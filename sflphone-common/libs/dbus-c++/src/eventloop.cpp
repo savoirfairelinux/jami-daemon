@@ -36,14 +36,12 @@
 
 using namespace DBus;
 
-static double millis (timeval tv)
-{
+static double millis (timeval tv) {
     return (tv.tv_sec *1000.0 + tv.tv_usec/1000.0);
 }
 
 DefaultTimeout::DefaultTimeout (int interval, bool repeat, DefaultMainLoop *ed)
-        : _enabled (true), _interval (interval), _repeat (repeat), _expiration (0), _data (0), _disp (ed)
-{
+        : _enabled (true), _interval (interval), _repeat (repeat), _expiration (0), _data (0), _disp (ed) {
     timeval now;
     gettimeofday (&now, NULL);
 
@@ -54,57 +52,48 @@ DefaultTimeout::DefaultTimeout (int interval, bool repeat, DefaultMainLoop *ed)
     _disp->_mutex_t.unlock();
 }
 
-DefaultTimeout::~DefaultTimeout()
-{
+DefaultTimeout::~DefaultTimeout() {
     _disp->_mutex_t.lock();
     _disp->_timeouts.remove (this);
     _disp->_mutex_t.unlock();
 }
 
 DefaultWatch::DefaultWatch (int fd, int flags, DefaultMainLoop *ed)
-        : _enabled (true), _fd (fd), _flags (flags), _state (0), _data (0), _disp (ed)
-{
+        : _enabled (true), _fd (fd), _flags (flags), _state (0), _data (0), _disp (ed) {
     _disp->_mutex_w.lock();
     _disp->_watches.push_back (this);
     _disp->_mutex_w.unlock();
 }
 
-DefaultWatch::~DefaultWatch()
-{
+DefaultWatch::~DefaultWatch() {
     _disp->_mutex_w.lock();
     _disp->_watches.remove (this);
     _disp->_mutex_w.unlock();
 }
 
-DefaultMutex::DefaultMutex()
-{
+DefaultMutex::DefaultMutex() {
     pthread_mutex_init (&_mutex, NULL);
 }
 
-DefaultMutex::~DefaultMutex()
-{
+DefaultMutex::~DefaultMutex() {
     pthread_mutex_destroy (&_mutex);
 }
 
-void DefaultMutex::lock()
-{
+void DefaultMutex::lock() {
     pthread_mutex_lock (&_mutex);
 }
 
-void DefaultMutex::unlock()
-{
+void DefaultMutex::unlock() {
     pthread_mutex_unlock (&_mutex);
 }
 
-DefaultMainLoop::DefaultMainLoop()
-{
+DefaultMainLoop::DefaultMainLoop() {
     if (pipe (_terminateFd) < 0) {
         throw ErrorFailed ("unable to create unamed pipe");
     }
 }
 
-DefaultMainLoop::~DefaultMainLoop()
-{
+DefaultMainLoop::~DefaultMainLoop() {
     _mutex_w.lock();
 
     DefaultWatches::iterator wi = _watches.begin();
@@ -140,13 +129,11 @@ DefaultMainLoop::~DefaultMainLoop()
     _mutex_t.unlock();
 }
 
-void DefaultMainLoop::terminate()
-{
+void DefaultMainLoop::terminate() {
     write (_terminateFd[1], " ", 1);
 }
 
-void DefaultMainLoop::dispatch()
-{
+void DefaultMainLoop::dispatch() {
     _mutex_w.lock();
 
     int nfd = _watches.size() + 1;

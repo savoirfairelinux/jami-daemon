@@ -31,8 +31,7 @@
 #include <cstdio>
 #include <stdlib.h>
 
-static void _debug_log_default (const char *format, ...)
-{
+static void _debug_log_default (const char *format, ...) {
 #ifdef DEBUG
 
     static int debug_env = getenv ("DBUSXX_VERBOSE") ? 1 : 0;

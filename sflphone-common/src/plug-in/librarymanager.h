@@ -32,11 +32,12 @@
 #define LIBRARY_MANAGER_H
 
 #include "dlfcn.h"
-#include <stdexcept> 
+#include <stdexcept>
 
 #include "global.h"
 
-class LibraryManager {
+class LibraryManager
+{
 
     public:
         typedef void* LibraryHandle;
@@ -57,19 +58,22 @@ class LibraryManager {
         LibraryHandle _handlePtr;
 };
 
-class LibraryManagerException : public std::runtime_error {
+class LibraryManagerException : public std::runtime_error
+{
 
     public:
 
         typedef enum Reason {
             loadingFailed = 0,
             symbolNotFound
-        }Reason;
+        } Reason;
 
         LibraryManagerException (const std::string &libraryName, const std::string &details, Reason reason);
         ~LibraryManagerException (void) throw() {}
 
-        inline Reason getReason (void) { return _reason; } 
+        inline Reason getReason (void) {
+            return _reason;
+        }
 
         const char* what () const throw();
 

@@ -10,7 +10,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -35,17 +35,17 @@
 
 class ManagerImpl;
 
-namespace sfl {
-    class AudioSymmetricRtpSession : public ost::SymmetricRTPSession, public AudioRtpSession<AudioSymmetricRtpSession> 
-    {
-        public:
-        AudioSymmetricRtpSession(ManagerImpl * manager, SIPCall * sipcall) :
-            ost::SymmetricRTPSession(ost::InetHostAddress(sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
-            AudioRtpSession<AudioSymmetricRtpSession>(manager, sipcall)
-        {
-            _debug("AudioSymmetricRtpSession initialized\n");
-        }       
-    };
+namespace sfl
+{
+class AudioSymmetricRtpSession : public ost::SymmetricRTPSession, public AudioRtpSession<AudioSymmetricRtpSession>
+{
+    public:
+        AudioSymmetricRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
+                ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
+                AudioRtpSession<AudioSymmetricRtpSession> (manager, sipcall) {
+            _debug ("AudioSymmetricRtpSession initialized\n");
+        }
+};
 }
 
 #endif // __AUDIO_SYMMETRIC_RTP_SESSION_H__

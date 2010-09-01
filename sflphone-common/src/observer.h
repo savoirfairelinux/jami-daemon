@@ -36,26 +36,29 @@
 /**
  * Observer design pattern interface
  */
-namespace Pattern {
+namespace Pattern
+{
 
 /**
  * Observer interface
  */
-class Observer {
-public:
-  virtual ~Observer() {};
-  virtual void update() = 0;
+class Observer
+{
+    public:
+        virtual ~Observer() {};
+        virtual void update() = 0;
 };
 
-class Subject {
-public:
-  virtual ~Subject() {};
-  void attach(Observer& observer);
-  void detach(Observer& observer);
-  void notify();
+class Subject
+{
+    public:
+        virtual ~Subject() {};
+        void attach (Observer& observer);
+        void detach (Observer& observer);
+        void notify();
 
-private:
-  std::list<Observer*> _observers;
+    private:
+        std::list<Observer*> _observers;
 };
 
 } // end namespace

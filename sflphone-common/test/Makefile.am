@@ -43,5 +43,5 @@ LLIBS=$(CPPUNIT_LIBS) \
 	../src/sflphoned-numbercleaner.o \
 	../src/sflphoned-observer.o \
 	../src/sflphoned-voiplink.o \
+	../src/sflphoned-preferences.o \
 	../src/libsflphone.la
-	

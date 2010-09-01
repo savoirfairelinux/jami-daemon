@@ -32,15 +32,16 @@
 #ifndef _HISTORY_MANAGER
 #define _HISTORY_MANAGER
 
-#include "historyitem.h" 
+#include "historyitem.h"
 #include <global.h>
 #include <user_cfg.h>
 
 #define DAY_UNIX_TIMESTAMP      86400   // Number of seconds in one day: 60 x 60 x 24
 
-typedef std::map <std::string, HistoryItem*> HistoryItemMap; 
+typedef std::map <std::string, HistoryItem*> HistoryItemMap;
 
-class HistoryManager {
+class HistoryManager
+{
 
     public:
         /*
@@ -95,7 +96,7 @@ class HistoryManager {
         inline void set_history_path (std::string filename) {
             _history_path = filename;
         }
-    
+
         /*
          *@return int   The number of items found in the history file
          */
@@ -108,13 +109,12 @@ class HistoryManager {
         int set_serialized_history (std::map <std::string, std::string> history, int limit);
 
     private:
-        inline int get_unix_timestamp_equivalent (int days)
-        {
+        inline int get_unix_timestamp_equivalent (int days) {
             return days * DAY_UNIX_TIMESTAMP;
         }
-        
-        int getConfigInt(const std::string& section, const std::string& name, Conf::ConfigTree *history_list);
-        std::string getConfigString(const std::string& section, const std::string& name, Conf::ConfigTree *history_list);
+
+        int getConfigInt (const std::string& section, const std::string& name, Conf::ConfigTree *history_list);
+        std::string getConfigString (const std::string& section, const std::string& name, Conf::ConfigTree *history_list);
 
         /*
          * Set the path to the history file
@@ -139,7 +139,7 @@ class HistoryManager {
 
         /*
          * The path to the history file
-         */ 
+         */
 
         std::string _history_path;
 

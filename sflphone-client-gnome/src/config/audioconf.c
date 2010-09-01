@@ -31,6 +31,8 @@
 #include <audioconf.h>
 #include <utils.h>
 #include <string.h>
+#include <eel-gconf-extensions.h>
+#include "dbus/dbus.h"
 
 GtkListStore *pluginlist;
 GtkListStore *outputlist;
@@ -352,7 +354,7 @@ select_output_audio_plugin (GtkComboBox* widget, gpointer data UNUSED)
         model = gtk_combo_box_get_model (widget);
         gtk_combo_box_get_active_iter (widget, &iter);
         gtk_tree_model_get (model, &iter, 0, &pluginName, -1);
-        dbus_set_output_audio_plugin (pluginName);
+        dbus_set_audio_plugin (pluginName);
         //update_combo_box( pluginName);
     }
 }
@@ -437,9 +439,10 @@ select_audio_input_device (GtkComboBox* comboBox, gpointer data UNUSED)
     }
 }
 
+
 /**
- * Set the audio ringtone device on the server with its index
- */
++ * Set the audio ringtone device on the server with its index
++ */
 static void
 select_audio_ringtone_device (GtkComboBox *comboBox, gpointer data UNUSED)
 {
@@ -459,6 +462,7 @@ select_audio_ringtone_device (GtkComboBox *comboBox, gpointer data UNUSED)
         dbus_set_audio_ringtone_device (deviceIndex);
     }
 }
+
 
 /**
  * Toggle move buttons on if a codec is selected, off elsewise
@@ -553,7 +557,6 @@ static void codec_move (gboolean moveUp, gpointer data)
 
     GtkTreeIter iter;
     GtkTreeIter *iter2;
-    GtkTreeView *treeView;
     GtkTreeModel *model;
     GtkTreeSelection *selection;
     GtkTreePath *treePath;
@@ -628,32 +631,6 @@ static void codec_move_down (GtkButton *button UNUSED, gpointer data)
     // Change tree view ordering and get indice changed
     codec_move (FALSE, data);
 }
-
-int
-is_ringtone_enabled (void)
-{
-    return dbus_is_ringtone_enabled();
-}
-
-void
-ringtone_enabled (void)
-{
-    dbus_ringtone_enabled();
-}
-
-void
-ringtone_changed (GtkFileChooser *chooser , GtkLabel *label UNUSED)
-{
-    gchar* tone = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (chooser));
-    dbus_set_ringtone_choice (tone);
-}
-
-gchar*
-get_ringtone_choice (void)
-{
-    return dbus_get_ringtone_choice();
-}
-
 
 GtkWidget* codecs_box (account_t **a)
 {
@@ -892,14 +869,6 @@ GtkWidget* alsa_box()
     gtk_label_set_mnemonic_widget (GTK_LABEL (item), input);
     g_signal_connect (G_OBJECT (input), "changed", G_CALLBACK (select_audio_input_device), input);
 
-    // Set rendering
-    renderer = gtk_cell_renderer_text_new();
-    gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (input), renderer, TRUE);
-    gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (input), renderer, "text", 0, NULL);
-    gtk_table_attach (GTK_TABLE (table), input, 2, 3, 3, 4, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
-    gtk_widget_show (input);
-
-
     DEBUG ("Audio: Configuration rintgtone");
     item = gtk_label_new (_ ("Ringtone"));
     gtk_misc_set_alignment (GTK_MISC (item), 0, 0.5);
@@ -920,51 +889,17 @@ GtkWidget* alsa_box()
     gtk_table_attach (GTK_TABLE (table), ringtone, 2, 3, 4, 5, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
     gtk_widget_show (ringtone);
 
+
+    // Set rendering
+    renderer = gtk_cell_renderer_text_new();
+    gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (input), renderer, TRUE);
+    gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (input), renderer, "text", 0, NULL);
+    gtk_table_attach (GTK_TABLE (table), input, 2, 3, 3, 4, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_widget_show (input);
+
     gtk_widget_show_all (ret);
 
     DEBUG ("done");
-    return ret;
-}
-
-GtkWidget* noise_box()
-{
-    GtkWidget *ret;
-    GtkWidget *enableEchoCancel;
-    GtkWidget *enableNoiseReduction;
-    gboolean echocancelActive, noisesuppressActive;
-    gchar *state;
-
-    ret = gtk_hbox_new (TRUE , 1);
-
-    enableEchoCancel = gtk_check_button_new_with_mnemonic (_ ("_Echo Suppression"));
-    state = dbus_get_echo_cancel_state();
-    echocancelActive = FALSE;
-
-    if (strcmp (state, "enabled") == 0)
-        echocancelActive = TRUE;
-    else
-        echocancelActive = FALSE;
-
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (enableEchoCancel), echocancelActive);
-    g_signal_connect (G_OBJECT (enableEchoCancel), "clicked", active_echo_cancel, NULL);
-
-    gtk_box_pack_start (GTK_BOX (ret), enableEchoCancel, TRUE , TRUE , 1);
-
-
-    enableNoiseReduction = gtk_check_button_new_with_mnemonic (_ ("_Noise Reduction"));
-    state = dbus_get_noise_suppress_state();
-    noisesuppressActive = FALSE;
-
-    if (strcmp (state, "enabled") == 0)
-        noisesuppressActive = TRUE;
-    else
-        noisesuppressActive = FALSE;
-
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (enableNoiseReduction), noisesuppressActive);
-    gtk_box_pack_start (GTK_BOX (ret) , enableNoiseReduction , TRUE , TRUE , 1);
-
-    g_signal_connect (G_OBJECT (enableNoiseReduction), "clicked", active_noise_suppress, NULL);
-
     return ret;
 }
 
@@ -983,8 +918,11 @@ GtkWidget* create_audio_configuration()
     // Main widget
     GtkWidget *ret;
     // Sub boxes
-    GtkWidget *box;
     GtkWidget *frame;
+    GtkWidget *enableEchoCancel;
+    GtkWidget *enableNoiseReduction;
+    gboolean echocancelActive, noisesuppressActive;
+    gchar *state;
 
     ret = gtk_vbox_new (FALSE, 10);
     gtk_container_set_border_width (GTK_CONTAINER (ret), 10);
@@ -1018,7 +956,6 @@ GtkWidget* create_audio_configuration()
 
     if (SHOW_ALSA_CONF) {
         // Box for the ALSA configuration
-        printf ("ALSA Created \n");
         alsabox = alsa_box();
         gtk_container_add (GTK_CONTAINER (alsa_conf) , alsabox);
         gtk_widget_hide (alsa_conf);
@@ -1046,40 +983,36 @@ GtkWidget* create_audio_configuration()
     g_signal_connect (G_OBJECT (folderChooser) , "selection_changed" , G_CALLBACK (record_path_changed) , NULL);
     gtk_table_attach (GTK_TABLE (table), folderChooser, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
 
-    // Box for the ringtones
-    gnome_main_section_new_with_table (_ ("Ringtones"), &frame, &table, 1, 2);
-    gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
-
-    GtkWidget *enableTone;
-    GtkWidget *fileChooser;
-
-    enableTone = gtk_check_button_new_with_mnemonic (_ ("_Enable ringtones"));
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (enableTone), dbus_is_ringtone_enabled());
-    g_signal_connect (G_OBJECT (enableTone) , "clicked" , G_CALLBACK (ringtone_enabled) , NULL);
-    gtk_table_attach (GTK_TABLE (table), enableTone, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-
-    // file chooser button
-    fileChooser = gtk_file_chooser_button_new (_ ("Choose a ringtone"), GTK_FILE_CHOOSER_ACTION_OPEN);
-    gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (fileChooser) , g_get_home_dir());
-    gtk_file_chooser_set_filename (GTK_FILE_CHOOSER (fileChooser) , get_ringtone_choice());
-    g_signal_connect (G_OBJECT (fileChooser) , "selection_changed" , G_CALLBACK (ringtone_changed) , NULL);
-
-    GtkFileFilter *filter = gtk_file_filter_new();
-    gtk_file_filter_set_name (filter , _ ("Audio Files"));
-    gtk_file_filter_add_pattern (filter , "*.wav");
-    gtk_file_filter_add_pattern (filter , "*.ul");
-    gtk_file_filter_add_pattern (filter , "*.au");
-    gtk_file_chooser_add_filter (GTK_FILE_CHOOSER (fileChooser) , filter);
-    gtk_table_attach (GTK_TABLE (table), fileChooser, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-
-    gnome_main_section_new (_ ("Voice enhancement settings"), &noise_conf);
-    gtk_box_pack_start (GTK_BOX (ret), noise_conf, FALSE, FALSE, 0);
-    gtk_widget_show (noise_conf);
 
     // Box for the voice enhancement configuration
-    noisebox = noise_box();
-    gtk_container_add (GTK_CONTAINER (noise_conf) , noisebox);
+    gnome_main_section_new_with_table (_ ("Voice enhancement settings"), &frame, &table, 2, 1);
+    gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
 
+    enableEchoCancel = gtk_check_button_new_with_mnemonic (_ ("_Echo Suppression"));
+    state = dbus_get_echo_cancel_state();
+    echocancelActive = FALSE;
+
+    if (strcmp (state, "enabled") == 0)
+        echocancelActive = TRUE;
+    else
+        echocancelActive = FALSE;
+
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (enableEchoCancel), echocancelActive);
+    g_signal_connect (G_OBJECT (enableEchoCancel), "clicked", active_echo_cancel, NULL);
+    gtk_table_attach (GTK_TABLE (table), enableEchoCancel, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+
+    enableNoiseReduction = gtk_check_button_new_with_mnemonic (_ ("_Noise Reduction"));
+    state = dbus_get_noise_suppress_state();
+    noisesuppressActive = FALSE;
+
+    if (strcmp (state, "enabled") == 0)
+        noisesuppressActive = TRUE;
+    else
+        noisesuppressActive = FALSE;
+
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (enableNoiseReduction), noisesuppressActive);
+    g_signal_connect (G_OBJECT (enableNoiseReduction), "clicked", active_noise_suppress, NULL);
+    gtk_table_attach (GTK_TABLE (table), enableNoiseReduction, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     gtk_widget_show_all (ret);
 

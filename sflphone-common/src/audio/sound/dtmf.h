@@ -1,7 +1,7 @@
 /*
  *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author : Yan Morin <yan.morin@savoirfairelinux.com>
- *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com> 
+ *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *
  * 	Portions Copyright (c) 2000 Billy Biggs <bbiggs@div8.net>
  *  Portions Copyright (c) 2004 Wirlab <kphone@wirlab.net>
@@ -42,36 +42,37 @@
  * @file dtmf.h
  * @brief DMTF library to generate a dtmf sample
  */
-class DTMF {
-  public:
-    /**
-     * Create a new DTMF.
-     * @param sampleRate frequency of the sample (ex: 8000 hz)
-     */
-    DTMF (unsigned int sampleRate);
-    
-   /**
-    * Destructor
-    */ 
-    ~DTMF (void);
+class DTMF
+{
+    public:
+        /**
+         * Create a new DTMF.
+         * @param sampleRate frequency of the sample (ex: 8000 hz)
+         */
+        DTMF (unsigned int sampleRate);
 
-    /**
-     * Start the done for th given dtmf
-     * @param code  The DTMF code
-     */
-    void startTone(char code);
-    
-    /**
-     * Copy the sound inside the sampling* buffer 
-     * @param buffer : a SFLDataFormat* buffer
-     * @param n      : The size to generate
-     */
-    bool generateDTMF	(SFLDataFormat* buffer, size_t n);
+        /**
+         * Destructor
+         */
+        ~DTMF (void);
 
-    char currentTone;
-    char newTone;
+        /**
+         * Start the done for th given dtmf
+         * @param code  The DTMF code
+         */
+        void startTone (char code);
 
-    DTMFGenerator dtmfgenerator;
+        /**
+         * Copy the sound inside the sampling* buffer
+         * @param buffer : a SFLDataFormat* buffer
+         * @param n      : The size to generate
+         */
+        bool generateDTMF	(SFLDataFormat* buffer, size_t n);
+
+        char currentTone;
+        char newTone;
+
+        DTMFGenerator dtmfgenerator;
 };
 
 #endif // __KEY_DTMF_H_

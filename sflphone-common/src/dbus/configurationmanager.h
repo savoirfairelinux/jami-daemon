@@ -34,139 +34,116 @@
 #ifndef CONFIGURATIONMANAGER_H
 #define CONFIGURATIONMANAGER_H
 
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "configurationmanager-glue.h"
+#pragma GCC diagnostic warning "-Wignored-qualifiers"
+#pragma GCC diagnostic warning "-Wunused-parameter"
+
 #include <dbus-c++/dbus.h>
 
 
 class ConfigurationManager
-: public org::sflphone::SFLphone::ConfigurationManager_adaptor,
-  public DBus::IntrospectableAdaptor,
-  public DBus::ObjectAdaptor
+        : public org::sflphone::SFLphone::ConfigurationManager_adaptor,
+        public DBus::IntrospectableAdaptor,
+        public DBus::ObjectAdaptor
 {
-public:
+    public:
 
-    ConfigurationManager(DBus::Connection& connection);
-    static const char* SERVER_PATH;
+        ConfigurationManager (DBus::Connection& connection);
+        static const char* SERVER_PATH;
 
-private:
-    std::vector<std::string> shortcutsKeys;
+    private:
+        std::vector<std::string> shortcutsKeys;
 
-public:
+    public:
 
-    std::map< std::string, std::string > getAccountDetails( const std::string& accountID );
-    void setAccountDetails( const std::string& accountID, const std::map< std::string, std::string >& details );
-    std::string addAccount( const std::map< std::string, std::string >& details );
-    void removeAccount( const std::string& accoundID );
-    void deleteAllCredential (const std::string& accountID);
-    std::vector< std::string > getAccountList(  );
-    void sendRegister(  const std::string& accoundID , const int32_t& expire );
+        std::map< std::string, std::string > getAccountDetails (const std::string& accountID);
+        void setAccountDetails (const std::string& accountID, const std::map< std::string, std::string >& details);
+        std::string addAccount (const std::map< std::string, std::string >& details);
+        void removeAccount (const std::string& accoundID);
+        void deleteAllCredential (const std::string& accountID);
+        std::vector< std::string > getAccountList();
+        void sendRegister (const std::string& accoundID , const int32_t& expire);
 
-    std::map< std::string, std::string > getTlsSettingsDefault (void);
-    void setIp2IpDetails(const std::map< std::string, std::string >& details);
-    std::map< std::string, std::string > getIp2IpDetails(void);
-    std::map< std::string, std::string > getCredential (const std::string& accountID, const int32_t& index);
-    int32_t getNumberOfCredential (const std::string& accountID);
-    void setCredential (const std::string& accountID, const int32_t& index, const std::map< std::string, std::string >& details);
-    void setNumberOfCredential (const std::string& accountID, const int32_t& number);
+        std::map< std::string, std::string > getTlsSettingsDefault (void);
+        void setIp2IpDetails (const std::map< std::string, std::string >& details);
+        std::map< std::string, std::string > getIp2IpDetails (void);
+        std::map< std::string, std::string > getCredential (const std::string& accountID, const int32_t& index);
+        int32_t getNumberOfCredential (const std::string& accountID);
+        void setCredential (const std::string& accountID, const int32_t& index, const std::map< std::string, std::string >& details);
 
-    std::vector< std::string > getCodecList(void);
-    std::vector< std::string > getSupportedTlsMethod(void);
-    std::vector< std::string > getCodecDetails( const int32_t& payload );
-    std::vector< std::string > getActiveCodecList (const std::string& accountID);
-    void setActiveCodecList (const std::vector< std::string >& list, const std::string& accountID);
+        std::vector< std::string > getCodecList (void);
+        std::vector< std::string > getSupportedTlsMethod (void);
+        std::vector< std::string > getCodecDetails (const int32_t& payload);
+        std::vector< std::string > getActiveCodecList (const std::string& accountID);
+        void setActiveCodecList (const std::vector< std::string >& list, const std::string& accountID);
 
-    std::vector< std::string > getAudioPluginList();
-    void setInputAudioPlugin(const std::string& audioPlugin);
-    void setOutputAudioPlugin(const std::string& audioPlugin);
-    std::vector< std::string > getAudioOutputDeviceList();
-    void setAudioOutputDevice(const int32_t& index);
-    void setAudioInputDevice(const int32_t& index);
-    void setAudioRingtoneDevice(const int32_t& index);
-    std::vector< std::string > getAudioInputDeviceList();
-    std::vector< std::string > getCurrentAudioDevicesIndex();
-    int32_t getAudioDeviceIndex(const std::string& name);
-    std::string getCurrentAudioOutputPlugin( void );
-    std::string getEchoCancelState(void);
-    void setEchoCancelState(const std::string& state);
-    std::string getNoiseSuppressState(void);
-    void setNoiseSuppressState(const std::string& state);
+        std::vector< std::string > getAudioPluginList();
+        void setAudioPlugin (const std::string& audioPlugin);
+        std::vector< std::string > getAudioOutputDeviceList();
+        void setAudioOutputDevice (const int32_t& index);
+        void setAudioInputDevice (const int32_t& index);
+        void setAudioRingtoneDevice (const int32_t& index);
+        std::vector< std::string > getAudioInputDeviceList();
+        std::vector< std::string > getCurrentAudioDevicesIndex();
+        int32_t getAudioDeviceIndex (const std::string& name);
+        std::string getCurrentAudioOutputPlugin (void);
+        std::string getEchoCancelState (void);
+        void setEchoCancelState (const std::string& state);
+        std::string getNoiseSuppressState (void);
+        void setNoiseSuppressState (const std::string& state);
 
 
-    std::vector< std::string > getToneLocaleList(  );
-    std::vector< std::string > getPlaybackDeviceList(  );
-    std::vector< std::string > getRecordDeviceList(  );
-    std::string getVersion(  );
-    std::vector< std::string > getRingtoneList(  );
-    int32_t getAudioManager( void );
-    void setAudioManager( const int32_t& api );
+        std::vector< std::string > getToneLocaleList();
+        std::vector< std::string > getPlaybackDeviceList();
+        std::vector< std::string > getRecordDeviceList();
+        std::string getVersion();
+        std::vector< std::string > getRingtoneList();
+        int32_t getAudioManager (void);
+        void setAudioManager (const int32_t& api);
 
-    bool isMd5CredentialHashing (void);
-    void setMd5CredentialHashing (const bool& enabled);
-    int32_t isIax2Enabled( void );
-    int32_t isRingtoneEnabled( void );
-    void ringtoneEnabled( void );
-    std::string getRingtoneChoice( void );
-    void setRingtoneChoice( const std::string& tone );
-    std::string getRecordPath( void );
-    void setRecordPath(const std::string& recPath );
-    int32_t getDialpad( void );
-    void setDialpad (const bool& display);
-    int32_t getSearchbar( void );
-    
-    void setSearchbar( void );
-    
-    void setHistoryLimit( const int32_t& days);
-    int32_t getHistoryLimit (void);
-    
-    void setHistoryEnabled (void);
-	std::string getHistoryEnabled (void);
+        bool isMd5CredentialHashing (void);
+        void setMd5CredentialHashing (const bool& enabled);
+        int32_t isIax2Enabled (void);
+        int32_t isRingtoneEnabled (const std::string& accountID);
+        void ringtoneEnabled (const std::string& accountID);
+        std::string getRingtoneChoice (const std::string& accountID);
+        void setRingtoneChoice (const std::string& accountID, const std::string& tone);
+        std::string getRecordPath (void);
+        void setRecordPath (const std::string& recPath);
 
-    int32_t getVolumeControls( void );
-    void setVolumeControls (const bool& display);
-    int32_t isStartHidden( void );
-    void startHidden( void );
-    int32_t popupMode( void );
-    void switchPopupMode( void );
-    int32_t getNotify( void );
-    void setNotify( void );
-    int32_t getMailNotify( void );
-    void setMailNotify( void );
 
-	int32_t getWindowWidth (void);
-	int32_t getWindowHeight (void);
-	void setWindowWidth (const int32_t& width);
-	void setWindowHeight (const int32_t& height);
-	int32_t getWindowPositionX (void);
-	int32_t getWindowPositionY (void);
-	void setWindowPositionX (const int32_t& posX);
-	void setWindowPositionY (const int32_t& posY);
+        void setHistoryLimit (const int32_t& days);
+        int32_t getHistoryLimit (void);
 
-	void enableStatusIcon (const std::string&);
-	std::string isStatusIconEnabled (void);
+        int32_t getMailNotify (void);
+        void setMailNotify (void);
 
-    std::map<std::string, int32_t> getAddressbookSettings (void);
-    void setAddressbookSettings (const std::map<std::string, int32_t>& settings);
-    std::vector< std::string > getAddressbookList ( void );
-    void setAddressbookList( const std::vector< std::string >& list );
 
-    void setAccountsOrder (const std::string& order);
+        std::map<std::string, int32_t> getAddressbookSettings (void);
+        void setAddressbookSettings (const std::map<std::string, int32_t>& settings);
+        std::vector< std::string > getAddressbookList (void);
+        void setAddressbookList (const std::vector< std::string >& list);
 
-    std::map<std::string, std::string> getHookSettings (void);
-    void setHookSettings (const std::map<std::string, std::string>& settings);
-    
-    std::map <std::string, std::string> getHistory (void);
-    void setHistory (const std::map <std::string, std::string>& entries);
+        void setAccountsOrder (const std::string& order);
 
-    std::map<std::string, std::string> getTlsSettings(const std::string& accountID);
-    void setTlsSettings(const std::string& accountID, const std::map< std::string, std::string >& details);
+        std::map<std::string, std::string> getHookSettings (void);
+        void setHookSettings (const std::map<std::string, std::string>& settings);
 
-    std::string getAddrFromInterfaceName(const std::string& interface);
-    
-    std::vector<std::string> getAllIpInterface(void);
-    std::vector<std::string> getAllIpInterfaceByName(void);
+        std::map <std::string, std::string> getHistory (void);
+        void setHistory (const std::map <std::string, std::string>& entries);
 
-    std::map< std::string, int32_t > getShortcuts ();
-    void setShortcuts (const std::map< std::string, int32_t >& shortcutsMap);
+        std::map<std::string, std::string> getTlsSettings (void);
+        void setTlsSettings (const std::map< std::string, std::string >& details);
+
+        std::string getAddrFromInterfaceName (const std::string& interface);
+
+        std::vector<std::string> getAllIpInterface (void);
+        std::vector<std::string> getAllIpInterfaceByName (void);
+
+        std::map< std::string, std::string > getShortcuts ();
+        void setShortcuts (const std::map< std::string, std::string >& shortcutsMap);
 };
 
 

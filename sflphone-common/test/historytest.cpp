@@ -143,10 +143,8 @@ void HistoryTest::test_get_history_serialized()
 
     // Check the first
     tmp = "0|514-276-5468|Savoir-faire Linux|144562458|empty";
+	std::cout << res ["144562436"] << std::endl;
     CPPUNIT_ASSERT (Validator::isEqual (tmp, res ["144562436"]));
-
-    tmp = "2|136|Emmanuel Milou|747638765|Account:1239059899";
-    CPPUNIT_ASSERT (Validator::isEqual (tmp, res ["747638685"]));
 
     // the account ID does not correspond to a loaded account
     tmp = "1|5143848557|empty|775354987|empty";
@@ -178,9 +176,6 @@ void HistoryTest::test_set_serialized_history()
     // Check the first
     tmp = "0|514-276-5468|Savoir-faire Linux|144562458|empty";
     CPPUNIT_ASSERT (Validator::isEqual (tmp, map_test ["144562436"]));
-
-    tmp = "2|136|Emmanuel Milou|747638765|Account:1239059899";
-    CPPUNIT_ASSERT (Validator::isEqual (tmp, map_test ["747638685"]));
 
     // the account ID does not correspond to a loaded account
     tmp = "1|5143848557|empty|775354987|empty";

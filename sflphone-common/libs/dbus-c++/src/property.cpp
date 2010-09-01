@@ -35,14 +35,12 @@ using namespace DBus;
 static const char *properties_name = "org.freedesktop.DBus.Properties";
 
 PropertiesAdaptor::PropertiesAdaptor()
-        : InterfaceAdaptor (properties_name)
-{
+        : InterfaceAdaptor (properties_name) {
     register_method (PropertiesAdaptor, Get, Get);
     register_method (PropertiesAdaptor, Set, Set);
 }
 
-Message PropertiesAdaptor::Get (const CallMessage &call)
-{
+Message PropertiesAdaptor::Get (const CallMessage &call) {
     MessageIter ri = call.reader();
 
     std::string iface_name;
@@ -73,8 +71,7 @@ Message PropertiesAdaptor::Get (const CallMessage &call)
     return reply;
 }
 
-Message PropertiesAdaptor::Set (const CallMessage &call)
-{
+Message PropertiesAdaptor::Set (const CallMessage &call) {
     MessageIter ri = call.reader();
 
     std::string iface_name;
@@ -97,8 +94,7 @@ Message PropertiesAdaptor::Set (const CallMessage &call)
     return reply;
 }
 
-IntrospectedInterface *const PropertiesAdaptor::introspect() const
-{
+IntrospectedInterface *const PropertiesAdaptor::introspect() const {
     static IntrospectedArgument Get_args[] = {
         { "interface_name", "s", true },
         { "property_name", "s", true },
@@ -132,19 +128,16 @@ IntrospectedInterface *const PropertiesAdaptor::introspect() const
 }
 
 PropertiesProxy::PropertiesProxy()
-        : InterfaceProxy (properties_name)
-{
+        : InterfaceProxy (properties_name) {
 }
 
-Variant PropertiesProxy::Get (const std::string &iface, const std::string &property)
-{
+Variant PropertiesProxy::Get (const std::string &iface, const std::string &property) {
 //todo
     Variant v;
     return v;
 }
 
-void PropertiesProxy::Set (const std::string &iface, const std::string &property, const Variant &value)
-{
+void PropertiesProxy::Set (const std::string &iface, const std::string &property, const Variant &value) {
 //todo
 }
 

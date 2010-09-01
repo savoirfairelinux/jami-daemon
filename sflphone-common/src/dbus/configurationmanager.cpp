@@ -35,6 +35,7 @@
 #include <sstream>
 #include "../manager.h"
 #include "sip/sipvoiplink.h"
+#include "sip/sipaccount.h"
 
 const char* ConfigurationManager::SERVER_PATH =
     "/org/sflphone/SFLphone/ConfigurationManager";
@@ -52,6 +53,8 @@ ConfigurationManager::ConfigurationManager (DBus::Connection& connection) :
 std::map<std::string, std::string> ConfigurationManager::getAccountDetails (
     const std::string& accountID)
 {
+
+    _debug ("ConfigurationManager: get account details %s", accountID.c_str());
     return Manager::instance().getAccountDetails (accountID);
 }
 
@@ -60,6 +63,7 @@ std::map<std::string, std::string> ConfigurationManager::getTlsSettingsDefault (
 {
 
     std::map<std::string, std::string> tlsSettingsDefault;
+
     tlsSettingsDefault.insert (std::pair<std::string, std::string> (
                                    TLS_LISTENER_PORT, DEFAULT_SIP_TLS_PORT));
     tlsSettingsDefault.insert (std::pair<std::string, std::string> (
@@ -95,37 +99,28 @@ std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails (void)
 
     std::map<std::string, std::string> ip2ipAccountDetails;
 
-    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ACCOUNT_ID,
-                                IP2IP_PROFILE));
-    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (
-                                    SRTP_KEY_EXCHANGE, Manager::instance().getConfigString (
-                                        IP2IP_PROFILE, SRTP_KEY_EXCHANGE)));
-    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (SRTP_ENABLE,
-                                Manager::instance().getConfigString (IP2IP_PROFILE, SRTP_ENABLE)));
-    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (
-                                    SRTP_RTP_FALLBACK, Manager::instance().getConfigString (
-                                        IP2IP_PROFILE, SRTP_RTP_FALLBACK)));
-    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (
-                                    ZRTP_DISPLAY_SAS, Manager::instance().getConfigString (
-                                        IP2IP_PROFILE, ZRTP_DISPLAY_SAS)));
-    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (
-                                    ZRTP_HELLO_HASH, Manager::instance().getConfigString (IP2IP_PROFILE,
-                                            ZRTP_HELLO_HASH)));
-    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (
-                                    ZRTP_NOT_SUPP_WARNING, Manager::instance().getConfigString (
-                                        IP2IP_PROFILE, ZRTP_NOT_SUPP_WARNING)));
-    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (
-                                    ZRTP_DISPLAY_SAS_ONCE, Manager::instance().getConfigString (
-                                        IP2IP_PROFILE, ZRTP_DISPLAY_SAS_ONCE)));
+    SIPAccount *sipaccount = (SIPAccount *) Manager::instance().getAccount (IP2IP_PROFILE);
 
-    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (
-                                    LOCAL_INTERFACE, Manager::instance().getConfigString (IP2IP_PROFILE,
-                                            LOCAL_INTERFACE)));
-    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (LOCAL_PORT,
-                                Manager::instance().getConfigString (IP2IP_PROFILE, LOCAL_PORT)));
+    if (!sipaccount) {
+        _error ("ConfigurationManager: could not find account");
+        return ip2ipAccountDetails;
+    }
+
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ACCOUNT_ID, IP2IP_PROFILE));
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (SRTP_KEY_EXCHANGE, sipaccount->getSrtpKeyExchange()));
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (SRTP_ENABLE, sipaccount->getSrtpEnable() ? "true" : "false"));
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (SRTP_RTP_FALLBACK, sipaccount->getSrtpFallback() ? "true" : "false"));
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS, sipaccount->getZrtpDisplaySas() ? "true" : "false"));
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ZRTP_HELLO_HASH, sipaccount->getZrtpHelloHash() ? "true" : "false"));
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ZRTP_NOT_SUPP_WARNING, sipaccount->getZrtpNotSuppWarning() ? "true" : "false"));
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS_ONCE, sipaccount->getZrtpDiaplaySasOnce() ? "true" : "false"));
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (LOCAL_INTERFACE, sipaccount->getLocalInterface()));
+    std::stringstream portstr;
+    portstr << sipaccount->getLocalPort();
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (LOCAL_PORT, portstr.str()));
 
     std::map<std::string, std::string> tlsSettings;
-    tlsSettings = getTlsSettings (IP2IP_PROFILE);
+    tlsSettings = getTlsSettings();
     std::copy (tlsSettings.begin(), tlsSettings.end(), std::inserter (
                    ip2ipAccountDetails, ip2ipAccountDetails.end()));
 
@@ -139,68 +134,50 @@ void ConfigurationManager::setIp2IpDetails (const std::map<std::string,
     std::map<std::string, std::string> map_cpy = details;
     std::map<std::string, std::string>::iterator it;
 
+    SIPAccount *sipaccount = (SIPAccount *) Manager::instance().getAccount (IP2IP_PROFILE);
+
+    if (!sipaccount) {
+        _error ("ConfigurationManager: could not find account");
+    }
+
+
     it = map_cpy.find (LOCAL_INTERFACE);
 
-    if (it != details.end()) {
-        Manager::instance().setConfig (IP2IP_PROFILE, LOCAL_INTERFACE,
-                                       it->second);
-    }
+    if (it != details.end()) sipaccount->setLocalInterface (it->second);
 
     it = map_cpy.find (LOCAL_PORT);
 
-    if (it != details.end()) {
-        Manager::instance().setConfig (IP2IP_PROFILE, LOCAL_PORT, it->second);
-    }
+    if (it != details.end()) sipaccount->setLocalPort (atoi (it->second.data()));
 
     it = map_cpy.find (SRTP_ENABLE);
 
-    if (it != details.end()) {
-        Manager::instance().setConfig (IP2IP_PROFILE, SRTP_ENABLE, it->second);
-    }
+    if (it != details.end()) sipaccount->setSrtpEnable ( (it->second == "true"));
 
     it = map_cpy.find (SRTP_RTP_FALLBACK);
 
-    if (it != details.end()) {
-        Manager::instance().setConfig (IP2IP_PROFILE, SRTP_RTP_FALLBACK,
-                                       it->second);
-    }
+    if (it != details.end()) sipaccount->setSrtpFallback ( (it->second == "true"));
 
     it = map_cpy.find (SRTP_KEY_EXCHANGE);
 
-    if (it != details.end()) {
-        Manager::instance().setConfig (IP2IP_PROFILE, SRTP_KEY_EXCHANGE,
-                                       it->second);
-    }
+    if (it != details.end()) sipaccount->setSrtpKeyExchange (it->second);
 
     it = map_cpy.find (ZRTP_DISPLAY_SAS);
 
-    if (it != details.end()) {
-        Manager::instance().setConfig (IP2IP_PROFILE, ZRTP_DISPLAY_SAS,
-                                       it->second);
-    }
+    if (it != details.end()) sipaccount->setZrtpDisplaySas ( (it->second == "true"));
 
     it = map_cpy.find (ZRTP_NOT_SUPP_WARNING);
 
-    if (it != details.end()) {
-        Manager::instance().setConfig (IP2IP_PROFILE, ZRTP_NOT_SUPP_WARNING,
-                                       it->second);
-    }
+    if (it != details.end()) sipaccount->setZrtpNotSuppWarning ( (it->second == "true"));
 
     it = map_cpy.find (ZRTP_HELLO_HASH);
 
-    if (it != details.end()) {
-        Manager::instance().setConfig (IP2IP_PROFILE, ZRTP_HELLO_HASH,
-                                       it->second);
-    }
+    if (it != details.end()) sipaccount->setZrtpHelloHash ( (it->second == "true"));
 
     it = map_cpy.find (ZRTP_DISPLAY_SAS_ONCE);
 
-    if (it != details.end()) {
-        Manager::instance().setConfig (IP2IP_PROFILE, ZRTP_DISPLAY_SAS_ONCE,
-                                       it->second);
-    }
+    if (it != details.end()) sipaccount->setZrtpDiaplaySasOnce ( (it->second == "true"));
 
-    setTlsSettings (IP2IP_PROFILE, details);
+    setTlsSettings (details);
 
     Manager::instance().saveConfig();
 
@@ -212,134 +189,100 @@ void ConfigurationManager::setIp2IpDetails (const std::map<std::string,
 
 }
 
-std::map<std::string, std::string> ConfigurationManager::getTlsSettings (
-    const std::string& section)
+std::map<std::string, std::string> ConfigurationManager::getTlsSettings()
 {
+
     std::map<std::string, std::string> tlsSettings;
 
-    tlsSettings.insert (std::pair<std::string, std::string> (TLS_LISTENER_PORT,
-                        Manager::instance().getConfigString (section, TLS_LISTENER_PORT)));
-    tlsSettings.insert (std::pair<std::string, std::string> (TLS_ENABLE,
-                        Manager::instance().getConfigString (section, TLS_ENABLE)));
-    tlsSettings.insert (std::pair<std::string, std::string> (TLS_CA_LIST_FILE,
-                        Manager::instance().getConfigString (section, TLS_CA_LIST_FILE)));
-    tlsSettings.insert (std::pair<std::string, std::string> (
-                            TLS_CERTIFICATE_FILE, Manager::instance().getConfigString (section,
-                                    TLS_CERTIFICATE_FILE)));
-    tlsSettings.insert (std::pair<std::string, std::string> (
-                            TLS_PRIVATE_KEY_FILE, Manager::instance().getConfigString (section,
-                                    TLS_PRIVATE_KEY_FILE)));
-    tlsSettings.insert (std::pair<std::string, std::string> (TLS_PASSWORD,
-                        Manager::instance().getConfigString (section, TLS_PASSWORD)));
-    tlsSettings.insert (std::pair<std::string, std::string> (TLS_METHOD,
-                        Manager::instance().getConfigString (section, TLS_METHOD)));
-    tlsSettings.insert (std::pair<std::string, std::string> (TLS_CIPHERS,
-                        Manager::instance().getConfigString (section, TLS_CIPHERS)));
-    tlsSettings.insert (std::pair<std::string, std::string> (TLS_SERVER_NAME,
-                        Manager::instance().getConfigString (section, TLS_SERVER_NAME)));
-    tlsSettings.insert (std::pair<std::string, std::string> (TLS_VERIFY_SERVER,
-                        Manager::instance().getConfigString (section, TLS_VERIFY_SERVER)));
-    tlsSettings.insert (std::pair<std::string, std::string> (TLS_VERIFY_CLIENT,
-                        Manager::instance().getConfigString (section, TLS_VERIFY_CLIENT)));
-    tlsSettings.insert (std::pair<std::string, std::string> (
-                            TLS_REQUIRE_CLIENT_CERTIFICATE,
-                            Manager::instance().getConfigString (section,
-                                                                 TLS_REQUIRE_CLIENT_CERTIFICATE)));
-    tlsSettings.insert (std::pair<std::string, std::string> (
-                            TLS_NEGOTIATION_TIMEOUT_SEC, Manager::instance().getConfigString (
-                                section, TLS_NEGOTIATION_TIMEOUT_SEC)));
-    tlsSettings.insert (std::pair<std::string, std::string> (
-                            TLS_NEGOTIATION_TIMEOUT_MSEC, Manager::instance().getConfigString (
-                                section, TLS_NEGOTIATION_TIMEOUT_MSEC)));
+    SIPAccount *sipaccount = (SIPAccount *) Manager::instance().getAccount (IP2IP_PROFILE);
+
+    if (!sipaccount)
+        return tlsSettings;
+
+    std::stringstream portstr;
+    portstr << sipaccount->getTlsListenerPort();
+    tlsSettings.insert (std::pair<std::string, std::string> (TLS_LISTENER_PORT, portstr.str()));
+    tlsSettings.insert (std::pair<std::string, std::string> (TLS_ENABLE, sipaccount->getTlsEnable()));
+    tlsSettings.insert (std::pair<std::string, std::string> (TLS_CA_LIST_FILE, sipaccount->getTlsCaListFile()));
+    tlsSettings.insert (std::pair<std::string, std::string> (TLS_CERTIFICATE_FILE, sipaccount->getTlsCertificateFile()));
+    tlsSettings.insert (std::pair<std::string, std::string> (TLS_PRIVATE_KEY_FILE, sipaccount->getTlsPrivateKeyFile()));
+    tlsSettings.insert (std::pair<std::string, std::string> (TLS_PASSWORD, sipaccount->getTlsPassword()));
+    tlsSettings.insert (std::pair<std::string, std::string> (TLS_METHOD, sipaccount->getTlsMethod()));
+    tlsSettings.insert (std::pair<std::string, std::string> (TLS_CIPHERS, sipaccount->getTlsCiphers()));
+    tlsSettings.insert (std::pair<std::string, std::string> (TLS_SERVER_NAME, sipaccount->getTlsServerName()));
+    tlsSettings.insert (std::pair<std::string, std::string> (TLS_VERIFY_SERVER, sipaccount->getTlsVerifyServer() ? "true" : "false"));
+    tlsSettings.insert (std::pair<std::string, std::string> (TLS_VERIFY_CLIENT, sipaccount->getTlsVerifyClient() ? "true" : "false"));
+    tlsSettings.insert (std::pair<std::string, std::string> (TLS_REQUIRE_CLIENT_CERTIFICATE, sipaccount->getTlsRequireClientCertificate() ? "true" : "false"));
+    tlsSettings.insert (std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_SEC, sipaccount->getTlsNegotiationTimeoutSec()));
+    tlsSettings.insert (std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_MSEC, sipaccount->getTlsNegotiationTimeoutMsec()));
+
     return tlsSettings;
 }
 
-void ConfigurationManager::setTlsSettings (const std::string& section,
-        const std::map<std::string, std::string>& details)
+void ConfigurationManager::setTlsSettings (const std::map<std::string, std::string>& details)
 {
+
     std::map<std::string, std::string> map_cpy = details;
     std::map<std::string, std::string>::iterator it;
 
+    SIPAccount * sipaccount = (SIPAccount *) Manager::instance().getAccount (IP2IP_PROFILE);
+
+    if (!sipaccount) {
+        _debug ("ConfigurationManager: Error: No valid account in set TLS settings");
+        return;
+    }
+
     it = map_cpy.find (TLS_LISTENER_PORT);
 
-    if (it != details.end()) {
-        Manager::instance().setConfig (section, TLS_LISTENER_PORT, it->second);
-    }
+    if (it != details.end()) sipaccount->setTlsListenerPort (atoi (it->second.data()));
 
     it = map_cpy.find (TLS_ENABLE);
 
-    if (it != details.end()) {
-        Manager::instance().setConfig (section, TLS_ENABLE, it->second);
-    }
+    if (it != details.end()) sipaccount->setTlsEnable (it->second);
 
     it = map_cpy.find (TLS_CA_LIST_FILE);
 
-    if (it != map_cpy.end()) {
-        Manager::instance().setConfig (section, TLS_CA_LIST_FILE, it->second);
-    }
+    if (it != map_cpy.end()) sipaccount->setTlsCaListFile (it->second);
 
     it = map_cpy.find (TLS_CERTIFICATE_FILE);
 
-    if (it != map_cpy.end()) {
-        Manager::instance().setConfig (section, TLS_CERTIFICATE_FILE, it->second);
-    }
+    if (it != map_cpy.end()) sipaccount->setTlsCertificateFile (it->second);
 
     it = map_cpy.find (TLS_PRIVATE_KEY_FILE);
 
-    if (it != map_cpy.end()) {
-        Manager::instance().setConfig (section, TLS_PRIVATE_KEY_FILE, it->second);
-    }
+    if (it != map_cpy.end()) sipaccount->setTlsPrivateKeyFile (it->second);
 
     it = map_cpy.find (TLS_PASSWORD);
 
-    if (it != map_cpy.end()) {
-        Manager::instance().setConfig (section, TLS_PASSWORD, it->second);
-    }
+    if (it != map_cpy.end()) sipaccount->setTlsPassword (it->second);
 
     it = map_cpy.find (TLS_METHOD);
 
-    if (it != map_cpy.end()) {
-        Manager::instance().setConfig (section, TLS_METHOD, it->second);
-    }
+    if (it != map_cpy.end()) sipaccount->setTlsMethod (it->second);
 
     it = map_cpy.find (TLS_CIPHERS);
 
-    if (it != map_cpy.end()) {
-        Manager::instance().setConfig (section, TLS_CIPHERS, it->second);
-    }
+    if (it != map_cpy.end()) sipaccount->setTlsCiphers (it->second);
 
     it = map_cpy.find (TLS_SERVER_NAME);
 
-    if (it != map_cpy.end()) {
-        Manager::instance().setConfig (section, TLS_SERVER_NAME, it->second);
-    }
+    if (it != map_cpy.end()) sipaccount->setTlsServerName (it->second);
 
     it = map_cpy.find (TLS_VERIFY_CLIENT);
 
-    if (it != map_cpy.end()) {
-        Manager::instance().setConfig (section, TLS_VERIFY_CLIENT, it->second);
-    }
+    if (it != map_cpy.end()) sipaccount->setTlsVerifyClient ( (it->second == "true") ? true : false);
 
     it = map_cpy.find (TLS_REQUIRE_CLIENT_CERTIFICATE);
 
-    if (it != map_cpy.end()) {
-        Manager::instance().setConfig (section, TLS_REQUIRE_CLIENT_CERTIFICATE,
-                                       it->second);
-    }
+    if (it != map_cpy.end()) sipaccount->setTlsRequireClientCertificate ( (it->second == "true") ? true : false);
 
     it = map_cpy.find (TLS_NEGOTIATION_TIMEOUT_SEC);
 
-    if (it != map_cpy.end()) {
-        Manager::instance().setConfig (section, TLS_NEGOTIATION_TIMEOUT_SEC,
-                                       it->second);
-    }
+    if (it != map_cpy.end()) sipaccount->setTlsNegotiationTimeoutSec (it->second);
 
     it = map_cpy.find (TLS_NEGOTIATION_TIMEOUT_MSEC);
 
-    if (it != map_cpy.end()) {
-        Manager::instance().setConfig (section, TLS_NEGOTIATION_TIMEOUT_MSEC,
-                                       it->second);
-    }
+    if (it != map_cpy.end()) sipaccount->setTlsNegotiationTimeoutMsec (it->second);
 
     Manager::instance().saveConfig();
 
@@ -352,27 +295,35 @@ std::map<std::string, std::string> ConfigurationManager::getCredential (
     const std::string& accountID, const int32_t& index)
 {
 
-    std::string credentialIndex;
-    std::stringstream streamOut;
-    streamOut << index;
-    credentialIndex = streamOut.str();
-
-    std::string section = std::string ("Credential") + std::string (":")
-                          + accountID + std::string (":") + credentialIndex;
+    Account *account = Manager::instance().getAccount (accountID);
 
     std::map<std::string, std::string> credentialInformation;
-    std::string username = Manager::instance().getConfigString (section,
-                           USERNAME);
-    std::string password = Manager::instance().getConfigString (section,
-                           PASSWORD);
-    std::string realm = Manager::instance().getConfigString (section, REALM);
 
-    credentialInformation.insert (std::pair<std::string, std::string> (USERNAME,
-                                  username));
-    credentialInformation.insert (std::pair<std::string, std::string> (PASSWORD,
-                                  password));
-    credentialInformation.insert (std::pair<std::string, std::string> (REALM,
-                                  realm));
+    if (account->getType() != "SIP")
+        return credentialInformation;
+
+    SIPAccount *sipaccount = (SIPAccount *) account;
+
+
+    if (index == 0) {
+        std::string username = sipaccount->getUsername();
+        std::string password = sipaccount->getPassword();
+        std::string realm = sipaccount->getRealm();
+
+        credentialInformation.insert (std::pair<std::string, std::string> (USERNAME, username));
+        credentialInformation.insert (std::pair<std::string, std::string> (PASSWORD, password));
+        credentialInformation.insert (std::pair<std::string, std::string> (REALM, realm));
+    } else {
+
+        // TODO: implement for extra credentials
+        std::string username = sipaccount->getUsername();
+        std::string password = sipaccount->getPassword();
+        std::string realm = sipaccount->getRealm();
+
+        credentialInformation.insert (std::pair<std::string, std::string> (USERNAME, username));
+        credentialInformation.insert (std::pair<std::string, std::string> (PASSWORD, password));
+        credentialInformation.insert (std::pair<std::string, std::string> (REALM, realm));
+    }
 
     return credentialInformation;
 }
@@ -380,16 +331,9 @@ std::map<std::string, std::string> ConfigurationManager::getCredential (
 int32_t ConfigurationManager::getNumberOfCredential (
     const std::string& accountID)
 {
-    return Manager::instance().getConfigInt (accountID, CONFIG_CREDENTIAL_NUMBER);
-}
 
-void ConfigurationManager::setNumberOfCredential (const std::string& accountID,
-        const int32_t& number)
-{
-    if (accountID != AccountNULL || !accountID.empty()) {
-        Manager::instance().setConfig (accountID, CONFIG_CREDENTIAL_NUMBER,
-                                       number);
-    }
+    SIPAccount *sipaccount = (SIPAccount *) Manager::instance().getAccount (accountID);
+    return sipaccount->getCredentialCount();
 }
 
 void ConfigurationManager::setCredential (const std::string& accountID,
@@ -461,8 +405,7 @@ std::vector<std::string> ConfigurationManager::getCodecList (void)
 
     std::vector<std::string> list;
 
-    CodecsMap codecs =
-        Manager::instance().getCodecDescriptorMap().getCodecsMap();
+    CodecsMap codecs = Manager::instance().getCodecDescriptorMap().getCodecsMap();
     CodecsMap::iterator iter = codecs.begin();
 
     while (iter != codecs.end()) {
@@ -558,14 +501,11 @@ std::vector<std::string> ConfigurationManager::getAudioPluginList()
 }
 
 
-void ConfigurationManager::setInputAudioPlugin (const std::string& audioPlugin)
+void ConfigurationManager::setAudioPlugin (const std::string& audioPlugin)
 {
-    return Manager::instance().setInputAudioPlugin (audioPlugin);
-}
+    _debug ("ConfigurationManager: Set audio plugin %s", audioPlugin.c_str());
 
-void ConfigurationManager::setOutputAudioPlugin (const std::string& audioPlugin)
-{
-    return Manager::instance().setOutputAudioPlugin (audioPlugin);
+    return Manager::instance().setAudioPlugin (audioPlugin);
 }
 
 std::vector<std::string> ConfigurationManager::getAudioOutputDeviceList()
@@ -605,6 +545,8 @@ int32_t ConfigurationManager::getAudioDeviceIndex (const std::string& name)
 
 std::string ConfigurationManager::getCurrentAudioOutputPlugin (void)
 {
+    _debug ("ConfigurationManager: Get audio plugin %s", Manager::instance().getCurrentAudioOutputPlugin().c_str());
+
     return Manager::instance().getCurrentAudioOutputPlugin();
 }
 
@@ -643,18 +585,12 @@ std::vector<std::string> ConfigurationManager::getRecordDeviceList()
 
 bool ConfigurationManager::isMd5CredentialHashing (void)
 {
-    bool isEnabled = Manager::instance().getConfigBool (PREFERENCES,
-                     CONFIG_MD5HASH);
-    return isEnabled;
+    return Manager::instance().preferences.getMd5Hash();
 }
 
 void ConfigurationManager::setMd5CredentialHashing (const bool& enabled)
 {
-    if (enabled) {
-        Manager::instance().setConfig (PREFERENCES, CONFIG_MD5HASH, TRUE_STR);
-    } else {
-        Manager::instance().setConfig (PREFERENCES, CONFIG_MD5HASH, FALSE_STR);
-    }
+    Manager::instance().preferences.setMd5Hash (enabled);
 }
 
 int32_t ConfigurationManager::isIax2Enabled (void)
@@ -662,24 +598,24 @@ int32_t ConfigurationManager::isIax2Enabled (void)
     return Manager::instance().isIax2Enabled();
 }
 
-void ConfigurationManager::ringtoneEnabled (void)
+void ConfigurationManager::ringtoneEnabled (const std::string& accountID)
 {
-    Manager::instance().ringtoneEnabled();
+    Manager::instance().ringtoneEnabled (accountID);
 }
 
-int32_t ConfigurationManager::isRingtoneEnabled (void)
+int32_t ConfigurationManager::isRingtoneEnabled (const std::string& accountID)
 {
-    return Manager::instance().isRingtoneEnabled();
+    return Manager::instance().isRingtoneEnabled (accountID);
 }
 
-std::string ConfigurationManager::getRingtoneChoice (void)
+std::string ConfigurationManager::getRingtoneChoice (const std::string& accountID)
 {
-    return Manager::instance().getRingtoneChoice();
+    return Manager::instance().getRingtoneChoice (accountID);
 }
 
-void ConfigurationManager::setRingtoneChoice (const std::string& tone)
+void ConfigurationManager::setRingtoneChoice (const std::string& accountID, const std::string& tone)
 {
-    Manager::instance().setRingtoneChoice (tone);
+    Manager::instance().setRingtoneChoice (accountID, tone);
 }
 
 std::string ConfigurationManager::getRecordPath (void)
@@ -692,35 +628,31 @@ void ConfigurationManager::setRecordPath (const std::string& recPath)
     Manager::instance().setRecordPath (recPath);
 }
 
-int32_t ConfigurationManager::getDialpad (void)
-{
-    return Manager::instance().getDialpad();
+/*
+int32_t ConfigurationManager::getDialpad(void) {
+	return Manager::instance().getDialpad();
 }
 
-void ConfigurationManager::setDialpad (const bool& display)
-{
-    Manager::instance().setDialpad (display);
+void ConfigurationManager::setDialpad(const bool& display) {
+	Manager::instance().setDialpad(display);
 }
 
-int32_t ConfigurationManager::getSearchbar (void)
-{
-    return Manager::instance().getSearchbar();
+int32_t ConfigurationManager::getSearchbar(void) {
+	return Manager::instance().getSearchbar();
 }
 
-void ConfigurationManager::setSearchbar (void)
-{
-    Manager::instance().setSearchbar();
+void ConfigurationManager::setSearchbar(void) {
+	Manager::instance().setSearchbar();
 }
 
-int32_t ConfigurationManager::getVolumeControls (void)
-{
-    return Manager::instance().getVolumeControls();
+int32_t ConfigurationManager::getVolumeControls(void) {
+	return Manager::instance().getVolumeControls();
 }
 
-void ConfigurationManager::setVolumeControls (const bool& display)
-{
-    Manager::instance().setVolumeControls (display);
+void ConfigurationManager::setVolumeControls(const bool& display) {
+	Manager::instance().setVolumeControls(display);
 }
+*/
 
 int32_t ConfigurationManager::getHistoryLimit (void)
 {
@@ -732,45 +664,39 @@ void ConfigurationManager::setHistoryLimit (const int32_t& days)
     Manager::instance().setHistoryLimit (days);
 }
 
-void ConfigurationManager::setHistoryEnabled (void)
-{
-    Manager::instance().setHistoryEnabled();
+/*
+void ConfigurationManager::setHistoryEnabled(void) {
+	Manager::instance().setHistoryEnabled();
 }
 
-std::string ConfigurationManager::getHistoryEnabled (void)
-{
-    return Manager::instance().getHistoryEnabled();
+std::string ConfigurationManager::getHistoryEnabled(void) {
+	return Manager::instance().getHistoryEnabled();
 }
 
-void ConfigurationManager::startHidden (void)
-{
-    Manager::instance().startHidden();
+void ConfigurationManager::startHidden(void) {
+	Manager::instance().startHidden();
 }
 
-int32_t ConfigurationManager::isStartHidden (void)
-{
-    return Manager::instance().isStartHidden();
+int32_t ConfigurationManager::isStartHidden(void) {
+	return Manager::instance().isStartHidden();
 }
 
-void ConfigurationManager::switchPopupMode (void)
-{
-    Manager::instance().switchPopupMode();
+void ConfigurationManager::switchPopupMode(void) {
+	Manager::instance().switchPopupMode();
 }
 
-int32_t ConfigurationManager::popupMode (void)
-{
-    return Manager::instance().popupMode();
+int32_t ConfigurationManager::popupMode(void) {
+	return Manager::instance().popupMode();
 }
 
-void ConfigurationManager::setNotify (void)
-{
-    Manager::instance().setNotify();
+void ConfigurationManager::setNotify(void) {
+	Manager::instance().setNotify();
 }
 
-int32_t ConfigurationManager::getNotify (void)
-{
-    return Manager::instance().getNotify();
+int32_t ConfigurationManager::getNotify(void) {
+	return Manager::instance().getNotify();
 }
+*/
 
 void ConfigurationManager::setAudioManager (const int32_t& api)
 {
@@ -879,96 +805,33 @@ std::vector<std::string> ConfigurationManager::getAllIpInterfaceByName (void)
     return vector;
 }
 
-int32_t ConfigurationManager::getWindowWidth (void)
+
+std::map<std::string, std::string> ConfigurationManager::getShortcuts()
 {
 
-    return Manager::instance().getConfigInt (PREFERENCES, WINDOW_WIDTH);
-}
-
-int32_t ConfigurationManager::getWindowHeight (void)
-{
-
-    return Manager::instance().getConfigInt (PREFERENCES, WINDOW_HEIGHT);
-}
-
-void ConfigurationManager::setWindowWidth (const int32_t& width)
-{
-
-    Manager::instance().setConfig (PREFERENCES, WINDOW_WIDTH, width);
-}
-
-void ConfigurationManager::setWindowHeight (const int32_t& height)
-{
-
-    Manager::instance().setConfig (PREFERENCES, WINDOW_HEIGHT, height);
-}
-
-int32_t ConfigurationManager::getWindowPositionX (void)
-{
-
-    return Manager::instance().getConfigInt (PREFERENCES, WINDOW_POSITION_X);
-}
-
-int32_t ConfigurationManager::getWindowPositionY (void)
-{
-
-    return Manager::instance().getConfigInt (PREFERENCES, WINDOW_POSITION_Y);
-}
-
-void ConfigurationManager::setWindowPositionX (const int32_t& posX)
-{
-
-    Manager::instance().setConfig (PREFERENCES, WINDOW_POSITION_X, posX);
-}
-
-void ConfigurationManager::setWindowPositionY (const int32_t& posY)
-{
-
-    Manager::instance().setConfig (PREFERENCES, WINDOW_POSITION_Y, posY);
-}
-
-std::map<std::string, int32_t> ConfigurationManager::getShortcuts()
-{
-
-    std::map<std::string, int> shortcutsMap;
-    int shortcut;
-
-    for (int i = 0; i < (int) shortcutsKeys.size(); i++) {
-        std::string key = shortcutsKeys.at (i);
-        shortcut = Manager::instance().getConfigInt ("Shortcuts", key);
-        shortcutsMap.insert (std::pair<std::string, int> (key, shortcut));
-    }
-
-    return shortcutsMap;
+    return Manager::instance().shortcutPreferences.getShortcuts();
 }
 
 void ConfigurationManager::setShortcuts (
-    const std::map<std::string, int32_t>& shortcutsMap)
+    const std::map<std::string, std::string>& shortcutsMap)
 {
 
-    std::map<std::string, int> map_cpy = shortcutsMap;
-    std::map<std::string, int>::iterator it;
+    std::map<std::string, std::string> map_cpy = shortcutsMap;
+    /*
+      std::map<std::string, std::string> map_cpy = shortcutsMap;
+      std::map<std::string, std::string>::iterator it;
 
-    for (int i = 0; i < (int) shortcutsKeys.size(); i++) {
-        std::string key = shortcutsKeys.at (i);
-        it = map_cpy.find (key);
+      for (int i = 0; i < (int)shortcutsKeys.size(); i++) {
+      	std::string key = shortcutsKeys.at(i);
+      	it = map_cpy.find(key);
+      	if (it != shortcutsMap.end()) {
 
-        if (it != shortcutsMap.end()) {
-            Manager::instance().setConfig ("Shortcuts", key, it->second);
-        }
-    }
+      		Manager::instance().setConfig("Shortcuts", key, it->second);
+      	}
+      }
+    */
+    Manager::instance().shortcutPreferences.setShortcuts (map_cpy);
 
     Manager::instance().saveConfig();
 }
 
-void ConfigurationManager::enableStatusIcon (const std::string& value)
-{
-
-    Manager::instance ().setConfig (PREFERENCES, SHOW_STATUSICON, value);
-}
-
-std::string ConfigurationManager::isStatusIconEnabled (void)
-{
-
-    return Manager::instance ().getConfigString (PREFERENCES, SHOW_STATUSICON);
-}

@@ -43,105 +43,132 @@ class AudioCodec;
 class Sdp;
 class AudioRtp;
 
-namespace sfl {
-    class AudioRtpFactory;
+namespace sfl
+{
+class AudioRtpFactory;
 }
 
 /**
  * @file sipcall.h
- * @brief SIPCall are SIP implementation of a normal Call 
+ * @brief SIPCall are SIP implementation of a normal Call
  */
 class SIPCall : public Call
 {
-  public:
+    public:
 
-    /**
-     * Constructor
-     * @param id	The call identifier
-     * @param type  The type of the call. Could be Incoming
-     *						 Outgoing
-     */
-    SIPCall(const CallID& id, Call::CallType type, pj_pool_t *pool );
+        /**
+         * Constructor
+         * @param id	The call identifier
+         * @param type  The type of the call. Could be Incoming
+         *						 Outgoing
+         */
+        SIPCall (const CallID& id, Call::CallType type, pj_pool_t *pool);
 
-    /**
-     * Destructor
-     */
-    ~SIPCall();
+        /**
+         * Destructor
+         */
+        ~SIPCall();
 
-    /** 
-     * Call Identifier
-     * @return int  SIP call id
-     */
-    int  getCid() { return _cid; }
-    
-    /** 
-     * Call Identifier
-     * @param cid SIP call id
-     */
-    void setCid(int cid) { _cid = cid ; } 
-    
-    /** 
-     * Domain identifier
-     * @return int  SIP domain id
-     */
-    int  getDid() { return _did; }
-    
-    /** 
-     * Domain identifier
-     * @param did SIP domain id
-     */
-    void setDid(int did) { _did = did; } 
-    
-    /** 
-     * Transaction identifier
-     * @return int  SIP transaction id
-     */
-    int  getTid() { return _tid; }
+        /**
+         * Call Identifier
+         * @return int  SIP call id
+         */
+        int  getCid() {
+            return _cid;
+        }
 
-    
-    
-    
-    /** 
-     * Transaction identifier
-     * @param tid SIP transaction id
-     */
-    void setTid(int tid) { _tid = tid; } 
+        /**
+         * Call Identifier
+         * @param cid SIP call id
+         */
+        void setCid (int cid) {
+            _cid = cid ;
+        }
 
-    void setXferSub(pjsip_evsub* sub) {_xferSub = sub;}
+        /**
+         * Domain identifier
+         * @return int  SIP domain id
+         */
+        int  getDid() {
+            return _did;
+        }
 
-    pjsip_evsub *getXferSub() {return _xferSub;}
-    
-    void setInvSession(pjsip_inv_session* inv) {_invSession = inv;}
+        /**
+         * Domain identifier
+         * @param did SIP domain id
+         */
+        void setDid (int did) {
+            _did = did;
+        }
 
-    pjsip_inv_session *getInvSession() {return _invSession;}
-    
-    Sdp* getLocalSDP (void) { return _local_sdp; }
+        /**
+         * Transaction identifier
+         * @return int  SIP transaction id
+         */
+        int  getTid() {
+            return _tid;
+        }
 
-    void setLocalSDP (Sdp *local_sdp) { _local_sdp = local_sdp; }
 
-    /** Returns a pointer to the AudioRtp object */
-    inline sfl::AudioRtpFactory * getAudioRtp(void) { return _audiortp; }
 
-  private:
 
-    int _cid;
-    int _did;
-    int _tid;
+        /**
+         * Transaction identifier
+         * @param tid SIP transaction id
+         */
+        void setTid (int tid) {
+            _tid = tid;
+        }
 
-    // Copy Constructor
-    SIPCall(const SIPCall& rh);
+        void setXferSub (pjsip_evsub* sub) {
+            _xferSub = sub;
+        }
 
-    // Assignment Operator
-    SIPCall& operator=( const SIPCall& rh);
+        pjsip_evsub *getXferSub() {
+            return _xferSub;
+        }
 
-    /** Starting sound */
-    sfl::AudioRtpFactory * _audiortp;
+        void setInvSession (pjsip_inv_session* inv) {
+            _invSession = inv;
+        }
 
-    pjsip_evsub *_xferSub;
-    
-	pjsip_inv_session *_invSession;
-    
-	Sdp *_local_sdp;
+        pjsip_inv_session *getInvSession() {
+            return _invSession;
+        }
+
+        Sdp* getLocalSDP (void) {
+            return _local_sdp;
+        }
+
+        void setLocalSDP (Sdp *local_sdp) {
+            _local_sdp = local_sdp;
+        }
+
+        /** Returns a pointer to the AudioRtp object */
+        inline sfl::AudioRtpFactory * getAudioRtp (void) {
+            return _audiortp;
+        }
+
+    private:
+
+        int _cid;
+        int _did;
+        int _tid;
+
+        // Copy Constructor
+        SIPCall (const SIPCall& rh);
+
+        // Assignment Operator
+        SIPCall& operator= (const SIPCall& rh);
+
+        /** Starting sound */
+        sfl::AudioRtpFactory * _audiortp;
+
+        pjsip_evsub *_xferSub;
+
+        pjsip_inv_session *_invSession;
+
+        Sdp *_local_sdp;
 
 };
 

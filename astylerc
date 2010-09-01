@@ -12,4 +12,5 @@ indent-switches         # Indent 'switch' blocks so that the 'case X:' statement
 break-blocks            # Pad empty lines around header blocks (e.g. 'if', 'while'...).
 brackets=linux
 unpad=paren
+formatted
 -d

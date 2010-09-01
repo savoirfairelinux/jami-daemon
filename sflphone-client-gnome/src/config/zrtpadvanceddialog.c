@@ -38,7 +38,6 @@ void show_advanced_zrtp_options (GHashTable * properties)
 {
     GtkDialog * securityDialog;
 
-    GtkWidget * zrtpFrame;
     GtkWidget * tableZrtp;
     GtkWidget * enableHelloHash;
     GtkWidget * enableSASConfirm;

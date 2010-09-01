@@ -71,7 +71,7 @@ void set_account_type (GtkWidget* widget , gpointer data UNUSED)
     }
 }
 
-static void show_password_cb (GtkWidget *widget, gpointer data)
+static void show_password_cb (GtkWidget *widget UNUSED, gpointer data)
 {
     gtk_entry_set_visibility (GTK_ENTRY (data), !gtk_entry_get_visibility (GTK_ENTRY (data)));
 }
@@ -331,7 +331,6 @@ GtkWidget* build_sip_account_configuration (void)
 {
     GtkWidget* table;
     GtkWidget* label;
-    GtkWidget *image;
     GtkWidget * clearTextCheckbox;
 
     wiz->sip_account = create_vbox (GTK_ASSISTANT_PAGE_CONTENT , _ ("SIP account settings") , _ ("Please fill the following information"));
@@ -446,7 +445,6 @@ GtkWidget* build_iax_account_configuration (void)
 {
     GtkWidget* label;
     GtkWidget*  table;
-    GtkWidget *image;
     GtkWidget * clearTextCheckbox;
 
     wiz->iax_account = create_vbox (GTK_ASSISTANT_PAGE_CONFIRM , _ ("IAX2 account settings") , _ ("Please fill the following information"));

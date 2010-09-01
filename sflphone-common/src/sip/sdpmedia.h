@@ -83,19 +83,23 @@ typedef enum mediaType mediaType;
 class sdpMedia
 {
     public:
-        sdpMedia( int type );
-        sdpMedia( std::string type, int port, std::string dir = DEFAULT_STREAM_DIRECTION);
+        sdpMedia (int type);
+        sdpMedia (std::string type, int port, std::string dir = DEFAULT_STREAM_DIRECTION);
         ~sdpMedia();
 
         /*
          * Read accessor. Return the list of codecs
          */
-        std::vector<AudioCodec*> get_media_codec_list() { return _codec_list; }
+        std::vector<AudioCodec*> get_media_codec_list() {
+            return _codec_list;
+        }
 
         /*
          * Read accessor. Return the type of media
          */
-        mediaType get_media_type() { return _media_type; }
+        mediaType get_media_type() {
+            return _media_type;
+        }
 
         /*
          * Read accessor. Return the type of media
@@ -105,59 +109,69 @@ class sdpMedia
         /*
          * Set the media type
          */
-        void set_media_type( int type ) { _media_type = (mediaType)type; }
+        void set_media_type (int type) {
+            _media_type = (mediaType) type;
+        }
 
         /*
          * Read accessor. Return the transport port
          */
-        int get_port() { return _port; }
+        int get_port() {
+            return _port;
+        }
 
         /*
          * Write accessor. Set the transport port
          */
-        void set_port( int port ) { _port = port; }
+        void set_port (int port) {
+            _port = port;
+        }
 
         /*
          * Add a codec in the current media codecs vector
          *
          * @param payload     The payload type
          */
-        void add_codec( AudioCodec *codec );
+        void add_codec (AudioCodec *codec);
 
         /*
          * Remove a codec from the current media codecs vector
          *
          * @param codec_name    The codec encoding name
          */
-        void remove_codec( std::string codec_name );
+        void remove_codec (std::string codec_name);
 
         /*
          * Remove all the codecs from the list
          */
-        void clear_codec_list( void );
+        void clear_codec_list (void);
 
         /*
          * Return a string description of the current media
-         */ 
-        std::string to_string( void );
+         */
+        std::string to_string (void);
 
         /*
          * Set the stream direction of the current media
          * ie: sendrecv, sendonly,...
          */
-        void set_stream_direction( int direction ) { _stream_type = (streamDirection)direction; }
+        void set_stream_direction (int direction) {
+            _stream_type = (streamDirection) direction;
+        }
 
         /*
          * Get the stream direction of the current media
          * ie: sendrecv, sendonly,...
          */
-        streamDirection get_stream_direction( void ) { return _stream_type; }
+        streamDirection get_stream_direction (void) {
+            return _stream_type;
+        }
 
         /*
          * Get the stream direction string description of the current media
          * ie: sendrecv, sendonly,...
          */
-        std::string get_stream_direction_str( void );
+        std::string get_stream_direction_str (void);
 
     private:
         /* The type of media */

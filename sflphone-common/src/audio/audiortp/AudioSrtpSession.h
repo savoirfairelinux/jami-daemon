@@ -11,7 +11,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -40,8 +40,8 @@ class SdesNegotiator;
 class ManagerImpl;
 class SIPCall;
 
-/* 
-   Table from RFC 4568 6.2. Crypto-Suites, which define key parameters for supported 
+/*
+   Table from RFC 4568 6.2. Crypto-Suites, which define key parameters for supported
    cipher suite
 
    +---------------------+-------------+--------------+---------------+
@@ -64,75 +64,75 @@ class SIPCall;
 */
 
 
-namespace sfl {
+namespace sfl
+{
 
-    class SrtpException: public std::exception
-    {
-        virtual const char* what() const throw()
-        {
-        return "ZRTP ZID initialization failed.";
+class SrtpException: public std::exception
+{
+        virtual const char* what() const throw() {
+            return "ZRTP ZID initialization failed.";
         }
-    };
+};
 
-    class AudioSrtpSession : public ost::SymmetricRTPSession, public AudioRtpSession<AudioSrtpSession> 
-    {
-        public:
+class AudioSrtpSession : public ost::SymmetricRTPSession, public AudioRtpSession<AudioSrtpSession>
+{
+    public:
 
-            AudioSrtpSession(ManagerImpl * manager, SIPCall * sipcall);
+        AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall);
 
-            std::vector<std::string> getLocalCryptoInfo(void);
+        std::vector<std::string> getLocalCryptoInfo (void);
 
-            void setRemoteCryptoInfo(sfl::SdesNegotiator& nego);
+        void setRemoteCryptoInfo (sfl::SdesNegotiator& nego);
 
-        private:
+    private:
 
-            void initializeLocalMasterKey(void);
+        void initializeLocalMasterKey (void);
 
-            void initializeLocalMasterSalt(void);
+        void initializeLocalMasterSalt (void);
 
-            void initializeRemoteCryptoContext(void);
+        void initializeRemoteCryptoContext (void);
 
-            void initializeLocalCryptoContext(void);
+        void initializeLocalCryptoContext (void);
 
-            std::string getBase64ConcatenatedKeys();
+        std::string getBase64ConcatenatedKeys();
 
-            void unBase64ConcatenatedKeys(std::string base64keys);
+        void unBase64ConcatenatedKeys (std::string base64keys);
 
-            char* encodeBase64(unsigned char *input, int length);
+        char* encodeBase64 (unsigned char *input, int length);
 
-            char* decodeBase64(unsigned char *input, int length, int *length_out);
+        char* decodeBase64 (unsigned char *input, int length, int *length_out);
 
-            /** Default local crypto suite is AES_CM_128_HMAC_SHA1_80*/
-            int _localCryptoSuite;
+        /** Default local crypto suite is AES_CM_128_HMAC_SHA1_80*/
+        int _localCryptoSuite;
 
-            /** Remote crypto suite is initialized at AES_CM_128_HMAC_SHA1_80*/
-            int _remoteCryptoSuite;
+        /** Remote crypto suite is initialized at AES_CM_128_HMAC_SHA1_80*/
+        int _remoteCryptoSuite;
 
-            uint8 _localMasterKey[16];
+        uint8 _localMasterKey[16];
 
-            /** local master key length in byte */
-            int _localMasterKeyLength;
+        /** local master key length in byte */
+        int _localMasterKeyLength;
 
-            uint8 _localMasterSalt[14];
+        uint8 _localMasterSalt[14];
 
-            /** local master salt length in byte */
-            int _localMasterSaltLength;
+        /** local master salt length in byte */
+        int _localMasterSaltLength;
 
-            uint8 _remoteMasterKey[16];
+        uint8 _remoteMasterKey[16];
 
-            /** remote master key length in byte */
-            int _remoteMasterKeyLength;
+        /** remote master key length in byte */
+        int _remoteMasterKeyLength;
 
-            uint8 _remoteMasterSalt[14];
+        uint8 _remoteMasterSalt[14];
 
-            /** remote master salt length in byte */
-            int _remoteMasterSaltLength;
+        /** remote master salt length in byte */
+        int _remoteMasterSaltLength;
 
-            ost::CryptoContext* _remoteCryptoCtx;
+        ost::CryptoContext* _remoteCryptoCtx;
 
-            ost::CryptoContext* _localCryptoCtx;
-    };
-   
+        ost::CryptoContext* _localCryptoCtx;
+};
+
 }
 
 #endif // __AUDIO_SRTP_SESSION_H__

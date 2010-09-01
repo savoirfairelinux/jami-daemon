@@ -43,7 +43,7 @@ gint is_confID_confstruct (gconstpointer a, gconstpointer b)
     }
 }
 
-conference_obj_t* create_new_conference (conference_state_t state, const gchar* confID, conference_obj_t ** conf)
+void create_new_conference (conference_state_t state, const gchar* confID, conference_obj_t ** conf)
 {
     DEBUG ("create_new_conference");
 
@@ -64,17 +64,14 @@ conference_obj_t* create_new_conference (conference_state_t state, const gchar* 
     new_conf->participant_list = NULL;
 
     *conf = new_conf;
-
 }
 
-conference_obj_t* create_new_conference_from_details (const gchar *conf_id, GHashTable *details, conference_obj_t ** conf)
+void create_new_conference_from_details (const gchar *conf_id, GHashTable *details, conference_obj_t ** conf)
 {
     DEBUG ("create_new_conference_from_details");
 
     conference_obj_t *new_conf;
-    gchar* call_id;
     gchar** participants;
-    gchar** part;
     gchar* state_str;
     // GSList* participant_list;
 
@@ -139,7 +136,7 @@ GSList* conference_next_participant (GSList* participant)
 }
 
 
-GSList* conference_participant_list_update (gchar** participants, conference_obj_t* conf)
+void conference_participant_list_update (gchar** participants, conference_obj_t* conf)
 {
     gchar* call_id;
     gchar** part;

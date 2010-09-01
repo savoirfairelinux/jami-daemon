@@ -32,7 +32,6 @@
 
 #include "delaydetection.h"
 #include "math.h"
-// #include <stdio.h>
 #include <string.h>
 #include <samplerate.h>
 
@@ -169,7 +168,7 @@ void DelayDetection::putData (SFLDataFormat *inputData, int nbBytes)
 
 }
 
-int DelayDetection::getData (SFLDataFormat *outputData)
+int DelayDetection::getData (SFLDataFormat *outputData UNUSED)
 {
     return 0;
 }
@@ -194,19 +193,6 @@ void DelayDetection::process (SFLDataFormat *inputData, int nbBytes)
 
         downsampleData (tmp, down, nbSamples, _downsamplingFactor);
 
-        /*
-        for(int i = 0; i < 10; i++)
-          _debug("up: %.10f", tmp[i]);
-
-        for(int i = 0; i < 10; i++)
-          _debug("down: %.10f", down[i]);
-
-        bandpassFilter(down, nbSamples/_downsamplingFactor);
-
-        for(int i = 0; i < 10; i++)
-          _debug("band: %.10f", down[i]);
-        */
-
         memcpy (_captureDataDown+ (_nbMicSampleStored/_downsamplingFactor), down, (nbSamples/_downsamplingFactor) *sizeof (float));
 
         _nbMicSampleStored += nbSamples;
@@ -218,54 +204,33 @@ void DelayDetection::process (SFLDataFormat *inputData, int nbBytes)
     else
         return;
 
-    /*
-    for(int i = 0; i < 10; i++)
-      _debug("spkrRef: %.10f", _spkrReferenceDown[i]);
-
-    for(int i = 0; i < 10; i++)
-      _debug("micSeg: %.10f", _captureDataDown[i]);
-    */
-
     _debug ("_spkrDownSize: %d, _micDownSize: %d", _spkrDownSize, _micDownSize);
     crossCorrelate (_spkrReferenceDown, _captureDataDown, _correlationResult, _micDownSize, _spkrDownSize);
 
     int maxIndex = getMaxIndex (_correlationResult, _spkrDownSize);
 
     _debug ("MaxIndex: %d", maxIndex);
-
-    // reset();
 }
 
-int DelayDetection::process (SFLDataFormat *intputData, SFLDataFormat *outputData, int nbBytes)
+int DelayDetection::process (SFLDataFormat *intputData UNUSED, SFLDataFormat *outputData UNUSED, int nbBytes UNUSED)
 {
     return 0;
 }
 
-void DelayDetection::process (SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes) {}
+void DelayDetection::process (SFLDataFormat *micData UNUSED, SFLDataFormat *spkrData UNUSED, SFLDataFormat *outputData UNUSED, int nbBytes UNUSED) {}
 
 void DelayDetection::crossCorrelate (float *ref, float *seg, float *res, int refSize, int segSize)
 {
 
     _debug ("CrossCorrelate");
 
-    int counter = 0;
-
     // Output has same size as the
     int rsize = refSize;
     int ssize = segSize;
     int tmpsize = segSize-refSize+1;
 
-    /*
-    for(int i = 0; i < 32; i++)
-        _debug("ref: %.10f", ref[i]);
-
-    for(int i = 0; i < 150; i++)
-        _debug("seg: %.10f", seg[i]);
-    */
-
     // perform autocorrelation on reference signal
     float acref = correlate (ref, ref, rsize);
-    // _debug("acref: %f", acref);
 
     // perform crossrelation on signal
     float acseg = 0.0;
@@ -274,7 +239,6 @@ void DelayDetection::crossCorrelate (float *ref, float *seg, float *res, int ref
     while (--tmpsize) {
         --ssize;
         acseg = correlate (seg+tmpsize, seg+tmpsize, rsize);
-        // _debug("acseg: %f", acseg);
         res[ssize] = correlate (ref, seg+tmpsize, rsize);
         r = sqrt (acref*acseg);
 
@@ -289,7 +253,6 @@ void DelayDetection::crossCorrelate (float *ref, float *seg, float *res, int ref
 
     while (rsize) {
         acseg = correlate (seg, seg, rsize);
-        // _debug("acseg: %f", acseg);
         res[ssize-1] = correlate (ref+i, seg, rsize);
         r = sqrt (acref*acseg);
 
@@ -321,8 +284,6 @@ double DelayDetection::correlate (float *sig1, float *sig2, short size)
 void DelayDetection::convertInt16ToFloat32 (SFLDataFormat *input, float *output, int nbSamples)
 {
 
-    // factor is 1/(2^15), used to rescale the short int range to the
-    // [-1.0 - 1.0] float range.
 #define S2F_FACTOR .000030517578125f;
     int len = nbSamples;
 
@@ -335,26 +296,6 @@ void DelayDetection::convertInt16ToFloat32 (SFLDataFormat *input, float *output,
 
 void DelayDetection::downsampleData (float *input, float *output, int nbSamples, int factor)
 {
-
-    /*
-    float tmp[nbSamples];
-
-    for(int i = 0; i < nbSamples; i++) {
-        tmp[i] = _decimationFilter.getOutputSample(input[i]);
-    }
-
-    int j;
-    for(j=_remainingIndex; j<nbSamples; j+=factor) {
-        output[j] = tmp[j];
-    }
-    _remainingIndex = j - nbSamples;
-    */
-
-    /*
-    double downsampleFactor = (double) samplerate1 / samplerate2;
-
-    int nbSamplesMax = (int) (samplerate1 * getFramesize() / 1000);
-    */
 
     int _src_err;
 
@@ -371,13 +312,7 @@ void DelayDetection::downsampleData (float *input, float *output, int nbSamples,
         src_data.src_ratio = downfactor;
         src_data.end_of_input = 0; // More data will come
 
-        //src_short_to_float_array (dataIn, _floatBufferUpMic, nbSamples);
-        //_debug("downsample %d %f %d" ,  src_data.output_frames, src_data.src_ratio , nbSamples);
         src_process (_src_state, &src_data);
-        //_debug("downsample %d %f %d" ,  src_data.output_frames, src_data.src_ratio , nbSamples);
-        // nbSamples  = (src_data.output_frames_gen > nbSamplesMax) ? nbSamplesMax : src_data.output_frames_gen;
-        //_debug("downsample %d %f %d" ,  src_data.output_frames, src_data.src_ratio , nbSamples);
-        // src_float_to_short_array (_floatBufferDownMic , dataOut , nbSamples);
     }
 }
 

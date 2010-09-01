@@ -39,6 +39,9 @@ GQueue * accountQueue;
 gint is_accountID_struct (gconstpointer a, gconstpointer b)
 {
 
+    if (!a || !b)
+        return 1;
+
     account_t * c = (account_t*) a;
 
     if (strcmp (c->accountID, (gchar*) b) == 0) {
@@ -247,11 +250,12 @@ account_list_get_registered_accounts (void)
     unsigned int i;
 
     for (i=0; i<account_list_get_size(); i++) {
+
         if (account_list_get_nth (i) -> state == (ACCOUNT_STATE_REGISTERED))
             res ++;
     }
 
-    DEBUG (" %d registered accounts" , res);
+    DEBUG ("Account: %d registered accounts" , res);
     return res;
 }
 
@@ -356,7 +360,9 @@ gboolean current_account_has_mailbox (void)
     current = account_list_get_current ();
 
     if (current) {
-        if (g_strcasecmp (g_hash_table_lookup (current->properties, ACCOUNT_MAILBOX), "") != 0)
+        gchar * account_mailbox = g_hash_table_lookup (current->properties, ACCOUNT_MAILBOX);
+
+        if (account_mailbox != NULL && g_strcasecmp (account_mailbox, "") != 0)
             return TRUE;
     }
 

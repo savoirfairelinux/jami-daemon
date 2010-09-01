@@ -24,7 +24,7 @@ AC_ARG_WITH(debug,
 if test "x$with_debug" = "xfull" -o "x$with_debug" = "xyes"; then
 	CFLAGS="-g -O0 -DDEBUG -Wall -Wextra"
 else
-	CFLAGS="$CFLAGS"
+	CFLAGS="$CFLAGS -Wall -Wextra"
 fi
 
 AC_PROG_CC
@@ -34,12 +34,6 @@ AC_PROG_LIBTOOL
 
 dnl GCONF utilities
 AM_GCONF_SOURCE_2
-
-dnl Check for log4c
-AC_CHECK_HEADERS(log4c.h, have_log4c=true, have_log4c=false)
-if ! $have_log4c; then
-    AC_MSG_ERROR(Please install the log4c library)
-fi
 
 dnl uninstalled gsr ui dir
 AC_DEFINE_UNQUOTED(SFLPHONE_UIDIR_UNINSTALLED, "`pwd`/src/",

@@ -45,196 +45,196 @@ typedef std::string CallID;
 class AudioRecord
 {
 
-public:
+    public:
 
-  AudioRecord();
+        AudioRecord();
 
-  ~AudioRecord();
-  
-  void setSndSamplingRate(int smplRate);
+        ~AudioRecord();
 
-  void setRecordingOption(FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate, std::string path);
+        void setSndSamplingRate (int smplRate);
 
-  void initFileName( std::string peerNumber );
+        void setRecordingOption (FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate, std::string path);
 
-  /** 
-   * Check if no otehr file is opened, then create a new one
-   * @param fileName A string containing teh file (with/without extension)
-   * @param type     The sound file format (FILE_RAW, FILE_WAVE)
-   * @param format   Internal sound format (INT16 / INT32)
-   */
-  void openFile();
+        void initFileName (std::string peerNumber);
 
-  /**
-   * Close the opend recording file. If wave: cout the number of byte
-   */
-  void closeFile();
+        /**
+         * Check if no otehr file is opened, then create a new one
+         * @param fileName A string containing teh file (with/without extension)
+         * @param type     The sound file format (FILE_RAW, FILE_WAVE)
+         * @param format   Internal sound format (INT16 / INT32)
+         */
+        void openFile();
 
-  /**
-   * Check if a file is already opened
-   */
-  bool isOpenFile();
+        /**
+         * Close the opend recording file. If wave: cout the number of byte
+         */
+        void closeFile();
 
-  /** 
-   * Check if a file already exist
-   */
-  bool isFileExist();
+        /**
+         * Check if a file is already opened
+         */
+        bool isOpenFile();
 
-  /**
-   * Check recording state 
-   */ 
-  bool isRecording();
+        /**
+         * Check if a file already exist
+         */
+        bool isFileExist();
 
-  /**
-   * Set recording flag
-   */
-  bool setRecording();
+        /**
+         * Check recording state
+         */
+        bool isRecording();
 
-  /**
-   * Stop recording flag
-   */
-  void stopRecording();
+        /**
+         * Set recording flag
+         */
+        bool setRecording();
 
-
-  /**
-   * Record a chunk of data in an internal buffer
-   * @param buffer  The data chunk to be recorded
-   * @param nSamples Number of samples (number of bytes) to be recorded 
-   */
-  void recSpkrData(SFLDataFormat* buffer, int nSamples);
-
-  /**
-   * Record a chunk of data in an internal buffer
-   * @param buffer  The data chunk to be recorded
-   * @param nSamples Number of samples (number of bytes) to be recorded 
-   */
-  void recMicData(SFLDataFormat* buffer, int nSamples);
-
-  /**
-   * Record a chunk of data in an openend file
-   * @param buffer  The data chunk to be recorded
-   * @param nSamples Number of samples (number of bytes) to be recorded 
-   */
-  void recData(SFLDataFormat* buffer, int nSamples);
-
-  /**
-   * Record a chunk of data in an openend file, Mix two differnet buffer
-   * @param buffer_1  The first data chunk to be recorded
-   * @param buffer_2  The second data chunk to be recorded
-   * @param nSamples_1 Number of samples (number of bytes) of buffer_1
-   * @param nSamples_2 Number of samples (number of bytes) of buffer_2
-   */
-  void recData(SFLDataFormat* buffer_1, SFLDataFormat* buffer_2, int nSamples_1, int nSamples_2);
+        /**
+         * Stop recording flag
+         */
+        void stopRecording();
 
 
-protected:
+        /**
+         * Record a chunk of data in an internal buffer
+         * @param buffer  The data chunk to be recorded
+         * @param nSamples Number of samples (number of bytes) to be recorded
+         */
+        void recSpkrData (SFLDataFormat* buffer, int nSamples);
 
-  /**
-   * Create name file according to current date
-   */
-  void createFilename();
-  
-  /**
-   * Set the header for raw files
-   */
-  bool setRawFile();
+        /**
+         * Record a chunk of data in an internal buffer
+         * @param buffer  The data chunk to be recorded
+         * @param nSamples Number of samples (number of bytes) to be recorded
+         */
+        void recMicData (SFLDataFormat* buffer, int nSamples);
 
-  /**
-   * Set the header for wave files
-   */
-  bool setWavFile();
+        /**
+         * Record a chunk of data in an openend file
+         * @param buffer  The data chunk to be recorded
+         * @param nSamples Number of samples (number of bytes) to be recorded
+         */
+        void recData (SFLDataFormat* buffer, int nSamples);
 
-  /**
-   * Open an existing raw file, used when the call is set on hold    
-   */
-  bool openExistingRawFile();
-
-  /**
-   * Open an existing wav file, used when the call is set on hold
-   */
-  bool openExistingWavFile();
-
-  /**
-   * Compute the number of byte recorded and close the file
-   */
-  void closeWavFile();
+        /**
+         * Record a chunk of data in an openend file, Mix two differnet buffer
+         * @param buffer_1  The first data chunk to be recorded
+         * @param buffer_2  The second data chunk to be recorded
+         * @param nSamples_1 Number of samples (number of bytes) of buffer_1
+         * @param nSamples_2 Number of samples (number of bytes) of buffer_2
+         */
+        void recData (SFLDataFormat* buffer_1, SFLDataFormat* buffer_2, int nSamples_1, int nSamples_2);
 
 
-  /**
-   * Pointer to the recorded file
-   */
-  FILE *fp;                      //file pointer
+    protected:
 
-  /**
-   * File format (RAW / WAVE)
-   */
-  FILE_TYPE fileType_;
+        /**
+         * Create name file according to current date
+         */
+        void createFilename();
 
-  /**
-   * Sound format (SINT16/SINT32)
-   */
-  SOUND_FORMAT sndFormat_;
+        /**
+         * Set the header for raw files
+         */
+        bool setRawFile();
 
-  /**
-   * Number of channels
-   */
-  int channels_;
+        /**
+         * Set the header for wave files
+         */
+        bool setWavFile();
 
-  /**
-   * Number of byte recorded
-   */
-  unsigned long byteCounter_;
+        /**
+         * Open an existing raw file, used when the call is set on hold
+         */
+        bool openExistingRawFile();
 
-  /**
-   * Sampling rate
-   */
-  int sndSmplRate_;
-  
-  /**
-   * number of samples recorded for mic buffer
-   */
-  int nbSamplesMic_;
+        /**
+         * Open an existing wav file, used when the call is set on hold
+         */
+        bool openExistingWavFile();
 
-  /**
-   * number of samples recorded for speaker buffer
-   */
-  int nbSamplesSpk_;
+        /**
+         * Compute the number of byte recorded and close the file
+         */
+        void closeWavFile();
 
-  /**
-   * Maximum number of samples
-   */
-  int nbSamplesMax_;
 
-  /**
-   * Recording flage
-   */
-  bool recordingEnabled_;
+        /**
+         * Pointer to the recorded file
+         */
+        FILE *fp;                      //file pointer
 
-  /**
-   * Buffer used for mixing two channels
-   */
-  SFLDataFormat* mixBuffer_;
+        /**
+         * File format (RAW / WAVE)
+         */
+        FILE_TYPE fileType_;
 
-  /**
-   * Buffer used to copy mic info
-   */
-  SFLDataFormat* micBuffer_;
-  
-  /**
-   * Buffer used to copy spkr info
-   */
-  SFLDataFormat* spkBuffer_;
-  
-  /**
-   * Filename for this recording
-   */
-  char fileName_[8192];
+        /**
+         * Sound format (SINT16/SINT32)
+         */
+        SOUND_FORMAT sndFormat_;
 
-  /**
-   * Path for this recording
-   */
-  std::string savePath_;
- 
+        /**
+         * Number of channels
+         */
+        int channels_;
+
+        /**
+         * Number of byte recorded
+         */
+        unsigned long byteCounter_;
+
+        /**
+         * Sampling rate
+         */
+        int sndSmplRate_;
+
+        /**
+         * number of samples recorded for mic buffer
+         */
+        int nbSamplesMic_;
+
+        /**
+         * number of samples recorded for speaker buffer
+         */
+        int nbSamplesSpk_;
+
+        /**
+         * Maximum number of samples
+         */
+        int nbSamplesMax_;
+
+        /**
+         * Recording flage
+         */
+        bool recordingEnabled_;
+
+        /**
+         * Buffer used for mixing two channels
+         */
+        SFLDataFormat* mixBuffer_;
+
+        /**
+         * Buffer used to copy mic info
+         */
+        SFLDataFormat* micBuffer_;
+
+        /**
+         * Buffer used to copy spkr info
+         */
+        SFLDataFormat* spkBuffer_;
+
+        /**
+         * Filename for this recording
+         */
+        char fileName_[8192];
+
+        /**
+         * Path for this recording
+         */
+        std::string savePath_;
+
 };
 
 #endif // _AUDIO_RECORD_H

@@ -40,10 +40,11 @@ typedef enum CallType {
     CALL_MISSED,
     CALL_INCOMING,
     CALL_OUTGOING
-}CallType; 
+} CallType;
 
 
-class HistoryItem {
+class HistoryItem
+{
 
     public:
         /*
@@ -55,7 +56,7 @@ class HistoryItem {
          * Constructor from a serialized form
          */
         HistoryItem (std::string, std::string="");
-        
+
         /*
          * Destructor
          */
@@ -82,7 +83,7 @@ class HistoryItem {
         std::string _timestamp_start;
         std::string _timestamp_stop;
 
-        /* 
+        /*
          * Represents the type of call
          * Has be either CALL_MISSED, CALL_INCOMING or CALL_OUTGOING
          */
@@ -96,7 +97,7 @@ class HistoryItem {
 
         /*
          * The account the call was made with
-         */ 
+         */
         std::string _account_id;
 };
 

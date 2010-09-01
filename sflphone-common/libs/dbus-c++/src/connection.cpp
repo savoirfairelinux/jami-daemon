@@ -42,13 +42,11 @@
 using namespace DBus;
 
 Connection::Private::Private (DBusConnection *c, Server::Private *s)
-        : conn (c) , dispatcher (0), server (s)
-{
+        : conn (c) , dispatcher (0), server (s) {
     init();
 }
 
-Connection::Private::Private (DBusBusType type)
-{
+Connection::Private::Private (DBusBusType type) {
     InternalError e;
 
     conn = dbus_bus_get_private (type, e);
@@ -58,8 +56,7 @@ Connection::Private::Private (DBusBusType type)
     init();
 }
 
-Connection::Private::~Private()
-{
+Connection::Private::~Private() {
     debug_log ("terminating connection 0x%08x", conn);
 
     detach_server();
@@ -79,8 +76,7 @@ Connection::Private::~Private()
     dbus_connection_unref (conn);
 }
 
-void Connection::Private::init()
-{
+void Connection::Private::init() {
     dbus_connection_ref (conn);
     dbus_connection_ref (conn);	//todo: the library has to own another reference
 
@@ -94,8 +90,7 @@ void Connection::Private::init()
     dbus_connection_set_exit_on_disconnect (conn, false); //why was this set to true??
 }
 
-void Connection::Private::detach_server()
-{
+void Connection::Private::detach_server() {
     /*	Server::Private *tmp = server;
 
     	server = NULL;
@@ -115,8 +110,7 @@ void Connection::Private::detach_server()
     	}*/
 }
 
-bool Connection::Private::do_dispatch()
-{
+bool Connection::Private::do_dispatch() {
     debug_log ("dispatching on %p", conn);
 
     if (!dbus_connection_get_is_connected (conn)) {
@@ -130,8 +124,7 @@ bool Connection::Private::do_dispatch()
     return dbus_connection_dispatch (conn) != DBUS_DISPATCH_DATA_REMAINS;
 }
 
-void Connection::Private::dispatch_status_stub (DBusConnection *dc, DBusDispatchStatus status, void *data)
-{
+void Connection::Private::dispatch_status_stub (DBusConnection *dc, DBusDispatchStatus status, void *data) {
     Private *p = static_cast<Private *> (data);
 
     switch (status) {
@@ -151,8 +144,7 @@ void Connection::Private::dispatch_status_stub (DBusConnection *dc, DBusDispatch
     }
 }
 
-DBusHandlerResult Connection::Private::message_filter_stub (DBusConnection *conn, DBusMessage *dmsg, void *data)
-{
+DBusHandlerResult Connection::Private::message_filter_stub (DBusConnection *conn, DBusMessage *dmsg, void *data) {
     MessageSlot *slot = static_cast<MessageSlot *> (data);
 
     Message msg = Message (new Message::Private (dmsg));
@@ -162,8 +154,7 @@ DBusHandlerResult Connection::Private::message_filter_stub (DBusConnection *conn
            : DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
-bool Connection::Private::disconn_filter_function (const Message &msg)
-{
+bool Connection::Private::disconn_filter_function (const Message &msg) {
     if (msg.is_signal (DBUS_INTERFACE_LOCAL,"Disconnected")) {
         debug_log ("%p disconnected by local bus", conn);
         dbus_connection_close (conn);
@@ -174,34 +165,28 @@ bool Connection::Private::disconn_filter_function (const Message &msg)
     return false;
 }
 
-DBusDispatchStatus Connection::Private::dispatch_status()
-{
+DBusDispatchStatus Connection::Private::dispatch_status() {
     return dbus_connection_get_dispatch_status (conn);
 }
 
-bool Connection::Private::has_something_to_dispatch()
-{
+bool Connection::Private::has_something_to_dispatch() {
     return dispatch_status() == DBUS_DISPATCH_DATA_REMAINS;
 }
 
 
-Connection Connection::SystemBus()
-{
+Connection Connection::SystemBus() {
     return Connection (new Private (DBUS_BUS_SYSTEM));
 }
 
-Connection Connection::SessionBus()
-{
+Connection Connection::SessionBus() {
     return Connection (new Private (DBUS_BUS_SESSION));
 }
 
-Connection Connection::ActivationBus()
-{
+Connection Connection::ActivationBus() {
     return Connection (new Private (DBUS_BUS_STARTER));
 }
 
-Connection::Connection (const char *address, bool priv)
-{
+Connection::Connection (const char *address, bool priv) {
     InternalError e;
     DBusConnection *conn = priv
                            ? dbus_connection_open_private (address, e)
@@ -217,24 +202,20 @@ Connection::Connection (const char *address, bool priv)
 }
 
 Connection::Connection (Connection::Private *p)
-        : _pvt (p)
-{
+        : _pvt (p) {
     setup (default_dispatcher);
 }
 
 Connection::Connection (const Connection &c)
-        : _pvt (c._pvt)
-{
+        : _pvt (c._pvt) {
     dbus_connection_ref (_pvt->conn);
 }
 
-Connection::~Connection()
-{
+Connection::~Connection() {
     dbus_connection_unref (_pvt->conn);
 }
 
-Dispatcher *Connection::setup (Dispatcher *dispatcher)
-{
+Dispatcher *Connection::setup (Dispatcher *dispatcher) {
     debug_log ("registering stubs for connection %p", _pvt->conn);
 
     if (!dispatcher) dispatcher = default_dispatcher;
@@ -268,13 +249,11 @@ Dispatcher *Connection::setup (Dispatcher *dispatcher)
     return prev;
 }
 
-bool Connection::operator == (const Connection &c) const
-{
+bool Connection::operator == (const Connection &c) const {
     return _pvt->conn == c._pvt->conn;
 }
 
-bool Connection::register_bus()
-{
+bool Connection::register_bus() {
     InternalError e;
 
     bool r = dbus_bus_register (_pvt->conn, e);
@@ -284,39 +263,32 @@ bool Connection::register_bus()
     return r;
 }
 
-bool Connection::connected() const
-{
+bool Connection::connected() const {
     return dbus_connection_get_is_connected (_pvt->conn);
 }
 
-void Connection::disconnect()
-{
+void Connection::disconnect() {
 //	dbus_connection_disconnect(_pvt->conn); // disappeared in 0.9x
     dbus_connection_close (_pvt->conn);
 }
 
-void Connection::exit_on_disconnect (bool exit)
-{
+void Connection::exit_on_disconnect (bool exit) {
     dbus_connection_set_exit_on_disconnect (_pvt->conn, exit);
 }
 
-bool Connection::unique_name (const char *n)
-{
+bool Connection::unique_name (const char *n) {
     return dbus_bus_set_unique_name (_pvt->conn, n);
 }
 
-const char *Connection::unique_name() const
-{
+const char *Connection::unique_name() const {
     return dbus_bus_get_unique_name (_pvt->conn);
 }
 
-void Connection::flush()
-{
+void Connection::flush() {
     dbus_connection_flush (_pvt->conn);
 }
 
-void Connection::add_match (const char *rule)
-{
+void Connection::add_match (const char *rule) {
     InternalError e;
 
     dbus_bus_add_match (_pvt->conn, rule, e);
@@ -326,8 +298,7 @@ void Connection::add_match (const char *rule)
     if (e) throw Error (e);
 }
 
-void Connection::remove_match (const char *rule)
-{
+void Connection::remove_match (const char *rule) {
     InternalError e;
 
     dbus_bus_remove_match (_pvt->conn, rule, e);
@@ -337,25 +308,21 @@ void Connection::remove_match (const char *rule)
     if (e) throw Error (e);
 }
 
-bool Connection::add_filter (MessageSlot &s)
-{
+bool Connection::add_filter (MessageSlot &s) {
     debug_log ("%s: adding filter", unique_name());
     return dbus_connection_add_filter (_pvt->conn, Private::message_filter_stub, &s, NULL);
 }
 
-void Connection::remove_filter (MessageSlot &s)
-{
+void Connection::remove_filter (MessageSlot &s) {
     debug_log ("%s: removing filter", unique_name());
     dbus_connection_remove_filter (_pvt->conn, Private::message_filter_stub, &s);
 }
 
-bool Connection::send (const Message &msg, unsigned int *serial)
-{
+bool Connection::send (const Message &msg, unsigned int *serial) {
     return dbus_connection_send (_pvt->conn, msg._pvt->msg, serial);
 }
 
-Message Connection::send_blocking (Message &msg, int timeout)
-{
+Message Connection::send_blocking (Message &msg, int timeout) {
     DBusMessage *reply;
     InternalError e;
 
@@ -366,8 +333,7 @@ Message Connection::send_blocking (Message &msg, int timeout)
     return Message (new Message::Private (reply), false);
 }
 
-PendingCall Connection::send_async (Message &msg, int timeout)
-{
+PendingCall Connection::send_async (Message &msg, int timeout) {
     DBusPendingCall *pending;
 
     if (!dbus_connection_send_with_reply (_pvt->conn, msg._pvt->msg, &pending, timeout)) {
@@ -377,8 +343,7 @@ PendingCall Connection::send_async (Message &msg, int timeout)
     return PendingCall (new PendingCall::Private (pending));
 }
 
-void Connection::request_name (const char *name, int flags)
-{
+void Connection::request_name (const char *name, int flags) {
     InternalError e;
 
     debug_log ("%s: registering bus name %s", unique_name(), name);
@@ -396,8 +361,7 @@ void Connection::request_name (const char *name, int flags)
     }
 }
 
-unsigned long Connection::sender_unix_uid (const char *sender)
-{
+unsigned long Connection::sender_unix_uid (const char *sender) {
     InternalError e;
 
     unsigned long ul = dbus_bus_get_unix_user (_pvt->conn, sender, e);
@@ -407,8 +371,7 @@ unsigned long Connection::sender_unix_uid (const char *sender)
     return ul;
 }
 
-bool Connection::has_name (const char *name)
-{
+bool Connection::has_name (const char *name) {
     InternalError e;
 
     bool b = dbus_bus_name_has_owner (_pvt->conn, name, e);
@@ -418,13 +381,11 @@ bool Connection::has_name (const char *name)
     return b;
 }
 
-const std::vector<std::string>& Connection::names()
-{
+const std::vector<std::string>& Connection::names() {
     return _pvt->names;
 }
 
-bool Connection::start_service (const char *name, unsigned long flags)
-{
+bool Connection::start_service (const char *name, unsigned long flags) {
     InternalError e;
 
     bool b = dbus_bus_start_service_by_name (_pvt->conn, name, flags, NULL, e);

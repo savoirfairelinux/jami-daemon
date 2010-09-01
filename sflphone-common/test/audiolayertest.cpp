@@ -42,11 +42,10 @@ void AudioLayerTest::testAudioLayerConfig()
 {
     _debug ("-------------------- AudioLayerTest::testAudioLayerConfig --------------------\n");
 
-    int sampling_rate = Manager::instance().getConfigInt (AUDIO,
-                        AUDIO_SAMPLE_RATE);
-    int frame_size = Manager::instance().getConfigInt (AUDIO, ALSA_FRAME_SIZE);
+    // int sampling_rate = Manager::instance().audioPreference.getSmplrate();
+    // int frame_size = Manager::instance().audioPreference.getFramesize();
 
-    int layer = Manager::instance().getAudioDriver()->getLayerType();
+    // int layer = Manager::instance().getAudioDriver()->getLayerType();
 
     // if (layer != ALSA)
     // 	Manager::instance().switchAudioManager();
@@ -96,12 +95,12 @@ void AudioLayerTest::testPulseConnect()
     std::string alsaPlugin;
     int numCardIn, numCardOut, numCardRing, sampleRate, frameSize;
 
-    alsaPlugin = manager->getConfigString (AUDIO, ALSA_PLUGIN);
-    numCardIn = manager->getConfigInt (AUDIO, ALSA_CARD_ID_IN);
-    numCardOut = manager->getConfigInt (AUDIO, ALSA_CARD_ID_OUT);
-    numCardRing = manager->getConfigInt (AUDIO, ALSA_CARD_ID_RING);
-    sampleRate = manager->getConfigInt (AUDIO, AUDIO_SAMPLE_RATE);
-    frameSize = manager->getConfigInt (AUDIO, ALSA_FRAME_SIZE);
+    alsaPlugin = manager->audioPreference.getPlugin();
+    numCardIn = manager->audioPreference.getCardin();
+    numCardOut = manager->audioPreference.getCardout();
+    numCardRing = manager->audioPreference.getCardring();
+    sampleRate = manager->audioPreference.getSmplrate();
+    frameSize = manager->audioPreference.getFramesize();
 
     CPPUNIT_ASSERT (_pulselayer->getPlaybackStream() == NULL);
     CPPUNIT_ASSERT (_pulselayer->getRecordStream() == NULL);

@@ -43,6 +43,7 @@
 #include <libebook/e-book.h>
 #include <sflphone_const.h>
 
+
 #define EMPTY_ENTRY     "empty"
 
 G_BEGIN_DECLS
@@ -69,9 +70,10 @@ typedef struct _Hit {
  */
 typedef struct {
     gchar *uid;
+    gchar *uri;
     gchar *name;
     gboolean active;
-    EBook *ebook;
+    gboolean isdefault;
 } book_data_t;
 
 GSList *books_data;
@@ -99,14 +101,19 @@ typedef void
  * Connection to evolution data server
  */
 void
-init (OpenAsyncHandler);
+init ();
 
 /**
- * Asynchronous search function
+ * Fill list of addressbooks
  */
 void
-search_async (const char *query, int max_results, SearchAsyncHandler handler,
-              gpointer user_data);
+fill_books_data (void);
+
+/**
+ * Asynchronous query to EDS using get contact method.
+ */
+void
+search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler handler, gpointer user_data);
 
 /**
  * Retrieve the specified information from the contact
@@ -138,6 +145,25 @@ books_active();
  */
 GSList *
 addressbook_get_books_data();
+
+/**
+ * Set the current address book
+ */
+void
+set_current_addressbook (const gchar *name);
+
+/**
+ * Return current addressbook name
+ */
+const gchar *
+get_current_addressbook (void);
+
+void
+set_current_addressbook_test (EBookQueryTest test);
+
+EBookQueryTest
+get_current_addressbook_test (void);
+
 
 G_END_DECLS
 

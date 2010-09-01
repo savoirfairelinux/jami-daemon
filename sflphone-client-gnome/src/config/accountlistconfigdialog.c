@@ -36,6 +36,7 @@
 #include <actions.h>
 #include <utils.h>
 #include <string.h>
+#include <libgnome/gnome-help.h>
 
 #define CONTEXT_ID_REGISTRATION 0
 
@@ -60,6 +61,38 @@ enum {
     COLUMN_ACCOUNT_DATA,
     COLUMN_ACCOUNT_COUNT
 };
+
+/**
+ * Delete an account
+ */
+static void delete_account_cb (void)
+{
+
+    if (selectedAccount != NULL) {
+        dbus_remove_account (selectedAccount->accountID);
+    }
+}
+
+
+/**
+ * Edit an account
+ */
+static void edit_account_cb (void)
+{
+
+    if (selectedAccount != NULL) {
+        show_account_window (selectedAccount);
+    }
+}
+
+/**
+ * Add an account
+ */
+static void add_account_cb (void)
+{
+
+    show_account_window (NULL);
+}
 
 /**
  * Fills the treelist with accounts
@@ -303,12 +336,11 @@ account_move_down_cb (GtkButton *button UNUSED, gpointer data)
 }
 
 static void
-help_contents_cb (GtkWidget * widget,
+help_contents_cb (GtkWidget * widget UNUSED,
                   gpointer data UNUSED)
 {
     GError *error = NULL;
 
-    //gboolean success = gtk_show_uri (NULL, "ghelp: sflphone.xml", GDK_CURRENT_TIME, &error);
     gnome_help_display ("sflphone.xml", "accounts", &error);
 
     if (error != NULL) {
@@ -319,14 +351,14 @@ help_contents_cb (GtkWidget * widget,
 }
 
 static void
-close_dialog_cb (GtkWidget * widget,
+close_dialog_cb (GtkWidget * widget UNUSED,
                  gpointer data UNUSED)
 {
     gtk_dialog_response (GTK_DIALOG (accountListDialog), GTK_RESPONSE_ACCEPT);
 
 }
 
-void highlight_ip_profile (GtkTreeViewColumn *col, GtkCellRenderer *rend, GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer data)
+void highlight_ip_profile (GtkTreeViewColumn *col UNUSED, GtkCellRenderer *rend, GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer data UNUSED)
 {
 
     GValue val;
@@ -354,12 +386,11 @@ void highlight_ip_profile (GtkTreeViewColumn *col, GtkCellRenderer *rend, GtkTre
     }
 }
 
-void highlight_registration (GtkTreeViewColumn *col, GtkCellRenderer *rend, GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer data)
+void highlight_registration (GtkTreeViewColumn *col UNUSED, GtkCellRenderer *rend, GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer data UNUSED)
 {
 
     GValue val;
     account_t *current;
-    GdkColor green = {0, 255, 0, 0};
 
     memset (&val, 0, sizeof (val));
     gtk_tree_model_get_value (tree_model, iter, COLUMN_ACCOUNT_DATA, &val);
@@ -381,7 +412,7 @@ void highlight_registration (GtkTreeViewColumn *col, GtkCellRenderer *rend, GtkT
 /**
  * Account settings tab
  */
-GtkWidget* create_account_list (GtkDialog * dialog)
+GtkWidget* create_account_list (GtkDialog * dialog UNUSED)
 {
 
     GtkWidget *table, *scrolledWindow, *buttonBox;
@@ -575,35 +606,3 @@ show_account_list_config_dialog (void)
     update_actions ();
 }
 
-
-/**
- * Delete an account
- */
-static void delete_account_cb (void)
-{
-
-    if (selectedAccount != NULL) {
-        dbus_remove_account (selectedAccount->accountID);
-    }
-}
-
-
-/**
- * Edit an account
- */
-static void edit_account_cb (void)
-{
-
-    if (selectedAccount != NULL) {
-        show_account_window (selectedAccount);
-    }
-}
-
-/**
- * Add an account
- */
-static void add_account_cb (void)
-{
-
-    show_account_window (NULL);
-}

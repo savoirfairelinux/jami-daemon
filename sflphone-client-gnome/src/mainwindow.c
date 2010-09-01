@@ -42,6 +42,7 @@
 #include <assistant.h>
 #include <widget/gtkscrollbook.h>
 #include <widget/minidialog.h>
+#include "uimanager.h"
 
 #include <gtk/gtk.h>
 #include <eel-gconf-extensions.h>
@@ -59,10 +60,14 @@ GtkWidget * statusBar = NULL;
 GtkWidget * filterEntry = NULL;
 PidginScrollBook *embedded_error_notebook;
 
+gchar *status_current_message = NULL;
+// pthread_mutex_t statusbar_message_mutex;
+GMutex *gmutex;
+
 /**
  * Handle main window resizing
  */
-static gboolean window_configure_cb (GtkWidget *win, GdkEventConfigure *event)
+static gboolean window_configure_cb (GtkWidget *win UNUSED, GdkEventConfigure *event)
 {
 
     int pos_x, pos_y;
@@ -92,6 +97,8 @@ on_delete (GtkWidget * widget UNUSED, gpointer data UNUSED)
         sflphone_quit ();
     }
 
+    // pthread_mutex_destroy (&statusbar_message_mutex);
+    g_mutex_free (gmutex);
     return TRUE;
 }
 
@@ -136,7 +143,9 @@ on_key_released (GtkWidget *widget, GdkEventKey *event, gpointer user_data UNUSE
                 event->keyval == 34 || // "
                 event->keyval == 65289 || // tab
                 event->keyval == 65361 || // left arrow
+                event->keyval == 65362 || // up arrow
                 event->keyval == 65363 || // right arrow
+                event->keyval == 65364 || // down arrow
                 event->keyval >= 65470 || // F-keys
                 event->keyval == 32 // space
            )
@@ -165,7 +174,6 @@ void
 create_main_window ()
 {
     GtkWidget *widget;
-    gchar *path;
     GError *error = NULL;
     gboolean ret;
     const char *window_title = "SFLphone VoIP Client";
@@ -288,6 +296,9 @@ create_main_window ()
     /* don't show waiting layer */
     gtk_widget_hide (waitingLayer);
 
+    // pthread_mutex_init (&statusbar_message_mutex, NULL);
+    gmutex = g_mutex_new();
+
     // Configuration wizard
     if (account_list_get_size () == 1) {
 #if GTK_CHECK_VERSION(2,10,0)
@@ -394,15 +405,65 @@ main_window_volume_controls (gboolean state)
 }
 
 void
-statusbar_push_message (const gchar * message, guint id)
+statusbar_push_message (const gchar *left_hand_message, const gchar *right_hand_message, guint id)
 {
-    gtk_statusbar_push (GTK_STATUSBAR (statusBar), id, message);
+    // The actual message to be push in the statusbar
+    gchar *message_to_display;
+
+    g_mutex_lock (gmutex);
+    // pthread_mutex_lock (&statusbar_message_mutex);
+
+    g_free (status_current_message);
+    // store the left hand message so that it can be reused in case of clock update
+    status_current_message = g_strdup (left_hand_message);
+
+    // Format message according to right hand member
+    if (right_hand_message)
+        message_to_display = g_strdup_printf ("%s           %s",
+                                              left_hand_message, right_hand_message);
+    else
+        message_to_display = g_strdup (left_hand_message);
+
+    // Push into the statusbar
+    gtk_statusbar_push (GTK_STATUSBAR (statusBar), id, message_to_display);
+
+    g_free (message_to_display);
+
+    // pthread_mutex_unlock (&statusbar_message_mutex);
+    g_mutex_unlock (gmutex);
 }
 
 void
 statusbar_pop_message (guint id)
 {
     gtk_statusbar_pop (GTK_STATUSBAR (statusBar), id);
+}
+
+void
+statusbar_update_clock (gchar *msg)
+{
+    gchar *message = NULL;
+
+    if (!msg) {
+        statusbar_pop_message (__MSG_ACCOUNT_DEFAULT);
+        statusbar_push_message (message, NULL, __MSG_ACCOUNT_DEFAULT);
+    }
+
+
+    // pthread_mutex_lock (&statusbar_message_mutex);
+    g_mutex_lock (gmutex);
+    message = g_strdup (status_current_message);
+    // pthread_mutex_unlock (&statusbar_message_mutex);
+    g_mutex_unlock (gmutex);
+
+    if (message) {
+        statusbar_pop_message (__MSG_ACCOUNT_DEFAULT);
+        statusbar_push_message (message, msg, __MSG_ACCOUNT_DEFAULT);
+    }
+
+    g_free (message);
+    message = NULL;
+
 }
 
 static void

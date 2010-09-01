@@ -24,6 +24,7 @@ BuildRoot:      %{_tmppath}/%{name}
 Source0:        sflphone-client-gnome-%{version}.tar.gz
 
 %if %{defined suse_version}
+BuildRequires:  scrollkeeper
 BuildRequires:	update-desktop-files
 BuildRequires:	liblog4c-devel
 BuildRequires:	dbus-1-glib-devel
@@ -32,10 +33,12 @@ BuildRequires:	libgnomeui-devel
 %endif
 
 %if %{defined fedora_version}
+BuildRequires:  rarian-compat
 BuildRequires:	log4c-devel
 BuildRequires:	dbus-glib-devel
 BuildRequires:	gnome-doc-utils
 BuildRequires:	libgnomeui-devel
+BuildRequires:  gettext
 # fix libproxy-pac expansion error
 BuildRequires:	libproxy-webkit
 # fix PolicyKit-authentication-agent expansion error
@@ -97,6 +100,7 @@ Authors:
 
 
 %build
+export SUSE_ASNEEDED=0 # fix opensuse linking issue (Since 11.2 uses default --as-needed for linking, the order of libraries is important)
 ./autogen.sh
 ./configure --prefix=%{_prefix}
 make -j

@@ -32,8 +32,7 @@ static bool systembus;
 static char *path;
 static char *service;
 
-void niam (int sig)
-{
+void niam (int sig) {
     DBus::Connection conn = systembus ? DBus::Connection::SystemBus() : DBus::Connection::SessionBus();
 
     IntrospectedObject io (conn, path, service);
@@ -43,8 +42,7 @@ void niam (int sig)
     dispatcher.leave();
 }
 
-int main (int argc, char ** argv)
-{
+int main (int argc, char ** argv) {
     signal (SIGTERM, niam);
     signal (SIGINT, niam);
     signal (SIGALRM, niam);

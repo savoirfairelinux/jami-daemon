@@ -26,7 +26,7 @@
  *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
  *  grants you additional permission to convey the resulting work.
  *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
+*  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
 
@@ -144,13 +144,6 @@ int dbus_get_number_of_credential (gchar * accountID);
  * @param a The account id
  */
 void dbus_delete_all_credential (account_t *a);
-
-/**
- * ConfigurationManager - Set the number of credential that
- * is being used.
- * @param a The account id
- */
-void dbus_set_number_of_credential (account_t *a, int number);
 
 /**
  * ConfigurationManager - Set the additional credential information
@@ -370,49 +363,25 @@ int dbus_is_iax2_enabled (void);
  * @return int	1 if enabled
  *	        0 otherwise
  */
-int dbus_is_ringtone_enabled (void);
+int dbus_is_ringtone_enabled (const gchar *accountID);
 
 /**
  * ConfigurationManager - Set the ringtone option
  * Inverse current value
  */
-void dbus_ringtone_enabled (void);
+void dbus_ringtone_enabled (const gchar *accountID);
 
 /**
  * ConfigurationManager - Get the ringtone
  * @return gchar* The file name selected as a ringtone
  */
-gchar* dbus_get_ringtone_choice (void);
+gchar* dbus_get_ringtone_choice (const gchar *accountID);
 
 /**
  * ConfigurationManager - Set a ringtone
  * @param tone The file name of the ringtone
  */
-void dbus_set_ringtone_choice (const gchar* tone);
-
-/**
- * ConfigurationManager - Set the dialpad visible or not
- */
-void dbus_set_dialpad (gboolean display);
-
-/**
- * ConfigurationManager - Tells if the user wants to display the dialpad or not
- * @return int 1 if dialpad has to be displayed
- *	       0 otherwise
- */
-int dbus_get_dialpad (void);
-
-/**
- * ConfigurationManager - Set the searchbar visible or not
- */
-void dbus_set_searchbar();
-
-/**
- * ConfigurationManager - Tells if the user wants to display the search bar or not
- * @return int 1 if the search bar has to be displayed
- *	       0 otherwise
- */
-int dbus_get_searchbar (void);
+void dbus_set_ringtone_choice (const gchar *accountID, const gchar* tone);
 
 /**
  * ConfigurationManager - Gives the maximum number of days the user wants to have in the history
@@ -572,17 +541,31 @@ gchar** dbus_get_supported_tls_method();
 
 gchar** dbus_get_participant_list (const char * confID);
 
-guint dbus_get_window_width (void);
-guint dbus_get_window_height (void);
-void dbus_set_window_height (const guint height);
-void dbus_set_window_width (const guint width);
-guint dbus_get_window_position_x (void);
-guint dbus_get_window_position_y (void);
-void dbus_set_window_position_x (const guint posx);
-void dbus_set_window_position_y (const guint posy);
-
 GHashTable* dbus_get_shortcuts (void);
 void dbus_set_shortcuts (GHashTable * shortcuts);
+
+void dbus_set_audio_ringtone_device (const int index);
+
+void
+dbus_hang_up_conference (const conference_obj_t * c);
+
+void
+dbus_hold_conference (const conference_obj_t * c);
+
+void
+dbus_unhold_conference (const conference_obj_t * c);
+
+void
+dbus_detach_participant (const gchar* callID);
+
+void
+dbus_join_participant (const gchar* sel_callID, const gchar* drag_callID);
+
+void
+dbus_join_conference (const gchar* sel_confID, const gchar* drag_confID);
+
+void
+dbus_add_main_participant (const gchar* confID);
 
 /* Instant messaging */
 void dbus_send_text_message (const gchar* callID, const gchar *message);
