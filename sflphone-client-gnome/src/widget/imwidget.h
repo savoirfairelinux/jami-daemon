@@ -60,6 +60,7 @@ struct _IMWidget {
     GtkWidget *info_bar;
     GtkWidget *info_state;
     gchar *call_id;
+    gchar *first_message;
     WebKitWebFrame *web_frame;      // Our web frame
     JSGlobalContextRef js_context;  // The frame's global JS context
     JSObjectRef js_global;          // The frame's global context JS object
@@ -73,11 +74,22 @@ struct _IMWidgetClass {
 /*! @function
 @abstract	Display the instant messaging interface for this call. If it has not been created yet, create it and attached it to the imWindow.
 @param		A reference on the call attached to the current IM widget
+@param          The first message to be displayed
  */
-void im_widget_display (callable_obj_t**);
+gboolean im_widget_display (callable_obj_t**, gchar*);
 
 GType im_widget_get_type (void) G_GNUC_CONST;
-GtkWidget *im_widget_new (void);
+
+/*! @function
+@abstract       Create a new widget with first_message
+*/
+GtkWidget *im_widget_new ();
+
+/*! @function
+@abstract 	Create a new widget with first_message
+*/
+GtkWidget *im_widget_new_with_first_message (gchar *message);
+
 
 /*! @function
 @abstract	Add a new message in the webkit view

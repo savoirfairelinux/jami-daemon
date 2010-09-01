@@ -47,6 +47,8 @@
 #include <actions.h>
 #include <string.h>
 
+#include <widget/imwidget.h>
+
 #define DEFAULT_DBUS_TIMEOUT 30000
 
 DBusGConnection * connection;
@@ -129,7 +131,7 @@ incoming_message_cb (DBusGProxy *proxy UNUSED, const gchar* callID UNUSED, const
     if (c) {
 
         /* Make the instant messaging main window pops */
-        im_widget_display (&c);
+        im_widget_display (&c, msg);
 
         /* Display the message */
         im_widget_add_message (c->_im_widget, get_peer_information (c), msg, 0);

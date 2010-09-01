@@ -35,9 +35,38 @@
 
 #define WEBKIT_DIR "file://" DATA_DIR "/webkit/"
 
+static void
+on_frame_loading_done (GObject *gobject, GParamSpec *pspec, gpointer user_data)
+{
+
+    switch (webkit_web_frame_get_load_status (WEBKIT_WEB_FRAME (user_data))) {
+        case WEBKIT_LOAD_PROVISIONAL:
+            DEBUG ("--------------------------------- loading provisional");
+            break;
+        case WEBKIT_LOAD_COMMITTED:
+            DEBUG ("--------------------------------- loading commited");
+            break;
+        case WEBKIT_LOAD_FINISHED:
+            // im_widget_add_message(im, const gchar *from, const gchar *message, gint level
+            DEBUG ("--------------------------------- loading finished");
+            break;
+        case WEBKIT_LOAD_FIRST_VISUALLY_NON_EMPTY_LAYOUT:
+            DEBUG ("--------------------------------- loading nonempty");
+            break;
+        case WEBKIT_LOAD_FAILED:
+            DEBUG ("--------------------------------- loading failed");
+            break;
+        default:
+            DEBUG ("--------------------------------- loading default");
+    }
+
+}
+
 void
 im_widget_add_message (IMWidget *im, const gchar *from, const gchar *message, gint level)
 {
+    gboolean loadingDone = FALSE;
+
     if (im) {
 
         /* Compute the date the message was sent */
@@ -175,7 +204,6 @@ im_widget_class_init (IMWidgetClass *klass)
 static void
 im_widget_init (IMWidget *im)
 {
-
     /* A text view to enable users to enter text */
     im->textarea = gtk_text_view_new ();
 
@@ -192,7 +220,7 @@ im_widget_init (IMWidget *im)
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (webscrollwin), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     gtk_widget_set_size_request (GTK_WIDGET (textscrollwin), -1, 20);
     gtk_widget_set_size_request (GTK_WIDGET (im->textarea), -1, 20);
-    gtk_text_view_set_wrap_mode (GTK_WIDGET (im->textarea), GTK_WRAP_CHAR);
+    gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (im->textarea), GTK_WRAP_CHAR);
     // gtk_container_set_resize_mode(GTK_CONTAINER(im->textarea), GTK_RESIZE_PARENT);
 
     gtk_container_add (GTK_CONTAINER (textscrollwin), im->textarea);
@@ -208,6 +236,8 @@ im_widget_init (IMWidget *im)
     im->js_context = webkit_web_frame_get_global_context (im->web_frame);
     im->js_global = JSContextGetGlobalObject (im->js_context);
     webkit_web_view_load_uri (WEBKIT_WEB_VIEW (im->web_view), "file://" DATA_DIR "/webkit/im/im.html");
+
+    g_signal_connect (G_OBJECT (im->web_frame), "notify", G_CALLBACK (on_frame_loading_done), im->web_frame);
 }
 
 GtkWidget *
@@ -215,6 +245,14 @@ im_widget_new()
 {
     return GTK_WIDGET (g_object_new (IM_WIDGET_TYPE, NULL));
 }
+
+GtkWidget *
+im_widget_new_with_first_messaget (gchar *message)
+{
+    return GTK_WIDGET (g_object_new (IM_WIDGET_TYPE, NULL));
+    // return GTK_WIDGET (g_object_new (IM_WIDGET_TYPE, "first_message", message, NULL));
+}
+
 
 GType
 im_widget_get_type (void)
@@ -245,8 +283,8 @@ im_widget_get_type (void)
     return im_widget_type;
 }
 
-void
-im_widget_display (callable_obj_t **call)
+gboolean
+im_widget_display (callable_obj_t **call, gchar *message)
 {
 
     /* Work with a copy of the object */
@@ -258,8 +296,12 @@ im_widget_display (callable_obj_t **call)
 
         if (!im) {
             DEBUG ("creating the im widget for this call\n");
+
             /* Create the im object */
-            im = IM_WIDGET (im_widget_new ());
+            if (message)
+                im = IM_WIDGET (im_widget_new ());
+            else
+                im = IM_WIDGET (im_widget_new ());
 
             /* Keep a reference on this object in the call struct */
             tmp->_im_widget = im;
@@ -273,11 +315,17 @@ im_widget_display (callable_obj_t **call)
 
             /* Add it to the main instant messaging window */
             im_window_add (im);
+
+            return FALSE;
         } else {
             DEBUG ("im widget exists for this call\n");
             im_window_show ();
+
+            return TRUE;
         }
     }
+
+    return FALSE;
 }
 
 void
