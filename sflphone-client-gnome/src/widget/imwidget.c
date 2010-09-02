@@ -48,14 +48,13 @@ on_frame_loading_done (GObject *gobject, GParamSpec *pspec, gpointer user_data)
         case WEBKIT_LOAD_FINISHED:
             c = calllist_get (current_calls, im->call_id);
             im_widget_add_message (im, get_peer_information (c), im->first_message, 0);
-	    g_free(im->first_message);
-	    im->first_message = NULL;
+            g_free (im->first_message);
+            im->first_message = NULL;
             DEBUG ("JavaScrip loading frame finished");
             break;
         case WEBKIT_LOAD_FIRST_VISUALLY_NON_EMPTY_LAYOUT:
         case WEBKIT_LOAD_FAILED:
             break;
-        default:
     }
 
 }
