@@ -1717,6 +1717,22 @@ void ManagerImpl::incomingMessage (const CallID& callID,
     }
 }
 
+
+//THREAD=VoIP
+void ManagerImpl::sendTextMessage (const CallID& callID, const std::string& message)
+{
+
+    SIPVoIPLink * link = NULL;
+    link = dynamic_cast<SIPVoIPLink *> (getAccountLink (AccountNULL));
+
+    if (link == NULL) {
+        _debug ("Manager: Failed to get sip link");
+        throw CallManagerException();
+    }
+
+    link->sendTextMessage (callID, message);
+}
+
 //THREAD=VoIP CALL=Outgoing
 void ManagerImpl::peerAnsweredCall (const CallID& id)
 {

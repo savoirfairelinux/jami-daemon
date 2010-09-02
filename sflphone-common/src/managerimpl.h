@@ -446,6 +446,14 @@ class ManagerImpl
          */
         void incomingMessage (const CallID& callID, const std::string& from, const std::string& message);
 
+
+        /**
+           * Send a new text message to the call, if participate to a conference, send to all participant.
+         * @param callID	The call to send the message
+         * @param message	The content of the message
+             */
+        void sendTextMessage (const CallID& callID, const std::string& message);
+
         /**
          * Notify the client he has voice mails
          * @param accountId	  The account identifier
