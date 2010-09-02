@@ -1712,6 +1712,34 @@ void ManagerImpl::incomingMessage (const CallID& callID,
                                    const std::string& from,
                                    const std::string& message)
 {
+    SIPVoIPLink *link = NULL;
+
+    if (participToConference (callID)) {
+        _debug ("Manager: Particip to a conference, send message to everyone");
+
+        Conference *conf = getConferenceFromCallID (callID);
+
+        ParticipantSet participants = conf->getParticipantList();
+        ParticipantSet::iterator iter_participant = participants.begin();
+
+        while (iter_participant != participants.end()) {
+
+            AccountID accountId = getAccountFromCall (*iter_participant);
+
+            _debug ("Manager: Send message to %s, (%s)", (*iter_participant).c_str(), accountId.c_str());
+
+            if (*iter_participant != callID) {
+
+                link = SIPVoIPLink::instance (""); // dynamic_cast<SIPVoIPLink *> (getAccountLink (*iter_participant));
+
+                if (link)
+                    link->sendTextMessage (*iter_participant, message);
+            }
+
+            iter_participant++;
+        }
+    }
+
     if (_dbus) {
         _dbus->getCallManager()->incomingMessage (callID, from, message);
     }
@@ -1719,23 +1747,48 @@ void ManagerImpl::incomingMessage (const CallID& callID,
 
 
 //THREAD=VoIP
-void ManagerImpl::sendTextMessage (const CallID& callID, const std::string& message)
+bool ManagerImpl::sendTextMessage (const CallID& callID, const std::string& message)
 {
+    SIPVoIPLink * link = NULL;
 
-    if (participToConference (callID))
+    if (participToConference (callID)) {
         _debug ("Manager: Particip to a conference, send message on everyone");
 
-    AccountID accountId = getAccountFromCall (callID);
+        Conference *conf = getConferenceFromCallID (callID);
 
-    SIPVoIPLink * link = NULL;
-    link = dynamic_cast<SIPVoIPLink *> (getAccountLink (accountId));
+        ParticipantSet participants = conf->getParticipantList();
+        ParticipantSet::iterator iter_participant = participants.begin();
 
-    if (link == NULL) {
-        _debug ("Manager: Failed to get sip link");
-        throw CallManagerException();
+        while (iter_participant != participants.end()) {
+
+            AccountID accountId = getAccountFromCall (*iter_participant);
+
+            _debug ("Manager: Send message to %s (%s)", (*iter_participant).c_str(), accountId.c_str());
+            link = SIPVoIPLink::instance (""); // dynamic_cast<SIPVoIPLink *> (getAccountLink (*iter_participant));
+
+
+            if (link)
+                link->sendTextMessage (*iter_participant, message);
+
+            iter_participant++;
+        }
+
+    } else {
+
+        AccountID accountId = getAccountFromCall (callID);
+
+        link = dynamic_cast<SIPVoIPLink *> (getAccountLink (accountId));
+
+        if (link == NULL) {
+            _debug ("Manager: Failed to get sip link");
+            return false;
+        }
+
+        _debug ("Manager: Send message to %s (%s)", callID.c_str(), accountId.c_str());
+        link->sendTextMessage (callID, message);
     }
 
-    link->sendTextMessage (callID, message);
+    return true;
 }
 
 //THREAD=VoIP CALL=Outgoing

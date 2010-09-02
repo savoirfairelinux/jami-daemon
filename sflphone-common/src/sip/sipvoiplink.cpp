@@ -1064,6 +1064,7 @@ SIPVoIPLink::onhold (const CallID& id)
 bool
 SIPVoIPLink::sendTextMessage (const std::string& callID, const std::string& message)
 {
+    _debug ("SipVoipLink: Send text message to %s", callID.c_str());
 
     SIPCall *call = getSIPCall (callID);
     pj_status_t status = !PJ_SUCCESS;

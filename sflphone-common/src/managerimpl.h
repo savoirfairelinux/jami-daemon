@@ -452,7 +452,7 @@ class ManagerImpl
          * @param callID	The call to send the message
          * @param message	The content of the message
              */
-        void sendTextMessage (const CallID& callID, const std::string& message);
+        bool sendTextMessage (const CallID& callID, const std::string& message);
 
         /**
          * Notify the client he has voice mails
