@@ -1722,8 +1722,13 @@ void ManagerImpl::incomingMessage (const CallID& callID,
 void ManagerImpl::sendTextMessage (const CallID& callID, const std::string& message)
 {
 
+    if (participToConference (callID))
+        _debug ("Manager: Particip to a conference, send message on everyone");
+
+    AccountID accountId = getAccountFromCall (callID);
+
     SIPVoIPLink * link = NULL;
-    link = dynamic_cast<SIPVoIPLink *> (getAccountLink (AccountNULL));
+    link = dynamic_cast<SIPVoIPLink *> (getAccountLink (accountId));
 
     if (link == NULL) {
         _debug ("Manager: Failed to get sip link");
