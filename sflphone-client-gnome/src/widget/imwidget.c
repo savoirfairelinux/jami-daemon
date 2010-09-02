@@ -41,22 +41,57 @@ on_frame_loading_done (GObject *gobject, GParamSpec *pspec, gpointer user_data)
     IMWidget *im = IM_WIDGET (user_data);
     callable_obj_t *c;
 
-    switch (webkit_web_frame_get_load_status (WEBKIT_WEB_FRAME (im->web_frame))) {
-        case WEBKIT_LOAD_PROVISIONAL:
-        case WEBKIT_LOAD_COMMITTED:
-            break;
-        case WEBKIT_LOAD_FINISHED:
-            c = calllist_get (current_calls, im->call_id);
-            im_widget_add_message (im, get_peer_information (c), im->first_message, 0);
-            g_free (im->first_message);
-            im->first_message = NULL;
-            DEBUG ("JavaScrip loading frame finished");
-            break;
-        case WEBKIT_LOAD_FIRST_VISUALLY_NON_EMPTY_LAYOUT:
-        case WEBKIT_LOAD_FAILED:
-            break;
+    if (im->first_message) {
+        switch (webkit_web_frame_get_load_status (WEBKIT_WEB_FRAME (im->web_frame))) {
+            case WEBKIT_LOAD_PROVISIONAL:
+            case WEBKIT_LOAD_COMMITTED:
+                break;
+            case WEBKIT_LOAD_FINISHED:
+                c = calllist_get (current_calls, im->call_id);
+                im_widget_add_message (im, get_peer_information (c), im->first_message, 0);
+                g_free (im->first_message);
+                im->first_message = NULL;
+                DEBUG ("JavaScrip loading frame finished");
+                break;
+            case WEBKIT_LOAD_FIRST_VISUALLY_NON_EMPTY_LAYOUT:
+            case WEBKIT_LOAD_FAILED:
+                break;
+        }
     }
 
+}
+
+gchar *
+escape_single_quotes (gchar *message)
+{
+    gchar **ptr_token;
+    gchar *string;
+
+    DEBUG ("message: %s", message);
+
+    if (ptr_token = g_strsplit (message, "'", NULL)) {
+        string = *ptr_token;
+        ptr_token++;
+        DEBUG ("SPLITTING");
+        // string = g_strjoinv ("\\'", ptr_token);
+
+        while (*ptr_token) {
+            DEBUG ("tokens: %s", *ptr_token);
+
+            // if (g_strcmp0 (string[ (strlen (string)-1) ], "\\") == 0) {
+            //     DEBUG ("already escaped last character %s", string[ (strlen (string)-1) ]);
+            //     string = g_strdup_printf ("%s'%s", string, *ptr_token);
+            // } else
+            string = g_strdup_printf ("%s\\'%s", string, *ptr_token);
+
+            ptr_token++;
+        }
+    }
+
+
+    DEBUG ("string: %s", string);
+
+    return string;
 }
 
 void
@@ -73,7 +108,7 @@ im_widget_add_message (IMWidget *im, const gchar *from, const gchar *message, gi
         gchar *css_class = (level == MESSAGE_LEVEL_ERROR) ? "error" : "";
 
         /* Prepare and execute the Javascript code */
-        gchar *script = g_strdup_printf ("add_message('%s', '%s', '%s', '%s');", message, from, css_class, msgtime);
+        gchar *script = g_strdup_printf ("add_message('%s', '%s', '%s', '%s');", escape_single_quotes (message), from, css_class, msgtime);
         webkit_web_view_execute_script (WEBKIT_WEB_VIEW (im->web_view), script);
 
         /* Cleanup */
