@@ -71,7 +71,14 @@ static void
 on_switch_page (GtkNotebook *notebook, GtkNotebookPage *page, guint page_num, gpointer userdata)
 {
     guint index = gtk_notebook_get_current_page (GTK_NOTEBOOK (notebook));
-    g_print ("switch to %i-  current = %i\n", page_num, index);
+
+    GtkWidget *tab = gtk_notebook_get_nth_page (GTK_NOTEBOOK (notebook), page_num);
+
+    // show the current widget
+    gtk_widget_grab_focus (tab);
+    gtk_widget_show_now (tab);
+
+    g_print ("switch to %i -  current = %i\n", page_num, index);
 }
 
 static void
@@ -186,14 +193,15 @@ im_window_add_tab (GtkWidget *widget)
     g_signal_connect (tab_CloseButton, "clicked", G_CALLBACK (close_tab_cb), widget);
 
     /* Show it */
+    gtk_widget_show_all (im_notebook);
     gtk_widget_show_all (tab_Container);
 
     /* Add the page to the notebook */
-    gtk_notebook_append_page (GTK_NOTEBOOK (im_notebook), widget, tab_Container);
+    guint tabIndex = gtk_notebook_append_page (GTK_NOTEBOOK (im_notebook), widget, tab_Container);
 
     /* TODO Switch to the newly opened tab. Still not working */
-    guint tabIndex = gtk_notebook_page_num (GTK_NOTEBOOK (im_notebook), widget);
-    gtk_notebook_set_current_page (GTK_NOTEBOOK (im_notebook), tabIndex);
+    DEBUG ("SWITCH TO NEW TAB: %i", tabIndex);
+    gtk_notebook_set_current_page (GTK_NOTEBOOK (im_notebook), -1);
 
     /* Decide whether or not displaying the tabs of the notebook */
     im_window_hide_show_tabs ();
@@ -207,6 +215,7 @@ im_window_hide_show_tabs ()
         gtk_notebook_set_show_tabs (GTK_NOTEBOOK (im_notebook), FALSE);
     } else
         gtk_notebook_set_show_tabs (GTK_NOTEBOOK (im_notebook), TRUE);
+
 }
 
 void
