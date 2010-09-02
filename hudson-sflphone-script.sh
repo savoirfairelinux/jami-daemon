@@ -17,13 +17,14 @@ make && make dep
 popd
 ./configure --prefix=/usr
 make
+make doc
 popd
 
 # Run the unit tests for the daemon
 pushd sflphone-common/test
 make check
 # if at least one test failed, exit
-./test || exit 1
+./test --xml || exit 1
 popd
 
 # Compile the client
