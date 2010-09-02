@@ -38,26 +38,24 @@
 static void
 on_frame_loading_done (GObject *gobject, GParamSpec *pspec, gpointer user_data)
 {
+    IMWidget *im = IM_WIDGET (user_data);
+    callable_obj_t *c;
 
-    switch (webkit_web_frame_get_load_status (WEBKIT_WEB_FRAME (user_data))) {
+    switch (webkit_web_frame_get_load_status (WEBKIT_WEB_FRAME (im->web_frame))) {
         case WEBKIT_LOAD_PROVISIONAL:
-            DEBUG ("--------------------------------- loading provisional");
-            break;
         case WEBKIT_LOAD_COMMITTED:
-            DEBUG ("--------------------------------- loading commited");
             break;
         case WEBKIT_LOAD_FINISHED:
-            // im_widget_add_message(im, const gchar *from, const gchar *message, gint level
-            DEBUG ("--------------------------------- loading finished");
+            c = calllist_get (current_calls, im->call_id);
+            im_widget_add_message (im, get_peer_information (c), im->first_message, 0);
+	    g_free(im->first_message);
+	    im->first_message = NULL;
+            DEBUG ("JavaScrip loading frame finished");
             break;
         case WEBKIT_LOAD_FIRST_VISUALLY_NON_EMPTY_LAYOUT:
-            DEBUG ("--------------------------------- loading nonempty");
-            break;
         case WEBKIT_LOAD_FAILED:
-            DEBUG ("--------------------------------- loading failed");
             break;
         default:
-            DEBUG ("--------------------------------- loading default");
     }
 
 }
@@ -237,7 +235,7 @@ im_widget_init (IMWidget *im)
     im->js_global = JSContextGetGlobalObject (im->js_context);
     webkit_web_view_load_uri (WEBKIT_WEB_VIEW (im->web_view), "file://" DATA_DIR "/webkit/im/im.html");
 
-    g_signal_connect (G_OBJECT (im->web_frame), "notify", G_CALLBACK (on_frame_loading_done), im->web_frame);
+    g_signal_connect (G_OBJECT (im->web_frame), "notify", G_CALLBACK (on_frame_loading_done), im);
 }
 
 GtkWidget *
@@ -247,7 +245,7 @@ im_widget_new()
 }
 
 GtkWidget *
-im_widget_new_with_first_messaget (gchar *message)
+im_widget_new_with_first_message (gchar *message)
 {
     return GTK_WIDGET (g_object_new (IM_WIDGET_TYPE, NULL));
     // return GTK_WIDGET (g_object_new (IM_WIDGET_TYPE, "first_message", message, NULL));
@@ -301,7 +299,7 @@ im_widget_display (callable_obj_t **call, gchar *message)
             if (message)
                 im = IM_WIDGET (im_widget_new ());
             else
-                im = IM_WIDGET (im_widget_new ());
+                im = IM_WIDGET (im_widget_new_with_first_message (message));
 
             /* Keep a reference on this object in the call struct */
             tmp->_im_widget = im;
@@ -315,6 +313,9 @@ im_widget_display (callable_obj_t **call, gchar *message)
 
             /* Add it to the main instant messaging window */
             im_window_add (im);
+
+            /* Update the first message to appears at widget creation*/
+            im->first_message = g_strdup (message);
 
             return FALSE;
         } else {
