@@ -34,6 +34,8 @@
 
 #include "instantmessagingtest.h"
 
+#include "expat.h"
+
 #define MAXIMUM_SIZE	10
 #define DELIMITER_CHAR	"\n\n"
 
@@ -137,6 +139,12 @@ void InstantMessagingTest::testSplitMessage ()
 
     /* Works for the last element, or for the only element */
     CPPUNIT_ASSERT (messages[size- 1] == very_long_message.substr (maxSize * (size-1)));
+}
+
+void InstantMessagingTest::testUriListParsing ()
+{
+    XML_Parser parser = XML_ParserCreate(NULL); 
+    XML_ParserFree(parser);
 }
 
 void InstantMessagingTest::tearDown()
