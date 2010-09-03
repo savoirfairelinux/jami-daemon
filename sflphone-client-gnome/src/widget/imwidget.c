@@ -64,32 +64,15 @@ on_frame_loading_done (GObject *gobject, GParamSpec *pspec, gpointer user_data)
 gchar *
 escape_single_quotes (gchar *message)
 {
-    gchar **ptr_token;
-    gchar *string;
+    gchar **ptr_token, second_ptr_token;
+    gchar *string, second_string;
 
     DEBUG ("message: %s", message);
 
     if (ptr_token = g_strsplit (message, "'", NULL)) {
-        string = *ptr_token;
-        ptr_token++;
         DEBUG ("SPLITTING");
-        // string = g_strjoinv ("\\'", ptr_token);
-
-        while (*ptr_token) {
-            DEBUG ("tokens: %s", *ptr_token);
-
-            // if (g_strcmp0 (string[ (strlen (string)-1) ], "\\") == 0) {
-            //     DEBUG ("already escaped last character %s", string[ (strlen (string)-1) ]);
-            //     string = g_strdup_printf ("%s'%s", string, *ptr_token);
-            // } else
-            string = g_strdup_printf ("%s\\'%s", string, *ptr_token);
-
-            ptr_token++;
-        }
+        string = g_strjoinv ("\\'", ptr_token);
     }
-
-
-    DEBUG ("string: %s", string);
 
     return string;
 }
@@ -107,12 +90,15 @@ im_widget_add_message (IMWidget *im, const gchar *from, const gchar *message, gi
         /* Check for the message level */
         gchar *css_class = (level == MESSAGE_LEVEL_ERROR) ? "error" : "";
 
+        // gchar *message_escaped = escape_single_quotes (message);
+
         /* Prepare and execute the Javascript code */
-        gchar *script = g_strdup_printf ("add_message('%s', '%s', '%s', '%s');", escape_single_quotes (message), from, css_class, msgtime);
+        gchar *script = g_strdup_printf ("add_message('%s', '%s', '%s', '%s');", message, from, css_class, msgtime);
         webkit_web_view_execute_script (WEBKIT_WEB_VIEW (im->web_view), script);
 
         /* Cleanup */
         g_free (script);
+        // g_free (message_escaped);
 
     }
 }

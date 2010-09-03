@@ -122,7 +122,7 @@ voice_mail_cb (DBusGProxy *proxy UNUSED, const gchar* accountID, const guint nb,
 static void
 incoming_message_cb (DBusGProxy *proxy UNUSED, const gchar* callID UNUSED, const gchar *from, const gchar* msg, void * foo  UNUSED)
 {
-    DEBUG ("Message %s!",msg);
+    DEBUG ("Message \"%s\" from %s!", msg, from);
 
     // Get the call information. Does this call exist?
     callable_obj_t * c = calllist_get (current_calls, callID);
@@ -133,7 +133,7 @@ incoming_message_cb (DBusGProxy *proxy UNUSED, const gchar* callID UNUSED, const
         /* Make the instant messaging main window pops, add messages only if the main window exist.
         Elsewhere the message is displayed asynchronously*/
         if (im_widget_display (&c, msg))
-            im_widget_add_message (c->_im_widget, get_peer_information (c), msg, 0);
+            im_widget_add_message (c->_im_widget, from, msg, 0);
 
     } else {
         ERROR ("Message received, but no recipient found");
