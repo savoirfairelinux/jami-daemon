@@ -29,6 +29,7 @@ namespace sfl
 {
 
 const std::string IM_XML_URI ("IM_XML_URI");
+const std::string BOUNDARY ("--boundary");
 
 class InstantMessaging
 {
@@ -143,6 +144,16 @@ class InstantMessaging
          * @return An UriList of UriEntry containing parsed XML information as a map.
          */
         UriList parseXmlUriList (std::string& urilist);
+
+        /**
+         * Format text message according to RFC 5365, append recipient-list to the message
+         *
+         * @param text to be displayed
+         * @param list containing the recipients
+         *
+         * @return formated text stored into a string to be included in sip MESSAGE
+         */
+        std::string appendUriList (std::string text, UriList& list);
 
     private:
 

@@ -15,13 +15,10 @@ static inline char* duplicateString (char dst[], const char src[], size_t len)
 static void XMLCALL startElementCallback (void *userData, const char *name, const char **atts)
 {
 
-    int *depthPtr = (int *) userData;
-
     char attribute[100];
     char value[100];
 
     const char **att;
-    const char **val;
 
     if (strcmp (name, "entry") == 0) {
 
@@ -137,8 +134,7 @@ pj_status_t InstantMessaging::send (pjsip_inv_session *session, CallID& id, cons
     pj_str_t message;
 
     msg_method.id = PJSIP_OTHER_METHOD;
-    msg_method.name = METHOD_NAME ;
-
+    msg_method.name = METHOD_NAME;
 
     // Get the dialog associated to the call
     dialog = session->dlg;
@@ -154,6 +150,24 @@ pj_status_t InstantMessaging::send (pjsip_inv_session *session, CallID& id, cons
 
     // Attach "text/plain" body
     tdata->msg->body = pjsip_msg_body_create (tdata->pool, &type, &subtype, &message);
+
+    // Create the Require header to handle recipient-list Content-Disposition type
+    pjsip_generic_string_hdr reqhdr;
+    pj_str_t reqhname = pj_str ("Require");
+    pj_str_t reqhvalue = pj_str ("recipient-list");
+
+    // Create the Content-Type header to handle multipart/mixed and boundary MIME types
+    pj_str_t ctype = pj_str ("Content-Type");
+    pj_str_t sctype = pj_str ("ctype"); // small version of the header name
+    // ctypehdr = pjsip_msg_find_hdr_by_names (tdata->msg, &ctype, &sctype, NULL);
+    // pjsip_generic_string_hdr ctypehdr;
+    // pj_str_t ctypehname = pj_str ("Content-Type");
+    // pj_str_t ctypehvalue = pj_str ("multipart/mixed;boundary=\"boundary\"");
+
+    // Add headers to the message
+    pjsip_generic_string_hdr_init2 (&reqhdr, &reqhname, &reqhvalue);
+    pj_list_push_back (& (tdata->msg->hdr), (pjsip_hdr*) (&reqhdr));
+    // pj_list_push_back (& (tdata->msg->hdr), (pjsip_hdr*) (&ctypehdr));
 
     // Send the request
     status = pjsip_dlg_send_request (dialog, tdata, -1, NULL);
@@ -182,7 +196,7 @@ pj_status_t InstantMessaging::send_message (pjsip_inv_session *session, CallID& 
         /* It exceeds the size limit of a SIP MESSAGE (1300 bytes), o plit it and send multiple messages */
         std::vector<std::string> multiple_messages = split_message (message);
         /* Send multiple messages */
-        int size = multiple_messages.size();
+        // int size = multiple_messages.size();
         int i = 0;
 
         // Maximum is above 1500 character
@@ -266,6 +280,24 @@ InstantMessaging::UriList InstantMessaging::parseXmlUriList (std::string& urilis
     }
 
     return list;
+}
+
+std::string InstantMessaging::appendUriList (std::string text, UriList& list)
+{
+
+    std::string formatedText = "--boundary\nContent-Type: text/plain\n\n";
+
+    formatedText.append (text);
+    formatedText.append ("\n--boundary\nContent-Type: application/resource-lists+xml\n");
+    formatedText.append ("Content-Disposition: recipient-list\n\n");
+
+    std::string recipientlist = generateXmlUriList (list);
+
+    formatedText.append (recipientlist);
+
+    formatedText.append ("--boundary--");
+
+    return formatedText;
 }
 
 }

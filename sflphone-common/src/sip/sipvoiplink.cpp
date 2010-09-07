@@ -1072,7 +1072,20 @@ SIPVoIPLink::sendTextMessage (const std::string& callID, const std::string& mess
 
     if (call) {
         /* Send IM message */
-        status = imModule->send_message (call->getInvSession (), (CallID&) callID, message);
+        sfl::InstantMessaging::UriList list;
+
+        sfl::InstantMessaging::UriEntry entry1;
+        entry1[sfl::IM_XML_URI] = "\"sip:alex@example.com\"";
+
+        sfl::InstantMessaging::UriEntry entry2;
+        entry2[sfl::IM_XML_URI] = "\"sip:manu@example.com\"";
+
+        list.push_front (&entry1);
+        list.push_front (&entry2);
+
+        std::string formatedMessage = imModule->appendUriList (message, list);
+
+        status = imModule->send_message (call->getInvSession (), (CallID&) callID, formatedMessage);
     } else {
         /* Notify the client of an error */
         /*Manager::instance ().incomingMessage (	"",
