@@ -15,37 +15,36 @@ static inline char* duplicateString (char dst[], const char src[], size_t len)
 static void XMLCALL startElementCallback (void *userData, const char *name, const char **atts)
 {
 
-    std::cout << "startElement " << name << std::endl;
-
     int *depthPtr = (int *) userData;
 
-    char attribute[50];
-    char value[50];
+    char attribute[100];
+    char value[100];
 
     const char **att;
     const char **val;
 
-    for (att = atts; *att; att += 2) {
+    if (strcmp (name, "entry") == 0) {
 
-        const char **val = att+1;
+        sfl::InstantMessaging::UriList *list = static_cast<sfl::InstantMessaging::UriList *> (userData);
+        sfl::InstantMessaging::UriEntry *entry = new sfl::InstantMessaging::UriEntry();
 
-        duplicateString (attribute, *att, strlen (*att));
-        std::cout << "att: " << attribute << std::endl;
+        for (att = atts; *att; att += 2) {
 
-        duplicateString (value, *val, strlen (*val));
-        std::cout << "val: " << value << std::endl;
+            const char **val = att+1;
+            duplicateString (attribute, *att, strlen (*att));
+            duplicateString (value, *val, strlen (*val));
+
+            entry->insert (std::pair<std::string, std::string> (attribute, value));
+        }
+
+        list->push_back (entry);
     }
-
-    *depthPtr += 1;
 
 }
 
 static void XMLCALL endElementCallback (void *userData, const char *name)
 {
     // std::cout << "endElement " << name << std::endl;
-
-    int *depthPtr = (int *) userData;
-    *depthPtr -= 1;
 }
 
 
@@ -237,8 +236,8 @@ std::string InstantMessaging::generateXmlUriList (UriList& list)
 
     while (iterEntry != list.end()) {
         xmlbuffer.append ("<entry uri=");
-        UriEntry entry = static_cast<UriEntry> (*iterEntry);
-        iterAttr = entry.find (sfl::IM_XML_URI);
+        UriEntry *entry = static_cast<UriEntry *> (*iterEntry);
+        iterAttr = entry->find (sfl::IM_XML_URI);
         xmlbuffer.append (iterAttr->second);
         xmlbuffer.append (" cp:copyControl=\"to\" />");
 
@@ -258,7 +257,7 @@ InstantMessaging::UriList InstantMessaging::parseXmlUriList (std::string& urilis
 
     XML_Parser parser = XML_ParserCreate (NULL);
     int depth = 0;
-    XML_SetUserData (parser, &depth);
+    XML_SetUserData (parser, &list);
     XML_SetElementHandler (parser, startElementCallback, endElementCallback);
 
     if (XML_Parse (parser, urilist.c_str(), urilist.size(), 1) == XML_STATUS_ERROR) {

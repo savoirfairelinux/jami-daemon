@@ -195,6 +195,7 @@ void InstantMessagingTest::testGenerateXmlUriList ()
     
     std::cout << std::endl;
 
+    // Create a test list with two entries
     sfl::InstantMessaging::UriList list;
 
     sfl::InstantMessaging::UriEntry entry1;
@@ -203,14 +204,15 @@ void InstantMessagingTest::testGenerateXmlUriList ()
     sfl::InstantMessaging::UriEntry entry2;
     entry2[sfl::IM_XML_URI] = "\"sip:manu@example.com\"";
 
-    list.push_front(entry1);
-    list.push_front(entry2);
+    list.push_front(&entry1);
+    list.push_front(&entry2);
 
     std::string buffer = _im->generateXmlUriList(list);
     CPPUNIT_ASSERT(buffer.size() != 0);
 
     std::cout << buffer << std::endl;
-
+	
+    // parse the resuling xml (further tests are performed in callbacks)
     XML_Parser parser = XML_ParserCreate(NULL);
     int nbEntry = 0;
     XML_SetUserData(parser, &nbEntry);
@@ -229,8 +231,38 @@ void InstantMessagingTest::testGenerateXmlUriList ()
 
 void InstantMessagingTest::testXmlUriListParsing ()
 {
-    
+    std::string xmlbuffer = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
+    xmlbuffer.append ("<resource-lists xmlns=\"urn:ietf:params:xml:ns:resource-lists\" xmlns:cp=\"urn:ietf:params:xml:ns:copycontrol\">");
+    xmlbuffer.append ("<list>");
+    xmlbuffer.append ("<entry uri=\"sip:alex@example.com\" cp:copyControl=\"to\" />");
+    xmlbuffer.append ("<entry uri=\"sip:manu@example.com\" cp:copyControl=\"to\" />");
+    xmlbuffer.append ("</list>");
+    xmlbuffer.append ("</resource-lists>");
 
+
+    sfl::InstantMessaging::UriList list = _im->parseXmlUriList(xmlbuffer);
+    CPPUNIT_ASSERT(list.size() == 2);
+
+    // An iterator over xml attribute
+    sfl::InstantMessaging::UriEntry::iterator iterAttr;
+
+    // An iterator over list entries
+    sfl::InstantMessaging::UriList::iterator iterEntry = list.begin();
+
+    
+    while (iterEntry != list.end()) {
+        sfl::InstantMessaging::UriEntry *entry = static_cast<sfl::InstantMessaging::UriEntry *> (*iterEntry);
+        iterAttr = entry->find (sfl::IM_XML_URI);
+	
+/*	
+        if((iterAttr->second == std::string("sip:alex@example.com")) ||
+           (iterAttr->second == std::string("sip:manu@example.com")))
+	    CPPUNIT_ASSERT(1==1);
+	else
+	    CPPUNIT_ASSERT(0==1);
+	*/
+        iterEntry++;
+    }
 }
 
 void InstantMessagingTest::tearDown()
