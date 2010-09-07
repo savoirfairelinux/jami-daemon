@@ -285,7 +285,7 @@ InstantMessaging::UriList InstantMessaging::parseXmlUriList (std::string& urilis
 std::string InstantMessaging::appendUriList (std::string text, UriList& list)
 {
 
-    std::string formatedText = "--boundary\nContent-Type: text/plain\n\n";
+    std::string formatedText = "--boundary\n Content-Type: text/plain\n\n";
 
     formatedText.append (text);
     formatedText.append ("\n--boundary\nContent-Type: application/resource-lists+xml\n");
@@ -299,5 +299,36 @@ std::string InstantMessaging::appendUriList (std::string text, UriList& list)
 
     return formatedText;
 }
+
+std::string InstantMessaging::findTextUriList (std::string text)
+{
+    std::string ctype = "Content-Type: application/resource-lists+xml";
+    std::string cdispo = "Content-Disposition: recipient-list";
+
+    size_t pos = 0;
+    pos = text.find (ctype);
+    pos = text.find (cdispo, pos);
+
+    size_t begin = pos+cdispo.size();
+
+    size_t end = text.find ("--boundary1--", begin);
+
+    return text.substr (begin, end);
+}
+
+std::string InstantMessaging::findTextMessage (std::string text)
+{
+    std::string ctype = "Content-Type: text/plain";
+    std::string boundary = "--boundary";
+
+    size_t pos = 0;
+    pos = text.find (ctype);
+    size_t begin = pos+ctype.size();
+
+    size_t end = text.find (boundary, begin);
+
+    return text.substr (begin, end);
+}
+
 
 }

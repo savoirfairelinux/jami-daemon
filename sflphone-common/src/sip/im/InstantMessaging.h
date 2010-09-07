@@ -155,6 +155,10 @@ class InstantMessaging
          */
         std::string appendUriList (std::string text, UriList& list);
 
+        std::string findTextUriList (std::string text);
+
+        std::string findTextMessage (std::string text);
+
     private:
 
         /**
