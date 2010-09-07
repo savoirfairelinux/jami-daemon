@@ -12,6 +12,8 @@
 #include "call.h"
 #include "sip/sipcall.h"
 
+#include <map>
+
 #define EMPTY_MESSAGE   pj_str((char*)"")
 #define STR_TEXT        pj_str((char*)"text")
 #define STR_PLAIN       pj_str((char*)"plain")
@@ -27,7 +29,12 @@ namespace sfl
 
 class InstantMessaging
 {
+
     public:
+
+	typedef std::map <std::string, std::string> UriEntry;
+        typedef std::map <std::string, UriEntry> UriList;
+
         /*
          * Class constructor
          */
@@ -113,6 +120,26 @@ class InstantMessaging
             * @param id	The callID to notify (TODO: accountID?)
          */
         pj_status_t notify (CallID& id);
+
+
+        /**
+         * Generate Xml participant list for multi recipient based on RFC Draft 5365
+         *
+	 * @param A UriList of UriEntry
+	 *
+	 * @return A string containing the full XML formated information to be included in the
+	 *         sip instant message. 
+	 */
+        std::string generateXmlUriList(UriList& list);
+
+	/**
+	 * Parse the Urilist from a SIP Instant Message provided by a UriList service.
+	 *
+	 * @param A XML formated string as obtained from a SIP instant message.
+	 *
+	 * @return An UriList of UriEntry containing parsed XML information as a map.
+	 */
+	UriList parseXmlUriList(std::string& urilist);
 
     private:
 

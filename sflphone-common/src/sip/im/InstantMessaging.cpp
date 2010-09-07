@@ -1,7 +1,53 @@
 #include "InstantMessaging.h"
 
+#include "expat.h"
+
 namespace sfl
 {
+
+static inline char* duplicateString (char dst[], const char src[], size_t len)
+{
+    memcpy (dst, src, len);
+    dst[len] = 0;
+    return dst;
+}
+
+static void XMLCALL startElementCallback (void *userData, const char *name, const char **atts)
+{
+
+    std::cout << "startElement " << name << std::endl;
+
+    int *depthPtr = (int *) userData;
+
+    char attribute[50];
+    char value[50];
+
+    const char **att;
+    const char **val;
+
+    for (att = atts; *att; att += 2) {
+
+        const char **val = att+1;
+
+        duplicateString (attribute, *att, strlen (*att));
+        std::cout << "att: " << attribute << std::endl;
+
+        duplicateString (value, *val, strlen (*val));
+        std::cout << "val: " << value << std::endl;
+    }
+
+    *depthPtr += 1;
+
+}
+
+static void XMLCALL endElementCallback (void *userData, const char *name)
+{
+    // std::cout << "endElement " << name << std::endl;
+
+    int *depthPtr = (int *) userData;
+    *depthPtr -= 1;
+}
+
 
 InstantMessaging::InstantMessaging()
         : imFiles ()
@@ -175,4 +221,36 @@ std::vector<std::string> InstantMessaging::split_message (const std::string& tex
 
     return messages;
 }
+
+std::string InstantMessaging::generateXmlUriList (UriList& list)
+{
+    std::string xmlbuffer = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
+    xmlbuffer.append ("<resource-lists xmlns=\"urn:ietf:params:xml:ns:resource-lists\" xmlns:cp=\"urn:ietf:params:xml:ns:copycontrol\">");
+    xmlbuffer.append ("<list>");
+    xmlbuffer.append ("<entry uri=\"sip:al@example.com\" cp:copyControl=\"to\" />");
+    xmlbuffer.append ("<entry uri=\"sip:manu@example.com\" cp:copyControl=\"to\" />");
+    xmlbuffer.append ("</list>");
+    xmlbuffer.append ("</resource-lists>");
+
+    return xmlbuffer;
+}
+
+
+InstantMessaging::UriList InstantMessaging::parseXmlUriList (std::string& urilist)
+{
+    InstantMessaging::UriList list;
+
+    XML_Parser parser = XML_ParserCreate (NULL);
+    int depth = 0;
+    XML_SetUserData (parser, &depth);
+    XML_SetElementHandler (parser, startElementCallback, endElementCallback);
+
+    if (XML_Parse (parser, urilist.c_str(), urilist.size(), 1) == XML_STATUS_ERROR) {
+        std::cout << "Error: " << XML_ErrorString (XML_GetErrorCode (parser))
+                  << " at line " << XML_GetCurrentLineNumber (parser) << std::endl;
+    }
+
+    return list;
+}
+
 }
