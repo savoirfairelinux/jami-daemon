@@ -13,6 +13,7 @@
 #include "sip/sipcall.h"
 
 #include <map>
+#include <list>
 
 #define EMPTY_MESSAGE   pj_str((char*)"")
 #define STR_TEXT        pj_str((char*)"text")
@@ -27,13 +28,15 @@
 namespace sfl
 {
 
+const std::string IM_XML_URI ("IM_XML_URI");
+
 class InstantMessaging
 {
 
     public:
 
-	typedef std::map <std::string, std::string> UriEntry;
-        typedef std::map <std::string, UriEntry> UriList;
+        typedef std::map <std::string, std::string> UriEntry;
+        typedef std::list <UriEntry> UriList;
 
         /*
          * Class constructor
@@ -125,21 +128,21 @@ class InstantMessaging
         /**
          * Generate Xml participant list for multi recipient based on RFC Draft 5365
          *
-	 * @param A UriList of UriEntry
-	 *
-	 * @return A string containing the full XML formated information to be included in the
-	 *         sip instant message. 
-	 */
-        std::string generateXmlUriList(UriList& list);
+        * @param A UriList of UriEntry
+        *
+        * @return A string containing the full XML formated information to be included in the
+        *         sip instant message.
+        */
+        std::string generateXmlUriList (UriList& list);
 
-	/**
-	 * Parse the Urilist from a SIP Instant Message provided by a UriList service.
-	 *
-	 * @param A XML formated string as obtained from a SIP instant message.
-	 *
-	 * @return An UriList of UriEntry containing parsed XML information as a map.
-	 */
-	UriList parseXmlUriList(std::string& urilist);
+        /**
+         * Parse the Urilist from a SIP Instant Message provided by a UriList service.
+         *
+         * @param A XML formated string as obtained from a SIP instant message.
+         *
+         * @return An UriList of UriEntry containing parsed XML information as a map.
+         */
+        UriList parseXmlUriList (std::string& urilist);
 
     private:
 

@@ -224,11 +224,27 @@ std::vector<std::string> InstantMessaging::split_message (const std::string& tex
 
 std::string InstantMessaging::generateXmlUriList (UriList& list)
 {
+
     std::string xmlbuffer = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
     xmlbuffer.append ("<resource-lists xmlns=\"urn:ietf:params:xml:ns:resource-lists\" xmlns:cp=\"urn:ietf:params:xml:ns:copycontrol\">");
     xmlbuffer.append ("<list>");
-    xmlbuffer.append ("<entry uri=\"sip:al@example.com\" cp:copyControl=\"to\" />");
-    xmlbuffer.append ("<entry uri=\"sip:manu@example.com\" cp:copyControl=\"to\" />");
+
+    // An iterator over xml attribute
+    UriEntry::iterator iterAttr;
+
+    // An iterator over list entries
+    UriList::iterator iterEntry = list.begin();
+
+    while (iterEntry != list.end()) {
+        xmlbuffer.append ("<entry uri=");
+        UriEntry entry = static_cast<UriEntry> (*iterEntry);
+        iterAttr = entry.find (sfl::IM_XML_URI);
+        xmlbuffer.append (iterAttr->second);
+        xmlbuffer.append (" cp:copyControl=\"to\" />");
+
+        iterEntry++;
+    }
+
     xmlbuffer.append ("</list>");
     xmlbuffer.append ("</resource-lists>");
 

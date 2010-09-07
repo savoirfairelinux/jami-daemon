@@ -143,7 +143,7 @@ void InstantMessagingTest::testSplitMessage ()
     CPPUNIT_ASSERT (messages[size- 1] == very_long_message.substr (maxSize * (size-1)));
 }
 
-static inline char* dupstr(char dst[], const char src[], size_t len)
+static inline char* duplicateString(char dst[], const char src[], size_t len)
 {
     memcpy(dst, src, len);
     dst[len] = 0;
@@ -166,11 +166,19 @@ static void XMLCALL startElementCallback(void *userData, const char *name, const
 
 	const char **val = att+1;
 
-	dupstr(attribute, *att, strlen(*att));
+	duplicateString(attribute, *att, strlen(*att));
 	std::cout << "att: " << attribute << std::endl;
 	
-	dupstr(value, *val, strlen(*val));
+	duplicateString(value, *val, strlen(*val));
 	std::cout << "val: " << value << std::endl;
+
+	if (strcmp(attribute, "uri") == 0) {
+	    if((strcmp(value, "sip:alex@example.com") == 0) ||
+	       (strcmp(value, "sip:manu@example.com") == 0))
+		CPPUNIT_ASSERT(1==1);
+	    else
+		CPPUNIT_ASSERT(0==1);
+	}
     }
 
     *nbEntry += 1;
@@ -189,8 +197,19 @@ void InstantMessagingTest::testGenerateXmlUriList ()
 
     sfl::InstantMessaging::UriList list;
 
+    sfl::InstantMessaging::UriEntry entry1;
+    entry1[sfl::IM_XML_URI] = "\"sip:alex@example.com\"";
+
+    sfl::InstantMessaging::UriEntry entry2;
+    entry2[sfl::IM_XML_URI] = "\"sip:manu@example.com\"";
+
+    list.push_front(entry1);
+    list.push_front(entry2);
+
     std::string buffer = _im->generateXmlUriList(list);
     CPPUNIT_ASSERT(buffer.size() != 0);
+
+    std::cout << buffer << std::endl;
 
     XML_Parser parser = XML_ParserCreate(NULL);
     int nbEntry = 0;
