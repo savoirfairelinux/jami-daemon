@@ -16,6 +16,7 @@ pushd libs/pjproject
 make && make dep
 popd
 ./configure --prefix=/usr
+make clean
 make
 make doc
 popd
@@ -31,6 +32,7 @@ popd
 pushd sflphone-client-gnome
 ./autogen.sh
 ./configure --prefix=/usr
+make clean
 make
 popd
 
