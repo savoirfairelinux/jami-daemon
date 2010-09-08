@@ -3508,10 +3508,19 @@ void call_on_tsx_changed (pjsip_inv_session *inv UNUSED, pjsip_transaction *tsx,
                 from = call->getPeerNumber ();
             }
 
+
+            // strip < and > characters in case of an IP address
+            std::string stripped;
+
+            if (from[0] == '<' && from[from.size()-1] == '>')
+                stripped = from.substr (1, from.size()-2);
+            else
+                stripped = from;
+
             // Pass through the instant messaging module if needed
             // Right now, it does do anything.
             // And notify the clients
-            Manager::instance ().incomingMessage (call->getCallId (), from, imModule->receive (message, from, call->getCallId ()));
+            Manager::instance ().incomingMessage (call->getCallId (), stripped, imModule->receive (message, stripped, call->getCallId ()));
         }
 
 
