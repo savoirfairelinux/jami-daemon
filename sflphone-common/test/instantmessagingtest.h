@@ -58,6 +58,8 @@ class InstantMessagingTest : public CppUnit::TestCase {
         CPPUNIT_TEST (testSplitMessage);
 	CPPUNIT_TEST (testGenerateXmlUriList);
 	CPPUNIT_TEST (testXmlUriListParsing);
+	CPPUNIT_TEST (testGetTextArea);
+	CPPUNIT_TEST (testGetUriListArea);
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -84,6 +86,10 @@ class InstantMessagingTest : public CppUnit::TestCase {
 	void testGenerateXmlUriList ();
 
 	void testXmlUriListParsing ();
+
+	void testGetTextArea ();
+
+	void testGetUriListArea ();
         
     private:
 		sfl::InstantMessaging *_im;

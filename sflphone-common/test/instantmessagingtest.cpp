@@ -265,6 +265,51 @@ void InstantMessagingTest::testXmlUriListParsing ()
     }
 }
 
+void InstantMessagingTest::testGetTextArea ()
+{
+
+    std::string formatedText = "--boundary\n Content-Type: text/plain\n\n";
+    formatedText.append ("Here is the text area");
+
+    formatedText.append ("\n--boundary\nContent-Type: application/resource-lists+xml\n");
+    formatedText.append ("Content-Disposition: recipient-list\n\n");
+    formatedText.append ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+    formatedText.append ("<resource-lists xmlns=\"urn:ietf:params:xml:ns:resource-lists\" xmlns:cp=\"urn:ietf:params:xml:ns:copycontrol\">");
+    formatedText.append ("<list>");
+    formatedText.append ("<entry uri=\"sip:alex@example.com\" cp:copyControl=\"to\" />");
+    formatedText.append ("<entry uri=\"sip:manu@example.com\" cp:copyControl=\"to\" />");
+    formatedText.append ("</list>");
+    formatedText.append ("</resource-lists>");
+    formatedText.append ("--boundary--");
+
+    std::string message = _im->findTextMessage(formatedText);
+
+    std::cout << "message: " << message << std::endl;
+}
+
+
+void InstantMessagingTest::testGetUriListArea ()
+{
+    std::string formatedText = "--boundary\n Content-Type: text/plain\n\n";
+    formatedText.append ("Here is the text area");
+
+    formatedText.append ("\n--boundary\nContent-Type: application/resource-lists+xml\n");
+    formatedText.append ("Content-Disposition: recipient-list\n\n");
+    formatedText.append ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+    formatedText.append ("<resource-lists xmlns=\"urn:ietf:params:xml:ns:resource-lists\" xmlns:cp=\"urn:ietf:params:xml:ns:copycontrol\">");
+    formatedText.append ("<list>");
+    formatedText.append ("<entry uri=\"sip:alex@example.com\" cp:copyControl=\"to\" />");
+    formatedText.append ("<entry uri=\"sip:manu@example.com\" cp:copyControl=\"to\" />");
+    formatedText.append ("</list>");
+    formatedText.append ("</resource-lists>");
+    formatedText.append ("--boundary--");
+
+    std::string urilist = _im->findTextUriList(formatedText);
+
+    std::cout << "urilist: " << urilist << std::endl;
+}
+
+
 void InstantMessagingTest::tearDown()
 {
     delete _im;
