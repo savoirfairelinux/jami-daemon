@@ -155,9 +155,23 @@ class InstantMessaging
          */
         std::string appendUriList (std::string text, UriList& list);
 
-        std::string findTextUriList (std::string text);
+	/**
+         * Retreive the xml formated uri list in formated text data according to RFC 5365
+         * 
+	 * @param text The formated text message as retreived in the SIP message
+	 *
+	 * @return A string containing the XML content
+	 */
+        std::string findTextUriList (std::string& text);
 
-        std::string findTextMessage (std::string text);
+	/**
+         * Retrive the plain text message in formated text data according to RFC 5365
+         *
+	 * @param text The formated text message as retreived in the SIP message
+	 *
+	 * @return A string containing the actual message
+	 */
+        std::string findTextMessage (std::string& text);
 
     private:
 
