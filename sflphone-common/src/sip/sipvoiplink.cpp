@@ -3486,27 +3486,25 @@ void call_on_tsx_changed (pjsip_inv_session *inv UNUSED, pjsip_transaction *tsx,
 
             // If no item present in the list, peer is considered as the sender
             if (list.empty()) {
-                _debug ("------------ List is empty!!!!!!!");
                 from = call->getPeerNumber ();
             } else {
-                _debug ("------------ List not empty!!!!!!!");
                 // InstaintMessaging::UriEntry *entry = static_cast<InstantMessaging::UriEntry *>(*iterItem);
                 // InstantMessaging::UriEntry::iterator iterAttr = entry->find(IM_XML_URI);
                 InstantMessaging::UriEntry *entry = list.front();
                 InstantMessaging::UriEntry::iterator iterAttr = entry->find (IM_XML_URI);
 
-                _debug ("------------ iterAttr->second %s", iterAttr->second.c_str());
-                from = iterAttr->second;
-                // from = call->getPeerNumber ();
+                if (iterAttr->second != "Me")
+                    from = iterAttr->second;
+                else
+                    from = call->getPeerNumber ();
             }
 
-            _debug ("------------------ from: %s", from.c_str());
+
 
             // Pass through the instant messaging module if needed
             // Right now, it does do anything.
             // And notify the clients
-            Manager::instance ().incomingMessage (call->getCallId (), from,
-                                                  imModule->receive (message, call->getPeerNumber (), call->getCallId ()));
+            Manager::instance ().incomingMessage (call->getCallId (), from, imModule->receive (message, from, call->getCallId ()));
         }
 
 
