@@ -60,6 +60,7 @@ class InstantMessagingTest : public CppUnit::TestCase {
 	CPPUNIT_TEST (testXmlUriListParsing);
 	CPPUNIT_TEST (testGetTextArea);
 	CPPUNIT_TEST (testGetUriListArea);
+	CPPUNIT_TEST (testIllFormatedMessage);
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -90,7 +91,9 @@ class InstantMessagingTest : public CppUnit::TestCase {
 	void testGetTextArea ();
 
 	void testGetUriListArea ();
-        
+
+	void testIllFormatedMessage ();        
+
     private:
 		sfl::InstantMessaging *_im;
 };

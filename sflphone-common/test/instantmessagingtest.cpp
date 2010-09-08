@@ -175,9 +175,9 @@ static void XMLCALL startElementCallback(void *userData, const char *name, const
 	if (strcmp(attribute, "uri") == 0) {
 	    if((strcmp(value, "sip:alex@example.com") == 0) ||
 	       (strcmp(value, "sip:manu@example.com") == 0))
-		CPPUNIT_ASSERT(1==1);
+		CPPUNIT_ASSERT(true);
 	    else
-		CPPUNIT_ASSERT(0==1);
+		CPPUNIT_ASSERT(false);
 	}
     }
 
@@ -220,13 +220,13 @@ void InstantMessagingTest::testGenerateXmlUriList ()
     if (XML_Parse(parser, buffer.c_str(), buffer.size(), 1) == XML_STATUS_ERROR) {
 	std::cout << "Error: " << XML_ErrorString(XML_GetErrorCode(parser)) 
                   << " at line " << XML_GetCurrentLineNumber(parser) << std::endl;
-        CPPUNIT_ASSERT(0==1);
+        CPPUNIT_ASSERT(false);
     }
     XML_ParserFree(parser);
 
     CPPUNIT_ASSERT(nbEntry == 4);
 
-    CPPUNIT_ASSERT(1==1);
+    CPPUNIT_ASSERT(true);
 }
 
 void InstantMessagingTest::testXmlUriListParsing ()
@@ -256,9 +256,9 @@ void InstantMessagingTest::testXmlUriListParsing ()
 		
         if((iterAttr->second == std::string("sip:alex@example.com")) ||
            (iterAttr->second == std::string("sip:manu@example.com")))
-	    CPPUNIT_ASSERT(1==1);
+	    CPPUNIT_ASSERT(true);
 	else
-	    CPPUNIT_ASSERT(0==1);
+	    CPPUNIT_ASSERT(false);
         iterEntry++;
     }
 }
@@ -321,11 +321,44 @@ void InstantMessagingTest::testGetUriListArea ()
 
     if(iterAttr == entry->end()) {
 	std::cout << "Error, did not found attribute" << std::endl;
-	CPPUNIT_ASSERT(0==1);
+	CPPUNIT_ASSERT(false);
     }
 
     std::string from = iterAttr->second;
     CPPUNIT_ASSERT(from == "sip:alex@example.com");
+}
+
+
+void InstantMessagingTest::testIllFormatedMessage ()
+{
+    bool exceptionCaught = false;
+
+    // SHOULD BE: Content-Type: text/plain
+    std::string formatedText = "--boundary\n Content-Ty\n\n";
+    formatedText.append ("Here is the text area");
+
+    formatedText.append ("\n--boundary\nContent-Type: application/resource-lists+xml\n");
+    formatedText.append ("Content-Disposition: recipient-list\n\n");
+    formatedText.append ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+    formatedText.append ("<resource-lists xmlns=\"urn:ietf:params:xml:ns:resource-lists\" xmlns:cp=\"urn:ietf:params:xml:ns:copycontrol\">");
+    formatedText.append ("<list>");
+    formatedText.append ("<entry uri=\"sip:alex@example.com\" cp:copyControl=\"to\" />");
+    formatedText.append ("<entry uri=\"sip:manu@example.com\" cp:copyControl=\"to\" />");
+    formatedText.append ("</list>");
+    formatedText.append ("</resource-lists>");
+    formatedText.append ("--boundary--");
+
+    try {
+	std::string message = _im->findTextMessage(formatedText);
+    } catch (sfl::InstantMessageException &e) {
+	exceptionCaught = true;	
+    }
+
+    if(exceptionCaught)
+	CPPUNIT_ASSERT(true);
+    else
+	CPPUNIT_ASSERT(false);
+
 }
 
 
