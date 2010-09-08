@@ -1062,9 +1062,9 @@ SIPVoIPLink::onhold (const CallID& id)
 }
 
 bool
-SIPVoIPLink::sendTextMessage (const std::string& callID, const std::string& message)
+SIPVoIPLink::sendTextMessage (const std::string& callID, const std::string& message, const std::string& from)
 {
-    _debug ("SipVoipLink: Send text message to %s", callID.c_str());
+    _debug ("SipVoipLink: Send text message to %s, from %s", callID.c_str(), from.c_str());
 
     SIPCall *call = getSIPCall (callID);
     pj_status_t status = !PJ_SUCCESS;
@@ -1074,14 +1074,10 @@ SIPVoIPLink::sendTextMessage (const std::string& callID, const std::string& mess
         /* Send IM message */
         sfl::InstantMessaging::UriList list;
 
-        sfl::InstantMessaging::UriEntry entry1;
-        entry1[sfl::IM_XML_URI] = "\"sip:alex@example.com\"";
+        sfl::InstantMessaging::UriEntry entry;
+        entry[sfl::IM_XML_URI] = std::string (from);
 
-        sfl::InstantMessaging::UriEntry entry2;
-        entry2[sfl::IM_XML_URI] = "\"sip:manu@example.com\"";
-
-        list.push_front (&entry1);
-        list.push_front (&entry2);
+        list.push_front (&entry);
 
         std::string formatedMessage = imModule->appendUriList (message, list);
 
@@ -3454,6 +3450,9 @@ void call_on_tsx_changed (pjsip_inv_session *inv UNUSED, pjsip_transaction *tsx,
         // Incoming TEXT message
         if (e && e->body.tsx_state.src.rdata) {
 
+            // sender of this message
+            std::string from;
+
             // Get the message inside the transaction
             r_data = e->body.tsx_state.src.rdata;
             std::string formatedMessage = (char*) r_data->msg_info.msg->body->data;
@@ -3470,13 +3469,32 @@ void call_on_tsx_changed (pjsip_inv_session *inv UNUSED, pjsip_transaction *tsx,
             pjsip_dlg_create_response (inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
             pjsip_dlg_send_response (inv->dlg, tsx, t_data);
 
+            // retrive message from formated text
             std::string message = imModule->findTextMessage (formatedMessage);
+
+            // retreive the recipient-list of this message
+            std::string urilist = imModule->findTextUriList (formatedMessage);
+
+            // parse the recipient list xml
+            InstantMessaging::UriList list = imModule->parseXmlUriList (formatedMessage);
+
+            // If no item present in the list, peer is considered as the sender
+            if (list.empty())
+                from = call->getPeerNumber ();
+            else {
+                // InstaintMessaging::UriEntry *entry = static_cast<InstantMessaging::UriEntry *>(*iterItem);
+                // InstantMessaging::UriEntry::iterator iterAttr = entry->find(IM_XML_URI);
+                InstantMessaging::UriEntry *entry = list.front();
+                InstantMessaging::UriEntry::iterator iterAttr = entry->find (IM_XML_URI);
+
+                from = iterAttr->second;
+            }
+
 
             // Pass through the instant messaging module if needed
             // Right now, it does do anything.
             // And notify the clients
-            Manager::instance ().incomingMessage (call->getCallId (),
-                                                  call->getPeerNumber (),
+            Manager::instance ().incomingMessage (call->getCallId (), from,
                                                   imModule->receive (message, call->getPeerNumber (), call->getCallId ()));
         }
 

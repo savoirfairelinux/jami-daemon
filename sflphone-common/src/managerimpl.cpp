@@ -1733,7 +1733,7 @@ void ManagerImpl::incomingMessage (const CallID& callID,
                 link = SIPVoIPLink::instance (""); // dynamic_cast<SIPVoIPLink *> (getAccountLink (*iter_participant));
 
                 if (link)
-                    link->sendTextMessage (*iter_participant, message);
+                    link->sendTextMessage (*iter_participant, message, from);
             }
 
             iter_participant++;
@@ -1747,7 +1747,7 @@ void ManagerImpl::incomingMessage (const CallID& callID,
 
 
 //THREAD=VoIP
-bool ManagerImpl::sendTextMessage (const CallID& callID, const std::string& message)
+bool ManagerImpl::sendTextMessage (const CallID& callID, const std::string& message, const std::string& from)
 {
     SIPVoIPLink * link = NULL;
 
@@ -1768,7 +1768,7 @@ bool ManagerImpl::sendTextMessage (const CallID& callID, const std::string& mess
 
 
             if (link)
-                link->sendTextMessage (*iter_participant, message);
+                link->sendTextMessage (*iter_participant, message, from);
 
             iter_participant++;
         }
@@ -1785,7 +1785,7 @@ bool ManagerImpl::sendTextMessage (const CallID& callID, const std::string& mess
         }
 
         _debug ("Manager: Send message to %s (%s)", callID.c_str(), accountId.c_str());
-        link->sendTextMessage (callID, message);
+        link->sendTextMessage (callID, message, from);
     }
 
     return true;
