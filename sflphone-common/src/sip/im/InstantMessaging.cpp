@@ -20,6 +20,8 @@ static void XMLCALL startElementCallback (void *userData, const char *name, cons
 
     const char **att;
 
+    // _debug ("InstantMessaging: StartElement Callback: %s", name);
+
     if (strcmp (name, "entry") == 0) {
 
         sfl::InstantMessaging::UriList *list = static_cast<sfl::InstantMessaging::UriList *> (userData);
@@ -28,10 +30,13 @@ static void XMLCALL startElementCallback (void *userData, const char *name, cons
         for (att = atts; *att; att += 2) {
 
             const char **val = att+1;
+
             duplicateString (attribute, *att, strlen (*att));
             duplicateString (value, *val, strlen (*val));
 
-            entry->insert (std::pair<std::string, std::string> (attribute, value));
+            // _debug ("InstantMessaging: attribute: %s, value: %s", attribute, value);
+
+            entry->insert (std::pair<std::string, std::string> (std::string (attribute), std::string (value)));
         }
 
         list->push_back (entry);

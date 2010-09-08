@@ -28,7 +28,7 @@
 namespace sfl
 {
 
-const std::string IM_XML_URI ("IM_XML_URI");
+const std::string IM_XML_URI ("uri");
 const std::string BOUNDARY ("--boundary");
 
 class InstantMessaging

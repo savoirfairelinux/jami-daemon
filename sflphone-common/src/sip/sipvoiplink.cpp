@@ -3481,23 +3481,26 @@ void call_on_tsx_changed (pjsip_inv_session *inv UNUSED, pjsip_transaction *tsx,
             // retreive the recipient-list of this message
             std::string urilist = imModule->findTextUriList (formatedMessage);
 
-            _debug ("---------------- XML -----------\n%s", urilist.c_str());
-
             // parse the recipient list xml
-            InstantMessaging::UriList list = imModule->parseXmlUriList (formatedMessage);
+            InstantMessaging::UriList list = imModule->parseXmlUriList (urilist);
 
             // If no item present in the list, peer is considered as the sender
-            if (list.empty())
+            if (list.empty()) {
+                _debug ("------------ List is empty!!!!!!!");
                 from = call->getPeerNumber ();
-            else {
+            } else {
+                _debug ("------------ List not empty!!!!!!!");
                 // InstaintMessaging::UriEntry *entry = static_cast<InstantMessaging::UriEntry *>(*iterItem);
                 // InstantMessaging::UriEntry::iterator iterAttr = entry->find(IM_XML_URI);
                 InstantMessaging::UriEntry *entry = list.front();
                 InstantMessaging::UriEntry::iterator iterAttr = entry->find (IM_XML_URI);
 
+                _debug ("------------ iterAttr->second %s", iterAttr->second.c_str());
                 from = iterAttr->second;
+                // from = call->getPeerNumber ();
             }
 
+            _debug ("------------------ from: %s", from.c_str());
 
             // Pass through the instant messaging module if needed
             // Right now, it does do anything.

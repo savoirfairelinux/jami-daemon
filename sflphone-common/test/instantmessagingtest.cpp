@@ -253,14 +253,12 @@ void InstantMessagingTest::testXmlUriListParsing ()
     while (iterEntry != list.end()) {
         sfl::InstantMessaging::UriEntry *entry = static_cast<sfl::InstantMessaging::UriEntry *> (*iterEntry);
         iterAttr = entry->find (sfl::IM_XML_URI);
-	
-/*	
+		
         if((iterAttr->second == std::string("sip:alex@example.com")) ||
            (iterAttr->second == std::string("sip:manu@example.com")))
 	    CPPUNIT_ASSERT(1==1);
 	else
 	    CPPUNIT_ASSERT(0==1);
-	*/
         iterEntry++;
     }
 }
@@ -311,6 +309,23 @@ void InstantMessagingTest::testGetUriListArea ()
     CPPUNIT_ASSERT(urilist.compare("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resource-lists xmlns=\"urn:ietf:params:xml:ns:resource-lists\" xmlns:cp=\"urn:ietf:params:xml:ns:copycontrol\"><list><entry uri=\"sip:alex@example.com\" cp:copyControl=\"to\" /><entry uri=\"sip:manu@example.com\" cp:copyControl=\"to\" /></list></resource-lists>") == 0);
 
     std::cout << "urilist: " << urilist << std::endl;
+
+    sfl::InstantMessaging::UriList list = _im->parseXmlUriList(urilist);
+    CPPUNIT_ASSERT(list.size() == 2);
+
+    // order may be important, for example to identify message sender
+    sfl::InstantMessaging::UriEntry *entry = list.front();
+    CPPUNIT_ASSERT(entry->size() == 2);
+
+    sfl::InstantMessaging::UriEntry::iterator iterAttr = entry->find (sfl::IM_XML_URI);
+
+    if(iterAttr == entry->end()) {
+	std::cout << "Error, did not found attribute" << std::endl;
+	CPPUNIT_ASSERT(0==1);
+    }
+
+    std::string from = iterAttr->second;
+    CPPUNIT_ASSERT(from == "sip:alex@example.com");
 }
 
 
