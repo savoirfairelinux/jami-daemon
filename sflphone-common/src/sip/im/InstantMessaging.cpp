@@ -314,7 +314,7 @@ std::string InstantMessaging::findTextUriList (std::string& text)
 
     size_t end = text.find (boundary, begin);
 
-    return text.substr (begin, end-begin);
+    return text.substr (begin+2, end-begin);
 }
 
 std::string InstantMessaging::findTextMessage (std::string& text)
@@ -328,7 +328,7 @@ std::string InstantMessaging::findTextMessage (std::string& text)
 
     size_t end = text.find (boundary, begin);
 
-    return text.substr (begin, end-begin);
+    return text.substr (begin+2, end-begin);
 }
 
 
