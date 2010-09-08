@@ -284,7 +284,7 @@ void InstantMessagingTest::testGetTextArea ()
 
     std::string message = _im->findTextMessage(formatedText);
 
-    // CPPUNIT_ASSERT(message == "Here is the text area");
+    CPPUNIT_ASSERT(message == "Here is the text area");
 
     std::cout << "message: " << message << std::endl;
 }
@@ -308,7 +308,7 @@ void InstantMessagingTest::testGetUriListArea ()
 
     std::string urilist = _im->findTextUriList(formatedText);
 
-    // CPPUNIT_ASSERT(urilist.compare("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resource-lists xmlns=\"urn:ietf:params:xml:ns:resource-lists\" xmlns:cp=\"urn:ietf:params:xml:ns:copycontrol\"><list><entry uri=\"sip:alex@example.com\" cp:copyControl=\"to\" /><entry uri=\"sip:manu@example.com\" cp:copyControl=\"to\" /></list></resource-lists>") == 0);
+    CPPUNIT_ASSERT(urilist.compare("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resource-lists xmlns=\"urn:ietf:params:xml:ns:resource-lists\" xmlns:cp=\"urn:ietf:params:xml:ns:copycontrol\"><list><entry uri=\"sip:alex@example.com\" cp:copyControl=\"to\" /><entry uri=\"sip:manu@example.com\" cp:copyControl=\"to\" /></list></resource-lists>") == 0);
 
     std::cout << "urilist: " << urilist << std::endl;
 }
