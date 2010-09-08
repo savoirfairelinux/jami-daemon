@@ -1071,11 +1071,17 @@ SIPVoIPLink::sendTextMessage (const std::string& callID, const std::string& mess
 
 
     if (call) {
+        std::string formatedFrom = from;
+
+        // add double quotes for xml formating
+        formatedFrom.insert (0,"\"");
+        formatedFrom.append ("\"");
+
         /* Send IM message */
         sfl::InstantMessaging::UriList list;
 
         sfl::InstantMessaging::UriEntry entry;
-        entry[sfl::IM_XML_URI] = std::string (from);
+        entry[sfl::IM_XML_URI] = std::string (formatedFrom);
 
         list.push_front (&entry);
 
@@ -3474,6 +3480,8 @@ void call_on_tsx_changed (pjsip_inv_session *inv UNUSED, pjsip_transaction *tsx,
 
             // retreive the recipient-list of this message
             std::string urilist = imModule->findTextUriList (formatedMessage);
+
+            _debug ("---------------- XML -----------\n%s", urilist.c_str());
 
             // parse the recipient list xml
             InstantMessaging::UriList list = imModule->parseXmlUriList (formatedMessage);
