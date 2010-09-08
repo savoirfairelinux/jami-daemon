@@ -3454,15 +3454,12 @@ void call_on_tsx_changed (pjsip_inv_session *inv UNUSED, pjsip_transaction *tsx,
         // Incoming TEXT message
         if (e && e->body.tsx_state.src.rdata) {
 
-            std::string message;
-            SIPCall * call;
-
             // Get the message inside the transaction
             r_data = e->body.tsx_state.src.rdata;
-            message = (char*) r_data->msg_info.msg->body->data;
+            std::string formatedMessage = (char*) r_data->msg_info.msg->body->data;
 
             // Try to determine who is the recipient of the message
-            call = reinterpret_cast<SIPCall *> (inv->mod_data[getModId() ]);
+            SIPCall *call = reinterpret_cast<SIPCall *> (inv->mod_data[getModId() ]);
 
             if (!call) {
                 _debug ("Incoming TEXT message: Can't find the recipient of the message");
@@ -3472,6 +3469,8 @@ void call_on_tsx_changed (pjsip_inv_session *inv UNUSED, pjsip_transaction *tsx,
             // Respond with a 200/OK
             pjsip_dlg_create_response (inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
             pjsip_dlg_send_response (inv->dlg, tsx, t_data);
+
+            std::string message = imModule->findTextMessage (formatedMessage);
 
             // Pass through the instant messaging module if needed
             // Right now, it does do anything.
