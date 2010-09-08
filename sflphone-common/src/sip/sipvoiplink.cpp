@@ -3475,31 +3475,38 @@ void call_on_tsx_changed (pjsip_inv_session *inv UNUSED, pjsip_transaction *tsx,
             pjsip_dlg_create_response (inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
             pjsip_dlg_send_response (inv->dlg, tsx, t_data);
 
-            // retrive message from formated text
-            std::string message = imModule->findTextMessage (formatedMessage);
+            std::string message;
+            std::string urilist;
+            InstantMessaging::UriList list;
 
-            // retreive the recipient-list of this message
-            std::string urilist = imModule->findTextUriList (formatedMessage);
+            try {
+                // retrive message from formated text
+                message = imModule->findTextMessage (formatedMessage);
 
-            // parse the recipient list xml
-            InstantMessaging::UriList list = imModule->parseXmlUriList (urilist);
+                // retreive the recipient-list of this message
+                urilist = imModule->findTextUriList (formatedMessage);
 
-            // If no item present in the list, peer is considered as the sender
-            if (list.empty()) {
-                from = call->getPeerNumber ();
-            } else {
-                // InstaintMessaging::UriEntry *entry = static_cast<InstantMessaging::UriEntry *>(*iterItem);
-                // InstantMessaging::UriEntry::iterator iterAttr = entry->find(IM_XML_URI);
-                InstantMessaging::UriEntry *entry = list.front();
-                InstantMessaging::UriEntry::iterator iterAttr = entry->find (IM_XML_URI);
+                // parse the recipient list xml
+                list = imModule->parseXmlUriList (urilist);
 
-                if (iterAttr->second != "Me")
-                    from = iterAttr->second;
-                else
+                // If no item present in the list, peer is considered as the sender
+                if (list.empty()) {
                     from = call->getPeerNumber ();
+                } else {
+                    InstantMessaging::UriEntry *entry = list.front();
+                    InstantMessaging::UriEntry::iterator iterAttr = entry->find (IM_XML_URI);
+
+                    if (iterAttr->second != "Me")
+                        from = iterAttr->second;
+                    else
+                        from = call->getPeerNumber ();
+                }
+
+            } catch (sfl::InstantMessageException &e) {
+                _error ("SipVoipLink: %s", e.what());
+                message = "";
+                from = call->getPeerNumber ();
             }
-
-
 
             // Pass through the instant messaging module if needed
             // Right now, it does do anything.

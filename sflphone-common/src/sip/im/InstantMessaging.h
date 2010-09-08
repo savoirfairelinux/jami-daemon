@@ -14,6 +14,7 @@
 
 #include <map>
 #include <list>
+#include <exception>
 
 #define EMPTY_MESSAGE   pj_str((char*)"")
 #define STR_TEXT        pj_str((char*)"text")
@@ -30,6 +31,23 @@ namespace sfl
 
 const std::string IM_XML_URI ("uri");
 const std::string BOUNDARY ("--boundary");
+
+class InstantMessageException : public std::exception
+{
+    public:
+        InstantMessageException (const std::string& str="") throw() : errstr (str) {}
+
+        virtual ~InstantMessageException() throw() {}
+
+        virtual const char *what() const throw() {
+            std::string expt ("YamlParserException occured: ");
+            expt.append (errstr);
+
+            return expt.c_str();
+        }
+    private:
+        std::string errstr;
+};
 
 class InstantMessaging
 {
