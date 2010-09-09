@@ -187,7 +187,7 @@ im_window_add_tab (GtkWidget *widget)
     if (im_widget_call)
         tab_Label = gtk_label_new (get_peer_information (im_widget_call));
     else
-        tab_Label = gtk_label_new (im_widget_conf->_confID);
+        tab_Label = gtk_label_new ("Conferencing");
 
     GtkWidget *tab_CloseButton = gtk_button_new ();
 

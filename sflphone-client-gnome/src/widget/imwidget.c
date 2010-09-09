@@ -391,9 +391,9 @@ im_widget_infobar (IMWidget *im)
     if (im_widget_call)
         msg1 = g_strdup_printf ("Calling %s  %s", im_widget_call->_peer_number, im_widget_call->_peer_name);
     else if (im_widget_conf)
-        msg1 = g_strdup_printf ("Conferencing %s", im_widget_conf->_confID);
+        msg1 = g_strdup_printf ("Conferencing"); // im_widget_conf->_confID);
     else
-        msg1 = "";
+        msg1 = g_strdup ("");
 
     GtkWidget *call_label = gtk_label_new (msg1);
 
