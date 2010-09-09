@@ -238,13 +238,13 @@ im_window_remove_tab (GtkWidget *widget)
     /* Need to do some memory clean up, so that we could re-open an Im widget for this call later. */
     IMWidget *im = IM_WIDGET (widget);
     callable_obj_t *call = calllist_get (current_calls, im->call_id);
-    conference_obj_t *conf = conferencelist_get(im->call_id);
+    conference_obj_t *conf = conferencelist_get (im->call_id);
 
     if (call)
         call->_im_widget = NULL;
 
     if (conf)
-	conf->_im_widget = NULL;
+        conf->_im_widget = NULL;
 
     /* Decide whether or not displaying the tabs of the notebook */
     im_window_hide_show_tabs ();

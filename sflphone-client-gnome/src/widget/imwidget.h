@@ -102,7 +102,7 @@ GtkWidget *im_widget_new_with_first_message (gchar *message);
 */
 void im_widget_add_message (IMWidget *im, const gchar *from, const gchar *message, gint level);
 
-void im_widget_send_message (callable_obj_t *call, const gchar *message);
+void im_widget_send_message (gchar *id, const gchar *message);
 
 gchar* im_widget_add_message_time ();
 

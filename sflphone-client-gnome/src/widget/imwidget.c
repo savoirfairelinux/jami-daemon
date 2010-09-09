@@ -40,7 +40,8 @@ static void
 on_frame_loading_done (GObject *gobject, GParamSpec *pspec, gpointer user_data)
 {
     IMWidget *im = IM_WIDGET (user_data);
-    callable_obj_t *c;
+    callable_obj_t *call;
+    conference_obj_t *conf;
 
     if (im->first_message) {
         switch (webkit_web_frame_get_load_status (WEBKIT_WEB_FRAME (im->web_frame))) {
@@ -48,8 +49,15 @@ on_frame_loading_done (GObject *gobject, GParamSpec *pspec, gpointer user_data)
             case WEBKIT_LOAD_COMMITTED:
                 break;
             case WEBKIT_LOAD_FINISHED:
-                c = calllist_get (current_calls, im->call_id);
-                im_widget_add_message (im, get_peer_information (c), im->first_message, 0);
+                call = calllist_get (current_calls, im->call_id);
+                conf = conferencelist_get (im->call_id);
+
+                if (call)
+                    im_widget_add_message (im, get_peer_information (call), im->first_message, NULL);
+
+                if (conf)
+                    im_widget_add_message (im, conf->_confID, im->first_message, NULL);
+
                 g_free (im->first_message);
                 im->first_message = NULL;
                 DEBUG ("JavaScrip loading frame finished");
@@ -136,15 +144,7 @@ on_Textview_changed (GtkWidget *widget, GdkEventKey *event, gpointer user_data)
     GtkTextIter start, end;
     /* Get all the text in the buffer */
     IMWidget *im =  user_data;
-    callable_obj_t *im_widget_call = calllist_get (current_calls, im->call_id);
 
-    /* If the call has been hungup, it is not anymore in the current_calls calltab */
-    if (!im_widget_call) {
-        /* So try the history tab */
-        im_widget_call = calllist_get (history, im->call_id);
-    }
-
-    /* Fetch the text entered in the GtkTextView */
     GtkTextBuffer *buffer =  gtk_text_view_get_buffer (GTK_TEXT_VIEW (im->textarea));
 
     /* Catch the keyboard events */
@@ -164,7 +164,7 @@ on_Textview_changed (GtkWidget *widget, GdkEventKey *event, gpointer user_data)
                     im_widget_add_message (im, "Me", message, MESSAGE_LEVEL_NORMAL);
 
                     /* Send the message to the peer */
-                    im_widget_send_message (im_widget_call, message);
+                    im_widget_send_message (im->call_id, message);
 
                     /* Empty the buffer */
                     gtk_text_buffer_delete (GTK_TEXT_BUFFER (buffer), &start, &end);
@@ -199,17 +199,29 @@ im_widget_add_message_time ()
 }
 
 void
-im_widget_send_message (callable_obj_t *call, const gchar *message)
+im_widget_send_message (gchar *id, const gchar *message)
 {
 
+    callable_obj_t *im_widget_call = calllist_get (current_calls, id);
+    conference_obj_t *im_widget_conf = conferencelist_get (id);
+
+    /* If the call has been hungup, it is not anymore in the current_calls calltab */
+    if (!im_widget_call) {
+        /* So try the history tab */
+        im_widget_call = calllist_get (history, id);
+    }
+
+    if (im_widget_conf) {
+        dbus_send_text_message (id, message);
+    }
     /* First check if the call is in CURRENT state, otherwise it could not be sent */
-    if (call) {
-        if (call->_type == CALL && (call->_state == CALL_STATE_CURRENT || call->_state == CALL_STATE_HOLD)) {
+    else if (im_widget_call) {
+        if (im_widget_call->_type == CALL && (im_widget_call->_state == CALL_STATE_CURRENT || im_widget_call->_state == CALL_STATE_HOLD)) {
             /* Ship the message through D-Bus */
-            dbus_send_text_message (call->_callID, message);
+            dbus_send_text_message (id, message);
         } else {
             /* Display an error message */
-            im_widget_add_message (IM_WIDGET (call->_im_widget), "sflphoned", "Oups, something went wrong! Unable to send text messages outside a call.", MESSAGE_LEVEL_ERROR);
+            im_widget_add_message (IM_WIDGET (im_widget_call->_im_widget), "sflphoned", "Oups, something went wrong! Unable to send text messages outside a call.", MESSAGE_LEVEL_ERROR);
         }
     }
 }
