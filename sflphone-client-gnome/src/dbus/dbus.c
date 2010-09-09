@@ -124,17 +124,27 @@ incoming_message_cb (DBusGProxy *proxy UNUSED, const gchar* callID UNUSED, const
 {
     DEBUG ("Message \"%s\" from %s!", msg, from);
 
-    // Get the call information. Does this call exist?
-    callable_obj_t * c = calllist_get (current_calls, callID);
+    callable_obj_t *call = NULL;
+    conference_obj_t *conf = NULL;
+
+    // Get the call information. (if this call exist)
+    call = calllist_get (current_calls, callID);
+
+    // Get the conference information (if this conference exist)
+    conf = conferencelist_get (callID);
 
     /* First check if the call is valid */
-    if (c) {
+    if (call) {
 
         /* Make the instant messaging main window pops, add messages only if the main window exist.
         Elsewhere the message is displayed asynchronously*/
-        if (im_widget_display (&c, msg))
-            im_widget_add_message (c->_im_widget, from, msg, 0);
-
+        if (im_widget_display (& (call->_im_widget), msg, call->_callID))
+            im_widget_add_message (call->_im_widget, from, msg, 0);
+    } else if (conf) {
+        /* Make the instant messaging main window pops, add messages only if the main window exist.
+            Elsewhere the message is displayed asynchronously*/
+        if (im_widget_display (& (conf->_im_widget), msg, conf->_confID))
+            im_widget_add_message (conf->_im_widget, from, msg, 0);
     } else {
         ERROR ("Message received, but no recipient found");
     }

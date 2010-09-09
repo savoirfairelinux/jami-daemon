@@ -302,51 +302,54 @@ im_widget_get_type (void)
 }
 
 gboolean
-im_widget_display (callable_obj_t **call, gchar *message)
+im_widget_display (IMWidget **im, gchar *message, gchar *id)
 {
 
     /* Work with a copy of the object */
-    callable_obj_t *tmp = *call;
+    // callable_obj_t *tmp = *call;
 
     /* Use the widget for this specific call, if exists */
-    if (tmp) {
-        IMWidget *im = IM_WIDGET (tmp->_im_widget);
+    // if (tmp) {
+    IMWidget *imwidget = *im;// = IM_WIDGET (tmp->_im_widget);
 
-        if (!im) {
-            DEBUG ("creating the im widget for this call\n");
+    if (!imwidget) {
+        DEBUG ("creating the im widget for this call\n");
 
-            /* Create the im object */
-            if (message)
-                im = IM_WIDGET (im_widget_new ());
-            else
-                im = IM_WIDGET (im_widget_new_with_first_message (message));
+        /* Create the im object, first message must be created asynchronously */
+        if (message)
+            imwidget = IM_WIDGET (im_widget_new ());
+        else
+            imwidget = IM_WIDGET (im_widget_new_with_first_message (message));
 
-            /* Keep a reference on this object in the call struct */
-            tmp->_im_widget = im;
-            *call = tmp;
+        /* Keep a reference on this object in the call struct */
+        // tmp->_im_widget = im;
+        // *call = tmp;
 
-            /* Update the widget with some useful call information: ie the call ID */
-            im->call_id = tmp->_callID;
+        /* Update the widget with some useful call information: ie the call ID */
+        imwidget->call_id = id;
 
-            /* Create the GtkInfoBar, used to display call information, and status of the IM widget */
-            im_widget_infobar (im);
+        /* Create the GtkInfoBar, used to display call information, and status of the IM widget */
+        im_widget_infobar (imwidget);
 
-            /* Add it to the main instant messaging window */
-            im_window_add (im);
+        /* Add it to the main instant messaging window */
+        im_window_add (imwidget);
 
-            /* Update the first message to appears at widget creation*/
-            im->first_message = g_strdup (message);
+        /* Update the first message to appears at widget creation*/
+        imwidget->first_message = g_strdup (message);
 
-            return FALSE;
-        } else {
-            DEBUG ("im widget exists for this call\n");
-            im_window_show ();
+        *im = imwidget;
 
-            return TRUE;
-        }
+        return FALSE;
+    } else {
+        DEBUG ("im widget exists for this call\n");
+        im_window_show ();
+
+        return TRUE;
     }
 
-    return FALSE;
+    // }
+
+    // return FALSE;
 }
 
 void

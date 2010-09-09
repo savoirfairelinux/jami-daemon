@@ -537,7 +537,7 @@ call_im (void* foo UNUSED)
     callable_obj_t * selectedCall = calltab_get_selected_call (current_calls);
 
     if (selectedCall) {
-        im_widget_display (&selectedCall, NULL);
+        im_widget_display (& (selectedCall->_im_widget), NULL, selectedCall->_callID);
     } else {
         warn ("Sorry. Instant messaging is not allowed outside a call\n");
     }

@@ -75,9 +75,10 @@ struct _IMWidgetClass {
 @abstract	Display the instant messaging interface for this call. If it has not been created yet, create it and attached it to the imWindow.
 @param		A reference on the call attached to the current IM widget
 @param          The first message to be displayed, webkit's frames are loaded asynchronously
+@param 	        The call id to be associated with the IMWidget
 @return         TRUE if window is already created, FALSE elsewhere
  */
-gboolean im_widget_display (callable_obj_t**, gchar*);
+gboolean im_widget_display (IMWidget**, gchar*, gchar*);
 
 GType im_widget_get_type (void) G_GNUC_CONST;
 
