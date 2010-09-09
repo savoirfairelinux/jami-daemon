@@ -299,12 +299,14 @@ history_load_configuration ()
 {
     history_limit = dbus_get_history_limit ();
     history_enabled = eel_gconf_get_integer (HISTORY_ENABLED);
+
 }
 
 void
 instant_messaging_load_configuration ()
 {
-    history_enabled = eel_gconf_get_integer (INSTANT_MESSAGING_ENABLED);
+    instant_messaging_enabled = eel_gconf_get_integer (INSTANT_MESSAGING_ENABLED);
+
 }
 
 
@@ -434,7 +436,7 @@ GtkTreeModel* createModel()
 {
 
     browser_t browser_entries[5] = {
-        {_ ("General"), "start-here", 0},
+        {_ ("General"), "preferences-system", 0},
         {_ ("Audio"), "multimedia-volume-control", 1},
         {_ ("Address Book"), "address-book-new", 2},
         {_ ("Hooks"), "gnome-globe", 3},
