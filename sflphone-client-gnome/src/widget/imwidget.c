@@ -429,6 +429,8 @@ call_state_image_widget (call_state_t state)
 
     switch (state) {
         case CALL_STATE_CURRENT:
+        case CALL_STATE_HOLD:
+        case CALL_STATE_RECORD:
             image = gtk_image_new_from_stock (GTK_STOCK_IM, GTK_ICON_SIZE_LARGE_TOOLBAR);
             break;
         default:
