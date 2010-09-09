@@ -183,6 +183,7 @@ im_window_add_tab (GtkWidget *widget)
     /* A container to include the tab label and the close button */
     GtkWidget *tab_Container = gtk_hbox_new (FALSE, 3);
     GtkWidget *tab_Label;
+    im->tab = tab_Container;
 
     if (im_widget_call)
         tab_Label = gtk_label_new (get_peer_information (im_widget_call));
@@ -224,6 +225,15 @@ im_window_hide_show_tabs ()
     } else
         gtk_notebook_set_show_tabs (GTK_NOTEBOOK (im_notebook), TRUE);
 
+}
+
+void
+im_window_show_tab (GtkWidget *widget)
+{
+    int pageIndex = gtk_notebook_page_num (GTK_NOTEBOOK (im_notebook), widget);
+
+    if (pageIndex != -1)
+        gtk_notebook_set_current_page (GTK_NOTEBOOK (im_notebook), pageIndex);
 }
 
 void

@@ -56,6 +56,7 @@ struct _IMWidget {
     GtkVBox parent_instance;
 
     /* Private */
+    GtkWidget *tab;
     GtkWidget *textarea;
     GtkWidget *web_view;
     GtkWidget *info_bar;

@@ -71,4 +71,6 @@ void im_window_add_tab (GtkWidget *widget);
 */
 void im_window_hide_show_tabs ();
 
+void im_widow_show_tab (GtkWidget *widget);
+
 #endif
