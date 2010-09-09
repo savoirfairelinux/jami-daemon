@@ -37,6 +37,7 @@
 
 #include <imwindow.h>
 #include <contacts/calltab.h>
+#include <contacts/calltab.h>
 
 /** Local variables */
 GtkWidget *im_window = NULL;
@@ -177,10 +178,17 @@ im_window_add_tab (GtkWidget *widget)
 
     /* Fetch the call */
     callable_obj_t *im_widget_call = calllist_get (current_calls, im->call_id);
+    conference_obj_t *im_widget_conf = conferencelist_get (im->call_id);
 
     /* A container to include the tab label and the close button */
     GtkWidget *tab_Container = gtk_hbox_new (FALSE, 3);
-    GtkWidget *tab_Label = gtk_label_new (get_peer_information (im_widget_call));
+    GtkWidget *tab_Label;
+
+    if (im_widget_call)
+        tab_Label = gtk_label_new (get_peer_information (im_widget_call));
+    else
+        tab_Label = gtk_label_new (im_widget_conf->_confID);
+
     GtkWidget *tab_CloseButton = gtk_button_new ();
 
     /* Pack it all */

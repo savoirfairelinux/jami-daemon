@@ -30,6 +30,7 @@
 #include "imwidget.h"
 #include <icons/icon_factory.h>
 #include <contacts/calltab.h>
+#include <contacts/conferencelist.h>
 #include <JavaScriptCore/JavaScript.h>
 #include <gdk/gdkkeysyms.h>
 
@@ -360,13 +361,25 @@ im_widget_infobar (IMWidget *im)
     GtkWidget *infobar = im->info_bar;
     GtkWidget *content_area = gtk_info_bar_get_content_area (GTK_INFO_BAR (infobar));
 
-    /* Fetch call information */
+    /* Fetch call/conference information */
     callable_obj_t *im_widget_call = calllist_get (current_calls, im->call_id);
+    conference_obj_t *im_widget_conf = conferencelist_get (im->call_id);
 
     /* Create the label widgets with the call information saved in the IM Widget struct */
-    gchar *msg1 = g_strdup_printf ("Calling %s  %s", im_widget_call->_peer_number, im_widget_call->_peer_name);
+    gchar *msg1;
+
+    if (im_widget_call)
+        msg1 = g_strdup_printf ("Calling %s  %s", im_widget_call->_peer_number, im_widget_call->_peer_name);
+    else if (im_widget_conf)
+        msg1 = g_strdup_printf ("Conferencing %s", im_widget_conf->_confID);
+    else
+        msg1 = "";
+
     GtkWidget *call_label = gtk_label_new (msg1);
-    im->info_state = call_state_image_widget (im_widget_call->_state);
+
+    if (im_widget_call)
+        im->info_state = call_state_image_widget (im_widget_call->_state);
+
     /* Add a nice icon from our own icon factory */
     GtkWidget *logoUser = gtk_image_new_from_stock (GTK_STOCK_USER, GTK_ICON_SIZE_LARGE_TOOLBAR);
 

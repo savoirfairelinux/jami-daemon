@@ -316,18 +316,22 @@ update_actions()
                 gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
                 gtk_widget_set_sensitive (GTK_WIDGET (holdToolbar), TRUE);
                 gtk_action_set_sensitive (GTK_ACTION (recordAction), TRUE);
+                gtk_action_set_sensitive (GTK_ACTION (imAction), TRUE);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar), 2);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget), 3);
+                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (imToolbar), 4);
                 break;
 
             case CONFERENCE_STATE_ACTIVE_DETACHED:
                 gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
                 gtk_widget_set_sensitive (GTK_WIDGET (holdToolbar), TRUE);
                 gtk_action_set_sensitive (GTK_ACTION (recordAction), TRUE);
+                gtk_action_set_sensitive (GTK_ACTION (imAction), TRUE);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar), 2);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget), 3);
+                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (imToolbar), 4);
                 break;
 
             case CONFERENCE_STATE_RECORD:
@@ -335,18 +339,22 @@ update_actions()
                 gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
                 gtk_widget_set_sensitive (GTK_WIDGET (holdToolbar), TRUE);
                 gtk_action_set_sensitive (GTK_ACTION (recordAction), TRUE);
+                gtk_action_set_sensitive (GTK_ACTION (imAction), TRUE);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar), 2);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget), 3);
+                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (imToolbar), 4);
                 break;
 
             case CONFERENCE_STATE_HOLD:
                 gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
                 gtk_widget_set_sensitive (GTK_WIDGET (offHoldToolbar), TRUE);
                 gtk_action_set_sensitive (GTK_ACTION (recordAction), TRUE);
+                gtk_action_set_sensitive (GTK_ACTION (imAction), TRUE);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (offHoldToolbar), 2);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget), 3);
+                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (imToolbar), 4);
                 break;
 
             default:
@@ -534,12 +542,23 @@ call_hold (void* foo UNUSED)
 static void
 call_im (void* foo UNUSED)
 {
-    callable_obj_t * selectedCall = calltab_get_selected_call (current_calls);
+    callable_obj_t *selectedCall = calltab_get_selected_call (current_calls);
+    conference_obj_t *selectedConf = calltab_get_selected_conf();
 
-    if (selectedCall) {
-        im_widget_display (& (selectedCall->_im_widget), NULL, selectedCall->_callID);
+    if (calltab_get_selected_type (current_calls) == A_CALL) {
+
+        if (selectedCall) {
+            im_widget_display (& (selectedCall->_im_widget), NULL, selectedCall->_callID);
+        } else {
+            warn ("Sorry. Instant messaging is not allowed outside a call\n");
+        }
     } else {
-        warn ("Sorry. Instant messaging is not allowed outside a call\n");
+
+        if (selectedConf) {
+            im_widget_display (& (selectedConf->_im_widget), NULL, selectedConf->_confID);
+        } else {
+            warn ("Sorry. Instant messaging is not allowed outside a call\n");
+        }
     }
 }
 
