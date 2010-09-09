@@ -51,7 +51,7 @@
 #include <sys/ioctl.h>
 #include <linux/if.h>
 
-
+#include <widget/imwidget.h>
 
 GHashTable * ip2ip_profile=NULL;
 
@@ -973,6 +973,10 @@ sflphone_detach_participant (const gchar* callID)
             selectedCall->_confID = NULL;
         }
 
+        // Instant messaging widget should have been deactivated during the conference
+        if (selectedCall->_im_widget)
+            im_widget_update_state (IM_WIDGET (selectedCall->_im_widget), TRUE);
+
         calltree_remove_call (current_calls, selectedCall, NULL);
         calltree_add_call (current_calls, selectedCall, NULL);
         dbus_detach_participant (selectedCall->_callID);
@@ -984,6 +988,10 @@ sflphone_detach_participant (const gchar* callID)
             g_free (selectedCall->_confID);
             selectedCall->_confID = NULL;
         }
+
+        // Instant messagin widget should have been deactivated during the conference
+        if (selectedCall->_im_widget)
+            im_widget_update_state (IM_WIDGET (selectedCall->_im_widget), TRUE);
 
         calltree_remove_call (current_calls, selectedCall, NULL);
         calltree_add_call (current_calls, selectedCall, NULL);
