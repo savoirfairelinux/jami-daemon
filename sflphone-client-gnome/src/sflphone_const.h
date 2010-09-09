@@ -182,6 +182,10 @@
 #define CONF_MAIN_WINDOW_HEIGHT		CONF_PREFIX "/state/window_height"
 #define CONF_MAIN_WINDOW_POSITION_X		CONF_PREFIX "/state/window_position_x"
 #define CONF_MAIN_WINDOW_POSITION_Y		CONF_PREFIX "/state/window_position_y"
+#define CONF_IM_WINDOW_WIDTH		CONF_PREFIX "/state/im_width"
+#define CONF_IM_WINDOW_HEIGHT		CONF_PREFIX "/state/im_height"
+#define CONF_IM_WINDOW_POSITION_X		CONF_PREFIX "/state/im_position_x"
+#define CONF_IM_WINDOW_POSITION_Y		CONF_PREFIX "/state/im_position_y"
 /** Show/Hide the dialpad */
 #define CONF_SHOW_DIALPAD			CONF_PREFIX "/state/dialpad"
 #define SHOW_VOLUME_CONTROLS		CONF_PREFIX "/state/volume_controls"
@@ -190,5 +194,6 @@
 #define START_HIDDEN				CONF_PREFIX "/state/start_hidden"
 #define POPUP_ON_CALL				CONF_PREFIX "/state/popup"
 #define HISTORY_ENABLED				CONF_PREFIX "/state/history"
+#define INSTANT_MESSAGING_ENABLED               CONF_PREFIX "/state/instant_messaging"
 
 #endif

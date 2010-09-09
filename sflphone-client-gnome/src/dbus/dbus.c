@@ -47,6 +47,8 @@
 #include <actions.h>
 #include <string.h>
 
+#include <widget/imwidget.h>
+
 #define DEFAULT_DBUS_TIMEOUT 30000
 
 DBusGConnection * connection;
@@ -118,11 +120,40 @@ voice_mail_cb (DBusGProxy *proxy UNUSED, const gchar* accountID, const guint nb,
 }
 
 static void
-incoming_message_cb (DBusGProxy *proxy UNUSED, const gchar* accountID UNUSED,
-                     const gchar* msg, void * foo  UNUSED)
+incoming_message_cb (DBusGProxy *proxy UNUSED, const gchar* callID UNUSED, const gchar *from, const gchar* msg, void * foo  UNUSED)
 {
-    DEBUG ("Message %s!",msg);
+    DEBUG ("Message \"%s\" from %s!", msg, from);
 
+    callable_obj_t *call = NULL;
+    conference_obj_t *conf = NULL;
+
+    // do not display message if instant messaging is disabled
+    gboolean instant_messaging_enabled = eel_gconf_get_integer (INSTANT_MESSAGING_ENABLED);
+
+    if (!instant_messaging_enabled)
+        return;
+
+    // Get the call information. (if this call exist)
+    call = calllist_get (current_calls, callID);
+
+    // Get the conference information (if this conference exist)
+    conf = conferencelist_get (callID);
+
+    /* First check if the call is valid */
+    if (call) {
+
+        /* Make the instant messaging main window pops, add messages only if the main window exist.
+           Elsewhere the message is displayed asynchronously*/
+        if (im_widget_display (& (call->_im_widget), msg, call->_callID, from))
+            im_widget_add_message (call->_im_widget, from, msg, 0);
+    } else if (conf) {
+        /* Make the instant messaging main window pops, add messages only if the main window exist.
+           Elsewhere the message is displayed asynchronously*/
+        if (im_widget_display (& (conf->_im_widget), msg, conf->_confID, from))
+            im_widget_add_message (conf->_im_widget, from, msg, 0);
+    } else {
+        ERROR ("Message received, but no recipient found");
+    }
 }
 
 static void
@@ -454,13 +485,6 @@ dbus_connect()
     instanceProxy = dbus_g_proxy_new_for_name (connection,
                     "org.sflphone.SFLphone", "/org/sflphone/SFLphone/Instance",
                     "org.sflphone.SFLphone.Instance");
-    /*
-     instanceProxy = dbus_g_proxy_new_for_name_owner (connection,
-     "org.sflphone.SFLphone",
-     "/org/sflphone/SFLphone/Instance",
-     "org.sflphone.SFLphone.Instance",
-     &error);
-     */
 
     if (instanceProxy == NULL) {
         ERROR ("Failed to get proxy to Instance");
@@ -473,13 +497,6 @@ dbus_connect()
                        "org.sflphone.SFLphone", "/org/sflphone/SFLphone/CallManager",
                        "org.sflphone.SFLphone.CallManager");
 
-    /*
-     callManagerProxy = dbus_g_proxy_new_for_name_owner (connection,
-     "org.sflphone.SFLphone",
-     "/org/sflphone/SFLphone/CallManager",
-     "org.sflphone.SFLphone.CallManager",
-     &error);
-     */
     if (callManagerProxy == NULL) {
         ERROR ("Failed to get proxy to CallManagers");
         return FALSE;
@@ -527,7 +544,7 @@ dbus_connect()
                                  G_CALLBACK (voice_mail_cb), NULL, NULL);
 
     dbus_g_proxy_add_signal (callManagerProxy, "incomingMessage", G_TYPE_STRING,
-                             G_TYPE_STRING, G_TYPE_INVALID);
+                             G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal (callManagerProxy, "incomingMessage",
                                  G_CALLBACK (incoming_message_cb), NULL, NULL);
 
@@ -622,13 +639,6 @@ dbus_connect()
                                 "org.sflphone.SFLphone", "/org/sflphone/SFLphone/ConfigurationManager",
                                 "org.sflphone.SFLphone.ConfigurationManager");
 
-    /*
-     configurationManagerProxy = dbus_g_proxy_new_for_name_owner (connection,
-     "org.sflphone.SFLphone",
-     "/org/sflphone/SFLphone/ConfigurationManager",
-     "org.sflphone.SFLphone.ConfigurationManager",
-     &error);
-     */
     if (!configurationManagerProxy) {
         ERROR ("Failed to get proxy to ConfigurationManager");
         return FALSE;
@@ -1773,38 +1783,38 @@ dbus_get_audio_manager (void)
 }
 
 /*
- void
- dbus_set_sip_address( const gchar* address )
- {
- GError* error = NULL;
- org_sflphone_SFLphone_ConfigurationManager_set_sip_address(
- configurationManagerProxy,
- address,
- &error);
- if(error)
- {
- g_error_free(error);
- }
- }
+   void
+   dbus_set_sip_address( const gchar* address )
+   {
+   GError* error = NULL;
+   org_sflphone_SFLphone_ConfigurationManager_set_sip_address(
+   configurationManagerProxy,
+   address,
+   &error);
+   if(error)
+   {
+   g_error_free(error);
+   }
+   }
  */
 
 /*
 
- gint
- dbus_get_sip_address( void )
- {
- GError* error = NULL;
- gint address;
- org_sflphone_SFLphone_ConfigurationManager_get_sip_address(
- configurationManagerProxy,
- &address,
- &error);
- if(error)
- {
- g_error_free(error);
- }
- return address;
- }
+   gint
+   dbus_get_sip_address( void )
+   {
+   GError* error = NULL;
+   gint address;
+   org_sflphone_SFLphone_ConfigurationManager_get_sip_address(
+   configurationManagerProxy,
+   &address,
+   &error);
+   if(error)
+   {
+   g_error_free(error);
+   }
+   return address;
+   }
  */
 
 GHashTable*
@@ -2228,6 +2238,7 @@ dbus_set_shortcuts (GHashTable * shortcuts)
     org_sflphone_SFLphone_ConfigurationManager_set_shortcuts (
         configurationManagerProxy, shortcuts, &error);
 
+
     if (error) {
         ERROR ("Failed to call set_shortcuts() on ConfigurationManager: %s",
                error->message);
@@ -2235,3 +2246,16 @@ dbus_set_shortcuts (GHashTable * shortcuts)
     }
 }
 
+void
+dbus_send_text_message (const gchar* callID, const gchar *message)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_CallManager_send_text_message (
+        callManagerProxy, callID, message, &error);
+
+    if (error) {
+        ERROR ("Failed to call send_text_message() on CallManager: %s",
+               error->message);
+        g_error_free (error);
+    }
+}

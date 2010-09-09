@@ -160,7 +160,8 @@ static void source_input_info_callback (pa_context *c UNUSED, const pa_source_in
     }
 }
 
-static void context_changed_callback (pa_context* c, pa_subscription_event_type_t t, uint32_t idx UNUSED, void* userdata UNUSED)
+
+static void context_changed_callback (pa_context* c, pa_subscription_event_type_t t, uint32_t idx, void* userdata)
 {
 
     switch (t) {

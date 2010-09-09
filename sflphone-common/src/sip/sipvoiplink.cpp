@@ -65,6 +65,8 @@
 
 #define CAN_REINVITE        1
 
+using namespace sfl;
+
 static char * invitationStateMap[] = {
     (char*) "PJSIP_INV_STATE_NULL",
     (char*) "PJSIP_INV_STATE_CALLING",
@@ -162,6 +164,11 @@ pj_thread_desc desc;
  * Url hook instance
  */
 UrlHook *urlhook;
+
+/*
+ * Instant Messaging module
+ */
+InstantMessaging *imModule;
 
 /**
  * Get the number of voicemail waiting in a SIP message
@@ -273,6 +280,9 @@ SIPVoIPLink::SIPVoIPLink (const AccountID& accountID)
 
     urlhook = new UrlHook ();
 
+    // Load the chat module
+    imModule = new InstantMessaging ();
+
     /* Start pjsip initialization step */
     init();
 }
@@ -342,7 +352,7 @@ SIPVoIPLink::terminate()
 
     /* Clean shutdown of pjsip library */
     if (initDone()) {
-        _debug ("UserAgent: Shuting down PJSIP");
+        _debug ("UserAgent: Shutting down PJSIP");
         pjsip_shutdown();
     }
 
@@ -1049,6 +1059,43 @@ SIPVoIPLink::onhold (const CallID& id)
         return false;
 
     return true;
+}
+
+bool
+SIPVoIPLink::sendTextMessage (const std::string& callID, const std::string& message, const std::string& from)
+{
+    _debug ("SipVoipLink: Send text message to %s, from %s", callID.c_str(), from.c_str());
+
+    SIPCall *call = getSIPCall (callID);
+    pj_status_t status = !PJ_SUCCESS;
+
+
+    if (call) {
+        std::string formatedFrom = from;
+
+        // add double quotes for xml formating
+        formatedFrom.insert (0,"\"");
+        formatedFrom.append ("\"");
+
+        /* Send IM message */
+        sfl::InstantMessaging::UriList list;
+
+        sfl::InstantMessaging::UriEntry entry;
+        entry[sfl::IM_XML_URI] = std::string (formatedFrom);
+
+        list.push_front (&entry);
+
+        std::string formatedMessage = imModule->appendUriList (message, list);
+
+        status = imModule->send_message (call->getInvSession (), (CallID&) callID, formatedMessage);
+    } else {
+        /* Notify the client of an error */
+        /*Manager::instance ().incomingMessage (	"",
+        										"sflphoned",
+        										"Unable to send a message outside a call.");*/
+    }
+
+    return status;
 }
 
 int SIPVoIPLink::inv_session_reinvite (SIPCall *call, std::string direction)
@@ -2039,12 +2086,18 @@ bool SIPVoIPLink::pjsip_init()
     _debug ("UserAgent: VOIP callbacks initialized");
 
     // Add endpoint capabilities (INFO, OPTIONS, etc) for this UA
-    pj_str_t allowed[] = { { (char*) "INFO", 4}, { (char*) "REGISTER", 8}, { (char*) "OPTIONS", 7} };       //  //{"INVITE", 6}, {"ACK",3}, {"BYE",3}, {"CANCEL",6}
+    pj_str_t allowed[] = { { (char*) "INFO", 4}, { (char*) "REGISTER", 8}, { (char*) "OPTIONS", 7}, { (char*) "MESSAGE", 7 } };       //  //{"INVITE", 6}, {"ACK",3}, {"BYE",3}, {"CANCEL",6}
 
     accepted = pj_str ( (char*) "application/sdp");
 
     // Register supported methods
     pjsip_endpt_add_capability (_endpt, &_mod_ua, PJSIP_H_ALLOW, NULL, PJ_ARRAY_SIZE (allowed), allowed);
+
+    const pj_str_t STR_MIME_TEXT_PLAIN = { (char*) "text/plain", 10 };
+    pjsip_endpt_add_capability (_endpt, &_mod_ua, PJSIP_H_ACCEPT, NULL, 1, &STR_MIME_TEXT_PLAIN);
+
+    // Registering and initializing IM module
+    imModule->init ();
 
     // Register "application/sdp" in ACCEPT header
     pjsip_endpt_add_capability (_endpt, &_mod_ua, PJSIP_H_ACCEPT, NULL, 1, &accepted);
@@ -3360,18 +3413,21 @@ void call_on_tsx_changed (pjsip_inv_session *inv UNUSED, pjsip_transaction *tsx,
 
     _debug ("UserAgent: Transaction changed to state %s", transactionStateMap[tsx->state]);
 
+    pjsip_rx_data* r_data;
+    pjsip_tx_data* t_data;
+
     if (tsx->role==PJSIP_ROLE_UAS && tsx->state==PJSIP_TSX_STATE_TRYING &&
             pjsip_method_cmp (&tsx->method, &pjsip_refer_method) ==0) {
         /** Handle the refer method **/
         onCallTransfered (inv, e->body.tsx_state.src.rdata);
+
     } else if (tsx->role==PJSIP_ROLE_UAS && tsx->state==PJSIP_TSX_STATE_TRYING) {
 
         if (e && e->body.rx_msg.rdata) {
 
 
             _debug ("Event");
-            pjsip_tx_data* t_data;
-            pjsip_rx_data* r_data = e->body.rx_msg.rdata;
+            r_data = e->body.rx_msg.rdata;
 
             if (r_data && r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD) {
 
@@ -3396,6 +3452,78 @@ void call_on_tsx_changed (pjsip_inv_session *inv UNUSED, pjsip_transaction *tsx,
                 }
             }
         }
+
+        // Incoming TEXT message
+        if (e && e->body.tsx_state.src.rdata) {
+
+            // sender of this message
+            std::string from;
+
+            // Get the message inside the transaction
+            r_data = e->body.tsx_state.src.rdata;
+            std::string formatedMessage = (char*) r_data->msg_info.msg->body->data;
+
+            // Try to determine who is the recipient of the message
+            SIPCall *call = reinterpret_cast<SIPCall *> (inv->mod_data[getModId() ]);
+
+            if (!call) {
+                _debug ("Incoming TEXT message: Can't find the recipient of the message");
+                return;
+            }
+
+            // Respond with a 200/OK
+            pjsip_dlg_create_response (inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
+            pjsip_dlg_send_response (inv->dlg, tsx, t_data);
+
+            std::string message;
+            std::string urilist;
+            InstantMessaging::UriList list;
+
+            try {
+                // retrive message from formated text
+                message = imModule->findTextMessage (formatedMessage);
+
+                // retreive the recipient-list of this message
+                urilist = imModule->findTextUriList (formatedMessage);
+
+                // parse the recipient list xml
+                list = imModule->parseXmlUriList (urilist);
+
+                // If no item present in the list, peer is considered as the sender
+                if (list.empty()) {
+                    from = call->getPeerNumber ();
+                } else {
+                    InstantMessaging::UriEntry *entry = list.front();
+                    InstantMessaging::UriEntry::iterator iterAttr = entry->find (IM_XML_URI);
+
+                    if (iterAttr->second != "Me")
+                        from = iterAttr->second;
+                    else
+                        from = call->getPeerNumber ();
+                }
+
+            } catch (sfl::InstantMessageException &e) {
+                _error ("SipVoipLink: %s", e.what());
+                message = "";
+                from = call->getPeerNumber ();
+            }
+
+
+            // strip < and > characters in case of an IP address
+            std::string stripped;
+
+            if (from[0] == '<' && from[from.size()-1] == '>')
+                stripped = from.substr (1, from.size()-2);
+            else
+                stripped = from;
+
+            // Pass through the instant messaging module if needed
+            // Right now, it does do anything.
+            // And notify the clients
+            Manager::instance ().incomingMessage (call->getCallId (), stripped, imModule->receive (message, stripped, call->getCallId ()));
+        }
+
+
     }
 }
 

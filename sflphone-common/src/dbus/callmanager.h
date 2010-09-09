@@ -110,6 +110,9 @@ class CallManager
         void acceptEnrollment (const std::string& callID, const bool& accepted);
         void setPBXEnrollment (const std::string& callID, const bool& yesNo);
 
+        /* Instant messaging */
+        void sendTextMessage (const std::string& callID, const std::string& message);
+
     private:
 
         sfl::AudioZrtpSession * getAudioZrtpSession (const std::string& callID);

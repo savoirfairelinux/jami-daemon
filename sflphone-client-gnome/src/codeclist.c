@@ -105,6 +105,7 @@ void codec_capabilities_load (void)
 void account_create_codec_list (account_t **acc)
 {
 
+    gchar **order = NULL;
     GQueue *_codecs;
 
     _codecs = (*acc)->codecs;

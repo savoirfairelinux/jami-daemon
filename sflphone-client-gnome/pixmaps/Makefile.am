@@ -41,7 +41,8 @@ buttons_DATA = current.svg \
 				lock_error.svg \
 				lock_off.svg \
 				lock_unconfirmed.svg \
-				phone.svg
+				phone.svg		\
+				im.svg
 
 buttonsdir   = $(datadir)/sflphone
 EXTRA_DIST   = $(buttons_DATA) $(icon_DATA)

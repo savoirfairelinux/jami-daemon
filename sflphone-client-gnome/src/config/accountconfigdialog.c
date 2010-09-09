@@ -229,6 +229,7 @@ static GPtrArray* getNewCredential (GHashTable * properties)
     if (g_strcasecmp (password, PW_HIDDEN) != 0)
         g_hash_table_insert (properties, g_strdup (ACCOUNT_PASSWORD), password);
 
+
     valid = gtk_tree_model_iter_next (GTK_TREE_MODEL (credentialStore), &iter);
 
     while (valid) {

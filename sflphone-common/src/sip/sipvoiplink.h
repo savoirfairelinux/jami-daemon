@@ -37,7 +37,7 @@
 
 #include "voiplink.h"
 #include "hooks/urlhook.h"
-
+#include "im/InstantMessaging.h"
 
 //////////////////////////////
 /* PJSIP imports */
@@ -363,6 +363,18 @@ class SIPVoIPLink : public VoIPLink
          * this action can be delayed by ongoing SIP transactions.
          */
         void shutdownSipTransport (const AccountID& accountID);
+
+
+        /**
+             * Send a SIP message to a call identified by its callid
+             *
+         * @param The Id of the call to send the message to
+         * @param The actual message to be transmitted
+         * @param The sender of this message (could be another participant of a conference)
+         *
+         * @return True if the message is sent without error, false elsewhere
+         */
+        bool sendTextMessage (const std::string& callID, const std::string& message, const std::string& from);
 
     private:
         /**

@@ -16,6 +16,7 @@ sflphone_client_gnome_SOURCES = \
   uimanager.c \
   sflnotify.c \
   mainwindow.c \
+  imwindow.c \
   dialpad.c \
   callable_obj.c \
   conference_obj.c \

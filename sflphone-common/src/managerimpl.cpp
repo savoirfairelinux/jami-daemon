@@ -1706,13 +1706,120 @@ bool ManagerImpl::incomingCall (Call* call, const AccountID& accountId)
     return true;
 }
 
+
 //THREAD=VoIP
-void ManagerImpl::incomingMessage (const AccountID& accountId,
+void ManagerImpl::incomingMessage (const CallID& callID,
+                                   const std::string& from,
                                    const std::string& message)
 {
-    if (_dbus) {
-        _dbus->getCallManager()->incomingMessage (accountId, message);
+    SIPVoIPLink *link = NULL;
+
+    if (participToConference (callID)) {
+        _debug ("Manager: Particip to a conference, send message to everyone");
+
+        Conference *conf = getConferenceFromCallID (callID);
+
+        ParticipantSet participants = conf->getParticipantList();
+        ParticipantSet::iterator iter_participant = participants.begin();
+
+        while (iter_participant != participants.end()) {
+
+            AccountID accountId = getAccountFromCall (*iter_participant);
+
+            _debug ("Manager: Send message to %s, (%s)", (*iter_participant).c_str(), accountId.c_str());
+
+            if (*iter_participant != callID) {
+
+                link = SIPVoIPLink::instance (""); // dynamic_cast<SIPVoIPLink *> (getAccountLink (*iter_participant));
+
+                if (link)
+                    link->sendTextMessage (*iter_participant, message, from);
+            }
+
+            iter_participant++;
+        }
+
+        // in case of a conference we must notify client using conference id
+        if (_dbus) {
+            _dbus->getCallManager()->incomingMessage (conf->getConfID(), from, message);
+        }
+
+    } else {
+
+        if (_dbus) {
+            _dbus->getCallManager()->incomingMessage (callID, from, message);
+        }
     }
+}
+
+
+//THREAD=VoIP
+bool ManagerImpl::sendTextMessage (const CallID& callID, const std::string& message, const std::string& from)
+{
+    SIPVoIPLink * link = NULL;
+
+    if (isConference (callID)) {
+        _debug ("Manager: Is a conference, send instant message to everyone");
+
+        ConferenceMap::iterator it = _conferencemap.find (callID);
+        Conference *conf = it->second;
+
+        ParticipantSet participants = conf->getParticipantList();
+        ParticipantSet::iterator iter_participant = participants.begin();
+
+        while (iter_participant != participants.end()) {
+
+            AccountID accountId = getAccountFromCall (*iter_participant);
+
+            _debug ("Manager: Send message to %s (%s)", (*iter_participant).c_str(), accountId.c_str());
+            link = SIPVoIPLink::instance (""); // dynamic_cast<SIPVoIPLink *> (getAccountLink (*iter_participant));
+
+
+            if (link)
+                link->sendTextMessage (*iter_participant, message, from);
+
+            iter_participant++;
+        }
+    }
+
+    if (participToConference (callID)) {
+        _debug ("Manager: Particip to a conference, send instant message to everyone");
+
+        Conference *conf = getConferenceFromCallID (callID);
+
+        ParticipantSet participants = conf->getParticipantList();
+        ParticipantSet::iterator iter_participant = participants.begin();
+
+        while (iter_participant != participants.end()) {
+
+            AccountID accountId = getAccountFromCall (*iter_participant);
+
+            _debug ("Manager: Send message to %s (%s)", (*iter_participant).c_str(), accountId.c_str());
+            link = SIPVoIPLink::instance (""); // dynamic_cast<SIPVoIPLink *> (getAccountLink (*iter_participant));
+
+
+            if (link)
+                link->sendTextMessage (*iter_participant, message, from);
+
+            iter_participant++;
+        }
+
+    } else {
+
+        AccountID accountId = getAccountFromCall (callID);
+
+        link = dynamic_cast<SIPVoIPLink *> (getAccountLink (accountId));
+
+        if (link == NULL) {
+            _debug ("Manager: Failed to get sip link");
+            return false;
+        }
+
+        _debug ("Manager: Send message to %s (%s)", callID.c_str(), accountId.c_str());
+        link->sendTextMessage (callID, message, from);
+    }
+
+    return true;
 }
 
 //THREAD=VoIP CALL=Outgoing
@@ -2018,6 +2125,7 @@ void ManagerImpl::ringtone (const AccountID& accountID)
         }
 
         layer = audiolayer->getLayerType();
+
         samplerate = audiolayer->getSampleRate();
         codecForTone = _codecDescriptorMap.getFirstCodecAvailable();
 
@@ -3709,7 +3817,6 @@ short ManagerImpl::loadAccountMap()
 
 void ManagerImpl::unloadAccountMap ()
 {
-
     AccountMap::iterator iter = _accountMap.begin();
 
     while (iter != _accountMap.end()) {

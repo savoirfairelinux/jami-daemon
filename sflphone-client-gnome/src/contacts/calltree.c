@@ -40,6 +40,7 @@
 #include <history.h>
 #include "uimanager.h"
 #include "actions.h"
+#include <imwindow.h>
 
 GtkWidget *sw;
 GtkCellRenderer *rend;
@@ -130,6 +131,10 @@ call_selected_cb (GtkTreeSelection *sel, void* data UNUSED)
             selected_path = string_path;
             selected_call = NULL;
 
+            if (selected_conf->_im_widget) {
+                // show the coresponding widget
+                im_window_show_tab (selected_conf->_im_widget);
+            }
         }
 
         DEBUG ("CallTree: selected_path %s, selected_call_id %s, selected_path_depth %d",
@@ -152,6 +157,11 @@ call_selected_cb (GtkTreeSelection *sel, void* data UNUSED)
             selected_call_id = selected_call->_callID;
             selected_path = string_path;
             selected_conf = NULL;
+
+            if (selected_call->_im_widget) {
+                // show the coresponding widget
+                im_window_show_tab (selected_call->_im_widget);
+            }
         }
 
         DEBUG ("CallTree: selected_path %s, selected_call_id %s, selected_path_depth %d",
@@ -237,7 +247,6 @@ row_activated (GtkTreeView       *tree_view UNUSED,
             if (selectedConf) {
 
                 switch (selectedConf->_state) {
-                        break;
                     case CONFERENCE_STATE_ACTIVE_DETACHED:
                         sflphone_add_main_participant (selectedConf);
                         break;

@@ -85,7 +85,8 @@ libsflphone_la_LDFLAGS = \
 		@SAMPLERATE_LIBS@ \
 		@libssl_LIBS@ \
 		@UUID_LIBS@ \
-		@yaml_LIBS@
+		@yaml_LIBS@ \
+		@xml_LIBS@
 
 libsflphone_la_CFLAGS = \
 		@CCGNU2_CFLAGS@ \
@@ -98,7 +99,8 @@ libsflphone_la_CFLAGS = \
 		@SAMPLERATE_CFLAGS@ \
 		@libssl_CFLAGS@ \
 		@UUID_CFLAGS@ \
-		@yaml_CFLAGS@
+		@yaml_CFLAGS@ \
+	 	@xml_CFLAGS@
 
 libsflphone_la_SOURCES =
 

@@ -567,4 +567,7 @@ dbus_join_conference (const gchar* sel_confID, const gchar* drag_confID);
 void
 dbus_add_main_participant (const gchar* confID);
 
+/* Instant messaging */
+void dbus_send_text_message (const gchar* callID, const gchar *message);
+
 #endif
