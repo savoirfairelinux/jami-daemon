@@ -34,6 +34,7 @@
 #include <gtk/gtk.h>
 #include <callable_obj.h>
 #include <webkit/webkit.h>
+#include <conference_obj.h>
 
 G_BEGIN_DECLS
 
@@ -115,6 +116,8 @@ gchar* im_widget_add_message_time ();
 void im_widget_infobar (IMWidget *im);
 
 GtkWidget* call_state_image_widget (call_state_t state);
+
+GtkWidget* conf_state_image_widget (conference_state_t state);
 
 void im_widget_update_state (IMWidget *im, gboolean active);
 

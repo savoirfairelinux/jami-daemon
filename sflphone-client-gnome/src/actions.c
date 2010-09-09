@@ -404,6 +404,7 @@ sflphone_hang_up()
                 break;
         }
     } else if (selectedConf) {
+        im_widget_update_state (selectedConf->_im_widget, FALSE);
         dbus_hang_up_conference (selectedConf);
     }
 

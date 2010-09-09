@@ -398,6 +398,9 @@ im_widget_infobar (IMWidget *im)
     if (im_widget_call)
         im->info_state = call_state_image_widget (im_widget_call->_state);
 
+    if (im_widget_conf)
+        im->info_state = conf_state_image_widget (im_widget_conf->_state);
+
     /* Add a nice icon from our own icon factory */
     GtkWidget *logoUser = gtk_image_new_from_stock (GTK_STOCK_USER, GTK_ICON_SIZE_LARGE_TOOLBAR);
 
@@ -430,6 +433,27 @@ call_state_image_widget (call_state_t state)
             image = gtk_image_new_from_stock (GTK_STOCK_FAIL, GTK_ICON_SIZE_LARGE_TOOLBAR);
             break;
 
+    }
+
+    return image;
+}
+
+GtkWidget*
+conf_state_image_widget (conference_state_t state)
+{
+
+    GtkWidget *image;
+
+    switch (state) {
+        case CONFERENCE_STATE_ACTIVE_ATACHED:
+        case CONFERENCE_STATE_ACTIVE_DETACHED:
+        case CONFERENCE_STATE_RECORD:
+        case CONFERENCE_STATE_HOLD:
+            image = gtk_image_new_from_stock (GTK_STOCK_IM, GTK_ICON_SIZE_LARGE_TOOLBAR);
+            break;
+        default:
+            image = gtk_image_new_from_stock (GTK_STOCK_FAIL, GTK_ICON_SIZE_LARGE_TOOLBAR);
+            break;
     }
 
     return image;
