@@ -101,15 +101,15 @@ im_widget_add_message (IMWidget *im, const gchar *from, const gchar *message, gi
         /* Check for the message level */
         gchar *css_class = (level == MESSAGE_LEVEL_ERROR) ? "error" : "";
 
-        // gchar *message_escaped = escape_single_quotes (message);
+        gchar *message_escaped = escape_single_quotes (message);
 
         /* Prepare and execute the Javascript code */
-        gchar *script = g_strdup_printf ("add_message('%s', '%s', '%s', '%s');", message, from, css_class, msgtime);
+        gchar *script = g_strdup_printf ("add_message('%s', '%s', '%s', '%s');", message_escaped, from, css_class, msgtime);
         webkit_web_view_execute_script (WEBKIT_WEB_VIEW (im->web_view), script);
 
         /* Cleanup */
         g_free (script);
-        // g_free (message_escaped);
+        g_free (message_escaped);
 
     }
 }
