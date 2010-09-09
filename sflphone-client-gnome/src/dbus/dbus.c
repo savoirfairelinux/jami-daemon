@@ -127,6 +127,12 @@ incoming_message_cb (DBusGProxy *proxy UNUSED, const gchar* callID UNUSED, const
     callable_obj_t *call = NULL;
     conference_obj_t *conf = NULL;
 
+    // do not display message if instant messaging is disabled
+    gboolean instant_messaging_enabled = eel_gconf_get_integer (INSTANT_MESSAGING_ENABLED);
+
+    if (!instant_messaging_enabled)
+        return;
+
     // Get the call information. (if this call exist)
     call = calllist_get (current_calls, callID);
 
