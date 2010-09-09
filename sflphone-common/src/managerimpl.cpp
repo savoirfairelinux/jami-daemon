@@ -1751,8 +1751,32 @@ bool ManagerImpl::sendTextMessage (const CallID& callID, const std::string& mess
 {
     SIPVoIPLink * link = NULL;
 
+    if (isConference (callID)) {
+        _debug ("Manager: Is a conference, send instant message to everyone");
+
+        ConferenceMap::iterator it = _conferencemap.find (callID);
+        Conference *conf = it->second;
+
+        ParticipantSet participants = conf->getParticipantList();
+        ParticipantSet::iterator iter_participant = participants.begin();
+
+        while (iter_participant != participants.end()) {
+
+            AccountID accountId = getAccountFromCall (*iter_participant);
+
+            _debug ("Manager: Send message to %s (%s)", (*iter_participant).c_str(), accountId.c_str());
+            link = SIPVoIPLink::instance (""); // dynamic_cast<SIPVoIPLink *> (getAccountLink (*iter_participant));
+
+
+            if (link)
+                link->sendTextMessage (*iter_participant, message, from);
+
+            iter_participant++;
+        }
+    }
+
     if (participToConference (callID)) {
-        _debug ("Manager: Particip to a conference, send message on everyone");
+        _debug ("Manager: Particip to a conference, send instant message to everyone");
 
         Conference *conf = getConferenceFromCallID (callID);
 
