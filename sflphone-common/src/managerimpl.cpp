@@ -1738,10 +1738,17 @@ void ManagerImpl::incomingMessage (const CallID& callID,
 
             iter_participant++;
         }
-    }
 
-    if (_dbus) {
-        _dbus->getCallManager()->incomingMessage (callID, from, message);
+        // in case of a conference we must notify client using conference id
+        if (_dbus) {
+            _dbus->getCallManager()->incomingMessage (conf->getConfID(), from, message);
+        }
+
+    } else {
+
+        if (_dbus) {
+            _dbus->getCallManager()->incomingMessage (callID, from, message);
+        }
     }
 }
 
