@@ -215,11 +215,11 @@ update_actions()
                 gtk_widget_set_sensitive (GTK_WIDGET (holdMenu), TRUE);
                 gtk_widget_set_sensitive (GTK_WIDGET (offHoldToolbar), TRUE);
                 gtk_widget_set_sensitive (GTK_WIDGET (newCallWidget), TRUE);
+                gtk_action_set_sensitive (GTK_ACTION (imAction), TRUE);
                 // Replace the hold button with the off-hold button
-                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget),
-                                    1);
-                gtk_toolbar_insert (GTK_TOOLBAR (toolbar),
-                                    GTK_TOOL_ITEM (offHoldToolbar), 2);
+                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
+                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (offHoldToolbar), 2);
+                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (imToolbar), 3);
                 break;
             case CALL_STATE_RINGING:
                 gtk_action_set_sensitive (GTK_ACTION (pickUpAction), TRUE);
@@ -251,14 +251,10 @@ update_actions()
                 gtk_widget_set_sensitive (GTK_WIDGET (transferToolbar), TRUE);
                 gtk_action_set_sensitive (GTK_ACTION (recordAction), TRUE);
                 gtk_action_set_sensitive (GTK_ACTION (imAction), TRUE);
-                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar),
-                                    2);
-                gtk_toolbar_insert (GTK_TOOLBAR (toolbar),
-                                    GTK_TOOL_ITEM (transferToolbar), 3);
-                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget),
-                                    4);
-                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (imToolbar),
-                                    5);
+                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar), 2);
+                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (transferToolbar), 3);
+                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget), 4);
+                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (imToolbar), 5);
                 gtk_signal_handler_block (GTK_OBJECT (transferToolbar), transfertButtonConnId);
                 gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (transferToolbar), FALSE);
                 gtk_signal_handler_unblock (transferToolbar, transfertButtonConnId);
@@ -275,9 +271,11 @@ update_actions()
                 gtk_widget_set_sensitive (GTK_WIDGET (holdToolbar), TRUE);
                 gtk_widget_set_sensitive (GTK_WIDGET (transferToolbar), TRUE);
                 gtk_action_set_sensitive (GTK_ACTION (recordAction), TRUE);
+                gtk_action_set_sensitive (GTK_ACTION (imAction), TRUE);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar), 2);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (transferToolbar), 3);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget), 4);
+                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (imToolbar), 5);
                 gtk_signal_handler_block (GTK_OBJECT (transferToolbar), transfertButtonConnId);
                 gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (transferToolbar), FALSE);
                 gtk_signal_handler_unblock (transferToolbar, transfertButtonConnId);

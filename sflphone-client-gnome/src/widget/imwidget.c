@@ -218,7 +218,9 @@ im_widget_send_message (gchar *id, const gchar *message)
     }
     /* First check if the call is in CURRENT state, otherwise it could not be sent */
     else if (im_widget_call) {
-        if (im_widget_call->_type == CALL && (im_widget_call->_state == CALL_STATE_CURRENT || im_widget_call->_state == CALL_STATE_HOLD)) {
+        if (im_widget_call->_type == CALL && (im_widget_call->_state == CALL_STATE_CURRENT ||
+                                              im_widget_call->_state == CALL_STATE_HOLD ||
+                                              im_widget_call->_state == CALL_STATE_RECORD)) {
             /* Ship the message through D-Bus */
             dbus_send_text_message (id, message);
         } else {
