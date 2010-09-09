@@ -71,6 +71,10 @@ void im_window_add_tab (GtkWidget *widget);
 */
 void im_window_hide_show_tabs ();
 
+/*! @function
+@abstract Select the specified tab as current in instant messaging window
+@param The tab to be set as current
+*/
 void im_widow_show_tab (GtkWidget *widget);
 
 #endif

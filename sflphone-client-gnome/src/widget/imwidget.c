@@ -65,7 +65,7 @@ on_frame_loading_done (GObject *gobject, GParamSpec *pspec, gpointer user_data)
                 DEBUG ("JavaScrip loading frame finished");
                 break;
             case WEBKIT_LOAD_FIRST_VISUALLY_NON_EMPTY_LAYOUT:
-            case WEBKIT_LOAD_FAILED:
+            // case WEBKIT_LOAD_FAILED: // only available in webkit-1.0-2
                 break;
         }
     }

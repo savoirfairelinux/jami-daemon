@@ -194,5 +194,6 @@
 #define START_HIDDEN				CONF_PREFIX "/state/start_hidden"
 #define POPUP_ON_CALL				CONF_PREFIX "/state/popup"
 #define HISTORY_ENABLED				CONF_PREFIX "/state/history"
+#define INSTANT_MESSAGING_ENABLED               CONF_PREFIX "/state/instant_messaging"
 
 #endif
