@@ -548,14 +548,14 @@ call_im (void* foo UNUSED)
     if (calltab_get_selected_type (current_calls) == A_CALL) {
 
         if (selectedCall) {
-            im_widget_display (& (selectedCall->_im_widget), NULL, selectedCall->_callID);
+            im_widget_display (& (selectedCall->_im_widget), NULL, selectedCall->_callID, NULL);
         } else {
             warn ("Sorry. Instant messaging is not allowed outside a call\n");
         }
     } else {
 
         if (selectedConf) {
-            im_widget_display (& (selectedConf->_im_widget), NULL, selectedConf->_confID);
+            im_widget_display (& (selectedConf->_im_widget), NULL, selectedConf->_confID, NULL);
         } else {
             warn ("Sorry. Instant messaging is not allowed outside a call\n");
         }

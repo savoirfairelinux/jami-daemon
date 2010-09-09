@@ -43,7 +43,7 @@ on_frame_loading_done (GObject *gobject, GParamSpec *pspec, gpointer user_data)
     callable_obj_t *call;
     conference_obj_t *conf;
 
-    if (im->first_message) {
+    if (im->first_message && im->first_message_from) {
         switch (webkit_web_frame_get_load_status (WEBKIT_WEB_FRAME (im->web_frame))) {
             case WEBKIT_LOAD_PROVISIONAL:
             case WEBKIT_LOAD_COMMITTED:
@@ -53,13 +53,15 @@ on_frame_loading_done (GObject *gobject, GParamSpec *pspec, gpointer user_data)
                 conf = conferencelist_get (im->call_id);
 
                 if (call)
-                    im_widget_add_message (im, get_peer_information (call), im->first_message, NULL);
+                    im_widget_add_message (im, im->first_message_from, im->first_message, NULL);
 
                 if (conf)
-                    im_widget_add_message (im, conf->_confID, im->first_message, NULL);
+                    im_widget_add_message (im, im->first_message_from, im->first_message, NULL);
 
                 g_free (im->first_message);
+                g_free (im->first_message_from);
                 im->first_message = NULL;
+                im->first_message_from = NULL;
                 DEBUG ("JavaScrip loading frame finished");
                 break;
             case WEBKIT_LOAD_FIRST_VISUALLY_NON_EMPTY_LAYOUT:
@@ -315,7 +317,7 @@ im_widget_get_type (void)
 }
 
 gboolean
-im_widget_display (IMWidget **im, gchar *message, gchar *id)
+im_widget_display (IMWidget **im, gchar *message, gchar *id, gchar *from)
 {
 
     /* Work with a copy of the object */
@@ -348,7 +350,11 @@ im_widget_display (IMWidget **im, gchar *message, gchar *id)
         im_window_add (imwidget);
 
         /* Update the first message to appears at widget creation*/
-        imwidget->first_message = g_strdup (message);
+        if (message)
+            imwidget->first_message = g_strdup (message);
+
+        if (from)
+            imwidget->first_message_from = g_strdup (from);
 
         *im = imwidget;
 

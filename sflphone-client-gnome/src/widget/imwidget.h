@@ -60,7 +60,8 @@ struct _IMWidget {
     GtkWidget *info_bar;
     GtkWidget *info_state;
     gchar *call_id;
-    gchar *first_message;
+    gchar *first_message;           // Message displayed at widget's creation time
+    gchar *first_message_from;      // Sender of the first message (usefull in case of a conference)
     WebKitWebFrame *web_frame;      // Our web frame
     JSGlobalContextRef js_context;  // The frame's global JS context
     JSObjectRef js_global;          // The frame's global context JS object
@@ -76,9 +77,10 @@ struct _IMWidgetClass {
 @param		A reference on the call attached to the current IM widget
 @param          The first message to be displayed, webkit's frames are loaded asynchronously
 @param 	        The call id to be associated with the IMWidget
+@param          The first message sender, could be different of call id for conferences
 @return         TRUE if window is already created, FALSE elsewhere
  */
-gboolean im_widget_display (IMWidget**, gchar*, gchar*);
+gboolean im_widget_display (IMWidget**, gchar*, gchar*, gchar*);
 
 GType im_widget_get_type (void) G_GNUC_CONST;
 

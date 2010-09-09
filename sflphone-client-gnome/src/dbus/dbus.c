@@ -137,13 +137,13 @@ incoming_message_cb (DBusGProxy *proxy UNUSED, const gchar* callID UNUSED, const
     if (call) {
 
         /* Make the instant messaging main window pops, add messages only if the main window exist.
-        Elsewhere the message is displayed asynchronously*/
-        if (im_widget_display (& (call->_im_widget), msg, call->_callID))
+           Elsewhere the message is displayed asynchronously*/
+        if (im_widget_display (& (call->_im_widget), msg, call->_callID, from))
             im_widget_add_message (call->_im_widget, from, msg, 0);
     } else if (conf) {
         /* Make the instant messaging main window pops, add messages only if the main window exist.
-            Elsewhere the message is displayed asynchronously*/
-        if (im_widget_display (& (conf->_im_widget), msg, conf->_confID))
+           Elsewhere the message is displayed asynchronously*/
+        if (im_widget_display (& (conf->_im_widget), msg, conf->_confID, from))
             im_widget_add_message (conf->_im_widget, from, msg, 0);
     } else {
         ERROR ("Message received, but no recipient found");
