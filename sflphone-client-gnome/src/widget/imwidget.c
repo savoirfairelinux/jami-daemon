@@ -27,6 +27,7 @@
  *  as that of the covered work.
  */
 
+#include <imwindow.h>
 #include "imwidget.h"
 #include <icons/icon_factory.h>
 #include <contacts/calltab.h>
@@ -37,7 +38,7 @@
 #define WEBKIT_DIR "file://" DATA_DIR "/webkit/"
 
 static void
-on_frame_loading_done (GObject *gobject, GParamSpec *pspec, gpointer user_data)
+on_frame_loading_done (GObject *gobject UNUSED, GParamSpec *pspec UNUSED, gpointer user_data)
 {
     IMWidget *im = IM_WIDGET (user_data);
     callable_obj_t *call;
@@ -53,10 +54,10 @@ on_frame_loading_done (GObject *gobject, GParamSpec *pspec, gpointer user_data)
                 conf = conferencelist_get (im->call_id);
 
                 if (call)
-                    im_widget_add_message (im, im->first_message_from, im->first_message, NULL);
+                    im_widget_add_message (im, im->first_message_from, im->first_message, 0);
 
                 if (conf)
-                    im_widget_add_message (im, im->first_message_from, im->first_message, NULL);
+                    im_widget_add_message (im, im->first_message_from, im->first_message, 0);
 
                 g_free (im->first_message);
                 g_free (im->first_message_from);
@@ -73,14 +74,14 @@ on_frame_loading_done (GObject *gobject, GParamSpec *pspec, gpointer user_data)
 }
 
 gchar *
-escape_single_quotes (gchar *message)
+escape_single_quotes (const gchar *message)
 {
-    gchar **ptr_token, second_ptr_token;
-    gchar *string, second_string;
+    gchar **ptr_token;
+    gchar *string = "";
 
     DEBUG ("message: %s", message);
 
-    if (ptr_token = g_strsplit (message, "'", NULL)) {
+    if ( (ptr_token = g_strsplit (message, "'", 0))) {
         DEBUG ("SPLITTING");
         string = g_strjoinv ("\\'", ptr_token);
     }
@@ -91,7 +92,6 @@ escape_single_quotes (gchar *message)
 void
 im_widget_add_message (IMWidget *im, const gchar *from, const gchar *message, gint level)
 {
-    gboolean loadingDone = FALSE;
 
     if (im) {
 
@@ -116,12 +116,12 @@ im_widget_add_message (IMWidget *im, const gchar *from, const gchar *message, gi
 
 static gboolean
 web_view_nav_requested_cb (
-    WebKitWebView             *web_view,
-    WebKitWebFrame            *frame,
+    WebKitWebView             *web_view UNUSED,
+    WebKitWebFrame            *frame UNUSED,
     WebKitNetworkRequest      *request,
-    WebKitWebNavigationAction *navigation_action,
+    WebKitWebNavigationAction *navigation_action UNUSED,
     WebKitWebPolicyDecision   *policy_decision,
-    gpointer                   user_data)
+    gpointer                   user_data UNUSED)
 {
     const gchar *uri = webkit_network_request_get_uri (request);
 
@@ -131,7 +131,10 @@ web_view_nav_requested_cb (
     } else {
         /* Running a system command to open the URL in the user's default browser */
         gchar *cmd = g_strdup_printf ("x-www-browser %s", uri);
-        system (cmd);
+
+        if (system (cmd) == -1)
+            ERROR ("Error executing command %s", cmd);
+
         webkit_web_policy_decision_ignore (policy_decision);
         g_free (cmd);
     }
@@ -140,7 +143,7 @@ web_view_nav_requested_cb (
 }
 
 static gboolean
-on_Textview_changed (GtkWidget *widget, GdkEventKey *event, gpointer user_data)
+on_Textview_changed (GtkWidget *widget UNUSED, GdkEventKey *event, gpointer user_data)
 {
 
     GtkTextIter start, end;
@@ -194,7 +197,7 @@ im_widget_add_message_time ()
 
     /* Get the time of the message. Format: HH:MM::SS */
     strftime ( (char *) str, 100, "%R", (const struct tm *) ptr);
-    gchar *res = g_strdup (str);
+    gchar *res = g_strdup ( (gchar *) str);
 
     /* Return the new value */
     return res;
@@ -232,7 +235,7 @@ im_widget_send_message (gchar *id, const gchar *message)
 
 
 static void
-im_widget_class_init (IMWidgetClass *klass)
+im_widget_class_init (IMWidgetClass *klass UNUSED)
 {
 }
 
@@ -282,7 +285,7 @@ im_widget_new()
 }
 
 GtkWidget *
-im_widget_new_with_first_message (gchar *message)
+im_widget_new_with_first_message (const gchar *message UNUSED)
 {
     return GTK_WIDGET (g_object_new (IM_WIDGET_TYPE, NULL));
     // return GTK_WIDGET (g_object_new (IM_WIDGET_TYPE, "first_message", message, NULL));
@@ -319,7 +322,7 @@ im_widget_get_type (void)
 }
 
 gboolean
-im_widget_display (IMWidget **im, gchar *message, gchar *id, gchar *from)
+im_widget_display (IMWidget **im, const gchar *message, const gchar *id, const gchar *from)
 {
 
     /* Work with a copy of the object */
@@ -349,7 +352,7 @@ im_widget_display (IMWidget **im, gchar *message, gchar *id, gchar *from)
         im_widget_infobar (imwidget);
 
         /* Add it to the main instant messaging window */
-        im_window_add (imwidget);
+        im_window_add (GTK_WIDGET (imwidget));
 
         /* Update the first message to appears at widget creation*/
         if (message)

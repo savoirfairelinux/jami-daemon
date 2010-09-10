@@ -250,6 +250,13 @@ gchar* dbus_get_current_codec_name (const callable_obj_t * c);
  */
 gchar** dbus_get_audio_plugin_list();
 
+
+/**
+ * ConfigurationManager - Select an input audio plugin
+ * @param audioPlugin The string description of the plugin
+ */
+void dbus_set_audio_plugin (gchar* audioPlugin);
+
 /**
  * ConfigurationManager - Select an input audio plugin
  * @param audioPlugin The string description of the plugin

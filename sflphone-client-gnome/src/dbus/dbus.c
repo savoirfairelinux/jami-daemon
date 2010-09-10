@@ -49,6 +49,8 @@
 
 #include <widget/imwidget.h>
 
+#include <eel-gconf-extensions.h>
+
 #define DEFAULT_DBUS_TIMEOUT 30000
 
 DBusGConnection * connection;
@@ -144,13 +146,17 @@ incoming_message_cb (DBusGProxy *proxy UNUSED, const gchar* callID UNUSED, const
 
         /* Make the instant messaging main window pops, add messages only if the main window exist.
            Elsewhere the message is displayed asynchronously*/
-        if (im_widget_display (& (call->_im_widget), msg, call->_callID, from))
-            im_widget_add_message (call->_im_widget, from, msg, 0);
+        IMWidget *widget = IM_WIDGET (call->_im_widget);
+
+        if (im_widget_display (&widget, msg, call->_callID, from))
+            im_widget_add_message (IM_WIDGET (call->_im_widget), from, msg, 0);
     } else if (conf) {
         /* Make the instant messaging main window pops, add messages only if the main window exist.
            Elsewhere the message is displayed asynchronously*/
-        if (im_widget_display (& (conf->_im_widget), msg, conf->_confID, from))
-            im_widget_add_message (conf->_im_widget, from, msg, 0);
+        IMWidget *widget = IM_WIDGET (conf->_im_widget);
+
+        if (im_widget_display (&widget, msg, conf->_confID, from))
+            im_widget_add_message (IM_WIDGET (conf->_im_widget), from, msg, 0);
     } else {
         ERROR ("Message received, but no recipient found");
     }
@@ -267,10 +273,10 @@ conference_changed_cb (DBusGProxy *proxy UNUSED, const gchar* confID,
             call = calllist_get (current_calls, call_id);
 
             if (call && call->_im_widget)
-                im_widget_update_state (call->_im_widget, TRUE);
+                im_widget_update_state (IM_WIDGET (call->_im_widget), TRUE);
         }
 
-        new_participants = (gchar**) dbus_get_participant_list (changed_conf->_confID);
+        new_participants = (gchar **) dbus_get_participant_list (changed_conf->_confID);
 
         // update conferece participants
         conference_participant_list_update (new_participants, changed_conf);
@@ -283,7 +289,7 @@ conference_changed_cb (DBusGProxy *proxy UNUSED, const gchar* confID,
             call = calllist_get (current_calls, call_id);
 
             if (call && call->_im_widget)
-                im_widget_update_state (call->_im_widget, FALSE);
+                im_widget_update_state (IM_WIDGET (call->_im_widget), FALSE);
         }
 
         // add new conference to calltree
@@ -338,7 +344,7 @@ conference_removed_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
 
     // deactivate instant messaging window for this conference
     if (c->_im_widget)
-        im_widget_update_state (c->_im_widget, FALSE);
+        im_widget_update_state (IM_WIDGET (c->_im_widget), FALSE);
 
     // remove all participant for this conference
     while (participant) {
@@ -355,7 +361,7 @@ conference_removed_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
 
             // if an instant messaging was previously disabled, enabled it
             if (call->_im_widget)
-                im_widget_update_state (call->_im_widget, TRUE);
+                im_widget_update_state (IM_WIDGET (call->_im_widget), TRUE);
         }
 
         participant = conference_next_participant (participant);

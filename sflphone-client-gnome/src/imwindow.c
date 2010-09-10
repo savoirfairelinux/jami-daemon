@@ -43,7 +43,7 @@
 GtkWidget *im_window = NULL;
 GtkWidget *im_notebook = NULL;
 
-static gboolean window_configure_cb (GtkWidget *win, GdkEventConfigure *event)
+static gboolean window_configure_cb (GtkWidget *wini UNUSED, GdkEventConfigure *event)
 {
     int pos_x, pos_y;
 
@@ -69,7 +69,7 @@ on_delete (GtkWidget * widget UNUSED, gpointer data UNUSED)
 }
 
 static void
-on_switch_page (GtkNotebook *notebook, GtkNotebookPage *page, guint page_num, gpointer userdata)
+on_switch_page (GtkNotebook *notebook, GtkNotebookPage *page UNUSED, guint page_num, gpointer userdata UNUSED)
 {
     guint index = gtk_notebook_get_current_page (GTK_NOTEBOOK (notebook));
 
@@ -86,9 +86,6 @@ static void
 im_window_init()
 {
     const char *window_title = "SFLphone IM Client";
-    gchar *path;
-    GError *error = NULL;
-    gboolean ret;
     int width, height, position_x, position_y;
 
     // Get configuration stored in gconf
@@ -157,11 +154,11 @@ im_window_add (GtkWidget *widget)
         /* Show it all */
         gtk_widget_show_all (im_window);
     } else
-        error ("Could not create the main instant messaging window");
+        ERROR ("Could not create the main instant messaging window");
 }
 
 static void
-close_tab_cb (GtkButton *button, gpointer userdata)
+close_tab_cb (GtkButton *button UNUSED, gpointer userdata)
 {
     /* We want here to close the current tab */
     im_window_remove_tab (GTK_WIDGET (userdata));
@@ -187,8 +184,10 @@ im_window_add_tab (GtkWidget *widget)
 
     if (im_widget_call)
         tab_Label = gtk_label_new (get_peer_information (im_widget_call));
-    else
+    else if (im_widget_conf)
         tab_Label = gtk_label_new ("Conferencing");
+    else
+        tab_Label = gtk_label_new ("");
 
     GtkWidget *tab_CloseButton = gtk_button_new ();
 
