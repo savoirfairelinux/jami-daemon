@@ -37,6 +37,8 @@
 #include "eventthread.h"
 #include <alsa/asoundlib.h>
 
+// #include <fstream>
+
 class RingBuffer;
 class ManagerImpl;
 
@@ -349,6 +351,8 @@ class AlsaLayer : public AudioLayer
 
         /** Sample rate converter object */
         SamplerateConverter* _converter;
+
+        // ofstream *captureFile;
 
 };
 

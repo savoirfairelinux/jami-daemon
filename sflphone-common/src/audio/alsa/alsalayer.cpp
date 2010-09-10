@@ -64,6 +64,9 @@ AlsaLayer::AlsaLayer (ManagerImpl* manager)
 
     AudioLayer::_echocancelstate = true;
     AudioLayer::_noisesuppressstate = true;
+
+    // captureFile = new ofstream ("probeFile", ofstream::binary);
+
 }
 
 // Destructor
@@ -76,6 +79,9 @@ AlsaLayer::~AlsaLayer (void)
         delete _converter;
         _converter = NULL;
     }
+
+    // captureFile->close();
+    // delete captureFile;
 }
 
 bool
@@ -94,6 +100,7 @@ AlsaLayer::closeLayer()
         _debugException ("Audio: Exception: when stopping audiortp");
         throw;
     }
+
 
     /* Then close the audio devices */
     closeCaptureStream();
@@ -934,6 +941,7 @@ void AlsaLayer::audioCallback (void)
         // Urgent data (dtmf, incoming call signal) come first.
         toGet = (urgentAvailBytes < (int) (playbackAvailBytes)) ? urgentAvailBytes : playbackAvailBytes;
         out = (SFLDataFormat*) malloc (toGet);
+        memset (out, 0, toGet);
 
         if (out) {
             _urgentRingBuffer.Get (out, toGet, spkrVolume);
@@ -953,6 +961,7 @@ void AlsaLayer::audioCallback (void)
         if (tone && (normalAvailBytes <= 0)) {
 
             out = (SFLDataFormat *) malloc (playbackAvailBytes);
+            memset (out, 0, playbackAvailBytes);
 
             if (out) {
                 tone->getNext (out, playbackAvailSmpl, spkrVolume);
@@ -965,6 +974,7 @@ void AlsaLayer::audioCallback (void)
         } else if (file_tone && !_RingtoneHandle && (normalAvailBytes <= 0)) {
 
             out = (SFLDataFormat *) malloc (playbackAvailBytes);
+            memset (out, 0, playbackAvailBytes);
 
             if (out) {
                 file_tone->getNext (out, playbackAvailSmpl, spkrVolume);
@@ -996,6 +1006,7 @@ void AlsaLayer::audioCallback (void)
             toGet = (normalAvailBytes < (int) maxNbBytesToGet) ? normalAvailBytes : maxNbBytesToGet;
 
             out = (SFLDataFormat*) malloc (maxNbBytesToGet);
+            memset (out, 0, maxNbBytesToGet);
 
             if (normalAvailBytes) {
 
@@ -1012,6 +1023,8 @@ void AlsaLayer::audioCallback (void)
 
                     if (rsmpl_out) {
                         rsmpl_out = (SFLDataFormat*) malloc (playbackAvailBytes);
+                        memset (out, 0, playbackAvailBytes);
+
                         int nbSample = _converter->upsampleData ( (SFLDataFormat*) out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_down);
                         write (rsmpl_out, nbSample*sizeof (SFLDataFormat), _PlaybackHandle);
                         free (rsmpl_out);
@@ -1139,6 +1152,7 @@ void AlsaLayer::audioCallback (void)
 
                     if (filter_out) {
                         _audiofilter->processAudio (in, filter_out, toPut);
+                        // captureFile->write ( (const char *) filter_out, toPut);
                         // int sampleready = AudioLayer::_echoCanceller->processAudio (filter_out, echoCancelledMic, toPut);
                         // getMainBuffer()->putData (echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);
                         getMainBuffer()->putData (filter_out, toPut, 100);
