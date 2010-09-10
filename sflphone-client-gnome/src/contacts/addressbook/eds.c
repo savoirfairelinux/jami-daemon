@@ -548,7 +548,8 @@ fill_books_data ()
             book_data->name = g_strdup (e_source_peek_name (source));
             book_data->uid = g_strdup (e_source_peek_uid (source));
 
-            gchar *prop = e_source_get_property (source, "default");
+            const gchar *property_name = "default";
+            const gchar *prop = e_source_get_property (source, property_name);
 
             if (prop)
                 if (strcmp (prop, "true") == 0)

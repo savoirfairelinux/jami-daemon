@@ -51,7 +51,7 @@
 #include <sys/ioctl.h>
 #include <linux/if.h>
 
-
+#include <widget/imwidget.h>
 
 GHashTable * ip2ip_profile=NULL;
 
@@ -200,7 +200,7 @@ sflphone_hung_up (callable_obj_t * c)
     update_actions();
 
     /* Update the IM interface */
-    im_widget_update_state (c->_im_widget, FALSE);
+    im_widget_update_state (IM_WIDGET (c->_im_widget), FALSE);
 
 #if GTK_CHECK_VERSION(2,10,0)
     status_tray_icon_blink (FALSE);
@@ -380,7 +380,7 @@ sflphone_hang_up()
                 call_remove_all_errors (selectedCall);
                 selectedCall->_state = CALL_STATE_DIALING;
                 set_timestamp (&selectedCall->_time_stop);
-                im_widget_update_state (selectedCall->_im_widget, FALSE);
+                im_widget_update_state (IM_WIDGET (selectedCall->_im_widget), FALSE);
                 break;
             case CALL_STATE_FAILURE:
                 dbus_hang_up (selectedCall);
@@ -404,7 +404,7 @@ sflphone_hang_up()
                 break;
         }
     } else if (selectedConf) {
-        im_widget_update_state (selectedConf->_im_widget, FALSE);
+        im_widget_update_state (IM_WIDGET (selectedConf->_im_widget), FALSE);
         dbus_hang_up_conference (selectedConf);
     }
 
@@ -973,6 +973,10 @@ sflphone_detach_participant (const gchar* callID)
             selectedCall->_confID = NULL;
         }
 
+        // Instant messaging widget should have been deactivated during the conference
+        if (selectedCall->_im_widget)
+            im_widget_update_state (IM_WIDGET (selectedCall->_im_widget), TRUE);
+
         calltree_remove_call (current_calls, selectedCall, NULL);
         calltree_add_call (current_calls, selectedCall, NULL);
         dbus_detach_participant (selectedCall->_callID);
@@ -984,6 +988,10 @@ sflphone_detach_participant (const gchar* callID)
             g_free (selectedCall->_confID);
             selectedCall->_confID = NULL;
         }
+
+        // Instant messagin widget should have been deactivated during the conference
+        if (selectedCall->_im_widget)
+            im_widget_update_state (IM_WIDGET (selectedCall->_im_widget), TRUE);
 
         calltree_remove_call (current_calls, selectedCall, NULL);
         calltree_add_call (current_calls, selectedCall, NULL);

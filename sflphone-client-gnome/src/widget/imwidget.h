@@ -82,7 +82,7 @@ struct _IMWidgetClass {
 @param          The first message sender, could be different of call id for conferences
 @return         TRUE if window is already created, FALSE elsewhere
  */
-gboolean im_widget_display (IMWidget**, gchar*, gchar*, gchar*);
+gboolean im_widget_display (IMWidget**, const gchar*, const gchar*, const gchar*);
 
 GType im_widget_get_type (void) G_GNUC_CONST;
 
@@ -94,7 +94,7 @@ GtkWidget *im_widget_new ();
 /*! @function
 @abstract 	Create a new widget with first_message
 */
-GtkWidget *im_widget_new_with_first_message (gchar *message);
+GtkWidget *im_widget_new_with_first_message (const gchar *message);
 
 
 /*! @function

@@ -121,6 +121,8 @@ void save_configuration_parameters (void);
 
 void history_load_configuration (void);
 
+void instant_messaging_load_configuration (void);
+
 GtkTreeModel* createModel();
 
 #endif

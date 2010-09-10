@@ -40,7 +40,7 @@
 #include <history.h>
 #include "uimanager.h"
 #include "actions.h"
-#include <imwindow.h>
+#include "imwindow.h"
 
 GtkWidget *sw;
 GtkCellRenderer *rend;
