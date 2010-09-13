@@ -40,7 +40,7 @@ class InstantMessageException : public std::exception
         virtual ~InstantMessageException() throw() {}
 
         virtual const char *what() const throw() {
-            std::string expt ("YamlParserException occured: ");
+            std::string expt ("InstantMessageException occured: ");
             expt.append (errstr);
 
             return expt.c_str();

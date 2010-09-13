@@ -266,11 +266,11 @@ void InstantMessagingTest::testXmlUriListParsing ()
 void InstantMessagingTest::testGetTextArea ()
 {
 
-    std::string formatedText = "--boundary\n Content-Type: text/plain\n\n";
+    std::string formatedText = "--boundary Content-Type: text/plain";
     formatedText.append ("Here is the text area");
 
-    formatedText.append ("\n--boundary\nContent-Type: application/resource-lists+xml\n");
-    formatedText.append ("Content-Disposition: recipient-list\n\n");
+    formatedText.append ("--boundary Content-Type: application/resource-lists+xml");
+    formatedText.append ("Content-Disposition: recipient-list");
     formatedText.append ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
     formatedText.append ("<resource-lists xmlns=\"urn:ietf:params:xml:ns:resource-lists\" xmlns:cp=\"urn:ietf:params:xml:ns:copycontrol\">");
     formatedText.append ("<list>");
@@ -282,19 +282,19 @@ void InstantMessagingTest::testGetTextArea ()
 
     std::string message = _im->findTextMessage(formatedText);
 
-    CPPUNIT_ASSERT(message == "Here is the text area");
+    std::cout << "message " << message << std::endl;
 
-    std::cout << "message: " << message << std::endl;
+    CPPUNIT_ASSERT(message == "Here is the text area");
 }
 
 
 void InstantMessagingTest::testGetUriListArea ()
 {
-    std::string formatedText = "--boundary\n Content-Type: text/plain\n\n";
+    std::string formatedText = "--boundary Content-Type: text/plain";
     formatedText.append ("Here is the text area");
 
-    formatedText.append ("\n--boundary\nContent-Type: application/resource-lists+xml\n");
-    formatedText.append ("Content-Disposition: recipient-list\n\n");
+    formatedText.append ("--boundary Content-Type: application/resource-lists+xml");
+    formatedText.append ("Content-Disposition: recipient-list");
     formatedText.append ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
     formatedText.append ("<resource-lists xmlns=\"urn:ietf:params:xml:ns:resource-lists\" xmlns:cp=\"urn:ietf:params:xml:ns:copycontrol\">");
     formatedText.append ("<list>");
@@ -334,11 +334,11 @@ void InstantMessagingTest::testIllFormatedMessage ()
     bool exceptionCaught = false;
 
     // SHOULD BE: Content-Type: text/plain
-    std::string formatedText = "--boundary\n Content-Ty\n\n";
+    std::string formatedText = "--boundary Content-Ty";
     formatedText.append ("Here is the text area");
 
-    formatedText.append ("\n--boundary\nContent-Type: application/resource-lists+xml\n");
-    formatedText.append ("Content-Disposition: recipient-list\n\n");
+    formatedText.append ("--boundary Content-Type: application/resource-lists+xml");
+    formatedText.append ("Content-Disposition: recipient-list");
     formatedText.append ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
     formatedText.append ("<resource-lists xmlns=\"urn:ietf:params:xml:ns:resource-lists\" xmlns:cp=\"urn:ietf:params:xml:ns:copycontrol\">");
     formatedText.append ("<list>");

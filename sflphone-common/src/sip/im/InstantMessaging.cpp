@@ -325,7 +325,7 @@ std::string InstantMessaging::findTextUriList (std::string& text)
         throw InstantMessageException ("Could not find Content-Disposition tag while parsing sip message for recipient-list");
 
     // xml content start after content disposition tag (plus \n\n)
-    begin = pos+cdispo.size() +2;
+    begin = pos+cdispo.size();
 
     // find final boundary
     if ( (end = text.find (boundary, begin)) == std::string::npos)
@@ -348,13 +348,13 @@ std::string InstantMessaging::findTextMessage (std::string& text)
         throw InstantMessageException ("Could not find Content-Type tag while parsing sip message for text");
 
     // plain text content start after content type tag (plus \n\n)
-    begin = pos+ctype.size() +2;
+    begin = pos+ctype.size();
 
     // retrive end of the text content
     if ( (end = text.find (boundary, begin)) == std::string::npos)
         throw InstantMessageException ("Could not find end of text \"boundary\" while parsing sip message for text");
 
-    return text.substr (begin, end-begin-1);
+    return text.substr (begin, end-begin);
 }
 
 
