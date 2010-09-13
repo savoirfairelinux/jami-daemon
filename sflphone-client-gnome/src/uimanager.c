@@ -576,21 +576,14 @@ call_im (void* foo UNUSED)
 
     if (calltab_get_selected_type (current_calls) == A_CALL) {
 
-        IMWidget *widget;
-
         if (selectedCall) {
-            widget = IM_WIDGET (selectedCall->_im_widget);
-            im_widget_display (&widget, NULL, selectedCall->_callID, NULL);
+            im_widget_display ( (IMWidget **) (&selectedCall->_im_widget), NULL, selectedCall->_callID, NULL);
         } else {
             WARN ("Sorry. Instant messaging is not allowed outside a call\n");
         }
     } else {
-
-        IMWidget *widget;
-
         if (selectedConf) {
-            widget = IM_WIDGET (selectedConf->_im_widget);
-            im_widget_display (&widget, NULL, selectedConf->_confID, NULL);
+            im_widget_display ( (IMWidget **) (&selectedConf->_im_widget), NULL, selectedConf->_confID, NULL);
         } else {
             WARN ("Sorry. Instant messaging is not allowed outside a call\n");
         }
