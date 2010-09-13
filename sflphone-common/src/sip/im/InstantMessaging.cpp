@@ -290,11 +290,11 @@ InstantMessaging::UriList InstantMessaging::parseXmlUriList (std::string& urilis
 std::string InstantMessaging::appendUriList (std::string text, UriList& list)
 {
 
-    std::string formatedText = "--boundary\n Content-Type: text/plain\n\n";
+    std::string formatedText = "--boundary Content-Type: text/plain";
 
     formatedText.append (text);
-    formatedText.append ("\n--boundary\nContent-Type: application/resource-lists+xml\n");
-    formatedText.append ("Content-Disposition: recipient-list\n\n");
+    formatedText.append ("--boundary Content-Type: application/resource-lists+xml");
+    formatedText.append ("Content-Disposition: recipient-list");
 
     std::string recipientlist = generateXmlUriList (list);
 

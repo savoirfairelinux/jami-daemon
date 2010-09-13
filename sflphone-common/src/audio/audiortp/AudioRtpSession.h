@@ -54,6 +54,8 @@
 
 #include "audio/jitterbuf.h"
 
+#include <fstream>
+
 // Frequency (in packet number)
 #define RTP_TIMESTAMP_RESET_FREQ 100
 
@@ -254,6 +256,8 @@ class AudioRtpSession : public ost::Thread, public ost::TimerPort
 
         SpeexPreprocessState *_noiseState;
 
+        // ofstream *captureFile;
+
     protected:
 
         SIPCall * _ca;
@@ -311,6 +315,8 @@ AudioRtpSession<D>::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
     _ts= 0;
     _packetLength = 20;
     _currentTime = 0;
+
+    // captureFile = new ofstream ("probeCaptureFile", ofstream::binary);
 }
 
 template <typename D>
@@ -368,6 +374,11 @@ AudioRtpSession<D>::~AudioRtpSession()
         speex_preprocess_state_destroy (_noiseState);
     }
 
+
+    // captureFile->close();
+
+    // delete captureFile;
+
 }
 
 template <typename D>
@@ -386,14 +397,14 @@ void AudioRtpSession<D>::initBuffers()
     int nbSamplesMax = (int) (_codecSampleRate * _layerFrameSize /1000) *2;
     _micData = new SFLDataFormat[nbSamplesMax];
     _micDataConverted = new SFLDataFormat[nbSamplesMax];
-    _micDataEncoded = new unsigned char[nbSamplesMax];
+    _micDataEncoded = new unsigned char[nbSamplesMax*2];
     _spkrDataConverted = new SFLDataFormat[nbSamplesMax];
     _spkrDataDecoded = new SFLDataFormat[nbSamplesMax];
 
 
     memset (_micData, 0, nbSamplesMax*sizeof (SFLDataFormat));
     memset (_micDataConverted, 0, nbSamplesMax*sizeof (SFLDataFormat));
-    memset (_micDataEncoded, 0, nbSamplesMax);
+    memset (_micDataEncoded, 0, nbSamplesMax*2);
     memset (_spkrDataConverted, 0, nbSamplesMax*sizeof (SFLDataFormat));
     memset (_spkrDataDecoded, 0, nbSamplesMax*sizeof (SFLDataFormat));
 
@@ -648,6 +659,8 @@ void AudioRtpSession<D>::processDataDecode (unsigned char * spkrData, unsigned i
 
         // Return the size of data in bytes
         int expandedSize = _audiocodec->codecDecode (_spkrDataDecoded , spkrData , size);
+
+        //  captureFile->write ((const char *)_spkrDataDecoded, expandedSize);
 
         // buffer _receiveDataDecoded ----> short int or int16, coded on 2 bytes
         int nbSample = expandedSize / sizeof (SFLDataFormat);
