@@ -130,7 +130,10 @@ incoming_message_cb (DBusGProxy *proxy UNUSED, const gchar* callID UNUSED, const
     conference_obj_t *conf = NULL;
 
     // do not display message if instant messaging is disabled
-    gboolean instant_messaging_enabled = eel_gconf_get_integer (INSTANT_MESSAGING_ENABLED);
+    gboolean instant_messaging_enabled = TRUE;
+
+    if (eel_gconf_key_exists (INSTANT_MESSAGING_ENABLED))
+        instant_messaging_enabled = eel_gconf_get_integer (INSTANT_MESSAGING_ENABLED);
 
     if (!instant_messaging_enabled)
         return;

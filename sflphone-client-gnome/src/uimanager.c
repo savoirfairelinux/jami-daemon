@@ -191,7 +191,10 @@ update_actions()
     callable_obj_t * selectedCall = calltab_get_selected_call (active_calltree);
     conference_obj_t * selectedConf = calltab_get_selected_conf (active_calltree);
 
-    gboolean instant_messaging_enabled = eel_gconf_get_integer (INSTANT_MESSAGING_ENABLED);
+    gboolean instant_messaging_enabled = TRUE;
+
+    if (eel_gconf_key_exists (INSTANT_MESSAGING_ENABLED))
+        instant_messaging_enabled = eel_gconf_get_integer (INSTANT_MESSAGING_ENABLED);
 
     if (selectedCall) {
         // update icon in systray
@@ -1238,18 +1241,28 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
         }
 
         if (im) {
-            menu_items = gtk_separator_menu_item_new();
-            gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-            gtk_widget_show (menu_items);
 
-            menu_items = gtk_image_menu_item_new_with_mnemonic (_ ("Send _message"));
-            image = gtk_image_new_from_stock (GTK_STOCK_IM, GTK_ICON_SIZE_MENU);
-            gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (menu_items), image);
-            gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-            g_signal_connect (G_OBJECT (menu_items), "activate",
-                              G_CALLBACK (call_im),
-                              NULL);
-            gtk_widget_show (menu_items);
+            // do not display message if instant messaging is disabled
+            gboolean instant_messaging_enabled = TRUE;
+
+            if (eel_gconf_key_exists (INSTANT_MESSAGING_ENABLED))
+                instant_messaging_enabled = eel_gconf_get_integer (INSTANT_MESSAGING_ENABLED);
+
+            if (instant_messaging_enabled) {
+
+                menu_items = gtk_separator_menu_item_new();
+                gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+                gtk_widget_show (menu_items);
+
+                menu_items = gtk_image_menu_item_new_with_mnemonic (_ ("Send _message"));
+                image = gtk_image_new_from_stock (GTK_STOCK_IM, GTK_ICON_SIZE_MENU);
+                gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (menu_items), image);
+                gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+                g_signal_connect (G_OBJECT (menu_items), "activate",
+                                  G_CALLBACK (call_im),
+                                  NULL);
+                gtk_widget_show (menu_items);
+            }
         }
 
     } else {
