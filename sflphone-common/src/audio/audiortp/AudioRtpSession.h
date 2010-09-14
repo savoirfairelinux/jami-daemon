@@ -81,6 +81,7 @@ typedef struct DtmfEvent {
 
 typedef list<DtmfEvent *> EventQueue;
 
+
 template <typename D>
 class AudioRtpSession : public ost::Thread, public ost::TimerPort
 {
@@ -123,17 +124,50 @@ class AudioRtpSession : public ost::Thread, public ost::TimerPort
 
     private:
 
+        /**
+         * Allocate memory for RTP buffers and fill them with zeros
+         */
         void initBuffers (void);
 
+        /**
+         * Set RTP Sockets send/receive timeouts
+         */
         void setSessionTimeouts (void);
+
+        /**
+         * Set the audio codec for this RTP session
+         */
         void setSessionMedia (AudioCodec*);
+
+        /**
+         * Retreive destination address for this session. Stored in CALL
+         */
         void setDestinationIpAddress (void);
 
+        /**
+         * Encode audio data from mainbuffer
+         */
         int processDataEncode (void);
+
+        /**
+         * Decode audio data received from peer
+         */
         void processDataDecode (unsigned char * spkrData, unsigned int size);
 
+        /**
+         * Send encoded data to peer
+         */
         void sendMicData();
+
+        /**
+         * Receive data from peer
+         */
         void receiveSpeakerData ();
+
+        /**
+        * Ramp In audio data to avoid audio click from peer
+        */
+        bool fadeIn (SFLDataFormat *audio, int size, SFLDataFormat *factor);
 
         ost::Time * _time;
 
@@ -254,9 +288,31 @@ class AudioRtpSession : public ost::Thread, public ost::TimerPort
          */
         int _currentTime;
 
+        /**
+         * Preprocess internal data
+         */
         SpeexPreprocessState *_noiseState;
 
-        // ofstream *captureFile;
+        /**
+         * State of mic fade in
+         */
+        bool _micFadeInComplete;
+
+        /**
+           * State of spkr fade in
+         */
+        bool _spkrFadeInComplete;
+
+        /**
+         * Ampliturde factor to fade in mic data
+         */
+        SFLDataFormat _micAmplFactor;
+
+        /**
+         * Amplitude factor to fade in spkr data
+         */
+        SFLDataFormat _spkrAmplFactor;
+
 
     protected:
 
@@ -288,6 +344,10 @@ AudioRtpSession<D>::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
         _countNotificationTime (0),
         _jbuffer (NULL),
         _noiseState (NULL),
+        _micFadeInComplete (false),
+        _spkrFadeInComplete (false),
+        _micAmplFactor (32000),
+        _spkrAmplFactor (32000),
         _ca (sipcall)
 {
     setCancel (cancelDefault);
@@ -316,7 +376,6 @@ AudioRtpSession<D>::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
     _packetLength = 20;
     _currentTime = 0;
 
-    // captureFile = new ofstream ("probeCaptureFile", ofstream::binary);
 }
 
 template <typename D>
@@ -373,11 +432,6 @@ AudioRtpSession<D>::~AudioRtpSession()
     if (_noiseState) {
         speex_preprocess_state_destroy (_noiseState);
     }
-
-
-    // captureFile->close();
-
-    // delete captureFile;
 
 }
 
@@ -624,6 +678,12 @@ int AudioRtpSession<D>::processDataEncode (void)
     // Get bytes from micRingBuffer to data_from_mic
     int nbSample = _manager->getAudioDriver()->getMainBuffer()->getData (_micData , bytesAvail, 100, _ca->getCallId()) / sizeof (SFLDataFormat);
 
+    if (!_micFadeInComplete)
+        _micFadeInComplete = fadeIn (_micData, nbSample, &_micAmplFactor);
+
+    if (nbSample == 0)
+        return nbSample;
+
     // nb bytes to be sent over RTP
     int compSize = 0;
 
@@ -635,14 +695,15 @@ int AudioRtpSession<D>::processDataEncode (void)
 
         nbSample = _converter->downsampleData (_micData , _micDataConverted , _audiocodec->getClockRate(), _mainBufferSampleRate, nb_sample_up);
 
-        compSize = _audiocodec->codecEncode (_micDataEncoded, _micDataConverted, nbSample*sizeof (int16));
+        compSize = _audiocodec->codecEncode (_micDataEncoded, _micDataConverted, nbSample*sizeof (SFLDataFormat));
 
     } else {
 
         _nSamplesMic = nbSample;
 
         // no resampling required
-        compSize = _audiocodec->codecEncode (_micDataEncoded, _micData, nbSample*sizeof (int16));
+        compSize = _audiocodec->codecEncode (_micDataEncoded, _micData, nbSample*sizeof (SFLDataFormat));
+
     }
 
     return compSize;
@@ -651,7 +712,6 @@ int AudioRtpSession<D>::processDataEncode (void)
 template <typename D>
 void AudioRtpSession<D>::processDataDecode (unsigned char * spkrData, unsigned int size)
 {
-
     if (_audiocodec != NULL) {
 
 
@@ -660,10 +720,11 @@ void AudioRtpSession<D>::processDataDecode (unsigned char * spkrData, unsigned i
         // Return the size of data in bytes
         int expandedSize = _audiocodec->codecDecode (_spkrDataDecoded , spkrData , size);
 
-        //  captureFile->write ((const char *)_spkrDataDecoded, expandedSize);
-
         // buffer _receiveDataDecoded ----> short int or int16, coded on 2 bytes
         int nbSample = expandedSize / sizeof (SFLDataFormat);
+
+        if (!_spkrFadeInComplete)
+            _spkrFadeInComplete = fadeIn (_spkrDataDecoded, nbSample, &_spkrAmplFactor);
 
         // test if resampling is required
         if (_audiocodec->getClockRate() != _mainBufferSampleRate) {
@@ -764,34 +825,40 @@ void AudioRtpSession<D>::receiveSpeakerData ()
 
     unsigned char* spkrDataIn = NULL;
     unsigned int size = 0;
-    int result;
-
-    jb_frame frame;
-
-    _jbuffer->info.conf.resync_threshold = 0;
 
     if (adu) {
 
         spkrDataIn  = (unsigned char*) adu->getData(); // data in char
         size = adu->getSize(); // size in char
 
-        result = jb_put (_jbuffer, spkrDataIn, JB_TYPE_VOICE, _packetLength, _ts+=20, _currentTime);
-
     } else {
         _debug ("No RTP packet available !!!!!!!!!!!!!!!!!!!!!!!\n");
     }
 
-    result = jb_get (_jbuffer, &frame, _currentTime+=20, _packetLength);
-
     // DTMF over RTP, size must be over 4 in order to process it as voice data
     if (size > 4) {
         processDataDecode (spkrDataIn, size);
-        //if(result == JB_OK) {
-        //   processDataDecode((unsigned char *)(frame.data), 160);
-        //}
     }
 
     delete adu;
+}
+
+template <typename D>
+bool AudioRtpSession<D>::fadeIn (SFLDataFormat *audio, int size, SFLDataFormat *factor)
+{
+
+    // apply amplitude factor;
+    while (size) {
+        size--;
+        audio[size] /= *factor;
+    }
+
+    *factor /= 2;
+
+    if (*factor == 0)
+        return true;
+
+    return false;
 }
 
 template <typename D>
@@ -834,6 +901,8 @@ void AudioRtpSession<D>::run ()
 
 
     _debug ("RTP: Entering mainloop for call %s",_ca->getCallId().c_str());
+
+    _manager->getAudioDriver()->getMainBuffer()->getInternalSamplingRate();
 
     while (!testCancel()) {
 
