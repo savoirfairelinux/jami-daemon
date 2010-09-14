@@ -59,6 +59,9 @@
 // Frequency (in packet number)
 #define RTP_TIMESTAMP_RESET_FREQ 100
 
+// Factor use to increase volume in fade in
+#define FADEIN_STEP_SIZE 4;
+
 namespace sfl
 {
 
@@ -853,8 +856,10 @@ bool AudioRtpSession<D>::fadeIn (SFLDataFormat *audio, int size, SFLDataFormat *
         audio[size] /= *factor;
     }
 
-    *factor /= 2;
+    // decrease factor
+    *factor /= FADEIN_STEP_SIZE;
 
+    // if factor reach 0, thsi function should no be called anymore
     if (*factor == 0)
         return true;
 
