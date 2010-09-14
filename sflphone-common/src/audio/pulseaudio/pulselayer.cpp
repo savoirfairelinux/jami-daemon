@@ -649,8 +649,6 @@ int PulseLayer::canGetMic()
 
 void PulseLayer::startStream (void)
 {
-    if (_audiofilter)
-        _audiofilter->resetAlgorithm();
 
     if (_echoCanceller)
         _echoCanceller->resetAlgorithm();
