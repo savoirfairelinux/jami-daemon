@@ -275,11 +275,6 @@ class AudioRtpSession : public ost::Thread, public ost::TimerPort
         EventQueue _eventQueue;
 
         /**
-         * Adaptive jitter buffer
-         */
-        jitterbuf * _jbuffer;
-
-        /**
          * Packet size in ms
          */
         int _packetLength;
@@ -345,7 +340,6 @@ AudioRtpSession<D>::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
         _timestampIncrement (0),
         _timestampCount (0),
         _countNotificationTime (0),
-        _jbuffer (NULL),
         _noiseState (NULL),
         _micFadeInComplete (false),
         _spkrFadeInComplete (false),
@@ -368,12 +362,6 @@ AudioRtpSession<D>::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
 
     _layerFrameSize = _audiolayer->getFrameSize(); // in ms
     _layerSampleRate = _audiolayer->getSampleRate();
-
-    _jbuffer = jb_new();
-
-    _jbuffer->info.conf.max_jitterbuf = 1000;
-    _jbuffer->info.conf.target_extra = 100;
-    _jbuffer->info.silence_begin_ts = 0;
 
     _ts= 0;
     _packetLength = 20;
@@ -426,10 +414,6 @@ AudioRtpSession<D>::~AudioRtpSession()
     if (_audiocodec) {
         delete _audiocodec;
         _audiocodec = NULL;
-    }
-
-    if (_jbuffer) {
-        jb_destroy (_jbuffer);
     }
 
     if (_noiseState) {
