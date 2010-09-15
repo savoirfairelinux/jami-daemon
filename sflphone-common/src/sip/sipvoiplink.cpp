@@ -3118,6 +3118,23 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
         return;
     }
 
+    pjsip_hdr *allow_header = NULL;
+    std::string *allowed_options = NULL;
+
+    char header_buffer[500];
+
+    if (e->body.tsx_state.src.rdata->msg_info.msg)
+        allow_header = (pjsip_hdr *) pjsip_msg_find_hdr (e->body.tsx_state.src.rdata->msg_info.msg, PJSIP_H_ALLOW, NULL);
+
+    if (allow_header) {
+        allowed_options = new std::string (allow_header->name.ptr, allow_header->name.slen);
+        allow_header->vptr->print_on (allow_header, header_buffer, 5000);
+        std::string theHeader (header_buffer);
+    }
+
+    if (allowed_options)
+        delete allowed_options;
+
     // If this is an outgoing INVITE that was created because of
     // REFER/transfer, send NOTIFY to transferer.
     if (call->getXferSub() && e->type==PJSIP_EVENT_TSX_STATE) {
