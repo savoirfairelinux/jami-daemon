@@ -144,6 +144,7 @@ pj_status_t InstantMessaging::send (pjsip_inv_session *session, CallID& id, cons
     // Get the dialog associated to the call
     dialog = session->dlg;
     // Convert the text into a format readable by pjsip
+
     message = pj_str ( (char*) text.c_str ());
 
     // Must lock dialog
@@ -157,21 +158,21 @@ pj_status_t InstantMessaging::send (pjsip_inv_session *session, CallID& id, cons
     tdata->msg->body = pjsip_msg_body_create (tdata->pool, &type, &subtype, &message);
 
     // Create the Require header to handle recipient-list Content-Disposition type
-    pjsip_generic_string_hdr reqhdr;
-    pj_str_t reqhname = pj_str ("Require");
-    pj_str_t reqhvalue = pj_str ("recipient-list");
+    // pjsip_generic_string_hdr reqhdr;
+    // pj_str_t reqhname = pj_str ("Require");
+    // pj_str_t reqhvalue = pj_str ("recipient-list");
 
     // Create the Content-Type header to handle multipart/mixed and boundary MIME types
-    pj_str_t ctype = pj_str ("Content-Type");
-    pj_str_t sctype = pj_str ("ctype"); // small version of the header name
+    // pj_str_t ctype = pj_str ("Content-Type");
+    // pj_str_t sctype = pj_str ("ctype"); // small version of the header name
     // ctypehdr = pjsip_msg_find_hdr_by_names (tdata->msg, &ctype, &sctype, NULL);
     // pjsip_generic_string_hdr ctypehdr;
     // pj_str_t ctypehname = pj_str ("Content-Type");
     // pj_str_t ctypehvalue = pj_str ("multipart/mixed;boundary=\"boundary\"");
 
     // Add headers to the message
-    pjsip_generic_string_hdr_init2 (&reqhdr, &reqhname, &reqhvalue);
-    pj_list_push_back (& (tdata->msg->hdr), (pjsip_hdr*) (&reqhdr));
+    // pjsip_generic_string_hdr_init2 (&reqhdr, &reqhname, &reqhvalue);
+    // pj_list_push_back (& (tdata->msg->hdr), (pjsip_hdr*) (&reqhdr));
     // pj_list_push_back (& (tdata->msg->hdr), (pjsip_hdr*) (&ctypehdr));
 
     // Send the request
