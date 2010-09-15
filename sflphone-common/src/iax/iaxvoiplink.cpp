@@ -51,19 +51,25 @@
 #define CHK_VALID_CALL   if (call == NULL) { _debug("IAX: Call doesn't exists"); \
 	return false; }
 
-IAXVoIPLink::IAXVoIPLink (const AccountID& accountID)
-        : VoIPLink (accountID)
+IAXVoIPLink::IAXVoIPLink (const AccountID& accountID) : VoIPLink (accountID)
+        , _evThread (NULL)
+        , _regSession (NULL)
+        , _nextRefreshStamp (0)
+        , audiolayer (NULL)
+        , micData (NULL)
+        , micDataConverted (NULL)
+        , micDataEncoded (NULL)
+        , spkrDataDecoded (NULL)
+        , spkrDataConverted (NULL)
+        , converter (NULL)
+        , converterSamplingRate (NULL)
+        , urlhook (NULL)
+        , countTime (0)
 {
-    // _debug("IAXVoIPLink::IAXVoIPLink : creating eventhread  ");
     _evThread = new EventThread (this);
-    _regSession = NULL;
-    _nextRefreshStamp = 0;
-    countTime = 0;
 
     // to get random number for RANDOM_PORT
     srand (time (NULL));
-
-    audiolayer = NULL;
 
     converter = new SamplerateConverter();
 
@@ -82,26 +88,46 @@ IAXVoIPLink::IAXVoIPLink (const AccountID& accountID)
 
 IAXVoIPLink::~IAXVoIPLink()
 {
-    delete _evThread;
-    _evThread = NULL;
+    if (_evThread) {
+        delete _evThread;
+        _evThread = NULL;
+    }
+
     _regSession = NULL; // shall not delete it
     terminate();
 
     audiolayer = NULL;
 
-    delete converter;
+    if (converter) {
+        delete converter;
+        converter = NULL;
+    }
 
-    delete [] micData;
-    micData = NULL;
-    delete [] micDataConverted;
-    micDataConverted = NULL;
-    delete [] micDataEncoded;
-    micDataEncoded = NULL;
+    if (micData) {
+        delete [] micData;
+        micData = NULL;
+    }
 
-    delete [] spkrDataDecoded;
-    spkrDataDecoded = NULL;
-    delete [] spkrDataConverted;
-    spkrDataConverted = NULL;
+    if (micDataConverted) {
+        delete [] micDataConverted;
+        micDataConverted = NULL;
+    }
+
+    if (micDataEncoded) {
+        delete [] micDataEncoded;
+        micDataEncoded = NULL;
+    }
+
+    if (spkrDataDecoded) {
+        delete [] spkrDataDecoded;
+        spkrDataDecoded = NULL;
+    }
+
+    if (spkrDataConverted) {
+        delete [] spkrDataConverted;
+        spkrDataConverted = NULL;
+    }
+
 }
 
 bool
@@ -253,12 +279,6 @@ IAXVoIPLink::getEvent()
     _mutexIAX.leaveMutex();
 
     sendAudioFromMic();
-
-    if (call) {
-        call->recAudio.recData (spkrDataDecoded, micData, nbSampleForRec_, nbSampleForRec_);
-
-        // Do the doodle-moodle to send audio from the microphone to the IAX channel.
-    }
 
     // Do the doodle-moodle to send audio from the microphone to the IAX channel.
     // sendAudioFromMic();
@@ -537,7 +557,7 @@ IAXVoIPLink::answer (const CallID& id)
 bool
 IAXVoIPLink::hangup (const CallID& id)
 {
-    _debug ("IAXVoIPLink::hangup() : function called once hangup ");
+    _debug ("IAXVoIPLink: Hangup");
     IAXCall* call = getIAXCall (id);
     std::string reason = "Dumped Call";
     CHK_VALID_CALL;
@@ -565,7 +585,7 @@ IAXVoIPLink::hangup (const CallID& id)
 bool
 IAXVoIPLink::peerHungup (const CallID& id)
 {
-    _debug ("IAXVoIPLink::peerHangup() : function called once hangup ");
+    _debug ("IAXVoIPLink: Peer hung up");
     IAXCall* call = getIAXCall (id);
     std::string reason = "Dumped Call";
     CHK_VALID_CALL;

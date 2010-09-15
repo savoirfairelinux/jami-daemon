@@ -3821,7 +3821,7 @@ void ManagerImpl::unloadAccountMap ()
 
     while (iter != _accountMap.end()) {
 
-        _debug ("Unloading account %s", iter->first.c_str());
+        _debug ("Manager: Unloading account %s", iter->first.c_str());
 
         delete iter->second;
         iter->second = NULL;
