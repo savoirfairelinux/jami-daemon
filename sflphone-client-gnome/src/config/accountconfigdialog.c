@@ -259,10 +259,13 @@ static GPtrArray* getNewCredential (GHashTable * properties)
 static void update_credential_cb (GtkWidget *widget, gpointer data UNUSED)
 {
     GtkTreeIter iter;
-    gtk_tree_model_get_iter_from_string ( (GtkTreeModel *) credentialStore, &iter, "0");
-    gint column = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (widget), "column"));
-    // g_print ("set password to %s\n", (gchar *) gtk_entry_get_text(GTK_ENTRY(widget)));
-    gtk_list_store_set (GTK_LIST_STORE (credentialStore), &iter, column, (gchar *) gtk_entry_get_text (GTK_ENTRY (widget)), -1);
+
+    if (credentialStore) {
+        gtk_tree_model_get_iter_from_string ( (GtkTreeModel *) credentialStore, &iter, "0");
+        gint column = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (widget), "column"));
+        // g_print ("set password to %s\n", (gchar *) gtk_entry_get_text(GTK_ENTRY(widget)));
+        gtk_list_store_set (GTK_LIST_STORE (credentialStore), &iter, column, (gchar *) gtk_entry_get_text (GTK_ENTRY (widget)), -1);
+    }
 }
 
 static GtkWidget* create_basic_tab (account_t **a)
