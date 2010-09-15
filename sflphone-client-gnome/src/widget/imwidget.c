@@ -107,6 +107,9 @@ im_widget_add_message (IMWidget *im, const gchar *from, const gchar *message, gi
         gchar *script = g_strdup_printf ("add_message('%s', '%s', '%s', '%s');", message_escaped, from, css_class, msgtime);
         webkit_web_view_execute_script (WEBKIT_WEB_VIEW (im->web_view), script);
 
+        /* Mark it as used */
+        im->containText = TRUE;
+
         /* Cleanup */
         g_free (script);
         g_free (message_escaped);
@@ -275,6 +278,8 @@ im_widget_init (IMWidget *im)
     im->js_global = JSContextGetGlobalObject (im->js_context);
     webkit_web_view_load_uri (WEBKIT_WEB_VIEW (im->web_view), "file://" DATA_DIR "/webkit/im/im.html");
 
+    im->containText = FALSE;
+
     g_signal_connect (G_OBJECT (im->web_frame), "notify", G_CALLBACK (on_frame_loading_done), im);
 }
 
@@ -437,7 +442,7 @@ call_state_image_widget (call_state_t state)
             image = gtk_image_new_from_stock (GTK_STOCK_IM, GTK_ICON_SIZE_LARGE_TOOLBAR);
             break;
         default:
-            image = gtk_image_new_from_stock (GTK_STOCK_FAIL, GTK_ICON_SIZE_LARGE_TOOLBAR);
+            image = gtk_image_new_from_stock (GTK_STOCK_IM, GTK_ICON_SIZE_LARGE_TOOLBAR);
             break;
 
     }

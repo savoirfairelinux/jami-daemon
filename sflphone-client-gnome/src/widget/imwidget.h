@@ -67,6 +67,7 @@ struct _IMWidget {
     WebKitWebFrame *web_frame;      // Our web frame
     JSGlobalContextRef js_context;  // The frame's global JS context
     JSObjectRef js_global;          // The frame's global context JS object
+    gboolean containText;
 };
 
 struct _IMWidgetClass {

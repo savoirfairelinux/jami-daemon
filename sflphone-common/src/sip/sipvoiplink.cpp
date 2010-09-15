@@ -3118,6 +3118,7 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
         return;
     }
 
+    /*
     pjsip_hdr *allow_header = NULL;
     std::string *allowed_options = NULL;
 
@@ -3134,6 +3135,7 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
 
     if (allowed_options)
         delete allowed_options;
+    */
 
     // If this is an outgoing INVITE that was created because of
     // REFER/transfer, send NOTIFY to transferer.

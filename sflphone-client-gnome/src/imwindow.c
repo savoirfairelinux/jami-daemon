@@ -138,6 +138,23 @@ im_window_get()
     return im_window;
 }
 
+
+gboolean
+im_window_is_active ()
+{
+
+    if (!im_window)
+        return FALSE;
+    else
+        return gtk_window_is_active (im_window);
+}
+
+gboolean
+im_window_is_visible ()
+{
+    return gtk_widget_get_visible (im_window);
+}
+
 void
 im_window_show ()
 {
@@ -155,6 +172,15 @@ im_window_add (GtkWidget *widget)
         gtk_widget_show_all (im_window);
     } else
         ERROR ("Could not create the main instant messaging window");
+}
+
+gint
+im_window_get_nb_tabs()
+{
+    if (im_notebook)
+        return gtk_notebook_get_n_pages (im_notebook);
+    else
+        return 0;
 }
 
 static void

@@ -60,6 +60,12 @@ void im_window_remove_tab (GtkWidget *widget);
 
 void im_window_show ();
 
+gboolean im_window_is_active (void);
+
+gboolean im_window_is_visible (void);
+
+gint im_window_get_nb_tab (void);
+
 /*! @function
 @abstract	Add a new tab in the notebook. Each tab is an IM Widget
 @param		The IM widget

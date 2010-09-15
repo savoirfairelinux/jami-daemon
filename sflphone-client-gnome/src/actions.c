@@ -52,6 +52,7 @@
 #include <linux/if.h>
 
 #include <widget/imwidget.h>
+#include <imwindow.h>
 
 GHashTable * ip2ip_profile=NULL;
 
@@ -199,8 +200,11 @@ sflphone_hung_up (callable_obj_t * c)
     call_remove_all_errors (c);
     update_actions();
 
-    /* Update the IM interface */
-    im_widget_update_state (IM_WIDGET (c->_im_widget), FALSE);
+    // test wether the widget contain text, if not remove it
+    if ( (im_window_get_nb_tabs() > 1) && c->_im_widget && ! (IM_WIDGET (c->_im_widget)->containText))
+        im_window_remove_tab (c->_im_widget);
+    else
+        im_widget_update_state (IM_WIDGET (c->_im_widget), FALSE);
 
 #if GTK_CHECK_VERSION(2,10,0)
     status_tray_icon_blink (FALSE);
@@ -380,7 +384,13 @@ sflphone_hang_up()
                 call_remove_all_errors (selectedCall);
                 selectedCall->_state = CALL_STATE_DIALING;
                 set_timestamp (&selectedCall->_time_stop);
+
+                //if ( (im_window_get_nb_tabs() > 1) && selectedCall->_im_widget &&
+                //        ! (IM_WIDGET (selectedCall->_im_widget)->containText))
+                //    im_window_remove_tab (selectedCall->_im_widget);
+                //else
                 im_widget_update_state (IM_WIDGET (selectedCall->_im_widget), FALSE);
+
                 break;
             case CALL_STATE_FAILURE:
                 dbus_hang_up (selectedCall);
@@ -437,10 +447,20 @@ sflphone_pick_up()
         switch (selectedCall->_state) {
             case CALL_STATE_DIALING:
                 sflphone_place_call (selectedCall);
+
+                // if instant messaging window is visible, create new tab (deleted automatically if not used)
+                if (im_window_is_visible())
+                    im_widget_display ( (IMWidget **) (&selectedCall->_im_widget), NULL, selectedCall->_callID, NULL);
+
                 break;
             case CALL_STATE_INCOMING:
                 selectedCall->_history_state = INCOMING;
                 calltree_update_call (history, selectedCall, NULL);
+
+                // if instant messaging window is visible, create new tab (deleted automatically if not used)
+                if (im_window_is_visible())
+                    im_widget_display ( (IMWidget **) (&selectedCall->_im_widget), NULL, selectedCall->_callID, NULL);
+
                 dbus_accept (selectedCall);
                 DEBUG ("from sflphone_pick_up : ");
                 stop_notification();
