@@ -141,7 +141,7 @@ im_window_get()
 void
 im_window_show ()
 {
-    gtk_widget_show (im_window_get ());
+    gtk_window_present (GTK_WINDOW (im_window_get ()));
 }
 
 void
