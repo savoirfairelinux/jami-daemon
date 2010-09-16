@@ -144,12 +144,6 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int indexRing, int sampleRate,
     // use 1 sec buffer for resampling
     _converter = new SamplerateConverter (_audioSampleRate, 1000);
 
-    AudioLayer::_echoCancel = new EchoCancel();
-    AudioLayer::_echoCanceller = new AudioProcessing (static_cast<Algorithm *> (_echoCancel));
-
-    AudioLayer::_echoCancel->setEchoCancelState (AudioLayer::_echocancelstate);
-    AudioLayer::_echoCancel->setNoiseSuppressState (AudioLayer::_noisesuppressstate);
-
     AudioLayer::_dcblocker = new DcBlocker();
     AudioLayer::_audiofilter = new AudioProcessing (static_cast<Algorithm *> (_dcblocker));
 
@@ -164,9 +158,6 @@ AlsaLayer::startStream (void)
 
     if (_audiofilter)
         _audiofilter->resetAlgorithm();
-
-    if (_echoCanceller)
-        _echoCanceller->resetAlgorithm();
 
     if (is_playback_running() && is_capture_running())
         return;
@@ -266,18 +257,12 @@ bool AlsaLayer::isCaptureActive (void)
 void AlsaLayer::setEchoCancelState (bool state)
 {
     // if a stream already running
-    if (AudioLayer::_echoCancel)
-        _echoCancel->setEchoCancelState (state);
-
     AudioLayer::_echocancelstate = state;
 }
 
 void AlsaLayer::setNoiseSuppressState (bool state)
 {
     // if a stream already opened
-    if (AudioLayer::_echoCancel)
-        _echoCancel->setNoiseSuppressState (state);
-
     AudioLayer::_noisesuppressstate = state;
 
 }
@@ -1012,10 +997,6 @@ void AlsaLayer::audioCallback (void)
 
                 getMainBuffer()->getData (out, toGet, spkrVolume);
 
-                // TODO: Audio processing should be performed inside mainbuffer
-                // to avoid such problem
-                AudioLayer::_echoCancel->setSamplingRate (_mainBufferSampleRate);
-
                 if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
 
                     // Do sample rate conversion
@@ -1037,9 +1018,6 @@ void AlsaLayer::audioCallback (void)
                     write (out, toGet, _PlaybackHandle);
 
                 }
-
-                // Copy far-end signal in echo canceller to adapt filter coefficient
-                // AudioLayer::_echoCanceller->putData (out, toGet);
 
             } else {
 
@@ -1105,8 +1083,6 @@ void AlsaLayer::audioCallback (void)
     int toPut;
 
     SFLDataFormat* in = NULL;
-    SFLDataFormat echoCancelledMic[5000];
-    memset (echoCancelledMic, 0, 5000);
 
     if (is_capture_running()) {
 
@@ -1136,11 +1112,7 @@ void AlsaLayer::audioCallback (void)
 
                     _audiofilter->processAudio (rsmpl_out, nbSample*sizeof (SFLDataFormat));
 
-                    // echo cancellation processing
-                    // int sampleready = AudioLayer::_echoCanceller->processAudio (rsmpl_out, echoCancelledMic, nbSample*sizeof (SFLDataFormat));
-
                     getMainBuffer()->putData (rsmpl_out, nbSample * sizeof (SFLDataFormat), 100);
-                    // getMainBuffer()->putData (echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);
 
                     free (rsmpl_out);
                     rsmpl_out = 0;
@@ -1153,8 +1125,6 @@ void AlsaLayer::audioCallback (void)
                     if (filter_out) {
                         _audiofilter->processAudio (in, filter_out, toPut);
                         // captureFile->write ( (const char *) filter_out, toPut);
-                        // int sampleready = AudioLayer::_echoCanceller->processAudio (filter_out, echoCancelledMic, toPut);
-                        // getMainBuffer()->putData (echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);
                         getMainBuffer()->putData (filter_out, toPut, 100);
                         free (filter_out);
                     }

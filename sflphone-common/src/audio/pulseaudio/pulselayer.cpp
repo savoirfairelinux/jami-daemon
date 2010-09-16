@@ -267,12 +267,6 @@ PulseLayer::~PulseLayer (void)
         _converter = NULL;
     }
 
-    delete AudioLayer::_echoCancel;
-    AudioLayer::_echoCancel = NULL;
-
-    delete AudioLayer::_echoCanceller;
-    AudioLayer::_echoCanceller = NULL;
-
     delete AudioLayer::_dcblocker;
     AudioLayer::_dcblocker = NULL;
 
@@ -436,9 +430,6 @@ bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int indexR
     _converter = new SamplerateConverter (_audioSampleRate, 1000);
 
     // Instantiate the algorithm
-    AudioLayer::_echoCancel = new EchoCancel (_audioSampleRate, _frameSize);
-    AudioLayer::_echoCanceller = new AudioProcessing (static_cast<Algorithm *> (_echoCancel));
-
     AudioLayer::_dcblocker = new DcBlocker();
     AudioLayer::_audiofilter = new AudioProcessing (static_cast<Algorithm *> (_dcblocker));
 
@@ -650,9 +641,6 @@ int PulseLayer::canGetMic()
 void PulseLayer::startStream (void)
 {
 
-    if (_echoCanceller)
-        _echoCanceller->resetAlgorithm();
-
     // Create Streams
     if (!playback || !record)
         createStreams (context);
@@ -750,18 +738,12 @@ void PulseLayer::processData (void)
 void PulseLayer::setEchoCancelState (bool state)
 {
     // if a stream already running
-    if (AudioLayer::_echoCancel)
-        _echoCancel->setEchoCancelState (state);
-
     AudioLayer::_echocancelstate = state;
 }
 
 void PulseLayer::setNoiseSuppressState (bool state)
 {
     // if a stream already opened
-    if (AudioLayer::_echoCancel)
-        _echoCancel->setNoiseSuppressState (state);
-
     AudioLayer::_noisesuppressstate = state;
 
 }
@@ -865,10 +847,6 @@ void PulseLayer::writeToSpeaker (void)
 
                 getMainBuffer()->getData (out, byteToGet, 100);
 
-                // TODO: Audio processing should be performed inside mainbuffer
-                // to avoid such problem
-                AudioLayer::_echoCancel->setSamplingRate (_mainBufferSampleRate);
-
                 // test if resampling is required
                 if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
 
@@ -894,10 +872,6 @@ void PulseLayer::writeToSpeaker (void)
 
 
                 }
-
-
-                // Copy far-end signal in echo canceller to adapt filter coefficient
-                // AudioLayer::_echoCanceller->putData(out, byteToGet);
 
                 pa_xfree (out);
 
@@ -930,9 +904,6 @@ void PulseLayer::readFromMic (void)
     const char* data = NULL;
     size_t r;
 
-    SFLDataFormat echoCancelledMic[10000];
-    memset (echoCancelledMic, 0, 10000*sizeof (SFLDataFormat));
-
     int readableSize = pa_stream_readable_size (record->pulseStream());
 
 
@@ -963,12 +934,6 @@ void PulseLayer::readFromMic (void)
 
             // captureFilterFile->write ((const char *)rsmpl_out, nbSample*sizeof(SFLDataFormat));
 
-            // echo cancellation processing
-            // int sampleready = _echoCanceller->processAudio(rsmpl_out, echoCancelledMic, nbSample*sizeof(SFLDataFormat));
-
-            // getMainBuffer()->putData ( (void*) rsmpl_out, nbSample*sizeof (SFLDataFormat), 100);
-            // if(sampleready)
-            // getMainBuffer()->putData ( echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);
             getMainBuffer()->putData (rsmpl_out, nbSample*sizeof (SFLDataFormat), 100);
 
             pa_xfree (rsmpl_out);
@@ -984,11 +949,6 @@ void PulseLayer::readFromMic (void)
 
             // captureFile->write ( (const char *) filter_out, r);
 
-            // echo cancellation processing
-            // int sampleready = _echoCanceller->processAudio((SFLDataFormat *)filter_out, echoCancelledMic, r);
-
-            // no resampling required
-            // getMainBuffer()->putData (echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);
             getMainBuffer()->putData (filter_out, r, 100);
 
             pa_xfree (filter_out);
