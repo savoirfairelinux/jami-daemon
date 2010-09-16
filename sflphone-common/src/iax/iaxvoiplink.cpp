@@ -904,6 +904,7 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
             break;
 
         case IAX_EVENT_TEXT:
+            Manager::instance ().incomingMessage (call->getCallId (), std::string ("ME"), std::string ( (const char*) event->data));
             break;
 
         case IAX_EVENT_RINGA:
