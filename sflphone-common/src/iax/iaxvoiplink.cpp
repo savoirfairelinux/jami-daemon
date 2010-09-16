@@ -918,6 +918,37 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
             break;
 
         case IAX_EVENT_TRANSFER:
+            _debug ("IAX_EVENT_TRANSFER");
+
+            if (call->getConnectionState() != Call::Connected) {
+
+                Manager::instance().addStream (call->getCallId());
+
+                call->setConnectionState (Call::Connected);
+                call->setState (Call::Active);
+                // audiolayer->startStream();
+
+                _debug ("IAX_EVENT_ANSWER: codec format: ");
+
+                if (event->ies.format) {
+                    // Should not get here, should have been set in EVENT_ACCEPT
+                    printf ("%i", event->ies.format);
+                    call->setFormat (event->ies.format);
+                }
+
+                {
+                    printf ("no codec format");
+                }
+
+                Manager::instance().peerAnsweredCall (id);
+
+                // start audio here?
+                audiolayer->startStream();
+                audiolayer->flushMain();
+            } else {
+                // deja connecté ?
+            }
+
             break;
 
         default:
