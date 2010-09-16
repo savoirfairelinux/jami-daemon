@@ -332,8 +332,16 @@ int32_t ConfigurationManager::getNumberOfCredential (
     const std::string& accountID)
 {
 
-    SIPAccount *sipaccount = (SIPAccount *) Manager::instance().getAccount (accountID);
-    return sipaccount->getCredentialCount();
+    Account *account = Manager::instance().getAccount (accountID);
+
+    if (!account)
+        return 0;
+
+    if (account->getType() == "SIP") {
+        SIPAccount *sipaccount = static_cast<SIPAccount *> (account);
+        return sipaccount->getCredentialCount();
+    } else
+        return 0;
 }
 
 void ConfigurationManager::setCredential (const std::string& accountID,
