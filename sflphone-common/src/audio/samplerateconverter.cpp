@@ -30,20 +30,6 @@
 #include "samplerateconverter.h"
 #include "manager.h"
 
-SamplerateConverter::SamplerateConverter (void)
-        : _frequence (Manager::instance().getConfigInt (AUDIO , AUDIO_SAMPLE_RATE)) //44100
-        , _framesize (Manager::instance().getConfigInt (AUDIO , ALSA_FRAME_SIZE))
-        , _floatBufferDownMic (NULL)
-        , _floatBufferUpMic (NULL)
-        , _src_state_mic (NULL)
-        , _floatBufferDownSpkr (NULL)
-        , _floatBufferUpSpkr (NULL)
-        , _src_state_spkr (NULL)
-        , _src_err (0)
-{
-    init();
-}
-
 SamplerateConverter::SamplerateConverter (int freq , int fs)
         : _frequence (freq)
         , _framesize (fs)
@@ -61,19 +47,36 @@ SamplerateConverter::SamplerateConverter (int freq , int fs)
 SamplerateConverter::~SamplerateConverter (void)
 {
 
-    delete [] _floatBufferUpMic;
-    _floatBufferUpMic = NULL;
-    delete [] _floatBufferDownMic;
-    _floatBufferDownMic = NULL;
+    if (_floatBufferUpMic) {
+        delete [] _floatBufferUpMic;
+        _floatBufferUpMic = NULL;
+    }
 
-    delete [] _floatBufferUpSpkr;
-    _floatBufferUpSpkr = NULL;
-    delete [] _floatBufferDownSpkr;
-    _floatBufferDownSpkr = NULL;
+    if (_floatBufferDownMic) {
+        delete [] _floatBufferDownMic;
+        _floatBufferDownMic = NULL;
+    }
+
+    if (_floatBufferUpSpkr) {
+        delete [] _floatBufferUpSpkr;
+        _floatBufferUpSpkr = NULL;
+    }
+
+    if (_floatBufferDownSpkr) {
+        delete [] _floatBufferDownSpkr;
+        _floatBufferDownSpkr = NULL;
+    }
 
     // libSamplerateConverter-related
-    _src_state_mic  = src_delete (_src_state_mic);
-    _src_state_spkr = src_delete (_src_state_spkr);
+    if (_src_state_mic) {
+        _src_state_mic  = src_delete (_src_state_mic);
+        _src_state_mic = NULL;
+    }
+
+    if (_src_state_spkr) {
+        _src_state_spkr = src_delete (_src_state_spkr);
+        _src_state_spkr = NULL;
+    }
 }
 
 void SamplerateConverter::init (void)
