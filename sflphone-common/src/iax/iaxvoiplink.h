@@ -188,9 +188,8 @@ class IAXVoIPLink : public VoIPLink
          */
         bool carryingDTMFdigits (const CallID& id, char code);
 
-        bool sendMessage (const std::string& to UNUSED, const std::string& body UNUSED) {
-            return false;
-        }
+
+        bool sendTextMessage (const std::string& callID, const std::string& message, const std::string& from);
 
         bool isContactPresenceSupported() {
             return false;

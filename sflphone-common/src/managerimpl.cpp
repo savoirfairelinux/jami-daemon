@@ -48,6 +48,7 @@
 #include "history/historymanager.h"
 #include "accountcreator.h" // create new account
 #include "sip/sipvoiplink.h"
+#include "iax/iaxvoiplink.h"
 #include "manager.h"
 #include "dbus/configurationmanager.h"
 
@@ -1780,6 +1781,8 @@ bool ManagerImpl::sendTextMessage (const CallID& callID, const std::string& mess
 
             iter_participant++;
         }
+
+        return true;
     }
 
     if (participToConference (callID)) {
@@ -1808,15 +1811,29 @@ bool ManagerImpl::sendTextMessage (const CallID& callID, const std::string& mess
 
         AccountID accountId = getAccountFromCall (callID);
 
-        link = dynamic_cast<SIPVoIPLink *> (getAccountLink (accountId));
+        Account *account = getAccount (accountId);
 
-        if (link == NULL) {
-            _debug ("Manager: Failed to get sip link");
+        if (!account) {
+            _debug ("Manager: Failed to get account while sending instant message");
             return false;
         }
 
-        _debug ("Manager: Send message to %s (%s)", callID.c_str(), accountId.c_str());
-        link->sendTextMessage (callID, message, from);
+        if (account->getType() == "SIP")
+            // link = dynamic_cast<SIPVoIPLink *> (getAccountLink (accountId));
+            dynamic_cast<SIPVoIPLink *> (getAccountLink (accountId))->sendTextMessage (callID, message, from);
+        else if (account->getType() == "IAX")
+            // link = dynamic_cast<IAXVoIPLink *> (account->getVoIPLink());
+            dynamic_cast<IAXVoIPLink *> (account->getVoIPLink())->sendTextMessage (callID, message, from);
+        else {
+            //link = NULL;
+
+            //if (!link) {
+            _debug ("Manager: Failed to get voip link while sending instant message");
+            return false;
+        }
+
+        // _debug ("Manager: Send message to %s (%s)", callID.c_str(), accountId.c_str());
+        // link->sendTextMessage (callID, message, from);
     }
 
     return true;

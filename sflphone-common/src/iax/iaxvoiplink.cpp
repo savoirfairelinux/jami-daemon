@@ -701,6 +701,20 @@ IAXVoIPLink::carryingDTMFdigits (const CallID& id, char code)
     return true;
 }
 
+bool
+IAXVoIPLink::sendTextMessage (const std::string& callID, const std::string& message, const std::string& from)
+{
+    IAXCall* call = getIAXCall (callID);
+
+    CHK_VALID_CALL;
+
+    _mutexIAX.enterMutex();
+    iax_send_text (call->getSession(), message.c_str());
+    _mutexIAX.leaveMutex();
+
+    return true;
+}
+
 
 std::string
 IAXVoIPLink::getCurrentCodecName()
