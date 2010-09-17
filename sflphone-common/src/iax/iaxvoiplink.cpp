@@ -702,13 +702,17 @@ IAXVoIPLink::carryingDTMFdigits (const CallID& id, char code)
 }
 
 bool
-IAXVoIPLink::sendTextMessage (const std::string& callID, const std::string& message, const std::string& from)
+IAXVoIPLink::sendTextMessage (sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from)
 {
     IAXCall* call = getIAXCall (callID);
 
     CHK_VALID_CALL;
 
+    // Must active the mutex for this session
     _mutexIAX.enterMutex();
+
+    // module->send_iax_message(call->getSession(), message.c_str());
+
     iax_send_text (call->getSession(), message.c_str());
     _mutexIAX.leaveMutex();
 

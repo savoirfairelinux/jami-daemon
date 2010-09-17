@@ -59,6 +59,8 @@
 #include "yamlparser.h"
 #include "preferences.h"
 
+#include "im/InstantMessaging.h"
+
 class AudioLayer;
 class GuiFramework;
 class TelephoneTone;
@@ -1309,6 +1311,13 @@ class ManagerImpl
         MainBuffer _mainBuffer;
 
 
+        /**
+         * Instant messaging module, resposible to initiate, format, parse,
+         * send, and receive instant messages.
+         */
+        sfl::InstantMessaging *_imModule;
+
+
     public:
 
         /**
@@ -1316,6 +1325,13 @@ class ManagerImpl
          */
         MainBuffer *getMainBuffer (void) {
             return &_mainBuffer;
+        }
+
+        /**
+         * Return a pointer to the instance of InstantMessaging
+         */
+        sfl::InstantMessaging *getInstantMessageModule (void) {
+            return _imModule;
         }
 
 

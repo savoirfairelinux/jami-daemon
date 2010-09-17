@@ -131,7 +131,7 @@ class InstantMessaging
          */
         pj_status_t send (pjsip_inv_session*, CallID& id, const std::string&);
 
-        pj_status_t send_message (pjsip_inv_session*, CallID& id, const std::string&);
+        pj_status_t send_sip_message (pjsip_inv_session*, CallID& id, const std::string&);
 
         std::vector<std::string> split_message (const std::string&);
 

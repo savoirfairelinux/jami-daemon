@@ -189,7 +189,7 @@ pj_status_t InstantMessaging::send (pjsip_inv_session *session, CallID& id, cons
     return PJ_SUCCESS;
 }
 
-pj_status_t InstantMessaging::send_message (pjsip_inv_session *session, CallID& id, const std::string& message)
+pj_status_t InstantMessaging::send_sip_message (pjsip_inv_session *session, CallID& id, const std::string& message)
 {
 
     /* Check the length of the message */

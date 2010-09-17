@@ -37,7 +37,7 @@
 
 #include "voiplink.h"
 #include "hooks/urlhook.h"
-#include "im/InstantMessaging.h"
+#include "../im/InstantMessaging.h"
 
 //////////////////////////////
 /* PJSIP imports */
@@ -366,15 +366,16 @@ class SIPVoIPLink : public VoIPLink
 
 
         /**
-             * Send a SIP message to a call identified by its callid
-             *
+         * Send a SIP message to a call identified by its callid
+         *
+        * @param The InstantMessaging module which contains formating, parsing and sending method
          * @param The Id of the call to send the message to
          * @param The actual message to be transmitted
          * @param The sender of this message (could be another participant of a conference)
          *
          * @return True if the message is sent without error, false elsewhere
          */
-        bool sendTextMessage (const std::string& callID, const std::string& message, const std::string& from);
+        bool sendTextMessage (sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from);
 
     private:
         /**

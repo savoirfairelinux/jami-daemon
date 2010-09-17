@@ -93,6 +93,7 @@ ManagerImpl::ManagerImpl (void) :
 
     _cleaner = new NumberCleaner();
     _history = new HistoryManager();
+    _imModule = new sfl::InstantMessaging();
 
 #ifdef TEST
     testAccountMap();
@@ -118,6 +119,8 @@ ManagerImpl::~ManagerImpl (void)
     _cleaner = NULL;
     delete _history;
     _history = NULL;
+    delete _imModule;
+    _imModule = NULL;
 
     _debug ("Manager: %s stop correctly.", PROGNAME);
 }
@@ -160,6 +163,9 @@ void ManagerImpl::init ()
 
     // Load the history
     _history->load_history (preferences.getHistoryLimit());
+
+    // Init the instant messaging module
+    _imModule->init();
 }
 
 void ManagerImpl::terminate ()
@@ -1733,8 +1739,8 @@ void ManagerImpl::incomingMessage (const CallID& callID,
 
                 link = SIPVoIPLink::instance (""); // dynamic_cast<SIPVoIPLink *> (getAccountLink (*iter_participant));
 
-                if (link)
-                    link->sendTextMessage (*iter_participant, message, from);
+                if (link && _imModule)
+                    link->sendTextMessage (_imModule, *iter_participant, message, from);
             }
 
             iter_participant++;
@@ -1776,8 +1782,8 @@ bool ManagerImpl::sendTextMessage (const CallID& callID, const std::string& mess
             link = SIPVoIPLink::instance (""); // dynamic_cast<SIPVoIPLink *> (getAccountLink (*iter_participant));
 
 
-            if (link)
-                link->sendTextMessage (*iter_participant, message, from);
+            if (link && _imModule)
+                link->sendTextMessage (_imModule, *iter_participant, message, from);
 
             iter_participant++;
         }
@@ -1801,8 +1807,8 @@ bool ManagerImpl::sendTextMessage (const CallID& callID, const std::string& mess
             link = SIPVoIPLink::instance (""); // dynamic_cast<SIPVoIPLink *> (getAccountLink (*iter_participant));
 
 
-            if (link)
-                link->sendTextMessage (*iter_participant, message, from);
+            if (link && _imModule)
+                link->sendTextMessage (_imModule, *iter_participant, message, from);
 
             iter_participant++;
         }
@@ -1820,10 +1826,10 @@ bool ManagerImpl::sendTextMessage (const CallID& callID, const std::string& mess
 
         if (account->getType() == "SIP")
             // link = dynamic_cast<SIPVoIPLink *> (getAccountLink (accountId));
-            dynamic_cast<SIPVoIPLink *> (getAccountLink (accountId))->sendTextMessage (callID, message, from);
+            dynamic_cast<SIPVoIPLink *> (getAccountLink (accountId))->sendTextMessage (_imModule, callID, message, from);
         else if (account->getType() == "IAX")
             // link = dynamic_cast<IAXVoIPLink *> (account->getVoIPLink());
-            dynamic_cast<IAXVoIPLink *> (account->getVoIPLink())->sendTextMessage (callID, message, from);
+            dynamic_cast<IAXVoIPLink *> (account->getVoIPLink())->sendTextMessage (_imModule, callID, message, from);
         else {
             //link = NULL;
 

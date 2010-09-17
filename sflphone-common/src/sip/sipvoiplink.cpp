@@ -45,6 +45,8 @@
 #include "dbus/dbusmanager.h"
 #include "dbus/callmanager.h"
 
+#include "im/InstantMessaging.h"
+
 #include "pjsip/sip_endpoint.h"
 #include "pjsip/sip_transport_tls.h"
 #include "pjsip/sip_transport_tls.h"
@@ -165,11 +167,6 @@ pj_thread_desc desc;
  */
 UrlHook *urlhook;
 
-/*
- * Instant Messaging module
- */
-InstantMessaging *imModule;
-
 /**
  * Get the number of voicemail waiting in a SIP message
  */
@@ -279,9 +276,6 @@ SIPVoIPLink::SIPVoIPLink (const AccountID& accountID)
     srand (time (NULL));
 
     urlhook = new UrlHook ();
-
-    // Load the chat module
-    imModule = new InstantMessaging ();
 
     /* Start pjsip initialization step */
     init();
@@ -1062,7 +1056,7 @@ SIPVoIPLink::onhold (const CallID& id)
 }
 
 bool
-SIPVoIPLink::sendTextMessage (const std::string& callID, const std::string& message, const std::string& from)
+SIPVoIPLink::sendTextMessage (sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from)
 {
     _debug ("SipVoipLink: Send text message to %s, from %s", callID.c_str(), from.c_str());
 
@@ -1085,9 +1079,10 @@ SIPVoIPLink::sendTextMessage (const std::string& callID, const std::string& mess
 
         list.push_front (&entry);
 
-        std::string formatedMessage = imModule->appendUriList (message, list);
+        std::string formatedMessage = module->appendUriList (message, list);
 
-        status = imModule->send_message (call->getInvSession (), (CallID&) callID, formatedMessage);
+        status = module->send_sip_message (call->getInvSession (), (CallID&) callID, formatedMessage);
+
     } else {
         /* Notify the client of an error */
         /*Manager::instance ().incomingMessage (	"",
@@ -2095,9 +2090,6 @@ bool SIPVoIPLink::pjsip_init()
 
     const pj_str_t STR_MIME_TEXT_PLAIN = { (char*) "text/plain", 10 };
     pjsip_endpt_add_capability (_endpt, &_mod_ua, PJSIP_H_ACCEPT, NULL, 1, &STR_MIME_TEXT_PLAIN);
-
-    // Registering and initializing IM module
-    imModule->init ();
 
     // Register "application/sdp" in ACCEPT header
     pjsip_endpt_add_capability (_endpt, &_mod_ua, PJSIP_H_ACCEPT, NULL, 1, &accepted);
@@ -3496,24 +3488,26 @@ void call_on_tsx_changed (pjsip_inv_session *inv UNUSED, pjsip_transaction *tsx,
 
             std::string message;
             std::string urilist;
-            InstantMessaging::UriList list;
+            sfl::InstantMessaging::UriList list;
+
+            sfl::InstantMessaging *module = Manager::instance().getInstantMessageModule();
 
             try {
                 // retrive message from formated text
-                message = imModule->findTextMessage (formatedMessage);
+                message = module->findTextMessage (formatedMessage);
 
                 // retreive the recipient-list of this message
-                urilist = imModule->findTextUriList (formatedMessage);
+                urilist = module->findTextUriList (formatedMessage);
 
                 // parse the recipient list xml
-                list = imModule->parseXmlUriList (urilist);
+                list = module->parseXmlUriList (urilist);
 
                 // If no item present in the list, peer is considered as the sender
                 if (list.empty()) {
                     from = call->getPeerNumber ();
                 } else {
-                    InstantMessaging::UriEntry *entry = list.front();
-                    InstantMessaging::UriEntry::iterator iterAttr = entry->find (IM_XML_URI);
+                    sfl::InstantMessaging::UriEntry *entry = list.front();
+                    sfl::InstantMessaging::UriEntry::iterator iterAttr = entry->find (IM_XML_URI);
 
                     if (iterAttr->second != "Me")
                         from = iterAttr->second;
@@ -3539,7 +3533,8 @@ void call_on_tsx_changed (pjsip_inv_session *inv UNUSED, pjsip_transaction *tsx,
             // Pass through the instant messaging module if needed
             // Right now, it does do anything.
             // And notify the clients
-            Manager::instance ().incomingMessage (call->getCallId (), stripped, imModule->receive (message, stripped, call->getCallId ()));
+
+            Manager::instance ().incomingMessage (call->getCallId (), stripped, module->receive (message, stripped, call->getCallId ()));
         }
 
 

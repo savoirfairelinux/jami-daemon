@@ -37,7 +37,7 @@
 #include <assert.h>
 
 // Application import
-#include "sip/im/InstantMessaging.h"
+#include "im/InstantMessaging.h"
 
 /*
  * @file instantmessagingtest.h 
