@@ -711,9 +711,9 @@ IAXVoIPLink::sendTextMessage (sfl::InstantMessaging *module, const std::string& 
     // Must active the mutex for this session
     _mutexIAX.enterMutex();
 
-    // module->send_iax_message(call->getSession(), message.c_str());
+    module->send_iax_message (call->getSession(), callID, message.c_str());
 
-    iax_send_text (call->getSession(), message.c_str());
+    // iax_send_text (call->getSession(), message.c_str());
     _mutexIAX.leaveMutex();
 
     return true;
@@ -908,7 +908,7 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
             break;
 
         case IAX_EVENT_TEXT:
-            Manager::instance ().incomingMessage (call->getCallId (), std::string ("ME"), std::string ( (const char*) event->data));
+            Manager::instance ().incomingMessage (call->getCallId (), call->getPeerNumber(), std::string ( (const char*) event->data));
             break;
 
         case IAX_EVENT_RINGA:

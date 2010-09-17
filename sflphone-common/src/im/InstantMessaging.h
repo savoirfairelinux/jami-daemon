@@ -16,6 +16,8 @@
 #include <list>
 #include <exception>
 
+#include <iax-client.h>
+
 #define EMPTY_MESSAGE   pj_str((char*)"")
 #define STR_TEXT        pj_str((char*)"text")
 #define STR_PLAIN       pj_str((char*)"plain")
@@ -129,9 +131,13 @@ class InstantMessaging
          * @return pj_status_t  0 on success
          *                      1 otherwise
          */
-        pj_status_t send (pjsip_inv_session*, CallID& id, const std::string&);
+        pj_status_t sip_send (pjsip_inv_session*, CallID& id, const std::string&);
 
         pj_status_t send_sip_message (pjsip_inv_session*, CallID& id, const std::string&);
+
+        bool iax_send (iax_session* session, const CallID& id, const std::string& message);
+
+        bool send_iax_message (iax_session *session, const CallID& id, const std::string&);
 
         std::vector<std::string> split_message (const std::string&);
 

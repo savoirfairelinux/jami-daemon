@@ -127,7 +127,7 @@ pj_status_t InstantMessaging::notify (CallID& id)
     return PJ_SUCCESS;
 }
 
-pj_status_t InstantMessaging::send (pjsip_inv_session *session, CallID& id, const std::string& text)
+pj_status_t InstantMessaging::sip_send (pjsip_inv_session *session, CallID& id, const std::string& text)
 {
 
     pjsip_method msg_method;
@@ -195,7 +195,7 @@ pj_status_t InstantMessaging::send_sip_message (pjsip_inv_session *session, Call
     /* Check the length of the message */
     if (message.length() < getMessageMaximumSize()) {
         /* No problem here */
-        send (session, id, message);
+        sip_send (session, id, message);
     }
 
     else {
@@ -207,10 +207,45 @@ pj_status_t InstantMessaging::send_sip_message (pjsip_inv_session *session, Call
 
         // Maximum is above 1500 character
         // TODO: Send every messages
-        send (session, id, multiple_messages[i]);
+        sip_send (session, id, multiple_messages[i]);
     }
 
     return PJ_SUCCESS;
+}
+
+
+bool InstantMessaging::iax_send (iax_session* session, const CallID& id, const std::string& message)
+{
+    if (iax_send_text (session, message.c_str()) != -1)
+        return true;
+    else
+        return false;
+
+
+}
+
+bool InstantMessaging::send_iax_message (iax_session* session, const CallID& id, const std::string& message)
+{
+
+    bool ret;
+
+    /* Check the length of the message */
+    if (message.length() < getMessageMaximumSize()) {
+        /* No problem here */
+        ret = iax_send (session, id, message);
+    }
+
+    else {
+        /* It exceeds the size limit of a SIP MESSAGE (1300 bytes), o plit it and send multiple messages */
+        std::vector<std::string> multiple_messages = split_message (message);
+        /* Send multiple messages */
+        // int size = multiple_messages.size();
+        int i = 0;
+
+        // Maximum is above 1500 character
+        // TODO: Send every messages
+        ret = iax_send (session, id, multiple_messages[i]);
+    }
 }
 
 
