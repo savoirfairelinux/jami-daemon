@@ -1730,6 +1730,9 @@ void ManagerImpl::incomingMessage (const CallID& callID,
 
         while (iter_participant != participants.end()) {
 
+            if (*iter_participant == callID)
+                continue;
+
             AccountID accountId = getAccountFromCall (*iter_participant);
 
             _debug ("Manager: Send message to %s, (%s)", (*iter_participant).c_str(), accountId.c_str());
