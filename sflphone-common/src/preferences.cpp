@@ -34,7 +34,7 @@
 #include "user_cfg.h"
 
 Preferences::Preferences() :  _accountOrder ("")
-        , _audioApi (0)
+        , _audioApi (1)
         , _historyLimit (30)
         , _historyMaxCalls (20)
         , _notifyMails (false)
