@@ -245,6 +245,8 @@ IAXVoIPLink::getEvent()
 {
     IAXCall* call = NULL;
 
+    Manager::instance().getAudioLayerMutex()->enter();
+
     // lock iax_ stuff..
     _mutexIAX.enterMutex();
     iax_event* event = NULL;
@@ -279,6 +281,8 @@ IAXVoIPLink::getEvent()
     _mutexIAX.leaveMutex();
 
     sendAudioFromMic();
+
+    Manager::instance().getAudioLayerMutex()->leave();
 
     // Do the doodle-moodle to send audio from the microphone to the IAX channel.
     // sendAudioFromMic();
