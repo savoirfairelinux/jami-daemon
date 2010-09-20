@@ -25,7 +25,7 @@ static void XMLCALL startElementCallback (void *userData, const char *name, cons
     if (strcmp (name, "entry") == 0) {
 
         sfl::InstantMessaging::UriList *list = static_cast<sfl::InstantMessaging::UriList *> (userData);
-        sfl::InstantMessaging::UriEntry *entry = new sfl::InstantMessaging::UriEntry();
+        sfl::InstantMessaging::UriEntry entry = sfl::InstantMessaging::UriEntry();
 
         for (att = atts; *att; att += 2) {
 
@@ -36,7 +36,7 @@ static void XMLCALL startElementCallback (void *userData, const char *name, cons
 
             // _debug ("InstantMessaging: attribute: %s, value: %s", attribute, value);
 
-            entry->insert (std::pair<std::string, std::string> (std::string (attribute), std::string (value)));
+            entry.insert (std::pair<std::string, std::string> (std::string (attribute), std::string (value)));
         }
 
         list->push_back (entry);
@@ -246,6 +246,8 @@ bool InstantMessaging::send_iax_message (iax_session* session, const CallID& id,
         // TODO: Send every messages
         ret = iax_send (session, id, multiple_messages[i]);
     }
+
+    return ret;
 }
 
 
@@ -291,8 +293,8 @@ std::string InstantMessaging::generateXmlUriList (UriList& list)
 
     while (iterEntry != list.end()) {
         xmlbuffer.append ("<entry uri=");
-        UriEntry *entry = static_cast<UriEntry *> (*iterEntry);
-        iterAttr = entry->find (sfl::IM_XML_URI);
+        UriEntry entry = static_cast<UriEntry> (*iterEntry);
+        iterAttr = entry.find (sfl::IM_XML_URI);
         xmlbuffer.append (iterAttr->second);
         xmlbuffer.append (" cp:copyControl=\"to\" />");
 

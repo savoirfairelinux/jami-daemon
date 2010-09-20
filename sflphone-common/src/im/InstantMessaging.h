@@ -57,7 +57,7 @@ class InstantMessaging
     public:
 
         typedef std::map <std::string, std::string> UriEntry;
-        typedef std::list <UriEntry *> UriList;
+        typedef std::list <UriEntry> UriList;
 
         /*
          * Class constructor

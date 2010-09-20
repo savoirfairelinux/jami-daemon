@@ -1077,7 +1077,7 @@ SIPVoIPLink::sendTextMessage (sfl::InstantMessaging *module, const std::string& 
         sfl::InstantMessaging::UriEntry entry;
         entry[sfl::IM_XML_URI] = std::string (formatedFrom);
 
-        list.push_front (&entry);
+        list.push_front (entry);
 
         std::string formatedMessage = module->appendUriList (message, list);
 
@@ -3506,8 +3506,8 @@ void call_on_tsx_changed (pjsip_inv_session *inv UNUSED, pjsip_transaction *tsx,
                 if (list.empty()) {
                     from = call->getPeerNumber ();
                 } else {
-                    sfl::InstantMessaging::UriEntry *entry = list.front();
-                    sfl::InstantMessaging::UriEntry::iterator iterAttr = entry->find (IM_XML_URI);
+                    sfl::InstantMessaging::UriEntry entry = list.front();
+                    sfl::InstantMessaging::UriEntry::iterator iterAttr = entry.find (IM_XML_URI);
 
                     if (iterAttr->second != "Me")
                         from = iterAttr->second;
