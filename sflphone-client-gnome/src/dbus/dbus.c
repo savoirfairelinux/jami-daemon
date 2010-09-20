@@ -1985,10 +1985,10 @@ dbus_get_conference_list (void)
 }
 
 gchar**
-dbus_get_participant_list (const char *confID)
+dbus_get_participant_list (const gchar *confID)
 {
     GError *error = NULL;
-    gchar **list = NULL;
+    char **list = NULL;
 
     DEBUG ("DBUS: Get conference %s participant list", confID);
 

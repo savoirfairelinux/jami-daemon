@@ -429,11 +429,30 @@ void dbus_set_sip_address (const gchar* address);
 
 gint dbus_get_sip_address (void);
 
+
+/**
+ * Add a participant (callID) to this conference (confID)
+ */
 void dbus_add_participant (const gchar* callID, const gchar* confID);
 
+/**
+ * Return a list of participant for this conference (confID)
+ */
+gchar** dbus_get_participant_list (const gchar *confID);
+
+/**
+ * Toggle recording for this instance, may be call or conference
+ */
 void dbus_set_record (const gchar * id);
 
+/**
+ * Set the path where the recorded audio files will be stored
+ */
 void dbus_set_record_path (const gchar *path);
+
+/**
+ * Get the path where the recorded audio files are stored
+ */
 gchar* dbus_get_record_path (void);
 
 /**
@@ -533,9 +552,8 @@ void dbus_set_confirm_go_clear (const callable_obj_t * c);
  */
 gchar** dbus_get_supported_tls_method();
 
-gchar** dbus_get_participant_list (const char * confID);
-
 GHashTable* dbus_get_shortcuts (void);
+
 void dbus_set_shortcuts (GHashTable * shortcuts);
 
 void dbus_set_audio_ringtone_device (const int index);

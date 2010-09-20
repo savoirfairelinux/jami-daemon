@@ -28,6 +28,7 @@
  *  as that of the covered work.
  */
 
+
 #include <audioconf.h>
 #include <utils.h>
 #include <string.h>
