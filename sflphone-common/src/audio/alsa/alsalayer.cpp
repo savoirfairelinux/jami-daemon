@@ -62,7 +62,6 @@ AlsaLayer::AlsaLayer (ManagerImpl* manager)
 
     _audioPlugin = AudioLayer::_manager->audioPreference.getPlugin();
 
-    AudioLayer::_echocancelstate = true;
     AudioLayer::_noisesuppressstate = true;
 
     // captureFile = new ofstream ("probeFile", ofstream::binary);
@@ -251,13 +250,6 @@ bool AlsaLayer::isCaptureActive (void)
         return (snd_pcm_state (_CaptureHandle) == SND_PCM_STATE_RUNNING ? true : false);
     else
         return false;
-}
-
-
-void AlsaLayer::setEchoCancelState (bool state)
-{
-    // if a stream already running
-    AudioLayer::_echocancelstate = state;
 }
 
 void AlsaLayer::setNoiseSuppressState (bool state)

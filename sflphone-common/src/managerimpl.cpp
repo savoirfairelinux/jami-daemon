@@ -2824,30 +2824,6 @@ std::string ManagerImpl::getCurrentAudioOutputPlugin (void)
 }
 
 
-std::string ManagerImpl::getEchoCancelState (void)
-{
-
-    std::string state;
-
-    state = audioPreference.getEchoCancel() ? "enabled" : "disabled";
-
-    return state;
-}
-
-void ManagerImpl::setEchoCancelState (std::string state)
-{
-    _debug ("Manager: Set echo suppress state: %s", state.c_str());
-
-    bool isEnabled = state == "enabled" ? true : false;
-
-    audioPreference.setEchoCancel (isEnabled);
-
-    if (_audiodriver) {
-        _audiodriver->setEchoCancelState (isEnabled);
-    }
-}
-
-
 std::string ManagerImpl::getNoiseSuppressState (void)
 {
 

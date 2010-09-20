@@ -619,12 +619,16 @@ class ManagerImpl
          */
         std::string getCurrentAudioOutputPlugin (void);
 
-        std::string getEchoCancelState (void);
-
-        void setEchoCancelState (std::string state);
-
+        /**
+         * Get the noise reduction engin state from
+         * the current audio layer.
+         */
         std::string getNoiseSuppressState (void);
 
+        /**
+         * Set the noise reduction engin state in the current
+         * audio layer.
+         */
         void setNoiseSuppressState (std::string state);
 
         /**

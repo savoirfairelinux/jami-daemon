@@ -558,16 +558,6 @@ std::string ConfigurationManager::getCurrentAudioOutputPlugin (void)
     return Manager::instance().getCurrentAudioOutputPlugin();
 }
 
-std::string ConfigurationManager::getEchoCancelState (void)
-{
-    return Manager::instance().getEchoCancelState();
-}
-
-void ConfigurationManager::setEchoCancelState (const std::string& state)
-{
-    Manager::instance().setEchoCancelState (state);
-}
-
 std::string ConfigurationManager::getNoiseSuppressState (void)
 {
     return Manager::instance().getNoiseSuppressState();

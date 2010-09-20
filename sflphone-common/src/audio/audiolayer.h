@@ -255,18 +255,6 @@ class AudioLayer
         }
 
         /**
-         * Get the echo canceller state
-         * @return true if echo cancel activated
-             */
-        virtual bool getEchoCancelState (void) = 0;
-
-        /**
-         * Set the echo canceller state
-         * @param state true if echocancel active, false elsewhere
-         */
-        virtual void setEchoCancelState (bool state) = 0;
-
-        /**
          * Get the noise suppressor state
          * @return true if noise suppressor activated
          */
@@ -367,13 +355,8 @@ class AudioLayer
          */
         ost::Mutex _mutex;
 
-        EchoCancel *_echoCancel;
-        AudioProcessing *_echoCanceller;
-
         DcBlocker *_dcblocker;
         AudioProcessing *_audiofilter;
-
-        bool _echocancelstate;
 
         bool _noisesuppressstate;
 

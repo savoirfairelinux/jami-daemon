@@ -245,7 +245,6 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
 
     is_started = false;
 
-    AudioLayer::_echocancelstate = true;
     AudioLayer::_noisesuppressstate = true;
 
     byteCounter = 0;
@@ -733,12 +732,6 @@ void PulseLayer::processData (void)
     if (record && (record->pulseStream()) && (pa_stream_get_state (record->pulseStream()) == PA_STREAM_READY))
         readFromMic();
 
-}
-
-void PulseLayer::setEchoCancelState (bool state)
-{
-    // if a stream already running
-    AudioLayer::_echocancelstate = state;
 }
 
 void PulseLayer::setNoiseSuppressState (bool state)

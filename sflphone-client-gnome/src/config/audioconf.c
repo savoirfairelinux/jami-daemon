@@ -753,38 +753,16 @@ select_audio_manager (void)
 }
 
 void
-active_echo_cancel (void)
-{
-
-    gchar* state;
-    gchar* newstate;
-
-    DEBUG ("Audio: Active echo cancel clicked");
-    state = dbus_get_echo_cancel_state();
-
-    DEBUG ("Audio: Get echo cancel state %s", state);
-
-    if (strcmp (state, "enabled") == 0)
-        newstate = "disabled";
-    else
-        newstate = "enabled";
-
-    dbus_set_echo_cancel_state (newstate);
-
-}
-
-
-void
 active_noise_suppress (void)
 {
 
     gchar *state;
     gchar *newstate;
 
-    DEBUG ("Audio: Active noise suppress clicked");
+    DEBUG ("Audio: Active noise suppression clicked");
     state = dbus_get_noise_suppress_state();
 
-    DEBUG ("Audio: Get echo cancel state %s", state);
+    DEBUG ("Audio: Get noise suppression cancel state %s", state);
 
     if (strcmp (state, "enabled") == 0)
         newstate = "disabled";
@@ -919,9 +897,8 @@ GtkWidget* create_audio_configuration()
     GtkWidget *ret;
     // Sub boxes
     GtkWidget *frame;
-    GtkWidget *enableEchoCancel;
     GtkWidget *enableNoiseReduction;
-    gboolean echocancelActive, noisesuppressActive;
+    gboolean noisesuppressActive;
     gchar *state;
 
     ret = gtk_vbox_new (FALSE, 10);
@@ -987,19 +964,6 @@ GtkWidget* create_audio_configuration()
     // Box for the voice enhancement configuration
     gnome_main_section_new_with_table (_ ("Voice enhancement settings"), &frame, &table, 2, 1);
     gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
-
-    enableEchoCancel = gtk_check_button_new_with_mnemonic (_ ("_Echo Suppression"));
-    state = dbus_get_echo_cancel_state();
-    echocancelActive = FALSE;
-
-    if (strcmp (state, "enabled") == 0)
-        echocancelActive = TRUE;
-    else
-        echocancelActive = FALSE;
-
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (enableEchoCancel), echocancelActive);
-    g_signal_connect (G_OBJECT (enableEchoCancel), "clicked", active_echo_cancel, NULL);
-    gtk_table_attach (GTK_TABLE (table), enableEchoCancel, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     enableNoiseReduction = gtk_check_button_new_with_mnemonic (_ ("_Noise Reduction"));
     state = dbus_get_noise_suppress_state();

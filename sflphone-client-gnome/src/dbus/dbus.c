@@ -1465,40 +1465,6 @@ dbus_get_current_audio_output_plugin()
     return plugin;
 }
 
-/**
- * Get echo canceller state
- */
-gchar*
-dbus_get_echo_cancel_state()
-{
-    gchar* state = "";
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_echo_cancel_state (configurationManagerProxy, &state, &error);
-
-    if (error) {
-        ERROR ("DBus: Failed to call get_echo_cancel_state() on ConfigurationManager: %s", error->message);
-        g_error_free (error);
-    }
-
-    return state;
-}
-
-/**
- * Set echo canceller state
- */
-void
-dbus_set_echo_cancel_state (gchar* state)
-{
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_echo_cancel_state (
-        configurationManagerProxy, state, &error);
-
-    if (error) {
-        ERROR ("Failed to call set_echo_cancel_state() on ConfigurationManager: %s", error->message);
-        g_error_free (error);
-    }
-}
-
 
 /**
  * Get noise reduction state
@@ -1519,7 +1485,7 @@ dbus_get_noise_suppress_state()
 }
 
 /**
- * Set echo canceller state
+ * Set noise reduction state
  */
 void
 dbus_set_noise_suppress_state (gchar* state)

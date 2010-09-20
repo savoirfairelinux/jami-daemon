@@ -315,19 +315,6 @@ int dbus_get_audio_device_index (const gchar* name);
  */
 gchar* dbus_get_current_audio_output_plugin();
 
-
-/**
- * ConfigurationManager - Get the current state of echo canceller
- * @return gchar* The state (enabled/disabled)
- */
-gchar *dbus_get_echo_cancel_state (void);
-
-/**
- * ConfigurationManager - Set the crrent state of echo canceller
- * @param gchar* The state (enabled/disabled)
- */
-void dbus_set_echo_cancel_state (gchar *state);
-
 /**
  * ConfigurationManager - Get the current noise suppressor state
  * @return gchar* The state (enabled/disabled)
