@@ -21,6 +21,7 @@ libaudio_la_SOURCES = \
 		delaydetection.cpp \
 		echocancel.cpp \
 		speexechocancel.cpp \
+		noisesuppress.cpp \
 		audioprocessing.cpp \
 		dcblocker.cpp \
 		jitterbuf.cpp \
@@ -40,6 +41,7 @@ noinst_HEADERS = \
 		delaydetection.h \
 		echocancel.h \
 		speexechocancel.h \
+		noisesuppress.h \
 		audioprocessing.h \
 		dcblocker.h \
 		jitterbuf.h \
