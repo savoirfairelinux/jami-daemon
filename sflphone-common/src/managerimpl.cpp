@@ -166,6 +166,8 @@ void ManagerImpl::init ()
 
     // Init the instant messaging module
     _imModule->init();
+
+
 }
 
 void ManagerImpl::terminate ()

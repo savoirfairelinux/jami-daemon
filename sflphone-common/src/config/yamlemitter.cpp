@@ -47,7 +47,8 @@ YamlEmitter::~YamlEmitter()
 
 void YamlEmitter::open()
 {
-    fd = fopen (filename.c_str(), "wb");
+
+    fd = fopen (filename.c_str(), "w");
 
     if (!fd)
         throw YamlEmitterException ("Could not open file descriptor");
@@ -55,12 +56,13 @@ void YamlEmitter::open()
     if (!yaml_emitter_initialize (&emitter))
         throw YamlEmitterException ("Could not initialize emitter");
 
-    // Use unicode format
+    // Allows unescaped unicode characters
     yaml_emitter_set_unicode (&emitter, 1);
 
     yaml_emitter_set_output_file (&emitter, fd);
 
-    yaml_document_initialize (&document, NULL, NULL, NULL, 0, 0);
+    if (!yaml_document_initialize (&document, NULL, NULL, NULL, 0, 0))
+        throw YamlEmitterException ("Could not initialize yaml document while saving configuration");
 
     // Init the main configuration mapping
     if ( (topLevelMapping = yaml_document_add_mapping (&document, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0)
@@ -74,13 +76,13 @@ void YamlEmitter::close()
     if (!fd)
         throw YamlEmitterException ("File descriptor not valid");
 
-    fclose (fd);
-    /*
-    if(!fclose(fd))
-      throw YamlEmitterException("Error closing file descriptor");
-    */
 
-    yaml_document_delete (&document);
+    if (fclose (fd))
+        throw YamlEmitterException ("Error closing file descriptor");
+
+
+    _debug ("Config: Configuration file closed successfully");
+
 }
 
 void YamlEmitter::read() {}
@@ -92,7 +94,9 @@ void YamlEmitter::write()
 
 void YamlEmitter::serializeData()
 {
-    yaml_emitter_dump (&emitter, &document);
+    // Document object is destroyed once its content is emitted
+    if (!yaml_emitter_dump (&emitter, &document))
+        throw YamlEmitterException ("Error while emitting configuration yaml document");
 }
 
 
