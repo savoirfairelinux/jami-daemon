@@ -65,7 +65,7 @@ class Recordable
         /**
          * Init the recording file name according to path specified in configuration
          */
-        void initRecFileName();
+        void initRecFileName (std::string filename);
 
         /**
          * Set recording sampling rate.

@@ -271,7 +271,7 @@ class Call: public Recordable
         }
 
         std::string getFileName (void) {
-            return _filename;
+            return _peerNumber;
         }
 
         virtual bool setRecording (void);
@@ -323,7 +323,7 @@ class Call: public Recordable
         /** Display Name */
         std::string _displayName;
 
-        /** File name for his call : time YY-MM-DD */
+        /** File name for his call, should be peer number */
         std::string _filename;
 
 

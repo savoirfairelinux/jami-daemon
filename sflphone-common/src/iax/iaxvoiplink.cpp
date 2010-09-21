@@ -519,7 +519,7 @@ IAXVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
 
     if (call) {
         call->setPeerNumber (toUrl);
-        call->initRecFileName();
+        call->initRecFileName (toUrl);
 
         if (iaxOutgoingInvite (call)) {
             call->setConnectionState (Call::Progressing);
@@ -1191,7 +1191,7 @@ IAXVoIPLink::iaxHandlePrecallEvent (iax_event* event)
                 call->setPeerName (std::string (event->ies.calling_name));
 
             // if peerNumber exist append it to the name string
-            call->initRecFileName();
+            call->initRecFileName (std::string (event->ies.calling_number));
 
             if (Manager::instance().incomingCall (call, getAccountID())) {
                 /** @todo Faudra considérer éventuellement le champ CODEC PREFS pour

@@ -824,7 +824,8 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
             _error ("UserAgent: Error: Failed to create rtp thread from newOutGoingCall");
         }
 
-        call->initRecFileName();
+        // init file name according to peer phone number
+        call->initRecFileName (toUrl);
 
         _debug ("UserAgent: Try to make a call to: %s with call ID: %s", toUrl.data(), id.data());
 
@@ -1689,7 +1690,9 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
     if (call) {
 
         call->setCallConfiguration (Call::IPtoIP);
-        call->initRecFileName();
+
+        // Init recfile name using to uri
+        call->initRecFileName (to);
 
         SIPAccount * account = NULL;
         account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (IP2IP_PROFILE));
@@ -3887,7 +3890,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     call->setConnectionState (Call::Progressing);
     call->setPeerNumber (peerNumber);
     call->setDisplayName (displayName);
-    call->initRecFileName();
+    call->initRecFileName (peerNumber);
 
     _debug ("UserAgent: DisplayName: %s", displayName.c_str());
 
