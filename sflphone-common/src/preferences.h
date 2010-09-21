@@ -74,18 +74,18 @@ const Conf::Key urlSipFieldKey ("urlSipField"); //:		X-sflphone-url
 // audio preferences
 const Conf::Key alsamapKey ("alsa");
 const Conf::Key pulsemapKey ("pulse");
-const Conf::Key cardinKey ("cardin");// : 0
-const Conf::Key cardoutKey ("cardout");// 0
-const Conf::Key cardringKey ("cardring");// : 0
-const Conf::Key framesizeKey ("framesize");// : 20
+const Conf::Key cardinKey ("cardIn");// : 0
+const Conf::Key cardoutKey ("cardOut");// 0
+const Conf::Key cardringKey ("cardRing");// : 0
+const Conf::Key framesizeKey ("frameSize");// : 20
 const Conf::Key pluginKey ("plugin"); //: default
-const Conf::Key smplrateKey ("smplrate");//: 44100
+const Conf::Key smplrateKey ("smplRate");//: 44100
 const Conf::Key devicePlaybackKey ("devicePlayback");//:
 const Conf::Key deviceRecordKey ("deviceRecord");// :
 const Conf::Key deviceRingtoneKey ("deviceRingtone");// :
-const Conf::Key recordpathKey ("recordpath");//: /home/msavard/Bureau
-const Conf::Key volumemicKey ("volumemic");//:  100
-const Conf::Key volumespkrKey ("volumespkr");//: 100
+const Conf::Key recordpathKey ("recordPath");//: /home/msavard/Bureau
+const Conf::Key volumemicKey ("volumeMic");//:  100
+const Conf::Key volumespkrKey ("volumeSpkr");//: 100
 const Conf::Key noiseReduceKey ("noiseReduce");
 
 // shortcut preferences

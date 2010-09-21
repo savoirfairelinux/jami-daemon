@@ -34,7 +34,7 @@
 #include "user_cfg.h"
 
 Preferences::Preferences() :  _accountOrder ("")
-        , _audioApi (1)
+        , _audioApi (1) // 1 is pulseaudio, 0 alsa
         , _historyLimit (30)
         , _historyMaxCalls (20)
         , _notifyMails (false)
@@ -59,9 +59,9 @@ void Preferences::serialize (Conf::YamlEmitter *emiter)
     Conf::MappingNode preferencemap (NULL);
 
     Conf::ScalarNode order (_accountOrder);
-    std::stringstream audiostr;
-    audiostr << _audioApi;
-    Conf::ScalarNode audioapi (audiostr.str());
+    // std::stringstream audiostr;
+    // audiostr << _audioApi;
+    Conf::ScalarNode audioapi (_audioApi == 1 ? "pulseaudio" : "alsa");
     std::stringstream histlimitstr;
     histlimitstr << _historyLimit;
     Conf::ScalarNode historyLimit (histlimitstr.str());
@@ -115,7 +115,8 @@ void Preferences::unserialize (Conf::MappingNode *map)
     val = (Conf::ScalarNode *) (map->getValue (audioApiKey));
 
     if (val) {
-        _audioApi = atoi (val->getValue().data());
+        // 1 is pulseaudio, 0 is alsa
+        _audioApi = (val->getValue().compare ("pulseaudio") == 0) ? 1 : 0;
         val = NULL;
     }
 
