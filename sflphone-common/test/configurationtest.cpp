@@ -65,7 +65,6 @@ void ConfigurationTest::testDefaultValueSignalisation()
     CPPUNIT_ASSERT (Manager::instance().voipPreferences.getPlayDtmf() == true);
     CPPUNIT_ASSERT (Manager::instance().voipPreferences.getPlayTones() == true);
     CPPUNIT_ASSERT (Manager::instance().voipPreferences.getPulseLength() == 250);
-    CPPUNIT_ASSERT (Manager::instance().voipPreferences.getSendDtmfAs() == 0);
 }
 
 void ConfigurationTest::testLoadSIPAccount()

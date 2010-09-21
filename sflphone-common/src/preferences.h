@@ -50,7 +50,6 @@ const Conf::Key md5HashKey ("md5Hash");                     // :	false
 const Conf::Key playDtmfKey ("playDtmf"); // true                    true
 const Conf::Key playTonesKey ("playTones"); // true
 const Conf::Key pulseLengthKey ("pulseLength"); //=250
-const Conf::Key sendDtmfAsKey ("sendDtmfAs");// =0
 const Conf::Key symmetricRtpKey ("symmetric");// =true
 const Conf::Key zidFileKey ("zidFile");// =sfl.zid
 
@@ -240,13 +239,6 @@ class VoipPreference : public Serializable
             _pulseLength = length;
         }
 
-        int getSendDtmfAs (void) {
-            return _sendDtmfAs;
-        }
-        void setSendDtmfAs (int dtmf) {
-            _sendDtmfAs = dtmf;
-        }
-
         bool getSymmetricRtp (void) {
             return _symmetricRtp;
         }
@@ -266,7 +258,6 @@ class VoipPreference : public Serializable
         bool _playDtmf;
         bool _playTones;
         int _pulseLength;
-        int _sendDtmfAs;
         bool _symmetricRtp;
         std::string _zidFile;
 

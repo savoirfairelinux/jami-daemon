@@ -191,7 +191,6 @@ void Preferences::unserialize (Conf::MappingNode *map)
 VoipPreference::VoipPreference() :  _playDtmf (true)
         , _playTones (true)
         , _pulseLength (atoi (DFT_PULSE_LENGTH_STR)) // DFT_PULSE_LENGTH_STR
-        , _sendDtmfAs (0)
         , _symmetricRtp (true)
         , _zidFile (ZRTP_ZIDFILE) // ZRTP_ZID_FILENAME
 {
@@ -212,16 +211,12 @@ void VoipPreference::serialize (Conf::YamlEmitter *emitter)
     std::stringstream pulselengthstr;
     pulselengthstr << _pulseLength;
     Conf::ScalarNode pulseLength (pulselengthstr.str());
-    std::stringstream senddtmfstr;
-    senddtmfstr << _sendDtmfAs;
-    Conf::ScalarNode sendDtmfAs (senddtmfstr.str());
     Conf::ScalarNode symmetricRtp (_symmetricRtp ? "true" : "false");
     Conf::ScalarNode zidFile (_zidFile.c_str());
 
     preferencemap.setKeyValue (playDtmfKey, &playDtmf);
     preferencemap.setKeyValue (playTonesKey, &playTones);
     preferencemap.setKeyValue (pulseLengthKey, &pulseLength);
-    preferencemap.setKeyValue (sendDtmfAsKey, &sendDtmfAs);
     preferencemap.setKeyValue (symmetricRtpKey, &symmetricRtp);
     preferencemap.setKeyValue (zidFileKey, &zidFile);
 
@@ -256,13 +251,6 @@ void VoipPreference::unserialize (Conf::MappingNode *map)
 
     if (val) {
         _pulseLength = atoi (val->getValue().data());
-        val = NULL;
-    }
-
-    val = (Conf::ScalarNode *) (map->getValue (sendDtmfAsKey));
-
-    if (val) {
-        _sendDtmfAs = atoi (val->getValue().data());
         val = NULL;
     }
 
