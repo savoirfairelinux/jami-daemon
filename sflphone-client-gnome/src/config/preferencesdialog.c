@@ -80,9 +80,12 @@ typedef struct {
     gint page_number;
 } browser_t;
 
-
+// history preference parameters
 static int history_limit;
 static gboolean history_enabled = TRUE;
+
+// instant messaging preference parameters
+static gboolean instant_messaging_enabled = TRUE;
 
 static void
 start_hidden (void)
@@ -124,6 +127,14 @@ history_enabled_cb (GtkWidget *widget)
     eel_gconf_set_integer (HISTORY_ENABLED, !eel_gconf_get_integer (HISTORY_ENABLED));
 }
 
+static void
+instant_messaging_enabled_cb (GtkWidget *widget)
+{
+    instant_messaging_enabled = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+
+    eel_gconf_set_integer (INSTANT_MESSAGING_ENABLED, !eel_gconf_get_integer (INSTANT_MESSAGING_ENABLED));
+}
+
 void
 clean_history (void)
 {
@@ -159,6 +170,9 @@ create_general_settings ()
 
     // Load history configuration
     history_load_configuration ();
+
+    // Load instant messaging configuration
+    instant_messaging_load_configuration();
 
     // Main widget
     ret = gtk_vbox_new (FALSE, 10);
@@ -248,6 +262,18 @@ create_general_settings ()
     gtk_table_attach (GTK_TABLE (table), label, 2, 3, 0, 1, GTK_EXPAND | GTK_FILL,
                       GTK_EXPAND | GTK_FILL, 0, 5);
 
+    // INSTANT MESSAGING CONFIGURATION
+    gnome_main_section_new_with_table (_ ("Instant Messaging"), &frame, &table, 1, 1);
+    gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
+
+    checkBoxWidget = gtk_check_button_new_with_mnemonic (
+                         _ ("Enable instant messaging"));
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (checkBoxWidget),
+                                  instant_messaging_enabled);
+    g_signal_connect (G_OBJECT (checkBoxWidget) , "clicked" , G_CALLBACK (instant_messaging_enabled_cb) , NULL);
+    gtk_table_attach (GTK_TABLE (table), checkBoxWidget, 0, 1, 0, 1, GTK_EXPAND
+                      | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+
     gtk_widget_show_all (ret);
 
     return ret;
@@ -273,6 +299,14 @@ history_load_configuration ()
 {
     history_limit = dbus_get_history_limit ();
     history_enabled = eel_gconf_get_integer (HISTORY_ENABLED);
+
+}
+
+void
+instant_messaging_load_configuration ()
+{
+    instant_messaging_enabled = eel_gconf_get_integer (INSTANT_MESSAGING_ENABLED);
+
 }
 
 
@@ -402,7 +436,7 @@ GtkTreeModel* createModel()
 {
 
     browser_t browser_entries[5] = {
-        {_ ("General"), "start-here", 0},
+        {_ ("General"), "preferences-system", 0},
         {_ ("Audio"), "multimedia-volume-control", 1},
         {_ ("Address Book"), "address-book-new", 2},
         {_ ("Hooks"), "gnome-globe", 3},

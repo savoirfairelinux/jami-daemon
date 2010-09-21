@@ -50,7 +50,6 @@ const Conf::Key md5HashKey ("md5Hash");                     // :	false
 const Conf::Key playDtmfKey ("playDtmf"); // true                    true
 const Conf::Key playTonesKey ("playTones"); // true
 const Conf::Key pulseLengthKey ("pulseLength"); //=250
-const Conf::Key sendDtmfAsKey ("sendDtmfAs");// =0
 const Conf::Key symmetricRtpKey ("symmetric");// =true
 const Conf::Key zidFileKey ("zidFile");// =sfl.zid
 
@@ -74,21 +73,19 @@ const Conf::Key urlSipFieldKey ("urlSipField"); //:		X-sflphone-url
 // audio preferences
 const Conf::Key alsamapKey ("alsa");
 const Conf::Key pulsemapKey ("pulse");
-const Conf::Key cardinKey ("cardin");// : 0
-const Conf::Key cardoutKey ("cardout");// 0
-const Conf::Key cardringKey ("cardring");// : 0
-const Conf::Key framesizeKey ("framesize");// : 20
+const Conf::Key cardinKey ("cardIn");// : 0
+const Conf::Key cardoutKey ("cardOut");// 0
+const Conf::Key cardringKey ("cardRing");// : 0
+const Conf::Key framesizeKey ("frameSize");// : 20
 const Conf::Key pluginKey ("plugin"); //: default
-const Conf::Key smplrateKey ("smplrate");//: 44100
+const Conf::Key smplrateKey ("smplRate");//: 44100
 const Conf::Key devicePlaybackKey ("devicePlayback");//:
 const Conf::Key deviceRecordKey ("deviceRecord");// :
 const Conf::Key deviceRingtoneKey ("deviceRingtone");// :
-const Conf::Key recordpathKey ("recordpath");//: /home/msavard/Bureau
-const Conf::Key volumemicKey ("volumemic");//:  100
-const Conf::Key volumespkrKey ("volumespkr");//: 100
+const Conf::Key recordpathKey ("recordPath");//: /home/msavard/Bureau
+const Conf::Key volumemicKey ("volumeMic");//:  100
+const Conf::Key volumespkrKey ("volumeSpkr");//: 100
 const Conf::Key noiseReduceKey ("noiseReduce");
-const Conf::Key echocancelKey ("echocancel");
-
 
 // shortcut preferences
 const Conf::Key hangupShortKey ("hangUp");
@@ -242,13 +239,6 @@ class VoipPreference : public Serializable
             _pulseLength = length;
         }
 
-        int getSendDtmfAs (void) {
-            return _sendDtmfAs;
-        }
-        void setSendDtmfAs (int dtmf) {
-            _sendDtmfAs = dtmf;
-        }
-
         bool getSymmetricRtp (void) {
             return _symmetricRtp;
         }
@@ -268,7 +258,6 @@ class VoipPreference : public Serializable
         bool _playDtmf;
         bool _playTones;
         int _pulseLength;
-        int _sendDtmfAs;
         bool _symmetricRtp;
         std::string _zidFile;
 
@@ -524,14 +513,6 @@ class AudioPreference : public Serializable
             _noisereduce = noise;
         }
 
-        bool getEchoCancel (void) {
-            return _echocancel;
-        }
-
-        void setEchoCancel (bool echo) {
-            _echocancel = echo;
-        }
-
     private:
 
         // alsa preference
@@ -553,7 +534,6 @@ class AudioPreference : public Serializable
         int _volumespkr; //: 100
 
         bool _noisereduce;
-        bool _echocancel;
 };
 
 

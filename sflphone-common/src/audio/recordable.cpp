@@ -48,10 +48,9 @@ Recordable::~Recordable()
 }
 
 
-void Recordable::initRecFileName()
+void Recordable::initRecFileName (std::string filename)
 {
-
-    recAudio.initFileName (getRecFileId());
+    recAudio.initFileName (filename);
 }
 
 

@@ -6,6 +6,7 @@
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -27,63 +28,65 @@
  *  as that of the covered work.
  */
 
-#ifndef RECORDABLE_H
-#define RECORDABLE_H
+#ifndef NOISESUPPRESS_H
+#define NOISESUPPRESS_H
 
-#include "audiorecord.h"
-#include "audiorecorder.h"
+#include <speex/speex_preprocess.h>
+#include "algorithm.h"
+#include "audioprocessing.h"
 
-class Recordable
+
+class NoiseSuppress : public Algorithm
 {
 
     public:
 
-        Recordable();
+        NoiseSuppress (int smplPerFrame, int samplingRate);
 
-        ~Recordable();
-
-        /**
-         * Return recording state (true/false)
-         */
-        bool isRecording() {
-            return recAudio.isRecording();
-        }
+        ~NoiseSuppress (void);
 
         /**
-         * This method must be implemented for this interface as calls and conferences
-         * have different behavior.
-         */
-        virtual bool setRecording() = 0;
+             * Reset noise suppressor internal state at runtime. Usefull when making a new call
+             */
+        virtual void reset (void);
 
         /**
-         * Stop recording
-         */
-        void stopRecording() {
-            recAudio.stopRecording();
-        }
+         * Unused
+        */
+        virtual void putData (SFLDataFormat *inputData, int nbBytes);
 
         /**
-         * Init the recording file name according to path specified in configuration
+        * Unused
          */
-        void initRecFileName (std::string filename);
+        virtual int getData (SFLDataFormat *outputData);
 
         /**
-         * Set recording sampling rate.
+         * Unused
          */
-        void setRecordingSmplRate (int smplRate);
-
-        virtual std::string getRecFileId() = 0;
-
-        // virtual std::string getFileName() = 0;
-
-        // std::string getFileName() { return _filename; }
+        virtual void process (SFLDataFormat *data, int nbBytes);
 
         /**
-         * An instance of audio recorder
-         */
-        AudioRecord recAudio;
+         * Unused
+        */
+        virtual int process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes);
 
-        AudioRecorder recorder;
+        /**
+        * Unused
+         */
+        virtual void process (SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes);
+
+    private:
+
+        void initNewNoiseSuppressor (int _smplPerFrame, int samplingRate);
+
+        /**
+             * Noise reduction processing state
+             */
+        SpeexPreprocessState *_noiseState;
+
+        int _smplPerFrame;
+
+        int _samplingRate;
 
 };
 

@@ -51,19 +51,25 @@
 #define CHK_VALID_CALL   if (call == NULL) { _debug("IAX: Call doesn't exists"); \
 	return false; }
 
-IAXVoIPLink::IAXVoIPLink (const AccountID& accountID)
-        : VoIPLink (accountID)
+IAXVoIPLink::IAXVoIPLink (const AccountID& accountID) : VoIPLink (accountID)
+        , _evThread (NULL)
+        , _regSession (NULL)
+        , _nextRefreshStamp (0)
+        , audiolayer (NULL)
+        , micData (NULL)
+        , micDataConverted (NULL)
+        , micDataEncoded (NULL)
+        , spkrDataDecoded (NULL)
+        , spkrDataConverted (NULL)
+        , converter (NULL)
+        , converterSamplingRate (NULL)
+        , urlhook (NULL)
+        , countTime (0)
 {
-    // _debug("IAXVoIPLink::IAXVoIPLink : creating eventhread  ");
     _evThread = new EventThread (this);
-    _regSession = NULL;
-    _nextRefreshStamp = 0;
-    countTime = 0;
 
     // to get random number for RANDOM_PORT
     srand (time (NULL));
-
-    audiolayer = NULL;
 
     converter = new SamplerateConverter();
 
@@ -82,26 +88,46 @@ IAXVoIPLink::IAXVoIPLink (const AccountID& accountID)
 
 IAXVoIPLink::~IAXVoIPLink()
 {
-    delete _evThread;
-    _evThread = NULL;
+    if (_evThread) {
+        delete _evThread;
+        _evThread = NULL;
+    }
+
     _regSession = NULL; // shall not delete it
     terminate();
 
     audiolayer = NULL;
 
-    delete converter;
+    if (converter) {
+        delete converter;
+        converter = NULL;
+    }
 
-    delete [] micData;
-    micData = NULL;
-    delete [] micDataConverted;
-    micDataConverted = NULL;
-    delete [] micDataEncoded;
-    micDataEncoded = NULL;
+    if (micData) {
+        delete [] micData;
+        micData = NULL;
+    }
 
-    delete [] spkrDataDecoded;
-    spkrDataDecoded = NULL;
-    delete [] spkrDataConverted;
-    spkrDataConverted = NULL;
+    if (micDataConverted) {
+        delete [] micDataConverted;
+        micDataConverted = NULL;
+    }
+
+    if (micDataEncoded) {
+        delete [] micDataEncoded;
+        micDataEncoded = NULL;
+    }
+
+    if (spkrDataDecoded) {
+        delete [] spkrDataDecoded;
+        spkrDataDecoded = NULL;
+    }
+
+    if (spkrDataConverted) {
+        delete [] spkrDataConverted;
+        spkrDataConverted = NULL;
+    }
+
 }
 
 bool
@@ -219,6 +245,8 @@ IAXVoIPLink::getEvent()
 {
     IAXCall* call = NULL;
 
+    Manager::instance().getAudioLayerMutex()->enter();
+
     // lock iax_ stuff..
     _mutexIAX.enterMutex();
     iax_event* event = NULL;
@@ -254,11 +282,7 @@ IAXVoIPLink::getEvent()
 
     sendAudioFromMic();
 
-    if (call) {
-        call->recAudio.recData (spkrDataDecoded, micData, nbSampleForRec_, nbSampleForRec_);
-
-        // Do the doodle-moodle to send audio from the microphone to the IAX channel.
-    }
+    Manager::instance().getAudioLayerMutex()->leave();
 
     // Do the doodle-moodle to send audio from the microphone to the IAX channel.
     // sendAudioFromMic();
@@ -495,7 +519,7 @@ IAXVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
 
     if (call) {
         call->setPeerNumber (toUrl);
-        call->initRecFileName();
+        call->initRecFileName (toUrl);
 
         if (iaxOutgoingInvite (call)) {
             call->setConnectionState (Call::Progressing);
@@ -537,7 +561,7 @@ IAXVoIPLink::answer (const CallID& id)
 bool
 IAXVoIPLink::hangup (const CallID& id)
 {
-    _debug ("IAXVoIPLink::hangup() : function called once hangup ");
+    _debug ("IAXVoIPLink: Hangup");
     IAXCall* call = getIAXCall (id);
     std::string reason = "Dumped Call";
     CHK_VALID_CALL;
@@ -565,7 +589,7 @@ IAXVoIPLink::hangup (const CallID& id)
 bool
 IAXVoIPLink::peerHungup (const CallID& id)
 {
-    _debug ("IAXVoIPLink::peerHangup() : function called once hangup ");
+    _debug ("IAXVoIPLink: Peer hung up");
     IAXCall* call = getIAXCall (id);
     std::string reason = "Dumped Call";
     CHK_VALID_CALL;
@@ -676,6 +700,24 @@ IAXVoIPLink::carryingDTMFdigits (const CallID& id, char code)
 
     _mutexIAX.enterMutex();
     iax_send_dtmf (call->getSession(), code);
+    _mutexIAX.leaveMutex();
+
+    return true;
+}
+
+bool
+IAXVoIPLink::sendTextMessage (sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from)
+{
+    IAXCall* call = getIAXCall (callID);
+
+    CHK_VALID_CALL;
+
+    // Must active the mutex for this session
+    _mutexIAX.enterMutex();
+
+    module->send_iax_message (call->getSession(), callID, message.c_str());
+
+    // iax_send_text (call->getSession(), message.c_str());
     _mutexIAX.leaveMutex();
 
     return true;
@@ -870,6 +912,7 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
             break;
 
         case IAX_EVENT_TEXT:
+            Manager::instance ().incomingMessage (call->getCallId (), call->getPeerNumber(), std::string ( (const char*) event->data));
             break;
 
         case IAX_EVENT_RINGA:
@@ -898,6 +941,37 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
             break;
 
         case IAX_EVENT_TRANSFER:
+            _debug ("IAX_EVENT_TRANSFER");
+
+            if (call->getConnectionState() != Call::Connected) {
+
+                Manager::instance().addStream (call->getCallId());
+
+                call->setConnectionState (Call::Connected);
+                call->setState (Call::Active);
+                // audiolayer->startStream();
+
+                _debug ("IAX_EVENT_ANSWER: codec format: ");
+
+                if (event->ies.format) {
+                    // Should not get here, should have been set in EVENT_ACCEPT
+                    printf ("%i", event->ies.format);
+                    call->setFormat (event->ies.format);
+                }
+
+                {
+                    printf ("no codec format");
+                }
+
+                Manager::instance().peerAnsweredCall (id);
+
+                // start audio here?
+                audiolayer->startStream();
+                audiolayer->flushMain();
+            } else {
+                // deja connecté ?
+            }
+
             break;
 
         default:
@@ -1117,7 +1191,7 @@ IAXVoIPLink::iaxHandlePrecallEvent (iax_event* event)
                 call->setPeerName (std::string (event->ies.calling_name));
 
             // if peerNumber exist append it to the name string
-            call->initRecFileName();
+            call->initRecFileName (std::string (event->ies.calling_number));
 
             if (Manager::instance().incomingCall (call, getAccountID())) {
                 /** @todo Faudra considérer éventuellement le champ CODEC PREFS pour

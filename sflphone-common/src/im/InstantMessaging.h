@@ -12,6 +12,12 @@
 #include "call.h"
 #include "sip/sipcall.h"
 
+#include <map>
+#include <list>
+#include <exception>
+
+#include <iax-client.h>
+
 #define EMPTY_MESSAGE   pj_str((char*)"")
 #define STR_TEXT        pj_str((char*)"text")
 #define STR_PLAIN       pj_str((char*)"plain")
@@ -25,9 +31,34 @@
 namespace sfl
 {
 
-class InstantMessaging
+const std::string IM_XML_URI ("uri");
+const std::string BOUNDARY ("--boundary");
+
+class InstantMessageException : public std::exception
 {
     public:
+        InstantMessageException (const std::string& str="") throw() : errstr (str) {}
+
+        virtual ~InstantMessageException() throw() {}
+
+        virtual const char *what() const throw() {
+            std::string expt ("InstantMessageException occured: ");
+            expt.append (errstr);
+
+            return expt.c_str();
+        }
+    private:
+        std::string errstr;
+};
+
+class InstantMessaging
+{
+
+    public:
+
+        typedef std::map <std::string, std::string> UriEntry;
+        typedef std::list <UriEntry> UriList;
+
         /*
          * Class constructor
          */
@@ -100,9 +131,13 @@ class InstantMessaging
          * @return pj_status_t  0 on success
          *                      1 otherwise
          */
-        pj_status_t send (pjsip_inv_session*, CallID& id, const std::string&);
+        pj_status_t sip_send (pjsip_inv_session*, CallID& id, const std::string&);
 
-        pj_status_t send_message (pjsip_inv_session*, CallID& id, const std::string&);
+        pj_status_t send_sip_message (pjsip_inv_session*, CallID& id, const std::string&);
+
+        bool iax_send (iax_session* session, const CallID& id, const std::string& message);
+
+        bool send_iax_message (iax_session *session, const CallID& id, const std::string&);
 
         std::vector<std::string> split_message (const std::string&);
 
@@ -113,6 +148,54 @@ class InstantMessaging
             * @param id	The callID to notify (TODO: accountID?)
          */
         pj_status_t notify (CallID& id);
+
+
+        /**
+         * Generate Xml participant list for multi recipient based on RFC Draft 5365
+         *
+        * @param A UriList of UriEntry
+        *
+        * @return A string containing the full XML formated information to be included in the
+        *         sip instant message.
+        */
+        std::string generateXmlUriList (UriList& list);
+
+        /**
+         * Parse the Urilist from a SIP Instant Message provided by a UriList service.
+         *
+         * @param A XML formated string as obtained from a SIP instant message.
+         *
+         * @return An UriList of UriEntry containing parsed XML information as a map.
+         */
+        UriList parseXmlUriList (std::string& urilist);
+
+        /**
+         * Format text message according to RFC 5365, append recipient-list to the message
+         *
+         * @param text to be displayed
+         * @param list containing the recipients
+         *
+         * @return formated text stored into a string to be included in sip MESSAGE
+         */
+        std::string appendUriList (std::string text, UriList& list);
+
+        /**
+             * Retreive the xml formated uri list in formated text data according to RFC 5365
+             *
+         * @param text The formated text message as retreived in the SIP message
+         *
+         * @return A string containing the XML content
+         */
+        std::string findTextUriList (std::string& text);
+
+        /**
+             * Retrive the plain text message in formated text data according to RFC 5365
+             *
+         * @param text The formated text message as retreived in the SIP message
+         *
+         * @return A string containing the actual message
+         */
+        std::string findTextMessage (std::string& text);
 
     private:
 

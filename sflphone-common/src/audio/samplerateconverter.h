@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,9 +40,15 @@
 class SamplerateConverter
 {
     public:
-        /** Constructor */
-        SamplerateConverter (void);
-        SamplerateConverter (int freq , int fs);
+        /**
+         * Samplerate converter is used for several situation:
+        * streaming conversion (RTP, IAX), audiolayer conversion,
+        * audio files conversion. Parameters are used to compute
+        * internal buffer size. Converter must be reinitialized
+        * every time these parameters change
+        */
+        SamplerateConverter (int freq=44100, int frameSize=20);
+
         /** Destructor */
         ~SamplerateConverter (void);
 

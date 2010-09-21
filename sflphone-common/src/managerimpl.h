@@ -59,6 +59,8 @@
 #include "yamlparser.h"
 #include "preferences.h"
 
+#include "im/InstantMessaging.h"
+
 class AudioLayer;
 class GuiFramework;
 class TelephoneTone;
@@ -448,11 +450,12 @@ class ManagerImpl
 
 
         /**
-           * Send a new text message to the call, if participate to a conference, send to all participant.
+         * Send a new text message to the call, if participate to a conference, send to all participant.
          * @param callID	The call to send the message
          * @param message	The content of the message
-             */
-        bool sendTextMessage (const CallID& callID, const std::string& message);
+        * @param from	        The sender of this message (could be another participant of a conference)
+         */
+        bool sendTextMessage (const CallID& callID, const std::string& message, const std::string& from);
 
         /**
          * Notify the client he has voice mails
@@ -616,12 +619,16 @@ class ManagerImpl
          */
         std::string getCurrentAudioOutputPlugin (void);
 
-        std::string getEchoCancelState (void);
-
-        void setEchoCancelState (std::string state);
-
+        /**
+         * Get the noise reduction engin state from
+         * the current audio layer.
+         */
         std::string getNoiseSuppressState (void);
 
+        /**
+         * Set the noise reduction engin state in the current
+         * audio layer.
+         */
         void setNoiseSuppressState (std::string state);
 
         /**
@@ -1308,6 +1315,13 @@ class ManagerImpl
         MainBuffer _mainBuffer;
 
 
+        /**
+         * Instant messaging module, resposible to initiate, format, parse,
+         * send, and receive instant messages.
+         */
+        sfl::InstantMessaging *_imModule;
+
+
     public:
 
         /**
@@ -1315,6 +1329,13 @@ class ManagerImpl
          */
         MainBuffer *getMainBuffer (void) {
             return &_mainBuffer;
+        }
+
+        /**
+         * Return a pointer to the instance of InstantMessaging
+         */
+        sfl::InstantMessaging *getInstantMessageModule (void) {
+            return _imModule;
         }
 
 

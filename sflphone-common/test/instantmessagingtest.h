@@ -37,7 +37,7 @@
 #include <assert.h>
 
 // Application import
-#include "sip/im/InstantMessaging.h"
+#include "im/InstantMessaging.h"
 
 /*
  * @file instantmessagingtest.h 
@@ -56,6 +56,11 @@ class InstantMessagingTest : public CppUnit::TestCase {
         CPPUNIT_TEST (testSaveSingleMessage);
         CPPUNIT_TEST (testSaveMultipleMessage);
         CPPUNIT_TEST (testSplitMessage);
+	CPPUNIT_TEST (testGenerateXmlUriList);
+	CPPUNIT_TEST (testXmlUriListParsing);
+	CPPUNIT_TEST (testGetTextArea);
+	CPPUNIT_TEST (testGetUriListArea);
+	CPPUNIT_TEST (testIllFormatedMessage);
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -78,7 +83,17 @@ class InstantMessagingTest : public CppUnit::TestCase {
         void testSaveMultipleMessage ();
 
         void testSplitMessage ();
-        
+
+	void testGenerateXmlUriList ();
+
+	void testXmlUriListParsing ();
+
+	void testGetTextArea ();
+
+	void testGetUriListArea ();
+
+	void testIllFormatedMessage ();        
+
     private:
 		sfl::InstantMessaging *_im;
 };

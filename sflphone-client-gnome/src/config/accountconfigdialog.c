@@ -31,6 +31,8 @@
  *  as that of the covered work.
  */
 
+
+
 #include <actions.h>
 #include <mainwindow.h>
 #include <accountlist.h>
@@ -74,7 +76,7 @@ GtkWidget * entryMailbox;
 GtkWidget * entryUseragent;
 GtkWidget * entryResolveNameOnlyOnce;
 GtkWidget * expireSpinBox;
-GtkListStore * credentialStore;
+GtkListStore * credentialStore = NULL;
 GtkWidget * deleteCredButton;
 GtkWidget * treeViewCredential;
 // GtkWidget * scrolledWindowCredential;
@@ -259,10 +261,15 @@ static GPtrArray* getNewCredential (GHashTable * properties)
 static void update_credential_cb (GtkWidget *widget, gpointer data UNUSED)
 {
     GtkTreeIter iter;
-    gtk_tree_model_get_iter_from_string ( (GtkTreeModel *) credentialStore, &iter, "0");
-    gint column = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (widget), "column"));
-    // g_print ("set password to %s\n", (gchar *) gtk_entry_get_text(GTK_ENTRY(widget)));
-    gtk_list_store_set (GTK_LIST_STORE (credentialStore), &iter, column, (gchar *) gtk_entry_get_text (GTK_ENTRY (widget)), -1);
+
+    if (credentialStore) {
+        if (gtk_tree_model_get_iter_from_string ( (GtkTreeModel *) credentialStore, &iter, "0")) {
+            gint column = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (widget), "column"));
+            // g_print ("set password to %s\n", (gchar *) gtk_entry_get_text(GTK_ENTRY(widget)));
+            gtk_list_store_set (GTK_LIST_STORE (credentialStore), &iter, column, (gchar *) gtk_entry_get_text (GTK_ENTRY (widget)), -1);
+        }
+    }
+
 }
 
 static GtkWidget* create_basic_tab (account_t **a)
@@ -1474,8 +1481,10 @@ void show_account_window (account_t * a)
         }
 
         if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (overrtp))) {
+            DEBUG ("Config: Set dtmf over rtp");
             g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_DTMF_TYPE), g_strdup (OVERRTP));
         } else {
+            DEBUG ("Config: Set dtmf over sip");
             g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_DTMF_TYPE), g_strdup (SIPINFO));
         }
 

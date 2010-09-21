@@ -55,7 +55,7 @@ Conference::Conference()
     _nbParticipant = 0;
     _id = conf.append (s);
 
-    Recordable::initRecFileName();
+    Recordable::initRecFileName (_id);
 
 }
 

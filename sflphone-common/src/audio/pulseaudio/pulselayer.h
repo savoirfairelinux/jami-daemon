@@ -192,20 +192,6 @@ class PulseLayer : public AudioLayer
         void processData (void);
 
         /**
-         * Get the echo canceller state
-         * @return true if echo cancel activated
-         */
-        bool getEchoCancelState (void) {
-            return AudioLayer::_echocancelstate;
-        }
-
-        /**
-         * Set the echo canceller state
-         * @param state true if echocancel active, false elsewhere
-         */
-        void setEchoCancelState (bool state);
-
-        /**
          * Get the noise suppressor state
          * @return true if noise suppressor activated
          */
@@ -292,11 +278,9 @@ class PulseLayer : public AudioLayer
         int spkrVolume;
         int micVolume;
 
-        /*
-        ofstream *captureFile;
-        ofstream *captureRsmplFile;
-        ofstream *captureFilterFile;
-        */
+
+        // ofstream *captureFile;
+        // ofstream *spkrFile;
 
         DeviceList _sinkList;
 

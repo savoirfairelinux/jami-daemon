@@ -40,6 +40,8 @@
 #include "audio/samplerateconverter.h"
 #include "hooks/urlhook.h"
 
+#include "im/InstantMessaging.h"
+
 class EventThread;
 class IAXCall;
 
@@ -188,9 +190,8 @@ class IAXVoIPLink : public VoIPLink
          */
         bool carryingDTMFdigits (const CallID& id, char code);
 
-        bool sendMessage (const std::string& to UNUSED, const std::string& body UNUSED) {
-            return false;
-        }
+
+        bool sendTextMessage (sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from);
 
         bool isContactPresenceSupported() {
             return false;

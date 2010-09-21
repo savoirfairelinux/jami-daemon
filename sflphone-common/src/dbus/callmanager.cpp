@@ -464,6 +464,6 @@ CallManager::setPBXEnrollment (const std::string& callID, const bool& yesNo)
 void
 CallManager::sendTextMessage (const std::string& callID, const std::string& message)
 {
-    if (!Manager::instance().sendTextMessage (callID, message))
+    if (!Manager::instance().sendTextMessage (callID, message, "Me"))
         throw CallManagerException();
 }

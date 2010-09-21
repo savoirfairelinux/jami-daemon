@@ -34,6 +34,7 @@
 #include <gtk/gtk.h>
 #include <callable_obj.h>
 #include <webkit/webkit.h>
+#include <conference_obj.h>
 
 G_BEGIN_DECLS
 
@@ -55,15 +56,18 @@ struct _IMWidget {
     GtkVBox parent_instance;
 
     /* Private */
+    GtkWidget *tab;
     GtkWidget *textarea;
     GtkWidget *web_view;
     GtkWidget *info_bar;
     GtkWidget *info_state;
     gchar *call_id;
-    gchar *first_message;
+    gchar *first_message;           // Message displayed at widget's creation time
+    gchar *first_message_from;      // Sender of the first message (usefull in case of a conference)
     WebKitWebFrame *web_frame;      // Our web frame
     JSGlobalContextRef js_context;  // The frame's global JS context
     JSObjectRef js_global;          // The frame's global context JS object
+    gboolean containText;
 };
 
 struct _IMWidgetClass {
@@ -75,9 +79,11 @@ struct _IMWidgetClass {
 @abstract	Display the instant messaging interface for this call. If it has not been created yet, create it and attached it to the imWindow.
 @param		A reference on the call attached to the current IM widget
 @param          The first message to be displayed, webkit's frames are loaded asynchronously
+@param 	        The call id to be associated with the IMWidget
+@param          The first message sender, could be different of call id for conferences
 @return         TRUE if window is already created, FALSE elsewhere
  */
-gboolean im_widget_display (callable_obj_t**, gchar*);
+gboolean im_widget_display (IMWidget**, const gchar*, const gchar*, const gchar*);
 
 GType im_widget_get_type (void) G_GNUC_CONST;
 
@@ -89,7 +95,7 @@ GtkWidget *im_widget_new ();
 /*! @function
 @abstract 	Create a new widget with first_message
 */
-GtkWidget *im_widget_new_with_first_message (gchar *message);
+GtkWidget *im_widget_new_with_first_message (const gchar *message);
 
 
 /*! @function
@@ -101,7 +107,7 @@ GtkWidget *im_widget_new_with_first_message (gchar *message);
 */
 void im_widget_add_message (IMWidget *im, const gchar *from, const gchar *message, gint level);
 
-void im_widget_send_message (callable_obj_t *call, const gchar *message);
+void im_widget_send_message (gchar *id, const gchar *message);
 
 gchar* im_widget_add_message_time ();
 
@@ -112,6 +118,8 @@ gchar* im_widget_add_message_time ();
 void im_widget_infobar (IMWidget *im);
 
 GtkWidget* call_state_image_widget (call_state_t state);
+
+GtkWidget* conf_state_image_widget (conference_state_t state);
 
 void im_widget_update_state (IMWidget *im, gboolean active);
 

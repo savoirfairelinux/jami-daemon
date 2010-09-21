@@ -89,8 +89,6 @@ class ConfigurationManager
         std::vector< std::string > getCurrentAudioDevicesIndex();
         int32_t getAudioDeviceIndex (const std::string& name);
         std::string getCurrentAudioOutputPlugin (void);
-        std::string getEchoCancelState (void);
-        void setEchoCancelState (const std::string& state);
         std::string getNoiseSuppressState (void);
         void setNoiseSuppressState (const std::string& state);
 

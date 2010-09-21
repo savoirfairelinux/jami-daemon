@@ -62,8 +62,10 @@ AlsaLayer::AlsaLayer (ManagerImpl* manager)
 
     _audioPlugin = AudioLayer::_manager->audioPreference.getPlugin();
 
-    AudioLayer::_echocancelstate = true;
     AudioLayer::_noisesuppressstate = true;
+
+    // captureFile = new ofstream ("probeFile", ofstream::binary);
+
 }
 
 // Destructor
@@ -76,6 +78,9 @@ AlsaLayer::~AlsaLayer (void)
         delete _converter;
         _converter = NULL;
     }
+
+    // captureFile->close();
+    // delete captureFile;
 }
 
 bool
@@ -94,6 +99,7 @@ AlsaLayer::closeLayer()
         _debugException ("Audio: Exception: when stopping audiortp");
         throw;
     }
+
 
     /* Then close the audio devices */
     closeCaptureStream();
@@ -137,12 +143,6 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int indexRing, int sampleRate,
     // use 1 sec buffer for resampling
     _converter = new SamplerateConverter (_audioSampleRate, 1000);
 
-    AudioLayer::_echoCancel = new EchoCancel();
-    AudioLayer::_echoCanceller = new AudioProcessing (static_cast<Algorithm *> (_echoCancel));
-
-    AudioLayer::_echoCancel->setEchoCancelState (AudioLayer::_echocancelstate);
-    AudioLayer::_echoCancel->setNoiseSuppressState (AudioLayer::_noisesuppressstate);
-
     AudioLayer::_dcblocker = new DcBlocker();
     AudioLayer::_audiofilter = new AudioProcessing (static_cast<Algorithm *> (_dcblocker));
 
@@ -157,9 +157,6 @@ AlsaLayer::startStream (void)
 
     if (_audiofilter)
         _audiofilter->resetAlgorithm();
-
-    if (_echoCanceller)
-        _echoCanceller->resetAlgorithm();
 
     if (is_playback_running() && is_capture_running())
         return;
@@ -255,22 +252,9 @@ bool AlsaLayer::isCaptureActive (void)
         return false;
 }
 
-
-void AlsaLayer::setEchoCancelState (bool state)
-{
-    // if a stream already running
-    if (AudioLayer::_echoCancel)
-        _echoCancel->setEchoCancelState (state);
-
-    AudioLayer::_echocancelstate = state;
-}
-
 void AlsaLayer::setNoiseSuppressState (bool state)
 {
     // if a stream already opened
-    if (AudioLayer::_echoCancel)
-        _echoCancel->setNoiseSuppressState (state);
-
     AudioLayer::_noisesuppressstate = state;
 
 }
@@ -934,6 +918,7 @@ void AlsaLayer::audioCallback (void)
         // Urgent data (dtmf, incoming call signal) come first.
         toGet = (urgentAvailBytes < (int) (playbackAvailBytes)) ? urgentAvailBytes : playbackAvailBytes;
         out = (SFLDataFormat*) malloc (toGet);
+        memset (out, 0, toGet);
 
         if (out) {
             _urgentRingBuffer.Get (out, toGet, spkrVolume);
@@ -953,6 +938,7 @@ void AlsaLayer::audioCallback (void)
         if (tone && (normalAvailBytes <= 0)) {
 
             out = (SFLDataFormat *) malloc (playbackAvailBytes);
+            memset (out, 0, playbackAvailBytes);
 
             if (out) {
                 tone->getNext (out, playbackAvailSmpl, spkrVolume);
@@ -965,6 +951,7 @@ void AlsaLayer::audioCallback (void)
         } else if (file_tone && !_RingtoneHandle && (normalAvailBytes <= 0)) {
 
             out = (SFLDataFormat *) malloc (playbackAvailBytes);
+            memset (out, 0, playbackAvailBytes);
 
             if (out) {
                 file_tone->getNext (out, playbackAvailSmpl, spkrVolume);
@@ -996,14 +983,11 @@ void AlsaLayer::audioCallback (void)
             toGet = (normalAvailBytes < (int) maxNbBytesToGet) ? normalAvailBytes : maxNbBytesToGet;
 
             out = (SFLDataFormat*) malloc (maxNbBytesToGet);
+            memset (out, 0, maxNbBytesToGet);
 
             if (normalAvailBytes) {
 
                 getMainBuffer()->getData (out, toGet, spkrVolume);
-
-                // TODO: Audio processing should be performed inside mainbuffer
-                // to avoid such problem
-                AudioLayer::_echoCancel->setSamplingRate (_mainBufferSampleRate);
 
                 if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
 
@@ -1012,6 +996,8 @@ void AlsaLayer::audioCallback (void)
 
                     if (rsmpl_out) {
                         rsmpl_out = (SFLDataFormat*) malloc (playbackAvailBytes);
+                        memset (out, 0, playbackAvailBytes);
+
                         int nbSample = _converter->upsampleData ( (SFLDataFormat*) out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_down);
                         write (rsmpl_out, nbSample*sizeof (SFLDataFormat), _PlaybackHandle);
                         free (rsmpl_out);
@@ -1024,9 +1010,6 @@ void AlsaLayer::audioCallback (void)
                     write (out, toGet, _PlaybackHandle);
 
                 }
-
-                // Copy far-end signal in echo canceller to adapt filter coefficient
-                // AudioLayer::_echoCanceller->putData (out, toGet);
 
             } else {
 
@@ -1092,8 +1075,6 @@ void AlsaLayer::audioCallback (void)
     int toPut;
 
     SFLDataFormat* in = NULL;
-    SFLDataFormat echoCancelledMic[5000];
-    memset (echoCancelledMic, 0, 5000);
 
     if (is_capture_running()) {
 
@@ -1123,11 +1104,7 @@ void AlsaLayer::audioCallback (void)
 
                     _audiofilter->processAudio (rsmpl_out, nbSample*sizeof (SFLDataFormat));
 
-                    // echo cancellation processing
-                    // int sampleready = AudioLayer::_echoCanceller->processAudio (rsmpl_out, echoCancelledMic, nbSample*sizeof (SFLDataFormat));
-
                     getMainBuffer()->putData (rsmpl_out, nbSample * sizeof (SFLDataFormat), 100);
-                    // getMainBuffer()->putData (echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);
 
                     free (rsmpl_out);
                     rsmpl_out = 0;
@@ -1139,8 +1116,7 @@ void AlsaLayer::audioCallback (void)
 
                     if (filter_out) {
                         _audiofilter->processAudio (in, filter_out, toPut);
-                        // int sampleready = AudioLayer::_echoCanceller->processAudio (filter_out, echoCancelledMic, toPut);
-                        // getMainBuffer()->putData (echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);
+                        // captureFile->write ( (const char *) filter_out, toPut);
                         getMainBuffer()->putData (filter_out, toPut, 100);
                         free (filter_out);
                     }

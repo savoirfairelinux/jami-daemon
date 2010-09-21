@@ -33,7 +33,11 @@
 #include "managerimpl.h"
 
 
+// #include <fstream>
+
 int framesPerBuffer = 2048;
+
+
 
 
 static  void playback_callback (pa_stream* s, size_t bytes, void* userdata)
@@ -161,7 +165,7 @@ static void source_input_info_callback (pa_context *c UNUSED, const pa_source_in
 }
 
 
-static void context_changed_callback (pa_context* c, pa_subscription_event_type_t t, uint32_t idx, void* userdata)
+static void context_changed_callback (pa_context* c, pa_subscription_event_type_t t, uint32_t idx UNUSED, void* userdata)
 {
 
     switch (t) {
@@ -241,16 +245,14 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
 
     is_started = false;
 
-    AudioLayer::_echocancelstate = true;
     AudioLayer::_noisesuppressstate = true;
 
     byteCounter = 0;
 
-    /*
-    captureFile = new ofstream("captureFile", ofstream::binary);
-    captureRsmplFile = new ofstream("captureRsmplFile", ofstream::binary);
-    captureFilterFile = new ofstream("captureFilterFile", ofstream::binary);
-    */
+
+    // captureFile = new ofstream ("probeCaptureFile", ofstream::binary);
+    // spkrFile = new ofstream ("probeSpkrFile", ofstream::binary);
+
     openLayer();
 }
 
@@ -264,27 +266,18 @@ PulseLayer::~PulseLayer (void)
         _converter = NULL;
     }
 
-    delete AudioLayer::_echoCancel;
-    AudioLayer::_echoCancel = NULL;
-
-    delete AudioLayer::_echoCanceller;
-    AudioLayer::_echoCanceller = NULL;
-
     delete AudioLayer::_dcblocker;
     AudioLayer::_dcblocker = NULL;
 
     delete AudioLayer::_audiofilter;
     AudioLayer::_audiofilter = NULL;
 
-    /*
-    captureFile->close();
-    captureRsmplFile->close();
-    captureFilterFile->close();
 
-    delete captureFile;
-    delete captureRsmplFile;
-    delete captureFilterFile;
-    */
+    // captureFile->close();
+    // spkrFile->close();
+
+    // delete captureFile;
+    // delete spkrFile;
 }
 
 void
@@ -436,9 +429,6 @@ bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int indexR
     _converter = new SamplerateConverter (_audioSampleRate, 1000);
 
     // Instantiate the algorithm
-    AudioLayer::_echoCancel = new EchoCancel (_audioSampleRate, _frameSize);
-    AudioLayer::_echoCanceller = new AudioProcessing (static_cast<Algorithm *> (_echoCancel));
-
     AudioLayer::_dcblocker = new DcBlocker();
     AudioLayer::_audiofilter = new AudioProcessing (static_cast<Algorithm *> (_dcblocker));
 
@@ -649,11 +639,6 @@ int PulseLayer::canGetMic()
 
 void PulseLayer::startStream (void)
 {
-    if (_audiofilter)
-        _audiofilter->resetAlgorithm();
-
-    if (_echoCanceller)
-        _echoCanceller->resetAlgorithm();
 
     // Create Streams
     if (!playback || !record)
@@ -749,21 +734,9 @@ void PulseLayer::processData (void)
 
 }
 
-void PulseLayer::setEchoCancelState (bool state)
-{
-    // if a stream already running
-    if (AudioLayer::_echoCancel)
-        _echoCancel->setEchoCancelState (state);
-
-    AudioLayer::_echocancelstate = state;
-}
-
 void PulseLayer::setNoiseSuppressState (bool state)
 {
     // if a stream already opened
-    if (AudioLayer::_echoCancel)
-        _echoCancel->setNoiseSuppressState (state);
-
     AudioLayer::_noisesuppressstate = state;
 
 }
@@ -792,8 +765,11 @@ void PulseLayer::writeToSpeaker (void)
     if (urgentAvailBytes > writeableSize) {
 
         out = (SFLDataFormat*) pa_xmalloc (writeableSize);
+        memset (out, 0, writeableSize);
+
         _urgentRingBuffer.Get (out, writeableSize, 100);
 
+        // spkrFile->write ( (const char *) out, writeableSize);
         pa_stream_write (playback->pulseStream(), out, writeableSize, NULL, 0, PA_SEEK_RELATIVE);
 
         pa_xfree (out);
@@ -818,8 +794,11 @@ void PulseLayer::writeToSpeaker (void)
             if (playback->getStreamState() == PA_STREAM_READY) {
 
                 out = (SFLDataFormat*) pa_xmalloc (writeableSize);
+                memset (out, 0, writeableSize);
+
                 int copied = tone->getNext (out, writeableSize / sizeof (SFLDataFormat), 100);
 
+                //spkrFile->write ( (const char *) out, copied*sizeof (SFLDataFormat));
                 pa_stream_write (playback->pulseStream(), out, copied * sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
 
                 pa_xfree (out);
@@ -857,17 +836,15 @@ void PulseLayer::writeToSpeaker (void)
                     byteToGet = byteToGet-1;
 
                 out = (SFLDataFormat*) pa_xmalloc (maxNbBytesToGet);
+                memset (out, 0, maxNbBytesToGet);
 
                 getMainBuffer()->getData (out, byteToGet, 100);
-
-                // TODO: Audio processing should be performed inside mainbuffer
-                // to avoid such problem
-                AudioLayer::_echoCancel->setSamplingRate (_mainBufferSampleRate);
 
                 // test if resampling is required
                 if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
 
                     SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (writeableSize);
+                    memset (out, 0, writeableSize);
 
                     // Do sample rate conversion
                     int nb_sample_down = byteToGet / sizeof (SFLDataFormat);
@@ -877,19 +854,17 @@ void PulseLayer::writeToSpeaker (void)
                     if ( (nbSample*sizeof (SFLDataFormat)) > (unsigned int) writeableSize)
                         _warn ("Audio: Error: nbsbyte exceed buffer length");
 
+                    // spkrFile->write ( (const char *) out, nbSample*sizeof (SFLDataFormat));
                     pa_stream_write (playback->pulseStream(), rsmpl_out, nbSample*sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
 
                     pa_xfree (rsmpl_out);
 
                 } else {
-
+                    // spkrFile->write ( (const char *) out, byteToGet);
                     pa_stream_write (playback->pulseStream(), out, byteToGet, NULL, 0, PA_SEEK_RELATIVE);
 
+
                 }
-
-
-                // Copy far-end signal in echo canceller to adapt filter coefficient
-                // AudioLayer::_echoCanceller->putData(out, byteToGet);
 
                 pa_xfree (out);
 
@@ -898,9 +873,9 @@ void PulseLayer::writeToSpeaker (void)
                 if (tone == 0) {
 
                     SFLDataFormat* zeros = (SFLDataFormat*) pa_xmalloc (writeableSize);
-
                     bzero (zeros, writeableSize);
 
+                    // spkrFile->write ( (const char *) zeros, writeableSize);
                     pa_stream_write (playback->pulseStream(), zeros, writeableSize, NULL, 0, PA_SEEK_RELATIVE);
 
                     pa_xfree (zeros);
@@ -922,9 +897,6 @@ void PulseLayer::readFromMic (void)
     const char* data = NULL;
     size_t r;
 
-    SFLDataFormat echoCancelledMic[10000];
-    memset (echoCancelledMic, 0, 10000*sizeof (SFLDataFormat));
-
     int readableSize = pa_stream_readable_size (record->pulseStream());
 
 
@@ -940,12 +912,11 @@ void PulseLayer::readFromMic (void)
         if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
 
             SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (readableSize);
+            memset (rsmpl_out, 0, readableSize);
 
             int nbSample = r / sizeof (SFLDataFormat);
 
             int nb_sample_up = nbSample;
-
-            // captureFile->write ((const char *)data, nbSample*sizeof(SFLDataFormat));
 
             nbSample = _converter->downsampleData ( (SFLDataFormat *) data, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_up);
 
@@ -956,28 +927,21 @@ void PulseLayer::readFromMic (void)
 
             // captureFilterFile->write ((const char *)rsmpl_out, nbSample*sizeof(SFLDataFormat));
 
-            // echo cancellation processing
-            // int sampleready = _echoCanceller->processAudio(rsmpl_out, echoCancelledMic, nbSample*sizeof(SFLDataFormat));
-
-            // getMainBuffer()->putData ( (void*) rsmpl_out, nbSample*sizeof (SFLDataFormat), 100);
-            // if(sampleready)
-            // getMainBuffer()->putData ( echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);
             getMainBuffer()->putData (rsmpl_out, nbSample*sizeof (SFLDataFormat), 100);
 
             pa_xfree (rsmpl_out);
 
         } else {
 
+
             SFLDataFormat* filter_out = (SFLDataFormat*) pa_xmalloc (r);
+            memset (filter_out, 0, r);
 
             // remove dc offset
             _audiofilter->processAudio ( (SFLDataFormat *) data, filter_out, r);
 
-            // echo cancellation processing
-            // int sampleready = _echoCanceller->processAudio((SFLDataFormat *)filter_out, echoCancelledMic, r);
+            // captureFile->write ( (const char *) filter_out, r);
 
-            // no resampling required
-            // getMainBuffer()->putData (echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);
             getMainBuffer()->putData (filter_out, r, 100);
 
             pa_xfree (filter_out);
@@ -1007,6 +971,8 @@ void PulseLayer::ringtoneToSpeaker (void)
         if (ringtone->getStreamState() == PA_STREAM_READY) {
 
             out = (SFLDataFormat *) pa_xmalloc (writableSize);
+            memset (out, 0, writableSize);
+
             int copied = file_tone->getNext (out, writableSize/sizeof (SFLDataFormat), 100);
             pa_stream_write (ringtone->pulseStream(), out, copied*sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
 
@@ -1018,6 +984,7 @@ void PulseLayer::ringtoneToSpeaker (void)
 
             out = (SFLDataFormat*) pa_xmalloc (writableSize);
             memset (out, 0, writableSize);
+
             pa_stream_write (ringtone->pulseStream(), out, writableSize, NULL, 0, PA_SEEK_RELATIVE);
 
             pa_xfree (out);

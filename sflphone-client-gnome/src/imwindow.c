@@ -37,12 +37,13 @@
 
 #include <imwindow.h>
 #include <contacts/calltab.h>
+#include <contacts/calltab.h>
 
 /** Local variables */
 GtkWidget *im_window = NULL;
 GtkWidget *im_notebook = NULL;
 
-static gboolean window_configure_cb (GtkWidget *win, GdkEventConfigure *event)
+static gboolean window_configure_cb (GtkWidget *wini UNUSED, GdkEventConfigure *event)
 {
     int pos_x, pos_y;
 
@@ -68,7 +69,7 @@ on_delete (GtkWidget * widget UNUSED, gpointer data UNUSED)
 }
 
 static void
-on_switch_page (GtkNotebook *notebook, GtkNotebookPage *page, guint page_num, gpointer userdata)
+on_switch_page (GtkNotebook *notebook, GtkNotebookPage *page UNUSED, guint page_num, gpointer userdata UNUSED)
 {
     guint index = gtk_notebook_get_current_page (GTK_NOTEBOOK (notebook));
 
@@ -85,9 +86,6 @@ static void
 im_window_init()
 {
     const char *window_title = "SFLphone IM Client";
-    gchar *path;
-    GError *error = NULL;
-    gboolean ret;
     int width, height, position_x, position_y;
 
     // Get configuration stored in gconf
@@ -140,10 +138,27 @@ im_window_get()
     return im_window;
 }
 
+
+gboolean
+im_window_is_active ()
+{
+
+    if (!im_window)
+        return FALSE;
+    else
+        return gtk_window_is_active (im_window);
+}
+
+gboolean
+im_window_is_visible ()
+{
+    return gtk_widget_get_visible (im_window);
+}
+
 void
 im_window_show ()
 {
-    gtk_widget_show (im_window_get ());
+    gtk_window_present (GTK_WINDOW (im_window_get ()));
 }
 
 void
@@ -156,11 +171,20 @@ im_window_add (GtkWidget *widget)
         /* Show it all */
         gtk_widget_show_all (im_window);
     } else
-        error ("Could not create the main instant messaging window");
+        ERROR ("Could not create the main instant messaging window");
+}
+
+gint
+im_window_get_nb_tabs()
+{
+    if (im_notebook)
+        return gtk_notebook_get_n_pages (im_notebook);
+    else
+        return 0;
 }
 
 static void
-close_tab_cb (GtkButton *button, gpointer userdata)
+close_tab_cb (GtkButton *button UNUSED, gpointer userdata)
 {
     /* We want here to close the current tab */
     im_window_remove_tab (GTK_WIDGET (userdata));
@@ -177,10 +201,20 @@ im_window_add_tab (GtkWidget *widget)
 
     /* Fetch the call */
     callable_obj_t *im_widget_call = calllist_get (current_calls, im->call_id);
+    conference_obj_t *im_widget_conf = conferencelist_get (im->call_id);
 
     /* A container to include the tab label and the close button */
     GtkWidget *tab_Container = gtk_hbox_new (FALSE, 3);
-    GtkWidget *tab_Label = gtk_label_new (get_peer_information (im_widget_call));
+    GtkWidget *tab_Label;
+    im->tab = tab_Container;
+
+    if (im_widget_call)
+        tab_Label = gtk_label_new (get_peer_information (im_widget_call));
+    else if (im_widget_conf)
+        tab_Label = gtk_label_new ("Conferencing");
+    else
+        tab_Label = gtk_label_new ("");
+
     GtkWidget *tab_CloseButton = gtk_button_new ();
 
     /* Pack it all */
@@ -219,6 +253,15 @@ im_window_hide_show_tabs ()
 }
 
 void
+im_window_show_tab (GtkWidget *widget)
+{
+    int pageIndex = gtk_notebook_page_num (GTK_NOTEBOOK (im_notebook), widget);
+
+    if (pageIndex != -1)
+        gtk_notebook_set_current_page (GTK_NOTEBOOK (im_notebook), pageIndex);
+}
+
+void
 im_window_remove_tab (GtkWidget *widget)
 {
     // Remove the widget from the window
@@ -230,9 +273,13 @@ im_window_remove_tab (GtkWidget *widget)
     /* Need to do some memory clean up, so that we could re-open an Im widget for this call later. */
     IMWidget *im = IM_WIDGET (widget);
     callable_obj_t *call = calllist_get (current_calls, im->call_id);
+    conference_obj_t *conf = conferencelist_get (im->call_id);
 
     if (call)
         call->_im_widget = NULL;
+
+    if (conf)
+        conf->_im_widget = NULL;
 
     /* Decide whether or not displaying the tabs of the notebook */
     im_window_hide_show_tabs ();

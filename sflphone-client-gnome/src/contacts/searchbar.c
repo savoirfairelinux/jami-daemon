@@ -39,7 +39,7 @@ GtkWidget * searchbox;
 GtkWidget * addressbookentry;
 
 GtkWidget * cbox;
-GtkListStore * liststore;
+GtkListStore * liststore = NULL;
 
 gint cboxSignalId;
 
@@ -109,7 +109,7 @@ void update_searchbar_addressbook_list()
             = book_list_iterator->next) {
         book_data = (book_data_t *) book_list_iterator->data;
 
-        if (book_data->active) {
+        if (book_data && book_data->active && activeText) {
 
             gtk_list_store_append (liststore, &iter);
             gtk_list_store_set (liststore, &iter, 0, book_data->name, -1);

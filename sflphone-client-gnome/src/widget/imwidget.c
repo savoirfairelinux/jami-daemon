@@ -27,34 +27,46 @@
  *  as that of the covered work.
  */
 
+#include <imwindow.h>
 #include "imwidget.h"
 #include <icons/icon_factory.h>
 #include <contacts/calltab.h>
+#include <contacts/conferencelist.h>
 #include <JavaScriptCore/JavaScript.h>
 #include <gdk/gdkkeysyms.h>
 
 #define WEBKIT_DIR "file://" DATA_DIR "/webkit/"
 
 static void
-on_frame_loading_done (GObject *gobject, GParamSpec *pspec, gpointer user_data)
+on_frame_loading_done (GObject *gobject UNUSED, GParamSpec *pspec UNUSED, gpointer user_data)
 {
     IMWidget *im = IM_WIDGET (user_data);
-    callable_obj_t *c;
+    callable_obj_t *call;
+    conference_obj_t *conf;
 
-    if (im->first_message) {
+    if (im->first_message && im->first_message_from) {
         switch (webkit_web_frame_get_load_status (WEBKIT_WEB_FRAME (im->web_frame))) {
             case WEBKIT_LOAD_PROVISIONAL:
             case WEBKIT_LOAD_COMMITTED:
                 break;
             case WEBKIT_LOAD_FINISHED:
-                c = calllist_get (current_calls, im->call_id);
-                im_widget_add_message (im, get_peer_information (c), im->first_message, 0);
+                call = calllist_get (current_calls, im->call_id);
+                conf = conferencelist_get (im->call_id);
+
+                if (call)
+                    im_widget_add_message (im, im->first_message_from, im->first_message, 0);
+
+                if (conf)
+                    im_widget_add_message (im, im->first_message_from, im->first_message, 0);
+
                 g_free (im->first_message);
+                g_free (im->first_message_from);
                 im->first_message = NULL;
+                im->first_message_from = NULL;
                 DEBUG ("JavaScrip loading frame finished");
                 break;
             case WEBKIT_LOAD_FIRST_VISUALLY_NON_EMPTY_LAYOUT:
-            case WEBKIT_LOAD_FAILED:
+                // case WEBKIT_LOAD_FAILED: // only available in webkit-1.0-2
                 break;
         }
     }
@@ -62,34 +74,17 @@ on_frame_loading_done (GObject *gobject, GParamSpec *pspec, gpointer user_data)
 }
 
 gchar *
-escape_single_quotes (gchar *message)
+escape_single_quotes (const gchar *message)
 {
     gchar **ptr_token;
-    gchar *string;
+    gchar *string = "";
 
     DEBUG ("message: %s", message);
 
-    if (ptr_token = g_strsplit (message, "'", NULL)) {
-        string = *ptr_token;
-        ptr_token++;
+    if ( (ptr_token = g_strsplit (message, "'", 0))) {
         DEBUG ("SPLITTING");
-        // string = g_strjoinv ("\\'", ptr_token);
-
-        while (*ptr_token) {
-            DEBUG ("tokens: %s", *ptr_token);
-
-            // if (g_strcmp0 (string[ (strlen (string)-1) ], "\\") == 0) {
-            //     DEBUG ("already escaped last character %s", string[ (strlen (string)-1) ]);
-            //     string = g_strdup_printf ("%s'%s", string, *ptr_token);
-            // } else
-            string = g_strdup_printf ("%s\\'%s", string, *ptr_token);
-
-            ptr_token++;
-        }
+        string = g_strjoinv ("\\'", ptr_token);
     }
-
-
-    DEBUG ("string: %s", string);
 
     return string;
 }
@@ -97,7 +92,6 @@ escape_single_quotes (gchar *message)
 void
 im_widget_add_message (IMWidget *im, const gchar *from, const gchar *message, gint level)
 {
-    gboolean loadingDone = FALSE;
 
     if (im) {
 
@@ -107,24 +101,30 @@ im_widget_add_message (IMWidget *im, const gchar *from, const gchar *message, gi
         /* Check for the message level */
         gchar *css_class = (level == MESSAGE_LEVEL_ERROR) ? "error" : "";
 
+        gchar *message_escaped = escape_single_quotes (message);
+
         /* Prepare and execute the Javascript code */
-        gchar *script = g_strdup_printf ("add_message('%s', '%s', '%s', '%s');", escape_single_quotes (message), from, css_class, msgtime);
+        gchar *script = g_strdup_printf ("add_message('%s', '%s', '%s', '%s');", message_escaped, from, css_class, msgtime);
         webkit_web_view_execute_script (WEBKIT_WEB_VIEW (im->web_view), script);
+
+        /* Mark it as used */
+        im->containText = TRUE;
 
         /* Cleanup */
         g_free (script);
+        g_free (message_escaped);
 
     }
 }
 
 static gboolean
 web_view_nav_requested_cb (
-    WebKitWebView             *web_view,
-    WebKitWebFrame            *frame,
+    WebKitWebView             *web_view UNUSED,
+    WebKitWebFrame            *frame UNUSED,
     WebKitNetworkRequest      *request,
-    WebKitWebNavigationAction *navigation_action,
+    WebKitWebNavigationAction *navigation_action UNUSED,
     WebKitWebPolicyDecision   *policy_decision,
-    gpointer                   user_data)
+    gpointer                   user_data UNUSED)
 {
     const gchar *uri = webkit_network_request_get_uri (request);
 
@@ -134,7 +134,10 @@ web_view_nav_requested_cb (
     } else {
         /* Running a system command to open the URL in the user's default browser */
         gchar *cmd = g_strdup_printf ("x-www-browser %s", uri);
-        system (cmd);
+
+        if (system (cmd) == -1)
+            ERROR ("Error executing command %s", cmd);
+
         webkit_web_policy_decision_ignore (policy_decision);
         g_free (cmd);
     }
@@ -143,21 +146,13 @@ web_view_nav_requested_cb (
 }
 
 static gboolean
-on_Textview_changed (GtkWidget *widget, GdkEventKey *event, gpointer user_data)
+on_Textview_changed (GtkWidget *widget UNUSED, GdkEventKey *event, gpointer user_data)
 {
 
     GtkTextIter start, end;
     /* Get all the text in the buffer */
     IMWidget *im =  user_data;
-    callable_obj_t *im_widget_call = calllist_get (current_calls, im->call_id);
 
-    /* If the call has been hungup, it is not anymore in the current_calls calltab */
-    if (!im_widget_call) {
-        /* So try the history tab */
-        im_widget_call = calllist_get (history, im->call_id);
-    }
-
-    /* Fetch the text entered in the GtkTextView */
     GtkTextBuffer *buffer =  gtk_text_view_get_buffer (GTK_TEXT_VIEW (im->textarea));
 
     /* Catch the keyboard events */
@@ -177,7 +172,7 @@ on_Textview_changed (GtkWidget *widget, GdkEventKey *event, gpointer user_data)
                     im_widget_add_message (im, "Me", message, MESSAGE_LEVEL_NORMAL);
 
                     /* Send the message to the peer */
-                    im_widget_send_message (im_widget_call, message);
+                    im_widget_send_message (im->call_id, message);
 
                     /* Empty the buffer */
                     gtk_text_buffer_delete (GTK_TEXT_BUFFER (buffer), &start, &end);
@@ -205,31 +200,45 @@ im_widget_add_message_time ()
 
     /* Get the time of the message. Format: HH:MM::SS */
     strftime ( (char *) str, 100, "%R", (const struct tm *) ptr);
-    gchar *res = g_strdup (str);
+    gchar *res = g_strdup ( (gchar *) str);
 
     /* Return the new value */
     return res;
 }
 
 void
-im_widget_send_message (callable_obj_t *call, const gchar *message)
+im_widget_send_message (gchar *id, const gchar *message)
 {
 
+    callable_obj_t *im_widget_call = calllist_get (current_calls, id);
+    conference_obj_t *im_widget_conf = conferencelist_get (id);
+
+    /* If the call has been hungup, it is not anymore in the current_calls calltab */
+    if (!im_widget_call) {
+        /* So try the history tab */
+        im_widget_call = calllist_get (history, id);
+    }
+
+    if (im_widget_conf) {
+        dbus_send_text_message (id, message);
+    }
     /* First check if the call is in CURRENT state, otherwise it could not be sent */
-    if (call) {
-        if (call->_type == CALL && (call->_state == CALL_STATE_CURRENT || call->_state == CALL_STATE_HOLD)) {
+    else if (im_widget_call) {
+        if (im_widget_call->_type == CALL && (im_widget_call->_state == CALL_STATE_CURRENT ||
+                                              im_widget_call->_state == CALL_STATE_HOLD ||
+                                              im_widget_call->_state == CALL_STATE_RECORD)) {
             /* Ship the message through D-Bus */
-            dbus_send_text_message (call->_callID, message);
+            dbus_send_text_message (id, message);
         } else {
             /* Display an error message */
-            im_widget_add_message (IM_WIDGET (call->_im_widget), "sflphoned", "Oups, something went wrong! Unable to send text messages outside a call.", MESSAGE_LEVEL_ERROR);
+            im_widget_add_message (IM_WIDGET (im_widget_call->_im_widget), "sflphoned", "Oups, something went wrong! Unable to send text messages outside a call.", MESSAGE_LEVEL_ERROR);
         }
     }
 }
 
 
 static void
-im_widget_class_init (IMWidgetClass *klass)
+im_widget_class_init (IMWidgetClass *klass UNUSED)
 {
 }
 
@@ -269,6 +278,8 @@ im_widget_init (IMWidget *im)
     im->js_global = JSContextGetGlobalObject (im->js_context);
     webkit_web_view_load_uri (WEBKIT_WEB_VIEW (im->web_view), "file://" DATA_DIR "/webkit/im/im.html");
 
+    im->containText = FALSE;
+
     g_signal_connect (G_OBJECT (im->web_frame), "notify", G_CALLBACK (on_frame_loading_done), im);
 }
 
@@ -279,7 +290,7 @@ im_widget_new()
 }
 
 GtkWidget *
-im_widget_new_with_first_message (gchar *message)
+im_widget_new_with_first_message (const gchar *message UNUSED)
 {
     return GTK_WIDGET (g_object_new (IM_WIDGET_TYPE, NULL));
     // return GTK_WIDGET (g_object_new (IM_WIDGET_TYPE, "first_message", message, NULL));
@@ -316,51 +327,58 @@ im_widget_get_type (void)
 }
 
 gboolean
-im_widget_display (callable_obj_t **call, gchar *message)
+im_widget_display (IMWidget **im, const gchar *message, const gchar *id, const gchar *from)
 {
 
     /* Work with a copy of the object */
-    callable_obj_t *tmp = *call;
+    // callable_obj_t *tmp = *call;
 
     /* Use the widget for this specific call, if exists */
-    if (tmp) {
-        IMWidget *im = IM_WIDGET (tmp->_im_widget);
+    // if (tmp) {
+    IMWidget *imwidget = *im;// = IM_WIDGET (tmp->_im_widget);
 
-        if (!im) {
-            DEBUG ("creating the im widget for this call\n");
+    if (!imwidget) {
+        DEBUG ("creating the im widget for this call\n");
 
-            /* Create the im object */
-            if (message)
-                im = IM_WIDGET (im_widget_new ());
-            else
-                im = IM_WIDGET (im_widget_new_with_first_message (message));
+        /* Create the im object, first message must be created asynchronously */
+        if (message)
+            imwidget = IM_WIDGET (im_widget_new ());
+        else
+            imwidget = IM_WIDGET (im_widget_new_with_first_message (message));
 
-            /* Keep a reference on this object in the call struct */
-            tmp->_im_widget = im;
-            *call = tmp;
+        /* Keep a reference on this object in the call struct */
+        // tmp->_im_widget = im;
+        // *call = tmp;
 
-            /* Update the widget with some useful call information: ie the call ID */
-            im->call_id = tmp->_callID;
+        /* Update the widget with some useful call information: ie the call ID */
+        imwidget->call_id = id;
 
-            /* Create the GtkInfoBar, used to display call information, and status of the IM widget */
-            im_widget_infobar (im);
+        /* Create the GtkInfoBar, used to display call information, and status of the IM widget */
+        im_widget_infobar (imwidget);
 
-            /* Add it to the main instant messaging window */
-            im_window_add (im);
+        /* Add it to the main instant messaging window */
+        im_window_add (GTK_WIDGET (imwidget));
 
-            /* Update the first message to appears at widget creation*/
-            im->first_message = g_strdup (message);
+        /* Update the first message to appears at widget creation*/
+        if (message)
+            imwidget->first_message = g_strdup (message);
 
-            return FALSE;
-        } else {
-            DEBUG ("im widget exists for this call\n");
-            im_window_show ();
+        if (from)
+            imwidget->first_message_from = g_strdup (from);
 
-            return TRUE;
-        }
+        *im = imwidget;
+
+        return FALSE;
+    } else {
+        DEBUG ("im widget exists for this call\n");
+        im_window_show ();
+
+        return TRUE;
     }
 
-    return FALSE;
+    // }
+
+    // return FALSE;
 }
 
 void
@@ -371,13 +389,28 @@ im_widget_infobar (IMWidget *im)
     GtkWidget *infobar = im->info_bar;
     GtkWidget *content_area = gtk_info_bar_get_content_area (GTK_INFO_BAR (infobar));
 
-    /* Fetch call information */
+    /* Fetch call/conference information */
     callable_obj_t *im_widget_call = calllist_get (current_calls, im->call_id);
+    conference_obj_t *im_widget_conf = conferencelist_get (im->call_id);
 
     /* Create the label widgets with the call information saved in the IM Widget struct */
-    gchar *msg1 = g_strdup_printf ("Calling %s  %s", im_widget_call->_peer_number, im_widget_call->_peer_name);
+    gchar *msg1;
+
+    if (im_widget_call)
+        msg1 = g_strdup_printf ("Calling %s  %s", im_widget_call->_peer_number, im_widget_call->_peer_name);
+    else if (im_widget_conf)
+        msg1 = g_strdup_printf ("Conferencing"); // im_widget_conf->_confID);
+    else
+        msg1 = g_strdup ("");
+
     GtkWidget *call_label = gtk_label_new (msg1);
-    im->info_state = call_state_image_widget (im_widget_call->_state);
+
+    if (im_widget_call)
+        im->info_state = call_state_image_widget (im_widget_call->_state);
+
+    if (im_widget_conf)
+        im->info_state = conf_state_image_widget (im_widget_conf->_state);
+
     /* Add a nice icon from our own icon factory */
     GtkWidget *logoUser = gtk_image_new_from_stock (GTK_STOCK_USER, GTK_ICON_SIZE_LARGE_TOOLBAR);
 
@@ -404,12 +437,35 @@ call_state_image_widget (call_state_t state)
 
     switch (state) {
         case CALL_STATE_CURRENT:
+        case CALL_STATE_HOLD:
+        case CALL_STATE_RECORD:
+            image = gtk_image_new_from_stock (GTK_STOCK_IM, GTK_ICON_SIZE_LARGE_TOOLBAR);
+            break;
+        default:
+            image = gtk_image_new_from_stock (GTK_STOCK_IM, GTK_ICON_SIZE_LARGE_TOOLBAR);
+            break;
+
+    }
+
+    return image;
+}
+
+GtkWidget*
+conf_state_image_widget (conference_state_t state)
+{
+
+    GtkWidget *image;
+
+    switch (state) {
+        case CONFERENCE_STATE_ACTIVE_ATACHED:
+        case CONFERENCE_STATE_ACTIVE_DETACHED:
+        case CONFERENCE_STATE_RECORD:
+        case CONFERENCE_STATE_HOLD:
             image = gtk_image_new_from_stock (GTK_STOCK_IM, GTK_ICON_SIZE_LARGE_TOOLBAR);
             break;
         default:
             image = gtk_image_new_from_stock (GTK_STOCK_FAIL, GTK_ICON_SIZE_LARGE_TOOLBAR);
             break;
-
     }
 
     return image;

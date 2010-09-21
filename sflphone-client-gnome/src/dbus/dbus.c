@@ -49,6 +49,8 @@
 
 #include <widget/imwidget.h>
 
+#include <eel-gconf-extensions.h>
+
 #define DEFAULT_DBUS_TIMEOUT 30000
 
 DBusGConnection * connection;
@@ -122,19 +124,38 @@ voice_mail_cb (DBusGProxy *proxy UNUSED, const gchar* accountID, const guint nb,
 static void
 incoming_message_cb (DBusGProxy *proxy UNUSED, const gchar* callID UNUSED, const gchar *from, const gchar* msg, void * foo  UNUSED)
 {
-    DEBUG ("Message %s!",msg);
+    DEBUG ("Message \"%s\" from %s!", msg, from);
 
-    // Get the call information. Does this call exist?
-    callable_obj_t * c = calllist_get (current_calls, callID);
+    callable_obj_t *call = NULL;
+    conference_obj_t *conf = NULL;
+
+    // do not display message if instant messaging is disabled
+    gboolean instant_messaging_enabled = TRUE;
+
+    if (eel_gconf_key_exists (INSTANT_MESSAGING_ENABLED))
+        instant_messaging_enabled = eel_gconf_get_integer (INSTANT_MESSAGING_ENABLED);
+
+    if (!instant_messaging_enabled)
+        return;
+
+    // Get the call information. (if this call exist)
+    call = calllist_get (current_calls, callID);
+
+    // Get the conference information (if this conference exist)
+    conf = conferencelist_get (callID);
 
     /* First check if the call is valid */
-    if (c) {
+    if (call) {
 
         /* Make the instant messaging main window pops, add messages only if the main window exist.
-        Elsewhere the message is displayed asynchronously*/
-        if (im_widget_display (&c, msg))
-            im_widget_add_message (c->_im_widget, get_peer_information (c), msg, 0);
-
+           Elsewhere the message is displayed asynchronously*/
+        if (im_widget_display ( (IMWidget **) (&call->_im_widget), msg, call->_callID, from))
+            im_widget_add_message (IM_WIDGET (call->_im_widget), from, msg, 0);
+    } else if (conf) {
+        /* Make the instant messaging main window pops, add messages only if the main window exist.
+           Elsewhere the message is displayed asynchronously*/
+        if (im_widget_display ( (IMWidget **) (&conf->_im_widget), msg, conf->_confID, from))
+            im_widget_add_message (IM_WIDGET (conf->_im_widget), from, msg, 0);
     } else {
         ERROR ("Message received, but no recipient found");
     }
@@ -218,9 +239,13 @@ conference_changed_cb (DBusGProxy *proxy UNUSED, const gchar* confID,
                        const gchar* state, void * foo  UNUSED)
 {
 
+    gchar** part;
+    callable_obj_t *call;
+    gchar* call_id;
+
     // sflphone_display_transfer_status("Transfer successfull");
     conference_obj_t* changed_conf = conferencelist_get (confID);
-    gchar** participants;
+    gchar** old_participants, new_participants;
 
     DEBUG ("conference new state %s\n", state);
 
@@ -239,10 +264,32 @@ conference_changed_cb (DBusGProxy *proxy UNUSED, const gchar* confID,
             DEBUG ("Error: conference state not recognized");
         }
 
-        participants = (gchar**) dbus_get_participant_list (changed_conf->_confID);
+        // reactivate instant messaging window for these calls
+        old_participants = (gchar**) changed_conf->participant_list;
+
+        for (part = old_participants; *part; part++) {
+            call_id = (gchar*) (*part);
+            call = calllist_get (current_calls, call_id);
+
+            if (call && call->_im_widget)
+                im_widget_update_state (IM_WIDGET (call->_im_widget), TRUE);
+        }
+
+        new_participants = (gchar **) dbus_get_participant_list (changed_conf->_confID);
 
         // update conferece participants
-        conference_participant_list_update (participants, changed_conf);
+        conference_participant_list_update (new_participants, changed_conf);
+
+        // deactivate instant messaging window for new participants
+        new_participants = (gchar**) changed_conf->participant_list;
+
+        for (part = new_participants; *part; part++) {
+            call_id = (gchar*) (*part);
+            call = calllist_get (current_calls, call_id);
+
+            if (call && call->_im_widget)
+                im_widget_update_state (IM_WIDGET (call->_im_widget), FALSE);
+        }
 
         // add new conference to calltree
         calltree_add_conference (current_calls, changed_conf);
@@ -271,6 +318,11 @@ conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
     for (part = participants; *part; part++) {
         call_id = (gchar*) (*part);
         call = calllist_get (current_calls, call_id);
+
+        // if a text widget is already created, disable it, use conference widget instead
+        if (call->_im_widget)
+            im_widget_update_state (IM_WIDGET (call->_im_widget), FALSE);
+
         call->_confID = g_strdup (confID);
     }
 
@@ -289,6 +341,11 @@ conference_removed_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
     GSList *participant = c->participant_list;
     callable_obj_t *call;
 
+    // deactivate instant messaging window for this conference
+    if (c->_im_widget)
+        im_widget_update_state (IM_WIDGET (c->_im_widget), FALSE);
+
+    // remove all participant for this conference
     while (participant) {
 
         call = calllist_get (current_calls, (const gchar *) (participant->data));
@@ -300,6 +357,10 @@ conference_removed_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
                 g_free (call->_confID);
                 call->_confID = NULL;
             }
+
+            // if an instant messaging was previously disabled, enabled it
+            if (call->_im_widget)
+                im_widget_update_state (IM_WIDGET (call->_im_widget), TRUE);
         }
 
         participant = conference_next_participant (participant);
@@ -1404,40 +1465,6 @@ dbus_get_current_audio_output_plugin()
     return plugin;
 }
 
-/**
- * Get echo canceller state
- */
-gchar*
-dbus_get_echo_cancel_state()
-{
-    gchar* state = "";
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_echo_cancel_state (configurationManagerProxy, &state, &error);
-
-    if (error) {
-        ERROR ("DBus: Failed to call get_echo_cancel_state() on ConfigurationManager: %s", error->message);
-        g_error_free (error);
-    }
-
-    return state;
-}
-
-/**
- * Set echo canceller state
- */
-void
-dbus_set_echo_cancel_state (gchar* state)
-{
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_echo_cancel_state (
-        configurationManagerProxy, state, &error);
-
-    if (error) {
-        ERROR ("Failed to call set_echo_cancel_state() on ConfigurationManager: %s", error->message);
-        g_error_free (error);
-    }
-}
-
 
 /**
  * Get noise reduction state
@@ -1458,7 +1485,7 @@ dbus_get_noise_suppress_state()
 }
 
 /**
- * Set echo canceller state
+ * Set noise reduction state
  */
 void
 dbus_set_noise_suppress_state (gchar* state)
@@ -1958,10 +1985,10 @@ dbus_get_conference_list (void)
 }
 
 gchar**
-dbus_get_participant_list (const char *confID)
+dbus_get_participant_list (const gchar *confID)
 {
     GError *error = NULL;
-    gchar **list = NULL;
+    char **list = NULL;
 
     DEBUG ("DBUS: Get conference %s participant list", confID);
 

@@ -3,7 +3,7 @@ include ../globals.mak
 libexecdir=$(libdir)/sflphone
 libexec_PROGRAMS = sflphoned
 
-SUBDIRS = dbus audio config plug-in hooks history sip iax
+SUBDIRS = dbus audio config plug-in hooks history sip iax im
 
 # Add here the cpp files to be build with sflphone
 sflphoned_SOURCES = \
@@ -66,6 +66,7 @@ libsflphone_la_LIBADD = \
 	$(src)/libs/iax2/libiax2.la \
 	$(src)/libs/dbus-c++/src/libdbus-c++-1.la \
 	$(IAX_LIB) \
+	./im/libim.la \
 	./sip/libsiplink.la \
 	./audio/libaudio.la \
 	./dbus/libdbus.la \
@@ -85,7 +86,8 @@ libsflphone_la_LDFLAGS = \
 		@SAMPLERATE_LIBS@ \
 		@libssl_LIBS@ \
 		@UUID_LIBS@ \
-		@yaml_LIBS@
+		@yaml_LIBS@ \
+		@xml_LIBS@
 
 libsflphone_la_CFLAGS = \
 		@CCGNU2_CFLAGS@ \
@@ -98,7 +100,8 @@ libsflphone_la_CFLAGS = \
 		@SAMPLERATE_CFLAGS@ \
 		@libssl_CFLAGS@ \
 		@UUID_CFLAGS@ \
-		@yaml_CFLAGS@
+		@yaml_CFLAGS@ \
+	 	@xml_CFLAGS@
 
 libsflphone_la_SOURCES =
 

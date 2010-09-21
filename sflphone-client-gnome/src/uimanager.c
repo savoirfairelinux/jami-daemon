@@ -191,6 +191,11 @@ update_actions()
     callable_obj_t * selectedCall = calltab_get_selected_call (active_calltree);
     conference_obj_t * selectedConf = calltab_get_selected_conf (active_calltree);
 
+    gboolean instant_messaging_enabled = TRUE;
+
+    if (eel_gconf_key_exists (INSTANT_MESSAGING_ENABLED))
+        instant_messaging_enabled = eel_gconf_get_integer (INSTANT_MESSAGING_ENABLED);
+
     if (selectedCall) {
         // update icon in systray
         show_status_hangup_icon();
@@ -215,11 +220,16 @@ update_actions()
                 gtk_widget_set_sensitive (GTK_WIDGET (holdMenu), TRUE);
                 gtk_widget_set_sensitive (GTK_WIDGET (offHoldToolbar), TRUE);
                 gtk_widget_set_sensitive (GTK_WIDGET (newCallWidget), TRUE);
+
                 // Replace the hold button with the off-hold button
-                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget),
-                                    1);
-                gtk_toolbar_insert (GTK_TOOLBAR (toolbar),
-                                    GTK_TOOL_ITEM (offHoldToolbar), 2);
+                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
+                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (offHoldToolbar), 2);
+
+                if (instant_messaging_enabled) {
+                    gtk_action_set_sensitive (GTK_ACTION (imAction), TRUE);
+                    gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (imToolbar), 3);
+                }
+
                 break;
             case CALL_STATE_RINGING:
                 gtk_action_set_sensitive (GTK_ACTION (pickUpAction), TRUE);
@@ -250,21 +260,21 @@ update_actions()
                 gtk_widget_set_sensitive (GTK_WIDGET (holdToolbar), TRUE);
                 gtk_widget_set_sensitive (GTK_WIDGET (transferToolbar), TRUE);
                 gtk_action_set_sensitive (GTK_ACTION (recordAction), TRUE);
-                gtk_action_set_sensitive (GTK_ACTION (imAction), TRUE);
-                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar),
-                                    2);
-                gtk_toolbar_insert (GTK_TOOLBAR (toolbar),
-                                    GTK_TOOL_ITEM (transferToolbar), 3);
-                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget),
-                                    4);
-                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (imToolbar),
-                                    5);
+                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar), 2);
+                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (transferToolbar), 3);
+                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget), 4);
                 gtk_signal_handler_block (GTK_OBJECT (transferToolbar), transfertButtonConnId);
                 gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (transferToolbar), FALSE);
                 gtk_signal_handler_unblock (transferToolbar, transfertButtonConnId);
                 g_signal_handler_block (GTK_OBJECT (recordWidget), recordButtonConnId);
                 gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (recordWidget), FALSE);
                 g_signal_handler_unblock (GTK_OBJECT (recordWidget), recordButtonConnId);
+
+                if (instant_messaging_enabled) {
+                    gtk_action_set_sensitive (GTK_ACTION (imAction), TRUE);
+                    gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (imToolbar), 5);
+                }
+
                 break;
 
             case CALL_STATE_RECORD:
@@ -284,6 +294,12 @@ update_actions()
                 g_signal_handler_block (GTK_OBJECT (recordWidget), recordButtonConnId);
                 gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (recordWidget), TRUE);
                 g_signal_handler_unblock (GTK_OBJECT (recordWidget), recordButtonConnId);
+
+                if (instant_messaging_enabled) {
+                    gtk_action_set_sensitive (GTK_ACTION (imAction), TRUE);
+                    gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (imToolbar), 5);
+                }
+
                 break;
             case CALL_STATE_BUSY:
             case CALL_STATE_FAILURE:
@@ -319,6 +335,12 @@ update_actions()
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar), 2);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget), 3);
+
+                if (instant_messaging_enabled) {
+                    gtk_action_set_sensitive (GTK_ACTION (imAction), TRUE);
+                    gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (imToolbar), 4);
+                }
+
                 break;
 
             case CONFERENCE_STATE_ACTIVE_DETACHED:
@@ -328,6 +350,12 @@ update_actions()
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar), 2);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget), 3);
+
+                if (instant_messaging_enabled) {
+                    gtk_action_set_sensitive (GTK_ACTION (imAction), TRUE);
+                    gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (imToolbar), 4);
+                }
+
                 break;
 
             case CONFERENCE_STATE_RECORD:
@@ -338,6 +366,12 @@ update_actions()
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar), 2);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget), 3);
+
+                if (instant_messaging_enabled) {
+                    gtk_action_set_sensitive (GTK_ACTION (imAction), TRUE);
+                    gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (imToolbar), 4);
+                }
+
                 break;
 
             case CONFERENCE_STATE_HOLD:
@@ -347,6 +381,12 @@ update_actions()
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (offHoldToolbar), 2);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget), 3);
+
+                if (instant_messaging_enabled) {
+                    gtk_action_set_sensitive (GTK_ACTION (imAction), TRUE);
+                    gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (imToolbar), 4);
+                }
+
                 break;
 
             default:
@@ -534,12 +574,22 @@ call_hold (void* foo UNUSED)
 static void
 call_im (void* foo UNUSED)
 {
-    callable_obj_t * selectedCall = calltab_get_selected_call (current_calls);
+    callable_obj_t *selectedCall = calltab_get_selected_call (current_calls);
+    conference_obj_t *selectedConf = calltab_get_selected_conf();
 
-    if (selectedCall) {
-        im_widget_display (&selectedCall, NULL);
+    if (calltab_get_selected_type (current_calls) == A_CALL) {
+
+        if (selectedCall) {
+            im_widget_display ( (IMWidget **) (&selectedCall->_im_widget), NULL, selectedCall->_callID, NULL);
+        } else {
+            WARN ("Sorry. Instant messaging is not allowed outside a call\n");
+        }
     } else {
-        warn ("Sorry. Instant messaging is not allowed outside a call\n");
+        if (selectedConf) {
+            im_widget_display ( (IMWidget **) (&selectedConf->_im_widget), NULL, selectedConf->_confID, NULL);
+        } else {
+            WARN ("Sorry. Instant messaging is not allowed outside a call\n");
+        }
     }
 }
 
@@ -1191,18 +1241,28 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
         }
 
         if (im) {
-            menu_items = gtk_separator_menu_item_new();
-            gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-            gtk_widget_show (menu_items);
 
-            menu_items = gtk_image_menu_item_new_with_mnemonic (_ ("Send _message"));
-            image = gtk_image_new_from_stock (GTK_STOCK_IM, GTK_ICON_SIZE_MENU);
-            gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (menu_items), image);
-            gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-            g_signal_connect (G_OBJECT (menu_items), "activate",
-                              G_CALLBACK (call_im),
-                              NULL);
-            gtk_widget_show (menu_items);
+            // do not display message if instant messaging is disabled
+            gboolean instant_messaging_enabled = TRUE;
+
+            if (eel_gconf_key_exists (INSTANT_MESSAGING_ENABLED))
+                instant_messaging_enabled = eel_gconf_get_integer (INSTANT_MESSAGING_ENABLED);
+
+            if (instant_messaging_enabled) {
+
+                menu_items = gtk_separator_menu_item_new();
+                gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+                gtk_widget_show (menu_items);
+
+                menu_items = gtk_image_menu_item_new_with_mnemonic (_ ("Send _message"));
+                image = gtk_image_new_from_stock (GTK_STOCK_IM, GTK_ICON_SIZE_MENU);
+                gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (menu_items), image);
+                gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+                g_signal_connect (G_OBJECT (menu_items), "activate",
+                                  G_CALLBACK (call_im),
+                                  NULL);
+                gtk_widget_show (menu_items);
+            }
         }
 
     } else {

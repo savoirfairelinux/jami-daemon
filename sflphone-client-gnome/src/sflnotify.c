@@ -72,7 +72,6 @@ void
 notify_incoming_message (const gchar *callID, const gchar *msg)
 {
 
-    gchar* text;
     gchar* title;
 
     title = g_markup_printf_escaped (_ ("%s says:"), callID);

@@ -34,7 +34,7 @@
 #include "user_cfg.h"
 
 Preferences::Preferences() :  _accountOrder ("")
-        , _audioApi (0)
+        , _audioApi (1) // 1 is pulseaudio, 0 alsa
         , _historyLimit (30)
         , _historyMaxCalls (20)
         , _notifyMails (false)
@@ -59,9 +59,9 @@ void Preferences::serialize (Conf::YamlEmitter *emiter)
     Conf::MappingNode preferencemap (NULL);
 
     Conf::ScalarNode order (_accountOrder);
-    std::stringstream audiostr;
-    audiostr << _audioApi;
-    Conf::ScalarNode audioapi (audiostr.str());
+    // std::stringstream audiostr;
+    // audiostr << _audioApi;
+    Conf::ScalarNode audioapi (_audioApi == 1 ? "pulseaudio" : "alsa");
     std::stringstream histlimitstr;
     histlimitstr << _historyLimit;
     Conf::ScalarNode historyLimit (histlimitstr.str());
@@ -115,7 +115,8 @@ void Preferences::unserialize (Conf::MappingNode *map)
     val = (Conf::ScalarNode *) (map->getValue (audioApiKey));
 
     if (val) {
-        _audioApi = atoi (val->getValue().data());
+        // 1 is pulseaudio, 0 is alsa
+        _audioApi = (val->getValue().compare ("pulseaudio") == 0) ? 1 : 0;
         val = NULL;
     }
 
@@ -190,7 +191,6 @@ void Preferences::unserialize (Conf::MappingNode *map)
 VoipPreference::VoipPreference() :  _playDtmf (true)
         , _playTones (true)
         , _pulseLength (atoi (DFT_PULSE_LENGTH_STR)) // DFT_PULSE_LENGTH_STR
-        , _sendDtmfAs (0)
         , _symmetricRtp (true)
         , _zidFile (ZRTP_ZIDFILE) // ZRTP_ZID_FILENAME
 {
@@ -211,16 +211,12 @@ void VoipPreference::serialize (Conf::YamlEmitter *emitter)
     std::stringstream pulselengthstr;
     pulselengthstr << _pulseLength;
     Conf::ScalarNode pulseLength (pulselengthstr.str());
-    std::stringstream senddtmfstr;
-    senddtmfstr << _sendDtmfAs;
-    Conf::ScalarNode sendDtmfAs (senddtmfstr.str());
     Conf::ScalarNode symmetricRtp (_symmetricRtp ? "true" : "false");
     Conf::ScalarNode zidFile (_zidFile.c_str());
 
     preferencemap.setKeyValue (playDtmfKey, &playDtmf);
     preferencemap.setKeyValue (playTonesKey, &playTones);
     preferencemap.setKeyValue (pulseLengthKey, &pulseLength);
-    preferencemap.setKeyValue (sendDtmfAsKey, &sendDtmfAs);
     preferencemap.setKeyValue (symmetricRtpKey, &symmetricRtp);
     preferencemap.setKeyValue (zidFileKey, &zidFile);
 
@@ -255,13 +251,6 @@ void VoipPreference::unserialize (Conf::MappingNode *map)
 
     if (val) {
         _pulseLength = atoi (val->getValue().data());
-        val = NULL;
-    }
-
-    val = (Conf::ScalarNode *) (map->getValue (sendDtmfAsKey));
-
-    if (val) {
-        _sendDtmfAs = atoi (val->getValue().data());
         val = NULL;
     }
 
@@ -489,7 +478,6 @@ AudioPreference::AudioPreference() : _cardin (atoi (ALSA_DFT_CARD)) // ALSA_DFT_
         , _volumemic (atoi (DFT_VOL_SPKR_STR)) // DFT_VOL_SPKR_STR
         , _volumespkr (atoi (DFT_VOL_MICRO_STR)) // DFT_VOL_MICRO_STR
         , _noisereduce (true)
-        , _echocancel (true)
 {
 
 }
@@ -536,8 +524,6 @@ void AudioPreference::serialize (Conf::YamlEmitter *emitter)
     spkrstr << _volumespkr;
     Conf::ScalarNode volumespkr (spkrstr.str()); //: 100
     Conf::ScalarNode noise (_noisereduce ? "true":"false");
-    Conf::ScalarNode echo (_echocancel ? "true":"false");
-
     preferencemap.setKeyValue (recordpathKey, &recordpath);
     preferencemap.setKeyValue (volumemicKey, &volumemic);
     preferencemap.setKeyValue (volumespkrKey, &volumespkr);
@@ -556,7 +542,6 @@ void AudioPreference::serialize (Conf::YamlEmitter *emitter)
     pulsepreferencemap.setKeyValue (deviceRingtoneKey, &deviceRingtone);
 
     preferencemap.setKeyValue (noiseReduceKey, &noise);
-    preferencemap.setKeyValue (echocancelKey, &echo);
 
     emitter->serializeAudioPreference (&preferencemap);
 
@@ -600,13 +585,6 @@ void AudioPreference::unserialize (Conf::MappingNode *map)
 
     if (val) {
         _noisereduce = (val->getValue() == "true");
-        val = NULL;
-    }
-
-    val = (Conf::ScalarNode *) (map->getValue (echocancelKey));
-
-    if (val) {
-        _echocancel = (val->getValue() == "true");
         val = NULL;
     }
 
