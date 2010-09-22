@@ -146,7 +146,7 @@ im_window_is_active ()
     if (!im_window)
         return FALSE;
     else
-        return gtk_window_is_active (im_window);
+        return gtk_window_is_active (GTK_WINDOW (im_window));
 }
 
 gboolean

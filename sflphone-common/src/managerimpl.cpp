@@ -2342,7 +2342,6 @@ void ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
 
         (alternate == "") ? path = _path : path = alternate;
         std::cout << path << std::endl;
-        _exist = _config.populateFromFile (path);
     }
 
     _debug ("Manager: configuration file path: %s", path.c_str());

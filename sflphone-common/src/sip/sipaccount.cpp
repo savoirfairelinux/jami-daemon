@@ -614,6 +614,8 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
         val = NULL;
     }
 
+    Account::loadAudioCodecs();
+
 }
 
 

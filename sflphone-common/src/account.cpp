@@ -39,7 +39,7 @@ Account::Account (const AccountID& accountID, std::string type) :
         , _enabled (true)
         , _type (type)
         , _codecOrder ()
-        , _codecStr ("")
+        , _codecStr ("0/")
         , _ringtonePath ("/usr/share/sflphone/ringtones/konga.ul")
         , _ringtoneEnabled (true)
         , _displayName ("")
@@ -83,11 +83,12 @@ void Account::loadAudioCodecs (void)
 
     // if the user never set the codec list, use the default configuration for this account
     if (_codecStr == "") {
-        _info ("Account: use the default order");
+        _info ("Account: Use default codec order");
         Manager::instance ().getCodecDescriptorMap ().setDefaultOrder();
     }
     // else retrieve the one set in the user config file
     else {
+        _debug ("Account: Set codec order from configuration file");
         std::vector<std::string> active_list = Manager::instance ().retrieveActiveCodecs();
         // This property is now set per account basis
         // std::string s = Manager::instance ().getConfigString (_accountID, "ActiveCodecs");

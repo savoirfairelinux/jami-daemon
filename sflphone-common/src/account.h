@@ -346,9 +346,10 @@ class Account : public Serializable
         // assignment operator
         Account& operator= (const Account& rh);
 
+    protected:
+
         void loadAudioCodecs (void);
 
-    protected:
         /**
          * Account ID are assign in constructor and shall not changed
          */

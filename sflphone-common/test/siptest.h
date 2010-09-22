@@ -52,7 +52,8 @@ class SIPTest : public CppUnit::TestCase {
    /**
      * Use cppunit library macros to add unit test the factory
      */
-    CPPUNIT_TEST_SUITE( InstantMessagingTest );
+    CPPUNIT_TEST_SUITE( SIPTest );
+    CPPUNIT_TEST ( testSimpleIpCall );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -69,6 +70,9 @@ class SIPTest : public CppUnit::TestCase {
          * This method is called by unitcpp after each test
          */
         inline void tearDown ();
+
+
+	void testSimpleIpCall(void);
 
     private:
 };

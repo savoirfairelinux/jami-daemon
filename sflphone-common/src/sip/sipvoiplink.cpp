@@ -1535,7 +1535,6 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
         pjsip_dlg_set_route_set (dialog, route_set);
     }
 
-
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
 
     // Set auth information
@@ -1733,7 +1732,6 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         call->getLocalSDP()->set_ip_address (addrSdp);
         call->getLocalSDP()->create_initial_offer (account->getActiveCodecs ());
 
-
         // Audio Rtp Session must be initialized before creating initial offer in SDP session
         // since SDES require crypto attribute.
         try {
@@ -1797,10 +1795,12 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
 
         // Create the dialog (UAC)
         // (Parameters are "strduped" inside this function)
+        _debug ("UserAgent: Creating dialog for this call");
         status = pjsip_dlg_create_uac (pjsip_ua_instance(), &pjFrom, &pjContact, &pjTo, NULL, &dialog);
         PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
 
         // Create the invite session for this call
+        _debug ("UserAgent: Creating invite session for this call");
         status = pjsip_inv_create_uac (dialog, call->getLocalSDP()->get_local_sdp_session(), 0, &inv);
         PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
 
@@ -3208,7 +3208,9 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
         const pj_str_t * description = pjsip_get_status_text (statusCode);
 
         if (statusCode) {
-            DBusManager::instance().getCallManager()->sipCallStateChanged (call->getCallId(), std::string (description->ptr, description->slen), statusCode);
+            // test wether or not dbus manager is instantiated, if not no need to notify the client
+            if (Manager::instance().getDbusManager())
+                DBusManager::instance().getCallManager()->sipCallStateChanged (call->getCallId(), std::string (description->ptr, description->slen), statusCode);
         }
     }
 

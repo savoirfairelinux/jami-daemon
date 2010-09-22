@@ -663,6 +663,9 @@ void Sdp::set_local_media_capabilities (CodecOrder selectedCodecs)
     /* We retrieve the codecs selected by the user */
     codecs_list = Manager::instance().getCodecDescriptorMap().getCodecsMap();
 
+    if (selectedCodecs.size() == 0)
+        _warn ("SDP: No selected codec while building local SDP offer");
+
     for (i=0; i<selectedCodecs.size(); i++) {
         iter=codecs_list.find (selectedCodecs[i]);
 

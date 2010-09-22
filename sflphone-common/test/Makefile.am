@@ -23,6 +23,8 @@ test_SOURCES = \
 	numbercleanertest.cpp \
 	pluginmanagertest.h \
 	pluginmanagertest.cpp \
+	siptest.h \
+	siptest.cpp \
 	rtptest.h \
 	rtptest.cpp \
 	sdesnegotiatortest.h \
