@@ -3687,8 +3687,6 @@ CallID ManagerImpl::getNewCallID ()
         random_id << (unsigned) rand();
     }
 
-    _lastCallID = random_id.str();
-
     return random_id.str();
 }
 

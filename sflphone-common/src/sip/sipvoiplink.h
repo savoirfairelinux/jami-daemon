@@ -521,6 +521,9 @@ class SIPVoIPLink : public VoIPLink
          * @return int The extern (public) port
          */
         int findLocalPortFromUri (const std::string& uri, pjsip_transport *transport);
+
+
+	friend class SIPTest;
 };
 
 

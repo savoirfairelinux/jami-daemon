@@ -38,6 +38,7 @@
 
 #include "siptest.h"
 #include "manager.h" 
+#include "sip/sipvoiplink.h"
 
 using std::cout;
 using std::endl;
@@ -158,15 +159,15 @@ void SIPTest::testSimpleIncomingIpCall ()
     // the incoming invite.
     sleep(2);
 
-    // CallList should not be used if receiving only one call
+    SIPVoIPLink *siplink = SIPVoIPLink::instance (""); 
+
+    CPPUNIT_ASSERT(siplink->_callMap.size() == 1);
+    CallMap::iterator iterCallId = siplink->_callMap.begin();
+
+    // TODO: hmmm, should IP2IP call be stored in call list....
     CPPUNIT_ASSERT(Manager::instance().getCallList().size() == 0);
-    // CPPUNIT_ASSERT(Manager::instance()._callAccountMap.size() == 1); 
 
-    // TODO: hmmm, need to find a better way to retreive the call id
-    // std::map<std::string, std::string>::iterator iterCallId = Manager::instance()._callAccountMap.begin();
-    // CPPUNIT_ASSERT(iterCallId != Manager::instance()._callAccountMap.end());    
-
-    std::string testcallid = Manager::instance()._lastCallID;
+    std::string testcallid = iterCallId->first;
 
     CPPUNIT_ASSERT(Manager::instance().answerCall(testcallid));
 

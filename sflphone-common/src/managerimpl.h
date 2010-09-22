@@ -1426,8 +1426,6 @@ class ManagerImpl
         Conf::YamlParser *parser;
         Conf::YamlEmitter *emitter;
 
-	std::string _lastCallID;
-
 #ifdef TEST
         bool testCallAccountMap();
         bool testAccountMap();
