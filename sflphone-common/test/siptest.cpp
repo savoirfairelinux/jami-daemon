@@ -76,8 +76,9 @@ void SIPTest::tearDown()
 
     // in order to stop any currently running threads
     std::cout << "SIPTest: Clean all remaining sipp instances" << std::endl;
-    system("killall sipp");
-
+    int ret = system("killall sipp");
+    if(!ret)
+	std::cout << "SIPTest: Error from system call, killall sipp" << std::endl;
 }
 
 
@@ -86,7 +87,7 @@ void SIPTest::testSimpleOutgoingIpCall ()
     pthread_t thethread;
     void *status;
 
-    // command to be executed by the thread
+    // command to be executed by the thread, user agent server waiting for a call
     std::string command("sipp -sn uas -i 127.0.0.1 -p 5062 -m 1");
 
     int rc = pthread_create(&thethread, NULL, sippThread, (void *)(&command));
@@ -147,31 +148,61 @@ void SIPTest::testSimpleIncomingIpCall ()
     pthread_t thethread;
     void *status;
 
-    // command to be executed by the thread
+    // command to be executed by the thread, user agent client which initiate a call and hangup
     std::string command("sipp -sn uac 127.0.0.1 -i 127.0.0.1 -p 5062 -m 1");
 
     int rc = pthread_create(&thethread, NULL, sippThread, (void *)(&command));
     if (rc) {
         std::cout << "SIPTest: ERROR; return code from pthread_create()" << std::endl;
     }
+    
 
     // sleep a while to make sure that sipp insdtance is initialized and sflphoned received
     // the incoming invite.
     sleep(2);
 
+    // gtrab call id from sipvoiplink 
     SIPVoIPLink *siplink = SIPVoIPLink::instance (""); 
 
     CPPUNIT_ASSERT(siplink->_callMap.size() == 1);
     CallMap::iterator iterCallId = siplink->_callMap.begin();
-
+    std::string testcallid = iterCallId->first;
+  
     // TODO: hmmm, should IP2IP call be stored in call list....
     CPPUNIT_ASSERT(Manager::instance().getCallList().size() == 0);
-
-    std::string testcallid = iterCallId->first;
-
+ 
+    // Answer this call
     CPPUNIT_ASSERT(Manager::instance().answerCall(testcallid));
+    
+    // This is useless since manager is not aware of incoming IP2IP sip calls
+    /*
+    sleep(1);
 
-    sleep(2);
+    std::map<std::string, std::string>::iterator iterCallDetails;
+    std::map<std::string, std::string> callDetails = Manager::instance().getCallDetails (testcallid);
+
+    iterCallDetails = callDetails.find("ACCOUNTID");
+    std::cout << "---------------------- " << iterCallDetails->second << std::endl;
+    // CPPUNIT_ASSERT((iterCallDetails != callDetails.end()) && (iterCallDetails->second == ""));
+    iterCallDetails = callDetails.find("PEER_NUMBER");
+    std::cout << "--------------------- " << iterCallDetails->second << std::endl;
+    // CPPUNIT_ASSERT((iterCallDetails != callDetails.end()) && (iterCallDetails->second == "<sip:test@127.0.0.1:5062>"));
+    iterCallDetails = callDetails.find("PEER_NAME");
+    std::cout << "--------------------- " << iterCallDetails->second << std::endl;
+    // CPPUNIT_ASSERT((iterCallDetails != callDetails.end()) && (iterCallDetails->second == ""));
+    iterCallDetails = callDetails.find("DISPLAY_NAME");
+    std::cout << "-------------------- " << iterCallDetails->second << std::endl;
+    // CPPUNIT_ASSERT((iterCallDetails != callDetails.end()) && (iterCallDetails->second == ""));
+    iterCallDetails = callDetails.find("CALL_STATE");
+    std::cout << "-------------------- " << iterCallDetails->second << std::endl;
+    // CPPUNIT_ASSERT((iterCallDetails != callDetails.end()) && (iterCallDetails->second == "CURRENT"));
+    iterCallDetails = callDetails.find("CALL_TYPE");
+    std::cout << "-------------------- " << iterCallDetails->second << std::endl;
+    // CPPUNIT_ASSERT((iterCallDetails != callDetails.end()) && (iterCallDetails->second == "1"));
+    */
+
+
+    sleep(1);
 
     rc = pthread_join(thethread, &status);
     if (rc) {
@@ -179,5 +210,4 @@ void SIPTest::testSimpleIncomingIpCall ()
     }
     else
         std::cout << "SIPTest: completed join with thread" << std::endl;
-
 }
