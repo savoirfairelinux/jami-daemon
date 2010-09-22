@@ -114,7 +114,6 @@ ManagerImpl::~ManagerImpl (void)
         _audiofile = NULL;
     }
 
-    // terminate();
     delete _cleaner;
     _cleaner = NULL;
     delete _history;
@@ -2342,6 +2341,8 @@ void ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
 
         (alternate == "") ? path = _path : path = alternate;
         std::cout << path << std::endl;
+
+	_path = path;
     }
 
     _debug ("Manager: configuration file path: %s", path.c_str());
