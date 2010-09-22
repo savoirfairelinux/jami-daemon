@@ -1430,7 +1430,7 @@ class ManagerImpl
         bool testCallAccountMap();
         bool testAccountMap();
 #endif
-
+        friend class SipTest;
         friend class ConfigurationTest;
         friend class HistoryTest;
 };

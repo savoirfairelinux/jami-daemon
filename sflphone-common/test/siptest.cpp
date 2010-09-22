@@ -48,10 +48,12 @@ pthread_t thethread;
 
 
 
-void *sippThread(void *threadid)
+void *sippThread(void *str)
 {
 
-    std::cout << "SIPTest: Starting sipp" << std::endl;
+    std::string *command = (std::string *)(str); 
+
+    std::cout << "SIPTest: " << command << std::endl;
 
     // Set up the sipp instance in this thread in order to catch return value 
     // 0: All calls were successful
@@ -60,9 +62,11 @@ void *sippThread(void *threadid)
     // 99: Normal exit without calls processed
     // -1: Fatal error
     // -2: Fatal error binding a socket 
-    int i = system("sipp -sn uas -i 127.0.0.1 -p 5062 -m 1 -f 0 -trace_msg -trace_stat");
+    int i = system(command->c_str());
 	
     CPPUNIT_ASSERT(i==0);
+
+    delete command;
 
     pthread_exit(NULL);
 
@@ -72,19 +76,21 @@ void *sippThread(void *threadid)
 void SIPTest::setUp()
 {
 
-    /*
-    int rc = pthread_create(&thethread, NULL, sippThread, NULL);
+    std::string *command = new std::string("sipp -sn uas -i 127.0.0.1 -p 5062 -m 1");
+
+    int rc = pthread_create(&thethread, NULL, sippThread, (void *)command);
     if (rc) {
         std::cout << "SIPTest: ERROR; return code from pthread_create()" << std::endl;
     }
-    */
+    
 }
 
 void SIPTest::tearDown()
 {
-    /*
 
     void *status;
+
+    system("killall sipp");
 
     int rc = pthread_join(thethread, &status);
     if (rc) {
@@ -93,7 +99,6 @@ void SIPTest::tearDown()
     else
 	std::cout << " SIPTest: completed join with thread" << std::endl;
 
-    */
 }
 
 
@@ -114,6 +119,9 @@ void SIPTest::testSimpleIpCall ()
     // must sleep here until receiving 180 and 200 message from peer
     sleep(2);
 
+    
+    CPPUNIT_ASSERT(Manager::instance().getCallList().size() == 1);
+
     CPPUNIT_ASSERT(Manager::instance().hasCurrentCall());
 
     CPPUNIT_ASSERT(Manager::instance().getCurrentCallId() == testcallid);
@@ -133,8 +141,11 @@ void SIPTest::testSimpleIpCall ()
     CPPUNIT_ASSERT((iterCallDetails != callDetails.end()) && (iterCallDetails->second == "CURRENT"));
     iterCallDetails = callDetails.find("CALL_TYPE");
     CPPUNIT_ASSERT((iterCallDetails != callDetails.end()) && (iterCallDetails->second == "1"));
-    
+
     Manager::instance().hangupCall(testcallid);
 
 }
+
+
+
 
