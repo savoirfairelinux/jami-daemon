@@ -1426,11 +1426,13 @@ class ManagerImpl
         Conf::YamlParser *parser;
         Conf::YamlEmitter *emitter;
 
+	std::string _lastCallID;
+
 #ifdef TEST
         bool testCallAccountMap();
         bool testAccountMap();
 #endif
-        friend class SipTest;
+        friend class SIPTest;
         friend class ConfigurationTest;
         friend class HistoryTest;
 };

@@ -85,6 +85,7 @@ void SIPTest::testSimpleOutgoingIpCall ()
     pthread_t thethread;
     void *status;
 
+    // command to be executed by the thread
     std::string command("sipp -sn uas -i 127.0.0.1 -p 5062 -m 1");
 
     int rc = pthread_create(&thethread, NULL, sippThread, (void *)(&command));
@@ -135,5 +136,47 @@ void SIPTest::testSimpleOutgoingIpCall ()
     else
         std::cout << "SIPTest: completed join with thread" << std::endl;
 
+
+}
+
+
+void SIPTest::testSimpleIncomingIpCall ()
+{
+
+    pthread_t thethread;
+    void *status;
+
+    // command to be executed by the thread
+    std::string command("sipp -sn uac 127.0.0.1 -i 127.0.0.1 -p 5062 -m 1");
+
+    int rc = pthread_create(&thethread, NULL, sippThread, (void *)(&command));
+    if (rc) {
+        std::cout << "SIPTest: ERROR; return code from pthread_create()" << std::endl;
+    }
+
+    // sleep a while to make sure that sipp insdtance is initialized and sflphoned received
+    // the incoming invite.
+    sleep(2);
+
+    // CallList should not be used if receiving only one call
+    CPPUNIT_ASSERT(Manager::instance().getCallList().size() == 0);
+    // CPPUNIT_ASSERT(Manager::instance()._callAccountMap.size() == 1); 
+
+    // TODO: hmmm, need to find a better way to retreive the call id
+    // std::map<std::string, std::string>::iterator iterCallId = Manager::instance()._callAccountMap.begin();
+    // CPPUNIT_ASSERT(iterCallId != Manager::instance()._callAccountMap.end());    
+
+    std::string testcallid = Manager::instance()._lastCallID;
+
+    CPPUNIT_ASSERT(Manager::instance().answerCall(testcallid));
+
+    sleep(2);
+
+    rc = pthread_join(thethread, &status);
+    if (rc) {
+        std::cout << "SIPTest: ERROR; return code from pthread_join(): " << rc << std::endl;
+    }
+    else
+        std::cout << "SIPTest: completed join with thread" << std::endl;
 
 }
