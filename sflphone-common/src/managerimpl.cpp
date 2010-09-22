@@ -783,7 +783,8 @@ ManagerImpl::createConference (const CallID& id1, const CallID& id2)
     _conferencemap.insert (std::pair<CallID, Conference*> (conf->getConfID(), conf));
 
     // broadcast a signal over dbus
-    _dbus->getCallManager()->conferenceCreated (conf->getConfID());
+    if(_dbus)
+        _dbus->getCallManager()->conferenceCreated (conf->getConfID());
 
     return conf;
 }
@@ -829,7 +830,8 @@ void ManagerImpl::removeConference (const ConfID& conference_id)
         _error ("Manager: Error: Cannot remove conference: %s", conference_id.c_str());
 
     // broadcast a signal over dbus
-    _dbus->getCallManager()->conferenceRemoved (conference_id);
+    if(_dbus)
+        _dbus->getCallManager()->conferenceRemoved (conference_id);
 
 }
 
@@ -882,8 +884,8 @@ void ManagerImpl::holdConference (const CallID& id)
 
         conf->setState (Conference::Hold);
 
-        _dbus->getCallManager()->conferenceChanged (conf->getConfID(),
-                conf->getStateStr());
+	if(_dbus)
+            _dbus->getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
 
     }
 
@@ -920,8 +922,8 @@ void ManagerImpl::unHoldConference (const CallID& id)
 
         conf->setState (Conference::Active_Atached);
 
-        _dbus->getCallManager()->conferenceChanged (conf->getConfID(),
-                conf->getStateStr());
+	if(_dbus)
+            _dbus->getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
 
     }
 
@@ -1089,8 +1091,8 @@ void ManagerImpl::addMainParticipant (const CallID& conference_id)
 
         conf->setState (Conference::Active_Atached);
 
-        _dbus->getCallManager()->conferenceChanged (conference_id,
-                conf->getStateStr());
+        if(_dbus)
+            _dbus->getCallManager()->conferenceChanged (conference_id, conf->getStateStr());
 
     }
 
@@ -1229,8 +1231,8 @@ void ManagerImpl::detachParticipant (const CallID& call_id,
                 removeParticipant (call_id);
                 processRemainingParticipant (current_call_id, conf);
 
-                _dbus->getCallManager()->conferenceChanged (conf->getConfID(),
-                        conf->getStateStr());
+		if(_dbus)
+                    _dbus->getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
             }
         } else {
 
@@ -1248,8 +1250,8 @@ void ManagerImpl::detachParticipant (const CallID& call_id,
 
             conf->setState (Conference::Active_Detached);
 
-            _dbus->getCallManager()->conferenceChanged (conf->getConfID(),
-                    conf->getStateStr());
+	    if(_dbus)
+                _dbus->getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
         }
 
         switchCall ("");
@@ -2342,7 +2344,7 @@ void ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
         (alternate == "") ? path = _path : path = alternate;
         std::cout << path << std::endl;
 
-	_path = path;
+        _path = path;
     }
 
     _debug ("Manager: configuration file path: %s", path.c_str());
