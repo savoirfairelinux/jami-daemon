@@ -42,12 +42,6 @@
 using std::cout;
 using std::endl;
 
-pthread_t thethread;
-
-
-
-
-
 void *sippThread(void *str)
 {
 
@@ -66,8 +60,6 @@ void *sippThread(void *str)
 	
     CPPUNIT_ASSERT(i==0);
 
-    delete command;
-
     pthread_exit(NULL);
 
 }
@@ -75,38 +67,31 @@ void *sippThread(void *str)
 
 void SIPTest::setUp()
 {
-
-    std::string *command = new std::string("sipp -sn uas -i 127.0.0.1 -p 5062 -m 1");
-
-    int rc = pthread_create(&thethread, NULL, sippThread, (void *)command);
-    if (rc) {
-        std::cout << "SIPTest: ERROR; return code from pthread_create()" << std::endl;
-    }
     
 }
 
 void SIPTest::tearDown()
 {
 
-    void *status;
-
+    // in order to stop any currently running threads
+    std::cout << "SIPTest: Clean all remaining sipp instances" << std::endl;
     system("killall sipp");
-
-    int rc = pthread_join(thethread, &status);
-    if (rc) {
-        std::cout << "SIPTest: ERROR; return code from pthread_join(): " << rc << std::endl;
-    }
-    else
-	std::cout << " SIPTest: completed join with thread" << std::endl;
 
 }
 
 
-void SIPTest::testSimpleIpCall ()
+void SIPTest::testSimpleOutgoingIpCall ()
 {
+    pthread_t thethread;
+    void *status;
 
+    std::string command("sipp -sn uas -i 127.0.0.1 -p 5062 -m 1");
+
+    int rc = pthread_create(&thethread, NULL, sippThread, (void *)(&command));
+    if (rc) {
+        std::cout << "SIPTest: ERROR; return code from pthread_create()" << std::endl;
+    }
     
-
     std::string testaccount("IP2IP");
     std::string testcallid("callid1234");
     std::string testcallnumber("sip:test@127.0.0.1:5062");
@@ -119,11 +104,10 @@ void SIPTest::testSimpleIpCall ()
     // must sleep here until receiving 180 and 200 message from peer
     sleep(2);
 
-    
-    CPPUNIT_ASSERT(Manager::instance().getCallList().size() == 1);
+    // call list should be empty for outgoing calls, only used for incoming calls
+    CPPUNIT_ASSERT(Manager::instance().getCallList().size() == 0);
 
     CPPUNIT_ASSERT(Manager::instance().hasCurrentCall());
-
     CPPUNIT_ASSERT(Manager::instance().getCurrentCallId() == testcallid);
 
     std::map<std::string, std::string>::iterator iterCallDetails;
@@ -144,8 +128,12 @@ void SIPTest::testSimpleIpCall ()
 
     Manager::instance().hangupCall(testcallid);
 
+    rc = pthread_join(thethread, &status);
+    if (rc) {
+        std::cout << "SIPTest: ERROR; return code from pthread_join(): " << rc << std::endl;
+    }
+    else
+        std::cout << "SIPTest: completed join with thread" << std::endl;
+
+
 }
-
-
-
-

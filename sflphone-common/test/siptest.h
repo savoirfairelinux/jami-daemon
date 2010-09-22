@@ -53,7 +53,7 @@ class SIPTest : public CppUnit::TestCase {
      * Use cppunit library macros to add unit test the factory
      */
     CPPUNIT_TEST_SUITE( SIPTest );
-    CPPUNIT_TEST ( testSimpleIpCall );
+    CPPUNIT_TEST ( testSimpleOutgoingIpCall );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -72,7 +72,7 @@ class SIPTest : public CppUnit::TestCase {
         inline void tearDown ();
 
 
-	void testSimpleIpCall(void);
+	void testSimpleOutgoingIpCall(void);
 
     private:
 };
