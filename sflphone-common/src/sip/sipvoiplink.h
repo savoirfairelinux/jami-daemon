@@ -523,7 +523,7 @@ class SIPVoIPLink : public VoIPLink
         int findLocalPortFromUri (const std::string& uri, pjsip_transport *transport);
 
 
-	friend class SIPTest;
+        friend class SIPTest;
 };
 
 
