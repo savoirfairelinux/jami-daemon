@@ -3833,19 +3833,19 @@ short ManagerImpl::loadAccountMap()
         if (val)
             accountid = val->getValue();
 
-	// search for alias (to get rid of the "ghost" account)
-	val = NULL;
-	val = (Conf::ScalarNode *) (map->getValue (alias));
-	Conf::Value accountAlias;
+        // search for alias (to get rid of the "ghost" account)
+        val = NULL;
+        val = (Conf::ScalarNode *) (map->getValue (alias));
+        Conf::Value accountAlias;
 
-	if (val)
-	    accountAlias = val->getValue();
+        if (val)
+            accountAlias = val->getValue();
 
         // do not insert in account map if id or alias is empty
         if (accountid.empty() || accountAlias.empty()) {
-	    iterSeq++;
+            iterSeq++;
             continue;
-	}
+        }
 
         // Create a default account for specific type
         if (accountType == "SIP" && accountid != "IP2IP") {
