@@ -62,6 +62,7 @@
 #include <sstream>
 #include <sys/types.h> // mkdir(2)
 #include <sys/stat.h>  // mkdir(2)
+
 #include <pwd.h>       // getpwuid
 
 #define DIRECT_IP_CALL	"IP CALL"
@@ -3807,15 +3808,33 @@ short ManagerImpl::loadAccountMap()
 
     while (iterSeq != seq->getSequence()->end()) {
 
+	// Pointer to the account and account preferences map
         Account *tmpAccount = NULL;
         Conf::MappingNode *map = (Conf::MappingNode *) (*iterSeq);
 
-        Conf::ScalarNode * val = (Conf::ScalarNode *) (map->getValue (accTypeKey));
-        Conf::Value accountType = val->getValue();
+	// Scalar node from yaml configuration
+        Conf::ScalarNode * val = NULL;
 
+	// Search for account types (IAX/IP2IP)
+	val = (Conf::ScalarNode *) (map->getValue (accTypeKey));
+        Conf::Value accountType;
+        if(val)
+	    accountType = val->getValue();
+	else
+	    accountType = "SIP"; // Assume type is SIP if not specified
+
+	// search for account id
+	val = NULL;
         val = (Conf::ScalarNode *) (map->getValue (accID));
-        Conf::Value accountid = val->getValue();
+   	Conf::Value accountid;
+	if(val)
+	    accountid = val->getValue();
 
+	// do not insert in account map if id is empty
+        if (accountid.empty())
+            continue;
+
+	// Create a default account for specific type
         if (accountType == "SIP" && accountid != "IP2IP") {
             _debug ("Manager: Create SIP account: %s", accountid.c_str());
             tmpAccount = AccountCreator::createAccount (AccountCreator::SIP_ACCOUNT, accountid);
@@ -3824,10 +3843,11 @@ short ManagerImpl::loadAccountMap()
             tmpAccount = AccountCreator::createAccount (AccountCreator::IAX_ACCOUNT, accountid);
         }
 
-
+	// Fill account with configuration preferences
         if (tmpAccount != NULL) {
 
             try {
+
                 tmpAccount->unserialize (map);
             } catch (SipAccountException &e) {
                 _error ("Manager: %s", e.what());

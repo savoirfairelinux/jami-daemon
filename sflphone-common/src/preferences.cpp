@@ -102,8 +102,10 @@ void Preferences::unserialize (Conf::MappingNode *map)
 
     Conf::ScalarNode *val;
 
-    if (!map)
+    if (!map) {
+	_debug("Preference: Did not find general preferences");
         return;
+    }
 
     val = (Conf::ScalarNode *) (map->getValue (orderKey));
 
@@ -230,8 +232,10 @@ void VoipPreference::unserialize (Conf::MappingNode *map)
 
     Conf::ScalarNode *val = NULL;
 
-    if (!map)
+    if (!map) {
+	_debug("VoipPreference: Did not find voip preference");
         return;
+    }
 
     val = (Conf::ScalarNode *) (map->getValue (playDtmfKey));
 
@@ -319,8 +323,10 @@ void AddressbookPreference::unserialize (Conf::MappingNode *map)
 
     Conf::ScalarNode *val = NULL;
 
-    if (!map)
+    if (!map) {
+	_debug("Addressbook: Did not find addressbook preferences");
         return;
+    }
 
     val = (Conf::ScalarNode *) (map->getValue (photoKey));
 
@@ -415,8 +421,10 @@ void HookPreference::unserialize (Conf::MappingNode *map)
 
     _debug ("Hook: Unserialize preference");
 
-    if (!map)
+    if (!map) {
+	_debug("Hook: Did not find hook preference");
         return;
+    }
 
     val = (Conf::ScalarNode *) (map->getValue (iax2EnabledKey));
 
@@ -551,8 +559,10 @@ void AudioPreference::unserialize (Conf::MappingNode *map)
 {
     _debug ("AudioPreference: Unserialize configuration");
 
-    if (!map)
+    if (!map) {
+	_debug("AudioPreference: Did not find audio preferences");	
         return;
+    }
 
     Conf::MappingNode *alsamap = NULL;
     Conf::MappingNode *pulsemap = NULL;
@@ -702,6 +712,9 @@ void ShortcutPreferences::setShortcuts (std::map<std::string, std::string> map_c
     // std::map<std::string, int> map_cpy = shortcut;
     std::map<std::string, std::string>::iterator it;
 
+    _debug ("ShortcutPreferences: Set shortcuts");
+
+
     it = map_cpy.find (hangupShortKey);
 
     if (it != map_cpy.end()) {
@@ -768,10 +781,12 @@ void ShortcutPreferences::serialize (Conf::YamlEmitter *emitter)
 
 void ShortcutPreferences::unserialize (Conf::MappingNode *map)
 {
-    _debug ("ShortcutPreference: Unserialize configuration");
+    _debug ("ShortcutPreference: Unserialize shortcut");
 
-    if (!map)
+    if (!map) {
+	_debug("ShortcutPreference: Could not find shortcut preferences");
         return;
+    }
 
     Conf::ScalarNode *val = NULL;
 
@@ -809,4 +824,5 @@ void ShortcutPreferences::unserialize (Conf::MappingNode *map)
         _togglePickupHangup = val->getValue();
         val = NULL;
     }
+
 }

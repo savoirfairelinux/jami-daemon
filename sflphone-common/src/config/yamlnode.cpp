@@ -74,6 +74,7 @@ void MappingNode::removeKeyValue (Key key)
 
 YamlNode *MappingNode::getValue (Key key)
 {
+
     Mapping::iterator it = map.find (key);
 
     if (it != map.end()) {

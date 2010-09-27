@@ -66,7 +66,7 @@ void Credentials::unserialize (Conf::MappingNode *map)
 
     Conf::ScalarNode *val = NULL;
 
-    _debug ("SipAccount: Unserialize");
+    _debug ("SipAccount: Unserialize credentials");
 
     val = (Conf::ScalarNode *) (map->getValue (credentialCountKey));
 
@@ -442,10 +442,13 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
         val = NULL;
     }
 
+    // Init stun server name with default server name
     _stunServerName = pj_str ( (char*) _stunServer.data());
 
     credMap = (Conf::MappingNode *) (map->getValue (credKey));
-    credentials.unserialize (credMap);
+    
+    if(credMap)
+        credentials.unserialize (credMap);
 
     val = (Conf::ScalarNode *) (map->getValue (displayNameKey));
 
