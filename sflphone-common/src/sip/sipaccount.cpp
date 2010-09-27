@@ -446,8 +446,8 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
     _stunServerName = pj_str ( (char*) _stunServer.data());
 
     credMap = (Conf::MappingNode *) (map->getValue (credKey));
-    
-    if(credMap)
+
+    if (credMap)
         credentials.unserialize (credMap);
 
     val = (Conf::ScalarNode *) (map->getValue (displayNameKey));

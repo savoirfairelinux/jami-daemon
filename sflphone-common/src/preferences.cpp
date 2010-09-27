@@ -103,7 +103,7 @@ void Preferences::unserialize (Conf::MappingNode *map)
     Conf::ScalarNode *val;
 
     if (!map) {
-	_debug("Preference: Did not find general preferences");
+        _debug ("Preference: Did not find general preferences");
         return;
     }
 
@@ -233,7 +233,7 @@ void VoipPreference::unserialize (Conf::MappingNode *map)
     Conf::ScalarNode *val = NULL;
 
     if (!map) {
-	_debug("VoipPreference: Did not find voip preference");
+        _debug ("VoipPreference: Did not find voip preference");
         return;
     }
 
@@ -324,7 +324,7 @@ void AddressbookPreference::unserialize (Conf::MappingNode *map)
     Conf::ScalarNode *val = NULL;
 
     if (!map) {
-	_debug("Addressbook: Did not find addressbook preferences");
+        _debug ("Addressbook: Did not find addressbook preferences");
         return;
     }
 
@@ -422,7 +422,7 @@ void HookPreference::unserialize (Conf::MappingNode *map)
     _debug ("Hook: Unserialize preference");
 
     if (!map) {
-	_debug("Hook: Did not find hook preference");
+        _debug ("Hook: Did not find hook preference");
         return;
     }
 
@@ -560,7 +560,7 @@ void AudioPreference::unserialize (Conf::MappingNode *map)
     _debug ("AudioPreference: Unserialize configuration");
 
     if (!map) {
-	_debug("AudioPreference: Did not find audio preferences");	
+        _debug ("AudioPreference: Did not find audio preferences");
         return;
     }
 
@@ -784,7 +784,7 @@ void ShortcutPreferences::unserialize (Conf::MappingNode *map)
     _debug ("ShortcutPreference: Unserialize shortcut");
 
     if (!map) {
-	_debug("ShortcutPreference: Could not find shortcut preferences");
+        _debug ("ShortcutPreference: Could not find shortcut preferences");
         return;
     }
 
