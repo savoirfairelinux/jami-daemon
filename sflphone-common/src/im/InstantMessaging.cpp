@@ -145,7 +145,8 @@ std::string InstantMessaging::receive (const std::string& message, const std::st
     // TODO String cleaning
 
     // Archive the message
-    this->saveMessage (message, author, id);
+    // TODO Deactivate this for the momment, this is an extra feature.
+    // this->saveMessage (message, author, id);
 
 
     return message;
