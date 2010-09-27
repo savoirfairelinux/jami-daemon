@@ -45,6 +45,9 @@
 #include "audio/audiolayer.h"
 #include "audio/codecs/audiocodec.h"
 #include "audio/samplerateconverter.h"
+#include "audio/audioprocessing.h"
+#include "audio/noisesuppress.h"
+
 #include "managerimpl.h"
 
 #include <ccrtp/rtp.h>
@@ -194,8 +197,10 @@ class AudioRtpSession : public ost::Thread, public ost::TimerPort
         // this destination and update a new one
         unsigned short _remote_port;
 
+        // Pointer to the session's codec
         AudioCodec * _audiocodec;
 
+        // Pointer to audio layer
         AudioLayer * _audiolayer;
 
         /** Mic-data related buffers */
@@ -287,11 +292,6 @@ class AudioRtpSession : public ost::Thread, public ost::TimerPort
         int _currentTime;
 
         /**
-         * Preprocess internal data
-         */
-        SpeexPreprocessState *_noiseState;
-
-        /**
          * State of mic fade in
          */
         bool _micFadeInComplete;
@@ -311,6 +311,15 @@ class AudioRtpSession : public ost::Thread, public ost::TimerPort
          */
         SFLDataFormat _spkrAmplFactor;
 
+        /**
+         * Audio process containing noise reduction engine
+         */
+        AudioProcessing *_audioProcess;
+
+        /**
+         * Noise reduction engine
+         */
+        NoiseSuppress *_noiseSuppress;
 
     protected:
 
@@ -340,11 +349,12 @@ AudioRtpSession<D>::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
         _timestampIncrement (0),
         _timestampCount (0),
         _countNotificationTime (0),
-        _noiseState (NULL),
         _micFadeInComplete (false),
         _spkrFadeInComplete (false),
         _micAmplFactor (32000),
         _spkrAmplFactor (32000),
+        _audioProcess (NULL),
+        _noiseSuppress (NULL),
         _ca (sipcall)
 {
     setCancel (cancelDefault);
@@ -416,10 +426,15 @@ AudioRtpSession<D>::~AudioRtpSession()
         _audiocodec = NULL;
     }
 
-    if (_noiseState) {
-        speex_preprocess_state_destroy (_noiseState);
+    if (_audioProcess) {
+        delete _audioProcess;
+        _audioProcess = NULL;
     }
 
+    if (_noiseSuppress) {
+        delete _noiseSuppress;
+        _noiseSuppress = NULL;
+    }
 }
 
 template <typename D>
@@ -428,7 +443,7 @@ void AudioRtpSession<D>::initBuffers()
     // Set sampling rate, main buffer choose the highest one
     _manager->getAudioDriver()->getMainBuffer()->setInternalSamplingRate (_codecSampleRate);
 
-    // may be different than one already setted
+    // may be different than one already set
     _converterSamplingRate = _manager->getAudioDriver()->getMainBuffer()->getInternalSamplingRate();
 
     // initialize SampleRate converter using AudioLayer's sampling rate
@@ -497,28 +512,6 @@ void AudioRtpSession<D>::setSessionMedia (AudioCodec* audiocodec)
         static_cast<D*> (this)->setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) _audiocodec->getPayload()));
     }
 
-    if (_noiseState) {
-        speex_preprocess_state_destroy (_noiseState);
-        _noiseState = NULL;
-    }
-
-    _noiseState = speex_preprocess_state_init (_codecSampleRate, _codecFrameSize);
-    int i=1;
-    speex_preprocess_ctl (_noiseState, SPEEX_PREPROCESS_SET_DENOISE, &i);
-    i=-20;
-    speex_preprocess_ctl (_noiseState, SPEEX_PREPROCESS_SET_NOISE_SUPPRESS, &i);
-    i=0;
-    speex_preprocess_ctl (_noiseState, SPEEX_PREPROCESS_SET_AGC, &i);
-    i=8000;
-    speex_preprocess_ctl (_noiseState, SPEEX_PREPROCESS_SET_AGC_TARGET, &i);
-    i=16000;
-    speex_preprocess_ctl (_noiseState, SPEEX_PREPROCESS_SET_AGC_LEVEL, &i);
-    i=0;
-    speex_preprocess_ctl (_noiseState, SPEEX_PREPROCESS_SET_DEREVERB, &i);
-    float f=0.0;
-    speex_preprocess_ctl (_noiseState, SPEEX_PREPROCESS_SET_DEREVERB_DECAY, &f);
-    f=0.0;
-    speex_preprocess_ctl (_noiseState, SPEEX_PREPROCESS_SET_DEREVERB_LEVEL, &f);
 }
 
 template <typename D>
@@ -682,11 +675,17 @@ int AudioRtpSession<D>::processDataEncode (void)
 
         nbSample = _converter->downsampleData (_micData , _micDataConverted , _audiocodec->getClockRate(), _mainBufferSampleRate, nb_sample_up);
 
+	if(_manager->audioPreference.getNoiseReduce())
+	    _audioProcess->processAudio(_micDataConverted, nbSample*sizeof (SFLDataFormat));
+
         compSize = _audiocodec->codecEncode (_micDataEncoded, _micDataConverted, nbSample*sizeof (SFLDataFormat));
 
     } else {
 
         _nSamplesMic = nbSample;
+
+	if(_manager->audioPreference.getNoiseReduce())
+	    _audioProcess->processAudio(_micData, nbSample*sizeof (SFLDataFormat));
 
         // no resampling required
         compSize = _audiocodec->codecEncode (_micDataEncoded, _micData, nbSample*sizeof (SFLDataFormat));
@@ -724,8 +723,6 @@ void AudioRtpSession<D>::processDataDecode (unsigned char * spkrData, unsigned i
             // Store the number of samples for recording
             _nSamplesSpkr = nbSample;
 
-            speex_preprocess_run (_noiseState, _spkrDataConverted);
-
             // put data in audio layer, size in byte
             _manager->getAudioDriver()->getMainBuffer()->putData (_spkrDataConverted, nbSample * sizeof (SFLDataFormat), 100, _ca->getCallId());
 
@@ -733,8 +730,6 @@ void AudioRtpSession<D>::processDataDecode (unsigned char * spkrData, unsigned i
         } else {
             // Store the number of samples for recording
             _nSamplesSpkr = nbSample;
-
-            // speex_preprocess_run(_noiseState, _spkrDataDecoded);
 
             // put data in audio layer, size in byte
             _manager->getAudioDriver()->getMainBuffer()->putData (_spkrDataDecoded, expandedSize, 100, _ca->getCallId());
@@ -882,12 +877,16 @@ void AudioRtpSession<D>::run ()
         throw AudioRtpSessionException();
     }
 
+    // Set recording sampling rate
     _ca->setRecordingSmplRate (_audiocodec->getClockRate());
+
+    // init noise reduction process
+    _noiseSuppress = new NoiseSuppress (_codecFrameSize, _audiocodec->getClockRate());
+    _audioProcess = new AudioProcessing (_noiseSuppress);
 
     // Start audio stream (if not started) AND flush all buffers (main and urgent)
     _manager->getAudioDriver()->startStream();
     static_cast<D*> (this)->startRunning();
-
 
     _debug ("RTP: Entering mainloop for call %s",_ca->getCallId().c_str());
 
