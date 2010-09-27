@@ -675,8 +675,8 @@ int AudioRtpSession<D>::processDataEncode (void)
 
         nbSample = _converter->downsampleData (_micData , _micDataConverted , _audiocodec->getClockRate(), _mainBufferSampleRate, nb_sample_up);
 
-	if(_manager->audioPreference.getNoiseReduce())
-	    _audioProcess->processAudio(_micDataConverted, nbSample*sizeof (SFLDataFormat));
+        if (_manager->audioPreference.getNoiseReduce())
+            _audioProcess->processAudio (_micDataConverted, nbSample*sizeof (SFLDataFormat));
 
         compSize = _audiocodec->codecEncode (_micDataEncoded, _micDataConverted, nbSample*sizeof (SFLDataFormat));
 
@@ -684,8 +684,8 @@ int AudioRtpSession<D>::processDataEncode (void)
 
         _nSamplesMic = nbSample;
 
-	if(_manager->audioPreference.getNoiseReduce())
-	    _audioProcess->processAudio(_micData, nbSample*sizeof (SFLDataFormat));
+        if (_manager->audioPreference.getNoiseReduce())
+            _audioProcess->processAudio (_micData, nbSample*sizeof (SFLDataFormat));
 
         // no resampling required
         compSize = _audiocodec->codecEncode (_micDataEncoded, _micData, nbSample*sizeof (SFLDataFormat));
