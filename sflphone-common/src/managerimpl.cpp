@@ -3805,36 +3805,49 @@ short ManagerImpl::loadAccountMap()
 
     Conf::Key accTypeKey ("type");
     Conf::Key accID ("id");
+    Conf::Key alias ("alias");
 
     while (iterSeq != seq->getSequence()->end()) {
 
-	// Pointer to the account and account preferences map
+        // Pointer to the account and account preferences map
         Account *tmpAccount = NULL;
         Conf::MappingNode *map = (Conf::MappingNode *) (*iterSeq);
 
-	// Scalar node from yaml configuration
+        // Scalar node from yaml configuration
         Conf::ScalarNode * val = NULL;
 
-	// Search for account types (IAX/IP2IP)
-	val = (Conf::ScalarNode *) (map->getValue (accTypeKey));
+        // Search for account types (IAX/IP2IP)
+        val = (Conf::ScalarNode *) (map->getValue (accTypeKey));
         Conf::Value accountType;
-        if(val)
-	    accountType = val->getValue();
-	else
-	    accountType = "SIP"; // Assume type is SIP if not specified
 
-	// search for account id
-	val = NULL;
+        if (val)
+            accountType = val->getValue();
+        else
+            accountType = "SIP"; // Assume type is SIP if not specified
+
+        // search for account id
+        val = NULL;
         val = (Conf::ScalarNode *) (map->getValue (accID));
-   	Conf::Value accountid;
-	if(val)
-	    accountid = val->getValue();
+        Conf::Value accountid;
 
-	// do not insert in account map if id is empty
-        if (accountid.empty())
+        if (val)
+            accountid = val->getValue();
+
+	// search for alias (to get rid of the "ghost" account)
+	val = NULL;
+	val = (Conf::ScalarNode *) (map->getValue (alias));
+	Conf::Value accountAlias;
+
+	if (val)
+	    accountAlias = val->getValue();
+
+        // do not insert in account map if id or alias is empty
+        if (accountid.empty() || accountAlias.empty()) {
+	    iterSeq++;
             continue;
+	}
 
-	// Create a default account for specific type
+        // Create a default account for specific type
         if (accountType == "SIP" && accountid != "IP2IP") {
             _debug ("Manager: Create SIP account: %s", accountid.c_str());
             tmpAccount = AccountCreator::createAccount (AccountCreator::SIP_ACCOUNT, accountid);
@@ -3843,7 +3856,7 @@ short ManagerImpl::loadAccountMap()
             tmpAccount = AccountCreator::createAccount (AccountCreator::IAX_ACCOUNT, accountid);
         }
 
-	// Fill account with configuration preferences
+        // Fill account with configuration preferences
         if (tmpAccount != NULL) {
 
             try {
