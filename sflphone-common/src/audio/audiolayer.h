@@ -3,6 +3,7 @@
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author:  Jerome Oufella <jerome.oufella@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Authro: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
