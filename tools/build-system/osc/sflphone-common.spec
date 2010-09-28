@@ -67,6 +67,8 @@ Requires:	libspeex
 Requires:	libasound2
 Requires:	libpulse0
 Requires:	libccrtp1
+Requires:	libyaml
+Requires:	webkitgtk
 %endif
 
 %if %{defined fedora_version}
@@ -78,6 +80,8 @@ Requires:	alsa-lib
 Requires:	pulseaudio-libs
 Requires:	ccrtp
 Requires:	libzrtpcpp
+Requires:	libyaml
+Requires:	webkitgtk
 %endif
 
 Conflicts:      sflphone
