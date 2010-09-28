@@ -335,7 +335,7 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
     val = (Conf::ScalarNode *) (map->getValue (accountEnableKey));
 
     if (val) {
-        _enabled = (val->getValue().compare ("true") == 0) ? true : false;
+        _enabled = (val->getValue() == "false") ? false : true;
         val = NULL;
     }
 
