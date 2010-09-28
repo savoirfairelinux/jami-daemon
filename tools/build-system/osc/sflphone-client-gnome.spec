@@ -71,12 +71,12 @@ Requires:	libsexy
 
 %if %{defined suse_version}
 Requires:	librsvg
-Requires:	liblog4c3
+Requires:       webkitgtk
 %endif
 
 %if %{defined fedora_version}
 Requires:	librsvg2
-Requires:	log4c
+Requires:       webkitgtk
 %endif
 
 Conflicts:	sflphone
