@@ -2,16 +2,16 @@ import os
 import yaml
 from ConfigParser import ConfigParser as cp
 
-# path = os.environ['HOME'] + "/.config/sflphone/sflphonedrc"
-path = "sflphonedrc"
+path = os.environ['HOME'] + "/.config/sflphone/sflphonedrc"
+# path = "sflphonedrc"
 c = cp()
 c.read(path)
 accnodes = ['srtp', 'tls', 'zrtp']
 auxnodes = ['alsa', 'pulse', 'dtmf']
 dico = {}
-dico['Accounts'] = []
+dico['accounts'] = []
 
-
+# Dictionary used to convert string used in prior configuration file to new one.
 conversion = {
 
 	# addressbook
@@ -69,6 +69,7 @@ conversion = {
 	'zidfile': 'zidFile',
 
 	# account
+	'accounts': 'accounts',
 	'ip2ip': 'IP2IP',
 	'alias': 'alias',
 	'displayname': 'displayName',
@@ -109,64 +110,85 @@ conversion = {
 	# to be removed
 	'listenerport': 'port',
 }
-# parcourt des sections du fichier d'origine
+
+
+# Dictionary to convert sections string
+section_conversion = {
+
+	'Accounts': 'accounts',
+	'Addressbook': 'addressbook',
+	'Audio': 'audio',
+	'Hooks': 'hooks',
+	'Preferences': 'preferences',
+	'VoIPLink': 'voipPreferences',
+	'Shortcuts': 'shortcuts'
+}
+
+
+
+# run over every sections in original file
 for sec in c.sections():
-    # les comptes sont maintenant dans une liste de comptes
+    # accounts are now stored in an account list
     if 'Account' in sec or sec == 'IP2IP':
-        dsec = 'Accounts'
-        # dict temporaire pour insertion ulterieure des comptes dans le dictionnaire
-        daccount = {}
+        dsec = 'accounts'
+        # temporary account dictionary to be inserted in main dictionary 
+	daccount = {}
         daccount['id'] = sec
-        # dict temporaire pour insertion ulterieure des nodes dans le compte
-        subdic = {}
-        # preparation du dictionnaire pour les nodes du compte
+        # temporary account dictionary to be inserted in account nodes
+	subdic = {}
+        # preparing account dictionary
         for x in accnodes:
             subdic[x] = {}
-        # parcourt des options
+        # run over every options
         for opt in c.options(sec):
             spl = opt.split('.')
-            # si nous avons affaire a un node
+            # if this is an account node
             if spl[0] in accnodes:
-                # on ajoute dans le sous dict du compte
+                # add into the account dictionary
                 print spl[1]
 		subdic[spl[0]][conversion[spl[1]]] = c.get(sec, opt)
-            # sinon l'option est attachee au compte
+            # else, the options is attached to the primary dictionary
             else:
                 daccount[spl[len(spl) -1]] = c.get(sec, opt)
-        # insertion des nodes dans le compte
+        # insert account nodes in account dictionary
         for x in accnodes:
             daccount[x] = subdic[x]
-        #insertion du compte dans le dictionnaire principal
+        # insert account dictionary in main dictionary
         dico[dsec].append(daccount)
     else:
-        dsec = sec
+        dsec = section_conversion[sec]
         dico[dsec] = {}
-        #print dsec
-        #for opt in c.options(sec):
-        #    dico[dsec][opt] = c.get(sec, opt)
-        #    print opt 
         subdic = {}
-        # preparation du dictionnaire pour les nodes de la section
+        # prepare dictionary for section's node
         for x in auxnodes:
             subdic[x] = {}
-        # parcourt des options
+        # run over all fields
         for opt in c.options(sec):
             spl = opt.split('.')
-            # si nous avons affaire a un node
+            # if this is a node
             if spl[0] in auxnodes:
-                # on ajoute dans le sous dict du compte
+                # add into sections dictionary
 		print spl[1]
                 subdic[spl[0]][conversion[spl[1]]] = c.get(sec, opt)
-            # sinon l'option est attachee au compte
+            # else if this option is attached to an accout
             else:
-                dico[sec][spl[len(spl) -1 ]] = c.get(sec, opt)
-        # insertion des nodes dans le compte
+                dico[section_conversion[sec]][spl[len(spl) -1 ]] = c.get(sec, opt)
+        # inserting the node into the account
             for x in auxnodes:
                 if subdic[x]:
-                    dico[sec][x] = subdic[x]
+                    dico[section_conversion[sec]][x] = subdic[x]
 
 
-f = open('blah.yml', 'wr')
+# Make sure all accunt are enabled (especially IP2IP)
+for acc in dico['accounts']:
+	acc['enable'] = 'true'
+
+# Save in new configuration file
+newPath = os.environ['HOME'] + "/.config/sflphone/sflphonedrc"
+# newPath = 'blah.yml'
+
+# Save new configuration file
+f = open(newPath, 'wr')
 f.write(yaml.dump(dico, default_flow_style=False))
 f.close()
 
