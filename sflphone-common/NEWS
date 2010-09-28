@@ -1,3 +1,12 @@
+SFLphoned (0.9.9) / 2010-28-09
+	* Instant messaging
+	* Full Evolution addressbook integration
+	* A noise reduction engine to improve audio quality
+	* Linear int 16bit wave format support for ringtones
+	* Ability to select a different ringtone playback device than voice playback
+	* SIP early media
+	* A new configuration system based on YAML serialization format.
+
 SFLphoned (0.7.0) / 2006-...
 	* adding reload (sound driver) button
 	* fix: peer hangup remove flashing buttons
