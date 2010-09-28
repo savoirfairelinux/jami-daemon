@@ -517,14 +517,14 @@ fill_books_data ()
     source_list = e_source_list_new_for_gconf_default ("/apps/evolution/addressbook/sources");
 
     if (source_list == NULL) {
-        ERROR ("Addressbook: Error could not initialize source list for addressbook");
+        DEBUG ("Addressbook: Error could not initialize source list for addressbook");
         return;
     }
 
     list = e_source_list_peek_groups (source_list);
 
     if (!list) {
-        ERROR ("Addressbook: Address Book source groups are missing! Check your GConf setup.");
+        DEBUG ("Addressbook: Address Book source groups are missing! Check your GConf setup.");
         return;
     }
 
