@@ -34,30 +34,28 @@
 #include <addressbook-config.h>
 
 static void
-handler_async_search(GList *, gpointer);
+handler_async_search (GList *, gpointer);
 
 /**
  * Perform a search on address book
  */
 void
-addressbook_search(GtkEntry* entry)
+addressbook_search (GtkEntry* entry)
 {
 
-    const gchar* query = gtk_entry_get_text(GTK_ENTRY (entry));
-    if (strlen(query) >= 3) {
+    const gchar* query = gtk_entry_get_text (GTK_ENTRY (entry));
+    DEBUG ("Addressbook: Search %s", query);
 
-        AddressBook_Config *addressbook_config;
-	
-	// Activate waiting layer
-	activateWaitingLayer();
 
-	// Load the address book parameters
-	addressbook_config_load_parameters(&addressbook_config);
-      
-	// Start the asynchronous search as soon as we have an entry */
-	search_async(gtk_entry_get_text(GTK_ENTRY (entry)), addressbook_config->max_results, &handler_async_search, addressbook_config);
+    AddressBook_Config *addressbook_config;
 
-    }
+    activateWaitingLayer();
+
+    addressbook_config_load_parameters (&addressbook_config);
+
+
+    search_async_by_contacts (gtk_entry_get_text (GTK_ENTRY (entry)), addressbook_config->max_results, &handler_async_search, addressbook_config);
+
 }
 
 /**
@@ -66,12 +64,12 @@ addressbook_search(GtkEntry* entry)
 gboolean
 addressbook_is_enabled()
 {
-  AddressBook_Config *addressbook_config;
-  
-  // Load the address book parameters
-  addressbook_config_load_parameters(&addressbook_config);
+    AddressBook_Config *addressbook_config;
 
-  return (guint)addressbook_config->enable;
+    // Load the address book parameters
+    addressbook_config_load_parameters (&addressbook_config);
+
+    return (guint) addressbook_config->enable;
 }
 
 /**
@@ -80,7 +78,7 @@ addressbook_is_enabled()
 gboolean
 addressbook_is_ready()
 {
-  return books_ready();
+    return books_ready();
 }
 
 /**
@@ -89,42 +87,42 @@ addressbook_is_ready()
 gboolean
 addressbook_is_active()
 {
-  return books_active();
+    return books_active();
 }
 
 /**
- * Asynchronous open callback.
- * Used to handle activation of books.
+ * Get active addressbook from config.
  */
 static void
 addressbook_config_books()
 {
 
-  gchar **config_book_uid;
-  book_data_t *book_data;
-  gchar **list;
+    gchar **config_book_uid;
+    book_data_t *book_data;
+    gchar **list;
 
-  // Retrieve list of books
-  list = (gchar **) dbus_get_addressbook_list();
+    // Retrieve list of books
+    list = (gchar **) dbus_get_addressbook_list();
 
-  if (list) {
+    if (list) {
 
-      for (config_book_uid = list; *config_book_uid; config_book_uid++) {
+        for (config_book_uid = list; *config_book_uid; config_book_uid++) {
 
-          // Get corresponding book data
-          book_data = books_get_book_data_by_uid(*config_book_uid);
+            // Get corresponding book data
+            book_data = books_get_book_data_by_uid (*config_book_uid);
 
-          // If book_data exists
-          if (book_data != NULL) {
+            // If book_data exists
+            if (!book_data)
+                ERROR ("Addressbook: Error: Could not open book");
 
-              book_data->active = TRUE;
-	  }
-      }
-      g_strfreev(list);
-  }
+            book_data->active = TRUE;
+        }
 
-  // Update buttons
-  update_actions ();
+        g_strfreev (list);
+    }
+
+    // Update buttons
+    // update_actions ();
 }
 
 /**
@@ -133,8 +131,12 @@ addressbook_config_books()
 GSList *
 addressbook_get_books_data()
 {
-  addressbook_config_books();
-  return books_data;
+    DEBUG ("Addressboook: Get books data");
+
+    fill_books_data();
+    addressbook_config_books();
+
+    return books_data;
 }
 
 /**
@@ -144,66 +146,80 @@ addressbook_get_books_data()
 void
 addressbook_init()
 {
-  // Call books initialization
-  init(&addressbook_config_books);
+    DEBUG ("Addressbook: Initialize addressbook");
+
+    fill_books_data();
+    addressbook_config_books();
+
+    // Call books initialization
+    init ();
 }
 
 /**
  * Callback called after all book have been processed
  */
 static void
-handler_async_search(GList *hits, gpointer user_data)
+handler_async_search (GList *hits, gpointer user_data)
 {
 
-  GList *i;
-  GdkPixbuf *photo = NULL;
-  AddressBook_Config *addressbook_config;
-  callable_obj_t *j;
+    GList *i;
+    GdkPixbuf *photo = NULL;
+    AddressBook_Config *addressbook_config;
+    callable_obj_t *j;
 
-  // freeing calls
-  while ((j = (callable_obj_t *) g_queue_pop_tail(contacts->callQueue)) != NULL)
-    {
-      free_callable_obj_t(j);
+    DEBUG ("Addressbook: callback async search");
+
+    // freeing calls
+    while ( (j = (callable_obj_t *) g_queue_pop_tail (contacts->callQueue)) != NULL) {
+        free_callable_obj_t (j);
     }
 
-  // Retrieve the address book parameters
-  addressbook_config = (AddressBook_Config*) user_data;
+    // Retrieve the address book parameters
+    addressbook_config = (AddressBook_Config*) user_data;
 
-  // reset previous results
-  calltree_reset(contacts);
-  calllist_reset(contacts);
+    // reset previous results
+    calltree_reset (contacts);
+    calllist_reset (contacts);
 
-  for (i = hits; i != NULL; i = i->next)
-    {
-      Hit *entry;
-      entry = i->data;
-      if (entry)
-        {
-          // Get the photo
-          if (addressbook_display(addressbook_config,
-              ADDRESSBOOK_DISPLAY_CONTACT_PHOTO))
-            photo = entry->photo;
-          // Create entry for business phone information
-          if (addressbook_display(addressbook_config,
-              ADDRESSBOOK_DISPLAY_PHONE_BUSINESS))
-            calllist_add_contact(entry->name, entry->phone_business,
-                CONTACT_PHONE_BUSINESS, photo);
-          // Create entry for home phone information
-          if (addressbook_display(addressbook_config,
-              ADDRESSBOOK_DISPLAY_PHONE_HOME))
-            calllist_add_contact(entry->name, entry->phone_home,
-                CONTACT_PHONE_HOME, photo);
-          // Create entry for mobile phone information
-          if (addressbook_display(addressbook_config,
-              ADDRESSBOOK_DISPLAY_PHONE_MOBILE))
-            calllist_add_contact(entry->name, entry->phone_mobile,
-                CONTACT_PHONE_MOBILE, photo);
+    for (i = hits; i != NULL; i = i->next) {
+
+        Hit *entry;
+        entry = i->data;
+
+        if (entry) {
+            // Get the photo
+            if (addressbook_display (addressbook_config,
+                                     ADDRESSBOOK_DISPLAY_CONTACT_PHOTO))
+                photo = entry->photo;
+
+            // Create entry for business phone information
+            if (addressbook_display (addressbook_config,
+                                     ADDRESSBOOK_DISPLAY_PHONE_BUSINESS))
+                calllist_add_contact (entry->name, entry->phone_business,
+                                      CONTACT_PHONE_BUSINESS, photo);
+
+            // Create entry for home phone information
+            if (addressbook_display (addressbook_config,
+                                     ADDRESSBOOK_DISPLAY_PHONE_HOME))
+                calllist_add_contact (entry->name, entry->phone_home,
+                                      CONTACT_PHONE_HOME, photo);
+
+            // Create entry for mobile phone information
+            if (addressbook_display (addressbook_config,
+                                     ADDRESSBOOK_DISPLAY_PHONE_MOBILE))
+                calllist_add_contact (entry->name, entry->phone_mobile,
+                                      CONTACT_PHONE_MOBILE, photo);
         }
-      free_hit(entry);
-    }
-  g_list_free(hits);
 
-  // Deactivate waiting image
-  deactivateWaitingLayer();
+        free_hit (entry);
+    }
+
+    g_list_free (hits);
+
+    // Deactivate waiting image
+    deactivateWaitingLayer();
+
+
+    gtk_widget_grab_focus (GTK_WIDGET (contacts->view));
 }
 

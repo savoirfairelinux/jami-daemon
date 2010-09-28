@@ -43,14 +43,15 @@ HistoryManager::HistoryManager ()
 
 HistoryManager::~HistoryManager ()
 {
-	 HistoryItemMap::iterator iter = _history_items.begin();
+    HistoryItemMap::iterator iter = _history_items.begin();
 
-	 HistoryItem * item;
-	 while(iter != _history_items.end()){
-		 item = iter->second;
-		 delete item;
-		 iter++;
-	 }
+    HistoryItem * item;
+
+    while (iter != _history_items.end()) {
+        item = iter->second;
+        delete item;
+        iter++;
+    }
 
     // Clear the history map
     _history_items.clear ();
@@ -76,12 +77,14 @@ bool HistoryManager::save_history (void)
 
 bool HistoryManager::load_history_from_file (Conf::ConfigTree *history_list)
 {
-    bool exist;
+    int exist;
 
-    exist = history_list->populateFromFile (_history_path);
+    _debug ("HistoryManager: Load history from file %s", _history_path.c_str());
+
+    exist = history_list->populateFromFile (_history_path.c_str());
     _history_loaded = (exist == 2) ? false : true;
 
-    return exist;
+    return _history_loaded;
 }
 
 int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list, int limit)
@@ -95,6 +98,8 @@ int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list, int 
     CallType type;
     int history_limit;
     time_t current_timestamp;
+
+    _debug ("HistoryManager: Load history items");
 
     // We want to save only the items recent enough (ie compared to CONFIG_HISTORY_LIMIT)
     // Get the current timestamp

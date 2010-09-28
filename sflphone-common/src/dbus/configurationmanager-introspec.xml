@@ -101,26 +101,12 @@
 			</arg>
 		</method>
 
-		<method name="setNumberOfCredential" tp:name-for-bindings="setNumberOfCredential">
-			<tp:docstring>
-			</tp:docstring>
-			<arg type="s" name="accountID" direction="in">
-			  <tp:docstring>
-			  </tp:docstring>
-			</arg>
-			<arg type="i" name="number" direction="in">
-				<tp:docstring>
-				</tp:docstring>
-			</arg>
-		</method>
-
 		<method name="deleteAllCredential" tp:name-for-bindings="deleteAllCredential">
 			<tp:docstring>
 			</tp:docstring>
 			<arg type="s" name="accountID" direction="in">
-			  <tp:docstring>
-			    Account ID
-			  </tp:docstring>
+				<tp:docstring>
+				</tp:docstring>
 			</arg>
 		</method>
 
@@ -207,55 +193,55 @@
 
 	   <method name="addAccount" tp:name-for-bindings="addAccount">
 		   <tp:docstring>
-		     Add a new account. When created, the signal <tp:member-ref>accountsChanged</tp:member-ref> is emitted. The clients must then call <tp:member-ref>getAccountList</tp:member-ref> to update their internal data structure.
-		     <tp:rationale>If no details are specified, the default parameters are used.</tp:rationale>
-		     <tp:rationale>The core tries to register the account as soon it is created.</tp:rationale>
+			   Add a new account. When created, the signal <tp:member-ref>accountsChanged</tp:member-ref> is emitted. The clients must then call <tp:member-ref>getAccountList</tp:member-ref> to update their internal data structure.
+			   <tp:rationale>If no details are specified, the default parameters are used.</tp:rationale>
+			   <tp:rationale>The core tries to register the account as soon it is created.</tp:rationale>
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
 		   <arg type="a{ss}" name="details" direction="in"  tp:type="String_String_Map">
-		     <tp:docstring>
-		       The new account settings
-		     </tp:docstring>
+			   <tp:docstring>
+					The new account settings
+			   </tp:docstring>
 		   </arg>
 		   <arg type="s" name="createdAccountId" direction="out">
-		     <tp:docstring>
-		       A new account ID
-		     </tp:docstring>
+			   <tp:docstring>
+					A new account ID
+			   </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="setAccountsOrder" tp:name-for-bindings="setAccountsOrder">
 		   <tp:docstring>
-		     Update the accounts order.
-		     <tp:rationale>When placing a call, the first registered account in the list is used.</tp:rationale>
+				Update the accounts order.
+				<tp:rationale>When placing a call, the first registered account in the list is used.</tp:rationale>
 		   </tp:docstring>
 		   <arg type="s" name="order" direction="in">
-		     <tp:docstring>
-		       An ordered list of account IDs, delimited by '/'
-		     </tp:docstring>
+			   <tp:docstring>
+				   An ordered list of account IDs, delimited by '/'
+			   </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="removeAccount" tp:name-for-bindings="removeAccount">
-	     <tp:docstring>
-	       Remove an existing account. When removed, the signal <tp:member-ref>accountsChanged</tp:member-ref> is emitted. The clients must then call <tp:member-ref>getAccountList</tp:member-ref> to update their internal data structure.
-	     </tp:docstring>
-	     <arg type="s" name="accoundID" direction="in">
-	       <tp:docstring>
-		 The account to remove, identified by its ID
-	       </tp:docstring>
-	     </arg>
+		   <tp:docstring>
+			   Remove an existing account. When removed, the signal <tp:member-ref>accountsChanged</tp:member-ref> is emitted. The clients must then call <tp:member-ref>getAccountList</tp:member-ref> to update their internal data structure.
+		   </tp:docstring>
+		   <arg type="s" name="accoundID" direction="in">
+			   <tp:docstring>
+					The account to remove, identified by its ID
+			   </tp:docstring>
+		   </arg>
 	   </method>
 
 	   <method name="getAccountList" tp:name-for-bindings="getAccountList">
-	     <tp:docstring>
-	       Get a list of all created accounts, as stored by the core.
-	     </tp:docstring>
+		   <tp:docstring>
+				Get a list of all created accounts, as stored by the core.
+		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
 		   <arg type="as" name="list" direction="out">
-		     <tp:docstring>
-		       A list of account IDs
-		     </tp:docstring>
+			   <tp:docstring>
+				   A list of account IDs
+			   </tp:docstring>
 		   </arg>
 	   </method>
 
@@ -268,15 +254,15 @@
 		   @param[in] input accountID
 		   -->
 		   <arg type="s" name="accountID" direction="in">
-		     <tp:docstring>
-		       The account ID
-		     </tp:docstring>
+			   <tp:docstring>
+					The account ID
+			   </tp:docstring>
 		   </arg>
 		   <arg type="i" name="expire" direction="in">
-		     <tp:docstring>
-		       <p>To register, expire must be 1.</p>
-		       <p>To un-register, expire must be 0.</p>
-		     </tp:docstring>
+			   <tp:docstring>
+					<p>To register, expire must be 1.</p>
+					<p>To un-register, expire must be 0.</p>
+			   </tp:docstring>
 		   </arg>
 	   </method>
 
@@ -285,14 +271,13 @@
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
 		   <arg type="as" name="list" direction="out">
-		     <tp:docstring>
-		     </tp:docstring>
+			   <tp:docstring>
+			   </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="getVersion" tp:name-for-bindings="getVersion">
 		   <tp:docstring>
-		     Return SFLphone-daemon version
 		   </tp:docstring>
 		   <arg type="s" name="version" direction="out">
 			   <tp:docstring>
@@ -302,19 +287,16 @@
 
 	   <method name="getRingtoneList" tp:name-for-bindings="getRingtoneList">
 		   <tp:docstring>
-		     Return a list of valid Sun's .au sound file used
-		     as ringtones.
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
 		   <arg type="as" name="list" direction="out">
-		     <tp:docstring>
-		     </tp:docstring>
+			   <tp:docstring>
+			   </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="getPlaybackDeviceList" tp:name-for-bindings="getPlaybackDeviceList">
 		   <tp:docstring>
-		     Provide a list of playback device from ALSA
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
 		   <arg type="as" name="list" direction="out">
@@ -325,7 +307,6 @@
 
 	   <method name="getRecordDeviceList" tp:name-for-bindings="getRecordDeviceList">
 		   <tp:docstring>
-		     Provide a list of record device from ALSA
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
 		   <arg type="as" name="list" direction="out">
@@ -336,8 +317,8 @@
 
 	   <method name="isRingtoneEnabled" tp:name-for-bindings="isRingtoneEnabled">
 		   <tp:docstring>
-		     Return true if ringtone is enabled, false otherwise
 		   </tp:docstring>
+		   <arg type="s" name="accountID" direction="in" />
 		   <arg type="i" name="bool" direction="out">
 			   <tp:docstring>
 			   </tp:docstring>
@@ -346,28 +327,27 @@
 
 	   <method name="ringtoneEnabled" tp:name-for-bindings="ringtoneEnabled">
 		   <tp:docstring>
-		     Unused
 		   </tp:docstring>
+		   <arg type="s" name="accountID" direction="in"/>
 	   </method>
 
 	   <method name="getRingtoneChoice" tp:name-for-bindings="getRingtoneChoice">
 		   <tp:docstring>
-		     Get current ringtone .au file selected
 		   </tp:docstring>
+		   <arg type="s" name="accountID" direction="in"/>
 		   <arg type="s" name="tone" direction="out">
-		     <tp:docstring>
-		     </tp:docstring>
+			   <tp:docstring>
+			   </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="setRingtoneChoice" tp:name-for-bindings="setRingtoneChoice">
 		   <tp:docstring>
-		     Set current ringtone .au file from list acquired using <tp:member-ref>getAccountList</tp:member-ref>
 		   </tp:docstring>
+		   <arg type="s" name="accountID" direction="in"/>
 		   <arg type="s" name="tone" direction="in">
-		     <tp:docstring>
-		       A valid .au file path
-		     </tp:docstring>
+			   <tp:docstring>
+			   </tp:docstring>
 		   </arg>
 	   </method>
 
@@ -466,7 +446,7 @@
 
 	   <!-- Audio devices methods -->
 
-	   <method name="getInputAudioPluginList" tp:name-for-bindings="getInputAudioPluginList">
+	   <method name="getAudioPluginList" tp:name-for-bindings="getAudioPluginList">
 		   <tp:docstring>
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
@@ -476,26 +456,7 @@
 		   </arg>
 	   </method>
 
-	   <method name="getOutputAudioPluginList" tp:name-for-bindings="getOutputAudioPluginList">
-		   <tp:docstring>
-		   </tp:docstring>
-		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
-		   <arg type="as" name="list" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
-
-	   <method name="setInputAudioPlugin" tp:name-for-bindings="setInputAudioPlugin">
-		   <tp:docstring>
-		   </tp:docstring>
-		   <arg type="s" name="audioPlugin" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
-
-	   <method name="setOutputAudioPlugin" tp:name-for-bindings="setOutputAudioPlugin">
+	   <method name="setAudioPlugin" tp:name-for-bindings="setAudioPlugin">
 		   <tp:docstring>
 		   </tp:docstring>
 		   <arg type="s" name="audioPlugin" direction="in">
@@ -523,6 +484,24 @@
 		   </arg>
 	   </method>
 
+	   <method name="setAudioInputDevice" tp:name-for-bindings="setAudioInputDevice">
+		   <tp:docstring>
+		   </tp:docstring>
+		   <arg type="i" name="index" direction="in">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+	   </method>
+
+	   <method name="setAudioRingtoneDevice" tp:name-for-binding="setAudioRingtoneDevice">
+	           <tp:docstring>
+		   </tp:docstring>
+		   <arg type="i" name="index" direction="in">
+		     <tp:docstring>
+		     </tp:docstring>
+		   </arg>
+	   </method>
+
 	   <method name="getAudioInputDeviceList" tp:name-for-bindings="getAudioInputDeviceList">
 		   <tp:docstring>
 		   </tp:docstring>
@@ -533,14 +512,6 @@
 		   </arg>
 	   </method>
 
-	   <method name="setAudioInputDevice" tp:name-for-bindings="setAudioInputDevice">
-		   <tp:docstring>
-		   </tp:docstring>
-		   <arg type="i" name="index" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
 
 	   <method name="getCurrentAudioDevicesIndex" tp:name-for-bindings="getCurrentAudioDevicesIndex">
 		   <tp:docstring>
@@ -574,6 +545,20 @@
 		   </arg>
 	   </method>
 
+           <method name="getNoiseSuppressState" tp:name-for-bindings="getNoiseSuppressState">
+	           <tp:docstring>
+		   </tp:docstring>
+		   <arg type="s" name="state" direction="out">
+		           <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+	   </method>
+
+	   <method name="setNoiseSuppressState" tp:name-for-binding="setNoiseSuppressState">
+	           <arg type="s" name="state" direction="in">
+	           </arg>
+	   </method>
+
 	   <!--    General Settings Panel         -->
 
 	   <method name="isMd5CredentialHashing" tp:name-for-bindings="isMd5CredentialHashing">
@@ -603,20 +588,6 @@
 		   </arg>
 	   </method>
 
-	   <method name="setNotify" tp:name-for-bindings="setNotify">
-		   <tp:docstring>
-		   </tp:docstring>
-	   </method>
-
-	   <method name="getNotify" tp:name-for-bindings="getNotify">
-		   <tp:docstring>
-		   </tp:docstring>
-		   <arg type="i" name="level" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
-
 	   <method name="setMailNotify" tp:name-for-bindings="setMailNotify">
 		   <tp:docstring>
 		   </tp:docstring>
@@ -631,69 +602,6 @@
 		   </arg>
 	   </method>
 
-	   <method name="getDialpad" tp:name-for-bindings="getDialpad">
-		   <tp:docstring>
-		   </tp:docstring>
-		   <arg type="i" name="state" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
-
-	   <method name="setDialpad" tp:name-for-bindings="setDialpad">
-		   <tp:docstring>
-		   </tp:docstring>
-		   <arg type="b" name="display" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
-
-	   <method name="getSearchbar" tp:name-for-bindings="getSearchbar">
-		   <tp:docstring>
-		   </tp:docstring>
-		   <arg type="i" name="state" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
-
-	   <method name="setSearchbar" tp:name-for-bindings="setSearchbar">
-		   <tp:docstring>
-		   </tp:docstring>
-	   </method>
-
-	   <method name="setHistoryEnabled" tp:name-for-bindings="setHistoryEnabled">
-		   <tp:docstring>
-		   </tp:docstring>
-	   </method>
-
-	   <method name="getHistoryEnabled" tp:name-for-bindings="getHistoryEnabled">
-		   <tp:docstring>
-		   </tp:docstring>
-		   <arg type="s" name="state" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
-
-	   <method name="getVolumeControls" tp:name-for-bindings="getVolumeControls">
-		   <tp:docstring>
-		   </tp:docstring>
-		   <arg type="i" name="state" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
-
-	   <method name="setVolumeControls" tp:name-for-bindings="setVolumeControls">
-		   <tp:docstring>
-		   </tp:docstring>
-		   <arg type="b" name="display" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
 
 	   <method name="getHistoryLimit" tp:name-for-bindings="getHistoryLimit">
 		   <tp:docstring>
@@ -712,137 +620,6 @@
 			   </tp:docstring>
 		   </arg>
 	   </method>
-
-	   <method name="startHidden" tp:name-for-bindings="startHidden">
-		   <tp:docstring>
-		   </tp:docstring>
-	   </method>
-
-	   <method name="isStartHidden" tp:name-for-bindings="isStartHidden">
-		   <tp:docstring>
-		   </tp:docstring>
-		   <arg type="i" name="state" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
-
-	   <method name="popupMode" tp:name-for-bindings="popupMode">
-		   <tp:docstring>
-		   </tp:docstring>
-		   <arg type="i" name="state" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
-
-	   <method name="switchPopupMode" tp:name-for-bindings="switchPopupMode">
-		   <tp:docstring>
-		   </tp:docstring>
-	   </method>
-
-	   <method name="getWindowWidth" tp:name-for-bindings="getWindowWidth">
-		   <tp:docstring>
-		     Unused
-		   </tp:docstring>
-		   <arg type="i" name="width" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
-
-	   <method name="getWindowHeight" tp:name-for-bindings="getWindowHeight">
-		   <tp:docstring>
-		     Unused
-		   </tp:docstring>
-		   <arg type="i" name="height" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
-
-	   <method name="setWindowWidth" tp:name-for-bindings="setWindowWidth">
-		   <tp:docstring>
-		     Unused
-		   </tp:docstring>
-		   <arg type="i" name="width" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
-
-	   <method name="setWindowHeight" tp:name-for-bindings="setWindowHeight">
-		   <tp:docstring>
-		     Unused
-		   </tp:docstring>
-		   <arg type="i" name="height" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
-
-	   <method name="getWindowPositionX" tp:name-for-bindings="getWindowPositionX">
-		   <tp:docstring>
-		     Unused
-		   </tp:docstring>
-		   <arg type="i" name="posX" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
-
-	   <method name="setWindowPositionX" tp:name-for-bindings="setWindowPositionX">
-		   <tp:docstring>
-		     Unused
-		   </tp:docstring>
-		   <arg type="i" name="posX" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
-
-	   <method name="getWindowPositionY" tp:name-for-bindings="getWindowPositionY">
-		   <tp:docstring>
-		     Unused
-		   </tp:docstring>
-		   <arg type="i" name="posY" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
-
-	   <method name="setWindowPositionY" tp:name-for-bindings="setWindowPositionY">
-		   <tp:docstring>
-		     Unused
-		   </tp:docstring>
-		   <arg type="i" name="posY" direction="in">
-		     <tp:docstring>
-		     </tp:docstring>
-		   </arg>
-	   </method>
-
-	   <method name="enableStatusIcon" tp:name-for-bindings="enableStatusIcon">
-		   <tp:docstring>
-		     Allow SFLphone icon to be displayed in system tray
-		   </tp:docstring>
-		   <arg type="s" name="value" direction="in">
-		     <tp:docstring>
-		       true/false
-		     </tp:docstring>
-		   </arg>
-	   </method>
-
-	   <method name="isStatusIconEnabled" tp:name-for-bindings="isStatusIconEnabled">
-		   <tp:docstring>
-		     Test if SFLphone icon is displayed in system tray.
-		   </tp:docstring>
-		   <arg type="s" name="value" direction="out">
-		     <tp:docstring>
-		       true/false
-		     </tp:docstring>
-		   </arg>
-	   </method>
-
 
 	   <!-- Addressbook configuration -->
 	   <method name="getAddressbookSettings" tp:name-for-bindings="getAddressbookSettings">
@@ -922,162 +699,110 @@
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
 		   <arg type="a{ss}" name="entries" direction="in">
-		     <tp:docstring>
-		     </tp:docstring>
+			   <tp:docstring>
+			   </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <signal name="accountsChanged" tp:name-for-bindings="accountsChanged">
-	           <tp:docstring>
-		     Signal emited on account changes. Clients should update
-		     all account status with <tp:member-ref>getAccountDetails</tp:member-ref>
-		     iterating over the list provided by <tp:member-ref>getAccountList</tp:member-ref>
-		   </tp:docstring>
 	   </signal>  
 
 	   <signal name="errorAlert" tp:name-for-bindings="errorAlert">
 		   <arg type="i" name="code">
-		     <tp:docstring>
-		     </tp:docstring>
+			   <tp:docstring>
+			   </tp:docstring>
 		   </arg>
 	   </signal> 
 
 	   <!-- TLS Methods -->
 	   <method name="getSupportedTlsMethod" tp:name-for-bindings="getSupportedTlsMethod">
 		   <tp:docstring>
-		     Provide a list of supported TLS method
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
 		   <arg type="as" name="list" direction="out">
-		     <tp:docstring>
-		       A list of TLS method: (TLSv1, SSLv1, SSLv2,
-		       SSLv3, SSLv23)
-		     </tp:docstring>
+			   <tp:docstring>
+			   </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="getTlsSettingsDefault" tp:name-for-bindings="getTlsSettingsDefault">
                    <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
 		   <tp:docstring>
-		     Get default TLS setting for new accounts
 		   </tp:docstring>
 		   <arg type="a{ss}" name="details" direction="out">
-		     <tp:docstring>
-		       A hash table containing details. Refer
-		       to <tp:member-ref>getTlsSettings</tp:member-ref>
-		       for possible keys
-		     </tp:docstring>
+			   <tp:docstring>
+			   </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="getTlsSettings" tp:name-for-bindings="getTlsSettings">
 		   <tp:docstring>
-		     Get current TLS setting for a specific account
 		   </tp:docstring>
-		   <arg type="s" name="accountID" direction="in">
-		     <tp:docstring>
-		       The account ID
-		     </tp:docstring>
-		   </arg>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
 		   <arg type="a{ss}" name="details" direction="out">
-		     <tp:docstring>
-			 A hash table containing details with key:
-			 <ul>
-			   <li>"TLS.listenerPort": valid numerical port</li>
-			   <li>"TLS.enable": true/false</li>
-			   <li>"TLS.certificateListFile": A valid path to
-			     a .pem file containing CA certificate</li>
-			   <li>"TLS.certificateFile": A valid path to a
-			     file containing the public end-point
-			     certificate (optional)</li>
-			   <li>"TLS.privateKeyFile": A valid path to a
-			     file containing the public end-point private
-			     key (optional)</li>
-			   <li>"TLS.password": Public end-point private
-			     key password (optional)</li>
-			   <li>"TLS.method": (TLSv1, SSLv1, SSLv2,
-			     SSLv3, SSLv23)</li>
-		       </ul>  
-		     </tp:docstring>
+			   <tp:docstring>
+			   </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="setTlsSettings" tp:name-for-bindings="setTlsSettings">
 		   <tp:docstring>
-		     Update TLS setting for a specific account
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="MapStringString"/>
-		   <arg type="s" name="accountID" direction="in">
-		     <tp:docstring>
-		       The account ID
-		     </tp:docstring>
-		   </arg>
 		   <arg type="a{ss}" name="details" direction="in">
-		     <tp:docstring>
-		       A hash table containing details. Refer
-		       to <tp:member-ref>getTlsSettings</tp:member-ref>
-		       for possible keys.  
-		     </tp:docstring>
+			   <tp:docstring>
+			   </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="getAddrFromInterfaceName" tp:name-for-bindings="getAddrFromInterfaceName">
 		   <tp:docstring>
-		     Resolve interface IPv4 address provided its name. 
 		   </tp:docstring>
 		   <arg type="s" name="interface" direction="in">
-		     <tp:docstring>
-		       Interface name
-		     </tp:docstring>
+			   <tp:docstring>
+			   </tp:docstring>
 		   </arg>
 		   <arg type="s" name="address" direction="out">
-		     <tp:docstring>
-		       Interface IPv4 address
-		     </tp:docstring>
+			   <tp:docstring>
+			   </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="getAllIpInterface" tp:name-for-bindings="getAllIpInterface">
 		   <tp:docstring>
-		     Provide a list of IP interface's IPv4 address.
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
 		   <arg type="as" name="list" direction="out">
-		     <tp:docstring>
-		       A list of interface's IPv4 address
-		     </tp:docstring>
+			   <tp:docstring>
+			   </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="getAllIpInterfaceByName" tp:name-for-bindings="getAllIpInterfaceByName">
 		   <tp:docstring>
-		     Provide a list of IP interface's name: default
-		     (0.0.0.0), lo, eth0 ...
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
 		   <arg type="as" name="list" direction="out">
-		     <tp:docstring>
-		       A list of interface's name
-		     </tp:docstring>
+			   <tp:docstring>
+			   </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="getShortcuts" tp:name-for-bindings="getShortcuts">
-                   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringInt"/>
+                   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
 		   <tp:docstring>
 		   </tp:docstring>
-		   <arg type="a{si}" name="shortcutsMap" direction="out">
+		   <arg type="a{ss}" name="shortcutsMap" direction="out">
 			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="setShortcuts" tp:name-for-bindings="setShortcuts">
-                   <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringInt"/>
+                   <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
 		   <tp:docstring>
 		   </tp:docstring>
-		   <arg type="a{si}" name="shortcutsMap" direction="in">
+		   <arg type="a{ss}" name="shortcutsMap" direction="in">
 			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>

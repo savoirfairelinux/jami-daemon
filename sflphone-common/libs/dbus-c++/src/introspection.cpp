@@ -38,13 +38,11 @@ using namespace DBus;
 static const char *introspectable_name = "org.freedesktop.DBus.Introspectable";
 
 IntrospectableAdaptor::IntrospectableAdaptor()
-        : InterfaceAdaptor (introspectable_name)
-{
+        : InterfaceAdaptor (introspectable_name) {
     register_method (IntrospectableAdaptor, Introspect, Introspect);
 }
 
-Message IntrospectableAdaptor::Introspect (const CallMessage &call)
-{
+Message IntrospectableAdaptor::Introspect (const CallMessage &call) {
     debug_log ("requested introspection data");
 
     std::ostringstream xml;
@@ -143,8 +141,7 @@ Message IntrospectableAdaptor::Introspect (const CallMessage &call)
     return reply;
 }
 
-IntrospectedInterface *const IntrospectableAdaptor::introspect() const
-{
+IntrospectedInterface *const IntrospectableAdaptor::introspect() const {
     static IntrospectedArgument Introspect_args[] = {
         { "data", "s", false },
         { 0, 0, 0 }
@@ -169,11 +166,9 @@ IntrospectedInterface *const IntrospectableAdaptor::introspect() const
 }
 
 IntrospectableProxy::IntrospectableProxy()
-        : InterfaceProxy (introspectable_name)
-{}
+        : InterfaceProxy (introspectable_name) {}
 
-std::string IntrospectableProxy::Introspect()
-{
+std::string IntrospectableProxy::Introspect() {
     DBus::CallMessage call;
 
     call.member ("Introspect");

@@ -1,7 +1,7 @@
 /*
  *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
- * 
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
@@ -10,7 +10,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -30,44 +30,60 @@
 #ifndef RECORDABLE_H
 #define RECORDABLE_H
 
-#include "../plug-in/audiorecorder/audiorecord.h"
+#include "audiorecord.h"
+#include "audiorecorder.h"
 
-class Recordable {
+class Recordable
+{
 
     public:
 
         Recordable();
 
-	~Recordable();
+        ~Recordable();
 
-	bool isRecording(){ return recAudio.isRecording(); }
+        /**
+         * Return recording state (true/false)
+         */
+        bool isRecording() {
+            return recAudio.isRecording();
+        }
 
-	bool setRecording(){ return recAudio.setRecording(); }
+        /**
+         * This method must be implemented for this interface as calls and conferences
+         * have different behavior.
+         */
+        virtual bool setRecording() = 0;
 
-	void stopRecording(){ recAudio.stopRecording(); }
+        /**
+         * Stop recording
+         */
+        void stopRecording() {
+            recAudio.stopRecording();
+        }
 
-	void initRecFileName();
+        /**
+         * Init the recording file name according to path specified in configuration
+         */
+        void initRecFileName (std::string filename);
 
-	void setRecordingSmplRate(int smplRate);
+        /**
+         * Set recording sampling rate.
+         */
+        void setRecordingSmplRate (int smplRate);
 
-	virtual std::string getRecFileId() = 0;
+        virtual std::string getRecFileId() = 0;
 
-	// virtual std::string getFileName() = 0;
+        // virtual std::string getFileName() = 0;
 
-	// std::string getFileName() { return _filename; }
+        // std::string getFileName() { return _filename; }
 
-	/**
-	 * An instance of audio recorder
-	 */
-         AudioRecord recAudio;
+        /**
+         * An instance of audio recorder
+         */
+        AudioRecord recAudio;
 
-
-    private:
-
-	/** File name for his call : time YY-MM-DD */
-        // std::string _filename;
-
-        
+        AudioRecorder recorder;
 
 };
 

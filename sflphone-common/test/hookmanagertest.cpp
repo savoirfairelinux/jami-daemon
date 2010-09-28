@@ -47,7 +47,7 @@ void HookManagerTest::setUp()
 
 void HookManagerTest::testAddAction ()
 {
-	_debug ("-------------------- HookManagerTest::testAddAction --------------------\n");
+    _debug ("-------------------- HookManagerTest::testAddAction --------------------\n");
 
     int status;
 
@@ -57,7 +57,7 @@ void HookManagerTest::testAddAction ()
 
 void HookManagerTest::testLargeUrl ()
 {
-	_debug ("-------------------- HookManagerTest::testLargeUrl --------------------\n");
+    _debug ("-------------------- HookManagerTest::testLargeUrl --------------------\n");
 
     std::string url;
     std::cout << url.max_size() << std::endl;

@@ -46,9 +46,13 @@
 #define CODECS                              "ActiveCodecs"	        /** List of active codecs */
 #define ALSA_CARD_ID_IN	                    "Alsa.cardID_In"            /** Soundcard index to use for capture */
 #define ALSA_CARD_ID_OUT                    "Alsa.cardID_Out"           /** Soundcard index to use for playback */
+#define ALSA_CARD_ID_RING                   "Alsa.cardID_Ring"           /** Soundcard index to use for ringtone */
 #define ALSA_FRAME_SIZE	                    "Alsa.framesize"            /** Audio layer frame size */
 #define ALSA_PLUGIN	                    "Alsa.plugin"	        /** Alsa plugin */
 #define AUDIO_SAMPLE_RATE                   "Alsa.sampleRate"          /** Audio layer sample rate */
+#define PULSE_DEVICE_PLAYBACK               "Pulse.devicePlayback"
+#define PULSE_DEVICE_RECORD                 "Pulse.deviceRecord"
+#define PULSE_DEVICE_RINGTONE               "Pulse.deviceRingtone"
 #define RING_CHOICE	                    "Rings.ringChoice"          /** Ringtone */
 #define VOLUME_SPKR	                    "Volume.speakers"           /** Speaker volume */
 #define VOLUME_MICRO                        "Volume.micro"	            /** Mic volume */
@@ -77,10 +81,9 @@
 #define WINDOW_POSITION_Y					"Window.positionY"
 #define SHOW_STATUSICON						"Statusicon.show"
 
-
-#define IP2IP_PROFILE                       "IP2IP"    
+#define IP2IP_PROFILE                       "IP2IP"
 #define SIGNALISATION                       "VoIPLink"	                /** Section Signalisation */
-#define ZRTP_ZIDFILE                        "ZRTP.zidFile"              /** The filename used for storing ZIDs */
+#define ZRTP_ZIDFILE                        "zidFile"                   /** The filename used for storing ZIDs */
 #define PLAY_DTMF		            "DTMF.playDtmf"	            /** Whether or not should play dtmf */
 #define PLAY_TONES		            "DTMF.playTones"            /** Whether or not should play tones */
 #define PULSE_LENGTH                        "DTMF.pulseLength"          /** Length of the DTMF in millisecond */
@@ -101,11 +104,11 @@
 #define URLHOOK_COMMAND                     "Hooks.url_command"
 #define URLHOOK_SIP_ENABLED                 "Hooks.sip_enabled"
 #define URLHOOK_IAX2_ENABLED                "Hooks.iax2_enabled"
-#define PHONE_NUMBER_HOOK_ENABLED           "Hooks.phone_number_enabled"    
+#define PHONE_NUMBER_HOOK_ENABLED           "Hooks.phone_number_enabled"
 #define PHONE_NUMBER_HOOK_ADD_PREFIX        "Hooks.phone_number_add_prefix"
 
 #define EMPTY_FIELD		            ""		      /** Default value for empty field */
-#define DEFAULT_ACCOUNT_TYPE                "SIP"		
+#define DEFAULT_ACCOUNT_TYPE                "SIP"
 #define DFT_STUN_SERVER 	            "stun.sflphone.org"	 /** Default STUN server address */
 #define	TRUE_STR			    "true"		 /** Default YES value */
 #define	FALSE_STR			    "false"		 /** Default NO value */

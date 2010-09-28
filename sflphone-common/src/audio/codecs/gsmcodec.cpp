@@ -31,8 +31,7 @@
 
 
 #include "audiocodec.h"
-extern "C"
-{
+extern "C" {
 #include <gsm/gsm.h>
 }
 

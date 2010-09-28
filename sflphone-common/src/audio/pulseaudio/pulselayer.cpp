@@ -32,7 +32,13 @@
 #include "pulselayer.h"
 #include "managerimpl.h"
 
+
+// #include <fstream>
+
 int framesPerBuffer = 2048;
+
+
+
 
 static  void playback_callback (pa_stream* s, size_t bytes, void* userdata)
 {
@@ -49,34 +55,181 @@ static void capture_callback (pa_stream* s, size_t bytes, void* userdata)
     assert (s && bytes);
     assert (bytes > 0);
     static_cast<PulseLayer*> (userdata)->processCaptureData();
-    
+
 }
 
-/*
-static void stream_suspended_callback (pa_stream *s UNUSED, void *userdata UNUSED)
+static void ringtone_callback (pa_stream* s, size_t bytes, void* userdata)
 {
-    _debug("Audio: Stream Suspended");
-}
-*/
 
-/*
-static void stream_moved_callback(pa_stream *s UNUSED, void *userdata UNUSED)
-{
-    _debug("Audio: Stream Moved");
-}
-*/
+    assert (s && bytes);
+    assert (bytes > 0);
+    static_cast<PulseLayer*> (userdata)->processRingtoneData();
 
-static void playback_underflow_callback (pa_stream* s,  void* userdata UNUSED)
+}
+
+static void stream_moved_callback (pa_stream *s, void *userdata UNUSED)
 {
-    // _debug ("Audio: Buffer Underflow");
-    // pa_stream_trigger (s, NULL, NULL);
+
+    _debug ("stream_moved_callback: stream %d to %d", pa_stream_get_index (s), pa_stream_get_device_index (s));
+}
+
+static void latency_update_callback (pa_stream *p, void *userdata UNUSED)
+{
+
+    pa_usec_t r_usec;
+
+    pa_stream_get_latency (p, &r_usec, NULL);
+
+    /*
+    _debug ("Audio: Stream letency update %0.0f ms for device %s", (float) r_usec/1000, pa_stream_get_device_name (p));
+    _debug ("Audio: maxlength %u", pa_stream_get_buffer_attr (p)->maxlength);
+    _debug ("Audio: tlength %u", pa_stream_get_buffer_attr (p)->tlength);
+    _debug ("Audio: prebuf %u", pa_stream_get_buffer_attr (p)->prebuf);
+    _debug ("Audio: minreq %u", pa_stream_get_buffer_attr (p)->minreq);
+    _debug ("Audio: fragsize %u", pa_stream_get_buffer_attr (p)->fragsize);
+    */
+}
+
+static void sink_input_info_callback (pa_context *c UNUSED, const pa_sink_info *i, int eol, void *userdata)
+{
+    char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cv[PA_CVOLUME_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
+
+    if (!eol) {
+
+        printf ("Sink %u\n"
+                "    Name: %s\n"
+                "    Driver: %s\n"
+                "    Description: %s\n"
+                "    Sample Specification: %s\n"
+                "    Channel Map: %s\n"
+                "    Owner Module: %u\n"
+                "    Volume: %s\n"
+                "    Monitor Source: %u\n"
+                "    Latency: %0.0f usec\n"
+                "    Flags: %s%s%s\n",
+                i->index,
+                i->name,
+                i->driver,
+                i->description,
+                pa_sample_spec_snprint (s, sizeof (s), &i->sample_spec),
+                pa_channel_map_snprint (cm, sizeof (cm), &i->channel_map),
+                i->owner_module,
+                i->mute ? "muted" : pa_cvolume_snprint (cv, sizeof (cv), &i->volume),
+                i->monitor_source,
+                (double) i->latency,
+                i->flags & PA_SINK_HW_VOLUME_CTRL ? "HW_VOLUME_CTRL " : "",
+                i->flags & PA_SINK_LATENCY ? "LATENCY " : "",
+                i->flags & PA_SINK_HARDWARE ? "HARDWARE" : "");
+
+        std::string deviceName (i->name);
+        ( (PulseLayer *) userdata)->getSinkList()->push_back (deviceName);
+
+    }
+}
+
+static void source_input_info_callback (pa_context *c UNUSED, const pa_source_info *i, int eol, void *userdata)
+{
+    char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cv[PA_CVOLUME_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
+
+    if (!eol) {
+
+        printf ("Sink %u\n"
+                "    Name: %s\n"
+                "    Driver: %s\n"
+                "    Description: %s\n"
+                "    Sample Specification: %s\n"
+                "    Channel Map: %s\n"
+                "    Owner Module: %u\n"
+                "    Volume: %s\n"
+                "    Monitor if Sink: %u\n"
+                "    Latency: %0.0f usec\n"
+                "    Flags: %s%s%s\n",
+                i->index,
+                i->name,
+                i->driver,
+                i->description,
+                pa_sample_spec_snprint (s, sizeof (s), &i->sample_spec),
+                pa_channel_map_snprint (cm, sizeof (cm), &i->channel_map),
+                i->owner_module,
+                i->mute ? "muted" : pa_cvolume_snprint (cv, sizeof (cv), &i->volume),
+                i->monitor_of_sink,
+                (double) i->latency,
+                i->flags & PA_SOURCE_HW_VOLUME_CTRL ? "HW_VOLUME_CTRL " : "",
+                i->flags & PA_SOURCE_LATENCY ? "LATENCY " : "",
+                i->flags & PA_SOURCE_HARDWARE ? "HARDWARE" : "");
+
+        std::string deviceName (i->name);
+        ( (PulseLayer *) userdata)->getSourceList()->push_back (deviceName);
+
+    }
+}
+
+
+static void context_changed_callback (pa_context* c, pa_subscription_event_type_t t, uint32_t idx UNUSED, void* userdata)
+{
+
+    switch (t) {
+
+        case PA_SUBSCRIPTION_EVENT_SINK:
+            _debug ("Audio: PA_SUBSCRIPTION_EVENT_SINK");
+            ( (PulseLayer *) userdata)->getSinkList()->clear();
+            pa_context_get_sink_info_list (c, sink_input_info_callback,  userdata);
+            break;
+        case PA_SUBSCRIPTION_EVENT_SOURCE:
+            _debug ("Audio: PA_SUBSCRIPTION_EVENT_SOURCE");
+            ( (PulseLayer *) userdata)->getSourceList()->clear();
+            pa_context_get_source_info_list (c, source_input_info_callback,  userdata);
+            break;
+        case PA_SUBSCRIPTION_EVENT_SINK_INPUT:
+            _debug ("Audio: PA_SUBSCRIPTION_EVENT_SINK_INPUT");
+            break;
+        case PA_SUBSCRIPTION_EVENT_SOURCE_OUTPUT:
+            _debug ("Audio: PA_SUBSCRIPTION_EVENT_SOURCE_OUTPUT");
+            break;
+        case PA_SUBSCRIPTION_EVENT_MODULE:
+            _debug ("Audio: PA_SUBSCRIPTION_EVENT_MODULE");
+            break;
+        case PA_SUBSCRIPTION_EVENT_CLIENT:
+            _debug ("Audio: PA_SUBSCRIPTION_EVENT_CLIENT");
+            break;
+        case PA_SUBSCRIPTION_EVENT_SAMPLE_CACHE:
+            _debug ("Audio: PA_SUBSCRIPTION_EVENT_SAMPLE_CACHE");
+            break;
+        case PA_SUBSCRIPTION_EVENT_SERVER:
+            _debug ("Audio: PA_SUBSCRIPTION_EVENT_SERVER");
+            break;
+        case PA_SUBSCRIPTION_EVENT_CARD:
+            _debug ("Audio: PA_SUBSCRIPTION_EVENT_CARD");
+            break;
+        case PA_SUBSCRIPTION_EVENT_FACILITY_MASK:
+            _debug ("Audio: PA_SUBSCRIPTION_EVENT_FACILITY_MASK");
+            break;
+        case PA_SUBSCRIPTION_EVENT_CHANGE:
+            _debug ("Audio: PA_SUBSCRIPTION_EVENT_CHANGE");
+            break;
+        case PA_SUBSCRIPTION_EVENT_REMOVE:
+            _debug ("Audio: PA_SUBSCRIPTION_EVENT_REMOVE");
+            ( (PulseLayer *) userdata)->getSinkList()->clear();
+            ( (PulseLayer *) userdata)->getSourceList()->clear();
+            pa_context_get_sink_info_list (c, sink_input_info_callback,  userdata);
+            pa_context_get_source_info_list (c, source_input_info_callback,  userdata);
+            break;
+        case PA_SUBSCRIPTION_EVENT_TYPE_MASK:
+            _debug ("Audio: PA_SUBSCRIPTION_EVENT_TYPE_MASK");
+            break;
+        default:
+            _debug ("Audio: Unknown event type");
+
+    }
+}
+
+static void playback_underflow_callback (pa_stream* s UNUSED,  void* userdata UNUSED)
+{
 }
 
 
 static void playback_overflow_callback (pa_stream* s UNUSED, void* userdata UNUSED)
 {
-    // _debug ("Audio: Buffer OverFlow");
-
 }
 
 
@@ -84,13 +237,22 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
         : AudioLayer (manager , PULSEAUDIO)
         , context (NULL)
         , m (NULL)
-        , playback()
-        , record()
+        , playback (NULL)
+        , record (NULL)
+        , ringtone (NULL)
 {
     _urgentRingBuffer.createReadPointer();
-    dcblocker = new DcBlocker();
+
     is_started = false;
-    
+
+    AudioLayer::_noisesuppressstate = true;
+
+    byteCounter = 0;
+
+
+    // captureFile = new ofstream ("probeCaptureFile", ofstream::binary);
+    // spkrFile = new ofstream ("probeSpkrFile", ofstream::binary);
+
     openLayer();
 }
 
@@ -104,60 +266,42 @@ PulseLayer::~PulseLayer (void)
         _converter = NULL;
     }
 
-    delete dcblocker;
+    delete AudioLayer::_dcblocker;
+    AudioLayer::_dcblocker = NULL;
 
-    dcblocker = NULL;
+    delete AudioLayer::_audiofilter;
+    AudioLayer::_audiofilter = NULL;
+
+
+    // captureFile->close();
+    // spkrFile->close();
+
+    // delete captureFile;
+    // delete spkrFile;
 }
 
 void
 PulseLayer::openLayer (void)
 {
-	if (!is_started) {
+    if (!is_started) {
 
-		_info("Audio: Open layer");
+        _info ("Audio: Open Pulseaudio layer");
 
-		if (!m) {
+        connectPulseAudioServer();
 
-			_info("Audio: Creating PulseAudio mainloop");
-			if (!(m = pa_threaded_mainloop_new()))
-				_warn ("Audio: Error: while creating pulseaudio mainloop");
+        is_started = true;
 
-			if (pa_threaded_mainloop_start (m) < 0) {
-				_warn("Audio: Error: Failed to start pulseaudio mainloop");
-			}
-			
-			assert(m);
-		}
-
-		if (!context) {
-			
-			_info("Audio: Creating new PulseAudio Context");
-			pa_threaded_mainloop_lock (m);
-
-			// Instanciate a context
-			if (! (context = pa_context_new (pa_threaded_mainloop_get_api (m) , "SFLphone")))
-				_warn ("Audio: Error: while creating pulseaudio context");
-
-			pa_threaded_mainloop_unlock (m);
-
-			assert (context);
-		}
-
-		// Create Streams
-		connectPulseAudioServer();
-
-		is_started = true;
-	}
+    }
 
 }
 
 bool
 PulseLayer::closeLayer (void)
 {
-    _info("Audio: Destroy pulselayer");
+    _info ("Audio: Close Pulseaudio layer");
 
     disconnectAudioStream();
-	
+
     if (m) {
         pa_threaded_mainloop_stop (m);
     }
@@ -180,35 +324,64 @@ PulseLayer::closeLayer (void)
 void
 PulseLayer::connectPulseAudioServer (void)
 {
-    _info("Audio: connect to pulseaudio server");
+    _info ("Audio: Connect to Pulseaudio server");
 
     setenv ("PULSE_PROP_media.role", "phone", 1);
 
     pa_context_flags_t flag = PA_CONTEXT_NOAUTOSPAWN ;
 
+    if (!m) {
+
+        // Instantiate a mainloop
+        _info ("Audio: Creating PulseAudio mainloop");
+
+        if (! (m = pa_threaded_mainloop_new()))
+            _warn ("Audio: Error: while creating pulseaudio mainloop");
+
+        assert (m);
+    }
+
+    if (!context) {
+
+        // Instantiate a context
+        if (! (context = pa_context_new (pa_threaded_mainloop_get_api (m) , "SFLphone")))
+            _warn ("Audio: Error: while creating pulseaudio context");
+
+        assert (context);
+    }
+
+    // set context state callback before starting the mainloop
+    pa_context_set_state_callback (context, context_state_callback, this);
+
+    _info ("Audio: Connect the context to the server");
+
+    if (pa_context_connect (context, NULL , flag , NULL) < 0) {
+        _warn ("Audio: Error: Could not connect context to the server");
+    }
+
+    // Lock the loop before starting it
     pa_threaded_mainloop_lock (m);
 
-    _info("Audio: Connect the context to the server");
-    pa_context_connect (context, NULL , flag , NULL);
+    if (pa_threaded_mainloop_start (m) < 0)
+        _warn ("Audio: Error: Failed to start pulseaudio mainloop");
 
-    pa_context_set_state_callback (context, context_state_callback, this);
-    pa_threaded_mainloop_wait(m);
-    
-    
+    pa_threaded_mainloop_wait (m);
+
+
     // Run the main loop
     if (pa_context_get_state (context) != PA_CONTEXT_READY) {
-        _warn("Audio: Error: connecting to pulse audio server");
+        _warn ("Audio: Error: connecting to pulse audio server");
     }
 
     pa_threaded_mainloop_unlock (m);
 
-    _info("Audio: Context creation done");
+    _info ("Audio: Context creation done");
 
 }
 
 void PulseLayer::context_state_callback (pa_context* c, void* user_data)
 {
-    _info("Audio: The state of the context changed");
+    _info ("Audio: The state of the context changed");
     PulseLayer* pulse = (PulseLayer*) user_data;
     assert (c && pulse->m);
 
@@ -224,7 +397,11 @@ void PulseLayer::context_state_callback (pa_context* c, void* user_data)
 
         case PA_CONTEXT_READY:
             _debug ("Audio: Connection to PulseAudio server established");
-            pa_threaded_mainloop_signal(pulse->m, 0);
+            pa_threaded_mainloop_signal (pulse->m, 0);
+            pa_context_subscribe (c, (pa_subscription_mask_t) (PA_SUBSCRIPTION_MASK_SINK|
+                                  PA_SUBSCRIPTION_MASK_SOURCE), NULL, pulse);
+            pa_context_set_subscribe_callback (c, context_changed_callback, pulse);
+            pulse->updateSinkList();
             break;
 
         case PA_CONTEXT_TERMINATED:
@@ -234,14 +411,14 @@ void PulseLayer::context_state_callback (pa_context* c, void* user_data)
         case PA_CONTEXT_FAILED:
 
         default:
-            _warn("Audio: Error : %s" , pa_strerror (pa_context_errno (c)));
+            _warn ("Audio: Error : %s" , pa_strerror (pa_context_errno (c)));
             pulse->disconnectAudioStream();
             exit (0);
             break;
     }
 }
 
-bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int sampleRate, int frameSize , int stream UNUSED, std::string plugin UNUSED)
+bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int indexRing UNUSED, int sampleRate, int frameSize , int stream UNUSED, std::string plugin UNUSED)
 {
     _audioSampleRate = sampleRate;
     _frameSize = frameSize;
@@ -251,13 +428,86 @@ bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int sample
     // use 1 sec buffer for resampling
     _converter = new SamplerateConverter (_audioSampleRate, 1000);
 
+    // Instantiate the algorithm
+    AudioLayer::_dcblocker = new DcBlocker();
+    AudioLayer::_audiofilter = new AudioProcessing (static_cast<Algorithm *> (_dcblocker));
+
     return true;
+}
+
+
+void PulseLayer::updateSinkList (void)
+{
+
+    _debug ("Audio: Update sink list");
+
+    getSinkList()->clear();
+
+    pa_context_get_sink_info_list (context, sink_input_info_callback,  this);
+}
+
+void PulseLayer::updateSourceList (void)
+{
+    _debug ("Audio: Update source list");
+
+    getSourceList()->clear();
+
+    pa_context_get_source_info_list (context, source_input_info_callback, this);
+
+}
+
+bool PulseLayer::inSinkList (std::string deviceName)
+{
+    //   _debug("Audio: in device list %s", deviceName.c_str());
+
+    DeviceList::iterator iter = _sinkList.begin();
+
+    // _debug("_deviceList.size() %d", _sinkList.size());
+
+    while (iter != _sinkList.end()) {
+        if (*iter == deviceName) {
+            // _debug("device name in list: %s", (*iter).c_str());
+            return true;
+        }
+
+        iter++;
+    }
+
+    return false;
+}
+
+
+bool PulseLayer::inSourceList (std::string deviceName)
+{
+
+    DeviceList::iterator iter = _sourceList.begin();
+
+    while (iter != _sourceList.end()) {
+
+        if (*iter == deviceName) {
+            return true;
+        }
+
+        iter++;
+    }
+
+    return false;
 }
 
 
 bool PulseLayer::createStreams (pa_context* c)
 {
-    _info("Audio: Create streams");
+    _info ("Audio: Create streams");
+
+    // _debug("Device list size %d", getDevicelist()->size());
+
+    std::string playbackDevice =  _manager->audioPreference.getDevicePlayback();
+    std::string recordDevice =  _manager->audioPreference.getDeviceRecord();
+    std::string ringtoneDevice =  _manager->audioPreference.getDeviceRingtone();
+
+    _debug ("Audio: Device stored in config for playback: %s", playbackDevice.c_str());
+    _debug ("Audio: Device stored in config for record: %s", recordDevice.c_str());
+    _debug ("Audio: Device stored in config for ringtone: %s", ringtoneDevice.c_str());
 
     PulseLayerType * playbackParam = new PulseLayerType();
     playbackParam->context = c;
@@ -267,12 +517,19 @@ bool PulseLayer::createStreams (pa_context* c)
     playbackParam->mainloop = m;
 
     playback = new AudioStream (playbackParam, _audioSampleRate);
-    playback->connectStream();
+
+    if (inSinkList (playbackDevice)) {
+        playback->connectStream (&playbackDevice);
+    } else {
+        playback->connectStream (NULL);
+    }
+
     pa_stream_set_write_callback (playback->pulseStream(), playback_callback, this);
     pa_stream_set_overflow_callback (playback->pulseStream(), playback_overflow_callback, this);
     pa_stream_set_underflow_callback (playback->pulseStream(), playback_underflow_callback, this);
     // pa_stream_set_suspended_callback(playback->pulseStream(), stream_suspended_callback, this);
-    // pa_stream_set_moved_callback(playback->pulseStream(), stream_moved_callback, this);
+    pa_stream_set_moved_callback (playback->pulseStream(), stream_moved_callback, this);
+    pa_stream_set_latency_update_callback (playback->pulseStream(), latency_update_callback, this);
     delete playbackParam;
 
     PulseLayerType * recordParam = new PulseLayerType();
@@ -283,11 +540,37 @@ bool PulseLayer::createStreams (pa_context* c)
     recordParam->mainloop = m;
 
     record = new AudioStream (recordParam, _audioSampleRate);
-    record->connectStream();
+
+    if (inSourceList (recordDevice)) {
+        record->connectStream (&recordDevice);
+    } else {
+        record->connectStream (NULL);
+    }
+
     pa_stream_set_read_callback (record->pulseStream() , capture_callback, this);
     // pa_stream_set_suspended_callback(record->pulseStream(), stream_suspended_callback, this);
-    // pa_stream_set_moved_callback(record->pulseStream(), stream_moved_callback, this);
+    pa_stream_set_moved_callback (record->pulseStream(), stream_moved_callback, this);
+    pa_stream_set_latency_update_callback (record->pulseStream(), latency_update_callback, this);
     delete recordParam;
+
+    PulseLayerType * ringtoneParam = new PulseLayerType();
+    ringtoneParam->context = c;
+    ringtoneParam->type = RINGTONE_STREAM;
+    ringtoneParam->description = RINGTONE_STREAM_NAME;
+    ringtoneParam->volume = _manager->getSpkrVolume();
+    ringtoneParam->mainloop = m;
+
+    ringtone = new AudioStream (ringtoneParam, _audioSampleRate);
+
+    if (inSourceList (ringtoneDevice)) {
+        ringtone->connectStream (&ringtoneDevice);
+    } else {
+        ringtone->connectStream (NULL);
+    }
+
+    pa_stream_set_write_callback (ringtone->pulseStream(), ringtone_callback, this);
+    pa_stream_set_moved_callback (ringtone->pulseStream(), stream_moved_callback, this);
+    delete ringtoneParam;
 
     pa_threaded_mainloop_signal (m , 0);
 
@@ -300,7 +583,7 @@ bool PulseLayer::createStreams (pa_context* c)
 
 bool PulseLayer::disconnectAudioStream (void)
 {
-    _info("Audio: Disconnect audio stream");
+    _info ("Audio: Disconnect audio stream");
 
     closePlaybackStream();
     closeCaptureStream();
@@ -315,6 +598,10 @@ bool PulseLayer::disconnectAudioStream (void)
 void PulseLayer::closeCaptureStream (void)
 {
     if (record) {
+
+        std::string deviceName (pa_stream_get_device_name (record->pulseStream()));
+        _debug ("Audio: record device to be stored in config: %s", deviceName.c_str());
+        _manager->audioPreference.setDeviceRecord (deviceName);
         delete record;
         record=NULL;
     }
@@ -324,8 +611,19 @@ void PulseLayer::closeCaptureStream (void)
 void PulseLayer::closePlaybackStream (void)
 {
     if (playback) {
+        std::string deviceName (pa_stream_get_device_name (playback->pulseStream()));
+        _debug ("Audio: playback device to be stored in config: %s", deviceName.c_str());
+        _manager->audioPreference.setDevicePlayback (deviceName);
         delete playback;
         playback=NULL;
+    }
+
+    if (ringtone) {
+        std::string deviceName (pa_stream_get_device_name (ringtone->pulseStream()));
+        _debug ("Audio: ringtone device to be stored in config: %s", deviceName.c_str());
+        _manager->audioPreference.setDeviceRingtone (deviceName);
+        delete ringtone;
+        ringtone  = NULL;
     }
 }
 
@@ -339,20 +637,13 @@ int PulseLayer::canGetMic()
 }
 
 
-int PulseLayer::getMic (void *buffer, int toCopy)
-{
-    if (record) {
-        return 0;
-    } else
-        return 0;
-}
-
-
 void PulseLayer::startStream (void)
 {
+
     // Create Streams
-	if(!playback || !record)
-		createStreams(context);
+    if (!playback || !record)
+        createStreams (context);
+
 
     // Flush outside the if statement: every time start stream is
     // called is to notify a new event
@@ -367,19 +658,19 @@ void
 PulseLayer::stopStream (void)
 {
 
-	_info("Audio: Stop audio stream");
+    _info ("Audio: Stop audio stream");
 
-	pa_threaded_mainloop_lock (m);
+    pa_threaded_mainloop_lock (m);
 
-	if(playback)
-	    pa_stream_flush (playback->pulseStream(), NULL, NULL);
+    if (playback)
+        pa_stream_flush (playback->pulseStream(), NULL, NULL);
 
-	if(record)
-	    pa_stream_flush (record->pulseStream(), NULL, NULL);
+    if (record)
+        pa_stream_flush (record->pulseStream(), NULL, NULL);
 
-	pa_threaded_mainloop_unlock (m);
+    pa_threaded_mainloop_unlock (m);
 
-	disconnectAudioStream();
+    disconnectAudioStream();
 }
 
 
@@ -409,6 +700,19 @@ void PulseLayer::processCaptureData (void)
 
 }
 
+void PulseLayer::processRingtoneData (void)
+{
+    // handle ringtone playback
+    if (ringtone && (ringtone)->pulseStream() && (pa_stream_get_state (ringtone->pulseStream()) == PA_STREAM_READY)) {
+
+        // If the playback buffer is full, we don't overflow it; wait for it to have free space
+        if (pa_stream_writable_size (ringtone->pulseStream()) == 0)
+            return;
+
+        ringtoneToSpeaker();
+    }
+}
+
 
 void PulseLayer::processData (void)
 {
@@ -430,6 +734,13 @@ void PulseLayer::processData (void)
 
 }
 
+void PulseLayer::setNoiseSuppressState (bool state)
+{
+    // if a stream already opened
+    AudioLayer::_noisesuppressstate = state;
+
+}
+
 
 void PulseLayer::writeToSpeaker (void)
 {
@@ -444,7 +755,6 @@ void PulseLayer::writeToSpeaker (void)
     SFLDataFormat* out;// = (SFLDataFormat*)pa_xmalloc(framesPerBuffer);
     urgentAvailBytes = _urgentRingBuffer.AvailForGet();
 
-
     // available bytes to be written in pulseaudio internal buffer
     int writeableSize = pa_stream_writable_size (playback->pulseStream());
 
@@ -455,8 +765,11 @@ void PulseLayer::writeToSpeaker (void)
     if (urgentAvailBytes > writeableSize) {
 
         out = (SFLDataFormat*) pa_xmalloc (writeableSize);
+        memset (out, 0, writeableSize);
+
         _urgentRingBuffer.Get (out, writeableSize, 100);
 
+        // spkrFile->write ( (const char *) out, writeableSize);
         pa_stream_write (playback->pulseStream(), out, writeableSize, NULL, 0, PA_SEEK_RELATIVE);
 
         pa_xfree (out);
@@ -467,33 +780,25 @@ void PulseLayer::writeToSpeaker (void)
 
     } else {
 
+        // Get ringtone
         AudioLoop* tone = _manager->getTelephoneTone();
-        AudioLoop* file_tone = _manager->getTelephoneFile();
+
+        // We must test if data have been received from network in case of early media
+        normalAvailBytes = getMainBuffer()->availForGet();
 
         // flush remaining samples in _urgentRingBuffer
         flushUrgent();
 
-        if (tone != 0) {
+        if ( (tone != 0) && (normalAvailBytes <= 0)) {
 
             if (playback->getStreamState() == PA_STREAM_READY) {
 
                 out = (SFLDataFormat*) pa_xmalloc (writeableSize);
+                memset (out, 0, writeableSize);
+
                 int copied = tone->getNext (out, writeableSize / sizeof (SFLDataFormat), 100);
-		
-                pa_stream_write (playback->pulseStream(), out, copied * sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
 
-                pa_xfree (out);
-
-            }
-        }
-
-        else if (file_tone != 0) {
-
-            if (playback->getStreamState() == PA_STREAM_READY) {
-
-                out = (SFLDataFormat*) pa_xmalloc (writeableSize);
-                int copied = file_tone->getNext (out, writeableSize / sizeof (SFLDataFormat), 100);
-
+                //spkrFile->write ( (const char *) out, copied*sizeof (SFLDataFormat));
                 pa_stream_write (playback->pulseStream(), out, copied * sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
 
                 pa_xfree (out);
@@ -506,9 +811,7 @@ void PulseLayer::writeToSpeaker (void)
 
             int maxNbBytesToGet = 0;
 
-
             // test if audio resampling is needed
-
             if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
 
                 // upsamplefactor is used to compute the number of bytes to get in the ring buffer
@@ -523,8 +826,6 @@ void PulseLayer::writeToSpeaker (void)
 
             }
 
-            normalAvailBytes = getMainBuffer()->availForGet();
-
             byteToGet = (normalAvailBytes < (int) (maxNbBytesToGet)) ? normalAvailBytes : maxNbBytesToGet;
 
             if (byteToGet) {
@@ -535,6 +836,7 @@ void PulseLayer::writeToSpeaker (void)
                     byteToGet = byteToGet-1;
 
                 out = (SFLDataFormat*) pa_xmalloc (maxNbBytesToGet);
+                memset (out, 0, maxNbBytesToGet);
 
                 getMainBuffer()->getData (out, byteToGet, 100);
 
@@ -542,6 +844,7 @@ void PulseLayer::writeToSpeaker (void)
                 if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
 
                     SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (writeableSize);
+                    memset (out, 0, writeableSize);
 
                     // Do sample rate conversion
                     int nb_sample_down = byteToGet / sizeof (SFLDataFormat);
@@ -549,15 +852,17 @@ void PulseLayer::writeToSpeaker (void)
                     int nbSample = _converter->upsampleData ( (SFLDataFormat*) out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_down);
 
                     if ( (nbSample*sizeof (SFLDataFormat)) > (unsigned int) writeableSize)
-                        _warn("Audio: Error: nbsbyte exceed buffer length");
+                        _warn ("Audio: Error: nbsbyte exceed buffer length");
 
+                    // spkrFile->write ( (const char *) out, nbSample*sizeof (SFLDataFormat));
                     pa_stream_write (playback->pulseStream(), rsmpl_out, nbSample*sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
 
                     pa_xfree (rsmpl_out);
 
                 } else {
-
+                    // spkrFile->write ( (const char *) out, byteToGet);
                     pa_stream_write (playback->pulseStream(), out, byteToGet, NULL, 0, PA_SEEK_RELATIVE);
+
 
                 }
 
@@ -565,12 +870,12 @@ void PulseLayer::writeToSpeaker (void)
 
             } else {
 
-                if ( (tone == 0) && (file_tone == 0)) {
+                if (tone == 0) {
 
                     SFLDataFormat* zeros = (SFLDataFormat*) pa_xmalloc (writeableSize);
-
                     bzero (zeros, writeableSize);
 
+                    // spkrFile->write ( (const char *) zeros, writeableSize);
                     pa_stream_write (playback->pulseStream(), zeros, writeableSize, NULL, 0, PA_SEEK_RELATIVE);
 
                     pa_xfree (zeros);
@@ -596,9 +901,8 @@ void PulseLayer::readFromMic (void)
 
 
     if (pa_stream_peek (record->pulseStream() , (const void**) &data , &r) < 0 || !data) {
-        _warn("Audio: Error capture stream peek failed: %s" , pa_strerror (pa_context_errno (context)));
+        _warn ("Audio: Error capture stream peek failed: %s" , pa_strerror (pa_context_errno (context)));
     }
-
 
     if (data != 0) {
 
@@ -608,25 +912,39 @@ void PulseLayer::readFromMic (void)
         if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
 
             SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (readableSize);
+            memset (rsmpl_out, 0, readableSize);
 
             int nbSample = r / sizeof (SFLDataFormat);
 
             int nb_sample_up = nbSample;
 
+            nbSample = _converter->downsampleData ( (SFLDataFormat *) data, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_up);
 
-            nbSample = _converter->downsampleData ( (SFLDataFormat*) data, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_up);
+            // captureRsmplFile->write ((const char *)rsmpl_out, nbSample*sizeof(SFLDataFormat));
 
             // remove dc offset
-            dcblocker->filter_signal (rsmpl_out, nbSample);
+            _audiofilter->processAudio (rsmpl_out, nbSample*sizeof (SFLDataFormat));
 
-            getMainBuffer()->putData ( (void*) rsmpl_out, nbSample*sizeof (SFLDataFormat), 100);
+            // captureFilterFile->write ((const char *)rsmpl_out, nbSample*sizeof(SFLDataFormat));
+
+            getMainBuffer()->putData (rsmpl_out, nbSample*sizeof (SFLDataFormat), 100);
 
             pa_xfree (rsmpl_out);
 
         } else {
 
-            // no resampling required
-            getMainBuffer()->putData ( (void*) data, r, 100);
+
+            SFLDataFormat* filter_out = (SFLDataFormat*) pa_xmalloc (r);
+            memset (filter_out, 0, r);
+
+            // remove dc offset
+            _audiofilter->processAudio ( (SFLDataFormat *) data, filter_out, r);
+
+            // captureFile->write ( (const char *) filter_out, r);
+
+            getMainBuffer()->putData (filter_out, r, 100);
+
+            pa_xfree (filter_out);
         }
 
 
@@ -634,8 +952,45 @@ void PulseLayer::readFromMic (void)
     }
 
     if (pa_stream_drop (record->pulseStream()) < 0) {
-        _warn("Audio: Error: capture stream drop failed: %s" , pa_strerror( pa_context_errno( context) ));
+        _warn ("Audio: Error: capture stream drop failed: %s" , pa_strerror (pa_context_errno (context)));
     }
+
+}
+
+
+void PulseLayer::ringtoneToSpeaker (void)
+{
+    AudioLoop* file_tone = _manager->getTelephoneFile();
+
+    SFLDataFormat* out;
+
+    int writableSize = pa_stream_writable_size (ringtone->pulseStream());
+
+    if (file_tone) {
+
+        if (ringtone->getStreamState() == PA_STREAM_READY) {
+
+            out = (SFLDataFormat *) pa_xmalloc (writableSize);
+            memset (out, 0, writableSize);
+
+            int copied = file_tone->getNext (out, writableSize/sizeof (SFLDataFormat), 100);
+            pa_stream_write (ringtone->pulseStream(), out, copied*sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
+
+            pa_xfree (out);
+        }
+    } else {
+
+        if (ringtone->getStreamState() == PA_STREAM_READY) {
+
+            out = (SFLDataFormat*) pa_xmalloc (writableSize);
+            memset (out, 0, writableSize);
+
+            pa_stream_write (ringtone->pulseStream(), out, writableSize, NULL, 0, PA_SEEK_RELATIVE);
+
+            pa_xfree (out);
+        }
+    }
+
 
 }
 

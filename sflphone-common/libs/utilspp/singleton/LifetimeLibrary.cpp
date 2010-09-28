@@ -4,17 +4,14 @@
 utilspp::LifetimeLibraryImpl::LifetimeLibraryImpl()
         :
         mTrackerArray (NULL),
-        mNbElements (0)
-{}
+        mNbElements (0) {}
 
-utilspp::LifetimeLibraryImpl::~LifetimeLibraryImpl()
-{
+utilspp::LifetimeLibraryImpl::~LifetimeLibraryImpl() {
     terminate();
 }
 
 void
-utilspp::LifetimeLibraryImpl::add (utilspp::PrivateMembers::LifetimeTracker *tracker)
-{
+utilspp::LifetimeLibraryImpl::add (utilspp::PrivateMembers::LifetimeTracker *tracker) {
     utilspp::PrivateMembers::TrackerArray newArray = static_cast<
             utilspp::PrivateMembers::TrackerArray > (std::realloc (mTrackerArray,
                     mNbElements + 1));
@@ -39,8 +36,7 @@ utilspp::LifetimeLibraryImpl::add (utilspp::PrivateMembers::LifetimeTracker *tra
 };
 
 void
-utilspp::LifetimeLibraryImpl::terminate()
-{
+utilspp::LifetimeLibraryImpl::terminate() {
     //The number of elements MUST always be equal or over zero.
     assert (mNbElements >= 0);
 
@@ -64,8 +60,7 @@ utilspp::LifetimeLibraryImpl::terminate()
 }
 
 unsigned int
-utilspp::getLongevity (utilspp::LifetimeLibraryImpl *)
-{
+utilspp::getLongevity (utilspp::LifetimeLibraryImpl *) {
     return 0;
 }
 

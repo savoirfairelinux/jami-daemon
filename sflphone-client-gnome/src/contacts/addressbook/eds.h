@@ -43,6 +43,7 @@
 #include <libebook/e-book.h>
 #include <sflphone_const.h>
 
+
 #define EMPTY_ENTRY     "empty"
 
 G_BEGIN_DECLS
@@ -56,24 +57,23 @@ int current_search_id;
 /**
  * Represent a contact entry
  */
-typedef struct _Hit
-{
-  gchar *name;
-  GdkPixbuf *photo;
-  gchar *phone_business;
-  gchar *phone_home;
-  gchar *phone_mobile;
+typedef struct _Hit {
+    gchar *name;
+    GdkPixbuf *photo;
+    gchar *phone_business;
+    gchar *phone_home;
+    gchar *phone_mobile;
 } Hit;
 
 /**
  * Book structure for "outside world"
  */
-typedef struct
-{
-  gchar *uid;
-  gchar *name;
-  gboolean active;
-  EBook *ebook;
+typedef struct {
+    gchar *uid;
+    gchar *uri;
+    gchar *name;
+    gboolean active;
+    gboolean isdefault;
 } book_data_t;
 
 GSList *books_data;
@@ -82,46 +82,51 @@ GSList *books_data;
  * Free a contact entry
  */
 void
-free_hit(Hit *h);
+free_hit (Hit *h);
 
 /**
  * Template callback function for the asynchronous search
  */
 typedef void
-(* SearchAsyncHandler)(GList *hits, gpointer user_data);
+(* SearchAsyncHandler) (GList *hits, gpointer user_data);
 
 /**
  * Template callback function for the asynchronous open
  */
 typedef void
-(* OpenAsyncHandler)();
+(* OpenAsyncHandler) ();
 
 /**
  * Initialize the address book.
  * Connection to evolution data server
  */
 void
-init(OpenAsyncHandler);
+init ();
 
 /**
- * Asynchronous search function
+ * Fill list of addressbooks
  */
 void
-search_async(const char *query, int max_results, SearchAsyncHandler handler,
-    gpointer user_data);
+fill_books_data (void);
+
+/**
+ * Asynchronous query to EDS using get contact method.
+ */
+void
+search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler handler, gpointer user_data);
 
 /**
  * Retrieve the specified information from the contact
  */
 void
-fetch_information_from_contact(EContact *contact, EContactField field,
-    gchar **info);
+fetch_information_from_contact (EContact *contact, EContactField field,
+                                gchar **info);
 
 GSList*
-get_books(void);
+get_books (void);
 
 book_data_t *
-books_get_book_data_by_uid(gchar *uid);
+books_get_book_data_by_uid (gchar *uid);
 
 /**
  * Public way to know if we can perform a search
@@ -140,6 +145,25 @@ books_active();
  */
 GSList *
 addressbook_get_books_data();
+
+/**
+ * Set the current address book
+ */
+void
+set_current_addressbook (const gchar *name);
+
+/**
+ * Return current addressbook name
+ */
+const gchar *
+get_current_addressbook (void);
+
+void
+set_current_addressbook_test (EBookQueryTest test);
+
+EBookQueryTest
+get_current_addressbook_test (void);
+
 
 G_END_DECLS
 

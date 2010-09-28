@@ -35,7 +35,8 @@
 #include "logger.h"
 #include <string>
 
-class NumberCleaner {
+class NumberCleaner
+{
 
     public:
         NumberCleaner (void);
@@ -43,16 +44,20 @@ class NumberCleaner {
 
         std::string clean (std::string to_clean);
 
-        inline void set_phone_number_prefix (std::string prefix) {  
-	  _debug("Number: Set phone number prefix %s", _prefix.c_str()); _prefix = prefix; }
+        inline void set_phone_number_prefix (std::string prefix) {
+            _debug ("Number: Set phone number prefix %s", _prefix.c_str());
+            _prefix = prefix;
+        }
 
-        inline std::string get_phone_number_prefix (void) { return _prefix; }
+        inline std::string get_phone_number_prefix (void) {
+            return _prefix;
+        }
 
     private:
 
         std::string _prefix;
 
-        void strip_char(std::string to_strip, std::string *num);
+        void strip_char (std::string to_strip, std::string *num);
 
 };
 

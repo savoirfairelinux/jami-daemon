@@ -1,0 +1,69 @@
+<gconfschemafile>
+   <schemalist>
+
+	<schema>
+        <key>/schemas/apps/sflphone-client-gnome/state/window_width</key>
+        <applyto>/apps/sflphone-client-gnome/state/window_width</applyto>
+        <owner>sflphone-client-gnome</owner>
+        <type>int</type>
+        <default>240</default>
+        <locale name="C">
+    <short>Main window width</short>
+    <long>Main window width.</long>
+        </locale>
+      </schema>
+
+
+      <schema>
+        <key>/schemas/apps/sflphone-client-gnome/state/window_position_x</key>
+        <applyto>/apps/sflphone-client-gnome/state/window_position_x</applyto>
+        <owner>sflphone-client-gnome</owner>
+        <type>int</type>
+        <default>0</default>
+        <locale name="C">
+    <short>Main window X position</short>
+    <long>Main window X position.</long>
+        </locale>
+      </schema>
+
+
+      <schema>
+        <key>/schemas/apps/sflphone-client-gnome/state/window_position_y</key>
+        <applyto>/apps/sflphone-client-gnome/state/window_position_y</applyto>
+        <owner>sflphone-client-gnome</owner>
+        <type>int</type>
+        <default>0</default>
+        <locale name="C">
+    <short>Main window Y position</short>
+    <long>Main window Y position.</long>
+        </locale>
+      </schema>
+
+      <schema>
+        <key>/schemas/apps/sflphone-client-gnome/state/window_height</key>
+        <applyto>/apps/sflphone-client-gnome/state/window_height</applyto>
+        <owner>sflphone-client-gnome</owner>
+        <type>int</type>
+        <default>320</default>
+        <locale name="C">
+    <short>Main window height</short>
+    <long>Main window height.</long>
+        </locale>
+      </schema>
+	
+	<schema>
+        <key>/schemas/apps/sflphone-client-gnome/state/dialpad</key>
+        <applyto>/apps/sflphone-client-gnome/state/dialpad</applyto>
+        <owner>sflphone-client-gnome</owner>
+        <type>bool</type>
+        <default>true</default>
+        <locale name="C">
+    <short>Display dialpad</short>
+    <long>Display dialpad.</long>
+        </locale>
+      </schema>
+	
+
+
+   </schemalist>
+</gconfschemafile>

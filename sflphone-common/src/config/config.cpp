@@ -38,6 +38,7 @@
 #include <errno.h>
 #include <iostream>
 #include <string.h>
+#include "yamlparser.h"
 
 namespace Conf
 {
@@ -50,6 +51,7 @@ ConfigTree::ConfigTree() :_sections()
 // dtor
 ConfigTree::~ConfigTree()
 {
+
     // erase every new ItemMap (by CreateSection)
     SectionMap::iterator iter = _sections.begin();
 
@@ -210,14 +212,14 @@ ConfigTree::getConfigTreeItem (const std::string& section, const std::string& it
     SectionMap::iterator iter = _sections.find (section);
 
     if (iter == _sections.end()) {
-      // _error("ConfigTree: Error: Did not found section %s in config tree", section.c_str());
+        // _error("ConfigTree: Error: Did not found section %s in config tree", section.c_str());
         return NULL;
     }
 
     ItemMap::iterator iterItem = iter->second->find (itemName);
 
     if (iterItem == iter->second->end()) {
-      // _error("ConfigTree: Error: Did not found item %s in config tree", itemName.c_str());
+        // _error("ConfigTree: Error: Did not found item %s in config tree", itemName.c_str());
         return NULL;
     }
 
@@ -271,6 +273,8 @@ ConfigTree::setConfigTreeItem (const std::string& section,
 bool
 ConfigTree::saveConfigTree (const std::string& fileName)
 {
+    _debug ("ConfigTree: Save %s", fileName.c_str());
+
     if (fileName.empty() && _sections.begin() == _sections.end()) {
         return false;
     }
@@ -280,7 +284,7 @@ ConfigTree::saveConfigTree (const std::string& fileName)
     file.open (fileName.data(), std::fstream::out);
 
     if (!file.is_open()) {
-        _error("ConfigTree: Error: Could not open %s configuration file", fileName.c_str());
+        _error ("ConfigTree: Error: Could not open %s configuration file", fileName.c_str());
         return false;
     }
 
@@ -304,7 +308,7 @@ ConfigTree::saveConfigTree (const std::string& fileName)
     file.close();
 
     if (chmod (fileName.c_str(), S_IRUSR | S_IWUSR)) {
-        _error("ConfigTree: Error: Failed to set permission on configuration: %s",strerror (errno));
+        _error ("ConfigTree: Error: Failed to set permission on configuration: %s",strerror (errno));
     }
 
     return true;
@@ -318,6 +322,8 @@ int
 ConfigTree::populateFromFile (const std::string& fileName)
 {
     bool out = false;
+
+    _debug ("ConfigTree: Populate from file %s", fileName.c_str());
 
     if (fileName.empty()) {
         return 0;
@@ -378,15 +384,16 @@ ConfigTree::populateFromFile (const std::string& fileName)
                 if (key.length() > 0 && val.length() > 0) {
                     setConfigTreeItem (section, key, val);
                 }
-		/*
-		if (key.length() > 0) {
 
-		    if(val.length() > 0) 
-		        setConfigTreeItem (section, key, val);
-		    else
-		        setConfigTreeItem (section, key, "");
-                }
-		*/
+                /*
+                if (key.length() > 0) {
+
+                    if(val.length() > 0)
+                        setConfigTreeItem (section, key, val);
+                    else
+                        setConfigTreeItem (section, key, "");
+                        }
+                */
             }
         }
     }

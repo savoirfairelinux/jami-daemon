@@ -370,6 +370,14 @@
 			<arg type="s" name="codecName" direction="out"/>
 		</method>
 
+		<method name="sendTextMessage" tp:name-for-bindings="sendTextMessage">
+			<tp:docstring>
+				Send a text message to the specified call
+			</tp:docstring>
+			<arg type="s" name="callID" direction="in"/>
+			<arg type="s" name="message" direction="in"/>
+		</method>
+
 		<signal name="currentSelectedCodec" tp:name-for-bindings="currentSelectedCodec">
 			<tp:docstring>
 			  Unused
@@ -404,9 +412,10 @@
 
 		<signal name="incomingMessage" tp:name-for-bindings="incomingMessage">
 			<tp:docstring>
-			  Unused
+				Notify clients that a new text message has been received. 
 			</tp:docstring>
-			<arg type="s" name="accountID" />
+			<arg type="s" name="callID" />
+			<arg type="s" name="from" />
 			<arg type="s" name="message" />
 		</signal>
 

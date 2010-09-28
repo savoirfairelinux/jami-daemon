@@ -7,6 +7,7 @@
       <menuitem action="PickUp"/>
       <menuitem action="HangUp"/>
       <menuitem name="OnHoldMenu" action="OnHold"/>
+      <menuitem action="InstantMessaging"/>
       <menuitem action="Record"/>
       <separator/>
       <menuitem action="AccountAssistant"/>
@@ -50,6 +51,7 @@
     <toolitem name="OnHoldToolbar" action="OnHold"/>
     <toolitem name="OffHoldToolbar" action="OffHold"/>
     <toolitem name="TransferToolbar" action="Transfer"/>
+    <toolitem name="InstantMessagingToolbar" action="InstantMessaging"/>
     <toolitem name="RecordToolbar" action="Record"/>
     <separator/>
     <toolitem name="VoicemailToolbar" action="Voicemail"/>

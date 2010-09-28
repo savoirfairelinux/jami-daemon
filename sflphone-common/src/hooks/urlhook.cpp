@@ -40,32 +40,33 @@ int UrlHook::addAction (std::string field_value, std::string command)
 {
 
     std::string command_bg;
-	std::string temp;
-	std::vector <std::string> args;
-	size_t pos;
-	unsigned int i;
+    std::string temp;
+    std::vector <std::string> args;
+    size_t pos;
+    unsigned int i;
 
-	/* Escape the '&' char to not discard $_GET parameters in the URL - #2659 */ 
-	while ( (pos = field_value.find ("&", 0)) != std::string::npos) {
+    /* Escape the '&' char to not discard $_GET parameters in the URL - #2659 */
+    while ( (pos = field_value.find ("&", 0)) != std::string::npos) {
         temp = field_value.substr (0, pos);
         field_value.erase (0, pos + 1);
-		args.push_back (temp);
-		std::cout << temp << " " << std::endl;	
-	}
+        args.push_back (temp);
+        std::cout << temp << " " << std::endl;
+    }
 
     command_bg = command + " ";
 
-	pos = args.size ();
-	for (i=0; i<pos; i++) {
-		// Escape the "&"
-		command_bg += args[i] + "\\&";
-	}
+    pos = args.size ();
 
-	// Retrieve the last argument
-	command_bg +=  field_value;
+    for (i=0; i<pos; i++) {
+        // Escape the "&"
+        command_bg += args[i] + "\\&";
+    }
+
+    // Retrieve the last argument
+    command_bg +=  field_value;
 
     /* Execute the command in the background to not block the application */
-	command_bg += "&";
+    command_bg += "&";
 
     /* Execute a system call */
     return RUN_COMMAND (command_bg.c_str());

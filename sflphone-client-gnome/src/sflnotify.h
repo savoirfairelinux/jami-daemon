@@ -60,7 +60,14 @@ void free_notification (GnomeNotification *g);
  * A dialog box is attached to the status icon
  * @param c The incoming call
  */
-void notify_incoming_call( callable_obj_t* c);
+void notify_incoming_call (callable_obj_t* c);
+
+/**
+ * Notify an incoming text message
+ * A dialog box is attached to the status icon
+ * @param c The incoming message
+ */
+void notify_incoming_message (const gchar *callID, const gchar *msg);
 
 /**
  * Notify voice mails count
@@ -68,28 +75,28 @@ void notify_incoming_call( callable_obj_t* c);
  * @param count The number of voice mails
  * @param acc The account that received the notification
  */
-void notify_voice_mails( guint count , account_t* acc );
+void notify_voice_mails (guint count , account_t* acc);
 
 /**
  * Notify the current account used to make calls with
  * @param acc The current account
  */
-void notify_current_account( account_t* acc );
+void notify_current_account (account_t* acc);
 
 /**
  * Notify that no accounts have been setup
  */
-void notify_no_accounts( );
+void notify_no_accounts();
 
 /**
  * Notify that there is no registered account
  */
-void notify_no_registered_accounts(  );
+void notify_no_registered_accounts();
 
 /**
  * Stop and close the current notification if an action occured before the timeout
  */
-void stop_notification( void );
+void stop_notification (void);
 
 /**
  * Notify that the RTP session is secured
@@ -104,7 +111,7 @@ void notify_secure_off (callable_obj_t* c);
 /**
  * Notify that the ZRTP negotiation failed
  */
- 
+
 void notify_zrtp_negotiation_failed (callable_obj_t* c);
 
 /**

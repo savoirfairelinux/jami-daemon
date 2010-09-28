@@ -31,21 +31,55 @@
 #ifndef DCBLOCKER_H
 #define DCBLOCKER_H
 
+#include "algorithm.h"
 #include "global.h"
 
-class DcBlocker {
+#include <vector>
 
-public:
+class DcBlocker : public Algorithm
+{
 
-    DcBlocker();
+    public:
 
-    ~DcBlocker();
+        DcBlocker();
 
-    void filter_signal(SFLDataFormat* audio_data, int length);
+        ~DcBlocker();
 
-private:
+        virtual void reset (void);
 
-    SFLDataFormat y, x, xm1, ym1;
+        /**
+         * Unused
+         */
+        virtual void putData (SFLDataFormat *inputData, int nbBytes);
+
+        /**
+         * Unused
+         */
+        virtual int getData (SFLDataFormat *outputData);
+
+        /**
+         * Perform dc blocking given the input data
+         */
+        virtual void process (SFLDataFormat *data, int nbBytes);
+
+        /**
+         * Perform echo cancellation using internal buffers
+         * \param inputData containing mixed echo and voice data
+         * \param outputData containing
+         */
+        virtual int process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes);
+
+        /**
+         * Perform echo cancellation, application must provide its own buffer
+         * \param micData containing mixed echo and voice data
+         * \param spkrData containing far-end voice data to be sent to speakers
+         * \param outputData containing the processed data
+         */
+        virtual void process (SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes);
+
+    private:
+
+        SFLDataFormat _y, _x, _xm1, _ym1;
 };
 
 #endif

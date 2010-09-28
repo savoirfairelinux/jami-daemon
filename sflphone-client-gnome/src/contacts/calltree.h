@@ -67,7 +67,7 @@ typedef enum {
  * @return GtkWidget* A new widget
  */
 void
-calltree_create(calltab_t* tab, gboolean searchbar_type);
+calltree_create (calltab_t* tab, gboolean searchbar_type);
 
 /**
  * Add a call in the calltree
@@ -90,7 +90,7 @@ calltree_update_call (calltab_t* ct, callable_obj_t * c, GtkTreeIter *parent);
 void
 calltree_remove_call (calltab_t* ct, callable_obj_t * c, GtkTreeIter *parent);
 
-void 
+void
 calltree_add_history_entry (callable_obj_t * c);
 
 void
@@ -109,6 +109,12 @@ void
 calltree_display (calltab_t *tab);
 
 void
-row_activated(GtkTreeView *, GtkTreePath *, GtkTreeViewColumn *, void *);
+row_activated (GtkTreeView *, GtkTreePath *, GtkTreeViewColumn *, void *);
+
+/**
+ * Update elapced time based on selected calltree's call
+ */
+void
+calltree_update_clock();
 
 #endif

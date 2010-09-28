@@ -11,7 +11,6 @@ libsiplink_la_SOURCES = \
 		sipcall.cpp \
 		sipvoiplink.cpp
 
-
 noinst_HEADERS = \
 		Pattern.h \
 		SdesNegotiator.h \

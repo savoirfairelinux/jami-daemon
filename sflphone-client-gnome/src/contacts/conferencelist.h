@@ -74,7 +74,7 @@ conferencelist_get_size ();
   * @param n The position of the call you want
   * @return A call or NULL */
 conference_obj_t*
-conferencelist_get_nth (guint n );
+conferencelist_get_nth (guint n);
 
 /** Return the call corresponding to the callID
   * @param n The callID of the call you want

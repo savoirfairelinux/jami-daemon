@@ -36,7 +36,7 @@ namespace sfl
 
 Pattern::Pattern (const std::string& pattern, const std::string& options) :
         _pattern (pattern),
-	_re (NULL),
+        _re (NULL),
         _ovector (NULL),
         _ovectorSize (0),
         _count (0),
@@ -194,8 +194,8 @@ std::string Pattern::group (const std::string& groupName)
         switch (rc) {
 
             case PCRE_ERROR_NOSUBSTRING:
-	        
-		break;
+
+                break;
 
             case PCRE_ERROR_NOMEMORY:
                 throw match_error ("Memory exhausted.");
@@ -207,14 +207,13 @@ std::string Pattern::group (const std::string& groupName)
 
     std::string matchedStr;
 
-    if(stringPtr) {
+    if (stringPtr) {
 
-	matchedStr = stringPtr;
-	pcre_free_substring (stringPtr);
-    }
-    else {
+        matchedStr = stringPtr;
+        pcre_free_substring (stringPtr);
+    } else {
 
-         matchedStr = "";
+        matchedStr = "";
     }
 
     return matchedStr;
@@ -229,7 +228,7 @@ void Pattern::start (const std::string& groupName) const
 
 size_t Pattern::start (unsigned int groupNumber) const
 {
-  if (groupNumber <= (unsigned int)_count) {
+    if (groupNumber <= (unsigned int) _count) {
         return _ovector[ (groupNumber + 1) * 2];
     } else {
         throw std::out_of_range ("Invalid group reference.");
@@ -249,7 +248,7 @@ void Pattern::end (const std::string& groupName) const
 
 size_t Pattern::end (unsigned int groupNumber) const
 {
-  if (groupNumber <= (unsigned int)_count) {
+    if (groupNumber <= (unsigned int) _count) {
         return _ovector[ ( (groupNumber + 1) * 2) + 1 ] - 1;
     } else {
         throw std::out_of_range ("Invalid group reference.");
@@ -280,7 +279,7 @@ bool Pattern::matches (const std::string& subject) throw (match_error)
                  _ovector,
                  _ovectorSize);
 
-  
+
 
     // Matching failed.
     if (rc < 0) {
@@ -304,7 +303,7 @@ bool Pattern::matches (const std::string& subject) throw (match_error)
 
     // Matching succeeded. Keep the number of substrings for
     // subsequent calls to group().
-      _count = rc;
+    _count = rc;
 
     return true;
 }
@@ -320,8 +319,8 @@ std::vector<std::string> Pattern::split (void)
         tokenStart = start();
         substringSplitted.push_back (_subject.substr (tokenEnd + 1,
                                      tokenStart - tokenEnd - 1));
-	// printf("split: %s\n", _subject.substr (tokenEnd + 1,
-	// 					 tokenStart - tokenEnd - 1).c_str());
+        // printf("split: %s\n", _subject.substr (tokenEnd + 1,
+        // 					 tokenStart - tokenEnd - 1).c_str());
         tokenEnd = end();
     }
 

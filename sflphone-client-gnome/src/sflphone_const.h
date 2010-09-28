@@ -32,8 +32,9 @@
 #define __SFLPHONE_CONST_H
 
 #include <libintl.h>
+#include "logger.h"
 #include "dbus.h"
-#include "log4c.h"
+#include <glib/gi18n.h>
 
 /* @file sflphone_const.h
  * @brief Contains the global variables for the client code
@@ -49,9 +50,9 @@
 #define CONTACTS            "contacts"
 
 /** Locale */
-#define _(STRING)             gettext( STRING )
-#define N_(STRING)			  (STRING)
-#define c_(COMMENT,STRING)    gettext(STRING) 
+//#define _(STRING)             gettext( STRING )
+//#define N_(STRING)			  (STRING)
+#define c_(COMMENT,STRING)    gettext(STRING)
 #define n_(SING,PLUR,COUNT)   ngettext(SING,PLUR,COUNT)
 
 #define IP2IP	"IP2IP"
@@ -87,9 +88,12 @@
 #define ACCOUNT_ZRTP_NOT_SUPP_WARNING      "ZRTP.notSuppWarning"
 #define ACCOUNT_ZRTP_HELLO_HASH            "ZRTP.helloHashEnable"
 #define ACCOUNT_DISPLAY_SAS_ONCE           "ZRTP.displaySasOnce"
-#define KEY_EXCHANGE_NONE                  "0"
-#define ZRTP                               "1"
-#define SDES                               "2"
+#define KEY_EXCHANGE_NONE                  "none"
+#define ZRTP                               "zrtp"
+#define SDES                               "sdes"
+
+#define CONFIG_RINGTONE_PATH                "Account.ringtonePath"
+#define CONFIG_RINGTONE_ENABLED             "Account.ringtoneEnabled"
 
 #define TLS_LISTENER_PORT                   "TLS.listenerPort"
 #define TLS_ENABLE                          "TLS.enable"
@@ -103,7 +107,7 @@
 #define TLS_SERVER_NAME                     "TLS.serverName"
 #define TLS_VERIFY_SERVER                   "TLS.verifyServer"
 #define TLS_VERIFY_CLIENT                   "TLS.verifyClient"
-#define TLS_REQUIRE_CLIENT_CERTIFICATE      "TLS.requireClientCertificate"  
+#define TLS_REQUIRE_CLIENT_CERTIFICATE      "TLS.requireClientCertificate"
 #define TLS_NEGOTIATION_TIMEOUT_SEC         "TLS.negotiationTimeoutSec"
 #define TLS_NEGOTIATION_TIMEOUT_MSEC        "TLS.negotiationTimemoutMsec"
 
@@ -114,13 +118,14 @@
 #define PUBLISHED_ADDRESS                   "Account.publishedAddress"
 
 #define REGISTRATION_STATUS                 "Status"
-#define REGISTRATION_STATE_CODE             "Registration.code" 
+#define REGISTRATION_STATE_CODE             "Registration.code"
 #define REGISTRATION_STATE_DESCRIPTION      "Registration.description"
 
-/**
- * Global logger
- */
-log4c_category_t* log4c_sfl_gtk_category;
+#define SHORTCUT_PICKUP                     "pickUp"
+#define SHORTCUT_HANGUP                     "hangUp"
+#define SHORTCUT_POPUP                      "popupWindow"
+#define SHORTCUT_TOGGLEPICKUPHANGUP         "togglePickupHangup"
+#define SHORTCUT_TOGGLEHOLD                 "toggleHold"
 
 /** Error while opening capture device */
 #define ALSA_CAPTURE_DEVICE	      0x0001
@@ -136,19 +141,17 @@ log4c_category_t* log4c_sfl_gtk_category;
 /** Tells if the main window is reduced to the system tray or not */
 #define MINIMIZED	      TRUE
 /** Behaviour of the main window on incoming calls */
-#define __POPUP_WINDOW  ( dbus_popup_mode() )
-/** Show/Hide the dialpad */
-#define SHOW_DIALPAD	( dbus_get_dialpad() )
+#define __POPUP_WINDOW  (eel_gconf_get_integer (POPUP_ON_CALL))
 /** Show/Hide the alsa configuration panel */
 #define SHOW_ALSA_CONF  ( dbus_get_audio_manager() == ALSA )
 /** Show/Hide the volume controls */
-#define SHOW_VOLUME	(dbus_get_volume_controls() && SHOW_ALSA_CONF)
+#define SHOW_VOLUME	(eel_gconf_get_integer (SHOW_VOLUME_CONTROLS) && SHOW_ALSA_CONF)
 
 /** Audio Managers */
 #define ALSA	      0
 #define PULSEAUDIO    1
 
- /** DTMF type */
+/** DTMF type */
 #define OVERRTP "overrtp"
 #define SIPINFO "sipinfo"
 
@@ -172,11 +175,25 @@ log4c_category_t* log4c_sfl_gtk_category;
 #define __TIMEOUT_TIME      18000       // 30 secondes
 
 /**
- * Macros for logging
+ * Gconf
  */
-#define DEBUG(...) log4c_category_log(log4c_sfl_gtk_category, LOG4C_PRIORITY_DEBUG, __VA_ARGS__);
-#define WARN(...) log4c_category_log(log4c_sfl_gtk_category, LOG4C_PRIORITY_WARN, __VA_ARGS__);
-#define ERROR(...) log4c_category_log(log4c_sfl_gtk_category, LOG4C_PRIORITY_ERROR, __VA_ARGS__);
-#define FATAL(...) log4c_category_log(log4c_sfl_gtk_category, LOG4C_PRIORITY_FATAL, __VA_ARGS__);
+#define CONF_PREFIX		"/apps/sflphone-client-gnome"
+#define CONF_MAIN_WINDOW_WIDTH		CONF_PREFIX "/state/window_width"
+#define CONF_MAIN_WINDOW_HEIGHT		CONF_PREFIX "/state/window_height"
+#define CONF_MAIN_WINDOW_POSITION_X		CONF_PREFIX "/state/window_position_x"
+#define CONF_MAIN_WINDOW_POSITION_Y		CONF_PREFIX "/state/window_position_y"
+#define CONF_IM_WINDOW_WIDTH		CONF_PREFIX "/state/im_width"
+#define CONF_IM_WINDOW_HEIGHT		CONF_PREFIX "/state/im_height"
+#define CONF_IM_WINDOW_POSITION_X		CONF_PREFIX "/state/im_position_x"
+#define CONF_IM_WINDOW_POSITION_Y		CONF_PREFIX "/state/im_position_y"
+/** Show/Hide the dialpad */
+#define CONF_SHOW_DIALPAD			CONF_PREFIX "/state/dialpad"
+#define SHOW_VOLUME_CONTROLS		CONF_PREFIX "/state/volume_controls"
+#define SHOW_STATUSICON				CONF_PREFIX "/state/statusicon"
+#define NOTIFY_ALL					CONF_PREFIX "/state/notify_all"
+#define START_HIDDEN				CONF_PREFIX "/state/start_hidden"
+#define POPUP_ON_CALL				CONF_PREFIX "/state/popup"
+#define HISTORY_ENABLED				CONF_PREFIX "/state/history"
+#define INSTANT_MESSAGING_ENABLED               CONF_PREFIX "/state/instant_messaging"
 
 #endif

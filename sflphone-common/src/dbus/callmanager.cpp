@@ -49,8 +49,8 @@ CallManager::CallManager (DBus::Connection& connection)
 void
 CallManager::placeCall (const std::string& accountID,
                         const std::string& callID,
-                        const std::string& to)
-{    // Check if a destination number is available
+                        const std::string& to)     // Check if a destination number is available
+{
 
     if (to == "")   _debug ("No number entered - Call stopped");
     else            Manager::instance().outgoingCall (accountID, callID, to);
@@ -58,12 +58,12 @@ CallManager::placeCall (const std::string& accountID,
 
 void
 CallManager::placeCallFirstAccount (const std::string& callID,
-				    const std::string& to)
+                                    const std::string& to)
 {
 
     if (to == "") {
-        _warn("CallManager: Warning: No number entered, call stopped");
-	return;
+        _warn ("CallManager: Warning: No number entered, call stopped");
+        return;
     }
 
     std::vector< std::string > accountOrder = Manager::instance().loadAccountOrder();
@@ -71,47 +71,50 @@ CallManager::placeCallFirstAccount (const std::string& callID,
 
     Account *account;
 
-    _debug("AccountOrder size: %d", accountOrder.size());
+    _debug ("AccountOrder size: %d", accountOrder.size());
 
-    if(accountOrder.size() > 0) {
+    if (accountOrder.size() > 0) {
 
-      iter = accountOrder.begin();
+        iter = accountOrder.begin();
 
-      while(iter != accountOrder.end()) {
-        account = Manager::instance().getAccount(*iter);
-	if((*iter != IP2IP_PROFILE) && account->isEnabled()) {
-	    Manager::instance().outgoingCall (*iter, callID, to);
-	    return;
-	}
+        while (iter != accountOrder.end()) {
+            account = Manager::instance().getAccount (*iter);
 
-	iter++;
-      }
+            if ( (*iter != IP2IP_PROFILE) && account->isEnabled()) {
+                Manager::instance().outgoingCall (*iter, callID, to);
+                return;
+            }
+
+            iter++;
+        }
+    } else {
+        _error ("AccountOrder is empty");
+        // If accountOrder is empty fallback on accountList (which has no preference order)
+        std::vector< std::string > accountList = Manager::instance().getAccountList();
+        iter = accountList.begin();
+
+
+        _error ("AccountList size: %d", accountList.size());
+
+        if (accountList.size() > 0) {
+            while (iter != accountList.end()) {
+                _error ("iter");
+                account = Manager::instance().getAccount (*iter);
+
+                if ( (*iter != IP2IP_PROFILE) && account->isEnabled()) {
+                    _error ("makecall");
+                    Manager::instance().outgoingCall (*iter, callID, to);
+                    return;
+                }
+
+                iter++;
+            }
+
+        }
     }
-    else {
-      _error("AccountOrder is empty");
-      // If accountOrder is empty fallback on accountList (which has no preference order)
-      std::vector< std::string > accountList = Manager::instance().getAccountList();
-      iter = accountList.begin();
-      
 
-      _error("AccountList size: %d", accountList.size());
-      if(accountList.size() > 0) {
-	while(iter != accountList.end()) {
-	  _error("iter");
-	  account = Manager::instance().getAccount(*iter);
-	  if((*iter != IP2IP_PROFILE) && account->isEnabled()) {
-	    _error("makecall");
-	    Manager::instance().outgoingCall(*iter, callID, to);
-	    return;
-	  }
-	  iter++;
-	}
-	
-      }
-    }
-    
-    _warn("CallManager: Warning: No enabled account found, call stopped");
-    
+    _warn ("CallManager: Warning: No enabled account found, call stopped");
+
 }
 
 void
@@ -261,7 +264,7 @@ CallManager::getConferenceList (void)
 std::vector< std::string >
 CallManager::getParticipantList (const std::string& confID)
 {
-    _debug("CallManager: Get Participant list for conference %s", confID.c_str());
+    _debug ("CallManager: Get Participant list for conference %s", confID.c_str());
     return Manager::instance().getParticipantList (confID);
 }
 
@@ -330,18 +333,23 @@ sfl::AudioZrtpSession * CallManager::getAudioZrtpSession (const std::string& cal
     SIPVoIPLink * link = NULL;
     link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (AccountNULL));
 
-    if (link == NULL) {
-        _debug ("Failed to get sip link");
+    if (!link) {
+        _debug ("CallManager: Failed to get sip link");
         throw CallManagerException();
     }
 
     SIPCall *call = link->getSIPCall (callID);
 
+    if (!call) {
+        _debug ("CallManager: Call id %d is not valid", callID.c_str());
+        throw CallManagerException();
+    }
+
     sfl::AudioRtpFactory * audioRtp = NULL;
     audioRtp = call->getAudioRtp();
 
-    if (audioRtp == NULL) {
-        _debug ("Failed to get AudioRtpFactory");
+    if (!audioRtp) {
+        _debug ("CallManager: Failed to get AudioRtpFactory");
         throw CallManagerException();
     }
 
@@ -349,8 +357,8 @@ sfl::AudioZrtpSession * CallManager::getAudioZrtpSession (const std::string& cal
 
     zSession = audioRtp->getAudioZrtpSession();
 
-    if (zSession == NULL) {
-        _debug ("Failed to get AudioZrtpSession");
+    if (!zSession) {
+        _debug ("CallManager: Failed to get AudioZrtpSession");
         throw CallManagerException();
     }
 
@@ -366,7 +374,8 @@ CallManager::setSASVerified (const std::string& callID)
         zSession = getAudioZrtpSession (callID);
         zSession->SASVerified();
     } catch (...) {
-        throw;
+        return;
+        // throw;
     }
 
 }
@@ -380,7 +389,8 @@ CallManager::resetSASVerified (const std::string& callID)
         zSession = getAudioZrtpSession (callID);
         zSession->resetSASVerified();
     } catch (...) {
-        throw;
+        return;
+        // throw;
     }
 
 }
@@ -395,7 +405,8 @@ CallManager::setConfirmGoClear (const std::string& callID)
         zSession = getAudioZrtpSession (callID);
         zSession->goClearOk();
     } catch (...) {
-        throw;
+        return;
+        // throw;
     }
 
 }
@@ -410,7 +421,8 @@ CallManager::requestGoClear (const std::string& callID)
         zSession = getAudioZrtpSession (callID);
         zSession->requestGoClear();
     } catch (...) {
-        throw;
+        return;
+        /// throw;
     }
 
 }
@@ -426,7 +438,8 @@ CallManager::acceptEnrollment (const std::string& callID, const bool& accepted)
         zSession = getAudioZrtpSession (callID);
         zSession->acceptEnrollment (accepted);
     } catch (...) {
-        throw;
+        return;
+        // throw;
     }
 
 }
@@ -442,7 +455,15 @@ CallManager::setPBXEnrollment (const std::string& callID, const bool& yesNo)
         zSession = getAudioZrtpSession (callID);
         zSession->setPBXEnrollment (yesNo);
     } catch (...) {
-        throw;
+        return;
+        // throw;
     }
 
+}
+
+void
+CallManager::sendTextMessage (const std::string& callID, const std::string& message)
+{
+    if (!Manager::instance().sendTextMessage (callID, message, "Me"))
+        throw CallManagerException();
 }

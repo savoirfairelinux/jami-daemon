@@ -30,6 +30,7 @@
  */
 #include "call.h"
 #include "manager.h"
+#include "audio/mainbuffer.h"
 
 Call::Call (const CallID& id, Call::CallType type)
         : _callMutex()
@@ -184,3 +185,43 @@ Call::isAudioStarted()
     return _audioStarted;
 }
 
+
+bool
+Call::setRecording()
+{
+    _debug ("Call: Set recording");
+
+    bool recordStatus = Recordable::recAudio.isRecording();
+
+    Recordable::recAudio.setRecording();
+
+    // Start recording
+    if (!recordStatus) {
+
+        _debug ("Call: Call not recording yet, set ringbuffers");
+
+        MainBuffer *mbuffer = Manager::instance().getMainBuffer();
+        CallID process_id = Recordable::recorder.getRecorderID();
+
+        mbuffer->bindHalfDuplexOut (process_id, _id);
+        mbuffer->bindHalfDuplexOut (process_id);
+
+        Recordable::recorder.start();
+    }
+    // Stop recording
+    else {
+
+        _debug ("Call: Stop recording");
+
+        MainBuffer *mbuffer = Manager::instance().getMainBuffer();
+        CallID process_id = Recordable::recorder.getRecorderID();
+
+        mbuffer->unBindHalfDuplexOut (process_id, _id);
+        mbuffer->unBindHalfDuplexOut (process_id);
+
+    }
+
+    Manager::instance().getMainBuffer()->stateInfo();
+
+    return recordStatus;
+}

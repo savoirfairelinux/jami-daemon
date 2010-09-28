@@ -1,7 +1,8 @@
 /*
  *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
- * 
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
@@ -10,7 +11,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -36,75 +37,86 @@
 #include "global.h"
 
 
-class SamplerateConverter {
-	public:
-		/** Constructor */
-		SamplerateConverter( void );
-		SamplerateConverter( int freq , int fs );
-		/** Destructor */
-		~SamplerateConverter( void );
+class SamplerateConverter
+{
+    public:
+        /**
+         * Samplerate converter is used for several situation:
+        * streaming conversion (RTP, IAX), audiolayer conversion,
+        * audio files conversion. Parameters are used to compute
+        * internal buffer size. Converter must be reinitialized
+        * every time these parameters change
+        */
+        SamplerateConverter (int freq=44100, int frameSize=20);
 
-		/** 
-		 * Upsample from the samplerate1 to the samplerate2
-		 * @param data  The data buffer
-		 * @param SamplerateConverter1 The lower sample rate
-		 * @param SamplerateConverter2 The higher sample rate
-		 * @param nbSamples	  The number of samples to process
-		 * @return int The number of samples after the operation
-		 */
-		int upsampleData( SFLDataFormat* dataIn , SFLDataFormat* dataOut , int samplerate1 , int samplerate2 , int nbSamples );
+        /** Destructor */
+        ~SamplerateConverter (void);
 
-		/**
-		 * Downsample from the samplerate1 to the samplerate2
-		 * @param data  The data buffer
-		 * @param SamplerateConverter1 The lower sample rate
-		 * @param SamplerateConverter2 The higher sample rate
-		 * @param nbSamples	  The number of samples to process
-		 * @return int The number of samples after the operation
-		 */
-		int downsampleData( SFLDataFormat* dataIn , SFLDataFormat* dataOut , int samplerate1 , int samplerate2 , int nbSamples );
+        /**
+         * Upsample from the samplerate1 to the samplerate2
+         * @param data  The data buffer
+         * @param SamplerateConverter1 The lower sample rate
+         * @param SamplerateConverter2 The higher sample rate
+         * @param nbSamples	  The number of samples to process
+         * @return int The number of samples after the operation
+         */
+        int upsampleData (SFLDataFormat* dataIn , SFLDataFormat* dataOut , int samplerate1 , int samplerate2 , int nbSamples);
 
-		int getFrequence( void ) { return _frequence; }
+        /**
+         * Downsample from the samplerate1 to the samplerate2
+         * @param data  The data buffer
+         * @param SamplerateConverter1 The lower sample rate
+         * @param SamplerateConverter2 The higher sample rate
+         * @param nbSamples	  The number of samples to process
+         * @return int The number of samples after the operation
+         */
+        int downsampleData (SFLDataFormat* dataIn , SFLDataFormat* dataOut , int samplerate1 , int samplerate2 , int nbSamples);
 
-		int getFramesize( void ) { return _framesize; } 
+        int getFrequence (void) {
+            return _frequence;
+        }
 
-		/**
-		 * Convert short table to floats for audio processing
-		 * @param in the input (short) array
-		 * @param out The resulting (float) array
-		 * @param len The number of elements in both tables
-		 */
-		void Short2FloatArray (const short *in, float *out, int len);
+        int getFramesize (void) {
+            return _framesize;
+        }
+
+        /**
+         * Convert short table to floats for audio processing
+         * @param in the input (short) array
+         * @param out The resulting (float) array
+         * @param len The number of elements in both tables
+         */
+        void Short2FloatArray (const short *in, float *out, int len);
 
 
-	private:
-		// Copy Constructor
-		SamplerateConverter(const SamplerateConverter& rh);
+    private:
+        // Copy Constructor
+        SamplerateConverter (const SamplerateConverter& rh);
 
-		// Assignment Operator
-		SamplerateConverter& operator=( const SamplerateConverter& rh);
+        // Assignment Operator
+        SamplerateConverter& operator= (const SamplerateConverter& rh);
 
-		void init( void );
+        void init (void);
 
-		/** Audio layer caracteristics */
-		int _frequence;
-		int _framesize;
+        /** Audio layer caracteristics */
+        int _frequence;
+        int _framesize;
 
-		/** Downsampled/Upsampled float buffers for the mic data processing */
-		float32* _floatBufferDownMic;
-		float32* _floatBufferUpMic;
-		/** libSamplerateConverter converter for outgoing voice */
-		SRC_STATE*    _src_state_mic;
+        /** Downsampled/Upsampled float buffers for the mic data processing */
+        float32* _floatBufferDownMic;
+        float32* _floatBufferUpMic;
+        /** libSamplerateConverter converter for outgoing voice */
+        SRC_STATE*    _src_state_mic;
 
-		/** Downsampled/Upsampled float buffers for the speaker data processing */
-		float32* _floatBufferDownSpkr;
-		float32* _floatBufferUpSpkr;
-		/** libSamplerateConverter converter for incoming voice */
-		SRC_STATE*    _src_state_spkr;
-		/** libSamplerateConverter error */
-		int _src_err;
+        /** Downsampled/Upsampled float buffers for the speaker data processing */
+        float32* _floatBufferDownSpkr;
+        float32* _floatBufferUpSpkr;
+        /** libSamplerateConverter converter for incoming voice */
+        SRC_STATE*    _src_state_spkr;
+        /** libSamplerateConverter error */
+        int _src_err;
 
-		
+
 };
 
 #endif //_SAMPLE_RATE_H

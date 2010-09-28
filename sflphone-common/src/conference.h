@@ -43,44 +43,53 @@ typedef std::string ConfID;
 
 typedef std::set<CallID> ParticipantSet;
 
-class Conference: public Recordable{
+class Conference: public Recordable
+{
 
     public:
 
         enum ConferenceState {Active_Atached, Active_Detached, Hold};
 
-	static int count;
+        static int count;
 
         Conference();
 
         ~Conference();
 
-	std::string getConfID() { return _id; }
+        std::string getConfID() {
+            return _id;
+        }
 
-	int getState();
+        int getState();
 
-	void setState(ConferenceState state);
+        void setState (ConferenceState state);
 
-	std::string getStateStr();
+        std::string getStateStr();
 
-	int getNbParticipants() { return _nbParticipant; }
+        int getNbParticipants() {
+            return _nbParticipant;
+        }
 
-	void add(CallID participant_id);
+        void add (CallID participant_id);
 
-	void remove(CallID participant_id);
+        void remove (CallID participant_id);
 
-	void bindParticipant(CallID participant_id);
+        void bindParticipant (CallID participant_id);
 
-	ParticipantSet getParticipantList();
+        ParticipantSet getParticipantList();
 
-	std::string getRecFileId(){ return getConfID(); }
+        std::string getRecFileId() {
+            return getConfID();
+        }
 
-    private:  
+        virtual bool setRecording();
+
+    private:
 
         /** Unique ID of the conference */
         CallID _id;
 
-	ConferenceState _confState;
+        ConferenceState _confState;
 
         ParticipantSet _participants;
 

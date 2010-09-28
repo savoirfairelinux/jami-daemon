@@ -46,7 +46,8 @@ EventThread::EventThread (VoIPLink *link)
 void EventThread::run (void)
 {
     while (!testCancel()) {
-        _linkthread->getEvent();
+        if (_linkthread)
+            _linkthread->getEvent();
     }
 }
 
@@ -65,7 +66,7 @@ void AudioThread::run (void)
 {
     while (!testCancel()) {
         _alsa->audioCallback();
-        Thread::sleep (3);
+        Thread::sleep (20);
     }
 }
 

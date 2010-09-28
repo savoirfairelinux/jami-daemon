@@ -24,7 +24,7 @@ AC_ARG_WITH(debug,
 if test "x$with_debug" = "xfull" -o "x$with_debug" = "xyes"; then
 	CFLAGS="-g -O0 -DDEBUG -Wall -Wextra"
 else
-	CFLAGS="$CFLAGS"
+	CFLAGS="$CFLAGS -Wall -Wextra"
 fi
 
 AC_PROG_CC
@@ -32,11 +32,8 @@ AC_PROG_INSTALL
 AC_STDC_HEADERS
 AC_PROG_LIBTOOL
 
-dnl Check for log4c
-AC_CHECK_HEADERS(log4c.h, have_log4c=true, have_log4c=false)
-if ! $have_log4c; then
-    AC_MSG_ERROR(Please install the log4c library)
-fi
+dnl GCONF utilities
+AM_GCONF_SOURCE_2
 
 dnl uninstalled gsr ui dir
 AC_DEFINE_UNQUOTED(SFLPHONE_UIDIR_UNINSTALLED, "`pwd`/src/",
@@ -61,6 +58,7 @@ PKG_CHECK_MODULES(DEPS,     \
     libnotify >= 0.4        \
     gtk+-2.0 >= 2.2         \
     glib-2.0 >= 2.2         \
+    webkit-1.0              \
     libebook-1.2 >= 2.22	\
 	libgnomeui-2.0			\
 	gnome-doc-utils
@@ -87,6 +85,7 @@ src/contacts/addressbook/Makefile
 src/widget/Makefile
 src/icons/Makefile
 pixmaps/Makefile
+webkit/Makefile
 sflphone.desktop
 tests/Makefile
 man/Makefile

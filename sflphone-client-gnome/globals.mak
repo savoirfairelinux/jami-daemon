@@ -1,6 +1,9 @@
 # Global variables
 src = $(top_srcdir)
 
+ASTYLERC="$(top_srcdir)/../astylerc"
+indent="/usr/bin/astyle"
+
 # Preprocessor flags
 AM_CPPFLAGS =		$(DEPS_CFLAGS)										\
 					$(LIBSEXY_CFLAGS)									\
@@ -21,3 +24,8 @@ AM_CPPFLAGS =		$(DEPS_CFLAGS)										\
 					-DLOCALEDIR=\""$(localedir)"\"							\
 					-DSFLPHONE_UIDIR=\""$(datadir)/sflphone/ui"\"
 
+indent:
+	@echo "Indenting code:"
+	if [ -f $(ASTYLERC) ] ; then \
+		find $(top_srcdir)/src/ -regex ".*\.\(h\|c\)" -exec $(indent) --options=$(ASTYLERC) {} \; ; \
+	fi

@@ -45,6 +45,8 @@
 #include "dbus/dbusmanager.h"
 #include "dbus/callmanager.h"
 
+#include "im/InstantMessaging.h"
+
 #include "pjsip/sip_endpoint.h"
 #include "pjsip/sip_transport_tls.h"
 #include "pjsip/sip_transport_tls.h"
@@ -64,6 +66,8 @@
 #include <map>
 
 #define CAN_REINVITE        1
+
+using namespace sfl;
 
 static char * invitationStateMap[] = {
     (char*) "PJSIP_INV_STATE_NULL",
@@ -215,7 +219,7 @@ void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_
 
 void on_rx_offer (pjsip_inv_session *inv, const pjmedia_sdp_session *offer);
 
-void on_create_offer(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer);
+void on_create_offer (pjsip_inv_session *inv, pjmedia_sdp_session **p_offer);
 
 /*
  * Registration callback
@@ -245,7 +249,7 @@ pj_bool_t mod_on_rx_response (pjsip_rx_data *rdata UNUSED) ;
     * Send an ACK message inside a transaction. PJSIP send automatically, non-2xx ACK response.
     * ACK for a 2xx response must be send using this method.
     */
-static void sendAck(pjsip_dialog *dlg, pjsip_rx_data *rdata);
+static void sendAck (pjsip_dialog *dlg, pjsip_rx_data *rdata);
 
 /*
  * Transfer callbacks
@@ -266,6 +270,8 @@ SIPVoIPLink::SIPVoIPLink (const AccountID& accountID)
         , _regPort (atoi (DEFAULT_SIP_PORT))
         , _clients (0)
 {
+
+    _debug ("SIPVOIPLINK");
     // to get random number for RANDOM_PORT
     srand (time (NULL));
 
@@ -277,9 +283,10 @@ SIPVoIPLink::SIPVoIPLink (const AccountID& accountID)
 
 SIPVoIPLink::~SIPVoIPLink()
 {
-    _debug("UserAgent: SIPVoIPLink destructor called");
+    _debug ("UserAgent: SIPVoIPLink destructor called");
 
     terminate();
+
 }
 
 SIPVoIPLink* SIPVoIPLink::instance (const AccountID& id)
@@ -299,7 +306,7 @@ void SIPVoIPLink::decrementClients (void)
 
     if (_clients == 0) {
 
-        _debug("UserAgent: No SIP account anymore, terminate SIPVoIPLink");
+        _debug ("UserAgent: No SIP account anymore, terminate SIPVoIPLink");
         // terminate();
         delete SIPVoIPLink::_instance;
     }
@@ -332,17 +339,19 @@ SIPVoIPLink::terminate()
 
     if (_evThread) {
         _debug ("UserAgent: Deleting sip eventThread");
-        delete _evThread; _evThread = NULL;
+        delete _evThread;
+        _evThread = NULL;
     }
 
 
     /* Clean shutdown of pjsip library */
     if (initDone()) {
-        _debug ("UserAgent: Shuting down PJSIP");
+        _debug ("UserAgent: Shutting down PJSIP");
         pjsip_shutdown();
     }
 
     initDone (false);
+
 }
 
 void
@@ -370,7 +379,7 @@ SIPVoIPLink::terminateSIPCall()
 void
 SIPVoIPLink::terminateOneCall (const CallID& id)
 {
-	_debug("UserAgent: Terminate call %s", id.c_str());
+    _debug ("UserAgent: Terminate call %s", id.c_str());
 
     SIPCall *call = getSIPCall (id);
 
@@ -405,7 +414,8 @@ void get_remote_sdp_from_offer (pjsip_rx_data *rdata, pjmedia_sdp_session** r_sd
 }
 
 
-std::string SIPVoIPLink::getInterfaceAddrFromName(std::string ifaceName) {
+std::string SIPVoIPLink::getInterfaceAddrFromName (std::string ifaceName)
+{
 
     struct ifreq ifr;
     int fd;
@@ -414,23 +424,23 @@ std::string SIPVoIPLink::getInterfaceAddrFromName(std::string ifaceName) {
     struct sockaddr_in *saddr_in;
     struct in_addr *addr_in;
 
-    if((fd = socket (AF_INET, SOCK_DGRAM,0)) < 0)
-        _error("UserAgent: Error: could not open socket");
+    if ( (fd = socket (AF_INET, SOCK_DGRAM,0)) < 0)
+        _error ("UserAgent: Error: could not open socket");
 
     memset (&ifr, 0, sizeof (struct ifreq));
 
     strcpy (ifr.ifr_name, ifaceName.c_str());
     ifr.ifr_addr.sa_family = AF_INET;
 
-    if((err = ioctl(fd, SIOCGIFADDR, &ifr)) < 0)
-        _debug("UserAgent: Use default interface (0.0.0.0)");
-    
-    saddr_in = (struct sockaddr_in *)&ifr.ifr_addr;
-    addr_in = &(saddr_in->sin_addr);
+    if ( (err = ioctl (fd, SIOCGIFADDR, &ifr)) < 0)
+        _debug ("UserAgent: Use default interface (0.0.0.0)");
 
-    std::string addr(pj_inet_ntoa(*((pj_in_addr*)addr_in)));
+    saddr_in = (struct sockaddr_in *) &ifr.ifr_addr;
+    addr_in = & (saddr_in->sin_addr);
 
-    close(fd);
+    std::string addr (pj_inet_ntoa (* ( (pj_in_addr*) addr_in)));
+
+    close (fd);
 
     return addr;
 }
@@ -438,17 +448,21 @@ std::string SIPVoIPLink::getInterfaceAddrFromName(std::string ifaceName) {
 
 std::string SIPVoIPLink::get_useragent_name (const AccountID& id)
 {
-	/*
+    /*
     useragent << PROGNAME << "/" << SFLPHONED_VERSION;
     return useragent.str();
-	*/
-    std::ostringstream  useragent;
-	
-	useragent << Manager::instance ().getConfigString (id, USERAGENT);
-	if (useragent.str() == "sflphone" || useragent.str() == "")
-		useragent << "/" << SFLPHONED_VERSION;
+    */
 
-	return useragent.str ();
+    SIPAccount *account = (SIPAccount *) Manager::instance().getAccount (id);
+
+    std::ostringstream  useragent;
+
+    useragent << account->getUseragent();
+
+    if (useragent.str() == "sflphone" || useragent.str() == "")
+        useragent << "/" << SFLPHONED_VERSION;
+
+    return useragent.str ();
 }
 
 void
@@ -530,17 +544,17 @@ int SIPVoIPLink::sendRegister (AccountID id)
     }
 
 
-    // Create SIP transport or get existent SIP transport from internal map 
+    // Create SIP transport or get existent SIP transport from internal map
     // according to account settings, if the transport could not be created but
-    // one is already set in account, use this one (most likely this is the 
-    // transport we tried to create) 
-    acquireTransport(account->getAccountID());
+    // one is already set in account, use this one (most likely this is the
+    // transport we tried to create)
+    acquireTransport (account->getAccountID());
 
     if (account->getAccountTransport()) {
-       _debug("Acquire transport in account registration: %s %s (refcnt=%d)",
-	      account->getAccountTransport()->obj_name,
-	      account->getAccountTransport()->info,
-	      (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
+        _debug ("Acquire transport in account registration: %s %s (refcnt=%d)",
+                account->getAccountTransport()->obj_name,
+                account->getAccountTransport()->info,
+                (int) pj_atomic_get (account->getAccountTransport()->ref_cnt));
     }
 
     _mutexSIP.enterMutex();
@@ -583,7 +597,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
 
     std::string contactUri = account->getContactHeader (address, portStr);
 
-    _debug ("sendRegister: fromUri: %s serverUri: %s contactUri: %s",
+    _debug ("UserAgent: sendRegister: fromUri: %s serverUri: %s contactUri: %s",
             fromUri.c_str(),
             srvUri.c_str(),
             contactUri.c_str());
@@ -600,31 +614,24 @@ int SIPVoIPLink::sendRegister (AccountID id)
     // Initializes registration
 
     // Set Route for registration passing throught one or several proxies
+    // status = pjsip_regc_init (regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, expire_value);
+
     status = pjsip_regc_init (regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, expire_value);
 
-    /*
-    if(!(account->getDomainName().empty())) {
+    if (! (account->getServiceRoute().empty())) {
 
-        _error("Set route with %s", account->getHostname().c_str());
+        _error ("UserAgent: Set Service-Route with %s", account->getServiceRoute().c_str());
 
-        pjsip_route_hdr *route_set = pjsip_route_hdr_create(_pool);
-        pjsip_route_hdr *routing = pjsip_route_hdr_create(_pool);
-        pjsip_sip_uri *url = pjsip_sip_uri_create(_pool, 0);
-        routing->name_addr.uri = (pjsip_uri*)url;
-        pj_strdup2(_pool, &url->host, account->getHostname().c_str());
+        pjsip_route_hdr *route_set = pjsip_route_hdr_create (_pool);
+        pjsip_route_hdr *routing = pjsip_route_hdr_create (_pool);
+        pjsip_sip_uri *url = pjsip_sip_uri_create (_pool, 0);
+        routing->name_addr.uri = (pjsip_uri*) url;
+        pj_strdup2 (_pool, &url->host, account->getServiceRoute().c_str());
 
-        pj_list_push_back(&route_set, pjsip_hdr_clone(_pool, routing));
+        pj_list_push_back (&route_set, pjsip_hdr_clone (_pool, routing));
 
-	status = pjsip_regc_init (regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, expire_value);
-
-        pjsip_regc_set_route_set(regc, route_set);
+        pjsip_regc_set_route_set (regc, route_set);
     }
-    else {
-
-        status = pjsip_regc_init (regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, expire_value);
-    }
-    */
-
 
     if (status != PJ_SUCCESS) {
         _debug ("UserAgent: Unable to initialize account %d in sendRegister", status);
@@ -635,7 +642,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
     pjsip_cred_info *cred = account->getCredInfo();
 
     int credential_count = account->getCredentialCount();
-    _debug ("setting %d credentials in sendRegister", credential_count);
+    _debug ("UserAgent: setting %d credentials in sendRegister", credential_count);
     pjsip_regc_set_credentials (regc, credential_count, cred);
 
     // Add User-Agent Header
@@ -649,7 +656,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
     // pj_list_push_back (&hdr_list, (pjsip_hdr*) routing);
 
     pjsip_regc_add_headers (regc, &hdr_list);
-    
+
     status = pjsip_regc_register (regc, PJ_TRUE, &tdata);
 
     if (status != PJ_SUCCESS) {
@@ -660,20 +667,20 @@ int SIPVoIPLink::sendRegister (AccountID id)
 
     pjsip_tpselector *tp;
 
-    init_transport_selector (account->getAccountTransport (), &tp); 
-    
+    init_transport_selector (account->getAccountTransport (), &tp);
+
     // pjsip_regc_set_transport increments transport ref count by one
     status = pjsip_regc_set_transport (regc, tp);
 
-    if(account->getAccountTransport()) {
-        // decrease transport's ref count, counter icrementation is 
-        // managed when acquiring transport 
-        pjsip_transport_dec_ref(account->getAccountTransport ());
+    if (account->getAccountTransport()) {
+        // decrease transport's ref count, counter icrementation is
+        // managed when acquiring transport
+        pjsip_transport_dec_ref (account->getAccountTransport ());
 
-        _debug("After setting the transport in account registration using transport: %s %s (refcnt=%d)",
-	       account->getAccountTransport()->obj_name,
-	       account->getAccountTransport()->info,
-	       (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
+        _debug ("UserAgent: After setting the transport in account registration using transport: %s %s (refcnt=%d)",
+                account->getAccountTransport()->obj_name,
+                account->getAccountTransport()->info,
+                (int) pj_atomic_get (account->getAccountTransport()->ref_cnt));
     }
 
     if (status != PJ_SUCCESS) {
@@ -683,14 +690,14 @@ int SIPVoIPLink::sendRegister (AccountID id)
     }
 
     // Send registration request
-    // pjsip_regc_send increment the transport ref count by one, 
+    // pjsip_regc_send increment the transport ref count by one,
     status = pjsip_regc_send (regc, tdata);
 
-    if(account->getAccountTransport()) {
-        // Decrease transport's ref count, since coresponding reference counter decrementation 
+    if (account->getAccountTransport()) {
+        // Decrease transport's ref count, since coresponding reference counter decrementation
         // is performed in pjsip_regc_destroy. This function is never called in SFLphone as the
         // regc data structure is permanently associated to the account at first registration.
-        pjsip_transport_dec_ref(account->getAccountTransport ());
+        pjsip_transport_dec_ref (account->getAccountTransport ());
     }
 
     if (status != PJ_SUCCESS) {
@@ -703,12 +710,12 @@ int SIPVoIPLink::sendRegister (AccountID id)
 
     account->setRegistrationInfo (regc);
 
-    if(account->getAccountTransport()) {
+    if (account->getAccountTransport()) {
 
-        _debug("Sent account registration using transport: %s %s (refcnt=%d)",
-	       account->getAccountTransport()->obj_name,
-	       account->getAccountTransport()->info,
-	       (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
+        _debug ("Sent account registration using transport: %s %s (refcnt=%d)",
+                account->getAccountTransport()->obj_name,
+                account->getAccountTransport()->info,
+                (int) pj_atomic_get (account->getAccountTransport()->ref_cnt));
     }
 
     return true;
@@ -727,12 +734,12 @@ SIPVoIPLink::sendUnregister (AccountID id)
     regc = account->getRegistrationInfo();
 
     // If an transport is attached to this account, detach it and decrease reference counter
-    if(account->getAccountTransport()) {
+    if (account->getAccountTransport()) {
 
-        _debug("Sent account unregistration using transport: %s %s (refcnt=%d)",
-	       account->getAccountTransport()->obj_name,
-	       account->getAccountTransport()->info,
-	       (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
+        _debug ("Sent account unregistration using transport: %s %s (refcnt=%d)",
+                account->getAccountTransport()->obj_name,
+                account->getAccountTransport()->info,
+                (int) pj_atomic_get (account->getAccountTransport()->ref_cnt));
 
     }
 
@@ -749,7 +756,7 @@ SIPVoIPLink::sendUnregister (AccountID id)
             _debug ("UserAgent: Unable to unregister regc.");
             return false;
         }
- 
+
         status = pjsip_regc_send (regc, tdata);
 
         if (status != PJ_SUCCESS) {
@@ -774,7 +781,7 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
     pj_status_t status;
     std::string localAddr, addrSdp;
 
-    _debug("UserAgent: New outgoing call %s to %s", id.c_str(), toUrl.c_str());
+    _debug ("UserAgent: New outgoing call %s to %s", id.c_str(), toUrl.c_str());
 
     SIPCall* call = new SIPCall (id, Call::Outgoing, _pool);
 
@@ -794,9 +801,9 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
 
         call->setPeerNumber (toUri);
 
-        localAddr = getInterfaceAddrFromName(account->getLocalInterface ());
+        localAddr = getInterfaceAddrFromName (account->getLocalInterface ());
 
-	_debug("UserAgent: Local address for call: %s", localAddr.c_str());
+        _debug ("UserAgent: Local address for call: %s", localAddr.c_str());
 
         if (localAddr == "0.0.0.0")
             loadSIPLocalIP (&localAddr);
@@ -804,7 +811,7 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
         setCallAudioLocal (call, localAddr);
 
         // May use the published address as well
-        account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = getInterfaceAddrFromName(account->getLocalInterface ());
+        account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = getInterfaceAddrFromName (account->getLocalInterface ());
 
         if (addrSdp == "0.0.0.0")
             loadSIPLocalIP (&addrSdp);
@@ -817,7 +824,8 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
             _error ("UserAgent: Error: Failed to create rtp thread from newOutGoingCall");
         }
 
-        call->initRecFileName();
+        // init file name according to peer phone number
+        call->initRecFileName (toUrl);
 
         _debug ("UserAgent: Try to make a call to: %s with call ID: %s", toUrl.data(), id.data());
 
@@ -957,7 +965,7 @@ SIPVoIPLink::peerHungup (const CallID& id)
     pjsip_tx_data *tdata = NULL;
     SIPCall* call;
 
-    _info("UserAgent: Peer hungup");
+    _info ("UserAgent: Peer hungup");
 
     call = getSIPCall (id);
 
@@ -1000,12 +1008,12 @@ SIPVoIPLink::peerHungup (const CallID& id)
 bool
 SIPVoIPLink::cancel (const CallID& id)
 {
-	_info ("UserAgent: Cancel call %s", id.c_str());
+    _info ("UserAgent: Cancel call %s", id.c_str());
 
     SIPCall* call = getSIPCall (id);
 
     if (!call) {
-        _warn("UserAgent: Error: Call doesn't exist");
+        _warn ("UserAgent: Error: Call doesn't exist");
         return false;
     }
 
@@ -1048,6 +1056,44 @@ SIPVoIPLink::onhold (const CallID& id)
     return true;
 }
 
+bool
+SIPVoIPLink::sendTextMessage (sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from)
+{
+    _debug ("SipVoipLink: Send text message to %s, from %s", callID.c_str(), from.c_str());
+
+    SIPCall *call = getSIPCall (callID);
+    pj_status_t status = !PJ_SUCCESS;
+
+
+    if (call) {
+        std::string formatedFrom = from;
+
+        // add double quotes for xml formating
+        formatedFrom.insert (0,"\"");
+        formatedFrom.append ("\"");
+
+        /* Send IM message */
+        sfl::InstantMessaging::UriList list;
+
+        sfl::InstantMessaging::UriEntry entry;
+        entry[sfl::IM_XML_URI] = std::string (formatedFrom);
+
+        list.push_front (entry);
+
+        std::string formatedMessage = module->appendUriList (message, list);
+
+        status = module->send_sip_message (call->getInvSession (), (CallID&) callID, formatedMessage);
+
+    } else {
+        /* Notify the client of an error */
+        /*Manager::instance ().incomingMessage (	"",
+        										"sflphoned",
+        										"Unable to send a message outside a call.");*/
+    }
+
+    return status;
+}
+
 int SIPVoIPLink::inv_session_reinvite (SIPCall *call, std::string direction)
 {
 
@@ -1065,7 +1111,7 @@ int SIPVoIPLink::inv_session_reinvite (SIPCall *call, std::string direction)
 
     // Reinvite only if connected
     // Build the local SDP offer
-	// TODO Restore Re-Invite
+    // TODO Restore Re-Invite
     // status = call->getLocalSDP()->create_initial_offer();
 
     // if (status != PJ_SUCCESS)
@@ -1146,7 +1192,7 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
 
     if (!account) {
-        _error("UserAgent: Error: Transfer account is null. Returning.");
+        _error ("UserAgent: Error: Transfer account is null. Returning.");
         return false;
     }
 
@@ -1195,9 +1241,9 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
     }
 
     // Put SIP call id in map in order to retrieve call during transfer callback
-    std::string callidtransfer(call->getInvSession()->dlg->call_id->id.ptr, call->getInvSession()->dlg->call_id->id.slen);
-    _debug("%s", callidtransfer.c_str());
-    transferCallID.insert(std::pair<std::string, CallID>(callidtransfer, call->getCallId()));
+    std::string callidtransfer (call->getInvSession()->dlg->call_id->id.ptr, call->getInvSession()->dlg->call_id->id.slen);
+    _debug ("%s", callidtransfer.c_str());
+    transferCallID.insert (std::pair<std::string, CallID> (callidtransfer, call->getCallId()));
 
 
     /* Send. */
@@ -1214,8 +1260,8 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
 bool SIPVoIPLink::transferStep2 (SIPCall* call)
 {
 
-	// TODO is this the best way to proceed?
-	Manager::instance().peerHungupCall(call->getCallId());
+    // TODO is this the best way to proceed?
+    Manager::instance().peerHungupCall (call->getCallId());
 
 
 
@@ -1229,7 +1275,7 @@ SIPVoIPLink::refuse (const CallID& id)
     pj_status_t status;
     pjsip_tx_data *tdata;
 
-    _debug("UserAgent: Refuse call %s", id.c_str());
+    _debug ("UserAgent: Refuse call %s", id.c_str());
 
     call = getSIPCall (id);
 
@@ -1257,9 +1303,11 @@ SIPVoIPLink::refuse (const CallID& id)
 
     call->getInvSession()->mod_data[getModId() ] = NULL;
 
+    removeCall (id);
+
     terminateOneCall (id);
 
-    _debug("UserAgent: Refuse call completed");
+    _debug ("UserAgent: Refuse call completed");
 
     return true;
 }
@@ -1294,23 +1342,23 @@ SIPVoIPLink::carryingDTMFdigits (const CallID& id, char code)
         return false;
     }
 
-    AccountID accountID = Manager::instance().getAccountFromCall(id);
-    SIPAccount *account = static_cast<SIPAccount *>(Manager::instance().getAccount(accountID));
+    AccountID accountID = Manager::instance().getAccountFromCall (id);
+    SIPAccount *account = static_cast<SIPAccount *> (Manager::instance().getAccount (accountID));
 
-    if(!account) {
-    	_error ("UserAgent: Error: Account not found while sending DTMF");
-    	return false;
+    if (!account) {
+        _error ("UserAgent: Error: Account not found while sending DTMF");
+        return false;
     }
 
     DtmfType type = account->getDtmfType();
 
-    if(type == OVERRTP)
-    	dtmfOverRtp(call, code);
-    else if(type == SIPINFO)
-    	dtmfSipInfo(call, code);
+    if (type == OVERRTP)
+        dtmfOverRtp (call, code);
+    else if (type == SIPINFO)
+        dtmfSipInfo (call, code);
     else {
-    	_error("UserAgent: Error: Dtmf type does not exist");
-    	return false;
+        _error ("UserAgent: Error: Dtmf type does not exist");
+        return false;
     }
 
     return true;
@@ -1318,69 +1366,69 @@ SIPVoIPLink::carryingDTMFdigits (const CallID& id, char code)
 
 
 bool
-SIPVoIPLink::dtmfSipInfo(SIPCall *call, char code)
+SIPVoIPLink::dtmfSipInfo (SIPCall *call, char code)
 {
 
-	int duration;
-	const int body_len = 1000;
-	char *dtmf_body;
-	pj_status_t status;
-	pjsip_tx_data *tdata;
-	pj_str_t methodName, content;
-	pjsip_method method;
-	pjsip_media_type ctype;
+    int duration;
+    const int body_len = 1000;
+    char *dtmf_body;
+    pj_status_t status;
+    pjsip_tx_data *tdata;
+    pj_str_t methodName, content;
+    pjsip_method method;
+    pjsip_media_type ctype;
 
 
-	duration = Manager::instance().getConfigInt (SIGNALISATION, PULSE_LENGTH);
+    duration = Manager::instance().voipPreferences.getPulseLength();
 
-	dtmf_body = new char[body_len];
+    dtmf_body = new char[body_len];
 
-	snprintf (dtmf_body, body_len - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
+    snprintf (dtmf_body, body_len - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
 
-	pj_strdup2 (_pool, &methodName, "INFO");
-	pjsip_method_init_np (&method, &methodName);
+    pj_strdup2 (_pool, &methodName, "INFO");
+    pjsip_method_init_np (&method, &methodName);
 
-	/* Create request message. */
-	status = pjsip_dlg_create_request (call->getInvSession()->dlg, &method, -1, &tdata);
+    /* Create request message. */
+    status = pjsip_dlg_create_request (call->getInvSession()->dlg, &method, -1, &tdata);
 
-	if (status != PJ_SUCCESS) {
-		_debug ("UserAgent: Unable to create INFO request -- %d", status);
-		return false;
-	}
+    if (status != PJ_SUCCESS) {
+        _debug ("UserAgent: Unable to create INFO request -- %d", status);
+        return false;
+    }
 
-	/* Get MIME type */
-	pj_strdup2 (_pool, &ctype.type, "application");
+    /* Get MIME type */
+    pj_strdup2 (_pool, &ctype.type, "application");
 
-	pj_strdup2 (_pool, &ctype.subtype, "dtmf-relay");
+    pj_strdup2 (_pool, &ctype.subtype, "dtmf-relay");
 
-	/* Create "application/dtmf-relay" message body. */
-	pj_strdup2 (_pool, &content, dtmf_body);
+    /* Create "application/dtmf-relay" message body. */
+    pj_strdup2 (_pool, &content, dtmf_body);
 
-	tdata->msg->body = pjsip_msg_body_create (tdata->pool, &ctype.type, &ctype.subtype, &content);
+    tdata->msg->body = pjsip_msg_body_create (tdata->pool, &ctype.type, &ctype.subtype, &content);
 
-	if (tdata->msg->body == NULL) {
-		_debug ("UserAgent: Unable to create msg body!");
-		pjsip_tx_data_dec_ref (tdata);
-		return false;
-	}
+    if (tdata->msg->body == NULL) {
+        _debug ("UserAgent: Unable to create msg body!");
+        pjsip_tx_data_dec_ref (tdata);
+        return false;
+    }
 
-	/* Send the request. */
-	status = pjsip_dlg_send_request (call->getInvSession()->dlg, tdata, getModId(), NULL);
+    /* Send the request. */
+    status = pjsip_dlg_send_request (call->getInvSession()->dlg, tdata, getModId(), NULL);
 
-	if (status != PJ_SUCCESS) {
-		_debug ("UserAgent: Unable to send MESSAGE request -- %d", status);
-		return false;
-	}
+    if (status != PJ_SUCCESS) {
+        _debug ("UserAgent: Unable to send MESSAGE request -- %d", status);
+        return false;
+    }
 
-	return true;
+    return true;
 }
 
 bool
-SIPVoIPLink::dtmfOverRtp(SIPCall* call, char code)
+SIPVoIPLink::dtmfOverRtp (SIPCall* call, char code)
 {
-	call->getAudioRtp()->sendDtmfDigit(atoi(&code));
+    call->getAudioRtp()->sendDtmfDigit (atoi (&code));
 
-	return true;
+    return true;
 }
 
 
@@ -1407,7 +1455,7 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
 
     AccountID id;
 
-    _debug("UserAgent: Start sip call");
+    _debug ("UserAgent: Start sip call");
 
     if (call == NULL)
         return false;
@@ -1471,6 +1519,22 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
     // Create the invite session for this call
     status = pjsip_inv_create_uac (dialog, call->getLocalSDP()->get_local_sdp_session(), 0, &inv);
 
+
+    if (! (account->getServiceRoute().empty())) {
+
+        _error ("UserAgent: Set Service-Route with %s", account->getServiceRoute().c_str());
+
+        pjsip_route_hdr *route_set = pjsip_route_hdr_create (_pool);
+        pjsip_route_hdr *routing = pjsip_route_hdr_create (_pool);
+        pjsip_sip_uri *url = pjsip_sip_uri_create (_pool, 0);
+        routing->name_addr.uri = (pjsip_uri*) url;
+        pj_strdup2 (_pool, &url->host, account->getServiceRoute().c_str());
+
+        pj_list_push_back (&route_set, pjsip_hdr_clone (_pool, routing));
+
+        pjsip_dlg_set_route_set (dialog, route_set);
+    }
+
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
 
     // Set auth information
@@ -1496,7 +1560,7 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
 
     // decrement transport's ref count
     // pjsip_transport_dec_ref(account->getAccountTransport());
-    
+
     status = pjsip_inv_send_msg (inv, tdata);
 
     if (status != PJ_SUCCESS) {
@@ -1504,12 +1568,12 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
         return false;
     }
 
-    if(account->getAccountTransport()) {
+    if (account->getAccountTransport()) {
 
-    _debug("UserAgent: Sent invite request using transport: %s %s (refcnt=%d)",
-	               account->getAccountTransport()->obj_name,
-		       account->getAccountTransport()->info,
-	               (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
+        _debug ("UserAgent: Sent invite request using transport: %s %s (refcnt=%d)",
+                account->getAccountTransport()->obj_name,
+                account->getAccountTransport()->info,
+                (int) pj_atomic_get (account->getAccountTransport()->ref_cnt));
     }
 
     return true;
@@ -1533,10 +1597,10 @@ SIPVoIPLink::SIPCallServerFailure (SIPCall *call)
 void
 SIPVoIPLink::SIPCallClosed (SIPCall *call)
 {
-	_info("UserAgent: Closing call");
+    _info ("UserAgent: Closing call");
 
     if (!call) {
-		_warn("UserAgent: Error: CAll pointer is NULL\n");
+        _warn ("UserAgent: Error: CAll pointer is NULL\n");
         return;
     }
 
@@ -1575,7 +1639,7 @@ SIPVoIPLink::SIPCallReleased (SIPCall *call)
 
 
 void
-SIPVoIPLink::SIPCallAnswered (SIPCall *call, pjsip_rx_data *rdata)
+SIPVoIPLink::SIPCallAnswered (SIPCall *call, pjsip_rx_data *rdata UNUSED)
 {
 
     _info ("UserAgent: SIP call answered");
@@ -1617,7 +1681,7 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
     pjsip_tx_data *tdata;
     std::string localAddress, addrSdp;
 
-    _debug("UserAgent: New IP2IP call %s to %s", id.c_str(), to.c_str());
+    _debug ("UserAgent: New IP2IP call %s to %s", id.c_str(), to.c_str());
 
     /* Create the call */
     call = new SIPCall (id, Call::Outgoing, _pool);
@@ -1625,18 +1689,20 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
     if (call) {
 
         call->setCallConfiguration (Call::IPtoIP);
-        call->initRecFileName();
+
+        // Init recfile name using to uri
+        call->initRecFileName (to);
 
         SIPAccount * account = NULL;
         account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (IP2IP_PROFILE));
 
         if (account == NULL) {
             _error ("UserAgent: Error: Account %s is null. Returning", IP2IP_PROFILE);
-	    return !PJ_SUCCESS;
+            return !PJ_SUCCESS;
         }
 
         // Set the local address
-        localAddress = getInterfaceAddrFromName(account->getLocalInterface ());
+        localAddress = getInterfaceAddrFromName (account->getLocalInterface ());
         // Set SDP parameters - Set to local
         addrSdp = localAddress;
 
@@ -1645,14 +1711,14 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
             loadSIPLocalIP (&localAddress);
         }
 
-	_debug ("UserAgent: Local Address for IP2IP call: %s", localAddress.c_str());
+        _debug ("UserAgent: Local Address for IP2IP call: %s", localAddress.c_str());
 
         // Local address to appear in SDP
         if (addrSdp == "0.0.0.0") {
-        	addrSdp = localAddress;
+            addrSdp = localAddress;
         }
 
-	_debug ("UserAgent: Media Address for IP2IP call: %s", localAddress.c_str());
+        _debug ("UserAgent: Media Address for IP2IP call: %s", localAddress.c_str());
 
         // Set local address for RTP media
         setCallAudioLocal (call, localAddress);
@@ -1666,37 +1732,36 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         call->getLocalSDP()->set_ip_address (addrSdp);
         call->getLocalSDP()->create_initial_offer (account->getActiveCodecs ());
 
-
         // Audio Rtp Session must be initialized before creating initial offer in SDP session
         // since SDES require crypto attribute.
         try {
-        	call->getAudioRtp()->initAudioRtpConfig (call);
-        	call->getAudioRtp()->initAudioRtpSession (call);
+            call->getAudioRtp()->initAudioRtpConfig (call);
+            call->getAudioRtp()->initAudioRtpSession (call);
         } catch (...) {
-        	_debug ("UserAgent: Unable to create RTP Session in new IP2IP call (%s:%d)", __FILE__, __LINE__);
+            _debug ("UserAgent: Unable to create RTP Session in new IP2IP call (%s:%d)", __FILE__, __LINE__);
         }
 
         // Init TLS transport if enabled
-        if(account->isTlsEnabled()) {
+        if (account->isTlsEnabled()) {
 
-        	_debug("UserAgent: TLS enabled for IP2IP calls");
-        	int at = toUri.find("@");
-        	int trns = toUri.find(";transport");
-        	std::string remoteAddr = toUri.substr(at+1, trns-at-1);
+            _debug ("UserAgent: TLS enabled for IP2IP calls");
+            int at = toUri.find ("@");
+            int trns = toUri.find (";transport");
+            std::string remoteAddr = toUri.substr (at+1, trns-at-1);
 
-        	if(toUri.find("sips:") != 1) {
-        		_debug("UserAgent: Error \"sips\" scheme required for TLS call");
-        		return false;
-        	}
+            if (toUri.find ("sips:") != 1) {
+                _debug ("UserAgent: Error \"sips\" scheme required for TLS call");
+                return false;
+            }
 
-        	if(createTlsTransport(account->getAccountID(), remoteAddr) != PJ_SUCCESS)
-        		return false;
+            if (createTlsTransport (account->getAccountID(), remoteAddr) != PJ_SUCCESS)
+                return false;
         }
 
         // If no transport already set, use the default one created at pjsip initialization
         if (account->getAccountTransport() == NULL) {
-        	_debug ("UserAgent: No transport for this account, using the default one");
-        	account->setAccountTransport (_localUDPTransport);
+            _debug ("UserAgent: No transport for this account, using the default one");
+            account->setAccountTransport (_localUDPTransport);
         }
 
         _debug ("UserAgent: Local port %i for IP2IP call", account->getLocalPort());
@@ -1710,79 +1775,96 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         int port = findLocalPortFromUri (toUri, account->getAccountTransport());
 
         std::stringstream ss;
-	std::string portStr;
-	ss << port;
-	ss >> portStr;
-	
-	std::string contactUri = account->getContactHeader (address, portStr);
+        std::string portStr;
+        ss << port;
+        ss >> portStr;
 
-	_debug ("UserAgent:  FROM uri: %s, TO uri: %s, CONTACT uri: %s",
-		fromUri.c_str(), toUri.c_str(), contactUri.c_str());
+        std::string contactUri = account->getContactHeader (address, portStr);
 
-	pj_str_t pjFrom;
-	pj_cstr (&pjFrom, fromUri.c_str());
+        _debug ("UserAgent:  FROM uri: %s, TO uri: %s, CONTACT uri: %s",
+                fromUri.c_str(), toUri.c_str(), contactUri.c_str());
 
-	pj_str_t pjTo;
-	pj_cstr (&pjTo, toUri.c_str());
+        pj_str_t pjFrom;
+        pj_cstr (&pjFrom, fromUri.c_str());
 
-	pj_str_t pjContact;
-	pj_cstr (&pjContact, contactUri.c_str());
+        pj_str_t pjTo;
+        pj_cstr (&pjTo, toUri.c_str());
 
-	// Create the dialog (UAC)
-	// (Parameters are "strduped" inside this function)
-	status = pjsip_dlg_create_uac (pjsip_ua_instance(), &pjFrom, &pjContact, &pjTo, NULL, &dialog);
-	PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
-	
-	// Create the invite session for this call
-	status = pjsip_inv_create_uac (dialog, call->getLocalSDP()->get_local_sdp_session(), 0, &inv);
-	PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
-	
-	// Set the appropriate transport
-	pjsip_tpselector *tp;
+        pj_str_t pjContact;
+        pj_cstr (&pjContact, contactUri.c_str());
 
-	init_transport_selector (account->getAccountTransport(), &tp);
+        // Create the dialog (UAC)
+        // (Parameters are "strduped" inside this function)
+        _debug ("UserAgent: Creating dialog for this call");
+        status = pjsip_dlg_create_uac (pjsip_ua_instance(), &pjFrom, &pjContact, &pjTo, NULL, &dialog);
+        PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
 
-	if(!account->getAccountTransport()) {
-	  _error("UserAgent: Error: Transport is NULL in IP2IP call");
-	}
+        // Create the invite session for this call
+        _debug ("UserAgent: Creating invite session for this call");
+        status = pjsip_inv_create_uac (dialog, call->getLocalSDP()->get_local_sdp_session(), 0, &inv);
+        PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
 
-	// set_transport methods increment transport's ref_count
-	status = pjsip_dlg_set_transport (dialog, tp);
+        if (! (account->getServiceRoute().empty())) {
 
-	// decrement transport's ref count
-	// pjsip_transport_dec_ref(account->getAccountTransport());
+            _error ("UserAgent: Set Service-Route with %s", account->getServiceRoute().c_str());
 
-	if (status != PJ_SUCCESS) {
-	  _error ("UserAgent: Error: Failed to set the transport for an IP2IP call");
-	  return status;
-	}
+            pjsip_route_hdr *route_set = pjsip_route_hdr_create (_pool);
+            pjsip_route_hdr *routing = pjsip_route_hdr_create (_pool);
+            pjsip_sip_uri *url = pjsip_sip_uri_create (_pool, 0);
+            routing->name_addr.uri = (pjsip_uri*) url;
+            pj_strdup2 (_pool, &url->host, account->getServiceRoute().c_str());
 
-	// Associate current call in the invite session
-	inv->mod_data[getModId() ] = call;
+            pj_list_push_back (&route_set, pjsip_hdr_clone (_pool, routing));
 
-	status = pjsip_inv_invite (inv, &tdata);
-	
-	PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
-		
-	// Associate current invite session in the call
-	call->setInvSession (inv);
+            pjsip_dlg_set_route_set (dialog, route_set);
+        }
 
-	status = pjsip_inv_send_msg (inv, tdata);
+        // Set the appropriate transport
+        pjsip_tpselector *tp;
 
-	if (status != PJ_SUCCESS) {
-	    delete call;
-	    call = 0;
-	    return false;
-	}
+        init_transport_selector (account->getAccountTransport(), &tp);
 
-	call->setConnectionState (Call::Progressing);
+        if (!account->getAccountTransport()) {
+            _error ("UserAgent: Error: Transport is NULL in IP2IP call");
+        }
 
-	call->setState (Call::Active);
-	addCall (call);
+        // set_transport methods increment transport's ref_count
+        status = pjsip_dlg_set_transport (dialog, tp);
 
-	return true;
+        // decrement transport's ref count
+        // pjsip_transport_dec_ref(account->getAccountTransport());
+
+        if (status != PJ_SUCCESS) {
+            _error ("UserAgent: Error: Failed to set the transport for an IP2IP call");
+            return status;
+        }
+
+        // Associate current call in the invite session
+        inv->mod_data[getModId() ] = call;
+
+        status = pjsip_inv_invite (inv, &tdata);
+
+        PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
+
+        // Associate current invite session in the call
+        call->setInvSession (inv);
+
+        status = pjsip_inv_send_msg (inv, tdata);
+
+        if (status != PJ_SUCCESS) {
+            delete call;
+            call = 0;
+            return false;
+        }
+
+        call->setConnectionState (Call::Progressing);
+
+        call->setState (Call::Active);
+        addCall (call);
+
+        return true;
     } else
-      return false;
+        return false;
 }
 
 
@@ -1827,10 +1909,11 @@ pj_status_t SIPVoIPLink::enable_dns_srv_resolver (pjsip_endpoint *endpt, pj_dns_
     std::vector <std::string> dns_servers;
     int scount, i;
 
-    _debug("UserAgent: Enable DNS SRV resolver");
+    _debug ("UserAgent: Enable DNS SRV resolver");
 
     // Create the DNS resolver instance
     status = pjsip_endpt_create_resolver (endpt, &resv);
+
     if (status != PJ_SUCCESS) {
         _error ("UserAgent: Error: Creating the DNS resolver instance");
         return status;
@@ -1848,13 +1931,15 @@ pj_status_t SIPVoIPLink::enable_dns_srv_resolver (pjsip_endpoint *endpt, pj_dns_
     }
 
     pj_str_t nameservers[scount];
+
     for (i = 0; i<scount; i++) {
-		_debug("UserAgent: Server: %s", (char *)dns_servers[i].c_str());
+        _debug ("UserAgent: Server: %s", (char *) dns_servers[i].c_str());
         nameservers[i] = pj_str ( (char *) dns_servers[i].c_str());
     }
 
     // Update the name servers for the DNS resolver
     status = pj_dns_resolver_set_ns (resv, scount, nameservers, NULL);
+
     if (status != PJ_SUCCESS) {
         _debug ("UserAgent: Error updating the name servers for the DNS resolver");
         return status;
@@ -1862,6 +1947,7 @@ pj_status_t SIPVoIPLink::enable_dns_srv_resolver (pjsip_endpoint *endpt, pj_dns_
 
     // Set the DNS resolver instance of the SIP resolver engine
     status = pjsip_endpt_set_resolver (endpt, resv);
+
     if (status != PJ_SUCCESS) {
         _debug ("UserAgent: Error setting the DNS resolver instance of the SIP resolver engine");
         return status;
@@ -1923,11 +2009,11 @@ bool SIPVoIPLink::pjsip_init()
         return false;
     }
 
-    // Initialize default UDP transport according to 
+    // Initialize default UDP transport according to
     // IP to IP settings (most likely using port 5060)
     createDefaultSipUdpTransport();
 
-    // Call this method to create TLS listener 
+    // Call this method to create TLS listener
     createDefaultSipTlsListener();
 
     // Initialize transaction layer
@@ -1998,12 +2084,15 @@ bool SIPVoIPLink::pjsip_init()
     _debug ("UserAgent: VOIP callbacks initialized");
 
     // Add endpoint capabilities (INFO, OPTIONS, etc) for this UA
-    pj_str_t allowed[] = { { (char*) "INFO", 4}, { (char*) "REGISTER", 8}, { (char*) "OPTIONS", 7} };       //  //{"INVITE", 6}, {"ACK",3}, {"BYE",3}, {"CANCEL",6}
+    pj_str_t allowed[] = { { (char*) "INFO", 4}, { (char*) "REGISTER", 8}, { (char*) "OPTIONS", 7}, { (char*) "MESSAGE", 7 } };       //  //{"INVITE", 6}, {"ACK",3}, {"BYE",3}, {"CANCEL",6}
 
     accepted = pj_str ( (char*) "application/sdp");
 
     // Register supported methods
     pjsip_endpt_add_capability (_endpt, &_mod_ua, PJSIP_H_ALLOW, NULL, PJ_ARRAY_SIZE (allowed), allowed);
+
+    const pj_str_t STR_MIME_TEXT_PLAIN = { (char*) "text/plain", 10 };
+    pjsip_endpt_add_capability (_endpt, &_mod_ua, PJSIP_H_ACCEPT, NULL, 1, &STR_MIME_TEXT_PLAIN);
 
     // Register "application/sdp" in ACCEPT header
     pjsip_endpt_add_capability (_endpt, &_mod_ua, PJSIP_H_ACCEPT, NULL, 1, &accepted);
@@ -2076,73 +2165,73 @@ pj_status_t SIPVoIPLink::stunServerResolve (AccountID id)
 
 
 
-bool SIPVoIPLink::acquireTransport(const AccountID& accountID) {
+bool SIPVoIPLink::acquireTransport (const AccountID& accountID)
+{
 
     SIPAccount* account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (accountID));
 
-    if(!account)
+    if (!account)
         return false;
 
 
-    // If an account is already bound to this account, decrease its reference 
-    // as it is going to change. If the same transport is selected, reference 
+    // If an account is already bound to this account, decrease its reference
+    // as it is going to change. If the same transport is selected, reference
     // counter will be increased
-    if(account->getAccountTransport()) {
+    if (account->getAccountTransport()) {
 
-        _debug("pjsip_transport_dec_ref in acquireTransport");
-        pjsip_transport_dec_ref(account->getAccountTransport());
+        _debug ("pjsip_transport_dec_ref in acquireTransport");
+        pjsip_transport_dec_ref (account->getAccountTransport());
     }
 
     // Try to create a new transport in case the settings for this account
     // are different than one defined for already created ones
     // If TLS is enabled, TLS connection is automatically handled when sending account registration
-    // However, for any other sip transaction, we must create TLS connection 
-    if(createSipTransport(accountID)) {
+    // However, for any other sip transaction, we must create TLS connection
+    if (createSipTransport (accountID)) {
         return true;
     }
     // A transport is already created on this port, use it
     else {
 
-        _debug("Could not create a new transport (%s)", account->getTransportMapKey().c_str());
-        _debug("Searching transport (%s) in transport map", account->getTransportMapKey().c_str());
+        _debug ("Could not create a new transport (%s)", account->getTransportMapKey().c_str());
+        _debug ("Searching transport (%s) in transport map", account->getTransportMapKey().c_str());
 
         // Could not create new transport, this transport may already exists
         SipTransportMap::iterator transport;
-        transport = _transportMap.find(account->getTransportMapKey());
+        transport = _transportMap.find (account->getTransportMapKey());
 
-	if(transport != _transportMap.end()) {
+        if (transport != _transportMap.end()) {
 
-	    // Transport already exist, use it for this account
-	    _debug("Found transport (%s) in transport map", account->getTransportMapKey().c_str());
+            // Transport already exist, use it for this account
+            _debug ("Found transport (%s) in transport map", account->getTransportMapKey().c_str());
 
-	    pjsip_transport* tr = transport->second;
+            pjsip_transport* tr = transport->second;
 
-	    // Set transport to be used for transaction involving this account
-	    account->setAccountTransport(tr);
+            // Set transport to be used for transaction involving this account
+            account->setAccountTransport (tr);
 
-	    // Increment newly associated transport reference counter
-	    // If the account is shutdowning, time is automatically canceled
-	    pjsip_transport_add_ref(tr);
+            // Increment newly associated transport reference counter
+            // If the account is shutdowning, time is automatically canceled
+            pjsip_transport_add_ref (tr);
 
-	    return true;
-	}
-	else {
+            return true;
+        } else {
 
-	    // Transport could not either be created, socket not available
-	    _debug("Did not find transport (%s) in transport map", account->getTransportMapKey().c_str());
+            // Transport could not either be created, socket not available
+            _debug ("Did not find transport (%s) in transport map", account->getTransportMapKey().c_str());
 
-	    account->setAccountTransport(_localUDPTransport);
+            account->setAccountTransport (_localUDPTransport);
 
-	    std::string localHostName(_localUDPTransport->local_name.host.ptr, _localUDPTransport->local_name.host.slen);
+            std::string localHostName (_localUDPTransport->local_name.host.ptr, _localUDPTransport->local_name.host.slen);
 
-	    _debug("Use default one instead (%s:%i)", localHostName.c_str(), _localUDPTransport->local_name.port);
+            _debug ("Use default one instead (%s:%i)", localHostName.c_str(), _localUDPTransport->local_name.port);
 
-	    // account->setLocalAddress(localHostName);
-	    account->setLocalPort(_localUDPTransport->local_name.port);
+            // account->setLocalAddress(localHostName);
+            account->setLocalPort (_localUDPTransport->local_name.port);
 
-	    // Transport could not either be created or found in the map, socket not available
-	    return false;
-	}
+            // Transport could not either be created or found in the map, socket not available
+            return false;
+        }
     }
 }
 
@@ -2160,16 +2249,16 @@ bool SIPVoIPLink::createDefaultSipUdpTransport()
 
     // Create a UDP listener meant for all accounts for which TLS was not enabled
     // Cannot acquireTransport since default UDP transport must be created regardless of TLS
-    errPjsip = createUdpTransport(IP2IP_PROFILE);
+    errPjsip = createUdpTransport (IP2IP_PROFILE);
 
-    if(account && (errPjsip == PJ_SUCCESS)) {
+    if (account && (errPjsip == PJ_SUCCESS)) {
 
         // Store transport in transport map
-        addTransportToMap(account->getTransportMapKey(), account->getAccountTransport());
+        addTransportToMap (account->getTransportMapKey(), account->getAccountTransport());
 
-	// if account is not NULL, use IP2IP trasport as default one
-	_localUDPTransport = account->getAccountTransport();
- 
+        // if account is not NULL, use IP2IP trasport as default one
+        _localUDPTransport = account->getAccountTransport();
+
     }
     // If the above UDP server
     // could not be created, then give it another try
@@ -2179,12 +2268,12 @@ bool SIPVoIPLink::createDefaultSipUdpTransport()
         _regPort = RANDOM_SIP_PORT;
 
         _debug ("UserAgent: Trying to initialize SIP listener on port %d", _regPort);
-	// If no AccountID specified, pointer to transport is stored in _localUDPTransport 
+        // If no AccountID specified, pointer to transport is stored in _localUDPTransport
         errPjsip = createUdpTransport();
 
         if (errPjsip != PJ_SUCCESS) {
             _debug ("UserAgent: Fail to initialize SIP listener on port %d", _regPort);
-	    return false;
+            return false;
         }
     }
 
@@ -2199,13 +2288,13 @@ void SIPVoIPLink::createDefaultSipTlsListener()
     SIPAccount * account = NULL;
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (IP2IP_PROFILE));
 
-    if(account->isTlsEnabled()) {
-        createTlsListener(IP2IP_PROFILE);
+    if (account->isTlsEnabled()) {
+        createTlsListener (IP2IP_PROFILE);
     }
 }
 
 
-void SIPVoIPLink::createTlsListener(const AccountID& accountID)
+void SIPVoIPLink::createTlsListener (const AccountID& accountID)
 {
 
     pjsip_tpfactory *tls;
@@ -2214,7 +2303,7 @@ void SIPVoIPLink::createTlsListener(const AccountID& accountID)
     pj_status_t status;
     pj_status_t success;
 
-    _debug("Create TLS listener");
+    _debug ("Create TLS listener");
 
     /* Grab the tls settings, populated
      * from configuration file.
@@ -2232,7 +2321,7 @@ void SIPVoIPLink::createTlsListener(const AccountID& accountID)
     pj_sockaddr_in_init (&local_addr, 0, 0);
     pj_uint16_t localTlsPort = account->getTlsListenerPort();
     local_addr.sin_port = pj_htons (localTlsPort);
-     
+
     pj_str_t pjAddress;
     pj_cstr (&pjAddress, PJ_INADDR_ANY);
     success = pj_sockaddr_in_set_str_addr (&local_addr, &pjAddress);
@@ -2240,7 +2329,7 @@ void SIPVoIPLink::createTlsListener(const AccountID& accountID)
 
     // Init published address for this listener (Local IP address on port 5061)
     std::string publishedAddress;
-    loadSIPLocalIP(&publishedAddress);
+    loadSIPLocalIP (&publishedAddress);
 
     pj_bzero (&a_name, sizeof (pjsip_host_port));
     pj_cstr (&a_name.host, publishedAddress.c_str());
@@ -2249,28 +2338,27 @@ void SIPVoIPLink::createTlsListener(const AccountID& accountID)
     /* Get TLS settings. Expected to be filled */
     pjsip_tls_setting * tls_setting = account->getTlsSetting();
 
-    
+
     _debug ("UserAgent: TLS transport to be initialized with published address %.*s,"
             " published port %d,\n                  local address %.*s, local port %d",
             (int) a_name.host.slen, a_name.host.ptr,
             (int) a_name.port, pjAddress.slen, pjAddress.ptr, (int) localTlsPort);
-    
+
 
     status = pjsip_tls_transport_start (_endpt, tls_setting, &local_addr, &a_name, 1, &tls);
 
     if (status != PJ_SUCCESS) {
         _debug ("UserAgent: Error creating SIP TLS listener (%d)", status);
-    }
-    else {
+    } else {
         _localTlsListener = tls;
     }
-    
+
     // return PJ_SUCCESS;
-    
+
 }
 
 
-bool SIPVoIPLink::createSipTransport(AccountID id)
+bool SIPVoIPLink::createSipTransport (AccountID id)
 {
 
     SIPAccount* account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
@@ -2282,23 +2370,22 @@ bool SIPVoIPLink::createSipTransport(AccountID id)
 
     if (account->isTlsEnabled()) {
 
-        if(_localTlsListener == NULL)
-	    createTlsListener(id);
+        if (_localTlsListener == NULL)
+            createTlsListener (id);
 
-        // Parse remote address to establish connection 
+        // Parse remote address to establish connection
         std::string remoteSipUri = account->getServerUri();
-        int sips = remoteSipUri.find("<sips:") + 6;
-	int trns = remoteSipUri.find(";transport");
-	std::string remoteAddr = remoteSipUri.substr(sips, trns-sips);
+        int sips = remoteSipUri.find ("<sips:") + 6;
+        int trns = remoteSipUri.find (";transport");
+        std::string remoteAddr = remoteSipUri.substr (sips, trns-sips);
 
         // Nothing to do, TLS listener already created at pjsip's startup and TLS connection
         // is automatically handled in pjsip when sending registration messages.
-        if(createTlsTransport(id, remoteAddr) != PJ_SUCCESS)
-	    return false;
+        if (createTlsTransport (id, remoteAddr) != PJ_SUCCESS)
+            return false;
 
         return true;
-    }
-    else {
+    } else {
 
         // Launch a new UDP listener/transport, using the published address
         if (account->isStunEnabled ()) {
@@ -2307,45 +2394,44 @@ bool SIPVoIPLink::createSipTransport(AccountID id)
 
             if (status != PJ_SUCCESS) {
                 _debug ("Failed to init UDP transport with STUN published address for account %s", id.c_str());
-		return false;
+                return false;
             }
 
         } else {
 
             status = createUdpTransport (id);
 
-	    if (status != PJ_SUCCESS) {
+            if (status != PJ_SUCCESS) {
                 _debug ("Failed to initialize UDP transport for account %s", id.c_str());
-		return false;
-	    }
-	    else {
+                return false;
+            } else {
 
-	        // If transport succesfully created, store it in the internal map.
-	        // STUN aware transport are account specific and should not be stored in map.
-	        // TLS transport is ephemeral and is managed by PJSIP, should not be stored either.
-	        addTransportToMap(account->getTransportMapKey(), account->getAccountTransport());
-	    }
-	}
+                // If transport successfully created, store it in the internal map.
+                // STUN aware transport are account specific and should not be stored in map.
+                // TLS transport is ephemeral and is managed by PJSIP, should not be stored either.
+                addTransportToMap (account->getTransportMapKey(), account->getAccountTransport());
+            }
+        }
     }
 
-    return true;   
+    return true;
 }
-   
 
 
-bool SIPVoIPLink::addTransportToMap(std::string key, pjsip_transport* transport)
+
+bool SIPVoIPLink::addTransportToMap (std::string key, pjsip_transport* transport)
 {
 
     SipTransportMap::iterator iter_transport;
-    iter_transport = _transportMap.find(key);
-	
+    iter_transport = _transportMap.find (key);
+
     // old transport in transport map, erase it
-    if(iter_transport != _transportMap.end()){
-        _transportMap.erase(iter_transport);
+    if (iter_transport != _transportMap.end()) {
+        _transportMap.erase (iter_transport);
     }
 
-    _debug("UserAgent: Storing newly created transport in map using key %s", key.c_str());
-    _transportMap.insert(pair<std::string, pjsip_transport*>(key, transport));
+    _debug ("UserAgent: Storing newly created transport in map using key %s", key.c_str());
+    _transportMap.insert (pair<std::string, pjsip_transport*> (key, transport));
 
     return true;
 
@@ -2360,7 +2446,7 @@ int SIPVoIPLink::createUdpTransport (AccountID id)
     pjsip_host_port a_name;
     // char tmpIP[32];
     pjsip_transport *transport;
-    std::string listeningAddress = "127.0.0.1";
+    std::string listeningAddress = "0.0.0.0";
     int listeningPort = _regPort;
 
     /* Use my local address as default value */
@@ -2388,10 +2474,10 @@ int SIPVoIPLink::createUdpTransport (AccountID id)
     } else {
 
         // We are trying to initialize a UDP transport available for all local accounts and direct IP calls
-        _debug("UserAgent: found account %s in map", account->getAccountID().c_str());
+        _debug ("UserAgent: found account %s in map", account->getAccountID().c_str());
 
         if (account->getLocalInterface () != "default") {
-            listeningAddress = getInterfaceAddrFromName(account->getLocalInterface());
+            listeningAddress = getInterfaceAddrFromName (account->getLocalInterface());
         }
 
         listeningPort = account->getLocalPort ();
@@ -2405,12 +2491,12 @@ int SIPVoIPLink::createUdpTransport (AccountID id)
 
         // Init bound address to ANY
         bound_addr.sin_addr.s_addr = pj_htonl (PJ_INADDR_ANY);
-    }
-    else {
+        loadSIPLocalIP (&listeningAddress);
+    } else {
 
-        // bind this account to a specific interface        
-        pj_strdup2(_pool, &temporary_address, listeningAddress.c_str());
-	bound_addr.sin_addr = pj_inet_addr(&temporary_address);
+        // bind this account to a specific interface
+        pj_strdup2 (_pool, &temporary_address, listeningAddress.c_str());
+        bound_addr.sin_addr = pj_inet_addr (&temporary_address);
     }
 
     bound_addr.sin_port = pj_htons ( (pj_uint16_t) listeningPort);
@@ -2419,20 +2505,27 @@ int SIPVoIPLink::createUdpTransport (AccountID id)
 
     // Create UDP-Server (default port: 5060)
     // Use here either the local information or the published address
-    if (account != NULL && !account->getPublishedSameasLocal ()) {
+    if (account && !account->getPublishedSameasLocal ()) {
 
         // Set the listening address to the published address
         listeningAddress = account->getPublishedAddress ();
+
         // Set the listening port to the published port
         listeningPort = account->getPublishedPort ();
         _debug ("UserAgent: Creating UDP transport published %s:%i", listeningAddress.c_str (), listeningPort);
 
     }
 
-    if(listeningAddress == "" || listeningPort == 0) {
-    	_error("UserAgent: Error invalid address for new udp transport");
-    	return !PJ_SUCCESS;
+    // We must specify this here to avoid the IP2IP_PROFILE
+    // to create a transport with name 0.0.0.0 to appear in the via header
+    if (id == IP2IP_PROFILE)
+        loadSIPLocalIP (&listeningAddress);
+
+    if (listeningAddress == "" || listeningPort == 0) {
+        _error ("UserAgent: Error invalid address for new udp transport");
+        return !PJ_SUCCESS;
     }
+
     //strcpy (tmpIP, listeningAddress.data());
     /* Init published name */
     pj_bzero (&a_name, sizeof (pjsip_host_port));
@@ -2459,14 +2552,13 @@ int SIPVoIPLink::createUdpTransport (AccountID id)
 
         if (account == NULL) {
 
-	    _debug("UserAgent: Use transport as local UDP server");
+            _debug ("UserAgent: Use transport as local UDP server");
             _localUDPTransport = transport;
-	}
-        else {
+        } else {
 
-	    _debug("UserAgent: bind transport to account %s", account->getAccountID().c_str());
-	    account->setAccountTransport (transport);
-	}
+            _debug ("UserAgent: bind transport to account %s", account->getAccountID().c_str());
+            account->setAccountTransport (transport);
+        }
     }
 
     return PJ_SUCCESS;
@@ -2534,18 +2626,17 @@ std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_
     pj_status_t status;
 
     /* Init the transport selector */
+
     //_debug ("Transport ID: %s", transport->obj_name);
     if (transportType == PJSIP_TRANSPORT_UDP) {
         status = init_transport_selector (transport, &tp_sel);
 
         if (status == PJ_SUCCESS) {
             status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, tp_sel, &localAddress, &port);
+        } else {
+            status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, NULL, &localAddress, &port);
         }
-        else {
-        	status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, NULL, &localAddress, &port);
-        }
-    }
-    else {
+    } else {
         status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, NULL, &localAddress, &port);
     }
 
@@ -2554,10 +2645,14 @@ std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_
         return machineName;
     }
 
-	std::string localaddr(localAddress.ptr, localAddress.slen);
+    std::string localaddr (localAddress.ptr, localAddress.slen);
+
+    if (localaddr == "0.0.0.0")
+        loadSIPLocalIP (&localaddr);
+
     _debug ("SIP: Local address discovered from attached transport: %s", localaddr.c_str());
 
-    return std::string (localAddress.ptr, localAddress.slen);
+    return localaddr;
 }
 
 
@@ -2659,26 +2754,26 @@ int SIPVoIPLink::findLocalPortFromUri (const std::string& uri, pjsip_transport *
 }
 
 
-pj_status_t SIPVoIPLink::createTlsTransport(const AccountID& accountID, std::string remoteAddr)
+pj_status_t SIPVoIPLink::createTlsTransport (const AccountID& accountID, std::string remoteAddr)
 {
     pj_status_t success;
 
-    _debug("Create TLS transport for account %s\n", accountID.c_str());
+    _debug ("Create TLS transport for account %s\n", accountID.c_str());
 
     // Retrieve the account information
     SIPAccount * account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (accountID));
 
-    if(!account) {
-        _debug("UserAgent: Account is NULL when creating TLS connection, returning");
-	return !PJ_SUCCESS;
+    if (!account) {
+        _debug ("UserAgent: Account is NULL when creating TLS connection, returning");
+        return !PJ_SUCCESS;
     }
 
     pj_sockaddr_in rem_addr;
     pj_str_t remote;
 
-    pj_cstr(&remote, remoteAddr.c_str());
+    pj_cstr (&remote, remoteAddr.c_str());
 
-    pj_sockaddr_in_init(&rem_addr, &remote, (pj_uint16_t)5061);
+    pj_sockaddr_in_init (&rem_addr, &remote, (pj_uint16_t) 5061);
 
     // Update TLS settings for account registration using the default listeners
     // Pjsip does not allow to create multiple listener
@@ -2687,12 +2782,12 @@ pj_status_t SIPVoIPLink::createTlsTransport(const AccountID& accountID, std::str
 
     // Create a new TLS connection from TLS listener
     pjsip_transport *tls;
-    success = pjsip_endpt_acquire_transport(_endpt, PJSIP_TRANSPORT_TLS, &rem_addr, sizeof(rem_addr), NULL, &tls);
+    success = pjsip_endpt_acquire_transport (_endpt, PJSIP_TRANSPORT_TLS, &rem_addr, sizeof (rem_addr), NULL, &tls);
 
-    if(success != PJ_SUCCESS)
-        _debug("UserAgent: Error could not create TLS transport");
-    else 
-        account->setAccountTransport(tls);
+    if (success != PJ_SUCCESS)
+        _debug ("UserAgent: Error could not create TLS transport");
+    else
+        account->setAccountTransport (tls);
 
     return success;
 }
@@ -2787,18 +2882,18 @@ pj_status_t SIPVoIPLink::createAlternateUdpTransport (AccountID id)
 
     account->setAccountTransport (transport);
 
-    if(transport) {
+    if (transport) {
 
-    	_debug("UserAgent: Initial ref count: %s %s (refcnt=%i)", transport->obj_name, transport->info,
-    			                (int)pj_atomic_get(transport->ref_cnt));
+        _debug ("UserAgent: Initial ref count: %s %s (refcnt=%i)", transport->obj_name, transport->info,
+                (int) pj_atomic_get (transport->ref_cnt));
 
-    	pj_sockaddr *addr = (pj_sockaddr*)&(transport->key.rem_addr);
+        pj_sockaddr *addr = (pj_sockaddr*) & (transport->key.rem_addr);
 
-    	static char str[PJ_INET6_ADDRSTRLEN];
-    	pj_inet_ntop(((const pj_sockaddr*)addr)->addr.sa_family, pj_sockaddr_get_addr(addr), str, sizeof(str));
-    
-    
-    	_debug("UserAgent: KEY: %s:%d",str, pj_sockaddr_get_port((const pj_sockaddr*)&(transport->key.rem_addr)));
+        static char str[PJ_INET6_ADDRSTRLEN];
+        pj_inet_ntop ( ( (const pj_sockaddr*) addr)->addr.sa_family, pj_sockaddr_get_addr (addr), str, sizeof (str));
+
+
+        _debug ("UserAgent: KEY: %s:%d",str, pj_sockaddr_get_port ( (const pj_sockaddr*) & (transport->key.rem_addr)));
 
     }
 
@@ -2810,28 +2905,28 @@ pj_status_t SIPVoIPLink::createAlternateUdpTransport (AccountID id)
 }
 
 
-void SIPVoIPLink::shutdownSipTransport(const AccountID& accountID)
+void SIPVoIPLink::shutdownSipTransport (const AccountID& accountID)
 {
 
-    _debug("UserAgent: Shutdown Sip Transport");
+    _debug ("UserAgent: Shutdown Sip Transport");
 
     SIPAccount* account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (accountID));
 
-    if(!account)
+    if (!account)
         return;
 
-    if(account->getAccountTransport()) {
+    if (account->getAccountTransport()) {
 
-        _debug("Transport bound to account, decrease ref count");
+        _debug ("Transport bound to account, decrease ref count");
 
-	// decrease reference count added by pjsip_regc_send
-	// PJSIP's IDLE timer is set if counter reach 0
+        // decrease reference count added by pjsip_regc_send
+        // PJSIP's IDLE timer is set if counter reach 0
 
         // there is still problems when account registration fails, so comment it for now
-	// status = pjsip_transport_dec_ref(account->getAccountTransport());
+        // status = pjsip_transport_dec_ref(account->getAccountTransport());
 
-	// detach transport from this account
-	account->setAccountTransport(NULL);
+        // detach transport from this account
+        account->setAccountTransport (NULL);
 
     }
 
@@ -2917,7 +3012,7 @@ bool SIPVoIPLink::pjsip_shutdown (void)
     /* Shutdown PJLIB */
     pj_shutdown();
 
-    _debug ("UserAgent: Shutted down succesfully");
+    _debug ("UserAgent: Shutted down successfully");
 
     /* Done. */
     return true;
@@ -2976,27 +3071,9 @@ void set_voicemail_info (AccountID account, pjsip_msg_body *body)
         Manager::instance().startVoiceMessageNotification (account, voicemail);
 }
 
-void SIPVoIPLink::handle_reinvite (SIPCall *call)
+void SIPVoIPLink::handle_reinvite (SIPCall *call UNUSED)
 {
-
     _debug ("UserAgent: Handle reinvite");
-    /*
-    // Close the previous RTP session
-    call->getAudioRtp()->stop ();
-    call->setAudioStart (false);
-    
-    _debug ("Create new rtp session from handle_reinvite : %s:%i", call->getLocalIp().c_str(), call->getLocalAudioPort());
-    _debug ("UserAgent: handle_reinvite");
- 
-    try {
-        call->getAudioRtp()->initAudioRtpSession (call);
-    } catch (...) {
-        _debug ("! SIP Failure: Unable to create RTP Session (%s:%d)", __FILE__, __LINE__);
-    }
-  
-    
-    _debug("Handle reINVITE");
-    */
 }
 
 // This callback is called when the invite session state has changed
@@ -3014,8 +3091,6 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
         _error ("UserAgent: Error: Call is NULL in call state changed callback");
         return;
     } else {
-        // _debug("    call_on_state_changed: call id %s", call->getCallId().c_str());
-        // _debug("    call_on_state_changed: call state %s", invitationStateMap[call->getInvSession()->state]);
     }
 
     //Retrieve the body message
@@ -3037,6 +3112,25 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
         _error ("UserAgent: Error: Link is NULL in call state changed callback");
         return;
     }
+
+    /*
+    pjsip_hdr *allow_header = NULL;
+    std::string *allowed_options = NULL;
+
+    char header_buffer[500];
+
+    if (e->body.tsx_state.src.rdata->msg_info.msg)
+        allow_header = (pjsip_hdr *) pjsip_msg_find_hdr (e->body.tsx_state.src.rdata->msg_info.msg, PJSIP_H_ALLOW, NULL);
+
+    if (allow_header) {
+        allowed_options = new std::string (allow_header->name.ptr, allow_header->name.slen);
+        allow_header->vptr->print_on (allow_header, header_buffer, 5000);
+        std::string theHeader (header_buffer);
+    }
+
+    if (allowed_options)
+        delete allowed_options;
+    */
 
     // If this is an outgoing INVITE that was created because of
     // REFER/transfer, send NOTIFY to transferer.
@@ -3114,7 +3208,9 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
         const pj_str_t * description = pjsip_get_status_text (statusCode);
 
         if (statusCode) {
-            DBusManager::instance().getCallManager()->sipCallStateChanged (call->getCallId(), std::string (description->ptr, description->slen), statusCode);
+            // test wether or not dbus manager is instantiated, if not no need to notify the client
+            if (Manager::instance().getDbusManager())
+                DBusManager::instance().getCallManager()->sipCallStateChanged (call->getCallId(), std::string (description->ptr, description->slen), statusCode);
         }
     }
 
@@ -3137,22 +3233,24 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
         accId = Manager::instance().getAccountFromCall (call->getCallId());
         link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
 
-		// Make sure link is valid
-        assert(link);
+        // Make sure link is valid
+        assert (link);
 
         switch (inv->cause) {
 
-            // The call terminates normally - BYE / CANCEL
+                // The call terminates normally - BYE / CANCEL
             case PJSIP_SC_OK:
             case PJSIP_SC_REQUEST_TERMINATED:
                 link->SIPCallClosed (call);
                 break;
 
             case PJSIP_SC_DECLINE:
-            	_debug("UserAgent: Call %s is declined", call->getCallId().c_str());
-				if (inv->role == PJSIP_ROLE_UAC)
-					link->SIPCallServerFailure (call);
-				break;
+                _debug ("UserAgent: Call %s is declined", call->getCallId().c_str());
+
+                if (inv->role == PJSIP_ROLE_UAC)
+                    link->SIPCallServerFailure (call);
+
+                break;
 
             case PJSIP_SC_NOT_FOUND:            /* peer not found */
             case PJSIP_SC_REQUEST_TIMEOUT:      /* request timeout */
@@ -3161,13 +3259,13 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
             case PJSIP_SC_UNSUPPORTED_MEDIA_TYPE:
             case PJSIP_SC_UNAUTHORIZED:
             case PJSIP_SC_FORBIDDEN:
-	    case PJSIP_SC_REQUEST_PENDING:
-	    case PJSIP_SC_ADDRESS_INCOMPLETE:
+            case PJSIP_SC_REQUEST_PENDING:
+            case PJSIP_SC_ADDRESS_INCOMPLETE:
                 link->SIPCallServerFailure (call);
                 break;
 
             default:
-	        link->SIPCallServerFailure (call);
+                link->SIPCallServerFailure (call);
                 _error ("UserAgent: Unhandled call state. This is probably a bug.");
                 break;
         }
@@ -3229,133 +3327,140 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 
     try {
         call->getAudioRtp()->updateDestinationIpAddress();
-    }
-    catch(...) {
-        
+    } catch (...) {
+
     }
 
 
     // Get the crypto attribute containing srtp's cryptographic context (keys, cipher)
     CryptoOffer crypto_offer;
-    call->getLocalSDP()->get_remote_sdp_crypto_from_offer(remote_sdp, crypto_offer);
+    call->getLocalSDP()->get_remote_sdp_crypto_from_offer (remote_sdp, crypto_offer);
 
     bool nego_success = false;
-    if(!crypto_offer.empty()) {
 
-    	_debug("UserAgent: Crypto attribute in SDP, init SRTP session");
+    if (!crypto_offer.empty()) {
 
-    	// init local cryptografic capabilities for negotiation
-    	std::vector<sfl::CryptoSuiteDefinition>localCapabilities;
-    	for(int i = 0; i < 3; i++) {
-    		localCapabilities.push_back(sfl::CryptoSuites[i]);
-		}
+        _debug ("UserAgent: Crypto attribute in SDP, init SRTP session");
 
-		sfl::SdesNegotiator sdesnego(localCapabilities, crypto_offer);
-	
-		if(sdesnego.negotiate()) {
-			_debug("UserAgent: SDES negociation successfull \n");
-			nego_success = true;
+        // init local cryptografic capabilities for negotiation
+        std::vector<sfl::CryptoSuiteDefinition>localCapabilities;
 
-            _debug("UserAgent: Set remote cryptographic context\n");
+        for (int i = 0; i < 3; i++) {
+            localCapabilities.push_back (sfl::CryptoSuites[i]);
+        }
+
+        sfl::SdesNegotiator sdesnego (localCapabilities, crypto_offer);
+
+        if (sdesnego.negotiate()) {
+            _debug ("UserAgent: SDES negociation successfull \n");
+            nego_success = true;
+
+            _debug ("UserAgent: Set remote cryptographic context\n");
+
             try {
-            	  call->getAudioRtp()->setRemoteCryptoInfo(sdesnego);
-            }
-            catch(...) {}
+                call->getAudioRtp()->setRemoteCryptoInfo (sdesnego);
+            } catch (...) {}
 
             DBusManager::instance().getCallManager()->secureSdesOn (call->getCallId());
-		}
-		else {
-			DBusManager::instance().getCallManager()->secureSdesOff (call->getCallId());
-		}
+        } else {
+            DBusManager::instance().getCallManager()->secureSdesOff (call->getCallId());
+        }
     }
 
     // We did not found any crypto context for this media
-    if(!nego_success && call->getAudioRtp()->getAudioRtpType() == sfl::Sdes) {
-       
+    if (!nego_success && call->getAudioRtp()->getAudioRtpType() == sfl::Sdes) {
+
         // We did not found any crypto context for this media
         // @TODO if SRTPONLY, CallFail
 
-        _debug("UserAgent: Did not found any crypto or negociation failed but Sdes enabled");
+        _debug ("UserAgent: Did not found any crypto or negociation failed but Sdes enabled");
         call->getAudioRtp()->stop();
-	call->getAudioRtp()->setSrtpEnabled(false);
+        call->getAudioRtp()->setSrtpEnabled (false);
 
-	// if RTPFALLBACK, change RTP session
-	AccountID accountID = Manager::instance().getAccountFromCall (call->getCallId());
-	if(Manager::instance().getConfigString (accountID, SRTP_RTP_FALLBACK) == "true")
-	    call->getAudioRtp()->initAudioRtpSession(call);
+        // if RTPFALLBACK, change RTP session
+        AccountID accountID = Manager::instance().getAccountFromCall (call->getCallId());
+        SIPAccount *account = (SIPAccount *) Manager::instance().getAccount (accountID);
+
+        if (account->getSrtpFallback())
+            call->getAudioRtp()->initAudioRtpSession (call);
     }
 
-    if(nego_success && call->getAudioRtp()->getAudioRtpType() != sfl::Sdes) {
-       
-        // We found a crypto context for this media but Sdes is not 
+    if (nego_success && call->getAudioRtp()->getAudioRtpType() != sfl::Sdes) {
+
+        // We found a crypto context for this media but Sdes is not
         // enabled for this call, make a try using RTP only...
-        _debug("UserAgent: SDES not initialized for this call\n");
+        _debug ("UserAgent: SDES not initialized for this call\n");
     }
 
 
     Sdp  *sdpSession = call->getLocalSDP();
-    if(!sdpSession)
-		return;
+
+    if (!sdpSession)
+        return;
 
     AudioCodec *sessionMedia = sdpSession->get_session_media();
-	if(!sessionMedia)
-		return;
 
-	AudioCodecType pl = (AudioCodecType)sessionMedia->getPayload();
-	AudioCodec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec(pl);
+    if (!sessionMedia)
+        return;
 
-	if (audiocodec == NULL)
-		_error ("UserAgent: No audiocodec found");
+    AudioCodecType pl = (AudioCodecType) sessionMedia->getPayload();
+    AudioCodec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (pl);
+
+    if (audiocodec == NULL)
+        _error ("UserAgent: No audiocodec found");
 
 
     try {
         call->setAudioStart (true);
-        call->getAudioRtp()->start(audiocodec);
+        call->getAudioRtp()->start (audiocodec);
     } catch (exception& rtpException) {
         _error ("UserAgent: Error: %s", rtpException.what());
     }
 
 }
 
-void call_on_forked (pjsip_inv_session *inv, pjsip_event *e)
+void call_on_forked (pjsip_inv_session *inv UNUSED, pjsip_event *e UNUSED)
 {
 }
 
-void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e)
+void call_on_tsx_changed (pjsip_inv_session *inv UNUSED, pjsip_transaction *tsx, pjsip_event *e)
 {
-	assert(tsx);
+    assert (tsx);
 
-    _debug("UserAgent: Transaction changed to state %s", transactionStateMap[tsx->state]);
+    _debug ("UserAgent: Transaction changed to state %s", transactionStateMap[tsx->state]);
+
+    pjsip_rx_data* r_data;
+    pjsip_tx_data* t_data;
 
     if (tsx->role==PJSIP_ROLE_UAS && tsx->state==PJSIP_TSX_STATE_TRYING &&
             pjsip_method_cmp (&tsx->method, &pjsip_refer_method) ==0) {
         /** Handle the refer method **/
         onCallTransfered (inv, e->body.tsx_state.src.rdata);
+
     } else if (tsx->role==PJSIP_ROLE_UAS && tsx->state==PJSIP_TSX_STATE_TRYING) {
 
         if (e && e->body.rx_msg.rdata) {
 
 
-        	_debug("Event");
-            pjsip_tx_data* t_data;
-            pjsip_rx_data* r_data = e->body.rx_msg.rdata;
+            _debug ("Event");
+            r_data = e->body.rx_msg.rdata;
 
             if (r_data && r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD) {
 
-            	_debug("R_data");
+                _debug ("R_data");
 
                 std::string method_info = "INFO";
                 std::string method_notify = "NOTIFY";
 
                 std::string request =  pjsip_rx_data_get_info (r_data);
 
-			    _debug("UserAgent: %s", request.c_str());
+                _debug ("UserAgent: %s", request.c_str());
 
-			    if(request.find (method_notify) != (size_t)-1) {
+                if (request.find (method_notify) != (size_t)-1) {
 
-			    }
-				// Must reply 200 OK on SIP INFO request
-			    else if (request.find (method_info) != (size_t)-1) {
+                }
+                // Must reply 200 OK on SIP INFO request
+                else if (request.find (method_info) != (size_t)-1) {
 
                     pjsip_dlg_create_response (inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
 
@@ -3363,6 +3468,81 @@ void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_
                 }
             }
         }
+
+        // Incoming TEXT message
+        if (e && e->body.tsx_state.src.rdata) {
+
+            // sender of this message
+            std::string from;
+
+            // Get the message inside the transaction
+            r_data = e->body.tsx_state.src.rdata;
+            std::string formatedMessage = (char*) r_data->msg_info.msg->body->data;
+
+            // Try to determine who is the recipient of the message
+            SIPCall *call = reinterpret_cast<SIPCall *> (inv->mod_data[getModId() ]);
+
+            if (!call) {
+                _debug ("Incoming TEXT message: Can't find the recipient of the message");
+                return;
+            }
+
+            // Respond with a 200/OK
+            pjsip_dlg_create_response (inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
+            pjsip_dlg_send_response (inv->dlg, tsx, t_data);
+
+            std::string message;
+            std::string urilist;
+            sfl::InstantMessaging::UriList list;
+
+            sfl::InstantMessaging *module = Manager::instance().getInstantMessageModule();
+
+            try {
+                // retrive message from formated text
+                message = module->findTextMessage (formatedMessage);
+
+                // retreive the recipient-list of this message
+                urilist = module->findTextUriList (formatedMessage);
+
+                // parse the recipient list xml
+                list = module->parseXmlUriList (urilist);
+
+                // If no item present in the list, peer is considered as the sender
+                if (list.empty()) {
+                    from = call->getPeerNumber ();
+                } else {
+                    sfl::InstantMessaging::UriEntry entry = list.front();
+                    sfl::InstantMessaging::UriEntry::iterator iterAttr = entry.find (IM_XML_URI);
+
+                    if (iterAttr->second != "Me")
+                        from = iterAttr->second;
+                    else
+                        from = call->getPeerNumber ();
+                }
+
+            } catch (sfl::InstantMessageException &e) {
+                _error ("SipVoipLink: %s", e.what());
+                message = "";
+                from = call->getPeerNumber ();
+            }
+
+
+            // strip < and > characters in case of an IP address
+            std::string stripped;
+
+            if (from[0] == '<' && from[from.size()-1] == '>')
+                stripped = from.substr (1, from.size()-2);
+            else
+                stripped = from;
+
+            // Pass through the instant messaging module if needed
+            // Right now, it does do anything.
+            // And notify the clients
+
+            Manager::instance ().incomingMessage (call->getCallId (), stripped, module->receive (message, stripped, call->getCallId ()));
+        }
+
+
     }
 }
 
@@ -3386,7 +3566,11 @@ void regc_cb (struct pjsip_regc_cbparam *param)
         //_debug("Received client registration callback wiht code: %i, %s\n", param->code, descriptionprint.c_str());
         DBusManager::instance().getCallManager()->registrationStateChanged (account->getAccountID(), std::string (description->ptr, description->slen), param->code);
         std::pair<int, std::string> details (param->code, std::string (description->ptr, description->slen));
-        account->setRegistrationStateDetailed (details);
+
+
+        // there a race condition for this ressource when closing the application
+        if (account)
+            account->setRegistrationStateDetailed (details);
     }
 
     if (param->status == PJ_SUCCESS) {
@@ -3413,20 +3597,20 @@ void regc_cb (struct pjsip_regc_cbparam *param)
                     account->setRegistrationState (ErrorAuth);
                     break;
 
-	        case 423: { // Expiration Interval Too Brief
+                case 423: { // Expiration Interval Too Brief
 
-		    int expire_value;
-		    std::istringstream stream (account->getRegistrationExpire());
-		    stream >> expire_value;
+                    int expire_value;
+                    std::istringstream stream (account->getRegistrationExpire());
+                    stream >> expire_value;
 
-		    std::stringstream out;
-		    out << (expire_value * 2);
-		    std::string s = out.str(); 
+                    std::stringstream out;
+                    out << (expire_value * 2);
+                    std::string s = out.str();
 
-		    Manager::instance().setConfig(account->getAccountID(), CONFIG_ACCOUNT_REGISTRATION_EXPIRE, s);
-		    account->registerVoIPLink();
-		}
-		    break;
+                    account->setRegistrationExpire (s);
+                    account->registerVoIPLink();
+                }
+                break;
 
                 default:
                     account->setRegistrationState (Error);
@@ -3435,11 +3619,11 @@ void regc_cb (struct pjsip_regc_cbparam *param)
 
             account->setRegister (false);
 
-	    // shutdown this transport since useless
-	    // if(account->getAccountTransport() != _localUDPTransport) {
+            // shutdown this transport since useless
+            // if(account->getAccountTransport() != _localUDPTransport) {
 
-	    SIPVoIPLink::instance("")->shutdownSipTransport(account->getAccountID());
-	    //}
+            SIPVoIPLink::instance ("")->shutdownSipTransport (account->getAccountID());
+            //}
 
         } else {
             // Registration/Unregistration is success
@@ -3449,17 +3633,17 @@ void regc_cb (struct pjsip_regc_cbparam *param)
                 account->setRegistrationState (Unregistered);
                 account->setRegister (false);
 
-		SIPVoIPLink::instance("")->shutdownSipTransport(account->getAccountID());
+                SIPVoIPLink::instance ("")->shutdownSipTransport (account->getAccountID());
 
-		// pjsip_regc_destroy(param->regc);
-		// account->setRegistrationInfo(NULL);
+                // pjsip_regc_destroy(param->regc);
+                // account->setRegistrationInfo(NULL);
             }
         }
     } else {
         account->setRegistrationState (ErrorAuth);
         account->setRegister (false);
 
-	SIPVoIPLink::instance("")->shutdownSipTransport(account->getAccountID());
+        SIPVoIPLink::instance ("")->shutdownSipTransport (account->getAccountID());
     }
 
 }
@@ -3491,14 +3675,14 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     std::string request;
 
 
-    _info("UserAgent: Transaction REQUEST received using transport: %s %s (refcnt=%d)",
-    	   rdata->tp_info.transport->obj_name,
-    	   rdata->tp_info.transport->info,
-    	   (int)pj_atomic_get(rdata->tp_info.transport->ref_cnt));
+    _info ("UserAgent: Transaction REQUEST received using transport: %s %s (refcnt=%d)",
+           rdata->tp_info.transport->obj_name,
+           rdata->tp_info.transport->info,
+           (int) pj_atomic_get (rdata->tp_info.transport->ref_cnt));
 
     // No need to go any further on incoming ACK
-    if (rdata->msg_info.msg->line.req.method.id == PJSIP_ACK_METHOD && pjsip_rdata_get_dlg(rdata) != NULL) {
-        _info("UserAgent: received an ACK");
+    if (rdata->msg_info.msg->line.req.method.id == PJSIP_ACK_METHOD && pjsip_rdata_get_dlg (rdata) != NULL) {
+        _info ("UserAgent: received an ACK");
         return true;
     }
 
@@ -3525,24 +3709,26 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     /* If we can't find any voIP link to handle the incoming call */
     if (!link) {
-        _warn("UserAgent: Error: cannot retrieve the voiplink from the account ID...");
-	pj_strdup2 (_pool, &reason, "ERROR: cannot retrieve the voip link from account");
-        pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, 
-				       &reason, NULL, NULL);
+        _warn ("UserAgent: Error: cannot retrieve the voiplink from the account ID...");
+        pj_strdup2 (_pool, &reason, "ERROR: cannot retrieve the voip link from account");
+        pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
+                                       &reason, NULL, NULL);
         return true;
         return false;
     }
 
     // Parse the display name from "From" header
     char* from_header = strstr (rdata->msg_info.msg_buf, "From: ");
+
     if (from_header) {
         std::string temp (from_header);
         int begin_displayName = temp.find ("\"") + 1;
         int end_displayName = temp.rfind ("\"");
         displayName = temp.substr (begin_displayName, end_displayName - begin_displayName);
-	if(displayName.size() > 25) {
-	    displayName = std::string ("");
-	}
+
+        if (displayName.size() > 25) {
+            displayName = std::string ("");
+        }
     } else {
         displayName = std::string ("");
     }
@@ -3563,15 +3749,17 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     std::string peerNumber (tmp, length);
 
     //Remove sip: prefix
-    size_t found = peerNumber.find("sip:");
-    if (found!=std::string::npos)
-        peerNumber.erase(found, found+4);
+    size_t found = peerNumber.find ("sip:");
 
-    found = peerNumber.find("@");
     if (found!=std::string::npos)
-        peerNumber.erase(found);
+        peerNumber.erase (found, found+4);
 
-    _debug("UserAgent: Peer number: %s", peerNumber.c_str());
+    found = peerNumber.find ("@");
+
+    if (found!=std::string::npos)
+        peerNumber.erase (found);
+
+    _debug ("UserAgent: Peer number: %s", peerNumber.c_str());
 
     // Get the server voicemail notification
     // Catch the NOTIFY message
@@ -3603,8 +3791,8 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     if (rdata->msg_info.msg->line.req.method.id != PJSIP_INVITE_METHOD) {
         if (rdata->msg_info.msg->line.req.method.id != PJSIP_ACK_METHOD) {
             pj_strdup2 (_pool, &reason, "user agent unable to handle this request ");
-            pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_METHOD_NOT_ALLOWED, 
-					   &reason, NULL, NULL);
+            pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_METHOD_NOT_ALLOWED,
+                                           &reason, NULL, NULL);
             return true;
         }
     }
@@ -3612,37 +3800,40 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
 
     get_remote_sdp_from_offer (rdata, &r_sdp);
-    if(account->getActiveCodecs().empty()) {
-    	_warn ("UserAgent: Error: No active codec");
-    	pj_strdup2 (_pool, &reason, "no active codec");
-        pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_NOT_ACCEPTABLE_HERE , 
-        		                                              &reason, NULL, NULL);
+
+    if (account->getActiveCodecs().empty()) {
+        _warn ("UserAgent: Error: No active codec");
+        pj_strdup2 (_pool, &reason, "no active codec");
+        pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_NOT_ACCEPTABLE_HERE ,
+                                       &reason, NULL, NULL);
         return true;
     }
 
     // Verify that we can handle the request
     status = pjsip_inv_verify_request (rdata, &options, NULL, NULL, _endpt, NULL);
+
     if (status != PJ_SUCCESS) {
         pj_strdup2 (_pool, &reason, "user agent unable to handle this INVITE");
-        pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_METHOD_NOT_ALLOWED, 
-				       &reason, NULL, NULL);
+        pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_METHOD_NOT_ALLOWED,
+                                       &reason, NULL, NULL);
         return true;
     }
 
     /******************************************* URL HOOK *********************************************/
 
-    if (Manager::instance().getConfigString (HOOKS, URLHOOK_SIP_ENABLED) == "1") {
+    if (Manager::instance().hookPreference.getSipEnabled()) {
 
-        _debug("UserAgent: Set sip url hooks");
+        _debug ("UserAgent: Set sip url hooks");
 
         std::string header_value;
 
-        header_value = fetch_header_value (rdata->msg_info.msg, Manager::instance().getConfigString (HOOKS, URLHOOK_SIP_FIELD));
+        header_value = fetch_header_value (rdata->msg_info.msg,
+                                           Manager::instance().hookPreference.getUrlSipField());
 
         if (header_value.size () < header_value.max_size()) {
             if (header_value!="") {
                 urlhook->addAction (header_value,
-                                    Manager::instance().getConfigString (HOOKS, URLHOOK_COMMAND));
+                                    Manager::instance().hookPreference.getUrlCommand());
             }
         } else
             throw length_error ("UserAgent: Url exceeds std::string max_size");
@@ -3660,10 +3851,10 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     // If an error occured at the call creation
     if (!call) {
-        _warn("UserAgent: Error: Unable to create an incoming call");
+        _warn ("UserAgent: Error: Unable to create an incoming call");
         pj_strdup2 (_pool, &reason, "unable to create an incoming call");
-        pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, 
-				       &reason, NULL, NULL);
+        pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
+                                       &reason, NULL, NULL);
         return false;
     }
 
@@ -3675,17 +3866,17 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
         // May use the published address as well
 
-        addrToUse = SIPVoIPLink::instance("")->getInterfaceAddrFromName(account->getLocalInterface ());
+        addrToUse = SIPVoIPLink::instance ("")->getInterfaceAddrFromName (account->getLocalInterface ());
         account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = addrToUse;
         // Set the appropriate transport to have the right VIA header
         link->init_transport_selector (account->getAccountTransport (), &tp);
 
-        if(account->getAccountTransport()) {
+        if (account->getAccountTransport()) {
 
-        	_debug("UserAgent: SIP transport for this account: %s %s (refcnt=%i)",
-        	account->getAccountTransport()->obj_name,
-        	account->getAccountTransport()->info,
-        	(int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
+            _debug ("UserAgent: SIP transport for this account: %s %s (refcnt=%i)",
+                    account->getAccountTransport()->obj_name,
+                    account->getAccountTransport()->info,
+                    (int) pj_atomic_get (account->getAccountTransport()->ref_cnt));
         }
 
     }
@@ -3701,9 +3892,9 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     call->setConnectionState (Call::Progressing);
     call->setPeerNumber (peerNumber);
     call->setDisplayName (displayName);
-    call->initRecFileName();
+    call->initRecFileName (peerNumber);
 
-    _debug("UserAgent: DisplayName: %s", displayName.c_str());
+    _debug ("UserAgent: DisplayName: %s", displayName.c_str());
 
 
     // Have to do some stuff with the SDP
@@ -3723,22 +3914,25 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     status = call->getLocalSDP()->receiving_initial_offer (r_sdp, account->getActiveCodecs ());
 
     if (status!=PJ_SUCCESS) {
-        delete call; call = NULL;
-        _warn("UserAgent: fail in receiving initial offer");
+        delete call;
+        call = NULL;
+        _warn ("UserAgent: fail in receiving initial offer");
         pj_strdup2 (_pool, &reason, "fail in receiving initial offer");
-        pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, 
-				       &reason, NULL, NULL);
+        pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
+                                       &reason, NULL, NULL);
         return false;
     }
 
     /* Create the local dialog (UAS) */
     status = pjsip_dlg_create_uas (pjsip_ua_instance(), rdata, NULL, &dialog);
+
     if (status != PJ_SUCCESS) {
-        delete call; call = NULL;
-        _warn("UserAgent: Error: Failed to create uas dialog");
+        delete call;
+        call = NULL;
+        _warn ("UserAgent: Error: Failed to create uas dialog");
         pj_strdup2 (_pool, &reason, "fail to create uas dialog");
-        pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, 
-				       &reason, NULL, NULL);
+        pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
+                                       &reason, NULL, NULL);
         return false;
     }
 
@@ -3767,18 +3961,20 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     call->setConnectionState (Call::Ringing);
 
     _debug ("UserAgent: Add call to account link");
+
     if (Manager::instance().incomingCall (call, account_id)) {
-    	// Add this call to the callAccountMap in ManagerImpl
-    	Manager::instance().getAccountLink (account_id)->addCall (call);
-	} else {
-		// Fail to notify UI
-		delete call; call = NULL;
-		_warn ("UserAgent: Fail to notify UI!");
-		pj_strdup2 (_pool, &reason, "fail to notify ui");
-		pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
-				&reason, NULL, NULL);
-		return false;
-	}
+        // Add this call to the callAccountMap in ManagerImpl
+        Manager::instance().getAccountLink (account_id)->addCall (call);
+    } else {
+        // Fail to notify UI
+        delete call;
+        call = NULL;
+        _warn ("UserAgent: Fail to notify UI!");
+        pj_strdup2 (_pool, &reason, "fail to notify ui");
+        pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
+                                       &reason, NULL, NULL);
+        return false;
+    }
 
     /* Done */
     return true;
@@ -3788,42 +3984,42 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 pj_bool_t mod_on_rx_response (pjsip_rx_data *rdata)
 {
     _info ("UserAgent: Transaction response using transport: %s %s (refcnt=%d)",
-    	   rdata->tp_info.transport->obj_name,
-    	   rdata->tp_info.transport->info,
-    	   (int)pj_atomic_get(rdata->tp_info.transport->ref_cnt));
+           rdata->tp_info.transport->obj_name,
+           rdata->tp_info.transport->info,
+           (int) pj_atomic_get (rdata->tp_info.transport->ref_cnt));
 
     pjsip_dialog *dlg;
-    dlg = pjsip_rdata_get_dlg( rdata );
+    dlg = pjsip_rdata_get_dlg (rdata);
 
-	if(dlg != NULL) {
-		pjsip_transaction *tsx = pjsip_rdata_get_tsx( rdata );
-		if ( tsx != NULL && tsx->method.id == PJSIP_INVITE_METHOD) {
-			if (tsx->status_code < 200) {
-				_info("UserAgent: Received provisional response");
-			}
-			else if (tsx->status_code >= 300) {
-			    _warn("UserAgent: Dialog failed");
-				// pjsip_dlg_dec_session(dlg);
-				// ACK for non-2xx final response is sent by transaction.
-			}
-			else {
-				_info("UserAgent: Received 200 OK response");
-				sendAck(dlg, rdata);
-			}
-		}
-	}
+    if (dlg != NULL) {
+        pjsip_transaction *tsx = pjsip_rdata_get_tsx (rdata);
+
+        if (tsx != NULL && tsx->method.id == PJSIP_INVITE_METHOD) {
+            if (tsx->status_code < 200) {
+                _info ("UserAgent: Received provisional response");
+            } else if (tsx->status_code >= 300) {
+                _warn ("UserAgent: Dialog failed");
+                // pjsip_dlg_dec_session(dlg);
+                // ACK for non-2xx final response is sent by transaction.
+            } else {
+                _info ("UserAgent: Received 200 OK response");
+                sendAck (dlg, rdata);
+            }
+        }
+    }
 
     return PJ_SUCCESS;
 }
 
-static void sendAck(pjsip_dialog *dlg, pjsip_rx_data *rdata) {
+static void sendAck (pjsip_dialog *dlg, pjsip_rx_data *rdata)
+{
 
-	pjsip_tx_data *tdata;
+    pjsip_tx_data *tdata;
 
-	// Create ACK request
-	pjsip_dlg_create_request(dlg, &pjsip_ack_method, rdata->msg_info.cseq->cseq, &tdata);
+    // Create ACK request
+    pjsip_dlg_create_request (dlg, &pjsip_ack_method, rdata->msg_info.cseq->cseq, &tdata);
 
-	pjsip_dlg_send_request( dlg, tdata,-1, NULL);
+    pjsip_dlg_send_request (dlg, tdata,-1, NULL);
 }
 
 void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
@@ -3872,7 +4068,7 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
      * request.
      */
     ref_by_hdr = (pjsip_hdr*)
-    pjsip_msg_find_hdr_by_name (rdata->msg_info.msg, &str_ref_by, NULL);
+                 pjsip_msg_find_hdr_by_name (rdata->msg_info.msg, &str_ref_by, NULL);
 
     /* Notify callback */
     code = PJSIP_SC_ACCEPTED;
@@ -4104,7 +4300,7 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
 
         /* This better be a NOTIFY request */
         if (r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD &&
-        	 request.find(method_notify) != (size_t)-1) {
+                request.find (method_notify) != (size_t)-1) {
 
             /* Check if there's body */
             msg = r_data->msg_info.msg;
@@ -4137,8 +4333,8 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
         }
 
         // Get call coresponding to this transaction
-        std::string transferID(r_data->msg_info.cid->id.ptr, r_data->msg_info.cid->id.slen);
-        std::map<std::string, CallID>::iterator it = transferCallID.find(transferID);
+        std::string transferID (r_data->msg_info.cid->id.ptr, r_data->msg_info.cid->id.slen);
+        std::map<std::string, CallID>::iterator it = transferCallID.find (transferID);
         CallID cid = it->second;
         SIPCall *call = dynamic_cast<SIPCall *> (link->getCall (cid));
 
@@ -4153,10 +4349,11 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
 
         cont = !is_last;
 
-		_debug("UserAgent: Notification status line: %d", status_line.code);
+        _debug ("UserAgent: Notification status line: %d", status_line.code);
+
         if (status_line.code/100 == 2) {
 
-        	_debug ("UserAgent: Received 200 OK on call transfered, stop call!");
+            _debug ("UserAgent: Received 200 OK on call transfered, stop call!");
             pjsip_tx_data *tdata;
 
             status = pjsip_inv_end_session (call->getInvSession(), PJSIP_SC_GONE, NULL, &tdata);
@@ -4211,9 +4408,9 @@ void xfer_svr_cb (pjsip_evsub *sub, pjsip_event *event)
     }
 }
 
-void on_rx_offer (pjsip_inv_session *inv, const pjmedia_sdp_session *offer)
+void on_rx_offer (pjsip_inv_session *inv, const pjmedia_sdp_session *offer UNUSED)
 {
-	_info("UserAgent: Received SDP offer");
+    _info ("UserAgent: Received SDP offer");
 
 
 #ifdef CAN_REINVITE
@@ -4244,44 +4441,44 @@ void on_rx_offer (pjsip_inv_session *inv, const pjmedia_sdp_session *offer)
 
 }
 
-void on_create_offer(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
+void on_create_offer (pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 {
-	_info("UserAgent: Create new SDP offer");
+    _info ("UserAgent: Create new SDP offer");
 
-	 /* Retrieve the call information */
-	SIPCall * call = NULL;
-	call = reinterpret_cast<SIPCall*> (inv->mod_data[_mod_ua.id]);
+    /* Retrieve the call information */
+    SIPCall * call = NULL;
+    call = reinterpret_cast<SIPCall*> (inv->mod_data[_mod_ua.id]);
 
-	CallID callid = call->getCallId();
-	AccountID accountid = Manager::instance().getAccountFromCall(callid);
+    CallID callid = call->getCallId();
+    AccountID accountid = Manager::instance().getAccountFromCall (callid);
 
-    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(accountid));
+    SIPAccount *account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (accountid));
 
     SIPVoIPLink *link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accountid));
 
-	// Set the local address
-	std::string localAddress = link->getInterfaceAddrFromName(account->getLocalInterface ());
-	// Set SDP parameters - Set to local
-	std::string addrSdp = localAddress;
+    // Set the local address
+    std::string localAddress = link->getInterfaceAddrFromName (account->getLocalInterface ());
+    // Set SDP parameters - Set to local
+    std::string addrSdp = localAddress;
 
-	_debug ("UserAgent: Local Address for IP2IP call: %s", localAddress.c_str());
+    _debug ("UserAgent: Local Address for IP2IP call: %s", localAddress.c_str());
 
-	// If local address bound to ANY, reslove it using PJSIP
-	if (localAddress == "0.0.0.0") {
-		link->loadSIPLocalIP (&localAddress);
-	}
+    // If local address bound to ANY, reslove it using PJSIP
+    if (localAddress == "0.0.0.0") {
+        link->loadSIPLocalIP (&localAddress);
+    }
 
-	// Local address to appear in SDP
-	if (addrSdp == "0.0.0.0") {
-		addrSdp = localAddress;
-	}
+    // Local address to appear in SDP
+    if (addrSdp == "0.0.0.0") {
+        addrSdp = localAddress;
+    }
 
     // Set local address for RTP media
     setCallAudioLocal (call, localAddress);
 
     // Building the local SDP offer
     call->getLocalSDP()->set_ip_address (addrSdp);
-    call->getLocalSDP()->create_initial_offer( account->getActiveCodecs() );
+    call->getLocalSDP()->create_initial_offer (account->getActiveCodecs());
 
     *p_offer = call->getLocalSDP()->get_local_sdp_session();
 
@@ -4337,7 +4534,7 @@ void handle_incoming_options (pjsip_rx_data *rdata)
 
     status = pjsip_endpt_send_response (_endpt, &res_addr, tdata, NULL, NULL);
 
-    
+
     if (status != PJ_SUCCESS)
         pjsip_tx_data_dec_ref (tdata);
 }
@@ -4440,24 +4637,24 @@ std::vector<std::string> SIPVoIPLink::getAllIpInterface (void)
 }
 
 
-int get_iface_list(struct ifconf *ifconf)
+int get_iface_list (struct ifconf *ifconf)
 {
-   int sock, rval;
+    int sock, rval;
 
-   if((sock = socket(AF_INET,SOCK_STREAM,0)) < 0)
-       _debug("get_iface_list error could not open socket\n");
+    if ( (sock = socket (AF_INET,SOCK_STREAM,0)) < 0)
+        _debug ("get_iface_list error could not open socket\n");
 
 
-   if((rval = ioctl(sock, SIOCGIFCONF , (char*) ifconf  )) < 0 )
-       _debug("get_iface_list error ioctl(SIOGIFCONF)\n");
+    if ( (rval = ioctl (sock, SIOCGIFCONF , (char*) ifconf)) < 0)
+        _debug ("get_iface_list error ioctl(SIOGIFCONF)\n");
 
-   close(sock);
+    close (sock);
 
-   return rval;
+    return rval;
 }
 
 
-std::vector<std::string> SIPVoIPLink::getAllIpInterfaceByName(void)
+std::vector<std::string> SIPVoIPLink::getAllIpInterfaceByName (void)
 {
     std::vector<std::string> ifaceList;
 
@@ -4465,30 +4662,31 @@ std::vector<std::string> SIPVoIPLink::getAllIpInterfaceByName(void)
     struct ifconf ifconf;
     int  nifaces;
 
-    // add the default 
-    ifaceList.push_back(std::string("default"));
+    // add the default
+    ifaceList.push_back (std::string ("default"));
 
-    memset(&ifconf,0,sizeof(ifconf));
+    memset (&ifconf,0,sizeof (ifconf));
     ifconf.ifc_buf = (char*) (ifreqs);
-    ifconf.ifc_len = sizeof(ifreqs);
+    ifconf.ifc_len = sizeof (ifreqs);
 
-    if(get_iface_list(&ifconf) < 0)
-        _debug("getAllIpInterfaceByName error could not get interface list\n");
+    if (get_iface_list (&ifconf) < 0)
+        _debug ("getAllIpInterfaceByName error could not get interface list\n");
 
-    nifaces =  ifconf.ifc_len/sizeof(struct ifreq);
+    nifaces =  ifconf.ifc_len/sizeof (struct ifreq);
 
-    _debug("Interfaces (count = %d):\n", nifaces);
-    for(int i = 0; i < nifaces; i++) {
-        _debug("  %s  ", ifreqs[i].ifr_name);
-	ifaceList.push_back(std::string (ifreqs[i].ifr_name));
-	printf("    %s\n", getInterfaceAddrFromName(std::string (ifreqs[i].ifr_name)).c_str());
+    _debug ("Interfaces (count = %d):\n", nifaces);
+
+    for (int i = 0; i < nifaces; i++) {
+        _debug ("  %s  ", ifreqs[i].ifr_name);
+        ifaceList.push_back (std::string (ifreqs[i].ifr_name));
+        printf ("    %s\n", getInterfaceAddrFromName (std::string (ifreqs[i].ifr_name)).c_str());
     }
 
-    return ifaceList;   
+    return ifaceList;
 }
 
 
-pj_bool_t stun_sock_on_status (pj_stun_sock *stun_sock, pj_stun_sock_op op, pj_status_t status)
+pj_bool_t stun_sock_on_status (pj_stun_sock *stun_sock UNUSED, pj_stun_sock_op op UNUSED, pj_status_t status)
 {
     if (status == PJ_SUCCESS)
         return PJ_TRUE;
@@ -4496,7 +4694,7 @@ pj_bool_t stun_sock_on_status (pj_stun_sock *stun_sock, pj_stun_sock_op op, pj_s
         return PJ_FALSE;
 }
 
-pj_bool_t stun_sock_on_rx_data (pj_stun_sock *stun_sock, void *pkt, unsigned pkt_len, const pj_sockaddr_t *src_addr, unsigned addr_len)
+pj_bool_t stun_sock_on_rx_data (pj_stun_sock *stun_sock UNUSED, void *pkt UNUSED, unsigned pkt_len UNUSED, const pj_sockaddr_t *src_addr UNUSED, unsigned addr_len UNUSED)
 {
     return PJ_TRUE;
 }

@@ -1,0 +1,136 @@
+<chapter id="common-use">
+
+<chapterinfo>
+<authorgroup>
+<author>
+<firstname>J&eacute;r&eacute;my</firstname>
+<surname>Quentin</surname>
+</author>
+<!-- TRANS:ROLES_OF_TRANSLATORS -->
+</authorgroup>
+</chapterinfo>
+
+<title>Common use of &sflphone-client-kde;</title>
+ 
+<sect1 id="common-use-current">
+<title>Handling a call</title>
+
+<para>There are a bunch of features that you can apply on a current call with &sflphone;. Here are their descriptions.
+</para>
+
+<sect2 id="common-use-current-new">
+<title>Placing a new call</title>
+
+<para> You can have plenty of calls in parallel, even if only one is current (ie : you can talk through) and the others are on hold. To place a new call when you are on a current call, click on the Place new call button, it will create a new empty item and select it automatically, then type the phone number you want to call and click Call or type Enter to place the call. You can also go to the &history-w; or the &address-w; and valid a call, and it will be added ringing in the &current-w;. When a new call is placed, any other one is put on hold, so that you can't mix two calls. If you want to go back to one of the calls put on hold, just double-click on the corresponding item and it will go back to current state while the old one is put on hold.
+</para>
+
+</sect2>
+
+<sect2 id="common-use-current-hold">
+<title>Holding a call</title>
+
+<para> If you want to place the current call on hold, you just have to click on the Hold button. The icon of the call will then be changed and communication is paused with your peer. You can then place a new call, transfer the held one (see transf...)... To take the communication back, just double-click on the item or click on Unhold button.
+</para>
+
+</sect2>
+
+<sect2 id="common-use-current-transfer">
+<title>Transfering a call</title>
+
+<para> If you want to transfer the current call to another phone number, click on the transfer button, the item will change and enable you to type the number to which you want to transfer your peer. Once you've typed it, click on Valid transfer button or type Enter to effectively transfer the call. You can place the call on hold while typing the number (see hold).
+</para>
+
+</sect2>
+
+<sect2 id="common-use-current-record">
+<title>Recording a call</title>
+
+<para> If you want to record the current call, click on the record button, the button will become triggered and the light may come on. Since &sflphone; only records calls when they are current (ie : not on hold), the light will be on if the selected call is current and can be recorded, and off if it's not. But if the button is triggered, &sflphone; will record as soon as it's communicating.
+</para>
+
+</sect2>
+
+</sect1>
+
+<sect1 id="common-use-mailbox">
+<title>Call mailbox</title>
+
+<para>You can call your mailbox typing your account's mailbox number. But if you have registered this number in account's settings, you can just click on Mailbox button. It will call the mailbox of the first registered account.</para>
+
+<para> In both case, you can then type your mailbox's password without worrying about people around, since &sflphone; will not display what you type if the called number is the registered mailbox number of the current call's account.
+</para>
+
+</sect1>
+
+<sect1 id="common-use-address">
+<title>Use the address book</title>
+
+<para>&sflphone-client-kde; communicates with the KDE Address Book and gathers all the phone numbers matching your request and the options chosen. Here we will explain how to configure and use it.</para>
+
+
+<sect2 id="common-use-address-kde">
+<title>Configuring KDE Address Book</title>
+
+<para> As it is fully designed for KDE, &sflphone-client-kde; looks for your contacts in KDE Address Book. So you first have to configure it. In the K Menu of your KDE, go to Applications,then Bureautique (??), then choose Address Book. You are now in the main window of the KDE address book. You can add contacts and handle them from here. Type F1 to see this application's help page if you have some problems with it.
+</para>
+
+<para> &sflphone-client-kde; looks into the standard address book, that means it will look into the contacts displayed in the contact list on the left of the window. The selected address books in the bottom left of the window will be searched. If you add some contacts, you may have to restart &sflphone-client-kde; before it can see them.
+</para>
+
+
+</sect2>
+
+
+<sect2 id="common-use-address-config">
+<title>Configuring &sflphone-client-kde;</title>
+
+<para> You can now go to the Configuration Dialog to choose how &sflphone; will handle your searches in the address book. This step is optionnal though, because the default settings enable you to use the feature without more setup. 
+</para>
+
+<para> The maximum results setting enables you to choose how many phone numbers can be displayed when you look for a contact. KDE address book can contain lots of contacts, especially if connected to LDAP directories, and you don't want to see thousands of contacts displayed as soon as you type a letter to search for.</para>
+
+<para> KDE address book can contain a photo for your contacts. &sflphone-client-kde; can display it in the result of your searches, but as it can take a little more time, you can choose to disable that feature.</para>
+
+<para> Each phone number in KDE address book is linked to a contact, and has a phone number type to differentiate work phones, home phones, and cell phones. You can choose to display only certain of those numbers. Check the types you are interested in and uncheck the other ones.</para>
+
+</sect2>
+
+<sect2 id="common-use-address-use">
+<title>Search in Address Book</title>
+
+<para> Now that everything is set up, you can go to the &address-w;, then type some letters of the name you want to phone. You will see all the phone numbers that match your request and their type. When the resulting list's size is greater than the maximum chosen in configuration, it will only display the beginning of the list with the max size, and will display a warning message to let you know that your wanted number may be in the rest of the list and so not displayed. In that case you should type some more letters to improve precision of the search. Once you found the right number, double click on the item to call it. 
+</para>
+
+</sect2>
+
+
+</sect1>
+
+
+
+<sect1 id="common-use-config">
+<title>Configuration Dialog</title>
+
+<para> There are a lot of options in &sflphone;. All of them are gathered and sorted in the Configuration Dialog. You can reach it clicking Configure SFLPhone in the Settings menu. Here are presented some commonly useful options</para>
+
+<sect2 id="common-use-config-address">
+<title>General settings</title>
+
+<para> Here you can choose the capacity of the call history. 
+</para>
+
+</sect2>
+
+</sect1>
+
+
+
+
+
+
+
+
+
+
+
+</chapter>

@@ -35,7 +35,6 @@
 #include <cc++/thread.h> // for mutex
 #include <sstream>
 
-// #include "plug-in/audiorecorder/audiorecord.h"
 #include "audio/recordable.h"
 
 #define SIP_SCHEME       "sip:"
@@ -43,14 +42,15 @@
 
 #define CallConfigNULL   NULL
 
-/* 
- * @file call.h 
+/*
+ * @file call.h
  * @brief A call is the base class for protocol-based calls
  */
 
 typedef std::string CallID;
 
-class Call: public Recordable{
+class Call: public Recordable
+{
     public:
 
         /**
@@ -84,84 +84,103 @@ class Call: public Recordable{
          * @param id Unique identifier of the call
          * @param type set definitely this call as incoming/outgoing
          */
-        Call(const CallID& id, Call::CallType type);
+        Call (const CallID& id, Call::CallType type);
         virtual ~Call();
 
-        /** 
+        /**
          * Return a reference on the call id
          * @return call id
          */
-        CallID& getCallId() {return _id; }
+        CallID& getCallId() {
+            return _id;
+        }
 
-	/** 
-         * Return a reference on the conference id
-         * @return call id
-         */
-        CallID& getConfId() {return _confID; }
+        /**
+             * Return a reference on the conference id
+             * @return call id
+             */
+        CallID& getConfId() {
+            return _confID;
+        }
 
-	void setConfId(CallID id) {_confID = id; }
+        void setConfId (CallID id) {
+            _confID = id;
+        }
 
-        inline CallType getCallType (void)
-        {
+        inline CallType getCallType (void) {
             return _type;
         }
 
-        /** 
+        /**
          * Set the peer number (destination on outgoing)
          * not protected by mutex (when created)
          * @param number peer number
          */
-        void setPeerNumber(const std::string& number) {  _peerNumber = number; }
+        void setPeerNumber (const std::string& number) {
+            _peerNumber = number;
+        }
 
-        /** 
+        /**
          * Get the peer number (destination on outgoing)
          * not protected by mutex (when created)
          * @return std::string The peer number
          */
-        const std::string& getPeerNumber() {  return _peerNumber; }
+        const std::string& getPeerNumber() {
+            return _peerNumber;
+        }
 
-        /** 
+        /**
          * Set the peer name (caller in ingoing)
          * not protected by mutex (when created)
          * @param name The peer name
          */
-        void setPeerName(const std::string& name) {  _peerName = name; }
+        void setPeerName (const std::string& name) {
+            _peerName = name;
+        }
 
-        /** 
+        /**
          * Get the peer name (caller in ingoing)
          * not protected by mutex (when created)
          * @return std::string The peer name
          */
-        const std::string& getPeerName() {  return _peerName; }
+        const std::string& getPeerName() {
+            return _peerName;
+        }
 
-	/** 
-         * Set the display name (caller in ingoing)
-         * not protected by mutex (when created)
-         * @return std::string The peer display name
-         */
-        void setDisplayName(const std::string& name) {  _displayName = name; }
+        /**
+             * Set the display name (caller in ingoing)
+             * not protected by mutex (when created)
+             * @return std::string The peer display name
+             */
+        void setDisplayName (const std::string& name) {
+            _displayName = name;
+        }
 
-	/** 
-         * Get the peer display name (caller in ingoing)
-         * not protected by mutex (when created)
-         * @return std::string The peer name
-         */
-        const std::string& getDisplayName() {  return _displayName; }
+        /**
+             * Get the peer display name (caller in ingoing)
+             * not protected by mutex (when created)
+             * @return std::string The peer name
+             */
+        const std::string& getDisplayName() {
+            return _displayName;
+        }
 
         /**
          * Tell if the call is incoming
          * @return true if yes
          *	      false otherwise
          */
-        bool isIncoming() { return (_type == Incoming) ? true : false; }
+        bool isIncoming() {
+            return (_type == Incoming) ? true : false;
+        }
 
-        /** 
+        /**
          * Set the connection state of the call (protected by mutex)
          * @param state The connection state
          */
-        void setConnectionState(ConnectionState state);
+        void setConnectionState (ConnectionState state);
 
-        /** 
+        /**
          * Get the connection state of the call (protected by mutex)
          * @return ConnectionState The connection state
          */
@@ -171,26 +190,30 @@ class Call: public Recordable{
          * Set the state of the call (protected by mutex)
          * @param state The call state
          */
-        void setState(CallState state);
+        void setState (CallState state);
 
-        /** 
+        /**
          * Get the call state of the call (protected by mutex)
          * @return CallState  The call state
          */
         CallState getState();
-        
+
         std::string getStateStr ();
 
-        void setCallConfiguration (Call::CallConfiguration callConfig) { _callConfig = callConfig; }
-        
-        Call::CallConfiguration getCallConfiguration (void) { return _callConfig; }
-        
+        void setCallConfiguration (Call::CallConfiguration callConfig) {
+            _callConfig = callConfig;
+        }
+
+        Call::CallConfiguration getCallConfiguration (void) {
+            return _callConfig;
+        }
+
         /**
          * Set the audio start boolean (protected by mutex)
          * @param start true if we start the audio
          *		    false otherwise
          */
-        void setAudioStart(bool start);
+        void setAudioStart (bool start);
 
         /**
          * Tell if the audio is started (protected by mutex)
@@ -199,45 +222,59 @@ class Call: public Recordable{
          */
         bool isAudioStarted();
 
-        /** 
-         * Set my IP [not protected] 
+        /**
+         * Set my IP [not protected]
          * @param ip  The local IP address
          */
-        void setLocalIp(const std::string& ip)     { _localIPAddress = ip; }
+        void setLocalIp (const std::string& ip)     {
+            _localIPAddress = ip;
+        }
 
-        /** 
+        /**
          * Set local audio port, as seen by me [not protected]
          * @param port  The local audio port
          */
-        void setLocalAudioPort(unsigned int port)  { _localAudioPort = port;}
+        void setLocalAudioPort (unsigned int port)  {
+            _localAudioPort = port;
+        }
 
-        /** 
+        /**
          * Set the audio port that remote will see.
          * @param port  The external audio port
          */
-        void setLocalExternAudioPort(unsigned int port) { _localExternalAudioPort = port; }
+        void setLocalExternAudioPort (unsigned int port) {
+            _localExternalAudioPort = port;
+        }
 
-        /** 
-         * Return the audio port seen by the remote side. 
+        /**
+         * Return the audio port seen by the remote side.
          * @return unsigned int The external audio port
          */
-        unsigned int getLocalExternAudioPort() { return _localExternalAudioPort; }
+        unsigned int getLocalExternAudioPort() {
+            return _localExternalAudioPort;
+        }
 
-        /** 
-         * Return my IP [mutex protected] 
+        /**
+         * Return my IP [mutex protected]
          * @return std::string The local IP
          */
         const std::string& getLocalIp();
 
-        /** 
-         * Return port used locally (for my machine) [mutex protected] 
+        /**
+         * Return port used locally (for my machine) [mutex protected]
          * @return unsigned int  The local audio port
          */
         unsigned int getLocalAudioPort();
 
-	std::string getRecFileId(){ return getPeerName(); }
+        std::string getRecFileId (void) {
+            return getPeerName();
+        }
 
-	std::string getFileName() { return _filename; }
+        std::string getFileName (void) {
+            return _peerNumber;
+        }
+
+        virtual bool setRecording (void);
 
     protected:
         /** Protect every attribute that can be changed by two threads */
@@ -257,13 +294,13 @@ class Call: public Recordable{
         unsigned int _localExternalAudioPort;
 
 
-    private:  
+    private:
 
         /** Unique ID of the call */
         CallID _id;
 
-	/** Unique conference ID, used exclusively in case of a conferece */
-	CallID _confID;
+        /** Unique conference ID, used exclusively in case of a conferece */
+        CallID _confID;
 
         /** Type of the call */
         CallType _type;
@@ -283,13 +320,13 @@ class Call: public Recordable{
         /** Number of the peer */
         std::string _peerNumber;
 
-	/** Display Name */
-	std::string _displayName;
+        /** Display Name */
+        std::string _displayName;
 
-	/** File name for his call : time YY-MM-DD */
+        /** File name for his call, should be peer number */
         std::string _filename;
 
-	
+
 };
 
 #endif

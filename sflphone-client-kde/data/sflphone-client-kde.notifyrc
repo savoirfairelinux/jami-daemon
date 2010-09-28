@@ -1,0 +1,25 @@
+[Global]
+Name=sflphone-client-kde
+IconName=sflphone-client-kde
+Comment=SFLphone VoIP KDE4 client
+
+[Event/contact online]
+Name=Contact Online
+Comment=A contact has come online
+Sound=
+Action=Sound|Popup
+
+
+[Event/test_notification]
+Name=test message
+Comment=Test message
+Contexts=call
+Action=Sound|Popup|Taskbar
+Persistant=true
+Sound=
+
+[Event/test_notification2]
+Name=test message2
+Comment=Test message2
+Sound=KDE-Im-New-Mail.ogg
+Action=None

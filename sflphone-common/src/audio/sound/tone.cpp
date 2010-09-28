@@ -42,9 +42,9 @@
 #define TABLE_LENGTH 4096
 double TWOPI = 2 * M_PI;
 
-Tone::Tone (const std::string& definition, unsigned int sampleRate) : AudioLoop(), _sampleRate (sampleRate), _xhigher(0.0), _xlower(0.0)
+Tone::Tone (const std::string& definition, unsigned int sampleRate) : AudioLoop(), _sampleRate (sampleRate), _xhigher (0.0), _xlower (0.0)
 {
-	fillWavetable();
+    fillWavetable();
     genBuffer (definition); // allocate memory with definition parameter
 }
 
@@ -116,7 +116,7 @@ Tone::genBuffer (const std::string& definition)
             }
 
             // Generate SAMPLING_RATE samples of sinus, buffer is the result
-            _debug("genSin(%d, %d)", freq1, freq2);
+            _debug ("genSin(%d, %d)", freq1, freq2);
             genSin (bufferPos, freq1, freq2, count);
 
             // To concatenate the different buffers for each section.
@@ -143,67 +143,67 @@ Tone::genBuffer (const std::string& definition)
 void
 Tone::fillWavetable()
 {
-	double tableSize = (double)TABLE_LENGTH;
+    double tableSize = (double) TABLE_LENGTH;
 
-	for(int i = 0; i < TABLE_LENGTH; i++) {
-		_wavetable[i] = sin( ((double)i / (tableSize - 1.0)) * TWOPI );
-	}
+    for (int i = 0; i < TABLE_LENGTH; i++) {
+        _wavetable[i] = sin ( ( (double) i / (tableSize - 1.0)) * TWOPI);
+    }
 }
 
 double
-Tone::interpolate(double x)
+Tone::interpolate (double x)
 {
-	int xi_0, xi_1;
-	double yi_0, yi_1, A, B;
+    int xi_0, xi_1;
+    double yi_0, yi_1, A, B;
 
-	xi_0 = (int)x;
-	xi_1 = xi_0+1;
+    xi_0 = (int) x;
+    xi_1 = xi_0+1;
 
-	yi_0  =_wavetable[xi_0];
-	yi_1 = _wavetable[xi_1];
+    yi_0  =_wavetable[xi_0];
+    yi_1 = _wavetable[xi_1];
 
-	A = (x - xi_0);
-	B = 1.0 - A;
+    A = (x - xi_0);
+    B = 1.0 - A;
 
-	return A*yi_0 + B*yi_1;
+    return A*yi_0 + B*yi_1;
 }
 
 void
 Tone::genSin (SFLDataFormat* buffer, int frequency1, int frequency2, int nb)
 {
-	_xhigher = 0.0;
-	_xlower = 0.0;
+    _xhigher = 0.0;
+    _xlower = 0.0;
 
-	double sr = (double)_sampleRate;
-	double tableSize = (double)TABLE_LENGTH;
+    double sr = (double) _sampleRate;
+    double tableSize = (double) TABLE_LENGTH;
 
-	 double N_h = sr / (double) (frequency1);
-	 double N_l = sr / (double)  (frequency2);
+    double N_h = sr / (double) (frequency1);
+    double N_l = sr / (double) (frequency2);
 
-	 double dx_h = tableSize / N_h;
-	 double dx_l = tableSize / N_l;
+    double dx_h = tableSize / N_h;
+    double dx_l = tableSize / N_l;
 
-	 double x_h = _xhigher;
-	 double x_l = _xlower;
+    double x_h = _xhigher;
+    double x_l = _xlower;
 
-	 double amp = (double)SFLDataAmplitude;
+    double amp = (double) SFLDataAmplitude;
 
-	 for (int t = 0; t < nb; t ++) {
-		 buffer[t] = (int16)(amp*(interpolate(x_h) + interpolate(x_l)));
-		 x_h += dx_h;
-		 x_l += dx_l;
+    for (int t = 0; t < nb; t ++) {
+        buffer[t] = (int16) (amp* (interpolate (x_h) + interpolate (x_l)));
+        x_h += dx_h;
+        x_l += dx_l;
 
-		 if(x_h > tableSize) {
-			 x_h -= tableSize;
-		}
+        if (x_h > tableSize) {
+            x_h -= tableSize;
+        }
 
-		 if(x_l > tableSize) {
-			 x_l -= tableSize;
-		}
-	 }
+        if (x_l > tableSize) {
+            x_l -= tableSize;
+        }
+    }
 
-	 _xhigher = x_h;
-	 _xlower = x_l;
+    _xhigher = x_h;
+    _xlower = x_l;
 
 }
 

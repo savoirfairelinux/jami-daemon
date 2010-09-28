@@ -64,7 +64,7 @@ AudioLoop::getNext (SFLDataFormat* output, int nb, short volume)
         bcopy (_buffer+pos, output, block*sizeof (SFLDataFormat)); // short>char conversion
 
         if (volume!=100) {
-            for (int i=0;i<block;i++) {
+            for (int i=0; i<block; i++) {
                 *output = (*output * volume) /100;
                 output++;
             }

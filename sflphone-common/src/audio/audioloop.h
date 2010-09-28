@@ -2,9 +2,9 @@
  *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *
- *  Inspired by tonegenerator of 
+ *  Inspired by tonegenerator of
  *   Laurielle Lea <laurielle.lea@savoirfairelinux.com> (2004)
- * 
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
@@ -41,60 +41,65 @@
  * @brief Loop on a sound file
  */
 
-class AudioLoop {
-public:
-  /**
-   * Constructor
-   */
-  AudioLoop();
-  
-  /**
-   * Virtual destructor
-   */
-  virtual ~AudioLoop();
+class AudioLoop
+{
+    public:
+        /**
+         * Constructor
+         */
+        AudioLoop();
 
-  /**
-   * Get the next fragment of the tone
-   * the function change the intern position, and will loop
-   * @param output  The data buffer
-   * @param nb of int16 to send
-   * @param volume  The volume
-   * @return the number of int16 sent (nb*2)
-   */
-  int getNext(SFLDataFormat* output, int nb, short volume=100);
-  
-  /**
-   * Reset the pointer position
-   */ 
-  void reset() { _pos = 0; }
+        /**
+         * Virtual destructor
+         */
+        virtual ~AudioLoop();
 
-  /**
-   * Accessor to the size of the buffer
-   * @return unsigned int The size
-   */
-  unsigned int getSize() { return _size; }
-  
+        /**
+         * Get the next fragment of the tone
+         * the function change the intern position, and will loop
+         * @param output  The data buffer
+         * @param nb of int16 to send
+         * @param volume  The volume
+         * @return the number of int16 sent (nb*2)
+         */
+        int getNext (SFLDataFormat* output, int nb, short volume=100);
 
-protected:
-  /** The data buffer */
-  SFLDataFormat* _buffer;
+        /**
+         * Reset the pointer position
+         */
+        void reset() {
+            _pos = 0;
+        }
 
-  /** Number of int16 inside the buffer, not the delay */
-  int _size;  
+        /**
+         * Accessor to the size of the buffer
+         * @return unsigned int The size
+         */
+        unsigned int getSize() {
+            return _size;
+        }
 
-  /** current position, set to 0, when initialize */
-  int _pos;  
 
-  /** Sample rate */
-  int _sampleRate;
+    protected:
+        /** The data buffer */
+        SFLDataFormat* _buffer;
 
-private:
- 
-  // Copy Constructor
-  AudioLoop(const AudioLoop& rh);
+        /** Number of int16 inside the buffer, not the delay */
+        int _size;
 
-  // Assignment Operator
-  AudioLoop& operator=( const AudioLoop& rh);
+        /** current position, set to 0, when initialize */
+        int _pos;
+
+        /** Sample rate */
+        int _sampleRate;
+
+    private:
+
+        // Copy Constructor
+        AudioLoop (const AudioLoop& rh);
+
+        // Assignment Operator
+        AudioLoop& operator= (const AudioLoop& rh);
 };
 
 #endif // __AUDIOLOOP_H__

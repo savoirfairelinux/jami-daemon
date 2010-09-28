@@ -85,7 +85,7 @@ sdpMedia::sdpMedia (std::string type, int port, std::string dir)
 
 sdpMedia::~sdpMedia()
 {
-	clear_codec_list();
+    clear_codec_list();
 }
 
 

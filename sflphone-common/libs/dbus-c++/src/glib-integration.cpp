@@ -31,27 +31,23 @@
 using namespace DBus;
 
 Glib::BusTimeout::BusTimeout (Timeout::Internal *ti, GMainContext *ctx, int priority)
-        : Timeout (ti), _ctx (ctx), _priority (priority), _source (NULL)
-{
+        : Timeout (ti), _ctx (ctx), _priority (priority), _source (NULL) {
     if (Timeout::enabled())
         _enable();
 }
 
-Glib::BusTimeout::~BusTimeout()
-{
+Glib::BusTimeout::~BusTimeout() {
     _disable();
 }
 
-void Glib::BusTimeout::toggle()
-{
+void Glib::BusTimeout::toggle() {
     debug_log ("glib: timeout %p toggled (%s)", this, Timeout::enabled() ? "on":"off");
 
     if (Timeout::enabled())	_enable();
     else			_disable();
 }
 
-gboolean Glib::BusTimeout::timeout_handler (gpointer data)
-{
+gboolean Glib::BusTimeout::timeout_handler (gpointer data) {
     Glib::BusTimeout *t = reinterpret_cast<Glib::BusTimeout *> (data);
 
     t->handle();
@@ -59,8 +55,7 @@ gboolean Glib::BusTimeout::timeout_handler (gpointer data)
     return TRUE;
 }
 
-void Glib::BusTimeout::_enable()
-{
+void Glib::BusTimeout::_enable() {
     if (_source)
         _disable(); // be sane
 
@@ -73,8 +68,7 @@ void Glib::BusTimeout::_enable()
     g_source_attach (_source, _ctx);
 }
 
-void Glib::BusTimeout::_disable()
-{
+void Glib::BusTimeout::_disable() {
     if (_source) {
         g_source_destroy (_source);
         _source = NULL;
@@ -86,24 +80,21 @@ struct BusSource {
     GPollFD poll;
 };
 
-static gboolean watch_prepare (GSource *source, gint *timeout)
-{
+static gboolean watch_prepare (GSource *source, gint *timeout) {
     //debug_log("glib: watch_prepare");
 
     *timeout = -1;
     return FALSE;
 }
 
-static gboolean watch_check (GSource *source)
-{
+static gboolean watch_check (GSource *source) {
     //debug_log("glib: watch_check");
 
     BusSource *io = (BusSource *) source;
     return io->poll.revents ? TRUE : FALSE;
 }
 
-static gboolean watch_dispatch (GSource *source, GSourceFunc callback, gpointer data)
-{
+static gboolean watch_dispatch (GSource *source, GSourceFunc callback, gpointer data) {
     debug_log ("glib: watch_dispatch");
 
     gboolean cb = callback (data);
@@ -118,27 +109,23 @@ static GSourceFuncs watch_funcs = {
 };
 
 Glib::BusWatch::BusWatch (Watch::Internal *wi, GMainContext *ctx, int priority)
-        : Watch (wi), _ctx (ctx), _priority (priority), _source (NULL)
-{
+        : Watch (wi), _ctx (ctx), _priority (priority), _source (NULL) {
     if (Watch::enabled())
         _enable();
 }
 
-Glib::BusWatch::~BusWatch()
-{
+Glib::BusWatch::~BusWatch() {
     _disable();
 }
 
-void Glib::BusWatch::toggle()
-{
+void Glib::BusWatch::toggle() {
     debug_log ("glib: watch %p toggled (%s)", this, Watch::enabled() ? "on":"off");
 
     if (Watch::enabled())	_enable();
     else			_disable();
 }
 
-gboolean Glib::BusWatch::watch_handler (gpointer data)
-{
+gboolean Glib::BusWatch::watch_handler (gpointer data) {
     Glib::BusWatch *w = reinterpret_cast<Glib::BusWatch *> (data);
 
     BusSource *io = (BusSource *) (w->_source);
@@ -162,8 +149,7 @@ gboolean Glib::BusWatch::watch_handler (gpointer data)
     return TRUE;
 }
 
-void Glib::BusWatch::_enable()
-{
+void Glib::BusWatch::_enable() {
     if (_source)
         _disable(); // be sane
 
@@ -202,8 +188,7 @@ void Glib::BusWatch::_enable()
     g_source_attach (_source, _ctx);
 }
 
-void Glib::BusWatch::_disable()
-{
+void Glib::BusWatch::_disable() {
     if (!_source)
         return;
 
@@ -228,8 +213,7 @@ struct DispatcherSource {
 };
 
 
-static gboolean dispatcher_prepare (GSource *source, gint *timeout)
-{
+static gboolean dispatcher_prepare (GSource *source, gint *timeout) {
     Dispatcher *dispatcher = ( (DispatcherSource*) source)->dispatcher;
 
     *timeout = -1;
@@ -237,16 +221,14 @@ static gboolean dispatcher_prepare (GSource *source, gint *timeout)
     return dispatcher->has_something_to_dispatch() ? TRUE:FALSE;
 }
 
-static gboolean dispatcher_check (GSource *source)
-{
+static gboolean dispatcher_check (GSource *source) {
     return FALSE;
 }
 
 static gboolean
 dispatcher_dispatch (GSource *source,
                      GSourceFunc callback,
-                     gpointer user_data)
-{
+                     gpointer user_data) {
     Dispatcher *dispatcher = ( (DispatcherSource*) source)->dispatcher;
 
     dispatcher->dispatch_pending();
@@ -261,12 +243,10 @@ static const GSourceFuncs dispatcher_funcs = {
 };
 
 Glib::BusDispatcher::BusDispatcher()
-        : _ctx (NULL), _priority (G_PRIORITY_DEFAULT), _source (NULL)
-{
+        : _ctx (NULL), _priority (G_PRIORITY_DEFAULT), _source (NULL) {
 }
 
-Glib::BusDispatcher::~BusDispatcher()
-{
+Glib::BusDispatcher::~BusDispatcher() {
     if (_source) {
         GSource *temp = _source;
         _source = NULL;
@@ -279,8 +259,7 @@ Glib::BusDispatcher::~BusDispatcher()
         g_main_context_unref (_ctx);
 }
 
-void Glib::BusDispatcher::attach (GMainContext *ctx)
-{
+void Glib::BusDispatcher::attach (GMainContext *ctx) {
     g_assert (_ctx == NULL); // just to be sane
 
     _ctx = ctx ? ctx : g_main_context_default();
@@ -294,8 +273,7 @@ void Glib::BusDispatcher::attach (GMainContext *ctx)
     g_source_attach (_source, _ctx);
 }
 
-Timeout *Glib::BusDispatcher::add_timeout (Timeout::Internal *wi)
-{
+Timeout *Glib::BusDispatcher::add_timeout (Timeout::Internal *wi) {
     Timeout *t = new Glib::BusTimeout (wi, _ctx, _priority);
 
     debug_log ("glib: added timeout %p (%s)", t, t->enabled() ? "on":"off");
@@ -303,15 +281,13 @@ Timeout *Glib::BusDispatcher::add_timeout (Timeout::Internal *wi)
     return t;
 }
 
-void Glib::BusDispatcher::rem_timeout (Timeout *t)
-{
+void Glib::BusDispatcher::rem_timeout (Timeout *t) {
     debug_log ("glib: removed timeout %p", t);
 
     delete t;
 }
 
-Watch *Glib::BusDispatcher::add_watch (Watch::Internal *wi)
-{
+Watch *Glib::BusDispatcher::add_watch (Watch::Internal *wi) {
     Watch *w = new Glib::BusWatch (wi, _ctx, _priority);
 
     debug_log ("glib: added watch %p (%s) fd=%d flags=%d",
@@ -320,14 +296,12 @@ Watch *Glib::BusDispatcher::add_watch (Watch::Internal *wi)
     return w;
 }
 
-void Glib::BusDispatcher::rem_watch (Watch *w)
-{
+void Glib::BusDispatcher::rem_watch (Watch *w) {
     debug_log ("glib: removed watch %p", w);
 
     delete w;
 }
 
-void Glib::BusDispatcher::set_priority (int priority)
-{
+void Glib::BusDispatcher::set_priority (int priority) {
     _priority = priority;
 }

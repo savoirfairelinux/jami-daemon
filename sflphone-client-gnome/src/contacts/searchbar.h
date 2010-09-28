@@ -69,7 +69,7 @@ SearchType get_current_history_search_type (void);
 /**
  * Initialize a specific search bar
  */
-void searchbar_init(calltab_t *);
+void searchbar_init (calltab_t *);
 
 /**
  * Activate a waiting layer during search
@@ -80,5 +80,12 @@ void activateWaitingLayer();
  * Deactivate waiting layer
  */
 void deactivateWaitingLayer();
+
+/**
+ * Reload combo box to update list of active addressbook
+ */
+void update_searchbar_addressbook_list (void);
+
+GtkWidget *addressbook_menu_new (void);
 
 #endif

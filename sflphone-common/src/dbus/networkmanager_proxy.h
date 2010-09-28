@@ -9,70 +9,69 @@
 #include <dbus-c++/dbus.h>
 #include <cassert>
 
-namespace org {
-namespace freedesktop {
+namespace org
+{
+namespace freedesktop
+{
 
 class NetworkManager_proxy
-: public ::DBus::InterfaceProxy
+        : public ::DBus::InterfaceProxy
 {
-public:
+    public:
 
-    NetworkManager_proxy()
-    : ::DBus::InterfaceProxy("org.freedesktop.NetworkManager")
-    {
-        connect_signal(NetworkManager_proxy, StateChanged, _StateChanged_stub);
-        connect_signal(NetworkManager_proxy, PropertiesChanged, _PropertiesChanged_stub);
-    }
+        NetworkManager_proxy()
+                : ::DBus::InterfaceProxy ("org.freedesktop.NetworkManager") {
+            connect_signal (NetworkManager_proxy, StateChanged, _StateChanged_stub);
+            connect_signal (NetworkManager_proxy, PropertiesChanged, _PropertiesChanged_stub);
+        }
 
-public:
+    public:
 
-    /* properties exported by this interface */
-public:
+        /* properties exported by this interface */
+    public:
 
-    /* methods exported by this interface,
-     * this functions will invoke the corresponding methods on the remote objects
-     */
-    std::vector< ::DBus::Path > GetDevices()
-    {
-        ::DBus::CallMessage call;
-        call.member("GetDevices");
-        ::DBus::Message ret = invoke_method (call);
-        ::DBus::MessageIter ri = ret.reader();
+        /* methods exported by this interface,
+         * this functions will invoke the corresponding methods on the remote objects
+         */
+        std::vector< ::DBus::Path > GetDevices() {
+            ::DBus::CallMessage call;
+            call.member ("GetDevices");
+            ::DBus::Message ret = invoke_method (call);
+            ::DBus::MessageIter ri = ret.reader();
 
-        std::vector< ::DBus::Path > argout;
-        ri >> argout;
-        return argout;
-    }
+            std::vector< ::DBus::Path > argout;
+            ri >> argout;
+            return argout;
+        }
 
 
-public:
+    public:
 
-    /* signal handlers for this interface
-     */
-    virtual void StateChanged(const uint32_t& argin0) = 0;
-    virtual void PropertiesChanged(const std::map< std::string, ::DBus::Variant >& argin0) = 0;
+        /* signal handlers for this interface
+         */
+        virtual void StateChanged (const uint32_t& argin0) = 0;
+        virtual void PropertiesChanged (const std::map< std::string, ::DBus::Variant >& argin0) = 0;
 
-private:
+    private:
 
-    /* unmarshalers (to unpack the DBus message before calling the actual signal handler)
-     */
-    void _StateChanged_stub(const ::DBus::SignalMessage &sig)
-    {
-        ::DBus::MessageIter ri = sig.reader();
+        /* unmarshalers (to unpack the DBus message before calling the actual signal handler)
+         */
+        void _StateChanged_stub (const ::DBus::SignalMessage &sig) {
+            ::DBus::MessageIter ri = sig.reader();
 
-        uint32_t arg0;
-        ri >> arg0;
-        StateChanged(arg0);
-    }
-    void _PropertiesChanged_stub(const ::DBus::SignalMessage &sig)
-    {
-        ::DBus::MessageIter ri = sig.reader();
+            uint32_t arg0;
+            ri >> arg0;
+            StateChanged (arg0);
+        }
+        void _PropertiesChanged_stub (const ::DBus::SignalMessage &sig) {
+            ::DBus::MessageIter ri = sig.reader();
 
-        std::map< std::string, ::DBus::Variant > arg0;
-        ri >> arg0;
-        PropertiesChanged(arg0);
-    }
+            std::map< std::string, ::DBus::Variant > arg0;
+            ri >> arg0;
+            PropertiesChanged (arg0);
+        }
 };
 
-} } 
+}
+}
 #endif //__dbusxx__networkmanager_proxy_h__PROXY_MARSHAL_H

@@ -52,6 +52,7 @@ AC_CONFIG_FILES([Makefile])
 
 	AC_CONFIG_FILES([src/Makefile \
 			src/sip/Makefile \
+			src/im/Makefile \
 			src/iax/Makefile \
 			src/audio/Makefile \
 			src/audio/audiortp/Makefile \
@@ -61,7 +62,6 @@ AC_CONFIG_FILES([Makefile])
 			src/audio/codecs/Makefile \
 			src/config/Makefile \
 			src/dbus/Makefile \
-			src/plug-in/audiorecorder/Makefile \
 			src/plug-in/Makefile \
 			src/plug-in/test/Makefile \
 			src/hooks/Makefile \
@@ -177,7 +177,7 @@ AC_SUBST(UUID_LIBS)
 AC_SUBST(ALSA_LIBS)
 
 	dnl Check for pulseaudio development package - name: libpulse-dev 
-	LIBPULSE_MIN_VERSION=0.9.6
+	LIBPULSE_MIN_VERSION=0.9.15
 	PKG_CHECK_MODULES(PULSEAUDIO, libpulse >= ${LIBPULSE_MIN_VERSION})
 	AC_SUBST(PULSEAUDIO_LIBS)
 AC_SUBST(PULSEAUDIO_CFLAGS)
@@ -266,8 +266,23 @@ fi
 xml_CFLAGS=
 xml_LIBS=-lexpat
 
-	AC_SUBST(xml_CFLAGS)
+AC_SUBST(xml_CFLAGS)
 AC_SUBST(xml_LIBS)
+
+AC_CHECK_LIB([yaml], yaml_parser_initialize,
+	       [AC_CHECK_HEADERS(yaml.h, have_yaml=true, have_yaml=false)],
+	       have_yaml = false)
+
+	if test "$have_yaml" = "false"; then
+AC_MSG_ERROR([You need the libyaml yaml parser]
+		[http://expat.sourceforge.net/])
+	fi
+
+yaml_CFLAGS=
+yaml_LIBS=-lyaml
+
+AC_SUBST(yaml_CFLAGS)
+AC_SUBST(yaml_LIBS)
 
 AC_CHECK_LIB([pthread], pthread_create,
 		[AC_CHECK_HEADERS(pthread.h, have_pthread=true, have_pthread=false)],
@@ -290,6 +305,7 @@ AC_MSG_ERROR([You need the Perl-Compatible Regular Expressions library (pcre)])
 	PCRE_CFLAGS=
 	AC_SUBST(PCRE_LIBS)
 AC_SUBST(PCRE_CFLAGS)
+
 
 
 
@@ -341,17 +357,19 @@ AC_ARG_WITH([speex],
 
 AS_IF([test "x$with_speex" != xno],
 		[AC_CHECK_HEADER([speex/speex.h], , AC_MSG_FAILURE([Unable to find the libspeex headers (you may need to install the dev package).  You may use --without-speex to compile without speex codec support.]))]
-		[AC_CHECK_HEADER([speex/speex_preprocess.h], , AC_MSG_FAILURE([Unable to find the libspeexdsp headers (you may need to install the libspeexdsp-dev package).  You may use --without-speex to compile without speex codec support.]))]
 		[AC_CHECK_LIB([speex], [speex_decode_int],
 			[],
 			[AC_MSG_FAILURE(
 				[libspeex link test failed.   You may use --without-speex to compile without speex codec support.])]
 			)
 		]
-		dnl More advanced check in case the libspeexdsp is not installed
-		AC_SEARCH_LIBS(speex_preprocess_run, speexdsp, HAVE_SPEEXDSP="yes", HAVE_SPEEXDSP="no", [])
+		# dnl More advanced check in case the libspeexdsp is not installed
+		# AC_SEARCH_LIBS(speex_preprocess_run, speexdsp, HAVE_SPEEXDSP="yes", HAVE_SPEEXDSP="no", [])
 	 )
 
+dnl check in case the libspeexdsp is not installed
+AC_CHECK_HEADER([speex/speex_preprocess.h], , AC_MSG_FAILURE([Unable to find the libspeexdsp headers (you may need to install the libspeexdsp-dev package) used for Noise Suppression and Automatic Gain Control.]))
+AC_CHECK_LIB(speexdsp, speex_preprocess_run, [], [], [])
 AC_DEFINE([HAVE_SPEEX], test "x$with_speex" = "xyes", [Define if you have libspeex])
 	AM_CONDITIONAL(BUILD_SPEEX, test "x$with_speex" = "xyes" )
 AM_CONDITIONAL(ENABLE_SPEEXDSP, test  $HAVE_SPEEXDSP = yes)
@@ -405,7 +423,7 @@ AC_DEFUN([BB_ENABLE_DOXYGEN],
 
 	if test x$DOT = x; then
 	if test "x$enable_dot" = xyes; then
-AC_MSG_ERROR([could not find dot])
+	AC_MSG_ERROR([could not find dot])
 	fi
 	enable_dot=no
 	else
@@ -414,24 +432,22 @@ AC_MSG_ERROR([could not find dot])
 	AM_CONDITIONAL(ENABLE_DOXYGEN, test x$enable_doc = xtrue)
 	AC_SUBST(enable_dot)
 	AC_SUBST(enable_html_docs)
-AC_SUBST(enable_latex_docs)
+	AC_SUBST(enable_latex_docs)
 	])
-# Acutally perform the doxygen check
+	# Acutally perform the doxygen check
 	BB_ENABLE_DOXYGEN
 
 	dnl Datadir directory
 	sflphone_datadir=$datadir/sflphone
-AC_SUBST(sflphone_datadir)
+	AC_SUBST(sflphone_datadir)
 
 	dnl Dbus Service activation part
 	DBUS_SERVICES_DIR="$datadir/dbus-1/services"
-AC_SUBST(DBUS_SERVICES_DIR)
+	AC_SUBST(DBUS_SERVICES_DIR)
 	AC_DEFINE_UNQUOTED(DBUS_SERVICES_DIR, "$DBUS_SERVICES_DIR", [Where services dir for DBUS is])
 
 # Go!
 	AC_SUBST(SFLPHONE_CFLAGS)
-AC_SUBST(SFLPHONE_LIBS)
+	AC_SUBST(SFLPHONE_LIBS)
 	AC_OUTPUT
 	AC_MSG_NOTICE([[Configuration done! Please make sure that pjsip library (libs/pjproject) has already been compiled. Run `make' to build the software.]])
-
-
