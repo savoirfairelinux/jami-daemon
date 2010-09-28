@@ -30,6 +30,7 @@ BuildRequires:	liblog4c-devel
 BuildRequires:	dbus-1-glib-devel
 BuildRequires:	gnome-doc-utils-devel	
 BuildRequires:	libgnomeui-devel
+BuildRequires:  webkitgtk-devel
 %endif
 
 %if %{defined fedora_version}
@@ -43,6 +44,7 @@ BuildRequires:  gettext
 BuildRequires:	libproxy-webkit
 # fix PolicyKit-authentication-agent expansion error
 BuildRequires:	PolicyKit-gnome
+BuildRequires:  webkitgtk-devel
 %endif
 
 %if %{defined mandriva_version}
