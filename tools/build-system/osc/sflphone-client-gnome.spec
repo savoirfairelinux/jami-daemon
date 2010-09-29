@@ -29,6 +29,7 @@ BuildRequires:	update-desktop-files
 BuildRequires:	dbus-1-glib-devel
 BuildRequires:	gnome-doc-utils-devel	
 BuildRequires:	libgnomeui-devel
+BuildRequires:  libwebkit-devel
 %endif
 
 %if %{defined fedora_version}
@@ -41,6 +42,7 @@ BuildRequires:  gettext
 BuildRequires:	libproxy-webkit
 # fix PolicyKit-authentication-agent expansion error
 BuildRequires:	PolicyKit-gnome
+BuildRequires:  webkitgtk-devel
 %endif
 
 %if %{defined mandriva_version}
@@ -58,7 +60,6 @@ BuildRequires:	libnotify-devel
 BuildRequires:	libsexy-devel
 BuildRequires:	evolution-data-server-devel
 BuildRequires:	check-devel
-BuildRequires:  libwebkit-devel
 
 Requires:	sflphone-common = %{version}
 Requires:	dbus-1-glib
@@ -140,6 +141,14 @@ make clean
 %{_prefix}/share/sflphone/*.gif
 %{_prefix}/share/omf/sflphone/*
 %{_prefix}/share/sflphone/ui/ui.xml
+%{_prefix}/etc/gconf/schemas/sflphone-client-gnome.schemas
+%{_prefix}/share/sflphone/webkit/im/chat_info.png
+%{_prefix}/share/sflphone/webkit/im/error.png
+%{_prefix}/share/sflphone/webkit/im/im.css
+%{_prefix}/share/sflphone/webkit/im/im.html
+%{_prefix}/share/sflphone/webkit/im/im.js
+%{_prefix}/share/sflphone/webkit/im/sflphone.png
+
 
 %changelog
 
