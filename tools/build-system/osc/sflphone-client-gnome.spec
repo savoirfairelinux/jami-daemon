@@ -58,7 +58,7 @@ BuildRequires:	libnotify-devel
 BuildRequires:	libsexy-devel
 BuildRequires:	evolution-data-server-devel
 BuildRequires:	check-devel
-BuildRequires:  webkit-devel
+BuildRequires:  libwebkit-devel
 
 Requires:	sflphone-common = %{version}
 Requires:	dbus-1-glib
