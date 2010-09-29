@@ -26,7 +26,6 @@ Source0:        sflphone-client-gnome-%{version}.tar.gz
 %if %{defined suse_version}
 BuildRequires:  scrollkeeper
 BuildRequires:	update-desktop-files
-BuildRequires:	liblog4c-devel
 BuildRequires:	dbus-1-glib-devel
 BuildRequires:	gnome-doc-utils-devel	
 BuildRequires:	libgnomeui-devel
@@ -34,7 +33,6 @@ BuildRequires:	libgnomeui-devel
 
 %if %{defined fedora_version}
 BuildRequires:  rarian-compat
-BuildRequires:	log4c-devel
 BuildRequires:	dbus-glib-devel
 BuildRequires:	gnome-doc-utils
 BuildRequires:	libgnomeui-devel
@@ -46,7 +44,6 @@ BuildRequires:	PolicyKit-gnome
 %endif
 
 %if %{defined mandriva_version}
-BuildRequires:	log4c-devel
 BuildRequires:	libgnomeui2-devel
 BuildRequires:	libdbus-glib-1_2-devel
 BuildRequires:	gnome-doc-utils
@@ -141,7 +138,6 @@ make clean
 %{_prefix}/share/applications/sflphone.desktop
 %{_prefix}/share/sflphone/*.svg
 %{_prefix}/share/sflphone/*.gif
-%{_prefix}/share/sflphone/log4crc
 %{_prefix}/share/omf/sflphone/*
 %{_prefix}/share/sflphone/ui/ui.xml
 
