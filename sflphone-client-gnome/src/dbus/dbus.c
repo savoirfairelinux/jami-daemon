@@ -239,13 +239,13 @@ conference_changed_cb (DBusGProxy *proxy UNUSED, const gchar* confID,
                        const gchar* state, void * foo  UNUSED)
 {
 
-    gchar** part;
+    // gchar** part;
     callable_obj_t *call;
     gchar* call_id;
 
     // sflphone_display_transfer_status("Transfer successfull");
     conference_obj_t* changed_conf = conferencelist_get (confID);
-    gchar** old_participants, new_participants;
+    GSList * part;
 
     DEBUG ("conference new state %s\n", state);
 
@@ -265,30 +265,34 @@ conference_changed_cb (DBusGProxy *proxy UNUSED, const gchar* confID,
         }
 
         // reactivate instant messaging window for these calls
-        old_participants = (gchar**) changed_conf->participant_list;
+        part = changed_conf->participant_list;
 
-        for (part = old_participants; *part; part++) {
-            call_id = (gchar*) (*part);
+        while (part) {
+            call_id = (gchar*) (part->data);
             call = calllist_get (current_calls, call_id);
 
             if (call && call->_im_widget)
                 im_widget_update_state (IM_WIDGET (call->_im_widget), TRUE);
+
+            part = g_slist_next (part);
         }
 
-        new_participants = (gchar **) dbus_get_participant_list (changed_conf->_confID);
+//        new_participants = (gchar **) dbus_get_participant_list (changed_conf->_confID);
 
         // update conferece participants
-        conference_participant_list_update (new_participants, changed_conf);
+        conference_participant_list_update (dbus_get_participant_list (changed_conf->_confID), changed_conf);
 
         // deactivate instant messaging window for new participants
-        new_participants = (gchar**) changed_conf->participant_list;
+        part = changed_conf->participant_list;
 
-        for (part = new_participants; *part; part++) {
-            call_id = (gchar*) (*part);
+        while (part) {
+            call_id = (gchar*) (part->data);
             call = calllist_get (current_calls, call_id);
 
             if (call && call->_im_widget)
                 im_widget_update_state (IM_WIDGET (call->_im_widget), FALSE);
+
+            part = g_slist_next (part);
         }
 
         // add new conference to calltree

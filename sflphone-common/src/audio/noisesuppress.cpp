@@ -51,9 +51,12 @@ void NoiseSuppress::reset (void)
     initNewNoiseSuppressor (_smplPerFrame, _samplingRate);
 }
 
-void NoiseSuppress::putData (SFLDataFormat *inputData, int nbBytes) { return 0; }
+void NoiseSuppress::putData (SFLDataFormat *inputData, int nbBytes) {}
 
-int NoiseSuppress::getData (SFLDataFormat *outputData) {}
+int NoiseSuppress::getData (SFLDataFormat *outputData)
+{
+    return 0;
+}
 
 void NoiseSuppress::process (SFLDataFormat *data, int nbBytes)
 {
@@ -61,7 +64,10 @@ void NoiseSuppress::process (SFLDataFormat *data, int nbBytes)
         speex_preprocess_run (_noiseState, data);
 }
 
-int NoiseSuppress::process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes) { return 0; }
+int NoiseSuppress::process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes)
+{
+    return 0;
+}
 
 void NoiseSuppress::process (SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes) {}
 
