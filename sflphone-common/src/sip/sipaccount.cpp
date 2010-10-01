@@ -177,7 +177,7 @@ void SIPAccount::serialize (Conf::YamlEmitter *emitter)
     Conf::ScalarNode port (portstr.str());
     Conf::ScalarNode serviceRoute (_serviceRoute);
 
-    Conf::ScalarNode mailbox ("97");
+    Conf::ScalarNode mailbox (_mailBox);
     Conf::ScalarNode publishAddr (_publishedIpAddress);
     std::stringstream publicportstr;
     publicportstr << _publishedPort;
@@ -339,7 +339,12 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
         val = NULL;
     }
 
-    //  val = (Conf::ScalarNode *)(map->getValue(mailboxKey));
+    val = (Conf::ScalarNode *) (map->getValue (mailboxKey));
+
+    if (val) {
+        _mailBox = val->getValue();
+        val = NULL;
+    }
 
     val = (Conf::ScalarNode *) (map->getValue (codecsKey));
 
@@ -383,7 +388,6 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
         val = NULL;
     }
 
-    // val = (Conf::ScalarNode *)(map->getValue(mailboxKey));
     val = (Conf::ScalarNode *) (map->getValue (publishAddrKey));
 
     if (val) {
@@ -662,6 +666,7 @@ void SIPAccount::setAccountDetails (const std::map<std::string, std::string>& de
     setEnabled ( (accountEnable == "true"));
     setRingtonePath (ringtonePath);
     setRingtoneEnabled ( (ringtoneEnabled == "true"));
+    setMailBox (mailbox);
 
     // SIP specific account settings
     if (getType() == "SIP") {
@@ -840,6 +845,9 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails()
 
     a.insert (std::pair<std::string, std::string> (CONFIG_RINGTONE_PATH, getRingtonePath()));
     a.insert (std::pair<std::string, std::string> (CONFIG_RINGTONE_ENABLED, getRingtoneEnabled() ? "true" : "false"));
+
+    a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_MAILBOX, getMailBox()));
+
 
     RegistrationState state = Unregistered;
     std::string registrationStateCode;

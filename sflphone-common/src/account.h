@@ -339,6 +339,14 @@ class Account : public Serializable
             _useragent = ua;
         }
 
+        std::string getMailBox (void) {
+            return _mailBox;
+        }
+
+        void setMailBox (std::string mb) {
+            _mailBox = mb;
+        }
+
     private:
         // copy constructor
         Account (const Account& rh);
@@ -435,6 +443,12 @@ class Account : public Serializable
          * Useragent used for registration
          */
         std::string _useragent;
+
+
+        /**
+             * Account mail box
+         */
+        std::string _mailBox;
 
 };
 

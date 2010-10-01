@@ -60,7 +60,7 @@ void IAXAccount::serialize (Conf::YamlEmitter *emitter)
     Conf::ScalarNode hostname (Account::_hostname);
     Conf::ScalarNode enable (_enabled ? "true" : "false");
     Conf::ScalarNode type (Account::_type);
-    Conf::ScalarNode mailbox ("97");
+    Conf::ScalarNode mailbox (_mailBox);
 
     Conf::ScalarNode codecs (_codecStr);
     Conf::ScalarNode displayName (_displayName);
@@ -139,7 +139,12 @@ void IAXAccount::unserialize (Conf::MappingNode *map)
         val = NULL;
     }
 
-    //  val = (Conf::ScalarNode *)(map->getValue(mailboxKey));
+    val = (Conf::ScalarNode *) (map->getValue (mailboxKey));
+
+    if (val) {
+        _mailBox = val->getValue();
+        val = NULL;
+    }
 
     val = (Conf::ScalarNode *) (map->getValue (codecsKey));
 
@@ -192,6 +197,7 @@ void IAXAccount::setAccountDetails (const std::map<std::string, std::string>& de
     setHostname (hostname);
     setPassword (password);
     setEnabled ( (accountEnable.compare ("true") == 0) ? true : false);
+    setMailBox (mailbox);
 
     std::string displayName;
     find_in_map (DISPLAY_NAME, displayName)
@@ -215,6 +221,7 @@ std::map<std::string, std::string> IAXAccount::getAccountDetails()
     a.insert (std::pair<std::string, std::string> (HOSTNAME, getHostname()));
     a.insert (std::pair<std::string, std::string> (USERNAME, getUsername()));
     a.insert (std::pair<std::string, std::string> (PASSWORD, getPassword()));
+    a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_MAILBOX, getMailBox()));
 
     RegistrationState state = Unregistered;
     std::string registrationStateCode;
