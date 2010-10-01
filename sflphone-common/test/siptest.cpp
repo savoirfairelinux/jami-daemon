@@ -254,13 +254,18 @@ void SIPTest::testTwoIncomingIpCall ()
     pthread_t firstCallThread, secondCallThread;
     void *status;
 
+    pthread_attr_t attr;
+
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
     // the first call is supposed to be put on hold when answering teh second incoming call
     std::string firstCallCommand("sipp -sf sippxml/test_2.xml 127.0.0.1 -i 127.0.0.1 -p 5064 -m 1");
 
     // command to be executed by the thread, user agent client which initiate a call and hangup
     std::string secondCallCommand("sipp -sn uac 127.0.0.1 -i 127.0.0.1 -p 5062 -m 1 -d 1000");
 
-    int rc = pthread_create(&firstCallThread, NULL, sippThread, (void *)(&firstCallCommand));
+    int rc = pthread_create(&firstCallThread, &attr, sippThread, (void *)(&firstCallCommand));
     if (rc) {
         std::cout << "SIPTest: ERROR; return code from pthread_create()" << std::endl;
     }
@@ -282,7 +287,7 @@ void SIPTest::testTwoIncomingIpCall ()
 
     sleep(1);
 
-    rc = pthread_create(&secondCallThread, NULL, sippThread, (void *)(&secondCallCommand));
+    rc = pthread_create(&secondCallThread, &attr, sippThread, (void *)(&secondCallCommand));
     if(rc) {
 	std::cout << "SIPTest: Error; return  code from pthread_create()" << std::endl;
     }
@@ -313,7 +318,5 @@ void SIPTest::testTwoIncomingIpCall ()
         std::cout << "SIPTest: completed join with thread 2" << std::endl;
 
 
-
-    std::cout << "---------------------------" << std::endl;
 }
 
