@@ -24,7 +24,6 @@ libaudio_la_SOURCES = \
 		noisesuppress.cpp \
 		audioprocessing.cpp \
 		dcblocker.cpp \
-		jitterbuf.cpp \
 		$(SPEEX_SOURCES_CPP)
 
 noinst_HEADERS = \
@@ -44,7 +43,6 @@ noinst_HEADERS = \
 		noisesuppress.h \
 		audioprocessing.h \
 		dcblocker.h \
-		jitterbuf.h \
 		samplerateconverter.h
 
 libaudio_la_LIBADD = \

@@ -55,8 +55,6 @@
 
 #include <speex/speex_jitter.h>
 
-#include "audio/jitterbuf.h"
-
 #include <fstream>
 
 // Frequency (in packet number)
