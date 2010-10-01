@@ -174,32 +174,112 @@ void SIPTest::testSimpleIncomingIpCall ()
     // Answer this call
     CPPUNIT_ASSERT(Manager::instance().answerCall(testcallid));
     
-    // This is useless since manager is not aware of incoming IP2IP sip calls
-    /*
+
     sleep(1);
 
-    std::map<std::string, std::string>::iterator iterCallDetails;
-    std::map<std::string, std::string> callDetails = Manager::instance().getCallDetails (testcallid);
+    rc = pthread_join(thethread, &status);
+    if (rc) {
+        std::cout << "SIPTest: ERROR; return code from pthread_join(): " << rc << std::endl;
+    }
+    else
+        std::cout << "SIPTest: completed join with thread" << std::endl;
+}
 
-    iterCallDetails = callDetails.find("ACCOUNTID");
-    std::cout << "---------------------- " << iterCallDetails->second << std::endl;
-    // CPPUNIT_ASSERT((iterCallDetails != callDetails.end()) && (iterCallDetails->second == ""));
-    iterCallDetails = callDetails.find("PEER_NUMBER");
-    std::cout << "--------------------- " << iterCallDetails->second << std::endl;
-    // CPPUNIT_ASSERT((iterCallDetails != callDetails.end()) && (iterCallDetails->second == "<sip:test@127.0.0.1:5062>"));
-    iterCallDetails = callDetails.find("PEER_NAME");
-    std::cout << "--------------------- " << iterCallDetails->second << std::endl;
-    // CPPUNIT_ASSERT((iterCallDetails != callDetails.end()) && (iterCallDetails->second == ""));
-    iterCallDetails = callDetails.find("DISPLAY_NAME");
-    std::cout << "-------------------- " << iterCallDetails->second << std::endl;
-    // CPPUNIT_ASSERT((iterCallDetails != callDetails.end()) && (iterCallDetails->second == ""));
-    iterCallDetails = callDetails.find("CALL_STATE");
-    std::cout << "-------------------- " << iterCallDetails->second << std::endl;
-    // CPPUNIT_ASSERT((iterCallDetails != callDetails.end()) && (iterCallDetails->second == "CURRENT"));
-    iterCallDetails = callDetails.find("CALL_TYPE");
-    std::cout << "-------------------- " << iterCallDetails->second << std::endl;
-    // CPPUNIT_ASSERT((iterCallDetails != callDetails.end()) && (iterCallDetails->second == "1"));
-    */
+
+void SIPTest::testTwoOutgoingIpCall ()
+{
+    pthread_t firstCallThread, secondCallThread;
+    void *status;
+
+    // This scenario expect to be put on hold before hangup 
+    std::string firstCallCommand("sipp -sf sippxml/test_1.xml -i 127.0.0.1 -p 5062 -m 1");
+
+    // The second call uses the default user agent scenario
+    std::string secondCallCommand("sipp -sn uas -i 127.0.0.1 -p 5064 -m 1");
+
+    int rc = pthread_create(&firstCallThread, NULL, sippThread, (void *)(&firstCallCommand));
+    if (rc) {
+        std::cout << "SIPTest: ERROR; return code from pthread_create()" << std::endl;
+    }
+
+    rc = pthread_create(&secondCallThread, NULL, sippThread, (void *)(&secondCallCommand));
+    if(rc) {
+	std::cout << "SIPTest: ERROR; return code from pthread_create()" << std::endl;
+    }
+
+    sleep(1);
+
+    std::string testAccount("IP2IP");
+
+    std::string firstCallID("callid1234");
+    std::string firstCallNumber("sip:test@127.0.0.1:5062");
+
+    std::string secondCallID("callid2345");
+    std::string secondCallNumber("sip:test@127.0.0.1:5064");
+
+    CPPUNIT_ASSERT(!Manager::instance().hasCurrentCall());
+
+    // start a new call sending INVITE message to sipp instance
+    // this call should be put on hold when making the second call 
+    Manager::instance().outgoingCall(testAccount, firstCallID, firstCallNumber);
+
+    // must sleep here until receiving 180 and 200 message from peer
+    sleep(1);
+
+    Manager::instance().outgoingCall(testAccount, secondCallID, secondCallNumber);
+
+    sleep(1);
+
+    Manager::instance().hangupCall(firstCallID);
+
+    rc = pthread_join(firstCallThread, &status);
+    if(rc) {
+	std::cout << "SIPTest: ERROR; return code from pthread_join(): " << rc << std::endl;
+    }
+	std::cout << "SIPTest: completed join with thread" << std::endl;
+
+    Manager::instance().hangupCall(secondCallID);
+
+    rc = pthread_join(secondCallThread, &status);
+    if (rc) {
+        std::cout << "SIPTest: ERROR; return code from pthread_join(): " << rc << std::endl;
+    }
+    else
+        std::cout << "SIPTest: completed join with thread" << std::endl;
+}
+
+/*
+void SIPTest::testTwoIncomingIpCall ()
+{
+
+    pthread_t thethread;
+    void *status;
+
+    // command to be executed by the thread, user agent client which initiate a call and hangup
+    std::string command("sipp -sn uac 127.0.0.1 -i 127.0.0.1 -p 5062 -m 1");
+
+    int rc = pthread_create(&thethread, NULL, sippThread, (void *)(&command));
+    if (rc) {
+        std::cout << "SIPTest: ERROR; return code from pthread_create()" << std::endl;
+    }
+
+
+    // sleep a while to make sure that sipp insdtance is initialized and sflphoned received
+    // the incoming invite.
+    sleep(2);
+
+    // gtrab call id from sipvoiplink 
+    SIPVoIPLink *siplink = SIPVoIPLink::instance ("");
+
+    CPPUNIT_ASSERT(siplink->_callMap.size() == 1);
+    CallMap::iterator iterCallId = siplink->_callMap.begin();
+    std::string testcallid = iterCallId->first;
+
+    // TODO: hmmm, should IP2IP call be stored in call list....
+    CPPUNIT_ASSERT(Manager::instance().getCallList().size() == 0);
+
+    // Answer this call
+    CPPUNIT_ASSERT(Manager::instance().answerCall(testcallid));
 
 
     sleep(1);
@@ -211,3 +291,4 @@ void SIPTest::testSimpleIncomingIpCall ()
     else
         std::cout << "SIPTest: completed join with thread" << std::endl;
 }
+*/
