@@ -320,3 +320,44 @@ void SIPTest::testTwoIncomingIpCall ()
 
 }
 
+
+void SIPTest::testHoldIpCall()
+{
+    pthread_t callThread;
+    void *status;
+
+    // pthread_attr_t attr;
+
+    // pthread_attr_init(&attr);
+    // pthreaq_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+    std::string callCommand("sipp -sf sippxml/test_3.xml -i 127.0.0.1 -p 5062 -m 1");
+/*
+    int rc = pthread_create(&callThread, NULL, sippThread, (void *)(&callCommand));
+    if(rc) {
+	std::cout << "SIPTest: ERROR; return code from pthread_create(): " << rc << std::endl;
+    }
+    else
+	std::cout << "SIPTest: completed thread creation" << std::endl;
+*/
+
+    std::string testAccount("IP2IP");
+
+    std::string testCallID("callid1234");
+    std::string testCallNumber("sip:test@127.0.0.1:5062");
+
+    Manager::instance().outgoingCall(testAccount, testCallID, testCallNumber);
+
+    sleep(1);
+
+    Manager::instance().onHoldCall(testCallID);
+
+    sleep(1);
+
+    Manager::instance().offHoldCall(testCallID);        
+
+    sleep(1);
+
+     Manager::instance().hangupCall(testCallID);
+}
+
