@@ -876,7 +876,7 @@ SIPVoIPLink::answer (const CallID& id)
 
     if (status == PJ_SUCCESS) {
 
-        _debug ("SIPVoIPLink::answer:UserAgent: Negociation success! : call %s ", call->getCallId().c_str());
+        _debug ("SIPVoIPLink: UserAgent: SDP Negociation success! : call %s ", call->getCallId().c_str());
         // Create and send a 200(OK) response
         status = pjsip_inv_answer (inv_session, PJSIP_SC_OK, NULL, NULL, &tdata);
         PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
@@ -897,7 +897,7 @@ SIPVoIPLink::answer (const CallID& id)
         PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
         // Terminate the call
-        _debug ("SIPVoIPLink::answer: fail terminate call %s ",call->getCallId().c_str());
+        _debug ("SIPVoIPLink: UserAgent: SDP Negociation failed, terminate call %s ", call->getCallId().c_str());
 
         if (call->getAudioRtp())
             call->getAudioRtp()->stop ();
@@ -1729,8 +1729,8 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         _debug ("UserAgent: TO uri for IP2IP call: %s", toUri.c_str());
 
         // Building the local SDP offer
-        call->getLocalSDP()->set_ip_address (addrSdp);
-        call->getLocalSDP()->create_initial_offer (account->getActiveCodecs ());
+        // call->getLocalSDP()->set_ip_address (addrSdp);
+        // call->getLocalSDP()->create_initial_offer (account->getActiveCodecs ());
 
         // Audio Rtp Session must be initialized before creating initial offer in SDP session
         // since SDES require crypto attribute.
@@ -1740,6 +1740,10 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         } catch (...) {
             _debug ("UserAgent: Unable to create RTP Session in new IP2IP call (%s:%d)", __FILE__, __LINE__);
         }
+
+        // Building the local SDP offer
+        call->getLocalSDP()->set_ip_address (addrSdp);
+        call->getLocalSDP()->create_initial_offer (account->getActiveCodecs ());
 
         // Init TLS transport if enabled
         if (account->isTlsEnabled()) {
@@ -3366,6 +3370,7 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
             DBusManager::instance().getCallManager()->secureSdesOff (call->getCallId());
         }
     }
+
 
     // We did not found any crypto context for this media
     if (!nego_success && call->getAudioRtp()->getAudioRtpType() == sfl::Sdes) {
