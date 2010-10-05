@@ -3703,6 +3703,8 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     // Get the account id of callee from username and server
     account_id = Manager::instance().getAccountIdFromNameAndServer (userName, server);
 
+    _debug ("UserAgent: Account ID for this call, %s", account_id.c_str());
+
     /* If we don't find any account to receive the call */
     if (account_id == AccountNULL) {
         _debug ("UserAgent: Username %s doesn't match any account, using IP2IP!",userName.c_str());
@@ -3863,6 +3865,9 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         return false;
     }
 
+    Manager::instance().associateCallToAccount (call->getCallId(), account_id);
+
+
     std::string addrToUse, addrSdp ="0.0.0.0";
 
     pjsip_tpselector *tp;
@@ -3910,6 +3915,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     call->getLocalSDP()->set_ip_address (addrSdp);
 
     try {
+        _debug ("UserAgent: Create RTP session for this call");
         call->getAudioRtp()->initAudioRtpConfig (call);
         call->getAudioRtp()->initAudioRtpSession (call);
     } catch (...) {
@@ -4551,8 +4557,15 @@ bool setCallAudioLocal (SIPCall* call, std::string localIP)
 {
     SIPAccount *account = NULL;
 
+    _debug ("UserAgent: Set local media information for this call");
+
     if (call) {
-        account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (Manager::instance().getAccountFromCall (call->getCallId ())));
+
+        AccountID account_id = Manager::instance().getAccountFromCall (call->getCallId ());
+
+        account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
+
+
 
         // Setting Audio
         unsigned int callLocalAudioPort = RANDOM_LOCAL_PORT;
@@ -4564,10 +4577,9 @@ bool setCallAudioLocal (SIPCall* call, std::string localIP)
             //localIP = account->getPublishedAddress ();
         }
 
-        _debug ("            Setting local ip address: %s", localIP.c_str());
-
-        _debug ("            Setting local audio port to: %d", callLocalAudioPort);
-        _debug ("            Setting local audio port (external) to: %d", callLocalExternAudioPort);
+        _debug ("UserAgent: Setting local ip address: %s", localIP.c_str());
+        _debug ("UserAgent: Setting local audio port to: %d", callLocalAudioPort);
+        _debug ("UserAgent: Setting local audio port (external) to: %d", callLocalExternAudioPort);
 
         // Set local audio port for SIPCall(id)
         call->setLocalIp (localIP);
@@ -4577,9 +4589,13 @@ bool setCallAudioLocal (SIPCall* call, std::string localIP)
         call->getLocalSDP()->attribute_port_to_all_media (callLocalExternAudioPort);
 
         return true;
-    }
+    } else {
 
-    return false;
+        _error ("UserAgent: Error: No call found while setting media information for this call");
+
+        return false;
+
+    }
 }
 
 std::string fetch_header_value (pjsip_msg *msg, std::string field)

@@ -1271,21 +1271,6 @@ class ManagerImpl
 
         bool removeCallConfig (const CallID& callID);
 
-        /** Associate a new CallID to a AccountID
-         * Protected by mutex
-         * @param callID the new CallID not in the list yet
-         * @param accountID the known accountID present in accountMap
-         * @return bool True if the new association is create
-         */
-        bool associateCallToAccount (const CallID& callID, const AccountID& accountID);
-
-        /** Remove a CallID/AccountID association
-         * Protected by mutex
-         * @param callID the CallID to remove
-         * @return bool True if association is removed
-         */
-        bool removeCallAccount (const CallID& callID);
-
         /**
          *Contains a list of account (sip, aix, etc) and their respective voiplink/calls */
         AccountMap _accountMap;
@@ -1324,6 +1309,21 @@ class ManagerImpl
 
 
     public:
+
+        /** Associate a new CallID to a AccountID
+         * Protected by mutex
+         * @param callID the new CallID not in the list yet
+         * @param accountID the known accountID present in accountMap
+         * @return bool True if the new association is create
+         */
+        bool associateCallToAccount (const CallID& callID, const AccountID& accountID);
+
+        /** Remove a CallID/AccountID association
+         * Protected by mutex
+         * @param callID the CallID to remove
+         * @return bool True if association is removed
+         */
+        bool removeCallAccount (const CallID& callID);
 
         /**
          * Return a pointer to the  instance of the mainbuffer

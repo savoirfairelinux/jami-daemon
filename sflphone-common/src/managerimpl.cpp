@@ -3925,18 +3925,22 @@ ManagerImpl::getAccount (const AccountID& accountID)
 {
     // In our definition,
     // this is the "direct ip calls account"
+    /*
     if (accountID == AccountNULL) {
-        _debug ("Returns the direct IP account");
+        _debug ("Manager: Returns the direct IP account");
         return _directIpAccount;
     }
+    */
 
     AccountMap::iterator iter = _accountMap.find (accountID);
 
-    if (iter == _accountMap.end()) {
-        return NULL;
+    if (iter != _accountMap.end()) {
+        _debug ("Manager: Found account %s", iter->first.c_str());
+        return iter->second;
     }
 
-    return iter->second;
+    _debug ("Manager: Did not found account %s, returning IP2IP account");
+    return _directIpAccount;
 }
 
 AccountID ManagerImpl::getAccountIdFromNameAndServer (
