@@ -135,10 +135,6 @@ void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
 
                 _rtpSession = new AudioSrtpSession (&Manager::instance(), ca);
                 _rtpSessionType = Sdes;
-
-                static_cast<AudioSrtpSession *> (_rtpSession)->initLocalCryptoInfo ();
-
-                ca->getLocalSDP()->set_srtp_crypto (static_cast<AudioSrtpSession *> (_rtpSession)->getLocalCryptoInfo());
                 break;
 
             default:
@@ -262,10 +258,12 @@ sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
     }
 }
 
-void sfl::AudioRtpFactory::initLocalCryptoInfo ()
+void sfl::AudioRtpFactory::initLocalCryptoInfo (SIPCall * ca)
 {
     if (_rtpSession && _rtpSessionType && (_rtpSessionType == Sdes)) {
         static_cast<AudioSrtpSession *> (_rtpSession)->initLocalCryptoInfo ();
+
+        ca->getLocalSDP()->set_srtp_crypto (static_cast<AudioSrtpSession *> (_rtpSession)->getLocalCryptoInfo());
     }
 }
 

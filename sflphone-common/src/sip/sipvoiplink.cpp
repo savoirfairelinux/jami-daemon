@@ -820,6 +820,7 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
             _info ("UserAgent: Creating new rtp session");
             call->getAudioRtp()->initAudioRtpConfig (call);
             call->getAudioRtp()->initAudioRtpSession (call);
+            call->getAudioRtp()->initLocalCryptoInfo (call);
         } catch (...) {
             _error ("UserAgent: Error: Failed to create rtp thread from newOutGoingCall");
         }
@@ -1737,6 +1738,7 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         try {
             call->getAudioRtp()->initAudioRtpConfig (call);
             call->getAudioRtp()->initAudioRtpSession (call);
+            call->getAudioRtp()->initLocalCryptoInfo (call);
         } catch (...) {
             _debug ("UserAgent: Unable to create RTP Session in new IP2IP call (%s:%d)", __FILE__, __LINE__);
         }
@@ -3363,6 +3365,7 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 
             try {
                 call->getAudioRtp()->setRemoteCryptoInfo (sdesnego);
+                call->getAudioRtp()->initLocalCryptoInfo (call);
             } catch (...) {}
 
             DBusManager::instance().getCallManager()->secureSdesOn (call->getCallId());
