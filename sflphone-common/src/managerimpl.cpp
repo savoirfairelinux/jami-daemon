@@ -602,6 +602,9 @@ bool ManagerImpl::offHoldCall (const CallID& call_id)
     //Place current call on hold if it isn't
 
     if (hasCurrentCall()) {
+
+        _debug ("Manager: Has current call, put on hold");
+
         // if this is not a conferenceand this and is not a conference participant
         if (!isConference (current_call_id) && !participToConference (
                     current_call_id)) {

@@ -86,6 +86,8 @@ class AudioSrtpSession : public ost::SymmetricRTPSession, public AudioRtpSession
 
     private:
 
+        void initLocalCryptoInfo (void);
+
         void initializeLocalMasterKey (void);
 
         void initializeLocalMasterSalt (void);

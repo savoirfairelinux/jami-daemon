@@ -243,9 +243,20 @@ bool SdesNegotiator::negotiate (void)
                     _cryptoSuite = (*iter_offer)->getCryptoSuite();
                     _srtpKeyMethod = (*iter_offer)->getSrtpKeyMethod();
                     _srtpKeyInfo = (*iter_offer)->getSrtpKeyInfo();
-                    _lifetime = (*iter_offer)->getLifetime();
-                    _mkiValue = (*iter_offer)->getMkiValue();
-                    _mkiLength = (*iter_offer)->getMkiLength();
+                    // TODO why does there return empty strings
+                    // _lifetime = (*iter_offer)->getLifetime();
+                    // _mkiValue = (*iter_offer)->getMkiValue();
+                    // _mkiLength = (*iter_offer)->getMkiLength();
+
+                    _mkiLength = _cryptoSuite.substr (_cryptoSuite.size()-2, 2);
+
+                    std::cout << "Negotiate tag: " + (*iter_offer)->getTag() << std::endl;
+                    std::cout << "Crypto Suite: " + _cryptoSuite << std::endl;
+                    std::cout << "SRTP Key Method: " + _srtpKeyMethod << std::endl;
+                    std::cout << "SRTP Key Info: " + _srtpKeyInfo << std::endl;
+                    // std::cout << "Lifetime: " + _lifetime << std::endl;
+                    // std::cout << "MKI Value: " + _mkiValue << std::endl;
+                    std::cout << "MKI Length: " + _mkiLength << std::endl;
                 }
 
                 iter_local++;

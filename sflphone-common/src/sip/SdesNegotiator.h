@@ -202,6 +202,7 @@ class SdesNegotiator
             return _mkiLength;
         }
 
+
     private:
         /**
          * A vector list containing the remote attributes.
