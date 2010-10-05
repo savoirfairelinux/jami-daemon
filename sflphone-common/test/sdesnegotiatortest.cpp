@@ -222,12 +222,14 @@ void SdesNegotiatorTest::testMostSimpleCase()
 
     CPPUNIT_ASSERT (negotiator->negotiate() == true);
 
-    CPPUNIT_ASSERT (negotiator->getCryptoSuite().compare ("AES_CM_128_HMAC_SHA1_80") == 0);
-    CPPUNIT_ASSERT (negotiator->getKeyMethod().compare ("inline") == 0);
-    CPPUNIT_ASSERT (negotiator->getKeyInfo().compare ("AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd") == 0);
-    CPPUNIT_ASSERT (negotiator->getLifeTime().compare ("") == 0);
-    CPPUNIT_ASSERT (negotiator->getMkiValue().compare ("") == 0);
-    CPPUNIT_ASSERT (negotiator->getMkiLength().compare ("") == 0);
+    CPPUNIT_ASSERT (negotiator->getCryptoSuite() == "AES_CM_128_HMAC_SHA1_80");
+    CPPUNIT_ASSERT (negotiator->getKeyMethod() == "inline");
+    CPPUNIT_ASSERT (negotiator->getKeyInfo() == "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd");
+    CPPUNIT_ASSERT (negotiator->getLifeTime() == "");
+    CPPUNIT_ASSERT (negotiator->getMkiValue() == "");
+    CPPUNIT_ASSERT (negotiator->getMkiLength() == "");
+    CPPUNIT_ASSERT (negotiator->getAuthTagLength() == "80");
+
 
     delete capabilities;
     capabilities = NULL;
@@ -236,3 +238,41 @@ void SdesNegotiatorTest::testMostSimpleCase()
     delete negotiator;
     negotiator = NULL;
 }
+
+
+void SdesNegotiatorTest::test32ByteKeyLength()
+{
+    _debug ("-------------------- SdesNegotiatorTest::test32ByteKeyLength --------------------\n");
+
+    // Register the local capabilities.
+    std::vector<sfl::CryptoSuiteDefinition> * capabilities = new std::vector<sfl::CryptoSuiteDefinition>();
+
+    //Support all the CryptoSuites
+    for (int i = 0; i < 3; i++) {
+        capabilities->push_back (sfl::CryptoSuites[i]);
+    }
+
+    std::string cryptoLine ("a=crypto:1 AES_CM_128_HMAC_SHA1_32 inline:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd");
+    std::vector<std::string> * cryptoOffer = new std::vector<std::string>();
+    cryptoOffer->push_back (cryptoLine);
+
+    sfl::SdesNegotiator * negotiator = new sfl::SdesNegotiator (*capabilities, *cryptoOffer);
+
+    CPPUNIT_ASSERT (negotiator->negotiate() == true);
+
+    CPPUNIT_ASSERT (negotiator->getCryptoSuite() == "AES_CM_128_HMAC_SHA1_32");
+    CPPUNIT_ASSERT (negotiator->getKeyMethod() == "inline");
+    CPPUNIT_ASSERT (negotiator->getKeyInfo() == "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd");
+    CPPUNIT_ASSERT (negotiator->getLifeTime() == "");
+    CPPUNIT_ASSERT (negotiator->getMkiValue() == "");
+    CPPUNIT_ASSERT (negotiator->getMkiLength() == "");
+    CPPUNIT_ASSERT (negotiator->getAuthTagLength() == "32");
+
+    delete capabilities;
+    capabilities = NULL;
+    delete cryptoOffer;
+    cryptoOffer = NULL;
+    delete negotiator;
+    negotiator = NULL;
+}
+

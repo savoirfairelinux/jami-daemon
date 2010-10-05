@@ -3942,7 +3942,7 @@ ManagerImpl::getAccount (const AccountID& accountID)
         return iter->second;
     }
 
-    _debug ("Manager: Did not found account %s, returning IP2IP account");
+    _debug ("Manager: Did not found account %s, returning IP2IP account", accountID.c_str());
     return _directIpAccount;
 }
 

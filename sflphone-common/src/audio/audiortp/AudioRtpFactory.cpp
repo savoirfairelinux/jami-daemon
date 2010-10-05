@@ -136,6 +136,8 @@ void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
                 _rtpSession = new AudioSrtpSession (&Manager::instance(), ca);
                 _rtpSessionType = Sdes;
 
+                static_cast<AudioSrtpSession *> (_rtpSession)->initLocalCryptoInfo ();
+
                 ca->getLocalSDP()->set_srtp_crypto (static_cast<AudioSrtpSession *> (_rtpSession)->getLocalCryptoInfo());
                 break;
 
@@ -257,6 +259,13 @@ sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
         return static_cast<AudioZrtpSession *> (_rtpSession);
     } else {
         throw AudioRtpFactoryException ("RTP: Error: _rtpSession is NULL in getAudioZrtpSession");
+    }
+}
+
+void sfl::AudioRtpFactory::initLocalCryptoInfo ()
+{
+    if (_rtpSession && _rtpSessionType && (_rtpSessionType == Sdes)) {
+        static_cast<AudioSrtpSession *> (_rtpSession)->initLocalCryptoInfo ();
     }
 }
 

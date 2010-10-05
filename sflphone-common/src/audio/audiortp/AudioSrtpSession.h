@@ -84,9 +84,9 @@ class AudioSrtpSession : public ost::SymmetricRTPSession, public AudioRtpSession
 
         void setRemoteCryptoInfo (sfl::SdesNegotiator& nego);
 
-    private:
-
         void initLocalCryptoInfo (void);
+
+    private:
 
         void initializeLocalMasterKey (void);
 

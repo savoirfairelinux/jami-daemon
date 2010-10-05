@@ -51,8 +51,8 @@ namespace sfl
 AudioSrtpSession::AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall) :
         ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
         AudioRtpSession<AudioSrtpSession> (manager, sipcall),
-        _localCryptoSuite (1),
-        _remoteCryptoSuite (1),
+        _localCryptoSuite (0),
+        _remoteCryptoSuite (0),
         _localMasterKeyLength (0),
         _localMasterSaltLength (0),
         _remoteMasterKeyLength (0),
@@ -120,8 +120,8 @@ void AudioSrtpSession::setRemoteCryptoInfo (sfl::SdesNegotiator& nego)
 
     // Use second crypto suite if key length is 32 bit, default is 80;
 
-    if (nego.getMkiLength() == "32") {
-        _debug ("AudioSrtp: Using %s byte key length", nego.getMkiLength().c_str());
+    if (nego.getAuthTagLength() == "32") {
+        _debug ("AudioSrtp: Using %s byte authentication tag length", nego.getAuthTagLength().c_str());
         _localCryptoSuite = 1;
         _remoteCryptoSuite = 1;
     }
@@ -251,7 +251,7 @@ void AudioSrtpSession::initializeRemoteCryptoContext (void)
             _remoteMasterSaltLength,
             crypto.encryptionKeyLength / 8,
             crypto.srtpAuthKeyLength / 8,
-            112 / 8,                         // session salt len
+            crypto.masterSaltLength / 8,                         // session salt len
             crypto.srtpAuthTagLength / 8);
 
 }
@@ -273,7 +273,7 @@ void AudioSrtpSession::initializeLocalCryptoContext (void)
             _localMasterSaltLength,
             crypto.encryptionKeyLength / 8,
             crypto.srtpAuthKeyLength / 8,
-            112 / 8,                         // session salt len
+            crypto.masterSaltLength / 8,                         // session salt len
             crypto.srtpAuthTagLength / 8);
 
 }

@@ -166,6 +166,8 @@ class AudioRtpFactory
          */
         sfl::AudioZrtpSession * getAudioZrtpSession();
 
+        void initLocalCryptoInfo (void);
+
         /**
          * Set remote cryptographic info. Should be called after negotiation in SDP
          * offer/answer session.

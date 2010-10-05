@@ -248,7 +248,7 @@ bool SdesNegotiator::negotiate (void)
                     // _mkiValue = (*iter_offer)->getMkiValue();
                     // _mkiLength = (*iter_offer)->getMkiLength();
 
-                    _mkiLength = _cryptoSuite.substr (_cryptoSuite.size()-2, 2);
+                    _authTagLength = _cryptoSuite.substr (_cryptoSuite.size()-2, 2);
 
                     std::cout << "Negotiate tag: " + (*iter_offer)->getTag() << std::endl;
                     std::cout << "Crypto Suite: " + _cryptoSuite << std::endl;
@@ -256,7 +256,8 @@ bool SdesNegotiator::negotiate (void)
                     std::cout << "SRTP Key Info: " + _srtpKeyInfo << std::endl;
                     // std::cout << "Lifetime: " + _lifetime << std::endl;
                     // std::cout << "MKI Value: " + _mkiValue << std::endl;
-                    std::cout << "MKI Length: " + _mkiLength << std::endl;
+                    // std::cout << "MKI Length: " + _mkiLength << std::endl;
+                    std::cout << "Auth tag length: " + _authTagLength << std::endl;
                 }
 
                 iter_local++;
