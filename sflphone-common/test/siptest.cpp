@@ -408,3 +408,46 @@ void SIPTest::testHoldIpCall()
     Manager::instance().hangupCall(testCallID);
 }
 
+
+void SIPTest::testIncomingIpCallSdp ()
+{
+
+    pthread_t thethread;
+    void *status;
+
+    // command to be executed by the thread, user agent client which initiate a call and hangup
+    std::string command("sipp -sf sippxml/test_4.xml 127.0.0.1 -i 127.0.0.1 -p 5062 -m 1");
+
+    int rc = pthread_create(&thethread, NULL, sippThread, (void *)(&command));
+    if (rc) {
+        std::cout << "SIPTest: ERROR; return code from pthread_create()" << std::endl;
+    }
+
+
+    // sleep a while to make sure that sipp insdtance is initialized and sflphoned received
+    // the incoming invite.
+    sleep(2);
+
+    // gtrab call id from sipvoiplink 
+    SIPVoIPLink *siplink = SIPVoIPLink::instance ("");
+
+    CPPUNIT_ASSERT(siplink->_callMap.size() == 1);
+    CallMap::iterator iterCallId = siplink->_callMap.begin();
+    std::string testcallid = iterCallId->first;
+
+    // TODO: hmmm, should IP2IP call be stored in call list....
+    CPPUNIT_ASSERT(Manager::instance().getCallList().size() == 0);
+
+    // Answer this call
+    CPPUNIT_ASSERT(Manager::instance().answerCall(testcallid));
+
+
+    sleep(1);
+
+    rc = pthread_join(thethread, &status);
+    if (rc) {
+        std::cout << "SIPTest: ERROR; return code from pthread_join(): " << rc << std::endl;
+    }
+    else
+        std::cout << "SIPTest: completed join with thread" << std::endl;
+}
