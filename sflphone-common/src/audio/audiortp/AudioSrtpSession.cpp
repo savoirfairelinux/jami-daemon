@@ -66,15 +66,6 @@ AudioSrtpSession::AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall) :
 
 AudioSrtpSession::~AudioSrtpSession()
 {
-    if (_remoteCryptoCtx) {
-        delete _remoteCryptoCtx;
-        _remoteCryptoCtx = NULL;
-    }
-
-    if (_localCryptoCtx) {
-        delete _localCryptoCtx;
-        _localCryptoCtx = NULL;
-    }
 }
 
 void AudioSrtpSession::initLocalCryptoInfo()
