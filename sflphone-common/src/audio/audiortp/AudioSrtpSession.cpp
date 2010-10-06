@@ -45,6 +45,8 @@
 #include <cerrno>
 
 
+bool remoteIsSet;
+
 namespace sfl
 {
 
@@ -59,6 +61,7 @@ AudioSrtpSession::AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall) :
         _remoteMasterSaltLength (0)
 
 {
+    remoteIsSet = false;
     // initLocalCryptoInfo();
 }
 
@@ -113,28 +116,31 @@ std::vector<std::string> AudioSrtpSession::getLocalCryptoInfo()
 
 void AudioSrtpSession::setRemoteCryptoInfo (sfl::SdesNegotiator& nego)
 {
+    if (!remoteIsSet) {
+        _debug ("----------------------------------------------- AudioSrtp: Set remote Cryptographic info for Srtp");
 
-    _debug ("----------------------------------------------- AudioSrtp: Set remote Cryptographic info for Srtp");
+        _debug ("%s", nego.getKeyInfo().c_str());
 
-    _debug ("%s", nego.getKeyInfo().c_str());
+        // Use second crypto suite if key length is 32 bit, default is 80;
+        _debug ("--------------------------------------------------- auth tag %s", nego.getAuthTagLength().c_str());
 
-    // Use second crypto suite if key length is 32 bit, default is 80;
-    _debug ("--------------------------------------------------- auth tag %s", nego.getAuthTagLength().c_str());
+        if (nego.getAuthTagLength() == "32") {
+            _debug ("--------------------------- AudioSrtp: Using %s byte authentication tag length", nego.getAuthTagLength().c_str());
+            _localCryptoSuite = 1;
+            _remoteCryptoSuite = 1;
+        }
 
-    if (nego.getAuthTagLength() == "32") {
-        _debug ("--------------------------- AudioSrtp: Using %s byte authentication tag length", nego.getAuthTagLength().c_str());
-        _localCryptoSuite = 1;
-        _remoteCryptoSuite = 1;
+        // decode keys
+        unBase64ConcatenatedKeys (nego.getKeyInfo());
+
+        // init crypto content in Srtp session
+        initializeRemoteCryptoContext();
+        setInQueueCryptoContext (_remoteCryptoCtx);
+
+        // initLocalCryptoInfo();
+        remoteIsSet = true;
     }
 
-    // decode keys
-    unBase64ConcatenatedKeys (nego.getKeyInfo());
-
-    // init crypto content in Srtp session
-    initializeRemoteCryptoContext();
-    setInQueueCryptoContext (_remoteCryptoCtx);
-
-    // initLocalCryptoInfo();
 }
 
 

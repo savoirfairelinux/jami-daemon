@@ -3337,7 +3337,7 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 
     }
 
-    /*
+
     // Get the crypto attribute containing srtp's cryptographic context (keys, cipher)
     CryptoOffer crypto_offer;
     call->getLocalSDP()->get_remote_sdp_crypto_from_offer (remote_sdp, crypto_offer);
@@ -3365,7 +3365,7 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 
             try {
                 call->getAudioRtp()->setRemoteCryptoInfo (sdesnego);
-                call->getAudioRtp()->initLocalCryptoInfo (call);
+                // call->getAudioRtp()->initLocalCryptoInfo (call);
             } catch (...) {}
 
             DBusManager::instance().getCallManager()->secureSdesOn (call->getCallId());
@@ -3399,7 +3399,6 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
         // enabled for this call, make a try using RTP only...
         _debug ("UserAgent: SDES not initialized for this call\n");
     }
-    */
 
 
     Sdp  *sdpSession = call->getLocalSDP();
@@ -3965,7 +3964,6 @@ mod_on_rx_request (pjsip_rx_data *rdata)
                         call->getAudioRtp()->initAudioRtpConfig (call);
                         call->getAudioRtp()->initAudioRtpSession (call);
                         call->getAudioRtp()->setRemoteCryptoInfo (sdesnego);
-                        _debug ("------------------------------------------------ init local crypto info");
                         call->getAudioRtp()->initLocalCryptoInfo (call);
                     } catch (...) {
                         _warn ("UserAgent: Error: Failed to create rtp thread from answer");
