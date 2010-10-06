@@ -58,8 +58,23 @@ AudioSrtpSession::AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall) :
         _localMasterSaltLength (0),
         _remoteMasterKeyLength (0),
         _remoteMasterSaltLength (0),
+        _remoteCryptoCtx (NULL),
+        _localCryptoCtx (NULL),
         _remoteOfferIsSet (false)
 {
+}
+
+AudioSrtpSession::~AudioSrtpSession()
+{
+    if (_remoteCryptoCtx) {
+        delete _remoteCryptoCtx;
+        _remoteCryptoCtx = NULL;
+    }
+
+    if (_localCryptoCtx) {
+        delete _localCryptoCtx;
+        _localCryptoCtx = NULL;
+    }
 }
 
 void AudioSrtpSession::initLocalCryptoInfo()
@@ -241,6 +256,11 @@ void AudioSrtpSession::initializeRemoteCryptoContext (void)
 
     CryptoSuiteDefinition crypto = sfl::CryptoSuites[_remoteCryptoSuite];
 
+    if (_remoteCryptoCtx) {
+        delete _remoteCryptoCtx;
+        _remoteCryptoCtx = NULL;
+    }
+
     _remoteCryptoCtx = new ost::CryptoContext (0x0,
             0,                               // roc,
             0L,                              // keydr,
@@ -262,6 +282,11 @@ void AudioSrtpSession::initializeLocalCryptoContext (void)
     _debug ("AudioSrtp: Initialize local crypto context");
 
     CryptoSuiteDefinition crypto = sfl::CryptoSuites[_localCryptoSuite];
+
+    if (_localCryptoCtx) {
+        delete _localCryptoCtx;
+        _localCryptoCtx = NULL;
+    }
 
     _localCryptoCtx = new ost::CryptoContext (OutgoingDataQueue::getLocalSSRC(),
             0,                               // roc,

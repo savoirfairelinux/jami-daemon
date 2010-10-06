@@ -83,6 +83,8 @@ class AudioSrtpSession : public ost::SymmetricRTPSession, public AudioRtpSession
          */
         AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall);
 
+        ~AudioSrtpSession();
+
         /**
          * Used to get sdp crypto header to be included in sdp session. This
          * method must be called befor setRemoteCryptoInfo in case of an
