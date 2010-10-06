@@ -820,6 +820,7 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
             _info ("UserAgent: Creating new rtp session");
             call->getAudioRtp()->initAudioRtpConfig (call);
             call->getAudioRtp()->initAudioRtpSession (call);
+            call->getAudioRtp()->initLocalCryptoInfo (call);
         } catch (...) {
             _error ("UserAgent: Error: Failed to create rtp thread from newOutGoingCall");
         }
@@ -1737,6 +1738,7 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         try {
             call->getAudioRtp()->initAudioRtpConfig (call);
             call->getAudioRtp()->initAudioRtpSession (call);
+            call->getAudioRtp()->initLocalCryptoInfo (call);
         } catch (...) {
             _debug ("UserAgent: Unable to create RTP Session in new IP2IP call (%s:%d)", __FILE__, __LINE__);
         }
@@ -3353,13 +3355,14 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
             localCapabilities.push_back (sfl::CryptoSuites[i]);
         }
 
+        // Mkae sure incoming crypto offer is valid
         sfl::SdesNegotiator sdesnego (localCapabilities, crypto_offer);
 
         if (sdesnego.negotiate()) {
-            _debug ("UserAgent: SDES negociation successfull \n");
+            _debug ("UserAgent: SDES negociation successfull");
             nego_success = true;
 
-            _debug ("UserAgent: Set remote cryptographic context\n");
+            _debug ("UserAgent: Set remote cryptographic context");
 
             try {
                 call->getAudioRtp()->setRemoteCryptoInfo (sdesnego);
@@ -3372,7 +3375,7 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
     }
 
 
-    // We did not found any crypto context for this media
+    // We did not found any crypto context for this media, RTP fallback
     if (!nego_success && call->getAudioRtp()->getAudioRtpType() == sfl::Sdes) {
 
         // We did not found any crypto context for this media
@@ -3390,13 +3393,7 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
             call->getAudioRtp()->initAudioRtpSession (call);
     }
 
-    if (nego_success && call->getAudioRtp()->getAudioRtpType() != sfl::Sdes) {
-
-        // We found a crypto context for this media but Sdes is not
-        // enabled for this call, make a try using RTP only...
-        _debug ("UserAgent: SDES not initialized for this call\n");
-    }
-
+    // Start audio rtp session.
 
     Sdp  *sdpSession = call->getLocalSDP();
 
@@ -3679,7 +3676,6 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     std::string method_name;
     std::string request;
 
-
     _info ("UserAgent: Transaction REQUEST received using transport: %s %s (refcnt=%d)",
            rdata->tp_info.transport->obj_name,
            rdata->tp_info.transport->info,
@@ -3702,6 +3698,8 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     // Get the account id of callee from username and server
     account_id = Manager::instance().getAccountIdFromNameAndServer (userName, server);
+
+    _debug ("UserAgent: Account ID for this call, %s", account_id.c_str());
 
     /* If we don't find any account to receive the call */
     if (account_id == AccountNULL) {
@@ -3863,6 +3861,9 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         return false;
     }
 
+    Manager::instance().associateCallToAccount (call->getCallId(), account_id);
+
+
     std::string addrToUse, addrSdp ="0.0.0.0";
 
     pjsip_tpselector *tp;
@@ -3909,12 +3910,63 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     // We retrieve the remote sdp offer in the rdata struct to begin the negociation
     call->getLocalSDP()->set_ip_address (addrSdp);
 
+    // Init audio rtp session
     try {
+        _debug ("UserAgent: Create RTP session for this call");
         call->getAudioRtp()->initAudioRtpConfig (call);
         call->getAudioRtp()->initAudioRtpSession (call);
     } catch (...) {
         _warn ("UserAgent: Error: Failed to create rtp thread from answer");
     }
+
+    // Retreive crypto offer from body, if any
+    if (rdata->msg_info.msg->body) {
+
+        char sdpbuffer[1000];
+        rdata->msg_info.msg->body->print_body (rdata->msg_info.msg->body, sdpbuffer, 1000);
+        std::string sdpoffer = std::string (sdpbuffer);
+        size_t start = sdpoffer.find ("a=crypto:");
+
+        // Found crypto header in SDP
+        if (start != std::string::npos) {
+
+            std::string cryptoHeader = sdpoffer.substr (start, (sdpoffer.size() - start) -1);
+            _debug ("UserAgent: Found incoming crypto offer: %s", cryptoHeader.c_str());
+
+            CryptoOffer crypto_offer;
+            crypto_offer.push_back (cryptoHeader);
+
+            bool nego_success = false;
+
+            if (!crypto_offer.empty()) {
+
+                _debug ("UserAgent: Crypto attribute in SDP, init SRTP session");
+
+                // init local cryptografic capabilities for negotiation
+                std::vector<sfl::CryptoSuiteDefinition>localCapabilities;
+
+                for (int i = 0; i < 3; i++) {
+                    localCapabilities.push_back (sfl::CryptoSuites[i]);
+                }
+
+                sfl::SdesNegotiator sdesnego (localCapabilities, crypto_offer);
+
+                if (sdesnego.negotiate()) {
+                    _debug ("UserAgent: SDES negociation successfull \n");
+                    nego_success = true;
+
+                    try {
+                        _debug ("UserAgent: Create RTP session for this call");
+                        call->getAudioRtp()->setRemoteCryptoInfo (sdesnego);
+                        call->getAudioRtp()->initLocalCryptoInfo (call);
+                    } catch (...) {
+                        _warn ("UserAgent: Error: Failed to create rtp thread from answer");
+                    }
+                }
+            }
+        }
+    }
+
 
     status = call->getLocalSDP()->receiving_initial_offer (r_sdp, account->getActiveCodecs ());
 
@@ -4551,8 +4603,15 @@ bool setCallAudioLocal (SIPCall* call, std::string localIP)
 {
     SIPAccount *account = NULL;
 
+    _debug ("UserAgent: Set local media information for this call");
+
     if (call) {
-        account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (Manager::instance().getAccountFromCall (call->getCallId ())));
+
+        AccountID account_id = Manager::instance().getAccountFromCall (call->getCallId ());
+
+        account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
+
+
 
         // Setting Audio
         unsigned int callLocalAudioPort = RANDOM_LOCAL_PORT;
@@ -4564,10 +4623,9 @@ bool setCallAudioLocal (SIPCall* call, std::string localIP)
             //localIP = account->getPublishedAddress ();
         }
 
-        _debug ("            Setting local ip address: %s", localIP.c_str());
-
-        _debug ("            Setting local audio port to: %d", callLocalAudioPort);
-        _debug ("            Setting local audio port (external) to: %d", callLocalExternAudioPort);
+        _debug ("UserAgent: Setting local ip address: %s", localIP.c_str());
+        _debug ("UserAgent: Setting local audio port to: %d", callLocalAudioPort);
+        _debug ("UserAgent: Setting local audio port (external) to: %d", callLocalExternAudioPort);
 
         // Set local audio port for SIPCall(id)
         call->setLocalIp (localIP);
@@ -4577,9 +4635,13 @@ bool setCallAudioLocal (SIPCall* call, std::string localIP)
         call->getLocalSDP()->attribute_port_to_all_media (callLocalExternAudioPort);
 
         return true;
-    }
+    } else {
 
-    return false;
+        _error ("UserAgent: Error: No call found while setting media information for this call");
+
+        return false;
+
+    }
 }
 
 std::string fetch_header_value (pjsip_msg *msg, std::string field)

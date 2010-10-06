@@ -45,6 +45,7 @@
 #include <cerrno>
 
 
+
 namespace sfl
 {
 
@@ -56,9 +57,20 @@ AudioSrtpSession::AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall) :
         _localMasterKeyLength (0),
         _localMasterSaltLength (0),
         _remoteMasterKeyLength (0),
-        _remoteMasterSaltLength (0)
-
+        _remoteMasterSaltLength (0),
+        _remoteCryptoCtx (NULL),
+        _localCryptoCtx (NULL),
+        _remoteOfferIsSet (false)
 {
+}
+
+AudioSrtpSession::~AudioSrtpSession()
+{
+}
+
+void AudioSrtpSession::initLocalCryptoInfo()
+{
+    _debug ("AudioSrtp: Set cryptographic info for this rtp session");
 
     // Initialize local Crypto context
     initializeLocalMasterKey();
@@ -69,13 +81,13 @@ AudioSrtpSession::AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall) :
     _localCryptoCtx->deriveSrtpKeys (0);
 
     setOutQueueCryptoContext (_localCryptoCtx);
-}
 
+}
 
 std::vector<std::string> AudioSrtpSession::getLocalCryptoInfo()
 {
 
-    _debug ("Get Cryptographic info from this rtp session");
+    _debug ("AudioSrtp: Get Cryptographic info from this rtp session");
 
     std::vector<std::string> crypto_vector;
 
@@ -107,23 +119,39 @@ std::vector<std::string> AudioSrtpSession::getLocalCryptoInfo()
 
 void AudioSrtpSession::setRemoteCryptoInfo (sfl::SdesNegotiator& nego)
 {
+    if (!_remoteOfferIsSet) {
 
-    _debug ("Set remote Cryptographic info for Srtp");
+        _debug ("%s", nego.getKeyInfo().c_str());
 
-    // decode keys
-    unBase64ConcatenatedKeys (nego.getKeyInfo());
+        // Use second crypto suite if key length is 32 bit, default is 80;
 
-    // init crypto content int Srtp session
-    initializeRemoteCryptoContext();
-    setInQueueCryptoContext (_remoteCryptoCtx);
+        if (nego.getAuthTagLength() == "32") {
+            _localCryptoSuite = 1;
+            _remoteCryptoSuite = 1;
+        }
+
+        // decode keys
+        unBase64ConcatenatedKeys (nego.getKeyInfo());
+
+        // init crypto content in Srtp session
+        initializeRemoteCryptoContext();
+        setInQueueCryptoContext (_remoteCryptoCtx);
+
+        // initLocalCryptoInfo();
+        _remoteOfferIsSet = true;
+    }
+
 }
 
 
 void AudioSrtpSession::initializeLocalMasterKey (void)
 {
+    _debug ("AudioSrtp: Init local master key");
 
     // @TODO key may have different length depending on cipher suite
     _localMasterKeyLength = sfl::CryptoSuites[_localCryptoSuite].masterKeyLength / 8;
+
+    _debug ("AudioSrtp: Local master key length %d", _localMasterKeyLength);
 
     // Allocate memory for key
     unsigned char *random_key = new unsigned char[_localMasterKeyLength];
@@ -136,14 +164,6 @@ void AudioSrtpSession::initializeLocalMasterKey (void)
 
     memcpy (_localMasterKey, random_key, _localMasterKeyLength);
 
-    /*
-    printf("Local Master: ");
-    for(int i = 0; i < _localMasterKeyLength; i++){
-        printf("%d", _localMasterKey[i]);
-    }
-    printf("\n");
-    */
-    return;
 }
 
 
@@ -156,6 +176,8 @@ void AudioSrtpSession::initializeLocalMasterSalt (void)
     // Allocate memory for key
     unsigned char *random_key = new unsigned char[_localMasterSaltLength];
 
+    _debug ("AudioSrtp: Local master salt length %d", _localMasterSaltLength);
+
     // Generate ryptographically strong pseudo-random bytes
     int err;
 
@@ -164,7 +186,6 @@ void AudioSrtpSession::initializeLocalMasterSalt (void)
 
     memcpy (_localMasterSalt, random_key, _localMasterSaltLength);
 
-    return;
 
 }
 
@@ -172,10 +193,14 @@ void AudioSrtpSession::initializeLocalMasterSalt (void)
 std::string AudioSrtpSession::getBase64ConcatenatedKeys()
 {
 
+    _debug ("AudioSrtp: Get base64 concatenated keys");
+
     // compute concatenated master and salt length
     int concatLength = _localMasterKeyLength + _localMasterSaltLength;
 
     uint8 concatKeys[concatLength];
+
+    _debug ("AudioSrtp: Concatenated length %d", concatLength);
 
     // concatenate keys
     memcpy ( (void*) concatKeys, (void*) _localMasterKey, _localMasterKeyLength);
@@ -196,8 +221,8 @@ std::string AudioSrtpSession::getBase64ConcatenatedKeys()
 void AudioSrtpSession::unBase64ConcatenatedKeys (std::string base64keys)
 {
 
-    _remoteMasterKeyLength = sfl::CryptoSuites[1].masterKeyLength / 8;
-    _remoteMasterSaltLength = sfl::CryptoSuites[1].masterSaltLength / 8;
+    _remoteMasterKeyLength = sfl::CryptoSuites[_remoteCryptoSuite].masterKeyLength / 8;
+    _remoteMasterSaltLength = sfl::CryptoSuites[_remoteCryptoSuite].masterSaltLength / 8;
 
     // length of decoded data data
     int length;
@@ -218,7 +243,14 @@ void AudioSrtpSession::unBase64ConcatenatedKeys (std::string base64keys)
 
 void AudioSrtpSession::initializeRemoteCryptoContext (void)
 {
-    CryptoSuiteDefinition crypto = sfl::CryptoSuites[_localCryptoSuite];
+    _debug ("AudioSrtp: Initialize remote crypto context");
+
+    CryptoSuiteDefinition crypto = sfl::CryptoSuites[_remoteCryptoSuite];
+
+    if (_remoteCryptoCtx) {
+        delete _remoteCryptoCtx;
+        _remoteCryptoCtx = NULL;
+    }
 
     _remoteCryptoCtx = new ost::CryptoContext (0x0,
             0,                               // roc,
@@ -231,14 +263,21 @@ void AudioSrtpSession::initializeRemoteCryptoContext (void)
             _remoteMasterSaltLength,
             crypto.encryptionKeyLength / 8,
             crypto.srtpAuthKeyLength / 8,
-            112 / 8,                         // session salt len
+            crypto.masterSaltLength / 8,                         // session salt len
             crypto.srtpAuthTagLength / 8);
 
 }
 
 void AudioSrtpSession::initializeLocalCryptoContext (void)
 {
+    _debug ("AudioSrtp: Initialize local crypto context");
+
     CryptoSuiteDefinition crypto = sfl::CryptoSuites[_localCryptoSuite];
+
+    if (_localCryptoCtx) {
+        delete _localCryptoCtx;
+        _localCryptoCtx = NULL;
+    }
 
     _localCryptoCtx = new ost::CryptoContext (OutgoingDataQueue::getLocalSSRC(),
             0,                               // roc,
@@ -251,7 +290,7 @@ void AudioSrtpSession::initializeLocalCryptoContext (void)
             _localMasterSaltLength,
             crypto.encryptionKeyLength / 8,
             crypto.srtpAuthKeyLength / 8,
-            112 / 8,                         // session salt len
+            crypto.masterSaltLength / 8,                         // session salt len
             crypto.srtpAuthTagLength / 8);
 
 }

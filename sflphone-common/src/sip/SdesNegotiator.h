@@ -202,6 +202,14 @@ class SdesNegotiator
             return _mkiLength;
         }
 
+        /**
+        * Authentication tag lenth
+        */
+        std::string getAuthTagLength (void) {
+            return _authTagLength;
+        }
+
+
     private:
         /**
          * A vector list containing the remote attributes.
@@ -241,6 +249,11 @@ class SdesNegotiator
          * Selected mki length after negotiation
          */
         std::string _mkiLength;
+
+        /**
+         * Authenticvation tag length in byte
+         */
+        std::string _authTagLength;
 
         std::vector<CryptoAttribute *> parse (void);
 };
