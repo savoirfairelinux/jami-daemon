@@ -3355,17 +3355,17 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
             localCapabilities.push_back (sfl::CryptoSuites[i]);
         }
 
+        // Mkae sure incoming crypto offer is valid
         sfl::SdesNegotiator sdesnego (localCapabilities, crypto_offer);
 
         if (sdesnego.negotiate()) {
-            _debug ("UserAgent: SDES negociation successfull \n");
+            _debug ("UserAgent: SDES negociation successfull");
             nego_success = true;
 
-            _debug ("UserAgent: Set remote cryptographic context\n");
+            _debug ("UserAgent: Set remote cryptographic context");
 
             try {
                 call->getAudioRtp()->setRemoteCryptoInfo (sdesnego);
-                // call->getAudioRtp()->initLocalCryptoInfo (call);
             } catch (...) {}
 
             DBusManager::instance().getCallManager()->secureSdesOn (call->getCallId());
@@ -3375,7 +3375,7 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
     }
 
 
-    // We did not found any crypto context for this media
+    // We did not found any crypto context for this media, RTP fallback
     if (!nego_success && call->getAudioRtp()->getAudioRtpType() == sfl::Sdes) {
 
         // We did not found any crypto context for this media
@@ -3393,13 +3393,7 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
             call->getAudioRtp()->initAudioRtpSession (call);
     }
 
-    if (nego_success && call->getAudioRtp()->getAudioRtpType() != sfl::Sdes) {
-
-        // We found a crypto context for this media but Sdes is not
-        // enabled for this call, make a try using RTP only...
-        _debug ("UserAgent: SDES not initialized for this call\n");
-    }
-
+    // Start audio rtp session.
 
     Sdp  *sdpSession = call->getLocalSDP();
 
@@ -3916,22 +3910,31 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     // We retrieve the remote sdp offer in the rdata struct to begin the negociation
     call->getLocalSDP()->set_ip_address (addrSdp);
 
+    // Init audio rtp session
+    try {
+        _debug ("UserAgent: Create RTP session for this call");
+        call->getAudioRtp()->initAudioRtpConfig (call);
+        call->getAudioRtp()->initAudioRtpSession (call);
+    } catch (...) {
+        _warn ("UserAgent: Error: Failed to create rtp thread from answer");
+    }
+
     // Retreive crypto offer from body, if any
     if (rdata->msg_info.msg->body) {
 
         char sdpbuffer[1000];
-        std::string *sdpoffer = NULL;
         rdata->msg_info.msg->body->print_body (rdata->msg_info.msg->body, sdpbuffer, 1000);
-        sdpoffer = new std::string (sdpbuffer);
-        int start = sdpoffer->find ("a=crypto:");
+        std::string sdpoffer = std::string (sdpbuffer);
+        size_t start = sdpoffer.find ("a=crypto:");
 
+        // Found crypto header in SDP
         if (start != std::string::npos) {
-            std::string cryptooffer = sdpoffer->substr (start, (sdpoffer->size() - start) -1);
-            _debug ("UserAgent: Found incoming crypto offer: %s", cryptooffer.c_str());
 
+            std::string cryptoHeader = sdpoffer.substr (start, (sdpoffer.size() - start) -1);
+            _debug ("UserAgent: Found incoming crypto offer: %s", cryptoHeader.c_str());
 
             CryptoOffer crypto_offer;
-            crypto_offer.push_back (cryptooffer);
+            crypto_offer.push_back (cryptoHeader);
 
             bool nego_success = false;
 
@@ -3952,17 +3955,8 @@ mod_on_rx_request (pjsip_rx_data *rdata)
                     _debug ("UserAgent: SDES negociation successfull \n");
                     nego_success = true;
 
-                    _debug ("----------------------------------- UserAgent: Set remote cryptographic context\n");
-
-                    /*
-                            try {
-                                call->getAudioRtp()->setRemoteCryptoInfo (sdesnego);
-                            } catch (...) {}
-                    */
                     try {
                         _debug ("UserAgent: Create RTP session for this call");
-                        call->getAudioRtp()->initAudioRtpConfig (call);
-                        call->getAudioRtp()->initAudioRtpSession (call);
                         call->getAudioRtp()->setRemoteCryptoInfo (sdesnego);
                         call->getAudioRtp()->initLocalCryptoInfo (call);
                     } catch (...) {
@@ -3973,18 +3967,6 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         }
     }
 
-
-    /*
-    try {
-        _debug ("UserAgent: Create RTP session for this call");
-        call->getAudioRtp()->initAudioRtpConfig (call);
-        call->getAudioRtp()->initAudioRtpSession (call);
-        _debug ("------------------------------------------------ init local crypto info");
-        call->getAudioRtp()->initLocalCryptoInfo (call);
-    } catch (...) {
-        _warn ("UserAgent: Error: Failed to create rtp thread from answer");
-    }
-    */
 
     status = call->getLocalSDP()->receiving_initial_offer (r_sdp, account->getActiveCodecs ());
 
