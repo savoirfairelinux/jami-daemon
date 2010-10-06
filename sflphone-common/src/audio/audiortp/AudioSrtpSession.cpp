@@ -51,8 +51,8 @@ namespace sfl
 AudioSrtpSession::AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall) :
         ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
         AudioRtpSession<AudioSrtpSession> (manager, sipcall),
-        _localCryptoSuite (0),
-        _remoteCryptoSuite (0),
+        _localCryptoSuite (1),
+        _remoteCryptoSuite (1),
         _localMasterKeyLength (0),
         _localMasterSaltLength (0),
         _remoteMasterKeyLength (0),
@@ -114,14 +114,15 @@ std::vector<std::string> AudioSrtpSession::getLocalCryptoInfo()
 void AudioSrtpSession::setRemoteCryptoInfo (sfl::SdesNegotiator& nego)
 {
 
-    _debug ("AudioSrtp: Set remote Cryptographic info for Srtp");
+    _debug ("----------------------------------------------- AudioSrtp: Set remote Cryptographic info for Srtp");
 
     _debug ("%s", nego.getKeyInfo().c_str());
 
     // Use second crypto suite if key length is 32 bit, default is 80;
+    _debug ("--------------------------------------------------- auth tag %s", nego.getAuthTagLength().c_str());
 
     if (nego.getAuthTagLength() == "32") {
-        _debug ("AudioSrtp: Using %s byte authentication tag length", nego.getAuthTagLength().c_str());
+        _debug ("--------------------------- AudioSrtp: Using %s byte authentication tag length", nego.getAuthTagLength().c_str());
         _localCryptoSuite = 1;
         _remoteCryptoSuite = 1;
     }
@@ -133,7 +134,7 @@ void AudioSrtpSession::setRemoteCryptoInfo (sfl::SdesNegotiator& nego)
     initializeRemoteCryptoContext();
     setInQueueCryptoContext (_remoteCryptoCtx);
 
-    initLocalCryptoInfo();
+    // initLocalCryptoInfo();
 }
 
 
