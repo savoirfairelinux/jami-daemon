@@ -78,74 +78,74 @@ class AudioSrtpSession : public ost::SymmetricRTPSession, public AudioRtpSession
 {
     public:
 
-	/**
-	 * Constructor for this rtp session
-	 */
+        /**
+         * Constructor for this rtp session
+         */
         AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall);
 
-	/**
-	 * Used to get sdp crypto header to be included in sdp session. This 
-	 * method must be called befor setRemoteCryptoInfo in case of an 
-	 * outgoing call or after in case of an outgoing call. 
-	 */
+        /**
+         * Used to get sdp crypto header to be included in sdp session. This
+         * method must be called befor setRemoteCryptoInfo in case of an
+         * outgoing call or after in case of an outgoing call.
+         */
         std::vector<std::string> getLocalCryptoInfo (void);
 
-	/**
-	 * Set remote crypto header from incoming sdp offer
-	 */
+        /**
+         * Set remote crypto header from incoming sdp offer
+         */
         void setRemoteCryptoInfo (sfl::SdesNegotiator& nego);
 
         /**
          * Init local crypto context for outgoing data
-	 * this method must be called before sending first Invite request 
-	 * with SDP offer.
-	 */
+        * this method must be called before sending first Invite request
+        * with SDP offer.
+        */
         void initLocalCryptoInfo (void);
 
     private:
 
-	/**
-	 * Init local master key according to current crypto context
-	 * as defined in SdesNegotiator.h
-	 */
+        /**
+         * Init local master key according to current crypto context
+         * as defined in SdesNegotiator.h
+         */
         void initializeLocalMasterKey (void);
 
-	/**
-	 * Init local master salt according to current crypto context
-	 * as defined in SdesNegotiator.h	 
-	 */
+        /**
+         * Init local master salt according to current crypto context
+         * as defined in SdesNegotiator.h
+         */
         void initializeLocalMasterSalt (void);
 
-	/**
-	 * Init remote crypto context in audio srtp session. This method
-	 * must be called after unBase64ConcatenatedKeys.
-	 */
+        /**
+         * Init remote crypto context in audio srtp session. This method
+         * must be called after unBase64ConcatenatedKeys.
+         */
         void initializeRemoteCryptoContext (void);
 
-	/**
-	 * Init local crypto context in audio srtp session. Make sure remote
-	 * crypto context is set before calling this method for incoming calls.
-	 */
+        /**
+         * Init local crypto context in audio srtp session. Make sure remote
+         * crypto context is set before calling this method for incoming calls.
+         */
         void initializeLocalCryptoContext (void);
 
-	/**
-	 * Used to generate local keys to be included in SDP offer/answer.
-	 */
+        /**
+         * Used to generate local keys to be included in SDP offer/answer.
+         */
         std::string getBase64ConcatenatedKeys();
 
-	/**
-	 * Used to retreive keys from base64 serialization
-	 */
+        /**
+         * Used to retreive keys from base64 serialization
+         */
         void unBase64ConcatenatedKeys (std::string base64keys);
 
-	/**
-	 * Encode input data as base64
-	 */
+        /**
+         * Encode input data as base64
+         */
         char* encodeBase64 (unsigned char *input, int length);
 
-	/**
-	 * Decode base64 data
-	 */
+        /**
+         * Decode base64 data
+         */
         char* decodeBase64 (unsigned char *input, int length, int *length_out);
 
         /** Default local crypto suite is AES_CM_128_HMAC_SHA1_80*/
@@ -174,11 +174,14 @@ class AudioSrtpSession : public ost::SymmetricRTPSession, public AudioRtpSession
         /** remote master salt length in byte */
         int _remoteMasterSaltLength;
 
-	/** Remote srtp crypto context to be set into incoming data queue. */
+        /** Remote srtp crypto context to be set into incoming data queue. */
         ost::CryptoContext* _remoteCryptoCtx;
 
-	/** Local srtp crypto context to be set into outgoing data queue. */
+        /** Local srtp crypto context to be set into outgoing data queue. */
         ost::CryptoContext* _localCryptoCtx;
+
+        /** Used to make sure remote crypto context not initialized wice. */
+        bool _remoteOfferIsSet;
 };
 
 }
