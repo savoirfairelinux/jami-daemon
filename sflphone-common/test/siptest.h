@@ -55,9 +55,9 @@ class SIPTest : public CppUnit::TestCase {
     CPPUNIT_TEST_SUITE( SIPTest );
     CPPUNIT_TEST ( testSimpleOutgoingIpCall );
     CPPUNIT_TEST ( testSimpleIncomingIpCall );
-    // CPPUNIT_TEST ( testTwoOutgoingIpCall );
+    CPPUNIT_TEST ( testTwoOutgoingIpCall );
     // CPPUNIT_TEST ( testTwoIncomingIpCall );
-    // CPPUNIT_TEST ( testHoldIpCall);
+    CPPUNIT_TEST ( testHoldIpCall);
     CPPUNIT_TEST_SUITE_END();
 
     public:

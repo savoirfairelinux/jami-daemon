@@ -43,6 +43,44 @@
 using std::cout;
 using std::endl;
 
+pthread_mutex_t count_mutex;
+pthread_cond_t count_nb_thread;
+int counter = 0;
+
+
+void *sippThreadWithCount(void *str)
+{
+
+    pthread_mutex_lock(&count_mutex);
+    counter++;
+    pthread_mutex_unlock(&count_mutex);
+
+    std::string *command = (std::string *)(str);
+
+    std::cout << "SIPTest: " << command << std::endl;
+
+    // Set up the sipp instance in this thread in order to catch return value 
+    // 0: All calls were successful
+    // 1: At least one call failed
+    // 97: exit on internal command. Calls may have been processed
+    // 99: Normal exit without calls processed
+    // -1: Fatal error
+    // -2: Fatal error binding a socket 
+    int i = system(command->c_str());
+
+    CPPUNIT_ASSERT(i!=0);
+
+    pthread_mutex_lock(&count_mutex);
+    counter--;
+    if(counter == 0)
+	pthread_cond_signal(&count_nb_thread);
+    pthread_mutex_unlock(&count_mutex);
+
+    pthread_exit(NULL);
+
+}
+
+
 void *sippThread(void *str)
 {
 
@@ -68,7 +106,9 @@ void *sippThread(void *str)
 
 void SIPTest::setUp()
 {
-    
+    pthread_mutex_lock(&count_mutex);
+    counter = 0;
+    pthread_mutex_unlock(&count_mutex);
 }
 
 void SIPTest::tearDown()
@@ -251,6 +291,9 @@ void SIPTest::testTwoOutgoingIpCall ()
 void SIPTest::testTwoIncomingIpCall ()
 {
 
+    pthread_mutex_init(&count_mutex, NULL);
+    pthread_cond_init (&count_nb_thread, NULL);
+
     pthread_t firstCallThread, secondCallThread;
     void *status;
 
@@ -260,12 +303,12 @@ void SIPTest::testTwoIncomingIpCall ()
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
     // the first call is supposed to be put on hold when answering teh second incoming call
-    std::string firstCallCommand("sipp -sf sippxml/test_2.xml 127.0.0.1 -i 127.0.0.1 -p 5064 -m 1");
+    std::string firstCallCommand("sipp -sf sippxml/test_2.xml 127.0.0.1 -i 127.0.0.1 -p 5064 -m 1 > testfile1.txt");
 
     // command to be executed by the thread, user agent client which initiate a call and hangup
-    std::string secondCallCommand("sipp -sn uac 127.0.0.1 -i 127.0.0.1 -p 5062 -m 1 -d 1000");
+    std::string secondCallCommand("sipp -sn uac 127.0.0.1 -i 127.0.0.1 -p 5062 -m 1 -d 250 > testfile2.txt");
 
-    int rc = pthread_create(&firstCallThread, &attr, sippThread, (void *)(&firstCallCommand));
+    int rc = pthread_create(&firstCallThread, &attr, sippThreadWithCount, (void *)(&firstCallCommand));
     if (rc) {
         std::cout << "SIPTest: ERROR; return code from pthread_create()" << std::endl;
     }
@@ -273,7 +316,7 @@ void SIPTest::testTwoIncomingIpCall ()
 
     // sleep a while to make sure that sipp insdtance is initialized and sflphoned received
     // the incoming invite.
-    sleep(2);
+    sleep(1);
 
     // gtrab call id from sipvoiplink 
     SIPVoIPLink *sipLink = SIPVoIPLink::instance ("");
@@ -302,7 +345,14 @@ void SIPTest::testTwoIncomingIpCall ()
 
     CPPUNIT_ASSERT(Manager::instance().answerCall(secondCallID));
 
+    sleep(2);
 
+    pthread_mutex_lock(&count_mutex);
+    while(counter > 0)
+	pthread_cond_wait(&count_nb_thread, &count_mutex);
+    pthread_mutex_unlock(&count_mutex);
+
+    /*
     rc = pthread_join(firstCallThread, &status);
     if (rc) {
         std::cout << "SIPTest: ERROR; return code from pthread_join(): " << rc << std::endl;
@@ -316,7 +366,10 @@ void SIPTest::testTwoIncomingIpCall ()
     }
     else
         std::cout << "SIPTest: completed join with thread 2" << std::endl;
+    */
 
+    pthread_mutex_destroy(&count_mutex);
+    pthread_cond_destroy(&count_nb_thread);
 
 }
 
@@ -324,22 +377,16 @@ void SIPTest::testTwoIncomingIpCall ()
 void SIPTest::testHoldIpCall()
 {
     pthread_t callThread;
-    void *status;
-
-    // pthread_attr_t attr;
-
-    // pthread_attr_init(&attr);
-    // pthreaq_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
     std::string callCommand("sipp -sf sippxml/test_3.xml -i 127.0.0.1 -p 5062 -m 1");
-/*
+
     int rc = pthread_create(&callThread, NULL, sippThread, (void *)(&callCommand));
     if(rc) {
 	std::cout << "SIPTest: ERROR; return code from pthread_create(): " << rc << std::endl;
     }
     else
 	std::cout << "SIPTest: completed thread creation" << std::endl;
-*/
+
 
     std::string testAccount("IP2IP");
 
@@ -358,6 +405,6 @@ void SIPTest::testHoldIpCall()
 
     sleep(1);
 
-     Manager::instance().hangupCall(testCallID);
+    Manager::instance().hangupCall(testCallID);
 }
 
