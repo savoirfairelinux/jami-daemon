@@ -211,7 +211,12 @@ addressbook_config_book_active_toggled (
 
     // Get path of clicked book active toggle box
     treePath = gtk_tree_path_new_from_string (path);
-    model = gtk_tree_view_get_model (GTK_TREE_VIEW (data));
+
+    if(!(model = gtk_tree_view_get_model (GTK_TREE_VIEW (data)))) {
+	DEBUG("Addressbook: No valid model (%s:%d)", __FILE__, __LINE__);
+    	return;
+    }
+
     gtk_tree_model_get_iter (model, &iter, treePath);
 
     // Get active value  at iteration
@@ -276,8 +281,16 @@ addressbook_config_fill_book_list()
     book_data_t *book_data;
     GSList *books_data = addressbook_get_books_data();
 
+    if(!books_data) {
+	DEBUG("Addressbook: No valid books data (%s:%d)", __FILE__, __LINE__);
+    } 
+
     // Get model of view and clear it
-    store = GTK_LIST_STORE (gtk_tree_view_get_model (GTK_TREE_VIEW (book_tree_view)));
+    if(!(store = GTK_LIST_STORE (gtk_tree_view_get_model (GTK_TREE_VIEW (book_tree_view))))) {
+	DEBUG("Addressbook: Could not find model from treeview (%s:%d)", __FILE__, __LINE__);
+	return;
+    }
+	
     gtk_list_store_clear (store);
 
     // Populate window

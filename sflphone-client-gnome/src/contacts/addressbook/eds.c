@@ -104,6 +104,11 @@ books_active()
     GSList *book_list_iterator;
     book_data_t *book_data;
 
+    if(!books_data) {
+	DEBUG("Addressbook: No books data (%s:%d)", __FILE__, __LINE__);
+        return FALSE;
+    }
+
     // Iterate throw the list
     for (book_list_iterator = books_data; book_list_iterator != NULL; book_list_iterator
             = book_list_iterator->next) {
@@ -124,6 +129,11 @@ books_get_book_data_by_uid (gchar *uid)
 {
     GSList *book_list_iterator;
     book_data_t *book_data;
+
+    if(!books_data) {
+	DEBUG("Addressbook: No books data (%s:%d)", __FILE__, __LINE__);
+	return NULL;
+    }
 
     DEBUG ("Addressbook: Get book data by uid: %s", uid);
 
@@ -517,14 +527,14 @@ fill_books_data ()
     source_list = e_source_list_new_for_gconf_default ("/apps/evolution/addressbook/sources");
 
     if (source_list == NULL) {
-        DEBUG ("Addressbook: Error could not initialize source list for addressbook");
+        DEBUG ("Addressbook: Error could not initialize source list for addressbook (%s:%d)", __FILE__, __LINE__);
         return;
     }
 
     list = e_source_list_peek_groups (source_list);
 
     if (!list) {
-        DEBUG ("Addressbook: Address Book source groups are missing! Check your GConf setup.");
+        DEBUG ("Addressbook: Address Book source groups are missing (%s:%d)! Check your GConf setup.", __FILE__, __LINE__);
         return;
     }
 
@@ -649,6 +659,11 @@ set_current_addressbook (const gchar *name)
 
     GSList *book_list_iterator;
     book_data_t *book_data;
+
+    if(!books_data) {
+        DEBUG("Addressbook: No books data (%s:%d)", __FILE__, __LINE__);
+        return NULL;
+    }
 
     // Iterate throw the list
     for (book_list_iterator = books_data; book_list_iterator != NULL; book_list_iterator
