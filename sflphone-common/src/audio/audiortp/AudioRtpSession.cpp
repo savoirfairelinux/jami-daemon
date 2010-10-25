@@ -1,6 +1,11 @@
 /*
  *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
+ *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
+ *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,107 +31,48 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#include "AudioZrtpSession.h"
-#include "ZrtpSessionCallback.h"
-#include "user_cfg.h"
 
-#include "sip/sipcall.h"
-
-#include <libzrtpcpp/ZrtpQueue.h>
-#include <libzrtpcpp/ZrtpUserCallback.h>
-
-#include <cstdio>
-#include <cstring>
-#include <cerrno>
+#include "AudioRtpSession.h"
 
 namespace sfl
 {
 
-AudioZrtpSession::AudioZrtpSession (ManagerImpl * manager, SIPCall * sipcall, const std::string& zidFilename) :
-        ost::SymmetricZRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort())
-																											  , _zidFilename (zidFilename)
-																											  , _time (new ost::Time())
-																											  , _mainloopSemaphore (0)
-																											  , _manager (manager)
-																											  , _timestamp (0)
-																											  , _timestampIncrement (0)
-																											  , _timestampCount (0)
-																											  , _countNotificationTime (0)
-																											  , _ca (sipcall)
+AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
+		ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort())
+																			, _time (new ost::Time())
+        																	, _mainloopSemaphore (0)
+        																	, _manager (manager)
+        																	, _timestamp (0)
+        																	, _timestampIncrement (0)
+        																	, _timestampCount (0)
+        																	, _countNotificationTime (0)
+        																	, _ca (sipcall)
 {
-    _debug ("AudioZrtpSession initialized");
-    initializeZid();
-
-    setCancel (cancelDefault);
+	setCancel (cancelDefault);
 
     assert (_ca);
 
-    _info ("AudioZrtpSession: Local audio port %i will be used", _ca->getLocalAudioPort());
+    _info ("AudioRtpSession: Local audio port %i will be used", _ca->getLocalAudioPort());
+
 }
 
-AudioZrtpSession::~AudioZrtpSession()
+AudioRtpSession::~AudioRtpSession()
 {
-	_debug ("AudioZrtpSession: Delete AudioRtpSession instance");
+    _debug ("AudioRtpSession: Delete AudioRtpSession instance");
 
-	    try {
-	    	terminate();
-	    } catch (...) {
-	        _debugException ("AudioZrtpSession: Thread destructor didn't terminate correctly");
-	        throw;
-	    }
-
-	    _manager->getAudioDriver()->getMainBuffer()->unBindAll (_ca->getCallId());
-
-	    if(_time)
-	    	delete _time;
-	    _time = NULL;
-}
-
-
-
-void AudioZrtpSession::initializeZid (void)
-{
-
-    if (_zidFilename.empty()) {
-        throw ZrtpZidException();
+    try {
+    	terminate();
+    } catch (...) {
+        _debugException ("AudioRtpSession: Thread destructor didn't terminate correctly");
+        throw;
     }
 
-    std::string zidCompleteFilename;
+    _manager->getAudioDriver()->getMainBuffer()->unBindAll (_ca->getCallId());
 
-    // xdg_config = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".cache/sflphone";
+    if(_time)
+    	delete _time;
+    _time = NULL;
 
-    std::string xdg_config = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".cache" + DIR_SEPARATOR_STR + PROGDIR + "/" + _zidFilename;
-
-    _debug ("    xdg_config %s", xdg_config.c_str());
-
-    if (XDG_CACHE_HOME != NULL) {
-        std::string xdg_env = std::string (XDG_CACHE_HOME) + _zidFilename;
-        _debug ("    xdg_env %s", xdg_env.c_str());
-        (xdg_env.length() > 0) ? zidCompleteFilename = xdg_env : zidCompleteFilename = xdg_config;
-    } else
-        zidCompleteFilename = xdg_config;
-
-
-    if (initialize (zidCompleteFilename.c_str()) >= 0) {
-        _debug ("Register callbacks");
-        setEnableZrtp (true);
-        setUserCallback (new ZrtpSessionCallback (_ca));
-        return;
-    }
-
-    _debug ("Initialization from ZID file failed. Trying to remove...");
-
-    if (remove (zidCompleteFilename.c_str()) !=0) {
-        _debug ("Failed to remove zid file because of: %s", strerror (errno));
-        throw ZrtpZidException();
-    }
-
-    if (initialize (zidCompleteFilename.c_str()) < 0) {
-        _debug ("ZRTP initialization failed");
-        throw ZrtpZidException();
-    }
-
-    return;
 }
 
 void AudioRtpSession::setSessionTimeouts (void)

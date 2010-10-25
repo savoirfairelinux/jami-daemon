@@ -74,7 +74,7 @@ class SrtpException: public std::exception
         }
 };
 
-class AudioSrtpSession : public ost::SymmetricRTPSession, public AudioRtpSession<AudioSrtpSession>
+class AudioSrtpSession : public AudioRtpSession
 {
     public:
 

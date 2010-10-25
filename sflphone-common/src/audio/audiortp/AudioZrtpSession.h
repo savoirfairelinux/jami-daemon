@@ -31,7 +31,7 @@
 
 #include <libzrtpcpp/zrtpccrtp.h>
 
-#include "AudioRtpSession.h"
+#include "AudioRtpRecordHandler.h"
 
 class ManagerImpl;
 class SIPCall;
@@ -46,7 +46,7 @@ class ZrtpZidException: public std::exception
         }
 };
 
-class AudioZrtpSession : public ost::SymmetricZRTPSession, public AudioRtpSession<AudioZrtpSession>
+class AudioZrtpSession : public ost::TimerPort, public ost::SymmetricZRTPSession, public AudioRtpRecordHandler
 {
     public:
         AudioZrtpSession (ManagerImpl * manager, SIPCall * sipcall, const std::string& zidFilename);
@@ -54,6 +54,56 @@ class AudioZrtpSession : public ost::SymmetricZRTPSession, public AudioRtpSessio
     private:
         void initializeZid (void);
         std::string _zidFilename;
+
+        ost::Time * _time;
+
+        // This semaphore is not used
+        // but is needed in order to avoid
+        // ambiguous compiling problem.
+        // It is set to 0, and since it is
+        // optional in ost::thread, then
+        // it amounts to the same as doing
+        // start() with no semaphore at all.
+        ost::Semaphore * _mainloopSemaphore;
+
+        // Main destination address for this rtp session.
+        // Stored in case or reINVITE, which may require to forget
+        // this destination and update a new one.
+        ost::InetHostAddress _remote_ip;
+
+
+        // Main destination port for this rtp session.
+        // Stored in case reINVITE, which may require to forget
+        // this destination and update a new one
+        unsigned short _remote_port;
+
+        /**
+         * Manager instance.
+         */
+        ManagerImpl * _manager;
+
+        /**
+         * Timestamp for this session
+         */
+        int _timestamp;
+
+        /**
+         * Timestamp incrementation value based on codec period length (framesize)
+         * except for G722 which require a 8 kHz incrementation.
+         */
+        int _timestampIncrement;
+
+        /**
+         * Timestamp reset freqeuncy specified in number of packet sent
+         */
+        short _timestampCount;
+
+        /**
+         * Time counter used to trigger incoming call notification
+         */
+        int _countNotificationTime;
+
+        SIPCall * _ca;
 };
 
 }

@@ -37,13 +37,11 @@ class ManagerImpl;
 
 namespace sfl
 {
-class AudioSymmetricRtpSession : public ost::SymmetricRTPSession, public AudioRtpSession<AudioSymmetricRtpSession>
+class AudioSymmetricRtpSession : public AudioRtpSession
 {
     public:
-        AudioSymmetricRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
-                ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
-                AudioRtpSession<AudioSymmetricRtpSession> (manager, sipcall) {
-            _debug ("AudioSymmetricRtpSession initialized\n");
+        AudioSymmetricRtpSession (ManagerImpl * manager, SIPCall * sipcall) : AudioRtpSession (manager, sipcall) {
+
         }
 };
 }
