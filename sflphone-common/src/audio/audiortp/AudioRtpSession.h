@@ -472,7 +472,7 @@ void AudioRtpSession<D>::setSessionTimeouts (void)
         static_cast<D*> (this)->setSchedulingTimeout (schedulingTimeout);
         static_cast<D*> (this)->setExpireTimeout (expireTimeout);
     } catch (...) {
-        _debugException ("Initialization failed while setting timeouts");
+        _debugException ("AudioRtpSession: Initialization failed while setting timeouts");
         throw AudioRtpSessionException();
     }
 }

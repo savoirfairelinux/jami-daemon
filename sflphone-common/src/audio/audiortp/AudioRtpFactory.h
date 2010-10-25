@@ -39,18 +39,21 @@
 class SdesNegotiator;
 class SIPCall;
 
+/*
 namespace sfl
 {
 class AudioZrtpSession;
 class AudioSrtpSession;
 class AudioSymmetricRtpSession;
 }
+*/
 
 namespace sfl
 {
 
 class AudioZrtpSession;
 class AudioSrtpSession;
+class AudioSymmetricRtpSession;
 
 // Possible kind of rtp session
 typedef enum RtpMethod {
