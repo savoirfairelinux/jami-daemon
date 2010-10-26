@@ -53,7 +53,7 @@ AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
         																	, _countNotificationTime (0)
         																	, _ca (sipcall)
 {
-	setCancel (cancelDefault);
+	this->setCancel (cancelDefault);
 
     assert (_ca);
 
@@ -66,7 +66,7 @@ AudioRtpSession::~AudioRtpSession()
     _debug ("AudioRtpSession: Delete AudioRtpSession instance");
 
     try {
-    	terminate();
+    	this->terminate();
     } catch (...) {
         _debugException ("AudioRtpSession: Thread destructor didn't terminate correctly");
         throw;
@@ -266,7 +266,9 @@ int AudioRtpSession::startRtpThread (AudioCodec* audiocodec)
     setSessionTimeouts();
     setSessionMedia (audiocodec);
     initBuffers();
-    return start (_mainloopSemaphore);
+    int ret = this->start (_mainloopSemaphore);
+    this->startRunning();
+    return ret;
 }
 
 void AudioRtpSession::run ()
@@ -284,6 +286,8 @@ void AudioRtpSession::run ()
         threadSleep = getAudioLayerFrameSize();
     }
 
+    initNoiseSuppress();
+
     TimerPort::setTimer (threadSleep);
 
     // Set recording sampling rate
@@ -291,7 +295,7 @@ void AudioRtpSession::run ()
 
     // Start audio stream (if not started) AND flush all buffers (main and urgent)
     _manager->getAudioDriver()->startStream();
-    startRunning();
+    // startRunning();
 
     _debug ("AudioRtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
 

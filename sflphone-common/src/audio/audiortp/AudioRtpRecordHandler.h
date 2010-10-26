@@ -115,6 +115,8 @@ public:
     void setSpkrDataConverted(SFLDataFormat *_spkrDataConverted);
     void setSpkrDataDecoded(SFLDataFormat *_spkrDataDecoded);
     void setSpkrFadeInComplete(bool _spkrFadeInComplete);
+    void setAudioProcessing(AudioProcessing *audioProcess);
+    void setNoiseSuppress(NoiseSuppress *noiseSuppress);
 
 private:
     AudioCodec *_audioCodec;
@@ -188,9 +190,11 @@ public:
 
      /**
       * Allocate memory for RTP buffers and fill them with zeros
- 	 * @prereq Session codec needs to be initialized prior calling this method
+ 	  * @prereq Session codec needs to be initialized prior calling this method
       */
      void initBuffers (void);
+
+     void initNoiseSuppress (void);
 
     /**
      * Encode audio data from mainbuffer

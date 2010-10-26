@@ -62,6 +62,7 @@ AudioRtpRecord::AudioRtpRecord(ManagerImpl *manager) : _audioCodec(NULL)
 
 	_audioLayerFrameSize = Manager::instance().getAudioDriver()->getFrameSize(); // in ms
 	_audioLayerSampleRate = Manager::instance().getAudioDriver()->getSampleRate();
+
 }
 
 
@@ -308,6 +309,16 @@ void AudioRtpRecord::setSpkrFadeInComplete(bool _spkrFadeInComplete)
     this->_spkrFadeInComplete = _spkrFadeInComplete;
 }
 
+void AudioRtpRecord::setAudioProcessing(AudioProcessing *audioProcess)
+{
+	this->_audioProcess = audioProcess;
+}
+
+void AudioRtpRecord::setNoiseSuppress(NoiseSuppress *noiseSuppress)
+{
+	this->_noiseSuppress = noiseSuppress;
+}
+
 AudioRtpRecordHandler::AudioRtpRecordHandler(ManagerImpl *manager, SIPCall *ca) : _audioRtpRecord(manager), _ca(ca) {
 	// TODO Auto-generated constructor stub
 
@@ -363,6 +374,15 @@ void AudioRtpRecordHandler::initBuffers()
     // memset (_spkrDataConverted, 0, nbSamplesMax*sizeof (SFLDataFormat));
     // memset (_spkrDataDecoded, 0, nbSamplesMax*sizeof (SFLDataFormat));
     Manager::instance().addStream(_ca->getCallId());
+}
+
+void AudioRtpRecordHandler::initNoiseSuppress()
+{
+	NoiseSuppress *noiseSuppress = new NoiseSuppress (getCodecFrameSize(), getCodecSampleRate());
+	AudioProcessing *processing = new AudioProcessing (noiseSuppress);
+
+	_audioRtpRecord.setNoiseSuppress(noiseSuppress);
+	_audioRtpRecord.setAudioProcessing(processing);
 }
 
 void AudioRtpRecordHandler::putDtmfEvent(int digit)

@@ -335,6 +335,8 @@ void AudioZrtpSession::run ()
         threadSleep = getAudioLayerFrameSize();
     }
 
+    initNoiseSuppress();
+
     TimerPort::setTimer (threadSleep);
 
     // Set recording sampling rate
@@ -347,6 +349,8 @@ void AudioZrtpSession::run ()
     _debug ("AudioRtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
 
     while (!testCancel()) {
+
+    	_debug("run");
 
         // Reset timestamp to make sure the timing information are up to date
         if (_timestampCount > RTP_TIMESTAMP_RESET_FREQ) {
