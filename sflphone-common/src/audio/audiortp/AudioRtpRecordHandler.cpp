@@ -475,22 +475,22 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, unsigned 
 	}
 }
 
-    bool AudioRtpRecordHandler::fadeIn(SFLDataFormat *audio, int size, SFLDataFormat *factor)
-    {
-        // apply amplitude factor;
-        while(size){
-            size--;
-            audio[size] /= *factor;
-        }
-        // decrease factor
-        *factor /= FADEIN_STEP_SIZE
-        ;
-        // if factor reach 0, thsi function should no be called anymore
-        if(*factor == 0)
-            return true;
+bool AudioRtpRecordHandler::fadeIn(SFLDataFormat *audio, int size, SFLDataFormat *factor)
+{
+	// apply amplitude factor;
+	while(size){
+		size--;
+		audio[size] /= *factor;
+	}
+	// decrease factor
+	*factor /= FADEIN_STEP_SIZE;
 
-        return false;
-    }
+	// if factor reach 0, thsi function should no be called anymore
+	if(*factor == 0)
+		return true;
+
+	return false;
+}
 
 }
 

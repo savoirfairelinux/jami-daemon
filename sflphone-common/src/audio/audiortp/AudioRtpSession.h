@@ -78,8 +78,6 @@ class AudioRtpSession : public ost::TimerPort, public ost::SymmetricRTPSession, 
          */
         void updateDestinationIpAddress (void);
 
-        void putDtmfEvent (int digit);
-
         /**
         * Send DTMF over RTP (RFC2833). The timestamp and sequence number must be
         * incremented as if it was microphone audio. This function change the payload type of the rtp session,
