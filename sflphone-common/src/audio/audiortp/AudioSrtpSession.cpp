@@ -50,8 +50,7 @@ namespace sfl
 {
 
 AudioSrtpSession::AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall) :
-        ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
-        AudioRtpSession<AudioSrtpSession> (manager, sipcall),
+        AudioRtpSession (manager, sipcall),
         _localCryptoSuite (0),
         _remoteCryptoSuite (0),
         _localMasterKeyLength (0),

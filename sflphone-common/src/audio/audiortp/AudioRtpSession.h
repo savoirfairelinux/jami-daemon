@@ -42,41 +42,19 @@
 
 #include "AudioRtpRecordHandler.h"
 #include "sip/sipcall.h"
-#include "sip/sdp.h"
-#include "audio/audiolayer.h"
+// #include "sip/sdp.h"
+// #include "audio/audiolayer.h"
 #include "audio/codecs/audiocodec.h"
-
-
 
 #include "managerimpl.h"
 
 #include <ccrtp/rtp.h>
 #include <cc++/numbers.h> // ost::Time
 
-#include <speex/speex_jitter.h>
-
 #include <fstream>
-
-// Frequency (in packet number)
-#define RTP_TIMESTAMP_RESET_FREQ 100
-
-// Factor use to increase volume in fade in
-#define FADEIN_STEP_SIZE 4;
 
 namespace sfl
 {
-
-static const int schedulingTimeout = 100000;
-static const int expireTimeout = 1000000;
-
-
-class AudioRtpSessionException: public std::exception
-{
-        virtual const char* what() const throw() {
-            return "AudioRtpSessionException occured";
-        }
-};
-
 
 // class AudioRtpSession : public ost::Thread, public ost::TimerPort, public AudioRtpRecordHandler, public ost::SymmetricRTPSession
 class AudioRtpSession : public ost::TimerPort, public ost::SymmetricRTPSession, public AudioRtpRecordHandler

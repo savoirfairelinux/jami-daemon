@@ -32,6 +32,7 @@
 #include <libzrtpcpp/zrtpccrtp.h>
 
 #include "AudioRtpRecordHandler.h"
+#include <cc++/numbers.h> // OST::Time
 
 class ManagerImpl;
 class SIPCall;
@@ -51,8 +52,58 @@ class AudioZrtpSession : public ost::TimerPort, public ost::SymmetricZRTPSession
     public:
         AudioZrtpSession (ManagerImpl * manager, SIPCall * sipcall, const std::string& zidFilename);
 
+        ~AudioZrtpSession();
+
+        // Thread associated method
+        virtual void run ();
+
+        int startRtpThread (AudioCodec*);
+
+        /**
+         * Used mostly when receiving a reinvite
+         */
+        void updateDestinationIpAddress (void);
+
+        void putDtmfEvent (int digit);
+
+        /**
+         * Send DTMF over RTP (RFC2833). The timestamp and sequence number must be
+         * incremented as if it was microphone audio. This function change the payload type of the rtp session,
+         * send the appropriate DTMF digit using this payload, discard coresponding data from mainbuffer and get
+         * back the codec payload for further audio processing.
+         */
+        void sendDtmfEvent (sfl::DtmfEvent *dtmf);
+
     private:
+
         void initializeZid (void);
+
+        /**
+         * Set RTP Sockets send/receive timeouts
+         */
+        void setSessionTimeouts (void);
+
+        /**
+         * Set the audio codec for this RTP session
+         */
+        void setSessionMedia (AudioCodec*);
+
+        /**
+         * Retreive destination address for this session. Stored in CALL
+         */
+        void setDestinationIpAddress (void);
+
+
+        /**
+         * Send encoded data to peer
+         */
+        void sendMicData();
+
+        /**
+         * Receive data from peer
+         */
+        void receiveSpeakerData ();
+
         std::string _zidFilename;
 
         ost::Time * _time;

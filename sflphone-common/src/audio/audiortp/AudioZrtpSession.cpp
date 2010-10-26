@@ -31,6 +31,8 @@
 #include "user_cfg.h"
 
 #include "sip/sipcall.h"
+#include "sip/sdp.h"
+#include "audio/audiolayer.h"
 
 #include <libzrtpcpp/ZrtpQueue.h>
 #include <libzrtpcpp/ZrtpUserCallback.h>
@@ -43,7 +45,8 @@ namespace sfl
 {
 
 AudioZrtpSession::AudioZrtpSession (ManagerImpl * manager, SIPCall * sipcall, const std::string& zidFilename) :
-        ost::SymmetricZRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort())
+        ost::SymmetricZRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
+        AudioRtpRecordHandler(manager, sipcall)
 																											  , _zidFilename (zidFilename)
 																											  , _time (new ost::Time())
 																											  , _mainloopSemaphore (0)
@@ -129,13 +132,13 @@ void AudioZrtpSession::initializeZid (void)
     return;
 }
 
-void AudioRtpSession::setSessionTimeouts (void)
+void AudioZrtpSession::setSessionTimeouts (void)
 {
 	setSchedulingTimeout (sfl::schedulingTimeout);
 	setExpireTimeout (sfl::expireTimeout);
 }
 
-void AudioRtpSession::setSessionMedia (AudioCodec* audioCodec)
+void AudioZrtpSession::setSessionMedia (AudioCodec* audioCodec)
 {
 	// set internal codec info for this session
 	setRtpMedia(audioCodec);
@@ -170,7 +173,7 @@ void AudioRtpSession::setSessionMedia (AudioCodec* audioCodec)
 
 }
 
-void AudioRtpSession::setDestinationIpAddress (void)
+void AudioZrtpSession::setDestinationIpAddress (void)
 {
     if (_ca == NULL) {
         _error ("AudioRtpSession: Sipcall is gone.");
@@ -200,7 +203,7 @@ void AudioRtpSession::setDestinationIpAddress (void)
     }
 }
 
-void AudioRtpSession::updateDestinationIpAddress (void)
+void AudioZrtpSession::updateDestinationIpAddress (void)
 {
     // Destination address are stored in a list in ccrtp
     // This method remove the current destination entry
@@ -213,7 +216,7 @@ void AudioRtpSession::updateDestinationIpAddress (void)
     setDestinationIpAddress();
 }
 
-void AudioRtpSession::sendDtmfEvent (sfl::DtmfEvent *dtmf)
+void AudioZrtpSession::sendDtmfEvent (sfl::DtmfEvent *dtmf)
 {
     _debug ("AudioRtpSession: Send Dtmf %d", getEventQueueSize());
 
@@ -263,7 +266,7 @@ bool onRTPPacketRecv (ost::IncomingRTPPkt&)
 }
 
 
-void AudioRtpSession::sendMicData()
+void AudioZrtpSession::sendMicData()
 {
     // Increment timestamp for outgoing packet
     _timestamp += _timestampIncrement;
@@ -271,11 +274,11 @@ void AudioRtpSession::sendMicData()
     int compSize = processDataEncode();
 
     // putData put the data on RTP queue, sendImmediate bypass this queue
-    putData (_timestamp, getEncodedData(), compSize);
+    putData (_timestamp, getMicDataEncoded(), compSize);
 }
 
 
-void AudioRtpSession::receiveSpeakerData ()
+void AudioZrtpSession::receiveSpeakerData ()
 {
     const ost::AppDataUnit* adu = NULL;
 
@@ -308,7 +311,7 @@ void AudioRtpSession::receiveSpeakerData ()
 }
 
 
-int AudioRtpSession::startRtpThread (AudioCodec* audiocodec)
+int AudioZrtpSession::startRtpThread (AudioCodec* audiocodec)
 {
     _debug ("RTP: Starting main thread");
     setSessionTimeouts();
@@ -317,7 +320,7 @@ int AudioRtpSession::startRtpThread (AudioCodec* audiocodec)
     return start (_mainloopSemaphore);
 }
 
-void AudioRtpSession::run ()
+void AudioZrtpSession::run ()
 {
 
     // Timestamp must be initialized randomly

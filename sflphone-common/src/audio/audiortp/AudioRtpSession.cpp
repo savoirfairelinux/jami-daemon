@@ -34,11 +34,16 @@
 
 #include "AudioRtpSession.h"
 
+#include "sip/sdp.h"
+#include "audio/audiolayer.h"
+#include "manager.h"
+
 namespace sfl
 {
 
 AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
-		ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort())
+		ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
+		AudioRtpRecordHandler(manager, sipcall)
 																			, _time (new ost::Time())
         																	, _mainloopSemaphore (0)
         																	, _manager (manager)
@@ -200,13 +205,14 @@ void AudioRtpSession::sendDtmfEvent (sfl::DtmfEvent *dtmf)
         getEventQueue()->pop_front();
     }
 }
-
+/*
 bool onRTPPacketRecv (ost::IncomingRTPPkt&)
 {
     _debug ("AudioRtpSession: onRTPPacketRecv");
 
     return true;
 }
+*/
 
 
 void AudioRtpSession::sendMicData()
@@ -217,7 +223,7 @@ void AudioRtpSession::sendMicData()
     int compSize = processDataEncode();
 
     // putData put the data on RTP queue, sendImmediate bypass this queue
-    putData (_timestamp, getEncodedData(), compSize);
+    putData (_timestamp, getMicDataEncoded(), compSize);
 }
 
 
@@ -314,7 +320,23 @@ void AudioRtpSession::run ()
 
         // Recv session
         // TODO should not be called here anymore
-        // receiveSpeakerData ();
+        receiveSpeakerData ();
+
+
+
+        // Notify (with a beep) an incoming call when there is already a call
+        if (Manager::instance().incomingCallWaiting() > 0) {
+        	_countNotificationTime += _time->getSecond();
+        	int countTimeModulo = _countNotificationTime % 5000;
+
+        	// _debug("countNotificationTime: %d\n", countNotificationTime);
+        	// _debug("countTimeModulo: %d\n", countTimeModulo);
+        	if ( (countTimeModulo - _countNotificationTime) < 0) {
+        		Manager::instance().notificationIncomingCall();
+        	}
+
+        	_countNotificationTime = countTimeModulo;
+        }
 
         _manager->getAudioLayerMutex()->leave();
 

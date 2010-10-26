@@ -36,6 +36,7 @@
 #include "AudioSymmetricRtpSession.h"
 #include "manager.h"
 #include "account.h"
+#include "sip/sdp.h"
 #include "sip/sipcall.h"
 #include "sip/sipaccount.h"
 #include "sip/SdesNegotiator.h"
@@ -279,7 +280,8 @@ void AudioRtpFactory::setRemoteCryptoInfo (sfl::SdesNegotiator& nego)
 
 void AudioRtpFactory::sendDtmfDigit (int digit)
 {
-    switch (_rtpSessionType) {
+
+	switch (_rtpSessionType) {
 
         case Sdes:
             static_cast<AudioSrtpSession *> (_rtpSession)->putDtmfEvent (digit);
@@ -293,6 +295,7 @@ void AudioRtpFactory::sendDtmfDigit (int digit)
             static_cast<AudioZrtpSession *> (_rtpSession)->putDtmfEvent (digit);
             break;
     }
+
 }
 }
 

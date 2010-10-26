@@ -30,13 +30,32 @@
 #ifndef AUDIORTPRECORDHANDLER_H_
 #define AUDIORTPRECORDHANDLER_H_
 
+#include "sip/sipcall.h"
 #include "audio/codecs/audiocodec.h"
 #include "audio/samplerateconverter.h"
 #include "audio/audioprocessing.h"
 #include "audio/noisesuppress.h"
+#include "managerimpl.h"
+#include <ccrtp/rtp.h>
 
 namespace sfl
 {
+
+// Frequency (in packet number)
+#define RTP_TIMESTAMP_RESET_FREQ 100
+
+// Factor use to increase volume in fade in
+#define FADEIN_STEP_SIZE 4;
+
+static const int schedulingTimeout = 100000;
+static const int expireTimeout = 1000000;
+
+class AudioRtpSessionException: public std::exception
+{
+        virtual const char* what() const throw() {
+            return "AudioRtpSessionException occured";
+        }
+};
 
 typedef struct DtmfEvent {
     ost::RTPPacket::RFC2833Payload payload;
@@ -53,202 +72,71 @@ typedef list<DtmfEvent *> EventQueue;
  */
 class AudioRtpRecord {
 public:
-	AudioRtpRecord();
+	AudioRtpRecord(ManagerImpl *manager);
 	virtual ~AudioRtpRecord();
-
-	/**
-	 * Return a pointer to the current codec instance
-	 */
     inline AudioCodec *getAudioCodec() const;
-
-    /**
-     * Get current payload type (static or dynamic)
-     */
     int getCodecPayloadType() const;
-
-    /**
-     * Return wether or not this codec has dynamic payload to be
-     * negotiated during SDP session
-     */
     bool getHasDynamicPayload() const;
-
-    /**
-     * Get current audio layer frame size
-	 */
     int getAudioLayerFrameSize() const;
-
-    /**
-     * Get current audio layer sampling rate
-     */
     int getAudioLayerSampleRate() const;
-
-    /**
-     * Get current codec frame size
-     */
     int getCodecFrameSize() const;
-
-    /**
-     * Return current sample rate
-     */
     int getCodecSampleRate() const;
-
-    /**
-     * Get the sampling rate converter for this session
-     */
     SamplerateConverter *getConverter() const;
-
-    /**
-     * Get sampling rate converter's sampling rate
-     */
     inline int getConverterSamplingRate() const;
-
-    /**
-     * Return a poiner to the DTMF event queue
-     */
-    EventQueue *getEventQueue() const;
-
-    /**
-     * Return the number of DTMF event waiting in the queue
-     */
+    EventQueue *getEventQueue();
     int getEventQueueSize() const;
+    SFLDataFormat *getMicData();
+    SFLDataFormat *getMicDataConverted();
+    unsigned char *getMicDataEncoded();
+    SFLDataFormat *getMicAmplFactor();
+    bool getMicFadeInComplete() const;
+    SFLDataFormat *getSpkrAmplFactor();
+    SFLDataFormat *getSpkrDataConverted() const;
+    SFLDataFormat *getSpkrDataDecoded() const;
+    bool getSpkrFadeInComplete() const;
+    AudioProcessing *getNoiseReductionProcess() const;
 
-    unsigned char *getEncodedData() const;
-
-    /**
-     * Return a pointer to the current codec instance
-     */
     void setAudioCodec(AudioCodec *audioCodec);
-
-    /**
-     * Set current codec payload (static or dynamic)
-     */
     void setCodecPayloadType(int codecPayloadType);
-
-    /**
-     * Set audio layer frame size
-     */
+    void setHasDynamicPayload(bool hasDynamicPayload);
     void setAudioLayerFrameSize(int _audioLayerFrameSize);
-
-    /**
-     * Set current audio layer sampling rate
-     * used to process sampling rate conversion
-     */
     void setAudioLayerSampleRate(int _audioLayerSampleRate);
-
-    /**
-     * Set codec frame size used to compute sampling rate conversion
-     */
     void setCodecFrameSize(int _codecFrameSize);
-
-    /**
-     * Set codec sampling rate used to compute sampling rate conversion
-     */
     void setCodecSampleRate(int _codecSampleRate);
-
-    /**
-     * Set sampling rate converter for this session
-     */
     void setConverter(SamplerateConverter *_converter);
-
-    /**
-     * Set converter sampling rate used to compute conversion buffer size
-     */
     void setConverterSamplingRate(int _converterSamplingRate);
+    void setEventQueue(EventQueue _eventQueue);
+    void setMicData(SFLDataFormat *micData);
+    void setMicDataConverted(SFLDataFormat *micDataConverted);
+    void setMicDataEncoded(unsigned char *micDataEncoded);
+    void setMicAmplFactor(SFLDataFormat _micAmplFactor);
+    void setMicFadeInComplete(bool _micFadeInComplete);
+    void setSpkrAmplFactor(SFLDataFormat _spkrAmplFactor);
+    void setSpkrDataConverted(SFLDataFormat *_spkrDataConverted);
+    void setSpkrDataDecoded(SFLDataFormat *_spkrDataDecoded);
+    void setSpkrFadeInComplete(bool _spkrFadeInComplete);
 
 private:
-    /**
-     * Pointer to the session's codec
-	 */
-    AudioCodec * _audioCodec;
-
-    /**
-     * Codec payload type
-     */
+    AudioCodec *_audioCodec;
     int _codecPayloadType;
-
-    /**
-     * Dynamic payload are negotiated during sdp session while static payload
-     * are predefined numbers identifying the codec
-     */
     bool _hasDynamicPayloadType;
-
-    /**
-     * Mic-data related buffers
-	 */
-    SFLDataFormat* _micData;
-    SFLDataFormat* _micDataConverted;
-    unsigned char* _micDataEncoded;
-
-    /**
-     * Speaker-data related buffers
-	 */
-    SFLDataFormat* _spkrDataDecoded;
-    SFLDataFormat* _spkrDataConverted;
-
-    /**
-     * Sample rate converter object
-	 */
-    SamplerateConverter * _converter;
-
-    /**
-     * Variables to process audio stream: sample rate for playing sound (typically 44100HZ)
-     */
+    SFLDataFormat *_micData;
+    SFLDataFormat *_micDataConverted;
+    unsigned char *_micDataEncoded;
+    SFLDataFormat *_spkrDataDecoded;
+    SFLDataFormat *_spkrDataConverted;
+    SamplerateConverter *_converter;
     int _audioLayerSampleRate;
-
-    /**
-     * Sample rate of the codec we use to encode and decode (most of time 8000HZ)
-	 */
     int _codecSampleRate;
-
-    /**
-     * Length of the sound frame we capture in ms (typically 20ms)
-	 */
     int _audioLayerFrameSize;
-
-    /**
-     * Codecs frame size in samples (20 ms => 882 at 44.1kHz)
-     * The exact value is stored in the codec
-	 */
     int _codecFrameSize;
-
-    /**
-     * Sampling rate of audio converter
-     */
     int _converterSamplingRate;
-
-    /**
-     * EventQueue used to store list of DTMF-
-     */
     EventQueue _eventQueue;
-
-    /**
-     * State of mic fade in
-     */
     bool _micFadeInComplete;
-
-    /**
-       * State of spkr fade in
-     */
     bool _spkrFadeInComplete;
-
-    /**
-     * Ampliturde factor to fade in mic data
-     */
     SFLDataFormat _micAmplFactor;
-
-    /**
-     * Amplitude factor to fade in spkr data
-     */
     SFLDataFormat _spkrAmplFactor;
-
-    /**
-     * Audio process containing noise reduction engine
-     */
     AudioProcessing *_audioProcess;
-
-    /**
-     * Noise reduction engine
-     */
     NoiseSuppress *_noiseSuppress;
 
 };
@@ -256,13 +144,15 @@ private:
 
 class AudioRtpRecordHandler {
 public:
-	AudioRtpRecordHandler();
+	AudioRtpRecordHandler(ManagerImpl *manager, SIPCall *ca);
 	virtual ~AudioRtpRecordHandler();
 
     /**
      *  Set rtp media for this session
      */
     void setRtpMedia(AudioCodec* audioCodec);
+
+    AudioCodec *getAudioCodec(void) { return _audioRtpRecord.getAudioCodec(); }
 
 	int getCodecPayloadType(void) { return _audioRtpRecord.getCodecPayloadType(); }
 
@@ -280,7 +170,11 @@ public:
 
 	int getEventQueueSize(void) { return _audioRtpRecord.getEventQueueSize(); }
 
-	unsigned char *getEncodedData(void) {return _audioRtpRecord.getEncodedData(); }
+	SFLDataFormat *getMicData(void) { return _audioRtpRecord.getMicData(); }
+
+	SFLDataFormat *getMicDataConverted(void) { return _audioRtpRecord.getMicDataConverted(); }
+
+	unsigned char *getMicDataEncoded(void) { return _audioRtpRecord.getMicDataEncoded(); }
 
 	inline float computeCodecFrameSize (int codecSamplePerFrame, int codecClockRate) {
 		return ( (float) codecSamplePerFrame * 1000.0) / (float) codecClockRate;
@@ -313,9 +207,13 @@ public:
     */
     bool fadeIn (SFLDataFormat *audio, int size, SFLDataFormat *factor);
 
+    void putDtmfEvent (int digit);
+
 private:
 
     AudioRtpRecord	_audioRtpRecord;
+
+    SIPCall *_ca;
 
 };
 
