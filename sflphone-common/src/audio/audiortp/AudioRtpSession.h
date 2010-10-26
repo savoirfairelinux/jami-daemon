@@ -57,7 +57,8 @@ namespace sfl
 {
 
 // class AudioRtpSession : public ost::Thread, public ost::TimerPort, public AudioRtpRecordHandler, public ost::SymmetricRTPSession
-class AudioRtpSession : public ost::TimerPort, public ost::SymmetricRTPSession, public AudioRtpRecordHandler
+// class AudioRtpSession : public ost::Thread, public ost::TimerPort, public ost::SymmetricRTPSession, public AudioRtpRecordHandler
+class AudioRtpSession : public ost::Thread, public ost::TimerPort, public AudioRtpRecordHandler, public ost::TRTPSessionBase<ost::DualRTPUDPIPv4Channel,ost::DualRTPUDPIPv4Channel,ost::AVPQueue>
 {
     public:
         /**

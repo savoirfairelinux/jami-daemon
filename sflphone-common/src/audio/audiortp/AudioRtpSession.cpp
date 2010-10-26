@@ -42,7 +42,12 @@ namespace sfl
 {
 
 AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
-		ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
+		// ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
+		TRTPSessionBase<ost::DualRTPUDPIPv4Channel,ost::DualRTPUDPIPv4Channel,ost::AVPQueue>(ost::InetHostAddress (sipcall->getLocalIp().c_str()),
+																												   sipcall->getLocalAudioPort(),
+																												   0,
+																												   ost::MembershipBookkeeping::defaultMembersHashSize,
+																												   ost::defaultApplication()),
 		AudioRtpRecordHandler(manager, sipcall)
 																			, _time (new ost::Time())
         																	, _mainloopSemaphore (0)
@@ -53,7 +58,7 @@ AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
         																	, _countNotificationTime (0)
         																	, _ca (sipcall)
 {
-	this->setCancel (cancelDefault);
+	static_cast<ost::Thread *>(this)->setCancel (cancelDefault);
 
     assert (_ca);
 
@@ -66,7 +71,7 @@ AudioRtpSession::~AudioRtpSession()
     _debug ("AudioRtpSession: Delete AudioRtpSession instance");
 
     try {
-    	this->terminate();
+    	static_cast<ost::Thread *>(this)->terminate();
     } catch (...) {
         _debugException ("AudioRtpSession: Thread destructor didn't terminate correctly");
         throw;
@@ -266,7 +271,7 @@ int AudioRtpSession::startRtpThread (AudioCodec* audiocodec)
     setSessionTimeouts();
     setSessionMedia (audiocodec);
     initBuffers();
-    int ret = this->start (_mainloopSemaphore);
+    int ret = static_cast<ost::Thread *>(this)->start (_mainloopSemaphore);
     this->startRunning();
     return ret;
 }
@@ -299,7 +304,7 @@ void AudioRtpSession::run ()
 
     _debug ("AudioRtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
 
-    while (!testCancel()) {
+    while (!static_cast<ost::Thread *>(this)->testCancel()) {
 
         // Reset timestamp to make sure the timing information are up to date
         if (_timestampCount > RTP_TIMESTAMP_RESET_FREQ) {
