@@ -358,7 +358,6 @@ void AudioRtpSession::run ()
 			sendMicData ();
 		}
 
-		receiveSpeakerData ();
 		// This also should be moved
 		notifyIncomingCall();
 
@@ -388,6 +387,8 @@ void AudioRtpSession::run ()
 			}
 			timeout = 0;
 		}
+
+		receiveSpeakerData ();
 	}
 
     _debug ("AudioRtpSession: Left main loop for call %s", _ca->getCallId().c_str());
