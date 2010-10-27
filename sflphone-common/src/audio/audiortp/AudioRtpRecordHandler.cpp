@@ -400,6 +400,8 @@ void AudioRtpRecordHandler::putDtmfEvent(int digit)
 
 int AudioRtpRecordHandler::processDataEncode(void)
 {
+	_debug("AudioProcessEncode");
+
 	AudioCodec *audioCodec = getAudioCodec();
 	AudioLayer *audioLayer = Manager::instance().getAudioDriver();
 
@@ -457,6 +459,9 @@ int AudioRtpRecordHandler::processDataEncode(void)
 
 void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, unsigned int size)
 {
+
+	_debug("AudioProcessDecode");
+
 	AudioCodec *audioCodec = getAudioCodec();
 	AudioLayer *audioLayer = Manager::instance().getAudioDriver();
 

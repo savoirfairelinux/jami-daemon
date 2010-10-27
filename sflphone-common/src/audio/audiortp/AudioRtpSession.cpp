@@ -43,13 +43,13 @@ namespace sfl
 
 AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
 		// ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
-		TRTPSessionBase<ost::DualRTPUDPIPv4Channel,ost::DualRTPUDPIPv4Channel,ost::AVPQueue>(ost::InetHostAddress (sipcall->getLocalIp().c_str()),
-																												   sipcall->getLocalAudioPort(),
-																												   0,
-																												   ost::MembershipBookkeeping::defaultMembersHashSize,
-																												   ost::defaultApplication()),
-		AudioRtpRecordHandler(manager, sipcall)
-																			, _time (new ost::Time())
+		AudioRtpRecordHandler(manager, sipcall),
+		ost::TRTPSessionBase<ost::DualRTPUDPIPv4Channel,ost::DualRTPUDPIPv4Channel,ost::AVPQueue>(ost::InetHostAddress (sipcall->getLocalIp().c_str()),
+																sipcall->getLocalAudioPort(),
+																0,
+																ost::MembershipBookkeeping::defaultMembersHashSize,
+																ost::defaultApplication())
+																		, _time (new ost::Time())
         																	, _mainloopSemaphore (0)
         																	, _manager (manager)
         																	, _timestamp (0)
@@ -58,20 +58,19 @@ AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
         																	, _countNotificationTime (0)
         																	, _ca (sipcall)
 {
-	static_cast<ost::Thread *>(this)->setCancel (cancelDefault);
+    setCancel (cancelDefault);
 
     assert (_ca);
 
-    _info ("AudioRtpSession: Local audio port %i will be used", _ca->getLocalAudioPort());
-
+    _info ("AudioRtpSession: Setting new RTP session with destination %s:%d", _ca->getLocalIp().c_str(), _ca->getLocalAudioPort());
 }
 
 AudioRtpSession::~AudioRtpSession()
 {
-    _debug ("AudioRtpSession: Delete AudioRtpSession instance");
+    _info ("AudioRtpSession: Delete AudioRtpSession instance");
 
     try {
-    	static_cast<ost::Thread *>(this)->terminate();
+	terminate();
     } catch (...) {
         _debugException ("AudioRtpSession: Thread destructor didn't terminate correctly");
         throw;
@@ -87,12 +86,16 @@ AudioRtpSession::~AudioRtpSession()
 
 void AudioRtpSession::setSessionTimeouts (void)
 {
+	_debug("AudioRtpSession: Set session scheduling timeout (%d) and expireTimeout (%d)", sfl::schedulingTimeout, sfl::expireTimeout);
+
 	setSchedulingTimeout (sfl::schedulingTimeout);
 	setExpireTimeout (sfl::expireTimeout);
 }
 
 void AudioRtpSession::setSessionMedia (AudioCodec* audioCodec)
 {
+	_debug("AudioRtpSession: Set session media");
+
 	// set internal codec info for this session
 	setRtpMedia(audioCodec);
 
@@ -108,6 +111,7 @@ void AudioRtpSession::setSessionMedia (AudioCodec* audioCodec)
     else
         _timestampIncrement = frameSize;
 
+    _debug ("AudioRptSession: Codec payload: %d", payloadType);
     _debug ("AudioRtpSession: Codec sampling rate: %d", smplRate);
     _debug ("AudioRtpSession: Codec frame size: %d", frameSize);
     _debug ("AudioRtpSession: RTP timestamp increment: %d", _timestampIncrement);
@@ -158,6 +162,8 @@ void AudioRtpSession::setDestinationIpAddress (void)
 
 void AudioRtpSession::updateDestinationIpAddress (void)
 {
+    _debug("AudioRtpSession: Update destination ip address");
+
     // Destination address are stored in a list in ccrtp
     // This method remove the current destination entry
 
@@ -222,6 +228,8 @@ bool onRTPPacketRecv (ost::IncomingRTPPkt&)
 
 void AudioRtpSession::sendMicData()
 {
+    _debug("sendMicData");
+
     // Increment timestamp for outgoing packet
     _timestamp += _timestampIncrement;
 
@@ -234,6 +242,8 @@ void AudioRtpSession::sendMicData()
 
 void AudioRtpSession::receiveSpeakerData ()
 {
+    _debug("receiveSpkrData");
+	
     const ost::AppDataUnit* adu = NULL;
 
     int packetTimestamp = getFirstTimestamp();
@@ -267,12 +277,12 @@ void AudioRtpSession::receiveSpeakerData ()
 
 int AudioRtpSession::startRtpThread (AudioCodec* audiocodec)
 {
-    _debug ("RTP: Starting main thread");
+    _debug ("AudioRtpSession: Starting main thread");
+    initNoiseSuppress();
     setSessionTimeouts();
     setSessionMedia (audiocodec);
     initBuffers();
-    int ret = static_cast<ost::Thread *>(this)->start (_mainloopSemaphore);
-    this->startRunning();
+    int ret = start (_mainloopSemaphore);
     return ret;
 }
 
@@ -291,8 +301,6 @@ void AudioRtpSession::run ()
         threadSleep = getAudioLayerFrameSize();
     }
 
-    initNoiseSuppress();
-
     TimerPort::setTimer (threadSleep);
 
     // Set recording sampling rate
@@ -304,7 +312,10 @@ void AudioRtpSession::run ()
 
     _debug ("AudioRtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
 
-    while (!static_cast<ost::Thread *>(this)->testCancel()) {
+    // while (!static_cast<ost::Thread *>(this)->testCancel()) {
+    while (!testCancel()) {
+
+	_debug("audio");
 
         // Reset timestamp to make sure the timing information are up to date
         if (_timestampCount > RTP_TIMESTAMP_RESET_FREQ) {

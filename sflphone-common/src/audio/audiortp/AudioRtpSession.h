@@ -49,6 +49,7 @@
 #include "managerimpl.h"
 
 #include <ccrtp/rtp.h>
+#include <ccrtp/iqueue.h>
 #include <cc++/numbers.h> // ost::Time
 
 #include <fstream>
@@ -58,7 +59,7 @@ namespace sfl
 
 // class AudioRtpSession : public ost::Thread, public ost::TimerPort, public AudioRtpRecordHandler, public ost::SymmetricRTPSession
 // class AudioRtpSession : public ost::Thread, public ost::TimerPort, public ost::SymmetricRTPSession, public AudioRtpRecordHandler
-class AudioRtpSession : public ost::Thread, public ost::TimerPort, public AudioRtpRecordHandler, public ost::TRTPSessionBase<ost::DualRTPUDPIPv4Channel,ost::DualRTPUDPIPv4Channel,ost::AVPQueue>
+class AudioRtpSession : protected ost::Thread, public ost::TimerPort, public AudioRtpRecordHandler, public ost::TRTPSessionBase<ost::DualRTPUDPIPv4Channel,ost::DualRTPUDPIPv4Channel,ost::AVPQueue>
 {
     public:
         /**
