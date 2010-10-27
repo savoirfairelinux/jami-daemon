@@ -435,13 +435,13 @@ int AudioRtpRecordHandler::processDataEncode(void)
     	int nbSampleUp = nbSample;
 
     	nbSample = _audioRtpRecord.getConverter()->downsampleData(micData, micDataConverted, _audioRtpRecord.getCodecSampleRate(), mainBufferSampleRate, nbSampleUp);
-    	// if(Manager::instance().audioPreference.getNoiseReduce())
-    		// _audioRtpRecord.getNoiseReductionProcess()->processAudio(micDataConverted, nbSample * sizeof (SFLDataFormat));
+    	if(Manager::instance().audioPreference.getNoiseReduce())
+    		_audioRtpRecord.getNoiseReductionProcess()->processAudio(micDataConverted, nbSample * sizeof (SFLDataFormat));
 
     	compSize = audioCodec->codecEncode(micDataEncoded, micDataConverted, nbSample * sizeof (SFLDataFormat));
     }else{
-    	// if(Manager::instance().audioPreference.getNoiseReduce())
-    		// _audioRtpRecord.getNoiseReductionProcess()->processAudio(micData, nbSample * sizeof (SFLDataFormat));
+    	if(Manager::instance().audioPreference.getNoiseReduce())
+    		_audioRtpRecord.getNoiseReductionProcess()->processAudio(micData, nbSample * sizeof (SFLDataFormat));
 
     	// no resampling required
     	compSize = audioCodec->codecEncode(micDataEncoded, micData, nbSample * sizeof (SFLDataFormat));

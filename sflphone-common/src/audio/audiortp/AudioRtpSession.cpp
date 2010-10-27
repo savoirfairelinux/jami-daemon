@@ -307,10 +307,10 @@ void AudioRtpSession::notifyIncomingCall()
 int AudioRtpSession::startRtpThread (AudioCodec* audiocodec)
 {
     _debug ("AudioRtpSession: Starting main thread");
-    // initNoiseSuppress();
     setSessionTimeouts();
     setSessionMedia (audiocodec);
     initBuffers();
+    initNoiseSuppress();
     enableStack();
     int ret = start (_mainloopSemaphore);
     return ret;
