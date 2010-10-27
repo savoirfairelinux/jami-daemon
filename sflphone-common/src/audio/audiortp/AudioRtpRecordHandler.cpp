@@ -387,7 +387,6 @@ void AudioRtpRecordHandler::putDtmfEvent(int digit)
 
 int AudioRtpRecordHandler::processDataEncode(void)
 {
-	_debug("Process data encode");
 
 	AudioCodec *audioCodec = getAudioCodec();
 	AudioLayer *audioLayer = Manager::instance().getAudioDriver();
@@ -407,11 +406,8 @@ int AudioRtpRecordHandler::processDataEncode(void)
     // compute nb of byte to get coresponding to 20 ms at audio layer frame size (44.1 khz)
     int bytesToGet = computeNbByteAudioLayer(fixedCodecFramesize);
 
-    _debug("    byte to get %d", bytesToGet);
-
     // available bytes inside ringbuffer
     int availBytesFromMic = audioLayer->getMainBuffer()->availForGet(_ca->getCallId());
-    _debug("    avail byte from mic %d", availBytesFromMic);
 
     if(availBytesFromMic < bytesToGet)
     	return 0;

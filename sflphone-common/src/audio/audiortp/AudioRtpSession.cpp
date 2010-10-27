@@ -235,8 +235,6 @@ bool AudioRtpSession::onRTPPacketRecv (ost::IncomingRTPPkt&)
 
 void AudioRtpSession::sendMicData()
 {
-    _debug("============== sendMicData ===============");
-
     int compSize = processDataEncode();
 
     // If no data, return
@@ -253,9 +251,6 @@ void AudioRtpSession::sendMicData()
 
     // Increment timestamp for outgoing packet
     _timestamp += _timestampIncrement;
-
-    _debug("    compSize: %d", compSize);
-    _debug("    timestamp: %d", _timestamp);
 
     // putData put the data on RTP queue, sendImmediate bypass this queue
     putData (_timestamp, getMicDataEncoded(), compSize);
@@ -302,8 +297,6 @@ void AudioRtpSession::notifyIncomingCall()
 		_countNotificationTime += _time->getSecond();
 		int countTimeModulo = _countNotificationTime % 5000;
 
-		// _debug("countNotificationTime: %d\n", countNotificationTime);
-		// _debug("countTimeModulo: %d\n", countTimeModulo);
 		if ( (countTimeModulo - _countNotificationTime) < 0) {
 			Manager::instance().notificationIncomingCall();
 		}
@@ -346,7 +339,6 @@ void AudioRtpSession::run ()
 
     // Start audio stream (if not started) AND flush all buffers (main and urgent)
     _manager->getAudioDriver()->startStream();
-    // startRunning();
 
     _debug ("AudioRtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
 
