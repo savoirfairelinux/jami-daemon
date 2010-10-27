@@ -49,7 +49,6 @@ AudioRtpRecord::AudioRtpRecord(ManagerImpl *manager) : _audioCodec(NULL)
 								 	 	 	 	 	 , _codecSampleRate(0)
 								 	 	 	 	 	 , _audioLayerFrameSize(0)
 								 	 	 	 	 	 , _codecFrameSize(0)
-								 	 	 	 	 	 , _converterSamplingRate(0)
 								 	 	 	 	 	 , _micFadeInComplete(false)
 								 	 	 	 	 	 , _spkrFadeInComplete(false)
 								 	 	 	 	 	 , _micAmplFactor(initFadeinFactor)
@@ -147,11 +146,6 @@ int AudioRtpRecord::getCodecSampleRate() const
 SamplerateConverter *AudioRtpRecord::getConverter() const
 {
     return _converter;
-}
-
-int AudioRtpRecord::getConverterSamplingRate() const
-{
-    return _converterSamplingRate;
 }
 
 EventQueue *AudioRtpRecord::getEventQueue()
@@ -254,10 +248,6 @@ void AudioRtpRecord::setConverter(SamplerateConverter *_converter)
     this->_converter = _converter;
 }
 
-void AudioRtpRecord::setConverterSamplingRate(int _converterSamplingRate)
-{
-    this->_converterSamplingRate = _converterSamplingRate;
-}
 
 void AudioRtpRecord::setEventQueue(EventQueue _eventQueue)
 {
@@ -355,9 +345,6 @@ void AudioRtpRecordHandler::initBuffers()
     // Set sampling rate, main buffer choose the highest one
     Manager::instance().getAudioDriver()->getMainBuffer()->setInternalSamplingRate (getCodecSampleRate());
 
-    // may be different than one already set
-    // _converterSamplingRate = Manager::instance().getAudioDriver()->getMainBuffer()->getInternalSamplingRate();
-
     // initialize SampleRate converter using AudioLayer's sampling rate
     // (internal buffers initialized with maximal sampling rate and frame size)
     _audioRtpRecord.setConverter(new SamplerateConverter (getAudioLayerSampleRate(), getAudioLayerFrameSize()));
@@ -400,7 +387,7 @@ void AudioRtpRecordHandler::putDtmfEvent(int digit)
 
 int AudioRtpRecordHandler::processDataEncode(void)
 {
-	_debug("AudioProcessEncode");
+	_debug("Process data encode");
 
 	AudioCodec *audioCodec = getAudioCodec();
 	AudioLayer *audioLayer = Manager::instance().getAudioDriver();
@@ -413,21 +400,33 @@ int AudioRtpRecordHandler::processDataEncode(void)
     assert(audioLayer);
 
     int mainBufferSampleRate = audioLayer->getMainBuffer()->getInternalSamplingRate();
+
     // compute codec framesize in ms
     float fixedCodecFramesize = computeCodecFrameSize(getCodecFrameSize(), getCodecSampleRate());
+
     // compute nb of byte to get coresponding to 20 ms at audio layer frame size (44.1 khz)
     int maxBytesToGet = computeNbByteAudioLayer(fixedCodecFramesize);
+
     // available bytes inside ringbuffer
     int availBytesFromMic = audioLayer->getMainBuffer()->availForGet(_ca->getCallId());
+    _debug("    avail byte from mic %d", availBytesFromMic);
+
+    if(!(availBytesFromMic > 320))
+    	return 0;
+
     // set available byte to maxByteToGet
     int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
+
     if(bytesAvail == 0){
     	memset(micDataEncoded, 0, sizeof (SFLDataFormat));
     	return getCodecFrameSize();
     }
 
     // Get bytes from micRingBuffer to data_from_mic
-    int nbSample = audioLayer->getMainBuffer()->getData(micData, bytesAvail, 100, _ca->getCallId()) / sizeof (SFLDataFormat);
+    // int nbSample = audioLayer->getMainBuffer()->getData(micData, bytesAvail, 100, _ca->getCallId()) / sizeof (SFLDataFormat);
+    int nbSample = audioLayer->getMainBuffer()->getData(micData, 320, 100, _ca->getCallId()) / sizeof (SFLDataFormat);
+
+    // process mic fade in
     if(!_audioRtpRecord.getMicFadeInComplete())
     	_audioRtpRecord.setMicFadeInComplete(fadeIn(micData, nbSample, _audioRtpRecord.getMicAmplFactor()));
 
@@ -443,13 +442,13 @@ int AudioRtpRecordHandler::processDataEncode(void)
     	int nbSampleUp = nbSample;
 
     	nbSample = _audioRtpRecord.getConverter()->downsampleData(micData, micDataConverted, _audioRtpRecord.getCodecSampleRate(), mainBufferSampleRate, nbSampleUp);
-    	if(Manager::instance().audioPreference.getNoiseReduce())
-    		_audioRtpRecord.getNoiseReductionProcess()->processAudio(micDataConverted, nbSample * sizeof (SFLDataFormat));
+    //	if(Manager::instance().audioPreference.getNoiseReduce())
+    //		_audioRtpRecord.getNoiseReductionProcess()->processAudio(micDataConverted, nbSample * sizeof (SFLDataFormat));
 
     	compSize = audioCodec->codecEncode(micDataEncoded, micDataConverted, nbSample * sizeof (SFLDataFormat));
     }else{
-    	if(Manager::instance().audioPreference.getNoiseReduce())
-    		_audioRtpRecord.getNoiseReductionProcess()->processAudio(micData, nbSample * sizeof (SFLDataFormat));
+    //	if(Manager::instance().audioPreference.getNoiseReduce())
+    //		_audioRtpRecord.getNoiseReductionProcess()->processAudio(micData, nbSample * sizeof (SFLDataFormat));
 
     	// no resampling required
     	compSize = audioCodec->codecEncode(micDataEncoded, micData, nbSample * sizeof (SFLDataFormat));
@@ -460,8 +459,6 @@ int AudioRtpRecordHandler::processDataEncode(void)
 void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, unsigned int size)
 {
 
-	_debug("AudioProcessDecode");
-
 	AudioCodec *audioCodec = getAudioCodec();
 	AudioLayer *audioLayer = Manager::instance().getAudioDriver();
 
@@ -471,7 +468,7 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, unsigned 
     SFLDataFormat *spkrDataDecoded = _audioRtpRecord.getSpkrDataConverted();
     SFLDataFormat *spkrDataConverted = _audioRtpRecord.getSpkrDataDecoded();
 
-	int mainBufferSampleRate = Manager::instance().getAudioDriver()->getMainBuffer()->getInternalSamplingRate();
+	int mainBufferSampleRate = audioLayer->getMainBuffer()->getInternalSamplingRate();
 
 	// Return the size of data in bytes
 	int expandedSize = audioCodec->codecDecode (spkrDataDecoded , spkrData , size);
@@ -491,17 +488,18 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, unsigned 
 		nbSample = _audioRtpRecord.getConverter()->upsampleData (spkrDataDecoded, spkrDataConverted, _audioRtpRecord.getCodecSampleRate(), mainBufferSampleRate, nbSampleDown);
 
 		// put data in audio layer, size in byte
-		Manager::instance().getAudioDriver()->getMainBuffer()->putData (spkrDataConverted, nbSample * sizeof (SFLDataFormat), 100, _ca->getCallId());
+		audioLayer->getMainBuffer()->putData (spkrDataConverted, nbSample * sizeof (SFLDataFormat), 100, _ca->getCallId());
 
 
 	} else {
 		// put data in audio layer, size in byte
-		Manager::instance().getAudioDriver()->getMainBuffer()->putData (spkrDataDecoded, expandedSize, 100, _ca->getCallId());
+		audioLayer->getMainBuffer()->putData (spkrDataDecoded, expandedSize, 100, _ca->getCallId());
 	}
 }
 
 bool AudioRtpRecordHandler::fadeIn(SFLDataFormat *audio, int size, SFLDataFormat *factor)
 {
+	/*
 	// apply amplitude factor;
 	while(size){
 		size--;
@@ -515,6 +513,8 @@ bool AudioRtpRecordHandler::fadeIn(SFLDataFormat *audio, int size, SFLDataFormat
 		return true;
 
 	return false;
+	*/
+	return true;
 }
 
 }

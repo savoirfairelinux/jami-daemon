@@ -41,6 +41,11 @@
 namespace sfl
 {
 
+inline uint32
+timeval2microtimeout(const timeval& t)
+{ return ((t.tv_sec * 1000000ul) + t.tv_usec); }
+
+
 AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
 		// ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
 		AudioRtpRecordHandler(manager, sipcall),
@@ -216,24 +221,33 @@ void AudioRtpSession::sendDtmfEvent (sfl::DtmfEvent *dtmf)
         getEventQueue()->pop_front();
     }
 }
-/*
-bool onRTPPacketRecv (ost::IncomingRTPPkt&)
+
+bool AudioRtpSession::onRTPPacketRecv (ost::IncomingRTPPkt&)
 {
-    _debug ("AudioRtpSession: onRTPPacketRecv");
+    //_debug ("AudioRtpSession: onRTPPacketRecv");
+
+	receiveSpeakerData ();
 
     return true;
 }
-*/
+
 
 
 void AudioRtpSession::sendMicData()
 {
-    _debug("sendMicData");
+    // _debug("============== sendMicData ===============");
+
+    int compSize = processDataEncode();
+
+    // If no data, return
+    if(!compSize)
+    	return;
 
     // Increment timestamp for outgoing packet
     _timestamp += _timestampIncrement;
 
-    int compSize = processDataEncode();
+    // _debug("    compSize: %d", compSize);
+    // _debug("    timestamp: %d", _timestamp);
 
     // putData put the data on RTP queue, sendImmediate bypass this queue
     putData (_timestamp, getMicDataEncoded(), compSize);
@@ -242,7 +256,6 @@ void AudioRtpSession::sendMicData()
 
 void AudioRtpSession::receiveSpeakerData ()
 {
-    _debug("receiveSpkrData");
 	
     const ost::AppDataUnit* adu = NULL;
 
@@ -274,14 +287,31 @@ void AudioRtpSession::receiveSpeakerData ()
     delete adu;
 }
 
+void AudioRtpSession::notifyIncomingCall()
+{
+	// Notify (with a beep) an incoming call when there is already a call
+	if (Manager::instance().incomingCallWaiting() > 0) {
+		_countNotificationTime += _time->getSecond();
+		int countTimeModulo = _countNotificationTime % 5000;
+
+		// _debug("countNotificationTime: %d\n", countNotificationTime);
+		// _debug("countTimeModulo: %d\n", countTimeModulo);
+		if ( (countTimeModulo - _countNotificationTime) < 0) {
+			Manager::instance().notificationIncomingCall();
+		}
+		_countNotificationTime = countTimeModulo;
+	}
+}
+
 
 int AudioRtpSession::startRtpThread (AudioCodec* audiocodec)
 {
     _debug ("AudioRtpSession: Starting main thread");
-    initNoiseSuppress();
+    // initNoiseSuppress();
     setSessionTimeouts();
     setSessionMedia (audiocodec);
     initBuffers();
+    enableStack();
     int ret = start (_mainloopSemaphore);
     return ret;
 }
@@ -312,58 +342,54 @@ void AudioRtpSession::run ()
 
     _debug ("AudioRtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
 
-    // while (!static_cast<ost::Thread *>(this)->testCancel()) {
-    while (!testCancel()) {
+	uint32 timeout = 0;
+	while ( isActive() ) {
+		if ( timeout < 1000 ){ // !(timeout/1000)
+			timeout = getSchedulingTimeout();
+		}
 
-	_debug("audio");
+		_manager->getAudioLayerMutex()->enter();
 
-        // Reset timestamp to make sure the timing information are up to date
-        if (_timestampCount > RTP_TIMESTAMP_RESET_FREQ) {
-            _timestamp = getCurrentTimestamp();
-            _timestampCount = 0;
-        }
+		// Send session
+		if (getEventQueueSize() > 0) {
+			sendDtmfEvent (getEventQueue()->front());
+		} else {
+			sendMicData ();
+		}
 
-        _timestampCount++;
+		// Recv session
+		// TODO should not be called here anymore
+//		receiveSpeakerData ();
 
-        _manager->getAudioLayerMutex()->enter();
+		notifyIncomingCall();
 
-        // TODO should not be linked to audio layer here
-        // converterSamplingRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
-        // _converterSamplingRate = _manager->getAudioDriver()->getMainBuffer()->getInternalSamplingRate();
+		_manager->getAudioLayerMutex()->leave();
 
-        // Send session
-        if (getEventQueueSize() > 0) {
-            sendDtmfEvent (getEventQueue()->front());
-        } else {
-            sendMicData ();
-        }
-
-        // Recv session
-        // TODO should not be called here anymore
-        receiveSpeakerData ();
-
-
-
-        // Notify (with a beep) an incoming call when there is already a call
-        if (Manager::instance().incomingCallWaiting() > 0) {
-        	_countNotificationTime += _time->getSecond();
-        	int countTimeModulo = _countNotificationTime % 5000;
-
-        	// _debug("countNotificationTime: %d\n", countNotificationTime);
-        	// _debug("countTimeModulo: %d\n", countTimeModulo);
-        	if ( (countTimeModulo - _countNotificationTime) < 0) {
-        		Manager::instance().notificationIncomingCall();
-        	}
-
-        	_countNotificationTime = countTimeModulo;
-        }
-
-        _manager->getAudioLayerMutex()->leave();
-
-        // Let's wait for the next transmit cycle
-        Thread::sleep (TimerPort::getTimer());
-        TimerPort::incTimer (threadSleep);
-    }
+		setCancel(cancelDeferred);
+		controlReceptionService();
+		controlTransmissionService();
+		setCancel(cancelImmediate);
+		uint32 maxWait = timeval2microtimeout(getRTCPCheckInterval());
+		// make sure the scheduling timeout is
+		// <= the check interval for RTCP
+		// packets
+		timeout = (timeout > maxWait)? maxWait : timeout;
+		if ( timeout < 1000 ) { // !(timeout/1000)
+			setCancel(cancelDeferred);
+			dispatchDataPacket();
+			setCancel(cancelImmediate);
+			timerTick();
+		} else {
+			if ( isPendingData(timeout/1000) ) {
+				setCancel(cancelDeferred);
+				if (isActive()) { // take in only if active
+					takeInDataPacket();
+				}
+				setCancel(cancelImmediate);
+			}
+			timeout = 0;
+		}
+	}
 
     _debug ("AudioRtpSession: Left main loop for call %s", _ca->getCallId().c_str());
 }

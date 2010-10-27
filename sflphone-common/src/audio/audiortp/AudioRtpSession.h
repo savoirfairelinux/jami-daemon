@@ -73,6 +73,8 @@ class AudioRtpSession : protected ost::Thread, public ost::TimerPort, public Aud
         // Thread associated method
         virtual void run ();
 
+        virtual bool onRTPPacketRecv (ost::IncomingRTPPkt&);
+
         int startRtpThread (AudioCodec*);
 
         /**
@@ -105,7 +107,6 @@ class AudioRtpSession : protected ost::Thread, public ost::TimerPort, public Aud
          */
         void setDestinationIpAddress (void);
 
-
         /**
          * Send encoded data to peer
          */
@@ -115,6 +116,11 @@ class AudioRtpSession : protected ost::Thread, public ost::TimerPort, public Aud
          * Receive data from peer
          */
         void receiveSpeakerData ();
+
+        /**
+         * Notificatify user with a beep for incoming calls
+         */
+        void notifyIncomingCall();
 
         ost::Time * _time;
 
