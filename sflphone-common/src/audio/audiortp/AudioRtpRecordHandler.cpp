@@ -435,13 +435,13 @@ int AudioRtpRecordHandler::processDataEncode(void)
     	int nbSampleUp = nbSample;
 
     	nbSample = _audioRtpRecord.getConverter()->downsampleData(micData, micDataConverted, _audioRtpRecord.getCodecSampleRate(), mainBufferSampleRate, nbSampleUp);
-    //	if(Manager::instance().audioPreference.getNoiseReduce())
-    //		_audioRtpRecord.getNoiseReductionProcess()->processAudio(micDataConverted, nbSample * sizeof (SFLDataFormat));
+    	// if(Manager::instance().audioPreference.getNoiseReduce())
+    		// _audioRtpRecord.getNoiseReductionProcess()->processAudio(micDataConverted, nbSample * sizeof (SFLDataFormat));
 
     	compSize = audioCodec->codecEncode(micDataEncoded, micDataConverted, nbSample * sizeof (SFLDataFormat));
     }else{
-    //	if(Manager::instance().audioPreference.getNoiseReduce())
-    //		_audioRtpRecord.getNoiseReductionProcess()->processAudio(micData, nbSample * sizeof (SFLDataFormat));
+    	// if(Manager::instance().audioPreference.getNoiseReduce())
+    		// _audioRtpRecord.getNoiseReductionProcess()->processAudio(micData, nbSample * sizeof (SFLDataFormat));
 
     	// no resampling required
     	compSize = audioCodec->codecEncode(micDataEncoded, micData, nbSample * sizeof (SFLDataFormat));
@@ -493,7 +493,11 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, unsigned 
 
 bool AudioRtpRecordHandler::fadeIn(SFLDataFormat *audio, int size, SFLDataFormat *factor)
 {
-	/*
+
+	// if factor reach 0, this function should no be called anymore
+	if(*factor <= 0)
+		return true;
+
 	// apply amplitude factor;
 	while(size){
 		size--;
@@ -502,13 +506,8 @@ bool AudioRtpRecordHandler::fadeIn(SFLDataFormat *audio, int size, SFLDataFormat
 	// decrease factor
 	*factor /= FADEIN_STEP_SIZE;
 
-	// if factor reach 0, thsi function should no be called anymore
-	if(*factor == 0)
-		return true;
-
 	return false;
-	*/
-	return true;
+
 }
 
 }
