@@ -405,26 +405,19 @@ int AudioRtpRecordHandler::processDataEncode(void)
     float fixedCodecFramesize = computeCodecFrameSize(getCodecFrameSize(), getCodecSampleRate());
 
     // compute nb of byte to get coresponding to 20 ms at audio layer frame size (44.1 khz)
-    int maxBytesToGet = computeNbByteAudioLayer(fixedCodecFramesize);
+    int bytesToGet = computeNbByteAudioLayer(fixedCodecFramesize);
+
+    _debug("    byte to get %d", bytesToGet);
 
     // available bytes inside ringbuffer
     int availBytesFromMic = audioLayer->getMainBuffer()->availForGet(_ca->getCallId());
     _debug("    avail byte from mic %d", availBytesFromMic);
 
-    if(!(availBytesFromMic > 320))
+    if(availBytesFromMic < bytesToGet)
     	return 0;
 
-    // set available byte to maxByteToGet
-    int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
-
-    if(bytesAvail == 0){
-    	memset(micDataEncoded, 0, sizeof (SFLDataFormat));
-    	return getCodecFrameSize();
-    }
-
     // Get bytes from micRingBuffer to data_from_mic
-    // int nbSample = audioLayer->getMainBuffer()->getData(micData, bytesAvail, 100, _ca->getCallId()) / sizeof (SFLDataFormat);
-    int nbSample = audioLayer->getMainBuffer()->getData(micData, 320, 100, _ca->getCallId()) / sizeof (SFLDataFormat);
+    int nbSample = audioLayer->getMainBuffer()->getData(micData, bytesToGet, 100, _ca->getCallId()) / sizeof (SFLDataFormat);
 
     // process mic fade in
     if(!_audioRtpRecord.getMicFadeInComplete())
@@ -453,6 +446,7 @@ int AudioRtpRecordHandler::processDataEncode(void)
     	// no resampling required
     	compSize = audioCodec->codecEncode(micDataEncoded, micData, nbSample * sizeof (SFLDataFormat));
     }
+
     return compSize;
 }
 

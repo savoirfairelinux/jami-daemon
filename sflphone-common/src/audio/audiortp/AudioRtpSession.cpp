@@ -235,7 +235,7 @@ bool AudioRtpSession::onRTPPacketRecv (ost::IncomingRTPPkt&)
 
 void AudioRtpSession::sendMicData()
 {
-    // _debug("============== sendMicData ===============");
+    _debug("============== sendMicData ===============");
 
     int compSize = processDataEncode();
 
@@ -246,8 +246,8 @@ void AudioRtpSession::sendMicData()
     // Increment timestamp for outgoing packet
     _timestamp += _timestampIncrement;
 
-    // _debug("    compSize: %d", compSize);
-    // _debug("    timestamp: %d", _timestamp);
+    _debug("    compSize: %d", compSize);
+    _debug("    timestamp: %d", _timestamp);
 
     // putData put the data on RTP queue, sendImmediate bypass this queue
     putData (_timestamp, getMicDataEncoded(), compSize);
@@ -357,10 +357,7 @@ void AudioRtpSession::run ()
 			sendMicData ();
 		}
 
-		// Recv session
-		// TODO should not be called here anymore
-//		receiveSpeakerData ();
-
+		// This also should be moved
 		notifyIncomingCall();
 
 		_manager->getAudioLayerMutex()->leave();
