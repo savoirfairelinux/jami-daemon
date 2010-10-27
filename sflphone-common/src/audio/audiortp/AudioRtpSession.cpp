@@ -343,8 +343,6 @@ void AudioRtpSession::run ()
 
     _debug ("AudioRtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
 
-	receiveSpeakerData ();
-
 	uint32 timeout = 0;
 	while ( isActive() ) {
 		if ( timeout < 1000 ){ // !(timeout/1000)
@@ -360,6 +358,7 @@ void AudioRtpSession::run ()
 			sendMicData ();
 		}
 
+		receiveSpeakerData ();
 		// This also should be moved
 		notifyIncomingCall();
 
