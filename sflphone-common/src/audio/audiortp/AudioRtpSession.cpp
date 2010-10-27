@@ -226,7 +226,7 @@ bool AudioRtpSession::onRTPPacketRecv (ost::IncomingRTPPkt&)
 {
     //_debug ("AudioRtpSession: onRTPPacketRecv");
 
-	receiveSpeakerData ();
+	// receiveSpeakerData ();
 
     return true;
 }
@@ -259,6 +259,7 @@ void AudioRtpSession::sendMicData()
 
 void AudioRtpSession::receiveSpeakerData ()
 {
+	_debug("receive spkr data");
 	
     const ost::AppDataUnit* adu = NULL;
 
@@ -341,6 +342,8 @@ void AudioRtpSession::run ()
     _manager->getAudioDriver()->startStream();
 
     _debug ("AudioRtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
+
+	receiveSpeakerData ();
 
 	uint32 timeout = 0;
 	while ( isActive() ) {
