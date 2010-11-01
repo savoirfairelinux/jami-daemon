@@ -229,9 +229,9 @@ void AudioRtpSession::sendDtmfEvent (sfl::DtmfEvent *dtmf)
 
 bool AudioRtpSession::onRTPPacketRecv (ost::IncomingRTPPkt&)
 {
-    _debug ("AudioRtpSession: onRTPPacketRecv");
+    // _debug ("AudioRtpSession: onRTPPacketRecv");
 
-	// receiveSpeakerData ();
+	receiveSpeakerData ();
 
     return true;
 }
@@ -358,8 +358,6 @@ void AudioRtpSession::run ()
 			sendMicData ();
 		}
 
-		receiveSpeakerData();
-
 		// This also should be moved
 		notifyIncomingCall();
 
@@ -390,6 +388,8 @@ void AudioRtpSession::run ()
 			}
 			timeout = 0;
 		}
+
+		// receiveSpeakerData();
 	}
 
     _debug ("AudioRtpSession: Left main loop for call %s", _ca->getCallId().c_str());
