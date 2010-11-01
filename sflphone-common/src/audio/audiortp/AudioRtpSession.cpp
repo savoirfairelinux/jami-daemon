@@ -68,6 +68,11 @@ AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
     assert (_ca);
 
     _info ("AudioRtpSession: Setting new RTP session with destination %s:%d", _ca->getLocalIp().c_str(), _ca->getLocalAudioPort());
+
+    // static_cast<ost::DualRTPUDPIPv4Channel>(dso)->sendSocket->setTypeOfService(ost::Socket::tosLowDelay);
+    // static_cast<ost::DualRTPChannel<ost::DualRTPUDPIPv4Channel> >(dso)->sendSocket->setTypeOfService(ost::Socket::tosLowDelay);
+
+    setTypeOfService(tosEnhanced);
 }
 
 AudioRtpSession::~AudioRtpSession()
@@ -137,12 +142,12 @@ void AudioRtpSession::setSessionMedia (AudioCodec* audioCodec)
 
 void AudioRtpSession::setDestinationIpAddress (void)
 {
+    _info ("AudioRtpSession: Setting IP address for the RTP session");
+
     if (_ca == NULL) {
         _error ("AudioRtpSession: Sipcall is gone.");
         throw AudioRtpSessionException();
     }
-
-    _info ("AudioRtpSession: Setting IP address for the RTP session");
 
     // Store remote ip in case we would need to forget current destination
     _remote_ip = ost::InetHostAddress (_ca->getLocalSDP()->get_remote_ip().c_str());
@@ -224,7 +229,7 @@ void AudioRtpSession::sendDtmfEvent (sfl::DtmfEvent *dtmf)
 
 bool AudioRtpSession::onRTPPacketRecv (ost::IncomingRTPPkt&)
 {
-    //_debug ("AudioRtpSession: onRTPPacketRecv");
+    _debug ("AudioRtpSession: onRTPPacketRecv");
 
 	// receiveSpeakerData ();
 
@@ -242,15 +247,17 @@ void AudioRtpSession::sendMicData()
     	return;
 
     // Reset timestamp to make sure the timing information are up to date
-    /*
     if (_timestampCount > RTP_TIMESTAMP_RESET_FREQ) {
         _timestamp = getCurrentTimestamp();
         _timestampCount = 0;
     }
-    */
+
+    // getCurrentTimestamp();
+    // RTPDataQueue::getTimestampIncrement();
 
     // Increment timestamp for outgoing packet
     _timestamp += _timestampIncrement;
+    _debug("sendMicData: %d, timestamp increment %d", _timestamp, _timestampIncrement);
 
     // putData put the data on RTP queue, sendImmediate bypass this queue
     putData (_timestamp, getMicDataEncoded(), compSize);
@@ -259,7 +266,6 @@ void AudioRtpSession::sendMicData()
 
 void AudioRtpSession::receiveSpeakerData ()
 {
-	_debug("receive spkr data");
 	
     const ost::AppDataUnit* adu = NULL;
 
@@ -268,20 +274,16 @@ void AudioRtpSession::receiveSpeakerData ()
     adu = getData (packetTimestamp);
 
     if (!adu) {
+    	_debug("receiveSpeakerData: no data!");
         return;
     }
 
     unsigned char* spkrDataIn = NULL;
     unsigned int size = 0;
 
-    if (adu) {
+    spkrDataIn  = (unsigned char*) adu->getData(); // data in char
+    size = adu->getSize(); // size in char
 
-        spkrDataIn  = (unsigned char*) adu->getData(); // data in char
-        size = adu->getSize(); // size in char
-
-    } else {
-        _debug ("AudioRtpSession: No RTP packet available");
-    }
 
     // DTMF over RTP, size must be over 4 in order to process it as voice data
     if (size > 4) {
@@ -321,7 +323,7 @@ int AudioRtpSession::startRtpThread (AudioCodec* audiocodec)
 void AudioRtpSession::run ()
 {
 
-    // Timestamp must be initialized randomly
+    // Timestamp must be initialized randomly, already done when instantiating outgoing queue
     _timestamp = getCurrentTimestamp();
 
     int threadSleep = 0;
@@ -345,7 +347,7 @@ void AudioRtpSession::run ()
 
 	uint32 timeout = 0;
 	while ( isActive() ) {
-		if ( timeout < 1000 ){ // !(timeout/1000)
+		if ( timeout < 100 ){ // !(timeout/1000)
 			timeout = getSchedulingTimeout();
 		}
 
@@ -372,13 +374,13 @@ void AudioRtpSession::run ()
 		// <= the check interval for RTCP
 		// packets
 		timeout = (timeout > maxWait)? maxWait : timeout;
-		if ( timeout < 1000 ) { // !(timeout/1000)
+		if ( timeout < 100 ) { // !(timeout/1000)
 			setCancel(cancelDeferred);
 			dispatchDataPacket();
 			setCancel(cancelImmediate);
 			timerTick();
 		} else {
-			if ( isPendingData(timeout/1000) ) {
+			if ( isPendingData(timeout/100) ) {
 				setCancel(cancelDeferred);
 				if (isActive()) { // take in only if active
 					takeInDataPacket();
@@ -388,7 +390,7 @@ void AudioRtpSession::run ()
 			timeout = 0;
 		}
 
-		receiveSpeakerData ();
+		receiveSpeakerData();
 	}
 
     _debug ("AudioRtpSession: Left main loop for call %s", _ca->getCallId().c_str());
