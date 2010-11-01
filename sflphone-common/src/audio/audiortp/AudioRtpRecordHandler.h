@@ -47,8 +47,8 @@ namespace sfl
 // Factor use to increase volume in fade in
 #define FADEIN_STEP_SIZE 4;
 
-static const int schedulingTimeout = 100000;
-static const int expireTimeout = 1000000;
+static const int schedulingTimeout = 10000;
+static const int expireTimeout = 100000;
 
 class AudioRtpSessionException: public std::exception
 {

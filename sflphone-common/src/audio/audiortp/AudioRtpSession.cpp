@@ -72,7 +72,7 @@ AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
     // static_cast<ost::DualRTPUDPIPv4Channel>(dso)->sendSocket->setTypeOfService(ost::Socket::tosLowDelay);
     // static_cast<ost::DualRTPChannel<ost::DualRTPUDPIPv4Channel> >(dso)->sendSocket->setTypeOfService(ost::Socket::tosLowDelay);
 
-    setTypeOfService(tosEnhanced);
+    // setTypeOfService(tosEnhanced);
 }
 
 AudioRtpSession::~AudioRtpSession()
@@ -261,6 +261,7 @@ void AudioRtpSession::sendMicData()
 
     // putData put the data on RTP queue, sendImmediate bypass this queue
     putData (_timestamp, getMicDataEncoded(), compSize);
+    // sendData()
 }
 
 
@@ -347,9 +348,11 @@ void AudioRtpSession::run ()
 
 	uint32 timeout = 0;
 	while ( isActive() ) {
-		if ( timeout < 100 ){ // !(timeout/1000)
+		if ( timeout < 1000 ){ // !(timeout/1000)
 			timeout = getSchedulingTimeout();
 		}
+
+		// timeout = ;
 
 		_manager->getAudioLayerMutex()->enter();
 
@@ -359,6 +362,8 @@ void AudioRtpSession::run ()
 		} else {
 			sendMicData ();
 		}
+
+		receiveSpeakerData();
 
 		// This also should be moved
 		notifyIncomingCall();
@@ -373,14 +378,17 @@ void AudioRtpSession::run ()
 		// make sure the scheduling timeout is
 		// <= the check interval for RTCP
 		// packets
+		_debug("timeout before: %d, maxwait %d", timeout, maxWait);
 		timeout = (timeout > maxWait)? maxWait : timeout;
-		if ( timeout < 100 ) { // !(timeout/1000)
+		_debug("timeout after: %d", timeout);
+
+		if ( timeout < 1000 ) { // !(timeout/1000)
 			setCancel(cancelDeferred);
 			dispatchDataPacket();
 			setCancel(cancelImmediate);
 			timerTick();
 		} else {
-			if ( isPendingData(timeout/100) ) {
+			if ( isPendingData(timeout/1000) ) {
 				setCancel(cancelDeferred);
 				if (isActive()) { // take in only if active
 					takeInDataPacket();
@@ -389,8 +397,6 @@ void AudioRtpSession::run ()
 			}
 			timeout = 0;
 		}
-
-		receiveSpeakerData();
 	}
 
     _debug ("AudioRtpSession: Left main loop for call %s", _ca->getCallId().c_str());
