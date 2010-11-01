@@ -49,7 +49,7 @@ timeval2microtimeout(const timeval& t)
 AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
 		// ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
 		AudioRtpRecordHandler(manager, sipcall),
-		ost::TRTPSessionBase<ost::DualRTPUDPIPv4Channel,ost::DualRTPUDPIPv4Channel,ost::AVPQueue>(ost::InetHostAddress (sipcall->getLocalIp().c_str()),
+		ost::TRTPSessionBase<ost::SymmetricRTPChannel,ost::SymmetricRTPChannel,ost::AVPQueue>(ost::InetHostAddress (sipcall->getLocalIp().c_str()),
 																sipcall->getLocalAudioPort(),
 																0,
 																ost::MembershipBookkeeping::defaultMembersHashSize,
@@ -252,12 +252,8 @@ void AudioRtpSession::sendMicData()
         _timestampCount = 0;
     }
 
-    // getCurrentTimestamp();
-    // RTPDataQueue::getTimestampIncrement();
-
     // Increment timestamp for outgoing packet
     _timestamp += _timestampIncrement;
-    _debug("sendMicData: %d, timestamp increment %d", _timestamp, _timestampIncrement);
 
     // putData put the data on RTP queue, sendImmediate bypass this queue
     putData (_timestamp, getMicDataEncoded(), compSize);
@@ -275,7 +271,6 @@ void AudioRtpSession::receiveSpeakerData ()
     adu = getData (packetTimestamp);
 
     if (!adu) {
-    	_debug("receiveSpeakerData: no data!");
         return;
     }
 
@@ -378,9 +373,7 @@ void AudioRtpSession::run ()
 		// make sure the scheduling timeout is
 		// <= the check interval for RTCP
 		// packets
-		_debug("timeout before: %d, maxwait %d", timeout, maxWait);
 		timeout = (timeout > maxWait)? maxWait : timeout;
-		_debug("timeout after: %d", timeout);
 
 		if ( timeout < 1000 ) { // !(timeout/1000)
 			setCancel(cancelDeferred);
