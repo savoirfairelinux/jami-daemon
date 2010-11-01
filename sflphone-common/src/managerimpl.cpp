@@ -3900,8 +3900,11 @@ void ManagerImpl::unloadAccountMap ()
 
         _debug ("Manager: Unloading account %s", iter->first.c_str());
 
-        delete iter->second;
-        iter->second = NULL;
+        // Avoid removing the IP2IP account twice
+        if(iter->first != "") {
+        	delete iter->second;
+        	iter->second = NULL;
+        }
 
         iter++;
     }
