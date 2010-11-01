@@ -72,7 +72,7 @@ AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
     // static_cast<ost::DualRTPUDPIPv4Channel>(dso)->sendSocket->setTypeOfService(ost::Socket::tosLowDelay);
     // static_cast<ost::DualRTPChannel<ost::DualRTPUDPIPv4Channel> >(dso)->sendSocket->setTypeOfService(ost::Socket::tosLowDelay);
 
-    // setTypeOfService(tosEnhanced);
+    setTypeOfService(tosEnhanced);
 }
 
 AudioRtpSession::~AudioRtpSession()
@@ -80,7 +80,7 @@ AudioRtpSession::~AudioRtpSession()
     _info ("AudioRtpSession: Delete AudioRtpSession instance");
 
     try {
-	terminate();
+    	terminate();
     } catch (...) {
         _debugException ("AudioRtpSession: Thread destructor didn't terminate correctly");
         throw;
@@ -133,7 +133,7 @@ void AudioRtpSession::setSessionMedia (AudioCodec* audioCodec)
     } else if (dynamic) {
         _debug ("AudioRtpSession: Setting dynamic payload format");
         setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, smplRate));
-    } else if (dynamic && payloadType != 9) {
+    } else if (dynamic && payloadType != g722PayloadType) {
         _debug ("AudioRtpSession: Setting static payload format");
         setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) payloadType));
     }
@@ -229,8 +229,6 @@ void AudioRtpSession::sendDtmfEvent (sfl::DtmfEvent *dtmf)
 
 bool AudioRtpSession::onRTPPacketRecv (ost::IncomingRTPPkt&)
 {
-    // _debug ("AudioRtpSession: onRTPPacketRecv");
-
 	receiveSpeakerData ();
 
     return true;
@@ -257,7 +255,6 @@ void AudioRtpSession::sendMicData()
 
     // putData put the data on RTP queue, sendImmediate bypass this queue
     putData (_timestamp, getMicDataEncoded(), compSize);
-    // sendData()
 }
 
 
@@ -322,6 +319,7 @@ void AudioRtpSession::run ()
     // Timestamp must be initialized randomly, already done when instantiating outgoing queue
     _timestamp = getCurrentTimestamp();
 
+    /**
     int threadSleep = 0;
 
     if (getCodecSampleRate() != 0) {
@@ -332,6 +330,7 @@ void AudioRtpSession::run ()
     }
 
     TimerPort::setTimer (threadSleep);
+	*/
 
     // Set recording sampling rate
     _ca->setRecordingSmplRate (getCodecSampleRate());
@@ -346,8 +345,6 @@ void AudioRtpSession::run ()
 		if ( timeout < 1000 ){ // !(timeout/1000)
 			timeout = getSchedulingTimeout();
 		}
-
-		// timeout = ;
 
 		_manager->getAudioLayerMutex()->enter();
 
@@ -389,7 +386,6 @@ void AudioRtpSession::run ()
 			timeout = 0;
 		}
 
-		// receiveSpeakerData();
 	}
 
     _debug ("AudioRtpSession: Left main loop for call %s", _ca->getCallId().c_str());

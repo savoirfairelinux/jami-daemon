@@ -57,13 +57,6 @@
 namespace sfl
 {
 
-// G.722 VoIP is typically carried in RTP payload type 9.[2] Note that IANA records the clock rate for type 9 G.722 as 8 kHz
-// (instead of 16 kHz), RFC3551[3]  clarifies that this is due to a historical error and is retained in order to maintain backward
-// compatibility. Consequently correct implementations represent the value 8,000 where required but encode and decode audio at 16 kHz.
-static const int g722PayloadType = 9;
-static const int g722RtpClockRate = 8000;
-static const int g722RtpTimeincrement = 160;
-
 // class AudioRtpSession : protected ost::Thread, public ost::TimerPort, public AudioRtpRecordHandler, public ost::TRTPSessionBase<ost::DualRTPUDPIPv4Channel,ost::DualRTPUDPIPv4Channel,ost::AVPQueue>
 class AudioRtpSession : protected ost::Thread, public ost::TimerPort, public AudioRtpRecordHandler, public ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::AVPQueue>
 {

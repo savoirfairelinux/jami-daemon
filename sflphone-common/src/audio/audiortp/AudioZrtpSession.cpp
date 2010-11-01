@@ -33,6 +33,7 @@
 #include "sip/sipcall.h"
 #include "sip/sdp.h"
 #include "audio/audiolayer.h"
+#include "manager.h"
 
 #include <libzrtpcpp/ZrtpQueue.h>
 #include <libzrtpcpp/ZrtpUserCallback.h>
@@ -64,25 +65,27 @@ AudioZrtpSession::AudioZrtpSession (ManagerImpl * manager, SIPCall * sipcall, co
 
     assert (_ca);
 
-    _info ("AudioZrtpSession: Local audio port %i will be used", _ca->getLocalAudioPort());
+    _info ("AudioZrtpSession: Setting new RTP session with destination %s:%d", _ca->getLocalIp().c_str(), _ca->getLocalAudioPort());
+
+    setTypeOfService(tosEnhanced);
 }
 
 AudioZrtpSession::~AudioZrtpSession()
 {
 	_debug ("AudioZrtpSession: Delete AudioRtpSession instance");
 
-	    try {
-	    	terminate();
-	    } catch (...) {
-	        _debugException ("AudioZrtpSession: Thread destructor didn't terminate correctly");
-	        throw;
-	    }
+	try {
+		terminate();
+	} catch (...) {
+		_debugException ("AudioZrtpSession: Thread destructor didn't terminate correctly");
+		throw;
+	}
 
-	    _manager->getAudioDriver()->getMainBuffer()->unBindAll (_ca->getCallId());
+	_manager->getAudioDriver()->getMainBuffer()->unBindAll (_ca->getCallId());
 
-	    if(_time)
-	    	delete _time;
-	    _time = NULL;
+	if(_time)
+		delete _time;
+	_time = NULL;
 }
 
 
@@ -134,12 +137,16 @@ void AudioZrtpSession::initializeZid (void)
 
 void AudioZrtpSession::setSessionTimeouts (void)
 {
+	_debug("AudioZrtpSession: Set session scheduling timeout (%d) and expireTimeout (%d)", sfl::schedulingTimeout, sfl::expireTimeout);
+
 	setSchedulingTimeout (sfl::schedulingTimeout);
 	setExpireTimeout (sfl::expireTimeout);
 }
 
 void AudioZrtpSession::setSessionMedia (AudioCodec* audioCodec)
 {
+	_debug("AudioRtpSession: Set session media");
+
 	// set internal codec info for this session
 	setRtpMedia(audioCodec);
 
@@ -150,24 +157,25 @@ void AudioZrtpSession::setSessionMedia (AudioCodec* audioCodec)
 	bool dynamic = getHasDynamicPayload();
 
     // G722 requires timestamp to be incremented at 8 kHz
-    if (payloadType == 9)
-        _timestampIncrement = 160;
+    if (payloadType == g722PayloadType)
+        _timestampIncrement = g722RtpTimeincrement;
     else
         _timestampIncrement = frameSize;
 
-    _debug ("AudioRtpSession: Codec sampling rate: %d", smplRate);
-    _debug ("AudioRtpSession: Codec frame size: %d", frameSize);
-    _debug ("AudioRtpSession: RTP timestamp increment: %d", _timestampIncrement);
+    _debug ("AudioZrtpSession: Codec payload: %d", payloadType);
+    _debug ("AudioZrtpSession: Codec sampling rate: %d", smplRate);
+    _debug ("AudioZrtpSession: Codec frame size: %d", frameSize);
+    _debug ("AudioZrtpSession: RTP timestamp increment: %d", _timestampIncrement);
 
     // Even if specified as a 16 kHz codec, G722 requires rtp sending rate to be 8 kHz
-    if (payloadType == 9) {
-        _debug ("AudioRtpSession: Setting G722 payload format");
-        setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, smplRate));
+    if (payloadType == g722PayloadType) {
+        _debug ("AudioZrtpSession: Setting G722 payload format");
+        setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, g722RtpClockRate));
     } else if (dynamic) {
-        _debug ("AudioRtpSession: Setting dynamic payload format");
+        _debug ("AudioZrtpSession: Setting dynamic payload format");
         setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, smplRate));
-    } else if (dynamic && payloadType != 9) {
-        _debug ("AudioRtpSession: Setting static payload format");
+    } else if (dynamic && payloadType != g722PayloadType) {
+        _debug ("AudioZrtpSession: Setting static payload format");
         setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) payloadType));
     }
 
@@ -175,18 +183,18 @@ void AudioZrtpSession::setSessionMedia (AudioCodec* audioCodec)
 
 void AudioZrtpSession::setDestinationIpAddress (void)
 {
+    _info ("AudioZrtpSession: Setting IP address for the RTP session");
+
     if (_ca == NULL) {
-        _error ("AudioRtpSession: Sipcall is gone.");
+        _error ("AudioZrtpSession: Sipcall is gone.");
         throw AudioRtpSessionException();
     }
-
-    _info ("AudioRtpSession: Setting IP address for the RTP session");
 
     // Store remote ip in case we would need to forget current destination
     _remote_ip = ost::InetHostAddress (_ca->getLocalSDP()->get_remote_ip().c_str());
 
     if (!_remote_ip) {
-        _warn ("AudioRtpSession: Target IP address (%s) is not correct!",
+        _warn ("AudioZrtpSession: Target IP address (%s) is not correct!",
                _ca->getLocalSDP()->get_remote_ip().data());
         return;
     }
@@ -194,22 +202,24 @@ void AudioZrtpSession::setDestinationIpAddress (void)
     // Store remote port in case we would need to forget current destination
     _remote_port = (unsigned short) _ca->getLocalSDP()->get_remote_audio_port();
 
-    _info ("AudioRtpSession: New remote address for session: %s:%d",
+    _info ("AudioZrtpSession: New remote address for session: %s:%d",
            _ca->getLocalSDP()->get_remote_ip().data(), _remote_port);
 
     if (!addDestination (_remote_ip, _remote_port)) {
-        _warn ("AudioRtpSession: Can't add new destination to session!");
+        _warn ("AudioZrtpSession: Can't add new destination to session!");
         return;
     }
 }
 
 void AudioZrtpSession::updateDestinationIpAddress (void)
 {
+	_debug("AudioZrtpSession: Update destination ip address");
+
     // Destination address are stored in a list in ccrtp
     // This method remove the current destination entry
 
     if (!forgetDestination (_remote_ip, _remote_port, _remote_port+1))
-        _warn ("AudioRtpSession: Could not remove previous destination");
+        _warn ("AudioZrtpSession: Could not remove previous destination");
 
     // new destination is stored in call
     // we just need to recall this method
@@ -218,7 +228,7 @@ void AudioZrtpSession::updateDestinationIpAddress (void)
 
 void AudioZrtpSession::sendDtmfEvent (sfl::DtmfEvent *dtmf)
 {
-    _debug ("AudioRtpSession: Send Dtmf %d", getEventQueueSize());
+    _debug ("AudioZrtpSession: Send Dtmf %d", getEventQueueSize());
 
     _timestamp += 160;
 
@@ -258,9 +268,9 @@ void AudioZrtpSession::sendDtmfEvent (sfl::DtmfEvent *dtmf)
     }
 }
 
-bool onRTPPacketRecv (ost::IncomingRTPPkt&)
+bool AudioZrtpSession::onRTPPacketRecv (ost::IncomingRTPPkt&)
 {
-    _debug ("AudioRtpSession: onRTPPacketRecv");
+	receiveSpeakerData();
 
     return true;
 }
@@ -268,10 +278,23 @@ bool onRTPPacketRecv (ost::IncomingRTPPkt&)
 
 void AudioZrtpSession::sendMicData()
 {
+	int compSize = processDataEncode();
+
+	// if no data return
+	if(!compSize)
+		return;
+
     // Increment timestamp for outgoing packet
     _timestamp += _timestampIncrement;
 
-    int compSize = processDataEncode();
+    // Reset timestamp to make sure the timing information are up to date
+    if (_timestampCount > RTP_TIMESTAMP_RESET_FREQ) {
+        _timestamp = getCurrentTimestamp();
+        _timestampCount = 0;
+    }
+
+    // Increment timestamp for outgoing packet
+    _timestamp += _timestampIncrement;
 
     // putData put the data on RTP queue, sendImmediate bypass this queue
     putData (_timestamp, getMicDataEncoded(), compSize);
@@ -293,14 +316,8 @@ void AudioZrtpSession::receiveSpeakerData ()
     unsigned char* spkrDataIn = NULL;
     unsigned int size = 0;
 
-    if (adu) {
-
-        spkrDataIn  = (unsigned char*) adu->getData(); // data in char
-        size = adu->getSize(); // size in char
-
-    } else {
-        _debug ("AudioRtpSession: No RTP packet available");
-    }
+    spkrDataIn  = (unsigned char*) adu->getData(); // data in char
+    size = adu->getSize(); // size in char
 
     // DTMF over RTP, size must be over 4 in order to process it as voice data
     if (size > 4) {
@@ -310,14 +327,32 @@ void AudioZrtpSession::receiveSpeakerData ()
     delete adu;
 }
 
+void AudioZrtpSession::notifyIncomingCall()
+{
+	// Notify (with a beep) an incoming call when there is already a call
+	if (Manager::instance().incomingCallWaiting() > 0) {
+		_countNotificationTime += _time->getSecond();
+		int countTimeModulo = _countNotificationTime % 5000;
+
+		if ( (countTimeModulo - _countNotificationTime) < 0) {
+			Manager::instance().notificationIncomingCall();
+		}
+		_countNotificationTime = countTimeModulo;
+	}
+}
 
 int AudioZrtpSession::startRtpThread (AudioCodec* audiocodec)
 {
-    _debug ("RTP: Starting main thread");
+    _debug ("AudioZrtpSession: Starting main thread");
     setSessionTimeouts();
     setSessionMedia (audiocodec);
     initBuffers();
-    return start (_mainloopSemaphore);
+    initNoiseSuppress();
+    enableStack();
+
+    int ret = start(_mainloopSemaphore);
+
+    return ret;
 }
 
 void AudioZrtpSession::run ()
@@ -335,8 +370,6 @@ void AudioZrtpSession::run ()
         threadSleep = getAudioLayerFrameSize();
     }
 
-    initNoiseSuppress();
-
     TimerPort::setTimer (threadSleep);
 
     // Set recording sampling rate
@@ -344,9 +377,8 @@ void AudioZrtpSession::run ()
 
     // Start audio stream (if not started) AND flush all buffers (main and urgent)
     _manager->getAudioDriver()->startStream();
-    startRunning();
 
-    _debug ("AudioRtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
+    _debug ("AudioZrtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
 
     while (!testCancel()) {
 
@@ -384,7 +416,7 @@ void AudioZrtpSession::run ()
         TimerPort::incTimer (threadSleep);
     }
 
-    _debug ("AudioRtpSession: Left main loop for call %s", _ca->getCallId().c_str());
+    _debug ("AudioZrtpSession: Left main loop for call %s", _ca->getCallId().c_str());
 }
 
 }

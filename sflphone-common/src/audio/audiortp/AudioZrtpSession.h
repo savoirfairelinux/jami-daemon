@@ -57,6 +57,8 @@ class AudioZrtpSession : public ost::TimerPort, public ost::SymmetricZRTPSession
         // Thread associated method
         virtual void run ();
 
+        virtual bool onRTPPacketRecv (ost::IncomingRTPPkt&);
+
         int startRtpThread (AudioCodec*);
 
         /**
@@ -91,6 +93,8 @@ class AudioZrtpSession : public ost::TimerPort, public ost::SymmetricZRTPSession
          */
         void setDestinationIpAddress (void);
 
+
+        void notifyIncomingCall();
 
         /**
          * Send encoded data to peer
