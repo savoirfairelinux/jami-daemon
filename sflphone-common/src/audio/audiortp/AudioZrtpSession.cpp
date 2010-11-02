@@ -292,9 +292,6 @@ void AudioZrtpSession::sendMicData()
 	if(!compSize)
 		return;
 
-    // Increment timestamp for outgoing packet
-    _timestamp += _timestampIncrement;
-
     // Reset timestamp to make sure the timing information are up to date
     if (_timestampCount > RTP_TIMESTAMP_RESET_FREQ) {
         _timestamp = getCurrentTimestamp();
@@ -311,6 +308,7 @@ void AudioZrtpSession::sendMicData()
 
 void AudioZrtpSession::receiveSpeakerData ()
 {
+
     const ost::AppDataUnit* adu = NULL;
 
     int packetTimestamp = getFirstTimestamp();
