@@ -380,23 +380,14 @@ void AudioZrtpSession::run ()
 
     _debug ("AudioZrtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
 
-    while (!testCancel()) {
+    uint32 timeout = 0;
+    while ( isActive() ) {
 
-    	_debug("run");
-
-        // Reset timestamp to make sure the timing information are up to date
-        if (_timestampCount > RTP_TIMESTAMP_RESET_FREQ) {
-            _timestamp = getCurrentTimestamp();
-            _timestampCount = 0;
-        }
-
-        _timestampCount++;
+    	if ( timeout < 1000 ){ // !(timeout/1000)
+    		timeout = getSchedulingTimeout();
+    	}
 
         _manager->getAudioLayerMutex()->enter();
-
-        // TODO should not be linked to audio layer here
-        // converterSamplingRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
-        // _converterSamplingRate = _manager->getAudioDriver()->getMainBuffer()->getInternalSamplingRate();
 
         // Send session
         if (getEventQueueSize() > 0) {
@@ -405,15 +396,37 @@ void AudioZrtpSession::run ()
             sendMicData ();
         }
 
-        // Recv session
-        // TODO should not be called here anymore
-        // receiveSpeakerData ();
+        // This also should be moved
+        notifyIncomingCall();
 
         _manager->getAudioLayerMutex()->leave();
 
-        // Let's wait for the next transmit cycle
-        Thread::sleep (TimerPort::getTimer());
-        TimerPort::incTimer (threadSleep);
+        setCancel(cancelDeferred);
+        controlReceptionService();
+        controlTransmissionService();
+        setCancel(cancelImmediate);
+        uint32 maxWait = timeval2microtimeout(getRTCPCheckInterval());
+        // make sure the scheduling timeout is
+        // <= the check interval for RTCP
+        // packets
+        timeout = (timeout > maxWait)? maxWait : timeout;
+
+        if ( timeout < 1000 ) { // !(timeout/1000)
+        	setCancel(cancelDeferred);
+        	dispatchDataPacket();
+        	setCancel(cancelImmediate);
+        	timerTick();
+        } else {
+        	if ( isPendingData(timeout/1000) ) {
+        		setCancel(cancelDeferred);
+        		if (isActive()) { // take in only if active
+        			takeInDataPacket();
+        		}
+        		setCancel(cancelImmediate);
+        	}
+        	timeout = 0;
+        }
+
     }
 
     _debug ("AudioZrtpSession: Left main loop for call %s", _ca->getCallId().c_str());

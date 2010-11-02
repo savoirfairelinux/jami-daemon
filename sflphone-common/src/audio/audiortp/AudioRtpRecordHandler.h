@@ -57,6 +57,10 @@ static const int g722PayloadType = 9;
 static const int g722RtpClockRate = 8000;
 static const int g722RtpTimeincrement = 160;
 
+inline uint32
+timeval2microtimeout(const timeval& t)
+{ return ((t.tv_sec * 1000000ul) + t.tv_usec); }
+
 class AudioRtpSessionException: public std::exception
 {
         virtual const char* what() const throw() {

@@ -41,11 +41,6 @@
 namespace sfl
 {
 
-inline uint32
-timeval2microtimeout(const timeval& t)
-{ return ((t.tv_sec * 1000000ul) + t.tv_usec); }
-
-
 AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
 		// ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
 		AudioRtpRecordHandler(manager, sipcall),
