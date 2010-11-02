@@ -29,7 +29,12 @@
 #ifndef __SFL_AUDIO_ZRTP_SESSION_H__
 #define __SFL_AUDIO_ZRTP_SESSION_H__
 
+
+#include <ccrtp/rtp.h>
+
 #include <libzrtpcpp/zrtpccrtp.h>
+#include <libzrtpcpp/ZrtpQueue.h>
+#include <libzrtpcpp/ZrtpUserCallback.h>
 
 #include "AudioRtpRecordHandler.h"
 #include <cc++/numbers.h> // OST::Time
@@ -47,7 +52,8 @@ class ZrtpZidException: public std::exception
         }
 };
 
-class AudioZrtpSession : public ost::TimerPort, public ost::SymmetricZRTPSession, public AudioRtpRecordHandler
+// class AudioZrtpSession : public ost::TimerPort, public ost::SymmetricZRTPSession, public AudioRtpRecordHandler
+class AudioZrtpSession : protected ost::Thread, public AudioRtpRecordHandler, public ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue>
 {
     public:
         AudioZrtpSession (ManagerImpl * manager, SIPCall * sipcall, const std::string& zidFilename);

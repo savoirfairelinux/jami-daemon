@@ -35,6 +35,7 @@
 #include "audio/audiolayer.h"
 #include "manager.h"
 
+#include <libzrtpcpp/zrtpccrtp.h>
 #include <libzrtpcpp/ZrtpQueue.h>
 #include <libzrtpcpp/ZrtpUserCallback.h>
 
@@ -42,13 +43,20 @@
 #include <cstring>
 #include <cerrno>
 
+#include <ccrtp/rtp.h>
+
 namespace sfl
 {
 
 AudioZrtpSession::AudioZrtpSession (ManagerImpl * manager, SIPCall * sipcall, const std::string& zidFilename) :
-        ost::SymmetricZRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
-        AudioRtpRecordHandler(manager, sipcall)
-																											  , _zidFilename (zidFilename)
+        // ost::SymmetricZRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
+        AudioRtpRecordHandler(manager, sipcall),
+        ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue> (ost::InetHostAddress (sipcall->getLocalIp().c_str()),
+				sipcall->getLocalAudioPort(),
+				0,
+				ost::MembershipBookkeeping::defaultMembersHashSize,
+				ost::defaultApplication())
+        																									  , _zidFilename (zidFilename)
 																											  , _time (new ost::Time())
 																											  , _mainloopSemaphore (0)
 																											  , _manager (manager)
@@ -361,6 +369,7 @@ void AudioZrtpSession::run ()
     // Timestamp must be initialized randomly
     _timestamp = getCurrentTimestamp();
 
+    /*
     int threadSleep = 0;
 
     if (getCodecSampleRate() != 0) {
@@ -371,6 +380,7 @@ void AudioZrtpSession::run ()
     }
 
     TimerPort::setTimer (threadSleep);
+	*/
 
     // Set recording sampling rate
     _ca->setRecordingSmplRate (getCodecSampleRate());
