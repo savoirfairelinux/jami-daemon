@@ -348,37 +348,51 @@ AS_IF([test "x$with_gsm" != xno],
 AC_DEFINE([HAVE_GSM], test "x$with_gsm" = "xyes", [Define if you have libgsm])
 AM_CONDITIONAL(BUILD_GSM, test "x$with_gsm" = "xyes" )
 
-	dnl Check for libspeex
+dnl Check for libspeex
 AC_ARG_WITH([speex],
 		[AS_HELP_STRING([--without-speex],
-			[disable support for speex codec])],
+		[disable support for speex codec])],
 		[],
 		[with_speex=yes])
 
 AS_IF([test "x$with_speex" != xno],
 		[AC_CHECK_HEADER([speex/speex.h], , AC_MSG_FAILURE([Unable to find the libspeex headers (you may need to install the dev package).  You may use --without-speex to compile without speex codec support.]))]
 		[AC_CHECK_LIB([speex], [speex_decode_int],
-			[],
-			[AC_MSG_FAILURE(
-				[libspeex link test failed.   You may use --without-speex to compile without speex codec support.])]
-			)
-		]
-		# dnl More advanced check in case the libspeexdsp is not installed
-		# AC_SEARCH_LIBS(speex_preprocess_run, speexdsp, HAVE_SPEEXDSP="yes", HAVE_SPEEXDSP="no", [])
-	 )
+		[],
+		[AC_MSG_FAILURE([libspeex link test failed.   You may use --without-speex to compile without speex codec support.])])
+		])
+		
+AC_DEFINE([HAVE_SPEEX], test "x$with_speex" = "xyes", [Define if you have libspeex])
+AM_CONDITIONAL(BUILD_SPEEX, test "x$with_speex" = "xyes" )
 
 dnl check in case the libspeexdsp is not installed
 AC_CHECK_HEADER([speex/speex_preprocess.h], , AC_MSG_FAILURE([Unable to find the libspeexdsp headers (you may need to install the libspeexdsp-dev package) used for Noise Suppression and Automatic Gain Control.]))
 AC_CHECK_LIB(speexdsp, speex_preprocess_run, [], [], [])
-AC_DEFINE([HAVE_SPEEX], test "x$with_speex" = "xyes", [Define if you have libspeex])
-	AM_CONDITIONAL(BUILD_SPEEX, test "x$with_speex" = "xyes" )
 AM_CONDITIONAL(ENABLE_SPEEXDSP, test  $HAVE_SPEEXDSP = yes)
 
-	dnl Check for celt. Compile it only if a recent enough version is found
-	LIBCELT_MIN_VERSION=0.7.1
-PKG_CHECK_MODULES(CELT, celt >= ${LIBCELT_MIN_VERSION}, AM_CONDITIONAL(BUILD_CELT, test 1 = 1 ), AM_CONDITIONAL(BUILD_CELT, test 0 = 1 ))
+dnl Check for celt. Compile it only if a recent enough version is found
+LIBCELT_MIN_VERSION=0.7.1
+AC_ARG_WITH([celt],
+	[AS_HELP_STRING([--without-celt],
+	[disable support for celt codec])],
+	[],
+	[with_celt=yes])
+	
+# AS_IF([test "x$with_celt" != xno],
+#	[AC_CHECK_HEADER([celt/celt.h], , AC_MSG_FAILURE([Unable to find the libcelt headers (you may need to install the dev package). You may use --without-celt to compile without celt codec support.]))]
+#	[AC_CHECK_LIB([celt], [celt_decode_ctl],
+#	[],
+#	[AC_MSG_FAILURE([libcelt link test failed.   You may use --without-celt to compile without celt codec support.])])
+#	])
 
-	dnl Check for IAX
+AC_DEFINE([HAVE_CELT], test "x$with_celt" = "xyes", [Define if you have libcelt])
+AM_CONDITIONAL(BUILD_CELT, test "x$with_celt" = "xyes" )
+
+# PKG_CHECK_MODULES(CELT, celt >= ${LIBCELT_MIN_VERSION})
+# AC_SUBST(BUILD_CELT)
+
+
+dnl Check for IAX
 AC_ARG_WITH([iax2],
 		[AS_HELP_STRING([--without-iax2],
 			[disable support for the iax2 protocol])],
