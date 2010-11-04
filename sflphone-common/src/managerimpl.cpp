@@ -157,7 +157,11 @@ void ManagerImpl::init ()
         std::string country = preferences.getZoneToneChoice();
         _telephoneTone = new TelephoneTone (country, sampleRate);
 
-        _debugInit ("Manager: Loading DTMF key");
+        _debugInit ("Manager: Loading DTMF key (%d)", sampleRate);
+        // if(sampleRate > 44100)
+
+        sampleRate = 8000;
+
         _dtmfKey = new DTMF (sampleRate);
     }
 
@@ -3046,7 +3050,7 @@ void ManagerImpl::audioSamplingRateChanged (void)
     int type, samplerate, framesize, numCardIn, numCardOut, numCardRing;
     std::string alsaPlugin;
 
-    _debug ("Manager: Audio Sampling Rate");
+    _debug ("Manager: Audio sampling rate changed");
 
     if (!_audiodriver)
         return;
@@ -3056,7 +3060,7 @@ void ManagerImpl::audioSamplingRateChanged (void)
     samplerate = _mainBuffer.getInternalSamplingRate();
     framesize = audioPreference.getFramesize();
 
-    _debug ("Mnager: samplerate: %i, framesize %i", samplerate, framesize);
+    _debug ("Mnager: new samplerate: %i, new framesize %i", samplerate, framesize);
 
     alsaPlugin = audioPreference.getPlugin();
 
@@ -3064,7 +3068,7 @@ void ManagerImpl::audioSamplingRateChanged (void)
     numCardOut = audioPreference.getCardout();
     numCardRing = audioPreference.getCardring();
 
-    _debug ("Manager: Deleting current layer... ");
+    _debug ("Manager: Deleting current layer...");
 
     // ost::MutexLock lock (*getAudioLayerMutex());
     getAudioLayerMutex()->enter();
@@ -3116,7 +3120,7 @@ void ManagerImpl::audioSamplingRateChanged (void)
 
         delete _dtmfKey;
 
-        _debugInit ("Manager: Loading DTMF key");
+        _debugInit ("Manager: Loading DTMF key with sample rate %d", sampleRate);
         _dtmfKey = new DTMF (sampleRate);
     }
 
