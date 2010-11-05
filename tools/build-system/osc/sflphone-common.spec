@@ -28,7 +28,6 @@ BuildRequires:	libzrtpcpp-devel
 BuildRequires:	commoncpp2-devel
 BuildRequires:	libsamplerate-devel
 BuildRequires:  libyaml-devel
-BuildRequires:  libcelt-devel
 
 %if %{defined suse_version}
 BuildRequires:	libpulse-devel
@@ -42,6 +41,7 @@ BuildRequires:	libexpat0
 BuildRequires:  alsa-devel
 BuildRequires:  dbus-1-devel
 BuildRequires:  pcre-devel
+BuildRequires:	libcelt-devel
 %endif
 
 %if %{defined fedora_version}
@@ -56,13 +56,13 @@ BuildRequires:	gsm-devel
 BuildRequires:  alsa-lib-devel
 BuildRequires:  dbus-devel
 BuildRequires:	pcre-devel
+BuildRequires:	celt-devel
 %endif
 
 Requires:	libsamplerate
 Requires:	commoncpp2
 Requires:	dbus-1
 Requires:	libyaml
-Requires:       libcelt
 
 %if %{defined suse_version}
 Requires:	libgsm1
@@ -71,6 +71,7 @@ Requires:	libspeex
 Requires:	libasound2
 Requires:	libpulse0
 Requires:	libccrtp1
+Requires:	libcelt
 %endif
 
 %if %{defined fedora_version}
@@ -82,6 +83,7 @@ Requires:	alsa-lib
 Requires:	pulseaudio-libs
 Requires:	ccrtp
 Requires:	libzrtpcpp
+Requires:	celt
 %endif
 
 Conflicts:      sflphone
