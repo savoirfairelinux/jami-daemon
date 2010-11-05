@@ -78,15 +78,15 @@
 SIPAccount defaultAccount ("default");
 
 ManagerImpl::ManagerImpl (void) :
-        _hasTriedToRegister (false), _config(), _currentCallId2(),
-        _currentCallMutex(), _codecBuilder (NULL), _audiodriver (NULL),
-        _dtmfKey (NULL), _codecDescriptorMap(), _toneMutex(),
-        _telephoneTone (NULL), _audiofile (NULL), _spkr_volume (0),
-        _mic_volume (0), _mutex(), _dbus (NULL), _waitingCall(),
-        _waitingCallMutex(), _nbIncomingWaitingCall (0), _path (""),
-        _exist (0), _setupLoaded (false), _callAccountMap(),
-        _callAccountMapMutex(), _callConfigMap(), _accountMap(),
-        _directIpAccount (NULL), _cleaner (NULL), _history (NULL)
+    _hasTriedToRegister (false), _config(), _currentCallId2(),
+    _currentCallMutex(), _codecBuilder (NULL), _audiodriver (NULL),
+    _dtmfKey (NULL), _codecDescriptorMap(), _toneMutex(),
+    _telephoneTone (NULL), _audiofile (NULL), _spkr_volume (0),
+    _mic_volume (0), _mutex(), _dbus (NULL), _waitingCall(),
+    _waitingCallMutex(), _nbIncomingWaitingCall (0), _path (""),
+    _exist (0), _setupLoaded (false), _callAccountMap(),
+    _callAccountMapMutex(), _callConfigMap(), _accountMap(),
+    _directIpAccount (NULL), _cleaner (NULL), _history (NULL)
 {
 
     // initialize random generator for call id
@@ -3905,9 +3905,9 @@ void ManagerImpl::unloadAccountMap ()
         _debug ("Manager: Unloading account %s", iter->first.c_str());
 
         // Avoid removing the IP2IP account twice
-        if(iter->first != "") {
-        	delete iter->second;
-        	iter->second = NULL;
+        if (iter->first != "") {
+            delete iter->second;
+            iter->second = NULL;
         }
 
         iter++;

@@ -234,12 +234,12 @@ static void playback_overflow_callback (pa_stream* s UNUSED, void* userdata UNUS
 
 
 PulseLayer::PulseLayer (ManagerImpl* manager)
-        : AudioLayer (manager , PULSEAUDIO)
-        , context (NULL)
-        , m (NULL)
-        , playback (NULL)
-        , record (NULL)
-        , ringtone (NULL)
+    : AudioLayer (manager , PULSEAUDIO)
+    , context (NULL)
+    , m (NULL)
+    , playback (NULL)
+    , record (NULL)
+    , ringtone (NULL)
 {
     _urgentRingBuffer.createReadPointer();
 
@@ -420,9 +420,9 @@ void PulseLayer::context_state_callback (pa_context* c, void* user_data)
 
 bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int indexRing UNUSED, int sampleRate, int frameSize , int stream UNUSED, std::string plugin UNUSED)
 {
-	_debug("Audio: Open device sampling rate %d, frame size %d", _audioSampleRate, _frameSize);
+    _debug ("Audio: Open device sampling rate %d, frame size %d", _audioSampleRate, _frameSize);
 
-	_audioSampleRate = sampleRate;
+    _audioSampleRate = sampleRate;
     _frameSize = frameSize;
 
     flushUrgent();

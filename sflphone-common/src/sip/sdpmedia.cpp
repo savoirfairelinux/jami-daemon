@@ -50,12 +50,12 @@ static const char* mediaTypeStr[] = {
 };
 
 sdpMedia::sdpMedia (int type)
-        : _media_type ( (mediaType) type), _codec_list (0), _port (0), _stream_type (SEND_RECEIVE) {}
+    : _media_type ( (mediaType) type), _codec_list (0), _port (0), _stream_type (SEND_RECEIVE) {}
 
 
 sdpMedia::sdpMedia (std::string type, int port, std::string dir)
-        : _media_type ( (mediaType)-1), _codec_list (0), _port (port),
-        _stream_type ( (streamDirection)-1)
+    : _media_type ( (mediaType)-1), _codec_list (0), _port (port),
+      _stream_type ( (streamDirection)-1)
 {
     unsigned int i;
     const char* tmp;

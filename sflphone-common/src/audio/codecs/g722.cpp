@@ -49,7 +49,7 @@ class G722 : public AudioCodec
     public:
 
         G722 (int payload=9)
-                : AudioCodec (payload, "G722") {
+            : AudioCodec (payload, "G722") {
             _clockRate = 16000;
             _frameSize = 320; // samples, 20 ms at 16kHz
             _channel   = 1;

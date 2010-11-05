@@ -653,8 +653,8 @@ process_dialing (callable_obj_t * c, guint keyval, gchar * key)
         case 65307: /* ESCAPE */
             sflphone_hang_up (c);
             break;
-        case 65288: /* BACKSPACE */
-        {  /* Brackets mandatory because of local vars */
+        case 65288: { /* BACKSPACE */
+            /* Brackets mandatory because of local vars */
             gchar * before = c->_peer_number;
 
             if (strlen (c->_peer_number) >= 1) {

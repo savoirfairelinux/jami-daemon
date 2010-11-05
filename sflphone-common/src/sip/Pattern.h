@@ -46,7 +46,7 @@ class compile_error : public std::invalid_argument
 {
     public:
         explicit compile_error (const std::string& error) :
-                std::invalid_argument (error) {}
+            std::invalid_argument (error) {}
 };
 
 /**
@@ -58,7 +58,7 @@ class match_error : public std::invalid_argument
 {
     public:
         match_error (const std::string& error) :
-                std::invalid_argument (error) {}
+            std::invalid_argument (error) {}
 };
 
 /**

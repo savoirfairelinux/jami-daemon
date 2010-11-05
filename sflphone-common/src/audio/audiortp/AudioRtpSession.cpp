@@ -42,21 +42,21 @@ namespace sfl
 {
 
 AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
-		// ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
-		AudioRtpRecordHandler(manager, sipcall),
-		ost::TRTPSessionBase<ost::SymmetricRTPChannel,ost::SymmetricRTPChannel,ost::AVPQueue>(ost::InetHostAddress (sipcall->getLocalIp().c_str()),
-									sipcall->getLocalAudioPort(),
-									0,
-									ost::MembershipBookkeeping::defaultMembersHashSize,
-									ost::defaultApplication())
-																		, _time (new ost::Time())
-        																	, _mainloopSemaphore (0)
-        																	, _manager (manager)
-        																	, _timestamp (0)
-        																	, _timestampIncrement (0)
-        																	, _timestampCount (0)
-        																	, _countNotificationTime (0)
-        																	, _ca (sipcall)
+    // ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
+    AudioRtpRecordHandler (manager, sipcall),
+    ost::TRTPSessionBase<ost::SymmetricRTPChannel,ost::SymmetricRTPChannel,ost::AVPQueue> (ost::InetHostAddress (sipcall->getLocalIp().c_str()),
+            sipcall->getLocalAudioPort(),
+            0,
+            ost::MembershipBookkeeping::defaultMembersHashSize,
+            ost::defaultApplication())
+    , _time (new ost::Time())
+    , _mainloopSemaphore (0)
+    , _manager (manager)
+    , _timestamp (0)
+    , _timestampIncrement (0)
+    , _timestampCount (0)
+    , _countNotificationTime (0)
+    , _ca (sipcall)
 {
     setCancel (cancelDefault);
 
@@ -67,7 +67,7 @@ AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
     // static_cast<ost::DualRTPUDPIPv4Channel>(dso)->sendSocket->setTypeOfService(ost::Socket::tosLowDelay);
     // static_cast<ost::DualRTPChannel<ost::DualRTPUDPIPv4Channel> >(dso)->sendSocket->setTypeOfService(ost::Socket::tosLowDelay);
 
-    setTypeOfService(tosEnhanced);
+    setTypeOfService (tosEnhanced);
 }
 
 AudioRtpSession::~AudioRtpSession()
@@ -75,7 +75,7 @@ AudioRtpSession::~AudioRtpSession()
     _info ("AudioRtpSession: Delete AudioRtpSession instance");
 
     try {
-    	terminate();
+        terminate();
     } catch (...) {
         _debugException ("AudioRtpSession: Thread destructor didn't terminate correctly");
         throw;
@@ -83,32 +83,33 @@ AudioRtpSession::~AudioRtpSession()
 
     _manager->getAudioDriver()->getMainBuffer()->unBindAll (_ca->getCallId());
 
-    if(_time)
-    	delete _time;
+    if (_time)
+        delete _time;
+
     _time = NULL;
 
 }
 
 void AudioRtpSession::setSessionTimeouts (void)
 {
-	_debug("AudioRtpSession: Set session scheduling timeout (%d) and expireTimeout (%d)", sfl::schedulingTimeout, sfl::expireTimeout);
+    _debug ("AudioRtpSession: Set session scheduling timeout (%d) and expireTimeout (%d)", sfl::schedulingTimeout, sfl::expireTimeout);
 
-	setSchedulingTimeout (sfl::schedulingTimeout);
-	setExpireTimeout (sfl::expireTimeout);
+    setSchedulingTimeout (sfl::schedulingTimeout);
+    setExpireTimeout (sfl::expireTimeout);
 }
 
 void AudioRtpSession::setSessionMedia (AudioCodec* audioCodec)
 {
-	_debug("AudioRtpSession: Set session media");
+    _debug ("AudioRtpSession: Set session media");
 
-	// set internal codec info for this session
-	setRtpMedia(audioCodec);
+    // set internal codec info for this session
+    setRtpMedia (audioCodec);
 
-	// store codec info locally
-	int payloadType = getCodecPayloadType();
-	int frameSize = getCodecFrameSize();
-	int smplRate = getCodecSampleRate();
-	bool dynamic = getHasDynamicPayload();
+    // store codec info locally
+    int payloadType = getCodecPayloadType();
+    int frameSize = getCodecFrameSize();
+    int smplRate = getCodecSampleRate();
+    bool dynamic = getHasDynamicPayload();
 
     // G722 requires timestamp to be incremented at 8 kHz
     if (payloadType == g722PayloadType)
@@ -167,7 +168,7 @@ void AudioRtpSession::setDestinationIpAddress (void)
 
 void AudioRtpSession::updateDestinationIpAddress (void)
 {
-    _debug("AudioRtpSession: Update destination ip address");
+    _debug ("AudioRtpSession: Update destination ip address");
 
     // Destination address are stored in a list in ccrtp
     // This method remove the current destination entry
@@ -224,7 +225,7 @@ void AudioRtpSession::sendDtmfEvent (sfl::DtmfEvent *dtmf)
 
 bool AudioRtpSession::onRTPPacketRecv (ost::IncomingRTPPkt&)
 {
-	receiveSpeakerData ();
+    receiveSpeakerData ();
 
     return true;
 }
@@ -236,8 +237,8 @@ void AudioRtpSession::sendMicData()
     int compSize = processDataEncode();
 
     // If no data, return
-    if(!compSize)
-    	return;
+    if (!compSize)
+        return;
 
     // Reset timestamp to make sure the timing information are up to date
     if (_timestampCount > RTP_TIMESTAMP_RESET_FREQ) {
@@ -255,7 +256,7 @@ void AudioRtpSession::sendMicData()
 
 void AudioRtpSession::receiveSpeakerData ()
 {
-	
+
     const ost::AppDataUnit* adu = NULL;
 
     int packetTimestamp = getFirstTimestamp();
@@ -283,16 +284,17 @@ void AudioRtpSession::receiveSpeakerData ()
 
 void AudioRtpSession::notifyIncomingCall()
 {
-	// Notify (with a beep) an incoming call when there is already a call
-	if (Manager::instance().incomingCallWaiting() > 0) {
-		_countNotificationTime += _time->getSecond();
-		int countTimeModulo = _countNotificationTime % 5000;
+    // Notify (with a beep) an incoming call when there is already a call
+    if (Manager::instance().incomingCallWaiting() > 0) {
+        _countNotificationTime += _time->getSecond();
+        int countTimeModulo = _countNotificationTime % 5000;
 
-		if ( (countTimeModulo - _countNotificationTime) < 0) {
-			Manager::instance().notificationIncomingCall();
-		}
-		_countNotificationTime = countTimeModulo;
-	}
+        if ( (countTimeModulo - _countNotificationTime) < 0) {
+            Manager::instance().notificationIncomingCall();
+        }
+
+        _countNotificationTime = countTimeModulo;
+    }
 }
 
 
@@ -325,7 +327,7 @@ void AudioRtpSession::run ()
     }
 
     TimerPort::setTimer (threadSleep);
-	*/
+    */
 
     // Set recording sampling rate
     _ca->setRecordingSmplRate (getCodecSampleRate());
@@ -335,53 +337,57 @@ void AudioRtpSession::run ()
 
     _debug ("AudioRtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
 
-	uint32 timeout = 0;
-	while ( isActive() ) {
-		if ( timeout < 1000 ){ // !(timeout/1000)
-			timeout = getSchedulingTimeout();
-		}
+    uint32 timeout = 0;
 
-		_manager->getAudioLayerMutex()->enter();
+    while (isActive()) {
+        if (timeout < 1000) {  // !(timeout/1000)
+            timeout = getSchedulingTimeout();
+        }
 
-		// Send session
-		if (getEventQueueSize() > 0) {
-			sendDtmfEvent (getEventQueue()->front());
-		} else {
-			sendMicData ();
-		}
+        _manager->getAudioLayerMutex()->enter();
 
-		// This also should be moved
-		notifyIncomingCall();
+        // Send session
+        if (getEventQueueSize() > 0) {
+            sendDtmfEvent (getEventQueue()->front());
+        } else {
+            sendMicData ();
+        }
 
-		_manager->getAudioLayerMutex()->leave();
+        // This also should be moved
+        notifyIncomingCall();
 
-		setCancel(cancelDeferred);
-		controlReceptionService();
-		controlTransmissionService();
-		setCancel(cancelImmediate);
-		uint32 maxWait = timeval2microtimeout(getRTCPCheckInterval());
-		// make sure the scheduling timeout is
-		// <= the check interval for RTCP
-		// packets
-		timeout = (timeout > maxWait)? maxWait : timeout;
+        _manager->getAudioLayerMutex()->leave();
 
-		if ( timeout < 1000 ) { // !(timeout/1000)
-			setCancel(cancelDeferred);
-			dispatchDataPacket();
-			setCancel(cancelImmediate);
-			timerTick();
-		} else {
-			if ( isPendingData(timeout/1000) ) {
-				setCancel(cancelDeferred);
-				if (isActive()) { // take in only if active
-					takeInDataPacket();
-				}
-				setCancel(cancelImmediate);
-			}
-			timeout = 0;
-		}
+        setCancel (cancelDeferred);
+        controlReceptionService();
+        controlTransmissionService();
+        setCancel (cancelImmediate);
+        uint32 maxWait = timeval2microtimeout (getRTCPCheckInterval());
+        // make sure the scheduling timeout is
+        // <= the check interval for RTCP
+        // packets
+        timeout = (timeout > maxWait) ? maxWait : timeout;
 
-	}
+        if (timeout < 1000) {   // !(timeout/1000)
+            setCancel (cancelDeferred);
+            dispatchDataPacket();
+            setCancel (cancelImmediate);
+            timerTick();
+        } else {
+            if (isPendingData (timeout/1000)) {
+                setCancel (cancelDeferred);
+
+                if (isActive()) { // take in only if active
+                    takeInDataPacket();
+                }
+
+                setCancel (cancelImmediate);
+            }
+
+            timeout = 0;
+        }
+
+    }
 
     _debug ("AudioRtpSession: Left main loop for call %s", _ca->getCallId().c_str());
 }

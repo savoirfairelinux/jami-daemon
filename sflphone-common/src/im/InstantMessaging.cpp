@@ -82,8 +82,8 @@ static void XMLCALL endElementCallback (void *userData, const char *name)
 
 
 InstantMessaging::InstantMessaging()
-        : imFiles ()
-        , messageMaxSize (MAXIMUM_MESSAGE_LENGTH) {}
+    : imFiles ()
+    , messageMaxSize (MAXIMUM_MESSAGE_LENGTH) {}
 
 
 InstantMessaging::~InstantMessaging() {}

@@ -35,12 +35,12 @@ namespace sfl
 {
 
 Pattern::Pattern (const std::string& pattern, const std::string& options) :
-        _pattern (pattern),
-        _re (NULL),
-        _ovector (NULL),
-        _ovectorSize (0),
-        _count (0),
-        _options (0)
+    _pattern (pattern),
+    _re (NULL),
+    _ovector (NULL),
+    _ovectorSize (0),
+    _count (0),
+    _options (0)
 {
 
     // printf("Pattern constructor called for %s!\n", pattern.c_str());

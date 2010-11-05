@@ -3,7 +3,7 @@ dnl
 
 	dnl Process this file with autoconf to produce a configure script.
 	AC_PREREQ(2.59)
-	AC_INIT([sflphone],[0.9.9],[sflphoneteam@savoirfairelinux.com],[sflphone])
+	AC_INIT([sflphone],[0.9.10],[sflphoneteam@savoirfairelinux.com],[sflphone])
 	AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004, 2005, 2006, 2007, 2008, 2009, 2010]])
 AC_REVISION([$Revision$])
 

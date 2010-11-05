@@ -201,12 +201,12 @@ class ConfigTreeItem
 
         // defaultvalue = value
         ConfigTreeItem (const std::string& name, const std::string& value, const std::string& type) :
-                _name (name), _value (value),
-                _defaultValue (value), _type (type) {}
+            _name (name), _value (value),
+            _defaultValue (value), _type (type) {}
 
         ConfigTreeItem (const std::string& name, const std::string& value, const std::string& defaultValue, const std::string& type) :
-                _name (name), _value (value),
-                _defaultValue (defaultValue), _type (type) {}
+            _name (name), _value (value),
+            _defaultValue (defaultValue), _type (type) {}
 
         ~ConfigTreeItem() {}
 

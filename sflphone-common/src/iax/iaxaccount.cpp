@@ -35,7 +35,7 @@
 #include "manager.h"
 
 IAXAccount::IAXAccount (const AccountID& accountID)
-        : Account (accountID, "iax2")
+    : Account (accountID, "iax2")
 {
     _link = new IAXVoIPLink (accountID);
 }

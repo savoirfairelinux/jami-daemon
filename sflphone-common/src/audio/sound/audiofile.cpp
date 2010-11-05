@@ -42,7 +42,7 @@
 
 
 RawFile::RawFile() : _filename()
-        , _codec (NULL)
+    , _codec (NULL)
 {
     AudioFile::_start = false;
 }
@@ -179,12 +179,12 @@ RawFile::loadFile (const std::string& filename, AudioCodec* codec , unsigned int
 
 
 WaveFile::WaveFile () : _byte_counter (0)
-        , _nb_channels (1)
-        , _file_size (0)
-        , _data_offset (0)
-        , _channels (0)
-        , _data_type (0)
-        , _file_rate (0)
+    , _nb_channels (1)
+    , _file_size (0)
+    , _data_offset (0)
+    , _channels (0)
+    , _data_type (0)
+    , _file_rate (0)
 {
     AudioFile::_start = false;
 }

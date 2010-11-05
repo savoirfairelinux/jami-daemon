@@ -48,7 +48,7 @@ namespace sfl
 {
 
 ZrtpSessionCallback::ZrtpSessionCallback (SIPCall *sipcall) :
-        _sipcall (sipcall)
+    _sipcall (sipcall)
 {
 
     if (_mapInitialized) {

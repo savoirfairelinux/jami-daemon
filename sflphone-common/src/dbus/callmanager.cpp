@@ -42,7 +42,7 @@
 const char* CallManager::SERVER_PATH = "/org/sflphone/SFLphone/CallManager";
 
 CallManager::CallManager (DBus::Connection& connection)
-        : DBus::ObjectAdaptor (connection, SERVER_PATH)
+    : DBus::ObjectAdaptor (connection, SERVER_PATH)
 {
 }
 

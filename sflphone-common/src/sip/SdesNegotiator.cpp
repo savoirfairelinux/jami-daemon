@@ -42,8 +42,8 @@ using namespace sfl;
 
 SdesNegotiator::SdesNegotiator (const std::vector<CryptoSuiteDefinition>& localCapabilites,
                                 const std::vector<std::string>& remoteAttribute) :
-        _remoteAttribute (remoteAttribute),
-        _localCapabilities (localCapabilites)
+    _remoteAttribute (remoteAttribute),
+    _localCapabilities (localCapabilites)
 {
 
 }

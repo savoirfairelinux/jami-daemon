@@ -46,9 +46,9 @@ int RingBuffer::count_rb = 0;
 
 // Create  a ring buffer with 'size' bytes
 RingBuffer::RingBuffer (int size, CallID call_id) : mEnd (0)
-        , mBufferSize (size > MIN_BUFFER_SIZE ? size : MIN_BUFFER_SIZE)
-        , mBuffer (NULL)
-        , buffer_id (call_id)
+    , mBufferSize (size > MIN_BUFFER_SIZE ? size : MIN_BUFFER_SIZE)
+    , mBuffer (NULL)
+    , buffer_id (call_id)
 {
     mBuffer = new unsigned char[mBufferSize];
     assert (mBuffer != NULL);

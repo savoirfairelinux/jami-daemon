@@ -34,7 +34,7 @@
 const char* Instance::SERVER_PATH = "/org/sflphone/SFLphone/Instance";
 
 Instance::Instance (DBus::Connection& connection)
-        : DBus::ObjectAdaptor (connection, SERVER_PATH)
+    : DBus::ObjectAdaptor (connection, SERVER_PATH)
 {
     count = 0;
 }

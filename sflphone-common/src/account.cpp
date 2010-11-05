@@ -34,16 +34,16 @@
 #include "manager.h"
 
 Account::Account (const AccountID& accountID, std::string type) :
-        _accountID (accountID)
-        , _link (NULL)
-        , _enabled (true)
-        , _type (type)
-        , _codecOrder ()
-        , _codecStr ("0/")
-        , _ringtonePath ("/usr/share/sflphone/ringtones/konga.ul")
-        , _ringtoneEnabled (true)
-        , _displayName ("")
-        , _useragent ("SFLphone")
+    _accountID (accountID)
+    , _link (NULL)
+    , _enabled (true)
+    , _type (type)
+    , _codecOrder ()
+    , _codecStr ("0/")
+    , _ringtonePath ("/usr/share/sflphone/ringtones/konga.ul")
+    , _ringtoneEnabled (true)
+    , _displayName ("")
+    , _useragent ("SFLphone")
 {
     setRegistrationState (Unregistered);
 }

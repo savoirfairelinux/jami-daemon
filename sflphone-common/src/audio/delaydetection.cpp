@@ -61,8 +61,8 @@ std::vector<double> irb (bandpassCoefs, bandpassCoefs + sizeof (bandpassCoefs) /
 
 
 FirFilter::FirFilter (std::vector<double> ir) : _length (ir.size()),
-        _impulseResponse (ir),
-        _count (0)
+    _impulseResponse (ir),
+    _count (0)
 {
     memset (_taps, 0, sizeof (double) *MAXFILTERSIZE);
 }

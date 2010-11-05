@@ -49,22 +49,22 @@ namespace sfl
 {
 
 AudioZrtpSession::AudioZrtpSession (ManagerImpl * manager, SIPCall * sipcall, const std::string& zidFilename) :
-        // ost::SymmetricZRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
-        AudioRtpRecordHandler(manager, sipcall),
-        ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue> (ost::InetHostAddress (sipcall->getLocalIp().c_str()),
-				sipcall->getLocalAudioPort(),
-				0,
-				ost::MembershipBookkeeping::defaultMembersHashSize,
-				ost::defaultApplication())
-        																									  , _zidFilename (zidFilename)
-																											  , _time (new ost::Time())
-																											  , _mainloopSemaphore (0)
-																											  , _manager (manager)
-																											  , _timestamp (0)
-																											  , _timestampIncrement (0)
-																											  , _timestampCount (0)
-																											  , _countNotificationTime (0)
-																											  , _ca (sipcall)
+    // ost::SymmetricZRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
+    AudioRtpRecordHandler (manager, sipcall),
+    ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue> (ost::InetHostAddress (sipcall->getLocalIp().c_str()),
+            sipcall->getLocalAudioPort(),
+            0,
+            ost::MembershipBookkeeping::defaultMembersHashSize,
+            ost::defaultApplication())
+    , _zidFilename (zidFilename)
+    , _time (new ost::Time())
+    , _mainloopSemaphore (0)
+    , _manager (manager)
+    , _timestamp (0)
+    , _timestampIncrement (0)
+    , _timestampCount (0)
+    , _countNotificationTime (0)
+    , _ca (sipcall)
 {
     _debug ("AudioZrtpSession initialized");
     initializeZid();
@@ -75,25 +75,26 @@ AudioZrtpSession::AudioZrtpSession (ManagerImpl * manager, SIPCall * sipcall, co
 
     _info ("AudioZrtpSession: Setting new RTP session with destination %s:%d", _ca->getLocalIp().c_str(), _ca->getLocalAudioPort());
 
-    setTypeOfService(tosEnhanced);
+    setTypeOfService (tosEnhanced);
 }
 
 AudioZrtpSession::~AudioZrtpSession()
 {
-	_debug ("AudioZrtpSession: Delete AudioRtpSession instance");
+    _debug ("AudioZrtpSession: Delete AudioRtpSession instance");
 
-	try {
-		terminate();
-	} catch (...) {
-		_debugException ("AudioZrtpSession: Thread destructor didn't terminate correctly");
-		throw;
-	}
+    try {
+        terminate();
+    } catch (...) {
+        _debugException ("AudioZrtpSession: Thread destructor didn't terminate correctly");
+        throw;
+    }
 
-	_manager->getAudioDriver()->getMainBuffer()->unBindAll (_ca->getCallId());
+    _manager->getAudioDriver()->getMainBuffer()->unBindAll (_ca->getCallId());
 
-	if(_time)
-		delete _time;
-	_time = NULL;
+    if (_time)
+        delete _time;
+
+    _time = NULL;
 }
 
 
@@ -145,24 +146,24 @@ void AudioZrtpSession::initializeZid (void)
 
 void AudioZrtpSession::setSessionTimeouts (void)
 {
-	_debug("AudioZrtpSession: Set session scheduling timeout (%d) and expireTimeout (%d)", sfl::schedulingTimeout, sfl::expireTimeout);
+    _debug ("AudioZrtpSession: Set session scheduling timeout (%d) and expireTimeout (%d)", sfl::schedulingTimeout, sfl::expireTimeout);
 
-	setSchedulingTimeout (sfl::schedulingTimeout);
-	setExpireTimeout (sfl::expireTimeout);
+    setSchedulingTimeout (sfl::schedulingTimeout);
+    setExpireTimeout (sfl::expireTimeout);
 }
 
 void AudioZrtpSession::setSessionMedia (AudioCodec* audioCodec)
 {
-	_debug("AudioRtpSession: Set session media");
+    _debug ("AudioRtpSession: Set session media");
 
-	// set internal codec info for this session
-	setRtpMedia(audioCodec);
+    // set internal codec info for this session
+    setRtpMedia (audioCodec);
 
-	// store codec info locally
-	int payloadType = getCodecPayloadType();
-	int frameSize = getCodecFrameSize();
-	int smplRate = getCodecSampleRate();
-	bool dynamic = getHasDynamicPayload();
+    // store codec info locally
+    int payloadType = getCodecPayloadType();
+    int frameSize = getCodecFrameSize();
+    int smplRate = getCodecSampleRate();
+    bool dynamic = getHasDynamicPayload();
 
     // G722 requires timestamp to be incremented at 8 kHz
     if (payloadType == g722PayloadType)
@@ -221,7 +222,7 @@ void AudioZrtpSession::setDestinationIpAddress (void)
 
 void AudioZrtpSession::updateDestinationIpAddress (void)
 {
-	_debug("AudioZrtpSession: Update destination ip address");
+    _debug ("AudioZrtpSession: Update destination ip address");
 
     // Destination address are stored in a list in ccrtp
     // This method remove the current destination entry
@@ -278,7 +279,7 @@ void AudioZrtpSession::sendDtmfEvent (sfl::DtmfEvent *dtmf)
 
 bool AudioZrtpSession::onRTPPacketRecv (ost::IncomingRTPPkt&)
 {
-	receiveSpeakerData();
+    receiveSpeakerData();
 
     return true;
 }
@@ -286,11 +287,11 @@ bool AudioZrtpSession::onRTPPacketRecv (ost::IncomingRTPPkt&)
 
 void AudioZrtpSession::sendMicData()
 {
-	int compSize = processDataEncode();
+    int compSize = processDataEncode();
 
-	// if no data return
-	if(!compSize)
-		return;
+    // if no data return
+    if (!compSize)
+        return;
 
     // Reset timestamp to make sure the timing information are up to date
     if (_timestampCount > RTP_TIMESTAMP_RESET_FREQ) {
@@ -335,16 +336,17 @@ void AudioZrtpSession::receiveSpeakerData ()
 
 void AudioZrtpSession::notifyIncomingCall()
 {
-	// Notify (with a beep) an incoming call when there is already a call
-	if (Manager::instance().incomingCallWaiting() > 0) {
-		_countNotificationTime += _time->getSecond();
-		int countTimeModulo = _countNotificationTime % 5000;
+    // Notify (with a beep) an incoming call when there is already a call
+    if (Manager::instance().incomingCallWaiting() > 0) {
+        _countNotificationTime += _time->getSecond();
+        int countTimeModulo = _countNotificationTime % 5000;
 
-		if ( (countTimeModulo - _countNotificationTime) < 0) {
-			Manager::instance().notificationIncomingCall();
-		}
-		_countNotificationTime = countTimeModulo;
-	}
+        if ( (countTimeModulo - _countNotificationTime) < 0) {
+            Manager::instance().notificationIncomingCall();
+        }
+
+        _countNotificationTime = countTimeModulo;
+    }
 }
 
 int AudioZrtpSession::startRtpThread (AudioCodec* audiocodec)
@@ -356,7 +358,7 @@ int AudioZrtpSession::startRtpThread (AudioCodec* audiocodec)
     initNoiseSuppress();
     enableStack();
 
-    int ret = start(_mainloopSemaphore);
+    int ret = start (_mainloopSemaphore);
 
     return ret;
 }
@@ -378,7 +380,7 @@ void AudioZrtpSession::run ()
     }
 
     TimerPort::setTimer (threadSleep);
-	*/
+    */
 
     // Set recording sampling rate
     _ca->setRecordingSmplRate (getCodecSampleRate());
@@ -389,11 +391,12 @@ void AudioZrtpSession::run ()
     _debug ("AudioZrtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
 
     uint32 timeout = 0;
-    while ( isActive() ) {
 
-    	if ( timeout < 1000 ){ // !(timeout/1000)
-    		timeout = getSchedulingTimeout();
-    	}
+    while (isActive()) {
+
+        if (timeout < 1000) {  // !(timeout/1000)
+            timeout = getSchedulingTimeout();
+        }
 
         _manager->getAudioLayerMutex()->enter();
 
@@ -409,30 +412,33 @@ void AudioZrtpSession::run ()
 
         _manager->getAudioLayerMutex()->leave();
 
-        setCancel(cancelDeferred);
+        setCancel (cancelDeferred);
         controlReceptionService();
         controlTransmissionService();
-        setCancel(cancelImmediate);
-        uint32 maxWait = timeval2microtimeout(getRTCPCheckInterval());
+        setCancel (cancelImmediate);
+        uint32 maxWait = timeval2microtimeout (getRTCPCheckInterval());
         // make sure the scheduling timeout is
         // <= the check interval for RTCP
         // packets
-        timeout = (timeout > maxWait)? maxWait : timeout;
+        timeout = (timeout > maxWait) ? maxWait : timeout;
 
-        if ( timeout < 1000 ) { // !(timeout/1000)
-        	setCancel(cancelDeferred);
-        	dispatchDataPacket();
-        	setCancel(cancelImmediate);
-        	timerTick();
+        if (timeout < 1000) {   // !(timeout/1000)
+            setCancel (cancelDeferred);
+            dispatchDataPacket();
+            setCancel (cancelImmediate);
+            timerTick();
         } else {
-        	if ( isPendingData(timeout/1000) ) {
-        		setCancel(cancelDeferred);
-        		if (isActive()) { // take in only if active
-        			takeInDataPacket();
-        		}
-        		setCancel(cancelImmediate);
-        	}
-        	timeout = 0;
+            if (isPendingData (timeout/1000)) {
+                setCancel (cancelDeferred);
+
+                if (isActive()) { // take in only if active
+                    takeInDataPacket();
+                }
+
+                setCancel (cancelImmediate);
+            }
+
+            timeout = 0;
         }
 
     }

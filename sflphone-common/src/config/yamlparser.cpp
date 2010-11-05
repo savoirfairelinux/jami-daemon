@@ -39,13 +39,13 @@ namespace Conf
 {
 
 YamlParser::YamlParser (const char *file) : filename (file)
-        , accountSequence (NULL)
-        , preferenceSequence (NULL)
-        , addressbookSequence (NULL)
-        , audioSequence (NULL)
-        , hooksSequence (NULL)
-        , voiplinkSequence (NULL)
-        , shortcutSequence (NULL)
+    , accountSequence (NULL)
+    , preferenceSequence (NULL)
+    , addressbookSequence (NULL)
+    , audioSequence (NULL)
+    , hooksSequence (NULL)
+    , voiplinkSequence (NULL)
+    , shortcutSequence (NULL)
 {
     memset (buffer, 0, PARSER_BUFFERSIZE);
 

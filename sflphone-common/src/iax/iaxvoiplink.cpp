@@ -52,19 +52,19 @@
 	return false; }
 
 IAXVoIPLink::IAXVoIPLink (const AccountID& accountID) : VoIPLink (accountID)
-        , _evThread (NULL)
-        , _regSession (NULL)
-        , _nextRefreshStamp (0)
-        , audiolayer (NULL)
-        , micData (NULL)
-        , micDataConverted (NULL)
-        , micDataEncoded (NULL)
-        , spkrDataDecoded (NULL)
-        , spkrDataConverted (NULL)
-        , converter (NULL)
-        , converterSamplingRate (NULL)
-        , urlhook (NULL)
-        , countTime (0)
+    , _evThread (NULL)
+    , _regSession (NULL)
+    , _nextRefreshStamp (0)
+    , audiolayer (NULL)
+    , micData (NULL)
+    , micDataConverted (NULL)
+    , micDataEncoded (NULL)
+    , spkrDataDecoded (NULL)
+    , spkrDataConverted (NULL)
+    , converter (NULL)
+    , converterSamplingRate (NULL)
+    , urlhook (NULL)
+    , countTime (0)
 {
     _evThread = new EventThread (this);
 

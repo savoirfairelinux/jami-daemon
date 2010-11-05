@@ -53,9 +53,9 @@ class AudioZrtpSession;
 }
 
 class CallManager
-        : public org::sflphone::SFLphone::CallManager_adaptor,
-        public DBus::IntrospectableAdaptor,
-        public DBus::ObjectAdaptor
+    : public org::sflphone::SFLphone::CallManager_adaptor,
+  public DBus::IntrospectableAdaptor,
+  public DBus::ObjectAdaptor
 {
     public:
 

@@ -38,7 +38,7 @@
 #define EMPTY_STRING        "empty"
 
 HistoryItem::HistoryItem (std::string timestamp_start, CallType call_type, std::string timestamp_stop, std::string name, std::string number, std::string account_id)
-        :	_timestamp_start (timestamp_start),
+    :	_timestamp_start (timestamp_start),
         _timestamp_stop (timestamp_stop),
         _call_type (call_type),
         _name (name),
@@ -49,7 +49,7 @@ HistoryItem::HistoryItem (std::string timestamp_start, CallType call_type, std::
 
 
 HistoryItem::HistoryItem (std::string timestamp, std::string serialized_form)
-        : _timestamp_start (timestamp)
+    : _timestamp_start (timestamp)
 {
     size_t pos;
     std::string tmp, id, name, number, stop, account;

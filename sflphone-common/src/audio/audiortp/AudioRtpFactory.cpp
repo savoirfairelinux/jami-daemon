@@ -281,7 +281,7 @@ void AudioRtpFactory::setRemoteCryptoInfo (sfl::SdesNegotiator& nego)
 void AudioRtpFactory::sendDtmfDigit (int digit)
 {
 
-	switch (_rtpSessionType) {
+    switch (_rtpSessionType) {
 
         case Sdes:
             static_cast<AudioSrtpSession *> (_rtpSession)->putDtmfEvent (digit);

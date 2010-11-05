@@ -35,7 +35,7 @@
 #include <time.h>
 
 HistoryManager::HistoryManager ()
-        :	_history_loaded (false),
+    :	_history_loaded (false),
         _history_path ("")
 {
 
@@ -184,7 +184,7 @@ int HistoryManager::create_history_path (std::string path)
         if (XDG_DATA_HOME != NULL) {
             xdg_env = std::string (XDG_DATA_HOME);
             (xdg_env.length() > 0) ?	userdata = xdg_env
-                                                : userdata = xdg_data;
+                                                   : userdata = xdg_data;
         } else
             userdata = xdg_data;
 

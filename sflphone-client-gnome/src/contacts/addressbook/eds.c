@@ -104,8 +104,8 @@ books_active()
     GSList *book_list_iterator;
     book_data_t *book_data;
 
-    if(!books_data) {
-	DEBUG("Addressbook: No books data (%s:%d)", __FILE__, __LINE__);
+    if (!books_data) {
+        DEBUG ("Addressbook: No books data (%s:%d)", __FILE__, __LINE__);
         return FALSE;
     }
 
@@ -130,9 +130,9 @@ books_get_book_data_by_uid (gchar *uid)
     GSList *book_list_iterator;
     book_data_t *book_data;
 
-    if(!books_data) {
-	DEBUG("Addressbook: No books data (%s:%d)", __FILE__, __LINE__);
-	return NULL;
+    if (!books_data) {
+        DEBUG ("Addressbook: No books data (%s:%d)", __FILE__, __LINE__);
+        return NULL;
     }
 
     DEBUG ("Addressbook: Get book data by uid: %s", uid);
@@ -660,8 +660,8 @@ set_current_addressbook (const gchar *name)
     GSList *book_list_iterator;
     book_data_t *book_data;
 
-    if(!books_data) {
-        DEBUG("Addressbook: No books data (%s:%d)", __FILE__, __LINE__);
+    if (!books_data) {
+        DEBUG ("Addressbook: No books data (%s:%d)", __FILE__, __LINE__);
         return NULL;
     }
 
