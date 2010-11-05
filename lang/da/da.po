@@ -7,72 +7,73 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-06-17 14:22-0400\n"
-"PO-Revision-Date: 2010-05-01 01:15+0000\n"
-"Last-Translator: Ask Hjorth Larsen <asklarsen@gmail.com>\n"
+"POT-Creation-Date: 2010-11-05 10:06-0400\n"
+"PO-Revision-Date: 2010-10-12 14:55+0000\n"
+"Last-Translator: Jonas Fonseca <fonseca@diku.dk>\n"
 "Language-Team: Danish <da@li.org>\n"
+"Language: da\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-06-17 18:12+0000\n"
+"X-Launchpad-Export-Date: 2010-11-05 13:36+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
-#: ../sflphone-client-gnome/src/accountlist.c:181
+#: ../sflphone-client-gnome/src/accountlist.c:182
 msgid "Registered"
 msgstr "Registreret"
 
-#: ../sflphone-client-gnome/src/accountlist.c:184
+#: ../sflphone-client-gnome/src/accountlist.c:185
 msgid "Not Registered"
 msgstr "Ikke registreret"
 
-#: ../sflphone-client-gnome/src/accountlist.c:187
+#: ../sflphone-client-gnome/src/accountlist.c:188
 msgid "Trying..."
 msgstr "Forsøger..."
 
-#: ../sflphone-client-gnome/src/accountlist.c:190
-#: ../sflphone-client-gnome/src/sflnotify.c:142
+#: ../sflphone-client-gnome/src/accountlist.c:191
 #: ../sflphone-client-gnome/src/sflnotify.c:159
+#: ../sflphone-client-gnome/src/sflnotify.c:176
 msgid "Error"
 msgstr "Fejl"
 
-#: ../sflphone-client-gnome/src/accountlist.c:193
+#: ../sflphone-client-gnome/src/accountlist.c:194
 msgid "Authentication Failed"
 msgstr "Godkendelse mislykkedes"
 
-#: ../sflphone-client-gnome/src/accountlist.c:196
+#: ../sflphone-client-gnome/src/accountlist.c:197
 msgid "Network unreachable"
 msgstr "Netværk kan ikke nås"
 
-#: ../sflphone-client-gnome/src/accountlist.c:199
+#: ../sflphone-client-gnome/src/accountlist.c:200
 msgid "Host unreachable"
 msgstr "Vært kan ikke nås"
 
-#: ../sflphone-client-gnome/src/accountlist.c:202
+#: ../sflphone-client-gnome/src/accountlist.c:203
 msgid "Stun configuration error"
 msgstr "Stun konfigureringsfejl"
 
-#: ../sflphone-client-gnome/src/accountlist.c:205
+#: ../sflphone-client-gnome/src/accountlist.c:206
 msgid "Stun server invalid"
 msgstr "Stun server ugyldig"
 
-#: ../sflphone-client-gnome/src/accountlist.c:208
+#: ../sflphone-client-gnome/src/accountlist.c:209
 msgid "Ready"
-msgstr ""
+msgstr "Klar"
 
-#: ../sflphone-client-gnome/src/accountlist.c:211
+#: ../sflphone-client-gnome/src/accountlist.c:212
 msgid "Invalid"
 msgstr "Ugyldig"
 
-#: ../sflphone-client-gnome/src/actions.c:125
+#: ../sflphone-client-gnome/src/actions.c:135
 msgid "Using account"
 msgstr "Benytter konto"
 
-#: ../sflphone-client-gnome/src/actions.c:132
+#: ../sflphone-client-gnome/src/actions.c:140
 msgid "No registered accounts"
 msgstr "Ingen registrerede konti"
 
-#: ../sflphone-client-gnome/src/actions.c:319
+#: ../sflphone-client-gnome/src/actions.c:321
 msgid ""
 "Unable to connect to the SFLphone server.\n"
 "Make sure the daemon is running."
@@ -80,28 +81,42 @@ msgstr ""
 "Forbindelse til SFLphone serveren kan ikke oprettes.\n"
 "Sørg for at server-dæmonen kører."
 
-#: ../sflphone-client-gnome/src/actions.c:620
-#: ../sflphone-client-gnome/src/actions.c:946
+#: ../sflphone-client-gnome/src/actions.c:629
+#: ../sflphone-client-gnome/src/actions.c:964
 msgid "Direct SIP call"
 msgstr "Direkte IP opkald"
 
-#: ../sflphone-client-gnome/src/callable_obj.c:390
+#: ../sflphone-client-gnome/src/callable_obj.c:498
 msgid "today at %R"
-msgstr ""
+msgstr "idag klokken %R"
 
-#: ../sflphone-client-gnome/src/callable_obj.c:393
+#: ../sflphone-client-gnome/src/callable_obj.c:501
 msgid "yesterday at %R"
-msgstr ""
+msgstr "igår klokken %R"
 
-#: ../sflphone-client-gnome/src/callable_obj.c:395
+#: ../sflphone-client-gnome/src/callable_obj.c:503
 msgid "%A at %R"
-msgstr ""
+msgstr "%A klokken %R"
 
-#: ../sflphone-client-gnome/src/callable_obj.c:399
+#: ../sflphone-client-gnome/src/callable_obj.c:507
 msgid "%x at %R"
+msgstr "%x klokken %R"
+
+#: ../sflphone-client-gnome/src/eel-gconf-extensions.c:74
+msgid ""
+"Cannot find a schema for gpdf preferences. \n"
+"Check your gconf setup, look at gpdf FAQ for \n"
+"more info"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/errors.c:40
+#: ../sflphone-client-gnome/src/eel-gconf-extensions.c:99
+#, c-format
+msgid ""
+"GConf error:\n"
+"  %s"
+msgstr ""
+
+#: ../sflphone-client-gnome/src/errors.c:41
 msgid ""
 "ALSA notification\n"
 "\n"
@@ -111,7 +126,7 @@ msgstr ""
 "\n"
 "Fejl opstod mens afspilningsenhed blev åbnet"
 
-#: ../sflphone-client-gnome/src/errors.c:43
+#: ../sflphone-client-gnome/src/errors.c:44
 msgid ""
 "ALSA notification\n"
 "\n"
@@ -121,7 +136,7 @@ msgstr ""
 "\n"
 "Fejl opstod mens optageenhed blev åbnet"
 
-#: ../sflphone-client-gnome/src/errors.c:46
+#: ../sflphone-client-gnome/src/errors.c:47
 msgid ""
 "Pulseaudio notification\n"
 "\n"
@@ -131,43 +146,43 @@ msgstr ""
 "\n"
 "PulseAudio er tilgængelig"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:105
+#: ../sflphone-client-gnome/src/mainwindow.c:115
 msgid "There is one call in progress."
 msgstr "Et igangværende opkald eksisterer"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:109
+#: ../sflphone-client-gnome/src/mainwindow.c:117
 msgid "There are calls in progress."
 msgstr "Igangværende opkald eksisterer"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:114
+#: ../sflphone-client-gnome/src/mainwindow.c:122
 msgid "Do you still want to quit?"
 msgstr "Ønsker du stadig at afslutte"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:337
+#: ../sflphone-client-gnome/src/mainwindow.c:348
 msgid "SFLphone Error"
 msgstr "SFLphone fejl"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:456
+#: ../sflphone-client-gnome/src/mainwindow.c:508
 #, c-format
 msgid "ZRTP is not supported by peer %s\n"
 msgstr "ZRTP er ikke understøttet af modtageren %s\n"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:458
+#: ../sflphone-client-gnome/src/mainwindow.c:510
 msgid "Secure Communication Unavailable"
 msgstr "Sikker kommunikation ikke tilgængelig"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:460
-#: ../sflphone-client-gnome/src/mainwindow.c:490
+#: ../sflphone-client-gnome/src/mainwindow.c:512
+#: ../sflphone-client-gnome/src/mainwindow.c:542
 msgid "Continue"
 msgstr "Fortsæt"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:461
-#: ../sflphone-client-gnome/src/mainwindow.c:491
-#: ../sflphone-client-gnome/src/mainwindow.c:512
+#: ../sflphone-client-gnome/src/mainwindow.c:513
+#: ../sflphone-client-gnome/src/mainwindow.c:543
+#: ../sflphone-client-gnome/src/mainwindow.c:564
 msgid "Stop Call"
 msgstr "Afslut opkald"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:486
+#: ../sflphone-client-gnome/src/mainwindow.c:538
 #, c-format
 msgid ""
 "A %s error forced the call with %s to fall under unencrypted mode.\n"
@@ -177,11 +192,11 @@ msgstr ""
 "tilstand.\n"
 "Den præcise årsag: %s\n"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:488
+#: ../sflphone-client-gnome/src/mainwindow.c:540
 msgid "ZRTP negotiation failed"
 msgstr "ZRTP-forhandling mislykkedes"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:506
+#: ../sflphone-client-gnome/src/mainwindow.c:558
 #, c-format
 msgid ""
 "%s wants to stop using secure communication. Confirm will resume "
@@ -190,50 +205,55 @@ msgstr ""
 "%s ønsker at afslutte brugen af sikker kommunikation. Ved at godkende vil "
 "samtalen fortætte uden SRTP\n"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:508
+#: ../sflphone-client-gnome/src/mainwindow.c:560
 msgid "Confirm Go Clear"
 msgstr "Godkend sikkerhedsændring"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:510
+#: ../sflphone-client-gnome/src/mainwindow.c:562
 msgid "Confirm"
 msgstr "Godkend"
 
-#: ../sflphone-client-gnome/src/sflnotify.c:82
-#: ../sflphone-client-gnome/src/sflnotify.c:102
+#: ../sflphone-client-gnome/src/sflnotify.c:77
+#, c-format
+msgid "%s says:"
+msgstr ""
+
+#: ../sflphone-client-gnome/src/sflnotify.c:98
+#: ../sflphone-client-gnome/src/sflnotify.c:119
 #, c-format
 msgid "%s account : %s"
 msgstr "%s konto : %s"
 
-#: ../sflphone-client-gnome/src/sflnotify.c:86
+#: ../sflphone-client-gnome/src/sflnotify.c:103
 #, c-format
 msgid "<i>From</i> %s"
 msgstr "<i>Fra</i> %s"
 
-#: ../sflphone-client-gnome/src/sflnotify.c:105
+#: ../sflphone-client-gnome/src/sflnotify.c:122
 #, c-format
 msgid "%d voice mail"
 msgid_plural "%d voice mails"
 msgstr[0] "%d indtalt besked"
 msgstr[1] "%d indtalte beskeder"
 
-#: ../sflphone-client-gnome/src/sflnotify.c:122
+#: ../sflphone-client-gnome/src/sflnotify.c:139
 #, c-format
 msgid "Calling with %s account <i>%s</i>"
 msgstr "Kalder op med %s konto <i>%s</i>"
 
-#: ../sflphone-client-gnome/src/sflnotify.c:126
+#: ../sflphone-client-gnome/src/sflnotify.c:143
 msgid "Current account"
 msgstr "Nuværende konto"
 
-#: ../sflphone-client-gnome/src/sflnotify.c:141
+#: ../sflphone-client-gnome/src/sflnotify.c:158
 msgid "You have no accounts set up"
 msgstr "Du har ingen oprettede konti"
 
-#: ../sflphone-client-gnome/src/sflnotify.c:158
+#: ../sflphone-client-gnome/src/sflnotify.c:175
 msgid "You have no registered accounts"
 msgstr "Du har ingen registrerede konti"
 
-#: ../sflphone-client-gnome/src/sflnotify.c:201
+#: ../sflphone-client-gnome/src/sflnotify.c:218
 #, c-format
 msgid ""
 "<i>With:</i> %s \n"
@@ -242,455 +262,480 @@ msgstr ""
 "<i>Med:</i> %s \n"
 "benyttende %s"
 
-#: ../sflphone-client-gnome/src/sflnotify.c:216
+#: ../sflphone-client-gnome/src/sflnotify.c:233
 #, c-format
 msgid "%s does not support ZRTP."
 msgstr "%s understøtter ikke ZRTP."
 
-#: ../sflphone-client-gnome/src/sflnotify.c:231
+#: ../sflphone-client-gnome/src/sflnotify.c:248
 #, c-format
 msgid "ZRTP negotiation failed with %s"
 msgstr "ZRTP forhandling mislykkedes med %s"
 
-#: ../sflphone-client-gnome/src/sflnotify.c:246
+#: ../sflphone-client-gnome/src/sflnotify.c:263
 #, c-format
 msgid "<i>With:</i> %s"
 msgstr "<i>Med:</i> %s"
 
-#: ../sflphone-client-gnome/src/sliders.c:173
+#: ../sflphone-client-gnome/src/sliders.c:174
 msgid "Speakers volume"
 msgstr "Højtaler lydstyrke"
 
-#: ../sflphone-client-gnome/src/sliders.c:175
+#: ../sflphone-client-gnome/src/sliders.c:176
 msgid "Mic volume"
 msgstr "Mikrofon lydstyrke"
 
-#: ../sflphone-client-gnome/src/statusicon.c:139
+#: ../sflphone-client-gnome/src/statusicon.c:136
 msgid "_Show main window"
 msgstr "_Vis hovedvindue"
 
-#: ../sflphone-client-gnome/src/statusicon.c:146
-#: ../sflphone-client-gnome/src/uimanager.c:822
-#: ../sflphone-client-gnome/src/uimanager.c:1136
-#: ../sflphone-client-gnome/src/uimanager.c:1178
+#: ../sflphone-client-gnome/src/statusicon.c:143
+#: ../sflphone-client-gnome/src/uimanager.c:914
+#: ../sflphone-client-gnome/src/uimanager.c:1210
+#: ../sflphone-client-gnome/src/uimanager.c:1272
 msgid "_Hang up"
 msgstr "_Læg på"
 
-#: ../sflphone-client-gnome/src/statusicon.c:200
+#: ../sflphone-client-gnome/src/statusicon.c:198
 msgid "SFLphone"
 msgstr "SFLphone"
 
-#: ../sflphone-client-gnome/src/statusicon.c:201
+#: ../sflphone-client-gnome/src/statusicon.c:199
 #, c-format
 msgid "%i active account"
 msgid_plural "%i active accounts"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%i aktiv konto"
+msgstr[1] "%i aktive konti"
 
-#: ../sflphone-client-gnome/src/toolbar.c:49
-#: ../sflphone-client-gnome/src/uimanager.c:787
-#: ../sflphone-client-gnome/src/uimanager.c:831
+#: ../sflphone-client-gnome/src/toolbar.c:50
+#: ../sflphone-client-gnome/src/uimanager.c:880
+#: ../sflphone-client-gnome/src/uimanager.c:925
 msgid "Voicemail"
 msgstr "Talebesked"
 
-#: ../sflphone-client-gnome/src/uimanager.c:133
+#: ../sflphone-client-gnome/src/uimanager.c:152
 msgid "No address book selected"
 msgstr "Ingen adressebog er valgt"
 
-#: ../sflphone-client-gnome/src/uimanager.c:156
-#: ../sflphone-client-gnome/src/uimanager.c:879
+#: ../sflphone-client-gnome/src/uimanager.c:183
+#: ../sflphone-client-gnome/src/uimanager.c:965
 msgid "Address book"
 msgstr "Adressebog"
 
-#: ../sflphone-client-gnome/src/uimanager.c:338
+#: ../sflphone-client-gnome/src/uimanager.c:416
 #, c-format
 msgid "Voicemail (%i)"
 msgstr "Talebesked"
 
-#: ../sflphone-client-gnome/src/uimanager.c:406
+#: ../sflphone-client-gnome/src/uimanager.c:493
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr "SFLphone er en VoIP-klient kompatibel med SIP og IAX2 protokoller"
 
-#: ../sflphone-client-gnome/src/uimanager.c:408
+#: ../sflphone-client-gnome/src/uimanager.c:495
 msgid "About SFLphone"
 msgstr "Om SFLphone"
 
-#: ../sflphone-client-gnome/src/uimanager.c:817
+#: ../sflphone-client-gnome/src/uimanager.c:909
 msgid "Call"
 msgstr "Afslut opkald"
 
-#: ../sflphone-client-gnome/src/uimanager.c:818
-#: ../sflphone-client-gnome/src/uimanager.c:1328
+#: ../sflphone-client-gnome/src/uimanager.c:910
+#: ../sflphone-client-gnome/src/uimanager.c:1480
 msgid "_New call"
 msgstr "_Nyt opkald"
 
-#: ../sflphone-client-gnome/src/uimanager.c:819
+#: ../sflphone-client-gnome/src/uimanager.c:911
 msgid "Place a new call"
 msgstr "Lav et nyt opkald"
 
-#: ../sflphone-client-gnome/src/uimanager.c:820
-#: ../sflphone-client-gnome/src/uimanager.c:1124
+#: ../sflphone-client-gnome/src/uimanager.c:912
+#: ../sflphone-client-gnome/src/uimanager.c:1199
 msgid "_Pick up"
 msgstr "_Svar"
 
-#: ../sflphone-client-gnome/src/uimanager.c:821
+#: ../sflphone-client-gnome/src/uimanager.c:913
 msgid "Answer the call"
 msgstr "Besvar opkaldet"
 
-#: ../sflphone-client-gnome/src/uimanager.c:823
+#: ../sflphone-client-gnome/src/uimanager.c:915
 msgid "Finish the call"
 msgstr "Afslut opkaldet"
 
-#: ../sflphone-client-gnome/src/uimanager.c:824
+#: ../sflphone-client-gnome/src/uimanager.c:916
 msgid "O_n hold"
 msgstr "I _venteposition"
 
-#: ../sflphone-client-gnome/src/uimanager.c:825
+#: ../sflphone-client-gnome/src/uimanager.c:917
 msgid "Place the call on hold"
 msgstr "Sæt opkaldet i venteposition"
 
-#: ../sflphone-client-gnome/src/uimanager.c:826
+#: ../sflphone-client-gnome/src/uimanager.c:918
 msgid "O_ff hold"
 msgstr "F_jern fra venteposition"
 
-#: ../sflphone-client-gnome/src/uimanager.c:827
+#: ../sflphone-client-gnome/src/uimanager.c:919
 msgid "Place the call off hold"
 msgstr "Fjern opkaldet fra venteposition"
 
-#: ../sflphone-client-gnome/src/uimanager.c:828
+#: ../sflphone-client-gnome/src/uimanager.c:920
+#: ../sflphone-client-gnome/src/uimanager.c:1257
+msgid "Send _message"
+msgstr ""
+
+#: ../sflphone-client-gnome/src/uimanager.c:921
+msgid "Send message"
+msgstr ""
+
+#: ../sflphone-client-gnome/src/uimanager.c:922
 msgid "Configuration _Assistant"
 msgstr "Konfigurationsfil"
 
-#: ../sflphone-client-gnome/src/uimanager.c:829
+#: ../sflphone-client-gnome/src/uimanager.c:923
 msgid "Run the configuration assistant"
 msgstr "Stun konfigureringsfejl"
 
-#: ../sflphone-client-gnome/src/uimanager.c:832
+#: ../sflphone-client-gnome/src/uimanager.c:926
 msgid "Call your voicemail"
 msgstr "%d indtalt besked"
 
-#: ../sflphone-client-gnome/src/uimanager.c:833
+#: ../sflphone-client-gnome/src/uimanager.c:927
 msgid "_Close"
 msgstr "_Luk"
 
-#: ../sflphone-client-gnome/src/uimanager.c:834
+#: ../sflphone-client-gnome/src/uimanager.c:928
 msgid "Minimize to system tray"
 msgstr "Minimere til systembakken"
 
-#: ../sflphone-client-gnome/src/uimanager.c:835
+#: ../sflphone-client-gnome/src/uimanager.c:929
 msgid "_Quit"
 msgstr "_Afslut"
 
-#: ../sflphone-client-gnome/src/uimanager.c:836
+#: ../sflphone-client-gnome/src/uimanager.c:930
 msgid "Quit the program"
 msgstr "Afslut programmet"
 
-#: ../sflphone-client-gnome/src/uimanager.c:839
+#: ../sflphone-client-gnome/src/uimanager.c:933
 msgid "_Edit"
 msgstr "_Rediger"
 
-#: ../sflphone-client-gnome/src/uimanager.c:840
+#: ../sflphone-client-gnome/src/uimanager.c:934
 msgid "_Copy"
 msgstr "_Kopier"
 
-#: ../sflphone-client-gnome/src/uimanager.c:841
+#: ../sflphone-client-gnome/src/uimanager.c:935
 msgid "Copy the selection"
 msgstr "Kopier det valgte"
 
-#: ../sflphone-client-gnome/src/uimanager.c:842
+#: ../sflphone-client-gnome/src/uimanager.c:936
 msgid "_Paste"
 msgstr "Inds_æt"
 
-#: ../sflphone-client-gnome/src/uimanager.c:843
+#: ../sflphone-client-gnome/src/uimanager.c:937
 msgid "Paste the clipboard"
 msgstr "Indsæt indholdet af udklipsholderen"
 
-#: ../sflphone-client-gnome/src/uimanager.c:844
+#: ../sflphone-client-gnome/src/uimanager.c:938
 msgid "Clear _history"
 msgstr "Opkaldshistorik"
 
-#: ../sflphone-client-gnome/src/uimanager.c:845
+#: ../sflphone-client-gnome/src/uimanager.c:939
 msgid "Clear the call history"
 msgstr "Opkaldshistorik"
 
-#: ../sflphone-client-gnome/src/uimanager.c:846
+#: ../sflphone-client-gnome/src/uimanager.c:940
 msgid "_Accounts"
 msgstr "Konti"
 
-#: ../sflphone-client-gnome/src/uimanager.c:846
+#: ../sflphone-client-gnome/src/uimanager.c:940
 msgid "Edit your accounts"
 msgstr "Nuværende konto"
 
-#: ../sflphone-client-gnome/src/uimanager.c:848
+#: ../sflphone-client-gnome/src/uimanager.c:942
 msgid "_Preferences"
 msgstr "Indstillinger"
 
-#: ../sflphone-client-gnome/src/uimanager.c:849
+#: ../sflphone-client-gnome/src/uimanager.c:943
 msgid "Change your preferences"
 msgstr "Ændr dine indstillinger"
 
-#: ../sflphone-client-gnome/src/uimanager.c:852
+#: ../sflphone-client-gnome/src/uimanager.c:946
 msgid "_View"
 msgstr "_Vis"
 
-#: ../sflphone-client-gnome/src/uimanager.c:855
+#: ../sflphone-client-gnome/src/uimanager.c:949
 msgid "_Help"
 msgstr "_Hjælp"
 
-#: ../sflphone-client-gnome/src/uimanager.c:856
+#: ../sflphone-client-gnome/src/uimanager.c:950
 msgid "Contents"
 msgstr "Fortsæt"
 
-#: ../sflphone-client-gnome/src/uimanager.c:857
+#: ../sflphone-client-gnome/src/uimanager.c:951
 msgid "Open the manual"
 msgstr "Åbn manualen"
 
-#: ../sflphone-client-gnome/src/uimanager.c:858
+#: ../sflphone-client-gnome/src/uimanager.c:952
 msgid "About this application"
 msgstr "Godkendelse"
 
-#: ../sflphone-client-gnome/src/uimanager.c:866
+#: ../sflphone-client-gnome/src/uimanager.c:959
 msgid "_Transfer"
 msgstr "_Overfør"
 
-#: ../sflphone-client-gnome/src/uimanager.c:867
+#: ../sflphone-client-gnome/src/uimanager.c:959
 msgid "Transfer the call"
 msgstr "Overfør opkaldet"
 
-#: ../sflphone-client-gnome/src/uimanager.c:868
-#: ../sflphone-client-gnome/src/uimanager.c:1160
+#: ../sflphone-client-gnome/src/uimanager.c:960
+#: ../sflphone-client-gnome/src/uimanager.c:1232
 msgid "_Record"
 msgstr "_Optag"
 
-#: ../sflphone-client-gnome/src/uimanager.c:869
+#: ../sflphone-client-gnome/src/uimanager.c:960
 msgid "Record the current conversation"
 msgstr "Optag den aktuelle samtale"
 
-#: ../sflphone-client-gnome/src/uimanager.c:870
+#: ../sflphone-client-gnome/src/uimanager.c:961
 msgid "_Show toolbar"
 msgstr "_Vis værktøjslinie"
 
-#: ../sflphone-client-gnome/src/uimanager.c:871
+#: ../sflphone-client-gnome/src/uimanager.c:961
 msgid "Show the toolbar"
 msgstr "Vis værktøjslinien"
 
-#: ../sflphone-client-gnome/src/uimanager.c:872
+#: ../sflphone-client-gnome/src/uimanager.c:962
 msgid "_Dialpad"
 msgstr "_Nummertastatur"
 
-#: ../sflphone-client-gnome/src/uimanager.c:873
+#: ../sflphone-client-gnome/src/uimanager.c:962
 msgid "Show the dialpad"
 msgstr "Vis nummertastaturet"
 
-#: ../sflphone-client-gnome/src/uimanager.c:874
+#: ../sflphone-client-gnome/src/uimanager.c:963
 msgid "_Volume controls"
 msgstr "Vis _lydstyrke indstillinger"
 
-#: ../sflphone-client-gnome/src/uimanager.c:875
+#: ../sflphone-client-gnome/src/uimanager.c:963
 msgid "Show the volume controls"
 msgstr "Vis lydstyrke indstillingerne"
 
-#: ../sflphone-client-gnome/src/uimanager.c:876
+#: ../sflphone-client-gnome/src/uimanager.c:964
 msgid "_History"
 msgstr "Opkaldshistorik"
 
-#: ../sflphone-client-gnome/src/uimanager.c:877
+#: ../sflphone-client-gnome/src/uimanager.c:964
 msgid "Calls history"
 msgstr "Opkaldshistorik"
 
-#: ../sflphone-client-gnome/src/uimanager.c:878
+#: ../sflphone-client-gnome/src/uimanager.c:965
 msgid "_Address book"
 msgstr "Adressebog"
 
-#: ../sflphone-client-gnome/src/uimanager.c:1148
-#: ../sflphone-client-gnome/src/uimanager.c:1190
+#: ../sflphone-client-gnome/src/uimanager.c:1221
+#: ../sflphone-client-gnome/src/uimanager.c:1283
 msgid "On _Hold"
 msgstr "I _venteposition"
 
-#: ../sflphone-client-gnome/src/uimanager.c:1251
+#: ../sflphone-client-gnome/src/uimanager.c:1341
 msgid "_Call back"
 msgstr "_Besvar opkald"
 
-#: ../sflphone-client-gnome/src/uimanager.c:1407
+#: ../sflphone-client-gnome/src/uimanager.c:1554
 msgid "Edit phone number"
 msgstr "Ændre telefonnummer"
 
-#: ../sflphone-client-gnome/src/uimanager.c:1419
+#: ../sflphone-client-gnome/src/uimanager.c:1566
 msgid "Edit the phone number before making a call"
 msgstr "Ændre telefonnummeret før opkald"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:281
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:320
 msgid "Account Parameters"
 msgstr "Kontoparametre"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:296
-#: ../sflphone-client-gnome/src/config/assistant.c:326
-#: ../sflphone-client-gnome/src/config/assistant.c:439
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:334
+#: ../sflphone-client-gnome/src/config/assistant.c:344
+#: ../sflphone-client-gnome/src/config/assistant.c:458
 msgid "_Alias"
 msgstr "_Alias"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:306
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:344
 msgid "_Protocol"
 msgstr "_Protokol"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:325
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:360
 msgid "Unknown"
 msgstr "Ukendt"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:336
-#: ../sflphone-client-gnome/src/config/assistant.c:334
-#: ../sflphone-client-gnome/src/config/assistant.c:447
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:372
+#: ../sflphone-client-gnome/src/config/assistant.c:352
+#: ../sflphone-client-gnome/src/config/assistant.c:466
 msgid "_Host name"
 msgstr "_Værtsnavn"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:345
-#: ../sflphone-client-gnome/src/config/assistant.c:342
-#: ../sflphone-client-gnome/src/config/assistant.c:455
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:381
+#: ../sflphone-client-gnome/src/config/assistant.c:360
+#: ../sflphone-client-gnome/src/config/assistant.c:474
 msgid "_User name"
 msgstr "_Brugernavn"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:380
-#: ../sflphone-client-gnome/src/config/assistant.c:358
-#: ../sflphone-client-gnome/src/config/assistant.c:470
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:402
+#: ../sflphone-client-gnome/src/config/assistant.c:376
+#: ../sflphone-client-gnome/src/config/assistant.c:489
 msgid "_Password"
 msgstr "_Adgangskode"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:403
-#: ../sflphone-client-gnome/src/config/assistant.c:375
-#: ../sflphone-client-gnome/src/config/assistant.c:485
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:424
+#: ../sflphone-client-gnome/src/config/assistant.c:393
+#: ../sflphone-client-gnome/src/config/assistant.c:504
 msgid "Show password"
 msgstr "Adgangskode"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:408
-#: ../sflphone-client-gnome/src/config/assistant.c:380
-#: ../sflphone-client-gnome/src/config/assistant.c:490
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:429
+#: ../sflphone-client-gnome/src/config/assistant.c:398
+#: ../sflphone-client-gnome/src/config/assistant.c:509
 msgid "_Voicemail number"
 msgstr "_Nummer for talebesked"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:417
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:438
 msgid "_User-agent"
-msgstr ""
+msgstr "_Brugeragent"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:504
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:500
 msgid "Authentication"
 msgstr "Godkendelse"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:505
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:501
 msgid "Secret"
 msgstr "Hemmelig"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:755
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:744
 msgid "Credential"
 msgstr "Legitimationsoplysning"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:789
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:778
 msgid "Authentication name"
 msgstr "Godkendelsesnavn"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:800
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:789
 msgid "Password"
 msgstr "Adgangskode"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:858
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1313
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:853
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1364
 msgid "Security"
 msgstr "Sikkerhed"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:869
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:864
 msgid "Use TLS transport (sips)"
 msgstr "Benyt TLS transport (sips)"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:875
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:870
 msgid "SRTP key exchange"
 msgstr "SRTP-nøgleudveksling"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:881
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:876
 msgid "Disabled"
 msgstr "Deaktiveret"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:949
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:940
 msgid "Registration"
 msgstr "Registrering"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:953
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:944
 msgid "Registration expire"
 msgstr "Forældelse af registrering"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:962
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:953
 msgid "_Comply with RFC 3263"
 msgstr "_Overhold RFC 3263"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:981
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:974
 msgid "Network Interface"
 msgstr "Netværk kan ikke nås"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:994
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:987
 msgid "Local address"
 msgstr "Lokal adresse"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1061
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1054
 msgid "Local port"
 msgstr "Lokal port"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1098
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1131
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1096
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1129
 msgid "Published address"
 msgstr "Offentliggjort adresse"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1102
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1100
 msgid "Using STUN"
 msgstr "Ved brug af STUN"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1109
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1107
 msgid "STUN server URL"
 msgstr "STUN serveradresse"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1117
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1115
 msgid "Same as local parameters"
 msgstr "Samme som lokale parametre"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1120
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1118
 msgid "Set published address and port:"
 msgstr "Konfigurer offentliggjort adresse og port:"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1140
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1138
 msgid "Published port"
 msgstr "Offentliggjort port"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1206
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1295
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1218
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1345
 msgid "Codecs"
 msgstr "Codecs"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1217
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1230
 msgid "DTMF"
-msgstr ""
+msgstr "DTMF"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1227
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1241
 msgid "RTP"
-msgstr ""
+msgstr "RTP"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1231
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1245
 msgid "SIP"
 msgstr "SIP"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1265
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1252
+msgid "Ringtones"
+msgstr "Ringetoner"
+
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1255
+msgid "Choose a ringtone"
+msgstr "Vælg en ringetone"
+
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1260
+msgid "_Enable ringtones"
+msgstr "Aktiver _ringetoner"
+
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1272
+msgid "Audio Files"
+msgstr "Lydfiler"
+
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1314
 msgid "Account settings"
 msgstr "Kontoindstillinger"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1288
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1337
 msgid "Basic"
 msgstr "Grundlæggende"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1308
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1359
 msgid "Advanced"
 msgstr "Avanceret"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1321
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1371
 msgid "Network"
 msgstr "Netværk"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1512
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1581
 msgid ""
 "This profile is used when you want to reach a remote peer simply by typing a "
 "sip URI such as <b>sip:remotepeer</b>. The settings you define here will "
@@ -701,95 +746,96 @@ msgstr ""
 "du definerer her vil også benyttes hvis ingen konto kan tilknyttes et "
 "indgående eller udgående opkald."
 
-#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:142
+#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:178
 #, c-format
 msgid "Server returned \"%s\" (%d)"
 msgstr "Server svarede \""
 
-#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:432
+#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:471
 msgid "Protocol"
 msgstr "Protokol"
 
-#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:440
+#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:479
 msgid "Status"
 msgstr "Status"
 
-#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:522
+#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:561
 msgid "Accounts"
 msgstr "Konti"
 
-#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:532
+#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:571
 msgid "Configured Accounts"
 msgstr "Oprettede konti"
 
-#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:549
+#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:589
 #, c-format
 msgid "There is %d active account"
 msgid_plural "There are %d active accounts"
 msgstr[0] "aktiv konto"
 msgstr[1] "aktiv konto"
 
-#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:555
+#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:595
 msgid "You have no active account"
 msgstr "Der er ingen aktive konti"
 
-#: ../sflphone-client-gnome/src/config/addressbook-config.c:317
-#: ../sflphone-client-gnome/src/config/preferencesdialog.c:303
-#: ../sflphone-client-gnome/src/config/shortcuts-config.c:47
+#: ../sflphone-client-gnome/src/config/addressbook-config.c:326
+#: ../sflphone-client-gnome/src/config/preferencesdialog.c:393
+#: ../sflphone-client-gnome/src/config/preferencesdialog.c:439
+#: ../sflphone-client-gnome/src/config/shortcuts-config.c:129
 msgid "General"
 msgstr "Generelt"
 
-#: ../sflphone-client-gnome/src/config/addressbook-config.c:323
+#: ../sflphone-client-gnome/src/config/addressbook-config.c:332
 msgid "_Use Evolution address books"
 msgstr "_Benyt Evolution adressekartotek"
 
-#: ../sflphone-client-gnome/src/config/addressbook-config.c:330
+#: ../sflphone-client-gnome/src/config/addressbook-config.c:339
 msgid "Download limit :"
 msgstr "Download begrænsning :"
 
-#: ../sflphone-client-gnome/src/config/addressbook-config.c:338
+#: ../sflphone-client-gnome/src/config/addressbook-config.c:347
 msgid "cards"
 msgstr "kort"
 
-#: ../sflphone-client-gnome/src/config/addressbook-config.c:344
+#: ../sflphone-client-gnome/src/config/addressbook-config.c:353
 msgid "_Display contact photo if available"
 msgstr "Vis _kontaktbillede hvis tilgængeligt"
 
-#: ../sflphone-client-gnome/src/config/addressbook-config.c:352
+#: ../sflphone-client-gnome/src/config/addressbook-config.c:361
 msgid "Fields from Evolution's address books"
 msgstr "Felter fra Evolutions adressekartotek"
 
-#: ../sflphone-client-gnome/src/config/addressbook-config.c:356
+#: ../sflphone-client-gnome/src/config/addressbook-config.c:365
 msgid "_Work"
 msgstr "_Arbejde"
 
-#: ../sflphone-client-gnome/src/config/addressbook-config.c:362
+#: ../sflphone-client-gnome/src/config/addressbook-config.c:371
 msgid "_Home"
 msgstr "_Hjem"
 
-#: ../sflphone-client-gnome/src/config/addressbook-config.c:368
+#: ../sflphone-client-gnome/src/config/addressbook-config.c:377
 msgid "_Mobile"
 msgstr "_Mobil"
 
-#: ../sflphone-client-gnome/src/config/addressbook-config.c:375
+#: ../sflphone-client-gnome/src/config/addressbook-config.c:384
 msgid "Address Books"
 msgstr "Adressekartoteker"
 
-#: ../sflphone-client-gnome/src/config/addressbook-config.c:379
+#: ../sflphone-client-gnome/src/config/addressbook-config.c:388
 msgid "Select which Evolution address books to use"
 msgstr "Vælg hvilke af Evolutions adressekartoteker skal benyttes"
 
-#: ../sflphone-client-gnome/src/config/addressbook-config.c:415
-#: ../sflphone-client-gnome/src/config/audioconf.c:704
+#: ../sflphone-client-gnome/src/config/addressbook-config.c:424
+#: ../sflphone-client-gnome/src/config/audioconf.c:682
 msgid "Name"
 msgstr "Navn"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:86
+#: ../sflphone-client-gnome/src/config/assistant.c:87
 #, c-format
 msgid "This assistant is now finished."
 msgstr "Denne vejledning er nu fuldført"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:88
+#: ../sflphone-client-gnome/src/config/assistant.c:89
 msgid ""
 "You can at any time check your registration state or modify your accounts "
 "parameters in the Options/Accounts window."
@@ -797,311 +843,303 @@ msgstr ""
 "Du kan til enhver tid undersøge din registrering eller ændre dine kontis "
 "parametre i vinduet Indstillinger/Konti"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:91
+#: ../sflphone-client-gnome/src/config/assistant.c:92
 msgid "Alias"
 msgstr "Alias"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:95
+#: ../sflphone-client-gnome/src/config/assistant.c:96
 msgid "Server"
 msgstr "Server"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:99
+#: ../sflphone-client-gnome/src/config/assistant.c:100
 msgid "Username"
 msgstr "Brugernavn"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:103
+#: ../sflphone-client-gnome/src/config/assistant.c:104
 msgid "Security: "
 msgstr "Sikkerhed: "
 
-#: ../sflphone-client-gnome/src/config/assistant.c:105
+#: ../sflphone-client-gnome/src/config/assistant.c:107
 msgid "SRTP/ZRTP draft-zimmermann"
 msgstr "SRTP/ZRTP draft-zimmermann"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:107
+#: ../sflphone-client-gnome/src/config/assistant.c:109
 msgid "None"
 msgstr "Ingen"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:241
+#: ../sflphone-client-gnome/src/config/assistant.c:256
 msgid "SFLphone account creation wizard"
 msgstr "SFLphone-guiden til oprettelse af konto"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:267
+#: ../sflphone-client-gnome/src/config/assistant.c:283
 msgid "Welcome to the Account creation wizard of SFLphone!"
 msgstr "Velkommen til kontooperettelsesvejledning for SFLphone"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:268
+#: ../sflphone-client-gnome/src/config/assistant.c:284
 msgid "This installation wizard will help you configure an account."
 msgstr ""
 "Denne installeringsvejledning vil hjælpe dig med at konfigurere en konto"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:282
+#: ../sflphone-client-gnome/src/config/assistant.c:299
 msgid "VoIP Protocols"
 msgstr "VoIP protokoller"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:282
+#: ../sflphone-client-gnome/src/config/assistant.c:299
 msgid "Select an account type"
 msgstr "Vælg en kontotype"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:284
+#: ../sflphone-client-gnome/src/config/assistant.c:301
 msgid "SIP (Session Initiation Protocol)"
 msgstr "SIP (Session Initiation Protocol)"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:286
+#: ../sflphone-client-gnome/src/config/assistant.c:303
 msgid "IAX2 (InterAsterix Exchange)"
 msgstr "IAX2 (InterAsterix Exchange)"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:300
+#: ../sflphone-client-gnome/src/config/assistant.c:318
 msgid "Account"
 msgstr "Konto"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:300
+#: ../sflphone-client-gnome/src/config/assistant.c:318
 msgid "Please select one of the following options"
 msgstr "Vælg en af følgende indstillinger"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:302
+#: ../sflphone-client-gnome/src/config/assistant.c:320
 msgid "Create a free SIP/IAX2 account on sflphone.org"
 msgstr "Opret en gratis SIP/IAX2 konto hos sflphone.org"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:304
+#: ../sflphone-client-gnome/src/config/assistant.c:322
 msgid "Register an existing SIP or IAX2 account"
 msgstr "Registrer en eksisterende SIP eller IAX2 konto"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:318
+#: ../sflphone-client-gnome/src/config/assistant.c:336
 msgid "SIP account settings"
 msgstr "SIP kontoindstillinger"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:318
-#: ../sflphone-client-gnome/src/config/assistant.c:431
+#: ../sflphone-client-gnome/src/config/assistant.c:336
+#: ../sflphone-client-gnome/src/config/assistant.c:450
 msgid "Please fill the following information"
 msgstr "Udfyld venligst følgende information"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:388
-#: ../sflphone-client-gnome/src/config/assistant.c:417
+#: ../sflphone-client-gnome/src/config/assistant.c:406
+#: ../sflphone-client-gnome/src/config/assistant.c:436
 msgid "Secure communications with _ZRTP"
 msgstr "Sikker kommunikation med _ZRTP"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:401
+#: ../sflphone-client-gnome/src/config/assistant.c:420
 msgid "Optional email address"
 msgstr "Valgfri emailadresse"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:401
+#: ../sflphone-client-gnome/src/config/assistant.c:420
 msgid "This email address will be used to send your voicemail messages."
 msgstr "Denne emailadresse vil blive brugt til at sende dig indtalte beskeder"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:409
+#: ../sflphone-client-gnome/src/config/assistant.c:428
 msgid "_Email address"
 msgstr "_Emailadresse"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:431
+#: ../sflphone-client-gnome/src/config/assistant.c:450
 msgid "IAX2 account settings"
 msgstr "IAX2 kontoindstillinger"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:508
+#: ../sflphone-client-gnome/src/config/assistant.c:528
 msgid "Network Address Translation (NAT)"
 msgstr "Network Address Translation (NAT)"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:508
+#: ../sflphone-client-gnome/src/config/assistant.c:528
 msgid "You should probably enable this if you are behind a firewall."
 msgstr "Du opfordres til at aktivere dette hvis du er bag en firewall"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:517
+#: ../sflphone-client-gnome/src/config/assistant.c:537
 msgid "E_nable STUN"
 msgstr "_Benyt STUN"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:524
+#: ../sflphone-client-gnome/src/config/assistant.c:544
 msgid "_STUN server"
 msgstr "_STUN server"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:538
+#: ../sflphone-client-gnome/src/config/assistant.c:559
 msgid "Account Registration"
 msgstr "Kontoregistrering"
 
-#: ../sflphone-client-gnome/src/config/assistant.c:538
+#: ../sflphone-client-gnome/src/config/assistant.c:559
 msgid "Congratulations!"
 msgstr "Tillykke!"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:709
+#: ../sflphone-client-gnome/src/config/audioconf.c:687
 msgid "Frequency"
 msgstr "Frekvens"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:714
+#: ../sflphone-client-gnome/src/config/audioconf.c:692
 msgid "Bitrate"
 msgstr "Bithastighed"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:719
+#: ../sflphone-client-gnome/src/config/audioconf.c:697
 msgid "Bandwidth"
 msgstr "Båndbredde"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:838
+#: ../sflphone-client-gnome/src/config/audioconf.c:794
 msgid "ALSA plugin"
 msgstr "ALSA plugin"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:860
+#: ../sflphone-client-gnome/src/config/audioconf.c:816
 msgid "Output"
 msgstr "Uddata"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:882
+#: ../sflphone-client-gnome/src/config/audioconf.c:838
 msgid "Input"
 msgstr "Inddata"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:904
-#, fuzzy
+#: ../sflphone-client-gnome/src/config/audioconf.c:852
 msgid "Ringtone"
-msgstr "Ringetoner"
+msgstr "Ringetone"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:939
-msgid "_Echo Suppression"
-msgstr ""
-
-#: ../sflphone-client-gnome/src/config/audioconf.c:952
-msgid "_Noise Reduction"
-msgstr ""
-
-#: ../sflphone-client-gnome/src/config/audioconf.c:991
+#: ../sflphone-client-gnome/src/config/audioconf.c:911
 msgid "Sound Manager"
 msgstr "Lydhåndtering"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:1000
+#: ../sflphone-client-gnome/src/config/audioconf.c:921
 msgid "_Pulseaudio"
 msgstr "_PulseAudio"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:1004
+#: ../sflphone-client-gnome/src/config/audioconf.c:925
 msgid "_ALSA"
 msgstr "_ALSA"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:1010
+#: ../sflphone-client-gnome/src/config/audioconf.c:931
 msgid "ALSA settings"
 msgstr "ALSA indstillinger"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:1031
+#: ../sflphone-client-gnome/src/config/audioconf.c:951
 msgid "Recordings"
 msgstr "Optagelser"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:1035
+#: ../sflphone-client-gnome/src/config/audioconf.c:955
 msgid "Destination folder"
 msgstr "Destinationsmappe"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:1039
+#: ../sflphone-client-gnome/src/config/audioconf.c:959
 msgid "Select a folder"
 msgstr "Vælg en mappe"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:1045
-msgid "Ringtones"
-msgstr "Ringetoner"
-
-#: ../sflphone-client-gnome/src/config/audioconf.c:1051
-msgid "_Enable ringtones"
-msgstr "Aktiver _ringetoner"
-
-#: ../sflphone-client-gnome/src/config/audioconf.c:1057
-msgid "Choose a ringtone"
-msgstr "Vælg en ringetone"
-
-#: ../sflphone-client-gnome/src/config/audioconf.c:1063
-msgid "Audio Files"
-msgstr "Lydfiler"
-
-#: ../sflphone-client-gnome/src/config/audioconf.c:1070
-#, fuzzy
+#: ../sflphone-client-gnome/src/config/audioconf.c:966
 msgid "Voice enhancement settings"
-msgstr "Kontoindstillinger"
+msgstr "Indstillinger for stemmeforstærkning"
 
-#: ../sflphone-client-gnome/src/config/hooks-config.c:141
+#: ../sflphone-client-gnome/src/config/audioconf.c:969
+msgid "_Noise Reduction"
+msgstr "_Støjreducering"
+
+#: ../sflphone-client-gnome/src/config/hooks-config.c:149
 msgid "URL Argument"
 msgstr "Adresseargument"
 
-#: ../sflphone-client-gnome/src/config/hooks-config.c:146
+#: ../sflphone-client-gnome/src/config/hooks-config.c:154
 msgid "Custom commands on incoming calls with URL"
 msgstr "Brugerdefinerede kommandoer ved indgående opkald med webadresse"
 
-#: ../sflphone-client-gnome/src/config/hooks-config.c:149
+#: ../sflphone-client-gnome/src/config/hooks-config.c:157
 #, c-format
 msgid "%s will be replaced with the passed URL."
 msgstr "%s vil blive erstattet med den givne webadresse."
 
-#: ../sflphone-client-gnome/src/config/hooks-config.c:152
+#: ../sflphone-client-gnome/src/config/hooks-config.c:160
 msgid "Trigger on specific _SIP header"
 msgstr "Udløse ved specifik _SIP protokolhoved"
 
-#: ../sflphone-client-gnome/src/config/hooks-config.c:161
+#: ../sflphone-client-gnome/src/config/hooks-config.c:169
 msgid "Trigger on _IAX2 URL"
 msgstr "Udløse ved _IAX2 webadresse"
 
-#: ../sflphone-client-gnome/src/config/hooks-config.c:166
+#: ../sflphone-client-gnome/src/config/hooks-config.c:174
 msgid "Command to _run"
 msgstr "Kommando som skal _kaldes"
 
-#: ../sflphone-client-gnome/src/config/hooks-config.c:176
+#: ../sflphone-client-gnome/src/config/hooks-config.c:184
 msgid "Phone number rewriting"
 msgstr "Omskrivning af telefonnummer"
 
-#: ../sflphone-client-gnome/src/config/hooks-config.c:180
+#: ../sflphone-client-gnome/src/config/hooks-config.c:188
 msgid "_Prefix dialed numbers with"
 msgstr "_Præfiks for indtastede numre"
 
-#: ../sflphone-client-gnome/src/config/preferencesdialog.c:158
+#: ../sflphone-client-gnome/src/config/preferencesdialog.c:182
 msgid "Desktop Notifications"
 msgstr "Meddelelser"
 
-#: ../sflphone-client-gnome/src/config/preferencesdialog.c:163
+#: ../sflphone-client-gnome/src/config/preferencesdialog.c:187
 msgid "_Enable notifications"
 msgstr "_Aktiver meddelelser"
 
-#: ../sflphone-client-gnome/src/config/preferencesdialog.c:170
+#: ../sflphone-client-gnome/src/config/preferencesdialog.c:194
 msgid "System Tray Icon"
 msgstr "Systembakke-ikon"
 
-#: ../sflphone-client-gnome/src/config/preferencesdialog.c:180
+#: ../sflphone-client-gnome/src/config/preferencesdialog.c:202
 msgid "Show SFLphone in the system tray"
-msgstr ""
+msgstr "Vis SFLphone i systemfeltet"
 
-#: ../sflphone-client-gnome/src/config/preferencesdialog.c:187
+#: ../sflphone-client-gnome/src/config/preferencesdialog.c:209
 msgid "_Popup main window on incoming call"
 msgstr "_Vis hovedvindue ved indgående opkald"
 
-#: ../sflphone-client-gnome/src/config/preferencesdialog.c:193
+#: ../sflphone-client-gnome/src/config/preferencesdialog.c:215
 msgid "Ne_ver popup main window"
 msgstr "Aldrig _pop-op hovedvindue"
 
-#: ../sflphone-client-gnome/src/config/preferencesdialog.c:203
+#: ../sflphone-client-gnome/src/config/preferencesdialog.c:228
 msgid "Hide SFLphone window on _startup"
 msgstr "Skjul SFLphone vinduet ved _start"
 
-#: ../sflphone-client-gnome/src/config/preferencesdialog.c:217
+#: ../sflphone-client-gnome/src/config/preferencesdialog.c:242
 msgid "Calls History"
 msgstr "Opkaldshistorik"
 
-#: ../sflphone-client-gnome/src/config/preferencesdialog.c:221
+#: ../sflphone-client-gnome/src/config/preferencesdialog.c:246
 msgid "_Keep my history for at least"
 msgstr "_Gem min historik i mindst"
 
-#: ../sflphone-client-gnome/src/config/preferencesdialog.c:236
+#: ../sflphone-client-gnome/src/config/preferencesdialog.c:261
 msgid "days"
 msgstr "dage"
 
-#: ../sflphone-client-gnome/src/config/preferencesdialog.c:282
+#: ../sflphone-client-gnome/src/config/preferencesdialog.c:266
+msgid "Instant Messaging"
+msgstr ""
+
+#: ../sflphone-client-gnome/src/config/preferencesdialog.c:270
+#, fuzzy
+msgid "Enable instant messaging"
+msgstr "Aktiver _ringetoner"
+
+#: ../sflphone-client-gnome/src/config/preferencesdialog.c:354
 msgid "Preferences"
 msgstr "Indstillinger"
 
-#: ../sflphone-client-gnome/src/config/preferencesdialog.c:309
+#: ../sflphone-client-gnome/src/config/preferencesdialog.c:399
+#: ../sflphone-client-gnome/src/config/preferencesdialog.c:440
 msgid "Audio"
 msgstr "Audio"
 
-#: ../sflphone-client-gnome/src/config/preferencesdialog.c:315
+#: ../sflphone-client-gnome/src/config/preferencesdialog.c:405
+#: ../sflphone-client-gnome/src/config/preferencesdialog.c:441
 msgid "Address Book"
 msgstr "Adressebog"
 
-#: ../sflphone-client-gnome/src/config/preferencesdialog.c:321
+#: ../sflphone-client-gnome/src/config/preferencesdialog.c:411
+#: ../sflphone-client-gnome/src/config/preferencesdialog.c:442
 msgid "Hooks"
 msgstr "Hooks"
 
-#: ../sflphone-client-gnome/src/config/preferencesdialog.c:326
+#: ../sflphone-client-gnome/src/config/preferencesdialog.c:416
+#: ../sflphone-client-gnome/src/config/preferencesdialog.c:443
 msgid "Shortcuts"
-msgstr ""
+msgstr "Genveje"
 
-#: ../sflphone-client-gnome/src/config/shortcuts-config.c:49
+#: ../sflphone-client-gnome/src/config/shortcuts-config.c:132
 msgid "Be careful: these shortcuts might override system-wide shortcuts."
 msgstr ""
+"Bemærk: disse genveje vil tilsidesætte genveje defineret for hele systemet."
 
 #: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:49
 msgid "Advanced options for TLS"
@@ -1126,7 +1164,7 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:118
 msgid "Global TLS listener (all accounts)"
-msgstr ""
+msgstr "Global TLS-modtager (alle konti)"
 
 #: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:133
 msgid "Certificate of Authority list"
@@ -1136,106 +1174,103 @@ msgstr "Autoritetscertifikatsliste"
 msgid "Choose a CA list file (optional)"
 msgstr "Vælg en fil med en autoritetscertifikatsliste (valgfri)"
 
-#: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:158
+#: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:156
 msgid "Public endpoint certificate file"
 msgstr "Offentlig endpoint certifikatsfil"
 
-#: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:162
+#: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:160
 msgid "Choose a public endpoint certificate (optional)"
 msgstr "Vælg et offentligt endpoint-certifikat (valgfri)"
 
-#: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:185
+#: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:182
 msgid "Choose a private key file (optional)"
 msgstr "Vælg en privat nøglefil (valgfri)"
 
-#: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:206
+#: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:202
 msgid "Password for the private key"
 msgstr "Adgangskode for den private nøgle"
 
-#: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:229
+#: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:225
 msgid "TLS protocol method"
 msgstr "TLS protokolmetode"
 
-#: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:263
+#: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:261
 msgid "TLS cipher list"
 msgstr "TLS cifferliste"
 
-#: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:272
+#: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:270
 msgid "Server name instance for outgoing TLS connection"
 msgstr "Server navneinstans for udgående TLS forbindelse"
 
-#: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:280
+#: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:278
 msgid "Negotiation timeout (sec:msec)"
 msgstr "Forhandlingstimeout"
 
-#: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:297
+#: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:295
 msgid "Verify incoming certificates, as a server"
 msgstr "Udfør kontrol af indgående certifikater, som en server"
 
-#: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:303
+#: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:301
 msgid "Verify certificates from answer, as a client"
 msgstr "Udfør kontrol af certifikater fra svar, som en klient"
 
-#: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:309
+#: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:307
 msgid "Require certificate for incoming tls connections"
 msgstr "Kræv certifikat for indgående TLS forbindelser"
 
-#: ../sflphone-client-gnome/src/config/zrtpadvanceddialog.c:60
+#: ../sflphone-client-gnome/src/config/zrtpadvanceddialog.c:59
 msgid "ZRTP Options"
 msgstr "ZRTP indstillinger"
 
-#: ../sflphone-client-gnome/src/config/zrtpadvanceddialog.c:80
+#: ../sflphone-client-gnome/src/config/zrtpadvanceddialog.c:79
 msgid "Send Hello Hash in S_DP"
 msgstr "Send \"Hello Hash\" i S_DP"
 
-#: ../sflphone-client-gnome/src/config/zrtpadvanceddialog.c:86
+#: ../sflphone-client-gnome/src/config/zrtpadvanceddialog.c:85
 msgid "Ask User to Confirm SAS"
 msgstr "_Spørg bruger om at godkende SAS"
 
-#: ../sflphone-client-gnome/src/config/zrtpadvanceddialog.c:92
+#: ../sflphone-client-gnome/src/config/zrtpadvanceddialog.c:91
 msgid "_Warn if ZRTP not supported"
 msgstr "_Advar hvis ZRTP ikke understøttes"
 
-#: ../sflphone-client-gnome/src/config/zrtpadvanceddialog.c:98
+#: ../sflphone-client-gnome/src/config/zrtpadvanceddialog.c:97
 msgid "Display SAS once for hold events"
 msgstr "_Vis SAS en enkelt gang for vente-hændelser"
 
 #: ../sflphone-client-gnome/src/config/zrtpadvanceddialog.c:142
 msgid "SDES Options"
-msgstr ""
+msgstr "SDES indstillinger"
 
 #: ../sflphone-client-gnome/src/config/zrtpadvanceddialog.c:167
 msgid "Fallback on RTP on SDES failure"
-msgstr ""
+msgstr "Fald tilbage til RTP ved SDES fejl"
 
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:69
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:165
 msgid "Search all"
 msgstr "Søg alle"
 
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:70
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:83
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:95
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:107
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:166
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:179
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:191
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:203
 msgid "Click here to change the search type"
 msgstr "Klik her for at ændre søgningstypen"
 
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:82
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:178
 msgid "Search by missed call"
 msgstr "Søg i ubesvarede opkald"
 
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:94
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:190
 msgid "Search by incoming call"
 msgstr "Søg i indgående opkald"
 
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:106
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:202
 msgid "Search by outgoing call"
 msgstr "Søg i udgående opkald"
 
-#~ msgid "_Voice Activity Detection"
-#~ msgstr "_Detektering af taleaktivitet"
-
-#~ msgid "_Noise Reduction (Narrow-Band Companding)"
-#~ msgstr "_Støjreducering (Narrow-Band Companding)"
+#~ msgid "_Echo Suppression"
+#~ msgstr "_Fjernelse af ekko"
 
 #~ msgid "SIP Port"
 #~ msgstr "SIP Port"
@@ -1263,8 +1298,14 @@ msgstr "Søg i udgående opkald"
 #~ msgid "is "
 #~ msgstr "er "
 
+#~ msgid "_Voice Activity Detection"
+#~ msgstr "_Detektering af taleaktivitet"
+
 #~ msgid "_Mute other applications during a call"
 #~ msgstr "_Dæmp andre programmer ved opkald"
+
+#~ msgid "_Noise Reduction (Narrow-Band Companding)"
+#~ msgstr "_Støjreducering (Narrow-Band Companding)"
 
 #~ msgid "Enable voicemail _notifications"
 #~ msgstr "Aktiver _talebeskedsmeddelelser"
