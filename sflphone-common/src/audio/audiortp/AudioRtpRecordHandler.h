@@ -86,53 +86,9 @@ typedef list<DtmfEvent *> EventQueue;
 class AudioRtpRecord
 {
     public:
-        AudioRtpRecord (ManagerImpl *manager);
-        virtual ~AudioRtpRecord();
-        inline AudioCodec *getAudioCodec() const;
-        int getCodecPayloadType() const;
-        bool getHasDynamicPayload() const;
-        int getAudioLayerFrameSize() const;
-        int getAudioLayerSampleRate() const;
-        int getCodecFrameSize() const;
-        int getCodecSampleRate() const;
-        SamplerateConverter *getConverter() const;
-        inline int getConverterSamplingRate() const;
-        EventQueue *getEventQueue();
-        int getEventQueueSize() const;
-        SFLDataFormat *getMicData();
-        SFLDataFormat *getMicDataConverted();
-        unsigned char *getMicDataEncoded();
-        SFLDataFormat *getMicAmplFactor();
-        bool getMicFadeInComplete() const;
-        SFLDataFormat *getSpkrAmplFactor();
-        SFLDataFormat *getSpkrDataConverted() const;
-        SFLDataFormat *getSpkrDataDecoded() const;
-        bool getSpkrFadeInComplete() const;
-        AudioProcessing *getNoiseReductionProcess() const;
+        AudioRtpRecord ();
+        ~AudioRtpRecord();
 
-        void setAudioCodec (AudioCodec *audioCodec);
-        void setCodecPayloadType (int codecPayloadType);
-        void setHasDynamicPayload (bool hasDynamicPayload);
-        void setAudioLayerFrameSize (int _audioLayerFrameSize);
-        void setAudioLayerSampleRate (int _audioLayerSampleRate);
-        void setCodecFrameSize (int _codecFrameSize);
-        void setCodecSampleRate (int _codecSampleRate);
-        void setConverter (SamplerateConverter *_converter);
-        void setConverterSamplingRate (int _converterSamplingRate);
-        void setEventQueue (EventQueue _eventQueue);
-        void setMicData (SFLDataFormat *micData);
-        void setMicDataConverted (SFLDataFormat *micDataConverted);
-        void setMicDataEncoded (unsigned char *micDataEncoded);
-        void setMicAmplFactor (SFLDataFormat _micAmplFactor);
-        void setMicFadeInComplete (bool _micFadeInComplete);
-        void setSpkrAmplFactor (SFLDataFormat _spkrAmplFactor);
-        void setSpkrDataConverted (SFLDataFormat *_spkrDataConverted);
-        void setSpkrDataDecoded (SFLDataFormat *_spkrDataDecoded);
-        void setSpkrFadeInComplete (bool _spkrFadeInComplete);
-        void setAudioProcessing (AudioProcessing *audioProcess);
-        void setNoiseSuppress (NoiseSuppress *noiseSuppress);
-
-    private:
         AudioCodec *_audioCodec;
         int _codecPayloadType;
         bool _hasDynamicPayloadType;
@@ -162,67 +118,70 @@ class AudioRtpRecordHandler
 {
     public:
         AudioRtpRecordHandler (ManagerImpl *manager, SIPCall *ca);
-        virtual ~AudioRtpRecordHandler();
+        ~AudioRtpRecordHandler();
 
         /**
          *  Set rtp media for this session
          */
+
         void setRtpMedia (AudioCodec* audioCodec);
 
+
         AudioCodec *getAudioCodec (void) {
-            return _audioRtpRecord.getAudioCodec();
+            return _audioRtpRecord._audioCodec;
         }
 
         int getCodecPayloadType (void) {
-            return _audioRtpRecord.getCodecPayloadType();
+            return _audioRtpRecord._codecPayloadType;
         }
 
         int getCodecSampleRate (void) {
-            return _audioRtpRecord.getCodecSampleRate();
+            return _audioRtpRecord._codecSampleRate;
         }
 
         int getCodecFrameSize (void) {
-            return _audioRtpRecord.getCodecFrameSize();
+            return _audioRtpRecord._codecFrameSize;
         }
 
         int getHasDynamicPayload (void) {
-            return _audioRtpRecord.getHasDynamicPayload();
+            return _audioRtpRecord._hasDynamicPayloadType;
         }
 
         int getAudioLayerFrameSize (void) {
-            return _audioRtpRecord.getAudioLayerFrameSize();
+            return _audioRtpRecord._audioLayerFrameSize;
         }
 
         int getAudioLayerSampleRate (void) {
-            return _audioRtpRecord.getAudioLayerSampleRate();
+            return _audioRtpRecord._audioLayerSampleRate;
         }
 
         EventQueue *getEventQueue (void) {
-            return _audioRtpRecord.getEventQueue();
+            return &_audioRtpRecord._eventQueue;
         }
 
         int getEventQueueSize (void) {
-            return _audioRtpRecord.getEventQueueSize();
+            return _audioRtpRecord._eventQueue.size();
         }
 
         SFLDataFormat *getMicData (void) {
-            return _audioRtpRecord.getMicData();
+            return _audioRtpRecord._micData;
         }
 
         SFLDataFormat *getMicDataConverted (void) {
-            return _audioRtpRecord.getMicDataConverted();
+            return _audioRtpRecord._micDataConverted;
         }
 
         unsigned char *getMicDataEncoded (void) {
-            return _audioRtpRecord.getMicDataEncoded();
+            return _audioRtpRecord._micDataEncoded;
         }
+
 
         inline float computeCodecFrameSize (int codecSamplePerFrame, int codecClockRate) {
             return ( (float) codecSamplePerFrame * 1000.0) / (float) codecClockRate;
         }
 
         int computeNbByteAudioLayer (float codecFrameSize) {
-            return (int) ( ( (float) _audioRtpRecord.getCodecSampleRate() * codecFrameSize * sizeof (SFLDataFormat)) / 1000.0);
+            return (int) ( ( (float) _audioRtpRecord._codecSampleRate * codecFrameSize * sizeof (SFLDataFormat)) / 1000.0);
         }
 
         void init (void);

@@ -57,8 +57,9 @@ AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
     , _timestampCount (0)
     , _countNotificationTime (0)
     , _ca (sipcall)
+    , _isStarted (false)
 {
-    setCancel (cancelDefault);
+    ost::Thread::setCancel (cancelDefault);
 
     assert (_ca);
 
@@ -75,7 +76,7 @@ AudioRtpSession::~AudioRtpSession()
     _info ("AudioRtpSession: Delete AudioRtpSession instance");
 
     try {
-        terminate();
+        ost::Thread::terminate();
     } catch (...) {
         _debugException ("AudioRtpSession: Thread destructor didn't terminate correctly");
         throw;
@@ -300,13 +301,17 @@ void AudioRtpSession::notifyIncomingCall()
 
 int AudioRtpSession::startRtpThread (AudioCodec* audiocodec)
 {
+    if (_isStarted)
+        return 0;
+
     _debug ("AudioRtpSession: Starting main thread");
+    _isStarted = true;
     setSessionTimeouts();
     setSessionMedia (audiocodec);
     initBuffers();
     initNoiseSuppress();
     enableStack();
-    int ret = start (_mainloopSemaphore);
+    int ret = ost::Thread::start (_mainloopSemaphore);
     return ret;
 }
 

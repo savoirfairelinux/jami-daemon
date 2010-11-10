@@ -174,6 +174,8 @@ class AudioRtpSession : protected ost::Thread, public ost::TimerPort, public Aud
     protected:
 
         SIPCall * _ca;
+
+        bool _isStarted;
 };
 
 }
