@@ -241,6 +241,8 @@ void AudioRtpSession::sendMicData()
     if (!compSize)
         return;
 
+    _timestampCount++;
+
     // Reset timestamp to make sure the timing information are up to date
     if (_timestampCount > RTP_TIMESTAMP_RESET_FREQ) {
         _timestamp = getCurrentTimestamp();
