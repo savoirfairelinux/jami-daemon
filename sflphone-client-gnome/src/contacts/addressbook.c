@@ -114,10 +114,8 @@ addressbook_config_books()
             // If book_data exists
             if (!book_data) {
                 ERROR ("Addressbook: Error: Could not open book (%s:%d)", __FILE__, __LINE__);
-                continue;
+                book_data->active = TRUE;
             }
-
-            book_data->active = TRUE;
         }
 
         g_strfreev (list);
