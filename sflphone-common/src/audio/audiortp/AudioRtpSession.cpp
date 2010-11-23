@@ -320,9 +320,6 @@ int AudioRtpSession::startRtpThread (AudioCodec* audiocodec)
 void AudioRtpSession::run ()
 {
 
-    // Timestamp must be initialized randomly, already done when instantiating outgoing queue
-    _timestamp = getCurrentTimestamp();
-
     /**
     int threadSleep = 0;
 
@@ -343,6 +340,9 @@ void AudioRtpSession::run ()
     _manager->getAudioDriver()->startStream();
 
     _debug ("AudioRtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
+
+    // Timestamp must be initialized randomly, already done when instantiating outgoing queue
+    _timestamp = getCurrentTimestamp();
 
     uint32 timeout = 0;
 

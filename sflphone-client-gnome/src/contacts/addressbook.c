@@ -121,8 +121,6 @@ addressbook_config_books()
         g_strfreev (list);
     }
 
-    // Update buttons
-    // update_actions ();
 }
 
 /**
