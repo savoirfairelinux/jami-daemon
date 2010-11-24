@@ -52,6 +52,44 @@ YamlNode *YamlDocument::popNode()
     return node;
 }
 
+void YamlDocument::deleteChildNodes()
+{
+    Sequence::iterator it = doc.begin();
+
+    while (it != doc.end()) {
+        YamlNode *yamlNode = static_cast<YamlNode *> (*it);
+
+        switch (yamlNode->getType()) {
+            case DOCUMENT:
+                break;
+            case SEQUENCE: {
+                SequenceNode *sequence = static_cast<SequenceNode *> (yamlNode);
+                sequence->deleteChildNodes();
+                delete sequence;
+                sequence = NULL;
+            }
+            break;
+            case MAPPING: {
+                MappingNode *mapping = static_cast<MappingNode *> (yamlNode);
+                mapping->deleteChildNodes();
+                delete mapping;
+                mapping = NULL;
+            }
+            break;
+            case SCALAR: {
+                ScalarNode *scalar = static_cast<ScalarNode *> (yamlNode);
+                delete scalar;
+                scalar = NULL;
+            }
+            break;
+            default:
+                break;
+        }
+
+        it++;
+    }
+}
+
 void MappingNode::addNode (YamlNode *node)
 {
     Mapping::iterator it = map.end();
@@ -85,6 +123,43 @@ YamlNode *MappingNode::getValue (Key key)
     }
 }
 
+void MappingNode::deleteChildNodes()
+{
+    Mapping::iterator it = map.begin();
+
+    while (it != map.end()) {
+        YamlNode *yamlNode = static_cast<YamlNode *> (it->second);
+
+        switch (yamlNode->getType()) {
+            case DOCUMENT:
+                break;
+            case SEQUENCE: {
+                SequenceNode *sequence = static_cast<SequenceNode *> (yamlNode);
+                sequence->deleteChildNodes();
+                delete sequence;
+                sequence = NULL;
+            }
+            break;
+            case MAPPING: {
+                MappingNode *mapping = static_cast<MappingNode *> (yamlNode);
+                mapping->deleteChildNodes();
+                delete mapping;
+                mapping = NULL;
+            }
+            break;
+            case SCALAR: {
+                ScalarNode *scalar = static_cast<ScalarNode *> (yamlNode);
+                delete scalar;
+                scalar = NULL;
+            }
+            break;
+            default:
+                break;
+        }
+
+        it++;
+    }
+}
 
 void SequenceNode::addNode (YamlNode *node)
 {
@@ -92,5 +167,43 @@ void SequenceNode::addNode (YamlNode *node)
     seq.insert (it, node);
 }
 
+
+void SequenceNode::deleteChildNodes()
+{
+    Sequence::iterator it = seq.begin();
+
+    while (it != seq.end()) {
+        YamlNode *yamlNode = static_cast<YamlNode *> (*it);
+
+        switch (yamlNode->getType()) {
+            case DOCUMENT:
+                break;
+            case SEQUENCE: {
+                SequenceNode *sequence = static_cast<SequenceNode *> (yamlNode);
+                sequence->deleteChildNodes();
+                delete sequence;
+                sequence = NULL;
+            }
+            break;
+            case MAPPING: {
+                MappingNode *mapping = static_cast<MappingNode *> (yamlNode);
+                mapping->deleteChildNodes();
+                delete mapping;
+                mapping = NULL;
+            }
+            break;
+            case SCALAR: {
+                ScalarNode *scalar = static_cast<ScalarNode *> (yamlNode);
+                delete scalar;
+                scalar = NULL;
+            }
+            break;
+            default:
+                break;
+        }
+
+        it++;
+    }
 }
 
+}

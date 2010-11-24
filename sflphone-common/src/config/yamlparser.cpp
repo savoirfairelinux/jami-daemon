@@ -73,9 +73,6 @@ void YamlParser::open()
 
 void YamlParser::close()
 {
-
-    yaml_parser_delete (&parser);
-
     if (!fd)
         throw YamlParserException ("File descriptor not valid");
 
@@ -83,7 +80,13 @@ void YamlParser::close()
     if (fclose (fd))
         throw YamlParserException ("Error closing file descriptor");
 
+    yaml_parser_delete (&parser);
 
+    if (doc) {
+        doc->deleteChildNodes();
+        delete doc;
+        doc = NULL;
+    }
 }
 
 void YamlParser::serializeEvents()

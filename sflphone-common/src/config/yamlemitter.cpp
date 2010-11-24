@@ -71,7 +71,7 @@ void YamlEmitter::open()
 
 void YamlEmitter::close()
 {
-    // yaml_emitter_delete(&emitter);
+    yaml_emitter_delete (&emitter);
 
     if (!fd)
         throw YamlEmitterException ("File descriptor not valid");

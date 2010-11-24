@@ -75,15 +75,17 @@ class YamlNode
 
         YamlNode (NodeType t, YamlNode *top=NULL) : type (t), topNode (top) {}
 
-        ~YamlNode() {}
+        ~YamlNode (void) {}
 
-        NodeType getType() {
+        NodeType getType (void) {
             return type;
         }
 
-        YamlNode *getTopNode() {
+        YamlNode *getTopNode (void) {
             return topNode;
         }
+
+        virtual void deleteChildNodes (void) = 0;
 
     private:
 
@@ -111,6 +113,8 @@ class YamlDocument : YamlNode
             return &doc;
         }
 
+        virtual void deleteChildNodes (void);
+
     private:
 
         Sequence doc;
@@ -131,6 +135,8 @@ class SequenceNode : public YamlNode
         }
 
         void addNode (YamlNode *node);
+
+        virtual void deleteChildNodes (void);
 
     private:
 
@@ -164,6 +170,8 @@ class MappingNode : public YamlNode
 
         YamlNode *getValue (Key key);
 
+        virtual void deleteChildNodes (void);
+
     private:
 
         Mapping map;
@@ -189,6 +197,8 @@ class ScalarNode : public YamlNode
         void setValue (Value v) {
             val = v;
         }
+
+        virtual void deleteChildNodes (void) {}
 
     private:
 
