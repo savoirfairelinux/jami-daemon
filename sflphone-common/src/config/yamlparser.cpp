@@ -85,6 +85,9 @@ void YamlParser::close()
 
     yaml_parser_delete (&parser);
 
+    for (int i = 0; i < eventNumber; i++)
+        yaml_event_delete (&events[i]);
+
     if (doc) {
         doc->deleteChildNodes();
         delete doc;
@@ -110,7 +113,9 @@ void YamlParser::serializeEvents()
         if (!copyEvent (& (events[eventNumber++]), &event))
             throw YamlParserException ("Error copying event");
 
+        yaml_event_delete (&event);
     }
+
 }
 
 
