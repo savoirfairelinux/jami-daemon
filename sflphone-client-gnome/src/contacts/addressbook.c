@@ -96,7 +96,6 @@ addressbook_is_active()
 static void
 addressbook_config_books()
 {
-
     gchar **config_book_uid;
     book_data_t *book_data;
     gchar **list;
@@ -104,23 +103,23 @@ addressbook_config_books()
     // Retrieve list of books
     list = (gchar **) dbus_get_addressbook_list();
 
-    if (list) {
+    if (list == NULL)
+        return;
 
-        for (config_book_uid = list; *config_book_uid; config_book_uid++) {
+    for (config_book_uid = list; *config_book_uid; config_book_uid++) {
 
-            // Get corresponding book data
-            book_data = books_get_book_data_by_uid (*config_book_uid);
+        // Get corresponding book data
+        book_data = books_get_book_data_by_uid (*config_book_uid);
 
-            // If book_data exists
-            if (!book_data) {
-                ERROR ("Addressbook: Error: Could not open book (%s:%d)", __FILE__, __LINE__);
-                book_data->active = TRUE;
-            }
+        // If book_data exists
+        if (book_data == NULL) {
+            ERROR ("Addressbook: Error: Could not open book (%s:%d)", __FILE__, __LINE__);
+        } else {
+            book_data->active = TRUE;
         }
-
-        g_strfreev (list);
     }
 
+    g_strfreev (list);
 }
 
 /**
