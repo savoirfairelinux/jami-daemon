@@ -38,6 +38,7 @@ Account::Account (const AccountID& accountID, std::string type) :
     , _link (NULL)
     , _enabled (true)
     , _type (type)
+    , _registrationState (Unregistered)
     , _codecOrder ()
     , _codecStr ("0/")
     , _ringtonePath ("/usr/share/sflphone/ringtones/konga.ul")
@@ -45,7 +46,6 @@ Account::Account (const AccountID& accountID, std::string type) :
     , _displayName ("")
     , _useragent ("SFLphone")
 {
-    setRegistrationState (Unregistered);
 }
 
 Account::~Account()
