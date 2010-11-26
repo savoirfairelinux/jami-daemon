@@ -132,6 +132,7 @@ addressbook_get_books_data()
 
     fill_books_data();
     addressbook_config_books();
+    determine_default_addressbook();
 
     return get_books_data();
 }
@@ -147,6 +148,7 @@ addressbook_init()
 
     fill_books_data();
     addressbook_config_books();
+    determine_default_addressbook();
 
     // Call books initialization
     init ();

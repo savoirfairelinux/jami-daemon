@@ -73,6 +73,12 @@ static gchar *current_name = "Default";
 
 static EBookQueryTest current_test = E_BOOK_QUERY_BEGINS_WITH;
 
+
+/**
+ * Prototypes
+ */
+void empty_books_data();
+
 /**
  * Freeing a hit instance
  */
@@ -477,6 +483,8 @@ fill_books_data ()
     ESourceList *source_list = NULL;
     gboolean default_found;
 
+    DEBUG ("Addressbook: Fill books data");
+
     source_list = e_source_list_new_for_gconf_default ("/apps/evolution/addressbook/sources");
 
     if (source_list == NULL) {
@@ -491,7 +499,7 @@ fill_books_data ()
         return;
     }
 
-    if (books_data == NULL) {
+    if (books_data != NULL) {
         empty_books_data();
         books_data = NULL;
     }
@@ -523,10 +531,12 @@ fill_books_data ()
                 if (strcmp (prop, "true") == 0) {
                     book_data->isdefault = TRUE;
                     default_found = TRUE;
-                } else
+                } else {
                     book_data->isdefault = FALSE;
-            } else
+                }
+            } else {
                 book_data->isdefault = FALSE;
+            }
 
             if (strcmp (absuri+strlen (absuri)-1, "/") == 0)
                 book_data->uri = g_strjoin ("", absuri, e_source_peek_relative_uri (source), NULL);
@@ -540,13 +550,38 @@ fill_books_data ()
         g_free (absuri);
     }
 
-    if (!default_found) {
-        DEBUG ("Addressbook: No default addressbook found, using first addressbook as default");
-        book_data_t *book_data = g_slist_nth_data (books_data, 0);
-        book_data->isdefault = TRUE;
+    g_object_unref (source_list);
+}
+
+void
+determine_default_addressbook()
+{
+    GSList *list_element = books_data;
+    gboolean default_found = FALSE;
+
+    while (list_element && !default_found) {
+        book_data_t *book_data = list_element->data;
+
+        if (book_data->isdefault)
+            default_found = TRUE;
+
+        list_element = g_slist_next (list_element);
     }
 
-    g_object_unref (source_list);
+    // reset loop
+    list_element = books_data;
+
+    while (list_element && !default_found) {
+        book_data_t *book_data = list_element->data;
+
+        if (book_data->active) {
+            book_data->isdefault = TRUE;
+            DEBUG ("Addressbook: No default addressbook found, using %s addressbook as default", book_data->name);
+            default_found = TRUE;
+        }
+
+        list_element = g_slist_next (list_element);
+    }
 }
 
 void
@@ -567,6 +602,8 @@ empty_books_data()
 
         free_book_data (book_data);
     }
+
+
 }
 
 void

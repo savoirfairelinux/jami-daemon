@@ -166,6 +166,9 @@ get_current_addressbook_test (void);
 GSList *
 get_books_data();
 
+void
+determine_default_addressbook();
+
 
 G_END_DECLS
 
