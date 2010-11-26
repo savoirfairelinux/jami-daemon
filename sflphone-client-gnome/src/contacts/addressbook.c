@@ -133,7 +133,7 @@ addressbook_get_books_data()
     fill_books_data();
     addressbook_config_books();
 
-    return books_data;
+    return get_books_data();
 }
 
 /**

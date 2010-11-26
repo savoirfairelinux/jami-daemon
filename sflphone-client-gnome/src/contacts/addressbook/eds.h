@@ -76,7 +76,6 @@ typedef struct {
     gboolean isdefault;
 } book_data_t;
 
-GSList *books_data;
 
 /**
  * Free a contact entry
@@ -163,6 +162,9 @@ set_current_addressbook_test (EBookQueryTest test);
 
 EBookQueryTest
 get_current_addressbook_test (void);
+
+GSList *
+get_books_data();
 
 
 G_END_DECLS

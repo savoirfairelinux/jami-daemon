@@ -64,6 +64,8 @@ static int pixbuf_size = 32;
  */
 int remaining_books_to_open;
 
+GSList *books_data = NULL;
+
 /**
  * Current selected addressbook's uri and uid, initialized with default
  */
@@ -451,65 +453,27 @@ eds_async_open_callback (EBook *book, EBookStatus status, gpointer closure)
 void
 init ()
 {
-    GError *err = NULL;
-    gchar *absuri, *reluri;
+    GSList *book_list_iterator;
+    book_data_t *book_data;
 
-    EBook *default_addressbook = e_book_new_default_addressbook (&err);
+    DEBUG ("Addressbook: Init default addressbook");
 
-    if (err)
-        ERROR ("Addressbook: Error: Could not create new book from source: %s", err->message);
-
-    ESource *default_source = e_book_get_source (default_addressbook);
-
-    // DEBUG ("Addressbook: Default source relative uri %s", e_source_peek_relative_uri (default_source));
-    // DEBUG ("Addressbook: Default source absolute uri %s", e_source_peek_absolute_uri (default_source));
-
-    if (current_uri) {
-        g_free (current_uri);
-        current_uri = NULL;
+    if (books_data == NULL) {
+        DEBUG ("Addressbook: No books data (%s:%d)", __FILE__, __LINE__);
+        return;
     }
 
-    if (current_uid) {
-        g_free (current_uid);
-        current_uid = NULL;
+    // Iterate throw the list
+    for (book_list_iterator = books_data; book_list_iterator != NULL;
+            book_list_iterator = book_list_iterator->next) {
+        book_data = (book_data_t *) book_list_iterator->data;
+
+        if (book_data->isdefault) {
+            current_uri = book_data->uri;
+            current_uid = book_data->uid;
+            current_name = book_data->name;
+        }
     }
-
-    if (strcmp (current_name, "Default") != 0) {
-        g_free (current_name);
-        current_name = NULL;
-    }
-
-    // TODO: This should work but return a NULL pointer ...
-    // if (! (group = e_source_peek_group (default_source)));
-
-    // ERROR ("Addressbook: Error: No group found for default addressbook");
-
-    absuri = g_strdup (e_source_peek_absolute_uri (default_source));
-    // absuri = g_strdup (e_source_group_peek_base_uri (group));
-    reluri = g_strdup (e_source_peek_relative_uri (default_source));
-
-    if (!absuri) {
-        absuri = g_malloc (1);
-        *absuri = 0;
-    }
-
-    if (!reluri) {
-        reluri = g_malloc (1);
-        *reluri = 0;
-    }
-
-    // Do not overwrite current_name for default
-    // current_name = g_strdup (e_source_peek_name (default_source));
-
-    current_uid = g_strdup (e_source_peek_uid (default_source));
-
-    if (strcmp (absuri+strlen (absuri)-1, "/") == 0)
-        current_uri = g_strjoin ("", absuri, reluri, NULL);
-    else
-        current_uri = g_strjoin ("/", absuri, reluri, NULL);
-
-    g_free (absuri);
-    g_free (reluri);
 }
 
 
@@ -522,7 +486,7 @@ fill_books_data ()
     GSList *list, *l;
     ESourceList *source_list = NULL;
     remaining_books_to_open = 0;
-    books_data = NULL;
+    gboolean default_found;
 
     source_list = e_source_list_new_for_gconf_default ("/apps/evolution/addressbook/sources");
 
@@ -538,14 +502,14 @@ fill_books_data ()
         return;
     }
 
+    // in case default property is not set for any addressbook
+    default_found = FALSE;
 
     for (l = list; l != NULL; l = l->next) {
 
         ESourceGroup *group = l->data;
         GSList *sources = NULL, *m;
-        gchar *absuri;
-
-        absuri = g_strdup (e_source_group_peek_base_uri (group));
+        gchar *absuri = g_strdup (e_source_group_peek_base_uri (group));
 
         sources = e_source_group_peek_sources (group);
 
@@ -561,12 +525,13 @@ fill_books_data ()
             const gchar *property_name = "default";
             const gchar *prop = e_source_get_property (source, property_name);
 
-            if (prop)
-                if (strcmp (prop, "true") == 0)
+            if (prop) {
+                if (strcmp (prop, "true") == 0) {
                     book_data->isdefault = TRUE;
-                else
+                    default_found = TRUE;
+                } else
                     book_data->isdefault = FALSE;
-            else
+            } else
                 book_data->isdefault = FALSE;
 
             if (strcmp (absuri+strlen (absuri)-1, "/") == 0)
@@ -579,6 +544,12 @@ fill_books_data ()
         }
 
         g_free (absuri);
+    }
+
+    if (!default_found) {
+        DEBUG ("Addressbook: No default addressbook found, using first addressbook as default");
+        book_data_t *book_data = g_slist_nth_data (books_data, 0);
+        book_data->isdefault = TRUE;
     }
 
     g_object_unref (source_list);
@@ -662,7 +633,7 @@ set_current_addressbook (const gchar *name)
 
     if (!books_data) {
         DEBUG ("Addressbook: No books data (%s:%d)", __FILE__, __LINE__);
-        return NULL;
+        return;
     }
 
     // Iterate throw the list
@@ -696,4 +667,10 @@ EBookQueryTest
 get_current_addressbook_test (void)
 {
     return current_test;
+}
+
+GSList *
+get_books_data()
+{
+    return books_data;
 }
