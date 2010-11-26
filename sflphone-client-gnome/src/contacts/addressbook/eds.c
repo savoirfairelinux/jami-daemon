@@ -55,16 +55,14 @@ typedef struct _Search_Handler_And_Data {
 } Search_Handler_And_Data;
 
 /**
+ * The global addressbook list
+ */
+GSList *books_data = NULL;
+
+/**
  * Size of image that will be displayed in contact list
  */
 static int pixbuf_size = 32;
-
-/**
- * Remaining books to open (asynchronous)
- */
-int remaining_books_to_open;
-
-GSList *books_data = NULL;
 
 /**
  * Current selected addressbook's uri and uid, initialized with default
@@ -89,11 +87,25 @@ free_hit (Hit *h)
 }
 
 /**
+ * Free a book data
+ */
+void
+free_book_data (book_data_t *data)
+{
+    g_free (data->name);
+    g_free (data->uid);
+    g_free (data->uri);
+}
+
+/**
  * Public way to know if we can perform a search
  */
 gboolean
 books_ready()
 {
+    if (books_data == NULL)
+        return 0;
+
     return (g_slist_length (books_data) > 0);
 }
 
@@ -106,7 +118,7 @@ books_active()
     GSList *book_list_iterator;
     book_data_t *book_data;
 
-    if (!books_data) {
+    if (books_data == NULL) {
         DEBUG ("Addressbook: No books data (%s:%d)", __FILE__, __LINE__);
         return FALSE;
     }
@@ -132,7 +144,7 @@ books_get_book_data_by_uid (gchar *uid)
     GSList *book_list_iterator;
     book_data_t *book_data;
 
-    if (!books_data) {
+    if (books_data == NULL) {
         DEBUG ("Addressbook: No books data (%s:%d)", __FILE__, __LINE__);
         return NULL;
     }
@@ -282,8 +294,6 @@ eds_query_result_cb (EBook *book, EBookStatus status, GList *contacts, gpointer 
 
     if (status == E_BOOK_ERROR_OK) {
 
-        gchar *number;
-
         // make sure we have a new list of hits
         had->hits = NULL;
 
@@ -297,37 +307,17 @@ eds_query_result_cb (EBook *book, EBookStatus status, GList *contacts, gpointer 
 
                 // Get the photo contact
                 hit->photo = pixbuf_from_contact (E_CONTACT (l->data));
-
-                // Get business phone information
-                fetch_information_from_contact (E_CONTACT (l->data), E_CONTACT_PHONE_BUSINESS, &number);
-                hit->phone_business = g_strdup (number);
-
-                // Get home phone information
-                fetch_information_from_contact (E_CONTACT (l->data), E_CONTACT_PHONE_HOME, &number);
-                hit->phone_home = g_strdup (number);
-
-                // Get mobile phone information
-                fetch_information_from_contact (E_CONTACT (l->data), E_CONTACT_PHONE_MOBILE, &number);
-                hit->phone_mobile = g_strdup (number);
-
+                fetch_information_from_contact (E_CONTACT (l->data), E_CONTACT_PHONE_BUSINESS, &hit->phone_business);
+                fetch_information_from_contact (E_CONTACT (l->data), E_CONTACT_PHONE_HOME, &hit->phone_home);
+                fetch_information_from_contact (E_CONTACT (l->data), E_CONTACT_PHONE_MOBILE, &hit->phone_mobile);
                 hit->name = g_strdup ( (char *) e_contact_get_const (E_CONTACT (l->data), E_CONTACT_NAME_OR_ORG));
 
                 if (!hit->name)
                     hit->name = "";
 
-                /*
-                        DEBUG ("Addressbook: Contact Found");
-                        DEBUG ("Addressbook:     Full Name %s", hit->name);
-                        DEBUG ("Addressbook:     Phone Home %s", hit->phone_home);
-                        DEBUG ("Addressbook:     Phone Business %s", hit->phone_business);
-                        DEBUG ("Addressbook:     Phone Mobile %s", hit->phone_mobile);
-                */
-
                 if (hit)
                     had->hits = g_list_append (had->hits, hit);
 
-
-                // DEBUG ("Addressbook: max_result_remaining %d", had->max_results_remaining);
                 had->max_results_remaining--;
 
                 if (had->max_results_remaining <= 0)
@@ -485,7 +475,6 @@ fill_books_data ()
 {
     GSList *list, *l;
     ESourceList *source_list = NULL;
-    remaining_books_to_open = 0;
     gboolean default_found;
 
     source_list = e_source_list_new_for_gconf_default ("/apps/evolution/addressbook/sources");
@@ -500,6 +489,11 @@ fill_books_data ()
     if (!list) {
         DEBUG ("Addressbook: Address Book source groups are missing (%s:%d)! Check your GConf setup.", __FILE__, __LINE__);
         return;
+    }
+
+    if (books_data == NULL) {
+        empty_books_data();
+        books_data = NULL;
     }
 
     // in case default property is not set for any addressbook
@@ -553,6 +547,26 @@ fill_books_data ()
     }
 
     g_object_unref (source_list);
+}
+
+void
+empty_books_data()
+{
+    GSList *book_list_iterator;
+    book_data_t *book_data;
+
+    if (books_data == NULL) {
+        DEBUG ("Addressbook: No books data (%s:%d)", __FILE__, __LINE__);
+        return;
+    }
+
+    // Iterate throw the list
+    for (book_list_iterator = books_data; book_list_iterator != NULL;
+            book_list_iterator = book_list_iterator->next) {
+        book_data = (book_data_t *) book_list_iterator->data;
+
+        free_book_data (book_data);
+    }
 }
 
 void
