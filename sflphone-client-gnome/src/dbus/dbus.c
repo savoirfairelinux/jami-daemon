@@ -511,23 +511,17 @@ error_alert (DBusGProxy *proxy UNUSED, int errCode, void * foo  UNUSED)
 }
 
 gboolean
-dbus_connect()
+dbus_connect (GError **error)
 {
-
-    GError *error = NULL;
     connection = NULL;
     instanceProxy = NULL;
 
     g_type_init();
 
-    connection = dbus_g_bus_get (DBUS_BUS_SESSION, &error);
+    connection = dbus_g_bus_get (DBUS_BUS_SESSION, error);
 
-    if (error) {
-        ERROR ("Failed to open connection to bus: %s",
-               error->message);
-        g_error_free (error);
+    if (connection == NULL)
         return FALSE;
-    }
 
     /* Create a proxy object for the "bus driver" (name "org.freedesktop.DBus") */
 
@@ -545,11 +539,7 @@ dbus_connect()
     callManagerProxy = dbus_g_proxy_new_for_name (connection,
                        "org.sflphone.SFLphone", "/org/sflphone/SFLphone/CallManager",
                        "org.sflphone.SFLphone.CallManager");
-
-    if (callManagerProxy == NULL) {
-        ERROR ("Failed to get proxy to CallManagers");
-        return FALSE;
-    }
+    g_assert (callManagerProxy != NULL);
 
     DEBUG ("DBus connected to CallManager");
     /* STRING STRING STRING Marshaller */
@@ -687,11 +677,7 @@ dbus_connect()
     configurationManagerProxy = dbus_g_proxy_new_for_name (connection,
                                 "org.sflphone.SFLphone", "/org/sflphone/SFLphone/ConfigurationManager",
                                 "org.sflphone.SFLphone.ConfigurationManager");
-
-    if (!configurationManagerProxy) {
-        ERROR ("Failed to get proxy to ConfigurationManager");
-        return FALSE;
-    }
+    g_assert (configurationManagerProxy != NULL);
 
     DEBUG ("DBus connected to ConfigurationManager");
     dbus_g_proxy_add_signal (configurationManagerProxy, "accountsChanged",
@@ -1171,18 +1157,10 @@ dbus_start_tone (const int start, const guint type)
     }
 }
 
-void
-dbus_register (int pid, gchar * name)
+gboolean
+dbus_register (int pid, gchar *name, GError **error)
 {
-    GError *error = NULL;
-
-    org_sflphone_SFLphone_Instance_register (instanceProxy, pid, name, &error);
-
-    if (error) {
-        ERROR ("Failed to call register() on instanceProxy: %s",
-               error->message);
-        g_error_free (error);
-    }
+    return org_sflphone_SFLphone_Instance_register (instanceProxy, pid, name, error);
 }
 
 void
@@ -1874,7 +1852,7 @@ dbus_get_addressbook_list (void)
 {
 
     GError *error = NULL;
-    gchar** array;
+    gchar** array = NULL;
 
     org_sflphone_SFLphone_ConfigurationManager_get_addressbook_list (
         configurationManagerProxy, &array, &error);
