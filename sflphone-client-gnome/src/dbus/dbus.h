@@ -50,7 +50,7 @@
  * Try to connect to DBus services
  * @return TRUE if connection succeeded, FALSE otherwise
  */
-gboolean dbus_connect (GError **error);
+gboolean dbus_connect ();
 
 /**
  * Unreferences the proxies
@@ -417,9 +417,8 @@ void dbus_start_tone (const int start , const guint type);
  * Manage the instances of clients connected to the server
  * @param pid The pid of the processus client
  * @param name The string description of the client. Here : GTK+ Client
- * @param error return location for a GError or NULL
  */
-gboolean dbus_register (int pid, gchar * name, GError **error);
+void dbus_register (int pid, gchar * name);
 
 /**
  * Instance - Send unregistration request to dbus services

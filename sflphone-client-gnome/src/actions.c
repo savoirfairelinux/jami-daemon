@@ -313,35 +313,38 @@ void sflphone_fill_account_list (void)
     sflphone_fill_codec_list ();
 }
 
-gboolean sflphone_init (GError **error)
+gboolean sflphone_init()
 {
-    if (!dbus_connect (error))
+
+    if (!dbus_connect ()) {
+
+        main_window_error_message (_ ("Unable to connect to the SFLphone server.\nMake sure the daemon is running."));
         return FALSE;
+    } else {
+        dbus_register (getpid(), "Gtk+ Client");
 
-    if (!dbus_register (getpid (), "Gtk+ Client", error))
-        return FALSE;
+        // Init icons factory
+        init_icon_factory ();
 
-    // Init icons factory
-    init_icon_factory ();
+        current_calls = calltab_init (FALSE, CURRENT_CALLS);
+        contacts = calltab_init (TRUE, CONTACTS);
+        history = calltab_init (TRUE, HISTORY);
 
-    current_calls = calltab_init (FALSE, CURRENT_CALLS);
-    contacts = calltab_init (TRUE, CONTACTS);
-    history = calltab_init (TRUE, HISTORY);
+        account_list_init ();
+        codec_capabilities_load ();
+        conferencelist_init ();
 
-    account_list_init ();
-    codec_capabilities_load ();
-    conferencelist_init ();
+        // Fetch the configured accounts
+        sflphone_fill_account_list ();
 
-    // Fetch the configured accounts
-    sflphone_fill_account_list ();
+        // Fetch the ip2ip profile
+        sflphone_fill_ip2ip_profile();
 
-    // Fetch the ip2ip profile
-    sflphone_fill_ip2ip_profile();
+        // Fetch the conference list
+        // sflphone_fill_conference_list();
 
-    // Fetch the conference list
-    // sflphone_fill_conference_list();
-
-    return TRUE;
+        return TRUE;
+    }
 }
 
 void sflphone_fill_ip2ip_profile (void)

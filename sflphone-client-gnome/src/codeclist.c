@@ -82,16 +82,14 @@ void codec_capabilities_load (void)
     // This is a global list inherited by all accounts
     codecs = (gchar**) dbus_codec_list ();
 
-    if (codecs != NULL) {
-        // Add the codecs in the list
-        for (pl=codecs; *codecs; codecs++) {
+    // Add the codecs in the list
+    for (pl=codecs; *codecs; codecs++) {
 
-            codec_t *c;
-            payload = atoi (*codecs);
-            specs = (gchar **) dbus_codec_details (payload);
-            codec_create_new_with_specs (payload, specs, TRUE, &c);
-            g_queue_push_tail (codecsCapabilities, (gpointer*) c);
-        }
+        codec_t *c;
+        payload = atoi (*codecs);
+        specs = (gchar **) dbus_codec_details (payload);
+        codec_create_new_with_specs (payload, specs, TRUE, &c);
+        g_queue_push_tail (codecsCapabilities, (gpointer*) c);
     }
 
     // If we didn't load any codecs, problem ...
@@ -100,7 +98,7 @@ void codec_capabilities_load (void)
         // Error message
         ERROR ("No audio codecs found");
         dbus_unregister (getpid());
-        exit (1);
+        exit (0);
     }
 }
 
