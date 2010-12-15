@@ -58,7 +58,7 @@ PKG_CHECK_MODULES(DEPS,     \
     gtk+-2.0 >= 2.2         \
     glib-2.0 >= 2.2         \
     webkit-1.0              \
-    libebook-1.2 >= 1.4	\
+    libebook-1.2 >= 2.22	\
 	libgnomeui-2.0			\
 	gnome-doc-utils
 )
