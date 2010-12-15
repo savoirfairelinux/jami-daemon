@@ -47,6 +47,7 @@
 int
 main (int argc, char *argv[])
 {
+    GError *error = NULL;
     // Handle logging
     int i;
 
@@ -89,42 +90,56 @@ main (int argc, char *argv[])
                         GNOME_PROGRAM_STANDARD_PROPERTIES,
                         NULL) ;
 
-    if (sflphone_init ()) {
+    if (!sflphone_init (&error)) {
+        gchar *markup;
 
-        if (eel_gconf_get_integer (SHOW_STATUSICON))
-            show_status_icon ();
+        ERROR (error->message);
+        markup = g_markup_printf_escaped (
+                     _ ("Unable to initialize.\nMake sure the daemon is running.\nError: %s"),
+                     error->message);
 
-        create_main_window ();
+        main_window_error_message (markup);
 
-        if (eel_gconf_get_integer (SHOW_STATUSICON) && eel_gconf_get_integer (START_HIDDEN)) {
-            gtk_widget_hide (GTK_WIDGET (get_main_window()));
-            set_minimized (TRUE);
-        }
+        g_free (markup);
+        g_error_free (error);
 
-
-        status_bar_display_account ();
-
-        // Load the history
-        sflphone_fill_history ();
-
-        // Get the active calls and conferences at startup
-        sflphone_fill_call_list ();
-        sflphone_fill_conference_list ();
-
-        // Update the GUI
-        update_actions ();
-
-        shortcuts_initialize_bindings();
-
-        /* start the main loop */
-        gtk_main ();
+        goto OUT;
     }
 
-    gdk_threads_leave ();
+    if (eel_gconf_get_integer (SHOW_STATUSICON))
+        show_status_icon ();
+
+    create_main_window ();
+
+    if (eel_gconf_get_integer (SHOW_STATUSICON) && eel_gconf_get_integer (START_HIDDEN)) {
+        gtk_widget_hide (GTK_WIDGET (get_main_window()));
+        set_minimized (TRUE);
+    }
+
+
+    status_bar_display_account ();
+
+    // Load the history
+    sflphone_fill_history ();
+
+    // Get the active calls and conferences at startup
+    sflphone_fill_call_list ();
+    sflphone_fill_conference_list ();
+
+    // Update the GUI
+    update_actions ();
+
+    shortcuts_initialize_bindings();
+
+    /* start the main loop */
+    gtk_main ();
 
     shortcuts_destroy_bindings();
 
-    return 0;
+OUT:
+    gdk_threads_leave ();
+
+    return error != NULL;
 }
 
 /** @mainpage SFLphone GTK+ Client Documentation
