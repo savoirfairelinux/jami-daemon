@@ -1,19 +1,7 @@
-#!/bin/bash
+#!/bin/sh -e
 
-function autocmd()
-{
-    echo "Running ${1}..."
-        $* || {
-            echo "Error running ${1}"
-                exit 1
-        }
-}
+# Workaround for http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=565663
+[ ! -e m4 ] && mkdir m4
 
 gnome-doc-prepare --force
-
-autocmd libtoolize --force --copy
-autocmd aclocal
-autocmd autoheader
-autocmd autoconf -f
-autocmd automake --add-missing --force-missing --copy -Wall
-
+autoreconf --force --install --verbose -Wall -I m4
