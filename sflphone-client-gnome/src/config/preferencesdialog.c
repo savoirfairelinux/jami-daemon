@@ -468,7 +468,7 @@ GtkTreeModel* createModel()
             gdk_pixbuf_unref (pixbuf);
         } else {
             DEBUG ("Couldn't load icon: %s", error->message);
-            g_error_free (error);
+            g_clear_error (&error);
         }
     }
 

@@ -74,5 +74,5 @@ AM_CPPFLAGS = \
 indent:
 	@echo "Indenting code:"
 	if [ -f $(ASTYLERC) ] ; then \
-		find $(top_srcdir)/src/ -regex ".*\.\(h\|cpp\)" -exec $(indent) --options=$(ASTYLERC) {} \; ; \
+                find $(top_srcdir)/src/ -name \*.cpp -o -name \*.h | xargs $(indent) --options=$(ASTYLERC) ; \
 	fi

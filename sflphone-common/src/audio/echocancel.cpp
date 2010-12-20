@@ -30,7 +30,7 @@
 
 #include "echocancel.h"
 
-// #include <fstream>
+#include <cmath>
 
 EchoCancel::EchoCancel (int smplRate, int frameLength) : _samplingRate (smplRate),
     _frameLength (frameLength),
