@@ -38,145 +38,156 @@ using namespace DBus;
 static const char *introspectable_name = "org.freedesktop.DBus.Introspectable";
 
 IntrospectableAdaptor::IntrospectableAdaptor()
-        : InterfaceAdaptor (introspectable_name) {
-    register_method (IntrospectableAdaptor, Introspect, Introspect);
+: InterfaceAdaptor(introspectable_name)
+{
+	register_method(IntrospectableAdaptor, Introspect, Introspect);
 }
 
-Message IntrospectableAdaptor::Introspect (const CallMessage &call) {
-    debug_log ("requested introspection data");
+Message IntrospectableAdaptor::Introspect(const CallMessage &call)
+{
+	debug_log("requested introspection data");
 
-    std::ostringstream xml;
+	std::ostringstream xml;
 
-    xml << DBUS_INTROSPECT_1_0_XML_DOCTYPE_DECL_NODE;
+	xml << DBUS_INTROSPECT_1_0_XML_DOCTYPE_DECL_NODE;
 
-    const std::string path = object()->path();
+	const std::string path = object()->path();
 
-    xml << "<node name=\"" << path << "\">";
+	xml << "<node name=\"" << path << "\">";
 
-    InterfaceAdaptorTable::const_iterator iti;
+	InterfaceAdaptorTable::const_iterator iti;
 
-    for (iti = _interfaces.begin(); iti != _interfaces.end(); ++iti) {
-        debug_log ("introspecting interface %s", iti->first.c_str());
+	for (iti = _interfaces.begin(); iti != _interfaces.end(); ++iti)
+	{
+		debug_log("introspecting interface %s", iti->first.c_str());
 
-        IntrospectedInterface *const intro = iti->second->introspect();
+		IntrospectedInterface *const intro = iti->second->introspect();
+		if (intro)
+		{
+			xml << "\n\t<interface name=\"" << intro->name << "\">";
 
-        if (intro) {
-            xml << "\n\t<interface name=\"" << intro->name << "\">";
+			for (const IntrospectedProperty *p = intro->properties; p->name; ++p)
+			{
+				std::string access;
 
-            for (const IntrospectedProperty *p = intro->properties; p->name; ++p) {
-                std::string access;
+				if (p->read)  access += "read";
+				if (p->write) access += "write";
 
-                if (p->read)  access += "read";
+				xml << "\n\t\t<property name=\"" << p->name << "\""
+				    << " type=\"" << p->type << "\""
+				    << " access=\"" << access << "\"/>";
+			}
 
-                if (p->write) access += "write";
+			for (const IntrospectedMethod *m = intro->methods; m->args; ++m)
+			{
+				xml << "\n\t\t<method name=\"" << m->name << "\">";
 
-                xml << "\n\t\t<property name=\"" << p->name << "\""
-                << " type=\"" << p->type << "\""
-                << " access=\"" << access << "\"/>";
-            }
+				for (const IntrospectedArgument *a = m->args; a->type; ++a)
+				{
+					xml << "\n\t\t\t<arg direction=\"" << (a->in ? "in" : "out") << "\""
+					    << " type=\"" << a->type << "\"";
 
-            for (const IntrospectedMethod *m = intro->methods; m->args; ++m) {
-                xml << "\n\t\t<method name=\"" << m->name << "\">";
+					if (a->name) xml << " name=\"" << a->name << "\"";
 
-                for (const IntrospectedArgument *a = m->args; a->type; ++a) {
-                    xml << "\n\t\t\t<arg direction=\"" << (a->in ? "in" : "out") << "\""
-                    << " type=\"" << a->type << "\"";
+					xml << "/>";
+				}
 
-                    if (a->name) xml << " name=\"" << a->name << "\"";
+				xml << "\n\t\t</method>";
+			}
 
-                    xml << "/>";
-                }
+			for (const IntrospectedMethod *m = intro->signals; m->args; ++m)
+			{
+				xml << "\n\t\t<signal name=\"" << m->name << "\">";
 
-                xml << "\n\t\t</method>";
-            }
+				for (const IntrospectedArgument *a = m->args; a->type; ++a)
+				{
+					xml << "<arg type=\"" << a->type << "\"";
 
-            for (const IntrospectedMethod *m = intro->signals; m->args; ++m) {
-                xml << "\n\t\t<signal name=\"" << m->name << "\">";
+					if (a->name) xml << " name=\"" << a->name << "\"";
 
-                for (const IntrospectedArgument *a = m->args; a->type; ++a) {
-                    xml << "<arg type=\"" << a->type << "\"";
+					xml << "/>";
+				}
+				xml << "\n\t\t</signal>";
+			}
 
-                    if (a->name) xml << " name=\"" << a->name << "\"";
+			xml << "\n\t</interface>";
+		}
+	}
 
-                    xml << "/>";
-                }
+	const ObjectPathList nodes = ObjectAdaptor::child_nodes_from_prefix(path + '/');
+	ObjectPathList::const_iterator oni;
 
-                xml << "\n\t\t</signal>";
-            }
+	for (oni = nodes.begin(); oni != nodes.end(); ++oni) 
+	{
+		xml << "\n\t<node name=\"" << (*oni) << "\"/>";
+	}
 
-            xml << "\n\t</interface>";
-        }
-    }
+	/* broken
+	const ObjectAdaptorPList children = ObjectAdaptor::from_path_prefix(path + '/');
 
-    const ObjectPathList nodes = ObjectAdaptor::child_nodes_from_prefix (path + '/');
+	ObjectAdaptorPList::const_iterator oci;
 
-    ObjectPathList::const_iterator oni;
+	for (oci = children.begin(); oci != children.end(); ++oci) 
+	{
+		std::string name = (*oci)->path().substr(path.length()+1);
+		name.substr(name.find('/'));
 
-    for (oni = nodes.begin(); oni != nodes.end(); ++oni) {
-        xml << "\n\t<node name=\"" << (*oni) << "\"/>";
-    }
+		xml << "<node name=\"" << name << "\"/>";
+	}
+	*/
 
-    /* broken
-    const ObjectAdaptorPList children = ObjectAdaptor::from_path_prefix(path + '/');
+	xml << "\n</node>";
 
-    ObjectAdaptorPList::const_iterator oci;
-
-    for (oci = children.begin(); oci != children.end(); ++oci)
-    {
-    	std::string name = (*oci)->path().substr(path.length()+1);
-    	name.substr(name.find('/'));
-
-    	xml << "<node name=\"" << name << "\"/>";
-    }
-    */
-
-    xml << "\n</node>";
-
-    ReturnMessage reply (call);
-
-    MessageIter wi = reply.writer();
-
-    wi.append_string (xml.str().c_str());
-
-    return reply;
+	ReturnMessage reply(call);
+	MessageIter wi = reply.writer();
+	wi.append_string(xml.str().c_str());
+	return reply;
 }
 
-IntrospectedInterface *const IntrospectableAdaptor::introspect() const {
-    static IntrospectedArgument Introspect_args[] = {
-        { "data", "s", false },
-        { 0, 0, 0 }
-    };
-    static IntrospectedMethod Introspectable_methods[] = {
-        { "Introspect", Introspect_args },
-        { 0, 0 }
-    };
-    static IntrospectedMethod Introspectable_signals[] = {
-        { 0, 0 }
-    };
-    static IntrospectedProperty Introspectable_properties[] = {
-        { 0, 0, 0, 0 }
-    };
-    static IntrospectedInterface Introspectable_interface = {
-        introspectable_name,
-        Introspectable_methods,
-        Introspectable_signals,
-        Introspectable_properties
-    };
-    return &Introspectable_interface;
+IntrospectedInterface *const IntrospectableAdaptor::introspect() const
+{
+	static IntrospectedArgument Introspect_args[] =
+	{
+		{ "data", "s", false },
+		{ 0, 0, 0 }
+	};
+	static IntrospectedMethod Introspectable_methods[] =
+	{
+		{ "Introspect", Introspect_args },
+		{ 0, 0 }
+	};
+	static IntrospectedMethod Introspectable_signals[] =
+	{
+		{ 0, 0 }
+	};
+	static IntrospectedProperty Introspectable_properties[] =
+	{
+		{ 0, 0, 0, 0 }
+	};
+	static IntrospectedInterface Introspectable_interface =
+	{
+		introspectable_name,
+		Introspectable_methods,
+		Introspectable_signals,
+		Introspectable_properties
+	};
+	return &Introspectable_interface;
 }
 
 IntrospectableProxy::IntrospectableProxy()
-        : InterfaceProxy (introspectable_name) {}
+: InterfaceProxy(introspectable_name)
+{}
 
-std::string IntrospectableProxy::Introspect() {
-    DBus::CallMessage call;
+std::string IntrospectableProxy::Introspect()
+{
+	DBus::CallMessage call;
 
-    call.member ("Introspect");
+	call.member("Introspect");
 
-    DBus::Message ret = invoke_method (call);
+	DBus::Message ret = invoke_method(call);
 
-    DBus::MessageIter ri = ret.reader();
-    const char *str = ri.get_string();
+	DBus::MessageIter ri = ret.reader();
+	const char *str = ri.get_string();
 
-    return str;
+	return str;
 }

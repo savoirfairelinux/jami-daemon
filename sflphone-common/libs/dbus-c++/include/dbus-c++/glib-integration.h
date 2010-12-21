@@ -54,9 +54,9 @@ private:
 
 private:
 
-	GSource *_source;
 	GMainContext *_ctx;
 	int _priority;
+	GSource *_source;
 
 friend class BusDispatcher;
 };
@@ -79,9 +79,9 @@ private:
 
 private:
 
-	GSource *_source;
 	GMainContext *_ctx;
 	int _priority;
+	GSource *_source;
 
 friend class BusDispatcher;
 };

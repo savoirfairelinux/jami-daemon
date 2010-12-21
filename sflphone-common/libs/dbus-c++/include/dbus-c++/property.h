@@ -46,7 +46,7 @@ public:
 
 	T operator() (void) const
 	{
-		return (T)_data->value;
+		return _data->value.operator T();
 	}
 
 	PropertyAdaptor &operator = (const T &t)

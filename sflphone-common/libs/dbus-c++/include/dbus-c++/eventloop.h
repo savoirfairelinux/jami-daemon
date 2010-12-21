@@ -30,7 +30,6 @@
 
 #include "api.h"
 #include "util.h"
-#include "error.h"
 
 namespace DBus {
 
@@ -127,7 +126,16 @@ class DXXAPI DefaultMutex
 {
 public:
 
-	DefaultMutex();
+  /*!
+   * Constructor for non recursive Mutex
+   */
+  DefaultMutex();
+
+  /*!
+   * Constructor
+   * \param recursive Set if Mutex should be recursive or not.
+   */
+	DefaultMutex(bool recursive);
 
 	~DefaultMutex();
 
@@ -150,8 +158,7 @@ public:
 
 	virtual void dispatch();
 
-    virtual void terminate();
-    
+	int _fdunlock[2];
 private:
 
 	DefaultMutex _mutex_t;
@@ -159,8 +166,6 @@ private:
 
 	DefaultMutex _mutex_w;
 	DefaultWatches _watches;
-	
-	int _terminateFd[2];
 
 friend class DefaultTimeout;
 friend class DefaultWatch;

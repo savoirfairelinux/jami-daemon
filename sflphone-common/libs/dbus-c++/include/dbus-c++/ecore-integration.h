@@ -47,7 +47,7 @@ private:
 
 	void toggle();
 
-	static int timeout_handler( void* );
+	static Eina_Bool timeout_handler( void* );
 
 	void _enable();
 
@@ -69,9 +69,9 @@ private:
 
 	void toggle();
 
-	static int watch_handler_read ( void*, Ecore_Fd_Handler *fdh);
+	static Eina_Bool watch_handler_read ( void*, Ecore_Fd_Handler *fdh);
     
-  static int watch_handler_error ( void*, Ecore_Fd_Handler *fdh);
+  static Eina_Bool watch_handler_error ( void*, Ecore_Fd_Handler *fdh);
 
 	void _enable();
 

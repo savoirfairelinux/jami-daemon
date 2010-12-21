@@ -25,6 +25,11 @@
 #ifndef __DBUSXX_UTIL_H
 #define __DBUSXX_UTIL_H
 
+#include <sstream>
+#include <iostream>
+#include <iomanip>
+#include <cassert>
+
 #include "api.h"
 #include "debug.h"
 
@@ -229,15 +234,29 @@ public:
 
 	R operator()(P param) const
 	{
-		/*if (_cb.get())*/ return _cb->call(param);
+		if (!empty())
+    {      
+      return _cb->call(param);
+    }
+
+    // TODO: think about return type in this case
+    // this assert should help me to find the use case where it's needed...
+    //assert (false);
 	}
 
 	R call(P param) const
 	{
-		/*if (_cb.get())*/ return _cb->call(param);
+		if (!empty())
+    {
+      return _cb->call(param);
+    }
+
+    // TODO: think about return type in this case
+    // this assert should help me to find the use case where it's needed...
+    //assert (false);
 	}
 
-	bool empty()
+	bool empty() const
 	{
 		return _cb.get() == 0;
 	}
@@ -267,6 +286,15 @@ private:
 
 	C *_c; M _m;
 };
+
+/// create std::string from any number
+template <typename T>
+std::string toString (const T &thing, int w = 0, int p = 0)
+{
+	std::ostringstream os;
+	os << std::setw(w) << std::setprecision(p) << thing;
+	return os.str();
+}
 
 } /* namespace DBus */
 

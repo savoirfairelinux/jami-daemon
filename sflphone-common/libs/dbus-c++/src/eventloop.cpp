@@ -30,200 +30,233 @@
 
 #include <sys/poll.h>
 #include <sys/time.h>
-#include <unistd.h>
 
 #include <dbus/dbus.h>
 
 using namespace DBus;
+using namespace std;
 
-static double millis (timeval tv) {
-    return (tv.tv_sec *1000.0 + tv.tv_usec/1000.0);
+static double millis(timeval tv)
+{
+	return (tv.tv_sec *1000.0 + tv.tv_usec/1000.0);
+}
+	
+DefaultTimeout::DefaultTimeout(int interval, bool repeat, DefaultMainLoop *ed)
+: _enabled(true), _interval(interval), _repeat(repeat), _expiration(0), _data(0), _disp(ed)
+{
+	timeval now;
+	gettimeofday(&now, NULL);
+
+	_expiration = millis(now) + interval;
+
+	_disp->_mutex_t.lock();
+	_disp->_timeouts.push_back(this);
+	_disp->_mutex_t.unlock();
 }
 
-DefaultTimeout::DefaultTimeout (int interval, bool repeat, DefaultMainLoop *ed)
-        : _enabled (true), _interval (interval), _repeat (repeat), _expiration (0), _data (0), _disp (ed) {
-    timeval now;
-    gettimeofday (&now, NULL);
-
-    _expiration = millis (now) + interval;
-
-    _disp->_mutex_t.lock();
-    _disp->_timeouts.push_back (this);
-    _disp->_mutex_t.unlock();
+DefaultTimeout::~DefaultTimeout()
+{
+	_disp->_mutex_t.lock();
+	_disp->_timeouts.remove(this);
+	_disp->_mutex_t.unlock();
 }
 
-DefaultTimeout::~DefaultTimeout() {
-    _disp->_mutex_t.lock();
-    _disp->_timeouts.remove (this);
-    _disp->_mutex_t.unlock();
+DefaultWatch::DefaultWatch(int fd, int flags, DefaultMainLoop *ed)
+: _enabled(true), _fd(fd), _flags(flags), _state(0), _data(0), _disp(ed)
+{
+	_disp->_mutex_w.lock();
+	_disp->_watches.push_back(this);
+	_disp->_mutex_w.unlock();
 }
 
-DefaultWatch::DefaultWatch (int fd, int flags, DefaultMainLoop *ed)
-        : _enabled (true), _fd (fd), _flags (flags), _state (0), _data (0), _disp (ed) {
-    _disp->_mutex_w.lock();
-    _disp->_watches.push_back (this);
-    _disp->_mutex_w.unlock();
+DefaultWatch::~DefaultWatch()
+{
+	_disp->_mutex_w.lock();
+	_disp->_watches.remove(this);
+	_disp->_mutex_w.unlock();
 }
 
-DefaultWatch::~DefaultWatch() {
-    _disp->_mutex_w.lock();
-    _disp->_watches.remove (this);
-    _disp->_mutex_w.unlock();
+DefaultMutex::DefaultMutex()
+{
+	pthread_mutex_init(&_mutex, NULL);
 }
 
-DefaultMutex::DefaultMutex() {
-    pthread_mutex_init (&_mutex, NULL);
+DefaultMutex::DefaultMutex(bool recursive)
+{
+	if (recursive)
+	{
+		pthread_mutex_t recmutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP; 
+ 		_mutex = recmutex;
+	}
+	else
+	{
+		pthread_mutex_init(&_mutex, NULL);
+	}
 }
 
-DefaultMutex::~DefaultMutex() {
-    pthread_mutex_destroy (&_mutex);
+DefaultMutex::~DefaultMutex()
+{
+	pthread_mutex_destroy(&_mutex);
 }
 
-void DefaultMutex::lock() {
-    pthread_mutex_lock (&_mutex);
+void DefaultMutex::lock()
+{
+	pthread_mutex_lock(&_mutex);
 }
 
-void DefaultMutex::unlock() {
-    pthread_mutex_unlock (&_mutex);
+void DefaultMutex::unlock()
+{
+	pthread_mutex_unlock(&_mutex);
 }
 
-DefaultMainLoop::DefaultMainLoop() {
-    if (pipe (_terminateFd) < 0) {
-        throw ErrorFailed ("unable to create unamed pipe");
-    }
+DefaultMainLoop::DefaultMainLoop() :
+	_mutex_w(true)
+{
 }
 
-DefaultMainLoop::~DefaultMainLoop() {
-    _mutex_w.lock();
+DefaultMainLoop::~DefaultMainLoop()
+{
+	_mutex_w.lock();
 
-    DefaultWatches::iterator wi = _watches.begin();
+	DefaultWatches::iterator wi = _watches.begin();
+	while (wi != _watches.end())
+	{
+		DefaultWatches::iterator wmp = wi;
+		++wmp;
+		_mutex_w.unlock();
+		delete (*wi);
+		_mutex_w.lock();
+		wi = wmp;
+	}
+	_mutex_w.unlock();
 
-    while (wi != _watches.end()) {
-        DefaultWatches::iterator wmp = wi;
-        ++wmp;
-        _mutex_w.unlock();
-        delete (*wi);
-        _mutex_w.lock();
-        wi = wmp;
-    }
+	_mutex_t.lock();
 
-    _mutex_w.unlock();
-
-    _mutex_t.lock();
-
-    DefaultTimeouts::iterator ti = _timeouts.begin();
-
-    while (ti != _timeouts.end()) {
-        DefaultTimeouts::iterator tmp = ti;
-        ++tmp;
-        _mutex_t.unlock();
-        delete (*ti);
-        _mutex_t.lock();
-        ti = tmp;
-    }
-
-    close (_terminateFd[0]);
-
-    close (_terminateFd[1]);
-
-    _mutex_t.unlock();
+	DefaultTimeouts::iterator ti = _timeouts.begin();
+	while (ti != _timeouts.end())
+	{
+		DefaultTimeouts::iterator tmp = ti;
+		++tmp;
+		_mutex_t.unlock();
+		delete (*ti);
+		_mutex_t.lock();
+		ti = tmp;
+	}
+	_mutex_t.unlock();
 }
 
-void DefaultMainLoop::terminate() {
-    write (_terminateFd[1], " ", 1);
-}
+void DefaultMainLoop::dispatch()
+{
+	_mutex_w.lock();
 
-void DefaultMainLoop::dispatch() {
-    _mutex_w.lock();
+	int nfd = _watches.size();
 
-    int nfd = _watches.size() + 1;
+	if(_fdunlock)
+	{
+		nfd=nfd+2;
+	}
 
-    pollfd fds[nfd];
+	pollfd fds[nfd];
 
-    DefaultWatches::iterator wi = _watches.begin();
+	DefaultWatches::iterator wi = _watches.begin();
 
-    for (nfd = 0; wi != _watches.end(); ++wi) {
-        if ( (*wi)->enabled()) {
-            fds[nfd].fd = (*wi)->descriptor();
-            fds[nfd].events = (*wi)->flags();
-            fds[nfd].revents = 0;
+	for (nfd = 0; wi != _watches.end(); ++wi)
+	{
+		if ((*wi)->enabled())
+		{
+			fds[nfd].fd = (*wi)->descriptor();
+			fds[nfd].events = (*wi)->flags();
+			fds[nfd].revents = 0;
 
-            ++nfd;
-        }
-    }
+			++nfd;
+		}
+	}
 
-    fds[nfd].fd = _terminateFd[0];
+	if(_fdunlock){
+		fds[nfd].fd = _fdunlock[0];
+		fds[nfd].events = POLLIN | POLLOUT | POLLPRI ;
+		fds[nfd].revents = 0;
+		
+		nfd++;
+		fds[nfd].fd = _fdunlock[1];
+		fds[nfd].events = POLLIN | POLLOUT | POLLPRI ;
+		fds[nfd].revents = 0;
+	}
 
-    fds[nfd].events = POLLIN;
-    fds[nfd].revents = 0;
+	_mutex_w.unlock();
 
-    _mutex_w.unlock();
+	int wait_min = 10000;
 
-    int wait_min = 10000;
+	DefaultTimeouts::iterator ti;
 
-    DefaultTimeouts::iterator ti;
+	_mutex_t.lock();
 
-    _mutex_t.lock();
+	for (ti = _timeouts.begin(); ti != _timeouts.end(); ++ti)
+	{
+		if ((*ti)->enabled() && (*ti)->interval() < wait_min)
+			wait_min = (*ti)->interval();
+	}
 
-    for (ti = _timeouts.begin(); ti != _timeouts.end(); ++ti) {
-        if ( (*ti)->enabled() && (*ti)->interval() < wait_min)
-            wait_min = (*ti)->interval();
-    }
+	_mutex_t.unlock();
 
-    _mutex_t.unlock();
+	poll(fds, nfd, wait_min);
 
-    poll (fds, nfd+1, wait_min);
+	timeval now;
+	gettimeofday(&now, NULL);
 
-    timeval now;
-    gettimeofday (&now, NULL);
+	double now_millis = millis(now);
 
-    double now_millis = millis (now);
+	_mutex_t.lock();
 
-    _mutex_t.lock();
+	ti = _timeouts.begin();
 
-    ti = _timeouts.begin();
+	while (ti != _timeouts.end())
+	{
+		DefaultTimeouts::iterator tmp = ti;
+		++tmp;
 
-    while (ti != _timeouts.end()) {
-        DefaultTimeouts::iterator tmp = ti;
-        ++tmp;
+		if ((*ti)->enabled() && now_millis >= (*ti)->_expiration)
+		{
+			(*ti)->expired(*(*ti));
 
-        if ( (*ti)->enabled() && now_millis >= (*ti)->_expiration) {
-            (*ti)->expired (* (*ti));
+			if ((*ti)->_repeat)
+			{
+				(*ti)->_expiration = now_millis + (*ti)->_interval;
+			}
 
-            if ( (*ti)->_repeat) {
-                (*ti)->_expiration = now_millis + (*ti)->_interval;
-            }
+		}
 
-        }
+		ti = tmp;
+	}
 
-        ti = tmp;
-    }
+	_mutex_t.unlock();
 
-    _mutex_t.unlock();
+	_mutex_w.lock();
 
-    _mutex_w.lock();
+	for (int j = 0; j < nfd; ++j)
+	{
+		DefaultWatches::iterator wi;
 
-    for (int j = 0; j < nfd; ++j) {
-        DefaultWatches::iterator wi;
+		for (wi = _watches.begin(); wi != _watches.end();)
+		{
+			DefaultWatches::iterator tmp = wi;
+			++tmp;
 
-        for (wi = _watches.begin(); wi != _watches.end();) {
-            DefaultWatches::iterator tmp = wi;
-            ++tmp;
+			if ((*wi)->enabled() && (*wi)->_fd == fds[j].fd)
+			{
+				if (fds[j].revents)
+				{
+					(*wi)->_state = fds[j].revents;
 
-            if ( (*wi)->enabled() && (*wi)->_fd == fds[j].fd) {
-                if (fds[j].revents) {
-                    (*wi)->_state = fds[j].revents;
+					(*wi)->ready(*(*wi));
 
-                    (*wi)->ready (* (*wi));
+					fds[j].revents = 0;
+				}
+			}
 
-                    fds[j].revents = 0;
-                }
-            }
-
-            wi = tmp;
-        }
-    }
-
-    _mutex_w.unlock();
+			wi = tmp;
+		}
+	}
+	_mutex_w.unlock();
 }
 

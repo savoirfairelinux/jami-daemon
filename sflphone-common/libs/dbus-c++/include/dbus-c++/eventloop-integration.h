@@ -25,6 +25,7 @@
 #ifndef __DBUSXX_EVENTLOOP_INTEGRATION_H
 #define __DBUSXX_EVENTLOOP_INTEGRATION_H
 
+#include <errno.h>
 #include "api.h"
 #include "dispatcher.h"
 #include "util.h"
@@ -37,6 +38,7 @@ namespace DBus {
  */
 
 class BusDispatcher;
+class Pipe;
 
 class DXXAPI BusTimeout : public Timeout, public DefaultTimeout
 {
@@ -59,17 +61,18 @@ friend class BusDispatcher;
 class DXXAPI BusDispatcher : public Dispatcher, public DefaultMainLoop
 {
 public:
-
-	BusDispatcher() : _running(false)
-	{}
-
-	~BusDispatcher()
-	{}
+	BusDispatcher();
+	
+	~BusDispatcher() {}
 
 	virtual void enter();
 
 	virtual void leave();
 
+  virtual Pipe *add_pipe(void(*handler)(const void *data, void *buffer, unsigned int nbyte), const void *data);
+
+	virtual void del_pipe (Pipe *pipe);
+	
 	virtual void do_iteration();
 
 	virtual Timeout *add_timeout(Timeout::Internal *);
@@ -85,8 +88,9 @@ public:
 	void timeout_expired(DefaultTimeout &);
 
 private:
-
 	bool _running;
+	int _pipe[2];
+	std::list <Pipe*> pipe_list;
 };
 
 } /* namespace DBus */

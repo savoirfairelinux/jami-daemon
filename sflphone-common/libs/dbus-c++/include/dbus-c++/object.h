@@ -52,6 +52,10 @@ public:
 	
  	inline Connection &conn();
 
+	void set_timeout(int new_timeout = -1);
+
+	inline int get_timeout() const;
+
 private:
 
 	DXXAPILOCAL virtual bool handle_message(const Message &) = 0;
@@ -63,6 +67,7 @@ private:
 	Connection	_conn;
 	DBus::Path	_path;
 	std::string	_service;
+        int		_default_timeout;
 };
 
 /*
@@ -81,6 +86,11 @@ const DBus::Path &Object::path() const
 const std::string &Object::service() const
 {
 	return _service;
+}
+
+int Object::get_timeout() const
+{
+	return _default_timeout;
 }
 
 /*

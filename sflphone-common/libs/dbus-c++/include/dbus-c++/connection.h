@@ -446,6 +446,10 @@ public:
 	bool start_service( const char* name, unsigned long flags );
 
 	const std::vector<std::string>& names();
+	
+	void set_timeout(int timeout);
+	
+	int get_timeout();
 
 private:
 
@@ -454,6 +458,7 @@ private:
 private:
 
 	RefPtrI<Private> _pvt;
+	int _timeout;
 
 friend class ObjectAdaptor; // needed in order to register object paths for a connection
 };

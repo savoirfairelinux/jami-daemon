@@ -44,7 +44,7 @@ public:
 	/*!
 	 * \brief Gets the timeout interval.
 	 *
-	 * The dbus_timeout_handle() should be called each time this interval elapses, 
+	 * The handle() should be called each time this interval elapses, 
 	 * starting after it elapses once.
 	 *
 	 * The interval may change during the life of the timeout; if so, the timeout 

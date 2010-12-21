@@ -35,109 +35,121 @@ using namespace DBus;
 static const char *properties_name = "org.freedesktop.DBus.Properties";
 
 PropertiesAdaptor::PropertiesAdaptor()
-        : InterfaceAdaptor (properties_name) {
-    register_method (PropertiesAdaptor, Get, Get);
-    register_method (PropertiesAdaptor, Set, Set);
+: InterfaceAdaptor(properties_name)
+{
+	register_method(PropertiesAdaptor, Get, Get);
+	register_method(PropertiesAdaptor, Set, Set);
 }
 
-Message PropertiesAdaptor::Get (const CallMessage &call) {
-    MessageIter ri = call.reader();
+Message PropertiesAdaptor::Get(const CallMessage &call)
+{
+	MessageIter ri = call.reader();
 
-    std::string iface_name;
-    std::string property_name;
+	std::string iface_name;
+	std::string property_name;
 
-    ri >> iface_name >> property_name;
+	ri >> iface_name >> property_name;
 
-    debug_log ("requesting property %s on interface %s", property_name.c_str(), iface_name.c_str());
+	debug_log("requesting property %s on interface %s", property_name.c_str(), iface_name.c_str());
 
-    InterfaceAdaptor *interface = (InterfaceAdaptor *) find_interface (iface_name);
+	InterfaceAdaptor *interface = (InterfaceAdaptor *) find_interface(iface_name);
 
-    if (!interface)
-        throw ErrorFailed ("requested interface not found");
+	if (!interface)
+		throw ErrorFailed("requested interface not found");
 
-    Variant *value = interface->get_property (property_name);
+	Variant *value = interface->get_property(property_name);
 
-    if (!value)
-        throw ErrorFailed ("requested property not found");
+	if (!value)
+		throw ErrorFailed("requested property not found");
 
-    on_get_property (*interface, property_name, *value);
+	on_get_property(*interface, property_name, *value);
 
-    ReturnMessage reply (call);
+	ReturnMessage reply(call);
 
-    MessageIter wi = reply.writer();
+	MessageIter wi = reply.writer();
 
-    wi << *value;
-
-    return reply;
+	wi << *value;
+	return reply;
 }
 
-Message PropertiesAdaptor::Set (const CallMessage &call) {
-    MessageIter ri = call.reader();
+Message PropertiesAdaptor::Set(const CallMessage &call)
+{
+	MessageIter ri = call.reader();
 
-    std::string iface_name;
-    std::string property_name;
-    Variant value;
+	std::string iface_name;
+	std::string property_name;
+	Variant value;
 
-    ri >> iface_name >> property_name >> value;
+	ri >> iface_name >> property_name >> value;
 
-    InterfaceAdaptor *interface = (InterfaceAdaptor *) find_interface (iface_name);
+	InterfaceAdaptor *interface = (InterfaceAdaptor *) find_interface(iface_name);
 
-    if (!interface)
-        throw ErrorFailed ("requested interface not found");
+	if (!interface)
+		throw ErrorFailed("requested interface not found");
 
-    on_set_property (*interface, property_name, value);
+	on_set_property(*interface, property_name, value);
 
-    interface->set_property (property_name, value);
+	interface->set_property(property_name, value);
 
-    ReturnMessage reply (call);
+	ReturnMessage reply(call);
 
-    return reply;
+	return reply;
 }
 
-IntrospectedInterface *const PropertiesAdaptor::introspect() const {
-    static IntrospectedArgument Get_args[] = {
-        { "interface_name", "s", true },
-        { "property_name", "s", true },
-        { "value", "v", false },
-        { 0, 0, 0 }
-    };
-    static IntrospectedArgument Set_args[] = {
-        { "interface_name", "s", true },
-        { "property_name", "s", true },
-        { "value", "v", true },
-        { 0, 0, 0 }
-    };
-    static IntrospectedMethod Properties_methods[] = {
-        { "Get", Get_args },
-        { "Set", Set_args },
-        { 0, 0 }
-    };
-    static IntrospectedMethod Properties_signals[] = {
-        { 0, 0 }
-    };
-    static IntrospectedProperty Properties_properties[] = {
-        { 0, 0, 0, 0 }
-    };
-    static IntrospectedInterface Properties_interface = {
-        properties_name,
-        Properties_methods,
-        Properties_signals,
-        Properties_properties
-    };
-    return &Properties_interface;
+IntrospectedInterface *const PropertiesAdaptor::introspect() const
+{
+	static IntrospectedArgument Get_args[] =
+	{
+		{ "interface_name", "s", true },
+		{ "property_name", "s", true },
+		{ "value", "v", false },
+		{ 0, 0, 0 }
+	};
+	static IntrospectedArgument Set_args[] =
+	{
+		{ "interface_name", "s", true },
+		{ "property_name", "s", true },
+		{ "value", "v", true },
+		{ 0, 0, 0 }
+	};
+	static IntrospectedMethod Properties_methods[] =
+	{
+		{ "Get", Get_args },
+		{ "Set", Set_args },
+		{ 0, 0 }
+	};
+	static IntrospectedMethod Properties_signals[] =
+	{
+		{ 0, 0 }
+	};
+	static IntrospectedProperty Properties_properties[] = 
+	{
+		{ 0, 0, 0, 0 }
+	};
+	static IntrospectedInterface Properties_interface =
+	{
+		properties_name,
+		Properties_methods,
+		Properties_signals,
+		Properties_properties
+	};
+	return &Properties_interface;
 }
 
 PropertiesProxy::PropertiesProxy()
-        : InterfaceProxy (properties_name) {
+: InterfaceProxy(properties_name)
+{
 }
 
-Variant PropertiesProxy::Get (const std::string &iface, const std::string &property) {
+Variant PropertiesProxy::Get(const std::string &iface, const std::string &property)
+{
 //todo
-    Variant v;
-    return v;
+	Variant v;
+	return v;
 }
 
-void PropertiesProxy::Set (const std::string &iface, const std::string &property, const Variant &value) {
+void PropertiesProxy::Set(const std::string &iface, const std::string &property, const Variant &value)
+{
 //todo
 }
 

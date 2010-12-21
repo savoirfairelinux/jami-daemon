@@ -32,40 +32,48 @@ static bool systembus;
 static char *path;
 static char *service;
 
-void niam (int sig) {
-    DBus::Connection conn = systembus ? DBus::Connection::SystemBus() : DBus::Connection::SessionBus();
+void niam(int sig)
+{
+	DBus::Connection conn = systembus ? DBus::Connection::SystemBus() : DBus::Connection::SessionBus();
 
-    IntrospectedObject io (conn, path, service);
+	IntrospectedObject io(conn, path, service);
 
-    std::cout << io.Introspect();
+	std::cout << io.Introspect();
 
-    dispatcher.leave();
+	dispatcher.leave();
 }
 
-int main (int argc, char ** argv) {
-    signal (SIGTERM, niam);
-    signal (SIGINT, niam);
-    signal (SIGALRM, niam);
+int main(int argc, char ** argv)
+{
+	signal(SIGTERM, niam);
+	signal(SIGINT, niam);
+	signal(SIGALRM, niam);
 
-    if (argc == 1) {
-        std::cerr << std::endl << "Usage: " << argv[0] << " [--system] <object_path> [<destination>]" << std::endl << std::endl;
-    } else {
-        if (strcmp (argv[1], "--system")) {
-            systembus = false;
-            path = argv[1];
-            service = argc > 2 ? argv[2] : 0;
-        } else {
-            systembus = true;
-            path = argv[2];
-            service = argc > 3 ? argv[3] : 0;
-        }
+	if (argc == 1)
+	{
+		std::cerr << std::endl << "Usage: " << argv[0] << " [--system] <object_path> [<destination>]" << std::endl << std::endl;
+	}
+	else
+	{
+		if (strcmp(argv[1], "--system"))
+		{
+			systembus = false;
+			path = argv[1];
+			service = argc > 2 ? argv[2] : 0;
+		}
+		else
+		{
+			systembus = true;
+			path = argv[2];
+			service = argc > 3 ? argv[3] : 0;
+		}
 
-        DBus::default_dispatcher = &dispatcher;
+		DBus::default_dispatcher = &dispatcher;
 
-        alarm (1);
+		alarm(1);
 
-        dispatcher.enter();
-    }
+		dispatcher.enter();
+	}
 
-    return 0;
+	return 0;
 }

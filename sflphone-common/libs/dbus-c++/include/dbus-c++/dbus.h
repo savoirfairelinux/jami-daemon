@@ -41,5 +41,6 @@
 #include "eventloop.h"
 #include "eventloop-integration.h"
 #include "introspection.h"
+#include "pipe.h"
 
 #endif//__DBUSXX_DBUS_H
