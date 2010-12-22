@@ -198,7 +198,8 @@ void AudioRtpSession::sendDtmfEvent (sfl::DtmfEvent *dtmf)
     if (dtmf->newevent)
         setMark (true);
 
-    putData (_timestamp, (const unsigned char*) (& (dtmf->payload)), sizeof (ost::RTPPacket::RFC2833Payload));
+    // putData (_timestamp, (const unsigned char*) (& (dtmf->payload)), sizeof (ost::RTPPacket::RFC2833Payload));
+    sendImmediate (_timestamp, (const unsigned char*) (& (dtmf->payload)), sizeof (ost::RTPPacket::RFC2833Payload));
 
     // This is no more a new event
     if (dtmf->newevent) {
@@ -253,7 +254,8 @@ void AudioRtpSession::sendMicData()
     _timestamp += _timestampIncrement;
 
     // putData put the data on RTP queue, sendImmediate bypass this queue
-    putData (_timestamp, getMicDataEncoded(), compSize);
+    // putData (_timestamp, getMicDataEncoded(), compSize);
+    sendImmediate (_timestamp, getMicDataEncoded(), compSize);
 }
 
 
@@ -375,9 +377,10 @@ void AudioRtpSession::run ()
         // packets
         timeout = (timeout > maxWait) ? maxWait : timeout;
 
+
         if (timeout < 1000) {   // !(timeout/1000)
             setCancel (cancelDeferred);
-            dispatchDataPacket();
+            // dispatchDataPacket();
             setCancel (cancelImmediate);
             timerTick();
         } else {

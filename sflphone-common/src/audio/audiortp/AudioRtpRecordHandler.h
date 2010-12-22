@@ -47,8 +47,8 @@ namespace sfl
 // Factor use to increase volume in fade in
 #define FADEIN_STEP_SIZE 4;
 
-static const int schedulingTimeout = 1000000;
-static const int expireTimeout = 10000000;
+static const int schedulingTimeout = 8000;
+static const int expireTimeout = 1000000;
 
 // G.722 VoIP is typically carried in RTP payload type 9.[2] Note that IANA records the clock rate for type 9 G.722 as 8 kHz
 // (instead of 16 kHz), RFC3551[3]  clarifies that this is due to a historical error and is retained in order to maintain backward
