@@ -242,13 +242,13 @@ void AudioRtpSession::sendMicData()
     if (!compSize)
         return;
 
-    _timestampCount++;
-
-    // Reset timestamp to make sure the timinlipg information are up to date
-    if (_timestampCount > RTP_TIMESTAMP_RESET_FREQ) {
-        _timestamp = getCurrentTimestamp();
-        _timestampCount = 0;
-    }
+//    _timestampCount++;
+//
+//    // Reset timestamp to make sure the timinlipg information are up to date
+//    if (_timestampCount > RTP_TIMESTAMP_RESET_FREQ) {
+//        _timestamp = getCurrentTimestamp();
+//        _timestampCount = 0;
+//    }
 
     // Increment timestamp for outgoing packet
     _timestamp += _timestampIncrement;
@@ -344,7 +344,7 @@ void AudioRtpSession::run ()
     _debug ("AudioRtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
 
     // Timestamp must be initialized randomly, already done when instantiating outgoing queue
-    _timestamp = getCurrentTimestamp();
+    // _timestamp = getCurrentTimestamp();
 
     uint32 timeout = 0;
 
