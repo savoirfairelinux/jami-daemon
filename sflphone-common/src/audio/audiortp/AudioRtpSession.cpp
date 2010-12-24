@@ -390,19 +390,9 @@ void AudioRtpSession::run ()
 
     while (isActive()) {
 
-        if (isActive())
-            _debug ("*************************** rtp stack is active");
-        else
-            _debug ("*************************** rtp stack is not active");
-
         if (timeout < 1000) {  // !(timeout/1000)
             timeout = getSchedulingTimeout();
         }
-
-
-        _debug ("******************** Made the half loop -1");
-
-
 
         // Send session
         if (getEventQueueSize() > 0) {
@@ -411,13 +401,8 @@ void AudioRtpSession::run ()
             sendMicData ();
         }
 
-        _debug ("******************** Made the half loop 0");
-
         // This also should be moved
         notifyIncomingCall();
-
-        _debug ("******************** Made the half loop 1");
-
 
         setCancel (cancelDeferred);
         controlReceptionService();
@@ -429,17 +414,12 @@ void AudioRtpSession::run ()
         // packets
         timeout = (timeout > maxWait) ? maxWait : timeout;
 
-        _debug ("*********************** Made the half loop 2");
-
         if (timeout < 1000) {   // !(timeout/1000)
             setCancel (cancelDeferred);
             // dispatchDataPacket();
             setCancel (cancelImmediate);
             timerTick();
         } else {
-
-            _debug ("******************** Made the half loop 3");
-
 
             if (isPendingData (timeout/1000)) {
                 setCancel (cancelDeferred);
@@ -453,9 +433,6 @@ void AudioRtpSession::run ()
 
             timeout = 0;
         }
-
-        _debug ("Made the full loop");
-
     }
 
     Thread::exit();

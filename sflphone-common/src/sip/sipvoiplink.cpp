@@ -1161,8 +1161,7 @@ SIPVoIPLink::offhold (const CallID& id)
         return false;
     }
 
-    int payloadType = call->getAudioRtp()->getSessionMedia();
-    AudioCodec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec ( (AudioCodecType) payloadType);
+    AudioCodec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (PAYLOAD_CODEC_ULAW);
 
     try {
         call->getAudioRtp()->initAudioRtpConfig (call);

@@ -60,6 +60,8 @@ AudioRtpRecord::AudioRtpRecord () : _audioCodec (NULL)
 
 AudioRtpRecord::~AudioRtpRecord()
 {
+    _debug ("-------------------------------------- Rtp: Delete audio rtp internal data");
+
     if (_micData)
         delete [] _micData;
 
