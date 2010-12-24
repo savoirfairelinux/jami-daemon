@@ -1161,9 +1161,13 @@ SIPVoIPLink::offhold (const CallID& id)
         return false;
     }
 
+    int payloadType = call->getAudioRtp()->getSessionMedia();
+    AudioCodec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec ( (AudioCodecType) payloadType);
+
     try {
         call->getAudioRtp()->initAudioRtpConfig (call);
         call->getAudioRtp()->initAudioRtpSession (call);
+        call->getAudioRtp()->start (audiocodec);
     } catch (...) {
         _debug ("! SIP Failure: Unable to create RTP Session (%s:%d)", __FILE__, __LINE__);
     }
@@ -1740,12 +1744,15 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         // call->getLocalSDP()->set_ip_address (addrSdp);
         // call->getLocalSDP()->create_initial_offer (account->getActiveCodecs ());
 
+        AudioCodec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (PAYLOAD_CODEC_ULAW);
+
         // Audio Rtp Session must be initialized before creating initial offer in SDP session
         // since SDES require crypto attribute.
         try {
             call->getAudioRtp()->initAudioRtpConfig (call);
             call->getAudioRtp()->initAudioRtpSession (call);
             call->getAudioRtp()->initLocalCryptoInfo (call);
+            call->getAudioRtp()->start (audiocodec);
         } catch (...) {
             _debug ("UserAgent: Unable to create RTP Session in new IP2IP call (%s:%d)", __FILE__, __LINE__);
         }
@@ -3981,6 +3988,16 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
 
     status = call->getLocalSDP()->receiving_initial_offer (r_sdp, account->getActiveCodecs ());
+
+    AudioCodec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (PAYLOAD_CODEC_ULAW);
+
+    // Init audio rtp session
+    try {
+        _debug ("UserAgent: Create RTP session for this call");
+        call->getAudioRtp()->start (audiocodec);
+    } catch (...) {
+        _warn ("UserAgent: Error: Failed to create rtp thread from answer");
+    }
 
     if (status!=PJ_SUCCESS) {
         delete call;
