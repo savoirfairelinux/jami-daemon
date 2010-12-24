@@ -82,7 +82,7 @@ AudioRtpSession::~AudioRtpSession()
         throw;
     }
 
-    _manager->getAudioDriver()->getMainBuffer()->unBindAll (_ca->getCallId());
+    Manager::instance().getMainBuffer()->unBindAll (_ca->getCallId());
 
     if (_time)
         delete _time;
@@ -382,7 +382,7 @@ void AudioRtpSession::run ()
     _ca->setRecordingSmplRate (getCodecSampleRate());
 
     // Start audio stream (if not started) AND flush all buffers (main and urgent)
-    _manager->getAudioDriver()->startStream();
+    // _manager->getAudioDriver()->startStream();
 
     _debug ("--------------------------------------- AudioRtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
 

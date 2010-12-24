@@ -47,6 +47,8 @@
 
 #include "im/InstantMessaging.h"
 
+#include "audio/audiolayer.h"
+
 #include "pjsip/sip_endpoint.h"
 #include "pjsip/sip_transport_tls.h"
 #include "pjsip/sip_transport_tls.h"
@@ -1594,8 +1596,9 @@ SIPVoIPLink::SIPCallServerFailure (SIPCall *call)
         terminateOneCall (id);
         removeCall (id);
 
-        if (call->getAudioRtp ())
+        if (call->getAudioRtp ()) {
             call->getAudioRtp()->stop();
+        }
     }
 }
 
@@ -3413,6 +3416,7 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 
     try {
         call->setAudioStart (true);
+        Manager::instance().getAudioDriver()->startStream(); //->startStream();
 
         // udate session media only if required
         if (pl != call->getAudioRtp()->getSessionMedia()) {
