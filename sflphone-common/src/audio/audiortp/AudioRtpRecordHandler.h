@@ -98,9 +98,7 @@ class AudioRtpRecord
         SFLDataFormat *_spkrDataDecoded;
         SFLDataFormat *_spkrDataConverted;
         SamplerateConverter *_converter;
-        int _audioLayerSampleRate;
         int _codecSampleRate;
-        int _audioLayerFrameSize;
         int _codecFrameSize;
         int _converterSamplingRate;
         EventQueue _eventQueue;
@@ -147,14 +145,6 @@ class AudioRtpRecordHandler
 
         int getHasDynamicPayload (void) {
             return _audioRtpRecord._hasDynamicPayloadType;
-        }
-
-        int getAudioLayerFrameSize (void) {
-            return _audioRtpRecord._audioLayerFrameSize;
-        }
-
-        int getAudioLayerSampleRate (void) {
-            return _audioRtpRecord._audioLayerSampleRate;
         }
 
         EventQueue *getEventQueue (void) {

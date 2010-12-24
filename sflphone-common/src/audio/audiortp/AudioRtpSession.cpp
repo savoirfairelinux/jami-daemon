@@ -378,19 +378,6 @@ void AudioRtpSession::stopRtpThread ()
 void AudioRtpSession::run ()
 {
 
-    /**
-    int threadSleep = 0;
-
-    if (getCodecSampleRate() != 0) {
-        threadSleep = (getCodecFrameSize() * 1000) / getCodecSampleRate();
-    } else {
-    	// TODO should not be dependent of audio layer frame size
-        threadSleep = getAudioLayerFrameSize();
-    }
-
-    TimerPort::setTimer (threadSleep);
-    */
-
     // Set recording sampling rate
     _ca->setRecordingSmplRate (getCodecSampleRate());
 
@@ -398,9 +385,6 @@ void AudioRtpSession::run ()
     _manager->getAudioDriver()->startStream();
 
     _debug ("--------------------------------------- AudioRtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
-
-    // Timestamp must be initialized randomly, already done when instantiating outgoing queue
-    // _timestamp = getCurrentTimestamp();
 
     uint32 timeout = 0;
 
@@ -418,20 +402,16 @@ void AudioRtpSession::run ()
 
         _debug ("******************** Made the half loop -1");
 
-        // Make sure user is not switching audio layer
-        _manager->getAudioLayerMutex()->enter();
 
-
-        _debug ("******************** Made the half loop 0");
 
         // Send session
         if (getEventQueueSize() > 0) {
             sendDtmfEvent (getEventQueue()->front());
         } else {
-            // audioCodecMutex.enter();
             sendMicData ();
-            // audioCodecMutex.leave();
         }
+
+        _debug ("******************** Made the half loop 0");
 
         // This also should be moved
         notifyIncomingCall();
@@ -449,9 +429,7 @@ void AudioRtpSession::run ()
         // packets
         timeout = (timeout > maxWait) ? maxWait : timeout;
 
-
         _debug ("*********************** Made the half loop 2");
-
 
         if (timeout < 1000) {   // !(timeout/1000)
             setCancel (cancelDeferred);
@@ -476,11 +454,10 @@ void AudioRtpSession::run ()
             timeout = 0;
         }
 
-        _manager->getAudioLayerMutex()->leave();
-
         _debug ("Made the full loop");
 
     }
+
     Thread::exit();
 
     _debug ("---------------------------------------------------- AudioRtpSession: Left main loop for call %s", _ca->getCallId().c_str());

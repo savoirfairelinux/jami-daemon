@@ -72,14 +72,6 @@ class SamplerateConverter
          */
         int downsampleData (SFLDataFormat* dataIn , SFLDataFormat* dataOut , int samplerate1 , int samplerate2 , int nbSamples);
 
-        int getFrequence (void) {
-            return _frequence;
-        }
-
-        int getFramesize (void) {
-            return _framesize;
-        }
-
         /**
          * Convert short table to floats for audio processing
          * @param in the input (short) array

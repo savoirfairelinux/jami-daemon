@@ -1103,9 +1103,11 @@ class ManagerImpl
          */
         bool initAudioDriver (void);
 
+        /*
         ost::Mutex* getAudioLayerMutex() {
             return &_audiolayer_mutex;
         }
+        */
 
         /**
          * Helper function that creates an MD5 Hash from the credential

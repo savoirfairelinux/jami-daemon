@@ -91,7 +91,7 @@ void SamplerateConverter::init (void)
     _src_state_mic  = src_new (SRC_LINEAR, 1, &_src_err);
     _src_state_spkr = src_new (SRC_LINEAR, 1, &_src_err);
 
-    int nbSamplesMax = (int) (getFrequence() * getFramesize() / 1000);
+    int nbSamplesMax = (int) ( (_frequence * _framesize) / 1000);
 
     _floatBufferDownMic  = new float32[nbSamplesMax];
     _floatBufferUpMic = new float32[nbSamplesMax];
@@ -119,7 +119,7 @@ int SamplerateConverter::upsampleData (SFLDataFormat* dataIn , SFLDataFormat* da
 
     double upsampleFactor = (double) samplerate2 / samplerate1 ;
 
-    int nbSamplesMax = (int) (samplerate2 * getFramesize() / 1000);
+    int nbSamplesMax = (int) (samplerate2 * _framesize / 1000);
 
     if (upsampleFactor != 1 && dataIn != NULL) {
         SRC_DATA src_data;
@@ -150,7 +150,7 @@ int SamplerateConverter::downsampleData (SFLDataFormat* dataIn , SFLDataFormat* 
 
     double downsampleFactor = (double) samplerate1 / samplerate2;
 
-    int nbSamplesMax = (int) (samplerate1 * getFramesize() / 1000);
+    int nbSamplesMax = (int) (samplerate1 * _framesize / 1000);
 
     if (downsampleFactor != 1) {
         SRC_DATA src_data;

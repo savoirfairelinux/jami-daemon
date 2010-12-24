@@ -71,9 +71,10 @@ IAXVoIPLink::IAXVoIPLink (const AccountID& accountID) : VoIPLink (accountID)
     // to get random number for RANDOM_PORT
     srand (time (NULL));
 
-    converter = new SamplerateConverter();
+    converter = new SamplerateConverter (44100, 20);
 
-    int nbSamplesMax = (int) (converter->getFrequence() * converter->getFramesize() / 1000);
+    // int nbSamplesMax = (int) (converter->getFrequence() * converter->getFramesize() / 1000);
+    int nbSamplesMax = (44100 * 20) / 1000;
 
     micData = new SFLDataFormat[nbSamplesMax];
     micDataConverted = new SFLDataFormat[nbSamplesMax];
@@ -245,7 +246,7 @@ IAXVoIPLink::getEvent()
 {
     IAXCall* call = NULL;
 
-    Manager::instance().getAudioLayerMutex()->enter();
+    // Manager::instance().getAudioLayerMutex()->enter();
 
     // lock iax_ stuff..
     _mutexIAX.enterMutex();
@@ -282,7 +283,7 @@ IAXVoIPLink::getEvent()
 
     sendAudioFromMic();
 
-    Manager::instance().getAudioLayerMutex()->leave();
+    // Manager::instance().getAudioLayerMutex()->leave();
 
     // Do the doodle-moodle to send audio from the microphone to the IAX channel.
     // sendAudioFromMic();

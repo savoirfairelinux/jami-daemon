@@ -435,7 +435,7 @@ void AudioZrtpSession::run ()
             timeout = getSchedulingTimeout();
         }
 
-        _manager->getAudioLayerMutex()->enter();
+        // _manager->getAudioLayerMutex()->enter();
 
         // Send session
         if (getEventQueueSize() > 0) {
@@ -447,7 +447,7 @@ void AudioZrtpSession::run ()
         // This also should be moved
         notifyIncomingCall();
 
-        _manager->getAudioLayerMutex()->leave();
+        // _manager->getAudioLayerMutex()->leave();
 
         setCancel (cancelDeferred);
         controlReceptionService();

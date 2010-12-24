@@ -2993,7 +2993,7 @@ void ManagerImpl::switchAudioManager (void)
     _debug ("Manager: Deleting current layer... ");
 
     // ost::MutexLock lock (*getAudioLayerMutex());
-    getAudioLayerMutex()->enter();
+    // getAudioLayerMutex()->enter();
 
     // _audiodriver->closeLayer();
     delete _audiodriver;
@@ -3034,7 +3034,7 @@ void ManagerImpl::switchAudioManager (void)
         _audiodriver->startStream();
 
     // ost::MutexLock unlock (*getAudioLayerMutex());
-    getAudioLayerMutex()->leave();
+    // getAudioLayerMutex()->leave();
 
     // need to stop audio streams if there is currently no call
     // if ( (type != PULSEAUDIO) && (!hasCurrentCall())) {
@@ -3071,7 +3071,7 @@ void ManagerImpl::audioSamplingRateChanged (void)
     _debug ("Manager: Deleting current layer...");
 
     // ost::MutexLock lock (*getAudioLayerMutex());
-    getAudioLayerMutex()->enter();
+    // getAudioLayerMutex()->enter();
 
     // _audiodriver->closeLayer();
     delete _audiodriver;
@@ -3128,7 +3128,7 @@ void ManagerImpl::audioSamplingRateChanged (void)
         _audiodriver->startStream();
 
     // ost::MutexLock unlock (*getAudioLayerMutex());
-    getAudioLayerMutex()->leave();
+    // getAudioLayerMutex()->leave();
 
     // need to stop audio streams if there is currently no call
     // if ( (type != PULSEAUDIO) && (!hasCurrentCall())) {
