@@ -188,7 +188,7 @@ void AudioRtpFactory::start (AudioCodec* audiocodec)
 void AudioRtpFactory::stop (void)
 {
     ost::MutexLock mutex (_audioRtpThreadMutex);
-    _info ("RTP: Stopping audio rtp session");
+    _info ("--------------------------------- RTP: Stopping audio rtp session");
 
     if (_rtpSession == NULL) {
         _debugException ("RTP: Error: _rtpSession is null when trying to stop. Returning.");
@@ -199,10 +199,12 @@ void AudioRtpFactory::stop (void)
         switch (_rtpSessionType) {
 
             case Sdes:
+                static_cast<AudioSrtpSession *> (_rtpSession)->stopRtpThread();
                 delete static_cast<AudioSrtpSession *> (_rtpSession);
                 break;
 
             case Symmetric:
+                static_cast<AudioSrtpSession *> (_rtpSession)->stopRtpThread();
                 delete static_cast<AudioSymmetricRtpSession *> (_rtpSession);
                 break;
 
@@ -215,6 +217,55 @@ void AudioRtpFactory::stop (void)
     } catch (...) {
         _debugException ("RTP: Error: Exception caught when stopping the audio rtp session");
         throw AudioRtpFactoryException ("RTP: Error: caught exception in AudioRtpFactory::stop");
+    }
+}
+
+int AudioRtpFactory::getSessionMedia()
+{
+    _info ("RTP: Update session media");
+
+    if (_rtpSession == NULL) {
+        throw AudioRtpFactoryException ("RTP: Error: _rtpSession was null when trying to get session media type");
+    }
+
+    int payloadType = 0;
+
+    switch (_rtpSessionType) {
+        case Sdes:
+            payloadType = static_cast<AudioSrtpSession *> (_rtpSession)->getCodecPayloadType();
+            break;
+        case Symmetric:
+            payloadType = static_cast<AudioSymmetricRtpSession *> (_rtpSession)->getCodecPayloadType();
+            break;
+        case Zrtp:
+            payloadType = static_cast<AudioZrtpSession *> (_rtpSession)->getCodecPayloadType();
+            break;
+    }
+
+    return payloadType;
+}
+
+void AudioRtpFactory::updateSessionMedia (AudioCodec *audiocodec)
+{
+    _info ("RTP: Updating session media");
+
+    if (_rtpSession == NULL) {
+        throw AudioRtpFactoryException ("RTP: Error: _rtpSession was null when trying to update IP address");
+    }
+
+    switch (_rtpSessionType) {
+
+        case Sdes:
+            static_cast<AudioSrtpSession *> (_rtpSession)->updateSessionMedia (audiocodec);
+            break;
+
+        case Symmetric:
+            static_cast<AudioSymmetricRtpSession *> (_rtpSession)->updateSessionMedia (audiocodec);
+            break;
+
+        case Zrtp:
+            static_cast<AudioZrtpSession *> (_rtpSession)->updateSessionMedia (audiocodec);
+            break;
     }
 }
 

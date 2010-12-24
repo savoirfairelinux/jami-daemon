@@ -63,7 +63,7 @@ AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
 
     assert (_ca);
 
-    _info ("AudioRtpSession: Setting new RTP session with destination %s:%d", _ca->getLocalIp().c_str(), _ca->getLocalAudioPort());
+    _info ("---------------------------------------- AudioRtpSession: Setting new RTP session with destination %s:%d", _ca->getLocalIp().c_str(), _ca->getLocalAudioPort());
 
     // static_cast<ost::DualRTPUDPIPv4Channel>(dso)->sendSocket->setTypeOfService(ost::Socket::tosLowDelay);
     // static_cast<ost::DualRTPChannel<ost::DualRTPUDPIPv4Channel> >(dso)->sendSocket->setTypeOfService(ost::Socket::tosLowDelay);
@@ -73,7 +73,7 @@ AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
 
 AudioRtpSession::~AudioRtpSession()
 {
-    _info ("AudioRtpSession: Delete AudioRtpSession instance");
+    _info ("-------------------------------------------- AudioRtpSession: Delete AudioRtpSession instance");
 
     try {
         ost::Thread::terminate();
@@ -93,18 +93,22 @@ AudioRtpSession::~AudioRtpSession()
 
 void AudioRtpSession::setSessionTimeouts (void)
 {
-    _debug ("AudioRtpSession: Set session scheduling timeout (%d) and expireTimeout (%d)", sfl::schedulingTimeout, sfl::expireTimeout);
+    _debug ("------------------------------------------ AudioRtpSession: Set session scheduling timeout (%d) and expireTimeout (%d)", sfl::schedulingTimeout, sfl::expireTimeout);
 
     setSchedulingTimeout (sfl::schedulingTimeout);
     setExpireTimeout (sfl::expireTimeout);
 }
 
-void AudioRtpSession::setSessionMedia (AudioCodec* audioCodec)
+void AudioRtpSession::setSessionMedia (AudioCodec *audioCodec)
 {
-    _debug ("AudioRtpSession: Set session media");
+    _debug ("-------------------------------------------------------------- AudioRtpSession: Set session media");
+
+    // audioCodecMutex.enter();
 
     // set internal codec info for this session
     setRtpMedia (audioCodec);
+
+    // audioCodecMutex.enter();
 
     // store codec info locally
     int payloadType = getCodecPayloadType();
@@ -135,11 +139,54 @@ void AudioRtpSession::setSessionMedia (AudioCodec* audioCodec)
         setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) payloadType));
     }
 
+
 }
+
+void AudioRtpSession::updateSessionMedia (AudioCodec *audioCodec)
+{
+    _debug ("------------------------------------------------------ AudioRtpSession: Update session media");
+
+    // audioCodecMutex.enter();
+
+    //
+    updateRtpMedia (audioCodec);
+
+    // audioCodecMutex.leave();
+
+    int payloadType = getCodecPayloadType();
+    int frameSize = getCodecFrameSize();
+    int smplRate = getCodecSampleRate();
+    int dynamic = getHasDynamicPayload();
+
+    // G722 requires timetamp to be incremented at 8khz
+    if (payloadType == g722PayloadType)
+        _timestampIncrement = g722RtpTimeincrement;
+    else
+        _timestampIncrement = frameSize;
+
+    _debug ("AudioRptSession: Codec payload: %d", payloadType);
+    _debug ("AudioRtpSession: Codec sampling rate: %d", smplRate);
+    _debug ("AudioRtpSession: Codec frame size: %d", frameSize);
+    _debug ("AudioRtpSession: RTP timestamp increment: %d", _timestampIncrement);
+
+    // Even if specified as a 16 kHz codec, G722 requires rtp sending rate to be 8 kHz
+    if (payloadType == g722PayloadType) {
+        _debug ("AudioRtpSession: Setting G722 payload format");
+        setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, g722RtpClockRate));
+    } else if (dynamic) {
+        _debug ("AudioRtpSession: Setting dynamic payload format");
+        setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, smplRate));
+    } else if (dynamic && payloadType != g722PayloadType) {
+        _debug ("AudioRtpSession: Setting static payload format");
+        setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) payloadType));
+    }
+
+}
+
 
 void AudioRtpSession::setDestinationIpAddress (void)
 {
-    _info ("AudioRtpSession: Setting IP address for the RTP session");
+    _info ("--------------------------------------------- AudioRtpSession: Setting IP address for the RTP session");
 
     if (_ca == NULL) {
         _error ("AudioRtpSession: Sipcall is gone.");
@@ -169,7 +216,7 @@ void AudioRtpSession::setDestinationIpAddress (void)
 
 void AudioRtpSession::updateDestinationIpAddress (void)
 {
-    _debug ("AudioRtpSession: Update destination ip address");
+    _debug ("----------------------------------------------- AudioRtpSession: Update destination ip address");
 
     // Destination address are stored in a list in ccrtp
     // This method remove the current destination entry
@@ -227,7 +274,9 @@ void AudioRtpSession::sendDtmfEvent (sfl::DtmfEvent *dtmf)
 
 bool AudioRtpSession::onRTPPacketRecv (ost::IncomingRTPPkt&)
 {
+    audioCodecMutex.enter();
     receiveSpeakerData ();
+    audioCodecMutex.leave();
 
     return true;
 }
@@ -308,7 +357,7 @@ int AudioRtpSession::startRtpThread (AudioCodec* audiocodec)
     if (_isStarted)
         return 0;
 
-    _debug ("AudioRtpSession: Starting main thread");
+    _debug ("----------------------------------------------- AudioRtpSession: Starting main thread");
     _isStarted = true;
     setSessionTimeouts();
     setSessionMedia (audiocodec);
@@ -317,6 +366,13 @@ int AudioRtpSession::startRtpThread (AudioCodec* audiocodec)
     enableStack();
     int ret = ost::Thread::start (_mainloopSemaphore);
     return ret;
+}
+
+void AudioRtpSession::stopRtpThread ()
+{
+    _debug ("------------------------------------------------ AudioRtpSession: Stoping main thread");
+
+    disableStack();
 }
 
 void AudioRtpSession::run ()
@@ -341,7 +397,7 @@ void AudioRtpSession::run ()
     // Start audio stream (if not started) AND flush all buffers (main and urgent)
     _manager->getAudioDriver()->startStream();
 
-    _debug ("AudioRtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
+    _debug ("--------------------------------------- AudioRtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
 
     // Timestamp must be initialized randomly, already done when instantiating outgoing queue
     // _timestamp = getCurrentTimestamp();
@@ -349,23 +405,39 @@ void AudioRtpSession::run ()
     uint32 timeout = 0;
 
     while (isActive()) {
+
+        if (isActive())
+            _debug ("*************************** rtp stack is active");
+        else
+            _debug ("*************************** rtp stack is not active");
+
         if (timeout < 1000) {  // !(timeout/1000)
             timeout = getSchedulingTimeout();
         }
 
+
+        _debug ("******************** Made the half loop -1");
+
+        // Make sure user is not switching audio layer
         _manager->getAudioLayerMutex()->enter();
+
+
+        _debug ("******************** Made the half loop 0");
 
         // Send session
         if (getEventQueueSize() > 0) {
             sendDtmfEvent (getEventQueue()->front());
         } else {
+            // audioCodecMutex.enter();
             sendMicData ();
+            // audioCodecMutex.leave();
         }
 
         // This also should be moved
         notifyIncomingCall();
 
-        _manager->getAudioLayerMutex()->leave();
+        _debug ("******************** Made the half loop 1");
+
 
         setCancel (cancelDeferred);
         controlReceptionService();
@@ -378,12 +450,19 @@ void AudioRtpSession::run ()
         timeout = (timeout > maxWait) ? maxWait : timeout;
 
 
+        _debug ("*********************** Made the half loop 2");
+
+
         if (timeout < 1000) {   // !(timeout/1000)
             setCancel (cancelDeferred);
             // dispatchDataPacket();
             setCancel (cancelImmediate);
             timerTick();
         } else {
+
+            _debug ("******************** Made the half loop 3");
+
+
             if (isPendingData (timeout/1000)) {
                 setCancel (cancelDeferred);
 
@@ -397,9 +476,14 @@ void AudioRtpSession::run ()
             timeout = 0;
         }
 
-    }
+        _manager->getAudioLayerMutex()->leave();
 
-    _debug ("AudioRtpSession: Left main loop for call %s", _ca->getCallId().c_str());
+        _debug ("Made the full loop");
+
+    }
+    Thread::exit();
+
+    _debug ("---------------------------------------------------- AudioRtpSession: Left main loop for call %s", _ca->getCallId().c_str());
 }
 
 }

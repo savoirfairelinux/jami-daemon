@@ -73,6 +73,11 @@ class AudioZrtpSession : protected ost::Thread, public AudioRtpRecordHandler, pu
         void updateDestinationIpAddress (void);
 
         /**
+         * Update audio codec dynamically
+         */
+        void updateSessionMedia (AudioCodec *);
+
+        /**
          * Send DTMF over RTP (RFC2833). The timestamp and sequence number must be
          * incremented as if it was microphone audio. This function change the payload type of the rtp session,
          * send the appropriate DTMF digit using this payload, discard coresponding data from mainbuffer and get

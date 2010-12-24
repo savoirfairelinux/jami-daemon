@@ -62,6 +62,8 @@ AudioRtpRecord::AudioRtpRecord () : _audioCodec (NULL)
     _audioLayerFrameSize = Manager::instance().getAudioDriver()->getFrameSize(); // in ms
     _audioLayerSampleRate = Manager::instance().getAudioDriver()->getSampleRate();
 
+    // _audioRtpRecord._audioCodec = NULL;
+
 }
 
 
@@ -132,6 +134,20 @@ void AudioRtpRecordHandler::setRtpMedia (AudioCodec* audioCodec)
 }
 
 
+void AudioRtpRecordHandler::updateRtpMedia (AudioCodec *audioCodec)
+{
+    if (_audioRtpRecord._audioCodec) {
+        delete _audioRtpRecord._audioCodec;
+        _audioRtpRecord._audioCodec = NULL;
+    }
+
+    _audioRtpRecord._audioCodec = audioCodec;
+    _audioRtpRecord._codecPayloadType = audioCodec->getPayload();
+    _audioRtpRecord._codecSampleRate = audioCodec->getClockRate();
+    _audioRtpRecord._codecFrameSize = audioCodec->getFrameSize();
+    _audioRtpRecord._hasDynamicPayloadType = audioCodec->hasDynamicPayload();
+}
+
 void AudioRtpRecordHandler::init()
 {
     // init noise reduction process
@@ -144,6 +160,7 @@ void AudioRtpRecordHandler::init()
 
 void AudioRtpRecordHandler::initBuffers()
 {
+
     int codecSampleRate = _audioRtpRecord._codecSampleRate;
 
     // Set sampling rate, main buffer choose the highest one

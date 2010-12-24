@@ -816,11 +816,15 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
         if (addrSdp == "0.0.0.0")
             loadSIPLocalIP (&addrSdp);
 
+        AudioCodec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (PAYLOAD_CODEC_ULAW);
+
         try {
             _info ("UserAgent: Creating new rtp session");
             call->getAudioRtp()->initAudioRtpConfig (call);
             call->getAudioRtp()->initAudioRtpSession (call);
             call->getAudioRtp()->initLocalCryptoInfo (call);
+            _info ("UserAgent: Start audio rtp session");
+            call->getAudioRtp()->start (audiocodec);
         } catch (...) {
             _error ("UserAgent: Error: Failed to create rtp thread from newOutGoingCall");
         }
@@ -3406,15 +3410,19 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
         return;
 
     AudioCodecType pl = (AudioCodecType) sessionMedia->getPayload();
-    AudioCodec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (pl);
-
-    if (audiocodec == NULL)
-        _error ("UserAgent: No audiocodec found");
-
 
     try {
         call->setAudioStart (true);
-        call->getAudioRtp()->start (audiocodec);
+
+        // udate session media only if required
+        if (pl != call->getAudioRtp()->getSessionMedia()) {
+            AudioCodec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (pl);
+
+            if (audiocodec == NULL)
+                _error ("UserAgent: No audiocodec found");
+
+            call->getAudioRtp()->updateSessionMedia (audiocodec);
+        }
     } catch (exception& rtpException) {
         _error ("UserAgent: Error: %s", rtpException.what());
     }

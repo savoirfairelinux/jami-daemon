@@ -76,6 +76,8 @@ class AudioRtpSession : protected ost::Thread, public ost::TimerPort, public Aud
 
         int startRtpThread (AudioCodec*);
 
+        void stopRtpThread (void);
+
         /**
          * Used mostly when receiving a reinvite
          */
@@ -89,6 +91,15 @@ class AudioRtpSession : protected ost::Thread, public ost::TimerPort, public Aud
         */
         void sendDtmfEvent (sfl::DtmfEvent *dtmf);
 
+        void callInitialized (bool init) {
+            _callInitialized = init;
+        }
+
+        /**
+         * Update session audio codec dynamically
+         */
+        void updateSessionMedia (AudioCodec *);
+
     private:
 
         /**
@@ -100,6 +111,7 @@ class AudioRtpSession : protected ost::Thread, public ost::TimerPort, public Aud
          * Set the audio codec for this RTP session
          */
         void setSessionMedia (AudioCodec*);
+
 
         /**
          * Retreive destination address for this session. Stored in CALL
@@ -170,6 +182,10 @@ class AudioRtpSession : protected ost::Thread, public ost::TimerPort, public Aud
          */
         int _countNotificationTime;
 
+        /**
+         * Call initialized
+         */
+        bool _callInitialized;
 
     protected:
 

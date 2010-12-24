@@ -108,6 +108,16 @@ class AudioRtpFactory
         void stop();
 
         /**
+         * Return the RTP payload currently used for this session
+         */
+        int getSessionMedia();
+
+        /**
+         * Dynamically update session media
+         */
+        void updateSessionMedia (AudioCodec *);
+
+        /**
          * Update current RTP destination address with one stored in call
          * @param None
          */

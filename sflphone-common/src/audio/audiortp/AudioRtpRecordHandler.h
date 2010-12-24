@@ -126,6 +126,8 @@ class AudioRtpRecordHandler
 
         void setRtpMedia (AudioCodec* audioCodec);
 
+        void updateRtpMedia (AudioCodec *audioCodec);
+
 
         AudioCodec *getAudioCodec (void) {
             return _audioRtpRecord._audioCodec;
@@ -211,9 +213,14 @@ class AudioRtpRecordHandler
 
         void putDtmfEvent (int digit);
 
+    protected:
+
+        ost::Mutex audioCodecMutex;
+
     private:
 
         AudioRtpRecord	_audioRtpRecord;
+
 
         SIPCall *_ca;
 
