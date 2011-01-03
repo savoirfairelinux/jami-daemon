@@ -42,7 +42,7 @@ sflphoned_CXXFLAGS = \
 
 # libsflphone 
 
-sflphoned_LDADD = ./libsflphone.la
+sflphoned_LDADD = ./libsflphone.la $(libssl_LIBS) -lcrypto
 noinst_LTLIBRARIES = libsflphone.la
 
 noinst_HEADERS = \
