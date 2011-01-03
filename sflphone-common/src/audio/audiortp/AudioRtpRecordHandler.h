@@ -172,8 +172,8 @@ class AudioRtpRecordHandler
             return ( (float) codecSamplePerFrame * 1000.0) / (float) codecClockRate;
         }
 
-        int computeNbByteAudioLayer (float codecFrameSize) {
-            return (int) ( ( (float) _audioRtpRecord._codecSampleRate * codecFrameSize * sizeof (SFLDataFormat)) / 1000.0);
+        int computeNbByteAudioLayer (int mainBufferSamplingRate, float codecFrameSize) {
+            return (int) ( ( (float) mainBufferSamplingRate * codecFrameSize * sizeof (SFLDataFormat)) / 1000.0);
         }
 
         void init (void);
@@ -185,6 +185,8 @@ class AudioRtpRecordHandler
         void initBuffers (void);
 
         void initNoiseSuppress (void);
+
+        void updateNoiseSuppress (void);
 
         /**
          * Encode audio data from mainbuffer

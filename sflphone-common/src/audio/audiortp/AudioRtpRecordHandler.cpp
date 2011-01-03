@@ -129,6 +129,8 @@ void AudioRtpRecordHandler::setRtpMedia (AudioCodec* audioCodec)
 
 void AudioRtpRecordHandler::updateRtpMedia (AudioCodec *audioCodec)
 {
+    int lastSamplingRate = _audioRtpRecord._codecSampleRate;
+
     if (_audioRtpRecord._audioCodec) {
         delete _audioRtpRecord._audioCodec;
         _audioRtpRecord._audioCodec = NULL;
@@ -139,6 +141,11 @@ void AudioRtpRecordHandler::updateRtpMedia (AudioCodec *audioCodec)
     _audioRtpRecord._codecSampleRate = audioCodec->getClockRate();
     _audioRtpRecord._codecFrameSize = audioCodec->getFrameSize();
     _audioRtpRecord._hasDynamicPayloadType = audioCodec->hasDynamicPayload();
+
+    Manager::instance().getMainBuffer()->setInternalSamplingRate (_audioRtpRecord._codecSampleRate);
+
+    if (lastSamplingRate != _audioRtpRecord._codecSampleRate)
+        updateNoiseSuppress();
 }
 
 void AudioRtpRecordHandler::init()
@@ -175,6 +182,28 @@ void AudioRtpRecordHandler::initNoiseSuppress()
     _audioRtpRecord._audioProcess = processing;
 }
 
+void AudioRtpRecordHandler::updateNoiseSuppress()
+{
+    if (_audioRtpRecord._audioProcess)
+        delete _audioRtpRecord._audioProcess;
+
+    _audioRtpRecord._audioProcess = NULL;
+
+    if (_audioRtpRecord._noiseSuppress)
+        delete _audioRtpRecord._noiseSuppress;
+
+    _audioRtpRecord._noiseSuppress = NULL;
+
+    _debug ("AudioRtpSession: Update noise suppressor with sampling rate %d and frame size %d", getCodecSampleRate(), getCodecFrameSize());
+
+    NoiseSuppress *noiseSuppress = new NoiseSuppress (getCodecFrameSize(), getCodecSampleRate());
+    AudioProcessing *processing = new AudioProcessing (noiseSuppress);
+
+    _audioRtpRecord._noiseSuppress = noiseSuppress;
+    _audioRtpRecord._audioProcess = processing;
+
+}
+
 void AudioRtpRecordHandler::putDtmfEvent (int digit)
 {
     sfl::DtmfEvent *dtmf = new sfl::DtmfEvent();
@@ -190,6 +219,8 @@ void AudioRtpRecordHandler::putDtmfEvent (int digit)
 
 int AudioRtpRecordHandler::processDataEncode (void)
 {
+//    _debug ("-------------------------------------- processDataEncode");
+
     AudioCodec *audioCodec = _audioRtpRecord._audioCodec;
 
     SFLDataFormat *micData = _audioRtpRecord._micData;
@@ -201,16 +232,27 @@ int AudioRtpRecordHandler::processDataEncode (void)
     int codecFrameSize = audioCodec->getFrameSize();
     int codecSampleRate = audioCodec->getClockRate();
 
+//    _debug ("codecFrameSize: %d", codecFrameSize);
+//    _debug ("codecSampleRate: %d", codecSampleRate);
+
     int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
+
+//    _debug ("mainbuffersamplerate: %d", mainBufferSampleRate);
 
     // compute codec framesize in ms
     float fixedCodecFramesize = computeCodecFrameSize (codecFrameSize, codecSampleRate);
 
+//    _debug ("fixedcodecframesize: %f", fixedCodecFramesize);
+
     // compute nb of byte to get coresponding to 20 ms at audio layer frame size (44.1 khz)
-    int bytesToGet = computeNbByteAudioLayer (fixedCodecFramesize);
+    int bytesToGet = computeNbByteAudioLayer (mainBufferSampleRate, fixedCodecFramesize);
+
+//    _debug ("bytetoget: %d", bytesToGet);
 
     // available bytes inside ringbuffer
     int availBytesFromMic = Manager::instance().getMainBuffer()->availForGet (_ca->getCallId());
+
+//    _debug ("availbytesfrommic: %d", availBytesFromMic);
 
     if (availBytesFromMic < bytesToGet)
         return 0;
@@ -233,6 +275,8 @@ int AudioRtpRecordHandler::processDataEncode (void)
 
         int nbSampleUp = nbSample;
 
+//        _debug ("nbSampleUp: %d", nbSampleUp);
+
         nbSample = _audioRtpRecord._converter->downsampleData (micData, micDataConverted, codecSampleRate, mainBufferSampleRate, nbSampleUp);
 
         if (Manager::instance().audioPreference.getNoiseReduce())
@@ -240,8 +284,10 @@ int AudioRtpRecordHandler::processDataEncode (void)
 
         compSize = audioCodec->codecEncode (micDataEncoded, micDataConverted, nbSample * sizeof (SFLDataFormat));
     } else {
-        if (Manager::instance().audioPreference.getNoiseReduce())
-            _audioRtpRecord._audioProcess->processAudio (micData, nbSample * sizeof (SFLDataFormat));
+        //if (Manager::instance().audioPreference.getNoiseReduce())
+        //    _audioRtpRecord._audioProcess->processAudio (micData, nbSample * sizeof (SFLDataFormat));
+
+//        _debug ("no resampling required");
 
         // no resampling required
         compSize = audioCodec->codecEncode (micDataEncoded, micData, nbSample * sizeof (SFLDataFormat));

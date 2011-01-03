@@ -3060,7 +3060,7 @@ void ManagerImpl::audioSamplingRateChanged (void)
     samplerate = _mainBuffer.getInternalSamplingRate();
     framesize = audioPreference.getFramesize();
 
-    _debug ("Mnager: new samplerate: %i, new framesize %i", samplerate, framesize);
+    _debug ("Manager: new samplerate: %i, new framesize %i", samplerate, framesize);
 
     alsaPlugin = audioPreference.getPlugin();
 

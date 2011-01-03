@@ -52,7 +52,7 @@ void MainBuffer::setInternalSamplingRate (int sr)
 
     if (sr != _internalSamplingRate) {
 
-        _debug ("MainBuffer: Internal sampling rate changed %d", sr);
+        _debug ("****************************************** MainBuffer: Internal sampling rate changed %d **********************************", sr);
 
         // This call takes the mutex
         flushAllBuffers();
