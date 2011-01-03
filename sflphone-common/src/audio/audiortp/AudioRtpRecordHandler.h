@@ -205,9 +205,10 @@ class AudioRtpRecordHandler
 
     protected:
 
-        ost::Mutex audioCodecMutex;
 
     private:
+
+        ost::Mutex audioCodecMutex;
 
         AudioRtpRecord	_audioRtpRecord;
 

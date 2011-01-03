@@ -130,16 +130,15 @@ void AudioRtpSession::setSessionMedia (AudioCodec *audioCodec)
     // Even if specified as a 16 kHz codec, G722 requires rtp sending rate to be 8 kHz
     if (payloadType == g722PayloadType) {
         _debug ("AudioRtpSession: Setting G722 payload format");
-        setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, g722RtpClockRate));
+        // setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, g722RtpClockRate));
+        setPayloadFormat (ost::StaticPayloadFormat (ost::sptG722));
     } else if (dynamic) {
         _debug ("AudioRtpSession: Setting dynamic payload format");
         setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, smplRate));
-    } else if (dynamic && payloadType != g722PayloadType) {
+    } else {
         _debug ("AudioRtpSession: Setting static payload format");
         setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) payloadType));
     }
-
-
 }
 
 void AudioRtpSession::updateSessionMedia (AudioCodec *audioCodec)
@@ -172,15 +171,15 @@ void AudioRtpSession::updateSessionMedia (AudioCodec *audioCodec)
     // Even if specified as a 16 kHz codec, G722 requires rtp sending rate to be 8 kHz
     if (payloadType == g722PayloadType) {
         _debug ("AudioRtpSession: Setting G722 payload format");
-        setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, g722RtpClockRate));
+        // setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, g722RtpClockRate));
+        setPayloadFormat (ost::StaticPayloadFormat (ost::sptG722));
     } else if (dynamic) {
         _debug ("AudioRtpSession: Setting dynamic payload format");
         setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, smplRate));
-    } else if (dynamic && payloadType != g722PayloadType) {
+    } else {
         _debug ("AudioRtpSession: Setting static payload format");
         setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) payloadType));
     }
-
 }
 
 
@@ -274,9 +273,9 @@ void AudioRtpSession::sendDtmfEvent (sfl::DtmfEvent *dtmf)
 
 bool AudioRtpSession::onRTPPacketRecv (ost::IncomingRTPPkt&)
 {
-    audioCodecMutex.enter();
+    // audioCodecMutex.enter();
     receiveSpeakerData ();
-    audioCodecMutex.leave();
+    // audioCodecMutex.leave();
 
     return true;
 }
@@ -300,7 +299,7 @@ void AudioRtpSession::sendMicData()
 //    }
 
     // Increment timestamp for outgoing packet
-    _timestamp += _timestampIncrement;
+    _timestamp += (_timestampIncrement*2);
 
     // putData put the data on RTP queue, sendImmediate bypass this queue
     // putData (_timestamp, getMicDataEncoded(), compSize);
