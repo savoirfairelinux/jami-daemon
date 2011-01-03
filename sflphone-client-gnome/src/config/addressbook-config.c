@@ -183,7 +183,7 @@ search_phone_home_cb (GtkWidget *widget)
 {
 
     addressbook_config->search_phone_home = (guint) gtk_toggle_button_get_active (
-            GTK_TOGGLE_BUTTON (widget));
+                                                GTK_TOGGLE_BUTTON (widget));
 }
 
 static void
@@ -338,7 +338,7 @@ create_addressbook_settings()
     scale_button = gtk_hbox_new (FALSE, 0);
     scale_label = gtk_label_new (_ ("Download limit :"));
     gtk_box_pack_start (GTK_BOX (scale_button),scale_label,FALSE,FALSE,0);
-    value = gtk_spin_button_new_with_range (1, 500, 1);
+    value = gtk_spin_button_new_with_range (1, G_MAXINT, 1);
     gtk_label_set_mnemonic_widget (GTK_LABEL (scale_label), value);
     gtk_spin_button_set_value (GTK_SPIN_BUTTON (value) , addressbook_config->max_results);
     g_signal_connect (G_OBJECT (value) , "value-changed" , G_CALLBACK (max_results_cb), NULL);
