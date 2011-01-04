@@ -99,7 +99,7 @@ void AudioRtpFactory::initAudioRtpConfig (SIPCall *ca)
         else
             _keyExchangeProtocol = Symmetric;
 
-        _debug ("Registered account %s profile selected with key exchange protocol number %d", accountId.c_str(), _keyExchangeProtocol);
+        _debug ("AudioRtpFactory: Registered account %s profile selected with key exchange protocol number %d", accountId.c_str(), _keyExchangeProtocol);
         _helloHashEnabled = sipaccount->getZrtpHelloHash();
     } else {
         _srtpEnabled = false;
@@ -128,7 +128,7 @@ void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
                     // TODO: be careful with that. The hello hash is computed asynchronously. Maybe it's
                     // not even available at that point.
                     ca->getLocalSDP()->set_zrtp_hash (static_cast<AudioZrtpSession *> (_rtpSession)->getHelloHash());
-                    _debug ("Zrtp hello hash fed to SDP");
+                    _debug ("AudioRtpFactory: Zrtp hello hash fed to SDP");
                 }
 
                 break;
@@ -140,20 +140,20 @@ void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
                 break;
 
             default:
-                _debug ("Unsupported Rtp Session Exception Type!");
+                _debug ("AudioRtpFactory: Unsupported Rtp Session Exception Type!");
                 throw UnsupportedRtpSessionType();
         }
     } else {
         _rtpSessionType = Symmetric;
         _rtpSession = new AudioSymmetricRtpSession (&Manager::instance(), ca);
-        _debug ("Starting a symmetric unencrypted rtp session");
+        _debug ("AudioRtpFactory: Starting a symmetric unencrypted rtp session");
     }
 }
 
 void AudioRtpFactory::start (AudioCodec* audiocodec)
 {
     if (_rtpSession == NULL) {
-        throw AudioRtpFactoryException ("RTP: Error: _rtpSession was null when trying to start audio thread");
+        throw AudioRtpFactoryException ("AudioRtpFactory: Error: RTP session was null when trying to start audio thread");
     }
 
     switch (_rtpSessionType) {
@@ -161,7 +161,7 @@ void AudioRtpFactory::start (AudioCodec* audiocodec)
         case Sdes:
 
             if (static_cast<AudioSrtpSession *> (_rtpSession)->startRtpThread (audiocodec) != 0) {
-                throw AudioRtpFactoryException ("RTP: Error: Failed to start AudioSRtpSession thread");
+                throw AudioRtpFactoryException ("AudioRtpFactory: Error: Failed to start AudioSRtpSession thread");
             }
 
             break;
@@ -170,7 +170,7 @@ void AudioRtpFactory::start (AudioCodec* audiocodec)
             _debug ("Starting symmetric rtp thread");
 
             if (static_cast<AudioSymmetricRtpSession *> (_rtpSession)->startRtpThread (audiocodec) != 0) {
-                throw AudioRtpFactoryException ("RTP: Error: Failed to start AudioSymmetricRtpSession thread");
+                throw AudioRtpFactoryException ("AudioRtpFactory: Error: Failed to start AudioSymmetricRtpSession thread");
             }
 
             break;
@@ -178,7 +178,7 @@ void AudioRtpFactory::start (AudioCodec* audiocodec)
         case Zrtp:
 
             if (static_cast<AudioZrtpSession *> (_rtpSession)->startRtpThread (audiocodec) != 0) {
-                throw AudioRtpFactoryException ("RTP: Error: Failed to start AudioZrtpSession thread");
+                throw AudioRtpFactoryException ("AudioRtpFactory: Error: Failed to start AudioZrtpSession thread");
             }
 
             break;
@@ -188,10 +188,10 @@ void AudioRtpFactory::start (AudioCodec* audiocodec)
 void AudioRtpFactory::stop (void)
 {
     ost::MutexLock mutex (_audioRtpThreadMutex);
-    _info ("--------------------------------- RTP: Stopping audio rtp session");
+    _info ("--------------------------------- AudioRtpFactory: Stopping audio rtp session");
 
     if (_rtpSession == NULL) {
-        _debugException ("RTP: Error: _rtpSession is null when trying to stop. Returning.");
+        _debugException ("AudioRtpFactory: Error: _rtpSession is null when trying to stop. Returning.");
         return;
     }
 
@@ -215,17 +215,17 @@ void AudioRtpFactory::stop (void)
 
         _rtpSession = NULL;
     } catch (...) {
-        _debugException ("RTP: Error: Exception caught when stopping the audio rtp session");
-        throw AudioRtpFactoryException ("RTP: Error: caught exception in AudioRtpFactory::stop");
+        _debugException ("AudioRtpFactory: Error: Exception caught when stopping the audio rtp session");
+        throw AudioRtpFactoryException ("AudioRtpFactory: Error: caught exception in AudioRtpFactory::stop");
     }
 }
 
 int AudioRtpFactory::getSessionMedia()
 {
-    _info ("RTP: Update session media");
+    _info ("AudioRtpFactory: Update session media");
 
     if (_rtpSession == NULL) {
-        throw AudioRtpFactoryException ("RTP: Error: _rtpSession was null when trying to get session media type");
+        throw AudioRtpFactoryException ("AudioRtpFactory: Error: RTP session was null when trying to get session media type");
     }
 
     int payloadType = 0;
@@ -247,10 +247,10 @@ int AudioRtpFactory::getSessionMedia()
 
 void AudioRtpFactory::updateSessionMedia (AudioCodec *audiocodec)
 {
-    _info ("RTP: Updating session media");
+    _info ("AudioRtpFactory: Updating session media");
 
     if (_rtpSession == NULL) {
-        throw AudioRtpFactoryException ("RTP: Error: _rtpSession was null when trying to update IP address");
+        throw AudioRtpFactoryException ("AudioRtpFactory: Error: _rtpSession was null when trying to update IP address");
     }
 
     switch (_rtpSessionType) {
@@ -271,10 +271,10 @@ void AudioRtpFactory::updateSessionMedia (AudioCodec *audiocodec)
 
 void AudioRtpFactory::updateDestinationIpAddress (void)
 {
-    _info ("RTP: Updating IP address");
+    _info ("AudioRtpFactory: Updating IP address");
 
     if (_rtpSession == NULL) {
-        throw AudioRtpFactoryException ("RTP: Error: _rtpSession was null when trying to update IP address");
+        throw AudioRtpFactoryException ("AudioRtpFactory: Error: RtpSession was null when trying to update IP address");
     }
 
     switch (_rtpSessionType) {

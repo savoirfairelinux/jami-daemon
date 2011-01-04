@@ -63,7 +63,7 @@ AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
 
     assert (_ca);
 
-    _info ("---------------------------------------- AudioRtpSession: Setting new RTP session with destination %s:%d", _ca->getLocalIp().c_str(), _ca->getLocalAudioPort());
+    _info ("AudioRtpSession: Setting new RTP session with destination %s:%d", _ca->getLocalIp().c_str(), _ca->getLocalAudioPort());
 
     // static_cast<ost::DualRTPUDPIPv4Channel>(dso)->sendSocket->setTypeOfService(ost::Socket::tosLowDelay);
     // static_cast<ost::DualRTPChannel<ost::DualRTPUDPIPv4Channel> >(dso)->sendSocket->setTypeOfService(ost::Socket::tosLowDelay);
@@ -73,7 +73,7 @@ AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
 
 AudioRtpSession::~AudioRtpSession()
 {
-    _info ("-------------------------------------------- AudioRtpSession: Delete AudioRtpSession instance");
+    _info ("AudioRtpSession: Delete AudioRtpSession instance");
 
     try {
         ost::Thread::terminate();
@@ -93,7 +93,7 @@ AudioRtpSession::~AudioRtpSession()
 
 void AudioRtpSession::setSessionTimeouts (void)
 {
-    _debug ("------------------------------------------ AudioRtpSession: Set session scheduling timeout (%d) and expireTimeout (%d)", sfl::schedulingTimeout, sfl::expireTimeout);
+    _debug ("AudioRtpSession: Set session scheduling timeout (%d) and expireTimeout (%d)", sfl::schedulingTimeout, sfl::expireTimeout);
 
     setSchedulingTimeout (sfl::schedulingTimeout);
     setExpireTimeout (sfl::expireTimeout);
@@ -101,7 +101,7 @@ void AudioRtpSession::setSessionTimeouts (void)
 
 void AudioRtpSession::setSessionMedia (AudioCodec *audioCodec)
 {
-    _debug ("-------------------------------------------------------------- AudioRtpSession: Set session media");
+    _debug ("AudioRtpSession: Set session media");
 
     // set internal codec info for this session
     setRtpMedia (audioCodec);
@@ -134,7 +134,7 @@ void AudioRtpSession::setSessionMedia (AudioCodec *audioCodec)
 
 void AudioRtpSession::updateSessionMedia (AudioCodec *audioCodec)
 {
-    _debug ("------------------------------------------------------ AudioRtpSession: Update session media");
+    _debug ("AudioRtpSession: Update session media");
 
     // Update internal codec for this session
     updateRtpMedia (audioCodec);
@@ -167,7 +167,7 @@ void AudioRtpSession::updateSessionMedia (AudioCodec *audioCodec)
 
 void AudioRtpSession::setDestinationIpAddress (void)
 {
-    _info ("--------------------------------------------- AudioRtpSession: Setting IP address for the RTP session");
+    _info ("AudioRtpSession: Setting IP address for the RTP session");
 
     if (_ca == NULL) {
         _error ("AudioRtpSession: Sipcall is gone.");
@@ -197,7 +197,7 @@ void AudioRtpSession::setDestinationIpAddress (void)
 
 void AudioRtpSession::updateDestinationIpAddress (void)
 {
-    _debug ("----------------------------------------------- AudioRtpSession: Update destination ip address");
+    _debug ("AudioRtpSession: Update destination ip address");
 
     // Destination address are stored in a list in ccrtp
     // This method remove the current destination entry
@@ -331,7 +331,7 @@ int AudioRtpSession::startRtpThread (AudioCodec* audiocodec)
     if (_isStarted)
         return 0;
 
-    _debug ("----------------------------------------------- AudioRtpSession: Starting main thread");
+    _debug ("AudioRtpSession: Starting main thread");
     _isStarted = true;
     setSessionTimeouts();
     setSessionMedia (audiocodec);
@@ -344,7 +344,7 @@ int AudioRtpSession::startRtpThread (AudioCodec* audiocodec)
 
 void AudioRtpSession::stopRtpThread ()
 {
-    _debug ("------------------------------------------------ AudioRtpSession: Stoping main thread");
+    _debug ("AudioRtpSession: Stoping main thread");
 
     disableStack();
 }
@@ -358,7 +358,7 @@ void AudioRtpSession::run ()
     // Start audio stream (if not started) AND flush all buffers (main and urgent)
     // _manager->getAudioDriver()->startStream();
 
-    _debug ("--------------------------------------- AudioRtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
+    _debug ("AudioRtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
 
     uint32 timeout = 0;
 
@@ -411,7 +411,7 @@ void AudioRtpSession::run ()
 
     Thread::exit();
 
-    _debug ("---------------------------------------------------- AudioRtpSession: Left main loop for call %s", _ca->getCallId().c_str());
+    _debug ("AudioRtpSession: Left main loop for call %s", _ca->getCallId().c_str());
 }
 
 }

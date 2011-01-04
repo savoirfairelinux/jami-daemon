@@ -1161,16 +1161,17 @@ SIPVoIPLink::offhold (const CallID& id)
         return false;
     }
 
+    // Retreive previously selected codec
     AudioCodec *sessionMedia = call->getLocalSDP()->get_session_media();
 
     if (!sessionMedia)
         return false;
 
+    // Get PayloadType for this codec
     AudioCodecType pl = (AudioCodecType) sessionMedia->getPayload();
 
-    _debug ("****************************** GetPayload %d", pl);
-
     try {
+        // Create a new instance for this codec
         AudioCodec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (pl);
 
         if (audiocodec == NULL)

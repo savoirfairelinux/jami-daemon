@@ -303,7 +303,6 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
         return false;
     }
 
-    _debug ("Manager: Adding Outgoing Call %s on account %s", call_id.data(), account_id.data());
     associateCallToAccount (call_id, account_id);
 
     if (getAccountLink (account_id)->newOutgoingCall (call_id, to_cleaned)) {
@@ -3648,7 +3647,7 @@ bool ManagerImpl::associateCallToAccount (const CallID& callID,
         if (accountExists (accountID)) { // account id exist in AccountMap
             ost::MutexLock m (_callAccountMapMutex);
             _callAccountMap[callID] = accountID;
-            _debug ("Associate Call %s with Account %s", callID.data(), accountID.data());
+            _debug ("Manager: Associate Call %s with Account %s", callID.data(), accountID.data());
             return true;
         } else {
             return false;
