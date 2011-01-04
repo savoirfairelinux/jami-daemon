@@ -183,7 +183,7 @@ search_phone_home_cb (GtkWidget *widget)
 {
 
     addressbook_config->search_phone_home = (guint) gtk_toggle_button_get_active (
-                                                GTK_TOGGLE_BUTTON (widget));
+            GTK_TOGGLE_BUTTON (widget));
 }
 
 static void
