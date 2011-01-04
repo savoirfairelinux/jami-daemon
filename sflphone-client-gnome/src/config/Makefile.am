@@ -16,5 +16,6 @@ libconfig_la_SOURCES = \
   utils.c 
 
 libconfig_la_LDFLAGS = @DEPS_LDFLAGS@
+libconfig_la_LIBADD = @DEPS_LIBS@
 					  
 libconfig_la_CFLAGS = @DEPS_CFLAGS@ 

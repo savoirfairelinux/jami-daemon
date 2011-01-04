@@ -8,5 +8,6 @@ libwidget_la_SOURCES = \
 		imwidget.c
 
 libwidget_la_LDFLAGS = @DEPS_LDFLAGS@
+libwidget_la_LIBADD = @DEPS_LIBS@
 					  
 libwidget_la_CFLAGS = @DEPS_CFLAGS@ 
