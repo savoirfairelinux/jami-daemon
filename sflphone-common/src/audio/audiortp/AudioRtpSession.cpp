@@ -103,12 +103,8 @@ void AudioRtpSession::setSessionMedia (AudioCodec *audioCodec)
 {
     _debug ("-------------------------------------------------------------- AudioRtpSession: Set session media");
 
-    // audioCodecMutex.enter();
-
     // set internal codec info for this session
     setRtpMedia (audioCodec);
-
-    // audioCodecMutex.enter();
 
     // store codec info locally
     int payloadType = getCodecPayloadType();
@@ -127,12 +123,6 @@ void AudioRtpSession::setSessionMedia (AudioCodec *audioCodec)
     _debug ("AudioRtpSession: Codec frame size: %d", frameSize);
     _debug ("AudioRtpSession: RTP timestamp increment: %d", _timestampIncrement);
 
-    // Even if specified as a 16 kHz codec, G722 requires rtp sending rate to be 8 kHz
-//    if (payloadType == g722PayloadType) {
-//        _debug ("AudioRtpSession: Setting G722 payload format");
-//        setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, g722RtpClockRate));
-//        // setPayloadFormat (ost::StaticPayloadFormat (ost::sptG722));
-//    } else
     if (dynamic) {
         _debug ("AudioRtpSession: Setting dynamic payload format");
         setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, smplRate));
@@ -146,12 +136,8 @@ void AudioRtpSession::updateSessionMedia (AudioCodec *audioCodec)
 {
     _debug ("------------------------------------------------------ AudioRtpSession: Update session media");
 
-    // audioCodecMutex.enter();
-
-    //
+    // Update internal codec for this session
     updateRtpMedia (audioCodec);
-
-    // audioCodecMutex.leave();
 
     int payloadType = getCodecPayloadType();
     int frameSize = getCodecFrameSize();
@@ -169,12 +155,6 @@ void AudioRtpSession::updateSessionMedia (AudioCodec *audioCodec)
     _debug ("AudioRtpSession: Codec frame size: %d", frameSize);
     _debug ("AudioRtpSession: RTP timestamp increment: %d", _timestampIncrement);
 
-    // Even if specified as a 16 kHz codec, G722 requires rtp sending rate to be 8 kHz
-//    if (payloadType == g722PayloadType) {
-//        _debug ("AudioRtpSession: Setting G722 payload format");
-//        setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, g722RtpClockRate));
-//        // setPayloadFormat (ost::StaticPayloadFormat (ost::sptG722));
-//    } else
     if (dynamic) {
         _debug ("AudioRtpSession: Setting dynamic payload format");
         setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, smplRate));
@@ -291,14 +271,6 @@ void AudioRtpSession::sendMicData()
     // If no data, return
     if (!compSize)
         return;
-
-//    _timestampCount++;
-//
-//    // Reset timestamp to make sure the timinlipg information are up to date
-//    if (_timestampCount > RTP_TIMESTAMP_RESET_FREQ) {
-//        _timestamp = getCurrentTimestamp();
-//        _timestampCount = 0;
-//    }
 
     // Increment timestamp for outgoing packet
     _timestamp += _timestampIncrement;

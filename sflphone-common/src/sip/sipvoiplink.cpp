@@ -1161,12 +1161,25 @@ SIPVoIPLink::offhold (const CallID& id)
         return false;
     }
 
-    AudioCodec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (PAYLOAD_CODEC_ULAW);
+    AudioCodec *sessionMedia = call->getLocalSDP()->get_session_media();
+
+    if (!sessionMedia)
+        return false;
+
+    AudioCodecType pl = (AudioCodecType) sessionMedia->getPayload();
+
+    _debug ("****************************** GetPayload %d", pl);
 
     try {
+        AudioCodec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (pl);
+
+        if (audiocodec == NULL)
+            _error ("UserAgent: No audiocodec found");
+
         call->getAudioRtp()->initAudioRtpConfig (call);
         call->getAudioRtp()->initAudioRtpSession (call);
         call->getAudioRtp()->start (audiocodec);
+
     } catch (...) {
         _debug ("! SIP Failure: Unable to create RTP Session (%s:%d)", __FILE__, __LINE__);
     }

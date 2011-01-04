@@ -90,6 +90,7 @@ class AudioRtpRecord
         ~AudioRtpRecord();
 
         AudioCodec *_audioCodec;
+        ost::Mutex audioCodecMutex;
         int _codecPayloadType;
         bool _hasDynamicPayloadType;
         SFLDataFormat *_micData;
@@ -108,6 +109,7 @@ class AudioRtpRecord
         SFLDataFormat _spkrAmplFactor;
         AudioProcessing *_audioProcess;
         NoiseSuppress *_noiseSuppress;
+        ost::Mutex audioProcessMutex;
 
 };
 
@@ -205,12 +207,7 @@ class AudioRtpRecordHandler
 
         void putDtmfEvent (int digit);
 
-    protected:
-
-
     private:
-
-        ost::Mutex audioCodecMutex;
 
         AudioRtpRecord	_audioRtpRecord;
 
