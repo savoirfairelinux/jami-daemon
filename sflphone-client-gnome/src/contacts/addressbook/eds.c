@@ -42,6 +42,7 @@
 #include <pango/pango.h>
 #include "eds.h"
 #include <addressbook-config.h>
+#include <libedataserverui/e-passwords.h>
 
 /**
  * Structure used to store search callback and data
@@ -53,6 +54,9 @@ typedef struct _Search_Handler_And_Data {
     int max_results_remaining;
     EBookQuery *equery;
 } Search_Handler_And_Data;
+
+static void
+authenticate_source (EBook *);
 
 /**
  * The global addressbook list
@@ -266,7 +270,7 @@ view_finish_callback (EBookView *book_view, Search_Handler_And_Data *had)
 
     g_free (had);
 
-    DEBUG ("Addressbook: View finish");
+    DEBUG ("Addressbook: View finish, all book have been processed");
 
     if (book_view != NULL)
         g_object_unref (book_view);
@@ -351,9 +355,20 @@ eds_async_open_callback (EBook *book, EBookStatus status, gpointer closure)
 {
     DEBUG ("Addressbook: Open book callback");
 
+    ESource *source;
+    const gchar *uri;
+
     Search_Handler_And_Data *had = (Search_Handler_And_Data *) closure;
 
     if (status == E_BOOK_ERROR_OK) {
+
+        if (! (source = e_book_get_source (book)))
+            DEBUG ("Addressbook: Error while getting source");
+
+        if (! (uri = e_book_get_uri (book)))
+            DEBUG ("Addressbook: Error while getting URI");
+
+        authenticate_source (book);
 
         if (!e_book_is_opened (book)) {
             // We must open the addressbook
@@ -472,6 +487,60 @@ init ()
     }
 }
 
+/**
+ * Authenticate this addressbook
+ */
+static void
+authenticate_source (EBook *book)
+{
+    const gchar *auth_domain;
+    const gchar *password = NULL;
+    const gchar *component_name;
+    const gchar *user;
+    const gchar *auth;
+    GError *err = NULL;
+    const gchar *uri;
+    ESource *source;
+    gboolean ret;
+
+    if (! (source = e_book_get_source (book)))
+        DEBUG ("Addressbook: Error while getting source");
+
+    if (! (uri = e_book_get_uri (book)))
+        DEBUG ("Addressbook: Error while getting URI");
+
+    auth_domain = e_source_get_property (source, "auth-domain");
+
+    auth = e_source_get_property (source, "auth");
+
+    if (auth && !strcmp ("ldap/simple-binddn", auth)) {
+        user = e_source_get_property (source, "binddn");
+    } else if (auth && !strcmp ("plain/password", auth)) {
+        user = e_source_get_property (source, "user");
+
+        if (!user) {
+            user = e_source_get_property (source, "username");
+        }
+    } else {
+        user = e_source_get_property (source, "email_addr");
+    }
+
+    if (!user)
+        user = "";
+
+    if (auth) {
+        component_name = auth_domain ? auth_domain : "Addressbook";
+
+        password = e_passwords_get_password (component_name, uri);
+
+        ret = e_book_authenticate_user (book, user, password, auth, &err);
+
+        if (ret)
+            DEBUG ("Addressbook: authentication successfull");
+        else
+            DEBUG ("Addressbook: authentication error");
+    }
+}
 
 /**
  * Fill book data
@@ -542,6 +611,9 @@ fill_books_data ()
                 book_data->uri = g_strjoin ("", absuri, e_source_peek_relative_uri (source), NULL);
             else
                 book_data->uri = g_strjoin ("/", absuri, e_source_peek_relative_uri (source), NULL);
+
+
+            // authenticate_source (book_data, source);
 
             books_data = g_slist_prepend (books_data, book_data);
 
