@@ -212,7 +212,7 @@ void AudioRtpSession::updateDestinationIpAddress (void)
 
 void AudioRtpSession::sendDtmfEvent (sfl::DtmfEvent *dtmf)
 {
-    _debug ("AudioRtpSession: Send Dtmf %d", getEventQueueSize());
+    _debug ("AudioRtpSession: Send Dtmf");
 
     _timestamp += 160;
 

@@ -238,7 +238,7 @@ void AudioRtpRecordHandler::putDtmfEvent (int digit)
     dtmf->newevent = true;
     dtmf->length = 1000;
     getEventQueue()->push_back (dtmf);
-    _debug ("AudioRtpSession: Put Dtmf Event %d", getEventQueue()->size());
+    _debug ("AudioRtpSession: Put Dtmf Event %d", digit);
 }
 
 int AudioRtpRecordHandler::processDataEncode (void)

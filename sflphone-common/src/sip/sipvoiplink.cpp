@@ -1362,7 +1362,7 @@ SIPVoIPLink::carryingDTMFdigits (const CallID& id, char code)
     SIPCall *call = getSIPCall (id);
 
     if (!call) {
-        _error ("UserAgent: Error: Call doesn't exist while sending DTMF");
+        //_error ("UserAgent: Error: Call doesn't exist while sending DTMF");
         return false;
     }
 
@@ -1402,6 +1402,7 @@ SIPVoIPLink::dtmfSipInfo (SIPCall *call, char code)
     pjsip_method method;
     pjsip_media_type ctype;
 
+    _debug ("UserAgent: Send DTMF %c", code);
 
     duration = Manager::instance().voipPreferences.getPulseLength();
 

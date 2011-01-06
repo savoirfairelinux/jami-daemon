@@ -1523,18 +1523,15 @@ bool ManagerImpl::saveConfig (void)
 //THREAD=Main
 bool ManagerImpl::sendDtmf (const CallID& id, char code)
 {
+    _debug ("Manager: Send DTMF for call %s", id.c_str());
 
     AccountID accountid = getAccountFromCall (id);
-
-    bool returnValue = false;
 
     playDtmf (code);
 
     CallAccountMap::iterator iter = _callAccountMap.find (id);
 
-    // Make sure the call exist before sending DTMF, ths could be simply call dialing
-    if (iter != _callAccountMap.end())
-        returnValue = getAccountLink (accountid)->carryingDTMFdigits (id, code);
+    bool returnValue = getAccountLink (accountid)->carryingDTMFdigits (id, code);
 
     return returnValue;
 }
