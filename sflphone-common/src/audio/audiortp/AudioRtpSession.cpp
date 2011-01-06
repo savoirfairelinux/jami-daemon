@@ -255,9 +255,7 @@ void AudioRtpSession::sendDtmfEvent (sfl::DtmfEvent *dtmf)
 
 bool AudioRtpSession::onRTPPacketRecv (ost::IncomingRTPPkt&)
 {
-    // audioCodecMutex.enter();
     receiveSpeakerData ();
-    // audioCodecMutex.leave();
 
     return true;
 }
@@ -355,9 +353,6 @@ void AudioRtpSession::run ()
     // Set recording sampling rate
     _ca->setRecordingSmplRate (getCodecSampleRate());
 
-    // Start audio stream (if not started) AND flush all buffers (main and urgent)
-    // _manager->getAudioDriver()->startStream();
-
     _debug ("AudioRtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
 
     uint32 timeout = 0;
@@ -394,7 +389,6 @@ void AudioRtpSession::run ()
             setCancel (cancelImmediate);
             timerTick();
         } else {
-
             if (isPendingData (timeout/1000)) {
                 setCancel (cancelDeferred);
 
