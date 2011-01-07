@@ -68,18 +68,18 @@ class AudioLayer
          * @param manager An instance of managerimpl
          */
         AudioLayer (ManagerImpl* manager , int type)
-                : _defaultVolume (100)
-                , _layerType (type)
-                , _manager (manager)
-                , _urgentRingBuffer (SIZEBUF, default_id)
-                , _indexIn (0)
-                , _indexOut (0)
-                , _audioSampleRate (0)
-                , _frameSize (0)
-                , _inChannel (1)
-                , _outChannel (1)
-                , _errorMessage (0)
-                , _mutex () {
+            : _defaultVolume (100)
+            , _layerType (type)
+            , _manager (manager)
+            , _urgentRingBuffer (SIZEBUF, default_id)
+            , _indexIn (0)
+            , _indexOut (0)
+            , _audioSampleRate (0)
+            , _frameSize (0)
+            , _inChannel (1)
+            , _outChannel (1)
+            , _errorMessage (0)
+            , _mutex () {
 
         }
 

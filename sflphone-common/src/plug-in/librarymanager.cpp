@@ -32,7 +32,7 @@
 #include "librarymanager.h"
 
 LibraryManager::LibraryManager (const std::string &filename)
-        : _filename (filename), _handlePtr (NULL)
+    : _filename (filename), _handlePtr (NULL)
 {
     _handlePtr = loadLibrary (filename);
 }
@@ -103,7 +103,7 @@ int LibraryManager::resolveSymbol (const std::string &symbol, SymbolHandle *symb
 /************************************************************************************************/
 
 LibraryManagerException::LibraryManagerException (const std::string &libraryName, const std::string &details, Reason reason) :
-        std::runtime_error (""), _reason (reason), _details ("")
+    std::runtime_error (""), _reason (reason), _details ("")
 
 {
     if (_reason == loadingFailed)

@@ -41,7 +41,7 @@ const char* ConfigurationManager::SERVER_PATH =
     "/org/sflphone/SFLphone/ConfigurationManager";
 
 ConfigurationManager::ConfigurationManager (DBus::Connection& connection) :
-        DBus::ObjectAdaptor (connection, SERVER_PATH)
+    DBus::ObjectAdaptor (connection, SERVER_PATH)
 {
     shortcutsKeys.push_back ("pick_up");
     shortcutsKeys.push_back ("hang_up");

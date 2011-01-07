@@ -31,8 +31,8 @@
 #include "noisesuppress.h"
 
 NoiseSuppress::NoiseSuppress (int smplPerFrame, int samplingRate) : _noiseState (NULL)
-        , _smplPerFrame (smplPerFrame)
-        , _samplingRate (samplingRate)
+    , _smplPerFrame (smplPerFrame)
+    , _samplingRate (samplingRate)
 {
     initNewNoiseSuppressor (_smplPerFrame, _samplingRate);
 }
