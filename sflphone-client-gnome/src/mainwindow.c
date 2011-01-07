@@ -94,11 +94,10 @@ on_delete (GtkWidget * widget UNUSED, gpointer data UNUSED)
         gtk_widget_hide (GTK_WIDGET (get_main_window()));
         set_minimized (TRUE);
     } else {
+        g_mutex_free (gmutex);
         sflphone_quit ();
     }
 
-    // pthread_mutex_destroy (&statusbar_message_mutex);
-    g_mutex_free (gmutex);
     return TRUE;
 }
 
