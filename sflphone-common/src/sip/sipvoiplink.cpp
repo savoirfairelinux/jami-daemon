@@ -1234,7 +1234,7 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
         pj_cstr (&pjDest, dest.c_str());
     }
 
-    _info ("UserAgent: Transfering to %s", dest.c_str());
+    _info ("UserAgent: Transferring to %s", dest.c_str());
 
     /* Create xfer client subscription. */
     pj_bzero (&xfer_cb, sizeof (xfer_cb));

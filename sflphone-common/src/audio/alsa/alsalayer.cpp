@@ -482,7 +482,7 @@ bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle, int type, int rate)
         _debug ("Audio: Set audio rate to %d", rate);
 
     if (dir!= 0) {
-        _debugAlsa ("Audio: Error: (%i) The choosen rate %d Hz is not supported by your hardware.Using %d Hz instead. ",type ,rate, exact_ivalue);
+        _debugAlsa ("Audio: Error: (%i) The chosen rate %d Hz is not supported by your hardware.Using %d Hz instead. ",type ,rate, exact_ivalue);
     }
 
     /* Set the number of channels */
@@ -502,7 +502,7 @@ bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle, int type, int rate)
     }
 
     if (dir!=0) {
-        _debugAlsa ("Audio: Warning: (%i) The choosen period size %d bytes is not supported by your hardware.Using %d instead. ", type, (int) periodsize, (int) exact_lvalue);
+        _debugAlsa ("Audio: Warning: (%i) The chosen period size %d bytes is not supported by your hardware.Using %d instead. ", type, (int) periodsize, (int) exact_lvalue);
     }
 
     periodsize = exact_lvalue;
@@ -518,7 +518,7 @@ bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle, int type, int rate)
     }
 
     if (dir!=0) {
-        _debugAlsa ("Audio: Warning: The choosen period number %i bytes is not supported by your hardware.Using %i instead. ", periods, exact_ivalue);
+        _debugAlsa ("Audio: Warning: The chosen period number %i bytes is not supported by your hardware.Using %i instead. ", periods, exact_ivalue);
     }
 
     periods=exact_ivalue;
