@@ -1,5 +1,6 @@
 /*
  *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -65,7 +66,9 @@ class AudioZrtpSession : protected ost::Thread, public AudioRtpRecordHandler, pu
 
         virtual bool onRTPPacketRecv (ost::IncomingRTPPkt&);
 
-        int startRtpThread (AudioCodec*);
+        int startRtpThread (AudioCodec *);
+
+        void stopRtpThread (void);
 
         /**
          * Used mostly when receiving a reinvite
@@ -168,6 +171,8 @@ class AudioZrtpSession : protected ost::Thread, public AudioRtpRecordHandler, pu
         int _countNotificationTime;
 
         SIPCall * _ca;
+
+        bool _isStarted;
 };
 
 }
