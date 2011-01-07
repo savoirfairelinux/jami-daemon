@@ -45,6 +45,7 @@ std::string NumberCleaner::clean (std::string to_clean)
 {
 
     strip_char (" ", &to_clean);
+    strip_char (".", &to_clean);
     strip_char ("-", &to_clean);
     strip_char ("(", &to_clean);
     strip_char (")", &to_clean);
