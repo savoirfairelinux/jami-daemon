@@ -38,7 +38,7 @@ class Alaw : public AudioCodec
     public:
         // 8 PCMA A 8000 1 [RFC3551]
         Alaw (int payload=0)
-                : AudioCodec (payload, "PCMA") {
+            : AudioCodec (payload, "PCMA") {
             _clockRate = 8000;
             _frameSize = 160; // samples, 20 ms at 8kHz
             _channel   = 1;

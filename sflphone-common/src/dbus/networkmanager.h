@@ -40,9 +40,9 @@
 using namespace std;
 
 class NetworkManager
-        : public org::freedesktop::NetworkManager_proxy,
-        public DBus::IntrospectableProxy,
-        public DBus::ObjectProxy
+    : public org::freedesktop::NetworkManager_proxy,
+  public DBus::IntrospectableProxy,
+  public DBus::ObjectProxy
 {
     public:
 

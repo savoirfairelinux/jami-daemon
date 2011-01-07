@@ -33,19 +33,19 @@
 #include "audio/mainbuffer.h"
 
 Call::Call (const CallID& id, Call::CallType type)
-        : _callMutex()
-        , _audioStarted (false)
-        , _localIPAddress ("")
-        , _localAudioPort (0)
-        , _localExternalAudioPort (0)
-        , _id (id)
-        , _confID ("")
-        , _type (type)
-        , _connectionState (Call::Disconnected)
-        , _callState (Call::Inactive)
-        , _callConfig (Call::Classic)
-        , _peerName()
-        , _peerNumber()
+    : _callMutex()
+    , _audioStarted (false)
+    , _localIPAddress ("")
+    , _localAudioPort (0)
+    , _localExternalAudioPort (0)
+    , _id (id)
+    , _confID ("")
+    , _type (type)
+    , _connectionState (Call::Disconnected)
+    , _callState (Call::Inactive)
+    , _callConfig (Call::Classic)
+    , _peerName()
+    , _peerNumber()
 {
 
 }

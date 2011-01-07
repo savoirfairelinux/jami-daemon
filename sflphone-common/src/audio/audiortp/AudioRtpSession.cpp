@@ -42,22 +42,22 @@ namespace sfl
 {
 
 AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
-        // ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
-        AudioRtpRecordHandler (manager, sipcall),
-        ost::TRTPSessionBase<ost::SymmetricRTPChannel,ost::SymmetricRTPChannel,ost::AVPQueue> (ost::InetHostAddress (sipcall->getLocalIp().c_str()),
-                sipcall->getLocalAudioPort(),
-                0,
-                ost::MembershipBookkeeping::defaultMembersHashSize,
-                ost::defaultApplication())
-        , _time (new ost::Time())
-        , _mainloopSemaphore (0)
-        , _manager (manager)
-        , _timestamp (0)
-        , _timestampIncrement (0)
-        , _timestampCount (0)
-        , _countNotificationTime (0)
-        , _ca (sipcall)
-        , _isStarted (false)
+    // ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
+    AudioRtpRecordHandler (manager, sipcall),
+    ost::TRTPSessionBase<ost::SymmetricRTPChannel,ost::SymmetricRTPChannel,ost::AVPQueue> (ost::InetHostAddress (sipcall->getLocalIp().c_str()),
+            sipcall->getLocalAudioPort(),
+            0,
+            ost::MembershipBookkeeping::defaultMembersHashSize,
+            ost::defaultApplication())
+    , _time (new ost::Time())
+    , _mainloopSemaphore (0)
+    , _manager (manager)
+    , _timestamp (0)
+    , _timestampIncrement (0)
+    , _timestampCount (0)
+    , _countNotificationTime (0)
+    , _ca (sipcall)
+    , _isStarted (false)
 {
     ost::Thread::setCancel (cancelDefault);
 

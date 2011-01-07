@@ -34,7 +34,7 @@
 
 /********************************** Voiplink thread *************************************/
 EventThread::EventThread (VoIPLink *link)
-        : Thread(), _linkthread (link)
+    : Thread(), _linkthread (link)
 {
     setCancel (cancelDeferred);
 }
@@ -54,7 +54,7 @@ void EventThread::run (void)
 /********************************************************************************************/
 
 AudioThread::AudioThread (AlsaLayer *alsa)
-        : Thread(), _alsa (alsa)
+    : Thread(), _alsa (alsa)
 {
     setCancel (cancelDeferred);
 }

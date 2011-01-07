@@ -38,7 +38,7 @@ class PluginTest : public Plugin
 
     public:
         PluginTest (const std::string &name)
-                :Plugin (name) {
+            :Plugin (name) {
         }
 
         virtual int initFunc (PluginInfo **info) {

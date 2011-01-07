@@ -39,13 +39,13 @@ class Speex : public AudioCodec
 
     public:
         Speex (int payload=0)
-                : AudioCodec (payload, "speex"),
-                _speexModePtr (NULL),
-                _speex_dec_bits(),
-                _speex_enc_bits(),
-                _speex_dec_state(),
-                _speex_enc_state(),
-                _speex_frame_size() {
+            : AudioCodec (payload, "speex"),
+              _speexModePtr (NULL),
+              _speex_dec_bits(),
+              _speex_enc_bits(),
+              _speex_dec_state(),
+              _speex_enc_state(),
+              _speex_frame_size() {
             _clockRate = 8000;
             _frameSize = 160; // samples, 20 ms at 8kHz
             _channel = 1;
