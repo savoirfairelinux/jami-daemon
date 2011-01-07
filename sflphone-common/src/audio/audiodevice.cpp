@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -34,7 +34,7 @@
 const double AudioDevice::DEFAULT_RATE = 8000.0;
 
 AudioDevice::AudioDevice (int id, const std::string& name) :
-    _id (id), _name (name), _rate (DEFAULT_RATE)
+        _id (id), _name (name), _rate (DEFAULT_RATE)
 {
     _rate = DEFAULT_RATE;
 }

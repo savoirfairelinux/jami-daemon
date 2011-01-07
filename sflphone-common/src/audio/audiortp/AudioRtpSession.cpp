@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -42,22 +42,22 @@ namespace sfl
 {
 
 AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
-    // ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
-    AudioRtpRecordHandler (manager, sipcall),
-    ost::TRTPSessionBase<ost::SymmetricRTPChannel,ost::SymmetricRTPChannel,ost::AVPQueue> (ost::InetHostAddress (sipcall->getLocalIp().c_str()),
-            sipcall->getLocalAudioPort(),
-            0,
-            ost::MembershipBookkeeping::defaultMembersHashSize,
-            ost::defaultApplication())
-    , _time (new ost::Time())
-    , _mainloopSemaphore (0)
-    , _manager (manager)
-    , _timestamp (0)
-    , _timestampIncrement (0)
-    , _timestampCount (0)
-    , _countNotificationTime (0)
-    , _ca (sipcall)
-    , _isStarted (false)
+        // ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
+        AudioRtpRecordHandler (manager, sipcall),
+        ost::TRTPSessionBase<ost::SymmetricRTPChannel,ost::SymmetricRTPChannel,ost::AVPQueue> (ost::InetHostAddress (sipcall->getLocalIp().c_str()),
+                sipcall->getLocalAudioPort(),
+                0,
+                ost::MembershipBookkeeping::defaultMembersHashSize,
+                ost::defaultApplication())
+        , _time (new ost::Time())
+        , _mainloopSemaphore (0)
+        , _manager (manager)
+        , _timestamp (0)
+        , _timestampIncrement (0)
+        , _timestampCount (0)
+        , _countNotificationTime (0)
+        , _ca (sipcall)
+        , _isStarted (false)
 {
     ost::Thread::setCancel (cancelDefault);
 

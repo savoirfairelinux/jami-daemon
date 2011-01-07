@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -36,14 +36,14 @@ static pa_channel_map channel_map;
 
 
 AudioStream::AudioStream (PulseLayerType * driver, int smplrate)
-    : _audiostream (NULL),
-      _context (driver->context),
-      _streamType (driver->type),
-      _streamDescription (driver->description),
-      _volume(),
-      _flag (PA_STREAM_AUTO_TIMING_UPDATE),
-      _sample_spec(),
-      _mainloop (driver->mainloop)
+        : _audiostream (NULL),
+        _context (driver->context),
+        _streamType (driver->type),
+        _streamDescription (driver->description),
+        _volume(),
+        _flag (PA_STREAM_AUTO_TIMING_UPDATE),
+        _sample_spec(),
+        _mainloop (driver->mainloop)
 {
     _sample_spec.format = PA_SAMPLE_S16LE; // PA_SAMPLE_FLOAT32LE;
     _sample_spec.rate = smplrate;

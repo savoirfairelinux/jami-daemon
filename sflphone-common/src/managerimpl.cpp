@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -78,15 +78,15 @@
 SIPAccount defaultAccount ("default");
 
 ManagerImpl::ManagerImpl (void) :
-    _hasTriedToRegister (false), _config(), _currentCallId2(),
-    _currentCallMutex(), _codecBuilder (NULL), _audiodriver (NULL),
-    _dtmfKey (NULL), _codecDescriptorMap(), _toneMutex(),
-    _telephoneTone (NULL), _audiofile (NULL), _spkr_volume (0),
-    _mic_volume (0), _mutex(), _dbus (NULL), _waitingCall(),
-    _waitingCallMutex(), _nbIncomingWaitingCall (0), _path (""),
-    _exist (0), _setupLoaded (false), _callAccountMap(),
-    _callAccountMapMutex(), _callConfigMap(), _accountMap(),
-    _directIpAccount (NULL), _cleaner (NULL), _history (NULL)
+        _hasTriedToRegister (false), _config(), _currentCallId2(),
+        _currentCallMutex(), _codecBuilder (NULL), _audiodriver (NULL),
+        _dtmfKey (NULL), _codecDescriptorMap(), _toneMutex(),
+        _telephoneTone (NULL), _audiofile (NULL), _spkr_volume (0),
+        _mic_volume (0), _mutex(), _dbus (NULL), _waitingCall(),
+        _waitingCallMutex(), _nbIncomingWaitingCall (0), _path (""),
+        _exist (0), _setupLoaded (false), _callAccountMap(),
+        _callAccountMapMutex(), _callConfigMap(), _accountMap(),
+        _directIpAccount (NULL), _cleaner (NULL), _history (NULL)
 {
 
     // initialize random generator for call id

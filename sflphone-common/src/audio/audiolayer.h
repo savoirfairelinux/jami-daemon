@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author:  Jerome Oufella <jerome.oufella@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -68,18 +68,18 @@ class AudioLayer
          * @param manager An instance of managerimpl
          */
         AudioLayer (ManagerImpl* manager , int type)
-            : _defaultVolume (100)
-            , _layerType (type)
-            , _manager (manager)
-            , _urgentRingBuffer (SIZEBUF, default_id)
-            , _indexIn (0)
-            , _indexOut (0)
-            , _audioSampleRate (0)
-            , _frameSize (0)
-            , _inChannel (1)
-            , _outChannel (1)
-            , _errorMessage (0)
-            , _mutex () {
+                : _defaultVolume (100)
+                , _layerType (type)
+                , _manager (manager)
+                , _urgentRingBuffer (SIZEBUF, default_id)
+                , _indexIn (0)
+                , _indexOut (0)
+                , _audioSampleRate (0)
+                , _frameSize (0)
+                , _inChannel (1)
+                , _outChannel (1)
+                , _errorMessage (0)
+                , _mutex () {
 
         }
 

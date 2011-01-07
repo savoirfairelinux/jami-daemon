@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -36,9 +36,9 @@
 
 
 class ContactManager
-    : public org::sflphone::SFLphone::ContactManager_adaptor,
-  public DBus::IntrospectableAdaptor,
-  public DBus::ObjectAdaptor
+        : public org::sflphone::SFLphone::ContactManager_adaptor,
+        public DBus::IntrospectableAdaptor,
+        public DBus::ObjectAdaptor
 {
     public:
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -40,9 +40,9 @@
 using namespace std;
 
 class NetworkManager
-    : public org::freedesktop::NetworkManager_proxy,
-  public DBus::IntrospectableProxy,
-  public DBus::ObjectProxy
+        : public org::freedesktop::NetworkManager_proxy,
+        public DBus::IntrospectableProxy,
+        public DBus::ObjectProxy
 {
     public:
 

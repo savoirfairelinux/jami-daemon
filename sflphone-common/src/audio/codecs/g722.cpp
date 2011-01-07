@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  * Author:  Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  * Motly borrowed from asterisk's sources (Steve Underwood <steveu@coppice.org>)
@@ -49,7 +49,7 @@ class G722 : public AudioCodec
     public:
 
         G722 (int payload=9)
-            : AudioCodec (payload, "G722") {
+                : AudioCodec (payload, "G722") {
             _clockRate = 16000;
             _frameSize = 320; // samples, 20 ms at 16kHz
             _channel   = 1;

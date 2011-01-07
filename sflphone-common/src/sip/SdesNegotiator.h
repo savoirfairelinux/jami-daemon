@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
@@ -46,7 +46,7 @@ class parse_error : public std::invalid_argument
 {
     public:
         explicit parse_error (const std::string& error) :
-            std::invalid_argument (error) {}
+                std::invalid_argument (error) {}
 };
 
 enum CipherMode {
@@ -100,13 +100,13 @@ class CryptoAttribute
                          std::string lifetime,
                          std::string mkiValue,
                          std::string mkiLength) :
-            tag (tag),
-            cryptoSuite (cryptoSuite),
-            srtpKeyMethod (srtpKeyMethod),
-            srtpKeyInfo (srtpKeyInfo),
-            lifetime (lifetime),
-            mkiValue (mkiValue),
-            mkiLength (mkiLength) {};
+                tag (tag),
+                cryptoSuite (cryptoSuite),
+                srtpKeyMethod (srtpKeyMethod),
+                srtpKeyInfo (srtpKeyInfo),
+                lifetime (lifetime),
+                mkiValue (mkiValue),
+                mkiLength (mkiLength) {};
 
 
         inline std::string getTag() {

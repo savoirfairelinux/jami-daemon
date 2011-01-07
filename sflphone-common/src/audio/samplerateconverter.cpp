@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
@@ -32,15 +32,15 @@
 #include "manager.h"
 
 SamplerateConverter::SamplerateConverter (int freq , int fs)
-    : _frequence (freq)
-    , _framesize (fs)
-    , _floatBufferDownMic (NULL)
-    , _floatBufferUpMic (NULL)
-    , _src_state_mic (NULL)
-    , _floatBufferDownSpkr (NULL)
-    , _floatBufferUpSpkr (NULL)
-    , _src_state_spkr (NULL)
-    , _src_err (0)
+        : _frequence (freq)
+        , _framesize (fs)
+        , _floatBufferDownMic (NULL)
+        , _floatBufferUpMic (NULL)
+        , _src_state_mic (NULL)
+        , _floatBufferDownSpkr (NULL)
+        , _floatBufferUpSpkr (NULL)
+        , _src_state_spkr (NULL)
+        , _src_err (0)
 {
     init();
 }

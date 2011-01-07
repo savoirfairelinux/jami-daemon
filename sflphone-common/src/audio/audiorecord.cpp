@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -50,16 +50,16 @@ struct wavhdr {
 
 
 AudioRecord::AudioRecord() : fp (NULL)
-    , channels_ (1)
-    , byteCounter_ (0)
-    , sndSmplRate_ (8000)
-    , nbSamplesMic_ (0)
-    , nbSamplesSpk_ (0)
-    , nbSamplesMax_ (3000)
-    , recordingEnabled_ (false)
-    , mixBuffer_ (NULL)
-    , micBuffer_ (NULL)
-    , spkBuffer_ (NULL)
+        , channels_ (1)
+        , byteCounter_ (0)
+        , sndSmplRate_ (8000)
+        , nbSamplesMic_ (0)
+        , nbSamplesSpk_ (0)
+        , nbSamplesMax_ (3000)
+        , recordingEnabled_ (false)
+        , mixBuffer_ (NULL)
+        , micBuffer_ (NULL)
+        , spkBuffer_ (NULL)
 {
 
     mixBuffer_ = new SFLDataFormat[nbSamplesMax_];

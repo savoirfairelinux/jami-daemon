@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *
@@ -201,12 +201,12 @@ class ConfigTreeItem
 
         // defaultvalue = value
         ConfigTreeItem (const std::string& name, const std::string& value, const std::string& type) :
-            _name (name), _value (value),
-            _defaultValue (value), _type (type) {}
+                _name (name), _value (value),
+                _defaultValue (value), _type (type) {}
 
         ConfigTreeItem (const std::string& name, const std::string& value, const std::string& defaultValue, const std::string& type) :
-            _name (name), _value (value),
-            _defaultValue (defaultValue), _type (type) {}
+                _name (name), _value (value),
+                _defaultValue (defaultValue), _type (type) {}
 
         ~ConfigTreeItem() {}
 

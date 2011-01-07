@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *
@@ -50,16 +50,16 @@ namespace sfl
 {
 
 AudioSrtpSession::AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall) :
-    AudioRtpSession (manager, sipcall),
-    _localCryptoSuite (0),
-    _remoteCryptoSuite (0),
-    _localMasterKeyLength (0),
-    _localMasterSaltLength (0),
-    _remoteMasterKeyLength (0),
-    _remoteMasterSaltLength (0),
-    _remoteCryptoCtx (NULL),
-    _localCryptoCtx (NULL),
-    _remoteOfferIsSet (false)
+        AudioRtpSession (manager, sipcall),
+        _localCryptoSuite (0),
+        _remoteCryptoSuite (0),
+        _localMasterKeyLength (0),
+        _localMasterSaltLength (0),
+        _remoteMasterKeyLength (0),
+        _remoteMasterSaltLength (0),
+        _remoteCryptoCtx (NULL),
+        _localCryptoCtx (NULL),
+        _remoteOfferIsSet (false)
 {
 }
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -32,7 +32,7 @@
 #include "librarymanager.h"
 
 LibraryManager::LibraryManager (const std::string &filename)
-    : _filename (filename), _handlePtr (NULL)
+        : _filename (filename), _handlePtr (NULL)
 {
     _handlePtr = loadLibrary (filename);
 }
@@ -103,7 +103,7 @@ int LibraryManager::resolveSymbol (const std::string &symbol, SymbolHandle *symb
 /************************************************************************************************/
 
 LibraryManagerException::LibraryManagerException (const std::string &libraryName, const std::string &details, Reason reason) :
-    std::runtime_error (""), _reason (reason), _details ("")
+        std::runtime_error (""), _reason (reason), _details ("")
 
 {
     if (_reason == loadingFailed)

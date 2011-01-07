@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
@@ -38,7 +38,7 @@
 #define EMPTY_STRING        "empty"
 
 HistoryItem::HistoryItem (std::string timestamp_start, CallType call_type, std::string timestamp_stop, std::string name, std::string number, std::string account_id)
-    :	_timestamp_start (timestamp_start),
+        :	_timestamp_start (timestamp_start),
         _timestamp_stop (timestamp_stop),
         _call_type (call_type),
         _name (name),
@@ -49,7 +49,7 @@ HistoryItem::HistoryItem (std::string timestamp_start, CallType call_type, std::
 
 
 HistoryItem::HistoryItem (std::string timestamp, std::string serialized_form)
-    : _timestamp_start (timestamp)
+        : _timestamp_start (timestamp)
 {
     size_t pos;
     std::string tmp, id, name, number, stop, account;

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  * Author:  Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  * Motly borrowed from asterisk's sources (Steve Underwood <steveu@coppice.org>)
@@ -64,7 +64,7 @@ class AudioCodec
 
     public:
         AudioCodec (int payload, const std::string &codecName)
-            : _codecName (codecName), _clockRate (8000), _channel (1),  _bitrate (0.0),_bandwidth (0),_payload (payload), _hasDynamicPayload (false),_state (true) {
+                : _codecName (codecName), _clockRate (8000), _channel (1),  _bitrate (0.0),_bandwidth (0),_payload (payload), _hasDynamicPayload (false),_state (true) {
 
             _hasDynamicPayload = (_payload >= 96 && _payload <= 127) ? true : false;
 
@@ -78,7 +78,7 @@ class AudioCodec
         }
 
         AudioCodec (const AudioCodec& codec)
-            : _codecName (codec._codecName), _clockRate (codec._clockRate), _channel (codec._channel),  _bitrate (codec._bitrate),_bandwidth (codec._bandwidth),_payload (codec._payload), _hasDynamicPayload (false),_state (true) {
+                : _codecName (codec._codecName), _clockRate (codec._clockRate), _channel (codec._channel),  _bitrate (codec._bitrate),_bandwidth (codec._bandwidth),_payload (codec._payload), _hasDynamicPayload (false),_state (true) {
 
             _hasDynamicPayload = (_payload >= 96 && _payload <= 127) ? true : false;
 

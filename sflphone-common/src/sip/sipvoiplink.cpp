@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yun Liu <yun.liu@savoirfairelinux.com>
@@ -267,10 +267,10 @@ SIPVoIPLink* SIPVoIPLink::_instance = NULL;
 
 
 SIPVoIPLink::SIPVoIPLink (const AccountID& accountID)
-    : VoIPLink (accountID)
-    , _nbTryListenAddr (2)   // number of times to try to start SIP listener
-    , _regPort (atoi (DEFAULT_SIP_PORT))
-    , _clients (0)
+        : VoIPLink (accountID)
+        , _nbTryListenAddr (2)   // number of times to try to start SIP listener
+        , _regPort (atoi (DEFAULT_SIP_PORT))
+        , _clients (0)
 {
 
     _debug ("SIPVOIPLINK");
@@ -2374,9 +2374,9 @@ void SIPVoIPLink::createTlsListener (const AccountID& accountID)
 
 
     _debug ("UserAgent: TLS transport to be initialized with published address %.*s,"
-    " published port %d,\n                  local address %.*s, local port %d",
-    (int) a_name.host.slen, a_name.host.ptr,
-    (int) a_name.port, pjAddress.slen, pjAddress.ptr, (int) localTlsPort);
+            " published port %d,\n                  local address %.*s, local port %d",
+            (int) a_name.host.slen, a_name.host.ptr,
+            (int) a_name.port, pjAddress.slen, pjAddress.ptr, (int) localTlsPort);
 
 
     status = pjsip_tls_transport_start (_endpt, tls_setting, &local_addr, &a_name, 1, &tls);
@@ -2919,7 +2919,7 @@ pj_status_t SIPVoIPLink::createAlternateUdpTransport (AccountID id)
     if (transport) {
 
         _debug ("UserAgent: Initial ref count: %s %s (refcnt=%i)", transport->obj_name, transport->info,
-        (int) pj_atomic_get (transport->ref_cnt));
+                (int) pj_atomic_get (transport->ref_cnt));
 
         pj_sockaddr *addr = (pj_sockaddr*) & (transport->key.rem_addr);
 
@@ -3468,7 +3468,7 @@ void call_on_tsx_changed (pjsip_inv_session *inv UNUSED, pjsip_transaction *tsx,
     pjsip_tx_data* t_data;
 
     if (tsx->role==PJSIP_ROLE_UAS && tsx->state==PJSIP_TSX_STATE_TRYING &&
-    pjsip_method_cmp (&tsx->method, &pjsip_refer_method) ==0) {
+            pjsip_method_cmp (&tsx->method, &pjsip_refer_method) ==0) {
         /** Handle the refer method **/
         onCallTransfered (inv, e->body.tsx_state.src.rdata);
 
@@ -3710,9 +3710,9 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     std::string request;
 
     _info ("UserAgent: Transaction REQUEST received using transport: %s %s (refcnt=%d)",
-    rdata->tp_info.transport->obj_name,
-    rdata->tp_info.transport->info,
-    (int) pj_atomic_get (rdata->tp_info.transport->ref_cnt));
+           rdata->tp_info.transport->obj_name,
+           rdata->tp_info.transport->info,
+           (int) pj_atomic_get (rdata->tp_info.transport->ref_cnt));
 
     // No need to go any further on incoming ACK
     if (rdata->msg_info.msg->line.req.method.id == PJSIP_ACK_METHOD && pjsip_rdata_get_dlg (rdata) != NULL) {
@@ -3748,7 +3748,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         _warn ("UserAgent: Error: cannot retrieve the voiplink from the account ID...");
         pj_strdup2 (_pool, &reason, "ERROR: cannot retrieve the voip link from account");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
-        &reason, NULL, NULL);
+                                       &reason, NULL, NULL);
         return true;
         return false;
     }
@@ -3780,7 +3780,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     // Store the peer number
     char tmp[PJSIP_MAX_URL_SIZE];
     int length = pjsip_uri_print (PJSIP_URI_IN_FROMTO_HDR,
-    sip_uri, tmp, PJSIP_MAX_URL_SIZE);
+                                  sip_uri, tmp, PJSIP_MAX_URL_SIZE);
 
     std::string peerNumber (tmp, length);
 
@@ -3828,7 +3828,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         if (rdata->msg_info.msg->line.req.method.id != PJSIP_ACK_METHOD) {
             pj_strdup2 (_pool, &reason, "user agent unable to handle this request ");
             pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_METHOD_NOT_ALLOWED,
-            &reason, NULL, NULL);
+                                           &reason, NULL, NULL);
             return true;
         }
     }
@@ -3841,7 +3841,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         _warn ("UserAgent: Error: No active codec");
         pj_strdup2 (_pool, &reason, "no active codec");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_NOT_ACCEPTABLE_HERE ,
-        &reason, NULL, NULL);
+                                       &reason, NULL, NULL);
         return true;
     }
 
@@ -3851,7 +3851,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     if (status != PJ_SUCCESS) {
         pj_strdup2 (_pool, &reason, "user agent unable to handle this INVITE");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_METHOD_NOT_ALLOWED,
-        &reason, NULL, NULL);
+                                       &reason, NULL, NULL);
         return true;
     }
 
@@ -3864,12 +3864,12 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         std::string header_value;
 
         header_value = fetch_header_value (rdata->msg_info.msg,
-        Manager::instance().hookPreference.getUrlSipField());
+                                           Manager::instance().hookPreference.getUrlSipField());
 
         if (header_value.size () < header_value.max_size()) {
             if (header_value!="") {
                 urlhook->addAction (header_value,
-                Manager::instance().hookPreference.getUrlCommand());
+                                    Manager::instance().hookPreference.getUrlCommand());
             }
         } else
             throw length_error ("UserAgent: Url exceeds std::string max_size");
@@ -3890,7 +3890,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         _warn ("UserAgent: Error: Unable to create an incoming call");
         pj_strdup2 (_pool, &reason, "unable to create an incoming call");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
-        &reason, NULL, NULL);
+                                       &reason, NULL, NULL);
         return false;
     }
 
@@ -3913,9 +3913,9 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         if (account->getAccountTransport()) {
 
             _debug ("UserAgent: SIP transport for this account: %s %s (refcnt=%i)",
-            account->getAccountTransport()->obj_name,
-            account->getAccountTransport()->info,
-            (int) pj_atomic_get (account->getAccountTransport()->ref_cnt));
+                    account->getAccountTransport()->obj_name,
+                    account->getAccountTransport()->info,
+                    (int) pj_atomic_get (account->getAccountTransport()->ref_cnt));
         }
 
     }
@@ -4019,7 +4019,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         _warn ("UserAgent: fail in receiving initial offer");
         pj_strdup2 (_pool, &reason, "fail in receiving initial offer");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
-        &reason, NULL, NULL);
+                                       &reason, NULL, NULL);
         return false;
     }
 
@@ -4032,7 +4032,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         _warn ("UserAgent: Error: Failed to create uas dialog");
         pj_strdup2 (_pool, &reason, "fail to create uas dialog");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
-        &reason, NULL, NULL);
+                                       &reason, NULL, NULL);
         return false;
     }
 
@@ -4072,7 +4072,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         _warn ("UserAgent: Fail to notify UI!");
         pj_strdup2 (_pool, &reason, "fail to notify ui");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
-        &reason, NULL, NULL);
+                                       &reason, NULL, NULL);
         return false;
     }
 
@@ -4084,9 +4084,9 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 pj_bool_t mod_on_rx_response (pjsip_rx_data *rdata)
 {
     _info ("UserAgent: Transaction response using transport: %s %s (refcnt=%d)",
-    rdata->tp_info.transport->obj_name,
-    rdata->tp_info.transport->info,
-    (int) pj_atomic_get (rdata->tp_info.transport->ref_cnt));
+           rdata->tp_info.transport->obj_name,
+           rdata->tp_info.transport->info,
+           (int) pj_atomic_get (rdata->tp_info.transport->ref_cnt));
 
     pjsip_dialog *dlg;
     dlg = pjsip_rdata_get_dlg (rdata);
@@ -4144,7 +4144,7 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
 
     /* Find the Refer-To header */
     refer_to = (pjsip_generic_string_hdr*)
-    pjsip_msg_find_hdr_by_name (rdata->msg_info.msg, &str_refer_to, NULL);
+               pjsip_msg_find_hdr_by_name (rdata->msg_info.msg, &str_refer_to, NULL);
 
     if (refer_to == NULL) {
         /* Invalid Request.
@@ -4157,7 +4157,7 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
 
     /* Find optional Refer-Sub header */
     refer_sub = (pjsip_generic_string_hdr*)
-    pjsip_msg_find_hdr_by_name (rdata->msg_info.msg, &str_refer_sub, NULL);
+                pjsip_msg_find_hdr_by_name (rdata->msg_info.msg, &str_refer_sub, NULL);
 
     if (refer_sub) {
         if (!pj_strnicmp2 (&refer_sub->hvalue, "true", 4) ==0)
@@ -4168,16 +4168,16 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
      * request.
      */
     ref_by_hdr = (pjsip_hdr*)
-    pjsip_msg_find_hdr_by_name (rdata->msg_info.msg, &str_ref_by, NULL);
+                 pjsip_msg_find_hdr_by_name (rdata->msg_info.msg, &str_ref_by, NULL);
 
     /* Notify callback */
     code = PJSIP_SC_ACCEPTED;
 
     _debug ("UserAgent: Call to %.*s is being transfered to %.*s",
-    (int) inv->dlg->remote.info_str.slen,
-    inv->dlg->remote.info_str.ptr,
-    (int) refer_to->hvalue.slen,
-    refer_to->hvalue.ptr);
+            (int) inv->dlg->remote.info_str.slen,
+            inv->dlg->remote.info_str.ptr,
+            (int) refer_to->hvalue.slen,
+            refer_to->hvalue.ptr);
 
     if (no_refer_sub) {
         /*
@@ -4188,7 +4188,7 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
         pjsip_hdr *hdr;
 
         status = pjsip_dlg_create_response (inv->dlg, rdata, code, NULL,
-        &tdata);
+                                            &tdata);
 
         if (status != PJ_SUCCESS) {
             _debug ("UserAgent: Unable to create 2xx response to REFER -- %d", status);
@@ -4197,15 +4197,15 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
 
         /* Add Refer-Sub header */
         hdr = (pjsip_hdr*)
-        pjsip_generic_string_hdr_create (tdata->pool, &str_refer_sub,
-        &str_false);
+              pjsip_generic_string_hdr_create (tdata->pool, &str_refer_sub,
+                                               &str_false);
 
         pjsip_msg_add_hdr (tdata->msg, hdr);
 
 
         /* Send answer */
         status = pjsip_dlg_send_response (inv->dlg, pjsip_rdata_get_tsx (rdata),
-        tdata);
+                                          tdata);
 
         if (status != PJ_SUCCESS) {
             _debug ("UserAgent: Unable to create 2xx response to REFER -- %d", status);
@@ -4244,9 +4244,9 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
             pjsip_hdr *hdr;
 
             hdr = (pjsip_hdr*)
-            pjsip_generic_string_hdr_create (inv->dlg->pool,
-            &str_refer_sub,
-            &str_true);
+                  pjsip_generic_string_hdr_create (inv->dlg->pool,
+                                                   &str_refer_sub,
+                                                   &str_true);
             pj_list_push_back (&hdr_list, hdr);
 
         }
@@ -4256,7 +4256,7 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
 
         /* Create initial NOTIFY request */
         status = pjsip_xfer_notify (sub, PJSIP_EVSUB_STATE_ACTIVE,
-        100, NULL, &tdata);
+                                    100, NULL, &tdata);
 
         if (status != PJ_SUCCESS) {
             _debug ("UserAgent: Unable to create NOTIFY to REFER -- %d", status);
@@ -4298,7 +4298,7 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
         /* Notify xferer about the error (if we have subscription) */
         if (sub) {
             status = pjsip_xfer_notify (sub, PJSIP_EVSUB_STATE_TERMINATED,
-            500, NULL, &tdata);
+                                        500, NULL, &tdata);
 
             if (status != PJ_SUCCESS) {
                 _debug ("UserAgent: Unable to create NOTIFY to REFER -- %d", status);
@@ -4338,7 +4338,7 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
 
         /* Put the invite_data in the subscription. */
         pjsip_evsub_set_mod_data (sub, _mod_ua.id,
-        newCall);
+                                  newCall);
     }
 }
 
@@ -4364,7 +4364,7 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
      * On incoming NOTIFY, notify application about call transfer progress.
      */
     else if (pjsip_evsub_get_state (sub) == PJSIP_EVSUB_STATE_ACTIVE ||
-    pjsip_evsub_get_state (sub) == PJSIP_EVSUB_STATE_TERMINATED) {
+             pjsip_evsub_get_state (sub) == PJSIP_EVSUB_STATE_TERMINATED) {
 
         pjsip_msg *msg;
         pjsip_msg_body *body;
@@ -4400,7 +4400,7 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
 
         /* This better be a NOTIFY request */
         if (r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD &&
-        request.find (method_notify) != (size_t)-1) {
+                request.find (method_notify) != (size_t)-1) {
 
             /* Check if there's body */
             msg = r_data->msg_info.msg;
@@ -4413,7 +4413,7 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
 
             /* Check for appropriate content */
             if (pj_stricmp2 (&body->content_type.type, "message") != 0 ||
-            pj_stricmp2 (&body->content_type.subtype, "sipfrag") != 0) {
+                    pj_stricmp2 (&body->content_type.subtype, "sipfrag") != 0) {
                 _warn ("UserAgent: Warning! Received NOTIFY without message/sipfrag content");
                 return;
             }

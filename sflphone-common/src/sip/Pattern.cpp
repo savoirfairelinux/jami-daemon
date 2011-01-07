@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -35,12 +35,12 @@ namespace sfl
 {
 
 Pattern::Pattern (const std::string& pattern, const std::string& options) :
-    _pattern (pattern),
-    _re (NULL),
-    _ovector (NULL),
-    _ovectorSize (0),
-    _count (0),
-    _options (0)
+        _pattern (pattern),
+        _re (NULL),
+        _ovector (NULL),
+        _ovectorSize (0),
+        _count (0),
+        _options (0)
 {
 
     // printf("Pattern constructor called for %s!\n", pattern.c_str());

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
@@ -37,21 +37,21 @@ int framesPerBufferAlsa = 2048;
 
 // Constructor
 AlsaLayer::AlsaLayer (ManagerImpl* manager)
-    : AudioLayer (manager , ALSA)
-    , _PlaybackHandle (NULL)
-    , _RingtoneHandle (NULL)
-    , _CaptureHandle (NULL)
-    , _periodSize (160)
-    , _audioPlugin ("default")
-    , IDSoundCards()
-    , _is_prepared_playback (false)
-    , _is_prepared_capture (false)
-    , _is_running_playback (false)
-    , _is_running_capture (false)
-    , _is_open_playback (false)
-    , _is_open_capture (false)
-    , _trigger_request (false)
-    , _audioThread (NULL)
+        : AudioLayer (manager , ALSA)
+        , _PlaybackHandle (NULL)
+        , _RingtoneHandle (NULL)
+        , _CaptureHandle (NULL)
+        , _periodSize (160)
+        , _audioPlugin ("default")
+        , IDSoundCards()
+        , _is_prepared_playback (false)
+        , _is_prepared_capture (false)
+        , _is_running_playback (false)
+        , _is_running_capture (false)
+        , _is_open_playback (false)
+        , _is_open_capture (false)
+        , _trigger_request (false)
+        , _audioThread (NULL)
 
 {
     _debug ("Audio: Build ALSA layer");

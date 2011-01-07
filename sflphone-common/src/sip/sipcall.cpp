@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
@@ -36,13 +36,13 @@
 #include "sdp.h"
 
 SIPCall::SIPCall (const CallID& id, Call::CallType type, pj_pool_t *pool) : Call (id, type)
-    , _cid (0)
-    , _did (0)
-    , _tid (0)
-    , _audiortp (new sfl::AudioRtpFactory())
-    , _xferSub (NULL)
-    , _invSession (NULL)
-    , _local_sdp (0)
+        , _cid (0)
+        , _did (0)
+        , _tid (0)
+        , _audiortp (new sfl::AudioRtpFactory())
+        , _xferSub (NULL)
+        , _invSession (NULL)
+        , _local_sdp (0)
 {
     _debug ("SIPCall: Create new call %s", id.c_str());
 

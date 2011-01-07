@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -74,7 +74,7 @@ main (int argc, char **argv)
 
     CommandOptionParse * args = makeCommandOptionParse (argc, argv, "");
 
-    printf ("SFLphone Daemon %s, by Savoir-Faire Linux 2004-2009\n", VERSION);
+    printf ("SFLphone Daemon %s, by Savoir-Faire Linux 2004-2011\n", VERSION);
     printf ("http://www.sflphone.org/\n");
 
     if (help.numSet) {

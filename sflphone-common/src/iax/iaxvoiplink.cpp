@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *
@@ -52,19 +52,19 @@
 	return false; }
 
 IAXVoIPLink::IAXVoIPLink (const AccountID& accountID) : VoIPLink (accountID)
-    , _evThread (NULL)
-    , _regSession (NULL)
-    , _nextRefreshStamp (0)
-    , audiolayer (NULL)
-    , micData (NULL)
-    , micDataConverted (NULL)
-    , micDataEncoded (NULL)
-    , spkrDataDecoded (NULL)
-    , spkrDataConverted (NULL)
-    , converter (NULL)
-    , converterSamplingRate (NULL)
-    , urlhook (NULL)
-    , countTime (0)
+        , _evThread (NULL)
+        , _regSession (NULL)
+        , _nextRefreshStamp (0)
+        , audiolayer (NULL)
+        , micData (NULL)
+        , micDataConverted (NULL)
+        , micDataEncoded (NULL)
+        , spkrDataDecoded (NULL)
+        , spkrDataConverted (NULL)
+        , converter (NULL)
+        , converterSamplingRate (NULL)
+        , urlhook (NULL)
+        , countTime (0)
 {
     _evThread = new EventThread (this);
 

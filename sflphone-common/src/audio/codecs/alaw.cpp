@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author:  Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author:  Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *
@@ -38,7 +38,7 @@ class Alaw : public AudioCodec
     public:
         // 8 PCMA A 8000 1 [RFC3551]
         Alaw (int payload=0)
-            : AudioCodec (payload, "PCMA") {
+                : AudioCodec (payload, "PCMA") {
             _clockRate = 8000;
             _frameSize = 160; // samples, 20 ms at 8kHz
             _channel   = 1;

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -46,9 +46,9 @@ int RingBuffer::count_rb = 0;
 
 // Create  a ring buffer with 'size' bytes
 RingBuffer::RingBuffer (int size, CallID call_id) : mEnd (0)
-    , mBufferSize (size > MIN_BUFFER_SIZE ? size : MIN_BUFFER_SIZE)
-    , mBuffer (NULL)
-    , buffer_id (call_id)
+        , mBufferSize (size > MIN_BUFFER_SIZE ? size : MIN_BUFFER_SIZE)
+        , mBuffer (NULL)
+        , buffer_id (call_id)
 {
     mBuffer = new unsigned char[mBufferSize];
     assert (mBuffer != NULL);

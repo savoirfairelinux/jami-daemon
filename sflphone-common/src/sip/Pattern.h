@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -46,7 +46,7 @@ class compile_error : public std::invalid_argument
 {
     public:
         explicit compile_error (const std::string& error) :
-            std::invalid_argument (error) {}
+                std::invalid_argument (error) {}
 };
 
 /**
@@ -58,7 +58,7 @@ class match_error : public std::invalid_argument
 {
     public:
         match_error (const std::string& error) :
-            std::invalid_argument (error) {}
+                std::invalid_argument (error) {}
 };
 
 /**

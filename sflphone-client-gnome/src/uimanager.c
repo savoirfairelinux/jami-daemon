@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -1629,7 +1629,7 @@ create_waiting_icon()
     waiting_icon = gtk_image_menu_item_new_with_label ("");
     gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (waiting_icon),
                                    gtk_image_new_from_animation (gdk_pixbuf_animation_new_from_file (
-                                           ICONS_DIR "/wait-on.gif", NULL)));
+                                                                     ICONS_DIR "/wait-on.gif", NULL)));
     gtk_menu_item_set_right_justified (GTK_MENU_ITEM (waiting_icon), TRUE);
 
     return waiting_icon;

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
@@ -82,8 +82,8 @@ static void XMLCALL endElementCallback (void *userData, const char *name)
 
 
 InstantMessaging::InstantMessaging()
-    : imFiles ()
-    , messageMaxSize (MAXIMUM_MESSAGE_LENGTH) {}
+        : imFiles ()
+        , messageMaxSize (MAXIMUM_MESSAGE_LENGTH) {}
 
 
 InstantMessaging::~InstantMessaging() {}

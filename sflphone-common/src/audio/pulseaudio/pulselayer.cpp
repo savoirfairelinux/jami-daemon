@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
@@ -234,12 +234,12 @@ static void playback_overflow_callback (pa_stream* s UNUSED, void* userdata UNUS
 
 
 PulseLayer::PulseLayer (ManagerImpl* manager)
-    : AudioLayer (manager , PULSEAUDIO)
-    , context (NULL)
-    , m (NULL)
-    , playback (NULL)
-    , record (NULL)
-    , ringtone (NULL)
+        : AudioLayer (manager , PULSEAUDIO)
+        , context (NULL)
+        , m (NULL)
+        , playback (NULL)
+        , record (NULL)
+        , ringtone (NULL)
 {
     _urgentRingBuffer.createReadPointer();
 

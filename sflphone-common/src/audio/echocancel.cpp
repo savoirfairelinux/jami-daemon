@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -33,34 +33,34 @@
 #include <cmath>
 
 EchoCancel::EchoCancel (int smplRate, int frameLength) : _samplingRate (smplRate),
-    _frameLength (frameLength),
-    _smplPerFrame (0),
-    _smplPerSeg (0),
-    _nbSegmentPerFrame (0),
-    _micHistoryLength (0),
-    _spkrHistoryLength (0),
-    _alpha (0.01),
-    _spkrLevelMem (0),
-    _micLevelMem (0),
-    _spkrLevel (0),
-    _micLevel (0),
-    _spkrHistCnt (0),
-    _micHistCnt (0),
-    _amplFactor (0.0),
-    _lastAmplFactor (0.0),
-    _amplDelayIndexIn (0),
-    _amplDelayIndexOut (0),
-    _adaptDone (false),
-    _adaptStarted (false),
-    _adaptCnt (0),
-    _spkrAdaptCnt (0),
-    _micAdaptCnt (0),
-    _spkrAdaptSize (SPKR_ADAPT_SIZE),
-    _micAdaptSize (MIC_ADAPT_SIZE),
-    _correlationSize (0),
-    _processedByte (0),
-    _echoActive (true),
-    _noiseActive (true)
+        _frameLength (frameLength),
+        _smplPerFrame (0),
+        _smplPerSeg (0),
+        _nbSegmentPerFrame (0),
+        _micHistoryLength (0),
+        _spkrHistoryLength (0),
+        _alpha (0.01),
+        _spkrLevelMem (0),
+        _micLevelMem (0),
+        _spkrLevel (0),
+        _micLevel (0),
+        _spkrHistCnt (0),
+        _micHistCnt (0),
+        _amplFactor (0.0),
+        _lastAmplFactor (0.0),
+        _amplDelayIndexIn (0),
+        _amplDelayIndexOut (0),
+        _adaptDone (false),
+        _adaptStarted (false),
+        _adaptCnt (0),
+        _spkrAdaptCnt (0),
+        _micAdaptCnt (0),
+        _spkrAdaptSize (SPKR_ADAPT_SIZE),
+        _micAdaptSize (MIC_ADAPT_SIZE),
+        _correlationSize (0),
+        _processedByte (0),
+        _echoActive (true),
+        _noiseActive (true)
 {
     _debug ("EchoCancel: Instantiate echo canceller");
 

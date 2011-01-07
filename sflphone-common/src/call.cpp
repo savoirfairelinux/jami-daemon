@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *
@@ -33,19 +33,19 @@
 #include "audio/mainbuffer.h"
 
 Call::Call (const CallID& id, Call::CallType type)
-    : _callMutex()
-    , _audioStarted (false)
-    , _localIPAddress ("")
-    , _localAudioPort (0)
-    , _localExternalAudioPort (0)
-    , _id (id)
-    , _confID ("")
-    , _type (type)
-    , _connectionState (Call::Disconnected)
-    , _callState (Call::Inactive)
-    , _callConfig (Call::Classic)
-    , _peerName()
-    , _peerNumber()
+        : _callMutex()
+        , _audioStarted (false)
+        , _localIPAddress ("")
+        , _localAudioPort (0)
+        , _localExternalAudioPort (0)
+        , _id (id)
+        , _confID ("")
+        , _type (type)
+        , _connectionState (Call::Disconnected)
+        , _callState (Call::Inactive)
+        , _callConfig (Call::Classic)
+        , _peerName()
+        , _peerNumber()
 {
 
 }

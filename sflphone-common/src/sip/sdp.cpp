@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
@@ -49,14 +49,14 @@ static const pj_str_t STR_CRYPTO = { (char*) "crypto", 6 };
 
 
 Sdp::Sdp (pj_pool_t *pool)
-    : _local_media_cap()
-    , _session_media (0)
-    , _negociator (NULL)
-    , _ip_addr ("")
-    , _local_offer (NULL)
-    , _negociated_offer (NULL)
-    , _pool (NULL)
-    , _local_extern_audio_port (0)
+        : _local_media_cap()
+        , _session_media (0)
+        , _negociator (NULL)
+        , _ip_addr ("")
+        , _local_offer (NULL)
+        , _negociated_offer (NULL)
+        , _pool (NULL)
+        , _local_extern_audio_port (0)
 {
     _pool = pool;
 }

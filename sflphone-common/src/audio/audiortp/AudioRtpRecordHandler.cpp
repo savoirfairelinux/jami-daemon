@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -38,21 +38,21 @@ namespace sfl
 static const SFLDataFormat initFadeinFactor = 32000;
 
 AudioRtpRecord::AudioRtpRecord () : _audioCodec (NULL)
-    , _hasDynamicPayloadType (false)
-    , _micData (NULL)
-    , _micDataConverted (NULL)
-    , _micDataEncoded (NULL)
-    , _spkrDataDecoded (NULL)
-    , _spkrDataConverted (NULL)
-    , _converter (NULL)
-    , _codecSampleRate (0)
-    , _codecFrameSize (0)
-    , _micFadeInComplete (false)
-    , _spkrFadeInComplete (false)
-    , _micAmplFactor (initFadeinFactor)
-    , _spkrAmplFactor (initFadeinFactor)
-    , _audioProcess (NULL)
-    , _noiseSuppress (NULL)
+        , _hasDynamicPayloadType (false)
+        , _micData (NULL)
+        , _micDataConverted (NULL)
+        , _micDataEncoded (NULL)
+        , _spkrDataDecoded (NULL)
+        , _spkrDataConverted (NULL)
+        , _converter (NULL)
+        , _codecSampleRate (0)
+        , _codecFrameSize (0)
+        , _micFadeInComplete (false)
+        , _spkrFadeInComplete (false)
+        , _micAmplFactor (initFadeinFactor)
+        , _spkrAmplFactor (initFadeinFactor)
+        , _audioProcess (NULL)
+        , _noiseSuppress (NULL)
 {
 
 }

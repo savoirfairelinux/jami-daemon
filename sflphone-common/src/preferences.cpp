@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -34,16 +34,16 @@
 #include "user_cfg.h"
 
 Preferences::Preferences() :  _accountOrder ("")
-    , _audioApi (1) // 1 is pulseaudio, 0 alsa
-    , _historyLimit (30)
-    , _historyMaxCalls (20)
-    , _notifyMails (false)
-    , _zoneToneChoice (DFT_ZONE) // DFT_ZONE
-    , _registrationExpire (180)
-    , _portNum (5060)
-    , _searchBarDisplay (true)
-    , _zeroConfenable (false)
-    , _md5Hash (false)
+        , _audioApi (1) // 1 is pulseaudio, 0 alsa
+        , _historyLimit (30)
+        , _historyMaxCalls (20)
+        , _notifyMails (false)
+        , _zoneToneChoice (DFT_ZONE) // DFT_ZONE
+        , _registrationExpire (180)
+        , _portNum (5060)
+        , _searchBarDisplay (true)
+        , _zeroConfenable (false)
+        , _md5Hash (false)
 {
 
 }
@@ -191,10 +191,10 @@ void Preferences::unserialize (Conf::MappingNode *map)
 
 
 VoipPreference::VoipPreference() :  _playDtmf (true)
-    , _playTones (true)
-    , _pulseLength (atoi (DFT_PULSE_LENGTH_STR)) // DFT_PULSE_LENGTH_STR
-    , _symmetricRtp (true)
-    , _zidFile (ZRTP_ZIDFILE) // ZRTP_ZID_FILENAME
+        , _playTones (true)
+        , _pulseLength (atoi (DFT_PULSE_LENGTH_STR)) // DFT_PULSE_LENGTH_STR
+        , _symmetricRtp (true)
+        , _zidFile (ZRTP_ZIDFILE) // ZRTP_ZID_FILENAME
 {
 
 }
@@ -277,12 +277,12 @@ void VoipPreference::unserialize (Conf::MappingNode *map)
 
 
 AddressbookPreference::AddressbookPreference() : _photo (true)
-    , _enabled (true)
-    , _list ("")
-    , _maxResults (25)
-    , _business (true)
-    , _home (true)
-    , _mobile (true)
+        , _enabled (true)
+        , _list ("")
+        , _maxResults (25)
+        , _business (true)
+        , _home (true)
+        , _mobile (true)
 {
 
 }
@@ -381,11 +381,11 @@ void AddressbookPreference::unserialize (Conf::MappingNode *map)
 
 
 HookPreference::HookPreference() : _iax2Enabled (false)
-    , _numberAddPrefix ("")
-    , _numberEnabled (false)
-    , _sipEnabled (false)
-    , _urlCommand ("x-www-browser")
-    , _urlSipField ("X-sflphone-url")
+        , _numberAddPrefix ("")
+        , _numberEnabled (false)
+        , _sipEnabled (false)
+        , _urlCommand ("x-www-browser")
+        , _urlSipField ("X-sflphone-url")
 {
 
 }
@@ -474,18 +474,18 @@ void HookPreference::unserialize (Conf::MappingNode *map)
 
 
 AudioPreference::AudioPreference() : _cardin (atoi (ALSA_DFT_CARD)) // ALSA_DFT_CARD
-    , _cardout (atoi (ALSA_DFT_CARD)) // ALSA_DFT_CARD
-    , _cardring (atoi (ALSA_DFT_CARD)) // ALSA_DFT_CARD
-    , _framesize (atoi (DFT_FRAME_SIZE)) // DFT_FRAME_SIZE
-    , _plugin ("default") // PCM_DEFAULT
-    , _smplrate (44100) // DFT_SAMPLE_RATE
-    , _devicePlayback ("")
-    , _deviceRecord ("")
-    , _deviceRingtone ("")
-    , _recordpath ("") // DFT_RECORD_PATH
-    , _volumemic (atoi (DFT_VOL_SPKR_STR)) // DFT_VOL_SPKR_STR
-    , _volumespkr (atoi (DFT_VOL_MICRO_STR)) // DFT_VOL_MICRO_STR
-    , _noisereduce (true)
+        , _cardout (atoi (ALSA_DFT_CARD)) // ALSA_DFT_CARD
+        , _cardring (atoi (ALSA_DFT_CARD)) // ALSA_DFT_CARD
+        , _framesize (atoi (DFT_FRAME_SIZE)) // DFT_FRAME_SIZE
+        , _plugin ("default") // PCM_DEFAULT
+        , _smplrate (44100) // DFT_SAMPLE_RATE
+        , _devicePlayback ("")
+        , _deviceRecord ("")
+        , _deviceRingtone ("")
+        , _recordpath ("") // DFT_RECORD_PATH
+        , _volumemic (atoi (DFT_VOL_SPKR_STR)) // DFT_VOL_SPKR_STR
+        , _volumespkr (atoi (DFT_VOL_MICRO_STR)) // DFT_VOL_MICRO_STR
+        , _noisereduce (true)
 {
 
 }
@@ -681,10 +681,10 @@ void AudioPreference::unserialize (Conf::MappingNode *map)
 
 
 ShortcutPreferences::ShortcutPreferences() : _hangup ("")
-    , _pickup ("")
-    , _popup ("")
-    , _toggleHold ("")
-    , _togglePickupHangup ("")
+        , _pickup ("")
+        , _popup ("")
+        , _toggleHold ("")
+        , _togglePickupHangup ("")
 {
 
 }
