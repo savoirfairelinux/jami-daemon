@@ -19,7 +19,7 @@ make && make dep
 popd
 ./configure --prefix=/usr
 make clean
-make
+make -j 1
 make doc
 popd
 
@@ -37,7 +37,7 @@ pushd sflphone-client-gnome
 ./autogen.sh
 ./configure --prefix=/usr
 make clean
-make
+make -j 1
 popd
 
 # SUCCESS
