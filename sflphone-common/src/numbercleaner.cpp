@@ -44,8 +44,9 @@ NumberCleaner::~NumberCleaner (void)
 std::string NumberCleaner::clean (std::string to_clean)
 {
 
-    strip_char (" ", &to_clean);
-    strip_char (".", &to_clean);
+    // TODO Check for IP to IP call
+	strip_char (" ", &to_clean);
+    // strip_char (".", &to_clean);
     strip_char ("-", &to_clean);
     strip_char ("(", &to_clean);
     strip_char (")", &to_clean);
