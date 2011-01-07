@@ -46,7 +46,7 @@ PluginManager::instance()
 }
 
 PluginManager::PluginManager()
-        :_loadedPlugins()
+    :_loadedPlugins()
 {
     _instance = this;
 }

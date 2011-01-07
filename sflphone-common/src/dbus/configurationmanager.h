@@ -44,9 +44,9 @@
 
 
 class ConfigurationManager
-        : public org::sflphone::SFLphone::ConfigurationManager_adaptor,
-        public DBus::IntrospectableAdaptor,
-        public DBus::ObjectAdaptor
+    : public org::sflphone::SFLphone::ConfigurationManager_adaptor,
+  public DBus::IntrospectableAdaptor,
+  public DBus::ObjectAdaptor
 {
     public:
 

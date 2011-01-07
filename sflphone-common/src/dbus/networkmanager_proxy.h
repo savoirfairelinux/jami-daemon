@@ -15,12 +15,12 @@ namespace freedesktop
 {
 
 class NetworkManager_proxy
-        : public ::DBus::InterfaceProxy
+    : public ::DBus::InterfaceProxy
 {
     public:
 
         NetworkManager_proxy()
-                : ::DBus::InterfaceProxy ("org.freedesktop.NetworkManager") {
+            : ::DBus::InterfaceProxy ("org.freedesktop.NetworkManager") {
             connect_signal (NetworkManager_proxy, StateChanged, _StateChanged_stub);
             connect_signal (NetworkManager_proxy, PropertiesChanged, _PropertiesChanged_stub);
         }

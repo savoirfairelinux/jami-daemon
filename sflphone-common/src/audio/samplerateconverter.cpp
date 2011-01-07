@@ -32,15 +32,15 @@
 #include "manager.h"
 
 SamplerateConverter::SamplerateConverter (int freq , int fs)
-        : _frequence (freq)
-        , _framesize (fs)
-        , _floatBufferDownMic (NULL)
-        , _floatBufferUpMic (NULL)
-        , _src_state_mic (NULL)
-        , _floatBufferDownSpkr (NULL)
-        , _floatBufferUpSpkr (NULL)
-        , _src_state_spkr (NULL)
-        , _src_err (0)
+    : _frequence (freq)
+    , _framesize (fs)
+    , _floatBufferDownMic (NULL)
+    , _floatBufferUpMic (NULL)
+    , _src_state_mic (NULL)
+    , _floatBufferDownSpkr (NULL)
+    , _floatBufferUpSpkr (NULL)
+    , _src_state_spkr (NULL)
+    , _src_err (0)
 {
     init();
 }

@@ -50,22 +50,22 @@ namespace sfl
 {
 
 AudioZrtpSession::AudioZrtpSession (ManagerImpl * manager, SIPCall * sipcall, const std::string& zidFilename) :
-        // ost::SymmetricZRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
-        AudioRtpRecordHandler (manager, sipcall),
-        ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue> (ost::InetHostAddress (sipcall->getLocalIp().c_str()),
-                sipcall->getLocalAudioPort(),
-                0,
-                ost::MembershipBookkeeping::defaultMembersHashSize,
-                ost::defaultApplication())
-        , _zidFilename (zidFilename)
-        , _time (new ost::Time())
-        , _mainloopSemaphore (0)
-        , _manager (manager)
-        , _timestamp (0)
-        , _timestampIncrement (0)
-        , _timestampCount (0)
-        , _countNotificationTime (0)
-        , _ca (sipcall)
+    // ost::SymmetricZRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
+    AudioRtpRecordHandler (manager, sipcall),
+    ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue> (ost::InetHostAddress (sipcall->getLocalIp().c_str()),
+            sipcall->getLocalAudioPort(),
+            0,
+            ost::MembershipBookkeeping::defaultMembersHashSize,
+            ost::defaultApplication())
+    , _zidFilename (zidFilename)
+    , _time (new ost::Time())
+    , _mainloopSemaphore (0)
+    , _manager (manager)
+    , _timestamp (0)
+    , _timestampIncrement (0)
+    , _timestampCount (0)
+    , _countNotificationTime (0)
+    , _ca (sipcall)
 {
     _debug ("AudioZrtpSession initialized");
     initializeZid();

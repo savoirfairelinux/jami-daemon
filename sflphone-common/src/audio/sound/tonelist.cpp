@@ -33,8 +33,8 @@
 #include "tonelist.h"
 
 ToneList::ToneList() : _nbTone (TONE_NBTONE) ,
-        _nbCountry (TONE_NBCOUNTRY),
-        _defaultCountryId (ZID_NORTH_AMERICA)
+    _nbCountry (TONE_NBCOUNTRY),
+    _defaultCountryId (ZID_NORTH_AMERICA)
 {
     initToneDefinition();
 }
@@ -119,8 +119,8 @@ ToneList::getCountryId (const std::string& countryName)
 }
 
 TelephoneTone::TelephoneTone (const std::string& countryName, unsigned int sampleRate) :
-        _currentTone (Tone::TONE_NULL),
-        _toneList()
+    _currentTone (Tone::TONE_NULL),
+    _toneList()
 {
     _debug ("TelephoneTone: Generate new telephone tones at %u Hz", sampleRate);
 
