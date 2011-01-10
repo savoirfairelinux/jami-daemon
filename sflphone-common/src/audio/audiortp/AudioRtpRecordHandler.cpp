@@ -53,6 +53,7 @@ AudioRtpRecord::AudioRtpRecord () : _audioCodec (NULL)
     , _spkrAmplFactor (initFadeinFactor)
     , _audioProcess (NULL)
     , _noiseSuppress (NULL)
+    , _callId ("")
 {
 
 }

@@ -110,6 +110,7 @@ class AudioRtpRecord
         AudioProcessing *_audioProcess;
         NoiseSuppress *_noiseSuppress;
         ost::Mutex audioProcessMutex;
+        std::string _callId;
 
 };
 
@@ -207,10 +208,11 @@ class AudioRtpRecordHandler
 
         void putDtmfEvent (int digit);
 
-    private:
+    protected:
 
         AudioRtpRecord	_audioRtpRecord;
 
+    private:
 
         SIPCall *_ca;
 

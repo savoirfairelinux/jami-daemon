@@ -65,6 +65,8 @@ AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
 
     _info ("AudioRtpSession: Setting new RTP session with destination %s:%d", _ca->getLocalIp().c_str(), _ca->getLocalAudioPort());
 
+    _audioRtpRecord._callId = _ca->getCallId();
+
     // static_cast<ost::DualRTPUDPIPv4Channel>(dso)->sendSocket->setTypeOfService(ost::Socket::tosLowDelay);
     // static_cast<ost::DualRTPChannel<ost::DualRTPUDPIPv4Channel> >(dso)->sendSocket->setTypeOfService(ost::Socket::tosLowDelay);
 
@@ -82,7 +84,7 @@ AudioRtpSession::~AudioRtpSession()
         throw;
     }
 
-    Manager::instance().getMainBuffer()->unBindAll (_ca->getCallId());
+    Manager::instance().getMainBuffer()->unBindAll (_audioRtpRecord._callId);
 
     if (_time)
         delete _time;
@@ -362,7 +364,7 @@ void AudioRtpSession::run ()
     // Set recording sampling rate
     _ca->setRecordingSmplRate (getCodecSampleRate());
 
-    _debug ("AudioRtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
+    _debug ("AudioRtpSession: Entering mainloop for call %s", _audioRtpRecord._callId.c_str());
 
     uint32 timeout = 0;
 
@@ -412,7 +414,7 @@ void AudioRtpSession::run ()
         }
     }
 
-    _debug ("AudioRtpSession: Left main loop for call %s", _ca->getCallId().c_str());
+    _debug ("AudioRtpSession: Left main loop for call %s", _audioRtpRecord._callId.c_str());
 
     Thread::exit();
 
