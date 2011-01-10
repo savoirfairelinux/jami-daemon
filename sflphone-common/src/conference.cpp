@@ -38,7 +38,7 @@
 
 int Conference::count = 0;
 
-Conference::Conference() : _id(""), _confState(Active_Atached), _nbParticipant(0)
+Conference::Conference() : _id (""), _confState (Active_Atached), _nbParticipant (0)
 {
     _nbParticipant = 0;
 
