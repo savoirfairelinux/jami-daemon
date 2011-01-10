@@ -49,9 +49,9 @@ static const pj_str_t STR_CRYPTO = { (char*) "crypto", 6 };
 
 
 Sdp::Sdp (pj_pool_t *pool)
-    : _local_media_cap()
+    : _negociator (NULL)
+    , _local_media_cap()
     , _session_media (0)
-    , _negociator (NULL)
     , _ip_addr ("")
     , _local_offer (NULL)
     , _negociated_offer (NULL)
@@ -526,10 +526,9 @@ void Sdp::set_negotiated_sdp (const pjmedia_sdp_session *sdp)
     int nb_media, nb_codecs;
     int i,j, port;
     pjmedia_sdp_media *current;
-    sdpMedia *media;
+    sdpMedia *media = NULL;
     std::string type, dir;
     CodecsMap codecs_list;
-    CodecsMap::iterator iter;
     pjmedia_sdp_attr *attribute = NULL;
     pjmedia_sdp_rtpmap *rtpmap;
 
@@ -560,7 +559,7 @@ void Sdp::set_negotiated_sdp (const pjmedia_sdp_session *sdp)
 
             pjmedia_sdp_attr_to_rtpmap (_pool, attribute, &rtpmap);
 
-            iter = codecs_list.find ( (AudioCodecType) pj_strtoul (&rtpmap->pt));
+            CodecsMap::iterator iter = codecs_list.find ( (AudioCodecType) pj_strtoul (&rtpmap->pt));
 
             if (iter==codecs_list.end())
                 return;
