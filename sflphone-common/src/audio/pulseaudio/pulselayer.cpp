@@ -884,6 +884,7 @@ void PulseLayer::writeToSpeaker (void)
                     pa_xfree (rsmpl_out);
 
                 } else {
+
                     // spkrFile->write ( (const char *) out, byteToGet);
                     pa_stream_write (playback->pulseStream(), out, byteToGet, NULL, 0, PA_SEEK_RELATIVE);
 

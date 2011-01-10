@@ -2160,7 +2160,7 @@ void ManagerImpl::ringtone (const AccountID& accountID)
     int layer, samplerate;
     bool loadFile;
 
-    _debug ("-------------------------------- Manager: Ringtone");
+    _debug ("Manager: Ringtone");
 
     Account *account = getAccount (accountID);
 
@@ -2171,7 +2171,7 @@ void ManagerImpl::ringtone (const AccountID& accountID)
 
     if (account->getRingtoneEnabled()) {
 
-        _debug ("-------------------------------- Manager: Tone is enabled");
+        _debug ("Manager: Tone is enabled");
         //TODO Comment this because it makes the daemon crashes since the main thread
         //synchronizes the ringtone thread.
 
@@ -2212,6 +2212,8 @@ void ManagerImpl::ringtone (const AccountID& accountID)
             _audiofile = static_cast<AudioFile *> (new RawFile());
 
         loadFile = false;
+
+        _debug ("Manager: ringChoice: %s, codecForTone: %d, samplerate %d", ringchoice.c_str(), codecForTone->getPayload(), samplerate);
 
         if (_audiofile)
             loadFile = _audiofile->loadFile (ringchoice, codecForTone, samplerate);
@@ -3433,14 +3435,18 @@ std::map<std::string, std::string> ManagerImpl::getAccountDetails (
 
     _debug ("Manager: get account details %s", accountID.c_str());
 
-    Account * account;
+    Account * account = _accountMap[accountID];
 
-    if (! (account = _accountMap[accountID])) {
-        _debug ("Manager: Get account details on a non-existing accountID %s. Returning default", accountID.c_str());
+    if (accountID.empty()) {
+        _debug ("Manager: Returning default account settings");
         // return a default map
         return defaultAccount.getAccountDetails();
-    } else
+    } else if (account) {
         return account->getAccountDetails();
+    } else {
+        _debug ("Manager: Get account details on a non-existing accountID %s. Returning default", accountID.c_str());
+        return defaultAccount.getAccountDetails();
+    }
 
 }
 

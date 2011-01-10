@@ -1304,11 +1304,11 @@ void show_account_window (account_t * a)
     currentAccount = a;
 
     if (currentAccount == NULL) {
+        DEBUG ("Config: Account is NULL. Will fetch default values");
         currentAccount = g_new0 (account_t, 1);
         currentAccount->properties = dbus_account_details (NULL);
         currentAccount->accountID = "new";
         sflphone_fill_codec_list_per_account (&currentAccount);
-        DEBUG ("Config: Account is NULL. Will fetch default values");
     }
 
     dialog = GTK_DIALOG (gtk_dialog_new_with_buttons (_ ("Account settings"),
