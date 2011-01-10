@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
@@ -263,6 +263,8 @@ class Sdp
 
         void get_remote_sdp_crypto_from_offer (const pjmedia_sdp_session* remote_sdp, CryptoOffer& crypto_offer);
 
+        /** negociator */
+        pjmedia_sdp_neg *_negociator;
     private:
         /** Codec Map */
         std::vector<sdpMedia*> _local_media_cap;
@@ -270,8 +272,6 @@ class Sdp
         /* The media that will be used by the session (after the SDP negociation) */
         std::vector<sdpMedia*> _session_media;
 
-        /** negociator */
-        pjmedia_sdp_neg *_negociator;
 
         /** IP address */
         std::string _ip_addr;

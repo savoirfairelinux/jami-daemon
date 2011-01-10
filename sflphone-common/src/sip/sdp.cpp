@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
@@ -63,8 +63,6 @@ Sdp::Sdp (pj_pool_t *pool)
 
 Sdp::~Sdp()
 {
-    // clean_session_media();
-    // clean_local_media_capabilities();
 }
 
 void Sdp::set_media_descriptor_line (sdpMedia *media, pjmedia_sdp_media** p_med)
@@ -222,6 +220,7 @@ int Sdp::create_initial_offer (CodecOrder selectedCodecs)
 
 int Sdp::receiving_initial_offer (pjmedia_sdp_session* remote, CodecOrder selectedCodecs)
 {
+    _debug ("SDP: Receiving initial offer");
 
     // Create the SDP negociator instance by calling
     // pjmedia_sdp_neg_create_w_remote_offer with the remote offer, and by providing the local offer ( optional )
@@ -262,6 +261,8 @@ pj_status_t Sdp::check_sdp_answer (pjsip_inv_session *inv, pjsip_rx_data *rdata)
     pj_status_t status;
     pjsip_msg * message = NULL;
     pjmedia_sdp_session * remote_sdp = NULL;
+
+    _debug ("Sdp: Check SDP answer");
 
     if (pjmedia_sdp_neg_get_state (inv->neg) == PJMEDIA_SDP_NEG_STATE_LOCAL_OFFER) {
 
@@ -489,6 +490,7 @@ void Sdp::clean_session_media()
         sdpMedia *media;
 
         while (iter != _session_media.end()) {
+            _debug ("delete media");
             media = *iter;
             delete media;
             iter++;
@@ -530,6 +532,8 @@ void Sdp::set_negotiated_sdp (const pjmedia_sdp_session *sdp)
     CodecsMap::iterator iter;
     pjmedia_sdp_attr *attribute = NULL;
     pjmedia_sdp_rtpmap *rtpmap;
+
+    _debug ("SDP: Set negotiated SDP");
 
     _negociated_offer = (pjmedia_sdp_session*) sdp;
 
@@ -576,7 +580,7 @@ AudioCodec* Sdp::get_session_media (void)
     AudioCodec *codec = NULL;
     std::vector<sdpMedia*> media_list;
 
-    _debug ("SDP: Executing sdp line %d - get_session_media()", __LINE__);
+    _debug ("SDP: Get session media");
 
     media_list = get_session_media_list ();
     nb_media = media_list.size();
@@ -596,6 +600,8 @@ AudioCodec* Sdp::get_session_media (void)
 pj_status_t Sdp::start_negociation()
 {
     pj_status_t status;
+
+    _debug ("Sdp: Start negotiation");
 
     if (_negociator) {
         status = pjmedia_sdp_neg_negotiate (_pool, _negociator, 0);

@@ -1,5 +1,6 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -89,7 +90,7 @@ AudioZrtpSession::~AudioZrtpSession()
         throw;
     }
 
-    _manager->getAudioDriver()->getMainBuffer()->unBindAll (_ca->getCallId());
+    Manager::instance().getMainBuffer()->unBindAll (_ca->getCallId());
 
     if (_time)
         delete _time;
@@ -183,14 +184,11 @@ void AudioZrtpSession::setSessionMedia (AudioCodec* audioCodec)
     _debug ("AudioZrtpSession: RTP timestamp increment: %d", _timestampIncrement);
 
     // Even if specified as a 16 kHz codec, G722 requires rtp sending rate to be 8 kHz
-    if (payloadType == g722PayloadType) {
-        _debug ("AudioZrtpSession: Setting G722 payload format");
-        setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, g722RtpClockRate));
-    } else if (dynamic) {
-        _debug ("AudioZrtpSession: Setting dynamic payload format");
+    if (dynamic) {
+        _debug ("AudioRtpSession: Setting dynamic payload format");
         setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, smplRate));
-    } else if (dynamic && payloadType != g722PayloadType) {
-        _debug ("AudioZrtpSession: Setting static payload format");
+    } else {
+        _debug ("AudioRtpSession: Setting static payload format");
         setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) payloadType));
     }
 
@@ -220,13 +218,10 @@ void AudioZrtpSession::updateSessionMedia (AudioCodec *audioCodec)
     _debug ("AudioRtpSession: RTP timestamp increment: %d", _timestampIncrement);
 
     // Even if specified as a 16 kHz codec, G722 requires rtp sending rate to be 8 kHz
-    if (payloadType == g722PayloadType) {
-        _debug ("AudioRtpSession: Setting G722 payload format");
-        setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, g722RtpClockRate));
-    } else if (dynamic) {
+    if (dynamic) {
         _debug ("AudioRtpSession: Setting dynamic payload format");
         setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, smplRate));
-    } else if (dynamic && payloadType != g722PayloadType) {
+    } else {
         _debug ("AudioRtpSession: Setting static payload format");
         setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) payloadType));
     }
@@ -294,7 +289,8 @@ void AudioZrtpSession::sendDtmfEvent (sfl::DtmfEvent *dtmf)
     if (dtmf->newevent)
         setMark (true);
 
-    putData (_timestamp, (const unsigned char*) (& (dtmf->payload)), sizeof (ost::RTPPacket::RFC2833Payload));
+    // putData (_timestamp, (const unsigned char*) (& (dtmf->payload)), sizeof (ost::RTPPacket::RFC2833Payload));
+    sendImmediate (_timestamp, (const unsigned char*) (& (dtmf->payload)), sizeof (ost::RTPPacket::RFC2833Payload));
 
     // This is no more a new event
     if (dtmf->newevent) {
@@ -336,17 +332,12 @@ void AudioZrtpSession::sendMicData()
     if (!compSize)
         return;
 
-    // Reset timestamp to make sure the timing information are up to date
-    if (_timestampCount > RTP_TIMESTAMP_RESET_FREQ) {
-        _timestamp = getCurrentTimestamp();
-        _timestampCount = 0;
-    }
-
     // Increment timestamp for outgoing packet
     _timestamp += _timestampIncrement;
 
     // putData put the data on RTP queue, sendImmediate bypass this queue
     putData (_timestamp, getMicDataEncoded(), compSize);
+    sendImmediate (_timestamp, getMicDataEncoded(), compSize);
 }
 
 
@@ -394,42 +385,32 @@ void AudioZrtpSession::notifyIncomingCall()
 
 int AudioZrtpSession::startRtpThread (AudioCodec* audiocodec)
 {
+    if (_isStarted)
+        return 0;
+
     _debug ("AudioZrtpSession: Starting main thread");
+    _isStarted = true;
     setSessionTimeouts();
     setSessionMedia (audiocodec);
     initBuffers();
     initNoiseSuppress();
     enableStack();
-
     int ret = start (_mainloopSemaphore);
-
     return ret;
+}
+
+void AudioZrtpSession::stopRtpThread ()
+{
+    _debug ("AudioZrtpSession: Stoping main thread");
+
+    disableStack();
 }
 
 void AudioZrtpSession::run ()
 {
 
-    // Timestamp must be initialized randomly
-    _timestamp = getCurrentTimestamp();
-
-    /*
-    int threadSleep = 0;
-
-    if (getCodecSampleRate() != 0) {
-        threadSleep = (getCodecFrameSize() * 1000) / getCodecSampleRate();
-    } else {
-    	// TODO should not be dependent of audio layer frame size
-        threadSleep = getAudioLayerFrameSize();
-    }
-
-    TimerPort::setTimer (threadSleep);
-    */
-
     // Set recording sampling rate
     _ca->setRecordingSmplRate (getCodecSampleRate());
-
-    // Start audio stream (if not started) AND flush all buffers (main and urgent)
-    _manager->getAudioDriver()->startStream();
 
     _debug ("AudioZrtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
 
@@ -441,8 +422,6 @@ void AudioZrtpSession::run ()
             timeout = getSchedulingTimeout();
         }
 
-        // _manager->getAudioLayerMutex()->enter();
-
         // Send session
         if (getEventQueueSize() > 0) {
             sendDtmfEvent (getEventQueue()->front());
@@ -452,8 +431,6 @@ void AudioZrtpSession::run ()
 
         // This also should be moved
         notifyIncomingCall();
-
-        // _manager->getAudioLayerMutex()->leave();
 
         setCancel (cancelDeferred);
         controlReceptionService();
@@ -467,7 +444,7 @@ void AudioZrtpSession::run ()
 
         if (timeout < 1000) {   // !(timeout/1000)
             setCancel (cancelDeferred);
-            dispatchDataPacket();
+            // dispatchDataPacket();
             setCancel (cancelImmediate);
             timerTick();
         } else {

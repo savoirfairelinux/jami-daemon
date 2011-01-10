@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -217,7 +217,7 @@ void AudioRtpSession::updateDestinationIpAddress (void)
 
 void AudioRtpSession::sendDtmfEvent (sfl::DtmfEvent *dtmf)
 {
-    _debug ("AudioRtpSession: Send Dtmf %d", getEventQueueSize());
+    _debug ("AudioRtpSession: Send Dtmf");
 
     _timestamp += 160;
 
@@ -260,9 +260,7 @@ void AudioRtpSession::sendDtmfEvent (sfl::DtmfEvent *dtmf)
 
 bool AudioRtpSession::onRTPPacketRecv (ost::IncomingRTPPkt&)
 {
-    // audioCodecMutex.enter();
     receiveSpeakerData ();
-    // audioCodecMutex.leave();
 
     return true;
 }
@@ -364,9 +362,6 @@ void AudioRtpSession::run ()
     // Set recording sampling rate
     _ca->setRecordingSmplRate (getCodecSampleRate());
 
-    // Start audio stream (if not started) AND flush all buffers (main and urgent)
-    // _manager->getAudioDriver()->startStream();
-
     _debug ("AudioRtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
 
     uint32 timeout = 0;
@@ -403,7 +398,6 @@ void AudioRtpSession::run ()
             setCancel (cancelImmediate);
             timerTick();
         } else {
-
             if (isPendingData (timeout/1000)) {
                 setCancel (cancelDeferred);
 

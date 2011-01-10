@@ -8,4 +8,4 @@ Icon=sflphone.svg
 StartupNotify=true
 Terminal=false
 Type=Application
-Categories=Network;Gnome;Telephony;
+Categories=Network;Telephony;

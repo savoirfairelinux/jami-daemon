@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -60,7 +60,7 @@ AudioRtpRecord::AudioRtpRecord () : _audioCodec (NULL)
 
 AudioRtpRecord::~AudioRtpRecord()
 {
-    _debug ("-------------------------------------- Rtp: Delete audio rtp internal data");
+    _debug ("AudioRtpRecord: Delete audio rtp internal data");
 
     if (_micData)
         delete [] _micData;
@@ -238,13 +238,11 @@ void AudioRtpRecordHandler::putDtmfEvent (int digit)
     dtmf->newevent = true;
     dtmf->length = 1000;
     getEventQueue()->push_back (dtmf);
-    _debug ("AudioRtpSession: Put Dtmf Event %d", getEventQueue()->size());
+    _debug ("AudioRtpSession: Put Dtmf Event %d", digit);
 }
 
 int AudioRtpRecordHandler::processDataEncode (void)
 {
-//    _debug ("-------------------------------------- processDataEncode");
-
 
     SFLDataFormat *micData = _audioRtpRecord._micData;
     unsigned char *micDataEncoded = _audioRtpRecord._micDataEncoded;
@@ -253,27 +251,16 @@ int AudioRtpRecordHandler::processDataEncode (void)
     int codecFrameSize = getCodecFrameSize();
     int codecSampleRate = getCodecSampleRate();
 
-//    _debug ("codecFrameSize: %d", codecFrameSize);
-//    _debug ("codecSampleRate: %d", codecSampleRate);
-
     int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
-
-//    _debug ("mainbuffersamplerate: %d", mainBufferSampleRate);
 
     // compute codec framesize in ms
     float fixedCodecFramesize = computeCodecFrameSize (codecFrameSize, codecSampleRate);
 
-//    _debug ("fixedcodecframesize: %f", fixedCodecFramesize);
-
     // compute nb of byte to get coresponding to 20 ms at audio layer frame size (44.1 khz)
     int bytesToGet = computeNbByteAudioLayer (mainBufferSampleRate, fixedCodecFramesize);
 
-//    _debug ("bytetoget: %d", bytesToGet);
-
     // available bytes inside ringbuffer
     int availBytesFromMic = Manager::instance().getMainBuffer()->availForGet (_ca->getCallId());
-
-//    _debug ("availbytesfrommic: %d", availBytesFromMic);
 
     if (availBytesFromMic < bytesToGet)
         return 0;
@@ -295,8 +282,6 @@ int AudioRtpRecordHandler::processDataEncode (void)
     if (codecSampleRate != mainBufferSampleRate) {
 
         int nbSampleUp = nbSample;
-
-//        _debug ("nbSampleUp: %d", nbSampleUp);
 
         nbSample = _audioRtpRecord._converter->downsampleData (micData, micDataConverted, codecSampleRate, mainBufferSampleRate, nbSampleUp);
 
@@ -321,8 +306,6 @@ int AudioRtpRecordHandler::processDataEncode (void)
             _audioRtpRecord._audioProcess->processAudio (micData, nbSample * sizeof (SFLDataFormat));
 
         _audioRtpRecord.audioProcessMutex.leave();
-
-//        _debug ("no resampling required");
 
         _audioRtpRecord.audioCodecMutex.enter();
 

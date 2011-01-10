@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -183,7 +183,7 @@ search_phone_home_cb (GtkWidget *widget)
 {
 
     addressbook_config->search_phone_home = (guint) gtk_toggle_button_get_active (
-                                                GTK_TOGGLE_BUTTON (widget));
+            GTK_TOGGLE_BUTTON (widget));
 }
 
 static void

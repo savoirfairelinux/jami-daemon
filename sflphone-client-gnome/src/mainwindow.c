@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
@@ -94,11 +94,10 @@ on_delete (GtkWidget * widget UNUSED, gpointer data UNUSED)
         gtk_widget_hide (GTK_WIDGET (get_main_window()));
         set_minimized (TRUE);
     } else {
+        g_mutex_free (gmutex);
         sflphone_quit ();
     }
 
-    // pthread_mutex_destroy (&statusbar_message_mutex);
-    g_mutex_free (gmutex);
     return TRUE;
 }
 

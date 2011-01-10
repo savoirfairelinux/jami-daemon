@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
@@ -601,9 +601,16 @@ void PulseLayer::closeCaptureStream (void)
 {
     if (record) {
 
-        std::string deviceName (pa_stream_get_device_name (record->pulseStream()));
-        _debug ("Audio: record device to be stored in config: %s", deviceName.c_str());
-        _manager->audioPreference.setDeviceRecord (deviceName);
+        if (record->pulseStream()) {
+            const char *name = pa_stream_get_device_name (record->pulseStream());
+
+            if (name && strlen (name)) {
+                std::string deviceName (name);
+                _debug ("Audio: record device to be stored in config: %s", deviceName.c_str());
+                _manager->audioPreference.setDeviceRecord (deviceName);
+            }
+        }
+
         delete record;
         record=NULL;
     }
@@ -613,17 +620,32 @@ void PulseLayer::closeCaptureStream (void)
 void PulseLayer::closePlaybackStream (void)
 {
     if (playback) {
-        std::string deviceName (pa_stream_get_device_name (playback->pulseStream()));
-        _debug ("Audio: playback device to be stored in config: %s", deviceName.c_str());
-        _manager->audioPreference.setDevicePlayback (deviceName);
+
+        if (playback->pulseStream()) {
+            const char *name = pa_stream_get_device_name (playback->pulseStream());
+
+            if (name && strlen (name)) {
+                std::string deviceName (pa_stream_get_device_name (playback->pulseStream()));
+                _debug ("Audio: playback device to be stored in config: %s", deviceName.c_str());
+                _manager->audioPreference.setDevicePlayback (deviceName);
+            }
+        }
+
         delete playback;
         playback=NULL;
     }
 
     if (ringtone) {
-        std::string deviceName (pa_stream_get_device_name (ringtone->pulseStream()));
-        _debug ("Audio: ringtone device to be stored in config: %s", deviceName.c_str());
-        _manager->audioPreference.setDeviceRingtone (deviceName);
+        if (ringtone->pulseStream()) {
+            const char *name = pa_stream_get_device_name (ringtone->pulseStream());
+
+            if (name && strlen (name)) {
+                std::string deviceName (pa_stream_get_device_name (ringtone->pulseStream()));
+                _debug ("Audio: ringtone device to be stored in config: %s", deviceName.c_str());
+                _manager->audioPreference.setDeviceRingtone (deviceName);
+            }
+        }
+
         delete ringtone;
         ringtone  = NULL;
     }

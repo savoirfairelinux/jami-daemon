@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
@@ -188,7 +188,7 @@ void AudioRtpFactory::start (AudioCodec* audiocodec)
 void AudioRtpFactory::stop (void)
 {
     ost::MutexLock mutex (_audioRtpThreadMutex);
-    _info ("--------------------------------- AudioRtpFactory: Stopping audio rtp session");
+    _info ("AudioRtpFactory: Stopping audio rtp session");
 
     if (_rtpSession == NULL) {
         _debugException ("AudioRtpFactory: Error: _rtpSession is null when trying to stop. Returning.");

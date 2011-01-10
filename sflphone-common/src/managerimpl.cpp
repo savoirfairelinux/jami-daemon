@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -1523,18 +1523,15 @@ bool ManagerImpl::saveConfig (void)
 //THREAD=Main
 bool ManagerImpl::sendDtmf (const CallID& id, char code)
 {
+    _debug ("Manager: Send DTMF for call %s", id.c_str());
 
     AccountID accountid = getAccountFromCall (id);
-
-    bool returnValue = false;
 
     playDtmf (code);
 
     CallAccountMap::iterator iter = _callAccountMap.find (id);
 
-    // Make sure the call exist before sending DTMF, ths could be simply call dialing
-    if (iter != _callAccountMap.end())
-        returnValue = getAccountLink (accountid)->carryingDTMFdigits (id, code);
+    bool returnValue = getAccountLink (accountid)->carryingDTMFdigits (id, code);
 
     return returnValue;
 }

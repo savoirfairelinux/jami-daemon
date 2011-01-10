@@ -879,7 +879,6 @@ SIPVoIPLink::answer (const CallID& id)
 
     inv_session = call->getInvSession();
 
-    status = local_sdp->start_negociation ();
 
     if (status == PJ_SUCCESS) {
 
@@ -1124,12 +1123,15 @@ int SIPVoIPLink::inv_session_reinvite (SIPCall *call, std::string direction)
     // if (status != PJ_SUCCESS)
     // return 1;   // !PJ_SUCCESS
 
+
     pjmedia_sdp_media_remove_all_attr (local_sdp->media[0], "sendrecv");
     pjmedia_sdp_media_remove_all_attr (local_sdp->media[0], "sendonly");
 
     attr = pjmedia_sdp_attr_create (_pool, direction.c_str(), NULL);
 
     pjmedia_sdp_media_add_attr (local_sdp->media[0], attr);
+
+    // pjmedia_sdp_neg_modify_local_offer (_pool, call->getLocalSDP()->_negociator, local_sdp);
 
     // Build the reinvite request
     status = pjsip_inv_reinvite (call->getInvSession(), NULL,
@@ -1154,6 +1156,8 @@ SIPVoIPLink::offhold (const CallID& id)
     SIPCall *call;
     pj_status_t status;
 
+    _debug ("UserAgent: retrive call from hold status");
+
     call = getSIPCall (id);
 
     if (call==0) {
@@ -1169,6 +1173,8 @@ SIPVoIPLink::offhold (const CallID& id)
 
     // Get PayloadType for this codec
     AudioCodecType pl = (AudioCodecType) sessionMedia->getPayload();
+
+    _debug ("------------------------- payload from session media %d", pl);
 
     try {
         // Create a new instance for this codec
@@ -1365,7 +1371,7 @@ SIPVoIPLink::carryingDTMFdigits (const CallID& id, char code)
     SIPCall *call = getSIPCall (id);
 
     if (!call) {
-        _error ("UserAgent: Error: Call doesn't exist while sending DTMF");
+        //_error ("UserAgent: Error: Call doesn't exist while sending DTMF");
         return false;
     }
 
@@ -1405,6 +1411,7 @@ SIPVoIPLink::dtmfSipInfo (SIPCall *call, char code)
     pjsip_method method;
     pjsip_media_type ctype;
 
+    _debug ("UserAgent: Send DTMF %c", code);
 
     duration = Manager::instance().voipPreferences.getPulseLength();
 
@@ -2001,7 +2008,7 @@ bool SIPVoIPLink::pjsip_init()
     pjsip_inv_callback inv_cb;
     pj_str_t accepted;
     std::string name_mod;
-    pj_dns_resolver *p_resv;
+    // pj_dns_resolver *p_resv;
     std::string addr;
 
     name_mod = "sflphone";
@@ -2098,7 +2105,7 @@ bool SIPVoIPLink::pjsip_init()
 
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
-    status = enable_dns_srv_resolver (_endpt, &p_resv);
+    // status = enable_dns_srv_resolver (_endpt, &p_resv);
 
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
@@ -3314,7 +3321,6 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 {
     _debug ("UserAgent: Call media update");
 
-    const pjmedia_sdp_session *local_sdp;
     const pjmedia_sdp_session *remote_sdp;
 
     SIPVoIPLink * link = NULL;
@@ -3345,9 +3351,7 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
         return;
     }
 
-    // Get the new sdp, result of the negotiation
-    pjmedia_sdp_neg_get_active_local (inv->neg, &local_sdp);
-
+    // Get sdp session from answer
     pjmedia_sdp_neg_get_active_remote (inv->neg, &remote_sdp);
 
     // Clean the resulting sdp offer to create a new one (in case of a reinvite)
@@ -3356,7 +3360,7 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
     // Set the fresh negotiated one, no matter if that was an offer or answer.
     // The local sdp is updated in case of an answer, even if the remote sdp
     // is kept internally.
-    call->getLocalSDP()->set_negotiated_sdp (local_sdp);
+    call->getLocalSDP()->set_negotiated_sdp (remote_sdp);
 
     // Set remote ip / port
     call->getLocalSDP()->set_media_transport_info_from_remote_sdp (remote_sdp);
