@@ -862,7 +862,7 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
 bool
 SIPVoIPLink::answer (const CallID& id)
 {
-    pj_status_t status;
+    pj_status_t status = PJ_SUCCESS;
     pjsip_tx_data *tdata;
     pjsip_inv_session *inv_session;
 
@@ -875,10 +875,7 @@ SIPVoIPLink::answer (const CallID& id)
         return false;
     }
 
-    Sdp *local_sdp = call->getLocalSDP();
-
     inv_session = call->getInvSession();
-
 
     if (status == PJ_SUCCESS) {
 
