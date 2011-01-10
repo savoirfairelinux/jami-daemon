@@ -119,7 +119,7 @@ AudioRtpRecord::~AudioRtpRecord()
 }
 
 
-AudioRtpRecordHandler::AudioRtpRecordHandler (ManagerImpl *manager, SIPCall *ca) : _audioRtpRecord (), _ca (ca) {}
+AudioRtpRecordHandler::AudioRtpRecordHandler (SIPCall *ca) : _audioRtpRecord (), _ca (ca) {}
 
 
 AudioRtpRecordHandler::~AudioRtpRecordHandler() {}

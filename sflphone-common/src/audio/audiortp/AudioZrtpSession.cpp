@@ -51,7 +51,7 @@ namespace sfl
 
 AudioZrtpSession::AudioZrtpSession (ManagerImpl * manager, SIPCall * sipcall, const std::string& zidFilename) :
     // ost::SymmetricZRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
-    AudioRtpRecordHandler (manager, sipcall),
+    AudioRtpRecordHandler (sipcall),
     ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue> (ost::InetHostAddress (sipcall->getLocalIp().c_str()),
             sipcall->getLocalAudioPort(),
             0,

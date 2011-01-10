@@ -118,7 +118,7 @@ class AudioRtpRecord
 class AudioRtpRecordHandler
 {
     public:
-        AudioRtpRecordHandler (ManagerImpl *manager, SIPCall *ca);
+        AudioRtpRecordHandler (SIPCall *ca);
         ~AudioRtpRecordHandler();
 
         /**

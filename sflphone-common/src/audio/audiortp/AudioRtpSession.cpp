@@ -43,7 +43,7 @@ namespace sfl
 
 AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
     // ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
-    AudioRtpRecordHandler (manager, sipcall),
+    AudioRtpRecordHandler (sipcall),
     ost::TRTPSessionBase<ost::SymmetricRTPChannel,ost::SymmetricRTPChannel,ost::AVPQueue> (ost::InetHostAddress (sipcall->getLocalIp().c_str()),
             sipcall->getLocalAudioPort(),
             0,
