@@ -200,16 +200,14 @@ void AudioRtpFactory::stop (void)
 
             case Sdes:
                 static_cast<AudioSrtpSession *> (_rtpSession)->stopRtpThread();
-                delete static_cast<AudioSrtpSession *> (_rtpSession);
                 break;
 
             case Symmetric:
                 static_cast<AudioSrtpSession *> (_rtpSession)->stopRtpThread();
-                delete static_cast<AudioSymmetricRtpSession *> (_rtpSession);
                 break;
 
             case Zrtp:
-                delete static_cast<AudioZrtpSession *> (_rtpSession);
+                static_cast<AudioZrtpSession *> (_rtpSession)->stopRtpThread();
                 break;
         }
 

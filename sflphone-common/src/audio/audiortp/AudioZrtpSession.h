@@ -60,6 +60,8 @@ class AudioZrtpSession : protected ost::Thread, public AudioRtpRecordHandler, pu
 
         ~AudioZrtpSession();
 
+        virtual void final();
+
         // Thread associated method
         virtual void run ();
 

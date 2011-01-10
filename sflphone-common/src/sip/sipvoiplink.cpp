@@ -1314,6 +1314,9 @@ SIPVoIPLink::refuse (const CallID& id)
         return false;
     }
 
+    // Stop Audio RTP session
+    call->getAudioRtp()->stop();
+
     // User refuse current call. Notify peer
     status = pjsip_inv_end_session (call->getInvSession(), PJSIP_SC_DECLINE, NULL, &tdata);   //603
 

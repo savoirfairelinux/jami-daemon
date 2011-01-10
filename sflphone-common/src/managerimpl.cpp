@@ -2163,7 +2163,7 @@ void ManagerImpl::ringtone (const AccountID& accountID)
     int layer, samplerate;
     bool loadFile;
 
-    _debug ("Manager: Ringtone");
+    _debug ("-------------------------------- Manager: Ringtone");
 
     Account *account = getAccount (accountID);
 
@@ -2174,7 +2174,7 @@ void ManagerImpl::ringtone (const AccountID& accountID)
 
     if (account->getRingtoneEnabled()) {
 
-        _debug ("Manager: Tone is enabled");
+        _debug ("-------------------------------- Manager: Tone is enabled");
         //TODO Comment this because it makes the daemon crashes since the main thread
         //synchronizes the ringtone thread.
 
@@ -2242,11 +2242,14 @@ void ManagerImpl::ringtone (const AccountID& accountID)
 AudioLoop*
 ManagerImpl::getTelephoneTone ()
 {
-    // _debug("ManagerImpl::getTelephoneTone()");
+    // _debug ("ManagerImpl::getTelephoneTone()");
+
     if (_telephoneTone != 0) {
+        // _debug ("telephone tone!!!!!!");
         ost::MutexLock m (_toneMutex);
         return _telephoneTone->getCurrentTone();
     } else {
+        //_debug ("No Tone!!!!!!");
         return 0;
     }
 }
@@ -2271,22 +2274,23 @@ void ManagerImpl::notificationIncomingCall (void)
 {
     AudioLayer *audiolayer;
     std::ostringstream frequency;
-    unsigned int samplerate, nbSampling;
+    unsigned int sampleRate, nbSample;
 
     audiolayer = getAudioDriver();
 
-    _debug ("ManagerImpl::notificationIncomingCall");
+    _debug ("------------------ ManagerImpl: Notification incoming call");
 
     if (audiolayer != 0) {
-        samplerate = audiolayer->getSampleRate();
+        sampleRate = audiolayer->getSampleRate();
+        _debug (" samplerate %d", sampleRate);
         frequency << "440/" << 160;
-        Tone tone (frequency.str(), samplerate);
-        nbSampling = tone.getSize();
-        SFLDataFormat buf[nbSampling];
-        tone.getNext (buf, tone.getSize());
+        Tone tone (frequency.str(), sampleRate);
+        nbSample = tone.getSize();
+        SFLDataFormat buf[nbSample];
+        tone.getNext (buf, nbSample);
         /* Put the data in the urgent ring buffer */
         audiolayer->flushUrgent();
-        audiolayer->putUrgent (buf, sizeof (SFLDataFormat) * nbSampling);
+        audiolayer->putUrgent (buf, sizeof (SFLDataFormat) * nbSample);
     }
 }
 

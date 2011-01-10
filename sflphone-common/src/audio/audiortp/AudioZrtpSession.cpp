@@ -98,6 +98,12 @@ AudioZrtpSession::~AudioZrtpSession()
 }
 
 
+void AudioZrtpSession::final()
+{
+    delete this;
+}
+
+
 
 void AudioZrtpSession::initializeZid (void)
 {

@@ -91,6 +91,11 @@ AudioRtpSession::~AudioRtpSession()
 
 }
 
+void AudioRtpSession::final()
+{
+    delete this;
+}
+
 void AudioRtpSession::setSessionTimeouts (void)
 {
     _debug ("AudioRtpSession: Set session scheduling timeout (%d) and expireTimeout (%d)", sfl::schedulingTimeout, sfl::expireTimeout);
@@ -312,8 +317,11 @@ void AudioRtpSession::receiveSpeakerData ()
 
 void AudioRtpSession::notifyIncomingCall()
 {
+
+    /*
     // Notify (with a beep) an incoming call when there is already a call
     if (Manager::instance().incomingCallWaiting() > 0) {
+        _debug ("Notify!!!!!!!!!!");
         _countNotificationTime += _time->getSecond();
         int countTimeModulo = _countNotificationTime % 5000;
 
@@ -323,6 +331,7 @@ void AudioRtpSession::notifyIncomingCall()
 
         _countNotificationTime = countTimeModulo;
     }
+    */
 }
 
 
@@ -409,9 +418,10 @@ void AudioRtpSession::run ()
         }
     }
 
+    _debug ("AudioRtpSession: Left main loop for call %s", _ca->getCallId().c_str());
+
     Thread::exit();
 
-    _debug ("AudioRtpSession: Left main loop for call %s", _ca->getCallId().c_str());
 }
 
 }

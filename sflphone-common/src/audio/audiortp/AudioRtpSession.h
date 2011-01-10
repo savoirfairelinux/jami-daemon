@@ -69,6 +69,8 @@ class AudioRtpSession : protected ost::Thread, public ost::TimerPort, public Aud
 
         ~AudioRtpSession();
 
+        virtual void final ();
+
         // Thread associated method
         virtual void run ();
 
