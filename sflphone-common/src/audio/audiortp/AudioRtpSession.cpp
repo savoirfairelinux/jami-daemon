@@ -346,12 +346,16 @@ void AudioRtpSession::run ()
             timeout = getSchedulingTimeout();
         }
 
+        setCancel (cancelDeferred);
+
         // Send session
         if (getEventQueueSize() > 0) {
             sendDtmfEvent (getEventQueue()->front());
         } else {
             sendMicData ();
         }
+
+        setCancel (cancelImmediate);
 
         setCancel (cancelDeferred);
         controlReceptionService();
@@ -364,9 +368,6 @@ void AudioRtpSession::run ()
         timeout = (timeout > maxWait) ? maxWait : timeout;
 
         if (timeout < 1000) {   // !(timeout/1000)
-            setCancel (cancelDeferred);
-            // dispatchDataPacket();
-            setCancel (cancelImmediate);
             timerTick();
         } else {
             if (isPendingData (timeout/1000)) {
