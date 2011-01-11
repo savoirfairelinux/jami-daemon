@@ -109,9 +109,6 @@ class AudioZrtpSession : protected ost::Thread, public AudioRtpRecordHandler, pu
          */
         void setDestinationIpAddress (void);
 
-
-        void notifyIncomingCall();
-
         /**
          * Send encoded data to peer
          */
@@ -123,8 +120,6 @@ class AudioZrtpSession : protected ost::Thread, public AudioRtpRecordHandler, pu
         void receiveSpeakerData ();
 
         std::string _zidFilename;
-
-        ost::Time * _time;
 
         // This semaphore is not used
         // but is needed in order to avoid
@@ -166,11 +161,6 @@ class AudioZrtpSession : protected ost::Thread, public AudioRtpRecordHandler, pu
          * Timestamp reset freqeuncy specified in number of packet sent
          */
         short _timestampCount;
-
-        /**
-         * Time counter used to trigger incoming call notification
-         */
-        int _countNotificationTime;
 
         SIPCall * _ca;
 

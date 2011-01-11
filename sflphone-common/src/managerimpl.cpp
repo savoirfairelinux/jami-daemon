@@ -456,7 +456,7 @@ bool ManagerImpl::hangupCall (const CallID& call_id)
 
     // stop streams
     if (audiolayer && (nbCalls <= 0)) {
-        _debug ("Manager: stop audio stream, ther is only %i call(s) remaining", nbCalls);
+        _debug ("Manager: stop audio stream, ther is only %d call(s) remaining", nbCalls);
         audiolayer->stopStream();
     }
 
@@ -738,7 +738,7 @@ bool ManagerImpl::refuseCall (const CallID& id)
     // AudioLayer* audiolayer = getAudioDriver();
 
     if (nbCalls <= 1) {
-        _debug ("    refuseCall: stop audio stream, there is only %i call(s) remaining", nbCalls);
+        _debug ("    refuseCall: stop audio stream, there is only %d call(s) remaining", nbCalls);
 
         AudioLayer* audiolayer = getAudioDriver();
         audiolayer->stopStream();
@@ -1977,7 +1977,7 @@ void ManagerImpl::peerHungupCall (const CallID& call_id)
     // stop streams
 
     if (nbCalls <= 0) {
-        _debug ("Manager: Stop audio stream, ther is only %i call(s) remaining", nbCalls);
+        _debug ("Manager: Stop audio stream, ther is only %d call(s) remaining", nbCalls);
 
         AudioLayer* audiolayer = getAudioDriver();
         audiolayer->stopStream();
@@ -2277,11 +2277,11 @@ void ManagerImpl::notificationIncomingCall (void)
 
     audiolayer = getAudioDriver();
 
-    _debug ("------------------ ManagerImpl: Notification incoming call");
+    _debug ("ManagerImpl: Notification incoming call");
 
-    if (audiolayer != 0) {
+    // Enable notification only if more than one call
+    if (audiolayer != 0 && hasCurrentCall()) {
         sampleRate = audiolayer->getSampleRate();
-        _debug (" samplerate %d", sampleRate);
         frequency << "440/" << 160;
         Tone tone (frequency.str(), sampleRate);
         nbSample = tone.getSize();
@@ -2521,7 +2521,7 @@ void ManagerImpl::setAudioDevice (const int index, int streamType)
 
     AlsaLayer *alsalayer = NULL;
     std::string alsaplugin;
-    _debug ("Manager: Set audio device: %i", index);
+    _debug ("Manager: Set audio device: %d", index);
 
     _audiodriver -> setErrorMessage (-1);
 
@@ -2804,7 +2804,7 @@ int32_t ManagerImpl::getAudioManager (void)
 void ManagerImpl::notifyErrClient (const int32_t& errCode)
 {
     if (_dbus) {
-        _debug ("Manager: NOTIFY ERR NUMBER %i" , errCode);
+        _debug ("Manager: NOTIFY ERR NUMBER %d" , errCode);
         _dbus -> getConfigurationManager() -> errorAlert (errCode);
     }
 }
@@ -2902,7 +2902,7 @@ bool ManagerImpl::initAudioDriver (void)
         error = getAudioDriver()->getErrorMessage();
 
         if (error == -1) {
-            _debug ("Init audio driver: %i", error);
+            _debug ("Init audio driver: %d", error);
             return false;
         }
     }
@@ -2921,7 +2921,7 @@ void ManagerImpl::selectAudioDriver (void)
     AlsaLayer *alsalayer;
 
     layer = _audiodriver->getLayerType();
-    _debug ("Audio layer type: %i" , layer);
+    _debug ("Audio layer type: %d" , layer);
 
     /* Retrieve the global devices info from the user config */
     alsaPlugin = audioPreference.getPlugin();
@@ -2938,19 +2938,19 @@ void ManagerImpl::selectAudioDriver (void)
         alsalayer = dynamic_cast<AlsaLayer*> (getAudioDriver());
 
         if (!alsalayer -> soundCardIndexExist (numCardIn, SFL_PCM_CAPTURE)) {
-            _debug (" Card with index %i doesn't exist or cannot capture. Switch to 0.", numCardIn);
+            _debug (" Card with index %d doesn't exist or cannot capture. Switch to 0.", numCardIn);
             numCardIn = ALSA_DFT_CARD_ID;
             audioPreference.setCardin (ALSA_DFT_CARD_ID);
         }
 
         if (!alsalayer -> soundCardIndexExist (numCardOut, SFL_PCM_PLAYBACK)) {
-            _debug (" Card with index %i doesn't exist or cannot playback. Switch to 0.", numCardOut);
+            _debug (" Card with index %d doesn't exist or cannot playback. Switch to 0.", numCardOut);
             numCardOut = ALSA_DFT_CARD_ID;
             audioPreference.setCardout (ALSA_DFT_CARD_ID);
         }
 
         if (!alsalayer->soundCardIndexExist (numCardRing, SFL_PCM_RINGTONE)) {
-            _debug (" Card with index %i doesn't exist or cannot ringtone. Switch to 0.", numCardRing);
+            _debug (" Card with index %d doesn't exist or cannot ringtone. Switch to 0.", numCardRing);
             numCardRing = ALSA_DFT_CARD_ID;
             audioPreference.setCardring (ALSA_DFT_CARD_ID);
         }
@@ -2984,7 +2984,7 @@ void ManagerImpl::switchAudioManager (void)
     samplerate = _mainBuffer.getInternalSamplingRate();
     framesize = audioPreference.getFramesize();
 
-    _debug ("Manager: samplerate: %i, framesize %i", samplerate, framesize);
+    _debug ("Manager: samplerate: %d, framesize %d", samplerate, framesize);
 
     alsaPlugin = audioPreference.getPlugin();
 
@@ -3029,8 +3029,7 @@ void ManagerImpl::switchAudioManager (void)
     if (_audiodriver -> getErrorMessage() != -1)
         notifyErrClient (_audiodriver -> getErrorMessage());
 
-    _debug ("Manager: Current device: %i ", type);
-    _debug ("Manager: Has current call: %i ", hasCurrentCall());
+    _debug ("Manager: Current device: %d ", type);
 
     if (hasCurrentCall())
         _audiodriver->startStream();
@@ -3062,7 +3061,7 @@ void ManagerImpl::audioSamplingRateChanged (void)
     samplerate = _mainBuffer.getInternalSamplingRate();
     framesize = audioPreference.getFramesize();
 
-    _debug ("Manager: new samplerate: %i, new framesize %i", samplerate, framesize);
+    _debug ("Manager: new samplerate: %d, new framesize %d", samplerate, framesize);
 
     alsaPlugin = audioPreference.getPlugin();
 
@@ -3107,8 +3106,7 @@ void ManagerImpl::audioSamplingRateChanged (void)
     if (_audiodriver -> getErrorMessage() != -1)
         notifyErrClient (_audiodriver -> getErrorMessage());
 
-    _debug ("Manager: Current device: %i ", type);
-    _debug ("Manager: Has current call: %i ", hasCurrentCall());
+    _debug ("Manager: Current device: %d ", type);
 
     if (_audiodriver) {
         unsigned int sampleRate = _audiodriver->getSampleRate();
@@ -4110,7 +4108,7 @@ bool ManagerImpl::associateConfigToCall (const CallID& callID,
 
     if (getConfigFromCall (callID) == CallConfigNULL) { // nothing with the same ID
         _callConfigMap[callID] = config;
-        _debug ("Manager: Associate call %s with config %i", callID.c_str(), config);
+        _debug ("Manager: Associate call %s with config %d", callID.c_str(), config);
         return true;
     } else {
         return false;

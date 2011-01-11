@@ -49,13 +49,11 @@ AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
             0,
             ost::MembershipBookkeeping::defaultMembersHashSize,
             ost::defaultApplication())
-    , _time (new ost::Time())
     , _mainloopSemaphore (0)
     , _manager (manager)
     , _timestamp (0)
     , _timestampIncrement (0)
     , _timestampCount (0)
-    , _countNotificationTime (0)
     , _ca (sipcall)
     , _isStarted (false)
 {
@@ -85,12 +83,6 @@ AudioRtpSession::~AudioRtpSession()
     }
 
     Manager::instance().getMainBuffer()->unBindAll (_audioRtpRecord._callId);
-
-    if (_time)
-        delete _time;
-
-    _time = NULL;
-
 }
 
 void AudioRtpSession::final()
@@ -315,26 +307,6 @@ void AudioRtpSession::receiveSpeakerData ()
     delete adu;
 }
 
-void AudioRtpSession::notifyIncomingCall()
-{
-
-    /*
-    // Notify (with a beep) an incoming call when there is already a call
-    if (Manager::instance().incomingCallWaiting() > 0) {
-        _debug ("Notify!!!!!!!!!!");
-        _countNotificationTime += _time->getSecond();
-        int countTimeModulo = _countNotificationTime % 5000;
-
-        if ( (countTimeModulo - _countNotificationTime) < 0) {
-            Manager::instance().notificationIncomingCall();
-        }
-
-        _countNotificationTime = countTimeModulo;
-    }
-    */
-}
-
-
 int AudioRtpSession::startRtpThread (AudioCodec* audiocodec)
 {
     if (_isStarted)
@@ -380,9 +352,6 @@ void AudioRtpSession::run ()
         } else {
             sendMicData ();
         }
-
-        // This also should be moved
-        notifyIncomingCall();
 
         setCancel (cancelDeferred);
         controlReceptionService();

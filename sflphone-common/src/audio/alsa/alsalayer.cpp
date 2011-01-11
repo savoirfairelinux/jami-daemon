@@ -894,6 +894,8 @@ void AlsaLayer::audioCallback (void)
     SFLDataFormat *out = NULL;
     SFLDataFormat *rsmpl_out = NULL;
 
+    notifyincomingCall();
+
     spkrVolume = _manager->getSpkrVolume();
     micVolume  = _manager->getMicVolume();
 

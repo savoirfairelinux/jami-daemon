@@ -34,6 +34,9 @@
 #ifndef _AUDIO_LAYER_H
 #define _AUDIO_LAYER_H
 
+#include <cc++/numbers.h> // for ost::Time
+#include <cc++/thread.h> // for ost::Mutex
+
 #include "global.h"
 #include "audiodevice.h"
 #include "ringbuffer.h"
@@ -42,7 +45,6 @@
 #include "speexechocancel.h"
 #include "echocancel.h"
 
-#include <cc++/thread.h> // for ost::Mutex
 
 /**
  * @file  audiolayer.h
@@ -79,14 +81,18 @@ class AudioLayer
             , _inChannel (1)
             , _outChannel (1)
             , _errorMessage (0)
-            , _mutex () {
+            , _mutex ()
+            , _time (new ost::Time()) {
 
         }
 
         /**
          * Destructor
          */
-        virtual ~AudioLayer (void) {}
+        virtual ~AudioLayer (void) {
+            delete _time;
+            _time = NULL;
+        }
 
         virtual bool closeLayer (void) = 0;
 
@@ -274,6 +280,7 @@ class AudioLayer
             return &_mutex;
         }
 
+        void notifyincomingCall (void);
 
     protected:
 
@@ -361,6 +368,15 @@ class AudioLayer
 
         bool _noisesuppressstate;
 
+        /**
+         * Time counter used to trigger incoming call notification
+         */
+        int _countNotificationTime;
+
+        /**
+         * Used to get formated system time in order to compute incoming call notification
+         */
+        ost::Time * _time;
 };
 
 #endif // _AUDIO_LAYER_H_

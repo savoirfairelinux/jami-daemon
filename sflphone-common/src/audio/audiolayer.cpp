@@ -30,6 +30,7 @@
  */
 
 #include "audiolayer.h"
+#include "manager.h"
 
 void AudioLayer::flushMain (void)
 {
@@ -83,4 +84,18 @@ int AudioLayer::putMain (void *buffer, int toCopy, CallID call_id)
     return 0;
 }
 
+void AudioLayer::notifyincomingCall()
+{
+    // Notify (with a beep) an incoming call when there is already a call
+    if (Manager::instance().incomingCallWaiting()) {
+        _countNotificationTime += _time->getSecond();
+        int countTimeModulo = _countNotificationTime % 5000;
+
+        if ( (countTimeModulo - _countNotificationTime) < 0) {
+            Manager::instance().notificationIncomingCall();
+        }
+
+        _countNotificationTime = countTimeModulo;
+    }
+}
 

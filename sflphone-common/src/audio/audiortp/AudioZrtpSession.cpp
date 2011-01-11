@@ -58,13 +58,11 @@ AudioZrtpSession::AudioZrtpSession (ManagerImpl * manager, SIPCall * sipcall, co
             ost::MembershipBookkeeping::defaultMembersHashSize,
             ost::defaultApplication())
     , _zidFilename (zidFilename)
-    , _time (new ost::Time())
     , _mainloopSemaphore (0)
     , _manager (manager)
     , _timestamp (0)
     , _timestampIncrement (0)
     , _timestampCount (0)
-    , _countNotificationTime (0)
     , _ca (sipcall)
 {
     _debug ("AudioZrtpSession initialized");
@@ -91,11 +89,6 @@ AudioZrtpSession::~AudioZrtpSession()
     }
 
     Manager::instance().getMainBuffer()->unBindAll (_ca->getCallId());
-
-    if (_time)
-        delete _time;
-
-    _time = NULL;
 }
 
 
@@ -368,21 +361,6 @@ void AudioZrtpSession::receiveSpeakerData ()
     delete adu;
 }
 
-void AudioZrtpSession::notifyIncomingCall()
-{
-    // Notify (with a beep) an incoming call when there is already a call
-    if (Manager::instance().incomingCallWaiting() > 0) {
-        _countNotificationTime += _time->getSecond();
-        int countTimeModulo = _countNotificationTime % 5000;
-
-        if ( (countTimeModulo - _countNotificationTime) < 0) {
-            Manager::instance().notificationIncomingCall();
-        }
-
-        _countNotificationTime = countTimeModulo;
-    }
-}
-
 int AudioZrtpSession::startRtpThread (AudioCodec* audiocodec)
 {
     if (_isStarted)
@@ -428,9 +406,6 @@ void AudioZrtpSession::run ()
         } else {
             sendMicData ();
         }
-
-        // This also should be moved
-        notifyIncomingCall();
 
         setCancel (cancelDeferred);
         controlReceptionService();

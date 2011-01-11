@@ -130,13 +130,6 @@ class AudioRtpSession : protected ost::Thread, public ost::TimerPort, public Aud
          */
         void receiveSpeakerData ();
 
-        /**
-         * Notificatify user with a beep for incoming calls
-         */
-        void notifyIncomingCall();
-
-        ost::Time * _time;
-
         // This semaphore is not used
         // but is needed in order to avoid
         // ambiguous compiling problem.
@@ -156,7 +149,6 @@ class AudioRtpSession : protected ost::Thread, public ost::TimerPort, public Aud
         // Stored in case reINVITE, which may require to forget
         // this destination and update a new one
         unsigned short _remote_port;
-
 
         /**
          * Manager instance.
@@ -178,11 +170,6 @@ class AudioRtpSession : protected ost::Thread, public ost::TimerPort, public Aud
          * Timestamp reset freqeuncy specified in number of packet sent
          */
         short _timestampCount;
-
-        /**
-         * Time counter used to trigger incoming call notification
-         */
-        int _countNotificationTime;
 
         /**
          * Call initialized

@@ -775,6 +775,7 @@ void PulseLayer::writeToSpeaker (void)
     /** Bytes to get in the ring buffer **/
     int byteToGet;
 
+    notifyincomingCall();
 
     SFLDataFormat* out;// = (SFLDataFormat*)pa_xmalloc(framesPerBuffer);
     urgentAvailBytes = _urgentRingBuffer.AvailForGet();
