@@ -53,7 +53,6 @@ GdkPixbuf *outgoing_pixbuf = NULL;
 GdkPixbuf *missed_pixbuf = NULL;
 
 
-
 void searchbar_addressbook_activated (GtkEntry *entry, gchar *arg1 UNUSED, gpointer data UNUSED)
 {
     DEBUG ("Searchbar: Entry activated");
@@ -84,6 +83,11 @@ static void cbox_changed_cb (GtkWidget *widget, gpointer user_data UNUSED)
     set_current_addressbook (name);
 
     addressbook_search (GTK_ENTRY (addressbookentry));
+}
+
+void set_forcus_on_addressbook_searchbar ()
+{
+    gtk_widget_grab_focus (addressbookentry);
 }
 
 void update_searchbar_addressbook_list()
@@ -263,7 +267,7 @@ GtkWidget *addressbook_menu_new (void)
 void
 focus_on_searchbar_out()
 {
-    DEBUG ("set_focus_on_searchbar_out");
+    DEBUG ("Searchbar: Unset focus from search bar");
     // gtk_widget_grab_focus(GTK_WIDGET(sw));
     focus_is_on_searchbar = FALSE;
 }
@@ -271,7 +275,7 @@ focus_on_searchbar_out()
 void
 focus_on_searchbar_in()
 {
-    DEBUG ("set_focus_on_searchbar_in");
+    DEBUG ("Searchbar: Set focus on search bar");
     // gtk_widget_grab_focus(GTK_WIDGET(sw));
     focus_is_on_searchbar = TRUE;
 }

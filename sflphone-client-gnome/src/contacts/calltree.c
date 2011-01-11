@@ -41,6 +41,7 @@
 #include "uimanager.h"
 #include "actions.h"
 #include "../imwindow.h"
+#include "searchbar.h"
 
 GtkWidget *sw;
 GtkCellRenderer *rend;
@@ -1400,6 +1401,8 @@ void calltree_display (calltab_t *tab)
         }
 
         gtk_toggle_tool_button_set_active ( (GtkToggleToolButton*) contactButton, TRUE);
+
+        set_forcus_on_addressbook_searchbar();
     }
 
     else

@@ -112,12 +112,6 @@ void statusbar_pop_message (guint id);
  */
 void statusbar_update_clock (gchar *time);
 
-
-//static gboolean
-//on_key_released (GtkWidget *widget, GdkEventKey *event,
-//                 gpointer user_data);
-// void set_focus_on_mainwindow();
-
 gboolean focus_is_on_calltree;
 
 gboolean focus_is_on_searchbar;

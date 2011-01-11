@@ -57,14 +57,19 @@ GdkPixbuf *waitingPixOff;
 SearchType HistorySearchType;
 
 /**
- * Create a new search bar with "type" passed in
- * parameter
+ * Create a new search bar for call hostory
  */
 GtkWidget* history_searchbar_new (void);
+
+/**
+ * Create a new search bar for addressbook
+ */
 GtkWidget* contacts_searchbar_new (void);
 
+/**
+ * Get type of call to be search from call history
+ */
 SearchType get_current_history_search_type (void);
-
 
 /**
  * Initialize a specific search bar
@@ -82,10 +87,18 @@ void activateWaitingLayer();
 void deactivateWaitingLayer();
 
 /**
+ * Set focus on addressbook search bar
+ */
+void set_forcus_on_addressbook_searchbar (void);
+
+/**
  * Reload combo box to update list of active addressbook
  */
 void update_searchbar_addressbook_list (void);
 
+/**
+ * Create a new menu listing all system addressbooks
+ */
 GtkWidget *addressbook_menu_new (void);
 
 #endif
