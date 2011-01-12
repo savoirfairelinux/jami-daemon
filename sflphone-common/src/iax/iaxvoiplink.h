@@ -316,9 +316,6 @@ class IAXVoIPLink : public VoIPLink
 
         /* URL hook */
         UrlHook *urlhook;
-
-        /** Counter for IncomingCallNotification */
-        int countTime;
 };
 
 #endif

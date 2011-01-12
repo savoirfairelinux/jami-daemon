@@ -64,7 +64,6 @@ IAXVoIPLink::IAXVoIPLink (const AccountID& accountID) : VoIPLink (accountID)
     , converter (NULL)
     , converterSamplingRate (NULL)
     , urlhook (NULL)
-    , countTime (0)
 {
     _evThread = new EventThread (this);
 
@@ -291,22 +290,6 @@ IAXVoIPLink::getEvent()
     // Refresh registration.
     if (_nextRefreshStamp && _nextRefreshStamp - 2 < time (NULL)) {
         sendRegister ("");
-    }
-
-    // Notify (with a beep) an incoming call when there is already a call
-    countTime += 3;
-
-    if ( (Manager::instance().incomingCallWaiting() > 0) && Manager::instance().hasCurrentCall()) {
-
-        int countTime_modulo = countTime % 4000;
-        // _debug("countTime: %i", countTime);
-        // _debug("countTime_modulo: %i", countTime_modulo);
-
-        if ( (countTime_modulo - countTime) < 0) {
-            Manager::instance().notificationIncomingCall();
-        }
-
-        countTime = countTime_modulo;
     }
 
     // thread wait 3 millisecond
