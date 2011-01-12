@@ -491,7 +491,7 @@ help_about (void * foo UNUSED)
     gtk_show_about_dialog (GTK_WINDOW (get_main_window()), "artists", artists,
                            "authors", authors, "comments",
                            _ ("SFLphone is a VoIP client compatible with SIP and IAX2 protocols."),
-                           "copyright", "Copyright © 2004-2009 Savoir-faire Linux Inc.", "name",
+                           "copyright", "Copyright © 2004-2011 Savoir-faire Linux Inc.", "name",
                            PACKAGE, "title", _ ("About SFLphone"), "version", VERSION, "website",
                            "http://www.sflphone.org", NULL);
 

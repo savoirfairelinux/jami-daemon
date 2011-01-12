@@ -1,3 +1,12 @@
+SFLphoned (0.9.12) / 2011-11-12
+	* Refactoring of the RTP session allowing dynamic update of audio codecs
+	* Updated synchronization between transport layer and audio layer
+	* Better implementation of SIP Early media playback
+	* Fixed memory leaks in configuration serialization engine
+	* Evolution addressbook: default addressbook support, addressbook authentication support
+	* Improved Gnome client initialization error handling
+	* Updated dbus-c++ binding
+
 SFLphoned (0.9.9) / 2010-28-09
 	* Instant messaging
 	* Full Evolution addressbook integration
