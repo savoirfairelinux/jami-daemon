@@ -48,6 +48,8 @@ YamlEmitter::~YamlEmitter()
 void YamlEmitter::open()
 {
 
+    _debug ("YamlEmiter: Open");
+
     fd = fopen (filename.c_str(), "w");
 
     if (!fd)
@@ -71,6 +73,8 @@ void YamlEmitter::open()
 
 void YamlEmitter::close()
 {
+    _debug ("YamlEmitter: Close");
+
     yaml_emitter_delete (&emitter);
 
     if (!fd)

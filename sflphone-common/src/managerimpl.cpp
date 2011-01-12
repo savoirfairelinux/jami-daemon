@@ -178,7 +178,6 @@ void ManagerImpl::terminate ()
 {
 
     _debug ("Manager: Terminate ");
-    saveConfig();
 
     unloadAccountMap();
 
@@ -1480,7 +1479,7 @@ void ManagerImpl::removeStream (const CallID& call_id)
 //THREAD=Main
 bool ManagerImpl::saveConfig (void)
 {
-    _debug ("Manager: Saving Configuration to XDG directory %s ... ", _path.c_str());
+    _debug ("Manager: Saving Configuration to XDG directory %s", _path.c_str());
     audioPreference.setVolumemic (getMicVolume());
     audioPreference.setVolumespkr (getSpkrVolume());
 
@@ -1516,7 +1515,6 @@ bool ManagerImpl::saveConfig (void)
         _error ("ConfigTree: %s", e.what());
     }
 
-    // _setupLoaded = _config.saveConfigTree(_path.data());
     return _setupLoaded;
 }
 
@@ -2753,7 +2751,11 @@ bool ManagerImpl::isRecording (const CallID& id)
 
 void ManagerImpl::setHistoryLimit (const int& days)
 {
+    _debug ("Manager: Set history limit");
+
     preferences.setHistoryLimit (days);
+
+    saveConfig();
 }
 
 int ManagerImpl::getHistoryLimit (void)
@@ -2768,7 +2770,11 @@ int32_t ManagerImpl::getMailNotify (void)
 
 void ManagerImpl::setMailNotify (void)
 {
+    _debug ("Manager: Set mail notify");
+
     preferences.getNotifyMails() ? preferences.setNotifyMails (true) : preferences.setNotifyMails (false);
+
+    saveConfig();
 }
 
 void ManagerImpl::setAudioManager (const int32_t& api)
@@ -2791,7 +2797,8 @@ void ManagerImpl::setAudioManager (const int32_t& api)
     preferences.setAudioApi (api);
 
     switchAudioManager();
-    return;
+
+    saveConfig();
 
 }
 
@@ -3361,6 +3368,8 @@ void ManagerImpl::setAccountsOrder (const std::string& order)
     // Set the new config
 
     preferences.setAccountOrder (order);
+
+    saveConfig();
 }
 
 std::vector<std::string> ManagerImpl::getAccountList ()
@@ -4027,7 +4036,7 @@ std::map<std::string, int32_t> ManagerImpl::getAddressbookSettings ()
 void ManagerImpl::setAddressbookSettings (
     const std::map<std::string, int32_t>& settings)
 {
-
+    _debug ("Manager: Update addressbook settings");
 
     addressbookPreference.setEnabled ( (settings.find ("ADDRESSBOOK_ENABLE")->second == 1) ? true : false);
     addressbookPreference.setMaxResults (settings.find ("ADDRESSBOOK_MAX_RESULTS")->second);
@@ -4037,14 +4046,19 @@ void ManagerImpl::setAddressbookSettings (
     addressbookPreference.setMobile ( (settings.find ("ADDRESSBOOK_DISPLAY_PHONE_MOBILE")->second == 1) ? true : false);
 
     // Write it to the configuration file
-    saveConfig();
+    // TODO save config is called for updateAddressbookSettings, updateHookSettings, setHistoryLimit each called
+    // when closing preference window (in this order)
+    // saveConfig();
 }
 
 void ManagerImpl::setAddressbookList (const std::vector<std::string>& list)
 {
+    _debug ("Manager: Set addressbook list");
 
     std::string s = serialize (list);
     addressbookPreference.setList (s);
+
+    saveConfig();
 
 }
 
@@ -4073,6 +4087,7 @@ std::map<std::string, std::string> ManagerImpl::getHookSettings ()
 
 void ManagerImpl::setHookSettings (const std::map<std::string, std::string>& settings)
 {
+    _debug ("Manager: Update hook settings");
 
     hookPreference.setIax2Enabled ( (settings.find ("URLHOOK_IAX2_ENABLED")->second == "true") ? true : false);
     hookPreference.setNumberAddPrefix (settings.find ("PHONE_NUMBER_HOOK_ADD_PREFIX")->second);
@@ -4082,7 +4097,9 @@ void ManagerImpl::setHookSettings (const std::map<std::string, std::string>& set
     hookPreference.setUrlSipField (settings.find ("URLHOOK_SIP_FIELD")->second);
 
     // Write it to the configuration file
-    saveConfig();
+    // TODO save config is called for updateAddressbookSettings, updateHookSettings, setHistoryLimit each called
+    // when closing preference window (in this order)
+    // saveConfig();
 }
 
 void ManagerImpl::check_call_configuration (const CallID& id,
