@@ -183,12 +183,24 @@ class PulseLayer : public AudioLayer
             micVolume = value;
         }
 
+        /**
+         * Handle used to write voice data to speaker
+         */
         void processPlaybackData (void);
 
+        /**
+         * Handle used to write voice data to microphone
+         */
         void processCaptureData (void);
 
+        /**
+         * Handle used to write audio data to speaker
+         */
         void processRingtoneData (void);
 
+        /**
+         * Process speaker and microphone audio data
+         */
         void processData (void);
 
         /**
@@ -278,15 +290,9 @@ class PulseLayer : public AudioLayer
         int spkrVolume;
         int micVolume;
 
-
-        // ofstream *captureFile;
-        // ofstream *spkrFile;
-
         DeviceList _sinkList;
 
         DeviceList _sourceList;
-
-        // private:
 
         int byteCounter;
 
