@@ -23,15 +23,14 @@ test_SOURCES = \
 	numbercleanertest.cpp \
 	pluginmanagertest.h \
 	pluginmanagertest.cpp \
-	siptest.h \
-	siptest.cpp \
 	rtptest.h \
 	rtptest.cpp \
 	sdesnegotiatortest.h \
 	sdesnegotiatortest.cpp \
-	delaydetectiontest.h \
-	delaydetectiontest.cpp \
-	instantmessagingtest.cpp
+	instantmessagingtest.h \
+	instantmessagingtest.cpp \
+	siptest.h \
+	siptest.cpp
 
 LLIBS=$(CPPUNIT_LIBS) \
 	../src/sflphoned-logger.o \
