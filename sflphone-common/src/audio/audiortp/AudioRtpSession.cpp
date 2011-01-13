@@ -122,10 +122,14 @@ void AudioRtpSession::setSessionMedia (AudioCodec *audioCodec)
     _debug ("AudioRtpSession: Codec frame size: %d", frameSize);
     _debug ("AudioRtpSession: RTP timestamp increment: %d", _timestampIncrement);
 
-    if (dynamic) {
+    // Even if specified as a 16 kHz codec, G722 requires rtp sending rate to be 8 kHz
+    if (payloadType == g722PayloadType) {
+        _debug ("AudioRtpSession: Setting G722 payload format");
+        setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, g722RtpClockRate));
+    } else if (dynamic) {
         _debug ("AudioRtpSession: Setting dynamic payload format");
         setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, smplRate));
-    } else {
+    } else if (dynamic && payloadType != g722PayloadType) {
         _debug ("AudioRtpSession: Setting static payload format");
         setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) payloadType));
     }
@@ -157,10 +161,14 @@ void AudioRtpSession::updateSessionMedia (AudioCodec *audioCodec)
     _debug ("AudioRtpSession: Codec frame size: %d", frameSize);
     _debug ("AudioRtpSession: RTP timestamp increment: %d", _timestampIncrement);
 
-    if (dynamic) {
+    // Even if specified as a 16 kHz codec, G722 requires rtp sending rate to be 8 kHz
+    if (payloadType == g722PayloadType) {
+        _debug ("AudioRtpSession: Setting G722 payload format");
+        setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, g722RtpClockRate));
+    } else if (dynamic) {
         _debug ("AudioRtpSession: Setting dynamic payload format");
         setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, smplRate));
-    } else {
+    } else if (dynamic && payloadType != g722PayloadType) {
         _debug ("AudioRtpSession: Setting static payload format");
         setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) payloadType));
     }
