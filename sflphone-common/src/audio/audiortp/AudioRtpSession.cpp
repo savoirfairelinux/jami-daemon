@@ -129,6 +129,9 @@ void AudioRtpSession::setSessionMedia (AudioCodec *audioCodec)
         _debug ("AudioRtpSession: Setting static payload format");
         setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) payloadType));
     }
+
+    // Set recording sampling rate
+    _ca->setRecordingSmplRate (getCodecSampleRate());
 }
 
 void AudioRtpSession::updateSessionMedia (AudioCodec *audioCodec)
@@ -161,6 +164,9 @@ void AudioRtpSession::updateSessionMedia (AudioCodec *audioCodec)
         _debug ("AudioRtpSession: Setting static payload format");
         setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) payloadType));
     }
+
+    // Set recording sampling rate
+    _ca->setRecordingSmplRate (getCodecSampleRate());
 }
 
 
@@ -332,10 +338,6 @@ void AudioRtpSession::stopRtpThread ()
 
 void AudioRtpSession::run ()
 {
-
-    // Set recording sampling rate
-    _ca->setRecordingSmplRate (getCodecSampleRate());
-
     _debug ("AudioRtpSession: Entering mainloop for call %s", _audioRtpRecord._callId.c_str());
 
     uint32 timeout = 0;
