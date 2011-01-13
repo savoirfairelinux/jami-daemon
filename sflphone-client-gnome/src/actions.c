@@ -1186,10 +1186,6 @@ void sflphone_fill_codec_list_per_account (account_t **account)
     }
 
     (*account)->codecs = codeclist;
-
-    // call dbus function with array of strings
-    codec_list_update_to_daemon (*account);
-
 }
 
 void sflphone_fill_call_list (void)

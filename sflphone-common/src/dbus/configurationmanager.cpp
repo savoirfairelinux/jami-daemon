@@ -493,6 +493,8 @@ void ConfigurationManager::setActiveCodecList (
     if (acc != NULL) {
         acc->setActiveCodecs (list);
     }
+
+    Manager::instance().saveConfig();
 }
 
 

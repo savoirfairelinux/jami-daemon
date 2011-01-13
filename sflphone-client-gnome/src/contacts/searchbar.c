@@ -87,6 +87,7 @@ static void cbox_changed_cb (GtkWidget *widget, gpointer user_data UNUSED)
 
 void set_forcus_on_addressbook_searchbar ()
 {
+
     gtk_widget_grab_focus (addressbookentry);
 }
 
