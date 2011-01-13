@@ -175,6 +175,8 @@ void AudioRtpSession::updateSessionMedia (AudioCodec *audioCodec)
 
     // Set recording sampling rate
     _ca->setRecordingSmplRate (getCodecSampleRate());
+
+    _timestamp = getCurrentTimestamp();
 }
 
 
@@ -349,6 +351,8 @@ void AudioRtpSession::run ()
     _debug ("AudioRtpSession: Entering mainloop for call %s", _audioRtpRecord._callId.c_str());
 
     uint32 timeout = 0;
+
+    _timestamp = getCurrentTimestamp();
 
     while (isActive()) {
 
