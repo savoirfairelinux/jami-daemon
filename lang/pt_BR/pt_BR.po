@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-11-05 10:06-0400\n"
+"POT-Creation-Date: 2011-01-13 16:17-0500\n"
 "PO-Revision-Date: 2010-06-17 19:21+0000\n"
 "Last-Translator: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>\n"
 "Language-Team: Brazilian Portuguese <pt_BR@li.org>\n"
@@ -16,8 +16,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Launchpad-Export-Date: 2010-11-05 13:36+0000\n"
-"X-Generator: Launchpad (build Unknown)\n"
+"X-Launchpad-Export-Date: 2011-01-13 11:23+0000\n"
+"X-Generator: Launchpad (build 12177)\n"
 
 #: ../sflphone-client-gnome/src/accountlist.c:182
 msgid "Registered"
@@ -73,16 +73,8 @@ msgstr "Utilizando conta"
 msgid "No registered accounts"
 msgstr "Sem contas registradas"
 
-#: ../sflphone-client-gnome/src/actions.c:321
-msgid ""
-"Unable to connect to the SFLphone server.\n"
-"Make sure the daemon is running."
-msgstr ""
-"Incapaz de conectar ao servidor SFLphone.\n"
-"Tenha certeza de que o daemon está rodando."
-
-#: ../sflphone-client-gnome/src/actions.c:629
-#: ../sflphone-client-gnome/src/actions.c:964
+#: ../sflphone-client-gnome/src/actions.c:626
+#: ../sflphone-client-gnome/src/actions.c:961
 msgid "Direct SIP call"
 msgstr "Ligações IP diretas"
 
@@ -146,43 +138,53 @@ msgstr ""
 "\n"
 "Pulseaudio não está rodando"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:115
+#: ../sflphone-client-gnome/src/main.c:98
+#, fuzzy, c-format
+msgid ""
+"Unable to initialize.\n"
+"Make sure the daemon is running.\n"
+"Error: %s"
+msgstr ""
+"Incapaz de conectar ao servidor SFLphone.\n"
+"Tenha certeza de que o daemon está rodando."
+
+#: ../sflphone-client-gnome/src/mainwindow.c:114
 msgid "There is one call in progress."
 msgstr "Existe uma ligação em progresso"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:117
+#: ../sflphone-client-gnome/src/mainwindow.c:116
 msgid "There are calls in progress."
 msgstr "Existem ligações em progresso"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:122
+#: ../sflphone-client-gnome/src/mainwindow.c:121
 msgid "Do you still want to quit?"
 msgstr "Você ainda deseja sair?"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:348
+#: ../sflphone-client-gnome/src/mainwindow.c:347
 msgid "SFLphone Error"
 msgstr "Erro no SFLphone"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:508
+#: ../sflphone-client-gnome/src/mainwindow.c:507
 #, c-format
 msgid "ZRTP is not supported by peer %s\n"
 msgstr "ZRTP não é suportado pelo peer %s\n"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:510
+#: ../sflphone-client-gnome/src/mainwindow.c:509
 msgid "Secure Communication Unavailable"
 msgstr "Comunicação Segura Indisponível"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:512
-#: ../sflphone-client-gnome/src/mainwindow.c:542
+#: ../sflphone-client-gnome/src/mainwindow.c:511
+#: ../sflphone-client-gnome/src/mainwindow.c:541
 msgid "Continue"
 msgstr "Continuar"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:513
-#: ../sflphone-client-gnome/src/mainwindow.c:543
-#: ../sflphone-client-gnome/src/mainwindow.c:564
+#: ../sflphone-client-gnome/src/mainwindow.c:512
+#: ../sflphone-client-gnome/src/mainwindow.c:542
+#: ../sflphone-client-gnome/src/mainwindow.c:563
 msgid "Stop Call"
 msgstr "Finalizar Chamada"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:538
+#: ../sflphone-client-gnome/src/mainwindow.c:537
 #, c-format
 msgid ""
 "A %s error forced the call with %s to fall under unencrypted mode.\n"
@@ -191,11 +193,11 @@ msgstr ""
 "Um erro %s forçou a ligação com %s a mudar para um modo não encriptado.\n"
 "Motivo exato: %s\n"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:540
+#: ../sflphone-client-gnome/src/mainwindow.c:539
 msgid "ZRTP negotiation failed"
 msgstr "Negociação ZRTP falhou"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:558
+#: ../sflphone-client-gnome/src/mainwindow.c:557
 #, c-format
 msgid ""
 "%s wants to stop using secure communication. Confirm will resume "
@@ -204,11 +206,11 @@ msgstr ""
 "%s deseja finalizar a utilização de comunicação segura. A confirmação irá "
 "retomar sem SRTP.\n"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:560
+#: ../sflphone-client-gnome/src/mainwindow.c:559
 msgid "Confirm Go Clear"
 msgstr "Confirmar Vá Limpar"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:562
+#: ../sflphone-client-gnome/src/mainwindow.c:561
 msgid "Confirm"
 msgstr "Confirmar"
 
@@ -289,9 +291,9 @@ msgid "_Show main window"
 msgstr "_Apresentar janela principal"
 
 #: ../sflphone-client-gnome/src/statusicon.c:143
-#: ../sflphone-client-gnome/src/uimanager.c:914
-#: ../sflphone-client-gnome/src/uimanager.c:1210
-#: ../sflphone-client-gnome/src/uimanager.c:1272
+#: ../sflphone-client-gnome/src/uimanager.c:919
+#: ../sflphone-client-gnome/src/uimanager.c:1244
+#: ../sflphone-client-gnome/src/uimanager.c:1306
 msgid "_Hang up"
 msgstr "_Desligar"
 
@@ -308,7 +310,7 @@ msgstr[1] "%i contas ativas"
 
 #: ../sflphone-client-gnome/src/toolbar.c:50
 #: ../sflphone-client-gnome/src/uimanager.c:880
-#: ../sflphone-client-gnome/src/uimanager.c:925
+#: ../sflphone-client-gnome/src/uimanager.c:940
 msgid "Voicemail"
 msgstr "Correio de voz"
 
@@ -317,7 +319,7 @@ msgid "No address book selected"
 msgstr "Catálogo de endereços"
 
 #: ../sflphone-client-gnome/src/uimanager.c:183
-#: ../sflphone-client-gnome/src/uimanager.c:965
+#: ../sflphone-client-gnome/src/uimanager.c:999
 msgid "Address book"
 msgstr "Catálogo de endereços"
 
@@ -338,214 +340,214 @@ msgstr "Sobre o SFLphone"
 msgid "Call"
 msgstr "_Chamar"
 
-#: ../sflphone-client-gnome/src/uimanager.c:910
-#: ../sflphone-client-gnome/src/uimanager.c:1480
+#: ../sflphone-client-gnome/src/uimanager.c:911
+#: ../sflphone-client-gnome/src/uimanager.c:1514
 msgid "_New call"
 msgstr "_Nova ligação"
 
-#: ../sflphone-client-gnome/src/uimanager.c:911
+#: ../sflphone-client-gnome/src/uimanager.c:912
 msgid "Place a new call"
 msgstr "Faz uma nova chamada"
 
-#: ../sflphone-client-gnome/src/uimanager.c:912
-#: ../sflphone-client-gnome/src/uimanager.c:1199
+#: ../sflphone-client-gnome/src/uimanager.c:915
+#: ../sflphone-client-gnome/src/uimanager.c:1233
 msgid "_Pick up"
 msgstr "_Atender"
 
-#: ../sflphone-client-gnome/src/uimanager.c:913
+#: ../sflphone-client-gnome/src/uimanager.c:916
 msgid "Answer the call"
 msgstr "Responder a chamada"
 
-#: ../sflphone-client-gnome/src/uimanager.c:915
+#: ../sflphone-client-gnome/src/uimanager.c:920
 msgid "Finish the call"
 msgstr "Terminar a chamada"
 
-#: ../sflphone-client-gnome/src/uimanager.c:916
+#: ../sflphone-client-gnome/src/uimanager.c:923
 msgid "O_n hold"
 msgstr "Em _Espera"
 
-#: ../sflphone-client-gnome/src/uimanager.c:917
+#: ../sflphone-client-gnome/src/uimanager.c:924
 msgid "Place the call on hold"
 msgstr "Colocar a chamada em espera"
 
-#: ../sflphone-client-gnome/src/uimanager.c:918
+#: ../sflphone-client-gnome/src/uimanager.c:927
 msgid "O_ff hold"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/uimanager.c:919
+#: ../sflphone-client-gnome/src/uimanager.c:928
 msgid "Place the call off hold"
 msgstr "Encerrar a chamada em espera"
 
-#: ../sflphone-client-gnome/src/uimanager.c:920
-#: ../sflphone-client-gnome/src/uimanager.c:1257
+#: ../sflphone-client-gnome/src/uimanager.c:931
+#: ../sflphone-client-gnome/src/uimanager.c:1291
 #, fuzzy
 msgid "Send _message"
 msgstr "Em mensagens"
 
-#: ../sflphone-client-gnome/src/uimanager.c:921
+#: ../sflphone-client-gnome/src/uimanager.c:932
 #, fuzzy
 msgid "Send message"
 msgstr "Em mensagens"
 
-#: ../sflphone-client-gnome/src/uimanager.c:922
+#: ../sflphone-client-gnome/src/uimanager.c:935
 msgid "Configuration _Assistant"
 msgstr "Arquivo de Configuração"
 
-#: ../sflphone-client-gnome/src/uimanager.c:923
+#: ../sflphone-client-gnome/src/uimanager.c:936
 msgid "Run the configuration assistant"
 msgstr "Erro de configuração no stun"
 
-#: ../sflphone-client-gnome/src/uimanager.c:926
+#: ../sflphone-client-gnome/src/uimanager.c:941
 msgid "Call your voicemail"
 msgstr "%d mensagem de voz"
 
-#: ../sflphone-client-gnome/src/uimanager.c:927
+#: ../sflphone-client-gnome/src/uimanager.c:944
 msgid "_Close"
 msgstr "_Fechar"
 
-#: ../sflphone-client-gnome/src/uimanager.c:928
+#: ../sflphone-client-gnome/src/uimanager.c:945
 msgid "Minimize to system tray"
 msgstr "Minimizar para a bandeja do sistema"
 
-#: ../sflphone-client-gnome/src/uimanager.c:929
+#: ../sflphone-client-gnome/src/uimanager.c:948
 msgid "_Quit"
 msgstr "_Sair"
 
-#: ../sflphone-client-gnome/src/uimanager.c:930
+#: ../sflphone-client-gnome/src/uimanager.c:949
 msgid "Quit the program"
 msgstr "Sair do programa"
 
-#: ../sflphone-client-gnome/src/uimanager.c:933
+#: ../sflphone-client-gnome/src/uimanager.c:953
 msgid "_Edit"
 msgstr "_Editar"
 
-#: ../sflphone-client-gnome/src/uimanager.c:934
+#: ../sflphone-client-gnome/src/uimanager.c:955
 msgid "_Copy"
 msgstr "_Copiar"
 
-#: ../sflphone-client-gnome/src/uimanager.c:935
+#: ../sflphone-client-gnome/src/uimanager.c:956
 msgid "Copy the selection"
 msgstr "Remover a conta selecionada"
 
-#: ../sflphone-client-gnome/src/uimanager.c:936
+#: ../sflphone-client-gnome/src/uimanager.c:959
 msgid "_Paste"
 msgstr "_Colar"
 
-#: ../sflphone-client-gnome/src/uimanager.c:937
+#: ../sflphone-client-gnome/src/uimanager.c:960
 msgid "Paste the clipboard"
 msgstr "Colar o conteúdo da Área de Transferência"
 
-#: ../sflphone-client-gnome/src/uimanager.c:938
+#: ../sflphone-client-gnome/src/uimanager.c:963
 msgid "Clear _history"
 msgstr "Limpar _histórico"
 
-#: ../sflphone-client-gnome/src/uimanager.c:939
+#: ../sflphone-client-gnome/src/uimanager.c:964
 msgid "Clear the call history"
 msgstr "Limpar histórico"
 
-#: ../sflphone-client-gnome/src/uimanager.c:940
+#: ../sflphone-client-gnome/src/uimanager.c:967
 msgid "_Accounts"
 msgstr "_Contas"
 
-#: ../sflphone-client-gnome/src/uimanager.c:940
+#: ../sflphone-client-gnome/src/uimanager.c:967
 msgid "Edit your accounts"
 msgstr "Conta atual"
 
-#: ../sflphone-client-gnome/src/uimanager.c:942
+#: ../sflphone-client-gnome/src/uimanager.c:971
 msgid "_Preferences"
 msgstr "Preferências"
 
-#: ../sflphone-client-gnome/src/uimanager.c:943
+#: ../sflphone-client-gnome/src/uimanager.c:972
 msgid "Change your preferences"
 msgstr "Altera as suas preferências"
 
-#: ../sflphone-client-gnome/src/uimanager.c:946
+#: ../sflphone-client-gnome/src/uimanager.c:976
 msgid "_View"
 msgstr "_Exibir"
 
-#: ../sflphone-client-gnome/src/uimanager.c:949
+#: ../sflphone-client-gnome/src/uimanager.c:979
 msgid "_Help"
 msgstr "_Ajuda"
 
-#: ../sflphone-client-gnome/src/uimanager.c:950
+#: ../sflphone-client-gnome/src/uimanager.c:981
 msgid "Contents"
 msgstr "Continuar"
 
-#: ../sflphone-client-gnome/src/uimanager.c:951
+#: ../sflphone-client-gnome/src/uimanager.c:982
 msgid "Open the manual"
 msgstr "Abrir o manual"
 
-#: ../sflphone-client-gnome/src/uimanager.c:952
+#: ../sflphone-client-gnome/src/uimanager.c:985
 msgid "About this application"
 msgstr "Autenticação"
 
-#: ../sflphone-client-gnome/src/uimanager.c:959
+#: ../sflphone-client-gnome/src/uimanager.c:993
 msgid "_Transfer"
 msgstr "Transferir"
 
-#: ../sflphone-client-gnome/src/uimanager.c:959
+#: ../sflphone-client-gnome/src/uimanager.c:993
 msgid "Transfer the call"
 msgstr "Transfirir para:"
 
-#: ../sflphone-client-gnome/src/uimanager.c:960
-#: ../sflphone-client-gnome/src/uimanager.c:1232
+#: ../sflphone-client-gnome/src/uimanager.c:994
+#: ../sflphone-client-gnome/src/uimanager.c:1266
 msgid "_Record"
 msgstr "_Gravar"
 
-#: ../sflphone-client-gnome/src/uimanager.c:960
+#: ../sflphone-client-gnome/src/uimanager.c:994
 msgid "Record the current conversation"
 msgstr "Gravar a conversação atual"
 
-#: ../sflphone-client-gnome/src/uimanager.c:961
+#: ../sflphone-client-gnome/src/uimanager.c:995
 msgid "_Show toolbar"
 msgstr "_Exibir barra de ferramentas"
 
-#: ../sflphone-client-gnome/src/uimanager.c:961
+#: ../sflphone-client-gnome/src/uimanager.c:995
 msgid "Show the toolbar"
 msgstr "Mostra a barra de ferramentas"
 
-#: ../sflphone-client-gnome/src/uimanager.c:962
+#: ../sflphone-client-gnome/src/uimanager.c:996
 msgid "_Dialpad"
 msgstr "Desabilitado"
 
-#: ../sflphone-client-gnome/src/uimanager.c:962
+#: ../sflphone-client-gnome/src/uimanager.c:996
 msgid "Show the dialpad"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/uimanager.c:963
+#: ../sflphone-client-gnome/src/uimanager.c:997
 msgid "_Volume controls"
 msgstr "_Controle de Volumes"
 
-#: ../sflphone-client-gnome/src/uimanager.c:963
+#: ../sflphone-client-gnome/src/uimanager.c:997
 msgid "Show the volume controls"
 msgstr "Exibir controles de volume"
 
-#: ../sflphone-client-gnome/src/uimanager.c:964
+#: ../sflphone-client-gnome/src/uimanager.c:998
 msgid "_History"
 msgstr "Histórico"
 
-#: ../sflphone-client-gnome/src/uimanager.c:964
+#: ../sflphone-client-gnome/src/uimanager.c:998
 msgid "Calls history"
 msgstr "Histórico de chamadas"
 
-#: ../sflphone-client-gnome/src/uimanager.c:965
+#: ../sflphone-client-gnome/src/uimanager.c:999
 msgid "_Address book"
 msgstr "Catálogo de endereços"
 
-#: ../sflphone-client-gnome/src/uimanager.c:1221
-#: ../sflphone-client-gnome/src/uimanager.c:1283
+#: ../sflphone-client-gnome/src/uimanager.c:1255
+#: ../sflphone-client-gnome/src/uimanager.c:1317
 msgid "On _Hold"
 msgstr "Em _Espera"
 
-#: ../sflphone-client-gnome/src/uimanager.c:1341
+#: ../sflphone-client-gnome/src/uimanager.c:1375
 msgid "_Call back"
 msgstr "_Ligar de volta"
 
-#: ../sflphone-client-gnome/src/uimanager.c:1554
+#: ../sflphone-client-gnome/src/uimanager.c:1588
 msgid "Edit phone number"
 msgstr "Editar número de telefone"
 
-#: ../sflphone-client-gnome/src/uimanager.c:1566
+#: ../sflphone-client-gnome/src/uimanager.c:1600
 msgid "Edit the phone number before making a call"
 msgstr "Edite o número de telefone antes de fazer uma ligação"
 
@@ -1252,34 +1254,40 @@ msgstr "Opções do SDES"
 msgid "Fallback on RTP on SDES failure"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:165
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:174
 msgid "Search all"
 msgstr "Buscar todos"
 
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:166
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:179
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:191
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:203
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:175
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:188
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:200
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:212
 msgid "Click here to change the search type"
 msgstr "Clique aqui para alterar o tipo de pesquisa"
 
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:178
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:187
 msgid "Search by missed call"
 msgstr "Buscar por ligações perdidas"
 
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:190
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:199
 msgid "Search by incoming call"
 msgstr "Buscar por ligações recebidas"
 
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:202
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:211
 msgid "Search by outgoing call"
 msgstr "Buscar por ligações feitas"
+
+#~ msgid "Email address"
+#~ msgstr "Endereço de e-mail"
 
 #~ msgid "Stun Server"
 #~ msgstr "Servidor STUN"
 
 #~ msgid "Codec"
 #~ msgstr "Codec"
+
+#~ msgid "Call history"
+#~ msgstr "Histórico de chamadas"
 
 #~ msgid "(C) 2009 Savoir-faire Linux"
 #~ msgstr "(C) 2009 Savoir-faire Linux"
@@ -1296,8 +1304,14 @@ msgstr "Buscar por ligações feitas"
 #~ msgid "Record"
 #~ msgstr "Gravar"
 
+#~ msgid "Transfer"
+#~ msgstr "Transferir"
+
 #~ msgid "Hang up"
 #~ msgstr "Desligar"
+
+#~ msgid "Remove the selected account"
+#~ msgstr "Remover a conta selecionada"
 
 #~ msgid "Display"
 #~ msgstr "Exibir"
@@ -1335,6 +1349,18 @@ msgstr "Buscar por ligações feitas"
 #~ msgid "SIP Port"
 #~ msgstr "Porta SIP"
 
+#~ msgid "Connection"
+#~ msgstr "Conexão"
+
+#~ msgid "History"
+#~ msgstr "Histórico"
+
+#~ msgid "_Call"
+#~ msgstr "_Chamar"
+
+#~ msgid "Advanced Settings"
+#~ msgstr "Configurações Avançadas"
+
 #~ msgid "NAT Traversal"
 #~ msgstr "NAT Traversal"
 
@@ -1360,6 +1386,9 @@ msgstr "Buscar por ligações feitas"
 #~ msgid "Enable STUN"
 #~ msgstr "Habilitar STUN"
 
+#~ msgid "Transfer to : "
+#~ msgstr "Transfirir para: "
+
 #~ msgid "Default account"
 #~ msgstr "Conta padrão"
 
@@ -1368,6 +1397,9 @@ msgstr "Buscar por ligações feitas"
 
 #~ msgid "Main screen"
 #~ msgstr "Tela principal"
+
+#~ msgid "Display volume controls"
+#~ msgstr "Exibir controles de volume"
 
 #~ msgid "Configure SFLphone"
 #~ msgstr "Configurar SFLphone"
@@ -1432,6 +1464,9 @@ msgstr "Buscar por ligações feitas"
 #~ "Este botão lhe permite iniciar uma nova conta. Em seguida você poderá "
 #~ "edita-la utilizando o formulário à direita."
 
+#~ msgid "Add a new account"
+#~ msgstr "Adicionar uma nova conta"
+
 #~ msgid "Get this account down"
 #~ msgstr "Desabilitar esta conta"
 
@@ -1455,6 +1490,9 @@ msgstr "Buscar por ligações feitas"
 
 #~ msgid "Stun parameters will be applied on each SIP account created."
 #~ msgstr "Parâmetros do Stun serão aplicados em cada conta SIP criada."
+
+#~ msgid "Enable address book"
+#~ msgstr "Habilitar catálogo de endereços"
 
 #~ msgid "Enable Stun"
 #~ msgstr "Habilitar Stun"
@@ -1507,6 +1545,9 @@ msgstr "Buscar por ligações feitas"
 #~ msgid "Trigger on specific SIP header"
 #~ msgstr "Gancho no cabeçalho SIP específico"
 
+#~ msgid "Clear history"
+#~ msgstr "Limpar histórico"
+
 #~ msgid "Attention:number of results exceeds max displayed."
 #~ msgstr "Atencão:número de resultados excede o máximo de exibição"
 
@@ -1530,11 +1571,17 @@ msgstr "Buscar por ligações feitas"
 #~ msgid "_Account creation wizard"
 #~ msgstr "_Assistante de criação de conta"
 
+#~ msgid "_Volume Controls"
+#~ msgstr "_Controle de Volumes"
+
 #~ msgid "_Enable this account"
 #~ msgstr "_Habilitar esta conta"
 
 #~ msgid "Registration _expire"
 #~ msgstr "Registro _expirou"
+
+#~ msgid "_Conform to RFC 3263"
+#~ msgstr "_Segundo a RFC 3263"
 
 #~ msgid "_Noise Reduction (Narrow-Band Companding)"
 #~ msgstr "_Redução de ruído (Utilização de banda-estreita)"
@@ -1574,8 +1621,14 @@ msgstr "Buscar por ligações feitas"
 #~ msgid "Manually"
 #~ msgstr "Manualmente"
 
+#~ msgid "Using STUN "
+#~ msgstr "Utilizando STUN "
+
 #~ msgid "There "
 #~ msgstr "Ali "
+
+#~ msgid "Server returned \""
+#~ msgstr "Servidor retornou \""
 
 #~ msgid "are "
 #~ msgstr "estão "
@@ -1586,8 +1639,14 @@ msgstr "Buscar por ligações feitas"
 #~ msgid "s"
 #~ msgstr "s"
 
+#~ msgid " active account"
+#~ msgstr " conta ativa"
+
 #~ msgid "UDP Transport"
 #~ msgstr "Transporte UDP"
+
+#~ msgid "Configuration File"
+#~ msgstr "Arquivo de Configuração"
 
 #~ msgid "Store SIP credentials as MD5 hash"
 #~ msgstr "Armazenar as credenciais SIP como hash MD5"

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SFLphone 0.9.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-11-05 10:06-0400\n"
+"POT-Creation-Date: 2011-01-13 16:17-0500\n"
 "PO-Revision-Date: 2010-06-17 19:28+0000\n"
 "Last-Translator: YunQiang Su <wzssyqa@gmail.com>\n"
 "Language-Team: SavoirFaireLinux Inc <sflphoneteam@savoirfairelinux.com>\n"
@@ -17,8 +17,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2010-11-05 13:36+0000\n"
-"X-Generator: Launchpad (build Unknown)\n"
+"X-Launchpad-Export-Date: 2011-01-13 11:22+0000\n"
+"X-Generator: Launchpad (build 12177)\n"
 
 #: ../sflphone-client-gnome/src/accountlist.c:182
 msgid "Registered"
@@ -74,16 +74,8 @@ msgstr "使用账户"
 msgid "No registered accounts"
 msgstr "没有已注册帐户"
 
-#: ../sflphone-client-gnome/src/actions.c:321
-msgid ""
-"Unable to connect to the SFLphone server.\n"
-"Make sure the daemon is running."
-msgstr ""
-"连接SFLphone服务器失败.\n"
-"请检查daemon是否还在运行."
-
-#: ../sflphone-client-gnome/src/actions.c:629
-#: ../sflphone-client-gnome/src/actions.c:964
+#: ../sflphone-client-gnome/src/actions.c:626
+#: ../sflphone-client-gnome/src/actions.c:961
 msgid "Direct SIP call"
 msgstr ""
 
@@ -147,65 +139,75 @@ msgstr ""
 "\n"
 "Pulseaudio未运行"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:115
+#: ../sflphone-client-gnome/src/main.c:98
+#, fuzzy, c-format
+msgid ""
+"Unable to initialize.\n"
+"Make sure the daemon is running.\n"
+"Error: %s"
+msgstr ""
+"连接SFLphone服务器失败.\n"
+"请检查daemon是否还在运行."
+
+#: ../sflphone-client-gnome/src/mainwindow.c:114
 msgid "There is one call in progress."
 msgstr "有一个电话正在处理"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:117
+#: ../sflphone-client-gnome/src/mainwindow.c:116
 msgid "There are calls in progress."
 msgstr "有电话正在处理中"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:122
+#: ../sflphone-client-gnome/src/mainwindow.c:121
 msgid "Do you still want to quit?"
 msgstr "确认要退出?"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:348
+#: ../sflphone-client-gnome/src/mainwindow.c:347
 msgid "SFLphone Error"
 msgstr "SFLphone出错"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:508
+#: ../sflphone-client-gnome/src/mainwindow.c:507
 #, c-format
 msgid "ZRTP is not supported by peer %s\n"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/mainwindow.c:510
+#: ../sflphone-client-gnome/src/mainwindow.c:509
 msgid "Secure Communication Unavailable"
 msgstr "安全通信不可用"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:512
-#: ../sflphone-client-gnome/src/mainwindow.c:542
+#: ../sflphone-client-gnome/src/mainwindow.c:511
+#: ../sflphone-client-gnome/src/mainwindow.c:541
 msgid "Continue"
 msgstr "继续"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:513
-#: ../sflphone-client-gnome/src/mainwindow.c:543
-#: ../sflphone-client-gnome/src/mainwindow.c:564
+#: ../sflphone-client-gnome/src/mainwindow.c:512
+#: ../sflphone-client-gnome/src/mainwindow.c:542
+#: ../sflphone-client-gnome/src/mainwindow.c:563
 msgid "Stop Call"
 msgstr "停止呼叫"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:538
+#: ../sflphone-client-gnome/src/mainwindow.c:537
 #, c-format
 msgid ""
 "A %s error forced the call with %s to fall under unencrypted mode.\n"
 "Exact reason: %s\n"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/mainwindow.c:540
+#: ../sflphone-client-gnome/src/mainwindow.c:539
 msgid "ZRTP negotiation failed"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/mainwindow.c:558
+#: ../sflphone-client-gnome/src/mainwindow.c:557
 #, c-format
 msgid ""
 "%s wants to stop using secure communication. Confirm will resume "
 "conversation without SRTP.\n"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/mainwindow.c:560
+#: ../sflphone-client-gnome/src/mainwindow.c:559
 msgid "Confirm Go Clear"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/mainwindow.c:562
+#: ../sflphone-client-gnome/src/mainwindow.c:561
 msgid "Confirm"
 msgstr "确认"
 
@@ -283,9 +285,9 @@ msgid "_Show main window"
 msgstr "显示主窗口(S)"
 
 #: ../sflphone-client-gnome/src/statusicon.c:143
-#: ../sflphone-client-gnome/src/uimanager.c:914
-#: ../sflphone-client-gnome/src/uimanager.c:1210
-#: ../sflphone-client-gnome/src/uimanager.c:1272
+#: ../sflphone-client-gnome/src/uimanager.c:919
+#: ../sflphone-client-gnome/src/uimanager.c:1244
+#: ../sflphone-client-gnome/src/uimanager.c:1306
 msgid "_Hang up"
 msgstr "挂断(_H)"
 
@@ -302,7 +304,7 @@ msgstr[1] ""
 
 #: ../sflphone-client-gnome/src/toolbar.c:50
 #: ../sflphone-client-gnome/src/uimanager.c:880
-#: ../sflphone-client-gnome/src/uimanager.c:925
+#: ../sflphone-client-gnome/src/uimanager.c:940
 msgid "Voicemail"
 msgstr "语音信箱"
 
@@ -311,7 +313,7 @@ msgid "No address book selected"
 msgstr "地址簿"
 
 #: ../sflphone-client-gnome/src/uimanager.c:183
-#: ../sflphone-client-gnome/src/uimanager.c:965
+#: ../sflphone-client-gnome/src/uimanager.c:999
 msgid "Address book"
 msgstr "地址簿"
 
@@ -332,214 +334,214 @@ msgstr "关于SFLphone"
 msgid "Call"
 msgstr "电话(_C)"
 
-#: ../sflphone-client-gnome/src/uimanager.c:910
-#: ../sflphone-client-gnome/src/uimanager.c:1480
+#: ../sflphone-client-gnome/src/uimanager.c:911
+#: ../sflphone-client-gnome/src/uimanager.c:1514
 msgid "_New call"
 msgstr "新电话(_N)"
 
-#: ../sflphone-client-gnome/src/uimanager.c:911
+#: ../sflphone-client-gnome/src/uimanager.c:912
 msgid "Place a new call"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/uimanager.c:912
-#: ../sflphone-client-gnome/src/uimanager.c:1199
+#: ../sflphone-client-gnome/src/uimanager.c:915
+#: ../sflphone-client-gnome/src/uimanager.c:1233
 msgid "_Pick up"
 msgstr "接听(_P)"
 
-#: ../sflphone-client-gnome/src/uimanager.c:913
+#: ../sflphone-client-gnome/src/uimanager.c:916
 msgid "Answer the call"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/uimanager.c:915
+#: ../sflphone-client-gnome/src/uimanager.c:920
 msgid "Finish the call"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/uimanager.c:916
+#: ../sflphone-client-gnome/src/uimanager.c:923
 msgid "O_n hold"
 msgstr "保持(_H)"
 
-#: ../sflphone-client-gnome/src/uimanager.c:917
+#: ../sflphone-client-gnome/src/uimanager.c:924
 msgid "Place the call on hold"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/uimanager.c:918
+#: ../sflphone-client-gnome/src/uimanager.c:927
 msgid "O_ff hold"
 msgstr "恢复通话"
 
-#: ../sflphone-client-gnome/src/uimanager.c:919
+#: ../sflphone-client-gnome/src/uimanager.c:928
 msgid "Place the call off hold"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/uimanager.c:920
-#: ../sflphone-client-gnome/src/uimanager.c:1257
+#: ../sflphone-client-gnome/src/uimanager.c:931
+#: ../sflphone-client-gnome/src/uimanager.c:1291
 #, fuzzy
 msgid "Send _message"
 msgstr "有新消息"
 
-#: ../sflphone-client-gnome/src/uimanager.c:921
+#: ../sflphone-client-gnome/src/uimanager.c:932
 #, fuzzy
 msgid "Send message"
 msgstr "有新消息"
 
-#: ../sflphone-client-gnome/src/uimanager.c:922
+#: ../sflphone-client-gnome/src/uimanager.c:935
 msgid "Configuration _Assistant"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/uimanager.c:923
+#: ../sflphone-client-gnome/src/uimanager.c:936
 msgid "Run the configuration assistant"
 msgstr "Stun配置有误"
 
-#: ../sflphone-client-gnome/src/uimanager.c:926
+#: ../sflphone-client-gnome/src/uimanager.c:941
 msgid "Call your voicemail"
 msgstr "%d 个语音信息"
 
-#: ../sflphone-client-gnome/src/uimanager.c:927
+#: ../sflphone-client-gnome/src/uimanager.c:944
 msgid "_Close"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/uimanager.c:928
+#: ../sflphone-client-gnome/src/uimanager.c:945
 msgid "Minimize to system tray"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/uimanager.c:929
+#: ../sflphone-client-gnome/src/uimanager.c:948
 msgid "_Quit"
 msgstr "退出(_Q)"
 
-#: ../sflphone-client-gnome/src/uimanager.c:930
+#: ../sflphone-client-gnome/src/uimanager.c:949
 msgid "Quit the program"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/uimanager.c:933
+#: ../sflphone-client-gnome/src/uimanager.c:953
 msgid "_Edit"
 msgstr "编辑(_E)"
 
-#: ../sflphone-client-gnome/src/uimanager.c:934
+#: ../sflphone-client-gnome/src/uimanager.c:955
 msgid "_Copy"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/uimanager.c:935
+#: ../sflphone-client-gnome/src/uimanager.c:956
 msgid "Copy the selection"
 msgstr "删除所选账户"
 
-#: ../sflphone-client-gnome/src/uimanager.c:936
+#: ../sflphone-client-gnome/src/uimanager.c:959
 msgid "_Paste"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/uimanager.c:937
+#: ../sflphone-client-gnome/src/uimanager.c:960
 msgid "Paste the clipboard"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/uimanager.c:938
+#: ../sflphone-client-gnome/src/uimanager.c:963
 msgid "Clear _history"
 msgstr "清空历史记录(_H)"
 
-#: ../sflphone-client-gnome/src/uimanager.c:939
+#: ../sflphone-client-gnome/src/uimanager.c:964
 msgid "Clear the call history"
 msgstr "清空历史记录"
 
-#: ../sflphone-client-gnome/src/uimanager.c:940
+#: ../sflphone-client-gnome/src/uimanager.c:967
 msgid "_Accounts"
 msgstr "账户(_A)"
 
-#: ../sflphone-client-gnome/src/uimanager.c:940
+#: ../sflphone-client-gnome/src/uimanager.c:967
 msgid "Edit your accounts"
 msgstr "当前帐户"
 
-#: ../sflphone-client-gnome/src/uimanager.c:942
+#: ../sflphone-client-gnome/src/uimanager.c:971
 msgid "_Preferences"
 msgstr "首选项(_P)"
 
-#: ../sflphone-client-gnome/src/uimanager.c:943
+#: ../sflphone-client-gnome/src/uimanager.c:972
 msgid "Change your preferences"
 msgstr "更改您的首选项"
 
-#: ../sflphone-client-gnome/src/uimanager.c:946
+#: ../sflphone-client-gnome/src/uimanager.c:976
 msgid "_View"
 msgstr "查看(_V)"
 
-#: ../sflphone-client-gnome/src/uimanager.c:949
+#: ../sflphone-client-gnome/src/uimanager.c:979
 msgid "_Help"
 msgstr "帮助(_H)"
 
-#: ../sflphone-client-gnome/src/uimanager.c:950
+#: ../sflphone-client-gnome/src/uimanager.c:981
 msgid "Contents"
 msgstr "继续"
 
-#: ../sflphone-client-gnome/src/uimanager.c:951
+#: ../sflphone-client-gnome/src/uimanager.c:982
 msgid "Open the manual"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/uimanager.c:952
+#: ../sflphone-client-gnome/src/uimanager.c:985
 msgid "About this application"
 msgstr "身份验证"
 
-#: ../sflphone-client-gnome/src/uimanager.c:959
+#: ../sflphone-client-gnome/src/uimanager.c:993
 msgid "_Transfer"
 msgstr "转接"
 
-#: ../sflphone-client-gnome/src/uimanager.c:959
+#: ../sflphone-client-gnome/src/uimanager.c:993
 msgid "Transfer the call"
 msgstr "转给:"
 
-#: ../sflphone-client-gnome/src/uimanager.c:960
-#: ../sflphone-client-gnome/src/uimanager.c:1232
+#: ../sflphone-client-gnome/src/uimanager.c:994
+#: ../sflphone-client-gnome/src/uimanager.c:1266
 msgid "_Record"
 msgstr "录音(_R)"
 
-#: ../sflphone-client-gnome/src/uimanager.c:960
+#: ../sflphone-client-gnome/src/uimanager.c:994
 msgid "Record the current conversation"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/uimanager.c:961
+#: ../sflphone-client-gnome/src/uimanager.c:995
 msgid "_Show toolbar"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/uimanager.c:961
+#: ../sflphone-client-gnome/src/uimanager.c:995
 msgid "Show the toolbar"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/uimanager.c:962
+#: ../sflphone-client-gnome/src/uimanager.c:996
 msgid "_Dialpad"
 msgstr "禁用"
 
-#: ../sflphone-client-gnome/src/uimanager.c:962
+#: ../sflphone-client-gnome/src/uimanager.c:996
 msgid "Show the dialpad"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/uimanager.c:963
+#: ../sflphone-client-gnome/src/uimanager.c:997
 msgid "_Volume controls"
 msgstr "音量控制(V)"
 
-#: ../sflphone-client-gnome/src/uimanager.c:963
+#: ../sflphone-client-gnome/src/uimanager.c:997
 msgid "Show the volume controls"
 msgstr "音量控制(V)"
 
-#: ../sflphone-client-gnome/src/uimanager.c:964
+#: ../sflphone-client-gnome/src/uimanager.c:998
 msgid "_History"
 msgstr "历史"
 
-#: ../sflphone-client-gnome/src/uimanager.c:964
+#: ../sflphone-client-gnome/src/uimanager.c:998
 msgid "Calls history"
 msgstr "呼叫记录"
 
-#: ../sflphone-client-gnome/src/uimanager.c:965
+#: ../sflphone-client-gnome/src/uimanager.c:999
 msgid "_Address book"
 msgstr "地址簿"
 
-#: ../sflphone-client-gnome/src/uimanager.c:1221
-#: ../sflphone-client-gnome/src/uimanager.c:1283
+#: ../sflphone-client-gnome/src/uimanager.c:1255
+#: ../sflphone-client-gnome/src/uimanager.c:1317
 msgid "On _Hold"
 msgstr "保持(_H)"
 
-#: ../sflphone-client-gnome/src/uimanager.c:1341
+#: ../sflphone-client-gnome/src/uimanager.c:1375
 msgid "_Call back"
 msgstr "回叫(_C)"
 
-#: ../sflphone-client-gnome/src/uimanager.c:1554
+#: ../sflphone-client-gnome/src/uimanager.c:1588
 msgid "Edit phone number"
 msgstr "编辑电话号码"
 
-#: ../sflphone-client-gnome/src/uimanager.c:1566
+#: ../sflphone-client-gnome/src/uimanager.c:1600
 msgid "Edit the phone number before making a call"
 msgstr "拨出电话前编辑电话号码"
 
@@ -1229,26 +1231,26 @@ msgstr ""
 msgid "Fallback on RTP on SDES failure"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:165
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:174
 msgid "Search all"
 msgstr "查询所有"
 
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:166
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:179
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:191
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:203
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:175
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:188
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:200
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:212
 msgid "Click here to change the search type"
 msgstr "请点击此处改变查询方式"
 
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:178
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:187
 msgid "Search by missed call"
 msgstr "从未接电话中查询"
 
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:190
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:199
 msgid "Search by incoming call"
 msgstr "从来电中查询"
 
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:202
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:211
 msgid "Search by outgoing call"
 msgstr "从拨出电话中查询"
 
@@ -1257,6 +1259,9 @@ msgstr "从拨出电话中查询"
 
 #~ msgid "Voicemail number"
 #~ msgstr "语音信箱号码"
+
+#~ msgid "Email address"
+#~ msgstr "邮件地址"
 
 #~ msgid "Enable STUN"
 #~ msgstr "使用STUN"
@@ -1272,6 +1277,9 @@ msgstr "从拨出电话中查询"
 #~ msgid "Default account"
 #~ msgstr "默认帐户"
 
+#~ msgid "Transfer to : "
+#~ msgstr "转给: "
+
 #~ msgid "Codec"
 #~ msgstr "编码"
 
@@ -1286,6 +1294,9 @@ msgstr "从拨出电话中查询"
 
 #~ msgid "Main screen"
 #~ msgstr "主屏幕"
+
+#~ msgid "Call history"
+#~ msgstr "呼叫记录"
 
 #~ msgid "Configure SFLphone"
 #~ msgstr "配置SFLphone"
@@ -1320,6 +1331,9 @@ msgstr "从拨出电话中查询"
 #~ msgid "Hold on"
 #~ msgstr "呼叫保持"
 
+#~ msgid "Transfer"
+#~ msgstr "转接"
+
 #~ msgid "Record"
 #~ msgstr "记录"
 
@@ -1347,6 +1361,9 @@ msgstr "从拨出电话中查询"
 #~ "取消选择则会禁用该账户。通过\"加\"\"减\"按钮可以添加或删除账户。点击\"编辑"
 #~ "\"按钮可以改变账户的设置。"
 
+#~ msgid "Remove the selected account"
+#~ msgstr "删除所选账户"
+
 #~ msgid ""
 #~ "This button will remove the selected account in the list below. Be sure "
 #~ "you really don't need it anymore. If you think you might use it again "
@@ -1357,6 +1374,9 @@ msgstr "从拨出电话中查询"
 
 #~ msgid "Remove"
 #~ msgstr "删除"
+
+#~ msgid "Add a new account"
+#~ msgstr "增加新帐户"
 
 #~ msgid ""
 #~ "This button enables you to initialize a new account. You will then be "
@@ -1407,6 +1427,9 @@ msgstr "从拨出电话中查询"
 #~ msgid "choose Stun server (example : stunserver.org)"
 #~ msgstr "选择STUN服务器(例如:stunserver.org)"
 
+#~ msgid "Enable address book"
+#~ msgstr "启用地址簿"
+
 #~ msgid "Maximum results"
 #~ msgstr "结果最大值"
 
@@ -1452,6 +1475,12 @@ msgstr "从拨出电话中查询"
 #~ msgid "On start"
 #~ msgstr "正在启动"
 
+#~ msgid "Clear history"
+#~ msgstr "清空历史记录"
+
+#~ msgid "Connection"
+#~ msgstr "连接"
+
 #~ msgid "SIP Port"
 #~ msgstr "SIP端口号"
 
@@ -1487,6 +1516,9 @@ msgstr "从拨出电话中查询"
 #~ msgid "%i account configured"
 #~ msgid_plural "%i accounts configured"
 #~ msgstr[0] "已配置了%i个账户"
+
+#~ msgid "History"
+#~ msgstr "历史"
 
 #~ msgid "_Enable this account"
 #~ msgstr "启用该账户(E)"
@@ -1578,6 +1610,9 @@ msgstr "从拨出电话中查询"
 #~ msgid "%s - %s"
 #~ msgstr "%s - %s"
 
+#~ msgid "Bad authentification"
+#~ msgstr "认证错误"
+
 #~ msgid "%d voice mails"
 #~ msgstr "%d 个语音信息"
 
@@ -1639,6 +1674,9 @@ msgstr "从拨出电话中查询"
 #~ msgid "%s account: %s"
 #~ msgstr "%s 帐户: %s"
 
+#~ msgid "<i>From:</i> %s"
+#~ msgstr "<i>拨入方：</i> %s"
+
 #~ msgid "You haven't setup any accounts"
 #~ msgstr "你没有设置任何帐户"
 
@@ -1647,6 +1685,15 @@ msgstr "从拨出电话中查询"
 
 #~ msgid "\"Voicemail\" <%s>"
 #~ msgstr "\"语音邮件\" <%s>"
+
+#~ msgid "Place a call"
+#~ msgstr "拨号"
+
+#~ msgid "Off Hold"
+#~ msgstr "恢复通话"
+
+#~ msgid "On Hold"
+#~ msgstr "待机"
 
 #~ msgid "Record a call"
 #~ msgstr "记录通话"
@@ -1767,6 +1814,9 @@ msgstr "从拨出电话中查询"
 #~ msgid "URL argument"
 #~ msgstr "URL参数"
 
+#~ msgid "_SIP protocol"
+#~ msgstr "SIP 协议(S)"
+
 #~ msgid "_SIP Header: "
 #~ msgstr "SIP消息头(S): "
 
@@ -1782,8 +1832,20 @@ msgstr "从拨出电话中查询"
 #~ msgid "%s account- %s"
 #~ msgstr "%s 帐户- %s"
 
+#~ msgid "Noise reduction"
+#~ msgstr "降噪"
+
 #~ msgid "_Destination folder"
 #~ msgstr "目标文件夹(D)"
+
+#~ msgid "_Account Assistant"
+#~ msgstr "帐户向导(A)"
+
+#~ msgid "Setup Accounts"
+#~ msgstr "设定帐户"
+
+#~ msgid "Search Parameters"
+#~ msgstr "查找相关参数"
 
 #~ msgid "Maximum result number for a request: "
 #~ msgstr "最大拨号数 "
@@ -1796,6 +1858,9 @@ msgstr "从拨出电话中查询"
 
 #~ msgid "_Account creation wizard"
 #~ msgstr "帐户创建向导(_A)"
+
+#~ msgid "_Call"
+#~ msgstr "电话(_C)"
 
 #~ msgctxt "NAME OF TRANSLATORS"
 #~ msgid "Your names"

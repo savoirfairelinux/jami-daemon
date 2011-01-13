@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SFLphone 0.9.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-11-05 10:06-0400\n"
+"POT-Creation-Date: 2011-01-13 16:17-0500\n"
 "PO-Revision-Date: 2010-07-01 20:28+0000\n"
 "Last-Translator: DMG <Unknown>\n"
 "Language-Team: Savoir-Faire Linux Inc <sflphoneteam@savoirfairelinux.com>\n"
@@ -17,8 +17,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Launchpad-Export-Date: 2010-11-05 13:36+0000\n"
-"X-Generator: Launchpad (build Unknown)\n"
+"X-Launchpad-Export-Date: 2011-01-13 11:22+0000\n"
+"X-Generator: Launchpad (build 12177)\n"
 
 #: ../sflphone-client-gnome/src/accountlist.c:182
 msgid "Registered"
@@ -74,16 +74,8 @@ msgstr "Использовать аккаунт"
 msgid "No registered accounts"
 msgstr "У вас нет зарегистрированных аккаунтов"
 
-#: ../sflphone-client-gnome/src/actions.c:321
-msgid ""
-"Unable to connect to the SFLphone server.\n"
-"Make sure the daemon is running."
-msgstr ""
-"Невозможно подключиться к SFLphone-серверу.\n"
-"Убедитесь что он работает."
-
-#: ../sflphone-client-gnome/src/actions.c:629
-#: ../sflphone-client-gnome/src/actions.c:964
+#: ../sflphone-client-gnome/src/actions.c:626
+#: ../sflphone-client-gnome/src/actions.c:961
 msgid "Direct SIP call"
 msgstr "Прямые IP-звонки"
 
@@ -147,43 +139,53 @@ msgstr ""
 "\n"
 "Pulseaudio не запущен"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:115
+#: ../sflphone-client-gnome/src/main.c:98
+#, fuzzy, c-format
+msgid ""
+"Unable to initialize.\n"
+"Make sure the daemon is running.\n"
+"Error: %s"
+msgstr ""
+"Невозможно подключиться к SFLphone-серверу.\n"
+"Убедитесь что он работает."
+
+#: ../sflphone-client-gnome/src/mainwindow.c:114
 msgid "There is one call in progress."
 msgstr "Звонок ещё не окончен."
 
-#: ../sflphone-client-gnome/src/mainwindow.c:117
+#: ../sflphone-client-gnome/src/mainwindow.c:116
 msgid "There are calls in progress."
 msgstr "Несколько звонков ещё не окончены."
 
-#: ../sflphone-client-gnome/src/mainwindow.c:122
+#: ../sflphone-client-gnome/src/mainwindow.c:121
 msgid "Do you still want to quit?"
 msgstr "Вы уверенны что хотите выйти?"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:348
+#: ../sflphone-client-gnome/src/mainwindow.c:347
 msgid "SFLphone Error"
 msgstr "Ошибка SFLphone."
 
-#: ../sflphone-client-gnome/src/mainwindow.c:508
+#: ../sflphone-client-gnome/src/mainwindow.c:507
 #, c-format
 msgid "ZRTP is not supported by peer %s\n"
 msgstr "ZRTP не поддерживается устройством %s\n"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:510
+#: ../sflphone-client-gnome/src/mainwindow.c:509
 msgid "Secure Communication Unavailable"
 msgstr "Зашифрованная связь недоступна."
 
-#: ../sflphone-client-gnome/src/mainwindow.c:512
-#: ../sflphone-client-gnome/src/mainwindow.c:542
+#: ../sflphone-client-gnome/src/mainwindow.c:511
+#: ../sflphone-client-gnome/src/mainwindow.c:541
 msgid "Continue"
 msgstr "Продолжить"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:513
-#: ../sflphone-client-gnome/src/mainwindow.c:543
-#: ../sflphone-client-gnome/src/mainwindow.c:564
+#: ../sflphone-client-gnome/src/mainwindow.c:512
+#: ../sflphone-client-gnome/src/mainwindow.c:542
+#: ../sflphone-client-gnome/src/mainwindow.c:563
 msgid "Stop Call"
 msgstr "Завершить вызов"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:538
+#: ../sflphone-client-gnome/src/mainwindow.c:537
 #, c-format
 msgid ""
 "A %s error forced the call with %s to fall under unencrypted mode.\n"
@@ -193,11 +195,11 @@ msgstr ""
 "режим.\n"
 "Точная причина: %s\n"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:540
+#: ../sflphone-client-gnome/src/mainwindow.c:539
 msgid "ZRTP negotiation failed"
 msgstr "Неудачный обмен информации ZRTP"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:558
+#: ../sflphone-client-gnome/src/mainwindow.c:557
 #, c-format
 msgid ""
 "%s wants to stop using secure communication. Confirm will resume "
@@ -206,11 +208,11 @@ msgstr ""
 "%s хочет отказаться от использования зашифрованной связи. В случае "
 "подтверждения разговор продолжится без SRTP.\n"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:560
+#: ../sflphone-client-gnome/src/mainwindow.c:559
 msgid "Confirm Go Clear"
 msgstr "Подтвердить переход на незашифрованную связь"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:562
+#: ../sflphone-client-gnome/src/mainwindow.c:561
 msgid "Confirm"
 msgstr "Подтвердить"
 
@@ -292,9 +294,9 @@ msgid "_Show main window"
 msgstr "_Показать главное окно"
 
 #: ../sflphone-client-gnome/src/statusicon.c:143
-#: ../sflphone-client-gnome/src/uimanager.c:914
-#: ../sflphone-client-gnome/src/uimanager.c:1210
-#: ../sflphone-client-gnome/src/uimanager.c:1272
+#: ../sflphone-client-gnome/src/uimanager.c:919
+#: ../sflphone-client-gnome/src/uimanager.c:1244
+#: ../sflphone-client-gnome/src/uimanager.c:1306
 msgid "_Hang up"
 msgstr "_Положить трубку"
 
@@ -312,7 +314,7 @@ msgstr[2] "%i active accounts"
 
 #: ../sflphone-client-gnome/src/toolbar.c:50
 #: ../sflphone-client-gnome/src/uimanager.c:880
-#: ../sflphone-client-gnome/src/uimanager.c:925
+#: ../sflphone-client-gnome/src/uimanager.c:940
 msgid "Voicemail"
 msgstr "Голосовая почта"
 
@@ -321,7 +323,7 @@ msgid "No address book selected"
 msgstr "Адресная книга не выбрана"
 
 #: ../sflphone-client-gnome/src/uimanager.c:183
-#: ../sflphone-client-gnome/src/uimanager.c:965
+#: ../sflphone-client-gnome/src/uimanager.c:999
 msgid "Address book"
 msgstr "Адресная книга"
 
@@ -342,214 +344,214 @@ msgstr "О программе SFLphone"
 msgid "Call"
 msgstr "_Вызов"
 
-#: ../sflphone-client-gnome/src/uimanager.c:910
-#: ../sflphone-client-gnome/src/uimanager.c:1480
+#: ../sflphone-client-gnome/src/uimanager.c:911
+#: ../sflphone-client-gnome/src/uimanager.c:1514
 msgid "_New call"
 msgstr "_Новый вызов"
 
-#: ../sflphone-client-gnome/src/uimanager.c:911
+#: ../sflphone-client-gnome/src/uimanager.c:912
 msgid "Place a new call"
 msgstr "Сделать новый вызов"
 
-#: ../sflphone-client-gnome/src/uimanager.c:912
-#: ../sflphone-client-gnome/src/uimanager.c:1199
+#: ../sflphone-client-gnome/src/uimanager.c:915
+#: ../sflphone-client-gnome/src/uimanager.c:1233
 msgid "_Pick up"
 msgstr "_Взять трубку"
 
-#: ../sflphone-client-gnome/src/uimanager.c:913
+#: ../sflphone-client-gnome/src/uimanager.c:916
 msgid "Answer the call"
 msgstr "Ответить на вызов"
 
-#: ../sflphone-client-gnome/src/uimanager.c:915
+#: ../sflphone-client-gnome/src/uimanager.c:920
 msgid "Finish the call"
 msgstr "Завершить вызов"
 
-#: ../sflphone-client-gnome/src/uimanager.c:916
+#: ../sflphone-client-gnome/src/uimanager.c:923
 msgid "O_n hold"
 msgstr "_Удерживать вызов"
 
-#: ../sflphone-client-gnome/src/uimanager.c:917
+#: ../sflphone-client-gnome/src/uimanager.c:924
 msgid "Place the call on hold"
 msgstr "Поставить вызов на удержание"
 
-#: ../sflphone-client-gnome/src/uimanager.c:918
+#: ../sflphone-client-gnome/src/uimanager.c:927
 msgid "O_ff hold"
 msgstr "_Снять вызов с удержания"
 
-#: ../sflphone-client-gnome/src/uimanager.c:919
+#: ../sflphone-client-gnome/src/uimanager.c:928
 msgid "Place the call off hold"
 msgstr "Поставить вызов на удержание"
 
-#: ../sflphone-client-gnome/src/uimanager.c:920
-#: ../sflphone-client-gnome/src/uimanager.c:1257
+#: ../sflphone-client-gnome/src/uimanager.c:931
+#: ../sflphone-client-gnome/src/uimanager.c:1291
 #, fuzzy
 msgid "Send _message"
 msgstr "При сообщениях"
 
-#: ../sflphone-client-gnome/src/uimanager.c:921
+#: ../sflphone-client-gnome/src/uimanager.c:932
 #, fuzzy
 msgid "Send message"
 msgstr "При сообщениях"
 
-#: ../sflphone-client-gnome/src/uimanager.c:922
+#: ../sflphone-client-gnome/src/uimanager.c:935
 msgid "Configuration _Assistant"
 msgstr "Мастер настройки"
 
-#: ../sflphone-client-gnome/src/uimanager.c:923
+#: ../sflphone-client-gnome/src/uimanager.c:936
 msgid "Run the configuration assistant"
 msgstr "Запустить мастер настройки"
 
-#: ../sflphone-client-gnome/src/uimanager.c:926
+#: ../sflphone-client-gnome/src/uimanager.c:941
 msgid "Call your voicemail"
 msgstr "Прослушивание голосовой почты"
 
-#: ../sflphone-client-gnome/src/uimanager.c:927
+#: ../sflphone-client-gnome/src/uimanager.c:944
 msgid "_Close"
 msgstr "_Закрыть"
 
-#: ../sflphone-client-gnome/src/uimanager.c:928
+#: ../sflphone-client-gnome/src/uimanager.c:945
 msgid "Minimize to system tray"
 msgstr "Свернуть в трей"
 
-#: ../sflphone-client-gnome/src/uimanager.c:929
+#: ../sflphone-client-gnome/src/uimanager.c:948
 msgid "_Quit"
 msgstr "В_ыход"
 
-#: ../sflphone-client-gnome/src/uimanager.c:930
+#: ../sflphone-client-gnome/src/uimanager.c:949
 msgid "Quit the program"
 msgstr "Выйти из программы"
 
-#: ../sflphone-client-gnome/src/uimanager.c:933
+#: ../sflphone-client-gnome/src/uimanager.c:953
 msgid "_Edit"
 msgstr "_Правка"
 
-#: ../sflphone-client-gnome/src/uimanager.c:934
+#: ../sflphone-client-gnome/src/uimanager.c:955
 msgid "_Copy"
 msgstr "_Копировать"
 
-#: ../sflphone-client-gnome/src/uimanager.c:935
+#: ../sflphone-client-gnome/src/uimanager.c:956
 msgid "Copy the selection"
 msgstr "Копировать выделенное"
 
-#: ../sflphone-client-gnome/src/uimanager.c:936
+#: ../sflphone-client-gnome/src/uimanager.c:959
 msgid "_Paste"
 msgstr "В_ставить"
 
-#: ../sflphone-client-gnome/src/uimanager.c:937
+#: ../sflphone-client-gnome/src/uimanager.c:960
 msgid "Paste the clipboard"
 msgstr "Вставить из буфера обмена"
 
-#: ../sflphone-client-gnome/src/uimanager.c:938
+#: ../sflphone-client-gnome/src/uimanager.c:963
 msgid "Clear _history"
 msgstr "Очистить журнал"
 
-#: ../sflphone-client-gnome/src/uimanager.c:939
+#: ../sflphone-client-gnome/src/uimanager.c:964
 msgid "Clear the call history"
 msgstr "Очистить журнал вызовов"
 
-#: ../sflphone-client-gnome/src/uimanager.c:940
+#: ../sflphone-client-gnome/src/uimanager.c:967
 msgid "_Accounts"
 msgstr "_Аккаунты"
 
-#: ../sflphone-client-gnome/src/uimanager.c:940
+#: ../sflphone-client-gnome/src/uimanager.c:967
 msgid "Edit your accounts"
 msgstr "Нстройка аккаунта"
 
-#: ../sflphone-client-gnome/src/uimanager.c:942
+#: ../sflphone-client-gnome/src/uimanager.c:971
 msgid "_Preferences"
 msgstr "_Настройки"
 
-#: ../sflphone-client-gnome/src/uimanager.c:943
+#: ../sflphone-client-gnome/src/uimanager.c:972
 msgid "Change your preferences"
 msgstr "Изменить ваши настройки"
 
-#: ../sflphone-client-gnome/src/uimanager.c:946
+#: ../sflphone-client-gnome/src/uimanager.c:976
 msgid "_View"
 msgstr "_Вид"
 
-#: ../sflphone-client-gnome/src/uimanager.c:949
+#: ../sflphone-client-gnome/src/uimanager.c:979
 msgid "_Help"
 msgstr "_Помощь"
 
-#: ../sflphone-client-gnome/src/uimanager.c:950
+#: ../sflphone-client-gnome/src/uimanager.c:981
 msgid "Contents"
 msgstr "Содержание"
 
-#: ../sflphone-client-gnome/src/uimanager.c:951
+#: ../sflphone-client-gnome/src/uimanager.c:982
 msgid "Open the manual"
 msgstr "Открыть руководство пользователя"
 
-#: ../sflphone-client-gnome/src/uimanager.c:952
+#: ../sflphone-client-gnome/src/uimanager.c:985
 msgid "About this application"
 msgstr "О программе"
 
-#: ../sflphone-client-gnome/src/uimanager.c:959
+#: ../sflphone-client-gnome/src/uimanager.c:993
 msgid "_Transfer"
 msgstr "Переадресация вызова"
 
-#: ../sflphone-client-gnome/src/uimanager.c:959
+#: ../sflphone-client-gnome/src/uimanager.c:993
 msgid "Transfer the call"
 msgstr "Переадресовать вызов"
 
-#: ../sflphone-client-gnome/src/uimanager.c:960
-#: ../sflphone-client-gnome/src/uimanager.c:1232
+#: ../sflphone-client-gnome/src/uimanager.c:994
+#: ../sflphone-client-gnome/src/uimanager.c:1266
 msgid "_Record"
 msgstr "_Запись"
 
-#: ../sflphone-client-gnome/src/uimanager.c:960
+#: ../sflphone-client-gnome/src/uimanager.c:994
 msgid "Record the current conversation"
 msgstr "Записать текущий разговор"
 
-#: ../sflphone-client-gnome/src/uimanager.c:961
+#: ../sflphone-client-gnome/src/uimanager.c:995
 msgid "_Show toolbar"
 msgstr "Показать _панель инструментов"
 
-#: ../sflphone-client-gnome/src/uimanager.c:961
+#: ../sflphone-client-gnome/src/uimanager.c:995
 msgid "Show the toolbar"
 msgstr "Показывать панель инструментов"
 
-#: ../sflphone-client-gnome/src/uimanager.c:962
+#: ../sflphone-client-gnome/src/uimanager.c:996
 msgid "_Dialpad"
 msgstr "_Номеронабиратель"
 
-#: ../sflphone-client-gnome/src/uimanager.c:962
+#: ../sflphone-client-gnome/src/uimanager.c:996
 msgid "Show the dialpad"
 msgstr "Показывать _номеронабиратель"
 
-#: ../sflphone-client-gnome/src/uimanager.c:963
+#: ../sflphone-client-gnome/src/uimanager.c:997
 msgid "_Volume controls"
 msgstr "Настройки _громкости"
 
-#: ../sflphone-client-gnome/src/uimanager.c:963
+#: ../sflphone-client-gnome/src/uimanager.c:997
 msgid "Show the volume controls"
 msgstr "Показывать настройки _громкости"
 
-#: ../sflphone-client-gnome/src/uimanager.c:964
+#: ../sflphone-client-gnome/src/uimanager.c:998
 msgid "_History"
 msgstr "Журнал вызовов"
 
-#: ../sflphone-client-gnome/src/uimanager.c:964
+#: ../sflphone-client-gnome/src/uimanager.c:998
 msgid "Calls history"
 msgstr "История вызовов"
 
-#: ../sflphone-client-gnome/src/uimanager.c:965
+#: ../sflphone-client-gnome/src/uimanager.c:999
 msgid "_Address book"
 msgstr "Адресная книга"
 
-#: ../sflphone-client-gnome/src/uimanager.c:1221
-#: ../sflphone-client-gnome/src/uimanager.c:1283
+#: ../sflphone-client-gnome/src/uimanager.c:1255
+#: ../sflphone-client-gnome/src/uimanager.c:1317
 msgid "On _Hold"
 msgstr "_Удерживать звонок"
 
-#: ../sflphone-client-gnome/src/uimanager.c:1341
+#: ../sflphone-client-gnome/src/uimanager.c:1375
 msgid "_Call back"
 msgstr "Обратный вызов"
 
-#: ../sflphone-client-gnome/src/uimanager.c:1554
+#: ../sflphone-client-gnome/src/uimanager.c:1588
 msgid "Edit phone number"
 msgstr "Изменить номер телефона"
 
-#: ../sflphone-client-gnome/src/uimanager.c:1566
+#: ../sflphone-client-gnome/src/uimanager.c:1600
 msgid "Edit the phone number before making a call"
 msgstr "Изменить номер телефона перед вызовом"
 
@@ -1253,26 +1255,26 @@ msgstr "Настройка SDES"
 msgid "Fallback on RTP on SDES failure"
 msgstr "Использовать RTP при сбое SDES"
 
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:165
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:174
 msgid "Search all"
 msgstr "Искать все"
 
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:166
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:179
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:191
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:203
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:175
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:188
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:200
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:212
 msgid "Click here to change the search type"
 msgstr "Нажмите сюда, чтобы изменить тип поиска"
 
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:178
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:187
 msgid "Search by missed call"
 msgstr "Поиск в пропущенных вызовах"
 
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:190
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:199
 msgid "Search by incoming call"
 msgstr "Поиск в входящих вызовах"
 
-#: ../sflphone-client-gnome/src/contacts/searchbar.c:202
+#: ../sflphone-client-gnome/src/contacts/searchbar.c:211
 msgid "Search by outgoing call"
 msgstr "Поиск в исходящих вызовах"
 
@@ -1284,6 +1286,9 @@ msgstr "Поиск в исходящих вызовах"
 
 #~ msgid "Voicemail number"
 #~ msgstr "Номер автоответчика #"
+
+#~ msgid "Email address"
+#~ msgstr "Адрес эл. почты"
 
 #~ msgid "Codec"
 #~ msgstr "Codec"
@@ -1299,6 +1304,9 @@ msgstr "Поиск в исходящих вызовах"
 
 #~ msgid "Hold on"
 #~ msgstr "Удержать звонок"
+
+#~ msgid "Transfer"
+#~ msgstr "Переслать звонок на другой номер"
 
 #~ msgid "Record"
 #~ msgstr "Записать переговор"
@@ -1317,6 +1325,9 @@ msgstr "Поиск в исходящих вызовах"
 
 #~ msgid "Format : name.server:port"
 #~ msgstr "Формат: имя.сервер:порт"
+
+#~ msgid "Enable address book"
+#~ msgstr "Адресная книга"
 
 #~ msgid "Display photo if available"
 #~ msgstr "_Показать фотографию контакта (если имеется):"
@@ -1358,6 +1369,12 @@ msgstr "Поиск в исходящих вызовах"
 
 #~ msgid "_Account creation wizard"
 #~ msgstr "Мастер настройки SFLphone"
+
+#~ msgid "_Call"
+#~ msgstr "_Звонок"
+
+#~ msgid "History"
+#~ msgstr "Журнал"
 
 #~ msgid "_Enable this account"
 #~ msgstr "_Включить"
@@ -1415,6 +1432,12 @@ msgstr "Поиск в исходящих вызовах"
 #~ msgid "Hold"
 #~ msgstr "Удержать звонок"
 
+#~ msgid "Configure accounts"
+#~ msgstr "Нынешний аккаунт"
+
+#~ msgid "Configure audio"
+#~ msgstr "Нынешний аккаунт"
+
 #~ msgctxt "Action record a call"
 #~ msgid "Record"
 #~ msgstr "Записать переговор"
@@ -1434,6 +1457,9 @@ msgstr "Поиск в исходящих вызовах"
 
 #~ msgid "Enable STUN"
 #~ msgstr "Задействовать STUN"
+
+#~ msgid "Transfer to : "
+#~ msgstr "Передать : "
 
 #~ msgid "Default account"
 #~ msgstr "Учетная запись по умолчанию"
@@ -1465,6 +1491,9 @@ msgstr "Поиск в исходящих вызовах"
 #~ msgid "Give up transfer"
 #~ msgstr "Прекратить передачу"
 
+#~ msgid "Remove the selected account"
+#~ msgstr "Удалить выбранную учетную запись"
+
 #~ msgid ""
 #~ "This button enables you to initialize a new account. You will then be "
 #~ "able to edit it using the form on the right."
@@ -1486,6 +1515,9 @@ msgstr "Поиск в исходящих вызовах"
 
 #~ msgid "Maximum results"
 #~ msgstr "Максимальное количество результатов"
+
+#~ msgid "Conform to RFC 3263"
+#~ msgstr "Соответствует RFC 3263"
 
 #~ msgid "Mute other applications during a call"
 #~ msgstr "Приглушить другие приложения на время вызова"
@@ -1513,8 +1545,17 @@ msgstr "Поиск в исходящих вызовах"
 #~ msgid "Keep my history for at least"
 #~ msgstr "По крайней мере хранить историю"
 
+#~ msgid "Clear history"
+#~ msgstr "Очистить историю"
+
+#~ msgid "Call history"
+#~ msgstr "История звонков"
+
 #~ msgid "Incoming call"
 #~ msgstr "Входящий звонок"
+
+#~ msgid "Call back"
+#~ msgstr "Обратный вызов"
 
 #~ msgid "(C) 2009 Savoir-faire Linux"
 #~ msgstr "(C) 2009 Savoir-faire Linux"
@@ -1524,6 +1565,9 @@ msgstr "Поиск в исходящих вызовах"
 
 #~ msgid "Remove"
 #~ msgstr "Удалить"
+
+#~ msgid "Add a new account"
+#~ msgstr "Добавить новую учётную запись"
 
 #~ msgid "ALSA"
 #~ msgstr "ALSA"
@@ -1540,11 +1584,29 @@ msgstr "Поиск в исходящих вызовах"
 #~ msgid "Enable notifications"
 #~ msgstr "Включить уведомления"
 
+#~ msgid "Connection"
+#~ msgstr "Подключение"
+
+#~ msgid "Advanced Settings"
+#~ msgstr "Дополнительные параметры"
+
+#~ msgid "Server returned \""
+#~ msgstr "Сервер ответил \""
+
 #~ msgid "Manually"
 #~ msgstr "Вручную"
 
+#~ msgid "Using STUN "
+#~ msgstr "Использует STUN "
+
+#~ msgid " active account"
+#~ msgstr " действующий аккаунт"
+
 #~ msgid "UDP Transport"
 #~ msgstr "Транспорт UDP"
+
+#~ msgid "Configuration File"
+#~ msgstr "Файл конфигурации"
 
 #~ msgid "There "
 #~ msgstr "Здесь "
@@ -1561,8 +1623,17 @@ msgstr "Поиск в исходящих вызовах"
 #~ msgid "is "
 #~ msgstr "Зарегестрирован "
 
+#~ msgid "%i account configured"
+#~ msgid_plural "%i accounts configured"
+#~ msgstr[0] "%i аккаунт настроен"
+#~ msgstr[1] "%i аккаунтов настроено"
+#~ msgstr[2] "%i аккаунтов настроены"
+
 #~ msgid "_Voice Activity Detection"
 #~ msgstr "Детектор тишины (VAD)"
+
+#~ msgid "Direct IP calls"
+#~ msgstr "Прямые IP-вызовы"
 
 #~ msgctxt "NAME OF TRANSLATORS"
 #~ msgid "Your names"
