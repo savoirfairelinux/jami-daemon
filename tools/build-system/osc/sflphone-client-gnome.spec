@@ -117,11 +117,15 @@ make clean
 
 %files
 %defattr(-, root, root)
+%dir %{_prefix}/etc/
 %dir %{_prefix}/share/sflphone
 %dir %{_prefix}/share/sflphone/ui
 %dir %{_prefix}/share/omf/sflphone
 %dir %{_prefix}/share/sflphone/webkit
 %dir %{_prefix}/share/sflphone/webkit/im
+%dir %{_prefix}/etc/gconf/
+%dir %{_prefix}/etc/gconf/schemas/
+
 %lang(fr) %{_prefix}/share/locale/fr/LC_MESSAGES/*.mo
 %lang(es) %{_prefix}/share/locale/es/LC_MESSAGES/*.mo
 %lang(de) %{_prefix}/share/locale/de/LC_MESSAGES/*.mo
@@ -143,7 +147,7 @@ make clean
 %{_prefix}/share/sflphone/*.gif
 %{_prefix}/share/omf/sflphone/*
 %{_prefix}/share/sflphone/ui/ui.xml
-/etc/gconf/schemas/sflphone-client-gnome.schemas
+%{_prefix}/etc/gconf/schemas/sflphone-client-gnome.schemas
 %{_prefix}/share/sflphone/webkit/im/chat_info.png
 %{_prefix}/share/sflphone/webkit/im/error.png
 %{_prefix}/share/sflphone/webkit/im/im.css
