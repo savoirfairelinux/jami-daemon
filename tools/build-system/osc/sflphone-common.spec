@@ -41,7 +41,6 @@ BuildRequires:	libexpat0
 BuildRequires:  alsa-devel
 BuildRequires:  dbus-1-devel
 BuildRequires:  pcre-devel
-BuildRequires:	libcelt-devel
 %endif
 
 %if %{defined fedora_version}
@@ -71,7 +70,6 @@ Requires:	libspeex
 Requires:	libasound2
 Requires:	libpulse0
 Requires:	libccrtp1
-Requires:	libcelt
 %endif
 
 %if %{defined fedora_version}

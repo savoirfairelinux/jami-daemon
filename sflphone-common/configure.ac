@@ -390,6 +390,11 @@ LIBCELT_MIN_VERSION=0.7.1
 
 PKG_CHECK_MODULES(CELT, celt >= ${LIBCELT_MIN_VERSION}, [with_celt=yes], [with_celt=no])
 AM_CONDITIONAL(BUILD_CELT, test "x$with_celt" = "xyes" )
+PKG_CHECK_MODULES(CELT, celt >= 0.9.1, [with_celt_091=yes], [with_cel_091=no])
+AM_CONDITIONAL(CELT_091, test "x$with_celt_091" = "xyes")
+if test "x$with_celt_091" = "xyes"; then
+AC_MSG_RESULT([Using Celt 0.9.1])
+fi
 
 
 dnl Check for IAX
