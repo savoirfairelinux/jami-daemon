@@ -147,7 +147,7 @@ make clean
 %{_prefix}/share/sflphone/*.gif
 %{_prefix}/share/omf/sflphone/*
 %{_prefix}/share/sflphone/ui/ui.xml
-# %{_prefix}/etc/gconf/schemas/sflphone-client-gnome.schemas
+%{_prefix}/etc/gconf/schemas/sflphone-client-gnome.schemas
 %{_prefix}/share/sflphone/webkit/im/chat_info.png
 %{_prefix}/share/sflphone/webkit/im/error.png
 %{_prefix}/share/sflphone/webkit/im/im.css
