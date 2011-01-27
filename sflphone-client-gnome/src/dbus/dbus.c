@@ -859,8 +859,6 @@ dbus_refuse (const callable_obj_t * c)
 void
 dbus_place_call (const callable_obj_t * c)
 {
-    DEBUG ("dbus_place_call %s\n", c->_callID);
-
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_place_call (callManagerProxy, c->_accountID,
             c->_callID, c->_peer_number, &error);
