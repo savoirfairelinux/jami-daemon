@@ -117,3 +117,20 @@ void gnome_main_section_new (gchar *title, GtkWidget **frame)
 
     *frame = _frame;
 }
+
+void gnome_info_bar (gchar *message, GtkMessageType type, GtkWidget **info_bar)
+{
+    GtkWidget *_info_bar, *message_label, *content_area;
+
+    _info_bar = gtk_info_bar_new();
+    gtk_widget_set_no_show_all (_info_bar, TRUE);
+    message_label = gtk_label_new (NULL);
+    gtk_widget_show (message_label);
+    content_area = gtk_info_bar_get_content_area (GTK_INFO_BAR (_info_bar));
+    gtk_container_add (GTK_CONTAINER (content_area), message_label);
+    gtk_label_set_markup (GTK_LABEL (message_label), message); //message);
+    gtk_info_bar_set_message_type (GTK_INFO_BAR (_info_bar), type);
+    gtk_widget_show (_info_bar);
+
+    *info_bar = _info_bar;
+}
