@@ -37,13 +37,14 @@ class Celt : public AudioCodec
 {
 
     public:
-        Celt (int payload=0)	: AudioCodec (payload, "celt") {
+        Celt (int payload=115)	: AudioCodec (payload, "celt") {
 
             _clockRate = 32000;
             _frameSize = 320;  // fixed frameSize, TODO: support variable size from 64 to 512
             _channel = 1;
             _bitrate = 0;
             _bandwidth = 0;
+            _hasDynamicPayload = true;
 
             initCelt();
 

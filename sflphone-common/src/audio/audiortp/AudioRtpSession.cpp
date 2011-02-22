@@ -173,6 +173,7 @@ void AudioRtpSession::updateSessionMedia (AudioCodec *audioCodec)
         setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) payloadType));
     }
 
+
     // Set recording sampling rate
     _ca->setRecordingSmplRate (getCodecSampleRate());
 

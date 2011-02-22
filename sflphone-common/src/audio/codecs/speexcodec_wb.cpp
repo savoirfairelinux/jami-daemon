@@ -37,7 +37,7 @@ class Speex : public AudioCodec
 {
 
     public:
-        Speex (int payload=0)
+        Speex (int payload=111)
             : AudioCodec (payload, "speex"),
               _speexModePtr (NULL),
               _speex_dec_bits(),

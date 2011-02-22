@@ -44,7 +44,11 @@ if BUILD_CELT
 CELT_LIB = libcodec_celt.so
 libcodec_celt_so_SOURCES = celtcodec.cpp
 libcodec_celt_so_CFLAGS = -fPIC -g -Wall
+if CELT_091
+libcodec_celt_so_CXXFLAGS = -fPIC -g -Wall -DUSE_091
+else
 libcodec_celt_so_CXXFLAGS = -fPIC -g -Wall
+endif
 libcodec_celt_so_LDFLAGS = --shared -lc -lcelt0 $(CELT_NIMP)
 INSTALL_CELT_RULE = install-libcodec_celt_so
 endif

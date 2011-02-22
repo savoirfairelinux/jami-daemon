@@ -50,6 +50,7 @@ class Gsm : public AudioCodec
             _channel = 1;
             _bitrate = 13.3;
             _bandwidth = 29.2;
+            _hasDynamicPayload = false;
 
             if (! (_decode_gsmhandle = gsm_create()))
                 printf ("ERROR: decode_gsm_create");

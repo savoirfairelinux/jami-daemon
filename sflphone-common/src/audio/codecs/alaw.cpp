@@ -31,25 +31,27 @@
 
 #include "../common.h"
 #include "audiocodec.h"
+#include <stdio.h>
 
 class Alaw : public AudioCodec
 {
 
     public:
         // 8 PCMA A 8000 1 [RFC3551]
-        Alaw (int payload=0)
+        Alaw (int payload=8)
             : AudioCodec (payload, "PCMA") {
             _clockRate = 8000;
             _frameSize = 160; // samples, 20 ms at 8kHz
             _channel   = 1;
             _bitrate = 64;
             _bandwidth = 80;
+            _hasDynamicPayload = false;
         }
 
         virtual ~Alaw() {}
 
         virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) {
-            // _debug("Decoded by alaw ");
+            printf ("Decoded by alaw ");
             int16* end = dst+size;
 
             while (dst<end)
@@ -59,7 +61,7 @@ class Alaw : public AudioCodec
         }
 
         virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) {
-            // _debug("Encoded by alaw ");
+            printf ("Encoded by alaw ");
             size >>= 1;
             uint8* end = dst+size;
 

@@ -33,6 +33,7 @@
 
 #include "../common.h"
 #include "audiocodec.h"
+#include <stdio.h>
 
 class Ulaw : public AudioCodec
 {
@@ -46,10 +47,11 @@ class Ulaw : public AudioCodec
             _channel   = 1;
             _bitrate =  64;
             _bandwidth = 80;
+            _hasDynamicPayload = false;
         }
 
         virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) {
-            // _debug("Decoded by ulaw");
+            printf ("Decoded by ulaw");
             int16* end = dst+size;
 
             while (dst<end)
@@ -59,7 +61,7 @@ class Ulaw : public AudioCodec
         }
 
         virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) {
-            // _debug("Encoded by ulaw \n");
+            printf ("Encoded by ulaw \n");
             size >>= 1;
             uint8* end = dst+size;
 

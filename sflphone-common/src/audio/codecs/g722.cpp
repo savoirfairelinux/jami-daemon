@@ -55,6 +55,7 @@ class G722 : public AudioCodec
             _channel   = 1;
             _bitrate = 64;
             _bandwidth = 80;
+            _hasDynamicPayload = false;
 
 
             decode_s = new g722_decode_state_t;
