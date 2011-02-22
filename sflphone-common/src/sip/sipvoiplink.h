@@ -50,6 +50,7 @@
 
 #include <map>
 #include <sstream>
+#include <exception>
 
 class EventThread;
 class SIPCall;
@@ -61,6 +62,22 @@ class SIPCall;
 #define PJ_LOG_LEVEL 0
 
 #define SipTransportMap std::map<std::string, pjsip_transport*>
+
+class SIPVoipLinkException : public std::exception
+{
+    public:
+        SIPVoipLinkException (const std::string& str="") throw() : errstr (str) {}
+
+        virtual ~SIPVoipLinkException() throw() {}
+
+        virtual const char *what() const throw() {
+            std::string expt ("UserAgent: SIPVoipLinkException occured: ");
+            expt.append (errstr);
+            return expt.c_str();
+        }
+    private:
+        std::string errstr;
+};
 
 /**
  * @file sipvoiplink.h
@@ -126,7 +143,7 @@ class SIPVoIPLink : public VoIPLink
          * @param toUrl  The Sip address of the recipient of the call
          * @return Call* The current call
          */
-        Call* newOutgoingCall (const CallID& id, const std::string& toUrl);
+        Call* newOutgoingCall (const CallID& id, const std::string& toUrl) throw (SIPVoipLinkException);
 
         /**
          * Answer the call

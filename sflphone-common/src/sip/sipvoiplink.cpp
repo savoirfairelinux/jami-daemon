@@ -777,7 +777,7 @@ SIPVoIPLink::sendUnregister (AccountID id)
 }
 
 Call*
-SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
+SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) throw (SIPVoipLinkException)
 {
     SIPAccount * account = NULL;
     pj_status_t status;
@@ -819,6 +819,11 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
             loadSIPLocalIP (&addrSdp);
 
         AudioCodec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (PAYLOAD_CODEC_ULAW);
+
+        if (audiocodec == NULL) {
+            _error ("UserAgent: Could not instantiate codec");
+            throw SIPVoipLinkException ("Could not instantiate codec");
+        }
 
         try {
             _info ("UserAgent: Creating new rtp session");
