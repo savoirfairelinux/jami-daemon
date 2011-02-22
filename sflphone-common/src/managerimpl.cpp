@@ -3404,7 +3404,7 @@ std::vector<std::string> ManagerImpl::getAccountList ()
 
         while (iter != _accountMap.end()) {
 
-            if (iter->second != NULL && iter->first != IP2IP_PROFILE) {
+            if (iter->second != NULL && iter->first != IP2IP_PROFILE && iter->first != "") {
                 _debug ("PUSHING BACK %s", iter->first.c_str());
                 // v.push_back(iter->first.data());
                 v.push_back (iter->second->getAccountID());
@@ -3424,7 +3424,7 @@ std::vector<std::string> ManagerImpl::getAccountList ()
             if ( (iter = _accountMap.find (account_order[i]))
                     != _accountMap.end()) {
                 // If the account is valid
-                if (iter->second != NULL && iter->first != IP2IP_PROFILE) {
+                if (iter->second != NULL && iter->first != IP2IP_PROFILE && iter->first != "") {
                     //_debug("PUSHING BACK %s", iter->first.c_str());
                     // v.push_back(iter->first.data());
                     v.push_back (iter->second->getAccountID());
