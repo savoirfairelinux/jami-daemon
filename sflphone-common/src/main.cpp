@@ -106,7 +106,7 @@ main (int argc, char **argv)
 
     unsigned int iPid = getpid();
     char cPid[64], cOldPid[64];
-    sprintf (cPid,"%d", iPid);
+    snprintf (cPid, sizeof (cPid), "%d", iPid);
     std::string xdg_cache, xdg_env, path;
 
     xdg_cache = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".cache/";
@@ -118,11 +118,13 @@ main (int argc, char **argv)
     } else
         path = xdg_cache;
 
-    sprintf (sfldir, "%s", path.c_str ());
+    // Use safe sprintf (Contribution #4952, Brendan Smith)
+    snprintf (sfldir, sizeof (sfldir), "%s", path.c_str ());
 
     path  = path + "sflphone";
 
-    sprintf (homepid, "%s/%s", path.c_str (), PIDFILE);
+    // Use safe sprintf (Contribution #4952, Brendan Smith)
+    snprintf (homepid, sizeof (homepid), "%s/%s", path.c_str (), PIDFILE);
 
     if ( (fp = fopen (homepid,"r")) == NULL) {
         // Check if $XDG_CACHE_HOME directory exists or not.
@@ -137,7 +139,7 @@ main (int argc, char **argv)
         }
 
         // Then create the sflphone directory inside the $XDG_CACHE_HOME dir
-        sprintf (sfldir, "%s", path.c_str ());
+        snprintf (sfldir, sizeof (sfldir), "%s", path.c_str ());
 
         if ( (dir = opendir (sfldir)) == NULL) {
             //Create it

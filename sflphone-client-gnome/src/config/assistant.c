@@ -90,15 +90,15 @@ void getMessageSummary (char * message , const gchar * alias, const gchar * serv
     strcat (message, "\n\n");
 
     strcat (message, _ ("Alias"));
-    sprintf (var, " :   %s\n", alias);
+    snprintf (var, sizeof (var), " :   %s\n", alias);
     strcat (message, var);
 
     strcat (message, _ ("Server"));
-    sprintf (var, " :   %s\n", server);
+    snprintf (var, sizeof (var), " :   %s\n", server);
     strcat (message, var);
 
     strcat (message, _ ("Username"));
-    sprintf (var, " :   %s\n", username);
+    snprintf (var, sizeof (var), " :   %s\n", username);
     strcat (message, var);
 
     strcat (message, _ ("Security: "));
