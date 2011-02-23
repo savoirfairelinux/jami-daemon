@@ -394,7 +394,7 @@ void Sdp::sdp_add_media_description()
     }
 }
 
-void Sdp::sdp_add_sdes_attribute (std::vector<std::string>& crypto)
+void Sdp::sdp_add_sdes_attribute (std::vector<std::string>& crypto) throw (SdpException)
 {
 
     // temporary buffer used to store crypto attribute
@@ -427,7 +427,7 @@ void Sdp::sdp_add_sdes_attribute (std::vector<std::string>& crypto)
 
             if (pjmedia_sdp_media_add_attr (_local_offer->media[i], attribute) != PJ_SUCCESS) {
                 // if(pjmedia_sdp_attr_add(&(_local_offer->attr_count), _local_offer->attr, attribute) != PJ_SUCCESS){
-                throw sdpException();
+                throw SdpException ("Could not add sdes attribute to media");
             }
         }
 
@@ -437,7 +437,7 @@ void Sdp::sdp_add_sdes_attribute (std::vector<std::string>& crypto)
 }
 
 
-void Sdp::sdp_add_zrtp_attribute (pjmedia_sdp_media* media, std::string hash)
+void Sdp::sdp_add_zrtp_attribute (pjmedia_sdp_media* media, std::string hash) throw (SdpException)
 {
     pjmedia_sdp_attr *attribute;
     char tempbuf[256];
@@ -460,7 +460,7 @@ void Sdp::sdp_add_zrtp_attribute (pjmedia_sdp_media* media, std::string hash)
     pj_memcpy (attribute->value.ptr, tempbuf, attribute->value.slen+1);
 
     if (pjmedia_sdp_media_add_attr (media, attribute) != PJ_SUCCESS) {
-        throw sdpException();
+        throw SdpException ("Could not add zrtp attribute to media");
     }
 }
 
@@ -668,8 +668,9 @@ void Sdp::set_local_media_capabilities (CodecOrder selectedCodecs)
     /* We retrieve the codecs selected by the user */
     codecs_list = Manager::instance().getCodecDescriptorMap().getCodecsMap();
 
-    if (selectedCodecs.size() == 0)
-        _warn ("SDP: No selected codec while building local SDP offer");
+    if (selectedCodecs.size() == 0) {
+        throw SdpException ("No selected codec while building local SDP offer");
+    }
 
     for (i=0; i<selectedCodecs.size(); i++) {
         iter=codecs_list.find (selectedCodecs[i]);

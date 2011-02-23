@@ -179,7 +179,6 @@ class Account : public Serializable
 
         virtual std::map<std::string, std::string> getAccountDetails() = 0;
 
-
         /**
          * Load the settings for this account.
          */
@@ -264,12 +263,11 @@ class Account : public Serializable
             return _registrationStateDetailed;
         }
 
-
-        /* inline functions */
         /* They should be treated like macro definitions by the C++ compiler */
         inline std::string getUsername (void) {
             return _username;
         }
+
         inline void setUsername (std::string username) {
             _username = username;
         }
@@ -309,6 +307,11 @@ class Account : public Serializable
         inline CodecOrder& getActiveCodecs (void) {
             return _codecOrder;
         }
+
+        /**
+         * Update both the codec order structure and the codec string used for
+         * SDP offer and configuration respectively
+         */
         void setActiveCodecs (const std::vector <std::string>& list);
 
         inline std::string getRingtonePath (void) {
@@ -354,9 +357,14 @@ class Account : public Serializable
         // assignment operator
         Account& operator= (const Account& rh);
 
+        /**
+         * Helper function used to load the default codec order from the codec factory
+         * setActiveCodecs is called to sync both _codecOrder and _codecStr
+         */
+        void loadDefaultCodecs (void);
+
     protected:
 
-        void loadAudioCodecs (void);
 
         /**
          * Account ID are assign in constructor and shall not changed

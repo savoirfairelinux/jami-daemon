@@ -353,6 +353,9 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
         val = NULL;
     }
 
+    // Update codec list which one is used for SDP offer
+    setActiveCodecs (Manager::instance ().unserialize (_codecStr));
+
     val = (Conf::ScalarNode *) (map->getValue (ringtonePathKey));
 
     if (val) {
@@ -620,8 +623,6 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
         _tlsVerifyClient = (val->getValue().compare ("true") == 0) ? true : false;
         val = NULL;
     }
-
-    Account::loadAudioCodecs();
 
 }
 
@@ -1029,9 +1030,6 @@ int SIPAccount::initCredential (void)
 int SIPAccount::registerVoIPLink()
 {
     _debug ("Account: Register account %s", getAccountID().c_str());
-
-    // Init general settings
-    // loadConfig();
 
     if (_hostname.length() >= PJ_MAX_HOSTNAME) {
         return !SUCCESS;

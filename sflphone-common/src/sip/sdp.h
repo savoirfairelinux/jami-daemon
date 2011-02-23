@@ -47,11 +47,20 @@
 
 #include <exception>
 
-class sdpException: public std::exception
+class SdpException : public std::exception
 {
-        virtual const char* what() const throw() {
-            return "An sdpException Occured";
+    public:
+        SdpException (const std::string& str="") throw() : errstr (str) {}
+
+        virtual ~SdpException() throw() {}
+
+        virtual const char *what() const throw() {
+            std::string expt ("SDP: SdpException occured: ");
+            expt.append (errstr);
+            return expt.c_str();
         }
+    private:
+        std::string errstr;
 };
 
 typedef std::vector<std::string> CryptoOffer;
@@ -395,7 +404,7 @@ class Sdp
          *
          * @param media The media to add the srtp attribute to
          */
-        void sdp_add_sdes_attribute (std::vector<std::string>& crypto);
+        void sdp_add_sdes_attribute (std::vector<std::string>& crypto) throw (SdpException);
 
         /*
          * Adds a zrtp-hash  attribute to
@@ -406,7 +415,7 @@ class Sdp
          * @param media The media to add the zrtp-hash attribute to
          * @param hash  The hash to which the attribute should be set to
          */
-        void sdp_add_zrtp_attribute (pjmedia_sdp_media* media, std::string hash);
+        void sdp_add_zrtp_attribute (pjmedia_sdp_media* media, std::string hash) throw (SdpException);
 
 };
 

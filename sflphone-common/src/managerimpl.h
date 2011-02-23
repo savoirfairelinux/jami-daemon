@@ -860,13 +860,6 @@ class ManagerImpl
         int32_t getMailNotify (void);
 
         /**
-         * Retrieve the formatted list of codecs payload in the user config file and
-         * load in the active list of codecs
-         * @return std::vector<std::string>	  The vector containing the active codecs
-         */
-        std::vector<std::string> retrieveActiveCodecs (void);
-
-        /**
          * Get the list of the active codecs
          * @return std::vector< ::std::string >  The list of active codecs
          */

@@ -71,7 +71,7 @@ CodecDescriptor::init()
 
     for (i = 0 ; i < _nbCodecs ; i++) {
         _CodecsMap[ (AudioCodecType) CodecDynamicList[i]->getPayload() ] = CodecDynamicList[i];
-        _debug ("%s" , CodecDynamicList[i]->getCodecName().c_str());
+        _debug ("CodecDescriptor: %s" , CodecDynamicList[i]->getCodecName().c_str());
     }
 }
 
@@ -107,7 +107,6 @@ CodecDescriptor::getCodec (AudioCodecType payload)
     CodecsMap::iterator iter = _CodecsMap.find (payload);
 
     if (iter!=_CodecsMap.end()) {
-        // _debug("Found codec %i _CodecsMap from codec descriptor", payload);
         return (iter->second);
     }
 

@@ -153,6 +153,9 @@ void IAXAccount::unserialize (Conf::MappingNode *map)
         val = NULL;
     }
 
+    // Update codec list which one is used for SDP offer
+    setActiveCodecs (Manager::instance ().unserialize (_codecStr));
+
     val = (Conf::ScalarNode *) (map->getValue (displayNameKey));
 
     if (val) {

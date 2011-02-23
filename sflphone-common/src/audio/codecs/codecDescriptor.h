@@ -75,12 +75,6 @@ class CodecDescriptor
         }
 
         /**
-         * Accessor to data structures
-         * @return CodecOrder& The list that reflects the user's choice
-         */
-        // CodecOrder& getActiveCodecs() { return _codecOrder; }
-
-        /**
          * Get codec name by its payload
          * @param payload the payload looked for
          *                same as getPayload()

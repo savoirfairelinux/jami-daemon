@@ -2432,18 +2432,6 @@ void ManagerImpl::initAudioCodec (void)
     _codecDescriptorMap.init();
 }
 
-/*
- * TODO Retrieve the active codec list per account
- */
-std::vector<std::string> ManagerImpl::retrieveActiveCodecs ()
-{
-
-    // This property is now set per account basis so we should remove it...
-    std::string s = "";
-    _info ("Manager: Retrieve active codecs: %s", s.c_str ());
-    return unserialize (s);
-}
-
 std::vector<std::string> ManagerImpl::unserialize (std::string s)
 {
 

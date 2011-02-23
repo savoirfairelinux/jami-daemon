@@ -40,12 +40,14 @@ Account::Account (const AccountID& accountID, std::string type) :
     , _type (type)
     , _registrationState (Unregistered)
     , _codecOrder ()
-    , _codecStr ("0/")
+    , _codecStr ("")
     , _ringtonePath ("/usr/share/sflphone/ringtones/konga.ul")
     , _ringtoneEnabled (true)
     , _displayName ("")
     , _useragent ("SFLphone")
 {
+    // Initialize the codec order, used when creating a new account
+    loadDefaultCodecs();
 }
 
 Account::~Account()
@@ -62,8 +64,6 @@ void Account::loadConfig()
         _enabled = false;
 
 #endif
-
-    loadAudioCodecs ();
 }
 
 void Account::setRegistrationState (RegistrationState state)
@@ -78,28 +78,33 @@ void Account::setRegistrationState (RegistrationState state)
     }
 }
 
-void Account::loadAudioCodecs (void)
+void Account::loadDefaultCodecs()
 {
+    // TODO
+    // CodecMap codecMap = Manager::instance ().getCodecDescriptorMap ().getCodecsMap();
 
-    // if the user never set the codec list, use the default configuration for this account
-    if (_codecStr == "") {
-        _info ("Account: Use default codec order");
-        Manager::instance ().getCodecDescriptorMap ().setDefaultOrder();
-    }
-    // else retrieve the one set in the user config file
-    else {
-        _debug ("Account: Set codec order from configuration file");
-        std::vector<std::string> active_list = Manager::instance ().retrieveActiveCodecs();
-        // This property is now set per account basis
-        // std::string s = Manager::instance ().getConfigString (_accountID, "ActiveCodecs");
-        setActiveCodecs (Manager::instance ().unserialize (_codecStr));
-    }
+    // Initialize codec
+    std::vector <std::string> codecList;
+    codecList.push_back ("0");
+    codecList.push_back ("3");
+    codecList.push_back ("8");
+    codecList.push_back ("9");
+    codecList.push_back ("110");
+    codecList.push_back ("111");
+    codecList.push_back ("112");
+
+    setActiveCodecs (codecList);
 }
+
+
 
 void Account::setActiveCodecs (const std::vector <std::string> &list)
 {
+    _debug ("Account: Set active codec");
 
+    // first clear the previously stored codecs
     _codecOrder.clear();
+
     // list contains the ordered payload of active codecs picked by the user for this account
     // we used the CodecOrder vector to save the order.
     int i=0;
@@ -108,14 +113,12 @@ void Account::setActiveCodecs (const std::vector <std::string> &list)
 
     while ( (unsigned int) i < size) {
         payload = std::atoi (list[i].data());
-        _info ("Account: Adding codec with RTP payload=%i", payload);
-        //if (Manager::instance ().getCodecDescriptorMap ().isCodecLoaded (payload)) {
+        _info ("Account: Adding codec with RTP payload type %d", payload);
         _codecOrder.push_back ( (AudioCodecType) payload);
-        //}
         i++;
     }
 
-    // setConfig
+    // update the codec string according to new codec selection
     _codecStr = Manager::instance ().serialize (list);
 
 }
