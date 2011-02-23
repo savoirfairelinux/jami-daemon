@@ -31,7 +31,6 @@
 
 #include "../common.h"
 #include "audiocodec.h"
-#include <stdio.h>
 
 class Alaw : public AudioCodec
 {
@@ -51,7 +50,6 @@ class Alaw : public AudioCodec
         virtual ~Alaw() {}
 
         virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) {
-            printf ("Decoded by alaw ");
             int16* end = dst+size;
 
             while (dst<end)
@@ -61,7 +59,6 @@ class Alaw : public AudioCodec
         }
 
         virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) {
-            printf ("Encoded by alaw ");
             size >>= 1;
             uint8* end = dst+size;
 
