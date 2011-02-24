@@ -84,7 +84,7 @@ ManagerImpl::ManagerImpl (void) :
     _telephoneTone (NULL), _audiofile (NULL), _spkr_volume (0),
     _mic_volume (0), _mutex(), _dbus (NULL), _waitingCall(),
     _waitingCallMutex(), _nbIncomingWaitingCall (0), _path (""),
-    _exist (0), _setupLoaded (false), _callAccountMap(),
+    _setupLoaded (false), _callAccountMap(),
     _callAccountMapMutex(), _callConfigMap(), _accountMap(),
     _directIpAccount (NULL), _cleaner (NULL), _history (NULL)
 {
@@ -136,13 +136,7 @@ void ManagerImpl::init ()
     _debug ("Manager: account map loaded");
 
     initVolume();
-
-    if (_exist == 0) {
-        _warn ("Manager: Cannot create config file in your home directory");
-    }
-
     initAudioDriver();
-
     selectAudioDriver();
 
     // Initialize the list of supported audio codecs

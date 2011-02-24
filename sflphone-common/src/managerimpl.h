@@ -1243,7 +1243,7 @@ class ManagerImpl
          * Path of the ConfigFile
          */
         std::string 	_path;
-        int _exist;
+
         int _setupLoaded;
 
 #ifdef USE_ZEROCONF

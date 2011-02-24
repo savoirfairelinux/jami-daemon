@@ -260,7 +260,6 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event);
 void xfer_svr_cb (pjsip_evsub *sub, pjsip_event *event);
 void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata);
 
-
 /*************************************************************************************************/
 
 SIPVoIPLink* SIPVoIPLink::_instance = NULL;
@@ -357,29 +356,7 @@ SIPVoIPLink::terminate()
 }
 
 void
-SIPVoIPLink::terminateSIPCall()
-{
-    ost::MutexLock m (_callMapMutex);
-    CallMap::iterator iter = _callMap.begin();
-    SIPCall *call;
-
-    while (iter != _callMap.end()) {
-        call = dynamic_cast<SIPCall*> (iter->second);
-
-        if (call) {
-            // terminate the sip call
-            delete call;
-            call = 0;
-        }
-
-        iter++;
-    }
-
-    _callMap.clear();
-}
-
-void
-SIPVoIPLink::terminateOneCall (const CallID& id)
+SIPVoIPLink::terminateCall (const CallID& id)
 {
     _debug ("UserAgent: Terminate call %s", id.c_str());
 
@@ -910,8 +887,6 @@ SIPVoIPLink::answer (const CallID& id)
         if (call->getAudioRtp())
             call->getAudioRtp()->stop ();
 
-        terminateOneCall (call->getCallId());
-
         removeCall (call->getCallId());
 
         return false;
@@ -959,8 +934,6 @@ SIPVoIPLink::hangup (const CallID& id)
         call->getAudioRtp()->stop();
     }
 
-    terminateOneCall (id);
-
     removeCall (id);
 
     return true;
@@ -1005,9 +978,6 @@ SIPVoIPLink::peerHungup (const CallID& id)
         call->getAudioRtp()->stop();
     }
 
-
-    terminateOneCall (id);
-
     removeCall (id);
 
     return true;
@@ -1025,7 +995,6 @@ SIPVoIPLink::cancel (const CallID& id)
         return false;
     }
 
-    terminateOneCall (id);
     removeCall (id);
 
     return true;
@@ -1340,8 +1309,6 @@ SIPVoIPLink::refuse (const CallID& id)
 
     removeCall (id);
 
-    terminateOneCall (id);
-
     _debug ("UserAgent: Refuse call completed");
 
     return true;
@@ -1622,7 +1589,6 @@ SIPVoIPLink::SIPCallServerFailure (SIPCall *call)
         _error ("UserAgent: Error: Server error!");
         CallID id = call->getCallId();
         Manager::instance().callFailure (id);
-        terminateOneCall (id);
         removeCall (id);
 
         if (call->getAudioRtp ()) {
@@ -1650,7 +1616,6 @@ SIPVoIPLink::SIPCallClosed (SIPCall *call)
     }
 
     Manager::instance().peerHungupCall (id);
-    terminateOneCall (id);
     removeCall (id);
 
 }
@@ -1668,8 +1633,6 @@ SIPVoIPLink::SIPCallReleased (SIPCall *call)
     CallID id = call->getCallId();
 
     Manager::instance().callFailure (id);
-
-    terminateOneCall (id);
 
     removeCall (id);
 }

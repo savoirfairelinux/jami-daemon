@@ -89,7 +89,7 @@ class IAXVoIPLink : public VoIPLink
         /**
          * Terminate on call
          */
-        void terminateOneCall (const CallID& id);
+        void terminateCall (const CallID& id);
 
         /**
          * Send out registration

@@ -60,6 +60,11 @@ bool VoIPLink::removeCall (const CallID& id)
 {
     ost::MutexLock m (_callMapMutex);
 
+    _debug ("VoipLink: delete call");
+    terminateCall (id);
+
+    _debug ("VoipLink: removing call from list");
+
     if (_callMap.erase (id)) {
         return true;
     }

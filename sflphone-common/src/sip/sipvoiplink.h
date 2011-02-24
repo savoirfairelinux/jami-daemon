@@ -224,14 +224,9 @@ class SIPVoIPLink : public VoIPLink
         bool dtmfOverRtp (SIPCall* call, char code);
 
         /**
-         * Terminate every call not hangup | brutal | Protected by mutex
-         */
-        void terminateSIPCall();
-
-        /**
          * Terminate only one call
          */
-        void terminateOneCall (const CallID& id);
+        virtual void terminateCall (const CallID& id);
 
         /**
          * Send an outgoing call invite

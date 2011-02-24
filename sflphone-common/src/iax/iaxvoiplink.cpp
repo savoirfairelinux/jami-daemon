@@ -227,12 +227,12 @@ IAXVoIPLink::terminateIAXCall()
     _callMap.clear();
 }
 
-void IAXVoIPLink::terminateOneCall (const CallID& id)
+void IAXVoIPLink::terminateCall (const CallID& id)
 {
     IAXCall* call = getIAXCall (id);
 
     if (call) {
-        _debug ("IAXVoIPLink::terminateOneCall()::the call is deleted, should close recording file ");
+        _debug ("IAXVoIPLink: Terminate call");
         delete call;
         call = 0;
     }
@@ -563,8 +563,6 @@ IAXVoIPLink::hangup (const CallID& id)
         // audiolayer->stopStream();
     }
 
-    terminateOneCall (id);
-
     removeCall (id);
     return true;
 }
@@ -589,8 +587,6 @@ IAXVoIPLink::peerHungup (const CallID& id)
         // stop audio
         // audiolayer->stopStream();
     }
-
-    terminateOneCall (id);
 
     removeCall (id);
     return true;
@@ -667,8 +663,6 @@ IAXVoIPLink::refuse (const CallID& id)
     iax_reject (call->getSession(), (char*) reason.c_str());
     _mutexIAX.leaveMutex();
 
-
-    // terminateOneCall(id);
     removeCall (id);
 
     return true;
@@ -812,7 +806,6 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
                _mutexIAX.leaveMutex();
                call->setSession(NULL);
                audiolayer->stopStream();
-               terminateOneCall(id);
              */
             removeCall (id);
             break;
@@ -829,7 +822,6 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
 
             call->setState (Call::Error);
             Manager::instance().callFailure (id);
-            // terminateOneCall(id);
             removeCall (id);
             break;
 
@@ -884,7 +876,6 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
             call->setConnectionState (Call::Connected);
             call->setState (Call::Busy);
             Manager::instance().callBusy (id);
-            // terminateOneCall(id);
             removeCall (id);
             break;
 

@@ -71,11 +71,18 @@ AudioRecord::AudioRecord() : fp (NULL)
 
 AudioRecord::~AudioRecord()
 {
-    delete [] mixBuffer_;
-    delete [] micBuffer_;
-    delete [] spkBuffer_;
-}
+    if (mixBuffer_) {
+        delete [] mixBuffer_;
+    }
 
+    if (micBuffer_) {
+        delete [] micBuffer_;
+    }
+
+    if (spkBuffer_) {
+        delete [] spkBuffer_;
+    }
+}
 
 void AudioRecord::setSndSamplingRate (int smplRate)
 {

@@ -191,7 +191,7 @@ void AudioRtpFactory::stop (void)
     _info ("AudioRtpFactory: Stopping audio rtp session");
 
     if (_rtpSession == NULL) {
-        _debugException ("AudioRtpFactory: Error: _rtpSession is null when trying to stop. Returning.");
+        _debugException ("AudioRtpFactory: Rtp session already deleted");
         return;
     }
 
