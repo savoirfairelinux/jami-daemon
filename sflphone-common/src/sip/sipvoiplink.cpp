@@ -771,6 +771,9 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) throw 
 
     _debug ("UserAgent: New outgoing call %s to %s", id.c_str(), toUrl.c_str());
 
+    _error ("UserAgent: pool capacity %d", pj_pool_get_capacity (_pool));
+    _error ("UserAgent: pool size %d", pj_pool_get_used_size (_pool));
+
     SIPCall* call = new SIPCall (id, Call::Outgoing, _cp);
 
     if (call) {
@@ -860,6 +863,10 @@ SIPVoIPLink::answer (const CallID& id)
     _debug ("UserAgent: Answering call %s", id.c_str());
 
     SIPCall *call = getSIPCall (id);
+
+    _error ("UserAgent: pool capacity %d", pj_pool_get_capacity (_pool));
+    _error ("UserAgent: pool size %d", pj_pool_get_used_size (_pool));
+
 
     if (call==0) {
         _debug ("UserAgent: SIPCall %s doesn't exists while answering", id.c_str());
