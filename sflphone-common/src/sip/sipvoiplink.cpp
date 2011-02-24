@@ -3717,9 +3717,9 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     /* If we can't find any voIP link to handle the incoming call */
     if (!link) {
         _warn ("UserAgent: Error: cannot retrieve the voiplink from the account ID...");
-        pj_strdup2 (_pool, &reason, "ERROR: cannot retrieve the voip link from account");
+        // pj_strdup2 (_pool, &reason, "ERROR: cannot retrieve the voip link from account");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
-        &reason, NULL, NULL);
+        NULL, NULL, NULL);
         return true;
         return false;
     }
@@ -3797,9 +3797,9 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     // Respond statelessly any non-INVITE requests with 500
     if (rdata->msg_info.msg->line.req.method.id != PJSIP_INVITE_METHOD) {
         if (rdata->msg_info.msg->line.req.method.id != PJSIP_ACK_METHOD) {
-            pj_strdup2 (_pool, &reason, "user agent unable to handle this request ");
+            // pj_strdup2 (_pool, &reason, "user agent unable to handle this request ");
             pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_METHOD_NOT_ALLOWED,
-            &reason, NULL, NULL);
+            NULL, NULL, NULL);
             return true;
         }
     }
@@ -3810,9 +3810,9 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     if (account->getActiveCodecs().empty()) {
         _warn ("UserAgent: Error: No active codec");
-        pj_strdup2 (_pool, &reason, "no active codec");
+        // pj_strdup2 (_pool, &reason, "no active codec");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_NOT_ACCEPTABLE_HERE ,
-        &reason, NULL, NULL);
+        NULL, NULL, NULL);
         return true;
     }
 
@@ -3820,9 +3820,9 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     status = pjsip_inv_verify_request (rdata, &options, NULL, NULL, _endpt, NULL);
 
     if (status != PJ_SUCCESS) {
-        pj_strdup2 (_pool, &reason, "user agent unable to handle this INVITE");
+        // pj_strdup2 (_pool, &reason, "user agent unable to handle this INVITE");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_METHOD_NOT_ALLOWED,
-        &reason, NULL, NULL);
+        NULL, NULL, NULL);
         return true;
     }
 
@@ -3859,9 +3859,9 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     // If an error occured at the call creation
     if (!call) {
         _warn ("UserAgent: Error: Unable to create an incoming call");
-        pj_strdup2 (_pool, &reason, "unable to create an incoming call");
+        // pj_strdup2 (_pool, &reason, "unable to create an incoming call");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
-        &reason, NULL, NULL);
+        NULL, NULL, NULL);
         return false;
     }
 
@@ -3988,9 +3988,9 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         delete call;
         call = NULL;
         _warn ("UserAgent: fail in receiving initial offer");
-        pj_strdup2 (_pool, &reason, "fail in receiving initial offer");
+        // pj_strdup2 (_pool, &reason, "fail in receiving initial offer");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
-        &reason, NULL, NULL);
+        NULL, NULL, NULL);
         return false;
     }
 
@@ -4001,9 +4001,9 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         delete call;
         call = NULL;
         _warn ("UserAgent: Error: Failed to create uas dialog");
-        pj_strdup2 (_pool, &reason, "fail to create uas dialog");
+        // pj_strdup2 (_pool, &reason, "fail to create uas dialog");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
-        &reason, NULL, NULL);
+        NULL, NULL, NULL);
         return false;
     }
 
@@ -4041,9 +4041,9 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         delete call;
         call = NULL;
         _warn ("UserAgent: Fail to notify UI!");
-        pj_strdup2 (_pool, &reason, "fail to notify ui");
+        // pj_strdup2 (_pool, &reason, "fail to notify ui");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
-        &reason, NULL, NULL);
+        NULL, NULL, NULL);
         return false;
     }
 
