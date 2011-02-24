@@ -62,7 +62,7 @@ class SIPCall : public Call
          * @param type  The type of the call. Could be Incoming
          *						 Outgoing
          */
-        SIPCall (const CallID& id, Call::CallType type, pj_pool_t *pool);
+        SIPCall (const CallID& id, Call::CallType type, pj_caching_pool *caching_pool);
 
         /**
          * Destructor
@@ -168,7 +168,15 @@ class SIPCall : public Call
 
         pjsip_inv_session *_invSession;
 
+        /**
+         * The SDP session
+         */
         Sdp *_local_sdp;
+
+        /**
+         * The pool to allocate memory
+         */
+        pj_pool_t *_pool;
 
 };
 

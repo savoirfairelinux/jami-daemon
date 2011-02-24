@@ -119,7 +119,7 @@ const pj_str_t STR_USER_AGENT = { (char*) "User-Agent", 10 };
  * @param rdata The request data
  * @param r_sdp The pjmedia_sdp_media to stock the remote SDP
  */
-void get_remote_sdp_from_offer (pjsip_rx_data *rdata, pjmedia_sdp_session** r_sdp);
+void getRemoteSdpFromOffer (pjsip_rx_data *rdata, pjmedia_sdp_session** r_sdp);
 
 int getModId();
 
@@ -131,17 +131,25 @@ int getModId();
  */
 bool setCallAudioLocal (SIPCall* call, std::string localIP);
 
-void handle_incoming_options (pjsip_rx_data *rxdata);
+/**
+ * Helper function to parse incoming OPTION message
+ */
+void handleIncomingOptions (pjsip_rx_data *rxdata);
 
-std::string fetch_header_value (pjsip_msg *msg, std::string field);
+/**
+ * Helper function to parser header from incoming sip messages
+ */
+std::string fetchHeaderValue (pjsip_msg *msg, std::string field);
 
+/**
+ * Helper function that retreive IP address from local udp transport
+ */
 std::string getLocalAddressAssociatedToAccount (AccountID id);
-
 
 /*
  *  The global pool factory
  */
-pj_caching_pool _cp;
+pj_caching_pool pool_cache, *_cp = &pool_cache;
 
 /*
  * The pool to allocate memory
@@ -172,13 +180,10 @@ UrlHook *urlhook;
 /**
  * Get the number of voicemail waiting in a SIP message
  */
-void set_voicemail_info (AccountID account, pjsip_msg_body *body);
+void setVoicemailInfo (AccountID account, pjsip_msg_body *body);
 
-// Documentated from the PJSIP Developer's Guide, available on the pjsip website/
-
-
-pj_bool_t stun_sock_on_status (pj_stun_sock *stun_sock, pj_stun_sock_op op, pj_status_t status);
-pj_bool_t stun_sock_on_rx_data (pj_stun_sock *stun_sock, void *pkt, unsigned pkt_len, const pj_sockaddr_t *src_addr, unsigned addr_len);
+pj_bool_t stun_sock_on_status_cb (pj_stun_sock *stun_sock, pj_stun_sock_op op, pj_status_t status);
+pj_bool_t stun_sock_on_rx_data_cb (pj_stun_sock *stun_sock, void *pkt, unsigned pkt_len, const pj_sockaddr_t *src_addr, unsigned addr_len);
 
 
 /*
@@ -188,7 +193,7 @@ pj_bool_t stun_sock_on_rx_data (pj_stun_sock *stun_sock, void *pkt, unsigned pkt
  * @param	inv	A pointer on a pjsip_inv_session structure
  * @param	e	A pointer on a pjsip_event structure
  */
-void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e);
+void invite_session_state_changed_cb (pjsip_inv_session *inv, pjsip_event *e);
 
 /*
  * Session callback
@@ -197,7 +202,7 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e);
  * @param	inv	A pointer on a pjsip_inv_session structure
  * @param	status	A pj_status_t structure
  */
-void call_on_media_update (pjsip_inv_session *inv, pj_status_t status UNUSED);
+void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status UNUSED);
 
 /*
  * Called when the invite usage module has created a new dialog and invite
@@ -206,7 +211,7 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status UNUSED);
  * @param	inv	A pointer on a pjsip_inv_session structure
  * @param	e	A pointer on a pjsip_event structure
  */
-void call_on_forked (pjsip_inv_session *inv, pjsip_event *e);
+void outgoing_request_forked_cb (pjsip_inv_session *inv, pjsip_event *e);
 
 /*
  * Session callback
@@ -217,16 +222,16 @@ void call_on_forked (pjsip_inv_session *inv, pjsip_event *e);
  * @param	tsx	A pointer on a pjsip_transaction structure
  * @param	e	A pointer on a pjsip_event structure
  */
-void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e);
+void transaction_state_changed_cb (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e);
 
-void on_rx_offer (pjsip_inv_session *inv, const pjmedia_sdp_session *offer);
+void invite_request_offer_cb (pjsip_inv_session *inv, const pjmedia_sdp_session *offer);
 
-void on_create_offer (pjsip_inv_session *inv, pjmedia_sdp_session **p_offer);
+void invite_create_offer_cb (pjsip_inv_session *inv, pjmedia_sdp_session **p_offer);
 
 /*
  * Registration callback
  */
-void regc_cb (struct pjsip_regc_cbparam *param);
+void registration_cb (struct pjsip_regc_cbparam *param);
 
 /*
  * DNS Callback used in workaround for bug #1852
@@ -238,14 +243,14 @@ static void dns_cb (pj_status_t status, void *token, const struct pjsip_server_a
  * @param   rdata
  * @return  pj_bool_t
  */
-pj_bool_t mod_on_rx_request (pjsip_rx_data *rdata);
+pj_bool_t transaction_request_cb (pjsip_rx_data *rdata);
 
 /*
  * Called to handle incoming response
  * @param	rdata
  * @return	pj_bool_t
  */
-pj_bool_t mod_on_rx_response (pjsip_rx_data *rdata UNUSED) ;
+pj_bool_t transaction_response_cb (pjsip_rx_data *rdata UNUSED) ;
 
 /**
     * Send an ACK message inside a transaction. PJSIP send automatically, non-2xx ACK response.
@@ -256,8 +261,12 @@ static void sendAck (pjsip_dialog *dlg, pjsip_rx_data *rdata);
 /*
  * Transfer callbacks
  */
-void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event);
-void xfer_svr_cb (pjsip_evsub *sub, pjsip_event *event);
+void transfer_function_cb (pjsip_evsub *sub, pjsip_event *event);
+void transfer_server_cb (pjsip_evsub *sub, pjsip_event *event);
+
+/**
+ * Helper function to process refer function on call transfer
+ */
 void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata);
 
 /*************************************************************************************************/
@@ -369,7 +378,7 @@ SIPVoIPLink::terminateCall (const CallID& id)
     }
 }
 
-void get_remote_sdp_from_offer (pjsip_rx_data *rdata, pjmedia_sdp_session** r_sdp)
+void getRemoteSdpFromOffer (pjsip_rx_data *rdata, pjmedia_sdp_session** r_sdp)
 {
 
     pjmedia_sdp_session *sdp;
@@ -554,7 +563,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
     account->setRegistrationState (Trying);
 
     // Create the registration according to the account ID
-    status = pjsip_regc_create (_endpt, (void*) account, &regc_cb, &regc);
+    status = pjsip_regc_create (_endpt, (void*) account, &registration_cb, &regc);
 
     if (status != PJ_SUCCESS) {
         _debug ("UserAgent: Unable to create regc.");
@@ -762,7 +771,7 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) throw 
 
     _debug ("UserAgent: New outgoing call %s to %s", id.c_str(), toUrl.c_str());
 
-    SIPCall* call = new SIPCall (id, Call::Outgoing, _pool);
+    SIPCall* call = new SIPCall (id, Call::Outgoing, _cp);
 
     if (call) {
         account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (Manager::instance().getAccountFromCall (id)));
@@ -1215,7 +1224,7 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
 
     /* Create xfer client subscription. */
     pj_bzero (&xfer_cb, sizeof (xfer_cb));
-    xfer_cb.on_evsub_state = &xfer_func_cb;
+    xfer_cb.on_evsub_state = &transfer_function_cb;
 
     status = pjsip_xfer_create_uac (call->getInvSession()->dlg, &xfer_cb, &sub);
 
@@ -1684,7 +1693,7 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
     _debug ("UserAgent: New IP2IP call %s to %s", id.c_str(), to.c_str());
 
     /* Create the call */
-    call = new SIPCall (id, Call::Outgoing, _pool);
+    call = new SIPCall (id, Call::Outgoing, _cp);
 
     if (call) {
 
@@ -1997,10 +2006,10 @@ bool SIPVoIPLink::pjsip_init()
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
     // Create a pool factory to allocate memory
-    pj_caching_pool_init (&_cp, &pj_pool_factory_default_policy, 0);
+    pj_caching_pool_init (_cp, &pj_pool_factory_default_policy, 0);
 
     // Create memory pool for application.
-    _pool = pj_pool_create (&_cp.factory, "sflphone", 4000, 4000, NULL);
+    _pool = pj_pool_create (&_cp->factory, "sflphone", 4000, 4000, NULL);
 
     if (!_pool) {
         _debug ("UserAgent: Could not initialize memory pool");
@@ -2008,7 +2017,7 @@ bool SIPVoIPLink::pjsip_init()
     }
 
     // Create the SIP endpoint
-    status = pjsip_endpt_create (&_cp.factory, pj_gethostname()->ptr, &_endpt);
+    status = pjsip_endpt_create (&_cp->factory, pj_gethostname()->ptr, &_endpt);
 
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
@@ -2051,9 +2060,9 @@ bool SIPVoIPLink::pjsip_init()
 
     _mod_ua.priority = PJSIP_MOD_PRIORITY_APPLICATION;
 
-    _mod_ua.on_rx_request = &mod_on_rx_request;
+    _mod_ua.on_rx_request = &transaction_request_cb;
 
-    _mod_ua.on_rx_response = &mod_on_rx_response;
+    _mod_ua.on_rx_response = &transaction_response_cb;
 
     status = pjsip_endpt_register_module (_endpt, &_mod_ua);
 
@@ -2077,12 +2086,12 @@ bool SIPVoIPLink::pjsip_init()
     // Init the callback for INVITE session:
     pj_bzero (&inv_cb, sizeof (inv_cb));
 
-    inv_cb.on_state_changed = &call_on_state_changed;
-    inv_cb.on_new_session = &call_on_forked;
-    inv_cb.on_media_update = &call_on_media_update;
-    inv_cb.on_tsx_state_changed = &call_on_tsx_changed;
-    inv_cb.on_rx_offer = &on_rx_offer;
-    inv_cb.on_create_offer = &on_create_offer;
+    inv_cb.on_state_changed = &invite_session_state_changed_cb;
+    inv_cb.on_new_session = &outgoing_request_forked_cb;
+    inv_cb.on_media_update = &sdp_media_update_cb;
+    inv_cb.on_tsx_state_changed = &transaction_state_changed_cb;
+    inv_cb.on_rx_offer = &invite_request_offer_cb;
+    inv_cb.on_create_offer = &invite_create_offer_cb;
 
     // Initialize session invite module
     status = pjsip_inv_usage_init (_endpt, &inv_cb);
@@ -2138,15 +2147,15 @@ pj_status_t SIPVoIPLink::stunServerResolve (AccountID id)
     stunPort = account->getStunPort ();
 
     // Initialize STUN configuration
-    pj_stun_config_init (&stunCfg, &_cp.factory, 0, pjsip_endpt_get_ioqueue (_endpt), pjsip_endpt_get_timer_heap (_endpt));
+    pj_stun_config_init (&stunCfg, &_cp->factory, 0, pjsip_endpt_get_ioqueue (_endpt), pjsip_endpt_get_timer_heap (_endpt));
 
     status = PJ_EPENDING;
 
     pj_bzero (&stun_sock_cb, sizeof (stun_sock_cb));
 
-    stun_sock_cb.on_rx_data = &stun_sock_on_rx_data;
+    stun_sock_cb.on_rx_data = &stun_sock_on_rx_data_cb;
 
-    stun_sock_cb.on_status = &stun_sock_on_status;
+    stun_sock_cb.on_status = &stun_sock_on_status_cb;
 
     status = pj_stun_sock_create (&stunCfg, "stunresolve", pj_AF_INET(), &stun_sock_cb, NULL, NULL, &stun_sock);
 
@@ -2857,7 +2866,7 @@ pj_status_t SIPVoIPLink::createAlternateUdpTransport (AccountID id)
     }
 
     // Query the mapped IP address and port on the 'outside' of the NAT
-    status = pjstun_get_mapped_addr (&_cp.factory, 1, &sock, &stunServer, stunPort, &stunServer, stunPort, &pub_addr);
+    status = pjstun_get_mapped_addr (&_cp->factory, 1, &sock, &stunServer, stunPort, &stunServer, stunPort, &pub_addr);
 
     if (status != PJ_SUCCESS) {
         _debug ("UserAgwent: Error: Contacting STUN server (%d)", status);
@@ -3014,7 +3023,7 @@ bool SIPVoIPLink::pjsip_shutdown (void)
     if (_pool) {
         pj_pool_release (_pool);
         _pool = NULL;
-        pj_caching_pool_destroy (&_cp);
+        pj_caching_pool_destroy (_cp);
     }
 
     /* Shutdown PJLIB */
@@ -3043,7 +3052,7 @@ static void dns_cb (pj_status_t status, void *token, const struct pjsip_server_a
     }
 }
 
-void set_voicemail_info (AccountID account, pjsip_msg_body *body)
+void setVoicemailInfo (AccountID account, pjsip_msg_body *body)
 {
 
     int voicemail = 0, pos_begin, pos_end;
@@ -3085,7 +3094,7 @@ void SIPVoIPLink::handle_reinvite (SIPCall *call UNUSED)
 }
 
 // This callback is called when the invite session state has changed
-void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
+void invite_session_state_changed_cb (pjsip_inv_session *inv, pjsip_event *e)
 {
     _debug ("UserAgent: Call state changed to %s", invitationStateMap[inv->state]);
 
@@ -3282,7 +3291,7 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
 }
 
 // This callback is called after SDP offer/answer session has completed.
-void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
+void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
 {
     _debug ("UserAgent: Call media update");
 
@@ -3425,11 +3434,11 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 
 }
 
-void call_on_forked (pjsip_inv_session *inv UNUSED, pjsip_event *e UNUSED)
+void outgoing_request_forked_cb (pjsip_inv_session *inv UNUSED, pjsip_event *e UNUSED)
 {
 }
 
-void call_on_tsx_changed (pjsip_inv_session *inv UNUSED, pjsip_transaction *tsx, pjsip_event *e)
+void transaction_state_changed_cb (pjsip_inv_session *inv UNUSED, pjsip_transaction *tsx, pjsip_event *e)
 {
     assert (tsx);
 
@@ -3552,7 +3561,7 @@ void call_on_tsx_changed (pjsip_inv_session *inv UNUSED, pjsip_transaction *tsx,
     }
 }
 
-void regc_cb (struct pjsip_regc_cbparam *param)
+void registration_cb (struct pjsip_regc_cbparam *param)
 {
     SIPAccount * account = NULL;
     account = static_cast<SIPAccount *> (param->token);
@@ -3656,7 +3665,7 @@ void regc_cb (struct pjsip_regc_cbparam *param)
 
 // Optional function to be called to process incoming request message.
 pj_bool_t
-mod_on_rx_request (pjsip_rx_data *rdata)
+transaction_request_cb (pjsip_rx_data *rdata)
 {
     pj_status_t status;
     pj_str_t reason;
@@ -3779,7 +3788,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
         if (request.find (method_name) != (size_t)-1) {
             /* Notify the right account */
-            set_voicemail_info (account_id, rdata->msg_info.msg->body);
+            setVoicemailInfo (account_id, rdata->msg_info.msg->body);
             request.find (method_name);
         }
 
@@ -3790,7 +3799,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     // Handle an OPTIONS message
     if (rdata->msg_info.msg->line.req.method.id == PJSIP_OPTIONS_METHOD) {
-        handle_incoming_options (rdata);
+        handleIncomingOptions (rdata);
         return true;
     }
 
@@ -3806,7 +3815,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
 
-    get_remote_sdp_from_offer (rdata, &r_sdp);
+    getRemoteSdpFromOffer (rdata, &r_sdp);
 
     if (account->getActiveCodecs().empty()) {
         _warn ("UserAgent: Error: No active codec");
@@ -3834,7 +3843,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
         std::string header_value;
 
-        header_value = fetch_header_value (rdata->msg_info.msg,
+        header_value = fetchHeaderValue (rdata->msg_info.msg,
         Manager::instance().hookPreference.getUrlSipField());
 
         if (header_value.size () < header_value.max_size()) {
@@ -3854,7 +3863,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     // Generate a new call ID for the incoming call!
     id = Manager::instance().getNewCallID();
 
-    call = new SIPCall (id, Call::Incoming, _pool);
+    call = new SIPCall (id, Call::Incoming, _cp);
 
     // If an error occured at the call creation
     if (!call) {
@@ -4052,7 +4061,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
 }
 
-pj_bool_t mod_on_rx_response (pjsip_rx_data *rdata)
+pj_bool_t transaction_response_cb (pjsip_rx_data *rdata)
 {
     _info ("UserAgent: Transaction response using transport: %s %s (refcnt=%d)",
     rdata->tp_info.transport->obj_name,
@@ -4193,7 +4202,7 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
 
         /* Init callback */
         pj_bzero (&xfer_cb, sizeof (xfer_cb));
-        xfer_cb.on_evsub_state = &xfer_svr_cb;
+        xfer_cb.on_evsub_state = &transfer_server_cb;
 
         /* Init addiTHIS_FILE, THIS_FILE, tional header list to be sent with REFER response */
         pj_list_init (&hdr_list);
@@ -4315,7 +4324,7 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
 
 
 
-void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
+void transfer_function_cb (pjsip_evsub *sub, pjsip_event *event)
 {
 
 
@@ -4452,7 +4461,7 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
 }
 
 
-void xfer_svr_cb (pjsip_evsub *sub, pjsip_event *event)
+void transfer_server_cb (pjsip_evsub *sub, pjsip_event *event)
 {
 
 
@@ -4479,7 +4488,7 @@ void xfer_svr_cb (pjsip_evsub *sub, pjsip_event *event)
     }
 }
 
-void on_rx_offer (pjsip_inv_session *inv, const pjmedia_sdp_session *offer UNUSED)
+void invite_request_offer_cb (pjsip_inv_session *inv, const pjmedia_sdp_session *offer UNUSED)
 {
     _info ("UserAgent: Received SDP offer");
 
@@ -4512,7 +4521,7 @@ void on_rx_offer (pjsip_inv_session *inv, const pjmedia_sdp_session *offer UNUSE
 
 }
 
-void on_create_offer (pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
+void invite_create_offer_cb (pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 {
     _info ("UserAgent: Create new SDP offer");
 
@@ -4556,7 +4565,7 @@ void on_create_offer (pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 }
 
 
-void handle_incoming_options (pjsip_rx_data *rdata)
+void handleIncomingOptions (pjsip_rx_data *rdata)
 {
 
 
@@ -4658,7 +4667,7 @@ bool setCallAudioLocal (SIPCall* call, std::string localIP)
     }
 }
 
-std::string fetch_header_value (pjsip_msg *msg, std::string field)
+std::string fetchHeaderValue (pjsip_msg *msg, std::string field)
 {
 
 
@@ -4767,7 +4776,7 @@ std::vector<std::string> SIPVoIPLink::getAllIpInterfaceByName (void)
 }
 
 
-pj_bool_t stun_sock_on_status (pj_stun_sock *stun_sock UNUSED, pj_stun_sock_op op UNUSED, pj_status_t status)
+pj_bool_t stun_sock_on_status_cb (pj_stun_sock *stun_sock UNUSED, pj_stun_sock_op op UNUSED, pj_status_t status)
 {
     if (status == PJ_SUCCESS)
         return PJ_TRUE;
@@ -4775,7 +4784,7 @@ pj_bool_t stun_sock_on_status (pj_stun_sock *stun_sock UNUSED, pj_stun_sock_op o
         return PJ_FALSE;
 }
 
-pj_bool_t stun_sock_on_rx_data (pj_stun_sock *stun_sock UNUSED, void *pkt UNUSED, unsigned pkt_len UNUSED, const pj_sockaddr_t *src_addr UNUSED, unsigned addr_len UNUSED)
+pj_bool_t stun_sock_on_rx_data_cb (pj_stun_sock *stun_sock UNUSED, void *pkt UNUSED, unsigned pkt_len UNUSED, const pj_sockaddr_t *src_addr UNUSED, unsigned addr_len UNUSED)
 {
     return PJ_TRUE;
 }
@@ -4789,6 +4798,8 @@ std::string getLocalAddressAssociatedToAccount (AccountID id)
     std::string localAddr;
     pj_str_t tmp;
 
+    _debug ("UserAgent: Get local address associated to account");
+
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
 
     // Set the local address
@@ -4799,20 +4810,16 @@ std::string getLocalAddressAssociatedToAccount (AccountID id)
         if (tspt != NULL) {
             local_addr_ipv4 = tspt->local_addr.ipv4;
         } else {
-            _debug ("In getLocalAddressAssociatedToAccount: transport is null");
+            _debug ("UserAgent: transport is null");
             local_addr_ipv4 = _localUDPTransport->local_addr.ipv4;
         }
     } else {
-        _debug ("In getLocalAddressAssociatedToAccount: account is null");
+        _debug ("UserAgent: account is null");
         local_addr_ipv4 = _localUDPTransport->local_addr.ipv4;
     }
 
-    _debug ("slbvasjklbvaskbvaskvbaskvaskvbsdfk: %i", local_addr_ipv4.sin_addr.s_addr);
-
     tmp = pj_str (pj_inet_ntoa (local_addr_ipv4.sin_addr));
     localAddr = std::string (tmp.ptr);
-
-    _debug ("slbvasjklbvaskbvaskvbaskvaskvbsdfk: %s", localAddr.c_str());
 
     return localAddr;
 

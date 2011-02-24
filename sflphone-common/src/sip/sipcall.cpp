@@ -35,18 +35,21 @@
 #include "global.h" // for _debug
 #include "sdp.h"
 
-SIPCall::SIPCall (const CallID& id, Call::CallType type, pj_pool_t *pool) : Call (id, type)
+SIPCall::SIPCall (const CallID& id, Call::CallType type, pj_caching_pool *caching_pool) : Call (id, type)
     , _cid (0)
     , _did (0)
     , _tid (0)
     , _audiortp (new sfl::AudioRtpFactory())
     , _xferSub (NULL)
     , _invSession (NULL)
-    , _local_sdp (0)
+    , _local_sdp (NULL)
 {
     _debug ("SIPCall: Create new call %s", id.c_str());
 
-    _local_sdp = new Sdp (pool);
+    // Create memory pool for application.
+    _pool = pj_pool_create (&caching_pool->factory, id.c_str(), 4000, 4000, NULL);
+
+    _local_sdp = new Sdp (_pool);
 }
 
 SIPCall::~SIPCall()
@@ -54,9 +57,13 @@ SIPCall::~SIPCall()
     _debug ("SIPCall: Delete call");
 
     delete _audiortp;
-    _audiortp = 0;
+    _audiortp = NULL;
     delete _local_sdp;
-    _local_sdp = 0;
+    _local_sdp = NULL;
+
+    pj_pool_release (_pool);
+    _pool = NULL;
+
 }
 
 

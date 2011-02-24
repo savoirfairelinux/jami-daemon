@@ -55,10 +55,9 @@ Sdp::Sdp (pj_pool_t *pool)
     , _ip_addr ("")
     , _local_offer (NULL)
     , _negociated_offer (NULL)
-    , _pool (NULL)
+    , _pool (pool)
     , _local_extern_audio_port (0)
 {
-    _pool = pool;
 }
 
 Sdp::~Sdp()

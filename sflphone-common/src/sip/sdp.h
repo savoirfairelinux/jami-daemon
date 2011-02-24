@@ -143,6 +143,13 @@ class Sdp
             _srtp_crypto = lc;
         }
 
+        /**
+         * Accessor for the internal memory pool
+         */
+        inline pj_pool_t *getMemoryPool (void) {
+            return _pool;
+        }
+
         /*
          * On building an invite outside a dialog, build the local offer and create the
          * SDP negociator instance with it.
@@ -296,7 +303,10 @@ class Sdp
         // negociation, with the compatible media from each part
         pjmedia_sdp_session *_negociated_offer;
 
-        // The pool to allocate memory
+        /**
+         * The pool to allocate memory, ownership to SipCall
+         * SDP shuold not release the pool itself
+         */
         pj_pool_t *_pool;
 
         /** Local audio port */
