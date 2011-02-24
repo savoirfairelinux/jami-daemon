@@ -109,12 +109,29 @@ void account_list_config_dialog_fill()
 
     gtk_list_store_clear (accountStore);
 
+    // IP2IP account must be first
+    account_t *a = account_list_get_by_id ("IP2IP");
+
+    if (a) {
+        gtk_list_store_append (accountStore, &iter);
+
+        DEBUG ("Filling accounts: Account is enabled :%s", g_hash_table_lookup (a->properties, ACCOUNT_ENABLED));
+
+        gtk_list_store_set (accountStore, &iter,
+                            COLUMN_ACCOUNT_ALIAS, g_hash_table_lookup (a->properties, ACCOUNT_ALIAS), // Name
+                            COLUMN_ACCOUNT_TYPE, g_hash_table_lookup (a->properties, ACCOUNT_TYPE),  // Protocol
+                            COLUMN_ACCOUNT_STATUS, account_state_name (a->state),     // Status
+                            COLUMN_ACCOUNT_ACTIVE, (g_strcasecmp (g_hash_table_lookup (a->properties, ACCOUNT_ENABLED),"true") == 0) ? TRUE:FALSE,  // Enable/Disable
+                            COLUMN_ACCOUNT_DATA, a,   // Pointer
+                            -1);
+    }
+
     unsigned int i;
 
     for (i = 0; i < account_list_get_size(); i++) {
-        account_t * a = account_list_get_nth (i);
+        a = account_list_get_nth (i);
 
-        if (a) {
+        if (a && g_strcmp0 (a->accountID, "IP2IP") != 0) {
             gtk_list_store_append (accountStore, &iter);
 
             DEBUG ("Filling accounts: Account is enabled :%s", g_hash_table_lookup (a->properties, ACCOUNT_ENABLED));
