@@ -61,6 +61,10 @@ SIPCall::~SIPCall()
     delete _local_sdp;
     _local_sdp = NULL;
 
+    _error ("SDP: pool capacity %d", pj_pool_get_capacity (_pool));
+    _error ("SDP: pool size %d", pj_pool_get_used_size (_pool));
+
+    // Release memory allocated for SDP only once
     pj_pool_release (_pool);
     _pool = NULL;
 

@@ -1094,11 +1094,20 @@ int SIPVoIPLink::inv_session_reinvite (SIPCall *call, std::string direction)
     pjsip_tx_data *tdata;
     pjmedia_sdp_session *local_sdp;
     pjmedia_sdp_attr *attr;
+    pj_pool_t *call_memory_pool;
 
-    local_sdp = call->getLocalSDP()->get_local_sdp_session();
+    if (call == NULL) {
+        _error ("UserAgent: Error: Call is NULL in session reinvite");
+        return !PJ_SUCCESS;
+    }
 
-    if (local_sdp == NULL) {
-        _debug ("SIP: Error: unable to find local sdp");
+    if ( (local_sdp = call->getLocalSDP()->get_local_sdp_session()) == NULL) {
+        _debug ("UserAgent: Error: Unable to find local sdp");
+        return !PJ_SUCCESS;
+    }
+
+    if ( (call_memory_pool = call->getLocalSDP()->getMemoryPool()) == NULL) {
+        _debug ("UserAgent: Error: Unable to find call memory pool");
         return !PJ_SUCCESS;
     }
 
@@ -1114,7 +1123,7 @@ int SIPVoIPLink::inv_session_reinvite (SIPCall *call, std::string direction)
     pjmedia_sdp_media_remove_all_attr (local_sdp->media[0], "sendrecv");
     pjmedia_sdp_media_remove_all_attr (local_sdp->media[0], "sendonly");
 
-    attr = pjmedia_sdp_attr_create (_pool, direction.c_str(), NULL);
+    attr = pjmedia_sdp_attr_create (call_memory_pool, direction.c_str(), NULL);
 
     pjmedia_sdp_media_add_attr (local_sdp->media[0], attr);
 
