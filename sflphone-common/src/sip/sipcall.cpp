@@ -35,6 +35,9 @@
 #include "global.h" // for _debug
 #include "sdp.h"
 
+const int SIPCall::CALL_MEMPOOL_INIT_SIZE = 16000;
+const int SIPCall::CALL_MEMPOOL_INC_SIZE = 4000;
+
 SIPCall::SIPCall (const CallID& id, Call::CallType type, pj_caching_pool *caching_pool) : Call (id, type)
     , _cid (0)
     , _did (0)
@@ -46,8 +49,9 @@ SIPCall::SIPCall (const CallID& id, Call::CallType type, pj_caching_pool *cachin
 {
     _debug ("SIPCall: Create new call %s", id.c_str());
 
-    // Create memory pool for application.
-    _pool = pj_pool_create (&caching_pool->factory, id.c_str(), 4000, 4000, NULL);
+    // Create memory pool for application, initialization value is based on empiric values.
+    _pool = pj_pool_create (&caching_pool->factory, id.c_str(), CALL_MEMPOOL_INIT_SIZE,
+                            CALL_MEMPOOL_INC_SIZE, NULL);
 
     _local_sdp = new Sdp (_pool);
 }

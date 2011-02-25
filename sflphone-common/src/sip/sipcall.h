@@ -67,13 +67,13 @@ class SIPCall : public Call
         /**
          * Destructor
          */
-        ~SIPCall();
+        ~SIPCall ();
 
         /**
          * Call Identifier
          * @return int  SIP call id
          */
-        int  getCid() {
+        int  getCid () {
             return _cid;
         }
 
@@ -82,7 +82,7 @@ class SIPCall : public Call
          * @param cid SIP call id
          */
         void setCid (int cid) {
-            _cid = cid ;
+            _cid = cid;
         }
 
         /**
@@ -105,12 +105,9 @@ class SIPCall : public Call
          * Transaction identifier
          * @return int  SIP transaction id
          */
-        int  getTid() {
+        int  getTid () {
             return _tid;
         }
-
-
-
 
         /**
          * Transaction identifier
@@ -120,10 +117,16 @@ class SIPCall : public Call
             _tid = tid;
         }
 
+        /**
+         * Set event subscription internal structure
+         */
         void setXferSub (pjsip_evsub* sub) {
             _xferSub = sub;
         }
 
+        /**
+         * Get event subscription internal structure
+         */
         pjsip_evsub *getXferSub() {
             return _xferSub;
         }
@@ -136,24 +139,28 @@ class SIPCall : public Call
             return _invSession;
         }
 
+        /**
+         * Return the local SDP session
+         */
         Sdp* getLocalSDP (void) {
             return _local_sdp;
         }
 
+        /**
+         * Set the local SDP session
+         */
         void setLocalSDP (Sdp *local_sdp) {
             _local_sdp = local_sdp;
         }
 
-        /** Returns a pointer to the AudioRtp object */
+        /**
+         * Returns a pointer to the AudioRtp object
+         */
         inline sfl::AudioRtpFactory * getAudioRtp (void) {
             return _audiortp;
         }
 
     private:
-
-        int _cid;
-        int _did;
-        int _tid;
 
         // Copy Constructor
         SIPCall (const SIPCall& rh);
@@ -161,11 +168,44 @@ class SIPCall : public Call
         // Assignment Operator
         SIPCall& operator= (const SIPCall& rh);
 
-        /** Starting sound */
+        /**
+         * Call specific memory pool initialization size (based on empirical data)
+         */
+        static const int CALL_MEMPOOL_INIT_SIZE;
+
+        /**
+         * Call specific memory pool incrementation size
+         */
+        static const int CALL_MEMPOOL_INC_SIZE;
+
+        /**
+         * Call identifier
+         */
+        int _cid;
+
+        /**
+         * Domain identifier
+         */
+        int _did;
+
+        /**
+         * Transaction identifier
+         */
+        int _tid;
+
+        /**
+         * Audio Rtp Session factory
+         */
         sfl::AudioRtpFactory * _audiortp;
 
+        /**
+         * Event subscription structure
+         */
         pjsip_evsub *_xferSub;
 
+        /**
+         * The invite session to be reused in case of transfer
+         */
         pjsip_inv_session *_invSession;
 
         /**
@@ -174,7 +214,7 @@ class SIPCall : public Call
         Sdp *_local_sdp;
 
         /**
-         * The pool to allocate memory
+         * The pool to allocate memory, released once call hang up
          */
         pj_pool_t *_pool;
 
