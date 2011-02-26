@@ -473,7 +473,6 @@ int SIPVoIPLink::sendRegister (AccountID id)
     int expire_value;
 
     pj_status_t status;
-    pj_str_t useragent;
     pjsip_tx_data *tdata;
     pjsip_host_info destination;
 
@@ -636,7 +635,9 @@ int SIPVoIPLink::sendRegister (AccountID id)
     // Add User-Agent Header
     pj_list_init (&hdr_list);
 
-    useragent = pj_str ( (char*) get_useragent_name (id).c_str());
+    const char *useragent_name = get_useragent_name (id).c_str();
+    pj_str_t useragent = pj_str ( (char *) useragent_name);
+    // pj_str_t useragent = pj_str ( (char *) "SFLphone"); // { (char *) "SFLphone",  8};
 
     h = pjsip_generic_string_hdr_create (_pool, &STR_USER_AGENT, &useragent);
 
@@ -771,8 +772,8 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) throw 
 
     _debug ("UserAgent: New outgoing call %s to %s", id.c_str(), toUrl.c_str());
 
-    _error ("UserAgent: pool capacity %d", pj_pool_get_capacity (_pool));
-    _error ("UserAgent: pool size %d", pj_pool_get_used_size (_pool));
+    _debug ("UserAgent: pool capacity %d", pj_pool_get_capacity (_pool));
+    _debug ("UserAgent: pool size %d", pj_pool_get_used_size (_pool));
 
     SIPCall* call = new SIPCall (id, Call::Outgoing, _cp);
 
@@ -864,8 +865,8 @@ SIPVoIPLink::answer (const CallID& id)
 
     SIPCall *call = getSIPCall (id);
 
-    _error ("UserAgent: pool capacity %d", pj_pool_get_capacity (_pool));
-    _error ("UserAgent: pool size %d", pj_pool_get_used_size (_pool));
+    _debug ("UserAgent: pool capacity %d", pj_pool_get_capacity (_pool));
+    _debug ("UserAgent: pool size %d", pj_pool_get_used_size (_pool));
 
 
     if (call==0) {

@@ -203,7 +203,7 @@ void AudioRtpFactory::stop (void)
                 break;
 
             case Symmetric:
-                static_cast<AudioSrtpSession *> (_rtpSession)->stopRtpThread();
+                static_cast<AudioRtpSession *> (_rtpSession)->stopRtpThread();
                 break;
 
             case Zrtp:

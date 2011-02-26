@@ -81,13 +81,15 @@ AudioRtpSession::~AudioRtpSession()
         _debugException ("AudioRtpSession: Thread destructor didn't terminate correctly");
         throw;
     }
-
-    Manager::instance().getMainBuffer()->unBindAll (_audioRtpRecord._callId);
 }
 
 void AudioRtpSession::final()
 {
-    delete this;
+    _debug ("AudioRtpSession: Finalize AudioRtpSession instance");
+
+    Manager::instance().getMainBuffer()->unBindAll (_audioRtpRecord._callId);
+
+    delete static_cast<AudioRtpSession *> (this);
 }
 
 void AudioRtpSession::setSessionTimeouts (void)
@@ -402,8 +404,6 @@ void AudioRtpSession::run ()
     }
 
     _debug ("AudioRtpSession: Left main loop for call %s", _audioRtpRecord._callId.c_str());
-
-    Thread::exit();
 
 }
 

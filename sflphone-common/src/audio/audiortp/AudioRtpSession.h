@@ -71,6 +71,8 @@ class AudioRtpSession : protected ost::Thread, public ost::TimerPort, public Aud
 
         virtual void final ();
 
+        void terminateRtpSession();
+
         // Thread associated method
         virtual void run ();
 
@@ -137,7 +139,7 @@ class AudioRtpSession : protected ost::Thread, public ost::TimerPort, public Aud
         // optional in ost::thread, then
         // it amounts to the same as doing
         // start() with no semaphore at all.
-        ost::Semaphore * _mainloopSemaphore;
+        ost::Semaphore *_mainloopSemaphore;
 
         // Main destination address for this rtp session.
         // Stored in case or reINVITE, which may require to forget

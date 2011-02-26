@@ -249,10 +249,6 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
 
     byteCounter = 0;
 
-
-    // captureFile = new ofstream ("probeCaptureFile", ofstream::binary);
-    // spkrFile = new ofstream ("probeSpkrFile", ofstream::binary);
-
     openLayer();
 }
 
@@ -271,13 +267,6 @@ PulseLayer::~PulseLayer (void)
 
     delete AudioLayer::_audiofilter;
     AudioLayer::_audiofilter = NULL;
-
-
-    // captureFile->close();
-    // spkrFile->close();
-
-    // delete captureFile;
-    // delete spkrFile;
 }
 
 void
