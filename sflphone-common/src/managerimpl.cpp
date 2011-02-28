@@ -173,6 +173,15 @@ void ManagerImpl::terminate ()
 
     _debug ("Manager: Terminate ");
 
+    std::vector<std::string> callList = getCallList();
+    _debug ("Manager: Hangup %d remaining call", callList.size());
+    std::vector<std::string>::iterator iter = callList.begin();
+
+    while (iter != callList.end()) {
+        hangupCall (*iter);
+        iter++;
+    }
+
     unloadAccountMap();
 
     _debug ("Manager: Unload DTMF key");
@@ -393,7 +402,6 @@ bool ManagerImpl::hangupCall (const CallID& call_id)
 
     _info ("Manager: Hangup call %s", call_id.c_str());
 
-    PulseLayer *pulselayer;
     AccountID account_id;
     bool returnValue = true;
 
@@ -451,10 +459,6 @@ bool ManagerImpl::hangupCall (const CallID& call_id)
     if (audiolayer && (nbCalls <= 0)) {
         _debug ("Manager: stop audio stream, ther is only %d call(s) remaining", nbCalls);
         audiolayer->stopStream();
-    }
-
-    if (_audiodriver->getLayerType() == PULSEAUDIO) {
-        pulselayer = dynamic_cast<PulseLayer *> (getAudioDriver());
     }
 
     return returnValue;
