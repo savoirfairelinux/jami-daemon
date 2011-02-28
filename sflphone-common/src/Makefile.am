@@ -3,6 +3,8 @@ include ../globals.mak
 libexecdir=$(libdir)/sflphone
 libexec_PROGRAMS = sflphoned
 
+# all: indent
+
 SUBDIRS = dbus audio config plug-in hooks history sip iax im
 
 # Add here the cpp files to be build with sflphone
@@ -105,4 +107,3 @@ libsflphone_la_CFLAGS = \
 
 libsflphone_la_SOURCES =
 
-all: indent
