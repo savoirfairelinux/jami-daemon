@@ -42,13 +42,8 @@ namespace sfl
 {
 
 AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
-    // ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
-    AudioRtpRecordHandler (sipcall),
-    ost::TRTPSessionBase<ost::SymmetricRTPChannel,ost::SymmetricRTPChannel,ost::AVPQueue> (ost::InetHostAddress (sipcall->getLocalIp().c_str()),
-            sipcall->getLocalAudioPort(),
-            0,
-            ost::MembershipBookkeeping::defaultMembersHashSize,
-            ost::defaultApplication())
+    AudioRtpRecordHandler (sipcall)
+    , ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort())
     , _mainloopSemaphore (0)
     , _manager (manager)
     , _timestamp (0)
@@ -56,17 +51,13 @@ AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
     , _timestampCount (0)
     , _ca (sipcall)
     , _isStarted (false)
+    , _rtpThread (new AudioRtpThread (this))
 {
-    ost::Thread::setCancel (cancelDefault);
-
     assert (_ca);
 
     _info ("AudioRtpSession: Setting new RTP session with destination %s:%d", _ca->getLocalIp().c_str(), _ca->getLocalAudioPort());
 
     _audioRtpRecord._callId = _ca->getCallId();
-
-    // static_cast<ost::DualRTPUDPIPv4Channel>(dso)->sendSocket->setTypeOfService(ost::Socket::tosLowDelay);
-    // static_cast<ost::DualRTPChannel<ost::DualRTPUDPIPv4Channel> >(dso)->sendSocket->setTypeOfService(ost::Socket::tosLowDelay);
 
     setTypeOfService (tosEnhanced);
 }
@@ -74,13 +65,6 @@ AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
 AudioRtpSession::~AudioRtpSession()
 {
     _info ("AudioRtpSession: Delete AudioRtpSession instance");
-
-    try {
-        ost::Thread::terminate();
-    } catch (...) {
-        _debugException ("AudioRtpSession: Thread destructor didn't terminate correctly");
-        throw;
-    }
 }
 
 void AudioRtpSession::final()
@@ -88,6 +72,8 @@ void AudioRtpSession::final()
     _debug ("AudioRtpSession: Finalize AudioRtpSession instance");
 
     Manager::instance().getMainBuffer()->unBindAll (_audioRtpRecord._callId);
+
+    delete _rtpThread;
 
     delete static_cast<AudioRtpSession *> (this);
 }
@@ -334,77 +320,61 @@ int AudioRtpSession::startRtpThread (AudioCodec* audiocodec)
         return 0;
 
     _debug ("AudioRtpSession: Starting main thread");
+
     _isStarted = true;
     setSessionTimeouts();
     setSessionMedia (audiocodec);
     initBuffers();
     initNoiseSuppress();
-    enableStack();
-    int ret = ost::Thread::start (_mainloopSemaphore);
-    return ret;
+
+    startRunning();
+    _rtpThread->start();
+
+    return 0;
 }
 
 void AudioRtpSession::stopRtpThread ()
 {
     _debug ("AudioRtpSession: Stoping main thread");
 
+    _rtpThread->stopRtpThread();
+
     disableStack();
 }
 
-void AudioRtpSession::run ()
+AudioRtpSession::AudioRtpThread::AudioRtpThread (AudioRtpSession *session) : rtpSession (session), running (true)
 {
-    _debug ("AudioRtpSession: Entering mainloop for call %s", _audioRtpRecord._callId.c_str());
+    _debug ("AudioRtpSession: Create new rtp thread");
+}
 
-    uint32 timeout = 0;
+AudioRtpSession::AudioRtpThread::~AudioRtpThread()
+{
+    _debug ("AudioRtpSession: Delete rtp thread");
+}
 
-    _timestamp = getCurrentTimestamp();
+void AudioRtpSession::AudioRtpThread::run()
+{
+    int threadSleep = 20;
 
-    while (isActive()) {
+    TimerPort::setTimer (threadSleep);
 
-        if (timeout < 1000) {  // !(timeout/1000)
-            timeout = getSchedulingTimeout();
-        }
+    _debug ("AudioRtpThread: Entering Audio rtp thread main loop");
 
-        setCancel (cancelDeferred);
+    while (running) {
 
         // Send session
-        if (getEventQueueSize() > 0) {
-            sendDtmfEvent (getEventQueue()->front());
+        if (rtpSession->getEventQueueSize() > 0) {
+            rtpSession->sendDtmfEvent (rtpSession->getEventQueue()->front());
         } else {
-            sendMicData ();
+            rtpSession->sendMicData ();
         }
 
-        setCancel (cancelImmediate);
+        Thread::sleep (TimerPort::getTimer());
 
-        setCancel (cancelDeferred);
-        controlReceptionService();
-        controlTransmissionService();
-        setCancel (cancelImmediate);
-        uint32 maxWait = timeval2microtimeout (getRTCPCheckInterval());
-        // make sure the scheduling timeout is
-        // <= the check interval for RTCP
-        // packets
-        timeout = (timeout > maxWait) ? maxWait : timeout;
-
-        if (timeout < 1000) {   // !(timeout/1000)
-            timerTick();
-        } else {
-            if (isPendingData (timeout/1000)) {
-                setCancel (cancelDeferred);
-
-                if (isActive()) { // take in only if active
-                    takeInDataPacket();
-                }
-
-                setCancel (cancelImmediate);
-            }
-
-            timeout = 0;
-        }
+        TimerPort::incTimer (threadSleep);
     }
 
-    _debug ("AudioRtpSession: Left main loop for call %s", _audioRtpRecord._callId.c_str());
-
+    _debug ("AudioRtpThread: Leaving audio rtp thread loop");
 }
 
 }

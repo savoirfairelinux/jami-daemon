@@ -53,12 +53,11 @@
 #include <cc++/numbers.h> // ost::Time
 
 #include <fstream>
-
 namespace sfl
 {
 
 // class AudioRtpSession : protected ost::Thread, public ost::TimerPort, public AudioRtpRecordHandler, public ost::TRTPSessionBase<ost::DualRTPUDPIPv4Channel,ost::DualRTPUDPIPv4Channel,ost::AVPQueue>
-class AudioRtpSession : protected ost::Thread, public ost::TimerPort, public AudioRtpRecordHandler, public ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::AVPQueue>
+class AudioRtpSession : public ost::TimerPort, public AudioRtpRecordHandler, public ost::SymmetricRTPSession
 {
     public:
         /**
@@ -74,7 +73,7 @@ class AudioRtpSession : protected ost::Thread, public ost::TimerPort, public Aud
         void terminateRtpSession();
 
         // Thread associated method
-        virtual void run ();
+        // virtual void run ();
 
         virtual bool onRTPPacketRecv (ost::IncomingRTPPkt&);
 
@@ -104,7 +103,30 @@ class AudioRtpSession : protected ost::Thread, public ost::TimerPort, public Aud
          */
         void updateSessionMedia (AudioCodec *);
 
+        /**
+         * Send encoded data to peer
+         */
+        void sendMicData();
+
     private:
+
+        class AudioRtpThread : public ost::Thread, public ost::TimerPort
+        {
+            public:
+                AudioRtpThread (AudioRtpSession *session);
+                ~AudioRtpThread();
+
+                void stopRtpThread (void) {
+                    running = false;
+                }
+
+                virtual void run();
+
+            private:
+                AudioRtpSession *rtpSession;
+
+                bool running;
+        };
 
         /**
          * Set RTP Sockets send/receive timeouts
@@ -121,11 +143,6 @@ class AudioRtpSession : protected ost::Thread, public ost::TimerPort, public Aud
          * Retreive destination address for this session. Stored in CALL
          */
         void setDestinationIpAddress (void);
-
-        /**
-         * Send encoded data to peer
-         */
-        void sendMicData();
 
         /**
          * Receive data from peer
@@ -183,6 +200,12 @@ class AudioRtpSession : protected ost::Thread, public ost::TimerPort, public Aud
         SIPCall * _ca;
 
         bool _isStarted;
+
+        AudioRtpThread *_rtpThread;
+
+    public:
+
+        friend class AudioRtpThread;
 };
 
 }
