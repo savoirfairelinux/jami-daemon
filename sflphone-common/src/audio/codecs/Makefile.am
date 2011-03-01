@@ -40,15 +40,23 @@ libcodec_speex_ub_so_LDFLAGS = --shared -lc -lspeex $(SPEEX_NIMP)
 INSTALL_SPEEX_UB_RULE = install-libcodec_speex_ub_so
 endif
 
-if BUILD_CELT
+if BUILD_CELT_91
 CELT_LIB = libcodec_celt.so
 libcodec_celt_so_SOURCES = celtcodec.cpp
-libcodec_celt_so_CFLAGS = -fPIC -g -Wall -D$(BUILD_CELT)
-libcodec_celt_so_CXXFLAGS = -fPIC -g -Wall
+libcodec_celt_so_CFLAGS = -fPIC -g -Wall -DBUILD_CELT_91
+libcodec_celt_so_CXXFLAGS = -fPIC -g -Wall -DBUILD_CELT_91
 libcodec_celt_so_LDFLAGS = --shared -lc -lcelt0 $(CELT_NIMP)
 INSTALL_CELT_RULE = install-libcodec_celt_so
 endif
 
+if BUILD_CELT_71
+CELT_LIB = libcodec_celt.so
+libcodec_celt_so_SOURCES = celtcodec.cpp
+libcodec_celt_so_CFLAGS = -fPIC -g -Wall -DBUILD_CELT_71
+libcodec_celt_so_CXXFLAGS = -fPIC -g -Wall -DBUILD_CELT_71
+libcodec_celt_so_LDFLAGS = --shared -lc -lcelt0 $(CELT_NIMP)
+INSTALL_CELT_RULE = install-libcodec_celt_so
+endif
 
 noinst_PROGRAMS = libcodec_ulaw.so libcodec_alaw.so libcodec_g722.so $(GSM_LIB) $(SPEEX_NB_LIB) $(SPEEX_WB_LIB) $(SPEEX_UB_LIB) $(CELT_LIB)
 

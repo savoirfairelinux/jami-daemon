@@ -389,16 +389,17 @@ AC_ARG_WITH([celt],
 AS_IF([test "x$with_celt" != xno],
 	PKG_CHECK_MODULES(CELT, celt >= 0.9.1, 
 		[
-			BUILD_CELT=91 ; with_celt=yes
+			with_celt_91=yes; AC_MSG_NOTICE([Using celt 0.9.1]); AC_SUBST(BUILD_CELT_91)
     	], 
     	[
-			PKG_CHECK_MODULES(CELT, celt >= 0.7.1,,AC_MSG_FAILURE([libcelt link test failed.   You may use --without-celt to compile without celt codec support.])) 
-        	BUILD_CELT=71; with_celt=yes;
+			PKG_CHECK_MODULES(CELT, celt >= 0.7.1, [with_celt_71=yes; AC_MSG_NOTICE([Using celt 0.7.1]); AC_SUBST(BUILD_CELT_71)], AC_MSG_FAILURE([libcelt link test failed.   You may use --without-celt to compile without celt codec support.])) 
     	])
 )
 
-AC_SUBST(BUILD_CELT)
-AM_CONDITIONAL(BUILD_CELT, test "x$with_celt" = "xyes" )
+# AC_SUBST(BUILD_CELT)
+# AM_CONDITIONAL(BUILD_CELT, test "x$with_celt" = "xyes" )
+AM_CONDITIONAL(BUILD_CELT_91, test "x$with_celt_91" = "xyes" )
+AM_CONDITIONAL(BUILD_CELT_71, test "x$with_celt_71" = "xyes" )
 
 
 dnl Check for IAX
