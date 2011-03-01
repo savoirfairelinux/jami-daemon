@@ -66,6 +66,11 @@ class G722 : public AudioCodec
 
         }
 
+        ~G722() {
+        	g722_decode_release();
+        	g722_encode_release();
+        }
+
         virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) {
 
             int in_byte = size;
@@ -118,6 +123,8 @@ class G722 : public AudioCodec
             decode_s->packed = FALSE;
             decode_s->band[0].det = 32;
             decode_s->band[1].det = 8;
+
+            decode_s->in_bits = 0;
         }
 
         int16_t saturate (int32_t amp) {
@@ -137,10 +144,10 @@ class G722 : public AudioCodec
 
 
         void block4_encode (int band, int d) {
-            int wd1;
-            int wd2;
-            int wd3;
-            int i;
+            int wd1 = 0;
+            int wd2 = 0;
+            int wd3 = 0;
+            int i = 0;
 
             /* Block 4, RECONS */
             encode_s->band[band].d[0] = d;
@@ -241,10 +248,10 @@ class G722 : public AudioCodec
         }
 
         void block4_decode (int band, int d) {
-            int wd1;
-            int wd2;
-            int wd3;
-            int i;
+            int wd1 = 0;
+            int wd2 = 0;
+            int wd3 = 0;
+            int i = 0;
 
             /* Block 4, RECONS */
             decode_s->band[band].d[0] = d;
@@ -347,12 +354,14 @@ class G722 : public AudioCodec
 
         int g722_encode_release() {
             delete decode_s;
+            decode_s = NULL;
             return 0;
         }
 
 
         int g722_decode_release() {
             delete encode_s;
+            encode_s = NULL;
             return 0;
         }
 
@@ -407,23 +416,25 @@ class G722 : public AudioCodec
                 3,  -11,   12,   32, -210,  951, 3876, -805,  362, -156,   53,  -11,
             };
 
-            int dlowt;
-            int rlow;
-            int ihigh;
-            int dhigh;
-            int rhigh;
-            int xout1;
-            int xout2;
-            int wd1;
-            int wd2;
-            int wd3;
-            int code;
-            int outlen;
-            int i;
-            int j;
+            int dlowt = 0;
+            int rlow = 0;
+            int ihigh = 0;
+            int dhigh = 0;
+            int rhigh = 0;
+            int xout1 = 0;
+            int xout2 = 0;
+            int wd1 = 0;
+            int wd2 = 0;
+            int wd3 = 0;
+            int code = 0;
+            int outlen = 0;
+            int i = 0;
+            int j = 0;
 
             outlen = 0;
             rhigh = 0;
+
+
 
             for (j = 0;  j < len;) {
                 if (decode_s->packed) {
@@ -630,30 +641,30 @@ class G722 : public AudioCodec
             static const int wh[3] = {0, -214, 798};
             static const int rh2[4] = {2, 1, 2, 1};
 
-            int dlow;
-            int dhigh;
-            int el;
-            int wd;
-            int wd1;
-            int ril;
-            int wd2;
-            int il4;
-            int ih2;
-            int wd3;
-            int eh;
-            int mih;
-            int i;
-            int j;
+            int dlow = 0;
+            int dhigh = 0;
+            int el = 0;
+            int wd = 0;
+            int wd1 = 0;
+            int ril = 0;
+            int wd2 = 0;
+            int il4 = 0;
+            int ih2 = 0;
+            int wd3 = 0;
+            int eh = 0;
+            int mih = 0;
+            int i = 0;
+            int j = 0;
             /* Low and high band PCM from the QMF */
-            int xlow;
-            int xhigh;
-            int g722_bytes;
+            int xlow = 0;
+            int xhigh = 0;
+            int g722_bytes = 0;
             /* Even and odd tap accumulators */
-            int sumeven;
-            int sumodd;
-            int ihigh;
-            int ilow;
-            int code;
+            int sumeven = 0;
+            int sumodd = 0;
+            int ihigh = 0;
+            int ilow = 0;
+            int code = 9;
 
             g722_bytes = 0;
             xhigh = 0;
