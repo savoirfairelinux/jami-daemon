@@ -1,1 +1,1 @@
-SUBDIRS = utilspp iax2 dbus-c++ pjproject
+SUBDIRS = utilspp iax2 dbus-c++

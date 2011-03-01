@@ -470,10 +470,9 @@ AC_DEFUN([BB_ENABLE_DOXYGEN],
 	AC_SUBST(DBUS_SERVICES_DIR)
 	AC_DEFINE_UNQUOTED(DBUS_SERVICES_DIR, "$DBUS_SERVICES_DIR", [Where services dir for DBUS is])
 
-        AC_CONFIG_COMMANDS_POST([(cd libs/pjproject/ && ./autogen.sh && ./configure --prefix=/usr)])
-
-
 # Go!
 	AC_SUBST(SFLPHONE_CFLAGS)
 	AC_SUBST(SFLPHONE_LIBS)
 	AC_OUTPUT
+
+	AC_MSG_NOTICE([[Configuration done! Please make sure that pjsip library (libs/pjproject) has already been compiled. Run `make' to build the software.]])
