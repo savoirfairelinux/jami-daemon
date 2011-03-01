@@ -1,5 +1,5 @@
 AC_INIT([SFLphone],[0.9.12],[sflphoneteam@savoirfairelinux.com],[sflphone-client-gnome])
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS([config.h])
 
 GNOME_DOC_INIT
 
@@ -28,8 +28,8 @@ fi
 
 AC_PROG_CC
 AC_PROG_INSTALL
-AC_STDC_HEADERS
-AC_PROG_LIBTOOL
+AC_HEADER_STDC
+LT_INIT
 
 dnl GCONF utilities
 AM_GCONF_SOURCE_2
@@ -76,7 +76,7 @@ AC_SUBST(DEPS_LIBS)
 dnl AM_PATH_CHECK() DEPRECATED
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
 
-AC_OUTPUT([
+AC_CONFIG_FILES([
 Makefile 
 src/Makefile
 src/config/Makefile
@@ -93,5 +93,6 @@ man/Makefile
 po/Makefile
 doc/Makefile
 ])
+AC_OUTPUT
 
 
