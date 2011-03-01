@@ -637,7 +637,6 @@ int SIPVoIPLink::sendRegister (AccountID id)
 
     const char *useragent_name = get_useragent_name (id).c_str();
     pj_str_t useragent = pj_str ( (char *) useragent_name);
-    // pj_str_t useragent = pj_str ( (char *) "SFLphone"); // { (char *) "SFLphone",  8};
 
     h = pjsip_generic_string_hdr_create (_pool, &STR_USER_AGENT, &useragent);
 

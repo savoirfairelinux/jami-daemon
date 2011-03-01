@@ -1,106 +1,106 @@
 dnl SFLPhone - configure.ac for automake 1.9 and autoconf 2.59
 dnl
 
-	dnl Process this file with autoconf to produce a configure script.
-	AC_PREREQ(2.59)
-	AC_INIT([sflphone],[0.9.12],[sflphoneteam@savoirfairelinux.com],[sflphone])
-	AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011]])
+dnl Process this file with autoconf to produce a configure script.
+AC_PREREQ(2.65)
+AC_INIT([sflphone],[0.9.12],[sflphoneteam@savoirfairelinux.com],[sflphone])
+AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011]])
 AC_REVISION([$Revision$])
 
-	AC_CANONICAL_SYSTEM
+AC_CANONICAL_BUILD
+AC_CANONICAL_HOST
+AC_CANONICAL_TARGET
 
-	PACKAGE=SFLphone
-	VERSION=`cat VERSION`
+PACKAGE=SFLphone
+VERSION=`cat VERSION`
 
-	AM_INIT_AUTOMAKE($NAME, $VERSION)
-AM_CONFIG_HEADER([config.h])
+AM_INIT_AUTOMAKE($NAME, $VERSION)
+AC_CONFIG_HEADERS([config.h])
 
 # Silent build by default. Use make V=1 to increase verbosity
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
-	dnl Use this variable in the program
+dnl Use this variable in the program
 AC_SUBST(PACKAGE_VERSION)
 
-	AM_PROG_LIBTOOL
+dnl Rewrite name of programs to be installed
+dnl AC_ARG_PROGRAM
 
+dnl Compute canonical system name
+dnl AC_CANONICAL_TARGET
 
-	dnl Rewrite name of programs to be installed
-	dnl AC_ARG_PROGRAM
+dnl Improve make variable MAKE
+AC_PROG_MAKE_SET
 
-	dnl Compute canonical system name
-	dnl AC_CANONICAL_TARGET
-
-	dnl Improve make variable MAKE
-	AC_PROG_MAKE_SET
-
-	dnl Where to find configure files
-	dnl AC_CONFIG_SRCDIR([config.h.in])
+dnl Where to find configure files
+dnl AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_MACRO_DIR([m4])
 
-	dnl What to generate
-	dnl AC_CONFIG_FILES([stamp-h], [echo timestamp > stamp-h])
+dnl What to generate
+dnl AC_CONFIG_FILES([stamp-h], [echo timestamp > stamp-h])
 AC_CONFIG_FILES([Makefile])
-	AC_CONFIG_FILES([libs/Makefile \
-			libs/utilspp/Makefile \
-			libs/utilspp/functor/Makefile \
-			libs/utilspp/singleton/Makefile \
-			libs/dbus-c++/Makefile \
-			libs/dbus-c++/src/Makefile \
-			libs/dbus-c++/tools/Makefile \
-			libs/dbus-c++/data/Makefile \
-			libs/iax2/Makefile])
+AC_CONFIG_FILES([libs/Makefile \
+		libs/utilspp/Makefile \
+		libs/utilspp/functor/Makefile \
+		libs/utilspp/singleton/Makefile \
+		libs/dbus-c++/Makefile \
+		libs/dbus-c++/src/Makefile \
+		libs/dbus-c++/tools/Makefile \
+		libs/dbus-c++/data/Makefile \
+		libs/iax2/Makefile])
 
-	AC_CONFIG_FILES([src/Makefile \
-			src/sip/Makefile \
-			src/im/Makefile \
-			src/iax/Makefile \
-			src/audio/Makefile \
-			src/audio/audiortp/Makefile \
-			src/audio/pulseaudio/Makefile \
-			src/audio/alsa/Makefile \
-			src/audio/sound/Makefile \
-			src/audio/codecs/Makefile \
-			src/config/Makefile \
-			src/dbus/Makefile \
-			src/plug-in/Makefile \
-			src/plug-in/test/Makefile \
-			src/hooks/Makefile \
-			src/history/Makefile]) 
+AC_CONFIG_FILES([src/Makefile \
+		src/sip/Makefile \
+		src/im/Makefile \
+		src/iax/Makefile \
+		src/audio/Makefile \
+		src/audio/audiortp/Makefile \
+		src/audio/pulseaudio/Makefile \
+		src/audio/alsa/Makefile \
+		src/audio/sound/Makefile \
+		src/audio/codecs/Makefile \
+		src/config/Makefile \
+		src/dbus/Makefile \
+		src/plug-in/Makefile \
+		src/plug-in/test/Makefile \
+		src/hooks/Makefile \
+		src/history/Makefile]) 
 
-	dnl Unitary test section
+dnl Unitary test section
 AC_CONFIG_FILES([test/Makefile])
 
 AC_CONFIG_FILES([ringtones/Makefile])
 
 AC_CONFIG_FILES([man/Makefile])
 
-	AC_CONFIG_FILES([doc/Makefile \
-					doc/dbus-api/Makefile \
-			doc/doxygen/Makefile])
+AC_CONFIG_FILES([doc/Makefile \
+		doc/dbus-api/Makefile \
+		doc/doxygen/Makefile])
 
-	dnl the file stamp-h.in should be there before (instead of AC_CONFIG_HEADERS(config.h))
+dnl the file stamp-h.in should be there before (instead of AC_CONFIG_HEADERS(config.h))
 dnl AM_CONFIG_HEADER(config.h)
 
-	dnl Settings need Standard C++ Library
-	LIBS="$LIBS -lstdc++"
+dnl Settings need Standard C++ Library
+LIBS="$LIBS -lstdc++"
 
-	dnl Solaris pkgadd support definitions
-	PKGADD_PKG="SFLphone"
-	PKGADD_NAME="SFLphone - a SIP client and daemon"
-	PKGADD_VENDOR="http://www.sflphone.org/"
-	AC_SUBST(PKGADD_PKG)
-	AC_SUBST(PKGADD_NAME)
+dnl Solaris pkgadd support definitions
+PKGADD_PKG="SFLphone"
+PKGADD_NAME="SFLphone - a SIP client and daemon"
+PKGADD_VENDOR="http://www.sflphone.org/"
+AC_SUBST(PKGADD_PKG)
+AC_SUBST(PKGADD_NAME)
 AC_SUBST(PKGADD_VENDOR)
 
-	dnl Check for programs
-	AC_PROG_CC
-	AC_PROG_CXX
-	AC_PROG_CPP
-	AC_PROG_INSTALL
-	AC_PROG_LN_S
-	AC_PROG_MAKE_SET
-	dnl will have to remove this
-	AC_PROG_LIBTOOL
+dnl Check for programs
+AC_PROG_CC
+AC_PROG_CXX
+AC_PROG_CPP
+AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
+
+dnl will have to remove this
+LT_INIT
 
 	dnl Define C++ as default language
 AC_LANG(C++)
@@ -138,7 +138,18 @@ AC_CHECK_TYPES([ptrdiff_t])
 	AC_FUNC_MEMCMP
 	AC_FUNC_REALLOC
 	AC_FUNC_SELECT_ARGTYPES
-	AC_TYPE_SIGNAL
+	AC_DIAGNOSE([obsolete],[your code may safely assume C89 semantics that RETSIGTYPE is void.
+Remove this warning and the `AC_CACHE_CHECK' when you adjust the code.])dnl
+AC_CACHE_CHECK([return type of signal handlers],[ac_cv_type_signal],[AC_COMPILE_IFELSE(
+[AC_LANG_PROGRAM([#include <sys/types.h>
+#include <signal.h>
+],
+		 [return *(signal (0, 0)) (0) == 1;])],
+		   [ac_cv_type_signal=int],
+		   [ac_cv_type_signal=void])])
+AC_DEFINE_UNQUOTED([RETSIGTYPE],[$ac_cv_type_signal],[Define as the return type of signal handlers
+		    (`int' or `void').])
+
 	AC_FUNC_STAT
 	AC_FUNC_UTIME_NULL
 	AC_FUNC_VPRINTF
@@ -171,25 +182,25 @@ dnl AC_SUBST(UUID_LIBS)
 AC_SUBST(UUID_LIBS)
 
 	dnl Check for alsa development package - name: libasound2-dev 
-	LIBASOUND2_MIN_VERSION=1.0
-	PKG_CHECK_MODULES(ALSA, alsa >= ${LIBASOUND2_MIN_VERSION})
+	ALSA_MIN_VERSION=1.0
+	PKG_CHECK_MODULES(ALSA, alsa >= ${ALSA_MIN_VERSION},, AC_MSG_ERROR([Mising alsa development package: libasound2-dev or alsa-lib-devel]))
 	AC_SUBST(ALSA_CFLAGS)
 AC_SUBST(ALSA_LIBS)
 
 	dnl Check for pulseaudio development package - name: libpulse-dev 
 	LIBPULSE_MIN_VERSION=0.9.15
-	PKG_CHECK_MODULES(PULSEAUDIO, libpulse >= ${LIBPULSE_MIN_VERSION})
+	PKG_CHECK_MODULES(PULSEAUDIO, libpulse >= ${LIBPULSE_MIN_VERSION},, AC_MSG_ERROR([Mising pulseaudio development package: libpulse-dev]))
 	AC_SUBST(PULSEAUDIO_LIBS)
 AC_SUBST(PULSEAUDIO_CFLAGS)
 
 	dnl Check for the samplerate development package - name: libsamplerate0-dev
 	LIBSAMPLERATE_MIN_VERSION=0.1.2
-	PKG_CHECK_MODULES(SAMPLERATE, samplerate >= ${LIBSAMPLERATE_MIN_VERSION})
+	PKG_CHECK_MODULES(SAMPLERATE, samplerate >= ${LIBSAMPLERATE_MIN_VERSION},, AC_MSG_ERROR([Mising libsamplerate development package: libsamplerate0-dev]))
 	AC_SUBST(SAMPLERATE_LIBS)
 AC_SUBST(SAMPLERATE_CFLAGS)
 
 	LIBCCGNU2_MIN_VERSION=1.3.1
-	PKG_CHECK_MODULES(CCGNU2, libccgnu2 >= ${LIBCCGNU2_MIN_VERSION})
+	PKG_CHECK_MODULES(CCGNU2, libccgnu2 >= ${LIBCCGNU2_MIN_VERSION},, AC_MSG_ERROR([Mising common cpp development package: libcommoncpp2-dev]))
 	AC_SUBST(CCGNU2_LIBS)
 AC_SUBST(CCGNU2_FLAGS)
 
@@ -199,18 +210,18 @@ AC_SUBST(CCGNU2_FLAGS)
 AC_SUBST(CCEXT2_CFLAGS)
 
 	LIBCCRT_MIN_VERSION=1.3.0
-	PKG_CHECK_MODULES(CCRTP, libccrtp1 >= ${LIBCCRT_MIN_VERSION})
+	PKG_CHECK_MODULES(CCRTP, libccrtp1 >= ${LIBCCRT_MIN_VERSION},, AC_MSG_ERROR([Mising ccrtp development package: libccrtp-dev]))
 	AC_SUBST(CCRTP_LIBS)
 AC_SUBST(CCRTP_CFLAGS)
 
 	dnl Check for OpenSSL to link against pjsip and provide SIPS TLS support
-	PKG_CHECK_MODULES([libssl], libssl, , AC_MSG_ERROR([libssl is required]))
+	PKG_CHECK_MODULES([libssl], libssl,, AC_MSG_ERROR([Mising ssl development package: libssl-dev]]))
 	AC_SUBST(libssl_CFLAGS)
 AC_SUBST(libssl_LIBS)
 
 	dnl Check for libzrtpcpp, a ccRTP extension providing zrtp key exchange
 	LIBZRTPCPP_MIN_VERSION=1.3.0
-	PKG_CHECK_MODULES(ZRTPCPP, libzrtpcpp >= ${LIBZRTPCPP_MIN_VERSION})
+	PKG_CHECK_MODULES(ZRTPCPP, libzrtpcpp >= ${LIBZRTPCPP_MIN_VERSION},, AC_MSG_ERROR([Missing zrtp development package: libzrtpcpp-dev]))
 	AC_SUBST(ZRTPCPP_LIBS)
 AC_SUBST(ZRTPCPP_CFLAGS)
 
@@ -259,8 +270,7 @@ AC_CHECK_LIB([expat], XML_ParserCreate_MM,
 	have_expat=false)
 
 if ! $have_expat; then
-AC_MSG_ERROR([You need the eXpat xml parser]
-		[http://expat.sourceforge.net/])
+AC_MSG_ERROR([libexpat development files missing])
 fi
 
 xml_CFLAGS=
@@ -271,12 +281,11 @@ AC_SUBST(xml_LIBS)
 
 AC_CHECK_LIB([yaml], yaml_parser_initialize,
 	       [AC_CHECK_HEADERS(yaml.h, have_yaml=true, have_yaml=false)],
-	       have_yaml = false)
+	       have_yaml=false)
 
-	if test "$have_yaml" = "false"; then
-AC_MSG_ERROR([You need the libyaml yaml parser]
-		[http://expat.sourceforge.net/])
-	fi
+if test "$have_yaml" = "false"; then
+AC_MSG_ERROR([libyaml development files missing])
+fi
 
 yaml_CFLAGS=
 yaml_LIBS=-lyaml
@@ -368,10 +377,10 @@ AM_CONDITIONAL(BUILD_SPEEX, test "x$with_speex" = "xyes" )
 dnl check in case the libspeexdsp is not installed
 AC_CHECK_HEADER([speex/speex_preprocess.h], , AC_MSG_FAILURE([Unable to find the libspeexdsp headers (you may need to install the libspeexdsp-dev package) used for Noise Suppression and Automatic Gain Control.]))
 AC_CHECK_LIB(speexdsp, speex_preprocess_run, [], [], [])
-AM_CONDITIONAL(ENABLE_SPEEXDSP, test  $HAVE_SPEEXDSP = yes)
+AM_CONDITIONAL(ENABLE_SPEEXDSP, test  "x$HAVE_SPEEXDSP" = xyes)
 
 dnl Check for celt. Compile it only if a recent enough version is found
-LIBCELT_MIN_VERSION=0.7.1
+#LIBCELT_MIN_VERSION=0.7.1
 # AC_ARG_WITH([celt],
 #	[AS_HELP_STRING([--without-celt],
 #	[disable support for celt codec])],
@@ -386,15 +395,37 @@ LIBCELT_MIN_VERSION=0.7.1
 #	])
 
 #AC_DEFINE([HAVE_CELT], test "x$with_celt" = "xyes", [Define if you have libcelt])
-#AM_CONDITIONAL(BUILD_CELT, test "x$with_celt" = "xyes" )
+#AM_CONDITIONAL(BUILD_CELT, test "x$with_celt" = "xyes" 
 
-PKG_CHECK_MODULES(CELT, celt >= ${LIBCELT_MIN_VERSION}, [with_celt=yes], [with_celt=no])
+with_celt=no
+PKG_CHECK_MODULES(CELT, celt >= 0.9.1 , 
+	[
+	  BUILD_CELT=91 ; with_celt=yes
+        ], 
+         [
+		PKG_CHECK_MODULES(CELT, celt >= 0.7.1) 
+                BUILD_CELT=71;with_celt=yes 
+         ])
+
+
+AC_SUBST(BUILD_CELT)
+
 AM_CONDITIONAL(BUILD_CELT, test "x$with_celt" = "xyes" )
-PKG_CHECK_MODULES(CELT, celt >= 0.9.1, [with_celt_091=yes], [with_cel_091=no])
-AM_CONDITIONAL(CELT_091, test "x$with_celt_091" = "xyes")
-if test "x$with_celt_091" = "xyes"; then
-AC_MSG_RESULT([Using Celt 0.9.1])
-fi
+
+
+
+
+
+
+
+#PKG_CHECK_MODULES(CELT, celt >= ${LIBCELT_MIN_VERSION}, [with_celt=yes], [with_celt=no])
+
+
+#PKG_CHECK_MODULES(CELT, celt >= 0.9.1, [with_celt_091=yes], [with_celt_091=no])
+#AM_CONDITIONAL(CELT_091, test "x$with_celt_091" = "xyes")
+#if test "x$with_celt_091" = "xyes"; then
+#AC_MSG_RESULT([Using Celt 0.9.1])
+#fi
 
 
 dnl Check for IAX
@@ -465,8 +496,12 @@ AC_DEFUN([BB_ENABLE_DOXYGEN],
 	AC_SUBST(DBUS_SERVICES_DIR)
 	AC_DEFINE_UNQUOTED(DBUS_SERVICES_DIR, "$DBUS_SERVICES_DIR", [Where services dir for DBUS is])
 
+        AC_CONFIG_COMMANDS_POST([(cd libs/pjproject/ && ./configure)])
+
+
 # Go!
 	AC_SUBST(SFLPHONE_CFLAGS)
 	AC_SUBST(SFLPHONE_LIBS)
 	AC_OUTPUT
+
 	AC_MSG_NOTICE([[Configuration done! Please make sure that pjsip library (libs/pjproject) has already been compiled. Run `make' to build the software.]])

@@ -127,7 +127,7 @@ class Celt : public AudioCodec
 
         virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) {
             int err = 0;
-#ifdef USE_091
+#if BUILD_CELT == 91
             err = celt_decode (_dec, src, size, (celt_int16*) dst, size);
 #else
             err = celt_decode (_dec, src, size, (celt_int16*) dst);
@@ -137,7 +137,7 @@ class Celt : public AudioCodec
 
         virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) {
             int len = 0;
-#ifdef USE_091
+#if BUILD_CELT == 91 
             len = celt_encode (_enc, (celt_int16*) src, size, dst, 40);
 #else
             len = celt_encode (_enc, (celt_int16*) src, (celt_int16 *) src, dst, 40);
