@@ -82,6 +82,7 @@ class AudioLayer
             , _outChannel (1)
             , _errorMessage (0)
             , _mutex ()
+        	, countNotificationTime(0)
             , _time (new ost::Time()) {
 
         }
