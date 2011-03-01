@@ -2,7 +2,7 @@ dnl SFLPhone - configure.ac for automake 1.9 and autoconf 2.59
 dnl
 
 dnl Process this file with autoconf to produce a configure script.
-AC_PREREQ(2.65)
+AC_PREREQ([2.67])
 AC_INIT([sflphone],[0.9.12],[sflphoneteam@savoirfairelinux.com],[sflphone])
 AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011]])
 AC_REVISION([$Revision$])
@@ -78,7 +78,7 @@ AC_CONFIG_FILES([doc/Makefile \
 		doc/doxygen/Makefile])
 
 dnl the file stamp-h.in should be there before (instead of AC_CONFIG_HEADERS(config.h))
-dnl AM_CONFIG_HEADER(config.h)
+dnl AC_CONFIG_HEADERS([config.h])
 
 dnl Settings need Standard C++ Library
 LIBS="$LIBS -lstdc++"
@@ -150,20 +150,20 @@ AC_CACHE_CHECK([return type of signal handlers],[ac_cv_type_signal],[AC_COMPILE_
 AC_DEFINE_UNQUOTED([RETSIGTYPE],[$ac_cv_type_signal],[Define as the return type of signal handlers
 		    (`int' or `void').])
 
-	AC_FUNC_STAT
-	AC_FUNC_UTIME_NULL
-	AC_FUNC_VPRINTF
-	AC_CHECK_FUNCS([bzero floor gethostbyname gethrtime gettimeofday \
-			inet_ntoa memset mkdir pathconf pow regcomp select setlocale socket \
-			strchr strdup strerror strrchr strstr strtol utime])
+AC_FUNC_STAT
+AC_FUNC_UTIME_NULL
+AC_FUNC_VPRINTF
+AC_CHECK_FUNCS([bzero floor gethostbyname gethrtime gettimeofday \
+		inet_ntoa memset mkdir pathconf pow regcomp select setlocale socket \
+		strchr strdup strerror strrchr strstr strtol utime])
 
-	dnl *****************************************
-	dnl Check for header files
-	dnl *****************************************
-	SFLPHONE_LIBS="$SFLPHONE_LIBS"
+dnl *****************************************
+dnl Check for header files
+dnl *****************************************
+SFLPHONE_LIBS="$SFLPHONE_LIBS"
 
-	dnl Check for GNU ccRTP
-	PKG_PROG_PKG_CONFIG
+dnl Check for GNU ccRTP
+PKG_PROG_PKG_CONFIG
 
 #Trying to set PJSIP using pkg-config
 #PKG_CHECK_MODULES(SIP, libpj-sfl, have_libpj=true, have_libpj=false)
@@ -172,87 +172,86 @@ AC_DEFINE_UNQUOTED([RETSIGTYPE],[$ac_cv_type_signal],[Define as the return type 
 #fi
 #AC_SUBST(SIP_CFLAGS)
 
-	dnl Check for uuid development package - name: uuid-dev 
-	dnl PKG_CHECK_MODULES(UUID, uuid >= ${UUID_MIN_VERSION})
-	dnl AC_SUBST(UUID_CFLAGS)
+dnl Check for uuid development package - name: uuid-dev 
+dnl PKG_CHECK_MODULES(UUID, uuid >= ${UUID_MIN_VERSION})
+dnl AC_SUBST(UUID_CFLAGS)
 dnl AC_SUBST(UUID_LIBS)
-	UUID_MIN_VERSION=1.0
-	PKG_CHECK_MODULES(UUID, uuid >= ${UUID_MIN_VERSION}, HAVE_UUID=true, HAVE_UUID=false);
-	AC_SUBST(UUID_CFLAGS)
+UUID_MIN_VERSION=1.0
+PKG_CHECK_MODULES(UUID, uuid >= ${UUID_MIN_VERSION}, HAVE_UUID=true, HAVE_UUID=false);
+AC_SUBST(UUID_CFLAGS)
 AC_SUBST(UUID_LIBS)
 
-	dnl Check for alsa development package - name: libasound2-dev 
-	ALSA_MIN_VERSION=1.0
-	PKG_CHECK_MODULES(ALSA, alsa >= ${ALSA_MIN_VERSION},, AC_MSG_ERROR([Mising alsa development package: libasound2-dev or alsa-lib-devel]))
-	AC_SUBST(ALSA_CFLAGS)
+dnl Check for alsa development package - name: libasound2-dev 
+ALSA_MIN_VERSION=1.0
+PKG_CHECK_MODULES(ALSA, alsa >= ${ALSA_MIN_VERSION},, AC_MSG_ERROR([Mising alsa development package: libasound2-dev or alsa-lib-devel]))
+AC_SUBST(ALSA_CFLAGS)
 AC_SUBST(ALSA_LIBS)
 
-	dnl Check for pulseaudio development package - name: libpulse-dev 
-	LIBPULSE_MIN_VERSION=0.9.15
-	PKG_CHECK_MODULES(PULSEAUDIO, libpulse >= ${LIBPULSE_MIN_VERSION},, AC_MSG_ERROR([Mising pulseaudio development package: libpulse-dev]))
-	AC_SUBST(PULSEAUDIO_LIBS)
+dnl Check for pulseaudio development package - name: libpulse-dev 
+LIBPULSE_MIN_VERSION=0.9.15
+PKG_CHECK_MODULES(PULSEAUDIO, libpulse >= ${LIBPULSE_MIN_VERSION},, AC_MSG_ERROR([Mising pulseaudio development package: libpulse-dev]))
+AC_SUBST(PULSEAUDIO_LIBS)
 AC_SUBST(PULSEAUDIO_CFLAGS)
 
-	dnl Check for the samplerate development package - name: libsamplerate0-dev
-	LIBSAMPLERATE_MIN_VERSION=0.1.2
-	PKG_CHECK_MODULES(SAMPLERATE, samplerate >= ${LIBSAMPLERATE_MIN_VERSION},, AC_MSG_ERROR([Mising libsamplerate development package: libsamplerate0-dev]))
-	AC_SUBST(SAMPLERATE_LIBS)
+dnl Check for the samplerate development package - name: libsamplerate0-dev
+LIBSAMPLERATE_MIN_VERSION=0.1.2
+PKG_CHECK_MODULES(SAMPLERATE, samplerate >= ${LIBSAMPLERATE_MIN_VERSION},, AC_MSG_ERROR([Mising libsamplerate development package: libsamplerate0-dev]))
+AC_SUBST(SAMPLERATE_LIBS)
 AC_SUBST(SAMPLERATE_CFLAGS)
 
-	LIBCCGNU2_MIN_VERSION=1.3.1
-	PKG_CHECK_MODULES(CCGNU2, libccgnu2 >= ${LIBCCGNU2_MIN_VERSION},, AC_MSG_ERROR([Mising common cpp development package: libcommoncpp2-dev]))
-	AC_SUBST(CCGNU2_LIBS)
+LIBCCGNU2_MIN_VERSION=1.3.1
+PKG_CHECK_MODULES(CCGNU2, libccgnu2 >= ${LIBCCGNU2_MIN_VERSION},, AC_MSG_ERROR([Mising common cpp development package: libcommoncpp2-dev]))
+AC_SUBST(CCGNU2_LIBS)
 AC_SUBST(CCGNU2_FLAGS)
 
-	LIBCCEXT2_MIN_VERSION=1.3.1
-	PKG_CHECK_MODULES(CCEXT2, libccext2 >= ${LIBCCEXT2_MIN_VERSION})
-	AC_SUBST(CCEXT2_LIBS)
+LIBCCEXT2_MIN_VERSION=1.3.1
+PKG_CHECK_MODULES(CCEXT2, libccext2 >= ${LIBCCEXT2_MIN_VERSION})
+AC_SUBST(CCEXT2_LIBS)
 AC_SUBST(CCEXT2_CFLAGS)
 
-	LIBCCRT_MIN_VERSION=1.3.0
-	PKG_CHECK_MODULES(CCRTP, libccrtp1 >= ${LIBCCRT_MIN_VERSION},, AC_MSG_ERROR([Mising ccrtp development package: libccrtp-dev]))
-	AC_SUBST(CCRTP_LIBS)
+LIBCCRT_MIN_VERSION=1.3.0
+PKG_CHECK_MODULES(CCRTP, libccrtp1 >= ${LIBCCRT_MIN_VERSION},, AC_MSG_ERROR([Mising ccrtp development package: libccrtp-dev]))
+AC_SUBST(CCRTP_LIBS)
 AC_SUBST(CCRTP_CFLAGS)
 
-	dnl Check for OpenSSL to link against pjsip and provide SIPS TLS support
-	PKG_CHECK_MODULES([libssl], libssl,, AC_MSG_ERROR([Mising ssl development package: libssl-dev]]))
-	AC_SUBST(libssl_CFLAGS)
+dnl Check for OpenSSL to link against pjsip and provide SIPS TLS support
+PKG_CHECK_MODULES([libssl], libssl,, AC_MSG_ERROR([Mising ssl development package: libssl-dev]))
+AC_SUBST(libssl_CFLAGS)
 AC_SUBST(libssl_LIBS)
 
-	dnl Check for libzrtpcpp, a ccRTP extension providing zrtp key exchange
-	LIBZRTPCPP_MIN_VERSION=1.3.0
-	PKG_CHECK_MODULES(ZRTPCPP, libzrtpcpp >= ${LIBZRTPCPP_MIN_VERSION},, AC_MSG_ERROR([Missing zrtp development package: libzrtpcpp-dev]))
-	AC_SUBST(ZRTPCPP_LIBS)
+dnl Check for libzrtpcpp, a ccRTP extension providing zrtp key exchange
+LIBZRTPCPP_MIN_VERSION=1.3.0
+PKG_CHECK_MODULES(ZRTPCPP, libzrtpcpp >= ${LIBZRTPCPP_MIN_VERSION},, AC_MSG_ERROR([Missing zrtp development package: libzrtpcpp-dev]))
+AC_SUBST(ZRTPCPP_LIBS)
 AC_SUBST(ZRTPCPP_CFLAGS)
 
 
 dnl DBus-C++ detection (used to be in library own build system)
-	DBUS_REQUIRED_VERSION=0.60
-	PKG_CHECK_MODULES(dbus, [dbus-1 >= $DBUS_REQUIRED_VERSION],,
-			AC_MSG_ERROR([You need the DBus libraries (version 0.6 or better)]
-				[http://gitorious.org/dbus-cplusplus])
-			)
-	AC_SUBST(dbus_CFLAGS)
+DBUS_REQUIRED_VERSION=0.60
+PKG_CHECK_MODULES(dbus, [dbus-1 >= $DBUS_REQUIRED_VERSION],,
+	AC_MSG_ERROR([You need the DBus libraries (version 0.6 or better)]
+				[http://gitorious.org/dbus-cplusplus]))
+AC_SUBST(dbus_CFLAGS)
 AC_SUBST(dbus_LIBS)
 
-	DBUS_API_STABLE_VERSION=1.0.0
-	PKG_CHECK_EXISTS([dbus-1 < $DBUS_API_STABLE_VERSION],
-			[AC_DEFINE(DBUS_API_SUBJECT_TO_CHANGE, , [unstable DBus])]
-			)
+DBUS_API_STABLE_VERSION=1.0.0
+PKG_CHECK_EXISTS([dbus-1 < $DBUS_API_STABLE_VERSION],
+	[AC_DEFINE(DBUS_API_SUBJECT_TO_CHANGE, , [unstable DBus])]
+	)
 
-	DBUS_THREADS_INIT_DEFAULT_VERSION=0.93
-	PKG_CHECK_EXISTS([dbus-1 >= $DBUS_THREADS_INIT_DEFAULT_VERSION],
-			[AC_DEFINE(DBUS_HAS_THREADS_INIT_DEFAULT, , [dbus_threads_init_default (needs DBus >= 0.93)])]
-			)
+DBUS_THREADS_INIT_DEFAULT_VERSION=0.93
+PKG_CHECK_EXISTS([dbus-1 >= $DBUS_THREADS_INIT_DEFAULT_VERSION],
+	[AC_DEFINE(DBUS_HAS_THREADS_INIT_DEFAULT, , [dbus_threads_init_default (needs DBus >= 0.93)])]
+	)
 
-	DBUS_RECURSIVE_MUTEX_VERSION=0.95
-	PKG_CHECK_EXISTS([dbus-1 >= $DBUS_RECURSIVE_MUTEX_VERSION],
-			[AC_DEFINE(DBUS_HAS_RECURSIVE_MUTEX, , [DBus supports recursive mutexes (needs DBus >= 0.95)])]
-			)
+DBUS_RECURSIVE_MUTEX_VERSION=0.95
+PKG_CHECK_EXISTS([dbus-1 >= $DBUS_RECURSIVE_MUTEX_VERSION],
+	[AC_DEFINE(DBUS_HAS_RECURSIVE_MUTEX, , [DBus supports recursive mutexes (needs DBus >= 0.95)])]
+	)
 
 
-	AC_ARG_WITH(debug,
-			AS_HELP_STRING(
+AC_ARG_WITH(debug,
+		AS_HELP_STRING(
 				[--with-debug],
 				[Set 'full' to enable debugging information @<:@default=no@:>@]
 				),
@@ -379,53 +378,27 @@ AC_CHECK_HEADER([speex/speex_preprocess.h], , AC_MSG_FAILURE([Unable to find the
 AC_CHECK_LIB(speexdsp, speex_preprocess_run, [], [], [])
 AM_CONDITIONAL(ENABLE_SPEEXDSP, test  "x$HAVE_SPEEXDSP" = xyes)
 
-dnl Check for celt. Compile it only if a recent enough version is found
-#LIBCELT_MIN_VERSION=0.7.1
-# AC_ARG_WITH([celt],
-#	[AS_HELP_STRING([--without-celt],
-#	[disable support for celt codec])],
-#	[],
-#	[with_celt=yes])
-	
-# AS_IF([test "x$with_celt" != xno],
-#	[AC_CHECK_HEADER([celt/celt.h], , AC_MSG_FAILURE([Unable to find the libcelt headers (you may need to install the dev package). You may use --without-celt to compile without celt codec support.]))]
-#	[AC_CHECK_LIB([celt], [celt_decode_ctl],
-#	[],
-#	[AC_MSG_FAILURE([libcelt link test failed.   You may use --without-celt to compile without celt codec support.])])
-#	])
 
-#AC_DEFINE([HAVE_CELT], test "x$with_celt" = "xyes", [Define if you have libcelt])
-#AM_CONDITIONAL(BUILD_CELT, test "x$with_celt" = "xyes" 
+# check for libcelt 
+AC_ARG_WITH([celt],
+		[AS_HELP_STRING([--without-celt],
+		[disable support for celt codec])],
+		[],
+		[with_celt=yes])
 
-with_celt=no
-PKG_CHECK_MODULES(CELT, celt >= 0.9.1 , 
-	[
-	  BUILD_CELT=91 ; with_celt=yes
-        ], 
-         [
-		PKG_CHECK_MODULES(CELT, celt >= 0.7.1) 
-                BUILD_CELT=71;with_celt=yes 
-         ])
-
+AS_IF([test "x$with_celt" != xno],
+	PKG_CHECK_MODULES(CELT, celt >= 0.9.1, 
+		[
+			BUILD_CELT=91 ; with_celt=yes
+    	], 
+    	[
+			PKG_CHECK_MODULES(CELT, celt >= 0.7.1,,AC_MSG_FAILURE([libcelt link test failed.   You may use --without-celt to compile without celt codec support.])) 
+        	BUILD_CELT=71; with_celt=yes;
+    	])
+)
 
 AC_SUBST(BUILD_CELT)
-
 AM_CONDITIONAL(BUILD_CELT, test "x$with_celt" = "xyes" )
-
-
-
-
-
-
-
-#PKG_CHECK_MODULES(CELT, celt >= ${LIBCELT_MIN_VERSION}, [with_celt=yes], [with_celt=no])
-
-
-#PKG_CHECK_MODULES(CELT, celt >= 0.9.1, [with_celt_091=yes], [with_celt_091=no])
-#AM_CONDITIONAL(CELT_091, test "x$with_celt_091" = "xyes")
-#if test "x$with_celt_091" = "xyes"; then
-#AC_MSG_RESULT([Using Celt 0.9.1])
-#fi
 
 
 dnl Check for IAX
@@ -496,12 +469,10 @@ AC_DEFUN([BB_ENABLE_DOXYGEN],
 	AC_SUBST(DBUS_SERVICES_DIR)
 	AC_DEFINE_UNQUOTED(DBUS_SERVICES_DIR, "$DBUS_SERVICES_DIR", [Where services dir for DBUS is])
 
-        AC_CONFIG_COMMANDS_POST([(cd libs/pjproject/ && ./configure)])
+        AC_CONFIG_COMMANDS_POST([(cd libs/pjproject/ && ./autogen.sh && ./configure --prefix=/usr)])
 
 
 # Go!
 	AC_SUBST(SFLPHONE_CFLAGS)
 	AC_SUBST(SFLPHONE_LIBS)
 	AC_OUTPUT
-
-	AC_MSG_NOTICE([[Configuration done! Please make sure that pjsip library (libs/pjproject) has already been compiled. Run `make' to build the software.]])
