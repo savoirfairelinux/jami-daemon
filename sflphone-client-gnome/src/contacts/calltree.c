@@ -43,10 +43,15 @@
 #include "../imwindow.h"
 #include "searchbar.h"
 
+// Messages used in menu item
+#define SFL_CREATE_CONFERENCE "Create conference"
+#define SFL_TRANSFER_CALL "Transfer call to"
+
 GtkWidget *sw;
 GtkCellRenderer *rend;
 GtkTreeViewColumn *col;
 GtkTreeSelection *sel;
+GtkWidget *popupmenu = NULL;
 
 gint dragged_type;
 gint selected_type;
@@ -70,7 +75,7 @@ conference_obj_t *selected_conf;
 static void drag_begin_cb (GtkWidget *widget, GdkDragContext *dc, gpointer data);
 static void drag_end_cb (GtkWidget * mblist, GdkDragContext * context, gpointer data);
 void drag_data_received_cb (GtkWidget *widget, GdkDragContext *dc, gint x, gint y, GtkSelectionData *selection_data, guint info, guint t, gpointer data);
-
+static void menuitem_response (gchar *);
 
 enum {
     COLUMN_ACCOUNT_STATE = 0,
@@ -533,6 +538,10 @@ focus_on_calltree_in()
 void
 calltree_create (calltab_t* tab, gboolean searchbar_type)
 {
+    GtkWidget *menu_items;
+    gchar *conference = SFL_CREATE_CONFERENCE;
+    gchar *transfer = SFL_TRANSFER_CALL;
+
 
     tab->tree = gtk_vbox_new (FALSE, 10);
 
@@ -593,6 +602,22 @@ calltree_create (calltab_t* tab, gboolean searchbar_type)
 
         // destination widget drag n drop signals
         g_signal_connect (G_OBJECT (tab->view), "drag_data_received", G_CALLBACK (drag_data_received_cb), NULL);
+
+        popupmenu = gtk_menu_new ();
+
+        menu_items = gtk_menu_item_new_with_label (transfer);
+        g_signal_connect_swapped (menu_items, "activate",
+                                                      G_CALLBACK (menuitem_response),
+                                                      (gpointer) g_strdup (transfer));
+        gtk_menu_shell_append (GTK_MENU_SHELL (popupmenu), menu_items);
+        gtk_widget_show (menu_items);
+
+        menu_items = gtk_menu_item_new_with_label (conference);
+        g_signal_connect_swapped (menu_items, "activate",
+                                              G_CALLBACK (menuitem_response),
+                                              (gpointer) g_strdup (conference));
+        gtk_menu_shell_append (GTK_MENU_SHELL (popupmenu), menu_items);
+        gtk_widget_show (menu_items);
 
     }
 
@@ -1561,8 +1586,14 @@ static void drag_end_cb (GtkWidget * widget UNUSED, GdkDragContext * context UNU
                     // draged a call on itself
                 } else {
                     // dragged a single call on a single call
-                    if (selected_call != NULL && dragged_call != NULL)
-                        sflphone_join_participant (selected_call->_callID, dragged_call->_callID);
+                    if (selected_call != NULL && dragged_call != NULL) {
+                        calltree_remove_call (current_calls, selected_call, NULL);
+                        calltree_add_call (current_calls, selected_call, NULL);
+                        gtk_menu_popup (GTK_MENU (popupmenu), NULL, NULL, NULL, NULL,
+                                               0, 0);
+
+                        // sflphone_join_participant (selected_call->_callID, dragged_call->_callID);
+                    }
                 }
             } else if (selected_type == A_CALL && dragged_type == A_CONFERENCE) {
 
@@ -1812,3 +1843,26 @@ void drag_data_received_cb (GtkWidget *widget, GdkDragContext *context UNUSED, g
         }
     }
 }
+
+/* Print a string when a menu item is selected */
+
+static void menuitem_response( gchar *string )
+{
+    if(g_strcmp0(string, SFL_CREATE_CONFERENCE) == 0) {
+        sflphone_join_participant (selected_call->_callID, dragged_call->_callID);
+    }
+    else if(g_strcmp0(string, SFL_TRANSFER_CALL) == 0) {
+        if(selected_call->_state == CALL_STATE_HOLD && dragged_call->_state == CALL_STATE_CURRENT) {
+            g_print("Calltree: Transfering call %s, to %s", selected_call->_peer_number, dragged_call->_peer_number);
+            selected_call->_trsft_to = g_strdup(dragged_call->_peer_number);
+            dbus_hang_up (dragged_call);
+            dbus_transfert (selected_call);
+        }
+    }
+    else {
+        g_print("CallTree: Error unknown option selected in menu %s", string);
+    }
+
+    printf ("%s\n", string);
+}
+
