@@ -2132,6 +2132,9 @@ bool SIPVoIPLink::pjsip_init()
 
     _debug ("UserAgent: pjsip version %s for %s initialized", pj_get_version(), PJ_OS_NAME);
 
+    status = pjsip_replaces_init_module	(_endpt);
+    PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
+
     // Create the secondary thread to poll sip events
     _evThread->start();
 
@@ -2965,7 +2968,42 @@ void SIPVoIPLink::shutdownSipTransport (const AccountID& accountID)
 
 }
 
+std::string SIPVoIPLink::parseDisplayName(char * buffer)
+{
+    // Parse the display name from "From" header
+    char* from_header = strstr (buffer, "From: ");
 
+    std::string displayName;
+
+    if (from_header) {
+        std::string temp (from_header);
+        int begin_displayName = temp.find ("\"") + 1;
+        int end_displayName = temp.rfind ("\"");
+        displayName = temp.substr (begin_displayName, end_displayName - begin_displayName);
+
+        if (displayName.size() > 25) {
+            displayName = std::string ("");
+        }
+    } else {
+        displayName = std::string ("");
+    }
+
+    return displayName;
+}
+
+void SIPVoIPLink::stripSipUriPrefix(std::string& sipUri)
+{
+    //Remove sip: prefix
+    size_t found = sipUri.find ("sip:");
+
+    if (found!=std::string::npos)
+    	sipUri.erase (found, found+4);
+
+    found = sipUri.find ("@");
+
+    if (found!=std::string::npos)
+    	sipUri.erase (found);
+}
 
 bool SIPVoIPLink::loadSIPLocalIP (std::string *addr)
 {
@@ -3458,13 +3496,14 @@ void transaction_state_changed_cb (pjsip_inv_session *inv UNUSED, pjsip_transact
 {
     assert (tsx);
 
-    _debug ("UserAgent: Transaction changed to state %s", transactionStateMap[tsx->state]);
-
     pjsip_rx_data* r_data;
     pjsip_tx_data* t_data;
 
+    _debug ("UserAgent: Transaction changed to state %s", transactionStateMap[tsx->state]);
+
+
     if (tsx->role==PJSIP_ROLE_UAS && tsx->state==PJSIP_TSX_STATE_TRYING &&
-    pjsip_method_cmp (&tsx->method, &pjsip_refer_method) ==0) {
+        pjsip_method_cmp (&tsx->method, &pjsip_refer_method) ==0) {
         /** Handle the refer method **/
         onCallTransfered (inv, e->body.tsx_state.src.rdata);
 
@@ -3555,6 +3594,7 @@ void transaction_state_changed_cb (pjsip_inv_session *inv UNUSED, pjsip_transact
                 _error ("SipVoipLink: %s", e.what());
                 message = "";
                 from = call->getPeerNumber ();
+                return;
             }
 
 
@@ -3684,31 +3724,21 @@ pj_bool_t
 transaction_request_cb (pjsip_rx_data *rdata)
 {
     pj_status_t status;
-    pj_str_t reason;
     unsigned options = 0;
-    pjsip_dialog* dialog;
+    pjsip_dialog* dialog, *replaced_dlg;
     pjsip_tx_data *tdata;
-    AccountID account_id;
-    pjsip_uri *uri;
-    pjsip_sip_uri *sip_uri;
-    std::string userName, server, displayName;
+    pjsip_tx_data *response;
     SIPVoIPLink *link;
     CallID id;
     SIPCall* call;
     pjsip_inv_session *inv;
-    SIPAccount *account;
     pjmedia_sdp_session *r_sdp;
-
-    // pjsip_generic_string_hdr* hdr;
-
-    // voicemail part
-    std::string method_name;
-    std::string request;
+    pjsip_response_addr *res_addr;
 
     _info ("UserAgent: Transaction REQUEST received using transport: %s %s (refcnt=%d)",
-    rdata->tp_info.transport->obj_name,
-    rdata->tp_info.transport->info,
-    (int) pj_atomic_get (rdata->tp_info.transport->ref_cnt));
+    						rdata->tp_info.transport->obj_name,
+    						rdata->tp_info.transport->info,
+    						(int) pj_atomic_get (rdata->tp_info.transport->ref_cnt));
 
     // No need to go any further on incoming ACK
     if (rdata->msg_info.msg->line.req.method.id == PJSIP_ACK_METHOD && pjsip_rdata_get_dlg (rdata) != NULL) {
@@ -3719,15 +3749,15 @@ transaction_request_cb (pjsip_rx_data *rdata)
     /* First, let's got the username and server name from the invite.
      * We will use them to detect which account is the callee.
      */
-    uri = rdata->msg_info.to->uri;
-    sip_uri = (pjsip_sip_uri *) pjsip_uri_get_uri (uri);
+    pjsip_uri *uri = rdata->msg_info.to->uri;
+    pjsip_sip_uri *sip_uri = (pjsip_sip_uri *) pjsip_uri_get_uri (uri);
 
-    userName = std::string (sip_uri->user.ptr, sip_uri->user.slen);
-    server = std::string (sip_uri->host.ptr, sip_uri->host.slen);
+    std::string userName = std::string (sip_uri->user.ptr, sip_uri->user.slen);
+    std::string server = std::string (sip_uri->host.ptr, sip_uri->host.slen);
+    _debug ("UserAgent: The receiver is: %s@%s", userName.data(), server.data());
 
     // Get the account id of callee from username and server
-    account_id = Manager::instance().getAccountIdFromNameAndServer (userName, server);
-
+    AccountID account_id = Manager::instance().getAccountIdFromNameAndServer (userName, server);
     _debug ("UserAgent: Account ID for this call, %s", account_id.c_str());
 
     /* If we don't find any account to receive the call */
@@ -3737,71 +3767,40 @@ transaction_request_cb (pjsip_rx_data *rdata)
 
     /* Get the voip link associated to the incoming call */
     /* The account must before have been associated to the call in ManagerImpl */
-    link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (account_id));
-
-    /* If we can't find any voIP link to handle the incoming call */
-    if (!link) {
+    if((link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (account_id))) == NULL) {
         _warn ("UserAgent: Error: cannot retrieve the voiplink from the account ID...");
-        // pj_strdup2 (_pool, &reason, "ERROR: cannot retrieve the voip link from account");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
-        NULL, NULL, NULL);
-        return true;
+        							   NULL, NULL, NULL);
         return false;
     }
 
-    // Parse the display name from "From" header
-    char* from_header = strstr (rdata->msg_info.msg_buf, "From: ");
-
-    if (from_header) {
-        std::string temp (from_header);
-        int begin_displayName = temp.find ("\"") + 1;
-        int end_displayName = temp.rfind ("\"");
-        displayName = temp.substr (begin_displayName, end_displayName - begin_displayName);
-
-        if (displayName.size() > 25) {
-            displayName = std::string ("");
-        }
-    } else {
-        displayName = std::string ("");
-    }
-
-    _debug ("UserAgent: The receiver is: %s@%s", userName.data(), server.data());
-    _debug ("UserAgent: The callee account is %s", account_id.c_str());
+    // retrive display name from the message buffer
+    std::string displayName = SIPVoIPLink::parseDisplayName(rdata->msg_info.msg_buf);
+    _debug("UserAgent: Display name for this call %s", displayName.c_str());
 
     /* Now, it is the time to find the information of the caller */
     uri = rdata->msg_info.from->uri;
-
     sip_uri = (pjsip_sip_uri *) pjsip_uri_get_uri (uri);
 
     // Store the peer number
     char tmp[PJSIP_MAX_URL_SIZE];
-    int length = pjsip_uri_print (PJSIP_URI_IN_FROMTO_HDR,
-    sip_uri, tmp, PJSIP_MAX_URL_SIZE);
-
+    int length = pjsip_uri_print (PJSIP_URI_IN_FROMTO_HDR, sip_uri, tmp, PJSIP_MAX_URL_SIZE);
     std::string peerNumber (tmp, length);
 
     //Remove sip: prefix
-    size_t found = peerNumber.find ("sip:");
-
-    if (found!=std::string::npos)
-        peerNumber.erase (found, found+4);
-
-    found = peerNumber.find ("@");
-
-    if (found!=std::string::npos)
-        peerNumber.erase (found);
-
+    SIPVoIPLink::stripSipUriPrefix(peerNumber);
     _debug ("UserAgent: Peer number: %s", peerNumber.c_str());
 
     // Get the server voicemail notification
     // Catch the NOTIFY message
     if (rdata->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD) {
 
-        method_name = "NOTIFY";
-        // Retrieve all the message. Should contains only the method name but ...
-        request =  rdata->msg_info.msg->line.req.method.name.ptr;
-        // Check if the message is a notification
+        std::string method_name = "NOTIFY";
 
+        // Retrieve all the message. Should contains only the method name but ...
+        std::string request =  rdata->msg_info.msg->line.req.method.name.ptr;
+
+        // Check if the message is a notification
         if (request.find (method_name) != (size_t)-1) {
             /* Notify the right account */
             setVoicemailInfo (account_id, rdata->msg_info.msg->body);
@@ -3822,30 +3821,26 @@ transaction_request_cb (pjsip_rx_data *rdata)
     // Respond statelessly any non-INVITE requests with 500
     if (rdata->msg_info.msg->line.req.method.id != PJSIP_INVITE_METHOD) {
         if (rdata->msg_info.msg->line.req.method.id != PJSIP_ACK_METHOD) {
-            // pj_strdup2 (_pool, &reason, "user agent unable to handle this request ");
             pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_METHOD_NOT_ALLOWED,
             NULL, NULL, NULL);
             return true;
         }
     }
 
-    account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
+    SIPAccount *account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
 
     getRemoteSdpFromOffer (rdata, &r_sdp);
 
     if (account->getActiveCodecs().empty()) {
         _warn ("UserAgent: Error: No active codec");
-        // pj_strdup2 (_pool, &reason, "no active codec");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_NOT_ACCEPTABLE_HERE ,
-        NULL, NULL, NULL);
-        return true;
+        											  NULL, NULL, NULL);
+        return false;
     }
 
     // Verify that we can handle the request
     status = pjsip_inv_verify_request (rdata, &options, NULL, NULL, _endpt, NULL);
-
     if (status != PJ_SUCCESS) {
-        // pj_strdup2 (_pool, &reason, "user agent unable to handle this INVITE");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_METHOD_NOT_ALLOWED,
         NULL, NULL, NULL);
         return true;
@@ -3884,7 +3879,6 @@ transaction_request_cb (pjsip_rx_data *rdata)
     // If an error occured at the call creation
     if (!call) {
         _warn ("UserAgent: Error: Unable to create an incoming call");
-        // pj_strdup2 (_pool, &reason, "unable to create an incoming call");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
         NULL, NULL, NULL);
         return false;
@@ -4013,7 +4007,6 @@ transaction_request_cb (pjsip_rx_data *rdata)
         delete call;
         call = NULL;
         _warn ("UserAgent: fail in receiving initial offer");
-        // pj_strdup2 (_pool, &reason, "fail in receiving initial offer");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
         NULL, NULL, NULL);
         return false;
@@ -4026,7 +4019,6 @@ transaction_request_cb (pjsip_rx_data *rdata)
         delete call;
         call = NULL;
         _warn ("UserAgent: Error: Failed to create uas dialog");
-        // pj_strdup2 (_pool, &reason, "fail to create uas dialog");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
         NULL, NULL, NULL);
         return false;
@@ -4066,7 +4058,6 @@ transaction_request_cb (pjsip_rx_data *rdata)
         delete call;
         call = NULL;
         _warn ("UserAgent: Fail to notify UI!");
-        // pj_strdup2 (_pool, &reason, "fail to notify ui");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
         NULL, NULL, NULL);
         return false;

@@ -389,6 +389,11 @@ class SIPVoIPLink : public VoIPLink
          */
         bool sendTextMessage (sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from);
 
+
+        static std::string parseDisplayName(char *);
+
+        static void stripSipUriPrefix(std::string&);
+
     private:
         /**
          * Constructor
@@ -497,7 +502,6 @@ class SIPVoIPLink : public VoIPLink
          * @return pj_status_t PJ_SUCCESS on success
          */
         pj_status_t createAlternateUdpTransport (AccountID id);
-
 
         /**
          * UDP Transports are stored in this map in order to retreive them in case
