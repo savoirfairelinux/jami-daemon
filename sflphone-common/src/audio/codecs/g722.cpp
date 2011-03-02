@@ -103,10 +103,20 @@ class G722 : public AudioCodec
             // Enable 8khz mode, encode using lower subband only
             encode_s->eight_k = FALSE;
 
+
             // Never set packed TRUE when using 64 kbps
             encode_s->packed = FALSE;
+
+            memset(encode_s->band, 0, sizeof(decode_s->band) * 2);
             encode_s->band[0].det = 32;
             encode_s->band[1].det = 8;
+
+            memset(encode_s->x, 0, sizeof(int) * 24);
+
+            decode_s->in_buffer = 0;
+            decode_s->in_bits = 0;
+            decode_s->out_buffer = 0;
+            decode_s->out_bits = 0;
         }
 
         void g722_decode_init (void) {
@@ -121,14 +131,23 @@ class G722 : public AudioCodec
 
             // Never set packed TRUE when using 64 kbps
             decode_s->packed = FALSE;
+
+            memset(decode_s->band, 0, sizeof(decode_s->band) * 2);
             decode_s->band[0].det = 32;
             decode_s->band[1].det = 8;
 
             decode_s->in_bits = 0;
+
+            memset(decode_s->x, 0, sizeof(int) * 24);
+
+            decode_s->in_buffer = 0;
+            decode_s->in_bits = 0;
+            decode_s->out_buffer = 0;
+            decode_s->out_bits = 0;
         }
 
         int16_t saturate (int32_t amp) {
-            int16_t amp16;
+            int16_t amp16 = 0;
 
             /* Hopefully this is optimised for the common case - not clipping */
             amp16 = (int16_t) amp;

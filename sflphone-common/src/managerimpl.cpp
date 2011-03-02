@@ -3038,10 +3038,10 @@ void ManagerImpl::switchAudioManager (void)
     // }
 }
 
-void ManagerImpl::audioSamplingRateChanged (void)
+void ManagerImpl::audioSamplingRateChanged (int samplerate)
 {
 
-    int type, samplerate, framesize, numCardIn, numCardOut, numCardRing;
+    int type, currentSamplerate, framesize, numCardIn, numCardOut, numCardRing;
     std::string alsaPlugin;
 
     _debug ("Manager: Audio sampling rate changed");
@@ -3049,9 +3049,14 @@ void ManagerImpl::audioSamplingRateChanged (void)
     if (!_audiodriver)
         return;
 
+    // Only modify internal sampling rate if new sampling rate is higher
+    currentSamplerate = _mainBuffer.getInternalSamplingRate();
+    if(currentSamplerate <= samplerate)
+    	return;
+
     type = _audiodriver->getLayerType();
 
-    samplerate = _mainBuffer.getInternalSamplingRate();
+    // samplerate = _mainBuffer.getInternalSamplingRate();
     framesize = audioPreference.getFramesize();
 
     _debug ("Manager: new samplerate: %d, new framesize %d", samplerate, framesize);
@@ -3100,6 +3105,8 @@ void ManagerImpl::audioSamplingRateChanged (void)
         notifyErrClient (_audiodriver -> getErrorMessage());
 
     _debug ("Manager: Current device: %d ", type);
+
+    _mainBuffer.setInternalSamplingRate(samplerate);
 
     if (_audiodriver) {
         unsigned int sampleRate = _audiodriver->getSampleRate();

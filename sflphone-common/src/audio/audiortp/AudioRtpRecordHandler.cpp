@@ -158,7 +158,8 @@ void AudioRtpRecordHandler::updateRtpMedia (AudioCodec *audioCodec)
 
     _audioRtpRecord.audioCodecMutex.leave();
 
-    Manager::instance().getMainBuffer()->setInternalSamplingRate (_audioRtpRecord._codecSampleRate);
+    // Manager::instance().getMainBuffer()->setInternalSamplingRate (_audioRtpRecord._codecSampleRate);
+    Manager::instance().audioSamplingRateChanged(_audioRtpRecord._codecSampleRate);
 
     if (lastSamplingRate != _audioRtpRecord._codecSampleRate)
         updateNoiseSuppress();
@@ -173,7 +174,8 @@ void AudioRtpRecordHandler::initBuffers()
     int codecSampleRate = _audioRtpRecord._codecSampleRate;
 
     // Set sampling rate, main buffer choose the highest one
-    Manager::instance().getMainBuffer()->setInternalSamplingRate (codecSampleRate);
+    // Manager::instance().getMainBuffer()->setInternalSamplingRate (codecSampleRate);
+    Manager::instance().audioSamplingRateChanged(codecSampleRate);
 
     // initialize SampleRate converter using AudioLayer's sampling rate
     // (internal buffers initialized with maximal sampling rate and frame size)

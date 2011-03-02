@@ -851,7 +851,11 @@ class ManagerImpl
 
         void switchAudioManager (void);
 
-        void audioSamplingRateChanged (void);
+        /**
+         * Set the internal audio sampling rate change. Should close the audio layer and
+         * reopen stream at different rate,
+         */
+        void audioSamplingRateChanged (int);
 
         /**
          * Get the desktop mail notification level

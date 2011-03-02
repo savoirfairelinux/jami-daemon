@@ -57,11 +57,11 @@ void MainBuffer::setInternalSamplingRate (int sr)
         // This call takes the mutex
         flushAllBuffers();
 
-        ost::MutexLock guard (_mutex);
+        // ost::MutexLock guard (_mutex);
 
         _internalSamplingRate = sr;
 
-        Manager::instance().audioSamplingRateChanged();
+        // Manager::instance().audioSamplingRateChanged(sr);
 
     }
 }
