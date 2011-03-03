@@ -650,8 +650,8 @@ int SIPVoIPLink::sendRegister (AccountID id)
     if (status != PJ_SUCCESS) {
         _debug ("UserAgent: Unable to register regc.");
         _mutexSIP.leaveMutex();
-        return false;
     }
+        return false;
 
     pjsip_tpselector *tp;
 
@@ -1202,20 +1202,18 @@ bool
 SIPVoIPLink::transfer (const CallID& id, const std::string& to)
 {
 
-    SIPCall *call;
     std::string tmp_to;
     pjsip_evsub *sub;
     pjsip_tx_data *tdata;
 
     struct pjsip_evsub_user xfer_cb;
     pj_status_t status;
-    AccountID account_id;
-    SIPAccount * account = NULL;
 
-    call = getSIPCall (id);
+    SIPCall *call = getSIPCall (id);
     call->stopRecording();
-    account_id = Manager::instance().getAccountFromCall (id);
-    account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
+
+    AccountID account_id = Manager::instance().getAccountFromCall (id);
+    SIPAccount *account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
 
     if (!account) {
         _error ("UserAgent: Error: Transfer account is null. Returning.");
@@ -1281,6 +1279,34 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
     }
 
     return true;
+}
+
+bool SIPVoIPLink::transferWithReplaces(const CallID& transferedId, const CallID& transferTargetId)
+{
+	char str_dest_buf[PJSIP_MAX_URL_SIZE*2];
+	pj_str_t str_dest;
+
+	/*
+    len = pj_ansi_snprintf(str_dest_buf + str_dest.slen,
+                           sizeof(str_dest_buf) - str_dest.slen,
+                           "?%s"
+                           "Replaces=%.*s"
+                           "%%3Bto-tag%%3D%.*s"
+                           "%%3Bfrom-tag%%3D%.*s>",
+                           ((options&PJSUA_XFER_NO_REQUIRE_REPLACES) ?
+                            "" : "Require=replaces&"),
+                           (int)dest_dlg->call_id->id.slen,
+                           dest_dlg->call_id->id.ptr,
+                           (int)dest_dlg->remote.info->tag.slen,
+                           dest_dlg->remote.info->tag.ptr,
+                           (int)dest_dlg->local.info->tag.slen,
+                           dest_dlg->local.info->tag.ptr);
+
+    pjsip_replaces_hdr *replaces_hdr =  pjsip_replaces_hdr_create (_pool);
+      // replaces_hdr;
+      pjsip_msg_add_hdr (tdata->msg, pjsip_hdr *hdr);
+*/
+	return true;
 }
 
 bool SIPVoIPLink::transferStep2 (SIPCall* call)
@@ -3874,10 +3900,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
     // Generate a new call ID for the incoming call!
     id = Manager::instance().getNewCallID();
 
-    call = new SIPCall (id, Call::Incoming, _cp);
-
-    // If an error occured at the call creation
-    if (!call) {
+    if((call = new SIPCall (id, Call::Incoming, _cp)) == NULL) {
         _warn ("UserAgent: Error: Unable to create an incoming call");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
         NULL, NULL, NULL);
@@ -3885,7 +3908,6 @@ transaction_request_cb (pjsip_rx_data *rdata)
     }
 
     Manager::instance().associateCallToAccount (call->getCallId(), account_id);
-
 
     std::string addrToUse, addrSdp ="0.0.0.0";
 
@@ -3924,7 +3946,6 @@ transaction_request_cb (pjsip_rx_data *rdata)
     call->initRecFileName (peerNumber);
 
     _debug ("UserAgent: DisplayName: %s", displayName.c_str());
-
 
     // Have to do some stuff with the SDP
     // Set the codec map, IP, peer number and so on... for the SIPCall object
@@ -4034,38 +4055,68 @@ transaction_request_cb (pjsip_rx_data *rdata)
     // Associate the call in the invite session
     inv->mod_data[_mod_ua.id] = call;
 
-    // Send a 180 Ringing response
-    _info ("UserAgent: Send a 180 Ringing response");
-    status = pjsip_inv_initial_answer (inv, rdata, PJSIP_SC_RINGING, NULL, NULL, &tdata);
-    PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
-
-    status = pjsip_inv_send_msg (inv, tdata);
-    PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
-
-    // Associate invite session to the current call
-    call->setInvSession (inv);
-
-    // Update the connection state
-    call->setConnectionState (Call::Ringing);
-
-    _debug ("UserAgent: Add call to account link");
-
-    if (Manager::instance().incomingCall (call, account_id)) {
-        // Add this call to the callAccountMap in ManagerImpl
-        Manager::instance().getAccountLink (account_id)->addCall (call);
-    } else {
-        // Fail to notify UI
-        delete call;
-        call = NULL;
-        _warn ("UserAgent: Fail to notify UI!");
-        pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
-        NULL, NULL, NULL);
-        return false;
+    // Check whether Replaces header is present in the request and process accordingly.
+    status = pjsip_replaces_verify_request(rdata, &replaced_dlg, PJ_FALSE, &response);
+    if (status != PJ_SUCCESS) {
+    	// Something wrong with Replaces request.
+        // Respond with 500 (Internal Server Error)
+    	pjsip_endpt_respond_stateless(_endpt, rdata, 500, NULL, NULL, NULL);
     }
 
-    /* Done */
-    return true;
+    // Check if call have been transfered
+    if(replaced_dlg) { // If Replace header present
 
+    	pjsip_inv_session *replaced_inv;
+
+    	// Always answer the new INVITE with 200, regardless whether
+    	// the replaced call is in early or confirmed state.
+    	if((status = pjsip_inv_answer(inv, 200, NULL, NULL, &response)) == PJ_SUCCESS)
+    		pjsip_inv_send_msg(inv, response);
+
+    	// Get the INVITE session associated with the replaced dialog.
+    	replaced_inv = pjsip_dlg_get_inv_session(replaced_dlg);
+
+    	// Disconnect the "replaced" INVITE session.
+         status = pjsip_inv_end_session(replaced_inv, PJSIP_SC_GONE, NULL, &tdata);
+         if (status == PJ_SUCCESS && tdata)
+             status = pjsip_inv_send_msg(replaced_inv, tdata);
+
+         call->replaceInvSession(inv);
+    }
+    else { // Prooceed with normal call flow
+
+        // Send a 180 Ringing response
+        _info ("UserAgent: Send a 180 Ringing response");
+        status = pjsip_inv_initial_answer (inv, rdata, PJSIP_SC_RINGING, NULL, NULL, &tdata);
+        PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
+
+        status = pjsip_inv_send_msg (inv, tdata);
+        PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
+
+    	// Associate invite session to the current call
+    	call->setInvSession (inv);
+
+    	// Update the connection state
+    	call->setConnectionState (Call::Ringing);
+
+    	_debug ("UserAgent: Add call to account link");
+
+    	if (Manager::instance().incomingCall (call, account_id)) {
+    		// Add this call to the callAccountMap in ManagerImpl
+    		Manager::instance().getAccountLink (account_id)->addCall (call);
+    	} else {
+    		// Fail to notify UI
+    		delete call;
+    		call = NULL;
+    		_warn ("UserAgent: Fail to notify UI!");
+    		pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
+    				NULL, NULL, NULL);
+    		return false;
+    	}
+
+    	/* Done */
+    	return true;
+    }
 }
 
 pj_bool_t transaction_response_cb (pjsip_rx_data *rdata)

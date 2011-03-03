@@ -139,6 +139,10 @@ class SIPCall : public Call
             return _invSession;
         }
 
+        void replaceInvSession (pjsip_inv_session *inv) {
+        	_invSession = inv;
+        }
+
         /**
          * Return the local SDP session
          */
