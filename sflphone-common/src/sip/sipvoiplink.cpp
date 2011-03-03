@@ -4121,13 +4121,15 @@ transaction_request_cb (pjsip_rx_data *rdata)
     // Check whether Replaces header is present in the request and process accordingly.
     status = pjsip_replaces_verify_request(rdata, &replaced_dlg, PJ_FALSE, &response);
     if (status != PJ_SUCCESS) {
-    	// Something wrong with Replaces request.
+    	_warn("UserAgent: Error: Something wrong with Replaces request.");
         // Respond with 500 (Internal Server Error)
     	pjsip_endpt_respond_stateless(_endpt, rdata, 500, NULL, NULL, NULL);
     }
 
     // Check if call have been transfered
     if(replaced_dlg) { // If Replace header present
+
+    	_debug("UserAgent: Replace request foud");
 
     	pjsip_inv_session *replaced_inv;
 
