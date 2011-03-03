@@ -107,11 +107,11 @@ class G722 : public AudioCodec
             // Never set packed TRUE when using 64 kbps
             encode_s->packed = FALSE;
 
-            memset(encode_s->band, 0, sizeof(decode_s->band) * 2);
+            memset(encode_s->band, 0, sizeof(decode_s->band));
             encode_s->band[0].det = 32;
             encode_s->band[1].det = 8;
 
-            memset(encode_s->x, 0, sizeof(int) * 24);
+            memset(encode_s->x, 0, sizeof(encode_s->x));
 
             decode_s->in_buffer = 0;
             decode_s->in_bits = 0;
