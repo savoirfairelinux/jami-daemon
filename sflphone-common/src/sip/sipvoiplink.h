@@ -195,7 +195,7 @@ class SIPVoIPLink : public VoIPLink
          */
         bool transfer (const CallID& id, const std::string& to);
 
-        bool transferWithReplaces(const CallID& transferedId, const CallID& transferTargetId);
+        bool transferWithReplaces(const CallID&, const CallID&);
 
         /** Handle the incoming refer msg, not finished yet */
         bool transferStep2 (SIPCall* call);

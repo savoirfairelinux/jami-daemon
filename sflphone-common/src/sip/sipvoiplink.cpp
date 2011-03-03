@@ -1281,12 +1281,48 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
     return true;
 }
 
-bool SIPVoIPLink::transferWithReplaces(const CallID& transferedId, const CallID& transferTargetId)
+bool SIPVoIPLink::transferWithReplaces(const CallID& transferId, const CallID& targetId)
 {
 	char str_dest_buf[PJSIP_MAX_URL_SIZE*2];
 	pj_str_t str_dest;
+	pjsip_dialog *target_dlg;
+	pjsip_uri *uri;
+	pjsip_evsub *sub;
+	pjsip_tx_data *tdata;
 
-	/*
+	struct pjsip_evsub_user xfer_cb;
+	pj_status_t status;
+
+	str_dest.ptr = NULL;
+	str_dest.slen = 0;
+
+    SIPCall *targetCall = getSIPCall (targetId);
+    target_dlg = targetCall->getInvSession()->dlg;
+
+    /* Print URI */
+    str_dest_buf[0] = '<';
+    str_dest.slen = 1;
+
+    uri = (pjsip_uri*) pjsip_uri_get_uri(target_dlg->remote.info->uri);
+    int len = pjsip_uri_print(PJSIP_URI_IN_REQ_URI, uri,
+                              str_dest_buf+1, sizeof(str_dest_buf)-1);
+    str_dest.slen += len;
+
+    len = pj_ansi_snprintf(str_dest_buf + str_dest.slen,
+    		               sizeof(str_dest_buf) - str_dest.slen,
+    			           "Replaces=%.*s"
+    			           "%%3Bto-tag%%3D%.*s"
+    			           "%%3Bfrom-tag%%3D%.*s>",
+    			           (int)target_dlg->call_id->id.slen,
+                           target_dlg->call_id->id.ptr,
+                           (int)target_dlg->remote.info->tag.slen,
+                           target_dlg->remote.info->tag.ptr,
+                           (int)target_dlg->local.info->tag.slen,
+                           target_dlg->local.info->tag.ptr);
+
+    str_dest.ptr = str_dest_buf;
+    str_dest.slen += len;
+    /*
     len = pj_ansi_snprintf(str_dest_buf + str_dest.slen,
                            sizeof(str_dest_buf) - str_dest.slen,
                            "?%s"
@@ -1305,7 +1341,53 @@ bool SIPVoIPLink::transferWithReplaces(const CallID& transferedId, const CallID&
     pjsip_replaces_hdr *replaces_hdr =  pjsip_replaces_hdr_create (_pool);
       // replaces_hdr;
       pjsip_msg_add_hdr (tdata->msg, pjsip_hdr *hdr);
-*/
+     */
+
+    SIPCall *transferCall = getSIPCall (transferId);
+
+    /* Create xfer client subscription. */
+    pj_bzero (&xfer_cb, sizeof (xfer_cb));
+    xfer_cb.on_evsub_state = &transfer_function_cb;
+
+    status = pjsip_xfer_create_uac (transferCall->getInvSession()->dlg, &xfer_cb, &sub);
+
+    if (status != PJ_SUCCESS) {
+    	_warn ("UserAgent: Unable to create xfer -- %d", status);
+    	return false;
+    }
+
+    /* Associate this voiplink of call with the client subscription
+     * We can not just associate call with the client subscription
+     * because after this function, we can no find the cooresponding
+     * voiplink from the call any more. But the voiplink is useful!
+     */
+    pjsip_evsub_set_mod_data (sub, getModId(), this);
+
+    /*
+     * Create REFER request.
+     */
+    status = pjsip_xfer_initiate (sub, &str_dest, &tdata);
+
+    if (status != PJ_SUCCESS) {
+    	_error ("UserAgent: Unable to create REFER request -- %d", status);
+    	return false;
+    }
+
+    // Put SIP call id in map in order to retrieve call during transfer callback
+    std::string callidtransfer (transferCall->getInvSession()->dlg->call_id->id.ptr,
+    							transferCall->getInvSession()->dlg->call_id->id.slen);
+    _debug ("%s", callidtransfer.c_str());
+    transferCallID.insert (std::pair<std::string, CallID> (callidtransfer, transferCall->getCallId()));
+
+
+    /* Send. */
+    status = pjsip_xfer_send_request (sub, tdata);
+
+    if (status != PJ_SUCCESS) {
+    	_error ("UserAgent: Unable to send REFER request -- %d", status);
+    	return false;
+    }
+
 	return true;
 }
 
