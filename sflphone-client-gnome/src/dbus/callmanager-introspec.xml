@@ -132,6 +132,22 @@
 			  </tp:docstring>
 			</arg>
 		</method>
+		
+		<method name="attendedTransfer" tp:name-for-bindings="attendedTransfer">
+			<tp:docstring>
+			  Perform an attended transfer on two calls
+			</tp:docstring>
+			<arg type="s" name="transferID" direction="in">
+			  <tp:docstring>
+			    The callID of the call to be transfered.
+			  </tp:docstring>
+			</arg>
+			<arg type="s" name="targetID" direction="in">
+			  <tp:docstring>
+			    The callID of the target call.
+			  </tp:docstring>
+			</arg>
+		</method>
 
 		<method name="playDTMF" tp:name-for-bindings="playDTMF">
 			<tp:docstring>

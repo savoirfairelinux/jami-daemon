@@ -819,6 +819,22 @@ dbus_transfert (const callable_obj_t * c)
 }
 
 void
+dbus_attended_transfer (const callable_obj_t *transfer, const callable_obj_t *target)
+{
+    DEBUG("DBUS: Attended tramsfer %s to %s", transfer->_callID, target->_callID);
+
+    GError *error = NULL;
+    org_sflphone_SFLphone_CallManager_attended_transfer (callManagerProxy, transfer->_callID,
+        target->_callID, &error);
+
+    if(error) {
+        ERROR("Failed to call transfer() on CallManager: %s",
+              error->message);
+        g_error_free(error);
+    }
+}
+
+void
 dbus_accept (const callable_obj_t * c)
 {
 #if GTK_CHECK_VERSION(2,10,0)

@@ -111,31 +111,31 @@ class SIPVoIPLink : public VoIPLink
          * Try to initiate the pjsip engine/thread and set config
          * @return bool True if OK
          */
-        bool init (void);
+        virtual bool init (void);
 
         /**
          * Shut the library and clean up
          */
-        void terminate (void);
+        virtual void terminate (void);
 
         /**
          * Event listener. Each event send by the call manager is received and handled from here
          */
-        void getEvent (void);
+        virtual void getEvent (void);
 
         /**
          * Build and send SIP registration request
          * @return bool True on success
          *		  false otherwise
          */
-        int sendRegister (AccountID id);
+        virtual int sendRegister (AccountID id);
 
         /**
          * Build and send SIP unregistration request
          * @return bool True on success
          *		  false otherwise
          */
-        int sendUnregister (AccountID id);
+        virtual int sendUnregister (AccountID id);
 
         /**
          * Place a new call
@@ -150,42 +150,42 @@ class SIPVoIPLink : public VoIPLink
          * @param id The call identifier
          * @return int True on success
          */
-        bool answer (const CallID& id);
+        virtual bool answer (const CallID& id);
 
         /**
          * Hang up the call
          * @param id The call identifier
          * @return bool True on success
          */
-        bool hangup (const CallID& id);
+        virtual bool hangup (const CallID& id);
 
         /**
          * Hang up the call
          * @param id The call identifier
          * @return bool True on success
          */
-        bool peerHungup (const CallID& id);
+        virtual bool peerHungup (const CallID& id);
 
         /**
          * Cancel the call
          * @param id The call identifier
          * @return bool True on success
          */
-        bool cancel (const CallID& id);
+        virtual bool cancel (const CallID& id);
 
         /**
          * Put the call on hold
          * @param id The call identifier
          * @return bool True on success
          */
-        bool onhold (const CallID& id);
+        virtual bool onhold (const CallID& id);
 
         /**
          * Put the call off hold
          * @param id The call identifier
          * @return bool True on success
          */
-        bool offhold (const CallID& id);
+        virtual bool offhold (const CallID& id);
 
         /**
          * Transfer the call
@@ -193,11 +193,19 @@ class SIPVoIPLink : public VoIPLink
          * @param to The recipient of the transfer
          * @return bool True on success
          */
-        bool transfer (const CallID& id, const std::string& to);
+        virtual bool transfer (const CallID& id, const std::string& to);
 
-        bool transferWithReplaces(const CallID&, const CallID&);
+        /**
+         * Attended transfer
+         * @param The transfered call id
+         * @param The target call id
+         * @return True on success
+         */
+        virtual bool attendedTransfer(const CallID&, const CallID&);
 
-        /** Handle the incoming refer msg, not finished yet */
+        /**
+         * Handle the incoming refer msg, not finished yet
+         */
         bool transferStep2 (SIPCall* call);
 
         /**
@@ -205,7 +213,7 @@ class SIPVoIPLink : public VoIPLink
          * @param id The call identifier
          * @return bool True on success
          */
-        bool refuse (const CallID& id);
+        virtual bool refuse (const CallID& id);
 
         /**
          * Send DTMF refering to account configuration
@@ -213,7 +221,7 @@ class SIPVoIPLink : public VoIPLink
          * @param code  The char code
          * @return bool True on success
          */
-        bool carryingDTMFdigits (const CallID& id, char code);
+        virtual bool carryingDTMFdigits (const CallID& id, char code);
 
         /**
          * Send Dtmf using SIP INFO message

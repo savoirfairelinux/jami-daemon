@@ -82,6 +82,13 @@ void dbus_hang_up (const callable_obj_t * c);
 void dbus_transfert (const callable_obj_t * c);
 
 /**
+ * CallManager - Perform an attended transfer on two calls
+ * @param The call to be transfered
+ * @param The target
+ */
+void dbus_attended_transfer(const callable_obj_t *, const callable_obj_t *);
+
+/**
  * CallManager - Accept a call
  * @param c The call to accept
  */

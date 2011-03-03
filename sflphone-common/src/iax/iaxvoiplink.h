@@ -79,23 +79,23 @@ class IAXVoIPLink : public VoIPLink
          * @return true if successful
          *	      false otherwise
          */
-        bool init (void);
+        virtual bool init (void);
 
         /**
          * Terminate a voip link by clearing the call list
          */
-        void terminate (void);
+        virtual void terminate (void);
 
         /**
          * Terminate on call
          */
-        void terminateCall (const CallID& id);
+        virtual void terminateCall (const CallID& id);
 
         /**
          * Send out registration
          * @return bool The new registration state (are we registered ?)
          */
-        int sendRegister (AccountID id);
+        virtual int sendRegister (AccountID id);
 
         /**
          * Destroy registration session
@@ -104,7 +104,7 @@ class IAXVoIPLink : public VoIPLink
          * @return bool true if we're registered upstream
          *		  false otherwise
          */
-        int sendUnregister (AccountID id);
+        virtual int sendUnregister (AccountID id);
 
         /**
          * Create a new outgoing call
@@ -112,7 +112,7 @@ class IAXVoIPLink : public VoIPLink
          * @param toUrl The address to call
          * @return Call*  A pointer on the call
          */
-        Call* newOutgoingCall (const CallID& id, const std::string& toUrl);
+        virtual Call* newOutgoingCall (const CallID& id, const std::string& toUrl);
 
         /**
          * Answer a call
@@ -120,7 +120,7 @@ class IAXVoIPLink : public VoIPLink
          * @return bool true on success
          *		  false otherwise
          */
-        bool answer (const CallID& id);
+        virtual bool answer (const CallID& id);
 
         /**
          * Hangup a call
@@ -128,7 +128,7 @@ class IAXVoIPLink : public VoIPLink
          * @return bool true on success
          *		  false otherwise
          */
-        bool hangup (const CallID& id);
+        virtual bool hangup (const CallID& id);
 
         /**
          * Peer Hungup a call
@@ -136,7 +136,7 @@ class IAXVoIPLink : public VoIPLink
          * @return bool true on success
          *		  false otherwise
          */
-        bool peerHungup (const CallID& id);
+        virtual bool peerHungup (const CallID& id);
 
         /**
          * Cancel a call
@@ -144,7 +144,7 @@ class IAXVoIPLink : public VoIPLink
          * @return bool true on success
          *		  false otherwise
          */
-        bool cancel (const CallID& id UNUSED) {
+        virtual bool cancel (const CallID& id UNUSED) {
             return false;
         }
 
@@ -154,7 +154,7 @@ class IAXVoIPLink : public VoIPLink
          * @return bool true on success
          *		  false otherwise
          */
-        bool onhold (const CallID& id);
+        virtual bool onhold (const CallID& id);
 
         /**
          * Put a call off hold
@@ -162,7 +162,7 @@ class IAXVoIPLink : public VoIPLink
          * @return bool true on success
          *		  false otherwise
          */
-        bool offhold (const CallID& id);
+        virtual bool offhold (const CallID& id);
 
         /**
          * Transfer a call
@@ -171,7 +171,15 @@ class IAXVoIPLink : public VoIPLink
          * @return bool true on success
          *		  false otherwise
          */
-        bool transfer (const CallID& id, const std::string& to);
+        virtual bool transfer (const CallID& id, const std::string& to);
+
+        /**
+         * Perform attended transfer
+         * @param Transfered call ID
+         * @param Target call ID
+         * @return true on success
+         */
+        virtual bool attendedTransfer(const CallID& transferID, const CallID& targetID);
 
         /**
          * Refuse a call
@@ -179,7 +187,7 @@ class IAXVoIPLink : public VoIPLink
          * @return bool true on success
          *		  false otherwise
          */
-        bool refuse (const CallID& id);
+        virtual bool refuse (const CallID& id);
 
         /**
          * Send DTMF
@@ -188,10 +196,10 @@ class IAXVoIPLink : public VoIPLink
          * @return bool true on success
          *		  false otherwise
          */
-        bool carryingDTMFdigits (const CallID& id, char code);
+        virtual bool carryingDTMFdigits (const CallID& id, char code);
 
 
-        bool sendTextMessage (sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from);
+        virtual bool sendTextMessage (sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from);
 
         bool isContactPresenceSupported() {
             return false;
@@ -201,7 +209,7 @@ class IAXVoIPLink : public VoIPLink
          * Return the codec protocol used for this call
          * @param id The call identifier
          */
-        std::string getCurrentCodecName();
+        virtual std::string getCurrentCodecName();
 
 
     public: // iaxvoiplink only

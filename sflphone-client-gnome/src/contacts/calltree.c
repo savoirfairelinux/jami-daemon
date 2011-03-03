@@ -1852,12 +1852,17 @@ static void menuitem_response( gchar *string )
         sflphone_join_participant (selected_call->_callID, dragged_call->_callID);
     }
     else if(g_strcmp0(string, SFL_TRANSFER_CALL) == 0) {
+        /*
         if(selected_call->_state == CALL_STATE_HOLD && dragged_call->_state == CALL_STATE_CURRENT) {
             g_print("Calltree: Transfering call %s, to %s", selected_call->_peer_number, dragged_call->_peer_number);
             selected_call->_trsft_to = g_strdup(dragged_call->_peer_number);
             dbus_hang_up (dragged_call);
-            dbus_transfert (selected_call);
+            dbus_transfert (c);
+            dbus_attended_transfer();
         }
+        */
+        g_print("Calltree: Transfering call %s, to %s", selected_call->_peer_number, dragged_call->_peer_number);
+        dbus_attended_transfer(selected_call, dragged_call);
     }
     else {
         g_print("CallTree: Error unknown option selected in menu %s", string);

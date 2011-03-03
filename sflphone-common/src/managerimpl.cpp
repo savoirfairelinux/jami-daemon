@@ -668,12 +668,9 @@ bool ManagerImpl::offHoldCall (const CallID& call_id)
 //THREAD=Main
 bool ManagerImpl::transferCall (const CallID& call_id, const std::string& to)
 {
-    AccountID accountid;
-    bool returnValue;
+    bool returnValue = false;;
 
     _info ("Manager: Transfer call %s", call_id.c_str());
-
-    CallID current_call_id = getCurrentCallId();
 
     // Direct IP to IP call
     if (getConfigFromCall (call_id) == Call::IPtoIP) {
@@ -682,7 +679,7 @@ bool ManagerImpl::transferCall (const CallID& call_id, const std::string& to)
     // Classic call, attached to an account
     else {
 
-        accountid = getAccountFromCall (call_id);
+        AccountID accountid = getAccountFromCall (call_id);
 
         if (accountid == AccountNULL) {
             _warn ("Manager: Call doesn't exists");
@@ -702,7 +699,7 @@ bool ManagerImpl::transferCall (const CallID& call_id, const std::string& to)
 void ManagerImpl::transferFailed ()
 {
 
-    _debug ("UserAgent: Transfer failed");
+    _debug ("Manager: Transfer failed");
 
     if (_dbus)
         _dbus->getCallManager()->transferFailed();
@@ -711,11 +708,35 @@ void ManagerImpl::transferFailed ()
 void ManagerImpl::transferSucceded ()
 {
 
-    _debug ("UserAgent: Transfer succeded");
+    _debug ("Manager: Transfer succeded");
 
     if (_dbus)
         _dbus->getCallManager()->transferSucceded();
 
+}
+
+bool ManagerImpl::attendedTransfer(const CallID& transferID, const CallID& targetID)
+{
+	bool returnValue = false;
+
+	_debug("Manager: Attended transfer");
+
+	 // Direct IP to IP call
+	if (getConfigFromCall (transferID) == Call::IPtoIP) {
+		returnValue = SIPVoIPLink::instance (AccountNULL)-> attendedTransfer(transferID, targetID);
+	}
+	else {	// Classic call, attached to an account
+
+		AccountID accountid = getAccountFromCall (transferID);
+
+		if (accountid == AccountNULL) {
+			_warn ("Manager: Call doesn't exists");
+			return false;
+		}
+
+		returnValue = getAccountLink (accountid)->attendedTransfer (transferID, targetID);
+
+	}
 }
 
 //THREAD=Main : Call:Incoming

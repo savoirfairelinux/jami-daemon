@@ -164,6 +164,14 @@ class VoIPLink
         virtual bool transfer (const CallID& id, const std::string& to) = 0;
 
         /**
+         * Attended transfer
+         * @param The transfered call id
+         * @param The target call id
+         * @return True on success
+         */
+        virtual bool attendedTransfer (const CallID&, const CallID&) = 0;
+
+        /**
          * Refuse incoming call
          * @param id The call identifier
          * @return bool True on success
@@ -177,18 +185,6 @@ class VoIPLink
          * @return bool True on success
          */
         virtual bool carryingDTMFdigits (const CallID& id, char code) = 0;
-
-        /**
-         * Set Recording
-         * @param id The call identifier
-         */
-        // virtual void setRecording(const CallID& id) = 0;
-
-        /**
-         * Return recording state
-         * @param id The call identifier
-         */
-        // virtual bool isRecording(const CallID& id) = 0;
 
         /**
          * Return the codec protocol used for this call

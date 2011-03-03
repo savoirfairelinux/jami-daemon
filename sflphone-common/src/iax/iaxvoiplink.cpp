@@ -652,6 +652,13 @@ IAXVoIPLink::transfer (const CallID& id, const std::string& to)
 }
 
 bool
+IAXVoIPLink::attendedTransfer(const CallID& transferID, const CallID& targetID)
+{
+	// TODO implement attended transfer for IAX
+	return false;
+}
+
+bool
 IAXVoIPLink::refuse (const CallID& id)
 {
     IAXCall* call = getIAXCall (id);

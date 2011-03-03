@@ -650,8 +650,8 @@ int SIPVoIPLink::sendRegister (AccountID id)
     if (status != PJ_SUCCESS) {
         _debug ("UserAgent: Unable to register regc.");
         _mutexSIP.leaveMutex();
-    }
         return false;
+    }
 
     pjsip_tpselector *tp;
 
@@ -1170,7 +1170,7 @@ SIPVoIPLink::offhold (const CallID& id)
     // Get PayloadType for this codec
     AudioCodecType pl = (AudioCodecType) sessionMedia->getPayload();
 
-    _debug ("------------------------- payload from session media %d", pl);
+    _debug ("UserAgent: Payload from session media %d", pl);
 
     try {
         // Create a new instance for this codec
@@ -1281,7 +1281,7 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
     return true;
 }
 
-bool SIPVoIPLink::transferWithReplaces(const CallID& transferId, const CallID& targetId)
+bool SIPVoIPLink::attendedTransfer(const CallID& transferId, const CallID& targetId)
 {
 	char str_dest_buf[PJSIP_MAX_URL_SIZE*2];
 	pj_str_t str_dest;
@@ -1292,6 +1292,8 @@ bool SIPVoIPLink::transferWithReplaces(const CallID& transferId, const CallID& t
 
 	struct pjsip_evsub_user xfer_cb;
 	pj_status_t status;
+
+	_debug("UserAgent: Attended transfer");
 
 	str_dest.ptr = NULL;
 	str_dest.slen = 0;
@@ -1310,7 +1312,8 @@ bool SIPVoIPLink::transferWithReplaces(const CallID& transferId, const CallID& t
 
     len = pj_ansi_snprintf(str_dest_buf + str_dest.slen,
     		               sizeof(str_dest_buf) - str_dest.slen,
-    			           "Replaces=%.*s"
+    			           "?"
+    		               "Replaces=%.*s"
     			           "%%3Bto-tag%%3D%.*s"
     			           "%%3Bfrom-tag%%3D%.*s>",
     			           (int)target_dlg->call_id->id.slen,
@@ -1322,26 +1325,6 @@ bool SIPVoIPLink::transferWithReplaces(const CallID& transferId, const CallID& t
 
     str_dest.ptr = str_dest_buf;
     str_dest.slen += len;
-    /*
-    len = pj_ansi_snprintf(str_dest_buf + str_dest.slen,
-                           sizeof(str_dest_buf) - str_dest.slen,
-                           "?%s"
-                           "Replaces=%.*s"
-                           "%%3Bto-tag%%3D%.*s"
-                           "%%3Bfrom-tag%%3D%.*s>",
-                           ((options&PJSUA_XFER_NO_REQUIRE_REPLACES) ?
-                            "" : "Require=replaces&"),
-                           (int)dest_dlg->call_id->id.slen,
-                           dest_dlg->call_id->id.ptr,
-                           (int)dest_dlg->remote.info->tag.slen,
-                           dest_dlg->remote.info->tag.ptr,
-                           (int)dest_dlg->local.info->tag.slen,
-                           dest_dlg->local.info->tag.ptr);
-
-    pjsip_replaces_hdr *replaces_hdr =  pjsip_replaces_hdr_create (_pool);
-      // replaces_hdr;
-      pjsip_msg_add_hdr (tdata->msg, pjsip_hdr *hdr);
-     */
 
     SIPCall *transferCall = getSIPCall (transferId);
 
@@ -1396,8 +1379,6 @@ bool SIPVoIPLink::transferStep2 (SIPCall* call)
 
     // TODO is this the best way to proceed?
     Manager::instance().peerHungupCall (call->getCallId());
-
-
 
     return true;
 }

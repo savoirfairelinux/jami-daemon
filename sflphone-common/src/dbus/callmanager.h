@@ -76,6 +76,7 @@ class CallManager
         void hold (const std::string& callID);
         void unhold (const std::string& callID);
         void transfert (const std::string& callID, const std::string& to);
+        void attendedTransfer(const std::string& transferID, const std::string& targetID);
         std::map< std::string, std::string > getCallDetails (const std::string& callID);
         std::vector< std::string > getCallList (void);
         std::string getCurrentCallID();

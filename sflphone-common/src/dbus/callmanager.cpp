@@ -170,7 +170,12 @@ CallManager::transfert (const std::string& callID, const std::string& to)
     Manager::instance().transferCall (callID, to);
 }
 
-
+void
+CallManager::attendedTransfer (const std::string& transferID, const std::string& targetID)
+{
+	_debug("CallManager::attended transfer received");
+	Manager::instance().attendedTransfer(transferID, targetID);
+}
 
 void
 CallManager::setVolume (const std::string& device, const double& value)

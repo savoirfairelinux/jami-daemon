@@ -253,6 +253,13 @@ class ManagerImpl
         bool transferCall (const CallID& id, const std::string& to);
 
         /**
+         * Attended transfer
+         * @param The call id to be transfered
+         * @param The target
+         */
+        bool attendedTransfer(const CallID& transferID, const CallID& targetID);
+
+        /**
          * Notify the client the transfer is successful
          */
         void transferSucceded();
