@@ -65,6 +65,7 @@ AudioSrtpSession::AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall) :
 
 AudioSrtpSession::~AudioSrtpSession()
 {
+	_debug("AudioSrtp: Destroy audio srtp session");
 }
 
 void AudioSrtpSession::initLocalCryptoInfo()
@@ -294,7 +295,11 @@ void AudioSrtpSession::initializeLocalCryptoContext (void)
 
 }
 
-#pragma GCC diagnostic ignored "-Wunused-value"
+void AudioSrtpSession::restoreCryptoContext(ost::CryptoContext *localContext, ost::CryptoContext *remoteContext) {
+	setInQueueCryptoContext (remoteContext);
+	setOutQueueCryptoContext (localContext);
+}
+
 char* AudioSrtpSession::encodeBase64 (unsigned char *input, int length)
 {
     BIO *b64, *bmem;

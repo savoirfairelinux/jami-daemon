@@ -46,7 +46,7 @@
 namespace sfl
 {
 
-AudioRtpFactory::AudioRtpFactory() : _rtpSession (NULL)
+AudioRtpFactory::AudioRtpFactory() : _rtpSession (NULL), remoteContext(NULL), localContext(NULL)
 {
 
 }
@@ -160,6 +160,10 @@ void AudioRtpFactory::start (AudioCodec* audiocodec)
 
         case Sdes:
 
+        	if(localContext && remoteContext) {
+        		static_cast<AudioSrtpSession *> (_rtpSession)->restoreCryptoContext(localContext, remoteContext);
+        	}
+
             if (static_cast<AudioSrtpSession *> (_rtpSession)->startRtpThread (audiocodec) != 0) {
                 throw AudioRtpFactoryException ("AudioRtpFactory: Error: Failed to start AudioSRtpSession thread");
             }
@@ -199,6 +203,8 @@ void AudioRtpFactory::stop (void)
         switch (_rtpSessionType) {
 
             case Sdes:
+            	localContext = static_cast<AudioSrtpSession *> (_rtpSession)->_localCryptoCtx;
+            	remoteContext = static_cast<AudioSrtpSession *> (_rtpSession)->_remoteCryptoCtx;
                 static_cast<AudioSrtpSession *> (_rtpSession)->stopRtpThread();
                 break;
 

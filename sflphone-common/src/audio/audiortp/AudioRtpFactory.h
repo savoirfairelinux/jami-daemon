@@ -33,6 +33,7 @@
 
 #include <stdexcept>
 #include <cc++/thread.h>
+#include <ccrtp/CryptoContext.h>
 
 #include "sip/SdesNegotiator.h"
 #include "audio/codecs/audiocodec.h"
@@ -212,6 +213,12 @@ class AudioRtpFactory
         // Field used when initializinga udio rtp session
         // May be set manually or from config using initAudioRtpConfig
         bool _helloHashEnabled;
+
+        /** Remote srtp crypto context to be set into incoming data queue. */
+        ost::CryptoContext *remoteContext;
+
+        /** Local srtp crypto context to be set into outgoing data queue. */
+        ost::CryptoContext *localContext;
 };
 }
 #endif // __AUDIO_RTP_FACTORY_H__

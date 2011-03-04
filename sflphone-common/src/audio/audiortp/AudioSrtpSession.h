@@ -104,6 +104,19 @@ class AudioSrtpSession : public AudioRtpSession
         */
         void initLocalCryptoInfo (void);
 
+        /**
+         * Restore the cryptographic context. most likely useful to restore
+         * a call after hold action
+         */
+        void restoreCryptoContext(ost::CryptoContext *, ost::CryptoContext *);
+
+
+        /** Remote srtp crypto context to be set into incoming data queue. */
+        ost::CryptoContext* _remoteCryptoCtx;
+
+        /** Local srtp crypto context to be set into outgoing data queue. */
+        ost::CryptoContext* _localCryptoCtx;
+
     private:
 
         /**
@@ -175,12 +188,6 @@ class AudioSrtpSession : public AudioRtpSession
 
         /** remote master salt length in byte */
         int _remoteMasterSaltLength;
-
-        /** Remote srtp crypto context to be set into incoming data queue. */
-        ost::CryptoContext* _remoteCryptoCtx;
-
-        /** Local srtp crypto context to be set into outgoing data queue. */
-        ost::CryptoContext* _localCryptoCtx;
 
         /** Used to make sure remote crypto context not initialized wice. */
         bool _remoteOfferIsSet;
