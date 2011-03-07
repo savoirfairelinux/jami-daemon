@@ -60,7 +60,7 @@ YamlParser::~YamlParser()
     close();
 }
 
-void YamlParser::open()
+void YamlParser::open() throw(YamlParserException)
 {
 
     fd = fopen (filename.c_str(), "rb");
@@ -69,17 +69,16 @@ void YamlParser::open()
         throw YamlParserException ("Could not open file descriptor");
 
     if (!yaml_parser_initialize (&parser))
-        throw YamlParserException ("Could not open file descriptor");
+        throw YamlParserException ("Could not initialize");
 
     yaml_parser_set_input_file (&parser, fd);
 }
 
-void YamlParser::close()
+void YamlParser::close() throw(YamlParserException)
 {
     if (!fd)
         throw YamlParserException ("File descriptor not valid");
 
-    // fclose (fd);
     if (fclose (fd))
         throw YamlParserException ("Error closing file descriptor");
 
@@ -95,194 +94,225 @@ void YamlParser::close()
     }
 }
 
-void YamlParser::serializeEvents()
+void YamlParser::serializeEvents() throw(YamlParserException)
 {
     bool done = false;
     yaml_event_t event;
 
-    while (!done) {
+    try {
 
-        if (!yaml_parser_parse (&parser, &event))
-            throw YamlParserException ("Error while parsing");
+    	while (!done) {
 
-        done = (event.type == YAML_STREAM_END_EVENT);
+    		if (!yaml_parser_parse (&parser, &event))
+    			throw YamlParserException ("Error while parsing");
 
-        if (eventNumber > PARSER_MAXEVENT)
-            throw YamlParserException ("Reached maximum of event");
+    		done = (event.type == YAML_STREAM_END_EVENT);
 
-        if (!copyEvent (& (events[eventNumber++]), &event))
-            throw YamlParserException ("Error copying event");
+    		if (eventNumber > PARSER_MAXEVENT)
+    			throw YamlParserException ("Reached maximum of event");
 
-        yaml_event_delete (&event);
+    		copyEvent (& (events[eventNumber++]), &event);
+
+    		yaml_event_delete (&event);
+    	}
+    }
+    catch(YamlParserException &e) {
+    	_error ("YamlParserException: %s", e.what());
+    	throw;
     }
 
 }
 
 
-int YamlParser::copyEvent (yaml_event_t *event_to, yaml_event_t *event_from)
+void YamlParser::copyEvent (yaml_event_t *event_to, yaml_event_t *event_from) throw(YamlParserException)
 {
 
     switch (event_from->type) {
         case YAML_STREAM_START_EVENT: {
-            // _debug("YAML_STREAM_START_EVENT");
-            return yaml_stream_start_event_initialize (event_to,
-                    event_from->data.stream_start.encoding);
+            if(yaml_stream_start_event_initialize (event_to,
+                    event_from->data.stream_start.encoding) == 0) {
+            	throw YamlParserException("Error stream start event");
+            }
+            break;
         }
 
         case YAML_STREAM_END_EVENT: {
-            //_debug("YAML_STREAM_END_EVENT");
-            return yaml_stream_end_event_initialize (event_to);
+            if(yaml_stream_end_event_initialize (event_to) == 0) {
+            	throw YamlParserException("Error stream end event");
+            }
+            break;
         }
 
         case YAML_DOCUMENT_START_EVENT: {
-            // _debug("YAML_DOCUMENT_START_EVENT");
-            return yaml_document_start_event_initialize (event_to,
+            if(yaml_document_start_event_initialize (event_to,
                     event_from->data.document_start.version_directive,
                     event_from->data.document_start.tag_directives.start,
                     event_from->data.document_start.tag_directives.end,
-                    event_from->data.document_start.implicit);
+                    event_from->data.document_start.implicit) == 0) {
+            	throw YamlParserException("Error document start event");
+            }
+            break;
         }
 
         case YAML_DOCUMENT_END_EVENT: {
-            // _debug("YAML_DOCUMENT_END_EVENT");
-            return yaml_document_end_event_initialize (event_to,
-                    event_from->data.document_end.implicit);
+            if(yaml_document_end_event_initialize (event_to,
+                    event_from->data.document_end.implicit) == 0) {
+            	throw YamlParserException("Error document end event");
+            }
+            break;
         }
         case YAML_ALIAS_EVENT: {
-            // _debug("YAML_ALIAS_EVENT");
-            return yaml_alias_event_initialize (event_to,
-                                                event_from->data.alias.anchor);
+            if (yaml_alias_event_initialize (event_to,
+                     event_from->data.alias.anchor) == 0) {
+            	throw YamlParserException("Error alias event initialize");
+            }
+            break;
         }
         case YAML_SCALAR_EVENT: {
-            // _debug("YAML_SCALAR_EVENT");
-            return yaml_scalar_event_initialize (event_to,
-                                                 event_from->data.scalar.anchor,
-                                                 event_from->data.scalar.tag,
-                                                 event_from->data.scalar.value,
-                                                 event_from->data.scalar.length,
-                                                 event_from->data.scalar.plain_implicit,
-                                                 event_from->data.scalar.quoted_implicit,
-                                                 event_from->data.scalar.style);
+            if(yaml_scalar_event_initialize (event_to,
+                    event_from->data.scalar.anchor,
+                    event_from->data.scalar.tag,
+                    event_from->data.scalar.value,
+                    event_from->data.scalar.length,
+                    event_from->data.scalar.plain_implicit,
+                    event_from->data.scalar.quoted_implicit,
+                    event_from->data.scalar.style) == 0) {
+            	throw YamlParserException("Error scalar event initialize");
+            }
+            break;
         }
         case YAML_SEQUENCE_START_EVENT: {
-            // _debug("YAML_SEQUENCE_START_EVENT");
-            return yaml_sequence_start_event_initialize (event_to,
+            if(yaml_sequence_start_event_initialize (event_to,
                     event_from->data.sequence_start.anchor,
                     event_from->data.sequence_start.tag,
                     event_from->data.sequence_start.implicit,
-                    event_from->data.sequence_start.style);
+                    event_from->data.sequence_start.style) == 0) {
+            	throw YamlParserException("Error sequence start event");
+            }
+            break;
         }
         case YAML_SEQUENCE_END_EVENT: {
-            // _debug("YAML_SEQUENCE_END_EVENT");
-            return yaml_sequence_end_event_initialize (event_to);
+            if(yaml_sequence_end_event_initialize (event_to) == 0) {
+            	throw YamlParserException("Error sequence end event");
+            }
+            break;
         }
         case YAML_MAPPING_START_EVENT: {
-            // _debug("YAML_MAPPING_START_EVENT");
-            return yaml_mapping_start_event_initialize (event_to,
+            if(yaml_mapping_start_event_initialize (event_to,
                     event_from->data.mapping_start.anchor,
                     event_from->data.mapping_start.tag,
                     event_from->data.mapping_start.implicit,
-                    event_from->data.mapping_start.style);
+                    event_from->data.mapping_start.style) == 0) {
+            	throw YamlParserException("Error mapping start event");
+            }
+            break;
         }
         case YAML_MAPPING_END_EVENT: {
-            // _debug("YAML_MAPPING_END_EVENT");
-            return yaml_mapping_end_event_initialize (event_to);
-
+            if(yaml_mapping_end_event_initialize (event_to) == 0) {
+            	throw YamlParserException("Error mapping end event");
+            }
+            break;
         }
         default:
-            assert (1);
-
+        	break;
     }
-
-    return 0;
 }
 
 
-YamlDocument *YamlParser::composeEvents()
+YamlDocument *YamlParser::composeEvents() throw(YamlParserException)
 {
+	try {
+		if (eventNumber == 0)
+			throw YamlParserException ("No event available");
 
-    // _debug("YamlParser: Compose Events");
+		if (events[0].type != YAML_STREAM_START_EVENT)
+			throw YamlParserException ("Parsing does not start with stream start");
 
-    if (eventNumber == 0)
-        throw YamlParserException ("No event available");
+		eventIndex = 0;
 
-    if (events[0].type != YAML_STREAM_START_EVENT)
-        throw YamlParserException ("Parsing does not start with stream start");
+		processStream();
+	}
+	catch(YamlParserException &e) {
+		_error ("YamlParserException: %s", e.what());
+		throw;
+	}
 
-    eventIndex = 0;
-
-    processStream();
 
     return doc;
 }
 
-void YamlParser::processStream ()
+void YamlParser::processStream () throw(YamlParserException)
 {
+	try {
+		while ( (eventIndex < eventNumber) && (events[eventIndex].type != YAML_STREAM_END_EVENT)) {
 
-    // _debug("YamlParser: process stream");
+			if (events[eventIndex].type == YAML_DOCUMENT_START_EVENT)
+				processDocument();
 
-    while ( (eventIndex < eventNumber) && (events[eventIndex].type != YAML_STREAM_END_EVENT)) {
+			eventIndex++;
+		}
 
-        if (events[eventIndex].type == YAML_DOCUMENT_START_EVENT)
-            processDocument();
-
-        eventIndex++;
-    }
-
-    if (events[eventIndex].type != YAML_STREAM_END_EVENT)
-        throw YamlParserException ("Did not found end of stream");
+		if (events[eventIndex].type != YAML_STREAM_END_EVENT)
+			throw YamlParserException ("Did not found end of stream");
+	}
+	catch (YamlParserException &e) {
+		_error ("YamlParserException: %s", e.what());
+		throw;
+	}
 }
 
-
-void YamlParser::processDocument()
+void YamlParser::processDocument() throw(YamlParserException)
 {
-    // _debug("YamlParser: process document");
+	try {
 
-    doc = new YamlDocument();
+		doc = new YamlDocument();
 
-    if (!doc)
-        throw YamlParserException ("Not able to create new document");
+		if (!doc)
+			throw YamlParserException ("Not able to create new document");
 
-    while ( (eventIndex < eventNumber) && (events[eventIndex].type != YAML_DOCUMENT_END_EVENT)) {
+		while ( (eventIndex < eventNumber) && (events[eventIndex].type != YAML_DOCUMENT_END_EVENT)) {
 
-        switch (events[eventIndex].type) {
+			switch (events[eventIndex].type) {
             case YAML_SCALAR_EVENT:
-                processScalar ( (YamlNode *) doc);
-                break;
+            	processScalar ( (YamlNode *) doc);
+            	break;
             case YAML_SEQUENCE_START_EVENT:
-                processSequence ( (YamlNode *) doc);
-                break;
+            	processSequence ( (YamlNode *) doc);
+            	break;
             case YAML_MAPPING_START_EVENT:
                 processMapping ( (YamlNode *) doc);
                 break;
             default:
                 break;
-        }
+			}
 
-        eventIndex++;
-    }
+			eventIndex++;
+		}
 
-    if (events[eventIndex].type != YAML_DOCUMENT_END_EVENT)
-        throw YamlParserException ("Did not found end of document");
+		if (events[eventIndex].type != YAML_DOCUMENT_END_EVENT)
+			throw YamlParserException ("Did not found end of document");
 
+	}
+	catch(YamlParserException &e) {
+		_error("YamlParserException: %s", e.what());
+		throw;
+	}
 }
 
 
-void YamlParser::processScalar (YamlNode *topNode)
+void YamlParser::processScalar (YamlNode *topNode) throw(YamlParserException)
 {
+	try {
 
-    // _debug("YamlParser: process scalar");
+		if (!topNode)
+			throw YamlParserException ("No container for scalar");
 
-    if (!topNode)
-        throw YamlParserException ("No container for scalar");
+		char buffer[1000];
+		snprintf (buffer, 1000, "%s", events[eventIndex].data.scalar.value);
 
-    char buffer[1000];
-    snprintf (buffer, 1000, "%s", events[eventIndex].data.scalar.value);
-    // _debug("and the scalar is: %s", buffer);
+		ScalarNode *sclr = new ScalarNode (buffer, topNode);
 
-    ScalarNode *sclr = new ScalarNode (buffer, topNode);
-
-    switch (topNode->getType()) {
+		switch (topNode->getType()) {
         case DOCUMENT:
             ( (YamlDocument *) (topNode))->addNode (sclr);
             break;
@@ -294,20 +324,26 @@ void YamlParser::processScalar (YamlNode *topNode)
         case SCALAR:
         default:
             break;
-    }
+		}
+	}
+	catch(YamlParserException &e) {
+		_error("YamlParserException %s", e.what());
+		throw;
+	}
 }
 
 
-void YamlParser::processSequence (YamlNode *topNode)
+void YamlParser::processSequence (YamlNode *topNode) throw(YamlParserException)
 {
-    _debug ("YamlParser: process sequence");
 
-    if (!topNode)
-        throw YamlParserException ("No container for sequence");
+	try {
 
-    SequenceNode *seq = new SequenceNode (topNode);
+		if (!topNode)
+			throw YamlParserException ("No container for sequence");
 
-    switch (topNode->getType()) {
+		SequenceNode *seq = new SequenceNode (topNode);
+
+		switch (topNode->getType()) {
         case DOCUMENT:
             ( (YamlDocument *) (topNode))->addNode (seq);
             break;
@@ -319,13 +355,13 @@ void YamlParser::processSequence (YamlNode *topNode)
         case SCALAR:
         default:
             break;
-    }
+		}
 
-    eventIndex++;
+		eventIndex++;
 
-    while ( (eventIndex < eventNumber) && (events[eventIndex].type != YAML_SEQUENCE_END_EVENT)) {
+		while ( (eventIndex < eventNumber) && (events[eventIndex].type != YAML_SEQUENCE_END_EVENT)) {
 
-        switch (events[eventIndex].type) {
+			switch (events[eventIndex].type) {
             case YAML_SCALAR_EVENT:
                 processScalar (seq);
                 break;
@@ -337,26 +373,32 @@ void YamlParser::processSequence (YamlNode *topNode)
                 break;
             default:
                 break;
-        }
+			}
 
-        eventIndex++;
-    }
+			eventIndex++;
+		}
 
-    if (events[eventIndex].type != YAML_SEQUENCE_END_EVENT)
-        throw YamlParserException ("Did not found end of sequence");
+		if (events[eventIndex].type != YAML_SEQUENCE_END_EVENT)
+			throw YamlParserException ("Did not found end of sequence");
+
+	}
+	catch(YamlParserException &e) {
+		_error("YamlParserException %s", e.what());
+		throw;
+	}
+
 }
 
-
-void YamlParser::processMapping (YamlNode *topNode)
+void YamlParser::processMapping (YamlNode *topNode) throw(YamlParserException)
 {
-    // _debug("YamlParser: process mapping");
+	try {
 
-    if (!topNode)
-        throw YamlParserException ("No container for mapping");
+		if (!topNode)
+			throw YamlParserException ("No container for mapping");
 
-    MappingNode *map = new MappingNode (topNode);
+		MappingNode *map = new MappingNode (topNode);
 
-    switch (topNode->getType()) {
+		switch (topNode->getType()) {
         case DOCUMENT:
             ( (YamlDocument *) (topNode))->addNode (map);
             break;
@@ -368,23 +410,22 @@ void YamlParser::processMapping (YamlNode *topNode)
         case SCALAR:
         default:
             break;
-    }
+		}
 
-    eventIndex++;
+		eventIndex++;
 
-    while ( (eventIndex < eventNumber) && (events[eventIndex].type != YAML_MAPPING_END_EVENT)) {
+		while ( (eventIndex < eventNumber) && (events[eventIndex].type != YAML_MAPPING_END_EVENT)) {
 
-        if (events[eventIndex].type != YAML_SCALAR_EVENT)
-            throw YamlParserException ("Mapping not followed by a key");
+			if (events[eventIndex].type != YAML_SCALAR_EVENT)
+				throw YamlParserException ("Mapping not followed by a key");
 
-        char buffer[1000];
-        snprintf (buffer, 1000, "%s", events[eventIndex].data.scalar.value);
-        map->setTmpKey (Key (buffer));
-        // _debug("KEY %s", buffer);
+			char buffer[1000];
+			snprintf (buffer, 1000, "%s", events[eventIndex].data.scalar.value);
+			map->setTmpKey (Key (buffer));
 
-        eventIndex++;
+			eventIndex++;
 
-        switch (events[eventIndex].type) {
+			switch (events[eventIndex].type) {
             case YAML_SCALAR_EVENT:
                 processScalar (map);
                 break;
@@ -396,27 +437,34 @@ void YamlParser::processMapping (YamlNode *topNode)
                 break;
             default:
                 break;
-        }
+			}
 
-        eventIndex++;
-    }
+			eventIndex++;
+		}
 
-    if (events[eventIndex].type != YAML_MAPPING_END_EVENT)
-        throw YamlParserException ("Did not found end of mapping");
+		if (events[eventIndex].type != YAML_MAPPING_END_EVENT)
+			throw YamlParserException ("Did not found end of mapping");
+
+	}
+	catch(YamlParserException &e) {
+		_error("YamlParserException %s", e.what());
+		throw;
+	}
 }
 
-void YamlParser::constructNativeData()
+void YamlParser::constructNativeData() throw(YamlParserException)
 {
 
-    Sequence *seq;
+	try {
+		Sequence *seq;
 
-    seq = doc->getSequence();
+		seq = doc->getSequence();
 
-    Sequence::iterator iter = seq->begin();
+		Sequence::iterator iter = seq->begin();
 
-    while (iter != seq->end()) {
+		while (iter != seq->end()) {
 
-        switch ( (*iter)->getType()) {
+			switch ( (*iter)->getType()) {
             case SCALAR:
                 // _debug("construct scalar");
                 throw YamlParserException ("No scalar allowed at document level, expect a mapping");
@@ -434,61 +482,69 @@ void YamlParser::constructNativeData()
             default:
                 throw YamlParserException ("Unknown type in configuration file, expect a mapping");
                 break;
-        }
+			}
 
-        iter++;
+			iter++;
 
-    }
+		}
+	}
+	catch(YamlParserException &e) {
+		_error("YamlParserException %s", e.what());
+		throw;
+	}
 
 }
 
 
-void YamlParser::mainNativeDataMapping (MappingNode *map)
+void YamlParser::mainNativeDataMapping (MappingNode *map) throw(YamlParserException)
 {
 
+	try {
+		Mapping::iterator iter = map->getMapping()->begin();
 
-    Mapping::iterator iter = map->getMapping()->begin();
+		Key accounts ("accounts");
+		Key addressbook ("addressbook");
+		Key audio ("audio");
+		Key hooks ("hooks");
+		Key preferences ("preferences");
+		Key voiplink ("voipPreferences");
+		Key shortcuts ("shortcuts");
 
-    Key accounts ("accounts");
-    Key addressbook ("addressbook");
-    Key audio ("audio");
-    Key hooks ("hooks");
-    Key preferences ("preferences");
-    Key voiplink ("voipPreferences");
-    Key shortcuts ("shortcuts");
+		while (iter != map->getMapping()->end()) {
 
-    while (iter != map->getMapping()->end()) {
+			_debug ("Iterating: %s", iter->first.c_str());
 
-        _debug ("Iterating: %s", iter->first.c_str());
+			if (accounts.compare (iter->first) == 0) {
+				_debug ("YamlParser: Adding voip account preferences");
+				accountSequence = (SequenceNode *) (iter->second);
+			} else if (addressbook.compare (iter->first) == 0) {
+				_debug ("YamlParser: Adding addressbook preference");
+				addressbookSequence = (SequenceNode *) (iter->second);
+			} else if (audio.compare (iter->first) == 0) {
+				_debug ("YamlParser: Adding audio preference");
+				audioSequence = (SequenceNode *) (iter->second);
+			} else if (hooks.compare (iter->first) == 0) {
+				_debug ("YamlParser: Adding hooks preference");
+				hooksSequence = (SequenceNode *) (iter->second);
+			} else if (preferences.compare (iter->first) == 0) {
+				_debug ("YamlParser: Adding preference preference");
+				preferenceSequence = (SequenceNode *) (iter->second);
+			} else if (voiplink.compare (iter->first) == 0) {
+				_debug ("YamlParser: Adding voip preference");
+				voiplinkSequence = (SequenceNode *) (iter->second);
+			} else if (shortcuts.compare (iter->first) == 0) {
+				_debug ("YamlParser: Adding shortcut preference");
+				shortcutSequence = (SequenceNode *) (iter->second);
+			} else
+				throw YamlParserException ("Unknow map key in configuration");
 
-        if (accounts.compare (iter->first) == 0) {
-            _debug ("YamlParser: Adding voip account preferences");
-            accountSequence = (SequenceNode *) (iter->second);
-        } else if (addressbook.compare (iter->first) == 0) {
-            _debug ("YamlParser: Adding addressbook preference");
-            addressbookSequence = (SequenceNode *) (iter->second);
-        } else if (audio.compare (iter->first) == 0) {
-            _debug ("YamlParser: Adding audio preference");
-            audioSequence = (SequenceNode *) (iter->second);
-        } else if (hooks.compare (iter->first) == 0) {
-            _debug ("YamlParser: Adding hooks preference");
-            hooksSequence = (SequenceNode *) (iter->second);
-        } else if (preferences.compare (iter->first) == 0) {
-            _debug ("YamlParser: Adding preference preference");
-            preferenceSequence = (SequenceNode *) (iter->second);
-        } else if (voiplink.compare (iter->first) == 0) {
-            _debug ("YamlParser: Adding voip preference");
-            voiplinkSequence = (SequenceNode *) (iter->second);
-        } else if (shortcuts.compare (iter->first) == 0) {
-            _debug ("YamlParser: Adding shortcut preference");
-            shortcutSequence = (SequenceNode *) (iter->second);
-        } else
-            throw YamlParserException ("Unknow map key in configuration");
-
-        iter++;
-    }
-
-    // _debug("Done");
+			iter++;
+		}
+	}
+	catch(YamlParserException &e) {
+		_error("YamlParserException %s", e.what());
+		throw;
+	}
 }
 
 }

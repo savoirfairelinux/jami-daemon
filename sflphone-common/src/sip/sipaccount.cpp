@@ -1040,7 +1040,7 @@ int SIPAccount::registerVoIPLink()
 
     // Init TLS settings if the user wants to use TLS
     if (_tlsEnable == "true") {
-        _debug ("Account: TLS is ennabled for accounr %s", getAccountID().c_str());
+        _debug ("----------------------------------------------------- Account: TLS is ennabled for accounr %s", getAccountID().c_str());
         _transportType = PJSIP_TRANSPORT_TLS;
         initTlsConfiguration();
     }

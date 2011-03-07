@@ -70,15 +70,15 @@ class YamlParser
 
         ~YamlParser();
 
-        void open();
+        void open() throw(YamlParserException);
 
-        void close();
+        void close() throw(YamlParserException);
 
-        void serializeEvents();
+        void serializeEvents() throw(YamlParserException);
 
-        YamlDocument *composeEvents();
+        YamlDocument *composeEvents() throw(YamlParserException);
 
-        void constructNativeData();
+        void constructNativeData() throw(YamlParserException);
 
         SequenceNode *getAccountSequence (void) {
             return accountSequence;
@@ -113,24 +113,28 @@ class YamlParser
         /**
          * Copy yaml parser event in event_to according to their type.
          */
-        int copyEvent (yaml_event_t *event_to, yaml_event_t *event_from);
+        void copyEvent (yaml_event_t *event_to, yaml_event_t *event_from) throw(YamlParserException);
 
-        void processStream (void);
+        void processStream (void) throw(YamlParserException);
 
-        void processDocument (void);
+        void processDocument (void) throw(YamlParserException);
 
-        void processScalar (YamlNode *topNode);
+        void processScalar (YamlNode *topNode) throw(YamlParserException);
 
-        void processSequence (YamlNode *topNode);
+        void processSequence (YamlNode *topNode) throw(YamlParserException);
 
-        void processMapping (YamlNode *topNode);
+        void processMapping (YamlNode *topNode) throw(YamlParserException);
 
-        void mainNativeDataMapping (MappingNode *map);
+        void mainNativeDataMapping (MappingNode *map) throw(YamlParserException);
 
-        //   void buildAccounts(SequenceNode *map);
-
+        /**
+         * Configuration file name
+         */
         std::string filename;
 
+        /**
+         * Configuration file descriptor
+         */
         FILE *fd;
 
         /**

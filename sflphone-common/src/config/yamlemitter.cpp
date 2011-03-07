@@ -45,7 +45,7 @@ YamlEmitter::~YamlEmitter()
     close();
 }
 
-void YamlEmitter::open()
+void YamlEmitter::open() throw(YamlEmitterException)
 {
 
     _debug ("YamlEmiter: Open");
@@ -63,15 +63,17 @@ void YamlEmitter::open()
 
     yaml_emitter_set_output_file (&emitter, fd);
 
-    if (!yaml_document_initialize (&document, NULL, NULL, NULL, 0, 0))
+    if (yaml_document_initialize (&document, NULL, NULL, NULL, 0, 0) == 0) {
         throw YamlEmitterException ("Could not initialize yaml document while saving configuration");
+    }
 
     // Init the main configuration mapping
-    if ( (topLevelMapping = yaml_document_add_mapping (&document, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0)
+    if ( (topLevelMapping = yaml_document_add_mapping (&document, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0) {
         throw YamlEmitterException ("Could not create top level mapping");
+    }
 }
 
-void YamlEmitter::close()
+void YamlEmitter::close() throw(YamlEmitterException) {
 {
     _debug ("YamlEmitter: Close");
 
@@ -96,15 +98,15 @@ void YamlEmitter::write()
 
 }
 
-void YamlEmitter::serializeData()
+void YamlEmitter::serializeData() throw(YamlEmitterException)
 {
     // Document object is destroyed once its content is emitted
-    if (!yaml_emitter_dump (&emitter, &document))
+    if (yaml_emitter_dump (&emitter, &document) == 0) {
         throw YamlEmitterException ("Error while emitting configuration yaml document");
+    }
 }
 
-
-void YamlEmitter::serializeAccount (MappingNode *map)
+void YamlEmitter::serializeAccount (MappingNode *map) throw(YamlEmitterException)
 {
 
     std::string accountstr ("accounts");
@@ -113,40 +115,51 @@ void YamlEmitter::serializeAccount (MappingNode *map)
 
     _debug ("YamlEmitter: Serialize account");
 
-    if (map->getType() != MAPPING)
+    if (map->getType() != MAPPING) {
         throw YamlEmitterException ("Node type is not a mapping while writing account");
+    }
 
     if (isFirstAccount) {
         // accountSequence need to be static outside this scope since reused each time an account is written
-        if ( (accountid = yaml_document_add_scalar (&document, NULL, (yaml_char_t *) accountstr.c_str(), -1, YAML_PLAIN_SCALAR_STYLE)) == 0)
+        if ( (accountid = yaml_document_add_scalar (&document, NULL, (yaml_char_t *) accountstr.c_str(), -1, YAML_PLAIN_SCALAR_STYLE)) == 0) {
             throw YamlEmitterException ("Could not add preference scalar to document");
+        }
 
-        if ( (accountSequence = yaml_document_add_sequence (&document, NULL, YAML_BLOCK_SEQUENCE_STYLE)) == 0)
+        if ( (accountSequence = yaml_document_add_sequence (&document, NULL, YAML_BLOCK_SEQUENCE_STYLE)) == 0) {
             throw YamlEmitterException ("Could not add sequence to document");
+        }
 
-        if (!yaml_document_append_mapping_pair (&document, topLevelMapping, accountid, accountSequence))
+        if (yaml_document_append_mapping_pair (&document, topLevelMapping, accountid, accountSequence) == 0) {
             throw YamlEmitterException ("Could not add mapping pair to top level mapping");
+        }
 
         isFirstAccount = false;
     }
 
-    if ( (accountmapping = yaml_document_add_mapping (&document, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0)
+    if ( (accountmapping = yaml_document_add_mapping (&document, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0) {
         throw YamlEmitterException ("Could not add account mapping to document");
+    }
 
-    if (!yaml_document_append_sequence_item (&document, accountSequence, accountmapping))
+    if (!yaml_document_append_sequence_item (&document, accountSequence, accountmapping) == 0) {
         throw YamlEmitterException ("Could not append account mapping to sequence");
+    }
 
     Mapping *internalmap = map->getMapping();
     Mapping::iterator iter = internalmap->begin();
 
-    while (iter != internalmap->end()) {
-        addMappingItem (accountmapping, iter->first, iter->second);
-        iter++;
+    try {
+    	while (iter != internalmap->end()) {
+    		addMappingItem (accountmapping, iter->first, iter->second);
+    		iter++;
+    	}
     }
-
+    catch(YamlEmitterException &e) {
+    	_error("YamlEmitterException: %s", e.what());
+    	throw;
+    }
 }
 
-void YamlEmitter::serializePreference (MappingNode *map)
+void YamlEmitter::serializePreference (MappingNode *map) throw(YamlEmitterException)
 {
     std::string preferencestr ("preferences");
 
@@ -169,14 +182,19 @@ void YamlEmitter::serializePreference (MappingNode *map)
     Mapping *internalmap = map->getMapping();
     Mapping::iterator iter = internalmap->begin();
 
-    while (iter != internalmap->end()) {
-        addMappingItem (preferencemapping, iter->first, iter->second);
-        iter++;
+    try {
+    	while (iter != internalmap->end()) {
+    		addMappingItem (preferencemapping, iter->first, iter->second);
+    		iter++;
+    	}
+    }
+    catch(YamlEmitterException &e) {
+    	throw;
     }
 
 }
 
-void YamlEmitter::serializeVoipPreference (MappingNode *map)
+void YamlEmitter::serializeVoipPreference (MappingNode *map) throw(YamlEmitterException)
 {
     std::string preferencestr ("voipPreferences");
 
@@ -199,14 +217,19 @@ void YamlEmitter::serializeVoipPreference (MappingNode *map)
     Mapping *internalmap = map->getMapping();
     Mapping::iterator iter = internalmap->begin();
 
-    while (iter != internalmap->end()) {
-        addMappingItem (preferencemapping, iter->first, iter->second);
-        iter++;
+    try {
+    	while (iter != internalmap->end()) {
+    		addMappingItem (preferencemapping, iter->first, iter->second);
+    		iter++;
+    	}
+    }
+    catch (YamlEmitterException &e) {
+    	throw;
     }
 
 }
 
-void YamlEmitter::serializeAddressbookPreference (MappingNode *map)
+void YamlEmitter::serializeAddressbookPreference (MappingNode *map) throw(YamlEmitterException)
 {
     std::string preferencestr ("addressbook");
 
@@ -229,14 +252,18 @@ void YamlEmitter::serializeAddressbookPreference (MappingNode *map)
     Mapping *internalmap = map->getMapping();
     Mapping::iterator iter = internalmap->begin();
 
-    while (iter != internalmap->end()) {
-        addMappingItem (preferencemapping, iter->first, iter->second);
-        iter++;
-    }
-
+	try {
+		while (iter != internalmap->end()) {
+			addMappingItem (preferencemapping, iter->first, iter->second);
+			iter++;
+		}
+	}
+	catch(YamlEmitterException &e) {
+		throw;
+	}
 }
 
-void YamlEmitter::serializeHooksPreference (MappingNode *map)
+void YamlEmitter::serializeHooksPreference (MappingNode *map) throw(YamlEmitterException)
 {
     std::string preferencestr ("hooks");
 
@@ -259,15 +286,19 @@ void YamlEmitter::serializeHooksPreference (MappingNode *map)
     Mapping *internalmap = map->getMapping();
     Mapping::iterator iter = internalmap->begin();
 
-    while (iter != internalmap->end()) {
-        addMappingItem (preferencemapping, iter->first, iter->second);
-        iter++;
+    try {
+		while (iter != internalmap->end()) {
+			addMappingItem (preferencemapping, iter->first, iter->second);
+			iter++;
+		}
     }
-
+	catch(YamlEmitterException &e) {
+		throw;
+	}
 }
 
 
-void YamlEmitter::serializeAudioPreference (MappingNode *map)
+void YamlEmitter::serializeAudioPreference (MappingNode *map) throw(YamlEmitterException)
 {
     std::string preferencestr ("audio");
 
@@ -290,15 +321,20 @@ void YamlEmitter::serializeAudioPreference (MappingNode *map)
     Mapping *internalmap = map->getMapping();
     Mapping::iterator iter = internalmap->begin();
 
-    while (iter != internalmap->end()) {
-        addMappingItem (preferencemapping, iter->first, iter->second);
-        iter++;
+    try {
+    	while (iter != internalmap->end()) {
+    		addMappingItem (preferencemapping, iter->first, iter->second);
+    		iter++;
+    	}
+    }
+    catch(YamlEmitterException &e) {
+    	throw;
     }
 
 }
 
 
-void YamlEmitter::serializeShortcutPreference (MappingNode *map)
+void YamlEmitter::serializeShortcutPreference (MappingNode *map) throw(YamlEmitterException)
 {
     std::string preferencestr ("shortcuts");
 
@@ -321,11 +357,15 @@ void YamlEmitter::serializeShortcutPreference (MappingNode *map)
     Mapping *internalmap = map->getMapping();
     Mapping::iterator iter = internalmap->begin();
 
-    while (iter != internalmap->end()) {
-        addMappingItem (preferencemapping, iter->first, iter->second);
-        iter++;
+    try {
+		while (iter != internalmap->end()) {
+			addMappingItem (preferencemapping, iter->first, iter->second);
+			iter++;
+		}
     }
-
+    catch(YamlEmitterException &e) {
+    	throw;
+    }
 }
 
 
@@ -364,13 +404,18 @@ void YamlEmitter::addMappingItem (int mappingid, Key key, YamlNode *node)
         Mapping *internalmap = map->getMapping();
         Mapping::iterator iter = internalmap->begin();
 
-        while (iter != internalmap->end()) {
-            addMappingItem (temp2, iter->first, iter->second);
-            iter++;
+        try {
+        	while (iter != internalmap->end()) {
+        		addMappingItem (temp2, iter->first, iter->second);
+        		iter++;
+        	}
         }
-    } else
+        catch(YamlEmitterException) {
+        	throw;
+        }
+    } else {
         throw YamlEmitterException ("Unknown node type while adding mapping node");
+    }
 }
-
 
 }

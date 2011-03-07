@@ -69,27 +69,27 @@ class YamlEmitter
 
         ~YamlEmitter();
 
-        void open();
+        void open() throw(YamlEmitterException);
 
-        void close();
+        void close() throw(YamlEmitterException);
 
         void read();
 
         void write();
 
-        void serializeAccount (MappingNode *map);
+        void serializeAccount (MappingNode *map) throw(YamlEmitterException);
 
-        void serializePreference (MappingNode *map);
+        void serializePreference (MappingNode *map) throw(YamlEmitterException);
 
-        void serializeVoipPreference (MappingNode *map);
+        void serializeVoipPreference (MappingNode *map) throw(YamlEmitterException);
 
-        void serializeAddressbookPreference (MappingNode *map);
+        void serializeAddressbookPreference (MappingNode *map) throw(YamlEmitterException);
 
-        void serializeHooksPreference (MappingNode *map);
+        void serializeHooksPreference (MappingNode *map) throw(YamlEmitterException);
 
-        void serializeAudioPreference (MappingNode *map);
+        void serializeAudioPreference (MappingNode *map) throw(YamlEmitterException);
 
-        void serializeShortcutPreference (MappingNode *map);
+        void serializeShortcutPreference (MappingNode *map) throw(YamlEmitterException);
 
         void writeAudio();
 
@@ -97,7 +97,7 @@ class YamlEmitter
 
         void writeVoiplink();
 
-        void serializeData();
+        void serializeData() throw(YamlEmitterException);
 
     private:
 
