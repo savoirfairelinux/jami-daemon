@@ -39,6 +39,8 @@ namespace Conf
 {
 
 YamlParser::YamlParser (const char *file) : filename (file)
+	, fd(NULL)
+	, events()
     , eventNumber (0)
     , doc (NULL)
     , eventIndex (0)
@@ -97,7 +99,7 @@ void YamlParser::close() throw(YamlParserException)
 void YamlParser::serializeEvents() throw(YamlParserException)
 {
     bool done = false;
-    yaml_event_t event;
+    yaml_event_t event, copiedEvent;
 
     try {
 
@@ -108,16 +110,16 @@ void YamlParser::serializeEvents() throw(YamlParserException)
 
     		done = (event.type == YAML_STREAM_END_EVENT);
 
-    		if (eventNumber > PARSER_MAXEVENT)
-    			throw YamlParserException ("Reached maximum of event");
+    		copyEvent (&copiedEvent, &event);
 
-    		copyEvent (& (events[eventNumber++]), &event);
+    		events.push_back(copiedEvent);
+
+    		eventNumber++;
 
     		yaml_event_delete (&event);
     	}
     }
     catch(YamlParserException &e) {
-    	_error ("YamlParserException: %s", e.what());
     	throw;
     }
 
@@ -233,7 +235,6 @@ YamlDocument *YamlParser::composeEvents() throw(YamlParserException)
 		processStream();
 	}
 	catch(YamlParserException &e) {
-		_error ("YamlParserException: %s", e.what());
 		throw;
 	}
 
@@ -255,8 +256,7 @@ void YamlParser::processStream () throw(YamlParserException)
 		if (events[eventIndex].type != YAML_STREAM_END_EVENT)
 			throw YamlParserException ("Did not found end of stream");
 	}
-	catch (YamlParserException &e) {
-		_error ("YamlParserException: %s", e.what());
+	catch(YamlParserException &e) {
 		throw;
 	}
 }
@@ -294,7 +294,6 @@ void YamlParser::processDocument() throw(YamlParserException)
 
 	}
 	catch(YamlParserException &e) {
-		_error("YamlParserException: %s", e.what());
 		throw;
 	}
 }
@@ -327,7 +326,6 @@ void YamlParser::processScalar (YamlNode *topNode) throw(YamlParserException)
 		}
 	}
 	catch(YamlParserException &e) {
-		_error("YamlParserException %s", e.what());
 		throw;
 	}
 }
@@ -383,7 +381,6 @@ void YamlParser::processSequence (YamlNode *topNode) throw(YamlParserException)
 
 	}
 	catch(YamlParserException &e) {
-		_error("YamlParserException %s", e.what());
 		throw;
 	}
 
@@ -447,7 +444,6 @@ void YamlParser::processMapping (YamlNode *topNode) throw(YamlParserException)
 
 	}
 	catch(YamlParserException &e) {
-		_error("YamlParserException %s", e.what());
 		throw;
 	}
 }
@@ -489,7 +485,6 @@ void YamlParser::constructNativeData() throw(YamlParserException)
 		}
 	}
 	catch(YamlParserException &e) {
-		_error("YamlParserException %s", e.what());
 		throw;
 	}
 
@@ -542,7 +537,6 @@ void YamlParser::mainNativeDataMapping (MappingNode *map) throw(YamlParserExcept
 		}
 	}
 	catch(YamlParserException &e) {
-		_error("YamlParserException %s", e.what());
 		throw;
 	}
 }

@@ -36,12 +36,14 @@
 #include <stdio.h>
 #include <exception>
 #include <string>
+#include <vector>
 
 namespace Conf
 {
 
 #define PARSER_BUFFERSIZE 65536
-#define PARSER_MAXEVENT 1024
+
+typedef std::vector<yaml_event_t> YamlEventVector;
 
 class YamlParserException : public std::exception
 {
@@ -145,7 +147,7 @@ class YamlParser
         /**
          * The event structure array.
          */
-        yaml_event_t events[PARSER_MAXEVENT];
+        YamlEventVector events;
 
         /**
          *
