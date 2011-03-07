@@ -87,7 +87,7 @@ void YamlEmitter::close() throw(YamlEmitterException)
         throw YamlEmitterException ("Error closing file descriptor");
 
 
-    _debug ("Config: Configuration file closed successfully");
+    _debug ("YamlEmitter: Configuration file closed successfully");
 
 }
 
@@ -106,13 +106,13 @@ void YamlEmitter::serializeAccount (MappingNode *map) throw(YamlEmitterException
 
     int accountid, accountmapping;
 
-    _debug ("YamlEmitter: Serialize account");
-
     if (map->getType() != MAPPING) {
         throw YamlEmitterException ("Node type is not a mapping while writing account");
     }
 
     if (isFirstAccount) {
+    	_debug("YamlEmitter: Create account sequence");
+
         // accountSequence need to be static outside this scope since reused each time an account is written
         if ( (accountid = yaml_document_add_scalar (&document, NULL, (yaml_char_t *) accountstr.c_str(), -1, YAML_PLAIN_SCALAR_STYLE)) == 0) {
             throw YamlEmitterException ("Could not add preference scalar to document");
@@ -133,7 +133,7 @@ void YamlEmitter::serializeAccount (MappingNode *map) throw(YamlEmitterException
         throw YamlEmitterException ("Could not add account mapping to document");
     }
 
-    if (!yaml_document_append_sequence_item (&document, accountSequence, accountmapping) == 0) {
+    if (yaml_document_append_sequence_item (&document, accountSequence, accountmapping) == 0) {
         throw YamlEmitterException ("Could not append account mapping to sequence");
     }
 
@@ -158,8 +158,6 @@ void YamlEmitter::serializePreference (MappingNode *map) throw(YamlEmitterExcept
 
     int preferenceid, preferencemapping;
 
-    _debug ("YamlEmitter: Serialize preference");
-
     if (map->getType() != MAPPING)
         throw YamlEmitterException ("Node type is not a mapping while writing preferences");
 
@@ -169,7 +167,7 @@ void YamlEmitter::serializePreference (MappingNode *map) throw(YamlEmitterExcept
     if ( (preferencemapping = yaml_document_add_mapping (&document, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0)
         throw YamlEmitterException ("Could not add mapping to document");
 
-    if (!yaml_document_append_mapping_pair (&document, topLevelMapping, preferenceid, preferencemapping))
+    if (yaml_document_append_mapping_pair (&document, topLevelMapping, preferenceid, preferencemapping) == 0)
         throw YamlEmitterException ("Could not add mapping pair to top leve mapping");
 
     Mapping *internalmap = map->getMapping();
@@ -193,8 +191,6 @@ void YamlEmitter::serializeVoipPreference (MappingNode *map) throw(YamlEmitterEx
 
     int preferenceid, preferencemapping;
 
-    _debug ("YamlEmitter: Serialize voip preference");
-
     if (map->getType() != MAPPING)
         throw YamlEmitterException ("Node type is not a mapping while writing preferences");
 
@@ -204,7 +200,7 @@ void YamlEmitter::serializeVoipPreference (MappingNode *map) throw(YamlEmitterEx
     if ( (preferencemapping = yaml_document_add_mapping (&document, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0)
         throw YamlEmitterException ("Could not add mapping to document");
 
-    if (!yaml_document_append_mapping_pair (&document, topLevelMapping, preferenceid, preferencemapping))
+    if (yaml_document_append_mapping_pair (&document, topLevelMapping, preferenceid, preferencemapping) == 0)
         throw YamlEmitterException ("Could not add mapping pair to top leve mapping");
 
     Mapping *internalmap = map->getMapping();
@@ -228,8 +224,6 @@ void YamlEmitter::serializeAddressbookPreference (MappingNode *map) throw(YamlEm
 
     int preferenceid, preferencemapping;
 
-    _debug ("YamlEmitter: Serialize addressbook preferences");
-
     if (map->getType() != MAPPING)
         throw YamlEmitterException ("Node type is not a mapping while writing preferences");
 
@@ -239,7 +233,7 @@ void YamlEmitter::serializeAddressbookPreference (MappingNode *map) throw(YamlEm
     if ( (preferencemapping = yaml_document_add_mapping (&document, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0)
         throw YamlEmitterException ("Could not add mapping to document");
 
-    if (!yaml_document_append_mapping_pair (&document, topLevelMapping, preferenceid, preferencemapping))
+    if (yaml_document_append_mapping_pair (&document, topLevelMapping, preferenceid, preferencemapping) == 0)
         throw YamlEmitterException ("Could not add mapping pair to top leve mapping");
 
     Mapping *internalmap = map->getMapping();
@@ -262,8 +256,6 @@ void YamlEmitter::serializeHooksPreference (MappingNode *map) throw(YamlEmitterE
 
     int preferenceid, preferencemapping;
 
-    _debug ("YamlEmitter: Serialize hooks preferences");
-
     if (map->getType() != MAPPING)
         throw YamlEmitterException ("Node type is not a mapping while writing preferences");
 
@@ -273,7 +265,7 @@ void YamlEmitter::serializeHooksPreference (MappingNode *map) throw(YamlEmitterE
     if ( (preferencemapping = yaml_document_add_mapping (&document, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0)
         throw YamlEmitterException ("Could not add mapping to document");
 
-    if (!yaml_document_append_mapping_pair (&document, topLevelMapping, preferenceid, preferencemapping))
+    if (yaml_document_append_mapping_pair (&document, topLevelMapping, preferenceid, preferencemapping) == 0)
         throw YamlEmitterException ("Could not add mapping pair to top leve mapping");
 
     Mapping *internalmap = map->getMapping();
@@ -297,8 +289,6 @@ void YamlEmitter::serializeAudioPreference (MappingNode *map) throw(YamlEmitterE
 
     int preferenceid, preferencemapping;
 
-    _debug ("YamlEmitter: Serialize hooks preferences");
-
     if (map->getType() != MAPPING)
         throw YamlEmitterException ("Node type is not a mapping while writing preferences");
 
@@ -308,7 +298,7 @@ void YamlEmitter::serializeAudioPreference (MappingNode *map) throw(YamlEmitterE
     if ( (preferencemapping = yaml_document_add_mapping (&document, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0)
         throw YamlEmitterException ("Could not add mapping to document");
 
-    if (!yaml_document_append_mapping_pair (&document, topLevelMapping, preferenceid, preferencemapping))
+    if (yaml_document_append_mapping_pair (&document, topLevelMapping, preferenceid, preferencemapping) == 0)
         throw YamlEmitterException ("Could not add mapping pair to top leve mapping");
 
     Mapping *internalmap = map->getMapping();
@@ -333,8 +323,6 @@ void YamlEmitter::serializeShortcutPreference (MappingNode *map) throw(YamlEmitt
 
     int preferenceid, preferencemapping;
 
-    _debug ("YamlEmitter: Serialize shortcuts preferences");
-
     if (map->getType() != MAPPING)
         throw YamlEmitterException ("Node type is not a mapping while writing preferences");
 
@@ -344,7 +332,7 @@ void YamlEmitter::serializeShortcutPreference (MappingNode *map) throw(YamlEmitt
     if ( (preferencemapping = yaml_document_add_mapping (&document, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0)
         throw YamlEmitterException ("Could not add mapping to document");
 
-    if (!yaml_document_append_mapping_pair (&document, topLevelMapping, preferenceid, preferencemapping))
+    if (yaml_document_append_mapping_pair (&document, topLevelMapping, preferenceid, preferencemapping) == 0)
         throw YamlEmitterException ("Could not add mapping pair to top leve mapping");
 
     Mapping *internalmap = map->getMapping();
@@ -377,7 +365,7 @@ void YamlEmitter::addMappingItem (int mappingid, Key key, YamlNode *node)
         if ( (temp2 = yaml_document_add_scalar (&document, NULL, (yaml_char_t *) sclr->getValue().c_str(), -1, YAML_PLAIN_SCALAR_STYLE)) == 0)
             throw YamlEmitterException ("Could not add scalar to document");
 
-        if (!yaml_document_append_mapping_pair (&document, mappingid, temp1, temp2))
+        if (yaml_document_append_mapping_pair (&document, mappingid, temp1, temp2) == 0)
             throw YamlEmitterException ("Could not append mapping pair to mapping");
 
     } else if (node->getType() == MAPPING) {
@@ -390,7 +378,7 @@ void YamlEmitter::addMappingItem (int mappingid, Key key, YamlNode *node)
         if ( (temp2 = yaml_document_add_mapping (&document, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0)
             throw YamlEmitterException ("Could not add scalar to document");
 
-        if (!yaml_document_append_mapping_pair (&document, mappingid, temp1, temp2))
+        if (yaml_document_append_mapping_pair (&document, mappingid, temp1, temp2) == 0)
             throw YamlEmitterException ("Could not add mapping pair to mapping");
 
         MappingNode *map = (MappingNode *) node;

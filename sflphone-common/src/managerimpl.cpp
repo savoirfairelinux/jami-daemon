@@ -1509,12 +1509,14 @@ bool ManagerImpl::saveConfig (void)
         emitter = new Conf::YamlEmitter (_path.c_str());
 
         while (iter != _accountMap.end()) {
-            _debug ("Manager: Saving account: %s", iter->first.c_str());
 
+        	// Skip the "" account ID (which refer to the IP2IP account)
             if (iter->first == "") {
                 iter++;
                 continue;
             }
+
+            _debug ("Manager: Saving account: %s", iter->first.c_str());
 
             iter->second->serialize (emitter);
             iter++;
