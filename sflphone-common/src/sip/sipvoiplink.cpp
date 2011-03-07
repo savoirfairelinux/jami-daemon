@@ -481,6 +481,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
     pjsip_regc *regc;
     pjsip_generic_string_hdr *h;
     pjsip_hdr hdr_list;
+    pjsip_host_info dest_info;
 
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
 
@@ -652,6 +653,8 @@ int SIPVoIPLink::sendRegister (AccountID id)
         _mutexSIP.leaveMutex();
         return false;
     }
+
+    pjsip_process_route_set(tdata, &dest_info);
 
     pjsip_tpselector *tp;
 
