@@ -73,7 +73,7 @@ void YamlEmitter::open() throw(YamlEmitterException)
     }
 }
 
-void YamlEmitter::close() throw(YamlEmitterException) {
+void YamlEmitter::close() throw(YamlEmitterException)
 {
     _debug ("YamlEmitter: Close");
 
@@ -88,13 +88,6 @@ void YamlEmitter::close() throw(YamlEmitterException) {
 
 
     _debug ("Config: Configuration file closed successfully");
-
-}
-
-void YamlEmitter::read() {}
-
-void YamlEmitter::write()
-{
 
 }
 

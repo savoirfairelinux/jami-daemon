@@ -73,10 +73,6 @@ class YamlEmitter
 
         void close() throw(YamlEmitterException);
 
-        void read();
-
-        void write();
-
         void serializeAccount (MappingNode *map) throw(YamlEmitterException);
 
         void serializePreference (MappingNode *map) throw(YamlEmitterException);
