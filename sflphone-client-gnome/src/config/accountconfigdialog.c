@@ -295,6 +295,7 @@ static GtkWidget* create_basic_tab (account_t **a)
     /* TODO: add curProxy, and add boxes for Proxy support */
     gchar *curMailbox = "";
     gchar *curUseragent = "";
+    gchar *curRouteSet = "";
 
     currentAccount = *a;
 
@@ -311,7 +312,7 @@ static GtkWidget* create_basic_tab (account_t **a)
         curHostname = g_hash_table_lookup (currentAccount->properties, ACCOUNT_HOSTNAME);
         curPassword = g_hash_table_lookup (currentAccount->properties, ACCOUNT_PASSWORD);
         curUsername = g_hash_table_lookup (currentAccount->properties, ACCOUNT_USERNAME);
-        // curRouteSet = g_hash_table_lookup(currentAccount->properties, ACCOUNT_ROUTE);
+        curRouteSet = g_hash_table_lookup(currentAccount->properties, ACCOUNT_ROUTE);
         curMailbox = g_hash_table_lookup (currentAccount->properties, ACCOUNT_MAILBOX);
         curMailbox = curMailbox != NULL ? curMailbox : "";
         curUseragent = g_hash_table_lookup (currentAccount->properties, ACCOUNT_USERAGENT);
@@ -424,6 +425,15 @@ static GtkWidget* create_basic_tab (account_t **a)
     clearTextCheckbox = gtk_check_button_new_with_mnemonic (_ ("Show password"));
     g_signal_connect (clearTextCheckbox, "toggled", G_CALLBACK (show_password_cb), entryPassword);
     gtk_table_attach (GTK_TABLE (table), clearTextCheckbox, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+
+    row++;
+    label = gtk_label_new_with_mnemonic (_ ("_Proxy"));
+    gtk_table_attach (GTK_TABLE (table), label, 0, 1, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+    entryRouteSet = gtk_entry_new ();
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryRouteSet);
+    gtk_entry_set_text (GTK_ENTRY (entryRouteSet), curRouteSet);
+    gtk_table_attach (GTK_TABLE (table), entryRouteSet, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     row++;
     label = gtk_label_new_with_mnemonic (_ ("_Voicemail number"));
@@ -1436,12 +1446,12 @@ void show_account_window (account_t * a)
                                   g_strdup (ACCOUNT_REGISTRATION_EXPIRE),
                                   g_strdup ( (gchar *) gtk_entry_get_text (GTK_ENTRY (expireSpinBox))));
 
-            /*
+
             // TODO: uncomment this code and implement route
             g_hash_table_replace(currentAccount->properties,
             		     g_strdup(ACCOUNT_ROUTE),
             		     g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryRouteSet))));
-            */
+
 
             g_hash_table_replace (currentAccount->properties,
                                   g_strdup (ACCOUNT_USERAGENT),

@@ -1593,12 +1593,8 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
     }
 
     // Creates URI
-    std::string fromUri;
-    std::string toUri;
-    std::string contactUri;
-
-    fromUri = account->getFromUri();
-    toUri = call->getPeerNumber(); // expecting a fully well formed sip uri
+    std::string fromUri = account->getFromUri();
+    std::string toUri = call->getPeerNumber(); // expecting a fully well formed sip uri
 
     std::string address = findLocalAddressFromUri (toUri, account->getAccountTransport ());
     int port = findLocalPortFromUri (toUri, account->getAccountTransport ());
@@ -1608,12 +1604,10 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
     ss << port;
     ss >> portStr;
 
-    contactUri = account->getContactHeader (address, portStr);
+    std::string contactUri = account->getContactHeader (address, portStr);
 
     _debug ("UserAgent: FROM uri: %s, TO uri: %s, CONTACT uri: %s",
-            fromUri.c_str(),
-            toUri.c_str(),
-            contactUri.c_str());
+            fromUri.c_str(), toUri.c_str(), contactUri.c_str());
 
     pj_str_t pjFrom;
     pj_cstr (&pjFrom, fromUri.c_str());
@@ -1640,20 +1634,20 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
     status = pjsip_inv_create_uac (dialog, call->getLocalSDP()->get_local_sdp_session(), 0, &inv);
 
 
-    if (! (account->getServiceRoute().empty())) {
-
-        _error ("UserAgent: Set Service-Route with %s", account->getServiceRoute().c_str());
-
-        pjsip_route_hdr *route_set = pjsip_route_hdr_create (_pool);
-        pjsip_route_hdr *routing = pjsip_route_hdr_create (_pool);
-        pjsip_sip_uri *url = pjsip_sip_uri_create (_pool, 0);
-        routing->name_addr.uri = (pjsip_uri*) url;
-        pj_strdup2 (_pool, &url->host, account->getServiceRoute().c_str());
-
-        pj_list_push_back (&route_set, pjsip_hdr_clone (_pool, routing));
-
-        pjsip_dlg_set_route_set (dialog, route_set);
-    }
+//    if (! (account->getServiceRoute().empty())) {
+//
+//        _error ("UserAgent: Set Service-Route with %s", account->getServiceRoute().c_str());
+//
+//        pjsip_route_hdr *route_set = pjsip_route_hdr_create (_pool);
+//        pjsip_route_hdr *routing = pjsip_route_hdr_create (_pool);
+//        pjsip_sip_uri *url = pjsip_sip_uri_create (_pool, 0);
+//        routing->name_addr.uri = (pjsip_uri*) url;
+//        pj_strdup2 (_pool, &url->host, account->getServiceRoute().c_str());
+//
+//        pj_list_push_back (&route_set, pjsip_hdr_clone (_pool, routing));
+//
+//        pjsip_dlg_set_route_set (dialog, route_set);
+//    }
 
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
 
@@ -1997,100 +1991,12 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
 // Private functions
 ///////////////////////////////////////////////////////////////////////////////
 
-
-bool get_dns_server_addresses (std::vector<std::string> *servers)
-{
-
-    int server_count, i;
-    std::vector<std::string> nameservers;
-
-    struct  sockaddr_in current_server;
-    in_addr address;
-    // Read configuration files
-
-    if (res_init () != 0) {
-        _debug ("UserAgent: Resolver initialization failed");
-        return false;
-    }
-
-    server_count = _res.nscount;
-
-    for (i=0; i<server_count; i++) {
-        current_server = (struct  sockaddr_in) _res.nsaddr_list[i];
-        address = current_server.sin_addr;
-        nameservers.push_back (inet_ntoa (address));
-    }
-
-    *servers = nameservers;
-
-    return true;
-}
-
-pj_status_t SIPVoIPLink::enable_dns_srv_resolver (pjsip_endpoint *endpt, pj_dns_resolver **p_resv)
-{
-
-    pj_status_t status;
-    pj_dns_resolver *resv;
-    std::vector <std::string> dns_servers;
-    int scount, i;
-
-    _debug ("UserAgent: Enable DNS SRV resolver");
-
-    // Create the DNS resolver instance
-    status = pjsip_endpt_create_resolver (endpt, &resv);
-
-    if (status != PJ_SUCCESS) {
-        _error ("UserAgent: Error: Creating the DNS resolver instance");
-        return status;
-    }
-
-    if (!get_dns_server_addresses (&dns_servers)) {
-        _error ("UserAgent: Error: while fetching DNS information");
-        return -1;
-    }
-
-    // Build the nameservers list needed by pjsip
-    if ( (scount = dns_servers.size ()) <= 0) {
-        _warn ("UserAgent: No server detected while fetching DNS information, stop dns resolution");
-        return 0;
-    }
-
-    pj_str_t nameservers[scount];
-
-    for (i = 0; i<scount; i++) {
-        _debug ("UserAgent: Server: %s", (char *) dns_servers[i].c_str());
-        nameservers[i] = pj_str ( (char *) dns_servers[i].c_str());
-    }
-
-    // Update the name servers for the DNS resolver
-    status = pj_dns_resolver_set_ns (resv, scount, nameservers, NULL);
-
-    if (status != PJ_SUCCESS) {
-        _debug ("UserAgent: Error updating the name servers for the DNS resolver");
-        return status;
-    }
-
-    // Set the DNS resolver instance of the SIP resolver engine
-    status = pjsip_endpt_set_resolver (endpt, resv);
-
-    if (status != PJ_SUCCESS) {
-        _debug ("UserAgent: Error setting the DNS resolver instance of the SIP resolver engine");
-        return status;
-    }
-
-    *p_resv = resv;
-
-    return PJ_SUCCESS;
-
-}
-
 bool SIPVoIPLink::pjsip_init()
 {
     pj_status_t status;
     pjsip_inv_callback inv_cb;
     pj_str_t accepted;
     std::string name_mod;
-    // pj_dns_resolver *p_resv;
     std::string addr;
 
     name_mod = "sflphone";
@@ -2186,8 +2092,6 @@ bool SIPVoIPLink::pjsip_init()
     status = pjsip_xfer_init_module (_endpt);
 
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
-
-    // status = enable_dns_srv_resolver (_endpt, &p_resv);
 
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
@@ -3490,7 +3394,6 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
     } catch (...) {
 
     }
-
 
     // Get the crypto attribute containing srtp's cryptographic context (keys, cipher)
     CryptoOffer crypto_offer;
