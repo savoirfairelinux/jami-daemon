@@ -479,7 +479,6 @@ int SIPVoIPLink::sendRegister (AccountID id)
     std::string tmp, hostname, username, password;
     SIPAccount *account = NULL;
     pjsip_regc *regc;
-    pjsip_generic_string_hdr *h;
     pjsip_hdr hdr_list;
     pjsip_host_info dest_info;
 
@@ -600,20 +599,16 @@ int SIPVoIPLink::sendRegister (AccountID id)
     pj_cstr (&pjSrv, srvUri.c_str());
 
     // Initializes registration
-
-    // Set Route for registration passing throught one or several proxies
-    // status = pjsip_regc_init (regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, expire_value);
-
     status = pjsip_regc_init (regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, expire_value);
 
     if (! (account->getServiceRoute().empty())) {
-
-        _error ("UserAgent: Set Service-Route with %s", account->getServiceRoute().c_str());
 
         pjsip_route_hdr *route_set = pjsip_route_hdr_create (_pool);
         pjsip_route_hdr *routing = pjsip_route_hdr_create (_pool);
         pjsip_sip_uri *url = pjsip_sip_uri_create (_pool, 0);
         routing->name_addr.uri = (pjsip_uri*) url;
+        // account->getServiceRoute().append(";lr");
+        _error ("UserAgent: Set Service-Route with %s", account->getServiceRoute().c_str());
         pj_strdup2 (_pool, &url->host, account->getServiceRoute().c_str());
 
         pj_list_push_back (&route_set, pjsip_hdr_clone (_pool, routing));
@@ -628,7 +623,6 @@ int SIPVoIPLink::sendRegister (AccountID id)
     }
 
     pjsip_cred_info *cred = account->getCredInfo();
-
     int credential_count = account->getCredentialCount();
     _debug ("UserAgent: setting %d credentials in sendRegister", credential_count);
     pjsip_regc_set_credentials (regc, credential_count, cred);
@@ -638,12 +632,9 @@ int SIPVoIPLink::sendRegister (AccountID id)
 
     const char *useragent_name = get_useragent_name (id).c_str();
     pj_str_t useragent = pj_str ( (char *) useragent_name);
-
-    h = pjsip_generic_string_hdr_create (_pool, &STR_USER_AGENT, &useragent);
+    pjsip_generic_string_hdr *h = pjsip_generic_string_hdr_create (_pool, &STR_USER_AGENT, &useragent);
 
     pj_list_push_back (&hdr_list, (pjsip_hdr*) h);
-    // pj_list_push_back (&hdr_list, (pjsip_hdr*) routing);
-
     pjsip_regc_add_headers (regc, &hdr_list);
 
     status = pjsip_regc_register (regc, PJ_TRUE, &tdata);
@@ -653,8 +644,6 @@ int SIPVoIPLink::sendRegister (AccountID id)
         _mutexSIP.leaveMutex();
         return false;
     }
-
-    pjsip_process_route_set(tdata, &dest_info);
 
     pjsip_tpselector *tp;
 
@@ -917,15 +906,35 @@ SIPVoIPLink::hangup (const CallID& id)
 {
     pj_status_t status;
     pjsip_tx_data *tdata = NULL;
-    SIPCall* call;
 
-    call = getSIPCall (id);
+    SIPCall* call = getSIPCall (id);
 
-    if (call==0) {
+
+    AccountID account_id = Manager::instance().getAccountFromCall (id);
+    SIPAccount *account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
+
+    if (call == NULL) {
         _debug ("! SIP Error: Call doesn't exist");
         return false;
     }
 
+    pjsip_inv_session *inv = call->getInvSession();
+
+    // _debug("Some tdata info: %",);
+    if (! (account->getServiceRoute().empty())) {
+
+        _error ("UserAgent: Set Service-Route with %s", account->getServiceRoute().c_str());
+
+        pjsip_route_hdr *route_set = pjsip_route_hdr_create (_pool);
+        pjsip_route_hdr *routing = pjsip_route_hdr_create (_pool);
+        pjsip_sip_uri *url = pjsip_sip_uri_create (_pool, 0);
+        routing->name_addr.uri = (pjsip_uri*) url;
+        pj_strdup2 (_pool, &url->host, account->getServiceRoute().c_str());
+
+        pj_list_push_back (&route_set, pjsip_hdr_clone (_pool, routing));
+
+        pjsip_dlg_set_route_set (inv->dlg, route_set);
+    }
 
     // User hangup current call. Notify peer
     status = pjsip_inv_end_session (call->getInvSession(), 404, NULL, &tdata);
@@ -936,8 +945,6 @@ SIPVoIPLink::hangup (const CallID& id)
 
     if (tdata == NULL)
         return true;
-
-    // _debug("Some tdata info: %",);
 
     status = pjsip_inv_send_msg (call->getInvSession(), tdata);
 
@@ -1634,20 +1641,20 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
     status = pjsip_inv_create_uac (dialog, call->getLocalSDP()->get_local_sdp_session(), 0, &inv);
 
 
-//    if (! (account->getServiceRoute().empty())) {
-//
-//        _error ("UserAgent: Set Service-Route with %s", account->getServiceRoute().c_str());
-//
-//        pjsip_route_hdr *route_set = pjsip_route_hdr_create (_pool);
-//        pjsip_route_hdr *routing = pjsip_route_hdr_create (_pool);
-//        pjsip_sip_uri *url = pjsip_sip_uri_create (_pool, 0);
-//        routing->name_addr.uri = (pjsip_uri*) url;
-//        pj_strdup2 (_pool, &url->host, account->getServiceRoute().c_str());
-//
-//        pj_list_push_back (&route_set, pjsip_hdr_clone (_pool, routing));
-//
-//        pjsip_dlg_set_route_set (dialog, route_set);
-//    }
+    if (! (account->getServiceRoute().empty())) {
+
+        _error ("UserAgent: Set Service-Route with %s", account->getServiceRoute().c_str());
+
+        pjsip_route_hdr *route_set = pjsip_route_hdr_create (_pool);
+        pjsip_route_hdr *routing = pjsip_route_hdr_create (_pool);
+        pjsip_sip_uri *url = pjsip_sip_uri_create (_pool, 0);
+        routing->name_addr.uri = (pjsip_uri*) url;
+        pj_strdup2 (_pool, &url->host, account->getServiceRoute().c_str());
+
+        pj_list_push_back (&route_set, pjsip_hdr_clone (_pool, routing));
+
+        pjsip_dlg_set_route_set (dialog, route_set);
+    }
 
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
 
@@ -3022,6 +3029,29 @@ bool SIPVoIPLink::loadSIPLocalIP (std::string *addr)
     return returnValue;
 }
 
+bool SIPVoIPLink::dnsResolution(std::string& name) {
+	pj_addrinfo ai;
+	unsigned count;
+	int af;
+	pjsip_server_addresses svr_addr;
+	pj_status_t status;
+
+	pjsip_host_info *target;
+
+	af = pj_AF_INET();
+
+	pj_sockaddr_init(pj_AF_INET(), &svr_addr.entry[0].addr, NULL, 0);
+
+	/* Resolve */
+	count = 1;
+	status = pj_getaddrinfo(af, &target->addr.host, &count, &ai);
+
+	svr_addr.entry[0].addr.addr.sa_family = (pj_uint16_t)af;
+	pj_memcpy(&svr_addr.entry[0].addr, &ai.ai_addr, sizeof(pj_sockaddr));
+
+	return true;
+}
+
 void SIPVoIPLink::busy_sleep (unsigned msec)
 {
 
@@ -3092,6 +3122,8 @@ int getModId()
 
 static void dns_cb (pj_status_t status, void *token, const struct pjsip_server_addresses *addr)
 {
+
+	_debug("UserAgent: DNS callback");
 
     struct result * result = (struct result*) token;
 
@@ -4771,7 +4803,6 @@ int get_iface_list (struct ifconf *ifconf)
 
     return rval;
 }
-
 
 std::vector<std::string> SIPVoIPLink::getAllIpInterfaceByName (void)
 {

@@ -59,7 +59,7 @@ class SIPCall;
 #define RANDOM_SIP_PORT   rand() % 64000 + 1024
 
 // To set the verbosity. From 0 (min) to 6 (max)
-#define PJ_LOG_LEVEL 0
+#define PJ_LOG_LEVEL 6
 
 #define SipTransportMap std::map<std::string, pjsip_transport*>
 
@@ -377,6 +377,10 @@ class SIPVoIPLink : public VoIPLink
          */
         bool loadSIPLocalIP (std::string *addr);
 
+        /**
+         * Wrapper around getaddrinfo
+         */
+        bool dnsResolution(std::string& name);
 
         /**
          * This function unset the transport for a given account. It tests wether the
