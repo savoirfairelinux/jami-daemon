@@ -51,7 +51,9 @@ GtkWidget *sw;
 GtkCellRenderer *rend;
 GtkTreeViewColumn *col;
 GtkTreeSelection *sel;
+
 GtkWidget *popupmenu = NULL;
+GtkWidget *menu_items = NULL;
 
 gint dragged_type;
 gint selected_type;
@@ -538,7 +540,6 @@ focus_on_calltree_in()
 void
 calltree_create (calltab_t* tab, gboolean searchbar_type)
 {
-    GtkWidget *menu_items;
     gchar *conference = SFL_CREATE_CONFERENCE;
     gchar *transfer = SFL_TRANSFER_CALL;
 
@@ -607,17 +608,17 @@ calltree_create (calltab_t* tab, gboolean searchbar_type)
 
         menu_items = gtk_menu_item_new_with_label (transfer);
         g_signal_connect_swapped (menu_items, "activate",
-                                                      G_CALLBACK (menuitem_response),
-                                                      (gpointer) g_strdup (transfer));
+                                  G_CALLBACK (menuitem_response), (gpointer) g_strdup (transfer));
         gtk_menu_shell_append (GTK_MENU_SHELL (popupmenu), menu_items);
         gtk_widget_show (menu_items);
 
         menu_items = gtk_menu_item_new_with_label (conference);
         g_signal_connect_swapped (menu_items, "activate",
-                                              G_CALLBACK (menuitem_response),
-                                              (gpointer) g_strdup (conference));
+                                  G_CALLBACK (menuitem_response), (gpointer) g_strdup (conference));
         gtk_menu_shell_append (GTK_MENU_SHELL (popupmenu), menu_items);
         gtk_widget_show (menu_items);
+
+
 
     }
 
@@ -1666,8 +1667,6 @@ static void drag_end_cb (GtkWidget * widget UNUSED, GdkDragContext * context UNU
         }
     } else {
 
-        // selected_path_depth == 2
-
         if (dragged_path_depth == 1) {
 
             if (selected_type == A_CALL && dragged_type == A_CALL) {
@@ -1713,6 +1712,9 @@ static void drag_end_cb (GtkWidget * widget UNUSED, GdkDragContext * context UNU
                 DEBUG ("Dragged a call in the same conference");
                 calltree_remove_call (current_calls, selected_call, NULL);
                 calltree_add_call (current_calls, selected_call, &parent_conference);
+                gtk_widget_hide(menu_items);
+                gtk_menu_popup (GTK_MENU (popupmenu), NULL, NULL, NULL, NULL,
+                                                               0, 0);
             } else {
 
 
@@ -1852,21 +1854,16 @@ static void menuitem_response( gchar *string )
         sflphone_join_participant (selected_call->_callID, dragged_call->_callID);
     }
     else if(g_strcmp0(string, SFL_TRANSFER_CALL) == 0) {
-        /*
-        if(selected_call->_state == CALL_STATE_HOLD && dragged_call->_state == CALL_STATE_CURRENT) {
-            g_print("Calltree: Transfering call %s, to %s", selected_call->_peer_number, dragged_call->_peer_number);
-            selected_call->_trsft_to = g_strdup(dragged_call->_peer_number);
-            dbus_hang_up (dragged_call);
-            dbus_transfert (c);
-            dbus_attended_transfer();
-        }
-        */
         g_print("Calltree: Transfering call %s, to %s", selected_call->_peer_number, dragged_call->_peer_number);
         dbus_attended_transfer(selected_call, dragged_call);
     }
     else {
         g_print("CallTree: Error unknown option selected in menu %s", string);
     }
+
+    // Make sure the create conference opetion will appear next time the menu pops
+    // The create conference option will hide if tow call from the same conference are draged on each other
+    gtk_widget_show(menu_items);
 
     printf ("%s\n", string);
 }
