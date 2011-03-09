@@ -480,7 +480,6 @@ int SIPVoIPLink::sendRegister (AccountID id)
     SIPAccount *account = NULL;
     pjsip_regc *regc;
     pjsip_hdr hdr_list;
-    pjsip_host_info dest_info;
 
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
 
@@ -856,6 +855,9 @@ SIPVoIPLink::answer (const CallID& id)
 
     SIPCall *call = getSIPCall (id);
 
+//    AccountID account_id = Manager::instance().getAccountFromCall (id);
+//    SIPAccount *account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
+
     _debug ("UserAgent: pool capacity %d", pj_pool_get_capacity (_pool));
     _debug ("UserAgent: pool size %d", pj_pool_get_used_size (_pool));
 
@@ -866,6 +868,20 @@ SIPVoIPLink::answer (const CallID& id)
     }
 
     inv_session = call->getInvSession();
+
+//    if (! (account->getServiceRoute().empty())) {
+//
+//        pjsip_route_hdr *route_set = pjsip_route_hdr_create (_pool);
+//        pjsip_route_hdr *routing = pjsip_route_hdr_create (_pool);
+//        pjsip_sip_uri *url = pjsip_sip_uri_create (_pool, 0);
+//        routing->name_addr.uri = (pjsip_uri*) url;
+//        _error ("UserAgent: Set Service-Route with %s", account->getServiceRoute().c_str());
+//        pj_strdup2 (_pool, &url->host, account->getServiceRoute().c_str());
+//
+//        pj_list_push_back (&route_set, pjsip_hdr_clone (_pool, routing));
+//
+//        pjsip_dlg_set_route_set (inv_session->dlg, route_set);
+//    }
 
     if (status == PJ_SUCCESS) {
 
@@ -2056,55 +2072,41 @@ bool SIPVoIPLink::pjsip_init()
 
     // Initialize transaction layer
     status = pjsip_tsx_layer_init_module (_endpt);
-
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
     // Initialize UA layer module
     status = pjsip_ua_init_module (_endpt, NULL);
-
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
     // Initialize Replaces support. See the Replaces specification in RFC 3891
     status = pjsip_replaces_init_module (_endpt);
-
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
     // Initialize 100rel support
     status = pjsip_100rel_init_module (_endpt);
-
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
     // Initialize and register sflphone module
     _mod_ua.name = pj_str ( (char*) name_mod.c_str());
-
     _mod_ua.id = -1;
-
     _mod_ua.priority = PJSIP_MOD_PRIORITY_APPLICATION;
-
     _mod_ua.on_rx_request = &transaction_request_cb;
-
     _mod_ua.on_rx_response = &transaction_response_cb;
-
     status = pjsip_endpt_register_module (_endpt, &_mod_ua);
-
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
     // Init the event subscription module.
     // It extends PJSIP by supporting SUBSCRIBE and NOTIFY methods
     status = pjsip_evsub_init_module (_endpt);
-
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
     // Init xfer/REFER module
     status = pjsip_xfer_init_module (_endpt);
-
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
-
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
     // Init the callback for INVITE session:
     pj_bzero (&inv_cb, sizeof (inv_cb));
-
     inv_cb.on_state_changed = &invite_session_state_changed_cb;
     inv_cb.on_new_session = &outgoing_request_forked_cb;
     inv_cb.on_media_update = &sdp_media_update_cb;
@@ -2114,14 +2116,12 @@ bool SIPVoIPLink::pjsip_init()
 
     // Initialize session invite module
     status = pjsip_inv_usage_init (_endpt, &inv_cb);
-
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
     _debug ("UserAgent: VOIP callbacks initialized");
 
     // Add endpoint capabilities (INFO, OPTIONS, etc) for this UA
     pj_str_t allowed[] = { { (char*) "INFO", 4}, { (char*) "REGISTER", 8}, { (char*) "OPTIONS", 7}, { (char*) "MESSAGE", 7 } };       //  //{"INVITE", 6}, {"ACK",3}, {"BYE",3}, {"CANCEL",6}
-
     accepted = pj_str ( (char*) "application/sdp");
 
     // Register supported methods
@@ -3180,30 +3180,22 @@ void invite_session_state_changed_cb (pjsip_inv_session *inv, pjsip_event *e)
 {
     _debug ("UserAgent: Call state changed to %s", invitationStateMap[inv->state]);
 
-    pjsip_rx_data *rdata;
-
     /* Retrieve the call information */
-    SIPCall * call = NULL;
-    call = reinterpret_cast<SIPCall*> (inv->mod_data[_mod_ua.id]);
-
+    SIPCall *call = reinterpret_cast<SIPCall*> (inv->mod_data[_mod_ua.id]);
     if (call == NULL) {
         _error ("UserAgent: Error: Call is NULL in call state changed callback");
         return;
-    } else {
     }
 
     //Retrieve the body message
-    rdata = e->body.tsx_state.src.rdata;
+    pjsip_rx_data *rdata = e->body.tsx_state.src.rdata;
 
     // If the call is a direct IP-to-IP call
-    AccountID accId;
-
     SIPVoIPLink * link = NULL;
-
     if (call->getCallConfiguration () == Call::IPtoIP) {
         link = SIPVoIPLink::instance ("");
     } else {
-        accId = Manager::instance().getAccountFromCall (call->getCallId());
+        AccountID accId = Manager::instance().getAccountFromCall (call->getCallId());
         link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
     }
 
@@ -3212,28 +3204,11 @@ void invite_session_state_changed_cb (pjsip_inv_session *inv, pjsip_event *e)
         return;
     }
 
-    /*
-    pjsip_hdr *allow_header = NULL;
-    std::string *allowed_options = NULL;
-
-    char header_buffer[500];
-
-    if (e->body.tsx_state.src.rdata->msg_info.msg)
-        allow_header = (pjsip_hdr *) pjsip_msg_find_hdr (e->body.tsx_state.src.rdata->msg_info.msg, PJSIP_H_ALLOW, NULL);
-
-    if (allow_header) {
-        allowed_options = new std::string (allow_header->name.ptr, allow_header->name.slen);
-        allow_header->vptr->print_on (allow_header, header_buffer, 5000);
-        std::string theHeader (header_buffer);
-    }
-
-    if (allowed_options)
-        delete allowed_options;
-    */
-
     // If this is an outgoing INVITE that was created because of
     // REFER/transfer, send NOTIFY to transferer.
     if (call->getXferSub() && e->type==PJSIP_EVENT_TSX_STATE) {
+
+    	_debug("============================= invite_session_state_changed_cb case  call->getXferSub() ====================== ");
 
         int st_code = -1;
         pjsip_evsub_state ev_state = PJSIP_EVSUB_STATE_ACTIVE;
@@ -3241,18 +3216,14 @@ void invite_session_state_changed_cb (pjsip_inv_session *inv, pjsip_event *e)
         switch (call->getInvSession()->state) {
 
             case PJSIP_INV_STATE_NULL:
-
             case PJSIP_INV_STATE_CALLING:
                 /* Do nothing */
                 break;
-
             case PJSIP_INV_STATE_EARLY:
-
             case PJSIP_INV_STATE_CONNECTING:
                 st_code = e->body.tsx_state.tsx->status_code;
                 ev_state = PJSIP_EVSUB_STATE_ACTIVE;
                 break;
-
             case PJSIP_INV_STATE_CONFIRMED:
                 /* When state is confirmed, send the final 200/OK and terminate
                  * subscription.
@@ -3295,7 +3266,6 @@ void invite_session_state_changed_cb (pjsip_inv_session *inv, pjsip_event *e)
 
     if (inv->state != PJSIP_INV_STATE_CONFIRMED) {
         // Update UI with the current status code and description
-        //pjsip_transaction * tsx
         pjsip_transaction * tsx = NULL;
         tsx = e->body.tsx_state.tsx;
         int statusCode = 404;
@@ -3313,44 +3283,32 @@ void invite_session_state_changed_cb (pjsip_inv_session *inv, pjsip_event *e)
         }
     }
 
-    // The call is ringing - We need to handle this case only on outgoing call
     if (inv->state == PJSIP_INV_STATE_EARLY && e->body.tsx_state.tsx->role == PJSIP_ROLE_UAC) {
+    	// The call is ringing - We need to handle this case only on outgoing call
         call->setConnectionState (Call::Ringing);
         Manager::instance().peerRingingCall (call->getCallId());
-    }
-
-
-    // After we sent or received a ACK - The connection is established
-    else if (inv->state == PJSIP_INV_STATE_CONFIRMED) {
-
+    } else if (inv->state == PJSIP_INV_STATE_CONFIRMED) {
+    	// After we sent or received a ACK - The connection is established
         link->SIPCallAnswered (call, rdata);
-
     } else if (inv->state == PJSIP_INV_STATE_DISCONNECTED) {
 
         _debug ("UserAgent: State: %s. Cause: %.*s", invitationStateMap[inv->state], (int) inv->cause_text.slen, inv->cause_text.ptr);
 
-        accId = Manager::instance().getAccountFromCall (call->getCallId());
-        link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
-
-        // Make sure link is valid
-        assert (link);
+        AccountID accId = Manager::instance().getAccountFromCall (call->getCallId());
+        if((link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId))) == NULL)
+        	return;
 
         switch (inv->cause) {
-
-                // The call terminates normally - BYE / CANCEL
+            // The call terminates normally - BYE / CANCEL
             case PJSIP_SC_OK:
             case PJSIP_SC_REQUEST_TERMINATED:
                 link->SIPCallClosed (call);
                 break;
-
             case PJSIP_SC_DECLINE:
                 _debug ("UserAgent: Call %s is declined", call->getCallId().c_str());
-
                 if (inv->role == PJSIP_ROLE_UAC)
                     link->SIPCallServerFailure (call);
-
                 break;
-
             case PJSIP_SC_NOT_FOUND:            /* peer not found */
             case PJSIP_SC_REQUEST_TIMEOUT:      /* request timeout */
             case PJSIP_SC_NOT_ACCEPTABLE_HERE:  /* no compatible codecs */
@@ -3362,7 +3320,6 @@ void invite_session_state_changed_cb (pjsip_inv_session *inv, pjsip_event *e)
             case PJSIP_SC_ADDRESS_INCOMPLETE:
                 link->SIPCallServerFailure (call);
                 break;
-
             default:
                 link->SIPCallServerFailure (call);
                 _error ("UserAgent: Unhandled call state. This is probably a bug.");
@@ -3383,7 +3340,6 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
     SIPCall * call;
 
     call = reinterpret_cast<SIPCall *> (inv->mod_data[getModId() ]);
-
     if (!call) {
         _debug ("UserAgent: Call declined by peer, SDP negociation stopped");
         return;
@@ -3760,7 +3716,6 @@ transaction_request_cb (pjsip_rx_data *rdata)
     SIPCall* call;
     pjsip_inv_session *inv;
     pjmedia_sdp_session *r_sdp;
-    pjsip_response_addr *res_addr;
 
     _info ("UserAgent: Transaction REQUEST received using transport: %s %s (refcnt=%d)",
     						rdata->tp_info.transport->obj_name,
@@ -4117,9 +4072,10 @@ transaction_request_cb (pjsip_rx_data *rdata)
     		return false;
     	}
 
-    	/* Done */
-    	return true;
     }
+
+    /* Done */
+    return true;
 }
 
 pj_bool_t transaction_response_cb (pjsip_rx_data *rdata)
