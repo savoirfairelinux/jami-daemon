@@ -11,7 +11,7 @@ set -x
 # Compile the daemon
 pushd sflphone-common
 ./autogen.sh
- Compile pjproject first
+# Compile pjproject first
 pushd libs/pjproject
 ./autogen.sh
 ./configure
