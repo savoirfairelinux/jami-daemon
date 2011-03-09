@@ -378,9 +378,14 @@ class SIPVoIPLink : public VoIPLink
         bool loadSIPLocalIP (std::string *addr);
 
         /**
+         * Helper function for creating a route set
+         */
+        pjsip_route_hdr *createRouteSet(Account *account);
+
+        /**
          * Wrapper around getaddrinfo
          */
-        bool dnsResolution(std::string& name);
+        bool dnsResolution(pjsip_tx_data *tdata);
 
         /**
          * This function unset the transport for a given account. It tests wether the
