@@ -472,7 +472,8 @@ int SIPVoIPLink::sendRegister (AccountID id)
     account->setRegistrationState (Trying);
 
     // Create the registration according to the account ID
-    status = pjsip_regc_create (_endpt, (void*) account, &registration_cb, &regc);
+    // status = pjsip_regc_create (_endpt, (void*) account, &registration_cb, &regc);
+    status = pjsip_regc_create (_endpt, (void *) &account->getAccountID(), &registration_cb, &regc);
 
     if (status != PJ_SUCCESS) {
         _debug ("UserAgent: Unable to create regc.");
@@ -661,8 +662,8 @@ Call *SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) 
 
     _debug ("UserAgent: New outgoing call %s to %s", id.c_str(), toUrl.c_str());
 
-    _debug ("UserAgent: pool capacity %d", pj_pool_get_capacity (_pool));
-    _debug ("UserAgent: pool size %d", pj_pool_get_used_size (_pool));
+    _error ("UserAgent: pool capacity %d", pj_pool_get_capacity (_pool));
+    _error ("UserAgent: pool size %d", pj_pool_get_used_size (_pool));
 
     SIPCall* call = new SIPCall (id, Call::Outgoing, _cp);
     if(call == NULL) {
@@ -757,8 +758,8 @@ SIPVoIPLink::answer (const CallID& id)
 //    AccountID account_id = Manager::instance().getAccountFromCall (id);
 //    SIPAccount *account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
 
-    _debug ("UserAgent: pool capacity %d", pj_pool_get_capacity (_pool));
-    _debug ("UserAgent: pool size %d", pj_pool_get_used_size (_pool));
+    _error ("UserAgent: pool capacity %d", pj_pool_get_capacity (_pool));
+    _error ("UserAgent: pool size %d", pj_pool_get_used_size (_pool));
 
 
     if (call==0) {
@@ -3031,7 +3032,7 @@ bool SIPVoIPLink::pjsip_shutdown (void)
 {
     if (_endpt) {
         _debug ("UserAgent: Shutting down...");
-        busySleep (1000);
+        busySleep (2000);
     }
 
     pj_thread_join (thread);
@@ -3549,11 +3550,11 @@ void transaction_state_changed_cb (pjsip_inv_session *inv UNUSED, pjsip_transact
 
 void registration_cb (struct pjsip_regc_cbparam *param)
 {
-    SIPAccount * account = NULL;
-    account = static_cast<SIPAccount *> (param->token);
+	AccountID *accountid = static_cast<AccountID *>(param->token);
+    SIPAccount * account = static_cast<SIPAccount *> (Manager::instance().getAccount(*accountid));
 
     if (account == NULL) {
-        _debug ("Account is NULL in regc_cb.");
+        _debug ("Account is NULL in registration_cb.");
         return;
     }
 
@@ -3569,7 +3570,7 @@ void registration_cb (struct pjsip_regc_cbparam *param)
         std::pair<int, std::string> details (param->code, std::string (description->ptr, description->slen));
 
 
-        // there a race condition for this ressource when closing the application
+        // TODO: there id a race condition for this ressource when closing the application
         if (account)
             account->setRegistrationStateDetailed (details);
     }
