@@ -2489,15 +2489,25 @@ std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_
     pj_str_t localAddress;
     pjsip_transport_type_e transportType;
     pjsip_tpselector *tp_sel;
+    pj_pool_t *tmp_pool;
+
+    _debug ("SIP: Find local address from URI");
+
+    // Create a temporary memory pool
+    tmp_pool = pj_pool_create (&_cp->factory, "tmpdtmf10", 1000, 1000, NULL);
+    if (tmp_pool == NULL) {
+    	_debug ("UserAgent: Could not initialize memory pool");
+    	return false;
+    }
 
     // Find the transport that must be used with the given uri
     pj_str_t tmp;
-    pj_strdup2_with_null (_pool, &tmp, uri.c_str());
+    pj_strdup2_with_null (tmp_pool, &tmp, uri.c_str());
     pjsip_uri * genericUri = NULL;
-    genericUri = pjsip_parse_uri (_pool, tmp.ptr, tmp.slen, 0);
+    genericUri = pjsip_parse_uri (tmp_pool, tmp.ptr, tmp.slen, 0);
 
     pj_str_t pjMachineName;
-    pj_strdup (_pool, &pjMachineName, pj_gethostname());
+    pj_strdup (tmp_pool, &pjMachineName, pj_gethostname());
     std::string machineName (pjMachineName.ptr, pjMachineName.slen);
 
     if (genericUri == NULL) {
@@ -2550,12 +2560,12 @@ std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_
         status = initTransportSelector (transport, &tp_sel);
 
         if (status == PJ_SUCCESS) {
-            status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, tp_sel, &localAddress, &port);
+            status = pjsip_tpmgr_find_local_addr (tpmgr, tmp_pool, transportType, tp_sel, &localAddress, &port);
         } else {
-            status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, NULL, &localAddress, &port);
+            status = pjsip_tpmgr_find_local_addr (tpmgr, tmp_pool, transportType, NULL, &localAddress, &port);
         }
     } else {
-        status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, NULL, &localAddress, &port);
+        status = pjsip_tpmgr_find_local_addr (tpmgr, tmp_pool, transportType, NULL, &localAddress, &port);
     }
 
     if (status != PJ_SUCCESS) {
@@ -2570,7 +2580,7 @@ std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_
 
     _debug ("SIP: Local address discovered from attached transport: %s", localaddr.c_str());
 
-    // pj_pool_release(tmp_pool);
+    pj_pool_release(tmp_pool);
 
     return localaddr;
 }
@@ -2600,12 +2610,22 @@ int SIPVoIPLink::findLocalPortFromUri (const std::string& uri, pjsip_transport *
     pjsip_transport_type_e transportType;
     int port;
     pjsip_tpselector *tp_sel;
+    pj_pool_t *tmp_pool;
+
+    _debug ("SIP: Find local port from URI");
+
+    // Create a temporary memory pool
+    tmp_pool = pj_pool_create (&_cp->factory, "tmpdtmf10", 1000, 1000, NULL);
+    if (tmp_pool == NULL) {
+    	_debug ("UserAgent: Could not initialize memory pool");
+    	return false;
+    }
 
     // Find the transport that must be used with the given uri
     pj_str_t tmp;
-    pj_strdup2_with_null (_pool, &tmp, uri.c_str());
+    pj_strdup2_with_null (tmp_pool, &tmp, uri.c_str());
     pjsip_uri * genericUri = NULL;
-    genericUri = pjsip_parse_uri (_pool, tmp.ptr, tmp.slen, 0);
+    genericUri = pjsip_parse_uri (tmp_pool, tmp.ptr, tmp.slen, 0);
 
     if (genericUri == NULL) {
         _debug ("UserAgent: genericUri is NULL in findLocalPortFromUri");
@@ -2658,11 +2678,11 @@ int SIPVoIPLink::findLocalPortFromUri (const std::string& uri, pjsip_transport *
         status = initTransportSelector (transport, &tp_sel);
 
         if (status == PJ_SUCCESS)
-            status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, tp_sel, &localAddress, &port);
+            status = pjsip_tpmgr_find_local_addr (tpmgr, tmp_pool, transportType, tp_sel, &localAddress, &port);
         else
-            status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, NULL, &localAddress, &port);
+            status = pjsip_tpmgr_find_local_addr (tpmgr, tmp_pool, transportType, NULL, &localAddress, &port);
     } else
-        status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, NULL, &localAddress, &port);
+        status = pjsip_tpmgr_find_local_addr (tpmgr, tmp_pool, transportType, NULL, &localAddress, &port);
 
 
     if (status != PJ_SUCCESS) {
@@ -2670,6 +2690,9 @@ int SIPVoIPLink::findLocalPortFromUri (const std::string& uri, pjsip_transport *
     }
 
     _debug ("UserAgent: local port discovered from attached transport: %i", port);
+
+    pj_pool_release(tmp_pool);
+
     return port;
 }
 
@@ -2916,6 +2939,8 @@ pjsip_route_hdr *SIPVoIPLink::createRouteSet(Account *account)
 	std::string host = "";
 	std::string port = "";
 	pjsip_route_hdr *route_set;
+
+	_debug ("SIP: Find local port from URI");
 
 	SIPAccount *sipaccount = dynamic_cast<SIPAccount *>(account);
     std::string route = sipaccount->getServiceRoute();
