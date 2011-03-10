@@ -1432,8 +1432,16 @@ SIPVoIPLink::dtmfSipInfo (SIPCall *call, char code)
     pj_str_t methodName, content;
     pjsip_method method;
     pjsip_media_type ctype;
+    pj_pool_t *tmp_pool;
 
     _debug ("UserAgent: Send DTMF %c", code);
+
+    // Create a temporary memory pool
+    tmp_pool = pj_pool_create (&_cp->factory, "tmpdtmf10", 1000, 1000, NULL);
+    if (tmp_pool == NULL) {
+    	_debug ("UserAgent: Could not initialize memory pool while sending DTMF");
+    	return false;
+    }
 
     duration = Manager::instance().voipPreferences.getPulseLength();
 
@@ -1441,7 +1449,7 @@ SIPVoIPLink::dtmfSipInfo (SIPCall *call, char code)
 
     snprintf (dtmf_body, body_len - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
 
-    pj_strdup2 (_pool, &methodName, "INFO");
+    pj_strdup2 (tmp_pool, &methodName, "INFO");
     pjsip_method_init_np (&method, &methodName);
 
     /* Create request message. */
@@ -1453,12 +1461,12 @@ SIPVoIPLink::dtmfSipInfo (SIPCall *call, char code)
     }
 
     /* Get MIME type */
-    pj_strdup2 (_pool, &ctype.type, "application");
+    pj_strdup2 (tmp_pool, &ctype.type, "application");
 
-    pj_strdup2 (_pool, &ctype.subtype, "dtmf-relay");
+    pj_strdup2 (tmp_pool, &ctype.subtype, "dtmf-relay");
 
     /* Create "application/dtmf-relay" message body. */
-    pj_strdup2 (_pool, &content, dtmf_body);
+    pj_strdup2 (tmp_pool, &content, dtmf_body);
 
     tdata->msg->body = pjsip_msg_body_create (tdata->pool, &ctype.type, &ctype.subtype, &content);
 
@@ -1475,6 +1483,8 @@ SIPVoIPLink::dtmfSipInfo (SIPCall *call, char code)
         _debug ("UserAgent: Unable to send MESSAGE request -- %d", status);
         return false;
     }
+
+    pj_pool_release(tmp_pool);
 
     return true;
 }
@@ -2446,14 +2456,10 @@ int SIPVoIPLink::createUdpTransport (AccountID id)
         return !PJ_SUCCESS;
     }
 
-    //strcpy (tmpIP, listeningAddress.data());
     /* Init published name */
     pj_bzero (&a_name, sizeof (pjsip_host_port));
     pj_cstr (&a_name.host, listeningAddress.c_str());
     a_name.port = listeningPort;
-
-    //pj_strdup2 (_pool, &a_name.host, tmpIP);
-    //a_name.port = (pj_uint16_t) listeningPort;
 
     status = pjsip_udp_transport_start (_endpt, &bound_addr, &a_name, 1, &transport);
 
@@ -2462,20 +2468,14 @@ int SIPVoIPLink::createUdpTransport (AccountID id)
     pjsip_tpmgr_dump_transports (tpmgr);
 
     if (status != PJ_SUCCESS) {
-
         _debug ("UserAgent: (%d) Unable to start UDP transport on %s:%d", status, listeningAddress.data(), listeningPort);
         return status;
-
     } else {
-
         _debug ("UserAgent: UDP transport initialized successfully on %s:%d", listeningAddress.c_str (), listeningPort);
-
         if (account == NULL) {
-
             _debug ("UserAgent: Use transport as local UDP server");
             _localUDPTransport = transport;
         } else {
-
             _debug ("UserAgent: bind transport to account %s", account->getAccountID().c_str());
             account->setAccountTransport (transport);
         }
@@ -2489,8 +2489,6 @@ std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_
     pj_str_t localAddress;
     pjsip_transport_type_e transportType;
     pjsip_tpselector *tp_sel;
-
-    _debug ("SIP: Find local address from URI");
 
     // Find the transport that must be used with the given uri
     pj_str_t tmp;
@@ -2571,6 +2569,8 @@ std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_
         loadSIPLocalIP (&localaddr);
 
     _debug ("SIP: Local address discovered from attached transport: %s", localaddr.c_str());
+
+    // pj_pool_release(tmp_pool);
 
     return localaddr;
 }
