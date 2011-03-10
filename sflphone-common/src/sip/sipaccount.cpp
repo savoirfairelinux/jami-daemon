@@ -81,6 +81,7 @@ void Credentials::unserialize (Conf::MappingNode *map)
 SIPAccount::SIPAccount (const AccountID& accountID)
     : Account (accountID, "SIP")
     , _routeSet ("")
+    , _pool (NULL)
     , _regc (NULL)
     , _bRegister (false)
     , _registrationExpire ("")
@@ -124,7 +125,7 @@ SIPAccount::SIPAccount (const AccountID& accountID)
     , _zrtpNotSuppWarning (true)
 {
 
-    _debug ("Sip account constructor called");
+    _debug ("Sip account constructor for account %s", accountID.c_str());
 
     _stunServerName.ptr = NULL;
     _stunServerName.slen = 0;

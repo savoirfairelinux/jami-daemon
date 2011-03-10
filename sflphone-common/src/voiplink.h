@@ -45,6 +45,22 @@ typedef std::string AccountID;
 /** Define a map that associate a Call object to a call identifier */
 typedef std::map<CallID, Call*> CallMap;
 
+class VoipLinkException : public std::exception
+{
+    public:
+        VoipLinkException (const std::string& str="") throw() : errstr (str) {}
+
+        virtual ~VoipLinkException() throw() {}
+
+        virtual const char *what() const throw() {
+            std::string expt ("UserAgent: VoipLinkException occured: ");
+            expt.append (errstr);
+            return expt.c_str();
+        }
+    private:
+        std::string errstr;
+};
+
 /**
  * @file voiplink.h
  * @brief Listener and manager interface for each VoIP protocol
@@ -111,7 +127,7 @@ class VoIPLink
          * @param toUrl  The address of the recipient of the call
          * @return Call* The current call
          */
-        virtual Call* newOutgoingCall (const CallID& id, const std::string& toUrl) = 0;
+        virtual Call* newOutgoingCall (const CallID& id, const std::string& toUrl) throw (VoipLinkException) = 0;
 
         /**
          * Answer the call

@@ -283,7 +283,7 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
         /* We need to retrieve the sip voiplink instance */
         siplink = SIPVoIPLink::instance ("");
 
-        if (siplink->new_ip_to_ip_call (call_id, to_cleaned)) {
+        if (siplink->SIPNewIpToIpCall(call_id, to_cleaned)) {
             switchCall (call_id);
             return true;
         } else {

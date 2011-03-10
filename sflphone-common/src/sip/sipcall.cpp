@@ -46,6 +46,7 @@ SIPCall::SIPCall (const CallID& id, Call::CallType type, pj_caching_pool *cachin
     , _xferSub (NULL)
     , _invSession (NULL)
     , _local_sdp (NULL)
+	, _pool(NULL)
 {
     _debug ("SIPCall: Create new call %s", id.c_str());
 
@@ -68,7 +69,7 @@ SIPCall::~SIPCall()
     _debug ("SDP: pool capacity %d", pj_pool_get_capacity (_pool));
     _debug ("SDP: pool size %d", pj_pool_get_used_size (_pool));
 
-    // Release memory allocated for SDP only once
+    // Release memory allocated for SDP
     pj_pool_release (_pool);
     _pool = NULL;
 

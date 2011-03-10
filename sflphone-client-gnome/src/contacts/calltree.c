@@ -1674,8 +1674,12 @@ static void drag_end_cb (GtkWidget * widget UNUSED, GdkDragContext * context UNU
                 // dragged a conference call on a call
                 sflphone_detach_participant (selected_call_id);
 
-                if (selected_call != NULL && dragged_call != NULL)
-                    sflphone_join_participant (selected_call->_callID, dragged_call->_callID);
+                if (selected_call != NULL && dragged_call != NULL) {
+                    // sflphone_join_participant (selected_call->_callID, dragged_call->_callID);
+                    gtk_menu_popup (GTK_MENU (popupmenu), NULL, NULL, NULL, NULL,
+                                                                   0, 0);
+
+                }
 
             } else if (selected_type == A_CALL && dragged_type == A_CONFERENCE) {
 

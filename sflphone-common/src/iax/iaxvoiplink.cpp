@@ -496,7 +496,7 @@ IAXVoIPLink::sendUnregister (AccountID id UNUSED)
 }
 
 Call*
-IAXVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
+IAXVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) throw(VoipLinkException)
 {
     IAXCall* call = new IAXCall (id, Call::Outgoing);
     call->setCodecMap (Manager::instance().getCodecDescriptorMap());

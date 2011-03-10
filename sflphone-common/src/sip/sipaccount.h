@@ -50,7 +50,6 @@ enum DtmfType { OVERRTP, SIPINFO};
 #define OVERRTPSTR "overrtp"
 #define SIPINFOSTR "sipinfo"
 
-
 // SIP specific configuration keys
 const Conf::Key expireKey ("expire");
 const Conf::Key interfaceKey ("interface");
@@ -695,6 +694,16 @@ class SIPAccount : public Account
 
     private:
 
+        /**
+         * Call specific memory pool initialization size (based on empirical data)
+         */
+        static const int ACCOUNT_MEMPOOL_INIT_SIZE;
+
+        /**
+         * Call specific memory pool incrementation size
+         */
+        static const int ACCOUNT_MEMPOOL_INC_SIZE;
+
         /* Maps a string description of the SSL method
          * to the corresponding enum value in pjsip_ssl_method.
          * @param method The string representation
@@ -734,7 +743,15 @@ class SIPAccount : public Account
          */
         std::string getLoginName (void);
 
+        /**
+         * List of routes (proxies) used for registration and calls
+         */
         std::string _routeSet;
+
+        /**
+         * Private pjsip memory pool for accounts
+         */
+        pj_pool_t *_pool;
 
 
         // The pjsip client registration information

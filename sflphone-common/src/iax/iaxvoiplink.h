@@ -112,7 +112,7 @@ class IAXVoIPLink : public VoIPLink
          * @param toUrl The address to call
          * @return Call*  A pointer on the call
          */
-        virtual Call* newOutgoingCall (const CallID& id, const std::string& toUrl);
+        virtual Call* newOutgoingCall (const CallID& id, const std::string& toUrl) throw(VoipLinkException);
 
         /**
          * Answer a call
