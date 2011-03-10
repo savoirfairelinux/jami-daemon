@@ -449,7 +449,7 @@ class SIPVoIPLink : public VoIPLink
         /**
          * Delete link-related stuff like calls
          */
-        bool pjsip_shutdown (void);
+        bool pjsipShutdown (void);
 
         /**
          * Resolve public address for this account

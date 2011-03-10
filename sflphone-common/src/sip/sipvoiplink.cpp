@@ -357,7 +357,7 @@ SIPVoIPLink::terminate()
     /* Clean shutdown of pjsip library */
     if (initDone()) {
         _debug ("UserAgent: Shutting down PJSIP");
-        pjsip_shutdown();
+        pjsipShutdown();
     }
 
     initDone (false);
@@ -3028,7 +3028,7 @@ void SIPVoIPLink::busySleep (unsigned msec)
 #endif
 }
 
-bool SIPVoIPLink::pjsip_shutdown (void)
+bool SIPVoIPLink::pjsipShutdown (void)
 {
     if (_endpt) {
         _debug ("UserAgent: Shutting down...");
@@ -4763,7 +4763,7 @@ std::string SIPVoIPLink::getInterfaceAddrFromName (std::string ifaceName)
     saddr_in = (struct sockaddr_in *) &ifr.ifr_addr;
     addr_in = & (saddr_in->sin_addr);
 
-    std::string addr (pj_inet_ntoa (* ( (pj_in_addr*) addr_in)));
+    std::string addr (inet_ntoa (*addr_in));
 
     close (fd);
 
