@@ -758,10 +758,6 @@ SIPVoIPLink::answer (const CallID& id)
 //    AccountID account_id = Manager::instance().getAccountFromCall (id);
 //    SIPAccount *account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
 
-    _error ("UserAgent: pool capacity %d", pj_pool_get_capacity (_pool));
-    _error ("UserAgent: pool size %d", pj_pool_get_used_size (_pool));
-
-
     if (call==0) {
         _debug ("UserAgent: SIPCall %s doesn't exists while answering", id.c_str());
         return false;
@@ -3450,13 +3446,9 @@ void transaction_state_changed_cb (pjsip_inv_session *inv UNUSED, pjsip_transact
 
         if (e && e->body.rx_msg.rdata) {
 
-
-            _debug ("Event");
             r_data = e->body.rx_msg.rdata;
 
             if (r_data && r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD) {
-
-                _debug ("R_data");
 
                 std::string method_info = "INFO";
                 std::string method_notify = "NOTIFY";
@@ -3465,14 +3457,15 @@ void transaction_state_changed_cb (pjsip_inv_session *inv UNUSED, pjsip_transact
 
                 _debug ("UserAgent: %s", request.c_str());
 
-                if (request.find (method_notify) != (size_t)-1) {
-
+                if (request.find (method_notify) != std::string::npos) {
+                	// Attempt to to get feedback of call transfer status
+//                	std::string contentType(e->body.rx_msg.rdata.msg_info.ctype.media.type->ptr,
+//                			e->body.rx_msg.rdata.msg_info.ctype.media.type->slen);
+//                	_debug("OK: %s", contentType.c_str());
                 }
                 // Must reply 200 OK on SIP INFO request
-                else if (request.find (method_info) != (size_t)-1) {
-
+                else if (request.find (method_info) != std::string::npos) {
                     pjsip_dlg_create_response (inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
-
                     pjsip_dlg_send_response (inv->dlg, tsx, t_data);
                 }
             }

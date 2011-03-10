@@ -466,8 +466,10 @@ sflphone_pick_up()
                 sflphone_new_call();
                 break;
             case CALL_STATE_TRANSFERT:
+                DEBUG("TRANSFER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                 dbus_transfert (selectedCall);
                 set_timestamp (&selectedCall->_time_stop);
+                calltree_remove_call(current_calls, selectedCall, NULL);
                 break;
             case CALL_STATE_CURRENT:
             case CALL_STATE_RECORD:
@@ -816,6 +818,7 @@ sflphone_keypad (guint keyval, gchar * key)
                     case 65421: /* ENTER numpad */
                         dbus_transfert (c);
                         set_timestamp (&c->_time_stop);
+                        calltree_remove_call(current_calls, c, NULL);
                         break;
                     case 65307: /* ESCAPE */
                         sflphone_unset_transfert (c);
