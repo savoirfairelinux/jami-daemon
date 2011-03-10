@@ -370,7 +370,7 @@ class SIPVoIPLink : public VoIPLink
          *
          * @return pj_status_t		PJ_SUCCESS if the structure was successfully initialized
          */
-        pj_status_t initTransportSelector (pjsip_transport *transport, pjsip_tpselector **tp_sel);
+        pj_status_t initTransportSelector (pjsip_transport *, pjsip_tpselector **, pj_pool_t *);
 
         /**
          * Requests PJSIP library for local IP address, using pj_gethostbyname()

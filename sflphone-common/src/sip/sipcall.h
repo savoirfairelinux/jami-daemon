@@ -164,6 +164,13 @@ class SIPCall : public Call
             return _audiortp;
         }
 
+        /**
+         * Return the local memory pool for this call
+         */
+        pj_pool_t *getMemoryPool(void) {
+        	return _pool;
+        }
+
     private:
 
         // Copy Constructor

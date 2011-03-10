@@ -51,14 +51,14 @@ namespace sfl
 
 AudioSrtpSession::AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall) :
     AudioRtpSession (manager, sipcall),
+    _remoteCryptoCtx (NULL),
+    _localCryptoCtx (NULL),
     _localCryptoSuite (0),
     _remoteCryptoSuite (0),
     _localMasterKeyLength (0),
     _localMasterSaltLength (0),
     _remoteMasterKeyLength (0),
     _remoteMasterSaltLength (0),
-    _remoteCryptoCtx (NULL),
-    _localCryptoCtx (NULL),
     _remoteOfferIsSet (false)
 {
 }

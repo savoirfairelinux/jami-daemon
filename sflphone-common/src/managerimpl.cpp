@@ -737,6 +737,8 @@ bool ManagerImpl::attendedTransfer(const CallID& transferID, const CallID& targe
 		returnValue = getAccountLink (accountid)->attendedTransfer (transferID, targetID);
 
 	}
+
+	return returnValue;
 }
 
 //THREAD=Main : Call:Incoming

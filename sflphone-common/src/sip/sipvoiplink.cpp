@@ -547,7 +547,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
 
     pjsip_tpselector *tp;
 
-    initTransportSelector (account->getAccountTransport (), &tp);
+    initTransportSelector (account->getAccountTransport (), &tp, _pool);
 
     // pjsip_regc_set_transport increments transport ref count by one
     status = pjsip_regc_set_transport (regc, tp);
@@ -849,7 +849,8 @@ SIPVoIPLink::hangup (const CallID& id)
     if (status != PJ_SUCCESS)
         return false;
 
-    call->getInvSession()->mod_data[getModId() ] = NULL;
+    // Make sure the pointer is NULL in callbacks
+    call->getInvSession()->mod_data[getModId()] = NULL;
 
 
     // Release RTP thread
@@ -893,6 +894,7 @@ SIPVoIPLink::peerHungup (const CallID& id)
     if (status != PJ_SUCCESS)
         return false;
 
+    // Make sure the pointer is NULL in callbacks
     call->getInvSession()->mod_data[getModId() ] = NULL;
 
 
@@ -1327,6 +1329,7 @@ SIPVoIPLink::refuse (const CallID& id)
     if (status != PJ_SUCCESS)
         return false;
 
+    // Make sure the pointer is NULL in callbacks
     call->getInvSession()->mod_data[getModId() ] = NULL;
 
     removeCall (id);
@@ -1525,6 +1528,9 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
     if (call == NULL)
         return false;
 
+    _error ("UserAgent: pool capacity %d", pj_pool_get_capacity (_pool));
+    _error ("UserAgent: pool size %d", pj_pool_get_used_size (_pool));
+
     AccountID id = Manager::instance().getAccountFromCall (call->getCallId());
 
     // Get the basic information about the callee account
@@ -1595,7 +1601,7 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
     // Set the appropriate transport
     pjsip_tpselector *tp;
 
-    initTransportSelector (account->getAccountTransport (), &tp);
+    initTransportSelector (account->getAccountTransport (), &tp, inv->pool);
 
     // increment transport's ref count by one
     status = pjsip_dlg_set_transport (dialog, tp);
@@ -1611,6 +1617,9 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
                 account->getAccountTransport()->info,
                 (int) pj_atomic_get (account->getAccountTransport()->ref_cnt));
     }
+
+    _error ("UserAgent: pool capacity %d", pj_pool_get_capacity (_pool));
+    _error ("UserAgent: pool size %d", pj_pool_get_used_size (_pool));
 
     return true;
 }
@@ -1853,7 +1862,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const CallID& id, const std::string& to)
         // Set the appropriate transport
         pjsip_tpselector *tp;
 
-        initTransportSelector (account->getAccountTransport(), &tp);
+        initTransportSelector (account->getAccountTransport(), &tp, inv->pool);
 
         if (!account->getAccountTransport()) {
             _error ("UserAgent: Error: Transport is NULL in IP2IP call");
@@ -2555,7 +2564,7 @@ std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_
 
     //_debug ("Transport ID: %s", transport->obj_name);
     if (transportType == PJSIP_TRANSPORT_UDP) {
-        status = initTransportSelector (transport, &tp_sel);
+        status = initTransportSelector (transport, &tp_sel, tmp_pool);
 
         if (status == PJ_SUCCESS) {
             status = pjsip_tpmgr_find_local_addr (tpmgr, tmp_pool, transportType, tp_sel, &localAddress, &port);
@@ -2585,12 +2594,12 @@ std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_
 
 
 
-pj_status_t SIPVoIPLink::initTransportSelector (pjsip_transport *transport, pjsip_tpselector **tp_sel)
+pj_status_t SIPVoIPLink::initTransportSelector (pjsip_transport *transport, pjsip_tpselector **tp_sel, pj_pool_t *tp_pool)
 {
     pjsip_tpselector *tp;
 
     if (transport != NULL) {
-        tp = (pjsip_tpselector *) pj_pool_zalloc (_pool, sizeof (pjsip_tpselector));
+        tp = (pjsip_tpselector *) pj_pool_zalloc (tp_pool, sizeof (pjsip_tpselector));
         tp->type = PJSIP_TPSELECTOR_TRANSPORT;
         tp->u.transport = transport;
 
@@ -2673,7 +2682,7 @@ int SIPVoIPLink::findLocalPortFromUri (const std::string& uri, pjsip_transport *
     if (transportType == PJSIP_TRANSPORT_UDP) {
         _debug ("UserAgent: transport ID: %s", transport->obj_name);
 
-        status = initTransportSelector (transport, &tp_sel);
+        status = initTransportSelector (transport, &tp_sel, tmp_pool);
 
         if (status == PJ_SUCCESS)
             status = pjsip_tpmgr_find_local_addr (tpmgr, tmp_pool, transportType, tp_sel, &localAddress, &port);
@@ -3131,7 +3140,6 @@ void invite_session_state_changed_cb (pjsip_inv_session *inv, pjsip_event *e)
     /* Retrieve the call information */
     SIPCall *call = reinterpret_cast<SIPCall*> (inv->mod_data[_mod_ua.id]);
     if (call == NULL) {
-        _error ("UserAgent: Error: Call is NULL in call state changed callback");
         return;
     }
 
@@ -3156,7 +3164,7 @@ void invite_session_state_changed_cb (pjsip_inv_session *inv, pjsip_event *e)
     // REFER/transfer, send NOTIFY to transferer.
     if (call->getXferSub() && e->type==PJSIP_EVENT_TSX_STATE) {
 
-    	_debug("============================= invite_session_state_changed_cb case  call->getXferSub() ====================== ");
+    	_debug("UserAgent: Call state changed during transfer");
 
         int st_code = -1;
         pjsip_evsub_state ev_state = PJSIP_EVSUB_STATE_ACTIVE;
@@ -3287,7 +3295,7 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
     SIPVoIPLink * link = NULL;
     SIPCall * call;
 
-    call = reinterpret_cast<SIPCall *> (inv->mod_data[getModId() ]);
+    call = reinterpret_cast<SIPCall *> (inv->mod_data[getModId()]);
     if (!call) {
         _debug ("UserAgent: Call declined by peer, SDP negociation stopped");
         return;
@@ -3824,7 +3832,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
         addrToUse = SIPVoIPLink::instance ("")->getInterfaceAddrFromName (account->getLocalInterface ());
         account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = addrToUse;
         // Set the appropriate transport to have the right VIA header
-        link->initTransportSelector (account->getAccountTransport (), &tp);
+        link->initTransportSelector (account->getAccountTransport (), &tp, call->getMemoryPool());
 
         if (account->getAccountTransport()) {
 
