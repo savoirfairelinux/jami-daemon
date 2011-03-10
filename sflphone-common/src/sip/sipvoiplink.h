@@ -384,7 +384,7 @@ class SIPVoIPLink : public VoIPLink
          * Helper function for creating a route set from information
          * stored in configuration file.
          */
-        pjsip_route_hdr *createRouteSet(Account *account);
+        pjsip_route_hdr *createRouteSet(Account *account, pj_pool_t *pool);
 
         /**
          * Wrapper around getaddrinfo

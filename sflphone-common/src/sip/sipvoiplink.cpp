@@ -518,7 +518,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
 
     // Fill route set
     if (! (account->getServiceRoute().empty())) {
-        pjsip_route_hdr *route_set = createRouteSet(account);
+        pjsip_route_hdr *route_set = createRouteSet(account, _pool);
         pjsip_regc_set_route_set (regc, route_set);
     }
 
@@ -829,7 +829,7 @@ SIPVoIPLink::hangup (const CallID& id)
 
     // _debug("Some tdata info: %",);
     if (! (account->getServiceRoute().empty())) {
-        pjsip_route_hdr *route_set = createRouteSet(account);
+        pjsip_route_hdr *route_set = createRouteSet(account, inv->pool);
         pjsip_dlg_set_route_set (inv->dlg, route_set);
     }
 
@@ -1564,10 +1564,7 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
 
     // Create the dialog (UAC)
     status = pjsip_dlg_create_uac (pjsip_ua_instance(), &pjFrom,
-                                   &pjContact,
-                                   &pjTo,
-                                   NULL,
-                                   &dialog);
+                                   &pjContact, &pjTo, NULL, &dialog);
     if (status != PJ_SUCCESS) {
         _error ("UserAgent: Error: UAC creation failed");
         return false;
@@ -1577,7 +1574,7 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
     status = pjsip_inv_create_uac (dialog, call->getLocalSDP()->get_local_sdp_session(), 0, &inv);
 
     if (! (account->getServiceRoute().empty())) {
-        pjsip_route_hdr *route_set = createRouteSet(account);
+        pjsip_route_hdr *route_set = createRouteSet(account, inv->pool);
         pjsip_dlg_set_route_set (dialog, route_set);
     }
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
@@ -1848,7 +1845,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const CallID& id, const std::string& to)
         PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
 
         if (! (account->getServiceRoute().empty())) {
-            pjsip_route_hdr *route_set = createRouteSet(account);
+            pjsip_route_hdr *route_set = createRouteSet(account, inv->pool);
             pjsip_dlg_set_route_set (dialog, route_set);
         }
 
@@ -2933,7 +2930,7 @@ bool SIPVoIPLink::loadSIPLocalIP (std::string *addr)
     return returnValue;
 }
 
-pjsip_route_hdr *SIPVoIPLink::createRouteSet(Account *account)
+pjsip_route_hdr *SIPVoIPLink::createRouteSet(Account *account, pj_pool_t *hdr_pool)
 {
 	size_t found;
 	std::string host = "";
@@ -2958,14 +2955,14 @@ pjsip_route_hdr *SIPVoIPLink::createRouteSet(Account *account)
 
 	std::cout << "Host: " << host << ", Port: " << port << std::endl;
 
-    route_set = pjsip_route_hdr_create (_pool);
-    pjsip_route_hdr *routing = pjsip_route_hdr_create (_pool);
-    pjsip_sip_uri *url = pjsip_sip_uri_create (_pool, 0);
+    route_set = pjsip_route_hdr_create (hdr_pool);
+    pjsip_route_hdr *routing = pjsip_route_hdr_create (hdr_pool);
+    pjsip_sip_uri *url = pjsip_sip_uri_create (hdr_pool, 0);
     routing->name_addr.uri = (pjsip_uri*) url;
-    pj_strdup2 (_pool, &url->host, host.c_str());
+    pj_strdup2 (hdr_pool, &url->host, host.c_str());
     url->port = atoi(port.c_str());
 
-    pj_list_push_back (route_set, pjsip_hdr_clone (_pool, routing));
+    pj_list_push_back (route_set, pjsip_hdr_clone (hdr_pool, routing));
 
     return route_set;
 
