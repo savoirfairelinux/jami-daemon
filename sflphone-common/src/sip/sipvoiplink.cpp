@@ -3032,7 +3032,7 @@ bool SIPVoIPLink::pjsip_shutdown (void)
 {
     if (_endpt) {
         _debug ("UserAgent: Shutting down...");
-        busySleep (2000);
+        busySleep (1000);
     }
 
     pj_thread_join (thread);
