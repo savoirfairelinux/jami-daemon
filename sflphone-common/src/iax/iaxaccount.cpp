@@ -253,14 +253,20 @@ void IAXAccount::setVoIPLink()
 
 int IAXAccount::registerVoIPLink()
 {
-    _link->init();
+	try {
 
-    // Stuff needed for IAX registration
-    setHostname (_hostname);
-    setUsername (_username);
-    setPassword (_password);
+        _link->init();
 
-    _link->sendRegister (_accountID);
+        // Stuff needed for IAX registration
+        setHostname (_hostname);
+        setUsername (_username);
+        setPassword (_password);
+
+        _link->sendRegister (_accountID);
+	}
+	catch(VoipLinkException &e) {
+		_error("IAXAccount: %s", e.what());
+	}
 
     return SUCCESS;
 }
@@ -268,10 +274,17 @@ int IAXAccount::registerVoIPLink()
 int
 IAXAccount::unregisterVoIPLink()
 {
-    _link->sendUnregister (_accountID);
-    _link->terminate();
+	try {
+        _link->sendUnregister (_accountID);
+        _link->terminate();
 
-    return SUCCESS;
+        return SUCCESS;
+	}
+	catch(VoipLinkException &e) {
+		_error("IAXAccount: %s", e.what());
+	}
+
+	return SUCCESS;
 }
 
 void

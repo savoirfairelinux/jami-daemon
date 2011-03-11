@@ -415,25 +415,23 @@ IAXVoIPLink::getIAXCall (const CallID& id)
 }
 
 
-int
-IAXVoIPLink::sendRegister (AccountID id UNUSED)
+void
+IAXVoIPLink::sendRegister (AccountID id UNUSED) throw(VoipLinkException)
 {
-    IAXAccount *account;
-    bool result;
-
     _debug ("IAX: Sending registration");
 
-    result = false;
-    account = dynamic_cast<IAXAccount *> (getAccountPtr());
+    IAXAccount *account = dynamic_cast<IAXAccount *> (getAccountPtr());
+
+    if (!account) {
+    	throw VoipLinkException("Account is NULL in send register");
+    }
 
     if (account->getHostname().empty()) {
-        _error ("IAX: Error: Account hostname is empty");
-        return false;
+    	throw VoipLinkException("Account hostname is empty");
     }
 
     if (account->getUsername().empty()) {
-        _error ("IAX: Error: Account username is empty");
-        return false;
+    	throw VoipLinkException("Account username is empty");
     }
 
     // lock
@@ -455,26 +453,24 @@ IAXVoIPLink::sendRegister (AccountID id UNUSED)
         // set the time-out to 15 seconds, after that, resend a registration request.
         // until we unregister.
         _nextRefreshStamp = time (NULL) + 10;
-        result = true;
 
         account->setRegistrationState (Trying);
     }
 
     // unlock
     _mutexIAX.leaveMutex();
-
-    return result;
 }
 
-int
-IAXVoIPLink::sendUnregister (AccountID id UNUSED)
+void
+IAXVoIPLink::sendUnregister (AccountID id UNUSED) throw(VoipLinkException)
 {
-    IAXAccount *account;
+    _debug ("IAXVoipLink: Send unregister");
 
-    account = dynamic_cast<IAXAccount*> (getAccountPtr());
+    IAXAccount *account = dynamic_cast<IAXAccount*> (getAccountPtr());
 
-    if (!account)
-        return 1;
+    if (!account) {
+        throw VoipLinkException("Account is NULL in send unregister");
+    }
 
     _mutexIAX.enterMutex();
 
@@ -489,10 +485,7 @@ IAXVoIPLink::sendUnregister (AccountID id UNUSED)
 
     _nextRefreshStamp = 0;
 
-    _debug ("IAX2 send unregister");
     account->setRegistrationState (Unregistered);
-
-    return SUCCESS;
 }
 
 Call*

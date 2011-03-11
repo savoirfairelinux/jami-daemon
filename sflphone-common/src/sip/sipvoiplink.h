@@ -140,14 +140,14 @@ class SIPVoIPLink : public VoIPLink
          * @return bool True on success
          *		  false otherwise
          */
-        virtual int sendRegister (AccountID id);
+        virtual void sendRegister (AccountID id) throw(VoipLinkException);
 
         /**
          * Build and send SIP unregistration request
          * @return bool True on success
          *		  false otherwise
          */
-        virtual int sendUnregister (AccountID id);
+        virtual void sendUnregister (AccountID id) throw(VoipLinkException);
 
         /**
          * Place a new call

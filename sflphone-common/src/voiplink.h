@@ -111,7 +111,7 @@ class VoIPLink
          * @return bool True on success
          *		  false otherwise
          */
-        virtual int sendRegister (AccountID id) = 0;
+        virtual void sendRegister (AccountID id) throw (VoipLinkException) = 0;
 
         /**
          * Virtual method
@@ -119,7 +119,7 @@ class VoIPLink
          * @return bool True on success
          *		  false otherwise
          */
-        virtual int sendUnregister (AccountID id) = 0;
+        virtual void sendUnregister (AccountID id) throw (VoipLinkException) = 0;
 
         /**
          * Place a new call

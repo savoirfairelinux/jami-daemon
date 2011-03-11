@@ -95,7 +95,7 @@ class IAXVoIPLink : public VoIPLink
          * Send out registration
          * @return bool The new registration state (are we registered ?)
          */
-        virtual int sendRegister (AccountID id);
+        virtual void sendRegister (AccountID id) throw(VoipLinkException);
 
         /**
          * Destroy registration session
@@ -104,7 +104,7 @@ class IAXVoIPLink : public VoIPLink
          * @return bool true if we're registered upstream
          *		  false otherwise
          */
-        virtual int sendUnregister (AccountID id);
+        virtual void sendUnregister (AccountID id) throw(VoipLinkException);
 
         /**
          * Create a new outgoing call

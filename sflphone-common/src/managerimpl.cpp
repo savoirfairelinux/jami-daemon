@@ -3965,15 +3965,6 @@ bool ManagerImpl::accountExists (const AccountID& accountID)
 Account*
 ManagerImpl::getAccount (const AccountID& accountID)
 {
-    // In our definition,
-    // this is the "direct ip calls account"
-    /*
-    if (accountID == AccountNULL) {
-        _debug ("Manager: Returns the direct IP account");
-        return _directIpAccount;
-    }
-    */
-
     AccountMap::iterator iter = _accountMap.find (accountID);
 
     if (iter != _accountMap.end()) {

@@ -1030,7 +1030,7 @@ int SIPAccount::initCredential (void)
 
 int SIPAccount::registerVoIPLink()
 {
-    _debug ("Account: Register account %s", getAccountID().c_str());
+    _debug ("SIPAccount: Register account %s", getAccountID().c_str());
 
     if (_hostname.length() >= PJ_MAX_HOSTNAME) {
         return !SUCCESS;
@@ -1041,13 +1041,12 @@ int SIPAccount::registerVoIPLink()
 
     // Init TLS settings if the user wants to use TLS
     if (_tlsEnable == "true") {
-        _debug ("----------------------------------------------------- Account: TLS is ennabled for accounr %s", getAccountID().c_str());
+        _debug ("SIPAccount: TLS is ennabled for accounr %s", getAccountID().c_str());
         _transportType = PJSIP_TRANSPORT_TLS;
         initTlsConfiguration();
     }
 
     // Init STUN settings for this account if the user selected it
-
     if (_stunEnabled) {
         _transportType = PJSIP_TRANSPORT_START_OTHER;
         initStunConfiguration ();
@@ -1055,12 +1054,16 @@ int SIPAccount::registerVoIPLink()
         _stunServerName = pj_str ( (char*) _stunServer.data());
     }
 
-    // In our definition of the
-    // ip2ip profile (aka Direct IP Calls),
-    // no registration should be performed
-    if (_accountID != IP2IP_PROFILE) {
-        int status = _link->sendRegister (_accountID);
-        ASSERT (status , SUCCESS);
+    try {
+        // In our definition of the
+    	// ip2ip profile (aka Direct IP Calls),
+    	// no registration should be performed
+    	if (_accountID != IP2IP_PROFILE) {
+    		_link->sendRegister (_accountID);
+    	}
+    }
+    catch(VoipLinkException &e) {
+    	_error("SIPAccount: %s", e.what());
     }
 
     return SUCCESS;
@@ -1068,17 +1071,22 @@ int SIPAccount::registerVoIPLink()
 
 int SIPAccount::unregisterVoIPLink()
 {
-    _debug ("Unregister account %s" , getAccountID().c_str());
+    _debug ("SIPAccount: Unregister account %s" , getAccountID().c_str());
 
     if (_accountID == IP2IP_PROFILE) {
         return true;
     }
 
-    if (_link->sendUnregister (_accountID)) {
+    try {
+    	_link->sendUnregister (_accountID);
         setRegistrationInfo (NULL);
-        return true;
-    } else
-        return false;
+    }
+    catch(VoipLinkException &e) {
+    	_error("SIPAccount: %s", e.what());
+    	return false;
+    }
+
+    return true;
 
 }
 

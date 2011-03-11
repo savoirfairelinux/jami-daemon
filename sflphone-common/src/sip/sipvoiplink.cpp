@@ -378,7 +378,7 @@ SIPVoIPLink::getEvent()
 
 }
 
-int SIPVoIPLink::sendRegister (AccountID id)
+void SIPVoIPLink::sendRegister (AccountID id) throw(VoipLinkException)
 {
 
     int expire_value;
@@ -393,10 +393,8 @@ int SIPVoIPLink::sendRegister (AccountID id)
     pjsip_hdr hdr_list;
 
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
-
     if (account == NULL) {
-        _debug ("UserAgent: In sendRegister: account is null");
-        return false;
+        throw VoipLinkException("Account pointer is NULL in send register");
     }
 
     // Resolve hostname here and keep its
@@ -476,9 +474,8 @@ int SIPVoIPLink::sendRegister (AccountID id)
     status = pjsip_regc_create (_endpt, (void *) &account->getAccountID(), &registration_cb, &regc);
 
     if (status != PJ_SUCCESS) {
-        _debug ("UserAgent: Unable to create regc.");
         _mutexSIP.leaveMutex();
-        return false;
+        throw VoipLinkException("UserAgent: Unable to create regc structure.");
     }
 
     // Creates URI
@@ -512,9 +509,8 @@ int SIPVoIPLink::sendRegister (AccountID id)
     // Initializes registration
     status = pjsip_regc_init (regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, expire_value);
     if (status != PJ_SUCCESS) {
-        _debug ("UserAgent: Unable to initialize account %d in sendRegister", status);
         _mutexSIP.leaveMutex();
-        return false;
+        throw VoipLinkException("Unable to initialize account registration structure");
     }
 
     // Fill route set
@@ -540,9 +536,8 @@ int SIPVoIPLink::sendRegister (AccountID id)
 
 
     if ((status = pjsip_regc_register (regc, PJ_TRUE, &tdata)) != PJ_SUCCESS) {
-        _debug ("UserAgent: Unable to register regc.");
         _mutexSIP.leaveMutex();
-        return false;
+        throw VoipLinkException("Unable to initialize transaction data for account registration");
     }
 
     pjsip_tpselector *tp;
@@ -564,9 +559,8 @@ int SIPVoIPLink::sendRegister (AccountID id)
     }
 
     if (status != PJ_SUCCESS) {
-        _debug ("UserAgent: Unable to set transport.");
         _mutexSIP.leaveMutex ();
-        return false;
+        throw VoipLinkException("Unable to set transport");
     }
 
     // Send registration request
@@ -581,9 +575,8 @@ int SIPVoIPLink::sendRegister (AccountID id)
     }
 
     if (status != PJ_SUCCESS) {
-        _debug ("UserAgent: Unable to send regc request.");
         _mutexSIP.leaveMutex();
-        return false;
+        throw VoipLinkException("Unable to send account registration request");
     }
 
     _mutexSIP.leaveMutex();
@@ -597,21 +590,16 @@ int SIPVoIPLink::sendRegister (AccountID id)
                 account->getAccountTransport()->info,
                 (int) pj_atomic_get (account->getAccountTransport()->ref_cnt));
     }
-
-    return true;
 }
 
-int
-SIPVoIPLink::sendUnregister (AccountID id)
+void SIPVoIPLink::sendUnregister (AccountID id) throw(VoipLinkException)
 {
 
     pj_status_t status = 0;
     pjsip_tx_data *tdata = NULL;
     SIPAccount *account;
-    pjsip_regc *regc;
 
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
-    regc = account->getRegistrationInfo();
 
     // If an transport is attached to this account, detach it and decrease reference counter
     if (account->getAccountTransport()) {
@@ -626,32 +614,26 @@ SIPVoIPLink::sendUnregister (AccountID id)
     // This may occurs if account failed to register and is in state INVALID
     if (!account->isRegister()) {
         account->setRegistrationState (Unregistered);
-        return true;
+        return;
     }
 
-    if (regc) {
-        status = pjsip_regc_unregister (regc, &tdata);
-
-        if (status != PJ_SUCCESS) {
-            _debug ("UserAgent: Unable to unregister regc.");
-            return false;
-        }
-
-        status = pjsip_regc_send (regc, tdata);
-
-        if (status != PJ_SUCCESS) {
-            _debug ("UserAgent: Unable to send regc request.");
-            return false;
-        }
-    } else {
-        _debug ("UserAgent: regc is null!");
-        return false;
+    pjsip_regc *regc = account->getRegistrationInfo();
+    if(regc == NULL) {
+    	throw VoipLinkException("Registration structure is NULL");
     }
 
-    // account->setRegistrationInfo(regc);
+    status = pjsip_regc_unregister (regc, &tdata);
+    if (status != PJ_SUCCESS) {
+    	throw VoipLinkException("Unable to unregister sip account");
+    }
+
+    status = pjsip_regc_send (regc, tdata);
+
+    if (status != PJ_SUCCESS) {
+    	throw VoipLinkException("Unable to send request to unregister sip account");
+    }
+
     account->setRegister (false);
-
-    return true;
 }
 
 Call *SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) throw (VoipLinkException) // throw (SIPVoipLinkException)
