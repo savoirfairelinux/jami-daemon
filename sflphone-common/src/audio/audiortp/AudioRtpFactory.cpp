@@ -258,18 +258,18 @@ void AudioRtpFactory::updateSessionMedia (AudioCodec *audiocodec)
     }
 
     switch (_rtpSessionType) {
-
-        case Sdes:
-            static_cast<AudioSrtpSession *> (_rtpSession)->updateSessionMedia (audiocodec);
-            break;
-
-        case Symmetric:
-            static_cast<AudioSymmetricRtpSession *> (_rtpSession)->updateSessionMedia (audiocodec);
-            break;
-
-        case Zrtp:
-            static_cast<AudioZrtpSession *> (_rtpSession)->updateSessionMedia (audiocodec);
-            break;
+    case Sdes:
+    	static_cast<AudioSrtpSession *> (_rtpSession)->updateSessionMedia (audiocodec);
+    	break;
+    case Symmetric:
+    	static_cast<AudioSymmetricRtpSession *> (_rtpSession)->updateSessionMedia (audiocodec);
+    	break;
+    case Zrtp:
+    	static_cast<AudioZrtpSession *> (_rtpSession)->updateSessionMedia (audiocodec);
+    	break;
+    default:
+    	_debug("AudioRtpFactory: Unknown session type");
+    	break;
     }
 }
 
