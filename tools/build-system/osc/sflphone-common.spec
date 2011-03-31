@@ -112,7 +112,7 @@ make clean
 make
 cd -
 ./autogen.sh
-./configure --prefix=%{_prefix} --libdir=%{_libdir}
+./configure --prefix=%{_prefix} --libdir=%{_libdir} --without-celt
 make -j
 
 %install
