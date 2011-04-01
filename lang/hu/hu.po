@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-01-13 16:17-0500\n"
+"POT-Creation-Date: 2011-04-01 09:11-0400\n"
 "PO-Revision-Date: 2011-01-07 19:33+0000\n"
 "Last-Translator: Balazs Radak <Unknown>\n"
 "Language-Team: Hungarian <hu@li.org>\n"
@@ -16,83 +16,83 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2011-01-13 11:22+0000\n"
-"X-Generator: Launchpad (build 12177)\n"
+"X-Launchpad-Export-Date: 2011-04-01 12:40+0000\n"
+"X-Generator: Launchpad (build 12710)\n"
 
 #: ../sflphone-client-gnome/src/accountlist.c:182
 msgid "Registered"
-msgstr ""
+msgstr "Regisztrálva"
 
 #: ../sflphone-client-gnome/src/accountlist.c:185
 msgid "Not Registered"
-msgstr ""
+msgstr "Nem regisztrált"
 
 #: ../sflphone-client-gnome/src/accountlist.c:188
 msgid "Trying..."
-msgstr ""
+msgstr "Próbálkozás..."
 
 #: ../sflphone-client-gnome/src/accountlist.c:191
 #: ../sflphone-client-gnome/src/sflnotify.c:159
 #: ../sflphone-client-gnome/src/sflnotify.c:176
 msgid "Error"
-msgstr ""
+msgstr "Hiba"
 
 #: ../sflphone-client-gnome/src/accountlist.c:194
 msgid "Authentication Failed"
-msgstr ""
+msgstr "Hitelesítési hiba"
 
 #: ../sflphone-client-gnome/src/accountlist.c:197
 msgid "Network unreachable"
-msgstr ""
+msgstr "A hálózat nem érhető el"
 
 #: ../sflphone-client-gnome/src/accountlist.c:200
 msgid "Host unreachable"
-msgstr ""
+msgstr "A hoszt nem elérhető"
 
 #: ../sflphone-client-gnome/src/accountlist.c:203
 msgid "Stun configuration error"
-msgstr ""
+msgstr "STUN konfigurációs hiba"
 
 #: ../sflphone-client-gnome/src/accountlist.c:206
 msgid "Stun server invalid"
-msgstr ""
+msgstr "Érvénytelen STUN szerver"
 
 #: ../sflphone-client-gnome/src/accountlist.c:209
 msgid "Ready"
-msgstr ""
+msgstr "Kész"
 
 #: ../sflphone-client-gnome/src/accountlist.c:212
 msgid "Invalid"
-msgstr ""
+msgstr "Érvénytelen"
 
 #: ../sflphone-client-gnome/src/actions.c:135
 msgid "Using account"
-msgstr ""
+msgstr "A következő fiók használatban"
 
 #: ../sflphone-client-gnome/src/actions.c:140
 msgid "No registered accounts"
-msgstr ""
+msgstr "Nincs regisztrált fiók"
 
-#: ../sflphone-client-gnome/src/actions.c:626
-#: ../sflphone-client-gnome/src/actions.c:961
+#: ../sflphone-client-gnome/src/actions.c:628
+#: ../sflphone-client-gnome/src/actions.c:964
 msgid "Direct SIP call"
-msgstr ""
+msgstr "Közvetlen SIP-hívás"
 
 #: ../sflphone-client-gnome/src/callable_obj.c:498
 msgid "today at %R"
-msgstr ""
+msgstr "Mai napon %R -kor"
 
 #: ../sflphone-client-gnome/src/callable_obj.c:501
 msgid "yesterday at %R"
-msgstr ""
+msgstr "Tegnap %R -kor"
 
 #: ../sflphone-client-gnome/src/callable_obj.c:503
 msgid "%A at %R"
-msgstr ""
+msgstr "%A %R -kor"
 
 #: ../sflphone-client-gnome/src/callable_obj.c:507
 msgid "%x at %R"
-msgstr ""
+msgstr "%x %R -kor"
 
 #: ../sflphone-client-gnome/src/eel-gconf-extensions.c:74
 msgid ""
@@ -114,6 +114,8 @@ msgid ""
 "\n"
 "Error while opening playback device"
 msgstr ""
+"ALSA üzenet: \n"
+"Hiba a hangeszköz megnyitásakor"
 
 #: ../sflphone-client-gnome/src/errors.c:44
 msgid ""
@@ -121,6 +123,8 @@ msgid ""
 "\n"
 "Error while opening capture device"
 msgstr ""
+"ALSA üzenet:\n"
+"Hiba a felvevő eszköz megnyitásakor"
 
 #: ../sflphone-client-gnome/src/errors.c:47
 msgid ""
@@ -128,50 +132,54 @@ msgid ""
 "\n"
 "Pulseaudio is not running"
 msgstr ""
+"Pulseaudió üzenet:\n"
+"Pulseaudio nem fut"
 
 #: ../sflphone-client-gnome/src/main.c:98
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "Unable to initialize.\n"
 "Make sure the daemon is running.\n"
 "Error: %s"
 msgstr ""
+"Hiba sz SFLphone szerverhez való csatlakozáskor.\n"
+"Győződjön meg róla, hogy fut a daemon!"
 
 #: ../sflphone-client-gnome/src/mainwindow.c:114
 msgid "There is one call in progress."
-msgstr ""
+msgstr "Egy hívás folyamatban"
 
 #: ../sflphone-client-gnome/src/mainwindow.c:116
 msgid "There are calls in progress."
-msgstr ""
+msgstr "Hívások folyamatban"
 
 #: ../sflphone-client-gnome/src/mainwindow.c:121
 msgid "Do you still want to quit?"
-msgstr ""
+msgstr "Biztos kilép?"
 
 #: ../sflphone-client-gnome/src/mainwindow.c:347
 msgid "SFLphone Error"
-msgstr ""
+msgstr "SFLphone Hiba"
 
 #: ../sflphone-client-gnome/src/mainwindow.c:507
 #, c-format
 msgid "ZRTP is not supported by peer %s\n"
-msgstr ""
+msgstr "A peer %s nem támogatja a ZRTP-t\n"
 
 #: ../sflphone-client-gnome/src/mainwindow.c:509
 msgid "Secure Communication Unavailable"
-msgstr ""
+msgstr "Biztonságos Kommunikáció nem elérhető"
 
 #: ../sflphone-client-gnome/src/mainwindow.c:511
 #: ../sflphone-client-gnome/src/mainwindow.c:541
 msgid "Continue"
-msgstr ""
+msgstr "Folytatás"
 
 #: ../sflphone-client-gnome/src/mainwindow.c:512
 #: ../sflphone-client-gnome/src/mainwindow.c:542
 #: ../sflphone-client-gnome/src/mainwindow.c:563
 msgid "Stop Call"
-msgstr ""
+msgstr "Hívás befejezése"
 
 #: ../sflphone-client-gnome/src/mainwindow.c:537
 #, c-format
@@ -182,7 +190,7 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/mainwindow.c:539
 msgid "ZRTP negotiation failed"
-msgstr ""
+msgstr "ZRTP átviteli hiba"
 
 #: ../sflphone-client-gnome/src/mainwindow.c:557
 #, c-format
@@ -190,6 +198,8 @@ msgid ""
 "%s wants to stop using secure communication. Confirm will resume "
 "conversation without SRTP.\n"
 msgstr ""
+"%s nem használja a titkosított kommunikációt. Amennyiben megerősíti, a "
+"további beszélgetés SRTP nélkül zajlik.\n"
 
 #: ../sflphone-client-gnome/src/mainwindow.c:559
 msgid "Confirm Go Clear"
@@ -197,7 +207,7 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/mainwindow.c:561
 msgid "Confirm"
-msgstr ""
+msgstr "Megerősít"
 
 #: ../sflphone-client-gnome/src/sflnotify.c:77
 #, c-format
@@ -208,19 +218,19 @@ msgstr ""
 #: ../sflphone-client-gnome/src/sflnotify.c:119
 #, c-format
 msgid "%s account : %s"
-msgstr ""
+msgstr "%s Fiók %s"
 
 #: ../sflphone-client-gnome/src/sflnotify.c:103
 #, c-format
 msgid "<i>From</i> %s"
-msgstr ""
+msgstr "%s<i>tól/től</i>"
 
 #: ../sflphone-client-gnome/src/sflnotify.c:122
 #, c-format
 msgid "%d voice mail"
 msgid_plural "%d voice mails"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d Hangposta"
+msgstr[1] "%d Hangposta üzenetek"
 
 #: ../sflphone-client-gnome/src/sflnotify.c:139
 #, c-format
@@ -229,15 +239,15 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/sflnotify.c:143
 msgid "Current account"
-msgstr ""
+msgstr "Jelenlegi Fiók"
 
 #: ../sflphone-client-gnome/src/sflnotify.c:158
 msgid "You have no accounts set up"
-msgstr ""
+msgstr "Nics beállított Fiók"
 
 #: ../sflphone-client-gnome/src/sflnotify.c:175
 msgid "You have no registered accounts"
-msgstr ""
+msgstr "nincs regisztrált Fiók"
 
 #: ../sflphone-client-gnome/src/sflnotify.c:218
 #, c-format
@@ -249,7 +259,7 @@ msgstr ""
 #: ../sflphone-client-gnome/src/sflnotify.c:233
 #, c-format
 msgid "%s does not support ZRTP."
-msgstr ""
+msgstr "%s nem támogatja a ZRTP-t."
 
 #: ../sflphone-client-gnome/src/sflnotify.c:248
 #, c-format
@@ -263,103 +273,103 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/sliders.c:174
 msgid "Speakers volume"
-msgstr ""
+msgstr "Hangszóró hangereje"
 
 #: ../sflphone-client-gnome/src/sliders.c:176
 msgid "Mic volume"
-msgstr ""
+msgstr "Mikrofon hangereje"
 
 #: ../sflphone-client-gnome/src/statusicon.c:136
 msgid "_Show main window"
-msgstr ""
+msgstr "_Főablak megjelenítése"
 
 #: ../sflphone-client-gnome/src/statusicon.c:143
 #: ../sflphone-client-gnome/src/uimanager.c:919
 #: ../sflphone-client-gnome/src/uimanager.c:1244
 #: ../sflphone-client-gnome/src/uimanager.c:1306
 msgid "_Hang up"
-msgstr ""
+msgstr "_Vonal bontása"
 
 #: ../sflphone-client-gnome/src/statusicon.c:198
 msgid "SFLphone"
-msgstr ""
+msgstr "SFLphone"
 
 #: ../sflphone-client-gnome/src/statusicon.c:199
 #, c-format
 msgid "%i active account"
 msgid_plural "%i active accounts"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%i Aktív Fók"
+msgstr[1] "%i Aktív Fiókok"
 
 #: ../sflphone-client-gnome/src/toolbar.c:50
 #: ../sflphone-client-gnome/src/uimanager.c:880
 #: ../sflphone-client-gnome/src/uimanager.c:940
 msgid "Voicemail"
-msgstr ""
+msgstr "Hangposta"
 
 #: ../sflphone-client-gnome/src/uimanager.c:152
 msgid "No address book selected"
-msgstr ""
+msgstr "Nincs kiválasztva Címjegyzék"
 
 #: ../sflphone-client-gnome/src/uimanager.c:183
 #: ../sflphone-client-gnome/src/uimanager.c:999
 msgid "Address book"
-msgstr ""
+msgstr "Címjegyzék"
 
 #: ../sflphone-client-gnome/src/uimanager.c:416
 #, c-format
 msgid "Voicemail (%i)"
-msgstr ""
+msgstr "Hangposta (%i)"
 
 #: ../sflphone-client-gnome/src/uimanager.c:493
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
-msgstr ""
+msgstr "Az SFLphone egy SIP és IAX2 kompatibilis VoIP kliens."
 
 #: ../sflphone-client-gnome/src/uimanager.c:495
 msgid "About SFLphone"
-msgstr ""
+msgstr "Az SFLphone-ról"
 
 #: ../sflphone-client-gnome/src/uimanager.c:909
 msgid "Call"
-msgstr ""
+msgstr "Hívás"
 
 #: ../sflphone-client-gnome/src/uimanager.c:911
 #: ../sflphone-client-gnome/src/uimanager.c:1514
 msgid "_New call"
-msgstr ""
+msgstr "_Új hívás"
 
 #: ../sflphone-client-gnome/src/uimanager.c:912
 msgid "Place a new call"
-msgstr ""
+msgstr "Új hívás kezdeményezése"
 
 #: ../sflphone-client-gnome/src/uimanager.c:915
 #: ../sflphone-client-gnome/src/uimanager.c:1233
 msgid "_Pick up"
-msgstr ""
+msgstr "_Felvesz"
 
 #: ../sflphone-client-gnome/src/uimanager.c:916
 msgid "Answer the call"
-msgstr ""
+msgstr "Hívás fogadása"
 
 #: ../sflphone-client-gnome/src/uimanager.c:920
 msgid "Finish the call"
-msgstr ""
+msgstr "Hívás befejezése"
 
 #: ../sflphone-client-gnome/src/uimanager.c:923
 msgid "O_n hold"
-msgstr ""
+msgstr "Tartás"
 
 #: ../sflphone-client-gnome/src/uimanager.c:924
 msgid "Place the call on hold"
-msgstr ""
+msgstr "Hívás tartásba tétele"
 
 #: ../sflphone-client-gnome/src/uimanager.c:927
 msgid "O_ff hold"
-msgstr ""
+msgstr "Hívás visszavétele"
 
 #: ../sflphone-client-gnome/src/uimanager.c:928
 msgid "Place the call off hold"
-msgstr ""
+msgstr "Hívás visszavétele"
 
 #: ../sflphone-client-gnome/src/uimanager.c:931
 #: ../sflphone-client-gnome/src/uimanager.c:1291
@@ -372,470 +382,476 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/uimanager.c:935
 msgid "Configuration _Assistant"
-msgstr ""
+msgstr "Beállítóasszisztens"
 
 #: ../sflphone-client-gnome/src/uimanager.c:936
 msgid "Run the configuration assistant"
-msgstr ""
+msgstr "A beállítóasszisztens futtatása"
 
 #: ../sflphone-client-gnome/src/uimanager.c:941
 msgid "Call your voicemail"
-msgstr ""
+msgstr "Hangposta hívása"
 
 #: ../sflphone-client-gnome/src/uimanager.c:944
 msgid "_Close"
-msgstr ""
+msgstr "_Bezár"
 
 #: ../sflphone-client-gnome/src/uimanager.c:945
 msgid "Minimize to system tray"
-msgstr ""
+msgstr "Tálcára helyezés"
 
 #: ../sflphone-client-gnome/src/uimanager.c:948
 msgid "_Quit"
-msgstr ""
+msgstr "_Kilépés"
 
 #: ../sflphone-client-gnome/src/uimanager.c:949
 msgid "Quit the program"
-msgstr ""
+msgstr "Kilépés a programból"
 
 #: ../sflphone-client-gnome/src/uimanager.c:953
 msgid "_Edit"
-msgstr ""
+msgstr "_Szerkesztés"
 
 #: ../sflphone-client-gnome/src/uimanager.c:955
 msgid "_Copy"
-msgstr ""
+msgstr "_Másolás"
 
 #: ../sflphone-client-gnome/src/uimanager.c:956
 msgid "Copy the selection"
-msgstr ""
+msgstr "Kijelölés másolása"
 
 #: ../sflphone-client-gnome/src/uimanager.c:959
 msgid "_Paste"
-msgstr ""
+msgstr "_Beillesztés"
 
 #: ../sflphone-client-gnome/src/uimanager.c:960
 msgid "Paste the clipboard"
-msgstr ""
+msgstr "A vágólap tartalmának beillesztése"
 
 #: ../sflphone-client-gnome/src/uimanager.c:963
 msgid "Clear _history"
-msgstr ""
+msgstr "Előzmények törlése"
 
 #: ../sflphone-client-gnome/src/uimanager.c:964
 msgid "Clear the call history"
-msgstr ""
+msgstr "Híváselőzmények törlése"
 
 #: ../sflphone-client-gnome/src/uimanager.c:967
 msgid "_Accounts"
-msgstr ""
+msgstr "_Fiókok"
 
 #: ../sflphone-client-gnome/src/uimanager.c:967
 msgid "Edit your accounts"
-msgstr ""
+msgstr "Felhasználói fiókok szerkesztése"
 
 #: ../sflphone-client-gnome/src/uimanager.c:971
 msgid "_Preferences"
-msgstr ""
+msgstr "_Beállítások"
 
 #: ../sflphone-client-gnome/src/uimanager.c:972
 msgid "Change your preferences"
-msgstr ""
+msgstr "Beállítások megváltoztatása"
 
 #: ../sflphone-client-gnome/src/uimanager.c:976
 msgid "_View"
-msgstr ""
+msgstr "_Nézet"
 
 #: ../sflphone-client-gnome/src/uimanager.c:979
 msgid "_Help"
-msgstr ""
+msgstr "_Súgó"
 
 #: ../sflphone-client-gnome/src/uimanager.c:981
 msgid "Contents"
-msgstr ""
+msgstr "Tartalom"
 
 #: ../sflphone-client-gnome/src/uimanager.c:982
 msgid "Open the manual"
-msgstr ""
+msgstr "A kézikönyv megnyitása"
 
 #: ../sflphone-client-gnome/src/uimanager.c:985
 msgid "About this application"
-msgstr ""
+msgstr "Az alkalmazás névjegye"
 
 #: ../sflphone-client-gnome/src/uimanager.c:993
 msgid "_Transfer"
-msgstr ""
+msgstr "_Átadás"
 
 #: ../sflphone-client-gnome/src/uimanager.c:993
 msgid "Transfer the call"
-msgstr ""
+msgstr "A hívás átadása"
 
 #: ../sflphone-client-gnome/src/uimanager.c:994
 #: ../sflphone-client-gnome/src/uimanager.c:1266
 msgid "_Record"
-msgstr ""
+msgstr "_Felvétel"
 
 #: ../sflphone-client-gnome/src/uimanager.c:994
 msgid "Record the current conversation"
-msgstr ""
+msgstr "A jelenlegi hívás rögzítése"
 
 #: ../sflphone-client-gnome/src/uimanager.c:995
 msgid "_Show toolbar"
-msgstr ""
+msgstr "Látszódjon az eszköztár"
 
 #: ../sflphone-client-gnome/src/uimanager.c:995
 msgid "Show the toolbar"
-msgstr ""
+msgstr "Látszódjon az eszköztár"
 
 #: ../sflphone-client-gnome/src/uimanager.c:996
 msgid "_Dialpad"
-msgstr ""
+msgstr "Tárcsázó"
 
 #: ../sflphone-client-gnome/src/uimanager.c:996
 msgid "Show the dialpad"
-msgstr ""
+msgstr "Tárcsázó megjelenítése"
 
 #: ../sflphone-client-gnome/src/uimanager.c:997
 msgid "_Volume controls"
-msgstr ""
+msgstr "_Hangerőszabályzó"
 
 #: ../sflphone-client-gnome/src/uimanager.c:997
 msgid "Show the volume controls"
-msgstr ""
+msgstr "Hangerőszabályzó megjelenítése"
 
 #: ../sflphone-client-gnome/src/uimanager.c:998
 msgid "_History"
-msgstr ""
+msgstr "_Előzmények"
 
 #: ../sflphone-client-gnome/src/uimanager.c:998
 msgid "Calls history"
-msgstr ""
+msgstr "Híváselőzmények"
 
 #: ../sflphone-client-gnome/src/uimanager.c:999
 msgid "_Address book"
-msgstr ""
+msgstr "_Névjegyzék"
 
 #: ../sflphone-client-gnome/src/uimanager.c:1255
 #: ../sflphone-client-gnome/src/uimanager.c:1317
 msgid "On _Hold"
-msgstr ""
+msgstr "Tartásban"
 
 #: ../sflphone-client-gnome/src/uimanager.c:1375
 msgid "_Call back"
-msgstr ""
+msgstr "_Visszahívás"
 
 #: ../sflphone-client-gnome/src/uimanager.c:1588
 msgid "Edit phone number"
-msgstr ""
+msgstr "Telefonszám szerkesztése"
 
 #: ../sflphone-client-gnome/src/uimanager.c:1600
 msgid "Edit the phone number before making a call"
-msgstr ""
+msgstr "Telefonszám hívás előtti szerkesztése"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:320
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:321
 msgid "Account Parameters"
-msgstr ""
+msgstr "Fiók paraméterek"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:334
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:335
 #: ../sflphone-client-gnome/src/config/assistant.c:344
 #: ../sflphone-client-gnome/src/config/assistant.c:458
 msgid "_Alias"
-msgstr ""
+msgstr "Alias"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:344
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:345
 msgid "_Protocol"
-msgstr ""
+msgstr "_Protokol"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:360
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:361
 msgid "Unknown"
-msgstr ""
+msgstr "Ismeretlen"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:372
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:373
 #: ../sflphone-client-gnome/src/config/assistant.c:352
 #: ../sflphone-client-gnome/src/config/assistant.c:466
 msgid "_Host name"
-msgstr ""
+msgstr "_Hoszt név"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:381
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:382
 #: ../sflphone-client-gnome/src/config/assistant.c:360
 #: ../sflphone-client-gnome/src/config/assistant.c:474
 msgid "_User name"
-msgstr ""
+msgstr "_Felhasználói név"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:402
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:403
 #: ../sflphone-client-gnome/src/config/assistant.c:376
 #: ../sflphone-client-gnome/src/config/assistant.c:489
 msgid "_Password"
-msgstr ""
+msgstr "_Jelszó"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:424
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:425
 #: ../sflphone-client-gnome/src/config/assistant.c:393
 #: ../sflphone-client-gnome/src/config/assistant.c:504
 msgid "Show password"
+msgstr "Jelszó megjelenítése"
+
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:430
+msgid "_Proxy"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:429
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:439
 #: ../sflphone-client-gnome/src/config/assistant.c:398
 #: ../sflphone-client-gnome/src/config/assistant.c:509
 msgid "_Voicemail number"
-msgstr ""
+msgstr "_Hangposta hívószáma"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:438
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:448
 msgid "_User-agent"
-msgstr ""
+msgstr "_Felhasználó program"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:500
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:510
 msgid "Authentication"
-msgstr ""
+msgstr "Azonosítás"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:501
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:511
 msgid "Secret"
-msgstr ""
+msgstr "Jelszó"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:744
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:754
 msgid "Credential"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:778
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:788
 msgid "Authentication name"
-msgstr ""
+msgstr "Azonosító név"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:789
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:799
 msgid "Password"
-msgstr ""
+msgstr "Jelszó"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:853
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1364
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:863
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1374
 msgid "Security"
-msgstr ""
+msgstr "Biztonság"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:864
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:874
 msgid "Use TLS transport (sips)"
-msgstr ""
+msgstr "TLS átvitel használata (sips)"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:870
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:880
 msgid "SRTP key exchange"
-msgstr ""
+msgstr "SRTP key exchange"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:876
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:886
 msgid "Disabled"
-msgstr ""
+msgstr "Tiltva"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:940
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:950
 msgid "Registration"
-msgstr ""
+msgstr "Regisztráció"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:944
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:954
 msgid "Registration expire"
-msgstr ""
+msgstr "Regisztráció érvényessége"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:953
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:963
 msgid "_Comply with RFC 3263"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:974
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:984
 msgid "Network Interface"
-msgstr ""
+msgstr "Hálózati csatoló"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:987
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:997
 msgid "Local address"
-msgstr ""
+msgstr "Helyi cím"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1054
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1064
 msgid "Local port"
-msgstr ""
+msgstr "Helyi port"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1096
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1129
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1106
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1139
 msgid "Published address"
-msgstr ""
+msgstr "Publikus cím"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1100
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1110
 msgid "Using STUN"
-msgstr ""
+msgstr "STUN használata"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1107
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1117
 msgid "STUN server URL"
-msgstr ""
+msgstr "STUN szerver cłme"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1115
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1125
 msgid "Same as local parameters"
-msgstr ""
+msgstr "Ugyanaz, mint a helyi paraméterek"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1118
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1128
 msgid "Set published address and port:"
-msgstr ""
+msgstr "Publikus cím és port:"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1138
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1148
 msgid "Published port"
-msgstr ""
+msgstr "Publikus port"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1218
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1345
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1228
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1355
 msgid "Codecs"
-msgstr ""
+msgstr "Kodekek"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1230
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1240
 msgid "DTMF"
-msgstr ""
+msgstr "DTMF"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1241
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1251
 msgid "RTP"
-msgstr ""
-
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1245
-msgid "SIP"
-msgstr ""
-
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1252
-msgid "Ringtones"
-msgstr ""
+msgstr "RTP"
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1255
+msgid "SIP"
+msgstr "SIP"
+
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1262
+msgid "Ringtones"
+msgstr "Csengőhangok"
+
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1265
 msgid "Choose a ringtone"
-msgstr ""
+msgstr "Válasszon csengőhangot"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1260
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1270
 msgid "_Enable ringtones"
-msgstr ""
+msgstr "_Csengőhangok engedélyezése"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1272
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1282
 msgid "Audio Files"
-msgstr ""
+msgstr "Audió fáljok"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1314
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1324
 msgid "Account settings"
-msgstr ""
+msgstr "Fiók beállítások"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1337
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1347
 msgid "Basic"
-msgstr ""
+msgstr "Alap"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1359
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1369
 msgid "Advanced"
-msgstr ""
+msgstr "Haladó"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1371
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1381
 msgid "Network"
-msgstr ""
+msgstr "Hálózat"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1581
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1591
 msgid ""
 "This profile is used when you want to reach a remote peer simply by typing a "
 "sip URI such as <b>sip:remotepeer</b>. The settings you define here will "
 "also be used if no account can be matched to an incoming or outgoing call."
 msgstr ""
 
-#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:178
+#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:195
 #, c-format
 msgid "Server returned \"%s\" (%d)"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:471
+#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:488
 msgid "Protocol"
-msgstr ""
+msgstr "Protokoll"
 
-#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:479
+#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:496
 msgid "Status"
-msgstr ""
+msgstr "Állapot"
 
-#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:561
+#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:578
 msgid "Accounts"
-msgstr ""
+msgstr "Fiókok"
 
-#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:571
+#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:588
 msgid "Configured Accounts"
-msgstr ""
+msgstr "Beállított Fiókok"
 
-#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:589
+#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:606
 #, c-format
 msgid "There is %d active account"
 msgid_plural "There are %d active accounts"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Összesen %d aktív Fiók van"
+msgstr[1] "Összesen %d aktív Fiók van"
 
-#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:595
+#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:612
 msgid "You have no active account"
-msgstr ""
+msgstr "Nincs aktív Fiók beállítva"
 
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:326
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:393
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:439
 #: ../sflphone-client-gnome/src/config/shortcuts-config.c:129
 msgid "General"
-msgstr ""
+msgstr "Általános"
 
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:332
 msgid "_Use Evolution address books"
-msgstr ""
+msgstr "_Evolution Címjegyzék használata"
 
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:339
 msgid "Download limit :"
-msgstr ""
+msgstr "Letöltési limit"
 
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:347
 msgid "cards"
-msgstr ""
+msgstr "kártyák"
 
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:353
 msgid "_Display contact photo if available"
-msgstr ""
+msgstr "_Kapcsolati kép megjelenítése, ha elérhető"
 
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:361
 msgid "Fields from Evolution's address books"
-msgstr ""
+msgstr "Az Evolution mezői"
 
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:365
 msgid "_Work"
-msgstr ""
+msgstr "_Munka"
 
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:371
 msgid "_Home"
-msgstr ""
+msgstr "_Otthoni"
 
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:377
 msgid "_Mobile"
-msgstr ""
+msgstr "_Mobil"
 
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:384
 msgid "Address Books"
-msgstr ""
+msgstr "Címjegyzékek"
 
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:388
 msgid "Select which Evolution address books to use"
-msgstr ""
+msgstr "Válaassza ki, melyik Címjegyzéket kívánja használni"
 
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:424
-#: ../sflphone-client-gnome/src/config/audioconf.c:682
+#: ../sflphone-client-gnome/src/config/audioconf.c:690
 msgid "Name"
-msgstr ""
+msgstr "Név"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:87
 #, c-format
 msgid "This assistant is now finished."
-msgstr ""
+msgstr "Beállítóasszisztens vége."
 
 #: ../sflphone-client-gnome/src/config/assistant.c:89
 msgid ""
 "You can at any time check your registration state or modify your accounts "
 "parameters in the Options/Accounts window."
 msgstr ""
+"Bármikor ellenőrizheti a Fiókja állapotát, vagy módosíthatja annak "
+"paramétereit az Szerkesztés / Fiókok menüpont alatt."
 
 #: ../sflphone-client-gnome/src/config/assistant.c:92
 msgid "Alias"
-msgstr ""
+msgstr "Alias"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:96
 msgid "Server"
-msgstr ""
+msgstr "Szerver"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:100
 msgid "Username"
-msgstr ""
+msgstr "Felhasználónév"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:104
 msgid "Security: "
-msgstr ""
+msgstr "Biztonság "
 
 #: ../sflphone-client-gnome/src/config/assistant.c:107
 msgid "SRTP/ZRTP draft-zimmermann"
@@ -843,286 +859,280 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/config/assistant.c:109
 msgid "None"
-msgstr ""
+msgstr "Egyik sem"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:256
 msgid "SFLphone account creation wizard"
-msgstr ""
+msgstr "SFLphone - Fiók létrehozása varázsló"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:283
 msgid "Welcome to the Account creation wizard of SFLphone!"
-msgstr ""
+msgstr "Üdvözöljük a  Fiók létrehozása varázslóban"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:284
 msgid "This installation wizard will help you configure an account."
-msgstr ""
+msgstr "Ez a varázsló segít a Fiók beállításában"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:299
 msgid "VoIP Protocols"
-msgstr ""
+msgstr "VoIP Protokollok"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:299
 msgid "Select an account type"
-msgstr ""
+msgstr "Válasszon Fiók típust"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:301
 msgid "SIP (Session Initiation Protocol)"
-msgstr ""
+msgstr "SIP (Session Initiation Protocol)"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:303
 msgid "IAX2 (InterAsterix Exchange)"
-msgstr ""
+msgstr "IAX2 (InterAsterix Exchange)"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:318
 msgid "Account"
-msgstr ""
+msgstr "Fiók"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:318
 msgid "Please select one of the following options"
-msgstr ""
+msgstr "Kérem, válasszon egyet az alábbi lehetősegek közül"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:320
 msgid "Create a free SIP/IAX2 account on sflphone.org"
-msgstr ""
+msgstr "Ingyenes Fiók (SIP/IAX2) létrehozása az sflphone.org-nál"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:322
 msgid "Register an existing SIP or IAX2 account"
-msgstr ""
+msgstr "Meglévő SIP vagy IAX2 Fiók beállítása"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:336
 msgid "SIP account settings"
-msgstr ""
+msgstr "SIP Fiók beállítások"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:336
 #: ../sflphone-client-gnome/src/config/assistant.c:450
 msgid "Please fill the following information"
-msgstr ""
+msgstr "Kérem, adja meg a következő adatokat"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:406
 #: ../sflphone-client-gnome/src/config/assistant.c:436
 msgid "Secure communications with _ZRTP"
-msgstr ""
+msgstr "Biztonságos kommunikáció _ZRTP-val"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:420
 msgid "Optional email address"
-msgstr ""
+msgstr "Opcionális e-mail cím"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:420
 msgid "This email address will be used to send your voicemail messages."
-msgstr ""
+msgstr "Erre az E-mail címre érkeznek majd a hangposta üzenetei."
 
 #: ../sflphone-client-gnome/src/config/assistant.c:428
 msgid "_Email address"
-msgstr ""
+msgstr "_E-mail cím"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:450
 msgid "IAX2 account settings"
-msgstr ""
+msgstr "IAX2 Fiók beállításai"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:528
 msgid "Network Address Translation (NAT)"
-msgstr ""
+msgstr "Hálózati Címfordítás (NAT)"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:528
 msgid "You should probably enable this if you are behind a firewall."
-msgstr ""
+msgstr "Amennyiben tűzfal mögött van, valószílűeg engedélyeznie kell."
 
 #: ../sflphone-client-gnome/src/config/assistant.c:537
 msgid "E_nable STUN"
-msgstr ""
+msgstr "STUN engedélyezése"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:544
 msgid "_STUN server"
-msgstr ""
+msgstr "_STUN szerver"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:559
 msgid "Account Registration"
-msgstr ""
+msgstr "Fiók Regisztráció"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:559
 msgid "Congratulations!"
-msgstr ""
+msgstr "Gratulálunk!"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:687
+#: ../sflphone-client-gnome/src/config/audioconf.c:695
 msgid "Frequency"
-msgstr ""
+msgstr "Gyakoriság"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:692
+#: ../sflphone-client-gnome/src/config/audioconf.c:700
 msgid "Bitrate"
-msgstr ""
+msgstr "Bitráta"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:697
+#: ../sflphone-client-gnome/src/config/audioconf.c:705
 msgid "Bandwidth"
-msgstr ""
+msgstr "Sávszélesség"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:794
+#: ../sflphone-client-gnome/src/config/audioconf.c:805
 msgid "ALSA plugin"
-msgstr ""
+msgstr "ALSA beépülő"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:816
+#: ../sflphone-client-gnome/src/config/audioconf.c:827
 msgid "Output"
-msgstr ""
+msgstr "Kimenet"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:838
+#: ../sflphone-client-gnome/src/config/audioconf.c:849
 msgid "Input"
-msgstr ""
+msgstr "Bemenet"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:852
+#: ../sflphone-client-gnome/src/config/audioconf.c:870
 msgid "Ringtone"
-msgstr ""
+msgstr "Csengőhang"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:911
+#: ../sflphone-client-gnome/src/config/audioconf.c:922
 msgid "Sound Manager"
-msgstr ""
+msgstr "Hangkezelő"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:921
+#: ../sflphone-client-gnome/src/config/audioconf.c:932
 msgid "_Pulseaudio"
-msgstr ""
+msgstr "_Pulseaudio"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:925
+#: ../sflphone-client-gnome/src/config/audioconf.c:936
 msgid "_ALSA"
-msgstr ""
+msgstr "_ALSA"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:931
+#: ../sflphone-client-gnome/src/config/audioconf.c:942
 msgid "ALSA settings"
-msgstr ""
+msgstr "ALSA beállítások"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:951
+#: ../sflphone-client-gnome/src/config/audioconf.c:962
 msgid "Recordings"
-msgstr ""
-
-#: ../sflphone-client-gnome/src/config/audioconf.c:955
-msgid "Destination folder"
-msgstr ""
-
-#: ../sflphone-client-gnome/src/config/audioconf.c:959
-msgid "Select a folder"
-msgstr ""
+msgstr "Felvételek"
 
 #: ../sflphone-client-gnome/src/config/audioconf.c:966
-msgid "Voice enhancement settings"
-msgstr ""
+msgid "Destination folder"
+msgstr "Célmappa"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:969
+#: ../sflphone-client-gnome/src/config/audioconf.c:970
+msgid "Select a folder"
+msgstr "Válasszon egy mappát"
+
+#: ../sflphone-client-gnome/src/config/audioconf.c:977
+msgid "Voice enhancement settings"
+msgstr "Hangerősítési beállítások"
+
+#: ../sflphone-client-gnome/src/config/audioconf.c:980
 msgid "_Noise Reduction"
-msgstr ""
+msgstr "Zajszűrő"
 
 #: ../sflphone-client-gnome/src/config/hooks-config.c:149
 msgid "URL Argument"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/config/hooks-config.c:154
-msgid "Custom commands on incoming calls with URL"
-msgstr ""
-
 #: ../sflphone-client-gnome/src/config/hooks-config.c:157
-#, c-format
-msgid "%s will be replaced with the passed URL."
-msgstr ""
-
-#: ../sflphone-client-gnome/src/config/hooks-config.c:160
 msgid "Trigger on specific _SIP header"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/config/hooks-config.c:169
+#: ../sflphone-client-gnome/src/config/hooks-config.c:166
 msgid "Trigger on _IAX2 URL"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/config/hooks-config.c:174
+#: ../sflphone-client-gnome/src/config/hooks-config.c:171
 msgid "Command to _run"
-msgstr ""
+msgstr "Parancs futtatása"
 
-#: ../sflphone-client-gnome/src/config/hooks-config.c:184
+#: ../sflphone-client-gnome/src/config/hooks-config.c:181
 msgid "Phone number rewriting"
-msgstr ""
+msgstr "Telefonszám árírása"
 
-#: ../sflphone-client-gnome/src/config/hooks-config.c:188
+#: ../sflphone-client-gnome/src/config/hooks-config.c:185
 msgid "_Prefix dialed numbers with"
-msgstr ""
+msgstr "Tárcsázott számok előtti _Prefix"
 
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:182
 msgid "Desktop Notifications"
-msgstr ""
+msgstr "Asztali értesítések"
 
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:187
 msgid "_Enable notifications"
-msgstr ""
+msgstr "_Értesítések engedélyezése"
 
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:194
 msgid "System Tray Icon"
-msgstr ""
+msgstr "Rendszertálca-ikon"
 
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:202
 msgid "Show SFLphone in the system tray"
-msgstr ""
+msgstr "SFLphone megjelenítése Rendszertálcán"
 
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:209
 msgid "_Popup main window on incoming call"
-msgstr ""
+msgstr "_Főablak megjelenítése bejövő hívás esetén"
 
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:215
 msgid "Ne_ver popup main window"
-msgstr ""
+msgstr "Soha ne mutasd a Főablakot"
 
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:228
 msgid "Hide SFLphone window on _startup"
-msgstr ""
+msgstr "Az SFLphone elrejtése indításkor"
 
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:242
 msgid "Calls History"
-msgstr ""
+msgstr "Híváselőzmények"
 
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:246
 msgid "_Keep my history for at least"
-msgstr ""
+msgstr "Híváéselőzmények megőrzése eddig"
 
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:261
 msgid "days"
-msgstr ""
+msgstr "nap"
 
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:266
 msgid "Instant Messaging"
 msgstr ""
 
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:270
+#, fuzzy
 msgid "Enable instant messaging"
-msgstr ""
+msgstr "_Csengőhangok engedélyezése"
 
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:354
 msgid "Preferences"
-msgstr ""
+msgstr "Beállítások"
 
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:399
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:440
 msgid "Audio"
-msgstr ""
+msgstr "Hang"
 
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:405
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:441
 msgid "Address Book"
-msgstr ""
+msgstr "Címjegyzék"
 
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:411
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:442
 msgid "Hooks"
-msgstr ""
+msgstr "Speciális Funkciók (Hooks)"
 
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:416
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:443
 msgid "Shortcuts"
-msgstr ""
+msgstr "Gyorsbillentyűk"
 
 #: ../sflphone-client-gnome/src/config/shortcuts-config.c:132
 msgid "Be careful: these shortcuts might override system-wide shortcuts."
 msgstr ""
+"Figyelem : az egyes  gyorsbillentyűk felülbírálhatják a Rendszer "
+"alapértelmezett gyorbillentyű beállításait."
 
 #: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:49
 msgid "Advanced options for TLS"
-msgstr ""
+msgstr "Haladó opciók a TLS-hez"
 
 #: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:67
 msgid "TLS transport"
-msgstr ""
+msgstr "TLS átvitel"
 
 #: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:71
 msgid ""
@@ -1191,7 +1201,7 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/config/zrtpadvanceddialog.c:59
 msgid "ZRTP Options"
-msgstr ""
+msgstr "ZRTP opcíók"
 
 #: ../sflphone-client-gnome/src/config/zrtpadvanceddialog.c:79
 msgid "Send Hello Hash in S_DP"
@@ -1203,7 +1213,7 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/config/zrtpadvanceddialog.c:91
 msgid "_Warn if ZRTP not supported"
-msgstr ""
+msgstr "_Figyelmeztessen, ha a ZRTP nem támogatott"
 
 #: ../sflphone-client-gnome/src/config/zrtpadvanceddialog.c:97
 msgid "Display SAS once for hold events"
@@ -1219,23 +1229,34 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/contacts/searchbar.c:174
 msgid "Search all"
-msgstr ""
+msgstr "Keresés az összesben"
 
 #: ../sflphone-client-gnome/src/contacts/searchbar.c:175
 #: ../sflphone-client-gnome/src/contacts/searchbar.c:188
 #: ../sflphone-client-gnome/src/contacts/searchbar.c:200
 #: ../sflphone-client-gnome/src/contacts/searchbar.c:212
 msgid "Click here to change the search type"
-msgstr ""
+msgstr "Kattintson ide a keresési típus megváltoztatásához"
 
 #: ../sflphone-client-gnome/src/contacts/searchbar.c:187
 msgid "Search by missed call"
-msgstr ""
+msgstr "Kersés a Nem fogadott hívások között"
 
 #: ../sflphone-client-gnome/src/contacts/searchbar.c:199
 msgid "Search by incoming call"
-msgstr ""
+msgstr "Keresés a Bejövő hívások között"
 
 #: ../sflphone-client-gnome/src/contacts/searchbar.c:211
 msgid "Search by outgoing call"
 msgstr ""
+
+#~ msgid "_Echo Suppression"
+#~ msgstr "Visszhanggátló"
+
+#~ msgctxt "NAME OF TRANSLATORS"
+#~ msgid "Your names"
+#~ msgstr " ,Launchpad Contributions:,Balazs Radak"
+
+#~ msgctxt "EMAIL OF TRANSLATORS"
+#~ msgid "Your emails"
+#~ msgstr ",,"

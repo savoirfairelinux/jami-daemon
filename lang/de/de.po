@@ -7,17 +7,17 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-01-13 16:17-0500\n"
-"PO-Revision-Date: 2010-09-14 05:38+0000\n"
-"Last-Translator: cmdrhenner <cmdrhenner@gmail.com>\n"
+"POT-Creation-Date: 2011-04-01 09:11-0400\n"
+"PO-Revision-Date: 2011-03-20 19:51+0000\n"
+"Last-Translator: Felix Braun <Unknown>\n"
 "Language-Team: SavoirFaire Linux Inc <sflphoneteam@savoirfairelinux.com>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2011-01-13 11:22+0000\n"
-"X-Generator: Launchpad (build 12177)\n"
+"X-Launchpad-Export-Date: 2011-04-01 12:41+0000\n"
+"X-Generator: Launchpad (build 12710)\n"
 
 #: ../sflphone-client-gnome/src/accountlist.c:182
 msgid "Registered"
@@ -73,8 +73,8 @@ msgstr "Mit Konto"
 msgid "No registered accounts"
 msgstr "Kein registriertes Konto"
 
-#: ../sflphone-client-gnome/src/actions.c:626
-#: ../sflphone-client-gnome/src/actions.c:961
+#: ../sflphone-client-gnome/src/actions.c:628
+#: ../sflphone-client-gnome/src/actions.c:964
 msgid "Direct SIP call"
 msgstr "Direkter SIP-Anruf"
 
@@ -372,7 +372,7 @@ msgstr "Den Anruf in die Warteschleife setzen"
 
 #: ../sflphone-client-gnome/src/uimanager.c:927
 msgid "O_ff hold"
-msgstr ""
+msgstr "zurück zum Wartenden"
 
 #: ../sflphone-client-gnome/src/uimanager.c:928
 msgid "Place the call off hold"
@@ -551,229 +551,233 @@ msgstr "Telefonnummer bearbeiten"
 msgid "Edit the phone number before making a call"
 msgstr "Telefonnummer vor dem Anruf bearbeiten"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:320
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:321
 msgid "Account Parameters"
 msgstr "Konto-Einstellungen"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:334
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:335
 #: ../sflphone-client-gnome/src/config/assistant.c:344
 #: ../sflphone-client-gnome/src/config/assistant.c:458
 msgid "_Alias"
 msgstr "_Alias"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:344
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:345
 msgid "_Protocol"
 msgstr "_Protokoll"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:360
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:361
 msgid "Unknown"
 msgstr "Unbekannt"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:372
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:373
 #: ../sflphone-client-gnome/src/config/assistant.c:352
 #: ../sflphone-client-gnome/src/config/assistant.c:466
 msgid "_Host name"
 msgstr "_Hostname"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:381
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:382
 #: ../sflphone-client-gnome/src/config/assistant.c:360
 #: ../sflphone-client-gnome/src/config/assistant.c:474
 msgid "_User name"
 msgstr "_Benutzername"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:402
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:403
 #: ../sflphone-client-gnome/src/config/assistant.c:376
 #: ../sflphone-client-gnome/src/config/assistant.c:489
 msgid "_Password"
 msgstr "_Passwort"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:424
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:425
 #: ../sflphone-client-gnome/src/config/assistant.c:393
 #: ../sflphone-client-gnome/src/config/assistant.c:504
 msgid "Show password"
 msgstr "Passwort anzeigen"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:429
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:430
+msgid "_Proxy"
+msgstr ""
+
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:439
 #: ../sflphone-client-gnome/src/config/assistant.c:398
 #: ../sflphone-client-gnome/src/config/assistant.c:509
 msgid "_Voicemail number"
 msgstr "Mailbox-Rufnummer"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:438
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:448
 msgid "_User-agent"
 msgstr "_User-Agent"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:500
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:510
 msgid "Authentication"
 msgstr "Authentifizierung"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:501
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:511
 msgid "Secret"
 msgstr "Geheim"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:744
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:754
 msgid "Credential"
 msgstr "Zugangsdaten"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:778
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:788
 msgid "Authentication name"
 msgstr "Benutzername"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:789
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:799
 msgid "Password"
 msgstr "Passwort"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:853
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1364
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:863
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1374
 msgid "Security"
 msgstr "Sicherheit"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:864
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:874
 msgid "Use TLS transport (sips)"
 msgstr "TLS verwenden (SIPS)"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:870
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:880
 msgid "SRTP key exchange"
 msgstr "SRTP-Schlüsselaustausch"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:876
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:886
 msgid "Disabled"
 msgstr "Deaktiviert"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:940
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:950
 msgid "Registration"
 msgstr "Registrierung"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:944
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:954
 msgid "Registration expire"
 msgstr "Registrierung abgelaufen"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:953
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:963
 msgid "_Comply with RFC 3263"
 msgstr "RFC3263-konform"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:974
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:984
 msgid "Network Interface"
 msgstr "Netzwerk-Schnittstelle"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:987
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:997
 msgid "Local address"
 msgstr "Adresse (lokal)"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1054
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1064
 msgid "Local port"
 msgstr "Port (lokal)"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1096
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1129
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1106
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1139
 msgid "Published address"
 msgstr "Veröffentlichte Adresse"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1100
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1110
 msgid "Using STUN"
 msgstr "STUN verwenden"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1107
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1117
 msgid "STUN server URL"
 msgstr "STUN Server URL"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1115
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1125
 msgid "Same as local parameters"
 msgstr "Entsprechend den lokalen Einstellungen"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1118
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1128
 msgid "Set published address and port:"
 msgstr "Veröffentliche Adresse und Port festlegen:"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1138
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1148
 msgid "Published port"
 msgstr "Veröffentlichter Port"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1218
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1345
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1228
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1355
 msgid "Codecs"
 msgstr "Codecs"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1230
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1240
 msgid "DTMF"
 msgstr "DTMF"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1241
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1251
 msgid "RTP"
 msgstr "RTP"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1245
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1255
 msgid "SIP"
 msgstr "SIP"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1252
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1262
 msgid "Ringtones"
 msgstr "Klingeltöne"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1255
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1265
 msgid "Choose a ringtone"
 msgstr "Klingelton auswählen"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1260
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1270
 msgid "_Enable ringtones"
 msgstr "Klingeltöne _einschalten"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1272
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1282
 msgid "Audio Files"
 msgstr "Audio-Dateien"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1314
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1324
 msgid "Account settings"
 msgstr "Kontoeinstellungen"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1337
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1347
 msgid "Basic"
 msgstr "Allgemein"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1359
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1369
 msgid "Advanced"
 msgstr "Erweitert"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1371
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1381
 msgid "Network"
 msgstr "Netzwerk"
 
-#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1581
+#: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1591
 msgid ""
 "This profile is used when you want to reach a remote peer simply by typing a "
 "sip URI such as <b>sip:remotepeer</b>. The settings you define here will "
 "also be used if no account can be matched to an incoming or outgoing call."
 msgstr ""
 
-#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:178
+#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:195
 #, c-format
 msgid "Server returned \"%s\" (%d)"
 msgstr "Server antwortete \"%s\" (%d)"
 
-#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:471
+#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:488
 msgid "Protocol"
 msgstr "Protokoll"
 
-#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:479
+#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:496
 msgid "Status"
 msgstr "Status"
 
-#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:561
+#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:578
 msgid "Accounts"
 msgstr "Konten"
 
-#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:571
+#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:588
 msgid "Configured Accounts"
 msgstr "Konfigurierten Konten"
 
-#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:589
+#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:606
 #, c-format
 msgid "There is %d active account"
 msgid_plural "There are %d active accounts"
 msgstr[0] "%d aktives Konto"
 msgstr[1] "%d aktive Konten"
 
-#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:595
+#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:612
 msgid "You have no active account"
 msgstr "Sie haben kein aktives Konto"
 
@@ -825,7 +829,7 @@ msgid "Select which Evolution address books to use"
 msgstr "verwendete Evolution-Adressbücher auswählen"
 
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:424
-#: ../sflphone-client-gnome/src/config/audioconf.c:682
+#: ../sflphone-client-gnome/src/config/audioconf.c:690
 msgid "Name"
 msgstr "Name"
 
@@ -966,67 +970,67 @@ msgstr "Konto-Registrierung"
 msgid "Congratulations!"
 msgstr "Gratulation!"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:687
+#: ../sflphone-client-gnome/src/config/audioconf.c:695
 msgid "Frequency"
 msgstr "Frequenz"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:692
+#: ../sflphone-client-gnome/src/config/audioconf.c:700
 msgid "Bitrate"
 msgstr "Bitrate"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:697
+#: ../sflphone-client-gnome/src/config/audioconf.c:705
 msgid "Bandwidth"
 msgstr "Bandbreite"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:794
+#: ../sflphone-client-gnome/src/config/audioconf.c:805
 msgid "ALSA plugin"
 msgstr "ALSA-Plugin"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:816
+#: ../sflphone-client-gnome/src/config/audioconf.c:827
 msgid "Output"
 msgstr "Ausgabe"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:838
+#: ../sflphone-client-gnome/src/config/audioconf.c:849
 msgid "Input"
 msgstr "Eingabe"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:852
+#: ../sflphone-client-gnome/src/config/audioconf.c:870
 msgid "Ringtone"
 msgstr "Klingelton"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:911
+#: ../sflphone-client-gnome/src/config/audioconf.c:922
 msgid "Sound Manager"
 msgstr "Sound Manager"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:921
+#: ../sflphone-client-gnome/src/config/audioconf.c:932
 msgid "_Pulseaudio"
 msgstr "PulseAudio"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:925
+#: ../sflphone-client-gnome/src/config/audioconf.c:936
 msgid "_ALSA"
 msgstr "ALSA"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:931
+#: ../sflphone-client-gnome/src/config/audioconf.c:942
 msgid "ALSA settings"
 msgstr "ALSA-Konfiguration"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:951
+#: ../sflphone-client-gnome/src/config/audioconf.c:962
 msgid "Recordings"
 msgstr "Aufnahmen"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:955
+#: ../sflphone-client-gnome/src/config/audioconf.c:966
 msgid "Destination folder"
 msgstr "Zielverzeichnis"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:959
+#: ../sflphone-client-gnome/src/config/audioconf.c:970
 msgid "Select a folder"
 msgstr "Verzeichnis auswählen"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:966
+#: ../sflphone-client-gnome/src/config/audioconf.c:977
 msgid "Voice enhancement settings"
-msgstr ""
+msgstr "Einstellungen zur Sprachverbesserung"
 
-#: ../sflphone-client-gnome/src/config/audioconf.c:969
+#: ../sflphone-client-gnome/src/config/audioconf.c:980
 msgid "_Noise Reduction"
 msgstr "Rauschunterdrückung"
 
@@ -1034,32 +1038,23 @@ msgstr "Rauschunterdrückung"
 msgid "URL Argument"
 msgstr "URL-Behandlung"
 
-#: ../sflphone-client-gnome/src/config/hooks-config.c:154
-msgid "Custom commands on incoming calls with URL"
-msgstr "Eigene Befehle bei eingehenden Anrufen mit URL"
-
 #: ../sflphone-client-gnome/src/config/hooks-config.c:157
-#, c-format
-msgid "%s will be replaced with the passed URL."
-msgstr "%s wird mit übergebener URL ersetzt."
-
-#: ../sflphone-client-gnome/src/config/hooks-config.c:160
 msgid "Trigger on specific _SIP header"
 msgstr "Auslösung bei spezifischem _SIP-Header"
 
-#: ../sflphone-client-gnome/src/config/hooks-config.c:169
+#: ../sflphone-client-gnome/src/config/hooks-config.c:166
 msgid "Trigger on _IAX2 URL"
 msgstr "Auslösung bei _IAX2-URL"
 
-#: ../sflphone-client-gnome/src/config/hooks-config.c:174
+#: ../sflphone-client-gnome/src/config/hooks-config.c:171
 msgid "Command to _run"
 msgstr "_Auszuführender Befehl"
 
-#: ../sflphone-client-gnome/src/config/hooks-config.c:184
+#: ../sflphone-client-gnome/src/config/hooks-config.c:181
 msgid "Phone number rewriting"
 msgstr "Anpassung der Telefonnummer"
 
-#: ../sflphone-client-gnome/src/config/hooks-config.c:188
+#: ../sflphone-client-gnome/src/config/hooks-config.c:185
 msgid "_Prefix dialed numbers with"
 msgstr "_Präfix vor Rufnummer einfügen"
 
@@ -1169,7 +1164,7 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:137
 msgid "Choose a CA list file (optional)"
-msgstr ""
+msgstr "Wählen Sie eine Zertifikats-Datei (optional)"
 
 #: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:156
 msgid "Public endpoint certificate file"
@@ -1181,11 +1176,11 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:182
 msgid "Choose a private key file (optional)"
-msgstr ""
+msgstr "Wählen Sie die Datei mit Ihrem privaten Schlüssel"
 
 #: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:202
 msgid "Password for the private key"
-msgstr ""
+msgstr "Passwort für den privaten Schlüssel"
 
 #: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:225
 msgid "TLS protocol method"
@@ -1201,7 +1196,7 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:278
 msgid "Negotiation timeout (sec:msec)"
-msgstr ""
+msgstr "Zeitspanne zum Aushandeln (sec:msec)"
 
 #: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:295
 msgid "Verify incoming certificates, as a server"
@@ -1268,6 +1263,12 @@ msgstr "Suche nach ausgehendem Anruf"
 
 #~ msgid "_Echo Suppression"
 #~ msgstr "Echounterdrückung"
+
+#~ msgid "Custom commands on incoming calls with URL"
+#~ msgstr "Eigene Befehle bei eingehenden Anrufen mit URL"
+
+#~ msgid "%s will be replaced with the passed URL."
+#~ msgstr "%s wird mit übergebener URL ersetzt."
 
 #~ msgctxt "account state"
 #~ msgid "Registered"
@@ -1684,9 +1685,9 @@ msgstr "Suche nach ausgehendem Anruf"
 #~ "Launchpad Contributions:,Maxime Chambreuil,Sven Werlen,Sven Werlen, ,"
 #~ "Launchpad Contributions:,Funatiker,Jakob Kramer,Jarosław Ogrodnik,Marcel "
 #~ "Schmücker,Maxime Chambreuil,Michael Keppler,Sven Werlen,Sven Werlen, ,"
-#~ "Launchpad Contributions:,Dorgendubal,Emmanuel Milou,Funatiker,Jakob "
-#~ "Kramer,Jarosław Ogrodnik,Marcel Schmücker,Maxime Chambreuil (http://www."
-#~ "savoirfairelinux.com),Michael Keppler,Sven Werlen,webmeischda"
+#~ "Launchpad Contributions:,Dorgendubal,Emmanuel Milou,Felix Braun,Funatiker,"
+#~ "Jakob Kramer,Jarosław Ogrodnik,Marcel Schmücker,Maxime Chambreuil (http://"
+#~ "www.savoirfairelinux.com),Michael Keppler,Sven Werlen,jango,webmeischda"
 
 #~ msgctxt "EMAIL OF TRANSLATORS"
 #~ msgid "Your emails"
@@ -1694,6 +1695,6 @@ msgstr "Suche nach ausgehendem Anruf"
 #~ "Ihre E-Mail-Adressen,,,maxime.chambreuil@gmail.com,,,,maxime."
 #~ "chambreuil@gmail.com,,sven.werlen@gmail.com,,,,,nobodythere@gmail.com,"
 #~ "versus666@hotmail.de,maxime.chambreuil@gmail.com,Bananeweizen@gmx.de,,"
-#~ "sven.werlen@gmail.com,,,,emmanuel.milou@savoirfairelinux.com,,,"
+#~ "sven.werlen@gmail.com,,,,emmanuel.milou@savoirfairelinux.com,,,,"
 #~ "nobodythere@gmail.com,,maxime.chambreuil@savoirfairelinux.com,"
-#~ "Bananeweizen@gmx.de,,"
+#~ "Bananeweizen@gmx.de,,,"
