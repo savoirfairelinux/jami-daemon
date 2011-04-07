@@ -45,6 +45,7 @@ void HistoryTest::setUp()
     history = new HistoryManager();
 }
 
+/*
 void HistoryTest::test_create_history_path()
 {
     _debug ("-------------------- HistoryTest::test_create_history_path --------------------\n");
@@ -61,7 +62,7 @@ void HistoryTest::test_create_history_path()
     CPPUNIT_ASSERT (result == 0);
     CPPUNIT_ASSERT (!history->is_loaded ());
     CPPUNIT_ASSERT (history->_history_path == path);
-}
+}*/
 
 void HistoryTest::test_load_history_from_file()
 {
