@@ -70,7 +70,7 @@ void HistoryTest::test_load_history_from_file()
     bool res;
     Conf::ConfigTree history_list;
 
-    history->create_history_path();
+    history->create_history_path(HISTORY_SAMPLE);
     res = history->load_history_from_file (&history_list);
 
     CPPUNIT_ASSERT (history->is_loaded ());
