@@ -53,7 +53,7 @@ class HistoryTest : public CppUnit::TestCase {
      * Use cppunit library macros to add unit test the factory
      */
     CPPUNIT_TEST_SUITE (HistoryTest);
-        // CPPUNIT_TEST (test_create_history_path);
+        CPPUNIT_TEST (test_create_history_path);
         CPPUNIT_TEST (test_save_history_items_map);
         CPPUNIT_TEST (test_load_history_from_file);
         CPPUNIT_TEST (test_load_history_items_map);
