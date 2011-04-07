@@ -26,7 +26,7 @@ popd
 # Run the unit tests for the daemon
 pushd sflphone-common/test
 # Remove the previous XML test file
-rm -rf $(XML_RESULTS)
+rm -rf $XML_RESULTS
 make check
 # if at least one test failed, exit
 ./test --xml || exit 1
