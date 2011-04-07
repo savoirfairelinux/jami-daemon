@@ -19,7 +19,7 @@ make && make dep
 popd
 ./configure --prefix=/usr
 make clean
-make -j 1
+make -j
 make doc
 popd
 
