@@ -496,18 +496,11 @@ bool PulseLayer::createStreams (pa_context* c)
     std::string recordDevice =  _manager->audioPreference.getDeviceRecord();
     std::string ringtoneDevice =  _manager->audioPreference.getDeviceRingtone();
 
-    _debug ("Audio: Device stored in config for playback: %s", playbackDevice.c_str());
-    _debug ("Audio: Device stored in config for record: %s", recordDevice.c_str());
-    _debug ("Audio: Device stored in config for ringtone: %s", ringtoneDevice.c_str());
+    _debug ("Audio: Device for playback: %s", playbackDevice.c_str());
+    _debug ("Audio: Device for record: %s", recordDevice.c_str());
+    _debug ("Audio: Device for ringtone: %s", ringtoneDevice.c_str());
 
-    PulseLayerType * playbackParam = new PulseLayerType();
-    playbackParam->context = c;
-    playbackParam->type = PLAYBACK_STREAM;
-    playbackParam->description = PLAYBACK_STREAM_NAME;
-    playbackParam->volume = _manager->getSpkrVolume();
-    playbackParam->mainloop = m;
-
-    playback = new AudioStream (playbackParam, _audioSampleRate);
+    playback = new AudioStream (c, m, PLAYBACK_STREAM_NAME, PLAYBACK_STREAM, _audioSampleRate);
 
     if (inSinkList (playbackDevice)) {
         playback->connectStream (&playbackDevice);
@@ -521,16 +514,8 @@ bool PulseLayer::createStreams (pa_context* c)
     // pa_stream_set_suspended_callback(playback->pulseStream(), stream_suspended_callback, this);
     pa_stream_set_moved_callback (playback->pulseStream(), stream_moved_callback, this);
     pa_stream_set_latency_update_callback (playback->pulseStream(), latency_update_callback, this);
-    delete playbackParam;
 
-    PulseLayerType * recordParam = new PulseLayerType();
-    recordParam->context = c;
-    recordParam->type = CAPTURE_STREAM;
-    recordParam->description = CAPTURE_STREAM_NAME;
-    recordParam->volume = _manager->getMicVolume();
-    recordParam->mainloop = m;
-
-    record = new AudioStream (recordParam, _audioSampleRate);
+    record = new AudioStream (c, m, CAPTURE_STREAM_NAME, CAPTURE_STREAM, _audioSampleRate);
 
     if (inSourceList (recordDevice)) {
         record->connectStream (&recordDevice);
@@ -542,16 +527,8 @@ bool PulseLayer::createStreams (pa_context* c)
     // pa_stream_set_suspended_callback(record->pulseStream(), stream_suspended_callback, this);
     pa_stream_set_moved_callback (record->pulseStream(), stream_moved_callback, this);
     pa_stream_set_latency_update_callback (record->pulseStream(), latency_update_callback, this);
-    delete recordParam;
 
-    PulseLayerType * ringtoneParam = new PulseLayerType();
-    ringtoneParam->context = c;
-    ringtoneParam->type = RINGTONE_STREAM;
-    ringtoneParam->description = RINGTONE_STREAM_NAME;
-    ringtoneParam->volume = _manager->getSpkrVolume();
-    ringtoneParam->mainloop = m;
-
-    ringtone = new AudioStream (ringtoneParam, _audioSampleRate);
+    ringtone = new AudioStream (c, m, RINGTONE_STREAM_NAME, RINGTONE_STREAM, _audioSampleRate*2);
 
     if (inSourceList (ringtoneDevice)) {
         ringtone->connectStream (&ringtoneDevice);
@@ -561,7 +538,6 @@ bool PulseLayer::createStreams (pa_context* c)
 
     pa_stream_set_write_callback (ringtone->pulseStream(), ringtone_callback, this);
     pa_stream_set_moved_callback (ringtone->pulseStream(), stream_moved_callback, this);
-    delete ringtoneParam;
 
     pa_threaded_mainloop_signal (m , 0);
 
@@ -716,7 +692,7 @@ void PulseLayer::processCaptureData (void)
 void PulseLayer::processRingtoneData (void)
 {
     // handle ringtone playback
-    if (ringtone && (ringtone)->pulseStream() && (pa_stream_get_state (ringtone->pulseStream()) == PA_STREAM_READY)) {
+    if (ringtone && ringtone->pulseStream() && (pa_stream_get_state (ringtone->pulseStream()) == PA_STREAM_READY)) {
 
         // If the playback buffer is full, we don't overflow it; wait for it to have free space
         if (pa_stream_writable_size (ringtone->pulseStream()) == 0)

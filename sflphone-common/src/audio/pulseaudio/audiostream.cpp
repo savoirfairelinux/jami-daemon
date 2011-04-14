@@ -33,17 +33,15 @@
 
 static pa_channel_map channel_map;
 
-
-
-AudioStream::AudioStream (PulseLayerType * driver, int smplrate)
+AudioStream::AudioStream (pa_context *c, pa_threaded_mainloop *m, std::string desc, int type, int smplrate)
     : _audiostream (NULL),
-      _context (driver->context),
-      _streamType (driver->type),
-      _streamDescription (driver->description),
+      _context (c),
+      _streamType (type),
+      _streamDescription (desc),
       _volume(),
       _flag (PA_STREAM_AUTO_TIMING_UPDATE),
       _sample_spec(),
-      _mainloop (driver->mainloop)
+      _mainloop (m)
 {
     _sample_spec.format = PA_SAMPLE_S16LE; // PA_SAMPLE_FLOAT32LE;
     _sample_spec.rate = smplrate;
