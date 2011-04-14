@@ -19,18 +19,18 @@ make && make dep
 popd
 ./configure --prefix=/usr
 make clean
-make -j 1
+make -j
 make doc
 popd
 
 # Run the unit tests for the daemon
-# pushd sflphone-common/test
+pushd sflphone-common/test
 # Remove the previous XML test file
-# rm -rf $(XML_RESULTS)
-# make check
+rm -rf $XML_RESULTS
+make check
 # if at least one test failed, exit
-# ./test --xml || exit 1
-# popd
+./test --xml || exit 1
+popd
 
 # Compile the client
 pushd sflphone-client-gnome
