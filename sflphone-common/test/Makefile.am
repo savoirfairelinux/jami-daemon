@@ -30,9 +30,9 @@ test_SOURCES = \
 	instantmessagingtest.h \
 	instantmessagingtest.cpp \
 	siptest.h \
-	siptest.cpp \
-        sdptest.h \
-        sdptest.cpp
+	siptest.cpp
+ #       sdptest.h \
+ #       sdptest.cpp
 
 LLIBS=$(CPPUNIT_LIBS) \
 	../src/sflphoned-logger.o \
