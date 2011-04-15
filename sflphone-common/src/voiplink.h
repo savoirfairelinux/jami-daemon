@@ -134,7 +134,7 @@ class VoIPLink
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool answer (const CallID& id) = 0;
+        virtual bool answer (const CallID& id) throw (VoipLinkException) = 0;
 
         /**
          * Hang up a call

@@ -120,7 +120,7 @@ class IAXVoIPLink : public VoIPLink
          * @return bool true on success
          *		  false otherwise
          */
-        virtual bool answer (const CallID& id);
+        virtual bool answer (const CallID& id) throw (VoipLinkException);
 
         /**
          * Hangup a call

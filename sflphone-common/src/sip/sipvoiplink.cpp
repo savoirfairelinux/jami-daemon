@@ -636,7 +636,7 @@ void SIPVoIPLink::sendUnregister (AccountID id) throw(VoipLinkException)
     account->setRegister (false);
 }
 
-Call *SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) throw (VoipLinkException) // throw (SIPVoipLinkException)
+Call *SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) throw (VoipLinkException)
 {
     SIPAccount * account = NULL;
     pj_status_t status;
@@ -727,7 +727,7 @@ Call *SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) 
 }
 
 bool
-SIPVoIPLink::answer (const CallID& id)
+SIPVoIPLink::answer (const CallID& id) throw (VoipLinkException)
 {
     pj_status_t status = PJ_SUCCESS;
     pjsip_tx_data *tdata;
@@ -737,49 +737,41 @@ SIPVoIPLink::answer (const CallID& id)
 
     SIPCall *call = getSIPCall (id);
 
-//    AccountID account_id = Manager::instance().getAccountFromCall (id);
-//    SIPAccount *account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
-
-    if (call==0) {
-        _debug ("UserAgent: SIPCall %s doesn't exists while answering", id.c_str());
-        return false;
+    if (call==NULL) {
+        throw VoipLinkException("Call is NULL while answering");
     }
 
     inv_session = call->getInvSession();
 
-//    if (! (account->getServiceRoute().empty())) {
-//
-//        pjsip_route_hdr *route_set = createRouteSet(account);
-//        pjsip_dlg_set_route_set (inv_session->dlg, route_set);
-//    }
-
     if (status == PJ_SUCCESS) {
 
-        _debug ("SIPVoIPLink: UserAgent: SDP Negociation success! : call %s ", call->getCallId().c_str());
+        _debug ("UserAgent: SDP Negociation success! : call %s ", call->getCallId().c_str());
         // Create and send a 200(OK) response
-        status = pjsip_inv_answer (inv_session, PJSIP_SC_OK, NULL, NULL, &tdata);
-        PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
-        status = pjsip_inv_send_msg (inv_session, tdata);
-        PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
+        if((status = pjsip_inv_answer (inv_session, PJSIP_SC_OK, NULL, NULL, &tdata)) != PJ_SUCCESS) {
+        	throw VoipLinkException("Could not init invite request answer (200 OK)");
+        }
+        if((status = pjsip_inv_send_msg (inv_session, tdata)) != PJ_SUCCESS) {
+        	throw VoipLinkException("Could not send invite request answer (200 OK)");
+        }
 
         call->setConnectionState (Call::Connected);
         call->setState (Call::Active);
 
         return true;
     } else {
-        // Create and send a 488/Not acceptable here
-        // because the SDP negociation failed
-        status = pjsip_inv_answer (inv_session, PJSIP_SC_NOT_ACCEPTABLE_HERE, NULL, NULL,
-                                   &tdata);
-        PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
-        status = pjsip_inv_send_msg (inv_session, tdata);
-        PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
-
+        // Create and send a 488/Not acceptable because the SDP negociation failed
+        if((status = pjsip_inv_answer (inv_session, PJSIP_SC_NOT_ACCEPTABLE_HERE, NULL, NULL, &tdata)) != PJ_SUCCESS) {
+        	throw VoipLinkException("Could not init invite answer (488 not acceptable here)");
+        }
+        if((status = pjsip_inv_send_msg (inv_session, tdata)) != PJ_SUCCESS) {
+        	throw VoipLinkException("Could not init invite request answer (488 NOT ACCEPTABLE HERE)");
+        }
         // Terminate the call
-        _debug ("SIPVoIPLink: UserAgent: SDP Negociation failed, terminate call %s ", call->getCallId().c_str());
+        _debug ("UserAgent: SDP Negociation failed, terminate call %s ", call->getCallId().c_str());
 
-        if (call->getAudioRtp())
+        if (call->getAudioRtp()) {
             call->getAudioRtp()->stop ();
+        }
 
         removeCall (call->getCallId());
 

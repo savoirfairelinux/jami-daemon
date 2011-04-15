@@ -513,7 +513,7 @@ IAXVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) throw(
 
 
 bool
-IAXVoIPLink::answer (const CallID& id)
+IAXVoIPLink::answer (const CallID& id) throw (VoipLinkException)
 {
     IAXCall* call = getIAXCall (id);
     call->setCodecMap (Manager::instance().getCodecDescriptorMap());

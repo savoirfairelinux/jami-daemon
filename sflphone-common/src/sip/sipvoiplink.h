@@ -35,9 +35,9 @@
 #ifndef SIPVOIPLINK_H
 #define SIPVOIPLINK_H
 
-#include "voiplink.h"
-#include "hooks/urlhook.h"
-#include "../im/InstantMessaging.h"
+#include <map>
+#include <sstream>
+#include <exception>
 
 //////////////////////////////
 /* PJSIP imports */
@@ -48,9 +48,9 @@
 #include <pjnath/stun_config.h>
 ///////////////////////////////
 
-#include <map>
-#include <sstream>
-#include <exception>
+#include "voiplink.h"
+#include "hooks/urlhook.h"
+#include "../im/InstantMessaging.h"
 
 class EventThread;
 class SIPCall;
@@ -162,7 +162,7 @@ class SIPVoIPLink : public VoIPLink
          * @param id The call identifier
          * @return int True on success
          */
-        virtual bool answer (const CallID& id);
+        virtual bool answer (const CallID& id) throw (VoipLinkException);
 
         /**
          * Hang up the call

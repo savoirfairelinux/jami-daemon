@@ -363,11 +363,14 @@ bool ManagerImpl::answerCall (const CallID& call_id)
         }
 
     }
-
-    if (!getAccountLink (account_id)->answer (call_id)) {
-        // error when receiving...
-        removeCallAccount (call_id);
-        return false;
+    try {
+        if (!getAccountLink (account_id)->answer (call_id)) {
+            removeCallAccount (call_id);
+            return false;
+        }
+    }
+    catch(VoipLinkException &e) {
+    	_error("Manager: Error: %s", e.what());
     }
 
     // if it was waiting, it's waiting no more
