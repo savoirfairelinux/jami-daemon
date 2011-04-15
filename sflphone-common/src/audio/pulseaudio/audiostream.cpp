@@ -158,7 +158,7 @@ AudioStream::stream_state_callback (pa_stream* s, void* user_data)
             // pa_buffer_attr *buffattr = (pa_buffer_attr *)pa_xmalloc (sizeof(pa_buffer_attr));
             _debug ("Audio: maxlength %u", pa_stream_get_buffer_attr (s)->maxlength);
             _debug ("Audio: tlength %u", pa_stream_get_buffer_attr (s)->tlength);
-            _debug ("Audio: prebug %u", pa_stream_get_buffer_attr (s)->prebuf);
+            _debug ("Audio: prebuf %u", pa_stream_get_buffer_attr (s)->prebuf);
             _debug ("Audio: minreq %u", pa_stream_get_buffer_attr (s)->minreq);
             _debug ("Audio: fragsize %u", pa_stream_get_buffer_attr (s)->fragsize);
             _debug ("Audio: samplespec %s", pa_sample_spec_snprint (str, sizeof (str), pa_stream_get_sample_spec (s)));

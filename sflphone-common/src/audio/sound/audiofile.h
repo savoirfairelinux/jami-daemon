@@ -169,7 +169,7 @@ class WaveFile : public AudioFile
 
         int _nb_channels;
 
-        unsigned long _file_size;
+        unsigned long _fileLength;
 
         unsigned long _data_offset;
 

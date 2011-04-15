@@ -528,7 +528,7 @@ bool PulseLayer::createStreams (pa_context* c)
     pa_stream_set_moved_callback (record->pulseStream(), stream_moved_callback, this);
     pa_stream_set_latency_update_callback (record->pulseStream(), latency_update_callback, this);
 
-    ringtone = new AudioStream (c, m, RINGTONE_STREAM_NAME, RINGTONE_STREAM, _audioSampleRate*2);
+    ringtone = new AudioStream (c, m, RINGTONE_STREAM_NAME, RINGTONE_STREAM, _audioSampleRate);
 
     if (inSourceList (ringtoneDevice)) {
         ringtone->connectStream (&ringtoneDevice);
@@ -684,8 +684,9 @@ void PulseLayer::processCaptureData (void)
 
     // Handle the mic
     // We check if the stream is ready
-    if (record && (record->pulseStream()) && (pa_stream_get_state (record->pulseStream()) == PA_STREAM_READY))
+    if (record && (record->pulseStream()) && (pa_stream_get_state (record->pulseStream()) == PA_STREAM_READY)) {
         readFromMic();
+    }
 
 }
 
