@@ -31,8 +31,6 @@ test_SOURCES = \
 	instantmessagingtest.cpp \
 	siptest.h \
 	siptest.cpp \
-	sdpsession.h \
-	sdpsession.cpp \
 	sdptest.h \
 	sdptest.cpp
 
