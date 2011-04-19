@@ -186,7 +186,7 @@ class ManagerImpl
          * Get a descriptor map of codec available
          * @return CodecDescriptor  The internal codec map
          */
-        CodecDescriptor& getCodecDescriptorMap (void) {
+        CodecFactory& getCodecDescriptorMap (void) {
             return _codecDescriptorMap;
         }
 
@@ -1187,7 +1187,7 @@ class ManagerImpl
         ost::Mutex _currentCallMutex;
 
         /** Vector of CodecDescriptor */
-        CodecDescriptor* _codecBuilder;
+        CodecFactory* _codecBuilder;
 
         /** Audio layer */
         AudioLayer* _audiodriver;
@@ -1197,7 +1197,7 @@ class ManagerImpl
         DTMF* _dtmfKey;
 
         // map of codec (for configlist request)
-        CodecDescriptor _codecDescriptorMap;
+        CodecFactory _codecDescriptorMap;
 
         /////////////////////
         // Protected by Mutex

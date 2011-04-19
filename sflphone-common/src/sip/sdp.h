@@ -85,7 +85,7 @@ class Sdp
          *
          * @return std::vector<sdpMedia*>   the vector containing the different media
          */
-        std::vector<sdpMedia*> get_local_media_cap (void) {
+        std::vector<sdpMedia*> getLocalMediaCap (void) {
             return _local_media_cap;
         }
 
@@ -94,53 +94,8 @@ class Sdp
         *
         *  @return pjmedia_sdp_session   The structure that describes a SDP session
         */
-        pjmedia_sdp_session* get_local_sdp_session (void) {
-            return _local_offer;
-        }
-
-        /*
-         * Write accessor. Set the local IP address that will be used in the sdp session
-         */
-        void set_ip_address (std::string ip_addr) {
-            _ip_addr = ip_addr;
-        }
-
-        /*
-         * Read accessor. Get the local IP address
-         */
-        std::string get_ip_address (void) {
-            return _ip_addr;
-        }
-
-        /*
-         * Build the local SDP offer
-         */
-        int create_local_offer (CodecOrder selectedCodecs);
-
-        /*
-         * Build the sdp media section
-         * Add rtpmap field if necessary
-         *
-         * @param media The media to add to SDP
-         * @param med   The structure to receive the media section
-         */
-        void set_media_descriptor_line (sdpMedia* media, pjmedia_sdp_media** p_med);
-
-        /* Set the zrtp hash that was previously calculated from the hello message in the zrtp layer.
-         * This hash value is unique at the media level. Therefore, if video support is added, one would
-         * have to set the correct zrtp-hash value in the corresponding media section.
-         * @param hash The hello hash of a rtp session. (Only audio at the moment)
-         */
-        inline void set_zrtp_hash (const std::string& hash) {
-            _zrtp_hello_hash = hash;
-            _debug ("Zrtp hash set with %s\n", hash.c_str());
-        }
-
-        /* Set the srtp _master_key
-             * @param mk The Master Key of a srtp session.
-             */
-        inline void set_srtp_crypto (const std::vector<std::string> lc) {
-            _srtp_crypto = lc;
+        pjmedia_sdp_session* getLocalSdpSession (void) {
+            return localSession;
         }
 
         /**
@@ -154,7 +109,7 @@ class Sdp
          * On building an invite outside a dialog, build the local offer and create the
          * SDP negociator instance with it.
          */
-        int create_initial_offer (CodecOrder selectedCodecs);
+        int createInitialOffer (CodecOrder selectedCodecs);
 
         /*
         * On receiving an invite outside a dialog, build the local offer and create the
@@ -162,7 +117,7 @@ class Sdp
         *
         * @param remote    The remote offer
         */
-        int receiving_initial_offer (pjmedia_sdp_session* remote, CodecOrder selectedCodecs);
+        int receivingInitialOffer (pjmedia_sdp_session* remote, CodecOrder selectedCodecs);
 
         /*
          * On receiving a message, check if it contains SDP and negotiate. Should be used for
@@ -173,7 +128,19 @@ class Sdp
          * @param rdata     The remote data
          */
 
-        pj_status_t check_sdp_answer (pjsip_inv_session *inv, pjsip_rx_data *rdata);
+        int receivingAnswerAfterInitialOffer(pjmedia_sdp_session* remote);
+
+        int generateAnswerFromInitialOffer(void);
+
+        /*
+        * Start the sdp negociation.
+        *
+        * @return pj_status_t  0 on success
+        *                      1 otherwise
+        */
+        pj_status_t startNegociation (void);
+
+        // pj_status_t check_sdp_answer (pjsip_inv_session *inv, pjsip_rx_data *rdata);
 
         /**
          * Remove all media in the session media vector.
@@ -205,13 +172,6 @@ class Sdp
             return _negociated_offer;
         }
 
-        /*
-        * Start the sdp negociation.
-        *
-        * @return pj_status_t  0 on success
-        *                      1 otherwise
-        */
-        pj_status_t start_negociation (void);
 
         /*
         * Retrieve the negociated sdp offer from the sip payload.
@@ -229,46 +189,65 @@ class Sdp
          */
         void attribute_port_to_all_media (int port);
 
-        void  set_local_extern_audio_port (int port) {
-            _local_extern_audio_port = port;
+
+        /*
+         * Write accessor. Set the local IP address that will be used in the sdp session
+         */
+        void setLocalIP (std::string ip_addr) {
+            localIpAddr = ip_addr;
         }
 
-        int  get_local_extern_audio_port (void) {
-            return _local_extern_audio_port;
+        /*
+         * Read accessor. Get the local IP address
+         */
+        std::string getLocalIP (void) {
+            return localIpAddr;
         }
 
-        void toString (void);
+        /**
+         * @param Set the published audio port
+         */
+        void  setLocalPublishedAudioPort (int port) {
+            localPublishedAudioPort = port;
+        }
+
+        /**
+         * @return The published audio port
+         */
+        int  getLocalPublishedAudioPort (void) {
+            return localPublishedAudioPort;
+        }
 
         /**
          * Set remote's IP addr. [not protected]
          * @param ip  The remote IP address
          */
-        void set_remote_ip (const std::string& ip) {
-            _remote_ip_addr = ip;
+        void setRemoteIP (const std::string& ip) {
+            remoteIpAddr = ip;
         }
 
         /**
          * Return IP of destination [mutex protected]
          * @return const std:string	The remote IP address
          */
-        const std::string& get_remote_ip() {
-            return _remote_ip_addr;
+        const std::string& getRemoteIP() {
+            return remoteIpAddr;
         }
 
         /**
          * Set remote's audio port. [not protected]
          * @param port  The remote audio port
          */
-        void set_remote_audio_port (unsigned int port) {
-            _remote_audio_port = port;
+        void setRemoteAudioPort (unsigned int port) {
+            remoteAudioPort = port;
         }
 
         /**
          * Return audio port at destination [mutex protected]
          * @return unsigned int The remote audio port
          */
-        unsigned int get_remote_audio_port() {
-            return _remote_audio_port;
+        unsigned int getRemoteAudioPort() {
+            return remoteAudioPort;
         }
 
         void set_media_transport_info_from_remote_sdp (const pjmedia_sdp_session *remote_sdp);
@@ -279,41 +258,79 @@ class Sdp
 
         void get_remote_sdp_crypto_from_offer (const pjmedia_sdp_session* remote_sdp, CryptoOffer& crypto_offer);
 
+
+        /*
+         * Build the sdp media section
+         * Add rtpmap field if necessary
+         *
+         * @param media The media to add to SDP
+         * @param med   The structure to receive the media section
+         */
+        void set_media_descriptor_line (sdpMedia* media, pjmedia_sdp_media** p_med);
+
+        /* Set the zrtp hash that was previously calculated from the hello message in the zrtp layer.
+         * This hash value is unique at the media level. Therefore, if video support is added, one would
+         * have to set the correct zrtp-hash value in the corresponding media section.
+         * @param hash The hello hash of a rtp session. (Only audio at the moment)
+         */
+        inline void set_zrtp_hash (const std::string& hash) {
+            _zrtp_hello_hash = hash;
+            _debug ("Zrtp hash set with %s\n", hash.c_str());
+        }
+
+        /* Set the srtp _master_key
+             * @param mk The Master Key of a srtp session.
+             */
+        inline void set_srtp_crypto (const std::vector<std::string> lc) {
+            _srtp_crypto = lc;
+        }
+
+        void toString (void);
+
         /** negociator */
         pjmedia_sdp_neg *_negociator;
+
     private:
-        /** Codec Map */
-        std::vector<sdpMedia*> _local_media_cap;
 
-        /* The media that will be used by the session (after the SDP negociation) */
-        std::vector<sdpMedia*> _session_media;
+        /**
+         * The pool to allocate memory, ownership to SipCall
+         * SDP should not release the pool itself
+         */
+        pj_pool_t *_pool;
 
+        /**
+         * Local SDP
+         */
+        pjmedia_sdp_session *localSession;
 
-        /** IP address */
-        std::string _ip_addr;
-
-        /** Remote's IP address */
-        std::string  _remote_ip_addr;
-
-        /** Local SDP */
-        pjmedia_sdp_session *_local_offer;
+        /**
+         * Remote SDP
+         */
+        pjmedia_sdp_session *remoteSession;
 
         /* The negociated SDP offer */
         // Explanation: each endpoint's offer is negociated, and a new sdp offer results from this
         // negociation, with the compatible media from each part
         pjmedia_sdp_session *_negociated_offer;
 
-        /**
-         * The pool to allocate memory, ownership to SipCall
-         * SDP shuold not release the pool itself
-         */
-        pj_pool_t *_pool;
+        /** Codec Map */
+        std::vector<sdpMedia *> _local_media_cap;
+
+        /* The media that will be used by the session (after the SDP negociation) */
+        std::vector<sdpMedia *> _session_media;
+
+        /** IP address */
+        std::string localIpAddr;
 
         /** Local audio port */
-        int _local_extern_audio_port;
+        int localPublishedAudioPort;
+
+        /** Remote's IP address */
+        std::string  remoteIpAddr;
 
         /** Remote audio port */
-        unsigned int _remote_audio_port;
+        unsigned int remoteAudioPort;
+
 
         std::string _zrtp_hello_hash;
 
@@ -321,9 +338,19 @@ class Sdp
         std::vector<std::string> _srtp_crypto;
 
         Sdp (const Sdp&); //No Copy Constructor
+
         Sdp& operator= (const Sdp&); //No Assignment Operator
 
-        void set_local_media_capabilities (CodecOrder selectedCodecs);
+        /**
+         * Build the local media capabilities for this session
+         * @param List of codec in preference order
+         */
+        void setLocalMediaCapabilities (CodecOrder selectedCodecs);
+
+        /*
+         * Build the local SDP offer
+         */
+        int createLocalSession (CodecOrder selectedCodecs);
 
         /*
          *  Mandatory field: Origin ("o=")

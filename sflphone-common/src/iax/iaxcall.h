@@ -114,7 +114,7 @@ class IAXCall : public Call
          * Set internal codec Map: initialization only, not protected
          * @param map The codec map
          */
-        void setCodecMap (const CodecDescriptor& map) {
+        void setCodecMap (const CodecFactory& map) {
             _codecMap = map;
         }
 
@@ -122,7 +122,7 @@ class IAXCall : public Call
          * Get internal codec Map: initialization only, not protected
          * @return CodecDescriptor	The codec map
          */
-        CodecDescriptor& getCodecMap();
+        CodecFactory& getCodecMap();
 
         /**
          * Return audio codec [mutex protected]
@@ -143,7 +143,7 @@ class IAXCall : public Call
         }
 
         /** Codec Map */
-        CodecDescriptor _codecMap;
+        CodecFactory _codecMap;
 
         /** Codec pointer */
         AudioCodecType _audioCodec;

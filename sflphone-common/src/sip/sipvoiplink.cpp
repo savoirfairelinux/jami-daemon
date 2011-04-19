@@ -705,8 +705,8 @@ Call *SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) 
 	_debug ("UserAgent: Try to make a call to: %s with call ID: %s", toUrl.data(), id.data());
 
 	// Building the local SDP offer
-	call->getLocalSDP()->set_ip_address (addrSdp);
-	status = call->getLocalSDP()->create_initial_offer (account->getActiveCodecs ());
+	call->getLocalSDP()->setLocalIP (addrSdp);
+	status = call->getLocalSDP()->createInitialOffer (account->getActiveCodecs ());
 
 	if (status != PJ_SUCCESS) {
 		delete call;
@@ -981,7 +981,7 @@ int SIPVoIPLink::SIPInvSessionReinvite (SIPCall *call, std::string direction)
         return !PJ_SUCCESS;
     }
 
-    if ( (local_sdp = call->getLocalSDP()->get_local_sdp_session()) == NULL) {
+    if ( (local_sdp = call->getLocalSDP()->getLocalSdpSession()) == NULL) {
         _debug ("UserAgent: Error: Unable to find local sdp");
         return !PJ_SUCCESS;
     }
@@ -1548,7 +1548,7 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
     }
 
     // Create the invite session for this call
-    status = pjsip_inv_create_uac (dialog, call->getLocalSDP()->get_local_sdp_session(), 0, &inv);
+    status = pjsip_inv_create_uac (dialog, call->getLocalSDP()->getLocalSdpSession(), 0, &inv);
 
     if (! (account->getServiceRoute().empty())) {
         pjsip_route_hdr *route_set = createRouteSet(account, inv->pool);
@@ -1758,8 +1758,8 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const CallID& id, const std::string& to)
         }
 
         // Building the local SDP offer
-        call->getLocalSDP()->set_ip_address (addrSdp);
-        call->getLocalSDP()->create_initial_offer (account->getActiveCodecs ());
+        call->getLocalSDP()->setLocalIP (addrSdp);
+        call->getLocalSDP()->createInitialOffer (account->getActiveCodecs ());
 
         // Init TLS transport if enabled
         if (account->isTlsEnabled()) {
@@ -1821,7 +1821,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const CallID& id, const std::string& to)
 
         // Create the invite session for this call
         _debug ("UserAgent: Creating invite session for this call");
-        status = pjsip_inv_create_uac (dialog, call->getLocalSDP()->get_local_sdp_session(), 0, &inv);
+        status = pjsip_inv_create_uac (dialog, call->getLocalSDP()->getLocalSdpSession(), 0, &inv);
         PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
 
         if (! (account->getServiceRoute().empty())) {
@@ -3831,7 +3831,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
     setCallAudioLocal (call, addrToUse);
 
     // We retrieve the remote sdp offer in the rdata struct to begin the negociation
-    call->getLocalSDP()->set_ip_address (addrSdp);
+    call->getLocalSDP()->setLocalIP (addrSdp);
 
     // Init audio rtp session
     try {
@@ -3891,7 +3891,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
     }
 
 
-    status = call->getLocalSDP()->receiving_initial_offer (r_sdp, account->getActiveCodecs ());
+    status = call->getLocalSDP()->receivingInitialOffer (r_sdp, account->getActiveCodecs ());
 
     sfl::Codec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (PAYLOAD_CODEC_ULAW);
 
@@ -3925,7 +3925,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
     }
 
     // Specify media capability during invite session creation
-    status = pjsip_inv_create_uas (dialog, rdata, call->getLocalSDP()->get_local_sdp_session(), 0, &inv);
+    status = pjsip_inv_create_uas (dialog, rdata, call->getLocalSDP()->getLocalSdpSession(), 0, &inv);
 
     // Explicitly set the transport, set_transport methods increment transport's reference counter
     status = pjsip_dlg_set_transport (dialog, tp);
@@ -4452,7 +4452,7 @@ void invite_request_offer_cb (pjsip_inv_session *inv, const pjmedia_sdp_session 
 
     // call->getLocalSDP()->receiving_initial_offer ( (pjmedia_sdp_session*) offer, account->getActiveCodecs ());
 
-    status=pjsip_inv_set_sdp_answer (call->getInvSession(), call->getLocalSDP()->get_local_sdp_session());
+    status=pjsip_inv_set_sdp_answer (call->getInvSession(), call->getLocalSDP()->getLocalSdpSession());
 
     if (link)
         link->SIPHandleReinvite (call);
@@ -4497,10 +4497,10 @@ void invite_create_offer_cb (pjsip_inv_session *inv, pjmedia_sdp_session **p_off
     setCallAudioLocal (call, localAddress);
 
     // Building the local SDP offer
-    call->getLocalSDP()->set_ip_address (addrSdp);
-    call->getLocalSDP()->create_initial_offer (account->getActiveCodecs());
+    call->getLocalSDP()->setLocalIP (addrSdp);
+    call->getLocalSDP()->createInitialOffer (account->getActiveCodecs());
 
-    *p_offer = call->getLocalSDP()->get_local_sdp_session();
+    *p_offer = call->getLocalSDP()->getLocalSdpSession();
 
 }
 

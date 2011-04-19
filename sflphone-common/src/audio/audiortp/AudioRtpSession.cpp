@@ -181,19 +181,19 @@ void AudioRtpSession::setDestinationIpAddress (void)
     }
 
     // Store remote ip in case we would need to forget current destination
-    _remote_ip = ost::InetHostAddress (_ca->getLocalSDP()->get_remote_ip().c_str());
+    _remote_ip = ost::InetHostAddress (_ca->getLocalSDP()->getRemoteIP().c_str());
 
     if (!_remote_ip) {
         _warn ("AudioRtpSession: Target IP address (%s) is not correct!",
-               _ca->getLocalSDP()->get_remote_ip().data());
+               _ca->getLocalSDP()->getRemoteIP().data());
         return;
     }
 
     // Store remote port in case we would need to forget current destination
-    _remote_port = (unsigned short) _ca->getLocalSDP()->get_remote_audio_port();
+    _remote_port = (unsigned short) _ca->getLocalSDP()->getRemoteAudioPort();
 
     _info ("AudioRtpSession: New remote address for session: %s:%d",
-           _ca->getLocalSDP()->get_remote_ip().data(), _remote_port);
+           _ca->getLocalSDP()->getRemoteIP().data(), _remote_port);
 
     if (!addDestination (_remote_ip, _remote_port)) {
         _warn ("AudioRtpSession: Can't add new destination to session!");

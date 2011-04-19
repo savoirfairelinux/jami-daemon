@@ -198,7 +198,7 @@ int IAXCall::getFirstMatchingFormat (int needles, std::string accountID)
     return 0;
 }
 
-CodecDescriptor& IAXCall::getCodecMap()
+CodecFactory& IAXCall::getCodecMap()
 {
     return _codecMap;
 }
