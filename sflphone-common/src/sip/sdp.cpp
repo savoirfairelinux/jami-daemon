@@ -70,7 +70,7 @@ void Sdp::set_media_descriptor_line (sdpMedia *media, pjmedia_sdp_media** p_med)
     pjmedia_sdp_media* med;
     pjmedia_sdp_rtpmap rtpmap;
     pjmedia_sdp_attr *attr;
-    AudioCodec *codec;
+    sfl::Codec *codec;
     int count, i;
     std::string tmp;
 
@@ -99,7 +99,7 @@ void Sdp::set_media_descriptor_line (sdpMedia *media, pjmedia_sdp_media** p_med)
 
     for (i=0; i<count; i++) {
         codec = media->get_media_codec_list() [i];
-        tmp = this->convert_int_to_string (codec->getPayload ());
+        tmp = this->convert_int_to_string (codec->getPayloadType ());
         _debug ("%s", tmp.c_str());
         pj_strdup2 (_pool, &med->desc.fmt[i], tmp.c_str());
 
@@ -108,20 +108,16 @@ void Sdp::set_media_descriptor_line (sdpMedia *media, pjmedia_sdp_media** p_med)
         // are entirely defined in the RFC 3351, but if we want to add other attributes like an asymmetric
         // connection, the rtpmap attribute will be useful to specify for which codec it is applicable
         rtpmap.pt = med->desc.fmt[i];
-        rtpmap.enc_name = pj_str ( (char*) codec->getCodecName().c_str());
+        rtpmap.enc_name = pj_str ( (char*) codec->getMimeSubtype().c_str());
 
         // G722 require G722/8000 media description even if it is 16000 codec
-        if (codec->getPayload () == 9) {
+        if (codec->getPayloadType () == 9) {
             rtpmap.clock_rate = 8000;
         } else {
             rtpmap.clock_rate = codec->getClockRate();
         }
 
-        // Add the channel number only if different from 1
-        if (codec->getChannel() > 1)
-            rtpmap.param = pj_str ( (char*) codec->getChannel());
-        else
-            rtpmap.param.slen = 0;
+        rtpmap.param.slen = 0;
 
         pjmedia_sdp_rtpmap_to_attr (_pool, &rtpmap, &attr);
 
@@ -575,7 +571,7 @@ AudioCodec* Sdp::get_session_media (void)
 
     int nb_media;
     int nb_codec;
-    AudioCodec *codec = NULL;
+    sfl::Codec *codec = NULL;
     std::vector<sdpMedia*> media_list;
 
     _debug ("SDP: Get session media");
@@ -591,7 +587,7 @@ AudioCodec* Sdp::get_session_media (void)
         }
     }
 
-    return codec;
+    return static_cast<AudioCodec *>(codec);
 }
 
 

@@ -111,7 +111,7 @@ RawFile::loadFile (const std::string& filename, AudioCodec* codec , unsigned int
     // expandedsize should be exactly two time more, else failed
     int16 monoBuffer[length];
 
-    int expandedsize = (int) _codec->codecDecode (monoBuffer, (unsigned char *) fileBuffer, length);
+    int expandedsize = (int) _codec->decode (monoBuffer, (unsigned char *) fileBuffer, length);
 
     if (expandedsize != length*2) {
         _debug ("Audio file error on loading audio file!");

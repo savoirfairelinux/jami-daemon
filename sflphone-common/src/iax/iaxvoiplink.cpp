@@ -330,7 +330,7 @@ IAXVoIPLink::sendAudioFromMic (void)
 
             if (callIsActive) {
 
-                ac = currentCall->getCodecMap().getCodec (currentCall->getAudioCodec());
+                ac = static_cast<AudioCodec *>(currentCall->getCodecMap().getCodec (currentCall->getAudioCodec()));
 
                 // Send sound here
 
@@ -370,12 +370,12 @@ IAXVoIPLink::sendAudioFromMic (void)
                             nbSample_ = converter->downsampleData (micData , micDataConverted , (int) ac->getClockRate(), _mainBufferSampleRate, nbSample_);
 
                             // for the mono: range = 0 to IAX_FRAME2SEND * sizeof(int16)
-                            compSize = ac->codecEncode (micDataEncoded, micDataConverted , nbSample_*sizeof (int16));
+                            compSize = ac->encode (micDataEncoded, micDataConverted , nbSample_*sizeof (int16));
 
                         } else {
 
                             // for the mono: range = 0 to IAX_FRAME2SEND * sizeof(int16)
-                            compSize = ac->codecEncode (micDataEncoded, micData, nbSample_*sizeof (int16));
+                            compSize = ac->encode (micDataEncoded, micData, nbSample_*sizeof (int16));
 
                         }
 
@@ -712,10 +712,10 @@ IAXVoIPLink::getCurrentCodecName()
     call = getIAXCall (Manager::instance().getCurrentCallId());
 
     if (call)
-        ac = call->getCodecMap().getCodec (call->getAudioCodec());
+        ac = static_cast<AudioCodec *>(call->getCodecMap().getCodec (call->getAudioCodec()));
 
     if (ac)
-        name = ac->getCodecName();
+        name = ac->getMimeSubtype();
 
     return name;
 }
@@ -975,7 +975,7 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
         return;
     }
 
-    ac = call->getCodecMap ().getCodec (call->getAudioCodec ());
+    ac = static_cast<AudioCodec *>(call->getCodecMap ().getCodec (call->getAudioCodec ()));
 
     if (!ac)
         return;
@@ -1013,7 +1013,7 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
             size = max;
         }
 
-        expandedSize = ac->codecDecode (spkrDataDecoded , data , size);
+        expandedSize = ac->decode (spkrDataDecoded , data , size);
 
         nbInt16      = expandedSize/sizeof (int16);
 

@@ -681,7 +681,7 @@ Call *SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) 
     if (addrSdp == "0.0.0.0")
 				loadSIPLocalIP (&addrSdp);
 
-    AudioCodec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (PAYLOAD_CODEC_ULAW);
+    sfl::Codec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (PAYLOAD_CODEC_ULAW);
 
     if (audiocodec == NULL) {
     	_error ("UserAgent: Could not instantiate codec");
@@ -694,7 +694,7 @@ Call *SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) 
 		call->getAudioRtp()->initAudioRtpSession (call);
 		call->getAudioRtp()->initLocalCryptoInfo (call);
 		_info ("UserAgent: Start audio rtp session");
-		call->getAudioRtp()->start (audiocodec);
+		call->getAudioRtp()->start (static_cast<AudioCodec *>(audiocodec));
 	} catch (...) {
 		_error ("UserAgent: Error: Failed to create rtp thread from newOutGoingCall");
 	}
@@ -1042,26 +1042,26 @@ SIPVoIPLink::offhold (const CallID& id)
     }
 
     // Retreive previously selected codec
-    AudioCodec *sessionMedia = call->getLocalSDP()->get_session_media();
+    sfl::Codec *sessionMedia = call->getLocalSDP()->get_session_media();
 
     if (!sessionMedia)
         return false;
 
     // Get PayloadType for this codec
-    AudioCodecType pl = (AudioCodecType) sessionMedia->getPayload();
+    AudioCodecType pl = (AudioCodecType) sessionMedia->getPayloadType();
 
     _debug ("UserAgent: Payload from session media %d", pl);
 
     try {
         // Create a new instance for this codec
-        AudioCodec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (pl);
+        sfl::Codec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (pl);
 
         if (audiocodec == NULL)
             _error ("UserAgent: No audiocodec found");
 
         call->getAudioRtp()->initAudioRtpConfig (call);
         call->getAudioRtp()->initAudioRtpSession (call);
-        call->getAudioRtp()->start (audiocodec);
+        call->getAudioRtp()->start (static_cast<AudioCodec *>(audiocodec));
 
     } catch (...) {
         _debug ("! SIP Failure: Unable to create RTP Session (%s:%d)", __FILE__, __LINE__);
@@ -1328,7 +1328,7 @@ SIPVoIPLink::getCurrentCodecName()
 {
 
     SIPCall *call;
-    AudioCodec *ac = NULL;
+    sfl::Codec *ac = NULL;
     std::string name = "";
 
     call = getSIPCall (Manager::instance().getCurrentCallId());
@@ -1337,7 +1337,7 @@ SIPVoIPLink::getCurrentCodecName()
         ac = call->getLocalSDP()->get_session_media();
 
     if (ac)
-        name = ac->getCodecName();
+        name = ac->getMimeSubtype();
 
     return name;
 }
@@ -1744,7 +1744,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const CallID& id, const std::string& to)
         // call->getLocalSDP()->set_ip_address (addrSdp);
         // call->getLocalSDP()->create_initial_offer (account->getActiveCodecs ());
 
-        AudioCodec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (PAYLOAD_CODEC_ULAW);
+        sfl::Codec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (PAYLOAD_CODEC_ULAW);
 
         // Audio Rtp Session must be initialized before creating initial offer in SDP session
         // since SDES require crypto attribute.
@@ -1752,7 +1752,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const CallID& id, const std::string& to)
             call->getAudioRtp()->initAudioRtpConfig (call);
             call->getAudioRtp()->initAudioRtpSession (call);
             call->getAudioRtp()->initLocalCryptoInfo (call);
-            call->getAudioRtp()->start (audiocodec);
+            call->getAudioRtp()->start (static_cast<AudioCodec *>(audiocodec));
         } catch (...) {
             _debug ("UserAgent: Unable to create RTP Session in new IP2IP call (%s:%d)", __FILE__, __LINE__);
         }
@@ -3376,7 +3376,7 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
     if (!sessionMedia)
         return;
 
-    AudioCodecType pl = (AudioCodecType) sessionMedia->getPayload();
+    AudioCodecType pl = (AudioCodecType) sessionMedia->getPayloadType();
 
     try {
         call->setAudioStart (true);
@@ -3384,12 +3384,12 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
 
         // udate session media only if required
         if (pl != call->getAudioRtp()->getSessionMedia()) {
-            AudioCodec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (pl);
+            sfl::Codec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (pl);
 
             if (audiocodec == NULL)
                 _error ("UserAgent: No audiocodec found");
 
-            call->getAudioRtp()->updateSessionMedia (audiocodec);
+            call->getAudioRtp()->updateSessionMedia (static_cast<AudioCodec *>(audiocodec));
         }
     } catch (exception& rtpException) {
         _error ("UserAgent: Error: %s", rtpException.what());
@@ -3893,12 +3893,12 @@ transaction_request_cb (pjsip_rx_data *rdata)
 
     status = call->getLocalSDP()->receiving_initial_offer (r_sdp, account->getActiveCodecs ());
 
-    AudioCodec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (PAYLOAD_CODEC_ULAW);
+    sfl::Codec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (PAYLOAD_CODEC_ULAW);
 
     // Init audio rtp session
     try {
         _debug ("UserAgent: Create RTP session for this call");
-        call->getAudioRtp()->start (audiocodec);
+        call->getAudioRtp()->start (static_cast<AudioCodec *>(audiocodec));
     } catch (...) {
         _warn ("UserAgent: Error: Failed to create rtp thread from answer");
     }

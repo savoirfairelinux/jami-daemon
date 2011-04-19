@@ -95,7 +95,7 @@ class Speex : public AudioCodec
             _speex_enc_state = 0;
         }
 
-        virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) {
+        virtual int decode (short *dst, unsigned char *src, unsigned int size) {
 
             // int ratio = 320 / _speex_frame_size;
             speex_bits_read_from (&_speex_dec_bits, (char*) src, size);
@@ -105,7 +105,7 @@ class Speex : public AudioCodec
             return _frameSize * 2;
         }
 
-        virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) {
+        virtual int encode (unsigned char *dst, short *src, unsigned int size) {
             speex_bits_reset (&_speex_enc_bits);
 
             speex_encode_int (_speex_enc_state, src, &_speex_enc_bits);
@@ -113,6 +113,21 @@ class Speex : public AudioCodec
 
             return nbBytes;
         }
+
+        /**
+         * @Override
+         */
+        std::string getDescription() const {
+            return "audio/speex 8000 (\"narrow band\") codec. Based on libspeex, by Jean-Marc Valin.";
+        }
+
+        /**
+         * @Override
+         */
+        Speex* clone() const {
+            return new Speex (*this);
+        }
+
 
     private:
         const SpeexMode* _speexModePtr;
@@ -124,12 +139,12 @@ class Speex : public AudioCodec
 };
 
 // the class factories
-extern "C" AudioCodec* create()
+extern "C" sfl::Codec* create()
 {
     return new Speex (110);
 }
 
-extern "C" void destroy (AudioCodec* a)
+extern "C" void destroy (sfl::Codec* a)
 {
     delete a;
 }

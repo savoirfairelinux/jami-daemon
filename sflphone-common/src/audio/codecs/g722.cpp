@@ -71,7 +71,7 @@ class G722 : public AudioCodec
         	g722_encode_release();
         }
 
-        virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) {
+        virtual int decode (short *dst, unsigned char *src, unsigned int size) {
 
             int in_byte = size;
             int out_samples;
@@ -81,7 +81,7 @@ class G722 : public AudioCodec
             return out_samples * 2;
         }
 
-        virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) {
+        virtual int encode (unsigned char *dst, short *src, unsigned int size) {
 
             // 2 bytes per sample (int16)
             int in_samples = size / 2;
@@ -822,6 +822,21 @@ class G722 : public AudioCodec
         }
 
 
+        /**
+         * @Override
+         */
+        std::string getDescription() const {
+            return "G722 codec. Most of the code comes from Steve Underwood (<steveu@coppice.org>) for the Asterisk project.";
+        }
+
+        /**
+         * @Override
+         */
+        G722* clone() const {
+            return new G722 (*this);
+        }
+
+
     private:
 
         g722_decode_state_t *decode_s;
@@ -830,12 +845,12 @@ class G722 : public AudioCodec
 };
 
 // the class factories
-extern "C" AudioCodec* create()
+extern "C" sfl::Codec* create()
 {
     return new G722 (9);
 }
 
-extern "C" void destroy (AudioCodec* a)
+extern "C" void destroy (sfl::Codec* a)
 {
     delete a;
 }

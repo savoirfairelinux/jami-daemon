@@ -1,8 +1,8 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ * Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  * Author:  Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
- * Motly borrowed from asterisk's sources (Steve Underwood <steveu@coppice.org>)
+ * Mostly borrowed from asterisk's sources (Steve Underwood <steveu@coppice.org>)
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,105 +29,163 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-
-#ifndef _CODEC_AUDIO_H
-#define _CODEC_AUDIO_H
+#ifndef __AUDIO_CODEC_H__
+#define __AUDIO_CODEC_H__
 
 #include <string>
 #include <iostream>
 #include <dlfcn.h>
 
-class AudioCodec
+#include "Codec.h"
+
+class AudioCodec : public sfl::Codec   // TODO Move into the "sfl" namespace
 {
-    protected:
-        /** Holds SDP-compliant codec name */
-        std::string _codecName; // what we put inside sdp
-
-        /** Clock rate or sample rate of the codec, in Hz */
-        int _clockRate;
-
-        /** Number of channel 1 = mono, 2 = stereo */
-        int _channel;
-
-        /** codec frame size in samples*/
-        int _frameSize;
-
-        /** Bitrate */
-        double _bitrate;
-        /** Bandwidth */
-        double _bandwidth;
-
-    protected:
-        bool _hasDynamicPayload;
-
-    private:
-        int _payload;
-        bool _state;
-
     public:
-        AudioCodec (int payload, const std::string &codecName)
-            : _codecName (codecName), _clockRate (8000), _channel (1),  _bitrate (0.0),_bandwidth (0), _hasDynamicPayload (false), _payload (payload),_state (true) {
+        AudioCodec (uint8 payload, const std::string &codecName);
 
-            _hasDynamicPayload = (_payload >= 96 && _payload <= 127) ? true : false;
-        }
+        /**
+         * Copy constructor.
+         */
+        AudioCodec (const AudioCodec& codec);
 
-        AudioCodec (const AudioCodec& codec)
-            : _codecName (codec._codecName), _clockRate (codec._clockRate), _channel (codec._channel),  _bitrate (codec._bitrate),_bandwidth (codec._bandwidth), _hasDynamicPayload (false), _payload (codec._payload),_state (true) {
+        virtual ~AudioCodec() {}
 
-            _hasDynamicPayload = (_payload >= 96 && _payload <= 127) ? true : false;
-        }
+        /**
+         * @Override
+         */
+        std::string getMimeType() const;
 
-        virtual ~AudioCodec() {
-        }
+        /**
+         * @Override
+         */
+        std::string getMimeSubtype() const;
+
+        /**
+         * @Override
+         */
+        const ost::PayloadFormat& getPayloadFormat();
+
+        /**
+         * @Override
+         */
+        void setParameter (const std::string& name, const std::string& value) {};
+
+        /**
+         * @Override
+         */
+        std::string getParameter (const std::string& name) {
+            return "";
+        };
+
         /**
          * Decode an input buffer and fill the output buffer with the decoded data
          * @return the number of bytes decoded
          */
-        virtual int codecDecode (short *, unsigned char *, unsigned int) = 0;
+        virtual int decode (short *, unsigned char *, unsigned int) = 0;
 
         /**
          * Encode an input buffer and fill the output buffer with the encoded data
          * @return the number of bytes encoded
          */
-        virtual int codecEncode (unsigned char *, short *, unsigned int) = 0;
+        virtual int encode (unsigned char *, short *, unsigned int) = 0;
 
+        /**
+         * @Override
+         */
+        uint8 getPayloadType() const ;
 
-        /** Value used for SDP negotiation */
-        std::string getCodecName (void) {
-            return _codecName;
-        }
-        int getPayload (void) {
-            return _payload;
-        }
-        bool hasDynamicPayload (void) {
-            return _hasDynamicPayload;
-        }
-        int getClockRate (void) {
-            return _clockRate;
-        }
-        int getFrameSize (void) {
-            return _frameSize;
-        }
-        int getChannel (void) {
-            return _channel;
-        }
-        bool getState (void) {
-            return _state;
-        }
-        void setState (bool b) {
-            _state = b;
-        }
-        double getBitRate (void) {
-            return _bitrate;
-        }
-        double getBandwidth (void) {
-            return _bandwidth;
+        /**
+         * @Override
+         */
+        void setPayloadType(uint8 pt) {
+        	_payload = pt;
         }
 
+        /**
+         * @return true if this payload is a dynamic one.
+         */
+        bool hasDynamicPayload();
+
+        /**
+         * @Override
+         */
+        uint32 getClockRate() const;
+
+        /**
+         * @return the number of audio channels.
+         */
+        uint8 getChannel() const;
+
+        /**
+         * @Override
+         */
+        double getBitRate() const;
+
+        /**
+         * @Override
+         */
+        double getBandwidth() const;
+
+        /**
+         * @return the framing size for this codec.
+         */
+        unsigned int getFrameSize() const;
+
+        /**
+         * @Override
+         */
+        virtual AudioCodec* clone() const = 0;
+
+    protected:
+        /** Holds SDP-compliant codec name */
+        std::string _codecName; // what we put inside sdp
+
+        /** Clock rate or sample rate of the codec, in Hz */
+        uint32 _clockRate;
+
+        /** Number of channel 1 = mono, 2 = stereo */
+        uint8 _channel;
+
+        /** codec frame size in samples*/
+        unsigned _frameSize;
+
+        /** Bitrate */
+        double _bitrate;
+
+        /** Bandwidth */
+        double _bandwidth;
+
+        bool _hasDynamicPayload;
+
+        void setCodecName (const std::string& codecName) {
+            _codecName = codecName;
+        }
+
+        void setClockRate (uint32 rate) {
+            _clockRate = rate;
+        }
+
+        void setChannel (uint8 channel) {
+            _channel = channel;
+        }
+
+        void setFrameSize (unsigned size) {
+            _frameSize = size;
+        }
+
+        void setBitrate (double rate) {
+            _bitrate = rate;
+        }
+
+        void setBandwidth (double bandwidth) {
+            _bandwidth = bandwidth;
+        }
+    private:
+        uint8 _payload;
+
+        ost::DynamicPayloadFormat* _payloadFormat;
+
+        void init (uint8 payloadType, uint32 clockRate);
 };
-
-// the types of the class factories
-typedef AudioCodec* create_t();
-typedef void destroy_t (AudioCodec*);
 
 #endif

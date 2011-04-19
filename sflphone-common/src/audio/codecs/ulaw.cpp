@@ -49,7 +49,7 @@ class Ulaw : public AudioCodec
             _hasDynamicPayload = false;
         }
 
-        virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) {
+        virtual int decode (short *dst, unsigned char *src, unsigned int size) {
             int16* end = dst+size;
 
             while (dst<end)
@@ -58,7 +58,7 @@ class Ulaw : public AudioCodec
             return size<<1;
         }
 
-        virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) {
+        virtual int encode (unsigned char *dst, short *src, unsigned int size) {
             size >>= 1;
             uint8* end = dst+size;
 
@@ -123,15 +123,30 @@ class Ulaw : public AudioCodec
 
             return u;
         }
+
+        /**
+         * @Override
+         */
+        std::string getDescription() const {
+            return "audio/PCMU 8000 (\"ulaw\") codec.";
+        }
+
+        /**
+         * @Override
+         */
+        Ulaw* clone() const {
+            return new Ulaw (*this);
+        }
+
 };
 
 // the class factories
-extern "C" AudioCodec* create()
+extern "C" sfl::Codec* create()
 {
     return new Ulaw (0);
 }
 
-extern "C" void destroy (AudioCodec* a)
+extern "C" void destroy (sfl::Codec* a)
 {
     delete a;
 }

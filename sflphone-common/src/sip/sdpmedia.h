@@ -90,7 +90,7 @@ class sdpMedia
         /*
          * Read accessor. Return the list of codecs
          */
-        std::vector<AudioCodec*> get_media_codec_list() {
+        std::vector<sfl::Codec*> get_media_codec_list() {
             return _codec_list;
         }
 
@@ -132,7 +132,7 @@ class sdpMedia
          *
          * @param payload     The payload type
          */
-        void add_codec (AudioCodec *codec);
+        void add_codec (sfl::Codec *codec);
 
         /*
          * Remove a codec from the current media codecs vector
@@ -178,7 +178,7 @@ class sdpMedia
         mediaType _media_type;
 
         /* The media codec vector */
-        std::vector< AudioCodec* > _codec_list;
+        std::vector< sfl::Codec* > _codec_list;
 
         /* the transport port */
         int _port;

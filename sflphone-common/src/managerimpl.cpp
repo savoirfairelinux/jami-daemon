@@ -2218,7 +2218,7 @@ void ManagerImpl::ringtone (const AccountID& accountID)
         layer = audiolayer->getLayerType();
 
         samplerate = audiolayer->getSampleRate();
-        codecForTone = _codecDescriptorMap.getFirstCodecAvailable();
+        codecForTone = static_cast<AudioCodec *>(_codecDescriptorMap.getFirstCodecAvailable());
 
         _toneMutex.enterMutex();
 
@@ -2237,7 +2237,7 @@ void ManagerImpl::ringtone (const AccountID& accountID)
 
         loadFile = false;
 
-        _debug ("Manager: ringChoice: %s, codecForTone: %d, samplerate %d", ringchoice.c_str(), codecForTone->getPayload(), samplerate);
+        _debug ("Manager: ringChoice: %s, codecForTone: %d, samplerate %d", ringchoice.c_str(), codecForTone->getPayloadType(), samplerate);
 
         if (_audiofile)
             loadFile = _audiofile->loadFile (ringchoice, codecForTone, samplerate);

@@ -103,8 +103,7 @@ std::string sdpMedia::get_media_type_str (void)
     return value;
 }
 
-
-void sdpMedia::add_codec (AudioCodec* codec)
+void sdpMedia::add_codec (sfl::Codec* codec)
 {
     _codec_list.push_back (codec);
 }
@@ -115,16 +114,16 @@ void sdpMedia::remove_codec (std::string codecName)
     int i;
     int size;
     std::string enc_name;
-    std::vector<AudioCodec*>::iterator iter;
+    std::vector<sfl::Codec*>::iterator iter;
 
     size = _codec_list.size();
     std::cout << "vector size: " << size << std::endl;
 
     for (i=0 ; i<size ; i++) {
-        std::cout << _codec_list[i]->getCodecName().c_str() << std::endl;
+        std::cout << _codec_list[i]->getMimeSubtype().c_str() << std::endl;
 
-        if (strcmp (_codec_list[i]->getCodecName().c_str(), codecName.c_str()) == 0) {
-            std::cout << "erase " <<_codec_list[i]->getCodecName() << std::endl;
+        if (strcmp (_codec_list[i]->getMimeSubtype().c_str(), codecName.c_str()) == 0) {
+            std::cout << "erase " <<_codec_list[i]->getMimeSubtype() << std::endl;
             iter = _codec_list.begin() +i;
             _codec_list.erase (iter);
             break;
@@ -167,7 +166,7 @@ std::string sdpMedia::to_string (void)
     display << ":";
 
     for (i=0; i<size; i++) {
-        display << _codec_list[i]->getCodecName() << "/";
+        display << _codec_list[i]->getMimeSubtype() << "/";
     }
 
     display << ":" << get_stream_direction_str() << std::endl;

@@ -130,7 +130,7 @@ void AudioRtpRecordHandler::setRtpMedia (AudioCodec* audioCodec)
 
     // Set varios codec info to reduce indirection
     _audioRtpRecord._audioCodec = audioCodec;
-    _audioRtpRecord._codecPayloadType = audioCodec->getPayload();
+    _audioRtpRecord._codecPayloadType = audioCodec->getPayloadType();
     _audioRtpRecord._codecSampleRate = audioCodec->getClockRate();
     _audioRtpRecord._codecFrameSize = audioCodec->getFrameSize();
     _audioRtpRecord._hasDynamicPayloadType = audioCodec->hasDynamicPayload();
@@ -151,7 +151,7 @@ void AudioRtpRecordHandler::updateRtpMedia (AudioCodec *audioCodec)
     }
 
     _audioRtpRecord._audioCodec = audioCodec;
-    _audioRtpRecord._codecPayloadType = audioCodec->getPayload();
+    _audioRtpRecord._codecPayloadType = audioCodec->getPayloadType();
     _audioRtpRecord._codecSampleRate = audioCodec->getClockRate();
     _audioRtpRecord._codecFrameSize = audioCodec->getFrameSize();
     _audioRtpRecord._hasDynamicPayloadType = audioCodec->hasDynamicPayload();
@@ -297,7 +297,7 @@ int AudioRtpRecordHandler::processDataEncode (void)
 
         _audioRtpRecord.audioCodecMutex.enter();
 
-        compSize = _audioRtpRecord._audioCodec->codecEncode (micDataEncoded, micDataConverted, nbSample * sizeof (SFLDataFormat));
+        compSize = _audioRtpRecord._audioCodec->encode (micDataEncoded, micDataConverted, nbSample * sizeof (SFLDataFormat));
 
         _audioRtpRecord.audioCodecMutex.leave();
 
@@ -313,7 +313,7 @@ int AudioRtpRecordHandler::processDataEncode (void)
         _audioRtpRecord.audioCodecMutex.enter();
 
         // no resampling required
-        compSize = _audioRtpRecord._audioCodec->codecEncode (micDataEncoded, micData, nbSample * sizeof (SFLDataFormat));
+        compSize = _audioRtpRecord._audioCodec->encode (micDataEncoded, micData, nbSample * sizeof (SFLDataFormat));
 
         _audioRtpRecord.audioCodecMutex.leave();
     }
@@ -333,7 +333,7 @@ void AudioRtpRecordHandler::processDataDecode (unsigned char *spkrData, unsigned
     _audioRtpRecord.audioCodecMutex.enter();
 
     // Return the size of data in bytes
-    int expandedSize = _audioRtpRecord._audioCodec->codecDecode (spkrDataDecoded , spkrData , size);
+    int expandedSize = _audioRtpRecord._audioCodec->decode (spkrDataDecoded , spkrData , size);
 
     _audioRtpRecord.audioCodecMutex.leave();
 

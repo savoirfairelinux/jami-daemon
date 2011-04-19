@@ -49,7 +49,7 @@ class Alaw : public AudioCodec
 
         virtual ~Alaw() {}
 
-        virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) {
+        virtual int decode (short *dst, unsigned char *src, unsigned int size) {
             int16* end = dst+size;
 
             while (dst<end)
@@ -58,7 +58,7 @@ class Alaw : public AudioCodec
             return size<<1;
         }
 
-        virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) {
+        virtual int encode (unsigned char *dst, short *src, unsigned int size) {
             size >>= 1;
             uint8* end = dst+size;
 
@@ -129,16 +129,30 @@ class Alaw : public AudioCodec
 
             return a^0x55; // A-law has alternate bits inverted for transmission
         }
+        /**
+         * @Override
+         */
+        std::string getDescription() const {
+            return "audio/PCMA 8000 (\"alaw\") codec.";
+        }
+
+        /**
+         * @Override
+         */
+        Alaw* clone() const {
+            return new Alaw (*this);
+        }
+
 
 };
 
 // the class factories
-extern "C" AudioCodec* create()
+extern "C" sfl::Codec* create()
 {
     return new Alaw (8);
 }
 
-extern "C" void destroy (AudioCodec* a)
+extern "C" void destroy (sfl::Codec* a)
 {
     delete a;
 }

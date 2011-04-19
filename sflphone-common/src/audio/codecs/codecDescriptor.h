@@ -39,12 +39,12 @@
 
 #include "global.h"
 #include "user_cfg.h"
-#include "audio/codecs/audiocodec.h"
+#include "audiocodec.h"
 
 /** Enable us to keep the handle pointer on the codec dynamicaly loaded so that we could destroy when we dont need it anymore */
-typedef std::pair<AudioCodec* , void*> CodecHandlePointer;
+typedef std::pair<sfl::Codec* , void*> CodecHandlePointer;
 /** Maps a pointer on an audiocodec object to a payload */
-typedef std::map<AudioCodecType , AudioCodec*> CodecsMap;
+typedef std::map<AudioCodecType , sfl::Codec*> CodecsMap;
 /** A codec is identified by its payload. A payload is associated with a name. */
 typedef std::map<AudioCodecType, std::string> CodecMap;
 
@@ -87,7 +87,7 @@ class CodecDescriptor
          * @param payload The payload looked for
          * @return AudioCodec* A pointer on a AudioCodec object
          */
-        AudioCodec* getCodec (AudioCodecType payload);
+        sfl::Codec* getCodec (AudioCodecType payload);
 
         /**
          * Initialiaze the map with all the supported codecs, even those inactive
@@ -147,13 +147,13 @@ class CodecDescriptor
          * i.e the one with the lowest payload
          * @return AudioCodec	The pointer on the codec object
          */
-        AudioCodec* getFirstCodecAvailable (void);
+        sfl::Codec* getFirstCodecAvailable (void);
 
         /**
          * Instantiate a codec, used in AudioRTP to get an instance of Codec per call
          * @param CodecHandlePointer	The map containing the pointer on the object and the pointer on the handle function
          */
-        AudioCodec* instantiateCodec (AudioCodecType payload);
+        sfl::Codec* instantiateCodec (AudioCodecType payload);
 
         /**
          * For a given codec, return its specification
@@ -178,14 +178,14 @@ class CodecDescriptor
          * And load the dynamic library
          * @return std::vector<AudioCodec*> The list of the codec object successfully loaded in memory
          */
-        std::vector<AudioCodec *> scanCodecDirectory (void);
+        std::vector<sfl::Codec *> scanCodecDirectory (void);
 
         /**
          * Load a codec
          * @param std::string	The path of the shared ( dynamic ) library.
          * @return AudioCodec*  the pointer of the object loaded.
          */
-        AudioCodec* loadCodec (std::string);
+        sfl::Codec* loadCodec (std::string);
 
         /**
          * Unload a codec

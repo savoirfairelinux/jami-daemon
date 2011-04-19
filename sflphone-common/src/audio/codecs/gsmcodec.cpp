@@ -68,7 +68,7 @@ class Gsm : public AudioCodec
             gsm_destroy (_encode_gsmhandle);
         }
 
-        virtual int	codecDecode	(short * dst, unsigned char * src, unsigned int size) {
+        virtual int	decode	(short * dst, unsigned char * src, unsigned int size) {
             // _debug("Decoded by gsm ");
             (void) size;
 
@@ -78,7 +78,7 @@ class Gsm : public AudioCodec
             return 320;
         }
 
-        virtual int	codecEncode	(unsigned char * dst, short * src, unsigned int size) {
+        virtual int	encode	(unsigned char * dst, short * src, unsigned int size) {
 
             // _debug("Encoded by gsm ");
             (void) size;
@@ -86,17 +86,32 @@ class Gsm : public AudioCodec
             return 33;
         }
 
+        /**
+         * @Override
+         */
+        std::string getDescription() const {
+            return "GSM codec. Based on libgsm, (C) Jutta Degener and Carsten Bormann, Technische Universitaet Berlin.";
+        }
+
+        /**
+         * @Override
+         */
+        Gsm* clone() const {
+            return new Gsm (*this);
+        }
+
+
     private:
         gsm _decode_gsmhandle;
         gsm _encode_gsmhandle;
 };
 
-extern "C" AudioCodec* create()
+extern "C" sfl::Codec* create()
 {
     return new Gsm (3);
 }
 
-extern "C" void destroy (AudioCodec* a)
+extern "C" void destroy (sfl::Codec* a)
 {
     delete a;
 }

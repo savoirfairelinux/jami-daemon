@@ -125,7 +125,7 @@ class Celt : public AudioCodec
             celt_mode_destroy (_mode);
         }
 
-        virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) {
+        virtual int decode (short *dst, unsigned char *src, unsigned int size) {
 #ifdef BUILD_CELT_91 // == 91
             int err = 0;
             err = celt_decode (_dec, src, size, (celt_int16*) dst, size);
@@ -137,7 +137,7 @@ class Celt : public AudioCodec
             return _frameSize * sizeof (celt_int16);
         }
 
-        virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) {
+        virtual int encode (unsigned char *dst, short *src, unsigned int size) {
             int len = 0;
 #ifdef BUILD_CELT_91// == 91
             len = celt_encode (_enc, (celt_int16*) src, size, dst, 40);
@@ -148,6 +148,21 @@ class Celt : public AudioCodec
             // returns the number of bytes writen
             return len;
         }
+
+        /**
+         * @Override
+         */
+        std::string getDescription() const {
+            return "audio/celt 32000 (\"HD\") codec. Based on libcelt, by Jean-Marc Valin.";
+        }
+
+        /**
+         * @Override
+         */
+        Celt* clone() const {
+            return new Celt (*this);
+        }
+
 
     private:
 
@@ -162,12 +177,12 @@ class Celt : public AudioCodec
 };
 
 // the class factories
-extern "C" AudioCodec* create()
+extern "C" sfl::Codec* create()
 {
     return new Celt (115);
 }
 
-extern "C" void destroy (AudioCodec* a)
+extern "C" void destroy (sfl::Codec* a)
 {
     delete a;
 }

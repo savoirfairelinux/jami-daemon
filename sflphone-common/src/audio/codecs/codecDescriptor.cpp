@@ -36,6 +36,7 @@
 
 #include "codecDescriptor.h"
 
+
 CodecDescriptor::CodecDescriptor() : _CodecsMap(), _defaultCodecOrder(), _Cache(), _nbCodecs(), _CodecInMemory()
 {
 }
@@ -45,22 +46,23 @@ CodecDescriptor::~CodecDescriptor()
 
 }
 
-void
-CodecDescriptor::deleteHandlePointer (void)
-{
-    _debug ("CodecDesccriptor: Delete codec handle pointers");
+//std::vector<std::string> CodecDescriptor::getAllMimeSubtypes()
+//{
+//    std::vector<std::string> output;
+//    IdentifierToCodecInstanceMapIterator it;
+//
+//    for (it = _codecsMap.begin(); it != _codecsMap.end(); it++) {
+//        output.push_back ( ( (*it).second)->getMimeSubtype());
+//    }
+//
+//    return output;
+//}
 
-    for (int i = 0 ; (unsigned int) i < _CodecInMemory.size() ; i++) {
-        unloadCodec (_CodecInMemory[i]);
-    }
-
-    _CodecInMemory.clear();
-}
 
 void
 CodecDescriptor::init()
 {
-    std::vector<AudioCodec*> CodecDynamicList = scanCodecDirectory();
+    std::vector<sfl::Codec*> CodecDynamicList = scanCodecDirectory();
     _nbCodecs = CodecDynamicList.size();
 
     if (_nbCodecs <= 0) {
@@ -70,8 +72,9 @@ CodecDescriptor::init()
     int i;
 
     for (i = 0 ; i < _nbCodecs ; i++) {
-        _CodecsMap[ (AudioCodecType) CodecDynamicList[i]->getPayload() ] = CodecDynamicList[i];
-        _debug ("CodecDescriptor: %s" , CodecDynamicList[i]->getCodecName().c_str());
+        _CodecsMap[ (AudioCodecType) CodecDynamicList[i]->getPayloadType() ] = CodecDynamicList[i];
+        _debug ("CodecDescriptor: %s" , CodecDynamicList[i]->getMimeSubtype().c_str());
+
     }
 }
 
@@ -95,19 +98,19 @@ CodecDescriptor::getCodecName (AudioCodecType payload)
     CodecsMap::iterator iter = _CodecsMap.find (payload);
 
     if (iter!=_CodecsMap.end()) {
-        return (iter->second->getCodecName());
+        return (iter->second->getMimeSubtype());
     }
 
     return resNull;
 }
 
-AudioCodec*
+sfl::Codec*
 CodecDescriptor::getCodec (AudioCodecType payload)
 {
     CodecsMap::iterator iter = _CodecsMap.find (payload);
 
     if (iter!=_CodecsMap.end()) {
-        return (iter->second);
+        return static_cast<AudioCodec *>(iter->second);
     }
 
     _error ("CodecDescriptor: Error cannont found codec %i in _CodecsMap from codec descriptor", payload);
@@ -170,10 +173,22 @@ void CodecDescriptor::saveActiveCodecs (const std::vector<std::string>& list)
     }
 }
 
-std::vector<AudioCodec*> CodecDescriptor::scanCodecDirectory (void)
+void
+CodecDescriptor::deleteHandlePointer (void)
+{
+    _debug ("CodecDesccriptor: Delete codec handle pointers");
+
+    for (int i = 0 ; (unsigned int) i < _CodecInMemory.size() ; i++) {
+        unloadCodec (_CodecInMemory[i]);
+    }
+
+    _CodecInMemory.clear();
+}
+
+std::vector<sfl::Codec*> CodecDescriptor::scanCodecDirectory (void)
 {
 
-    std::vector<AudioCodec*> codecs;
+    std::vector<sfl::Codec*> codecs;
     std::string tmp;
     int i;
 
@@ -187,7 +202,7 @@ std::vector<AudioCodec*> CodecDescriptor::scanCodecDirectory (void)
         std::string dirStr = dirToScan[i];
         _debug ("CodecDescriptor: Scanning %s to find audio codecs....",  dirStr.c_str());
         DIR *dir = opendir (dirStr.c_str());
-        AudioCodec* audioCodec;
+        sfl::Codec* audioCodec;
 
         if (dir) {
             dirent *dirStruct;
@@ -211,7 +226,7 @@ std::vector<AudioCodec*> CodecDescriptor::scanCodecDirectory (void)
     return codecs;
 }
 
-AudioCodec* CodecDescriptor::loadCodec (std::string path)
+sfl::Codec* CodecDescriptor::loadCodec (std::string path)
 {
 
     CodecHandlePointer p;
@@ -228,7 +243,7 @@ AudioCodec* CodecDescriptor::loadCodec (std::string path)
     if (dlerror())
         cerr << dlerror() << '\n';
 
-    AudioCodec* a = createCodec();
+    sfl::Codec* a = createCodec();
 
     p = CodecHandlePointer (a, codecHandle);
 
@@ -252,7 +267,7 @@ void CodecDescriptor::unloadCodec (CodecHandlePointer p)
     dlclose (p.second);
 }
 
-AudioCodec* CodecDescriptor::instantiateCodec (AudioCodecType payload)
+sfl::Codec* CodecDescriptor::instantiateCodec (AudioCodecType payload)
 {
 
     using std::cerr;
@@ -260,13 +275,13 @@ AudioCodec* CodecDescriptor::instantiateCodec (AudioCodecType payload)
     std::vector< CodecHandlePointer >::iterator iter = _CodecInMemory.begin();
 
     while (iter != _CodecInMemory.end()) {
-        if (iter->first->getPayload() == payload) {
+        if (iter->first->getPayloadType() == payload) {
             create_t* createCodec = (create_t*) dlsym (iter->second , "create");
 
             if (dlerror())
                 cerr << dlerror() << '\n';
 
-            AudioCodec* a = createCodec();
+            sfl::Codec* a = createCodec();
 
             return a;
         }
@@ -279,7 +294,7 @@ AudioCodec* CodecDescriptor::instantiateCodec (AudioCodecType payload)
 
 
 
-AudioCodec* CodecDescriptor::getFirstCodecAvailable (void)
+sfl::Codec* CodecDescriptor::getFirstCodecAvailable (void)
 {
 
     CodecsMap::iterator iter = _CodecsMap.begin();
