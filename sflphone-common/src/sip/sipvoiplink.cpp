@@ -897,35 +897,109 @@ SIPVoIPLink::cancel (const CallID& id)
     return true;
 }
 
+
 bool
 SIPVoIPLink::onhold (const CallID& id)
 {
-
+	Sdp *sdpSession;
     pj_status_t status;
     SIPCall* call;
 
     call = getSIPCall (id);
 
-    if (call==0) {
-        _debug ("! SIP Error: call doesn't exist");
+    if (call == NULL) {
+        _debug ("UserAgent: Error: call doesn't exist in onhold action");
         return false;
     }
 
-
     // Stop sound
     call->setAudioStart (false);
-
     call->setState (Call::Hold);
-
-    _debug ("* SIP Info: Stopping AudioRTP for onhold action");
-
     call->getAudioRtp()->stop();
 
-    /* Create re-INVITE with new offer */
-    status = SIPInvSessionReinvite (call, "sendonly");
+    _debug ("UserAgent: Stopping RTP session for on hold action");
 
-    if (status != PJ_SUCCESS)
+    if ( (sdpSession = call->getLocalSDP()) == NULL) {
+        _debug ("UserAgent: Error: Unable to find local sdp");
         return false;
+    }
+
+    sdpSession->removeAttributeFromLocalAudioMedia("sendrecv");
+    sdpSession->removeAttributeFromLocalAudioMedia("sendonly");
+
+    sdpSession->addAttributeToLocalAudioMedia("sendonly");
+
+    // Create re-INVITE with new offer
+    status = SIPSessionReinvite (call);
+
+    if (status != PJ_SUCCESS) {
+        return false;
+    }
+
+    return true;
+}
+
+bool
+SIPVoIPLink::offhold (const CallID& id)
+{
+	Sdp *sdpSession;
+    pj_status_t status;
+    SIPCall *call;
+
+    _debug ("UserAgent: retrive call from hold status");
+
+    call = getSIPCall (id);
+
+    if (call==0) {
+        _debug ("! SIP Error: Call doesn't exist");
+        return false;
+    }
+
+    if ( (sdpSession = call->getLocalSDP()) == NULL) {
+        _debug ("UserAgent: Error: Unable to find local sdp");
+        return false;
+    }
+
+    // Retreive previously selected codec
+    sfl::Codec *sessionMedia = sdpSession->getSessionMedia();
+
+    if (!sessionMedia) {
+        return false;
+    }
+
+    // Get PayloadType for this codec
+    AudioCodecType pl = (AudioCodecType) sessionMedia->getPayloadType();
+
+    _debug ("UserAgent: Payload from session media %d", pl);
+
+    try {
+        // Create a new instance for this codec
+        sfl::Codec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (pl);
+
+        if (audiocodec == NULL)
+            _error ("UserAgent: No audiocodec found");
+
+        call->getAudioRtp()->initAudioRtpConfig (call);
+        call->getAudioRtp()->initAudioRtpSession (call);
+        call->getAudioRtp()->start (static_cast<AudioCodec *>(audiocodec));
+
+    } catch (...) {
+        _debug ("! SIP Failure: Unable to create RTP Session (%s:%d)", __FILE__, __LINE__);
+    }
+
+    sdpSession->removeAttributeFromLocalAudioMedia("sendrecv");
+    sdpSession->removeAttributeFromLocalAudioMedia("sendonly");
+
+    sdpSession->addAttributeToLocalAudioMedia("sendrecv");
+
+    /* Create re-INVITE with new offer */
+    status = SIPSessionReinvite (call);
+
+    if (status != PJ_SUCCESS) {
+        return false;
+    }
+
+    call->setState (Call::Active);
 
     return true;
 }
@@ -968,14 +1042,12 @@ SIPVoIPLink::sendTextMessage (sfl::InstantMessaging *module, const std::string& 
     return status;
 }
 
-int SIPVoIPLink::SIPInvSessionReinvite (SIPCall *call, std::string direction)
+int SIPVoIPLink::SIPSessionReinvite (SIPCall *call)
 {
 
     pj_status_t status;
     pjsip_tx_data *tdata;
     pjmedia_sdp_session *local_sdp;
-    pjmedia_sdp_attr *attr;
-    pj_pool_t *call_memory_pool;
 
     if (call == NULL) {
         _error ("UserAgent: Error: Call is NULL in session reinvite");
@@ -987,32 +1059,8 @@ int SIPVoIPLink::SIPInvSessionReinvite (SIPCall *call, std::string direction)
         return !PJ_SUCCESS;
     }
 
-    if ( (call_memory_pool = call->getLocalSDP()->getMemoryPool()) == NULL) {
-        _debug ("UserAgent: Error: Unable to find call memory pool");
-        return !PJ_SUCCESS;
-    }
-
-    // Reinvite only if connected
-    // Build the local SDP offer
-    // TODO Restore Re-Invite
-    // status = call->getLocalSDP()->create_initial_offer();
-
-    // if (status != PJ_SUCCESS)
-    // return 1;   // !PJ_SUCCESS
-
-
-    pjmedia_sdp_media_remove_all_attr (local_sdp->media[0], "sendrecv");
-    pjmedia_sdp_media_remove_all_attr (local_sdp->media[0], "sendonly");
-
-    attr = pjmedia_sdp_attr_create (call_memory_pool, direction.c_str(), NULL);
-
-    pjmedia_sdp_media_add_attr (local_sdp->media[0], attr);
-
-    // pjmedia_sdp_neg_modify_local_offer (_pool, call->getLocalSDP()->_negociator, local_sdp);
-
     // Build the reinvite request
-    status = pjsip_inv_reinvite (call->getInvSession(), NULL,
-                                 local_sdp, &tdata);
+    status = pjsip_inv_reinvite (call->getInvSession(), NULL, local_sdp, &tdata);
 
     if (status != PJ_SUCCESS)
         return 1;   // !PJ_SUCCESS
@@ -1024,59 +1072,6 @@ int SIPVoIPLink::SIPInvSessionReinvite (SIPCall *call, std::string direction)
         return 1;   // !PJ_SUCCESS
 
     return PJ_SUCCESS;
-}
-
-
-bool
-SIPVoIPLink::offhold (const CallID& id)
-{
-    SIPCall *call;
-    pj_status_t status;
-
-    _debug ("UserAgent: retrive call from hold status");
-
-    call = getSIPCall (id);
-
-    if (call==0) {
-        _debug ("! SIP Error: Call doesn't exist");
-        return false;
-    }
-
-    // Retreive previously selected codec
-    sfl::Codec *sessionMedia = call->getLocalSDP()->getSessionMedia();
-
-    if (!sessionMedia)
-        return false;
-
-    // Get PayloadType for this codec
-    AudioCodecType pl = (AudioCodecType) sessionMedia->getPayloadType();
-
-    _debug ("UserAgent: Payload from session media %d", pl);
-
-    try {
-        // Create a new instance for this codec
-        sfl::Codec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (pl);
-
-        if (audiocodec == NULL)
-            _error ("UserAgent: No audiocodec found");
-
-        call->getAudioRtp()->initAudioRtpConfig (call);
-        call->getAudioRtp()->initAudioRtpSession (call);
-        call->getAudioRtp()->start (static_cast<AudioCodec *>(audiocodec));
-
-    } catch (...) {
-        _debug ("! SIP Failure: Unable to create RTP Session (%s:%d)", __FILE__, __LINE__);
-    }
-
-    /* Create re-INVITE with new offer */
-    status = SIPInvSessionReinvite (call, "sendrecv");
-
-    if (status != PJ_SUCCESS)
-        return false;
-
-    call->setState (Call::Active);
-
-    return true;
 }
 
 bool

@@ -717,6 +717,21 @@ void Sdp::setPortToAllMedia (int port)
     }
 }
 
+void Sdp::addAttributeToLocalAudioMedia(std::string attr)
+{
+    pjmedia_sdp_attr *attribute;
+
+    attribute = pjmedia_sdp_attr_create (memPool, attr.c_str(), NULL);
+
+	pjmedia_sdp_media_add_attr (getLocalSdpSession()->media[0], attribute);
+}
+
+void Sdp::removeAttributeFromLocalAudioMedia(std::string attr)
+{
+	pjmedia_sdp_media_remove_all_attr (getLocalSdpSession()->media[0], attr.c_str());
+
+}
+
 std::string Sdp::convertIntToString (int value)
 {
     std::ostringstream result;

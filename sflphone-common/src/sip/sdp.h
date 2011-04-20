@@ -282,30 +282,52 @@ class Sdp
             return remoteAudioPort;
         }
 
-        std::vector<sdpMedia*> getSessionMediaList (void) {
+        /**
+         * Get media list for this session
+         */
+        SdpMediaList getSessionMediaList (void) {
             return sessionAudioMedia;
         }
 
+        /**
+         *
+         */
+        void addAttributeToLocalAudioMedia(std::string);
+
+        /**
+         *
+         */
+        void removeAttributeFromLocalAudioMedia(std::string);
+
+
+        /**
+         * Get SRTP master key
+         * @param remote sdp session
+         * @param crypto offer
+         */
         void getRemoteSdpCryptoFromOffer (const pjmedia_sdp_session* remote_sdp, CryptoOffer& crypto_offer);
 
+        /**
+         * Set the SRTP master_key
+         * @param mk The Master Key of a srtp session.
+         */
+        inline void setLocalSdpCrypto (const std::vector<std::string> lc) {
+            srtpCrypto = lc;
+        }
 
-        /* Set the zrtp hash that was previously calculated from the hello message in the zrtp layer.
+        /**
+         * Set the zrtp hash that was previously calculated from the hello message in the zrtp layer.
          * This hash value is unique at the media level. Therefore, if video support is added, one would
          * have to set the correct zrtp-hash value in the corresponding media section.
          * @param hash The hello hash of a rtp session. (Only audio at the moment)
          */
-        inline void set_zrtp_hash (const std::string& hash) {
+        inline void setZrtpHash (const std::string& hash) {
             zrtpHelloHash = hash;
-            _debug ("Zrtp hash set with %s\n", hash.c_str());
         }
 
-        /* Set the srtp _master_key
-             * @param mk The Master Key of a srtp session.
-             */
-        inline void set_srtp_crypto (const std::vector<std::string> lc) {
-            srtpCrypto = lc;
-        }
-
+        /**
+         * Print internal state info
+         */
         void toString (void);
 
 

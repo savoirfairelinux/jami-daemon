@@ -127,7 +127,7 @@ void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
                 if (_helloHashEnabled) {
                     // TODO: be careful with that. The hello hash is computed asynchronously. Maybe it's
                     // not even available at that point.
-                    ca->getLocalSDP()->set_zrtp_hash (static_cast<AudioZrtpSession *> (_rtpSession)->getHelloHash());
+                    ca->getLocalSDP()->setZrtpHash (static_cast<AudioZrtpSession *> (_rtpSession)->getHelloHash());
                     _debug ("AudioRtpFactory: Zrtp hello hash fed to SDP");
                 }
 
@@ -320,7 +320,7 @@ void sfl::AudioRtpFactory::initLocalCryptoInfo (SIPCall * ca)
     if (_rtpSession && _rtpSessionType && (_rtpSessionType == Sdes)) {
         static_cast<AudioSrtpSession *> (_rtpSession)->initLocalCryptoInfo ();
 
-        ca->getLocalSDP()->set_srtp_crypto (static_cast<AudioSrtpSession *> (_rtpSession)->getLocalCryptoInfo());
+        ca->getLocalSDP()->setLocalSdpCrypto (static_cast<AudioSrtpSession *> (_rtpSession)->getLocalCryptoInfo());
     }
 }
 

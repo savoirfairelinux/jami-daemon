@@ -300,18 +300,18 @@ class SIPVoIPLink : public VoIPLink
         /**
          * Handle a re-invite request by the remote peer.
          * A re-invite is an invite request inside a dialog.
-         * When receiving a re-invite, we close the current rtp session and create
-         * a new one with the updated information
+         * When receiving a re-invite, we updated information
+         * concerning medias
          * @param sip call
          */
         void SIPHandleReinvite (SIPCall *call);
 
         /**
          * Send a reINVITE inside an active dialog to modify its state
+         * Local SDP session should be modified before calling this method
          * @param sip call
-         * @param the direction, "sendrecv" or "sendonly"
          */
-        int SIPInvSessionReinvite (SIPCall *call, std::string direction="");
+        int SIPSessionReinvite (SIPCall *call);
 
         pj_caching_pool *getMemoryPoolFactory();
 
