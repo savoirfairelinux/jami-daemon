@@ -84,27 +84,39 @@ class SDPTest : public CppUnit::TestCase {
      * Use cppunit library macros to add unit test the factory
      */
     CPPUNIT_TEST_SUITE( SDPTest );
-    CPPUNIT_TEST ( testInitialOffer );
+    CPPUNIT_TEST ( testInitialOfferLastCodec );
+    CPPUNIT_TEST ( testInitialAnswerLastCodec );
+    CPPUNIT_TEST ( testInitialOfferLastCodec );
+    CPPUNIT_TEST ( testInitialAnswerLastCodec );
+    CPPUNIT_TEST ( testReinvite );
     CPPUNIT_TEST_SUITE_END();
 
-    public:
-        SDPTest() : CppUnit::TestCase("SDP module Tests") {}
+public:
+    SDPTest() : CppUnit::TestCase("SDP module Tests") {}
         
-        /*
-         * Code factoring - Common resources can be initialized here.
-         * This method is called by unitcpp before each test
-         */
-        void setUp();
+    /**
+     * Code factoring - Common resources can be initialized here.
+     * This method is called by unitcpp before each test
+     */
+    void setUp();
 
-        /*
-         * Code factoring - Common resources can be released here.
-         * This method is called by unitcpp after each test
-         */
-        inline void tearDown ();
+    /**
+     * Code factoring - Common resources can be released here.
+     * This method is called by unitcpp after each test
+     */
+    inline void tearDown ();
 
-	void testInitialOffer();
+	void testInitialOfferFirstCodec();
 
-    private:
+	void testInitialAnswerFirstCodec();
+
+	void testInitialOfferLastCodec();
+
+	void testInitialAnswerLastCodec();
+
+	void testReinvite ();
+
+private:
 
 	Sdp *_session;
 
