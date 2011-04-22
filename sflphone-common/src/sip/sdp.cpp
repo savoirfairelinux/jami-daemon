@@ -389,7 +389,6 @@ int Sdp::receivingAnswerAfterInitialOffer(const pjmedia_sdp_session* remote)
 	if(pjmedia_sdp_neg_get_state(negociator) != PJMEDIA_SDP_NEG_STATE_WAIT_NEGO) {
 		_warn("SDP: Session not in a valid state after receiving answer");
 	}
-
 	_debug("SDP: Negotiator state %s\n", pjmedia_sdp_neg_state_str(pjmedia_sdp_neg_get_state(negociator)));
 
 	return status;

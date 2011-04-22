@@ -35,8 +35,8 @@
 #include "global.h" // for _debug
 #include "sdp.h"
 
-const int SIPCall::CALL_MEMPOOL_INIT_SIZE = 16000;
-const int SIPCall::CALL_MEMPOOL_INC_SIZE = 4000;
+const int SIPCall::CALL_MEMPOOL_INIT_SIZE = 16384;
+const int SIPCall::CALL_MEMPOOL_INC_SIZE = 16384;   // Must be large enough to clone sdp sessions
 
 SIPCall::SIPCall (const CallID& id, Call::CallType type, pj_caching_pool *caching_pool) : Call (id, type)
     , _cid (0)
@@ -63,6 +63,7 @@ SIPCall::~SIPCall()
 
     delete _audiortp;
     _audiortp = NULL;
+
     delete _local_sdp;
     _local_sdp = NULL;
 

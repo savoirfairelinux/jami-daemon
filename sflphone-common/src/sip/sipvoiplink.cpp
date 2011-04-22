@@ -707,7 +707,7 @@ Call *SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) 
 
 	// Building the local SDP offer
 	call->getLocalSDP()->setLocalIP (addrSdp);
-	// status = call->getLocalSDP()->createOffer (account->getActiveCodecs ());
+	status = call->getLocalSDP()->createOffer (account->getActiveCodecs ());
 
 	if (status != PJ_SUCCESS) {
 		delete call;
@@ -1736,10 +1736,6 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const CallID& id, const std::string& to)
 
         _debug ("UserAgent: TO uri for IP2IP call: %s", toUri.c_str());
 
-        // Building the local SDP offer
-        // call->getLocalSDP()->set_ip_address (addrSdp);
-        // call->getLocalSDP()->create_initial_offer (account->getActiveCodecs ());
-
         sfl::Codec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (PAYLOAD_CODEC_ULAW);
 
         // Audio Rtp Session must be initialized before creating initial offer in SDP session
@@ -1755,7 +1751,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const CallID& id, const std::string& to)
 
         // Building the local SDP offer
         call->getLocalSDP()->setLocalIP (addrSdp);
-        //call->getLocalSDP()->createOffer (account->getActiveCodecs ());
+        call->getLocalSDP()->createOffer (account->getActiveCodecs ());
 
         // Init TLS transport if enabled
         if (account->isTlsEnabled()) {
