@@ -51,22 +51,33 @@ AC_SUBST(LIBSEXY_CFLAGS)
 AC_SUBST(LIBSEXY_LIBS)
 
 PKG_CHECK_MODULES(DBUSGLIB, dbus-glib-1 >= 0.75, HAVE_DBUS_G_PROXY_SET_DEFAULT_TIMEOUT=true, HAVE_DBUS_G_PROXY_SET_DEFAULT_TIMEOUT=false);
+PKG_CHECK_MODULES(LIBNOTIFY, libnotify >= 0.4)
+PKG_CHECK_MODULES(SFLGTK, gtk+-2.0 > 2.2)
+PKG_CHECK_MODULES(SFLGLIB, glib-2.0 >= 2.2)
+PKG_CHECK_MODULES(WEBKIT, webkit-1.0)
+PKG_CHECK_MODULES(LIBEBOOK, libebook-1.2 >= 1.4)
+PKG_CHECK_MODULES(LIBEDATASERVER, libedataserver-1.2)
+PKG_CHECK_MODULES(LIBEDATASERVERUI, libedataserverui-1.2)
+PKG_CHECK_MODULES(LIBGNOMEUI, libgnomeui-2.0)
+PKG_CHECK_MODULES(GNOMEDOCUTILS, gnome-doc-utils)
 
-PKG_CHECK_MODULES(DEPS,     \
-    dbus-glib-1 >= 0.35     \
-    libnotify >= 0.4        \
-    gtk+-2.0 >= 2.2         \
-    glib-2.0 >= 2.2         \
-    webkit-1.0              \
-    libebook-1.2 >= 1.4     \
-    libedataserver-1.2      \
-    libedataserverui-1.2    \
-	libgnomeui-2.0			\
-	gnome-doc-utils
-)
+AC_SUBST(SFLGTK_CFLAGS)
+AC_SUBST(SFLGLIB_CFLAGS)
+AC_SUBST(WEBKIT_CFLAGS)
+AC_SUBST(LIBEBOOK_CFLAGS)
+AC_SUBST(LIBEDATASERVER_CFLAGS)
+AC_SUBST(LIBEDATASERVERUI_CFLAGS)
+AC_SUBST(LIBGNOMEUI_CFLAGS)
+AC_SUBST(GNOMEDOCUTILS)
 
-AC_SUBST(DEPS_CFLAGS)
-AC_SUBST(DEPS_LIBS)
+AC_SUBST(SFLGTK_LIBS)
+AC_SUBST(SFLGLIB_LIBS)
+AC_SUBST(WEBKIT_LIBS)
+AC_SUBST(LIBEBOOK_LIBS)
+AC_SUBST(LIBEDATASERVER_LIBS)
+AC_SUBST(LIBGNOMEUI_LIBS)
+AC_SUBST(GNOMEDOCUTILS)
+
 
 # This macro is defined in check.m4 and tests if check.h and
 # libcheck.a are installed in your system. It sets CHECK_CFLAGS and
@@ -94,5 +105,4 @@ po/Makefile
 doc/Makefile
 ])
 AC_OUTPUT
-
 

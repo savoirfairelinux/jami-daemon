@@ -34,7 +34,11 @@ noinst_HEADERS =  actions.h sflnotify.h mainwindow.h dialpad.h codeclist.h \
                   accountlist.h sliders.h statusicon.h callable_obj.h conference_obj.h \
                   shortcuts.h eel-gconf-extensions.h logger.h
 
-sflphone_client_gnome_LDADD = $(DEPS_LIBS) $(NOTIFY_LIBS) $(SFLPHONEGTK_LIBS) $(LIBSEXY_LIBS) $(X11_LIBS) $(DBUSGLIB_LIBS)
+sflphone_client_gnome_LDADD = $(DBUSGLIB_LIBS) $(LIBNOTIFY_LIBS) $(NOTIFY_LIBS) $(SFLPHONEGTK_LIBS) $(LIBSEXY_LIBS) $(X11_LIBS) \
+				$(GTK_LIBS) $(GLIB_LIBS) $(WEBKIT_LIBS) $(LIBEBOOK_LIBS) $(LIBEDATASERVER_LIBS) $(LIBEDATASERVERUI_LIBS) $(LIBGNOMEUI_LIBS) $(GNOMEDOCUTILS_LIBS)
+
+sflphone_client_gnome_CFLAGS = $(DBUSGLIB_CFLAGS) $(LIBNOTIFY_CFLAGS) $(NOTIFY_CFLAGS) $(SFLPHONEGTK_CFLAGS) $(LIBSEXY_CFLAGS) $(X11_CFLAGS) \
+                                $(GTK_CFLAGS) $(GLIB_CFLAGS) $(WEBKIT_CFLAGS) $(LIBEBOOK_CFLAGS) $(LIBEDATASERVER_CFLAGS) $(LIBEDATASERVERUI_CFLAGS) $(LIBGNOMEUI_CFLAGS) $(GNOMEDOCUTILS_CFLAGS)
 
 # add symbolic link	     
 install-exec-local:
