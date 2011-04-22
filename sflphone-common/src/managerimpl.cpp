@@ -3072,22 +3072,25 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
     int type, currentSamplerate, framesize, numCardIn, numCardOut, numCardRing;
     std::string alsaPlugin;
 
-    _debug ("Manager: Audio sampling rate changed");
-
-    if (!_audiodriver)
+    if (!_audiodriver) {
+    	_debug("Manager: No Audio driver set");
         return;
+    }
 
     // Only modify internal sampling rate if new sampling rate is higher
     currentSamplerate = _mainBuffer.getInternalSamplingRate();
-    if(currentSamplerate <= samplerate)
+    if(currentSamplerate >= samplerate) {
+    	_debug("Manager: No need to update audio layer sampling rate");
     	return;
+    }
+    else {
+        _debug ("Manager: Audio sampling rate changed");
+    }
 
     type = _audiodriver->getLayerType();
-
-    // samplerate = _mainBuffer.getInternalSamplingRate();
     framesize = audioPreference.getFramesize();
 
-    _debug ("Manager: new samplerate: %d, new framesize %d", samplerate, framesize);
+    _debug ("Manager: New samplerate: %d, New framesize %d", samplerate, framesize);
 
     alsaPlugin = audioPreference.getPlugin();
 
@@ -3152,18 +3155,9 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
         _dtmfKey = new DTMF (sampleRate);
     }
 
-    if (hasCurrentCall())
+    if (hasCurrentCall()) {
         _audiodriver->startStream();
-
-    // ost::MutexLock unlock (*getAudioLayerMutex());
-    // getAudioLayerMutex()->leave();
-
-    // need to stop audio streams if there is currently no call
-    // if ( (type != PULSEAUDIO) && (!hasCurrentCall())) {
-    // _debug("There is currently a call!!");
-    // _audiodriver->stopStream();
-
-    // }
+    }
 }
 
 /**

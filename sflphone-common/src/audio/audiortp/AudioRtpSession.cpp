@@ -123,7 +123,6 @@ void AudioRtpSession::setSessionMedia (AudioCodec *audioCodec)
         }
     }
 
-    // Set recording sampling rate
     _ca->setRecordingSmplRate (getCodecSampleRate());
 }
 
@@ -164,7 +163,6 @@ void AudioRtpSession::updateSessionMedia (AudioCodec *audioCodec)
     }
 
 
-    // Set recording sampling rate
     _ca->setRecordingSmplRate (getCodecSampleRate());
 
     _timestamp = getCurrentTimestamp();

@@ -158,7 +158,6 @@ void AudioRtpRecordHandler::updateRtpMedia (AudioCodec *audioCodec)
 
     _audioRtpRecord.audioCodecMutex.leave();
 
-    // Manager::instance().getMainBuffer()->setInternalSamplingRate (_audioRtpRecord._codecSampleRate);
     Manager::instance().audioSamplingRateChanged(_audioRtpRecord._codecSampleRate);
 
     if (lastSamplingRate != _audioRtpRecord._codecSampleRate)

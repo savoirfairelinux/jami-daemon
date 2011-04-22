@@ -291,7 +291,7 @@ bool AudioRecord::setRawFile()
     fp = fopen (savePath_.c_str(), "wb");
 
     if (!fp) {
-        _warn ("AudioRecord::setRawFile() : could not create RAW file!");
+        _warn ("AudioRecord: Could not create RAW file!");
         return false;
     }
 
@@ -308,7 +308,7 @@ bool AudioRecord::setRawFile()
 
 bool AudioRecord::setWavFile()
 {
-    _debug ("AudioRecord: Create wave file %s", savePath_.c_str());
+    _debug ("AudioRecord: Create new wave file %s, sampling rate: %d", savePath_.c_str(), sndSmplRate_);
 
     fp = fopen (savePath_.c_str(), "wb");
 
@@ -322,11 +322,8 @@ bool AudioRecord::setWavFile()
     };
 
     hdr.riff[3] = 'F';
-
     hdr.wave[3] = 'E';
-
     hdr.fmt[3]  = ' ';
-
     hdr.data[3] = 'a';
 
     hdr.num_chans = channels_;

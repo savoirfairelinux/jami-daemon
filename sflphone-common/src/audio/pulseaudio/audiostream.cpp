@@ -198,7 +198,7 @@ AudioStream::createStream (pa_context* c, std::string *deviceName)
     assert (pa_sample_spec_valid (&_sample_spec));
     assert (pa_channel_map_valid (&channel_map));
 
-    _info ("Audio: Create pulseaudio stream");
+    _info ("Audio: Create pulseaudio stream: %d", _sample_spec.rate);
 
     pa_buffer_attr* attributes = (pa_buffer_attr*) malloc (sizeof (pa_buffer_attr));
 
