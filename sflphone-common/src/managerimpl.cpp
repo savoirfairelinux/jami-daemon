@@ -444,14 +444,14 @@ bool ManagerImpl::hangupCall (const CallID& call_id)
     else {
         account_id = getAccountFromCall (call_id);
 
-        // Account may be NULL if call have not been sent yet
-        if (account_id == AccountNULL) {
-            _error ("Manager: Error: account id is NULL in hangup");
-            returnValue = false;
-        } else {
+//        // Account may be NULL if call have not been sent yet
+//        if (account_id == AccountNULL) {
+//            _error ("Manager: Error: account id is NULL in hangup");
+//            returnValue = false;
+//        } else {
             returnValue = getAccountLink (account_id)->hangup (call_id);
             removeCallAccount (call_id);
-        }
+//        }
     }
 
     int nbCalls = getCallList().size();
