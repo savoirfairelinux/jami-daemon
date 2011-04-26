@@ -3159,13 +3159,18 @@ void invite_session_state_changed_cb (pjsip_inv_session *inv, pjsip_event *e)
         switch (call->getInvSession()->state) {
 
             case PJSIP_INV_STATE_NULL:
+            	_debug("PJSIP_INV_STATE_NULL");
+            	break;
             case PJSIP_INV_STATE_CALLING:
+            	_debug("\n");
                 /* Do nothing */
+            	_debug("PJSIP_INV_STATE_CALLING");
                 break;
             case PJSIP_INV_STATE_EARLY:
             case PJSIP_INV_STATE_CONNECTING:
                 st_code = e->body.tsx_state.tsx->status_code;
                 ev_state = PJSIP_EVSUB_STATE_ACTIVE;
+                _debug("PJSIP_INV_STATE_EARLY, PJSIP_INV_STATE_CONNECTING");
                 break;
             case PJSIP_INV_STATE_CONFIRMED:
                 /* When state is confirmed, send the final 200/OK and terminate
@@ -3173,17 +3178,20 @@ void invite_session_state_changed_cb (pjsip_inv_session *inv, pjsip_event *e)
                  */
                 st_code = e->body.tsx_state.tsx->status_code;
                 ev_state = PJSIP_EVSUB_STATE_TERMINATED;
+                _debug("PJSIP_INV_STATE_CONFIRMED");
                 break;
 
             case PJSIP_INV_STATE_DISCONNECTED:
                 st_code = e->body.tsx_state.tsx->status_code;
                 ev_state = PJSIP_EVSUB_STATE_TERMINATED;
+                _debug("PJSIP_EVSUB_STATE_TERMINATED");
                 break;
 
             case PJSIP_INV_STATE_INCOMING:
                 /* Nothing to do. Just to keep gcc from complaining about
                  * unused enums.
                  */
+            	_debug("PJSIP_INV_STATE_INCOMING");
                 break;
         }
 
@@ -4319,14 +4327,14 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
     sipUri = std::string (uri);
 
     CallID currentCallId = currentCall->getCallId();
-    AccountID accId = Manager::instance().getAccountFromCall (currentCallId);
+    // AccountID accId = Manager::instance().getAccountFromCall (currentCallId);
 
     CallID newCallId = Manager::instance().getNewCallID();
 
-    // Hangup currently transfered call
-    // Manager::instance().hangupCall(currentCallId);
+    Call *newCall = SIPVoIPLink::instance(IP2IP_PROFILE)->newOutgoingCall(newCallId, sipUri);
 
-    if (!Manager::instance().outgoingCall (accId, newCallId, sipUri)) {
+   //  if (!Manager::instance().outgoingCall (accId, newCallId, sipUri)) {
+    if(newCall == NULL) {
 
         /* Notify xferer about the error (if we have subscription) */
         if (sub) {
@@ -4349,32 +4357,32 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
         return;
     }
 
-    SIPCall* newCall = NULL;
+    SIPCall* sipCall = dynamic_cast<SIPCall *>(newCall);
 
-    SIPVoIPLink *link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
-    if(link == NULL) {
-    	_debug("UserAgent: Error could not retreive voip link from call");
-    	return;
-    }
-
-    if (link) {
-        newCall = dynamic_cast<SIPCall *> (link->getCall (newCallId));
-
-        if (!newCall) {
-            _debug ("UserAgent: can not find the call from sipvoiplink!");
-            return;
-        }
-    }
+//    SIPVoIPLink *link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
+//    if(link == NULL) {
+//    	_debug("UserAgent: Error could not retreive voip link from call");
+//    	return;
+//    }
+//
+//    if (link) {
+//        newCall = dynamic_cast<SIPCall *> (link->getCall (newCallId));
+//
+//        if (!newCall) {
+//            _debug ("UserAgent: can not find the call from sipvoiplink!");
+//            return;
+//        }
+//    }
 
     if (sub) {
         /* Put the server subscription in inv_data.
          * Subsequent state changed in pjsua_inv_on_state_changed() will be
          * reported back to the server subscription.
          */
-        newCall->setXferSub (sub);
+        currentCall->setXferSub (sub);
 
         /* Put the invite_data in the subscription. */
-        pjsip_evsub_set_mod_data (sub, _mod_ua.id, newCall);
+        pjsip_evsub_set_mod_data (sub, _mod_ua.id, currentCall);
     }
 }
 
@@ -4501,7 +4509,7 @@ void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
                     _debug ("UserAgent: Fail to send end session msg!");
             }
 
-            link->transferStep2 (call);
+            // link->transferStep2 (call);
 
             cont = PJ_FALSE;
         }
@@ -4565,7 +4573,9 @@ void transfer_server_cb (pjsip_evsub *sub, pjsip_event *event)
 
         call->setXferSub (NULL);
 
-        _debug ("UserAgent: Xfer server subscription terminated");
+        Manager::instance().hangupCall(call->getCallId());
+
+        _error ("UserAgent: Xfer server subscription terminated");
     }
 }
 
