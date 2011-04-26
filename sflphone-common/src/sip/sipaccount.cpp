@@ -1297,7 +1297,6 @@ std::string SIPAccount::getToUri (const std::string& username)
     std::string hostname = "";
 
     // UDP does not require the transport specification
-
     if (_transportType == PJSIP_TRANSPORT_TLS) {
         scheme = "sips:";
         transport = ";transport=" + std::string (pjsip_transport_get_type_name (_transportType));

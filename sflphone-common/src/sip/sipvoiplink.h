@@ -306,13 +306,6 @@ class SIPVoIPLink : public VoIPLink
          */
         void SIPHandleReinvite (SIPCall *call);
 
-        /**
-         * Send a reINVITE inside an active dialog to modify its state
-         * Local SDP session should be modified before calling this method
-         * @param sip call
-         */
-        int SIPSessionReinvite (SIPCall *call);
-
         pj_caching_pool *getMemoryPoolFactory();
 
         /**

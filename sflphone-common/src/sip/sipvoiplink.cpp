@@ -254,15 +254,22 @@ pj_bool_t transaction_request_cb (pjsip_rx_data *rdata);
 pj_bool_t transaction_response_cb (pjsip_rx_data *rdata UNUSED) ;
 
 /**
-    * Send an ACK message inside a transaction. PJSIP send automatically, non-2xx ACK response.
-    * ACK for a 2xx response must be send using this method.
-    */
+ * Send an ACK message inside a transaction. PJSIP send automatically, non-2xx ACK response.
+ * ACK for a 2xx response must be send using this method.
+ */
 static void sendAck (pjsip_dialog *dlg, pjsip_rx_data *rdata);
+
+/**
+ * Send a reINVITE inside an active dialog to modify its state
+ * Local SDP session should be modified before calling this method
+ * @param sip call
+ */
+int SIPSessionReinvite(SIPCall *);
 
 /*
  * Transfer callbacks
  */
-void transfer_function_cb (pjsip_evsub *sub, pjsip_event *event);
+void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event);
 void transfer_server_cb (pjsip_evsub *sub, pjsip_event *event);
 
 /**
@@ -643,17 +650,16 @@ Call *SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) 
     pj_status_t status;
     std::string localAddr, addrSdp;
 
-    _debug ("UserAgent: New outgoing call %s to %s", id.c_str(), toUrl.c_str());
+    // _error ("UserAgent: pool capacity %d", pj_pool_get_capacity (_pool));
+    // _error ("UserAgent: pool size %d", pj_pool_get_used_size (_pool));
 
-    _error ("UserAgent: pool capacity %d", pj_pool_get_capacity (_pool));
-    _error ("UserAgent: pool size %d", pj_pool_get_used_size (_pool));
-
+    // Create a new SIP call
     SIPCall* call = new SIPCall (id, Call::Outgoing, _cp);
     if(call == NULL) {
-    	return NULL;
+    	throw VoipLinkException("Could not create new SIP call");
     }
 
-
+    // Find the account associated to this call
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (Manager::instance().getAccountFromCall (id)));
     if (account == NULL) {
     	_error ("UserAgent: Error: Could not retrieving account to make call with");
@@ -661,32 +667,47 @@ Call *SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) 
     	call->setState (Call::Error);
     	delete call;
     	call = NULL;
-    	return call;
+    	// TODO: We should investigate how we could get rid of this error and create a IP2IP call instead
+    	throw VoipLinkException("Could not get account for this call");
     }
 
-    std::string toUri = account->getToUri (toUrl);
+    // If toUri is not a well formated sip URI, use account information to process it
+    std::string toUri;
+    if((toUrl.find("sip:") != std::string::npos) ||
+    		toUrl.find("sips:") != std::string::npos) {
+    	toUri = toUrl;
+    }
+    else {
+        toUri = account->getToUri (toUrl);
+    }
     call->setPeerNumber (toUri);
+    _debug ("UserAgent: New outgoing call %s to %s", id.c_str(), toUri.c_str());
 
     localAddr = getInterfaceAddrFromName (account->getLocalInterface ());
+    _debug ("UserAgent: Local address for thi call: %s", localAddr.c_str());
 
-    _debug ("UserAgent: Local address for call: %s", localAddr.c_str());
-
-    if (localAddr == "0.0.0.0")
+    if (localAddr == "0.0.0.0") {
     	loadSIPLocalIP (&localAddr);
+    }
 
     setCallAudioLocal (call, localAddr);
 
     // May use the published address as well
     account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = getInterfaceAddrFromName (account->getLocalInterface ());
 
-    if (addrSdp == "0.0.0.0")
+    if (addrSdp == "0.0.0.0") {
 				loadSIPLocalIP (&addrSdp);
+    }
 
+    // Initialize the session using ULAW as default codec in case of early media
+    // The session should be ready to receive media once the first INVITE is sent, before
+    // the session initialization is completed
     sfl::Codec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (PAYLOAD_CODEC_ULAW);
-
     if (audiocodec == NULL) {
     	_error ("UserAgent: Could not instantiate codec");
-    	throw VoipLinkException ("Could not instantiate codec");
+    	delete call;
+    	call = NULL;
+    	throw VoipLinkException ("Could not instantiate codec for early media");
     }
 
 	try {
@@ -697,22 +718,19 @@ Call *SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) 
 		_info ("UserAgent: Start audio rtp session");
 		call->getAudioRtp()->start (static_cast<AudioCodec *>(audiocodec));
 	} catch (...) {
-		_error ("UserAgent: Error: Failed to create rtp thread from newOutGoingCall");
+		throw VoipLinkException ("Could start rtp session for early media");
 	}
 
 	// init file name according to peer phone number
 	call->initRecFileName (toUrl);
 
-	_debug ("UserAgent: Try to make a call to: %s with call ID: %s", toUrl.data(), id.data());
-
 	// Building the local SDP offer
 	call->getLocalSDP()->setLocalIP (addrSdp);
 	status = call->getLocalSDP()->createOffer (account->getActiveCodecs ());
-
 	if (status != PJ_SUCCESS) {
 		delete call;
 		call = NULL;
-		return call;
+		throw VoipLinkException ("Could not create local sdp offer for new call");
 	}
 
 	if (SIPOutgoingInvite (call)) {
@@ -722,9 +740,10 @@ Call *SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) 
 	} else {
 		delete call;
 		call = NULL;
+		throw VoipLinkException("Could not send outgoing INVITE request for new call");
 	}
 
-    return call;
+	return call;
 }
 
 bool
@@ -1042,12 +1061,14 @@ SIPVoIPLink::sendTextMessage (sfl::InstantMessaging *module, const std::string& 
     return status;
 }
 
-int SIPVoIPLink::SIPSessionReinvite (SIPCall *call)
+int SIPSessionReinvite (SIPCall *call)
 {
 
     pj_status_t status;
     pjsip_tx_data *tdata;
     pjmedia_sdp_session *local_sdp;
+
+    _debug("UserAgent: Sending re-INVITE request");
 
     if (call == NULL) {
         _error ("UserAgent: Error: Call is NULL in session reinvite");
@@ -1086,18 +1107,17 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
     pj_status_t status;
 
     SIPCall *call = getSIPCall (id);
+    if (!call) {
+        _error ("UserAgent: Error: Call doesn't exist");
+        return false;
+    }
+
     call->stopRecording();
 
     AccountID account_id = Manager::instance().getAccountFromCall (id);
     SIPAccount *account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
-
     if (!account) {
         _error ("UserAgent: Error: Transfer account is null. Returning.");
-        return false;
-    }
-
-    if (!call) {
-        _error ("UserAgent: Error: Call doesn't exist");
         return false;
     }
 
@@ -1114,7 +1134,7 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
 
     /* Create xfer client subscription. */
     pj_bzero (&xfer_cb, sizeof (xfer_cb));
-    xfer_cb.on_evsub_state = &transfer_function_cb;
+    xfer_cb.on_evsub_state = &transfer_client_cb;
 
     status = pjsip_xfer_create_uac (call->getInvSession()->dlg, &xfer_cb, &sub);
 
@@ -1206,7 +1226,7 @@ bool SIPVoIPLink::attendedTransfer(const CallID& transferId, const CallID& targe
 
     /* Create xfer client subscription. */
     pj_bzero (&xfer_cb, sizeof (xfer_cb));
-    xfer_cb.on_evsub_state = &transfer_function_cb;
+    xfer_cb.on_evsub_state = &transfer_client_cb;
 
     status = pjsip_xfer_create_uac (transferCall->getInvSession()->dlg, &xfer_cb, &sub);
 
@@ -1509,9 +1529,11 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
         return false;
     }
 
+
     // Creates URI
     std::string fromUri = account->getFromUri();
     std::string toUri = call->getPeerNumber(); // expecting a fully well formed sip uri
+    _debug("------------------------------------------ toUri: %s", toUri.c_str());
 
     std::string address = findLocalAddressFromUri (toUri, account->getAccountTransport ());
     int port = findLocalPortFromUri (toUri, account->getAccountTransport ());
@@ -1751,7 +1773,10 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const CallID& id, const std::string& to)
 
         // Building the local SDP offer
         call->getLocalSDP()->setLocalIP (addrSdp);
-        call->getLocalSDP()->createOffer (account->getActiveCodecs ());
+        status = call->getLocalSDP()->createOffer (account->getActiveCodecs ());
+        if(status != PJ_SUCCESS) {
+        	_error("UserAgent: Failed to create local offer\n");
+        }
 
         // Init TLS transport if enabled
         if (account->isTlsEnabled()) {
@@ -3166,6 +3191,8 @@ void invite_session_state_changed_cb (pjsip_inv_session *inv, pjsip_event *e)
             pjsip_tx_data *tdata;
             pj_status_t status;
 
+            _debug(" ----------------------------------------------------------- Xfer NOTIFY!!!!!!\n");
+
             status = pjsip_xfer_notify (call->getXferSub(), ev_state, st_code, NULL, &tdata);
 
             if (status != PJ_SUCCESS) {
@@ -3492,6 +3519,7 @@ void transaction_state_changed_cb (pjsip_inv_session *inv UNUSED, pjsip_transact
     if (tsx->role==PJSIP_ROLE_UAS && tsx->state==PJSIP_TSX_STATE_TRYING &&
         pjsip_method_cmp (&tsx->method, &pjsip_refer_method) ==0) {
         /** Handle the refer method **/
+    	_debug("-------------------------------------------------------------- Handle REFER method");
         onCallTransfered (inv, e->body.tsx_state.src.rdata);
 
     } else if (tsx->role==PJSIP_ROLE_UAS && tsx->state==PJSIP_TSX_STATE_TRYING) {
@@ -3717,6 +3745,8 @@ transaction_request_cb (pjsip_rx_data *rdata)
     SIPCall* call;
     pjsip_inv_session *inv;
     pjmedia_sdp_session *r_sdp;
+
+    _debug("------------------------------------------------------------------- Transaction Request\n");
 
     _info ("UserAgent: Transaction REQUEST received using transport: %s %s (refcnt=%d)",
     						rdata->tp_info.transport->obj_name,
@@ -3970,7 +4000,15 @@ transaction_request_cb (pjsip_rx_data *rdata)
 
 
     status = call->getLocalSDP()->recieveOffer (r_sdp, account->getActiveCodecs ());
+    if (status!=PJ_SUCCESS) {
+        delete call;
+        call = NULL;
+        _warn ("UserAgent: fail in receiving initial offer");
+        pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, NULL, NULL, NULL);
+        return false;
+    }
 
+    // Init default codec for early media session
     sfl::Codec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (PAYLOAD_CODEC_ULAW);
 
     // Init audio rtp session
@@ -3981,14 +4019,6 @@ transaction_request_cb (pjsip_rx_data *rdata)
         _warn ("UserAgent: Error: Failed to create rtp thread from answer");
     }
 
-    if (status!=PJ_SUCCESS) {
-        delete call;
-        call = NULL;
-        _warn ("UserAgent: fail in receiving initial offer");
-        pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
-        NULL, NULL, NULL);
-        return false;
-    }
 
     /* Create the local dialog (UAS) */
     status = pjsip_dlg_create_uas (pjsip_ua_instance(), rdata, NULL, &dialog);
@@ -4081,6 +4111,8 @@ transaction_request_cb (pjsip_rx_data *rdata)
 
 pj_bool_t transaction_response_cb (pjsip_rx_data *rdata)
 {
+	_debug("----------------------------------------------------------- Transaction response");
+
     _info ("UserAgent: Transaction response using transport: %s %s (refcnt=%d)",
     rdata->tp_info.transport->obj_name,
     rdata->tp_info.transport->info,
@@ -4125,7 +4157,7 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
 
     pj_status_t status;
     pjsip_tx_data *tdata;
-    SIPCall *existing_call;
+    SIPCall *currentCall;
     const pj_str_t str_refer_to = { (char*) "Refer-To", 8};
     const pj_str_t str_refer_sub = { (char*) "Refer-Sub", 9 };
     const pj_str_t str_ref_by = { (char*) "Referred-By", 11 };
@@ -4134,16 +4166,21 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
     pjsip_hdr *ref_by_hdr;
     pj_bool_t no_refer_sub = PJ_FALSE;
     char *uri;
-    std::string tmp;
+    std::string sipUri;
     pjsip_status_code code;
     pjsip_evsub *sub;
 
-    existing_call = (SIPCall *) inv->mod_data[_mod_ua.id];
+    _debug("----------------------------------------------------------- On Call Transfered called\n");
+
+    currentCall = (SIPCall *) inv->mod_data[_mod_ua.id];
+    if (currentCall == NULL) {
+        _debug ("UserAgent: Call doesn't exist (%s, %s)", __FILE__, __LINE__);
+        return;
+    }
 
     /* Find the Refer-To header */
     refer_to = (pjsip_generic_string_hdr*)
     pjsip_msg_find_hdr_by_name (rdata->msg_info.msg, &str_refer_to, NULL);
-
     if (refer_to == NULL) {
         /* Invalid Request.
          * No Refer-To header!
@@ -4156,7 +4193,6 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
     /* Find optional Refer-Sub header */
     refer_sub = (pjsip_generic_string_hdr*)
     pjsip_msg_find_hdr_by_name (rdata->msg_info.msg, &str_refer_sub, NULL);
-
     if (refer_sub) {
         if (!pj_strnicmp2 (&refer_sub->hvalue, "true", 4) ==0)
             no_refer_sub = PJ_TRUE;
@@ -4172,10 +4208,10 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
     code = PJSIP_SC_ACCEPTED;
 
     _debug ("UserAgent: Call to %.*s is being transfered to %.*s",
-    (int) inv->dlg->remote.info_str.slen,
-    inv->dlg->remote.info_str.ptr,
-    (int) refer_to->hvalue.slen,
-    refer_to->hvalue.ptr);
+    				(int) inv->dlg->remote.info_str.slen,
+    				inv->dlg->remote.info_str.ptr,
+    				(int) refer_to->hvalue.slen,
+    				refer_to->hvalue.ptr);
 
     if (no_refer_sub) {
         /*
@@ -4189,7 +4225,7 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
         &tdata);
 
         if (status != PJ_SUCCESS) {
-            _debug ("UserAgent: Unable to create 2xx response to REFER -- %d", status);
+            _debug ("UserAgent: Unable to create 2xx response to REFER reques -- %d", status);
             return;
         }
 
@@ -4206,7 +4242,7 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
         tdata);
 
         if (status != PJ_SUCCESS) {
-            _debug ("UserAgent: Unable to create 2xx response to REFER -- %d", status);
+            _debug ("UserAgent: Unable to create 2xx response to REFER request -- %d", status);
             return;
         }
 
@@ -4222,7 +4258,7 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
         pj_bzero (&xfer_cb, sizeof (xfer_cb));
         xfer_cb.on_evsub_state = &transfer_server_cb;
 
-        /* Init addiTHIS_FILE, THIS_FILE, tional header list to be sent with REFER response */
+        /* Init addional header list to be sent with REFER response */
         pj_list_init (&hdr_list);
 
         /* Create transferee event subscription */
@@ -4280,18 +4316,17 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
     uri[refer_to->hvalue.slen] = '\0';
 
     /* Now make the outgoing call. */
-    tmp = std::string (uri);
+    sipUri = std::string (uri);
 
-    if (existing_call == NULL) {
-        _debug ("UserAgent: Call doesn't exist!");
-        return;
-    }
-
-    AccountID accId = Manager::instance().getAccountFromCall (existing_call->getCallId());
+    CallID currentCallId = currentCall->getCallId();
+    AccountID accId = Manager::instance().getAccountFromCall (currentCallId);
 
     CallID newCallId = Manager::instance().getNewCallID();
 
-    if (!Manager::instance().outgoingCall (accId, newCallId, tmp)) {
+    // Hangup currently transfered call
+    // Manager::instance().hangupCall(currentCallId);
+
+    if (!Manager::instance().outgoingCall (accId, newCallId, sipUri)) {
 
         /* Notify xferer about the error (if we have subscription) */
         if (sub) {
@@ -4314,9 +4349,13 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
         return;
     }
 
-    SIPCall* newCall = 0;
+    SIPCall* newCall = NULL;
 
     SIPVoIPLink *link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
+    if(link == NULL) {
+    	_debug("UserAgent: Error could not retreive voip link from call");
+    	return;
+    }
 
     if (link) {
         newCall = dynamic_cast<SIPCall *> (link->getCall (newCallId));
@@ -4335,14 +4374,13 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
         newCall->setXferSub (sub);
 
         /* Put the invite_data in the subscription. */
-        pjsip_evsub_set_mod_data (sub, _mod_ua.id,
-        newCall);
+        pjsip_evsub_set_mod_data (sub, _mod_ua.id, newCall);
     }
 }
 
 
 
-void transfer_function_cb (pjsip_evsub *sub, pjsip_event *event)
+void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
 {
 
 
@@ -4362,7 +4400,7 @@ void transfer_function_cb (pjsip_evsub *sub, pjsip_event *event)
      * On incoming NOTIFY, notify application about call transfer progress.
      */
     else if (pjsip_evsub_get_state (sub) == PJSIP_EVSUB_STATE_ACTIVE ||
-    pjsip_evsub_get_state (sub) == PJSIP_EVSUB_STATE_TERMINATED) {
+    		pjsip_evsub_get_state (sub) == PJSIP_EVSUB_STATE_TERMINATED) {
 
         pjsip_msg *msg;
         pjsip_msg_body *body;
@@ -4435,12 +4473,10 @@ void transfer_function_cb (pjsip_evsub *sub, pjsip_event *event)
         std::map<std::string, CallID>::iterator it = transferCallID.find (transferID);
         CallID cid = it->second;
         SIPCall *call = dynamic_cast<SIPCall *> (link->getCall (cid));
-
         if (!call) {
             _warn ("UserAgent:  Call with id %s doesn't exit!", cid.c_str());
             return;
         }
-
 
         /* Notify application */
         is_last = (pjsip_evsub_get_state (sub) ==PJSIP_EVSUB_STATE_TERMINATED);
@@ -4489,14 +4525,41 @@ void transfer_server_cb (pjsip_evsub *sub, pjsip_event *event)
      * When subscription is terminated, clear the xfer_sub member of
      * the inv_data.
      */
+    switch (pjsip_evsub_get_state (sub)) {
+	case PJSIP_EVSUB_STATE_NULL:
+		_debug("--------------------------------------------- Transfer server cb PJSIP_EVSUB_STATE_NULL\n");
+		break;
+	case PJSIP_EVSUB_STATE_SENT:
+		_debug("--------------------------------------------- Transfer server cb PJSIP_EVSUB_STATE_SENT\n");
+		break;
+	case PJSIP_EVSUB_STATE_ACCEPTED:
+		_debug("--------------------------------------------- Transfer server cb PJSIP_EVSUB_STATE_ACCEPTED\n");
+		break;
+	case PJSIP_EVSUB_STATE_PENDING:
+		_debug("--------------------------------------------- Transfer server cb PJSIP_EVSUB_STATE_PENDING\n");
+		break;
+	case PJSIP_EVSUB_STATE_ACTIVE:
+		_debug("--------------------------------------------- Transfer server cb PJSIP_EVSUB_STATE_ACTIVE\n");
+		break;
+	case PJSIP_EVSUB_STATE_TERMINATED:
+		_debug("--------------------------------------------- Transfer server cb PJSIP_EVSUB_STATE_TERMINATED\n");
+		break;
+	case PJSIP_EVSUB_STATE_UNKNOWN:
+		_debug("--------------------------------------------- Transfer server cb PJSIP_EVSUB_STATE_UNKNOWN\n");
+		break;
+	default:
+		break;
+	}
 
     if (pjsip_evsub_get_state (sub) == PJSIP_EVSUB_STATE_TERMINATED) {
         SIPCall *call;
 
         call = (SIPCall*) pjsip_evsub_get_mod_data (sub, _mod_ua.id);
 
-        if (!call)
+        if (!call) {
+        	_debug("UserAgent: Could not find subscription data");
             return;
+        }
 
         pjsip_evsub_set_mod_data (sub, _mod_ua.id, NULL);
 
