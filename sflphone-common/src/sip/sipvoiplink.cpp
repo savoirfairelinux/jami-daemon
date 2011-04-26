@@ -4509,9 +4509,9 @@ void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
                     _debug ("UserAgent: Fail to send end session msg!");
             }
 
-            // link->transferStep2 (call);
-
             cont = PJ_FALSE;
+
+            Manager::instance().hangupCall(call->getCallId());
         }
 
         if (!cont) {
@@ -4573,7 +4573,7 @@ void transfer_server_cb (pjsip_evsub *sub, pjsip_event *event)
 
         call->setXferSub (NULL);
 
-        Manager::instance().hangupCall(call->getCallId());
+        // Manager::instance().hangupCall(call->getCallId());
 
         _error ("UserAgent: Xfer server subscription terminated");
     }
