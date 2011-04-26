@@ -4221,98 +4221,98 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
     				(int) refer_to->hvalue.slen,
     				refer_to->hvalue.ptr);
 
-    if (no_refer_sub) {
-        /*
-         * Always answer with 2xx.
-         */
-        pjsip_tx_data *tdata;
-        const pj_str_t str_false = { (char*) "false", 5};
-        pjsip_hdr *hdr;
-
-        status = pjsip_dlg_create_response (inv->dlg, rdata, code, NULL,
-        &tdata);
-
-        if (status != PJ_SUCCESS) {
-            _debug ("UserAgent: Unable to create 2xx response to REFER reques -- %d", status);
-            return;
-        }
-
-        /* Add Refer-Sub header */
-        hdr = (pjsip_hdr*)
-        pjsip_generic_string_hdr_create (tdata->pool, &str_refer_sub,
-        &str_false);
-
-        pjsip_msg_add_hdr (tdata->msg, hdr);
-
-
-        /* Send answer */
-        status = pjsip_dlg_send_response (inv->dlg, pjsip_rdata_get_tsx (rdata),
-        tdata);
-
-        if (status != PJ_SUCCESS) {
-            _debug ("UserAgent: Unable to create 2xx response to REFER request -- %d", status);
-            return;
-        }
-
-        /* Don't have subscription */
-        sub = NULL;
-
-    } else {
-
-        struct pjsip_evsub_user xfer_cb;
-        pjsip_hdr hdr_list;
-
-        /* Init callback */
-        pj_bzero (&xfer_cb, sizeof (xfer_cb));
-        xfer_cb.on_evsub_state = &transfer_server_cb;
-
-        /* Init addional header list to be sent with REFER response */
-        pj_list_init (&hdr_list);
-
-        /* Create transferee event subscription */
-        status = pjsip_xfer_create_uas (inv->dlg, &xfer_cb, rdata, &sub);
-
-        if (status != PJ_SUCCESS) {
-            _debug ("UserAgent: Unable to create xfer uas -- %d", status);
-            pjsip_dlg_respond (inv->dlg, rdata, 500, NULL, NULL, NULL);
-            return;
-        }
-
-        /* If there's Refer-Sub header and the value is "true", send back
-         * Refer-Sub in the response with value "true" too.
-         */
-        if (refer_sub) {
-            const pj_str_t str_true = { (char*) "true", 4 };
-            pjsip_hdr *hdr;
-
-            hdr = (pjsip_hdr*)
-            pjsip_generic_string_hdr_create (inv->dlg->pool,
-            &str_refer_sub,
-            &str_true);
-            pj_list_push_back (&hdr_list, hdr);
-
-        }
-
-        /* Accept the REFER request, send 2xx. */
-        pjsip_xfer_accept (sub, rdata, code, &hdr_list);
-
-        /* Create initial NOTIFY request */
-        status = pjsip_xfer_notify (sub, PJSIP_EVSUB_STATE_ACTIVE,
-        100, NULL, &tdata);
-
-        if (status != PJ_SUCCESS) {
-            _debug ("UserAgent: Unable to create NOTIFY to REFER -- %d", status);
-            return;
-        }
-
-        /* Send initial NOTIFY request */
-        status = pjsip_xfer_send_request (sub, tdata);
-
-        if (status != PJ_SUCCESS) {
-            _debug ("UserAgent: Unable to send NOTIFY to REFER -- %d", status);
-            return;
-        }
-    }
+//    if (no_refer_sub) {
+//        /*
+//         * Always answer with 2xx.
+//         */
+//        pjsip_tx_data *tdata;
+//        const pj_str_t str_false = { (char*) "false", 5};
+//        pjsip_hdr *hdr;
+//
+//        status = pjsip_dlg_create_response (inv->dlg, rdata, code, NULL,
+//        &tdata);
+//
+//        if (status != PJ_SUCCESS) {
+//            _debug ("UserAgent: Unable to create 2xx response to REFER reques -- %d", status);
+//            return;
+//        }
+//
+//        /* Add Refer-Sub header */
+//        hdr = (pjsip_hdr*)
+//        pjsip_generic_string_hdr_create (tdata->pool, &str_refer_sub,
+//        &str_false);
+//
+//        pjsip_msg_add_hdr (tdata->msg, hdr);
+//
+//
+//        /* Send answer */
+//        status = pjsip_dlg_send_response (inv->dlg, pjsip_rdata_get_tsx (rdata),
+//        tdata);
+//
+//        if (status != PJ_SUCCESS) {
+//            _debug ("UserAgent: Unable to create 2xx response to REFER request -- %d", status);
+//            return;
+//        }
+//
+//        /* Don't have subscription */
+//        sub = NULL;
+//
+//    } else {
+//
+//        struct pjsip_evsub_user xfer_cb;
+//        pjsip_hdr hdr_list;
+//
+//        /* Init callback */
+//        pj_bzero (&xfer_cb, sizeof (xfer_cb));
+//        xfer_cb.on_evsub_state = &transfer_server_cb;
+//
+//        /* Init addional header list to be sent with REFER response */
+//        pj_list_init (&hdr_list);
+//
+//        /* Create transferee event subscription */
+//        status = pjsip_xfer_create_uas (inv->dlg, &xfer_cb, rdata, &sub);
+//
+//        if (status != PJ_SUCCESS) {
+//            _debug ("UserAgent: Unable to create xfer uas -- %d", status);
+//            pjsip_dlg_respond (inv->dlg, rdata, 500, NULL, NULL, NULL);
+//            return;
+//        }
+//
+//        /* If there's Refer-Sub header and the value is "true", send back
+//         * Refer-Sub in the response with value "true" too.
+//         */
+//        if (refer_sub) {
+//            const pj_str_t str_true = { (char*) "true", 4 };
+//            pjsip_hdr *hdr;
+//
+//            hdr = (pjsip_hdr*)
+//            pjsip_generic_string_hdr_create (inv->dlg->pool,
+//            &str_refer_sub,
+//            &str_true);
+//            pj_list_push_back (&hdr_list, hdr);
+//
+//        }
+//
+//        /* Accept the REFER request, send 2xx. */
+//        pjsip_xfer_accept (sub, rdata, code, &hdr_list);
+//
+//        /* Create initial NOTIFY request */
+//        status = pjsip_xfer_notify (sub, PJSIP_EVSUB_STATE_TERMINATED,
+//        100, NULL, &tdata);
+//
+//        if (status != PJ_SUCCESS) {
+//            _debug ("UserAgent: Unable to create NOTIFY to REFER -- %d", status);
+//            return;
+//        }
+//
+//        /* Send initial NOTIFY request */
+//        status = pjsip_xfer_send_request (sub, tdata);
+//
+//        if (status != PJ_SUCCESS) {
+//            _debug ("UserAgent: Unable to send NOTIFY to REFER -- %d", status);
+//            return;
+//        }
+//    }
 
     /* We're cheating here.
      * We need to get a null terminated string from a pj_str_t.
@@ -4359,6 +4359,8 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
 
     SIPCall* sipCall = dynamic_cast<SIPCall *>(newCall);
 
+    Manager::instance().hangupCall(currentCall->getCallId());
+
 //    SIPVoIPLink *link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
 //    if(link == NULL) {
 //    	_debug("UserAgent: Error could not retreive voip link from call");
@@ -4374,16 +4376,16 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
 //        }
 //    }
 
-    if (sub) {
-        /* Put the server subscription in inv_data.
-         * Subsequent state changed in pjsua_inv_on_state_changed() will be
-         * reported back to the server subscription.
-         */
-        currentCall->setXferSub (sub);
-
-        /* Put the invite_data in the subscription. */
-        pjsip_evsub_set_mod_data (sub, _mod_ua.id, currentCall);
-    }
+//    if (sub) {
+//        /* Put the server subscription in inv_data.
+//         * Subsequent state changed in pjsua_inv_on_state_changed() will be
+//         * reported back to the server subscription.
+//         */
+//        currentCall->setXferSub (sub);
+//
+//        /* Put the invite_data in the subscription. */
+//        pjsip_evsub_set_mod_data (sub, _mod_ua.id, currentCall);
+//    }
 }
 
 
@@ -4427,6 +4429,7 @@ void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
         if (pjsip_evsub_get_state (sub) == PJSIP_EVSUB_STATE_TERMINATED) {
             pjsip_evsub_set_mod_data (sub, _mod_ua.id, NULL);
             _debug ("UserAgent: Xfer client subscription terminated");
+            // Manager::instance().hangupCall(call->getCallId());
 
         }
 
@@ -4511,7 +4514,7 @@ void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
 
             cont = PJ_FALSE;
 
-            Manager::instance().hangupCall(call->getCallId());
+            // Manager::instance().hangupCall(call->getCallId());
         }
 
         if (!cont) {
