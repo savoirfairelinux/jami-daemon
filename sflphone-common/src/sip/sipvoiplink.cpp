@@ -3402,11 +3402,11 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
     // Print SDP session
 	memset(buffer, 0, 1000);
 	pjmedia_sdp_print(remote_sdp, buffer, 1000);
-	_debug("SDP: Remote active SDP Session: %s\n", buffer);
+	_debug("SDP: Remote active SDP Session:\n%s", buffer);
 
 	memset(buffer, 0, 1000);
 	pjmedia_sdp_print(local_sdp, buffer, 1000);
-	_debug("SDP: Local active SDP Session: %s\n", buffer);
+	_debug("SDP: Local active SDP Session:\n%s", buffer);
 
 	// Set active SDP sessions
     sdpSession->setActiveRemoteSdpSession(remote_sdp);

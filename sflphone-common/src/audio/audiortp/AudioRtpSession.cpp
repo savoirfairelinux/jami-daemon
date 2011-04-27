@@ -180,7 +180,6 @@ void AudioRtpSession::setDestinationIpAddress (void)
 
     // Store remote ip in case we would need to forget current destination
     _remote_ip = ost::InetHostAddress (_ca->getLocalSDP()->getRemoteIP().c_str());
-
     if (!_remote_ip) {
         _warn ("AudioRtpSession: Target IP address (%s) is not correct!",
                _ca->getLocalSDP()->getRemoteIP().data());
@@ -206,8 +205,10 @@ void AudioRtpSession::updateDestinationIpAddress (void)
     // Destination address are stored in a list in ccrtp
     // This method remove the current destination entry
 
-    if (!forgetDestination (_remote_ip, _remote_port, _remote_port+1))
-        _warn ("AudioRtpSession: Could not remove previous destination");
+    if (!forgetDestination (_remote_ip, _remote_port, _remote_port+1)) {
+        _warn ("AudioRtpSession: Could not remove previous destination: %s:%d",
+        						inet_ntoa(_remote_ip.getAddress()), _remote_port);
+    }
 
     // new destination is stored in call
     // we just need to recall this method

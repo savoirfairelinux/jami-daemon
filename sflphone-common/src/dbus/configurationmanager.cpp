@@ -53,8 +53,6 @@ ConfigurationManager::ConfigurationManager (DBus::Connection& connection) :
 std::map<std::string, std::string> ConfigurationManager::getAccountDetails (
     const std::string& accountID)
 {
-
-    _debug ("ConfigurationManager: get account details %s", accountID.c_str());
     return Manager::instance().getAccountDetails (accountID);
 }
 
@@ -452,9 +450,6 @@ std::vector<std::string> ConfigurationManager::getCodecDetails (
 std::vector<std::string> ConfigurationManager::getActiveCodecList (
     const std::string& accountID)
 {
-
-    _debug ("Send active codec list for account %s", accountID.c_str ());
-
     std::vector<std::string> v;
     Account *acc;
     CodecOrder active;

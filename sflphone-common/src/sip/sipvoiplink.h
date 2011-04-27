@@ -59,7 +59,7 @@ class SIPCall;
 #define RANDOM_SIP_PORT   rand() % 64000 + 1024
 
 // To set the verbosity. From 0 (min) to 6 (max)
-#define PJ_LOG_LEVEL 6
+#define PJ_LOG_LEVEL 0
 
 class SIPVoipLinkException : public std::exception
 {

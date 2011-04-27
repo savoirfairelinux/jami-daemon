@@ -54,9 +54,12 @@ Preferences::~Preferences() {}
 void Preferences::serialize (Conf::YamlEmitter *emiter)
 {
 
-    _debug ("Preference: Serialize configuration");
+	if(emiter == NULL) {
+		_error("Preference: Error: emitter is NULL while serializing");
+		return;
+	}
 
-    Conf::MappingNode preferencemap (NULL);
+	Conf::MappingNode preferencemap (NULL);
 
     Conf::ScalarNode order (_accountOrder);
     // std::stringstream audiostr;
@@ -97,13 +100,10 @@ void Preferences::serialize (Conf::YamlEmitter *emiter)
 
 void Preferences::unserialize (Conf::MappingNode *map)
 {
-
-    _debug ("Preference: Unserialize configuration");
-
     Conf::ScalarNode *val;
 
-    if (!map) {
-        _debug ("Preference: Did not find general preferences");
+    if (map == NULL) {
+        _error ("Preference: Error: Preference map is NULL");
         return;
     }
 
@@ -204,7 +204,10 @@ VoipPreference::~VoipPreference() {}
 
 void VoipPreference::serialize (Conf::YamlEmitter *emitter)
 {
-    _debug ("VoipPreference: Serialize configuration");
+	if(emitter == NULL) {
+		_error("VoipPreference: Error: emitter is NULL while serializing");
+		return;
+	}
 
     Conf::MappingNode preferencemap (NULL);
 
@@ -228,12 +231,10 @@ void VoipPreference::serialize (Conf::YamlEmitter *emitter)
 void VoipPreference::unserialize (Conf::MappingNode *map)
 {
 
-    _debug ("VoipPreference: Unserialize configuration");
-
     Conf::ScalarNode *val = NULL;
 
     if (!map) {
-        _debug ("VoipPreference: Did not find voip preference");
+        _error ("VoipPreference: Error: Preference map is NULL");
         return;
     }
 
@@ -291,7 +292,10 @@ AddressbookPreference::~AddressbookPreference() {}
 
 void AddressbookPreference::serialize (Conf::YamlEmitter *emitter)
 {
-    _debug ("Addressbook: Serialize configuration");
+	if(emitter == NULL) {
+		_error("AddressbookPreference: Error: emitter is NULL while serializing");
+		return;
+	}
 
     Conf::MappingNode preferencemap (NULL);
 
@@ -319,12 +323,10 @@ void AddressbookPreference::serialize (Conf::YamlEmitter *emitter)
 
 void AddressbookPreference::unserialize (Conf::MappingNode *map)
 {
-    _debug ("Addressbook: Unserialize configuration");
-
     Conf::ScalarNode *val = NULL;
 
     if (!map) {
-        _debug ("Addressbook: Did not find addressbook preferences");
+        _error ("Addressbook: Error: Preference map is NULL");
         return;
     }
 
@@ -394,7 +396,10 @@ HookPreference::~HookPreference() {}
 
 void HookPreference::serialize (Conf::YamlEmitter *emitter)
 {
-    _debug ("Hook: Serialize configuration");
+	if(emitter == NULL) {
+		_error("HookPreference: Error: emitter is NULL while serializing");
+		return;
+	}
 
     Conf::MappingNode preferencemap (NULL);
 
@@ -419,10 +424,8 @@ void HookPreference::unserialize (Conf::MappingNode *map)
 {
     Conf::ScalarNode *val = NULL;
 
-    _debug ("Hook: Unserialize preference");
-
     if (!map) {
-        _debug ("Hook: Did not find hook preference");
+        _error ("Hook: Error: Preference map is NULL");
         return;
     }
 
@@ -494,7 +497,10 @@ AudioPreference::~AudioPreference() {}
 
 void AudioPreference::serialize (Conf::YamlEmitter *emitter)
 {
-    _debug ("AudioPreference: Serialize configuration");
+	if(emitter == NULL) {
+		_error("AudioPreference: Error: emitter is NULL while serializing");
+		return;
+	}
 
     Conf::MappingNode preferencemap (NULL);
     Conf::MappingNode alsapreferencemap (NULL);
@@ -557,10 +563,8 @@ void AudioPreference::serialize (Conf::YamlEmitter *emitter)
 
 void AudioPreference::unserialize (Conf::MappingNode *map)
 {
-    _debug ("AudioPreference: Unserialize configuration");
-
-    if (!map) {
-        _debug ("AudioPreference: Did not find audio preferences");
+    if (map == NULL) {
+        _error ("AudioPreference: Error: Preference map is NULL");
         return;
     }
 
@@ -709,11 +713,7 @@ std::map<std::string, std::string> ShortcutPreferences::getShortcuts()
 
 void ShortcutPreferences::setShortcuts (std::map<std::string, std::string> map_cpy)
 {
-    // std::map<std::string, int> map_cpy = shortcut;
     std::map<std::string, std::string>::iterator it;
-
-    _debug ("ShortcutPreferences: Set shortcuts");
-
 
     it = map_cpy.find (hangupShortKey);
 
@@ -759,8 +759,10 @@ void ShortcutPreferences::setShortcuts (std::map<std::string, std::string> map_c
 
 void ShortcutPreferences::serialize (Conf::YamlEmitter *emitter)
 {
-
-    _debug ("ShortcutPreference: Serialize configuration");
+	if(emitter == NULL) {
+		_error("ShortcutPreferences: Error: emitter is NULL while serializing");
+		return;
+	}
 
     Conf::MappingNode preferencemap (NULL);
 
@@ -781,10 +783,8 @@ void ShortcutPreferences::serialize (Conf::YamlEmitter *emitter)
 
 void ShortcutPreferences::unserialize (Conf::MappingNode *map)
 {
-    _debug ("ShortcutPreference: Unserialize shortcut");
-
-    if (!map) {
-        _debug ("ShortcutPreference: Could not find shortcut preferences");
+    if (map == NULL) {
+        _error ("ShortcutPreference: Error: Preference map is NULL");
         return;
     }
 

@@ -68,9 +68,7 @@ void Account::loadConfig()
 
 void Account::setRegistrationState (RegistrationState state)
 {
-
     if (state != _registrationState) {
-        _debug ("Account: set registration state");
         _registrationState = state;
 
         // Notify the client
@@ -100,8 +98,6 @@ void Account::loadDefaultCodecs()
 
 void Account::setActiveCodecs (const std::vector <std::string> &list)
 {
-    _debug ("Account: Set active codec");
-
     // first clear the previously stored codecs
     _codecOrder.clear();
 
@@ -113,7 +109,6 @@ void Account::setActiveCodecs (const std::vector <std::string> &list)
 
     while ( (unsigned int) i < size) {
         payload = std::atoi (list[i].data());
-        _info ("Account: Adding codec with RTP payload type %d", payload);
         _codecOrder.push_back ( (AudioCodecType) payload);
         i++;
     }

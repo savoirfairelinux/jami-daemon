@@ -257,6 +257,8 @@ ManagerImpl::sendRegister (const std::string& accountID , const int32_t& enable)
 
     acc->loadConfig();
 
+    Manager::instance().saveConfig();
+
     // Test on the freshly updated value
     if (acc->isEnabled()) {
         // Verify we aren't already registered, then register

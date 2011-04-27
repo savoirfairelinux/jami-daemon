@@ -300,7 +300,7 @@ int Sdp::createLocalSession (CodecOrder selectedCodecs)
 
     memset(buffer, 0, 1000);
     pjmedia_sdp_print(getLocalSdpSession(), buffer, 1000);
-    _debug("SDP: Local SDP Session: %s\n\n", buffer);
+    _debug("SDP: Local SDP Session:\n%s", buffer);
 
     // Validate the sdp session
     return pjmedia_sdp_validate (localSession);
@@ -330,8 +330,6 @@ int Sdp::createOffer (CodecOrder selectedCodecs)
 
     state = pjmedia_sdp_neg_get_state (negociator);
 
-    _debug("SDP: Negociator state %s\n", pjmedia_sdp_neg_state_str(state));
-
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
     return PJ_SUCCESS;
@@ -351,7 +349,7 @@ int Sdp::recieveOffer (const pjmedia_sdp_session* remote, CodecOrder selectedCod
 
     memset(buffer, 0, 1000);
     pjmedia_sdp_print(remote, buffer, 1000);
-    _debug("SDP: Remote SDP Session: %s\n\n", buffer);
+    _debug("SDP: Remote SDP Session:\n%s", buffer);
 
     // If called for the first time
     if(localSession == NULL) {
@@ -389,7 +387,6 @@ int Sdp::receivingAnswerAfterInitialOffer(const pjmedia_sdp_session* remote)
 	if(pjmedia_sdp_neg_get_state(negociator) != PJMEDIA_SDP_NEG_STATE_WAIT_NEGO) {
 		_warn("SDP: Session not in a valid state after receiving answer");
 	}
-	_debug("SDP: Negotiator state %s\n", pjmedia_sdp_neg_state_str(pjmedia_sdp_neg_get_state(negociator)));
 
 	return status;
 }
@@ -436,8 +433,6 @@ pj_status_t Sdp::startNegociation()
     if(status != PJ_SUCCESS) {
     	return status;
     }
-
-    _debug("SDP: Negotiator state %s\n", pjmedia_sdp_neg_state_str(pjmedia_sdp_neg_get_state(negociator)));
 
 	status = pjmedia_sdp_neg_get_active_local(negociator, &active_local);
 	if(status != PJ_SUCCESS) {

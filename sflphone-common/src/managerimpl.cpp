@@ -1521,8 +1521,6 @@ bool ManagerImpl::saveConfig (void)
                 continue;
             }
 
-            _debug ("Manager: Saving account: %s", iter->first.c_str());
-
             iter->second->serialize (emitter);
             iter++;
         }
@@ -2476,7 +2474,6 @@ std::vector<std::string> ManagerImpl::unserialize (std::string s)
 
 std::string ManagerImpl::serialize (std::vector<std::string> v)
 {
-
     unsigned int i;
     std::string res;
 
@@ -3455,8 +3452,6 @@ std::map<std::string, std::string> ManagerImpl::getAccountDetails (
     const AccountID& accountID)
 {
 
-    _debug ("Manager: get account details %s", accountID.c_str());
-
     Account * account = _accountMap[accountID];
 
     if (accountID.empty()) {
@@ -3823,8 +3818,10 @@ short ManagerImpl::loadAccountMap()
     // Conf::YamlParser *parser;
     int nbAccount = 0;
 
-    if (!_setupLoaded)
-        return 0;
+    if (!_setupLoaded) {
+    	_error("Manager: Error: Configuration file not loaded yet, could not load config");
+    	return 0;
+    }
 
     // build preferences
     preferences.unserialize ( (Conf::MappingNode *) (parser->getPreferenceSequence()));
@@ -3885,10 +3882,8 @@ short ManagerImpl::loadAccountMap()
 
         // Create a default account for specific type
         if (accountType == "SIP" && accountid != "IP2IP") {
-            _debug ("Manager: Create SIP account: %s", accountid.c_str());
             tmpAccount = AccountCreator::createAccount (AccountCreator::SIP_ACCOUNT, accountid);
         } else if (accountType == "IAX" && accountid != "IP2IP") {
-            _debug ("Manager: Create IAX account: %s", accountid.c_str());
             tmpAccount = AccountCreator::createAccount (AccountCreator::IAX_ACCOUNT, accountid);
         }
 
@@ -3903,7 +3898,6 @@ short ManagerImpl::loadAccountMap()
             }
 
             _accountMap[accountid] = tmpAccount;
-            _debug ("Manager: Loading account %s (size %d)", accountid.c_str(), _accountMap.size());
 
             tmpAccount->setVoIPLink();
             nbAccount++;
@@ -3926,12 +3920,11 @@ short ManagerImpl::loadAccountMap()
 
 void ManagerImpl::unloadAccountMap ()
 {
+    _debug ("Manager: Unload account map");
+
     AccountMap::iterator iter = _accountMap.begin();
 
     while (iter != _accountMap.end()) {
-
-        _debug ("Manager: Unloading account %s", iter->first.c_str());
-
         // Avoid removing the IP2IP account twice
         if (iter->first != "") {
             delete iter->second;
@@ -3941,9 +3934,7 @@ void ManagerImpl::unloadAccountMap ()
         iter++;
     }
 
-    _debug ("Manager: Clear account map");
     _accountMap.clear();
-    _debug ("Manager: Unload account map");
 
 
 }
@@ -3965,7 +3956,6 @@ ManagerImpl::getAccount (const AccountID& accountID)
     AccountMap::iterator iter = _accountMap.find (accountID);
 
     if (iter != _accountMap.end()) {
-        _debug ("Manager: Found account %s", iter->first.c_str());
         return iter->second;
     }
 
@@ -4093,7 +4083,6 @@ std::map<std::string, std::string> ManagerImpl::getHookSettings ()
 
 void ManagerImpl::setHookSettings (const std::map<std::string, std::string>& settings)
 {
-    _debug ("Manager: Update hook settings");
 
     hookPreference.setIax2Enabled ( (settings.find ("URLHOOK_IAX2_ENABLED")->second == "true") ? true : false);
     hookPreference.setNumberAddPrefix (settings.find ("PHONE_NUMBER_HOOK_ADD_PREFIX")->second);

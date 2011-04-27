@@ -47,9 +47,6 @@ YamlEmitter::~YamlEmitter()
 
 void YamlEmitter::open() throw(YamlEmitterException)
 {
-
-    _debug ("YamlEmiter: Open");
-
     fd = fopen (filename.c_str(), "w");
 
     if (!fd)
@@ -75,8 +72,6 @@ void YamlEmitter::open() throw(YamlEmitterException)
 
 void YamlEmitter::close() throw(YamlEmitterException)
 {
-    _debug ("YamlEmitter: Close");
-
     yaml_emitter_delete (&emitter);
 
     if (!fd)
@@ -85,10 +80,6 @@ void YamlEmitter::close() throw(YamlEmitterException)
 
     if (fclose (fd))
         throw YamlEmitterException ("Error closing file descriptor");
-
-
-    _debug ("YamlEmitter: Configuration file closed successfully");
-
 }
 
 void YamlEmitter::serializeData() throw(YamlEmitterException)

@@ -3,6 +3,7 @@
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -49,7 +50,10 @@ IAXAccount::~IAXAccount()
 
 void IAXAccount::serialize (Conf::YamlEmitter *emitter)
 {
-    _debug ("IaxAccount: serialize %s", _accountID.c_str());
+	if(emitter == NULL) {
+		_error("IAXAccount: Error: emitter is NULL in serialize");
+		return;
+	}
 
     Conf::MappingNode accountmap (NULL);
 
@@ -88,7 +92,10 @@ void IAXAccount::unserialize (Conf::MappingNode *map)
 {
     Conf::ScalarNode *val;
 
-    _debug ("IaxAccount: Unserialize");
+    if(map == NULL) {
+    	_error("IAXAccount: Error: Map is NULL in unserialize");
+    	return;
+    }
 
     val = (Conf::ScalarNode *) (map->getValue (aliasKey));
 
@@ -170,8 +177,6 @@ void IAXAccount::setAccountDetails (const std::map<std::string, std::string>& de
     std::map<std::string, std::string> map_cpy;
     std::map<std::string, std::string>::iterator iter;
 
-    _debug ("IaxAccount: Set account details: %s", _accountID.c_str());
-
     // Work on a copy
     map_cpy = details;
 
@@ -214,8 +219,6 @@ void IAXAccount::setAccountDetails (const std::map<std::string, std::string>& de
 std::map<std::string, std::string> IAXAccount::getAccountDetails()
 {
     std::map<std::string, std::string> a;
-
-    _debug ("IaxAccount: get account details  %s", _accountID.c_str());
 
     a.insert (std::pair<std::string, std::string> (ACCOUNT_ID, _accountID));
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ALIAS, getAlias()));

@@ -66,8 +66,6 @@ void Credentials::unserialize (Conf::MappingNode *map)
 
     Conf::ScalarNode *val = NULL;
 
-    _debug ("SipAccount: Unserialize credentials");
-
     val = (Conf::ScalarNode *) (map->getValue (credentialCountKey));
 
     if (val) {
@@ -124,20 +122,9 @@ SIPAccount::SIPAccount (const AccountID& accountID)
     , _zrtpHelloHash (true)
     , _zrtpNotSuppWarning (true)
 {
-
-    _debug ("Sip account constructor for account %s", accountID.c_str());
-
     _stunServerName.ptr = NULL;
     _stunServerName.slen = 0;
     _stunPort = 0;
-
-    // IP2IP settings must be loaded before singleton instanciation, cannot call it here...
-
-    // _link = SIPVoIPLink::instance ("");
-
-    /* Represents the number of SIP accounts connected the same link */
-    // dynamic_cast<SIPVoIPLink*> (_link)->incrementClients();
-
 }
 
 SIPAccount::~SIPAccount()
@@ -154,9 +141,10 @@ SIPAccount::~SIPAccount()
 
 void SIPAccount::serialize (Conf::YamlEmitter *emitter)
 {
-
-    _debug ("SipAccount: serialize %s", _accountID.c_str());
-
+	if(emitter == NULL) {
+		_error("SIPAccount: Error: emitter is NULL in serialize");
+		return;
+	}
 
     Conf::MappingNode accountmap (NULL);
     Conf::MappingNode credentialmap (NULL);
@@ -289,7 +277,9 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
     Conf::MappingNode *zrtpMap;
     Conf::MappingNode *credMap;
 
-    _debug ("SipAccount: Unserialize %s", _accountID.c_str());
+    if(map == NULL) {
+    	_error("SIPAccount: Error: map is NULL in SIPAccount");
+    }
 
     val = (Conf::ScalarNode *) (map->getValue (aliasKey));
 
@@ -634,8 +624,6 @@ void SIPAccount::setAccountDetails (const std::map<std::string, std::string>& de
     std::map<std::string, std::string> map_cpy;
     std::map<std::string, std::string>::iterator iter;
 
-    _debug ("SipAccount: set account details %s", _accountID.c_str());
-
     // Work on a copy
     map_cpy = details;
 
@@ -829,8 +817,6 @@ void SIPAccount::setAccountDetails (const std::map<std::string, std::string>& de
 
 std::map<std::string, std::string> SIPAccount::getAccountDetails()
 {
-    _debug ("SipAccount: get account details %s", _accountID.c_str());
-
     std::map<std::string, std::string> a;
 
     a.insert (std::pair<std::string, std::string> (ACCOUNT_ID, _accountID));
@@ -946,8 +932,6 @@ void SIPAccount::setVoIPLink()
 
 int SIPAccount::initCredential (void)
 {
-    _debug ("SipAccount: Init credential");
-
     bool md5HashingEnabled = false;
     int dataType = 0;
     md5HashingEnabled = Manager::instance().preferences.getMd5Hash();
@@ -1030,8 +1014,6 @@ int SIPAccount::initCredential (void)
 
 int SIPAccount::registerVoIPLink()
 {
-    _debug ("SIPAccount: Register account %s", getAccountID().c_str());
-
     if (_hostname.length() >= PJ_MAX_HOSTNAME) {
         return !SUCCESS;
     }
@@ -1071,8 +1053,6 @@ int SIPAccount::registerVoIPLink()
 
 int SIPAccount::unregisterVoIPLink()
 {
-    _debug ("SIPAccount: Unregister account %s" , getAccountID().c_str());
-
     if (_accountID == IP2IP_PROFILE) {
         return true;
     }
@@ -1117,8 +1097,6 @@ pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum (const std::string& method)
 
 void SIPAccount::initTlsConfiguration (void)
 {
-    _debug ("SipAccount: Init TLS configuration");
-
     /*
      * Initialize structure to zero
      */
