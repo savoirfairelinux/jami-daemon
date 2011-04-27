@@ -945,7 +945,6 @@ SIPVoIPLink::onhold (const CallID& id)
 
     sdpSession->removeAttributeFromLocalAudioMedia("sendrecv");
     sdpSession->removeAttributeFromLocalAudioMedia("sendonly");
-
     sdpSession->addAttributeToLocalAudioMedia("sendonly");
 
     // Create re-INVITE with new offer
@@ -1129,7 +1128,6 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
         dest = account->getToUri (to);
         pj_cstr (&pjDest, dest.c_str());
     }
-
     _info ("UserAgent: Transfering to %s", dest.c_str());
 
     /* Create xfer client subscription. */
@@ -1533,7 +1531,6 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
     // Creates URI
     std::string fromUri = account->getFromUri();
     std::string toUri = call->getPeerNumber(); // expecting a fully well formed sip uri
-    _debug("------------------------------------------ toUri: %s", toUri.c_str());
 
     std::string address = findLocalAddressFromUri (toUri, account->getAccountTransport ());
     int port = findLocalPortFromUri (toUri, account->getAccountTransport ());
@@ -3199,8 +3196,6 @@ void invite_session_state_changed_cb (pjsip_inv_session *inv, pjsip_event *e)
             pjsip_tx_data *tdata;
             pj_status_t status;
 
-            _debug(" ----------------------------------------------------------- Xfer NOTIFY!!!!!!\n");
-
             status = pjsip_xfer_notify (call->getXferSub(), ev_state, st_code, NULL, &tdata);
 
             if (status != PJ_SUCCESS) {
@@ -3527,7 +3522,6 @@ void transaction_state_changed_cb (pjsip_inv_session *inv UNUSED, pjsip_transact
     if (tsx->role==PJSIP_ROLE_UAS && tsx->state==PJSIP_TSX_STATE_TRYING &&
         pjsip_method_cmp (&tsx->method, &pjsip_refer_method) ==0) {
         /** Handle the refer method **/
-    	_debug("-------------------------------------------------------------- Handle REFER method");
         onCallTransfered (inv, e->body.tsx_state.src.rdata);
 
     } else if (tsx->role==PJSIP_ROLE_UAS && tsx->state==PJSIP_TSX_STATE_TRYING) {
@@ -3753,8 +3747,6 @@ transaction_request_cb (pjsip_rx_data *rdata)
     SIPCall* call;
     pjsip_inv_session *inv;
     pjmedia_sdp_session *r_sdp;
-
-    _debug("------------------------------------------------------------------- Transaction Request\n");
 
     _info ("UserAgent: Transaction REQUEST received using transport: %s %s (refcnt=%d)",
     						rdata->tp_info.transport->obj_name,
@@ -4119,8 +4111,6 @@ transaction_request_cb (pjsip_rx_data *rdata)
 
 pj_bool_t transaction_response_cb (pjsip_rx_data *rdata)
 {
-	_debug("----------------------------------------------------------- Transaction response");
-
     _info ("UserAgent: Transaction response using transport: %s %s (refcnt=%d)",
     rdata->tp_info.transport->obj_name,
     rdata->tp_info.transport->info,
@@ -4177,8 +4167,6 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
     std::string sipUri;
     pjsip_status_code code;
     pjsip_evsub *sub;
-
-    _debug("----------------------------------------------------------- On Call Transfered called\n");
 
     currentCall = (SIPCall *) inv->mod_data[_mod_ua.id];
     if (currentCall == NULL) {
@@ -4538,25 +4526,18 @@ void transfer_server_cb (pjsip_evsub *sub, pjsip_event *event)
      */
     switch (pjsip_evsub_get_state (sub)) {
 	case PJSIP_EVSUB_STATE_NULL:
-		_debug("--------------------------------------------- Transfer server cb PJSIP_EVSUB_STATE_NULL\n");
 		break;
 	case PJSIP_EVSUB_STATE_SENT:
-		_debug("--------------------------------------------- Transfer server cb PJSIP_EVSUB_STATE_SENT\n");
 		break;
 	case PJSIP_EVSUB_STATE_ACCEPTED:
-		_debug("--------------------------------------------- Transfer server cb PJSIP_EVSUB_STATE_ACCEPTED\n");
 		break;
 	case PJSIP_EVSUB_STATE_PENDING:
-		_debug("--------------------------------------------- Transfer server cb PJSIP_EVSUB_STATE_PENDING\n");
 		break;
 	case PJSIP_EVSUB_STATE_ACTIVE:
-		_debug("--------------------------------------------- Transfer server cb PJSIP_EVSUB_STATE_ACTIVE\n");
 		break;
 	case PJSIP_EVSUB_STATE_TERMINATED:
-		_debug("--------------------------------------------- Transfer server cb PJSIP_EVSUB_STATE_TERMINATED\n");
 		break;
 	case PJSIP_EVSUB_STATE_UNKNOWN:
-		_debug("--------------------------------------------- Transfer server cb PJSIP_EVSUB_STATE_UNKNOWN\n");
 		break;
 	default:
 		break;

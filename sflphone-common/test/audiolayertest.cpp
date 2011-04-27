@@ -45,8 +45,6 @@ void AudioLayerTest::testAudioLayerConfig()
     CPPUNIT_ASSERT( Manager::instance().audioPreference.getSmplrate() == 44100);
     CPPUNIT_ASSERT( Manager::instance().audioPreference.getFramesize() == 20);
 
-    CPPUNIT_ASSERT( Manager::instance().getAudioDriver()->getLayerType() == PULSEAUDIO);
-
     // alsa preferences
     CPPUNIT_ASSERT( Manager::instance().audioPreference.getCardin() == 0);
     CPPUNIT_ASSERT( Manager::instance().audioPreference.getCardout() == 0);
