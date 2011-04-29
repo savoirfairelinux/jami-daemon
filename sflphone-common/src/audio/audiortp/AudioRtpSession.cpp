@@ -219,20 +219,21 @@ void AudioRtpSession::sendDtmfEvent (sfl::DtmfEvent *dtmf)
 {
     _debug ("AudioRtpSession: Send Dtmf");
 
-    _timestamp += 160;
+    _timestamp += _timestampIncrement;
+    dtmf->factor++;
 
     // discard equivalent size of audio
     processDataEncode();
 
     // change Payload type for DTMF payload
-    setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) 101, 8000));
+    setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) getDtmfPayloadType(), 8000));
 
     // Set marker in case this is a new Event
     if (dtmf->newevent)
         setMark (true);
 
     // putData (_timestamp, (const unsigned char*) (& (dtmf->payload)), sizeof (ost::RTPPacket::RFC2833Payload));
-    sendImmediate (_timestamp, (const unsigned char*) (& (dtmf->payload)), sizeof (ost::RTPPacket::RFC2833Payload));
+    sendImmediate (_timestamp, (const unsigned char *) (& (dtmf->payload)), sizeof (ost::RTPPacket::RFC2833Payload));
 
     // This is no more a new event
     if (dtmf->newevent) {
@@ -244,15 +245,16 @@ void AudioRtpSession::sendDtmfEvent (sfl::DtmfEvent *dtmf)
     setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) getCodecPayloadType()));
 
     // decrease length remaining to process for this event
-    dtmf->length -= 160;
+    dtmf->length -= _timestampIncrement;
 
-    dtmf->payload.duration += 1;
+    dtmf->payload.duration++;
+
 
     // next packet is going to be the last one
-    if ( (dtmf->length - 160) < 160)
+    if ( (dtmf->length - _timestampIncrement) < _timestampIncrement)
         dtmf->payload.ebit = true;
 
-    if (dtmf->length < 160) {
+    if (dtmf->length < _timestampIncrement) {
         delete dtmf;
         getEventQueue()->pop_front();
     }

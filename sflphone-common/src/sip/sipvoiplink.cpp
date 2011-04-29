@@ -3417,6 +3417,7 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
 
     try {
         call->getAudioRtp()->updateDestinationIpAddress();
+        call->getAudioRtp()->setDtmfPayloadType(sdpSession->getTelephoneEventType());
     } catch (...) {
 
     }

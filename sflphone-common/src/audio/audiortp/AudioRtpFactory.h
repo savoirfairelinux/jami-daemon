@@ -189,6 +189,8 @@ class AudioRtpFactory
          */
         void setRemoteCryptoInfo (sfl::SdesNegotiator& nego);
 
+        void setDtmfPayloadType(unsigned int);
+
         /**
          * Send DTMF over RTP (RFC2833). The timestamp and sequence number must be
          * incremented as if it was microphone audio. This function change the payload type of the rtp session,

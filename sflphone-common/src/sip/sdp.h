@@ -199,7 +199,7 @@ class Sdp
         /**
          * Remove all media in the session media vector.
          */
-        void clean_session_media (void);
+        void cleanSessionMedia (void);
 
         /**
          * Remove all media in local media capability vector
@@ -325,6 +325,12 @@ class Sdp
             zrtpHelloHash = hash;
         }
 
+
+        unsigned int getTelephoneEventType() {
+        	return telephoneEventPayload;
+        }
+
+
         /**
          * Print internal state info
          */
@@ -405,6 +411,11 @@ class Sdp
          */
         std::vector<std::string> srtpCrypto;
 
+        /**
+         * Payload type for dtmf telephone event
+         */
+        unsigned int telephoneEventPayload;
+
         Sdp (const Sdp&); //No Copy Constructor
 
         Sdp& operator= (const Sdp&); //No Assignment Operator
@@ -417,6 +428,8 @@ class Sdp
          * @param med   The structure to receive the media section
          */
         void setMediaDescriptorLine (sdpMedia* media, pjmedia_sdp_media** p_med);
+
+        void setTelephoneEventRtpmap(pjmedia_sdp_media *med);
 
         /**
          * Build the local media capabilities for this session
@@ -504,7 +517,7 @@ class Sdp
         /*
          * Mandatory field: Media descriptions ("m=")
          */
-        void addMediaDescription();
+        void addAudioMediaDescription();
 
         /*
          * Adds a sdes attribute to the given media section.
@@ -532,8 +545,9 @@ class Sdp
 
         void setMediaTransportInfoFromRemoteSdp (const pjmedia_sdp_session *remote_sdp);
 
-        void getRemoteSdpMediaFromOffer (const pjmedia_sdp_session* remote_sdp, pjmedia_sdp_media** r_media);
+        void getRemoteSdpTelephoneEventFromOffer(const pjmedia_sdp_session *remote_sdp);
 
+        void getRemoteSdpMediaFromOffer (const pjmedia_sdp_session* remote_sdp, pjmedia_sdp_media** r_media);
 
 
 };

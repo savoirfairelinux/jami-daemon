@@ -54,6 +54,7 @@ AudioRtpRecord::AudioRtpRecord () : _audioCodec (NULL)
     , _audioProcess (NULL)
     , _noiseSuppress (NULL)
     , _callId ("")
+	, _dtmfPayloadType(101) // same as Asterisk
 {
 
 }

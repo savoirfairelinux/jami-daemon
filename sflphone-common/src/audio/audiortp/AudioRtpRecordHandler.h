@@ -72,6 +72,7 @@ class AudioRtpSessionException: public std::exception
 
 typedef struct DtmfEvent {
     ost::RTPPacket::RFC2833Payload payload;
+    int factor;
     int length;
     bool newevent;
 } DtmfEvent;
@@ -111,6 +112,7 @@ class AudioRtpRecord
         NoiseSuppress *_noiseSuppress;
         ost::Mutex audioProcessMutex;
         std::string _callId;
+       unsigned int _dtmfPayloadType;
 
 };
 
@@ -205,6 +207,14 @@ class AudioRtpRecordHandler
         * Ramp In audio data to avoid audio click from peer
         */
         bool fadeIn (SFLDataFormat *audio, int size, SFLDataFormat *factor);
+
+        void setDtmfPayloadType(unsigned int payloadType) {
+        	_audioRtpRecord._dtmfPayloadType = payloadType;
+        }
+
+        unsigned int getDtmfPayloadType(void) {
+        	return _audioRtpRecord._dtmfPayloadType;
+        }
 
         void putDtmfEvent (int digit);
 

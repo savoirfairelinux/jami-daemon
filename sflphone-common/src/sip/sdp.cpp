@@ -46,6 +46,7 @@ static const pj_str_t STR_SDP_NAME = { (char*) "sflphone", 8 };
 static const pj_str_t STR_SENDRECV = { (char*) "sendrecv", 8 };
 static const pj_str_t STR_RTPMAP = { (char*) "rtpmap", 6 };
 static const pj_str_t STR_CRYPTO = { (char*) "crypto", 6 };
+static const pj_str_t STR_TELEPHONE_EVENT = { (char*) "telephone-event", 15};
 
 
 Sdp::Sdp (pj_pool_t *pool)
@@ -63,6 +64,7 @@ Sdp::Sdp (pj_pool_t *pool)
 	, remoteAudioPort (0)
 	, zrtpHelloHash ("")
 	, srtpCrypto()
+    , telephoneEventPayload(101) // same as asterisk
 {
 }
 
@@ -130,6 +132,8 @@ void Sdp::setActiveRemoteSdpSession (const pjmedia_sdp_session *sdp)
     _debug ("SDP: Set negotiated SDP");
 
     activeRemoteSession = (pjmedia_sdp_session*) sdp;
+
+    getRemoteSdpTelephoneEventFromOffer(sdp);
 }
 
 AudioCodec* Sdp::getSessionMedia (void)
@@ -176,7 +180,6 @@ void Sdp::setMediaDescriptorLine (sdpMedia *media, pjmedia_sdp_media** p_med)
 
     // in case of sdes, media are tagged as "RTP/SAVP", RTP/AVP elsewhere
     if (srtpCrypto.empty()) {
-
         pj_strdup (memPool, &med->desc.transport, &STR_RTP_AVP);
     } else {
 
@@ -231,7 +234,27 @@ void Sdp::setMediaDescriptorLine (sdpMedia *media, pjmedia_sdp_media** p_med)
         }
     }
 
+    setTelephoneEventRtpmap(med);
+
     *p_med = med;
+}
+
+void Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media *med)
+{
+    pjmedia_sdp_attr *attr_rtpmap = NULL;
+    pjmedia_sdp_attr *attr_fmtp = NULL;
+
+    attr_rtpmap = static_cast<pjmedia_sdp_attr *>(pj_pool_zalloc(memPool, sizeof(pjmedia_sdp_attr)));
+    attr_rtpmap->name = pj_str("rtpmap");
+    attr_rtpmap->value = pj_str("101 telephone-event/8000");
+
+    med->attr[med->attr_count++] = attr_rtpmap;
+
+    attr_fmtp = static_cast<pjmedia_sdp_attr *>(pj_pool_zalloc(memPool, sizeof(pjmedia_sdp_attr)));
+    attr_fmtp->name = pj_str("fmtp");
+    attr_fmtp->value = pj_str("101 0-15");
+
+    med->attr[med->attr_count++] = attr_fmtp;
 }
 
 void Sdp::setLocalMediaCapabilities (CodecOrder selectedCodecs)
@@ -292,7 +315,7 @@ int Sdp::createLocalSession (CodecOrder selectedCodecs)
     addSessionName();
     addConnectionInfo();
     addTiming();
-    addMediaDescription();
+    addAudioMediaDescription();
 
     if (!srtpCrypto.empty()) {
         addSdesAttribute (srtpCrypto);
@@ -517,19 +540,22 @@ void Sdp::addAttributes()
 }
 
 
-void Sdp::addMediaDescription()
+void Sdp::addAudioMediaDescription()
 {
     pjmedia_sdp_media* med;
     int nb_media, i;
 
     med = PJ_POOL_ZALLOC_T (memPool, pjmedia_sdp_media);
     nb_media = getLocalMediaCap().size();
-    this->localSession->media_count = nb_media;
+    // For DTMF RTP events
+    localSession->media_count = nb_media;
 
     for (i=0; i<nb_media; i++) {
         setMediaDescriptorLine (getLocalMediaCap() [i], &med);
-        this->localSession->media[i] = med;
+        localSession->media[i] = med;
     }
+
+
 }
 
 void Sdp::addSdesAttribute (std::vector<std::string>& crypto) throw (SdpException)
@@ -618,7 +644,7 @@ std::string Sdp::mediaToString (void)
     return res.str();
 }
 
-void Sdp::clean_session_media()
+void Sdp::cleanSessionMedia()
 {
     _info ("SDP: Clean session media");
 
@@ -753,13 +779,14 @@ void Sdp::setRemoteAudioPortFromSdp (pjmedia_sdp_media *r_media)
 
 void Sdp::setMediaTransportInfoFromRemoteSdp (const pjmedia_sdp_session *remote_sdp)
 {
+    pjmedia_sdp_media *r_media;
 
     _info ("SDP: Fetching media from sdp");
 
-    if (!remote_sdp)
+    if (!remote_sdp) {
+    	_error("Sdp: Error: Remote sdp is NULL while parsing media");
         return;
-
-    pjmedia_sdp_media *r_media;
+    }
 
     getRemoteSdpMediaFromOffer (remote_sdp, &r_media);
 
@@ -771,12 +798,11 @@ void Sdp::setMediaTransportInfoFromRemoteSdp (const pjmedia_sdp_session *remote_
     setRemoteAudioPortFromSdp (r_media);
 
     setRemoteIpFromSdp (remote_sdp);
-
 }
 
 void Sdp::getRemoteSdpMediaFromOffer (const pjmedia_sdp_session* remote_sdp, pjmedia_sdp_media** r_media)
 {
-    int count, i;
+    int count;
 
     if (!remote_sdp)
         return;
@@ -784,12 +810,52 @@ void Sdp::getRemoteSdpMediaFromOffer (const pjmedia_sdp_session* remote_sdp, pjm
     count = remote_sdp->media_count;
     *r_media =  NULL;
 
-    for (i = 0; i < count; ++i) {
+
+    for (int i = 0; i < count; ++i) {
         if (pj_stricmp2 (&remote_sdp->media[i]->desc.media, "audio") == 0) {
             *r_media = remote_sdp->media[i];
             return;
         }
     }
+}
+
+void Sdp::getRemoteSdpTelephoneEventFromOffer(const pjmedia_sdp_session *remote_sdp)
+{
+	int media_count, attr_count;
+	pjmedia_sdp_media *r_media = NULL;
+	pjmedia_sdp_attr *attribute;
+	pjmedia_sdp_rtpmap *rtpmap;
+
+	if(!remote_sdp) {
+		_error("Sdp: Error: Remote sdp is NULL while parsing telephone event attribute");
+		return;
+	}
+
+	media_count = remote_sdp->media_count;
+
+	for(int i = 0; i < media_count; i++) {
+		if(pj_stricmp2(&remote_sdp->media[i]->desc.media, "audio") == 0) {
+			r_media = remote_sdp->media[i];
+			break;
+		}
+	}
+
+	if(r_media == NULL) {
+		_error("Sdp: Error: Could not found dtmf event gfrom remote sdp");
+		return;
+	}
+
+	attr_count = r_media->attr_count;
+
+	attribute = pjmedia_sdp_attr_find(attr_count, r_media->attr, &STR_TELEPHONE_EVENT, NULL);
+
+	if(attribute != NULL) {
+
+	    pjmedia_sdp_attr_to_rtpmap (memPool, attribute, &rtpmap);
+
+	    telephoneEventPayload = pj_strtoul (&rtpmap->pt);
+	}
+
 }
 
 void Sdp::getRemoteSdpCryptoFromOffer (const pjmedia_sdp_session* remote_sdp, CryptoOffer& crypto_offer)
