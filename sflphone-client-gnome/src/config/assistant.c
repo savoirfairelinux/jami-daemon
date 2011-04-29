@@ -317,7 +317,7 @@ GtkWidget* build_sfl_or_account()
 
     wiz->sflphone_org = create_vbox (GTK_ASSISTANT_PAGE_CONTENT , _ ("Account") , _ ("Please select one of the following options"));
 
-    sfl = gtk_radio_button_new_with_label (NULL, _ ("Create a free SIP/IAX2 account on sflphone.org"));
+    sfl = gtk_radio_button_new_with_label (NULL, _ ("Create a free SIP/IAX2 account on sflphone.org \n(For testing purpose only)"));
     gtk_box_pack_start (GTK_BOX (wiz->sflphone_org) , sfl , TRUE, TRUE, 0);
     cus = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (sfl), _ ("Register an existing SIP or IAX2 account"));
     gtk_box_pack_start (GTK_BOX (wiz->sflphone_org) , cus , TRUE, TRUE, 0);
