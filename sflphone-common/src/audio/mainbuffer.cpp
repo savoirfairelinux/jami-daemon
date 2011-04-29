@@ -49,11 +49,11 @@ MainBuffer::~MainBuffer()
 
 void MainBuffer::setInternalSamplingRate (int sr)
 {
-	_debug("MainBuffer: ------------------------------------- Set internal sampling rate");
+	_debug("MainBuffer: Set internal sampling rate");
 
     if (sr > _internalSamplingRate) {
 
-        _debug ("MainBuffer: ---------------------------------- Internal sampling rate changed %d", sr);
+        _debug ("MainBuffer: Internal sampling rate changed %d", sr);
 
         // This call takes the mutex
         flushAllBuffers();
@@ -467,7 +467,6 @@ int MainBuffer::availForGet (CallID call_id)
         return 0;
 
     if (callid_set->empty()) {
-        _debug ("MainBuffer: CallIDSet with ID: \"%s\" is empty!", call_id.c_str());
         return 0;
     }
 
@@ -576,7 +575,6 @@ void MainBuffer::flush (CallID call_id)
         return;
 
     if (callid_set->empty()) {
-        // _debug("CallIDSet with ID: \"%s\" is empty!", call_id.c_str());
     }
 
     if (callid_set->size() == 1) {
@@ -634,7 +632,6 @@ void MainBuffer:: syncBuffers (CallID call_id)
         return;
 
     if (callid_set->empty()) {
-        _debug ("MainBuffer: CallIDSet with ID: \"%s\" is empty!", call_id.c_str());
         return;
     }
 
