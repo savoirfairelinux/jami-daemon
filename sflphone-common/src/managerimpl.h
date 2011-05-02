@@ -212,6 +212,7 @@ class ManagerImpl
          * Functions which occur with a user's action
          * Hangup the call
          * @param id  The call identifier
+         * @return true on success
          */
         bool hangupCall (const CallID& id);
 
@@ -1330,6 +1331,14 @@ class ManagerImpl
          * @return bool True if association is removed
          */
         bool removeCallAccount (const CallID& callID);
+
+        /**
+         * Test if call is a valid call, i.e. have been created and stored in
+         * call-account map
+         * @param callID the CallID to be tested
+         * @return true if call is created and present in the call-account map
+         */
+        bool isValidCall(const CallID& callID);
 
         /**
          * Return a pointer to the  instance of the mainbuffer

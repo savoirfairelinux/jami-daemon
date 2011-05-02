@@ -400,68 +400,70 @@ bool ManagerImpl::answerCall (const CallID& call_id)
 }
 
 //THREAD=Main
-bool ManagerImpl::hangupCall (const CallID& call_id)
+bool ManagerImpl::hangupCall (const CallID& callId)
 {
-
-    _info ("Manager: Hangup call %s", call_id.c_str());
-
-    AccountID account_id;
     bool returnValue = true;
 
+    // First stop audio layer if there is no call anymore
+    int nbCalls = getCallList().size();
+    if(nbCalls <= 0) {
+        AudioLayer *audiolayer = getAudioDriver();
+
+        if(audiolayer == NULL) {
+        	_error("Manager: Error: Audio layer was not instantiated");
+        	return returnValue;
+        }
+
+        _debug ("Manager: stop audio stream, there is no call remaining", nbCalls);
+        audiolayer->stopStream();
+    }
+
+
+    if (_dbus == NULL) {
+    	_error("Manager: Error: Dbus layer have not been instantiated");
+    	return false;
+    }
+
+    if(!isValidCall(callId)) {
+    	// We may still want to tell the client to hangup this call...
+        _dbus->getCallManager()->callStateChanged (callId, "HUNGUP");
+        return returnValue;
+    }
+
+    _info ("Manager: Hangup call %s", callId.c_str());
+
     // store the current call id
-    CallID current_call_id = getCurrentCallId();
+    CallID currentCallId = getCurrentCallId();
 
     stopTone();
 
     /* Broadcast a signal over DBus */
-    _debug ("Manager: Send DBUS call state change (HUNGUP) for id %s", call_id.c_str());
+    _debug ("Manager: Send DBUS call state change (HUNGUP) for id %s", callId.c_str());
 
-    if (_dbus)
-        _dbus->getCallManager()->callStateChanged (call_id, "HUNGUP");
+    _dbus->getCallManager()->callStateChanged (callId, "HUNGUP");
 
-    if (participToConference (call_id)) {
-
-        Conference *conf = getConferenceFromCallID (call_id);
-
+    if (participToConference (callId)) {
+        Conference *conf = getConferenceFromCallID (callId);
         if (conf != NULL) {
             // remove this participant
-            removeParticipant (call_id);
-
-            processRemainingParticipant (current_call_id, conf);
+            removeParticipant (callId);
+            processRemainingParticipant (currentCallId, conf);
         }
-
     } else {
         // we are not participating to a conference, current call switched to ""
-        if (!isConference (current_call_id))
+        if (!isConference (currentCallId)) {
             switchCall ("");
+        }
     }
 
-    /* Direct IP to IP call */
-    if (getConfigFromCall (call_id) == Call::IPtoIP) {
-        returnValue = SIPVoIPLink::instance (AccountNULL)->hangup (call_id);
+    if (getConfigFromCall (callId) == Call::IPtoIP) {
+        /* Direct IP to IP call */
+        returnValue = SIPVoIPLink::instance (AccountNULL)->hangup (callId);
     }
-    /* Classic call, attached to an account */
     else {
-        account_id = getAccountFromCall (call_id);
-
-//        // Account may be NULL if call have not been sent yet
-//        if (account_id == AccountNULL) {
-//            _error ("Manager: Error: account id is NULL in hangup");
-//            returnValue = false;
-//        } else {
-            returnValue = getAccountLink (account_id)->hangup (call_id);
-            removeCallAccount (call_id);
-//        }
-    }
-
-    int nbCalls = getCallList().size();
-
-    AudioLayer *audiolayer = getAudioDriver();
-
-    // stop streams
-    if (audiolayer && (nbCalls <= 0)) {
-        _debug ("Manager: stop audio stream, ther is only %d call(s) remaining", nbCalls);
-        audiolayer->stopStream();
+    	AccountID accountId = getAccountFromCall (callId);
+        returnValue = getAccountLink (accountId)->hangup (callId);
+        removeCallAccount (callId);
     }
 
     return returnValue;
@@ -3702,6 +3704,20 @@ bool ManagerImpl::removeCallAccount (const CallID& callID)
     }
 
     return false;
+}
+
+bool ManagerImpl::isValidCall(const CallID& callID)
+{
+	ost::MutexLock m(_callAccountMapMutex);
+	CallAccountMap::iterator iter = _callAccountMap.find (callID);
+
+	if(iter != _callAccountMap.end()) {
+		return true;
+	}
+	else {
+		return false;
+	}
+
 }
 
 CallID ManagerImpl::getNewCallID ()
