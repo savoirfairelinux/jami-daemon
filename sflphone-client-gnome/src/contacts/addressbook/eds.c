@@ -66,7 +66,7 @@ GSList *books_data = NULL;
 /**
  * Size of image that will be displayed in contact list
  */
-static int pixbuf_size = 32;
+static const int pixbuf_size = 32;
 
 /**
  * Current selected addressbook's uri and uid, initialized with default
@@ -195,14 +195,17 @@ create_query (const char* s, EBookQueryTest test, AddressBook_Config *conf)
     // We could also use E_BOOK_QUERY_IS or E_BOOK_QUERY_BEGINS_WITH instead of E_BOOK_QUERY_CONTAINS
     queries[cpt++] = e_book_query_field_test (E_CONTACT_FULL_NAME, test, s);
 
-    if (conf->search_phone_home)
+    if (conf->search_phone_home) {
         queries[cpt++] = e_book_query_field_test (E_CONTACT_PHONE_HOME, test, s);
+    }
 
-    if (conf->search_phone_business)
+    if (conf->search_phone_business) {
         queries[cpt++] = e_book_query_field_test (E_CONTACT_PHONE_BUSINESS, test, s);
+    }
 
-    if (conf->search_phone_mobile)
+    if (conf->search_phone_mobile) {
         queries[cpt++] = e_book_query_field_test (E_CONTACT_PHONE_MOBILE, test, s);
+    }
 
     equery = e_book_query_or (cpt, queries, TRUE);
 
@@ -225,10 +228,9 @@ pixbuf_from_contact (EContact *contact)
         loader = gdk_pixbuf_loader_new();
 
         if (photo->type == E_CONTACT_PHOTO_TYPE_INLINED) {
-            if (gdk_pixbuf_loader_write (loader,
-                                         (guchar *) photo->data.inlined.data, photo->data.inlined.length,
-                                         NULL))
+            if (gdk_pixbuf_loader_write (loader, (guchar *) photo->data.inlined.data, photo->data.inlined.length, NULL)) {
                 pixbuf = gdk_pixbuf_loader_get_pixbuf (loader);
+            }
         }
 
         // If pixbuf has been found, check size and resize if needed
@@ -283,18 +285,20 @@ view_finish_callback (EBookView *book_view, Search_Handler_And_Data *had)
 /**
  * Callback called after a contact have been found in EDS by search_async_by_contacts.
  */
-static void
-eds_query_result_cb (EBook *book, EBookStatus status, GList *contacts, gpointer user_data)
+void
+eds_query_result_cb (EBook *book, const GError *error, GList *contacts, gpointer user_data)
 {
 
     DEBUG ("Addressbook: Search Result callback called");
 
-    if (status != E_BOOK_ERROR_OK)
-        ERROR ("Addressbook: Error: Status not OK on search callback");
+    if (error) {
+        ERROR ("Addressbook: Error: %s", error->message);
+        return;
+    }
 
     Search_Handler_And_Data *had = (Search_Handler_And_Data *) user_data;
 
-    if (!contacts) {
+    if (contacts == NULL) {
         DEBUG ("Addressbook: No contact found");
         had->search_handler (NULL, user_data);
         return;
@@ -302,47 +306,45 @@ eds_query_result_cb (EBook *book, EBookStatus status, GList *contacts, gpointer 
 
     GList *l = NULL;
 
-    if (status == E_BOOK_ERROR_OK) {
+    // make sure we have a new list of hits
+    had->hits = NULL;
 
-        // make sure we have a new list of hits
-        had->hits = NULL;
+    l = contacts;
 
-        l = contacts;
+    while (l) {
 
-        while (l) {
+        Hit *hit = g_new (Hit, 1);
 
-            Hit *hit = g_new (Hit, 1);
+        if (hit) {
 
-            if (hit) {
+            // Get the photo contact
+            hit->photo = pixbuf_from_contact (E_CONTACT (l->data));
+            fetch_information_from_contact (E_CONTACT (l->data), E_CONTACT_PHONE_BUSINESS, &hit->phone_business);
+            fetch_information_from_contact (E_CONTACT (l->data), E_CONTACT_PHONE_HOME, &hit->phone_home);
+            fetch_information_from_contact (E_CONTACT (l->data), E_CONTACT_PHONE_MOBILE, &hit->phone_mobile);
+            hit->name = g_strdup ( (char *) e_contact_get_const (E_CONTACT (l->data), E_CONTACT_NAME_OR_ORG));
 
-                // Get the photo contact
-                hit->photo = pixbuf_from_contact (E_CONTACT (l->data));
-                fetch_information_from_contact (E_CONTACT (l->data), E_CONTACT_PHONE_BUSINESS, &hit->phone_business);
-                fetch_information_from_contact (E_CONTACT (l->data), E_CONTACT_PHONE_HOME, &hit->phone_home);
-                fetch_information_from_contact (E_CONTACT (l->data), E_CONTACT_PHONE_MOBILE, &hit->phone_mobile);
-                hit->name = g_strdup ( (char *) e_contact_get_const (E_CONTACT (l->data), E_CONTACT_NAME_OR_ORG));
-
-                if (!hit->name)
-                    hit->name = "";
-
-                if (hit)
-                    had->hits = g_list_append (had->hits, hit);
-
-                had->max_results_remaining--;
-
-                if (had->max_results_remaining <= 0)
-                    break;
+            if (!hit->name) {
+                hit->name = "";
             }
 
-            l = g_list_next (l);
+            if (hit) {
+                had->hits = g_list_append (had->hits, hit);
+            }
 
+            had->max_results_remaining--;
+            if (had->max_results_remaining <= 0) {
+              break;
+            }
         }
 
-        view_finish_callback (NULL, had);
+        l = g_list_next (l);
+
     }
 
-    g_object_unref (book);
+    view_finish_callback (NULL, had);
 
+    g_object_unref (book);
 }
 
 
@@ -350,112 +352,39 @@ eds_query_result_cb (EBook *book, EBookStatus status, GList *contacts, gpointer 
 /**
  * Callback for asynchronous open of books
  */
-static void
-eds_async_open_callback (EBook *book, EBookStatus status, gpointer closure)
+void
+eds_async_open_callback (EBook *book, const GError *error, gpointer closure)
 {
-    DEBUG ("Addressbook: Open book callback");
+    DEBUG("Addressbook: Open book callback");
 
     ESource *source;
     const gchar *uri;
 
-    Search_Handler_And_Data *had = (Search_Handler_And_Data *) closure;
-
-    if (status == E_BOOK_ERROR_OK) {
-
-        if (! (source = e_book_get_source (book)))
-            DEBUG ("Addressbook: Error while getting source");
-
-        if (! (uri = e_book_get_uri (book)))
-            DEBUG ("Addressbook: Error while getting URI");
-
-        authenticate_source (book);
-
-        if (!e_book_is_opened (book)) {
-            // We must open the addressbook
-            e_book_open (book, FALSE, NULL);
-        }
-
-        if (e_book_async_get_contacts (book, had->equery, eds_query_result_cb, had))
-            ERROR ("Addressbook: Error: While querying addressbook");
-
-    } else {
-        WARN ("Addressbook: Got error when opening book");
-        gchar *state_string = NULL;
-
-        switch (status) {
-            case E_BOOK_ERROR_INVALID_ARG :
-                state_string = g_strdup ("E_BOOK_ERROR_INVALID_ARG");
-                break;
-            case E_BOOK_ERROR_BUSY :
-                state_string = g_strdup ("E_BOOK_ERROR_BUSY");
-                break;
-            case E_BOOK_ERROR_REPOSITORY_OFFLINE :
-                state_string = g_strdup ("E_BOOK_ERROR_REPOSITORY_OFFLINE");
-                break;
-            case E_BOOK_ERROR_NO_SUCH_BOOK :
-                state_string = g_strdup ("E_BOOK_ERROR_NO_SUCH_BOOK");
-                break;
-            case E_BOOK_ERROR_NO_SELF_CONTACT :
-                state_string = g_strdup ("E_BOOK_ERROR_NO_SELF_CONTACT");
-                break;
-            case E_BOOK_ERROR_SOURCE_NOT_LOADED:
-                state_string = g_strdup ("E_BOOK_ERROR_SOURCE_NOT_LOADED");
-                break;
-            case E_BOOK_ERROR_SOURCE_ALREADY_LOADED :
-                state_string = g_strdup ("E_BOOK_ERROR_SOURCE_ALREADY_LOADED");
-                break;
-            case E_BOOK_ERROR_PERMISSION_DENIED :
-                state_string = g_strdup ("E_BOOK_ERROR_PERMISSION_DENIED");
-                break;
-            case E_BOOK_ERROR_CONTACT_NOT_FOUND :
-                state_string = g_strdup ("E_BOOK_ERROR_CONTACT_NOT_FOUND");
-                break;
-            case E_BOOK_ERROR_CONTACT_ID_ALREADY_EXISTS :
-                state_string = g_strdup ("E_BOOK_ERROR_CONTACT_ID_ALREADY_EXISTS");
-                break;
-            case E_BOOK_ERROR_PROTOCOL_NOT_SUPPORTED :
-                state_string = g_strdup ("E_BOOK_ERROR_PROTOCOL_NOT_SUPPORTED");
-                break;
-            case E_BOOK_ERROR_CANCELLED :
-                state_string = g_strdup ("E_BOOK_ERROR_CANCELLED");
-                break;
-            case E_BOOK_ERROR_COULD_NOT_CANCEL :
-                state_string = g_strdup ("E_BOOK_ERROR_COULD_NOT_CANCEL");
-                break;
-            case E_BOOK_ERROR_AUTHENTICATION_FAILED :
-                state_string = g_strdup ("E_BOOK_ERROR_AUTHENTICATION_FAILED");
-                break;
-            case E_BOOK_ERROR_AUTHENTICATION_REQUIRED :
-                state_string = g_strdup ("E_BOOK_ERROR_AUTHENTICATION_REQUIRED");
-                break;
-            case E_BOOK_ERROR_TLS_NOT_AVAILABLE :
-                state_string = g_strdup ("E_BOOK_ERROR_TLS_NOT_AVAILABLE");
-                break;
-            case E_BOOK_ERROR_CORBA_EXCEPTION :
-                state_string = g_strdup ("E_BOOK_ERROR_CORBA_EXCEPTION");
-                break;
-            case E_BOOK_ERROR_NO_SUCH_SOURCE :
-                state_string = g_strdup ("E_BOOK_ERROR_NO_SUCH_SOURCE");
-                break;
-            case E_BOOK_ERROR_OFFLINE_UNAVAILABLE :
-                state_string = g_strdup ("E_BOOK_ERROR_OFFLINE_UNAVAILABLE");
-                break;
-            case E_BOOK_ERROR_OTHER_ERROR :
-                state_string = g_strdup ("E_BOOK_ERROR_OTHER_ERROR");
-                break;
-            case E_BOOK_ERROR_INVALID_SERVER_VERSION :
-                state_string = g_strdup ("E_BOOK_ERROR_INVALID_SERVER_VERSION");
-                break;
-            default:
-                break;
-
-        }
-
-        ERROR ("%s", state_string);
-
-        g_free (state_string);
+    if(error) {
+        ERROR("Addressbook: Error: %s", error->message);
+        return;
     }
 
+    Search_Handler_And_Data *had = (Search_Handler_And_Data *) closure;
+
+    if (! (source = e_book_get_source (book))) {
+        ERROR("Addressbook: Error: while getting source");
+    }
+
+    if (! (uri = e_book_get_uri (book))) {
+        ERROR("Addressbook: Error while getting URI");
+    }
+
+    authenticate_source (book);
+
+    if (!e_book_is_opened (book)) {
+        // We must open the addressbook
+        e_book_open (book, FALSE, NULL);
+    }
+
+    if (!e_book_get_contacts_async (book, had->equery, eds_query_result_cb, had)) {
+        ERROR("Addressbook: Error: While querying addressbook");
+    }
 }
 
 /**
@@ -496,18 +425,19 @@ authenticate_source (EBook *book)
     const gchar *auth_domain;
     const gchar *password = NULL;
     const gchar *component_name;
-    const gchar *user;
+    const gchar *user = NULL;
     const gchar *auth;
     GError *err = NULL;
     const gchar *uri;
     ESource *source;
-    gboolean ret;
 
-    if (! (source = e_book_get_source (book)))
+    if ((source = e_book_get_source (book)) == NULL) {
         DEBUG ("Addressbook: Error while getting source");
+    }
 
-    if (! (uri = e_book_get_uri (book)))
+    if ((uri = e_book_get_uri (book)) == NULL) {
         DEBUG ("Addressbook: Error while getting URI");
+    }
 
     auth_domain = e_source_get_property (source, "auth-domain");
 
@@ -515,7 +445,8 @@ authenticate_source (EBook *book)
 
     if (auth && !strcmp ("ldap/simple-binddn", auth)) {
         user = e_source_get_property (source, "binddn");
-    } else if (auth && !strcmp ("plain/password", auth)) {
+    }
+    else if (auth && !strcmp ("plain/password", auth)) {
         user = e_source_get_property (source, "user");
 
         if (!user) {
@@ -525,20 +456,21 @@ authenticate_source (EBook *book)
         user = e_source_get_property (source, "email_addr");
     }
 
-    if (!user)
+    if (!user) {
         user = "";
+    }
 
     if (auth) {
         component_name = auth_domain ? auth_domain : "Addressbook";
 
         password = e_passwords_get_password (component_name, uri);
 
-        ret = e_book_authenticate_user (book, user, password, auth, &err);
-
-        if (ret)
+        if (e_book_authenticate_user (book, user, password, auth, &err)) {
             DEBUG ("Addressbook: authentication successfull");
-        else
-            DEBUG ("Addressbook: authentication error");
+        }
+        else {
+            ERROR ("Addressbook: authentication error");
+        }
     }
 }
 
@@ -682,7 +614,7 @@ void
 search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler handler, gpointer user_data)
 {
     GError *err = NULL;
-    EBook *book;
+    EBook *book = NULL;
 
     DEBUG ("Addressbook: New search by contacts: %s, max_results %d", query, max_results);
 
@@ -701,32 +633,33 @@ search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler
     had->max_results_remaining = max_results;
     had->equery = create_query (query, current_test, (AddressBook_Config *) (user_data));
 
-    if (!current_uri)
+    if (!current_uri) {
         ERROR ("Addressbook: Error: Current addressbook uri not specified uri");
-
+    }
 
     DEBUG ("Addressbook: Opening addressbook: %s", current_uri);
     DEBUG ("Addressbook: Opening addressbook: %s", current_name);
 
-    // TODO: This hack is necessary as we cannot access group's base_uri of the default book
-    // see init()
 
-    if (strcmp (current_name, "Default") == 0)
+    if (strcmp (current_name, "Default") == 0) {
         book = e_book_new_default_addressbook (&err);
-    else
+    }
+    else {
         book = e_book_new_from_uri (current_uri, &err);
+    }
 
-    if (err)
+    if (err) {
         ERROR ("Addressbook: Error: Could not open new book: %s", err->message);
+    }
 
     if (book) {
         DEBUG ("Addressbook: Created empty book successfully");
 
         // Asynchronous open
-        e_book_async_open (book, TRUE, eds_async_open_callback, had);
-    } else
+        e_book_open_async (book, TRUE, eds_async_open_callback, had);
+    } else {
         ERROR ("Addressbook: Error: No book available");
-
+    }
 
 }
 
