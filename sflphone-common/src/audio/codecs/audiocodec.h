@@ -68,12 +68,12 @@ class AudioCodec : public sfl::Codec   // TODO Move into the "sfl" namespace
         /**
          * @Override
          */
-        void setParameter (const std::string& name, const std::string& value) {};
+        void setParameter (const std::string& name UNUSED, const std::string& value UNUSED) {};
 
         /**
          * @Override
          */
-        std::string getParameter (const std::string& name) {
+        std::string getParameter (const std::string& name UNUSED) {
             return "";
         };
 

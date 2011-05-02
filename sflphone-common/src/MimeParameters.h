@@ -89,14 +89,15 @@
 
 #define MIME_PARAMETER_KEEP_REMOTE MimeParameters::addParameterRemote
 
-#include "sip/Fmtp.h"
-
 #include <ccrtp/rtp.h>
 #include <algorithm>
 #include <stdexcept>
 #include <vector>
 #include <map>
 #include <errno.h>
+
+#include "global.h"
+#include "sip/Fmtp.h"
 
 namespace sfl
 {
@@ -311,8 +312,8 @@ class MimeParameters
         static void addParameterIfEqual(
         		const sfl::SdpParameter& localParam,
         		const sfl::SdpParameter& remoteParam,
-        		const sfl::Fmtp& offerer,
-        		const sfl::Fmtp& answerer,
+        		const sfl::Fmtp& offerer UNUSED,
+        		const sfl::Fmtp& answerer UNUSED,
         		sfl::Fmtp& negotiatedFmtp)
         {
         	if (localParam.getValue() == remoteParam.getValue()) {
@@ -323,8 +324,8 @@ class MimeParameters
         static void addParameterMinimum(
         		const sfl::SdpParameter& localParam,
         		const sfl::SdpParameter& remoteParam,
-        		const sfl::Fmtp& offerer,
-        		const sfl::Fmtp& answerer,
+        		const sfl::Fmtp& offerer UNUSED,
+        		const sfl::Fmtp& answerer UNUSED,
         		sfl::Fmtp& negotiatedFmtp)
         {
     		long int localValue = strtol(localParam.getValue().c_str(), NULL, 16);
@@ -342,10 +343,10 @@ class MimeParameters
         }
 
         static void addParameterRemote(
-        		const sfl::SdpParameter& localParam,
+        		const sfl::SdpParameter& localParam UNUSED,
         		const sfl::SdpParameter& remoteParam,
-        		const sfl::Fmtp& offerer,
-        		const sfl::Fmtp& answerer,
+        		const sfl::Fmtp& offerer UNUSED,
+        		const sfl::Fmtp& answerer UNUSED,
         		sfl::Fmtp& negotiatedFmtp)
         {
         	negotiatedFmtp[remoteParam.getName()] = remoteParam.getValue();
