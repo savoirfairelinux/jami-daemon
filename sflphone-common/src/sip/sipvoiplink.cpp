@@ -650,9 +650,6 @@ Call *SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) 
     pj_status_t status;
     std::string localAddr, addrSdp;
 
-    // _error ("UserAgent: pool capacity %d", pj_pool_get_capacity (_pool));
-    // _error ("UserAgent: pool size %d", pj_pool_get_used_size (_pool));
-
     // Create a new SIP call
     SIPCall* call = new SIPCall (id, Call::Outgoing, _cp);
     if(call == NULL) {
@@ -718,7 +715,7 @@ Call *SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) 
 		_info ("UserAgent: Start audio rtp session");
 		call->getAudioRtp()->start (static_cast<AudioCodec *>(audiocodec));
 	} catch (...) {
-		throw VoipLinkException ("Could start rtp session for early media");
+		throw VoipLinkException ("Could not start rtp session for early media");
 	}
 
 	// init file name according to peer phone number
@@ -756,7 +753,6 @@ SIPVoIPLink::answer (const CallID& id) throw (VoipLinkException)
     _debug ("UserAgent: Answering call %s", id.c_str());
 
     SIPCall *call = getSIPCall (id);
-
     if (call==NULL) {
         throw VoipLinkException("Call is NULL while answering");
     }
@@ -789,8 +785,15 @@ SIPVoIPLink::answer (const CallID& id) throw (VoipLinkException)
         // Terminate the call
         _debug ("UserAgent: SDP Negociation failed, terminate call %s ", call->getCallId().c_str());
 
-        if (call->getAudioRtp()) {
+        if(call->getAudioRtp()) {
+        	throw VoipLinkException("No audio rtp session for this call");
+        }
+
+        try {
             call->getAudioRtp()->stop ();
+        }
+        catch(...) {
+        	throw VoipLinkException("Could not stop rtp session");
         }
 
         removeCall (call->getCallId());
@@ -800,53 +803,59 @@ SIPVoIPLink::answer (const CallID& id) throw (VoipLinkException)
 }
 
 bool
-SIPVoIPLink::hangup (const CallID& id)
+SIPVoIPLink::hangup (const CallID& id) throw (VoipLinkException)
 {
     pj_status_t status;
     pjsip_tx_data *tdata = NULL;
 
     SIPCall* call = getSIPCall (id);
-
+    if (call == NULL) {
+        throw VoipLinkException("Call is NULL while hanging up");
+    }
 
     AccountID account_id = Manager::instance().getAccountFromCall (id);
     SIPAccount *account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
-
-    if (call == NULL) {
-        _debug ("! SIP Error: Call doesn't exist");
-        return false;
+    if(account == NULL) {
+    	throw VoipLinkException("Could not find account for this call");
     }
 
-    pjsip_inv_session *inv = call->getInvSession();
 
-    // _debug("Some tdata info: %",);
+    pjsip_inv_session *inv = call->getInvSession();
+    if(inv == NULL) {
+    	throw VoipLinkException("No invite session for this call");
+    }
+
+    // Looks for sip routes
     if (! (account->getServiceRoute().empty())) {
         pjsip_route_hdr *route_set = createRouteSet(account, inv->pool);
         pjsip_dlg_set_route_set (inv->dlg, route_set);
     }
 
     // User hangup current call. Notify peer
-    status = pjsip_inv_end_session (call->getInvSession(), 404, NULL, &tdata);
-
-    if (status != PJ_SUCCESS)
+    status = pjsip_inv_end_session (inv, 404, NULL, &tdata);
+    if (status != PJ_SUCCESS) {
         return false;
+    }
 
-
-    if (tdata == NULL)
+    if (tdata == NULL) {
         return true;
+    }
 
-    status = pjsip_inv_send_msg (call->getInvSession(), tdata);
-
+    status = pjsip_inv_send_msg (inv, tdata);
     if (status != PJ_SUCCESS)
         return false;
 
-    // Make sure the pointer is NULL in callbacks
-    call->getInvSession()->mod_data[getModId()] = NULL;
-
+    // Make sure user data is NULL in callbacks
+    inv->mod_data[getModId()] = NULL;
 
     // Release RTP thread
-    if (Manager::instance().isCurrentCall (id)) {
-        _debug ("* SIP Info: Stopping AudioRTP for hangup");
-        call->getAudioRtp()->stop();
+    try {
+        if (Manager::instance().isCurrentCall (id)) {
+            call->getAudioRtp()->stop();
+        }
+    }
+    catch(...) {
+    	throw VoipLinkException("Could not stop audio rtp session");
     }
 
     removeCall (id);
@@ -855,7 +864,7 @@ SIPVoIPLink::hangup (const CallID& id)
 }
 
 bool
-SIPVoIPLink::peerHungup (const CallID& id)
+SIPVoIPLink::peerHungup (const CallID& id) throw (VoipLinkException)
 {
     pj_status_t status;
     pjsip_tx_data *tdata = NULL;
@@ -864,15 +873,12 @@ SIPVoIPLink::peerHungup (const CallID& id)
     _info ("UserAgent: Peer hungup");
 
     call = getSIPCall (id);
-
-    if (call==0) {
-        _warn ("UserAgent: Call doesn't exist");
-        return false;
+    if (call == NULL) {
+        throw VoipLinkException("Call does not exist");
     }
 
     // User hangup current call. Notify peer
     status = pjsip_inv_end_session (call->getInvSession(), 404, NULL, &tdata);
-
     if (status != PJ_SUCCESS)
         return false;
 
@@ -884,14 +890,18 @@ SIPVoIPLink::peerHungup (const CallID& id)
     if (status != PJ_SUCCESS)
         return false;
 
-    // Make sure the pointer is NULL in callbacks
+    // Make sure user data is NULL in callbacks
     call->getInvSession()->mod_data[getModId() ] = NULL;
 
-
     // Release RTP thread
-    if (Manager::instance().isCurrentCall (id)) {
-        _debug ("UserAgent: Stopping AudioRTP for hangup");
-        call->getAudioRtp()->stop();
+    try {
+        if (Manager::instance().isCurrentCall (id)) {
+            _debug ("UserAgent: Stopping AudioRTP for hangup");
+            call->getAudioRtp()->stop();
+        }
+    }
+    catch(...) {
+    	throw VoipLinkException("Could not stop audio rtp session");
     }
 
     removeCall (id);
@@ -900,15 +910,13 @@ SIPVoIPLink::peerHungup (const CallID& id)
 }
 
 bool
-SIPVoIPLink::cancel (const CallID& id)
+SIPVoIPLink::cancel (const CallID& id) throw (VoipLinkException)
 {
     _info ("UserAgent: Cancel call %s", id.c_str());
 
     SIPCall* call = getSIPCall (id);
-
     if (!call) {
-        _warn ("UserAgent: Error: Call doesn't exist");
-        return false;
+    	throw VoipLinkException("Call does not exist");
     }
 
     removeCall (id);
@@ -918,7 +926,7 @@ SIPVoIPLink::cancel (const CallID& id)
 
 
 bool
-SIPVoIPLink::onhold (const CallID& id)
+SIPVoIPLink::onhold (const CallID& id) throw (VoipLinkException)
 {
 	Sdp *sdpSession;
     pj_status_t status;
@@ -927,24 +935,30 @@ SIPVoIPLink::onhold (const CallID& id)
     call = getSIPCall (id);
 
     if (call == NULL) {
-        _debug ("UserAgent: Error: call doesn't exist in onhold action");
-        return false;
+    	throw VoipLinkException("Could not find call");
     }
 
     // Stop sound
     call->setAudioStart (false);
     call->setState (Call::Hold);
-    call->getAudioRtp()->stop();
+
+    try {
+        call->getAudioRtp()->stop();
+    }
+    catch (...) {
+    	throw VoipLinkException("Could not stop audio rtp session");
+    }
 
     _debug ("UserAgent: Stopping RTP session for on hold action");
 
-    if ( (sdpSession = call->getLocalSDP()) == NULL) {
-        _debug ("UserAgent: Error: Unable to find local sdp");
-        return false;
+    sdpSession = call->getLocalSDP();
+    if (sdpSession == NULL) {
+    	throw VoipLinkException("Could not find sdp session");
     }
 
     sdpSession->removeAttributeFromLocalAudioMedia("sendrecv");
     sdpSession->removeAttributeFromLocalAudioMedia("sendonly");
+
     sdpSession->addAttributeToLocalAudioMedia("sendonly");
 
     // Create re-INVITE with new offer
@@ -958,7 +972,7 @@ SIPVoIPLink::onhold (const CallID& id)
 }
 
 bool
-SIPVoIPLink::offhold (const CallID& id)
+SIPVoIPLink::offhold (const CallID& id) throw (VoipLinkException)
 {
 	Sdp *sdpSession;
     pj_status_t status;
@@ -968,21 +982,20 @@ SIPVoIPLink::offhold (const CallID& id)
 
     call = getSIPCall (id);
 
-    if (call==0) {
-        _debug ("! SIP Error: Call doesn't exist");
-        return false;
+    if (call == NULL) {
+    	throw VoipLinkException("Could not find call");
     }
 
-    if ( (sdpSession = call->getLocalSDP()) == NULL) {
-        _debug ("UserAgent: Error: Unable to find local sdp");
-        return false;
+    sdpSession = call->getLocalSDP();
+    if (sdpSession == NULL) {
+    	throw VoipLinkException("Could not find sdp session");
     }
 
     // Retreive previously selected codec
     sfl::Codec *sessionMedia = sdpSession->getSessionMedia();
 
-    if (!sessionMedia) {
-        return false;
+    if (sessionMedia == NULL) {
+        throw VoipLinkException("Could not find session media");
     }
 
     // Get PayloadType for this codec
@@ -990,19 +1003,19 @@ SIPVoIPLink::offhold (const CallID& id)
 
     _debug ("UserAgent: Payload from session media %d", pl);
 
+    // Create a new instance for this codec
+    sfl::Codec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (pl);
+    if (audiocodec == NULL) {
+    	throw VoipLinkException("Could not instantiate codec");
+    }
+
     try {
-        // Create a new instance for this codec
-        sfl::Codec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (pl);
-
-        if (audiocodec == NULL)
-            _error ("UserAgent: No audiocodec found");
-
         call->getAudioRtp()->initAudioRtpConfig (call);
         call->getAudioRtp()->initAudioRtpSession (call);
         call->getAudioRtp()->start (static_cast<AudioCodec *>(audiocodec));
 
     } catch (...) {
-        _debug ("! SIP Failure: Unable to create RTP Session (%s:%d)", __FILE__, __LINE__);
+    	throw VoipLinkException("Could not create audio rtp session");
     }
 
     sdpSession->removeAttributeFromLocalAudioMedia("sendrecv");
@@ -1012,7 +1025,6 @@ SIPVoIPLink::offhold (const CallID& id)
 
     /* Create re-INVITE with new offer */
     status = SIPSessionReinvite (call);
-
     if (status != PJ_SUCCESS) {
         return false;
     }
@@ -1095,7 +1107,7 @@ int SIPSessionReinvite (SIPCall *call)
 }
 
 bool
-SIPVoIPLink::transfer (const CallID& id, const std::string& to)
+SIPVoIPLink::transfer (const CallID& id, const std::string& to) throw (VoipLinkException)
 {
 
     std::string tmp_to;
@@ -1106,28 +1118,26 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
     pj_status_t status;
 
     SIPCall *call = getSIPCall (id);
-    if (!call) {
-        _error ("UserAgent: Error: Call doesn't exist");
-        return false;
+    if (call == NULL) {
+    	throw VoipLinkException("Could not find call");
     }
 
     call->stopRecording();
 
     AccountID account_id = Manager::instance().getAccountFromCall (id);
     SIPAccount *account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
-    if (!account) {
-        _error ("UserAgent: Error: Transfer account is null. Returning.");
-        return false;
+    if (account == NULL) {
+    	throw VoipLinkException("Could not find account");
     }
 
     std::string dest;
-
     pj_str_t pjDest;
 
     if (to.find ("@") == std::string::npos) {
         dest = account->getToUri (to);
         pj_cstr (&pjDest, dest.c_str());
     }
+
     _info ("UserAgent: Transfering to %s", dest.c_str());
 
     /* Create xfer client subscription. */
@@ -1135,10 +1145,8 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
     xfer_cb.on_evsub_state = &transfer_client_cb;
 
     status = pjsip_xfer_create_uac (call->getInvSession()->dlg, &xfer_cb, &sub);
-
     if (status != PJ_SUCCESS) {
-        _warn ("UserAgent: Unable to create xfer -- %d", status);
-        return false;
+    	throw VoipLinkException("Could not create xfer request");
     }
 
     /* Associate this voiplink of call with the client subscription
@@ -1152,24 +1160,18 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
      * Create REFER request.
      */
     status = pjsip_xfer_initiate (sub, &pjDest, &tdata);
-
     if (status != PJ_SUCCESS) {
-        _error ("UserAgent: Unable to create REFER request -- %d", status);
-        return false;
+    	throw VoipLinkException("Could not create REFER request");
     }
 
     // Put SIP call id in map in order to retrieve call during transfer callback
     std::string callidtransfer (call->getInvSession()->dlg->call_id->id.ptr, call->getInvSession()->dlg->call_id->id.slen);
-    _debug ("%s", callidtransfer.c_str());
     transferCallID.insert (std::pair<std::string, CallID> (callidtransfer, call->getCallId()));
-
 
     /* Send. */
     status = pjsip_xfer_send_request (sub, tdata);
-
     if (status != PJ_SUCCESS) {
-        _error ("UserAgent: Unable to send REFER request -- %d", status);
-        return false;
+    	throw VoipLinkException("Could not send xfer request");
     }
 
     return true;
@@ -4167,7 +4169,7 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
     char *uri;
     std::string sipUri;
     pjsip_status_code code;
-    pjsip_evsub *sub;
+    pjsip_evsub *sub = NULL;
 
     currentCall = (SIPCall *) inv->mod_data[_mod_ua.id];
     if (currentCall == NULL) {
@@ -4346,9 +4348,9 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
         return;
     }
 
-    SIPCall* sipCall = dynamic_cast<SIPCall *>(newCall);
-
     Manager::instance().hangupCall(currentCall->getCallId());
+
+//    SIPCall* sipCall = dynamic_cast<SIPCall *>(newCall);
 
 //    SIPVoIPLink *link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
 //    if(link == NULL) {

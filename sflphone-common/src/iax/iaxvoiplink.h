@@ -128,7 +128,7 @@ class IAXVoIPLink : public VoIPLink
          * @return bool true on success
          *		  false otherwise
          */
-        virtual bool hangup (const CallID& id);
+        virtual bool hangup (const CallID& id) throw (VoipLinkException);
 
         /**
          * Peer Hungup a call
@@ -136,7 +136,7 @@ class IAXVoIPLink : public VoIPLink
          * @return bool true on success
          *		  false otherwise
          */
-        virtual bool peerHungup (const CallID& id);
+        virtual bool peerHungup (const CallID& id) throw (VoipLinkException);
 
         /**
          * Cancel a call
@@ -144,7 +144,7 @@ class IAXVoIPLink : public VoIPLink
          * @return bool true on success
          *		  false otherwise
          */
-        virtual bool cancel (const CallID& id UNUSED) {
+        virtual bool cancel (const CallID& id UNUSED) throw (VoipLinkException){
             return false;
         }
 
@@ -154,7 +154,7 @@ class IAXVoIPLink : public VoIPLink
          * @return bool true on success
          *		  false otherwise
          */
-        virtual bool onhold (const CallID& id);
+        virtual bool onhold (const CallID& id) throw (VoipLinkException);
 
         /**
          * Put a call off hold
@@ -162,7 +162,7 @@ class IAXVoIPLink : public VoIPLink
          * @return bool true on success
          *		  false otherwise
          */
-        virtual bool offhold (const CallID& id);
+        virtual bool offhold (const CallID& id) throw (VoipLinkException);
 
         /**
          * Transfer a call
@@ -171,7 +171,7 @@ class IAXVoIPLink : public VoIPLink
          * @return bool true on success
          *		  false otherwise
          */
-        virtual bool transfer (const CallID& id, const std::string& to);
+        virtual bool transfer (const CallID& id, const std::string& to) throw (VoipLinkException);
 
         /**
          * Perform attended transfer

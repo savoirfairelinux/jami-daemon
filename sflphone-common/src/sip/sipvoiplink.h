@@ -160,7 +160,7 @@ class SIPVoIPLink : public VoIPLink
         /**
          * Answer the call
          * @param id The call identifier
-         * @return int True on success
+         * @return True on success
          */
         virtual bool answer (const CallID& id) throw (VoipLinkException);
 
@@ -169,35 +169,35 @@ class SIPVoIPLink : public VoIPLink
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool hangup (const CallID& id);
+        virtual bool hangup (const CallID& id) throw (VoipLinkException);
 
         /**
          * Hang up the call
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool peerHungup (const CallID& id);
+        virtual bool peerHungup (const CallID& id) throw (VoipLinkException);
 
         /**
          * Cancel the call
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool cancel (const CallID& id);
+        virtual bool cancel (const CallID& id) throw (VoipLinkException);
 
         /**
          * Put the call on hold
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool onhold (const CallID& id);
+        virtual bool onhold (const CallID& id) throw (VoipLinkException);
 
         /**
          * Put the call off hold
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool offhold (const CallID& id);
+        virtual bool offhold (const CallID& id) throw (VoipLinkException);
 
         /**
          * Transfer the call
@@ -205,7 +205,7 @@ class SIPVoIPLink : public VoIPLink
          * @param to The recipient of the transfer
          * @return bool True on success
          */
-        virtual bool transfer (const CallID& id, const std::string& to);
+        virtual bool transfer (const CallID& id, const std::string& to) throw (VoipLinkException);
 
         /**
          * Attended transfer

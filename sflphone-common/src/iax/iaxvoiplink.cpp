@@ -536,25 +536,25 @@ IAXVoIPLink::answer (const CallID& id) throw (VoipLinkException)
 }
 
 bool
-IAXVoIPLink::hangup (const CallID& id)
+IAXVoIPLink::hangup (const CallID& id) throw (VoipLinkException)
 {
     _debug ("IAXVoIPLink: Hangup");
+
     IAXCall* call = getIAXCall (id);
+    if(call == NULL) {
+    	throw VoipLinkException("Could not find call");
+    }
+
     std::string reason = "Dumped Call";
     CHK_VALID_CALL;
 
     audiolayer->getMainBuffer()->unBindAll (call->getCallId());
 
     _mutexIAX.enterMutex();
-
     iax_hangup (call->getSession(), (char*) reason.c_str());
     _mutexIAX.leaveMutex();
-    call->setSession (NULL);
 
-    if (Manager::instance().isCurrentCall (id)) {
-        // stop audio
-        // audiolayer->stopStream();
-    }
+    call->setSession (NULL);
 
     removeCall (id);
     return true;
@@ -562,24 +562,21 @@ IAXVoIPLink::hangup (const CallID& id)
 
 
 bool
-IAXVoIPLink::peerHungup (const CallID& id)
+IAXVoIPLink::peerHungup (const CallID& id) throw (VoipLinkException)
 {
     _debug ("IAXVoIPLink: Peer hung up");
+
     IAXCall* call = getIAXCall (id);
+    if(call == NULL) {
+    	throw VoipLinkException("Could not find call");
+    }
+
     std::string reason = "Dumped Call";
     CHK_VALID_CALL;
 
     audiolayer->getMainBuffer()->unBindAll (call->getCallId());
 
-    _mutexIAX.enterMutex();
-
-    _mutexIAX.leaveMutex();
     call->setSession (NULL);
-
-    if (Manager::instance().isCurrentCall (id)) {
-        // stop audio
-        // audiolayer->stopStream();
-    }
 
     removeCall (id);
     return true;
@@ -588,9 +585,12 @@ IAXVoIPLink::peerHungup (const CallID& id)
 
 
 bool
-IAXVoIPLink::onhold (const CallID& id)
+IAXVoIPLink::onhold (const CallID& id) throw (VoipLinkException)
 {
     IAXCall* call = getIAXCall (id);
+    if(call == NULL) {
+    	throw VoipLinkException("Call does not exist");
+    }
 
     CHK_VALID_CALL;
 
@@ -607,7 +607,7 @@ IAXVoIPLink::onhold (const CallID& id)
 }
 
 bool
-IAXVoIPLink::offhold (const CallID& id)
+IAXVoIPLink::offhold (const CallID& id) throw (VoipLinkException)
 {
     IAXCall* call = getIAXCall (id);
 
@@ -625,7 +625,7 @@ IAXVoIPLink::offhold (const CallID& id)
 }
 
 bool
-IAXVoIPLink::transfer (const CallID& id, const std::string& to)
+IAXVoIPLink::transfer (const CallID& id, const std::string& to) throw (VoipLinkException)
 {
     IAXCall* call = getIAXCall (id);
 

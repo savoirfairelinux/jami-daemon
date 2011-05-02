@@ -141,35 +141,35 @@ class VoIPLink
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool hangup (const CallID& id) = 0;
+        virtual bool hangup (const CallID& id)  throw (VoipLinkException) = 0;
 
         /**
         * Peer Hung up a call
         * @param id The call identifier
         * @return bool True on success
         */
-        virtual bool peerHungup (const CallID& id) = 0;
+        virtual bool peerHungup (const CallID& id) throw (VoipLinkException) = 0;
 
         /**
          * Cancel the call dialing
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool cancel (const CallID& id) = 0;
+        virtual bool cancel (const CallID& id) throw (VoipLinkException) = 0;
 
         /**
          * Put a call on hold
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool onhold (const CallID& id) = 0;
+        virtual bool onhold (const CallID& id) throw (VoipLinkException) = 0;
 
         /**
          * Resume a call from hold state
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool offhold (const CallID& id) = 0;
+        virtual bool offhold (const CallID& id) throw (VoipLinkException) = 0;
 
         /**
          * Transfer a call to specified URI
@@ -177,7 +177,7 @@ class VoIPLink
          * @param to The recipient of the call
          * @return bool True on success
          */
-        virtual bool transfer (const CallID& id, const std::string& to) = 0;
+        virtual bool transfer (const CallID& id, const std::string& to) throw (VoipLinkException) = 0;
 
         /**
          * Attended transfer
