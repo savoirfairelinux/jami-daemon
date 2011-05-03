@@ -515,6 +515,8 @@ fill_books_data ()
         GSList *sources = NULL, *m;
         gchar *absuri = g_strdup (e_source_group_peek_base_uri (group));
 
+        DEBUG("ADDRESSBOOK: GROUP: %s", absuri);
+
         sources = e_source_group_peek_sources (group);
 
         for (m = sources; m != NULL; m = m->next) {
@@ -525,6 +527,9 @@ fill_books_data ()
             book_data->active = FALSE;
             book_data->name = g_strdup (e_source_peek_name (source));
             book_data->uid = g_strdup (e_source_peek_uid (source));
+
+            DEBUG("ADDRESSBOOK: NAME: %s", book_data->name);
+            DEBUG("ADDRESSBOOK: UID: %s", book_data->uid);
 
             const gchar *property_name = "default";
             const gchar *prop = e_source_get_property (source, property_name);
@@ -540,7 +545,10 @@ fill_books_data ()
                 book_data->isdefault = FALSE;
             }
 
+            DEBUG("ADDRESSBOOK: absolute: %s", absuri);
+            DEBUG("ADDRESSBOOK: relative: %s", e_source_peek_relative_uri (source));
             book_data->uri = g_strjoin ("", absuri, e_source_peek_relative_uri (source), NULL);
+            DEBUG("ADDRESSBOOK: URI: %s", book_data->uri);
 
             book_data->source = e_source_copy(source);
             // authenticate_source (book_data, source);
@@ -639,9 +647,11 @@ search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler
     DEBUG ("Addressbook: Opening addressbook: name: %s", current_name);
 
 
-    ESource *source = e_source_new_with_absolute_uri(current_name, current_uri);
+//    ESource *source = e_source_new_with_absolute_uri(current_name, current_uri);
+//
+//    book = e_book_new(source, &err);
 
-    book = e_book_new(source, &err);
+    book = e_book_new_from_uri(current_uri, &err);
 
     if (err) {
         ERROR ("Addressbook: Error: Could not open new book: %s", err->message);
