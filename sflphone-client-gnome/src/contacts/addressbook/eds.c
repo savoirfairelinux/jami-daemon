@@ -42,7 +42,7 @@
 #include <pango/pango.h>
 #include "eds.h"
 #include <addressbook-config.h>
-#include <libedataserverui/e-passwords.h>
+#include <libedataserver/e-source.h>
 
 /**
  * Structure used to store search callback and data
@@ -74,6 +74,7 @@ static const int pixbuf_size = 32;
 static gchar *current_uri = NULL;
 static gchar *current_uid = NULL;
 static gchar *current_name = "Default";
+static book_data_t *current_book = NULL;
 
 static EBookQueryTest current_test = E_BOOK_QUERY_BEGINS_WITH;
 
@@ -539,12 +540,9 @@ fill_books_data ()
                 book_data->isdefault = FALSE;
             }
 
-            if (strcmp (absuri+strlen (absuri)-1, "/") == 0)
-                book_data->uri = g_strjoin ("", absuri, e_source_peek_relative_uri (source), NULL);
-            else
-                book_data->uri = g_strjoin ("/", absuri, e_source_peek_relative_uri (source), NULL);
+            book_data->uri = g_strjoin ("", absuri, e_source_peek_relative_uri (source), NULL);
 
-
+            book_data->source = e_source_copy(source);
             // authenticate_source (book_data, source);
 
             books_data = g_slist_prepend (books_data, book_data);
@@ -637,16 +635,13 @@ search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler
         ERROR ("Addressbook: Error: Current addressbook uri not specified uri");
     }
 
-    DEBUG ("Addressbook: Opening addressbook: %s", current_uri);
-    DEBUG ("Addressbook: Opening addressbook: %s", current_name);
+    DEBUG ("Addressbook: Opening addressbook: uri: %s", current_uri);
+    DEBUG ("Addressbook: Opening addressbook: name: %s", current_name);
 
 
-    if (strcmp (current_name, "Default") == 0) {
-        book = e_book_new_default_addressbook (&err);
-    }
-    else {
-        book = e_book_new_from_uri (current_uri, &err);
-    }
+    ESource *source = e_source_new_with_absolute_uri(current_name, current_uri);
+
+    book = e_book_new(source, &err);
 
     if (err) {
         ERROR ("Addressbook: Error: Could not open new book: %s", err->message);
@@ -701,6 +696,7 @@ set_current_addressbook (const gchar *name)
             current_uri = book_data->uri;
             current_uid = book_data->uid;
             current_name = book_data->name;
+            current_book = book_data;
         }
     }
 }

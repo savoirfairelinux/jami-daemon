@@ -72,6 +72,7 @@ typedef struct {
     gchar *uid;
     gchar *uri;
     gchar *name;
+    ESource *source;
     gboolean active;
     gboolean isdefault;
 } book_data_t;
