@@ -146,12 +146,14 @@ addressbook_init()
 {
     DEBUG ("Addressbook: Initialize addressbook");
 
+    init_eds_mutex();
+
     fill_books_data();
     addressbook_config_books();
     determine_default_addressbook();
 
     // Call books initialization
-    init ();
+    init_eds();
 }
 
 /**

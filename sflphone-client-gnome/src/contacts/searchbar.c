@@ -284,11 +284,18 @@ focus_on_searchbar_in()
 void searchbar_init (calltab_t *tab)
 {
     if (g_strcasecmp (tab->_name, CONTACTS) == 0) {
-        addressbook_init();
-    } else if (g_strcasecmp (tab->_name, HISTORY) == 0) {
+    }
+    else if (g_strcasecmp (tab->_name, HISTORY) == 0) {
         history_init();
-    } else
+    }
+    else {
         ERROR ("searchbar.c - searchbar_init should not happen within this widget\n");
+    }
+}
+
+void addressbook_searchbar_update()
+{
+
 }
 
 GtkWidget* history_searchbar_new (void)
@@ -383,6 +390,7 @@ GtkWidget* contacts_searchbar_new ()
     liststore = gtk_list_store_new (1,G_TYPE_STRING);
 
     // Create combo box to select current addressbook
+    addressbook_init();
 
     GSList *book_list_iterator;
     book_data_t *book_data;

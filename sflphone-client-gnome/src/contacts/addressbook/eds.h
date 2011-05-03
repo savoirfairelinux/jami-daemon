@@ -72,7 +72,6 @@ typedef struct {
     gchar *uid;
     gchar *uri;
     gchar *name;
-    ESource *source;
     gboolean active;
     gboolean isdefault;
 } book_data_t;
@@ -101,7 +100,14 @@ typedef void
  * Connection to evolution data server
  */
 void
-init ();
+init_eds ();
+
+/**
+ * We need to initialize multi-threading capabilities
+ * due to asynchronous callbacks
+ */
+void
+init_eds_mutex(void);
 
 /**
  * Fill list of addressbooks

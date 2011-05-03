@@ -62,6 +62,7 @@ authenticate_source (EBook *);
  * The global addressbook list
  */
 GSList *books_data = NULL;
+GMutex *books_data_mutex = NULL;
 
 /**
  * Size of image that will be displayed in contact list
@@ -114,10 +115,19 @@ free_book_data (book_data_t *data)
 gboolean
 books_ready()
 {
-    if (books_data == NULL)
-        return 0;
+    gboolean returnValue;
 
-    return (g_slist_length (books_data) > 0);
+    g_mutex_lock(books_data_mutex);
+
+    if (books_data == NULL) {
+        g_mutex_unlock(books_data_mutex);
+        return FALSE;
+    }
+
+    returnValue = (g_slist_length (books_data) > 0);
+    g_mutex_unlock(books_data_mutex);
+
+    return returnValue;
 }
 
 /**
@@ -129,8 +139,11 @@ books_active()
     GSList *book_list_iterator;
     book_data_t *book_data;
 
+    g_mutex_lock(books_data_mutex);
+
     if (books_data == NULL) {
         DEBUG ("Addressbook: No books data (%s:%d)", __FILE__, __LINE__);
+        g_mutex_unlock(books_data_mutex);
         return FALSE;
     }
 
@@ -139,9 +152,13 @@ books_active()
             = book_list_iterator->next) {
         book_data = (book_data_t *) book_list_iterator->data;
 
-        if (book_data->active)
+        if (book_data->active) {
+            g_mutex_unlock(books_data_mutex);
             return TRUE;
+        }
     }
+
+    g_mutex_unlock(books_data_mutex);
 
     // If no result
     return FALSE;
@@ -155,8 +172,11 @@ books_get_book_data_by_uid (gchar *uid)
     GSList *book_list_iterator;
     book_data_t *book_data;
 
+    g_mutex_lock(books_data_mutex);
+
     if (books_data == NULL) {
         DEBUG ("Addressbook: No books data (%s:%d)", __FILE__, __LINE__);
+        g_mutex_unlock(books_data_mutex);
         return NULL;
     }
 
@@ -169,9 +189,12 @@ books_get_book_data_by_uid (gchar *uid)
 
         if (strcmp (book_data->uid, uid) == 0) {
             DEBUG ("Addressbook: Book %s found", uid);
+            g_mutex_unlock(books_data_mutex);
             return book_data;
         }
     }
+
+    g_mutex_unlock(books_data_mutex);
 
     DEBUG ("Addressbook: Could not found Book %s", uid);
     // If no result
@@ -392,19 +415,29 @@ eds_async_open_callback (EBook *book, const GError *error, gpointer closure)
  * Initialize address book
  */
 void
-init ()
+init_eds ()
 {
     GSList *book_list_iterator;
     book_data_t *book_data;
 
-    DEBUG ("Addressbook: Init default addressbook");
+    DEBUG ("Addressbook: Init evolution data server");
+
+    g_mutex_lock(books_data_mutex);
 
     if (books_data == NULL) {
         DEBUG ("Addressbook: No books data (%s:%d)", __FILE__, __LINE__);
+        g_mutex_unlock(books_data_mutex);
         return;
     }
 
-    // Iterate throw the list
+    // init current with first addressbook if no default addressbook set
+    book_list_iterator = books_data;
+    book_data = (book_data_t *) book_list_iterator->data;
+    current_uri = book_data->uri;
+    current_uid = book_data->uid;
+    current_name = book_data->name;
+
+    // Iterate through list to find default addressbook
     for (book_list_iterator = books_data; book_list_iterator != NULL;
             book_list_iterator = book_list_iterator->next) {
         book_data = (book_data_t *) book_list_iterator->data;
@@ -415,6 +448,16 @@ init ()
             current_name = book_data->name;
         }
     }
+
+    DEBUG("END EVOLUTION %s, %s, %s", current_uri, current_uid, current_name);
+
+    g_mutex_unlock(books_data_mutex);
+}
+
+void
+init_eds_mutex() {
+
+    books_data_mutex = g_mutex_new();
 }
 
 /**
@@ -490,21 +533,24 @@ fill_books_data ()
     source_list = e_source_list_new_for_gconf_default ("/apps/evolution/addressbook/sources");
 
     if (source_list == NULL) {
-        DEBUG ("Addressbook: Error could not initialize source list for addressbook (%s:%d)", __FILE__, __LINE__);
+        ERROR ("Addressbook: Error could not initialize source list for addressbook (%s:%d)", __FILE__, __LINE__);
         return;
     }
 
     list = e_source_list_peek_groups (source_list);
 
-    if (!list) {
-        DEBUG ("Addressbook: Address Book source groups are missing (%s:%d)! Check your GConf setup.", __FILE__, __LINE__);
+    if (list == NULL) {
+        ERROR ("Addressbook: Address Book source groups are missing (%s:%d)! Check your GConf setup.", __FILE__, __LINE__);
         return;
     }
+
+    g_mutex_lock(books_data_mutex);
 
     if (books_data != NULL) {
         empty_books_data();
         books_data = NULL;
     }
+
 
     // in case default property is not set for any addressbook
     default_found = FALSE;
@@ -514,8 +560,6 @@ fill_books_data ()
         ESourceGroup *group = l->data;
         GSList *sources = NULL, *m;
         gchar *absuri = g_strdup (e_source_group_peek_base_uri (group));
-
-        DEBUG("ADDRESSBOOK: GROUP: %s", absuri);
 
         sources = e_source_group_peek_sources (group);
 
@@ -527,9 +571,6 @@ fill_books_data ()
             book_data->active = FALSE;
             book_data->name = g_strdup (e_source_peek_name (source));
             book_data->uid = g_strdup (e_source_peek_uid (source));
-
-            DEBUG("ADDRESSBOOK: NAME: %s", book_data->name);
-            DEBUG("ADDRESSBOOK: UID: %s", book_data->uid);
 
             const gchar *property_name = "default";
             const gchar *prop = e_source_get_property (source, property_name);
@@ -545,12 +586,8 @@ fill_books_data ()
                 book_data->isdefault = FALSE;
             }
 
-            DEBUG("ADDRESSBOOK: absolute: %s", absuri);
-            DEBUG("ADDRESSBOOK: relative: %s", e_source_peek_relative_uri (source));
             book_data->uri = g_strjoin ("", absuri, e_source_peek_relative_uri (source), NULL);
-            DEBUG("ADDRESSBOOK: URI: %s", book_data->uri);
 
-            book_data->source = e_source_copy(source);
             // authenticate_source (book_data, source);
 
             books_data = g_slist_prepend (books_data, book_data);
@@ -560,12 +597,16 @@ fill_books_data ()
         g_free (absuri);
     }
 
+    g_mutex_unlock(books_data_mutex);
+
     g_object_unref (source_list);
 }
 
 void
 determine_default_addressbook()
 {
+    g_mutex_lock(books_data_mutex);
+
     GSList *list_element = books_data;
     gboolean default_found = FALSE;
 
@@ -592,6 +633,8 @@ determine_default_addressbook()
 
         list_element = g_slist_next (list_element);
     }
+
+    g_mutex_unlock(books_data_mutex);
 }
 
 void
@@ -646,11 +689,6 @@ search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler
     DEBUG ("Addressbook: Opening addressbook: uri: %s", current_uri);
     DEBUG ("Addressbook: Opening addressbook: name: %s", current_name);
 
-
-//    ESource *source = e_source_new_with_absolute_uri(current_name, current_uri);
-//
-//    book = e_book_new(source, &err);
-
     book = e_book_new_from_uri(current_uri, &err);
 
     if (err) {
@@ -692,8 +730,11 @@ set_current_addressbook (const gchar *name)
     GSList *book_list_iterator;
     book_data_t *book_data;
 
+    g_mutex_lock(books_data_mutex);
+
     if (!books_data) {
         DEBUG ("Addressbook: No books data (%s:%d)", __FILE__, __LINE__);
+        g_mutex_unlock(books_data_mutex);
         return;
     }
 
@@ -709,6 +750,8 @@ set_current_addressbook (const gchar *name)
             current_book = book_data;
         }
     }
+
+    g_mutex_unlock(books_data_mutex);
 }
 
 
