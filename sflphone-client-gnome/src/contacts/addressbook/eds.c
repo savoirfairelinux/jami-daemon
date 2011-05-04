@@ -23,7 +23,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
+ *e_book
  *  Additional permission under GNU GPL version 3 section 7:
  *
  *  If you modify this program, or any covered work, by linking or
@@ -43,6 +43,8 @@
 #include "eds.h"
 #include <addressbook-config.h>
 #include <libedataserver/e-source.h>
+
+// #define LIBEBOOK_VERSION_230
 
 /**
  * Structure used to store search callback and data
@@ -75,7 +77,6 @@ static const int pixbuf_size = 32;
 static gchar *current_uri = NULL;
 static gchar *current_uid = NULL;
 static gchar *current_name = "Default";
-static book_data_t *current_book = NULL;
 
 static EBookQueryTest current_test = E_BOOK_QUERY_BEGINS_WITH;
 
@@ -309,16 +310,28 @@ view_finish_callback (EBookView *book_view, Search_Handler_And_Data *had)
 /**
  * Callback called after a contact have been found in EDS by search_async_by_contacts.
  */
+#ifdef LIBEBOOK_VERSION_230
+static void
+eds_query_result_cb (EBook *book, EBookStatus status, GList *contacts, gpointer user_data)
+{
+  DEBUG ("Addressbook: Search Result callback called");
+
+  if (status != E_BOOK_ERROR_OK) {
+      ERROR ("Addressbook: Error: ");
+      return;
+  }
+
+#else
 void
 eds_query_result_cb (EBook *book, const GError *error, GList *contacts, gpointer user_data)
 {
-
     DEBUG ("Addressbook: Search Result callback called");
 
     if (error) {
         ERROR ("Addressbook: Error: %s", error->message);
         return;
     }
+#endif
 
     Search_Handler_And_Data *had = (Search_Handler_And_Data *) user_data;
 
@@ -376,6 +389,18 @@ eds_query_result_cb (EBook *book, const GError *error, GList *contacts, gpointer
 /**
  * Callback for asynchronous open of books
  */
+#ifdef LIBEBOOK_VERSION_230
+static void
+eds_async_open_callback (EBook *book, EBookStatus status, gpointer closure)
+{
+    ESource *source;
+    const gchar *uri;
+
+    if(status == E_BOOK_ERROR_OK) {
+        ERROR("Addressbook: Error: ");
+        return;
+    }
+#else
 void
 eds_async_open_callback (EBook *book, const GError *error, gpointer closure)
 {
@@ -388,6 +413,8 @@ eds_async_open_callback (EBook *book, const GError *error, gpointer closure)
         ERROR("Addressbook: Error: %s", error->message);
         return;
     }
+
+#endif
 
     Search_Handler_And_Data *had = (Search_Handler_And_Data *) closure;
 
@@ -406,9 +433,15 @@ eds_async_open_callback (EBook *book, const GError *error, gpointer closure)
         e_book_open (book, FALSE, NULL);
     }
 
+#ifdef LIBEBOOK_VERSION_230
+    if (e_book_async_get_contacts (book, had->equery, eds_query_result_cb, had))
+        ERROR ("Addressbook: Error: While querying addressbook");
+#else
     if (!e_book_get_contacts_async (book, had->equery, eds_query_result_cb, had)) {
         ERROR("Addressbook: Error: While querying addressbook");
     }
+#endif
+
 }
 
 /**
@@ -449,7 +482,7 @@ init_eds ()
         }
     }
 
-    DEBUG("END EVOLUTION %s, %s, %s", current_uri, current_uid, current_name);
+    DEBUG("END EVOLUTION INIT %s, %s, %s", current_uri, current_uid, current_name);
 
     g_mutex_unlock(books_data_mutex);
 }
@@ -613,8 +646,12 @@ determine_default_addressbook()
     while (list_element && !default_found) {
         book_data_t *book_data = list_element->data;
 
-        if (book_data->isdefault)
+        if (book_data->isdefault) {
             default_found = TRUE;
+            current_uri = book_data->uri;
+            current_uid = book_data->uid;
+            current_name = book_data->name;
+        }
 
         list_element = g_slist_next (list_element);
     }
@@ -626,9 +663,12 @@ determine_default_addressbook()
         book_data_t *book_data = list_element->data;
 
         if (book_data->active) {
-            book_data->isdefault = TRUE;
-            DEBUG ("Addressbook: No default addressbook found, using %s addressbook as default", book_data->name);
             default_found = TRUE;
+            book_data->isdefault = TRUE;
+            current_uri = book_data->uri;
+            current_uid = book_data->uid;
+            current_name = book_data->name;
+            DEBUG ("Addressbook: No default addressbook found, using %s addressbook as default", book_data->name);
         }
 
         list_element = g_slist_next (list_element);
@@ -683,7 +723,7 @@ search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler
     had->equery = create_query (query, current_test, (AddressBook_Config *) (user_data));
 
     if (!current_uri) {
-        ERROR ("Addressbook: Error: Current addressbook uri not specified uri");
+        ERROR ("Addressbook: Error: Current addressbook uri not specified");
     }
 
     DEBUG ("Addressbook: Opening addressbook: uri: %s", current_uri);
@@ -698,8 +738,15 @@ search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler
     if (book) {
         DEBUG ("Addressbook: Created empty book successfully");
 
+#ifdef LIBEBOOK_VERSION_230
         // Asynchronous open
+        e_book_async_open(book, TRUE,
+                eds_async_open_callback, had);
+#else
         e_book_open_async (book, TRUE, eds_async_open_callback, had);
+#endif
+
+
     } else {
         ERROR ("Addressbook: Error: No book available");
     }
@@ -730,6 +777,9 @@ set_current_addressbook (const gchar *name)
     GSList *book_list_iterator;
     book_data_t *book_data;
 
+    if(name == NULL)
+        return;
+
     g_mutex_lock(books_data_mutex);
 
     if (!books_data) {
@@ -747,9 +797,10 @@ set_current_addressbook (const gchar *name)
             current_uri = book_data->uri;
             current_uid = book_data->uid;
             current_name = book_data->name;
-            current_book = book_data;
         }
     }
+
+    DEBUG("Addressbook: Set current addressbook %s, %s, %s", current_uri, current_uid, current_name);
 
     g_mutex_unlock(books_data_mutex);
 }

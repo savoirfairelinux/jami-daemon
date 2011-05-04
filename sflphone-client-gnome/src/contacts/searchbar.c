@@ -97,7 +97,7 @@ void update_searchbar_addressbook_list()
     GtkTreeIter iter, activeIter;
     gchar *activeText;
     GSList *book_list_iterator;
-    book_data_t *book_data;
+    book_data_t *book_data, *activeBook;
     GSList *books_data = addressbook_get_books_data();
 
     DEBUG ("Searchbar: Update addressbook list");
@@ -132,10 +132,18 @@ void update_searchbar_addressbook_list()
         }
     }
 
-    if (activeIsSet)
+
+
+    if (activeIsSet) {
         gtk_combo_box_set_active_iter (GTK_COMBO_BOX (cbox), &activeIter);
-    else
+        set_current_addressbook(activeText);
+    }
+    else {
         gtk_combo_box_set_active (GTK_COMBO_BOX (cbox), 0);
+        gtk_combo_box_get_active_text(GTK_COMBO_BOX(cbox));
+        set_current_addressbook(gtk_combo_box_get_active_text(GTK_COMBO_BOX(cbox)));
+    }
+
 
     g_free (activeText);
     cboxSignalId = gtk_signal_connect (GTK_OBJECT (cbox), "changed", G_CALLBACK (cbox_changed_cb), NULL);
@@ -291,11 +299,6 @@ void searchbar_init (calltab_t *tab)
     else {
         ERROR ("searchbar.c - searchbar_init should not happen within this widget\n");
     }
-}
-
-void addressbook_searchbar_update()
-{
-
 }
 
 GtkWidget* history_searchbar_new (void)
