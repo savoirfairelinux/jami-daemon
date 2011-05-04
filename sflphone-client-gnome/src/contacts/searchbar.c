@@ -97,7 +97,7 @@ void update_searchbar_addressbook_list()
     GtkTreeIter iter, activeIter;
     gchar *activeText;
     GSList *book_list_iterator;
-    book_data_t *book_data, *activeBook;
+    book_data_t *book_data;
     GSList *books_data = addressbook_get_books_data();
 
     DEBUG ("Searchbar: Update addressbook list");
@@ -107,6 +107,11 @@ void update_searchbar_addressbook_list()
 
     // store the current active text
     activeText = g_strdup (gtk_combo_box_get_active_text (GTK_COMBO_BOX (cbox)));
+
+    if(activeText == NULL) {
+
+        activeText = g_strdup ("");
+    }
 
     gtk_list_store_clear (liststore);
 
@@ -118,7 +123,8 @@ void update_searchbar_addressbook_list()
             = book_list_iterator->next) {
         book_data = (book_data_t *) book_list_iterator->data;
 
-        if (book_data && book_data->active && activeText) {
+        if (book_data && book_data->active) {
+
 
             gtk_list_store_append (liststore, &iter);
             gtk_list_store_set (liststore, &iter, 0, book_data->name, -1);
