@@ -466,7 +466,6 @@ sflphone_pick_up()
                 sflphone_new_call();
                 break;
             case CALL_STATE_TRANSFERT:
-                DEBUG("TRANSFER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                 dbus_transfert (selectedCall);
                 set_timestamp (&selectedCall->_time_stop);
                 calltree_remove_call(current_calls, selectedCall, NULL);
@@ -504,7 +503,6 @@ sflphone_on_hold ()
             case CALL_STATE_RECORD:
                 dbus_hold (selectedCall);
                 break;
-
             default:
                 WARN ("Should not happen in sflphone_on_hold!");
                 break;

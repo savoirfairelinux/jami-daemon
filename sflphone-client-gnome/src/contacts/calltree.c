@@ -240,8 +240,9 @@ row_activated (GtkTreeView       *tree_view UNUSED,
 
                 calllist_add (current_calls, new_call);
                 calltree_add_call (current_calls, new_call, NULL);
-                sflphone_place_call (new_call);
+                // Function sflphone_place_call (new_call) is processed in process_dialing
                 calltree_display (current_calls);
+
             }
         }
     } else if (calltab_get_selected_type (current_calls) == A_CONFERENCE) {
