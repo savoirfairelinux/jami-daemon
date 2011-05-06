@@ -1108,11 +1108,15 @@ class ManagerImpl
          */
         bool initAudioDriver (void);
 
-        /*
-        ost::Mutex* getAudioLayerMutex() {
-            return &_audiolayer_mutex;
-        }
-        */
+        /**
+         * Enter the mutex for the audio layer
+         */
+        void audioLayerMutexLock(void) { _audiolayerMutex.enterMutex(); }
+
+        /**
+         * Leave the mutex for audio layer
+         */
+        void audioLayerMutexUnlock(void) { _audiolayerMutex.leaveMutex(); }
 
         /**
          * Helper function that creates an MD5 Hash from the credential
@@ -1218,18 +1222,29 @@ class ManagerImpl
         /** Mutex to protect access to code section */
         ost::Mutex _mutex;
 
-        ost::Mutex _audiolayer_mutex;
+        /**
+         * Mutex used to protect audio layer
+         */
+        ost::Mutex _audiolayerMutex;
 
-        // Multithread variable (non protected)
+        /**
+         * Multithread variable (non protected)
+         */
         DBusManagerImpl * _dbus;
 
-        /** Waiting Call Vectors */
+        /**
+         * Waiting Call Vectors
+         */
         CallIDSet _waitingCall;
 
-        /** Protect waiting call list, access by many voip/audio threads */
+        /**
+         * Protect waiting call list, access by many voip/audio threads
+         */
         ost::Mutex _waitingCallMutex;
 
-        /** Number of waiting call, synchronize with waitingcall callidvector */
+        /**
+         * Number of waiting call, synchronize with waitingcall callidvector
+         */
         unsigned int _nbIncomingWaitingCall;
 
         /**
@@ -1254,7 +1269,7 @@ class ManagerImpl
         /**
          * Path of the ConfigFile
          */
-        std::string 	_path;
+        std::string _path;
 
         int _setupLoaded;
 

@@ -81,9 +81,12 @@ ManagerImpl::registerAccounts()
         iter++;
     }
 
+    audioLayerMutexLock();
     // calls the client notification here in case of errors at startup...
-    if (_audiodriver -> getErrorMessage() != -1)
-        notifyErrClient (_audiodriver -> getErrorMessage());
+    if (_audiodriver->getErrorMessage() != -1) {
+        notifyErrClient (_audiodriver->getErrorMessage());
+    }
+    audioLayerMutexUnlock();
 
     ASSERT (flag, true);
 
@@ -120,9 +123,12 @@ ManagerImpl::initRegisterAccounts()
         iter++;
     }
 
+    audioLayerMutexLock();
     // calls the client notification here in case of errors at startup...
-    if (_audiodriver -> getErrorMessage() != -1)
-        notifyErrClient (_audiodriver -> getErrorMessage());
+    if (_audiodriver->getErrorMessage() != -1) {
+        notifyErrClient (_audiodriver->getErrorMessage());
+    }
+    audioLayerMutexUnlock();
 
     ASSERT (flag, true);
 

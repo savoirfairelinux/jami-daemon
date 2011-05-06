@@ -142,6 +142,8 @@ void ManagerImpl::init ()
     // Initialize the list of supported audio codecs
     initAudioCodec();
 
+    audioLayerMutexLock();
+
     AudioLayer *audiolayer = getAudioDriver();
 
     if (audiolayer) {
@@ -158,6 +160,8 @@ void ManagerImpl::init ()
 
         _dtmfKey = new DTMF (sampleRate);
     }
+
+    audioLayerMutexUnlock();
 
     // Load the history
     _history->load_history (preferences.getHistoryLimit());
@@ -191,9 +195,13 @@ void ManagerImpl::terminate ()
     delete _telephoneTone;
     _telephoneTone = NULL;
 
+    audioLayerMutexLock();
+
     _debug ("Manager: Unload audio driver");
     delete _audiodriver;
     _audiodriver = NULL;
+
+    audioLayerMutexUnlock();
 
     _debug ("Manager: Unload telephone tone");
     delete _telephoneTone;
@@ -407,16 +415,22 @@ bool ManagerImpl::hangupCall (const CallID& callId)
     // First stop audio layer if there is no call anymore
     int nbCalls = getCallList().size();
     if(nbCalls <= 0) {
+
+    	audioLayerMutexLock();
+
         AudioLayer *audiolayer = getAudioDriver();
 
         if(audiolayer == NULL) {
+        	audioLayerMutexUnlock();
         	_error("Manager: Error: Audio layer was not instantiated");
         	return returnValue;
         }
 
         _debug ("Manager: stop audio stream, there is no call remaining", nbCalls);
         audiolayer->stopStream();
+        audioLayerMutexUnlock();
     }
+
 
 
     if (_dbus == NULL) {
@@ -664,7 +678,10 @@ bool ManagerImpl::offHoldCall (const CallID& call_id)
 
     } else {
         switchCall (call_id);
+
+        audioLayerMutexLock();
         _audiodriver->flushMain();
+        audioLayerMutexUnlock();
     }
 
     return returnValue;
@@ -765,8 +782,9 @@ bool ManagerImpl::refuseCall (const CallID& id)
     if (nbCalls <= 1) {
         _debug ("    refuseCall: stop audio stream, there is only %d call(s) remaining", nbCalls);
 
-        AudioLayer* audiolayer = getAudioDriver();
-        audiolayer->stopStream();
+        audioLayerMutexLock();
+        getAudioDriver()->stopStream();
+        audioLayerMutexUnlock();
     }
 
     /* Direct IP to IP call */
@@ -843,7 +861,7 @@ void ManagerImpl::removeConference (const ConfID& conference_id)
     // We now need to bind the audio to the remain participant
 
     // Unbind main participant audio from conference
-    _audiodriver->getMainBuffer()->unBindAll (default_id);
+    getMainBuffer()->unBindAll (default_id);
 
     ParticipantSet participants = conf->getParticipantList();
 
@@ -852,19 +870,21 @@ void ManagerImpl::removeConference (const ConfID& conference_id)
 
     if (iter_p != participants.end()) {
 
-        _audiodriver->getMainBuffer()->bindCallID (*iter_p, default_id);
+        getMainBuffer()->bindCallID (*iter_p, default_id);
     }
 
     // Then remove the conference from the conference map
-    if (_conferencemap.erase (conference_id) == 1)
+    if (_conferencemap.erase (conference_id) == 1) {
         _debug ("Manager: Conference %s removed successfully", conference_id.c_str());
-    else
+    }
+    else {
         _error ("Manager: Error: Cannot remove conference: %s", conference_id.c_str());
+    }
 
     // broadcast a signal over dbus
-    if (_dbus)
+    if (_dbus) {
         _dbus->getCallManager()->conferenceRemoved (conference_id);
-
+    }
 }
 
 Conference*
@@ -1054,7 +1074,7 @@ void ManagerImpl::addParticipant (const CallID& call_id, const CallID& conferenc
             answerCall (call_id);
         } else if (iter_details->second == "CURRENT") {
             // Already a curent call, so we beed to reset audio stream bindings manually
-            _audiodriver->getMainBuffer()->unBindAll (call_id);
+            getMainBuffer()->unBindAll (call_id);
             conf->bindParticipant (call_id);
         }
 
@@ -1066,14 +1086,13 @@ void ManagerImpl::addParticipant (const CallID& call_id, const CallID& conferenc
         ParticipantSet::iterator iter_p = participants.begin();
 
         while (iter_p != participants.end()) {
-
             // flush conference participants only
-            _audiodriver->getMainBuffer()->flush (*iter_p);
+            getMainBuffer()->flush (*iter_p);
 
             iter_p++;
         }
+        getMainBuffer()->flush (default_id);
 
-        _audiodriver->getMainBuffer()->flush (default_id);
     } else {
         _debug ("    addParticipant: Error, conference %s conference_id not found!", conference_id.c_str());
     }
@@ -1096,6 +1115,8 @@ void ManagerImpl::addMainParticipant (const CallID& conference_id)
 
     Conference *conf = NULL;
 
+    audioLayerMutexLock();
+
     if (iter != _conferencemap.end()) {
         conf = iter->second;
 
@@ -1104,7 +1125,7 @@ void ManagerImpl::addMainParticipant (const CallID& conference_id)
         ParticipantSet::iterator iter_participant = participants.begin();
 
         while (iter_participant != participants.end()) {
-            _audiodriver->getMainBuffer()->bindCallID (*iter_participant,
+            getMainBuffer()->bindCallID (*iter_participant,
                     default_id);
 
             iter_participant++;
@@ -1114,12 +1135,12 @@ void ManagerImpl::addMainParticipant (const CallID& conference_id)
         iter_participant = participants.begin();
 
         while (iter_participant != participants.end()) {
-            _audiodriver->getMainBuffer()->flush (*iter_participant);
+            getMainBuffer()->flush (*iter_participant);
 
             iter_participant++;
         }
 
-        _audiodriver->getMainBuffer()->flush (default_id);
+        getMainBuffer()->flush (default_id);
 
         conf->setState (Conference::Active_Atached);
 
@@ -1127,6 +1148,8 @@ void ManagerImpl::addMainParticipant (const CallID& conference_id)
             _dbus->getCallManager()->conferenceChanged (conference_id, conf->getStateStr());
 
     }
+
+    audioLayerMutexUnlock();
 
     switchCall (conference_id);
 }
@@ -1190,7 +1213,7 @@ void ManagerImpl::joinParticipant (const CallID& call_id1, const CallID& call_id
     } else if (iter_details->second == "INCOMING") {
         answerCall (call_id1);
     } else if (iter_details->second == "CURRENT") {
-        _audiodriver->getMainBuffer()->unBindAll (call_id1);
+        getMainBuffer()->unBindAll (call_id1);
         conf->bindParticipant (call_id1);
     } else if (iter_details->second == "INACTIVE") {
         answerCall (call_id1);
@@ -1211,7 +1234,7 @@ void ManagerImpl::joinParticipant (const CallID& call_id1, const CallID& call_id
     } else if (iter_details->second == "INCOMING") {
         answerCall (call_id2);
     } else if (iter_details->second == "CURRENT") {
-        _audiodriver->getMainBuffer()->unBindAll (call_id2);
+        getMainBuffer()->unBindAll (call_id2);
         conf->bindParticipant (call_id2);
     } else if (iter_details->second == "INACTIVE") {
         answerCall (call_id2);
@@ -1219,11 +1242,14 @@ void ManagerImpl::joinParticipant (const CallID& call_id1, const CallID& call_id
         _warn ("Manager: Call state not recognized");
     }
 
+    audioLayerMutexLock();
 
     if (_audiodriver) {
     	conf->setRecordingSmplRate(_audiodriver->getSampleRate());
         _audiodriver->getMainBuffer()->stateInfo();
     }
+
+    audioLayerMutexUnlock();
 
 }
 
@@ -1275,8 +1301,9 @@ void ManagerImpl::detachParticipant (const CallID& call_id,
 
         }
     } else {
+
         _debug ("Manager: Unbind main participant from all");
-        _audiodriver->getMainBuffer()->unBindAll (default_id);
+        getMainBuffer()->unBindAll (default_id);
 
         if (isConference (current_call_id)) {
 
@@ -1324,9 +1351,7 @@ void ManagerImpl::removeParticipant (const CallID& call_id)
 
     }
 
-    if (_audiodriver)
-        _audiodriver->getMainBuffer()->stateInfo();
-
+    getMainBuffer()->stateInfo();
 }
 
 void ManagerImpl::processRemainingParticipant (CallID current_call_id,
@@ -1345,12 +1370,12 @@ void ManagerImpl::processRemainingParticipant (CallID current_call_id,
         iter_participant = participants.begin();
 
         while (iter_participant != participants.end()) {
-            _audiodriver->getMainBuffer()->flush (*iter_participant);
+            getMainBuffer()->flush (*iter_participant);
 
             iter_participant++;
         }
 
-        _audiodriver->getMainBuffer()->flush (default_id);
+        getMainBuffer()->flush (default_id);
 
     } else if (conf->getNbParticipants() == 1) {
 
@@ -1466,12 +1491,12 @@ void ManagerImpl::addStream (const CallID& call_id)
 
                 // to avoid puting onhold the call
                 // switchCall("");
-                _audiodriver->getMainBuffer()->flush (*iter_p);
+                getMainBuffer()->flush (*iter_p);
 
                 iter_p++;
             }
 
-            _audiodriver->getMainBuffer()->flush (default_id);
+            getMainBuffer()->flush (default_id);
         }
 
     } else {
@@ -1479,30 +1504,28 @@ void ManagerImpl::addStream (const CallID& call_id)
         _debug ("Manager: Add stream to call");
 
         // bind to main
-        getAudioDriver()->getMainBuffer()->bindCallID (call_id);
+        getMainBuffer()->bindCallID (call_id);
 
-        // _audiodriver->getMainBuffer()->flush(default_id);
+        audioLayerMutexLock();
         _audiodriver->flushUrgent();
         _audiodriver->flushMain();
-
+        audioLayerMutexUnlock();
     }
 
-    if (_audiodriver)
-        _audiodriver->getMainBuffer()->stateInfo();
+    getMainBuffer()->stateInfo();
 }
 
 void ManagerImpl::removeStream (const CallID& call_id)
 {
     _debug ("Manager: Remove audio stream %s", call_id.c_str());
 
-    getAudioDriver()->getMainBuffer()->unBindAll (call_id);
+    getMainBuffer()->unBindAll (call_id);
 
     if (participToConference (call_id)) {
         removeParticipant (call_id);
     }
 
-    if (_audiodriver)
-        _audiodriver->getMainBuffer()->stateInfo();
+    getMainBuffer()->stateInfo();
 }
 
 //THREAD=Main
@@ -1566,9 +1589,8 @@ bool ManagerImpl::sendDtmf (const CallID& id, char code)
 //THREAD=Main | VoIPLink
 bool ManagerImpl::playDtmf (char code)
 {
-    int pulselen, layer, size;
+    int pulselen, layerType, size;
     bool ret = false;
-    AudioLayer *audiolayer;
     SFLDataFormat *buf;
 
     stopTone();
@@ -1588,15 +1610,17 @@ bool ManagerImpl::playDtmf (char code)
         return false;
     }
 
+    audioLayerMutexLock();
+
     // numbers of int = length in milliseconds / 1000 (number of seconds)
     //                = number of seconds * SAMPLING_RATE by SECONDS
-    audiolayer = getAudioDriver();
 
-    layer = audiolayer->getLayerType();
+    layerType = _audiodriver->getLayerType();
 
     // fast return, no sound, so no dtmf
-    if (audiolayer == 0 || _dtmfKey == 0) {
+    if (_audiodriver == NULL || _dtmfKey == NULL) {
         _debug ("Manager: playDtmf: Error no audio layer...");
+        audioLayerMutexUnlock();
         return false;
     }
 
@@ -1604,7 +1628,7 @@ bool ManagerImpl::playDtmf (char code)
     // size (n sampling) = time_ms * sampling/s
     //                     ---------------------
     //                            ms/s
-    size = (int) ( (pulselen * (float) audiolayer->getSampleRate()) / 1000);
+    size = (int) ( (pulselen * (float) _audiodriver->getSampleRate()) / 1000);
 
     // this buffer is for mono
     // TODO <-- this should be global and hide if same size
@@ -1619,9 +1643,11 @@ bool ManagerImpl::playDtmf (char code)
         // put the size in bytes...
         // so size * 1 channel (mono) * sizeof (bytes for the data)
         // audiolayer->flushUrgent();
-        audiolayer->startStream();
-        audiolayer->putUrgent (buf, size * sizeof (SFLDataFormat));
+        _audiodriver->startStream();
+        _audiodriver->putUrgent (buf, size * sizeof (SFLDataFormat));
     }
+
+    audioLayerMutexUnlock();
 
     ret = true;
 
@@ -1927,12 +1953,14 @@ void ManagerImpl::peerAnsweredCall (const CallID& id)
         stopTone();
     }
 
-    if (_dbus)
+    if (_dbus) {
         _dbus->getCallManager()->callStateChanged (id, "CURRENT");
+    }
 
+    audioLayerMutexLock();
     _audiodriver->flushMain();
-
     _audiodriver->flushUrgent();
+    audioLayerMutexUnlock();
 }
 
 //THREAD=VoIP Call=Outgoing
@@ -1952,7 +1980,6 @@ void ManagerImpl::peerRingingCall (const CallID& id)
 //THREAD=VoIP Call=Outgoing/Ingoing
 void ManagerImpl::peerHungupCall (const CallID& call_id)
 {
-    PulseLayer *pulselayer;
     AccountID account_id;
     bool returnValue;
 
@@ -2006,12 +2033,9 @@ void ManagerImpl::peerHungupCall (const CallID& call_id)
     if (nbCalls <= 0) {
         _debug ("Manager: Stop audio stream, ther is only %d call(s) remaining", nbCalls);
 
-        AudioLayer* audiolayer = getAudioDriver();
-        audiolayer->stopStream();
-    }
-
-    if (_audiodriver->getLayerType() == PULSEAUDIO) {
-        pulselayer = dynamic_cast<PulseLayer *> (getAudioDriver());
+        audioLayerMutexLock();
+        _audiodriver->stopStream();
+        audioLayerMutexUnlock();
     }
 }
 
@@ -2101,6 +2125,7 @@ bool ManagerImpl::playATone (Tone::TONEID toneId)
     if (!hasToPlayTone)
         return false;
 
+    audioLayerMutexLock();
     audiolayer = getAudioDriver();
 
     if (audiolayer) {
@@ -2108,6 +2133,7 @@ bool ManagerImpl::playATone (Tone::TONEID toneId)
         audiolayer->flushUrgent();
         audiolayer->startStream();
     }
+    audioLayerMutexUnlock();
 
     if (_telephoneTone != 0) {
         _toneMutex.enterMutex();
@@ -2211,10 +2237,13 @@ void ManagerImpl::ringtone (const AccountID& accountID)
                          + RINGDIR + DIR_SEPARATOR_STR + ringchoice;
         }
 
+        audioLayerMutexLock();
+
         audiolayer = getAudioDriver();
 
         if (!audiolayer) {
             _error ("Manager: Error: no audio layer in ringtone");
+            audioLayerMutexUnlock();
             return;
         }
 
@@ -2222,6 +2251,8 @@ void ManagerImpl::ringtone (const AccountID& accountID)
 
         samplerate = audiolayer->getSampleRate();
         codecForTone = static_cast<AudioCodec *>(_codecDescriptorMap.getFirstCodecAvailable());
+
+        audioLayerMutexUnlock();
 
         _toneMutex.enterMutex();
 
@@ -2253,8 +2284,10 @@ void ManagerImpl::ringtone (const AccountID& accountID)
             _audiofile->start();
             _toneMutex.leaveMutex();
 
+            audioLayerMutexLock();
             // start audio if not started AND flush all buffers (main and urgent)
             audiolayer->startStream();
+            audioLayerMutexUnlock();
 
         } else {
             ringback();
@@ -2302,6 +2335,8 @@ void ManagerImpl::notificationIncomingCall (void)
     std::ostringstream frequency;
     unsigned int sampleRate, nbSample;
 
+    audioLayerMutexLock();
+
     audiolayer = getAudioDriver();
 
     _debug ("ManagerImpl: Notification incoming call");
@@ -2318,6 +2353,8 @@ void ManagerImpl::notificationIncomingCall (void)
         audiolayer->flushUrgent();
         audiolayer->putUrgent (buf, sizeof (SFLDataFormat) * nbSample);
     }
+
+    audioLayerMutexUnlock();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2510,11 +2547,13 @@ std::string ManagerImpl::getCurrentCodecName (const CallID& id)
  */
 void ManagerImpl::setAudioPlugin (const std::string& audioPlugin)
 {
-    int layer = _audiodriver -> getLayerType();
+
+	audioLayerMutexLock();
+    int layerType = _audiodriver -> getLayerType();
 
     audioPreference.setPlugin (audioPlugin);
 
-    if (CHECK_INTERFACE (layer , ALSA)) {
+    if (CHECK_INTERFACE (layerType , ALSA)) {
         _debug ("Set input audio plugin");
         _audiodriver -> setErrorMessage (-1);
         _audiodriver -> openDevice (_audiodriver->getIndexIn(), _audiodriver->getIndexOut(),
@@ -2524,6 +2563,7 @@ void ManagerImpl::setAudioPlugin (const std::string& audioPlugin)
         if (_audiodriver -> getErrorMessage() != -1)
             notifyErrClient (_audiodriver -> getErrorMessage());
     }
+    audioLayerMutexUnlock();
 
 }
 
@@ -2537,13 +2577,17 @@ void ManagerImpl::setAudioDevice (const int index, int streamType)
     std::string alsaplugin;
     _debug ("Manager: Set audio device: %d", index);
 
-    _audiodriver -> setErrorMessage (-1);
+    audioLayerMutexLock();
 
-    if (! (alsalayer = dynamic_cast<AlsaLayer*> (getAudioDriver()))) {
-        _warn ("Manager: Error: No audio driver");
-        return;
+    if(_audiodriver == NULL) {
+    	_warn ("Manager: Error: No audio driver");
+    	audioLayerMutexUnlock();
+    	return;
     }
 
+    _audiodriver -> setErrorMessage (-1);
+
+    alsalayer = dynamic_cast<AlsaLayer*> (_audiodriver);
     alsaplugin = alsalayer->getAudioPlugin();
 
     _debug ("Manager: Set ALSA plugin: %s", alsaplugin.c_str());
@@ -2575,8 +2619,11 @@ void ManagerImpl::setAudioDevice (const int index, int streamType)
             _warn ("Unknown stream type");
     }
 
-    if (_audiodriver -> getErrorMessage() != -1)
+    if (_audiodriver -> getErrorMessage() != -1) {
         notifyErrClient (_audiodriver -> getErrorMessage());
+    }
+
+    audioLayerMutexUnlock();
 
 }
 
@@ -2586,13 +2633,17 @@ void ManagerImpl::setAudioDevice (const int index, int streamType)
 std::vector<std::string> ManagerImpl::getAudioOutputDeviceList (void)
 {
     _debug ("Manager: Get audio output device list");
-    AlsaLayer *layer;
+    AlsaLayer *alsalayer;
     std::vector<std::string> devices;
 
-    layer = dynamic_cast<AlsaLayer*> (getAudioDriver());
+    audioLayerMutexLock();
 
-    if (layer)
-        devices = layer -> getSoundCardsInfo (SFL_PCM_PLAYBACK);
+    alsalayer = dynamic_cast<AlsaLayer*> (_audiodriver);
+
+    if (alsalayer) {
+        devices = alsalayer -> getSoundCardsInfo (SFL_PCM_PLAYBACK);
+    }
+    audioLayerMutexUnlock();
 
     return devices;
 }
@@ -2603,13 +2654,18 @@ std::vector<std::string> ManagerImpl::getAudioOutputDeviceList (void)
  */
 std::vector<std::string> ManagerImpl::getAudioInputDeviceList (void)
 {
-    AlsaLayer *audiolayer;
+    AlsaLayer *alsalayer;
     std::vector<std::string> devices;
 
-    audiolayer = dynamic_cast<AlsaLayer *> (getAudioDriver());
+    audioLayerMutexLock();
 
-    if (audiolayer)
-        devices = audiolayer->getSoundCardsInfo (SFL_PCM_CAPTURE);
+    alsalayer = dynamic_cast<AlsaLayer *> (getAudioDriver());
+
+    if (alsalayer) {
+        devices = alsalayer->getSoundCardsInfo (SFL_PCM_CAPTURE);
+    }
+
+    audioLayerMutexUnlock();
 
     return devices;
 }
@@ -2620,6 +2676,9 @@ std::vector<std::string> ManagerImpl::getAudioInputDeviceList (void)
 std::vector<std::string> ManagerImpl::getCurrentAudioDevicesIndex ()
 {
     _debug ("Get current audio devices index");
+
+    audioLayerMutexLock();
+
     std::vector<std::string> v;
     std::stringstream ssi, sso, ssr;
     sso << _audiodriver->getIndexOut();
@@ -2628,6 +2687,9 @@ std::vector<std::string> ManagerImpl::getCurrentAudioDevicesIndex ()
     v.push_back (ssi.str());
     ssr << _audiodriver->getIndexRing();
     v.push_back (ssr.str());
+
+    audioLayerMutexUnlock();
+
     return v;
 }
 
@@ -2796,19 +2858,26 @@ void ManagerImpl::setMailNotify (void)
 void ManagerImpl::setAudioManager (const int32_t& api)
 {
 
-    int type;
+    int layerType;
 
     _debug ("Manager: Setting audio manager ");
 
-    if (!_audiodriver)
-        return;
+    audioLayerMutexLock();
 
-    type = _audiodriver->getLayerType();
-
-    if (type == api) {
-        _debug ("Manager: Audio manager chosen already in use. No changes made. ");
+    if (!_audiodriver) {
+    	audioLayerMutexUnlock();
         return;
     }
+
+    layerType = _audiodriver->getLayerType();
+
+    if (layerType == api) {
+        _debug ("Manager: Audio manager chosen already in use. No changes made. ");
+        audioLayerMutexUnlock();
+        return;
+    }
+
+    audioLayerMutexUnlock();
 
     preferences.setAudioApi (api);
 
@@ -2835,28 +2904,27 @@ void ManagerImpl::notifyErrClient (const int32_t& errCode)
 int ManagerImpl::getAudioDeviceIndex (const std::string name)
 {
     AlsaLayer *alsalayer;
+    int soundCardIndex = 0;
 
     _debug ("Manager: Get audio device index");
 
+    audioLayerMutexLock();
+
     alsalayer = dynamic_cast<AlsaLayer *> (getAudioDriver());
 
-    if (alsalayer)
-        return alsalayer -> soundCardGetIndex (name);
-    else
-        return 0;
+    if (alsalayer) {
+        soundCardIndex = alsalayer -> soundCardGetIndex (name);
+    }
+
+    audioLayerMutexUnlock();
+
+    return soundCardIndex;
 }
 
 std::string ManagerImpl::getCurrentAudioOutputPlugin (void)
 {
-    AlsaLayer *alsalayer;
-
     _debug ("Manager: Get alsa plugin");
 
-    alsalayer = dynamic_cast<AlsaLayer *> (getAudioDriver());
-
-    // if (alsalayer)
-    //    return alsalayer -> getAudioPlugin();
-    // else
     return audioPreference.getPlugin();
 }
 
@@ -2880,9 +2948,13 @@ void ManagerImpl::setNoiseSuppressState (std::string state)
 
     audioPreference.setNoiseReduce (isEnabled);
 
+    audioLayerMutexLock();
+
     if (_audiodriver) {
         _audiodriver->setNoiseSuppressState (isEnabled);
     }
+
+    audioLayerMutexUnlock();
 }
 
 int ManagerImpl::app_is_running (std::string process)
@@ -2901,7 +2973,9 @@ bool ManagerImpl::initAudioDriver (void)
 
     int error;
 
-    _debugInit ("AudioLayer Creation");
+    _debugInit ("Manager: AudioLayer Creation");
+
+    audioLayerMutexLock();
 
     if (preferences.getAudioApi() == ALSA) {
         _audiodriver = new AlsaLayer (this);
@@ -2915,20 +2989,25 @@ bool ManagerImpl::initAudioDriver (void)
             preferences.setAudioApi (ALSA);
             _audiodriver->setMainBuffer (&_mainBuffer);
         }
-    } else
+    } else {
         _debug ("Error - Audio API unknown");
+    }
 
-    if (_audiodriver == 0) {
-        _debug ("Init audio driver error");
+    if (_audiodriver == NULL) {
+        _debug ("Manager: Init audio driver error");
+        audioLayerMutexUnlock();
         return false;
     } else {
-        error = getAudioDriver()->getErrorMessage();
+        error = _audiodriver->getErrorMessage();
 
         if (error == -1) {
-            _debug ("Init audio driver: %d", error);
+            _debug ("Manager: Init audio driver: %d", error);
+            audioLayerMutexUnlock();
             return false;
         }
     }
+
+    audioLayerMutexUnlock();
 
     return true;
 
@@ -2939,12 +3018,20 @@ bool ManagerImpl::initAudioDriver (void)
  */
 void ManagerImpl::selectAudioDriver (void)
 {
-    int layer, numCardIn, numCardOut, numCardRing, sampleRate, frameSize;
+    int layerType, numCardIn, numCardOut, numCardRing, sampleRate, frameSize;
     std::string alsaPlugin;
     AlsaLayer *alsalayer;
 
-    layer = _audiodriver->getLayerType();
-    _debug ("Audio layer type: %d" , layer);
+    audioLayerMutexLock();
+
+    if(_audiodriver == NULL) {
+    	_debug("Manager: Audio layer not initialized");
+    	audioLayerMutexUnlock();
+    	return;
+    }
+
+    layerType = _audiodriver->getLayerType();
+    _debug ("Manager: Audio layer type: %d" , layerType);
 
     /* Retrieve the global devices info from the user config */
     alsaPlugin = audioPreference.getPlugin();
@@ -2952,13 +3039,13 @@ void ManagerImpl::selectAudioDriver (void)
     numCardOut = audioPreference.getCardout();
     numCardRing = audioPreference.getCardring();
 
-    sampleRate = _mainBuffer.getInternalSamplingRate();
+    sampleRate = getMainBuffer()->getInternalSamplingRate();
     frameSize = audioPreference.getFramesize();
 
     /* Only for the ALSA layer, we check the sound card information */
 
-    if (layer == ALSA) {
-        alsalayer = dynamic_cast<AlsaLayer*> (getAudioDriver());
+    if (layerType == ALSA) {
+        alsalayer = dynamic_cast<AlsaLayer*> (_audiodriver);
 
         if (!alsalayer -> soundCardIndexExist (numCardIn, SFL_PCM_CAPTURE)) {
             _debug (" Card with index %d doesn't exist or cannot capture. Switch to 0.", numCardIn);
@@ -2987,8 +3074,11 @@ void ManagerImpl::selectAudioDriver (void)
 
     /* Notify the error if there is one */
 
-    if (_audiodriver -> getErrorMessage() != -1)
+    if (_audiodriver -> getErrorMessage() != -1) {
         notifyErrClient (_audiodriver -> getErrorMessage());
+    }
+
+    audioLayerMutexUnlock();
 
 }
 
@@ -2999,8 +3089,14 @@ void ManagerImpl::switchAudioManager (void)
 
     _debug ("Manager: Switching audio manager ");
 
-    if (!_audiodriver)
+    audioLayerMutexLock();
+
+    if (_audiodriver == NULL) {
+    	audioLayerMutexUnlock();
         return;
+    }
+
+    bool wasStarted = _audiodriver->isStarted();
 
     type = _audiodriver->getLayerType();
 
@@ -3017,12 +3113,7 @@ void ManagerImpl::switchAudioManager (void)
 
     _debug ("Manager: Deleting current layer... ");
 
-    // ost::MutexLock lock (*getAudioLayerMutex());
-    // getAudioLayerMutex()->enter();
-
-    // _audiodriver->closeLayer();
     delete _audiodriver;
-
     _audiodriver = NULL;
 
     switch (type) {
@@ -3054,18 +3145,11 @@ void ManagerImpl::switchAudioManager (void)
 
     _debug ("Manager: Current device: %d ", type);
 
-    if (hasCurrentCall())
+    if (wasStarted) {
         _audiodriver->startStream();
+    }
 
-    // ost::MutexLock unlock (*getAudioLayerMutex());
-    // getAudioLayerMutex()->leave();
-
-    // need to stop audio streams if there is currently no call
-    // if ( (type != PULSEAUDIO) && (!hasCurrentCall())) {
-    // _debug("There is currently a call!!");
-    // _audiodriver->stopStream();
-
-    // }
+    audioLayerMutexUnlock();
 }
 
 void ManagerImpl::audioSamplingRateChanged (int samplerate)
@@ -3075,17 +3159,20 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
     std::string alsaPlugin;
     bool wasActive;
 
-    _debug("Manager: Audio Sampling rate changed");
+    audioLayerMutexLock();
 
     if (!_audiodriver) {
     	_debug("Manager: No Audio driver initialized");
+    	audioLayerMutexUnlock();
         return;
     }
+
 
     // Only modify internal sampling rate if new sampling rate is higher
     currentSamplerate = _mainBuffer.getInternalSamplingRate();
     if(currentSamplerate >= samplerate) {
     	_debug("Manager: No need to update audio layer sampling rate");
+    	audioLayerMutexUnlock();
     	return;
     }
     else {
@@ -3130,7 +3217,9 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
     }
 
     if(_audiodriver == NULL) {
-	_debug("Manager: Error: Audio driver could not be initialized");
+    	_debug("Manager: Error: Audio driver could not be initialized");
+    	audioLayerMutexUnlock();
+    	return;
     }
 
     _audiodriver->setErrorMessage (-1);
@@ -3173,6 +3262,8 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
     if (wasActive) {
         _audiodriver->startStream();
     }
+
+    audioLayerMutexUnlock();
 }
 
 /**
@@ -3193,8 +3284,10 @@ void ManagerImpl::setSpkrVolume (unsigned short spkr_vol)
     /* Set the manager sound volume */
     _spkr_volume = spkr_vol;
 
+    audioLayerMutexLock();
+
     /* Only for PulseAudio */
-    pulselayer = dynamic_cast<PulseLayer*> (getAudioDriver());
+    pulselayer = dynamic_cast<PulseLayer*> (_audiodriver);
 
     if (pulselayer) {
         if (pulselayer->getLayerType() == PULSEAUDIO) {
@@ -3202,6 +3295,8 @@ void ManagerImpl::setSpkrVolume (unsigned short spkr_vol)
                 pulselayer->setPlaybackVolume (spkr_vol);
         }
     }
+
+    audioLayerMutexUnlock();
 }
 
 void ManagerImpl::setMicVolume (unsigned short mic_vol)

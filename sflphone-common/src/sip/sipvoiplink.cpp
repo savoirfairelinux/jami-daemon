@@ -3491,7 +3491,10 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
 
     try {
         call->setAudioStart (true);
-        Manager::instance().getAudioDriver()->startStream(); //->startStream();
+
+        Manager::instance().audioLayerMutexLock();
+        Manager::instance().getAudioDriver()->startStream();
+        Manager::instance().audioLayerMutexUnlock();
 
         // udate session media only if required
         if (pl != call->getAudioRtp()->getSessionMedia()) {
