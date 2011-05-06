@@ -196,12 +196,15 @@ AlsaLayer::startStream (void)
         }
     }
 
+    _isStarted = true;
 }
 
 void
 AlsaLayer::stopStream (void)
 {
     _debug ("Audio: Stop stream");
+
+    _isStarted = false;
 
     try {
         /* Stop the audio thread first */

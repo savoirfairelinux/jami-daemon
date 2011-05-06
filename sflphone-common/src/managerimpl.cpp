@@ -3070,9 +3070,12 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
 
     int type, currentSamplerate, framesize, numCardIn, numCardOut, numCardRing;
     std::string alsaPlugin;
+    bool wasActive;
+
+    _debug("Manager: Audio Sampling rate changed");
 
     if (!_audiodriver) {
-    	_debug("Manager: No Audio driver set");
+    	_debug("Manager: No Audio driver initialized");
         return;
     }
 
@@ -3099,12 +3102,9 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
 
     _debug ("Manager: Deleting current layer...");
 
-    // ost::MutexLock lock (*getAudioLayerMutex());
-    // getAudioLayerMutex()->enter();
+    wasActive = _audiodriver->isStarted();
 
-    // _audiodriver->closeLayer();
     delete _audiodriver;
-
     _audiodriver = NULL;
 
     switch (type) {
@@ -3126,35 +3126,48 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
             break;
     }
 
+    if(_audiodriver == NULL) {
+	_debug("Manager: Error: Audio driver could not be initialized");
+    }
+
     _audiodriver->setErrorMessage (-1);
 
     _audiodriver->openDevice (numCardIn, numCardOut, numCardRing, samplerate, framesize,
                               SFL_PCM_BOTH, alsaPlugin);
 
-    if (_audiodriver -> getErrorMessage() != -1)
+    if (_audiodriver -> getErrorMessage() != -1) {
         notifyErrClient (_audiodriver -> getErrorMessage());
+    }
 
     _debug ("Manager: Current device: %d ", type);
 
     _mainBuffer.setInternalSamplingRate(samplerate);
 
-    if (_audiodriver) {
-        unsigned int sampleRate = _audiodriver->getSampleRate();
+    unsigned int sampleRate = _audiodriver->getSampleRate();
 
-        delete _telephoneTone;
+    delete _telephoneTone;
+    _telephoneTone = NULL;
 
-        _debugInit ("Manager: Load telephone tone");
-        std::string country = preferences.getZoneToneChoice();
-        _telephoneTone = new TelephoneTone (country, sampleRate);
+    _debugInit ("Manager: Load telephone tone");
+    std::string country = preferences.getZoneToneChoice();
+    _telephoneTone = new TelephoneTone (country, sampleRate);
 
+    if(_telephoneTone == NULL) {
+        _debug("Manager: Error: Telephone tone is NULL");
+    }
+     
+    delete _dtmfKey;
+    _dtmfKey = NULL;
 
-        delete _dtmfKey;
+    _debugInit ("Manager: Loading DTMF key with sample rate %d", sampleRate);
+    _dtmfKey = new DTMF (sampleRate);
 
-        _debugInit ("Manager: Loading DTMF key with sample rate %d", sampleRate);
-        _dtmfKey = new DTMF (sampleRate);
+    if(_dtmfKey == NULL) {
+        _debug("Manager: Error: DtmfKey is NULL");
     }
 
-    if (hasCurrentCall()) {
+    // Restart audio layer if it was active
+    if (wasActive) {
         _audiodriver->startStream();
     }
 }

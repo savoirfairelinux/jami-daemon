@@ -72,6 +72,7 @@ class AudioLayer
         AudioLayer (ManagerImpl* manager , int type)
             : _defaultVolume (100)
             , _layerType (type)
+        	, _isStarted(false)
             , _manager (manager)
             , _urgentRingBuffer (SIZEBUF, default_id)
             , _indexIn (0)
@@ -125,6 +126,8 @@ class AudioLayer
          * ALSA Library API
          */
         virtual void stopStream (void) = 0;
+
+        bool isStarted(void) { return _isStarted; }
 
         /**
          * Send a chunk of data to the hardware buffer to start the playback
@@ -296,6 +299,11 @@ class AudioLayer
          * Drop the pending frames and close the playback device
          */
         virtual void closePlaybackStream (void) = 0;
+ 
+        /**
+	 * Wether or not the audio layer stream is started
+         */
+        bool _isStarted;
 
         /** Augment coupling, reduce indirect access */
         ManagerImpl* _manager;

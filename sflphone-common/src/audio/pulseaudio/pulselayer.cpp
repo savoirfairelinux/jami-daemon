@@ -243,8 +243,6 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
 {
     _urgentRingBuffer.createReadPointer();
 
-    is_started = false;
-
     AudioLayer::_noisesuppressstate = true;
 
     byteCounter = 0;
@@ -272,22 +270,22 @@ PulseLayer::~PulseLayer (void)
 void
 PulseLayer::openLayer (void)
 {
-    if (!is_started) {
+	if(_isStarted)
+		return;
 
-        _info ("Audio: Open Pulseaudio layer");
+	_info ("Audio: Open Pulseaudio layer");
 
-        connectPulseAudioServer();
+	connectPulseAudioServer();
 
-        is_started = true;
-
-    }
-
+	_isStarted = true;
 }
 
 bool
 PulseLayer::closeLayer (void)
 {
     _info ("Audio: Close Pulseaudio layer");
+
+    _isStarted = false;
 
     disconnectAudioStream();
 

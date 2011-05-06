@@ -306,7 +306,6 @@ void AudioRtpSession::receiveSpeakerData ()
     spkrDataIn  = (unsigned char*) adu->getData(); // data in char
     size = adu->getSize(); // size in char
 
-
     // DTMF over RTP, size must be over 4 in order to process it as voice data
     if (size > 4) {
         processDataDecode (spkrDataIn, size);

@@ -285,8 +285,6 @@ class PulseLayer : public AudioLayer
         /** Sample rate converter object */
         SamplerateConverter * _converter;
 
-        bool is_started;
-
         int spkrVolume;
         int micVolume;
 
