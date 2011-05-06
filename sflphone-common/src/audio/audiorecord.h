@@ -53,6 +53,8 @@ class AudioRecord
 
         void setSndSamplingRate (int smplRate);
 
+        int getSndSamplingRate(void);
+
         void setRecordingOption (FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate, std::string path);
 
         void initFileName (std::string peerNumber);

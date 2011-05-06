@@ -1219,8 +1219,11 @@ void ManagerImpl::joinParticipant (const CallID& call_id1, const CallID& call_id
         _warn ("Manager: Call state not recognized");
     }
 
-    if (_audiodriver)
+
+    if (_audiodriver) {
+    	conf->setRecordingSmplRate(_audiodriver->getSampleRate());
         _audiodriver->getMainBuffer()->stateInfo();
+    }
 
 }
 
