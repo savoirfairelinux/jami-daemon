@@ -540,7 +540,7 @@ call_hold (void* foo UNUSED)
     callable_obj_t * selectedCall = calltab_get_selected_call (current_calls);
     conference_obj_t * selectedConf = calltab_get_selected_conf();
 
-    DEBUG ("UIManager: Hold button pressed (call)");
+    DEBUG ("UIManager: Hold button pressed");
 
     if (selectedCall) {
         if (selectedCall->_state == CALL_STATE_HOLD) {
@@ -559,10 +559,11 @@ call_hold (void* foo UNUSED)
             break;
 
             case CONFERENCE_STATE_ACTIVE_ATACHED:
-            case CONFERENCE_STATE_ACTIVE_DETACHED: {
+            case CONFERENCE_STATE_ACTIVE_DETACHED:
+            case CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD:
+            case CONFERENCE_STATE_ACTIVE_DETACHED_RECORD:
                 selectedConf->_state = CONFERENCE_STATE_HOLD;
                 sflphone_conference_on_hold (selectedConf);
-            }
             break;
             default:
                 break;
