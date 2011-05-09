@@ -246,7 +246,7 @@ conference_changed_cb (DBusGProxy *proxy UNUSED, const gchar* confID,
     conference_obj_t* changed_conf = conferencelist_get (confID);
     GSList * part;
 
-    DEBUG ("conference new state %s\n", state);
+    DEBUG ("DBUS: Conference state changed: %s\n", state);
 
     if (changed_conf) {
         // remove old conference from calltree
@@ -263,6 +263,8 @@ conference_changed_cb (DBusGProxy *proxy UNUSED, const gchar* confID,
              changed_conf->_state = CONFERENCE_STATE_ACTIVE_DETACHED_RECORD;
         } else if (strcmp (state, "HOLD") == 0) {
             changed_conf->_state = CONFERENCE_STATE_HOLD;
+        } else if (strcmp(state, "HOLD_REC") == 0) {
+            changed_conf->_state = CONFERENCE_STATE_HOLD_RECORD;
         } else {
             DEBUG ("Error: conference state not recognized");
         }

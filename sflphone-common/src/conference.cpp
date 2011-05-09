@@ -145,9 +145,12 @@ std::string Conference::getStateStr()
         case ACTIVE_DETACHED_REC:
         	state_str = "ACTIVE_DETACHED_REC";
         	break;
-        case Hold:
+        case HOLD:
             state_str = "HOLD";
             break;
+        case HOLD_REC:
+        	state_str = "HOLD_REC";
+        	break;
         default:
             break;
     }

@@ -48,51 +48,101 @@ class Conference: public Recordable
 
     public:
 
-        enum ConferenceState {ACTIVE_ATTACHED, ACTIVE_DETACHED, ACTIVE_ATTACHED_REC, ACTIVE_DETACHED_REC, Hold};
+        enum ConferenceState {ACTIVE_ATTACHED, ACTIVE_DETACHED, ACTIVE_ATTACHED_REC, ACTIVE_DETACHED_REC, HOLD, HOLD_REC};
 
         static int count;
 
+        /**
+         * Constructor for this class, increment static counter
+         */
         Conference();
 
+        /**
+         * Destructor
+         */
         ~Conference();
 
+        /**
+         * Return the conference id
+         */
         std::string getConfID() {
             return _id;
         }
 
+        /**
+         * Return the current conference state
+         */
         int getState();
 
+        /**
+         * Set conference state
+         */
         void setState (ConferenceState state);
 
+        /**
+         * Return a string description of the conference state
+         */
         std::string getStateStr();
 
+        /**
+         * Return the number of participant for this conference
+         */
         int getNbParticipants() {
             return _nbParticipant;
         }
 
+        /**
+         * Add a new participant to the conference
+         */
         void add (CallID participant_id);
 
+        /**
+         * Remove a participant from the conference
+         */
         void remove (CallID participant_id);
 
+        /**
+         * Bind a participant to the conference
+         */
         void bindParticipant (CallID participant_id);
 
+        /**
+         * Get the participant list for this conference
+         */
         ParticipantSet getParticipantList();
 
+        /**
+         * Get recording file ID
+         */
         std::string getRecFileId() {
             return getConfID();
         }
 
+        /**
+         * Start/stop recording toggle
+         */
         virtual bool setRecording();
 
     private:
 
-        /** Unique ID of the conference */
+        /**
+         * Unique ID of the conference
+         */
         CallID _id;
 
+        /**
+         * Conference state
+         */
         ConferenceState _confState;
 
+        /**
+         * List of participant ids
+         */
         ParticipantSet _participants;
 
+        /**
+         * Number of participant
+         */
         int _nbParticipant;
 
 };

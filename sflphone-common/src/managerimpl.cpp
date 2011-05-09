@@ -619,14 +619,14 @@ bool ManagerImpl::offHoldCall (const CallID& call_id)
 
     if (hasCurrentCall()) {
 
-        _debug ("Manager: Has current call, put on hold");
+        _debug ("Manager: Has current call %s, put on hold", current_call_id.c_str());
 
-        // if this is not a conferenceand this and is not a conference participant
-        if (!isConference (current_call_id) && !participToConference (
-                    current_call_id)) {
+        // if this is not a conference and this and is not a conference participant
+        if (!isConference (current_call_id) && !participToConference (current_call_id)) {
+        	_debug("------------------------------------------------ is not a conference and does not participate to conference");
             onHoldCall (current_call_id);
-        } else if (isConference (current_call_id) && !participToConference (
-                       call_id)) {
+        } else if (isConference (current_call_id) && !participToConference (call_id)) {
+        	_debug("------------------------------------------------ detach participant");
             detachParticipant (default_id, current_call_id);
         }
     }
@@ -907,6 +907,7 @@ void ManagerImpl::holdConference (const CallID& id)
 
     Conference *conf;
     ConferenceMap::iterator iter_conf = _conferencemap.find (id);
+    bool isRec = false;
 
     AccountID currentAccountId;
 
@@ -914,6 +915,14 @@ void ManagerImpl::holdConference (const CallID& id)
 
     if (iter_conf != _conferencemap.end()) {
         conf = iter_conf->second;
+
+        if(conf->getState() == Conference::ACTIVE_ATTACHED_REC) {
+        	isRec = true;
+        } else if (conf->getState() == Conference::ACTIVE_DETACHED_REC) {
+        	isRec = true;
+        } else if (conf->getState() == Conference::HOLD_REC) {
+        	isRec = true;
+        }
 
         ParticipantSet participants = conf->getParticipantList();
         ParticipantSet::iterator iter_participant = participants.begin();
@@ -930,7 +939,12 @@ void ManagerImpl::holdConference (const CallID& id)
 
         }
 
-        conf->setState (Conference::Hold);
+        if(isRec) {
+        	conf->setState(Conference::HOLD_REC);
+        }
+        else {
+            conf->setState (Conference::HOLD);
+        }
 
         if (_dbus)
             _dbus->getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
@@ -958,6 +972,12 @@ void ManagerImpl::unHoldConference (const CallID& id)
         ParticipantSet participants = conf->getParticipantList();
         ParticipantSet::iterator iter_participant = participants.begin();
 
+        if((conf->getState() == Conference::ACTIVE_ATTACHED_REC) ||
+           (conf->getState() == Conference::ACTIVE_DETACHED_REC) ||
+           (conf->getState() == Conference::HOLD_REC)) {
+        	isRec = true;
+        }
+
         while (iter_participant != participants.end()) {
             _debug ("    unholdConference: participant %s", (*iter_participant).c_str());
             currentAccountId = getAccountFromCall (*iter_participant);
@@ -975,14 +995,17 @@ void ManagerImpl::unHoldConference (const CallID& id)
         }
 
         if(isRec) {
+        	_debug("----------------------------------------------------------- active attached rec");
             conf->setState (Conference::ACTIVE_ATTACHED_REC);
         }
         else {
         	conf->setState (Conference::ACTIVE_ATTACHED);
         }
-        if (_dbus)
-            _dbus->getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
 
+        if (_dbus) {
+        	_debug("------------------------------------------------------------ dbus %s", conf->getStateStr().c_str());
+            _dbus->getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
+        }
     }
 
 }
@@ -2826,21 +2849,25 @@ bool ManagerImpl::getMd5CredentialHashing (void)
 void ManagerImpl::setRecordingCall (const CallID& id)
 {
 
+	Call *call = NULL;
+	Conference *conf = NULL;
     Recordable* rec = NULL;
 
     if (!isConference (id)) {
         _debug ("Manager: Set recording for call %s", id.c_str());
         AccountID accountid = getAccountFromCall (id);
-        rec = (Recordable *) getAccountLink (accountid)->getCall (id);
+        call = getAccountLink (accountid)->getCall (id);
+        rec = static_cast<Recordable *>(call);
     } else {
-        _debug ("Manager: Ser recording for conference %s", id.c_str());
+        _debug ("Manager: Set recording for conference %s", id.c_str());
         ConferenceMap::iterator it = _conferencemap.find (id);
-        rec = (Recordable *) it->second;
+        conf = it->second;
+        rec = static_cast<Recordable *>(conf);
     }
 
-    if (rec)
+    if (rec != NULL) {
         rec->setRecording();
-
+    }
 }
 
 bool ManagerImpl::isRecording (const CallID& id)

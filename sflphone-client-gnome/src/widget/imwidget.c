@@ -462,6 +462,7 @@ conf_state_image_widget (conference_state_t state)
         case CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD:
         case CONFERENCE_STATE_ACTIVE_DETACHED_RECORD:
         case CONFERENCE_STATE_HOLD:
+        case CONFERENCE_STATE_HOLD_RECORD:
             image = gtk_image_new_from_stock (GTK_STOCK_IM, GTK_ICON_SIZE_LARGE_TOOLBAR);
             break;
         default:

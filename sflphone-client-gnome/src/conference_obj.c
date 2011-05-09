@@ -103,6 +103,8 @@ void create_new_conference_from_details (const gchar *conf_id, GHashTable *detai
         new_conf->_state = CONFERENCE_STATE_ACTIVE_DETACHED_RECORD;
     } else if (g_strcasecmp (state_str, "HOLD") == 0) {
         new_conf->_state = CONFERENCE_STATE_HOLD;
+    } else if (g_strcasecmp (state_str, "HOLD_REC") == 0) {
+        new_conf->_state = CONFERENCE_STATE_HOLD_RECORD;
     }
 
     *conf = new_conf;

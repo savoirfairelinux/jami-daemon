@@ -375,6 +375,7 @@ update_actions()
                 break;
 
             case CONFERENCE_STATE_HOLD:
+            case CONFERENCE_STATE_HOLD_RECORD:
                 gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
                 gtk_widget_set_sensitive (GTK_WIDGET (offHoldToolbar), TRUE);
                 gtk_action_set_sensitive (GTK_ACTION (recordAction), TRUE);
@@ -552,19 +553,25 @@ call_hold (void* foo UNUSED)
 
         switch (selectedConf->_state) {
 
-            case CONFERENCE_STATE_HOLD: {
+            case CONFERENCE_STATE_HOLD:
                 selectedConf->_state = CONFERENCE_STATE_ACTIVE_ATACHED;
                 sflphone_conference_off_hold (selectedConf);
-            }
-            break;
+                break;
+            case CONFERENCE_STATE_HOLD_RECORD:
+                selectedConf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD;
+                sflphone_conference_off_hold (selectedConf);
+                break;
 
             case CONFERENCE_STATE_ACTIVE_ATACHED:
             case CONFERENCE_STATE_ACTIVE_DETACHED:
-            case CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD:
-            case CONFERENCE_STATE_ACTIVE_DETACHED_RECORD:
                 selectedConf->_state = CONFERENCE_STATE_HOLD;
                 sflphone_conference_on_hold (selectedConf);
-            break;
+                break;
+            case CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD:
+            case CONFERENCE_STATE_ACTIVE_DETACHED_RECORD:
+              selectedConf->_state = CONFERENCE_STATE_HOLD_RECORD;
+              sflphone_conference_on_hold (selectedConf);
+              break;
             default:
                 break;
         }
@@ -602,18 +609,23 @@ conference_hold (void* foo UNUSED)
     DEBUG ("UIManager: Hold button pressed (conference)");
 
     switch (selectedConf->_state) {
-        case CONFERENCE_STATE_HOLD: {
+        case CONFERENCE_STATE_HOLD:
             selectedConf->_state = CONFERENCE_STATE_ACTIVE_ATACHED;
             sflphone_conference_off_hold (selectedConf);
-        }
-        break;
-
+            break;
+        case CONFERENCE_STATE_HOLD_RECORD:
+            selectedConf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD;
+            sflphone_conference_off_hold (selectedConf);
+            break;
         case CONFERENCE_STATE_ACTIVE_ATACHED:
-        case CONFERENCE_STATE_ACTIVE_DETACHED: {
+        case CONFERENCE_STATE_ACTIVE_DETACHED:
             selectedConf->_state = CONFERENCE_STATE_HOLD;
             sflphone_conference_on_hold (selectedConf);
-        }
-        break;
+            break;
+        case CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD:
+        case CONFERENCE_STATE_ACTIVE_DETACHED_RECORD:
+            selectedConf->_state = CONFERENCE_STATE_HOLD_RECORD;
+            sflphone_conference_on_hold(selectedConf);
         default:
             break;
     }
@@ -1181,6 +1193,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
                 case CONFERENCE_STATE_ACTIVE_DETACHED:
                     break;
                 case CONFERENCE_STATE_HOLD:
+                case CONFERENCE_STATE_HOLD_RECORD:
                     hangup_conf = TRUE;
                     hold_conf = TRUE;
                     break;

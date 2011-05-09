@@ -261,6 +261,7 @@ row_activated (GtkTreeView       *tree_view UNUSED,
                         sflphone_add_main_participant (selectedConf);
                         break;
                     case CONFERENCE_STATE_HOLD:
+                    case CONFERENCE_STATE_HOLD_RECORD:
                         sflphone_conference_off_hold (selectedConf);
                         break;
                     case CONFERENCE_STATE_ACTIVE_ATACHED:
@@ -1139,6 +1140,7 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
                 break;
             case CONFERENCE_STATE_ACTIVE_DETACHED:
             case CONFERENCE_STATE_HOLD:
+            case CONFERENCE_STATE_HOLD_RECORD:
                 pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/usersDetached.svg", NULL);
                 break;
             case CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD:
