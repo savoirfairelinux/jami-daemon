@@ -144,10 +144,8 @@ void ManagerImpl::init ()
 
     audioLayerMutexLock();
 
-    AudioLayer *audiolayer = getAudioDriver();
-
-    if (audiolayer) {
-        unsigned int sampleRate = audiolayer->getSampleRate();
+    if (_audiodriver != NULL) {
+        unsigned int sampleRate = _audiodriver->getSampleRate();
 
         _debugInit ("Manager: Load telephone tone");
         std::string country = preferences.getZoneToneChoice();
@@ -418,16 +416,15 @@ bool ManagerImpl::hangupCall (const CallID& callId)
 
     	audioLayerMutexLock();
 
-        AudioLayer *audiolayer = getAudioDriver();
 
-        if(audiolayer == NULL) {
+        if(_audiodriver == NULL) {
         	audioLayerMutexUnlock();
         	_error("Manager: Error: Audio layer was not instantiated");
         	return returnValue;
         }
 
         _debug ("Manager: stop audio stream, there is no call remaining", nbCalls);
-        audiolayer->stopStream();
+        _audiodriver->stopStream();
         audioLayerMutexUnlock();
     }
 
@@ -777,13 +774,11 @@ bool ManagerImpl::refuseCall (const CallID& id)
 
     int nbCalls = getCallList().size();
 
-    // AudioLayer* audiolayer = getAudioDriver();
-
     if (nbCalls <= 1) {
         _debug ("    refuseCall: stop audio stream, there is only %d call(s) remaining", nbCalls);
 
         audioLayerMutexLock();
-        getAudioDriver()->stopStream();
+        _audiodriver->stopStream();
         audioLayerMutexUnlock();
     }
 
@@ -2122,17 +2117,19 @@ bool ManagerImpl::playATone (Tone::TONEID toneId)
 
     hasToPlayTone = voipPreferences.getPlayTones();
 
-    if (!hasToPlayTone)
+    if (!hasToPlayTone) {
         return false;
+    }
 
     audioLayerMutexLock();
-    audiolayer = getAudioDriver();
 
-    if (audiolayer) {
-
-        audiolayer->flushUrgent();
-        audiolayer->startStream();
+    if (_audiodriver == NULL) {
+    	_error("Manager: Error: Audio layer not initialized");
+    	audioLayerMutexUnlock();
+    	return false;
     }
+    _audiodriver->flushUrgent();
+    _audiodriver->startStream();
     audioLayerMutexUnlock();
 
     if (_telephoneTone != 0) {
@@ -2239,17 +2236,16 @@ void ManagerImpl::ringtone (const AccountID& accountID)
 
         audioLayerMutexLock();
 
-        audiolayer = getAudioDriver();
 
-        if (!audiolayer) {
+        if (!_audiodriver) {
             _error ("Manager: Error: no audio layer in ringtone");
             audioLayerMutexUnlock();
             return;
         }
 
-        layer = audiolayer->getLayerType();
+        layer = _audiodriver->getLayerType();
 
-        samplerate = audiolayer->getSampleRate();
+        samplerate = _audiodriver->getSampleRate();
         codecForTone = static_cast<AudioCodec *>(_codecDescriptorMap.getFirstCodecAvailable());
 
         audioLayerMutexUnlock();
@@ -2331,27 +2327,30 @@ ManagerImpl::getTelephoneFile ()
 
 void ManagerImpl::notificationIncomingCall (void)
 {
-    AudioLayer *audiolayer;
     std::ostringstream frequency;
     unsigned int sampleRate, nbSample;
 
     audioLayerMutexLock();
 
-    audiolayer = getAudioDriver();
+    if(_audiodriver == NULL) {
+    	_error("Manager: Error: Audio layer not initialized");
+    	audioLayerMutexUnlock();
+    	return;
+    }
 
     _debug ("ManagerImpl: Notification incoming call");
 
     // Enable notification only if more than one call
-    if (audiolayer != 0 && hasCurrentCall()) {
-        sampleRate = audiolayer->getSampleRate();
+    if (hasCurrentCall()) {
+        sampleRate = _audiodriver->getSampleRate();
         frequency << "440/" << 160;
         Tone tone (frequency.str(), sampleRate);
         nbSample = tone.getSize();
         SFLDataFormat buf[nbSample];
         tone.getNext (buf, nbSample);
         /* Put the data in the urgent ring buffer */
-        audiolayer->flushUrgent();
-        audiolayer->putUrgent (buf, sizeof (SFLDataFormat) * nbSample);
+        _audiodriver->flushUrgent();
+        _audiodriver->putUrgent (buf, sizeof (SFLDataFormat) * nbSample);
     }
 
     audioLayerMutexUnlock();
@@ -2659,11 +2658,15 @@ std::vector<std::string> ManagerImpl::getAudioInputDeviceList (void)
 
     audioLayerMutexLock();
 
-    alsalayer = dynamic_cast<AlsaLayer *> (getAudioDriver());
+    alsalayer = dynamic_cast<AlsaLayer *> (_audiodriver);
 
-    if (alsalayer) {
-        devices = alsalayer->getSoundCardsInfo (SFL_PCM_CAPTURE);
+    if (alsalayer == NULL) {
+    	_error("Manager: Error: Audio layer not initialized");
+    	audioLayerMutexUnlock();
+    	return devices;
     }
+
+    devices = alsalayer->getSoundCardsInfo (SFL_PCM_CAPTURE);
 
     audioLayerMutexUnlock();
 
@@ -2680,6 +2683,13 @@ std::vector<std::string> ManagerImpl::getCurrentAudioDevicesIndex ()
     audioLayerMutexLock();
 
     std::vector<std::string> v;
+
+    if(_audiodriver == NULL) {
+    	_error("Manager: Error: Audio layer not initialized");
+    	audioLayerMutexUnlock();
+    	return v;
+    }
+
     std::stringstream ssi, sso, ssr;
     sso << _audiodriver->getIndexOut();
     v.push_back (sso.str());
@@ -2910,7 +2920,13 @@ int ManagerImpl::getAudioDeviceIndex (const std::string name)
 
     audioLayerMutexLock();
 
-    alsalayer = dynamic_cast<AlsaLayer *> (getAudioDriver());
+    if(_audiodriver == NULL) {
+    	_error("Manager: Error: Audio layer not initialized");
+    	audioLayerMutexUnlock();
+    	return soundCardIndex;
+    }
+
+    alsalayer = dynamic_cast<AlsaLayer *> (_audiodriver);
 
     if (alsalayer) {
         soundCardIndex = alsalayer -> soundCardGetIndex (name);
