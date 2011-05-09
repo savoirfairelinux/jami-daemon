@@ -1093,10 +1093,10 @@ sflphone_rec_call()
                 WARN ("Should not happen in sflphone_off_hold ()!");
                 break;
         }
+        calltree_update_call (current_calls, selectedCall, NULL);
     } else if (selectedConf) {
         DEBUG ("SFLphone: Set record for selected conf");
         dbus_set_record (selectedConf->_confID);
-
         switch (selectedConf->_state) {
             case CONFERENCE_STATE_ACTIVE_ATACHED:
                 selectedConf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD;
@@ -1114,9 +1114,9 @@ sflphone_rec_call()
                 WARN ("Should not happen in sflphone_off_hold ()!");
                 break;
         }
+        calltree_update_conference(current_calls, selectedConf);
     }
 
-    calltree_update_call (current_calls, selectedCall, NULL);
     update_actions();
 }
 

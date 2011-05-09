@@ -1262,7 +1262,6 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
         // for (pl = participant; *pl; pl++)
         while (conference_participant) {
 
-            DEBUG ("OK");
             call_id = (gchar*) (conference_participant->data);
             call = calllist_get (tab, call_id);
             // create_new_call_from_details (conf_id, conference_details, &c);
@@ -1292,9 +1291,12 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 }
 
 
-void calltree_update_conference (calltab_t* tab UNUSED, const gchar* confID UNUSED)
+void calltree_update_conference (calltab_t* tab, const conference_obj_t* conf)
 {
     DEBUG ("calltree_update_conference");
+
+    calltree_remove_conference(tab, conf, NULL);
+    calltree_add_conference (tab, conf);
 }
 
 

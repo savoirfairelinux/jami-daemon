@@ -97,7 +97,7 @@ void
 calltree_add_conference (calltab_t* tab, conference_obj_t* conf);
 
 void
-calltree_update_conference (calltab_t* tab, const gchar* confID);
+calltree_update_conference (calltab_t* tab, const conference_obj_t* conf);
 
 void
 calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, GtkTreeIter *parent);
