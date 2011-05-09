@@ -239,7 +239,6 @@ conference_changed_cb (DBusGProxy *proxy UNUSED, const gchar* confID,
                        const gchar* state, void * foo  UNUSED)
 {
 
-    // gchar** part;
     callable_obj_t *call;
     gchar* call_id;
 
@@ -258,6 +257,10 @@ conference_changed_cb (DBusGProxy *proxy UNUSED, const gchar* confID,
             changed_conf->_state = CONFERENCE_STATE_ACTIVE_ATACHED;
         } else if (strcmp (state, "ACTIVE_DETACHED") == 0) {
             changed_conf->_state = CONFERENCE_STATE_ACTIVE_DETACHED;
+        } else if (strcmp (state, "ACTIVE_ATTACHED_REC") == 0) {
+            changed_conf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD;
+        } else if (strcmp(state, "ACTIVE_DETACHED_REC") == 0) {
+             changed_conf->_state = CONFERENCE_STATE_ACTIVE_DETACHED_RECORD;
         } else if (strcmp (state, "HOLD") == 0) {
             changed_conf->_state = CONFERENCE_STATE_HOLD;
         } else {
@@ -276,8 +279,6 @@ conference_changed_cb (DBusGProxy *proxy UNUSED, const gchar* confID,
 
             part = g_slist_next (part);
         }
-
-//        new_participants = (gchar **) dbus_get_participant_list (changed_conf->_confID);
 
         // update conferece participants
         conference_participant_list_update (dbus_get_participant_list (changed_conf->_confID), changed_conf);
@@ -324,8 +325,15 @@ conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
         call = calllist_get (current_calls, call_id);
 
         // if a text widget is already created, disable it, use conference widget instead
-        if (call->_im_widget)
+        if (call->_im_widget) {
             im_widget_update_state (IM_WIDGET (call->_im_widget), FALSE);
+        }
+
+
+        // if one of these participant is currently recording, the whole conference will be recorded
+        if(call->_state == CALL_STATE_RECORD) {
+            new_conf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD;
+        }
 
         call->_confID = g_strdup (confID);
     }

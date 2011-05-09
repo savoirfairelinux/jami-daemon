@@ -93,66 +93,44 @@ Call::getStateStr ()
     std::string state_str;
 
     switch (state) {
-
-        case Active:
-
-            switch (connection) {
-
-                case Ringing:
-                    (type == Incoming) ? state_str = "INCOMING":state_str = "RINGING";
-                    break;
-
-                case Connected:
-                    state_str = "CURRENT";
-                    break;
-
-                default:
-                    state_str = "CURRENT";
-                    break;
-            }
-
-            break;
-
-        case Hold:
-            state_str = "HOLD";
-            break;
-
-        case Busy:
-            state_str = "BUSY";
-            break;
-
-        case Inactive:
-
-            switch (connection) {
-
-                case Ringing:
-                    (type == Incoming) ? state_str = "INCOMING":state_str = "RINGING";
-                    break;
-
-                case Connected:
-                    state_str = "CURRENT";
-                    break;
-
-                default:
-                    state_str = "INACTIVE";
-                    break;
-            }
-
-            break;
-
-        case Conferencing:
-            state_str = "CONFERENCING";
-            break;
-
-        case Refused:
-
-        case Error:
-
+    case Active:
+        switch (connection) {
+        case Ringing:
+        	(type == Incoming) ? state_str = "INCOMING":state_str = "RINGING";
+        	break;
+        case Connected:
         default:
-            state_str = "FAILURE";
+            isRecording() ? state_str = "RECORD" : state_str = "CURRENT";
             break;
+        }
+    case Hold:
+    	state_str = "HOLD";
+    	break;
+    case Busy:
+    	state_str = "BUSY";
+    	break;
+    case Inactive:
+    	switch (connection) {
+    	case Ringing:
+    		(type == Incoming) ? state_str = "INCOMING":state_str = "RINGING";
+    		break;
+    	case Connected:
+    		state_str = "CURRENT";
+    		break;
+    	default:
+    		state_str = "INACTIVE";
+    		break;
+    	}
+    	break;
+    case Conferencing:
+    	state_str = "CONFERENCING";
+    	break;
+    case Refused:
+    case Error:
+    default:
+    	state_str = "FAILURE";
+    	break;
     }
-
     return state_str;
 }
 

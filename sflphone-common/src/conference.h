@@ -48,7 +48,7 @@ class Conference: public Recordable
 
     public:
 
-        enum ConferenceState {Active_Atached, Active_Detached, Hold};
+        enum ConferenceState {ACTIVE_ATTACHED, ACTIVE_DETACHED, ACTIVE_ATTACHED_REC, ACTIVE_DETACHED_REC, Hold};
 
         static int count;
 

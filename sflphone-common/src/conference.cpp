@@ -38,7 +38,7 @@
 
 int Conference::count = 0;
 
-Conference::Conference() : _id (""), _confState (Active_Atached), _nbParticipant (0)
+Conference::Conference() : _id (""), _confState (ACTIVE_ATTACHED), _nbParticipant (0)
 {
     _nbParticipant = 0;
 
@@ -133,18 +133,21 @@ std::string Conference::getStateStr()
 
     switch (_confState) {
 
-        case Active_Atached:
+        case ACTIVE_ATTACHED:
             state_str = "ACTIVE_ATACHED";
             break;
-
-        case Active_Detached:
+        case ACTIVE_DETACHED:
             state_str = "ACTIVE_DETACHED";
             break;
-
+        case ACTIVE_ATTACHED_REC:
+        	state_str = "ACTIVE_ATTACHED_REC";
+        	break;
+        case ACTIVE_DETACHED_REC:
+        	state_str = "ACTIVE_DETACHED_REC";
+        	break;
         case Hold:
             state_str = "HOLD";
             break;
-
         default:
             break;
     }

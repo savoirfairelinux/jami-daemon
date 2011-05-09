@@ -33,7 +33,10 @@ buttons_DATA = current.svg \
 				contact_default.svg \
 				face-monkey.svg \
 				users.svg \
-				usersActive.svg \
+				usersAttached.svg \
+				usersDetached.svg \
+				usersAttachedRec.svg \
+				usersDetachedRec.svg \
 				home.svg \
 				wait-on.gif \
 				lock_certified.svg \

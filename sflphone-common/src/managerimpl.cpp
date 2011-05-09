@@ -604,10 +604,10 @@ bool ManagerImpl::offHoldCall (const CallID& call_id)
 {
 
     AccountID account_id;
-    bool returnValue, is_rec;
+    bool returnValue, isRec;
     std::string codecName;
 
-    is_rec = false;
+    isRec = false;
 
     _debug ("Manager: Put call %s off hold", call_id.c_str());
 
@@ -651,16 +651,17 @@ bool ManagerImpl::offHoldCall (const CallID& call_id)
 
         _debug ("Manager: Setting offhold, Account %s, callid %s", account_id.c_str(), call_id.c_str());
 
-        is_rec = getAccountLink (account_id)->getCall (call_id)->isRecording();
+        isRec = getAccountLink (account_id)->getCall (call_id)->isRecording();
         returnValue = getAccountLink (account_id)->offhold (call_id);
     }
 
     if (_dbus) {
-        if (is_rec)
+        if (isRec) {
             _dbus->getCallManager()->callStateChanged (call_id, "UNHOLD_RECORD");
-        else
+        }
+        else {
             _dbus->getCallManager()->callStateChanged (call_id, "UNHOLD_CURRENT");
-
+        }
     }
 
     if (participToConference (call_id)) {
@@ -945,6 +946,7 @@ void ManagerImpl::unHoldConference (const CallID& id)
 
     Conference *conf;
     ConferenceMap::iterator iter_conf = _conferencemap.find (id);
+    bool isRec = false;
 
     AccountID currentAccountId;
 
@@ -961,14 +963,23 @@ void ManagerImpl::unHoldConference (const CallID& id)
             currentAccountId = getAccountFromCall (*iter_participant);
             call = getAccountLink (currentAccountId)->getCall (*iter_participant);
 
+            // if one call is currently recording, the conference is in state recording
+            if(call->isRecording()) {
+            	isRec = true;
+            }
+
             offHoldCall (*iter_participant);
 
             iter_participant++;
 
         }
 
-        conf->setState (Conference::Active_Atached);
-
+        if(isRec) {
+            conf->setState (Conference::ACTIVE_ATTACHED_REC);
+        }
+        else {
+        	conf->setState (Conference::ACTIVE_ATTACHED);
+        }
         if (_dbus)
             _dbus->getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
 
@@ -1120,8 +1131,7 @@ void ManagerImpl::addMainParticipant (const CallID& conference_id)
         ParticipantSet::iterator iter_participant = participants.begin();
 
         while (iter_participant != participants.end()) {
-            getMainBuffer()->bindCallID (*iter_participant,
-                    default_id);
+            getMainBuffer()->bindCallID (*iter_participant, default_id);
 
             iter_participant++;
         }
@@ -1137,7 +1147,7 @@ void ManagerImpl::addMainParticipant (const CallID& conference_id)
 
         getMainBuffer()->flush (default_id);
 
-        conf->setState (Conference::Active_Atached);
+        conf->setState (Conference::ACTIVE_ATTACHED);
 
         if (_dbus)
             _dbus->getCallManager()->conferenceChanged (conference_id, conf->getStateStr());
@@ -1151,6 +1161,7 @@ void ManagerImpl::addMainParticipant (const CallID& conference_id)
 
 void ManagerImpl::joinParticipant (const CallID& call_id1, const CallID& call_id2)
 {
+	bool isRec = false;
 
     _debug ("Manager: Join participants %s, %s", call_id1.c_str(), call_id2.c_str());
 
@@ -1203,14 +1214,19 @@ void ManagerImpl::joinParticipant (const CallID& call_id1, const CallID& call_id
     iter_details = call1_details.find ("CALL_STATE");
     _debug ("Manager: Process call %s state: %s", call_id1.c_str(), iter_details->second.c_str());
 
-    if (iter_details->second == "HOLD") {
+    std::string call1_state_str = iter_details->second;
+    if (call1_state_str == "HOLD") {
         offHoldCall (call_id1);
-    } else if (iter_details->second == "INCOMING") {
+    } else if (call1_state_str == "INCOMING") {
         answerCall (call_id1);
-    } else if (iter_details->second == "CURRENT") {
+    } else if (call1_state_str == "CURRENT") {
         getMainBuffer()->unBindAll (call_id1);
         conf->bindParticipant (call_id1);
-    } else if (iter_details->second == "INACTIVE") {
+    } else if (call1_state_str == "RECORD") {
+    	getMainBuffer()->unBindAll(call_id1);
+    	conf->bindParticipant(call_id1);
+    	isRec = true;
+    } else if (call1_state_str == "INACTIVE") {
         answerCall (call_id1);
     } else {
         _warn ("Manager: Call state not recognized");
@@ -1224,14 +1240,19 @@ void ManagerImpl::joinParticipant (const CallID& call_id1, const CallID& call_id
     iter_details = call2_details.find ("CALL_STATE");
     _debug ("Manager: Process call %s state: %s", call_id2.c_str(), iter_details->second.c_str());
 
-    if (iter_details->second == "HOLD") {
+    std::string call2_state_str = iter_details->second;
+    if (call2_state_str == "HOLD") {
         offHoldCall (call_id2);
-    } else if (iter_details->second == "INCOMING") {
+    } else if (call2_state_str == "INCOMING") {
         answerCall (call_id2);
-    } else if (iter_details->second == "CURRENT") {
+    } else if (call2_state_str == "CURRENT") {
         getMainBuffer()->unBindAll (call_id2);
         conf->bindParticipant (call_id2);
-    } else if (iter_details->second == "INACTIVE") {
+    } else if (call2_state_str == "RECORD") {
+    	getMainBuffer()->unBindAll (call_id2);
+    	conf->bindParticipant (call_id2);
+    	isRec = true;
+    } else if (call2_state_str == "INACTIVE") {
         answerCall (call_id2);
     } else {
         _warn ("Manager: Call state not recognized");
@@ -1240,6 +1261,7 @@ void ManagerImpl::joinParticipant (const CallID& call_id1, const CallID& call_id
     audioLayerMutexLock();
 
     if (_audiodriver) {
+    	conf->setState(Conference::ACTIVE_ATTACHED_REC);
     	conf->setRecordingSmplRate(_audiodriver->getSampleRate());
         _audiodriver->getMainBuffer()->stateInfo();
     }
@@ -1305,7 +1327,7 @@ void ManagerImpl::detachParticipant (const CallID& call_id,
             ConferenceMap::iterator iter = _conferencemap.find (current_call_id);
             Conference *conf = iter->second;
 
-            conf->setState (Conference::Active_Detached);
+            conf->setState (Conference::ACTIVE_DETACHED);
 
             if (_dbus)
                 _dbus->getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
@@ -2205,7 +2227,6 @@ void ManagerImpl::ringback ()
 void ManagerImpl::ringtone (const AccountID& accountID)
 {
     std::string ringchoice;
-    AudioLayer *audiolayer;
     AudioCodec *codecForTone;
     int layer, samplerate;
     bool loadFile;
@@ -2282,7 +2303,7 @@ void ManagerImpl::ringtone (const AccountID& accountID)
 
             audioLayerMutexLock();
             // start audio if not started AND flush all buffers (main and urgent)
-            audiolayer->startStream();
+            _audiodriver->startStream();
             audioLayerMutexUnlock();
 
         } else {

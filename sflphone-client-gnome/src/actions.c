@@ -1099,11 +1099,17 @@ sflphone_rec_call()
 
         switch (selectedConf->_state) {
             case CONFERENCE_STATE_ACTIVE_ATACHED:
-                selectedConf->_state = CONFERENCE_STATE_RECORD;
+                selectedConf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD;
                 break;
-            case CONFERENCE_STATE_RECORD:
+            case CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD:
                 selectedConf->_state = CONFERENCE_STATE_ACTIVE_ATACHED;
                 break;
+            case CONFERENCE_STATE_ACTIVE_DETACHED:
+                selectedConf->_state = CONFERENCE_STATE_ACTIVE_DETACHED_RECORD;
+                break;
+            case CONFERENCE_STATE_ACTIVE_DETACHED_RECORD:
+              selectedConf->_state = CONFERENCE_STATE_ACTIVE_DETACHED_RECORD;
+              break;
             default:
                 WARN ("Should not happen in sflphone_off_hold ()!");
                 break;

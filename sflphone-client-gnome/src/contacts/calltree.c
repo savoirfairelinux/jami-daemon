@@ -257,13 +257,14 @@ row_activated (GtkTreeView       *tree_view UNUSED,
 
                 switch (selectedConf->_state) {
                     case CONFERENCE_STATE_ACTIVE_DETACHED:
+                    case CONFERENCE_STATE_ACTIVE_DETACHED_RECORD:
                         sflphone_add_main_participant (selectedConf);
                         break;
                     case CONFERENCE_STATE_HOLD:
                         sflphone_conference_off_hold (selectedConf);
                         break;
                     case CONFERENCE_STATE_ACTIVE_ATACHED:
-                    case CONFERENCE_STATE_RECORD:
+                    case CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD:
                     default:
                         break;
                 }
@@ -841,11 +842,9 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
                     case SRTP_STATE_ZRTP_SAS_UNCONFIRMED:
                         DEBUG ("Secure is ON");
                         pixbuf_security = gdk_pixbuf_new_from_file (ICONS_DIR "/lock_unconfirmed.svg", NULL);
-
                         if (c->_sas != NULL) {
                             DEBUG ("SAS is ready with value %s", c->_sas);
                         }
-
                         break;
                     case SRTP_STATE_ZRTP_SAS_CONFIRMED:
                         DEBUG ("SAS is confirmed");
@@ -866,7 +865,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
                     default:
                         WARN ("Update calltree srtp state #%d- Should not happen!", c->_srtp_state);
 
-                        if (g_strcasecmp (srtp_enabled,"true") == 0) {
+                        if (g_strcasecmp (srtp_enabled, "true") == 0) {
                             pixbuf_security = gdk_pixbuf_new_from_file (ICONS_DIR "/lock_off.svg", NULL);
                         }
 
@@ -1135,23 +1134,22 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
     if (tab == current_calls) {
 
         switch (conf->_state) {
-            case CONFERENCE_STATE_ACTIVE_ATACHED: {
-
-                pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/usersActive.svg", NULL);
+            case CONFERENCE_STATE_ACTIVE_ATACHED:
+                pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/usersAttached.svg", NULL);
                 break;
-            }
             case CONFERENCE_STATE_ACTIVE_DETACHED:
-            case CONFERENCE_STATE_HOLD: {
-
-
-                pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/users.svg", NULL);
+            case CONFERENCE_STATE_HOLD:
+                pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/usersDetached.svg", NULL);
                 break;
-            }
+            case CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD:
+                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/usersAttachedRec.svg", NULL);
+                break;
+            case CONFERENCE_STATE_ACTIVE_DETACHED_RECORD:
+                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/usersDetachedRec.svg", NULL);
+                break;
             default:
                 WARN ("Update conference add - Should not happen!");
         }
-    } else {
-        DEBUG ("Error Conference State NULL for conferece %s!!!!!", conf->_confID);
     }
 
 
@@ -1172,22 +1170,12 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
     // Every participant to a conference must be secured, the conference is not secured elsewhere
     conf->_conference_secured = TRUE;
 
-    DEBUG ("Calltree: Determine if conference is secured");
-
-    // participant = conf->participant;
-    // participant = dbus_get_participant_list(conf->_confID);
     conference_participant = conf->participant_list;
-
     if (conference_participant) {
 
         DEBUG ("Calltree: Determine if at least one participant uses SRTP");
 
-        // participant = conf->participant;
-        // participant = dbus_get_participant_list(conf->_confID);
-        // for (pl = participant; *pl; pl++)
         while (conference_participant) {
-
-            // call_id = (gchar*)(*pl);
             call_id = (gchar*) (conference_participant->data);
             call = calllist_get (tab, call_id);
 
@@ -1199,7 +1187,7 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
                     srtp_enabled = g_hash_table_lookup (account_details->properties, ACCOUNT_SRTP_ENABLED);
                 }
 
-                if (g_strcasecmp (srtp_enabled,"true") == 0) {
+                if (g_strcasecmp (srtp_enabled, "true") == 0) {
                     DEBUG ("Calltree: SRTP enabled for participant %s", call_id);
                     conf->_conf_srtp_enabled = TRUE;
                     break;
@@ -1227,7 +1215,7 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 
                 if (call != NULL) {
 
-                    if (call->_srtp_state == 0) {
+                    if (call->_srtp_state == SRTP_STATE_UNLOCKED) {
                         DEBUG ("Calltree: Participant %s is not secured", call_id);
                         conf->_conference_secured = FALSE;
                         break;

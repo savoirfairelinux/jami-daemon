@@ -358,7 +358,7 @@ update_actions()
 
                 break;
 
-            case CONFERENCE_STATE_RECORD:
+            case CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD:
                 DEBUG ("UIManager: Conference state record");
                 gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
                 gtk_widget_set_sensitive (GTK_WIDGET (holdToolbar), TRUE);

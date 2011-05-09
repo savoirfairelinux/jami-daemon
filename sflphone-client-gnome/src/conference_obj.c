@@ -93,14 +93,17 @@ void create_new_conference_from_details (const gchar *conf_id, GHashTable *detai
 
     state_str = g_hash_table_lookup (details, "CONF_STATE");
 
-    if (g_strcasecmp (state_str, "ACTIVE_ATACHED") == 0)
+    if (g_strcasecmp (state_str, "ACTIVE_ATACHED") == 0) {
         new_conf->_state = CONFERENCE_STATE_ACTIVE_ATACHED;
-
-    else if (g_strcasecmp (state_str, "ACTIVE_DETACHED") == 0)
+    } else if (g_strcasecmp (state_str, "ACTIVE_ATTACHED_REC") == 0) {
+        new_conf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD;
+    } else if (g_strcasecmp (state_str, "ACTIVE_DETACHED") == 0) {
         new_conf->_state = CONFERENCE_STATE_ACTIVE_DETACHED;
-
-    else if (g_strcasecmp (state_str, "HOLD") == 0)
+    } else if (g_strcasecmp (state_str, "ACTIVE_DETACHED_REC") == 0) {
+        new_conf->_state = CONFERENCE_STATE_ACTIVE_DETACHED_RECORD;
+    } else if (g_strcasecmp (state_str, "HOLD") == 0) {
         new_conf->_state = CONFERENCE_STATE_HOLD;
+    }
 
     *conf = new_conf;
 }
