@@ -958,27 +958,45 @@ void PulseLayer::ringtoneToSpeaker (void)
 
     if (file_tone) {
 
-        if (ringtone->getStreamState() == PA_STREAM_READY) {
-
-            out = (SFLDataFormat *) pa_xmalloc (writableSize);
-            memset (out, 0, writableSize);
-
-            int copied = file_tone->getNext (out, writableSize/sizeof (SFLDataFormat), 100);
-            pa_stream_write (ringtone->pulseStream(), out, copied*sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
-
-            pa_xfree (out);
+        if (ringtone->getStreamState() != PA_STREAM_READY) {
+        	_error("PulseAudio: Error: Ringtone stream not in state ready");
+        	return;
         }
+
+        out = (SFLDataFormat *) pa_xmalloc (writableSize);
+        if(out == NULL) {
+        	_error("PulseAudio: Error: Could not allocate memory for buffer");
+        	return;
+        }
+
+        memset (out, 0, writableSize);
+
+        int copied = file_tone->getNext (out, writableSize/sizeof (SFLDataFormat), 100);
+
+        if(copied == 0) {
+        	copied = writableSize/sizeof(SFLDataFormat);
+        }
+
+        pa_stream_write (ringtone->pulseStream(), out, copied*sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
+
+        pa_xfree (out);
     } else {
 
-        if (ringtone->getStreamState() == PA_STREAM_READY) {
-
-            out = (SFLDataFormat*) pa_xmalloc (writableSize);
-            memset (out, 0, writableSize);
-
-            pa_stream_write (ringtone->pulseStream(), out, writableSize, NULL, 0, PA_SEEK_RELATIVE);
-
-            pa_xfree (out);
+        if (ringtone->getStreamState() != PA_STREAM_READY) {
+        	_error("PulseAudio: Error: Ringtone stream not in state ready");
+        	return;
         }
+
+        out = (SFLDataFormat*) pa_xmalloc (writableSize);
+        if(out == NULL) {
+        	_error("PulseAudio: Error: Could not allocate memory for buffer");
+        	return;
+        }
+        memset (out, 0, writableSize);
+
+        pa_stream_write (ringtone->pulseStream(), out, writableSize, NULL, 0, PA_SEEK_RELATIVE);
+
+        pa_xfree (out);
     }
 
 

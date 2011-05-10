@@ -53,6 +53,11 @@ AudioLoop::getNext (SFLDataFormat* output, int nb, short volume)
     int block;
     int pos = _pos;
 
+    if(_size == 0) {
+    	_error("AudioLoop: Error: Audio loop size is 0");
+    	return 0;
+    }
+
     while (nb) {
         block = nb;
 
