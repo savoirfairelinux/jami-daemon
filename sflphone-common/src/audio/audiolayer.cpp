@@ -37,10 +37,7 @@ void AudioLayer::flushMain (void)
     ost::MutexLock guard (_mutex);
 
     // should pass call id
-    MainBuffer* mainbuffer = getMainBuffer();
-
-    if (mainbuffer)
-        mainbuffer->flushAllBuffers();
+    getMainBuffer()->flushAllBuffers();
 }
 
 

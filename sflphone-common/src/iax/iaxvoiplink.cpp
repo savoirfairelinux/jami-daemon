@@ -167,7 +167,7 @@ IAXVoIPLink::init()
             audiolayer = Manager::instance().getAudioDriver();
 
             // may be different than one already setted
-            converterSamplingRate = audiolayer->getMainBuffer()->getInternalSamplingRate();
+            converterSamplingRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
 
             break;
         }
@@ -339,7 +339,7 @@ IAXVoIPLink::sendAudioFromMic (void)
                     // _debug("Send sound");
                     // audiolayer->getMainBuffer()->flush(currentCall->getCallId());
 
-                    audiolayer->getMainBuffer()->setInternalSamplingRate (ac->getClockRate());
+                    Manager::instance().getMainBuffer()->setInternalSamplingRate (ac->getClockRate());
 
                     int _mainBufferSampleRate = audiolayer->getMainBuffer()->getInternalSamplingRate();
 
@@ -548,7 +548,7 @@ IAXVoIPLink::hangup (const CallID& id) throw (VoipLinkException)
     std::string reason = "Dumped Call";
     CHK_VALID_CALL;
 
-    audiolayer->getMainBuffer()->unBindAll (call->getCallId());
+    Manager::instance().getMainBuffer()->unBindAll (call->getCallId());
 
     _mutexIAX.enterMutex();
     iax_hangup (call->getSession(), (char*) reason.c_str());
@@ -574,7 +574,7 @@ IAXVoIPLink::peerHungup (const CallID& id) throw (VoipLinkException)
     std::string reason = "Dumped Call";
     CHK_VALID_CALL;
 
-    audiolayer->getMainBuffer()->unBindAll (call->getCallId());
+    Manager::instance().getMainBuffer()->unBindAll (call->getCallId());
 
     call->setSession (NULL);
 
@@ -594,7 +594,7 @@ IAXVoIPLink::onhold (const CallID& id) throw (VoipLinkException)
 
     CHK_VALID_CALL;
 
-    audiolayer->getMainBuffer()->unBindAll (call->getCallId());
+    Manager::instance().getMainBuffer()->unBindAll (call->getCallId());
 
     //if (call->getState() == Call::Hold) { _debug("Call is already on hold"); return false; }
 
@@ -982,12 +982,12 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
 
     if (audiolayer) {
 
-        audiolayer->getMainBuffer ()->setInternalSamplingRate (ac->getClockRate ());
+        Manager::instance().getMainBuffer ()->setInternalSamplingRate (ac->getClockRate ());
 
         // If we receive datalen == 0, some things of the jitter buffer in libiax2/iax.c
         // were triggered
 
-        int _mainBufferSampleRate = audiolayer->getMainBuffer()->getInternalSamplingRate();
+        int _mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
 
         // On-the-fly codec changing (normally, when we receive a full packet)
         // as per http://tools.ietf.org/id/draft-guy-iax-03.txt

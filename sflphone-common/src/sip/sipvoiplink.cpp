@@ -978,7 +978,7 @@ SIPVoIPLink::offhold (const CallID& id) throw (VoipLinkException)
     pj_status_t status;
     SIPCall *call;
 
-    _debug ("UserAgent: retrive call from hold status");
+    _debug ("-------------------------------------------------------- UserAgent: retrive call from hold status");
 
     call = getSIPCall (id);
 
@@ -1023,6 +1023,8 @@ SIPVoIPLink::offhold (const CallID& id) throw (VoipLinkException)
 
     sdpSession->addAttributeToLocalAudioMedia("sendrecv");
 
+
+    _debug("------------------------------- create re-INVITE");
     /* Create re-INVITE with new offer */
     status = SIPSessionReinvite (call);
     if (status != PJ_SUCCESS) {
