@@ -250,6 +250,8 @@ bool WaveFile::isFileOpened()
 bool WaveFile::openExistingWaveFile (const std::string& fileName, int audioSamplingRate)
 {
 
+	int maxIteration = 0;
+
     _debug ("WaveFile: Opening %s", fileName.c_str());
     _file_stream.open (fileName.c_str(), std::ios::in | std::ios::binary);
 
@@ -262,9 +264,10 @@ bool WaveFile::openExistingWaveFile (const std::string& fileName, int audioSampl
 
     // Find the "fmt " chunk
     char fmt[4] = {};
-    while (strncmp ("fmt ", fmt, 4) != 0) {
+    maxIteration = 10;
+    while ((maxIteration > 0) && strncmp ("fmt ", fmt, 4)) {
         _file_stream.read (fmt, 4);
-        _debug ("Searching... \"fmt \"");
+        maxIteration--;
     }
     SINT32 chunk_size;         // fmt chunk size
     unsigned short format_tag; // data compression tag
@@ -279,8 +282,6 @@ bool WaveFile::openExistingWaveFile (const std::string& fileName, int audioSampl
         _debug ("WaveFile: File contains an unsupported data format type");
         return false;
     }
-
-
 
     // Get number of channels from the header.
     SINT16 chan;
@@ -324,9 +325,10 @@ bool WaveFile::openExistingWaveFile (const std::string& fileName, int audioSampl
 
     // Find the "data" chunk
     char data[4] = {};
-    while (strncmp ("data", data, 4)) {
+    maxIteration = 10;
+    while ((maxIteration > 0) && strncmp ("data", data, 4)) {
         _file_stream.read (data, 4);
-        _debug ("Searching... data");
+        maxIteration--;
     }
 
 
@@ -453,7 +455,6 @@ bool WaveFile::openExistingWaveFile (const std::string& fileName, int audioSampl
 
 bool WaveFile::loadFile (const std::string& filename, AudioCodec *codec , unsigned int sampleRate)
 {
-
     openFile (filename, sampleRate);
 
     return true;
