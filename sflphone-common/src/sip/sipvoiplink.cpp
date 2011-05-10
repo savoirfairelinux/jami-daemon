@@ -3555,6 +3555,7 @@ void transaction_state_changed_cb (pjsip_inv_session *inv UNUSED, pjsip_transact
                 else if (request.find (method_info) != std::string::npos) {
                     pjsip_dlg_create_response (inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
                     pjsip_dlg_send_response (inv->dlg, tsx, t_data);
+		    return;
                 }
             }
         }
