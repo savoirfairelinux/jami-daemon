@@ -27,9 +27,10 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-
-#include "sflnotify.h"
 #include <eel-gconf-extensions.h>
+
+#include "config.h"
+#include "sflnotify.h"
 
 GnomeNotification *_gnome_notification;
 
@@ -44,11 +45,17 @@ void create_new_gnome_notification (gchar *title, gchar *body, NotifyUrgency urg
         notify_init ("SFLphone");
 
         // Set struct fields
+#ifdef LIBNOTIFY_VERSION_0_7_2
+        _notif->notification = notify_notification_new (title, body, NULL);
+#else
         _notif->notification = notify_notification_new (title, body, NULL, NULL);
-        //_notif->icon = gdk_pixbuf_new_from_file_at_size (LOGO, 120, 120, NULL);
+#endif
         _notif->icon = gdk_pixbuf_new_from_file (LOGO_SMALL, NULL);
+#ifdef LIBNOTIFY_VERSION_0_7_2
+#else
 #if GTK_CHECK_VERSION(2,10,0)
         notify_notification_attach_to_status_icon (_notif->notification , get_status_icon());
+#endif
 #endif
 
         notify_notification_set_urgency (_notif->notification, urgency);

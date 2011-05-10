@@ -540,6 +540,7 @@ authenticate_source (EBook *book)
     if (auth) {
         component_name = auth_domain ? auth_domain : "Addressbook";
 
+/*
         password = e_passwords_get_password (component_name, uri);
 
         if (e_book_authenticate_user (book, user, password, auth, &err)) {
@@ -548,6 +549,7 @@ authenticate_source (EBook *book)
         else {
             ERROR ("Addressbook: authentication error");
         }
+*/
     }
 }
 
