@@ -187,8 +187,6 @@ void AudioRtpRecordHandler::initBuffers()
     _audioRtpRecord._micDataEncoded = new unsigned char[nbSamplesMax * 2];
     _audioRtpRecord._spkrDataConverted = new SFLDataFormat[nbSamplesMax];
     _audioRtpRecord._spkrDataDecoded = new SFLDataFormat[nbSamplesMax];
-
-    Manager::instance().addStream (_ca->getCallId());
 }
 
 void AudioRtpRecordHandler::initNoiseSuppress()

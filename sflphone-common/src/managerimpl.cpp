@@ -330,21 +330,15 @@ bool ManagerImpl::answerCall (const CallID& call_id)
 
     _debug ("ManagerImpl: Answer call %s", call_id.c_str());
 
+    // If sflphone is ringing
     stopTone();
 
     // store the current call id
     CallID current_call_id = getCurrentCallId();
 
+    // Retreive call coresponding to this id
     AccountID account_id = getAccountFromCall (call_id);
-
-    if (account_id == AccountNULL) {
-        _debug ("    answerCall: AccountId is null");
-    }
-
-    Call* call = NULL;
-
-    call = getAccountLink (account_id)->getCall (call_id);
-
+    Call *call = getAccountLink (account_id)->getCall (call_id);
     if (call == NULL) {
         _debug ("    answerCall: Call is null");
     }
@@ -379,28 +373,23 @@ bool ManagerImpl::answerCall (const CallID& call_id)
     	_error("Manager: Error: %s", e.what());
     }
 
-    // if it was waiting, it's waiting no more
-    if (_dbus)
+    // update call state on client side
+    if (_dbus) {
         _dbus->getCallManager()->callStateChanged (call_id, "CURRENT");
+    }
 
-    // std::string codecName = Manager::instance().getCurrentCodecName (call_id);
-    // if (_dbus) _dbus->getCallManager()->currentSelectedCodec (call_id, codecName.c_str());
-
+    // if it was waiting, it's waiting no more
     removeWaitingCall (call_id);
 
     // if we dragged this call into a conference already
     if (participToConference (call_id)) {
-
-        // AccountID currentAccountId;
-        // Call* call = NULL;
-
-        // currentAccountId = getAccountFromCall (call_id);
-        // call = getAccountLink (currentAccountId)->getCall (call_id);
-
         switchCall (call->getConfId());
     } else {
         switchCall (call_id);
     }
+
+    // Connect streams
+    addStream (call_id);
 
     return true;
 }
@@ -415,7 +404,6 @@ bool ManagerImpl::hangupCall (const CallID& callId)
     if(nbCalls <= 0) {
 
     	audioLayerMutexLock();
-
 
         if(_audiodriver == NULL) {
         	audioLayerMutexUnlock();
@@ -450,8 +438,10 @@ bool ManagerImpl::hangupCall (const CallID& callId)
 
     /* Broadcast a signal over DBus */
     _debug ("Manager: Send DBUS call state change (HUNGUP) for id %s", callId.c_str());
-
     _dbus->getCallManager()->callStateChanged (callId, "HUNGUP");
+
+    // Disconnect streams
+    removeStream(callId);
 
     if (participToConference (callId)) {
         Conference *conf = getConferenceFromCallID (callId);
@@ -548,6 +538,8 @@ bool ManagerImpl::cancelCall (const CallID& id)
     // it could be a waiting call?
     removeWaitingCall (id);
 
+    removeStream(id);
+
     switchCall ("");
 
     return returnValue;
@@ -559,7 +551,7 @@ bool ManagerImpl::onHoldCall (const CallID& call_id)
     AccountID account_id;
     bool returnValue;
 
-    _debug ("-------------------------------------------------------------------- Manager: Put call %s on hold", call_id.c_str());
+    _debug ("Manager: Put call %s on hold", call_id.c_str());
 
     stopTone();
 
@@ -609,7 +601,7 @@ bool ManagerImpl::offHoldCall (const CallID& call_id)
 
     isRec = false;
 
-    _debug ("---------------------------------------------------------------- Manager: Put call %s off hold", call_id.c_str());
+    _debug ("Manager: Put call %s off hold", call_id.c_str());
 
     stopTone();
 
@@ -623,10 +615,10 @@ bool ManagerImpl::offHoldCall (const CallID& call_id)
 
         // if this is not a conference and this and is not a conference participant
         if (!isConference (current_call_id) && !participToConference (current_call_id)) {
-        	_debug("------------------------------------------------ is not a conference and does not participate to conference");
+        	_debug("is not a conference and does not participate to conference");
             onHoldCall (current_call_id);
         } else if (isConference (current_call_id) && !participToConference (call_id)) {
-        	_debug("------------------------------------------------ detach participant");
+        	_debug("detach participant");
             detachParticipant (default_id, current_call_id);
         }
     }
@@ -649,7 +641,7 @@ bool ManagerImpl::offHoldCall (const CallID& call_id)
             return false;
         }
 
-        _debug ("------------------------------------------ Manager: Setting offhold, Account %s, callid %s", account_id.c_str(), call_id.c_str());
+        _debug ("Manager: Setting offhold, Account %s, callid %s", account_id.c_str(), call_id.c_str());
 
         isRec = getAccountLink (account_id)->getCall (call_id)->isRecording();
         returnValue = getAccountLink (account_id)->offhold (call_id);
@@ -812,6 +804,9 @@ bool ManagerImpl::refuseCall (const CallID& id)
             _dbus->getCallManager()->callStateChanged (id, "HUNGUP");
     }
 
+    // Disconnect streams
+    removeStream();
+
     return returnValue;
 }
 
@@ -839,7 +834,7 @@ ManagerImpl::createConference (const CallID& id1, const CallID& id2)
 void ManagerImpl::removeConference (const ConfID& conference_id)
 {
 
-    _debug ("Manager: Remove conference %s", conference_id.c_str());
+    _debug ("******************************************************* Manager: Remove conference %s", conference_id.c_str());
 
     Conference* conf = NULL;
 
@@ -882,6 +877,8 @@ void ManagerImpl::removeConference (const ConfID& conference_id)
     if (_dbus) {
         _dbus->getCallManager()->conferenceRemoved (conference_id);
     }
+
+    _debug ("*****************************************************");
 }
 
 Conference*
@@ -996,7 +993,6 @@ void ManagerImpl::unHoldConference (const CallID& id)
         }
 
         if(isRec) {
-        	_debug("----------------------------------------------------------- active attached rec");
             conf->setState (Conference::ACTIVE_ATTACHED_REC);
         }
         else {
@@ -1004,7 +1000,6 @@ void ManagerImpl::unHoldConference (const CallID& id)
         }
 
         if (_dbus) {
-        	_debug("------------------------------------------------------------ dbus %s", conf->getStateStr().c_str());
             _dbus->getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
         }
     }
@@ -1047,7 +1042,7 @@ bool ManagerImpl::participToConference (const CallID& call_id)
 
 void ManagerImpl::addParticipant (const CallID& call_id, const CallID& conference_id)
 {
-    _debug ("ManagerImpl: Add participant %s to %s", call_id.c_str(), conference_id.c_str());
+    _debug ("*****************************************************8 ManagerImpl: Add participant %s to %s", call_id.c_str(), conference_id.c_str());
 
     std::map<std::string, std::string> call_details = getCallDetails (call_id);
 
@@ -1127,6 +1122,8 @@ void ManagerImpl::addParticipant (const CallID& call_id, const CallID& conferenc
         _debug ("    addParticipant: Error, conference %s conference_id not found!", conference_id.c_str());
     }
 
+    _debug ("*****************************************************");
+
 }
 
 void ManagerImpl::addMainParticipant (const CallID& conference_id)
@@ -1147,6 +1144,8 @@ void ManagerImpl::addMainParticipant (const CallID& conference_id)
 
     audioLayerMutexLock();
 
+    _debug("************************************************************* Manager: Add Main Participant");
+
     if (iter != _conferencemap.end()) {
         conf = iter->second;
 
@@ -1156,7 +1155,6 @@ void ManagerImpl::addMainParticipant (const CallID& conference_id)
 
         while (iter_participant != participants.end()) {
             getMainBuffer()->bindCallID (*iter_participant, default_id);
-
             iter_participant++;
         }
 
@@ -1165,7 +1163,6 @@ void ManagerImpl::addMainParticipant (const CallID& conference_id)
 
         while (iter_participant != participants.end()) {
             getMainBuffer()->flush (*iter_participant);
-
             iter_participant++;
         }
 
@@ -1178,6 +1175,8 @@ void ManagerImpl::addMainParticipant (const CallID& conference_id)
 
     }
 
+    _debug ("*****************************************************");
+
     audioLayerMutexUnlock();
 
     switchCall (conference_id);
@@ -1187,7 +1186,7 @@ void ManagerImpl::joinParticipant (const CallID& call_id1, const CallID& call_id
 {
 	bool isRec = false;
 
-    _debug ("Manager: Join participants %s, %s", call_id1.c_str(), call_id2.c_str());
+    _debug ("*********************************************** Manager: Join participants %s, %s", call_id1.c_str(), call_id2.c_str());
 
     std::map<std::string, std::string> call1_details = getCallDetails (call_id1);
     std::map<std::string, std::string> call2_details = getCallDetails (call_id2);
@@ -1240,6 +1239,8 @@ void ManagerImpl::joinParticipant (const CallID& call_id1, const CallID& call_id
 
     getMainBuffer()->unBindAll(call_id1);
     getMainBuffer()->unBindAll(call_id2);
+    getMainBuffer()->bindCallID(call_id1);
+    getMainBuffer()->bindCallID(call_id2);
 
     std::string call1_state_str = iter_details->second;
     if (call1_state_str == "HOLD") {
@@ -1297,6 +1298,8 @@ void ManagerImpl::joinParticipant (const CallID& call_id1, const CallID& call_id
     }
     audioLayerMutexUnlock();
 
+    _debug ("*****************************************************");
+
     getMainBuffer()->stateInfo();
 
 
@@ -1306,7 +1309,7 @@ void ManagerImpl::detachParticipant (const CallID& call_id,
                                      const CallID& current_id)
 {
 
-    _debug ("Manager: Detach participant %s from conference", call_id.c_str());
+    _debug ("*********************************************** Manager: Detach participant %s from conference", call_id.c_str());
 
     CallID current_call_id = current_id;
 
@@ -1368,6 +1371,8 @@ void ManagerImpl::detachParticipant (const CallID& call_id,
         switchCall ("");
 
     }
+
+    _debug ("*****************************************************");
 
 }
 
@@ -1512,7 +1517,7 @@ void ManagerImpl::joinConference (const CallID& conf_id1,
 void ManagerImpl::addStream (const CallID& call_id)
 {
 
-    _debug ("Manager: Add audio stream %s", call_id.c_str());
+    _debug ("******************************************************** Manager: Add audio stream %s", call_id.c_str());
 
     AccountID currentAccountId;
     Call* call = NULL;
@@ -1533,6 +1538,7 @@ void ManagerImpl::addStream (const CallID& call_id)
             conf->bindParticipant (call_id);
 
             ParticipantSet participants = conf->getParticipantList();
+
             // reset ring buffer for all conference participant
             ParticipantSet::iterator iter_p = participants.begin();
 
@@ -1549,7 +1555,6 @@ void ManagerImpl::addStream (const CallID& call_id)
         }
 
     } else {
-
         _debug ("Manager: Add stream to call");
 
         // bind to main
@@ -1561,18 +1566,22 @@ void ManagerImpl::addStream (const CallID& call_id)
         audioLayerMutexUnlock();
     }
 
+    _debug ("*****************************************************");
+
     getMainBuffer()->stateInfo();
 }
 
 void ManagerImpl::removeStream (const CallID& call_id)
 {
-    _debug ("Manager: Remove audio stream %s", call_id.c_str());
+    _debug ("****************************************************8 Manager: Remove audio stream %s", call_id.c_str());
 
     getMainBuffer()->unBindAll (call_id);
 
     if (participToConference (call_id)) {
         removeParticipant (call_id);
     }
+
+    _debug ("*****************************************************");
 
     getMainBuffer()->stateInfo();
 }
@@ -2005,6 +2014,9 @@ void ManagerImpl::peerAnsweredCall (const CallID& id)
     if (_dbus) {
         _dbus->getCallManager()->callStateChanged (id, "CURRENT");
     }
+
+    // Connect audio streams
+    addStream(id);
 
     audioLayerMutexLock();
     _audiodriver->flushMain();

@@ -107,7 +107,10 @@ void Conference::bindParticipant (CallID participant_id)
 {
 
     if (_nbParticipant >= 1) {
-        ParticipantSet::iterator iter = _participants.begin();
+
+    	_debug("************************************************ Conference: bindParticipant");
+
+    	ParticipantSet::iterator iter = _participants.begin();
 
         while (iter != _participants.end()) {
 

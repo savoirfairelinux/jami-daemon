@@ -69,9 +69,6 @@ AudioRtpSession::~AudioRtpSession()
 
 void AudioRtpSession::final()
 {
-    _debug ("AudioRtpSession: Finalize AudioRtpSession instance");
-
-    Manager::instance().getMainBuffer()->unBindAll (_audioRtpRecord._callId);
 
     delete _rtpThread;
 

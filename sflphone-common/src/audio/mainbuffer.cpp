@@ -152,7 +152,7 @@ RingBuffer* MainBuffer::getRingBuffer (CallID call_id)
 RingBuffer* MainBuffer::createRingBuffer (CallID call_id)
 {
 
-    _debug ("BufferManager: Create ring buffer %s", call_id.c_str());
+    _debug ("-------------------------------------------- BufferManager: Create ring buffer %s", call_id.c_str());
 
     RingBuffer* newRingBuffer = new RingBuffer (SIZEBUF, call_id);
 
@@ -165,7 +165,7 @@ RingBuffer* MainBuffer::createRingBuffer (CallID call_id)
 bool MainBuffer::removeRingBuffer (CallID call_id)
 {
 
-    _debug ("BufferManager: Remove Ringbuffer %s", call_id.c_str());
+    _debug ("----------------------------------------- BufferManager: Remove Ringbuffer %s", call_id.c_str());
 
     RingBuffer* ring_buffer = getRingBuffer (call_id);
 
@@ -189,7 +189,7 @@ void MainBuffer::bindCallID (CallID call_id1, CallID call_id2)
 
     ost::MutexLock guard (_mutex);
 
-    _debug ("BufferManager: Bind  calls %s, %s", call_id1.c_str(), call_id2.c_str());
+    _debug ("------------------------------------------- BufferManager: Bind  calls %s, %s", call_id1.c_str(), call_id2.c_str());
 
     RingBuffer* ring_buffer;
     CallIDSet* callid_set;
@@ -221,6 +221,8 @@ void MainBuffer::bindHalfDuplexOut (CallID process_id, CallID call_id)
 
     ost::MutexLock guard (_mutex);
 
+    _debug ("------------------------------------------- BufferManager: Bind  half duplex %s, %s", process_id.c_str(), call_id.c_str());
+
     // This method is used only for active calls, if this call does not exist, do nothing
     if (!getRingBuffer (call_id))
         return;
@@ -240,7 +242,7 @@ void MainBuffer::unBindCallID (CallID call_id1, CallID call_id2)
 
     ost::MutexLock guard (_mutex);
 
-    _debug ("BufferManager: Unbind calls %s, %s", call_id1.c_str(), call_id2.c_str());
+    _debug ("------------------------------------------------- BufferManager: Unbind calls %s, %s", call_id1.c_str(), call_id2.c_str());
 
     removeCallIDfromSet (call_id1, call_id2);
     removeCallIDfromSet (call_id2, call_id1);
@@ -276,6 +278,8 @@ void MainBuffer::unBindHalfDuplexOut (CallID process_id, CallID call_id)
 
     ost::MutexLock guard (_mutex);
 
+    _debug("------------------------------------------------- BufferManager: Unbind half duplex %s, %s", process_id.c_str(), call_id.c_str());
+
     removeCallIDfromSet (process_id, call_id);
 
     RingBuffer* ringbuffer = getRingBuffer (call_id);
@@ -305,6 +309,8 @@ void MainBuffer::unBindHalfDuplexOut (CallID process_id, CallID call_id)
 
 void MainBuffer::unBindAll (CallID call_id)
 {
+
+	_debug("--------------------------------------- MainBuffer: unbind all %s", call_id.c_str());
 
     CallIDSet* callid_set = getCallIDSet (call_id);
 
