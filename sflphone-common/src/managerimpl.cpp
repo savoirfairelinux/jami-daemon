@@ -437,7 +437,6 @@ bool ManagerImpl::hangupCall (const CallID& callId)
     removeStream(callId);
 
     if (participToConference (callId)) {
-    	_debug("===================================================== particip to conference = yew");
     	Conference *conf = getConferenceFromCallID (callId);
         if (conf != NULL) {
             // remove this participant
@@ -948,7 +947,6 @@ void ManagerImpl::holdConference (const CallID& id)
 
 void ManagerImpl::unHoldConference (const CallID& id)
 {
-
     _debug ("Manager: Unhold conference()");
 
     Conference *conf;
@@ -1014,8 +1012,6 @@ bool ManagerImpl::isConference (const CallID& id)
 
 bool ManagerImpl::participToConference (const CallID& call_id)
 {
-	_debug("======================================== ManagerImpl: Paticip to conference");
-
 	AccountID accountId = getAccountFromCall (call_id);
     Call *call = getAccountLink (accountId)->getCall (call_id);
 
@@ -1023,8 +1019,6 @@ bool ManagerImpl::participToConference (const CallID& call_id)
     	_error("Manager: Error call is NULL in particip to conference");
         return false;
     }
-
-    _debug("                           conf id %s", call->getConfId().c_str());
 
     if (call->getConfId() == "") {
         return false;
@@ -1035,7 +1029,7 @@ bool ManagerImpl::participToConference (const CallID& call_id)
 
 void ManagerImpl::addParticipant (const CallID& call_id, const CallID& conference_id)
 {
-    _debug ("***************************************************** ManagerImpl: Add participant %s to %s", call_id.c_str(), conference_id.c_str());
+    _debug ("***************************************************** Manager: Add participant %s to %s", call_id.c_str(), conference_id.c_str());
 
     std::map<std::string, std::string> call_details = getCallDetails (call_id);
 
@@ -1045,23 +1039,20 @@ void ManagerImpl::addParticipant (const CallID& call_id, const CallID& conferenc
     // store the current call id (it will change in offHoldCall or in answerCall)
     CallID current_call_id = getCurrentCallId();
 
-    // detach from the conference and switch to this conference
-
+    // detach from prior communication and switch to this conference
     if (current_call_id != call_id) {
         if (isConference (current_call_id)) {
             detachParticipant (default_id, current_call_id);
         } else
             onHoldCall (current_call_id);
     }
-
     // TODO: remove this ugly hack => There should be different calls when double clicking
     // a conference to add main participant to it, or (in this case) adding a participant
     // toconference
     switchCall ("");
 
+    // Add main participant
     addMainParticipant (conference_id);
-
-    _debug ("    addParticipant: enter main process");
 
     if (iter != _conferencemap.end()) {
 
@@ -1079,24 +1070,18 @@ void ManagerImpl::addParticipant (const CallID& call_id, const CallID& conferenc
 
         iter_details = call_details.find ("CALL_STATE");
 
-        _debug ("    addParticipant: call state: %s", iter_details->second.c_str());
+        // Connect new audio streams together
+        getMainBuffer()->unBindAll (call_id);
 
         if (iter_details->second == "HOLD") {
-            _debug ("    OFFHOLD %s", call_id.c_str());
-
-            // offHoldCall create a new rtp session which use addStream to bind participant
+            conf->bindParticipant (call_id);
             offHoldCall (call_id);
         } else if (iter_details->second == "INCOMING") {
-            _debug ("    ANSWER %s", call_id.c_str());
-            // answerCall create a new rtp session which use addStream to bind participant
-            answerCall (call_id);
+        	conf->bindParticipant (call_id);
+        	answerCall (call_id);
         } else if (iter_details->second == "CURRENT") {
-            // Already a curent call, so we beed to reset audio stream bindings manually
-            getMainBuffer()->unBindAll (call_id);
             conf->bindParticipant (call_id);
         }
-
-        // _dbus->getCallManager()->conferenceChanged(conference_id, conf->getStateStr());
 
         ParticipantSet participants = conf->getParticipantList();
 
@@ -1236,8 +1221,8 @@ void ManagerImpl::joinParticipant (const CallID& call_id1, const CallID& call_id
 
     getMainBuffer()->unBindAll(call_id1);
     getMainBuffer()->unBindAll(call_id2);
-    getMainBuffer()->bindCallID(call_id1);
-    getMainBuffer()->bindCallID(call_id2);
+//    getMainBuffer()->bindCallID(call_id1);
+//    getMainBuffer()->bindCallID(call_id2);
 
     std::string call1_state_str = iter_details->second;
     if (call1_state_str == "HOLD") {
@@ -1401,6 +1386,8 @@ void ManagerImpl::removeParticipant (const CallID& call_id)
     _debug ("Manager: Remove participant %s", call_id.c_str());
     conf->remove (call_id);
     call->setConfId ("");
+
+    removeStream(call_id);
 
     getMainBuffer()->stateInfo();
 }

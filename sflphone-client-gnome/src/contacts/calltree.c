@@ -1287,7 +1287,7 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 
 void calltree_update_conference (calltab_t* tab, const conference_obj_t* conf)
 {
-    DEBUG ("calltree_update_conference");
+    DEBUG ("CallTree: Update conference %s\n", conf->_confID);
 
     calltree_remove_conference(tab, conf, NULL);
     calltree_add_conference (tab, conf);
@@ -1297,7 +1297,7 @@ void calltree_update_conference (calltab_t* tab, const conference_obj_t* conf)
 void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, GtkTreeIter *parent)
 {
 
-    DEBUG ("calltree_remove_conference %s\n", conf->_confID);
+    DEBUG ("CallTree: Remove conference %s\n", conf->_confID);
 
     GtkTreeIter iter_parent;
     GtkTreeIter iter_child;
@@ -1314,15 +1314,9 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, G
 
     for (i = 0; i < nbChild; i++) {
 
-        DEBUG("OK1");
-
         if (gtk_tree_model_iter_nth_child (GTK_TREE_MODEL (store), &iter_parent, parent, i)) {
 
-            DEBUG("OK2");
-
             if (gtk_tree_model_iter_has_child (GTK_TREE_MODEL (store), &iter_parent)) {
-
-                DEBUG("OK3");
 
                 calltree_remove_conference (tab, conf, &iter_parent);
 
@@ -1334,10 +1328,8 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, G
 
                 if (tempconf == conf) {
 
-                    DEBUG("OK4");
-
                     nbParticipant = gtk_tree_model_iter_n_children (GTK_TREE_MODEL (store), &iter_parent);
-                    DEBUG ("nbParticipant: %i", nbParticipant);
+                    DEBUG ("CallTree: nbParticipant: %d", nbParticipant);
 
                     for (j = 0; j < nbParticipant; j++) {
                         call = NULL;
@@ -1360,11 +1352,6 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, G
                     gtk_tree_store_remove (store, &iter_parent);
                 }
             }
-//            else {
-//
-//                if(tempconf == conf)
-//                gtk_tree_store_remove (store, &iter_parent);
-//            }
         }
     }
 
