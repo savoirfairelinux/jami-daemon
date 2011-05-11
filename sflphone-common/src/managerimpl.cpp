@@ -401,6 +401,7 @@ bool ManagerImpl::hangupCall (const CallID& callId)
 
     _info ("Manager: Hangup call %s", callId.c_str());
 
+
     // First stop audio layer if there is no call anymore
     int nbCalls = getCallList().size();
     if(nbCalls <= 0) {
@@ -432,6 +433,11 @@ bool ManagerImpl::hangupCall (const CallID& callId)
     /* Broadcast a signal over DBus */
     _debug ("Manager: Send DBUS call state change (HUNGUP) for id %s", callId.c_str());
     _dbus->getCallManager()->callStateChanged (callId, "HUNGUP");
+
+    if(!isValidCall(callId)) {
+    	_error("Manager: Error: Could not hang up call, call not valid");
+    	return false;
+    }
 
     // Disconnect streams
     removeStream(callId);
@@ -470,11 +476,6 @@ bool ManagerImpl::hangupConference (const ConfID& id)
     ConferenceMap::iterator iter_conf = _conferencemap.find (id);
 
     AccountID currentAccountId;
-
-    // broadcast a signal over dbus
-    if (_dbus) {
-        _dbus->getCallManager()->conferenceRemoved (id);
-    }
 
     if (iter_conf != _conferencemap.end()) {
         Conference *conf = iter_conf->second;
