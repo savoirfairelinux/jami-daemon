@@ -805,7 +805,7 @@ bool ManagerImpl::refuseCall (const CallID& id)
     }
 
     // Disconnect streams
-    removeStream();
+    removeStream(id);
 
     return returnValue;
 }
