@@ -1165,7 +1165,15 @@ void ManagerImpl::addMainParticipant (const CallID& conference_id)
 
         getMainBuffer()->flush (default_id);
 
-        conf->setState (Conference::ACTIVE_ATTACHED);
+        if(conf->getState() == Conference::ACTIVE_DETACHED) {
+            conf->setState (Conference::ACTIVE_ATTACHED);
+        }
+        else if(conf->getState() == Conference::ACTIVE_DETACHED_REC) {
+        	conf->setState(Conference::ACTIVE_ATTACHED_REC);
+        }
+        else {
+        	_warn("Manager: Warning: Invalid conference state while adding main participant");
+        }
 
         if (_dbus)
             _dbus->getCallManager()->conferenceChanged (conference_id, conf->getStateStr());
@@ -1317,30 +1325,27 @@ void ManagerImpl::detachParticipant (const CallID& call_id,
         Conference *conf = getConferenceFromCallID (call_id);
 
         if (conf != NULL) {
-
-            _debug ("Manager: Detaching participant %s", call_id.c_str());
-            std::map<std::string, std::string> call_details = getCallDetails (
-                        call_id);
-            std::map<std::string, std::string>::iterator iter_details;
-
-            iter_details = call_details.find ("CALL_STATE");
-
-            if (iter_details->second == "RINGING") {
-
-                removeParticipant (call_id);
-            } else {
-                onHoldCall (call_id);
-                removeParticipant (call_id);
-                processRemainingParticipant (current_call_id, conf);
-
-                if (_dbus)
-                    _dbus->getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
-            }
-        } else {
-
-            _debug ("Manager: Call is not conferencing, cannot detach");
-
+            _error ("Manager: Call is not conferencing, cannot detach");
+            return;
         }
+
+        std::map<std::string, std::string> call_details = getCallDetails (call_id);
+        std::map<std::string, std::string>::iterator iter_details;
+
+        iter_details = call_details.find ("CALL_STATE");
+
+        if (iter_details->second == "RINGING") {
+        	removeParticipant (call_id);
+        } else {
+        	onHoldCall (call_id);
+        	removeParticipant (call_id);
+        	processRemainingParticipant (current_call_id, conf);
+
+        	if (_dbus) {
+        		_dbus->getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
+            }
+        }
+
     } else {
 
         _debug ("Manager: Unbind main participant from all");
@@ -1351,10 +1356,19 @@ void ManagerImpl::detachParticipant (const CallID& call_id,
             ConferenceMap::iterator iter = _conferencemap.find (current_call_id);
             Conference *conf = iter->second;
 
-            conf->setState (Conference::ACTIVE_DETACHED);
+            if(conf->getState() == Conference::ACTIVE_ATTACHED) {
+            	conf->setState(Conference::ACTIVE_DETACHED);
+            }
+            else if(conf->getState() == Conference::ACTIVE_ATTACHED_REC) {
+            	conf->setState(Conference::ACTIVE_DETACHED_REC);
+            }
+            else {
+            	_warn("Manager: Warning: Undefined behavior, invalid state in detach participant");
+            }
 
-            if (_dbus)
+            if (_dbus) {
                 _dbus->getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
+            }
         }
 
         switchCall ("");
@@ -2856,6 +2870,12 @@ void ManagerImpl::setRecordingCall (const CallID& id)
         _debug ("Manager: Set recording for conference %s", id.c_str());
         ConferenceMap::iterator it = _conferencemap.find (id);
         conf = it->second;
+        if(conf->isRecording()) {
+        	conf->setState(Conference::ACTIVE_ATTACHED);
+        }
+        else {
+        	conf->setState(Conference::ACTIVE_ATTACHED_REC);
+        }
         rec = static_cast<Recordable *>(conf);
     }
 

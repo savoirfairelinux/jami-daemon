@@ -246,7 +246,7 @@ conference_changed_cb (DBusGProxy *proxy UNUSED, const gchar* confID,
     conference_obj_t* changed_conf = conferencelist_get (confID);
     GSList * part;
 
-    DEBUG ("DBUS: Conference state changed: %s\n", state);
+    DEBUG ("-------------------------------------- DBUS: Conference state changed: %s\n", state);
 
     if (changed_conf) {
         // remove old conference from calltree
@@ -306,7 +306,7 @@ conference_changed_cb (DBusGProxy *proxy UNUSED, const gchar* confID,
 static void
 conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo  UNUSED)
 {
-    DEBUG ("DBUS: Conference %s added", confID);
+    DEBUG ("--------------------------------------------- DBUS: Conference %s added", confID);
 
     conference_obj_t* new_conf;
     callable_obj_t* call;
@@ -347,7 +347,7 @@ conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
 static void
 conference_removed_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo  UNUSED)
 {
-    DEBUG ("DBUS: Conference removed %s", confID);
+    DEBUG ("------------------------------------------ DBUS: Conference removed %s", confID);
 
     conference_obj_t * c = conferencelist_get (confID);
     calltree_remove_conference (current_calls, c, NULL);
