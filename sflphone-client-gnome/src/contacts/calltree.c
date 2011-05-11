@@ -1099,35 +1099,27 @@ void calltree_add_history_entry (callable_obj_t * c)
 void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 {
 
-    GdkPixbuf *pixbuf=NULL;
-    GdkPixbuf *pixbuf_security=NULL;
+    GdkPixbuf *pixbuf = NULL;
+    GdkPixbuf *pixbuf_security = NULL;
     GtkTreeIter iter;
     GtkTreePath *path;
     GtkTreeModel *model = (GtkTreeModel*) active_calltree->store;
-
-    // gchar** participant = dbus_get_participant_list(conf->_confID);
-    // gchar** pl;
-    GSList* conference_participant;
-    gchar* call_id;
-
-    callable_obj_t * call;
-
-    account_t* account_details=NULL;
-    gchar* srtp_enabled="";
-
+    GSList *conference_participant;
+    gchar *call_id;
+    callable_obj_t *call;
+    account_t *account_details = NULL;
+    gchar *srtp_enabled = "";
     // New call in the list
-
     gchar * description;
-
-
-    if (!conf) {
-        ERROR ("Calltree: Error: Conference is null!!");
-        return;
-    }
 
     DEBUG ("Calltree: Add conference %s", conf->_confID);
 
-    // description = g_markup_printf_escaped("<b>%s</b>", conf->_confID);
+    if (!conf) {
+        ERROR ("Calltree: Error: Conference is null");
+        return;
+    }
+
+
     description = g_markup_printf_escaped ("<b>%s</b>", "");
 
     gtk_tree_store_append (tab->store, &iter, NULL);
@@ -1318,14 +1310,19 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, G
     int nbChild = gtk_tree_model_iter_n_children (GTK_TREE_MODEL (store), parent);
 
     int nbParticipant;
-
     int i, j;
 
     for (i = 0; i < nbChild; i++) {
 
+        DEBUG("OK1");
+
         if (gtk_tree_model_iter_nth_child (GTK_TREE_MODEL (store), &iter_parent, parent, i)) {
 
+            DEBUG("OK2");
+
             if (gtk_tree_model_iter_has_child (GTK_TREE_MODEL (store), &iter_parent)) {
+
+                DEBUG("OK3");
 
                 calltree_remove_conference (tab, conf, &iter_parent);
 
@@ -1336,6 +1333,8 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, G
                 g_value_unset (&confval);
 
                 if (tempconf == conf) {
+
+                    DEBUG("OK4");
 
                     nbParticipant = gtk_tree_model_iter_n_children (GTK_TREE_MODEL (store), &iter_parent);
                     DEBUG ("nbParticipant: %i", nbParticipant);
@@ -1361,12 +1360,13 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, G
                     gtk_tree_store_remove (store, &iter_parent);
                 }
             }
+//            else {
+//
+//                if(tempconf == conf)
+//                gtk_tree_store_remove (store, &iter_parent);
+//            }
         }
     }
-
-    // callable_obj_t * selectedCall = calltab_get_selected_call(tab);
-    // if(selectedCall == c)
-    // calltab_select_call(tab, NULL);
 
     update_actions();
 
