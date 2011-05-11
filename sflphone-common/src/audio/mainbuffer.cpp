@@ -114,15 +114,12 @@ bool MainBuffer::removeCallIDSet (CallID set_id)
 
 void MainBuffer::addCallIDtoSet (CallID set_id, CallID call_id)
 {
-
     CallIDSet* callid_set = getCallIDSet (set_id);
     callid_set->insert (call_id);
-
 }
 
 void MainBuffer::removeCallIDfromSet (CallID set_id, CallID call_id)
 {
-
     CallIDSet* callid_set = getCallIDSet (set_id);
 
     if (callid_set != NULL) {
@@ -138,7 +135,6 @@ void MainBuffer::removeCallIDfromSet (CallID set_id, CallID call_id)
 
 RingBuffer* MainBuffer::getRingBuffer (CallID call_id)
 {
-
     RingBufferMap::iterator iter = _ringBufferMap.find (call_id);
 
     if (iter == _ringBufferMap.end()) {
@@ -151,9 +147,6 @@ RingBuffer* MainBuffer::getRingBuffer (CallID call_id)
 
 RingBuffer* MainBuffer::createRingBuffer (CallID call_id)
 {
-
-    _debug ("-------------------------------------------- BufferManager: Create ring buffer %s", call_id.c_str());
-
     RingBuffer* newRingBuffer = new RingBuffer (SIZEBUF, call_id);
 
     _ringBufferMap.insert (pair<CallID, RingBuffer*> (call_id, newRingBuffer));
@@ -164,9 +157,6 @@ RingBuffer* MainBuffer::createRingBuffer (CallID call_id)
 
 bool MainBuffer::removeRingBuffer (CallID call_id)
 {
-
-    _debug ("----------------------------------------- BufferManager: Remove Ringbuffer %s", call_id.c_str());
-
     RingBuffer* ring_buffer = getRingBuffer (call_id);
 
     if (ring_buffer != NULL) {
@@ -186,10 +176,7 @@ bool MainBuffer::removeRingBuffer (CallID call_id)
 
 void MainBuffer::bindCallID (CallID call_id1, CallID call_id2)
 {
-
     ost::MutexLock guard (_mutex);
-
-    _debug ("------------------------------------------- BufferManager: Bind  calls %s, %s", call_id1.c_str(), call_id2.c_str());
 
     RingBuffer* ring_buffer;
     CallIDSet* callid_set;
@@ -218,10 +205,7 @@ void MainBuffer::bindCallID (CallID call_id1, CallID call_id2)
 
 void MainBuffer::bindHalfDuplexOut (CallID process_id, CallID call_id)
 {
-
     ost::MutexLock guard (_mutex);
-
-    _debug ("------------------------------------------- BufferManager: Bind  half duplex %s, %s", process_id.c_str(), call_id.c_str());
 
     // This method is used only for active calls, if this call does not exist, do nothing
     if (!getRingBuffer (call_id))
@@ -239,10 +223,7 @@ void MainBuffer::bindHalfDuplexOut (CallID process_id, CallID call_id)
 
 void MainBuffer::unBindCallID (CallID call_id1, CallID call_id2)
 {
-
     ost::MutexLock guard (_mutex);
-
-    _debug ("------------------------------------------------- BufferManager: Unbind calls %s, %s", call_id1.c_str(), call_id2.c_str());
 
     removeCallIDfromSet (call_id1, call_id2);
     removeCallIDfromSet (call_id2, call_id1);
@@ -275,10 +256,7 @@ void MainBuffer::unBindCallID (CallID call_id1, CallID call_id2)
 
 void MainBuffer::unBindHalfDuplexOut (CallID process_id, CallID call_id)
 {
-
     ost::MutexLock guard (_mutex);
-
-    _debug("------------------------------------------------- BufferManager: Unbind half duplex %s, %s", process_id.c_str(), call_id.c_str());
 
     removeCallIDfromSet (process_id, call_id);
 
@@ -309,9 +287,6 @@ void MainBuffer::unBindHalfDuplexOut (CallID process_id, CallID call_id)
 
 void MainBuffer::unBindAll (CallID call_id)
 {
-
-	_debug("--------------------------------------- MainBuffer: unbind all %s", call_id.c_str());
-
     CallIDSet* callid_set = getCallIDSet (call_id);
 
     if (callid_set == NULL)
@@ -336,7 +311,6 @@ void MainBuffer::unBindAll (CallID call_id)
 
 void MainBuffer::unBindAllHalfDuplexOut (CallID process_id)
 {
-
     CallIDSet* callid_set = getCallIDSet (process_id);
 
     if (!callid_set)
@@ -451,7 +425,6 @@ int MainBuffer::getData (void *buffer, int toCopy, unsigned short volume, CallID
 
 int MainBuffer::getDataByID (void *buffer, int toCopy, unsigned short volume, CallID call_id, CallID reader_id)
 {
-
     RingBuffer* ring_buffer = getRingBuffer (call_id);
 
     if (!ring_buffer) {
@@ -464,7 +437,6 @@ int MainBuffer::getDataByID (void *buffer, int toCopy, unsigned short volume, Ca
 
 int MainBuffer::availForGet (CallID call_id)
 {
-
     ost::MutexLock guard (_mutex);
 
     CallIDSet* callid_set = getCallIDSet (call_id);
@@ -508,7 +480,6 @@ int MainBuffer::availForGet (CallID call_id)
 
 int MainBuffer::availForGetByID (CallID call_id, CallID reader_id)
 {
-
     if ( (call_id != default_id) && (reader_id == call_id)) {
         _error ("MainBuffer: Error: RingBuffer has a readpointer on tiself");
     }
@@ -559,7 +530,6 @@ int MainBuffer::discard (int toDiscard, CallID call_id)
 
 int MainBuffer::discardByID (int toDiscard, CallID call_id, CallID reader_id)
 {
-
     RingBuffer* ringbuffer = getRingBuffer (call_id);
 
     if (ringbuffer == NULL)
@@ -602,13 +572,11 @@ void MainBuffer::flushDefault()
     ost::MutexLock guard (_mutex);
 
     flushByID (default_id, default_id);
-
 }
 
 
 void MainBuffer::flushByID (CallID call_id, CallID reader_id)
 {
-
     RingBuffer* ringbuffer = getRingBuffer (call_id);
 
     if (ringbuffer != NULL)
@@ -618,7 +586,6 @@ void MainBuffer::flushByID (CallID call_id, CallID reader_id)
 
 void MainBuffer::flushAllBuffers()
 {
-
     RingBufferMap::iterator iter_buffer = _ringBufferMap.begin();
 
     while (iter_buffer != _ringBufferMap.end()) {
@@ -631,7 +598,6 @@ void MainBuffer::flushAllBuffers()
 
 void MainBuffer:: syncBuffers (CallID call_id)
 {
-
     CallIDSet* callid_set = getCallIDSet (call_id);
 
     if (callid_set == NULL)
