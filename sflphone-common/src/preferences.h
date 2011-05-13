@@ -83,6 +83,7 @@ const Conf::Key devicePlaybackKey ("devicePlayback");//:
 const Conf::Key deviceRecordKey ("deviceRecord");// :
 const Conf::Key deviceRingtoneKey ("deviceRingtone");// :
 const Conf::Key recordpathKey ("recordPath");//: /home/msavard/Bureau
+const Conf::Key alwaysRecordingKey("alwaysRecording");
 const Conf::Key volumemicKey ("volumeMic");//:  100
 const Conf::Key volumespkrKey ("volumeSpkr");//: 100
 const Conf::Key noiseReduceKey ("noiseReduce");

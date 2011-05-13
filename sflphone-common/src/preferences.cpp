@@ -533,6 +533,7 @@ void AudioPreference::serialize (Conf::YamlEmitter *emitter)
 
     // general preference
     Conf::ScalarNode recordpath (_recordpath); //: /home/msavard/Bureau
+    Conf::ScalarNode alwaysRecording(_alwaysRecording ? "true" : "false");
     std::stringstream micstr;
     micstr << _volumemic;
     Conf::ScalarNode volumemic (micstr.str()); //:  100
@@ -541,6 +542,7 @@ void AudioPreference::serialize (Conf::YamlEmitter *emitter)
     Conf::ScalarNode volumespkr (spkrstr.str()); //: 100
     Conf::ScalarNode noise (_noisereduce ? "true":"false");
     preferencemap.setKeyValue (recordpathKey, &recordpath);
+    preferencemap.setKeyValue (alwaysRecordingKey, &alwaysRecording);
     preferencemap.setKeyValue (volumemicKey, &volumemic);
     preferencemap.setKeyValue (volumespkrKey, &volumespkr);
 
@@ -581,6 +583,13 @@ void AudioPreference::unserialize (Conf::MappingNode *map)
     if (val) {
         _recordpath = val->getValue();
         val = NULL;
+    }
+
+    val = (Conf::ScalarNode *) (map->getValue (alwaysRecordingKey));
+
+    if(val) {
+    	_alwaysRecording = (val->getValue() == "true");
+    	val = NULL;
     }
 
     val = (Conf::ScalarNode *) (map->getValue (volumemicKey));
