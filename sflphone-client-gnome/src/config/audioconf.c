@@ -63,6 +63,9 @@ enum {
     CODEC_COLUMN_COUNT
 };
 
+
+static void active_is_always_recording (void);
+
 /**
  * Fills the tree list with supported codecs
  */
@@ -767,10 +770,7 @@ active_noise_suppress (void)
     gchar *state;
     gchar *newstate;
 
-    DEBUG ("Audio: Active noise suppression clicked");
     state = dbus_get_noise_suppress_state();
-
-    DEBUG ("Audio: Get noise suppression cancel state %s", state);
 
     if (strcmp (state, "enabled") == 0) {
         newstate = "disabled";
@@ -779,6 +779,23 @@ active_noise_suppress (void)
     }
 
     dbus_set_noise_suppress_state (newstate);
+}
+
+void
+active_is_always_recording (void)
+{
+    gboolean enabled = FALSE;
+
+    enabled = dbus_get_is_always_recording();
+
+    if(enabled) {
+        enabled = FALSE;
+    }
+    else {
+        enabled = TRUE;
+    }
+
+    dbus_set_is_always_recording(enabled);
 }
 
 GtkWidget* alsa_box()
@@ -957,9 +974,9 @@ GtkWidget* create_audio_configuration()
 
     /* Get the path where to save audio files */
     dftPath = dbus_get_record_path ();
-    DEBUG ("load recording path %s\n", dftPath);
+    DEBUG ("AudioConf: Load recording path %s", dftPath);
 
-    gnome_main_section_new_with_table (_ ("Recordings"), &frame, &table, 1, 2);
+    gnome_main_section_new_with_table (_ ("Recordings"), &frame, &table, 2, 3);
     gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
 
     // label
@@ -972,6 +989,16 @@ GtkWidget* create_audio_configuration()
     g_signal_connect (G_OBJECT (folderChooser) , "selection_changed" , G_CALLBACK (record_path_changed) , NULL);
     gtk_table_attach (GTK_TABLE (table), folderChooser, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
 
+    // isAlwaysRecording functionality checkbox
+    GtkWidget *enableIsAlwaysRecording = NULL;
+    gboolean isAlwaysRecording = FALSE;
+
+    isAlwaysRecording = dbus_get_is_always_recording();
+    enableIsAlwaysRecording = gtk_check_button_new_with_mnemonic(_("_Always recording"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableIsAlwaysRecording), isAlwaysRecording);
+    g_signal_connect(G_OBJECT(enableIsAlwaysRecording), "clicked", active_is_always_recording, NULL);
+    gtk_table_attach(GTK_TABLE(table), enableIsAlwaysRecording, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    gtk_widget_show(GTK_WIDGET(enableIsAlwaysRecording));
 
     // Box for the voice enhancement configuration
     gnome_main_section_new_with_table (_ ("Voice enhancement settings"), &frame, &table, 2, 1);
@@ -980,12 +1007,10 @@ GtkWidget* create_audio_configuration()
     enableNoiseReduction = gtk_check_button_new_with_mnemonic (_ ("_Noise Reduction"));
     state = dbus_get_noise_suppress_state();
     noisesuppressActive = FALSE;
-
     if (strcmp (state, "enabled") == 0)
         noisesuppressActive = TRUE;
     else
         noisesuppressActive = FALSE;
-
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (enableNoiseReduction), noisesuppressActive);
     g_signal_connect (G_OBJECT (enableNoiseReduction), "clicked", active_noise_suppress, NULL);
     gtk_table_attach (GTK_TABLE (table), enableNoiseReduction, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);

@@ -110,7 +110,8 @@ class ConfigurationManager
         void setRingtoneChoice (const std::string& accountID, const std::string& tone);
         std::string getRecordPath (void);
         void setRecordPath (const std::string& recPath);
-
+        bool getIsAlwaysRecording(void);
+        void setIsAlwaysRecording(const bool& rec);
 
         void setHistoryLimit (const int32_t& days);
         int32_t getHistoryLimit (void);

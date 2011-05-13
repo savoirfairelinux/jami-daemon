@@ -695,6 +695,17 @@ class ManagerImpl
         void setRecordPath (const std::string& recPath);
 
         /**
+         * Get is always recording functionality
+         */
+        bool getIsAlwaysRecording(void);
+
+        /**
+         * Set is always recording functionality, every calls will then be set in RECORDING mode
+         * once answered
+         */
+        void setIsAlwaysRecording(bool isAlwaysRec);
+
+        /**
          * Set a credential for a given account. If it
          * does not exist yet, it will be created.
          */

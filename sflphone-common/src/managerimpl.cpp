@@ -2886,6 +2886,16 @@ void ManagerImpl::setRecordPath (const std::string& recPath)
     audioPreference.setRecordpath (recPath);
 }
 
+bool ManagerImpl::getIsAlwaysRecording(void)
+{
+	return audioPreference.getIsAlwaysRecording();
+}
+
+void ManagerImpl::setIsAlwaysRecording(bool isAlwaysRec)
+{
+	return audioPreference.setIsAlwaysRecording(isAlwaysRec);
+}
+
 bool ManagerImpl::getMd5CredentialHashing (void)
 {
     return preferences.getMd5Hash();

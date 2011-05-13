@@ -386,6 +386,24 @@
 			   </tp:docstring>
 		   </arg>
 	   </method>
+	   
+	   <method name="getIsAlwaysRecording" tp:name-for-bindings="getIsAlwaysRecording">
+		   <tp:docstring>
+		   </tp:docstring>
+		   <arg type="b" name="res" direction="out">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+	   </method>
+
+	   <method name="setIsAlwaysRecording" tp:name-for-bindings="setIsAlwaysRecording">
+		   <tp:docstring>
+		   </tp:docstring>
+		   <arg type="b" name="enabled" direction="in">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+	   </method>
 
 	   <!--      ///////////////////////               -->
 

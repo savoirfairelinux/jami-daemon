@@ -575,7 +575,6 @@ std::vector<std::string> ConfigurationManager::getRecordDeviceList()
 {
     std::vector<std::string> ret;
     return ret;
-
 }
 
 bool ConfigurationManager::isMd5CredentialHashing (void)
@@ -623,6 +622,15 @@ void ConfigurationManager::setRecordPath (const std::string& recPath)
     Manager::instance().setRecordPath (recPath);
 }
 
+bool ConfigurationManager::getIsAlwaysRecording(void)
+{
+	return Manager::instance().getIsAlwaysRecording();
+}
+
+void ConfigurationManager::setIsAlwaysRecording(const bool& rec)
+{
+	Manager::instance().setIsAlwaysRecording(rec);
+}
 /*
 int32_t ConfigurationManager::getDialpad(void) {
 	return Manager::instance().getDialpad();

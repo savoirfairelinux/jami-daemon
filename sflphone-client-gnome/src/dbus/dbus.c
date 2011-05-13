@@ -1750,6 +1750,33 @@ dbus_get_record_path (void)
     return path;
 }
 
+void dbus_set_is_always_recording(const gboolean alwaysRec)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_set_is_always_recording(
+        configurationManagerProxy, alwaysRec, &error);
+
+    if(error) {
+        ERROR("DBUS: Could not set isAlwaysRecording");
+        g_error_free(error);
+    }
+}
+
+gboolean dbus_get_is_always_recording(void)
+{
+    GError *error = NULL;
+    int alwaysRec;
+    org_sflphone_SFLphone_ConfigurationManager_get_is_always_recording(
+        configurationManagerProxy, &alwaysRec, &error);
+
+    if(error) {
+        ERROR("DBUS: Could not get isAlwaysRecording");
+        g_error_free(error);
+    }
+
+    return alwaysRec;
+}
+
 void
 dbus_set_history_limit (const guint days)
 {

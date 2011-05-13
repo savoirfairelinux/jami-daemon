@@ -465,6 +465,18 @@ void dbus_set_record_path (const gchar *path);
 gchar* dbus_get_record_path (void);
 
 /**
+ * Set the always recording functionality, once true all call
+ * will be set in recording mode once answered
+ */
+void dbus_set_is_always_recording(const gboolean);
+
+/**
+ * Test if the always recording functionality is activated
+ * @return true if call are always recording
+ */
+gboolean dbus_get_is_always_recording(void);
+
+/**
  * Encapsulate all the address book-related configuration
  * Get the configuration
  */
