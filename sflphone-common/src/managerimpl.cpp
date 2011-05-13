@@ -261,19 +261,19 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 
     CallID current_call_id = getCurrentCallId();
 
-    if (hookPreference.getNumberEnabled())
+    if (hookPreference.getNumberEnabled()) {
         _cleaner->set_phone_number_prefix (hookPreference.getNumberAddPrefix());
-    else
+    }
+    else {
         _cleaner->set_phone_number_prefix ("");
-
+    }
     to_cleaned = _cleaner->clean (to);
 
     /* Check what kind of call we are dealing with */
-    check_call_configuration (call_id, to_cleaned, &callConfig);
+    checkCallConfiguration (call_id, to_cleaned, &callConfig);
 
     // in any cases we have to detach from current communication
     if (hasCurrentCall()) {
-
         _debug ("Manager: Has current call (%s) put it onhold", current_call_id.c_str());
 
         // if this is not a conferenceand this and is not a conference participant
@@ -301,21 +301,24 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 
     _debug ("Manager: Selecting account %s", account_id.c_str());
 
+    // Is this accout exist
     if (!accountExists (account_id)) {
         _error ("Manager: Error: Account doesn't exist in new outgoing call");
         return false;
     }
 
+    // Call ID must be unique
     if (getAccountFromCall (call_id) != AccountNULL) {
         _error ("Manager: Error: Call id already exists in outgoing call");
         return false;
     }
 
-    associateCallToAccount (call_id, account_id);
+    if(!associateCallToAccount (call_id, account_id)) {
+    	_warn("Manager: Warning: Could not associate call id %s to account id %s", call_id.c_str(), account_id.c_str());
+    }
 
     if (getAccountLink (account_id)->newOutgoingCall (call_id, to_cleaned)) {
         switchCall (call_id);
-        return true;
     } else {
         callFailure (call_id);
         _debug ("Manager: Error: An error occur, the call was not created");
@@ -323,14 +326,14 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 
     getMainBuffer()->stateInfo();
 
-    return false;
+    return true;
 }
 
 //THREAD=Main : for outgoing Call
 bool ManagerImpl::answerCall (const CallID& call_id)
 {
 
-    _debug ("ManagerImpl: Answer call %s", call_id.c_str());
+    _debug ("Manager: Answer call %s", call_id.c_str());
 
     // If sflphone is ringing
     stopTone();
@@ -342,29 +345,25 @@ bool ManagerImpl::answerCall (const CallID& call_id)
     AccountID account_id = getAccountFromCall (call_id);
     Call *call = getAccountLink (account_id)->getCall (call_id);
     if (call == NULL) {
-        _debug ("    answerCall: Call is null");
+        _error("Manager: Error: Call is null");
     }
 
     // in any cases we have to detach from current communication
     if (hasCurrentCall()) {
 
-        _debug ("    answerCall: Currently conversing with %s", current_call_id.c_str());
-        // if it is not a conference and is not a conference participant
+        _debug ("Manager: Currently conversing with %s", current_call_id.c_str());
 
-        if (!isConference (current_call_id) && !participToConference (
-                    current_call_id)) {
-            _debug ("    answerCall: Put the current call (%s) on hold", current_call_id.c_str());
+        if (!isConference(current_call_id) && !participToConference (current_call_id)) {
+            // if it is not a conference and is not a conference participant
+            _debug ("Manager: Answer call: Put the current call (%s) on hold", current_call_id.c_str());
             onHoldCall (current_call_id);
-        }
-
-        // if we are talking to a conference and we are answering an incoming call
-        else if (isConference (current_call_id)
-                 && !participToConference (call_id)) {
-            _debug ("    answerCall: Detach main participant from conference");
+        } else if (isConference (current_call_id) && !participToConference (call_id)) {
+            // if we are talking to a conference and we are answering an incoming call
+            _debug ("Manager: Detach main participant from conference");
             detachParticipant (default_id, current_call_id);
         }
-
     }
+
     try {
         if (!getAccountLink (account_id)->answer (call_id)) {
             removeCallAccount (call_id);
@@ -375,10 +374,6 @@ bool ManagerImpl::answerCall (const CallID& call_id)
     	_error("Manager: Error: %s", e.what());
     }
 
-    // update call state on client side
-    if (_dbus) {
-        _dbus->getCallManager()->callStateChanged (call_id, "CURRENT");
-    }
 
     // if it was waiting, it's waiting no more
     removeWaitingCall (call_id);
@@ -394,6 +389,25 @@ bool ManagerImpl::answerCall (const CallID& call_id)
     addStream (call_id);
 
     getMainBuffer()->stateInfo();
+
+    // Start recording if set in preference
+    if(audioPreference.getIsAlwaysRecording()) {
+    	setRecordingCall(call_id);
+    }
+
+    // update call state on client side
+    if (_dbus == NULL) {
+    	_error("Manager: Error: DBUS was not initialized");
+    	return false;
+    }
+
+    if(audioPreference.getIsAlwaysRecording()) {
+        _dbus->getCallManager()->callStateChanged (call_id, "RECORD");
+    }
+    else {
+    	_dbus->getCallManager()->callStateChanged(call_id, "CURRENT");
+    }
+    // _dbus->getCallManager()->callStateChanged(call_id, "CURRENT");
 
     return true;
 }
@@ -2006,9 +2020,6 @@ void ManagerImpl::peerAnsweredCall (const CallID& id)
         stopTone();
     }
 
-    if (_dbus) {
-        _dbus->getCallManager()->callStateChanged (id, "CURRENT");
-    }
 
     // Connect audio streams
     addStream(id);
@@ -2017,6 +2028,22 @@ void ManagerImpl::peerAnsweredCall (const CallID& id)
     _audiodriver->flushMain();
     _audiodriver->flushUrgent();
     audioLayerMutexUnlock();
+
+    if(audioPreference.getIsAlwaysRecording()) {
+    	setRecordingCall(id);
+    }
+
+    if(_dbus == NULL) {
+    	_error("Manager: Error: DBUS not initialized");
+    	return;
+    }
+
+    if(audioPreference.getIsAlwaysRecording()) {
+    	_dbus->getCallManager()->callStateChanged (id, "RECORD");
+    }
+    else {
+    	_dbus->getCallManager()->callStateChanged(id, "CURRENT");
+    }
 }
 
 //THREAD=VoIP Call=Outgoing
@@ -2029,8 +2056,11 @@ void ManagerImpl::peerRingingCall (const CallID& id)
         ringback();
     }
 
-    if (_dbus)
-        _dbus->getCallManager()->callStateChanged (id, "RINGING");
+    if (_dbus == NULL) {
+    	_error("Manager: Error: DBUS not initialized");
+    }
+
+    _dbus->getCallManager()->callStateChanged (id, "RINGING");
 }
 
 //THREAD=VoIP Call=Outgoing/Ingoing
@@ -2095,8 +2125,9 @@ void ManagerImpl::callBusy (const CallID& id)
 {
     _debug ("Manager: Call %s busy", id.c_str());
 
-    if (_dbus)
+    if (_dbus) {
         _dbus->getCallManager()->callStateChanged (id, "BUSY");
+    }
 
     if (isCurrentCall (id)) {
         playATone (Tone::TONE_BUSY);
@@ -2111,8 +2142,9 @@ void ManagerImpl::callBusy (const CallID& id)
 //THREAD=VoIP
 void ManagerImpl::callFailure (const CallID& call_id)
 {
-    if (_dbus)
+    if (_dbus) {
         _dbus->getCallManager()->callStateChanged (call_id, "FAILURE");
+    }
 
     if (isCurrentCall (call_id)) {
         playATone (Tone::TONE_BUSY);
@@ -2127,12 +2159,15 @@ void ManagerImpl::callFailure (const CallID& call_id)
 
         Conference *conf = getConferenceFromCallID (call_id);
 
-        if (conf != NULL) {
-            // remove this participant
-            removeParticipant (call_id);
-
-            processRemainingParticipant (current_call_id, conf);
+        if (conf == NULL) {
+        	_error("Manager: Could not retreive conference from call id %s", call_id.c_str());
+        	return;
         }
+
+        // remove this participant
+        removeParticipant (call_id);
+
+        processRemainingParticipant (current_call_id, conf);
 
     }
 
@@ -2146,8 +2181,9 @@ void ManagerImpl::callFailure (const CallID& call_id)
 void ManagerImpl::startVoiceMessageNotification (const AccountID& accountId,
         int nb_msg)
 {
-    if (_dbus)
+    if (_dbus) {
         _dbus->getCallManager()->voiceMailNotify (accountId, nb_msg);
+    }
 }
 
 void ManagerImpl::connectionStatusNotification ()
@@ -4305,7 +4341,7 @@ void ManagerImpl::setHookSettings (const std::map<std::string, std::string>& set
     // saveConfig();
 }
 
-void ManagerImpl::check_call_configuration (const CallID& id,
+void ManagerImpl::checkCallConfiguration (const CallID& id,
         const std::string &to, Call::CallConfiguration *callConfig)
 {
     Call::CallConfiguration config;

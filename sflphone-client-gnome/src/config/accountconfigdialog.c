@@ -1225,7 +1225,7 @@ GtkWidget* create_codecs_configuration (account_t **a)
     box = codecs_box (a);
 
     // Box for the codecs
-    gnome_main_section_new (_ ("Codecs"), &codecs);
+    gnome_main_section_new (_ ("Audio"), &codecs);
     gtk_box_pack_start (GTK_BOX (ret), codecs, FALSE, FALSE, 0);
     gtk_widget_set_size_request (GTK_WIDGET (codecs), -1, 200);
     gtk_widget_show (codecs);

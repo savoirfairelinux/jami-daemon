@@ -326,74 +326,54 @@ update_actions()
         // update icon in systray
         show_status_hangup_icon();
 
+
         switch (selectedConf->_state) {
 
             case CONFERENCE_STATE_ACTIVE_ATACHED:
-                gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
-                gtk_widget_set_sensitive (GTK_WIDGET (holdToolbar), TRUE);
-                gtk_action_set_sensitive (GTK_ACTION (recordAction), TRUE);
-                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
-                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar), 2);
-                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget), 3);
-
-                if (instant_messaging_enabled) {
-                    gtk_action_set_sensitive (GTK_ACTION (imAction), TRUE);
-                    gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (imToolbar), 4);
-                }
-
-                break;
-
             case CONFERENCE_STATE_ACTIVE_DETACHED:
+                DEBUG("---------------------------------------- CONFERENCE STATE active");
                 gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
                 gtk_widget_set_sensitive (GTK_WIDGET (holdToolbar), TRUE);
                 gtk_action_set_sensitive (GTK_ACTION (recordAction), TRUE);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar), 2);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget), 3);
-
                 if (instant_messaging_enabled) {
                     gtk_action_set_sensitive (GTK_ACTION (imAction), TRUE);
                     gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (imToolbar), 4);
                 }
-
                 break;
-
             case CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD:
-                DEBUG ("UIManager: Conference state record");
+            case CONFERENCE_STATE_ACTIVE_DETACHED_RECORD:
+                DEBUG("---------------------------------------- CONFERENCE STATE record");
                 gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
                 gtk_widget_set_sensitive (GTK_WIDGET (holdToolbar), TRUE);
                 gtk_action_set_sensitive (GTK_ACTION (recordAction), TRUE);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar), 2);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget), 3);
-
                 if (instant_messaging_enabled) {
                     gtk_action_set_sensitive (GTK_ACTION (imAction), TRUE);
                     gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (imToolbar), 4);
                 }
-
                 break;
-
             case CONFERENCE_STATE_HOLD:
             case CONFERENCE_STATE_HOLD_RECORD:
+                DEBUG("---------------------------------------- CONFERENCE STATE hold");
                 gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
                 gtk_widget_set_sensitive (GTK_WIDGET (offHoldToolbar), TRUE);
                 gtk_action_set_sensitive (GTK_ACTION (recordAction), TRUE);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (offHoldToolbar), 2);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget), 3);
-
                 if (instant_messaging_enabled) {
                     gtk_action_set_sensitive (GTK_ACTION (imAction), TRUE);
                     gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (imToolbar), 4);
                 }
-
                 break;
-
             default:
                 WARN ("Should not happen in update_action()!");
                 break;
-
         }
     }
 
@@ -671,7 +651,7 @@ call_hang_up (void)
      * [#3020]	Restore the record toggle button
      *			We set it to FALSE, as when we hang up a call, the recording is stopped.
      */
-    gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (recordWidget), FALSE);
+//    gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (recordWidget), FALSE);
 
     sflphone_hang_up();
 
@@ -758,6 +738,7 @@ edit_copy (void * foo UNUSED)
                 no = selectedCall->_peer_number;
                 break;
             case CALL_STATE_CURRENT:
+            case CALL_STATE_RECORD:
             case CALL_STATE_HOLD:
             case CALL_STATE_BUSY:
             case CALL_STATE_FAILURE:
@@ -819,6 +800,7 @@ edit_paste (void * foo UNUSED)
             }
             break;
             case CALL_STATE_CURRENT:
+            case CALL_STATE_RECORD:
             default: {
                 unsigned int i;
 
@@ -1187,10 +1169,12 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
         if (selectedConf) {
             switch (selectedConf->_state) {
                 case CONFERENCE_STATE_ACTIVE_ATACHED:
+                case CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD:
                     hangup_conf = TRUE;
                     hold_conf = TRUE;
                     break;
                 case CONFERENCE_STATE_ACTIVE_DETACHED:
+                case CONFERENCE_STATE_ACTIVE_DETACHED_RECORD:
                     break;
                 case CONFERENCE_STATE_HOLD:
                 case CONFERENCE_STATE_HOLD_RECORD:

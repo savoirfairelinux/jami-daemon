@@ -1452,7 +1452,7 @@ class ManagerImpl
         /**
          * Check if the call is a classic call or a direct IP-to-IP call
          */
-        void check_call_configuration (const CallID& id, const std::string& to, Call::CallConfiguration *callConfig);
+        void checkCallConfiguration (const CallID& id, const std::string& to, Call::CallConfiguration *callConfig);
 
         Conf::YamlParser *parser;
         Conf::YamlEmitter *emitter;

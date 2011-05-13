@@ -967,6 +967,9 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
                 // If the call has been initiated by a another client and, when we start, it is already current
                 pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/hold.svg", NULL);
                 break;
+            case CALL_STATE_RECORD:
+                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/icon_rec.svg", NULL);
+                break;
             case CALL_STATE_FAILURE:
                 // If the call has been initiated by a another client and, when we start, it is already current
                 pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/fail.svg", NULL);
@@ -986,7 +989,7 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
     }
 
     else {
-        WARN ("This widget doesn't exist - This is a bug in the application.");
+        WARN ("CallTree: This widget doesn't exist - This is a bug in the application.");
     }
 
 

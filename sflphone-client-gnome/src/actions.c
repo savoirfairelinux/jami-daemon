@@ -1442,17 +1442,15 @@ sflphone_confirm_go_clear (callable_obj_t * c)
 void
 sflphone_call_state_changed (callable_obj_t * c, const gchar * description, const guint code)
 {
-    DEBUG ("SFLPhone: sflphone_call_state_changed");
+    DEBUG ("SFLPhone: Call State changed %s", description);
 
     if (c == NULL) {
-        DEBUG ("Panic callable obj is NULL in %s at %d", __FILE__, __LINE__);
-    } else {
-        //g_free(c->_state_code_description);
-        //DEBUG("sflphone_call_state_changed");
-        c->_state_code_description = g_strdup (description);
-        c->_state_code = code;
-        DEBUG ("SFLPhone: state code %d", c->_state_code);
+        ERROR ("SFLphone: Error: callable obj is NULL in %s at %d", __FILE__, __LINE__);
+        return;
     }
+
+    c->_state_code_description = g_strdup (description);
+    c->_state_code = code;
 
     calltree_update_call (current_calls, c, NULL);
     update_actions();

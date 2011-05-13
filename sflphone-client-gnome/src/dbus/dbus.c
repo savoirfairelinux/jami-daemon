@@ -165,7 +165,7 @@ static void
 call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state,
                void * foo  UNUSED)
 {
-    DEBUG ("Call %s state %s",callID, state);
+    DEBUG ("DBUS: Call %s state %s",callID, state);
     callable_obj_t * c = calllist_get (current_calls, callID);
 
     if (c) {
@@ -191,6 +191,8 @@ call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state
             sflphone_ringing (c);
         } else if (strcmp (state, "CURRENT") == 0) {
             sflphone_current (c);
+        } else if (strcmp (state, "RECORD") == 0) {
+            sflphone_record (c);
         } else if (strcmp (state, "FAILURE") == 0) {
             sflphone_fail (c);
         } else if (strcmp (state, "BUSY") == 0) {
@@ -200,12 +202,14 @@ call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state
         // The callID is unknow, threat it like a new call
         // If it were an incoming call, we won't be here
         // It means that a new call has been initiated with an other client (cli for instance)
-        if (strcmp (state, "RINGING") == 0 || strcmp (state, "CURRENT") == 0) {
+        if ((strcmp (state, "RINGING")) == 0 ||
+            (strcmp (state, "CURRENT")) == 0 ||
+            (strcmp (state, "RECORD"))) {
             callable_obj_t *new_call;
             GHashTable *call_details;
             gchar *type;
 
-            DEBUG ("New ringing call! accountID: %s", callID);
+            DEBUG ("DBUS: New ringing call! accountID: %s", callID);
 
             // We fetch the details associated to the specified call
             call_details = dbus_get_call_details (callID);
@@ -246,7 +250,7 @@ conference_changed_cb (DBusGProxy *proxy UNUSED, const gchar* confID,
     conference_obj_t* changed_conf = conferencelist_get (confID);
     GSList * part;
 
-    DEBUG ("-------------------------------------- DBUS: Conference state changed: %s\n", state);
+    DEBUG ("DBUS: Conference state changed: %s\n", state);
 
     if (changed_conf) {
         // remove old conference from calltree
@@ -306,7 +310,7 @@ conference_changed_cb (DBusGProxy *proxy UNUSED, const gchar* confID,
 static void
 conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo  UNUSED)
 {
-    DEBUG ("--------------------------------------------- DBUS: Conference %s added", confID);
+    DEBUG ("DBUS: Conference %s added", confID);
 
     conference_obj_t* new_conf;
     callable_obj_t* call;
@@ -347,7 +351,7 @@ conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
 static void
 conference_removed_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo  UNUSED)
 {
-    DEBUG ("------------------------------------------ DBUS: Conference removed %s", confID);
+    DEBUG ("DBUS: Conference removed %s", confID);
 
     conference_obj_t * c = conferencelist_get (confID);
     calltree_remove_conference (current_calls, c, NULL);
@@ -508,9 +512,11 @@ sip_call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID,
     c = calllist_get (current_calls, callID);
 
     if (c != NULL) {
-        DEBUG ("sip_call_state_cb received code %d", code);
-        sflphone_call_state_changed (c, description, code);
+        ERROR("DBUS: Error call is NULL in state changed");
+        return;
     }
+
+    sflphone_call_state_changed (c, description, code);
 }
 
 static void

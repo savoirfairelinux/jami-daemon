@@ -491,6 +491,14 @@ class AudioPreference : public Serializable
             _recordpath = r;
         }
 
+        bool getIsAlwaysRecording(void) {
+        	return _alwaysRecording;
+        }
+
+        void setIsAlwaysRecording(bool rec) {
+        	_alwaysRecording = rec;
+        }
+
         int getVolumemic (void) {
             return _volumemic;
         }
@@ -530,6 +538,7 @@ class AudioPreference : public Serializable
 
         // general preference
         std::string _recordpath; //: /home/msavard/Bureau
+        bool _alwaysRecording;
         int _volumemic; //:  100
         int _volumespkr; //: 100
 

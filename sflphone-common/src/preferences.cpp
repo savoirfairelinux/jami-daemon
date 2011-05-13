@@ -486,6 +486,7 @@ AudioPreference::AudioPreference() : _cardin (atoi (ALSA_DFT_CARD)) // ALSA_DFT_
     , _deviceRecord ("")
     , _deviceRingtone ("")
     , _recordpath ("") // DFT_RECORD_PATH
+	, _alwaysRecording(false)
     , _volumemic (atoi (DFT_VOL_SPKR_STR)) // DFT_VOL_SPKR_STR
     , _volumespkr (atoi (DFT_VOL_MICRO_STR)) // DFT_VOL_MICRO_STR
     , _noisereduce (true)
@@ -520,6 +521,7 @@ void AudioPreference::serialize (Conf::YamlEmitter *emitter)
     framestr << _framesize;
     Conf::ScalarNode framesize (framestr.str()); // 20
     Conf::ScalarNode plugin (_plugin); // default
+
     std::stringstream ratestr;
     ratestr << _smplrate;
     Conf::ScalarNode smplrate (ratestr.str());// 44100
