@@ -1609,7 +1609,7 @@ void
 dbus_join_participant (const gchar* sel_callID, const gchar* drag_callID)
 {
 
-    DEBUG ("dbus_join_participant %s and %s\n", sel_callID, drag_callID);
+    DEBUG ("DBUS: Join participant %s and %s\n", sel_callID, drag_callID);
 
     GError* error = NULL;
 
@@ -1626,7 +1626,7 @@ void
 dbus_add_participant (const gchar* callID, const gchar* confID)
 {
 
-    DEBUG ("dbus_add_participant %s and %s\n", callID, confID);
+    DEBUG ("DBUS: Add participant %s to %s\n", callID, confID);
 
     GError* error = NULL;
 
@@ -1642,7 +1642,7 @@ dbus_add_participant (const gchar* callID, const gchar* confID)
 void
 dbus_add_main_participant (const gchar* confID)
 {
-    DEBUG ("dbus_add_participant %s\n", confID);
+    DEBUG ("DBUS: Add main participant %s\n", confID);
 
     GError* error = NULL;
 
@@ -1658,7 +1658,7 @@ void
 dbus_detach_participant (const gchar* callID)
 {
 
-    DEBUG ("dbus_detach_participant %s\n", callID);
+    DEBUG ("DBUS: Detach participant %s\n", callID);
 
     GError* error = NULL;
     org_sflphone_SFLphone_CallManager_detach_participant (callManagerProxy,

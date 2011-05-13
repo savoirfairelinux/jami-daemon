@@ -559,15 +559,12 @@ bool ManagerImpl::onHoldCall (const CallID& call_id)
 
     CallID current_call_id = getCurrentCallId();
 
-
-    /* Direct IP to IP call */
-
     if (getConfigFromCall (call_id) == Call::IPtoIP) {
+    	/* Direct IP to IP call */
         returnValue = SIPVoIPLink::instance (AccountNULL)-> onhold (call_id);
     }
-
-    /* Classic call, attached to an account */
     else {
+    	/* Classic call, attached to an account */
         account_id = getAccountFromCall (call_id);
 
         if (account_id == AccountNULL) {
@@ -576,14 +573,15 @@ bool ManagerImpl::onHoldCall (const CallID& call_id)
         }
 
         returnValue = getAccountLink (account_id)->onhold (call_id);
+
+        removeStream(call_id);
     }
 
+    // Remove call from teh queue if it was still there
     removeWaitingCall (call_id);
 
     // keeps current call id if the action is not holding this call or a new outgoing call
-
     if (current_call_id == call_id) {
-
         switchCall ("");
     }
 
@@ -628,23 +626,14 @@ bool ManagerImpl::offHoldCall (const CallID& call_id)
         }
     }
 
-    // switch current call id to id since sipvoip link need it to amke a call
-    // switchCall(id);
-
     /* Direct IP to IP call */
     if (getConfigFromCall (call_id) == Call::IPtoIP) {
         // is_rec = SIPVoIPLink::instance (AccountNULL)-> isRecording (call_id);
         returnValue = SIPVoIPLink::instance (AccountNULL)-> offhold (call_id);
     }
-
     /* Classic call, attached to an account */
     else {
         account_id = getAccountFromCall (call_id);
-
-        if (account_id == AccountNULL) {
-            _warn ("Manager: Error: Call doesn't exists in off hold");
-            return false;
-        }
 
         _debug ("Manager: Setting offhold, Account %s, callid %s", account_id.c_str(), call_id.c_str());
 
@@ -662,7 +651,6 @@ bool ManagerImpl::offHoldCall (const CallID& call_id)
     }
 
     if (participToConference (call_id)) {
-
         AccountID currentAccountId;
         Call* call = NULL;
 
@@ -674,9 +662,11 @@ bool ManagerImpl::offHoldCall (const CallID& call_id)
     } else {
         switchCall (call_id);
 
-        audioLayerMutexLock();
-        _audiodriver->flushMain();
-        audioLayerMutexUnlock();
+//        audioLayerMutexLock();
+//        _audiodriver->flushMain();
+//        audioLayerMutexUnlock();
+
+        addStream(call_id);
     }
 
     getMainBuffer()->stateInfo();
@@ -1055,6 +1045,19 @@ void ManagerImpl::addParticipant (const CallID& call_id, const CallID& conferenc
     ConferenceMap::iterator iter = _conferencemap.find (conference_id);
     std::map<std::string, std::string>::iterator iter_details;
 
+    if (iter == _conferencemap.end()) {
+    	_error("Manager: Error: Conference id is not valid");
+    	return;
+    }
+
+    AccountID currentAccountId = getAccountFromCall (call_id);
+    Call *call = getAccountLink (currentAccountId)->getCall (call_id);
+
+    if(call == NULL) {
+    	_error("Manager: Error: Call id is not valid");
+    	return;
+    }
+
     // store the current call id (it will change in offHoldCall or in answerCall)
     CallID current_call_id = getCurrentCallId();
 
@@ -1062,8 +1065,9 @@ void ManagerImpl::addParticipant (const CallID& call_id, const CallID& conferenc
     if (current_call_id != call_id) {
         if (isConference (current_call_id)) {
             detachParticipant (default_id, current_call_id);
-        } else
+        } else {
             onHoldCall (current_call_id);
+        }
     }
     // TODO: remove this ugly hack => There should be different calls when double clicking
     // a conference to add main participant to it, or (in this case) adding a participant
@@ -1073,51 +1077,42 @@ void ManagerImpl::addParticipant (const CallID& call_id, const CallID& conferenc
     // Add main participant
     addMainParticipant (conference_id);
 
-    if (iter != _conferencemap.end()) {
+    Conference* conf = iter->second;
+    switchCall (conf->getConfID());
 
-        Conference* conf = iter->second;
-        switchCall (conf->getConfID());
+    // Add coresponding IDs in conf and call
+    call->setConfId (conf->getConfID());
+    conf->add (call_id);
 
-        AccountID currentAccountId;
-        Call* call = NULL;
+    iter_details = call_details.find ("CALL_STATE");
 
-        currentAccountId = getAccountFromCall (call_id);
-        call = getAccountLink (currentAccountId)->getCall (call_id);
-        call->setConfId (conf->getConfID());
+    // Connect new audio streams together
+    getMainBuffer()->unBindAll (call_id);
 
-        conf->add (call_id);
-
-        iter_details = call_details.find ("CALL_STATE");
-
-        // Connect new audio streams together
-        getMainBuffer()->unBindAll (call_id);
-
-        if (iter_details->second == "HOLD") {
-            conf->bindParticipant (call_id);
-            offHoldCall (call_id);
-        } else if (iter_details->second == "INCOMING") {
-        	conf->bindParticipant (call_id);
-        	answerCall (call_id);
-        } else if (iter_details->second == "CURRENT") {
-            conf->bindParticipant (call_id);
-        }
-
-        ParticipantSet participants = conf->getParticipantList();
-
-        // reset ring buffer for all conference participant
-        ParticipantSet::iterator iter_p = participants.begin();
-
-        while (iter_p != participants.end()) {
-            // flush conference participants only
-            getMainBuffer()->flush (*iter_p);
-
-            iter_p++;
-        }
-        getMainBuffer()->flush (default_id);
-
-    } else {
-        _debug ("    addParticipant: Error, conference %s conference_id not found!", conference_id.c_str());
+    if (iter_details->second == "HOLD") {
+    	conf->bindParticipant (call_id);
+    	offHoldCall (call_id);
+    } else if (iter_details->second == "INCOMING") {
+    	conf->bindParticipant (call_id);
+    	answerCall (call_id);
+    } else if (iter_details->second == "CURRENT") {
+    	conf->bindParticipant (call_id);
     }
+
+    ParticipantSet participants = conf->getParticipantList();
+
+    if(participants.empty()) {
+    	_error("Manager: Error: Participant list is empty for this conference");
+    }
+
+    // reset ring buffer for all conference participant
+    ParticipantSet::iterator iter_p = participants.begin();
+    while (iter_p != participants.end()) {
+    	// flush conference participants only
+    	getMainBuffer()->flush (*iter_p);
+    	iter_p++;
+    }
+    getMainBuffer()->flush (default_id);
 
     // Connect stream
     addStream(call_id);
@@ -1238,6 +1233,7 @@ void ManagerImpl::joinParticipant (const CallID& call_id1, const CallID& call_id
     call->setConfId (conf->getConfID());
 
     iter_details = call1_details.find ("CALL_STATE");
+
     _debug ("Manager: Process call %s state: %s", call_id1.c_str(), iter_details->second.c_str());
 
     getMainBuffer()->unBindAll(call_id1);
@@ -1306,26 +1302,27 @@ void ManagerImpl::detachParticipant (const CallID& call_id,
                                      const CallID& current_id)
 {
 
-    _debug ("Manager: Detach participant %s from conference", call_id.c_str());
+    _debug ("Manager: Detach participant %s (current id: %s)", call_id.c_str(), current_id.c_str());
 
-    CallID current_call_id = current_id;
 
-    current_call_id = getCurrentCallId();
+    CallID current_call_id = getCurrentCallId();
 
     if (call_id != default_id) {
-        AccountID currentAccountId;
-        Call* call = NULL;
 
-        currentAccountId = getAccountFromCall (call_id);
-        call = getAccountLink (currentAccountId)->getCall (call_id);
+        AccountID currentAccountId = getAccountFromCall (call_id);
+        Call *call = getAccountLink (currentAccountId)->getCall (call_id);
+
+        if(call == NULL) {
+        	_error("Manager: Error: Could not find call %s", call_id.c_str());
+        	return;
+        }
 
         // TODO: add conference_id as a second parameter
         ConferenceMap::iterator iter = _conferencemap.find (call->getConfId());
 
         Conference *conf = getConferenceFromCallID (call_id);
-
-        if (conf != NULL) {
-            _error ("Manager: Call is not conferencing, cannot detach");
+        if (conf == NULL) {
+            _error ("Manager: Error: Call is not conferencing, cannot detach");
             return;
         }
 
@@ -1333,6 +1330,10 @@ void ManagerImpl::detachParticipant (const CallID& call_id,
         std::map<std::string, std::string>::iterator iter_details;
 
         iter_details = call_details.find ("CALL_STATE");
+        if(iter_details == call_details.end()) {
+        	_error ("Manager: Error: Could not find CALL_STATE");
+        	return;
+        }
 
         if (iter_details->second == "RINGING") {
         	removeParticipant (call_id);
@@ -1340,35 +1341,37 @@ void ManagerImpl::detachParticipant (const CallID& call_id,
         	onHoldCall (call_id);
         	removeParticipant (call_id);
         	processRemainingParticipant (current_call_id, conf);
-
-        	if (_dbus) {
-        		_dbus->getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
-            }
         }
-
     } else {
 
-        _debug ("Manager: Unbind main participant from all");
+        _debug ("Manager: Unbind main participant from conference %d");
         getMainBuffer()->unBindAll (default_id);
 
-        if (isConference (current_call_id)) {
+        if(!isConference(current_call_id)) {
+        	_error("Manager: Warning: Current call id (%s) is not a conference", current_call_id.c_str());
+        	return;
+        }
 
-            ConferenceMap::iterator iter = _conferencemap.find (current_call_id);
-            Conference *conf = iter->second;
+        ConferenceMap::iterator iter = _conferencemap.find (current_call_id);
+        Conference *conf = iter->second;
 
-            if(conf->getState() == Conference::ACTIVE_ATTACHED) {
-            	conf->setState(Conference::ACTIVE_DETACHED);
-            }
-            else if(conf->getState() == Conference::ACTIVE_ATTACHED_REC) {
-            	conf->setState(Conference::ACTIVE_DETACHED_REC);
-            }
-            else {
-            	_warn("Manager: Warning: Undefined behavior, invalid state in detach participant");
-            }
+        if(conf == NULL) {
+        	_debug("Manager: Error: Conference is NULL");
+        	return;
+        }
 
-            if (_dbus) {
-                _dbus->getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
-            }
+        if(conf->getState() == Conference::ACTIVE_ATTACHED) {
+        	conf->setState(Conference::ACTIVE_DETACHED);
+        }
+        else if(conf->getState() == Conference::ACTIVE_ATTACHED_REC) {
+        	conf->setState(Conference::ACTIVE_DETACHED_REC);
+        }
+        else {
+        	_warn("Manager: Warning: Undefined behavior, invalid conference state in detach participant");
+        }
+
+        if (_dbus) {
+        	_dbus->getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
         }
 
         switchCall ("");
