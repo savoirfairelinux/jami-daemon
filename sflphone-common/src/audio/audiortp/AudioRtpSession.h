@@ -42,8 +42,6 @@
 
 #include "AudioRtpRecordHandler.h"
 #include "sip/sipcall.h"
-// #include "sip/sdp.h"
-// #include "audio/audiolayer.h"
 #include "audio/codecs/audiocodec.h"
 
 #include "managerimpl.h"
@@ -194,6 +192,8 @@ class AudioRtpSession : public ost::TimerPort, public AudioRtpRecordHandler, pub
          * Call initialized
          */
         bool _callInitialized;
+
+        SpeexEchoCancel echoCanceller;
 
     protected:
 

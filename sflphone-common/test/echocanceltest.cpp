@@ -65,12 +65,12 @@ void EchoCancelTest::testEchoCancelProcessing()
         micFile.read(reinterpret_cast<char *>(micData), nbSamples * sizeof(SFLDataFormat));
         spkrFile.read(reinterpret_cast<char *>(spkrData), nbSamples * sizeof(SFLDataFormat));
 
-	echoCanceller.putData(spkrData, nbSamples * sizeof(SFLDataFormat));
- 	echoCanceller.process(micData, echoCancelData, nbSamples * sizeof(SFLDataFormat));
+        echoCanceller.putData(spkrData, nbSamples * sizeof(SFLDataFormat));
+        echoCanceller.process(micData, echoCancelData, nbSamples * sizeof(SFLDataFormat));
 
         echoCancelFile.write(reinterpret_cast<char *>(echoCancelData), nbSamples * sizeof(SFLDataFormat));
             	
-	remainingLength -= nbSamples;
+        remainingLength -= nbSamples;
     }
     
     

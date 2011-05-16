@@ -35,6 +35,7 @@
 #include "audio/samplerateconverter.h"
 #include "audio/audioprocessing.h"
 #include "audio/noisesuppress.h"
+#include "audio/speexechocancel.h"
 #include "managerimpl.h"
 #include <ccrtp/rtp.h>
 
@@ -96,6 +97,7 @@ class AudioRtpRecord
         bool _hasDynamicPayloadType;
         SFLDataFormat *_micData;
         SFLDataFormat *_micDataConverted;
+        SFLDataFormat *_micDataEchoCancelled;
         unsigned char *_micDataEncoded;
         SFLDataFormat *_spkrDataDecoded;
         SFLDataFormat *_spkrDataConverted;
@@ -172,7 +174,6 @@ class AudioRtpRecordHandler
             return _audioRtpRecord._micDataEncoded;
         }
 
-
         inline float computeCodecFrameSize (int codecSamplePerFrame, int codecClockRate) {
             return ( (float) codecSamplePerFrame * 1000.0) / (float) codecClockRate;
         }
@@ -226,6 +227,7 @@ class AudioRtpRecordHandler
 
         SIPCall *_ca;
 
+ 	SpeexEchoCancel echoCanceller;
 };
 
 }

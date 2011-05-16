@@ -77,6 +77,9 @@ AudioRtpRecord::~AudioRtpRecord()
     if (_micDataEncoded)
         delete [] _micDataEncoded;
 
+    if(_micDataEchoCancelled)
+	delete [] _micDataEchoCancelled;
+
     _micDataEncoded = NULL;
 
     if (_spkrDataDecoded)
@@ -182,8 +185,10 @@ void AudioRtpRecordHandler::initBuffers()
     _audioRtpRecord._converter = new SamplerateConverter ();
 
     int nbSamplesMax = (int) ( (getCodecSampleRate() * getCodecFrameSize() / 1000));
+    _debug("============================================================= getCodecFrameSize() %d", getCodecFrameSize());
     _audioRtpRecord._micData = new SFLDataFormat[nbSamplesMax];
     _audioRtpRecord._micDataConverted = new SFLDataFormat[nbSamplesMax];
+    _audioRtpRecord._micDataEchoCancelled = new SFLDataFormat[nbSamplesMax];
     _audioRtpRecord._micDataEncoded = new unsigned char[nbSamplesMax * 2];
     _audioRtpRecord._spkrDataConverted = new SFLDataFormat[nbSamplesMax];
     _audioRtpRecord._spkrDataDecoded = new SFLDataFormat[nbSamplesMax];
@@ -242,11 +247,15 @@ void AudioRtpRecordHandler::putDtmfEvent (int digit)
     _debug ("AudioRtpSession: Put Dtmf Event %d", digit);
 }
 
+ofstream teststream("test_process_data_encode.raw");
+
 int AudioRtpRecordHandler::processDataEncode (void)
 {
+    _debug("AudioRtp: Process data encode");
 
     SFLDataFormat *micData = _audioRtpRecord._micData;
     unsigned char *micDataEncoded = _audioRtpRecord._micDataEncoded;
+    SFLDataFormat *micDataEchoCancelled = _audioRtpRecord._micDataEchoCancelled;
     SFLDataFormat *micDataConverted = _audioRtpRecord._micDataConverted;
 
     int codecFrameSize = getCodecFrameSize();
@@ -288,14 +297,19 @@ int AudioRtpRecordHandler::processDataEncode (void)
 
         _audioRtpRecord.audioProcessMutex.enter();
 
-        if (Manager::instance().audioPreference.getNoiseReduce())
-            _audioRtpRecord._audioProcess->processAudio (micDataConverted, nbSample * sizeof (SFLDataFormat));
+        echoCanceller.process(micDataConverted, micDataEchoCancelled, nbSample * sizeof(SFLDataFormat));
+        
+        if (Manager::instance().audioPreference.getNoiseReduce()) {
+            _audioRtpRecord._audioProcess->processAudio (micDataEchoCancelled, nbSample * sizeof (SFLDataFormat));
+            // _audioRtpRecord._audioProcess->processAudio (micDataConverted, nbSample * sizeof (SFLDataFormat));
+        }
 
         _audioRtpRecord.audioProcessMutex.leave();
 
         _audioRtpRecord.audioCodecMutex.enter();
 
-        compSize = _audioRtpRecord._audioCodec->encode (micDataEncoded, micDataConverted, nbSample * sizeof (SFLDataFormat));
+        compSize = _audioRtpRecord._audioCodec->encode (micDataEncoded, micDataEchoCancelled, nbSample * sizeof (SFLDataFormat));
+        // compSize = _audioRtpRecord._audioCodec->encode (micDataEncoded, micDataConverted, nbSample * sizeof (SFLDataFormat));
 
         _audioRtpRecord.audioCodecMutex.leave();
 
@@ -303,15 +317,24 @@ int AudioRtpRecordHandler::processDataEncode (void)
 
         _audioRtpRecord.audioProcessMutex.enter();
 
-        if (Manager::instance().audioPreference.getNoiseReduce())
-            _audioRtpRecord._audioProcess->processAudio (micData, nbSample * sizeof (SFLDataFormat));
+        _debug("------------------------------------------------------ process encode!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 
+        echoCanceller.process(micData, micDataEchoCancelled, nbSample * sizeof(SFLDataFormat));
+
+        teststream.write(reinterpret_cast<char *>(micDataEchoCancelled), nbSample * sizeof(SFLDataFormat));
+
+        if (Manager::instance().audioPreference.getNoiseReduce()) {
+            // _audioRtpRecord._audioProcess->processAudio (micData, nbSample * sizeof (SFLDataFormat));
+            _audioRtpRecord._audioProcess->processAudio (micDataEchoCancelled, nbSample * sizeof (SFLDataFormat));
+        }
+        
         _audioRtpRecord.audioProcessMutex.leave();
 
         _audioRtpRecord.audioCodecMutex.enter();
 
         // no resampling required
-        compSize = _audioRtpRecord._audioCodec->encode (micDataEncoded, micData, nbSample * sizeof (SFLDataFormat));
+        // compSize = _audioRtpRecord._audioCodec->encode (micDataEncoded, micData, nbSample * sizeof (SFLDataFormat));
+        compSize = _audioRtpRecord._audioCodec->encode (micDataEncoded, micDataEchoCancelled, nbSample * sizeof (SFLDataFormat));
 
         _audioRtpRecord.audioCodecMutex.leave();
     }
@@ -321,6 +344,8 @@ int AudioRtpRecordHandler::processDataEncode (void)
 
 void AudioRtpRecordHandler::processDataDecode (unsigned char *spkrData, unsigned int size)
 {
+    _debug("AudioRtp: process data decode");
+
     int codecSampleRate = getCodecSampleRate();
 
     SFLDataFormat *spkrDataDecoded = _audioRtpRecord._spkrDataConverted;
@@ -338,8 +363,9 @@ void AudioRtpRecordHandler::processDataDecode (unsigned char *spkrData, unsigned
     // buffer _receiveDataDecoded ----> short int or int16, coded on 2 bytes
     int nbSample = expandedSize / sizeof (SFLDataFormat);
 
-    if (!_audioRtpRecord._spkrFadeInComplete)
+    if (!_audioRtpRecord._spkrFadeInComplete) {
         _audioRtpRecord._spkrFadeInComplete = fadeIn (spkrDataDecoded, nbSample, &_audioRtpRecord._micAmplFactor);
+    }
 
     // test if resampling is required
     if (codecSampleRate != mainBufferSampleRate) {
@@ -349,11 +375,15 @@ void AudioRtpRecordHandler::processDataDecode (unsigned char *spkrData, unsigned
 
         nbSample = _audioRtpRecord._converter->upsampleData (spkrDataDecoded, spkrDataConverted, codecSampleRate, mainBufferSampleRate, nbSampleDown);
 
+        echoCanceller.putData(spkrDataConverted, nbSample * sizeof(SFLDataFormat));
+
         // put data in audio layer, size in byte
         Manager::instance().getMainBuffer()->putData (spkrDataConverted, nbSample * sizeof (SFLDataFormat), 100, _ca->getCallId());
 
 
     } else {
+    	echoCanceller.putData(spkrDataDecoded, expandedSize);
+
         // put data in audio layer, size in byte
         Manager::instance().getMainBuffer()->putData (spkrDataDecoded, expandedSize, 100, _ca->getCallId());
     }
