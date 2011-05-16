@@ -1065,23 +1065,18 @@ bool ManagerImpl::participToConference (const CallID& call_id)
     return true;
 }
 
-void ManagerImpl::addParticipant (const CallID& call_id, const CallID& conference_id)
+void ManagerImpl::addParticipant (const CallID& callId, const CallID& conferenceId)
 {
-    _debug ("Manager: Add participant %s to %s", call_id.c_str(), conference_id.c_str());
+    _debug ("Manager: Add participant %s to %s", callId.c_str(), conferenceId.c_str());
 
-    std::map<std::string, std::string> call_details = getCallDetails (call_id);
-
-    ConferenceMap::iterator iter = _conferencemap.find (conference_id);
-    std::map<std::string, std::string>::iterator iter_details;
-
+    ConferenceMap::iterator iter = _conferencemap.find (conferenceId);
     if (iter == _conferencemap.end()) {
     	_error("Manager: Error: Conference id is not valid");
     	return;
     }
 
-    AccountID currentAccountId = getAccountFromCall (call_id);
-    Call *call = getAccountLink (currentAccountId)->getCall (call_id);
-
+    AccountID currentAccountId = getAccountFromCall (callId);
+    Call *call = getAccountLink (currentAccountId)->getCall (callId);
     if(call == NULL) {
     	_error("Manager: Error: Call id is not valid");
     	return;
@@ -1091,7 +1086,7 @@ void ManagerImpl::addParticipant (const CallID& call_id, const CallID& conferenc
     CallID current_call_id = getCurrentCallId();
 
     // detach from prior communication and switch to this conference
-    if (current_call_id != call_id) {
+    if (current_call_id != callId) {
         if (isConference (current_call_id)) {
             detachParticipant (default_id, current_call_id);
         } else {
@@ -1104,32 +1099,31 @@ void ManagerImpl::addParticipant (const CallID& call_id, const CallID& conferenc
     switchCall ("");
 
     // Add main participant
-    addMainParticipant (conference_id);
+    addMainParticipant (conferenceId);
 
     Conference* conf = iter->second;
     switchCall (conf->getConfID());
 
     // Add coresponding IDs in conf and call
     call->setConfId (conf->getConfID());
-    conf->add (call_id);
-
-    iter_details = call_details.find ("CALL_STATE");
+    conf->add (callId);
 
     // Connect new audio streams together
-    getMainBuffer()->unBindAll (call_id);
+    getMainBuffer()->unBindAll (callId);
 
-    if (iter_details->second == "HOLD") {
-    	conf->bindParticipant (call_id);
-    	offHoldCall (call_id);
-    } else if (iter_details->second == "INCOMING") {
-    	conf->bindParticipant (call_id);
-    	answerCall (call_id);
-    } else if (iter_details->second == "CURRENT") {
-    	conf->bindParticipant (call_id);
+    std::map<std::string, std::string> callDetails = getCallDetails (callId);
+    std::string callState = callDetails.find("CALL_STATE")->second;
+    if (callState == "HOLD") {
+    	conf->bindParticipant (callId);
+    	offHoldCall (callId);
+    } else if (callState == "INCOMING") {
+    	conf->bindParticipant (callId);
+    	answerCall (callId);
+    } else if (callState == "CURRENT") {
+    	conf->bindParticipant (callId);
     }
 
     ParticipantSet participants = conf->getParticipantList();
-
     if(participants.empty()) {
     	_error("Manager: Error: Participant list is empty for this conference");
     }
@@ -1141,10 +1135,11 @@ void ManagerImpl::addParticipant (const CallID& call_id, const CallID& conferenc
     	getMainBuffer()->flush (*iter_p);
     	iter_p++;
     }
+
     getMainBuffer()->flush (default_id);
 
     // Connect stream
-    addStream(call_id);
+    addStream(callId);
 }
 
 void ManagerImpl::addMainParticipant (const CallID& conference_id)
@@ -1217,23 +1212,6 @@ void ManagerImpl::joinParticipant (const CallID& callId1, const CallID& callId2)
 
     std::map<std::string, std::string> call1Details = getCallDetails (callId1);
     std::map<std::string, std::string> call2Details = getCallDetails (callId2);
-
-    std::map<std::string, std::string>::iterator iter_details;
-
-    // Test if we have valid call ids
-    iter_details = call1Details.find ("PEER_NUMBER");
-
-    if (iter_details->second == "Unknown") {
-        _error ("Manager: Error: Id %s is not a valid call", callId1.c_str());
-        return;
-    }
-
-    iter_details = call2Details.find ("PEER_NUMBER");
-
-    if (iter_details->second == "Unknown") {
-        _error ("Manager: Error: Id %s is not a valid call", callId2.c_str());
-        return;
-    }
 
     CallID current_call_id = getCurrentCallId();
     _debug ("Manager: Current Call ID %s", current_call_id.c_str());
