@@ -257,7 +257,7 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
         return false;
     }
 
-    _debug ("Manager: New outgoing call %s to %s", call_id.c_str(), to.c_str());
+    _debug ("---------------------------------------------------------- Manager: New outgoing call %s to %s", call_id.c_str(), to.c_str());
 
     CallID current_call_id = getCurrentCallId();
 
@@ -276,9 +276,17 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
     if (hasCurrentCall()) {
         _debug ("Manager: Has current call (%s) put it onhold", current_call_id.c_str());
 
+        // std::string currentCallState = getCallDetails(current_call_id).find("CALL_STATE")->second;
+        Call *call = getAccountLink(getAccountFromCall(current_call_id))->getCall(current_call_id);
+
+        // _error("------------------------------------------- call is %s", currentCallState.c_str());
+
         // if this is not a conferenceand this and is not a conference participant
         if (!isConference (current_call_id) && !participToConference (current_call_id)) {
-            onHoldCall (current_call_id);
+        	// if(currentCallState != "RINGING") {
+            // if(call->getConnectionState() == Call::Connected) {
+        	onHoldCall (current_call_id);
+        	// }
         } else if (isConference (current_call_id) && !participToConference (call_id)) {
             detachParticipant (default_id, current_call_id);
         }
@@ -562,46 +570,56 @@ bool ManagerImpl::cancelCall (const CallID& id)
 }
 
 //THREAD=Main
-bool ManagerImpl::onHoldCall (const CallID& call_id)
+bool ManagerImpl::onHoldCall (const CallID& callId)
 {
     AccountID account_id;
-    bool returnValue;
+    bool returnValue = false;
 
-    _debug ("Manager: Put call %s on hold", call_id.c_str());
+    _debug ("--------------------------------------------------------- Manager: Put call %s on hold", callId.c_str());
 
     stopTone();
 
     CallID current_call_id = getCurrentCallId();
 
-    if (getConfigFromCall (call_id) == Call::IPtoIP) {
-    	/* Direct IP to IP call */
-        returnValue = SIPVoIPLink::instance (AccountNULL)-> onhold (call_id);
+    try {
+
+    	if (getConfigFromCall (callId) == Call::IPtoIP) {
+    		/* Direct IP to IP call */
+    		returnValue = SIPVoIPLink::instance (AccountNULL)-> onhold (callId);
+    	}
+    	else {
+    		/* Classic call, attached to an account */
+    		account_id = getAccountFromCall (callId);
+
+    		if (account_id == AccountNULL) {
+    			_debug ("Manager: Account ID %s or callid %s doesn't exists in call onHold", account_id.c_str(), callId.c_str());
+    			return false;
+    		}
+    		returnValue = getAccountLink (account_id)->onhold (callId);
+    	}
     }
-    else {
-    	/* Classic call, attached to an account */
-        account_id = getAccountFromCall (call_id);
-
-        if (account_id == AccountNULL) {
-            _debug ("Manager: Account ID %s or callid %s doesn't exists in call onHold", account_id.c_str(), call_id.c_str());
-            return false;
-        }
-
-        returnValue = getAccountLink (account_id)->onhold (call_id);
-
-        removeStream(call_id);
+    catch (VoipLinkException &e){
+    	_error("Manager: Error: %s", e.what());
     }
+
+    // Unbind calls in main buffer
+    removeStream(callId);
 
     // Remove call from teh queue if it was still there
-    removeWaitingCall (call_id);
+    removeWaitingCall (callId);
 
     // keeps current call id if the action is not holding this call or a new outgoing call
-    if (current_call_id == call_id) {
+    // this could happen in case of a conference
+    if (current_call_id == callId) {
         switchCall ("");
     }
 
-    if (_dbus) {
-        _dbus->getCallManager()->callStateChanged (call_id, "HOLD");
+    if (_dbus == NULL) {
+    	_error("Manager: Error: DBUS not initialized");
+    	return false;
     }
+
+    _dbus->getCallManager()->callStateChanged (callId, "HOLD");
 
     getMainBuffer()->stateInfo();
 
@@ -628,14 +646,11 @@ bool ManagerImpl::offHoldCall (const CallID& call_id)
 
     if (hasCurrentCall()) {
 
-        _debug ("Manager: Has current call %s, put on hold", current_call_id.c_str());
-
         // if this is not a conference and this and is not a conference participant
         if (!isConference (current_call_id) && !participToConference (current_call_id)) {
-        	_debug("is not a conference and does not participate to conference");
+        	_debug ("Manager: Has current call (%s), put on hold", current_call_id.c_str());
             onHoldCall (current_call_id);
         } else if (isConference (current_call_id) && !participToConference (call_id)) {
-        	_debug("detach participant");
             detachParticipant (default_id, current_call_id);
         }
     }
@@ -1194,112 +1209,115 @@ void ManagerImpl::addMainParticipant (const CallID& conference_id)
     switchCall (conference_id);
 }
 
-void ManagerImpl::joinParticipant (const CallID& call_id1, const CallID& call_id2)
+void ManagerImpl::joinParticipant (const CallID& callId1, const CallID& callId2)
 {
 	bool isRec = false;
 
-    _debug ("Manager: Join participants %s, %s", call_id1.c_str(), call_id2.c_str());
+    _debug ("Manager: Join participants %s, %s", callId1.c_str(), callId2.c_str());
 
-    std::map<std::string, std::string> call1_details = getCallDetails (call_id1);
-    std::map<std::string, std::string> call2_details = getCallDetails (call_id2);
+    std::map<std::string, std::string> call1Details = getCallDetails (callId1);
+    std::map<std::string, std::string> call2Details = getCallDetails (callId2);
 
     std::map<std::string, std::string>::iterator iter_details;
 
     // Test if we have valid call ids
-    iter_details = call1_details.find ("PEER_NUMBER");
+    iter_details = call1Details.find ("PEER_NUMBER");
 
     if (iter_details->second == "Unknown") {
-        _error ("Manager: Error: Id %s is not a valid call", call_id1.c_str());
+        _error ("Manager: Error: Id %s is not a valid call", callId1.c_str());
         return;
     }
 
-    iter_details = call2_details.find ("PEER_NUMBER");
+    iter_details = call2Details.find ("PEER_NUMBER");
 
     if (iter_details->second == "Unknown") {
-        _error ("Manager: Error: Id %s is not a valid call", call_id2.c_str());
+        _error ("Manager: Error: Id %s is not a valid call", callId2.c_str());
         return;
     }
-
-    AccountID currentAccountId;
-    Call* call = NULL;
 
     CallID current_call_id = getCurrentCallId();
-    _debug ("Manager: current_call_id %s", current_call_id.c_str());
+    _debug ("Manager: Current Call ID %s", current_call_id.c_str());
 
     // detach from the conference and switch to this conference
-    if ( (current_call_id != call_id1) && (current_call_id != call_id2)) {
+    if ( (current_call_id != callId1) && (current_call_id != callId2)) {
 
-        // If currently in a conference
-        if (isConference (current_call_id))
+        if (isConference (current_call_id)) {
+        	// If currently in a conference
             detachParticipant (default_id, current_call_id);
-        // If currently in a call
-        else
+        }
+        else {
+            // If currently in a call
             onHoldCall (current_call_id);
+        }
     }
 
-    _debug ("Manager: Create a conference");
+    Conference *conf = createConference (callId1, callId2);
 
-    Conference *conf = createConference (call_id1, call_id2);
-    switchCall (conf->getConfID());
+    // Set corresponding conference ids for call 1
+    AccountID currentAccountId1 = getAccountFromCall (callId1);
+    Call *call1 = getAccountLink (currentAccountId1)->getCall (callId1);
+    if(call1 == NULL) {
+    	_error("Manager: Could not find call %s", callId1.c_str());
+    }
+    call1->setConfId (conf->getConfID());
+    getMainBuffer()->unBindAll(callId1);
 
-    currentAccountId = getAccountFromCall (call_id1);
-    call = getAccountLink (currentAccountId)->getCall (call_id1);
-    call->setConfId (conf->getConfID());
+    // Set corresponding conderence details
+    AccountID currentAccountId2 = getAccountFromCall (callId2);
+    Call *call2 = getAccountLink (currentAccountId2)->getCall (callId2);
+    if(call2 == NULL) {
+    	_error("Manager: Could not find call %s", callId2.c_str());
+    }
+    call2->setConfId (conf->getConfID());
+    getMainBuffer()->unBindAll(callId2);
 
-    iter_details = call1_details.find ("CALL_STATE");
 
-    _debug ("Manager: Process call %s state: %s", call_id1.c_str(), iter_details->second.c_str());
+    // Process call1 according to its state
+    std::string call1_state_str = call1Details.find ("CALL_STATE")->second;
+    _debug ("Manager: Process call %s state: %s", callId1.c_str(), call1_state_str.c_str());
 
-    getMainBuffer()->unBindAll(call_id1);
-    getMainBuffer()->unBindAll(call_id2);
-
-    std::string call1_state_str = iter_details->second;
     if (call1_state_str == "HOLD") {
-    	conf->bindParticipant (call_id1);
-        offHoldCall (call_id1);
+    	conf->bindParticipant (callId1);
+        offHoldCall (callId1);
     } else if (call1_state_str == "INCOMING") {
-    	conf->bindParticipant (call_id1);
-        answerCall (call_id1);
+    	conf->bindParticipant (callId1);
+        answerCall (callId1);
     } else if (call1_state_str == "CURRENT") {
-        conf->bindParticipant (call_id1);
+        conf->bindParticipant (callId1);
     } else if (call1_state_str == "RECORD") {
-    	conf->bindParticipant(call_id1);
+    	conf->bindParticipant(callId1);
     	isRec = true;
     } else if (call1_state_str == "INACTIVE") {
-        conf->bindParticipant (call_id1);
-        answerCall (call_id1);
+        conf->bindParticipant (callId1);
+        answerCall (callId1);
     } else {
         _warn ("Manager: Call state not recognized");
     }
 
-    currentAccountId = getAccountFromCall (call_id2);
+    // Process call2 according to its state
+    std::string call2_state_str = call2Details.find ("CALL_STATE")->second;
+    _debug ("Manager: Process call %s state: %s", callId2.c_str(), call2_state_str.c_str());
 
-    call = getAccountLink (currentAccountId)->getCall (call_id2);
-    call->setConfId (conf->getConfID());
-
-    iter_details = call2_details.find ("CALL_STATE");
-    _debug ("Manager: Process call %s state: %s", call_id2.c_str(), iter_details->second.c_str());
-
-    std::string call2_state_str = iter_details->second;
     if (call2_state_str == "HOLD") {
-    	conf->bindParticipant (call_id2);
-        offHoldCall (call_id2);
+    	conf->bindParticipant (callId2);
+        offHoldCall (callId2);
     } else if (call2_state_str == "INCOMING") {
-    	conf->bindParticipant (call_id2);
-        answerCall (call_id2);
+    	conf->bindParticipant (callId2);
+        answerCall (callId2);
     } else if (call2_state_str == "CURRENT") {
-        conf->bindParticipant (call_id2);
+        conf->bindParticipant (callId2);
     } else if (call2_state_str == "RECORD") {
-    	conf->bindParticipant (call_id2);
+    	conf->bindParticipant (callId2);
     	isRec = true;
     } else if (call2_state_str == "INACTIVE") {
-    	conf->bindParticipant (call_id2);
-        answerCall (call_id2);
+    	conf->bindParticipant (callId2);
+        answerCall (callId2);
     } else {
         _warn ("Manager: Call state not recognized");
     }
 
-
+    // Switch current call id to this conference
+    switchCall (conf->getConfID());
     conf->setState(Conference::ACTIVE_ATTACHED);
 
     // set recording sampling rate
@@ -4421,7 +4439,7 @@ std::map<std::string, std::string> ManagerImpl::getCallDetails (const CallID& ca
     accountid = getAccountFromCall (callID);
 
     // Then the VoIP link this account is linked with (IAX2 or SIP)
-    if ( (account = getAccount (accountid)) != 0) {
+    if ( (account = getAccount (accountid)) != NULL) {
         link = account->getVoIPLink();
 
         if (link) {
@@ -4442,6 +4460,7 @@ std::map<std::string, std::string> ManagerImpl::getCallDetails (const CallID& ca
         call_details.insert (std::pair<std::string, std::string> ("ACCOUNTID", AccountNULL));
         call_details.insert (std::pair<std::string, std::string> ("PEER_NUMBER", "Unknown"));
         call_details.insert (std::pair<std::string, std::string> ("PEER_NAME", "Unknown"));
+        call_details.insert (std::pair<std::string, std::string> ("DISPLAY_NAME", "Unknown"));
         call_details.insert (std::pair<std::string, std::string> ("CALL_STATE", "UNKNOWN"));
         call_details.insert (std::pair<std::string, std::string> ("CALL_TYPE", "0"));
     }
