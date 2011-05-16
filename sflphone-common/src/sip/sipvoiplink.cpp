@@ -992,16 +992,20 @@ SIPVoIPLink::offhold (const CallID& id) throw (VoipLinkException)
     }
 
     // Retreive previously selected codec
+    AudioCodecType pl;
     sfl::Codec *sessionMedia = sdpSession->getSessionMedia();
-
     if (sessionMedia == NULL) {
-        throw VoipLinkException("Could not find session media");
+        // throw VoipLinkException("Could not find session media");
+    	_warn("UserAgent: Session media not yet initialized, using default (ULAW)");
+    	pl = PAYLOAD_CODEC_ULAW;
+    }
+    else {
+    	// Get PayloadType for this codec
+    	pl = (AudioCodecType) sessionMedia->getPayloadType();
     }
 
-    // Get PayloadType for this codec
-    AudioCodecType pl = (AudioCodecType) sessionMedia->getPayloadType();
-
     _debug ("UserAgent: Payload from session media %d", pl);
+
 
     // Create a new instance for this codec
     sfl::Codec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (pl);
@@ -2491,8 +2495,7 @@ std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_
     // Create a temporary memory pool
     tmp_pool = pj_pool_create (&_cp->factory, "tmpdtmf10", 1000, 1000, NULL);
     if (tmp_pool == NULL) {
-    	_debug ("UserAgent: Could not initialize memory pool");
-    	return false;
+    	_error ("UserAgent: Could not initialize memory pool");
     }
 
     // Find the transport that must be used with the given uri
