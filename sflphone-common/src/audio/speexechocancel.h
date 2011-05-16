@@ -41,27 +41,31 @@ class SpeexEchoCancel : public Algorithm
          * Add speaker data into internal buffer
          * \param inputData containing far-end voice data to be sent to speakers
          */
-        virtual void putData (SFLDataFormat *inputData, int nbBytes);
+        virtual void putData (SFLDataFormat *, int);
+
+        virtual int getData(SFLDataFormat *);
 
         /**
          * Unused
          */
-        virtual void process (SFLDataFormat *data, int nbBytes);
+        virtual void process (SFLDataFormat *, int);
 
         /**
          * Perform echo cancellation using internal buffers
          * \param inputData containing mixed echo and voice data
          * \param outputData containing
          */
-        virtual int process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes);
+        virtual int process (SFLDataFormat *, SFLDataFormat *, int);
 
         /**
          * Perform echo cancellation, application must provide its own buffer
          * \param micData containing mixed echo and voice data
          * \param spkrData containing far-end voice data to be sent to speakers
          * \param outputData containing the processed data
+	 * \param size in bytes
          */
-        virtual void process (SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes);
+
+        virtual void process (SFLDataFormat *, SFLDataFormat *, SFLDataFormat *, int);
 
     private:
 

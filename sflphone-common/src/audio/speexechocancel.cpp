@@ -20,6 +20,8 @@
 #include "speexechocancel.h"
 
 #include <fstream>
+// #include <string.h>
+// #include <stdio.h>
 
 // number of samples (20 ms)
 #define FRAME_SIZE 160
@@ -38,10 +40,6 @@ SpeexEchoCancel::SpeexEchoCancel()
 
     speex_echo_ctl (_echoState, SPEEX_ECHO_SET_SAMPLING_RATE, &samplingRate);
     speex_preprocess_ctl (_preState, SPEEX_PREPROCESS_SET_ECHO_STATE, _echoState);
-
-    micFile = new ofstream ("micData", ofstream::binary);
-    echoFile = new ofstream ("echoData", ofstream::binary);
-    spkrFile = new ofstream ("spkrData", ofstream::binary);
 
     _micData = new RingBuffer (10000);
     _spkrData = new RingBuffer (10000);
@@ -68,13 +66,6 @@ SpeexEchoCancel::~SpeexEchoCancel()
     delete _spkrData;
     _spkrData = NULL;
 
-    micFile->close();
-    spkrFile->close();
-    echoFile->close();
-
-    delete micFile;
-    delete spkrFile;
-    delete echoFile;
 }
 
 void SpeexEchoCancel::reset()
@@ -92,6 +83,8 @@ void SpeexEchoCancel::putData (SFLDataFormat *inputData, int nbBytes)
         _spkrStoped = false;
     }
 
+    _debug("EchoCancel: Put Data");
+
     // Put data in speaker ring buffer
     _spkrData->Put (inputData, nbBytes);
 
@@ -99,6 +92,8 @@ void SpeexEchoCancel::putData (SFLDataFormat *inputData, int nbBytes)
     // (require capture and playback stream to be synchronized)
     // speex_echo_playback(_echoState, inputData);
 }
+
+int SpeexEchoCancel::getData(SFLDataFormat *outputData) { return 0; }
 
 void SpeexEchoCancel::process (SFLDataFormat *data UNUSED, int nbBytes UNUSED) {}
 
@@ -108,6 +103,8 @@ int SpeexEchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputDat
     if (_spkrStoped) {
         return 0;
     }
+
+    _debug("EchoCancel: Process");
 
     int byteSize = FRAME_SIZE*2;
 
@@ -129,23 +126,24 @@ int SpeexEchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputDat
     // Get data from mic and speaker
     while ( (spkrAvail > byteSize) && (micAvail > byteSize)) {
 
+        _debug("--------------------------------------- process echo");
         // get synchronized data
         _spkrData->Get (_tmpSpkr, byteSize);
         _micData->Get (_tmpMic, byteSize);
 
         speex_preprocess_run (_preState, _tmpMic);
 
-        micFile->write ( (const char *) _tmpMic, byteSize);
-        spkrFile->write ( (const char *) _tmpSpkr, byteSize);
+        // micFile->write ( (const char *) _tmpMic, byteSize);
+        // spkrFile->write ( (const char *) _tmpSpkr, byteSize);
 
         // Processed echo cancellation
         speex_echo_cancellation (_echoState, _tmpMic, _tmpSpkr, _tmpOut);
 
         // speex_preprocess_run(_preState, _tmpOut);
 
-        bcopy (_tmpOut, outputData+ (nbFrame*FRAME_SIZE), byteSize);
+        memcpy (_tmpOut, outputData + (nbFrame*FRAME_SIZE), byteSize);
 
-        echoFile->write ( (const char *) _tmpOut, byteSize);
+        // echoFile->write ( (const char *) _tmpOut, byteSize);
 
 
         spkrAvail = _spkrData->AvailForGet();

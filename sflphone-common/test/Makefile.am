@@ -32,7 +32,9 @@ test_SOURCES = \
 	siptest.h \
 	siptest.cpp \
 	sdptest.h \
-	sdptest.cpp
+	sdptest.cpp \
+	echocanceltest.h \
+	echocanceltest.cpp
 
 LLIBS=$(CPPUNIT_LIBS) \
 	../src/sflphoned-logger.o \
