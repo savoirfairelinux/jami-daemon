@@ -257,7 +257,7 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
         return false;
     }
 
-    _debug ("---------------------------------------------------------- Manager: New outgoing call %s to %s", call_id.c_str(), to.c_str());
+    _debug ("Manager: New outgoing call %s to %s", call_id.c_str(), to.c_str());
 
     CallID current_call_id = getCurrentCallId();
 
@@ -278,8 +278,6 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 
         // std::string currentCallState = getCallDetails(current_call_id).find("CALL_STATE")->second;
         Call *call = getAccountLink(getAccountFromCall(current_call_id))->getCall(current_call_id);
-
-        // _error("------------------------------------------- call is %s", currentCallState.c_str());
 
         // if this is not a conferenceand this and is not a conference participant
         if (!isConference (current_call_id) && !participToConference (current_call_id)) {
@@ -1833,6 +1831,8 @@ bool ManagerImpl::incomingCall (Call* call, const AccountID& accountId)
     if (_dbus)
         _dbus->getCallManager()->incomingCall (accountId, call->getCallId(), display.c_str());
 
+   // answerCall(call->getCallId());
+
     return true;
 }
 
@@ -3067,7 +3067,7 @@ void ManagerImpl::setNoiseSuppressState (std::string state)
 {
     _debug ("Manager: Set noise suppress state: %s", state.c_str());
 
-    bool isEnabled = state == "enabled" ? true : false;
+    bool isEnabled = (state == "enabled");
 
     audioPreference.setNoiseReduce (isEnabled);
 
@@ -3078,6 +3078,43 @@ void ManagerImpl::setNoiseSuppressState (std::string state)
     }
 
     audioLayerMutexUnlock();
+}
+
+std::string ManagerImpl::getEchoCancelState(void)
+{
+	// echo canceller disabled by default
+	std::string state;
+
+	state = audioPreference.getEchoCancel() ? "enabled" : "disabled";
+
+	return state;
+}
+
+void ManagerImpl::setEchoCancelState(std::string state)
+{
+	bool isEnabled = (state == "enabled");
+
+	audioPreference.setEchoCancel(isEnabled);
+}
+
+int ManagerImpl::getEchoCancelTailLength(void)
+{
+	return audioPreference.getEchoCancelTailLength();
+}
+
+void ManagerImpl::setEchoCancelTailLength(int length)
+{
+	audioPreference.setEchoCancelTailLength(length);
+}
+
+int ManagerImpl::getEchoCancelDelay(void)
+{
+	return audioPreference.getEchoCancelDelay();
+}
+
+void ManagerImpl::setEchoCancelDelay(int delay)
+{
+	audioPreference.setEchoCancelDelay(delay);
 }
 
 int ManagerImpl::app_is_running (std::string process)

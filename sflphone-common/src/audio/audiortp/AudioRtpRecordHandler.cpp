@@ -185,7 +185,6 @@ void AudioRtpRecordHandler::initBuffers()
     _audioRtpRecord._converter = new SamplerateConverter ();
 
     int nbSamplesMax = (int) ( (getCodecSampleRate() * getCodecFrameSize() / 1000));
-    _debug("============================================================= getCodecFrameSize() %d", getCodecFrameSize());
     _audioRtpRecord._micData = new SFLDataFormat[nbSamplesMax];
     _audioRtpRecord._micDataConverted = new SFLDataFormat[nbSamplesMax];
     _audioRtpRecord._micDataEchoCancelled = new SFLDataFormat[nbSamplesMax];
@@ -251,8 +250,6 @@ ofstream teststream("test_process_data_encode.raw");
 
 int AudioRtpRecordHandler::processDataEncode (void)
 {
-    _debug("AudioRtp: Process data encode");
-
     SFLDataFormat *micData = _audioRtpRecord._micData;
     unsigned char *micDataEncoded = _audioRtpRecord._micDataEncoded;
     SFLDataFormat *micDataEchoCancelled = _audioRtpRecord._micDataEchoCancelled;
@@ -317,8 +314,6 @@ int AudioRtpRecordHandler::processDataEncode (void)
 
         _audioRtpRecord.audioProcessMutex.enter();
 
-        _debug("------------------------------------------------------ process encode!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-
         echoCanceller.process(micData, micDataEchoCancelled, nbSample * sizeof(SFLDataFormat));
 
         teststream.write(reinterpret_cast<char *>(micDataEchoCancelled), nbSample * sizeof(SFLDataFormat));
@@ -344,8 +339,6 @@ int AudioRtpRecordHandler::processDataEncode (void)
 
 void AudioRtpRecordHandler::processDataDecode (unsigned char *spkrData, unsigned int size)
 {
-    _debug("AudioRtp: process data decode");
-
     int codecSampleRate = getCodecSampleRate();
 
     SFLDataFormat *spkrDataDecoded = _audioRtpRecord._spkrDataConverted;

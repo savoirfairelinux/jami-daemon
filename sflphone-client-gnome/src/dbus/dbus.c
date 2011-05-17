@@ -1512,6 +1512,89 @@ dbus_set_noise_suppress_state (gchar* state)
     }
 }
 
+gchar *
+dbus_get_echo_cancel_state(void)
+{
+    GError *error = NULL;
+    gchar *state = "";
+    org_sflphone_SFLphone_ConfigurationManager_get_echo_cancel_state(configurationManagerProxy, &state, &error);
+
+    if(error) {
+        ERROR("DBus: Failed to call get_echo_cancel_state() on ConfigurationManager: %s", error->message);
+        g_error_free(error);
+    }
+
+    return state;
+}
+
+void
+dbus_set_echo_cancel_state(gchar *state)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_set_echo_cancel_state(configurationManagerProxy, state, &error);
+
+    if(error) {
+        ERROR("DBus: Failed to call set_echo_cancel_state() on ConfigurationManager: %s", error->message);
+        g_error_free(error);
+    }
+}
+
+int
+dbus_get_echo_cancel_tail_length(void)
+{
+    GError *error = NULL;
+    int length;
+
+    org_sflphone_SFLphone_ConfigurationManager_get_echo_cancel_tail_length(configurationManagerProxy, &length, &error);
+
+    if(error) {
+        ERROR("DBus: Failed to call get_echo_cancel_tail_length() on ConfigurationManager: %s", error->message);
+        g_error_free(error);
+    }
+
+    return length;
+}
+
+void
+dbus_set_echo_cancel_tail_length(int length)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_set_echo_cancel_tail_length(configurationManagerProxy, length, &error);
+
+    if(error) {
+        ERROR("DBus: Failed to call get_echo_cancel_state() on ConfigurationManager: %s", error->message);
+        g_error_free(error);
+    }
+}
+
+int
+dbus_get_echo_cancel_delay(void)
+{
+    GError *error = NULL;
+    int delay;
+
+    org_sflphone_SFLphone_ConfigurationManager_get_echo_cancel_delay(configurationManagerProxy, &delay, &error);
+
+    if(error) {
+        ERROR("DBus: Failed to call get_echo_cancel_tail_length() on ConfigurationManager: %s", error->message);
+        g_error_free(error);
+    }
+
+    return delay;
+}
+
+void
+dbus_set_echo_cancel_delay(int delay)
+{
+    GError *error = NULL;
+
+    org_sflphone_SFLphone_ConfigurationManager_set_echo_cancel_delay(configurationManagerProxy, delay, &error);
+
+    if(error) {
+        ERROR("DBus: Failed to call get_echo_cancel_delay() on ConfigurationManager: %s", error->message);
+        g_error_free(error);
+    }
+}
 
 gchar*
 dbus_get_ringtone_choice (const gchar *accountID)

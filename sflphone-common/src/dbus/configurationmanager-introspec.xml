@@ -563,7 +563,7 @@
 		   </arg>
 	   </method>
 
-           <method name="getNoiseSuppressState" tp:name-for-bindings="getNoiseSuppressState">
+       <method name="getNoiseSuppressState" tp:name-for-bindings="getNoiseSuppressState">
 	           <tp:docstring>
 		   </tp:docstring>
 		   <arg type="s" name="state" direction="out">
@@ -576,6 +576,54 @@
 	           <arg type="s" name="state" direction="in">
 	           </arg>
 	   </method>
+	   
+	   <method name="getEchoCancelState" tp:name-for-bindings="getEchoCancelState">
+	           <tp:docstring>
+		   </tp:docstring>
+		   <arg type="s" name="state" direction="out">
+		           <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+	   </method>
+
+	   <method name="setEchoCancelState" tp:name-for-binding="setEchoCancelState">
+	           <arg type="s" name="state" direction="in">
+	           </arg>
+	   </method>
+
+	   <method name="setEchoCancelTailLength" tp:name-for-binding="setEchoCancelTailLength">
+	           <tp:docstring>
+		   </tp:docstring>
+		   <arg type="i" name="index" direction="in">
+		     <tp:docstring>
+		     </tp:docstring>
+		   </arg>
+	   </method>
+	   
+	   <method name="getEchoCancelTailLength" tp:name-for-binding="getEchoCancelTailLength">
+	           <tp:docstring>
+		   </tp:docstring>
+		   <arg type="i" name="index" direction="out">
+		     <tp:docstring>
+		     </tp:docstring>
+		   </arg>
+	   </method>
+	   
+	   <method name="setEchoCancelDelay" tp:name-for-binding="setEchoCancelTailLength">
+	       <tp:docstring>
+	       </tp:docstring>
+	       <arg type="i" name="index" direction="in">
+	       </arg>
+	   </method> 
+	   
+	   <method name="getEchoCancelDelay" tp:name-for-binding="getEchoCancelTailLength">
+	       <tp:docstring>
+	       </tp:docstring>
+	       <arg type="i" name="index" direction="out">
+	       </arg>
+	   </method>
+	   
+	   
 
 	   <!--    General Settings Panel         -->
 

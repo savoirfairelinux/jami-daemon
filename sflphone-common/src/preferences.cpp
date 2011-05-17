@@ -470,8 +470,6 @@ void HookPreference::unserialize (Conf::MappingNode *map)
         _urlSipField = val->getValue();
         val = NULL;
     }
-
-
 }
 
 
@@ -490,6 +488,7 @@ AudioPreference::AudioPreference() : _cardin (atoi (ALSA_DFT_CARD)) // ALSA_DFT_
     , _volumemic (atoi (DFT_VOL_SPKR_STR)) // DFT_VOL_SPKR_STR
     , _volumespkr (atoi (DFT_VOL_MICRO_STR)) // DFT_VOL_MICRO_STR
     , _noisereduce (true)
+	, _echocancel(false)
 {
 
 }
@@ -541,6 +540,14 @@ void AudioPreference::serialize (Conf::YamlEmitter *emitter)
     spkrstr << _volumespkr;
     Conf::ScalarNode volumespkr (spkrstr.str()); //: 100
     Conf::ScalarNode noise (_noisereduce ? "true":"false");
+    Conf::ScalarNode echo(_echocancel ? "true" : "false");
+    std::stringstream tailstr;
+    tailstr << _echoCancelTailLength;
+    Conf::ScalarNode echotail(tailstr.str());
+    std::stringstream delaystr;
+    delaystr << _echoCancelDelay;
+    Conf::ScalarNode echodelay(delaystr.str());
+
     preferencemap.setKeyValue (recordpathKey, &recordpath);
     preferencemap.setKeyValue (alwaysRecordingKey, &alwaysRecording);
     preferencemap.setKeyValue (volumemicKey, &volumemic);
@@ -560,6 +567,9 @@ void AudioPreference::serialize (Conf::YamlEmitter *emitter)
     pulsepreferencemap.setKeyValue (deviceRingtoneKey, &deviceRingtone);
 
     preferencemap.setKeyValue (noiseReduceKey, &noise);
+    preferencemap.setKeyValue(echoCancelKey, &echo);
+    preferencemap.setKeyValue(echoTailKey, &echotail);
+    preferencemap.setKeyValue(echoDelayKey, &echodelay);
 
     emitter->serializeAudioPreference (&preferencemap);
 
@@ -611,6 +621,13 @@ void AudioPreference::unserialize (Conf::MappingNode *map)
     if (val) {
         _noisereduce = (val->getValue() == "true");
         val = NULL;
+    }
+
+    val = (Conf::ScalarNode *) (map->getValue(echoCancelKey));
+
+    if (val) {
+    	_echocancel = (val->getValue() == "true");
+    	val = NULL;
     }
 
     alsamap = (Conf::MappingNode *) (map->getValue ("alsa"));

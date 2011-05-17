@@ -565,6 +565,36 @@ void ConfigurationManager::setNoiseSuppressState (const std::string& state)
     Manager::instance().setNoiseSuppressState (state);
 }
 
+std::string ConfigurationManager::getEchoCancelState(void)
+{
+	return Manager::instance().getEchoCancelState();
+}
+
+void ConfigurationManager::setEchoCancelState(const std::string& state)
+{
+	Manager::instance().setEchoCancelState(state);
+}
+
+int ConfigurationManager::getEchoCancelTailLength(void)
+{
+	return Manager::instance().getEchoCancelTailLength();
+}
+
+void ConfigurationManager::setEchoCancelTailLength(const int32_t& length)
+{
+	Manager::instance().setEchoCancelTailLength(length);
+}
+
+int ConfigurationManager::getEchoCancelDelay(void)
+{
+	return Manager::instance().getEchoCancelDelay();
+}
+
+void ConfigurationManager::setEchoCancelDelay(const int32_t& delay)
+{
+	Manager::instance().setEchoCancelDelay(delay);
+}
+
 std::vector<std::string> ConfigurationManager::getPlaybackDeviceList()
 {
     std::vector<std::string> ret;

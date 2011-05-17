@@ -782,6 +782,23 @@ active_noise_suppress (void)
 }
 
 void
+active_echo_cancel(void)
+{
+    gchar *state;
+    gchar *newstate;
+
+    state = dbus_get_echo_cancel_state();
+
+    if(strcmp(state, "enabled") == 0) {
+        newstate = "disabled";
+    } else {
+        newstate = "enabled";
+    }
+
+    dbus_set_echo_cancel_state(newstate);
+}
+
+void
 active_is_always_recording (void)
 {
     gboolean enabled = FALSE;
@@ -927,7 +944,9 @@ GtkWidget* create_audio_configuration()
     // Sub boxes
     GtkWidget *frame;
     GtkWidget *enableNoiseReduction;
+    GtkWidget *enableEchoCancel;
     gboolean noisesuppressActive;
+    gboolean echoCancelActive;
     gchar *state;
 
     ret = gtk_vbox_new (FALSE, 10);
@@ -1014,6 +1033,19 @@ GtkWidget* create_audio_configuration()
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (enableNoiseReduction), noisesuppressActive);
     g_signal_connect (G_OBJECT (enableNoiseReduction), "clicked", active_noise_suppress, NULL);
     gtk_table_attach (GTK_TABLE (table), enableNoiseReduction, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+
+    enableEchoCancel = gtk_check_button_new_with_mnemonic(_("_Echo Cancellation"));
+    // state = dbus_get_echo_cancel_state();
+    echoCancelActive = FALSE;
+    if (strcmp(state, "enabled") == 0) {
+        echoCancelActive = TRUE;
+    }
+    else {
+        echoCancelActive = FALSE;
+    }
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableEchoCancel), echoCancelActive);
+    g_signal_connect(G_OBJECT(enableEchoCancel), "clicked", active_echo_cancel, NULL);
+    gtk_table_attach(GTK_TABLE(table), enableEchoCancel, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     gtk_widget_show_all (ret);
 

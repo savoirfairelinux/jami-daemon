@@ -335,6 +335,25 @@ gchar *dbus_get_noise_suppress_state (void);
  */
 void dbus_set_noise_suppress_state (gchar *state);
 
+/**
+ * ConfigurationManager - Get the current echo cancel state
+ * @return gchar* The state (enabled/disabled)
+ */
+gchar *dbus_get_echo_cancel_state(void);
+
+/**
+ * ConfigurationManager - Set the current echo cancel state
+ * @param gchar* The state (enabled/disabled)
+ */
+void dbus_set_echo_cancel_state(gchar *state);
+
+int dbus_get_echo_cancel_tail_length(void);
+
+void dbus_set_echo_cancel_tail_length(int length);
+
+int dbus_get_echo_cancel_delay(void);
+
+void dbus_set_echo_cancel_delay(int delay);
 
 /**
  * ConfigurationManager - Query to server to

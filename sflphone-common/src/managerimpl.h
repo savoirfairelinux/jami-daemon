@@ -641,6 +641,25 @@ class ManagerImpl
         void setNoiseSuppressState (std::string state);
 
         /**
+         * Get the echo canceller engin state from
+         * the current audio layer
+         */
+        std::string getEchoCancelState(void);
+
+        /**
+         * Set the echo canceller engin state
+         */
+        void setEchoCancelState(std::string state);
+
+        int getEchoCancelTailLength(void);
+
+        void setEchoCancelTailLength(int);
+
+        int getEchoCancelDelay(void);
+
+        void setEchoCancelDelay(int);
+
+        /**
          * Convert a list of payload in a special format, readable by the server.
          * Required format: payloads separated with one slash.
          * @return std::string The serializabled string

@@ -91,6 +91,12 @@ class ConfigurationManager
         std::string getCurrentAudioOutputPlugin (void);
         std::string getNoiseSuppressState (void);
         void setNoiseSuppressState (const std::string& state);
+        std::string getEchoCancelState(void);
+        void setEchoCancelState(const std::string& state);
+        void setEchoCancelTailLength(const int32_t& length);
+        int getEchoCancelTailLength(void);
+        void setEchoCancelDelay(const int32_t& length);
+        int getEchoCancelDelay(void);
 
 
         std::vector< std::string > getToneLocaleList();

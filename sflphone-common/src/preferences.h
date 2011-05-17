@@ -87,6 +87,9 @@ const Conf::Key alwaysRecordingKey("alwaysRecording");
 const Conf::Key volumemicKey ("volumeMic");//:  100
 const Conf::Key volumespkrKey ("volumeSpkr");//: 100
 const Conf::Key noiseReduceKey ("noiseReduce");
+const Conf::Key echoCancelKey ("echoCancel");
+const Conf::Key echoTailKey ("echoTailLength");
+const Conf::Key echoDelayKey ("echoDelayLength");
 
 // shortcut preferences
 const Conf::Key hangupShortKey ("hangUp");
@@ -522,6 +525,30 @@ class AudioPreference : public Serializable
             _noisereduce = noise;
         }
 
+        bool getEchoCancel(void) {
+        	return _echocancel;
+        }
+
+        void setEchoCancel(bool echo) {
+        	_echocancel = echo;
+        }
+
+        int getEchoCancelTailLength(void) {
+        	return _echoCancelTailLength;
+        }
+
+        void setEchoCancelTailLength(int length) {
+        	_echoCancelTailLength = length;
+        }
+
+        int getEchoCancelDelay(void) {
+        	return _echoCancelDelay;
+        }
+
+        void setEchoCancelDelay(int delay) {
+        	_echoCancelDelay = delay;
+        }
+
     private:
 
         // alsa preference
@@ -544,6 +571,9 @@ class AudioPreference : public Serializable
         int _volumespkr; //: 100
 
         bool _noisereduce;
+        bool _echocancel;
+        int _echoCancelTailLength;
+        int _echoCancelDelay;
 };
 
 
