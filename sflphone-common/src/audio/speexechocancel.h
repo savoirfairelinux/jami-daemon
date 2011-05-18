@@ -87,6 +87,8 @@ class SpeexEchoCancel : public Algorithm
 
         ofstream *micFile;
         ofstream *spkrFile;
+        ofstream *micProcessFile;
+        ofstream *spkrProcessFile;
         ofstream *echoFile;
 };
 

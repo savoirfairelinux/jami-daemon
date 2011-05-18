@@ -57,6 +57,8 @@ SpeexEchoCancel::SpeexEchoCancel()
 
     micFile = new ofstream("test_mic_data.raw");
     spkrFile = new ofstream("test_spkr_data.raw");
+    micProcessFile = new ofstream("test_mic_data_process.raw", std::ofstream::out);
+    spkrProcessFile = new ofstream("test_spkr_data_process.raw", std::ofstream::out);
     echoFile = new ofstream("test_echo_data.raw");
 
     _spkrStopped = true;
@@ -80,6 +82,8 @@ SpeexEchoCancel::~SpeexEchoCancel()
 
     delete micFile;
     delete spkrFile;
+    delete micProcessFile;
+    delete spkrProcessFile;
     delete echoFile;
 
 }
@@ -96,6 +100,8 @@ void SpeexEchoCancel::putData (SFLDataFormat *inputData, int nbBytes)
         _spkrData->flushAll();
         _spkrStopped = false;
     }
+
+    spkrFile->write(reinterpret_cast<char *>(inputData), nbBytes);
 
     // Put data in speaker ring buffer
     _spkrData->Put (inputData, nbBytes);
@@ -125,6 +131,8 @@ int SpeexEchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputDat
     memset (_tmpMic, 0, 5000 * sizeof(SFLDataFormat));
     memset (_tmpOut, 0, 5000 * sizeof(SFLDataFormat));
 
+    micFile->write(reinterpret_cast<char *>(inputData), nbBytes);
+
     // Put mic data in ringbuffer
     _micData->Put (inputData, nbBytes);
 
@@ -143,8 +151,8 @@ int SpeexEchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputDat
         _spkrData->Get (_tmpSpkr, byteSize);
         _micData->Get (_tmpMic, byteSize);
 
-        micFile->write(reinterpret_cast<char *>(_tmpMic), byteSize);
-        spkrFile->write(reinterpret_cast<char *>(_tmpSpkr), byteSize);
+        micProcessFile->write(reinterpret_cast<char *>(_tmpMic), byteSize);
+        spkrProcessFile->write(reinterpret_cast<char *>(_tmpSpkr), byteSize);
 
         // speex_preprocess_run (_preState, _tmpMic);
 
