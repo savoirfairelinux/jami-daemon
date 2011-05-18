@@ -24,7 +24,7 @@
 #include "manager.h"
 
 // number of samples (20 ms)
-#define EC_FRAME_SIZE 320
+#define EC_FRAME_SIZE 160
 // number of sample to process, (800 à 4000 samples, 100 to 500 ms)
 #define EC_FILTER_LENGTH 800
 
@@ -49,8 +49,8 @@ SpeexEchoCancel::SpeexEchoCancel()
     speex_echo_ctl (_echoState, SPEEX_ECHO_SET_SAMPLING_RATE, &samplingRate);
     speex_preprocess_ctl (_preState, SPEEX_PREPROCESS_SET_ECHO_STATE, _echoState);
 
-    _micData = new RingBuffer (10000);
-    _spkrData = new RingBuffer (10000);
+    _micData = new RingBuffer (100000);
+    _spkrData = new RingBuffer (100000);
 
     _micData->createReadPointer();
     _spkrData->createReadPointer();
@@ -156,16 +156,16 @@ int SpeexEchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputDat
         micProcessFile->write(reinterpret_cast<char *>(_tmpMic), byteSize);
         spkrProcessFile->write(reinterpret_cast<char *>(_tmpSpkr), byteSize);
 
-        int32_t tmp;
-        for(int i = 0; i < nbSamples; i++) {
-        	tmp = _tmpSpkr[i] * 2;
-        	if(tmp > SHRT_MAX) {
-        		tmp = SHRT_MAX;
-        	}
-        	_tmpSpkr[i] = (int16_t)tmp;
-
-        	_tmpMic[i] /= 2;
-        }
+//        int32_t tmp;
+//        for(int i = 0; i < nbSamples; i++) {
+//        	tmp = _tmpSpkr[i] * 2;
+//        	if(tmp > SHRT_MAX) {
+//        		tmp = SHRT_MAX;
+//        	}
+//        	_tmpSpkr[i] = (int16_t)tmp;
+//
+//        	_tmpMic[i] /= 2;
+//        }
 
 
         // Processed echo cancellation
@@ -174,9 +174,9 @@ int SpeexEchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputDat
 
         echoFile->write(reinterpret_cast<char *>(_tmpOut), byteSize);
 
-        for(int i = 0; i < nbSamples; i++) {
-        	_tmpOut[i] *= 2;
-        }
+//        for(int i = 0; i < nbSamples; i++) {
+//        	_tmpOut[i] *= 2;
+//        }
 
         memcpy (outputData, _tmpOut, byteSize);
 
