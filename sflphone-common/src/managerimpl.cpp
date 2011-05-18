@@ -3092,6 +3092,7 @@ std::string ManagerImpl::getEchoCancelState(void)
 
 void ManagerImpl::setEchoCancelState(std::string state)
 {
+
 	bool isEnabled = (state == "enabled");
 
 	audioPreference.setEchoCancel(isEnabled);
@@ -3099,21 +3100,25 @@ void ManagerImpl::setEchoCancelState(std::string state)
 
 int ManagerImpl::getEchoCancelTailLength(void)
 {
+	_debug("-------------------------------------- getEchoTailLength %d", audioPreference.getEchoCancelTailLength());
 	return audioPreference.getEchoCancelTailLength();
 }
 
 void ManagerImpl::setEchoCancelTailLength(int length)
 {
+	_debug("------------------------------------- setEchoTailLength %d", length);
 	audioPreference.setEchoCancelTailLength(length);
 }
 
 int ManagerImpl::getEchoCancelDelay(void)
 {
+	_debug("------------------------------------- getEchoCancelDelay %d", audioPreference.getEchoCancelDelay());
 	return audioPreference.getEchoCancelDelay();
 }
 
 void ManagerImpl::setEchoCancelDelay(int delay)
 {
+	_debug("------------------------------------- setEchoCancelDelay %d", delay);
 	audioPreference.setEchoCancelDelay(delay);
 }
 

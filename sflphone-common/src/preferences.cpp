@@ -542,9 +542,11 @@ void AudioPreference::serialize (Conf::YamlEmitter *emitter)
     Conf::ScalarNode noise (_noisereduce ? "true":"false");
     Conf::ScalarNode echo(_echocancel ? "true" : "false");
     std::stringstream tailstr;
+    _debug("************************************************** serialize echotail %d", _echoCancelTailLength);
     tailstr << _echoCancelTailLength;
     Conf::ScalarNode echotail(tailstr.str());
     std::stringstream delaystr;
+    _debug("************************************************** serialize echodelay %d", _echoCancelTailLength);
     delaystr << _echoCancelDelay;
     Conf::ScalarNode echodelay(delaystr.str());
 

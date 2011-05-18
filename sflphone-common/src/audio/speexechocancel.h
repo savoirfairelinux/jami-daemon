@@ -76,6 +76,9 @@ class SpeexEchoCancel : public Algorithm
         RingBuffer *_micData;
         RingBuffer *_spkrData;
 
+        int _echoDelay;
+        int _echoTailLength;
+
         bool _spkrStopped;
 
         SFLDataFormat _tmpSpkr[5000];

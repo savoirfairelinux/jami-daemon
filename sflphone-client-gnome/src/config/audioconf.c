@@ -799,6 +799,24 @@ active_echo_cancel(void)
 }
 
 void
+echo_tail_length_changed(GtkRange *range, gpointer  user_data)
+{
+    gint value;
+    value = (gint)gtk_range_get_value(range);
+
+    dbus_set_echo_cancel_tail_length(value);
+}
+
+void
+echo_delay_changed(GtkRange *range, gpointer  user_data)
+{
+    gint value;
+    value = (gint)gtk_range_get_value(range);
+
+    dbus_set_echo_cancel_delay(value);
+}
+
+void
 active_is_always_recording (void)
 {
     gboolean enabled = FALSE;
@@ -945,6 +963,8 @@ GtkWidget* create_audio_configuration()
     GtkWidget *frame;
     GtkWidget *enableNoiseReduction;
     GtkWidget *enableEchoCancel;
+    GtkWidget *echoTailLength;
+    GtkWidget *echoDelay;
     gboolean noisesuppressActive;
     gboolean echoCancelActive;
     gchar *state;
@@ -955,7 +975,7 @@ GtkWidget* create_audio_configuration()
     GtkWidget *alsa;
     GtkWidget *table;
 
-    gnome_main_section_new_with_table (_ ("Sound Manager"), &frame, &table, 1, 2);
+    gnome_main_section_new_with_table (_ ("Sound Manager"), &frame, &table, 1, 4);
     gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
 
     int audio_manager = dbus_get_audio_manager();
@@ -1046,6 +1066,18 @@ GtkWidget* create_audio_configuration()
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableEchoCancel), echoCancelActive);
     g_signal_connect(G_OBJECT(enableEchoCancel), "clicked", active_echo_cancel, NULL);
     gtk_table_attach(GTK_TABLE(table), enableEchoCancel, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+
+    gint value = dbus_get_echo_cancel_tail_length();
+    echoTailLength = gtk_hscale_new_with_range(100, 500, 5);
+    gtk_range_set_value(GTK_RANGE(echoTailLength), (gdouble)value);
+    gtk_table_attach(GTK_TABLE(table), echoTailLength, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    g_signal_connect(G_OBJECT(echoTailLength), "value-changed", G_CALLBACK(echo_tail_length_changed), NULL);
+
+    value = dbus_get_echo_cancel_delay();
+    echoDelay = gtk_hscale_new_with_range(0, 500, 5);
+    gtk_range_set_value(GTK_RANGE(echoDelay), (gdouble)value);
+    gtk_table_attach(GTK_TABLE(table), echoDelay, 0, 1, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    g_signal_connect(G_OBJECT(echoDelay), "value-changed", G_CALLBACK(echo_delay_changed), NULL);
 
     gtk_widget_show_all (ret);
 

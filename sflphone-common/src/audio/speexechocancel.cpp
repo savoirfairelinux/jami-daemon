@@ -20,6 +20,7 @@
 #include <fstream>
 
 #include "speexechocancel.h"
+#include "manager.h"
 
 // number of samples (20 ms)
 #define EC_FRAME_SIZE 160
@@ -31,12 +32,19 @@ SpeexEchoCancel::SpeexEchoCancel()
 {
     int samplingRate = 8000;
 
-    _debug("EchoCancel: Initializing echo canceller with framesize: %d, filter length: %d, and samplerate %d",
-    														EC_FRAME_SIZE, EC_FILTER_LENGTH, samplingRate);
 
-    _echoState = speex_echo_state_init (EC_FRAME_SIZE, EC_FILTER_LENGTH);
+    int echoDelayMs = Manager::instance().getEchoCancelDelay();
+    int echoTailLengthMs = Manager::instance().getEchoCancelTailLength();
+
+    _echoDelay = echoDelayMs * samplingRate / 1000;
+    _echoTailLength = echoTailLengthMs * samplingRate / 1000;
+
+    // _echoState = speex_echo_state_init (EC_FRAME_SIZE, EC_FILTER_LENGTH);
+    _echoState = speex_echo_state_init (EC_FRAME_SIZE, _echoTailLength);
     _preState = speex_preprocess_state_init (EC_FRAME_SIZE, samplingRate);
 
+    _debug("EchoCancel: Initializing echo canceller with delay: %d, filter length: %d, frame size: %d and samplerate %d",
+    											_echoDelay, _echoTailLength, EC_FRAME_SIZE, samplingRate);
 
     speex_echo_ctl (_echoState, SPEEX_ECHO_SET_SAMPLING_RATE, &samplingRate);
     speex_preprocess_ctl (_preState, SPEEX_PREPROCESS_SET_ECHO_STATE, _echoState);
@@ -128,7 +136,8 @@ int SpeexEchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputDat
     int nbFrame = 0;
 
     // Get data from mic and speaker
-    if ((spkrAvail >= (byteSize * 6)) && (micAvail >= byteSize)) {
+    // if ((spkrAvail >= (byteSize * 6)) && (micAvail >= byteSize)) {
+    if ((spkrAvail >= (_echoDelay+byteSize)) && (micAvail >= byteSize)) {
 
         // get synchronized data
         _spkrData->Get (_tmpSpkr, byteSize);

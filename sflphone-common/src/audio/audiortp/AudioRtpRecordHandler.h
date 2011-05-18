@@ -227,7 +227,7 @@ class AudioRtpRecordHandler
 
         SIPCall *_ca;
 
- 	SpeexEchoCancel echoCanceller;
+ 	    SpeexEchoCancel echoCanceller;
 };
 
 }
