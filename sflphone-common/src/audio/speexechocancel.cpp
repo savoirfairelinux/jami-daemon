@@ -156,16 +156,16 @@ int SpeexEchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputDat
         micProcessFile->write(reinterpret_cast<char *>(_tmpMic), byteSize);
         spkrProcessFile->write(reinterpret_cast<char *>(_tmpSpkr), byteSize);
 
-//        int32_t tmp;
-//        for(int i = 0; i < nbSamples; i++) {
-//        	tmp = _tmpSpkr[i] * 2;
-//        	if(tmp > SHRT_MAX) {
-//        		tmp = SHRT_MAX;
-//        	}
-//        	_tmpSpkr[i] = (int16_t)tmp;
-//
-//        	_tmpMic[i] /= 2;
-//        }
+        int32_t tmp;
+        for(int i = 0; i < nbSamples; i++) {
+        	tmp = _tmpSpkr[i] * 3;
+        	if(tmp > SHRT_MAX) {
+        		tmp = SHRT_MAX;
+        	}
+        	_tmpSpkr[i] = (int16_t)tmp;
+
+        	_tmpMic[i] /= 3;
+        }
 
 
         // Processed echo cancellation
@@ -174,9 +174,9 @@ int SpeexEchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputDat
 
         echoFile->write(reinterpret_cast<char *>(_tmpOut), byteSize);
 
-//        for(int i = 0; i < nbSamples; i++) {
-//        	_tmpOut[i] *= 2;
-//        }
+        for(int i = 0; i < nbSamples; i++) {
+        	_tmpOut[i] *= 3;
+        }
 
         memcpy (outputData, _tmpOut, byteSize);
 
