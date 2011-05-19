@@ -40,8 +40,8 @@ SpeexEchoCancel::SpeexEchoCancel()
     _echoTailLength = echoTailLengthMs * samplingRate / 1000;
 
     // _echoState = speex_echo_state_init (EC_FRAME_SIZE, EC_FILTER_LENGTH);
-    _echoState = speex_echo_state_init (EC_FRAME_SIZE * sizeof(SFLDataFormat), _echoTailLength);
-    _preState = speex_preprocess_state_init (EC_FRAME_SIZE * sizeof(SFLDataFormat), samplingRate);
+    _echoState = speex_echo_state_init (EC_FRAME_SIZE, _echoTailLength);
+    _preState = speex_preprocess_state_init (EC_FRAME_SIZE, samplingRate);
 
     _debug("EchoCancel: Initializing echo canceller with delay: %d, filter length: %d, frame size: %d and samplerate %d",
     											_echoDelay, _echoTailLength, EC_FRAME_SIZE, samplingRate);
