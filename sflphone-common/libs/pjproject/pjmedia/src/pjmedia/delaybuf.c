@@ -144,8 +144,8 @@ PJ_DEF(pj_status_t) pjmedia_delay_buf_create( pj_pool_t *pool,
 	return status;
 
     /* Finally, create mutex */
-    status = pj_lock_create_recursive_mutex(pool, b->obj_name, 
-					    &b->lock);
+//    status = pj_lock_create_recursive_mutex(pool, b->obj_name,
+//					    &b->lock);
     if (status != PJ_SUCCESS)
 	return status;
 
@@ -162,15 +162,15 @@ PJ_DEF(pj_status_t) pjmedia_delay_buf_destroy(pjmedia_delay_buf *b)
 
     PJ_ASSERT_RETURN(b, PJ_EINVAL);
 
-    pj_lock_acquire(b->lock);
+//    pj_lock_acquire(b->lock);
 
     status = pjmedia_wsola_destroy(b->wsola);
     if (status == PJ_SUCCESS)
 	b->wsola = NULL;
 
-    pj_lock_release(b->lock);
+//    pj_lock_release(b->lock);
 
-    pj_lock_destroy(b->lock);
+//    pj_lock_destroy(b->lock);
     b->lock = NULL;
 
     return status;
@@ -273,13 +273,13 @@ PJ_DEF(pj_status_t) pjmedia_delay_buf_put(pjmedia_delay_buf *b,
 
     PJ_ASSERT_RETURN(b && frame, PJ_EINVAL);
 
-    pj_lock_acquire(b->lock);
+    // pj_lock_acquire(b->lock);
 
     update(b, OP_PUT);
     
     status = pjmedia_wsola_save(b->wsola, frame, PJ_FALSE);
     if (status != PJ_SUCCESS) {
-	pj_lock_release(b->lock);
+//	pj_lock_release(b->lock);
 	return status;
     }
 
@@ -316,7 +316,7 @@ PJ_DEF(pj_status_t) pjmedia_delay_buf_put(pjmedia_delay_buf *b,
 
     pjmedia_circ_buf_write(b->circ_buf, frame, b->samples_per_frame);
 
-    pj_lock_release(b->lock);
+    // pj_lock_release(b->lock);
     return PJ_SUCCESS;
 }
 
@@ -327,7 +327,7 @@ PJ_DEF(pj_status_t) pjmedia_delay_buf_get( pjmedia_delay_buf *b,
 
     PJ_ASSERT_RETURN(b && frame, PJ_EINVAL);
 
-    pj_lock_acquire(b->lock);
+    // pj_lock_acquire(b->lock);
 
     update(b, OP_GET);
 
@@ -342,7 +342,7 @@ PJ_DEF(pj_status_t) pjmedia_delay_buf_get( pjmedia_delay_buf *b,
 	if (status == PJ_SUCCESS) {
 	    TRACE__((b->obj_name,"Successfully generate 1 frame"));
 	    if (pjmedia_circ_buf_get_len(b->circ_buf) == 0) {
-		pj_lock_release(b->lock);
+//		pj_lock_release(b->lock);
 		return PJ_SUCCESS;
 	    }
 
@@ -363,7 +363,7 @@ PJ_DEF(pj_status_t) pjmedia_delay_buf_get( pjmedia_delay_buf *b,
 	    /* The buffer is empty now, reset it */
 	    pjmedia_circ_buf_reset(b->circ_buf);
 
-	    pj_lock_release(b->lock);
+	    // pj_lock_release(b->lock);
 
 	    return PJ_SUCCESS;
 	}
@@ -371,7 +371,7 @@ PJ_DEF(pj_status_t) pjmedia_delay_buf_get( pjmedia_delay_buf *b,
 
     pjmedia_circ_buf_read(b->circ_buf, frame, b->samples_per_frame);
 
-    pj_lock_release(b->lock);
+    //pj_lock_release(b->lock);
 
     return PJ_SUCCESS;
 }
@@ -381,7 +381,7 @@ PJ_DEF(pj_status_t) pjmedia_delay_buf_reset(pjmedia_delay_buf *b)
 {
     PJ_ASSERT_RETURN(b, PJ_EINVAL);
 
-    pj_lock_acquire(b->lock);
+    // pj_lock_acquire(b->lock);
 
     b->recalc_timer = RECALC_TIME;
 
@@ -391,7 +391,7 @@ PJ_DEF(pj_status_t) pjmedia_delay_buf_reset(pjmedia_delay_buf *b)
     /* Reset WSOLA */
     pjmedia_wsola_reset(b->wsola, 0);
 
-    pj_lock_release(b->lock);
+    // pj_lock_release(b->lock);
 
     PJ_LOG(5,(b->obj_name,"Delay buffer is reset"));
 

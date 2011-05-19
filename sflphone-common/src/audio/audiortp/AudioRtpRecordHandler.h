@@ -36,6 +36,7 @@
 #include "audio/audioprocessing.h"
 #include "audio/noisesuppress.h"
 #include "audio/speexechocancel.h"
+#include "audio/echosuppress.h"
 #include "managerimpl.h"
 #include <ccrtp/rtp.h>
 
@@ -227,7 +228,7 @@ class AudioRtpRecordHandler
 
         SIPCall *_ca;
 
- 	    SpeexEchoCancel echoCanceller;
+ 	    EchoSuppress echoCanceller;
 };
 
 }

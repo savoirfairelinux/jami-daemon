@@ -20,6 +20,7 @@ libaudio_la_SOURCES = \
 		samplerateconverter.cpp \
 		delaydetection.cpp \
 		echocancel.cpp \
+		echosuppress.cpp \
 		speexechocancel.cpp \
 		noisesuppress.cpp \
 		audioprocessing.cpp \
@@ -39,6 +40,7 @@ noinst_HEADERS = \
 		algorithm.h \
 		delaydetection.h \
 		echocancel.h \
+		echosuppress.h \
 		speexechocancel.h \
 		noisesuppress.h \
 		audioprocessing.h \
