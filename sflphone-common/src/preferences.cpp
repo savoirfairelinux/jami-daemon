@@ -484,11 +484,11 @@ AudioPreference::AudioPreference() : _cardin (atoi (ALSA_DFT_CARD)) // ALSA_DFT_
     , _deviceRecord ("")
     , _deviceRingtone ("")
     , _recordpath ("") // DFT_RECORD_PATH
-	, _alwaysRecording(false)
+    , _alwaysRecording(false)
     , _volumemic (atoi (DFT_VOL_SPKR_STR)) // DFT_VOL_SPKR_STR
     , _volumespkr (atoi (DFT_VOL_MICRO_STR)) // DFT_VOL_MICRO_STR
     , _noisereduce (true)
-	, _echocancel(false)
+    , _echocancel(false)
 {
 
 }

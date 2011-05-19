@@ -1067,6 +1067,7 @@ GtkWidget* create_audio_configuration()
     g_signal_connect(G_OBJECT(enableEchoCancel), "clicked", active_echo_cancel, NULL);
     gtk_table_attach(GTK_TABLE(table), enableEchoCancel, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
+    /*
     gint value = dbus_get_echo_cancel_tail_length();
     echoTailLength = gtk_hscale_new_with_range(100, 500, 5);
     gtk_range_set_value(GTK_RANGE(echoTailLength), (gdouble)value);
@@ -1078,6 +1079,7 @@ GtkWidget* create_audio_configuration()
     gtk_range_set_value(GTK_RANGE(echoDelay), (gdouble)value);
     gtk_table_attach(GTK_TABLE(table), echoDelay, 0, 1, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     g_signal_connect(G_OBJECT(echoDelay), "value-changed", G_CALLBACK(echo_delay_changed), NULL);
+    */
 
     gtk_widget_show_all (ret);
 

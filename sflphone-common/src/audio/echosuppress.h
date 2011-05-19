@@ -15,9 +15,9 @@
 
 class EchoSuppress: public Algorithm {
 public:
-	EchoSuppress(pj_pool_t *pool);
+    EchoSuppress(pj_pool_t *pool);
 
-	virtual ~EchoSuppress();
+    virtual ~EchoSuppress();
 
     virtual void reset (void);
 

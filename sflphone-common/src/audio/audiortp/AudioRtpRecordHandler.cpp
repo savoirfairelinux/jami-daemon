@@ -54,7 +54,7 @@ AudioRtpRecord::AudioRtpRecord () : _audioCodec (NULL)
     , _audioProcess (NULL)
     , _noiseSuppress (NULL)
     , _callId ("")
-	, _dtmfPayloadType(101) // same as Asterisk
+    , _dtmfPayloadType(101) // same as Asterisk
 {
 
 }
@@ -123,7 +123,10 @@ AudioRtpRecord::~AudioRtpRecord()
 }
 
 
-AudioRtpRecordHandler::AudioRtpRecordHandler (SIPCall *ca) : _audioRtpRecord (), _ca (ca), echoCanceller(ca->getMemoryPool()) {}
+AudioRtpRecordHandler::AudioRtpRecordHandler (SIPCall *ca) : _audioRtpRecord (), _ca (ca), echoCanceller(ca->getMemoryPool()) 
+{
+
+}
 
 
 AudioRtpRecordHandler::~AudioRtpRecordHandler() {}
