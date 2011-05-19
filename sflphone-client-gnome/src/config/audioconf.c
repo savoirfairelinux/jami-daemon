@@ -1055,7 +1055,7 @@ GtkWidget* create_audio_configuration()
     gtk_table_attach (GTK_TABLE (table), enableNoiseReduction, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     enableEchoCancel = gtk_check_button_new_with_mnemonic(_("_Echo Cancellation"));
-    // state = dbus_get_echo_cancel_state();
+    state = dbus_get_echo_cancel_state();
     echoCancelActive = FALSE;
     if (strcmp(state, "enabled") == 0) {
         echoCancelActive = TRUE;
