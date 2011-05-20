@@ -44,8 +44,9 @@
 #include <addressbook-config.h>
 #include <libedataserver/e-source.h>
 
-// #define LIBEBOOK_VERSION_230
+#include "config.h"
 
+// #define LIBEBOOK_VERSION_230
 /**
  * Structure used to store search callback and data
  */
@@ -310,18 +311,7 @@ view_finish_callback (EBookView *book_view, Search_Handler_And_Data *had)
 /**
  * Callback called after a contact have been found in EDS by search_async_by_contacts.
  */
-#ifdef LIBEBOOK_VERSION_230
-static void
-eds_query_result_cb (EBook *book, EBookStatus status, GList *contacts, gpointer user_data)
-{
-  DEBUG ("Addressbook: Search Result callback called");
-
-  if (status != E_BOOK_ERROR_OK) {
-      ERROR ("Addressbook: Error: ");
-      return;
-  }
-
-#else
+#ifdef LIBEDATASERVER_VERSION_2_32
 void
 eds_query_result_cb (EBook *book, const GError *error, GList *contacts, gpointer user_data)
 {
@@ -331,6 +321,16 @@ eds_query_result_cb (EBook *book, const GError *error, GList *contacts, gpointer
         ERROR ("Addressbook: Error: %s", error->message);
         return;
     }
+#else
+static void
+eds_query_result_cb (EBook *book, EBookStatus status, GList *contacts, gpointer user_data)
+{
+  DEBUG ("Addressbook: Search Result callback called");
+
+  if (status != E_BOOK_ERROR_OK) {
+      ERROR ("Addressbook: Error: ");
+      return;
+  }
 #endif
 
     Search_Handler_And_Data *had = (Search_Handler_And_Data *) user_data;
@@ -389,18 +389,7 @@ eds_query_result_cb (EBook *book, const GError *error, GList *contacts, gpointer
 /**
  * Callback for asynchronous open of books
  */
-#ifdef LIBEBOOK_VERSION_230
-static void
-eds_async_open_callback (EBook *book, EBookStatus status, gpointer closure)
-{
-    ESource *source;
-    const gchar *uri;
-
-    if(status == E_BOOK_ERROR_OK) {
-        ERROR("Addressbook: Error: ");
-        return;
-    }
-#else
+#ifdef LIBEDATASERVER_VERSION_2_32
 void
 eds_async_open_callback (EBook *book, const GError *error, gpointer closure)
 {
@@ -411,6 +400,17 @@ eds_async_open_callback (EBook *book, const GError *error, gpointer closure)
 
     if(error) {
         ERROR("Addressbook: Error: %s", error->message);
+        return;
+    }
+#else
+static void
+eds_async_open_callback (EBook *book, EBookStatus status, gpointer closure)
+{
+    ESource *source;
+    const gchar *uri;
+
+    if(status == E_BOOK_ERROR_OK) {
+        ERROR("Addressbook: Error: ");
         return;
     }
 
@@ -433,13 +433,12 @@ eds_async_open_callback (EBook *book, const GError *error, gpointer closure)
         e_book_open (book, FALSE, NULL);
     }
 
-#ifdef LIBEBOOK_VERSION_230
+#ifdef LIBEDATASERVER_VERSION_2_32
+    if (!e_book_get_contacts_async (book, had->equery, eds_query_result_cb, had))
+        ERROR("Addressbook: Error: While querying addressbook");
+#else
     if (e_book_async_get_contacts (book, had->equery, eds_query_result_cb, had))
         ERROR ("Addressbook: Error: While querying addressbook");
-#else
-    if (!e_book_get_contacts_async (book, had->equery, eds_query_result_cb, had)) {
-        ERROR("Addressbook: Error: While querying addressbook");
-    }
 #endif
 
 }
@@ -740,12 +739,11 @@ search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler
     if (book) {
         DEBUG ("Addressbook: Created empty book successfully");
 
-#ifdef LIBEBOOK_VERSION_230
-        // Asynchronous open
-        e_book_async_open(book, TRUE,
-                eds_async_open_callback, had);
-#else
+#ifdef LIBEDATASERVER_VERSION_2_32
         e_book_open_async (book, TRUE, eds_async_open_callback, had);
+#else
+        // Asynchronous open
+        e_book_async_open(book, TRUE, eds_async_open_callback, had);
 #endif
 
 
