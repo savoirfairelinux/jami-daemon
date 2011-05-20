@@ -12,6 +12,8 @@
 
 EchoSuppress::EchoSuppress(pj_pool_t *pool)
 {
+
+    /*
     pj_status_t status;
 
 
@@ -31,6 +33,7 @@ EchoSuppress::EchoSuppress(pj_pool_t *pool)
     if(status != PJ_SUCCESS) {
     	_error("EchoCancel: Error: Could not create echo canceller");
     }
+    */
 }
 
 EchoSuppress::~EchoSuppress()
@@ -44,6 +47,7 @@ void EchoSuppress::reset()
 
 void EchoSuppress::putData (SFLDataFormat *inputData, int nbBytes)
 {
+    /*
     pj_status_t status;
 
     status = pjmedia_echo_playback(echoState, reinterpret_cast<pj_int16_t *>(inputData));
@@ -51,17 +55,19 @@ void EchoSuppress::putData (SFLDataFormat *inputData, int nbBytes)
     if(status != PJ_SUCCESS) {
         _warn("EchoCancel: Warning: Problem while putting input data");
     }
+    */
 }
 
 int EchoSuppress::getData(SFLDataFormat *outputData)
 {
+    /*
     pj_status_t status;
 
     status = pjmedia_echo_capture(echoState, reinterpret_cast<pj_int16_t *>(outputData), 0);
     if(status != PJ_SUCCESS) {
         _warn("EchoCancel: Warning: Problem while getting output data");
     }
-
+    */
     return 0;
 }
 

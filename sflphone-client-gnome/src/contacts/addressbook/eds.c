@@ -46,7 +46,6 @@
 
 #include "config.h"
 
-// #define LIBEBOOK_VERSION_230
 /**
  * Structure used to store search callback and data
  */
