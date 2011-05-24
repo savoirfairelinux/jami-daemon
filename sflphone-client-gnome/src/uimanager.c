@@ -1298,7 +1298,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
         }
 
     } else {
-        DEBUG ("UIManager: Build call menus");
+        DEBUG ("UIManager: Build conf menus");
 
         if (hangup_conf) {
             menu_items = gtk_image_menu_item_new_with_mnemonic (_ ("_Hang up"));
@@ -1315,12 +1315,13 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
             menu_items = gtk_check_menu_item_new_with_mnemonic (_ ("On _Hold"));
             gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
             gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (menu_items),
-                                            (selectedCall->_state == CALL_STATE_HOLD ? TRUE : FALSE));
+                                            (selectedConf->_state == CALL_STATE_HOLD ? TRUE : FALSE));
             g_signal_connect (G_OBJECT (menu_items), "activate",
                               G_CALLBACK (conference_hold),
                               NULL);
             gtk_widget_show (menu_items);
         }
+
     }
 
     if (accounts) {
