@@ -978,7 +978,7 @@ SIPVoIPLink::offhold (const CallID& id) throw (VoipLinkException)
     pj_status_t status;
     SIPCall *call;
 
-    _debug ("-------------------------------------------------------- UserAgent: retrive call from hold status");
+    _debug ("UserAgent: retrive call from hold status");
 
     call = getSIPCall (id);
 
@@ -1027,8 +1027,6 @@ SIPVoIPLink::offhold (const CallID& id) throw (VoipLinkException)
 
     sdpSession->addAttributeToLocalAudioMedia("sendrecv");
 
-
-    _debug("------------------------------- create re-INVITE");
     /* Create re-INVITE with new offer */
     status = SIPSessionReinvite (call);
     if (status != PJ_SUCCESS) {
@@ -3551,7 +3549,7 @@ void transaction_state_changed_cb (pjsip_inv_session *inv UNUSED, pjsip_transact
                 _debug ("UserAgent: %s", request.c_str());
 
                 if (request.find (method_notify) != std::string::npos) {
-                	// Attempt to to get feedback of call transfer status
+  			// Attempt to to get feedback of call transfer status
 //                	std::string contentType(e->body.rx_msg.rdata.msg_info.ctype.media.type->ptr,
 //                			e->body.rx_msg.rdata.msg_info.ctype.media.type->slen);
 //                	_debug("OK: %s", contentType.c_str());
@@ -4404,6 +4402,27 @@ void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
 
         _debug ("UserAgent: Transfer received, waiting for notifications. ");
 
+        pjsip_rx_data *rdata;
+        pjsip_generic_string_hdr *refer_sub;
+        const pj_str_t REFER_SUB = { "Refer-Sub", 9 };
+
+ 	/* Must be receipt of response message */
+        pj_assert(event->type == PJSIP_EVENT_TSX_STATE &&
+                  event->body.tsx_state.type == PJSIP_EVENT_RX_MSG);
+        rdata = event->body.tsx_state.src.rdata;
+
+        /* Find Refer-Sub header */
+        refer_sub = (pjsip_generic_string_hdr*)
+                    pjsip_msg_find_hdr_by_name(rdata->msg_info.msg,
+                                               &REFER_SUB, NULL);
+
+        /* Check if subscription is suppressed */
+        if (refer_sub && pj_stricmp2(&refer_sub->hvalue, "false")==0) {
+	    _debug("UserAgent: No subscription requested");
+        }
+	else {
+	    _debug("UserAgent: Transfer subscription reqeusted");
+	}	
     }
 
     /*
@@ -4419,6 +4438,8 @@ void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
         pj_bool_t cont;
         pj_status_t status;
 
+
+        _debug("UserAgent: PJSIP_EVSUB_STATE_ACTIVE PJSIP_EVSUB_STATE_TERMINATED");
 
         SIPVoIPLink *link = reinterpret_cast<SIPVoIPLink *> (pjsip_evsub_get_mod_data (sub, _mod_ua.id));
 
@@ -4508,27 +4529,25 @@ void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
             } else {
                 status = pjsip_inv_send_msg (call->getInvSession(), tdata);
 
-                if (status != PJ_SUCCESS)
+                if (status != PJ_SUCCESS) {
                     _debug ("UserAgent: Fail to send end session msg!");
+		}
             }
 
-            cont = PJ_FALSE;
+            Manager::instance().hangupCall(call->getCallId());
 
-            // Manager::instance().hangupCall(call->getCallId());
+            cont = PJ_FALSE;
         }
 
         if (!cont) {
             pjsip_evsub_set_mod_data (sub, _mod_ua.id, NULL);
         }
-
     }
-
 }
 
 
 void transfer_server_cb (pjsip_evsub *sub, pjsip_event *event)
 {
-
 
     PJ_UNUSED_ARG (event);
 
