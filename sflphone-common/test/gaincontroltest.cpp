@@ -38,8 +38,7 @@ using namespace std;
 void GainControlTest::testGainProcessing()
 {
     int fileSize;
-    SFLDataFormat inbuf[SFL_GAIN_BUFFER_LENGTH];
-    SFLDataFormat outbuf[SFL_GAIN_BUFFER_LENGTH];
+    SFLDataFormat buf[SFL_GAIN_BUFFER_LENGTH];
 
     GainControl gcontrol(8000);
 
@@ -54,7 +53,7 @@ void GainControlTest::testGainProcessing()
     while(fileSize > 0) {
         inputFile.read(reinterpret_cast<char *>(inbuf), BUFFER_LENGTH * sizeof(SFLDataFormat));
 
-        gcontrol.process(inbuf, outbuf, BUFFER_LENGTH);
+        gcontrol.process(buf, BUFFER_LENGTH);
 
         outputFile.write(reinterpret_cast<char *>(outbuf), BUFFER_LENGTH * sizeof(SFLDataFormat));
 

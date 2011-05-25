@@ -11,26 +11,47 @@
 #define SFL_GAIN_LIMITER_RATIO 0.1
 #define SFL_GAIN_LIMITER_THRESHOLD 0.6
 
-GainControl::GainControl(double sr) : averager(sr, SFL_GAIN_ATTACK_RELEASE_TIME)
-				    , limiter(SFL_GAIN_LIMITER_RATIO, SFL_GAIN_LIMITER_THRESHOLD) {}
+#define SFL_GAIN_LOGe10  2.30258509299404568402
+
+GainControl::GainControl(double sr, double target) : averager(sr, SFL_GAIN_ATTACK_RELEASE_TIME)
+				    , limiter(SFL_GAIN_LIMITER_RATIO, SFL_GAIN_LIMITER_THRESHOLD)
+				    , targetGaindB(target)
+				    , targetGainLinear(0.0)
+{
+    targetGainLinear = exp(targetGaindB * 0.05 * SFL_GAIN_LOGe10);
+
+    _debug("GainControl: Target gain %d dB (%d linear)", targetGaindB, targetGainLinear);
+}
 
 GainControl::~GainControl() {}
 
-std::fstream tmpRms("testrms.raw", std::fstream::out);
+#ifdef DUMP_GAIN_CONTROL_SIGNAL
+std::fstream tmpRms("gaintestrms.raw", std::fstream::out);
+std::fstream tmpIn("gaintestin.raw", std::fstream::out);
+std::fstream tmpOut("gaintestout.raw", std::fstream::out);
+#endif
 
-void GainControl::process(SFLDataFormat *inBuf, SFLDataFormat *outBuf, int bufLength) 
+void GainControl::process(SFLDataFormat *buf, int bufLength) 
 {
     double rms, rmsAvg, in, out;
 
     for(int i = 0; i < bufLength; i++) {
-	in = (double)inBuf[i] / (double)SHRT_MAX;
+	in = (double)buf[i] / (double)SHRT_MAX;
         rms = detector.getRms(in);
         rmsAvg = sqrt(averager.getAverage(rms));
-        
+       
+#ifdef DUMP_GAIN_CONTROL_SIGNAL 
 	tmpRms.write(reinterpret_cast<char *>(&rmsAvg), sizeof(double));
+        tmpIn.write(reinterpret_cast<char *>(&in), sizeof(double));
+#endif
 
         out = limiter.limit(in);
-        outBuf[i] = (short)(out * (double)SHRT_MAX);
+
+#ifdef DUMP_GAIN_CONTROL_SIGNAL
+	tmpRms.write(retinterpret_cast<char *>(&out), sizeof(double));
+#endif
+
+        buf[i] = (short)(out * (double)SHRT_MAX);
     }
 }
 

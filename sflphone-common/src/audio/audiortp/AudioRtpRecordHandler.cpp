@@ -123,7 +123,7 @@ AudioRtpRecord::~AudioRtpRecord()
 }
 
 
-AudioRtpRecordHandler::AudioRtpRecordHandler (SIPCall *ca) : _audioRtpRecord (), _ca (ca), echoCanceller(ca->getMemoryPool()) 
+AudioRtpRecordHandler::AudioRtpRecordHandler (SIPCall *ca) : _audioRtpRecord (), _ca (ca), echoCanceller(ca->getMemoryPool()), gainController(8000, 0.0) 
 {
 
 }
@@ -328,7 +328,6 @@ int AudioRtpRecordHandler::processDataEncode (void)
         // echoCanceller.process(micData, micDataEchoCancelled, nbSample * sizeof(SFLDataFormat));
         // echoCanceller.process(micData, micDataEchoCancelled, nbSample * sizeof(SFLDataFormat));
         if(Manager::instance().getEchoCancelState() == "enabled") {
-        	_debug("EchoCancel: -------------------------- getData");
             echoCanceller.getData(micData);
         }
 
@@ -372,12 +371,13 @@ void AudioRtpRecordHandler::processDataDecode (unsigned char *spkrData, unsigned
         _audioRtpRecord._spkrFadeInComplete = fadeIn (spkrDataDecoded, nbSample, &_audioRtpRecord._micAmplFactor);
     }
 
+    gainController.process(spkrDataDecoded, nbSample);
+
     // test if resampling is required
     if (codecSampleRate != mainBufferSampleRate) {
 
         // Do sample rate conversion
         int nbSampleDown = nbSample;
-
         nbSample = _audioRtpRecord._converter->upsampleData (spkrDataDecoded, spkrDataConverted, codecSampleRate, mainBufferSampleRate, nbSampleDown);
 
         if(Manager::instance().getEchoCancelState() == "enabled") {
@@ -390,8 +390,7 @@ void AudioRtpRecordHandler::processDataDecode (unsigned char *spkrData, unsigned
 
     } else {
     	if(Manager::instance().getEchoCancelState() == "enabled") {
-    		_debug("EchoCancel: ------------------------ Put Data");
-    		echoCanceller.putData(spkrDataDecoded, expandedSize);
+    	    echoCanceller.putData(spkrDataDecoded, expandedSize);
     	}
         // put data in audio layer, size in byte
         Manager::instance().getMainBuffer()->putData (spkrDataDecoded, expandedSize, 100, _ca->getCallId());
