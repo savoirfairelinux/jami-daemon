@@ -24,6 +24,7 @@ libaudio_la_SOURCES = \
 		speexechocancel.cpp \
 		noisesuppress.cpp \
 		audioprocessing.cpp \
+		gaincontrol.cpp \
 		dcblocker.cpp \
 		$(SPEEX_SOURCES_CPP)
 
@@ -44,6 +45,7 @@ noinst_HEADERS = \
 		speexechocancel.h \
 		noisesuppress.h \
 		audioprocessing.h \
+		gaincontrol.h \
 		dcblocker.h \
 		samplerateconverter.h
 

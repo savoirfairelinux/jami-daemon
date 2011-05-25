@@ -34,7 +34,9 @@ test_SOURCES = \
 	sdptest.h \
 	sdptest.cpp \
 	echocanceltest.h \
-	echocanceltest.cpp
+	echocanceltest.cpp \
+	gaincontroltest.h \
+	gaincontroltest.cpp
 
 LLIBS=$(CPPUNIT_LIBS) \
 	../src/sflphoned-logger.o \
