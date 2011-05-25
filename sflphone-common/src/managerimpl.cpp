@@ -625,76 +625,74 @@ bool ManagerImpl::onHoldCall (const CallID& callId)
 }
 
 //THREAD=Main
-bool ManagerImpl::offHoldCall (const CallID& call_id)
+bool ManagerImpl::offHoldCall (const CallID& callId)
 {
 
-    AccountID account_id;
+    AccountID accountId;
     bool returnValue, isRec;
     std::string codecName;
 
     isRec = false;
 
-    _debug ("Manager: Put call %s off hold", call_id.c_str());
+    _debug ("Manager: Put call %s off hold", callId.c_str());
 
     stopTone();
 
-    CallID current_call_id = getCurrentCallId();
+    CallID currentCallId = getCurrentCallId();
 
     //Place current call on hold if it isn't
 
     if (hasCurrentCall()) {
 
         // if this is not a conference and this and is not a conference participant
-        if (!isConference (current_call_id) && !participToConference (current_call_id)) {
-        	_debug ("Manager: Has current call (%s), put on hold", current_call_id.c_str());
-            onHoldCall (current_call_id);
-        } else if (isConference (current_call_id) && !participToConference (call_id)) {
-            detachParticipant (default_id, current_call_id);
+        if (!isConference (currentCallId) && !participToConference (currentCallId)) {
+        	_debug ("Manager: Has current call (%s), put on hold", currentCallId.c_str());
+            onHoldCall (currentCallId);
+        } else if (isConference (currentCallId) && !participToConference (callId)) {
+            detachParticipant (default_id, currentCallId);
         }
     }
 
     /* Direct IP to IP call */
-    if (getConfigFromCall (call_id) == Call::IPtoIP) {
+    if (getConfigFromCall (callId) == Call::IPtoIP) {
         // is_rec = SIPVoIPLink::instance (AccountNULL)-> isRecording (call_id);
-        returnValue = SIPVoIPLink::instance (AccountNULL)-> offhold (call_id);
+        returnValue = SIPVoIPLink::instance (AccountNULL)-> offhold (callId);
     }
     /* Classic call, attached to an account */
     else {
-        account_id = getAccountFromCall (call_id);
+        accountId = getAccountFromCall (callId);
 
-        _debug ("Manager: Setting offhold, Account %s, callid %s", account_id.c_str(), call_id.c_str());
+        _debug ("Manager: Setting offhold, Account %s, callid %s", accountId.c_str(), callId.c_str());
 
-        isRec = getAccountLink (account_id)->getCall (call_id)->isRecording();
-        returnValue = getAccountLink (account_id)->offhold (call_id);
+        isRec = getAccountLink (accountId)->getCall (callId)->isRecording();
+        returnValue = getAccountLink (accountId)->offhold (callId);
     }
 
-    if (_dbus) {
-        if (isRec) {
-            _dbus->getCallManager()->callStateChanged (call_id, "UNHOLD_RECORD");
-        }
-        else {
-            _dbus->getCallManager()->callStateChanged (call_id, "UNHOLD_CURRENT");
-        }
+    if (_dbus == NULL) {
+     	_error("Manager: Error: DBUS not initialized");   
     }
 
-    if (participToConference (call_id)) {
+    if (isRec) {
+    	_dbus->getCallManager()->callStateChanged (callId, "UNHOLD_RECORD");
+    }
+    else {
+        _dbus->getCallManager()->callStateChanged (callId, "UNHOLD_CURRENT");
+    }
+
+    if (participToConference (callId)) {
         AccountID currentAccountId;
         Call* call = NULL;
 
-        currentAccountId = getAccountFromCall (call_id);
-        call = getAccountLink (currentAccountId)->getCall (call_id);
+        currentAccountId = getAccountFromCall (callId);
+        call = getAccountLink (currentAccountId)->getCall (callId);
 
         switchCall (call->getConfId());
 
     } else {
-        switchCall (call_id);
-
-//        audioLayerMutexLock();
-//        _audiodriver->flushMain();
-//        audioLayerMutexUnlock();
-
-        addStream(call_id);
+        switchCall (callId);
     }
+
+    addStream(callId);
 
     getMainBuffer()->stateInfo();
 
@@ -772,30 +770,30 @@ void ManagerImpl::transferSucceded ()
 
 bool ManagerImpl::attendedTransfer(const CallID& transferID, const CallID& targetID)
 {
-	bool returnValue = false;
+    bool returnValue = false;
 
-	_debug("Manager: Attended transfer");
+    _debug("Manager: Attended transfer");
 
-	 // Direct IP to IP call
-	if (getConfigFromCall (transferID) == Call::IPtoIP) {
-		returnValue = SIPVoIPLink::instance (AccountNULL)-> attendedTransfer(transferID, targetID);
-	}
-	else {	// Classic call, attached to an account
+    // Direct IP to IP call
+    if (getConfigFromCall (transferID) == Call::IPtoIP) {
+        returnValue = SIPVoIPLink::instance (AccountNULL)-> attendedTransfer(transferID, targetID);
+    }
+    else {	// Classic call, attached to an account
 
-		AccountID accountid = getAccountFromCall (transferID);
+        AccountID accountid = getAccountFromCall (transferID);
 
-		if (accountid == AccountNULL) {
-			_warn ("Manager: Call doesn't exists");
-			return false;
-		}
+        if (accountid == AccountNULL) {
+            _warn ("Manager: Call doesn't exists");
+	    return false;
+        }
 
-		returnValue = getAccountLink (accountid)->attendedTransfer (transferID, targetID);
+        returnValue = getAccountLink (accountid)->attendedTransfer (transferID, targetID);
 
-	}
+    }
 
-	getMainBuffer()->stateInfo();
+    getMainBuffer()->stateInfo();
 
-	return returnValue;
+    return returnValue;
 }
 
 //THREAD=Main : Call:Incoming
