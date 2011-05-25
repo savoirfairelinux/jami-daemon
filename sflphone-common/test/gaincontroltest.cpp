@@ -40,7 +40,9 @@ void GainControlTest::testGainProcessing()
     int fileSize;
     SFLDataFormat buf[SFL_GAIN_BUFFER_LENGTH];
 
-    GainControl gcontrol(8000);
+    // Sampling rate is 8000
+    // Target level is 0 dB
+    GainControl gcontrol(8000, 0.0);
 
     /*
     fstream inputFile("testgaininput.raw", fstream::in);

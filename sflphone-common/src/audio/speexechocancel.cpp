@@ -55,11 +55,13 @@ SpeexEchoCancel::SpeexEchoCancel()
     _micData->createReadPointer();
     _spkrData->createReadPointer();
 
+#ifdef DUMP_ECHOCANCEL_INTERNAL_DATA
     micFile = new ofstream("test_mic_data.raw");
     spkrFile = new ofstream("test_spkr_data.raw");
     micProcessFile = new ofstream("test_mic_data_process.raw", std::ofstream::out);
     spkrProcessFile = new ofstream("test_spkr_data_process.raw", std::ofstream::out);
     echoFile = new ofstream("test_echo_data.raw");
+#endif
 
     _spkrStopped = true;
 }
@@ -80,11 +82,13 @@ SpeexEchoCancel::~SpeexEchoCancel()
     delete _spkrData;
     _spkrData = NULL;
 
+#ifdef DUMP_ECHOCANCEL_INTERNAL_DATA
     delete micFile;
     delete spkrFile;
     delete micProcessFile;
     delete spkrProcessFile;
     delete echoFile;
+#endif
 
 }
 
@@ -101,7 +105,9 @@ void SpeexEchoCancel::putData (SFLDataFormat *inputData, int nbBytes)
         _spkrStopped = false;
     }
 
+#ifdef DUMP_ECHOCANCEL_INTERNAL_DATA
     spkrFile->write(reinterpret_cast<char *>(inputData), nbBytes);
+#endif
 
     // Put data in speaker ring buffer
     _spkrData->Put (inputData, nbBytes);
@@ -131,7 +137,9 @@ int SpeexEchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputDat
     memset (_tmpMic, 0, 5000 * sizeof(SFLDataFormat));
     memset (_tmpOut, 0, 5000 * sizeof(SFLDataFormat));
 
+#ifdef DUMP_ECHOCANCEL_INTERNAL_DATA
     micFile->write(reinterpret_cast<char *>(inputData), nbBytes);
+#endif
 
     // Put mic data in ringbuffer
     _micData->Put (inputData, nbBytes);
@@ -153,8 +161,10 @@ int SpeexEchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputDat
         _spkrData->Get (_tmpSpkr, byteSize);
         _micData->Get (_tmpMic, byteSize);
 
+#ifdef DUMP_ECHOCANCEL_INTERNAL_DATA
         micProcessFile->write(reinterpret_cast<char *>(_tmpMic), byteSize);
         spkrProcessFile->write(reinterpret_cast<char *>(_tmpSpkr), byteSize);
+#endif
 
         int32_t tmp;
         for(int i = 0; i < nbSamples; i++) {
@@ -172,7 +182,9 @@ int SpeexEchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputDat
         speex_echo_cancellation (_echoState, _tmpMic, _tmpSpkr, _tmpOut);
         speex_preprocess_run(_preState, reinterpret_cast<short *>(_tmpOut));
 
+#ifdef DUMP_ECHOCANCEL_INTERNAL_DATA
         echoFile->write(reinterpret_cast<char *>(_tmpOut), byteSize);
+#endif
 
         for(int i = 0; i < nbSamples; i++) {
         	_tmpOut[i] *= 3;

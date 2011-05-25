@@ -51,8 +51,11 @@ private:
     public:
         /**
          * Constructor for this class
+         * /param Sampling rate
+         * /param Attack ramping time
+         * /param Release ramping time 
          */
-	DetectionAverage(double, double);
+	DetectionAverage(double, double, double);
         
         /**
 	 * Process average
@@ -61,14 +64,24 @@ private:
 
     private:
         /**
-         * Average factor
+         * Average factor for attack
          */
-	double g;
+	double g_a;
 
         /**
-         * Attack and release ramp time (in ms)
+         * Attack ramp time (in ms)
          */
-	double teta;
+	double teta_a;
+
+        /**
+         * Average factor for release
+	 */
+        double g_r;
+
+        /**
+         * Release ramp time (in ms)
+         */
+        double teta_r;
 
         /**
 	 * Samplig rate

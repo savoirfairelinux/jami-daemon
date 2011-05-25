@@ -371,6 +371,7 @@ void AudioRtpRecordHandler::processDataDecode (unsigned char *spkrData, unsigned
         _audioRtpRecord._spkrFadeInComplete = fadeIn (spkrDataDecoded, nbSample, &_audioRtpRecord._micAmplFactor);
     }
 
+    // Normalize incomming signal
     gainController.process(spkrDataDecoded, nbSample);
 
     // test if resampling is required

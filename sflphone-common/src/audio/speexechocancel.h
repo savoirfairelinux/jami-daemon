@@ -85,11 +85,13 @@ class SpeexEchoCancel : public Algorithm
         SFLDataFormat _tmpMic[5000];
         SFLDataFormat _tmpOut[5000];
 
+#ifdef DUMP_ECHOCANCEL_INTERNAL_DATA
         ofstream *micFile;
         ofstream *spkrFile;
         ofstream *micProcessFile;
         ofstream *spkrProcessFile;
         ofstream *echoFile;
+#endif
 };
 
 #endif

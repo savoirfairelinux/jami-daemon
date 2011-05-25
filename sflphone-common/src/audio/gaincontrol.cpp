@@ -6,14 +6,17 @@
 #include "global.h"
 #include "gaincontrol.h"
 
-#define SFL_GAIN_ATTACK_RELEASE_TIME 10
+#define SFL_GAIN_ATTACK_TIME 10
+#define SFL_GAIN_RELEASE_TIME 300
 
 #define SFL_GAIN_LIMITER_RATIO 0.1
 #define SFL_GAIN_LIMITER_THRESHOLD 0.6
 
 #define SFL_GAIN_LOGe10  2.30258509299404568402
 
-GainControl::GainControl(double sr, double target) : averager(sr, SFL_GAIN_ATTACK_RELEASE_TIME)
+#define DUMP_GAIN_CONTROL_SIGNAL
+
+GainControl::GainControl(double sr, double target) : averager(sr, SFL_GAIN_ATTACK_TIME, SFL_GAIN_RELEASE_TIME)
 				    , limiter(SFL_GAIN_LIMITER_RATIO, SFL_GAIN_LIMITER_THRESHOLD)
 				    , targetGaindB(target)
 				    , targetGainLinear(0.0)
@@ -48,7 +51,7 @@ void GainControl::process(SFLDataFormat *buf, int bufLength)
         out = limiter.limit(in);
 
 #ifdef DUMP_GAIN_CONTROL_SIGNAL
-	tmpRms.write(retinterpret_cast<char *>(&out), sizeof(double));
+	tmpOut.write(reinterpret_cast<char *>(&out), sizeof(double));
 #endif
 
         buf[i] = (short)(out * (double)SHRT_MAX);
@@ -62,17 +65,24 @@ double GainControl::RmsDetection::getRms(double in)
     return in * in;
 }
 
-GainControl::DetectionAverage::DetectionAverage(double sr, double t) : 
-			g(0.0), teta(t), samplingRate(sr), previous_y(0.0) 
+GainControl::DetectionAverage::DetectionAverage(double sr, double ta, double tr) : 
+			g_a(0.0), teta_a(ta), g_r(0.0), teta_r(tr), samplingRate(sr), previous_y(0.0) 
 {
-    g = exp(-1.0 / (samplingRate * (teta / 1000.0)));        
+    g_a = exp(-1.0 / (samplingRate * (teta_a / 1000.0)));        
+    g_r = exp(-1.0 / (samplingRate * (teta_r / 1000.0)));
 
-    std::cout << "GainControl: g: " << g << ", teta: " << teta << std::endl;
+    std::cout << "GainControl: g_attack: " << g_a << ", teta_attack: " << teta_a 
+		<< ", g_release: " << g_r << ", teta_release: " << teta_r << std::endl;
 }
 
 double GainControl::DetectionAverage::getAverage(double in)
 {
-    previous_y = ((1.0 - g) * in) + (g * previous_y);
+    if(in > previous_y) {
+        previous_y = ((1.0 - g_a) * in) + (g_a * previous_y);
+    }
+    else {
+	previous_y = ((1.0 - g_r) * in) + (g_r * previous_y);
+    }
 
     return previous_y;
 }
