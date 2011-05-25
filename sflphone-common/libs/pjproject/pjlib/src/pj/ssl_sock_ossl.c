@@ -312,8 +312,8 @@ static pj_status_t init_openssl(void)
 	    meth = (SSL_METHOD*)TLSv1_server_method();
 	if (!meth)
 	    meth = (SSL_METHOD*)SSLv3_server_method();
-	if (!meth)
-	    meth = (SSL_METHOD*)SSLv2_server_method();
+	/*if (!meth)
+	    meth = (SSL_METHOD*)SSLv2_server_method();*/
 	pj_assert(meth);
 
 	ctx=SSL_CTX_new(meth);
@@ -389,8 +389,10 @@ static pj_status_t create_ssl_ctx(pj_ssl_sock_t *ssock, SSL_CTX **p_ctx)
 	ssl_method = (SSL_METHOD*)TLSv1_method();
 	break;
     case PJ_SSL_SOCK_PROTO_SSL2:
+    /*
 	ssl_method = (SSL_METHOD*)SSLv2_method();
-	break;
+    */
+	return PJ_EINVAL;
     case PJ_SSL_SOCK_PROTO_SSL3:
 	ssl_method = (SSL_METHOD*)SSLv3_method();
 	break;
