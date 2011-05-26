@@ -37,13 +37,15 @@
 #include <string.h>
 #include <eel-gconf-extensions.h>
 
-#include <accountconfigdialog.h>
-#include <addressbook-config.h>
-#include <shortcuts-config.h>
-#include <audioconf.h>
-#include <hooks-config.h>
-#include <audioconf.h>
-#include <uimanager.h>
+#include "accountconfigdialog.h"
+#include "addressbook-config.h"
+#include "shortcuts-config.h"
+#include "audioconf.h"
+#include "videoconf.h"
+#include "hooks-config.h"
+#include "audioconf.h"
+#include "videoconf.h"
+#include "uimanager.h"
 
 /**
  * Local variables
@@ -397,6 +399,12 @@ show_preferences_dialog ()
     tab = create_audio_configuration ();
     gtk_notebook_append_page (GTK_NOTEBOOK (notebook), tab, gtk_label_new (
                                   _ ("Audio")));
+    gtk_notebook_page_num (GTK_NOTEBOOK (notebook), tab);
+
+    // Video tab
+    tab = create_video_configuration ();
+    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), tab, gtk_label_new (
+                                  _ ("Video")));
     gtk_notebook_page_num (GTK_NOTEBOOK (notebook), tab);
 
     // Addressbook tab

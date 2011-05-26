@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
- *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,20 +28,11 @@
  *  as that of the covered work.
  */
 
-#ifndef __AUDIO_CONF_H
-#define __AUDIO_CONF_H
+#ifndef __VIDEO_CONF_H
+#define __VIDEO_CONF_H
 
-#include "actions.h"
+#include <gtk/gtk.h>
 
-GtkWidget* create_audio_configuration (void);
-GtkWidget* create_codecs_configuration (account_t **a);
+GtkWidget* create_video_configuration ();
 
-GtkWidget* api_box();
-GtkWidget* alsa_box();
-GtkWidget* pulse_box();
-GtkWidget* codecs_box();
-GtkWidget* ringtone_box();
-
-gboolean get_api();
-
-#endif // __AUDIO_CONF_H
+#endif // __VIDEO_CONF_H

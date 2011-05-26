@@ -13,6 +13,7 @@ libconfig_la_SOURCES = \
   accountconfigdialog.c \
   hooks-config.c \
   audioconf.c \
+  videoconf.c \
   utils.c 
 
 libconfig_la_LDFLAGS = @DBUSGLIB_LDFLAGS@ @LIBNOTIFY_LDFLAGS@ \
