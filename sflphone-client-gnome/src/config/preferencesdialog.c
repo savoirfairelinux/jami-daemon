@@ -341,7 +341,7 @@ selection_changed_cb (GtkIconView *view, gpointer user_data UNUSED)
 /**
  * Show configuration window with tabs
  */
-void
+guint
 show_preferences_dialog ()
 {
     GtkDialog * dialog;
@@ -429,6 +429,7 @@ show_preferences_dialog ()
     dialogOpen = FALSE;
 
     gtk_widget_destroy (GTK_WIDGET (dialog));
+    return result;
 }
 
 
