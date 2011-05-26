@@ -43,7 +43,6 @@ void YamlDocument::addNode (YamlNode *node)
 
 YamlNode *YamlDocument::popNode()
 {
-    Sequence::iterator it = doc.begin();
     YamlNode *node = doc.front();
 
     //removed element's destructor is called

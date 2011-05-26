@@ -127,12 +127,12 @@ class Celt : public AudioCodec
 
         virtual int decode (short *dst, unsigned char *src, unsigned int size) {
 #ifdef BUILD_CELT_91 // == 91
-            int err = 0;
-            err = celt_decode (_dec, src, size, (celt_int16*) dst, size);
+            //int err = 0;
+            /*err =*/ celt_decode (_dec, src, size, (celt_int16*) dst, size);
 #endif
 #ifdef BUILD_CELT_71
-            int err = 0;
-            err = celt_decode (_dec, src, size, (celt_int16*) dst);
+            //int err = 0; // FIXME: check error code
+            /*err =*/ celt_decode (_dec, src, size, (celt_int16*) dst);
 #endif
             return _frameSize * sizeof (celt_int16);
         }
