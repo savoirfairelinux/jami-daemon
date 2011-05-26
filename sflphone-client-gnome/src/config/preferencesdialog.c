@@ -442,13 +442,14 @@ show_preferences_dialog ()
 
 GtkTreeModel* createModel()
 {
-
-    browser_t browser_entries[5] = {
+    enum {ENTRIES = 6} ;
+    browser_t browser_entries[ENTRIES] = {
         {_ ("General"), "preferences-system", 0},
         {_ ("Audio"), "multimedia-volume-control", 1},
-        {_ ("Address Book"), "address-book-new", 2},
-        {_ ("Hooks"), "gnome-globe", 3},
-        {_ ("Shortcuts"), "preferences-desktop-keyboard", 4}
+        {_ ("Video"), "multimedia-camera", 2},
+        {_ ("Address Book"), "address-book-new", 3},
+        {_ ("Hooks"), "gnome-globe", 4},
+        {_ ("Shortcuts"), "preferences-desktop-keyboard", 5}
     };
 
     GdkPixbuf *pixbuf;
@@ -460,7 +461,7 @@ GtkTreeModel* createModel()
     store = gtk_list_store_new (3, GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_INT);
     GtkIconTheme* theme = gtk_icon_theme_get_default();
 
-    for (i = 0; i < 5; i++) {
+    for (i = 0; i < ENTRIES; i++) {
 
         gtk_list_store_append (store, &iter);
 
