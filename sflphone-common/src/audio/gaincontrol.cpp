@@ -10,7 +10,7 @@
 #define SFL_GAIN_RELEASE_TIME 300
 
 #define SFL_GAIN_LIMITER_RATIO 0.1
-#define SFL_GAIN_LIMITER_THRESHOLD 0.6
+#define SFL_GAIN_LIMITER_THRESHOLD 0.8
 
 #define SFL_GAIN_LOGe10  2.30258509299404568402
 
@@ -18,12 +18,20 @@
 
 GainControl::GainControl(double sr, double target) : averager(sr, SFL_GAIN_ATTACK_TIME, SFL_GAIN_RELEASE_TIME)
 				    , limiter(SFL_GAIN_LIMITER_RATIO, SFL_GAIN_LIMITER_THRESHOLD)
-				    , targetGaindB(target)
-				    , targetGainLinear(0.0)
+				    , targetLeveldB(target)
+				    , targetLevelLinear(0.0)
+				    , currentGain(1.0)
+				    , previousGain(0.0)
+				    , maxIncreaseStep(0.0)
+				    , maxDecreaseStep(0.0)
 {
-    targetGainLinear = exp(targetGaindB * 0.05 * SFL_GAIN_LOGe10);
+    targetLevelLinear = exp(targetLeveldB * 0.05 * SFL_GAIN_LOGe10);
 
-    _debug("GainControl: Target gain %d dB (%d linear)", targetGaindB, targetGainLinear);
+    maxIncreaseStep = exp(0.11513 * 12. * 160 / 8000); // Computed on 12 frames (240 ms)
+    maxDecreaseStep = exp(-0.11513 * 40. * 160 / 8000); // Computed on 40 frames (800 ms)
+
+    _debug("GainControl: Target gain %d dB (%d linear)", targetLeveldB, targetLevelLinear);
+
 }
 
 GainControl::~GainControl() {}
@@ -36,19 +44,28 @@ std::fstream tmpOut("gaintestout.raw", std::fstream::out);
 
 void GainControl::process(SFLDataFormat *buf, int bufLength) 
 {
-    double rms, rmsAvg, in, out;
+    double rms, rmsAvgLevel, in, out, diffRms, maxRms;
 
+    maxRms = 0.0;
     for(int i = 0; i < bufLength; i++) {
+        // linear conversion
 	in = (double)buf[i] / (double)SHRT_MAX;
-        rms = detector.getRms(in);
-        rmsAvg = sqrt(averager.getAverage(rms));
-       
+	
+        out = currentGain * in;
+
+	rms = detector.getRms(out);
+	rmsAvgLevel = sqrt(averager.getAverage(rms));
+
 #ifdef DUMP_GAIN_CONTROL_SIGNAL 
-	tmpRms.write(reinterpret_cast<char *>(&rmsAvg), sizeof(double));
+	tmpRms.write(reinterpret_cast<char *>(&rmsAvgLevel), sizeof(double));
         tmpIn.write(reinterpret_cast<char *>(&in), sizeof(double));
 #endif
 
-        out = limiter.limit(in);
+	if(rmsAvgLevel > maxRms) {
+	    maxRms = rmsAvgLevel;
+        }
+
+        out = limiter.limit(out);
 
 #ifdef DUMP_GAIN_CONTROL_SIGNAL
 	tmpOut.write(reinterpret_cast<char *>(&out), sizeof(double));
@@ -56,6 +73,25 @@ void GainControl::process(SFLDataFormat *buf, int bufLength)
 
         buf[i] = (short)(out * (double)SHRT_MAX);
     }
+
+    diffRms = maxRms - targetLevelLinear;
+    
+    if((diffRms > 0.0) && (maxRms > 0.1)) {
+	currentGain *= maxDecreaseStep;
+    }
+    else if((diffRms <= 0.0) && (maxRms > 0.1)) { 
+	currentGain *= maxIncreaseStep;
+    }
+    else if(maxRms <= 0.1) {
+	currentGain = 1.0;
+    }
+
+    currentGain = 0.5 * (currentGain + previousGain);
+
+    previousGain = currentGain;
+
+    // _debug("GainControl: current gain: %f, target gain: %f, rmsAvgLevel %f, target level %f", 
+    //     currentGain, gainTargetLevel, rmsAvgLevel, targetLevelLinear);
 }
 
 GainControl::RmsDetection::RmsDetection() {}
