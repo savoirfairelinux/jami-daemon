@@ -40,7 +40,7 @@
 #define SIP_SCHEME       "sip:"
 #define SIPS_SCHEME      "sips:"
 
-#define CallConfigNULL   NULL
+#define CallConfigNULL   0
 
 /*
  * @file call.h
