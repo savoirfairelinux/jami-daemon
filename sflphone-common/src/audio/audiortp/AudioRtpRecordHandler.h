@@ -37,6 +37,7 @@
 #include "audio/noisesuppress.h"
 #include "audio/speexechocancel.h"
 #include "audio/echosuppress.h"
+#include "audio/gaincontrol.h"
 #include "managerimpl.h"
 #include <ccrtp/rtp.h>
 
@@ -67,9 +68,9 @@ timeval2microtimeout (const timeval& t)
 
 class AudioRtpSessionException: public std::exception
 {
-        virtual const char* what() const throw() {
-            return "AudioRtpSessionException occured";
-        }
+    virtual const char* what() const throw() {
+        return "AudioRtpSessionException occured";
+    }
 };
 
 typedef struct DtmfEvent {
@@ -115,7 +116,7 @@ class AudioRtpRecord
         NoiseSuppress *_noiseSuppress;
         ost::Mutex audioProcessMutex;
         std::string _callId;
-       unsigned int _dtmfPayloadType;
+        unsigned int _dtmfPayloadType;
 
 };
 
@@ -228,7 +229,9 @@ class AudioRtpRecordHandler
 
         SIPCall *_ca;
 
- 	    EchoSuppress echoCanceller;
+ 	EchoSuppress echoCanceller;
+
+        GainControl gainController;
 };
 
 }

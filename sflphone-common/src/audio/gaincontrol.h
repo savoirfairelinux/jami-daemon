@@ -8,13 +8,30 @@
 class GainControl {
 
 public:
-    GainControl(double);
+    /**
+     * Constructor for the gain controller
+     * /param Sampling rate
+     * /param Target gain in dB
+     */
+    GainControl(double, double);
+
+    /**
+     * Destructor for this class
+     */
     ~GainControl(void);
 
-    void process(SFLDataFormat *, SFLDataFormat *, int);
+    /**
+     * Apply addaptive gain factor on input signal
+     * /param Input audio buffer
+     * /param Input buffer length
+     */
+    void process(SFLDataFormat *, int);
 
 private:
 
+    /**
+     * Rms detector
+     */
     class RmsDetection {
     public:
 	/**
@@ -24,6 +41,7 @@ private:
 
         /**
 	 * Get rms value
+         * /param Audio sample
 	 */
         double getRms(double);
     
@@ -33,8 +51,11 @@ private:
     public:
         /**
          * Constructor for this class
+         * /param Sampling rate
+         * /param Attack ramping time
+         * /param Release ramping time 
          */
-	DetectionAverage(double, double);
+	DetectionAverage(double, double, double);
         
         /**
 	 * Process average
@@ -43,14 +64,24 @@ private:
 
     private:
         /**
-         * Average factor
+         * Average factor for attack
          */
-	double g;
+	double g_a;
 
         /**
-         * Attack and release ramp time (in ms)
+         * Attack ramp time (in ms)
          */
-	double teta;
+	double teta_a;
+
+        /**
+         * Average factor for release
+	 */
+        double g_r;
+
+        /**
+         * Release ramp time (in ms)
+         */
+        double teta_r;
 
         /**
 	 * Samplig rate
@@ -65,8 +96,16 @@ private:
 
     class Limiter {
     public:
+        /**
+         * Limiter
+	 * /param Threshold
+	 * /param Ratio
+         */
     	Limiter(double, double);
 
+        /**
+         * Perform compression on input signal
+         */
         double limit(double);
 
     private:
@@ -79,6 +118,10 @@ private:
     DetectionAverage averager;
 
     Limiter limiter;
+
+    double targetGaindB;
+
+    double targetGainLinear;
 };
 
 #endif // GAINCONTROL_H
