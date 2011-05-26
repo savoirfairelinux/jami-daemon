@@ -31,7 +31,7 @@
 #ifndef __AUDIO_CONF_H
 #define __AUDIO_CONF_H
 
-#include <actions.h>
+#include "actions.h"
 
 GtkWidget* create_audio_configuration (void);
 GtkWidget* create_codecs_configuration (account_t **a);
