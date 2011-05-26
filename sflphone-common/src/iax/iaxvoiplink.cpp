@@ -62,7 +62,7 @@ IAXVoIPLink::IAXVoIPLink (const AccountID& accountID) : VoIPLink (accountID)
     , spkrDataDecoded (NULL)
     , spkrDataConverted (NULL)
     , converter (NULL)
-    , converterSamplingRate (NULL)
+    , converterSamplingRate (0)
     , urlhook (NULL)
 {
     _evThread = new EventThread (this);

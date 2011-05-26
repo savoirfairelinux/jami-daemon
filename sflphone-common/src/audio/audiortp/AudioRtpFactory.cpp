@@ -299,7 +299,7 @@ void AudioRtpFactory::updateDestinationIpAddress (void)
 
 sfl::AudioSymmetricRtpSession * AudioRtpFactory::getAudioSymetricRtpSession()
 {
-    if ( (_rtpSessionType == Symmetric) && (_rtpSessionType != NULL)) {
+    if ( (_rtpSessionType == Symmetric) && (_rtpSessionType != 0)) {
         return static_cast<AudioSymmetricRtpSession *> (_rtpSession);
     } else {
         throw AudioRtpFactoryException ("RTP: Error: _rtpSession is NULL in getAudioSymetricRtpSession");
@@ -308,7 +308,7 @@ sfl::AudioSymmetricRtpSession * AudioRtpFactory::getAudioSymetricRtpSession()
 
 sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
 {
-    if ( (_rtpSessionType == Zrtp) && (_rtpSessionType != NULL)) {
+    if ( (_rtpSessionType == Zrtp) && (_rtpSessionType != 0)) {
         return static_cast<AudioZrtpSession *> (_rtpSession);
     } else {
         throw AudioRtpFactoryException ("RTP: Error: _rtpSession is NULL in getAudioZrtpSession");
