@@ -146,7 +146,6 @@ preferences_dialog_fill_output_audio_device_list()
 
     GtkTreeIter iter;
     gchar** list;
-    gchar** audioDevice;
     int index;
 
     gtk_list_store_clear (outputlist);
@@ -157,7 +156,7 @@ preferences_dialog_fill_output_audio_device_list()
     // For each device name included in list
     int c = 0;
 
-    for (audioDevice = list; *list ; list++) {
+    for (; *list ; list++) {
         index = dbus_get_audio_device_index (*list);
         gtk_list_store_append (outputlist, &iter);
         gtk_list_store_set (outputlist, &iter, 0, *list, 1, index, -1);
@@ -176,7 +175,6 @@ preferences_dialog_fill_ringtone_audio_device_list()
 
     GtkTreeIter iter;
     gchar** list;
-    gchar** audioDevice;
     int index;
 
     gtk_list_store_clear (ringtonelist);
@@ -187,7 +185,7 @@ preferences_dialog_fill_ringtone_audio_device_list()
     // For each device name in the list
     int c = 0;
 
-    for (audioDevice = list; *list; list++) {
+    for (; *list; list++) {
         index = dbus_get_audio_device_index (*list);
         gtk_list_store_append (ringtonelist, &iter);
         gtk_list_store_set (ringtonelist, &iter, 0, *list, 1, index, -1);
@@ -285,7 +283,6 @@ preferences_dialog_fill_input_audio_device_list()
 
     GtkTreeIter iter;
     gchar** list;
-    gchar** audioDevice;
     int index ;
     gtk_list_store_clear (inputlist);
 
@@ -294,7 +291,7 @@ preferences_dialog_fill_input_audio_device_list()
 
     // For each device name included in list
     //int c = 0;
-    for (audioDevice = list; *list; list++) {
+    for (; *list; list++) {
         index = dbus_get_audio_device_index (*list);
         gtk_list_store_append (inputlist, &iter);
         gtk_list_store_set (inputlist, &iter, 0, *list, 1, index, -1);
@@ -799,8 +796,9 @@ active_echo_cancel(void)
 }
 
 void
-echo_tail_length_changed(GtkRange *range, gpointer  user_data)
+echo_tail_length_changed(GtkRange *range, gpointer user_data)
 {
+    (void) user_data; /* UNUSED */
     gint value;
     value = (gint)gtk_range_get_value(range);
 
@@ -810,6 +808,7 @@ echo_tail_length_changed(GtkRange *range, gpointer  user_data)
 void
 echo_delay_changed(GtkRange *range, gpointer  user_data)
 {
+    (void) user_data; /* UNUSED */
     gint value;
     value = (gint)gtk_range_get_value(range);
 
@@ -963,8 +962,6 @@ GtkWidget* create_audio_configuration()
     GtkWidget *frame;
     GtkWidget *enableNoiseReduction;
     GtkWidget *enableEchoCancel;
-    GtkWidget *echoTailLength;
-    GtkWidget *echoDelay;
     gboolean noisesuppressActive;
     gboolean echoCancelActive;
     gchar *state;

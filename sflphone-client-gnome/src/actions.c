@@ -1199,7 +1199,6 @@ void sflphone_fill_call_list (void)
 {
 
     gchar** calls = (gchar**) dbus_get_call_list();
-    gchar** pl;
     GHashTable *call_details;
     callable_obj_t *c;
     gchar *callID;
@@ -1207,7 +1206,7 @@ void sflphone_fill_call_list (void)
     DEBUG ("sflphone_fill_call_list");
 
     if (calls) {
-        for (pl=calls; *calls; calls++) {
+        for (; *calls; calls++) {
             c = g_new0 (callable_obj_t, 1);
             callID = (gchar*) (*calls);
             call_details = dbus_get_call_details (callID);
@@ -1229,7 +1228,6 @@ void sflphone_fill_conference_list (void)
     // TODO Fetch the active conferences at client startup
 
     gchar** conferences;
-    gchar** pl;
     GHashTable *conference_details;
     gchar* conf_id;
     conference_obj_t* conf;
@@ -1239,7 +1237,7 @@ void sflphone_fill_conference_list (void)
     conferences = dbus_get_conference_list();
 
     if (conferences) {
-        for (pl = conferences; *conferences; conferences++) {
+        for (; *conferences; conferences++) {
             conf = g_new0 (conference_obj_t, 1);
             conf_id = (gchar*) (*conferences);
 

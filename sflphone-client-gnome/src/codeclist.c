@@ -70,7 +70,7 @@ void codec_list_init (GQueue **queue)
 void codec_capabilities_load (void)
 {
 
-    gchar **codecs = NULL, **pl = NULL, **specs = NULL;
+    gchar **codecs = NULL, **specs = NULL;
     guint payload;
 
     // Create the queue object that will contain the global list of audio codecs
@@ -84,7 +84,7 @@ void codec_capabilities_load (void)
 
     if (codecs != NULL) {
         // Add the codecs in the list
-        for (pl=codecs; *codecs; codecs++) {
+        for (; *codecs; codecs++) {
 
             codec_t *c;
             payload = atoi (*codecs);
