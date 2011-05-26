@@ -446,7 +446,7 @@ GtkTreeModel* createModel()
     browser_t browser_entries[ENTRIES] = {
         {_ ("General"), "preferences-system", 0},
         {_ ("Audio"), "multimedia-volume-control", 1},
-        {_ ("Video"), "multimedia-camera", 2},
+        {_ ("Video"), "multimedia-volume-control", 2},
         {_ ("Address Book"), "address-book-new", 3},
         {_ ("Hooks"), "gnome-globe", 4},
         {_ ("Shortcuts"), "preferences-desktop-keyboard", 5}
