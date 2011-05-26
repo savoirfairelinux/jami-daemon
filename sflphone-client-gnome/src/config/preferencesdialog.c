@@ -35,7 +35,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <eel-gconf-extensions.h>
+#include "eel-gconf-extensions.h"
 
 #include "accountconfigdialog.h"
 #include "addressbook-config.h"
