@@ -497,6 +497,8 @@ init_eds_mutex() {
 static void
 authenticate_source (EBook *book)
 {
+    (void) book; /* unused */
+    /*
     const gchar *auth_domain;
     const gchar *password = NULL;
     const gchar *component_name;
@@ -538,7 +540,6 @@ authenticate_source (EBook *book)
     if (auth) {
         component_name = auth_domain ? auth_domain : "Addressbook";
 
-/*
         password = e_passwords_get_password (component_name, uri);
 
         if (e_book_authenticate_user (book, user, password, auth, &err)) {
@@ -547,8 +548,9 @@ authenticate_source (EBook *book)
         else {
             ERROR ("Addressbook: authentication error");
         }
-*/
+
     }
+*/
 }
 
 /**
@@ -559,7 +561,6 @@ fill_books_data ()
 {
     GSList *list, *l;
     ESourceList *source_list = NULL;
-    gboolean default_found;
 
     DEBUG ("Addressbook: Fill books data");
 
@@ -584,10 +585,6 @@ fill_books_data ()
         books_data = NULL;
     }
 
-
-    // in case default property is not set for any addressbook
-    default_found = FALSE;
-
     for (l = list; l != NULL; l = l->next) {
 
         ESourceGroup *group = l->data;
@@ -611,7 +608,6 @@ fill_books_data ()
             if (prop) {
                 if (strcmp (prop, "true") == 0) {
                     book_data->isdefault = TRUE;
-                    default_found = TRUE;
                 } else {
                     book_data->isdefault = FALSE;
                 }

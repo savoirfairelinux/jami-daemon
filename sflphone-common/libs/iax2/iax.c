@@ -1289,7 +1289,7 @@ static int send_command_samples(struct iax_session *i, char type, int command, u
 
 int iax_transfer(struct iax_session *session, const char *number)
 {
-	static int res;				//Return Code
+	//static int res;				//Return Code
 	struct iax_ie_data ied;			//IE Data Structure (Stuff To Send)
 
 	// Clear The Memory Used For IE Buffer
@@ -1299,7 +1299,7 @@ int iax_transfer(struct iax_session *session, const char *number)
 	iax_ie_append_str(&ied, IAX_IE_CALLED_NUMBER, number);
 
 	// Send The Transfer Command - Asterisk Will Handle The Rest!
-	res = send_command(session, AST_FRAME_IAX, IAX_COMMAND_TRANSFER, 0, ied.buf, ied.pos, -1);
+	/*res =*/ send_command(session, AST_FRAME_IAX, IAX_COMMAND_TRANSFER, 0, ied.buf, ied.pos, -1);
 
 	// Return Success
 	return 0;

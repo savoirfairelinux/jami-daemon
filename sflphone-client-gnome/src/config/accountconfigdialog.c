@@ -285,8 +285,6 @@ static GtkWidget* create_basic_tab (account_t **a)
 #endif
 
     // Default settings
-    gchar *curAccountID = "";
-    gchar *curAccountEnabled = "true";
     gchar *curAccountType = "SIP";
     gchar *curAlias = "";
     gchar *curUsername = "";
@@ -305,9 +303,7 @@ static GtkWidget* create_basic_tab (account_t **a)
 
     // Load from SIP/IAX/Unknown ?
     if (currentAccount) {
-        curAccountID = currentAccount->accountID;
         curAccountType = g_hash_table_lookup (currentAccount->properties, ACCOUNT_TYPE);
-        curAccountEnabled = g_hash_table_lookup (currentAccount->properties, ACCOUNT_ENABLED);
         curAlias = g_hash_table_lookup (currentAccount->properties, ACCOUNT_ALIAS);
         curHostname = g_hash_table_lookup (currentAccount->properties, ACCOUNT_HOSTNAME);
         curPassword = g_hash_table_lookup (currentAccount->properties, ACCOUNT_PASSWORD);

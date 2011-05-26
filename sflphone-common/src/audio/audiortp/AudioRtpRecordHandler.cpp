@@ -255,7 +255,7 @@ int AudioRtpRecordHandler::processDataEncode (void)
 {
     SFLDataFormat *micData = _audioRtpRecord._micData;
     unsigned char *micDataEncoded = _audioRtpRecord._micDataEncoded;
-    SFLDataFormat *micDataEchoCancelled = _audioRtpRecord._micDataEchoCancelled;
+    //SFLDataFormat *micDataEchoCancelled = _audioRtpRecord._micDataEchoCancelled;
     SFLDataFormat *micDataConverted = _audioRtpRecord._micDataConverted;
 
     int codecFrameSize = getCodecFrameSize();

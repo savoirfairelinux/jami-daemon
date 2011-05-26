@@ -100,12 +100,6 @@ GtkWidget * create_codec_table();
 GtkWidget * create_accounts_tab (GtkDialog * dialog);
 
 /**
- * Create the audio configuration tab and add it to the main configuration window
- * @return GtkWidget* The widget created
- */
-GtkWidget * create_audio_tab();
-
-/**
  * Create the recording configuration tab and add it to the main configuration window
  */
 GtkWidget * create_recording_settings();
@@ -113,7 +107,7 @@ GtkWidget * create_recording_settings();
 /**
  * Display the main configuration window
  */
-void show_preferences_dialog();
+guint show_preferences_dialog();
 
 void preferences_dialog_set_stun_visible();
 

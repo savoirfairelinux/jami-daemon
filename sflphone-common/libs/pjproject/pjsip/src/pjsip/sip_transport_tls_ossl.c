@@ -365,8 +365,10 @@ static pj_status_t create_ctx( struct tls_listener *lis, SSL_CTX **p_ctx)
 	ssl_method = TLSv1_method();
 	break;
     case PJSIP_SSLV2_METHOD:
-	ssl_method = SSLv2_method();
-	break;
+	/* ssl_method = SSLv2_method(); */
+	ssl_report_error(lis_name, 4, PJSIP_TLS_EINVMETHOD,
+			 "Error creating SSL context: SSLv2 not supported");
+	return PJSIP_TLS_EINVMETHOD;
     case PJSIP_SSLV3_METHOD:
 	ssl_method = SSLv3_method();
 	break;

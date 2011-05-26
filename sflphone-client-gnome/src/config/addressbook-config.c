@@ -314,7 +314,6 @@ create_addressbook_settings()
 
     GtkListStore *store;
     GtkCellRenderer *renderer;
-    GtkTreeSelection *tree_selection;
     GtkTreeViewColumn *tree_view_column;
 
     // Load the user value
@@ -407,9 +406,6 @@ create_addressbook_settings()
 
     // Create tree view with list store
     book_tree_view = gtk_tree_view_new_with_model (GTK_TREE_MODEL (store));
-
-    // Get tree selection manager
-    tree_selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (book_tree_view));
 
     // Active column
     renderer = gtk_cell_renderer_toggle_new();

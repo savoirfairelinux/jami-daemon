@@ -41,7 +41,7 @@
 #include "global.h"
 #include "sip/sipaccount.h"
 
-#include "audio/audiolayer.h"
+//#include "audio/audiolayer.h"
 #include "audio/alsa/alsalayer.h"
 #include "audio/pulseaudio/pulselayer.h"
 #include "audio/sound/tonelist.h"
@@ -277,7 +277,7 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
         _debug ("Manager: Has current call (%s) put it onhold", current_call_id.c_str());
 
         // std::string currentCallState = getCallDetails(current_call_id).find("CALL_STATE")->second;
-        Call *call = getAccountLink(getAccountFromCall(current_call_id))->getCall(current_call_id);
+        //Call *call = getAccountLink(getAccountFromCall(current_call_id))->getCall(current_call_id);
 
         // if this is not a conferenceand this and is not a conference participant
         if (!isConference (current_call_id) && !participToConference (current_call_id)) {
@@ -2214,7 +2214,6 @@ bool ManagerImpl::playATone (Tone::TONEID toneId)
 {
 
     bool hasToPlayTone;
-    AudioLayer *audiolayer;
 
     // _debug ("Manager: Play tone %d", toneId);
 

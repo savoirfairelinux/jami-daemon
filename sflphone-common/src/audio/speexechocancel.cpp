@@ -119,7 +119,7 @@ void SpeexEchoCancel::putData (SFLDataFormat *inputData, int nbBytes)
     _debug("EchoCancel: Put spkrData data, updated size %d, put nbBytes", _spkrData->AvailForGet());
 }
 
-int SpeexEchoCancel::getData(SFLDataFormat *outputData) { return 0; }
+int SpeexEchoCancel::getData(SFLDataFormat * /*outputData*/) { return 0; }
 
 void SpeexEchoCancel::process (SFLDataFormat *data UNUSED, int nbBytes UNUSED) {}
 

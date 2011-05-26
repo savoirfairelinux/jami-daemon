@@ -51,7 +51,6 @@
 void show_edit_number (callable_obj_t *call);
 
 static GtkWidget *toolbar;
-static GtkWidget *toolbarWindows;
 
 guint transfertButtonConnId; //The button toggled signal connection ID
 guint recordButtonConnId; //The button toggled signal connection ID
@@ -1107,8 +1106,8 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
     // TODO update the selection to make sure the call under the mouse is the call selected
 
     // call type boolean
-    gboolean pickup = FALSE, hangup = FALSE, hold = FALSE, copy = FALSE, record =
-                                          FALSE, detach = FALSE, im = FALSE;
+    gboolean pickup = FALSE, hangup = FALSE, hold = FALSE, copy = FALSE,
+             record = FALSE, im = FALSE;
     gboolean accounts = FALSE;
 
     // conference type boolean
@@ -1128,16 +1127,13 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
                 case CALL_STATE_INCOMING:
                     pickup = TRUE;
                     hangup = TRUE;
-                    detach = TRUE;
                     break;
                 case CALL_STATE_HOLD:
                     hangup = TRUE;
                     hold = TRUE;
-                    detach = TRUE;
                     break;
                 case CALL_STATE_RINGING:
                     hangup = TRUE;
-                    detach = TRUE;
                     break;
                 case CALL_STATE_DIALING:
                     pickup = TRUE;
@@ -1149,7 +1145,6 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
                     hangup = TRUE;
                     hold = TRUE;
                     record = TRUE;
-                    detach = TRUE;
                     im = TRUE;
                     break;
                 case CALL_STATE_BUSY:
