@@ -107,7 +107,7 @@ GtkWidget * create_recording_settings();
 /**
  * Display the main configuration window
  */
-void show_preferences_dialog();
+guint show_preferences_dialog();
 
 void preferences_dialog_set_stun_visible();
 

@@ -113,15 +113,51 @@ private:
 	double threshold;
     };
 
+    /**
+     * Current audio level detection
+     */
     RmsDetection detector;
 
+    /**
+     * First order mean filter
+     */
     DetectionAverage averager;
 
+    /**
+     * Post processing compression
+     */
     Limiter limiter;
 
-    double targetGaindB;
+    /**
+     * Target audio level in dB
+     */
+    double targetLeveldB;
 
-    double targetGainLinear;
+    /**
+     * Target audio level in linear scale
+     */
+    double targetLevelLinear;
+
+    /**
+     * Current gain
+     */
+    double currentGain;
+
+    /** 
+     * Previou gain for smoothing
+     */
+    double previousGain;
+
+    /**
+     * Maximum incrementation stop of current gain
+     */
+    double maxIncreaseStep;
+
+    /**
+     * Maximum decrease step
+     */ 
+    double maxDecreaseStep;
+
 };
 
 #endif // GAINCONTROL_H

@@ -123,7 +123,7 @@ AudioRtpRecord::~AudioRtpRecord()
 }
 
 
-AudioRtpRecordHandler::AudioRtpRecordHandler (SIPCall *ca) : _audioRtpRecord (), _ca (ca), echoCanceller(ca->getMemoryPool()), gainController(8000, 0.0) 
+AudioRtpRecordHandler::AudioRtpRecordHandler (SIPCall *ca) : _audioRtpRecord (), _ca (ca), echoCanceller(ca->getMemoryPool()), gainController(8000, -10.0) 
 {
 
 }
@@ -255,7 +255,7 @@ int AudioRtpRecordHandler::processDataEncode (void)
 {
     SFLDataFormat *micData = _audioRtpRecord._micData;
     unsigned char *micDataEncoded = _audioRtpRecord._micDataEncoded;
-    SFLDataFormat *micDataEchoCancelled = _audioRtpRecord._micDataEchoCancelled;
+    //SFLDataFormat *micDataEchoCancelled = _audioRtpRecord._micDataEchoCancelled;
     SFLDataFormat *micDataConverted = _audioRtpRecord._micDataConverted;
 
     int codecFrameSize = getCodecFrameSize();

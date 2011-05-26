@@ -645,7 +645,7 @@ IAXVoIPLink::transfer (const CallID& id, const std::string& to) throw (VoipLinkE
 }
 
 bool
-IAXVoIPLink::attendedTransfer(const CallID& transferID, const CallID& targetID)
+IAXVoIPLink::attendedTransfer(const CallID& /*transferID*/, const CallID& /*targetID*/)
 {
 	// TODO implement attended transfer for IAX
 	return false;
@@ -684,7 +684,9 @@ IAXVoIPLink::carryingDTMFdigits (const CallID& id, char code)
 }
 
 bool
-IAXVoIPLink::sendTextMessage (sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from)
+IAXVoIPLink::sendTextMessage (sfl::InstantMessaging *module,
+        const std::string& callID, const std::string& message,
+        const std::string& /*from*/)
 {
     IAXCall* call = getIAXCall (callID);
 

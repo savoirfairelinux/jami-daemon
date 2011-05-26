@@ -321,8 +321,6 @@ ConfigTree::saveConfigTree (const std::string& fileName)
 int
 ConfigTree::populateFromFile (const std::string& fileName)
 {
-    bool out = false;
-
     _debug ("ConfigTree: Populate from file %s", fileName.c_str());
 
     if (fileName.empty()) {
@@ -335,7 +333,6 @@ ConfigTree::populateFromFile (const std::string& fileName)
 
     if (!file.is_open()) {
         file.open (fileName.data(), std::fstream::out);
-        out = true;
 
         if (!file.is_open()) {
             return 0;

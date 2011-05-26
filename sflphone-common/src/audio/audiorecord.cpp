@@ -131,7 +131,7 @@ void AudioRecord::initFileName (std::string peerNumber)
     savePath_.append (fName);
 }
 
-void AudioRecord::openFile()
+bool AudioRecord::openFile()
 {
 
     bool result = false;
@@ -156,6 +156,8 @@ void AudioRecord::openFile()
             result = openExistingWavFile();
         }
     }
+
+    return result;
 }
 
 

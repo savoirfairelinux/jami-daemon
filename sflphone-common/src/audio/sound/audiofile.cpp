@@ -453,7 +453,7 @@ bool WaveFile::openExistingWaveFile (const std::string& fileName, int audioSampl
 }
 
 
-bool WaveFile::loadFile (const std::string& filename, AudioCodec *codec , unsigned int sampleRate)
+bool WaveFile::loadFile (const std::string& filename, AudioCodec * /*codec*/, unsigned int sampleRate)
 {
     openFile (filename, sampleRate);
 

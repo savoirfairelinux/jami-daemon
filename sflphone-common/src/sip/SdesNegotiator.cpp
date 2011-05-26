@@ -60,8 +60,7 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse (void)
     * generalSyntaxPattern,
     * tagPattern,
     * cryptoSuitePattern,
-    * keyParamsPattern,
-    * sessionParamPattern;
+    * keyParamsPattern;
 
     try {
 
@@ -83,6 +82,7 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse (void)
             "(?P<mkiValue>[0-9]+)\\:"			 \
             "(?P<mkiLength>[0-9]{1,3})\\;?)?", "g");
 
+        /*
         sessionParamPattern = new Pattern (
             "(?P<sessionParam>(kdr\\=[0-9]{1,2}|" \
             "UNENCRYPTED_SRTP|" \
@@ -92,6 +92,7 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse (void)
             "FEC_KEY=(?P<fecKey>" + keyParamsPattern->getPattern() + ")|" \
             "WSH=(?P<wsh>[0-9]{1,2})|" \
             "(?<!\\-)[[:graph:]]+))*", "g"); // srtp-session-extension
+        */
 
     } catch (compile_error& exception) {
         throw parse_error ("A compile exception occured on a pattern.");
