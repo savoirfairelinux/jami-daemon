@@ -1347,19 +1347,30 @@ std::string
 SIPVoIPLink::getCurrentCodecName()
 {
 
-    SIPCall *call;
+    SIPCall *call = NULL;
     sfl::Codec *ac = NULL;
     std::string name = "";
 
     call = getSIPCall (Manager::instance().getCurrentCallId());
+    if(call == NULL) {
+        _error("UserAgent: Error: No current call");
+	// return empty string
+        return name;
+    }
+    
 
-    if (call) {
+    if(call->getLocalSDP()->hasSessionMedia()) {
         ac = call->getLocalSDP()->getSessionMedia();
     }
-
-    if (ac) {
-        name = ac->getMimeSubtype();
+    else {
+	return name;
     }
+
+    if (ac == NULL) {
+	_error("UserAgent: Error: No codec initialized for this session");
+    }
+
+    name = ac->getMimeSubtype();
 
     return name;
 }

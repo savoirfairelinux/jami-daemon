@@ -150,9 +150,14 @@ class Sdp
 
 
         /**
+	 * Return wether or not the media have been determined for this sdp session
+	 */
+        bool hasSessionMedia(void);
+
+        /**
          * Return the codec of the first media after negociation
          */
-        AudioCodec* getSessionMedia (void);
+        AudioCodec* getSessionMedia (void) throw(SdpException);
 
         /*
          * On building an invite outside a dialog, build the local offer and create the

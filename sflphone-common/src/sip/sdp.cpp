@@ -136,26 +136,47 @@ void Sdp::setActiveRemoteSdpSession (const pjmedia_sdp_session *sdp)
     getRemoteSdpTelephoneEventFromOffer(sdp);
 }
 
-AudioCodec* Sdp::getSessionMedia (void)
+bool Sdp::hasSessionMedia(void) 
+{
+    std::vector<sdpMedia *> mediaList = getSessionMediaList();
+    bool listNotEmpty;
+
+    if(mediaList.size() > 0) {
+	listNotEmpty = true;
+    }
+    else {
+        listNotEmpty = false;
+    }
+
+    return listNotEmpty;
+}
+
+AudioCodec* Sdp::getSessionMedia (void) throw(SdpException)
 {
 
-    int nb_media;
-    int nb_codec;
+    int nbMedia;
+    int nbCodec;
     sfl::Codec *codec = NULL;
-    std::vector<sdpMedia*> media_list;
+    std::vector<sdpMedia *> mediaList;
 
     _debug ("SDP: Get session media");
 
-    media_list = getSessionMediaList ();
-    nb_media = media_list.size();
+    mediaList = getSessionMediaList ();
+    nbMedia = mediaList.size();
 
-    if (nb_media > 0) {
-        nb_codec = media_list[0]->get_media_codec_list().size();
-
-        if (nb_codec > 0) {
-            codec = media_list[0]->get_media_codec_list() [0];
-        }
+    if(nbMedia <= 0) {
+	_error("SDP: Error: No media in session description");
+	throw SdpException("No media description for this SDP");
     }
+
+    nbCodec = mediaList[0]->get_media_codec_list().size();
+
+    if (nbCodec <= 0) {
+	_error("SDP: Error: No codec description for this media");
+    	throw SdpException("No codec description for this media");
+    }
+
+    codec = mediaList[0]->get_media_codec_list() [0];
 
     return static_cast<AudioCodec *>(codec);
 }
