@@ -1353,11 +1353,13 @@ SIPVoIPLink::getCurrentCodecName()
 
     call = getSIPCall (Manager::instance().getCurrentCallId());
 
-    if (call)
+    if (call) {
         ac = call->getLocalSDP()->getSessionMedia();
+    }
 
-    if (ac)
+    if (ac) {
         name = ac->getMimeSubtype();
+    }
 
     return name;
 }

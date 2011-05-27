@@ -573,7 +573,7 @@ bool ManagerImpl::onHoldCall (const CallID& callId)
     AccountID account_id;
     bool returnValue = false;
 
-    _debug ("--------------------------------------------------------- Manager: Put call %s on hold", callId.c_str());
+    _debug ("Manager: Put call %s on hold", callId.c_str());
 
     stopTone();
 
@@ -2632,14 +2632,22 @@ std::string ManagerImpl::getCurrentCodecName (const CallID& id)
     AccountID accountid = getAccountFromCall (id);
     VoIPLink* link = getAccountLink (accountid);
     Call* call = link->getCall (id);
+    std::string codecName = "";
 
-    if (!call)
-        return "";
+    _debug("Manager: Get current codec name");
 
-    if (call->getState() != Call::Active)
-        return "";
-    else
-        return link->getCurrentCodecName();
+    
+    if (!call) {
+	// return an empty codec name
+        return codecName;
+    }
+
+    Call::CallState state = call->getState();
+    if (state == Call::Active || state == Call::Conferencing) {
+        codecName = link->getCurrentCodecName();
+    }
+
+    return codecName;	
 }
 
 /**

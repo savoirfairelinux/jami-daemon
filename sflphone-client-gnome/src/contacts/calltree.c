@@ -406,11 +406,7 @@ void calltree_display_call_info (callable_obj_t * c, CallDisplayType display_typ
     switch (display_type) {
 
         case DISPLAY_TYPE_CALL:
-
-            DEBUG ("CallTree: Display a normal call");
-
             if (c->_state_code == 0) {
-
                 if (g_strcmp0 ("", c->_peer_name) == 0) {
                     description = g_markup_printf_escaped ("<b>%s</b><i>%s</i>",
                                                            display_number, c->_peer_name);
@@ -418,7 +414,6 @@ void calltree_display_call_info (callable_obj_t * c, CallDisplayType display_typ
                     description = g_markup_printf_escaped ("<b>%s</b>   <i>%s</i>",
                                                            c->_peer_name, display_number);
                 }
-
             } else {
                 if (g_strcmp0 ("", c->_peer_name) == 0) {
                     description = g_markup_printf_escaped ("<b>%s</b><i>%s</i>\n<i>%s (%d)</i>",
@@ -430,14 +425,10 @@ void calltree_display_call_info (callable_obj_t * c, CallDisplayType display_typ
                                                            c->_state_code_description, c->_state_code);
                 }
             }
-
+            DEBUG ("CallTree: Display a normal call, description: %s", description);
             break;
 
-
         case DISPLAY_TYPE_CALL_TRANSFER:
-
-            DEBUG ("CallTree: Display a call transfer");
-
             if (g_strcmp0 ("",c->_peer_name) == 0) {
                 description = g_markup_printf_escaped ("<b>%s</b><i>%s</i>\n<i>Transfert to:%s</i> ",
                                                        display_number, c->_peer_name, c->_trsft_to);
@@ -445,18 +436,12 @@ void calltree_display_call_info (callable_obj_t * c, CallDisplayType display_typ
                 description = g_markup_printf_escaped ("<b>%s</b>   <i>%s</i>\n<i>Transfert to:%s</i> ",
                                                        c->_peer_name, display_number, c->_trsft_to);
             }
-
+            DEBUG ("CallTree: Display a call transfer, description: %s", description);
             break;
 
-
         case DISPLAY_TYPE_STATE_CODE :
-
-            DEBUG ("CallTree: Display a state code");
-
             if (g_strcmp0 ("",c->_peer_name) == 0) {
-
                 if (c->_state_code) {
-
                     description = g_markup_printf_escaped ("<b>%s</b><i>%s</i>\n<i>%s (%d)</i>  <i>%s</i>",
                                                            display_number, c->_peer_name,
                                                            c->_state_code_description, c->_state_code,
@@ -476,13 +461,10 @@ void calltree_display_call_info (callable_obj_t * c, CallDisplayType display_typ
                                                            c->_peer_name, display_number, audio_codec);
                 }
             }
-
+            DEBUG ("CallTree: Display a state code, description: %s", description);
             break;
 
         case DISPLAY_TYPE_SAS:
-
-            DEBUG ("CallTree: Display a call with sas");
-
             if (g_strcmp0 ("", c->_peer_name) == 0) {
                 description = g_markup_printf_escaped ("<b>%s</b><i>%s</i>\n<i>Confirm SAS <b>%s</b> ?</i> ",
                                                        display_number, c->_peer_name, c->_sas);
@@ -490,13 +472,9 @@ void calltree_display_call_info (callable_obj_t * c, CallDisplayType display_typ
                 description = g_markup_printf_escaped ("<b>%s</b>   <i>%s</i>\n<i>Confirm SAS <b>%s</b> ?</i> ",
                                                        c->_peer_name, display_number, c->_sas);
             }
-
+            DEBUG ("CallTree: Display a call with sas, description: %s", description);
             break;
-
         case DISPLAY_TYPE_HISTORY :
-
-            DEBUG ("CallTree: Display history entry");
-
             if (g_strcmp0 ("", c->_peer_name) == 0) {
                 description = g_markup_printf_escaped ("<b>%s</b><i>%s</i>",
                                                        display_number, c->_peer_name);
@@ -504,9 +482,8 @@ void calltree_display_call_info (callable_obj_t * c, CallDisplayType display_typ
                 description = g_markup_printf_escaped ("<b>%s</b>   <i>%s</i>",
                                                        c->_peer_name, display_number);
             }
-
+            DEBUG ("CallTree: Display history entry %s", description);
             break;
-
         default :
             DEBUG ("CallTree: Not an allowable type of display");
             break;
