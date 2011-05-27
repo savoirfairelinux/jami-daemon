@@ -2644,7 +2644,7 @@ std::string ManagerImpl::getCurrentCodecName (const CallID& id)
 
     Call::CallState state = call->getState();
     if (state == Call::Active || state == Call::Conferencing) {
-        codecName = link->getCurrentCodecName();
+        codecName = link->getCurrentCodecName(id);
     }
 
     return codecName;	

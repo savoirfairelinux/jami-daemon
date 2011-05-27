@@ -1344,14 +1344,15 @@ SIPVoIPLink::terminateCall (const CallID& id)
 }
 
 std::string
-SIPVoIPLink::getCurrentCodecName()
+SIPVoIPLink::getCurrentCodecName(const CallID& id)
 {
 
     SIPCall *call = NULL;
     sfl::Codec *ac = NULL;
     std::string name = "";
 
-    call = getSIPCall (Manager::instance().getCurrentCallId());
+    // call = getSIPCall (Manager::instance().getCurrentCallId());
+    call = getSIPCall (id);
     if(call == NULL) {
         _error("UserAgent: Error: No current call");
 	// return empty string

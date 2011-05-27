@@ -206,7 +206,7 @@ class VoIPLink
          * Return the codec protocol used for this call
          * @param id The call identifier
          */
-        virtual std::string getCurrentCodecName() = 0;
+        virtual std::string getCurrentCodecName(const CallID& id) = 0;
 
         bool initDone (void) {
             return _initDone;
