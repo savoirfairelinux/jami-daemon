@@ -243,16 +243,18 @@ void sflphone_fill_account_list (void)
 
     for (i = 0; i < account_list_get_size(); i++) {
         account_t  * a = account_list_get_nth (i);
-        GHashTable * details = (GHashTable *) dbus_account_details (a->accountID);
-
-        if (details == NULL)
+        if(a == NULL) {
+            ERROR("SFLphone: Error: Could not find account %d in list", i);
             break;
+        }
+
+        GHashTable * details = (GHashTable *) dbus_get_account_details (a->accountID);
+        if (details == NULL) {
+            ERROR("SFLphone: Error: Could not fetch detais for account %s", a->accountID);
+	    break;
+        }
 
         a->properties = details;
-
-        /* As this function might be called numberous time, we should free the
-         * previously allocated space to avoid memory leaks.
-         */
 
         /* Fill the actual array of credentials */
         int number_of_credential = dbus_get_number_of_credential (a->accountID);

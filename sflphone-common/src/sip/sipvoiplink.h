@@ -319,7 +319,7 @@ class SIPVoIPLink : public VoIPLink
          * Return the codec protocol used for this call
          * @param id The call identifier
          */
-        std::string getCurrentCodecName();
+        std::string getCurrentCodecName(const CallID& id);
 
         /**
          * Retrive useragent name from account

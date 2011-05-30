@@ -684,6 +684,9 @@ static void set_published_addr_manually_cb (GtkWidget * widget, gpointer data UN
 
 static void use_stun_cb (GtkWidget *widget, gpointer data UNUSED)
 {
+    
+     
+
     if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))) {
 
         DEBUG ("Config: Showing stun options, hiding Local/Published info");
@@ -713,6 +716,8 @@ static void use_stun_cb (GtkWidget *widget, gpointer data UNUSED)
             gtk_widget_show (publishedPortSpinBox);
         }
     }
+
+    DEBUG("DONE");
 }
 
 
@@ -1105,10 +1110,12 @@ GtkWidget* create_published_address (account_t **a)
 
     useStunCheckBox = gtk_check_button_new_with_mnemonic (_ ("Using STUN"));
     gtk_table_attach_defaults (GTK_TABLE (table), useStunCheckBox, 0, 1, 0, 1);
+    g_signal_connect (useStunCheckBox, "toggled", G_CALLBACK (use_stun_cb), a);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (useStunCheckBox),
                                   g_strcasecmp (stun_enable, "true") == 0 ? TRUE: FALSE);
     gtk_widget_set_sensitive (GTK_WIDGET (useStunCheckBox),
                               g_strcasecmp (use_tls,"true") == 0 ? FALSE: TRUE);
+
 
     stunServerLabel = gtk_label_new_with_mnemonic (_ ("STUN server URL"));
     gtk_table_attach_defaults (GTK_TABLE (table), stunServerLabel, 0, 1, 1, 2);
@@ -1154,7 +1161,6 @@ GtkWidget* create_published_address (account_t **a)
     // widgets need to be instanciated before that.
     g_signal_connect (localAddressCombo, "changed", G_CALLBACK (local_interface_changed_cb), localAddressCombo);
 
-    g_signal_connect (useStunCheckBox, "toggled", G_CALLBACK (use_stun_cb), useStunCheckBox);
 
     g_signal_connect (sameAsLocalRadioButton, "toggled", G_CALLBACK (same_as_local_cb), sameAsLocalRadioButton);
     g_signal_connect (publishedAddrRadioButton, "toggled", G_CALLBACK (set_published_addr_manually_cb), publishedAddrRadioButton);
@@ -1310,9 +1316,9 @@ void show_account_window (account_t * a)
     currentAccount = a;
 
     if (currentAccount == NULL) {
-        DEBUG ("Config: Account is NULL. Will fetch default values");
+        DEBUG ("Config: Fetching default values for new account");
         currentAccount = g_new0 (account_t, 1);
-        currentAccount->properties = dbus_account_details (NULL);
+        currentAccount->properties = dbus_get_account_details (NULL);
         currentAccount->accountID = "new";
         sflphone_fill_codec_list_per_account (&currentAccount);
     }

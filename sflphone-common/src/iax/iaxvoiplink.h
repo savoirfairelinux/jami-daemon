@@ -209,7 +209,7 @@ class IAXVoIPLink : public VoIPLink
          * Return the codec protocol used for this call
          * @param id The call identifier
          */
-        virtual std::string getCurrentCodecName();
+        virtual std::string getCurrentCodecName(const CallID& id);
 
 
     public: // iaxvoiplink only

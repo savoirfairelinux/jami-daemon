@@ -573,7 +573,7 @@ bool ManagerImpl::onHoldCall (const CallID& callId)
     AccountID account_id;
     bool returnValue = false;
 
-    _debug ("--------------------------------------------------------- Manager: Put call %s on hold", callId.c_str());
+    _debug ("Manager: Put call %s on hold", callId.c_str());
 
     stopTone();
 
@@ -2632,14 +2632,22 @@ std::string ManagerImpl::getCurrentCodecName (const CallID& id)
     AccountID accountid = getAccountFromCall (id);
     VoIPLink* link = getAccountLink (accountid);
     Call* call = link->getCall (id);
+    std::string codecName = "";
 
-    if (!call)
-        return "";
+    _debug("Manager: Get current codec name");
 
-    if (call->getState() != Call::Active)
-        return "";
-    else
-        return link->getCurrentCodecName();
+    
+    if (!call) {
+	// return an empty codec name
+        return codecName;
+    }
+
+    Call::CallState state = call->getState();
+    if (state == Call::Active || state == Call::Conferencing) {
+        codecName = link->getCurrentCodecName(id);
+    }
+
+    return codecName;	
 }
 
 /**
@@ -3822,27 +3830,33 @@ void ManagerImpl::setAccountDetails (const std::string& accountID,
                                      const std::map<std::string, std::string>& details)
 {
 
-    _debug ("Manager: Set account details %s", accountID.c_str());
+    _debug ("Manager: Set account details for %s", accountID.c_str());
 
-    Account* account;
-
-    if (! (account = getAccount (accountID))) {
-        _warn ("Manager: Cannot setAccountDetails on a non-existing accountID %s.", accountID.c_str());
+    Account* account = getAccount(accountID);
+    if (account == NULL) {
+        _error ("Manager: Error: Could not find account %s", accountID.c_str());
         return;
     }
 
     account->setAccountDetails (details);
 
+    // Serialize configuration to disk once it is done
     saveConfig();
 
-    if (account->isEnabled())
+    if (account->isEnabled()) {
         account->registerVoIPLink();
-    else
+    }
+    else {
         account->unregisterVoIPLink();
+    }
 
     // Update account details to the client side
-    if (_dbus)
-        _dbus->getConfigurationManager()->accountsChanged();
+    if (_dbus) {
+        _error("Manager: Error: Dbus not initialized");
+        return;
+    }
+
+    _dbus->getConfigurationManager()->accountsChanged();
 
 }
 

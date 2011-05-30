@@ -705,7 +705,7 @@ IAXVoIPLink::sendTextMessage (sfl::InstantMessaging *module,
 
 
 std::string
-IAXVoIPLink::getCurrentCodecName()
+IAXVoIPLink::getCurrentCodecName(const CallID& id)
 {
     IAXCall *call = NULL;
     AudioCodec *ac = NULL;

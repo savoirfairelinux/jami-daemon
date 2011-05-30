@@ -67,10 +67,12 @@ enum {
  */
 static void delete_account_cb (void)
 {
-
-    if (selectedAccount != NULL) {
-        dbus_remove_account (selectedAccount->accountID);
+    if(selectedAccount == NULL) {
+	ERROR("Config: Error: No selected account in delete action");
+        return;
     }
+
+    dbus_remove_account (selectedAccount->accountID);
 }
 
 
@@ -79,10 +81,12 @@ static void delete_account_cb (void)
  */
 static void edit_account_cb (void)
 {
-
-    if (selectedAccount != NULL) {
-        show_account_window (selectedAccount);
+    if(selectedAccount == NULL) {
+        ERROR("Config: Error: No selected account in edit action");
+        return;
     }
+
+    show_account_window (selectedAccount);
 }
 
 /**
@@ -101,7 +105,7 @@ void account_list_config_dialog_fill()
 {
 
     if (accountListDialog == NULL) {
-        DEBUG ("Dialog is not opened");
+        ERROR("Config: Error: Dialog is not opened");
         return;
     }
 
@@ -111,30 +115,37 @@ void account_list_config_dialog_fill()
 
     // IP2IP account must be first
     account_t *a = account_list_get_by_id ("IP2IP");
+    if(a == NULL) {
+        ERROR("Config: Error: Could not find IP2IP account");
+        return;
+    }
 
-    if (a) {
-        gtk_list_store_append (accountStore, &iter);
+    gtk_list_store_append (accountStore, &iter);
 
-        DEBUG ("Filling accounts: Account is enabled :%s", g_hash_table_lookup (a->properties, ACCOUNT_ENABLED));
+    DEBUG ("Config: Filling accounts: Account is enabled :%s", g_hash_table_lookup (a->properties, ACCOUNT_ENABLED));
 
-        gtk_list_store_set (accountStore, &iter,
+    gtk_list_store_set (accountStore, &iter,
                             COLUMN_ACCOUNT_ALIAS, g_hash_table_lookup (a->properties, ACCOUNT_ALIAS), // Name
                             COLUMN_ACCOUNT_TYPE, g_hash_table_lookup (a->properties, ACCOUNT_TYPE),  // Protocol
                             COLUMN_ACCOUNT_STATUS, account_state_name (a->state),     // Status
                             COLUMN_ACCOUNT_ACTIVE, (g_strcasecmp (g_hash_table_lookup (a->properties, ACCOUNT_ENABLED),"true") == 0) ? TRUE:FALSE,  // Enable/Disable
                             COLUMN_ACCOUNT_DATA, a,   // Pointer
                             -1);
-    }
 
     unsigned int i;
-
     for (i = 0; i < account_list_get_size(); i++) {
         a = account_list_get_nth (i);
 
-        if (a && g_strcmp0 (a->accountID, "IP2IP") != 0) {
+        if(a==NULL) {
+            ERROR("Config: Error: Account %d is NULL while parsing the list", i);
+            return;
+        }
+
+        // we dont wnat to process account twice
+        if (g_strcmp0 (a->accountID, "IP2IP") != 0) {
             gtk_list_store_append (accountStore, &iter);
 
-            DEBUG ("Filling accounts: Account is enabled :%s", g_hash_table_lookup (a->properties, ACCOUNT_ENABLED));
+            DEBUG ("Config: Filling accounts: Account is enabled :%s", g_hash_table_lookup (a->properties, ACCOUNT_ENABLED));
 
             gtk_list_store_set (accountStore, &iter,
                                 COLUMN_ACCOUNT_ALIAS, g_hash_table_lookup (a->properties, ACCOUNT_ALIAS), // Name
@@ -145,10 +156,7 @@ void account_list_config_dialog_fill()
                                 -1);
         }
     }
-
 }
-
-
 
 /**
  * Call back when the user click on an account in the list

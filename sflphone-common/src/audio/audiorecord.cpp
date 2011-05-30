@@ -89,7 +89,7 @@ void AudioRecord::setSndSamplingRate (int smplRate)
     sndSmplRate_ = smplRate;
 }
 
-int AudioRecord::getSndSamplingRate()
+int AudioRecord::getSndSamplingRate() const
 {
 	return sndSmplRate_;
 }

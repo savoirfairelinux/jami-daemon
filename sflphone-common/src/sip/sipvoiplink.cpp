@@ -991,34 +991,38 @@ SIPVoIPLink::offhold (const CallID& id) throw (VoipLinkException)
     	throw VoipLinkException("Could not find sdp session");
     }
 
-    // Retreive previously selected codec
-    AudioCodecType pl;
-    sfl::Codec *sessionMedia = sdpSession->getSessionMedia();
-    if (sessionMedia == NULL) {
-        // throw VoipLinkException("Could not find session media");
-    	_warn("UserAgent: Session media not yet initialized, using default (ULAW)");
-    	pl = PAYLOAD_CODEC_ULAW;
-    }
-    else {
-    	// Get PayloadType for this codec
-    	pl = (AudioCodecType) sessionMedia->getPayloadType();
-    }
-
-    _debug ("UserAgent: Payload from session media %d", pl);
-
-
-    // Create a new instance for this codec
-    sfl::Codec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (pl);
-    if (audiocodec == NULL) {
-    	throw VoipLinkException("Could not instantiate codec");
-    }
-
     try {
+        // Retreive previously selected codec
+        AudioCodecType pl;
+        sfl::Codec *sessionMedia = sdpSession->getSessionMedia();
+        if (sessionMedia == NULL) {
+            // throw VoipLinkException("Could not find session media");
+    	    _warn("UserAgent: Session media not yet initialized, using default (ULAW)");
+    	    pl = PAYLOAD_CODEC_ULAW;
+        }
+        else {
+    	    // Get PayloadType for this codec
+    	    pl = (AudioCodecType) sessionMedia->getPayloadType();
+        }
+
+        _debug ("UserAgent: Payload from session media %d", pl);
+
+
+        // Create a new instance for this codec
+        sfl::Codec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (pl);
+        if (audiocodec == NULL) {
+    	    throw VoipLinkException("Could not instantiate codec");
+        }
+
         call->getAudioRtp()->initAudioRtpConfig (call);
         call->getAudioRtp()->initAudioRtpSession (call);
         call->getAudioRtp()->start (static_cast<AudioCodec *>(audiocodec));
 
-    } catch (...) {
+    }
+    catch (SdpException &e) {
+    	_error("UserAgent: Exception: %s", e.what());
+    } 
+    catch (...) {
     	throw VoipLinkException("Could not create audio rtp session");
     }
 
@@ -1344,20 +1348,38 @@ SIPVoIPLink::terminateCall (const CallID& id)
 }
 
 std::string
-SIPVoIPLink::getCurrentCodecName()
+SIPVoIPLink::getCurrentCodecName(const CallID& id)
 {
 
-    SIPCall *call;
+    SIPCall *call = NULL;
     sfl::Codec *ac = NULL;
     std::string name = "";
 
-    call = getSIPCall (Manager::instance().getCurrentCallId());
+    try {
+        // call = getSIPCall (Manager::instance().getCurrentCallId());
+        call = getSIPCall (id);
+        if(call == NULL) {
+            _error("UserAgent: Error: No current call");
+   	    // return empty string
+            return name;
+        }
+    
+        if(call->getLocalSDP()->hasSessionMedia()) {
+            ac = call->getLocalSDP()->getSessionMedia();
+        }
+        else {
+	    return name;
+        }
+    }
+    catch (SdpException &e) {
+	_error("UserAgent: Exception: %s", e.what());
+    }
 
-    if (call)
-        ac = call->getLocalSDP()->getSessionMedia();
+    if (ac == NULL) {
+	_error("UserAgent: Error: No codec initialized for this session");
+    }
 
-    if (ac)
-        name = ac->getMimeSubtype();
+    name = ac->getMimeSubtype();
 
     return name;
 }
@@ -3508,8 +3530,12 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
 
             call->getAudioRtp()->updateSessionMedia (static_cast<AudioCodec *>(audiocodec));
         }
-    } catch (exception& rtpException) {
-        _error ("UserAgent: Error: %s", rtpException.what());
+    } 
+    catch (exception& rtpException) {
+        _error ("UserAgent: Exception: %s", rtpException.what());
+    } 
+    catch (SdpException &e) {
+    	_error("UserAgent: Exception: %s", e.what());
     }
 
 }

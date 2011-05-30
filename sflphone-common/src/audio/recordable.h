@@ -72,7 +72,7 @@ class Recordable
          */
         void setRecordingSmplRate (int smplRate);
 
-        int getRecordingSmplRate(void);
+        int getRecordingSmplRate(void) const;
 
         virtual std::string getRecFileId() = 0;
 
