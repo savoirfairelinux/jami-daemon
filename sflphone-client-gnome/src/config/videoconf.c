@@ -29,14 +29,14 @@
  */
 
 
-#include <videoconf.h>
-#include <utils.h>
 #include <string.h>
-#include <eel-gconf-extensions.h>
+#include "videoconf.h"
+#include "utils.h"
+#include "eel-gconf-extensions.h"
 #include "dbus/dbus.h"
 
     
-void active_is_always_recording (void)
+void active_is_always_recording ()
 {
     gboolean enabled = FALSE;
 
@@ -52,8 +52,14 @@ void active_is_always_recording (void)
     dbus_set_is_always_recording(enabled);
 }
 
+void preview_button_clicked(GtkButton *button, gpointer data UNUSED)
+{
+    printf("%s\n", gtk_button_get_label(button));
+}
 
-static void record_path_changed (GtkFileChooser *chooser , GtkLabel *label UNUSED)
+
+static void record_path_changed (GtkFileChooser *chooser , 
+                                 GtkLabel *label UNUSED)
 {
     DEBUG ("record_path_changed");
 
@@ -75,7 +81,7 @@ GtkWidget* create_video_configuration()
 
     GtkWidget *table;
 
-    gnome_main_section_new_with_table (_ ("Video Manager"), &frame, &table, 1, 4);
+    gnome_main_section_new_with_table (_ ("Video Manager"), &frame, &table, 1, 5);
     gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
 
     //int video_manager = dbus_get_video_manager();
@@ -111,7 +117,14 @@ GtkWidget* create_video_configuration()
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableIsAlwaysRecording), isAlwaysRecording);
     g_signal_connect(G_OBJECT(enableIsAlwaysRecording), "clicked", active_is_always_recording, NULL);
     gtk_table_attach(GTK_TABLE(table), enableIsAlwaysRecording, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
-    gtk_widget_show(GTK_WIDGET(enableIsAlwaysRecording));
+    
+    gnome_main_section_new_with_table (_ ("Preview"), &frame, &table, 3, 4);
+    gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
+
+    GtkWidget *previewButton = gtk_button_new_with_mnemonic(_("_Start preview"));
+    gtk_table_attach(GTK_TABLE(table), previewButton, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 6);
+    g_signal_connect(G_OBJECT(previewButton), "clicked", G_CALLBACK(preview_button_clicked), NULL);
+    gtk_widget_show(GTK_WIDGET(previewButton));
 
     /*
     gint value = dbus_get_echo_cancel_tail_length();
