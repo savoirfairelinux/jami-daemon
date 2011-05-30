@@ -242,7 +242,7 @@ void build_wizard (void)
     wiz = (struct _wizard*) g_malloc (sizeof (struct _wizard));
     current = g_new0 (account_t, 1);
     current->properties = NULL;
-    current->properties = dbus_account_details (NULL);
+    current->properties = dbus_get_account_details (NULL);
 
     if (current->properties == NULL) {
         DEBUG ("Failed to get default values. Creating from scratch");

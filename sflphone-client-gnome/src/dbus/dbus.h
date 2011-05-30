@@ -118,7 +118,7 @@ gchar ** dbus_account_list();
  * @param accountID The unique of the account
  * @return GHashTable* The details of the account
  */
-GHashTable * dbus_account_details (gchar * accountID);
+GHashTable * dbus_get_account_details (gchar * accountID);
 
 /**
  * ConfigurationManager - Set the details of a specific account

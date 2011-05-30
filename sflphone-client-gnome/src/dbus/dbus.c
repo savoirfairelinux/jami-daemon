@@ -926,7 +926,7 @@ dbus_account_list()
 }
 
 GHashTable*
-dbus_account_details (gchar * accountID)
+dbus_get_account_details (gchar * accountID)
 {
     GError *error = NULL;
     GHashTable * details;

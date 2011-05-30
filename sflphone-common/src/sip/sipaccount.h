@@ -359,12 +359,16 @@ class SIPAccount : public Account
         }
 
         /**
-             * @return bool Tells if current transport for that
-             * account is set to OTHER.
-             */
+         * @return bool Tells if current transport for that
+         * account is set to OTHER.
+         */
         inline bool isStunEnabled (void) {
-            return (_transportType == PJSIP_TRANSPORT_START_OTHER) ? true: false;
+            return _stunEnabled;
         }
+
+        /**
+         * Set wether or not stun is enabled for this account
+         */
         inline void setStunEnabled (bool enabl) {
             _stunEnabled = enabl;
         }

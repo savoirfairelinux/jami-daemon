@@ -719,15 +719,15 @@ void SIPAccount::setAccountDetails (const std::map<std::string, std::string>& de
         setDisplayName (displayName);
         setServiceRoute (routeset);
         setLocalInterface (localInterface);
-        setPublishedSameasLocal ( (publishedSameasLocal.compare ("true") == 0) ? true : false);
+        setPublishedSameasLocal (publishedSameasLocal == "true");
         setPublishedAddress (publishedAddress);
         setLocalPort (atoi (localPort.data()));
         setPublishedPort (atoi (publishedPort.data()));
         setStunServer (stunServer);
-        setStunEnabled ( (stunEnable == "true"));
+        setStunEnabled (stunEnable == "true");
         setDtmfType ( (dtmfType == "overrtp") ? OVERRTP : SIPINFO);
 
-        setResolveOnce ( (resolveOnce.compare ("true") ==0) ? true : false);
+        setResolveOnce (resolveOnce == "true");
         setRegistrationExpire (registrationExpire);
 
         // sip credential
@@ -746,13 +746,12 @@ void SIPAccount::setAccountDetails (const std::map<std::string, std::string>& de
         find_in_map (ZRTP_HELLO_HASH, zrtpHelloHash)
         find_in_map (SRTP_KEY_EXCHANGE, srtpKeyExchange)
 
-        setSrtpEnable ( (srtpEnable.compare ("true") == 0) ? true : false);
-        setSrtpFallback ( (srtpRtpFallback.compare ("true") == 0) ? true : false);
-        setZrtpDisplaySas ( (zrtpDisplaySas.compare ("true") == 0) ? true : false);
-        setZrtpDiaplaySasOnce ( (zrtpDisplaySasOnce.compare ("true") == 0) ? true : false);
-        setZrtpNotSuppWarning ( (zrtpNotSuppWarning.compare ("true") == 0) ? true : false);
-        setZrtpHelloHash ( (zrtpHelloHash.compare ("true") == 0) ? true : false);
-        // sipaccount->setSrtpKeyExchange((srtpKeyExchange.compare("true") == 0) ? true : false);
+        setSrtpEnable (srtpEnable == "true");
+        setSrtpFallback (srtpRtpFallback == "true");
+        setZrtpDisplaySas (zrtpDisplaySas == "true");
+        setZrtpDiaplaySasOnce (zrtpDisplaySasOnce == "true");
+        setZrtpNotSuppWarning (zrtpNotSuppWarning == "true");
+        setZrtpHelloHash (zrtpHelloHash == "true");
         setSrtpKeyExchange (srtpKeyExchange);
 
         // TLS settings
@@ -787,9 +786,9 @@ void SIPAccount::setAccountDetails (const std::map<std::string, std::string>& de
         setTlsMethod (tlsMethod);
         setTlsCiphers (tlsCiphers);
         setTlsServerName (tlsServerName);
-        setTlsVerifyServer (tlsVerifyServer.compare ("true") ? true : false);
-        setTlsVerifyClient (tlsVerifyServer.compare ("true") ? true : false);
-        setTlsRequireClientCertificate (tlsRequireClientCertificate.compare ("true") ? true : false);
+        setTlsVerifyServer (tlsVerifyServer == "true");
+        setTlsVerifyClient (tlsVerifyServer == "true");
+        setTlsRequireClientCertificate (tlsRequireClientCertificate == "true");
         setTlsNegotiationTimeoutSec (tlsNegotiationTimeoutSec);
         setTlsNegotiationTimeoutMsec (tlsNegotiationTimeoutMsec);
 
