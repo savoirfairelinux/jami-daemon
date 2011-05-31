@@ -60,8 +60,9 @@ struct _VideoPreviewClass {
 };
 
 /* Public interface */
-int video_preview_run(VideoPreview *preview);
 VideoPreview *video_preview_new();
+int video_preview_run(VideoPreview *preview);
+void video_preview_stop(VideoPreview *preview);
 
 G_END_DECLS
 

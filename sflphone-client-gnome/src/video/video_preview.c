@@ -47,7 +47,18 @@
    and define a parent class pointer accessible from the whole .c file */
 G_DEFINE_TYPE (VideoPreview, video_preview, G_TYPE_OBJECT);
 
+enum
+{
+    PROP_0,
+    PROP_RUNNING,
+    PROP_LAST
+};
+
+static GParamSpec *properties[PROP_LAST];
+
 static void video_preview_finalize (GObject *gobject);
+static void video_preview_get_property (GObject *object, guint prop_id,
+                            GValue *value, GParamSpec *pspec);
 
 /* Our private member structure */
 struct _VideoPreviewPrivate {
@@ -56,6 +67,7 @@ struct _VideoPreviewPrivate {
     gchar *shm_buffer;
     gint sem_set_id;
     ClutterActor *texture;
+    gboolean is_running;
 };
 
 typedef struct _FrameInfo {
@@ -83,9 +95,11 @@ getFrameInfo()
     FILE *tmp = fopen(TEMPFILE, "r");
     if (fscanf(tmp, "%u\n%u\n%u\n", &info.size, &info.width, &info.height) <= 0)
         g_print("Error: Could not read %s\n", TEMPFILE);
+#if 0
     printf("Size is %u\n", info.size);
     printf("Width is %u\n", info.width);
     printf("Height is %u\n", info.height);
+#endif
     return info;
 }
 
@@ -151,7 +165,7 @@ get_sem_set()
 }
 
 
-    static void
+static void
 video_preview_class_init (VideoPreviewClass *klass) 
 {
     GObjectClass *gobject_class;                                                  
@@ -159,10 +173,42 @@ video_preview_class_init (VideoPreviewClass *klass)
 
     g_type_class_add_private (klass, sizeof (VideoPreviewPrivate));
     gobject_class->finalize = video_preview_finalize;       
+    gobject_class->get_property = video_preview_get_property;
+
+    properties[PROP_RUNNING] = g_param_spec_boolean ("running", "Running",
+                                                     "True if preview is running",
+                                                     FALSE,
+                                                     G_PARAM_READABLE);
+
+    g_object_class_install_property (gobject_class, PROP_RUNNING,
+                                     properties[PROP_RUNNING]);
+
     /* Initialize Clutter */
     if (clutter_init (NULL, NULL) != CLUTTER_INIT_SUCCESS)
         g_print("Error: could not initialize clutter!\n");
 }
+
+static void
+video_preview_get_property (GObject *object, guint prop_id,
+                            GValue *value, GParamSpec *pspec)
+{
+    VideoPreview *preview;
+    VideoPreviewPrivate *priv;
+
+    preview = VIDEO_PREVIEW(object);
+    priv = preview->priv;
+
+    switch (prop_id)
+    {
+        case PROP_RUNNING:
+            g_value_set_boolean (value, priv->is_running);
+            break;
+        default:
+            G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+            break;
+    }
+}
+
 
 static void
 video_preview_init (VideoPreview *self)
@@ -186,8 +232,7 @@ video_preview_finalize (GObject *obj)
 {
     VideoPreview *self = VIDEO_PREVIEW (obj);
 
-    if (!g_idle_remove_by_data((void*)self))
-        g_print("Could not remove update texture callback\n");
+    g_idle_remove_by_data((void*)self);
 
     /* finalize might be called multiple times, so we must guard against
      * calling g_object_unref() on an invalid GObject.
@@ -272,10 +317,11 @@ on_stage_delete(ClutterStage *stage, ClutterEvent *event, gpointer data)
 {
     (void) event;
     clutter_actor_destroy(CLUTTER_ACTOR(stage));
-    /* if (!g_idle_remove_by_data((void*)data))
-       g_print("Could not remove update texture callback\n"); */
-    /* unref self, FIXME: this signal should be forwarded to the owner */
-    g_object_unref(G_OBJECT(data));
+    if (!g_idle_remove_by_data((void*)data))
+       g_print("Could not remove update texture callback\n");
+    VIDEO_PREVIEW_GET_PRIVATE(data)->is_running = FALSE;
+    /* notify explicitly so that the owner of this preview can react */
+    g_object_notify_by_pspec(G_OBJECT(data), properties[PROP_RUNNING]);
     return TRUE; /* don't call the default delete-event handler */
 }
 
@@ -305,5 +351,18 @@ video_preview_run(VideoPreview *preview)
 
     clutter_actor_show_all(stage);
 
+    priv->is_running = TRUE;
+    /* emit the notify signal for this property */
+    g_object_notify_by_pspec (G_OBJECT(preview), properties[PROP_RUNNING]);
+
     return 0;
+}
+
+void
+video_preview_stop(VideoPreview *preview)
+{
+    VideoPreviewPrivate *priv = VIDEO_PREVIEW_GET_PRIVATE(preview);
+    priv->is_running = FALSE;
+    /* Destroy stage, which is texture's parent */
+    clutter_actor_destroy(clutter_actor_get_parent(priv->texture));
 }

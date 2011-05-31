@@ -53,6 +53,19 @@ void active_is_always_recording ()
     dbus_set_is_always_recording(enabled);
 }
 
+static gboolean
+preview_is_running_cb(GObject *obj, GParamSpec *pspec, gpointer user_data)
+{
+    (void) pspec;
+    gboolean running = FALSE;
+    g_object_get(obj, "running", &running, NULL);
+    if (!running) {
+        GtkButton *button = GTK_BUTTON(user_data);
+        gtk_button_set_label(button, "_Start preview");
+    }
+    return TRUE;
+}
+
 void preview_button_clicked(GtkButton *button, gpointer data UNUSED)
 {
     static VideoPreview *preview = NULL;
@@ -60,11 +73,15 @@ void preview_button_clicked(GtkButton *button, gpointer data UNUSED)
         gtk_button_set_label(button, "_Stop preview");
         if (preview == NULL) {
             preview = video_preview_new();
+            g_signal_connect (preview, "notify::running",
+                              G_CALLBACK (preview_is_running_cb),
+                              button);
             video_preview_run(preview);
         }
     }
-    else {
+    else /* user clicked stop */ {
         if (preview) {
+            video_preview_stop(preview);
             g_object_unref(preview);
             preview = NULL;
         }
