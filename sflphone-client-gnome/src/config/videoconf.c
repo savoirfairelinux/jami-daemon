@@ -54,7 +54,10 @@ void active_is_always_recording ()
 
 void preview_button_clicked(GtkButton *button, gpointer data UNUSED)
 {
-    printf("%s\n", gtk_button_get_label(button));
+    if (g_strcmp0(gtk_button_get_label(button), "_Start preview")  == 0)
+            gtk_button_set_label(button, "_Stop preview");
+    else
+            gtk_button_set_label(button, "_Start preview");
 }
 
 
