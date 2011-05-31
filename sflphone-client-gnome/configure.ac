@@ -96,6 +96,7 @@ src/dbus/Makefile
 src/contacts/Makefile
 src/contacts/addressbook/Makefile
 src/widget/Makefile
+src/video/Makefile
 src/icons/Makefile
 pixmaps/Makefile
 webkit/Makefile

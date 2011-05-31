@@ -34,6 +34,7 @@
 #include "utils.h"
 #include "eel-gconf-extensions.h"
 #include "dbus/dbus.h"
+#include "video/video_preview.h"
 
     
 void active_is_always_recording ()
@@ -54,10 +55,21 @@ void active_is_always_recording ()
 
 void preview_button_clicked(GtkButton *button, gpointer data UNUSED)
 {
-    if (g_strcmp0(gtk_button_get_label(button), "_Start preview")  == 0)
-            gtk_button_set_label(button, "_Stop preview");
-    else
-            gtk_button_set_label(button, "_Start preview");
+    static VideoPreview *preview = NULL;
+    if (g_strcmp0(gtk_button_get_label(button), "_Start preview")  == 0) {
+        gtk_button_set_label(button, "_Stop preview");
+        if (preview == NULL) {
+            preview = video_preview_new();
+            video_preview_run(preview);
+        }
+    }
+    else {
+        if (preview) {
+            g_object_unref(preview);
+            preview = NULL;
+        }
+        gtk_button_set_label(button, "_Start preview");
+    }
 }
 
 

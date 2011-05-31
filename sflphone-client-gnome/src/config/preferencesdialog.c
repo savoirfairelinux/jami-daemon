@@ -40,8 +40,6 @@
 #include "accountconfigdialog.h"
 #include "addressbook-config.h"
 #include "shortcuts-config.h"
-#include "audioconf.h"
-#include "videoconf.h"
 #include "hooks-config.h"
 #include "audioconf.h"
 #include "videoconf.h"

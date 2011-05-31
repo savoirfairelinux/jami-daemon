@@ -28,11 +28,41 @@
  *  as that of the covered work.
  */
 
-#ifndef __VIDEO_CONF_H__
-#define __VIDEO_CONF_H__
+#ifndef __VIDEO_PREVIEW_H__
+#define __VIDEO_PREVIEW_H__
 
-#include <gtk/gtk.h>
+#include <glib-object.h>
 
-GtkWidget* create_video_configuration();
+G_BEGIN_DECLS
 
-#endif // __VIDEO_CONF_H__
+#define VIDEO_PREVIEW_TYPE              (video_preview_get_type())
+#define VIDEO_PREVIEW(obj)              (G_TYPE_CHECK_INSTANCE_CAST((obj), VIDEO_PREVIEW_TYPE, VideoPreview))
+#define VIDEO_PREVIEW_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST((klass), VIDEO_PREVIEW_TYPE, VideoPreviewClass))
+#define IS_VIDEO_PREVIEW(obj)           (G_TYPE_CHECK_INSTANCE_TYPE((obj), VIDEO_PREVIEW_TYPE))
+#define IS_VIDEO_PREVIEW_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE((klass), VIDEO_PREVIEW_TYPE))
+#define VIDEO_PREVIEW_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS((obj), VIDEO_PREVIEW_TYPE, VideoPreviewClass))
+#define VIDEO_PREVIEW_CAST(obj)         ((VideoPreview*)(obj))
+#define VIDEO_PREVIEW_CLASS_CAST(klass) ((VideoPreviewClass*)(klass))
+
+typedef struct _VideoPreview      VideoPreview;
+typedef struct _VideoPreviewClass VideoPreviewClass;
+
+typedef struct _VideoPreviewPrivate VideoPreviewPrivate;
+
+struct _VideoPreview {
+    GObject parent;
+    /* Private */
+    VideoPreviewPrivate *priv;
+};
+
+struct _VideoPreviewClass {
+    GObjectClass parent_class;
+};
+
+/* Public interface */
+int video_preview_run(VideoPreview *preview);
+VideoPreview *video_preview_new();
+
+G_END_DECLS
+
+#endif // __VIDEO_PREVIEW_H__
