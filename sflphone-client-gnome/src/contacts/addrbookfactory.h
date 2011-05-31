@@ -1,6 +1,5 @@
 /*
  *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
- *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -29,67 +28,28 @@
  *  as that of the covered work.
  */
 
-/**
- * This file contains functions specific for addressbook.
- * It is used as a "mapping" between real search implementation
- * and search bar.
- */
 
-#ifndef __ADDRESSBOOK_H__
-#define __ADDRESSBOOK_H__
+#ifndef __ADDRBOOKFACTORY_H__
+#define __ADDRBOOKFACTORY_H__
 
+#include <dlfcn.h>
 #include <gtk/gtk.h>
-#include <addressbook/eds.h>
-
-typedef enum {ABOOK_QUERY_IS, ABOOK_QUERY_BEGINS_WITH, ABOOK_QUERY_CONTAINS} AddrbookSearchType;
-
-typedef struct _addrbookhandle {
-    void (*init) (void);
-    gboolean (*is_ready) (void);
-    gboolean (*is_enabled) (void);
-    gboolean (*is_active) (void);
-    void (*search) (GtkEntry*);
-    GSList *(*get_books_data)(void);
-    GSList *(*get_book_data_by_uid)(gchar *);
-    void (*set_current_book)(gchar *); 
-    void (*set_search_type)(AddrbookSearchType);
-} AddrBookHandle;
-
-/**
- * Initialize addressbook
- */
-void addressbook_init();
-
-/**
- * Return addressbook state
- */
-gboolean addressbook_is_ready();
-
-/**
- * Return addressbook state
- */
-gboolean addressbook_is_enabled();
-
-/**
- * Return if at least one addressbook is active
- */
-gboolean addressbook_is_active();
+#include "addressbook.h"
 
 
-/**
- * Perform a search in addressbook
- */
-void addressbook_search (GtkEntry*);
+typedef struct _addrbookfactory {
+    gboolean is_loaded;
+    AddrBookHandle *addrbook;
+} AddrBookFactory;
 
-/**
- * Get a list of addressbook
- */
-GSList *addressbook_get_books_data(void);
+void abookfactory_init_factory(); 
 
-GSList *addressbook_get_book_data_by_uid(gchar *);
+AddrBookFactory *abookfactory_get_factory(void);
 
-void addressbook_set_current_book(void);
+gboolean abookfactory_is_addressbook_loaded(void);
 
-void addressbook_set_search_type(AddrbookSearchType);
+void abookfactory_scan_directory(AddrBookFactory *);
+
+void abookfactory_load_module(AddrBookFactory *);
 
 #endif

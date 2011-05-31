@@ -143,7 +143,7 @@ books_active()
     g_mutex_lock(books_data_mutex);
 
     if (books_data == NULL) {
-        DEBUG ("Addressbook: No books data (%s:%d)", __FILE__, __LINE__);
+        printf("Addressbook: No books data (%s:%d)\n", __FILE__, __LINE__); 
         g_mutex_unlock(books_data_mutex);
         return FALSE;
     }
@@ -176,12 +176,12 @@ books_get_book_data_by_uid (gchar *uid)
     g_mutex_lock(books_data_mutex);
 
     if (books_data == NULL) {
-        DEBUG ("Addressbook: No books data (%s:%d)", __FILE__, __LINE__);
+        printf("Addressbook: No books data (%s:%d)\n", __FILE__, __LINE__);
         g_mutex_unlock(books_data_mutex);
         return NULL;
     }
 
-    DEBUG ("Addressbook: Get book data by uid: %s", uid);
+    printf("Addressbook: Get book data by uid: %s\n", uid);
 
     // Iterate throw the list
     for (book_list_iterator = books_data; book_list_iterator != NULL; book_list_iterator
@@ -189,7 +189,7 @@ books_get_book_data_by_uid (gchar *uid)
         book_data = (book_data_t *) book_list_iterator->data;
 
         if (strcmp (book_data->uid, uid) == 0) {
-            DEBUG ("Addressbook: Book %s found", uid);
+            printf("Addressbook: Book %s found\n", uid);
             g_mutex_unlock(books_data_mutex);
             return book_data;
         }
@@ -197,7 +197,7 @@ books_get_book_data_by_uid (gchar *uid)
 
     g_mutex_unlock(books_data_mutex);
 
-    DEBUG ("Addressbook: Could not found Book %s", uid);
+    printf("Addressbook: Could not found Book %s\n", uid);
     // If no result
     return NULL;
 }
@@ -297,7 +297,7 @@ view_finish_callback (EBookView *book_view, Search_Handler_And_Data *had)
 
     g_free (had);
 
-    DEBUG ("Addressbook: View finish, all book have been processed");
+    printf("Addressbook: View finish, all book have beem processed\n"); 
 
     if (book_view != NULL)
         g_object_unref (book_view);
@@ -314,28 +314,27 @@ view_finish_callback (EBookView *book_view, Search_Handler_And_Data *had)
 void
 eds_query_result_cb (EBook *book, const GError *error, GList *contacts, gpointer user_data)
 {
-    DEBUG ("Addressbook: Search Result callback called");
-
+    printf("Addressbook: Search Result callback called\n");
     if (error) {
-        ERROR ("Addressbook: Error: %s", error->message);
+        printf("Addressbook: Error: %s\n", error->message);
         return;
     }
 #else
 static void
 eds_query_result_cb (EBook *book, EBookStatus status, GList *contacts, gpointer user_data)
 {
-  DEBUG ("Addressbook: Search Result callback called");
+    printf("Addressbook: Search Result callback called\n");
 
-  if (status != E_BOOK_ERROR_OK) {
-      ERROR ("Addressbook: Error: ");
-      return;
-  }
+    if (status != E_BOOK_ERROR_OK) {
+        printf("Addressbook: Error: ");
+        return;
+    }
 #endif
 
     Search_Handler_And_Data *had = (Search_Handler_And_Data *) user_data;
 
     if (contacts == NULL) {
-        DEBUG ("Addressbook: No contact found");
+        printf("Addressbook: No contact found\n");
         had->search_handler (NULL, user_data);
         return;
     }
@@ -392,13 +391,13 @@ eds_query_result_cb (EBook *book, EBookStatus status, GList *contacts, gpointer 
 void
 eds_async_open_callback (EBook *book, const GError *error, gpointer closure)
 {
-    DEBUG("Addressbook: Open book callback");
+    printf("Addressbook: Open book callback\n");
 
     ESource *source;
     const gchar *uri;
 
     if(error) {
-        ERROR("Addressbook: Error: %s", error->message);
+        printf("Addressbook: Error: %s\n", error->message);
         return;
     }
 #else
@@ -409,7 +408,7 @@ eds_async_open_callback (EBook *book, EBookStatus status, gpointer closure)
     const gchar *uri;
 
     if(status == E_BOOK_ERROR_OK) {
-        ERROR("Addressbook: Error: ");
+        printf("Addressbook: Error\n");
         return;
     }
 
@@ -418,11 +417,11 @@ eds_async_open_callback (EBook *book, EBookStatus status, gpointer closure)
     Search_Handler_And_Data *had = (Search_Handler_And_Data *) closure;
 
     if (! (source = e_book_get_source (book))) {
-        ERROR("Addressbook: Error: while getting source");
+        printf("Addressbook: Error: while getting source\n");
     }
 
     if (! (uri = e_book_get_uri (book))) {
-        ERROR("Addressbook: Error while getting URI");
+        printf("Addressbook: Error while getting URI\n");
     }
 
     authenticate_source (book);
@@ -434,10 +433,10 @@ eds_async_open_callback (EBook *book, EBookStatus status, gpointer closure)
 
 #ifdef LIBEDATASERVER_VERSION_2_32
     if (!e_book_get_contacts_async (book, had->equery, eds_query_result_cb, had))
-        ERROR("Addressbook: Error: While querying addressbook");
+        printf("Addressbook: Error: While querying addressbook\n");
 #else
     if (e_book_async_get_contacts (book, had->equery, eds_query_result_cb, had))
-        ERROR ("Addressbook: Error: While querying addressbook");
+        printf("Addressbook: Error: While querying addressbook\n");
 #endif
 
 }
@@ -451,12 +450,12 @@ init_eds ()
     GSList *book_list_iterator;
     book_data_t *book_data;
 
-    DEBUG ("Addressbook: Init evolution data server");
+    printf ("Addressbook: Init evolution data server\n");
 
     g_mutex_lock(books_data_mutex);
 
     if (books_data == NULL) {
-        DEBUG ("Addressbook: No books data (%s:%d)", __FILE__, __LINE__);
+        printf ("Addressbook: No books data (%s:%d)\n", __FILE__, __LINE__);
         g_mutex_unlock(books_data_mutex);
         return;
     }
@@ -480,7 +479,7 @@ init_eds ()
         }
     }
 
-    DEBUG("END EVOLUTION INIT %s, %s, %s", current_uri, current_uid, current_name);
+    printf("END EVOLUTION INIT %s, %s, %s\n", current_uri, current_uid, current_name);
 
     g_mutex_unlock(books_data_mutex);
 }
@@ -562,19 +561,19 @@ fill_books_data ()
     GSList *list, *l;
     ESourceList *source_list = NULL;
 
-    DEBUG ("Addressbook: Fill books data");
+    printf ("Addressbook: Fill books data\n");
 
     source_list = e_source_list_new_for_gconf_default ("/apps/evolution/addressbook/sources");
 
     if (source_list == NULL) {
-        ERROR ("Addressbook: Error could not initialize source list for addressbook (%s:%d)", __FILE__, __LINE__);
+        printf ("Addressbook: Error could not initialize source list for addressbook (%s:%d)\n", __FILE__, __LINE__);
         return;
     }
 
     list = e_source_list_peek_groups (source_list);
 
     if (list == NULL) {
-        ERROR ("Addressbook: Address Book source groups are missing (%s:%d)! Check your GConf setup.", __FILE__, __LINE__);
+        printf ("Addressbook: Address Book source groups are missing (%s:%d)! Check your GConf setup.\n", __FILE__, __LINE__);
         return;
     }
 
@@ -664,7 +663,7 @@ determine_default_addressbook()
             current_uri = book_data->uri;
             current_uid = book_data->uid;
             current_name = book_data->name;
-            DEBUG ("Addressbook: No default addressbook found, using %s addressbook as default", book_data->name);
+            printf ("Addressbook: No default addressbook found, using %s addressbook as default\n", book_data->name);
         }
 
         list_element = g_slist_next (list_element);
@@ -680,7 +679,7 @@ empty_books_data()
     book_data_t *book_data;
 
     if (books_data == NULL) {
-        DEBUG ("Addressbook: No books data (%s:%d)", __FILE__, __LINE__);
+        printf ("Addressbook: No books data (%s:%d)\n", __FILE__, __LINE__);
         return;
     }
 
@@ -701,10 +700,10 @@ search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler
     GError *err = NULL;
     EBook *book = NULL;
 
-    DEBUG ("Addressbook: New search by contacts: %s, max_results %d", query, max_results);
+    printf ("Addressbook: New search by contacts: %s, max_results %d\n", query, max_results);
 
     if (strlen (query) < 1) {
-        DEBUG ("Addressbook: Query is empty");
+        printf ("Addressbook: Query is empty\n");
         handler (NULL, user_data);
         return;
     }
@@ -719,20 +718,20 @@ search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler
     had->equery = create_query (query, current_test, (AddressBook_Config *) (user_data));
 
     if (!current_uri) {
-        ERROR ("Addressbook: Error: Current addressbook uri not specified");
+        printf ("Addressbook: Error: Current addressbook uri not specified\n");
     }
 
-    DEBUG ("Addressbook: Opening addressbook: uri: %s", current_uri);
-    DEBUG ("Addressbook: Opening addressbook: name: %s", current_name);
+    printf ("Addressbook: Opening addressbook: uri: %s\n", current_uri);
+    pinrtf ("Addressbook: Opening addressbook: name: %s\n", current_name);
 
     book = e_book_new_from_uri(current_uri, &err);
 
     if (err) {
-        ERROR ("Addressbook: Error: Could not open new book: %s", err->message);
+        printf ("Addressbook: Error: Could not open new book: %s\n", err->message);
     }
 
     if (book) {
-        DEBUG ("Addressbook: Created empty book successfully");
+        printf ("Addressbook: Created empty book successfully\n");
 
 #ifdef LIBEDATASERVER_VERSION_2_32
         e_book_open_async (book, TRUE, eds_async_open_callback, had);
@@ -743,7 +742,7 @@ search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler
 
 
     } else {
-        ERROR ("Addressbook: Error: No book available");
+        printf ("Addressbook: Error: No book available\n");
     }
 
 }
@@ -778,7 +777,7 @@ set_current_addressbook (const gchar *name)
     g_mutex_lock(books_data_mutex);
 
     if (!books_data) {
-        DEBUG ("Addressbook: No books data (%s:%d)", __FILE__, __LINE__);
+        printf ("Addressbook: No books data (%s:%d)\n", __FILE__, __LINE__);
         g_mutex_unlock(books_data_mutex);
         return;
     }
@@ -795,7 +794,7 @@ set_current_addressbook (const gchar *name)
         }
     }
 
-    DEBUG("Addressbook: Set current addressbook %s, %s, %s", current_uri, current_uid, current_name);
+    printf("Addressbook: Set current addressbook %s, %s, %s\n", current_uri, current_uid, current_name);
 
     g_mutex_unlock(books_data_mutex);
 }

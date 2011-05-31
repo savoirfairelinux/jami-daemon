@@ -37,6 +37,7 @@
 #include <string.h>
 #include "eel-gconf-extensions.h"
 
+#include "addrbookfactory.h"
 #include "accountconfigdialog.h"
 #include "addressbook-config.h"
 #include "shortcuts-config.h"
@@ -282,9 +283,11 @@ create_general_settings ()
 void
 save_configuration_parameters (void)
 {
+    if(abookfactory_is_addressbook_loaded()) {
+        // Address book config
+        addressbook_config_save_parameters ();
+    }
 
-    // Address book config
-    addressbook_config_save_parameters ();
     hooks_save_parameters ();
 
     // History config
@@ -389,26 +392,17 @@ show_preferences_dialog ()
 
     // General settings tab
     tab = create_general_settings ();
-    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), tab, gtk_label_new (
-                                  _ ("General")));
+    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), tab, gtk_label_new (_ ("General")));
     gtk_notebook_page_num (GTK_NOTEBOOK (notebook), tab);
 
     // Audio tab
     tab = create_audio_configuration ();
-    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), tab, gtk_label_new (
-                                  _ ("Audio")));
-    gtk_notebook_page_num (GTK_NOTEBOOK (notebook), tab);
-
-    // Addressbook tab
-    tab = create_addressbook_settings ();
-    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), tab, gtk_label_new (
-                                  _ ("Address Book")));
+    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), tab, gtk_label_new (_ ("Audio")));
     gtk_notebook_page_num (GTK_NOTEBOOK (notebook), tab);
 
     // Hooks tab
     tab = create_hooks_settings ();
-    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), tab, gtk_label_new (
-                                  _ ("Hooks")));
+    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), tab, gtk_label_new (_ ("Hooks")));
     gtk_notebook_page_num (GTK_NOTEBOOK (notebook), tab);
 
     // Shortcuts tab
@@ -416,6 +410,13 @@ show_preferences_dialog ()
     gtk_notebook_append_page (GTK_NOTEBOOK (notebook), tab, gtk_label_new (_ ("Shortcuts")));
     gtk_notebook_page_num (GTK_NOTEBOOK (notebook), tab);
 
+    if(abookfactory_is_addressbook_loaded()) {
+        // Addressbook tab
+        tab = create_addressbook_settings ();
+        gtk_notebook_append_page (GTK_NOTEBOOK (notebook), tab, gtk_label_new (_ ("Address Book")));
+        gtk_notebook_page_num (GTK_NOTEBOOK (notebook), tab);
+    }
+    
     // By default, general settings
     gtk_notebook_set_current_page (GTK_NOTEBOOK (notebook), 0);
     // Highlight the corresponding icon
@@ -432,37 +433,40 @@ show_preferences_dialog ()
     return result;
 }
 
+#define NB_MAX_ENTRIES 5
 
 GtkTreeModel* createModel()
-{
-
-    browser_t browser_entries[5] = {
+{    
+    browser_t browser_entries_full[NB_MAX_ENTRIES] = {
         {_ ("General"), "preferences-system", 0},
         {_ ("Audio"), "multimedia-volume-control", 1},
-        {_ ("Address Book"), "address-book-new", 2},
-        {_ ("Hooks"), "gnome-globe", 3},
-        {_ ("Shortcuts"), "preferences-desktop-keyboard", 4}
+        {_ ("Hooks"), "gnome-globe", 2},
+        {_ ("Shortcuts"), "preferences-desktop-keyboard", 3},
+        {_ ("Address Book"), "address-book-new", 4},
     };
 
     GdkPixbuf *pixbuf;
     GtkTreeIter iter;
     GtkListStore *store;
     GError *error = NULL;
-    gint i;
+    gint i, nb_entries;
+
+    nb_entries = abookfactory_is_addressbook_loaded() ? 5 : 4;
 
     store = gtk_list_store_new (3, GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_INT);
     GtkIconTheme* theme = gtk_icon_theme_get_default();
 
-    for (i = 0; i < 5; i++) {
+
+    for (i = 0; i < nb_entries; i++) {
 
         gtk_list_store_append (store, &iter);
 
-        pixbuf = gtk_icon_theme_load_icon (theme, browser_entries[i].icon_name, 48, 0, &error);
+        pixbuf = gtk_icon_theme_load_icon (theme, browser_entries_full[i].icon_name, 48, 0, &error);
 
         gtk_list_store_set (store, &iter,
                             PIXBUF_COL, pixbuf,
-                            TEXT_COL, browser_entries[i].icon_descr,
-                            PAGE_NUMBER, browser_entries[i].page_number,
+                            TEXT_COL, browser_entries_full[i].icon_descr,
+                            PAGE_NUMBER, browser_entries_full[i].page_number,
                             -1);
 
         if (pixbuf != NULL) {

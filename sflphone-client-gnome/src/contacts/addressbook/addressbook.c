@@ -27,11 +27,12 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-
-#include <addressbook.h>
-#include <searchbar.h>
 #include <string.h>
-#include <addressbook-config.h>
+#include <stdio.h>
+
+#include "addressbook.h"
+#include "searchbar.h"
+#include "addressbook-config.h"
 
 static void
 handler_async_search (GList *, gpointer);
@@ -44,15 +45,13 @@ addressbook_search (GtkEntry* entry)
 {
 
     const gchar* query = gtk_entry_get_text (GTK_ENTRY (entry));
-    DEBUG ("Addressbook: Search %s", query);
-
+    printf("Addressbook: Search %s\n", query);
 
     AddressBook_Config *addressbook_config;
 
     activateWaitingLayer();
 
-    addressbook_config_load_parameters (&addressbook_config);
-
+    // addressbook_config_load_parameters (&addressbook_config);
 
     search_async_by_contacts (gtk_entry_get_text (GTK_ENTRY (entry)), addressbook_config->max_results, &handler_async_search, addressbook_config);
 
@@ -66,8 +65,10 @@ addressbook_is_enabled()
 {
     AddressBook_Config *addressbook_config;
 
+    printf("Addresbook: is enabled\n");
+
     // Load the address book parameters
-    addressbook_config_load_parameters (&addressbook_config);
+    // addressbook_config_load_parameters (&addressbook_config);
 
     return (guint) addressbook_config->enable;
 }
@@ -78,6 +79,8 @@ addressbook_is_enabled()
 gboolean
 addressbook_is_ready()
 {
+    printf("Addressbook: is ready\n");
+
     return books_ready();
 }
 
@@ -87,6 +90,7 @@ addressbook_is_ready()
 gboolean
 addressbook_is_active()
 {
+    printf("Addressbook: is active\n");
     return books_active();
 }
 
@@ -100,8 +104,12 @@ addressbook_config_books()
     book_data_t *book_data;
     gchar **list;
 
+    
+
     // Retrieve list of books
-    list = (gchar **) dbus_get_addressbook_list();
+    // list = (gchar **) dbus_get_addressbook_list();
+
+    list = NULL;
 
     if (list == NULL)
         return;
@@ -113,7 +121,7 @@ addressbook_config_books()
 
         // If book_data exists
         if (book_data == NULL) {
-            ERROR ("Addressbook: Error: Could not open book (%s:%d)", __FILE__, __LINE__);
+            printf("Addressbook: Error: Could not open book (%s:%d)\n", __FILE__, __LINE__);
         } else {
             book_data->active = TRUE;
         }
@@ -128,13 +136,18 @@ addressbook_config_books()
 GSList *
 addressbook_get_books_data()
 {
-    DEBUG ("Addressboook: Get books data");
+    printf("Addressbook: Get books data\n");
 
     fill_books_data();
     addressbook_config_books();
     determine_default_addressbook();
 
     return get_books_data();
+}
+
+GSList *
+addressbook_get_book_data_by_uid(gchar *uid) 
+{
 }
 
 /**
@@ -144,7 +157,7 @@ addressbook_get_books_data()
 void
 addressbook_init()
 {
-    DEBUG ("Addressbook: Initialize addressbook");
+    printf("Addressbook: Initialize addressbook\n");
 
     init_eds_mutex();
 
@@ -168,7 +181,7 @@ handler_async_search (GList *hits, gpointer user_data)
     AddressBook_Config *addressbook_config;
     callable_obj_t *j;
 
-    DEBUG ("Addressbook: callback async search");
+    printf("Addressbook: callback async search\n");
 
     // freeing calls
     while ( (j = (callable_obj_t *) g_queue_pop_tail (contacts->callQueue)) != NULL) {
@@ -205,7 +218,7 @@ handler_async_search (GList *hits, gpointer user_data)
                 calllist_add_contact (entry->name, entry->phone_home,
                                       CONTACT_PHONE_HOME, photo);
 
-            // Create entry for mobile phone information
+            // Create entry for mobile phone iddnformation
             if (addressbook_display (addressbook_config,
                                      ADDRESSBOOK_DISPLAY_PHONE_MOBILE))
                 calllist_add_contact (entry->name, entry->phone_mobile,
@@ -224,3 +237,6 @@ handler_async_search (GList *hits, gpointer user_data)
     gtk_widget_grab_focus (GTK_WIDGET (contacts->view));
 }
 
+void addressbook_set_search_type(AddrbookSearchType searchType) {
+
+}

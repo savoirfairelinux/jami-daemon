@@ -317,11 +317,15 @@ void sflphone_fill_account_list (void)
 
 gboolean sflphone_init (GError **error)
 {
-    if (!dbus_connect (error))
+    if (!dbus_connect (error)) {
         return FALSE;
+    }
 
-    if (!dbus_register (getpid (), "Gtk+ Client", error))
+    if (!dbus_register (getpid (), "Gtk+ Client", error)) {
         return FALSE;
+    }
+    
+    abookfactory_init_factory(); 
 
     // Init icons factory
     init_icon_factory ();

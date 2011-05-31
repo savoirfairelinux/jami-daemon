@@ -30,7 +30,8 @@
 
 #include "addressbook-config.h"
 #include "searchbar.h"
-#include <contacts/addressbook/eds.h>
+#include "contacts/addrbookfactory.h"
+#include "contacts/addressbook/eds.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -209,6 +210,10 @@ addressbook_config_book_active_toggled (
     gchar* name;
     gchar* uid;
 
+    if(!abookfactory_is_addressbook_loaded()) {
+        return;
+    }
+
     // Get path of clicked book active toggle box
     treePath = gtk_tree_path_new_from_string (path);
 
@@ -216,6 +221,8 @@ addressbook_config_book_active_toggled (
         DEBUG ("Addressbook: No valid model (%s:%d)", __FILE__, __LINE__);
         return;
     }
+
+    AddrBookFactory *factory = abookfactory_get_factory();
 
     gtk_tree_model_get_iter (model, &iter, treePath);
 
@@ -232,7 +239,7 @@ addressbook_config_book_active_toggled (
     gtk_tree_path_free (treePath);
 
     // Update current memory stored books data
-    books_get_book_data_by_uid (uid)->active = active;
+    // factory->addrbook->get_book_data_by_uid (uid)->active = active;
 
     // Save data
 
@@ -279,7 +286,14 @@ addressbook_config_fill_book_list()
     GSList *book_list_iterator;
     GtkListStore *store;
     book_data_t *book_data;
-    GSList *books_data = addressbook_get_books_data();
+
+    if(!abookfactory_is_addressbook_loaded()) {
+        return;
+    }
+
+    AddrBookFactory *factory = abookfactory_get_factory();
+
+    GSList *books_data = factory->addrbook->get_books_data();
 
     if (!books_data) {
         DEBUG ("Addressbook: No valid books data (%s:%d)", __FILE__, __LINE__);

@@ -35,7 +35,7 @@
 #include <glib/gtypes.h>
 
 #include "actions.h"
-#include <utils.h>
+#include "utils.h"
 
 G_BEGIN_DECLS
 
