@@ -246,7 +246,6 @@ readFrameFromShm(int width, int height, char *data, int sem_set_id,
 static gboolean
 updateTexture(gpointer data)
 {
-    printf(".\n");
     VideoPreview *preview = (VideoPreview *) data;
     VideoPreviewPrivate *priv = VIDEO_PREVIEW_GET_PRIVATE(preview);
     readFrameFromShm(priv->width, priv->height, priv->shm_buffer,
