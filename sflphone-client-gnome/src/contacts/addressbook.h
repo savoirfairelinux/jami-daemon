@@ -43,22 +43,36 @@
 
 typedef enum {ABOOK_QUERY_IS, ABOOK_QUERY_BEGINS_WITH, ABOOK_QUERY_CONTAINS} AddrbookSearchType;
 
-typedef struct _addrbookhandle {
-    void (*init) (void);
+typedef struct _AddressBook_Config {
+    // gint64: a signed integer guaranteed to be 64 bits on all platforms
+    // To print or scan values of this type, use G_GINT64_MODIFIER and/or G_GINT64_FORMAT
+    gint enable;
+    gint max_results;
+    gint display_contact_photo;
+    gint search_phone_home;
+    gint search_phone_business;
+    gint search_phone_mobile;
+} AddressBook_Config;
+
+typedef struct AddrBookHandle AddrBookHandle;
+
+struct AddrBookHandle {
+    void (*init) (gchar **);
     gboolean (*is_ready) (void);
     gboolean (*is_enabled) (void);
     gboolean (*is_active) (void);
-    void (*search) (GtkEntry*);
-    GSList *(*get_books_data)(void);
+    void (*search) (AddrBookHandle *, GtkEntry *, AddressBook_Config *);
+    book_data_t *(*get_books_data)(gchar **);
     GSList *(*get_book_data_by_uid)(gchar *);
     void (*set_current_book)(gchar *); 
     void (*set_search_type)(AddrbookSearchType);
-} AddrBookHandle;
+    void (*search_cb)(GList *, gpointer); 
+};
 
 /**
  * Initialize addressbook
  */
-void addressbook_init();
+void addressbook_init(gchar **book_list);
 
 /**
  * Return addressbook state
@@ -79,16 +93,16 @@ gboolean addressbook_is_active();
 /**
  * Perform a search in addressbook
  */
-void addressbook_search (GtkEntry*);
+void addressbook_search (AddrBookHandle *, GtkEntry *, AddressBook_Config *);
 
 /**
- * Get a list of addressbook
+ * Get a list of addressbook book
  */
-GSList *addressbook_get_books_data(void);
+GSList *addressbook_get_books_data(gchar **book_list);
 
-GSList *addressbook_get_book_data_by_uid(gchar *);
+book_data_t *addressbook_get_book_data_by_uid(gchar *);
 
-void addressbook_set_current_book(void);
+void addressbook_set_current_book(gchar *);
 
 void addressbook_set_search_type(AddrbookSearchType);
 

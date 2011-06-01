@@ -86,18 +86,6 @@ static EBookQueryTest current_test = E_BOOK_QUERY_BEGINS_WITH;
  */
 void empty_books_data();
 
-/**
- * Freeing a hit instance
- */
-void
-free_hit (Hit *h)
-{
-    g_free (h->name);
-    g_free (h->phone_business);
-    g_free (h->phone_home);
-    g_free (h->phone_mobile);
-    g_free (h);
-}
 
 /**
  * Free a book data
@@ -690,8 +678,6 @@ empty_books_data()
 
         free_book_data (book_data);
     }
-
-
 }
 
 void
@@ -722,7 +708,7 @@ search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler
     }
 
     printf ("Addressbook: Opening addressbook: uri: %s\n", current_uri);
-    pinrtf ("Addressbook: Opening addressbook: name: %s\n", current_name);
+    printf ("Addressbook: Opening addressbook: name: %s\n", current_name);
 
     book = e_book_new_from_uri(current_uri, &err);
 
@@ -739,7 +725,6 @@ search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler
         // Asynchronous open
         e_book_async_open(book, TRUE, eds_async_open_callback, had);
 #endif
-
 
     } else {
         printf ("Addressbook: Error: No book available\n");

@@ -33,6 +33,8 @@
 
 #include <searchbar.h>
 #include <calltree.h>
+#include <config/addressbook-config.h>
+#include <contacts/addressbook.h>
 #include <contacts/addressbook/eds.h>
 #include <contacts/addrbookfactory.h>
 
@@ -60,7 +62,9 @@ void searchbar_addressbook_activated (GtkEntry *entry, gchar *arg1 UNUSED, gpoin
 
     if(abookfactory_is_addressbook_loaded()) {
         AddrBookFactory *factory = abookfactory_get_factory();
-        factory->addrbook->search(entry);
+	AddressBook_Config *addressbook_config; 
+        addressbook_config_load_parameters(&addressbook_config);
+        factory->addrbook->search(factory->addrbook, entry, addressbook_config);
     }
 }
 
@@ -87,7 +91,9 @@ static void cbox_changed_cb (GtkWidget *widget, gpointer user_data UNUSED)
     if(abookfactory_is_addressbook_loaded()) {
         AddrBookFactory *factory = abookfactory_get_factory();
         factory->addrbook->set_current_book (name);
-        factory->addrbook->search(GTK_ENTRY(addressbookentry));
+        AddressBook_Config *addressbook_config;
+        addressbook_config_load_parameters(&addressbook_config);
+        factory->addrbook->search(factory->addrbook, GTK_ENTRY(addressbookentry), addressbook_config);
     }
 }
 
@@ -105,16 +111,18 @@ void update_searchbar_addressbook_list()
     GSList *book_list_iterator;
     book_data_t *book_data;
     GSList *books_data = NULL;
+    gchar **book_list;
 
     if(abookfactory_is_addressbook_loaded()) {
         AddrBookFactory *factory = abookfactory_get_factory();
-        books_data = factory->addrbook->get_books_data();
+        book_list = dbus_get_addressbook_list();
+        books_data = factory->addrbook->get_books_data(book_list);
     }
 
     if(books_data == NULL) {
+        ERROR("Searchbar: No books data found");
     	return;
     }
-
     DEBUG ("Searchbar: Update addressbook list");
 
     // we must disconnect signal from teh cbox while updating its content
@@ -122,7 +130,6 @@ void update_searchbar_addressbook_list()
 
     // store the current active text
     activeText = g_strdup (gtk_combo_box_get_active_text (GTK_COMBO_BOX (cbox)));
-
     if(activeText == NULL) {
 
         activeText = g_strdup ("");
@@ -153,6 +160,8 @@ void update_searchbar_addressbook_list()
         }
     }
 
+    DEBUG("OK");
+
     if(abookfactory_is_addressbook_loaded()) {
         AddrBookFactory *factory = abookfactory_get_factory();
         if (activeIsSet) {
@@ -165,6 +174,7 @@ void update_searchbar_addressbook_list()
             factory->addrbook->set_current_book(gtk_combo_box_get_active_text(GTK_COMBO_BOX(cbox)));
         }
     }
+    DEBUG("OK");
 
     g_free (activeText);
     cboxSignalId = gtk_signal_connect (GTK_OBJECT (cbox), "changed", G_CALLBACK (cbox_changed_cb), NULL);
@@ -192,8 +202,10 @@ static void select_search_type (GtkWidget *item, GtkEntry  *entry UNUSED)
         else if (strcmp ("Search contains", gtk_menu_item_get_label (GTK_MENU_ITEM (item))) == 0) {
             factory->addrbook->set_search_type(ABOOK_QUERY_CONTAINS);
         }
-
-        factory->addrbook->search (GTK_ENTRY (addressbookentry));
+  
+        AddressBook_Config *addressbook_config;
+        addressbook_config_load_parameters(&addressbook_config);
+        factory->addrbook->search (factory->addrbook, GTK_ENTRY (addressbookentry), addressbook_config);
     }
 
 }
@@ -410,6 +422,7 @@ GtkWidget* contacts_searchbar_new ()
     int count, cbox_height, cbox_width;
     GtkTreeIter iter, activeIter;
     GtkCellRenderer *cell;
+    gchar **book_list;
     // gchar *current_addressbook = NULL;
 
     DEBUG ("Addressbook: Create addressbook search bar");
@@ -423,13 +436,15 @@ GtkWidget* contacts_searchbar_new ()
     	return NULL;
     }
 
+    book_list = dbus_get_addressbook_list();
+
     AddrBookFactory *factory = abookfactory_get_factory();
 
-    factory->addrbook->init();
+    factory->addrbook->init(book_list);
 
     GSList *book_list_iterator;
     book_data_t *book_data;
-    GSList *books_data = factory->addrbook->get_books_data();
+    GSList *books_data = factory->addrbook->get_books_data(book_list);
 
     // Populate menu
     count = 0;

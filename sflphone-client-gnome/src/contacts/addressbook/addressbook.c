@@ -34,26 +34,27 @@
 #include "searchbar.h"
 #include "addressbook-config.h"
 
-static void
-handler_async_search (GList *, gpointer);
+// static void
+// handler_async_search (GList *, gpointer);
 
 /**
  * Perform a search on address book
  */
 void
-addressbook_search (GtkEntry* entry)
+addressbook_search (AddrBookHandle *handle, GtkEntry* entry, AddressBook_Config *addressbook_config)
 {
+    printf("Addressbook: Search");
 
     const gchar* query = gtk_entry_get_text (GTK_ENTRY (entry));
     printf("Addressbook: Search %s\n", query);
 
-    AddressBook_Config *addressbook_config;
+    // AddressBook_Config *addressbook_config;
 
-    activateWaitingLayer();
+    // activateWaitingLayer();
 
     // addressbook_config_load_parameters (&addressbook_config);
 
-    search_async_by_contacts (gtk_entry_get_text (GTK_ENTRY (entry)), addressbook_config->max_results, &handler_async_search, addressbook_config);
+    search_async_by_contacts (gtk_entry_get_text (GTK_ENTRY (entry)), addressbook_config->max_results, handle->search_cb, addressbook_config);
 
 }
 
@@ -98,13 +99,11 @@ addressbook_is_active()
  * Get active addressbook from config.
  */
 static void
-addressbook_config_books()
+addressbook_config_books(gchar **book_list)
 {
     gchar **config_book_uid;
     book_data_t *book_data;
     gchar **list;
-
-    
 
     // Retrieve list of books
     // list = (gchar **) dbus_get_addressbook_list();
@@ -134,20 +133,21 @@ addressbook_config_books()
  * Good method to get books_data
  */
 GSList *
-addressbook_get_books_data()
+addressbook_get_books_data(gchar **book_list)
 {
     printf("Addressbook: Get books data\n");
 
-    fill_books_data();
-    addressbook_config_books();
+    // fill_books_data();
+    addressbook_config_books(book_list);
     determine_default_addressbook();
 
     return get_books_data();
 }
 
-GSList *
+book_data_t *
 addressbook_get_book_data_by_uid(gchar *uid) 
 {
+    return books_get_book_data_by_uid (uid); 
 }
 
 /**
@@ -155,14 +155,14 @@ addressbook_get_book_data_by_uid(gchar *uid)
  * Set active/inactive status depending on config.
  */
 void
-addressbook_init()
+addressbook_init(gchar **book_list)
 {
     printf("Addressbook: Initialize addressbook\n");
 
     init_eds_mutex();
 
     fill_books_data();
-    addressbook_config_books();
+    addressbook_config_books(book_list);
     determine_default_addressbook();
 
     // Call books initialization
@@ -172,6 +172,7 @@ addressbook_init()
 /**
  * Callback called after all book have been processed
  */
+/*
 static void
 handler_async_search (GList *hits, gpointer user_data)
 {
@@ -231,12 +232,17 @@ handler_async_search (GList *hits, gpointer user_data)
     g_list_free (hits);
 
     // Deactivate waiting image
-    deactivateWaitingLayer();
+    // deactivateWaitingLayer();
 
 
     gtk_widget_grab_focus (GTK_WIDGET (contacts->view));
 }
+*/
 
 void addressbook_set_search_type(AddrbookSearchType searchType) {
+
+}
+
+void addressbook_set_current_book(gchar *current) {
 
 }

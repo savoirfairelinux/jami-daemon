@@ -29,9 +29,13 @@
  */
 
 #include "addrbookfactory.h"
+#include "addressbook-config.h"
+
 
 #include <glib.h>
 #include <dlfcn.h>
+
+static void handler_async_search(GList *hits, gpointer user_data);
 
 AddrBookFactory addressbookFactory = {NULL};
 
@@ -111,6 +115,86 @@ void abookfactory_load_module(AddrBookFactory *factory) {
         ERROR("AddressbookFactory: Error: Could not load addressbook addressbook_set_search_type");
     }
 
+    ab->search_cb = handler_async_search;
+
     DEBUG("AddressbookFactory: Loading done");
     factory->addrbook = ab;
+}
+
+void
+free_hit (Hit *h)
+{
+    g_free (h->name);
+    g_free (h->phone_business);
+    g_free (h->phone_home);
+    g_free (h->phone_mobile);
+    g_free (h);
+}
+
+/**
+ * Callback called after all book have been processed
+ */
+static void
+handler_async_search (GList *hits, gpointer user_data)
+{
+
+    GList *i;
+    GdkPixbuf *photo = NULL;
+    AddressBook_Config *addressbook_config;
+    callable_obj_t *j;
+
+    printf("Addressbook: callback async search\n");
+
+    // freeing calls
+    while ( (j = (callable_obj_t *) g_queue_pop_tail (contacts->callQueue)) != NULL) {
+        free_callable_obj_t (j);
+    }
+
+    // Retrieve the address book parameters
+    addressbook_config = (AddressBook_Config*) user_data;
+
+    // reset previous results
+    calltree_reset (contacts);
+    calllist_reset (contacts);
+
+    for (i = hits; i != NULL; i = i->next) {
+
+        Hit *entry;
+        entry = i->data;
+
+        if (entry) {
+            // Get the photo
+            if (addressbook_display (addressbook_config,
+                                     ADDRESSBOOK_DISPLAY_CONTACT_PHOTO))
+                photo = entry->photo;
+
+            // Create entry for business phone information
+            if (addressbook_display (addressbook_config,
+                                     ADDRESSBOOK_DISPLAY_PHONE_BUSINESS))
+                calllist_add_contact (entry->name, entry->phone_business,
+                                      CONTACT_PHONE_BUSINESS, photo);
+
+            // Create entry for home phone information
+            if (addressbook_display (addressbook_config,
+                                     ADDRESSBOOK_DISPLAY_PHONE_HOME))
+                calllist_add_contact (entry->name, entry->phone_home,
+                                      CONTACT_PHONE_HOME, photo);
+
+            // Create entry for mobile phone iddnformation
+            if (addressbook_display (addressbook_config,
+                                     ADDRESSBOOK_DISPLAY_PHONE_MOBILE))
+                calllist_add_contact (entry->name, entry->phone_mobile,
+                                      CONTACT_PHONE_MOBILE, photo);
+        }
+
+        free_hit (entry);
+    }
+
+    g_list_free (hits);
+
+    // Deactivate waiting image
+    // deactivateWaitingLayer();
+
+
+    gtk_widget_grab_focus (GTK_WIDGET (contacts->view));
 }

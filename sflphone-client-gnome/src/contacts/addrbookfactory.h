@@ -52,4 +52,5 @@ void abookfactory_scan_directory(AddrBookFactory *);
 
 void abookfactory_load_module(AddrBookFactory *);
 
+void free_hit(Hit *);
 #endif
