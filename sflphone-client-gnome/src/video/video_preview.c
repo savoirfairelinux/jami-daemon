@@ -88,11 +88,17 @@ union semun
 
 #define TEMPFILE "/tmp/frame.txt"
 
+/* FIXME: this will be replaced by a dbus call */
 static FrameInfo
 getFrameInfo()
 {
     FrameInfo info;
     FILE *tmp = fopen(TEMPFILE, "r");
+    if (tmp == NULL) {
+        g_print("Error: Could not open file\n");
+        /* FIXME: this should error out gracefully */
+        exit(EXIT_FAILURE);
+    }
     if (fscanf(tmp, "%u\n%u\n%u\n", &info.size, &info.width, &info.height) <= 0)
         g_print("Error: Could not read %s\n", TEMPFILE);
 #if 0
@@ -104,7 +110,7 @@ getFrameInfo()
 }
 
 /* join and/or create a shared memory segment */
-    static int
+static int
 getShm(unsigned numBytes)
 {
     key_t key;
@@ -118,7 +124,7 @@ getShm(unsigned numBytes)
 }
 
 /* attach a shared memory segment */
-    static char *
+static char *
 attachShm(int shm_id)
 {
     char *data = NULL;
@@ -133,7 +139,7 @@ attachShm(int shm_id)
     return data;
 }
 
-    static void
+static void
 detachShm(char *data)
 {
     /* detach from the segment: */
@@ -316,10 +322,8 @@ static gint
 on_stage_delete(ClutterStage *stage, ClutterEvent *event, gpointer data)
 {
     (void) event;
-    clutter_actor_destroy(CLUTTER_ACTOR(stage));
-    if (!g_idle_remove_by_data((void*)data))
-       g_print("Could not remove update texture callback\n");
-    VIDEO_PREVIEW_GET_PRIVATE(data)->is_running = FALSE;
+    (void) stage;
+    video_preview_stop(data);
     /* notify explicitly so that the owner of this preview can react */
     g_object_notify_by_pspec(G_OBJECT(data), properties[PROP_RUNNING]);
     return TRUE; /* don't call the default delete-event handler */
@@ -333,16 +337,17 @@ video_preview_run(VideoPreview *preview)
 
     ClutterActor *stage;
 
-    /* Get the default stage */
-    stage = clutter_stage_get_default ();
-    g_signal_connect (stage, "delete-event", G_CALLBACK (on_stage_delete), preview);
+    /* Get a stage */
+    stage = clutter_stage_new ();
+    g_signal_connect (stage, "delete-event", G_CALLBACK(on_stage_delete),
+            preview);
     clutter_actor_set_size(stage,
             priv->width,
             priv->height);
 
     priv->texture = clutter_texture_new();
 
-    clutter_stage_set_title(CLUTTER_STAGE (stage), "Client");
+    clutter_stage_set_title(CLUTTER_STAGE (stage), "Video Test");
     /* Add ClutterTexture to the stage */
     clutter_container_add(CLUTTER_CONTAINER (stage), priv->texture, NULL);
 
@@ -362,7 +367,9 @@ void
 video_preview_stop(VideoPreview *preview)
 {
     VideoPreviewPrivate *priv = VIDEO_PREVIEW_GET_PRIVATE(preview);
+    g_idle_remove_by_data((void*)preview);
     priv->is_running = FALSE;
     /* Destroy stage, which is texture's parent */
-    clutter_actor_destroy(clutter_actor_get_parent(priv->texture));
+    ClutterActor *stage = clutter_actor_get_parent(priv->texture);
+    clutter_actor_destroy(stage);
 }

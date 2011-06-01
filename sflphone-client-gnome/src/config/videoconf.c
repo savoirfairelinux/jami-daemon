@@ -53,6 +53,7 @@ void active_is_always_recording ()
     dbus_set_is_always_recording(enabled);
 }
 
+/* This gets called when the video preview window is closed */
 static gboolean
 preview_is_running_cb(GObject *obj, GParamSpec *pspec, gpointer user_data)
 {
@@ -76,16 +77,18 @@ void preview_button_clicked(GtkButton *button, gpointer data UNUSED)
             g_signal_connect (preview, "notify::running",
                               G_CALLBACK (preview_is_running_cb),
                               button);
-            video_preview_run(preview);
         }
+
+        video_preview_run(preview);
     }
-    else /* user clicked stop */ {
+    else {
+        /* user clicked stop */
+        gtk_button_set_label(button, "_Start preview");
         if (preview) {
             video_preview_stop(preview);
             g_object_unref(preview);
             preview = NULL;
         }
-        gtk_button_set_label(button, "_Start preview");
     }
 }
 
