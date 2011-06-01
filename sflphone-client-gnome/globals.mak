@@ -4,6 +4,9 @@ src = $(top_srcdir)
 ASTYLERC="$(top_srcdir)/../astylerc"
 indent="/usr/bin/astyle"
 
+sfllibdir=$(DESTDIR)$(libdir)/sflphone
+sflplugindir=$(sfllibdir)/plugins
+
 # Preprocessor flags
 AM_CPPFLAGS =		$(DEPS_CFLAGS)										\
 					$(LIBSEXY_CFLAGS)									\
@@ -22,8 +25,8 @@ AM_CPPFLAGS =		$(DEPS_CFLAGS)										\
 					-DDATADIR=\""$(datadir)"\"							\
 					-DLIBDIR=\""$(libdir)"\"							\
 					-DLOCALEDIR=\""$(localedir)"\"							\
-					-DSFLPHONE_UIDIR=\""$(datadir)/sflphone/ui"\"
-
+					-DSFLPHONE_UIDIR=\""$(datadir)/sflphone/ui"\" \
+					-DPLUGINS_DIR=\""$(sflplugindir)"\"
 indent:
 	@echo "Indenting code:"
 	if [ -f $(ASTYLERC) ] ; then \

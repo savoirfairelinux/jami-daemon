@@ -17,3 +17,8 @@ libevladdrbook_so_CFLAGS = -fPIC -g -Wall $(SFLGLIB_CFLAGS) $(SFLGTK_CFLAGS) $(L
 #				@SFLGTK_CFLAGS@ @SFLGLIB_CFLAGS@ @WEBKIT_CFLAGS@ @LIBEBOOK_CFLAGS@ \
 #				@LIBEDATASERVER_CFLAGS@ @LIBEDATASERVERUI_CFLAGS@ @LIBGNOMEUI_CFLAGS@ \
 #				@GNOMEDOCUTILS_CFLAGS@
+
+install-exec-local: install-libplugin_libevladdrbook_so
+
+install-libplugin_libevladdrbook_so: libevladdrbook.so
+	$(INSTALL_PROGRAM)  libevladdrbook.so $(sflplugindir)

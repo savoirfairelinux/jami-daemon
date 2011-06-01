@@ -52,23 +52,27 @@ void abookfactory_init_factory() {
 } 
 
 void abookfactory_scan_directory(AddrBookFactory *factory) {
-
+    
 }
 
 void abookfactory_load_module(AddrBookFactory *factory) {
 
     AddrBookHandle *ab;
-    void *handle;    
+    void *handle;
 
-    DEBUG("AddressbookFactory: Loading addressbook");
+    gchar *plugindir = PLUGINS_DIR;
+    gchar *pluginpath = g_strdup_printf("%s/libevladdrbook.so", plugindir);
+
+    DEBUG("AddressbookFactory: Loading addressbook: %s", pluginpath);
 
     ab = g_malloc(sizeof(AddrBookHandle));
 
-    handle = dlopen("./src/contacts/addressbook/libevladdrbook.so", RTLD_LAZY);
+    handle = dlopen(pluginpath, RTLD_LAZY);
     if(handle == NULL) {
         ERROR("AddressbookFactory: Error: Could not load addressbook");
         return;
     }
+    g_free(pluginpath);
 
     ab->init = dlsym(handle, "addressbook_init");
     if(ab->init == NULL) {

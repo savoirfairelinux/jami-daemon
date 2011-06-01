@@ -115,8 +115,6 @@ update_actions()
     g_object_ref (voicemailToolbar);
     g_object_ref (imToolbar);
 
-    DEBUG("OK1");
-
     if (is_inserted (GTK_WIDGET (hangUpWidget), GTK_WIDGET (toolbar))) {
         gtk_container_remove (GTK_CONTAINER (toolbar), GTK_WIDGET (hangUpWidget));
     }
@@ -150,8 +148,6 @@ update_actions()
                               GTK_WIDGET (imToolbar));
     }
     
-    DEBUG("OK2");
-
     gtk_widget_set_sensitive (GTK_WIDGET (holdMenu), FALSE);
     gtk_widget_set_sensitive (GTK_WIDGET (holdToolbar), FALSE);
     gtk_widget_set_sensitive (GTK_WIDGET (offHoldToolbar), FALSE);
@@ -186,8 +182,6 @@ update_actions()
         gtk_widget_set_sensitive (GTK_WIDGET (historyButton), TRUE);
     }
 
-    DEBUG("OK3");
-  
     // If addressbook support has been enabled and all addressbooks are loaded, display the icon
    
     if(abookfactory_is_addressbook_loaded()) {
@@ -204,7 +198,6 @@ update_actions()
         }
     }
 
-    DEBUG("OK4");
     // g_signal_handler_block (GTK_OBJECT (recordWidget), recordButtonConnId);
     // gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (recordWidget), FALSE);
     // g_signal_handler_unblock (GTK_OBJECT (recordWidget), recordButtonConnId);
@@ -214,8 +207,6 @@ update_actions()
 
     gboolean instant_messaging_enabled = TRUE;
     
-    DEBUG("OK4");
-
     if (eel_gconf_key_exists (INSTANT_MESSAGING_ENABLED))
         instant_messaging_enabled = eel_gconf_get_integer (INSTANT_MESSAGING_ENABLED);
 
@@ -408,7 +399,6 @@ update_actions()
             update_voicemail_status();
         }
     }
-    DEBUG("OK5");    
 }
 
 void
