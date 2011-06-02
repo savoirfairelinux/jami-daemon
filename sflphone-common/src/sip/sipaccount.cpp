@@ -40,7 +40,9 @@ Credentials::Credentials() : credentialCount (0) {}
 
 Credentials::~Credentials() {}
 
-void Credentials::setNewCredential (std::string username, std::string password, std::string realm)
+void Credentials::setNewCredential (const std::string &username,
+                                    const std::string &password,
+                                    const std::string &realm)
 {
     credentialArray[credentialCount].username = username;
     credentialArray[credentialCount].password = password;

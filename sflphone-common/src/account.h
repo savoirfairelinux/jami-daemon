@@ -275,7 +275,7 @@ class Account : public Serializable
         std::string getHostname (void) const {
             return _hostname;
         }
-        void setHostname (std::string hostname) {
+        void setHostname (const std::string &hostname) {
             _hostname = hostname;
         }
 
@@ -338,7 +338,7 @@ class Account : public Serializable
         std::string getUseragent (void) const {
             return _useragent;
         }
-        void setUseragent (std::string ua) {
+        void setUseragent (const std::string &ua) {
             _useragent = ua;
         }
 
@@ -346,7 +346,7 @@ class Account : public Serializable
             return _mailBox;
         }
 
-        void setMailBox (std::string mb) {
+        void setMailBox (const std::string &mb) {
             _mailBox = mb;
         }
 

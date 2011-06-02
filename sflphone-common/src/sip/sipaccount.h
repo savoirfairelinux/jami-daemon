@@ -150,7 +150,9 @@ class Credentials : public Serializable
             credentialCount = count;
         }
 
-        void setNewCredential (std::string username, std::string password, std::string realm);
+        void setNewCredential (const std::string &username,
+                               const std::string &password,
+                               const std::string &realm);
         const CredentialItem *getCredential (int index) const;
 
     private:
@@ -193,7 +195,7 @@ class SIPAccount : public Account
         /**
          * Set route header to appears in sip messages for this account
          */
-        void setRouteSet (std::string route) {
+        void setRouteSet (const std::string &route) {
             _routeSet = route;
         }
 
@@ -263,7 +265,7 @@ class SIPAccount : public Account
          *
          * @param A string describing the expiration value.
          */
-        void setRegistrationExpire (std::string expr) {
+        void setRegistrationExpire (const std::string &expr) {
             _registrationExpire = expr;
         }
 
@@ -519,7 +521,7 @@ class SIPAccount : public Account
             return _serviceRoute;
         }
 
-        void setServiceRoute (std::string route) {
+        void setServiceRoute (const std::string &route) {
             _serviceRoute = route;
         }
 
@@ -558,7 +560,7 @@ class SIPAccount : public Account
         std::string getSrtpKeyExchange (void) const {
             return _srtpKeyExchange;
         }
-        void setSrtpKeyExchange (std::string key) {
+        void setSrtpKeyExchange (const std::string &key) {
             _srtpKeyExchange = key;
         }
 
@@ -601,63 +603,63 @@ class SIPAccount : public Account
         std::string getRealm (void) const {
             return _realm;
         }
-        void setRealm (std::string r) {
+        void setRealm (const std::string &r) {
             _realm = r;
         }
 
         std::string getTlsEnable (void) const {
             return _tlsEnable;
         }
-        void setTlsEnable (std::string enabl) {
+        void setTlsEnable (const std::string &enabl) {
             _tlsEnable = enabl;
         }
 
         std::string getTlsCaListFile (void) const {
             return _tlsCaListFile;
         }
-        void setTlsCaListFile (std::string calist) {
+        void setTlsCaListFile (const std::string &calist) {
             _tlsCaListFile = calist;
         }
 
         std::string getTlsCertificateFile (void) const {
             return _tlsCertificateFile;
         }
-        void setTlsCertificateFile (std::string cert) {
+        void setTlsCertificateFile (const std::string &cert) {
             _tlsCertificateFile = cert;
         }
 
         std::string getTlsPrivateKeyFile (void) const {
             return _tlsPrivateKeyFile;
         }
-        void setTlsPrivateKeyFile (std::string priv) {
+        void setTlsPrivateKeyFile (const std::string &priv) {
             _tlsPrivateKeyFile = priv;
         }
 
         std::string getTlsPassword (void) const {
             return _tlsPassword;
         }
-        void setTlsPassword (std::string pass) {
+        void setTlsPassword (const std::string &pass) {
             _tlsPassword = pass;
         }
 
         std::string getTlsMethod (void) const {
             return _tlsMethod;
         }
-        void setTlsMethod (std::string meth) {
+        void setTlsMethod (const std::string &meth) {
             _tlsMethod = meth;
         }
 
         std::string getTlsCiphers (void) const {
             return _tlsCiphers;
         }
-        void setTlsCiphers (std::string cipher) {
+        void setTlsCiphers (const std::string &cipher) {
             _tlsCiphers = cipher;
         }
 
         std::string getTlsServerName (void) const {
             return _tlsServerName;
         }
-        void setTlsServerName (std::string name) {
+        void setTlsServerName (const std::string &name) {
             _tlsServerName = name;
         }
 
@@ -685,7 +687,7 @@ class SIPAccount : public Account
         std::string getTlsNegotiationTimeoutSec (void) const {
             return _tlsNegotiationTimeoutSec;
         }
-        void setTlsNegotiationTimeoutSec (std::string timeout) {
+        void setTlsNegotiationTimeoutSec (const std::string &timeout) {
             _tlsNegotiationTimeoutSec = timeout;
         }
 
