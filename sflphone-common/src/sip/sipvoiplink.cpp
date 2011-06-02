@@ -45,6 +45,7 @@
 #include "dbus/dbusmanager.h"
 #include "dbus/callmanager.h"
 
+#include "hooks/urlhook.h"
 #include "im/InstantMessaging.h"
 
 #include "audio/audiolayer.h"
