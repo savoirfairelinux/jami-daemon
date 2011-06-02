@@ -364,7 +364,7 @@ IAXVoIPLink::sendAudioFromMic (void)
                         nbSampleForRec_ = nbSample_;
 
 
-                        if (ac->getClockRate() && (ac->getClockRate() != _mainBufferSampleRate)) {
+                        if (ac->getClockRate() && ((int) ac->getClockRate() != _mainBufferSampleRate)) {
 
                             // resample
                             nbSample_ = converter->downsampleData (micData , micDataConverted , (int) ac->getClockRate(), _mainBufferSampleRate, nbSample_);
@@ -705,7 +705,7 @@ IAXVoIPLink::sendTextMessage (sfl::InstantMessaging *module,
 
 
 std::string
-IAXVoIPLink::getCurrentCodecName(const CallID& id)
+IAXVoIPLink::getCurrentCodecName(const CallID& /*id*/)
 {
     IAXCall *call = NULL;
     AudioCodec *ac = NULL;
@@ -1028,7 +1028,7 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
 
         // test if resampling is required
 
-        if (ac->getClockRate() && (ac->getClockRate() != _mainBufferSampleRate)) {
+        if (ac->getClockRate() && ((int) ac->getClockRate() != _mainBufferSampleRate)) {
 
             // resample
             nbInt16 = converter->upsampleData (spkrDataDecoded, spkrDataConverted, ac->getClockRate(), _mainBufferSampleRate, nbSample_);

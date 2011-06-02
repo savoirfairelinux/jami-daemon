@@ -156,7 +156,7 @@ class Account : public Serializable
 
     public:
 
-        Account (const AccountID& accountID, std::string type);
+        Account (const AccountID& accountID, const std::string &type);
 
         /**
          * Virtual destructor
@@ -177,7 +177,7 @@ class Account : public Serializable
 
         virtual void setAccountDetails (const std::map<std::string, std::string>& details) = 0;
 
-        virtual std::map<std::string, std::string> getAccountDetails() = 0;
+        virtual std::map<std::string, std::string> getAccountDetails() const = 0;
 
         /**
          * Load the settings for this account.
@@ -188,7 +188,7 @@ class Account : public Serializable
          * Get the account ID
          * @return constant account id
          */
-        inline const AccountID& getAccountID() {
+        const AccountID& getAccountID() const {
             return _accountID;
         }
 
@@ -196,7 +196,7 @@ class Account : public Serializable
          * Get the voiplink pointer
          * @return VoIPLink* the pointer or 0
          */
-        inline VoIPLink* getVoIPLink() {
+        VoIPLink* getVoIPLink() const {
             return _link;
         }
 
@@ -219,7 +219,7 @@ class Account : public Serializable
          * @return true if enabled
          *	     false otherwise
          */
-        bool isEnabled() {
+        bool isEnabled() const {
             return _enabled;
         }
 
@@ -231,7 +231,7 @@ class Account : public Serializable
          * Get the registration state of the specified link
          * @return RegistrationState	The registration state of underlying VoIPLink
          */
-        inline RegistrationState getRegistrationState() {
+        RegistrationState getRegistrationState() const {
             return _registrationState;
         }
 
@@ -259,44 +259,44 @@ class Account : public Serializable
          * @param void
          * @return std::pair<int, std::string> A Code:Description state
          */
-        std::pair<int, std::string> getRegistrationStateDetailed (void) {
+        std::pair<int, std::string> getRegistrationStateDetailed (void) const {
             return _registrationStateDetailed;
         }
 
         /* They should be treated like macro definitions by the C++ compiler */
-        inline std::string getUsername (void) {
+        std::string getUsername (void) const {
             return _username;
         }
 
-        inline void setUsername (std::string username) {
+        void setUsername (const std::string &username) {
             _username = username;
         }
 
-        inline std::string getHostname (void) {
+        std::string getHostname (void) const {
             return _hostname;
         }
-        inline void setHostname (std::string hostname) {
+        void setHostname (const std::string &hostname) {
             _hostname = hostname;
         }
 
-        inline std::string getPassword (void) {
+        std::string getPassword (void) const {
             return _password;
         }
-        inline void setPassword (std::string password) {
+        void setPassword (const std::string &password) {
             _password = password;
         }
 
-        inline std::string getAlias (void) {
+        std::string getAlias (void) const {
             return _alias;
         }
-        inline void setAlias (std::string alias) {
+        void setAlias (const std::string &alias) {
             _alias = alias;
         }
 
-        inline std::string getType (void) {
+        std::string getType (void) const {
             return _type;
         }
-        inline void setType (std::string type) {
+        void setType (const std::string &type) {
             _type = type;
         }
 
@@ -304,7 +304,7 @@ class Account : public Serializable
          * Accessor to data structures
          * @return CodecOrder& The list that reflects the user's choice
          */
-        inline CodecOrder& getActiveCodecs (void) {
+        const CodecOrder& getActiveCodecs (void) const {
             return _codecOrder;
         }
 
@@ -314,39 +314,39 @@ class Account : public Serializable
          */
         void setActiveCodecs (const std::vector <std::string>& list);
 
-        inline std::string getRingtonePath (void) {
+        std::string getRingtonePath (void) const {
             return _ringtonePath;
         }
-        inline void setRingtonePath (std::string path) {
+        void setRingtonePath (const std::string &path) {
             _ringtonePath = path;
         }
 
-        inline bool getRingtoneEnabled (void) {
+        bool getRingtoneEnabled (void) const {
             return _ringtoneEnabled;
         }
-        inline void setRingtoneEnabled (bool enabl) {
+        void setRingtoneEnabled (bool enabl) {
             _ringtoneEnabled = enabl;
         }
 
-        inline std::string getDisplayName (void) {
+        std::string getDisplayName (void) const {
             return _displayName;
         }
-        inline void setDisplayName (std::string name) {
+        void setDisplayName (const std::string &name) {
             _displayName = name;
         }
 
-        std::string getUseragent (void) {
+        std::string getUseragent (void) const {
             return _useragent;
         }
-        void setUseragent (std::string ua) {
+        void setUseragent (const std::string &ua) {
             _useragent = ua;
         }
 
-        std::string getMailBox (void) {
+        std::string getMailBox (void) const {
             return _mailBox;
         }
 
-        void setMailBox (std::string mb) {
+        void setMailBox (const std::string &mb) {
             _mailBox = mb;
         }
 

@@ -33,7 +33,7 @@
 #include "account.h"
 #include "manager.h"
 
-Account::Account (const AccountID& accountID, std::string type) :
+Account::Account (const AccountID& accountID, const std::string &type) :
     _accountID (accountID)
     , _link (NULL)
     , _enabled (true)

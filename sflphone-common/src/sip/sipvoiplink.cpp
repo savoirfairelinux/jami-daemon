@@ -45,6 +45,7 @@
 #include "dbus/dbusmanager.h"
 #include "dbus/callmanager.h"
 
+#include "hooks/urlhook.h"
 #include "im/InstantMessaging.h"
 
 #include "audio/audiolayer.h"
@@ -4431,7 +4432,7 @@ void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
 
         pjsip_rx_data *rdata;
         pjsip_generic_string_hdr *refer_sub;
-        const pj_str_t REFER_SUB = { "Refer-Sub", 9 };
+        const pj_str_t REFER_SUB = { (char *) "Refer-Sub", 9 };
 
  	/* Must be receipt of response message */
         pj_assert(event->type == PJSIP_EVENT_TSX_STATE &&

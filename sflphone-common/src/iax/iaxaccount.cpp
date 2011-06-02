@@ -216,7 +216,7 @@ void IAXAccount::setAccountDetails (const std::map<std::string, std::string>& de
 
 }
 
-std::map<std::string, std::string> IAXAccount::getAccountDetails()
+std::map<std::string, std::string> IAXAccount::getAccountDetails() const
 {
     std::map<std::string, std::string> a;
 

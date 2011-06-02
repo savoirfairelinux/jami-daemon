@@ -36,7 +36,6 @@
 #define SIPVOIPLINK_H
 
 #include <map>
-#include <sstream>
 #include <exception>
 
 //////////////////////////////
@@ -49,8 +48,10 @@
 ///////////////////////////////
 
 #include "voiplink.h"
-#include "hooks/urlhook.h"
-#include "../im/InstantMessaging.h"
+
+namespace sfl {
+    class InstantMessaging;
+}
 
 class EventThread;
 class SIPCall;

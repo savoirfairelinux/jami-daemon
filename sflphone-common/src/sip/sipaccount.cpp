@@ -40,7 +40,9 @@ Credentials::Credentials() : credentialCount (0) {}
 
 Credentials::~Credentials() {}
 
-void Credentials::setNewCredential (std::string username, std::string password, std::string realm)
+void Credentials::setNewCredential (const std::string &username,
+                                    const std::string &password,
+                                    const std::string &realm)
 {
     credentialArray[credentialCount].username = username;
     credentialArray[credentialCount].password = password;
@@ -48,7 +50,7 @@ void Credentials::setNewCredential (std::string username, std::string password, 
 
 }
 
-CredentialItem *Credentials::getCredential (int index)
+const CredentialItem *Credentials::getCredential (int index) const
 {
     if ( (index >= 0) && (index < credentialCount))
         return & (credentialArray[index]);
@@ -814,7 +816,7 @@ void SIPAccount::setAccountDetails (const std::map<std::string, std::string>& de
     }
 }
 
-std::map<std::string, std::string> SIPAccount::getAccountDetails()
+std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 {
     std::map<std::string, std::string> a;
 
@@ -1170,12 +1172,12 @@ void SIPAccount::loadConfig()
     Account::loadConfig();
 }
 
-bool SIPAccount::fullMatch (const std::string& username, const std::string& hostname)
+bool SIPAccount::fullMatch (const std::string& username, const std::string& hostname) const
 {
     return (userMatch (username) && hostnameMatch (hostname));
 }
 
-bool SIPAccount::userMatch (const std::string& username)
+bool SIPAccount::userMatch (const std::string& username) const
 {
     if (username.empty()) {
         return false;
@@ -1184,19 +1186,19 @@ bool SIPAccount::userMatch (const std::string& username)
     return (username == getUsername());
 }
 
-bool SIPAccount::hostnameMatch (const std::string& hostname)
+bool SIPAccount::hostnameMatch (const std::string& hostname) const
 {
     return (hostname == getHostname());
 }
 
-std::string SIPAccount::getMachineName (void)
+std::string SIPAccount::getMachineName (void) const
 {
     std::string hostname;
     hostname = std::string (pj_gethostname()->ptr, pj_gethostname()->slen);
     return hostname;
 }
 
-std::string SIPAccount::getLoginName (void)
+std::string SIPAccount::getLoginName (void) const
 {
     std::string username;
 
@@ -1212,7 +1214,7 @@ std::string SIPAccount::getLoginName (void)
     return username;
 }
 
-std::string SIPAccount::getTransportMapKey (void)
+std::string SIPAccount::getTransportMapKey (void) const
 {
 
     std::stringstream out;
@@ -1223,7 +1225,7 @@ std::string SIPAccount::getTransportMapKey (void)
 }
 
 
-std::string SIPAccount::getFromUri (void)
+std::string SIPAccount::getFromUri (void) const
 {
     char uri[PJSIP_MAX_URL_SIZE];
 
@@ -1265,7 +1267,7 @@ std::string SIPAccount::getFromUri (void)
     return std::string (uri, len);
 }
 
-std::string SIPAccount::getToUri (const std::string& username)
+std::string SIPAccount::getToUri (const std::string& username) const
 {
     char uri[PJSIP_MAX_URL_SIZE];
 
@@ -1305,7 +1307,7 @@ std::string SIPAccount::getToUri (const std::string& username)
     return std::string (uri, len);
 }
 
-std::string SIPAccount::getServerUri (void)
+std::string SIPAccount::getServerUri (void) const
 {
     char uri[PJSIP_MAX_URL_SIZE];
 
@@ -1332,7 +1334,7 @@ std::string SIPAccount::getServerUri (void)
     return std::string (uri, len);
 }
 
-std::string SIPAccount::getContactHeader (const std::string& address, const std::string& port)
+std::string SIPAccount::getContactHeader (const std::string& address, const std::string& port) const
 {
     char contact[PJSIP_MAX_URL_SIZE];
     const char * beginquote, * endquote;
