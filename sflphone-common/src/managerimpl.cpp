@@ -1803,7 +1803,7 @@ bool ManagerImpl::incomingCall (Call* call, const AccountID& accountId)
 
         int startIndex = peerNumber.find ("sip:");
 
-        if (startIndex != (int) string::npos) {
+        if (startIndex != (int) std::string::npos) {
             std::string strippedPeerNumber = peerNumber.substr (startIndex + 4);
             call->setPeerNumber (strippedPeerNumber);
         }

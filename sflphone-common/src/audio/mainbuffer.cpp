@@ -30,7 +30,7 @@
  */
 
 #include "mainbuffer.h"
-
+#include <utility> // for std::pair
 #include "manager.h"
 
 MainBuffer::MainBuffer() : _internalSamplingRate (8000)
@@ -84,7 +84,7 @@ bool MainBuffer::createCallIDSet (CallID set_id)
 
     CallIDSet* newCallIDSet = new CallIDSet;
 
-    _callIDMap.insert (pair<CallID, CallIDSet*> (set_id, newCallIDSet));
+    _callIDMap.insert (std::pair<CallID, CallIDSet*> (set_id, newCallIDSet));
 
     return true;
 
@@ -149,7 +149,7 @@ RingBuffer* MainBuffer::createRingBuffer (CallID call_id)
 {
     RingBuffer* newRingBuffer = new RingBuffer (SIZEBUF, call_id);
 
-    _ringBufferMap.insert (pair<CallID, RingBuffer*> (call_id, newRingBuffer));
+    _ringBufferMap.insert (std::pair<CallID, RingBuffer*> (call_id, newRingBuffer));
 
     return newRingBuffer;
 }
@@ -646,8 +646,8 @@ void MainBuffer::stateInfo()
     while (iter_call != _callIDMap.end()) {
 
         std::string dbg_str ("    Call: ");
-        dbg_str.append (std::string (iter_call->first.c_str()));
-        dbg_str.append (std::string ("   is bound to: "));
+        dbg_str.append (iter_call->first);
+        dbg_str.append ("   is bound to: ");
 
         CallIDSet* call_id_set = (CallIDSet*) iter_call->second;
 
@@ -655,8 +655,8 @@ void MainBuffer::stateInfo()
 
         while (iter_call_id != call_id_set->end()) {
 
-            dbg_str.append (std::string (*iter_call_id));
-            dbg_str.append (std::string (", "));
+            dbg_str.append (*iter_call_id);
+            dbg_str.append (", ");
 
             iter_call_id++;
         }
@@ -676,8 +676,8 @@ void MainBuffer::stateInfo()
 
         std::string dbg_str ("    Buffer: ");
 
-        dbg_str.append (std::string (iter_buffer->first.c_str()));
-        dbg_str.append (std::string ("   as read pointer: "));
+        dbg_str.append (iter_buffer->first);
+        dbg_str.append ("   as read pointer: ");
 
         if (rbuffer)
             rpointer = rbuffer->getReadPointerList();
@@ -688,8 +688,8 @@ void MainBuffer::stateInfo()
 
             while (iter_pointer != rpointer->end()) {
 
-                dbg_str.append (string (iter_pointer->first.c_str()));
-                dbg_str.append (string (", "));
+                dbg_str.append (iter_pointer->first);
+                dbg_str.append (", ");
 
                 iter_pointer++;
             }

@@ -28,6 +28,7 @@
  */
 
 #include "AudioRtpRecordHandler.h"
+#include <fstream>
 
 #include "audio/audiolayer.h"
 #include "manager.h"
@@ -249,7 +250,7 @@ void AudioRtpRecordHandler::putDtmfEvent (int digit)
     _debug ("AudioRtpSession: Put Dtmf Event %d", digit);
 }
 
-ofstream teststream("test_process_data_encode.raw");
+std::ofstream teststream("test_process_data_encode.raw");
 
 int AudioRtpRecordHandler::processDataEncode (void)
 {
