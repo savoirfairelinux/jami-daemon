@@ -36,11 +36,9 @@
 #include <instance.h>
 #include "../manager.h"
 
-using namespace std;
+const std::string NetworkManager::statesString[5] = {"unknown", "asleep", "connecting", "connected", "disconnected"};
 
-const string NetworkManager::statesString[5] = {"unknown", "asleep", "connecting", "connected", "disconnected"};
-
-string NetworkManager::stateAsString (const uint32_t& state)
+std::string NetworkManager::stateAsString (const uint32_t& state)
 {
     return statesString[state];
 }
@@ -52,9 +50,9 @@ void NetworkManager::StateChanged (const uint32_t& state)
 
 void NetworkManager::PropertiesChanged (const std::map< std::string, ::DBus::Variant >& argin0)
 {
-    const map< string, ::DBus::Variant >::const_iterator iter = argin0.begin();
+    const std::map< std::string, ::DBus::Variant >::const_iterator iter = argin0.begin();
 
-    string message = iter->first;
+    std::string message = iter->first;
 
     _warn ("Properties changed: %s", iter->first.c_str());
     /*
