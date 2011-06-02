@@ -45,7 +45,6 @@
 
 #include "audio/audiolayer.h"
 
-using namespace std;
 using namespace ost;
 
 CommandOptionArg	level (
@@ -78,13 +77,13 @@ main (int argc, char **argv)
     printf ("http://www.sflphone.org/\n");
 
     if (help.numSet) {
-        cerr << args->printUsage();
+        std::cerr << args->printUsage();
         ::exit (0);
     }
 
     if (args->argsHaveError()) {
-        cerr << args->printErrors();
-        cerr << args->printUsage();
+        std::cerr << args->printErrors();
+        std::cerr << args->printUsage();
         ::exit (1);
     }
 
