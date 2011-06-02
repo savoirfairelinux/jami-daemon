@@ -143,7 +143,7 @@ class Credentials : public Serializable
 
         virtual void unserialize (Conf::MappingNode *map);
 
-        int getCredentialCount (void) {
+        int getCredentialCount (void) const {
             return credentialCount;
         }
         void setCredentialCount (int count) {
@@ -151,7 +151,7 @@ class Credentials : public Serializable
         }
 
         void setNewCredential (std::string username, std::string password, std::string realm);
-        CredentialItem *getCredential (int index);
+        const CredentialItem *getCredential (int index) const;
 
     private:
 
@@ -188,7 +188,7 @@ class SIPAccount : public Account
 
         virtual void setAccountDetails (const std::map<std::string, std::string>& details);
 
-        virtual std::map<std::string, std::string> getAccountDetails();
+        virtual std::map<std::string, std::string> getAccountDetails() const;
 
         /**
          * Set route header to appears in sip messages for this account
@@ -200,7 +200,7 @@ class SIPAccount : public Account
         /**
          * Get route header to appear in sip messages for this account
          */
-        std::string getRouteSet (void) {
+        std::string getRouteSet (void) const {
             return _routeSet;
         }
 
@@ -225,21 +225,21 @@ class SIPAccount : public Account
          */
         int unregisterVoIPLink();
 
-        inline void setCredInfo (pjsip_cred_info *cred) {
+        void setCredInfo (pjsip_cred_info *cred) {
             _cred = cred;
         }
-        inline pjsip_cred_info *getCredInfo() {
+        pjsip_cred_info *getCredInfo() const {
             return _cred;
         }
 
-        inline std::string& getAuthenticationUsername (void) {
+        const std::string& getAuthenticationUsername (void) const {
             return _authenticationUsername;
         }
-        inline void setAuthenticationUsername (const std::string& username) {
+        void setAuthenticationUsername (const std::string& username) {
             _authenticationUsername = username;
         }
 
-        inline bool isResolveOnce (void) {
+        bool isResolveOnce (void) const {
             return _resolveOnce;
         }
         void setResolveOnce (bool reslv) {
@@ -254,7 +254,7 @@ class SIPAccount : public Account
          *
          * @return A string describing the expiration value.
          */
-        inline std::string& getRegistrationExpire (void) {
+        const std::string& getRegistrationExpire (void) const {
             return _registrationExpire;
         }
 
@@ -263,16 +263,16 @@ class SIPAccount : public Account
          *
          * @param A string describing the expiration value.
          */
-        inline void setRegistrationExpire (std::string expr) {
+        void setRegistrationExpire (std::string expr) {
             _registrationExpire = expr;
         }
 
-        bool fullMatch (const std::string& username, const std::string& hostname);
-        bool userMatch (const std::string& username);
-        bool hostnameMatch (const std::string& hostname);
+        bool fullMatch (const std::string& username, const std::string& hostname) const;
+        bool userMatch (const std::string& username) const;
+        bool hostnameMatch (const std::string& hostname) const;
 
         /* Registration flag */
-        bool isRegister() {
+        bool isRegister() const {
             return _bRegister;
         }
         void setRegister (bool result) {
@@ -286,7 +286,7 @@ class SIPAccount : public Account
          * @param void
          * @return pjsip_regc* A pointer to the registration structure
          */
-        pjsip_regc* getRegistrationInfo (void) {
+        pjsip_regc* getRegistrationInfo (void) const {
             return _regc;
         }
 
@@ -306,10 +306,10 @@ class SIPAccount : public Account
          * @param none
          * @return int The number of credentials set for this account.
          */
-        inline int getCredentialCount (void) {
+        int getCredentialCount (void) const {
             return credentials.getCredentialCount() + 1;
         }
-        inline void setCredentialCount (int count) {
+        void setCredentialCount (int count) {
             return credentials.setCredentialCount (count);
         }
 
@@ -318,7 +318,7 @@ class SIPAccount : public Account
          * file, that can be used directly by PJSIP to initialize
          * TLS transport.
          */
-        inline pjsip_tls_setting * getTlsSetting (void) {
+        pjsip_tls_setting * getTlsSetting (void) const {
             return _tlsSetting;
         }
 
@@ -327,14 +327,14 @@ class SIPAccount : public Account
          * file, that can be used directly by PJSIP to initialize
          * an alternate UDP transport.
          */
-        inline std::string getStunServer (void) {
+        std::string getStunServer (void) const {
             return _stunServer;
         }
-        inline void setStunServer (std::string srv) {
+        void setStunServer (const std::string &srv) {
             _stunServer = srv;
         }
 
-        inline pj_str_t getStunServerName (void) {
+        pj_str_t getStunServerName (void) const {
             return _stunServerName;
         }
 
@@ -343,10 +343,10 @@ class SIPAccount : public Account
          * file, that can be used directly by PJSIP to initialize
          * an alternate UDP transport.
          */
-        inline pj_uint16_t getStunPort (void) {
+        pj_uint16_t getStunPort (void) const {
             return _stunPort;
         }
-        inline void setStunPort (pj_uint16_t port) {
+        void setStunPort (pj_uint16_t port) {
             _stunPort = port;
         }
 
@@ -354,7 +354,7 @@ class SIPAccount : public Account
          * @return bool Tells if current transport for that
          * account is set to TLS.
          */
-        inline bool isTlsEnabled (void) {
+        bool isTlsEnabled (void) const {
             return (_transportType == PJSIP_TRANSPORT_TLS) ? true: false;
         }
 
@@ -362,14 +362,14 @@ class SIPAccount : public Account
          * @return bool Tells if current transport for that
          * account is set to OTHER.
          */
-        inline bool isStunEnabled (void) {
+        bool isStunEnabled (void) const {
             return _stunEnabled;
         }
 
         /**
          * Set wether or not stun is enabled for this account
          */
-        inline void setStunEnabled (bool enabl) {
+        void setStunEnabled (bool enabl) {
             _stunEnabled = enabl;
         }
 
@@ -382,7 +382,7 @@ class SIPAccount : public Account
          * of the host on which the UA is running, since these are not logical
          * names."
          */
-        std::string getFromUri (void);
+        std::string getFromUri (void) const;
 
         /*
          * This method adds the correct scheme, hostname and append
@@ -392,7 +392,7 @@ class SIPAccount : public Account
          * @return pj_str_t "To" uri based on @param username
          * @param username A string formatted as : "username"
          */
-        std::string getToUri (const std::string& username);
+        std::string getToUri (const std::string& username) const;
 
         /*
          * In the current version of SFLPhone, "srv" uri is obtained in the preformated
@@ -402,28 +402,28 @@ class SIPAccount : public Account
          * @return pj_str_t "server" uri based on @param hostPort
          * @param hostPort A string formatted as : "hostname:port"
          */
-        std::string getServerUri (void);
+        std::string getServerUri (void) const;
 
         /**
          * @param port Optional port. Otherwise set to the port defined for that account.
          * @param hostname Optional local address. Otherwise set to the hostname defined for that account.
          * @return pj_str_t The contact header based on account information
          */
-        std::string getContactHeader (const std::string& address, const std::string& port);
+        std::string getContactHeader (const std::string& address, const std::string& port) const;
 
         /**
          * Set the interface name on which this account is bound, "default" means
          * that the account is bound to the ANY interafec (0.0.0.0). This method should be
          * when binding the account to a new sip transport only.
          */
-        inline void setLocalInterface (const std::string& interface) {
+        void setLocalInterface (const std::string& interface) {
             _interface = interface;
         }
 
         /**
          * Get the local interface name on which this account is bound.
          */
-        inline std::string getLocalInterface (void) {
+        std::string getLocalInterface (void) const {
             return _interface;
         }
 
@@ -432,7 +432,7 @@ class SIPAccount : public Account
          * IP address and port (_localAddress and _localPort) or to an address set
          * manually (_publishedAddress and _publishedPort).
          */
-        bool getPublishedSameasLocal() {
+        bool getPublishedSameasLocal() const {
             return _publishedSameasLocal;
         }
 
@@ -450,7 +450,7 @@ class SIPAccount : public Account
          * actually using.
          * @return pj_uint16 The port used for that account
          */
-        inline pj_uint16_t getLocalPort (void) {
+        pj_uint16_t getLocalPort (void) const {
             return (pj_uint16_t) _localPort;
         }
 
@@ -458,7 +458,7 @@ class SIPAccount : public Account
          * Set the new port on which this account is running over.
          * @pram port The port used by this account.
          */
-        inline void setLocalPort (pj_uint16_t port) {
+        void setLocalPort (pj_uint16_t port) {
             _localPort = port;
         }
 
@@ -467,7 +467,7 @@ class SIPAccount : public Account
          * for the chosen SIP transport.
          * @return pj_uint16 The port used for that account
          */
-        inline pj_uint16_t getPublishedPort (void) {
+        pj_uint16_t getPublishedPort (void) const {
             return (pj_uint16_t) _publishedPort;
         }
 
@@ -476,7 +476,7 @@ class SIPAccount : public Account
          * for the chosen SIP transport.
          * @pram port The port used by this account.
          */
-        inline void setPublishedPort (pj_uint16_t port) {
+        void setPublishedPort (pj_uint16_t port) {
             _publishedPort = port;
         }
 
@@ -484,7 +484,7 @@ class SIPAccount : public Account
              * Get the local port for TLS listener.
              * @return pj_uint16 The port used for that account
              */
-        inline pj_uint16_t getTlsListenerPort (void) {
+        pj_uint16_t getTlsListenerPort (void) const {
             return (pj_uint16_t) _tlsListenerPort;
         }
 
@@ -492,7 +492,7 @@ class SIPAccount : public Account
          * Set the local port for TLS listener.
          * @pram port The port used for TLS listener.
          */
-        inline void setTlsListenerPort (pj_uint16_t port) {
+        void setTlsListenerPort (pj_uint16_t port) {
             _tlsListenerPort = port;
         }
 
@@ -502,7 +502,7 @@ class SIPAccount : public Account
          * will be used.
          * @return std::string The public IPV4 address formatted in the standard dot notation.
          */
-        inline std::string getPublishedAddress (void) {
+        std::string getPublishedAddress (void) const {
             return _publishedIpAddress;
         }
 
@@ -511,15 +511,15 @@ class SIPAccount : public Account
          * @param The public IPV4 address in the standard dot notation.
          * @return void
          */
-        inline void setPublishedAddress (const std::string& publishedIpAddress) {
+        void setPublishedAddress (const std::string& publishedIpAddress) {
             _publishedIpAddress = publishedIpAddress;
         }
 
-        inline std::string getServiceRoute (void) {
+        std::string getServiceRoute (void) const {
             return _serviceRoute;
         }
 
-        inline void setServiceRoute (std::string route) {
+        void setServiceRoute (std::string route) {
             _serviceRoute = route;
         }
 
@@ -527,70 +527,70 @@ class SIPAccount : public Account
          * Get the chosen transport type.
          * @return pjsip_transport_type_e Transport type chosen by the user for this account.
          */
-        inline pjsip_transport_type_e getTransportType (void) {
+        pjsip_transport_type_e getTransportType (void) const {
             return _transportType;
         }
 
-        inline pjsip_transport* getAccountTransport (void) {
+        pjsip_transport* getAccountTransport (void) const {
             return _transport;
         }
 
-        inline void setAccountTransport (pjsip_transport *transport) {
+        void setAccountTransport (pjsip_transport *transport) {
             _transport = transport;
         }
 
-        std::string getTransportMapKey (void);
+        std::string getTransportMapKey (void) const;
 
-        DtmfType getDtmfType (void) {
+        DtmfType getDtmfType (void) const {
             return _dtmfType;
         }
         void setDtmfType (DtmfType type) {
             _dtmfType = type;
         }
 
-        bool getSrtpEnable (void) {
+        bool getSrtpEnable (void) const {
             return _srtpEnabled;
         }
         void setSrtpEnable (bool enabl) {
             _srtpEnabled = enabl;
         }
 
-        std::string getSrtpKeyExchange (void) {
+        std::string getSrtpKeyExchange (void) const {
             return _srtpKeyExchange;
         }
         void setSrtpKeyExchange (std::string key) {
             _srtpKeyExchange = key;
         }
 
-        bool getSrtpFallback (void) {
+        bool getSrtpFallback (void) const {
             return _srtpFallback;
         }
         void setSrtpFallback (bool fallback) {
             _srtpFallback = fallback;
         }
 
-        bool getZrtpDisplaySas (void) {
+        bool getZrtpDisplaySas (void) const {
             return _zrtpDisplaySas;
         }
         void setZrtpDisplaySas (bool sas) {
             _zrtpDisplaySas = sas;
         }
 
-        bool getZrtpDiaplaySasOnce (void) {
+        bool getZrtpDiaplaySasOnce (void) const {
             return _zrtpDisplaySasOnce;
         }
         void setZrtpDiaplaySasOnce (bool sasonce) {
             _zrtpDisplaySasOnce = sasonce;
         }
 
-        bool getZrtpNotSuppWarning (void) {
+        bool getZrtpNotSuppWarning (void) const {
             return _zrtpNotSuppWarning;
         }
         void setZrtpNotSuppWarning (bool warning) {
             _zrtpNotSuppWarning = warning;
         }
 
-        bool getZrtpHelloHash (void) {
+        bool getZrtpHelloHash (void) const {
             return _zrtpHelloHash;
         }
         void setZrtpHelloHash (bool hellohash) {
@@ -598,101 +598,101 @@ class SIPAccount : public Account
         }
         // void setSrtpKeyExchange
 
-        std::string getRealm (void) {
+        std::string getRealm (void) const {
             return _realm;
         }
         void setRealm (std::string r) {
             _realm = r;
         }
 
-        std::string getTlsEnable (void) {
+        std::string getTlsEnable (void) const {
             return _tlsEnable;
         }
         void setTlsEnable (std::string enabl) {
             _tlsEnable = enabl;
         }
 
-        std::string getTlsCaListFile (void) {
+        std::string getTlsCaListFile (void) const {
             return _tlsCaListFile;
         }
         void setTlsCaListFile (std::string calist) {
             _tlsCaListFile = calist;
         }
 
-        std::string getTlsCertificateFile (void) {
+        std::string getTlsCertificateFile (void) const {
             return _tlsCertificateFile;
         }
         void setTlsCertificateFile (std::string cert) {
             _tlsCertificateFile = cert;
         }
 
-        std::string getTlsPrivateKeyFile (void) {
+        std::string getTlsPrivateKeyFile (void) const {
             return _tlsPrivateKeyFile;
         }
         void setTlsPrivateKeyFile (std::string priv) {
             _tlsPrivateKeyFile = priv;
         }
 
-        std::string getTlsPassword (void) {
+        std::string getTlsPassword (void) const {
             return _tlsPassword;
         }
         void setTlsPassword (std::string pass) {
             _tlsPassword = pass;
         }
 
-        std::string getTlsMethod (void) {
+        std::string getTlsMethod (void) const {
             return _tlsMethod;
         }
         void setTlsMethod (std::string meth) {
             _tlsMethod = meth;
         }
 
-        std::string getTlsCiphers (void) {
+        std::string getTlsCiphers (void) const {
             return _tlsCiphers;
         }
         void setTlsCiphers (std::string cipher) {
             _tlsCiphers = cipher;
         }
 
-        std::string getTlsServerName (void) {
+        std::string getTlsServerName (void) const {
             return _tlsServerName;
         }
         void setTlsServerName (std::string name) {
             _tlsServerName = name;
         }
 
-        bool getTlsVerifyServer (void) {
+        bool getTlsVerifyServer (void) const {
             return _tlsVerifyServer;
         }
         void setTlsVerifyServer (bool verif) {
             _tlsVerifyServer = verif;
         }
 
-        bool getTlsVerifyClient (void) {
+        bool getTlsVerifyClient (void) const {
             return _tlsVerifyClient;
         }
         void setTlsVerifyClient (bool verif) {
             _tlsVerifyClient = verif;
         }
 
-        bool getTlsRequireClientCertificate (void) {
+        bool getTlsRequireClientCertificate (void) const {
             return _tlsRequireClientCertificate;
         }
         void setTlsRequireClientCertificate (bool require) {
             _tlsRequireClientCertificate = require;
         }
 
-        std::string getTlsNegotiationTimeoutSec (void) {
+        std::string getTlsNegotiationTimeoutSec (void) const {
             return _tlsNegotiationTimeoutSec;
         }
         void setTlsNegotiationTimeoutSec (std::string timeout) {
             _tlsNegotiationTimeoutSec = timeout;
         }
 
-        std::string getTlsNegotiationTimeoutMsec (void) {
+        std::string getTlsNegotiationTimeoutMsec (void) const {
             return _tlsNegotiationTimeoutMsec;
         }
-        void setTlsNegotiationTimeoutMsec (std::string timeout) {
+        void setTlsNegotiationTimeoutMsec (const std::string &timeout) {
             _tlsNegotiationTimeoutMsec = timeout;
         }
 
@@ -737,7 +737,7 @@ class SIPAccount : public Account
          * onto.
          * @return std::string The machine hostname as returned by pj_gethostname()
          */
-        std::string getMachineName (void);
+        std::string getMachineName (void) const;
 
         /**
          * If username is not provided, as it happens for Direct ip calls,
@@ -745,7 +745,7 @@ class SIPAccount : public Account
          * running this program.
          * @return std::string The login name under which SFLPhone is running.
          */
-        std::string getLoginName (void);
+        std::string getLoginName (void) const;
 
         /**
          * List of routes (proxies) used for registration and calls
