@@ -30,8 +30,6 @@
 #ifndef __SFL_AUDIO_ZRTP_SESSION_H__
 #define __SFL_AUDIO_ZRTP_SESSION_H__
 
-using namespace std;
-
 #include <ccrtp/rtp.h>
 
 #include <libzrtpcpp/zrtpccrtp.h>

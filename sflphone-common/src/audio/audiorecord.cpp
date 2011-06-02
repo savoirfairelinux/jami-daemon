@@ -29,6 +29,8 @@
  */
 
 #include "audiorecord.h"
+#include <cstring> // for strstr
+#include <sstream> // for stringstream
 
 // structure for the wave header
 
@@ -249,7 +251,7 @@ void AudioRecord::createFilename()
     rawtime = time (NULL);
     timeinfo = localtime (&rawtime);
 
-    stringstream out;
+    std::stringstream out;
 
     // DATE
     out << timeinfo->tm_year+1900;

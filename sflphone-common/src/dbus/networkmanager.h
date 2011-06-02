@@ -37,8 +37,6 @@
 #pragma GCC diagnostic warning "-Wignored-qualifiers"
 #pragma GCC diagnostic warning "-Wunused-parameter"
 
-using namespace std;
-
 class NetworkManager
     : public org::freedesktop::NetworkManager_proxy,
   public DBus::IntrospectableProxy,
@@ -49,7 +47,7 @@ class NetworkManager
         NetworkManager (DBus::Connection&, const DBus::Path&, const char*);
         void StateChanged (const uint32_t& state);
         void PropertiesChanged (const std::map< std::string, ::DBus::Variant >& argin0);
-        string stateAsString (const uint32_t& state);
+        std::string stateAsString (const uint32_t& state);
 
         enum NMState {
             NM_STATE_UNKNOWN = 0,
@@ -59,7 +57,7 @@ class NetworkManager
             NM_STATE_DISCONNECTED
         };
 
-        static const string statesString[5];
+        static const std::string statesString[5];
 };
 #endif
 

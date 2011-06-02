@@ -69,8 +69,8 @@ EchoCancel::EchoCancel (int smplRate, int frameLength) : _samplingRate (smplRate
     // echoFile = new ofstream("echoData", ofstream::binary);
     // spkrFile = new ofstream("spkrData", ofstream::binary);
 
-    micLevelData = new ofstream ("micLevelData", ofstream::binary);
-    spkrLevelData = new ofstream ("spkrLevelData", ofstream::binary);
+    micLevelData = new std::ofstream ("micLevelData", std::ofstream::binary);
+    spkrLevelData = new std::ofstream ("spkrLevelData", std::ofstream::binary);
 
 
     _micData = new RingBuffer (50000);

@@ -30,8 +30,6 @@
 #ifndef __SFL_MIME_PARAMETERS_H__
 #define __SFL_MIME_PARAMETERS_H__
 
-using namespace std;
-
 /**
  * Start a new payload format definition.
  */

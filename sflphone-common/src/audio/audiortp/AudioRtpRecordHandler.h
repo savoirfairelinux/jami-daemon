@@ -40,6 +40,7 @@
 #include "audio/gaincontrol.h"
 #include "managerimpl.h"
 #include <ccrtp/rtp.h>
+#include <list>
 
 namespace sfl
 {
@@ -80,7 +81,7 @@ typedef struct DtmfEvent {
     bool newevent;
 } DtmfEvent;
 
-typedef list<DtmfEvent *> EventQueue;
+typedef std::list<DtmfEvent *> EventQueue;
 
 /**
  * Class meant to store internal data in order to encode/decode,

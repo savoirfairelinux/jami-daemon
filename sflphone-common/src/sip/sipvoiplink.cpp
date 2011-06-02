@@ -59,6 +59,7 @@
 #include <arpa/nameser.h>
 #include <resolv.h>
 #include <istream>
+#include <utility> // for std::pair
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -467,7 +468,7 @@ void SIPVoIPLink::sendRegister (AccountID id) throw(VoipLinkException)
     account->setRegister (true);
 
     // Set the expire value of the message from the config file
-    istringstream stream (account->getRegistrationExpire());
+    std::istringstream stream (account->getRegistrationExpire());
     stream >> expire_value;
 
     if (!expire_value) {
@@ -2380,7 +2381,7 @@ bool SIPVoIPLink::addTransportToMap (std::string key, pjsip_transport* transport
     }
 
     _debug ("UserAgent: Storing newly created transport in map using key %s", key.c_str());
-    _transportMap.insert (pair<std::string, pjsip_transport*> (key, transport));
+    _transportMap.insert (std::pair<std::string, pjsip_transport*> (key, transport));
 
     return true;
 
@@ -3530,11 +3531,11 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
 
             call->getAudioRtp()->updateSessionMedia (static_cast<AudioCodec *>(audiocodec));
         }
-    } 
-    catch (exception& rtpException) {
+    }  // FIXME: should this really be std::exception? If so, it should be caught last
+    catch (const std::exception& rtpException) {
         _error ("UserAgent: Exception: %s", rtpException.what());
     } 
-    catch (SdpException &e) {
+    catch (const SdpException &e) {
     	_error("UserAgent: Exception: %s", e.what());
     }
 
@@ -3912,7 +3913,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
                 Manager::instance().hookPreference.getUrlCommand());
             }
         } else
-            throw length_error ("UserAgent: Url exceeds std::string max_size");
+            throw std::length_error ("UserAgent: Url exceeds std::string max_size");
 
     }
 

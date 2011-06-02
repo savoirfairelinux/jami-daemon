@@ -31,14 +31,10 @@
 #ifndef _AUDIO_RECORD_H
 #define _AUDIO_RECORD_H
 
-#include <iostream>
-#include <string.h>
-#include <stdlib.h>
-#include <sstream>
+#include <string>
+#include <cstdlib>
 
 #include "global.h"
-
-using namespace std;
 
 typedef std::string CallID;
 

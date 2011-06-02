@@ -29,11 +29,9 @@
  */
 
 #include "logger.h"
-#include <stdarg.h>
+#include <cstdarg>
 #include <string>
-#include <stdio.h>
-
-using namespace std;
+#include <cstdio>
 
 namespace Logger
 {
@@ -43,6 +41,7 @@ bool debugMode = false;
 
 void log (const int level, const char* format, ...)
 {
+    using std::string;
     if (!debugMode && level == LOG_DEBUG)
         return;
 
