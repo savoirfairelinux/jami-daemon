@@ -1,8 +1,6 @@
 AC_INIT([SFLphone],[0.9.13],[sflphoneteam@savoirfairelinux.com],[sflphone-plugins])
 AC_CONFIG_HEADERS([config.h])
 
-GNOME_DOC_INIT
-
 PACKAGE=SFLphone
 VERSION=`cat VERSION`
 
