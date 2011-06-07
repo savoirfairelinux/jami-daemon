@@ -48,6 +48,7 @@
 #include "statusicon.h"
 
 #include "contacts/addrbookfactory.h"
+#include "config/addressbook-config.h"
 
 #include "accountlist.h"
 #include "config/accountlistconfigdialog.h"
@@ -186,8 +187,10 @@ update_actions()
    
     if(abookfactory_is_addressbook_loaded()) {
         AddrBookFactory *bookFactory = abookfactory_get_factory();
-        
-        if (bookFactory->addrbook->is_enabled() && bookFactory->addrbook->is_ready()) {
+        AddressBook_Config *addressbook_config;
+	addressbook_config_load_parameters(&addressbook_config);
+ 
+        if (addressbook_config->enable && bookFactory->addrbook->is_ready()) {
             gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (contactButton), -1);
 
             // Make the icon clickable only if at least one address book is active

@@ -72,7 +72,7 @@ addressbook_is_enabled()
     // Load the address book parameters
     // addressbook_config_load_parameters (&addressbook_config);
 
-    return (guint) addressbook_config->enable;
+    return (gboolean) addressbook_config->enable;
 }
 
 /**
