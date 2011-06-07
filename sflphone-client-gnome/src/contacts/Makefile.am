@@ -1,7 +1,5 @@
 include ../../globals.mak
 
-SUBDIRS = addressbook
-
 noinst_LTLIBRARIES = libcontacts.la
 
 libcontacts_la_SOURCES = \
@@ -23,4 +21,3 @@ libcontacts_la_CFLAGS = $(DBUSGLIB_CFLAGS) $(LIBNOTIFY_CFLAGS) \
 				$(LIBEDATASERVER_CFLAGS) $(LIBEDATASERVERUI_CFLAGS) $(LIBGNOMEUI_CFLAGS) \
 				$(GNOMEDOCUTILS_CFLAGS)
 
-libcontacts_la_LIBADD = ./addressbook/libevladdrbook.so

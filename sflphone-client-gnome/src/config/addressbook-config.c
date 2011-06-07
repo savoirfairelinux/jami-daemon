@@ -31,7 +31,7 @@
 #include "addressbook-config.h"
 #include "searchbar.h"
 #include "contacts/addrbookfactory.h"
-#include "contacts/addressbook/eds.h"
+// #include "contacts/addressbook/eds.h"
 #include <string.h>
 #include <stdlib.h>
 

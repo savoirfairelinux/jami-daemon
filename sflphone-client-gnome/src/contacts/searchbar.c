@@ -35,7 +35,7 @@
 #include <calltree.h>
 #include <config/addressbook-config.h>
 #include <contacts/addressbook.h>
-#include <contacts/addressbook/eds.h>
+// #include <contacts/addressbook/eds.h>
 #include <contacts/addrbookfactory.h>
 
 GtkWidget * searchbox;

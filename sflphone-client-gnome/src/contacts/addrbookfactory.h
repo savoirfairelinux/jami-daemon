@@ -36,7 +36,6 @@
 #include <gtk/gtk.h>
 #include "addressbook.h"
 
-
 typedef struct _addrbookfactory {
     gboolean is_loaded;
     AddrBookHandle *addrbook;

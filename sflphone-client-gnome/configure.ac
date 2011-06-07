@@ -84,11 +84,12 @@ src/Makefile
 src/config/Makefile
 src/dbus/Makefile
 src/contacts/Makefile
-src/contacts/addressbook/Makefile
 src/widget/Makefile
 src/icons/Makefile
 pixmaps/Makefile
 webkit/Makefile
+plugin/addressbook/Makefile
+plugin/Makefile
 sflphone.desktop
 tests/Makefile
 man/Makefile

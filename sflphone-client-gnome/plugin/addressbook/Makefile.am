@@ -1,4 +1,4 @@
-include ../../../globals.mak
+include ../../globals.mak
 
 noinst_PROGRAMS = libevladdrbook.so
 

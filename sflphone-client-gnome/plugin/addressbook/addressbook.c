@@ -30,6 +30,7 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "eds.h"
 #include "addressbook.h"
 #include "searchbar.h"
 #include "addressbook-config.h"

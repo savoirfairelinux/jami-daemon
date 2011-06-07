@@ -39,9 +39,34 @@
 #define __ADDRESSBOOK_H__
 
 #include <gtk/gtk.h>
-#include <addressbook/eds.h>
+// #include <addressbook/eds.h>
+
+
+#define EMPTY_ENTRY     "empty"
 
 typedef enum {ABOOK_QUERY_IS, ABOOK_QUERY_BEGINS_WITH, ABOOK_QUERY_CONTAINS} AddrbookSearchType;
+
+/**
+ * Represent a contact entry
+ */
+typedef struct _Hit {
+    gchar *name;
+    GdkPixbuf *photo;
+    gchar *phone_business;
+    gchar *phone_home;
+    gchar *phone_mobile;
+} Hit;
+
+/**
+ * Book structure for "outside world"
+ */
+typedef struct {
+    gchar *uid;
+    gchar *uri;
+    gchar *name;
+    gboolean active;
+    gboolean isdefault;
+} book_data_t;
 
 typedef struct _AddressBook_Config {
     // gint64: a signed integer guaranteed to be 64 bits on all platforms
