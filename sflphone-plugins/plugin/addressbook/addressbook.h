@@ -87,8 +87,8 @@ struct AddrBookHandle {
     gboolean (*is_enabled) (void);
     gboolean (*is_active) (void);
     void (*search) (AddrBookHandle *, GtkEntry *, AddressBook_Config *);
-    book_data_t *(*get_books_data)(gchar **);
-    GSList *(*get_book_data_by_uid)(gchar *);
+    GSList *(*get_books_data)(gchar **);
+    book_data_t *(*get_book_data_by_uid)(gchar *);
     void (*set_current_book)(gchar *); 
     void (*set_search_type)(AddrbookSearchType);
     void (*search_cb)(GList *, gpointer); 
