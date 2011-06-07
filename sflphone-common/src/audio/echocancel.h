@@ -31,6 +31,7 @@
 #ifndef ECHOCANCEL_H
 #define ECHOCANCEL_H
 
+#include <iosfwd> // for forward declarations of ofstream
 #include <cc++/thread.h>
 #include <speex/speex_preprocess.h>
 
@@ -376,12 +377,12 @@ class EchoCancel : public Algorithm
 
         int _correlationArray[BUFF_SIZE];
 
-        ofstream *micFile;
-        ofstream *spkrFile;
-        ofstream *echoFile;
+        std::ofstream *micFile;
+        std::ofstream *spkrFile;
+        std::ofstream *echoFile;
 
-        ofstream *micLevelData;
-        ofstream *spkrLevelData;
+        std::ofstream *micLevelData;
+        std::ofstream *spkrLevelData;
 
         // #ifdef HAVE_SPEEXDSP_LIB
         /**

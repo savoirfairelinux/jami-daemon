@@ -33,6 +33,7 @@
 #include <libintl.h>
 #include <cstring>
 #include <iostream>
+#include <memory> // for auto_ptr
 #include <string>
 #include <dirent.h>
 #include <sys/stat.h>
@@ -45,7 +46,6 @@
 
 #include "audio/audiolayer.h"
 
-using namespace std;
 using namespace ost;
 
 CommandOptionArg	level (
@@ -72,19 +72,21 @@ main (int argc, char **argv)
     Logger::setConsoleLog (false);
     Logger::setDebugMode (false);
 
-    CommandOptionParse * args = makeCommandOptionParse (argc, argv, "");
+    // makeCommandOptionParse allocates the object with operator new, so
+    // auto_ptr is fine in this context.
+    // TODO: This should eventually be replaced with std::unique_ptr for C++0x
+    std::auto_ptr<CommandOptionParse> args(makeCommandOptionParse (argc, argv, ""));
 
     printf ("SFLphone Daemon %s, by Savoir-Faire Linux 2004-2011\n", VERSION);
     printf ("http://www.sflphone.org/\n");
 
     if (help.numSet) {
-        cerr << args->printUsage();
+        std::cerr << args->printUsage();
         ::exit (0);
     }
-
-    if (args->argsHaveError()) {
-        cerr << args->printErrors();
-        cerr << args->printUsage();
+    else if (args->argsHaveError()) {
+        std::cerr << args->printErrors();
+        std::cerr << args->printUsage();
         ::exit (1);
     }
 
@@ -97,8 +99,6 @@ main (int argc, char **argv)
         _info ("Debug mode activated");
         Logger::setDebugMode (true);
     }
-
-    delete args;
 
     FILE *fp;
     char homepid[128];

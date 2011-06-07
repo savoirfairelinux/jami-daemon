@@ -32,9 +32,10 @@
  *  as that of the covered work.
  */
 
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
+#include <utility> // for std::pair
 
 #include "ringbuffer.h"
 #include "global.h"
@@ -180,7 +181,7 @@ void
 RingBuffer::createReadPointer (CallID call_id)
 {
     if (!hasThisReadPointer (call_id))
-        _readpointer.insert (pair<CallID, int> (call_id, mEnd));
+        _readpointer.insert (std::pair<CallID, int> (call_id, mEnd));
 
 }
 

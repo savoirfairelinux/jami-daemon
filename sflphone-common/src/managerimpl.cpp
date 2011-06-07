@@ -74,9 +74,6 @@
 
 #define MD5_APPEND(pms,buf,len) pj_md5_update(pms, (const pj_uint8_t*)buf, len)
 
-// Default account used to get default parametersa if requested by client (to build ne account)
-SIPAccount defaultAccount ("default");
-
 ManagerImpl::ManagerImpl (void) :
     _hasTriedToRegister (false), _config(), _currentCallId2(),
     _currentCallMutex(), _codecBuilder (NULL), _audiodriver (NULL),
@@ -1803,7 +1800,7 @@ bool ManagerImpl::incomingCall (Call* call, const AccountID& accountId)
 
         int startIndex = peerNumber.find ("sip:");
 
-        if (startIndex != (int) string::npos) {
+        if (startIndex != (int) std::string::npos) {
             std::string strippedPeerNumber = peerNumber.substr (startIndex + 4);
             call->setPeerNumber (strippedPeerNumber);
         }
@@ -3751,18 +3748,20 @@ std::vector<std::string> ManagerImpl::getAccountList ()
 std::map<std::string, std::string> ManagerImpl::getAccountDetails (
     const AccountID& accountID)
 {
+    // Default account used to get default parameters if requested by client (to build new account)
+    static const SIPAccount DEFAULT_ACCOUNT("default");
 
     Account * account = _accountMap[accountID];
 
     if (accountID.empty()) {
         _debug ("Manager: Returning default account settings");
         // return a default map
-        return defaultAccount.getAccountDetails();
+        return DEFAULT_ACCOUNT.getAccountDetails();
     } else if (account) {
         return account->getAccountDetails();
     } else {
         _debug ("Manager: Get account details on a non-existing accountID %s. Returning default", accountID.c_str());
-        return defaultAccount.getAccountDetails();
+        return DEFAULT_ACCOUNT.getAccountDetails();
     }
 
 }

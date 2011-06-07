@@ -31,8 +31,6 @@
 #ifndef __SFL_ZRTP_CALLBACK_H__
 #define __SFL_ZRTP_CALLBACK_H__
 
-using namespace std;
-
 #include <libzrtpcpp/zrtpccrtp.h>
 #include <libzrtpcpp/ZrtpQueue.h>
 #include <libzrtpcpp/ZrtpUserCallback.h>
@@ -67,7 +65,7 @@ class ZrtpSessionCallback: public ZrtpUserCallback
 
     private:
         SIPCall* _sipcall;
-
+        /* FIXME: why are these strings dynamically allocated? */
         static std::map<int32, std::string*> _infoMap;
         static std::map<int32, std::string*> _warningMap;
         static std::map<int32, std::string*> _severeMap;

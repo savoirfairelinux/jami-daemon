@@ -36,7 +36,6 @@
 
 #include "call.h"
 
-class AudioCodec;
 class Account;
 
 /** Define AccountID type */

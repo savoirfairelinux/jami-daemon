@@ -50,7 +50,7 @@ class IAXAccount : public Account
 
         void setAccountDetails (const std::map<std::string, std::string>& details);
 
-        std::map<std::string, std::string> getAccountDetails();
+        std::map<std::string, std::string> getAccountDetails() const;
 
         void setVoIPLink ();
 

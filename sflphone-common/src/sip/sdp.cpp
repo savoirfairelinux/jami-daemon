@@ -266,14 +266,14 @@ void Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media *med)
     pjmedia_sdp_attr *attr_fmtp = NULL;
 
     attr_rtpmap = static_cast<pjmedia_sdp_attr *>(pj_pool_zalloc(memPool, sizeof(pjmedia_sdp_attr)));
-    attr_rtpmap->name = pj_str("rtpmap");
-    attr_rtpmap->value = pj_str("101 telephone-event/8000");
+    attr_rtpmap->name = pj_str((char *) "rtpmap");
+    attr_rtpmap->value = pj_str((char *) "101 telephone-event/8000");
 
     med->attr[med->attr_count++] = attr_rtpmap;
 
     attr_fmtp = static_cast<pjmedia_sdp_attr *>(pj_pool_zalloc(memPool, sizeof(pjmedia_sdp_attr)));
-    attr_fmtp->name = pj_str("fmtp");
-    attr_fmtp->value = pj_str("101 0-15");
+    attr_fmtp->name = pj_str((char *) "fmtp");
+    attr_fmtp->value = pj_str((char *) "101 0-15");
 
     med->attr[med->attr_count++] = attr_fmtp;
 }
