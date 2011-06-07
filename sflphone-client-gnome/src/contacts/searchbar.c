@@ -454,6 +454,8 @@ GtkWidget* contacts_searchbar_new ()
              book_list_iterator = book_list_iterator->next) {
         book_data = (book_data_t *) book_list_iterator->data;
 
+        DEBUG("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ %s", book_data->name);
+
         if (book_data->active) {
 
             gtk_list_store_append (liststore, &iter);
@@ -539,7 +541,7 @@ GtkWidget* contacts_searchbar_new ()
     gtk_box_pack_start (GTK_BOX (ret), addressbookentry, TRUE, TRUE, 0);
 
     g_free (tooltip_text);
-
+    g_strfreev (book_list);
 
     // current_addressbook = gtk_combo_box_get_active_text (GTK_COMBO_BOX (cbox));
     // set_current_addressbook (current_addressbook);

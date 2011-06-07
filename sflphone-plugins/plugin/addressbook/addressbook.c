@@ -104,17 +104,13 @@ addressbook_config_books(gchar **book_list)
 {
     gchar **config_book_uid;
     book_data_t *book_data;
-    gchar **list;
 
-    // Retrieve list of books
-    // list = (gchar **) dbus_get_addressbook_list();
-
-    list = NULL;
-
-    if (list == NULL)
+    if (book_list == NULL) {
+        printf("Addresbook: Error: Book list is NULL (%s:%d)\n", __FILE__, __LINE__);
         return;
+    }
 
-    for (config_book_uid = list; *config_book_uid; config_book_uid++) {
+    for (config_book_uid = book_list; *config_book_uid; config_book_uid++) {
 
         // Get corresponding book data
         book_data = books_get_book_data_by_uid (*config_book_uid);
@@ -126,8 +122,6 @@ addressbook_config_books(gchar **book_list)
             book_data->active = TRUE;
         }
     }
-
-    g_strfreev (list);
 }
 
 /**
