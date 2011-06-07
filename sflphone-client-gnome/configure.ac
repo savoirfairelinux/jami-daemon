@@ -55,9 +55,6 @@ PKG_CHECK_MODULES([LIBNOTIFY], [libnotify >= 0.7.2], [AC_DEFINE([LIBNOTIFY_VERSI
 PKG_CHECK_MODULES(SFLGTK, gtk+-2.0 > 2.2)
 PKG_CHECK_MODULES(SFLGLIB, glib-2.0 >= 2.2)
 PKG_CHECK_MODULES(WEBKIT, webkit-1.0)
-PKG_CHECK_MODULES(LIBEBOOK, libebook-1.2 >= 1.4)
-PKG_CHECK_MODULES([LIBEDATASERVER], [libedataserver-1.2 >= 2.32], [AC_DEFINE([LIBEDATASERVER_VERSION_2_32], [], [Using libedataserver-1.2 version 2.32 or higher])],[PKG_CHECK_MODULES([LIBEDATASERVER], [libedataserver-1.2 >= 1.4])])
-#PKG_CHECK_MODULES(LIBEDATASERVERUI, libedataserverui-1.2)
 PKG_CHECK_MODULES(LIBGNOMEUI, libgnomeui-2.0)
 PKG_CHECK_MODULES(GNOMEDOCUTILS, gnome-doc-utils)
 
@@ -88,8 +85,6 @@ src/widget/Makefile
 src/icons/Makefile
 pixmaps/Makefile
 webkit/Makefile
-plugin/addressbook/Makefile
-plugin/Makefile
 sflphone.desktop
 tests/Makefile
 man/Makefile

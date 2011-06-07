@@ -1,4 +1,4 @@
-SUBDIRS = src pixmaps webkit tests man po doc plugin
+SUBDIRS = src pixmaps webkit tests man po doc
 
 CFLAGS=-Wall -Werror -Wextra
 
