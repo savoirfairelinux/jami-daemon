@@ -94,10 +94,13 @@ calltab_get_selected_conf ()
 void
 calltab_create_searchbar (calltab_t* tab)
 {
-    if (g_strcasecmp (tab->_name, HISTORY) == 0)
+    if (g_strcasecmp (tab->_name, HISTORY) == 0) {
         tab->searchbar = history_searchbar_new ();
-    else if (g_strcasecmp (tab->_name, CONTACTS) == 0)
+    }
+    else if (g_strcasecmp (tab->_name, CONTACTS) == 0) {
         tab->searchbar = contacts_searchbar_new ();
-    else
+    }
+    else {
         ERROR ("Current calls tab does not need a searchbar\n");
+    }
 }
