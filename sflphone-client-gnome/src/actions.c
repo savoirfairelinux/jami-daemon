@@ -29,30 +29,31 @@
  *  as that of the covered work.
  */
 
-#include <actions.h>
-#include <dbus/dbus.h>
-#include <statusicon.h>
-#include <contacts/searchbar.h>
-#include "icons/icon_factory.h"
-
 #include <gtk/gtk.h>
-#include <string.h>
 #include <glib/gprintf.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <netinet/in.h>
 #include <arpa/nameser.h>
+#include <netinet/in.h>
 #include <resolv.h>
 
+#include <linux/if.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <linux/if.h>
 
-#include <widget/imwidget.h>
-#include <imwindow.h>
+#include "actions.h"
+#include "dbus/dbus.h"
+#include "contacts/searchbar.h"
+#include "contacts/addrbookfactory.h"
+#include "icons/icon_factory.h"
+#include "imwindow.h"
+#include "statusicon.h"
+#include "widget/imwidget.h"
+
 
 GHashTable * ip2ip_profile=NULL;
 
