@@ -1270,7 +1270,7 @@ void calltree_update_conference (calltab_t* tab, const conference_obj_t* conf)
     DEBUG ("CallTree: Update conference %s\n", conf->_confID);
 
     calltree_remove_conference(tab, conf, NULL);
-    calltree_add_conference (tab, conf);
+    calltree_add_conference (tab, (conference_obj_t *)conf);
 }
 
 
