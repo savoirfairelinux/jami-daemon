@@ -33,6 +33,8 @@
 #include "audio/audiolayer.h"
 #include "manager.h"
 
+// #define DUMP_PROCESS_DATA_ENCODE
+
 namespace sfl
 {
 
@@ -250,7 +252,9 @@ void AudioRtpRecordHandler::putDtmfEvent (int digit)
     _debug ("AudioRtpSession: Put Dtmf Event %d", digit);
 }
 
+#ifdef DUMP_PROCESS_DATA_ENCODE
 std::ofstream teststream("test_process_data_encode.raw");
+#endif
 
 int AudioRtpRecordHandler::processDataEncode (void)
 {
@@ -332,8 +336,10 @@ int AudioRtpRecordHandler::processDataEncode (void)
             echoCanceller.getData(micData);
         }
 
+	
+#ifdef DUMP_PROCESS_DATA_ENCODE
         teststream.write(reinterpret_cast<char *>(micData), nbSample * sizeof(SFLDataFormat));
-
+#endif
         
         _audioRtpRecord.audioProcessMutex.leave();
 
