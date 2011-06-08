@@ -10,20 +10,19 @@
 #export DH_VERBOSE=1
 export DH_OPTIONS
 
-package=sflphone-common
+package=sflphone-plugins
 
-CXX = g++-4.0
+CXX = gcc-4.0
 CFLAGS = -Wall -g
-DEB_INSTALL_MANPAGES_sflphone_common = sflphoned.1
 
 configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
-	./autogen.sh 
-	./configure --prefix=/usr --without-celt
-	cd libs/pjproject; ./autogen.sh; ./configure --prefix=/usr
+	./autogen.sh
+	./configure --prefix=/usr
 	touch configure-stamp
+
 
 #Architecture 
 build: build-arch build-indep
@@ -32,8 +31,7 @@ build-arch: build-arch-stamp
 build-arch-stamp: configure-stamp 
 
     # Add here commands to compile the arch part of the package.
-	cd libs/pjproject; $(MAKE) dep; $(MAKE) clean; $(MAKE)
-	$(MAKE)
+	$(MAKE) 
 	touch $@
 
 build-indep: build-indep-stamp
@@ -73,7 +71,6 @@ install-arch:
 	# Add here commands to install the arch part of the package into 
 	# debian/tmp.
 	$(MAKE) DESTDIR=$(CURDIR)/debian/$(package) install
-	rm -rf $(CURDIR)/debian/$(package)/usr/include
 	dh_install -s
 # Must not depend on anything. This is to be called by
 # binary-arch/binary-indep
@@ -106,7 +103,7 @@ binary-common:
 #	dh_shlibdeps
 	dh_gencontrol
 	dh_md5sums
-dh_builddeb
+	dh_builddeb
 # Build architecture independant packages using the common target.
 binary-indep: build-indep install-indep
 	$(MAKE) -f debian/rules DH_OPTIONS=-i binary-common
