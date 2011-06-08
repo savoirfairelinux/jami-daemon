@@ -235,9 +235,22 @@ handler_async_search (GList *hits, gpointer user_data)
 */
 
 void addressbook_set_search_type(AddrbookSearchType searchType) {
-
+    switch(searchType) {
+    case ABOOK_QUERY_IS:
+	set_current_addressbook_test(E_BOOK_QUERY_IS);
+	break;
+    case ABOOK_QUERY_BEGINS_WITH:
+	set_current_addressbook_test(E_BOOK_QUERY_BEGINS_WITH);
+	break;
+    case ABOOK_QUERY_CONTAINS:
+	set_current_addresbook_test(E_BOOK_QUERY_CONTAINS);
+	break;
+    default:
+	printf("Addressbook: Error: Unsupported search type");
+    	break;
+    }
 }
 
 void addressbook_set_current_book(gchar *current) {
-
+    set_current_addressbook(current);
 }

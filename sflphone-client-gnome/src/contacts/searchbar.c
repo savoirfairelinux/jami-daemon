@@ -84,11 +84,12 @@ static void cbox_changed_cb (GtkWidget *widget, gpointer user_data UNUSED)
 {
     gchar *name;
 
-    DEBUG ("Searchbar: CBOX changed callback");
+    DEBUG ("Searchbar: Addressbook changed callback");
 
     name = gtk_combo_box_get_active_text (GTK_COMBO_BOX (widget));
 
     if(abookfactory_is_addressbook_loaded()) {
+        DEBUG("Searchbar: Set new addressbook");
         AddrBookFactory *factory = abookfactory_get_factory();
         factory->addrbook->set_current_book (name);
         AddressBook_Config *addressbook_config;
