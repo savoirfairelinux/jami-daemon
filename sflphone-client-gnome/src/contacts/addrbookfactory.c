@@ -37,7 +37,7 @@
 
 static void handler_async_search(GList *hits, gpointer user_data);
 
-AddrBookFactory addressbookFactory = {NULL};
+AddrBookFactory addressbookFactory = { .addrbook = NULL };
 
 AddrBookFactory *abookfactory_get_factory(void) {
     return &addressbookFactory;
@@ -51,7 +51,7 @@ void abookfactory_init_factory() {
     abookfactory_load_module(&addressbookFactory);
 } 
 
-void abookfactory_scan_directory(AddrBookFactory *factory) {
+void abookfactory_scan_directory(AddrBookFactory *factory UNUSED) {
     
 }
 
