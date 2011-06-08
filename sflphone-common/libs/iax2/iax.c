@@ -878,6 +878,7 @@ int iax_init(int preferredportno)
 	{
 		struct sockaddr_in sin;
 		socklen_t sinlen;
+		socklen_t *slen = &sinlen;
 		int flags;
 		int bufsize = 256 * 1024;
 
@@ -928,7 +929,7 @@ int iax_init(int preferredportno)
 		}
 
 		sinlen = sizeof(sin);
-		if (getsockname(netfd, (struct sockaddr *) &sin, &sinlen) < 0)
+		if (getsockname(netfd, (struct sockaddr *) &sin, slen) < 0)
 		{
 			close(netfd);
 			netfd = -1;

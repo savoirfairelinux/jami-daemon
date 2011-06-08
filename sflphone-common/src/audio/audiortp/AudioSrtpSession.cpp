@@ -319,7 +319,7 @@ char* AudioSrtpSession::encodeBase64 (unsigned char *input, int length)
     b64 = BIO_push (b64, bmem);
 
     BIO_write (b64, input, length);
-    BIO_flush (b64);
+    // BIO_flush (b64);
 
     // get pointer to data
     BIO_get_mem_ptr (b64, &bptr);
