@@ -31,9 +31,12 @@
 #ifndef INSTANCE_H
 #define INSTANCE_H
 
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
+
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #include "instance-glue.h"
 #pragma GCC diagnostic warning "-Wignored-qualifiers"
 #pragma GCC diagnostic warning "-Wunused-parameter"
