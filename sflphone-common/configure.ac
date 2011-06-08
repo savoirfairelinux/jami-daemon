@@ -11,17 +11,11 @@ AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
-PACKAGE=SFLphone
-VERSION=`cat VERSION`
-
-AM_INIT_AUTOMAKE($NAME, $VERSION)
+AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
 
 # Silent build by default. Use make V=1 to increase verbosity
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
-
-dnl Use this variable in the program
-AC_SUBST(PACKAGE_VERSION)
 
 dnl Rewrite name of programs to be installed
 dnl AC_ARG_PROGRAM

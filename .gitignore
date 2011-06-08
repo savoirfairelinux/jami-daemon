@@ -9,9 +9,13 @@
 *.m4
 *.Tpo
 Makefile.in
+Makefile
 /config.*
 *.swp
 *.so
+*.raw
+*.pod
+
 # Binary translation files
 *.mo
 libtool
@@ -44,11 +48,42 @@ sflphone-client-gnome/stamp-h1
 /src/sflphone
 /src/.libs
 
-/src/dbus/org.sflphone.SFLphone.service
+# Ignore sflphone-common stuff
+/sflphone-common/autom4te.cache
+/sflphone-common/config.guess
+/sflphone-common/config.*
+/sflphone-common/configure
+/sflphone-common/depcomp
+/sflphone-common/install-sh
+/sflphone-common/INSTALL
+/sflphone-common/missing
+/sflphone-common/src/dbus/org.sflphone.SFLphone.service
+/sflphone-common/src/sflphoned
+/sflphone-common/stamp-h1
+/sflphone-common/ltmain.sh
 
 # PJSIP files
 *.depend
 *i686-pc-linux-gnu
+*pjlib-util-test-*
+*pjlib-test-*
+*pjmedia-test-*
+*pjnath-test-*
+*pjturn-client-*
+*pjturn-srv-*
+*pjsua-*
+*pjsystest-*
+*x86_64-unknown-*
+sip_autoconf.h
+os-auto.mak
+build.mak
+config.log
+config.status
+m_auto.h
+os_auto.h
+config_site.h
+config_auto.h
+
 /libs/pjproject-1.0.3/pjlib-util/build/os-auto.mak
 /libs/pjproject-1.0.3/pjlib/build/os-auto.mak
 /libs/pjproject-1.0.3/pjlib/include/pj/compat/m_auto.h
@@ -120,6 +155,10 @@ sflphone-client-gnome/stamp-h1
 /sflphone-client-gnome/src/dbus/marshaller.c
 /sflphone-client-gnome/src/dbus/marshaller.h
 /sflphone-client-gnome/ltmain.sh
+/sflphone-client-gnome/@GCONF_SCHEMA_FILE_DIR@/
+/sflphone-client-gnome/active
+/sflphone-client-gnome/man/sflphone.pod
+
 
 # Ignore sflphone_kde stuff
 /sflphone-client-kde/build
@@ -155,6 +194,28 @@ sflphone-client-gnome/stamp-h1
 /sflphone-client-kde/src/qrc_resources.cxx
 /sflphone-client-kde/src/sflphone-client-kde
 /sflphone-client-kde/src/sflphone-client-kde.shell
+/sflphone-client-kde/man/sflphone.pod
+
+# Ignore sflphone-plugins stuff
+
+/sflphone-plugins/.cproject
+/sflphone-plugins/.project
+/sflphone-plugins/.settings/*
+/sflphone-plugins/active
+/sflphone-plugins/autom4te.cache/*
+/sflphone-plugins/config.guess
+/sflphone-plugins/config.*
+/sflphone-plugins/configure
+/sflphone-plugins/depcomp
+/sflphone-plugins/gnome-doc-utils.make
+/sflphone-plugins/install-sh
+/sflphone-plugins/ltmain.sh
+/sflphone-plugins/missing
+/sflphone-plugins/sflphone-client-gnome.schemas
+/sflphone-plugins/sflphone.desktop
+/sflphone-plugins/sflphone.desktop.*
+/sflphone-plugins/stamp-h.in
+/sflphone-plugins/stamp-h1
 
 # Ignore sub-modules stuff
 ## libiax2
@@ -253,4 +314,5 @@ sflphone-client-gnome/stamp-h1
 /tools/*.changes
 /tools/mozilla-telify-sflphone/debian/control
 /tools/mozilla-telify-sflphone/debian/mozilla-telify-sflphone.links
-
+/tools/mozilla-telify-sflphone/debian*
+/tools/build-system/launchpad/mozilla-telify-sflphone/*

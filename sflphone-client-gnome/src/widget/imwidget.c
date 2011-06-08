@@ -63,12 +63,18 @@ on_frame_loading_done (GObject *gobject UNUSED, GParamSpec *pspec UNUSED, gpoint
                 g_free (im->first_message_from);
                 im->first_message = NULL;
                 im->first_message_from = NULL;
-                DEBUG ("JavaScrip loading frame finished");
+                DEBUG ("InstantMessaging: JavaScrip loading frame finished");
                 break;
             case WEBKIT_LOAD_FIRST_VISUALLY_NON_EMPTY_LAYOUT:
                 // case WEBKIT_LOAD_FAILED: // only available in webkit-1.0-2
                 break;
-        }
+	    case WEBKIT_LOAD_FAILED:
+		DEBUG("InstantMessaging: Webkit load failed");
+    		break;    
+	    default:
+		ERROR("InstantMessaging: Error: Not a valid case in switch");
+	        break;
+	}
     }
 
 }
@@ -79,10 +85,9 @@ escape_single_quotes (const gchar *message)
     gchar **ptr_token;
     gchar *string = "";
 
-    DEBUG ("message: %s", message);
+    DEBUG ("InstantMessaging: message: %s", message);
 
     if ( (ptr_token = g_strsplit (message, "'", 0))) {
-        DEBUG ("SPLITTING");
         string = g_strjoinv ("\\'", ptr_token);
     }
 
@@ -136,7 +141,7 @@ web_view_nav_requested_cb (
         gchar *cmd = g_strdup_printf ("x-www-browser %s", uri);
 
         if (system (cmd) == -1)
-            ERROR ("Error executing command %s", cmd);
+            ERROR ("InstantMessaging: Error: executing command %s", cmd);
 
         webkit_web_policy_decision_ignore (policy_decision);
         g_free (cmd);
@@ -351,7 +356,7 @@ im_widget_display (IMWidget **im, const gchar *message, const gchar *id, const g
         // *call = tmp;
 
         /* Update the widget with some useful call information: ie the call ID */
-        imwidget->call_id = id;
+        imwidget->call_id = (gchar *)id;
 
         /* Create the GtkInfoBar, used to display call information, and status of the IM widget */
         im_widget_infobar (imwidget);

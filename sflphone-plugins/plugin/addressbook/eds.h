@@ -41,7 +41,9 @@
 #include <glib/gtypes.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <libebook/e-book.h>
-#include <sflphone_const.h>
+
+#include "addressbook.h"
+// #include "sflphone_const.h"
 
 
 #define EMPTY_ENTRY     "empty"
@@ -57,6 +59,7 @@ int current_search_id;
 /**
  * Represent a contact entry
  */
+/*
 typedef struct _Hit {
     gchar *name;
     GdkPixbuf *photo;
@@ -64,10 +67,11 @@ typedef struct _Hit {
     gchar *phone_home;
     gchar *phone_mobile;
 } Hit;
-
+*/
 /**
  * Book structure for "outside world"
  */
+/*
 typedef struct {
     gchar *uid;
     gchar *uri;
@@ -75,7 +79,7 @@ typedef struct {
     gboolean active;
     gboolean isdefault;
 } book_data_t;
-
+*/
 
 /**
  * Free a contact entry

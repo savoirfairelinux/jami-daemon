@@ -26,5 +26,5 @@ doc:
 
 ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = libs src ringtones man $(TESTS_DIR)
-EXTRA_DIST = m4/*.m4 tools/*.sh platform/* images/* README.gentoo
+EXTRA_DIST = m4/*.m4 images/* README.gentoo
 

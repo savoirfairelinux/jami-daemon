@@ -3533,12 +3533,12 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
             call->getAudioRtp()->updateSessionMedia (static_cast<AudioCodec *>(audiocodec));
         }
     }  // FIXME: should this really be std::exception? If so, it should be caught last
+    catch (const SdpException &e) {
+        _error("UserAgent: Exception: %s", e.what());
+    }
     catch (const std::exception& rtpException) {
         _error ("UserAgent: Exception: %s", rtpException.what());
     } 
-    catch (const SdpException &e) {
-    	_error("UserAgent: Exception: %s", e.what());
-    }
 
 }
 

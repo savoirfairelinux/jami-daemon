@@ -30,7 +30,8 @@
 
 #include "addressbook-config.h"
 #include "searchbar.h"
-#include <contacts/addressbook/eds.h>
+#include "contacts/addrbookfactory.h"
+// #include "contacts/addressbook/eds.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -66,8 +67,8 @@ addressbook_config_load_parameters (AddressBook_Config **settings)
         _settings->search_phone_business = 1;
         _settings->search_phone_home = 1;
         _settings->search_phone_mobile = 1;
-
-    } else {
+    } 
+    else {
         _settings->enable = (size_t) (g_hash_table_lookup (_params, ADDRESSBOOK_ENABLE));
         _settings->max_results = (size_t) (g_hash_table_lookup (_params, ADDRESSBOOK_MAX_RESULTS));
         _settings->display_contact_photo = (size_t) (g_hash_table_lookup (_params, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO));
@@ -206,8 +207,13 @@ addressbook_config_book_active_toggled (
     GtkTreePath *treePath;
     GtkTreeModel *model;
     gboolean active;
+    book_data_t *book_data;
     gchar* name;
     gchar* uid;
+
+    if(!abookfactory_is_addressbook_loaded()) {
+        return;
+    }
 
     // Get path of clicked book active toggle box
     treePath = gtk_tree_path_new_from_string (path);
@@ -216,6 +222,8 @@ addressbook_config_book_active_toggled (
         DEBUG ("Addressbook: No valid model (%s:%d)", __FILE__, __LINE__);
         return;
     }
+
+    AddrBookFactory *factory = abookfactory_get_factory();
 
     gtk_tree_model_get_iter (model, &iter, treePath);
 
@@ -232,10 +240,20 @@ addressbook_config_book_active_toggled (
     gtk_tree_path_free (treePath);
 
     // Update current memory stored books data
-    books_get_book_data_by_uid (uid)->active = active;
+    book_data = factory->addrbook->get_book_data_by_uid(uid);
+    if(book_data == NULL) {
+	ERROR("Addressbook: Error: Could not find addressbook %s", uid);
+    }
+    book_data->active = active;
+
+    if(active) {
+        DEBUG("-------------------------------------------- SET ADDRESSBOOK %s AS ACTIVE", book_data->name);
+    }
+    else {
+        DEBUG("-------------------------------------------- SET ADDRESSBOOK %s AS INACTIVE", book_data->name);
+    }
 
     // Save data
-
     gboolean valid;
 
     // Initiate double array char list for one string
@@ -279,7 +297,16 @@ addressbook_config_fill_book_list()
     GSList *book_list_iterator;
     GtkListStore *store;
     book_data_t *book_data;
-    GSList *books_data = addressbook_get_books_data();
+    gchar **book_list;
+
+    if(!abookfactory_is_addressbook_loaded()) {
+        return;
+    }
+
+    AddrBookFactory *factory = abookfactory_get_factory();
+
+    book_list = dbus_get_addressbook_list();
+    GSList *books_data = factory->addrbook->get_books_data(book_list);
 
     if (!books_data) {
         DEBUG ("Addressbook: No valid books data (%s:%d)", __FILE__, __LINE__);
@@ -298,6 +325,7 @@ addressbook_config_fill_book_list()
             = book_list_iterator->next) {
         book_data = (book_data_t *) book_list_iterator->data;
         gtk_list_store_append (store, &list_store_iterator);
+        DEBUG("-----------------------------------: %s, %s", book_data->name, book_data->active ? "active" : "not-active");
         gtk_list_store_set (store, &list_store_iterator, COLUMN_BOOK_ACTIVE,
                             book_data->active, COLUMN_BOOK_UID, book_data->uid, COLUMN_BOOK_NAME,
                             book_data->name, -1);

@@ -42,9 +42,14 @@
 #include <statusicon.h>
 #include <widget/imwidget.h>
 #include <eel-gconf-extensions.h>
+
+
 #include "uimanager.h"
 #include "statusicon.h"
-#include "contacts/addressbook.h"
+
+#include "contacts/addrbookfactory.h"
+#include "config/addressbook-config.h"
+
 #include "accountlist.h"
 #include "config/accountlistconfigdialog.h"
 
@@ -93,6 +98,7 @@ update_actions()
 
     DEBUG ("UIManager: Update action");
 
+
     gtk_action_set_sensitive (GTK_ACTION (newCallAction), TRUE);
     gtk_action_set_sensitive (GTK_ACTION (pickUpAction), FALSE);
     gtk_action_set_sensitive (GTK_ACTION (hangUpAction), FALSE);
@@ -102,7 +108,9 @@ update_actions()
     g_object_ref (recordWidget);
     g_object_ref (holdToolbar);
     g_object_ref (offHoldToolbar);
-    g_object_ref (contactButton);
+    if(abookfactory_is_addressbook_loaded()) {
+        g_object_ref (contactButton);
+    }
     g_object_ref (historyButton);
     g_object_ref (transferToolbar);
     g_object_ref (voicemailToolbar);
@@ -125,8 +133,10 @@ update_actions()
         gtk_container_remove (GTK_CONTAINER (toolbar), GTK_WIDGET (historyButton));
     }
 
-    if (is_inserted (GTK_WIDGET (contactButton), GTK_WIDGET (toolbar))) {
-        gtk_container_remove (GTK_CONTAINER (toolbar), GTK_WIDGET (contactButton));
+    if(abookfactory_is_addressbook_loaded()) {
+        if (is_inserted (GTK_WIDGET (contactButton), GTK_WIDGET (toolbar))) {
+            gtk_container_remove (GTK_CONTAINER (toolbar), GTK_WIDGET (contactButton));
+        }
     }
 
     if (is_inserted (GTK_WIDGET (voicemailToolbar), GTK_WIDGET (toolbar))) {
@@ -138,17 +148,20 @@ update_actions()
         gtk_container_remove (GTK_CONTAINER (toolbar),
                               GTK_WIDGET (imToolbar));
     }
-
+    
     gtk_widget_set_sensitive (GTK_WIDGET (holdMenu), FALSE);
     gtk_widget_set_sensitive (GTK_WIDGET (holdToolbar), FALSE);
     gtk_widget_set_sensitive (GTK_WIDGET (offHoldToolbar), FALSE);
     gtk_action_set_sensitive (GTK_ACTION (recordAction), FALSE);
     gtk_widget_set_sensitive (GTK_WIDGET (recordWidget), FALSE);
     gtk_action_set_sensitive (GTK_ACTION (copyAction), FALSE);
-    gtk_widget_set_sensitive (GTK_WIDGET (contactButton), FALSE);
+    if(abookfactory_is_addressbook_loaded()) { 
+        gtk_widget_set_sensitive (GTK_WIDGET (contactButton), FALSE);
+    }
     gtk_widget_set_sensitive (GTK_WIDGET (historyButton), FALSE);
-    gtk_widget_set_tooltip_text (GTK_WIDGET (contactButton),
-                                 _ ("No address book selected"));
+    if(abookfactory_is_addressbook_loaded()) {
+        gtk_widget_set_tooltip_text (GTK_WIDGET (contactButton),_("No address book selected"));
+    }
 
     if (is_inserted (GTK_WIDGET (holdToolbar), GTK_WIDGET (toolbar)))
         gtk_container_remove (GTK_CONTAINER (toolbar), GTK_WIDGET (holdToolbar));
@@ -171,15 +184,20 @@ update_actions()
     }
 
     // If addressbook support has been enabled and all addressbooks are loaded, display the icon
-    if (addressbook_is_enabled() && addressbook_is_ready()) {
-        gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (contactButton),
-                            -1);
+   
+    if(abookfactory_is_addressbook_loaded()) {
+        AddrBookFactory *bookFactory = abookfactory_get_factory();
+        AddressBook_Config *addressbook_config;
+	addressbook_config_load_parameters(&addressbook_config);
+ 
+        if (addressbook_config->enable && bookFactory->addrbook->is_ready()) {
+            gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (contactButton), -1);
 
-        // Make the icon clickable only if at least one address book is active
-        if (addressbook_is_active()) {
-            gtk_widget_set_sensitive (GTK_WIDGET (contactButton), TRUE);
-            gtk_widget_set_tooltip_text (GTK_WIDGET (contactButton),
-                                         _ ("Address book"));
+            // Make the icon clickable only if at least one address book is active
+            if (bookFactory->addrbook->is_active()) {
+                gtk_widget_set_sensitive (GTK_WIDGET (contactButton), TRUE);
+                gtk_widget_set_tooltip_text (GTK_WIDGET (contactButton),_ ("Address book"));
+            }
         }
     }
 
@@ -191,7 +209,7 @@ update_actions()
     conference_obj_t * selectedConf = calltab_get_selected_conf (active_calltree);
 
     gboolean instant_messaging_enabled = TRUE;
-
+    
     if (eel_gconf_key_exists (INSTANT_MESSAGING_ENABLED))
         instant_messaging_enabled = eel_gconf_get_integer (INSTANT_MESSAGING_ENABLED);
 
@@ -330,7 +348,6 @@ update_actions()
 
             case CONFERENCE_STATE_ACTIVE_ATACHED:
             case CONFERENCE_STATE_ACTIVE_DETACHED:
-                DEBUG("---------------------------------------- CONFERENCE STATE active");
                 gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
                 gtk_widget_set_sensitive (GTK_WIDGET (holdToolbar), TRUE);
                 gtk_action_set_sensitive (GTK_ACTION (recordAction), TRUE);
@@ -344,7 +361,6 @@ update_actions()
                 break;
             case CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD:
             case CONFERENCE_STATE_ACTIVE_DETACHED_RECORD:
-                DEBUG("---------------------------------------- CONFERENCE STATE record");
                 gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
                 gtk_widget_set_sensitive (GTK_WIDGET (holdToolbar), TRUE);
                 gtk_action_set_sensitive (GTK_ACTION (recordAction), TRUE);
@@ -358,7 +374,6 @@ update_actions()
                 break;
             case CONFERENCE_STATE_HOLD:
             case CONFERENCE_STATE_HOLD_RECORD:
-                DEBUG("---------------------------------------- CONFERENCE STATE hold");
                 gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
                 gtk_widget_set_sensitive (GTK_WIDGET (offHoldToolbar), TRUE);
                 gtk_action_set_sensitive (GTK_ACTION (recordAction), TRUE);
@@ -900,85 +915,51 @@ toggle_addressbook_cb (GtkToggleAction *action, gpointer user_data UNUSED)
 static const GtkActionEntry menu_entries[] = {
 
     // Call Menu
-    { "Call", NULL, N_ ("Call") },
-    {
-        "NewCall", GTK_STOCK_DIAL, N_ ("_New call"), "<control>N",
-        N_ ("Place a new call"), G_CALLBACK (call_new_call)
-    },
-    {
-        "PickUp", GTK_STOCK_PICKUP, N_ ("_Pick up"), NULL,
-        N_ ("Answer the call"), G_CALLBACK (call_pick_up)
-    },
-    {
-        "HangUp", GTK_STOCK_HANGUP, N_ ("_Hang up"), "<control>S",
-        N_ ("Finish the call"), G_CALLBACK (call_hang_up)
-    },
-    {
-        "OnHold", GTK_STOCK_ONHOLD, N_ ("O_n hold"), "<control>P",
-        N_ ("Place the call on hold"), G_CALLBACK (call_hold)
-    },
-    {
-        "OffHold", GTK_STOCK_OFFHOLD, N_ ("O_ff hold"), "<control>P",
-        N_ ("Place the call off hold"), G_CALLBACK (call_hold)
-    },
-    {
-        "InstantMessaging", GTK_STOCK_IM, N_ ("Send _message"), "<control>M",
-        N_ ("Send message"), G_CALLBACK (call_im)
-    },
-    {
-        "AccountAssistant", NULL, N_ ("Configuration _Assistant"), NULL,
-        N_ ("Run the configuration assistant"),
-        G_CALLBACK (call_configuration_assistant)
-    },
-    {
-        "Voicemail", "mail-read", N_ ("Voicemail"), NULL,
-        N_ ("Call your voicemail"), G_CALLBACK (call_mailbox_cb)
-    },
-    {
-        "Close", GTK_STOCK_CLOSE, N_ ("_Close"), "<control>W",
-        N_ ("Minimize to system tray"), G_CALLBACK (call_minimize)
-    },
-    {
-        "Quit", GTK_STOCK_CLOSE, N_ ("_Quit"), "<control>Q",
-        N_ ("Quit the program"), G_CALLBACK (call_quit)
-    },
+    { "Call", NULL, N_ ("Call"), NULL, NULL, NULL},
+    { "NewCall", GTK_STOCK_DIAL, N_ ("_New call"), "<control>N",
+      N_ ("Place a new call"), G_CALLBACK (call_new_call) },
+    { "PickUp", GTK_STOCK_PICKUP, N_ ("_Pick up"), NULL,
+      N_ ("Answer the call"), G_CALLBACK (call_pick_up) },
+    { "HangUp", GTK_STOCK_HANGUP, N_ ("_Hang up"), "<control>S",
+      N_ ("Finish the call"), G_CALLBACK (call_hang_up) },
+    { "OnHold", GTK_STOCK_ONHOLD, N_ ("O_n hold"), "<control>P",
+      N_ ("Place the call on hold"), G_CALLBACK (call_hold) },
+    { "OffHold", GTK_STOCK_OFFHOLD, N_ ("O_ff hold"), "<control>P",
+      N_ ("Place the call off hold"), G_CALLBACK (call_hold) },
+    { "InstantMessaging", GTK_STOCK_IM, N_ ("Send _message"), "<control>M",
+      N_ ("Send message"), G_CALLBACK (call_im) },
+    { "AccountAssistant", NULL, N_ ("Configuration _Assistant"), NULL,
+      N_ ("Run the configuration assistant"), G_CALLBACK (call_configuration_assistant) },
+    { "Voicemail", "mail-read", N_ ("Voicemail"), NULL,
+      N_ ("Call your voicemail"), G_CALLBACK (call_mailbox_cb) },
+    { "Close", GTK_STOCK_CLOSE, N_ ("_Close"), "<control>W",
+      N_ ("Minimize to system tray"), G_CALLBACK (call_minimize) },
+    { "Quit", GTK_STOCK_CLOSE, N_ ("_Quit"), "<control>Q",
+      N_ ("Quit the program"), G_CALLBACK (call_quit) },
 
     // Edit Menu
-    { "Edit", NULL, N_ ("_Edit") },
-    {
-        "Copy", GTK_STOCK_COPY, N_ ("_Copy"), "<control>C",
-        N_ ("Copy the selection"), G_CALLBACK (edit_copy)
-    },
-    {
-        "Paste", GTK_STOCK_PASTE, N_ ("_Paste"), "<control>V",
-        N_ ("Paste the clipboard"), G_CALLBACK (edit_paste)
-    },
-    {
-        "ClearHistory", GTK_STOCK_CLEAR, N_ ("Clear _history"), NULL,
-        N_ ("Clear the call history"), G_CALLBACK (clear_history)
-    },
-    {
-        "Accounts", NULL, N_ ("_Accounts"), NULL, N_ ("Edit your accounts"),
-        G_CALLBACK (edit_accounts)
-    },
-    {
-        "Preferences", GTK_STOCK_PREFERENCES, N_ ("_Preferences"), NULL,
+    { "Edit", NULL, N_ ("_Edit"), NULL, NULL, NULL },
+    { "Copy", GTK_STOCK_COPY, N_ ("_Copy"), "<control>C",
+      N_ ("Copy the selection"), G_CALLBACK (edit_copy) },
+    { "Paste", GTK_STOCK_PASTE, N_ ("_Paste"), "<control>V",
+      N_ ("Paste the clipboard"), G_CALLBACK (edit_paste) },
+    { "ClearHistory", GTK_STOCK_CLEAR, N_ ("Clear _history"), NULL,
+      N_ ("Clear the call history"), G_CALLBACK (clear_history) },
+    { "Accounts", NULL, N_ ("_Accounts"), NULL, 
+      N_ ("Edit your accounts"), G_CALLBACK (edit_accounts) },
+    { "Preferences", GTK_STOCK_PREFERENCES, N_ ("_Preferences"), NULL,
         N_ ("Change your preferences"), G_CALLBACK (edit_preferences)
     },
 
     // View Menu
-    { "View", NULL, N_ ("_View") },
+    { "View", NULL, N_ ("_View"), NULL, NULL, NULL},
 
     // Help menu
-    { "Help", NULL, N_ ("_Help") },
-    {
-        "HelpContents", GTK_STOCK_HELP, N_ ("Contents"), "F1",
-        N_ ("Open the manual"), G_CALLBACK (help_contents_cb)
-    },
-    {
-        "About", GTK_STOCK_ABOUT, NULL, NULL, N_ ("About this application"),
-        G_CALLBACK (help_about)
-    }
+    { "Help", NULL, N_ ("_Help"), NULL, NULL, NULL },
+    { "HelpContents", GTK_STOCK_HELP, N_ ("Contents"), "F1",
+      N_ ("Open the manual"), G_CALLBACK (help_contents_cb) },
+    { "About", GTK_STOCK_ABOUT, NULL, NULL, 
+      N_ ("About this application"), G_CALLBACK (help_about) }
 
 };
 
@@ -1002,6 +983,9 @@ uimanager_new (GtkUIManager **_ui_manager)
     GtkWidget *window;
     gchar *path;
     GError *error = NULL;
+    gint nb_entries;
+
+    nb_entries = abookfactory_is_addressbook_loaded() ? 7 : 6;
 
     window = get_main_window();
     ui_manager = gtk_ui_manager_new();
@@ -1037,10 +1021,8 @@ uimanager_new (GtkUIManager **_ui_manager)
     action_group = gtk_action_group_new ("SFLphoneWindowActions");
     // To translate label and tooltip entries
     gtk_action_group_set_translation_domain (action_group, "sflphone-client-gnome");
-    gtk_action_group_add_actions (action_group, menu_entries,
-                                  G_N_ELEMENTS (menu_entries), window);
-    gtk_action_group_add_toggle_actions (action_group, toggle_menu_entries,
-                                         G_N_ELEMENTS (toggle_menu_entries), window);
+    gtk_action_group_add_actions (action_group, menu_entries, G_N_ELEMENTS (menu_entries), window);
+    gtk_action_group_add_toggle_actions (action_group, toggle_menu_entries, nb_entries, window);
     //gtk_action_group_add_radio_actions (action_group, radio_menu_entries, G_N_ELEMENTS (radio_menu_entries), CALLTREE_CALLS, G_CALLBACK (calltree_switch_cb), window);
     gtk_ui_manager_insert_action_group (ui_manager, action_group, 0);
 
@@ -1310,7 +1292,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
             menu_items = gtk_check_menu_item_new_with_mnemonic (_ ("On _Hold"));
             gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
             gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (menu_items),
-                                            (selectedConf->_state == CALL_STATE_HOLD ? TRUE : FALSE));
+                                            (selectedConf->_state == CONFERENCE_STATE_HOLD ? TRUE : FALSE));
             g_signal_connect (G_OBJECT (menu_items), "activate",
                               G_CALLBACK (conference_hold),
                               NULL);
@@ -1689,8 +1671,10 @@ create_toolbar_actions (GtkUIManager *ui_manager, GtkWidget **widget)
                                            "/ToolbarActions/InstantMessagingToolbar");
     historyButton = gtk_ui_manager_get_widget (ui_manager,
                     "/ToolbarActions/HistoryToolbar");
-    contactButton = gtk_ui_manager_get_widget (ui_manager,
-                    "/ToolbarActions/AddressbookToolbar");
+    if(abookfactory_is_addressbook_loaded()) {
+        contactButton = gtk_ui_manager_get_widget (ui_manager,
+                        "/ToolbarActions/AddressbookToolbar");
+    }
 
     // Set the handler ID for the transfer
     transfertButtonConnId

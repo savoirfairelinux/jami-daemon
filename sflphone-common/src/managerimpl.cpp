@@ -4371,10 +4371,10 @@ void ManagerImpl::setAddressbookList (const std::vector<std::string>& list)
     _debug ("Manager: Set addressbook list");
 
     std::string s = serialize (list);
+    _debug("Manager: New addressbook list: %s", s.c_str());
     addressbookPreference.setList (s);
 
     saveConfig();
-
 }
 
 std::vector<std::string> ManagerImpl::getAddressbookList (void)

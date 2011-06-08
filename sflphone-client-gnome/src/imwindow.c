@@ -177,8 +177,8 @@ im_window_add (GtkWidget *widget)
 gint
 im_window_get_nb_tabs()
 {
-    if (im_notebook)
-        return gtk_notebook_get_n_pages (im_notebook);
+    if (im_notebook != NULL)
+        return gtk_notebook_get_n_pages (GTK_NOTEBOOK(im_notebook));
     else
         return 0;
 }
