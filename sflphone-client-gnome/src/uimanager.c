@@ -915,85 +915,51 @@ toggle_addressbook_cb (GtkToggleAction *action, gpointer user_data UNUSED)
 static const GtkActionEntry menu_entries[] = {
 
     // Call Menu
-    { "Call", NULL, N_ ("Call") },
-    {
-        "NewCall", GTK_STOCK_DIAL, N_ ("_New call"), "<control>N",
-        N_ ("Place a new call"), G_CALLBACK (call_new_call)
-    },
-    {
-        "PickUp", GTK_STOCK_PICKUP, N_ ("_Pick up"), NULL,
-        N_ ("Answer the call"), G_CALLBACK (call_pick_up)
-    },
-    {
-        "HangUp", GTK_STOCK_HANGUP, N_ ("_Hang up"), "<control>S",
-        N_ ("Finish the call"), G_CALLBACK (call_hang_up)
-    },
-    {
-        "OnHold", GTK_STOCK_ONHOLD, N_ ("O_n hold"), "<control>P",
-        N_ ("Place the call on hold"), G_CALLBACK (call_hold)
-    },
-    {
-        "OffHold", GTK_STOCK_OFFHOLD, N_ ("O_ff hold"), "<control>P",
-        N_ ("Place the call off hold"), G_CALLBACK (call_hold)
-    },
-    {
-        "InstantMessaging", GTK_STOCK_IM, N_ ("Send _message"), "<control>M",
-        N_ ("Send message"), G_CALLBACK (call_im)
-    },
-    {
-        "AccountAssistant", NULL, N_ ("Configuration _Assistant"), NULL,
-        N_ ("Run the configuration assistant"),
-        G_CALLBACK (call_configuration_assistant)
-    },
-    {
-        "Voicemail", "mail-read", N_ ("Voicemail"), NULL,
-        N_ ("Call your voicemail"), G_CALLBACK (call_mailbox_cb)
-    },
-    {
-        "Close", GTK_STOCK_CLOSE, N_ ("_Close"), "<control>W",
-        N_ ("Minimize to system tray"), G_CALLBACK (call_minimize)
-    },
-    {
-        "Quit", GTK_STOCK_CLOSE, N_ ("_Quit"), "<control>Q",
-        N_ ("Quit the program"), G_CALLBACK (call_quit)
-    },
+    { "Call", NULL, N_ ("Call"), NULL, NULL, NULL},
+    { "NewCall", GTK_STOCK_DIAL, N_ ("_New call"), "<control>N",
+      N_ ("Place a new call"), G_CALLBACK (call_new_call) },
+    { "PickUp", GTK_STOCK_PICKUP, N_ ("_Pick up"), NULL,
+      N_ ("Answer the call"), G_CALLBACK (call_pick_up) },
+    { "HangUp", GTK_STOCK_HANGUP, N_ ("_Hang up"), "<control>S",
+      N_ ("Finish the call"), G_CALLBACK (call_hang_up) },
+    { "OnHold", GTK_STOCK_ONHOLD, N_ ("O_n hold"), "<control>P",
+      N_ ("Place the call on hold"), G_CALLBACK (call_hold) },
+    { "OffHold", GTK_STOCK_OFFHOLD, N_ ("O_ff hold"), "<control>P",
+      N_ ("Place the call off hold"), G_CALLBACK (call_hold) },
+    { "InstantMessaging", GTK_STOCK_IM, N_ ("Send _message"), "<control>M",
+      N_ ("Send message"), G_CALLBACK (call_im) },
+    { "AccountAssistant", NULL, N_ ("Configuration _Assistant"), NULL,
+      N_ ("Run the configuration assistant"), G_CALLBACK (call_configuration_assistant) },
+    { "Voicemail", "mail-read", N_ ("Voicemail"), NULL,
+      N_ ("Call your voicemail"), G_CALLBACK (call_mailbox_cb) },
+    { "Close", GTK_STOCK_CLOSE, N_ ("_Close"), "<control>W",
+      N_ ("Minimize to system tray"), G_CALLBACK (call_minimize) },
+    { "Quit", GTK_STOCK_CLOSE, N_ ("_Quit"), "<control>Q",
+      N_ ("Quit the program"), G_CALLBACK (call_quit) },
 
     // Edit Menu
-    { "Edit", NULL, N_ ("_Edit") },
-    {
-        "Copy", GTK_STOCK_COPY, N_ ("_Copy"), "<control>C",
-        N_ ("Copy the selection"), G_CALLBACK (edit_copy)
-    },
-    {
-        "Paste", GTK_STOCK_PASTE, N_ ("_Paste"), "<control>V",
-        N_ ("Paste the clipboard"), G_CALLBACK (edit_paste)
-    },
-    {
-        "ClearHistory", GTK_STOCK_CLEAR, N_ ("Clear _history"), NULL,
-        N_ ("Clear the call history"), G_CALLBACK (clear_history)
-    },
-    {
-        "Accounts", NULL, N_ ("_Accounts"), NULL, N_ ("Edit your accounts"),
-        G_CALLBACK (edit_accounts)
-    },
-    {
-        "Preferences", GTK_STOCK_PREFERENCES, N_ ("_Preferences"), NULL,
+    { "Edit", NULL, N_ ("_Edit"), NULL, NULL, NULL },
+    { "Copy", GTK_STOCK_COPY, N_ ("_Copy"), "<control>C",
+      N_ ("Copy the selection"), G_CALLBACK (edit_copy) },
+    { "Paste", GTK_STOCK_PASTE, N_ ("_Paste"), "<control>V",
+      N_ ("Paste the clipboard"), G_CALLBACK (edit_paste) },
+    { "ClearHistory", GTK_STOCK_CLEAR, N_ ("Clear _history"), NULL,
+      N_ ("Clear the call history"), G_CALLBACK (clear_history) },
+    { "Accounts", NULL, N_ ("_Accounts"), NULL, 
+      N_ ("Edit your accounts"), G_CALLBACK (edit_accounts) },
+    { "Preferences", GTK_STOCK_PREFERENCES, N_ ("_Preferences"), NULL,
         N_ ("Change your preferences"), G_CALLBACK (edit_preferences)
     },
 
     // View Menu
-    { "View", NULL, N_ ("_View") },
+    { "View", NULL, N_ ("_View"), NULL, NULL, NULL},
 
     // Help menu
-    { "Help", NULL, N_ ("_Help") },
-    {
-        "HelpContents", GTK_STOCK_HELP, N_ ("Contents"), "F1",
-        N_ ("Open the manual"), G_CALLBACK (help_contents_cb)
-    },
-    {
-        "About", GTK_STOCK_ABOUT, NULL, NULL, N_ ("About this application"),
-        G_CALLBACK (help_about)
-    }
+    { "Help", NULL, N_ ("_Help"), NULL, NULL, NULL },
+    { "HelpContents", GTK_STOCK_HELP, N_ ("Contents"), "F1",
+      N_ ("Open the manual"), G_CALLBACK (help_contents_cb) },
+    { "About", GTK_STOCK_ABOUT, NULL, NULL, 
+      N_ ("About this application"), G_CALLBACK (help_about) }
 
 };
 
@@ -1326,7 +1292,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
             menu_items = gtk_check_menu_item_new_with_mnemonic (_ ("On _Hold"));
             gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
             gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (menu_items),
-                                            (selectedConf->_state == CALL_STATE_HOLD ? TRUE : FALSE));
+                                            (selectedConf->_state == CONFERENCE_STATE_HOLD ? TRUE : FALSE));
             g_signal_connect (G_OBJECT (menu_items), "activate",
                               G_CALLBACK (conference_hold),
                               NULL);
