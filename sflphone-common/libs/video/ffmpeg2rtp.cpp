@@ -1,11 +1,14 @@
-#include <assert.h>
+#include <cassert>
 #include <signal.h>
 
+extern "C" {
+#define __STDC_CONSTANT_MACROS
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavutil/opt.h>
 #include <libavdevice/avdevice.h>
 #include <libswscale/swscale.h>
+}
 
 static volatile int interrupted = 0;
 
@@ -25,7 +28,7 @@ void print_error(const char *filename, int err)
 void print_and_save_sdp(AVFormatContext **avc)
 {
     size_t sdp_size = avc[0]->streams[0]->codec->extradata_size + 2048;
-    char *sdp = malloc(sdp_size); /* theora sdp can be huge */
+    char *sdp = reinterpret_cast<char*>(malloc(sdp_size)); /* theora sdp can be huge */
     printf("sdp_size:%ld\n", sdp_size);
     av_sdp_create(avc, 1, sdp, sdp_size);
     printf("SDP:\n%s\n", sdp);
@@ -75,7 +78,7 @@ int main(int argc, char *argv[])
 
     // find the first video stream from the input
     int videoStream = -1;
-    int i;
+    unsigned i;
     for (i = 0; i < ic->nb_streams; i++) {
         if (ic->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
             videoStream = i;
@@ -116,7 +119,7 @@ int main(int argc, char *argv[])
     strncpy(oc->filename, DEST, sizeof(oc->filename));
 
     AVCodec *encoder = NULL;
-    char *vcodec_name = argc > 2 ? argv[2] : "mpeg4";
+    const char *vcodec_name = argc > 2 ? argv[2] : "mpeg4";
 
     AVCodecContext *encoderCtx;
     /* find the video encoder */
@@ -129,7 +132,7 @@ int main(int argc, char *argv[])
     encoderCtx = avcodec_alloc_context();
 
     /* set some encoder settings here */
-    encoderCtx->bit_rate = 1000000;
+    encoderCtx->bit_rate = argc > 3 ? atoi(argv[3]) : 1000000;
     /* emit one intra frame every gop_size frames */
     encoderCtx->gop_size = 15;
     encoderCtx->max_b_frames = 0;
@@ -160,7 +163,7 @@ int main(int argc, char *argv[])
         long pos = ftell(f);
         fseek(f, 0, SEEK_SET);
 
-        char *encoder_options_string = malloc(pos + 1);
+        char *encoder_options_string = reinterpret_cast<char*>(malloc(pos + 1));
         fread(encoder_options_string, pos, 1, f);
         fclose(f);
 
@@ -221,8 +224,8 @@ int main(int argc, char *argv[])
     /* alloc image and output buffer */
     int size = encoderCtx->width * encoderCtx->height;
     int outbuf_size = size;
-    uint8_t *outbuf = malloc(outbuf_size);
-    uint8_t *scaled_picture_buf = malloc((size * 3) / 2); /* size for YUV 420 */
+    uint8_t *outbuf = reinterpret_cast<uint8_t*>(malloc(outbuf_size));
+    uint8_t *scaled_picture_buf = reinterpret_cast<uint8_t*>(malloc((size * 3) / 2)); /* size for YUV 420 */
 
     scaled_picture->data[0] = scaled_picture_buf;
     scaled_picture->data[1] = scaled_picture->data[0] + size;
@@ -236,7 +239,7 @@ int main(int argc, char *argv[])
 
     int frameFinished;
     AVPacket inpacket;
-    int64_t frame_number = 0;
+    double frame_number = 0;
 
     /* Create scaling context */
     struct SwsContext *img_convert_ctx = sws_getContext(inputDecoderCtx->width,
@@ -254,7 +257,7 @@ int main(int argc, char *argv[])
             // decode video frame from camera
             avcodec_decode_video2(inputDecoderCtx, raw_frame, &frameFinished, &inpacket);
             if (frameFinished)  {
-                sws_scale(img_convert_ctx, (void*)raw_frame->data, raw_frame->linesize,
+                sws_scale(img_convert_ctx, raw_frame->data, raw_frame->linesize,
                         0, inputDecoderCtx->height, scaled_picture->data,
                         scaled_picture->linesize);
 
