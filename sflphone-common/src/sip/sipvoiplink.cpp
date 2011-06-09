@@ -701,7 +701,7 @@ Call *SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) 
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
     // the session initialization is completed
-    sfl::Codec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (PAYLOAD_CODEC_ULAW);
+    sfl::Codec* audiocodec = Manager::instance().getAudioCodecFactory().instantiateCodec (PAYLOAD_CODEC_ULAW);
     if (audiocodec == NULL) {
     	_error ("UserAgent: Could not instantiate codec");
     	delete call;
@@ -1011,7 +1011,7 @@ SIPVoIPLink::offhold (const CallID& id) throw (VoipLinkException)
 
 
         // Create a new instance for this codec
-        sfl::Codec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (pl);
+        sfl::Codec* audiocodec = Manager::instance().getAudioCodecFactory().instantiateCodec (pl);
         if (audiocodec == NULL) {
     	    throw VoipLinkException("Could not instantiate codec");
         }
@@ -1785,7 +1785,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const CallID& id, const std::string& to)
 
         _debug ("UserAgent: TO uri for IP2IP call: %s", toUri.c_str());
 
-        sfl::Codec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (PAYLOAD_CODEC_ULAW);
+        sfl::Codec* audiocodec = Manager::instance().getAudioCodecFactory().instantiateCodec (PAYLOAD_CODEC_ULAW);
 
         // Audio Rtp Session must be initialized before creating initial offer in SDP session
         // since SDES require crypto attribute.
@@ -3525,7 +3525,7 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
 
         // udate session media only if required
         if (pl != call->getAudioRtp()->getSessionMedia()) {
-            sfl::Codec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (pl);
+            sfl::Codec* audiocodec = Manager::instance().getAudioCodecFactory().instantiateCodec (pl);
 
             if (audiocodec == NULL)
                 _error ("UserAgent: No audiocodec found");
@@ -4047,7 +4047,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
     }
 
     // Init default codec for early media session
-    sfl::Codec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec (PAYLOAD_CODEC_ULAW);
+    sfl::Codec* audiocodec = Manager::instance().getAudioCodecFactory().instantiateCodec (PAYLOAD_CODEC_ULAW);
 
     // Init audio rtp session
     try {

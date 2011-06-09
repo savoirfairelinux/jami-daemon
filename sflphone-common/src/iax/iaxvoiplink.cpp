@@ -264,7 +264,6 @@ IAXVoIPLink::getEvent()
         if (call) {
             // We know that call, deal with it
             iaxHandleCallEvent (event, call);
-            //_audiocodec = Manager::instance().getCodecDescriptorMap().getCodec( call -> getAudioCodec() );
         } else if (event->session && event->session == _regSession) {
             // This is a registration session, deal with it
             iaxHandleRegReply (event);
@@ -303,7 +302,7 @@ IAXVoIPLink::sendAudioFromMic (void)
 {
 
     int maxBytesToGet, availBytesFromMic, bytesAvail, compSize;
-    AudioCodec *ac;
+    AudioCodec *audioCodec = NULL;
     IAXCall *currentCall;
 
     // We have to update the audio layer type in case we switched
@@ -330,16 +329,17 @@ IAXVoIPLink::sendAudioFromMic (void)
 
             if (callIsActive) {
 
-                ac = static_cast<AudioCodec *>(currentCall->getCodecMap().getCodec (currentCall->getAudioCodec()));
+		AudioCodecType codecType = currentCall->getAudioCodec();
+                audioCodec = static_cast<AudioCodec *>(currentCall->getAudioCodecFactory().getCodec (codecType));
 
                 // Send sound here
 
-                if (ac && audiolayer) {
+                if (audioCodec && audiolayer) {
 
                     // _debug("Send sound");
                     // audiolayer->getMainBuffer()->flush(currentCall->getCallId());
 
-                    Manager::instance().getMainBuffer()->setInternalSamplingRate (ac->getClockRate());
+                    Manager::instance().getMainBuffer()->setInternalSamplingRate (audioCodec->getClockRate());
 
                     int _mainBufferSampleRate = audiolayer->getMainBuffer()->getInternalSamplingRate();
 
@@ -364,18 +364,18 @@ IAXVoIPLink::sendAudioFromMic (void)
                         nbSampleForRec_ = nbSample_;
 
 
-                        if (ac->getClockRate() && ((int) ac->getClockRate() != _mainBufferSampleRate)) {
+                        if (audioCodec->getClockRate() && ((int) audioCodec->getClockRate() != _mainBufferSampleRate)) {
 
                             // resample
-                            nbSample_ = converter->downsampleData (micData , micDataConverted , (int) ac->getClockRate(), _mainBufferSampleRate, nbSample_);
+                            nbSample_ = converter->downsampleData (micData , micDataConverted , (int) audioCodec->getClockRate(), _mainBufferSampleRate, nbSample_);
 
                             // for the mono: range = 0 to IAX_FRAME2SEND * sizeof(int16)
-                            compSize = ac->encode (micDataEncoded, micDataConverted , nbSample_*sizeof (int16));
+                            compSize = audioCodec->encode (micDataEncoded, micDataConverted , nbSample_*sizeof (int16));
 
                         } else {
 
                             // for the mono: range = 0 to IAX_FRAME2SEND * sizeof(int16)
-                            compSize = ac->encode (micDataEncoded, micData, nbSample_*sizeof (int16));
+                            compSize = audioCodec->encode (micDataEncoded, micData, nbSample_*sizeof (int16));
 
                         }
 
@@ -492,7 +492,7 @@ Call*
 IAXVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) throw(VoipLinkException)
 {
     IAXCall* call = new IAXCall (id, Call::Outgoing);
-    call->setCodecMap (Manager::instance().getCodecDescriptorMap());
+    call->setCodecMap (Manager::instance().getAudioCodecFactory());
 
     if (call) {
         call->setPeerNumber (toUrl);
@@ -516,7 +516,7 @@ bool
 IAXVoIPLink::answer (const CallID& id) throw (VoipLinkException)
 {
     IAXCall* call = getIAXCall (id);
-    call->setCodecMap (Manager::instance().getCodecDescriptorMap());
+    call->setCodecMap (Manager::instance().getAudioCodecFactory());
 
     Manager::instance().addStream (call->getCallId());
 
@@ -708,16 +708,25 @@ std::string
 IAXVoIPLink::getCurrentCodecName(const CallID& /*id*/)
 {
     IAXCall *call = NULL;
-    AudioCodec *ac = NULL;
+    AudioCodec *audioCodec = NULL;
     std::string name = "";
 
     call = getIAXCall (Manager::instance().getCurrentCallId());
 
-    if (call)
-        ac = static_cast<AudioCodec *>(call->getCodecMap().getCodec (call->getAudioCodec()));
+    if(call == NULL) {
+	_error("IAX: Error: Could not load call");
+	return "";
+    }
 
-    if (ac)
-        name = ac->getMimeSubtype();
+    AudioCodecType audioCodecType = call->getAudioCodec();
+    audioCodec= static_cast<AudioCodec *>(call->getAudioCodecFactory().getCodec (audioCodecType));
+
+    if(audioCodec == NULL) {
+        _error("IAX: Error: Could not load audio codec");
+        return "";
+    }
+
+    name = audioCodec->getMimeSubtype();
 
     return name;
 }
@@ -966,10 +975,11 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
     unsigned char *data;
     unsigned int size, max, nbInt16;
     int expandedSize, nbSample_;
-    AudioCodec *ac;
+    AudioCodec *audioCodec;
 
-    if (!call)
+    if (!call) {
         return;
+    }
 
     if (!event->datalen) {
         // Skip this empty packet.
@@ -977,14 +987,15 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
         return;
     }
 
-    ac = static_cast<AudioCodec *>(call->getCodecMap ().getCodec (call->getAudioCodec ()));
+    AudioCodecType audioCodecType = call->getAudioCodec();
+    audioCodec = static_cast<AudioCodec *>(call->getAudioCodecFactory().getCodec (audioCodecType));
 
-    if (!ac)
+    if (!audioCodec)
         return;
 
     if (audiolayer) {
 
-        Manager::instance().getMainBuffer ()->setInternalSamplingRate (ac->getClockRate ());
+        Manager::instance().getMainBuffer ()->setInternalSamplingRate (audioCodec->getClockRate ());
 
         // If we receive datalen == 0, some things of the jitter buffer in libiax2/iax.c
         // were triggered
@@ -1000,22 +1011,19 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
             call->setFormat (event->subclass);
         }
 
-        //_debug("Receive: len=%d, format=%d, _receiveDataDecoded=%p", event->datalen, call->getFormat(), _receiveDataDecoded);
-        // ac = call->getCodecMap().getCodec (call -> getAudioCodec());
-
         data = (unsigned char*) event->data;
 
         size   = event->datalen;
 
         // Decode data with relevant codec
-        max = (int) (ac->getClockRate() * audiolayer->getFrameSize() / 1000);
+        max = (int) (audioCodec->getClockRate() * audiolayer->getFrameSize() / 1000);
 
         if (size > max) {
             _debug ("The size %d is bigger than expected %d. Packet cropped. Ouch!", size, max);
             size = max;
         }
 
-        expandedSize = ac->decode (spkrDataDecoded , data , size);
+        expandedSize = audioCodec->decode (spkrDataDecoded , data , size);
 
         nbInt16      = expandedSize/sizeof (int16);
 
@@ -1028,10 +1036,10 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
 
         // test if resampling is required
 
-        if (ac->getClockRate() && ((int) ac->getClockRate() != _mainBufferSampleRate)) {
+        if (audioCodec->getClockRate() && ((int) audioCodec->getClockRate() != _mainBufferSampleRate)) {
 
             // resample
-            nbInt16 = converter->upsampleData (spkrDataDecoded, spkrDataConverted, ac->getClockRate(), _mainBufferSampleRate, nbSample_);
+            nbInt16 = converter->upsampleData (spkrDataDecoded, spkrDataConverted, audioCodec->getClockRate(), _mainBufferSampleRate, nbSample_);
 
             /* Write the data to the mic ring buffer */
             audiolayer->getMainBuffer()->putData (spkrDataConverted, nbInt16 * sizeof (SFLDataFormat), 100, call->getCallId());
@@ -1156,7 +1164,7 @@ IAXVoIPLink::iaxHandlePrecallEvent (iax_event* event)
             call->setSession (event->session);
 
             // setCallAudioLocal(call);
-            call->setCodecMap (Manager::instance().getCodecDescriptorMap());
+            call->setCodecMap (Manager::instance().getAudioCodecFactory());
 
             call->setConnectionState (Call::Progressing);
 

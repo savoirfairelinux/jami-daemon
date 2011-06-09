@@ -34,14 +34,14 @@
 #include <iostream>
 #include <cstdlib>
 
-#include "codecDescriptor.h"
+#include "audiocodecfactory.h"
 
 
-CodecFactory::CodecFactory() : _CodecsMap(), _defaultCodecOrder(), _Cache(), _nbCodecs(), _CodecInMemory()
+AudioCodecFactory::AudioCodecFactory() : _CodecsMap(), _defaultCodecOrder(), _Cache(), _nbCodecs(), _CodecInMemory()
 {
 }
 
-CodecFactory::~CodecFactory()
+AudioCodecFactory::~AudioCodecFactory()
 {
 
 }
@@ -60,7 +60,7 @@ CodecFactory::~CodecFactory()
 
 
 void
-CodecFactory::init()
+AudioCodecFactory::init()
 {
     std::vector<sfl::Codec*> CodecDynamicList = scanCodecDirectory();
     _nbCodecs = CodecDynamicList.size();
@@ -78,7 +78,7 @@ CodecFactory::init()
     }
 }
 
-void CodecFactory::setDefaultOrder()
+void AudioCodecFactory::setDefaultOrder()
 {
 
     _defaultCodecOrder.clear();
@@ -92,7 +92,7 @@ void CodecFactory::setDefaultOrder()
 }
 
 std::string
-CodecFactory::getCodecName (AudioCodecType payload)
+AudioCodecFactory::getCodecName (AudioCodecType payload)
 {
     std::string resNull = "";
     CodecsMap::iterator iter = _CodecsMap.find (payload);
@@ -105,7 +105,7 @@ CodecFactory::getCodecName (AudioCodecType payload)
 }
 
 sfl::Codec*
-CodecFactory::getCodec (AudioCodecType payload)
+AudioCodecFactory::getCodec (AudioCodecType payload)
 {
     CodecsMap::iterator iter = _CodecsMap.find (payload);
 
@@ -118,7 +118,7 @@ CodecFactory::getCodec (AudioCodecType payload)
     return NULL;
 }
 
-double CodecFactory::getBitRate (AudioCodecType payload)
+double AudioCodecFactory::getBitRate (AudioCodecType payload)
 {
 
     CodecsMap::iterator iter = _CodecsMap.find (payload);
@@ -129,7 +129,7 @@ double CodecFactory::getBitRate (AudioCodecType payload)
         return 0.0;
 }
 
-double CodecFactory::getBandwidthPerCall (AudioCodecType payload)
+double AudioCodecFactory::getBandwidthPerCall (AudioCodecType payload)
 {
 
     CodecsMap::iterator iter = _CodecsMap.find (payload);
@@ -140,7 +140,7 @@ double CodecFactory::getBandwidthPerCall (AudioCodecType payload)
         return 0.0;
 }
 
-int CodecFactory::getSampleRate (AudioCodecType payload)
+int AudioCodecFactory::getSampleRate (AudioCodecType payload)
 {
 
     CodecsMap::iterator iter = _CodecsMap.find (payload);
@@ -151,7 +151,7 @@ int CodecFactory::getSampleRate (AudioCodecType payload)
         return 0;
 }
 
-void CodecFactory::saveActiveCodecs (const std::vector<std::string>& list)
+void AudioCodecFactory::saveActiveCodecs (const std::vector<std::string>& list)
 {
 
     _defaultCodecOrder.clear();
@@ -174,7 +174,7 @@ void CodecFactory::saveActiveCodecs (const std::vector<std::string>& list)
 }
 
 void
-CodecFactory::deleteHandlePointer (void)
+AudioCodecFactory::deleteHandlePointer (void)
 {
     _debug ("CodecDesccriptor: Delete codec handle pointers");
 
@@ -185,7 +185,7 @@ CodecFactory::deleteHandlePointer (void)
     _CodecInMemory.clear();
 }
 
-std::vector<sfl::Codec*> CodecFactory::scanCodecDirectory (void)
+std::vector<sfl::Codec*> AudioCodecFactory::scanCodecDirectory (void)
 {
 
     std::vector<sfl::Codec*> codecs;
@@ -226,7 +226,7 @@ std::vector<sfl::Codec*> CodecFactory::scanCodecDirectory (void)
     return codecs;
 }
 
-sfl::Codec* CodecFactory::loadCodec (std::string path)
+sfl::Codec* AudioCodecFactory::loadCodec (std::string path)
 {
 
     CodecHandlePointer p;
@@ -253,7 +253,7 @@ sfl::Codec* CodecFactory::loadCodec (std::string path)
 }
 
 
-void CodecFactory::unloadCodec (CodecHandlePointer p)
+void AudioCodecFactory::unloadCodec (CodecHandlePointer p)
 {
 
     using std::cerr;
@@ -267,7 +267,7 @@ void CodecFactory::unloadCodec (CodecHandlePointer p)
     dlclose (p.second);
 }
 
-sfl::Codec* CodecFactory::instantiateCodec (AudioCodecType payload)
+sfl::Codec* AudioCodecFactory::instantiateCodec (AudioCodecType payload)
 {
 
     using std::cerr;
@@ -294,7 +294,7 @@ sfl::Codec* CodecFactory::instantiateCodec (AudioCodecType payload)
 
 
 
-sfl::Codec* CodecFactory::getFirstCodecAvailable (void)
+sfl::Codec* AudioCodecFactory::getFirstCodecAvailable (void)
 {
 
     CodecsMap::iterator iter = _CodecsMap.begin();
@@ -305,7 +305,7 @@ sfl::Codec* CodecFactory::getFirstCodecAvailable (void)
         return NULL;
 }
 
-bool CodecFactory::seemsValid (std::string lib)
+bool AudioCodecFactory::seemsValid (std::string lib)
 {
 
     // The name of the shared library seems valid  <==> it looks like libcodec_xxx.so
@@ -362,7 +362,7 @@ bool CodecFactory::seemsValid (std::string lib)
 }
 
 bool
-CodecFactory::alreadyInCache (std::string lib)
+AudioCodecFactory::alreadyInCache (std::string lib)
 {
     int i;
 
@@ -375,7 +375,7 @@ CodecFactory::alreadyInCache (std::string lib)
     return false;
 }
 
-bool CodecFactory::isCodecLoaded (int payload)
+bool AudioCodecFactory::isCodecLoaded (int payload)
 {
 
     CodecsMap::iterator iter = _CodecsMap.begin();
@@ -390,7 +390,7 @@ bool CodecFactory::isCodecLoaded (int payload)
     return false;
 }
 
-std::vector <std::string> CodecFactory::getCodecSpecifications (const int32_t& payload)
+std::vector <std::string> AudioCodecFactory::getCodecSpecifications (const int32_t& payload)
 {
 
     _debug ("CodecDescriptor: Gathering codec specifications for payload %i", payload);

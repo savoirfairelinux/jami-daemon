@@ -33,7 +33,7 @@
 
 #include <vector>
 
-#include "audio/codecs/codecDescriptor.h"
+#include "audio/codecs/audiocodecfactory.h"
 
 #define DEFAULT_STREAM_DIRECTION    "sendrecv"
 

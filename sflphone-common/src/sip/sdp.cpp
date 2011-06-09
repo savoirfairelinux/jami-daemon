@@ -88,7 +88,7 @@ void Sdp::setActiveLocalSdpSession (const pjmedia_sdp_session *sdp)
 
     activeLocalSession = (pjmedia_sdp_session*) sdp;
 
-    codecs_list = Manager::instance().getCodecDescriptorMap().getCodecsMap();
+    codecs_list = Manager::instance().getAudioCodecFactory().getCodecsMap();
 
     // retrieve the media information
     nb_media = activeLocalSession->media_count;
@@ -296,7 +296,7 @@ void Sdp::setLocalMediaCapabilities (CodecOrder selectedCodecs)
     audio->set_port (getLocalPublishedAudioPort());
 
     /* We retrieve the codecs selected by the user */
-    codecs_list = Manager::instance().getCodecDescriptorMap().getCodecsMap();
+    codecs_list = Manager::instance().getAudioCodecFactory().getCodecsMap();
 
     if (selectedCodecs.size() == 0) {
         throw SdpException ("No selected codec while building local SDP offer");

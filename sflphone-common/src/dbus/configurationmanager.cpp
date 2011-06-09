@@ -411,7 +411,7 @@ std::vector<std::string> ConfigurationManager::getAudioCodecList (void)
 
     std::vector<std::string> list;
 
-    CodecsMap codecs = Manager::instance().getCodecDescriptorMap().getCodecsMap();
+    CodecsMap codecs = Manager::instance().getAudioCodecFactory().getCodecsMap();
     CodecsMap::iterator iter = codecs.begin();
 
     while (iter != codecs.end()) {
@@ -456,9 +456,8 @@ std::vector<std::string> ConfigurationManager::getSupportedTlsMethod (void)
 std::vector<std::string> ConfigurationManager::getAudioCodecDetails (
         const int32_t& payload)
 {
-
-    return Manager::instance().getCodecDescriptorMap().getCodecSpecifications (
-            payload);
+    return Manager::instance().getAudioCodecFactory().getCodecSpecifications (
+               payload);
 }
 
 std::vector<std::string> ConfigurationManager::getActiveAudioCodecList (

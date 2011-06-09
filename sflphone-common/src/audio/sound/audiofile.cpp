@@ -38,7 +38,7 @@
 #include <limits.h>
 
 #include "audiofile.h"
-#include "audio/codecs/codecDescriptor.h"
+#include "audio/codecs/audiocodecfactory.h"
 #include "audio/samplerateconverter.h"
 
 #include "manager.h"

@@ -36,7 +36,7 @@
 #include <iax-client.h>
 #include "global.h"
 
-#include "audio/codecs/codecDescriptor.h"
+#include "audio/codecs/audiocodecfactory.h"
 #include "audio/samplerateconverter.h"
 #include "hooks/urlhook.h"
 

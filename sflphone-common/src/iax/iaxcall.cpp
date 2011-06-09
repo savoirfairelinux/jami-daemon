@@ -198,9 +198,9 @@ int IAXCall::getFirstMatchingFormat (int needles, std::string accountID)
     return 0;
 }
 
-CodecFactory& IAXCall::getCodecMap()
+AudioCodecFactory& IAXCall::getAudioCodecFactory()
 {
-    return _codecMap;
+    return _audioCodecFactory;
 }
 
 AudioCodecType IAXCall::getAudioCodec()
