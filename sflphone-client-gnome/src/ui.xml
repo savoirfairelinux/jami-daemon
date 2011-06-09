@@ -33,7 +33,6 @@
       <menuitem action="VolumeControls"/>
       <separator/>
       <menuitem action="History"/>
-      <menuitem action="Addressbook"/>
     </menu>
 
     <menu name="HelpMenu" action="Help">
@@ -55,7 +54,6 @@
     <separator/>
     <toolitem name="VoicemailToolbar" action="Voicemail"/>
     <toolitem name="HistoryToolbar" action="History"/>
-    <!-- <toolitem name="AddressbookToolbar" action="Addressbook"/> -->
   </toolbar>
 
   <popup name="PopupMenu">
