@@ -40,7 +40,7 @@ enum session_type
     LOCAL_OFFER,
 };
 
-static char *sdp_answer1 = "v=0\r\n"
+static const char *sdp_answer1 = "v=0\r\n"
                            "o=bob 2890844730 2890844730 IN IP4 host.example.com\r\n"
                            "s= \r\n"
                            "c=IN IP4 host.example.com\r\n"
@@ -51,7 +51,7 @@ static char *sdp_answer1 = "v=0\r\n"
                            "m=video 53002 RTP/AVP 32\r\n"
                            "a=rtpmap:32 MPV/90000\r\n";
 
-static char *sdp_offer1 = "v=0\r\n"
+static const char *sdp_offer1 = "v=0\r\n"
                           "o=bob 2890844730 2890844730 IN IP4 host.example.com\r\n"
                           "s= \r\n"
                           "c=IN IP4 host.example.com\r\n"
@@ -62,7 +62,7 @@ static char *sdp_offer1 = "v=0\r\n"
                           "m=video 53002 RTP/AVP 32\r\n"
                           "a=rtpmap:32 MPV/90000\r\n";
 
-static char *sdp_answer2 = "v=0\r\n"
+static const char *sdp_answer2 = "v=0\r\n"
                            "o=bob 2890844730 2890844730 IN IP4 host.example.com\r\n"
                            "s= \r\n"
                            "c=IN IP4 host.example.com\r\n"
@@ -75,7 +75,7 @@ static char *sdp_answer2 = "v=0\r\n"
                            "m=video 53002 RTP/AVP 32\r\n"
                            "a=rtpmap:32 MPV/90000\r\n";
 
-static char *sdp_offer2 = "v=0\r\n"
+static const char *sdp_offer2 = "v=0\r\n"
                           "o=bob 2890844730 2890844730 IN IP4 host.example.com\r\n"
                           "s= \r\n"
                           "c=IN IP4 host.example.com\r\n"
@@ -88,7 +88,7 @@ static char *sdp_offer2 = "v=0\r\n"
                           "m=video 53002 RTP/AVP 32\r\n"
                           "a=rtpmap:32 MPV/90000\r\n";
 
-static char *sdp_reinvite = "v=0\r\n"
+static const char *sdp_reinvite = "v=0\r\n"
                             "o=bob 2890844730 2890844730 IN IP4 host.example.com\r\n"
                             "s= \r\n"
                             "c=IN IP4 host.exampleReinvite.com\r\n"
@@ -140,7 +140,7 @@ void SDPTest::testInitialOfferFirstCodec ()
     _session->createOffer(codecSelection);
 
     // pjmedia_sdp_parse(_testPool, test[0].offer_answer[0].sdp2, strlen(test[0].offer_answer[0].sdp2), &remoteAnswer);
-    pjmedia_sdp_parse(_testPool, sdp_answer1, strlen(sdp_answer1), &remoteAnswer);
+    pjmedia_sdp_parse(_testPool, (char*)sdp_answer1, strlen(sdp_answer1), &remoteAnswer);
 
     _session->receivingAnswerAfterInitialOffer(remoteAnswer);
 
@@ -172,7 +172,7 @@ void SDPTest::testInitialAnswerFirstCodec ()
 	codecSelection.push_back(PAYLOAD_CODEC_ALAW);
 	codecSelection.push_back(PAYLOAD_CODEC_G722);
 
-    pjmedia_sdp_parse(_testPool, sdp_offer1, strlen(sdp_offer1), &remoteOffer);
+    pjmedia_sdp_parse(_testPool, (char*)sdp_offer1, strlen(sdp_offer1), &remoteOffer);
 
     _session->setLocalIP("127.0.0.1");
 	_session->setLocalPublishedAudioPort(49567);
@@ -213,7 +213,7 @@ void SDPTest::testInitialOfferLastCodec ()
     _session->createOffer(codecSelection);
 
     // pjmedia_sdp_parse(_testPool, test[0].offer_answer[0].sdp2, strlen(test[0].offer_answer[0].sdp2), &remoteAnswer);
-    pjmedia_sdp_parse(_testPool, sdp_answer2, strlen(sdp_answer2), &remoteAnswer);
+    pjmedia_sdp_parse(_testPool, (char*)sdp_answer2, strlen(sdp_answer2), &remoteAnswer);
 
     _session->receivingAnswerAfterInitialOffer(remoteAnswer);
 
@@ -245,7 +245,7 @@ void SDPTest::testInitialAnswerLastCodec ()
 	codecSelection.push_back(PAYLOAD_CODEC_ALAW);
 	codecSelection.push_back(PAYLOAD_CODEC_G722);
 
-    pjmedia_sdp_parse(_testPool, sdp_offer2, strlen(sdp_offer2), &remoteOffer);
+    pjmedia_sdp_parse(_testPool, (char*)sdp_offer2, strlen(sdp_offer2), &remoteOffer);
 
     _session->setLocalIP("127.0.0.1");
 	_session->setLocalPublishedAudioPort(49567);
@@ -288,7 +288,7 @@ void SDPTest::testReinvite ()
     _session->createOffer(codecSelection);
 
     // pjmedia_sdp_parse(_testPool, test[0].offer_answer[0].sdp2, strlen(test[0].offer_answer[0].sdp2), &remoteAnswer);
-    pjmedia_sdp_parse(_testPool, sdp_answer1, strlen(sdp_answer1), &remoteAnswer);
+    pjmedia_sdp_parse(_testPool, (char*)sdp_answer1, strlen(sdp_answer1), &remoteAnswer);
 
     _session->receivingAnswerAfterInitialOffer(remoteAnswer);
 
@@ -302,7 +302,7 @@ void SDPTest::testReinvite ()
     CPPUNIT_ASSERT(_session->getRemoteIP() == "host.example.com");
     CPPUNIT_ASSERT(_session->getSessionMedia()->getMimeSubtype() == "PCMU");
 
-    pjmedia_sdp_parse(_testPool, sdp_reinvite, strlen(sdp_reinvite), &reinviteOffer);
+    pjmedia_sdp_parse(_testPool, (char*)sdp_reinvite, strlen(sdp_reinvite), &reinviteOffer);
 
     _session->recieveOffer(reinviteOffer, codecSelection);
 
