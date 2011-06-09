@@ -41,7 +41,8 @@ AC_CONFIG_FILES([libs/Makefile \
 		libs/dbus-c++/src/Makefile \
 		libs/dbus-c++/tools/Makefile \
 		libs/dbus-c++/data/Makefile \
-		libs/iax2/Makefile])
+		libs/iax2/Makefile \
+        libs/video/Makefile])
 
 AC_CONFIG_FILES([src/Makefile \
 		src/sip/Makefile \
@@ -192,6 +193,19 @@ LIBSAMPLERATE_MIN_VERSION=0.1.2
 PKG_CHECK_MODULES(SAMPLERATE, samplerate >= ${LIBSAMPLERATE_MIN_VERSION},, AC_MSG_ERROR([Mising libsamplerate development package: libsamplerate0-dev]))
 AC_SUBST(SAMPLERATE_LIBS)
 AC_SUBST(SAMPLERATE_CFLAGS)
+
+dnl The libav versions correspond to the last beta release of libav, 0.7-beta2
+dnl Check for libavcodec development package - name: libavcodec-dev
+PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 53.3.0,, AC_MSG_ERROR([Missing libavcodec package: libavcodec-dev]))
+
+dnl Check for libavformat development package - name: libavformat-dev
+PKG_CHECK_MODULES(LIBAVFORMAT, libavformat >= 53.0.3,, AC_MSG_ERROR([Missing libavformat package: libavformat-dev]))
+
+dnl Check for libswscale development package - name: libswcale-dev
+PKG_CHECK_MODULES(LIBSWSCALE, libswscale >= 1.1.0,, AC_MSG_ERROR([Missing libswscale package: libswscale-dev]))
+
+dnl Check for libavdevice development package - name: libavdevice-dev
+PKG_CHECK_MODULES(LIBAVDEVICE, libavdevice >= 53.0.0,, AC_MSG_ERROR([Missing libavdevice package: libavdevice-dev]))
 
 LIBCCGNU2_MIN_VERSION=1.3.1
 PKG_CHECK_MODULES(CCGNU2, libccgnu2 >= ${LIBCCGNU2_MIN_VERSION},, AC_MSG_ERROR([Mising common cpp development package: libcommoncpp2-dev]))
