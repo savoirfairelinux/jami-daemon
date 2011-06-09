@@ -372,15 +372,13 @@ main_window_info_message (gchar * markup)
 void
 main_window_dialpad (gboolean state)
 {
-
-    g_print ("main_window_dialpad\n");
-
     if (state) {
         dialpad = create_dialpad ();
         gtk_box_pack_end (GTK_BOX (subvbox), dialpad, FALSE /*expand*/,
                           TRUE /*fill*/, 0 /*padding*/);
         gtk_widget_show_all (dialpad);
     } else {
+	
         gtk_container_remove (GTK_CONTAINER (subvbox), dialpad);
     }
 }

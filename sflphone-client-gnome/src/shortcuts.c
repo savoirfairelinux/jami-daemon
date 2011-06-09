@@ -87,7 +87,7 @@ filter_keys (const GdkXEvent *xevent, const GdkEvent *event UNUSED, gpointer dat
     while (accelerators_list[i].action != NULL) {
         if (accelerators_list[i].key == key->keycode && accelerators_list[i].mask
                 == keystate) {
-            DEBUG ("catched key for action: %s", accelerators_list[i].action,
+            DEBUG ("Shortcuts: Catched key for action: %s", accelerators_list[i].action,
                    accelerators_list[i].key);
 
             // call associated callback function
@@ -98,8 +98,6 @@ filter_keys (const GdkXEvent *xevent, const GdkEvent *event UNUSED, gpointer dat
 
         i++;
     }
-
-    DEBUG ("Should not be reached");
 
     return GDK_FILTER_CONTINUE;
 }
@@ -113,7 +111,7 @@ toggle_pick_up_hang_up_callback ()
     callable_obj_t * selectedCall = calltab_get_selected_call (active_calltree);
     conference_obj_t * selectedConf = calltab_get_selected_conf (active_calltree);
 
-    g_print ("toggle_pick_up_hang_up_callback\n");
+    DEBUG ("Shortcuts: Toggle pickup/hangup callback");
 
     if (selectedCall) {
         switch (selectedCall->_state) {
@@ -159,20 +157,20 @@ toggle_hold_callback ()
         switch (selectedCall->_state) {
             case CALL_STATE_CURRENT:
             case CALL_STATE_RECORD:
-                g_print ("on hold\n");
                 sflphone_on_hold ();
                 break;
             case CALL_STATE_HOLD:
-                g_print ("off hold\n");
                 sflphone_off_hold ();
                 break;
             default:
                 break;
         }
-    } else if (selectedConf)
+    } 
+    else if (selectedConf)
         dbus_hold_conference (selectedConf);
-    else
-        ERROR ("Should not happen");
+    else {
+        ERROR ("Shortcuts: Error: No callable object selected");
+    }
 }
 
 static void
@@ -180,14 +178,12 @@ popup_window_callback ()
 {
     gtk_widget_hide (GTK_WIDGET (get_main_window()));
     gtk_widget_show (GTK_WIDGET (get_main_window()));
-    //gtk_window_move (GTK_WINDOW (get_main_window ()),
-    //    dbus_get_window_position_x (), dbus_get_window_position_y ());
 }
 
 static void
 default_callback ()
 {
-    ERROR ("Missing shortcut callback");
+    ERROR ("Shortcuts: Error: Missing shortcut callback");
 }
 
 /*
@@ -307,7 +303,7 @@ initialize_binding (const gchar* action, guint key, GdkModifierType mask)
     }
 
     if (accelerators_list[i].action == NULL) {
-        ERROR ("Should not happen: cannot find corresponding action");
+        ERROR ("Shortcut: Error: Cannot find corresponding action");
         return;
     }
 
@@ -373,7 +369,7 @@ update_bindings_data (guint index, guint key, GdkModifierType mask)
     while (accelerators_list[i].action != NULL) {
         if (accelerators_list[i].key == key && accelerators_list[i].mask == mask
                 && accelerators_list[i].key != 0) {
-            DEBUG ("Existing mapping found %d+%d", mask, key);
+            DEBUG ("Shortcuts: Existing mapping found %d+%d", mask, key);
 
             // disable old binding
             accelerators_list[i].key = 0;
@@ -452,7 +448,7 @@ shortcuts_initialize_bindings ()
 
         // Value not setted
         if (token1 && token2) {
-            DEBUG ("Ahortcuts: token1 %s, token2 %s", token1, token2);
+            DEBUG ("Shortcuts: token1 %s, token2 %s", token1, token2);
 
             mask = atoi (token1);
             key = atoi (token2);
@@ -495,7 +491,7 @@ shortcuts_get_list ()
 static void
 ungrab_key (guint key, GdkModifierType mask, const GdkWindow *root)
 {
-    DEBUG ("Ungrabbing key %d+%d", mask, key);
+    DEBUG ("Shortcuts: Ungrabbing key %d+%d", mask, key);
 
     gdk_error_trap_push ();
 
@@ -515,7 +511,7 @@ ungrab_key (guint key, GdkModifierType mask, const GdkWindow *root)
     gdk_flush ();
 
     if (gdk_error_trap_pop ()) {
-        DEBUG ("Error ungrabbing key %d+%d", mask, key);
+        ERROR ("Shortcuts: Error: Ungrabbing key %d+%d", mask, key);
     }
 }
 
@@ -527,7 +523,7 @@ grab_key (guint key, GdkModifierType mask, const GdkWindow *root)
 {
     gdk_error_trap_push ();
 
-    DEBUG ("Grabbing key %d+%d", mask, key);
+    DEBUG ("Shortcuts: Grabbing key %d+%d", mask, key);
 
     XGrabKey (GDK_DISPLAY(), key, mask, GDK_WINDOW_XID ( (GdkDrawable*) root), True,
               GrabModeAsync, GrabModeAsync);
@@ -549,6 +545,6 @@ grab_key (guint key, GdkModifierType mask, const GdkWindow *root)
     gdk_flush ();
 
     if (gdk_error_trap_pop ()) {
-        DEBUG ("Error grabbing key %d+%d", mask, key);
+        ERROR ("Shortcuts: Error: Grabbing key %d+%d", mask, key);
     }
 }
