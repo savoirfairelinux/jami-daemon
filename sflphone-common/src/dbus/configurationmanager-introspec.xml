@@ -407,9 +407,9 @@
 
 	   <!--      ///////////////////////               -->
 
-	   <!-- Codecs-related methods -->
+	   <!-- Audio Codecs-related methods -->
 
-	   <method name="getCodecList" tp:name-for-bindings="getCodecList">
+	   <method name="getAudioCodecList" tp:name-for-bindings="getAudioCodecList">
 		   <tp:docstring>
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
@@ -419,7 +419,7 @@
 		   </arg>
 	   </method>
 
-	   <method name="getCodecDetails" tp:name-for-bindings="getCodecDetails">
+	   <method name="getAudioCodecDetails" tp:name-for-bindings="getAudioCodecDetails">
 		   <tp:docstring>
 		   </tp:docstring>
 		   <arg type="i" name="payload" direction="in">
@@ -433,7 +433,7 @@
 		   </arg>
 	   </method>
 
-	   <method name="getActiveCodecList" tp:name-for-bindings="getActiveCodecList">
+	   <method name="getActiveAudioCodecList" tp:name-for-bindings="getActiveAudioCodecList">
 		   <tp:docstring>
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
@@ -447,7 +447,7 @@
 		   </arg>
 	   </method>
 
-	   <method name="setActiveCodecList" tp:name-for-bindings="setActiveCodecList">
+	   <method name="setActiveAudioCodecList" tp:name-for-bindings="setActiveAudioCodecList">
 		   <tp:docstring>
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="VectorString"/>

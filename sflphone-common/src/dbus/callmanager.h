@@ -104,7 +104,7 @@ class CallManager
         double getVolume (const std::string& device);
         void setRecording (const std::string& callID);
         bool getIsRecording (const std::string& callID);
-        std::string getCurrentCodecName (const std::string& callID);
+        std::string getCurrentAudioCodecName (const std::string& callID);
         void playDTMF (const std::string& key);
         void startTone (const int32_t& start, const int32_t& type);
 

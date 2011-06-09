@@ -37,8 +37,10 @@ using namespace std;
 
 void GainControlTest::testGainProcessing()
 {
+#if 0
     int fileSize;
     SFLDataFormat buf[SFL_GAIN_BUFFER_LENGTH];
+#endif
 
     // Sampling rate is 8000
     // Target level is 0 dB

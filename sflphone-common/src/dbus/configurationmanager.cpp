@@ -406,7 +406,7 @@ std::vector<std::string> ConfigurationManager::getRingtoneList()
  * Send the list of all codecs loaded to the client through DBus.
  * Can stay global, as only the active codecs will be set per accounts
  */
-std::vector<std::string> ConfigurationManager::getCodecList (void)
+std::vector<std::string> ConfigurationManager::getAudioCodecList (void)
 {
 
     std::vector<std::string> list;
@@ -439,7 +439,7 @@ std::vector<std::string> ConfigurationManager::getSupportedTlsMethod (void)
     return method;
 }
 
-std::vector<std::string> ConfigurationManager::getCodecDetails (
+std::vector<std::string> ConfigurationManager::getAudioCodecDetails (
     const int32_t& payload)
 {
 
@@ -447,7 +447,7 @@ std::vector<std::string> ConfigurationManager::getCodecDetails (
                payload);
 }
 
-std::vector<std::string> ConfigurationManager::getActiveCodecList (
+std::vector<std::string> ConfigurationManager::getActiveAudioCodecList (
     const std::string& accountID)
 {
     std::vector<std::string> v;
@@ -474,7 +474,7 @@ std::vector<std::string> ConfigurationManager::getActiveCodecList (
 
 }
 
-void ConfigurationManager::setActiveCodecList (
+void ConfigurationManager::setActiveAudioCodecList (
     const std::vector<std::string>& list, const std::string& accountID)
 {
 

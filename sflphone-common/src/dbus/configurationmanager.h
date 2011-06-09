@@ -77,11 +77,11 @@ class ConfigurationManager
         int32_t getNumberOfCredential (const std::string& accountID);
         void setCredential (const std::string& accountID, const int32_t& index, const std::map< std::string, std::string >& details);
 
-        std::vector< std::string > getCodecList (void);
+        std::vector< std::string > getAudioCodecList (void);
         std::vector< std::string > getSupportedTlsMethod (void);
-        std::vector< std::string > getCodecDetails (const int32_t& payload);
-        std::vector< std::string > getActiveCodecList (const std::string& accountID);
-        void setActiveCodecList (const std::vector< std::string >& list, const std::string& accountID);
+        std::vector< std::string > getAudioCodecDetails (const int32_t& payload);
+        std::vector< std::string > getActiveAudioCodecList (const std::string& accountID);
+        void setActiveAudioCodecList (const std::vector< std::string >& list, const std::string& accountID);
 
         std::vector< std::string > getAudioPluginList();
         void setAudioPlugin (const std::string& audioPlugin);

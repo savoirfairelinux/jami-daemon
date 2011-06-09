@@ -295,7 +295,6 @@ void SIPTest::testTwoIncomingIpCall ()
     pthread_cond_init (&count_nb_thread, NULL);
 
     pthread_t firstCallThread, secondCallThread;
-    void *status;
 
     pthread_attr_t attr;
 
