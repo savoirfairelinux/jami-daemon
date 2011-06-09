@@ -30,7 +30,6 @@
       <menuitem action="Toolbar"/>
       <separator/>
       <menuitem action="Dialpad"/>
-      <!--menuitem name="VolumeControlsToggle" action="VolumeControls"/-->
       <menuitem action="VolumeControls"/>
       <separator/>
       <menuitem action="History"/>
@@ -56,7 +55,7 @@
     <separator/>
     <toolitem name="VoicemailToolbar" action="Voicemail"/>
     <toolitem name="HistoryToolbar" action="History"/>
-    <toolitem name="AddressbookToolbar" action="Addressbook"/>
+    <!-- <toolitem name="AddressbookToolbar" action="Addressbook"/> -->
   </toolbar>
 
   <popup name="PopupMenu">

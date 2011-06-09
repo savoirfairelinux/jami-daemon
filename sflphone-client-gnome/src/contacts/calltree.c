@@ -430,10 +430,10 @@ void calltree_display_call_info (callable_obj_t * c, CallDisplayType display_typ
 
         case DISPLAY_TYPE_CALL_TRANSFER:
             if (g_strcmp0 ("",c->_peer_name) == 0) {
-                description = g_markup_printf_escaped ("<b>%s</b><i>%s</i>\n<i>Transfert to:%s</i> ",
+                description = g_markup_printf_escaped ("<b>%s</b><i>%s</i>\n<i>Transfer to:%s</i> ",
                                                        display_number, c->_peer_name, c->_trsft_to);
             } else {
-                description = g_markup_printf_escaped ("<b>%s</b>   <i>%s</i>\n<i>Transfert to:%s</i> ",
+                description = g_markup_printf_escaped ("<b>%s</b>   <i>%s</i>\n<i>Transfer to:%s</i> ",
                                                        c->_peer_name, display_number, c->_trsft_to);
             }
             DEBUG ("CallTree: Display a call transfer, description: %s", description);

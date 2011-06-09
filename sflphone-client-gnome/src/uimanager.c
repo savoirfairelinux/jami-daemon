@@ -861,7 +861,7 @@ clear_history (void)
 }
 
 /**
- * Transfert the line
+ * Transfer the line
  */
 static void
 call_transfer_cb()
@@ -982,10 +982,13 @@ uimanager_new (GtkUIManager **_ui_manager)
     GtkActionGroup *action_group;
     GtkWidget *window;
     gchar *path;
+    guint manager_id = 0;
     GError *error = NULL;
-    gint nb_entries;
+    gint nb_entries, nb_menu_entries;
 
     nb_entries = abookfactory_is_addressbook_loaded() ? 7 : 6;
+    nb_menu_entries = abookfactory_is_addressbook_loaded() ? 7 : 6;
+
 
     window = get_main_window();
     ui_manager = gtk_ui_manager_new();
@@ -994,7 +997,7 @@ uimanager_new (GtkUIManager **_ui_manager)
     path = g_build_filename (SFLPHONE_UIDIR_UNINSTALLED, "./ui.xml", NULL);
 
     if (g_file_test (path, G_FILE_TEST_EXISTS)) {
-        gtk_ui_manager_add_ui_from_file (ui_manager, path, &error);
+        manager_id = gtk_ui_manager_add_ui_from_file (ui_manager, path, &error);
 
         if (error != NULL) {
             g_error_free (error);
@@ -1006,7 +1009,7 @@ uimanager_new (GtkUIManager **_ui_manager)
         path = g_build_filename (SFLPHONE_UIDIR, "./ui.xml", NULL);
 
         if (g_file_test (path, G_FILE_TEST_EXISTS)) {
-            gtk_ui_manager_add_ui_from_file (ui_manager, path, &error);
+            manager_id = gtk_ui_manager_add_ui_from_file (ui_manager, path, &error);
 
             if (error != NULL) {
                 g_error_free (error);
@@ -1017,10 +1020,20 @@ uimanager_new (GtkUIManager **_ui_manager)
         } else
             return FALSE;
     }
-
+    
+    if(abookfactory_is_addressbook_loaded()) {
+ 	// This action must be loaded dynamically and is not specified in the xml description
+        gtk_ui_manager_add_ui(ui_manager, manager_id,  "/ToolbarActions",
+                          "AddressbookToolbar",
+                          "Addressbook",
+                          GTK_UI_MANAGER_TOOLITEM, FALSE);	
+    }
+    
     action_group = gtk_action_group_new ("SFLphoneWindowActions");
     // To translate label and tooltip entries
     gtk_action_group_set_translation_domain (action_group, "sflphone-client-gnome");
+   // gtk_action_group_add_actions(action_group, menu_entries, 6, window);
+    DEBUG("------------------------- menu nb element %d", G_N_ELEMENTS(menu_entries));
     gtk_action_group_add_actions (action_group, menu_entries, G_N_ELEMENTS (menu_entries), window);
     gtk_action_group_add_toggle_actions (action_group, toggle_menu_entries, nb_entries, window);
     //gtk_action_group_add_radio_actions (action_group, radio_menu_entries, G_N_ELEMENTS (radio_menu_entries), CALLTREE_CALLS, G_CALLBACK (calltree_switch_cb), window);
@@ -1668,12 +1681,11 @@ create_toolbar_actions (GtkUIManager *ui_manager, GtkWidget **widget)
     recordWidget = gtk_ui_manager_get_widget (ui_manager,
                    "/ToolbarActions/RecordToolbar");
     imToolbar = gtk_ui_manager_get_widget (ui_manager,
-                                           "/ToolbarActions/InstantMessagingToolbar");
+                   "/ToolbarActions/InstantMessagingToolbar");
     historyButton = gtk_ui_manager_get_widget (ui_manager,
                     "/ToolbarActions/HistoryToolbar");
     if(abookfactory_is_addressbook_loaded()) {
-        contactButton = gtk_ui_manager_get_widget (ui_manager,
-                        "/ToolbarActions/AddressbookToolbar");
+        contactButton = gtk_ui_manager_get_widget (ui_manager, "/ToolbarActions/AddressbookToolbar");
     }
 
     // Set the handler ID for the transfer
