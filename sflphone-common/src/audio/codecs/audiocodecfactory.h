@@ -53,18 +53,18 @@ typedef std::map<AudioCodecType, std::string> CodecMap;
  * @brief Handle audio codecs, load them in memory
  */
 
-class CodecFactory
+class AudioCodecFactory
 {
     public:
         /**
          * Constructor
          */
-        CodecFactory();
+        AudioCodecFactory();
 
         /**
          * Destructor
          */
-        ~CodecFactory();
+        ~AudioCodecFactory();
 
         /**
          * Accessor to data structures

@@ -42,7 +42,7 @@
 #include <pj/assert.h>
 #include <vector>
 
-#include "audio/codecs/codecDescriptor.h"
+#include "audio/codecs/audiocodecfactory.h"
 #include "sdpmedia.h"
 
 #include <exception>

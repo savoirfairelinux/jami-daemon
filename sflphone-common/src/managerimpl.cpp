@@ -76,8 +76,8 @@
 
 ManagerImpl::ManagerImpl (void) :
     _hasTriedToRegister (false), _config(), _currentCallId2(),
-    _currentCallMutex(), _codecBuilder (NULL), _audiodriver (NULL),
-    _dtmfKey (NULL), _codecDescriptorMap(), _toneMutex(),
+    _currentCallMutex(), _audiodriver (NULL),
+    _dtmfKey (NULL), _audioCodecFactory(), _toneMutex(),
     _telephoneTone (NULL), _audiofile (NULL), _spkr_volume (0),
     _mic_volume (0), _mutex(), _dbus (NULL), _waitingCall(),
     _waitingCallMutex(), _nbIncomingWaitingCall (0), _path (""),
@@ -203,7 +203,7 @@ void ManagerImpl::terminate ()
     _telephoneTone = NULL;
 
     _debug ("Manager: Unload audio codecs ");
-    _codecDescriptorMap.deleteHandlePointer();
+    _audioCodecFactory.deleteHandlePointer();
 
 }
 
@@ -2344,7 +2344,7 @@ void ManagerImpl::ringtone (const AccountID& accountID)
         layer = _audiodriver->getLayerType();
 
         samplerate = _audiodriver->getSampleRate();
-        codecForTone = static_cast<AudioCodec *>(_codecDescriptorMap.getFirstCodecAvailable());
+        codecForTone = static_cast<AudioCodec *>(_audioCodecFactory.getFirstCodecAvailable());
 
         audioLayerMutexUnlock();
 
@@ -2592,7 +2592,7 @@ void ManagerImpl::initAudioCodec (void)
     /* Init list of all supported codecs by the application.
      * This is a global list. Every account will inherit it.
      */
-    _codecDescriptorMap.init();
+    _audioCodecFactory.init();
 }
 
 std::vector<std::string> ManagerImpl::unserialize (std::string s)

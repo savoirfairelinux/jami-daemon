@@ -32,7 +32,7 @@
 #define IAXCALL_H
 
 #include "call.h"
-#include "audio/codecs/codecDescriptor.h"
+#include "audio/codecs/audiocodecfactory.h"
 
 #include <iax-client.h>
 #include <frame.h>
@@ -114,15 +114,15 @@ class IAXCall : public Call
          * Set internal codec Map: initialization only, not protected
          * @param map The codec map
          */
-        void setCodecMap (const CodecFactory& map) {
-            _codecMap = map;
+        void setCodecMap (const AudioCodecFactory& factory) {
+            _audioCodecFactory = factory;
         }
 
         /**
          * Get internal codec Map: initialization only, not protected
          * @return CodecDescriptor	The codec map
          */
-        CodecFactory& getCodecMap();
+        AudioCodecFactory& getAudioCodecFactory();
 
         /**
          * Return audio codec [mutex protected]
@@ -143,7 +143,7 @@ class IAXCall : public Call
         }
 
         /** Codec Map */
-        CodecFactory _codecMap;
+        AudioCodecFactory _audioCodecFactory;
 
         /** Codec pointer */
         AudioCodecType _audioCodec;

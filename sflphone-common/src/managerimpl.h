@@ -53,7 +53,7 @@
 #include "audio/sound/tonelist.h"  // for Tone::TONEID declaration
 #include "audio/sound/audiofile.h"
 #include "audio/sound/dtmf.h" // DTMF class contained by value here
-#include "audio/codecs/codecDescriptor.h" // CodecDescriptor class contained by value here
+#include "audio/codecs/audiocodecfactory.h" 
 
 #include "audio/mainbuffer.h"
 #include "yamlemitter.h"
@@ -186,8 +186,8 @@ class ManagerImpl
          * Get a descriptor map of codec available
          * @return CodecDescriptor  The internal codec map
          */
-        CodecFactory& getCodecDescriptorMap (void) {
-            return _codecDescriptorMap;
+        AudioCodecFactory& getAudioCodecFactory (void) {
+            return _audioCodecFactory;
         }
 
         /**
@@ -1221,9 +1221,6 @@ class ManagerImpl
         /** Protected current call access */
         ost::Mutex _currentCallMutex;
 
-        /** Vector of CodecDescriptor */
-        CodecFactory* _codecBuilder;
-
         /** Audio layer */
         AudioLayer* _audiodriver;
 
@@ -1232,7 +1229,7 @@ class ManagerImpl
         DTMF* _dtmfKey;
 
         // map of codec (for configlist request)
-        CodecFactory _codecDescriptorMap;
+        AudioCodecFactory _audioCodecFactory;
 
         /////////////////////
         // Protected by Mutex
