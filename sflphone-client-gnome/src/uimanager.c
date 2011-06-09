@@ -1024,7 +1024,7 @@ uimanager_new (GtkUIManager **_ui_manager)
     if(abookfactory_is_addressbook_loaded()) {
  	// These actions must be loaded dynamically and is not specified in the xml description
 	gtk_ui_manager_add_ui(ui_manager, manager_id, "/ViewMenu",
-			  NULL,
+			  "Addressbook",
 			  "Addressbook",
 			  GTK_UI_MANAGER_MENUITEM, FALSE);
         gtk_ui_manager_add_ui(ui_manager, manager_id,  "/ToolbarActions",

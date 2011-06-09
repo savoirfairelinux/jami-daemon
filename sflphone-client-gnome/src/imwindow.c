@@ -79,7 +79,7 @@ on_switch_page (GtkNotebook *notebook, GtkNotebookPage *page UNUSED, guint page_
     gtk_widget_grab_focus (tab);
     gtk_widget_show_now (tab);
 
-    g_print ("switch to %i -  current = %i\n", page_num, index);
+    DEBUG ("InstantMessaging: switch to %i -  current = %i\n", page_num, index);
 }
 
 static void
@@ -170,8 +170,10 @@ im_window_add (GtkWidget *widget)
 
         /* Show it all */
         gtk_widget_show_all (im_window);
-    } else
-        ERROR ("Could not create the main instant messaging window");
+    } 
+    else {
+        ERROR ("InstantMessaging: Error: Could not create the main instant messaging window");
+    }
 }
 
 gint
@@ -234,7 +236,7 @@ im_window_add_tab (GtkWidget *widget)
     guint tabIndex = gtk_notebook_append_page (GTK_NOTEBOOK (im_notebook), widget, tab_Container);
 
     /* TODO Switch to the newly opened tab. Still not working */
-    DEBUG ("SWITCH TO NEW TAB: %i", tabIndex);
+    DEBUG ("InstantMessaging: Switch to tab: %i", tabIndex);
     gtk_notebook_set_current_page (GTK_NOTEBOOK (im_notebook), -1);
 
     /* Decide whether or not displaying the tabs of the notebook */

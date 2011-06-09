@@ -1820,12 +1820,12 @@ static void menuitem_response( gchar *string )
         sflphone_join_participant (selected_call->_callID, dragged_call->_callID);
     }
     else if(g_strcmp0(string, SFL_TRANSFER_CALL) == 0) {
-        g_print("Calltree: Transfering call %s, to %s", selected_call->_peer_number, dragged_call->_peer_number);
+        DEBUG("Calltree: Transfering call %s, to %s", selected_call->_peer_number, dragged_call->_peer_number);
         dbus_attended_transfer(selected_call, dragged_call);
         calltree_remove_call(current_calls, selected_call, NULL);
     }
     else {
-        g_print("CallTree: Error unknown option selected in menu %s", string);
+        DEBUG("CallTree: Error unknown option selected in menu %s", string);
     }
 
     // Make sure the create conference opetion will appear next time the menu pops
