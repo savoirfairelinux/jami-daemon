@@ -1022,7 +1022,11 @@ uimanager_new (GtkUIManager **_ui_manager)
     }
     
     if(abookfactory_is_addressbook_loaded()) {
- 	// This action must be loaded dynamically and is not specified in the xml description
+ 	// These actions must be loaded dynamically and is not specified in the xml description
+	gtk_ui_manager_add_ui(ui_manager, manager_id, "/ViewMenu",
+			  NULL,
+			  "Addressbook",
+			  GTK_UI_MANAGER_MENUITEM, FALSE);
         gtk_ui_manager_add_ui(ui_manager, manager_id,  "/ToolbarActions",
                           "AddressbookToolbar",
                           "Addressbook",
@@ -1032,8 +1036,6 @@ uimanager_new (GtkUIManager **_ui_manager)
     action_group = gtk_action_group_new ("SFLphoneWindowActions");
     // To translate label and tooltip entries
     gtk_action_group_set_translation_domain (action_group, "sflphone-client-gnome");
-   // gtk_action_group_add_actions(action_group, menu_entries, 6, window);
-    DEBUG("------------------------- menu nb element %d", G_N_ELEMENTS(menu_entries));
     gtk_action_group_add_actions (action_group, menu_entries, G_N_ELEMENTS (menu_entries), window);
     gtk_action_group_add_toggle_actions (action_group, toggle_menu_entries, nb_entries, window);
     //gtk_action_group_add_radio_actions (action_group, radio_menu_entries, G_N_ELEMENTS (radio_menu_entries), CALLTREE_CALLS, G_CALLBACK (calltree_switch_cb), window);

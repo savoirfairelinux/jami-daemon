@@ -1211,11 +1211,11 @@ void ringtone_enabled (GtkWidget *widget UNUSED, gpointer fileChooser, const gch
 }
 
 
-GtkWidget* create_codecs_configuration (account_t **a)
+GtkWidget* create_audiocodecs_configuration (account_t **a)
 {
 
     // Main widget
-    GtkWidget *ret, *codecs, *dtmf, *box, *frame, *sipinfo, *table;
+    GtkWidget *ret, *audiocodecs, *dtmf, *box, *frame, *sipinfo, *table;
     account_t *currentAccount = *a;
     gchar *currentDtmfType = "";
     gboolean dtmf_are_rtp = TRUE;
@@ -1224,14 +1224,14 @@ GtkWidget* create_codecs_configuration (account_t **a)
     ret = gtk_vbox_new (FALSE, 10);
     gtk_container_set_border_width (GTK_CONTAINER (ret), 10);
 
-    box = codecs_box (a);
+    box = audiocodecs_box (a);
 
-    // Box for the codecs
-    gnome_main_section_new (_ ("Audio"), &codecs);
-    gtk_box_pack_start (GTK_BOX (ret), codecs, FALSE, FALSE, 0);
-    gtk_widget_set_size_request (GTK_WIDGET (codecs), -1, 200);
-    gtk_widget_show (codecs);
-    gtk_container_add (GTK_CONTAINER (codecs) , box);
+    // Box for the audiocodecs
+    gnome_main_section_new (_ ("Audio"), &audiocodecs);
+    gtk_box_pack_start (GTK_BOX (ret), audiocodecs, FALSE, FALSE, 0);
+    gtk_widget_set_size_request (GTK_WIDGET (audiocodecs), -1, 200);
+    gtk_widget_show (audiocodecs);
+    gtk_container_add (GTK_CONTAINER (audiocodecs) , box);
 
     // Add DTMF type selection for SIP account only
     p = g_hash_table_lookup (currentAccount->properties, g_strdup (ACCOUNT_TYPE));
@@ -1300,7 +1300,7 @@ void show_account_window (account_t * a)
 {
 
     GtkWidget * notebook;
-    GtkWidget *tab, *codecs_tab, *ip_tab;
+    GtkWidget *tab, *audiocodecs_tab, *ip_tab;
     gint response;
     account_t *currentAccount;
 
@@ -1352,10 +1352,10 @@ void show_account_window (account_t * a)
 
     }
 
-    /* Codecs */
-    codecs_tab = create_codecs_configuration (&currentAccount);
-    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), codecs_tab, gtk_label_new (_ ("Audio")));
-    gtk_notebook_page_num (GTK_NOTEBOOK (notebook), codecs_tab);
+    /* Audio Codecs */
+    audiocodecs_tab = create_audiocodecs_configuration (&currentAccount);
+    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), audiocodecs_tab, gtk_label_new (_ ("Audio")));
+    gtk_notebook_page_num (GTK_NOTEBOOK (notebook), audiocodecs_tab);
 
     // Get current protocol for this account protocol
     gchar *currentProtocol = "SIP";
