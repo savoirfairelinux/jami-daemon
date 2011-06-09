@@ -14,7 +14,7 @@
 
 #define SFL_GAIN_LOGe10  2.30258509299404568402
 
-#define DUMP_GAIN_CONTROL_SIGNAL
+// #define DUMP_GAIN_CONTROL_SIGNAL
 
 GainControl::GainControl(double sr, double target) : averager(sr, SFL_GAIN_ATTACK_TIME, SFL_GAIN_RELEASE_TIME)
 				    , limiter(SFL_GAIN_LIMITER_RATIO, SFL_GAIN_LIMITER_THRESHOLD)

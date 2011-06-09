@@ -645,7 +645,9 @@ calltree_create (calltab_t* tab, gboolean searchbar_type)
     // search bar if tab is either "history" or "addressbook"
     if (searchbar_type) {
         calltab_create_searchbar (tab);
-        gtk_box_pack_start (GTK_BOX (tab->tree), tab->searchbar, FALSE, TRUE, 0);
+        if(tab->searchbar != NULL) {
+            gtk_box_pack_start (GTK_BOX (tab->tree), tab->searchbar, FALSE, TRUE, 0);
+    	}
     }
 
     gtk_widget_show (tab->tree);

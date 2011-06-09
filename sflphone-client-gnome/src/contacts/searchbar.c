@@ -161,8 +161,6 @@ void update_searchbar_addressbook_list()
         }
     }
 
-    DEBUG("OK");
-
     if(abookfactory_is_addressbook_loaded()) {
         AddrBookFactory *factory = abookfactory_get_factory();
         if (activeIsSet) {
@@ -175,7 +173,6 @@ void update_searchbar_addressbook_list()
             factory->addrbook->set_current_book(gtk_combo_box_get_active_text(GTK_COMBO_BOX(cbox)));
         }
     }
-    DEBUG("OK");
 
     g_free (activeText);
     cboxSignalId = gtk_signal_connect (GTK_OBJECT (cbox), "changed", G_CALLBACK (cbox_changed_cb), NULL);
@@ -440,13 +437,13 @@ GtkWidget* contacts_searchbar_new ()
     book_list = dbus_get_addressbook_list();
 
     AddrBookFactory *factory = abookfactory_get_factory();
-
+    
     factory->addrbook->init(book_list);
 
     GSList *book_list_iterator;
     book_data_t *book_data;
     GSList *books_data = factory->addrbook->get_books_data(book_list);
-
+    
     // Populate menu
     count = 0;
     gboolean activeIsSet = FALSE;
@@ -494,7 +491,6 @@ GtkWidget* contacts_searchbar_new ()
     cell = gtk_cell_renderer_text_new();
     gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (cbox), cell, TRUE);
     gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (cbox), cell, "text", 0, NULL);
-
 
 
 #if GTK_CHECK_VERSION(2,16,0)
