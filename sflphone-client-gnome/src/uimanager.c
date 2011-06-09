@@ -982,6 +982,7 @@ uimanager_new (GtkUIManager **_ui_manager)
     GtkActionGroup *action_group;
     GtkWidget *window;
     gchar *path;
+    guint manager_id = 0;
     GError *error = NULL;
     gint nb_entries;
 
@@ -994,7 +995,7 @@ uimanager_new (GtkUIManager **_ui_manager)
     path = g_build_filename (SFLPHONE_UIDIR_UNINSTALLED, "./ui.xml", NULL);
 
     if (g_file_test (path, G_FILE_TEST_EXISTS)) {
-        gtk_ui_manager_add_ui_from_file (ui_manager, path, &error);
+        manager_id = gtk_ui_manager_add_ui_from_file (ui_manager, path, &error);
 
         if (error != NULL) {
             g_error_free (error);
@@ -1006,7 +1007,7 @@ uimanager_new (GtkUIManager **_ui_manager)
         path = g_build_filename (SFLPHONE_UIDIR, "./ui.xml", NULL);
 
         if (g_file_test (path, G_FILE_TEST_EXISTS)) {
-            gtk_ui_manager_add_ui_from_file (ui_manager, path, &error);
+            manager_id = gtk_ui_manager_add_ui_from_file (ui_manager, path, &error);
 
             if (error != NULL) {
                 g_error_free (error);
@@ -1017,7 +1018,14 @@ uimanager_new (GtkUIManager **_ui_manager)
         } else
             return FALSE;
     }
-
+    
+    if(abookfactory_is_addressbook_loaded()) {
+        gtk_ui_manager_add_ui(ui_manager, manager_id,  "/ToolbarActions",
+                          "AddressbookToolbar",
+                          "Addressbook",
+                          GTK_UI_MANAGER_TOOLITEM, FALSE);	
+    }
+    
     action_group = gtk_action_group_new ("SFLphoneWindowActions");
     // To translate label and tooltip entries
     gtk_action_group_set_translation_domain (action_group, "sflphone-client-gnome");
@@ -1668,12 +1676,11 @@ create_toolbar_actions (GtkUIManager *ui_manager, GtkWidget **widget)
     recordWidget = gtk_ui_manager_get_widget (ui_manager,
                    "/ToolbarActions/RecordToolbar");
     imToolbar = gtk_ui_manager_get_widget (ui_manager,
-                                           "/ToolbarActions/InstantMessagingToolbar");
+                   "/ToolbarActions/InstantMessagingToolbar");
     historyButton = gtk_ui_manager_get_widget (ui_manager,
                     "/ToolbarActions/HistoryToolbar");
     if(abookfactory_is_addressbook_loaded()) {
-        contactButton = gtk_ui_manager_get_widget (ui_manager,
-                        "/ToolbarActions/AddressbookToolbar");
+        contactButton = gtk_ui_manager_get_widget (ui_manager, "/ToolbarActions/AddressbookToolbar");
     }
 
     // Set the handler ID for the transfer
