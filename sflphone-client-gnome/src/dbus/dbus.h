@@ -221,6 +221,12 @@ void dbus_play_dtmf (const gchar * key);
 gchar** dbus_audio_codec_list();
 
 /**
+ * ConfigurationManager - Get the video codecs list
+ * @return gchar** The list of video codecs 
+ */
+gchar** dbus_video_codec_list();
+
+/**
  * ConfigurationManager - Get the audio codec details
  * @param payload The payload of the audio codec
  * @return gchar** The audio codec details

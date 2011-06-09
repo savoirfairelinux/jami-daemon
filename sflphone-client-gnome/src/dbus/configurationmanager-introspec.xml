@@ -418,6 +418,16 @@
 			   </tp:docstring>
 		   </arg>
 	   </method>
+	   
+       <method name="getVideoCodecList" tp:name-for-bindings="getVideoCodecList">
+		   <tp:docstring>
+		   </tp:docstring>
+		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+		   <arg type="as" name="list" direction="out">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+	   </method>
 
 	   <method name="getAudioCodecDetails" tp:name-for-bindings="getAudioCodecDetails">
 		   <tp:docstring>

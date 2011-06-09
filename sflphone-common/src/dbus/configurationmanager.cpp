@@ -428,6 +428,20 @@ std::vector<std::string> ConfigurationManager::getAudioCodecList (void)
     return list;
 }
 
+
+/**
+ * Send the list of all codecs loaded to the client through DBus.
+ * Can stay global, as only the active codecs will be set per accounts
+ */
+std::vector<std::string> ConfigurationManager::getVideoCodecList (void)
+{
+    std::vector<std::string> list;
+
+    list.push_back("h263");
+
+    return list;
+}
+
 std::vector<std::string> ConfigurationManager::getSupportedTlsMethod (void)
 {
     std::vector<std::string> method;
@@ -440,15 +454,15 @@ std::vector<std::string> ConfigurationManager::getSupportedTlsMethod (void)
 }
 
 std::vector<std::string> ConfigurationManager::getAudioCodecDetails (
-    const int32_t& payload)
+        const int32_t& payload)
 {
 
     return Manager::instance().getCodecDescriptorMap().getCodecSpecifications (
-               payload);
+            payload);
 }
 
 std::vector<std::string> ConfigurationManager::getActiveAudioCodecList (
-    const std::string& accountID)
+        const std::string& accountID)
 {
     std::vector<std::string> v;
     Account *acc;
@@ -475,7 +489,7 @@ std::vector<std::string> ConfigurationManager::getActiveAudioCodecList (
 }
 
 void ConfigurationManager::setActiveAudioCodecList (
-    const std::vector<std::string>& list, const std::string& accountID)
+        const std::vector<std::string>& list, const std::string& accountID)
 {
 
     _debug ("ConfigurationManager: Active codec list received");
@@ -567,32 +581,32 @@ void ConfigurationManager::setNoiseSuppressState (const std::string& state)
 
 std::string ConfigurationManager::getEchoCancelState(void)
 {
-	return Manager::instance().getEchoCancelState();
+    return Manager::instance().getEchoCancelState();
 }
 
 void ConfigurationManager::setEchoCancelState(const std::string& state)
 {
-	Manager::instance().setEchoCancelState(state);
+    Manager::instance().setEchoCancelState(state);
 }
 
 int ConfigurationManager::getEchoCancelTailLength(void)
 {
-	return Manager::instance().getEchoCancelTailLength();
+    return Manager::instance().getEchoCancelTailLength();
 }
 
 void ConfigurationManager::setEchoCancelTailLength(const int32_t& length)
 {
-	Manager::instance().setEchoCancelTailLength(length);
+    Manager::instance().setEchoCancelTailLength(length);
 }
 
 int ConfigurationManager::getEchoCancelDelay(void)
 {
-	return Manager::instance().getEchoCancelDelay();
+    return Manager::instance().getEchoCancelDelay();
 }
 
 void ConfigurationManager::setEchoCancelDelay(const int32_t& delay)
 {
-	Manager::instance().setEchoCancelDelay(delay);
+    Manager::instance().setEchoCancelDelay(delay);
 }
 
 std::vector<std::string> ConfigurationManager::getPlaybackDeviceList()
@@ -654,38 +668,38 @@ void ConfigurationManager::setRecordPath (const std::string& recPath)
 
 bool ConfigurationManager::getIsAlwaysRecording(void)
 {
-	return Manager::instance().getIsAlwaysRecording();
+    return Manager::instance().getIsAlwaysRecording();
 }
 
 void ConfigurationManager::setIsAlwaysRecording(const bool& rec)
 {
-	Manager::instance().setIsAlwaysRecording(rec);
+    Manager::instance().setIsAlwaysRecording(rec);
 }
 /*
-int32_t ConfigurationManager::getDialpad(void) {
-	return Manager::instance().getDialpad();
-}
+   int32_t ConfigurationManager::getDialpad(void) {
+   return Manager::instance().getDialpad();
+   }
 
-void ConfigurationManager::setDialpad(const bool& display) {
-	Manager::instance().setDialpad(display);
-}
+   void ConfigurationManager::setDialpad(const bool& display) {
+   Manager::instance().setDialpad(display);
+   }
 
-int32_t ConfigurationManager::getSearchbar(void) {
-	return Manager::instance().getSearchbar();
-}
+   int32_t ConfigurationManager::getSearchbar(void) {
+   return Manager::instance().getSearchbar();
+   }
 
-void ConfigurationManager::setSearchbar(void) {
-	Manager::instance().setSearchbar();
-}
+   void ConfigurationManager::setSearchbar(void) {
+   Manager::instance().setSearchbar();
+   }
 
-int32_t ConfigurationManager::getVolumeControls(void) {
-	return Manager::instance().getVolumeControls();
-}
+   int32_t ConfigurationManager::getVolumeControls(void) {
+   return Manager::instance().getVolumeControls();
+   }
 
-void ConfigurationManager::setVolumeControls(const bool& display) {
-	Manager::instance().setVolumeControls(display);
-}
-*/
+   void ConfigurationManager::setVolumeControls(const bool& display) {
+   Manager::instance().setVolumeControls(display);
+   }
+   */
 
 int32_t ConfigurationManager::getHistoryLimit (void)
 {
@@ -698,38 +712,38 @@ void ConfigurationManager::setHistoryLimit (const int32_t& days)
 }
 
 /*
-void ConfigurationManager::setHistoryEnabled(void) {
-	Manager::instance().setHistoryEnabled();
-}
+   void ConfigurationManager::setHistoryEnabled(void) {
+   Manager::instance().setHistoryEnabled();
+   }
 
-std::string ConfigurationManager::getHistoryEnabled(void) {
-	return Manager::instance().getHistoryEnabled();
-}
+   std::string ConfigurationManager::getHistoryEnabled(void) {
+   return Manager::instance().getHistoryEnabled();
+   }
 
-void ConfigurationManager::startHidden(void) {
-	Manager::instance().startHidden();
-}
+   void ConfigurationManager::startHidden(void) {
+   Manager::instance().startHidden();
+   }
 
-int32_t ConfigurationManager::isStartHidden(void) {
-	return Manager::instance().isStartHidden();
-}
+   int32_t ConfigurationManager::isStartHidden(void) {
+   return Manager::instance().isStartHidden();
+   }
 
-void ConfigurationManager::switchPopupMode(void) {
-	Manager::instance().switchPopupMode();
-}
+   void ConfigurationManager::switchPopupMode(void) {
+   Manager::instance().switchPopupMode();
+   }
 
-int32_t ConfigurationManager::popupMode(void) {
-	return Manager::instance().popupMode();
-}
+   int32_t ConfigurationManager::popupMode(void) {
+   return Manager::instance().popupMode();
+   }
 
-void ConfigurationManager::setNotify(void) {
-	Manager::instance().setNotify();
-}
+   void ConfigurationManager::setNotify(void) {
+   Manager::instance().setNotify();
+   }
 
-int32_t ConfigurationManager::getNotify(void) {
-	return Manager::instance().getNotify();
-}
-*/
+   int32_t ConfigurationManager::getNotify(void) {
+   return Manager::instance().getNotify();
+   }
+   */
 
 void ConfigurationManager::setAudioManager (const int32_t& api)
 {
@@ -752,7 +766,7 @@ int32_t ConfigurationManager::getMailNotify (void)
 }
 
 std::map<std::string, int32_t> ConfigurationManager::getAddressbookSettings (
-    void)
+        void)
 {
     return Manager::instance().getAddressbookSettings();
 }
@@ -769,7 +783,7 @@ std::vector<std::string> ConfigurationManager::getAddressbookList (void)
 }
 
 void ConfigurationManager::setAddressbookList (
-    const std::vector<std::string>& list)
+        const std::vector<std::string>& list)
 {
     Manager::instance().setAddressbookList (list);
 }
@@ -796,17 +810,17 @@ std::map<std::string, std::string> ConfigurationManager::getHistory (void)
 }
 
 void ConfigurationManager::setHistory (
-    const std::map<std::string, std::string>& entries)
+        const std::map<std::string, std::string>& entries)
 {
     Manager::instance().receive_history_from_client (entries);
 }
 
 std::string ConfigurationManager::getAddrFromInterfaceName (
-    const std::string& interface)
+        const std::string& interface)
 {
 
     std::string address = SIPVoIPLink::instance ("")->getInterfaceAddrFromName (
-                              interface);
+            interface);
 
     return address;
 }
@@ -846,23 +860,23 @@ std::map<std::string, std::string> ConfigurationManager::getShortcuts()
 }
 
 void ConfigurationManager::setShortcuts (
-    const std::map<std::string, std::string>& shortcutsMap)
+        const std::map<std::string, std::string>& shortcutsMap)
 {
 
     std::map<std::string, std::string> map_cpy = shortcutsMap;
     /*
-      std::map<std::string, std::string> map_cpy = shortcutsMap;
-      std::map<std::string, std::string>::iterator it;
+       std::map<std::string, std::string> map_cpy = shortcutsMap;
+       std::map<std::string, std::string>::iterator it;
 
-      for (int i = 0; i < (int)shortcutsKeys.size(); i++) {
-      	std::string key = shortcutsKeys.at(i);
-      	it = map_cpy.find(key);
-      	if (it != shortcutsMap.end()) {
+       for (int i = 0; i < (int)shortcutsKeys.size(); i++) {
+       std::string key = shortcutsKeys.at(i);
+       it = map_cpy.find(key);
+       if (it != shortcutsMap.end()) {
 
-      		Manager::instance().setConfig("Shortcuts", key, it->second);
-      	}
-      }
-    */
+       Manager::instance().setConfig("Shortcuts", key, it->second);
+       }
+       }
+       */
     Manager::instance().shortcutPreferences.setShortcuts (map_cpy);
 
     Manager::instance().saveConfig();

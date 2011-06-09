@@ -1226,6 +1226,24 @@ dbus_audio_codec_list()
 }
 
 gchar**
+dbus_video_codec_list()
+{
+
+    GError *error = NULL;
+    gchar** array = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_get_video_codec_list (
+        configurationManagerProxy, &array, &error);
+
+    if (error) {
+        ERROR ("Failed to call get_video_codec_list() on ConfigurationManager: %s",
+               error->message);
+        g_error_free (error);
+    }
+
+    return array;
+}
+
+gchar**
 dbus_audio_codec_details (int payload)
 {
 
