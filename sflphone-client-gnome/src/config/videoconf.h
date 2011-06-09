@@ -34,5 +34,6 @@
 #include <gtk/gtk.h>
 
 GtkWidget* create_video_configuration();
+GtkWidget* videocodecs_box();
 
 #endif // __VIDEO_CONF_H__

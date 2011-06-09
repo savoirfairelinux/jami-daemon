@@ -37,10 +37,10 @@
 #include <mainwindow.h>
 #include <accountlist.h>
 #include <audioconf.h>
+#include <videoconf.h>
 #include <accountconfigdialog.h>
 #include <zrtpadvanceddialog.h>
 #include <tlsadvanceddialog.h>
-#include <audioconf.h>
 
 // From version 2.16, gtk provides the functionalities libsexy used to provide
 #if GTK_CHECK_VERSION(2,16,0)
@@ -1296,11 +1296,35 @@ GtkWidget* create_audiocodecs_configuration (account_t **a)
 
 }
 
+GtkWidget* create_videocodecs_configuration (account_t **a)
+{
+
+    // Main widget
+    GtkWidget *ret, *videocodecs, *box;
+
+    ret = gtk_vbox_new (FALSE, 10);
+    gtk_container_set_border_width (GTK_CONTAINER (ret), 10);
+
+    box = videocodecs_box (a);
+
+    // Box for the videocodecs
+    gnome_main_section_new (_ ("Video"), &videocodecs);
+    gtk_box_pack_start (GTK_BOX (ret), videocodecs, FALSE, FALSE, 0);
+    gtk_widget_set_size_request (GTK_WIDGET (videocodecs), -1, 200);
+    gtk_widget_show (videocodecs);
+    gtk_container_add (GTK_CONTAINER (videocodecs) , box);
+
+    gtk_widget_show_all (ret);
+
+    return ret;
+
+}
+
 void show_account_window (account_t * a)
 {
 
     GtkWidget * notebook;
-    GtkWidget *tab, *audiocodecs_tab, *ip_tab;
+    GtkWidget *tab, *audiocodecs_tab, *videocodecs_tab, *ip_tab;
     gint response;
     account_t *currentAccount;
 
@@ -1356,6 +1380,11 @@ void show_account_window (account_t * a)
     audiocodecs_tab = create_audiocodecs_configuration (&currentAccount);
     gtk_notebook_append_page (GTK_NOTEBOOK (notebook), audiocodecs_tab, gtk_label_new (_ ("Audio")));
     gtk_notebook_page_num (GTK_NOTEBOOK (notebook), audiocodecs_tab);
+    
+    /* Video Codecs */
+    videocodecs_tab = create_videocodecs_configuration (&currentAccount);
+    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), videocodecs_tab, gtk_label_new (_ ("Video")));
+    gtk_notebook_page_num (GTK_NOTEBOOK (notebook), videocodecs_tab);
 
     // Get current protocol for this account protocol
     gchar *currentProtocol = "SIP";
