@@ -42,7 +42,8 @@ AC_CONFIG_FILES([libs/Makefile \
 		libs/dbus-c++/tools/Makefile \
 		libs/dbus-c++/data/Makefile \
 		libs/iax2/Makefile \
-        libs/video/Makefile])
+        libs/video/Makefile \
+        libs/video/test/Makefile])
 
 AC_CONFIG_FILES([src/Makefile \
 		src/sip/Makefile \
