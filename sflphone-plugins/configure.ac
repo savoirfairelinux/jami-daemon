@@ -43,8 +43,8 @@ PKG_CHECK_MODULES([LIBEDATASERVER], [libedataserver-1.2 >= 2.32], [AC_DEFINE([LI
 
 AC_CONFIG_FILES([
 Makefile 
-plugin/addressbook/Makefile
-plugin/Makefile
+addressbook/evolution/Makefile
+addressbook/Makefile
 ])
 AC_OUTPUT
 
