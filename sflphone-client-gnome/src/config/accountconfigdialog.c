@@ -1354,7 +1354,7 @@ void show_account_window (account_t * a)
 
     /* Codecs */
     codecs_tab = create_codecs_configuration (&currentAccount);
-    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), codecs_tab, gtk_label_new (_ ("Codecs")));
+    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), codecs_tab, gtk_label_new (_ ("Audio")));
     gtk_notebook_page_num (GTK_NOTEBOOK (notebook), codecs_tab);
 
     // Get current protocol for this account protocol
