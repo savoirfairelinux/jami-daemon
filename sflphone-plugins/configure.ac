@@ -41,15 +41,10 @@ PKG_CHECK_MODULES(SFLGLIB, glib-2.0 >= 2.2)
 PKG_CHECK_MODULES(LIBEBOOK, libebook-1.2 >= 1.4)
 PKG_CHECK_MODULES([LIBEDATASERVER], [libedataserver-1.2 >= 2.32], [AC_DEFINE([LIBEDATASERVER_VERSION_2_32], [], [Using libedataserver-1.2 version 2.32 or higher])],[PKG_CHECK_MODULES([LIBEDATASERVER], [libedataserver-1.2 >= 1.4])])
 
-AC_SUBST(SFLGTK_LIBS)
-AC_SUBST(SFLGLIB_LIBS)
-AC_SUBST(LIBEBOOK_LIBS)
-AC_SUBST(LIBEDATASERVER_LIBS)
-
 AC_CONFIG_FILES([
 Makefile 
-plugin/addressbook/Makefile
-plugin/Makefile
+addressbook/evolution/Makefile
+addressbook/Makefile
 ])
 AC_OUTPUT
 

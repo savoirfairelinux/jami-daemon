@@ -1,4 +1,4 @@
-SUBDIRS = plugin
+SUBDIRS = addressbook
 
 CFLAGS=-Wall -Werror -Wextra
 

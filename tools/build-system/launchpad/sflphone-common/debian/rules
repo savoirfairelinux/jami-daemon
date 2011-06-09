@@ -106,7 +106,7 @@ binary-common:
 #	dh_shlibdeps
 	dh_gencontrol
 	dh_md5sums
-dh_builddeb
+	dh_builddeb
 # Build architecture independant packages using the common target.
 binary-indep: build-indep install-indep
 	$(MAKE) -f debian/rules DH_OPTIONS=-i binary-common

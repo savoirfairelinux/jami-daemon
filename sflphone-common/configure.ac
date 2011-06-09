@@ -174,26 +174,22 @@ dnl AC_SUBST(UUID_CFLAGS)
 dnl AC_SUBST(UUID_LIBS)
 UUID_MIN_VERSION=1.0
 PKG_CHECK_MODULES(UUID, uuid >= ${UUID_MIN_VERSION}, HAVE_UUID=true, HAVE_UUID=false);
-AC_SUBST(UUID_CFLAGS)
-AC_SUBST(UUID_LIBS)
+
+LIBCRYPTO_MIN_VERSION=1.0
+PKG_CHECK_MODULES(LIBCRYPTO, libcrypto >= ${LIBCRYPTO_MIN_VERSION}, HAVE_LIBCRYPTO=true, HAVE_LIBCRYPTO=false);
 
 dnl Check for alsa development package - name: libasound2-dev 
 ALSA_MIN_VERSION=1.0
-PKG_CHECK_MODULES(ALSA, alsa >= ${ALSA_MIN_VERSION},, AC_MSG_ERROR([Mising alsa development package: libasound2-dev or alsa-lib-devel]))
-AC_SUBST(ALSA_CFLAGS)
-AC_SUBST(ALSA_LIBS)
+PKG_CHECK_MODULES(ALSA, alsa >= ${ALSA_MIN_VERSION},, AC_MSG_ERROR([Missing alsa development package: libasound2-dev or alsa-lib-devel]))
 
 dnl Check for pulseaudio development package - name: libpulse-dev 
+
 LIBPULSE_MIN_VERSION=0.9.15
-PKG_CHECK_MODULES(PULSEAUDIO, libpulse >= ${LIBPULSE_MIN_VERSION},, AC_MSG_ERROR([Mising pulseaudio development package: libpulse-dev]))
-AC_SUBST(PULSEAUDIO_LIBS)
-AC_SUBST(PULSEAUDIO_CFLAGS)
+PKG_CHECK_MODULES(PULSEAUDIO, libpulse >= ${LIBPULSE_MIN_VERSION},, AC_MSG_ERROR([Missing pulseaudio development package: libpulse-dev]))
 
 dnl Check for the samplerate development package - name: libsamplerate0-dev
 LIBSAMPLERATE_MIN_VERSION=0.1.2
-PKG_CHECK_MODULES(SAMPLERATE, samplerate >= ${LIBSAMPLERATE_MIN_VERSION},, AC_MSG_ERROR([Mising libsamplerate development package: libsamplerate0-dev]))
-AC_SUBST(SAMPLERATE_LIBS)
-AC_SUBST(SAMPLERATE_CFLAGS)
+PKG_CHECK_MODULES(SAMPLERATE, samplerate >= ${LIBSAMPLERATE_MIN_VERSION},, AC_MSG_ERROR([Missing libsamplerate development package: libsamplerate0-dev]))
 
 dnl The libav versions correspond to the last beta release of libav, 0.7-beta2
 dnl Check for libavcodec development package - name: libavcodec-dev
@@ -209,30 +205,20 @@ dnl Check for libavdevice development package - name: libavdevice-dev
 PKG_CHECK_MODULES(LIBAVDEVICE, libavdevice >= 53.0.0,, AC_MSG_ERROR([Missing libavdevice package: libavdevice-dev]))
 
 LIBCCGNU2_MIN_VERSION=1.3.1
-PKG_CHECK_MODULES(CCGNU2, libccgnu2 >= ${LIBCCGNU2_MIN_VERSION},, AC_MSG_ERROR([Mising common cpp development package: libcommoncpp2-dev]))
-AC_SUBST(CCGNU2_LIBS)
-AC_SUBST(CCGNU2_FLAGS)
+PKG_CHECK_MODULES(CCGNU2, libccgnu2 >= ${LIBCCGNU2_MIN_VERSION},, AC_MSG_ERROR([Missing common cpp development package: libcommoncpp2-dev]))
 
 LIBCCEXT2_MIN_VERSION=1.3.1
 PKG_CHECK_MODULES(CCEXT2, libccext2 >= ${LIBCCEXT2_MIN_VERSION})
-AC_SUBST(CCEXT2_LIBS)
-AC_SUBST(CCEXT2_CFLAGS)
 
 LIBCCRT_MIN_VERSION=1.3.0
-PKG_CHECK_MODULES(CCRTP, libccrtp1 >= ${LIBCCRT_MIN_VERSION},, AC_MSG_ERROR([Mising ccrtp development package: libccrtp-dev]))
-AC_SUBST(CCRTP_LIBS)
-AC_SUBST(CCRTP_CFLAGS)
+PKG_CHECK_MODULES(CCRTP, libccrtp1 >= ${LIBCCRT_MIN_VERSION},, AC_MSG_ERROR([Missing ccrtp development package: libccrtp-dev]))
 
 dnl Check for OpenSSL to link against pjsip and provide SIPS TLS support
-PKG_CHECK_MODULES([libssl], libssl,, AC_MSG_ERROR([Mising ssl development package: libssl-dev]))
-AC_SUBST(libssl_CFLAGS)
-AC_SUBST(libssl_LIBS)
+PKG_CHECK_MODULES([libssl], libssl,, AC_MSG_ERROR([Missing ssl development package: libssl-dev]))
 
 dnl Check for libzrtpcpp, a ccRTP extension providing zrtp key exchange
 LIBZRTPCPP_MIN_VERSION=1.3.0
 PKG_CHECK_MODULES(ZRTPCPP, libzrtpcpp >= ${LIBZRTPCPP_MIN_VERSION},, AC_MSG_ERROR([Missing zrtp development package: libzrtpcpp-dev]))
-AC_SUBST(ZRTPCPP_LIBS)
-AC_SUBST(ZRTPCPP_CFLAGS)
 
 
 dnl DBus-C++ detection (used to be in library own build system)
@@ -240,8 +226,6 @@ DBUS_REQUIRED_VERSION=0.60
 PKG_CHECK_MODULES(dbus, [dbus-1 >= $DBUS_REQUIRED_VERSION],,
 	AC_MSG_ERROR([You need the DBus libraries (version 0.6 or better)]
 				[http://gitorious.org/dbus-cplusplus]))
-AC_SUBST(dbus_CFLAGS)
-AC_SUBST(dbus_LIBS)
 
 DBUS_API_STABLE_VERSION=1.0.0
 PKG_CHECK_EXISTS([dbus-1 < $DBUS_API_STABLE_VERSION],
@@ -338,10 +322,9 @@ AC_SUBST(PCRE_CFLAGS)
 			)
 AC_SUBST(BUILD_LIBDBUS_CXX_DIR)
 
-	dnl Check for libcppunit-dev
-	CPPUNIT_MIN_VERSION=1.12
-	PKG_CHECK_MODULES(CPPUNIT, cppunit >= ${CPPUNIT_MIN_VERSION}, AM_CONDITIONAL(BUILD_TEST, test 1 = 1 ), AM_CONDITIONAL(BUILD_TEST, test 0 = 1 ))
-AC_SUBST(CPPUNIT_LIBS)
+dnl Check for libcppunit-dev
+CPPUNIT_MIN_VERSION=1.12
+PKG_CHECK_MODULES(CPPUNIT, cppunit >= ${CPPUNIT_MIN_VERSION}, AM_CONDITIONAL(BUILD_TEST, test 1 = 1 ), AM_CONDITIONAL(BUILD_TEST, test 0 = 1 ))
 
 # check for libgsm1 (doesn't use pkg-config)
 	dnl Check for libgsm

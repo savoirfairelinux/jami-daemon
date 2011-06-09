@@ -3,7 +3,7 @@ include ../globals.mak
 check_PROGRAMS = test
 
 test_CXXFLAGS = $(CPPUNIT_CFLAGS)
-test_LDADD = $(LLIBS)
+test_LDADD = $(LLIBS) @LIBCRYPTO_LIBS@
 
 test_SOURCES = \
 	main.cpp \
