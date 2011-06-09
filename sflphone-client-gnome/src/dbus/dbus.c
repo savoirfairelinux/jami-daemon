@@ -100,8 +100,8 @@ zrtp_negotiation_failed_cb (DBusGProxy *proxy UNUSED, const gchar* callID,
 }
 
 static void
-curent_selected_codec (DBusGProxy *proxy UNUSED, const gchar* callID UNUSED,
-                       const gchar* codecName UNUSED, void * foo  UNUSED)
+current_selected_audio_codec (DBusGProxy *proxy UNUSED, const gchar* callID UNUSED,
+                             const gchar* codecName UNUSED, void * foo  UNUSED)
 {
 }
 
@@ -573,14 +573,14 @@ dbus_connect (GError **error)
     dbus_g_proxy_connect_signal (callManagerProxy, "zrtpNegotiationFailed",
                                  G_CALLBACK (zrtp_negotiation_failed_cb), NULL, NULL);
 
-    /* Current codec */
+    /* Current audio codec */
     dbus_g_object_register_marshaller (
         g_cclosure_user_marshal_VOID__STRING_STRING_STRING, G_TYPE_NONE,
         G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
-    dbus_g_proxy_add_signal (callManagerProxy, "currentSelectedCodec",
+    dbus_g_proxy_add_signal (callManagerProxy, "currentSelectedAudioCodec",
                              G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
-    dbus_g_proxy_connect_signal (callManagerProxy, "currentSelectedCodec",
-                                 G_CALLBACK (curent_selected_codec), NULL, NULL);
+    dbus_g_proxy_connect_signal (callManagerProxy, "currentSelectedAudioCodec",
+                                 G_CALLBACK (current_selected_audio_codec), NULL, NULL);
 
     /* Register a marshaller for STRING,STRING */
     dbus_g_object_register_marshaller (
@@ -1208,16 +1208,16 @@ dbus_unregister (int pid)
 }
 
 gchar**
-dbus_codec_list()
+dbus_audio_codec_list()
 {
 
     GError *error = NULL;
     gchar** array = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_codec_list (
+    org_sflphone_SFLphone_ConfigurationManager_get_audio_codec_list (
         configurationManagerProxy, &array, &error);
 
     if (error) {
-        ERROR ("Failed to call get_codec_list() on ConfigurationManager: %s",
+        ERROR ("Failed to call get_audio_codec_list() on ConfigurationManager: %s",
                error->message);
         g_error_free (error);
     }
@@ -1226,16 +1226,16 @@ dbus_codec_list()
 }
 
 gchar**
-dbus_codec_details (int payload)
+dbus_audio_codec_details (int payload)
 {
 
     GError *error = NULL;
     gchar ** array;
-    org_sflphone_SFLphone_ConfigurationManager_get_codec_details (
+    org_sflphone_SFLphone_ConfigurationManager_get_audio_codec_details (
         configurationManagerProxy, payload, &array, &error);
 
     if (error) {
-        ERROR ("Failed to call get_codec_details() on ConfigurationManager: %s",
+        ERROR ("Failed to call get_audio_codec_details() on ConfigurationManager: %s",
                error->message);
         g_error_free (error);
     }
@@ -1244,35 +1244,35 @@ dbus_codec_details (int payload)
 }
 
 gchar*
-dbus_get_current_codec_name (const callable_obj_t * c)
+dbus_get_current_audio_codec_name (const callable_obj_t * c)
 {
 
     gchar* codecName = "";
     GError* error = NULL;
 
-    org_sflphone_SFLphone_CallManager_get_current_codec_name (callManagerProxy,
+    org_sflphone_SFLphone_CallManager_get_current_audio_codec_name (callManagerProxy,
             c->_callID, &codecName, &error);
 
     if (error) {
         g_error_free (error);
     }
 
-    DEBUG ("dbus_get_current_codec_name : codecName : %s", codecName);
+    DEBUG ("%s: codecName : %s", __PRETTY_FUNCTION__, codecName);
 
     return codecName;
 }
 
 gchar**
-dbus_get_active_codec_list (gchar *accountID)
+dbus_get_active_audio_codec_list (gchar *accountID)
 {
 
     gchar ** array;
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_active_codec_list (
+    org_sflphone_SFLphone_ConfigurationManager_get_active_audio_codec_list (
         configurationManagerProxy, accountID, &array, &error);
 
     if (error) {
-        ERROR ("Failed to call get_active_codec_list() on ConfigurationManager: %s",
+        ERROR ("Failed to call get_active_audio_codec_list() on ConfigurationManager: %s",
                error->message);
         g_error_free (error);
     }
@@ -1281,15 +1281,15 @@ dbus_get_active_codec_list (gchar *accountID)
 }
 
 void
-dbus_set_active_codec_list (const gchar** list, const gchar *accountID)
+dbus_set_active_audio_codec_list (const gchar** list, const gchar *accountID)
 {
 
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_active_codec_list (
+    org_sflphone_SFLphone_ConfigurationManager_set_active_audio_codec_list (
         configurationManagerProxy, list, accountID, &error);
 
     if (error) {
-        ERROR ("Failed to call set_active_codec_list() on ConfigurationManager: %s",
+        ERROR ("Failed to call set_active_audio_codec_list() on ConfigurationManager: %s",
                error->message);
         g_error_free (error);
     }
