@@ -31,8 +31,7 @@ void print_and_save_sdp(AVFormatContext **avc)
     printf("SDP:\n%s\n", sdp);
     fflush(stdout);
     FILE *sdp_file = fopen("test.sdp", "w");
-    fwrite(sdp, 1, sdp_size, sdp_file);
-    fwrite("\n", 1, 1, sdp_file);
+    fprintf(sdp_file, "%s\n", sdp);
     fclose(sdp_file);
     free(sdp);
 }
@@ -72,11 +71,11 @@ int main(int argc, char *argv[])
         return 1; // couldn't find stream info
     }
 
-    int i;
     AVCodecContext *inputDecoderCtx;
 
     // find the first video stream from the input
     int videoStream = -1;
+    int i;
     for (i = 0; i < ic->nb_streams; i++) {
         if (ic->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
             videoStream = i;
@@ -178,9 +177,6 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    /* Main loop, frames are read and saved here */
-    i = 0;
-
     /* add video stream to outputformat context */
     AVStream *video_st = av_new_stream(oc, 0);
     video_st->codec = encoderCtx;
@@ -223,9 +219,9 @@ int main(int argc, char *argv[])
     }
 
     /* alloc image and output buffer */
-    int outbuf_size = 10000000;
-    uint8_t *outbuf = malloc(outbuf_size);
     int size = encoderCtx->width * encoderCtx->height;
+    int outbuf_size = size;
+    uint8_t *outbuf = malloc(outbuf_size);
     uint8_t *scaled_picture_buf = malloc((size * 3) / 2); /* size for YUV 420 */
 
     scaled_picture->data[0] = scaled_picture_buf;
