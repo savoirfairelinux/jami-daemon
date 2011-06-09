@@ -215,42 +215,42 @@ gdouble dbus_get_volume (const gchar * device);
 void dbus_play_dtmf (const gchar * key);
 
 /**
- * ConfigurationManager - Get the codecs list
- * @return gchar** The list of codecs
+ * ConfigurationManager - Get the audio codecs list
+ * @return gchar** The list of audiocodecs
  */
-gchar** dbus_codec_list();
+gchar** dbus_audio_codec_list();
 
 /**
- * ConfigurationManager - Get the codec details
- * @param payload The payload of the codec
- * @return gchar** The codec details
+ * ConfigurationManager - Get the audio codec details
+ * @param payload The payload of the audio codec
+ * @return gchar** The audio codec details
  */
-gchar** dbus_codec_details (int payload);
+gchar** dbus_audio_codec_details (int payload);
 
 /**
- * ConfigurationManager - Get the default codec list
- * The default codec list are the codecs selected by the server if the user hasn't made any changes
- * @return gchar** The default codec list
+ * ConfigurationManager - Get the default audio codec list
+ * The default audio codec list are the audio codecs selected by the server if the user hasn't made any changes
+ * @return gchar** The default audio codec list
  */
-gchar** dbus_default_codec_list();
+gchar** dbus_default_audio_codec_list();
 
 /**
- * ConfigurationManager - Get the list of the codecs used for media negociation
- * @return gchar** The list of codecs
+ * ConfigurationManager - Get the list of the audio codecs used for media negotiation
+ * @return gchar** The list of audio codecs
  */
-gchar** dbus_get_active_codec_list (gchar *accountID);
+gchar** dbus_get_active_audio_codec_list (gchar *accountID);
 
 /**
- * ConfigurationManager - Set the list of codecs used for media negociation
- * @param list The list of codecs
+ * ConfigurationManager - Set the list of audio codecs used for media negociation
+ * @param list The list of audio codecs
  */
-void dbus_set_active_codec_list (const gchar** list, const gchar*);
+void dbus_set_active_audio_codec_list (const gchar** list, const gchar*);
 
 /**
- * CallManager - return the codec name
+ * CallManager - return the audio codec name
  * @param callable_obj_t* current call
  */
-gchar* dbus_get_current_codec_name (const callable_obj_t * c);
+gchar* dbus_get_current_audio_codec_name (const callable_obj_t * c);
 
 /**
  * ConfigurationManager - Get the list of available output audio plugins

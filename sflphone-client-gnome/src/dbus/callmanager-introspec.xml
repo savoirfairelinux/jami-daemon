@@ -378,7 +378,7 @@
 			</arg>
 		</method>
 
-		<method name="getCurrentCodecName" tp:name-for-bindings="getCurrentCodecName">
+		<method name="getCurrentAudioCodecName" tp:name-for-bindings="getCurrentAudioCodecName">
 			<tp:docstring>
 			  Unused
 			</tp:docstring>
@@ -394,7 +394,7 @@
 			<arg type="s" name="message" direction="in"/>
 		</method>
 
-		<signal name="currentSelectedCodec" tp:name-for-bindings="currentSelectedCodec">
+		<signal name="currentSelectedAudioCodec" tp:name-for-bindings="currentSelectedAudioCodec">
 			<tp:docstring>
 			  Unused
 			</tp:docstring>

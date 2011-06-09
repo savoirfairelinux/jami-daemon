@@ -1156,7 +1156,7 @@ void sflphone_fill_codec_list_per_account (account_t **account)
     GQueue *codeclist;
     gboolean active = FALSE;
 
-    order = (gchar**) dbus_get_active_codec_list ( (*account)->accountID);
+    order = (gchar**) dbus_get_active_audio_codec_list ( (*account)->accountID);
 
     codeclist = (*account)->codecs;
 

@@ -80,7 +80,7 @@ void codec_capabilities_load (void)
     codecsCapabilities = g_queue_new();
 
     // This is a global list inherited by all accounts
-    codecs = (gchar**) dbus_codec_list ();
+    codecs = (gchar**) dbus_audio_codec_list ();
 
     if (codecs != NULL) {
         // Add the codecs in the list
@@ -88,7 +88,7 @@ void codec_capabilities_load (void)
 
             codec_t *c;
             payload = atoi (*codecs);
-            specs = (gchar **) dbus_codec_details (payload);
+            specs = (gchar **) dbus_audio_codec_details (payload);
             codec_create_new_with_specs (payload, specs, TRUE, &c);
             g_queue_push_tail (codecsCapabilities, (gpointer*) c);
         }
@@ -127,7 +127,7 @@ void codec_create_new (gint payload, gboolean active, codec_t **c)
 
     codec = g_new0 (codec_t, 1);
     codec->_payload = payload;
-    specs = (gchar **) dbus_codec_details (payload);
+    specs = (gchar **) dbus_audio_codec_details (payload);
     codec->name = specs[0];
     codec->sample_rate = atoi (specs[1]);
     codec->_bitrate = atoi (specs[2]);
@@ -347,7 +347,7 @@ void codec_list_update_to_daemon (account_t *acc)
     * (codecList+c) = NULL;
 
     // call dbus function with array of strings
-    dbus_set_active_codec_list (codecList, acc->accountID);
+    dbus_set_active_audio_codec_list (codecList, acc->accountID);
 
     // Delete memory
     for (i = 0; i < c; i++) {
