@@ -173,6 +173,9 @@ dnl AC_SUBST(UUID_LIBS)
 UUID_MIN_VERSION=1.0
 PKG_CHECK_MODULES(UUID, uuid >= ${UUID_MIN_VERSION}, HAVE_UUID=true, HAVE_UUID=false);
 
+LIBCRYPTO_MIN_VERSION=1.0
+PKG_CHECK_MODULES(LIBCRYPTO, libcrypto >= ${LIBCRYPTO_MIN_VERSION}, HAVE_LIBCRYPTO=true, HAVE_LIBCRYPTO=false);
+
 dnl Check for alsa development package - name: libasound2-dev 
 ALSA_MIN_VERSION=1.0
 PKG_CHECK_MODULES(ALSA, alsa >= ${ALSA_MIN_VERSION},, AC_MSG_ERROR([Missing alsa development package: libasound2-dev or alsa-lib-devel]))
