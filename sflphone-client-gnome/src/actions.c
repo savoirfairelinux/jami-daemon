@@ -55,7 +55,7 @@
 #include "widget/imwidget.h"
 
 
-GHashTable * ip2ip_profile=NULL;
+static GHashTable * ip2ip_profile=NULL;
 
 void
 sflphone_notify_voice_mail (const gchar* accountID , guint count)

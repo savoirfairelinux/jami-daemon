@@ -48,21 +48,20 @@
 #include <eel-gconf-extensions.h>
 
 /** Local variables */
-GtkUIManager *ui_manager = NULL;
-GtkAccelGroup * accelGroup = NULL;
-GtkWidget * window = NULL;
-GtkWidget * subvbox = NULL;
-GtkWidget * vbox = NULL;
-GtkWidget * dialpad = NULL;
-GtkWidget * speaker_control = NULL;
-GtkWidget * mic_control = NULL;
-GtkWidget * statusBar = NULL;
-GtkWidget * filterEntry = NULL;
-PidginScrollBook *embedded_error_notebook;
+static GtkUIManager *ui_manager = NULL;
+static GtkAccelGroup * accelGroup = NULL;
+static GtkWidget * window = NULL;
+static GtkWidget * subvbox = NULL;
+static GtkWidget * vbox = NULL;
+static GtkWidget * dialpad = NULL;
+static GtkWidget * speaker_control = NULL;
+static GtkWidget * mic_control = NULL;
+static GtkWidget * statusBar = NULL;
+static GtkWidget * filterEntry = NULL;
+static PidginScrollBook *embedded_error_notebook;
 
-gchar *status_current_message = NULL;
-// pthread_mutex_t statusbar_message_mutex;
-GMutex *gmutex;
+static gchar *status_current_message = NULL;
+static GMutex *gmutex;
 
 /**
  * Handle main window resizing

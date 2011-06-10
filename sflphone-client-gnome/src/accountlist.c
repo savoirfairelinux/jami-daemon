@@ -33,7 +33,7 @@
 #include <actions.h>
 #include <string.h>
 
-GQueue * accountQueue;
+static GQueue * accountQueue;
 
 /* GCompareFunc to compare a accountID (gchar* and a account_t) */
 gint is_accountID_struct (gconstpointer a, gconstpointer b)

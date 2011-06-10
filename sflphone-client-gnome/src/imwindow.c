@@ -40,8 +40,8 @@
 #include <contacts/calltab.h>
 
 /** Local variables */
-GtkWidget *im_window = NULL;
-GtkWidget *im_notebook = NULL;
+static GtkWidget *im_window = NULL;
+static GtkWidget *im_notebook = NULL;
 
 static gboolean window_configure_cb (GtkWidget *wini UNUSED, GdkEventConfigure *event)
 {
