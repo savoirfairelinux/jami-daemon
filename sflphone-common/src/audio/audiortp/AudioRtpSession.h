@@ -37,6 +37,7 @@
 #include <iostream>
 #include <exception>
 #include <list>
+#include <cstddef>
 
 #include "global.h"
 
@@ -46,6 +47,7 @@
 
 #include "managerimpl.h"
 
+using std::ptrdiff_t;
 #include <ccrtp/rtp.h>
 #include <ccrtp/iqueue.h>
 #include <cc++/numbers.h> // ost::Time

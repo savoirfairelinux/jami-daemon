@@ -29,6 +29,12 @@
 
 #ifndef AUDIORTPRECORDHANDLER_H_
 #define AUDIORTPRECORDHANDLER_H_
+#include <cstddef>
+
+using std::ptrdiff_t;
+
+#include <ccrtp/rtp.h>
+#include <list>
 
 #include "sip/sipcall.h"
 #include "audio/codecs/audiocodec.h"
@@ -39,8 +45,6 @@
 #include "audio/echosuppress.h"
 #include "audio/gaincontrol.h"
 #include "managerimpl.h"
-#include <ccrtp/rtp.h>
-#include <list>
 
 namespace sfl
 {
