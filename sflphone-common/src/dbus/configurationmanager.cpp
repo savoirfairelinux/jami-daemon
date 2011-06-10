@@ -437,21 +437,20 @@ std::vector<std::string> ConfigurationManager::getAudioCodecList (void)
 std::vector<std::string> ConfigurationManager::getVideoCodecList (void)
 {
     std::vector<std::string> list;
-#if 0
+    typedef std::map<int, std::string> VideoCodecsMap;
     VideoCodecsMap codecs = sfl_video::getCodecsMap();
     VideoCodecsMap::iterator iter = codecs.begin();
 
     while (iter != codecs.end()) {
         std::stringstream ss;
 
-        if (iter->second != NULL) {
+        if (not iter->second.empty()) {
             ss << iter->first;
             list.push_back(ss.str());
         }
 
         iter++;
     }
-#endif
 
     return list;
 }

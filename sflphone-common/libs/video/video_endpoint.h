@@ -33,10 +33,11 @@
 
 #include <vector>
 #include <string>
+#include <map>
 
 namespace sfl_video {
     std::vector<std::string> getCodecSpecifications(int payload);
-    std::vector<std::string> getCodecsMap(int payload);
+    std::map<int, std::string> getCodecsMap();
 }
 
 #endif // __VIDEO_ENDPOINT_H__

@@ -29,18 +29,51 @@
  */
 
 #include "video_endpoint.h"
+#include <iostream>
 #include <sstream>
 #include <map>
 
 namespace sfl_video {
 
+/* anonymous namespace */
+namespace {
 std::string encoderName(int payload)
 {
-    static std::map<int, std::string> CODEC_MAP;
-    if (CODEC_MAP.empty())
-        CODEC_MAP[96] = "H263P";
+    std::string result = getCodecsMap()[payload];
+    if (result.empty())
+        return "MISSING";
+    else
+        return result;
+}
 
-    return CODEC_MAP[payload];
+int FAKE_BITRATE()
+{
+    return 1000000;
+}
+
+int getBitRate(int payload)
+{
+    return FAKE_BITRATE();
+}
+
+int getBandwidthPerCall(int payload)
+{
+    return FAKE_BITRATE();
+}
+} // end anonymous namespace
+
+std::map<int, std::string> getCodecsMap()
+{
+    static std::map<int, std::string> CODECS_MAP;
+    if (CODECS_MAP.empty())
+    {
+        CODECS_MAP[96] = "H263-2000";
+        CODECS_MAP[97] = "H264";
+        CODECS_MAP[98] = "MP4V-ES";
+        CODECS_MAP[99] = "VP8";
+        CODECS_MAP[100] = "THEORA";
+    }
+    return CODECS_MAP;
 }
 
 std::vector<std::string> getCodecSpecifications(int payload)
@@ -49,17 +82,17 @@ std::vector<std::string> getCodecSpecifications(int payload)
     std::stringstream ss;
 
     // Add the name of the codec
-    v.push_back(encoderName(payload));
+    v.push_back (encoderName(payload));
 
     // Add the bit rate
-    static const int FAKE_BITRATE = 1000000;
-    ss << FAKE_BITRATE;
-    v.push_back (ss.str());
-    ss.str ("");
+    ss << getBitRate(payload);
+    v.push_back(ss.str());
+    ss.str("");
 
     // Add the bandwidth information
-    ss << FAKE_BITRATE;
+    ss << getBandwidthPerCall(payload);
     v.push_back (ss.str());
+    ss.str ("");
 
     return v;
 }
