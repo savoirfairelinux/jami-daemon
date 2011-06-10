@@ -38,7 +38,9 @@
 
 #include "Codec.h"
 
-class AudioCodec : public sfl::Codec   // TODO Move into the "sfl" namespace
+namespace sfl {
+
+class AudioCodec : public Codec
 {
     public:
         AudioCodec (uint8 payload, const std::string &codecName);
@@ -187,5 +189,6 @@ class AudioCodec : public sfl::Codec   // TODO Move into the "sfl" namespace
 
         void init (uint8 payloadType, uint32 clockRate);
 };
+} // end namespace sfl
 
 #endif

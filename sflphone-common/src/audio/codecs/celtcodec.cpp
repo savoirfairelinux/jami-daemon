@@ -33,11 +33,11 @@
 #include <celt/celt.h>
 
 
-class Celt : public AudioCodec
+class Celt : public sfl::AudioCodec
 {
 
     public:
-        Celt (int payload=115)	: AudioCodec (payload, "celt") {
+        Celt (int payload=115)	: sfl::AudioCodec (payload, "celt") {
 
             _clockRate = 32000;
             _frameSize = 320;  // fixed frameSize, TODO: support variable size from 64 to 512

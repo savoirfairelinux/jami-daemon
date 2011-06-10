@@ -151,7 +151,7 @@ bool Sdp::hasSessionMedia(void)
     return listNotEmpty;
 }
 
-AudioCodec* Sdp::getSessionMedia (void) throw(SdpException)
+sfl::AudioCodec* Sdp::getSessionMedia (void) throw(SdpException)
 {
 
     int nbMedia;
@@ -178,7 +178,7 @@ AudioCodec* Sdp::getSessionMedia (void) throw(SdpException)
 
     codec = mediaList[0]->get_media_codec_list() [0];
 
-    return static_cast<AudioCodec *>(codec);
+    return static_cast<sfl::AudioCodec *>(codec);
 }
 
 void Sdp::setMediaDescriptorLine (sdpMedia *media, pjmedia_sdp_media** p_med)

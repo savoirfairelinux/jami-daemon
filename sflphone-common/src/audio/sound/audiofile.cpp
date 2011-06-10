@@ -39,6 +39,7 @@
 
 #include "audiofile.h"
 #include "audio/codecs/audiocodecfactory.h"
+#include "audio/codecs/audiocodec.h"
 #include "audio/samplerateconverter.h"
 
 #include "manager.h"
@@ -55,7 +56,7 @@ RawFile::~RawFile()
 
 // load file in mono format
 bool
-RawFile::loadFile (const std::string& filename, AudioCodec* codec , unsigned int sampleRate=8000)
+RawFile::loadFile (const std::string& filename, sfl::AudioCodec* codec , unsigned int sampleRate=8000)
 {
     _codec = codec;
 
@@ -453,7 +454,7 @@ bool WaveFile::openExistingWaveFile (const std::string& fileName, int audioSampl
 }
 
 
-bool WaveFile::loadFile (const std::string& filename, AudioCodec * /*codec*/, unsigned int sampleRate)
+bool WaveFile::loadFile (const std::string& filename, sfl::AudioCodec * /*codec*/, unsigned int sampleRate)
 {
     openFile (filename, sampleRate);
 

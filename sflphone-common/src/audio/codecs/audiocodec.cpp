@@ -32,6 +32,8 @@
 
 #include "audiocodec.h"
 
+namespace sfl {
+
 AudioCodec::AudioCodec (uint8 payload, const std::string &codecName) :
         _codecName (codecName), _clockRate (8000), _channel (1), _bitrate (0.0),
         _bandwidth (0), _hasDynamicPayload (false), _payload(payload)
@@ -110,3 +112,5 @@ double AudioCodec::getBandwidth (void) const
 {
     return _bandwidth;
 }
+
+} // end namespace sfl
