@@ -35,23 +35,22 @@
 #include <eel-gconf-extensions.h>
 #include "dbus/dbus.h"
 
-GtkListStore *pluginlist;
-GtkListStore *outputlist;
-GtkListStore *inputlist;
-GtkListStore *ringtonelist;
+/* FIXME: these should be in a struct rather than at file scope */
+static GtkListStore *pluginlist;
+static GtkListStore *outputlist;
+static GtkListStore *inputlist;
+static GtkListStore *ringtonelist;
 
-GtkWidget *output;
-GtkWidget *input;
-GtkWidget *ringtone;
-GtkWidget *plugin;
-GtkWidget *codecMoveUpButton;
-GtkWidget *codecMoveDownButton;
-GtkWidget *codecTreeView;		// View used instead of store to get access to selection
-GtkWidget *pulse;
-GtkWidget *alsabox;
-GtkWidget *alsa_conf;
-GtkWidget *noisebox;
-GtkWidget *noise_conf;
+static GtkWidget *output;
+static GtkWidget *input;
+static GtkWidget *ringtone;
+static GtkWidget *plugin;
+static GtkWidget *codecMoveUpButton;
+static GtkWidget *codecMoveDownButton;
+static GtkWidget *codecTreeView;		// View used instead of store to get access to selection
+static GtkWidget *pulse;
+static GtkWidget *alsabox;
+static GtkWidget *alsa_conf;
 
 // Codec properties ID
 enum {
