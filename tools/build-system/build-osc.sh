@@ -14,14 +14,12 @@ ROOT_DIR=${HOME}
 
 OSC_REPOSITORY="${ROOT_DIR}/sflphone-osc/home:jbonjean:sflphone"
 
-LAUNCHPAD_PACKAGES=( "sflphone-client-gnome" "sflphone-common" )
-#LAUNCHPAD_PACKAGES=( "sflphone-client-gnome" )
-#LAUNCHPAD_PACKAGES=( "sflphone-common" )
+LAUNCHPAD_PACKAGES=( "sflphone-client-gnome" "sflphone-common" "sflphone-plugins" )
 
 REFERENCE_REPOSITORY="${ROOT_DIR}/sflphone-source-repository"
 OSC_DIR="${REFERENCE_REPOSITORY}/tools/build-system/osc"
 
-SOFTWARE_VERSION="0.9.8.3"
+SOFTWARE_VERSION="0.9.14"
 
 VERSION_INDEX=1
 
