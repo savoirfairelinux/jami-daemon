@@ -57,30 +57,30 @@ void show_edit_number (callable_obj_t *call);
 
 static GtkWidget *toolbar;
 
-guint transfertButtonConnId; //The button toggled signal connection ID
-guint recordButtonConnId; //The button toggled signal connection ID
+static guint transfertButtonConnId; //The button toggled signal connection ID
+static guint recordButtonConnId; //The button toggled signal connection ID
 
-GtkAction * pickUpAction;
-GtkWidget * pickUpWidget;
-GtkAction * newCallAction;
-GtkWidget * newCallWidget;
-GtkAction * hangUpAction;
-GtkWidget * hangUpWidget;
-GtkWidget * holdMenu;
-GtkWidget * holdToolbar;
-GtkWidget * offHoldToolbar;
-GtkWidget * transferToolbar;
-GtkAction * copyAction;
-GtkAction * pasteAction;
-GtkAction * recordAction;
-GtkWidget * recordWidget;
-GtkAction * voicemailAction;
-GtkWidget * voicemailToolbar;
-GtkWidget * imToolbar;
-GtkAction * imAction;
+static GtkAction * pickUpAction;
+static GtkWidget * pickUpWidget;
+static GtkAction * newCallAction;
+static GtkWidget * newCallWidget;
+static GtkAction * hangUpAction;
+static GtkWidget * hangUpWidget;
+static GtkWidget * holdMenu;
+static GtkWidget * holdToolbar;
+static GtkWidget * offHoldToolbar;
+static GtkWidget * transferToolbar;
+static GtkAction * copyAction;
+static GtkAction * pasteAction;
+static GtkAction * recordAction;
+static GtkWidget * recordWidget;
+static GtkAction * voicemailAction;
+static GtkWidget * voicemailToolbar;
+static GtkWidget * imToolbar;
+static GtkAction * imAction;
 
-GtkWidget * editable_num;
-GtkDialog * edit_dialog;
+static GtkWidget * editable_num;
+static GtkDialog * edit_dialog;
 
 enum {
     CALLTREE_CALLS, CALLTREE_HISTORY, CALLTREE_CONTACTS

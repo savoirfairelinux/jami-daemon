@@ -33,12 +33,12 @@
 #include <actions.h>
 #include <string.h>
 
-gdouble     value[2];
-GtkWidget * slider[2];
-GtkWidget * button[2];
+static gdouble     value[2];
+static GtkWidget * slider[2];
+static GtkWidget * button[2];
 
 // icons
-GtkWidget * images[2][4];
+static GtkWidget * images[2][4];
 enum device_t {
     SPEAKER = 0,
     MIKE,
@@ -52,8 +52,8 @@ enum volume_t {
     VOL75
 } ;
 
-guint toggledConnId[2]; // The button toggled signal connection ID
-guint movedConnId[2];   // The slider_moved signal connection ID
+static guint toggledConnId[2]; // The button toggled signal connection ID
+static guint movedConnId[2];   // The slider_moved signal connection ID
 
 void
 update_icons (int dev)
