@@ -33,7 +33,7 @@
 #include <string.h>
 #include <stdio.h>
 
-int log_level = LOG_INFO;
+static int log_level = LOG_INFO;
 
 void internal_log (const int level, const char* format, ...)
 {

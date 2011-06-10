@@ -37,9 +37,9 @@
 #include <eel-gconf-extensions.h>
 
 #if GTK_CHECK_VERSION(2,10,0)
-GtkStatusIcon *status;
-GtkWidget *show_menu_item, *hangup_menu_item;
-gboolean __minimized = MINIMIZED;
+static GtkStatusIcon *status;
+static GtkWidget *show_menu_item, *hangup_menu_item;
+static gboolean __minimized = MINIMIZED;
 
 void
 popup_main_window (void)

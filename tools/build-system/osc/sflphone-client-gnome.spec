@@ -67,6 +67,7 @@ Requires:	gtk2
 Requires:	glib2
 Requires:	libnotify
 Requires:	libsexy
+Requires:	notification-daemon
 
 %if %{defined suse_version}
 Requires:	librsvg

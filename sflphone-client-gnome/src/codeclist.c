@@ -36,7 +36,7 @@
 
 #include "dbus.h"
 
-GQueue * codecsCapabilities = NULL;
+static GQueue * codecsCapabilities = NULL;
 
 gint
 is_name_codecstruct (gconstpointer a, gconstpointer b)

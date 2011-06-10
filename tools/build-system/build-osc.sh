@@ -27,24 +27,33 @@ cd ${OSC_REPOSITORY}
 
 for LAUNCHPAD_PACKAGE in ${LAUNCHPAD_PACKAGES[*]}
 do
-	cd ${OSC_REPOSITORY}/${LAUNCHPAD_PACKAGE}
+	echo Change current directory to ${OSC_REPOSITORY}/${LAUNCHPAD_PACKAGE}
+        cd ${OSC_REPOSITORY}/${LAUNCHPAD_PACKAGE}
 
-	rm -rf ${LAUNCHPAD_PACKAGE}-${SOFTWARE_VERSION}*
+        echo Clean directory ${LAUNCHPAD_PACKAGE}-${SOFTWARE_VERSION}*
+        rm -rf ${LAUNCHPAD_PACKAGE}-${SOFTWARE_VERSION}*
 
-	cp -r ${REFERENCE_REPOSITORY}/${LAUNCHPAD_PACKAGE} ${LAUNCHPAD_PACKAGE}-${SOFTWARE_VERSION}
+        echo Copy sources from reference repository  ${REFERENCE_REPOSITORY}/${LAUNCHPAD_PACKAGE} ${LAUNCHPAD_PACKAGE}-${SOFTWARE_VERSION}
+        cp -r ${REFERENCE_REPOSITORY}/${LAUNCHPAD_PACKAGE} ${LAUNCHPAD_PACKAGE}-${SOFTWARE_VERSION}
 
-	cp ${OSC_DIR}/${LAUNCHPAD_PACKAGE}* .
+        echo Copy package in current directory ${OSC_DIR}/${LAUNCHPAD_PACKAGE}*
+        cp ${OSC_DIR}/${LAUNCHPAD_PACKAGE}* .
 
-	sed -i -e "s/VERSION_INDEX/${VERSION_INDEX}/g" -e "s/VERSION/${SOFTWARE_VERSION}/g" ${LAUNCHPAD_PACKAGE}.spec
+        echo 
+        sed -i -e "s/VERSION_INDEX/${VERSION_INDEX}/g" -e "s/VERSION/${SOFTWARE_VERSION}/g" ${LAUNCHPAD_PACKAGE}.spec
 
-	tar czf ${LAUNCHPAD_PACKAGE}-${SOFTWARE_VERSION}.tar.gz ${LAUNCHPAD_PACKAGE}-${SOFTWARE_VERSION}
+        echo Create tar ball ${LAUNCHPAD_PACKAGE}-${SOFTWARE_VERSION}.tar.gz
+        tar czf ${LAUNCHPAD_PACKAGE}-${SOFTWARE_VERSION}.tar.gz ${LAUNCHPAD_PACKAGE}-${SOFTWARE_VERSION}
 
-	rm -rf ${LAUNCHPAD_PACKAGE}-${SOFTWARE_VERSION} 
-	
-	osc add ${LAUNCHPAD_PACKAGE}-${SOFTWARE_VERSION}.tar.gz
-	osc add *.patch
+        echo Clean directory ${LAUNCHPAD_PACKAGE}-${SOFTWARE_VERSION}
+        rm -rf ${LAUNCHPAD_PACKAGE}-${SOFTWARE_VERSION}
 
-	yes | osc commit --force -m "Version ${SOFTWARE_VERSION}"
+        echo OSC Add ${LAUNCHPAD_PACKAGE}-${SOFTWARE_VERSION}.tar.gz
+        osc add ${LAUNCHPAD_PACKAGE}-${SOFTWARE_VERSION}.tar.gz
+        osc add *.patch
+
+        echo OSC Commit 
+        yes | osc commit --force -m "Version ${SOFTWARE_VERSION}"
 done
 
 exit 0
