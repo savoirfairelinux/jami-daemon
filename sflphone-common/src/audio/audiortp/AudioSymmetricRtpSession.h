@@ -28,7 +28,9 @@
  */
 #ifndef __SFL_AUDIO_SYMMETRIC_RTP_SESSION_H__
 #define __SFL_AUDIO_SYMMETRIC_RTP_SESSION_H__
+#include <cstddef>
 
+using std::ptrdiff_t;
 #include <ccrtp/rtp.h>
 
 #include "AudioRtpSession.h"
