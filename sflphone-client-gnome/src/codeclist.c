@@ -88,6 +88,7 @@ void codec_capabilities_load (void)
 
             codec_t *c;
             payload = atoi (*codecs);
+            DEBUG("payload %d\n", payload);
             specs = (gchar **) dbus_audio_codec_details (payload);
             codec_create_new_with_specs (payload, specs, TRUE, &c);
             g_queue_push_tail (codecsCapabilities, (gpointer*) c);
