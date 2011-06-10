@@ -715,7 +715,7 @@ Call *SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) 
 		call->getAudioRtp()->initAudioRtpSession (call);
 		call->getAudioRtp()->initLocalCryptoInfo (call);
 		_info ("UserAgent: Start audio rtp session");
-		call->getAudioRtp()->start (static_cast<AudioCodec *>(audiocodec));
+		call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
 	} catch (...) {
 		throw VoipLinkException ("Could not start rtp session for early media");
 	}
@@ -1018,7 +1018,7 @@ SIPVoIPLink::offhold (const CallID& id) throw (VoipLinkException)
 
         call->getAudioRtp()->initAudioRtpConfig (call);
         call->getAudioRtp()->initAudioRtpSession (call);
-        call->getAudioRtp()->start (static_cast<AudioCodec *>(audiocodec));
+        call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
 
     }
     catch (SdpException &e) {
@@ -1793,7 +1793,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const CallID& id, const std::string& to)
             call->getAudioRtp()->initAudioRtpConfig (call);
             call->getAudioRtp()->initAudioRtpSession (call);
             call->getAudioRtp()->initLocalCryptoInfo (call);
-            call->getAudioRtp()->start (static_cast<AudioCodec *>(audiocodec));
+            call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
         } catch (...) {
             _debug ("UserAgent: Unable to create RTP Session in new IP2IP call (%s:%d)", __FILE__, __LINE__);
         }
@@ -3509,7 +3509,7 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
     if (!sdpSession)
         return;
 
-    AudioCodec *sessionMedia = sdpSession->getSessionMedia();
+    sfl::AudioCodec *sessionMedia = sdpSession->getSessionMedia();
 
     if (!sessionMedia)
         return;
@@ -3530,7 +3530,7 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
             if (audiocodec == NULL)
                 _error ("UserAgent: No audiocodec found");
 
-            call->getAudioRtp()->updateSessionMedia (static_cast<AudioCodec *>(audiocodec));
+            call->getAudioRtp()->updateSessionMedia (static_cast<sfl::AudioCodec *>(audiocodec));
         }
     }  // FIXME: should this really be std::exception? If so, it should be caught last
     catch (const SdpException &e) {
@@ -4052,7 +4052,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
     // Init audio rtp session
     try {
         _debug ("UserAgent: Create RTP session for this call");
-        call->getAudioRtp()->start (static_cast<AudioCodec *>(audiocodec));
+        call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
     } catch (...) {
         _warn ("UserAgent: Error: Failed to create rtp thread from answer");
     }

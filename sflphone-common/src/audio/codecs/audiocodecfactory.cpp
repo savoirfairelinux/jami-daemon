@@ -108,9 +108,9 @@ AudioCodecFactory::getCodec (AudioCodecType payload)
 {
     CodecsMap::iterator iter = _CodecsMap.find (payload);
 
-    if (iter!=_CodecsMap.end()) {
-        return static_cast<AudioCodec *>(iter->second);
-    }
+    // FIXME: isn't this static cast pointless?
+    if (iter != _CodecsMap.end())
+        return static_cast<sfl::AudioCodec *>(iter->second);
 
     _error ("CodecDescriptor: Error cannont found codec %i in _CodecsMap from codec descriptor", payload);
 

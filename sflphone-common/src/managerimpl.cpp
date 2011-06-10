@@ -2304,7 +2304,7 @@ void ManagerImpl::ringback ()
 void ManagerImpl::ringtone (const AccountID& accountID)
 {
     std::string ringchoice;
-    AudioCodec *codecForTone;
+    sfl::AudioCodec *codecForTone;
     int layer, samplerate;
     bool loadFile;
 
@@ -2344,7 +2344,7 @@ void ManagerImpl::ringtone (const AccountID& accountID)
         layer = _audiodriver->getLayerType();
 
         samplerate = _audiodriver->getSampleRate();
-        codecForTone = static_cast<AudioCodec *>(_audioCodecFactory.getFirstCodecAvailable());
+        codecForTone = static_cast<sfl::AudioCodec *>(_audioCodecFactory.getFirstCodecAvailable());
 
         audioLayerMutexUnlock();
 
