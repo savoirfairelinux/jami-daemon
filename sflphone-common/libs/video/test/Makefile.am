@@ -1,0 +1,3 @@
+check_PROGRAMS=test_list_codecs
+
+test_list_codecs_SOURCES=test_list_codecs.cpp
