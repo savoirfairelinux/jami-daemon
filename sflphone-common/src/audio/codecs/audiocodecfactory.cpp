@@ -86,7 +86,6 @@ void AudioCodecFactory::setDefaultOrder()
 
     while (iter != _CodecsMap.end()) {
         _defaultCodecOrder.push_back (iter->first);
-        iter->second->setState (true);
         iter ++ ;
     }
 }
@@ -166,7 +165,6 @@ void AudioCodecFactory::saveActiveCodecs (const std::vector<std::string>& list)
 
         if (isCodecLoaded (payload)) {
             _defaultCodecOrder.push_back ( (AudioCodecType) payload);
-            _CodecsMap.find ( (AudioCodecType) payload)->second->setState (true);
         }
 
         i++;
