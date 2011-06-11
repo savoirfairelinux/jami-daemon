@@ -1,4 +1,4 @@
-AC_INIT([SFLphone],[0.9.13],[sflphoneteam@savoirfairelinux.com],[sflphone-plugins])
+AC_INIT([SFLphone],[0.9.14],[sflphoneteam@savoirfairelinux.com],[sflphone-plugins])
 AC_CONFIG_HEADERS([config.h])
 
 PACKAGE=SFLphone

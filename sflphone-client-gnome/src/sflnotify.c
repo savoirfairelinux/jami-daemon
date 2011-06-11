@@ -32,7 +32,7 @@
 #include "config.h"
 #include "sflnotify.h"
 
-GnomeNotification *_gnome_notification;
+static GnomeNotification *_gnome_notification;
 
 void create_new_gnome_notification (gchar *title, gchar *body, NotifyUrgency urgency, gint timeout, GnomeNotification **notif)
 {

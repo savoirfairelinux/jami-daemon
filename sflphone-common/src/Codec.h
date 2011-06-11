@@ -95,15 +95,6 @@ class Codec : public virtual MimeParameters
 
             return buffer.str();
         }
-
-        void setState(bool state) { _state = state; }
-
-        bool getState(void) { return _state; }
-
-    private:
-
-        bool _state;
-
 };
 }
 

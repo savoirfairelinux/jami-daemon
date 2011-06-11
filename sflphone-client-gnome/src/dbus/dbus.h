@@ -234,6 +234,13 @@ gchar** dbus_video_codec_list();
 gchar** dbus_audio_codec_details (int payload);
 
 /**
+ * ConfigurationManager - Get the video codec details
+ * @param payload The payload of the video codec
+ * @return gchar** The video codec details
+ */
+gchar** dbus_video_codec_details (int payload);
+
+/**
  * ConfigurationManager - Get the default audio codec list
  * The default audio codec list are the audio codecs selected by the server if the user hasn't made any changes
  * @return gchar** The default audio codec list

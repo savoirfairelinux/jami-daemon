@@ -638,6 +638,19 @@
 		   </arg>
 	   </method>
 
+	   <method name="getVideoCodecDetails" tp:name-for-bindings="getVideoCodecDetails">
+		   <tp:docstring>
+		   </tp:docstring>
+		   <arg type="i" name="payload" direction="in">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+		   <arg type="as" name="details" direction="out">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+	   </method>
 
 	   <!--    General Settings Panel         -->
 

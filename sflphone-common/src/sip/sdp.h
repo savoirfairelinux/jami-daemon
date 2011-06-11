@@ -42,10 +42,13 @@
 #include <pj/assert.h>
 #include <vector>
 
-#include "audio/codecs/audiocodecfactory.h"
 #include "sdpmedia.h"
 
 #include <exception>
+
+namespace sfl {
+    class AudioCodec;
+}
 
 class SdpException : public std::exception
 {
@@ -157,7 +160,7 @@ class Sdp
         /**
          * Return the codec of the first media after negociation
          */
-        AudioCodec* getSessionMedia (void) throw(SdpException);
+        sfl::AudioCodec* getSessionMedia (void) throw(SdpException);
 
         /*
          * On building an invite outside a dialog, build the local offer and create the

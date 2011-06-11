@@ -37,9 +37,10 @@
 #include <fstream>
 
 #include "audio/audioloop.h"
-#include "audio/codecs/audiocodec.h"
-#include "audio/codecs/audiocodecfactory.h"
 
+namespace sfl {
+class AudioCodec;
+}
 
 /**
  * @brief Abstract interface for file readers
@@ -55,7 +56,7 @@ class AudioFile : public AudioLoop
         * @param sampleRate	The sample rate to read it
         * @return bool   True on success
         */
-        virtual bool loadFile (const std::string& filename, AudioCodec *codec , unsigned int sampleRate) = 0;
+        virtual bool loadFile (const std::string& filename, sfl::AudioCodec *codec , unsigned int sampleRate) = 0;
 
         /**
          * Start the sound file
@@ -114,7 +115,7 @@ class RawFile : public AudioFile
          * @param sampleRate	The sample rate to read it
          * @return bool   True on success
          */
-        virtual bool loadFile (const std::string& filename, AudioCodec *codec , unsigned int sampleRate);
+        virtual bool loadFile (const std::string& filename, sfl::AudioCodec *codec , unsigned int sampleRate);
 
     private:
         // Copy Constructor
@@ -127,7 +128,7 @@ class RawFile : public AudioFile
         std::string _filename;
 
         /** Your preferred codec */
-        AudioCodec* _codec;
+        sfl::AudioCodec* _codec;
 };
 
 
@@ -155,7 +156,7 @@ class WaveFile : public AudioFile
              * @param sampleRate	The sample rate to read it
              * @return bool   True on success
              */
-        virtual bool loadFile (const std::string& filename, AudioCodec *codec , unsigned int sampleRate);
+        virtual bool loadFile (const std::string& filename, sfl::AudioCodec *codec , unsigned int sampleRate);
 
     private:
 

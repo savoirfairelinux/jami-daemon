@@ -34,13 +34,13 @@
 #include "../common.h"
 #include "audiocodec.h"
 
-class Ulaw : public AudioCodec
+class Ulaw : public sfl::AudioCodec
 {
 
     public:
         // 0 PCMU A 8000 1 [RFC3551]
         Ulaw (int payload=0)
-            : AudioCodec (payload, "PCMU") {
+            : sfl::AudioCodec (payload, "PCMU") {
             _clockRate = 8000;
             _frameSize = 160; // samples, 20 ms at 8kHz
             _channel   = 1;

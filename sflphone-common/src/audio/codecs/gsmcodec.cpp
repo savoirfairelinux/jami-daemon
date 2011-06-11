@@ -39,12 +39,12 @@ extern "C" {
  * GSM audio codec C++ class (over gsm/gsm.h)
  */
 
-class Gsm : public AudioCodec
+class Gsm : public sfl::AudioCodec
 {
 
     public:
         // _payload should be 3
-        Gsm (int payload=3) : AudioCodec (payload, "GSM"), _decode_gsmhandle (NULL), _encode_gsmhandle (NULL) {
+        Gsm (int payload=3) : sfl::AudioCodec (payload, "GSM"), _decode_gsmhandle (NULL), _encode_gsmhandle (NULL) {
             _clockRate = 8000;
             _frameSize = 160; // samples, 20 ms at 8kHz
             _channel = 1;

@@ -86,7 +86,6 @@ void AudioCodecFactory::setDefaultOrder()
 
     while (iter != _CodecsMap.end()) {
         _defaultCodecOrder.push_back (iter->first);
-        iter->second->setState (true);
         iter ++ ;
     }
 }
@@ -109,9 +108,9 @@ AudioCodecFactory::getCodec (AudioCodecType payload)
 {
     CodecsMap::iterator iter = _CodecsMap.find (payload);
 
-    if (iter!=_CodecsMap.end()) {
-        return static_cast<AudioCodec *>(iter->second);
-    }
+    // FIXME: isn't this static cast pointless?
+    if (iter != _CodecsMap.end())
+        return static_cast<sfl::AudioCodec *>(iter->second);
 
     _error ("CodecDescriptor: Error cannont found codec %i in _CodecsMap from codec descriptor", payload);
 
@@ -166,7 +165,6 @@ void AudioCodecFactory::saveActiveCodecs (const std::vector<std::string>& list)
 
         if (isCodecLoaded (payload)) {
             _defaultCodecOrder.push_back ( (AudioCodecType) payload);
-            _CodecsMap.find ( (AudioCodecType) payload)->second->setState (true);
         }
 
         i++;

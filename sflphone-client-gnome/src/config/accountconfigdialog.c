@@ -1287,12 +1287,9 @@ GtkWidget* create_audiocodecs_configuration (account_t **a)
     gtk_file_chooser_add_filter (GTK_FILE_CHOOSER (fileChooser) , filter);
     gtk_table_attach (GTK_TABLE (table), fileChooser, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-
-
     gtk_widget_show_all (ret);
 
     return ret;
-
 }
 
 GtkWidget* create_videocodecs_configuration (account_t **a)

@@ -33,12 +33,12 @@
 #include "videoconf.h"
 #include "utils.h"
 #include "eel-gconf-extensions.h"
-#include "dbus/dbus.h"
+#include "dbus.h"
 #include "video/video_preview.h"
 
-GtkWidget *codecTreeView;		// View used instead of store to get access to selection
-GtkWidget *codecMoveUpButton;
-GtkWidget *codecMoveDownButton;
+static GtkWidget *codecTreeView;		// View used instead of store to get access to selection
+static GtkWidget *codecMoveUpButton;
+static GtkWidget *codecMoveDownButton;
 
 // Codec properties ID
 enum {
@@ -150,59 +150,13 @@ GtkWidget* create_video_configuration()
 
     //int video_manager = dbus_get_video_manager();
 
-    // Recorded file saving path
-    GtkWidget *label;
-    GtkWidget *folderChooser;
-    gchar *dftPath;
-
-    /* Get the path where to save video files */
-    dftPath = dbus_get_record_path ();
-    DEBUG ("VideoConf: Load recording path %s", dftPath);
-
-    gnome_main_section_new_with_table (_ ("Recordings"), &frame, &table, 2, 3);
-    gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
-
-    // label
-    label = gtk_label_new (_ ("Destination folder"));
-    gtk_table_attach (GTK_TABLE (table), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
-
-    // folder chooser button
-    folderChooser = gtk_file_chooser_button_new (_ ("Select a folder"), GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
-    gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (folderChooser), dftPath);
-    g_signal_connect (G_OBJECT (folderChooser) , "selection_changed" , G_CALLBACK (record_path_changed) , NULL);
-    gtk_table_attach (GTK_TABLE (table), folderChooser, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
-
-    // isAlwaysRecording functionality checkbox
-    GtkWidget *enableIsAlwaysRecording = NULL;
-    gboolean isAlwaysRecording = FALSE;
-
-    isAlwaysRecording = dbus_get_is_always_recording();
-    enableIsAlwaysRecording = gtk_check_button_new_with_mnemonic(_("_Always recording"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableIsAlwaysRecording), isAlwaysRecording);
-    g_signal_connect(G_OBJECT(enableIsAlwaysRecording), "clicked", active_is_always_recording, NULL);
-    gtk_table_attach(GTK_TABLE(table), enableIsAlwaysRecording, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
-    
-    gnome_main_section_new_with_table (_ ("Preview"), &frame, &table, 3, 4);
+    gnome_main_section_new_with_table (_ ("Preview"), &frame, &table, 1, 2);
     gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
 
     GtkWidget *previewButton = gtk_button_new_with_mnemonic(_("_Start preview"));
-    gtk_table_attach(GTK_TABLE(table), previewButton, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 6);
+    gtk_table_attach(GTK_TABLE(table), previewButton, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 6);
     g_signal_connect(G_OBJECT(previewButton), "clicked", G_CALLBACK(preview_button_clicked), NULL);
     gtk_widget_show(GTK_WIDGET(previewButton));
-
-    /*
-    gint value = dbus_get_echo_cancel_tail_length();
-    echoTailLength = gtk_hscale_new_with_range(100, 500, 5);
-    gtk_range_set_value(GTK_RANGE(echoTailLength), (gdouble)value);
-    gtk_table_attach(GTK_TABLE(table), echoTailLength, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    g_signal_connect(G_OBJECT(echoTailLength), "value-changed", G_CALLBACK(echo_tail_length_changed), NULL);
-
-    value = dbus_get_echo_cancel_delay();
-    echoDelay = gtk_hscale_new_with_range(0, 500, 5);
-    gtk_range_set_value(GTK_RANGE(echoDelay), (gdouble)value);
-    gtk_table_attach(GTK_TABLE(table), echoDelay, 0, 1, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    g_signal_connect(G_OBJECT(echoDelay), "value-changed", G_CALLBACK(echo_delay_changed), NULL);
-    */
 
     gtk_widget_show_all (ret);
 
@@ -215,21 +169,36 @@ GtkWidget* create_video_configuration()
 static void preferences_dialog_fill_codec_list (account_t **a UNUSED)
 {
     GtkListStore *codecStore;
+    gchar **video_codecs = NULL, **specs = NULL;
     GtkTreeIter iter;
+    glong payload;
 
     // Get model of view and clear it
     codecStore = GTK_LIST_STORE (gtk_tree_view_get_model (GTK_TREE_VIEW (codecTreeView)));
     gtk_list_store_clear (codecStore);
 
-    // Insert codecs
-    DEBUG ("%s", "h263p");
-    gtk_list_store_append (codecStore, &iter);
-    gtk_list_store_set (codecStore, &iter,
-            COLUMN_CODEC_ACTIVE,	TRUE,									// Active
-            COLUMN_CODEC_NAME,		"H263P",								// Name
-            COLUMN_CODEC_BITRATE,	g_strdup_printf ("%.1f kbps", 1000.0),	// Bitrate (kbps)
-            COLUMN_CODEC_BANDWIDTH,	g_strdup_printf ("%.1f kbps", 1000.0),	// Bandwidth (kpbs)
-            -1);
+    // This is a global list inherited by all accounts
+    video_codecs = (gchar**) dbus_video_codec_list ();
+    if (video_codecs != NULL) {
+        // Add the codecs in the list
+        for (; *video_codecs; video_codecs++) {
+            payload = atol (*video_codecs);
+            specs = (gchar **) dbus_video_codec_details (payload);
+            DEBUG("%s\n", *video_codecs);
+            DEBUG("%s\n", specs[0]);
+            DEBUG("%d\n", payload);
+
+            // Insert codecs
+            gtk_list_store_append (codecStore, &iter);
+            gtk_list_store_set (codecStore, &iter,
+                    COLUMN_CODEC_ACTIVE,	TRUE,									// Active
+                    COLUMN_CODEC_NAME,		specs[0],								// Name
+                    COLUMN_CODEC_BITRATE,	g_strdup_printf ("%.1f kbps", 1000.0),	// Bitrate (kbps)
+                    COLUMN_CODEC_BANDWIDTH,	g_strdup_printf ("%.1f kbps", 1000.0),	// Bandwidth (kpbs)
+                    -1);
+        }
+    }
+
 }
 
 
@@ -294,7 +263,7 @@ codec_active_toggled (GtkCellRendererToggle *renderer UNUSED, gchar *path UNUSED
  * Move codec in list depending on direction and selected codec and
  * update changes in the daemon list and the configuration files
  */
-static void codec_move (gboolean moveUp, gpointer data)
+static void codec_move (gboolean moveUp, gpointer data UNUSED)
 {
 
     GtkTreeIter iter;
@@ -303,18 +272,18 @@ static void codec_move (gboolean moveUp, gpointer data)
     GtkTreeSelection *selection;
     GtkTreePath *treePath;
     gchar *path;
-    account_t *acc;
-    GQueue *acc_q;
+    //account_t *acc;
+    //GQueue *acc_q;
 
     // Get view, model and selection of codec store
     model = gtk_tree_view_get_model (GTK_TREE_VIEW (codecTreeView));
     selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (codecTreeView));
 
     // Retrieve the user data
-    acc = (account_t*) data;
+    //acc = (account_t*) data;
 
-    if (acc)
-        acc_q = acc->codecs;
+    //if (acc)
+    //   acc_q = acc->codecs;
 
     // Find selected iteration and create a copy
     gtk_tree_selection_get_selected (GTK_TREE_SELECTION (selection), &model, &iter);

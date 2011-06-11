@@ -1,11 +1,12 @@
 /*
  *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
- *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
+ *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -26,26 +27,17 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#ifndef __SFL_AUDIO_SYMMETRIC_RTP_SESSION_H__
-#define __SFL_AUDIO_SYMMETRIC_RTP_SESSION_H__
-#include <cstddef>
 
-using std::ptrdiff_t;
-#include <ccrtp/rtp.h>
+#ifndef __VIDEO_ENDPOINT_H__
+#define __VIDEO_ENDPOINT_H__
 
-#include "AudioRtpSession.h"
+#include <vector>
+#include <string>
+#include <map>
 
-class ManagerImpl;
-
-namespace sfl
-{
-class AudioSymmetricRtpSession : public AudioRtpSession
-{
-    public:
-        AudioSymmetricRtpSession (ManagerImpl * manager, SIPCall * sipcall) : AudioRtpSession (manager, sipcall) {
-
-        }
-};
+namespace sfl_video {
+    std::vector<std::string> getCodecSpecifications(int payload);
+    std::map<int, std::string> getCodecsMap();
 }
 
-#endif // __AUDIO_SYMMETRIC_RTP_SESSION_H__
+#endif // __VIDEO_ENDPOINT_H__

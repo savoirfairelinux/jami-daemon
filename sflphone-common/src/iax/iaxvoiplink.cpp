@@ -302,7 +302,7 @@ IAXVoIPLink::sendAudioFromMic (void)
 {
 
     int maxBytesToGet, availBytesFromMic, bytesAvail, compSize;
-    AudioCodec *audioCodec = NULL;
+    sfl::AudioCodec *audioCodec = NULL;
     IAXCall *currentCall;
 
     // We have to update the audio layer type in case we switched
@@ -330,7 +330,7 @@ IAXVoIPLink::sendAudioFromMic (void)
             if (callIsActive) {
 
 		AudioCodecType codecType = currentCall->getAudioCodec();
-                audioCodec = static_cast<AudioCodec *>(currentCall->getAudioCodecFactory().getCodec (codecType));
+                audioCodec = static_cast<sfl::AudioCodec *>(currentCall->getAudioCodecFactory().getCodec (codecType));
 
                 // Send sound here
 
@@ -708,7 +708,7 @@ std::string
 IAXVoIPLink::getCurrentCodecName(const CallID& /*id*/)
 {
     IAXCall *call = NULL;
-    AudioCodec *audioCodec = NULL;
+    sfl::AudioCodec *audioCodec = NULL;
     std::string name = "";
 
     call = getIAXCall (Manager::instance().getCurrentCallId());
@@ -719,7 +719,7 @@ IAXVoIPLink::getCurrentCodecName(const CallID& /*id*/)
     }
 
     AudioCodecType audioCodecType = call->getAudioCodec();
-    audioCodec= static_cast<AudioCodec *>(call->getAudioCodecFactory().getCodec (audioCodecType));
+    audioCodec= static_cast<sfl::AudioCodec *>(call->getAudioCodecFactory().getCodec (audioCodecType));
 
     if(audioCodec == NULL) {
         _error("IAX: Error: Could not load audio codec");
@@ -975,7 +975,7 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
     unsigned char *data;
     unsigned int size, max, nbInt16;
     int expandedSize, nbSample_;
-    AudioCodec *audioCodec;
+    sfl::AudioCodec *audioCodec;
 
     if (!call) {
         return;
@@ -988,7 +988,7 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
     }
 
     AudioCodecType audioCodecType = call->getAudioCodec();
-    audioCodec = static_cast<AudioCodec *>(call->getAudioCodecFactory().getCodec (audioCodecType));
+    audioCodec = static_cast<sfl::AudioCodec *>(call->getAudioCodecFactory().getCodec (audioCodecType));
 
     if (!audioCodec)
         return;

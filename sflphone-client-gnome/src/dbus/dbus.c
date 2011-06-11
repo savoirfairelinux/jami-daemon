@@ -1261,6 +1261,24 @@ dbus_audio_codec_details (int payload)
     return array;
 }
 
+gchar**
+dbus_video_codec_details (int payload)
+{
+
+    GError *error = NULL;
+    gchar ** array;
+    org_sflphone_SFLphone_ConfigurationManager_get_video_codec_details (
+        configurationManagerProxy, payload, &array, &error);
+
+    if (error) {
+        ERROR ("Failed to call get_video_codec_details() on ConfigurationManager: %s",
+               error->message);
+        g_error_free (error);
+    }
+
+    return array;
+}
+
 gchar*
 dbus_get_current_audio_codec_name (const callable_obj_t * c)
 {

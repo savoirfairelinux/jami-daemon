@@ -33,12 +33,12 @@
 #include <cstdio>
 #include <speex/speex.h>
 
-class Speex : public AudioCodec
+class Speex : public sfl::AudioCodec
 {
 
     public:
         Speex (int payload=112)
-            : AudioCodec (payload, "speex"),
+            : sfl::AudioCodec (payload, "speex"),
               _speexModePtr (NULL),
               _speex_dec_bits(),
               _speex_enc_bits(),

@@ -36,6 +36,7 @@
 #include "../manager.h"
 #include "sip/sipvoiplink.h"
 #include "sip/sipaccount.h"
+#include "video/video_endpoint.h"
 
 const char* ConfigurationManager::SERVER_PATH =
     "/org/sflphone/SFLphone/ConfigurationManager";
@@ -436,8 +437,20 @@ std::vector<std::string> ConfigurationManager::getAudioCodecList (void)
 std::vector<std::string> ConfigurationManager::getVideoCodecList (void)
 {
     std::vector<std::string> list;
+    typedef std::map<int, std::string> VideoCodecsMap;
+    VideoCodecsMap codecs = sfl_video::getCodecsMap();
+    VideoCodecsMap::iterator iter = codecs.begin();
 
-    list.push_back("h263");
+    while (iter != codecs.end()) {
+        std::stringstream ss;
+
+        if (not iter->second.empty()) {
+            ss << iter->first;
+            list.push_back(ss.str());
+        }
+
+        iter++;
+    }
 
     return list;
 }
@@ -458,6 +471,12 @@ std::vector<std::string> ConfigurationManager::getAudioCodecDetails (
 {
     return Manager::instance().getAudioCodecFactory().getCodecSpecifications (
                payload);
+}
+
+std::vector<std::string> ConfigurationManager::getVideoCodecDetails (
+        const int32_t& payload)
+{
+    return sfl_video::getCodecSpecifications(payload);
 }
 
 std::vector<std::string> ConfigurationManager::getActiveAudioCodecList (

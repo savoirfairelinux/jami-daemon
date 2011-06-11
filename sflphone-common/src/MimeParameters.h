@@ -89,6 +89,9 @@
 
 #define MIME_PARAMETER_KEEP_REMOTE MimeParameters::addParameterRemote
 
+#include <cstddef>
+
+using std::ptrdiff_t;
 #include <ccrtp/rtp.h>
 #include <algorithm>
 #include <stdexcept>
