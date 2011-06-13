@@ -28,13 +28,15 @@ namespace utilspp
 {
    class NonCopyable
    {
-      public:
+      protected:
          NonCopyable()
+         {}
+         ~NonCopyable()
          {}
 
       private:
-         NonCopyable(const NonCopyable&)
-         {}
+         NonCopyable(const NonCopyable&);
+         const NonCopyable& operator=(const NonCopyable&);
    };
 }
 
