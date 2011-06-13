@@ -37,9 +37,7 @@
 #include <pjsip-simple/evsub.h>
 #include <pjsip_ua.h>
 
-class AudioCodec;
 class Sdp;
-class AudioRtp;
 
 namespace sfl
 {
