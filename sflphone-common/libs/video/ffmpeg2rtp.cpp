@@ -1,4 +1,7 @@
 #include <cassert>
+#include <sstream>
+#include <iostream>
+#include <fstream>
 #include <signal.h>
 
 extern "C" {
@@ -31,11 +34,16 @@ void print_and_save_sdp(AVFormatContext **avc)
     char *sdp = reinterpret_cast<char*>(malloc(sdp_size)); /* theora sdp can be huge */
     printf("sdp_size:%ud\n", sdp_size);
     av_sdp_create(avc, 1, sdp, sdp_size);
-    printf("SDP:\n%s\n", sdp);
-    fflush(stdout);
-    FILE *sdp_file = fopen("test.sdp", "w");
-    fprintf(sdp_file, "%s\n", sdp);
-    fclose(sdp_file);
+    std::ofstream sdp_file("test.sdp");
+    std::istringstream iss(sdp);
+    std::string line;
+    while (std::getline(iss, line))
+    {
+        /* strip windows line ending */
+        sdp_file << line.substr(0, line.length() - 1) << std::endl;
+        std::cout << line << std::endl;
+    }
+    sdp_file.close();
     free(sdp);
 }
 
