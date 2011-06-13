@@ -30,10 +30,12 @@
 
 #include "test_video_endpoint.h"
 #include <cstdlib>
+#include <memory>
 #include <iostream>
 #include <cassert>
 #include "video_endpoint.h"
 #include "libav_utils.h"
+#include "video_rtp_session.h"
 
 void VideoEndpointTest::testIsSupportedCodec()
 {
@@ -63,11 +65,19 @@ void VideoEndpointTest::testCodecMap()
     assert(count == 1);
 }
 
+void VideoEndpointTest::testRTPSession()
+{
+    std::auto_ptr<sfl_video::VideoRTPSession> session(sfl_video::createVideoRTPSession());
+    session->start();
+    session->stop();
+}
+
 int main (int argc, char* argv[])
 {
     VideoEndpointTest test;
     test.testListInstalledCodecs();
     test.testCodecMap();
     test.testIsSupportedCodec();
+    test.testRTPSession();
     return 0;
 }

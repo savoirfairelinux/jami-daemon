@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,15 +28,29 @@
  *  as that of the covered work.
  */
 
-#ifndef _VIDEO_ENDPOINT_TEST_
-#define _VIDEO_ENDPOINT_TEST_
+#include "video_rtp_session.h"
+#include <string>
+#include <iostream>
 
-class VideoEndpointTest {
-public:
-	void testListInstalledCodecs();
-    void testCodecMap();
-    void testIsSupportedCodec();
-    void testRTPSession();
-};
+namespace sfl_video {
+        
+VideoRTPSession::VideoRTPSession(const std::string &input,
+                                 const std::string &codec,
+                                 int bitrate,
+                                 const std::string &destinationURI) :
+    input_(input), codec_(codec), bitrate_(bitrate),
+    destinationURI_(destinationURI)
+{}
 
-#endif // _VIDEO_ENDPOINT_TEST_
+void VideoRTPSession::start()
+{
+    std::cout << "Capturing from " << input_ << ", encoding to " << codec_ <<
+        " at " << bitrate_ << " bps, sending to " << destinationURI_ <<
+        std::endl;
+}
+
+void VideoRTPSession::stop()
+{
+    std::cout << "Stopping video rtp session " << std::endl;
+}
+} // end namspace sfl_video

@@ -14,8 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
  *  If you modify this program, or any covered work, by linking or
@@ -29,10 +28,12 @@
  */
 
 #include "video_endpoint.h"
-#include "libav_utils.h"
+
 #include <iostream>
 #include <sstream>
 #include <map>
+#include "libav_utils.h"
+#include "video_rtp_session.h"
 
 namespace sfl_video {
 
@@ -96,6 +97,12 @@ std::vector<std::string> getCodecSpecifications(int payload)
     ss.str ("");
 
     return v;
+}
+
+VideoRTPSession *createVideoRTPSession()
+{
+    return new VideoRTPSession("/dev/video0", "mpeg4", 1000000,
+                               "rtp://127.0.0.1:5000");
 }
 
 } // end namespace sfl_video
