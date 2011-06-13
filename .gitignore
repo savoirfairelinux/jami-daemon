@@ -316,3 +316,12 @@ config_auto.h
 /tools/mozilla-telify-sflphone/debian/mozilla-telify-sflphone.links
 /tools/mozilla-telify-sflphone/debian*
 /tools/build-system/launchpad/mozilla-telify-sflphone/*
+
+# in libs/video
+sflphone-common/libs/video/ffmpeg2rtp
+sflphone-common/libs/video/ffmpeg2shm
+sflphone-common/libs/video/test.sdp
+sflphone-common/libs/video/test/shmclient
+sflphone-common/libs/video/test/test_list_codecs
+sflphone-common/test/test
+
