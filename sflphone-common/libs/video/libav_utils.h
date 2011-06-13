@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,14 +28,22 @@
  *  as that of the covered work.
  */
 
-#ifndef _VIDEO_ENDPOINT_TEST_
-#define _VIDEO_ENDPOINT_TEST_
+#ifndef __LIBAV_UTILS_H__
+#define __LIBAV_UTILS_H__
 
-class VideoEndpointTest {
-public:
-	void testListInstalledCodecs();
-    void testCodecMap();
-    void testIsSupportedCodec();
-};
+#include <list>
+#include <string>
 
-#endif // _VIDEO_ENDPOINT_TEST_
+namespace libav_utils {
+    /**
+     * Returns the list of codecs installed at runtime and that we support
+     */
+    std::list<std::string> installedCodecs();
+    /**
+     * Returns true if a given codec is supported, that is to say it's use
+     * has been anticipated and it has been tested.
+     */
+    bool isSupportedCodec(const char *codec);
+}
+
+#endif // __LIBAV_UTILS_H__

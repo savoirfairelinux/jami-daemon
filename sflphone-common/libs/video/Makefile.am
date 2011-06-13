@@ -3,7 +3,8 @@ SUBDIRS=test
 noinst_PROGRAMS = ffmpeg2rtp ffmpeg2shm
 noinst_LTLIBRARIES = libvideo_endpoint.la
 
-libvideo_endpoint_la_SOURCES = video_endpoint.cpp video_endpoint.h
+libvideo_endpoint_la_SOURCES = video_endpoint.cpp video_endpoint.h \
+							   libav_utils.cpp libav_utils.h
 libvideo_endpoint_la_LIBADD = @LIBAVFORMAT_LIBS@ 
 
 AM_CXXFLAGS=@LIBAVCODEC_CFLAGS@ @LIBAVFORMAT_CFLAGS@ @LIBAVDEVICE_CFLAGS@ @LIBSWSCALE_CFLAGS@

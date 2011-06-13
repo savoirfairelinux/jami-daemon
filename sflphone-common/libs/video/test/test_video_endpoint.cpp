@@ -30,11 +30,27 @@
 
 #include "test_video_endpoint.h"
 #include <cstdlib>
-#include <cppunit/CompilerOutputter.h>
-#include <cppunit/ui/text/TextTestRunner.h>
+#include <iostream>
+#include <cassert>
 #include "video_endpoint.h"
+#include "libav_utils.h"
 
-void VideoEndpointTest::testListCodecs()
+void VideoEndpointTest::testIsSupportedCodec()
+{
+    /* This would list codecs */
+    assert(libav_utils::isSupportedCodec("mpeg4"));
+    assert(not libav_utils::isSupportedCodec("mp3"));
+    assert(not libav_utils::isSupportedCodec("xan_wc4"));
+    assert(not libav_utils::isSupportedCodec("schroedinger"));
+}
+
+void VideoEndpointTest::testListInstalledCodecs()
+{
+    /* This would list codecs */
+    libav_utils::installedCodecs();
+}
+
+void VideoEndpointTest::testCodecMap()
 {
     /* This would list codecs */
     typedef std::map<int, std::string> MapType;
@@ -44,35 +60,14 @@ void VideoEndpointTest::testListCodecs()
         if (iter->second == "MP4V-ES")
             count++;
 
-    CPPUNIT_ASSERT(count == 1);
+    assert(count == 1);
 }
 
 int main (int argc, char* argv[])
 {
-
-    printf ("\nSFLphone Video Test Suite, by Savoir-Faire Linux 2011\n\n");
-
-    // Default test suite : all tests
-    std::string testSuiteName = "All Tests";
-
-
-    // Get the top level suite from the registry
-    printf ("\n\n=== Test Suite: %s ===\n\n", testSuiteName.c_str());
-    CPPUNIT_NS::Test *suite = CPPUNIT_NS::TestFactoryRegistry::getRegistry(testSuiteName).makeTest();
-
-    if (suite->getChildTestCount() == 0) {
-        exit (EXIT_FAILURE);
-    }
-
-    // Adds the test to the list of test to run
-    CppUnit::TextTestRunner runner;
-    runner.addTest (suite);
-    // Change the default outputter to a compiler error format outputter
-    runner.setOutputter (new CppUnit::CompilerOutputter(&runner.result(), std::cerr));
-
-    // Run the tests.
-    bool wasSucessful = runner.run();
-
-    // Return error code 1 if the one of test failed.
-    return wasSucessful ? 0 : 1;
+    VideoEndpointTest test;
+    test.testListInstalledCodecs();
+    test.testCodecMap();
+    test.testIsSupportedCodec();
+    return 0;
 }

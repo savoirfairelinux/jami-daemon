@@ -1,6 +1,6 @@
-check_PROGRAMS=test_list_codecs
+TESTS=test_video_endpoint
+check_PROGRAMS=test_video_endpoint
 
-test_list_codecs_SOURCES=test_video_endpoint.cpp
-test_list_codecs_LDADD=$(top_builddir)/libs/video/libvideo_endpoint.la \
-					   $(CPPUNIT_LIBS)
-test_list_codecs_CXXFLAGS=-I./ -I../
+test_video_endpoint_SOURCES=test_video_endpoint.cpp
+test_video_endpoint_LDADD=$(top_builddir)/libs/video/libvideo_endpoint.la
+test_video_endpoint_CXXFLAGS=-I./ -I../

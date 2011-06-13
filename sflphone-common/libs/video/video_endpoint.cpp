@@ -29,6 +29,7 @@
  */
 
 #include "video_endpoint.h"
+#include "libav_utils.h"
 #include <iostream>
 #include <sstream>
 #include <map>
