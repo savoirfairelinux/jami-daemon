@@ -34,56 +34,75 @@
 #ifndef __AUDIOFILE_H__
 #define __AUDIOFILE_H__
 
+#include <exception>
 #include <fstream>
 
 #include "audio/audioloop.h"
 #include "audio/codecs/audiocodec.h"
 #include "audio/codecs/audiocodecfactory.h"
 
+class AudioFileException : public std::exception
+{
+public:
+    AudioFileException (const std::string& str="") throw() : errstr(str) {}
+
+    virtual ~AudioFileException() throw() {}
+
+    virtual const char *what() const throw() {
+        std::string expt("AudioFile: AudioFileException occured: ");
+        expt.append(errstr);
+        return expt.c_str();
+    }
+
+private:
+    std::string errstr;
+
+};
 
 /**
  * @brief Abstract interface for file readers
  */
 class AudioFile : public AudioLoop
 {
-    public:
+public:
 
-        /**
-        * Load a sound file in memory
-        * @param filename  The absolute path to the file
-        * @param codec     The codec to decode and encode it
-        * @param sampleRate	The sample rate to read it
-        * @return bool   True on success
-        */
-        virtual bool loadFile (const std::string& filename, AudioCodec *codec , unsigned int sampleRate) = 0;
+    /**
+     * Load a sound file in memory
+     *
+     * @param filename  The absolute path to the file
+     * @param codec     The codec to decode and encode it
+     * @param sampleRate	The sample rate to read it
+     * @return bool   True on success
+     */
+    virtual void loadFile (const std::string& filename, AudioCodec *codec , unsigned int sampleRate) throw(AudioFileException) = 0;
 
-        /**
-         * Start the sound file
-         */
-        void start() {
-            _start = true;
-        }
+    /**
+     * Start the sound file
+     */
+    void start() {
+        _start = true;
+    }
 
-        /**
-         * Stop the sound file
-         */
-        void stop() {
-            _start = false;
-        }
+    /**
+     * Stop the sound file
+     */
+    void stop() {
+        _start = false;
+    }
 
-        /**
-         * Tells whether or not the file is playing
-         * @return bool True if yes
-         *		  false otherwise
-         */
-        bool isStarted() {
-            return _start;
-        }
+    /**
+     * Tells whether or not the file is playing
+     * @return bool True if yes
+     *		  false otherwise
+     */
+    bool isStarted() {
+        return _start;
+    }
 
-    protected:
+protected:
 
-        /** start or not */
-        bool _start;
+    /** start or not */
+    bool _start;
 };
 
 
@@ -114,7 +133,7 @@ class RawFile : public AudioFile
          * @param sampleRate	The sample rate to read it
          * @return bool   True on success
          */
-        virtual bool loadFile (const std::string& filename, AudioCodec *codec , unsigned int sampleRate);
+        virtual void loadFile (const std::string&, AudioCodec *, unsigned int sampleRate) throw(AudioFileException);
 
     private:
         // Copy Constructor
@@ -124,64 +143,112 @@ class RawFile : public AudioFile
         RawFile& operator= (const RawFile& rh);
 
         /** The absolute path to the sound file */
-        std::string _filename;
+        std::string filename;
 
         /** Your preferred codec */
-        AudioCodec* _codec;
+        AudioCodec* audioCodec;
 };
-
 
 class WaveFile : public AudioFile
 {
 
     public:
 
-        WaveFile ();
+        WaveFile();
 
         ~WaveFile();
 
-        bool openFile (const std::string& fileName, int audioSamplingRate);
+        /**
+         * Open a file give a file name
+         *
+         * @param A reference to a string containing the filename
+         * @param The internal sampling rate, file will be resampled
+         *        if it's sampling rate does not correspond to internal one
+         */
+        void openFile (const std::string&, int) throw(AudioFileException);
 
+        /**
+         * Close an opened file
+         */
         bool closeFile();
 
+        /**
+         * Test if the specified file already exist
+         */
         bool isFileExist (const std::string& fileName);
 
+        /**
+         * Test if file opend
+         */
         bool isFileOpened();
 
         /**
-             * Load a sound file in memory
+         * Load a sound file in memory
              * @param filename  The absolute path to the file
              * @param codec     The codec to decode and encode it
              * @param sampleRate	The sample rate to read it
              * @return bool   True on success
              */
-        virtual bool loadFile (const std::string& filename, AudioCodec *codec , unsigned int sampleRate);
+        virtual void loadFile (const std::string& filename, AudioCodec *codec , unsigned int sampleRate) throw(AudioFileException);
 
     private:
 
-        bool setWaveFile();
+        /**
+         * Open an existing wave file
+         * @param File name
+         * @param Audio sampling rate
+         */
+        void openExistingWaveFile (const std::string&, int) throw(AudioFileException);
 
-        bool openExistingWaveFile (const std::string& fileName, int audioSamplingRate);
+        /**
+         * Sound format for this file (16/32 bits)
+         */
+        SOUND_FORMAT sndFormat;
+ 
+        /**
+         * Nb of bytes for this file 
+         */
+        long byteCounter;
 
-        SOUND_FORMAT _snd_format;
+        /**
+         * Number of channels for this file
+	 */
+        int nbChannels;
 
-        long _byte_counter;
+        /**
+         * Total file length
+         */
+        unsigned long fileLength;
 
-        int _nb_channels;
+        /**
+         * Audio data start offset in bytes
+         */
+        unsigned long dataOffset;
 
-        unsigned long _fileLength;
+        /**
+         * Channels
+         */
+        SINT16 channels;
 
-        unsigned long _data_offset;
+        /**
+         * Data type
+         */
+        SOUND_FORMAT dataType;
 
-        SINT16 _channels;
+        /**
+         * File sampling rate
+         */
+        double fileRate;
 
-        SOUND_FORMAT _data_type;
+        /**
+         * File stream
+         */
+        std::fstream fileStream;
 
-        double _file_rate;
-
-        std::fstream _file_stream;
-
-        std::string _fileName;
+        /**
+         * File name
+         */
+        std::string fileName;
 
 };
 
