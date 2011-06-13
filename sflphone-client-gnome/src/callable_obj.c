@@ -233,6 +233,7 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
     obj->_peer_name = g_strdup (peer_name);
     obj->_peer_number = g_strdup (peer_number);
     obj->_peer_info = g_strdup (get_peer_info (peer_name, peer_number));
+    obj->_recordfile = NULL;
 
     obj->_trsft_to = "";
     set_timestamp (& (obj->_time_start));
@@ -300,6 +301,7 @@ void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details
 {
     gchar *peer_name="";
     gchar *peer_number="", *accountID="", *time_stop="";
+    gchar *recordfile="";
     callable_obj_t *new_call;
     history_state_t history_state = MISSED;
     char **ptr;
@@ -311,7 +313,6 @@ void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details
     if ( (ptr = g_strsplit (details, delim,5)) != NULL) {
 
         while (ptr != NULL && token < 5) {
-
             switch (token) {
                 case 0:
                     history_state = get_history_state_from_id (*ptr);
@@ -328,6 +329,8 @@ void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details
                 case 4:
                     accountID = *ptr;
                     break;
+                case 5:
+		    recordfile = *ptr;
                 default:
                     break;
             }
@@ -346,6 +349,7 @@ void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details
     new_call->_history_state = history_state;
     new_call->_time_start = convert_gchar_to_timestamp (timestamp);
     new_call->_time_stop = convert_gchar_to_timestamp (time_stop);
+    new_call->_recordfile = g_strdup(recordfile);
 
     *call = new_call;
 }
@@ -361,6 +365,12 @@ void free_callable_obj_t (callable_obj_t *c)
     g_free (c->_peer_name);
     g_free (c->_peer_number);
     g_free (c->_peer_info);
+
+    if(c->_recordfile != NULL) {
+        g_free(c->_recordfile);
+ 	c->_recordfile = NULL;
+    }
+
     g_free (c);
 
     DEBUG ("If you don't see it that is because there is a problem");
@@ -458,7 +468,8 @@ gchar* serialize_history_entry (callable_obj_t *entry)
                           entry->_peer_number, separator,
                           peer_name, separator,
                           timestamp, separator,
-                          account_id,
+                          account_id, separator,
+			  entry->_recordfile ? entry->_recordfile : "",
                           NULL);
 
     return result;

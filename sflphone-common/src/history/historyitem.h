@@ -2,6 +2,7 @@
  *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Alexamdre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -49,8 +50,16 @@ class HistoryItem
     public:
         /*
          * Constructor
+         * 
+         * @param Timestamp start
+         * @param Call type
+         * @param Timestamp stop
+         * @param Call name
+         * @param Call number
+         * @param Call account id
+	 * @param Recording file name (if any recording were performed)
          */
-        HistoryItem (std::string, CallType, std::string, std::string, std::string, std::string="");
+        HistoryItem (std::string, CallType, std::string, std::string, std::string, std::string="", std::string="");
 
         /*
          * Constructor from a serialized form
@@ -99,6 +108,11 @@ class HistoryItem
          * The account the call was made with
          */
         std::string _account_id;
+
+        /**
+         * Wether or not a recording exist for this call 
+         */
+        std::string _recording_file;
 };
 
 

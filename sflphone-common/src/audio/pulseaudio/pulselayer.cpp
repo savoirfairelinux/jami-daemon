@@ -747,9 +747,9 @@ void PulseLayer::writeToSpeaker (void)
     // available bytes to be written in pulseaudio internal buffer
     int writeableSize = pa_stream_writable_size (playback->pulseStream());
 
-    if (writeableSize < 0)
+    if (writeableSize < 0) {
         _warn ("Audio: playback error : %s", pa_strerror (writeableSize));
-
+    }
 
     if (urgentAvailBytes > writeableSize) {
 
@@ -758,7 +758,6 @@ void PulseLayer::writeToSpeaker (void)
 
         _urgentRingBuffer.Get (out, writeableSize, 100);
 
-        // spkrFile->write ( (const char *) out, writeableSize);
         pa_stream_write (playback->pulseStream(), out, writeableSize, NULL, 0, PA_SEEK_RELATIVE);
 
         pa_xfree (out);
@@ -769,114 +768,87 @@ void PulseLayer::writeToSpeaker (void)
 
     } else {
 
-        // Get ringtone
-        AudioLoop* tone = _manager->getTelephoneTone();
-
         // We must test if data have been received from network in case of early media
         normalAvailBytes = getMainBuffer()->availForGet();
 
         // flush remaining samples in _urgentRingBuffer
         flushUrgent();
 
-        if ( (tone != 0) && (normalAvailBytes <= 0)) {
+        int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
 
-            if (playback->getStreamState() == PA_STREAM_READY) {
+        int maxNbBytesToGet = 0;
 
-                out = (SFLDataFormat*) pa_xmalloc (writeableSize);
+        // test if audio resampling is needed
+        if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
+            double upsampleFactor = (double) _mainBufferSampleRate / _audioSampleRate;
+             maxNbBytesToGet = ( (double) writeableSize * upsampleFactor);
+        } else {
+            maxNbBytesToGet = writeableSize;
+        }
+
+        byteToGet = (normalAvailBytes < (int) (maxNbBytesToGet)) ? normalAvailBytes : maxNbBytesToGet;
+
+        if (byteToGet) {
+
+            // Sending an odd number of byte breaks the audio!
+            if ( (byteToGet%2) != 0) {
+                byteToGet = byteToGet-1;
+	    }
+
+            out = (SFLDataFormat*) pa_xmalloc (maxNbBytesToGet);
+            memset (out, 0, maxNbBytesToGet);
+
+            getMainBuffer()->getData (out, byteToGet, 100);
+
+            // test if resampling is required
+            if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
+
+                SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (writeableSize);
                 memset (out, 0, writeableSize);
 
-                int copied = tone->getNext (out, writeableSize / sizeof (SFLDataFormat), 100);
+                // Do sample rate conversion
+                int nb_sample_down = byteToGet / sizeof (SFLDataFormat);
 
-                //spkrFile->write ( (const char *) out, copied*sizeof (SFLDataFormat));
-                pa_stream_write (playback->pulseStream(), out, copied * sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
+                int nbSample = _converter->upsampleData ( (SFLDataFormat*) out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_down);
 
-                pa_xfree (out);
+                if ( (nbSample*sizeof (SFLDataFormat)) > (unsigned int) writeableSize) {
+                    _warn ("Audio: Error: nbsbyte exceed buffer length");
+		}
 
-            }
+	 	// write resample data
+                pa_stream_write (playback->pulseStream(), rsmpl_out, nbSample*sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
+
+	        // free resampling buffer
+                pa_xfree (rsmpl_out);
+
+            } else {
+		// write origin data
+                pa_stream_write (playback->pulseStream(), out, byteToGet, NULL, 0, PA_SEEK_RELATIVE);
+	    }
+
+	    // free audio buffer used to get data from 
+            pa_xfree (out);
 
         } else {
 
-            int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
+	    // Get ringtone
+            AudioLoop *fileToPlay = _manager->getTelephoneTone();
 
-            int maxNbBytesToGet = 0;
+	    // If audio stream is open and there is realy nothing to play (i.e. audio voce is late and audio layer is underrun)
+            if (fileToPlay == NULL) {
 
-            // test if audio resampling is needed
-            if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
+                SFLDataFormat* zeros = (SFLDataFormat*) pa_xmalloc (writeableSize);
+                bzero (zeros, writeableSize);
 
-                // upsamplefactor is used to compute the number of bytes to get in the ring buffer
-                double upsampleFactor = (double) _mainBufferSampleRate / _audioSampleRate;
+		_debug("write zeros");
+                pa_stream_write (playback->pulseStream(), zeros, writeableSize, NULL, 0, PA_SEEK_RELATIVE);
 
-                maxNbBytesToGet = ( (double) writeableSize * upsampleFactor);
-
-            } else {
-
-                // maxNbSamplesToGet = framesPerBuffer;
-                maxNbBytesToGet = writeableSize;
+                pa_xfree (zeros);
 
             }
-
-            byteToGet = (normalAvailBytes < (int) (maxNbBytesToGet)) ? normalAvailBytes : maxNbBytesToGet;
-
-            if (byteToGet) {
-
-                // Sending an odd number of byte breaks the audio!
-                // TODO, find out where the problem occurs to get rid of this hack
-                if ( (byteToGet%2) != 0)
-                    byteToGet = byteToGet-1;
-
-                out = (SFLDataFormat*) pa_xmalloc (maxNbBytesToGet);
-                memset (out, 0, maxNbBytesToGet);
-
-                getMainBuffer()->getData (out, byteToGet, 100);
-
-                // test if resampling is required
-                if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
-
-                    SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (writeableSize);
-                    memset (out, 0, writeableSize);
-
-                    // Do sample rate conversion
-                    int nb_sample_down = byteToGet / sizeof (SFLDataFormat);
-
-                    int nbSample = _converter->upsampleData ( (SFLDataFormat*) out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_down);
-
-                    if ( (nbSample*sizeof (SFLDataFormat)) > (unsigned int) writeableSize)
-                        _warn ("Audio: Error: nbsbyte exceed buffer length");
-
-                    // spkrFile->write ( (const char *) out, nbSample*sizeof (SFLDataFormat));
-                    pa_stream_write (playback->pulseStream(), rsmpl_out, nbSample*sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
-
-                    pa_xfree (rsmpl_out);
-
-                } else {
-
-                    // spkrFile->write ( (const char *) out, byteToGet);
-                    pa_stream_write (playback->pulseStream(), out, byteToGet, NULL, 0, PA_SEEK_RELATIVE);
-
-
-                }
-
-                pa_xfree (out);
-
-            } else {
-
-                if (tone == 0) {
-
-                    SFLDataFormat* zeros = (SFLDataFormat*) pa_xmalloc (writeableSize);
-                    bzero (zeros, writeableSize);
-
-                    // spkrFile->write ( (const char *) zeros, writeableSize);
-                    pa_stream_write (playback->pulseStream(), zeros, writeableSize, NULL, 0, PA_SEEK_RELATIVE);
-
-                    pa_xfree (zeros);
-
-                }
-            }
-
-
-            _urgentRingBuffer.Discard (byteToGet);
-
         }
+
+	_urgentRingBuffer.Discard (byteToGet);
 
     }
 
@@ -910,12 +882,8 @@ void PulseLayer::readFromMic (void)
 
             nbSample = _converter->downsampleData ( (SFLDataFormat *) data, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_up);
 
-            // captureRsmplFile->write ((const char *)rsmpl_out, nbSample*sizeof(SFLDataFormat));
-
             // remove dc offset
             _audiofilter->processAudio (rsmpl_out, nbSample*sizeof (SFLDataFormat));
-
-            // captureFilterFile->write ((const char *)rsmpl_out, nbSample*sizeof(SFLDataFormat));
 
             getMainBuffer()->putData (rsmpl_out, nbSample*sizeof (SFLDataFormat), 100);
 
@@ -930,15 +898,10 @@ void PulseLayer::readFromMic (void)
             // remove dc offset
             _audiofilter->processAudio ( (SFLDataFormat *) data, filter_out, r);
 
-            // captureFile->write ( (const char *) filter_out, r);
-
             getMainBuffer()->putData (filter_out, r, 100);
 
             pa_xfree (filter_out);
         }
-
-
-
     }
 
     if (pa_stream_drop (record->pulseStream()) < 0) {
@@ -950,41 +913,41 @@ void PulseLayer::readFromMic (void)
 
 void PulseLayer::ringtoneToSpeaker (void)
 {
-    AudioLoop* file_tone = _manager->getTelephoneFile();
+    AudioLoop* fileToPlay = _manager->getTelephoneFile();
 
     SFLDataFormat* out;
 
     int writableSize = pa_stream_writable_size (ringtone->pulseStream());
 
-    if (file_tone) {
+    if (fileToPlay) {
 
         if (ringtone->getStreamState() != PA_STREAM_READY) {
-        	_error("PulseAudio: Error: Ringtone stream not in state ready");
-        	return;
+            _error("PulseAudio: Error: Ringtone stream not in state ready");
+            return;
         }
 
         out = (SFLDataFormat *) pa_xmalloc (writableSize);
         if(out == NULL) {
-        	_error("PulseAudio: Error: Could not allocate memory for buffer");
-        	return;
+            _error("PulseAudio: Error: Could not allocate memory for buffer");
+            return;
         }
 
         memset (out, 0, writableSize);
 
-        int copied = file_tone->getNext (out, writableSize/sizeof (SFLDataFormat), 100);
-
+        int copied = fileToPlay->getNext (out, writableSize/sizeof (SFLDataFormat), 100);
         if(copied == 0) {
-        	copied = writableSize/sizeof(SFLDataFormat);
+            copied = writableSize/sizeof(SFLDataFormat);
         }
 
         pa_stream_write (ringtone->pulseStream(), out, copied*sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
 
         pa_xfree (out);
-    } else {
+    } 
+    else {
 
         if (ringtone->getStreamState() != PA_STREAM_READY) {
-        	_error("PulseAudio: Error: Ringtone stream not in state ready");
-        	return;
+            _error("PulseAudio: Error: Ringtone stream not in state ready");
+       	    return;
         }
 
         out = (SFLDataFormat*) pa_xmalloc (writableSize);
@@ -998,8 +961,6 @@ void PulseLayer::ringtoneToSpeaker (void)
 
         pa_xfree (out);
     }
-
-
 }
 
 static void retrieve_server_info (pa_context *c UNUSED, const pa_server_info *i, void *userdata UNUSED)

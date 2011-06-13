@@ -2,6 +2,7 @@
  *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -76,7 +77,7 @@ class HistoryManager
          */
         int load_history_items_map (Conf::ConfigTree *history_list, int limit);
 
-        /*
+        /* 
          * Inverse method, ie save a data structure containing the history into a file
          */
         bool save_history_to_file (Conf::ConfigTree *history_list);
