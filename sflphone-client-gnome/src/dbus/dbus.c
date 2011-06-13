@@ -346,6 +346,7 @@ conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
 
     conferencelist_add (new_conf);
     calltree_add_conference (current_calls, new_conf);
+    calltree_add_conference (history, new_conf);
 }
 
 static void

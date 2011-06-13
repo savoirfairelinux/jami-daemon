@@ -490,39 +490,36 @@ gchar* get_history_id_from_state (history_state_t state)
     }
 }
 
-gchar* get_formatted_start_timestamp (callable_obj_t *obj)
+// gchar* get_formatted_start_timestamp (callable_obj_t *obj)
+gchar *get_formatted_start_timestamp (time_t time_start)
 {
 
     struct tm* ptr;
     time_t lt, now;
     unsigned char str[100];
 
-    if (obj) {
-        // Fetch the current timestamp
-        (void) time (&now);
-        lt = obj->_time_start;
+    // Fetch the current timestamp
+    (void) time (&now);
+    lt = time_start;
 
-        ptr = localtime (&lt);
+    ptr = localtime (&lt);
 
-        if (now - lt < UNIX_WEEK) {
-            if (now-lt < UNIX_DAY) {
-                strftime ( (char *) str, 100, N_ ("today at %R"), (const struct tm *) ptr);
-            } else {
-                if (now - lt < UNIX_TWO_DAYS) {
-                    strftime ( (char *) str, 100, N_ ("yesterday at %R"), (const struct tm *) ptr);
-                } else {
-                    strftime ( (char *) str, 100, N_ ("%A at %R"), (const struct tm *) ptr);
-                }
-            }
+    if (now - lt < UNIX_WEEK) {
+        if (now-lt < UNIX_DAY) {
+            strftime ( (char *) str, 100, N_ ("today at %R"), (const struct tm *) ptr);
         } else {
-            strftime ( (char *) str, 100, N_ ("%x at %R"), (const struct tm *) ptr);
+            if (now - lt < UNIX_TWO_DAYS) {
+                strftime ( (char *) str, 100, N_ ("yesterday at %R"), (const struct tm *) ptr);
+            } else {
+                strftime ( (char *) str, 100, N_ ("%A at %R"), (const struct tm *) ptr);
+            }
         }
-
-        // result function of the current locale
-        return g_markup_printf_escaped ("\n%s\n" , str);
+    } else {
+        strftime ( (char *) str, 100, N_ ("%x at %R"), (const struct tm *) ptr);
     }
 
-    return "";
+    // result function of the current locale
+    return g_markup_printf_escaped ("\n%s\n" , str);
 }
 
 void set_timestamp (time_t *timestamp)

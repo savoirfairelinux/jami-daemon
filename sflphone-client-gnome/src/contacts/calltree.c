@@ -73,6 +73,7 @@ callable_obj_t *selected_call;
 conference_obj_t *dragged_conf;
 conference_obj_t *selected_conf;
 
+static void calltree_add_history_conference(conference_obj_t *);
 
 static void drag_begin_cb (GtkWidget *widget, GdkDragContext *dc, gpointer data);
 static void drag_end_cb (GtkWidget * mblist, GdkDragContext * context, gpointer data);
@@ -868,7 +869,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 
                 calltree_display_call_info (c, DISPLAY_TYPE_HISTORY, NULL, &description);
 
-                date = get_formatted_start_timestamp (c);
+                date = get_formatted_start_timestamp (c->_time_start);
                 duration = get_call_duration (c);
                 duration = g_strconcat (date , duration , NULL);
                 description = g_strconcat (description , duration, NULL);
@@ -1010,7 +1011,7 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 void calltree_add_history_entry (callable_obj_t * c)
 {
 
-    DEBUG ("calltree_add_history_entry %s", c->_callID);
+    DEBUG ("CallTree: Calltree add history entry %s", c->_callID);
 
     if (!eel_gconf_get_integer (HISTORY_ENABLED))
         return;
@@ -1040,7 +1041,7 @@ void calltree_add_history_entry (callable_obj_t * c)
             WARN ("History - Should not happen!");
     }
 
-    date = get_formatted_start_timestamp (c);
+    date = get_formatted_start_timestamp (c->_time_start);
     duration = get_call_duration (c);
     duration = g_strconcat (date , duration , NULL);
     description = g_strconcat (description , duration, NULL);
@@ -1065,8 +1066,9 @@ void calltree_add_history_entry (callable_obj_t * c)
                         3, c,      // Pointer
                         -1);
 
-    if (pixbuf != NULL)
+    if (pixbuf != NULL) {
         g_object_unref (G_OBJECT (pixbuf));
+    }
 
     if (pixbuf_security != NULL) {
         g_object_unref (G_OBJECT (pixbuf_security));
@@ -1101,13 +1103,16 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
         return;
     }
 
+    if(tab == history) {
+        calltree_add_history_conference(conf);
+    	return;
+    }
 
     description = g_markup_printf_escaped ("<b>%s</b>", "");
 
     gtk_tree_store_append (tab->store, &iter, NULL);
 
     if (tab == current_calls) {
-
         switch (conf->_state) {
             case CONFERENCE_STATE_ACTIVE_ATACHED:
                 pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/usersAttached.svg", NULL);
@@ -1127,7 +1132,9 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
                 WARN ("Update conference add - Should not happen!");
         }
     }
-
+    else if(tab == history) {
+        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/usersAttached.svg", NULL);
+    }
 
     //Resize it
     if (pixbuf) {
@@ -1137,6 +1144,8 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
     } else {
         DEBUG ("Error no pixbuff for conference from %s", ICONS_DIR);
     }
+
+    if(tab == current_calls) {
 
     // Used to determine if at least one participant use a security feature
     // If true (at least on call use a security feature) we need to display security icons
@@ -1214,6 +1223,7 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
             pixbuf_security = gdk_pixbuf_new_from_file (ICONS_DIR "/lock_off.svg", NULL);
         }
     }
+    }
 
     DEBUG ("Calltree: Add conference to tree store");
 
@@ -1224,8 +1234,13 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
                         3, conf, // Pointer
                         -1);
 
-    if (pixbuf != NULL)
+    if (pixbuf != NULL) {
         g_object_unref (G_OBJECT (pixbuf));
+    }
+
+    if(tab == history) {
+        return;
+    }
 
     // participant = conf->participant;
     // participant = dbus_get_participant_list(conf->_confID);
@@ -1265,7 +1280,6 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
     update_actions();
 
 }
-
 
 void calltree_update_conference (calltab_t* tab, const conference_obj_t* conf)
 {
@@ -1339,6 +1353,30 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, G
 
     update_actions();
 
+}
+
+void calltree_add_history_conference(conference_obj_t *conf) {
+    GdkPixbuf *pixbuf = NULL;
+    gchar *description = "";
+    GtkTreeIter iter;
+
+    DEBUG("------------------------------ ADD CONFERENCE TO HISTORY");
+
+    gtk_tree_store_prepend(history->store, &iter, NULL);
+
+    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/", NULL);
+
+    if(pixbuf) {
+        if(gdk_pixbuf_get_width(pixbuf) > 32 || gdk_pixbuf_get_height(pixbuf) > 32) {
+            pixbuf = gdk_pixbuf_scale_simple(pixbuf, 32, 32, GDK_INTERP_BILINEAR);
+	}
+    } 
+
+    gtk_tree_store_set(history->store, &iter, 0, pixbuf, 1, description, 2, NULL, 3, conf, -1);
+
+    if(pixbuf != NULL) {
+	g_object_unref(G_OBJECT(pixbuf)); 
+    }
 }
 
 
