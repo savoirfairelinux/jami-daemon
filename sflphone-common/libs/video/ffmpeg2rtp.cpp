@@ -192,11 +192,11 @@ int main(int argc, char *argv[])
 
     /* add video stream to outputformat context */
     AVStream *video_st = av_new_stream(oc, 0);
-    video_st->codec = encoderCtx;
     if (!video_st) {
         std::cerr << "Could not alloc stream" << std::endl;
         exit(EXIT_FAILURE);
     }
+    video_st->codec = encoderCtx;
 
     /* set the output parameters (must be done even if no
        parameters). */
@@ -214,13 +214,6 @@ int main(int argc, char *argv[])
         }
     }
     else std::cerr << "No need to open" << std::endl;
-
-    /* set the output parameters (must be done even if no
-       parameters). */
-    if (av_set_parameters(oc, NULL) < 0) {
-        std::cerr << "Invalid output format parameters" << std::endl;
-        exit(EXIT_FAILURE);
-    }
 
     av_dump_format(oc, 0, oc->filename, 1);
     print_and_save_sdp(&oc);
@@ -291,6 +284,8 @@ int main(int argc, char *argv[])
                         AV_NOPTS_VALUE)
                         opkt.pts = av_rescale_q(encoderCtx->coded_frame->pts,
                                 encoderCtx->time_base, video_st->time_base);
+                    else
+                        opkt.pts = 0;
 
                     if (encoderCtx->coded_frame->key_frame)
                         opkt.flags |= AV_PKT_FLAG_KEY;
