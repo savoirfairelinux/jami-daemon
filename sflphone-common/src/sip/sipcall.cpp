@@ -33,6 +33,7 @@
 
 #include "sipcall.h"
 #include "global.h" // for _debug
+#include "audio/audiortp/AudioRtpFactory.h"
 #include "sdp.h"
 
 const int SIPCall::CALL_MEMPOOL_INIT_SIZE = 16384;
