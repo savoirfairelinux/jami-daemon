@@ -196,12 +196,6 @@ void ManagerImpl::terminate ()
     delete _audiodriver;
     _audiodriver = NULL;
 
-    audioLayerMutexUnlock();
-
-    _debug ("Manager: Unload telephone tone");
-    delete _telephoneTone;
-    _telephoneTone = NULL;
-
     _debug ("Manager: Unload audio codecs ");
     _audioCodecFactory.deleteHandlePointer();
 
@@ -2245,21 +2239,21 @@ bool ManagerImpl::playATone (Tone::TONEID toneId)
  */
 void ManagerImpl::stopTone ()
 {
-    bool hasToPlayTone;
+    bool hasToPlayTone = voipPreferences.getPlayTones();
 
-    hasToPlayTone = voipPreferences.getPlayTones();
-
-    if (!hasToPlayTone)
+    if (hasToPlayTone == false) {
         return;
+    }
 
     _toneMutex.enterMutex();
 
-    if (_telephoneTone != 0) {
+    if (_telephoneTone != NULL) {
         _telephoneTone->setCurrentTone (Tone::TONE_NULL);
     }
 
-    if (_audiofile)
+    if (_audiofile) {
         _audiofile->stop();
+    }
 
     _toneMutex.leaveMutex();
 }
@@ -2382,8 +2376,6 @@ void ManagerImpl::ringtone (const AccountID& accountID)
         _audiodriver->startStream();
         audioLayerMutexUnlock();
 
-        ringback();
-
     } else {
         ringback();
     }
@@ -2392,26 +2384,22 @@ void ManagerImpl::ringtone (const AccountID& accountID)
 AudioLoop*
 ManagerImpl::getTelephoneTone ()
 {
-    // _debug ("ManagerImpl::getTelephoneTone()");
-
-    if (_telephoneTone != 0) {
-        // _debug ("telephone tone!!!!!!");
+    if (_telephoneTone != NULL) {
         ost::MutexLock m (_toneMutex);
         return _telephoneTone->getCurrentTone();
     } else {
-        //_debug ("No Tone!!!!!!");
-        return 0;
+        return NULL;
     }
 }
 
 AudioLoop*
 ManagerImpl::getTelephoneFile ()
 {
-    // _debug("ManagerImpl::getTelephoneFile()");
     ost::MutexLock m (_toneMutex);
 
-    if (!_audiofile)
+    if (!_audiofile) {
         return NULL;
+    }
 
     if (_audiofile->isStarted()) {
         return _audiofile;

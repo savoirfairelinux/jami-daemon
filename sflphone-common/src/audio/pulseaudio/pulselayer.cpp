@@ -132,7 +132,6 @@ static void source_input_info_callback (pa_context *c UNUSED, const pa_source_in
     char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cv[PA_CVOLUME_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
 
     if (!eol) {
-
         printf ("Sink %u\n"
                 "    Name: %s\n"
                 "    Driver: %s\n"
@@ -157,7 +156,6 @@ static void source_input_info_callback (pa_context *c UNUSED, const pa_source_in
                 i->flags & PA_SOURCE_HW_VOLUME_CTRL ? "HW_VOLUME_CTRL " : "",
                 i->flags & PA_SOURCE_LATENCY ? "LATENCY " : "",
                 i->flags & PA_SOURCE_HARDWARE ? "HARDWARE" : "");
-
         std::string deviceName (i->name);
         ( (PulseLayer *) userdata)->getSourceList()->push_back (deviceName);
 
@@ -169,7 +167,6 @@ static void context_changed_callback (pa_context* c, pa_subscription_event_type_
 {
 
     switch (t) {
-
         case PA_SUBSCRIPTION_EVENT_SINK:
             _debug ("Audio: PA_SUBSCRIPTION_EVENT_SINK");
             ( (PulseLayer *) userdata)->getSinkList()->clear();
@@ -751,6 +748,8 @@ void PulseLayer::writeToSpeaker (void)
         _warn ("Audio: playback error : %s", pa_strerror (writeableSize));
     }
 
+    AudioLoop *toneToPlay = _manager->getTelephoneTone();
+
     if (urgentAvailBytes > writeableSize) {
 
         out = (SFLDataFormat*) pa_xmalloc (writeableSize);
@@ -766,7 +765,24 @@ void PulseLayer::writeToSpeaker (void)
         getMainBuffer()->discard (writeableSize);
 
 
-    } else {
+    } 
+    else if (toneToPlay != 0) {
+
+        if (playback->getStreamState() == PA_STREAM_READY) {
+
+            out = (SFLDataFormat*) pa_xmalloc (writeableSize);
+            memset (out, 0, writeableSize);
+
+            int copied = toneToPlay->getNext (out, writeableSize / sizeof (SFLDataFormat), 100);
+
+            //spkrFile->write ( (const char *) out, copied*sizeof (SFLDataFormat));
+                pa_stream_write (playback->pulseStream(), out, copied * sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
+
+                pa_xfree (out);
+ 
+        }
+    }
+    else {
 
         // We must test if data have been received from network in case of early media
         normalAvailBytes = getMainBuffer()->availForGet();
@@ -832,15 +848,14 @@ void PulseLayer::writeToSpeaker (void)
         } else {
 
 	    // Get ringtone
-            AudioLoop *fileToPlay = _manager->getTelephoneTone();
+            // AudioLoop *fileToPlay = _manager->getTelephoneTone();
 
 	    // If audio stream is open and there is realy nothing to play (i.e. audio voce is late and audio layer is underrun)
-            if (fileToPlay == NULL) {
+            if (toneToPlay == NULL) {
 
                 SFLDataFormat* zeros = (SFLDataFormat*) pa_xmalloc (writeableSize);
                 bzero (zeros, writeableSize);
 
-		_debug("write zeros");
                 pa_stream_write (playback->pulseStream(), zeros, writeableSize, NULL, 0, PA_SEEK_RELATIVE);
 
                 pa_xfree (zeros);
