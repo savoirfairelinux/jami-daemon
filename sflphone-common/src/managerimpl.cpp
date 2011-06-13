@@ -2363,29 +2363,26 @@ void ManagerImpl::ringtone (const AccountID& accountID)
         else
             _audiofile = static_cast<AudioFile *> (new RawFile());
 
-        loadFile = false;
 
         _debug ("Manager: ringChoice: %s, codecForTone: %d, samplerate %d", ringchoice.c_str(), codecForTone->getPayloadType(), samplerate);
 
-        if (_audiofile)
-            loadFile = _audiofile->loadFile (ringchoice, codecForTone, samplerate);
-
+        if (_audiofile) {
+            _audiofile->loadFile (ringchoice, codecForTone, samplerate);
+        }
+    
         _toneMutex.leaveMutex();
 
-        if (loadFile) {
 
-            _toneMutex.enterMutex();
-            _audiofile->start();
-            _toneMutex.leaveMutex();
+        _toneMutex.enterMutex();
+        _audiofile->start();
+        _toneMutex.leaveMutex();
 
-            audioLayerMutexLock();
-            // start audio if not started AND flush all buffers (main and urgent)
-            _audiodriver->startStream();
-            audioLayerMutexUnlock();
+        audioLayerMutexLock();
+        // start audio if not started AND flush all buffers (main and urgent)
+        _audiodriver->startStream();
+        audioLayerMutexUnlock();
 
-        } else {
-            ringback();
-        }
+        ringback();
 
     } else {
         ringback();

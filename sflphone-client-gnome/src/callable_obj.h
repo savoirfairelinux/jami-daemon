@@ -150,6 +150,12 @@ typedef struct  {
     /* The audio codec used for this call, if applicable */
     gchar *_audio_codec;
 
+    /**
+     * The recording file for this call, if NULL, no recording available
+     * Should be used only for history items
+     */
+    gchar *_recordfile;
+
     /* Associated IM widget */
     GtkWidget *_im_widget;
 

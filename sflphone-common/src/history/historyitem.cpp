@@ -2,6 +2,7 @@
  *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,13 +38,14 @@
 #define ITEM_SEPARATOR      "|"
 #define EMPTY_STRING        "empty"
 
-HistoryItem::HistoryItem (std::string timestamp_start, CallType call_type, std::string timestamp_stop, std::string name, std::string number, std::string account_id)
+HistoryItem::HistoryItem (std::string timestamp_start, CallType call_type, std::string timestamp_stop, std::string name, std::string number, std::string account_id, std::string recording)
     :	_timestamp_start (timestamp_start),
         _timestamp_stop (timestamp_stop),
         _call_type (call_type),
         _name (name),
         _number (number),
-        _account_id (account_id)
+        _account_id (account_id),
+	_recording_file(recording)
 {
 }
 
@@ -52,7 +54,7 @@ HistoryItem::HistoryItem (std::string timestamp, std::string serialized_form)
     : _timestamp_start (timestamp)
 {
     size_t pos;
-    std::string tmp, id, name, number, stop, account;
+    std::string tmp, id, name, number, stop, account, recordFile;
     int indice=0;
 
     while (serialized_form.find (ITEM_SEPARATOR, 0) != std::string::npos) {
@@ -61,27 +63,24 @@ HistoryItem::HistoryItem (std::string timestamp, std::string serialized_form)
         serialized_form.erase (0, pos + 1);
 
         switch (indice) {
-
             case 0: // The call type
                 id = tmp;
                 break;
-
             case 1: // The number field
                 number = tmp;
                 break;
-
             case 2: // The name field
                 name = tmp;
                 break;
-
             case 3: // The end timestamp
                 stop = tmp;
                 break;
-
             case 4: // The account ID
                 account = tmp;
                 break;
-
+            case 5: // The recorded file name
+		recordFile = tmp;
+		break;
             default: // error
                 std::cout <<"[ERROR] unserialized form not recognized."<<std::endl;
                 break;
@@ -118,7 +117,8 @@ bool HistoryItem::save (Conf::ConfigTree **history)
             && (*history)->setConfigTreeItem (section, "timestamp_stop", _timestamp_stop)
             && (*history)->setConfigTreeItem (section, "number", _number)
             && (*history)->setConfigTreeItem (section, "accountid", _account_id)
-            && (*history)->setConfigTreeItem (section, "name", _name));
+            && (*history)->setConfigTreeItem (section, "name", _name)
+	    && (*history)->setConfigTreeItem (section, "recordfile", _recording_file));
 
     return res;
 }
@@ -136,7 +136,8 @@ std::string HistoryItem::serialize (void)
     (_account_id == "" || non_valid_account (_account_id)) ? accountID = "empty" : accountID = _account_id;
 
     // Serialize it
-    res << _call_type << separator << _number << separator << name << separator << _timestamp_stop << separator << accountID;
+    res << _call_type << separator << _number << separator << name << separator << _timestamp_stop << separator << accountID
+		<< separator << _recording_file;
 
     return res.str();
 }
