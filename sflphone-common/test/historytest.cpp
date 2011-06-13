@@ -137,17 +137,18 @@ void HistoryTest::test_get_history_serialized()
     res = history->get_history_serialized();
     CPPUNIT_ASSERT (res.size() ==HISTORY_SAMPLE_SIZE);
 
+
     // Warning - If you change the history-sample file, you must change the following lines also so that the tests could work
     // The reference here is the file history-sample in this test directory
     // The serialized form is: calltype%to%from%callid
 
     // Check the first
-    tmp = "0|514-276-5468|Savoir-faire Linux|144562458|empty";
+    tmp = "0|514-276-5468|Savoir-faire Linux|144562458|empty|";
 	std::cout << res ["144562436"] << std::endl;
     CPPUNIT_ASSERT (Validator::isEqual (tmp, res ["144562436"]));
 
     // the account ID does not correspond to a loaded account
-    tmp = "1|5143848557|empty|775354987|empty";
+    tmp = "1|5143848557|empty|775354987|empty|";
     CPPUNIT_ASSERT (Validator::isEqual (tmp, res ["775354456"]));
 }
 
@@ -160,9 +161,9 @@ void HistoryTest::test_set_serialized_history()
     std::string tmp;
     Conf::ConfigTree history_list;
 
-    map_test["144562436"] = "0|514-276-5468|Savoir-faire Linux|144562458|empty";
-    map_test["747638685"] = "2|136|Emmanuel Milou|747638765|Account:1239059899";
-    map_test["775354456"] = "1|5143848557|empty|775354987|Account:43789459478";
+    map_test["144562436"] = "0|514-276-5468|Savoir-faire Linux|144562458|empty|";
+    map_test["747638685"] = "2|136|Emmanuel Milou|747638765|Account:1239059899|";
+    map_test["775354456"] = "1|5143848557|empty|775354987|Account:43789459478|";
 
     CPPUNIT_ASSERT (history->load_history (HUGE_HISTORY_LIMIT, HISTORY_SAMPLE) == HISTORY_SAMPLE_SIZE);
     // We use a large history limit to be able to interpret results
@@ -174,11 +175,11 @@ void HistoryTest::test_set_serialized_history()
     CPPUNIT_ASSERT (map_test.size() ==3);
 
     // Check the first
-    tmp = "0|514-276-5468|Savoir-faire Linux|144562458|empty";
+    tmp = "0|514-276-5468|Savoir-faire Linux|144562458|empty|";
     CPPUNIT_ASSERT (Validator::isEqual (tmp, map_test ["144562436"]));
 
     // the account ID does not correspond to a loaded account
-    tmp = "1|5143848557|empty|775354987|empty";
+    tmp = "1|5143848557|empty|775354987|empty|";
     CPPUNIT_ASSERT (Validator::isEqual (tmp, map_test ["775354456"]));
 
     history->save_history_items_map (&history_list);
@@ -202,11 +203,11 @@ void HistoryTest::test_set_serialized_history_with_limit()
     current_3 << (current - 11 * day) << std::endl;
 
     map_test[current_1.str() ]
-    = "0|514-276-5468|Savoir-faire Linux|144562458|empty";
+    = "0|514-276-5468|Savoir-faire Linux|144562458|empty|";
     map_test[current_2.str() ]
-    = "2|136|Emmanuel Milou|747638765|Account:1239059899";
+    = "2|136|Emmanuel Milou|747638765|Account:1239059899|";
     map_test[current_3.str() ]
-    = "1|5143848557|empty|775354987|Account:43789459478";
+    = "1|5143848557|empty|775354987|Account:43789459478|";
 
     CPPUNIT_ASSERT (history->load_history (HUGE_HISTORY_LIMIT, HISTORY_SAMPLE) == HISTORY_SAMPLE_SIZE);
     // We use different value of history limit
