@@ -56,6 +56,8 @@ RawFile::~RawFile()
 // load file in mono format
 void RawFile::loadFile (const std::string& name, sfl::AudioCodec* codec, unsigned int sampleRate = 8000) throw(AudioFileException)
 {
+    _debug("RawFile: Load new file %s", name.c_str());
+
     audioCodec = codec;
 
     // if the filename was already load, with the same samplerate
@@ -437,6 +439,8 @@ void WaveFile::openExistingWaveFile (const std::string& fileName, int audioSampl
 
 void WaveFile::loadFile (const std::string& filename, sfl::AudioCodec * /*codec*/, unsigned int sampleRate) throw(AudioFileException)
 {
+    _debug("WaveFile: Load new file %s", filename.c_str());
+
     try { 
         openFile (filename, sampleRate);
     }

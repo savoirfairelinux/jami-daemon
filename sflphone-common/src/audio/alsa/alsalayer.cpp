@@ -886,6 +886,7 @@ void AlsaLayer::audioCallback (void)
             memset (out, 0, playbackAvailBytes);
 
             if (out) {
+		_debug("Write tone (normal %d) (playbackAvail %d)", normalAvailBytes, playbackAvailBytes);
                 tone->getNext (out, playbackAvailSmpl, spkrVolume);
                 write (out , playbackAvailBytes, _PlaybackHandle);
                 free (out);

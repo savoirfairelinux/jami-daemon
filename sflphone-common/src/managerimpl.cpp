@@ -2306,7 +2306,6 @@ void ManagerImpl::ringtone (const AccountID& accountID)
     std::string ringchoice;
     sfl::AudioCodec *codecForTone;
     int layer, samplerate;
-    bool loadFile;
 
     _debug ("Manager: Ringtone");
 
@@ -2358,22 +2357,23 @@ void ManagerImpl::ringtone (const AccountID& accountID)
         std::string wave (".wav");
         size_t found = ringchoice.find (wave);
 
-        if (found != std::string::npos)
-            _audiofile = static_cast<AudioFile *> (new WaveFile());
-        else
-            _audiofile = static_cast<AudioFile *> (new RawFile());
+        try {
 
+            if (found != std::string::npos) {
+                _audiofile = static_cast<AudioFile *> (new WaveFile());
+            }
+            else {
+                _audiofile = static_cast<AudioFile *> (new RawFile());
+            }
 
-        _debug ("Manager: ringChoice: %s, codecForTone: %d, samplerate %d", ringchoice.c_str(), codecForTone->getPayloadType(), samplerate);
+            _debug ("Manager: ringChoice: %s, codecForTone: %d, samplerate %d", ringchoice.c_str(), codecForTone->getPayloadType(), samplerate);
 
-        if (_audiofile) {
             _audiofile->loadFile (ringchoice, codecForTone, samplerate);
         }
+        catch (AudioFileException &e) {
+	    _error("Manager: Exception: %s", e.what());
+        }
     
-        _toneMutex.leaveMutex();
-
-
-        _toneMutex.enterMutex();
         _audiofile->start();
         _toneMutex.leaveMutex();
 
