@@ -2,6 +2,7 @@
  *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com> 
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -94,7 +95,7 @@ int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list, int 
     Conf::TokenList sections;
     HistoryItem *item;
     Conf::TokenList::iterator iter;
-    std::string number, name, accountID, timestamp_start, timestamp_stop;
+    std::string number, name, accountID, timestamp_start, timestamp_stop, recording_file;
     CallType type;
     int history_limit;
     time_t current_timestamp;
@@ -116,12 +117,14 @@ int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list, int 
         name = getConfigString (*iter, "name", history_list);
         number = getConfigString (*iter, "number", history_list);
         accountID = getConfigString (*iter, "accountid", history_list);
+        recording_file = getConfigString(*iter, "recordfile", history_list);
+        
         timestamp_start = *iter;
 
         // Make a check on the start timestamp to know it is loadable according to CONFIG_HISTORY_LIMIT
 
         if (atoi (timestamp_start.c_str ()) >= ( (int) current_timestamp - history_limit)) {
-            item = new HistoryItem (timestamp_start, type, timestamp_stop, name, number, accountID);
+            item = new HistoryItem (timestamp_start, type, timestamp_stop, name, number, accountID, recording_file);
             add_new_history_entry (item);
             nb_items ++;
         }
