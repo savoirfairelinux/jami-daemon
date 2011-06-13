@@ -49,6 +49,7 @@
 #include "im/InstantMessaging.h"
 
 #include "audio/audiolayer.h"
+#include "audio/audiortp/AudioRtpFactory.h"
 
 #include "pjsip/sip_endpoint.h"
 #include "pjsip/sip_transport_tls.h"
