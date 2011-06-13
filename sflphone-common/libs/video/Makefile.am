@@ -1,6 +1,6 @@
 SUBDIRS=test
 
-bin_PROGRAMS = ffmpeg2rtp ffmpeg2shm
+noinst_PROGRAMS = ffmpeg2rtp ffmpeg2shm
 noinst_LTLIBRARIES = libvideo_endpoint.la
 
 libvideo_endpoint_la_SOURCES = video_endpoint.cpp video_endpoint.h
