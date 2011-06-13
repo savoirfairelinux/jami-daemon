@@ -29,7 +29,7 @@ void print_and_save_sdp(AVFormatContext **avc)
 {
     size_t sdp_size = avc[0]->streams[0]->codec->extradata_size + 2048;
     char *sdp = reinterpret_cast<char*>(malloc(sdp_size)); /* theora sdp can be huge */
-    printf("sdp_size:%ld\n", sdp_size);
+    printf("sdp_size:%ud\n", sdp_size);
     av_sdp_create(avc, 1, sdp, sdp_size);
     printf("SDP:\n%s\n", sdp);
     fflush(stdout);
@@ -224,8 +224,8 @@ int main(int argc, char *argv[])
     /* alloc image and output buffer */
     int size = encoderCtx->width * encoderCtx->height;
     int outbuf_size = size;
-    uint8_t *outbuf = reinterpret_cast<uint8_t*>(malloc(outbuf_size));
-    uint8_t *scaled_picture_buf = reinterpret_cast<uint8_t*>(malloc((size * 3) / 2)); /* size for YUV 420 */
+    uint8_t *outbuf = reinterpret_cast<uint8_t*>(av_malloc(outbuf_size));
+    uint8_t *scaled_picture_buf = reinterpret_cast<uint8_t*>(av_malloc((size * 3) / 2)); /* size for YUV 420 */
 
     scaled_picture->data[0] = scaled_picture_buf;
     scaled_picture->data[1] = scaled_picture->data[0] + size;
@@ -297,8 +297,8 @@ int main(int argc, char *argv[])
         // free the packet that was allocated by av_read_frame
         av_free_packet(&inpacket);
     }
-    free(scaled_picture_buf);
-    free(outbuf);
+    av_free(scaled_picture_buf);
+    av_free(outbuf);
 
     /* write the trailer, if any.  the trailer must be written
      * before you close the CodecContexts open when you wrote the
