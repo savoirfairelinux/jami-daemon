@@ -25,14 +25,14 @@ void print_error(const char *filename, int err)
 
     if (av_strerror(err, errbuf, sizeof(errbuf)) < 0)
         errbuf_ptr = strerror(AVUNERROR(err));
-    fprintf(stderr, "%s: %s\n", filename, errbuf_ptr);
+    std::cerr << filename << ":" <<  errbuf_ptr << std::endl;
 }
 
 void print_and_save_sdp(AVFormatContext **avc)
 {
     size_t sdp_size = avc[0]->streams[0]->codec->extradata_size + 2048;
     char *sdp = reinterpret_cast<char*>(malloc(sdp_size)); /* theora sdp can be huge */
-    printf("sdp_size:%ud\n", sdp_size);
+    std::cout << "sdp_size: " << sdp_size << std::endl;
     av_sdp_create(avc, 1, sdp, sdp_size);
     std::ofstream sdp_file("test.sdp");
     std::istringstream iss(sdp);
@@ -43,6 +43,7 @@ void print_and_save_sdp(AVFormatContext **avc)
         sdp_file << line.substr(0, line.length() - 1) << std::endl;
         std::cout << line << std::endl;
     }
+    sdp_file << std::endl;
     sdp_file.close();
     free(sdp);
 }
@@ -51,7 +52,7 @@ int main(int argc, char *argv[])
 {
     attach_signal_handlers();
     if (argc < 2) {
-        fprintf(stderr, "Usage: %s <filename> <codec>\n", argv[0]);
+        std::cerr << "Usage: " << argv[0] <<  " <filename> <codec>" << std::endl;
         return 1;
     }
 
@@ -62,23 +63,23 @@ int main(int argc, char *argv[])
     AVInputFormat *file_iformat = NULL;
     // it's a v4l device if starting with /dev/video
     if (strncmp(argv[1], "/dev/video", strlen("/dev/video")) == 0) {
-        printf("Using v4l2 format\n");
+        std::cout << "Using v4l2 format" << std::endl;
         file_iformat = av_find_input_format("video4linux2");
         if (!file_iformat) {
-            fprintf(stderr, "Could not find format!\n");
+            std::cerr << "Could not find format!" << std::endl;
             return 1;
         }
     }
 
     // Open video file
     if (av_open_input_file(&ic, argv[1], file_iformat, 0, NULL) != 0) {
-        fprintf(stderr, "Could not open input file!\n");
+        std::cerr <<  "Could not open input file!" << std::endl;
         return 1; // couldn't open file
     }
 
     // retrieve stream information
     if (av_find_stream_info(ic) < 0) {
-        fprintf(stderr, "Could not find stream info!\n");
+        std::cerr << "Could not find stream info!" << std::endl;
         return 1; // couldn't find stream info
     }
 
@@ -94,7 +95,7 @@ int main(int argc, char *argv[])
         }
     }
     if (videoStream == -1) {
-        fprintf(stderr, "Could not find video stream!\n");
+        std::cerr << "Could not find video stream!" << std::endl;
         return 1; // didn't find a video stream
     }
 
@@ -104,13 +105,13 @@ int main(int argc, char *argv[])
     // find the decoder for the video stream
     AVCodec *inputDecoder = avcodec_find_decoder(inputDecoderCtx->codec_id);
     if (inputDecoder == NULL) {
-        fprintf(stderr, "Unsupported codec!\n");
+        std::cerr << "Unsupported codec!" << std::endl;
         return 1; // codec not found
     }
 
     // open codec
     if (avcodec_open(inputDecoderCtx, inputDecoder) < 0) {
-        fprintf(stderr, "Could not open codec!\n");
+        std::cerr << "Could not open codec!" << std::endl;
         return 1; // could not open codec
     }
 
@@ -119,8 +120,8 @@ int main(int argc, char *argv[])
 
     AVOutputFormat *file_oformat = av_guess_format("rtp", DEST, NULL);
     if (!file_oformat) {
-        fprintf(stderr, "Unable to find a suitable output format for '%s'\n",
-                DEST);
+        std::cerr << "Unable to find a suitable output format for " << DEST
+                << std::endl;
         exit(EXIT_FAILURE);
     }
     oc->oformat = file_oformat;
@@ -133,8 +134,8 @@ int main(int argc, char *argv[])
     /* find the video encoder */
     encoder = avcodec_find_encoder_by_name(vcodec_name);
     if (!encoder) {
-        fprintf(stderr, "encoder not found\n");
-        exit(1);
+        std::cerr << "encoder not found" << std::endl;
+        exit(EXIT_FAILURE);
     }
 
     encoderCtx = avcodec_alloc_context();
@@ -154,7 +155,7 @@ int main(int argc, char *argv[])
 
     /* let x264 preset override our encoder settings */
     if (!strcmp(vcodec_name, "libx264")) {
-        printf("get x264 preset time\n");
+        std::cout << "get x264 preset time" << std::endl;
         //int opt_name_count = 0;
         FILE *f = NULL;
         // FIXME: hardcoded! should look for FFMPEG_DATADIR
@@ -162,7 +163,8 @@ int main(int argc, char *argv[])
         /* open preset file for libx264 */
         f = fopen(preset_filename, "r");
         if (!f) {
-            fprintf(stderr, "File for preset '%s' not found\n", preset_filename);
+            std::cerr << "File for preset ' " << preset_filename << "' not"
+                "found" << std::endl;
             exit(EXIT_FAILURE);
         }
 
@@ -175,7 +177,7 @@ int main(int argc, char *argv[])
         fread(encoder_options_string, pos, 1, f);
         fclose(f);
 
-        printf("%s\n", encoder_options_string);
+        std::cout << "Encoder options: " << encoder_options_string << std::endl;
         av_set_options_string(encoderCtx, encoder_options_string, "=", "\n");
         free(encoder_options_string); // free allocated memory
     }
@@ -184,39 +186,40 @@ int main(int argc, char *argv[])
 
     /* open encoder */
     if (avcodec_open(encoderCtx, encoder) < 0) {
-        fprintf(stderr, "could not open encoder\n");
-        exit(1);
+        std::cerr << "Could not open encoder" << std::endl;
+        exit(EXIT_FAILURE);
     }
 
     /* add video stream to outputformat context */
     AVStream *video_st = av_new_stream(oc, 0);
     video_st->codec = encoderCtx;
     if (!video_st) {
-        fprintf(stderr, "Could not alloc stream\n");
-        exit(1);
+        std::cerr << "Could not alloc stream" << std::endl;
+        exit(EXIT_FAILURE);
     }
 
     /* set the output parameters (must be done even if no
        parameters). */
     if (av_set_parameters(oc, NULL) < 0) {
-        fprintf(stderr, "Invalid output format parameters\n");
-        exit(1);
+        std::cerr << "Invalid output format parameters" << std::endl;
+        exit(EXIT_FAILURE);
     }
 
     /* open the output file, if needed */
     if (!(file_oformat->flags & AVFMT_NOFILE)) {
         if (avio_open(&oc->pb, oc->filename, AVIO_FLAG_WRITE) < 0) {
-            fprintf(stderr, "Could not open '%s'\n", oc->filename);
-            exit(1);
+            std::cerr << "Could not open '" << oc->filename << "'" <<
+                std::endl;
+            exit(EXIT_FAILURE);
         }
     }
-    else printf("No need to open\n");
+    else std::cerr << "No need to open" << std::endl;
 
     /* set the output parameters (must be done even if no
        parameters). */
     if (av_set_parameters(oc, NULL) < 0) {
-        fprintf(stderr, "Invalid output format parameters\n");
-        exit(1);
+        std::cerr << "Invalid output format parameters" << std::endl;
+        exit(EXIT_FAILURE);
     }
 
     av_dump_format(oc, 0, oc->filename, 1);
@@ -255,8 +258,8 @@ int main(int argc, char *argv[])
             encoderCtx->height, encoderCtx->pix_fmt, SWS_BICUBIC,
             NULL, NULL, NULL);
     if (img_convert_ctx == NULL) {
-        fprintf(stderr, "Cannot init the conversion context!\n");
-        exit(1);
+        std::cerr << "Cannot init the conversion context!" << std::endl;
+        exit(EXIT_FAILURE);
     }
 
     while (!interrupted && av_read_frame(ic, &inpacket) >= 0) {
@@ -284,7 +287,8 @@ int main(int argc, char *argv[])
                     opkt.data = outbuf;
                     opkt.size = out_size;
 
-                    if (encoderCtx->coded_frame->pts != AV_NOPTS_VALUE)
+                    if (static_cast<unsigned>(encoderCtx->coded_frame->pts) !=
+                        AV_NOPTS_VALUE)
                         opkt.pts = av_rescale_q(encoderCtx->coded_frame->pts,
                                 encoderCtx->time_base, video_st->time_base);
 
@@ -294,9 +298,9 @@ int main(int argc, char *argv[])
 
                     /* write the compressed frame in the media file */
                     int ret = av_interleaved_write_frame(oc, &opkt);
-                    if(ret < 0){
+                    if (ret < 0) {
                         print_error("av_interleaved_write_frame() error", ret);
-                        exit(1);
+                        exit(EXIT_FAILURE);
                     }
                     av_free_packet(&opkt);
                 }
@@ -328,6 +332,6 @@ int main(int argc, char *argv[])
     // close the video file
     av_close_input_file(ic);
 
-    printf("Exitting...\n");
+    std::cout << "Exitting..." << std::endl;
     return 0;
 }
