@@ -34,7 +34,6 @@
 
 Call::Call (const CallID& id, Call::CallType type)
     : _callMutex()
-    , _audioStarted (false)
     , _localIPAddress ("")
     , _localAudioPort (0)
     , _localExternalAudioPort (0)
@@ -148,21 +147,6 @@ Call::getLocalAudioPort()
     ost::MutexLock m (_callMutex);
     return _localAudioPort;
 }
-
-void
-Call::setAudioStart (bool start)
-{
-    ost::MutexLock m (_callMutex);
-    _audioStarted = start;
-}
-
-bool
-Call::isAudioStarted()
-{
-    ost::MutexLock m (_callMutex);
-    return _audioStarted;
-}
-
 
 bool
 Call::setRecording()
