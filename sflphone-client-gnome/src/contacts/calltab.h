@@ -48,10 +48,10 @@ calltab_t* calltab_init (gboolean searchbar_type, gchar *name);
   * is the currently highlighted one in the list.
   * @param c The call */
 void
-calltab_select_call (calltab_t*, callable_obj_t *);
+calltab_select_call (calltab_t *, callable_obj_t *);
 
 void
-calltab_select_conf (conference_obj_t *);
+calltab_select_conf (calltab_t *, conference_obj_t *);
 
 gint
 calltab_get_selected_type (calltab_t* tab);

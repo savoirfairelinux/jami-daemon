@@ -52,25 +52,28 @@ calltab_t* calltab_init (gboolean searchbar_type, gchar *name)
     calltree_create (ret, searchbar_type);
     calllist_init (ret);
 
-
     return ret;
 }
 
 void
 calltab_select_call (calltab_t* tab, callable_obj_t * c)
 {
+    DEBUG("CallTab: Select call");
+
     tab->selectedType = A_CALL;
     tab->selectedCall = c;
-    current_calls->selectedConf = NULL;
+    tab->selectedConf = NULL;
 }
 
 
 void
-calltab_select_conf (conference_obj_t * c)
+calltab_select_conf (calltab_t *tab, conference_obj_t * c)
 {
-    current_calls->selectedType = A_CONFERENCE;
-    current_calls->selectedConf = c;
-    current_calls->selectedCall = NULL;
+    DEBUG("CallTab: Selected conf");
+
+    tab->selectedType = A_CONFERENCE;
+    tab->selectedConf = c;
+    tab->selectedCall = NULL;
 }
 
 gint

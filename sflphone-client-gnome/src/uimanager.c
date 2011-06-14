@@ -201,10 +201,6 @@ update_actions()
         }
     }
 
-    // g_signal_handler_block (GTK_OBJECT (recordWidget), recordButtonConnId);
-    // gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (recordWidget), FALSE);
-    // g_signal_handler_unblock (GTK_OBJECT (recordWidget), recordButtonConnId);
-
     callable_obj_t * selectedCall = calltab_get_selected_call (active_calltree);
     conference_obj_t * selectedConf = calltab_get_selected_conf (active_calltree);
 
@@ -214,6 +210,9 @@ update_actions()
         instant_messaging_enabled = eel_gconf_get_integer (INSTANT_MESSAGING_ENABLED);
 
     if (selectedCall) {
+
+        DEBUG("UIManager: Update actions for call"); 
+
         // update icon in systray
         show_status_hangup_icon();
 
@@ -339,6 +338,8 @@ update_actions()
                 break;
         }
     } else if (selectedConf) {
+
+        DEBUG("UIManager: Update actions for conference");
 
         // update icon in systray
         show_status_hangup_icon();
