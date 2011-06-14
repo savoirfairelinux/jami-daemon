@@ -344,6 +344,8 @@ conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
         call->_confID = g_strdup (confID);
     }
 
+    set_timestamp(&new_conf->_time_start);
+
     conferencelist_add (new_conf);
     calltree_add_conference (current_calls, new_conf);
     calltree_add_conference (history, new_conf);

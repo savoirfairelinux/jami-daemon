@@ -113,8 +113,15 @@ call_selected_cb (GtkTreeSelection *sel, void* data UNUSED)
     gchar* string_path;
 
 
-    if (! gtk_tree_selection_get_selected (sel, &model, &iter)) {
+    if (!gtk_tree_selection_get_selected (sel, &model, &iter)) {
         return;
+    }
+
+    if(active_calltree == history) {
+	DEBUG("Current call tree is history");
+    } 
+    else if(active_calltree == current_calls) {
+	DEBUG("Current call tree is current calls");
     }
 
     // store info for dragndrop
@@ -130,7 +137,7 @@ call_selected_cb (GtkTreeSelection *sel, void* data UNUSED)
         val.g_type = 0;
         gtk_tree_model_get_value (model, &iter, COLUMN_ACCOUNT_PTR, &val);
 
-        calltab_select_conf ( (conference_obj_t*) g_value_get_pointer (&val));
+        calltab_select_conf ( active_calltree, (conference_obj_t*) g_value_get_pointer (&val));
 
         selected_conf = (conference_obj_t*) g_value_get_pointer (&val);
 
@@ -243,7 +250,6 @@ row_activated (GtkTreeView       *tree_view UNUSED,
                 calltree_add_call (current_calls, new_call, NULL);
                 // Function sflphone_place_call (new_call) is processed in process_dialing
                 calltree_display (current_calls);
-
             }
         }
     } else if (calltab_get_selected_type (current_calls) == A_CONFERENCE) {
@@ -281,69 +287,82 @@ void
 row_single_click (GtkTreeView *tree_view UNUSED, void * data UNUSED)
 {
     callable_obj_t * selectedCall = NULL;
+    conference_obj_t *selectedConf = NULL;
     account_t * account_details = NULL;
     gchar * displaySasOnce="";
 
     DEBUG ("CallTree: Single click action");
 
     selectedCall = calltab_get_selected_call (active_calltree);
+    selectedConf = calltab_get_selected_conf (active_calltree);
 
-    /*
-    if(!selected_call) {
-      selected_call = selectedCall;
+    if(active_calltree == current_calls) {
+        DEBUG("CallTree: Active calltree is current_calls");
     }
-    */
+    else if(active_calltree == history) {
+        DEBUG("CallTree: Active calltree is history");
+    }
 
-    if (selectedCall) {
+    if(calltab_get_selected_type(active_calltree) == A_CALL) {
 
-        account_details = account_list_get_by_id (selectedCall->_accountID);
-        DEBUG ("AccountID %s", selectedCall->_accountID);
+        DEBUG("CallTree: Selected a call");
 
-        if (account_details != NULL) {
-            displaySasOnce = g_hash_table_lookup (account_details->properties, ACCOUNT_DISPLAY_SAS_ONCE);
-            DEBUG ("Display SAS once %s", displaySasOnce);
-        } else {
-            GHashTable * properties = NULL;
-            sflphone_get_ip2ip_properties (&properties);
+        if (selectedCall) {
 
-            if (properties != NULL) {
-                displaySasOnce = g_hash_table_lookup (properties, ACCOUNT_DISPLAY_SAS_ONCE);
-                DEBUG ("IP2IP displaysasonce %s", displaySasOnce);
+            account_details = account_list_get_by_id (selectedCall->_accountID);
+            DEBUG ("AccountID %s", selectedCall->_accountID);
+
+            if (account_details != NULL) {
+                displaySasOnce = g_hash_table_lookup (account_details->properties, ACCOUNT_DISPLAY_SAS_ONCE);
+                DEBUG ("Display SAS once %s", displaySasOnce);
+            } else {
+                GHashTable * properties = NULL;
+                sflphone_get_ip2ip_properties (&properties);
+
+                if (properties != NULL) {
+                    displaySasOnce = g_hash_table_lookup (properties, ACCOUNT_DISPLAY_SAS_ONCE);
+                    DEBUG ("IP2IP displaysasonce %s", displaySasOnce);
+                }
+            }
+
+            /*  Make sure that we are not in the history tab since
+             *  nothing is defined for it yet
+             */
+            if (active_calltree == current_calls) {
+
+                switch (selectedCall->_srtp_state) {
+
+                    case SRTP_STATE_ZRTP_SAS_UNCONFIRMED:
+                        selectedCall->_srtp_state = SRTP_STATE_ZRTP_SAS_CONFIRMED;
+
+                        if (g_strcasecmp (displaySasOnce,"true") == 0) {
+                            selectedCall->_zrtp_confirmed = TRUE;
+                        }
+
+                        dbus_confirm_sas (selectedCall);
+                        calltree_update_call (current_calls, selectedCall, NULL);
+                        break;
+                    case SRTP_STATE_ZRTP_SAS_CONFIRMED:
+                        selectedCall->_srtp_state = SRTP_STATE_ZRTP_SAS_UNCONFIRMED;
+                        dbus_reset_sas (selectedCall);
+                        calltree_update_call (current_calls, selectedCall, NULL);
+                        break;
+                    default:
+                        DEBUG ("Single click but no action");
+                        break;
+                }
             }
         }
+    }
+    else if(calltab_get_selected_type(active_calltree) == A_CONFERENCE) {
+        DEBUG("CallTree: Selected a conference");
 
-        /*  Make sure that we are not in the history tab since
-         *  nothing is defined for it yet
-         */
-        if (active_calltree == current_calls) {
-
-            // sflphone_selected_call_codec(selectedCall);
-
-            // DEBUG("single click action: %s", dbus_get_current_codec_name(selectedCall));
-            // sflphone_display_selected_codec(dbus_get_current_codec_name(selectedCall));
-
-            switch (selectedCall->_srtp_state) {
-
-                case SRTP_STATE_ZRTP_SAS_UNCONFIRMED:
-                    selectedCall->_srtp_state = SRTP_STATE_ZRTP_SAS_CONFIRMED;
-
-                    if (g_strcasecmp (displaySasOnce,"true") == 0) {
-                        selectedCall->_zrtp_confirmed = TRUE;
-                    }
-
-                    dbus_confirm_sas (selectedCall);
-                    calltree_update_call (current_calls, selectedCall, NULL);
-                    break;
-                case SRTP_STATE_ZRTP_SAS_CONFIRMED:
-                    selectedCall->_srtp_state = SRTP_STATE_ZRTP_SAS_UNCONFIRMED;
-                    dbus_reset_sas (selectedCall);
-                    calltree_update_call (current_calls, selectedCall, NULL);
-                    break;
-                default:
-                    DEBUG ("Single click but no action");
-                    break;
-            }
+        if(selectedConf) {
+            DEBUG("CallTree: There is actually a selected conf");
         }
+    }
+    else {
+        WARN("CallTree: Warning: Unknow selection type");
     }
 }
 
@@ -598,9 +617,10 @@ calltree_create (calltab_t* tab, gboolean searchbar_type)
                                   G_CALLBACK (menuitem_response), (gpointer) g_strdup (conference));
         gtk_menu_shell_append (GTK_MENU_SHELL (popupmenu), menu_items);
         gtk_widget_show (menu_items);
+    }
 
-
-
+    if(tab == history) {
+         gtk_tree_view_set_show_expanders(GTK_TREE_VIEW(tab->view), TRUE);
     }
 
 
@@ -898,7 +918,7 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
     DEBUG ("CallTree: Add call to calltree id: %s, peer name: %s", c->_callID, c->_peer_name);
 
     if (tab == history) {
-        calltree_add_history_entry (c);
+        calltree_add_history_entry (c, parent);
         return;
     }
 
@@ -1008,7 +1028,7 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
     history_reinit (history);
 }
 
-void calltree_add_history_entry (callable_obj_t * c)
+void calltree_add_history_entry (callable_obj_t *c, GtkTreeIter *parent)
 {
 
     DEBUG ("CallTree: Calltree add history entry %s", c->_callID);
@@ -1025,20 +1045,28 @@ void calltree_add_history_entry (callable_obj_t * c)
 
     calltree_display_call_info (c, DISPLAY_TYPE_HISTORY, NULL, &description);
 
-    gtk_tree_store_prepend (history->store, &iter, NULL);
+    gtk_tree_store_prepend (history->store, &iter, parent);
 
-    switch (c->_history_state) {
-        case INCOMING:
-            pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/incoming.svg", NULL);
-            break;
-        case OUTGOING:
-            pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/outgoing.svg", NULL);
-            break;
-        case MISSED:
-            pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/missed.svg", NULL);
-            break;
-        default:
-            WARN ("History - Should not happen!");
+    if(parent == NULL) {
+	// this is a first level call not participating to a conference
+        switch (c->_history_state) {
+            case INCOMING:
+                pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/incoming.svg", NULL);
+                break;
+            case OUTGOING:
+                pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/outgoing.svg", NULL);
+                break;
+            case MISSED:
+                pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/missed.svg", NULL);
+                break;
+            default:
+                WARN ("History - Should not happen!");
+        }
+    }
+    else {
+	DEBUG("?????????????????????????????????????????????????????????????????????\n");
+        // participant to a conference
+	pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
     }
 
     date = get_formatted_start_timestamp (c->_time_start);
@@ -1357,21 +1385,42 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, G
 
 void calltree_add_history_conference(conference_obj_t *conf) {
     GdkPixbuf *pixbuf = NULL;
-    gchar *description = "";
+    gchar *description = "Conference: ", *date = "", *duration = "";
     GtkTreeIter iter;
+    gchar *call_id;
+    callable_obj_t *call; 
+    GSList *conference_participant;
 
-    DEBUG("------------------------------ ADD CONFERENCE TO HISTORY");
+    DEBUG("CallTree: Add conference %s to history", conf->_confID);
+
+    if(!conf) {
+        ERROR("CallTree: Error conference is NULL");
+    }
 
     gtk_tree_store_prepend(history->store, &iter, NULL);
 
-    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/", NULL);
+    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/usersAttached.svg", NULL);
 
     if(pixbuf) {
         if(gdk_pixbuf_get_width(pixbuf) > 32 || gdk_pixbuf_get_height(pixbuf) > 32) {
             pixbuf = gdk_pixbuf_scale_simple(pixbuf, 32, 32, GDK_INTERP_BILINEAR);
 	}
-    } 
+    }
 
+    conference_participant = conf->participant_list;
+    if(conference_participant) {
+        while(conference_participant) {
+	    call_id = (gchar *)(conference_participant->data);
+            call = calllist_get(current_calls, call_id);
+            if(call) {
+	        calltree_add_history_entry(call, &iter);
+            }
+ 	    conference_participant = conference_next_participant(conference_participant); 
+        }   
+    }
+    
+    date = get_formatted_start_timestamp(conf->_time_start);
+    description = g_strconcat(description, date, NULL);
     gtk_tree_store_set(history->store, &iter, 0, pixbuf, 1, description, 2, NULL, 3, conf, -1);
 
     if(pixbuf != NULL) {

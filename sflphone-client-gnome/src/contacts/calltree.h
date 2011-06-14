@@ -90,8 +90,13 @@ calltree_update_call (calltab_t* ct, callable_obj_t * c, GtkTreeIter *parent);
 void
 calltree_remove_call (calltab_t* ct, callable_obj_t * c, GtkTreeIter *parent);
 
+/**
+ * Add a callable object to history treeview
+ * @param The callable object to be inserted into the history
+ * @param The parent item in case of a conference, should be NULL in case of a normal call
+ */
 void
-calltree_add_history_entry (callable_obj_t * c);
+calltree_add_history_entry (callable_obj_t *, GtkTreeIter *);
 
 void
 calltree_add_conference (calltab_t* tab, conference_obj_t* conf);
