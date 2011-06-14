@@ -50,17 +50,6 @@ AudioRtpFactory::AudioRtpFactory() : _rtpSession (NULL), remoteContext(NULL), lo
 
 }
 
-AudioRtpFactory::AudioRtpFactory (SIPCall *ca) : _rtpSession (NULL)
-{
-    assert (ca);
-
-    try {
-        initAudioRtpSession (ca);
-    } catch (UnsupportedRtpSessionType& exception) {
-        throw exception;
-    }
-}
-
 AudioRtpFactory::~AudioRtpFactory()
 {
     stop();
