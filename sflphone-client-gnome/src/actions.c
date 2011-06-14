@@ -450,6 +450,7 @@ sflphone_pick_up()
     if (selectedCall) {
         switch (selectedCall->_state) {
             case CALL_STATE_DIALING:
+		DEBUG("------------------------------------ PLACING A NEW CALL FROM SFLPHONE PICKUP"); 
                 sflphone_place_call (selectedCall);
 
                 // if instant messaging window is visible, create new tab (deleted automatically if not used)
@@ -638,7 +639,7 @@ sflphone_incoming_call (callable_obj_t * c)
 }
 
 void
-process_dialing (callable_obj_t * c, guint keyval, gchar * key)
+process_dialing (callable_obj_t *c, guint keyval, gchar *key)
 {
     // We stop the tone
     if (strlen (c->_peer_number) == 0 && c->_state != CALL_STATE_TRANSFERT) {
@@ -646,8 +647,8 @@ process_dialing (callable_obj_t * c, guint keyval, gchar * key)
         //dbus_play_dtmf( key );
     }
 
-    DEBUG ("process_dialing : keyval : %i",keyval);
-    DEBUG ("process_dialing : key : %s",key);
+    DEBUG ("--------------------- SFLphone: process dialing : keyval: %d", keyval);
+    DEBUG ("--------------------- SFLphone: process dialing : key: %s", key);
 
     switch (keyval) {
         case 65293: /* ENTER */
@@ -670,7 +671,7 @@ process_dialing (callable_obj_t * c, guint keyval, gchar * key)
                 } else {
                     c->_peer_number = g_strndup (c->_peer_number, strlen (c->_peer_number) -1);
                     g_free (before);
-                    DEBUG ("TO: backspace %s", c->_peer_number);
+                    DEBUG ("SFLphone: TO: backspace %s", c->_peer_number);
                 }
 
                 calltree_update_call (current_calls, c, NULL);
@@ -748,6 +749,8 @@ void
 sflphone_keypad (guint keyval, gchar * key)
 {
     callable_obj_t * c = calltab_get_selected_call (current_calls);
+
+    DEBUG("SFLphone: Keypad");
 
     if ( (active_calltree != current_calls) || (active_calltree == current_calls && !c)) {
         DEBUG ("Not in a call, not dialing, create a new call");

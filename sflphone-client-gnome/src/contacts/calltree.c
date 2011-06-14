@@ -200,7 +200,7 @@ row_activated (GtkTreeView       *tree_view UNUSED,
     conference_obj_t* selectedConf = NULL;
     gchar *account_id;
 
-    DEBUG ("CallTree: Double click action");
+    DEBUG ("----------------------------------------------- CallTree: Double click action");
 
     if (calltab_get_selected_type (active_calltree) == A_CALL) {
 
@@ -229,6 +229,7 @@ row_activated (GtkTreeView       *tree_view UNUSED,
                         break;
                     case CALL_STATE_DIALING:
                         sflphone_place_call (selectedCall);
+			DEBUG("---------------------------- PLACING A NEW CALL FROM ROW ACTIVATED (current_calls)");
                         break;
                     default:
                         WARN ("Row activated - Should not happen!");
@@ -245,11 +246,14 @@ row_activated (GtkTreeView       *tree_view UNUSED,
 
                 // Create a new call
                 create_new_call (CALL, CALL_STATE_DIALING, "", account_id, selectedCall->_peer_name, selectedCall->_peer_number, &new_call);
+		DEBUG("------------------------------------ PLACING A NEW CALL FROM ROW ACTIVATED (history)");
+		// sflphone_place_call(new_call);
 
-                calllist_add (current_calls, new_call);
-                calltree_add_call (current_calls, new_call, NULL);
+                // calllist_add (current_calls, new_call);
+                // calltree_add_call (current_calls, new_call, NULL);
                 // Function sflphone_place_call (new_call) is processed in process_dialing
-                calltree_display (current_calls);
+                sflphone_place_call(new_call);
+		// calltree_display (current_calls);
             }
         }
     } else if (calltab_get_selected_type (current_calls) == A_CONFERENCE) {
@@ -593,7 +597,6 @@ calltree_create (calltab_t* tab, gboolean searchbar_type)
 
     if (tab != history && tab!=contacts) {
 
-        DEBUG ("SET TREE VIEW REORDABLE");
         // Make calltree reordable for drag n drop
         gtk_tree_view_set_reorderable (GTK_TREE_VIEW (tab->view), TRUE);
 
