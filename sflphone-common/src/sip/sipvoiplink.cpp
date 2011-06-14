@@ -51,6 +51,8 @@
 #include "audio/audiolayer.h"
 #include "audio/audiortp/AudioRtpFactory.h"
 
+#include "video/video_rtp_factory.h"
+
 #include "pjsip/sip_endpoint.h"
 #include "pjsip/sip_transport_tls.h"
 #include "pjsip/sip_transport_tls.h"
@@ -717,6 +719,8 @@ Call *SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) 
 		call->getAudioRtp()->initLocalCryptoInfo (call);
 		_info ("UserAgent: Start audio rtp session");
 		call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
+		_info ("UserAgent: Start video rtp session");
+		call->getVideoRtp()->start();
 	} catch (...) {
 		throw VoipLinkException ("Could not start rtp session for early media");
 	}
@@ -855,6 +859,7 @@ SIPVoIPLink::hangup (const CallID& id) throw (VoipLinkException)
     try {
         if (Manager::instance().isCurrentCall (id)) {
             call->getAudioRtp()->stop();
+            call->getVideoRtp()->stop();
         }
     }
     catch(...) {
@@ -901,6 +906,7 @@ SIPVoIPLink::peerHungup (const CallID& id) throw (VoipLinkException)
         if (Manager::instance().isCurrentCall (id)) {
             _debug ("UserAgent: Stopping AudioRTP for hangup");
             call->getAudioRtp()->stop();
+            call->getVideoRtp()->stop();
         }
     }
     catch(...) {
@@ -942,11 +948,11 @@ SIPVoIPLink::onhold (const CallID& id) throw (VoipLinkException)
     }
 
     // Stop sound
-    call->setAudioStart (false);
     call->setState (Call::Hold);
 
     try {
         call->getAudioRtp()->stop();
+        call->getVideoRtp()->stop();
     }
     catch (...) {
     	throw VoipLinkException("Could not stop audio rtp session");
@@ -1020,6 +1026,7 @@ SIPVoIPLink::offhold (const CallID& id) throw (VoipLinkException)
         call->getAudioRtp()->initAudioRtpConfig (call);
         call->getAudioRtp()->initAudioRtpSession (call);
         call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
+        call->getVideoRtp()->start();
 
     }
     catch (SdpException &e) {
@@ -1314,6 +1321,7 @@ SIPVoIPLink::refuse (const CallID& id)
 
     // Stop Audio RTP session
     call->getAudioRtp()->stop();
+    call->getVideoRtp()->stop();
 
     // User refuse current call. Notify peer
     status = pjsip_inv_end_session (call->getInvSession(), PJSIP_SC_DECLINE, NULL, &tdata);   //603
@@ -1652,6 +1660,10 @@ SIPVoIPLink::SIPCallServerFailure (SIPCall *call)
         if (call->getAudioRtp ()) {
             call->getAudioRtp()->stop();
         }
+
+        if (call->getVideoRtp ()) {
+            call->getVideoRtp()->stop();
+        }
     }
 }
 
@@ -1668,9 +1680,9 @@ SIPVoIPLink::SIPCallClosed (SIPCall *call)
     CallID id = call->getCallId();
 
     if (Manager::instance().isCurrentCall (id)) {
-        call->setAudioStart (false);
         _debug ("UserAgent: Stopping AudioRTP when closing");
         call->getAudioRtp()->stop();
+        call->getVideoRtp()->stop();
     }
 
     Manager::instance().peerHungupCall (id);
@@ -1795,6 +1807,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const CallID& id, const std::string& to)
             call->getAudioRtp()->initAudioRtpSession (call);
             call->getAudioRtp()->initLocalCryptoInfo (call);
             call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
+            call->getVideoRtp()->start ();
         } catch (...) {
             _debug ("UserAgent: Unable to create RTP Session in new IP2IP call (%s:%d)", __FILE__, __LINE__);
         }
@@ -3518,8 +3531,6 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
     AudioCodecType pl = (AudioCodecType) sessionMedia->getPayloadType();
 
     try {
-        call->setAudioStart (true);
-
         Manager::instance().audioLayerMutexLock();
         Manager::instance().getAudioDriver()->startStream();
         Manager::instance().audioLayerMutexUnlock();

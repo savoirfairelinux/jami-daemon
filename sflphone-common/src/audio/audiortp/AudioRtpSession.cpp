@@ -69,7 +69,6 @@ AudioRtpSession::~AudioRtpSession()
 
 void AudioRtpSession::final()
 {
-
     delete _rtpThread;
 
     delete static_cast<AudioRtpSession *> (this);

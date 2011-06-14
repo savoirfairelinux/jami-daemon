@@ -45,6 +45,11 @@ namespace sfl
 class AudioRtpFactory;
 }
 
+namespace sfl_video
+{
+class VideoRtpFactory;
+}
+
 /**
  * @file sipcall.h
  * @brief SIPCall are SIP implementation of a normal Call
@@ -162,6 +167,13 @@ class SIPCall : public Call
         }
 
         /**
+         * Returns a pointer to the VideoRtp object
+         */
+        sfl_video::VideoRtpFactory * getVideoRtp (void) {
+            return videortp_;
+        }
+
+        /**
          * Return the local memory pool for this call
          */
         pj_pool_t *getMemoryPool(void) {
@@ -205,6 +217,11 @@ class SIPCall : public Call
          * Audio Rtp Session factory
          */
         sfl::AudioRtpFactory * _audiortp;
+
+        /**
+         * Video Rtp Session factory
+         */
+        sfl_video::VideoRtpFactory * videortp_;
 
         /**
          * Event subscription structure
