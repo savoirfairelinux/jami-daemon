@@ -32,7 +32,7 @@
 
 namespace sfl_video 
 {
-VideoRtpFactory::VideoRtpFactory(SIPCall * ca)
+VideoRtpFactory::VideoRtpFactory()
 {
 }
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2011 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,27 +28,12 @@
  *  as that of the covered work.
  */
 
-#ifndef __VIDEO_RTP_SESSION_H__
-#define __VIDEO_RTP_SESSION_H__
+#ifndef _VIDEO_RTP_TEST_
+#define _VIDEO_RTP_TEST_
 
-namespace sfl_video {
-class VideoRtpFactory {
-    public:
-        VideoRtpFactory();
-
-        /**
-         * Start the video RTP thread of the type specified in the configuration
-         * file.
-         * @param None
-         */
-        void start();
-        /**
-         * Stop the audio rtp thread of the type specified in the configuration
-         * file. initAudioRtpSession must have been called prior to that.
-         * @param None
-         */
-        void stop();
+class VideoRtpTest {
+public:
+    void testRTPSession();
 };
-}
 
-#endif // __VIDEO_RTP_SESSION_H__
+#endif // _VIDEO_RTP_TEST_

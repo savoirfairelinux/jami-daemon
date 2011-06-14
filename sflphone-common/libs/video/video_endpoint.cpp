@@ -33,7 +33,6 @@
 #include <sstream>
 #include <map>
 #include "libav_utils.h"
-#include "video_rtp_session.h"
 
 namespace sfl_video {
 
@@ -97,12 +96,6 @@ std::vector<std::string> getCodecSpecifications(int payload)
     ss.str ("");
 
     return v;
-}
-
-VideoRtpSession *createVideoRtpSession()
-{
-    return new VideoRtpSession("/dev/video0", "mpeg4", 1000000,
-                               "rtp://127.0.0.1:5000");
 }
 
 } // end namespace sfl_video

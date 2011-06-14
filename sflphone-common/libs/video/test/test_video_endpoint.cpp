@@ -35,7 +35,7 @@
 #include <cassert>
 #include "video_endpoint.h"
 #include "libav_utils.h"
-#include "video_rtp_session.h"
+#include "video_rtp_factory.h"
 
 void VideoEndpointTest::testIsSupportedCodec()
 {
@@ -67,9 +67,9 @@ void VideoEndpointTest::testCodecMap()
 
 void VideoEndpointTest::testRTPSession()
 {
-    std::auto_ptr<sfl_video::VideoRtpSession> session(sfl_video::createVideoRtpSession());
-    session->start();
-    session->stop();
+    sfl_video::VideoRtpFactory videortp;
+    videortp.start();
+    videortp.stop();
 }
 
 int main (int argc, char* argv[])

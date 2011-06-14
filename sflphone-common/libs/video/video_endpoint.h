@@ -39,7 +39,6 @@ namespace sfl_video {
     class VideoRtpSession;
     std::vector<std::string> getCodecSpecifications(int payload);
     std::map<int, std::string> getCodecsMap();
-    VideoRtpSession *createVideoRtpSession();
 }
 
 #endif // __VIDEO_ENDPOINT_H__

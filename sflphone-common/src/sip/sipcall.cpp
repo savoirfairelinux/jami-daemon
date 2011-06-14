@@ -34,6 +34,7 @@
 #include "sipcall.h"
 #include "global.h" // for _debug
 #include "audio/audiortp/AudioRtpFactory.h"
+#include "video/video_rtp_factory.h"
 #include "sdp.h"
 
 const int SIPCall::CALL_MEMPOOL_INIT_SIZE = 16384;
@@ -44,6 +45,7 @@ SIPCall::SIPCall (const CallID& id, Call::CallType type, pj_caching_pool *cachin
     , _did (0)
     , _tid (0)
     , _audiortp (new sfl::AudioRtpFactory())
+    , videortp_ (new sfl_video::VideoRtpFactory())
     , _xferSub (NULL)
     , _invSession (NULL)
     , _local_sdp (NULL)
@@ -64,6 +66,8 @@ SIPCall::~SIPCall()
 
     delete _audiortp;
     _audiortp = NULL;
+    delete videortp_;
+    videortp_ = NULL;
 
     delete _local_sdp;
     _local_sdp = NULL;
@@ -76,6 +80,3 @@ SIPCall::~SIPCall()
     _pool = NULL;
 
 }
-
-
-
