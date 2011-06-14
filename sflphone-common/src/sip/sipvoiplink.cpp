@@ -942,7 +942,6 @@ SIPVoIPLink::onhold (const CallID& id) throw (VoipLinkException)
     }
 
     // Stop sound
-    call->setAudioStart (false);
     call->setState (Call::Hold);
 
     try {
@@ -1668,7 +1667,6 @@ SIPVoIPLink::SIPCallClosed (SIPCall *call)
     CallID id = call->getCallId();
 
     if (Manager::instance().isCurrentCall (id)) {
-        call->setAudioStart (false);
         _debug ("UserAgent: Stopping AudioRTP when closing");
         call->getAudioRtp()->stop();
     }
@@ -3518,8 +3516,6 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
     AudioCodecType pl = (AudioCodecType) sessionMedia->getPayloadType();
 
     try {
-        call->setAudioStart (true);
-
         Manager::instance().audioLayerMutexLock();
         Manager::instance().getAudioDriver()->startStream();
         Manager::instance().audioLayerMutexUnlock();

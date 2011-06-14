@@ -209,20 +209,6 @@ class Call: public Recordable
         }
 
         /**
-         * Set the audio start boolean (protected by mutex)
-         * @param start true if we start the audio
-         *		    false otherwise
-         */
-        void setAudioStart (bool start);
-
-        /**
-         * Tell if the audio is started (protected by mutex)
-         * @return true if it's already started
-         *	      false otherwise
-         */
-        bool isAudioStarted();
-
-        /**
          * Set my IP [not protected]
          * @param ip  The local IP address
          */
@@ -280,8 +266,6 @@ class Call: public Recordable
         /** Protect every attribute that can be changed by two threads */
         ost::Mutex _callMutex;
 
-        bool _audioStarted;
-
         // Informations about call socket / audio
 
         /** My IP address */
@@ -325,8 +309,6 @@ class Call: public Recordable
 
         /** File name for his call, should be peer number */
         std::string _filename;
-
-
 };
 
 #endif
