@@ -71,7 +71,7 @@ class LibraryManagerException : public std::runtime_error
         LibraryManagerException (const std::string &libraryName, const std::string &details, Reason reason);
         ~LibraryManagerException (void) throw() {}
 
-        inline Reason getReason (void) {
+        Reason getReason (void) const {
             return _reason;
         }
 

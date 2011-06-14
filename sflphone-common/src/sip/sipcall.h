@@ -69,7 +69,7 @@ class SIPCall : public Call
          * Call Identifier
          * @return int  SIP call id
          */
-        int  getCid () {
+        int  getCid () const {
             return _cid;
         }
 
@@ -85,7 +85,7 @@ class SIPCall : public Call
          * Domain identifier
          * @return int  SIP domain id
          */
-        int  getDid() {
+        int  getDid() const {
             return _did;
         }
 
@@ -101,7 +101,7 @@ class SIPCall : public Call
          * Transaction identifier
          * @return int  SIP transaction id
          */
-        int  getTid () {
+        int  getTid () const {
             return _tid;
         }
 
@@ -156,7 +156,7 @@ class SIPCall : public Call
         /**
          * Returns a pointer to the AudioRtp object
          */
-        inline sfl::AudioRtpFactory * getAudioRtp (void) {
+        sfl::AudioRtpFactory * getAudioRtp (void) {
             return _audiortp;
         }
 

@@ -141,23 +141,23 @@ class AudioRtpRecordHandler
         void updateRtpMedia (AudioCodec *audioCodec);
 
 
-        AudioCodec *getAudioCodec (void) {
+        AudioCodec *getAudioCodec (void) const {
             return _audioRtpRecord._audioCodec;
         }
 
-        int getCodecPayloadType (void) {
+        int getCodecPayloadType (void) const {
             return _audioRtpRecord._codecPayloadType;
         }
 
-        int getCodecSampleRate (void) {
+        int getCodecSampleRate (void) const {
             return _audioRtpRecord._codecSampleRate;
         }
 
-        int getCodecFrameSize (void) {
+        int getCodecFrameSize (void) const {
             return _audioRtpRecord._codecFrameSize;
         }
 
-        int getHasDynamicPayload (void) {
+        int getHasDynamicPayload (void) const {
             return _audioRtpRecord._hasDynamicPayloadType;
         }
 
@@ -165,7 +165,7 @@ class AudioRtpRecordHandler
             return &_audioRtpRecord._eventQueue;
         }
 
-        int getEventQueueSize (void) {
+        int getEventQueueSize (void) const {
             return _audioRtpRecord._eventQueue.size();
         }
 
@@ -173,19 +173,19 @@ class AudioRtpRecordHandler
             return _audioRtpRecord._micData;
         }
 
-        SFLDataFormat *getMicDataConverted (void) {
+        SFLDataFormat *getMicDataConverted (void) const {
             return _audioRtpRecord._micDataConverted;
         }
 
-        unsigned char *getMicDataEncoded (void) {
+        unsigned char *getMicDataEncoded (void) const {
             return _audioRtpRecord._micDataEncoded;
         }
 
-        inline float computeCodecFrameSize (int codecSamplePerFrame, int codecClockRate) {
+        float computeCodecFrameSize (int codecSamplePerFrame, int codecClockRate) const {
             return ( (float) codecSamplePerFrame * 1000.0) / (float) codecClockRate;
         }
 
-        int computeNbByteAudioLayer (int mainBufferSamplingRate, float codecFrameSize) {
+        int computeNbByteAudioLayer (int mainBufferSamplingRate, float codecFrameSize) const {
             return (int) ( ( (float) mainBufferSamplingRate * codecFrameSize * sizeof (SFLDataFormat)) / 1000.0);
         }
 
@@ -220,7 +220,7 @@ class AudioRtpRecordHandler
         	_audioRtpRecord._dtmfPayloadType = payloadType;
         }
 
-        unsigned int getDtmfPayloadType(void) {
+        unsigned int getDtmfPayloadType(void) const {
         	return _audioRtpRecord._dtmfPayloadType;
         }
 

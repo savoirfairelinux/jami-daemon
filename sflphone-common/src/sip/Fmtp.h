@@ -46,7 +46,7 @@ public:
 		std::pair<std::string, std::string>(name, value) {
 	}
 	;
-	inline ~SdpParameter() {
+	~SdpParameter() {
 	}
 	;
 	std::string getName() const {

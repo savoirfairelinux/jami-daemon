@@ -51,7 +51,7 @@ class Plugin
 
         virtual ~Plugin()  {}
 
-        inline std::string getPluginName (void) {
+        std::string getPluginName (void) const {
             return _name;
         }
 

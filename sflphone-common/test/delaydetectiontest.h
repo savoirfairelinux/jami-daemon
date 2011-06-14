@@ -85,7 +85,7 @@ class DelayDetectionTest : public CppUnit::TestCase {
 
     void setUp();
 
-    inline void tearDown();
+    void tearDown();
 
     void testCrossCorrelation();
 

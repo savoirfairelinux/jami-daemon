@@ -97,7 +97,7 @@ class Sdp
         /**
          * Accessor for the internal memory pool
          */
-        inline pj_pool_t *getMemoryPool (void) {
+        pj_pool_t *getMemoryPool (void) const {
             return memPool;
         }
 
@@ -319,7 +319,7 @@ class Sdp
          * Set the SRTP master_key
          * @param mk The Master Key of a srtp session.
          */
-        inline void setLocalSdpCrypto (const std::vector<std::string> lc) {
+        void setLocalSdpCrypto (const std::vector<std::string> lc) {
             srtpCrypto = lc;
         }
 
@@ -329,7 +329,7 @@ class Sdp
          * have to set the correct zrtp-hash value in the corresponding media section.
          * @param hash The hello hash of a rtp session. (Only audio at the moment)
          */
-        inline void setZrtpHash (const std::string& hash) {
+        void setZrtpHash (const std::string& hash) {
             zrtpHelloHash = hash;
         }
 

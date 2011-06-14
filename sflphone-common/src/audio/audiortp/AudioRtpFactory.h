@@ -129,7 +129,7 @@ class AudioRtpFactory
          * @return The internal audio rtp thread of the type specified in the configuration
          * file. initAudioRtpSession must have been called prior to that.
          */
-        inline void * getAudioRtpSession (void) {
+        void * getAudioRtpSession (void) const {
             return _rtpSession;
         }
 
@@ -142,14 +142,14 @@ class AudioRtpFactory
          *         Zrtp = 1
          *         Sdes = 2
          */
-        inline RtpMethod getAudioRtpType (void) {
+        RtpMethod getAudioRtpType (void) const {
             return _rtpSessionType;
         }
 
         /**
          * @param Set internal audio rtp session type (Symmetric, Zrtp, Sdes)
          */
-        inline void setAudioRtpType (RtpMethod type) {
+        void setAudioRtpType (RtpMethod type) {
             _rtpSessionType = type;
         }
 

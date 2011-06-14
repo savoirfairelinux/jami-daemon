@@ -207,7 +207,7 @@ class PulseLayer : public AudioLayer
          * Get the noise suppressor state
          * @return true if noise suppressor activated
          */
-        bool getNoiseSuppressState (void) {
+        bool getNoiseSuppressState (void) const {
             return AudioLayer::_noisesuppressstate;
         }
 

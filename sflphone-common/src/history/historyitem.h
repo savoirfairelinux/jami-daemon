@@ -71,7 +71,7 @@ class HistoryItem
          */
         ~HistoryItem ();
 
-        inline std::string get_timestamp () {
+        std::string get_timestamp () const {
             return _timestamp_start;
         }
 

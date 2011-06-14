@@ -167,7 +167,7 @@ class AudioLayer
          * Read accessor to the error state
          * @return int  The error code
          */
-        int getErrorMessage() {
+        int getErrorMessage() const {
             return _errorMessage;
         }
 
@@ -176,7 +176,7 @@ class AudioLayer
          * @return int The index of the card used for capture
          *			0 for the first available card on the system, 1 ...
          */
-        int getIndexIn() {
+        int getIndexIn() const {
             return _indexIn;
         }
 
@@ -185,7 +185,7 @@ class AudioLayer
          * @return int The index of the card used for playback
          *			0 for the first available card on the system, 1 ...
          */
-        int getIndexOut() {
+        int getIndexOut() const {
             return _indexOut;
         }
 
@@ -194,7 +194,7 @@ class AudioLayer
              * @return int The index of the card used for ringtone
              *			0 for the first available card on the system, 1 ...
              */
-        int getIndexRing() {
+        int getIndexRing() const {
             return _indexRing;
         }
 
@@ -203,7 +203,7 @@ class AudioLayer
          * @return unsigned int The sample rate
          *			    default: 44100 HZ
          */
-        unsigned int getSampleRate() {
+        unsigned int getSampleRate() const {
             return _audioSampleRate;
         }
 
@@ -212,7 +212,7 @@ class AudioLayer
          * @return unsigned int The frame size
          *			    default: 20 ms
          */
-        unsigned int getFrameSize() {
+        unsigned int getFrameSize() const {
             return _frameSize;
         }
 
@@ -221,7 +221,7 @@ class AudioLayer
              * @return unsigned int The layer type
              *
              */
-        int getLayerType (void) {
+        int getLayerType (void) const {
             return _layerType;
         }
 
@@ -233,7 +233,7 @@ class AudioLayer
          *
              * @return MainBuffer* a pointer to the MainBuffer instance
              */
-        MainBuffer* getMainBuffer (void) {
+        MainBuffer* getMainBuffer (void) const {
             return _mainBuffer;
         }
 
@@ -253,7 +253,7 @@ class AudioLayer
         /**
          * Set the audio recorder
          */
-        inline void setRecorderInstance (Recordable* rec) {
+        void setRecorderInstance (Recordable* rec) {
             _recorder = NULL;
             _recorder = rec;
         }
@@ -261,7 +261,7 @@ class AudioLayer
         /**
          * Get the audio recorder
          */
-        inline Recordable* getRecorderInstance (void) {
+        Recordable* getRecorderInstance (void) const {
             return _recorder;
         }
 
@@ -269,7 +269,7 @@ class AudioLayer
          * Get the noise suppressor state
          * @return true if noise suppressor activated
          */
-        virtual bool getNoiseSuppressState (void) = 0;
+        virtual bool getNoiseSuppressState (void) const = 0;
 
         /**
          * Set the noise suppressor state
@@ -280,7 +280,7 @@ class AudioLayer
         /**
          * Get the mutex lock for the entire audio layer
          */
-        inline ost::Mutex* getMutexLock (void) {
+        ost::Mutex* getMutexLock (void) {
             return &_mutex;
         }
 

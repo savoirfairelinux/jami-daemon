@@ -121,7 +121,7 @@ class Pattern
          *
          * @return The currently set pattern
          */
-        inline std::string getPattern (void) {
+        std::string getPattern (void) const {
             return _pattern;
         }
 
