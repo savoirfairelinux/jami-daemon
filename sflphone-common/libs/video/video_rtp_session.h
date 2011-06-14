@@ -34,9 +34,9 @@
 #include <string>
 
 namespace sfl_video {
-class VideoRTPSession {
+class VideoRtpSession {
     public:
-        VideoRTPSession(const std::string &input, const std::string &codec,
+        VideoRtpSession(const std::string &input, const std::string &codec,
                 int bitrate, const std::string &destinationURI);
 
         void start();

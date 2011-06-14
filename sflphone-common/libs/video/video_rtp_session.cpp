@@ -34,7 +34,7 @@
 
 namespace sfl_video {
         
-VideoRTPSession::VideoRTPSession(const std::string &input,
+VideoRtpSession::VideoRtpSession(const std::string &input,
                                  const std::string &codec,
                                  int bitrate,
                                  const std::string &destinationURI) :
@@ -42,14 +42,14 @@ VideoRTPSession::VideoRTPSession(const std::string &input,
     destinationURI_(destinationURI)
 {}
 
-void VideoRTPSession::start()
+void VideoRtpSession::start()
 {
     std::cout << "Capturing from " << input_ << ", encoding to " << codec_ <<
         " at " << bitrate_ << " bps, sending to " << destinationURI_ <<
         std::endl;
 }
 
-void VideoRTPSession::stop()
+void VideoRtpSession::stop()
 {
     std::cout << "Stopping video rtp session " << std::endl;
 }

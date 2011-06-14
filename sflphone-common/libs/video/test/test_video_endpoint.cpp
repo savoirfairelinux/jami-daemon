@@ -67,7 +67,7 @@ void VideoEndpointTest::testCodecMap()
 
 void VideoEndpointTest::testRTPSession()
 {
-    std::auto_ptr<sfl_video::VideoRTPSession> session(sfl_video::createVideoRTPSession());
+    std::auto_ptr<sfl_video::VideoRtpSession> session(sfl_video::createVideoRtpSession());
     session->start();
     session->stop();
 }

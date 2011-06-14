@@ -99,9 +99,9 @@ std::vector<std::string> getCodecSpecifications(int payload)
     return v;
 }
 
-VideoRTPSession *createVideoRTPSession()
+VideoRtpSession *createVideoRtpSession()
 {
-    return new VideoRTPSession("/dev/video0", "mpeg4", 1000000,
+    return new VideoRtpSession("/dev/video0", "mpeg4", 1000000,
                                "rtp://127.0.0.1:5000");
 }
 
