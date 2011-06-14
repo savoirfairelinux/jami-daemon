@@ -34,10 +34,11 @@
 
 #include "call.h"
 
-#include <pjsip-simple/evsub.h>
-#include <pjsip_ua.h>
-
 class Sdp;
+class pjsip_evsub;
+class pj_caching_pool;
+class pj_pool_t;
+class pjsip_inv_session;
 
 namespace sfl
 {
