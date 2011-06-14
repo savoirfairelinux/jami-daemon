@@ -63,7 +63,9 @@ typedef struct  {
     gboolean _conf_srtp_enabled;     // security required for this conference
     GSList *participant_list;        // participant list for this
     GtkWidget *_im_widget;           // associated instant messaging widget
-
+    time_t _time_start;
+    time_t _time_stop;
+    time_t _time_current;
 } conference_obj_t;
 
 void create_new_conference (conference_state_t, const gchar*, conference_obj_t **);

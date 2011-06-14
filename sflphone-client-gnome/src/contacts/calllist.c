@@ -104,8 +104,9 @@ calllist_add (calltab_t* tab, callable_obj_t * c)
 {
     if (tab == history) {
         calllist_add_history_entry (c);
-    } else
+    } else {
         g_queue_push_tail (tab->callQueue, (gpointer *) c);
+    }
 }
 
 // TODO : sflphoneGTK : try to do this more generic
