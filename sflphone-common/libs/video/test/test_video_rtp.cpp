@@ -30,6 +30,7 @@
 
 #include <iostream>
 #include <cassert>
+#include "test_video_rtp.h"
 #include "video_rtp_factory.h"
 
 void VideoRtpTest::testRTPSession()

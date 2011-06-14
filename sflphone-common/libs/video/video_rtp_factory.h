@@ -28,10 +28,14 @@
  *  as that of the covered work.
  */
 
-#ifndef __VIDEO_RTP_SESSION_H__
-#define __VIDEO_RTP_SESSION_H__
+#ifndef __VIDEO_RTP_FACTORY_H__
+#define __VIDEO_RTP_FACTORY_H__
+
+#include <tr1/memory>
 
 namespace sfl_video {
+class VideoRtpSession;
+
 class VideoRtpFactory {
     public:
         VideoRtpFactory();
@@ -48,6 +52,8 @@ class VideoRtpFactory {
          * @param None
          */
         void stop();
+    private:
+        std::tr1::shared_ptr<VideoRtpSession> session_;
 };
 }
 

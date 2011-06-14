@@ -29,20 +29,26 @@
  */
 
 #include "video_rtp_factory.h"
+#include "video_rtp_session.h"
 
 namespace sfl_video 
 {
-VideoRtpFactory::VideoRtpFactory()
+
+VideoRtpFactory::VideoRtpFactory() :
+    session_(new VideoRtpSession("/dev/video", "mpeg4", 1000000,
+                                 "rtp://127.0.0.1:5000"))
 {
 }
 
 void VideoRtpFactory::start()
 {
-    // starting
+    session_->start();
 }
 
 void VideoRtpFactory::stop()
 {
     // stop
+    session_->stop();
 }
+
 } // end namespace sfl

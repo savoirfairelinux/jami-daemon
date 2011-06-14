@@ -34,6 +34,7 @@
 #include <string>
 
 namespace sfl_video {
+
 class VideoRtpSession {
     public:
         VideoRtpSession(const std::string &input, const std::string &codec,
@@ -47,6 +48,7 @@ class VideoRtpSession {
         const int bitrate_;
         const std::string destinationURI_;
 };
+
 }
 
 #endif // __VIDEO_RTP_SESSION_H__
