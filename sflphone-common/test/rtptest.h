@@ -92,7 +92,7 @@ public:
 	 * Code factoring - Common resources can be released here.
 	 * This method is called by unitcpp after each test
 	 */
-	inline void tearDown();
+	void tearDown();
 
 	bool pjsipInit();
 

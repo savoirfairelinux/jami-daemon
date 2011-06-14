@@ -44,7 +44,7 @@ class Codec : public virtual MimeParameters
 {
     public:
         Codec() {};
-        virtual inline ~Codec() {}
+        virtual ~Codec() {}
 
         /**
          * @return The bitrate for which this codec is configured // TODO deal with VBR case.

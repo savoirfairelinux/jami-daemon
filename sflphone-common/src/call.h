@@ -99,7 +99,7 @@ class Call: public Recordable
              * Return a reference on the conference id
              * @return call id
              */
-        CallID& getConfId() {
+        const CallID& getConfId() const {
             return _confID;
         }
 
@@ -107,7 +107,7 @@ class Call: public Recordable
             _confID = id;
         }
 
-        inline CallType getCallType (void) {
+        CallType getCallType (void) const {
             return _type;
         }
 
@@ -125,7 +125,7 @@ class Call: public Recordable
          * not protected by mutex (when created)
          * @return std::string The peer number
          */
-        const std::string& getPeerNumber() {
+        const std::string& getPeerNumber() const {
             return _peerNumber;
         }
 
@@ -143,7 +143,7 @@ class Call: public Recordable
          * not protected by mutex (when created)
          * @return std::string The peer name
          */
-        const std::string& getPeerName() {
+        const std::string& getPeerName() const {
             return _peerName;
         }
 
@@ -161,7 +161,7 @@ class Call: public Recordable
              * not protected by mutex (when created)
              * @return std::string The peer name
              */
-        const std::string& getDisplayName() {
+        const std::string& getDisplayName() const {
             return _displayName;
         }
 
@@ -204,7 +204,7 @@ class Call: public Recordable
             _callConfig = callConfig;
         }
 
-        Call::CallConfiguration getCallConfiguration (void) {
+        Call::CallConfiguration getCallConfiguration (void) const {
             return _callConfig;
         }
 
@@ -250,7 +250,7 @@ class Call: public Recordable
          * Return the audio port seen by the remote side.
          * @return unsigned int The external audio port
          */
-        unsigned int getLocalExternAudioPort() {
+        unsigned int getLocalExternAudioPort() const {
             return _localExternalAudioPort;
         }
 
@@ -270,7 +270,7 @@ class Call: public Recordable
             return getPeerName();
         }
 
-        std::string getFileName (void) {
+        std::string getFileName (void) const {
             return _peerNumber;
         }
 

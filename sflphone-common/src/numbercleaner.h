@@ -44,12 +44,12 @@ class NumberCleaner
 
         std::string clean (std::string to_clean);
 
-        inline void set_phone_number_prefix (std::string prefix) {
+        void set_phone_number_prefix (std::string prefix) {
             _debug ("Number: Set phone number prefix %s", _prefix.c_str());
             _prefix = prefix;
         }
 
-        inline std::string get_phone_number_prefix (void) {
+        std::string get_phone_number_prefix (void) const {
             return _prefix;
         }
 

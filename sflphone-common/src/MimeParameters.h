@@ -37,7 +37,7 @@
 		private: \
 			uint8 payload; \
 		public: \
-		inline virtual ~MimeParameters##subtype() {}; \
+		virtual ~MimeParameters##subtype() {}; \
         std::string getMimeType() const { \
             return std::string( mime ); \
         } \

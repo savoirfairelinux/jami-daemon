@@ -946,7 +946,7 @@ class ManagerImpl
          */
         bool setConfig (const std::string& section, const std::string& name, int value);
 
-        inline std::string mapStateNumberToString (RegistrationState state) {
+        std::string mapStateNumberToString (RegistrationState state) const {
             std::string stringRepresentation;
 
             if (state > NumberOfState) {

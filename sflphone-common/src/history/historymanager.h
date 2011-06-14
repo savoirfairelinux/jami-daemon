@@ -90,18 +90,18 @@ class HistoryManager
         /**
          *@return bool  True if the history file has been successfully read
          */
-        inline bool is_loaded (void) {
+        bool is_loaded (void) const {
             return _history_loaded;
         }
 
-        inline void set_history_path (std::string filename) {
+        void set_history_path (const std::string &filename) {
             _history_path = filename;
         }
 
         /*
          *@return int   The number of items found in the history file
          */
-        inline int get_history_size (void) {
+        int get_history_size (void) const {
             return _history_items.size ();
         }
 
@@ -110,7 +110,7 @@ class HistoryManager
         int set_serialized_history (std::map <std::string, std::string> history, int limit);
 
     private:
-        inline int get_unix_timestamp_equivalent (int days) {
+        int get_unix_timestamp_equivalent (int days) const {
             return days * DAY_UNIX_TIMESTAMP;
         }
 

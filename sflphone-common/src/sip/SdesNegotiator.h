@@ -109,25 +109,25 @@ class CryptoAttribute
             mkiLength (mkiLength) {};
 
 
-        inline std::string getTag() {
+        std::string getTag() const {
             return tag;
         };
-        inline std::string getCryptoSuite() {
+        std::string getCryptoSuite() const {
             return cryptoSuite;
         };
-        inline std::string getSrtpKeyMethod() {
+        std::string getSrtpKeyMethod() const {
             return srtpKeyMethod;
         };
-        inline std::string getSrtpKeyInfo() {
+        std::string getSrtpKeyInfo() const {
             return srtpKeyInfo;
         };
-        inline std::string getLifetime() {
+        std::string getLifetime() const {
             return lifetime;
         };
-        inline std::string getMkiValue() {
+        std::string getMkiValue() const {
             return mkiValue;
         };
-        inline std::string getMkiLength() {
+        std::string getMkiLength() const {
             return mkiLength;
         };
 
@@ -163,49 +163,49 @@ class SdesNegotiator
         /**
          * Return crypto suite after negotiation
          */
-        std::string getCryptoSuite (void) {
+        std::string getCryptoSuite (void) const {
             return _cryptoSuite;
         }
 
         /**
          * Return key method after negotiation (most likely inline:)
          */
-        std::string getKeyMethod (void) {
+        std::string getKeyMethod (void) const {
             return _srtpKeyMethod;
         }
 
         /**
          * Return crypto suite after negotiation
          */
-        std::string getKeyInfo (void) {
+        std::string getKeyInfo (void) const {
             return _srtpKeyInfo;
         }
 
         /**
          * Return key lifetime after negotiation
          */
-        std::string getLifeTime (void) {
+        std::string getLifeTime (void) const {
             return _lifetime;
         }
 
         /**
          * Return mki value after negotiation
          */
-        std::string getMkiValue (void) {
+        std::string getMkiValue (void) const {
             return _mkiValue;
         }
 
         /**
          * Return mki length after negotiation
          */
-        std::string getMkiLength (void) {
+        std::string getMkiLength (void) const {
             return _mkiLength;
         }
 
         /**
         * Authentication tag lenth
         */
-        std::string getAuthTagLength (void) {
+        std::string getAuthTagLength (void) const {
             return _authTagLength;
         }
 

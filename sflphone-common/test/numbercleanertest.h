@@ -97,7 +97,7 @@ class NumberCleanerTest : public CppUnit::TestCase {
          * Code factoring - Common resources can be released here.
          * This method is called by unitcpp after each test
          */
-        inline void tearDown ();
+        void tearDown ();
 
     private:
         NumberCleaner *cleaner;

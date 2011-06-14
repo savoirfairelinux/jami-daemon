@@ -235,7 +235,7 @@ class VoIPLink
         /**
          * @return AccountID  parent Account's ID
          */
-        inline AccountID& getAccountID (void) {
+        AccountID& getAccountID (void) {
             return _accountID;
         }
 
@@ -244,7 +244,7 @@ class VoIPLink
         /**
          * @param accountID The account identifier
          */
-        inline void setAccountID (const AccountID& accountID) {
+        void setAccountID (const AccountID& accountID) {
             _accountID = accountID;
         }
 
