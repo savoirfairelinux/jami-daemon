@@ -84,7 +84,6 @@ class AudioRtpFactory
 {
     public:
         AudioRtpFactory();
-        AudioRtpFactory (SIPCall * ca);
         ~AudioRtpFactory();
 
         void initAudioRtpConfig (SIPCall *ca);
