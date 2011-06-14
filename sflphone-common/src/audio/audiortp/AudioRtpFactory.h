@@ -33,13 +33,15 @@
 
 #include <stdexcept>
 #include <cc++/thread.h>
+#include "account.h" // for typedef of AccountID (std::string)
 #include <ccrtp/CryptoContext.h>
 
 #include "sip/SdesNegotiator.h"
-#include "audio/codecs/audiocodec.h"
 
 class SdesNegotiator;
 class SIPCall;
+class Account;
+class SIPAccount;
 
 /*
 namespace sfl
@@ -56,6 +58,7 @@ namespace sfl
 class AudioZrtpSession;
 class AudioSrtpSession;
 class AudioSymmetricRtpSession;
+class AudioCodec;
 
 // Possible kind of rtp session
 typedef enum RtpMethod {
@@ -200,6 +203,8 @@ class AudioRtpFactory
         void sendDtmfDigit (int digit);
 
     private:
+        void registerAccount(Account *account, const AccountID &id);
+        void registerAccount(SIPAccount *account, const AccountID &id);
         void * _rtpSession;
         RtpMethod _rtpSessionType;
         ost::Mutex _audioRtpThreadMutex;

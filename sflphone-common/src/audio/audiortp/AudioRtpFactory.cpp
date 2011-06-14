@@ -35,13 +35,12 @@
 #include "AudioSrtpSession.h"
 #include "AudioSymmetricRtpSession.h"
 #include "manager.h"
-#include "account.h"
 #include "sip/sdp.h"
 #include "sip/sipcall.h"
 #include "sip/sipaccount.h"
 #include "sip/SdesNegotiator.h"
 
-#include <assert.h>
+#include <cassert>
 
 namespace sfl
 {
@@ -77,7 +76,7 @@ void AudioRtpFactory::initAudioRtpConfig (SIPCall *ca)
         stop();
     }
 
-    AccountID accountId = Manager::instance().getAccountFromCall (ca->getCallId());
+    AccountID accountId(Manager::instance().getAccountFromCall (ca->getCallId()));
 
     _debug ("AudioRtpFactory: Init rtp session for account %s", accountId.c_str());
 
@@ -87,26 +86,31 @@ void AudioRtpFactory::initAudioRtpConfig (SIPCall *ca)
     if (!account)
         _error ("AudioRtpFactory: Error no account found");
 
-    if (account->getType() == "SIP") {
-        SIPAccount *sipaccount = static_cast<SIPAccount *> (account);
-        _srtpEnabled = sipaccount->getSrtpEnable();
-        std::string tempkey = sipaccount->getSrtpKeyExchange();
+    registerAccount(account, accountId);
+}
 
-        if (tempkey == "sdes")
-            _keyExchangeProtocol = Sdes;
-        else if (tempkey == "zrtp")
-            _keyExchangeProtocol = Zrtp;
-        else
-            _keyExchangeProtocol = Symmetric;
+void AudioRtpFactory::registerAccount(Account * /*account*/, const AccountID & /* id */)
+{
+    _srtpEnabled = false;
+    _keyExchangeProtocol = Symmetric;
+    _helloHashEnabled = false;
+}
 
-        _debug ("AudioRtpFactory: Registered account %s profile selected with key exchange protocol number %d", accountId.c_str(), _keyExchangeProtocol);
-        _helloHashEnabled = sipaccount->getZrtpHelloHash();
-    } else {
-        _srtpEnabled = false;
+
+void AudioRtpFactory::registerAccount(SIPAccount *sipaccount, const AccountID& accountId)
+{
+    _srtpEnabled = sipaccount->getSrtpEnable();
+    std::string tempkey(sipaccount->getSrtpKeyExchange());
+
+    if (tempkey == "sdes")
+        _keyExchangeProtocol = Sdes;
+    else if (tempkey == "zrtp")
+        _keyExchangeProtocol = Zrtp;
+    else
         _keyExchangeProtocol = Symmetric;
-        _helloHashEnabled = false;
-    }
 
+    _debug ("AudioRtpFactory: Registered account %s profile selected with key exchange protocol number %d", accountId.c_str(), _keyExchangeProtocol);
+    _helloHashEnabled = sipaccount->getZrtpHelloHash();
 }
 
 void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
@@ -160,9 +164,9 @@ void AudioRtpFactory::start (AudioCodec* audiocodec)
 
         case Sdes:
 
-        	if(localContext && remoteContext) {
-        		static_cast<AudioSrtpSession *> (_rtpSession)->restoreCryptoContext(localContext, remoteContext);
-        	}
+            if(localContext && remoteContext) {
+                static_cast<AudioSrtpSession *> (_rtpSession)->restoreCryptoContext(localContext, remoteContext);
+            }
 
             if (static_cast<AudioSrtpSession *> (_rtpSession)->startRtpThread (audiocodec) != 0) {
                 throw AudioRtpFactoryException ("AudioRtpFactory: Error: Failed to start AudioSRtpSession thread");
@@ -203,8 +207,8 @@ void AudioRtpFactory::stop (void)
         switch (_rtpSessionType) {
 
             case Sdes:
-            	localContext = static_cast<AudioSrtpSession *> (_rtpSession)->_localCryptoCtx;
-            	remoteContext = static_cast<AudioSrtpSession *> (_rtpSession)->_remoteCryptoCtx;
+                localContext = static_cast<AudioSrtpSession *> (_rtpSession)->_localCryptoCtx;
+                remoteContext = static_cast<AudioSrtpSession *> (_rtpSession)->_remoteCryptoCtx;
                 static_cast<AudioSrtpSession *> (_rtpSession)->stopRtpThread();
                 break;
 
@@ -258,18 +262,18 @@ void AudioRtpFactory::updateSessionMedia (AudioCodec *audiocodec)
     }
 
     switch (_rtpSessionType) {
-    case Sdes:
-    	static_cast<AudioSrtpSession *> (_rtpSession)->updateSessionMedia (audiocodec);
-    	break;
-    case Symmetric:
-    	static_cast<AudioSymmetricRtpSession *> (_rtpSession)->updateSessionMedia (audiocodec);
-    	break;
-    case Zrtp:
-    	static_cast<AudioZrtpSession *> (_rtpSession)->updateSessionMedia (audiocodec);
-    	break;
-    default:
-    	_debug("AudioRtpFactory: Unknown session type");
-    	break;
+        case Sdes:
+            static_cast<AudioSrtpSession *> (_rtpSession)->updateSessionMedia (audiocodec);
+            break;
+        case Symmetric:
+            static_cast<AudioSymmetricRtpSession *> (_rtpSession)->updateSessionMedia (audiocodec);
+            break;
+        case Zrtp:
+            static_cast<AudioZrtpSession *> (_rtpSession)->updateSessionMedia (audiocodec);
+            break;
+        default:
+            _debug("AudioRtpFactory: Unknown session type");
+            break;
     }
 }
 
