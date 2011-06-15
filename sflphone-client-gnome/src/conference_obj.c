@@ -62,6 +62,7 @@ void create_new_conference (conference_state_t state, const gchar* confID, confe
     new_conf->_confID = g_strdup (conf_id);
 
     new_conf->participant_list = NULL;
+    new_conf->participant_number = NULL;
 
     *conf = new_conf;
 }
@@ -114,8 +115,9 @@ void free_conference_obj_t (conference_obj_t *c)
 {
     g_free (c->_confID);
 
-    if (c->participant_list)
-        g_slist_free (c->participant_list);
+    if (c->participant_list) {
+        g_slist_free(c->participant_list);
+    }
 
     g_free (c);
 }
@@ -124,9 +126,13 @@ void free_conference_obj_t (conference_obj_t *c)
 void conference_add_participant (const gchar* call_id, conference_obj_t* conf)
 {
     // store the new participant list after appending participant id
-    conf->participant_list = g_slist_append (conf->participant_list, (gpointer) call_id);
+    conf->participant_list = g_slist_append (conf->participant_list, (gpointer) g_strdup(call_id));
 }
 
+void conference_add_participant_number(const gchar *call_id, conference_obj_t *conf)
+{
+    conf->participant_number = g_slist_append(conf->participant_number, (gpointer) g_strdup(call_id));
+}
 
 void conference_remove_participant (const gchar* call_id, conference_obj_t* conf)
 {
@@ -146,16 +152,15 @@ void conference_participant_list_update (gchar** participants, conference_obj_t*
     gchar* call_id;
     gchar** part;
 
+    DEBUG ("Conference: Participant list update");
+
     if (conf->participant_list) {
         g_slist_free (conf->participant_list);
         conf->participant_list = NULL;
     }
 
-    DEBUG ("Conference: Participant list update");
-
     for (part = participants; *part; part++) {
         call_id = (gchar*) (*part);
-        DEBUG ("Adding %s", call_id);
         conference_add_participant (call_id, conf);
     }
 

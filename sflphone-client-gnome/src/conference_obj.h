@@ -62,6 +62,7 @@ typedef struct  {
     gboolean _conference_secured;    // the security state of the conference
     gboolean _conf_srtp_enabled;     // security required for this conference
     GSList *participant_list;        // participant list for this
+    GSList *participant_number;
     GtkWidget *_im_widget;           // associated instant messaging widget
     time_t _time_start;
     time_t _time_stop;

@@ -250,7 +250,7 @@ conference_changed_cb (DBusGProxy *proxy UNUSED, const gchar* confID,
     conference_obj_t* changed_conf = conferencelist_get (confID);
     GSList * part;
 
-    DEBUG ("DBUS: Conference state changed: %s\n", state);
+    DEBUG ("---------------------------- DBUS: Conference state changed: %s\n", state);
 
     if (changed_conf) {
         // remove old conference from calltree
@@ -280,8 +280,9 @@ conference_changed_cb (DBusGProxy *proxy UNUSED, const gchar* confID,
             call_id = (gchar*) (part->data);
             call = calllist_get (current_calls, call_id);
 
-            if (call && call->_im_widget)
+            if (call && call->_im_widget) {
                 im_widget_update_state (IM_WIDGET (call->_im_widget), TRUE);
+	    }
 
             part = g_slist_next (part);
         }
@@ -296,8 +297,9 @@ conference_changed_cb (DBusGProxy *proxy UNUSED, const gchar* confID,
             call_id = (gchar*) (part->data);
             call = calllist_get (current_calls, call_id);
 
-            if (call && call->_im_widget)
+            if (call && call->_im_widget) {
                 im_widget_update_state (IM_WIDGET (call->_im_widget), FALSE);
+	    }
 
             part = g_slist_next (part);
         }
@@ -1749,6 +1751,22 @@ dbus_join_participant (const gchar* sel_callID, const gchar* drag_callID)
     }
 
 }
+
+void
+dbus_create_conf_from_participant_list(const gchar **list) {
+
+    GError *error = NULL;
+
+    DEBUG("DBUS: Create conference from participant list");
+
+    org_sflphone_SFLphone_CallManager_create_conf_from_participant_list(callManagerProxy,
+	list, &error);
+
+    if(error) {
+	DEBUG("DBUS: Error: %s", error->message);
+	g_error_free(error);
+    }
+}  
 
 void
 dbus_add_participant (const gchar* callID, const gchar* confID)

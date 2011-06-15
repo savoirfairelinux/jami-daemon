@@ -211,8 +211,15 @@ CallManager::getVolume (const std::string& device)
 void
 CallManager::joinParticipant (const std::string& sel_callID, const std::string& drag_callID)
 {
-    _debug ("CallManager::joinParticipant received %s, %s", sel_callID.c_str(), drag_callID.c_str());
+    _debug ("CallManager: Join participant %s, %s", sel_callID.c_str(), drag_callID.c_str());
     Manager::instance().joinParticipant (sel_callID, drag_callID);
+}
+
+void
+CallManager::createConfFromParticipantList(const std::vector< std::string >& participants)
+{
+    _debug("CallManager: Create conference from participant list");
+    Manager::instance().createConfFromParticipantList(participants);
 }
 
 void

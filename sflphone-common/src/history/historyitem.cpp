@@ -65,20 +65,26 @@ HistoryItem::HistoryItem (std::string timestamp, std::string serialized_form)
         switch (indice) {
             case 0: // The call type
                 id = tmp;
+		_error("Unserialized id: %s", tmp.c_str());
                 break;
             case 1: // The number field
                 number = tmp;
+		_error("Unserialized number: %s", tmp.c_str());
                 break;
             case 2: // The name field
                 name = tmp;
+		_error("Unserialized name: %s", tmp.c_str());
                 break;
             case 3: // The end timestamp
+		_error("Unserialized timestamp: %s", tmp.c_str());
                 stop = tmp;
                 break;
             case 4: // The account ID
+		_error("Unserialized account: %s", tmp.c_str());
                 account = tmp;
                 break;
             case 5: // The recorded file name
+		_error("Unserialized recordfile: %s", tmp.c_str());
 		recordFile = tmp;
 		break;
             default: // error
@@ -94,7 +100,7 @@ HistoryItem::HistoryItem (std::string timestamp, std::string serialized_form)
     _number = number;
     (name == EMPTY_STRING) ? _name = "" : _name = name;
     _timestamp_stop = stop;
-    (serialized_form == EMPTY_STRING) ? _account_id = "" : _account_id=serialized_form ;
+    (serialized_form == EMPTY_STRING) ? _account_id = "" : _account_id=tmp;
 }
 
 HistoryItem::~HistoryItem ()

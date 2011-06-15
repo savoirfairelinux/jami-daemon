@@ -58,7 +58,7 @@ calltab_t* calltab_init (gboolean searchbar_type, gchar *name)
 void
 calltab_select_call (calltab_t* tab, callable_obj_t * c)
 {
-    DEBUG("CallTab: Select call");
+    DEBUG("CallTab: Select call %s", c ? c->_callID : "");
 
     tab->selectedType = A_CALL;
     tab->selectedCall = c;
@@ -69,7 +69,7 @@ calltab_select_call (calltab_t* tab, callable_obj_t * c)
 void
 calltab_select_conf (calltab_t *tab, conference_obj_t * c)
 {
-    DEBUG("CallTab: Selected conf");
+    DEBUG("CallTab: Selected conf %s", c ? c->_confID : "");
 
     tab->selectedType = A_CONFERENCE;
     tab->selectedConf = c;
@@ -83,15 +83,15 @@ calltab_get_selected_type (calltab_t* tab)
 }
 
 callable_obj_t *
-calltab_get_selected_call (calltab_t* tab)
+calltab_get_selected_call (calltab_t *tab)
 {
     return tab->selectedCall;
 }
 
 conference_obj_t*
-calltab_get_selected_conf ()
+calltab_get_selected_conf (calltab_t *tab)
 {
-    return current_calls->selectedConf;
+    return tab->selectedConf;
 }
 
 void

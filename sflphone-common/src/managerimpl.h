@@ -340,6 +340,12 @@ class ManagerImpl
          */
         void joinParticipant (const CallID& call_id1, const CallID& call_id2);
 
+	/**
+	 * Create a conference from a list of participant
+	 * @param A vector containing the list of participant
+ 	 */
+	void createConfFromParticipantList(const std::vector< std::string > &);
+
         /**
          * Detach a participant from a conference, put the call on hold, do not hangup it
          * @param call id

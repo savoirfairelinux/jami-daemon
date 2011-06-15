@@ -433,19 +433,21 @@ sflphone_hang_up()
 void
 sflphone_conference_hang_up()
 {
-    conference_obj_t * selectedConf = calltab_get_selected_conf();
+    conference_obj_t * selectedConf = calltab_get_selected_conf(current_calls);
 
-    if (selectedConf)
+    if (selectedConf) {
         dbus_hang_up_conference (selectedConf);
+    }
 }
 
 
 void
 sflphone_pick_up()
 {
-    DEBUG ("sflphone_pick_up\n");
     callable_obj_t * selectedCall = NULL;
     selectedCall = calltab_get_selected_call (active_calltree);
+
+    DEBUG("SFLphone: Pick up");
 
     if (selectedCall) {
         switch (selectedCall->_state) {
@@ -647,12 +649,10 @@ process_dialing (callable_obj_t *c, guint keyval, gchar *key)
         //dbus_play_dtmf( key );
     }
 
-    DEBUG ("--------------------- SFLphone: process dialing : keyval: %d", keyval);
-    DEBUG ("--------------------- SFLphone: process dialing : key: %s", key);
-
     switch (keyval) {
         case 65293: /* ENTER */
         case 65421: /* ENTER numpad */
+	    DEBUG("------------------------------------------------ SFLPHONE PLACE CALL (process dialing)");
             sflphone_place_call (c);
             break;
         case 65307: /* ESCAPE */
@@ -921,10 +921,10 @@ static int _place_registered_call (callable_obj_t * c)
     DEBUG ("Actions: Get account for this call");
 
     if (g_strcasecmp (c->_accountID, "") != 0) {
-        DEBUG ("Actions: Account %s already set for this call", c->_accountID);
+        DEBUG ("-------------------------------------------------------- Actions: Account %s already set for this call", c->_accountID);
         current = account_list_get_by_id (c->_accountID);
     } else {
-        DEBUG ("Actions: No account set for this call, use first of the list");
+        DEBUG ("-------------------------------------------------------- Actions: No account set for this call, use first of the list");
         current = account_list_get_current();
     }
 
@@ -961,12 +961,12 @@ sflphone_place_call (callable_obj_t * c)
 {
     gchar *msg = "";
 
-    DEBUG ("Actions: Placing call with %s @ %s and accountid %s", c->_peer_name, c->_peer_number, c->_accountID);
-
     if (c == NULL) {
         DEBUG ("Actions: Unexpected condition: callable_obj_t is null in %s at %d", __FILE__, __LINE__);
         return;
     }
+
+    DEBUG ("Actions: Placing call with %s @ %s and accountid %s", c->_peer_name, c->_peer_number, c->_accountID);
 
     if (_is_direct_call (c)) {
         msg = g_markup_printf_escaped (_ ("Direct SIP call"));
