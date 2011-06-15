@@ -4,18 +4,17 @@
 #include <cstdlib>
 #include <string>
 #include <map>
+#include <cc++/thread.h>
 #include "video_rtp_session.h"
 
-#if 0
 static volatile int interrupted = 0;
 
 void signal_handler(int sig) { (void)sig; interrupted = 1; }
 void attach_signal_handlers() { signal(SIGINT, signal_handler); }
-#endif
 
 int main(int argc, char *argv[])
 {
-    //attach_signal_handlers();
+    attach_signal_handlers();
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0] <<  " <filename> (OPTIONAL) <codec> <bitrate> <destination>" << std::endl;
         return 1;
@@ -46,6 +45,9 @@ int main(int argc, char *argv[])
     sfl_video::VideoRtpSession session(args["input"], args["codec"],
             atoi(args["bitrate"].c_str()), args["destination"]);
     session.start();
+    while (not interrupted)
+        ost::Thread::sleep(1000);
+    session.stop();
     std::cout << "Exitting..." << std::endl;
     return 0;
 }

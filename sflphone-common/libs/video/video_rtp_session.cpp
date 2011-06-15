@@ -29,13 +29,6 @@
  */
 
 #include "video_rtp_session.h"
-#include <string>
-#include <iostream>
-#include <cassert>
-#include <sstream>
-#include <fstream>
-#include <map>
-#include <signal.h>
 
 extern "C" {
 #define __STDC_CONSTANT_MACROS
@@ -45,10 +38,18 @@ extern "C" {
 #include <libavdevice/avdevice.h>
 #include <libswscale/swscale.h>
 }
+#include <string>
+#include <iostream>
+#include <cassert>
+#include <sstream>
+#include <fstream>
+#include <map>
+#include <cc++/thread.h>
+#include <signal.h>
 
 namespace sfl_video {
 
-class VideoRtpThread {
+class VideoRtpThread : public ost::Thread {
     private:
         static void print_error(const char *filename, int err)
         {
@@ -64,7 +65,7 @@ class VideoRtpThread {
         {
             size_t sdp_size = avc[0]->streams[0]->codec->extradata_size + 2048;
             char *sdp = reinterpret_cast<char*>(malloc(sdp_size)); /* theora sdp can be huge */
-            std::cout << "sdp_size: " << sdp_size << std::endl;
+            std::cerr << "sdp_size: " << sdp_size << std::endl;
             av_sdp_create(avc, 1, sdp, sdp_size);
             std::ofstream sdp_file("test.sdp");
             std::istringstream iss(sdp);
@@ -73,18 +74,22 @@ class VideoRtpThread {
             {
                 /* strip windows line ending */
                 sdp_file << line.substr(0, line.length() - 1) << std::endl;
-                std::cout << line << std::endl;
+                std::cerr << line << std::endl;
             }
             sdp_file << std::endl;
             sdp_file.close();
             free(sdp);
         }
 
-        static volatile int interrupted_;
+        std::map<std::string, std::string> args_;
+        volatile int interrupted_;
 
     public:
 
-        static int run(std::map<std::string, std::string> args)
+        VideoRtpThread(std::map<std::string, std::string> args) : args_(args),
+        interrupted_(false) {}
+
+        virtual void run()
         {
             av_register_all();
             avdevice_register_all();
@@ -92,26 +97,26 @@ class VideoRtpThread {
 
             AVInputFormat *file_iformat = NULL;
             // it's a v4l device if starting with /dev/video
-            if (args["input"].substr(0, strlen("/dev/video")) == "/dev/video") {
-                std::cout << "Using v4l2 format" << std::endl;
+            if (args_["input"].substr(0, strlen("/dev/video")) == "/dev/video") {
+                std::cerr << "Using v4l2 format" << std::endl;
                 file_iformat = av_find_input_format("video4linux2");
                 if (!file_iformat) {
                     std::cerr << "Could not find format!" << std::endl;
-                    return 1;
+                    exit();
                 }
             }
 
             // Open video file
-            if (av_open_input_file(&ic, args["input"].c_str(), file_iformat, 0, NULL) != 0) {
-                std::cerr <<  "Could not open input file " << args["input"] <<
+            if (av_open_input_file(&ic, args_["input"].c_str(), file_iformat, 0, NULL) != 0) {
+                std::cerr <<  "Could not open input file " << args_["input"] <<
                     std::endl;
-                return 1; // couldn't open file
+                exit(); // couldn't open file
             }
 
             // retrieve stream information
             if (av_find_stream_info(ic) < 0) {
                 std::cerr << "Could not find stream info!" << std::endl;
-                return 1; // couldn't find stream info
+                exit(); // couldn't find stream info
             }
 
             AVCodecContext *inputDecoderCtx;
@@ -127,7 +132,7 @@ class VideoRtpThread {
             }
             if (videoStream == -1) {
                 std::cerr << "Could not find video stream!" << std::endl;
-                return 1; // didn't find a video stream
+                exit(); // didn't find a video stream
             }
 
             // Get a pointer to the codec context for the video stream
@@ -137,42 +142,41 @@ class VideoRtpThread {
             AVCodec *inputDecoder = avcodec_find_decoder(inputDecoderCtx->codec_id);
             if (inputDecoder == NULL) {
                 std::cerr << "Unsupported codec!" << std::endl;
-                return 1; // codec not found
+                exit(); // codec not found
             }
 
             // open codec
             if (avcodec_open(inputDecoderCtx, inputDecoder) < 0) {
                 std::cerr << "Could not open codec!" << std::endl;
-                return 1; // could not open codec
+                exit(); // could not open codec
             }
 
             AVFormatContext *oc = avformat_alloc_context();
 
-            AVOutputFormat *file_oformat = av_guess_format("rtp",
-                                                           args["destination"].c_str(), NULL);
+            AVOutputFormat *file_oformat = av_guess_format("rtp", args_["destination"].c_str(), NULL);
             if (!file_oformat) {
                 std::cerr << "Unable to find a suitable output format for " <<
-                    args["destination"] << std::endl;
-                exit(EXIT_FAILURE);
+                    args_["destination"] << std::endl;
+                exit();
             }
             oc->oformat = file_oformat;
-            strncpy(oc->filename, args["destination"].c_str(), sizeof(oc->filename));
+            strncpy(oc->filename, args_["destination"].c_str(), sizeof(oc->filename));
 
             AVCodec *encoder = NULL;
-            const char *vcodec_name = args["codec"].c_str();
+            const char *vcodec_name = args_["codec"].c_str();
 
             AVCodecContext *encoderCtx;
             /* find the video encoder */
             encoder = avcodec_find_encoder_by_name(vcodec_name);
             if (!encoder) {
                 std::cerr << "encoder not found" << std::endl;
-                exit(EXIT_FAILURE);
+                exit();
             }
 
             encoderCtx = avcodec_alloc_context();
 
             /* set some encoder settings here */
-            encoderCtx->bit_rate = args.size() > 2 ? atoi(args["bitrate"].c_str()) : 1000000;
+            encoderCtx->bit_rate = args_.size() > 2 ? atoi(args_["bitrate"].c_str()) : 1000000;
             /* emit one intra frame every gop_size frames */
             encoderCtx->gop_size = 15;
             encoderCtx->max_b_frames = 0;
@@ -186,7 +190,7 @@ class VideoRtpThread {
 
             /* let x264 preset override our encoder settings */
             if (!strcmp(vcodec_name, "libx264")) {
-                std::cout << "get x264 preset time" << std::endl;
+                std::cerr << "get x264 preset time" << std::endl;
                 //int opt_name_count = 0;
                 FILE *f = NULL;
                 // FIXME: hardcoded! should look for FFMPEG_DATADIR
@@ -196,7 +200,7 @@ class VideoRtpThread {
                 if (!f) {
                     std::cerr << "File for preset ' " << preset_filename << "' not"
                         "found" << std::endl;
-                    exit(EXIT_FAILURE);
+                    exit();
                 }
 
                 /* grab preset file and put it in character buffer */
@@ -208,7 +212,7 @@ class VideoRtpThread {
                 fread(encoder_options_string, pos, 1, f);
                 fclose(f);
 
-                std::cout << "Encoder options: " << encoder_options_string << std::endl;
+                std::cerr << "Encoder options: " << encoder_options_string << std::endl;
                 av_set_options_string(encoderCtx, encoder_options_string, "=", "\n");
                 free(encoder_options_string); // free allocated memory
             }
@@ -218,14 +222,14 @@ class VideoRtpThread {
             /* open encoder */
             if (avcodec_open(encoderCtx, encoder) < 0) {
                 std::cerr << "Could not open encoder" << std::endl;
-                exit(EXIT_FAILURE);
+                exit();
             }
 
             /* add video stream to outputformat context */
             AVStream *video_st = av_new_stream(oc, 0);
             if (!video_st) {
                 std::cerr << "Could not alloc stream" << std::endl;
-                exit(EXIT_FAILURE);
+                exit();
             }
             video_st->codec = encoderCtx;
 
@@ -233,7 +237,7 @@ class VideoRtpThread {
                parameters). */
             if (av_set_parameters(oc, NULL) < 0) {
                 std::cerr << "Invalid output format parameters" << std::endl;
-                exit(EXIT_FAILURE);
+                exit();
             }
 
             /* open the output file, if needed */
@@ -241,7 +245,7 @@ class VideoRtpThread {
                 if (avio_open(&oc->pb, oc->filename, AVIO_FLAG_WRITE) < 0) {
                     std::cerr << "Could not open '" << oc->filename << "'" <<
                         std::endl;
-                    exit(EXIT_FAILURE);
+                    exit();
                 }
             }
             else std::cerr << "No need to open" << std::endl;
@@ -253,7 +257,7 @@ class VideoRtpThread {
             /* write the stream header, if any */
             if (av_write_header(oc) < 0) {
                 snprintf(error, sizeof(error), "Could not write header for output file (incorrect codec parameters ?)");
-                return AVERROR(EINVAL);
+                exit();
             }
 
             /* alloc image and output buffer */
@@ -283,7 +287,7 @@ class VideoRtpThread {
                     NULL, NULL, NULL);
             if (img_convert_ctx == NULL) {
                 std::cerr << "Cannot init the conversion context!" << std::endl;
-                exit(EXIT_FAILURE);
+                exit();
             }
 
             while (!interrupted_ && av_read_frame(ic, &inpacket) >= 0) {
@@ -326,7 +330,7 @@ class VideoRtpThread {
                             int ret = av_interleaved_write_frame(oc, &opkt);
                             if (ret < 0) {
                                 print_error("av_interleaved_write_frame() error", ret);
-                                exit(EXIT_FAILURE);
+                                exit();
                             }
                             av_free_packet(&opkt);
                         }
@@ -358,10 +362,20 @@ class VideoRtpThread {
             // close the video file
             av_close_input_file(ic);
 
-            return 0;
+            exit();
+        }
+
+        void stop()
+        {
+            /* FIXME: not thread safe */
+            interrupted_ = true;
+        }
+
+        virtual ~VideoRtpThread()
+        {
+            terminate();
         }
 };
-volatile int VideoRtpThread::interrupted_ = 0;
 
 
 VideoRtpSession::VideoRtpSession(const std::string &input,
@@ -370,14 +384,15 @@ VideoRtpSession::VideoRtpSession(const std::string &input,
         const std::string &destinationURI) :
     input_(input), codec_(codec), bitrate_(bitrate),
     destinationURI_(destinationURI)
-{}
+{
+}
 
 void VideoRtpSession::start()
 {
-    std::cout << "Capturing from " << input_ << ", encoding to " << codec_ <<
+    assert(rtpThread_.get() == 0);
+    std::cerr << "Capturing from " << input_ << ", encoding to " << codec_ <<
         " at " << bitrate_ << " bps, sending to " << destinationURI_ <<
         std::endl;
-    VideoRtpThread th;
     std::map<std::string, std::string> args;
     args["input"] = input_;
     args["codec"] = codec_;
@@ -387,12 +402,17 @@ void VideoRtpSession::start()
     args["bitrate"] = bitstr.str();
     args["destination"] = destinationURI_;
 
-    th.run(args);
+    rtpThread_.reset(new VideoRtpThread(args));
+    rtpThread_->start();
 }
 
 void VideoRtpSession::stop()
 {
-    std::cout << "Stopping video rtp session " << std::endl;
+    std::cerr << "Stopping video rtp session " << std::endl;
+    // FIXME: all kinds of evil!!! interrupted should be atomic
+    rtpThread_->stop();
+    std::cerr << "cancelled video rtp session " << std::endl;
+    rtpThread_.reset();
 }
 
 } // end namspace sfl_video

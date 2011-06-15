@@ -1,0 +1,8 @@
+Video TODO
+----
+
+* refactor VideoRtpThread, while loop should be the only thing in the thread
+* camera configuration
+* test on network, with netem
+* figure out when streaming files, playback doesn't happend at correct
+  framerate (it goes as fast as possible)
