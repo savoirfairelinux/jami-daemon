@@ -310,26 +310,32 @@ void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details
 
     // details is in serialized form, i e: calltype%to%from%callid
 
-    if ( (ptr = g_strsplit (details, delim,5)) != NULL) {
+    if ( (ptr = g_strsplit (details, delim, 6)) != NULL) {
 
-        while (ptr != NULL && token < 5) {
+        while (ptr != NULL && token < 6) {
             switch (token) {
                 case 0:
+		    DEBUG("------------------------------------------------------------------------------------------ HISTORYSTATE FROM SERIALIZATION %s", *ptr);
                     history_state = get_history_state_from_id (*ptr);
                     break;
                 case 1:
+		    DEBUG("------------------------------------------------------------------------------------------ PEERNUMBER FROM SERIALIZATION %s", *ptr);
                     peer_number = *ptr;
                     break;
                 case 2:
+		    DEBUG("------------------------------------------------------------------------------------------ PEERNAME FROM SERIALIZATION %s", *ptr);
                     peer_name = *ptr;
                     break;
                 case 3:
+		    DEBUG("------------------------------------------------------------------------------------------ TIMESTOP FROM SERIALIZATION %s", *ptr);
                     time_stop = *ptr;
                     break;
                 case 4:
+		    DEBUG("------------------------------------------------------------------------------------------ ACCOUNTID FROM SERIALIZATION %s", *ptr);
                     accountID = *ptr;
                     break;
                 case 5:
+		    DEBUG("------------------------------------------------------------------------------------------ RECORDFILE FROM SERIALIZATION %s", *ptr);
 		    recordfile = *ptr;
                 default:
                     break;
@@ -463,6 +469,8 @@ gchar* serialize_history_entry (callable_obj_t *entry)
 
     gchar* peer_name = (entry->_peer_name == NULL || g_strcasecmp (entry->_peer_name,"") == 0) ? "empty": entry->_peer_name;
     gchar* account_id = (entry->_accountID == NULL || g_strcasecmp (entry->_accountID,"") == 0) ? "empty": entry->_accountID;
+
+    DEBUG("ACCOUNT ID STORED IN HISTORY %s", account_id);
 
     result = g_strconcat (history_state, separator,
                           entry->_peer_number, separator,

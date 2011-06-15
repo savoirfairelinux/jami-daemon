@@ -249,11 +249,11 @@ row_activated (GtkTreeView       *tree_view UNUSED,
 		DEBUG("------------------------------------ PLACING A NEW CALL FROM ROW ACTIVATED (history)");
 		// sflphone_place_call(new_call);
 
-                // calllist_add (current_calls, new_call);
-                // calltree_add_call (current_calls, new_call, NULL);
+                calllist_add (current_calls, new_call);
+                calltree_add_call (current_calls, new_call, NULL);
                 // Function sflphone_place_call (new_call) is processed in process_dialing
                 sflphone_place_call(new_call);
-		// calltree_display (current_calls);
+		calltree_display (current_calls);
             }
         }
     } else if (calltab_get_selected_type (current_calls) == A_CONFERENCE) {

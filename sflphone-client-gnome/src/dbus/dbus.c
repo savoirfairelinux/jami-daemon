@@ -1715,6 +1715,19 @@ dbus_join_participant (const gchar* sel_callID, const gchar* drag_callID)
 }
 
 void
+dbus_create_conf_from_participant_list(const gchar **list) {
+
+    GError *error = NULL;
+
+    org_sflphone_SFLphone_CallManager_create_conf_from_participant_list(callManagerProxy,
+	list, &error);
+
+    if(error) {
+	g_error_free(error);
+    }
+}  
+
+void
 dbus_add_participant (const gchar* callID, const gchar* confID)
 {
 

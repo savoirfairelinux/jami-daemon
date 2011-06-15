@@ -921,10 +921,10 @@ static int _place_registered_call (callable_obj_t * c)
     DEBUG ("Actions: Get account for this call");
 
     if (g_strcasecmp (c->_accountID, "") != 0) {
-        DEBUG ("Actions: Account %s already set for this call", c->_accountID);
+        DEBUG ("-------------------------------------------------------- Actions: Account %s already set for this call", c->_accountID);
         current = account_list_get_by_id (c->_accountID);
     } else {
-        DEBUG ("Actions: No account set for this call, use first of the list");
+        DEBUG ("-------------------------------------------------------- Actions: No account set for this call, use first of the list");
         current = account_list_get_current();
     }
 
