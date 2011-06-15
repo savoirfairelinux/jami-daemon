@@ -433,19 +433,21 @@ sflphone_hang_up()
 void
 sflphone_conference_hang_up()
 {
-    conference_obj_t * selectedConf = calltab_get_selected_conf();
+    conference_obj_t * selectedConf = calltab_get_selected_conf(current_calls);
 
-    if (selectedConf)
+    if (selectedConf) {
         dbus_hang_up_conference (selectedConf);
+    }
 }
 
 
 void
 sflphone_pick_up()
 {
-    DEBUG ("sflphone_pick_up\n");
     callable_obj_t * selectedCall = NULL;
     selectedCall = calltab_get_selected_call (active_calltree);
+
+    DEBUG("SFLphone: Pick up");
 
     if (selectedCall) {
         switch (selectedCall->_state) {

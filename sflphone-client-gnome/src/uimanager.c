@@ -534,7 +534,7 @@ static void
 call_hold (void* foo UNUSED)
 {
     callable_obj_t * selectedCall = calltab_get_selected_call (current_calls);
-    conference_obj_t * selectedConf = calltab_get_selected_conf();
+    conference_obj_t * selectedConf = calltab_get_selected_conf(current_calls);
 
     DEBUG ("UIManager: Hold button pressed");
 
@@ -578,7 +578,7 @@ static void
 call_im (void* foo UNUSED)
 {
     callable_obj_t *selectedCall = calltab_get_selected_call (current_calls);
-    conference_obj_t *selectedConf = calltab_get_selected_conf();
+    conference_obj_t *selectedConf = calltab_get_selected_conf(current_calls);
 
     if (calltab_get_selected_type (current_calls) == A_CALL) {
 
@@ -599,9 +599,14 @@ call_im (void* foo UNUSED)
 static void
 conference_hold (void* foo UNUSED)
 {
-    conference_obj_t * selectedConf = calltab_get_selected_conf();
+    conference_obj_t * selectedConf = calltab_get_selected_conf(current_calls);
 
-    DEBUG ("UIManager: Hold button pressed (conference)");
+    DEBUG ("UIManager: Hold button pressed for conference");
+
+    if(selectedConf == NULL) {
+        ERROR("UIManager: No conference selected");
+	return;
+    }
 
     switch (selectedConf->_state) {
         case CONFERENCE_STATE_HOLD:
@@ -629,16 +634,18 @@ conference_hold (void* foo UNUSED)
 static void
 call_pick_up (void * foo UNUSED)
 {
-    DEBUG ("------ call_button -----");
     callable_obj_t * selectedCall;
     callable_obj_t* new_call;
+    
+    DEBUG ("UIManager: Pick up");
 
-    selectedCall = calltab_get_selected_call (active_calltree);
-
-    if (calllist_get_size (current_calls) > 0)
+    if (calllist_get_size (current_calls) > 0) {
         sflphone_pick_up();
+    }
 
     else if (calllist_get_size (active_calltree) > 0) {
+	selectedCall = calltab_get_selected_call(active_calltree);
+
         if (selectedCall) {
             create_new_call (CALL, CALL_STATE_DIALING, "", "", "",
                              selectedCall->_peer_number, &new_call);
@@ -660,13 +667,11 @@ call_pick_up (void * foo UNUSED)
 static void
 call_hang_up (void)
 {
-
     DEBUG ("UIManager: Hang up button pressed (call)");
     /*
      * [#3020]	Restore the record toggle button
      *			We set it to FALSE, as when we hang up a call, the recording is stopped.
      */
-//    gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (recordWidget), FALSE);
 
     sflphone_hang_up();
 
@@ -699,12 +704,16 @@ call_configuration_assistant (void * foo UNUSED)
 static void
 remove_from_history (void * foo UNUSED)
 {
-    callable_obj_t* c = calltab_get_selected_call (history);
+    callable_obj_t* call = calltab_get_selected_call (history);
 
-    if (c) {
-        DEBUG ("UIManager: Remove the call from the history");
-        calllist_remove_from_history (c);
+    DEBUG ("UIManager: Remove the call from the history");
+
+    if(call == NULL) {
+	ERROR("UIManager: Error: Call is NULL");
+    	return;
     }
+
+    calllist_remove_from_history (call);
 }
 
 static void
@@ -714,15 +723,20 @@ call_back (void * foo UNUSED)
 
     selected_call = calltab_get_selected_call (active_calltree);
 
-    if (selected_call) {
-        create_new_call (CALL, CALL_STATE_DIALING, "", "",
+    DEBUG("UIManager: Call back");
+
+    if(selected_call == NULL) {
+	ERROR("UIManager: Error: No selected call");
+	return;
+    }
+
+    create_new_call (CALL, CALL_STATE_DIALING, "", "",
                          selected_call->_peer_name, selected_call->_peer_number, &new_call);
 
-        calllist_add (current_calls, new_call);
-        calltree_add_call (current_calls, new_call, NULL);
-        sflphone_place_call (new_call);
-        calltree_display (current_calls);
-    }
+    calllist_add (current_calls, new_call);
+    calltree_add_call (current_calls, new_call, NULL);
+    sflphone_place_call (new_call);
+    calltree_display (current_calls);
 }
 
 static void
@@ -745,27 +759,32 @@ edit_copy (void * foo UNUSED)
     callable_obj_t * selectedCall = calltab_get_selected_call (current_calls);
     gchar * no = NULL;
 
-    if (selectedCall) {
-        switch (selectedCall->_state) {
-            case CALL_STATE_TRANSFERT:
-            case CALL_STATE_DIALING:
-            case CALL_STATE_RINGING:
-                no = selectedCall->_peer_number;
-                break;
-            case CALL_STATE_CURRENT:
-            case CALL_STATE_RECORD:
-            case CALL_STATE_HOLD:
-            case CALL_STATE_BUSY:
-            case CALL_STATE_FAILURE:
-            case CALL_STATE_INCOMING:
-            default:
-                no = selectedCall->_peer_number;
-                break;
-        }
+    DEBUG("UIManager: Edit/Copy");
 
-        DEBUG ("UIManager: Clipboard number: %s\n", no);
-        gtk_clipboard_set_text (clip, no, strlen (no));
+    if(selectedCall == NULL) {
+        ERROR("UIManager: Error: No selected call", selectedCall);
+    	return;
     }
+
+    switch (selectedCall->_state) {
+        case CALL_STATE_TRANSFERT:
+        case CALL_STATE_DIALING:
+        case CALL_STATE_RINGING:
+            no = selectedCall->_peer_number;
+            break;
+        case CALL_STATE_CURRENT:
+        case CALL_STATE_RECORD:
+        case CALL_STATE_HOLD:
+        case CALL_STATE_BUSY:
+        case CALL_STATE_FAILURE:
+        case CALL_STATE_INCOMING:
+        default:
+            no = selectedCall->_peer_number;
+            break;
+    }
+
+    DEBUG ("UIManager: Clipboard number: %s\n", no);
+    gtk_clipboard_set_text (clip, no, strlen (no));
 
 }
 
@@ -1157,7 +1176,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
         }
     } else {
         DEBUG ("UIManager: Menus: selected a conf");
-        selectedConf = calltab_get_selected_conf();
+        selectedConf = calltab_get_selected_conf(active_calltree);
 
         if (selectedConf) {
             switch (selectedConf->_state) {

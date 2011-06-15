@@ -40,7 +40,7 @@ calltab_t* current_calls;
 calltab_t* history;
 calltab_t* contacts;
 
-calltab_t* calltab_init (gboolean searchbar_type, gchar *name);
+calltab_t* calltab_init (gboolean, gchar *);
 
 
 
@@ -54,15 +54,15 @@ void
 calltab_select_conf (calltab_t *, conference_obj_t *);
 
 gint
-calltab_get_selected_type (calltab_t* tab);
+calltab_get_selected_type (calltab_t *);
 
 /** Return the selected call.
   * @return The number of the caller */
 callable_obj_t *
-calltab_get_selected_call (calltab_t*);
+calltab_get_selected_call (calltab_t *);
 
 conference_obj_t *
-calltab_get_selected_conf ();
+calltab_get_selected_conf (calltab_t *);
 
 void
 calltab_create_searchbar (calltab_t *);
