@@ -217,7 +217,7 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
 
     DEBUG ("CallableObj: Create new call");
 
-    DEBUG ("Account: %s", accountID);
+    DEBUG ("CallableObj: Account: %s", accountID);
 
     // Allocate memory
     obj = g_new0 (callable_obj_t, 1);

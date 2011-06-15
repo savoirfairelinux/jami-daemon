@@ -62,7 +62,7 @@ static void
 incoming_call_cb (DBusGProxy *proxy UNUSED, const gchar* accountID,
                   const gchar* callID, const gchar* from, void * foo  UNUSED)
 {
-    DEBUG ("Incoming call (%s) from %s", callID, from);
+    DEBUG ("DBus: Incoming call (%s) from %s", callID, from);
 
     callable_obj_t * c;
     gchar *peer_name, *peer_number;
