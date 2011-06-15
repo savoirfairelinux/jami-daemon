@@ -35,7 +35,7 @@ namespace sfl_video
 {
 
 VideoRtpFactory::VideoRtpFactory() :
-    session_(new VideoRtpSession("/dev/video", "mpeg4", 1000000,
+    session_(new VideoRtpSession("/dev/video0", "mpeg4", 1000000,
                                  "rtp://127.0.0.1:5000"))
 {
 }

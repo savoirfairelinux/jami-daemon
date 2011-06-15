@@ -30,6 +30,7 @@
 
 #include <iostream>
 #include <cassert>
+#include <unistd.h> // for sleep
 #include "test_video_rtp.h"
 #include "video_rtp_factory.h"
 
@@ -37,6 +38,7 @@ void VideoRtpTest::testRTPSession()
 {
     sfl_video::VideoRtpFactory videortp;
     videortp.start();
+    sleep(10);
     videortp.stop();
 }
 

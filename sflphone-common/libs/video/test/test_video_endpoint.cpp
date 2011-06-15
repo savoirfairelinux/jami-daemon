@@ -35,7 +35,6 @@
 #include <cassert>
 #include "video_endpoint.h"
 #include "libav_utils.h"
-#include "video_rtp_factory.h"
 
 void VideoEndpointTest::testIsSupportedCodec()
 {
@@ -65,19 +64,11 @@ void VideoEndpointTest::testCodecMap()
     assert(count == 1);
 }
 
-void VideoEndpointTest::testRTPSession()
-{
-    sfl_video::VideoRtpFactory videortp;
-    videortp.start();
-    videortp.stop();
-}
-
 int main (int argc, char* argv[])
 {
     VideoEndpointTest test;
     test.testListInstalledCodecs();
     test.testCodecMap();
     test.testIsSupportedCodec();
-    test.testRTPSession();
     return 0;
 }
