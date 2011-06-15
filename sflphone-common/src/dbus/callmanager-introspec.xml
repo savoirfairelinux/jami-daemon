@@ -133,7 +133,7 @@
 			</arg>
 		</method>
 		
-	    <method name="attendedTransfer" tp:name-for-bindings="attendedTransfer">
+		<method name="attendedTransfer" tp:name-for-bindings="attendedTransfer">
 			<tp:docstring>
 			  Perform an attended transfer on two calls
 			</tp:docstring>
@@ -210,6 +210,15 @@
 			</tp:docstring>
 			<arg type="s" name="sel_callID" direction="in"/>
 			<arg type="s" name="drag_callID" direction="in"/>
+		</method>
+
+                <method name="createConfFromParticipantList" tp:name-for-bindings="createConfFromParticipantList">
+			<tp:added version="0.9.14"/>
+			<tp:docstring>
+				<p>Create a conference from a list of participant</p>
+			<tp:rationale>The signal <tp:member-ref>conferenceCreated</tp:member-ref> is emitted on success.</tp:rationale>
+			</tp:docstring>
+			<arg type="as" name="participants" direction="in"/>
 		</method>
 
 		<method name="addParticipant" tp:name-for-bindings="addParticipant">

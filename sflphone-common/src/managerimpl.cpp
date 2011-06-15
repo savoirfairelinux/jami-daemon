@@ -267,15 +267,9 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
     if (hasCurrentCall()) {
         _debug ("Manager: Has current call (%s) put it onhold", current_call_id.c_str());
 
-        // std::string currentCallState = getCallDetails(current_call_id).find("CALL_STATE")->second;
-        //Call *call = getAccountLink(getAccountFromCall(current_call_id))->getCall(current_call_id);
-
         // if this is not a conferenceand this and is not a conference participant
         if (!isConference (current_call_id) && !participToConference (current_call_id)) {
-        	// if(currentCallState != "RINGING") {
-            // if(call->getConnectionState() == Call::Connected) {
-        	onHoldCall (current_call_id);
-        	// }
+       	    onHoldCall (current_call_id);
         } else if (isConference (current_call_id) && !participToConference (call_id)) {
             detachParticipant (default_id, current_call_id);
         }
@@ -404,7 +398,6 @@ bool ManagerImpl::answerCall (const CallID& call_id)
     else {
     	_dbus->getCallManager()->callStateChanged(call_id, "CURRENT");
     }
-    // _dbus->getCallManager()->callStateChanged(call_id, "CURRENT");
 
     return true;
 }
@@ -1310,6 +1303,40 @@ void ManagerImpl::joinParticipant (const CallID& callId1, const CallID& callId2)
     audioLayerMutexUnlock();
 
     getMainBuffer()->stateInfo();
+}
+
+void ManagerImpl::createConfFromParticipantList(const std::vector< std::string > &participantList)
+{
+    _debug("Manager: Create conference from participant list");
+
+    Conference *conf = new Conference();
+
+    // std::vector< std::string >::iterator iter;
+
+    // iter = participantList.begin();
+
+    /*
+    while(iter != participantList.end()) {
+	std::string participant = *iter;
+        _debug("PARTICIPANT LIST %s", participant.c_str());
+	iter++;
+    } 
+    */
+    
+    std::string generatedCallID = "callid";
+    std::string tostr = "147";
+    std::string accountstr = "AccountID:123456";
+
+    for(unsigned int i = 0; i < participantList.size(); i++) {
+        _debug("PARTICIPANT LIST %s", participantList[i].c_str());
+	generatedCallID = generatedCallID + participantList[i];
+	outgoingCall(accountstr, generatedCallID, tostr);	
+	conf->add(generatedCallID);
+    }
+
+    _conferencemap.insert(std::pair<CallID, Conference *> (conf->getConfID(), conf));
+
+    
 }
 
 void ManagerImpl::detachParticipant (const CallID& call_id,
