@@ -34,7 +34,7 @@
 #include <cassert>
 #include <sstream>
 #include <fstream>
-#include <vector>
+#include <map>
 #include <signal.h>
 
 extern "C" {
@@ -81,8 +81,10 @@ class VideoRtpThread {
         }
 
         static volatile int interrupted_;
+
     public:
-        static int run(const std::vector<std::string> &args)
+
+        static int run(std::map<std::string, std::string> args)
         {
             av_register_all();
             avdevice_register_all();
@@ -90,7 +92,7 @@ class VideoRtpThread {
 
             AVInputFormat *file_iformat = NULL;
             // it's a v4l device if starting with /dev/video
-            if (args[0].substr(0, strlen("/dev/video")) == "/dev/video") {
+            if (args["input"].substr(0, strlen("/dev/video")) == "/dev/video") {
                 std::cout << "Using v4l2 format" << std::endl;
                 file_iformat = av_find_input_format("video4linux2");
                 if (!file_iformat) {
@@ -100,8 +102,8 @@ class VideoRtpThread {
             }
 
             // Open video file
-            if (av_open_input_file(&ic, args[0].c_str(), file_iformat, 0, NULL) != 0) {
-                std::cerr <<  "Could not open input file " << args[0] <<
+            if (av_open_input_file(&ic, args["input"].c_str(), file_iformat, 0, NULL) != 0) {
+                std::cerr <<  "Could not open input file " << args["input"] <<
                     std::endl;
                 return 1; // couldn't open file
             }
@@ -145,19 +147,19 @@ class VideoRtpThread {
             }
 
             AVFormatContext *oc = avformat_alloc_context();
-            const char *DEST = "rtp://127.0.0.1:5000";
 
-            AVOutputFormat *file_oformat = av_guess_format("rtp", DEST, NULL);
+            AVOutputFormat *file_oformat = av_guess_format("rtp",
+                                                           args["destination"].c_str(), NULL);
             if (!file_oformat) {
-                std::cerr << "Unable to find a suitable output format for " << DEST
-                    << std::endl;
+                std::cerr << "Unable to find a suitable output format for " <<
+                    args["destination"] << std::endl;
                 exit(EXIT_FAILURE);
             }
             oc->oformat = file_oformat;
-            strncpy(oc->filename, DEST, sizeof(oc->filename));
+            strncpy(oc->filename, args["destination"].c_str(), sizeof(oc->filename));
 
             AVCodec *encoder = NULL;
-            const char *vcodec_name = args.size() > 1 ? args[1].c_str() : "mpeg4";
+            const char *vcodec_name = args["codec"].c_str();
 
             AVCodecContext *encoderCtx;
             /* find the video encoder */
@@ -170,7 +172,7 @@ class VideoRtpThread {
             encoderCtx = avcodec_alloc_context();
 
             /* set some encoder settings here */
-            encoderCtx->bit_rate = args.size() > 2 ? atoi(args[2].c_str()) : 1000000;
+            encoderCtx->bit_rate = args.size() > 2 ? atoi(args["bitrate"].c_str()) : 1000000;
             /* emit one intra frame every gop_size frames */
             encoderCtx->gop_size = 15;
             encoderCtx->max_b_frames = 0;
@@ -376,11 +378,14 @@ void VideoRtpSession::start()
         " at " << bitrate_ << " bps, sending to " << destinationURI_ <<
         std::endl;
     VideoRtpThread th;
-    std::vector<std::string> args;
-    args.push_back(input_);
-    args.push_back(codec_);
-    args.push_back("1000000");
-    args.push_back(destinationURI_);
+    std::map<std::string, std::string> args;
+    args["input"] = input_;
+    args["codec"] = codec_;
+    std::stringstream bitstr;
+    bitstr << bitrate_;
+
+    args["bitrate"] = bitstr.str();
+    args["destination"] = destinationURI_;
 
     th.run(args);
 }

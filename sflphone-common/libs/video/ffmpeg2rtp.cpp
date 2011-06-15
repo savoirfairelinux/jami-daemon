@@ -3,7 +3,7 @@
 #include <signal.h>
 #include <cstdlib>
 #include <string>
-#include <vector>
+#include <map>
 #include "video_rtp_session.h"
 
 #if 0
@@ -17,21 +17,34 @@ int main(int argc, char *argv[])
 {
     //attach_signal_handlers();
     if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] <<  " <filename> <codec>" << std::endl;
+        std::cerr << "Usage: " << argv[0] <<  " <filename> (OPTIONAL) <codec> <bitrate> <destination>" << std::endl;
         return 1;
     }
-    std::vector<std::string> args;
-    for (int i = 1; i < argc; ++i)
-        args.push_back(argv[i]);
-    if (argc < 3)
-        args.push_back("mpeg4");
-    if (argc < 4)
-        args.push_back("1000000");
-    if (argc < 5)
-        args.push_back("rtp://127.0.0.1:5000");
 
-    sfl_video::VideoRtpSession session(args[0] /*input*/, args[1] /*codec*/,
-            atoi(args[2].c_str()) /* bitrate */, args[3] /* uri */);
+    std::map<std::string, std::string> args;
+    args["input"] = argv[1];
+    args["codec"] = "mpeg4";
+    args["bitrate"] = "1000000";
+    args["destination"] = "rtp://127.0.0.1:5000";
+
+    switch (argc)
+    {
+        case 5:
+            args["destination"] = argv[4];
+            /* fallthrough */
+        case 4:
+            args["bitrate"] = argv[3];
+            /* fallthrough */
+        case 3:
+            args["codec"] = argv[2];
+            /* fallthrough */
+        case 2:
+        default:
+            break;
+    }
+
+    sfl_video::VideoRtpSession session(args["input"], args["codec"],
+            atoi(args["bitrate"].c_str()), args["destination"]);
     session.start();
     std::cout << "Exitting..." << std::endl;
     return 0;
