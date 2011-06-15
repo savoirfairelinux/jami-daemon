@@ -154,6 +154,11 @@ void conference_participant_list_update (gchar** participants, conference_obj_t*
 
     DEBUG ("Conference: Participant list update");
 
+    if(conf == NULL) {
+    	ERROR("Conference: Error: Conference is NULL");
+        return;
+    }
+
     if (conf->participant_list) {
         g_slist_free (conf->participant_list);
         conf->participant_list = NULL;
