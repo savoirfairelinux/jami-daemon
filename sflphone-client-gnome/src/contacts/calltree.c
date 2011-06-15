@@ -293,20 +293,34 @@ row_activated (GtkTreeView       *tree_view UNUSED,
 
 static void 
 calltree_create_conf_from_participant_list(GSList *list) {
-    gchar **participant_list;
+    gchar **participant_list, participant_number;
     gint list_length = g_slist_length(list);
-    gint i;
+    gint i = 0;
+    gint c = 0;
+    
 
     DEBUG("CallTree: Create conference from participant list");
 
     participant_list = (void *) malloc(sizeof(void*));
+    
 
+    // concatenate 
     for(i = 0; i < list_length; i++) {
-	gchar *participant = g_slist_nth_data(list, i);
-	DEBUG("********************* participant %s ***************************", participant);       
+	gchar *participant_id = g_slist_nth_data(list, i);
+	DEBUG("********************* participant %s ***************************", participant_id);       
+        callable_obj_t *call = calllist_get(history, participant_id);
+ 
+        if(c!=0) {
+	    participant_list = (void *) realloc(participant_list, (c+1) * sizeof(void *));
+    	}
+
+        // allocate memory for teh participant number
+	*(participant_list+c) = g_strdup(call->_peer_number);
+
+	c++;
     }
 
-    // dbus_create_conf_from_participant_list(participant_list);
+    dbus_create_conf_from_participant_list(participant_list);
 }
 
 /* Catch cursor-activated signal. That is, when the entry is single clicked */

@@ -152,16 +152,15 @@ void conference_participant_list_update (gchar** participants, conference_obj_t*
     gchar* call_id;
     gchar** part;
 
+    DEBUG ("Conference: Participant list update");
+
     if (conf->participant_list) {
         g_slist_free (conf->participant_list);
         conf->participant_list = NULL;
     }
 
-    DEBUG ("Conference: Participant list update");
-
     for (part = participants; *part; part++) {
         call_id = (gchar*) (*part);
-        DEBUG ("Adding %s", call_id);
         conference_add_participant (call_id, conf);
     }
 

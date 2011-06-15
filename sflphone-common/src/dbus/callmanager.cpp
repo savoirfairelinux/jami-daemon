@@ -219,6 +219,7 @@ void
 CallManager::createConfFromParticipantList(const std::vector< std::string >& participants)
 {
     _debug("CallManager: Create conference from participant list");
+    Manager::instance().createConfFromParticipantList(participants);
 }
 
 void

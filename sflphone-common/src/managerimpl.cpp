@@ -1326,7 +1326,7 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
     
     std::string generatedCallID = "callid";
     std::string tostr = "147";
-    std::string accountstr = "AccountID:123456";
+    std::string accountstr = "Account:1307562458";
 
     for(unsigned int i = 0; i < participantList.size(); i++) {
         _debug("PARTICIPANT LIST %s", participantList[i].c_str());
