@@ -207,12 +207,8 @@ row_activated (GtkTreeView       *tree_view UNUSED,
         selectedCall = calltab_get_selected_call (active_calltree);
 
         if (selectedCall) {
-            DEBUG ("CallTree: Selected a call");
-
             // Get the right event from the right calltree
             if (active_calltree == current_calls) {
-
-                DEBUG ("CallTree: Active tree is current calls");
 
                 switch (selectedCall->_state) {
                     case CALL_STATE_INCOMING:
@@ -229,7 +225,6 @@ row_activated (GtkTreeView       *tree_view UNUSED,
                         break;
                     case CALL_STATE_DIALING:
                         sflphone_place_call (selectedCall);
-			DEBUG("---------------------------- PLACING A NEW CALL FROM ROW ACTIVATED (current_calls)");
                         break;
                     default:
                         WARN ("Row activated - Should not happen!");
@@ -240,25 +235,21 @@ row_activated (GtkTreeView       *tree_view UNUSED,
             // If history or contact: double click action places a new call
             else {
 
-                DEBUG ("CallTree: Active tree is history or contact");
-
                 account_id = g_strdup (selectedCall->_accountID);
 
                 // Create a new call
                 create_new_call (CALL, CALL_STATE_DIALING, "", account_id, selectedCall->_peer_name, selectedCall->_peer_number, &new_call);
-		DEBUG("------------------------------------ PLACING A NEW CALL FROM ROW ACTIVATED (history)");
 		// sflphone_place_call(new_call);
 
                 calllist_add (current_calls, new_call);
                 calltree_add_call (current_calls, new_call, NULL);
                 // Function sflphone_place_call (new_call) is processed in process_dialing
+		DEBUG("------------------------------------ PLACING A NEW CALL FROM ROW ACTIVATED (history)");
                 sflphone_place_call(new_call);
 		calltree_display (current_calls);
             }
         }
     } else if (calltab_get_selected_type (current_calls) == A_CONFERENCE) {
-
-        DEBUG ("CallTree: Selected a conference");
 
         if (active_calltree == current_calls) {
 

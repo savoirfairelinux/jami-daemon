@@ -135,14 +135,11 @@ on_key_released (GtkWidget *widget, GdkEventKey *event, gpointer user_data UNUSE
 
     if (focus_is_on_searchbar == FALSE) {
 	if(event->keyval == 65293) {
-	    DEBUG("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 	    if(active_calltree == current_calls) {
-            	DEBUG("Active calltree is current_calls");
 	        sflphone_keypad (event->keyval, event->string);
         	return TRUE;
 	    }
 	    else if(active_calltree == history) {
-		DEBUG("Active calltree is history");
 	        return FALSE;
 	    }
 	}

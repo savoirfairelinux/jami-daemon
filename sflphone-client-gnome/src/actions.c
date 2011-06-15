@@ -647,12 +647,10 @@ process_dialing (callable_obj_t *c, guint keyval, gchar *key)
         //dbus_play_dtmf( key );
     }
 
-    DEBUG ("--------------------- SFLphone: process dialing : keyval: %d", keyval);
-    DEBUG ("--------------------- SFLphone: process dialing : key: %s", key);
-
     switch (keyval) {
         case 65293: /* ENTER */
         case 65421: /* ENTER numpad */
+	    DEBUG("------------------------------------------------ SFLPHONE PLACE CALL (process dialing)");
             sflphone_place_call (c);
             break;
         case 65307: /* ESCAPE */
@@ -961,12 +959,12 @@ sflphone_place_call (callable_obj_t * c)
 {
     gchar *msg = "";
 
-    DEBUG ("Actions: Placing call with %s @ %s and accountid %s", c->_peer_name, c->_peer_number, c->_accountID);
-
     if (c == NULL) {
         DEBUG ("Actions: Unexpected condition: callable_obj_t is null in %s at %d", __FILE__, __LINE__);
         return;
     }
+
+    DEBUG ("Actions: Placing call with %s @ %s and accountid %s", c->_peer_name, c->_peer_number, c->_accountID);
 
     if (_is_direct_call (c)) {
         msg = g_markup_printf_escaped (_ ("Direct SIP call"));

@@ -248,6 +248,13 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
         return false;
     }
 
+    // Call ID must be unique
+    if (getAccountFromCall (call_id) != AccountNULL) {
+        _error ("Manager: Error: Call id already exists in outgoing call");
+        return false;
+    }
+
+
     _debug ("Manager: New outgoing call %s to %s", call_id.c_str(), to.c_str());
 
     CallID current_call_id = getCurrentCallId();
@@ -295,12 +302,6 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
     // Is this accout exist
     if (!accountExists (account_id)) {
         _error ("Manager: Error: Account doesn't exist in new outgoing call");
-        return false;
-    }
-
-    // Call ID must be unique
-    if (getAccountFromCall (call_id) != AccountNULL) {
-        _error ("Manager: Error: Call id already exists in outgoing call");
         return false;
     }
 
