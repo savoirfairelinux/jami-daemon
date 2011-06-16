@@ -213,7 +213,8 @@ void VideoRtpReceiveThread::setup()
             std::cerr <<  "Could not open input file " << args_["input"] <<
                 std::endl;
             tries++;
-            if (tries > 10)
+            ost::Thread::sleep(1000);
+            if (tries > 100)
                 cleanup();
         }
         else open = true;
