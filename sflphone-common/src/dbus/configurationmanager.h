@@ -104,6 +104,14 @@ class ConfigurationManager
         void setEchoCancelDelay(const int32_t& length);
         int getEchoCancelDelay(void);
 
+        std::vector<std::string> getVideoInputDeviceList();
+        std::vector<std::string> getVideoInputDeviceInputList();
+        std::vector<std::string> getVideoInputDeviceSizeList();
+        std::vector<std::string> getVideoInputDeviceRateList();
+        void setVideoInputDevice(const int32_t& api);
+        void setVideoInputDeviceInput(const int32_t& api);
+        void setVideoInputDeviceSize(const int32_t& api);
+        void setVideoInputDeviceRate(const int32_t& api);
 
         std::vector< std::string > getToneLocaleList();
         std::vector< std::string > getPlaybackDeviceList();
