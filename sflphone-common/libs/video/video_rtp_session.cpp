@@ -210,6 +210,7 @@ class VideoRtpThread : public ost::Thread {
 
                 char *encoder_options_string = reinterpret_cast<char*>(malloc(pos + 1));
                 fread(encoder_options_string, pos, 1, f);
+                encoder_options_string[pos] = '\0';
                 fclose(f);
 
                 std::cerr << "Encoder options: " << encoder_options_string << std::endl;
