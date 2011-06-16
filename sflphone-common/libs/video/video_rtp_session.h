@@ -45,6 +45,7 @@ class VideoRtpSession {
                 int bitrate, const std::string &destinationURI);
 
         void start();
+        void test();
         void stop();
     private:
         const std::string input_;

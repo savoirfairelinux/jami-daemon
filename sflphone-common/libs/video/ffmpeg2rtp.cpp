@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
 
     sfl_video::VideoRtpSession session(input, codec,
             atoi(bitrate.c_str()), destination);
-    session.start();
+    session.test();
     while (not interrupted)
         sleep(1);
     session.stop();
