@@ -84,6 +84,271 @@ class VideoRtpThread : public ost::Thread {
         std::map<std::string, std::string> args_;
         volatile int interrupted_;
 
+        /*-------------------------------------------------------------*/
+        /* These variables should be used in thread (i.e. run()) only! */
+        /*-------------------------------------------------------------*/
+        uint8_t *scaledPictureBuf_;
+        uint8_t *outbuf_;
+        AVCodecContext *inputDecoderCtx_;
+        AVFrame *rawFrame_;
+        AVFrame *scaledPicture_;
+        int videoStreamIndex_;
+        int outbufSize_;
+        AVCodecContext *encoderCtx_;
+        AVStream *videoStream_;
+        AVFormatContext *inputCtx_;
+        AVFormatContext *outputCtx_;
+
+        void forcePresetX264()
+        {
+            std::cerr << "get x264 preset time" << std::endl;
+            //int opt_name_count = 0;
+            FILE *f = 0;
+            // FIXME: hardcoded! should look for FFMPEG_DATADIR
+            const char* preset_filename = "libx264-ultrafast.ffpreset";
+            /* open preset file for libx264 */
+            f = fopen(preset_filename, "r");
+            if (f == 0)
+            {
+                std::cerr << "File for preset ' " << preset_filename << "' not"
+                    "found" << std::endl;
+                cleanup();
+            }
+
+            /* grab preset file and put it in character buffer */
+            fseek(f, 0, SEEK_END);
+            long pos = ftell(f);
+            fseek(f, 0, SEEK_SET);
+
+            char *encoder_options_string = reinterpret_cast<char*>(malloc(pos + 1));
+            fread(encoder_options_string, pos, 1, f);
+            encoder_options_string[pos] = '\0';
+            fclose(f);
+
+            std::cerr << "Encoder options: " << encoder_options_string << std::endl;
+            av_set_options_string(encoderCtx_, encoder_options_string, "=", "\n");
+            free(encoder_options_string); // free allocated memory
+        }
+
+        void setup()
+        {
+            av_register_all();
+            avdevice_register_all();
+
+            AVInputFormat *file_iformat = 0;
+            // it's a v4l device if starting with /dev/video
+            if (args_["input"].substr(0, strlen("/dev/video")) == "/dev/video")
+            {
+                std::cerr << "Using v4l2 format" << std::endl;
+                file_iformat = av_find_input_format("video4linux2");
+                if (!file_iformat)
+                {
+                    std::cerr << "Could not find format!" << std::endl;
+                    cleanup();
+                }
+            }
+
+            // Open video file
+            if (av_open_input_file(&inputCtx_, args_["input"].c_str(), file_iformat, 0, NULL) != 0)
+            {
+                std::cerr <<  "Could not open input file " << args_["input"] <<
+                    std::endl;
+                cleanup();
+            }
+
+            // retrieve stream information
+            if (av_find_stream_info(inputCtx_) < 0) {
+                std::cerr << "Could not find stream info!" << std::endl;
+                cleanup();
+            }
+
+            // find the first video stream from the input
+            unsigned i;
+            for (i = 0; i < inputCtx_->nb_streams; i++)
+            {
+                if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
+                {
+                    videoStreamIndex_ = i;
+                    break;
+                }
+            }
+            if (videoStreamIndex_ == -1)
+            {
+                std::cerr << "Could not find video stream!" << std::endl;
+                cleanup();
+            }
+
+            // Get a pointer to the codec context for the video stream
+            inputDecoderCtx_ = inputCtx_->streams[videoStreamIndex_]->codec;
+
+            // find the decoder for the video stream
+            AVCodec *inputDecoder = avcodec_find_decoder(inputDecoderCtx_->codec_id);
+            if (inputDecoder == NULL)
+            {
+                std::cerr << "Unsupported codec!" << std::endl;
+                cleanup();
+            }
+
+            // open codec
+            if (avcodec_open(inputDecoderCtx_, inputDecoder) < 0)
+            {
+                std::cerr << "Could not open codec!" << std::endl;
+                cleanup();
+            }
+
+            outputCtx_ = avformat_alloc_context();
+
+            AVOutputFormat *file_oformat = av_guess_format("rtp", args_["destination"].c_str(), NULL);
+            if (!file_oformat)
+            {
+                std::cerr << "Unable to find a suitable output format for " <<
+                    args_["destination"] << std::endl;
+                cleanup();
+            }
+            outputCtx_->oformat = file_oformat;
+            strncpy(outputCtx_->filename, args_["destination"].c_str(),
+                    sizeof(outputCtx_->filename));
+
+            AVCodec *encoder = 0;
+            /* find the video encoder */
+            encoder = avcodec_find_encoder_by_name(args_["codec"].c_str());
+            if (encoder == 0)
+            {
+                std::cerr << "encoder not found" << std::endl;
+                cleanup();
+            }
+
+            encoderCtx_ = avcodec_alloc_context();
+
+            // set some encoder settings here
+            encoderCtx_->bit_rate = args_.size() > 2 ? atoi(args_["bitrate"].c_str()) : 1000000;
+            // emit one intra frame every gop_size frames
+            encoderCtx_->gop_size = 15;
+            encoderCtx_->max_b_frames = 0;
+            encoderCtx_->rtp_payload_size = 0; // Target GOB length
+            // resolution must be a multiple of two
+            encoderCtx_->width = inputDecoderCtx_->width; // get resolution from input
+            encoderCtx_->height = inputDecoderCtx_->height;
+            // fps
+            encoderCtx_->time_base = (AVRational){1, 30};
+            encoderCtx_->pix_fmt = PIX_FMT_YUV420P;
+
+            /* let x264 preset override our encoder settings */
+            if (args_["codec"] == "libx264")
+                forcePresetX264();
+
+            scaledPicture_ = avcodec_alloc_frame();
+
+            // open encoder
+            if (avcodec_open(encoderCtx_, encoder) < 0)
+            {
+                std::cerr << "Could not open encoder" << std::endl;
+                cleanup();
+            }
+
+            // add video stream to outputformat context
+            videoStream_ = av_new_stream(outputCtx_, 0);
+            if (videoStream_ == 0)
+            {
+                std::cerr << "Could not alloc stream" << std::endl;
+                cleanup();
+            }
+            videoStream_->codec = encoderCtx_;
+
+            // set the output parameters (must be done even if no
+            //   parameters).
+            if (av_set_parameters(outputCtx_, NULL) < 0)
+            {
+                std::cerr << "Invalid output format parameters" << std::endl;
+                cleanup();
+            }
+
+            // open the output file, if needed
+            if (!(file_oformat->flags & AVFMT_NOFILE))
+            {
+                if (avio_open(&outputCtx_->pb, outputCtx_->filename, AVIO_FLAG_WRITE) < 0)
+                {
+                    std::cerr << "Could not open '" << outputCtx_->filename << "'" <<
+                        std::endl;
+                    cleanup();
+                }
+            }
+            else
+                std::cerr << "No need to open" << std::endl;
+
+            av_dump_format(outputCtx_, 0, outputCtx_->filename, 1);
+            print_and_save_sdp(&outputCtx_);
+
+            char error[1024];
+            // write the stream header, if any
+            if (av_write_header(outputCtx_) < 0)
+            {
+                snprintf(error, sizeof(error), "Could not write header for output file (incorrect codec parameters ?)");
+                cleanup();
+            }
+
+            // allocate video frame
+            rawFrame_ = avcodec_alloc_frame();
+
+            // alloc image and output buffer
+            outbufSize_ = encoderCtx_->width * encoderCtx_->height;
+            outbuf_ = reinterpret_cast<uint8_t*>(av_malloc(outbufSize_));
+            // allocate buffer that fits YUV 420
+            scaledPictureBuf_ = reinterpret_cast<uint8_t*>(av_malloc((outbufSize_ * 3) / 2));
+
+            scaledPicture_->data[0] = scaledPictureBuf_;
+            scaledPicture_->data[1] = scaledPicture_->data[0] + outbufSize_;
+            scaledPicture_->data[2] = scaledPicture_->data[1] + outbufSize_ / 4;
+            scaledPicture_->linesize[0] = encoderCtx_->width;
+            scaledPicture_->linesize[1] = encoderCtx_->width / 2;
+            scaledPicture_->linesize[2] = encoderCtx_->width / 2;
+        }
+
+        void cleanup()
+        {
+            // write the trailer, if any.  the trailer must be written
+            // before you close the CodecContexts open when you wrote the
+            // header; otherwise write_trailer may try to use memory that
+            // was freed on av_codec_close()
+            av_write_trailer(outputCtx_);
+
+            av_free(scaledPictureBuf_);
+            av_free(outbuf_);
+
+            // free the scaled frame
+            av_free(scaledPicture_);
+            // free the YUV frame
+            av_free(rawFrame_);
+
+            // close the codecs
+            avcodec_close(encoderCtx_);
+
+            // doesn't need to be freed, we didn't use avcodec_alloc_context
+            avcodec_close(inputDecoderCtx_);
+
+            // close the video file
+            av_close_input_file(inputCtx_);
+
+            // exit this thread
+            exit();
+        }
+
+        SwsContext * createScalingContext()
+        {
+            // Create scaling context
+            SwsContext *imgConvertCtx = sws_getContext(inputDecoderCtx_->width,
+                    inputDecoderCtx_->height, inputDecoderCtx_->pix_fmt, encoderCtx_->width,
+                    encoderCtx_->height, encoderCtx_->pix_fmt, SWS_BICUBIC,
+                    NULL, NULL, NULL);
+            if (imgConvertCtx == 0)
+            {
+                std::cerr << "Cannot init the conversion context!" << std::endl;
+                cleanup();
+            }
+            return imgConvertCtx;
+        }
+
+
     public:
 
         VideoRtpThread(std::map<std::string, std::string> args) : args_(args),
@@ -91,246 +356,59 @@ class VideoRtpThread : public ost::Thread {
 
         virtual void run()
         {
-            av_register_all();
-            avdevice_register_all();
-            AVFormatContext *ic;
-
-            AVInputFormat *file_iformat = NULL;
-            // it's a v4l device if starting with /dev/video
-            if (args_["input"].substr(0, strlen("/dev/video")) == "/dev/video") {
-                std::cerr << "Using v4l2 format" << std::endl;
-                file_iformat = av_find_input_format("video4linux2");
-                if (!file_iformat) {
-                    std::cerr << "Could not find format!" << std::endl;
-                    exit();
-                }
-            }
-
-            // Open video file
-            if (av_open_input_file(&ic, args_["input"].c_str(), file_iformat, 0, NULL) != 0) {
-                std::cerr <<  "Could not open input file " << args_["input"] <<
-                    std::endl;
-                exit(); // couldn't open file
-            }
-
-            // retrieve stream information
-            if (av_find_stream_info(ic) < 0) {
-                std::cerr << "Could not find stream info!" << std::endl;
-                exit(); // couldn't find stream info
-            }
-
-            AVCodecContext *inputDecoderCtx;
-
-            // find the first video stream from the input
-            int videoStream = -1;
-            unsigned i;
-            for (i = 0; i < ic->nb_streams; i++) {
-                if (ic->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
-                    videoStream = i;
-                    break;
-                }
-            }
-            if (videoStream == -1) {
-                std::cerr << "Could not find video stream!" << std::endl;
-                exit(); // didn't find a video stream
-            }
-
-            // Get a pointer to the codec context for the video stream
-            inputDecoderCtx = ic->streams[videoStream]->codec;
-
-            // find the decoder for the video stream
-            AVCodec *inputDecoder = avcodec_find_decoder(inputDecoderCtx->codec_id);
-            if (inputDecoder == NULL) {
-                std::cerr << "Unsupported codec!" << std::endl;
-                exit(); // codec not found
-            }
-
-            // open codec
-            if (avcodec_open(inputDecoderCtx, inputDecoder) < 0) {
-                std::cerr << "Could not open codec!" << std::endl;
-                exit(); // could not open codec
-            }
-
-            AVFormatContext *oc = avformat_alloc_context();
-
-            AVOutputFormat *file_oformat = av_guess_format("rtp", args_["destination"].c_str(), NULL);
-            if (!file_oformat) {
-                std::cerr << "Unable to find a suitable output format for " <<
-                    args_["destination"] << std::endl;
-                exit();
-            }
-            oc->oformat = file_oformat;
-            strncpy(oc->filename, args_["destination"].c_str(), sizeof(oc->filename));
-
-            AVCodec *encoder = NULL;
-            const char *vcodec_name = args_["codec"].c_str();
-
-            AVCodecContext *encoderCtx;
-            /* find the video encoder */
-            encoder = avcodec_find_encoder_by_name(vcodec_name);
-            if (!encoder) {
-                std::cerr << "encoder not found" << std::endl;
-                exit();
-            }
-
-            encoderCtx = avcodec_alloc_context();
-
-            /* set some encoder settings here */
-            encoderCtx->bit_rate = args_.size() > 2 ? atoi(args_["bitrate"].c_str()) : 1000000;
-            /* emit one intra frame every gop_size frames */
-            encoderCtx->gop_size = 15;
-            encoderCtx->max_b_frames = 0;
-            encoderCtx->rtp_payload_size = 0; // Target GOB length
-            /* resolution must be a multiple of two */
-            encoderCtx->width = inputDecoderCtx->width; // get resolution from input
-            encoderCtx->height = inputDecoderCtx->height;
-            /* fps */
-            encoderCtx->time_base = (AVRational){1, 30};
-            encoderCtx->pix_fmt = PIX_FMT_YUV420P;
-
-            /* let x264 preset override our encoder settings */
-            if (!strcmp(vcodec_name, "libx264")) {
-                std::cerr << "get x264 preset time" << std::endl;
-                //int opt_name_count = 0;
-                FILE *f = NULL;
-                // FIXME: hardcoded! should look for FFMPEG_DATADIR
-                const char* preset_filename = "libx264-ultrafast.ffpreset";
-                /* open preset file for libx264 */
-                f = fopen(preset_filename, "r");
-                if (!f) {
-                    std::cerr << "File for preset ' " << preset_filename << "' not"
-                        "found" << std::endl;
-                    exit();
-                }
-
-                /* grab preset file and put it in character buffer */
-                fseek(f, 0, SEEK_END);
-                long pos = ftell(f);
-                fseek(f, 0, SEEK_SET);
-
-                char *encoder_options_string = reinterpret_cast<char*>(malloc(pos + 1));
-                fread(encoder_options_string, pos, 1, f);
-                fclose(f);
-
-                std::cerr << "Encoder options: " << encoder_options_string << std::endl;
-                av_set_options_string(encoderCtx, encoder_options_string, "=", "\n");
-                free(encoder_options_string); // free allocated memory
-            }
-
-            AVFrame *scaled_picture = avcodec_alloc_frame();
-
-            /* open encoder */
-            if (avcodec_open(encoderCtx, encoder) < 0) {
-                std::cerr << "Could not open encoder" << std::endl;
-                exit();
-            }
-
-            /* add video stream to outputformat context */
-            AVStream *video_st = av_new_stream(oc, 0);
-            if (!video_st) {
-                std::cerr << "Could not alloc stream" << std::endl;
-                exit();
-            }
-            video_st->codec = encoderCtx;
-
-            /* set the output parameters (must be done even if no
-               parameters). */
-            if (av_set_parameters(oc, NULL) < 0) {
-                std::cerr << "Invalid output format parameters" << std::endl;
-                exit();
-            }
-
-            /* open the output file, if needed */
-            if (!(file_oformat->flags & AVFMT_NOFILE)) {
-                if (avio_open(&oc->pb, oc->filename, AVIO_FLAG_WRITE) < 0) {
-                    std::cerr << "Could not open '" << oc->filename << "'" <<
-                        std::endl;
-                    exit();
-                }
-            }
-            else std::cerr << "No need to open" << std::endl;
-
-            av_dump_format(oc, 0, oc->filename, 1);
-            print_and_save_sdp(&oc);
-
-            char error[1024];
-            /* write the stream header, if any */
-            if (av_write_header(oc) < 0) {
-                snprintf(error, sizeof(error), "Could not write header for output file (incorrect codec parameters ?)");
-                exit();
-            }
-
-            /* alloc image and output buffer */
-            int size = encoderCtx->width * encoderCtx->height;
-            int outbuf_size = size;
-            uint8_t *outbuf = reinterpret_cast<uint8_t*>(av_malloc(outbuf_size));
-            uint8_t *scaled_picture_buf = reinterpret_cast<uint8_t*>(av_malloc((size * 3) / 2)); /* size for YUV 420 */
-
-            scaled_picture->data[0] = scaled_picture_buf;
-            scaled_picture->data[1] = scaled_picture->data[0] + size;
-            scaled_picture->data[2] = scaled_picture->data[1] + size / 4;
-            scaled_picture->linesize[0] = encoderCtx->width;
-            scaled_picture->linesize[1] = encoderCtx->width / 2;
-            scaled_picture->linesize[2] = encoderCtx->width / 2;
-
-            // allocate video frame
-            AVFrame *raw_frame = avcodec_alloc_frame();
-
-            int frameFinished;
+            setup();
             AVPacket inpacket;
-            double frame_number = 0;
+            int frameFinished;
+            int64_t frameNumber = 0;
+            SwsContext *imgConvertCtx = createScalingContext();
 
-            /* Create scaling context */
-            struct SwsContext *img_convert_ctx = sws_getContext(inputDecoderCtx->width,
-                    inputDecoderCtx->height, inputDecoderCtx->pix_fmt, encoderCtx->width,
-                    encoderCtx->height, encoderCtx->pix_fmt, SWS_BICUBIC,
-                    NULL, NULL, NULL);
-            if (img_convert_ctx == NULL) {
-                std::cerr << "Cannot init the conversion context!" << std::endl;
-                exit();
-            }
-
-            while (!interrupted_ && av_read_frame(ic, &inpacket) >= 0) {
+            while (not interrupted_ and av_read_frame(inputCtx_, &inpacket) >= 0)
+            {
                 // is this a packet from the video stream?
-                if (inpacket.stream_index == videoStream) {
+                if (inpacket.stream_index == videoStreamIndex_)
+                {
                     // decode video frame from camera
-                    avcodec_decode_video2(inputDecoderCtx, raw_frame, &frameFinished, &inpacket);
-                    if (frameFinished)  {
-                        sws_scale(img_convert_ctx, raw_frame->data, raw_frame->linesize,
-                                0, inputDecoderCtx->height, scaled_picture->data,
-                                scaled_picture->linesize);
+                    avcodec_decode_video2(inputDecoderCtx_, rawFrame_, &frameFinished, &inpacket);
+                    if (frameFinished)
+                    {
+                        sws_scale(imgConvertCtx, rawFrame_->data, rawFrame_->linesize,
+                                0, inputDecoderCtx_->height, scaledPicture_->data,
+                                scaledPicture_->linesize);
 
-                        /* Set presentation timestamp on our scaled frame before encoding it */
-                        scaled_picture->pts = frame_number;
-                        frame_number++;
+                        // Set presentation timestamp on our scaled frame before encoding it
+                        scaledPicture_->pts = frameNumber;
+                        frameNumber++;
 
-                        int out_size = avcodec_encode_video(encoderCtx,
-                                outbuf, outbuf_size,
-                                scaled_picture);
+                        int encodedSize = avcodec_encode_video(encoderCtx_,
+                                outbuf_, outbufSize_, scaledPicture_);
 
-                        if (out_size > 0) {
+                        if (encodedSize > 0) {
                             AVPacket opkt;
                             av_init_packet(&opkt);
 
-                            opkt.data = outbuf;
-                            opkt.size = out_size;
+                            opkt.data = outbuf_;
+                            opkt.size = encodedSize;
 
-                            if (static_cast<unsigned>(encoderCtx->coded_frame->pts) !=
+                            // rescale pts from encoded video framerate to rtp
+                            // clock rate
+                            if (static_cast<unsigned>(encoderCtx_->coded_frame->pts) !=
                                     AV_NOPTS_VALUE)
-                                opkt.pts = av_rescale_q(encoderCtx->coded_frame->pts,
-                                        encoderCtx->time_base, video_st->time_base);
+                                opkt.pts = av_rescale_q(encoderCtx_->coded_frame->pts,
+                                        encoderCtx_->time_base, videoStream_->time_base);
                             else
                                 opkt.pts = 0;
 
-                            if (encoderCtx->coded_frame->key_frame)
+                            // is it a key frame?
+                            if (encoderCtx_->coded_frame->key_frame)
                                 opkt.flags |= AV_PKT_FLAG_KEY;
-                            opkt.stream_index = video_st->index;
+                            opkt.stream_index = videoStream_->index;
 
-                            /* write the compressed frame in the media file */
-                            int ret = av_interleaved_write_frame(oc, &opkt);
-                            if (ret < 0) {
+                            // write the compressed frame in the media file
+                            int ret = av_interleaved_write_frame(outputCtx_, &opkt);
+                            if (ret < 0)
+                            {
                                 print_error("av_interleaved_write_frame() error", ret);
-                                exit();
+                                cleanup();
                             }
                             av_free_packet(&opkt);
                         }
@@ -339,35 +417,13 @@ class VideoRtpThread : public ost::Thread {
                 // free the packet that was allocated by av_read_frame
                 av_free_packet(&inpacket);
             }
-            av_free(scaled_picture_buf);
-            av_free(outbuf);
-
-            /* write the trailer, if any.  the trailer must be written
-             * before you close the CodecContexts open when you wrote the
-             * header; otherwise write_trailer may try to use memory that
-             * was freed on av_codec_close() */
-            av_write_trailer(oc);
-
-            // free the scaled frame
-            av_free(scaled_picture);
-            // free the YUV frame
-            av_free(raw_frame);
-
-            // close the codecs
-            avcodec_close(encoderCtx);
-
-            /* doesn't need to be freed, we didn't use avcodec_alloc_context */
-            avcodec_close(inputDecoderCtx);
-
-            // close the video file
-            av_close_input_file(ic);
-
-            exit();
+            // free resources, exit thread
+            cleanup();
         }
 
         void stop()
         {
-            /* FIXME: not thread safe */
+            // FIXME: not thread safe
             interrupted_ = true;
         }
 
