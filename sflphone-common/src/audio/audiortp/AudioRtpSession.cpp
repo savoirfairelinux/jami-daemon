@@ -36,16 +36,13 @@
 
 #include "sip/sdp.h"
 #include "audio/audiolayer.h"
-#include "manager.h"
-
 namespace sfl
 {
 
-AudioRtpSession::AudioRtpSession (ManagerImpl * manager, SIPCall * sipcall) :
+AudioRtpSession::AudioRtpSession (SIPCall * sipcall) :
     AudioRtpRecordHandler (sipcall)
     , ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort())
     , _mainloopSemaphore (0)
-    , _manager (manager)
     , _timestamp (0)
     , _timestampIncrement (0)
     , _timestampCount (0)

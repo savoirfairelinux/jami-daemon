@@ -35,14 +35,12 @@ using std::ptrdiff_t;
 
 #include "AudioRtpSession.h"
 
-class ManagerImpl;
-
 namespace sfl
 {
 class AudioSymmetricRtpSession : public AudioRtpSession
 {
     public:
-        AudioSymmetricRtpSession (ManagerImpl * manager, SIPCall * sipcall) : AudioRtpSession (manager, sipcall) {
+        AudioSymmetricRtpSession (SIPCall * sipcall) : AudioRtpSession (sipcall) {
 
         }
 };

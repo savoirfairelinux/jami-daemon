@@ -45,8 +45,6 @@
 #include "sip/sipcall.h"
 #include "audio/codecs/audiocodec.h"
 
-#include "managerimpl.h"
-
 using std::ptrdiff_t;
 #include <ccrtp/rtp.h>
 #include <ccrtp/iqueue.h>
@@ -64,7 +62,7 @@ class AudioRtpSession : public ost::TimerPort, public AudioRtpRecordHandler, pub
         * Constructor
         * @param sipcall The pointer on the SIP call
         */
-        AudioRtpSession (ManagerImpl * manager, SIPCall* sipcall);
+        AudioRtpSession (SIPCall* sipcall);
 
         ~AudioRtpSession();
 
@@ -168,11 +166,6 @@ class AudioRtpSession : public ost::TimerPort, public AudioRtpRecordHandler, pub
         // Stored in case reINVITE, which may require to forget
         // this destination and update a new one
         unsigned short _remote_port;
-
-        /**
-         * Manager instance.
-         */
-        ManagerImpl * _manager;
 
         /**
          * Timestamp for this session
