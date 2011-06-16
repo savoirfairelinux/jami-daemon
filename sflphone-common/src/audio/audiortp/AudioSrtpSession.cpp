@@ -49,8 +49,8 @@
 namespace sfl
 {
 
-AudioSrtpSession::AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall) :
-    AudioRtpSession (manager, sipcall),
+AudioSrtpSession::AudioSrtpSession (SIPCall * sipcall) :
+    AudioRtpSession (sipcall),
     _remoteCryptoCtx (NULL),
     _localCryptoCtx (NULL),
     _localCryptoSuite (0),

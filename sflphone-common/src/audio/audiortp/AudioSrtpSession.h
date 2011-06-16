@@ -37,7 +37,6 @@
 #include <vector>
 
 class SdesNegotiator;
-class ManagerImpl;
 class SIPCall;
 
 /*
@@ -81,7 +80,7 @@ class AudioSrtpSession : public AudioRtpSession
         /**
          * Constructor for this rtp session
          */
-        AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall);
+        AudioSrtpSession (SIPCall * sipcall);
 
         ~AudioSrtpSession();
 

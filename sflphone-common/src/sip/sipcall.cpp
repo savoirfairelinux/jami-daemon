@@ -32,7 +32,7 @@
  */
 
 #include "sipcall.h"
-#include "global.h" // for _debug
+#include "logger.h" // for _debug
 #include "audio/audiortp/AudioRtpFactory.h"
 #include "sdp.h"
 
