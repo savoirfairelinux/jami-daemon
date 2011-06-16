@@ -195,7 +195,7 @@ static int GetSizes(int fd, VideoV4l2Input &input, unsigned int pixelformat)
 
 static int GetFormat(int fd, VideoV4l2Input &input)
 {
-    int idx = input.idx;
+    unsigned idx = input.idx;
     if (ioctl(fd, VIDIOC_S_INPUT, &idx))
         return 1;
 
@@ -205,7 +205,7 @@ static int GetFormat(int fd, VideoV4l2Input &input)
 
     unsigned int best_score = UINT_MAX;
     unsigned int best_idx = 0;
-    unsigned int pixelformat;
+    unsigned int pixelformat = 0;
     while (!ioctl(fd, VIDIOC_ENUM_FMT, &fmt)) {
         if (idx != fmt.index)
             break;
@@ -230,7 +230,7 @@ static int GetFormat(int fd, VideoV4l2Input &input)
 }
 
 VideoV4l2Device::VideoV4l2Device(const char *dev) {
-    int idx;
+    unsigned idx;
     int fd = open(dev, O_RDWR);
     if (fd == -1)
         throw 1; // could not open device
