@@ -31,6 +31,7 @@
 #ifndef __VIDEO_V4L2_H__
 #define __VIDEO_V4L2_H__
 
+#include <string>
 #include <vector>
 
 extern "C" {
@@ -90,12 +91,14 @@ class VideoV4l2Input {
 
 class VideoV4l2Device {
     public:
-        VideoV4l2Device(const char *dev);
+        VideoV4l2Device(int fd, std::string &device);
 
     std::vector<VideoV4l2Input> inputs;
     void addInput(const VideoV4l2Input &input) {
         inputs.push_back(input);
     }
+
+    std::string device;
 };
 
 } // namespace sfl_video

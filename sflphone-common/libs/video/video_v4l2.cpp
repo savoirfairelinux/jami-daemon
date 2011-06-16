@@ -28,6 +28,7 @@
  *  as that of the covered work.
  */
 
+#include <string>
 #include <vector>
 #include <climits>
 
@@ -42,6 +43,8 @@ extern "C" {
 
 #include "video_v4l2.h"
 
+namespace sfl_video
+{
 static const unsigned pixelformats_supported[] = {
     /* pixel format        depth  description   */
 
@@ -110,6 +113,7 @@ static const unsigned pixelformats_supported[] = {
  * YUV input
  * 
  */
+
 static unsigned int pixelformat_score(unsigned pixelformat)
 {
     size_t n = sizeof pixelformats_supported / sizeof *pixelformats_supported;
@@ -119,9 +123,6 @@ static unsigned int pixelformat_score(unsigned pixelformat)
     }
     return UINT_MAX - 1;
 }
-
-namespace sfl_video
-{
 
 static int GetFrameRates(int fd, VideoV4l2Size &size, unsigned int pixel_format)
 {
@@ -229,22 +230,15 @@ static int GetFormat(int fd, VideoV4l2Input &input)
     return ret ? ret + 2 : ret;
 }
 
-VideoV4l2Device::VideoV4l2Device(const char *dev) {
+VideoV4l2Device::VideoV4l2Device(int fd, std::string &device) {
     unsigned idx;
-    int fd = open(dev, O_RDWR);
-    if (fd == -1)
-        throw 1; // could not open device
 
     struct v4l2_capability cap;
-    if (ioctl(fd, VIDIOC_QUERYCAP, &cap)) {
-        close(fd);
-        throw 2; // could not query capabilities
-    }
+    if (ioctl(fd, VIDIOC_QUERYCAP, &cap))
+        throw 1; // could not query capabilities
 
-    if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
-        close(fd);
-        throw 3; // not a capture device
-    }
+    if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE))
+        throw 2; // not a capture device
 
     struct v4l2_input input;
     input.index = idx = 0;
@@ -255,18 +249,15 @@ VideoV4l2Device::VideoV4l2Device(const char *dev) {
         if (input.type & V4L2_INPUT_TYPE_CAMERA) {
             VideoV4l2Input vinput(idx, (const char*)input.name);
 
-            if (GetFormat(fd, vinput)) {
-                close(fd);
-                throw 4; // could not add input
-            }
+            if (GetFormat(fd, vinput))
+                throw 3; // could not add input
 
             addInput(vinput);
         }
 
         input.index = ++idx;
     }
-
-    close(fd);
+    this->device = device;
 }
 
 } // end namespace sfl

@@ -10,7 +10,7 @@ libvideo_endpoint_la_SOURCES = video_endpoint.cpp video_endpoint.h \
 							   video_rtp_thread.h video_rtp_thread.cpp
 libvideo_endpoint_la_LIBADD = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@ @LIBAVDEVICE_LIBS@ @LIBSWSCALE_LIBS@ @CCRTP_LIBS@
 
-libvideo_v4l2_la_SOURCES = video_v4l2.cpp video_v4l2.h
+libvideo_v4l2_la_SOURCES = video_v4l2.cpp video_v4l2.h video_v4l2_list.h video_v4l2_list.cpp
 
 AM_CXXFLAGS=@LIBAVCODEC_CFLAGS@ @LIBAVFORMAT_CFLAGS@ @LIBAVDEVICE_CFLAGS@ @LIBSWSCALE_CFLAGS@ @CCRTP_CFLAGS@
 AM_CFLAGS=@LIBAVCODEC_CFLAGS@ @LIBAVFORMAT_CFLAGS@ @LIBAVDEVICE_CFLAGS@ @LIBSWSCALE_CFLAGS@
