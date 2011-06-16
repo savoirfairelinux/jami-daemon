@@ -49,7 +49,6 @@ gint is_callID_callstruct(gconstpointer a, gconstpointer b)
     
     call = c->elem.call;
 
-    DEBUG("Compare %s to %s", call->_callID, (const gchar *)b);
     if(g_strcasecmp(call->_callID, (const gchar *) b) == 0) {
         return 0;
     }
@@ -147,16 +146,12 @@ calllist_add_call (calltab_t* tab, callable_obj_t * c)
 {
     QueueElement *element;
 
-    DEBUG(")))))))))))))))))))))))))))))))))))))))))))) Calllist: Add Call %s", c->_callID);
+    DEBUG("Calllist: Add Call %s", c->_callID);
 
-    // if (tab == history) {
-    //    calllist_add_history_call (c);
-    // } else {
-	element = (QueueElement *)malloc(sizeof(QueueElement));
-	element->type = HIST_CALL;
-	element->elem.call = c;
-        g_queue_push_tail (tab->callQueue, (gpointer *) element);
-    // }
+    element = (QueueElement *)malloc(sizeof(QueueElement));
+    element->type = HIST_CALL;
+    element->elem.call = c;
+    g_queue_push_tail (tab->callQueue, (gpointer *) element);
 }
 
 // TODO : sflphoneGTK : try to do this more generic

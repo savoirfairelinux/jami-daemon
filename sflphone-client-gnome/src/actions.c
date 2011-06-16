@@ -626,6 +626,7 @@ sflphone_incoming_call (callable_obj_t * c)
     calllist_add_call (current_calls, c);
     calllist_add_call (history, c);
     calltree_add_call (current_calls, c, NULL);
+    calltree_add_call (history, c, NULL);
     update_actions();
     calltree_display (current_calls);
 
@@ -950,7 +951,10 @@ static int _place_registered_call (callable_obj_t * c)
     }
 
     c->_history_state = OUTGOING;
+    
     calllist_add_call (history, c);
+    calltree_add_call (history, c, NULL);    
+
     return 0;
 }
 
@@ -1314,9 +1318,11 @@ void sflphone_fill_history (void)
 
                 // do something with key and value
                 create_history_entry_from_serialized_form ( (gchar*) key, (gchar*) value, &history_entry);
-                DEBUG ("HISTORY ENTRY: %i\n", history_entry->_time_start);
-                // Add it and update the GUI
+                DEBUG ("SFLphone: History timestart%d\n", history_entry->_time_start);
+                
+		// Add it and update the GUI
                 calllist_add_call (history, history_entry);
+		calltree_add_call (history, history_entry, NULL);
 
                 // remove entry from map
                 g_hash_table_remove (entries, key_to_min);

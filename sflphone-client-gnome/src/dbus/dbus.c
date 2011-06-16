@@ -76,6 +76,8 @@ new_call_created_cb (DBusGProxy *proxy UNUSED, const gchar *accountID,
     calllist_add_call(current_calls, c);
     calllist_add_call(history, c);
     calltree_add_call(current_calls, c, NULL);
+    calltree_add_call(history, c, NULL);
+
     update_actions();
     calltree_display(current_calls);
 }
