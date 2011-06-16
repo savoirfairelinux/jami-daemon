@@ -1,7 +1,7 @@
 SUBDIRS=test
 
 noinst_PROGRAMS = ffmpeg2rtp ffmpeg2shm
-noinst_LTLIBRARIES = libvideo_endpoint.la
+noinst_LTLIBRARIES = libvideo_endpoint.la libvideo_v4l2.la
 
 libvideo_endpoint_la_SOURCES = video_endpoint.cpp video_endpoint.h \
 							   libav_utils.cpp libav_utils.h \
@@ -9,6 +9,8 @@ libvideo_endpoint_la_SOURCES = video_endpoint.cpp video_endpoint.h \
 							   video_rtp_factory.cpp video_rtp_factory.h \
 							   video_rtp_thread.h video_rtp_thread.cpp
 libvideo_endpoint_la_LIBADD = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@ @LIBAVDEVICE_LIBS@ @LIBSWSCALE_LIBS@ @CCRTP_LIBS@
+
+libvideo_v4l2_la_SOURCES = video_v4l2.cpp video_v4l2.h
 
 AM_CXXFLAGS=@LIBAVCODEC_CFLAGS@ @LIBAVFORMAT_CFLAGS@ @LIBAVDEVICE_CFLAGS@ @LIBSWSCALE_CFLAGS@ @CCRTP_CFLAGS@
 AM_CFLAGS=@LIBAVCODEC_CFLAGS@ @LIBAVFORMAT_CFLAGS@ @LIBAVDEVICE_CFLAGS@ @LIBSWSCALE_CFLAGS@

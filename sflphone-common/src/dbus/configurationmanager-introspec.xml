@@ -462,6 +462,86 @@
 	   </method>
 
 
+       <!-- Video devices methods -->
+
+	   <method name="getVideoInputDeviceList" tp:name-for-bindings="getVideoInputDeviceList">
+		   <tp:docstring>
+		   </tp:docstring>
+		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+		   <arg type="as" name="list" direction="out">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+	   </method>
+
+	   <method name="getVideoInputDeviceInputList" tp:name-for-bindings="getVideoInputDeviceInputList">
+		   <tp:docstring>
+		   </tp:docstring>
+		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+		   <arg type="as" name="list" direction="out">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+	   </method>
+
+	   <method name="getVideoInputDeviceSizeList" tp:name-for-bindings="getVideoInputDeviceSizeList">
+		   <tp:docstring>
+		   </tp:docstring>
+		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+		   <arg type="as" name="list" direction="out">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+	   </method>
+
+	   <method name="getVideoInputDeviceRateList" tp:name-for-bindings="getVideoInputDeviceRateList">
+		   <tp:docstring>
+		   </tp:docstring>
+		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+		   <arg type="as" name="list" direction="out">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+	   </method>
+
+	   <method name="setVideoInputDevice" tp:name-for-bindings="setVideoInputDevice">
+		   <tp:docstring>
+		   </tp:docstring>
+		   <arg type="i" name="index" direction="in">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+	   </method>
+
+	   <method name="setVideoInputDeviceInput" tp:name-for-bindings="setVideoInputDeviceInput">
+		   <tp:docstring>
+		   </tp:docstring>
+		   <arg type="i" name="index" direction="in">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+	   </method>
+
+	   <method name="setVideoInputDeviceSize" tp:name-for-bindings="setVideoInputDeviceSize">
+		   <tp:docstring>
+		   </tp:docstring>
+		   <arg type="i" name="index" direction="in">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+	   </method>
+
+	   <method name="setVideoInputDeviceRate" tp:name-for-bindings="setVideoInputDeviceRate">
+		   <tp:docstring>
+		   </tp:docstring>
+		   <arg type="i" name="index" direction="in">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+	   </method>
+
+	   <!--      ///////////////////////               -->
+
 	   <!-- Audio devices methods -->
 
 	   <method name="getAudioPluginList" tp:name-for-bindings="getAudioPluginList">

@@ -639,6 +639,46 @@ std::vector<std::string> ConfigurationManager::getRecordDeviceList()
     return ret;
 }
 
+std::vector<std::string> ConfigurationManager::getVideoInputDeviceList()
+{
+    std::vector<std::string> ret;
+    return ret;
+}
+
+std::vector<std::string> ConfigurationManager::getVideoInputDeviceInputList()
+{
+    std::vector<std::string> ret;
+    return ret;
+}
+
+std::vector<std::string> ConfigurationManager::getVideoInputDeviceSizeList()
+{
+    std::vector<std::string> ret;
+    return ret;
+}
+
+std::vector<std::string> ConfigurationManager::getVideoInputDeviceRateList()
+{
+    std::vector<std::string> ret;
+    return ret;
+}
+
+void ConfigurationManager::setVideoInputDevice(const int32_t& api)
+{
+}
+
+void ConfigurationManager::setVideoInputDeviceInput(const int32_t& api)
+{
+}
+
+void ConfigurationManager::setVideoInputDeviceSize(const int32_t& api)
+{
+}
+
+void ConfigurationManager::setVideoInputDeviceRate(const int32_t& api)
+{
+}
+
 bool ConfigurationManager::isMd5CredentialHashing (void)
 {
     return Manager::instance().preferences.getMd5Hash();
