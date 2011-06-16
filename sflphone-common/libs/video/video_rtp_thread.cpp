@@ -191,17 +191,6 @@ void VideoRtpReceiveThread::setup()
     avdevice_register_all();
 
     AVInputFormat *file_iformat = 0;
-    // it's a v4l device if starting with /dev/video
-    if (args_["input"].substr(0, strlen("/dev/video")) == "/dev/video")
-    {
-        std::cerr << "Using v4l2 format" << std::endl;
-        file_iformat = av_find_input_format("video4linux2");
-        if (!file_iformat)
-        {
-            std::cerr << "Could not find format!" << std::endl;
-            cleanup();
-        }
-    }
 
     // Open video file
     int tries = 0;
@@ -221,7 +210,8 @@ void VideoRtpReceiveThread::setup()
     }
 
     // retrieve stream information
-    if (av_find_stream_info(inputCtx_) < 0) {
+    if (av_find_stream_info(inputCtx_) < 0)
+    {
         std::cerr << "Could not find stream info!" << std::endl;
         cleanup();
     }
@@ -285,7 +275,6 @@ void VideoRtpReceiveThread::setup()
 
     // allocate video frame
     rawFrame_ = avcodec_alloc_frame();
-
 }
 
 void VideoRtpReceiveThread::cleanup()
@@ -430,6 +419,23 @@ void VideoRtpSendThread::forcePresetX264()
     free(encoder_options_string); // free allocated memory
 }
 
+void VideoRtpSendThread::prepareEncoderContext()
+{
+    encoderCtx_ = avcodec_alloc_context();
+    // set some encoder settings here
+    encoderCtx_->bit_rate = atoi(args_["bitrate"].c_str());
+    // emit one intra frame every gop_size frames
+    encoderCtx_->gop_size = 15;
+    encoderCtx_->max_b_frames = 0;
+    encoderCtx_->rtp_payload_size = 0; // Target GOB length
+    // resolution must be a multiple of two
+    encoderCtx_->width = inputDecoderCtx_->width; // get resolution from input
+    encoderCtx_->height = inputDecoderCtx_->height;
+    // fps
+    encoderCtx_->time_base = (AVRational){1, 30};
+    encoderCtx_->pix_fmt = PIX_FMT_YUV420P;
+}
+
 void VideoRtpSendThread::setup()
 {
     av_register_all();
@@ -518,20 +524,7 @@ void VideoRtpSendThread::setup()
         cleanup();
     }
 
-    encoderCtx_ = avcodec_alloc_context();
-
-    // set some encoder settings here
-    encoderCtx_->bit_rate = args_.size() > 2 ? atoi(args_["bitrate"].c_str()) : 1000000;
-    // emit one intra frame every gop_size frames
-    encoderCtx_->gop_size = 15;
-    encoderCtx_->max_b_frames = 0;
-    encoderCtx_->rtp_payload_size = 0; // Target GOB length
-    // resolution must be a multiple of two
-    encoderCtx_->width = inputDecoderCtx_->width; // get resolution from input
-    encoderCtx_->height = inputDecoderCtx_->height;
-    // fps
-    encoderCtx_->time_base = (AVRational){1, 30};
-    encoderCtx_->pix_fmt = PIX_FMT_YUV420P;
+    prepareEncoderContext();
 
     /* let x264 preset override our encoder settings */
     if (args_["codec"] == "libx264")

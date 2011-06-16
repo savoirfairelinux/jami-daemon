@@ -76,6 +76,7 @@ class VideoRtpSendThread : public ost::Thread {
         void forcePresetX264();
         void print_and_save_sdp();
         void setup();
+        void prepareEncoderContext();
         void cleanup();
         SwsContext * createScalingContext();
 
