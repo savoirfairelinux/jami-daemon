@@ -65,53 +65,11 @@ class SIPCall : public Call
          * Destructor
          */
         ~SIPCall ();
-
         /**
-         * Call Identifier
-         * @return int  SIP call id
+         * Get event subscription internal structure
          */
-        int  getCid () const {
-            return _cid;
-        }
-
-        /**
-         * Call Identifier
-         * @param cid SIP call id
-         */
-        void setCid (int cid) {
-            _cid = cid;
-        }
-
-        /**
-         * Domain identifier
-         * @return int  SIP domain id
-         */
-        int  getDid() const {
-            return _did;
-        }
-
-        /**
-         * Domain identifier
-         * @param did SIP domain id
-         */
-        void setDid (int did) {
-            _did = did;
-        }
-
-        /**
-         * Transaction identifier
-         * @return int  SIP transaction id
-         */
-        int  getTid () const {
-            return _tid;
-        }
-
-        /**
-         * Transaction identifier
-         * @param tid SIP transaction id
-         */
-        void setTid (int tid) {
-            _tid = tid;
+        pjsip_evsub *getXferSub() {
+            return _xferSub;
         }
 
         /**
@@ -119,13 +77,6 @@ class SIPCall : public Call
          */
         void setXferSub (pjsip_evsub* sub) {
             _xferSub = sub;
-        }
-
-        /**
-         * Get event subscription internal structure
-         */
-        pjsip_evsub *getXferSub() {
-            return _xferSub;
         }
 
         void setInvSession (pjsip_inv_session* inv) {
@@ -137,7 +88,7 @@ class SIPCall : public Call
         }
 
         void replaceInvSession (pjsip_inv_session *inv) {
-        	_invSession = inv;
+            _invSession = inv;
         }
 
         /**
@@ -165,7 +116,7 @@ class SIPCall : public Call
          * Return the local memory pool for this call
          */
         pj_pool_t *getMemoryPool(void) {
-        	return _pool;
+            return _pool;
         }
 
     private:
