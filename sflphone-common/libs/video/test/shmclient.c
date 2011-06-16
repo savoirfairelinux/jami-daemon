@@ -157,6 +157,8 @@ int main(int argc, char *argv[])
     FrameInfo info = getFrameSize();
     int shm_id = getShm(info.size);
     char *shm_buffer = attachShm(shm_id);
+    if (shm_buffer == NULL)
+        return 1;
     int sem_set_id = get_sem_set();
 
     ClutterActor *stage, *texture;

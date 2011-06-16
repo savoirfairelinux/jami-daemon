@@ -285,6 +285,7 @@ void VideoRtpReceiveThread::cleanup()
     // close the video file
     av_close_input_file(inputCtx_);
 
+    std::cerr << "Exitting the decoder thread" << std::endl;
     // exit this thread
     exit();
 }
