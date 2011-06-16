@@ -30,6 +30,19 @@
 
 #include <conferencelist.h>
 
+static gint is_confID_confstruct(gconstpointer, gconstpointer);
+
+static
+gint is_confID_confstruct (gconstpointer a, gconstpointer b)
+{
+    conference_obj_t * c = (conference_obj_t*) a;
+
+    if (g_strcasecmp (c->_confID, (const gchar*) b) == 0) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
 
 gchar*
 generate_conf_id (void)

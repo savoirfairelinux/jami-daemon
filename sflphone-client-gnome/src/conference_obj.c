@@ -32,15 +32,15 @@
 #include <sflphone_const.h>
 #include <time.h>
 
-gint is_confID_confstruct (gconstpointer a, gconstpointer b)
-{
-    conference_obj_t * c = (conference_obj_t*) a;
+static void set_conference_timestamp (time_t *);
 
-    if (g_strcasecmp (c->_confID, (const gchar*) b) == 0) {
-        return 0;
-    } else {
-        return 1;
-    }
+static void set_conference_timestamp (time_t *timestamp) 
+{
+    time_t tmp;
+
+    // Set to current value
+    (void) time(&tmp);
+    *timestamp = tmp;
 }
 
 void create_new_conference (conference_state_t state, const gchar* confID, conference_obj_t ** conf)
@@ -173,5 +173,39 @@ void conference_participant_list_update (gchar** participants, conference_obj_t*
 
 gchar *serialize_history_conference_entry(conference_obj_t *entry)
 {
+    gchar *result;
+    gchar *separator = "|";
+    gchar *sep;
+    gchar *timestamp;
+    gchar *peer_name;
+    gchar *numberstr = "";
+    GSList *number_list;
+    gint length = 0;
+    gint i;
+
+    timestamp = convert_timestamp_to_gchar(entry->_time_stop);
+ 
+    peer_name = (entry->_confID == NULL || g_strcasecmp(entry->_confID, "") == 0) ? "empty": entry->_confID;
+
+    length = g_slist_length(entry->participant_number);
+    number_list = entry->participant_number;
+
+    for(i = 0; i < length; i++) {
+	gchar *tmp = g_slist_nth_data(number_list, i);
+	if(tmp == NULL) {
+            WARN("Conference: Peer number is NULL in conference list");
+        }
+        g_strconcat(numberstr, tmp, ",");
+    }
+
+    result = g_strconcat("2188", separator,
+			numberstr, separator, // peer number
+			peer_name, separator,
+			timestamp, separator,
+			"", separator, // peer AccountID
+			entry->_recordfile ? entry->_recordfile : "",
+			NULL); 
+  	
+
     return "";
 }

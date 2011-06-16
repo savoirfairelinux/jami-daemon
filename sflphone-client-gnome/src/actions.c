@@ -1349,10 +1349,12 @@ void sflphone_save_history (void)
 
         if (current) {
 	    if(current->type == HIST_CALL) {
+		DEBUG("Serialize call");
                 value = serialize_history_call_entry (current->elem.call);
 		key =  convert_timestamp_to_gchar (current->elem.call->_time_start);
             }
 	    else if(current->type == HIST_CONFERENCE) {
+		DEBUG("Serialize conference");
                 value = serialize_history_conference_entry(current->elem.conf);
 		key = convert_timestamp_to_gchar (current->elem.conf->_time_start);
             }
