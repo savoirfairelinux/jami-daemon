@@ -49,7 +49,7 @@ extern "C" {
 
 namespace sfl_video {
 
-class VideoRtpThread : public ost::Thread {
+class VideoRtpSendThread : public ost::Thread {
     private:
         static void print_error(const char *filename, int err)
         {
@@ -351,7 +351,7 @@ class VideoRtpThread : public ost::Thread {
 
     public:
 
-        VideoRtpThread(std::map<std::string, std::string> args) : args_(args),
+        VideoRtpSendThread(const std::map<std::string, std::string> &args) : args_(args),
         interrupted_(false) {}
 
         virtual void run()
@@ -427,7 +427,7 @@ class VideoRtpThread : public ost::Thread {
             interrupted_ = true;
         }
 
-        virtual ~VideoRtpThread()
+        virtual ~VideoRtpSendThread()
         {
             terminate();
         }
@@ -445,7 +445,7 @@ VideoRtpSession::VideoRtpSession(const std::string &input,
 
 void VideoRtpSession::start()
 {
-    assert(rtpThread_.get() == 0);
+    assert(rtpSendThread_.get() == 0);
     std::cerr << "Capturing from " << input_ << ", encoding to " << codec_ <<
         " at " << bitrate_ << " bps, sending to " << destinationURI_ <<
         std::endl;
@@ -458,17 +458,17 @@ void VideoRtpSession::start()
     args["bitrate"] = bitstr.str();
     args["destination"] = destinationURI_;
 
-    rtpThread_.reset(new VideoRtpThread(args));
-    rtpThread_->start();
+    rtpSendThread_.reset(new VideoRtpSendThread(args));
+    rtpSendThread_->start();
 }
 
 void VideoRtpSession::stop()
 {
     std::cerr << "Stopping video rtp session " << std::endl;
     // FIXME: all kinds of evil!!! interrupted should be atomic
-    rtpThread_->stop();
+    rtpSendThread_->stop();
     std::cerr << "cancelled video rtp session " << std::endl;
-    rtpThread_.reset();
+    rtpSendThread_.reset();
 }
 
 } // end namspace sfl_video

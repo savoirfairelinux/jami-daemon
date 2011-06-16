@@ -36,7 +36,8 @@
 
 namespace sfl_video {
 
-class VideoRtpThread;
+class VideoRtpSendThread;
+class VideoRtpReceiveThread;
 
 class VideoRtpSession {
     public:
@@ -50,7 +51,7 @@ class VideoRtpSession {
         const std::string codec_;
         const int bitrate_;
         const std::string destinationURI_;
-        std::tr1::shared_ptr<VideoRtpThread> rtpThread_;
+        std::tr1::shared_ptr<VideoRtpSendThread> rtpSendThread_;
 };
 
 }
