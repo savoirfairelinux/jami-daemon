@@ -1336,7 +1336,10 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
 	std::string tostr = participantList[i].c_str();
 	generatedCallID = generatedCallID + participantList[i];
 	conf->add(generatedCallID);
-	outgoingCall(accountstr, generatedCallID, tostr, conf->getConfID());	
+	outgoingCall(accountstr, generatedCallID, tostr, conf->getConfID());
+	if(_dbus) {
+	    _dbus->getCallManager()->newCallCreated(accountstr, generatedCallID, tostr);
+	}	
     }
 
     _conferencemap.insert(std::pair<CallID, Conference *> (conf->getConfID(), conf));
@@ -1868,10 +1871,9 @@ bool ManagerImpl::incomingCall (Call* call, const AccountID& accountId)
     display.append (" ");
     display.append (from);
 
-    if (_dbus)
+    if (_dbus) {
         _dbus->getCallManager()->incomingCall (accountId, call->getCallId(), display.c_str());
-
-   // answerCall(call->getCallId());
+    }
 
     return true;
 }

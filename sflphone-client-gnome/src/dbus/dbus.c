@@ -59,19 +59,42 @@ DBusGProxy * configurationManagerProxy;
 DBusGProxy * instanceProxy;
 
 static void
+new_call_created_cb (DBusGProxy *proxy UNUSED, const gchar *accountID,
+		     const gchar *callID, const gchar *to, void *foo UNUSED)
+{
+    callable_obj_t *c;
+    gchar *peer_name = to;
+    gchar *peer_number = "";
+
+    DEBUG("DBus: New Call (%s) created to (%s)", callID, to);
+
+    create_new_call(CALL, CALL_STATE_RINGING, g_strdup(callID), g_strdup(accountID), 
+			peer_name, peer_number, &c);
+
+    set_timestamp(&c->_time_start);
+
+    calllist_add(current_calls, c);
+    calllist_add(history, c);
+    calltree_add_call(current_calls, c, NULL);
+    update_actions();
+    calltree_display(current_calls);
+}
+
+static void
 incoming_call_cb (DBusGProxy *proxy UNUSED, const gchar* accountID,
                   const gchar* callID, const gchar* from, void * foo  UNUSED)
 {
-    DEBUG ("DBus: Incoming call (%s) from %s", callID, from);
-
     callable_obj_t * c;
     gchar *peer_name, *peer_number;
+    
+    DEBUG ("DBus: Incoming call (%s) from %s", callID, from);
+
     // We receive the from field under a formatted way. We want to extract the number and the name of the caller
     peer_name = call_get_peer_name (from);
     peer_number = call_get_peer_number (from);
 
-    DEBUG ("    peer name: %s", peer_name);
-    DEBUG ("    peer number: %s", peer_number);
+    DEBUG ("DBus incoming peer name: %s", peer_name);
+    DEBUG ("DBus incoming peer number: %s", peer_number);
 
     create_new_call (CALL, CALL_STATE_INCOMING, g_strdup (callID), g_strdup (
                          accountID), peer_name, peer_number, &c);
@@ -569,6 +592,10 @@ dbus_connect (GError **error)
     dbus_g_object_register_marshaller (
         g_cclosure_user_marshal_VOID__STRING_STRING_STRING, G_TYPE_NONE,
         G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_add_signal (callManagerProxy, "newCallCreated", G_TYPE_STRING,
+			     G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal (callManagerProxy, "newCallCreated",
+				 G_CALLBACK (new_call_created_cb), NULL, NULL);
     dbus_g_proxy_add_signal (callManagerProxy, "incomingCall", G_TYPE_STRING,
                              G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal (callManagerProxy, "incomingCall",
