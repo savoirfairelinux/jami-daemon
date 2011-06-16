@@ -170,3 +170,8 @@ void conference_participant_list_update (gchar** participants, conference_obj_t*
     }
 
 }
+
+gchar *serialize_history_conference_entry(conference_obj_t *entry)
+{
+    return "";
+}

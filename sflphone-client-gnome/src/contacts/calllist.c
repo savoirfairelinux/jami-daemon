@@ -194,8 +194,6 @@ calllist_remove_call (calltab_t* tab, const gchar * callID)
     DEBUG("CallList: Remove call %s from list", callID);
 
     c = g_queue_find_custom (tab->callQueue, callID, is_callID_callstruct);
-
-    // c = calllist_get_call (tab, callID);
     if(c == NULL) {
         DEBUG("CallList: Could not remove call %s", callID);
     	return;

@@ -223,7 +223,7 @@ history_state_t get_history_state_from_id (gchar *indice);
 
 gchar* get_call_duration (callable_obj_t *obj);
 
-gchar* serialize_history_entry (callable_obj_t *entry);
+gchar* serialize_history_call_entry(callable_obj_t *entry);
 
 gchar* get_history_id_from_state (history_state_t state);
 

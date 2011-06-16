@@ -455,7 +455,7 @@ gchar* get_call_duration (callable_obj_t *obj)
 
 }
 
-gchar* serialize_history_entry (callable_obj_t *entry)
+gchar* serialize_history_call_entry (callable_obj_t *entry)
 {
     // "0|514-276-5468|Savoir-faire Linux|144562458" for instance
 
@@ -470,8 +470,6 @@ gchar* serialize_history_entry (callable_obj_t *entry)
 
     gchar* peer_name = (entry->_peer_name == NULL || g_strcasecmp (entry->_peer_name,"") == 0) ? "empty": entry->_peer_name;
     gchar* account_id = (entry->_accountID == NULL || g_strcasecmp (entry->_accountID,"") == 0) ? "empty": entry->_accountID;
-
-    DEBUG("ACCOUNT ID STORED IN HISTORY %s", account_id);
 
     result = g_strconcat (history_state, separator,
                           entry->_peer_number, separator,

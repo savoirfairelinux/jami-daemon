@@ -1333,27 +1333,36 @@ void sflphone_fill_history (void)
 
 void sflphone_save_history (void)
 {
-    GQueue *items;
     gint size;
-    int i;
-    callable_obj_t *current;
+    gint i;
+    QueueElement *current;
     GHashTable *result = NULL;
     gchar *key, *value;
 
-    DEBUG ("SFLphone: Saving history ...");
+    DEBUG ("SFLphone: Saving history");
 
     result = g_hash_table_new (NULL, g_str_equal);
-    items = history->callQueue;
     size = calllist_get_size (history);
 
-    for (i=0; i<size; i++) {
-        current = g_queue_peek_nth (items, i);
+    for (i = 0; i < size; i++) {
+        current = calllist_get_nth (history, i);
 
         if (current) {
-            value = serialize_history_entry (current);
-            key = convert_timestamp_to_gchar (current->_time_start);
-            g_hash_table_replace (result, (gpointer) key,
-                                  (gpointer) value);
+	    if(current->type == HIST_CALL) {
+                value = serialize_history_call_entry (current->elem.call);
+		key =  convert_timestamp_to_gchar (current->elem.call->_time_start);
+            }
+	    else if(current->type == HIST_CONFERENCE) {
+                value = serialize_history_conference_entry(current->elem.conf);
+		key = convert_timestamp_to_gchar (current->elem.conf->_time_start);
+            }
+ 	    else {
+		ERROR("SFLphone: Error: Unknown type for serialization");
+            }
+            g_hash_table_replace (result, (gpointer) key, (gpointer) value);
+        } 
+	else {
+	    WARN("SFLphone: Warning: %dth element is null", i);
         }
     }
 

@@ -337,8 +337,6 @@ update_actions()
                 WARN ("Should not happen in update_actions()!");
                 break;
         }
-
-	DEBUG("ok");
     } else if (selectedConf) {
 
         DEBUG("UIManager: Update actions for conference");
