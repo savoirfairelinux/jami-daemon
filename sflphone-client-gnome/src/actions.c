@@ -195,7 +195,7 @@ sflphone_hung_up (callable_obj_t * c)
 {
     DEBUG ("SFLphone: Hung up");
 
-    calllist_remove (current_calls, c->_callID);
+    calllist_remove_call (current_calls, c->_callID);
     calltree_remove_call (current_calls, c, NULL);
     c->_state = CALL_STATE_DIALING;
     call_remove_all_errors (c);
@@ -452,7 +452,6 @@ sflphone_pick_up()
     if (selectedCall) {
         switch (selectedCall->_state) {
             case CALL_STATE_DIALING:
-		DEBUG("------------------------------------ PLACING A NEW CALL FROM SFLPHONE PICKUP"); 
                 sflphone_place_call (selectedCall);
 
                 // if instant messaging window is visible, create new tab (deleted automatically if not used)
@@ -469,7 +468,6 @@ sflphone_pick_up()
                     im_widget_display ( (IMWidget **) (&selectedCall->_im_widget), NULL, selectedCall->_callID, NULL);
 
                 dbus_accept (selectedCall);
-                DEBUG ("from sflphone_pick_up : ");
                 stop_notification();
                 break;
             case CALL_STATE_HOLD:
@@ -625,8 +623,8 @@ sflphone_incoming_call (callable_obj_t * c)
     gchar *msg = "";
 
     c->_history_state = MISSED;
-    calllist_add (current_calls, c);
-    calllist_add (history, c);
+    calllist_add_call (current_calls, c);
+    calllist_add_call (history, c);
     calltree_add_call (current_calls, c, NULL);
     update_actions();
     calltree_display (current_calls);
@@ -737,7 +735,7 @@ sflphone_new_call()
 
     c->_history_state = OUTGOING;
 
-    calllist_add (current_calls,c);
+    calllist_add_call (current_calls,c);
     calltree_add_call (current_calls, c, NULL);
     update_actions();
 
@@ -952,7 +950,7 @@ static int _place_registered_call (callable_obj_t * c)
     }
 
     c->_history_state = OUTGOING;
-    calllist_add (history, c);
+    calllist_add_call (history, c);
     return 0;
 }
 
@@ -1009,7 +1007,7 @@ sflphone_detach_participant (const gchar* callID)
         calltree_add_call (current_calls, selectedCall, NULL);
         dbus_detach_participant (selectedCall->_callID);
     } else {
-        callable_obj_t * selectedCall = calllist_get (current_calls, callID);
+        callable_obj_t * selectedCall = calllist_get_call (current_calls, callID);
         DEBUG ("Action: Darticipant %s", callID);
 
         if (selectedCall->_confID) {
@@ -1225,7 +1223,7 @@ void sflphone_fill_call_list (void)
             c->_zrtp_confirmed = FALSE;
             // Add it to the list
             DEBUG ("Add call retrieved from server side: %s\n", c->_callID);
-            calllist_add (current_calls, c);
+            calllist_add_call (current_calls, c);
             // Update the GUI
             calltree_add_call (current_calls, c, NULL);
         }
@@ -1318,7 +1316,7 @@ void sflphone_fill_history (void)
                 create_history_entry_from_serialized_form ( (gchar*) key, (gchar*) value, &history_entry);
                 DEBUG ("HISTORY ENTRY: %i\n", history_entry->_time_start);
                 // Add it and update the GUI
-                calllist_add (history, history_entry);
+                calllist_add_call (history, history_entry);
 
                 // remove entry from map
                 g_hash_table_remove (entries, key_to_min);
@@ -1336,7 +1334,7 @@ void sflphone_save_history (void)
     GHashTable *result = NULL;
     gchar *key, *value;
 
-    DEBUG ("Saving history ...");
+    DEBUG ("SFLphone: Saving history ...");
 
     result = g_hash_table_new (NULL, g_str_equal);
     items = history->callQueue;

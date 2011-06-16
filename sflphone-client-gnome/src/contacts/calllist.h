@@ -39,6 +39,18 @@
   * @brief A list to hold calls.
   */
 
+typedef enum { HIST_CONFERENCE, HIST_CALL } ElementType;
+
+typedef struct {
+   callable_obj_t *call;
+   conference_obj_t *conf;
+} callableElement;
+
+typedef struct {
+    ElementType type;
+    callableElement elem;
+} QueueElement;
+
 typedef struct {
     GtkTreeStore* store;
     GtkWidget* view;
@@ -56,7 +68,9 @@ typedef struct {
 void
 calllist_add_contact (gchar *, gchar *, contact_type_t, GdkPixbuf *);
 
-void calllist_add_history_entry (callable_obj_t *obj);
+void calllist_add_history_call (callable_obj_t *obj);
+
+void calllist_add_history_conference (conference_obj_t *obj);
 
 /** This function initialize a call list. */
 void
@@ -82,13 +96,13 @@ call_history_set_max_calls (const gdouble number);
   * @param c The call you want to add
   * */
 void
-calllist_add (calltab_t* tab, callable_obj_t * c);
+calllist_add_call (calltab_t* tab, callable_obj_t * c);
 
 /** This function remove a call from list.
   * @param callID The callID of the call you want to remove
   */
 void
-calllist_remove (calltab_t* tab, const gchar * callID);
+calllist_remove_call (calltab_t* tab, const gchar * callID);
 
 /** Return the first call that corresponds to the state.
   * This is usefull for unique states as DIALING and CURRENT.
@@ -105,14 +119,14 @@ calllist_get_size (calltab_t* tab);
 /** Return the call at the nth position in the list
   * @param n The position of the call you want
   * @return A call or NULL */
-callable_obj_t *
+QueueElement *
 calllist_get_nth (calltab_t* tab, guint n);
 
 /** Return the call corresponding to the callID
   * @param n The callID of the call you want
   * @return A call or NULL */
 callable_obj_t *
-calllist_get (calltab_t* tab, const gchar * callID);
+calllist_get_call (calltab_t* tab, const gchar * callID);
 
 /**
  * Clean the history. Delete all calls

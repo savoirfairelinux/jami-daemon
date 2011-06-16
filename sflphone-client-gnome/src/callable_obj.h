@@ -182,7 +182,7 @@ void call_remove_all_errors (callable_obj_t * call);
 /*
  * GCompareFunc to compare a callID (gchar* and a callable_obj_t)
  */
-gint is_callID_callstruct (gconstpointer, gconstpointer);
+// gint is_callID_callstruct (gconstpointer, gconstpointer);
 
 /*
  * GCompareFunc to get current call (gchar* and a callable_obj_t)

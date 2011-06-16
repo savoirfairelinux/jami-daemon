@@ -50,7 +50,7 @@ on_frame_loading_done (GObject *gobject UNUSED, GParamSpec *pspec UNUSED, gpoint
             case WEBKIT_LOAD_COMMITTED:
                 break;
             case WEBKIT_LOAD_FINISHED:
-                call = calllist_get (current_calls, im->call_id);
+                call = calllist_get_call (current_calls, im->call_id);
                 conf = conferencelist_get (im->call_id);
 
                 if (call)
@@ -215,13 +215,13 @@ void
 im_widget_send_message (gchar *id, const gchar *message)
 {
 
-    callable_obj_t *im_widget_call = calllist_get (current_calls, id);
+    callable_obj_t *im_widget_call = calllist_get_call (current_calls, id);
     conference_obj_t *im_widget_conf = conferencelist_get (id);
 
     /* If the call has been hungup, it is not anymore in the current_calls calltab */
     if (!im_widget_call) {
         /* So try the history tab */
-        im_widget_call = calllist_get (history, id);
+        im_widget_call = calllist_get_call (history, id);
     }
 
     if (im_widget_conf) {
@@ -395,7 +395,7 @@ im_widget_infobar (IMWidget *im)
     GtkWidget *content_area = gtk_info_bar_get_content_area (GTK_INFO_BAR (infobar));
 
     /* Fetch call/conference information */
-    callable_obj_t *im_widget_call = calllist_get (current_calls, im->call_id);
+    callable_obj_t *im_widget_call = calllist_get_call (current_calls, im->call_id);
     conference_obj_t *im_widget_conf = conferencelist_get (im->call_id);
 
     /* Create the label widgets with the call information saved in the IM Widget struct */

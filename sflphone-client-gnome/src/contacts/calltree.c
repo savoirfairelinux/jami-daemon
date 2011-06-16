@@ -242,7 +242,7 @@ row_activated (GtkTreeView       *tree_view UNUSED,
                 create_new_call (CALL, CALL_STATE_DIALING, "", account_id, selectedCall->_peer_name, selectedCall->_peer_number, &new_call);
 		// sflphone_place_call(new_call);
 
-                calllist_add (current_calls, new_call);
+                calllist_add_call(current_calls, new_call);
                 calltree_add_call (current_calls, new_call, NULL);
                 // Function sflphone_place_call (new_call) is processed in process_dialing
                 sflphone_place_call(new_call);
@@ -308,7 +308,7 @@ calltree_create_conf_from_participant_list(GSList *list) {
     for(i = 0; i < list_length; i++) {
 	gchar *participant_id = g_slist_nth_data(list, i);
 	DEBUG("********************* participant %s ***************************", participant_id);       
-        callable_obj_t *call = calllist_get(history, participant_id);
+        callable_obj_t *call = calllist_get_call(history, participant_id);
  
         if(c!=0) {
 	    participant_list = (void *) realloc(participant_list, (c+1) * sizeof(void *));
@@ -1234,7 +1234,7 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 
         while (conference_participant) {
             call_id = (gchar*) (conference_participant->data);
-            call = calllist_get (tab, call_id);
+            call = calllist_get_call(tab, call_id);
 
             if (call != NULL) {
 
@@ -1268,7 +1268,7 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
             while (conference_participant) {
                 // call_id = (gchar*)(*pl);
                 call_id = (gchar*) (conference_participant->data);
-                call = calllist_get (tab, call_id);
+                call = calllist_get_call(tab, call_id);
 
                 if (call != NULL) {
 
@@ -1326,7 +1326,7 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
         while (conference_participant) {
 
             call_id = (gchar*) (conference_participant->data);
-            call = calllist_get (tab, call_id);
+            call = calllist_get_call(tab, call_id);
             // create_new_call_from_details (conf_id, conference_details, &c);
 
             calltree_remove_call (tab, call, NULL);
@@ -1455,7 +1455,7 @@ void calltree_add_history_conference(conference_obj_t *conf) {
     if(conference_participant) {
         while(conference_participant) {
 	    call_id = (gchar *)(conference_participant->data);
-            call = calllist_get(current_calls, call_id);
+            call = calllist_get_call(current_calls, call_id);
             if(call) {
 	        calltree_add_history_entry(call, &iter);
             }

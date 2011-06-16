@@ -211,7 +211,7 @@ update_actions()
 
     if (selectedCall) {
 
-        DEBUG("UIManager: Update actions for call"); 
+        DEBUG("UIManager: Update actions for call %s", selectedCall->_callID); 
 
         // update icon in systray
         show_status_hangup_icon();
@@ -337,6 +337,8 @@ update_actions()
                 WARN ("Should not happen in update_actions()!");
                 break;
         }
+
+	DEBUG("ok");
     } else if (selectedConf) {
 
         DEBUG("UIManager: Update actions for conference");
@@ -650,7 +652,7 @@ call_pick_up (void * foo UNUSED)
             create_new_call (CALL, CALL_STATE_DIALING, "", "", "",
                              selectedCall->_peer_number, &new_call);
 
-            calllist_add (current_calls, new_call);
+            calllist_add_call (current_calls, new_call);
             calltree_add_call (current_calls, new_call, NULL);
             sflphone_place_call (new_call);
             calltree_display (current_calls);
@@ -733,7 +735,7 @@ call_back (void * foo UNUSED)
     create_new_call (CALL, CALL_STATE_DIALING, "", "",
                          selected_call->_peer_name, selected_call->_peer_number, &new_call);
 
-    calllist_add (current_calls, new_call);
+    calllist_add_call (current_calls, new_call);
     calltree_add_call (current_calls, new_call, NULL);
     sflphone_place_call (new_call);
     calltree_display (current_calls);
@@ -909,7 +911,7 @@ call_mailbox_cb (void)
     create_new_call (CALL, CALL_STATE_DIALING, "", account_id, _ ("Voicemail"), to,
                      &mailbox_call);
     DEBUG ("TO : %s" , mailbox_call->_peer_number);
-    calllist_add (current_calls, mailbox_call);
+    calllist_add_call (current_calls, mailbox_call);
     calltree_add_call (current_calls, mailbox_call, NULL);
     update_actions();
     sflphone_place_call (mailbox_call);
@@ -1570,7 +1572,7 @@ ok_cb (GtkWidget *widget UNUSED, gpointer userdata)
                      original->_peer_name, g_strdup (new_number), &modified_call);
 
     // Update the internal data structure and the GUI
-    calllist_add (current_calls, modified_call);
+    calllist_add_call (current_calls, modified_call);
     calltree_add_call (current_calls, modified_call, NULL);
     sflphone_place_call (modified_call);
     calltree_display (current_calls);

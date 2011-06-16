@@ -39,10 +39,10 @@
 #define UNIX_DAY			86400
 #define UNIX_WEEK			86400 * 6
 #define UNIX_TWO_DAYS		        86400 * 2
-
+/*
 gint is_callID_callstruct (gconstpointer a, gconstpointer b)
 {
-    callable_obj_t * c = (callable_obj_t*) a;
+   callable_obj_t * c = (callable_obj_t*) a;
 
     if (g_strcasecmp (c->_callID, (const gchar*) b) == 0) {
         return 0;
@@ -50,6 +50,7 @@ gint is_callID_callstruct (gconstpointer a, gconstpointer b)
         return 1;
     }
 }
+*/
 
 gint get_state_callstruct (gconstpointer a, gconstpointer b)
 {
