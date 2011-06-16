@@ -30,7 +30,7 @@ GainControl::GainControl(double sr, double target) : averager(sr, SFL_GAIN_ATTAC
     maxIncreaseStep = exp(0.11513 * 12. * 160 / 8000); // Computed on 12 frames (240 ms)
     maxDecreaseStep = exp(-0.11513 * 40. * 160 / 8000); // Computed on 40 frames (800 ms)
 
-    _debug("GainControl: Target gain %d dB (%d linear)", targetLeveldB, targetLevelLinear);
+    _debug("GainControl: Target gain %f dB (%f linear)", targetLeveldB, targetLevelLinear);
 
 }
 

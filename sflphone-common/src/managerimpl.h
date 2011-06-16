@@ -194,12 +194,13 @@ class ManagerImpl
          * Functions which occur with a user's action
          * Place a new call
          * @param accountId	The account to make tha call with
-         * @param id  The call identifier
+         * @param call_id  The call identifier
          * @param to  The recipient of the call
+	 * @param conf_id The conference identifier if any
          * @return bool true on success
          *		  false otherwise
          */
-        bool outgoingCall (const AccountID& accountId, const CallID& id, const std::string& to);
+        bool outgoingCall (const AccountID&, const CallID&, const std::string&, const std::string& = "");
 
         /**
          * Functions which occur with a user's action

@@ -236,7 +236,7 @@ void ManagerImpl::switchCall (const CallID& id)
 /* Main Thread */
 
 bool ManagerImpl::outgoingCall (const std::string& account_id,
-                                const CallID& call_id, const std::string& to)
+                                const CallID& call_id, const std::string& to, const std::string& conf_id)
 {
 
     std::string pattern, to_cleaned;
@@ -309,12 +309,16 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
     	_warn("Manager: Warning: Could not associate call id %s to account id %s", call_id.c_str(), account_id.c_str());
     }
 
-    if (getAccountLink (account_id)->newOutgoingCall (call_id, to_cleaned)) {
+    Call *call = NULL;
+    call = getAccountLink(account_id)->newOutgoingCall (call_id, to_cleaned);
+    if (call) {
         switchCall (call_id);
     } else {
         callFailure (call_id);
         _debug ("Manager: Error: An error occur, the call was not created");
     }
+
+    call->setConfId(conf_id);
 
     getMainBuffer()->stateInfo();
 
@@ -1048,7 +1052,7 @@ bool ManagerImpl::isConference (const CallID& id)
 
 bool ManagerImpl::participToConference (const CallID& call_id)
 {
-	AccountID accountId = getAccountFromCall (call_id);
+    AccountID accountId = getAccountFromCall (call_id);
     Call *call = getAccountLink (accountId)->getCall (call_id);
 
     if (call == NULL) {
@@ -1325,17 +1329,24 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
     */
     
     std::string generatedCallID = "callid";
-    std::string tostr = "147";
     std::string accountstr = "Account:1307562458";
 
     for(unsigned int i = 0; i < participantList.size(); i++) {
-        _debug("PARTICIPANT LIST %s", participantList[i].c_str());
+        _debug("********************************************************************* PARTICIPANT LIST %s", participantList[i].c_str());
+	std::string tostr = participantList[i].c_str();
 	generatedCallID = generatedCallID + participantList[i];
-	outgoingCall(accountstr, generatedCallID, tostr);	
 	conf->add(generatedCallID);
+	outgoingCall(accountstr, generatedCallID, tostr, conf->getConfID());
+	if(_dbus) {
+	    _dbus->getCallManager()->newCallCreated(accountstr, generatedCallID, tostr);
+	}	
     }
 
     _conferencemap.insert(std::pair<CallID, Conference *> (conf->getConfID(), conf));
+    
+    if (_dbus) {
+        _dbus->getCallManager()->conferenceCreated (conf->getConfID());
+    }
 
     
 }
@@ -1554,8 +1565,6 @@ void ManagerImpl::joinConference (const CallID& conf_id1,
 
         iter_participant++;
     }
-
-    // detachParticipant(default_id, "");
 
 }
 
@@ -1862,10 +1871,9 @@ bool ManagerImpl::incomingCall (Call* call, const AccountID& accountId)
     display.append (" ");
     display.append (from);
 
-    if (_dbus)
+    if (_dbus) {
         _dbus->getCallManager()->incomingCall (accountId, call->getCallId(), display.c_str());
-
-   // answerCall(call->getCallId());
+    }
 
     return true;
 }

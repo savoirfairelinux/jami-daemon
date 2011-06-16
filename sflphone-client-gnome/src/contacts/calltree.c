@@ -320,6 +320,9 @@ calltree_create_conf_from_participant_list(GSList *list) {
 	c++;
     }
 
+    participant_list = (void *) realloc(participant_list, (c+1) *sizeof(void*));
+    *(participant_list+c) = NULL;
+
     dbus_create_conf_from_participant_list(participant_list);
 }
 
