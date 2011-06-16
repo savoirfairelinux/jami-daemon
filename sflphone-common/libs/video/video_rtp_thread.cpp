@@ -341,7 +341,7 @@ void VideoRtpReceiveThread::run()
 
 void VideoRtpReceiveThread::stop()
 {
-    // FIXME: not thread safe
+    // FIXME: not thread safe, add mutex
     interrupted_ = true;
 }
 

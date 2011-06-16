@@ -100,9 +100,12 @@ void VideoRtpSession::stop()
     // FIXME: all kinds of evil!!! interrupted should be atomic
     rtpReceiveThread_->stop();
     rtpReceiveThread_->join();
+
     rtpSendThread_->stop();
     rtpSendThread_->join();
     std::cerr << "cancelled video rtp session " << std::endl;
+
+    // destroy objects
     rtpReceiveThread_.reset();
     rtpSendThread_.reset();
 }
