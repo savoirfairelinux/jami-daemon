@@ -41,7 +41,6 @@ using std::ptrdiff_t;
 #include "AudioRtpRecordHandler.h"
 #include <cc++/numbers.h> // OST::Time
 
-class ManagerImpl;
 class SIPCall;
 
 namespace sfl
@@ -58,7 +57,7 @@ class ZrtpZidException: public std::exception
 class AudioZrtpSession : protected ost::Thread, public AudioRtpRecordHandler, public ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue>
 {
     public:
-        AudioZrtpSession (ManagerImpl * manager, SIPCall * sipcall, const std::string& zidFilename);
+        AudioZrtpSession (SIPCall * sipcall, const std::string& zidFilename);
 
         ~AudioZrtpSession();
 
@@ -141,11 +140,6 @@ class AudioZrtpSession : protected ost::Thread, public AudioRtpRecordHandler, pu
         // Stored in case reINVITE, which may require to forget
         // this destination and update a new one
         unsigned short _remote_port;
-
-        /**
-         * Manager instance.
-         */
-        ManagerImpl * _manager;
 
         /**
          * Timestamp for this session

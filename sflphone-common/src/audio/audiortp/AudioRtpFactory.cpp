@@ -114,7 +114,7 @@ void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
         switch (_keyExchangeProtocol) {
 
             case Zrtp:
-                _rtpSession = new AudioZrtpSession (&Manager::instance(), ca, zidFilename);
+                _rtpSession = new AudioZrtpSession (ca, zidFilename);
                 _rtpSessionType = Zrtp;
 
                 if (_helloHashEnabled) {
@@ -128,7 +128,7 @@ void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
 
             case Sdes:
 
-                _rtpSession = new AudioSrtpSession (&Manager::instance(), ca);
+                _rtpSession = new AudioSrtpSession (ca);
                 _rtpSessionType = Sdes;
                 break;
 
@@ -138,7 +138,7 @@ void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
         }
     } else {
         _rtpSessionType = Symmetric;
-        _rtpSession = new AudioSymmetricRtpSession (&Manager::instance(), ca);
+        _rtpSession = new AudioSymmetricRtpSession (ca);
         _debug ("AudioRtpFactory: Starting a symmetric unencrypted rtp session");
     }
 }
