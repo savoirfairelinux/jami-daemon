@@ -52,6 +52,7 @@ class VideoRtpSession {
         const int bitrate_;
         const std::string destinationURI_;
         std::tr1::shared_ptr<VideoRtpSendThread> rtpSendThread_;
+        std::tr1::shared_ptr<VideoRtpReceiveThread> rtpReceiveThread_;
 };
 
 }
