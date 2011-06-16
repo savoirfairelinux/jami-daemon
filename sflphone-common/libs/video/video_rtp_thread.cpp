@@ -193,20 +193,11 @@ void VideoRtpReceiveThread::setup()
     AVInputFormat *file_iformat = 0;
 
     // Open video file
-    int tries = 0;
-    bool open = false;
-    while (not open)
+    if (av_open_input_file(&inputCtx_, args_["input"].c_str(), file_iformat, 0, NULL) != 0)
     {
-        if (av_open_input_file(&inputCtx_, args_["input"].c_str(), file_iformat, 0, NULL) != 0)
-        {
-            std::cerr <<  "Could not open input file " << args_["input"] <<
-                std::endl;
-            tries++;
-            ost::Thread::sleep(1000);
-            if (tries > 100)
-                cleanup();
-        }
-        else open = true;
+        std::cerr <<  "Could not open input file " << args_["input"] <<
+            std::endl;
+        cleanup();
     }
 
     // retrieve stream information
@@ -386,6 +377,13 @@ void VideoRtpSendThread::print_and_save_sdp()
     sdp_file << std::endl;
     sdp_file.close();
     free(sdp);
+    sdpReady_.signal();
+}
+
+// NOT called from this (the run() ) thread
+void VideoRtpSendThread::waitForSDP()
+{
+    sdpReady_.wait();
 }
 
 void VideoRtpSendThread::forcePresetX264()

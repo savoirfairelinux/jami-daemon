@@ -79,6 +79,7 @@ class VideoRtpSendThread : public ost::Thread {
         void prepareEncoderContext();
         void cleanup();
         SwsContext * createScalingContext();
+        ost::Event sdpReady_;
 
         std::map<std::string, std::string> args_;
         volatile int interrupted_;
@@ -99,6 +100,8 @@ class VideoRtpSendThread : public ost::Thread {
     public:
         VideoRtpSendThread(const std::map<std::string, std::string> &args);
         virtual ~VideoRtpSendThread();
+        // called from main thread 
+        void waitForSDP();
         virtual void run();
         void stop();
 };

@@ -65,6 +65,7 @@ void VideoRtpSession::test()
     rtpSendThread_.reset(new VideoRtpSendThread(args));
     rtpSendThread_->start();
 
+    rtpSendThread_->waitForSDP();
     args["input"] = "test.sdp";
     rtpReceiveThread_.reset(new VideoRtpReceiveThread(args));
     rtpReceiveThread_->start();
