@@ -59,6 +59,7 @@ typedef struct {
 
     // Calllist vars
     GQueue* callQueue;
+    GQueue* conferenceQueue;
     gint selectedType;
     callable_obj_t* selectedCall;
     conference_obj_t* selectedConf;

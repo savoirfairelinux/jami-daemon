@@ -28,11 +28,16 @@
  *  as that of the covered work.
  */
 
-#include <callable_obj.h>
-#include <sflphone_const.h>
 #include <time.h>
 
+#include "callable_obj.h"
+#include "sflphone_const.h"
+
+#include "calltab.h"
+#include "calllist.h"
+
 static void set_conference_timestamp (time_t *);
+static void conference_add_participant_number(const gchar *, conference_obj_t *);
 
 static void set_conference_timestamp (time_t *timestamp) 
 {
@@ -127,11 +132,25 @@ void conference_add_participant (const gchar* call_id, conference_obj_t* conf)
 {
     // store the new participant list after appending participant id
     conf->participant_list = g_slist_append (conf->participant_list, (gpointer) g_strdup(call_id));
+
+    // store the phone number of this participant
+    conference_add_participant_number(call_id, conf);
 }
 
+static
 void conference_add_participant_number(const gchar *call_id, conference_obj_t *conf)
 {
-    conf->participant_number = g_slist_append(conf->participant_number, (gpointer) g_strdup(call_id));
+    gchar *number_account;
+
+    callable_obj_t *call = calllist_get_call(current_calls, call_id); 
+    if(call == NULL) {
+	ERROR("Conference: Error: Could not find");
+	return;
+    }
+    
+    number_account = g_strconcat(call->_peer_number, ",", call->_accountID, NULL);
+
+    conf->participant_number = g_slist_append(conf->participant_number, (gpointer) number_account);
 }
 
 void conference_remove_participant (const gchar* call_id, conference_obj_t* conf)
@@ -195,7 +214,10 @@ gchar *serialize_history_conference_entry(conference_obj_t *entry)
 	if(tmp == NULL) {
             WARN("Conference: Peer number is NULL in conference list");
         }
-        g_strconcat(numberstr, tmp, ",");
+        numberstr = g_strconcat(numberstr, tmp, ";", NULL);
+	
+
+	DEBUG("Print: %s concat: %s", tmp, numberstr);
     }
 
     result = g_strconcat("2188", separator,
@@ -207,5 +229,5 @@ gchar *serialize_history_conference_entry(conference_obj_t *entry)
 			NULL); 
   	
 
-    return "";
+    return result;
 }

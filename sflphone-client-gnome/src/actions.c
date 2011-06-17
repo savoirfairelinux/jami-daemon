@@ -337,7 +337,8 @@ gboolean sflphone_init (GError **error)
 
     account_list_init ();
     codec_capabilities_load ();
-    conferencelist_init ();
+    conferencelist_init (current_calls);
+    conferencelist_init (history);
 
     // Fetch the configured accounts
     sflphone_fill_account_list ();
@@ -1261,7 +1262,7 @@ void sflphone_fill_conference_list (void)
 
             conf->_confID = g_strdup (conf_id);
 
-            conferencelist_add (conf);
+            conferencelist_add (current_calls, conf);
             calltree_add_conference (current_calls, conf);
         }
     }
@@ -1336,6 +1337,7 @@ void sflphone_save_history (void)
     gint size;
     gint i;
     QueueElement *current;
+    conference_obj_t *conf;
     GHashTable *result = NULL;
     gchar *key, *value;
 
@@ -1361,11 +1363,30 @@ void sflphone_save_history (void)
  	    else {
 		ERROR("SFLphone: Error: Unknown type for serialization");
             }
+
             g_hash_table_replace (result, (gpointer) key, (gpointer) value);
         } 
 	else {
 	    WARN("SFLphone: Warning: %dth element is null", i);
         }
+    }
+
+    size = conferencelist_get_size(history);
+    DEBUG("Conference list size %d", size);
+
+    while(size > 0) {
+	conf = conferencelist_pop_head(history);
+	size = conferencelist_get_size(history);
+
+        if(conf) {
+	    DEBUG("Serialize conference");
+	    value = serialize_history_conference_entry(conf);
+	    key = convert_timestamp_to_gchar(conf->_time_start);
+        }
+	else {
+	    WARN("SFLphone: Warning: %dth element is NULL", i);
+        }
+	g_hash_table_replace(result, (gpointer)key, (gpointer)value);	
     }
 
     dbus_set_history (result);

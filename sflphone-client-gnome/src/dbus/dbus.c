@@ -167,7 +167,7 @@ incoming_message_cb (DBusGProxy *proxy UNUSED, const gchar* callID UNUSED, const
     call = calllist_get_call (current_calls, callID);
 
     // Get the conference information (if this conference exist)
-    conf = conferencelist_get (callID);
+    conf = conferencelist_get (current_calls, callID);
 
     /* First check if the call is valid */
     if (call) {
@@ -275,7 +275,7 @@ conference_changed_cb (DBusGProxy *proxy UNUSED, const gchar* confID,
     gchar* call_id;
 
     // sflphone_display_transfer_status("Transfer successfull");
-    conference_obj_t* changed_conf = conferencelist_get (confID);
+    conference_obj_t* changed_conf = conferencelist_get (current_calls, confID);
     GSList * part;
 
     DEBUG ("---------------------------- DBUS: Conference state changed: %s\n", state);
@@ -377,7 +377,8 @@ conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
 
     set_timestamp(&new_conf->_time_start);
 
-    conferencelist_add (new_conf);
+    conferencelist_add (current_calls, new_conf);
+    conferencelist_add (history, new_conf);
     calltree_add_conference (current_calls, new_conf);
     calltree_add_conference (history, new_conf);
 }
@@ -387,7 +388,7 @@ conference_removed_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
 {
     DEBUG ("DBUS: Conference removed %s", confID);
 
-    conference_obj_t * c = conferencelist_get (confID);
+    conference_obj_t * c = conferencelist_get (current_calls, confID);
     calltree_remove_conference (current_calls, c, NULL);
 
     GSList *participant = c->participant_list;
@@ -418,7 +419,7 @@ conference_removed_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
         participant = conference_next_participant (participant);
     }
 
-    conferencelist_remove (c->_confID);
+    conferencelist_remove (current_calls, c->_confID);
 }
 
 static void
