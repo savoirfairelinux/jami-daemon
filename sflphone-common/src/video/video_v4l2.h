@@ -34,6 +34,8 @@
 #include <string>
 #include <vector>
 
+#include "logger.h"
+
 extern "C" {
 #include <linux/videodev2.h>
 #if !defined(VIDIOC_ENUM_FRAMESIZES) || !defined(VIDIOC_ENUM_FRAMEINTERVALS)
@@ -54,24 +56,45 @@ class VideoV4l2Rate {
 
 class VideoV4l2Size {
     public:
-        VideoV4l2Size(unsigned height, unsigned width) : height(height), width(width) {}
+        VideoV4l2Size(unsigned height, unsigned width) : height(height), width(width), _currentRate(0) {}
         void addSupportedRate(const VideoV4l2Rate &rate) {
             rates.push_back(rate);
         }
 
         unsigned height;
         unsigned width;
+
+        void setRate(unsigned index) {
+            if (index >= rates.size()) {
+                _error("%s: requested size %d but we only have %d", __PRETTY_FUNCTION__, index, rates.size());
+                index = rates.size() - 1;
+            }
+            _currentRate = index;
+        }
+
+        VideoV4l2Rate &getRate() {
+            return rates[_currentRate];
+        }
+
+        VideoV4l2Rate &getRate(unsigned index) {
+            return rates[index];
+        }
+
+        size_t nRates() {
+            return rates.size();
+        }
+
+    private:
         std::vector<VideoV4l2Rate> rates;
+        unsigned _currentRate;
 };
 class VideoV4l2Input {
     public:
-        VideoV4l2Input(unsigned idx, const char *s) : idx(idx), name(s) { }
+        VideoV4l2Input(unsigned idx, const char *s) : idx(idx), name(s), _currentSize(0) { }
 
         void addSupportedSize(const VideoV4l2Size &size) {
             sizes.push_back(size);
         }
-
-        std::vector<VideoV4l2Size> sizes;
 
         void SetFourcc(unsigned code) {
             fourcc[0] = code;
@@ -81,24 +104,70 @@ class VideoV4l2Input {
             fourcc[4] = '\0';
         }
 
-        const char * const GetFourcc() { return fourcc; }
+        const char * GetFourcc() { return fourcc; }
         unsigned idx;
         std::string name;
 
+        void setSize(unsigned index) {
+            if (index >= sizes.size()) {
+                _error("%s: requested size %d but we only have %d", __PRETTY_FUNCTION__, index, sizes.size());
+                index = sizes.size() - 1;
+            }
+            _currentSize = index;
+        }
+
+        VideoV4l2Size &getSize() {
+            return sizes[_currentSize];
+        }
+
+        VideoV4l2Size &getSize(unsigned index) {
+            return sizes[index];
+        }
+
+        size_t nSizes() {
+            return sizes.size();
+        }
+
     private:
+        std::vector<VideoV4l2Size> sizes;
         char fourcc[5];
+        unsigned _currentSize;
 };
 
 class VideoV4l2Device {
     public:
         VideoV4l2Device(int fd, std::string &device);
 
-    std::vector<VideoV4l2Input> inputs;
-    void addInput(const VideoV4l2Input &input) {
-        inputs.push_back(input);
-    }
+        void addInput(const VideoV4l2Input &input) {
+            inputs.push_back(input);
+        }
 
-    std::string device;
+        std::string device;
+        std::string name;
+
+        void setInput(unsigned index) {
+            if (index >= inputs.size()) {
+                _error("%s: requested input %d but we only have %d", __PRETTY_FUNCTION__, index, inputs.size());
+                index = inputs.size() - 1;
+            }
+            _currentInput = index;
+        }
+
+        VideoV4l2Input &getInput() {
+            return inputs[_currentInput];
+        }
+
+        VideoV4l2Input &getInput(unsigned index) {
+            return inputs[index];
+        }
+
+        size_t nInputs() {
+            return inputs.size();
+        }
+
+    private:
+        std::vector<VideoV4l2Input> inputs;
+        unsigned _currentInput;
 };
 
 } // namespace sfl_video

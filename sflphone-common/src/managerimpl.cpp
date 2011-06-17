@@ -51,6 +51,8 @@
 #include "iax/iaxvoiplink.h"
 #include "manager.h"
 #include "dbus/configurationmanager.h"
+#include "video/video_v4l2.h"
+#include "video/video_v4l2_list.h"
 
 #include "conference.h"
 
@@ -1662,6 +1664,7 @@ bool ManagerImpl::saveConfig (void)
         addressbookPreference.serialize (emitter);
         hookPreference.serialize (emitter);
         audioPreference.serialize (emitter);
+        videoPreference.serialize (emitter);
         shortcutPreferences.serialize (emitter);
 
         emitter->serializeData();
@@ -2828,6 +2831,111 @@ std::vector<std::string> ManagerImpl::getCurrentAudioDevicesIndex ()
     audioLayerMutexUnlock();
 
     return v;
+}
+
+std::vector<std::string> ManagerImpl::getVideoInputDeviceList()
+{
+    std::vector<std::string> v;
+    if (!videoPreference.v4l2_list)
+        return v;
+
+    std::stringstream ss;
+    size_t n = videoPreference.v4l2_list->nDevices();
+    unsigned i;
+    for (i = 0 ; i < n ; i++) {
+        sfl_video::VideoV4l2Device &dev = videoPreference.v4l2_list->getDevice(i);
+
+        std::string &name = dev.name;
+        if (name.length()) {
+            ss << name;
+        } else {
+            ss << dev.device;
+        }
+        v.push_back(ss.str());
+    }
+
+    return v;
+}
+
+std::vector<std::string> ManagerImpl::getVideoInputDeviceInputList()
+{
+    std::vector<std::string> v;
+    if (!videoPreference.v4l2_list)
+        return v;
+
+    sfl_video::VideoV4l2Device &dev = videoPreference.v4l2_list->getDevice();
+    size_t n = dev.nInputs();
+    unsigned i;
+    for (i = 0 ; i < n ; i++) {
+        sfl_video::VideoV4l2Input &input = dev.getInput(i);
+        v.push_back(input.name);
+    }
+
+    return v;
+}
+
+std::vector<std::string> ManagerImpl::getVideoInputDeviceSizeList()
+{
+    std::vector<std::string> v;
+    if (!videoPreference.v4l2_list)
+        return v;
+
+    sfl_video::VideoV4l2Input &input = videoPreference.v4l2_list->getDevice().getInput();
+    size_t n = input.nSizes();
+    unsigned i;
+    for (i = 0 ; i < n ; i++) {
+        sfl_video::VideoV4l2Size size = input.getSize(i);
+        std::stringstream ss;
+
+        ss << size.width << "x" << size.height;
+
+        v.push_back(ss.str());
+    }
+
+    return v;
+}
+
+std::vector<std::string> ManagerImpl::getVideoInputDeviceRateList()
+{
+    std::vector<std::string> v;
+    if (!videoPreference.v4l2_list)
+        return v;
+
+    sfl_video::VideoV4l2Size &size = videoPreference.v4l2_list->getDevice().getInput().getSize();
+    std::stringstream ss;
+
+    size_t n = size.nRates();
+    unsigned i;
+    for (i = 0 ; i < n ; i++) {
+        sfl_video::VideoV4l2Rate rate = size.getRate(i);
+        std::stringstream ss;
+
+        ss << (float)rate.den / rate.num;
+
+        v.push_back(ss.str());
+    }
+
+    return v;
+}
+
+void ManagerImpl::setVideoInputDevice(const int32_t& api)
+{
+    videoPreference.v4l2_list->setDevice(api);
+}
+
+void ManagerImpl::setVideoInputDeviceInput(const int32_t& api)
+{
+    videoPreference.v4l2_list->getDevice().setInput(api);
+}
+
+void ManagerImpl::setVideoInputDeviceSize(const int32_t& api)
+{
+    videoPreference.v4l2_list->getDevice().getInput().setSize(api);
+}
+
+void ManagerImpl::setVideoInputDeviceRate(const int32_t& api)
+{
+    videoPreference.v4l2_list->getDevice().getInput().getSize().setRate(api);
 }
 
 int ManagerImpl::isIax2Enabled (void)
@@ -4169,6 +4277,7 @@ short ManagerImpl::loadAccountMap()
     addressbookPreference.unserialize ( (Conf::MappingNode *) (parser->getAddressbookSequence()));
     hookPreference.unserialize ( (Conf::MappingNode *) (parser->getHookSequence()));
     audioPreference.unserialize ( (Conf::MappingNode *) (parser->getAudioSequence()));
+    videoPreference.unserialize ( (Conf::MappingNode *) (parser->getVideoSequence()));
     shortcutPreferences.unserialize ( (Conf::MappingNode *) (parser->getShortcutSequence()));
 
     Conf::SequenceNode *seq = parser->getAccountSequence();

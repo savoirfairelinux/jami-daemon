@@ -28,42 +28,31 @@
  *  as that of the covered work.
  */
 
-#include <iostream>
-#include <sstream>
+#ifndef __VIDEO_V4L2_LIST_H__
+#define __VIDEO_V4L2_LIST_H__
 
-extern "C" {
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-}
-
-#include "video_v4l2_list.h"
+#include "video_v4l2.h"
 
 namespace sfl_video {
 
-VideoV4l2List::VideoV4l2List()
-{
-    int idx;
-    for(idx = 0;;idx++) {
+class VideoV4l2List {
+    public:
+        VideoV4l2List();
 
-        std::stringstream ss;
-        ss << "/dev/video" << idx;
-        int fd = open(ss.str().c_str(), O_RDWR);
-        if (fd == -1)
-            break;
-
-        try {
-            std::string str(ss.str());
-            VideoV4l2Device v(fd, str);
-            addDevice(v);
-        }
-        catch (int e) {
-            close(fd);
-            throw e;
+        void addDevice(const VideoV4l2Device &device) {
+            devices.push_back(device);
         }
 
-        close(fd);
-    }
-}
+        void setDevice(unsigned index);
+        VideoV4l2Device &getDevice(void);
+        VideoV4l2Device &getDevice(unsigned index);
+        size_t nDevices();
+
+    private:
+        std::vector<VideoV4l2Device> devices;
+        unsigned _currentDevice;
+};
 
 } // namespace sfl_video
+
+#endif //__VIDEO_V4L2_LIST_H__ 

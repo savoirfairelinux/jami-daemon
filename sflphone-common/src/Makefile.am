@@ -5,7 +5,7 @@ libexec_PROGRAMS = sflphoned
 
 # all: indent
 
-SUBDIRS = dbus audio config plug-in hooks history sip iax im
+SUBDIRS = dbus audio config plug-in hooks history sip iax im video
 
 # Add here the cpp files to be build with sflphone
 sflphoned_SOURCES = \
@@ -66,13 +66,13 @@ noinst_HEADERS = \
 libsflphone_la_LIBADD = \
 	$(src)/libs/utilspp/libutilspp.la \
 	$(src)/libs/video/libvideo_endpoint.la \
-	$(src)/libs/video/libvideo_v4l2.la \
 	$(src)/libs/iax2/libiax2.la \
 	$(src)/libs/dbus-c++/src/libdbus-c++-1.la \
 	$(IAX_LIB) \
 	./im/libim.la \
 	./sip/libsiplink.la \
 	./audio/libaudio.la \
+	./video/libvideo.la \
 	./dbus/libdbus.la \
 	./config/libconfig.la \
 	./plug-in/libplugin.la \

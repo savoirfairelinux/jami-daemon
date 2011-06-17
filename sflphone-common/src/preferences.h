@@ -32,6 +32,7 @@
 #define __PREFERENCE_H__
 
 #include "config/serializable.h"
+#include "video/video_v4l2_list.h"
 
 // general preferences
 const Conf::Key orderKey ("order");                         // :	1234/2345/
@@ -90,6 +91,12 @@ const Conf::Key noiseReduceKey ("noiseReduce");
 const Conf::Key echoCancelKey ("echoCancel");
 const Conf::Key echoTailKey ("echoTailLength");
 const Conf::Key echoDelayKey ("echoDelayLength");
+
+// video preferences
+const Conf::Key videoDeviceKey ("v4l2Dev");
+const Conf::Key videoInputKey ("v4l2Input");
+const Conf::Key videoSizeKey ("v4l2Size");
+const Conf::Key videoRateKey ("v4l2Rate");
 
 // shortcut preferences
 const Conf::Key hangupShortKey ("hangUp");
@@ -574,6 +581,63 @@ class AudioPreference : public Serializable
         bool _echocancel;
         int _echoCancelTailLength;
         int _echoCancelDelay;
+};
+
+
+class VideoPreference : public Serializable
+{
+
+    public:
+
+        VideoPreference();
+
+        ~VideoPreference();
+
+        virtual void serialize (Conf::YamlEmitter *emitter);
+
+        virtual void unserialize (Conf::MappingNode *map);
+
+        int getVideoDevice(void) {
+            return _videoDevice;
+        }
+
+        void setVideoDevice(int device) {
+            _videoDevice = device;
+        }
+
+        int getVideoInput(void) {
+            return _videoInput;
+        }
+
+        void setVideoInput(int input) {
+            _videoInput = input;
+        }
+
+        int getVideoSize(void) {
+            return _videoSize;
+        }
+
+        void setVideoSize(int size) {
+            _videoSize = size;
+        }
+
+        int getVideoRate(void) {
+            return _videoRate;
+        }
+
+        void setVideoRate(int rate) {
+            _videoRate = rate;
+        }
+
+        // V4L2 devices
+        sfl_video::VideoV4l2List *v4l2_list;
+
+    private:
+
+        int _videoDevice;
+        int _videoInput;
+        int _videoSize;
+        int _videoRate;
 };
 
 

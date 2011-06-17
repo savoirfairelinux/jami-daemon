@@ -473,7 +473,6 @@ void HookPreference::unserialize (Conf::MappingNode *map)
 }
 
 
-
 AudioPreference::AudioPreference() : _cardin (atoi (ALSA_DFT_CARD)) // ALSA_DFT_CARD
     , _cardout (atoi (ALSA_DFT_CARD)) // ALSA_DFT_CARD
     , _cardring (atoi (ALSA_DFT_CARD)) // ALSA_DFT_CARD
@@ -591,46 +590,28 @@ void AudioPreference::unserialize (Conf::MappingNode *map)
 
 
     val = (Conf::ScalarNode *) (map->getValue (recordpathKey));
-
-    if (val) {
+    if (val)
         _recordpath = val->getValue();
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (map->getValue (alwaysRecordingKey));
-
-    if(val) {
+    if(val)
     	_alwaysRecording = (val->getValue() == "true");
-    	val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (map->getValue (volumemicKey));
-
-    if (val) {
+    if (val)
         _volumemic = atoi (val->getValue().data());
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (map->getValue (volumespkrKey));
-
-    if (val) {
+    if (val)
         _volumespkr = atoi (val->getValue().data());
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (map->getValue (noiseReduceKey));
-
-    if (val) {
+    if (val)
         _noisereduce = (val->getValue() == "true");
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (map->getValue(echoCancelKey));
-
-    if (val) {
+    if (val)
     	_echocancel = (val->getValue() == "true");
-    	val = NULL;
-    }
 
     alsamap = (Conf::MappingNode *) (map->getValue ("alsa"));
 
@@ -638,47 +619,28 @@ void AudioPreference::unserialize (Conf::MappingNode *map)
     if (alsamap) {
 
         val = (Conf::ScalarNode *) (alsamap->getValue (cardinKey));
-
-        if (val) {
+        if (val)
             _cardin = atoi (val->getValue().data());
-            val = NULL;
-        }
 
         val = (Conf::ScalarNode *) (alsamap->getValue (cardoutKey));
-
-        if (val) {
+        if (val)
             _cardout = atoi (val->getValue().data());
-            val = NULL;
-        }
 
         val = (Conf::ScalarNode *) (alsamap->getValue (cardringKey));
-
-        if (val) {
+        if (val)
             _cardring = atoi (val->getValue().data());
-            val = NULL;
-        }
 
         val = (Conf::ScalarNode *) (alsamap->getValue (framesizeKey));
-
-        if (val) {
+        if (val)
             _framesize = atoi (val->getValue().data());
-            val = NULL;
-        }
 
         val = (Conf::ScalarNode *) (alsamap->getValue (smplrateKey));
-
-        if (val) {
+        if (val)
             _smplrate = atoi (val->getValue().data());
-            val = NULL;
-        }
 
         val = (Conf::ScalarNode *) (alsamap->getValue (pluginKey));
-
-        if (val) {
+        if (val)
             _plugin = val->getValue();
-            val = NULL;
-        }
-
     }
 
 
@@ -688,28 +650,97 @@ void AudioPreference::unserialize (Conf::MappingNode *map)
     if (pulsemap) {
 
         val = (Conf::ScalarNode *) (pulsemap->getValue (devicePlaybackKey));
-
-        if (val) {
+        if (val)
             _devicePlayback = val->getValue();
-            val = NULL;
-        }
 
         val = (Conf::ScalarNode *) (pulsemap->getValue (deviceRecordKey));
-
-        if (val) {
+        if (val)
             _deviceRecord = val->getValue();
-            val = NULL;
-        }
 
         val = (Conf::ScalarNode *) (pulsemap->getValue (deviceRingtoneKey));
-
-        if (val) {
+        if (val)
             _deviceRingtone = val->getValue();
-            val = NULL;
-        }
 
     }
 
+}
+
+
+
+VideoPreference::VideoPreference() : _videoDevice(0)
+    , _videoInput(0)
+    , _videoSize(0)
+    , _videoRate(0)
+{
+    try {
+        v4l2_list = new sfl_video::VideoV4l2List();
+    } catch (int e) {
+        v4l2_list = NULL;
+        _error("Exception %d when probing v4l2 devices\n", e);
+    }
+}
+
+VideoPreference::~VideoPreference()
+{
+    delete v4l2_list;
+}
+
+void VideoPreference::serialize (Conf::YamlEmitter *emitter)
+{
+	if(emitter == NULL) {
+		_error("VideoPreference: Error: emitter is NULL while serializing");
+		return;
+	}
+
+    Conf::MappingNode preferencemap (NULL);
+
+    std::stringstream devstr;
+    devstr << _videoDevice;
+    Conf::ScalarNode videoDevice(devstr.str());
+    std::stringstream inputstr;
+    inputstr << _videoInput;
+    Conf::ScalarNode videoInput(inputstr.str());
+    std::stringstream sizestr;
+    sizestr << _videoDevice;
+    Conf::ScalarNode videoSize(sizestr.str());
+    std::stringstream frameratestr;
+    frameratestr << _videoDevice;
+    Conf::ScalarNode videoRate (frameratestr.str());
+
+    preferencemap.setKeyValue (videoDeviceKey, &videoDevice);
+    preferencemap.setKeyValue (videoInputKey, &videoInput);
+    preferencemap.setKeyValue (videoSizeKey, &videoSize);
+    preferencemap.setKeyValue (videoRateKey, &videoRate);
+
+    emitter->serializeVideoPreference (&preferencemap);
+
+}
+
+void VideoPreference::unserialize (Conf::MappingNode *map)
+{
+    if (map == NULL) {
+        _error ("VideoPreference: Error: Preference map is NULL");
+        return;
+    }
+
+    Conf::ScalarNode *val = NULL;
+
+
+    val = (Conf::ScalarNode *) (map->getValue (videoDeviceKey));
+    if (val)
+        _videoDevice = atoi(val->getValue().data());
+
+    val = (Conf::ScalarNode *) (map->getValue (videoInputKey));
+    if (val)
+        _videoInput = atoi(val->getValue().data());
+
+    val = (Conf::ScalarNode *) (map->getValue (videoSizeKey));
+    if (val)
+        _videoSize = atoi(val->getValue().data());
+
+    val = (Conf::ScalarNode *) (map->getValue (videoRateKey));
+    if (val)
+        _videoRate = atoi(val->getValue().data());
 }
 
 

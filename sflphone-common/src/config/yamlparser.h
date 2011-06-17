@@ -94,6 +94,10 @@ class YamlParser
             return addressbookSequence;
         }
 
+        SequenceNode *getVideoSequence (void) {
+            return videoSequence;
+        }
+
         SequenceNode *getAudioSequence (void) {
             return audioSequence;
         }
@@ -170,6 +174,8 @@ class YamlParser
         SequenceNode *addressbookSequence;
 
         SequenceNode *audioSequence;
+
+        SequenceNode *videoSequence;
 
         SequenceNode *hooksSequence;
 

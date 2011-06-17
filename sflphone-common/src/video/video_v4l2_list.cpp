@@ -28,23 +28,67 @@
  *  as that of the covered work.
  */
 
-#ifndef __VIDEO_V4L2_LIST_H__
-#define __VIDEO_V4L2_LIST_H__
+#include <iostream>
+#include <sstream>
 
-#include "video_v4l2.h"
+extern "C" {
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+}
+
+#include "logger.h"
+#include "video_v4l2_list.h"
 
 namespace sfl_video {
 
-class VideoV4l2List {
-    public:
-        VideoV4l2List();
+VideoV4l2List::VideoV4l2List() : _currentDevice(0)
+{
+    int idx;
+    for(idx = 0;;idx++) {
 
-    std::vector<VideoV4l2Device> devices;
-    void addDevice(const VideoV4l2Device &device) {
-        devices.push_back(device);
+        std::stringstream ss;
+        ss << "/dev/video" << idx;
+        int fd = open(ss.str().c_str(), O_RDWR);
+        if (fd == -1)
+            break;
+
+        try {
+            std::string str(ss.str());
+            VideoV4l2Device v(fd, str);
+            addDevice(v);
+        }
+        catch (int e) {
+            close(fd);
+            throw e;
+        }
+
+        close(fd);
     }
-};
+}
+
+void VideoV4l2List::setDevice(unsigned index)
+{
+    if (index >= devices.size()) {
+        _error("%s: requested device %d but we only have %d", __PRETTY_FUNCTION__, index, devices.size());
+        index = devices.size() - 1;
+    }
+    _currentDevice = index;
+}
+
+VideoV4l2Device &VideoV4l2List::getDevice(unsigned index)
+{
+    return devices[index];
+}
+
+VideoV4l2Device &VideoV4l2List::getDevice()
+{
+    return devices[_currentDevice];
+}
+
+size_t VideoV4l2List::nDevices()
+{
+    return devices.size();
+}
 
 } // namespace sfl_video
-
-#endif //__VIDEO_V4L2_LIST_H__ 

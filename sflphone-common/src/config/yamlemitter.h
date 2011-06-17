@@ -85,6 +85,8 @@ class YamlEmitter
 
         void serializeAudioPreference (MappingNode *map) throw(YamlEmitterException);
 
+        void serializeVideoPreference (MappingNode *map) throw(YamlEmitterException);
+
         void serializeShortcutPreference (MappingNode *map) throw(YamlEmitterException);
 
         void writeAudio();

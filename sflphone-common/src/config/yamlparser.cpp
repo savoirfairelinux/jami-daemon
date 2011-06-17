@@ -48,6 +48,7 @@ YamlParser::YamlParser (const char *file) : filename (file)
     , preferenceSequence (NULL)
     , addressbookSequence (NULL)
     , audioSequence (NULL)
+    , videoSequence (NULL)
     , hooksSequence (NULL)
     , voiplinkSequence (NULL)
     , shortcutSequence (NULL)
@@ -500,6 +501,7 @@ void YamlParser::mainNativeDataMapping (MappingNode *map) throw(YamlParserExcept
 		Key accounts ("accounts");
 		Key addressbook ("addressbook");
 		Key audio ("audio");
+		Key video ("video");
 		Key hooks ("hooks");
 		Key preferences ("preferences");
 		Key voiplink ("voipPreferences");
@@ -513,6 +515,8 @@ void YamlParser::mainNativeDataMapping (MappingNode *map) throw(YamlParserExcept
 				addressbookSequence = (SequenceNode *) (iter->second);
 			} else if (audio.compare (iter->first) == 0) {
 				audioSequence = (SequenceNode *) (iter->second);
+			} else if (video.compare (iter->first) == 0) {
+				videoSequence = (SequenceNode *) (iter->second);
 			} else if (hooks.compare (iter->first) == 0) {
 				hooksSequence = (SequenceNode *) (iter->second);
 			} else if (preferences.compare (iter->first) == 0) {

@@ -55,6 +55,7 @@ AC_CONFIG_FILES([src/Makefile \
 		src/audio/alsa/Makefile \
 		src/audio/sound/Makefile \
 		src/audio/codecs/Makefile \
+		src/video/Makefile \
 		src/config/Makefile \
 		src/dbus/Makefile \
 		src/plug-in/Makefile \

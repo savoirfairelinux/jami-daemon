@@ -99,16 +99,16 @@ typedef std::map<CallID, Conference*> ConferenceMap;
 
 static CallID default_conf = "conf";
 
-static char * mapStateToChar[] = {
-    (char*) "UNREGISTERED",
-    (char*) "TRYING",
-    (char*) "REGISTERED",
-    (char*) "ERROR",
-    (char*) "ERRORAUTH",
-    (char*) "ERRORNETWORK",
-    (char*) "ERRORHOST",
-    (char*) "ERROREXISTSTUN",
-    (char*) "ERRORCONFSTUN"
+static const char * mapStateToChar[] = {
+    "UNREGISTERED",
+    "TRYING",
+    "REGISTERED",
+    "ERROR",
+    "ERRORAUTH",
+    "ERRORNETWORK",
+    "ERRORHOST",
+    "ERROREXISTSTUN",
+    "ERRORCONFSTUN"
 };
 
 /** Manager (controller) of sflphone daemon */
@@ -143,6 +143,11 @@ class ManagerImpl
          * Audio preferences
          */
         AudioPreference audioPreference;
+
+        /**
+         * Video preferences
+         */
+        VideoPreference videoPreference;
 
         /**
          * Shortcut preferences
@@ -665,6 +670,54 @@ class ManagerImpl
         int getEchoCancelDelay(void);
 
         void setEchoCancelDelay(int);
+
+        /**
+         * Get the list of available V4L2 devices
+         * @return std::vector<std::string> A list of the V4L2 capture devices
+         */
+        std::vector<std::string> getVideoInputDeviceList();
+
+        /**
+         * Get the list of available inputs for the current V4L2 device 
+         * @return std::vector<std::string> A list of the V4L2 inputs
+         */
+        std::vector<std::string> getVideoInputDeviceInputList();
+
+        /**
+         * Get the list of available resolutions for the current V4L2 device/input pair
+         * @return std::vector<std::string> A list of frame sizes
+         */
+        std::vector<std::string> getVideoInputDeviceSizeList();
+
+        /**
+         * Get the list of available frame rates for the current V4L2 device/input/resolution
+         * @return std::vector<std::string> A list of the possible frame rates
+         */
+        std::vector<std::string> getVideoInputDeviceRateList();
+
+        /**
+         * Set video input device
+         * @param index The index of the V4L2 device
+         */
+        void setVideoInputDevice(const int32_t& api);
+
+        /**
+         * Set v4l2 input
+         * @param index The index of the V4L2 input 
+         */
+        void setVideoInputDeviceInput(const int32_t& api);
+
+        /**
+         * Set video input resolution
+         * @param index The index of the resolution in the list of supported sizes
+         */
+        void setVideoInputDeviceSize(const int32_t& api);
+
+        /**
+         * Set video input frame rate
+         * @param index The index of the frame rate in the list of supported rates
+         */
+        void setVideoInputDeviceRate(const int32_t& api);
 
         /**
          * Convert a list of payload in a special format, readable by the server.
@@ -1469,7 +1522,6 @@ class ManagerImpl
         ConferenceMap _conferencemap;
 
     private:
-
         // Copy Constructor
         ManagerImpl (const ManagerImpl& rh);
 

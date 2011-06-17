@@ -641,42 +641,42 @@ std::vector<std::string> ConfigurationManager::getRecordDeviceList()
 
 std::vector<std::string> ConfigurationManager::getVideoInputDeviceList()
 {
-    std::vector<std::string> ret;
-    return ret;
+    return Manager::instance().getVideoInputDeviceList();
 }
 
 std::vector<std::string> ConfigurationManager::getVideoInputDeviceInputList()
 {
-    std::vector<std::string> ret;
-    return ret;
+    return Manager::instance().getVideoInputDeviceInputList();
 }
 
 std::vector<std::string> ConfigurationManager::getVideoInputDeviceSizeList()
 {
-    std::vector<std::string> ret;
-    return ret;
+    return Manager::instance().getVideoInputDeviceSizeList();
 }
 
 std::vector<std::string> ConfigurationManager::getVideoInputDeviceRateList()
 {
-    std::vector<std::string> ret;
-    return ret;
+    return Manager::instance().getVideoInputDeviceRateList();
 }
 
 void ConfigurationManager::setVideoInputDevice(const int32_t& api)
 {
+    Manager::instance().setVideoInputDevice(api);
 }
 
 void ConfigurationManager::setVideoInputDeviceInput(const int32_t& api)
 {
+    Manager::instance().setVideoInputDeviceInput(api);
 }
 
 void ConfigurationManager::setVideoInputDeviceSize(const int32_t& api)
 {
+    Manager::instance().setVideoInputDeviceSize(api);
 }
 
 void ConfigurationManager::setVideoInputDeviceRate(const int32_t& api)
 {
+    Manager::instance().setVideoInputDeviceRate(api);
 }
 
 bool ConfigurationManager::isMd5CredentialHashing (void)

@@ -230,7 +230,7 @@ static int GetFormat(int fd, VideoV4l2Input &input)
     return ret ? ret + 2 : ret;
 }
 
-VideoV4l2Device::VideoV4l2Device(int fd, std::string &device) {
+VideoV4l2Device::VideoV4l2Device(int fd, std::string &device) : _currentInput(0) {
     unsigned idx;
 
     struct v4l2_capability cap;
@@ -239,6 +239,8 @@ VideoV4l2Device::VideoV4l2Device(int fd, std::string &device) {
 
     if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE))
         throw 2; // not a capture device
+
+    name = std::string((const char*)cap.card);
 
     struct v4l2_input input;
     input.index = idx = 0;
