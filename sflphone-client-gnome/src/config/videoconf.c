@@ -36,6 +36,16 @@
 #include "dbus.h"
 #include "video/video_preview.h"
 
+static GtkWidget *v4l2Device;
+static GtkWidget *v4l2Input;
+static GtkWidget *v4l2Size;
+static GtkWidget *v4l2Rate;
+
+static GtkListStore *v4l2DeviceList;
+static GtkListStore *v4l2InputList;
+static GtkListStore *v4l2SizeList;
+static GtkListStore *v4l2RateList;
+
 static GtkWidget *codecTreeView;		// View used instead of store to get access to selection
 static GtkWidget *codecMoveUpButton;
 static GtkWidget *codecMoveDownButton;
@@ -157,6 +167,13 @@ GtkWidget* create_video_configuration()
     gtk_table_attach(GTK_TABLE(table), previewButton, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 6);
     g_signal_connect(G_OBJECT(previewButton), "clicked", G_CALLBACK(preview_button_clicked), NULL);
     gtk_widget_show(GTK_WIDGET(previewButton));
+
+    gnome_main_section_new_with_table (_ ("Video4Linux2"), &frame, &table, 1, 4);
+    gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
+    GtkWidget *v4l2box = v4l2_box();
+    gtk_table_attach(GTK_TABLE(table), v4l2box, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 6);
+    gtk_widget_show(GTK_WIDGET(v4l2box));
+
 
     gtk_widget_show_all (ret);
 
@@ -419,6 +436,286 @@ GtkWidget* videocodecs_box (account_t **a)
     g_signal_connect (G_OBJECT (codecMoveDownButton), "clicked", G_CALLBACK (codec_move_down), *a);
 
     preferences_dialog_fill_codec_list (a);
+
+    return ret;
+}
+
+/**
+ * Fill video input device rate store
+ */
+static void
+preferences_dialog_fill_video_input_device_rate_list()
+{
+
+    GtkTreeIter iter;
+    gchar** list;
+
+    gtk_list_store_clear (v4l2RateList);
+
+    // Call dbus to retreive list
+    list = dbus_get_video_input_device_rate_list();
+
+    // For each device name included in list
+    int c;
+
+    for (c=0; *list ; c++, list++) {
+        gtk_list_store_append (v4l2RateList, &iter);
+        gtk_list_store_set (v4l2RateList, &iter, 0, *list, 1, c, -1);
+    }
+}
+
+/**
+ * Set the video input device rate on the server with its index
+ */
+static void
+select_video_input_device_rate (GtkComboBox* comboBox, gpointer data UNUSED)
+{
+    GtkTreeModel* model;
+    GtkTreeIter iter;
+    int comboBoxIndex;
+    int deviceIndex;
+
+    comboBoxIndex = gtk_combo_box_get_active (comboBox);
+
+    if (comboBoxIndex >= 0) {
+        model = gtk_combo_box_get_model (comboBox);
+        gtk_combo_box_get_active_iter (comboBox, &iter);
+        gtk_tree_model_get (model, &iter, 1, &deviceIndex, -1);
+
+        dbus_set_video_input_rate (deviceIndex);
+    }
+}
+
+/**
+ * Fill video input device size store
+ */
+static void
+preferences_dialog_fill_video_input_device_size_list()
+{
+
+    GtkTreeIter iter;
+    gchar** list;
+
+    gtk_list_store_clear (v4l2SizeList);
+
+    // Call dbus to retreive list
+    list = dbus_get_video_input_device_size_list();
+
+    // For each device name included in list
+    int c;
+
+    for (c=0; *list ; c++, list++) {
+        gtk_list_store_append (v4l2SizeList, &iter);
+        gtk_list_store_set (v4l2SizeList, &iter, 0, *list, 1, c, -1);
+    }
+}
+
+/**
+ * Set the video input device size on the server with its index
+ */
+static void
+select_video_input_device_size (GtkComboBox* comboBox, gpointer data UNUSED)
+{
+    GtkTreeModel* model;
+    GtkTreeIter iter;
+    int comboBoxIndex;
+    int deviceIndex;
+
+    comboBoxIndex = gtk_combo_box_get_active (comboBox);
+
+    if (comboBoxIndex >= 0) {
+        model = gtk_combo_box_get_model (comboBox);
+        gtk_combo_box_get_active_iter (comboBox, &iter);
+        gtk_tree_model_get (model, &iter, 1, &deviceIndex, -1);
+
+        dbus_set_video_input_size (deviceIndex);
+    }
+}
+
+/**
+ * Fill video input device input store
+ */
+static void
+preferences_dialog_fill_video_input_device_input_list()
+{
+
+    GtkTreeIter iter;
+    gchar** list;
+
+    gtk_list_store_clear (v4l2InputList);
+
+    // Call dbus to retreive list
+    list = dbus_get_video_input_device_input_list();
+
+    // For each device name included in list
+    int c;
+
+    for (c=0; *list ; c++, list++) {
+        gtk_list_store_append (v4l2InputList, &iter);
+        gtk_list_store_set (v4l2InputList, &iter, 0, *list, 1, c, -1);
+    }
+}
+
+/**
+ * Set the video input device input on the server with its index
+ */
+static void
+select_video_input_device_input (GtkComboBox* comboBox, gpointer data UNUSED)
+{
+    GtkTreeModel* model;
+    GtkTreeIter iter;
+    int comboBoxIndex;
+    int deviceIndex;
+
+    comboBoxIndex = gtk_combo_box_get_active (comboBox);
+
+    if (comboBoxIndex >= 0) {
+        model = gtk_combo_box_get_model (comboBox);
+        gtk_combo_box_get_active_iter (comboBox, &iter);
+        gtk_tree_model_get (model, &iter, 1, &deviceIndex, -1);
+
+        dbus_set_video_input_device_input (deviceIndex);
+    }
+}
+
+/**
+ * Fill video input device store
+ */
+static void
+preferences_dialog_fill_video_input_device_list()
+{
+
+    GtkTreeIter iter;
+    gchar** list;
+
+    gtk_list_store_clear (v4l2DeviceList);
+
+    // Call dbus to retreive list
+    list = dbus_get_video_input_device_list();
+
+    // For each device name included in list
+    int c;
+
+    for (c=0; *list ; c++, list++) {
+        gtk_list_store_append (v4l2DeviceList, &iter);
+        gtk_list_store_set (v4l2DeviceList, &iter, 0, *list, 1, c, -1);
+    }
+}
+
+/**
+ * Set the video input device on the server with its index
+ */
+static void
+select_video_input_device (GtkComboBox* comboBox, gpointer data UNUSED)
+{
+    GtkTreeModel* model;
+    GtkTreeIter iter;
+    int comboBoxIndex;
+    int deviceIndex;
+
+    comboBoxIndex = gtk_combo_box_get_active (comboBox);
+
+    if (comboBoxIndex >= 0) {
+        model = gtk_combo_box_get_model (comboBox);
+        gtk_combo_box_get_active_iter (comboBox, &iter);
+        gtk_tree_model_get (model, &iter, 1, &deviceIndex, -1);
+
+        dbus_set_video_input_device (deviceIndex);
+    }
+}
+
+GtkWidget* v4l2_box ()
+{
+    GtkWidget *ret;
+    GtkWidget *item;
+    GtkWidget *table;
+    GtkCellRenderer *renderer;
+
+    ret = gtk_hbox_new (FALSE, 4);
+    gtk_widget_show (ret);
+
+    table = gtk_table_new (6, 3, FALSE);
+    gtk_table_set_col_spacing (GTK_TABLE (table), 0, 40);
+    gtk_box_pack_start (GTK_BOX (ret) , table , TRUE , TRUE , 1);
+    gtk_widget_show (table);
+
+    // Set choices of input devices
+    item = gtk_label_new (_ ("Device"));
+    v4l2DeviceList = gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_INT);
+    v4l2Device = gtk_combo_box_new_with_model (GTK_TREE_MODEL (v4l2DeviceList));
+    gtk_label_set_mnemonic_widget (GTK_LABEL (item), v4l2Device);
+    g_signal_connect (G_OBJECT (v4l2Device), "changed", G_CALLBACK (select_video_input_device), v4l2Device);
+    gtk_table_attach (GTK_TABLE (table), item, 0, 1, 0, 1, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+
+    preferences_dialog_fill_video_input_device_list();
+    gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Device), 0); //FIXME : use prefs
+
+    // Set rendering
+    renderer = gtk_cell_renderer_text_new();
+    gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (v4l2Device), renderer, TRUE);
+    gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (v4l2Device), renderer, "text", 0, NULL);
+    gtk_table_attach (GTK_TABLE (table), v4l2Device, 1, 2, 0, 1, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_widget_show (v4l2Device);
+
+
+    // Set choices of input
+    item = gtk_label_new (_ ("Input"));
+    v4l2InputList = gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_INT);
+    v4l2Input = gtk_combo_box_new_with_model (GTK_TREE_MODEL (v4l2InputList));
+    gtk_label_set_mnemonic_widget (GTK_LABEL (item), v4l2Input);
+    g_signal_connect (G_OBJECT (v4l2Input), "changed", G_CALLBACK (select_video_input_device_input), v4l2Input);
+    gtk_table_attach (GTK_TABLE (table), item, 0, 1, 1, 2, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+
+    preferences_dialog_fill_video_input_device_input_list();
+    gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Input), 0); //FIXME : use prefs
+
+    // Set rendering
+    renderer = gtk_cell_renderer_text_new();
+    gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (v4l2Input), renderer, TRUE);
+    gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (v4l2Input), renderer, "text", 0, NULL);
+    gtk_table_attach (GTK_TABLE (table), v4l2Input, 1, 2, 1, 2, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_widget_show (v4l2Input);
+
+
+    // Set choices of sizes
+    item = gtk_label_new (_ ("Size"));
+    v4l2SizeList = gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_INT);
+    v4l2Size = gtk_combo_box_new_with_model (GTK_TREE_MODEL (v4l2SizeList));
+    gtk_label_set_mnemonic_widget (GTK_LABEL (item), v4l2Size);
+    g_signal_connect (G_OBJECT (v4l2Size), "changed", G_CALLBACK (select_video_input_device_size), v4l2Size);
+    gtk_table_attach (GTK_TABLE (table), item, 0, 1, 2, 3, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+
+    preferences_dialog_fill_video_input_device_size_list();
+    gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Size), 0); //FIXME : use prefs
+
+    // Set rendering
+    renderer = gtk_cell_renderer_text_new();
+    gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (v4l2Size), renderer, TRUE);
+    gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (v4l2Size), renderer, "text", 0, NULL);
+    gtk_table_attach (GTK_TABLE (table), v4l2Size, 1, 2, 2, 3, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_widget_show (v4l2Size);
+
+
+    // Set choices of rates
+    item = gtk_label_new (_ ("Rate"));
+    v4l2RateList = gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_INT);
+    v4l2Rate = gtk_combo_box_new_with_model (GTK_TREE_MODEL (v4l2RateList));
+    gtk_label_set_mnemonic_widget (GTK_LABEL (item), v4l2Rate);
+    g_signal_connect (G_OBJECT (v4l2Rate), "changed", G_CALLBACK (select_video_input_device_rate), v4l2Rate);
+    gtk_table_attach (GTK_TABLE (table), item, 0, 1, 3, 4, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+
+    preferences_dialog_fill_video_input_device_rate_list();
+    gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Rate), 0); //FIXME : use prefs
+
+    // Set rendering
+    renderer = gtk_cell_renderer_text_new();
+    gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (v4l2Rate), renderer, TRUE);
+    gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (v4l2Rate), renderer, "text", 0, NULL);
+    gtk_table_attach (GTK_TABLE (table), v4l2Rate, 1, 2, 3, 4, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_widget_show (v4l2Rate);
+
+
+    gtk_widget_show_all(ret);
 
     return ret;
 }

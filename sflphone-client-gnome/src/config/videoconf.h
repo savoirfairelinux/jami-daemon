@@ -35,5 +35,6 @@
 
 GtkWidget* create_video_configuration();
 GtkWidget* videocodecs_box();
+GtkWidget* v4l2_box();
 
 #endif // __VIDEO_CONF_H__

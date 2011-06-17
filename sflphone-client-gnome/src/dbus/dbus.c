@@ -2000,6 +2000,170 @@ dbus_get_audio_manager (void)
     return api;
 }
 
+/**
+ * Set video input device from its index
+ */
+void
+dbus_set_video_input_device (const int index)
+{
+    GError* error = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_set_video_input_device(
+        configurationManagerProxy, index, &error);
+
+    if (error) {
+        ERROR ("Failed to call set_video_input_device() on ConfigurationManager: %s", error->message);
+        g_error_free (error);
+    }
+}
+
+/**
+ * Set video input device input from its index
+ */
+void
+dbus_set_video_input_device_input (const int index)
+{
+    GError* error = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_set_video_input_device_input(
+        configurationManagerProxy, index, &error);
+
+    if (error) {
+        ERROR ("Failed to call set_video_input_device_input() on ConfigurationManager: %s", error->message);
+        g_error_free (error);
+    }
+}
+
+/**
+ * Set video input size from its index
+ */
+void
+dbus_set_video_input_size (const int index)
+{
+    GError* error = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_set_video_input_device_size(
+        configurationManagerProxy, index, &error);
+
+    if (error) {
+        ERROR ("Failed to call set_video_input_device_size() on ConfigurationManager: %s", error->message);
+        g_error_free (error);
+    }
+}
+
+/**
+ * Set video input rate from its index
+ */
+void
+dbus_set_video_input_rate (const int index)
+{
+    GError* error = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_set_video_input_device_rate(
+        configurationManagerProxy, index, &error);
+
+    if (error) {
+        ERROR ("Failed to call set_video_input_device_rate() on ConfigurationManager: %s", error->message);
+        g_error_free (error);
+    }
+}
+
+/**
+ * Get a list of video input devices
+ */
+gchar**
+dbus_get_video_input_device_list()
+{
+    gchar** array;
+    GError* error = NULL;
+
+    if (!org_sflphone_SFLphone_ConfigurationManager_get_video_input_device_list (
+                configurationManagerProxy, &array, &error)) {
+        if (error->domain == DBUS_GERROR && error->code
+                == DBUS_GERROR_REMOTE_EXCEPTION) {
+            ERROR ("Caught remote method (get_video_input_device_list) exception  %s: %s", dbus_g_error_get_name (error), error->message);
+        } else {
+            ERROR ("Error while calling get_video_input_device_list: %s", error->message);
+        }
+
+        g_error_free (error);
+        return NULL;
+    } else {
+        return array;
+    }
+}
+
+/**
+ * Get a list of inputs supported by the video input device
+ */
+gchar**
+dbus_get_video_input_device_input_list()
+{
+    gchar** array;
+    GError* error = NULL;
+
+    if (!org_sflphone_SFLphone_ConfigurationManager_get_video_input_device_input_list (
+                configurationManagerProxy, &array, &error)) {
+        if (error->domain == DBUS_GERROR && error->code
+                == DBUS_GERROR_REMOTE_EXCEPTION) {
+            ERROR ("Caught remote method (get_video_input_device_input_list) exception  %s: %s", dbus_g_error_get_name (error), error->message);
+        } else {
+            ERROR ("Error while calling get_video_input_device_input_list: %s", error->message);
+        }
+
+        g_error_free (error);
+        return NULL;
+    } else {
+        return array;
+    }
+}
+
+/**
+ * Get a list of resolutions supported by the video input
+ */
+gchar**
+dbus_get_video_input_device_size_list()
+{
+    gchar** array;
+    GError* error = NULL;
+
+    if (!org_sflphone_SFLphone_ConfigurationManager_get_video_input_device_size_list (
+                configurationManagerProxy, &array, &error)) {
+        if (error->domain == DBUS_GERROR && error->code
+                == DBUS_GERROR_REMOTE_EXCEPTION) {
+            ERROR ("Caught remote method (get_video_input_device_size_list) exception  %s: %s", dbus_g_error_get_name (error), error->message);
+        } else {
+            ERROR ("Error while calling get_video_input_device_size_list: %s", error->message);
+        }
+
+        g_error_free (error);
+        return NULL;
+    } else {
+        return array;
+    }
+}
+
+/**
+ * Get a list of frame rates supported by the video input resolution
+ */
+gchar**
+dbus_get_video_input_device_rate_list()
+{
+    gchar** array;
+    GError* error = NULL;
+
+    if (!org_sflphone_SFLphone_ConfigurationManager_get_video_input_device_rate_list (
+                configurationManagerProxy, &array, &error)) {
+        if (error->domain == DBUS_GERROR && error->code
+                == DBUS_GERROR_REMOTE_EXCEPTION) {
+            ERROR ("Caught remote method (get_video_input_device_rate_list) exception  %s: %s", dbus_g_error_get_name (error), error->message);
+        } else {
+            ERROR ("Error while calling get_video_input_device_rate_list: %s", error->message);
+        }
+
+        g_error_free (error);
+        return NULL;
+    } else {
+        return array;
+    }
+}
+
 /*
    void
    dbus_set_sip_address( const gchar* address )
