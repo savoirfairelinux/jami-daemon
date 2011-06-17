@@ -306,6 +306,7 @@ calltree_create_conf_from_participant_list(GSList *list) {
 
     // concatenate 
     for(i = 0; i < list_length; i++) {
+	gchar *number;
 	gchar *participant_id = g_slist_nth_data(list, i);
 	DEBUG("********************* participant %s ***************************", participant_id);       
         callable_obj_t *call = calllist_get_call(history, participant_id);
@@ -314,8 +315,10 @@ calltree_create_conf_from_participant_list(GSList *list) {
 	    participant_list = (void *) realloc(participant_list, (c+1) * sizeof(void *));
     	}
 
-        // allocate memory for teh participant number
-	*(participant_list+c) = g_strdup(call->_peer_number);
+        // allocate memory for the participant number
+	number = g_strconcat(call->_peer_number,",",call->_accountID, NULL);
+
+	*(participant_list+c) = number;
 
 	c++;
     }
