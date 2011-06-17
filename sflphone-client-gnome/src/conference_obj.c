@@ -116,6 +116,7 @@ void create_new_conference_from_details (const gchar *conf_id, GHashTable *detai
     *conf = new_conf;
 }
 
+
 void free_conference_obj_t (conference_obj_t *c)
 {
     g_free (c->_confID);
@@ -231,3 +232,83 @@ gchar *serialize_history_conference_entry(conference_obj_t *entry)
 
     return result;
 }
+
+void create_conference_history_entry_from_serialized(gchar *timestamp, gchar **ptr, conference_obj_t **conf)
+{
+    gchar *conference_id = "";
+    history_state_t history_state = MISSED;
+    gint token = 0;
+    conference_state_t state = CONFERENCE_STATE_ACTIVE_ATACHED;
+    gchar *participant = "";
+    gchar *name = "";
+    gchar *time_stop = "";
+    gchar *accountID = "";
+    gchar *recordfile = "";
+    const gchar *confID = "conf_1234";
+    
+    // create a new empty conference
+    create_new_conference(state, confID, conf);
+
+    while(ptr != NULL && token < 6) {
+        switch(token) {
+            case 0:
+		history_state = MISSED;
+		break;
+	    case 1:
+		participant = *ptr;
+		break;
+	    case 2:
+		name = *ptr;
+		break;
+	    case 3:
+		time_stop = *ptr;
+		break;
+	    case 4:
+		accountID = *ptr;
+		break;
+	    case 5:
+	        recordfile = *ptr;
+		break;
+	    default:
+	        break;
+	}
+
+	token++;
+ 	ptr++;
+    }
+}
+
+void process_conference_participant_from_serialized(gchar *participant, conference_obj_t *conf)
+{
+    gchar **ptr = NULL;
+    gchar **numberptr = NULL;
+    gchar *delim = ";";
+    gchar *delimnumber = ",";
+    gchar *numberaccount;
+    guint token = 0;
+
+    ptr = g_strsplit(participant, delim, 0);
+    while(ptr != NULL) {
+	token = 0;
+	numberaccount = *ptr;
+	numberptr = g_strsplit(numberaccount, delimnumber, 2);
+	while(numberptr != NULL) {
+	    gchar *phone_number = NULL;
+	    gchar *account = NULL;
+	    switch(token) {
+	 	case 0:
+		    phone_number = *numberptr;
+		    break;
+		case 1:
+		    account = *numberptr;
+		    break;
+		default:
+		    break;
+	    }
+	    token++;
+	    numberptr++;
+
+	    // we should create call here and add it to the conference to be inserted in history
+	}
+    }
+} 

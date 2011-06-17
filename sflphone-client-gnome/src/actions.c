@@ -1275,6 +1275,7 @@ void sflphone_fill_history (void)
     gpointer key, value;
     gpointer key_to_min = NULL;
     callable_obj_t *history_entry;
+    conference_obj_t *conference_entry;
     int timestamp = 0;
     int min_timestamp = 0;
 
@@ -1317,16 +1318,30 @@ void sflphone_fill_history (void)
 
             if (g_hash_table_lookup_extended (entries, key_to_min, &key, &value)) {
 
-                // do something with key and value
-                create_history_entry_from_serialized_form ( (gchar*) key, (gchar*) value, &history_entry);
-                DEBUG ("SFLphone: History timestart%d\n", history_entry->_time_start);
-                
-		// Add it and update the GUI
-                calllist_add_call (history, history_entry);
-		calltree_add_call (history, history_entry, NULL);
+		gchar **ptr;
+    		const gchar *delim = "|";
 
-                // remove entry from map
-                g_hash_table_remove (entries, key_to_min);
+		DEBUG("---------------------------------- HISTORY VALUE %s", value);
+
+	        ptr = g_strsplit(value, delim, 6);
+		if(ptr != NULL) {
+
+		    // first ptr refers to entry type
+		    if(g_strcmp0(*ptr, "2188") == 0) {
+			// create_conference_history_entry_from_serialized((gchar *)key, (gchar **)ptr, &conference_entry);
+			g_hash_table_remove(entries, key_to_min);	
+		    }
+		    else {
+                        // do something with key and value
+                        create_history_entry_from_serialized_form ( (gchar*) key, (gchar **) ptr, &history_entry);
+                
+		        // Add it and update the GUI
+                        calllist_add_call (history, history_entry);
+		        calltree_add_call (history, history_entry, NULL);
+                        // remove entry from map
+                        g_hash_table_remove (entries, key_to_min);
+		    }
+	        }
             }
         }
     }
