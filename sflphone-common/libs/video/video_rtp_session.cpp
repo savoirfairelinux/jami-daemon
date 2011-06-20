@@ -34,7 +34,8 @@
 #include <sstream>
 #include <map>
 #include <string>
-#include "video_rtp_thread.h"
+#include "video_send_thread.h"
+#include "video_receive_thread.h"
 
 namespace sfl_video {
 
@@ -49,7 +50,7 @@ VideoRtpSession::VideoRtpSession(const std::string &input,
 
 void VideoRtpSession::test()
 {
-    assert(rtpSendThread_.get() == 0);
+    assert(sendThread_.get() == 0);
     std::cerr << "Capturing from " << input_ << ", encoding to " << codec_ <<
         " at " << bitrate_ << " bps, sending to " << destinationURI_ <<
         std::endl;
@@ -62,18 +63,18 @@ void VideoRtpSession::test()
     args["bitrate"] = bitstr.str();
     args["destination"] = destinationURI_;
 
-    rtpSendThread_.reset(new VideoRtpSendThread(args));
-    rtpSendThread_->start();
+    sendThread_.reset(new VideoSendThread(args));
+    sendThread_->start();
 
-    rtpSendThread_->waitForSDP();
+    sendThread_->waitForSDP();
     args["input"] = "test.sdp";
-    rtpReceiveThread_.reset(new VideoRtpReceiveThread(args));
-    rtpReceiveThread_->start();
+    receiveThread_.reset(new VideoReceiveThread(args));
+    receiveThread_->start();
 }
 
 void VideoRtpSession::start()
 {
-    assert(rtpSendThread_.get() == 0);
+    assert(sendThread_.get() == 0);
     std::cerr << "Capturing from " << input_ << ", encoding to " << codec_ <<
         " at " << bitrate_ << " bps, sending to " << destinationURI_ <<
         std::endl;
@@ -86,28 +87,28 @@ void VideoRtpSession::start()
     args["bitrate"] = bitstr.str();
     args["destination"] = destinationURI_;
 
-    rtpSendThread_.reset(new VideoRtpSendThread(args));
-    rtpSendThread_->start();
+    sendThread_.reset(new VideoSendThread(args));
+    sendThread_->start();
 
     args["input"] = "test.sdp";
-    rtpReceiveThread_.reset(new VideoRtpReceiveThread(args));
-    rtpReceiveThread_->start();
+    receiveThread_.reset(new VideoReceiveThread(args));
+    receiveThread_->start();
 }
 
 void VideoRtpSession::stop()
 {
     std::cerr << "Stopping video rtp session " << std::endl;
     // FIXME: all kinds of evil!!! interrupted should be atomic
-    rtpReceiveThread_->stop();
-    rtpReceiveThread_->join();
+    receiveThread_->stop();
+    receiveThread_->join();
 
-    rtpSendThread_->stop();
-    rtpSendThread_->join();
+    sendThread_->stop();
+    sendThread_->join();
     std::cerr << "cancelled video rtp session " << std::endl;
 
     // destroy objects
-    rtpReceiveThread_.reset();
-    rtpSendThread_.reset();
+    receiveThread_.reset();
+    sendThread_.reset();
 }
 
 } // end namspace sfl_video

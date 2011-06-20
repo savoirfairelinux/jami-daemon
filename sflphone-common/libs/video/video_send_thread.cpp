@@ -30,7 +30,7 @@
 
 #define __STDC_CONSTANT_MACROS
 
-#include "video_rtp_thread.h"
+#include "video_send_thread.h"
 
 // libav includes
 extern "C" {
@@ -41,316 +41,9 @@ extern "C" {
 #include <libswscale/swscale.h>
 }
 
-// shm includes
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/sem.h>     /* semaphore functions and structs.    */
-#include <sys/shm.h>
-
 namespace sfl_video {
 
-namespace { // anonymouse namespace
-
-#if _SEM_SEMUN_UNDEFINED
-union semun
-{
- int val;				    /* value for SETVAL */
- struct semid_ds *buf;		/* buffer for IPC_STAT & IPC_SET */
- unsigned short int *array;	/* array for GETALL & SETALL */
- struct seminfo *__buf;		/* buffer for IPC_INFO */
-};
-#endif
-
-typedef struct {
-    unsigned size;
-    unsigned width;
-    unsigned height;
-} FrameInfo;
-
-#define TEMPFILE "/tmp/frame.txt"
-
-void postFrameSize(unsigned width, unsigned height, unsigned numBytes)
-{
-    FILE *tmp = fopen(TEMPFILE, "w");
-
-    /* write to file*/
-    fprintf(tmp, "%u\n", numBytes);
-    fprintf(tmp, "%u\n", width);
-    fprintf(tmp, "%u\n", height);
-    fclose(tmp);
-}
-
-int createSemSet()
-{
-    /* this variable will contain the semaphore set. */
-    int sem_set_id;
-    key_t key = ftok("/tmp", 'b');
-
-    /* semaphore value, for semctl().                */
-    union semun sem_val;
-
-    /* first we create a semaphore set with a single semaphore, */
-    /* whose counter is initialized to '0'.                     */
-    sem_set_id = semget(key, 1, 0600 | IPC_CREAT);
-    if (sem_set_id == -1) {
-        perror("semget");
-        exit(1);
-    }
-    sem_val.val = 0;
-    semctl(sem_set_id, 0, SETVAL, sem_val);
-    return sem_set_id;
-}
-
-void
-cleanupSemaphore(int sem_set_id)
-{
-    semctl(sem_set_id, 0, IPC_RMID);
-}
-
-
-/*
- * function: sem_signal. signals the process that a frame is ready.
- * input:    semaphore set ID.
- * output:   none.
- */
-void
-sem_signal(int sem_set_id)
-{
-    /* structure for semaphore operations.   */
-    struct sembuf sem_op;
-
-    /* signal the semaphore - increase its value by one. */
-    sem_op.sem_num = 0;
-    sem_op.sem_op = 1;
-    sem_op.sem_flg = 0;
-    semop(sem_set_id, &sem_op, 1);
-}
-
-/* join and/or create a shared memory segment */
-int createShm(unsigned numBytes)
-{
-    key_t key;
-    int shm_id;
-    /* connect to and possibly create a segment with 644 permissions
-       (rw-r--r--) */
-    key = ftok("/tmp", 'c');
-    shm_id = shmget(key, numBytes, 0644 | IPC_CREAT);
-
-    return shm_id;
-}
-
-/* attach a shared memory segment */
-uint8_t *attachShm(int shm_id)
-{
-    uint8_t *data = NULL;
-
-    /* attach to the segment and get a pointer to it */
-    data = reinterpret_cast<uint8_t*>(shmat(shm_id, (void *)0, 0));
-    if (data == (uint8_t *)(-1)) {
-        perror("shmat");
-        data = NULL;
-    }
-
-    return data;
-}
-
-void detachShm(uint8_t *data)
-{
-    /* detach from the segment: */
-    if (shmdt(data) == -1) {
-        perror("shmdt");
-    }
-}
-
-void destroyShm(int shm_id)
-{
-    /* destroy it */
-    shmctl(shm_id, IPC_RMID, NULL);
-}
-
-void cleanupShm(int shm_id, uint8_t *data)
-{
-    detachShm(data);
-    destroyShm(shm_id);
-}
-
-int bufferSizeRGB24(int width, int height)
-{
-    int numBytes;
-    // determine required buffer size and allocate buffer
-    numBytes = avpicture_get_size(PIX_FMT_RGB24, width, height);
-    return numBytes * sizeof(uint8_t);
-}
-
-} // end anonymous namespace
-
-
-void VideoRtpReceiveThread::setup()
-{
-    av_register_all();
-    avdevice_register_all();
-
-    AVInputFormat *file_iformat = 0;
-
-    // Open video file
-    if (av_open_input_file(&inputCtx_, args_["input"].c_str(), file_iformat, 0, NULL) != 0)
-    {
-        std::cerr <<  "Could not open input file " << args_["input"] <<
-            std::endl;
-        cleanup();
-    }
-
-    // retrieve stream information
-    if (av_find_stream_info(inputCtx_) < 0)
-    {
-        std::cerr << "Could not find stream info!" << std::endl;
-        cleanup();
-    }
-
-    // find the first video stream from the input
-    unsigned i;
-    for (i = 0; i < inputCtx_->nb_streams; i++)
-    {
-        if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
-        {
-            videoStreamIndex_ = i;
-            break;
-        }
-    }
-    if (videoStreamIndex_ == -1)
-    {
-        std::cerr << "Could not find video stream!" << std::endl;
-        cleanup();
-    }
-
-    // Get a pointer to the codec context for the video stream
-    decoderCtx_ = inputCtx_->streams[videoStreamIndex_]->codec;
-
-    // find the decoder for the video stream
-    AVCodec *inputDecoder = avcodec_find_decoder(decoderCtx_->codec_id);
-    if (inputDecoder == NULL)
-    {
-        std::cerr << "Unsupported codec!" << std::endl;
-        cleanup();
-    }
-
-    // open codec
-    if (avcodec_open(decoderCtx_, inputDecoder) < 0)
-    {
-        std::cerr << "Could not open codec!" << std::endl;
-        cleanup();
-    }
-
-    scaledPicture_ = avcodec_alloc_frame();
-    if (scaledPicture_ == 0)
-    {
-        std::cerr << "Could not allocated output frame!" << std::endl;
-        cleanup();
-    }
-
-    unsigned numBytes;
-    // determine required buffer size and allocate buffer
-    numBytes = bufferSizeRGB24(decoderCtx_->width, decoderCtx_->height);
-    /*printf("%u bytes\n", numBytes);*/
-    postFrameSize(decoderCtx_->width, decoderCtx_->height, numBytes);
-
-    // create shared memory segment and attach to it
-    shmID_ = createShm(numBytes);
-    shmBuffer_  = attachShm(shmID_);
-    semSetID_ = createSemSet();
-
-    // assign appropriate parts of buffer to image planes in scaledPicture 
-    avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
-            reinterpret_cast<uint8_t*>(shmBuffer_),
-            PIX_FMT_RGB24, decoderCtx_->width, decoderCtx_->height);
-
-    // allocate video frame
-    rawFrame_ = avcodec_alloc_frame();
-}
-
-void VideoRtpReceiveThread::cleanup()
-{
-    // free shared memory
-    cleanupSemaphore(semSetID_);
-    cleanupShm(shmID_, shmBuffer_);
-
-    // free the scaled frame
-    av_free(scaledPicture_);
-    // free the YUV frame
-    av_free(rawFrame_);
-
-    // doesn't need to be freed, we didn't use avcodec_alloc_context
-    avcodec_close(decoderCtx_);
-
-    // close the video file
-    av_close_input_file(inputCtx_);
-
-    std::cerr << "Exitting the decoder thread" << std::endl;
-    // exit this thread
-    exit();
-}
-
-SwsContext * VideoRtpReceiveThread::createScalingContext()
-{
-    // Create scaling context, no scaling done here
-    SwsContext *imgConvertCtx = sws_getContext(decoderCtx_->width,
-            decoderCtx_->height, decoderCtx_->pix_fmt, decoderCtx_->width,
-            decoderCtx_->height, PIX_FMT_RGB24, SWS_BICUBIC,
-            NULL, NULL, NULL);
-    if (imgConvertCtx == 0)
-    {
-        std::cerr << "Cannot init the conversion context!" << std::endl;
-        cleanup();
-    }
-    return imgConvertCtx;
-}
-
-VideoRtpReceiveThread::VideoRtpReceiveThread(const std::map<std::string, std::string> &args) : args_(args),
-    interrupted_(false) {}
-
-void VideoRtpReceiveThread::run()
-{
-    setup();
-    AVPacket inpacket;
-    int frameFinished;
-    SwsContext *imgConvertCtx = createScalingContext();
-
-    while (not interrupted_ and av_read_frame(inputCtx_, &inpacket) >= 0)
-    {
-        // is this a packet from the video stream?
-        if (inpacket.stream_index == videoStreamIndex_)
-        {
-            // decode video frame from camera
-            avcodec_decode_video2(decoderCtx_, rawFrame_, &frameFinished, &inpacket);
-            if (frameFinished)
-            {
-                sws_scale(imgConvertCtx, rawFrame_->data, rawFrame_->linesize,
-                        0, decoderCtx_->height, scaledPicture_->data,
-                        scaledPicture_->linesize);
-
-                /* signal the semaphore that a new frame is ready */ 
-                sem_signal(semSetID_);
-            }
-        }
-        // free the packet that was allocated by av_read_frame
-        av_free_packet(&inpacket);
-    }
-    // free resources, exit thread
-    cleanup();
-}
-
-void VideoRtpReceiveThread::stop()
-{
-    // FIXME: not thread safe, add mutex
-    interrupted_ = true;
-}
-
-VideoRtpReceiveThread::~VideoRtpReceiveThread()
-{
-    terminate();
-}
-
-void VideoRtpSendThread::print_error(const char *filename, int err)
+void VideoSendThread::print_error(const char *filename, int err)
 {
     char errbuf[128];
     const char *errbuf_ptr = errbuf;
@@ -360,7 +53,7 @@ void VideoRtpSendThread::print_error(const char *filename, int err)
     std::cerr << filename << ":" <<  errbuf_ptr << std::endl;
 }
 
-void VideoRtpSendThread::print_and_save_sdp()
+void VideoSendThread::print_and_save_sdp()
 {
     size_t sdp_size = outputCtx_->streams[0]->codec->extradata_size + 2048;
     char *sdp = reinterpret_cast<char*>(malloc(sdp_size)); /* theora sdp can be huge */
@@ -382,12 +75,12 @@ void VideoRtpSendThread::print_and_save_sdp()
 }
 
 // NOT called from this (the run() ) thread
-void VideoRtpSendThread::waitForSDP()
+void VideoSendThread::waitForSDP()
 {
     sdpReady_.wait();
 }
 
-void VideoRtpSendThread::forcePresetX264()
+void VideoSendThread::forcePresetX264()
 {
     std::cerr << "get x264 preset time" << std::endl;
     //int opt_name_count = 0;
@@ -418,7 +111,7 @@ void VideoRtpSendThread::forcePresetX264()
     free(encoder_options_string); // free allocated memory
 }
 
-void VideoRtpSendThread::prepareEncoderContext()
+void VideoSendThread::prepareEncoderContext()
 {
     encoderCtx_ = avcodec_alloc_context();
     // set some encoder settings here
@@ -435,7 +128,7 @@ void VideoRtpSendThread::prepareEncoderContext()
     encoderCtx_->pix_fmt = PIX_FMT_YUV420P;
 }
 
-void VideoRtpSendThread::setup()
+void VideoSendThread::setup()
 {
     av_register_all();
     avdevice_register_all();
@@ -596,7 +289,7 @@ void VideoRtpSendThread::setup()
     scaledPicture_->linesize[2] = encoderCtx_->width / 2;
 }
 
-void VideoRtpSendThread::cleanup()
+void VideoSendThread::cleanup()
 {
     // write the trailer, if any.  the trailer must be written
     // before you close the CodecContexts open when you wrote the
@@ -625,7 +318,7 @@ void VideoRtpSendThread::cleanup()
     exit();
 }
 
-SwsContext * VideoRtpSendThread::createScalingContext()
+SwsContext * VideoSendThread::createScalingContext()
 {
     // Create scaling context
     SwsContext *imgConvertCtx = sws_getContext(inputDecoderCtx_->width,
@@ -641,11 +334,11 @@ SwsContext * VideoRtpSendThread::createScalingContext()
 }
 
 
-VideoRtpSendThread::VideoRtpSendThread(const std::map<std::string, std::string> &args) :
+VideoSendThread::VideoSendThread(const std::map<std::string, std::string> &args) :
     args_(args),
     interrupted_(false) {}
 
-void VideoRtpSendThread::run()
+void VideoSendThread::run()
 {
     setup();
     AVPacket inpacket;
@@ -712,13 +405,13 @@ void VideoRtpSendThread::run()
     cleanup();
 }
 
-void VideoRtpSendThread::stop()
+void VideoSendThread::stop()
 {
     // FIXME: not thread safe
     interrupted_ = true;
 }
 
-VideoRtpSendThread::~VideoRtpSendThread()
+VideoSendThread::~VideoSendThread()
 {
     terminate();
 }

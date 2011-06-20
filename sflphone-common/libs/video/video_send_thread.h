@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2011 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#ifndef _VIDEO_RTP_THREAD_H_
-#define _VIDEO_RTP_THREAD_H_
+#ifndef _VIDEO_SEND_THREAD_H_
+#define _VIDEO_SEND_THREAD_H_
 
 #include <cc++/thread.h>
 #include <map>
@@ -42,35 +42,8 @@ class AVFormatContext;
 class AVFrame;
 
 namespace sfl_video {
-class VideoRtpReceiveThread : public ost::Thread {
-    private:
-        std::map<std::string, std::string> args_;
-        volatile int interrupted_;
 
-        /*-------------------------------------------------------------*/
-        /* These variables should be used in thread (i.e. run()) only! */
-        /*-------------------------------------------------------------*/
-        uint8_t *scaledPictureBuf_;
-        uint8_t *shmBuffer_;
-        int shmID_;
-        int semSetID_;
-        AVCodecContext *decoderCtx_;
-        AVFrame *rawFrame_;
-        AVFrame *scaledPicture_;
-        int videoStreamIndex_;
-        AVFormatContext *inputCtx_;
-
-        void setup();
-        void cleanup();
-        SwsContext * createScalingContext();
-    public:
-        VideoRtpReceiveThread(const std::map<std::string, std::string> &args);
-        virtual ~VideoRtpReceiveThread();
-        virtual void run();
-        void stop();
-};
-
-class VideoRtpSendThread : public ost::Thread {
+class VideoSendThread : public ost::Thread {
     private:
         static void print_error(const char *filename, int err);
         void forcePresetX264();
@@ -98,8 +71,8 @@ class VideoRtpSendThread : public ost::Thread {
         AVFormatContext *inputCtx_;
         AVFormatContext *outputCtx_;
     public:
-        VideoRtpSendThread(const std::map<std::string, std::string> &args);
-        virtual ~VideoRtpSendThread();
+        VideoSendThread(const std::map<std::string, std::string> &args);
+        virtual ~VideoSendThread();
         // called from main thread 
         void waitForSDP();
         virtual void run();
@@ -107,4 +80,4 @@ class VideoRtpSendThread : public ost::Thread {
 };
 }
 
-#endif // _VIDEO_RTP_THREAD_H_
+#endif // _VIDEO_SEND_THREAD_H_

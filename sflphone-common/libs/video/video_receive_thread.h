@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2011 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,34 +28,47 @@
  *  as that of the covered work.
  */
 
-#ifndef __VIDEO_RTP_SESSION_H__
-#define __VIDEO_RTP_SESSION_H__
+#ifndef _VIDEO_RECEIVE_THREAD_H_
+#define _VIDEO_RECEIVE_THREAD_H_
 
+#include <cc++/thread.h>
+#include <map>
 #include <string>
-#include <tr1/memory>
+
+class SwsContext;
+class AVCodecContext;
+class AVStream;
+class AVFormatContext;
+class AVFrame;
 
 namespace sfl_video {
-
-class VideoSendThread;
-class VideoReceiveThread;
-
-class VideoRtpSession {
-    public:
-        VideoRtpSession(const std::string &input, const std::string &codec,
-                int bitrate, const std::string &destinationURI);
-
-        void start();
-        void test();
-        void stop();
+class VideoReceiveThread : public ost::Thread {
     private:
-        const std::string input_;
-        const std::string codec_;
-        const int bitrate_;
-        const std::string destinationURI_;
-        std::tr1::shared_ptr<VideoSendThread> sendThread_;
-        std::tr1::shared_ptr<VideoReceiveThread> receiveThread_;
-};
+        std::map<std::string, std::string> args_;
+        volatile int interrupted_;
 
+        /*-------------------------------------------------------------*/
+        /* These variables should be used in thread (i.e. run()) only! */
+        /*-------------------------------------------------------------*/
+        uint8_t *scaledPictureBuf_;
+        uint8_t *shmBuffer_;
+        int shmID_;
+        int semSetID_;
+        AVCodecContext *decoderCtx_;
+        AVFrame *rawFrame_;
+        AVFrame *scaledPicture_;
+        int videoStreamIndex_;
+        AVFormatContext *inputCtx_;
+
+        void setup();
+        void cleanup();
+        SwsContext * createScalingContext();
+    public:
+        VideoReceiveThread(const std::map<std::string, std::string> &args);
+        virtual ~VideoReceiveThread();
+        virtual void run();
+        void stop();
+};
 }
 
-#endif // __VIDEO_RTP_SESSION_H__
+#endif // _VIDEO_RECEIVE_THREAD_H_
