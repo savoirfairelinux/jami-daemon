@@ -72,6 +72,10 @@ class VideoV4l2Size {
             _currentRate = index;
         }
 
+        unsigned getRateIndex() {
+            return _currentRate;
+        }
+
         VideoV4l2Rate &getRate() {
             return rates[_currentRate];
         }
@@ -116,6 +120,10 @@ class VideoV4l2Input {
             _currentSize = index;
         }
 
+        unsigned getSizeIndex() {
+            return _currentSize;
+        }
+
         VideoV4l2Size &getSize() {
             return sizes[_currentSize];
         }
@@ -151,6 +159,10 @@ class VideoV4l2Device {
                 index = inputs.size() - 1;
             }
             _currentInput = index;
+        }
+
+        unsigned getInputIndex() {
+            return _currentInput;
         }
 
         VideoV4l2Input &getInput() {

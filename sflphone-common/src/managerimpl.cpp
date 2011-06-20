@@ -2918,6 +2918,26 @@ std::vector<std::string> ManagerImpl::getVideoInputDeviceRateList()
     return v;
 }
 
+int32_t ManagerImpl::getVideoInputDevice()
+{
+    return videoPreference.v4l2_list->getDeviceIndex();
+}
+
+int32_t ManagerImpl::getVideoInputDeviceInput()
+{
+    return videoPreference.v4l2_list->getDevice().getInputIndex();
+}
+
+int32_t ManagerImpl::getVideoInputDeviceSize()
+{
+    return videoPreference.v4l2_list->getDevice().getInput().getSizeIndex();
+}
+
+int32_t ManagerImpl::getVideoInputDeviceRate()
+{
+    return videoPreference.v4l2_list->getDevice().getInput().getSize().getRateIndex();
+}
+
 void ManagerImpl::setVideoInputDevice(const int32_t& api)
 {
     videoPreference.v4l2_list->setDevice(api);

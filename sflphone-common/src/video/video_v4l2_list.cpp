@@ -81,6 +81,11 @@ VideoV4l2Device &VideoV4l2List::getDevice(unsigned index)
     return devices[index];
 }
 
+unsigned VideoV4l2List::getDeviceIndex()
+{
+    return _currentDevice;
+}
+
 VideoV4l2Device &VideoV4l2List::getDevice()
 {
     return devices[_currentDevice];

@@ -696,6 +696,26 @@ class ManagerImpl
         std::vector<std::string> getVideoInputDeviceRateList();
 
         /**
+         * Get video input device index
+         */
+        int32_t getVideoInputDevice();
+
+        /**
+         * Get video input device input index
+         */
+        int32_t getVideoInputDeviceInput();
+
+        /**
+         * Get video input device size index
+         */
+        int32_t getVideoInputDeviceSize();
+
+        /**
+         * Get video input device rate index
+         */
+        int32_t getVideoInputDeviceRate();
+
+        /**
          * Set video input device
          * @param index The index of the V4L2 device
          */
