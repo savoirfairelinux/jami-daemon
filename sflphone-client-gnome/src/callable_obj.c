@@ -313,27 +313,21 @@ void create_history_entry_from_serialized_form (gchar *timestamp, gchar **ptr, c
     while (ptr != NULL && token < 6) {
         switch (token) {
             case 0:
-	        DEBUG("------------------------------------------------------------------------------------------ HISTORYSTATE FROM SERIALIZATION %s", *ptr);
                 history_state = get_history_state_from_id (*ptr);
                 break;
             case 1:
-	        DEBUG("------------------------------------------------------------------------------------------ PEERNUMBER FROM SERIALIZATION %s", *ptr);
                 peer_number = *ptr;
                 break;
             case 2:
-	        DEBUG("------------------------------------------------------------------------------------------ PEERNAME FROM SERIALIZATION %s", *ptr);
                 peer_name = *ptr;
                 break;
             case 3:
-		DEBUG("------------------------------------------------------------------------------------------ TIMESTOP FROM SERIALIZATION %s", *ptr);
                 time_stop = *ptr;
                 break;
             case 4:
-		DEBUG("------------------------------------------------------------------------------------------ ACCOUNTID FROM SERIALIZATION %s", *ptr);
                 accountID = *ptr;
                 break;
             case 5:
-		DEBUG("------------------------------------------------------------------------------------------ RECORDFILE FROM SERIALIZATION %s", *ptr);
 		recordfile = *ptr;
             default:
                 break;

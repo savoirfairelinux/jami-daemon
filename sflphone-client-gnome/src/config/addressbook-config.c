@@ -246,13 +246,6 @@ addressbook_config_book_active_toggled (
     }
     book_data->active = active;
 
-    if(active) {
-        DEBUG("-------------------------------------------- SET ADDRESSBOOK %s AS ACTIVE", book_data->name);
-    }
-    else {
-        DEBUG("-------------------------------------------- SET ADDRESSBOOK %s AS INACTIVE", book_data->name);
-    }
-
     // Save data
     gboolean valid;
 

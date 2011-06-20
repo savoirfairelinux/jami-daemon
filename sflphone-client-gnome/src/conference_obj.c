@@ -38,6 +38,7 @@
 
 static void set_conference_timestamp (time_t *);
 static void conference_add_participant_number(const gchar *, conference_obj_t *);
+static void process_conference_participant_from_serialized(gchar *, conference_obj_t *);
 
 static void set_conference_timestamp (time_t *timestamp) 
 {
@@ -50,21 +51,27 @@ static void set_conference_timestamp (time_t *timestamp)
 
 void create_new_conference (conference_state_t state, const gchar* confID, conference_obj_t ** conf)
 {
-    DEBUG ("create_new_conference");
-
-    // conference_obj_t *obj;
     conference_obj_t *new_conf;
-    const gchar* conf_id;
+
+    if(confID == NULL) {
+	ERROR("Conference: Error: Conference ID is NULL while creating new conference");
+	return;
+    }
+
+    DEBUG ("Conference: Create new conference %s", confID);
 
     // Allocate memory
     new_conf = g_new0 (conference_obj_t, 1);
+    if(new_conf == NULL) {
+	ERROR("Conference: Error: Could not allocate data ");
+	return;
+    }
 
     // Set state field
     new_conf->_state = state;
 
     // Set the ID field
-    conf_id = confID;
-    new_conf->_confID = g_strdup (conf_id);
+    new_conf->_confID = g_strdup (confID);
 
     new_conf->participant_list = NULL;
     new_conf->participant_number = NULL;
@@ -74,15 +81,18 @@ void create_new_conference (conference_state_t state, const gchar* confID, confe
 
 void create_new_conference_from_details (const gchar *conf_id, GHashTable *details, conference_obj_t ** conf)
 {
-    DEBUG ("create_new_conference_from_details");
-
     conference_obj_t *new_conf;
     gchar** participants;
     gchar* state_str;
-    // GSList* participant_list;
+    
+    DEBUG ("Conference: Create new conference from details");
 
     // Allocate memory
     new_conf = g_new0 (conference_obj_t, 1);
+    if(new_conf == NULL) {
+        ERROR("Conference: Error: Could not allocate data ");
+        return;
+    }
 
     new_conf->_confID = g_strdup (conf_id);
 
@@ -93,6 +103,9 @@ void create_new_conference_from_details (const gchar *conf_id, GHashTable *detai
 
     // get participant list
     participants = dbus_get_participant_list (conf_id);
+    if(participants == NULL) {
+	ERROR("Conference: Error: Could not get participant list");
+    }
 
     // generate conference participant list
     conference_participant_list_update (participants, new_conf);
@@ -131,6 +144,8 @@ void free_conference_obj_t (conference_obj_t *c)
 
 void conference_add_participant (const gchar* call_id, conference_obj_t* conf)
 {
+    DEBUG("Conference: Conference %s, adding participant %s", conf->_confID, call_id);
+
     // store the new participant list after appending participant id
     conf->participant_list = g_slist_append (conf->participant_list, (gpointer) g_strdup(call_id));
 
@@ -246,6 +261,8 @@ void create_conference_history_entry_from_serialized(gchar *timestamp, gchar **p
     gchar *recordfile = "";
     const gchar *confID = "conf_1234";
     
+    DEBUG("Conference: Create a conference from serialized form");
+ 
     // create a new empty conference
     create_new_conference(state, confID, conf);
 
@@ -255,7 +272,8 @@ void create_conference_history_entry_from_serialized(gchar *timestamp, gchar **p
 		history_state = MISSED;
 		break;
 	    case 1:
-		participant = *ptr;
+		participant = g_strdup(*ptr);
+		process_conference_participant_from_serialized(participant, *conf);
 		break;
 	    case 2:
 		name = *ptr;
@@ -276,9 +294,11 @@ void create_conference_history_entry_from_serialized(gchar *timestamp, gchar **p
 	token++;
  	ptr++;
     }
+
+    g_free(participant);
 }
 
-void process_conference_participant_from_serialized(gchar *participant, conference_obj_t *conf)
+static void process_conference_participant_from_serialized(gchar *participant, conference_obj_t *conf)
 {
     gchar **ptr = NULL;
     gchar **numberptr = NULL;
@@ -286,15 +306,22 @@ void process_conference_participant_from_serialized(gchar *participant, conferen
     gchar *delimnumber = ",";
     gchar *numberaccount;
     guint token = 0;
+    callable_obj_t *tmp_call = NULL;
+    gint tok = 0;
+    
 
-    ptr = g_strsplit(participant, delim, 0);
-    while(ptr != NULL) {
+    DEBUG("------------------------------- process_conference_participant_from_serialized");
+
+    ptr = g_strsplit(participant, delim, 2);
+    while(ptr != NULL && (tok < 2)) {
+	gchar *phone_number = NULL;
+	gchar *account = NULL;
 	token = 0;
 	numberaccount = *ptr;
+	DEBUG("HERE IS THE PROBLEM");
 	numberptr = g_strsplit(numberaccount, delimnumber, 2);
-	while(numberptr != NULL) {
-	    gchar *phone_number = NULL;
-	    gchar *account = NULL;
+	DEBUG("problem !!!");
+	while(numberptr != NULL && (token < 2)) {
 	    switch(token) {
 	 	case 0:
 		    phone_number = *numberptr;
@@ -307,8 +334,22 @@ void process_conference_participant_from_serialized(gchar *participant, conferen
 	    }
 	    token++;
 	    numberptr++;
-
-	    // we should create call here and add it to the conference to be inserted in history
 	}
+
+	tok++;
+
+	gchar *name = "name";
+	gchar *call_id = generate_call_id();
+	   
+	// we should create call here and add it to the conference to be inserted in history
+	create_new_call(HISTORY_ENTRY, CALL_STATE_DIALING, call_id, account, name, phone_number, &tmp_call);  
+	calllist_add_history_call(tmp_call);
+	calllist_add_call(current_calls, tmp_call); 
+
+	DEBUG("BEFORE %s", call_id);
+	conference_add_participant(call_id, conf);
+	DEBUG("AFTER");
+	
+	ptr++;
     }
 } 
