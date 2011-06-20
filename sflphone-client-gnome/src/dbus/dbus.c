@@ -2006,6 +2006,74 @@ dbus_get_audio_manager (void)
     return api;
 }
 
+unsigned
+dbus_get_video_input_device_input ()
+{
+    gint index;
+    GError* error = NULL;
+
+    org_sflphone_SFLphone_ConfigurationManager_get_video_input_device_input(
+        configurationManagerProxy, &index, &error);
+
+    if (error) {
+        ERROR ("Error calling dbus_get_video_input_device_input");
+        g_error_free (error);
+    }
+
+    return index;
+}
+
+unsigned
+dbus_get_video_input_device_size ()
+{
+    gint index;
+    GError* error = NULL;
+
+    org_sflphone_SFLphone_ConfigurationManager_get_video_input_device_size(
+        configurationManagerProxy, &index, &error);
+
+    if (error) {
+        ERROR ("Error calling dbus_get_video_input_device_size");
+        g_error_free (error);
+    }
+
+    return index;
+}
+
+unsigned
+dbus_get_video_input_device_rate ()
+{
+    gint index;
+    GError* error = NULL;
+
+    org_sflphone_SFLphone_ConfigurationManager_get_video_input_device_rate(
+        configurationManagerProxy, &index, &error);
+
+    if (error) {
+        ERROR ("Error calling dbus_get_video_input_device_rate");
+        g_error_free (error);
+    }
+
+    return index;
+}
+
+unsigned
+dbus_get_video_input_device ()
+{
+    gint index;
+    GError* error = NULL;
+
+    org_sflphone_SFLphone_ConfigurationManager_get_video_input_device(
+        configurationManagerProxy, &index, &error);
+
+    if (error) {
+        ERROR ("Error calling dbus_get_video_input_device");
+        g_error_free (error);
+    }
+
+    return index;
+}
+
 /**
  * Set video input device from its index
  */

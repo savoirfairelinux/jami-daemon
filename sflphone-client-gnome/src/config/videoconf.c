@@ -462,6 +462,7 @@ preferences_dialog_fill_video_input_device_rate_list()
         gtk_list_store_append (v4l2RateList, &iter);
         gtk_list_store_set (v4l2RateList, &iter, 0, *list, 1, c, -1);
     }
+    gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Rate), dbus_get_video_input_device_rate());
 }
 
 /**
@@ -508,6 +509,7 @@ preferences_dialog_fill_video_input_device_size_list()
         gtk_list_store_append (v4l2SizeList, &iter);
         gtk_list_store_set (v4l2SizeList, &iter, 0, *list, 1, c, -1);
     }
+    gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Size), dbus_get_video_input_device_size());
 }
 
 /**
@@ -530,6 +532,7 @@ select_video_input_device_size (GtkComboBox* comboBox, gpointer data UNUSED)
 
         dbus_set_video_input_size (deviceIndex);
     }
+    preferences_dialog_fill_video_input_device_rate_list();
 }
 
 /**
@@ -554,6 +557,7 @@ preferences_dialog_fill_video_input_device_input_list()
         gtk_list_store_append (v4l2InputList, &iter);
         gtk_list_store_set (v4l2InputList, &iter, 0, *list, 1, c, -1);
     }
+    gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Input), dbus_get_video_input_device_input());
 }
 
 /**
@@ -576,6 +580,7 @@ select_video_input_device_input (GtkComboBox* comboBox, gpointer data UNUSED)
 
         dbus_set_video_input_device_input (deviceIndex);
     }
+    preferences_dialog_fill_video_input_device_size_list();
 }
 
 /**
@@ -600,6 +605,7 @@ preferences_dialog_fill_video_input_device_list()
         gtk_list_store_append (v4l2DeviceList, &iter);
         gtk_list_store_set (v4l2DeviceList, &iter, 0, *list, 1, c, -1);
     }
+    gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Device), dbus_get_video_input_device());
 }
 
 /**
@@ -622,6 +628,7 @@ select_video_input_device (GtkComboBox* comboBox, gpointer data UNUSED)
 
         dbus_set_video_input_device (deviceIndex);
     }
+    preferences_dialog_fill_video_input_device_input_list();
 }
 
 GtkWidget* v4l2_box ()
@@ -648,7 +655,6 @@ GtkWidget* v4l2_box ()
     gtk_table_attach (GTK_TABLE (table), item, 0, 1, 0, 1, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
 
     preferences_dialog_fill_video_input_device_list();
-    gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Device), 0); //FIXME : use prefs
 
     // Set rendering
     renderer = gtk_cell_renderer_text_new();
@@ -667,7 +673,6 @@ GtkWidget* v4l2_box ()
     gtk_table_attach (GTK_TABLE (table), item, 0, 1, 1, 2, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
 
     preferences_dialog_fill_video_input_device_input_list();
-    gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Input), 0); //FIXME : use prefs
 
     // Set rendering
     renderer = gtk_cell_renderer_text_new();
@@ -686,7 +691,6 @@ GtkWidget* v4l2_box ()
     gtk_table_attach (GTK_TABLE (table), item, 0, 1, 2, 3, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
 
     preferences_dialog_fill_video_input_device_size_list();
-    gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Size), 0); //FIXME : use prefs
 
     // Set rendering
     renderer = gtk_cell_renderer_text_new();
@@ -705,7 +709,6 @@ GtkWidget* v4l2_box ()
     gtk_table_attach (GTK_TABLE (table), item, 0, 1, 3, 4, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
 
     preferences_dialog_fill_video_input_device_rate_list();
-    gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Rate), 0); //FIXME : use prefs
 
     // Set rendering
     renderer = gtk_cell_renderer_text_new();

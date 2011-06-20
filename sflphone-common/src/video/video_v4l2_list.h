@@ -44,6 +44,7 @@ class VideoV4l2List {
         }
 
         void setDevice(unsigned index);
+        unsigned getDeviceIndex(void);
         VideoV4l2Device &getDevice(void);
         VideoV4l2Device &getDevice(unsigned index);
         size_t nDevices();

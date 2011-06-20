@@ -112,6 +112,10 @@ class ConfigurationManager
         void setVideoInputDeviceInput(const int32_t& api);
         void setVideoInputDeviceSize(const int32_t& api);
         void setVideoInputDeviceRate(const int32_t& api);
+        int32_t getVideoInputDevice();
+        int32_t getVideoInputDeviceInput();
+        int32_t getVideoInputDeviceSize();
+        int32_t getVideoInputDeviceRate();
 
         std::vector< std::string > getToneLocaleList();
         std::vector< std::string > getPlaybackDeviceList();

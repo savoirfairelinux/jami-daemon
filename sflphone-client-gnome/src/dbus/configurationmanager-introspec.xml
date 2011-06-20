@@ -562,6 +562,42 @@
                </tp:docstring>
            </arg>
        </method>
+
+       <method name="getVideoInputDevice" tp:name-for-bindings="getVideoInputDevice">
+           <tp:docstring>
+           </tp:docstring>
+           <arg type="i" name="index" direction="out">
+               <tp:docstring>
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="getVideoInputDeviceInput" tp:name-for-bindings="getVideoInputDeviceInput">
+           <tp:docstring>
+           </tp:docstring>
+           <arg type="i" name="index" direction="out">
+               <tp:docstring>
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="getVideoInputDeviceSize" tp:name-for-bindings="getVideoInputDeviceSize">
+           <tp:docstring>
+           </tp:docstring>
+           <arg type="i" name="index" direction="out">
+               <tp:docstring>
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="getVideoInputDeviceRate" tp:name-for-bindings="getVideoInputDeviceRate">
+           <tp:docstring>
+           </tp:docstring>
+           <arg type="i" name="index" direction="out">
+               <tp:docstring>
+               </tp:docstring>
+           </arg>
+       </method>
  
        <!--      ///////////////////////               -->
  

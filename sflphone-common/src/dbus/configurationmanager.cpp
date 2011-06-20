@@ -659,6 +659,26 @@ std::vector<std::string> ConfigurationManager::getVideoInputDeviceRateList()
     return Manager::instance().getVideoInputDeviceRateList();
 }
 
+int32_t ConfigurationManager::getVideoInputDevice()
+{
+    return Manager::instance().getVideoInputDevice();
+}
+
+int32_t ConfigurationManager::getVideoInputDeviceInput()
+{
+    return Manager::instance().getVideoInputDeviceInput();
+}
+
+int32_t ConfigurationManager::getVideoInputDeviceSize()
+{
+    return Manager::instance().getVideoInputDeviceSize();
+}
+
+int32_t ConfigurationManager::getVideoInputDeviceRate()
+{
+    return Manager::instance().getVideoInputDeviceRate();
+}
+
 void ConfigurationManager::setVideoInputDevice(const int32_t& api)
 {
     Manager::instance().setVideoInputDevice(api);
