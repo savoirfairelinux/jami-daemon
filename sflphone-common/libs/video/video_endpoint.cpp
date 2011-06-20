@@ -28,8 +28,10 @@
  */
 
 #include "video_endpoint.h"
+#include "video_receive_thread.h"
 
 #include <iostream>
+#include <tr1/memory>
 #include <sstream>
 #include <map>
 #include "libav_utils.h"

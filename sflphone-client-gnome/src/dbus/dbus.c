@@ -2715,3 +2715,35 @@ dbus_send_text_message (const gchar* callID, const gchar *message)
         g_error_free (error);
     }
 }
+
+gboolean
+dbus_start_video_preview ()
+{
+    GError *error = NULL;
+    gboolean status;
+    org_sflphone_SFLphone_ConfigurationManager_start_video_preview (
+        configurationManagerProxy, &status, &error);
+
+    if (error) {
+        ERROR ("Failed to call start_video_preview () on ConfigurationManager: %s",
+               error->message);
+        g_error_free (error);
+    }
+    return status;
+}
+
+gboolean
+dbus_stop_video_preview ()
+{
+    GError *error = NULL;
+    gboolean status;
+    org_sflphone_SFLphone_ConfigurationManager_stop_video_preview (
+        configurationManagerProxy, &status, &error);
+
+    if (error) {
+        ERROR ("Failed to call stop_video_preview () on ConfigurationManager: %s",
+               error->message);
+        g_error_free (error);
+    }
+    return status;
+}

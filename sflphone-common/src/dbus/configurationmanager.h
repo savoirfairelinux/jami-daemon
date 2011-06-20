@@ -46,6 +46,11 @@
 
 #include <dbus-c++/dbus.h>
 
+#include <tr1/memory> // for shared_ptr
+
+namespace sfl_video {
+    class VideoPreview;
+}
 
 class ConfigurationManager
     : public org::sflphone::SFLphone::ConfigurationManager_adaptor,
@@ -59,6 +64,8 @@ class ConfigurationManager
 
     private:
         std::vector<std::string> shortcutsKeys;
+        // FIXME: this probably shouldn't live here
+        std::tr1::shared_ptr<sfl_video::VideoPreview> preview_;
 
     public:
 
@@ -167,6 +174,9 @@ class ConfigurationManager
 
         std::map< std::string, std::string > getShortcuts ();
         void setShortcuts (const std::map< std::string, std::string >& shortcutsMap);
+
+        bool startVideoPreview();
+        bool stopVideoPreview();
 };
 
 

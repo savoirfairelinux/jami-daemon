@@ -1016,5 +1016,24 @@
 			   </tp:docstring>
 		   </arg>
 	   </method>
+
+	   <method name="startVideoPreview" tp:name-for-bindings="startVideoPreview">
+                   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="Boolean"/>
+		   <tp:docstring>
+		   </tp:docstring>
+		   <arg type="b" name="b_ret" direction="out">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+	   </method>
+	   <method name="stopVideoPreview" tp:name-for-bindings="stopVideoPreview">
+                   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="Boolean"/>
+		   <tp:docstring>
+		   </tp:docstring>
+		   <arg type="b" name="b_ret" direction="out">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+	   </method>
    </interface>
 	   </node>

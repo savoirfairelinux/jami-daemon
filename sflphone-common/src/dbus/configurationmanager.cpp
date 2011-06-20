@@ -37,6 +37,7 @@
 #include "sip/sipvoiplink.h"
 #include "sip/sipaccount.h"
 #include "video/video_endpoint.h"
+#include "video/video_preview.h"
 
 const char* ConfigurationManager::SERVER_PATH =
     "/org/sflphone/SFLphone/ConfigurationManager";
@@ -958,5 +959,22 @@ void ConfigurationManager::setShortcuts (
     Manager::instance().shortcutPreferences.setShortcuts (map_cpy);
 
     Manager::instance().saveConfig();
+}
+
+
+bool ConfigurationManager::startVideoPreview()
+{
+    _debug("Starting video preview");
+    preview_.reset(new sfl_video::VideoPreview);
+    preview_->start();
+    return true;
+}
+
+bool ConfigurationManager::stopVideoPreview()
+{
+    _debug("Stopping video preview");
+    preview_->stop();
+    preview_.reset();
+    return true;
 }
 

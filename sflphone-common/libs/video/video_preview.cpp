@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,49 +28,35 @@
  *  as that of the covered work.
  */
 
-#ifndef _VIDEO_RECEIVE_THREAD_H_
-#define _VIDEO_RECEIVE_THREAD_H_
-
-#include <cc++/thread.h>
+#include "video_preview.h"
 #include <map>
 #include <string>
-
-class SwsContext;
-class AVCodecContext;
-class AVStream;
-class AVFormatContext;
-class AVFrame;
+#include "video_receive_thread.h"
 
 namespace sfl_video {
-class VideoReceiveThread : public ost::Thread {
-    private:
-        std::map<std::string, std::string> args_;
-        volatile int interrupted_;
 
-        /*-------------------------------------------------------------*/
-        /* These variables should be used in thread (i.e. run()) only! */
-        /*-------------------------------------------------------------*/
-        uint8_t *scaledPictureBuf_;
-        uint8_t *shmBuffer_;
-        int shmID_;
-        int semSetID_;
-        AVCodecContext *decoderCtx_;
-        AVFrame *rawFrame_;
-        AVFrame *scaledPicture_;
-        int videoStreamIndex_;
-        AVFormatContext *inputCtx_;
-
-        void setup();
-        void cleanup();
-        SwsContext * createScalingContext();
-        ost::Event shmReady_;
-    public:
-        explicit VideoReceiveThread(const std::map<std::string, std::string> &args);
-        virtual ~VideoReceiveThread();
-        virtual void run();
-        void stop();
-        void waitForShm();
-};
+bool VideoPreview::start()
+{
+    using std::string;
+    using std::map;
+    map<string, string> args;
+    args["input"] = "/dev/video0";
+    receiveThread_.reset(new VideoReceiveThread(args));
+    receiveThread_->start();
+    receiveThread_->waitForShm();
+    return true;
 }
 
-#endif // _VIDEO_RECEIVE_THREAD_H_
+bool VideoPreview::stop()
+{
+    std::cerr << "Stopping video preview " << std::endl;
+    // FIXME: all kinds of evil!!! interrupted should be atomic
+    receiveThread_->stop();
+    receiveThread_->join();
+
+    // destroy objects
+    receiveThread_.reset();
+    return true;
+}
+
+} // end namspace sfl_video

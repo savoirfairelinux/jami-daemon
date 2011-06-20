@@ -89,23 +89,20 @@ union semun
 #define TEMPFILE "/tmp/frame.txt"
 
 /* FIXME: this will be replaced by a dbus call */
-static FrameInfo
+static FrameInfo *
 getFrameInfo()
 {
-    FrameInfo info;
+    FrameInfo *info;
     FILE *tmp = fopen(TEMPFILE, "r");
     if (tmp == NULL) {
-        g_print("Error: Could not open file\n");
+        g_print("Error: Could not open file %s\n", TEMPFILE);
         /* FIXME: this should error out gracefully */
-        exit(EXIT_FAILURE);
+        return NULL;
     }
-    if (fscanf(tmp, "%u\n%u\n%u\n", &info.size, &info.width, &info.height) <= 0)
+    info = (FrameInfo *) g_malloc(sizeof(FrameInfo));
+    if (fscanf(tmp, "%u\n%u\n%u\n", &info->size, &info->width, &info->height) <= 0)
         g_print("Error: Could not read %s\n", TEMPFILE);
-#if 0
-    printf("Size is %u\n", info.size);
-    printf("Width is %u\n", info.width);
-    printf("Height is %u\n", info.height);
-#endif
+
     return info;
 }
 
@@ -163,7 +160,7 @@ get_sem_set()
     sem_set_id = semget(key, 1, 0600);
     if (sem_set_id == -1) {
         perror("semget");
-        exit(1);
+        return sem_set_id;
     }
     sem_val.val = 0;
     semctl(sem_set_id, 0, SETVAL, sem_val);
@@ -224,12 +221,23 @@ video_preview_init (VideoPreview *self)
     self->priv = priv = VIDEO_PREVIEW_GET_PRIVATE (self);
 
     /* update the object state depending on constructor properties */
-    FrameInfo info = getFrameInfo();
-    priv->width = info.width;
-    priv->height = info.height;
-    int shm_id = getShm(info.size);
-    priv->shm_buffer = attachShm(shm_id);
-    priv->sem_set_id = get_sem_set();
+    int shm_id = -1;
+    FrameInfo *info = getFrameInfo();
+    if (info)
+    {
+        priv->width = info->width;
+        priv->height = info->height;
+        shm_id = getShm(info->size);
+        g_free (info);
+    }
+    if (shm_id != -1) {
+        priv->shm_buffer = attachShm(shm_id);
+        priv->sem_set_id = get_sem_set();
+    }
+    else {
+        priv->shm_buffer = NULL;
+        priv->sem_set_id = -1;
+    }
     priv->texture = NULL;
 }
 
@@ -243,7 +251,7 @@ video_preview_finalize (GObject *obj)
     /* finalize might be called multiple times, so we must guard against
      * calling g_object_unref() on an invalid GObject.
      */
-    if (self->priv->shm_buffer)
+    if (self->priv->shm_buffer != NULL)
     {
         detachShm(self->priv->shm_buffer);
         self->priv->shm_buffer = NULL;
@@ -282,6 +290,8 @@ static void
 readFrameFromShm(int width, int height, char *data, int sem_set_id,
         ClutterActor *texture)
 {
+    if (sem_set_id == -1)
+        return;
     sem_wait(sem_set_id);
     clutter_texture_set_from_rgb_data (CLUTTER_TEXTURE(texture),
             (void*)data,
@@ -299,9 +309,13 @@ updateTexture(gpointer data)
 {
     VideoPreview *preview = (VideoPreview *) data;
     VideoPreviewPrivate *priv = VIDEO_PREVIEW_GET_PRIVATE(preview);
-    readFrameFromShm(priv->width, priv->height, priv->shm_buffer,
-            priv->sem_set_id, priv->texture);
-    return TRUE;
+    if (priv->shm_buffer != NULL) {
+        readFrameFromShm(priv->width, priv->height, priv->shm_buffer,
+                priv->sem_set_id, priv->texture);
+        return TRUE;
+    }
+    else
+        return FALSE;
 }
 
 /**                                                                             
@@ -309,7 +323,7 @@ updateTexture(gpointer data)
  *                                                                              
  * Create a new #VideoPreview instance.                                        
  */                                                                             
-VideoPreview *                                                                 
+    VideoPreview *                                                                 
 video_preview_new (void)
 {
     VideoPreview *result;
@@ -370,6 +384,8 @@ video_preview_stop(VideoPreview *preview)
     g_idle_remove_by_data((void*)preview);
     priv->is_running = FALSE;
     /* Destroy stage, which is texture's parent */
-    ClutterActor *stage = clutter_actor_get_parent(priv->texture);
-    clutter_actor_destroy(stage);
+    if (priv->texture) {
+        ClutterActor *stage = clutter_actor_get_parent(priv->texture);
+        clutter_actor_destroy(stage);
+    }
 }

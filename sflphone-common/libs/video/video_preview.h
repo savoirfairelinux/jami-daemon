@@ -28,49 +28,23 @@
  *  as that of the covered work.
  */
 
-#ifndef _VIDEO_RECEIVE_THREAD_H_
-#define _VIDEO_RECEIVE_THREAD_H_
+#ifndef __VIDEO_PREVIEW_H__
+#define __VIDEO_PREVIEW_H__
 
-#include <cc++/thread.h>
-#include <map>
-#include <string>
-
-class SwsContext;
-class AVCodecContext;
-class AVStream;
-class AVFormatContext;
-class AVFrame;
+#include <tr1/memory>
 
 namespace sfl_video {
-class VideoReceiveThread : public ost::Thread {
-    private:
-        std::map<std::string, std::string> args_;
-        volatile int interrupted_;
 
-        /*-------------------------------------------------------------*/
-        /* These variables should be used in thread (i.e. run()) only! */
-        /*-------------------------------------------------------------*/
-        uint8_t *scaledPictureBuf_;
-        uint8_t *shmBuffer_;
-        int shmID_;
-        int semSetID_;
-        AVCodecContext *decoderCtx_;
-        AVFrame *rawFrame_;
-        AVFrame *scaledPicture_;
-        int videoStreamIndex_;
-        AVFormatContext *inputCtx_;
+class VideoReceiveThread;
 
-        void setup();
-        void cleanup();
-        SwsContext * createScalingContext();
-        ost::Event shmReady_;
+class VideoPreview {
     public:
-        explicit VideoReceiveThread(const std::map<std::string, std::string> &args);
-        virtual ~VideoReceiveThread();
-        virtual void run();
-        void stop();
-        void waitForShm();
+        bool start();
+        bool stop();
+    private:
+        std::tr1::shared_ptr<VideoReceiveThread> receiveThread_;
 };
+
 }
 
-#endif // _VIDEO_RECEIVE_THREAD_H_
+#endif // __VIDEO_PREVIEW_H__

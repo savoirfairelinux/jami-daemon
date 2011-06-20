@@ -8,7 +8,8 @@ libvideo_endpoint_la_SOURCES = video_endpoint.cpp video_endpoint.h \
 							   video_rtp_session.cpp video_rtp_session.h \
 							   video_rtp_factory.cpp video_rtp_factory.h \
 							   video_send_thread.h video_send_thread.cpp \
-							   video_receive_thread.h video_receive_thread.cpp
+							   video_receive_thread.h video_receive_thread.cpp \
+							   video_preview.h video_preview.cpp
 libvideo_endpoint_la_LIBADD = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@ @LIBAVDEVICE_LIBS@ @LIBSWSCALE_LIBS@ @CCRTP_LIBS@
 
 AM_CXXFLAGS=@LIBAVCODEC_CFLAGS@ @LIBAVFORMAT_CFLAGS@ @LIBAVDEVICE_CFLAGS@ @LIBSWSCALE_CFLAGS@ @CCRTP_CFLAGS@

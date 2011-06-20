@@ -191,6 +191,17 @@ void VideoReceiveThread::setup()
     avdevice_register_all();
 
     AVInputFormat *file_iformat = 0;
+    // it's a v4l device if starting with /dev/video
+    if (args_["input"].substr(0, strlen("/dev/video")) == "/dev/video")
+    {
+        std::cerr << "Using v4l2 format" << std::endl;
+        file_iformat = av_find_input_format("video4linux2");
+        if (!file_iformat)
+        {
+            std::cerr << "Could not find format!" << std::endl;
+            cleanup();
+        }
+    }
 
     // Open video file
     if (av_open_input_file(&inputCtx_, args_["input"].c_str(), file_iformat, 0, NULL) != 0)
@@ -258,6 +269,7 @@ void VideoReceiveThread::setup()
     shmID_ = createShm(numBytes);
     shmBuffer_  = attachShm(shmID_);
     semSetID_ = createSemSet();
+    shmReady_.signal();
 
     // assign appropriate parts of buffer to image planes in scaledPicture 
     avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
@@ -266,6 +278,12 @@ void VideoReceiveThread::setup()
 
     // allocate video frame
     rawFrame_ = avcodec_alloc_frame();
+}
+
+// NOT called from this (the run() ) thread
+void VideoReceiveThread::waitForShm()
+{
+    shmReady_.wait();
 }
 
 void VideoReceiveThread::cleanup()

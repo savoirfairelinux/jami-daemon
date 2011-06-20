@@ -112,6 +112,8 @@ void preview_button_clicked(GtkButton *button, gpointer data UNUSED)
     if (g_strcmp0(gtk_button_get_label(button), "_Start preview")  == 0) {
         gtk_button_set_label(button, "_Stop preview");
         if (preview == NULL) {
+            gboolean result = dbus_start_video_preview();
+            g_assert(result);
             preview = video_preview_new();
             g_signal_connect (preview, "notify::running",
                               G_CALLBACK (preview_is_running_cb),
@@ -124,6 +126,8 @@ void preview_button_clicked(GtkButton *button, gpointer data UNUSED)
         /* user clicked stop */
         gtk_button_set_label(button, "_Start preview");
         if (preview) {
+            gboolean result = dbus_stop_video_preview();
+            g_assert(result);
             video_preview_stop(preview);
             g_object_unref(preview);
             preview = NULL;
@@ -131,17 +135,6 @@ void preview_button_clicked(GtkButton *button, gpointer data UNUSED)
     }
 }
 
-
-static void record_path_changed (GtkFileChooser *chooser , 
-                                 GtkLabel *label UNUSED)
-{
-    DEBUG ("record_path_changed");
-
-    gchar* path;
-    path = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (chooser));
-    DEBUG ("path2 %s", path);
-    dbus_set_record_path (path);
-}
 
 GtkWidget* create_video_configuration()
 {
