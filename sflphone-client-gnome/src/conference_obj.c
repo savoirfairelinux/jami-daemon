@@ -28,19 +28,24 @@
  *  as that of the covered work.
  */
 
-#include <callable_obj.h>
-#include <sflphone_const.h>
 #include <time.h>
 
-gint is_confID_confstruct (gconstpointer a, gconstpointer b)
-{
-    conference_obj_t * c = (conference_obj_t*) a;
+#include "callable_obj.h"
+#include "sflphone_const.h"
 
-    if (g_strcasecmp (c->_confID, (const gchar*) b) == 0) {
-        return 0;
-    } else {
-        return 1;
-    }
+#include "calltab.h"
+#include "calllist.h"
+
+static void set_conference_timestamp (time_t *);
+static void conference_add_participant_number(const gchar *, conference_obj_t *);
+
+static void set_conference_timestamp (time_t *timestamp) 
+{
+    time_t tmp;
+
+    // Set to current value
+    (void) time(&tmp);
+    *timestamp = tmp;
 }
 
 void create_new_conference (conference_state_t state, const gchar* confID, conference_obj_t ** conf)
@@ -111,6 +116,7 @@ void create_new_conference_from_details (const gchar *conf_id, GHashTable *detai
     *conf = new_conf;
 }
 
+
 void free_conference_obj_t (conference_obj_t *c)
 {
     g_free (c->_confID);
@@ -127,11 +133,25 @@ void conference_add_participant (const gchar* call_id, conference_obj_t* conf)
 {
     // store the new participant list after appending participant id
     conf->participant_list = g_slist_append (conf->participant_list, (gpointer) g_strdup(call_id));
+
+    // store the phone number of this participant
+    conference_add_participant_number(call_id, conf);
 }
 
+static
 void conference_add_participant_number(const gchar *call_id, conference_obj_t *conf)
 {
-    conf->participant_number = g_slist_append(conf->participant_number, (gpointer) g_strdup(call_id));
+    gchar *number_account;
+
+    callable_obj_t *call = calllist_get_call(current_calls, call_id); 
+    if(call == NULL) {
+	ERROR("Conference: Error: Could not find");
+	return;
+    }
+    
+    number_account = g_strconcat(call->_peer_number, ",", call->_accountID, NULL);
+
+    conf->participant_number = g_slist_append(conf->participant_number, (gpointer) number_account);
 }
 
 void conference_remove_participant (const gchar* call_id, conference_obj_t* conf)
@@ -170,3 +190,125 @@ void conference_participant_list_update (gchar** participants, conference_obj_t*
     }
 
 }
+
+gchar *serialize_history_conference_entry(conference_obj_t *entry)
+{
+    gchar *result;
+    gchar *separator = "|";
+    gchar *sep;
+    gchar *timestamp;
+    gchar *peer_name;
+    gchar *numberstr = "";
+    GSList *number_list;
+    gint length = 0;
+    gint i;
+
+    timestamp = convert_timestamp_to_gchar(entry->_time_stop);
+ 
+    peer_name = (entry->_confID == NULL || g_strcasecmp(entry->_confID, "") == 0) ? "empty": entry->_confID;
+
+    length = g_slist_length(entry->participant_number);
+    number_list = entry->participant_number;
+
+    for(i = 0; i < length; i++) {
+	gchar *tmp = g_slist_nth_data(number_list, i);
+	if(tmp == NULL) {
+            WARN("Conference: Peer number is NULL in conference list");
+        }
+        numberstr = g_strconcat(numberstr, tmp, ";", NULL);
+	
+
+	DEBUG("Print: %s concat: %s", tmp, numberstr);
+    }
+
+    result = g_strconcat("2188", separator,
+			numberstr, separator, // peer number
+			peer_name, separator,
+			timestamp, separator,
+			"", separator, // peer AccountID
+			entry->_recordfile ? entry->_recordfile : "",
+			NULL); 
+  	
+
+    return result;
+}
+
+void create_conference_history_entry_from_serialized(gchar *timestamp, gchar **ptr, conference_obj_t **conf)
+{
+    gchar *conference_id = "";
+    history_state_t history_state = MISSED;
+    gint token = 0;
+    conference_state_t state = CONFERENCE_STATE_ACTIVE_ATACHED;
+    gchar *participant = "";
+    gchar *name = "";
+    gchar *time_stop = "";
+    gchar *accountID = "";
+    gchar *recordfile = "";
+    const gchar *confID = "conf_1234";
+    
+    // create a new empty conference
+    create_new_conference(state, confID, conf);
+
+    while(ptr != NULL && token < 6) {
+        switch(token) {
+            case 0:
+		history_state = MISSED;
+		break;
+	    case 1:
+		participant = *ptr;
+		break;
+	    case 2:
+		name = *ptr;
+		break;
+	    case 3:
+		time_stop = *ptr;
+		break;
+	    case 4:
+		accountID = *ptr;
+		break;
+	    case 5:
+	        recordfile = *ptr;
+		break;
+	    default:
+	        break;
+	}
+
+	token++;
+ 	ptr++;
+    }
+}
+
+void process_conference_participant_from_serialized(gchar *participant, conference_obj_t *conf)
+{
+    gchar **ptr = NULL;
+    gchar **numberptr = NULL;
+    gchar *delim = ";";
+    gchar *delimnumber = ",";
+    gchar *numberaccount;
+    guint token = 0;
+
+    ptr = g_strsplit(participant, delim, 0);
+    while(ptr != NULL) {
+	token = 0;
+	numberaccount = *ptr;
+	numberptr = g_strsplit(numberaccount, delimnumber, 2);
+	while(numberptr != NULL) {
+	    gchar *phone_number = NULL;
+	    gchar *account = NULL;
+	    switch(token) {
+	 	case 0:
+		    phone_number = *numberptr;
+		    break;
+		case 1:
+		    account = *numberptr;
+		    break;
+		default:
+		    break;
+	    }
+	    token++;
+	    numberptr++;
+
+	    // we should create call here and add it to the conference to be inserted in history
+	}
+    }
+} 

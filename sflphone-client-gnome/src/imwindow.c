@@ -202,8 +202,8 @@ im_window_add_tab (GtkWidget *widget)
     IMWidget *im = IM_WIDGET (widget);
 
     /* Fetch the call */
-    callable_obj_t *im_widget_call = calllist_get (current_calls, im->call_id);
-    conference_obj_t *im_widget_conf = conferencelist_get (im->call_id);
+    callable_obj_t *im_widget_call = calllist_get_call (current_calls, im->call_id);
+    conference_obj_t *im_widget_conf = conferencelist_get (current_calls, im->call_id);
 
     /* A container to include the tab label and the close button */
     GtkWidget *tab_Container = gtk_hbox_new (FALSE, 3);
@@ -274,8 +274,8 @@ im_window_remove_tab (GtkWidget *widget)
 
     /* Need to do some memory clean up, so that we could re-open an Im widget for this call later. */
     IMWidget *im = IM_WIDGET (widget);
-    callable_obj_t *call = calllist_get (current_calls, im->call_id);
-    conference_obj_t *conf = conferencelist_get (im->call_id);
+    callable_obj_t *call = calllist_get_call (current_calls, im->call_id);
+    conference_obj_t *conf = conferencelist_get (current_calls, im->call_id);
 
     if (call)
         call->_im_widget = NULL;

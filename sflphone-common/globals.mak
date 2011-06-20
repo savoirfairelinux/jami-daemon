@@ -56,14 +56,9 @@ AM_CPPFLAGS = \
 	-I$(src)/src \
 	-I$(src)/src/config \
 	-I$(src)/test \
+	$(SIP_CFLAGS) \
 	-DPREFIX=\"$(prefix)\" \
 	-DPROGSHAREDIR=\"${datadir}/sflphone\" \
-	$(ZEROCONFFLAGS) \
-	$(GSTREAMER_CFLAGS) \
-	$(LIBAVCODEC_CFLAGS) \
-	$(LIBSWSCALE_CFLAGS) \
-	$(IAX_FLAGS) \
-	$(SIP_CFLAGS) \
 	-DCODECS_DIR=\""$(sflcodecdir)"\" \
 	-DPLUGINS_DIR=\""$(sflplugindir)"\" \
 	-DENABLE_TRACE \

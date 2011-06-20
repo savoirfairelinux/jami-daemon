@@ -30,90 +30,170 @@
 
 #include <conferencelist.h>
 
+#include "logger.h"
 
-gchar*
-generate_conf_id (void)
+static gint is_confID_confstruct(gconstpointer, gconstpointer);
+static gchar *generate_conf_id (void);
+
+static gint is_confID_confstruct (gconstpointer a, gconstpointer b)
+{
+    conference_obj_t * c = (conference_obj_t*) a;
+
+    if (g_strcasecmp (c->_confID, (const gchar*) b) == 0) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
+static gchar *generate_conf_id (void)
 {
     gchar *conf_id;
 
     conf_id = g_new0 (gchar, 30);
     g_sprintf (conf_id, "%d", rand());
+    
     return conf_id;
 }
 
 
-void
-conferencelist_init()
+void conferencelist_init(calltab_t *tab)
 {
-    conferenceQueue = g_queue_new ();
+    if(tab == NULL) {
+	ERROR("ConferenceList: Error: Call tab is NULL");
+	return;
+    }
+
+    tab->conferenceQueue = g_queue_new ();
 }
 
 
-void
-conferencelist_clean()
+void conferencelist_clean(calltab_t *tab)
 {
-    g_queue_free (conferenceQueue);
+    if(tab == NULL) {
+    	ERROR("ConferenceList: Error: Calltab tab is NULL");
+	return;
+    }
+
+    g_queue_free (tab->conferenceQueue);
 }
 
 
-void
-conferencelist_reset()
+void conferencelist_reset(calltab_t *tab)
 {
-    g_queue_free (conferenceQueue);
-    conferenceQueue = g_queue_new();
+    if(tab == NULL) {
+        ERROR("ConferenceList: Error: Calltab tab is NULL");
+        return;
+    }
+
+    g_queue_free (tab->conferenceQueue);
+    tab->conferenceQueue = g_queue_new();
 }
 
 
-void
-conferencelist_add (const conference_obj_t* conf)
+void conferencelist_add (calltab_t *tab, const conference_obj_t* conf)
 {
-    gchar* c = (gchar*) conferencelist_get (conf->_confID);
+    gchar* c;
+    
+    if(conf == NULL) {
+        ERROR("ConferenceList: Error: Conference is NULL");
+	return;
+    }
+
+    if(tab == NULL) {
+	ERROR("ConferenceList: Error: Tab is NULL");
+	return;
+    }
+
+    c = (gchar*) conferencelist_get (tab, conf->_confID);
 
     if (!c) {
-        g_queue_push_tail (conferenceQueue, (gpointer) conf);
+	// only add conference into the list if not already inserted
+        g_queue_push_tail (tab->conferenceQueue, (gpointer) conf);
     }
 }
 
 
-void
-conferencelist_remove (const gchar* conf)
+void conferencelist_remove (calltab_t *tab, const gchar* conf)
 {
-    gchar* c = (gchar*) conferencelist_get (conf);
+    gchar* c; 
 
-    if (c) {
-        g_queue_remove (conferenceQueue, c);
+    if(conf == NULL) {
+	ERROR("ConferenceList: Error: Conf id is NULL");
+	return;
     }
+
+    if(tab == NULL) {
+	ERROR("ConferenceList: Error: Calltab is NULL");
+	return;
+    }
+
+    c = (gchar*) conferencelist_get (tab, conf);
+
+    if(c == NULL) {
+        ERROR("ConferenceList: Error: Could not find conference %s", conf);
+	return;
+    }
+
+    g_queue_remove (tab->conferenceQueue, c);
 }
 
-conference_obj_t*
-conferencelist_get (const gchar* conf_id)
+conference_obj_t* conferencelist_get (calltab_t *tab, const gchar* conf_id)
 {
 
-    GList* c = g_queue_find_custom (conferenceQueue, conf_id, is_confID_confstruct);
+    GList* c;
 
-    if (c) {
-        return (conference_obj_t*) c->data;
-    } else {
+    if(tab == NULL) {
+	ERROR("ConferenceList: Error: Calltab is NULL");
+	return;
+    } 
+
+    c = g_queue_find_custom (tab->conferenceQueue, conf_id, is_confID_confstruct);
+
+    if(c == NULL) {
+        ERROR("ConferenceList: Error: Could not find conference %s", conf_id);
         return NULL;
     }
+
+    return (conference_obj_t*) c->data;
 }
 
 
-conference_obj_t*
-conferencelist_get_nth (guint n)
+conference_obj_t* conferencelist_get_nth (calltab_t *tab, guint n)
 {
-    GList* c = g_queue_peek_nth (conferenceQueue, n);
+    GList* c; 
 
-    if (c) {
-        return (conference_obj_t*) c->data;
-    } else {
-        return NULL;
+    if(tab == NULL) {
+        ERROR("ConferenceList: Error: Calltab is NULL");
+	return NULL;
     }
+
+    c = g_queue_peek_nth (tab->conferenceQueue, n);
+
+    if(c == NULL) {
+	ERROR("ConferenceList: Error: Could not fetch conference %d", n);
+	return NULL;
+    }
+
+    return (conference_obj_t*) c->data;
 }
 
-
-guint
-conferencelist_get_size ()
+conference_obj_t *conferencelist_pop_head(calltab_t *tab)
 {
-    return g_queue_get_length (conferenceQueue);
+    if(tab == NULL) {
+	ERROR("ConferenceList: Error: Tab is NULL");
+	return NULL;
+    }
+
+    return g_queue_pop_head(tab->conferenceQueue);
+}
+
+guint conferencelist_get_size (calltab_t *tab)
+{
+    if(tab == NULL) {
+        ERROR("ConferenceList: Error: Calltab is NULL");
+	return 0;
+    }
+
+    return g_queue_get_length (tab->conferenceQueue);
 }

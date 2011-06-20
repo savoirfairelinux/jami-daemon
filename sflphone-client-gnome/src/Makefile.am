@@ -6,6 +6,7 @@ SUBDIRS = config contacts dbus widget icons video
   
 NOFIFY_LIBS = -lnotify
 X11_LIBS = -lX11
+LD_LIBS = -ldl
 
 SFLPHONEGTK_LIBS=./contacts/libcontacts.la ./config/libconfig.la \
 				 ./dbus/libdbus.la ./widget/libwidget.la ./icons/libicons.la \
@@ -37,7 +38,7 @@ noinst_HEADERS =  actions.h sflnotify.h mainwindow.h dialpad.h codeclist.h \
                   shortcuts.h eel-gconf-extensions.h logger.h
 
 sflphone_client_gnome_LDADD = $(DBUSGLIB_LIBS) $(LIBNOTIFY_LIBS) $(NOTIFY_LIBS) $(SFLPHONEGTK_LIBS) $(LIBSEXY_LIBS) $(X11_LIBS) \
-				$(GTK_LIBS) $(GLIB_LIBS) $(WEBKIT_LIBS) $(LIBGNOMEUI_LIBS) $(GNOMEDOCUTILS_LIBS)
+				$(GTK_LIBS) $(GLIB_LIBS) $(WEBKIT_LIBS) $(LIBGNOMEUI_LIBS) $(GNOMEDOCUTILS_LIBS) $(LD_LIBS)
 
 sflphone_client_gnome_CFLAGS = $(DBUSGLIB_CFLAGS) $(LIBNOTIFY_CFLAGS) $(NOTIFY_CFLAGS) $(SFLPHONEGTK_CFLAGS) $(LIBSEXY_CFLAGS) $(X11_CFLAGS) \
                                 $(GTK_CFLAGS) $(GLIB_CFLAGS) $(WEBKIT_CFLAGS) $(LIBGNOMEUI_CFLAGS) $(GNOMEDOCUTILS_CFLAGS)

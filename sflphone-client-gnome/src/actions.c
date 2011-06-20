@@ -195,7 +195,7 @@ sflphone_hung_up (callable_obj_t * c)
 {
     DEBUG ("SFLphone: Hung up");
 
-    calllist_remove (current_calls, c->_callID);
+    calllist_remove_call (current_calls, c->_callID);
     calltree_remove_call (current_calls, c, NULL);
     c->_state = CALL_STATE_DIALING;
     call_remove_all_errors (c);
@@ -337,7 +337,8 @@ gboolean sflphone_init (GError **error)
 
     account_list_init ();
     codec_capabilities_load ();
-    conferencelist_init ();
+    conferencelist_init (current_calls);
+    conferencelist_init (history);
 
     // Fetch the configured accounts
     sflphone_fill_account_list ();
@@ -452,7 +453,6 @@ sflphone_pick_up()
     if (selectedCall) {
         switch (selectedCall->_state) {
             case CALL_STATE_DIALING:
-		DEBUG("------------------------------------ PLACING A NEW CALL FROM SFLPHONE PICKUP"); 
                 sflphone_place_call (selectedCall);
 
                 // if instant messaging window is visible, create new tab (deleted automatically if not used)
@@ -469,7 +469,6 @@ sflphone_pick_up()
                     im_widget_display ( (IMWidget **) (&selectedCall->_im_widget), NULL, selectedCall->_callID, NULL);
 
                 dbus_accept (selectedCall);
-                DEBUG ("from sflphone_pick_up : ");
                 stop_notification();
                 break;
             case CALL_STATE_HOLD:
@@ -625,9 +624,10 @@ sflphone_incoming_call (callable_obj_t * c)
     gchar *msg = "";
 
     c->_history_state = MISSED;
-    calllist_add (current_calls, c);
-    calllist_add (history, c);
+    calllist_add_call (current_calls, c);
+    calllist_add_call (history, c);
     calltree_add_call (current_calls, c, NULL);
+    calltree_add_call (history, c, NULL);
     update_actions();
     calltree_display (current_calls);
 
@@ -737,7 +737,7 @@ sflphone_new_call()
 
     c->_history_state = OUTGOING;
 
-    calllist_add (current_calls,c);
+    calllist_add_call (current_calls,c);
     calltree_add_call (current_calls, c, NULL);
     update_actions();
 
@@ -952,7 +952,10 @@ static int _place_registered_call (callable_obj_t * c)
     }
 
     c->_history_state = OUTGOING;
-    calllist_add (history, c);
+    
+    calllist_add_call (history, c);
+    calltree_add_call (history, c, NULL);    
+
     return 0;
 }
 
@@ -1009,7 +1012,7 @@ sflphone_detach_participant (const gchar* callID)
         calltree_add_call (current_calls, selectedCall, NULL);
         dbus_detach_participant (selectedCall->_callID);
     } else {
-        callable_obj_t * selectedCall = calllist_get (current_calls, callID);
+        callable_obj_t * selectedCall = calllist_get_call (current_calls, callID);
         DEBUG ("Action: Darticipant %s", callID);
 
         if (selectedCall->_confID) {
@@ -1225,7 +1228,7 @@ void sflphone_fill_call_list (void)
             c->_zrtp_confirmed = FALSE;
             // Add it to the list
             DEBUG ("Add call retrieved from server side: %s\n", c->_callID);
-            calllist_add (current_calls, c);
+            calllist_add_call (current_calls, c);
             // Update the GUI
             calltree_add_call (current_calls, c, NULL);
         }
@@ -1259,7 +1262,7 @@ void sflphone_fill_conference_list (void)
 
             conf->_confID = g_strdup (conf_id);
 
-            conferencelist_add (conf);
+            conferencelist_add (current_calls, conf);
             calltree_add_conference (current_calls, conf);
         }
     }
@@ -1272,6 +1275,7 @@ void sflphone_fill_history (void)
     gpointer key, value;
     gpointer key_to_min = NULL;
     callable_obj_t *history_entry;
+    conference_obj_t *conference_entry;
     int timestamp = 0;
     int min_timestamp = 0;
 
@@ -1314,14 +1318,30 @@ void sflphone_fill_history (void)
 
             if (g_hash_table_lookup_extended (entries, key_to_min, &key, &value)) {
 
-                // do something with key and value
-                create_history_entry_from_serialized_form ( (gchar*) key, (gchar*) value, &history_entry);
-                DEBUG ("HISTORY ENTRY: %i\n", history_entry->_time_start);
-                // Add it and update the GUI
-                calllist_add (history, history_entry);
+		gchar **ptr;
+    		const gchar *delim = "|";
 
-                // remove entry from map
-                g_hash_table_remove (entries, key_to_min);
+		DEBUG("---------------------------------- HISTORY VALUE %s", value);
+
+	        ptr = g_strsplit(value, delim, 6);
+		if(ptr != NULL) {
+
+		    // first ptr refers to entry type
+		    if(g_strcmp0(*ptr, "2188") == 0) {
+			// create_conference_history_entry_from_serialized((gchar *)key, (gchar **)ptr, &conference_entry);
+			g_hash_table_remove(entries, key_to_min);	
+		    }
+		    else {
+                        // do something with key and value
+                        create_history_entry_from_serialized_form ( (gchar*) key, (gchar **) ptr, &history_entry);
+                
+		        // Add it and update the GUI
+                        calllist_add_call (history, history_entry);
+		        calltree_add_call (history, history_entry, NULL);
+                        // remove entry from map
+                        g_hash_table_remove (entries, key_to_min);
+		    }
+	        }
             }
         }
     }
@@ -1329,28 +1349,59 @@ void sflphone_fill_history (void)
 
 void sflphone_save_history (void)
 {
-    GQueue *items;
     gint size;
-    int i;
-    callable_obj_t *current;
+    gint i;
+    QueueElement *current;
+    conference_obj_t *conf;
     GHashTable *result = NULL;
     gchar *key, *value;
 
-    DEBUG ("Saving history ...");
+    DEBUG ("SFLphone: Saving history");
 
     result = g_hash_table_new (NULL, g_str_equal);
-    items = history->callQueue;
     size = calllist_get_size (history);
 
-    for (i=0; i<size; i++) {
-        current = g_queue_peek_nth (items, i);
+    for (i = 0; i < size; i++) {
+        current = calllist_get_nth (history, i);
 
         if (current) {
-            value = serialize_history_entry (current);
-            key = convert_timestamp_to_gchar (current->_time_start);
-            g_hash_table_replace (result, (gpointer) key,
-                                  (gpointer) value);
+	    if(current->type == HIST_CALL) {
+		DEBUG("Serialize call");
+                value = serialize_history_call_entry (current->elem.call);
+		key =  convert_timestamp_to_gchar (current->elem.call->_time_start);
+            }
+	    else if(current->type == HIST_CONFERENCE) {
+		DEBUG("Serialize conference");
+                value = serialize_history_conference_entry(current->elem.conf);
+		key = convert_timestamp_to_gchar (current->elem.conf->_time_start);
+            }
+ 	    else {
+		ERROR("SFLphone: Error: Unknown type for serialization");
+            }
+
+            g_hash_table_replace (result, (gpointer) key, (gpointer) value);
+        } 
+	else {
+	    WARN("SFLphone: Warning: %dth element is null", i);
         }
+    }
+
+    size = conferencelist_get_size(history);
+    DEBUG("Conference list size %d", size);
+
+    while(size > 0) {
+	conf = conferencelist_pop_head(history);
+	size = conferencelist_get_size(history);
+
+        if(conf) {
+	    DEBUG("Serialize conference");
+	    value = serialize_history_conference_entry(conf);
+	    key = convert_timestamp_to_gchar(conf->_time_start);
+        }
+	else {
+	    WARN("SFLphone: Warning: %dth element is NULL", i);
+        }
+	g_hash_table_replace(result, (gpointer)key, (gpointer)value);	
     }
 
     dbus_set_history (result);

@@ -171,7 +171,7 @@ void create_new_call (callable_type_t, call_state_t, gchar*, gchar*, gchar*, gch
 
 void create_new_call_from_details (const gchar *, GHashTable *, callable_obj_t **);
 
-void create_history_entry_from_serialized_form (gchar *, gchar *, callable_obj_t **);
+void create_history_entry_from_serialized_form (gchar *, gchar **, callable_obj_t **);
 
 void call_add_error (callable_obj_t * call, gpointer dialog);
 
@@ -182,7 +182,7 @@ void call_remove_all_errors (callable_obj_t * call);
 /*
  * GCompareFunc to compare a callID (gchar* and a callable_obj_t)
  */
-gint is_callID_callstruct (gconstpointer, gconstpointer);
+// gint is_callID_callstruct (gconstpointer, gconstpointer);
 
 /*
  * GCompareFunc to get current call (gchar* and a callable_obj_t)
@@ -223,7 +223,7 @@ history_state_t get_history_state_from_id (gchar *indice);
 
 gchar* get_call_duration (callable_obj_t *obj);
 
-gchar* serialize_history_entry (callable_obj_t *entry);
+gchar* serialize_history_call_entry(callable_obj_t *entry);
 
 gchar* get_history_id_from_state (history_state_t state);
 

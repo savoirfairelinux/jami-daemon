@@ -94,6 +94,8 @@ account_list_remove (const gchar * accountID)
 {
     GList * c = g_queue_find_custom (accountQueue, accountID, is_accountID_struct);
 
+    DEBUG("Account List remove");
+
     if (c) {
         g_queue_remove (accountQueue, c->data);
     }
@@ -118,11 +120,12 @@ account_list_get_by_id (gchar * accountID)
 {
     GList * c = g_queue_find_custom (accountQueue, accountID, is_accountID_struct);
 
-    if (c) {
-        return (account_t *) c->data;
-    } else {
-        return NULL;
-    }
+    if(c == NULL) {
+    	ERROR("AccountList: Could not find account %s", accountID);
+	return NULL;
+    } 
+
+    return (account_t *) c->data;
 }
 
 guint account_list_get_size (void)

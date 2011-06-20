@@ -30,6 +30,9 @@
 
 #ifndef __SFL_ZRTP_CALLBACK_H__
 #define __SFL_ZRTP_CALLBACK_H__
+#include <cstddef>
+
+using std::ptrdiff_t;
 
 #include <libzrtpcpp/zrtpccrtp.h>
 #include <libzrtpcpp/ZrtpQueue.h>
