@@ -39,10 +39,10 @@
 #define UNIX_DAY			86400
 #define UNIX_WEEK			86400 * 6
 #define UNIX_TWO_DAYS		        86400 * 2
-
+/*
 gint is_callID_callstruct (gconstpointer a, gconstpointer b)
 {
-    callable_obj_t * c = (callable_obj_t*) a;
+   callable_obj_t * c = (callable_obj_t*) a;
 
     if (g_strcasecmp (c->_callID, (const gchar*) b) == 0) {
         return 0;
@@ -50,6 +50,7 @@ gint is_callID_callstruct (gconstpointer a, gconstpointer b)
         return 1;
     }
 }
+*/
 
 gint get_state_callstruct (gconstpointer a, gconstpointer b)
 {
@@ -297,54 +298,49 @@ void create_new_call_from_details (const gchar *call_id, GHashTable *details, ca
     *call = new_call;
 }
 
-void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details, callable_obj_t **call)
+void create_history_entry_from_serialized_form (gchar *timestamp, gchar **ptr, callable_obj_t **call)
 {
-    gchar *peer_name="";
-    gchar *peer_number="", *accountID="", *time_stop="";
-    gchar *recordfile="";
+    gchar *peer_name = "";
+    gchar *peer_number = "", *accountID = "", *time_stop = "";
+    gchar *recordfile = "";
     callable_obj_t *new_call;
     history_state_t history_state = MISSED;
-    char **ptr;
-    const char *delim="|";
-    int token=0;
+    const gchar *delim = "|";
+    gint token = 0;
 
     // details is in serialized form, i e: calltype%to%from%callid
 
-    if ( (ptr = g_strsplit (details, delim, 6)) != NULL) {
-
-        while (ptr != NULL && token < 6) {
-            switch (token) {
-                case 0:
-		    DEBUG("------------------------------------------------------------------------------------------ HISTORYSTATE FROM SERIALIZATION %s", *ptr);
-                    history_state = get_history_state_from_id (*ptr);
-                    break;
-                case 1:
-		    DEBUG("------------------------------------------------------------------------------------------ PEERNUMBER FROM SERIALIZATION %s", *ptr);
-                    peer_number = *ptr;
-                    break;
-                case 2:
-		    DEBUG("------------------------------------------------------------------------------------------ PEERNAME FROM SERIALIZATION %s", *ptr);
-                    peer_name = *ptr;
-                    break;
-                case 3:
-		    DEBUG("------------------------------------------------------------------------------------------ TIMESTOP FROM SERIALIZATION %s", *ptr);
-                    time_stop = *ptr;
-                    break;
-                case 4:
-		    DEBUG("------------------------------------------------------------------------------------------ ACCOUNTID FROM SERIALIZATION %s", *ptr);
-                    accountID = *ptr;
-                    break;
-                case 5:
-		    DEBUG("------------------------------------------------------------------------------------------ RECORDFILE FROM SERIALIZATION %s", *ptr);
-		    recordfile = *ptr;
-                default:
-                    break;
-            }
-
-            token++;
-            ptr++;
-
+    while (ptr != NULL && token < 6) {
+        switch (token) {
+            case 0:
+	        DEBUG("------------------------------------------------------------------------------------------ HISTORYSTATE FROM SERIALIZATION %s", *ptr);
+                history_state = get_history_state_from_id (*ptr);
+                break;
+            case 1:
+	        DEBUG("------------------------------------------------------------------------------------------ PEERNUMBER FROM SERIALIZATION %s", *ptr);
+                peer_number = *ptr;
+                break;
+            case 2:
+	        DEBUG("------------------------------------------------------------------------------------------ PEERNAME FROM SERIALIZATION %s", *ptr);
+                peer_name = *ptr;
+                break;
+            case 3:
+		DEBUG("------------------------------------------------------------------------------------------ TIMESTOP FROM SERIALIZATION %s", *ptr);
+                time_stop = *ptr;
+                break;
+            case 4:
+		DEBUG("------------------------------------------------------------------------------------------ ACCOUNTID FROM SERIALIZATION %s", *ptr);
+                accountID = *ptr;
+                break;
+            case 5:
+		DEBUG("------------------------------------------------------------------------------------------ RECORDFILE FROM SERIALIZATION %s", *ptr);
+		recordfile = *ptr;
+            default:
+                break;
         }
+
+        token++;
+        ptr++;
 
     }
 
@@ -454,7 +450,7 @@ gchar* get_call_duration (callable_obj_t *obj)
 
 }
 
-gchar* serialize_history_entry (callable_obj_t *entry)
+gchar* serialize_history_call_entry (callable_obj_t *entry)
 {
     // "0|514-276-5468|Savoir-faire Linux|144562458" for instance
 
@@ -469,8 +465,6 @@ gchar* serialize_history_entry (callable_obj_t *entry)
 
     gchar* peer_name = (entry->_peer_name == NULL || g_strcasecmp (entry->_peer_name,"") == 0) ? "empty": entry->_peer_name;
     gchar* account_id = (entry->_accountID == NULL || g_strcasecmp (entry->_accountID,"") == 0) ? "empty": entry->_accountID;
-
-    DEBUG("ACCOUNT ID STORED IN HISTORY %s", account_id);
 
     result = g_strconcat (history_state, separator,
                           entry->_peer_number, separator,

@@ -533,7 +533,7 @@ main_window_zrtp_negotiation_failed (const gchar* callID, const gchar* reason,
 {
     gchar* peer_number = "(number unknown)";
     callable_obj_t * c = NULL;
-    c = calllist_get (current_calls, callID);
+    c = calllist_get_call (current_calls, callID);
 
     if (c != NULL) {
         peer_number = c->_peer_number;

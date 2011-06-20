@@ -1316,29 +1316,19 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
 
     Conference *conf = new Conference();
 
-    // std::vector< std::string >::iterator iter;
-
-    // iter = participantList.begin();
-
-    /*
-    while(iter != participantList.end()) {
-	std::string participant = *iter;
-        _debug("PARTICIPANT LIST %s", participant.c_str());
-	iter++;
-    } 
-    */
-    
-    std::string generatedCallID = "callid";
-    std::string accountstr = "Account:1307562458";
-
     for(unsigned int i = 0; i < participantList.size(); i++) {
-        _debug("********************************************************************* PARTICIPANT LIST %s", participantList[i].c_str());
-	std::string tostr = participantList[i].c_str();
-	generatedCallID = generatedCallID + participantList[i];
+	std::string numberaccount = participantList[i];
+	std::string tostr = numberaccount.substr(0, numberaccount.find(","));
+        std::string account = numberaccount.substr(numberaccount.find(",")+1, numberaccount.size());
+		
+	std::string generatedCallID = getNewCallID();
+
 	conf->add(generatedCallID);
-	outgoingCall(accountstr, generatedCallID, tostr, conf->getConfID());
+
+	outgoingCall(account, generatedCallID, tostr, conf->getConfID());
+
 	if(_dbus) {
-	    _dbus->getCallManager()->newCallCreated(accountstr, generatedCallID, tostr);
+	    _dbus->getCallManager()->newCallCreated(account, generatedCallID, tostr);
 	}	
     }
 
