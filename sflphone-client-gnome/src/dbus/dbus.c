@@ -2162,7 +2162,7 @@ dbus_set_video_input_rate (const int index)
 gchar**
 dbus_get_video_input_device_list()
 {
-    gchar** array;
+    gchar** array = NULL;
     GError* error = NULL;
 
     if (!org_sflphone_SFLphone_ConfigurationManager_get_video_input_device_list (
@@ -2175,10 +2175,9 @@ dbus_get_video_input_device_list()
         }
 
         g_error_free (error);
-        return NULL;
-    } else {
-        return array;
     }
+
+    return array;
 }
 
 /**
@@ -2187,7 +2186,7 @@ dbus_get_video_input_device_list()
 gchar**
 dbus_get_video_input_device_input_list()
 {
-    gchar** array;
+    gchar** array = NULL;
     GError* error = NULL;
 
     if (!org_sflphone_SFLphone_ConfigurationManager_get_video_input_device_input_list (
@@ -2200,10 +2199,8 @@ dbus_get_video_input_device_input_list()
         }
 
         g_error_free (error);
-        return NULL;
-    } else {
-        return array;
     }
+    return array;
 }
 
 /**

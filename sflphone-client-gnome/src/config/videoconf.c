@@ -172,13 +172,11 @@ GtkWidget* create_video_configuration()
     gtk_widget_show(GTK_WIDGET(preview_button));
 
     /* FIXME: commented out as this makes the daemon crash */
-#if 0
     gnome_main_section_new_with_table (_ ("Video4Linux2"), &frame, &table, 1, 4);
     gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
     GtkWidget *v4l2box = v4l2_box();
     gtk_table_attach(GTK_TABLE(table), v4l2box, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 6);
     gtk_widget_show(GTK_WIDGET(v4l2box));
-#endif
 
     gtk_widget_show_all (ret);
 
@@ -463,12 +461,17 @@ preferences_dialog_fill_video_input_device_rate_list()
     // For each device name included in list
     int c;
 
-    for (c=0; *list ; c++, list++) {
-        gtk_list_store_append (v4l2RateList, &iter);
-        gtk_list_store_set (v4l2RateList, &iter, 0, *list, 1, c, -1);
+    if (list) {
+        for (c=0; *list ; c++, list++) {
+            gtk_list_store_append (v4l2RateList, &iter);
+            gtk_list_store_set (v4l2RateList, &iter, 0, *list, 1, c, -1);
+        }
+        gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Rate), dbus_get_video_input_device_rate());
     }
-    gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Rate), dbus_get_video_input_device_rate());
+    else
+        ERROR("No video rate list found for device");
 }
+
 
 /**
  * Set the video input device rate on the server with its index
@@ -507,14 +510,18 @@ preferences_dialog_fill_video_input_device_size_list()
     // Call dbus to retreive list
     list = dbus_get_video_input_device_size_list();
 
-    // For each device name included in list
-    int c;
+    if (list) {
+        // For each device name included in list
+        int c;
 
-    for (c=0; *list ; c++, list++) {
-        gtk_list_store_append (v4l2SizeList, &iter);
-        gtk_list_store_set (v4l2SizeList, &iter, 0, *list, 1, c, -1);
+        for (c=0; *list ; c++, list++) {
+            gtk_list_store_append (v4l2SizeList, &iter);
+            gtk_list_store_set (v4l2SizeList, &iter, 0, *list, 1, c, -1);
+        }
+        gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Size), dbus_get_video_input_device_size());
     }
-    gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Size), dbus_get_video_input_device_size());
+    else
+        ERROR("No device size list found");
 }
 
 /**
@@ -555,14 +562,18 @@ preferences_dialog_fill_video_input_device_input_list()
     // Call dbus to retreive list
     list = dbus_get_video_input_device_input_list();
 
-    // For each device name included in list
-    int c;
+    if (list) {
+        // For each device name included in list
+        int c;
 
-    for (c=0; *list ; c++, list++) {
-        gtk_list_store_append (v4l2InputList, &iter);
-        gtk_list_store_set (v4l2InputList, &iter, 0, *list, 1, c, -1);
+        for (c=0; *list ; c++, list++) {
+            gtk_list_store_append (v4l2InputList, &iter);
+            gtk_list_store_set (v4l2InputList, &iter, 0, *list, 1, c, -1);
+        }
+        gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Input), dbus_get_video_input_device_input());
     }
-    gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Input), dbus_get_video_input_device_input());
+    else
+        ERROR("No channel list found\n");
 }
 
 /**
@@ -603,14 +614,18 @@ preferences_dialog_fill_video_input_device_list()
     // Call dbus to retreive list
     list = dbus_get_video_input_device_list();
 
-    // For each device name included in list
-    int c;
+    if (list) {
 
-    for (c=0; *list ; c++, list++) {
-        gtk_list_store_append (v4l2DeviceList, &iter);
-        gtk_list_store_set (v4l2DeviceList, &iter, 0, *list, 1, c, -1);
+        // For each device name included in list
+        int c;
+        for (c=0; *list ; c++, list++) {
+            gtk_list_store_append (v4l2DeviceList, &iter);
+            gtk_list_store_set (v4l2DeviceList, &iter, 0, *list, 1, c, -1);
+        }
+        gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Device), dbus_get_video_input_device());
     }
-    gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Device), dbus_get_video_input_device());
+    else
+        ERROR("No device list found\n");
 }
 
 /**
