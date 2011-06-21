@@ -384,7 +384,7 @@ video_preview_stop(VideoPreview *preview)
     g_idle_remove_by_data((void*)preview);
     priv->is_running = FALSE;
     /* Destroy stage, which is texture's parent */
-    if (priv->texture) {
+    if (priv->texture && CLUTTER_IS_ACTOR(priv->texture)) {
         ClutterActor *stage = clutter_actor_get_parent(priv->texture);
         clutter_actor_destroy(stage);
     }

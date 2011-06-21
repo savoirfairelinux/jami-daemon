@@ -102,36 +102,48 @@ preview_is_running_cb(GObject *obj, GParamSpec *pspec, gpointer user_data)
     if (!running) {
         GtkButton *button = GTK_BUTTON(user_data);
         gtk_button_set_label(button, "_Start preview");
+        dbus_stop_video_preview();
     }
     return TRUE;
 }
 
-void preview_button_clicked(GtkButton *button, gpointer data UNUSED)
+static VideoPreview *preview = NULL;
+static GtkWidget *preview_button = NULL;
+
+void
+video_started_cb()
 {
-    static VideoPreview *preview = NULL;
+    DEBUG("Preview started");
+    if (preview == NULL) {
+        preview = video_preview_new();
+        g_signal_connect (preview, "notify::running",
+                G_CALLBACK (preview_is_running_cb),
+                preview_button);
+        video_preview_run(preview);
+    }
+}
+
+void
+video_stopped_cb()
+{
+    DEBUG("Preview stopped");
+    video_preview_stop(preview);
+    g_object_unref(preview);
+    preview = NULL;
+}
+
+static void
+preview_button_clicked(GtkButton *button, gpointer data UNUSED)
+{
+    preview_button = GTK_WIDGET(button);
     if (g_strcmp0(gtk_button_get_label(button), "_Start preview")  == 0) {
         gtk_button_set_label(button, "_Stop preview");
-        if (preview == NULL) {
-            gboolean result = dbus_start_video_preview();
-            g_assert(result);
-            preview = video_preview_new();
-            g_signal_connect (preview, "notify::running",
-                              G_CALLBACK (preview_is_running_cb),
-                              button);
-        }
-
-        video_preview_run(preview);
+        dbus_start_video_preview();
     }
     else {
         /* user clicked stop */
         gtk_button_set_label(button, "_Start preview");
-        if (preview) {
-            gboolean result = dbus_stop_video_preview();
-            g_assert(result);
-            video_preview_stop(preview);
-            g_object_unref(preview);
-            preview = NULL;
-        }
+        dbus_stop_video_preview();
     }
 }
 
@@ -151,22 +163,22 @@ GtkWidget* create_video_configuration()
     gnome_main_section_new_with_table (_ ("Video Manager"), &frame, &table, 1, 5);
     gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
 
-    //int video_manager = dbus_get_video_manager();
-
     gnome_main_section_new_with_table (_ ("Preview"), &frame, &table, 1, 2);
     gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
 
-    GtkWidget *previewButton = gtk_button_new_with_mnemonic(_("_Start preview"));
-    gtk_table_attach(GTK_TABLE(table), previewButton, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 6);
-    g_signal_connect(G_OBJECT(previewButton), "clicked", G_CALLBACK(preview_button_clicked), NULL);
-    gtk_widget_show(GTK_WIDGET(previewButton));
+    preview_button = gtk_button_new_with_mnemonic(_("_Start preview"));
+    gtk_table_attach(GTK_TABLE(table), preview_button, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 6);
+    g_signal_connect(G_OBJECT(preview_button), "clicked", G_CALLBACK(preview_button_clicked), NULL);
+    gtk_widget_show(GTK_WIDGET(preview_button));
 
+    /* FIXME: commented out as this makes the daemon crash */
+#if 0
     gnome_main_section_new_with_table (_ ("Video4Linux2"), &frame, &table, 1, 4);
     gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
     GtkWidget *v4l2box = v4l2_box();
     gtk_table_attach(GTK_TABLE(table), v4l2box, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 6);
     gtk_widget_show(GTK_WIDGET(v4l2box));
-
+#endif
 
     gtk_widget_show_all (ret);
 
@@ -216,7 +228,7 @@ static void preferences_dialog_fill_codec_list (account_t **a UNUSED)
  * Toggle active value of codec on click and update changes to the deamon
  * and in configuration files
  */
-static void
+    static void
 codec_active_toggled (GtkCellRendererToggle *renderer UNUSED, gchar *path UNUSED, gpointer data UNUSED)
 {
 #if 0

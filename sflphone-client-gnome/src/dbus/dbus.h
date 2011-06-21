@@ -650,8 +650,8 @@ dbus_add_main_participant (const gchar* confID);
 void dbus_send_text_message (const gchar* callID, const gchar *message);
 
 /* Video calibration */
-gboolean dbus_start_video_preview ();
+void dbus_start_video_preview ();
 
-gboolean dbus_stop_video_preview ();
+void dbus_stop_video_preview ();
 
 #endif

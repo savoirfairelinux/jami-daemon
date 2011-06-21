@@ -50,6 +50,7 @@
 #include <widget/imwidget.h>
 
 #include <eel-gconf-extensions.h>
+#include "videoconf.h"
 
 #define DEFAULT_DBUS_TIMEOUT 30000
 
@@ -2716,34 +2717,30 @@ dbus_send_text_message (const gchar* callID, const gchar *message)
     }
 }
 
-gboolean
+void
 dbus_start_video_preview ()
 {
     GError *error = NULL;
-    gboolean status;
-    org_sflphone_SFLphone_ConfigurationManager_start_video_preview (
-        configurationManagerProxy, &status, &error);
+    org_sflphone_SFLphone_ConfigurationManager_start_video_preview_async (
+        configurationManagerProxy, video_started_cb, &error);
 
     if (error) {
         ERROR ("Failed to call start_video_preview () on ConfigurationManager: %s",
                error->message);
         g_error_free (error);
     }
-    return status;
 }
 
-gboolean
+void
 dbus_stop_video_preview ()
 {
     GError *error = NULL;
-    gboolean status;
-    org_sflphone_SFLphone_ConfigurationManager_stop_video_preview (
-        configurationManagerProxy, &status, &error);
+    org_sflphone_SFLphone_ConfigurationManager_stop_video_preview_async (
+        configurationManagerProxy, video_stopped_cb, &error);
 
     if (error) {
         ERROR ("Failed to call stop_video_preview () on ConfigurationManager: %s",
                error->message);
         g_error_free (error);
     }
-    return status;
 }

@@ -175,8 +175,8 @@ class ConfigurationManager
         std::map< std::string, std::string > getShortcuts ();
         void setShortcuts (const std::map< std::string, std::string >& shortcutsMap);
 
-        bool startVideoPreview();
-        bool stopVideoPreview();
+        void startVideoPreview();
+        void stopVideoPreview();
 };
 
 

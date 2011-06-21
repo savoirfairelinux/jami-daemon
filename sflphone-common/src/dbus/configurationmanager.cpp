@@ -962,19 +962,21 @@ void ConfigurationManager::setShortcuts (
 }
 
 
-bool ConfigurationManager::startVideoPreview()
+void ConfigurationManager::startVideoPreview()
 {
     _debug("Starting video preview");
     preview_.reset(new sfl_video::VideoPreview);
     preview_->start();
-    return true;
+    // notify client via dbus
+    videoStarted();
 }
 
-bool ConfigurationManager::stopVideoPreview()
+void ConfigurationManager::stopVideoPreview()
 {
     _debug("Stopping video preview");
     preview_->stop();
     preview_.reset();
-    return true;
+    // notify client via dbus
+    videoStopped();
 }
 

@@ -36,5 +36,7 @@
 GtkWidget* create_video_configuration();
 GtkWidget* videocodecs_box();
 GtkWidget* v4l2_box();
+void video_started_cb();
+void video_stopped_cb();
 
 #endif // __VIDEO_CONF_H__
