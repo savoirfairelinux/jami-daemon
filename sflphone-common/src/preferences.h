@@ -631,7 +631,6 @@ class VideoPreference : public Serializable
 
         // V4L2 devices
         sfl_video::VideoV4l2List *v4l2_list;
-
     private:
 
         int _videoDevice;

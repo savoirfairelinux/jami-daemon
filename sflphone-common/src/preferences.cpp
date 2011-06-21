@@ -667,7 +667,9 @@ void AudioPreference::unserialize (Conf::MappingNode *map)
 
 
 
-VideoPreference::VideoPreference() : _videoDevice(0)
+VideoPreference::VideoPreference() :
+    v4l2_list(0)
+    , _videoDevice(0)
     , _videoInput(0)
     , _videoSize(0)
     , _videoRate(0)
