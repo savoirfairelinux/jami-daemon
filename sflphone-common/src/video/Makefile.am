@@ -1,5 +1,7 @@
 include $(top_srcdir)/globals.mak
 
+SUBDIRS=test
+
 noinst_LTLIBRARIES = libvideo.la
 
 #SUBDIRS = 
