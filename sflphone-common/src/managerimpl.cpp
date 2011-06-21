@@ -310,15 +310,17 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
     }
 
     Call *call = NULL;
-    call = getAccountLink(account_id)->newOutgoingCall (call_id, to_cleaned);
-    if (call) {
+    try {
+        call = getAccountLink(account_id)->newOutgoingCall (call_id, to_cleaned);
+        
         switchCall (call_id);
-    } else {
+        
+        call->setConfId(conf_id);
+    } catch (VoipLinkException &e) {
         callFailure (call_id);
-        _debug ("Manager: Error: An error occur, the call was not created");
+        _error ("Manager: %s", e.what());
+	return false;
     }
-
-    call->setConfId(conf_id);
 
     getMainBuffer()->stateInfo();
 
@@ -499,7 +501,7 @@ bool ManagerImpl::hangupConference (const ConfID& id)
         ParticipantSet::iterator iter_participant = participants.begin();
 
         while (iter_participant != participants.end()) {
-            _debug ("Manager: Hangup onference participant %s", (*iter_participant).c_str());
+            _debug ("Manager: Hangup conference participant %s", (*iter_participant).c_str());
 
             hangupCall (*iter_participant);
 
