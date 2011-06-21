@@ -471,14 +471,15 @@ sflphone_pick_up()
                 dbus_accept (selectedCall);
                 stop_notification();
                 break;
-            case CALL_STATE_HOLD:
+            casecalllist_remove_call(current_calls, selectedCall); CALL_STATE_HOLD:
                 sflphone_new_call();
                 break;
             case CALL_STATE_TRANSFERT:
                 dbus_transfert (selectedCall);
                 set_timestamp (&selectedCall->_time_stop);
                 calltree_remove_call(current_calls, selectedCall, NULL);
-                break;
+                calllist_remove_call(current_calls, selectedCall);
+		break;
             case CALL_STATE_CURRENT:
             case CALL_STATE_RECORD:
                 sflphone_new_call();
@@ -826,6 +827,7 @@ sflphone_keypad (guint keyval, gchar * key)
                         dbus_transfert (c);
                         set_timestamp (&c->_time_stop);
                         calltree_remove_call(current_calls, c, NULL);
+			calllist_remove_call(current_calls, c->_callID);
                         break;
                     case 65307: /* ESCAPE */
                         sflphone_unset_transfert (c);
@@ -1324,26 +1326,12 @@ void sflphone_fill_history (void)
 	        ptr = g_strsplit(value, delim, 6);
 		if(ptr != NULL) {
 
-		    DEBUG("!!!!!!!!!!!!!!!!!!!!!!!!!!!! %s", *ptr);
-
 		    // first ptr refers to entry type
 		    if(g_strcmp0(*ptr, "2188") == 0) {
-		        DEBUG("---------------------------------- HISTORY VALUE %s", value);
 			create_conference_history_entry_from_serialized((gchar *)key, (gchar **)ptr, &conference_entry);
 			conferencelist_add (history, conference_entry);
 			calltree_add_conference (history, conference_entry);
 			conferencelist_add(current_calls, conference_entry);
-/*
-		        GSList *part = conference_entry->participant_list;
-
-			while(part) {
-			    callable_obj_t *call_to_add = NULL;
-			    gchar *call_id = (gchar *)part->data;
-			    call_to_add = calllist_get_call(history, call_id);
-
-			    calltree_add_call();
-                        }	
-*/
 			g_hash_table_remove(entries, key_to_min);	
 		    }
 		    else {

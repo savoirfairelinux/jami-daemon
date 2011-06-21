@@ -64,6 +64,8 @@ calltab_get_selected_call (calltab_t *);
 conference_obj_t *
 calltab_get_selected_conf (calltab_t *);
 
+void calltab_unselect_all(calltab_t *);
+
 void
 calltab_create_searchbar (calltab_t *);
 

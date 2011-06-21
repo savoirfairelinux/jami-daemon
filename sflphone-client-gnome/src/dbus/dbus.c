@@ -10,7 +10,7 @@
  *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty f
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
@@ -65,9 +65,9 @@ new_call_created_cb (DBusGProxy *proxy UNUSED, const gchar *accountID,
 {
     callable_obj_t *c;
     gchar *peer_name = (gchar *)to;
-    gchar *peer_number = "";
+    gchar *peer_number = (gchar *)to;
 
-    DEBUG("DBus: New Call (%s) created to (%s)", callID, to);
+    DEBUG("DBUS: New Call (%s) created to (%s)", callID, to);
 
     create_new_call(CALL, CALL_STATE_RINGING, g_strdup(callID), g_strdup(accountID), 
 			peer_name, peer_number, &c);
@@ -115,7 +115,7 @@ static void
 zrtp_negotiation_failed_cb (DBusGProxy *proxy UNUSED, const gchar* callID,
                             const gchar* reason, const gchar* severity, void * foo  UNUSED)
 {
-    DEBUG ("Zrtp negotiation failed.");
+    DEBUG ("DBUS: Zrtp negotiation failed.");
     main_window_zrtp_negotiation_failed (callID, reason, severity);
     callable_obj_t * c = NULL;
     c = calllist_get_call (current_calls, callID);
@@ -135,7 +135,7 @@ static void
 volume_changed_cb (DBusGProxy *proxy UNUSED, const gchar* device, const gdouble value,
                    void * foo  UNUSED)
 {
-    DEBUG ("Volume of %s changed to %f.",device, value);
+    DEBUG ("DBUS: Volume of %s changed to %f.",device, value);
     set_slider (device, value);
 }
 
@@ -143,14 +143,14 @@ static void
 voice_mail_cb (DBusGProxy *proxy UNUSED, const gchar* accountID, const guint nb,
                void * foo  UNUSED)
 {
-    DEBUG ("%d Voice mail waiting!",nb);
+    DEBUG ("DBUS: %d Voice mail waiting!",nb);
     sflphone_notify_voice_mail (accountID, nb);
 }
 
 static void
 incoming_message_cb (DBusGProxy *proxy UNUSED, const gchar* callID UNUSED, const gchar *from, const gchar* msg, void * foo  UNUSED)
 {
-    DEBUG ("Message \"%s\" from %s!", msg, from);
+    DEBUG ("DBUS: Message \"%s\" from %s!", msg, from);
 
     callable_obj_t *call = NULL;
     conference_obj_t *conf = NULL;
@@ -194,7 +194,7 @@ call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state
     DEBUG ("DBUS: Call %s state %s",callID, state);
     callable_obj_t *c = calllist_get_call (current_calls, callID);
     if(c == NULL) {
-	ERROR("DBUS: Call is NULL");
+	ERROR("DBUS: Error: Call is NULL in ");
     }
 
     if (c) {
@@ -275,67 +275,70 @@ conference_changed_cb (DBusGProxy *proxy UNUSED, const gchar* confID,
     callable_obj_t *call;
     gchar* call_id;
 
+    DEBUG ("DBUS: Conference state changed: %s\n", state);
+
     // sflphone_display_transfer_status("Transfer successfull");
     conference_obj_t* changed_conf = conferencelist_get (current_calls, confID);
     GSList * part;
 
-    DEBUG ("---------------------------- DBUS: Conference state changed: %s\n", state);
-
-    if (changed_conf) {
-        // remove old conference from calltree
-        calltree_remove_conference (current_calls, changed_conf, NULL);
-
-        // update conference state
-        if (strcmp (state, "ACTIVE_ATACHED") == 0) {
-            changed_conf->_state = CONFERENCE_STATE_ACTIVE_ATACHED;
-        } else if (strcmp (state, "ACTIVE_DETACHED") == 0) {
-            changed_conf->_state = CONFERENCE_STATE_ACTIVE_DETACHED;
-        } else if (strcmp (state, "ACTIVE_ATTACHED_REC") == 0) {
-            changed_conf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD;
-        } else if (strcmp(state, "ACTIVE_DETACHED_REC") == 0) {
-             changed_conf->_state = CONFERENCE_STATE_ACTIVE_DETACHED_RECORD;
-        } else if (strcmp (state, "HOLD") == 0) {
-            changed_conf->_state = CONFERENCE_STATE_HOLD;
-        } else if (strcmp(state, "HOLD_REC") == 0) {
-            changed_conf->_state = CONFERENCE_STATE_HOLD_RECORD;
-        } else {
-            DEBUG ("Error: conference state not recognized");
-        }
-
-        // reactivate instant messaging window for these calls
-        part = changed_conf->participant_list;
-
-        while (part) {
-            call_id = (gchar*) (part->data);
-            call = calllist_get_call (current_calls, call_id);
-
-            if (call && call->_im_widget) {
-                im_widget_update_state (IM_WIDGET (call->_im_widget), TRUE);
-	    }
-
-            part = g_slist_next (part);
-        }
-
-        // update conferece participants
-        conference_participant_list_update (dbus_get_participant_list (changed_conf->_confID), changed_conf);
-
-        // deactivate instant messaging window for new participants
-        part = changed_conf->participant_list;
-
-        while (part) {
-            call_id = (gchar*) (part->data);
-            call = calllist_get_call (current_calls, call_id);
-
-            if (call && call->_im_widget) {
-                im_widget_update_state (IM_WIDGET (call->_im_widget), FALSE);
-	    }
-
-            part = g_slist_next (part);
-        }
-
-        // add new conference to calltree
-        calltree_add_conference (current_calls, changed_conf);
+    if(changed_conf == NULL) {
+	ERROR("DBUS: Conference is NULL in conference state changed");
+	return;
     }
+
+    // remove old conference from calltree
+    calltree_remove_conference (current_calls, changed_conf, NULL);
+
+    // update conference state
+    if (strcmp (state, "ACTIVE_ATACHED") == 0) {
+        changed_conf->_state = CONFERENCE_STATE_ACTIVE_ATACHED;
+    } else if (strcmp (state, "ACTIVE_DETACHED") == 0) {
+        changed_conf->_state = CONFERENCE_STATE_ACTIVE_DETACHED;
+    } else if (strcmp (state, "ACTIVE_ATTACHED_REC") == 0) {
+        changed_conf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD;
+    } else if (strcmp(state, "ACTIVE_DETACHED_REC") == 0) {
+        changed_conf->_state = CONFERENCE_STATE_ACTIVE_DETACHED_RECORD;
+    } else if (strcmp (state, "HOLD") == 0) {
+        changed_conf->_state = CONFERENCE_STATE_HOLD;
+    } else if (strcmp(state, "HOLD_REC") == 0) {
+        changed_conf->_state = CONFERENCE_STATE_HOLD_RECORD;
+    } else {
+        DEBUG ("Error: conference state not recognized");
+    }
+
+    // reactivate instant messaging window for these calls
+    part = changed_conf->participant_list;
+
+    while (part) {
+        call_id = (gchar*) (part->data);
+        call = calllist_get_call (current_calls, call_id);
+
+        if (call && call->_im_widget) {
+            im_widget_update_state (IM_WIDGET (call->_im_widget), TRUE);
+	}
+
+        part = g_slist_next (part);
+    }
+
+    // update conferece participants
+    conference_participant_list_update (dbus_get_participant_list (changed_conf->_confID), changed_conf);
+
+    // deactivate instant messaging window for new participants
+    part = changed_conf->participant_list;
+
+    while (part) {
+        call_id = (gchar*) (part->data);
+        call = calllist_get_call (current_calls, call_id);
+
+        if (call && call->_im_widget) {
+            im_widget_update_state (IM_WIDGET (call->_im_widget), FALSE);
+	}
+
+        part = g_slist_next (part);
+    }
+
+    // add new conference to calltree
+    calltree_add_conference (current_calls, changed_conf);
 }
 
 static void
@@ -426,7 +429,7 @@ conference_removed_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
 static void
 accounts_changed_cb (DBusGProxy *proxy UNUSED, void * foo  UNUSED)
 {
-    DEBUG ("Accounts changed");
+    DEBUG ("DBUS: Accounts changed");
     sflphone_fill_account_list();
     sflphone_fill_ip2ip_profile();
     account_list_config_dialog_fill();
@@ -442,21 +445,21 @@ accounts_changed_cb (DBusGProxy *proxy UNUSED, void * foo  UNUSED)
 static void
 transfer_succeded_cb (DBusGProxy *proxy UNUSED, void * foo  UNUSED)
 {
-    DEBUG ("Transfer succeded\n");
+    DEBUG ("DBUS: Transfer succeded");
     sflphone_display_transfer_status ("Transfer successfull");
 }
 
 static void
 transfer_failed_cb (DBusGProxy *proxy UNUSED, void * foo  UNUSED)
 {
-    DEBUG ("Transfer failed\n");
+    DEBUG ("DBUS: Transfer failed");
     sflphone_display_transfer_status ("Transfer failed");
 }
 
 static void
 secure_sdes_on_cb (DBusGProxy *proxy UNUSED, const gchar *callID, void *foo UNUSED)
 {
-    DEBUG ("SRTP using SDES is on");
+    DEBUG ("DBUS: SRTP using SDES is on");
     callable_obj_t *c = calllist_get_call (current_calls, callID);
 
     if (c) {
@@ -469,7 +472,7 @@ secure_sdes_on_cb (DBusGProxy *proxy UNUSED, const gchar *callID, void *foo UNUS
 static void
 secure_sdes_off_cb (DBusGProxy *proxy UNUSED, const gchar *callID, void *foo UNUSED)
 {
-    DEBUG ("SRTP using SDES is off");
+    DEBUG ("DBUS: SRTP using SDES is off");
     callable_obj_t *c = calllist_get_call (current_calls, callID);
 
     if (c) {
@@ -482,7 +485,7 @@ static void
 secure_zrtp_on_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* cipher,
                    void * foo  UNUSED)
 {
-    DEBUG ("SRTP using ZRTP is ON secure_on_cb");
+    DEBUG ("DBUS: SRTP using ZRTP is ON secure_on_cb");
     callable_obj_t * c = calllist_get_call (current_calls, callID);
 
     if (c) {
@@ -496,7 +499,7 @@ secure_zrtp_on_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* c
 static void
 secure_zrtp_off_cb (DBusGProxy *proxy UNUSED, const gchar* callID, void * foo  UNUSED)
 {
-    DEBUG ("SRTP using ZRTP is OFF");
+    DEBUG ("DBUS: SRTP using ZRTP is OFF");
     callable_obj_t * c = calllist_get_call (current_calls, callID);
 
     if (c) {
@@ -509,7 +512,7 @@ static void
 show_zrtp_sas_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* sas,
                   const gboolean verified, void * foo  UNUSED)
 {
-    DEBUG ("Showing SAS");
+    DEBUG ("DBUS: Showing SAS");
     callable_obj_t * c = calllist_get_call (current_calls, callID);
 
     if (c) {
@@ -520,7 +523,8 @@ show_zrtp_sas_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* sa
 static void
 confirm_go_clear_cb (DBusGProxy *proxy UNUSED, const gchar* callID, void * foo  UNUSED)
 {
-    DEBUG ("Confirm Go Clear request");
+    DEBUG ("DBUS: Confirm Go Clear request");
+
     callable_obj_t * c = calllist_get_call (current_calls, callID);
 
     if (c) {
@@ -545,9 +549,11 @@ sip_call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID,
                    const gchar* description, const guint code, void * foo  UNUSED)
 {
     callable_obj_t * c = NULL;
-    c = calllist_get_call (current_calls, callID);
 
-    if (c != NULL) {
+    DEBUG("DBUS: Sip call state changed %s", callID);
+
+    c = calllist_get_call (current_calls, callID);
+    if (c == NULL) {
         ERROR("DBUS: Error call is NULL in state changed");
         return;
     }
@@ -558,7 +564,7 @@ sip_call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID,
 static void
 error_alert (DBusGProxy *proxy UNUSED, int errCode, void * foo  UNUSED)
 {
-    ERROR ("Error notifying : (%i)", errCode);
+    ERROR ("DBUS: Error notifying : (%i)", errCode);
     sflphone_throw_exception (errCode);
 }
 
@@ -769,9 +775,10 @@ dbus_clean()
 void
 dbus_hold (const callable_obj_t * c)
 {
-    DEBUG ("dbus_hold %s\n", c->_callID);
-
     GError *error = NULL;
+    
+    DEBUG ("DBUS: Hold %s\n", c->_callID);
+    
     org_sflphone_SFLphone_CallManager_hold (callManagerProxy, c->_callID, &error);
 
     if (error) {
@@ -784,9 +791,10 @@ dbus_hold (const callable_obj_t * c)
 void
 dbus_unhold (const callable_obj_t * c)
 {
-    DEBUG ("dbus_unhold %s\n", c->_callID);
-
     GError *error = NULL;
+    
+    DEBUG ("DBUS: Unhold call %s\n", c->_callID);
+    
     org_sflphone_SFLphone_CallManager_unhold (callManagerProxy, c->_callID, &error);
 
     if (error) {
@@ -799,7 +807,7 @@ dbus_unhold (const callable_obj_t * c)
 void
 dbus_hold_conference (const conference_obj_t * c)
 {
-    DEBUG ("dbus_hold_conference %s\n", c->_confID);
+    DEBUG ("DBUS: Hold conference %s\n", c->_confID);
 
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_hold_conference (callManagerProxy,
@@ -815,7 +823,7 @@ dbus_hold_conference (const conference_obj_t * c)
 void
 dbus_unhold_conference (const conference_obj_t * c)
 {
-    DEBUG ("dbus_unhold_conference %s\n", c->_confID);
+    DEBUG ("DBUS: Unold conference %s\n", c->_confID);
 
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_unhold_conference (callManagerProxy,
@@ -831,7 +839,7 @@ dbus_unhold_conference (const conference_obj_t * c)
 void
 dbus_hang_up (const callable_obj_t * c)
 {
-    DEBUG ("dbus_hang_up %s\n", c->_callID);
+    DEBUG ("DBUS: Hang up call %s\n", c->_callID);
 
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_hang_up (callManagerProxy, c->_callID,
@@ -847,15 +855,13 @@ dbus_hang_up (const callable_obj_t * c)
 void
 dbus_hang_up_conference (const conference_obj_t * c)
 {
-    DEBUG ("dbus_hang_up_conference %s\n", c->_confID);
+    DEBUG ("DBUS: Hang up conference %s\n", c->_confID);
 
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_hang_up_conference (callManagerProxy,
-            c->_confID, &error);
+    org_sflphone_SFLphone_CallManager_hang_up_conference (callManagerProxy, c->_confID, &error);
 
     if (error) {
-        ERROR ("Failed to call hang_up() on CallManager: %s",
-               error->message);
+        ERROR ("Failed to call hang_up() on CallManager: %s", error->message);
         g_error_free (error);
     }
 }
@@ -864,6 +870,9 @@ void
 dbus_transfert (const callable_obj_t * c)
 {
     GError *error = NULL;
+
+    DEBUG("DBUS: Transfer: %s\n", c->_callID);
+
     org_sflphone_SFLphone_CallManager_transfert (callManagerProxy, c->_callID,
             c->_trsft_to, &error);
 
@@ -877,7 +886,7 @@ dbus_transfert (const callable_obj_t * c)
 void
 dbus_attended_transfer (const callable_obj_t *transfer, const callable_obj_t *target)
 {
-    DEBUG("DBUS: Attended tramsfer %s to %s", transfer->_callID, target->_callID);
+    DEBUG("DBUS: Attended tramsfer %s to %s\n", transfer->_callID, target->_callID);
 
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_attended_transfer (callManagerProxy, transfer->_callID,
@@ -897,7 +906,7 @@ dbus_accept (const callable_obj_t * c)
     status_tray_icon_blink (FALSE);
 #endif
 
-    DEBUG ("dbus_accept %s\n", c->_callID);
+    DEBUG ("DBUS: Accept call %s\n", c->_callID);
 
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_accept (callManagerProxy, c->_callID, &error);
@@ -916,7 +925,7 @@ dbus_refuse (const callable_obj_t * c)
     status_tray_icon_blink (FALSE);
 #endif
 
-    DEBUG ("dbus_refuse %s\n", c->_callID);
+    DEBUG ("DBUS: Refuse call %s\n", c->_callID);
 
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_refuse (callManagerProxy, c->_callID, &error);
@@ -932,6 +941,9 @@ void
 dbus_place_call (const callable_obj_t * c)
 {
     GError *error = NULL;
+ 
+    DEBUG("DBUS: Place call %s", c->_callID);
+
     org_sflphone_SFLphone_CallManager_place_call (callManagerProxy, c->_accountID,
             c->_callID, c->_peer_number, &error);
 
@@ -971,7 +983,7 @@ dbus_get_account_details (gchar * accountID)
     GError *error = NULL;
     GHashTable * details;
 
-    DEBUG ("Dbus: Get account detail accountid %s", accountID);
+    DEBUG ("Dbus: Get account detail for %s", accountID);
 
     if (!org_sflphone_SFLphone_ConfigurationManager_get_account_details (
                 configurationManagerProxy, accountID, &details, &error)) {
@@ -992,8 +1004,10 @@ dbus_get_account_details (gchar * accountID)
 void
 dbus_set_credential (account_t *a, int index)
 {
-    DEBUG ("Sending credential %d to server", index);
     GError *error = NULL;
+    
+    DEBUG ("DBUS: Sending credential %d to server", index);
+    
     GHashTable * credential = g_ptr_array_index (a->credential_information, index);
 
     if (credential == NULL) {
@@ -1012,8 +1026,9 @@ dbus_set_credential (account_t *a, int index)
 void
 dbus_delete_all_credential (account_t *a)
 {
-    DEBUG ("Deleting all credentials\n");
     GError *error = NULL;
+    
+    DEBUG ("DBUS: Deleting all credentials");
 
     org_sflphone_SFLphone_ConfigurationManager_delete_all_credential (
         configurationManagerProxy, a->accountID, &error);
@@ -1031,7 +1046,7 @@ dbus_get_number_of_credential (gchar * accountID)
     GError *error = NULL;
     int number = 0;
 
-    DEBUG ("Getting number of credential for account %s", accountID);
+    DEBUG ("DBUS: Getting number of credential for account %s", accountID);
 
     if (!org_sflphone_SFLphone_ConfigurationManager_get_number_of_credential (
                 configurationManagerProxy, accountID, &number, &error)) {
@@ -1055,6 +1070,8 @@ dbus_get_credential (gchar * accountID, int index)
 {
     GError *error = NULL;
     GHashTable * details;
+
+    DEBUG("DBUS: Get credential for account %s", accountID);
 
     if (!org_sflphone_SFLphone_ConfigurationManager_get_credential (
                 configurationManagerProxy, accountID, index, &details, &error)) {
