@@ -112,15 +112,15 @@ class ConfigurationManager
         int getEchoCancelDelay(void);
 
         std::vector<std::string> getVideoInputDeviceList();
-        std::vector<std::string> getVideoInputDeviceInputList();
+        std::vector<std::string> getVideoInputDeviceChannelList();
         std::vector<std::string> getVideoInputDeviceSizeList();
         std::vector<std::string> getVideoInputDeviceRateList();
         void setVideoInputDevice(const int32_t& api);
-        void setVideoInputDeviceInput(const int32_t& api);
+        void setVideoInputDeviceChannel(const int32_t& api);
         void setVideoInputDeviceSize(const int32_t& api);
         void setVideoInputDeviceRate(const int32_t& api);
         int32_t getVideoInputDevice();
-        int32_t getVideoInputDeviceInput();
+        int32_t getVideoInputDeviceChannel();
         int32_t getVideoInputDeviceSize();
         int32_t getVideoInputDeviceRate();
 

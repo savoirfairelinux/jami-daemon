@@ -681,7 +681,7 @@ class ManagerImpl
          * Get the list of available inputs for the current V4L2 device 
          * @return std::vector<std::string> A list of the V4L2 inputs
          */
-        std::vector<std::string> getVideoInputDeviceInputList();
+        std::vector<std::string> getVideoInputDeviceChannelList();
 
         /**
          * Get the list of available resolutions for the current V4L2 device/input pair
@@ -703,7 +703,7 @@ class ManagerImpl
         /**
          * Get video input device input index
          */
-        int32_t getVideoInputDeviceInput();
+        int32_t getVideoInputDeviceChannel();
 
         /**
          * Get video input device size index
@@ -725,7 +725,7 @@ class ManagerImpl
          * Set v4l2 input
          * @param index The index of the V4L2 input 
          */
-        void setVideoInputDeviceInput(const int32_t& api);
+        void setVideoInputDeviceChannel(const int32_t& api);
 
         /**
          * Set video input resolution

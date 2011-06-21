@@ -443,15 +443,15 @@ int dbus_get_audio_manager (void);
 void dbus_set_audio_manager (int api);
 
 void dbus_set_video_input_device (const int index);
-void dbus_set_video_input_device_input (const int index);
+void dbus_set_video_input_device_channel (const int index);
 void dbus_set_video_input_size (const int index);
 void dbus_set_video_input_rate (const int index);
 unsigned dbus_get_video_input_device ();
-unsigned dbus_get_video_input_device_input ();
+unsigned dbus_get_video_input_device_channel ();
 unsigned dbus_get_video_input_size ();
 unsigned dbus_get_video_input_rate ();
 gchar **dbus_get_video_input_device_list();
-gchar **dbus_get_video_input_device_input_list();
+gchar **dbus_get_video_input_device_channel_list();
 gchar **dbus_get_video_input_device_size_list();
 gchar **dbus_get_video_input_device_rate_list();
 

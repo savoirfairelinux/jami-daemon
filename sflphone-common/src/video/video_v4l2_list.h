@@ -31,6 +31,9 @@
 #ifndef __VIDEO_V4L2_LIST_H__
 #define __VIDEO_V4L2_LIST_H__
 
+#include <string>
+#include <vector>
+
 #include "video_v4l2.h"
 
 namespace sfl_video {
@@ -39,15 +42,10 @@ class VideoV4l2List {
     public:
         VideoV4l2List();
 
-        void addDevice(const VideoV4l2Device &device) {
-            devices.push_back(device);
-        }
-
         void setDevice(unsigned index);
         unsigned getDeviceIndex(void);
+        std::vector<std::string> getDeviceList(void);
         VideoV4l2Device &getDevice(void);
-        VideoV4l2Device &getDevice(unsigned index);
-        size_t nDevices();
 
     private:
         std::vector<VideoV4l2Device> devices;

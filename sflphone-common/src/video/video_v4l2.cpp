@@ -124,13 +124,13 @@ static unsigned int pixelformat_score(unsigned pixelformat)
     return UINT_MAX - 1;
 }
 
-static int GetFrameRates(int fd, VideoV4l2Size &size, unsigned int pixel_format)
+int VideoV4l2Size::GetFrameRates(int fd, unsigned int pixel_format)
 {
     struct v4l2_frmivalenum frmival = {
         0,
         pixel_format,
-        size.width,
-        size.height,
+        width,
+        height,
     };
 
     if (ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival)) {
@@ -142,7 +142,7 @@ static int GetFrameRates(int fd, VideoV4l2Size &size, unsigned int pixel_format)
         do {
             VideoV4l2Rate rate(frmival.discrete.numerator,
                            frmival.discrete.denominator);
-            size.addSupportedRate(rate);
+            rates.push_back(rate);
             frmival.index++;
         } while (!ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival));
         break;
@@ -159,7 +159,7 @@ static int GetFrameRates(int fd, VideoV4l2Size &size, unsigned int pixel_format)
     return 0;
 }
 
-static int GetSizes(int fd, VideoV4l2Input &input, unsigned int pixelformat)
+int VideoV4l2Channel::GetSizes(int fd, unsigned int pixelformat)
 {
     struct v4l2_frmsizeenum frmsize;
     frmsize.index = 0;
@@ -172,8 +172,8 @@ static int GetSizes(int fd, VideoV4l2Input &input, unsigned int pixelformat)
         do {
             VideoV4l2Size size(frmsize.discrete.height, frmsize.discrete.width);
 
-            if (!GetFrameRates(fd, size, frmsize.pixel_format))
-                input.addSupportedSize(size);
+            if (!size.GetFrameRates(fd, frmsize.pixel_format))
+                sizes.push_back(size);
 
             frmsize.index++;
         } while (!ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize));
@@ -194,9 +194,8 @@ static int GetSizes(int fd, VideoV4l2Input &input, unsigned int pixelformat)
     return 0;
 }
 
-static int GetFormat(int fd, VideoV4l2Input &input)
+int VideoV4l2Channel::GetFormat(int fd)
 {
-    unsigned idx = input.idx;
     if (ioctl(fd, VIDIOC_S_INPUT, &idx))
         return 1;
 
@@ -224,13 +223,13 @@ static int GetFormat(int fd, VideoV4l2Input &input)
         return 2;
 
     fmt.index = best_idx;
-    input.SetFourcc(pixelformat);
+    SetFourcc(pixelformat);
 
-    int ret = GetSizes(fd, input, pixelformat);
+    int ret = GetSizes(fd, pixelformat);
     return ret ? ret + 2 : ret;
 }
 
-VideoV4l2Device::VideoV4l2Device(int fd, std::string &device) : _currentInput(0) {
+VideoV4l2Device::VideoV4l2Device(int fd, std::string &device) throw(int): _currentChannel(0) {
     unsigned idx;
 
     struct v4l2_capability cap;
@@ -249,12 +248,11 @@ VideoV4l2Device::VideoV4l2Device(int fd, std::string &device) : _currentInput(0)
             break;
 
         if (input.type & V4L2_INPUT_TYPE_CAMERA) {
-            VideoV4l2Input vinput(idx, (const char*)input.name);
+            VideoV4l2Channel channel(idx, (const char*)input.name);
+            if (channel.GetFormat(fd))
+                throw 3; // could not add channel
 
-            if (GetFormat(fd, vinput))
-                throw 3; // could not add input
-
-            addInput(vinput);
+            channels.push_back(channel);
         }
 
         input.index = ++idx;

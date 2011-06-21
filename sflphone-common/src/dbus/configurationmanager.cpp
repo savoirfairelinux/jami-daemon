@@ -645,9 +645,9 @@ std::vector<std::string> ConfigurationManager::getVideoInputDeviceList()
     return Manager::instance().getVideoInputDeviceList();
 }
 
-std::vector<std::string> ConfigurationManager::getVideoInputDeviceInputList()
+std::vector<std::string> ConfigurationManager::getVideoInputDeviceChannelList()
 {
-    return Manager::instance().getVideoInputDeviceInputList();
+    return Manager::instance().getVideoInputDeviceChannelList();
 }
 
 std::vector<std::string> ConfigurationManager::getVideoInputDeviceSizeList()
@@ -665,9 +665,9 @@ int32_t ConfigurationManager::getVideoInputDevice()
     return Manager::instance().getVideoInputDevice();
 }
 
-int32_t ConfigurationManager::getVideoInputDeviceInput()
+int32_t ConfigurationManager::getVideoInputDeviceChannel()
 {
-    return Manager::instance().getVideoInputDeviceInput();
+    return Manager::instance().getVideoInputDeviceChannel();
 }
 
 int32_t ConfigurationManager::getVideoInputDeviceSize()
@@ -685,9 +685,9 @@ void ConfigurationManager::setVideoInputDevice(const int32_t& api)
     Manager::instance().setVideoInputDevice(api);
 }
 
-void ConfigurationManager::setVideoInputDeviceInput(const int32_t& api)
+void ConfigurationManager::setVideoInputDeviceChannel(const int32_t& api)
 {
-    Manager::instance().setVideoInputDeviceInput(api);
+    Manager::instance().setVideoInputDeviceChannel(api);
 }
 
 void ConfigurationManager::setVideoInputDeviceSize(const int32_t& api)

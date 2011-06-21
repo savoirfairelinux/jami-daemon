@@ -2857,87 +2857,22 @@ std::vector<std::string> ManagerImpl::getCurrentAudioDevicesIndex ()
 
 std::vector<std::string> ManagerImpl::getVideoInputDeviceList()
 {
-    std::vector<std::string> v;
-    if (!videoPreference.v4l2_list)
-        return v;
-
-    std::stringstream ss;
-    size_t n = videoPreference.v4l2_list->nDevices();
-    unsigned i;
-    for (i = 0 ; i < n ; i++) {
-        sfl_video::VideoV4l2Device &dev = videoPreference.v4l2_list->getDevice(i);
-
-        std::string &name = dev.name;
-        if (name.length()) {
-            ss << name;
-        } else {
-            ss << dev.device;
-        }
-        v.push_back(ss.str());
-    }
-
-    return v;
+    return videoPreference.v4l2_list->getDeviceList();
 }
 
-std::vector<std::string> ManagerImpl::getVideoInputDeviceInputList()
+std::vector<std::string> ManagerImpl::getVideoInputDeviceChannelList()
 {
-    std::vector<std::string> v;
-    if (!videoPreference.v4l2_list)
-        return v;
-
-    sfl_video::VideoV4l2Device &dev = videoPreference.v4l2_list->getDevice();
-    size_t n = dev.nInputs();
-    unsigned i;
-    for (i = 0 ; i < n ; i++) {
-        sfl_video::VideoV4l2Input &input = dev.getInput(i);
-        v.push_back(input.name);
-    }
-
-    return v;
+    return videoPreference.v4l2_list->getDevice().getChannelList();
 }
 
 std::vector<std::string> ManagerImpl::getVideoInputDeviceSizeList()
 {
-    std::vector<std::string> v;
-    if (!videoPreference.v4l2_list)
-        return v;
-
-    sfl_video::VideoV4l2Input &input = videoPreference.v4l2_list->getDevice().getInput();
-    size_t n = input.nSizes();
-    unsigned i;
-    for (i = 0 ; i < n ; i++) {
-        sfl_video::VideoV4l2Size size = input.getSize(i);
-        std::stringstream ss;
-
-        ss << size.width << "x" << size.height;
-
-        v.push_back(ss.str());
-    }
-
-    return v;
+    return videoPreference.v4l2_list->getDevice().getChannel().getSizeList();
 }
 
 std::vector<std::string> ManagerImpl::getVideoInputDeviceRateList()
 {
-    std::vector<std::string> v;
-    if (!videoPreference.v4l2_list)
-        return v;
-
-    sfl_video::VideoV4l2Size &size = videoPreference.v4l2_list->getDevice().getInput().getSize();
-    std::stringstream ss;
-
-    size_t n = size.nRates();
-    unsigned i;
-    for (i = 0 ; i < n ; i++) {
-        sfl_video::VideoV4l2Rate rate = size.getRate(i);
-        std::stringstream ss;
-
-        ss << (float)rate.den / rate.num;
-
-        v.push_back(ss.str());
-    }
-
-    return v;
+    return videoPreference.v4l2_list->getDevice().getChannel().getSize().getRateList();
 }
 
 int32_t ManagerImpl::getVideoInputDevice()
@@ -2945,19 +2880,19 @@ int32_t ManagerImpl::getVideoInputDevice()
     return videoPreference.v4l2_list->getDeviceIndex();
 }
 
-int32_t ManagerImpl::getVideoInputDeviceInput()
+int32_t ManagerImpl::getVideoInputDeviceChannel()
 {
-    return videoPreference.v4l2_list->getDevice().getInputIndex();
+    return videoPreference.v4l2_list->getDevice().getChannelIndex();
 }
 
 int32_t ManagerImpl::getVideoInputDeviceSize()
 {
-    return videoPreference.v4l2_list->getDevice().getInput().getSizeIndex();
+    return videoPreference.v4l2_list->getDevice().getChannel().getSizeIndex();
 }
 
 int32_t ManagerImpl::getVideoInputDeviceRate()
 {
-    return videoPreference.v4l2_list->getDevice().getInput().getSize().getRateIndex();
+    return videoPreference.v4l2_list->getDevice().getChannel().getSize().getRateIndex();
 }
 
 void ManagerImpl::setVideoInputDevice(const int32_t& api)
@@ -2965,19 +2900,19 @@ void ManagerImpl::setVideoInputDevice(const int32_t& api)
     videoPreference.v4l2_list->setDevice(api);
 }
 
-void ManagerImpl::setVideoInputDeviceInput(const int32_t& api)
+void ManagerImpl::setVideoInputDeviceChannel(const int32_t& api)
 {
-    videoPreference.v4l2_list->getDevice().setInput(api);
+    videoPreference.v4l2_list->getDevice().setChannel(api);
 }
 
 void ManagerImpl::setVideoInputDeviceSize(const int32_t& api)
 {
-    videoPreference.v4l2_list->getDevice().getInput().setSize(api);
+    videoPreference.v4l2_list->getDevice().getChannel().setSize(api);
 }
 
 void ManagerImpl::setVideoInputDeviceRate(const int32_t& api)
 {
-    videoPreference.v4l2_list->getDevice().getInput().getSize().setRate(api);
+    videoPreference.v4l2_list->getDevice().getChannel().getSize().setRate(api);
 }
 
 int ManagerImpl::isIax2Enabled (void)

@@ -56,11 +56,11 @@ VideoV4l2List::VideoV4l2List() : _currentDevice(0)
         try {
             std::string str(ss.str());
             VideoV4l2Device v(fd, str);
-            addDevice(v);
+            devices.push_back(v);
         }
         catch (int e) {
             close(fd);
-            throw e;
+            break;
         }
 
         close(fd);
@@ -76,9 +76,25 @@ void VideoV4l2List::setDevice(unsigned index)
     _currentDevice = index;
 }
 
-VideoV4l2Device &VideoV4l2List::getDevice(unsigned index)
+std::vector<std::string> VideoV4l2List::getDeviceList(void)
 {
-    return devices[index];
+    std::vector<std::string> v;
+    std::stringstream ss;
+
+    size_t n = devices.size();
+    unsigned i;
+    for (i = 0 ; i < n ; i++) {
+        VideoV4l2Device &dev = devices[i];
+        std::string &name = dev.name;
+        if (name.length()) {
+            ss << name;
+        } else {
+            ss << dev.device;
+        }
+        v.push_back(ss.str());
+    }
+
+    return v;
 }
 
 unsigned VideoV4l2List::getDeviceIndex()
@@ -89,11 +105,6 @@ unsigned VideoV4l2List::getDeviceIndex()
 VideoV4l2Device &VideoV4l2List::getDevice()
 {
     return devices[_currentDevice];
-}
-
-size_t VideoV4l2List::nDevices()
-{
-    return devices.size();
 }
 
 } // namespace sfl_video

@@ -33,6 +33,7 @@
 
 #include <string>
 #include <vector>
+#include <sstream>
 
 #include "logger.h"
 
@@ -57,9 +58,25 @@ class VideoV4l2Rate {
 class VideoV4l2Size {
     public:
         VideoV4l2Size(unsigned height, unsigned width) : height(height), width(width), _currentRate(0) {}
-        void addSupportedRate(const VideoV4l2Rate &rate) {
-            rates.push_back(rate);
+
+        int GetFrameRates(int fd, unsigned int pixel_format);
+
+        std::vector<std::string> getRateList() {
+            std::vector<std::string> v;
+            std::stringstream ss;
+
+            size_t n = rates.size();
+            unsigned i;
+            for (i = 0 ; i < n ; i++) {
+                VideoV4l2Rate rate = rates[i];
+                std::stringstream ss;
+                ss << (float)rate.den / rate.num;
+                v.push_back(ss.str());
+            }
+
+            return v;
         }
+
 
         unsigned height;
         unsigned width;
@@ -80,25 +97,17 @@ class VideoV4l2Size {
             return rates[_currentRate];
         }
 
-        VideoV4l2Rate &getRate(unsigned index) {
-            return rates[index];
-        }
-
-        size_t nRates() {
-            return rates.size();
-        }
-
     private:
         std::vector<VideoV4l2Rate> rates;
         unsigned _currentRate;
 };
-class VideoV4l2Input {
-    public:
-        VideoV4l2Input(unsigned idx, const char *s) : idx(idx), name(s), _currentSize(0) { }
 
-        void addSupportedSize(const VideoV4l2Size &size) {
-            sizes.push_back(size);
-        }
+class VideoV4l2Channel {
+    public:
+        VideoV4l2Channel(unsigned idx, const char *s) : idx(idx), name(s), _currentSize(0) { }
+
+        int GetFormat(int fd);
+        int GetSizes(int fd, unsigned int pixel_format);
 
         void SetFourcc(unsigned code) {
             fourcc[0] = code;
@@ -120,20 +129,28 @@ class VideoV4l2Input {
             _currentSize = index;
         }
 
+        std::vector<std::string> getSizeList(void) {
+            std::vector<std::string> v;
+
+            size_t n = sizes.size();
+            unsigned i;
+            for (i = 0 ; i < n ; i++) {
+                VideoV4l2Size &size = sizes[i];
+                std::stringstream ss;
+                ss << size.width << "x" << size.height;
+                v.push_back(ss.str());
+            }
+
+            return v;
+        }
+
+
         unsigned getSizeIndex() {
             return _currentSize;
         }
 
         VideoV4l2Size &getSize() {
             return sizes[_currentSize];
-        }
-
-        VideoV4l2Size &getSize(unsigned index) {
-            return sizes[index];
-        }
-
-        size_t nSizes() {
-            return sizes.size();
         }
 
     private:
@@ -144,42 +161,41 @@ class VideoV4l2Input {
 
 class VideoV4l2Device {
     public:
-        VideoV4l2Device(int fd, std::string &device);
-
-        void addInput(const VideoV4l2Input &input) {
-            inputs.push_back(input);
-        }
+        VideoV4l2Device(int fd, std::string &device) throw(int);
 
         std::string device;
         std::string name;
 
-        void setInput(unsigned index) {
-            if (index >= inputs.size()) {
-                _error("%s: requested input %d but we only have %d", __PRETTY_FUNCTION__, index, inputs.size());
-                index = inputs.size() - 1;
+        std::vector<std::string> getChannelList(void) {
+            std::vector<std::string> v;
+
+            size_t n = channels.size();
+            unsigned i;
+            for (i = 0 ; i < n ; i++) 
+                v.push_back(channels[i].name);
+
+            return v;
+        }
+
+        void setChannel(unsigned index) {
+            if (index >= channels.size()) {
+                _error("%s: requested channel %d but we only have %d", __PRETTY_FUNCTION__, index, channels.size());
+                index = channels.size() - 1;
             }
-            _currentInput = index;
+            _currentChannel = index;
         }
 
-        unsigned getInputIndex() {
-            return _currentInput;
+        unsigned getChannelIndex() {
+            return _currentChannel;
         }
 
-        VideoV4l2Input &getInput() {
-            return inputs[_currentInput];
-        }
-
-        VideoV4l2Input &getInput(unsigned index) {
-            return inputs[index];
-        }
-
-        size_t nInputs() {
-            return inputs.size();
+        VideoV4l2Channel &getChannel() {
+            return channels[_currentChannel];
         }
 
     private:
-        std::vector<VideoV4l2Input> inputs;
-        unsigned _currentInput;
+        std::vector<VideoV4l2Channel> channels;
+        unsigned _currentChannel;
 };
 
 } // namespace sfl_video
