@@ -418,16 +418,15 @@ AM_CONDITIONAL(USE_NETWORKMANAGER, test "x$with_networkmanager" = "xyes" )
 # ----------------------------------------------------------------------------
 AC_DEFUN([BB_ENABLE_DOXYGEN],
 		[
-		AC_ARG_ENABLE(doxygen, [  --enable-doxygen        enable documentation generation with doxygen (auto)])
+		AC_ARG_ENABLE(doxygen, [  --enable-doxygen        enable documentation generation with doxygen (disabled by default)])
 		AC_ARG_ENABLE(dot, [  --enable-dot            use 'dot' to generate graphs in doxygen (auto)])              
-		if test "x$enable_doxygen" != xno; then
+		if test "x$enable_doxygen" = xyes; then
 		AC_PATH_PROG(DOXYGEN, doxygen, , $PATH)
-		test x$DOXYGEN = x -a "x$enable_doxygen" = xyes && AC_MSG_ERROR([could not find doxygen])
+		test x$DOXYGEN = x && AC_MSG_ERROR([could not find doxygen])
 		AC_PATH_PROG(DOT, dot, , $PATH)
+        test x$DOT = x -a "x$enable_dot" = xyes && AC_MSG_ERROR([could not find dot])
 		fi
-        AM_CONDITIONAL(ENABLE_DOXYGEN, test x$DOXYGEN != x)
-
-	test x$DOT = x -a "x$enable_dot" = xyes && AC_MSG_ERROR([could not find dot])
+        AM_CONDITIONAL(ENABLE_DOXYGEN, test x$DOXYGEN = yes)
 	])
 	# Acutally perform the doxygen check
 	BB_ENABLE_DOXYGEN
