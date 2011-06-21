@@ -1,3 +1,5 @@
+if ENABLE_DOXYGEN
+
 SUBDIRS =
 
 docdir = ${prefix}/share/doc/wifidog-@VERSION@
@@ -53,3 +55,5 @@ maintainer-clean-local: clean-local
             -e 's:@-html_footer-@:${HTML_FOOTER}:g'
 	rm $@.tmp3
 	mv $@.tmp4 $@
+
+endif # ENABLE_DOXYGEN
