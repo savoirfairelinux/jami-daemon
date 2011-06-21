@@ -1314,7 +1314,16 @@ void ManagerImpl::joinParticipant (const CallID& callId1, const CallID& callId2)
 
 void ManagerImpl::createConfFromParticipantList(const std::vector< std::string > &participantList)
 {
+    bool callSuccess;
+    int successCounter = 0;
+
     _debug("Manager: Create conference from participant list");
+
+    // we must at least have 2 participant for a conference
+    if(participantList.size() <= 1) {
+        _error("Manager: Error: Participant number must be higher or equal to 2");
+	return;
+    }
 
     Conference *conf = new Conference();
 
@@ -1325,21 +1334,42 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
 		
 	std::string generatedCallID = getNewCallID();
 
+	// Manager methods may behave differently if the call id particip to a conference
 	conf->add(generatedCallID);
 
-	outgoingCall(account, generatedCallID, tostr, conf->getConfID());
+	// Create call
+	callSuccess = outgoingCall(account, generatedCallID, tostr, conf->getConfID());
 
-	if(_dbus) {
+        // If not able to create call remove this participant from the conference
+	if(!callSuccess)
+	    conf->remove(generatedCallID);
+
+	if(_dbus && callSuccess) {
 	    _dbus->getCallManager()->newCallCreated(account, generatedCallID, tostr);
+	    successCounter++;
 	}	
     }
 
-    _conferencemap.insert(std::pair<CallID, Conference *> (conf->getConfID(), conf));
-    
-    if (_dbus) {
-        _dbus->getCallManager()->conferenceCreated (conf->getConfID());
-    }
+    // Create the conference if and only if at least 2 calls have been successfully created
+    if(successCounter >= 2 ) {
+        _conferencemap.insert(std::pair<CallID, Conference *> (conf->getConfID(), conf));
 
+        if (_dbus) {
+            _dbus->getCallManager()->conferenceCreated (conf->getConfID());
+        }
+
+	audioLayerMutexLock();
+	if(_audiodriver) {
+	    conf->setRecordingSmplRate(_audiodriver->getSampleRate());
+        }
+	audioLayerMutexUnlock();
+
+	getMainBuffer()->stateInfo();
+    }
+    else {
+	delete conf;
+	conf = NULL;
+    }
     
 }
 
