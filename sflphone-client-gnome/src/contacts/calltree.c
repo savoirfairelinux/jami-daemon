@@ -1577,6 +1577,10 @@ static void drag_begin_cb (GtkWidget *widget UNUSED, GdkDragContext *dc UNUSED, 
 
 static void drag_end_cb (GtkWidget * widget UNUSED, GdkDragContext * context UNUSED, gpointer data UNUSED)
 {
+    if(active_calltree == history) {
+	return;
+    }
+
     DEBUG ("CallTree: Drag end callback");
     DEBUG ("CallTree: selected_path %s, selected_call_id %s, selected_path_depth %d",
            selected_path, selected_call_id, selected_path_depth);
@@ -1866,6 +1870,7 @@ void drag_data_received_cb (GtkWidget *widget, GdkDragContext *context UNUSED, g
 
     if(active_calltree == history) {
 	g_signal_stop_emission_by_name(G_OBJECT(widget), "drag_data_received");
+	return;
     }
 
     GtkTreeModel* tree_model = gtk_tree_view_get_model (tree_view);
