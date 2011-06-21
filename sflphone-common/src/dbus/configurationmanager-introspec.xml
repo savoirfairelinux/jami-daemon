@@ -627,8 +627,8 @@
 		   </arg>
 	   </method>
 
-	   <method name="setAudioRingtoneDevice" tp:name-for-binding="setAudioRingtoneDevice">
-	           <tp:docstring>
+	   <method name="setAudioRingtoneDevice" tp:name-for-bindings="setAudioRingtoneDevice">
+	       <tp:docstring>
 		   </tp:docstring>
 		   <arg type="i" name="index" direction="in">
 		     <tp:docstring>
@@ -688,8 +688,12 @@
 		   </arg>
 	   </method>
 
-	   <method name="setNoiseSuppressState" tp:name-for-binding="setNoiseSuppressState">
+	   <method name="setNoiseSuppressState" tp:name-for-bindings="setNoiseSuppressState">
+	           <tp:docstring>
+		   </tp:docstring>
 	           <arg type="s" name="state" direction="in">
+	           <tp:docstring>
+		   </tp:docstring>
 	           </arg>
 	   </method>
 	   
@@ -702,12 +706,12 @@
 		   </arg>
 	   </method>
 
-	   <method name="setEchoCancelState" tp:name-for-binding="setEchoCancelState">
+	   <method name="setEchoCancelState" tp:name-for-bindings="setEchoCancelState">
 	           <arg type="s" name="state" direction="in">
 	           </arg>
 	   </method>
 
-	   <method name="setEchoCancelTailLength" tp:name-for-binding="setEchoCancelTailLength">
+	   <method name="setEchoCancelTailLength" tp:name-for-bindings="setEchoCancelTailLength">
 	           <tp:docstring>
 		   </tp:docstring>
 		   <arg type="i" name="index" direction="in">
@@ -716,7 +720,7 @@
 		   </arg>
 	   </method>
 	   
-	   <method name="getEchoCancelTailLength" tp:name-for-binding="getEchoCancelTailLength">
+	   <method name="getEchoCancelTailLength" tp:name-for-bindings="getEchoCancelTailLength">
 	           <tp:docstring>
 		   </tp:docstring>
 		   <arg type="i" name="index" direction="out">
@@ -725,14 +729,14 @@
 		   </arg>
 	   </method>
 	   
-	   <method name="setEchoCancelDelay" tp:name-for-binding="setEchoCancelTailLength">
+	   <method name="setEchoCancelDelay" tp:name-for-bindings="setEchoCancelDelay">
 	       <tp:docstring>
 	       </tp:docstring>
 	       <arg type="i" name="index" direction="in">
 	       </arg>
 	   </method> 
 	   
-	   <method name="getEchoCancelDelay" tp:name-for-binding="getEchoCancelTailLength">
+	   <method name="getEchoCancelDelay" tp:name-for-bindings="getEchoCancelDelay">
 	       <tp:docstring>
 	       </tp:docstring>
 	       <arg type="i" name="index" direction="out">
