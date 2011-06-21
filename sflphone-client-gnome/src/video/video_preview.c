@@ -30,10 +30,10 @@
 
 #include "video_preview.h"
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <sys/msg.h> /* for msg queue */
 #include <sys/ipc.h>
 #include <sys/sem.h> /* semaphore functions and structs. */
 #include <sys/shm.h>
@@ -76,6 +76,7 @@ typedef struct _FrameInfo {
     unsigned height;
 } FrameInfo;
 
+/* See /bits/sem.h line 55 for why this is necessary */
 #if _SEM_SEMUN_UNDEFINED
 union semun
 {
@@ -266,7 +267,7 @@ video_preview_finalize (GObject *obj)
  * input:    semaphore set ID.
  * output:   none.
  */
-static void
+static int
 sem_wait(int sem_set_id)
 {
     /* structure for semaphore operations.   */
@@ -275,8 +276,8 @@ sem_wait(int sem_set_id)
     /* wait on the semaphore, unless it's value is non-negative. */
     sem_op.sem_num = 0;
     sem_op.sem_op = -1;
-    sem_op.sem_flg = 0;
-    semop(sem_set_id, &sem_op, 1);
+    sem_op.sem_flg = IPC_NOWAIT;
+    return semop(sem_set_id, &sem_op, 1);
 }
 
 /* round integer value up to next multiple of 4 */
@@ -290,18 +291,26 @@ static void
 readFrameFromShm(int width, int height, char *data, int sem_set_id,
         ClutterActor *texture)
 {
-    if (sem_set_id == -1)
-        return;
-    sem_wait(sem_set_id);
-    clutter_texture_set_from_rgb_data (CLUTTER_TEXTURE(texture),
-            (void*)data,
-            FALSE,
-            width,
-            height,
-            round_up_4(3 * width),
-            3,
-            0,
-            NULL);
+    if (sem_set_id != -1) {
+        if (sem_wait(sem_set_id) != -1) {
+            clutter_texture_set_from_rgb_data (CLUTTER_TEXTURE(texture),
+                    (void*)data,
+                    FALSE,
+                    width,
+                    height,
+                    round_up_4(3 * width),
+                    3,
+                    0,
+                    NULL);
+        }
+        else
+        {
+            if (errno != EAGAIN) {
+                g_print("Could not read from shared memory!\n");
+                perror("shm: ");
+            }
+        }
+    }
 }
 
 static gboolean
@@ -323,7 +332,7 @@ updateTexture(gpointer data)
  *                                                                              
  * Create a new #VideoPreview instance.                                        
  */                                                                             
-    VideoPreview *                                                                 
+VideoPreview *
 video_preview_new (void)
 {
     VideoPreview *result;
