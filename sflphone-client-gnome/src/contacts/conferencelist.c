@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#include <conferencelist.h>
-
+#include "calltree.h"
+#include "conferencelist.h"
 #include "logger.h"
 
 static gint is_confID_confstruct(gconstpointer, gconstpointer);
@@ -76,6 +76,30 @@ void conferencelist_clean(calltab_t *tab)
     }
 
     g_queue_free (tab->conferenceQueue);
+}
+
+void
+conferencelist_clean_history(void)
+{
+    conference_obj_t *conf;
+    guint size = conferencelist_get_size(history);
+    guint i;
+
+    DEBUG("ConferenceList: clean history");
+
+    while(size > 0) {
+        conf = conferencelist_pop_head(history);
+	if(conf) {
+	    calltree_remove_conference(history, conf, NULL);
+	}
+	else {
+	    ERROR("ConferenceList: Conference pointer is NULL");
+        }
+	size = conferencelist_get_size(history);
+    }
+
+    // g_queue_free(history->conferenceQueue); 
+
 }
 
 

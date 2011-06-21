@@ -875,6 +875,10 @@ edit_paste (void * foo UNUSED)
 static void
 clear_history (void)
 {
+    if(conferencelist_get_size(history) != 0) {
+	conferencelist_clean_history();
+    }
+
     if (calllist_get_size (history) != 0) {
         calllist_clean_history();
     }

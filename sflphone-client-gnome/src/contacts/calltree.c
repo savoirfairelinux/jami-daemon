@@ -1360,7 +1360,7 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 
 void calltree_update_conference (calltab_t* tab, const conference_obj_t* conf)
 {
-    DEBUG ("CallTree: Update conference %s\n", conf->_confID);
+    DEBUG ("CallTree: Update conference %s", conf->_confID);
 
     calltree_remove_conference(tab, conf, NULL);
     calltree_add_conference (tab, (conference_obj_t *)conf);
@@ -1379,7 +1379,7 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, G
     int nbParticipant;
     int i, j;
    	
-    DEBUG ("CallTree: Remove conference %s\n", conf->_confID);
+    DEBUG ("CallTree: Remove conference %s", conf->_confID);
 
     int nbChild = gtk_tree_model_iter_n_children (GTK_TREE_MODEL (store), parent);
 
@@ -1414,8 +1414,11 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, G
                             g_value_unset (&callval);
 
                             if (call) {
-                                calltree_add_call (tab, call, NULL);
-                            }
+				// do not add back call in history calltree when cleaning it
+				if(tab != history) {
+                                    calltree_add_call (tab, call, NULL);
+                                }
+			    }
                         }
 
                     }
