@@ -1,4 +1,343 @@
+/*
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
+ */
+#include <config.h>
 
+#include <calltab.h>
+#include <callmanager-glue.h>
+#include <configurationmanager-glue.h>
+#include <instance-glue.h>
+#include <preferencesdialog.h>
+#include <accountlistconfigdialog.h>
+#include <mainwindow.h>
+#include <marshaller.h>
+#include <sliders.h>
+#include <statusicon.h>
+#include <assistant.h>
+
+#include <dbus.h>
+#include <actions.h>
+#include <string.h>
+
+#include <widget/imwidget.h>
+
+#include <eel-gconf-extensions.h>
+
+#define DEFAULT_DBUS_TIMEOUT 30000
+
+DBusGConnection * connection;
+DBusGProxy * callManagerProxy;
+DBusGProxy * configurationManagerProxy;
+DBusGProxy * instanceProxy;
+
+static void
+new_call_created_cb (DBusGProxy *proxy UNUSED, const gchar *accountID,
+		     const gchar *callID, const gchar *to, void *foo UNUSED)
+{
+    callable_obj_t *c;
+    gchar *peer_name = (gchar *)to;
+    gchar *peer_number = "";
+
+    DEBUG("DBus: New Call (%s) created to (%s)", callID, to);
+
+    create_new_call(CALL, CALL_STATE_RINGING, g_strdup(callID), g_strdup(accountID), 
+			peer_name, peer_number, &c);
+
+    set_timestamp(&c->_time_start);
+
+    calllist_add_call(current_calls, c);
+    calllist_add_call(history, c);
+    calltree_add_call(current_calls, c, NULL);
+    calltree_add_call(history, c, NULL);
+
+    update_actions();
+    calltree_display(current_calls);
+}
+
+static void
+incoming_call_cb (DBusGProxy *proxy UNUSED, const gchar* accountID,
+                  const gchar* callID, const gchar* from, void * foo  UNUSED)
+{
+    callable_obj_t * c;
+    gchar *peer_name, *peer_number;
+    
+    DEBUG ("DBus: Incoming call (%s) from %s", callID, from);
+
+    // We receive the from field under a formatted way. We want to extract the number and the name of the caller
+    peer_name = call_get_peer_name (from);
+    peer_number = call_get_peer_number (from);
+
+    DEBUG ("DBus incoming peer name: %s", peer_name);
+    DEBUG ("DBus incoming peer number: %s", peer_number);
+
+    create_new_call (CALL, CALL_STATE_INCOMING, g_strdup (callID), g_strdup (
+                         accountID), peer_name, peer_number, &c);
+#if GTK_CHECK_VERSION(2,10,0)
+    status_tray_icon_blink (TRUE);
+    popup_main_window();
+#endif
+
+    set_timestamp (&c->_time_start);
+    notify_incoming_call (c);
+    sflphone_incoming_call (c);
+}
+
+static void
+zrtp_negotiation_failed_cb (DBusGProxy *proxy UNUSED, const gchar* callID,
+                            const gchar* reason, const gchar* severity, void * foo  UNUSED)
+{
+    DEBUG ("Zrtp negotiation failed.");
+    main_window_zrtp_negotiation_failed (callID, reason, severity);
+    callable_obj_t * c = NULL;
+    c = calllist_get_call (current_calls, callID);
+
+    if (c) {
+        notify_zrtp_negotiation_failed (c);
+    }
+}
+
+static void
+current_selected_audio_codec (DBusGProxy *proxy UNUSED, const gchar* callID UNUSED,
+                             const gchar* codecName UNUSED, void * foo  UNUSED)
+{
+}
+
+static void
+volume_changed_cb (DBusGProxy *proxy UNUSED, const gchar* device, const gdouble value,
+                   void * foo  UNUSED)
+{
+    DEBUG ("Volume of %s changed to %f.",device, value);
+    set_slider (device, value);
+}
+
+static void
+voice_mail_cb (DBusGProxy *proxy UNUSED, const gchar* accountID, const guint nb,
+               void * foo  UNUSED)
+{
+    DEBUG ("%d Voice mail waiting!",nb);
+    sflphone_notify_voice_mail (accountID, nb);
+}
+
+static void
+incoming_message_cb (DBusGProxy *proxy UNUSED, const gchar* callID UNUSED, const gchar *from, const gchar* msg, void * foo  UNUSED)
+{
+    DEBUG ("Message \"%s\" from %s!", msg, from);
+
+    callable_obj_t *call = NULL;
+    conference_obj_t *conf = NULL;
+
+    // do not display message if instant messaging is disabled
+    gboolean instant_messaging_enabled = TRUE;
+
+    if (eel_gconf_key_exists (INSTANT_MESSAGING_ENABLED))
+        instant_messaging_enabled = eel_gconf_get_integer (INSTANT_MESSAGING_ENABLED);
+
+    if (!instant_messaging_enabled)
+        return;
+
+    // Get the call information. (if this call exist)
+    call = calllist_get_call (current_calls, callID);
+
+    // Get the conference information (if this conference exist)
+    conf = conferencelist_get (current_calls, callID);
+
+    /* First check if the call is valid */
+    if (call) {
+
+        /* Make the instant messaging main window pops, add messages only if the main window exist.
+           Elsewhere the message is displayed asynchronously*/
+        if (im_widget_display ( (IMWidget **) (&call->_im_widget), msg, call->_callID, from))
+            im_widget_add_message (IM_WIDGET (call->_im_widget), from, msg, 0);
+    } else if (conf) {
+        /* Make the instant messaging main window pops, add messages only if the main window exist.
+           Elsewhere the message is displayed asynchronously*/
+        if (im_widget_display ( (IMWidget **) (&conf->_im_widget), msg, conf->_confID, from))
+            im_widget_add_message (IM_WIDGET (conf->_im_widget), from, msg, 0);
+    } else {
+        ERROR ("Message received, but no recipient found");
+    }
+}
+
+static void
+call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state,
+               void * foo  UNUSED)
+{
+    DEBUG ("DBUS: Call %s state %s",callID, state);
+    callable_obj_t *c = calllist_get_call (current_calls, callID);
+    if(c == NULL) {
+	ERROR("DBUS: Call is NULL");
+    }
+
+    if (c) {
+        if (strcmp (state, "HUNGUP") == 0) {
+            if (c->_state == CALL_STATE_CURRENT) {
+                // peer hung up, the conversation was established, so _stop has been initialized with the current time value
+                DEBUG ("DBUS: call state current");
+                set_timestamp (&c->_time_stop);
+                calltree_update_call (history, c, NULL);
+            }
+
+            stop_notification();
+            calltree_update_call (history, c, NULL);
+            status_bar_display_account();
+            sflphone_hung_up (c);
+        } else if (strcmp (state, "UNHOLD_CURRENT") == 0) {
+            sflphone_current (c);
+        } else if (strcmp (state, "UNHOLD_RECORD") == 0) {
+            sflphone_record (c);
+        } else if (strcmp (state, "HOLD") == 0) {
+            sflphone_hold (c);
+        } else if (strcmp (state, "RINGING") == 0) {
+            sflphone_ringing (c);
+        } else if (strcmp (state, "CURRENT") == 0) {
+            sflphone_current (c);
+        } else if (strcmp (state, "RECORD") == 0) {
+            sflphone_record (c);
+        } else if (strcmp (state, "FAILURE") == 0) {
+            sflphone_fail (c);
+        } else if (strcmp (state, "BUSY") == 0) {
+            sflphone_busy (c);
+        }
+    } else {
+        // The callID is unknow, threat it like a new call
+        // If it were an incoming call, we won't be here
+        // It means that a new call has been initiated with an other client (cli for instance)
+        if ((strcmp (state, "RINGING")) == 0 ||
+            (strcmp (state, "CURRENT")) == 0 ||
+            (strcmp (state, "RECORD"))) {
+            callable_obj_t *new_call;
+            GHashTable *call_details;
+            gchar *type;
+
+            DEBUG ("DBUS: New ringing call! accountID: %s", callID);
+
+            // We fetch the details associated to the specified call
+            call_details = dbus_get_call_details (callID);
+            create_new_call_from_details (callID, call_details, &new_call);
+
+            // Restore the callID to be synchronous with the daemon
+            new_call->_callID = g_strdup (callID);
+            type = g_hash_table_lookup (call_details, "CALL_TYPE");
+
+            if (g_strcasecmp (type, "0") == 0) {
+                // DEBUG("incoming\n");
+                new_call->_history_state = INCOMING;
+            } else {
+                // DEBUG("outgoing\n");
+                new_call->_history_state = OUTGOING;
+            }
+
+            calllist_add_call (current_calls, new_call);
+            calllist_add_call (history, new_call);
+            calltree_add_call (current_calls, new_call, NULL);
+            update_actions();
+            calltree_display (current_calls);
+
+            //sflphone_incoming_call (new_call);
+        }
+    }
+}
+
+static void
+conference_changed_cb (DBusGProxy *proxy UNUSED, const gchar* confID,
+                       const gchar* state, void * foo  UNUSED)
+{
+
+    callable_obj_t *call;
+    gchar* call_id;
+
+    // sflphone_display_transfer_status("Transfer successfull");
+    conference_obj_t* changed_conf = conferencelist_get (current_calls, confID);
+    GSList * part;
+
+    DEBUG ("---------------------------- DBUS: Conference state changed: %s\n", state);
+
+    if (changed_conf) {
+        // remove old conference from calltree
+        calltree_remove_conference (current_calls, changed_conf, NULL);
+
+        // update conference state
+        if (strcmp (state, "ACTIVE_ATACHED") == 0) {
+            changed_conf->_state = CONFERENCE_STATE_ACTIVE_ATACHED;
+        } else if (strcmp (state, "ACTIVE_DETACHED") == 0) {
+            changed_conf->_state = CONFERENCE_STATE_ACTIVE_DETACHED;
+        } else if (strcmp (state, "ACTIVE_ATTACHED_REC") == 0) {
+            changed_conf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD;
+        } else if (strcmp(state, "ACTIVE_DETACHED_REC") == 0) {
+             changed_conf->_state = CONFERENCE_STATE_ACTIVE_DETACHED_RECORD;
+        } else if (strcmp (state, "HOLD") == 0) {
+            changed_conf->_state = CONFERENCE_STATE_HOLD;
+        } else if (strcmp(state, "HOLD_REC") == 0) {
+            changed_conf->_state = CONFERENCE_STATE_HOLD_RECORD;
+        } else {
+            DEBUG ("Error: conference state not recognized");
+        }
+
+        // reactivate instant messaging window for these calls
+        part = changed_conf->participant_list;
+
+        while (part) {
+            call_id = (gchar*) (part->data);
+            call = calllist_get_call (current_calls, call_id);
+
+            if (call && call->_im_widget) {
+                im_widget_update_state (IM_WIDGET (call->_im_widget), TRUE);
+	    }
+
+            part = g_slist_next (part);
+        }
+
+        // update conferece participants
+        conference_participant_list_update (dbus_get_participant_list (changed_conf->_confID), changed_conf);
+
+        // deactivate instant messaging window for new participants
+        part = changed_conf->participant_list;
+
+        while (part) {
+            call_id = (gchar*) (part->data);
+            call = calllist_get_call (current_calls, call_id);
+
+            if (call && call->_im_widget) {
+                im_widget_update_state (IM_WIDGET (call->_im_widget), FALSE);
+	    }
+
+            part = g_slist_next (part);
+        }
+
+        // add new conference to calltree
+        calltree_add_conference (current_calls, changed_conf);
+    }
+}
+
+static void
 conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo  UNUSED)
 {
     DEBUG ("DBUS: Conference %s added", confID);
@@ -10,9 +349,6 @@ conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
     gchar** part;
 
     create_new_conference (CONFERENCE_STATE_ACTIVE_ATACHED, confID, &new_conf);
-
-    conferencelist_add (current_calls, new_conf);
-    conferencelist_add (history, new_conf);
 
     participants = (gchar**) dbus_get_participant_list (new_conf->_confID);
 
@@ -29,6 +365,7 @@ conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
             im_widget_update_state (IM_WIDGET (call->_im_widget), FALSE);
         }
 
+
         // if one of these participant is currently recording, the whole conference will be recorded
         if(call->_state == CALL_STATE_RECORD) {
             new_conf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD;
@@ -40,10 +377,10 @@ conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
 
     set_timestamp(&new_conf->_time_start);
 
+    conferencelist_add (current_calls, new_conf);
+    conferencelist_add (history, new_conf);
     calltree_add_conference (current_calls, new_conf);
     calltree_add_conference (history, new_conf);
-
-    calltree_display(current_calls);
 }
 
 static void
@@ -208,6 +545,7 @@ sip_call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID,
 {
     callable_obj_t * c = NULL;
     c = calllist_get_call (current_calls, callID);
+
     if (c != NULL) {
         ERROR("DBUS: Error call is NULL in state changed");
         return;
