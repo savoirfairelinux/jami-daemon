@@ -737,7 +737,7 @@ sflphone_new_call()
 
     c->_history_state = OUTGOING;
 
-    calllist_add_call (current_calls,c);
+    calllist_add_call (current_calls, c);
     calltree_add_call (current_calls, c, NULL);
     update_actions();
 
@@ -934,7 +934,7 @@ static int _place_registered_call (callable_obj_t * c)
         return -1;
     }
 
-    if (g_strcasecmp (g_hash_table_lookup (current->properties, "Status"),"REGISTERED") ==0) {
+    if (g_strcasecmp (g_hash_table_lookup (current->properties, "Status"), "REGISTERED") ==0) {
         /* The call is made with the current account */
         // free memory for previous account id and get a new one
         g_free (c->_accountID);

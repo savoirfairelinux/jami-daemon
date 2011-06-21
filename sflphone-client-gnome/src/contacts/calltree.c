@@ -291,10 +291,6 @@ row_activated (GtkTreeView       *tree_view UNUSED,
 	    calltree_display(current_calls); 
 	}
     }
-
-    calltab_unselect_all(current_calls);
-    calltab_unselect_all(history);
-    calltab_unselect_all(contacts);
 }
 
 static void 

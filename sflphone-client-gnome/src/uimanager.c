@@ -220,6 +220,7 @@ update_actions()
 
         switch (selectedCall->_state) {
             case CALL_STATE_INCOMING:
+		DEBUG("UIManager: Call State Incoming");
                 // Make the button toolbar clickable
                 gtk_action_set_sensitive (GTK_ACTION (pickUpAction), TRUE);
                 gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
@@ -232,6 +233,7 @@ update_actions()
                                     1);
                 break;
             case CALL_STATE_HOLD:
+		DEBUG("UIManager: Call State Hold");
                 gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
                 gtk_widget_set_sensitive (GTK_WIDGET (holdMenu), TRUE);
                 gtk_widget_set_sensitive (GTK_WIDGET (offHoldToolbar), TRUE);
@@ -248,12 +250,14 @@ update_actions()
 
                 break;
             case CALL_STATE_RINGING:
+		DEBUG("UIManager: Call State Ringing");
                 gtk_action_set_sensitive (GTK_ACTION (pickUpAction), TRUE);
                 gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget),
                                     1);
                 break;
             case CALL_STATE_DIALING:
+		DEBUG("UIManager: Call State Dialing");
                 gtk_action_set_sensitive (GTK_ACTION (pickUpAction), TRUE);
 
                 if (active_calltree == current_calls)
@@ -319,6 +323,7 @@ update_actions()
                 break;
             case CALL_STATE_BUSY:
             case CALL_STATE_FAILURE:
+		DEBUG("UIManager: Call State Busy/Failure"); 
                 gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
                 break;
@@ -334,7 +339,7 @@ update_actions()
                 gtk_widget_set_sensitive (GTK_WIDGET (transferToolbar), TRUE);
                 break;
             default:
-                WARN ("Should not happen in update_actions()!");
+                ERROR ("UIMAnager: Error: Unknown state in action update!");
                 break;
         }
     } else if (selectedConf) {
@@ -349,6 +354,7 @@ update_actions()
 
             case CONFERENCE_STATE_ACTIVE_ATACHED:
             case CONFERENCE_STATE_ACTIVE_DETACHED:
+		DEBUG("UIManager: Conference State Active");
                 gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
                 gtk_widget_set_sensitive (GTK_WIDGET (holdToolbar), TRUE);
                 gtk_action_set_sensitive (GTK_ACTION (recordAction), TRUE);
@@ -362,6 +368,7 @@ update_actions()
                 break;
             case CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD:
             case CONFERENCE_STATE_ACTIVE_DETACHED_RECORD:
+		DEBUG("UIManager: Conference State Record");
                 gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
                 gtk_widget_set_sensitive (GTK_WIDGET (holdToolbar), TRUE);
                 gtk_action_set_sensitive (GTK_ACTION (recordAction), TRUE);
@@ -375,6 +382,7 @@ update_actions()
                 break;
             case CONFERENCE_STATE_HOLD:
             case CONFERENCE_STATE_HOLD_RECORD:
+		DEBUG("UIManager: Conference State Hold");
                 gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
                 gtk_widget_set_sensitive (GTK_WIDGET (offHoldToolbar), TRUE);
                 gtk_action_set_sensitive (GTK_ACTION (recordAction), TRUE);
@@ -387,7 +395,7 @@ update_actions()
                 }
                 break;
             default:
-                WARN ("Should not happen in update_action()!");
+                WARN ("UIManager: Error: Should not happen in action update!");
                 break;
         }
     }

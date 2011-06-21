@@ -105,8 +105,8 @@ void account_list_config_dialog_fill()
 {
 
     if (accountListDialog == NULL) {
-        ERROR("Config: Error: Dialog is not opened");
-        return;
+        DEBUG("Config: No account dialog, returning");
+	return;
     }
 
     GtkTreeIter iter;
