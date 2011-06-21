@@ -232,7 +232,7 @@ void SIPTest::testTwoOutgoingIpCall ()
     void *status;
 
     // This scenario expect to be put on hold before hangup 
-    std::string firstCallCommand("sipp -sf sippxml/test_1.xml -i 127.0.0.1 -p 5062 -m 1");
+    std::string firstCallCommand("sipp -sf tools/sippxml/test_1.xml -i 127.0.0.1 -p 5062 -m 1");
 
     // The second call uses the default user agent scenario
     std::string secondCallCommand("sipp -sn uas -i 127.0.0.1 -p 5064 -m 1");
@@ -302,7 +302,7 @@ void SIPTest::testTwoIncomingIpCall ()
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
     // the first call is supposed to be put on hold when answering teh second incoming call
-    std::string firstCallCommand("sipp -sf sippxml/test_2.xml 127.0.0.1 -i 127.0.0.1 -p 5064 -m 1 > testfile1.txt");
+    std::string firstCallCommand("sipp -sf tools/sippxml/test_2.xml 127.0.0.1 -i 127.0.0.1 -p 5064 -m 1 > testfile1.txt");
 
     // command to be executed by the thread, user agent client which initiate a call and hangup
     std::string secondCallCommand("sipp -sn uac 127.0.0.1 -i 127.0.0.1 -p 5062 -m 1 -d 250 > testfile2.txt");
@@ -377,7 +377,7 @@ void SIPTest::testHoldIpCall()
 {
     pthread_t callThread;
 
-    std::string callCommand("sipp -sf sippxml/test_3.xml -i 127.0.0.1 -p 5062 -m 1");
+    std::string callCommand("sipp -sf tools/sippxml/test_3.xml -i 127.0.0.1 -p 5062 -m 1");
 
     int rc = pthread_create(&callThread, NULL, sippThread, (void *)(&callCommand));
     if(rc) {
@@ -415,7 +415,7 @@ void SIPTest::testIncomingIpCallSdp ()
     void *status;
 
     // command to be executed by the thread, user agent client which initiate a call and hangup
-    std::string command("sipp -sf sippxml/test_4.xml 127.0.0.1 -i 127.0.0.1 -p 5062 -m 1");
+    std::string command("sipp -sf tools/sippxml/test_4.xml 127.0.0.1 -i 127.0.0.1 -p 5062 -m 1");
 
     int rc = pthread_create(&thethread, NULL, sippThread, (void *)(&command));
     if (rc) {

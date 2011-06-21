@@ -77,7 +77,8 @@ static void calltree_add_history_conference(conference_obj_t *);
 
 static void drag_begin_cb (GtkWidget *, GdkDragContext *, gpointer);
 static void drag_end_cb (GtkWidget *, GdkDragContext *, gpointer);
-void drag_data_received_cb (GtkWidget *, GdkDragContext *, gint, gint, GtkSelectionData *, guint, guint, gpointer);
+static void drag_data_received_cb (GtkWidget *, GdkDragContext *, gint, gint, GtkSelectionData *, guint, guint, gpointer);
+static void drag_history_received_cb (GtkWidget *, GdkDragContext *, gint, gint, GtkSelectionData *, guint, guint, gpointer);
 static void menuitem_response (gchar *);
 static void calltree_create_conf_from_participant_list (GSList *);
 
@@ -104,7 +105,7 @@ static void
 call_selected_cb (GtkTreeSelection *sel, void* data UNUSED)
 {
 
-    DEBUG ("******************************************* CallTree: Selection callback");
+    DEBUG ("CallTree: Selection callback");
 
     GtkTreeIter iter;
     GValue val;
@@ -119,10 +120,10 @@ call_selected_cb (GtkTreeSelection *sel, void* data UNUSED)
     }
 
     if(active_calltree == history) {
-	DEBUG("Current call tree is history");
+	DEBUG("CallTree: Current call tree is history");
     } 
     else if(active_calltree == current_calls) {
-	DEBUG("Current call tree is current calls");
+	DEBUG("CallTree: Current call tree is current calls");
     }
 
     // store info for dragndrop
@@ -154,7 +155,7 @@ call_selected_cb (GtkTreeSelection *sel, void* data UNUSED)
             }
         }
 
-        DEBUG ("******************************* CallTree: selected_path %s, selected_conf_id %s, selected_path_depth %d",
+        DEBUG ("CallTree: selected_path %s, selected_conf_id %s, selected_path_depth %d",
                selected_path, selected_call_id, selected_path_depth);
 
     } else {
@@ -201,9 +202,11 @@ row_activated (GtkTreeView       *tree_view UNUSED,
     conference_obj_t* selectedConf = NULL;
     gchar *account_id;
 
-    DEBUG ("----------------------------------------------- CallTree: Double click action");
+    DEBUG ("CallTree: Double click action");
 
     if (calltab_get_selected_type (active_calltree) == A_CALL) {
+
+	DEBUG("CallTree: Selected a conference");
 
         selectedCall = calltab_get_selected_call (active_calltree);
 
@@ -251,7 +254,7 @@ row_activated (GtkTreeView       *tree_view UNUSED,
         }
     } else if (calltab_get_selected_type (active_calltree) == A_CONFERENCE) {
 
-	DEBUG("SELECTED A CONFERENCE");
+	DEBUG("CallTree: Seleceted a conference");
 
         if (active_calltree == current_calls) {
 
@@ -276,15 +279,12 @@ row_activated (GtkTreeView       *tree_view UNUSED,
             }
         }
 	else if (active_calltree == history) {
-	    DEBUG("SELECTED A CONFERENCE IN HISTORY");
 
 	    selectedConf = calltab_get_selected_conf(history);
 	    if(selectedConf == NULL) {
   	        ERROR("CallTree: Error: Could not get selected conference from history");
 	        return;
 	    }
-
-	    DEBUG("Selected conf id %s", selectedConf->_confID);
 
 	    calltree_create_conf_from_participant_list(selectedConf->participant_list); 
         }
@@ -302,13 +302,11 @@ calltree_create_conf_from_participant_list(GSList *list) {
     DEBUG("CallTree: Create conference from participant list");
 
     participant_list = (void *) malloc(sizeof(void*));
-    
 
     // concatenate 
     for(i = 0; i < list_length; i++) {
 	gchar *number;
 	gchar *participant_id = g_slist_nth_data(list, i);
-	DEBUG("********************* participant %s ***************************", participant_id);       
         callable_obj_t *call = calllist_get_call(history, participant_id);
  
         if(c!=0) {
@@ -667,6 +665,7 @@ calltree_create (calltab_t* tab, gboolean searchbar_type)
 
     if(tab == history) {
          gtk_tree_view_set_show_expanders(GTK_TREE_VIEW(tab->view), TRUE);
+	 g_signal_connect (G_OBJECT (tab->view), "drag_data_received", G_CALLBACK (drag_history_received_cb), NULL);
     }
 
 
@@ -985,7 +984,10 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
     gtk_tree_store_prepend (tab->store, &iter, parent);
 
     if (c != NULL) {
-        account_details = account_list_get_by_id (c->_callID);
+        account_details = account_list_get_by_id (c->_accountID);
+	if(account_details == NULL) {
+	    ERROR("CallTree: Could not find account %s", c->_accountID);
+	}
 
         if (account_details != NULL) {
             srtp_enabled = g_hash_table_lookup (account_details->properties, ACCOUNT_SRTP_ENABLED);
@@ -1162,7 +1164,7 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
     GdkPixbuf *pixbuf_security = NULL;
     GtkTreeIter iter;
     GtkTreePath *path;
-    GtkTreeModel *model = (GtkTreeModel*) active_calltree->store;
+    GtkTreeModel *model = (GtkTreeModel*) tab->store;
     GSList *conference_participant;
     gchar *call_id;
     callable_obj_t *call;
@@ -1170,13 +1172,13 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
     gchar *srtp_enabled = "";
     // New call in the list
     gchar * description;
-
-    DEBUG ("Calltree: Add conference %s", conf->_confID);
-
+    
     if (!conf) {
         ERROR ("Calltree: Error: Conference is null");
         return;
     }
+
+    DEBUG ("Calltree: Add conference %s", conf->_confID);
 
     if(tab == history) {
         calltree_add_history_conference(conf);
@@ -1238,10 +1240,16 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
         while (conference_participant) {
             call_id = (gchar*) (conference_participant->data);
             call = calllist_get_call(tab, call_id);
+	    if(call == NULL) {
+		ERROR("Calltree: Error: Could not find call %s in call list", call_id);
+	    }
 
             if (call != NULL) {
 
-                account_details = account_list_get_by_id (call->_callID);
+                account_details = account_list_get_by_id (call->_accountID);
+		if (account_details == NULL) {
+		    ERROR("Calltree: Error: Could not find account %s in account list", call->_accountID);
+	        }
 
                 if (account_details != NULL) {
                     srtp_enabled = g_hash_table_lookup (account_details->properties, ACCOUNT_SRTP_ENABLED);
@@ -1264,12 +1272,9 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
         DEBUG ("Calltree: Determine if all conference participant are secured");
 
         if (conf->_conf_srtp_enabled) {
-            // participant = conf->participant;
             conference_participant = conf->participant_list;
 
-            // for (pl = participant; *pl; pl++)
             while (conference_participant) {
-                // call_id = (gchar*)(*pl);
                 call_id = (gchar*) (conference_participant->data);
                 call = calllist_get_call(tab, call_id);
 
@@ -1317,8 +1322,6 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
         return;
     }
 
-    // participant = conf->participant;
-    // participant = dbus_get_participant_list(conf->_confID);
     conference_participant = conf->participant_list;
 
     if (conference_participant) {
@@ -1338,13 +1341,6 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
             conference_participant = conference_next_participant (conference_participant);
         }
     }
-
-    /*
-    else
-      {
-        WARN ("Conferences cannot be added in this widget - This is a bug in the application.");
-      }
-    */
 
     gtk_tree_view_set_model (GTK_TREE_VIEW (tab->view), GTK_TREE_MODEL (tab->store));
 
@@ -1367,21 +1363,19 @@ void calltree_update_conference (calltab_t* tab, const conference_obj_t* conf)
 
 void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, GtkTreeIter *parent)
 {
-
-    DEBUG ("CallTree: Remove conference %s\n", conf->_confID);
-
     GtkTreeIter iter_parent;
     GtkTreeIter iter_child;
     GValue confval;
     GValue callval;
-    conference_obj_t * tempconf;
-    callable_obj_t * call;
+    conference_obj_t *tempconf = NULL;
+    callable_obj_t *call = NULL;
     GtkTreeStore* store = tab->store;
-
-    int nbChild = gtk_tree_model_iter_n_children (GTK_TREE_MODEL (store), parent);
-
     int nbParticipant;
     int i, j;
+   	
+    DEBUG ("CallTree: Remove conference %s\n", conf->_confID);
+
+    int nbChild = gtk_tree_model_iter_n_children (GTK_TREE_MODEL (store), parent);
 
     for (i = 0; i < nbChild; i++) {
 
@@ -1430,19 +1424,20 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, G
 
 }
 
-void calltree_add_history_conference(conference_obj_t *conf) {
+void calltree_add_history_conference(conference_obj_t *conf) 
+{
     GdkPixbuf *pixbuf = NULL;
     gchar *description = "Conference: ", *date = "", *duration = "";
     GtkTreeIter iter;
     gchar *call_id;
     callable_obj_t *call; 
     GSList *conference_participant;
-
-    DEBUG("CallTree: Add conference %s to history", conf->_confID);
-
+    
     if(!conf) {
         ERROR("CallTree: Error conference is NULL");
     }
+
+    DEBUG("CallTree: Add conference %s to history", conf->_confID);
 
     gtk_tree_store_prepend(history->store, &iter, NULL);
 
@@ -1478,8 +1473,6 @@ void calltree_add_history_conference(conference_obj_t *conf) {
 
 void calltree_display (calltab_t *tab)
 {
-
-
     GtkTreeSelection *sel;
 
     /* If we already are displaying the specified calltree */
@@ -1489,7 +1482,7 @@ void calltree_display (calltab_t *tab)
     /* case 1: we want to display the main calltree */
     if (tab==current_calls) {
 
-        DEBUG ("display main tab");
+        DEBUG ("CallTree: Display main tab");
 
 
         if (active_calltree==contacts) {
@@ -1503,9 +1496,9 @@ void calltree_display (calltab_t *tab)
     }
 
     /* case 2: we want to display the history */
-    else if (tab==history) {
+    else if (tab == history) {
 
-        DEBUG ("display history tab");
+        DEBUG ("ConferenceList: Display history tab");
 
         if (active_calltree==contacts) {
             gtk_toggle_tool_button_set_active ( (GtkToggleToolButton*) contactButton, FALSE);
@@ -1516,7 +1509,7 @@ void calltree_display (calltab_t *tab)
 
     else if (tab==contacts) {
 
-        DEBUG ("display contact tab");
+        DEBUG ("CallTree: Display contact tab");
 
         if (active_calltree==history) {
             gtk_toggle_tool_button_set_active ( (GtkToggleToolButton*) historyButton, FALSE);
@@ -1526,17 +1519,16 @@ void calltree_display (calltab_t *tab)
 
         set_forcus_on_addressbook_searchbar();
     }
-
-    else
-        ERROR ("calltree.c line %d . This is probably a bug in the application", __LINE__);
-
+    else {
+        ERROR ("CallTree: Error: Not a valid call tab  (%d, %s)", __LINE__, __FILE__);
+    }
 
     gtk_widget_hide (active_calltree->tree);
     active_calltree = tab;
     gtk_widget_show (active_calltree->tree);
 
     sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
-    DEBUG ("Emit signal changed from calltree_display");
+    DEBUG ("CallTree: Emit signal changed from calltree_display");
     g_signal_emit_by_name (sel, "changed");
     update_actions();
 }
@@ -1855,6 +1847,10 @@ static void drag_end_cb (GtkWidget * widget UNUSED, GdkDragContext * context UNU
 
 }
 
+void drag_history_received_cb (GtkWidget *widget, GdkDragContext *context UNUSED, gint x UNUSED, gint y UNUSED, GtkSelectionData *selection_data UNUSED, guint info UNUSED, guint t UNUSED, gpointer data UNUSED)
+{
+    g_signal_stop_emission_by_name(G_OBJECT(widget), "drag_data_received"); 
+}
 
 void drag_data_received_cb (GtkWidget *widget, GdkDragContext *context UNUSED, gint x UNUSED, gint y UNUSED, GtkSelectionData *selection_data UNUSED, guint info UNUSED, guint t UNUSED, gpointer data UNUSED)
 {
@@ -1862,6 +1858,10 @@ void drag_data_received_cb (GtkWidget *widget, GdkDragContext *context UNUSED, g
     GtkTreePath *drop_path;
     GtkTreeViewDropPosition position;
     GValue val;
+
+    if(active_calltree == history) {
+	g_signal_stop_emission_by_name(G_OBJECT(widget), "drag_data_received");
+    }
 
     GtkTreeModel* tree_model = gtk_tree_view_get_model (tree_view);
 

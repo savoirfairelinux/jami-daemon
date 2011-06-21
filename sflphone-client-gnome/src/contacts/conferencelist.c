@@ -118,6 +118,8 @@ void conferencelist_remove (calltab_t *tab, const gchar* conf)
 {
     gchar* c; 
 
+    DEBUG("ConferenceList: Remove conference %s", conf);
+
     if(conf == NULL) {
 	ERROR("ConferenceList: Error: Conf id is NULL");
 	return;
@@ -142,6 +144,8 @@ conference_obj_t* conferencelist_get (calltab_t *tab, const gchar* conf_id)
 {
 
     GList* c;
+
+    DEBUG("ConferenceList: Conference list get %s", conf_id);
 
     if(tab == NULL) {
 	ERROR("ConferenceList: Error: Calltab is NULL");

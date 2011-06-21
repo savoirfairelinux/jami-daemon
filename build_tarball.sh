@@ -32,7 +32,6 @@ rm -f *.tar.gz
 rm -rf lang/
 rm -rf tools/
 rm -rf sflphone-client-kde/
-rm -rf sippxml
 
 rm -rf .git/
 rm -f .gitignore

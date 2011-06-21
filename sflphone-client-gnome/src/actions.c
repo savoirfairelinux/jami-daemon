@@ -652,7 +652,6 @@ process_dialing (callable_obj_t *c, guint keyval, gchar *key)
     switch (keyval) {
         case 65293: /* ENTER */
         case 65421: /* ENTER numpad */
-	    DEBUG("------------------------------------------------ SFLPHONE PLACE CALL (process dialing)");
             sflphone_place_call (c);
             break;
         case 65307: /* ESCAPE */
@@ -921,10 +920,10 @@ static int _place_registered_call (callable_obj_t * c)
     DEBUG ("Actions: Get account for this call");
 
     if (g_strcasecmp (c->_accountID, "") != 0) {
-        DEBUG ("-------------------------------------------------------- Actions: Account %s already set for this call", c->_accountID);
+        DEBUG ("Actions: Account %s already set for this call", c->_accountID);
         current = account_list_get_by_id (c->_accountID);
     } else {
-        DEBUG ("-------------------------------------------------------- Actions: No account set for this call, use first of the list");
+        DEBUG ("Actions: No account set for this call, use first of the list");
         current = account_list_get_current();
     }
 
@@ -1281,7 +1280,7 @@ void sflphone_fill_history (void)
 
     gboolean is_first;
 
-    DEBUG ("Loading history ...");
+    DEBUG ("SFLphone: Loading history ...");
 
     entries = dbus_get_history ();
 
@@ -1321,14 +1320,30 @@ void sflphone_fill_history (void)
 		gchar **ptr;
     		const gchar *delim = "|";
 
-		DEBUG("---------------------------------- HISTORY VALUE %s", value);
 
 	        ptr = g_strsplit(value, delim, 6);
 		if(ptr != NULL) {
 
+		    DEBUG("!!!!!!!!!!!!!!!!!!!!!!!!!!!! %s", *ptr);
+
 		    // first ptr refers to entry type
 		    if(g_strcmp0(*ptr, "2188") == 0) {
-			// create_conference_history_entry_from_serialized((gchar *)key, (gchar **)ptr, &conference_entry);
+		        DEBUG("---------------------------------- HISTORY VALUE %s", value);
+			create_conference_history_entry_from_serialized((gchar *)key, (gchar **)ptr, &conference_entry);
+			conferencelist_add (history, conference_entry);
+			calltree_add_conference (history, conference_entry);
+			conferencelist_add(current_calls, conference_entry);
+/*
+		        GSList *part = conference_entry->participant_list;
+
+			while(part) {
+			    callable_obj_t *call_to_add = NULL;
+			    gchar *call_id = (gchar *)part->data;
+			    call_to_add = calllist_get_call(history, call_id);
+
+			    calltree_add_call();
+                        }	
+*/
 			g_hash_table_remove(entries, key_to_min);	
 		    }
 		    else {
