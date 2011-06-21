@@ -668,18 +668,12 @@ void AudioPreference::unserialize (Conf::MappingNode *map)
 
 
 VideoPreference::VideoPreference() :
-    v4l2_list(0)
-    , _videoDevice(0)
+    _videoDevice(0)
     , _videoInput(0)
     , _videoSize(0)
     , _videoRate(0)
 {
-    try {
-        v4l2_list = new sfl_video::VideoV4l2List();
-    } catch (int e) {
-        v4l2_list = NULL;
-        _error("Exception %d when probing v4l2 devices\n", e);
-    }
+    v4l2_list = new sfl_video::VideoV4l2List();
 }
 
 VideoPreference::~VideoPreference()

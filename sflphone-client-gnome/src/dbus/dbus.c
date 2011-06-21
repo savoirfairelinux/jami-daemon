@@ -2025,16 +2025,16 @@ dbus_get_audio_manager (void)
 }
 
 unsigned
-dbus_get_video_input_device_input ()
+dbus_get_video_input_device_channel ()
 {
     gint index;
     GError* error = NULL;
 
-    org_sflphone_SFLphone_ConfigurationManager_get_video_input_device_input(
+    org_sflphone_SFLphone_ConfigurationManager_get_video_input_device_channel(
         configurationManagerProxy, &index, &error);
 
     if (error) {
-        ERROR ("Error calling dbus_get_video_input_device_input");
+        ERROR ("Error calling dbus_get_video_input_device_channel");
         g_error_free (error);
     }
 
@@ -2112,14 +2112,14 @@ dbus_set_video_input_device (const int index)
  * Set video input device input from its index
  */
 void
-dbus_set_video_input_device_input (const int index)
+dbus_set_video_input_device_channel (const int index)
 {
     GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_video_input_device_input(
+    org_sflphone_SFLphone_ConfigurationManager_set_video_input_device_channel(
         configurationManagerProxy, index, &error);
 
     if (error) {
-        ERROR ("Failed to call set_video_input_device_input() on ConfigurationManager: %s", error->message);
+        ERROR ("Failed to call set_video_input_device_channel() on ConfigurationManager: %s", error->message);
         g_error_free (error);
     }
 }
@@ -2184,18 +2184,18 @@ dbus_get_video_input_device_list()
  * Get a list of inputs supported by the video input device
  */
 gchar**
-dbus_get_video_input_device_input_list()
+dbus_get_video_input_device_channel_list()
 {
     gchar** array = NULL;
     GError* error = NULL;
 
-    if (!org_sflphone_SFLphone_ConfigurationManager_get_video_input_device_input_list (
+    if (!org_sflphone_SFLphone_ConfigurationManager_get_video_input_device_channel_list (
                 configurationManagerProxy, &array, &error)) {
         if (error->domain == DBUS_GERROR && error->code
                 == DBUS_GERROR_REMOTE_EXCEPTION) {
-            ERROR ("Caught remote method (get_video_input_device_input_list) exception  %s: %s", dbus_g_error_get_name (error), error->message);
+            ERROR ("Caught remote method (get_video_input_device_channel_list) exception  %s: %s", dbus_g_error_get_name (error), error->message);
         } else {
-            ERROR ("Error while calling get_video_input_device_input_list: %s", error->message);
+            ERROR ("Error while calling get_video_input_device_channel_list: %s", error->message);
         }
 
         g_error_free (error);

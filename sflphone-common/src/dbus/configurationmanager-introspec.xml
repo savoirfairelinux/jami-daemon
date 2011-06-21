@@ -474,7 +474,7 @@
 		   </arg>
 	   </method>
 
-	   <method name="getVideoInputDeviceInputList" tp:name-for-bindings="getVideoInputDeviceInputList">
+	   <method name="getVideoInputDeviceChannelList" tp:name-for-bindings="getVideoInputDeviceChannelList">
 		   <tp:docstring>
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
@@ -513,7 +513,7 @@
 		   </arg>
 	   </method>
 
-	   <method name="getVideoInputDeviceInput" tp:name-for-bindings="getVideoInputDeviceInput">
+	   <method name="getVideoInputDeviceChannel" tp:name-for-bindings="getVideoInputDeviceChannel">
 		   <tp:docstring>
 		   </tp:docstring>
 		   <arg type="i" name="index" direction="out">
@@ -549,7 +549,7 @@
 		   </arg>
 	   </method>
 
-	   <method name="setVideoInputDeviceInput" tp:name-for-bindings="setVideoInputDeviceInput">
+	   <method name="setVideoInputDeviceChannel" tp:name-for-bindings="setVideoInputDeviceChannel">
 		   <tp:docstring>
 		   </tp:docstring>
 		   <arg type="i" name="index" direction="in">
