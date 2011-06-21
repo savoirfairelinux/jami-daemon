@@ -29,80 +29,67 @@
  */
 
 #include <iostream>
-#include <sstream>
+#include <vector>
+#include <string>
+#include <cassert>
 
-extern "C" {
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-}
+using namespace std;
 
 #include "video_v4l2_list.h"
+#include "video_v4l2.h"
+using namespace sfl_video;
 
-namespace sfl_video {
-
-VideoV4l2List::VideoV4l2List() : _currentDevice(0)
+int main()
 {
-    int idx;
-    for(idx = 0;;idx++) {
+    unsigned idx;
+    VideoV4l2List list;
+    std::vector<std::string> v = list.getDeviceList();
+    idx = list.getDeviceIndex();
+    list.setDevice(idx);
 
-        std::stringstream ss;
-        ss << "/dev/video" << idx;
-        int fd = open(ss.str().c_str(), O_RDWR);
-        if (fd == -1)
-            break;
-
-        try {
-            std::string str(ss.str());
-            VideoV4l2Device v(fd, str);
-            devices.push_back(v);
-        }
-        catch (int e) {
-            close(fd);
-            break;
-        }
-
-        close(fd);
-    }
-}
-
-void VideoV4l2List::setDevice(unsigned index)
-{
-    if (index >= devices.size())
-        index = devices.size() - 1;
-
-    _currentDevice = index;
-}
-
-std::vector<std::string> VideoV4l2List::getDeviceList(void)
-{
-    std::vector<std::string> v;
-    std::stringstream ss;
-
-    size_t n = devices.size();
-    unsigned i;
-    for (i = 0 ; i < n ; i++) {
-        VideoV4l2Device &dev = devices[i];
-        std::string &name = dev.name;
-        if (name.length()) {
-            ss << name;
-        } else {
-            ss << dev.device;
-        }
-        v.push_back(ss.str());
+    size_t i, n = v.size();
+    assert(idx < n);
+    for (i=0; i<n; i++) {
+        cout << ((idx == i) ? " * " : "   ");
+        cout << v[i] << endl;
     }
 
-    return v;
-}
+    VideoV4l2Device &dev = list.getDevice();
+    idx = dev.getChannelIndex();
+    dev.setChannel(idx);
+    v = dev.getChannelList();
 
-unsigned VideoV4l2List::getDeviceIndex()
-{
-    return _currentDevice;
-}
+    n = v.size();
+    assert(idx < n);
+    for (i=0; i<n; i++) {
+        cout << ((idx == i) ? " * " : "   ");
+        cout << "\t" << v[i] << endl;
+    }
 
-VideoV4l2Device &VideoV4l2List::getDevice()
-{
-    return devices[_currentDevice];
-}
+    VideoV4l2Channel &chan = dev.getChannel();
+    VideoV4l2Size &size = chan.getSize();
+    idx = chan.getSizeIndex();
+    chan.setSize(idx);
+    v = chan.getSizeList();
 
-} // namespace sfl_video
+    n = v.size();
+    assert(idx < n);
+    for (i=0; i<n; i++) {
+        cout << ((idx == i) ? " * " : "   ");
+        cout << "\t\t" << v[i] << endl;
+    }
+
+    //VideoV4l2Rate &rate = chan.getRate();
+    idx = size.getRateIndex();
+    size.setRate(idx);
+    v = size.getRateList();
+
+    n = v.size();
+    assert(idx < n);
+    for (i=0; i<n; i++) {
+        cout << ((idx == i) ? " * " : "   ");
+        cout << "\t\t\t" << v[i] << endl;
+    }
+
+    return 0;
+}

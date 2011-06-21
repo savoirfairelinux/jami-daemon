@@ -35,8 +35,6 @@
 #include <vector>
 #include <sstream>
 
-#include "logger.h"
-
 extern "C" {
 #include <linux/videodev2.h>
 #if !defined(VIDIOC_ENUM_FRAMESIZES) || !defined(VIDIOC_ENUM_FRAMEINTERVALS)
@@ -82,10 +80,8 @@ class VideoV4l2Size {
         unsigned width;
 
         void setRate(unsigned index) {
-            if (index >= rates.size()) {
-                _error("%s: requested size %d but we only have %d", __PRETTY_FUNCTION__, index, rates.size());
+            if (index >= rates.size())
                 index = rates.size() - 1;
-            }
             _currentRate = index;
         }
 
@@ -122,10 +118,8 @@ class VideoV4l2Channel {
         std::string name;
 
         void setSize(unsigned index) {
-            if (index >= sizes.size()) {
-                _error("%s: requested size %d but we only have %d", __PRETTY_FUNCTION__, index, sizes.size());
+            if (index >= sizes.size())
                 index = sizes.size() - 1;
-            }
             _currentSize = index;
         }
 
@@ -178,10 +172,8 @@ class VideoV4l2Device {
         }
 
         void setChannel(unsigned index) {
-            if (index >= channels.size()) {
-                _error("%s: requested channel %d but we only have %d", __PRETTY_FUNCTION__, index, channels.size());
+            if (index >= channels.size())
                 index = channels.size() - 1;
-            }
             _currentChannel = index;
         }
 
