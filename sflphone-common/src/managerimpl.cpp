@@ -1337,6 +1337,8 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
 	// Manager methods may behave differently if the call id particip to a conference
 	conf->add(generatedCallID);
 
+	switchCall("");
+
 	// Create call
 	callSuccess = outgoingCall(account, generatedCallID, tostr, conf->getConfID());
 
