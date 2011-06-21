@@ -125,8 +125,7 @@ update_actions()
     }
 
     if (is_inserted (GTK_WIDGET (transferToolbar), GTK_WIDGET (toolbar))) {
-        gtk_container_remove (GTK_CONTAINER (toolbar),
-                              GTK_WIDGET (transferToolbar));
+        gtk_container_remove (GTK_CONTAINER (toolbar), GTK_WIDGET (transferToolbar));
     }
 
     if (is_inserted (GTK_WIDGET (historyButton), GTK_WIDGET (toolbar))) {
@@ -206,8 +205,9 @@ update_actions()
 
     gboolean instant_messaging_enabled = TRUE;
     
-    if (eel_gconf_key_exists (INSTANT_MESSAGING_ENABLED))
+    if (eel_gconf_key_exists (INSTANT_MESSAGING_ENABLED)) {
         instant_messaging_enabled = eel_gconf_get_integer (INSTANT_MESSAGING_ENABLED);
+    }
 
     if (selectedCall) {
 

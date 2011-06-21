@@ -206,7 +206,7 @@ row_activated (GtkTreeView       *tree_view UNUSED,
 
     if (calltab_get_selected_type (active_calltree) == A_CALL) {
 
-	DEBUG("CallTree: Selected a conference");
+	DEBUG("CallTree: Selected a call");
 
         selectedCall = calltab_get_selected_call (active_calltree);
 
@@ -287,8 +287,14 @@ row_activated (GtkTreeView       *tree_view UNUSED,
 	    }
 
 	    calltree_create_conf_from_participant_list(selectedConf->participant_list); 
-        }
+       
+	    calltree_display(current_calls); 
+	}
     }
+
+    calltab_unselect_all(current_calls);
+    calltab_unselect_all(history);
+    calltab_unselect_all(contacts);
 }
 
 static void 
@@ -1957,6 +1963,7 @@ static void menuitem_response( gchar *string )
         DEBUG("Calltree: Transfering call %s, to %s", selected_call->_peer_number, dragged_call->_peer_number);
         dbus_attended_transfer(selected_call, dragged_call);
         calltree_remove_call(current_calls, selected_call, NULL);
+	calllist_remove_call(current_calls, selected_call->_callID);
     }
     else {
         DEBUG("CallTree: Error unknown option selected in menu %s", string);

@@ -95,6 +95,18 @@ calltab_get_selected_conf (calltab_t *tab)
 }
 
 void
+calltab_unselect_all(calltab_t *tab) 
+{
+    if(tab == NULL) {
+        ERROR("CallTab: Tab is NULL");
+	return;
+    }
+
+    tab->selectedCall = NULL;
+    tab->selectedConf = NULL;
+}
+
+void
 calltab_create_searchbar (calltab_t* tab)
 {
     if (g_strcasecmp (tab->_name, HISTORY) == 0) {
