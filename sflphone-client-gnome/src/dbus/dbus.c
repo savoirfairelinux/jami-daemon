@@ -64,7 +64,7 @@ new_call_created_cb (DBusGProxy *proxy UNUSED, const gchar *accountID,
 {
     callable_obj_t *c;
     gchar *peer_name = (gchar *)to;
-    gchar *peer_number = "";
+    gchar *peer_number = (gchar *)to;
 
     DEBUG("DBUS: New Call (%s) created to (%s)", callID, to);
 
