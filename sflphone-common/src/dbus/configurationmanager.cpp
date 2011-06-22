@@ -965,7 +965,7 @@ void ConfigurationManager::setShortcuts (
 void ConfigurationManager::startVideoPreview()
 {
     _debug("Starting video preview");
-    preview_.reset(new sfl_video::VideoPreview);
+    preview_.reset(new sfl_video::VideoPreview(Manager::instance().videoPreference.v4l2_list->getDevice().device));
     preview_->start();
     // notify client via dbus
     videoStarted();

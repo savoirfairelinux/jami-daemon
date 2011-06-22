@@ -32,6 +32,7 @@
 #define __VIDEO_PREVIEW_H__
 
 #include <tr1/memory>
+#include <string>
 
 namespace sfl_video {
 
@@ -39,10 +40,12 @@ class VideoReceiveThread;
 
 class VideoPreview {
     public:
+        VideoPreview(const std::string &device);
         bool start();
         bool stop();
     private:
         std::tr1::shared_ptr<VideoReceiveThread> receiveThread_;
+        const std::string device_;
 };
 
 }

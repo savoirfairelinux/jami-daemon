@@ -35,12 +35,14 @@
 
 namespace sfl_video {
 
+VideoPreview::VideoPreview(const std::string &device) : device_(device) {}
+
 bool VideoPreview::start()
 {
     using std::string;
     using std::map;
     map<string, string> args;
-    args["input"] = "/dev/video0";
+    args["input"] = device_;
     receiveThread_.reset(new VideoReceiveThread(args));
     receiveThread_->start();
     receiveThread_->waitForShm();
