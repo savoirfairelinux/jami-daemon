@@ -1,5 +1,7 @@
 /*
  *  Copyright (C) 2011 Savoir-Faire Linux Inc.
+ *  Copyright © 2009 Rémi Denis-Courmont
+ *
  *  Author: Rafaël Carré <rafael.carre@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,8 +30,18 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <iostream>
 #include <sstream>
+
+#ifdef HAVE_UDEV
+#include <libudev.h>
+#include <cstring>
+#endif //HAVE_UDEV
+
 
 extern "C" {
 #include <sys/types.h>
@@ -43,27 +55,102 @@ namespace sfl_video {
 
 VideoV4l2List::VideoV4l2List() : _currentDevice(0)
 {
+#ifdef HAVE_UDEV
+    struct udev *udev;
+    struct udev_monitor *mon = NULL;
+    struct udev_list_entry *devlist;
+    struct udev_enumerate *devenum;
+
+    udev = udev_new();
+    if (!udev)
+        goto udev_error;
+
+    mon = udev_monitor_new_from_netlink (udev, "udev");
+    if (!mon)
+        goto udev_error;
+    if (udev_monitor_filter_add_match_subsystem_devtype (mon, "video4linux", NULL))
+        goto udev_error;
+
+    /* Enumerate existing devices */
+    devenum = udev_enumerate_new (udev);
+    if (devenum == NULL)
+        goto udev_error;
+    if (udev_enumerate_add_match_subsystem (devenum, "video4linux"))
+    {
+        udev_enumerate_unref (devenum);
+        goto udev_error;
+    }
+
+    udev_monitor_enable_receiving (mon);
+    /* Note that we enumerate _after_ monitoring is enabled so that we do not
+     * loose device events occuring while we are enumerating. We could still
+     * loose events if the Netlink socket receive buffer overflows. */
+    udev_enumerate_scan_devices (devenum);
+    devlist = udev_enumerate_get_list_entry (devenum);
+    struct udev_list_entry *deventry;
+    udev_list_entry_foreach (deventry, devlist)
+    {
+        const char *path = udev_list_entry_get_name (deventry);
+        struct udev_device *dev = udev_device_new_from_syspath (udev, path);
+
+        const char *version; 
+        version = udev_device_get_property_value (dev, "ID_V4L_VERSION");
+        /* we do not support video4linux 1 */
+        if (version && strcmp (version, "1")) {
+            const char *devpath = udev_device_get_devnode (dev);
+            if (devpath) {
+                try {
+                    addDevice(devpath);
+                } catch (int e) {
+                    //
+                }
+            }
+        }
+        udev_device_unref (dev);
+    }
+
+    udev_monitor_unref (mon);
+    udev_unref (udev);
+    return;
+
+udev_error:
+    if (mon)
+        udev_monitor_unref (mon);
+    if (udev)
+        udev_unref (udev);
+
+#endif // HAVE_UDEV
+
+    /* fallback : go through /dev/video* */
     int idx;
     for(idx = 0;;idx++) {
-
         std::stringstream ss;
         ss << "/dev/video" << idx;
-        int fd = open(ss.str().c_str(), O_RDWR);
-        if (fd == -1)
-            break;
-
         try {
-            std::string str(ss.str());
-            VideoV4l2Device v(fd, str);
-            devices.push_back(v);
+            addDevice(ss.str().c_str());
+        } catch (int e) {
+            return;
         }
-        catch (int e) {
-            close(fd);
-            break;
-        }
-
-        close(fd);
     }
+}
+
+void VideoV4l2List::addDevice(const char *dev) throw(int)
+{
+    int fd = open(dev, O_RDWR);
+    if (fd == -1)
+        throw(0);
+
+    try {
+        std::string s(dev);
+        VideoV4l2Device v(fd, s);
+        devices.push_back(v);
+    }
+    catch (int e) {
+        close(fd);
+        throw(e);
+    }
+
+    close(fd);
 }
 
 void VideoV4l2List::setDevice(unsigned index)

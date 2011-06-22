@@ -222,7 +222,6 @@ dnl Check for libzrtpcpp, a ccRTP extension providing zrtp key exchange
 LIBZRTPCPP_MIN_VERSION=1.3.0
 PKG_CHECK_MODULES(ZRTPCPP, libzrtpcpp >= ${LIBZRTPCPP_MIN_VERSION},, AC_MSG_ERROR([Missing zrtp development package: libzrtpcpp-dev]))
 
-
 dnl DBus-C++ detection (used to be in library own build system)
 DBUS_REQUIRED_VERSION=0.60
 PKG_CHECK_MODULES(dbus, [dbus-1 >= $DBUS_REQUIRED_VERSION],,
@@ -243,6 +242,15 @@ DBUS_RECURSIVE_MUTEX_VERSION=0.95
 PKG_CHECK_EXISTS([dbus-1 >= $DBUS_RECURSIVE_MUTEX_VERSION],
 	[AC_DEFINE(DBUS_HAS_RECURSIVE_MUTEX, , [DBus supports recursive mutexes (needs DBus >= 0.95)])]
 	)
+
+AC_ARG_ENABLE(udev,
+        AS_HELP_STRING(
+            [--disable-udev],
+            [enable video4linux devices detection (enabled by default)]
+            )
+        )
+
+test "x$enable_udev" != "xno" && PKG_CHECK_MODULES(UDEV, libudev >= 142, [AC_DEFINE([HAVE_UDEV], [], [Using libudev])])
 
 
 AC_ARG_WITH(debug,
