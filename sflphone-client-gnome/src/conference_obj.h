@@ -86,6 +86,6 @@ void conference_participant_list_update (gchar**, conference_obj_t*);
 
 gchar *serialize_history_conference_entry(conference_obj_t *entry);
 
-void create_conference_history_entry_from_serialized(gchar *, gchar **, conference_obj_t **);
+void create_conference_history_entry_from_serialized(gchar **, conference_obj_t **);
 
 #endif

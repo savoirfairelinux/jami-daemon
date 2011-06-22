@@ -298,7 +298,7 @@ void create_new_call_from_details (const gchar *call_id, GHashTable *details, ca
     *call = new_call;
 }
 
-void create_history_entry_from_serialized_form (gchar *timestamp UNUSED, gchar **ptr, callable_obj_t **call)
+void create_history_entry_from_serialized_form (gchar **ptr, callable_obj_t **call)
 {
     gchar *peer_name = "";
     gchar *peer_number = "", *accountID = "", *time_start = "", *time_stop = "";

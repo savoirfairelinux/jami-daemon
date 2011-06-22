@@ -551,9 +551,18 @@ gchar** dbus_get_conference_list (void);
 
 void dbus_set_accounts_order (const gchar* order);
 
-GHashTable* dbus_get_history (void);
+/**
+ * Get a list of serialized hisotry entries
+ * @return The list of history entries
+ */
+gchar **dbus_get_history (void);
 
-void dbus_set_history (GHashTable* entries);
+/**
+ * Set the history entries into the daemon. The daemon then write teh content 
+ * of this list into the history file
+ * @param A list of serialized history entries
+ */
+void dbus_set_history (GSList *);
 
 void sflphone_display_transfer_status (const gchar* message);
 

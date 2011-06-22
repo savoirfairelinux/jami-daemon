@@ -4560,14 +4560,17 @@ std::map<std::string, std::string> ManagerImpl::getCallDetails (const CallID& ca
     return call_details;
 }
 
-std::map<std::string, std::string> ManagerImpl::send_history_to_client (void)
+std::vector<std::string> ManagerImpl::getHistorySerialized(void)
 {
+    _debug("Manager: Get history serialized"); 
+
     return _history->get_history_serialized();
 }
 
-void ManagerImpl::receive_history_from_client (std::map<std::string,
-        std::string> history)
+void ManagerImpl::setHistorySerialized(std::vector<std::string> history)
 {
+
+    _debug("Manager: Set history serialized");
 
     _history->set_serialized_history (history, preferences.getHistoryLimit());;
     _history->save_history();
