@@ -471,14 +471,14 @@ sflphone_pick_up()
                 dbus_accept (selectedCall);
                 stop_notification();
                 break;
-            casecalllist_remove_call(current_calls, selectedCall); CALL_STATE_HOLD:
+            case CALL_STATE_HOLD:
                 sflphone_new_call();
                 break;
             case CALL_STATE_TRANSFERT:
                 dbus_transfert (selectedCall);
                 set_timestamp (&selectedCall->_time_stop);
                 calltree_remove_call(current_calls, selectedCall, NULL);
-                calllist_remove_call(current_calls, selectedCall);
+                calllist_remove_call(current_calls, selectedCall->_callID);
 		break;
             case CALL_STATE_CURRENT:
             case CALL_STATE_RECORD:
@@ -737,7 +737,7 @@ sflphone_new_call()
 
     c->_history_state = OUTGOING;
 
-    calllist_add_call (current_calls,c);
+    calllist_add_call (current_calls, c);
     calltree_add_call (current_calls, c, NULL);
     update_actions();
 
@@ -934,7 +934,7 @@ static int _place_registered_call (callable_obj_t * c)
         return -1;
     }
 
-    if (g_strcasecmp (g_hash_table_lookup (current->properties, "Status"),"REGISTERED") ==0) {
+    if (g_strcasecmp (g_hash_table_lookup (current->properties, "Status"), "REGISTERED") ==0) {
         /* The call is made with the current account */
         // free memory for previous account id and get a new one
         g_free (c->_accountID);
@@ -1282,7 +1282,7 @@ void sflphone_fill_history (void)
 
     gboolean is_first;
 
-    DEBUG ("SFLphone: Loading history ...");
+    DEBUG ("======================================================== SFLphone: Loading history");
 
     entries = dbus_get_history ();
 
@@ -1328,10 +1328,11 @@ void sflphone_fill_history (void)
 
 		    // first ptr refers to entry type
 		    if(g_strcmp0(*ptr, "2188") == 0) {
+			DEBUG("------------------------------- SFLphone: Serialized item: %s", *ptr);
 			create_conference_history_entry_from_serialized((gchar *)key, (gchar **)ptr, &conference_entry);
 			conferencelist_add (history, conference_entry);
-			calltree_add_conference (history, conference_entry);
 			conferencelist_add(current_calls, conference_entry);
+			calltree_add_conference (history, conference_entry);
 			g_hash_table_remove(entries, key_to_min);	
 		    }
 		    else {
@@ -1348,6 +1349,8 @@ void sflphone_fill_history (void)
             }
         }
     }
+
+    DEBUG ("======================================================== SFLphone: Loading history ...(end)");
 }
 
 void sflphone_save_history (void)
@@ -1359,7 +1362,7 @@ void sflphone_save_history (void)
     GHashTable *result = NULL;
     gchar *key, *value;
 
-    DEBUG ("SFLphone: Saving history");
+    DEBUG ("==================================================== SFLphone: Saving history");
 
     result = g_hash_table_new (NULL, g_str_equal);
     size = calllist_get_size (history);
@@ -1369,14 +1372,14 @@ void sflphone_save_history (void)
 
         if (current) {
 	    if(current->type == HIST_CALL) {
-		DEBUG("Serialize call");
                 value = serialize_history_call_entry (current->elem.call);
 		key =  convert_timestamp_to_gchar (current->elem.call->_time_start);
+		DEBUG("--------------------------------- SFLphone: Serialize call [%s]: %s", key, value);
             }
 	    else if(current->type == HIST_CONFERENCE) {
-		DEBUG("Serialize conference");
                 value = serialize_history_conference_entry(current->elem.conf);
 		key = convert_timestamp_to_gchar (current->elem.conf->_time_start);
+		DEBUG("--------------------------------- SFLphone: Serialize conference [%s]: %s", key, value);
             }
  	    else {
 		ERROR("SFLphone: Error: Unknown type for serialization");
@@ -1390,16 +1393,16 @@ void sflphone_save_history (void)
     }
 
     size = conferencelist_get_size(history);
-    DEBUG("Conference list size %d", size);
+    DEBUG("SFLphone: Conference list size %d", size);
 
     while(size > 0) {
 	conf = conferencelist_pop_head(history);
 	size = conferencelist_get_size(history);
 
         if(conf) {
-	    DEBUG("Serialize conference");
 	    value = serialize_history_conference_entry(conf);
 	    key = convert_timestamp_to_gchar(conf->_time_start);
+	    DEBUG("-------------------------------------- SFLphone: Serialize conference [%s]: %s", key, value);
         }
 	else {
 	    WARN("SFLphone: Warning: %dth element is NULL", i);
@@ -1411,6 +1414,9 @@ void sflphone_save_history (void)
 
     // Decrement the reference count
     g_hash_table_unref (result);
+
+    
+    DEBUG ("==================================================== SFLphone: Saving history (end)");
 }
 
 void

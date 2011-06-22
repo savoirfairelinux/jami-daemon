@@ -291,10 +291,6 @@ row_activated (GtkTreeView       *tree_view UNUSED,
 	    calltree_display(current_calls); 
 	}
     }
-
-    calltab_unselect_all(current_calls);
-    calltab_unselect_all(history);
-    calltab_unselect_all(contacts);
 }
 
 static void 
@@ -1119,7 +1115,6 @@ void calltree_add_history_entry (callable_obj_t *c, GtkTreeIter *parent)
         }
     }
     else {
-	DEBUG("?????????????????????????????????????????????????????????????????????\n");
         // participant to a conference
 	pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
     }
@@ -1360,7 +1355,7 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 
 void calltree_update_conference (calltab_t* tab, const conference_obj_t* conf)
 {
-    DEBUG ("CallTree: Update conference %s\n", conf->_confID);
+    DEBUG ("CallTree: Update conference %s", conf->_confID);
 
     calltree_remove_conference(tab, conf, NULL);
     calltree_add_conference (tab, (conference_obj_t *)conf);
@@ -1379,7 +1374,7 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, G
     int nbParticipant;
     int i, j;
    	
-    DEBUG ("CallTree: Remove conference %s\n", conf->_confID);
+    DEBUG ("CallTree: Remove conference %s", conf->_confID);
 
     int nbChild = gtk_tree_model_iter_n_children (GTK_TREE_MODEL (store), parent);
 
@@ -1414,8 +1409,11 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, G
                             g_value_unset (&callval);
 
                             if (call) {
-                                calltree_add_call (tab, call, NULL);
-                            }
+				// do not add back call in history calltree when cleaning it
+				if(tab != history) {
+                                    calltree_add_call (tab, call, NULL);
+                                }
+			    }
                         }
 
                     }
@@ -1459,10 +1457,13 @@ void calltree_add_history_conference(conference_obj_t *conf)
     if(conference_participant) {
         while(conference_participant) {
 	    call_id = (gchar *)(conference_participant->data);
-            call = calllist_get_call(current_calls, call_id);
+            call = calllist_get_call(history, call_id);
             if(call) {
 	        calltree_add_history_entry(call, &iter);
             }
+	    else {
+		ERROR("ConferenceList: Error: Could not find call %s", call_id);
+	    }
  	    conference_participant = conference_next_participant(conference_participant); 
         }   
     }
@@ -1578,6 +1579,10 @@ static void drag_begin_cb (GtkWidget *widget UNUSED, GdkDragContext *dc UNUSED, 
 
 static void drag_end_cb (GtkWidget * widget UNUSED, GdkDragContext * context UNUSED, gpointer data UNUSED)
 {
+    if(active_calltree == history) {
+	return;
+    }
+
     DEBUG ("CallTree: Drag end callback");
     DEBUG ("CallTree: selected_path %s, selected_call_id %s, selected_path_depth %d",
            selected_path, selected_call_id, selected_path_depth);
@@ -1867,6 +1872,7 @@ void drag_data_received_cb (GtkWidget *widget, GdkDragContext *context UNUSED, g
 
     if(active_calltree == history) {
 	g_signal_stop_emission_by_name(G_OBJECT(widget), "drag_data_received");
+	return;
     }
 
     GtkTreeModel* tree_model = gtk_tree_view_get_model (tree_view);

@@ -154,13 +154,13 @@ calllist_add_call (calltab_t* tab, callable_obj_t * c)
     g_queue_push_tail (tab->callQueue, (gpointer *) element);
 }
 
-// TODO : sflphoneGTK : try to do this more generic
 void
 calllist_clean_history (void)
 {
-    unsigned int i;
+    guint i;
     guint size = calllist_get_size (history);
-    DEBUG ("CallList: History list size = %i", calllist_get_size (history));
+
+    DEBUG ("CallList: History list size %d", size);
 
     for (i = 0 ; i < size; i++) {
         QueueElement* c = calllist_get_nth (history , i);

@@ -76,6 +76,8 @@ void create_new_conference (conference_state_t state, const gchar* confID, confe
     new_conf->participant_list = NULL;
     new_conf->participant_number = NULL;
 
+    set_conference_timestamp(&new_conf->_time_start);
+
     *conf = new_conf;
 }
 
@@ -259,7 +261,7 @@ void create_conference_history_entry_from_serialized(gchar *timestamp, gchar **p
     gchar *time_stop = "";
     gchar *accountID = "";
     gchar *recordfile = "";
-    const gchar *confID = "conf_1234";
+    const gchar *confID = generate_call_id();
     
     DEBUG("Conference: Create a conference from serialized form");
  
@@ -310,7 +312,7 @@ static void process_conference_participant_from_serialized(gchar *participant, c
     gint tok = 0;
     
 
-    DEBUG("------------------------------- process_conference_participant_from_serialized");
+    DEBUG("Conference: Process participant from serialized form");
 
     ptr = g_strsplit(participant, delim, 2);
     while(ptr != NULL && (tok < 2)) {
@@ -318,9 +320,7 @@ static void process_conference_participant_from_serialized(gchar *participant, c
 	gchar *account = NULL;
 	token = 0;
 	numberaccount = *ptr;
-	DEBUG("HERE IS THE PROBLEM");
 	numberptr = g_strsplit(numberaccount, delimnumber, 2);
-	DEBUG("problem !!!");
 	while(numberptr != NULL && (token < 2)) {
 	    switch(token) {
 	 	case 0:
@@ -328,6 +328,12 @@ static void process_conference_participant_from_serialized(gchar *participant, c
 		    break;
 		case 1:
 		    account = *numberptr;
+		    // remove the ";" character at the end of the account string
+		    if(g_str_has_suffix(account, ";")) {
+		        int len = strlen(account);
+		    	gchar *tmpchar = g_strdup(account);
+			g_strlcpy(account, tmpchar, len);
+		    }
 		    break;
 		default:
 		    break;
@@ -338,17 +344,15 @@ static void process_conference_participant_from_serialized(gchar *participant, c
 
 	tok++;
 
-	gchar *name = "name";
+	gchar *name = "";
 	gchar *call_id = generate_call_id();
 	   
 	// we should create call here and add it to the conference to be inserted in history
 	create_new_call(HISTORY_ENTRY, CALL_STATE_DIALING, call_id, account, name, phone_number, &tmp_call);  
 	calllist_add_history_call(tmp_call);
-	calllist_add_call(current_calls, tmp_call); 
+	calllist_add_call(current_calls, tmp_call);
 
-	DEBUG("BEFORE %s", call_id);
 	conference_add_participant(call_id, conf);
-	DEBUG("AFTER");
 	
 	ptr++;
     }
