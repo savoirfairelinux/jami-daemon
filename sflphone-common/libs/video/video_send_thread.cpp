@@ -126,6 +126,8 @@ void VideoSendThread::prepareEncoderContext()
     // fps
     encoderCtx_->time_base = (AVRational){1, 30};
     encoderCtx_->pix_fmt = PIX_FMT_YUV420P;
+    // Place global headers in extradata instead of every keyframe.
+    encoderCtx_->flags |= CODEC_FLAG_GLOBAL_HEADER;
 }
 
 void VideoSendThread::setup()
@@ -147,7 +149,7 @@ void VideoSendThread::setup()
     }
 
     // Open video file
-    if (av_open_input_file(&inputCtx_, args_["input"].c_str(), file_iformat, 0, NULL) != 0)
+    if (avformat_open_input(&inputCtx_, args_["input"].c_str(), file_iformat, NULL) != 0)
     {
         std::cerr <<  "Could not open input file " << args_["input"] <<
             std::endl;
@@ -240,14 +242,6 @@ void VideoSendThread::setup()
     }
     videoStream_->codec = encoderCtx_;
 
-    // set the output parameters (must be done even if no
-    //   parameters).
-    if (av_set_parameters(outputCtx_, NULL) < 0)
-    {
-        std::cerr << "Invalid output format parameters" << std::endl;
-        cleanup();
-    }
-
     // open the output file, if needed
     if (!(file_oformat->flags & AVFMT_NOFILE))
     {
@@ -265,7 +259,7 @@ void VideoSendThread::setup()
     print_and_save_sdp();
 
     // write the stream header, if any
-    if (av_write_header(outputCtx_) < 0)
+    if (avformat_write_header(outputCtx_, NULL) < 0)
     {
         std::cerr << "Could not write header for output file (incorrect codec "
             << "parameters ?)" << std::endl;
