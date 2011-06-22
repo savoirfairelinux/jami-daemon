@@ -31,9 +31,9 @@
 #include <string>
 #include <vector>
 #include <climits>
+#include <cassert>
 
-#include <iostream>
-using namespace std;
+#include "logger.h"
 
 extern "C" {
 #include <fcntl.h>
@@ -124,7 +124,7 @@ static unsigned int pixelformat_score(unsigned pixelformat)
     return UINT_MAX - 1;
 }
 
-void VideoV4l2Size::GetFrameRates(int fd, unsigned int pixel_format) throw(const char *)
+void VideoV4l2Size::GetFrameRates(int fd, unsigned int pixel_format)
 {
     struct v4l2_frmivalenum frmival = {
         0,
@@ -134,7 +134,10 @@ void VideoV4l2Size::GetFrameRates(int fd, unsigned int pixel_format) throw(const
     };
 
     if (ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival)) {
-        throw("could not query frame interval for size");
+            VideoV4l2Rate rate(1, 25);
+            rates.push_back(rate);
+        _error("could not query frame interval for size");
+        return;
     }
 
     switch(frmival.type) {
@@ -147,11 +150,15 @@ void VideoV4l2Size::GetFrameRates(int fd, unsigned int pixel_format) throw(const
         } while (!ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival));
         break;
     case V4L2_FRMIVAL_TYPE_CONTINUOUS:
+        rates.push_back(VideoV4l2Rate(1,25));
         // TODO
-        throw("Continuous Frame Intervals not supported");
+        _error("Continuous Frame Intervals not supported");
+        break;
     case V4L2_FRMIVAL_TYPE_STEPWISE:
+        rates.push_back(VideoV4l2Rate(1, 25));
         // TODO
-        throw("Stepwise Frame Intervals not supported");
+        _error("Stepwise Frame Intervals not supported");
+        break;
     }
 }
 
@@ -161,33 +168,40 @@ void VideoV4l2Channel::GetSizes(int fd, unsigned int pixelformat) throw(const ch
     frmsize.index = 0;
     frmsize.pixel_format = pixelformat;
     if (ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize))
-        throw("could not query frame sizes for format");
+        goto fallback;
 
     switch(frmsize.type) {
     case V4L2_FRMSIZE_TYPE_DISCRETE:
         do {
             VideoV4l2Size size(frmsize.discrete.height, frmsize.discrete.width);
-
-            try { 
-                size.GetFrameRates(fd, frmsize.pixel_format);
-                sizes.push_back(size);
-            } catch (const char *s) {
-                throw(s);
-            }
-
+            size.GetFrameRates(fd, frmsize.pixel_format);
+            sizes.push_back(size);
             frmsize.index++;
         } while (!ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize));
-        break;
+        return;
 
         // TODO, we dont want to display a list of 2000x2000 
         // resolutions if the camera supports continuous framesizes
         // from 1x1 to 2000x2000
         // We should limit to a list of known standard sizes
     case V4L2_FRMSIZE_TYPE_CONTINUOUS:
-        throw("Continuous Frame sizes not supported");
+        _error("Continuous Frame sizes not supported");
+        break;
     case V4L2_FRMSIZE_TYPE_STEPWISE:
-        throw("Stepwise Frame sizes not supported");
+        _error("Stepwise Frame sizes not supported");
+        break;
     }
+
+fallback:
+    struct v4l2_format fmt;
+    fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    if (ioctl(fd, VIDIOC_G_FMT, &fmt) < 0)
+        throw("Couldnt get format");
+    
+    VideoV4l2Size size(fmt.fmt.pix.height, fmt.fmt.pix.width);
+    assert(pixelformat == fmt.fmt.pix.pixelformat);
+    size.GetFrameRates(fd, fmt.fmt.pix.pixelformat);
+    sizes.push_back(size);
 }
 
 void VideoV4l2Channel::GetFormat(int fd) throw(const char *)

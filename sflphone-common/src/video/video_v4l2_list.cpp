@@ -37,6 +37,8 @@
 #include <iostream>
 #include <sstream>
 
+#include "logger.h"
+
 #ifdef HAVE_UDEV
 #include <libudev.h>
 #include <cstring>
@@ -102,7 +104,7 @@ VideoV4l2List::VideoV4l2List() : _currentDevice(0)
                 try {
                     addDevice(devpath);
                 } catch (const char *s) {
-                    std::cerr << s << std::endl;
+                    _error(s);
                 }
             }
         }
@@ -130,7 +132,7 @@ udev_error:
             if (!addDevice(ss.str().c_str()))
                 return;
         } catch (const char *s) {
-            std::cerr << s << std::endl;
+            _error(s);
             return;
         }
     }

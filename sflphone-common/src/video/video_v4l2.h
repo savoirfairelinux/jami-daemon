@@ -57,7 +57,7 @@ class VideoV4l2Size {
     public:
         VideoV4l2Size(unsigned height, unsigned width) : height(height), width(width), _currentRate(0) {}
 
-        void GetFrameRates(int fd, unsigned int pixel_format) throw(const char*);
+        void GetFrameRates(int fd, unsigned int pixel_format);
 
         std::vector<std::string> getRateList() {
             std::vector<std::string> v;
