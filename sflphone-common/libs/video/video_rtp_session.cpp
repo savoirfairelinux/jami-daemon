@@ -68,6 +68,8 @@ void VideoRtpSession::test()
 
     sendThread_->waitForSDP();
     args["input"] = "test.sdp";
+    std::cerr << "Receiving at " << destinationURI_ <<
+        ", writing to shared memory" << std::endl;
     receiveThread_.reset(new VideoReceiveThread(args));
     receiveThread_->start();
 }
