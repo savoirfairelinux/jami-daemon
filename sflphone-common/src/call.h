@@ -246,7 +246,7 @@ class Call: public Recordable
 
         virtual bool setRecording (void);
 
-    protected:
+    private:
         /** Protect every attribute that can be changed by two threads */
         ost::Mutex _callMutex;
 
@@ -257,12 +257,6 @@ class Call: public Recordable
 
         /** Local audio port, as seen by me. */
         unsigned int _localAudioPort;
-
-        /** Port assigned to my machine by the NAT, as seen by remote peer (he connects there) */
-        unsigned int _localExternalAudioPort;
-
-
-    private:
 
         /** Unique ID of the call */
         CallID _id;
