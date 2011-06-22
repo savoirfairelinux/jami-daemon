@@ -101,7 +101,7 @@ void VideoRtpSession::test_loopback()
 void VideoRtpSession::start()
 {
     assert(sendThread_.get() == 0);
-    assert(receiveThread.get() == 0);
+    assert(receiveThread_.get() == 0);
     std::cerr << "Capturing from " << input_ << ", encoding to " << codec_ <<
         " at " << bitrate_ << " bps, sending to " << destinationURI_ <<
         std::endl;
