@@ -298,19 +298,17 @@ void create_new_call_from_details (const gchar *call_id, GHashTable *details, ca
     *call = new_call;
 }
 
-void create_history_entry_from_serialized_form (gchar *timestamp, gchar **ptr, callable_obj_t **call)
+void create_history_entry_from_serialized_form (gchar *timestamp UNUSED, gchar **ptr, callable_obj_t **call)
 {
     gchar *peer_name = "";
-    gchar *peer_number = "", *accountID = "", *time_stop = "";
+    gchar *peer_number = "", *accountID = "", *time_start = "", *time_stop = "";
     gchar *recordfile = "";
     callable_obj_t *new_call;
     history_state_t history_state = MISSED;
-    const gchar *delim = "|";
     gint token = 0;
 
     // details is in serialized form, i e: calltype%to%from%callid
-
-    while (ptr != NULL && token < 6) {
+    while (ptr != NULL && token < 7) {
         switch (token) {
             case 0:
                 history_state = get_history_state_from_id (*ptr);
@@ -322,12 +320,15 @@ void create_history_entry_from_serialized_form (gchar *timestamp, gchar **ptr, c
                 peer_name = *ptr;
                 break;
             case 3:
+		time_start = *ptr;
+		break;
+	    case 4:
                 time_stop = *ptr;
                 break;
-            case 4:
+            case 5:
                 accountID = *ptr;
                 break;
-            case 5:
+            case 6:
 		recordfile = *ptr;
             default:
                 break;
@@ -343,7 +344,7 @@ void create_history_entry_from_serialized_form (gchar *timestamp, gchar **ptr, c
 
     create_new_call (HISTORY_ENTRY, CALL_STATE_DIALING, "", accountID, peer_name, peer_number, &new_call);
     new_call->_history_state = history_state;
-    new_call->_time_start = convert_gchar_to_timestamp (timestamp);
+    new_call->_time_start = convert_gchar_to_timestamp (time_start);
     new_call->_time_stop = convert_gchar_to_timestamp (time_stop);
     new_call->_recordfile = g_strdup(recordfile);
 
@@ -448,14 +449,16 @@ gchar* serialize_history_call_entry (callable_obj_t *entry)
 {
     // "0|514-276-5468|Savoir-faire Linux|144562458" for instance
 
-    gchar* result;
-    gchar* separator = "|";
-    gchar* history_state, *timestamp;
+    gchar *result = "";
+    gchar *separator = "|";
+    gchar *history_state = "", *time_start = "", *time_stop = "";
 
     // Need the string form for the history state
     history_state = get_history_id_from_state (entry->_history_state);
     // and the timestamps
-    timestamp = convert_timestamp_to_gchar (entry->_time_stop);
+    time_start = convert_timestamp_to_gchar (entry->_time_start);
+    time_stop = convert_timestamp_to_gchar (entry->_time_stop);
+
 
     gchar* peer_name = (entry->_peer_name == NULL || g_strcasecmp (entry->_peer_name,"") == 0) ? "empty": entry->_peer_name;
     gchar* account_id = (entry->_accountID == NULL || g_strcasecmp (entry->_accountID,"") == 0) ? "empty": entry->_accountID;
@@ -463,7 +466,8 @@ gchar* serialize_history_call_entry (callable_obj_t *entry)
     result = g_strconcat (history_state, separator,
                           entry->_peer_number, separator,
                           peer_name, separator,
-                          timestamp, separator,
+                          time_start, separator,
+			  time_stop, separator,
                           account_id, separator,
 			  entry->_recordfile ? entry->_recordfile : "",
                           NULL);

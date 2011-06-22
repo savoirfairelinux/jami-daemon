@@ -54,7 +54,7 @@ HistoryItem::HistoryItem (std::string timestamp, std::string serialized_form)
     : _timestamp_start (timestamp)
 {
     size_t pos;
-    std::string tmp, id, name, number, stop, account, recordFile;
+    std::string tmp, id, name, number, start, stop, account, recordFile;
     int indice=0;
 
     while (serialized_form.find (ITEM_SEPARATOR, 0) != std::string::npos) {
@@ -75,15 +75,19 @@ HistoryItem::HistoryItem (std::string timestamp, std::string serialized_form)
                 name = tmp;
 		_error("Unserialized name: %s", tmp.c_str());
                 break;
-            case 3: // The end timestamp
-		_error("Unserialized timestamp: %s", tmp.c_str());
-                stop = tmp;
+            case 3: // The start timestamp
+		_error("Unserialized time start: %s", tmp.c_str());
+                start = tmp;
                 break;
-            case 4: // The account ID
+	    case 4: // The end timestamp
+		_error("Unserialized time stop: %s", tmp.c_str());
+		stop = tmp;
+		break;
+            case 5: // The account ID
 		_error("Unserialized account: %s", tmp.c_str());
                 account = tmp;
                 break;
-            case 5: // The recorded file name
+            case 6: // The recorded file name
 		_error("Unserialized recordfile: %s", tmp.c_str());
 		recordFile = tmp;
 		break;
@@ -120,6 +124,7 @@ bool HistoryItem::save (Conf::ConfigTree **history)
     call_type << _call_type;
 
     res = ( (*history)->setConfigTreeItem (section, "type", call_type.str())
+	    && (*history)->setConfigTreeItem (section, "timestamp_start", _timestamp_start)
             && (*history)->setConfigTreeItem (section, "timestamp_stop", _timestamp_stop)
             && (*history)->setConfigTreeItem (section, "number", _number)
             && (*history)->setConfigTreeItem (section, "accountid", _account_id)
@@ -142,7 +147,7 @@ std::string HistoryItem::serialize (void)
     (_account_id == "" || non_valid_account (_account_id)) ? accountID = "empty" : accountID = _account_id;
 
     // Serialize it
-    res << _call_type << separator << _number << separator << name << separator << _timestamp_stop << separator << accountID
+    res << _call_type << separator << _number << separator << name << separator << _timestamp_start << separator << _timestamp_stop << separator << accountID
 		<< separator << _recording_file;
 
     return res.str();
