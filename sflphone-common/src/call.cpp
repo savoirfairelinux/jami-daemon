@@ -36,6 +36,7 @@ Call::Call (const CallID& id, Call::CallType type)
     : _callMutex()
     , _localIPAddress ("")
     , _localAudioPort (0)
+    , _localVideoPort (0)
     , _id (id)
     , _confID ("")
     , _type (type)
@@ -145,6 +146,13 @@ Call::getLocalAudioPort()
 {
     ost::MutexLock m (_callMutex);
     return _localAudioPort;
+}
+
+unsigned int
+Call::getLocalVideoPort()
+{
+    ost::MutexLock m (_callMutex);
+    return _localVideoPort;
 }
 
 bool

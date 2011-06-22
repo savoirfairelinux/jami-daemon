@@ -225,6 +225,14 @@ class Call: public Recordable
         }
 
         /**
+         * Set local video port, as seen by me [not protected]
+         * @param port  The local video port
+         */
+        void setLocalVideoPort (unsigned int port)  {
+            _localVideoPort = port;
+        }
+
+        /**
          * Return my IP [mutex protected]
          * @return std::string The local IP
          */
@@ -235,6 +243,12 @@ class Call: public Recordable
          * @return unsigned int  The local audio port
          */
         unsigned int getLocalAudioPort();
+
+        /**
+         * Return port used locally (for my machine) [mutex protected]
+         * @return unsigned int  The local video port
+         */
+        unsigned int getLocalVideoPort();
 
         std::string getRecFileId (void) {
             return getPeerName();
@@ -257,6 +271,9 @@ class Call: public Recordable
 
         /** Local audio port, as seen by me. */
         unsigned int _localAudioPort;
+
+        /** Local video port, as seen by me. */
+        unsigned int _localVideoPort;
 
         /** Unique ID of the call */
         CallID _id;
