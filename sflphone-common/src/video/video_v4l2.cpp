@@ -31,7 +31,6 @@
 #include <string>
 #include <vector>
 #include <climits>
-#include <cassert>
 
 #include "logger.h"
 
@@ -162,7 +161,7 @@ void VideoV4l2Size::GetFrameRates(int fd, unsigned int pixel_format)
     }
 }
 
-void VideoV4l2Channel::GetSizes(int fd, unsigned int pixelformat) throw(const char *)
+unsigned int VideoV4l2Channel::GetSizes(int fd, unsigned int pixelformat) throw(const char *)
 {
     struct v4l2_frmsizeenum frmsize;
     frmsize.index = 0;
@@ -178,7 +177,7 @@ void VideoV4l2Channel::GetSizes(int fd, unsigned int pixelformat) throw(const ch
             sizes.push_back(size);
             frmsize.index++;
         } while (!ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize));
-        return;
+        return pixelformat;
 
         // TODO, we dont want to display a list of 2000x2000 
         // resolutions if the camera supports continuous framesizes
@@ -199,9 +198,10 @@ fallback:
         throw("Couldnt get format");
     
     VideoV4l2Size size(fmt.fmt.pix.height, fmt.fmt.pix.width);
-    assert(pixelformat == fmt.fmt.pix.pixelformat);
     size.GetFrameRates(fd, fmt.fmt.pix.pixelformat);
     sizes.push_back(size);
+
+    return fmt.fmt.pix.pixelformat;
 }
 
 void VideoV4l2Channel::GetFormat(int fd) throw(const char *)
@@ -233,13 +233,13 @@ void VideoV4l2Channel::GetFormat(int fd) throw(const char *)
         throw("Could not enumerate formats");
 
     fmt.index = best_idx;
-    SetFourcc(pixelformat);
-
     try {
-        GetSizes(fd, pixelformat);
+        pixelformat = GetSizes(fd, pixelformat);
     } catch (const char *s) {
         throw(s);
     }
+
+    SetFourcc(pixelformat);
 }
 
 VideoV4l2Device::VideoV4l2Device(int fd, std::string &device) throw(const char *): _currentChannel(0) {

@@ -103,7 +103,7 @@ class VideoV4l2Channel {
         VideoV4l2Channel(unsigned idx, const char *s) : idx(idx), name(s), _currentSize(0) { }
 
         void GetFormat(int fd) throw(const char *);
-        void GetSizes(int fd, unsigned int pixel_format) throw(const char *);
+        unsigned int GetSizes(int fd, unsigned int pixel_format) throw(const char *);
 
         void SetFourcc(unsigned code) {
             fourcc[0] = code;
