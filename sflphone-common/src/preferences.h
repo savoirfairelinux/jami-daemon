@@ -33,6 +33,8 @@
 
 #include "config/serializable.h"
 #include "video/video_v4l2_list.h"
+#include "video/video_v4l2.h"
+using namespace sfl_video;
 
 // general preferences
 const Conf::Key orderKey ("order");                         // :	1234/2345/
@@ -596,6 +598,25 @@ class VideoPreference : public Serializable
         virtual void serialize (Conf::YamlEmitter *emitter);
 
         virtual void unserialize (Conf::MappingNode *map);
+
+        std::map<std::string, std::string> getVideoSettings(void) {
+            std::map<std::string, std::string> map;
+            VideoV4l2Device &dev = v4l2_list->getDevice();
+            map["device"] = dev.device;
+            map["channel"] = dev.getChannelIndex();
+            VideoV4l2Channel &chan = dev.getChannel();
+            VideoV4l2Size &size = chan.getSize();
+            std::stringstream ss;
+            ss << size.width << "x" << size.height;
+            map["video_size"] = ss.str();
+            VideoV4l2Rate &rate = size.getRate();
+
+            std::stringstream framestr;
+            framestr << rate.num << "/" << rate.den;
+            map["framerate"] = framestr.str();
+
+            return map;
+        }
 
         int getVideoDevice(void) {
             return _videoDevice;
