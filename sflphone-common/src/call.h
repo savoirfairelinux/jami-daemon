@@ -225,6 +225,14 @@ class Call: public Recordable
         }
 
         /**
+         * Set local video port, as seen by me [not protected]
+         * @param port  The local video port
+         */
+        void setLocalVideoPort (unsigned int port)  {
+            _localVideoPort = port;
+        }
+
+        /**
          * Return my IP [mutex protected]
          * @return std::string The local IP
          */
@@ -236,6 +244,12 @@ class Call: public Recordable
          */
         unsigned int getLocalAudioPort();
 
+        /**
+         * Return port used locally (for my machine) [mutex protected]
+         * @return unsigned int  The local video port
+         */
+        unsigned int getLocalVideoPort();
+
         std::string getRecFileId (void) {
             return getPeerName();
         }
@@ -246,7 +260,8 @@ class Call: public Recordable
 
         virtual bool setRecording (void);
 
-    protected:
+    private:
+
         /** Protect every attribute that can be changed by two threads */
         ost::Mutex _callMutex;
 
@@ -258,11 +273,8 @@ class Call: public Recordable
         /** Local audio port, as seen by me. */
         unsigned int _localAudioPort;
 
-        /** Port assigned to my machine by the NAT, as seen by remote peer (he connects there) */
-        unsigned int _localExternalAudioPort;
-
-
-    private:
+        /** Local video port, as seen by me. */
+        unsigned int _localVideoPort;
 
         /** Unique ID of the call */
         CallID _id;
