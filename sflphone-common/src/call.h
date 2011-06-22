@@ -225,22 +225,6 @@ class Call: public Recordable
         }
 
         /**
-         * Set the audio port that remote will see.
-         * @param port  The external audio port
-         */
-        void setLocalExternAudioPort (unsigned int port) {
-            _localExternalAudioPort = port;
-        }
-
-        /**
-         * Return the audio port seen by the remote side.
-         * @return unsigned int The external audio port
-         */
-        unsigned int getLocalExternAudioPort() const {
-            return _localExternalAudioPort;
-        }
-
-        /**
          * Return my IP [mutex protected]
          * @return std::string The local IP
          */
