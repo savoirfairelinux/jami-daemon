@@ -112,7 +112,7 @@ class VideoV4l2Channel {
         /**
          * @throw std::runtime_error
          */
-        void GetSizes(int fd, unsigned int pixel_format);
+        unsigned int GetSizes(int fd, unsigned int pixel_format);
 
         void SetFourcc(unsigned code) {
             fourcc[0] = code;
