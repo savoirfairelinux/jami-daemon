@@ -210,17 +210,18 @@ void conference_participant_list_update (gchar** participants, conference_obj_t*
 
 gchar *serialize_history_conference_entry(conference_obj_t *entry)
 {
-    gchar *result;
+    gchar *result = "";
     gchar *separator = "|";
-    gchar *sep;
-    gchar *timestamp;
-    gchar *peer_name;
+    gchar *time_start = "";
+    gchar *time_stop = "";
+    gchar *peer_name = "";
     gchar *numberstr = "";
     GSList *number_list;
     gint length = 0;
     gint i;
 
-    timestamp = convert_timestamp_to_gchar(entry->_time_stop);
+    time_start = convert_timestamp_to_gchar(entry->_time_start);
+    time_stop = convert_timestamp_to_gchar(entry->_time_stop);
  
     peer_name = (entry->_confID == NULL || g_strcasecmp(entry->_confID, "") == 0) ? "empty": entry->_confID;
 
@@ -235,13 +236,14 @@ gchar *serialize_history_conference_entry(conference_obj_t *entry)
         numberstr = g_strconcat(numberstr, tmp, ";", NULL);
 	
 
-	DEBUG("Print: %s concat: %s", tmp, numberstr);
+	DEBUG("Conference: Participant number: %s, concatenation: %s", tmp, numberstr);
     }
 
     result = g_strconcat("2188", separator,
 			numberstr, separator, // peer number
 			peer_name, separator,
-			timestamp, separator,
+			time_start, separator,
+			time_stop, separator,
 			"", separator, // peer AccountID
 			entry->_recordfile ? entry->_recordfile : "",
 			NULL); 
@@ -250,14 +252,14 @@ gchar *serialize_history_conference_entry(conference_obj_t *entry)
     return result;
 }
 
-void create_conference_history_entry_from_serialized(gchar *timestamp, gchar **ptr, conference_obj_t **conf)
+void create_conference_history_entry_from_serialized(gchar *timestamp UNUSED, gchar **ptr, conference_obj_t **conf)
 {
-    gchar *conference_id = "";
     history_state_t history_state = MISSED;
     gint token = 0;
     conference_state_t state = CONFERENCE_STATE_ACTIVE_ATACHED;
     gchar *participant = "";
     gchar *name = "";
+    gchar *time_start = "";
     gchar *time_stop = "";
     gchar *accountID = "";
     gchar *recordfile = "";
@@ -268,7 +270,7 @@ void create_conference_history_entry_from_serialized(gchar *timestamp, gchar **p
     // create a new empty conference
     create_new_conference(state, confID, conf);
 
-    while(ptr != NULL && token < 6) {
+    while(ptr != NULL && token < 7) {
         switch(token) {
             case 0:
 		history_state = MISSED;
@@ -281,12 +283,15 @@ void create_conference_history_entry_from_serialized(gchar *timestamp, gchar **p
 		name = *ptr;
 		break;
 	    case 3:
-		time_stop = *ptr;
+		time_start = *ptr;
 		break;
 	    case 4:
-		accountID = *ptr;
+		time_stop = *ptr;
 		break;
 	    case 5:
+		accountID = *ptr;
+		break;
+	    case 6:
 	        recordfile = *ptr;
 		break;
 	    default:
