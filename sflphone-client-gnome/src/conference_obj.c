@@ -328,8 +328,9 @@ static void process_conference_participant_from_serialized(gchar *participant, c
 		    break;
 		case 1:
 		    account = *numberptr;
-		    int len = strlen(account);
+		    // remove the ";" character at the end of the account string
 		    if(g_str_has_suffix(account, ";")) {
+		        int len = strlen(account);
 		    	gchar *tmpchar = g_strdup(account);
 			g_strlcpy(account, tmpchar, len);
 		    }
@@ -343,13 +344,13 @@ static void process_conference_participant_from_serialized(gchar *participant, c
 
 	tok++;
 
-	gchar *name = "name";
+	gchar *name = "";
 	gchar *call_id = generate_call_id();
 	   
 	// we should create call here and add it to the conference to be inserted in history
 	create_new_call(HISTORY_ENTRY, CALL_STATE_DIALING, call_id, account, name, phone_number, &tmp_call);  
 	calllist_add_history_call(tmp_call);
-	calllist_add_call(current_calls, tmp_call); 
+	calllist_add_call(current_calls, tmp_call);
 
 	conference_add_participant(call_id, conf);
 	

@@ -553,7 +553,7 @@ sip_call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID,
 
     c = calllist_get_call (current_calls, callID);
     if (c == NULL) {
-        ERROR("DBUS: Error call is NULL in state changed");
+        ERROR("DBUS: Error call is NULL in state changed (call may not have been created yet)");
         return;
     }
 

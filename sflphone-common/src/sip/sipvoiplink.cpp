@@ -3251,7 +3251,6 @@ void invite_session_state_changed_cb (pjsip_inv_session *inv, pjsip_event *e)
         }
 
         const pj_str_t * description = pjsip_get_status_text (statusCode);
-
         if (statusCode) {
             // test wether or not dbus manager is instantiated, if not no need to notify the client
             if (Manager::instance().getDbusManager())

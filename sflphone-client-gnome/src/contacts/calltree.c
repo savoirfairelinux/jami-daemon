@@ -1115,7 +1115,6 @@ void calltree_add_history_entry (callable_obj_t *c, GtkTreeIter *parent)
         }
     }
     else {
-	DEBUG("?????????????????????????????????????????????????????????????????????\n");
         // participant to a conference
 	pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
     }
@@ -1458,10 +1457,13 @@ void calltree_add_history_conference(conference_obj_t *conf)
     if(conference_participant) {
         while(conference_participant) {
 	    call_id = (gchar *)(conference_participant->data);
-            call = calllist_get_call(current_calls, call_id);
+            call = calllist_get_call(history, call_id);
             if(call) {
 	        calltree_add_history_entry(call, &iter);
             }
+	    else {
+		ERROR("ConferenceList: Error: Could not find call %s", call_id);
+	    }
  	    conference_participant = conference_next_participant(conference_participant); 
         }   
     }
