@@ -35,6 +35,7 @@
 #endif
 
 #include <iostream>
+#include <stdexcept> // for std::runtime_error
 #include <sstream>
 
 #ifdef HAVE_UDEV
@@ -101,8 +102,8 @@ VideoV4l2List::VideoV4l2List() : _currentDevice(0)
             if (devpath) {
                 try {
                     addDevice(devpath);
-                } catch (const char *s) {
-                    std::cerr << s << std::endl;
+                } catch (const std::runtime_error &e) {
+                    std::cerr << e.what() << std::endl;
                 }
             }
         }
@@ -129,28 +130,22 @@ udev_error:
         try {
             if (!addDevice(ss.str().c_str()))
                 return;
-        } catch (const char *s) {
-            std::cerr << s << std::endl;
+        } catch (const std::runtime_error &e) {
+            std::cerr << e.what() << std::endl;
             return;
         }
     }
 }
 
-bool VideoV4l2List::addDevice(const char *dev) throw(const char *)
+bool VideoV4l2List::addDevice(const std::string &dev)
 {
-    int fd = open(dev, O_RDWR);
+    int fd = open(dev.c_str(), O_RDWR);
     if (fd == -1)
         return false;
 
-    try {
-        std::string s(dev);
-        VideoV4l2Device v(fd, s);
-        devices.push_back(v);
-    }
-    catch (const char *s) {
-        close(fd);
-        throw(s);
-    }
+    std::string s(dev);
+    VideoV4l2Device v(fd, s);
+    devices.push_back(v);
 
     close(fd);
     return true;

@@ -48,7 +48,10 @@ class VideoV4l2List {
         VideoV4l2Device &getDevice(void);
 
     private:
-        bool addDevice(const char *dev) throw(const char *);
+        /**
+         * @throw std::runtime_error
+         */
+        bool addDevice(const std::string &dev);
         std::vector<VideoV4l2Device> devices;
         unsigned _currentDevice;
 };
