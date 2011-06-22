@@ -38,6 +38,8 @@
 #include <stdexcept> // for std::runtime_error
 #include <sstream>
 
+#include "logger.h"
+
 #ifdef HAVE_UDEV
 #include <libudev.h>
 #include <cstring>
@@ -103,7 +105,7 @@ VideoV4l2List::VideoV4l2List() : _currentDevice(0)
                 try {
                     addDevice(devpath);
                 } catch (const std::runtime_error &e) {
-                    std::cerr << e.what() << std::endl;
+                    _error(e.what());
                 }
             }
         }
@@ -131,7 +133,7 @@ udev_error:
             if (!addDevice(ss.str().c_str()))
                 return;
         } catch (const std::runtime_error &e) {
-            std::cerr << e.what() << std::endl;
+            _error(e.what());
             return;
         }
     }
@@ -162,11 +164,11 @@ void VideoV4l2List::setDevice(unsigned index)
 std::vector<std::string> VideoV4l2List::getDeviceList(void)
 {
     std::vector<std::string> v;
-    std::stringstream ss;
 
     size_t n = devices.size();
     unsigned i;
     for (i = 0 ; i < n ; i++) {
+        std::stringstream ss;
         VideoV4l2Device &dev = devices[i];
         std::string &name = dev.name;
         if (name.length()) {
