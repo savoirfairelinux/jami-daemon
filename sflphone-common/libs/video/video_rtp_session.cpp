@@ -51,6 +51,30 @@ VideoRtpSession::VideoRtpSession(const std::string &input,
 void VideoRtpSession::test()
 {
     assert(sendThread_.get() == 0);
+    assert(receiveThread_.get() == 0);
+    std::cerr << "Capturing from " << input_ << ", encoding to " << codec_ <<
+        " at " << bitrate_ << " bps, sending to " << destinationURI_ <<
+        std::endl;
+    std::map<std::string, std::string> args;
+    args["input"] = input_;
+    args["codec"] = codec_;
+    std::stringstream bitstr;
+    bitstr << bitrate_;
+
+    args["bitrate"] = bitstr.str();
+    args["destination"] = destinationURI_;
+
+    sendThread_.reset(new VideoSendThread(args));
+    sendThread_->start();
+
+    /* block until SDP is ready */
+    sendThread_->waitForSDP();
+    std::cerr << "SDP File written" << std::endl;
+}
+
+void VideoRtpSession::test_loopback()
+{
+    assert(sendThread_.get() == 0);
     std::cerr << "Capturing from " << input_ << ", encoding to " << codec_ <<
         " at " << bitrate_ << " bps, sending to " << destinationURI_ <<
         std::endl;
@@ -77,6 +101,7 @@ void VideoRtpSession::test()
 void VideoRtpSession::start()
 {
     assert(sendThread_.get() == 0);
+    assert(receiveThread.get() == 0);
     std::cerr << "Capturing from " << input_ << ", encoding to " << codec_ <<
         " at " << bitrate_ << " bps, sending to " << destinationURI_ <<
         std::endl;
@@ -101,11 +126,17 @@ void VideoRtpSession::stop()
 {
     std::cerr << "Stopping video rtp session " << std::endl;
     // FIXME: all kinds of evil!!! interrupted should be atomic
-    receiveThread_->stop();
-    receiveThread_->join();
+    if (receiveThread_.get())
+    {
+        receiveThread_->stop();
+        receiveThread_->join();
+    }
 
-    sendThread_->stop();
-    sendThread_->join();
+    if (sendThread_.get())
+    {
+        sendThread_->stop();
+        sendThread_->join();
+    }
     std::cerr << "cancelled video rtp session " << std::endl;
 
     // destroy objects

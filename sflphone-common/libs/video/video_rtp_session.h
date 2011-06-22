@@ -46,6 +46,7 @@ class VideoRtpSession {
 
         void start();
         void test();
+        void test_loopback();
         void stop();
     private:
         const std::string input_;

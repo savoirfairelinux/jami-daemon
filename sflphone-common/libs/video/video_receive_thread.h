@@ -45,7 +45,7 @@ namespace sfl_video {
 class VideoReceiveThread : public ost::Thread {
     private:
         std::map<std::string, std::string> args_;
-        volatile int interrupted_;
+        volatile sig_atomic_t interrupted_;
 
         /*-------------------------------------------------------------*/
         /* These variables should be used in thread (i.e. run()) only! */

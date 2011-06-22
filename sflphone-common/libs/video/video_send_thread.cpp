@@ -285,28 +285,39 @@ void VideoSendThread::setup()
 
 void VideoSendThread::cleanup()
 {
+    // make sure no one is waiting for the SDP which will never come if we've
+    // error'd out
+    sdpReady_.signal();
     // write the trailer, if any.  the trailer must be written
     // before you close the CodecContexts open when you wrote the
     // header; otherwise write_trailer may try to use memory that
     // was freed on av_codec_close()
-    av_write_trailer(outputCtx_);
+    if (outputCtx_)
+        av_write_trailer(outputCtx_);
 
-    av_free(scaledPictureBuf_);
-    av_free(outbuf_);
+    if (scaledPictureBuf_)
+        av_free(scaledPictureBuf_);
+    if (outbuf_)
+        av_free(outbuf_);
 
     // free the scaled frame
-    av_free(scaledPicture_);
+    if (scaledPicture_)
+        av_free(scaledPicture_);
     // free the YUV frame
-    av_free(rawFrame_);
+    if (rawFrame_)
+        av_free(rawFrame_);
 
     // close the codecs
-    avcodec_close(encoderCtx_);
+    if (encoderCtx_)
+        avcodec_close(encoderCtx_);
 
     // doesn't need to be freed, we didn't use avcodec_alloc_context
-    avcodec_close(inputDecoderCtx_);
+    if (inputDecoderCtx_)
+        avcodec_close(inputDecoderCtx_);
 
     // close the video file
-    av_close_input_file(inputCtx_);
+    if (inputCtx_)
+        av_close_input_file(inputCtx_);
 
     // exit this thread
     exit();
@@ -330,7 +341,19 @@ SwsContext * VideoSendThread::createScalingContext()
 
 VideoSendThread::VideoSendThread(const std::map<std::string, std::string> &args) :
     args_(args),
-    interrupted_(false) {}
+    interrupted_(false),
+    scaledPictureBuf_(0),
+    outbuf_(0),
+    inputDecoderCtx_(0),
+    rawFrame_(0),
+    scaledPicture_(0),
+    videoStreamIndex_(-1),
+    outbufSize_(0),
+    encoderCtx_(0),
+    videoStream_(0),
+    inputCtx_(0),
+    outputCtx_(0)
+{}
 
 void VideoSendThread::run()
 {
@@ -401,7 +424,6 @@ void VideoSendThread::run()
 
 void VideoSendThread::stop()
 {
-    // FIXME: not thread safe
     interrupted_ = true;
 }
 

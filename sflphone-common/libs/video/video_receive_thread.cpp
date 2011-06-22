@@ -301,15 +301,19 @@ void VideoReceiveThread::cleanup()
     cleanupShm(shmID_, shmBuffer_);
 
     // free the scaled frame
-    av_free(scaledPicture_);
+    if (scaledPicture_)
+        av_free(scaledPicture_);
     // free the YUV frame
-    av_free(rawFrame_);
+    if (rawFrame_)
+        av_free(rawFrame_);
 
     // doesn't need to be freed, we didn't use avcodec_alloc_context
-    avcodec_close(decoderCtx_);
+    if (decoderCtx_)
+        avcodec_close(decoderCtx_);
 
     // close the video file
-    av_close_input_file(inputCtx_);
+    if (inputCtx_)
+        av_close_input_file(inputCtx_);
 
     std::cerr << "Exitting the decoder thread" << std::endl;
     // exit this thread
@@ -332,7 +336,16 @@ SwsContext * VideoReceiveThread::createScalingContext()
 }
 
 VideoReceiveThread::VideoReceiveThread(const std::map<std::string, std::string> &args) : args_(args),
-    interrupted_(false), rawFrame_(NULL), scaledPicture_(NULL), decoderCtx_(NULL), inputCtx_(NULL)
+    interrupted_(false),
+    scaledPictureBuf_(0),
+    shmBuffer_(0),
+    shmID_(-1),
+    semSetID_(-1),
+    decoderCtx_(0),
+    rawFrame_(0),
+    scaledPicture_(0),
+    videoStreamIndex_(-1),
+    inputCtx_(0)
     {}
 
 void VideoReceiveThread::run()

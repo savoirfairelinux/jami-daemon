@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include "video_rtp_session.h"
 
-static volatile int interrupted = 0;
+static volatile sig_atomic_t interrupted = 0;
 
 void signal_handler(int sig) { (void)sig; interrupted = 1; }
 void attach_signal_handlers() { signal(SIGINT, signal_handler); }

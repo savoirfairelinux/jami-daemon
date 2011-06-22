@@ -55,7 +55,7 @@ class VideoSendThread : public ost::Thread {
         ost::Event sdpReady_;
 
         std::map<std::string, std::string> args_;
-        volatile int interrupted_;
+        volatile sig_atomic_t interrupted_;
         /*-------------------------------------------------------------*/
         /* These variables should be used in thread (i.e. run()) only! */
         /*-------------------------------------------------------------*/
@@ -71,7 +71,7 @@ class VideoSendThread : public ost::Thread {
         AVFormatContext *inputCtx_;
         AVFormatContext *outputCtx_;
     public:
-        VideoSendThread(const std::map<std::string, std::string> &args);
+        explicit VideoSendThread(const std::map<std::string, std::string> &args);
         virtual ~VideoSendThread();
         // called from main thread 
         void waitForSDP();
