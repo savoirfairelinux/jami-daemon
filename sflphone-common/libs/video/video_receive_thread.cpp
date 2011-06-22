@@ -332,7 +332,7 @@ SwsContext * VideoReceiveThread::createScalingContext()
 }
 
 VideoReceiveThread::VideoReceiveThread(const std::map<std::string, std::string> &args) : args_(args),
-    interrupted_(false), rawFrame_(NULL), scaledPicture_(NULL), decoderCtx_(NULL), inputCtx_(NULL)
+    interrupted_(false), decoderCtx_(NULL), rawFrame_(NULL), scaledPicture_(NULL), inputCtx_(NULL)
     {}
 
 void VideoReceiveThread::run()
