@@ -261,7 +261,6 @@ class Call: public Recordable
         virtual bool setRecording (void);
 
     private:
-
         /** Protect every attribute that can be changed by two threads */
         ost::Mutex _callMutex;
 
