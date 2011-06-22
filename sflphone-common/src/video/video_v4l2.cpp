@@ -124,7 +124,7 @@ static unsigned int pixelformat_score(unsigned pixelformat)
     return UINT_MAX - 1;
 }
 
-int VideoV4l2Size::GetFrameRates(int fd, unsigned int pixel_format)
+void VideoV4l2Size::GetFrameRates(int fd, unsigned int pixel_format) throw(const char *)
 {
     struct v4l2_frmivalenum frmival = {
         0,
@@ -134,7 +134,7 @@ int VideoV4l2Size::GetFrameRates(int fd, unsigned int pixel_format)
     };
 
     if (ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival)) {
-        return 1; // could not query frame interval for size
+        throw("could not query frame interval for size");
     }
 
     switch(frmival.type) {
@@ -148,32 +148,32 @@ int VideoV4l2Size::GetFrameRates(int fd, unsigned int pixel_format)
         break;
     case V4L2_FRMIVAL_TYPE_CONTINUOUS:
         // TODO
-        cerr << "Continuous Frame Intervals not supported" << endl;
-        return 2;
+        throw("Continuous Frame Intervals not supported");
     case V4L2_FRMIVAL_TYPE_STEPWISE:
         // TODO
-        cerr << "Stepwise Frame Intervals not supported" << endl;
-        return 3;
+        throw("Stepwise Frame Intervals not supported");
     }
-
-    return 0;
 }
 
-int VideoV4l2Channel::GetSizes(int fd, unsigned int pixelformat)
+void VideoV4l2Channel::GetSizes(int fd, unsigned int pixelformat) throw(const char *)
 {
     struct v4l2_frmsizeenum frmsize;
     frmsize.index = 0;
     frmsize.pixel_format = pixelformat;
     if (ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize))
-        return 1; // could not query frame sizes for format
+        throw("could not query frame sizes for format");
 
     switch(frmsize.type) {
     case V4L2_FRMSIZE_TYPE_DISCRETE:
         do {
             VideoV4l2Size size(frmsize.discrete.height, frmsize.discrete.width);
 
-            if (!size.GetFrameRates(fd, frmsize.pixel_format))
+            try { 
+                size.GetFrameRates(fd, frmsize.pixel_format);
                 sizes.push_back(size);
+            } catch (const char *s) {
+                throw(s);
+            }
 
             frmsize.index++;
         } while (!ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize));
@@ -184,20 +184,16 @@ int VideoV4l2Channel::GetSizes(int fd, unsigned int pixelformat)
         // from 1x1 to 2000x2000
         // We should limit to a list of known standard sizes
     case V4L2_FRMSIZE_TYPE_CONTINUOUS:
-        cerr << "Continuous Frame sizes not supported" << endl;
-        return 2;
+        throw("Continuous Frame sizes not supported");
     case V4L2_FRMSIZE_TYPE_STEPWISE:
-        cerr << "Stepwise Frame sizes not supported" << endl;
-        return 3;
+        throw("Stepwise Frame sizes not supported");
     }
-
-    return 0;
 }
 
-int VideoV4l2Channel::GetFormat(int fd)
+void VideoV4l2Channel::GetFormat(int fd) throw(const char *)
 {
     if (ioctl(fd, VIDIOC_S_INPUT, &idx))
-        return 1;
+        throw("VIDIOC_S_INPUT failed");
 
     struct v4l2_fmtdesc fmt;
     fmt.index = idx = 0;
@@ -220,24 +216,27 @@ int VideoV4l2Channel::GetFormat(int fd)
         fmt.index = ++idx;
     }
     if (idx == 0)
-        return 2;
+        throw("Could not enumerate formats");
 
     fmt.index = best_idx;
     SetFourcc(pixelformat);
 
-    int ret = GetSizes(fd, pixelformat);
-    return ret ? ret + 2 : ret;
+    try {
+        GetSizes(fd, pixelformat);
+    } catch (const char *s) {
+        throw(s);
+    }
 }
 
-VideoV4l2Device::VideoV4l2Device(int fd, std::string &device) throw(int): _currentChannel(0) {
+VideoV4l2Device::VideoV4l2Device(int fd, std::string &device) throw(const char *): _currentChannel(0) {
     unsigned idx;
 
     struct v4l2_capability cap;
     if (ioctl(fd, VIDIOC_QUERYCAP, &cap))
-        throw 1; // could not query capabilities
+        throw("could not query capabilities");
 
     if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE))
-        throw 2; // not a capture device
+        throw("not a capture device");
 
     name = std::string((const char*)cap.card);
 
@@ -249,8 +248,11 @@ VideoV4l2Device::VideoV4l2Device(int fd, std::string &device) throw(int): _curre
 
         if (input.type & V4L2_INPUT_TYPE_CAMERA) {
             VideoV4l2Channel channel(idx, (const char*)input.name);
-            if (channel.GetFormat(fd))
-                throw 3; // could not add channel
+            try {
+                channel.GetFormat(fd);
+            } catch (const char *s) {
+                throw(s);
+            }
 
             channels.push_back(channel);
         }

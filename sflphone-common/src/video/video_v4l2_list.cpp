@@ -101,8 +101,8 @@ VideoV4l2List::VideoV4l2List() : _currentDevice(0)
             if (devpath) {
                 try {
                     addDevice(devpath);
-                } catch (int e) {
-                    //
+                } catch (const char *s) {
+                    std::cerr << s << std::endl;
                 }
             }
         }
@@ -127,30 +127,33 @@ udev_error:
         std::stringstream ss;
         ss << "/dev/video" << idx;
         try {
-            addDevice(ss.str().c_str());
-        } catch (int e) {
+            if (!addDevice(ss.str().c_str()))
+                return;
+        } catch (const char *s) {
+            std::cerr << s << std::endl;
             return;
         }
     }
 }
 
-void VideoV4l2List::addDevice(const char *dev) throw(int)
+bool VideoV4l2List::addDevice(const char *dev) throw(const char *)
 {
     int fd = open(dev, O_RDWR);
     if (fd == -1)
-        throw(0);
+        return false;
 
     try {
         std::string s(dev);
         VideoV4l2Device v(fd, s);
         devices.push_back(v);
     }
-    catch (int e) {
+    catch (const char *s) {
         close(fd);
-        throw(e);
+        throw(s);
     }
 
     close(fd);
+    return true;
 }
 
 void VideoV4l2List::setDevice(unsigned index)

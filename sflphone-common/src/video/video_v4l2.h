@@ -57,7 +57,7 @@ class VideoV4l2Size {
     public:
         VideoV4l2Size(unsigned height, unsigned width) : height(height), width(width), _currentRate(0) {}
 
-        int GetFrameRates(int fd, unsigned int pixel_format);
+        void GetFrameRates(int fd, unsigned int pixel_format) throw(const char*);
 
         std::vector<std::string> getRateList() {
             std::vector<std::string> v;
@@ -102,8 +102,8 @@ class VideoV4l2Channel {
     public:
         VideoV4l2Channel(unsigned idx, const char *s) : idx(idx), name(s), _currentSize(0) { }
 
-        int GetFormat(int fd);
-        int GetSizes(int fd, unsigned int pixel_format);
+        void GetFormat(int fd) throw(const char *);
+        void GetSizes(int fd, unsigned int pixel_format) throw(const char *);
 
         void SetFourcc(unsigned code) {
             fourcc[0] = code;
@@ -155,7 +155,7 @@ class VideoV4l2Channel {
 
 class VideoV4l2Device {
     public:
-        VideoV4l2Device(int fd, std::string &device) throw(int);
+        VideoV4l2Device(int fd, std::string &device) throw(const char *);
 
         std::string device;
         std::string name;
