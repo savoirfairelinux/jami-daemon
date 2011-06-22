@@ -4706,7 +4706,6 @@ bool setCallAudioLocal (SIPCall* call, std::string localIP)
         // Set local audio port for SIPCall(id)
         call->setLocalIp (localIP);
         call->setLocalAudioPort (callLocalAudioPort);
-        call->setLocalExternAudioPort (callLocalExternAudioPort);
 
         call->getLocalSDP()->setPortToAllMedia (callLocalExternAudioPort);
 
