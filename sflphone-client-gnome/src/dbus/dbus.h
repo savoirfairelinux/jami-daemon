@@ -562,7 +562,7 @@ gchar **dbus_get_history (void);
  * of this list into the history file
  * @param A list of serialized history entries
  */
-void dbus_set_history (GSList *);
+void dbus_set_history (gchar **);
 
 void sflphone_display_transfer_status (const gchar* message);
 

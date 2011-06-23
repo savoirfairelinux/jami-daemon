@@ -2248,13 +2248,12 @@ dbus_get_history (void)
 }
 
 void
-dbus_set_history (GSList *entries)
+dbus_set_history (gchar **entries)
 {
     GError *error = NULL;
-    gchar **charlist = NULL;
 
     org_sflphone_SFLphone_ConfigurationManager_set_history (
-        configurationManagerProxy, (const char **)charlist, &error);
+        configurationManagerProxy, (const char **)entries, &error);
 
     if (error) {
         ERROR ("Error calling org_sflphone_SFLphone_CallManager_set_history");
