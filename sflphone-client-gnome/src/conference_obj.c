@@ -354,8 +354,9 @@ static void process_conference_participant_from_serialized(gchar *participant, c
 	   
 	// we should create call here and add it to the conference to be inserted in history
 	create_new_call(HISTORY_ENTRY, CALL_STATE_DIALING, call_id, account, name, phone_number, &tmp_call);  
-	calllist_add_history_call(tmp_call);
-	calllist_add_call(current_calls, tmp_call);
+	// calllist_add_history_call(tmp_call);
+	calllist_add_call(history, tmp_call);
+        // calllist_add_call(current_calls, tmp_call);
 
 	conference_add_participant(call_id, conf);
 	
