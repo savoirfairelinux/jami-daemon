@@ -56,10 +56,13 @@ class HistoryItem
          * @param Timestamp stop
          * @param Call name
          * @param Call number
+	 * @param Call id
          * @param Call account id
 	 * @param Recording file name (if any recording were performed)
+	 * @param Configuration ID
+	 * @param time added
          */
-        HistoryItem (std::string, CallType, std::string, std::string, std::string, std::string="", std::string="");
+        HistoryItem (std::string, CallType, std::string, std::string, std::string, std::string, std::string, std::string, std::string, std::string);
 
         /*
          * Constructor from a serialized form
@@ -105,6 +108,11 @@ class HistoryItem
         std::string _name;
         std::string _number;
 
+	/**
+	 * The identifier fo this item
+	 */
+        std::string _id;
+
         /*
          * The account the call was made with
          */
@@ -114,6 +122,16 @@ class HistoryItem
          * Wether or not a recording exist for this call 
          */
         std::string _recording_file;
+
+        /**
+	 * The conference ID for this call (if any)
+	 */
+	std::string _confID;
+
+        /**
+	 * Time added to conference
+         */
+        std::string _timeAdded;
 };
 
 

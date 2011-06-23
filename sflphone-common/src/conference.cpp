@@ -43,17 +43,8 @@ Conference::Conference() : _id (""), _confState (ACTIVE_ATTACHED), _nbParticipan
     _nbParticipant = 0;
 
     ++count;
-
-    std::string conf ("conf_");
-
-    // convert count into string
-    std::string s;
-    std::stringstream out;
-    out << count;
-    s = out.str();
-
     _nbParticipant = 0;
-    _id = conf.append (s);
+    _id = Manager::instance().getNewCallID();
 
     Recordable::initRecFileName (_id);
 

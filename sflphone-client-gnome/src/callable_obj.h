@@ -165,13 +165,15 @@ typedef struct  {
 
     int clockStarted;
 
+    time_t _time_added;
+
 } callable_obj_t;
 
 void create_new_call (callable_type_t, call_state_t, gchar*, gchar*, gchar*, gchar*, callable_obj_t **);
 
 void create_new_call_from_details (const gchar *, GHashTable *, callable_obj_t **);
 
-void create_history_entry_from_serialized_form (gchar **, callable_obj_t **);
+void create_history_entry_from_serialized_form (gchar *, callable_obj_t **);
 
 void call_add_error (callable_obj_t * call, gpointer dialog);
 

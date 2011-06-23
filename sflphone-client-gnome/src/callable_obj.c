@@ -261,6 +261,9 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
         }
     }
 
+    obj->_confID = NULL;
+    obj->_time_added = 0;
+
     *new_call = obj;
 }
 
@@ -298,17 +301,21 @@ void create_new_call_from_details (const gchar *call_id, GHashTable *details, ca
     *call = new_call;
 }
 
-void create_history_entry_from_serialized_form (gchar **ptr, callable_obj_t **call)
+void create_history_entry_from_serialized_form (gchar *entry, callable_obj_t **call)
 {
-    gchar *peer_name = "";
-    gchar *peer_number = "", *accountID = "", *time_start = "", *time_stop = "";
+    gchar *peer_name = "", *peer_number = "";
+    gchar *callID = "", *accountID = ""; 
+    gchar *time_start = "", *time_stop = "";
     gchar *recordfile = "";
+    gchar *confID = "", *time_added = "";
     callable_obj_t *new_call;
     history_state_t history_state = MISSED;
     gint token = 0;
-
-    // details is in serialized form, i e: calltype%to%from%callid
-    while (ptr != NULL && token < 7) {
+    gchar **ptr;
+    gchar *delim = "|";
+ 
+    ptr = g_strsplit(entry, delim, 10);
+    while (ptr != NULL && token < 10) {
         switch (token) {
             case 0:
                 history_state = get_history_state_from_id (*ptr);
@@ -325,34 +332,39 @@ void create_history_entry_from_serialized_form (gchar **ptr, callable_obj_t **ca
 	    case 4:
                 time_stop = *ptr;
                 break;
-            case 5:
-                accountID = *ptr;
-		// remove terminating | (this may occurs if recordfiel filed is empty)
-	 	if(g_str_has_suffix(accountID, "|")) {
-		    int len = strlen(accountID);
-		    gchar *tmpchar = g_strdup(accountID);
-		    g_strlcpy(accountID, tmpchar, len);
-	        }	
-                break;
+	    case 5:
+		callID = *ptr;
+		break;
             case 6:
+                accountID = *ptr;
+                break;
+            case 7:
 		recordfile = *ptr;
+		break;
+	    case 8:
+		confID = *ptr;
+		break;
+	    case 9:
+		time_added = *ptr;
+		break;
             default:
                 break;
         }
 
         token++;
         ptr++;
-
     }
 
     if (g_strcasecmp (peer_name, "empty") == 0)
-        peer_name="";
+        peer_name = "";
 
-    create_new_call (HISTORY_ENTRY, CALL_STATE_DIALING, "", accountID, peer_name, peer_number, &new_call);
+    create_new_call (HISTORY_ENTRY, CALL_STATE_DIALING, callID, accountID, peer_name, peer_number, &new_call);
     new_call->_history_state = history_state;
     new_call->_time_start = convert_gchar_to_timestamp (time_start);
     new_call->_time_stop = convert_gchar_to_timestamp (time_stop);
     new_call->_recordfile = g_strdup(recordfile);
+    new_call->_confID = g_strdup(confID);
+    new_call->_time_added = convert_gchar_to_timestamp(time_start);
 
     *call = new_call;
 }
@@ -452,28 +464,39 @@ gchar* get_call_duration (callable_obj_t *obj)
 gchar* serialize_history_call_entry (callable_obj_t *entry)
 {
     // "0|514-276-5468|Savoir-faire Linux|144562458" for instance
-
+    gchar *peer_number = "", *peer_name = "", *account_id = "";
     gchar *result = "";
     gchar *separator = "|";
     gchar *history_state = "", *time_start = "", *time_stop = "";
+    gchar *record_file = "";
+    gchar *confID = "", *time_added = "";
+
+    gchar *call_id = entry->_callID;
 
     // Need the string form for the history state
     history_state = get_history_id_from_state (entry->_history_state);
     // and the timestamps
     time_start = convert_timestamp_to_gchar (entry->_time_start);
     time_stop = convert_timestamp_to_gchar (entry->_time_stop);
+    time_added = convert_timestamp_to_gchar (entry->_time_added);
 
+    peer_number = (entry->_peer_number == NULL) ? "" : entry->_peer_number;
+    peer_name = (entry->_peer_name == NULL || g_strcasecmp (entry->_peer_name,"") == 0) ? "empty": entry->_peer_name;
+    account_id = (entry->_accountID == NULL || g_strcasecmp (entry->_accountID,"") == 0) ? "empty": entry->_accountID;
+    confID = (entry->_confID == NULL) ? "" : entry->_confID;
 
-    gchar* peer_name = (entry->_peer_name == NULL || g_strcasecmp (entry->_peer_name,"") == 0) ? "empty": entry->_peer_name;
-    gchar* account_id = (entry->_accountID == NULL || g_strcasecmp (entry->_accountID,"") == 0) ? "empty": entry->_accountID;
+    record_file = g_strdup((entry->_recordfile == NULL) ? "" : entry->_recordfile);
 
     result = g_strconcat (history_state, separator,
                           entry->_peer_number, separator,
                           peer_name, separator,
                           time_start, separator,
 			  time_stop, separator,
+			  call_id, separator,
                           account_id, separator,
-			  entry->_recordfile ? entry->_recordfile : "",
+			  record_file, separator,
+			  confID, separator,
+			  time_added,
                           NULL);
 
     return result;
@@ -549,7 +572,7 @@ gchar*
 get_peer_information (callable_obj_t *c)
 {
 
-    if (g_strcasecmp (c->_peer_name,"") == 0)
+    if (g_strcasecmp (c->_peer_name, "") == 0)
         return g_strdup (c->_peer_number);
     else
         return g_strdup (c->_peer_name);

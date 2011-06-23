@@ -1362,27 +1362,14 @@ void sflphone_fill_history (void)
 
         current_entry = *entries;
 
-	ptr = g_strsplit(current_entry, delim, 6);
-	if(ptr != NULL) {
-
-	    // first ptr refers to entry type
-	    if(g_strcmp0(*ptr, "2188") == 0) {
-		DEBUG("------------------------------- SFLphone: Serialized item: %s", *ptr);
-		create_conference_history_entry_from_serialized(ptr, &conference_entry);
-		conferencelist_add (history, conference_entry);
-		conferencelist_add(current_calls, conference_entry);
-		calltree_add_conference (history, conference_entry);
-	    }
-	    else {
-                // do something with key and value
-                create_history_entry_from_serialized_form (ptr, &history_entry);
+        // do something with key and value
+        create_history_entry_from_serialized_form (current_entry, &history_entry);
                 
-		// Add it and update the GUI
-                calllist_add_call (history, history_entry);
-		calltree_add_call (history, history_entry, NULL);
-	    }
-	}
-	entries++;
+	// Add it and update the GUI
+        calllist_add_call (history, history_entry);
+	calltree_add_call (history, history_entry, NULL);
+	
+        entries++;
     }
 
     DEBUG ("======================================================== SFLphone: Loading history ...(end)");
@@ -1431,25 +1418,6 @@ void sflphone_save_history (void)
         }
     }
 
-    size = conferencelist_get_size(history);
-    DEBUG("SFLphone: Conference list size %d", size);
-
-    while(size > 0) {
-	conf = conferencelist_pop_head(history);
-	size = conferencelist_get_size(history);
-
-        if(conf) {
-	    value = serialize_history_conference_entry(conf);
-	    key = convert_timestamp_to_gchar(conf->_time_start);
-	    DEBUG("-------------------------------------- SFLphone: Serialize conference [%s]: %s", key, value);
-        }
-	else {
-	    WARN("SFLphone: Warning: %dth element is NULL", i);
-        }
-	g_hash_table_replace(result, (gpointer)key, 
-			g_slist_append(g_hash_table_lookup(result, key), (gpointer)value));	
-    }
-    
     sflphone_order_history_hash_table(result, &ordered_result);
 
     gchar **testprnt = ordered_result;
