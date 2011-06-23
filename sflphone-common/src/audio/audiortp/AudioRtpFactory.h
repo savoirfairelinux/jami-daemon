@@ -43,21 +43,11 @@ class SIPCall;
 class Account;
 class SIPAccount;
 
-/*
-namespace sfl
-{
-class AudioZrtpSession;
-class AudioSrtpSession;
-class AudioSymmetricRtpSession;
-}
-*/
-
 namespace sfl
 {
 
 class AudioZrtpSession;
 class AudioSrtpSession;
-class AudioSymmetricRtpSession;
 class AudioCodec;
 
 // Possible kind of rtp session
@@ -134,8 +124,6 @@ class AudioRtpFactory
         void * getAudioRtpSession (void) const {
             return _rtpSession;
         }
-
-        AudioSymmetricRtpSession * getAudioSymetricRtpSession();
 
         /**
          * @param None
