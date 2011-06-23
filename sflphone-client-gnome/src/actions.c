@@ -1464,12 +1464,6 @@ void sflphone_save_history (void)
     // Decrement the reference count
     g_hash_table_unref (result);
    
-    while(*ordered_result) {
-       g_free(*ordered_result);
-       ordered_result++;
-    }
-    g_free(ordered_result);
-
     DEBUG ("==================================================== SFLphone: Saving history (end)");
 }
 
