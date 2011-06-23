@@ -63,8 +63,9 @@ class HistoryItem
 
         /*
          * Constructor from a serialized form
+	 * @string contaning serialized form
          */
-        HistoryItem (std::string, std::string="");
+        HistoryItem (std::string="");
 
         /*
          * Destructor

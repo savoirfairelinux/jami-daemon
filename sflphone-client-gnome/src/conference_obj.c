@@ -252,7 +252,7 @@ gchar *serialize_history_conference_entry(conference_obj_t *entry)
     return result;
 }
 
-void create_conference_history_entry_from_serialized(gchar *timestamp UNUSED, gchar **ptr, conference_obj_t **conf)
+void create_conference_history_entry_from_serialized(gchar **ptr, conference_obj_t **conf)
 {
     history_state_t history_state = MISSED;
     gint token = 0;

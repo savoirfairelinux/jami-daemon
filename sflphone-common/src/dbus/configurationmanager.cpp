@@ -883,15 +883,14 @@ void ConfigurationManager::setAccountsOrder (const std::string& order)
     Manager::instance().setAccountsOrder (order);
 }
 
-std::map<std::string, std::string> ConfigurationManager::getHistory (void)
+std::vector<std::string> ConfigurationManager::getHistory (void)
 {
-    return Manager::instance().send_history_to_client();
+    return Manager::instance().getHistorySerialized();
 }
 
-void ConfigurationManager::setHistory (
-        const std::map<std::string, std::string>& entries)
+void ConfigurationManager::setHistory (const std::vector<std::string>& entries)
 {
-    Manager::instance().receive_history_from_client (entries);
+    Manager::instance().setHistorySerialized(entries);
 }
 
 std::string ConfigurationManager::getAddrFromInterfaceName (
