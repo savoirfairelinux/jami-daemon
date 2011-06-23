@@ -1,1 +1,1 @@
-SUBDIRS = utilspp iax2 dbus-c++ video
+SUBDIRS = utilspp iax2 dbus-c++
