@@ -42,7 +42,6 @@
 
 #include "rtptest.h"
 #include "audio/audiortp/AudioRtpSession.h"
-#include "audio/audiortp/AudioSymmetricRtpSession.h"
 
 #include <unistd.h>
 
