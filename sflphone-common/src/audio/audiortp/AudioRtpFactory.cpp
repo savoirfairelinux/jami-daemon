@@ -319,40 +319,12 @@ void AudioRtpFactory::setRemoteCryptoInfo (sfl::SdesNegotiator& nego)
 
 void AudioRtpFactory::setDtmfPayloadType(unsigned int payloadType)
 {
-    switch (_rtpSessionType) {
-
-        case Sdes:
-            static_cast<AudioSrtpSession *> (_rtpSession)->setDtmfPayloadType(payloadType);
-            break;
-
-        case Symmetric:
-            static_cast<AudioRtpSession *> (_rtpSession)->setDtmfPayloadType(payloadType);
-            break;
-
-        case Zrtp:
-            static_cast<AudioZrtpSession *> (_rtpSession)->setDtmfPayloadType(payloadType);
-            break;
-    }
+    static_cast<AudioRtpRecordHandler *> (_rtpSession)->setDtmfPayloadType(payloadType);
 }
 
 void AudioRtpFactory::sendDtmfDigit (int digit)
 {
-
-    switch (_rtpSessionType) {
-
-        case Sdes:
-            static_cast<AudioSrtpSession *> (_rtpSession)->putDtmfEvent (digit);
-            break;
-
-        case Symmetric:
-            static_cast<AudioRtpSession *> (_rtpSession)->putDtmfEvent (digit);
-            break;
-
-        case Zrtp:
-            static_cast<AudioZrtpSession *> (_rtpSession)->putDtmfEvent (digit);
-            break;
-    }
-
+    static_cast<AudioRtpRecordHandler*> (_rtpSession)->putDtmfEvent (digit);
 }
 }
 
