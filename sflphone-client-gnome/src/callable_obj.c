@@ -298,7 +298,7 @@ void create_new_call_from_details (const gchar *call_id, GHashTable *details, ca
     *call = new_call;
 }
 
-void create_history_entry_from_serialized_form (gchar *timestamp UNUSED, gchar **ptr, callable_obj_t **call)
+void create_history_entry_from_serialized_form (gchar **ptr, callable_obj_t **call)
 {
     gchar *peer_name = "";
     gchar *peer_number = "", *accountID = "", *time_start = "", *time_stop = "";
@@ -327,6 +327,12 @@ void create_history_entry_from_serialized_form (gchar *timestamp UNUSED, gchar *
                 break;
             case 5:
                 accountID = *ptr;
+		// remove terminating | (this may occurs if recordfiel filed is empty)
+	 	if(g_str_has_suffix(accountID, "|")) {
+		    int len = strlen(accountID);
+		    gchar *tmpchar = g_strdup(accountID);
+		    g_strlcpy(accountID, tmpchar, len);
+	        }	
                 break;
             case 6:
 		recordfile = *ptr;
@@ -369,8 +375,6 @@ void free_callable_obj_t (callable_obj_t *c)
     }
 
     g_free (c);
-
-    DEBUG ("If you don't see it that is because there is a problem");
 
     calltree_update_clock();
 }

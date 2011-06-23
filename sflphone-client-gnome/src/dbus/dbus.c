@@ -2495,30 +2495,31 @@ dbus_set_accounts_order (const gchar* order)
     }
 }
 
-GHashTable*
+gchar **
 dbus_get_history (void)
 {
     GError *error = NULL;
-    GHashTable *entries = NULL;
+    const gchar **entries = NULL;
 
     org_sflphone_SFLphone_ConfigurationManager_get_history (
-        configurationManagerProxy, &entries, &error);
+        configurationManagerProxy, (char ***)&entries, &error);
 
     if (error) {
-        ERROR ("Error calling org_sflphone_SFLphone_CallManager_get_history");
+        ERROR ("Error calling get history: %s", error->message);
         g_error_free (error);
+	return NULL;
     }
 
     return entries;
 }
 
 void
-dbus_set_history (GHashTable* entries)
+dbus_set_history (gchar **entries)
 {
     GError *error = NULL;
 
     org_sflphone_SFLphone_ConfigurationManager_set_history (
-        configurationManagerProxy, entries, &error);
+        configurationManagerProxy, (const char **)entries, &error);
 
     if (error) {
         ERROR ("Error calling org_sflphone_SFLphone_CallManager_set_history");

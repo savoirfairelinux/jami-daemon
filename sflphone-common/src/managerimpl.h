@@ -1499,9 +1499,17 @@ class ManagerImpl
         */
         bool accountExists (const AccountID& accountID);
 
-        std::map<std::string, std::string> send_history_to_client (void);
+	/**
+	 * Get a list of serialized history entries
+	 * @return A list of serialized entry
+  	 */
+        std::vector<std::string> getHistorySerialized (void);
 
-        void receive_history_from_client (std::map<std::string, std::string> history);
+	/**
+	 * Set a list of serialized history entries
+	 * @param Vector of history entries
+         */
+	void setHistorySerialized (std::vector<std::string> history);
         /**
          * Get an account pointer
          * @param accountID account ID to get

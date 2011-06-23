@@ -50,8 +50,7 @@ HistoryItem::HistoryItem (std::string timestamp_start, CallType call_type, std::
 }
 
 
-HistoryItem::HistoryItem (std::string timestamp, std::string serialized_form)
-    : _timestamp_start (timestamp)
+HistoryItem::HistoryItem (std::string serialized_form)
 {
     size_t pos;
     std::string tmp, id, name, number, start, stop, account, recordFile;
@@ -69,26 +68,26 @@ HistoryItem::HistoryItem (std::string timestamp, std::string serialized_form)
                 break;
             case 1: // The number field
                 number = tmp;
-		_error("Unserialized number: %s", tmp.c_str());
+		_error("Serialized number: %s", tmp.c_str());
                 break;
             case 2: // The name field
                 name = tmp;
-		_error("Unserialized name: %s", tmp.c_str());
+		_error("Serialized name: %s", tmp.c_str());
                 break;
             case 3: // The start timestamp
-		_error("Unserialized time start: %s", tmp.c_str());
+		_error("Serialized time start: %s", tmp.c_str());
                 start = tmp;
                 break;
 	    case 4: // The end timestamp
-		_error("Unserialized time stop: %s", tmp.c_str());
+		_error("Serialized time stop: %s", tmp.c_str());
 		stop = tmp;
 		break;
             case 5: // The account ID
-		_error("Unserialized account: %s", tmp.c_str());
+		_error("Serialized account: %s", tmp.c_str());
                 account = tmp;
                 break;
             case 6: // The recorded file name
-		_error("Unserialized recordfile: %s", tmp.c_str());
+		_error("Serialized recordfile: %s", tmp.c_str());
 		recordFile = tmp;
 		break;
             default: // error
@@ -103,6 +102,7 @@ HistoryItem::HistoryItem (std::string timestamp, std::string serialized_form)
 
     _number = number;
     (name == EMPTY_STRING) ? _name = "" : _name = name;
+    _timestamp_start = start;
     _timestamp_stop = stop;
     (serialized_form == EMPTY_STRING) ? _account_id = "" : _account_id=tmp;
 }
@@ -122,6 +122,14 @@ bool HistoryItem::save (Conf::ConfigTree **history)
     // The section is : "[" + timestamp = "]"
     section = get_timestamp ();
     call_type << _call_type;
+
+    _error("Unserialized type: %s", call_type.str().c_str());
+    _error("Unserialized time start: %s", _timestamp_start.c_str());
+    _error("Unserialized time stop: %s", _timestamp_stop.c_str());
+    _error("Unserialized number: %s", _number.c_str());
+    _error("Unserialized account: %s", _account_id.c_str());
+    _error("Unserialized name: %s", _name.c_str());
+    _error("Unserialized record file: %s", _recording_file.c_str());
 
     res = ( (*history)->setConfigTreeItem (section, "type", call_type.str())
 	    && (*history)->setConfigTreeItem (section, "timestamp_start", _timestamp_start)

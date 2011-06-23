@@ -39,7 +39,7 @@
 
 #define DAY_UNIX_TIMESTAMP      86400   // Number of seconds in one day: 60 x 60 x 24
 
-typedef std::map <std::string, HistoryItem*> HistoryItemMap;
+typedef std::vector <HistoryItem *> HistoryItemMap;
 
 class HistoryManager
 {
@@ -105,9 +105,9 @@ class HistoryManager
             return _history_items.size ();
         }
 
-        std::map <std::string, std::string> get_history_serialized (void);
+        std::vector<std::string> get_history_serialized (void);
 
-        int set_serialized_history (std::map <std::string, std::string> history, int limit);
+        int set_serialized_history (std::vector<std::string> history, int limit);
 
     private:
         int get_unix_timestamp_equivalent (int days) const {

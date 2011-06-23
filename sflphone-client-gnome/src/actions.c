@@ -57,6 +57,83 @@
 
 static GHashTable * ip2ip_profile=NULL;
 
+static void sflphone_order_history_hash_table(GHashTable *result, gchar ***ordered_output_list) 
+{
+    GHashTableIter iter;
+    gchar **ordered_list;
+    gint timestamp, min_timestamp;
+    gpointer key, key_to_min, value;
+    gboolean is_first;
+    gint c = 0;
+    
+    if(result == NULL) {
+        ERROR("SFLphone: Hash table is NULL");
+	return;
+    }
+
+    if(ordered_output_list == NULL) {
+        ERROR("SFLphone: Ordered result is NULL");
+	return;
+    }
+
+    ordered_list = (void *) malloc(sizeof(void *));
+    if(ordered_list == NULL) {
+	ERROR("SFLphone: Error could not allocate memory for ordered list");
+        return;
+    }
+
+    while (g_hash_table_size (result)) {
+
+        is_first = TRUE;
+
+        // find lowest timestamp in map
+        g_hash_table_iter_init (&iter, result);
+
+        while (g_hash_table_iter_next (&iter, &key, &value))  {
+
+            timestamp = atoi ( (gchar*) key);
+
+            if (is_first) {
+
+                // first iteration of the loop, init search
+                min_timestamp = timestamp;
+                key_to_min = key;
+
+                is_first = FALSE;
+            } else {
+
+                // if lower, replace
+                if (timestamp < min_timestamp) {
+
+                    min_timestamp = timestamp;
+                    key_to_min = key;
+                }
+            }
+        }
+
+	if(g_hash_table_lookup_extended(result, key_to_min, &key, &value)) {
+
+	    GSList *llist = (GSList *)value;
+ 	    
+	    while(llist) {
+		if(c != 0)
+		    ordered_list = (void *) realloc(ordered_list, (c + 1)*sizeof(void *));
+
+		*(ordered_list + c) = g_strdup((gchar *)llist->data);
+		c++;
+		llist = g_slist_next(llist);
+ 	    } 	
+		
+	    g_hash_table_remove(result, key_to_min);
+        }
+    }
+
+    ordered_list = (void *) realloc(ordered_list, (c + 1) * sizeof(void *));
+    *(ordered_list + c) = NULL;
+
+    *ordered_output_list = ordered_list;
+}
+
 void
 sflphone_notify_voice_mail (const gchar* accountID , guint count)
 {
@@ -1271,83 +1348,41 @@ void sflphone_fill_conference_list (void)
 
 void sflphone_fill_history (void)
 {
-    GHashTable *entries;
-    GHashTableIter iter;
-    gpointer key, value;
-    gpointer key_to_min = NULL;
+    gchar **entries, *current_entry;
     callable_obj_t *history_entry;
     conference_obj_t *conference_entry;
-    int timestamp = 0;
-    int min_timestamp = 0;
 
-    gboolean is_first;
-
-    DEBUG ("======================================================== SFLphone: Loading history");
+    DEBUG ("======================================================= SFLphone: Loading history");
 
     entries = dbus_get_history ();
 
-    if (entries) {
+    while (*entries) {
+    	const gchar *delim = "|";
+	gchar **ptr;
 
-        while (g_hash_table_size (entries)) {
+        current_entry = *entries;
 
-            is_first = TRUE;
+	ptr = g_strsplit(current_entry, delim, 6);
+	if(ptr != NULL) {
 
-            // find lowest timestamp in map
-            g_hash_table_iter_init (&iter, entries);
-
-            while (g_hash_table_iter_next (&iter, &key, &value))  {
-
-                timestamp = atoi ( (gchar*) key);
-
-                if (is_first) {
-
-                    // first iteration of the loop, init search
-                    min_timestamp = timestamp;
-                    key_to_min = key;
-
-                    is_first = FALSE;
-                } else {
-
-                    // if lower, replace
-                    if (timestamp < min_timestamp) {
-
-                        min_timestamp = timestamp;
-                        key_to_min = key;
-                    }
-                }
-            }
-
-            if (g_hash_table_lookup_extended (entries, key_to_min, &key, &value)) {
-
-		gchar **ptr;
-    		const gchar *delim = "|";
-
-
-	        ptr = g_strsplit(value, delim, 6);
-		if(ptr != NULL) {
-
-		    // first ptr refers to entry type
-		    if(g_strcmp0(*ptr, "2188") == 0) {
-			DEBUG("------------------------------- SFLphone: Serialized item: %s", *ptr);
-			create_conference_history_entry_from_serialized((gchar *)key, (gchar **)ptr, &conference_entry);
-			conferencelist_add (history, conference_entry);
-			conferencelist_add(current_calls, conference_entry);
-			calltree_add_conference (history, conference_entry);
-			g_hash_table_remove(entries, key_to_min);	
-		    }
-		    else {
-                        // do something with key and value
-                        create_history_entry_from_serialized_form ( (gchar*) key, (gchar **) ptr, &history_entry);
+	    // first ptr refers to entry type
+	    if(g_strcmp0(*ptr, "2188") == 0) {
+		DEBUG("------------------------------- SFLphone: Serialized item: %s", *ptr);
+		create_conference_history_entry_from_serialized(ptr, &conference_entry);
+		conferencelist_add (history, conference_entry);
+		conferencelist_add(current_calls, conference_entry);
+		calltree_add_conference (history, conference_entry);
+	    }
+	    else {
+                // do something with key and value
+                create_history_entry_from_serialized_form (ptr, &history_entry);
                 
-		        // Add it and update the GUI
-                        calllist_add_call (history, history_entry);
-		        calltree_add_call (history, history_entry, NULL);
-                        // remove entry from map
-                        g_hash_table_remove (entries, key_to_min);
-		    }
-	        }
-            }
-        }
+		// Add it and update the GUI
+                calllist_add_call (history, history_entry);
+		calltree_add_call (history, history_entry, NULL);
+	    }
+	}
+	entries++;
     }
 
     DEBUG ("======================================================== SFLphone: Loading history ...(end)");
@@ -1360,11 +1395,14 @@ void sflphone_save_history (void)
     QueueElement *current;
     conference_obj_t *conf;
     GHashTable *result = NULL;
+    gchar **ordered_result;
     gchar *key, *value;
 
     DEBUG ("==================================================== SFLphone: Saving history");
 
     result = g_hash_table_new (NULL, g_str_equal);
+    g_hash_table_ref (result);
+
     size = calllist_get_size (history);
 
     for (i = 0; i < size; i++) {
@@ -1385,7 +1423,8 @@ void sflphone_save_history (void)
 		ERROR("SFLphone: Error: Unknown type for serialization");
             }
 
-            g_hash_table_replace (result, (gpointer) key, (gpointer) value);
+            g_hash_table_replace (result, (gpointer) key, 
+			g_slist_append(g_hash_table_lookup(result, key), (gpointer) value));
         } 
 	else {
 	    WARN("SFLphone: Warning: %dth element is null", i);
@@ -1407,13 +1446,23 @@ void sflphone_save_history (void)
 	else {
 	    WARN("SFLphone: Warning: %dth element is NULL", i);
         }
-	g_hash_table_replace(result, (gpointer)key, (gpointer)value);	
+	g_hash_table_replace(result, (gpointer)key, 
+			g_slist_append(g_hash_table_lookup(result, key), (gpointer)value));	
     }
+    
+    sflphone_order_history_hash_table(result, &ordered_result);
 
-    dbus_set_history (result);
+    gchar **testprnt = ordered_result;
+
+    while(*testprnt) {
+	DEBUG("ORDERED: %s", *testprnt);
+	testprnt++;
+    } 
+
+    dbus_set_history (ordered_result);
 
     // Decrement the reference count
-    g_hash_table_unref (result);
+    g_hash_table_unref (ordered_result);
 
     
     DEBUG ("==================================================== SFLphone: Saving history (end)");
