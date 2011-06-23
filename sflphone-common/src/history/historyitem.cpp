@@ -114,14 +114,16 @@ HistoryItem::~HistoryItem ()
 
 bool HistoryItem::save (Conf::ConfigTree **history)
 {
-
-    std::string section, timestamp;
+    std::stringstream section;
     std::stringstream call_type;
+    std::string sectionstr;
     bool res;
 
     // The section is : "[" + timestamp = "]"
-    section = get_timestamp ();
+    section << rand();
     call_type << _call_type;
+
+    sectionstr = section.str();
 
     _error("Unserialized type: %s", call_type.str().c_str());
     _error("Unserialized time start: %s", _timestamp_start.c_str());
@@ -131,13 +133,13 @@ bool HistoryItem::save (Conf::ConfigTree **history)
     _error("Unserialized name: %s", _name.c_str());
     _error("Unserialized record file: %s", _recording_file.c_str());
 
-    res = ( (*history)->setConfigTreeItem (section, "type", call_type.str())
-	    && (*history)->setConfigTreeItem (section, "timestamp_start", _timestamp_start)
-            && (*history)->setConfigTreeItem (section, "timestamp_stop", _timestamp_stop)
-            && (*history)->setConfigTreeItem (section, "number", _number)
-            && (*history)->setConfigTreeItem (section, "accountid", _account_id)
-            && (*history)->setConfigTreeItem (section, "name", _name)
-	    && (*history)->setConfigTreeItem (section, "recordfile", _recording_file));
+    res = ( (*history)->setConfigTreeItem (sectionstr, "type", call_type.str())
+	    && (*history)->setConfigTreeItem (sectionstr, "timestamp_start", _timestamp_start)
+            && (*history)->setConfigTreeItem (sectionstr, "timestamp_stop", _timestamp_stop)
+            && (*history)->setConfigTreeItem (sectionstr, "number", _number)
+            && (*history)->setConfigTreeItem (sectionstr, "accountid", _account_id)
+            && (*history)->setConfigTreeItem (sectionstr, "name", _name)
+	    && (*history)->setConfigTreeItem (sectionstr, "recordfile", _recording_file));
 
     return res;
 }

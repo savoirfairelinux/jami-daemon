@@ -45,7 +45,6 @@ HistoryManager::HistoryManager ()
 HistoryManager::~HistoryManager ()
 {
     HistoryItemMap::iterator iter = _history_items.begin();
-
     HistoryItem * item;
 
     while (iter != _history_items.end()) {
@@ -63,6 +62,8 @@ int HistoryManager::load_history (int limit, std::string path)
 {
     Conf::ConfigTree history_list;
 
+    _debug("HistoryManager: Load history");
+
     create_history_path (path);
     load_history_from_file (&history_list);
     return load_history_items_map (&history_list, limit);
@@ -71,6 +72,8 @@ int HistoryManager::load_history (int limit, std::string path)
 bool HistoryManager::save_history (void)
 {
     Conf::ConfigTree history_list;
+
+    _debug("HistoryManager: Save history");
 
     save_history_items_map (&history_list);
     return save_history_to_file (&history_list);
@@ -154,6 +157,8 @@ int HistoryManager::save_history_items_map (Conf::ConfigTree *history_list)
     HistoryItemMap::iterator iter;
     HistoryItem *item;
     int items_saved = 0;
+
+    _debug("HistoryManager: Save history items map");
 
     iter = _history_items.begin ();
 
@@ -246,6 +251,8 @@ std::vector<std::string> HistoryManager::get_history_serialized (void)
     HistoryItem *current;
     std::string res;
 
+    _debug("HistoryManager: Get history serialized");
+
     iter = _history_items.begin ();
 
     while (iter != _history_items.end()) {
@@ -271,6 +278,8 @@ int HistoryManager::set_serialized_history (std::vector<std::string> history, in
     int items_added = 0;
     int history_limit;
     time_t current_timestamp;
+
+    _debug("HistoryManager: Set serialized history");
 
     // Clear the existing history
     _history_items.clear ();
