@@ -225,22 +225,6 @@ class Call: public Recordable
         }
 
         /**
-         * Set the audio port that remote will see.
-         * @param port  The external audio port
-         */
-        void setLocalExternAudioPort (unsigned int port) {
-            _localExternalAudioPort = port;
-        }
-
-        /**
-         * Return the audio port seen by the remote side.
-         * @return unsigned int The external audio port
-         */
-        unsigned int getLocalExternAudioPort() const {
-            return _localExternalAudioPort;
-        }
-
-        /**
          * Return my IP [mutex protected]
          * @return std::string The local IP
          */
@@ -262,7 +246,7 @@ class Call: public Recordable
 
         virtual bool setRecording (void);
 
-    protected:
+    private:
         /** Protect every attribute that can be changed by two threads */
         ost::Mutex _callMutex;
 
@@ -273,12 +257,6 @@ class Call: public Recordable
 
         /** Local audio port, as seen by me. */
         unsigned int _localAudioPort;
-
-        /** Port assigned to my machine by the NAT, as seen by remote peer (he connects there) */
-        unsigned int _localExternalAudioPort;
-
-
-    private:
 
         /** Unique ID of the call */
         CallID _id;
