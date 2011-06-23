@@ -203,8 +203,16 @@ void VideoReceiveThread::setup()
         }
     }
 
+    AVDictionary *options = NULL;
+    if (!args_["framerate"].empty())
+        av_dict_set(&options, "framerate", args_["framerate"].c_str(), 0);
+    if (!args_["video_size"].empty())
+        av_dict_set(&options, "video_size", args_["video_size"].c_str(), 0);
+    if (!args_["channel"].empty())
+        av_dict_set(&options, "channel", args_["channel"].c_str(), 0);
+
     // Open video file
-    if (avformat_open_input(&inputCtx_, args_["input"].c_str(), file_iformat, NULL) != 0)
+    if (avformat_open_input(&inputCtx_, args_["input"].c_str(), file_iformat, &options) != 0)
     {
         std::cerr <<  "Could not open input file " << args_["input"] <<
             std::endl;
