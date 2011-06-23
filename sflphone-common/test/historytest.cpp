@@ -129,13 +129,13 @@ void HistoryTest::test_get_history_serialized()
 {
     _debug ("-------------------- HistoryTest::test_get_history_serialized --------------------\n");
 
-    std::map<std::string, std::string> res;
-    std::map<std::string, std::string>::iterator iter;
+    std::vector<std::string> res;
+    std::vector<std::string>::iterator iter;
     std::string tmp;
 
     CPPUNIT_ASSERT (history->load_history (HUGE_HISTORY_LIMIT, HISTORY_SAMPLE) == HISTORY_SAMPLE_SIZE);
     res = history->get_history_serialized();
-    CPPUNIT_ASSERT (res.size() ==HISTORY_SAMPLE_SIZE);
+    CPPUNIT_ASSERT (res.size() == HISTORY_SAMPLE_SIZE);
 
 
     // Warning - If you change the history-sample file, you must change the following lines also so that the tests could work
@@ -143,13 +143,14 @@ void HistoryTest::test_get_history_serialized()
     // The serialized form is: calltype%to%from%callid
 
     // Check the first
-    tmp = "0|514-276-5468|Savoir-faire Linux|144562458|empty|";
-	std::cout << res ["144562436"] << std::endl;
-    CPPUNIT_ASSERT (Validator::isEqual (tmp, res ["144562436"]));
+    tmp = "0|514-276-5468|Savoir-faire Linux|144562000|144562458|empty|";
+    std::cout << res[0] << std::endl;
+    CPPUNIT_ASSERT (Validator::isEqual (tmp, res[0]));
 
     // the account ID does not correspond to a loaded account
-    tmp = "1|5143848557|empty|775354987|empty|";
-    CPPUNIT_ASSERT (Validator::isEqual (tmp, res ["775354456"]));
+    tmp = "2|136|Emmanuel Milou|747638685|747638765|empty|"; 
+    std::cout << res[1] << std::endl;
+    CPPUNIT_ASSERT (Validator::isEqual (tmp, res[1]));
 }
 
 void HistoryTest::test_set_serialized_history()
@@ -157,30 +158,30 @@ void HistoryTest::test_set_serialized_history()
     _debug ("-------------------- HistoryTest::test_set_serialized_history --------------------\n");
 
     // We build a map to have an efficient test
-    std::map<std::string, std::string> map_test;
+    std::vector<std::string> test_vector;
     std::string tmp;
     Conf::ConfigTree history_list;
 
-    map_test["144562436"] = "0|514-276-5468|Savoir-faire Linux|144562458|empty|";
-    map_test["747638685"] = "2|136|Emmanuel Milou|747638765|Account:1239059899|";
-    map_test["775354456"] = "1|5143848557|empty|775354987|Account:43789459478|";
+    test_vector.push_back("0|514-276-5468|Savoir-faire Linux|144562000|144562458|empty|");
+    test_vector.push_back("2|136|Emmanuel Milou|747638685|747638765|Account:1239059899|");
+    test_vector.push_back("1|5143848557|empty|775354456|775354987|Account:43789459478|");
 
     CPPUNIT_ASSERT (history->load_history (HUGE_HISTORY_LIMIT, HISTORY_SAMPLE) == HISTORY_SAMPLE_SIZE);
     // We use a large history limit to be able to interpret results
-    CPPUNIT_ASSERT (history->set_serialized_history (map_test, HUGE_HISTORY_LIMIT) == 3);
+    CPPUNIT_ASSERT (history->set_serialized_history (test_vector, HUGE_HISTORY_LIMIT) == 3);
     CPPUNIT_ASSERT (history->get_history_size () == 3);
 
-    map_test.clear();
-    map_test = history->get_history_serialized();
-    CPPUNIT_ASSERT (map_test.size() ==3);
+    test_vector.clear();
+    test_vector = history->get_history_serialized();
+    CPPUNIT_ASSERT (test_vector.size() == 3);
 
     // Check the first
-    tmp = "0|514-276-5468|Savoir-faire Linux|144562458|empty|";
-    CPPUNIT_ASSERT (Validator::isEqual (tmp, map_test ["144562436"]));
+    tmp = "0|514-276-5468|Savoir-faire Linux|144562000|144562458|empty|";
+    CPPUNIT_ASSERT (Validator::isEqual (tmp, test_vector[0])); 
 
     // the account ID does not correspond to a loaded account
-    tmp = "1|5143848557|empty|775354987|empty|";
-    CPPUNIT_ASSERT (Validator::isEqual (tmp, map_test ["775354456"]));
+    tmp = "2|136|Emmanuel Milou|747638685|747638765|empty|";
+    CPPUNIT_ASSERT (Validator::isEqual (tmp, test_vector[1]));
 
     history->save_history_items_map (&history_list);
     CPPUNIT_ASSERT (history->save_history_to_file (&history_list));
@@ -191,36 +192,33 @@ void HistoryTest::test_set_serialized_history_with_limit()
     _debug ("-------------------- HistoryTest::test_set_serialized_history_with_limit --------------------\n");
 
     // We build a map to have an efficient test
-    std::map<std::string, std::string> map_test;
+    std::vector<std::string> test_vector;
     std::string tmp;
+    
     Conf::ConfigTree history_list;
     time_t current, day = 86400; // One day in unix timestamp
     std::stringstream current_1, current_2, current_3;
-
     (void) time (&current);
-    current_1 << (current - 2 * day) << std::endl;
-    current_2 << (current - 5 * day) << std::endl;
-    current_3 << (current - 11 * day) << std::endl;
+    current_1 << "0|514-276-5468|Savoir-faire Linux|" << (current - 2 * day) << "|144562458|empty|" << std::endl;
+    current_2 << "2|136|Emmanuel Milou|" << (current - 5 * day) << "|747638765|Account:1239059899|" << std::endl;
+    current_3 << "1|5143848557|empty|" << (current - 11 * day) << "|775354987|Account:43789459478|" << std::endl;
 
-    map_test[current_1.str() ]
-    = "0|514-276-5468|Savoir-faire Linux|144562458|empty|";
-    map_test[current_2.str() ]
-    = "2|136|Emmanuel Milou|747638765|Account:1239059899|";
-    map_test[current_3.str() ]
-    = "1|5143848557|empty|775354987|Account:43789459478|";
+    test_vector.push_back(current_1.str());
+    test_vector.push_back(current_2.str());
+    test_vector.push_back(current_3.str());
 
     CPPUNIT_ASSERT (history->load_history (HUGE_HISTORY_LIMIT, HISTORY_SAMPLE) == HISTORY_SAMPLE_SIZE);
     // We use different value of history limit
     // 10 days - the last entry should not be saved
-    CPPUNIT_ASSERT (history->set_serialized_history (map_test, 10) == 2);
+    CPPUNIT_ASSERT (history->set_serialized_history (test_vector, 10) == 2);
     CPPUNIT_ASSERT (history->get_history_size () == 2);
 
     //  4 days - the two last entries should not be saved
-    CPPUNIT_ASSERT (history->set_serialized_history (map_test, 4) == 1);
+    CPPUNIT_ASSERT (history->set_serialized_history (test_vector, 4) == 1);
     CPPUNIT_ASSERT (history->get_history_size () == 1);
 
     //  1 day - no entry should not be saved
-    CPPUNIT_ASSERT (history->set_serialized_history (map_test, 1) == 0);
+    CPPUNIT_ASSERT (history->set_serialized_history (test_vector, 1) == 0);
     CPPUNIT_ASSERT (history->get_history_size () == 0);
 }
 
