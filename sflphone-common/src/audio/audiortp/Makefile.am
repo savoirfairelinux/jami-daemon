@@ -14,7 +14,6 @@ noinst_HEADERS = \
 		AudioRtpRecordHandler.h \
 		AudioRtpFactory.h \
 		AudioRtpSession.h \
-		AudioSymmetricRtpSession.h \
 		AudioZrtpSession.h \
 		ZrtpSessionCallback.h \
 		AudioSrtpSession.h 
