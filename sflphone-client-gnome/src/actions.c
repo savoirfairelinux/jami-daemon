@@ -76,7 +76,7 @@ static void sflphone_order_history_hash_table(GHashTable *result, gchar ***order
 	return;
     }
 
-    ordered_list = (void *) malloc(sizeof(void *));
+    ordered_list = (void *) g_malloc(sizeof(void *));
     if(ordered_list == NULL) {
 	ERROR("SFLphone: Error could not allocate memory for ordered list");
         return;
@@ -117,7 +117,7 @@ static void sflphone_order_history_hash_table(GHashTable *result, gchar ***order
  	    
 	    while(llist) {
 		if(c != 0)
-		    ordered_list = (void *) realloc(ordered_list, (c + 1)*sizeof(void *));
+		    ordered_list = (void *) g_realloc(ordered_list, (c + 1)*sizeof(void *));
 
 		*(ordered_list + c) = g_strdup((gchar *)llist->data);
 		c++;
@@ -128,7 +128,7 @@ static void sflphone_order_history_hash_table(GHashTable *result, gchar ***order
         }
     }
 
-    ordered_list = (void *) realloc(ordered_list, (c + 1) * sizeof(void *));
+    ordered_list = (void *) g_realloc(ordered_list, (c + 1) * sizeof(void *));
     *(ordered_list + c) = NULL;
 
     *ordered_output_list = ordered_list;
@@ -1462,9 +1462,14 @@ void sflphone_save_history (void)
     dbus_set_history (ordered_result);
 
     // Decrement the reference count
-    g_hash_table_unref (ordered_result);
+    g_hash_table_unref (result);
+   
+    while(*ordered_result) {
+       g_free(*ordered_result);
+       ordered_result++;
+    }
+    g_free(ordered_result);
 
-    
     DEBUG ("==================================================== SFLphone: Saving history (end)");
 }
 
