@@ -302,7 +302,7 @@ void VideoSendThread::cleanup()
     // before you close the CodecContexts open when you wrote the
     // header; otherwise write_trailer may try to use memory that
     // was freed on av_codec_close()
-    if (outputCtx_)
+    if (outputCtx_ and outputCtx_->priv_data)
         av_write_trailer(outputCtx_);
 
     if (scaledPictureBuf_)
