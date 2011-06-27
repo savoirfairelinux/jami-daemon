@@ -249,8 +249,6 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
 
     // Set the IDs
     obj->_callID = g_strdup (call_id);
-    obj->_confID = NULL;
-
     obj->clockStarted = 1;
 
     if (obj->_type == CALL) {
@@ -262,6 +260,7 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
     }
 
     obj->_confID = NULL;
+    obj->_historyConfID = NULL;
     obj->_time_added = 0;
 
     *new_call = obj;
@@ -364,6 +363,7 @@ void create_history_entry_from_serialized_form (gchar *entry, callable_obj_t **c
     new_call->_time_stop = convert_gchar_to_timestamp (time_stop);
     new_call->_recordfile = g_strdup(recordfile);
     new_call->_confID = g_strdup(confID);
+    new_call->_historyConfID = g_strdup(confID);
     new_call->_time_added = convert_gchar_to_timestamp(time_start);
 
     *call = new_call;
@@ -483,7 +483,9 @@ gchar* serialize_history_call_entry (callable_obj_t *entry)
     peer_number = (entry->_peer_number == NULL) ? "" : entry->_peer_number;
     peer_name = (entry->_peer_name == NULL || g_strcasecmp (entry->_peer_name,"") == 0) ? "empty": entry->_peer_name;
     account_id = (entry->_accountID == NULL || g_strcasecmp (entry->_accountID,"") == 0) ? "empty": entry->_accountID;
-    confID = (entry->_confID == NULL) ? "" : entry->_confID;
+
+    confID = (entry->_historyConfID == NULL) ? "" : entry->_historyConfID;
+    DEBUG("==================================== SERIALIZE: CONFID %s", confID);
 
     record_file = g_strdup((entry->_recordfile == NULL) ? "" : entry->_recordfile);
 

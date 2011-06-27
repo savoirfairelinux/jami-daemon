@@ -1691,8 +1691,6 @@ static void drag_end_cb (GtkWidget * widget UNUSED, GdkDragContext * context UNU
                         calltree_add_call (current_calls, selected_call, NULL);
                         gtk_menu_popup (GTK_MENU (popupmenu), NULL, NULL, NULL, NULL,
                                                0, 0);
-
-                        // sflphone_join_participant (selected_call->_callID, dragged_call->_callID);
                     }
                 }
             } else if (selected_type == A_CALL && dragged_type == A_CONFERENCE) {
@@ -1704,6 +1702,11 @@ static void drag_end_cb (GtkWidget * widget UNUSED, GdkDragContext * context UNU
                 }
 
                 selected_call->_confID = g_strdup (dragged_call_id);
+		if(selected_call->_historyConfID != NULL) {
+		    g_free(selected_call->_historyConfID);
+		    selected_call->_historyConfID = NULL;
+		}
+		selected_call->_historyConfID = g_strdup(dragged_call_id);
                 sflphone_add_participant (selected_call_id, dragged_call_id);
             } else if (selected_type == A_CONFERENCE && dragged_type == A_CALL) {
 
@@ -1774,7 +1777,6 @@ static void drag_end_cb (GtkWidget * widget UNUSED, GdkDragContext * context UNU
                 sflphone_detach_participant (selected_call_id);
 
                 if (selected_call != NULL && dragged_call != NULL) {
-                    // sflphone_join_participant (selected_call->_callID, dragged_call->_callID);
                     gtk_menu_popup (GTK_MENU (popupmenu), NULL, NULL, NULL, NULL,
                                                                    0, 0);
 
