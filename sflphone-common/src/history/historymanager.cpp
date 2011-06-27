@@ -261,6 +261,8 @@ std::vector<std::string> HistoryManager::get_history_serialized (void)
 
     iter = _history_items.begin ();
 
+    _error("HistoryManager: History items size: %d", _history_items.size());
+
     while (iter != _history_items.end()) {
         current = *iter;
 

@@ -355,16 +355,18 @@ update_actions()
             case CONFERENCE_STATE_ACTIVE_ATACHED:
             case CONFERENCE_STATE_ACTIVE_DETACHED:
 		DEBUG("UIManager: Conference State Active");
-                gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
-                gtk_widget_set_sensitive (GTK_WIDGET (holdToolbar), TRUE);
-                gtk_action_set_sensitive (GTK_ACTION (recordAction), TRUE);
-                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
-                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar), 2);
-                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget), 3);
-                if (instant_messaging_enabled) {
-                    gtk_action_set_sensitive (GTK_ACTION (imAction), TRUE);
-                    gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (imToolbar), 4);
-                }
+		if(active_calltree == current_calls) {
+                    gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
+                    gtk_widget_set_sensitive (GTK_WIDGET (holdToolbar), TRUE);
+                    gtk_action_set_sensitive (GTK_ACTION (recordAction), TRUE);
+                    gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
+                    gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar), 2);
+                    gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget), 3);
+                    if (instant_messaging_enabled) {
+                        gtk_action_set_sensitive (GTK_ACTION (imAction), TRUE);
+                        gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (imToolbar), 4);
+                    }
+		}
                 break;
             case CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD:
             case CONFERENCE_STATE_ACTIVE_DETACHED_RECORD:

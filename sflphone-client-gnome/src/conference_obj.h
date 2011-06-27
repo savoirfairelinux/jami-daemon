@@ -76,7 +76,7 @@ void create_new_conference_from_details (const gchar *, GHashTable *, conference
 
 void free_conference_obj_t (conference_obj_t *c);
 
-void conference_add_participatn (const gchar*, conference_obj_t *);
+void conference_add_participant (const gchar*, conference_obj_t *);
 
 void conference_remove_participant (const gchar*, conference_obj_t *);
 

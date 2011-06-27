@@ -173,7 +173,7 @@ conference_obj_t* conferencelist_get (calltab_t *tab, const gchar* conf_id)
 
     if(tab == NULL) {
 	ERROR("ConferenceList: Error: Calltab is NULL");
-	return;
+	return NULL;
     } 
 
     c = g_queue_find_custom (tab->conferenceQueue, conf_id, is_confID_confstruct);
@@ -203,7 +203,7 @@ conference_obj_t* conferencelist_get_nth (calltab_t *tab, guint n)
 	return NULL;
     }
 
-    return (conference_obj_t*) c->data;
+    return (conference_obj_t*) c;
 }
 
 conference_obj_t *conferencelist_pop_head(calltab_t *tab)
