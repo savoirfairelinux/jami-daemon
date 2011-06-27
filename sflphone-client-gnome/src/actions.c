@@ -1127,7 +1127,22 @@ sflphone_join_participant (const gchar* sel_callID, const gchar* drag_callID)
 void
 sflphone_add_participant (const gchar* callID, const gchar* confID)
 {
-    DEBUG ("sflphone add participant %s to conference %s", callID, confID);
+    GtkTreeIter iter;
+    callable_obj_t *call;
+
+    DEBUG (">SFLphone: Add participant %s to conference %s", callID, confID);
+
+    call = calllist_get_call(current_calls, callID);
+    if(call == NULL) {
+	ERROR("SFLphone: Error: Could not find call");
+	return;
+    }
+
+    set_timestamp(&call->_time_added);
+
+    iter = calltree_get_gtkiter_from_id(history, confID);
+
+    calltree_add_call(history, call, &iter);
 
     dbus_add_participant (callID, confID);
 }

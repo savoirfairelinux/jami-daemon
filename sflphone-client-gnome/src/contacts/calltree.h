@@ -122,4 +122,13 @@ row_activated (GtkTreeView *, GtkTreePath *, GtkTreeViewColumn *, void *);
 void
 calltree_update_clock();
 
+/**
+ * Get the iter to a row provided the callID/confID
+ * @param The calltab (current_calls, history, contacts)
+ * @param The callID/confID
+ * @return The 
+ */
+GtkTreeIter 
+calltree_get_gtkiter_from_id(calltab_t *, gchar *);
+
 #endif

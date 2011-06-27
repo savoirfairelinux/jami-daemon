@@ -1050,7 +1050,6 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
         WARN ("CallTree: This widget doesn't exist - This is a bug in the application.");
     }
 
-
     //Resize it
     if (pixbuf) {
         if (gdk_pixbuf_get_width (pixbuf) > 32 || gdk_pixbuf_get_height (pixbuf) > 32) {
@@ -1651,7 +1650,7 @@ static void drag_end_cb (GtkWidget * widget UNUSED, GdkDragContext * context UNU
                 if (selected_call->_confID) {
 
                     gtk_tree_path_up (spath);
-                    gtk_tree_model_get_iter (GTK_TREE_MODEL (model), &parent_conference, spath);
+                gtk_tree_model_get_iter (GTK_TREE_MODEL (model), &parent_conference, spath);
 
                     calltree_add_call (current_calls, selected_call, &parent_conference);
                 } else {
@@ -1718,7 +1717,7 @@ static void drag_end_cb (GtkWidget * widget UNUSED, GdkDragContext * context UNU
 		    selected_call->_historyConfID = NULL;
 		}
 		selected_call->_historyConfID = g_strdup(dragged_call_id);
-                sflphone_add_participant (selected_call_id, dragged_call_id);
+	        sflphone_add_participant (selected_call_id, dragged_call_id);
             } else if (selected_type == A_CONFERENCE && dragged_type == A_CALL) {
 
                 // dragged a conference on a single call
@@ -1726,7 +1725,6 @@ static void drag_end_cb (GtkWidget * widget UNUSED, GdkDragContext * context UNU
 
                 calltree_remove_conference (current_calls, conf, NULL);
                 calltree_add_conference (current_calls, conf);
-
 
             } else if (selected_type == A_CONFERENCE && dragged_type == A_CONFERENCE) {
 
@@ -1992,6 +1990,40 @@ static void menuitem_response( gchar *string )
     // The create conference option will hide if tow call from the same conference are draged on each other
     gtk_widget_show(menu_items);
 
-    printf ("%s\n", string);
+    printf("%s\n", string);
 }
 
+GtkTreeIter calltree_get_gtkiter_from_id(calltab_t *tab, gchar *id)
+{
+    GtkTreeIter iter;
+    GValue val;
+    GtkTreeModel *tree_model;
+    conference_obj_t *conf;
+    callable_obj_t *call;
+
+    tree_model = GTK_TREE_MODEL(tab->store);
+
+    gtk_tree_model_get_iter_first(tree_model, &iter);
+
+    while(gtk_tree_model_iter_next(tree_model, &iter)) {
+        val.g_type = 0;
+        gtk_tree_model_get_value (tree_model, &iter, COLUMN_ACCOUNT_PTR, &val);
+	
+        if(gtk_tree_model_iter_has_child(tree_model, &iter)) {
+            conf = (conference_obj_t *) g_value_get_pointer (&val);
+
+	    if(g_strcmp0(conf->_confID, id) == 0) {
+		return iter;
+	    }
+	}
+	else {
+	    call = (callable_obj_t *) g_value_get_pointer(&val);
+
+	    if(g_strcmp0(call->_callID, id) == 0) {
+	        return iter;
+	    }
+	}
+    }
+
+    return iter;
+}
