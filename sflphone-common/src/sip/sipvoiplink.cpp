@@ -724,6 +724,7 @@ Call *SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) 
 		_info ("UserAgent: Start audio rtp session");
 		call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
 		_info ("UserAgent: Start video rtp session");
+        call->getVideoRtp()->updateDestination(call->getLocalIp(), call->getLocalVideoPort());
 		call->getVideoRtp()->start();
 	} catch (...) {
 		throw VoipLinkException ("Could not start rtp session for early media");
@@ -1030,6 +1031,7 @@ SIPVoIPLink::offhold (const CallID& id) throw (VoipLinkException)
         call->getAudioRtp()->initAudioRtpConfig (call);
         call->getAudioRtp()->initAudioSymmetricRtpSession (call);
         call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
+        call->getVideoRtp()->updateDestination(call->getLocalIp(), call->getLocalVideoPort());
         call->getVideoRtp()->start();
 
     }
@@ -1811,6 +1813,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const CallID& id, const std::string& to)
             call->getAudioRtp()->initAudioSymmetricRtpSession (call);
             call->getAudioRtp()->initLocalCryptoInfo (call);
             call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
+            call->getVideoRtp()->updateDestination(call->getLocalIp(), call->getLocalVideoPort());
             call->getVideoRtp()->start ();
         } catch (...) {
             _debug ("UserAgent: Unable to create RTP Session in new IP2IP call (%s:%d)", __FILE__, __LINE__);
@@ -3463,6 +3466,7 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
 
     try {
         call->getAudioRtp()->updateDestinationIpAddress();
+        call->getVideoRtp()->updateDestination(call->getLocalIp(), call->getLocalVideoPort());
         call->getAudioRtp()->setDtmfPayloadType(sdpSession->getTelephoneEventType());
     } catch (...) {
 
@@ -4068,6 +4072,8 @@ transaction_request_cb (pjsip_rx_data *rdata)
     try {
         _debug ("UserAgent: Create RTP session for this call");
         call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
+        call->getVideoRtp()->updateDestination(call->getLocalIp(), call->getLocalVideoPort());
+        call->getVideoRtp()->start();
     } catch (...) {
         _warn ("UserAgent: Error: Failed to create rtp thread from answer");
     }
@@ -4706,8 +4712,10 @@ bool setCallMediaLocal (SIPCall* call, const std::string &localIP)
 
         account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
 
-        // Setting Audio
+        // Setting Audio and Video
         unsigned int callLocalAudioPort = RANDOM_LOCAL_PORT;
+        unsigned int callLocalVideoPort = RANDOM_LOCAL_PORT;
+        assert(callLocalAudioPort != callLocalVideoPort);
         unsigned int callLocalExternAudioPort = callLocalAudioPort;
 
         if (account->isStunEnabled ()) {
@@ -4718,11 +4726,13 @@ bool setCallMediaLocal (SIPCall* call, const std::string &localIP)
 
         _debug ("UserAgent: Setting local ip address: %s", localIP.c_str());
         _debug ("UserAgent: Setting local audio port to: %d", callLocalAudioPort);
+        _debug ("UserAgent: Setting local video port to: %d", callLocalVideoPort);
         _debug ("UserAgent: Setting local audio port (external) to: %d", callLocalExternAudioPort);
 
         // Set local audio port for SIPCall(id)
         call->setLocalIp (localIP);
         call->setLocalAudioPort (callLocalAudioPort);
+        call->setLocalVideoPort (callLocalVideoPort);
 
         call->getLocalSDP()->setPortToAllMedia (callLocalExternAudioPort);
 

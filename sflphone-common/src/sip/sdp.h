@@ -224,10 +224,24 @@ class Sdp
         }
 
         /**
+         * @param Set the published video port
+         */
+        void  setLocalPublishedVideoPort (int port) {
+            localVideoPort_ = port;
+        }
+
+        /**
          * @return The published audio port
          */
         int  getLocalPublishedAudioPort (void) const {
             return localAudioPort_;
+        }
+
+        /**
+         * @return The published video port
+         */
+        int  getLocalPublishedVideoPort (void) const {
+            return localVideoPort_;
         }
 
         /**
@@ -255,6 +269,14 @@ class Sdp
         }
 
         /**
+         * Set remote's video port. [not protected]
+         * @param port  The remote video port
+         */
+        void setRemoteVideoPort (unsigned int port) {
+            remoteVideoPort_ = port;
+        }
+
+        /**
          * Return audio port at destination [mutex protected]
          * @return unsigned int The remote audio port
          */
@@ -262,6 +284,14 @@ class Sdp
             return remoteAudioPort_;
         }
 
+
+        /**
+         * Return video port at destination [mutex protected]
+         * @return unsigned int The remote video port
+         */
+        unsigned int getRemoteVideoPort() const {
+            return remoteVideoPort_;
+        }
 
         /**
          * Get media list for this session
@@ -369,9 +399,19 @@ class Sdp
         int localAudioPort_;
 
         /**
+         * Local video port
+         */
+        int localVideoPort_;
+
+        /**
          * Remote audio port
          */
         unsigned int remoteAudioPort_;
+
+        /**
+         * Remote video port
+         */
+        unsigned int remoteVideoPort_;
 
         /**
          * Zrtp hello hash
@@ -489,6 +529,11 @@ class Sdp
          * Mandatory field: Media descriptions ("m=")
          */
         void addAudioMediaDescription();
+
+        /*
+         * Mandatory field: Media descriptions ("m=")
+         */
+        void addVideoMediaDescription();
 
         /*
          * Adds a sdes attribute to the given media section.

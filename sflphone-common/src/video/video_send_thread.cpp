@@ -65,12 +65,15 @@ void VideoSendThread::print_and_save_sdp()
     std::ofstream sdp_file("test.sdp");
     std::istringstream iss(sdp);
     std::string line;
+    sdp_ = "";
     while (std::getline(iss, line))
     {
         /* strip windows line ending */
-        sdp_file << line.substr(0, line.length() - 1) << std::endl;
-        std::cerr << line << std::endl;
+        line = line.substr(0, line.length() - 1);
+        sdp_file << line << std::endl;
+        sdp_ += line + "\n";
     }
+    std::cerr << sdp_ << std::endl;
     sdp_file << std::endl;
     sdp_file.close();
     free(sdp);
@@ -349,7 +352,8 @@ VideoSendThread::VideoSendThread(const std::map<std::string, std::string> &args)
     encoderCtx_(0),
     videoStream_(0),
     inputCtx_(0),
-    outputCtx_(0)
+    outputCtx_(0),
+    sdp_("")
 {}
 
 void VideoSendThread::run()

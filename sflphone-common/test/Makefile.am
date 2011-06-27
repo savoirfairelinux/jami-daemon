@@ -42,15 +42,15 @@ test_SOURCES = \
 	gaincontroltest.cpp
 
 LLIBS=$(CPPUNIT_LIBS) \
-	../src/sflphoned-logger.o \
-	../src/sflphoned-managerimpl.o \
-	../src/sflphoned-account.o\
-	../src/sflphoned-accountcreator.o \
-	../src/sflphoned-call.o \
-	../src/sflphoned-conference.o \
-	../src/sflphoned-eventthread.o \
-	../src/sflphoned-managerimpl_registration.o \
-	../src/sflphoned-numbercleaner.o \
-	../src/sflphoned-voiplink.o \
-	../src/sflphoned-preferences.o \
+	../src/logger.o \
+	../src/managerimpl.o \
+	../src/account.o\
+	../src/accountcreator.o \
+	../src/call.o \
+	../src/conference.o \
+	../src/eventthread.o \
+	../src/managerimpl_registration.o \
+	../src/numbercleaner.o \
+	../src/voiplink.o \
+	../src/preferences.o \
 	../src/libsflphone.la

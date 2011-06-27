@@ -569,6 +569,21 @@ void Sdp::addAudioMediaDescription()
     }
 }
 
+
+void Sdp::addVideoMediaDescription()
+{
+#if 0
+    pjmedia_sdp_media* med;
+    int nb_media, i;
+
+    med = PJ_POOL_ZALLOC_T (memPool, pjmedia_sdp_media);
+    for (i=0; i<nb_media; i++) {
+        setMediaDescriptorLine (getLocalMediaCap() [i], &med);
+        localSession->media[i] = med;
+    }
+#endif
+}
+
 void Sdp::addSdesAttribute (const std::vector<std::string>& crypto)
 {
     // temporary buffer used to store crypto attribute

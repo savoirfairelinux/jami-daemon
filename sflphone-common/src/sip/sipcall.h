@@ -29,8 +29,8 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#ifndef SIPCALL_H
-#define SIPCALL_H
+#ifndef __SIPCALL_H__
+#define __SIPCALL_H__
 
 #include "call.h"
 
@@ -196,4 +196,4 @@ class SIPCall : public Call
 
 };
 
-#endif
+#endif // __SIPCALL_H__

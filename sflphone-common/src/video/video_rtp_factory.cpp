@@ -61,4 +61,11 @@ void VideoRtpFactory::stop()
     session_->stop();
 }
 
+void VideoRtpFactory::updateDestination(const std::string &dest,
+                                        unsigned int port)
+{
+    session_->updateDestination(dest, port);
+}
+
+
 } // end namespace sfl

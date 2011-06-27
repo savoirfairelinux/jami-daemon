@@ -39,6 +39,8 @@ class VideoRtpSession;
 class VideoRtpFactory {
     public:
         VideoRtpFactory();
+        void updateDestination(const std::string &dest,
+                               unsigned int port);
 
         /**
          * Start the video RTP thread of the type specified in the configuration

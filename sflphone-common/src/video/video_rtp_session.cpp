@@ -44,6 +44,15 @@ VideoRtpSession::VideoRtpSession(std::map<std::string,std::string> args) :
 {
 }
 
+void VideoRtpSession::updateDestination(const std::string &destination,
+        unsigned int port)
+{
+    std::stringstream tmp;
+    tmp << "rtp://" << destination << ":" << port;
+    args_["destination"] = tmp.str();
+    std::cerr << "updated dest to " << args_["destination"] << std::endl;
+}
+
 void VideoRtpSession::test()
 {
     assert(sendThread_.get() == 0);

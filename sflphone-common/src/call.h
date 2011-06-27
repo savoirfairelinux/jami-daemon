@@ -29,8 +29,8 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#ifndef CALL_H
-#define CALL_H
+#ifndef __CALL_H__
+#define __CALL_H__
 
 #include <cc++/thread.h> // for mutex
 #include <sstream>
@@ -306,4 +306,4 @@ class Call: public Recordable
         std::string _filename;
 };
 
-#endif
+#endif // __CALL_H__
