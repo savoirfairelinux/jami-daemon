@@ -1463,7 +1463,11 @@ void calltree_add_history_conference(conference_obj_t *conf)
             pixbuf = gdk_pixbuf_scale_simple(pixbuf, 32, 32, GDK_INTERP_BILINEAR);
 	}
     }
-
+    
+    date = get_formatted_start_timestamp(conf->_time_start);
+    description = g_strconcat(description, date, NULL);
+    gtk_tree_store_set(history->store, &iter, 0, pixbuf, 1, description, 2, NULL, 3, conf, -1);
+    
     conference_participant = conf->participant_list;
     if(conference_participant) {
         while(conference_participant) {
@@ -1476,12 +1480,8 @@ void calltree_add_history_conference(conference_obj_t *conf)
 		ERROR("ConferenceList: Error: Could not find call %s", call_id);
 	    }
  	    conference_participant = conference_next_participant(conference_participant); 
-        }   
+        }
     }
-    
-    date = get_formatted_start_timestamp(conf->_time_start);
-    description = g_strconcat(description, date, NULL);
-    gtk_tree_store_set(history->store, &iter, 0, pixbuf, 1, description, 2, NULL, 3, conf, -1);
 
     if(pixbuf != NULL) {
 	g_object_unref(G_OBJECT(pixbuf)); 
