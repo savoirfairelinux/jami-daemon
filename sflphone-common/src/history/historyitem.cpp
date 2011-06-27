@@ -38,14 +38,17 @@
 #define ITEM_SEPARATOR      "|"
 #define EMPTY_STRING        "empty"
 
-HistoryItem::HistoryItem (std::string timestamp_start, CallType call_type, std::string timestamp_stop, std::string name, std::string number, std::string account_id, std::string recording)
+HistoryItem::HistoryItem (std::string timestamp_start, CallType call_type, std::string timestamp_stop, std::string name, std::string number, std::string id, std::string account_id, std::string recording, std::string confID, std::string timeAdded)
     :	_timestamp_start (timestamp_start),
         _timestamp_stop (timestamp_stop),
         _call_type (call_type),
         _name (name),
         _number (number),
+	_id(id),
         _account_id (account_id),
-	_recording_file(recording)
+	_recording_file(recording),
+	_confID(confID),
+	_timeAdded(timeAdded)
 {
 }
 
@@ -53,8 +56,9 @@ HistoryItem::HistoryItem (std::string timestamp_start, CallType call_type, std::
 HistoryItem::HistoryItem (std::string serialized_form)
 {
     size_t pos;
-    std::string tmp, id, name, number, start, stop, account, recordFile;
-    int indice=0;
+    std::string tmp, type, name, number, start, stop, id, account, recordFile;
+    std::string confID, timeAdded;
+    int indice = 0;
 
     while (serialized_form.find (ITEM_SEPARATOR, 0) != std::string::npos) {
         pos = serialized_form.find (ITEM_SEPARATOR, 0);
@@ -63,8 +67,8 @@ HistoryItem::HistoryItem (std::string serialized_form)
 
         switch (indice) {
             case 0: // The call type
-                id = tmp;
-		_error("Unserialized id: %s", tmp.c_str());
+                type = tmp;
+		_error("Unserialized type: %s", tmp.c_str());
                 break;
             case 1: // The number field
                 number = tmp;
@@ -82,29 +86,47 @@ HistoryItem::HistoryItem (std::string serialized_form)
 		_error("Serialized time stop: %s", tmp.c_str());
 		stop = tmp;
 		break;
-            case 5: // The account ID
+	    case 5: // The ID
+		_error("Serialized id: %s", tmp.c_str());
+		id = tmp;
+		break;
+            case 6: // The account ID
 		_error("Serialized account: %s", tmp.c_str());
                 account = tmp;
                 break;
-            case 6: // The recorded file name
+            case 7: // The recorded file name
 		_error("Serialized recordfile: %s", tmp.c_str());
 		recordFile = tmp;
 		break;
+            case 8: // The conference ID
+	        _error("Serialized conferenceID: %s", tmp.c_str());
+		confID = tmp;
+		break;
+	    case 9: // The time
+		_error("Serialized timeadded: %s", tmp.c_str());
+		timeAdded = tmp;
+		break;
             default: // error
-                std::cout <<"[ERROR] unserialized form not recognized."<<std::endl;
+                std::cout << "[ERROR] unserialized form not recognized." << std::endl;
                 break;
         }
 
         indice ++;
     }
 
-    _call_type = (CallType) atoi (id.c_str());
+    _id = id;
+
+    _call_type = (CallType) atoi (type.c_str());
 
     _number = number;
     (name == EMPTY_STRING) ? _name = "" : _name = name;
     _timestamp_start = start;
     _timestamp_stop = stop;
-    (serialized_form == EMPTY_STRING) ? _account_id = "" : _account_id=tmp;
+    // (serialized_form == EMPTY_STRING) ? _account_id = "" : _account_id = tmp;
+    _account_id = account;
+
+    _confID = confID;
+    _timeAdded = timeAdded;
 }
 
 HistoryItem::~HistoryItem ()
@@ -125,22 +147,28 @@ bool HistoryItem::save (Conf::ConfigTree **history)
 
     sectionstr = section.str();
 
-    _error("Unserialized type: %s", call_type.str().c_str());
-    _error("Unserialized time start: %s", _timestamp_start.c_str());
-    _error("Unserialized time stop: %s", _timestamp_stop.c_str());
-    _error("Unserialized number: %s", _number.c_str());
-    _error("Unserialized account: %s", _account_id.c_str());
-    _error("Unserialized name: %s", _name.c_str());
-    _error("Unserialized record file: %s", _recording_file.c_str());
+    _error("-- Unserialized type: %s", call_type.str().c_str());
+    _error("-- Unserialized time start: %s", _timestamp_start.c_str());
+    _error("-- Unserialized time stop: %s", _timestamp_stop.c_str());
+    _error("-- Unserialized number: %s", _number.c_str());
+    _error("-- Unserialized id: %s", _id.c_str());
+    _error("-- Unserialized account: %s", _account_id.c_str());
+    _error("-- Unserialized name: %s", _name.c_str());
+    _error("-- Unserialized record file: %s", _recording_file.c_str());
+    _error("-- Unserialized conference id:%s", _confID.c_str());
+    _error("-- Unserialized time added: %s", _timeAdded.c_str());
 
     res = ( (*history)->setConfigTreeItem (sectionstr, "type", call_type.str())
 	    && (*history)->setConfigTreeItem (sectionstr, "timestamp_start", _timestamp_start)
             && (*history)->setConfigTreeItem (sectionstr, "timestamp_stop", _timestamp_stop)
             && (*history)->setConfigTreeItem (sectionstr, "number", _number)
+	    && (*history)->setConfigTreeItem (sectionstr, "id", _id)
             && (*history)->setConfigTreeItem (sectionstr, "accountid", _account_id)
             && (*history)->setConfigTreeItem (sectionstr, "name", _name)
-	    && (*history)->setConfigTreeItem (sectionstr, "recordfile", _recording_file));
-
+	    && (*history)->setConfigTreeItem (sectionstr, "recordfile", _recording_file)
+	    && (*history)->setConfigTreeItem (sectionstr, "confid", _confID)
+	    && (*history)->setConfigTreeItem (sectionstr, "timeadded", _timeAdded));
+	   
     return res;
 }
 
@@ -157,8 +185,8 @@ std::string HistoryItem::serialize (void)
     (_account_id == "" || non_valid_account (_account_id)) ? accountID = "empty" : accountID = _account_id;
 
     // Serialize it
-    res << _call_type << separator << _number << separator << name << separator << _timestamp_start << separator << _timestamp_stop << separator << accountID
-		<< separator << _recording_file;
+    res << _call_type << separator << _number << separator << name << separator << _timestamp_start << separator << _timestamp_stop 
+	<< separator << _id << separator << accountID << separator << _recording_file;
 
     return res.str();
 }

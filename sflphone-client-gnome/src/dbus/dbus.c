@@ -364,6 +364,8 @@ conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
         call_id = (gchar*) (*part);
         call = calllist_get_call (current_calls, call_id);
 
+	DEBUG("PART:                                       %s", call_id);
+
         // if a text widget is already created, disable it, use conference widget instead
         if (call->_im_widget) {
             im_widget_update_state (IM_WIDGET (call->_im_widget), FALSE);

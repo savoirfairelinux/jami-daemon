@@ -98,7 +98,7 @@ int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list, int 
     Conf::TokenList sections;
     HistoryItem *item;
     Conf::TokenList::iterator iter;
-    std::string number, name, accountID, timestamp_start, timestamp_stop, recording_file;
+    std::string number, name, callID, accountID, timestamp_start, timestamp_stop, recording_file, confID, time_added;
     CallType type;
     int history_limit;
     time_t current_timestamp;
@@ -120,20 +120,26 @@ int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list, int 
         timestamp_stop = getConfigString (*iter, "timestamp_stop", history_list);
         name = getConfigString (*iter, "name", history_list);
         number = getConfigString (*iter, "number", history_list);
+	callID = getConfigString(*iter, "id", history_list);
         accountID = getConfigString (*iter, "accountid", history_list);
         recording_file = getConfigString(*iter, "recordfile", history_list);
+	confID = getConfigString(*iter, "confid", history_list);
+        time_added = getConfigString(*iter, "timeadded", history_list);
 
     	_error("Unserialized time start: %s", timestamp_start.c_str());
     	_error("Unserialized time stop: %s", timestamp_stop.c_str());
     	_error("Unserialized number: %s", number.c_str());
+	_error("Unserialized callid: %s", callID.c_str());
     	_error("Unserialized account: %s", accountID.c_str());
     	_error("Unserialized name: %s", name.c_str());
     	_error("Unserialized record file: %s", recording_file.c_str());
+	_error("Unserialized confid: %s", confID.c_str());
+        _error("Unserialized timeadded: %s", time_added.c_str());
 
         // Make a check on the start timestamp to know it is loadable according to CONFIG_HISTORY_LIMIT
 
         if (atoi (timestamp_start.c_str ()) >= ( (int) current_timestamp - history_limit)) {
-            item = new HistoryItem (timestamp_start, type, timestamp_stop, name, number, accountID, recording_file);
+            item = new HistoryItem (timestamp_start, type, timestamp_stop, name, number, callID, accountID, recording_file, confID, time_added);
             add_new_history_entry (item);
             nb_items ++;
         }
