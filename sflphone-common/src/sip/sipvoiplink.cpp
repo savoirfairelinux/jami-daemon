@@ -132,7 +132,7 @@ int getModId();
  * @param call a SIPCall valid pointer
  * @return bool True
  */
-bool setCallAudioLocal (SIPCall* call, std::string localIP);
+bool setCallMediaLocal (SIPCall* call, const std::string &localIP);
 
 /**
  * Helper function to parse incoming OPTION message
@@ -690,7 +690,7 @@ Call *SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) 
     	loadSIPLocalIP (&localAddr);
     }
 
-    setCallAudioLocal (call, localAddr);
+    setCallMediaLocal (call, localAddr);
 
     // May use the published address as well
     account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = getInterfaceAddrFromName (account->getLocalInterface ());
@@ -1777,7 +1777,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const CallID& id, const std::string& to)
         _debug ("UserAgent: Media Address for IP2IP call: %s", localAddress.c_str());
 
         // Set local address for RTP media
-        setCallAudioLocal (call, localAddress);
+        setCallMediaLocal (call, localAddress);
 
         std::string toUri = account->getToUri (to);
         call->setPeerNumber (toUri);
@@ -3374,7 +3374,7 @@ void sdp_create_offer_cb (pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
     }
 
     // Set local address for RTP media
-    setCallAudioLocal (call, localAddress);
+    setCallMediaLocal (call, localAddress);
 
     // Building the local SDP offer
     call->getLocalSDP()->setLocalIP (addrSdp);
@@ -3970,7 +3970,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
 
     // Have to do some stuff with the SDP
     // Set the codec map, IP, peer number and so on... for the SIPCall object
-    setCallAudioLocal (call, addrToUse);
+    setCallMediaLocal (call, addrToUse);
 
     // We retrieve the remote sdp offer in the rdata struct to begin the negociation
     call->getLocalSDP()->setLocalIP (addrSdp);
@@ -4675,7 +4675,7 @@ void handleIncomingOptions (pjsip_rx_data *rdata)
 /*****************************************************************************************************************/
 
 
-bool setCallAudioLocal (SIPCall* call, std::string localIP)
+bool setCallMediaLocal (SIPCall* call, const std::string &localIP)
 {
     SIPAccount *account = NULL;
 
