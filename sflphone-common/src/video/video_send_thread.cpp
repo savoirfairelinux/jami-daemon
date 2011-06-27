@@ -198,6 +198,7 @@ void VideoSendThread::setup()
     }
 
     // open codec
+    // FIXME: calls to avcodec_open/close should be protected by a mutex
     if (avcodec_open(inputDecoderCtx_, inputDecoder) < 0)
     {
         std::cerr << "Could not open codec!" << std::endl;
@@ -235,6 +236,7 @@ void VideoSendThread::setup()
     scaledPicture_ = avcodec_alloc_frame();
 
     // open encoder
+    // FIXME: calls to avcodec_open/close should be protected by a mutex
     if (avcodec_open(encoderCtx_, encoder) < 0)
     {
         std::cerr << "Could not open encoder" << std::endl;
@@ -316,10 +318,15 @@ void VideoSendThread::cleanup()
         av_free(rawFrame_);
 
     // close the codecs
+    // FIXME: calls to avcodec_open/close should be protected by a mutex
     if (encoderCtx_)
+    {
         avcodec_close(encoderCtx_);
+        av_freep(&encoderCtx_);
+    }
 
     // doesn't need to be freed, we didn't use avcodec_alloc_context
+    // FIXME: calls to avcodec_open/close should be protected by a mutex
     if (inputDecoderCtx_)
         avcodec_close(inputDecoderCtx_);
 

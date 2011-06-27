@@ -34,7 +34,7 @@
 
 void VideoPreviewTest::testPreview()
 {
-    sfl_video::VideoPreview preview;
+    sfl_video::VideoPreview preview("/dev/video0");
     preview.start();
     sleep(10);
     preview.stop();

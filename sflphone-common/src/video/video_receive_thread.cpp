@@ -254,6 +254,7 @@ void VideoReceiveThread::setup()
     }
 
     // open codec
+    // FIXME: calls to avcodec_open/close should be protected by a mutex
     if (avcodec_open(decoderCtx_, inputDecoder) < 0)
     {
         std::cerr << "Could not open codec!" << std::endl;
@@ -308,6 +309,7 @@ void VideoReceiveThread::cleanup()
         av_free(rawFrame_);
 
     // doesn't need to be freed, we didn't use avcodec_alloc_context
+    // FIXME: calls to avcodec_open/close should be protected by a mutex
     if (decoderCtx_)
         avcodec_close(decoderCtx_);
 
