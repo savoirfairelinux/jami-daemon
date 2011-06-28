@@ -1863,13 +1863,13 @@ bool ManagerImpl::incomingCall (Call* call, const AccountID& accountId)
     }
 
     if (!hasCurrentCall()) {
-        _debug ("Manager: Has no current call");
+        _debug ("Manager: Has no current call start ringing");
 
         call->setConnectionState (Call::Ringing);
         ringtone (accountId);
 
     } else {
-        _debug ("Manager: has current call");
+        _debug ("Manager: has current call, beep in current audio stream");
     }
 
     addWaitingCall (call->getCallId());
@@ -2359,7 +2359,7 @@ void ManagerImpl::ringtone (const AccountID& accountID)
 {
     std::string ringchoice;
     sfl::AudioCodec *codecForTone;
-    int layer, samplerate;
+    int samplerate;
 
     _debug ("Manager: Ringtone");
 
@@ -2393,8 +2393,6 @@ void ManagerImpl::ringtone (const AccountID& accountID)
             audioLayerMutexUnlock();
             return;
         }
-
-        layer = _audiodriver->getLayerType();
 
         samplerate = _audiodriver->getSampleRate();
         codecForTone = static_cast<sfl::AudioCodec *>(_audioCodecFactory.getFirstCodecAvailable());
@@ -3012,14 +3010,65 @@ bool ManagerImpl::isRecording (const CallID& id)
     return ret;
 }
 
-void ManagerImpl::startRecordedFilePlayback(const std::string& filepath) 
+bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath) 
 {
+    int sampleRate;
+ 
     _debug("Manager: Start recorded file playback %s", filepath.c_str());
+
+    audioLayerMutexLock();
+
+    if(!_audiodriver) {
+	_error("Manager: Error: No audio layer in start recorded file playback");
+    }
+
+    sampleRate = _audiodriver->getSampleRate();
+
+    audioLayerMutexUnlock();
+
+    _toneMutex.enterMutex();
+
+    if(_audiofile) {
+        delete _audiofile;
+	_audiofile = NULL;
+    }
+
+    try {
+        _audiofile = static_cast<AudioFile *>(new WaveFile());
+
+        _audiofile->loadFile(filepath, NULL, sampleRate);
+    }
+    catch(AudioFileException &e) {
+        _error("Manager: Exception: %s", e.what());
+    }
+
+    _audiofile->start();
+
+    _toneMutex.leaveMutex();
+
+    audioLayerMutexLock();
+    _audiodriver->startStream();
+    audioLayerMutexUnlock(); 
+
+    return true;
 }
+
 
 void ManagerImpl::stopRecordedFilePlayback(const std::string& filepath)
 {
     _debug("Manager: Stop recorded file playback %s", filepath.c_str());
+
+    audioLayerMutexLock();
+    _audiodriver->stopStream();
+    audioLayerMutexUnlock();
+
+    _toneMutex.enterMutex();
+    if(_audiofile != NULL) {
+        _audiofile->stop();
+	delete _audiofile;
+	_audiofile = NULL;
+    }
+    _toneMutex.leaveMutex();
 }
 
 void ManagerImpl::setHistoryLimit (const int& days)

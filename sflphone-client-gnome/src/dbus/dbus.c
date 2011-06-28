@@ -86,13 +86,16 @@ static void
 conference_changed_cb (DBusGProxy *, const gchar *, const gchar *, void *);
 
 static void
-conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo  UNUSED);
+conference_created_cb (DBusGProxy *, const gchar *, void *);
 
 static void
-conference_removed_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo  UNUSED);
+conference_removed_cb (DBusGProxy *, const gchar *, void *);
 
 static void
-record_playback_filepath_cb (DBusGProxy *proxy UNUSED, const gchar *id, const gchar *filepath);
+record_playback_filepath_cb (DBusGProxy *, const gchar *, const gchar *);
+
+static void
+record_playback_result_cb (DBusGProxy *, const gchar *, const gboolean);
 
 static void
 accounts_changed_cb (DBusGProxy *, void *);
@@ -492,10 +495,20 @@ record_playback_filepath_cb (DBusGProxy *proxy UNUSED, const gchar *id, const gc
     callable_obj_t *call = NULL;
     conference_obj_t *conf = NULL;
 
-    DEBUG("DBUS: Filepath for call %s: %s", id, filepath); 
+    DEBUG("DBUS: Filepath for %s: %s", id, filepath); 
 
     call = calllist_get_call(current_calls, id);
     conf = conferencelist_get(current_calls, id);
+
+    if(call && conf) {
+	ERROR("DBUS: Two object for this callid");
+	return;
+    }
+
+    if(!call && !conf) {
+        ERROR("DBUS: Could not get object");
+	return;
+    } 
 
     if(call) {
 	if(call->_recordfile == NULL) 
@@ -508,6 +521,36 @@ record_playback_filepath_cb (DBusGProxy *proxy UNUSED, const gchar *id, const gc
         
 }
 
+static void
+record_playback_result_cb (DBusGProxy *proxy UNUSED, const gchar *id, const gboolean result)
+{
+    callable_obj_t *call = NULL;
+    conference_obj_t *conf = NULL;
+
+    DEBUG("DBUS: Result for %s: %s", id, result ? "ok" : "bad");
+
+    call = calllist_get_call(history, id);
+    conf = conferencelist_get(history, id);
+
+    if(call && conf) {
+	ERROR("DBUS: Two object for this ID");
+	return;
+    }
+
+    if(!call && !conf) {
+        ERROR("DBUS: Could not get object");
+	return; 
+    }
+
+    if(call) {
+	call->_record_is_playing = result;
+    }
+    else if(conf) {
+	conf->_record_is_playing = result;
+    }
+
+    update_actions();   
+}
 
 static void
 accounts_changed_cb (DBusGProxy *proxy UNUSED, void * foo  UNUSED)
@@ -772,6 +815,10 @@ dbus_connect (GError **error)
 				G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal (callManagerProxy, "recordPlaybackFilepath",
 				G_CALLBACK (record_playback_filepath_cb), NULL, NULL);
+    dbus_g_proxy_add_signal (callManagerProxy, "recordPlaybackResult", G_TYPE_BOOLEAN,
+				G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_add_signal(callManagerProxy, "recordPlaybackResult",
+				G_CALLBACK (record_playback_result_cb), NULL, NULL);
 
     /* Security related callbacks */
 
@@ -925,19 +972,23 @@ dbus_unhold_conference (const conference_obj_t * c)
     }
 }
 
-void
+gboolean
 dbus_start_recorded_file_playback(const gchar *filepath)
 {
     DEBUG("DBUS: Start recorded file playback %s", filepath);
 
     GError *error = NULL;
+    gboolean result;
+
     org_sflphone_SFLphone_CallManager_start_recorded_file_playback(callManagerProxy,
-	filepath, &error);
+	filepath, &result, &error);
 
     if(error) {
         ERROR("Failed to call recorded file playback: %s", error->message);
 	g_error_free(error);
     }
+
+    return result;
 }
 
 void

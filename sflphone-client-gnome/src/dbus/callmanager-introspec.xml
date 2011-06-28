@@ -349,6 +349,12 @@
 			<arg type="s" name="filepath"/>
 		</signal>
 
+		<signal name="recordPlaybackResult" tp:name-for-bindings="recordPlaybackResult">
+			<tp:docstring/>
+			<arg type="b" name="callID" />
+		</signal>
+			
+
 		<method name="getCallDetails" tp:name-for-bindings="getCallDetails">
 			<tp:docstring>
 			  Get all the details about a specific call.
@@ -605,6 +611,7 @@
 			<tp:docstring>
 			</tp:docstring>
 			<arg type="s" name="filepath" direction="in"/>
+			<arg type="b" name="result" direction="out"/>
 	        </method>
 
 		<method name="stopRecordedFilePlayback" tp:name-for-bindings="stopRecordedFilePlayback">

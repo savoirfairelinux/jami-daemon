@@ -157,6 +157,12 @@ typedef struct  {
      */
     gchar *_recordfile;
 
+    /**
+     * This boolean value is used to determine if the audio file
+     * is currently played back.
+     */
+    gboolean _record_is_playing;
+
     /* Associated IM widget */
     GtkWidget *_im_widget;
 

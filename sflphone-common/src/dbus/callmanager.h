@@ -101,7 +101,7 @@ class CallManager
         std::map< std::string, std::string > getConferenceDetails (const std::string& callID);
 
   	/* File Playback methods */
- 	void startRecordedFilePlayback(const std::string& filepath);
+ 	bool startRecordedFilePlayback(const std::string& filepath);
 	void stopRecordedFilePlayback(const std::string& filepath);
 
         /* General audio methods */

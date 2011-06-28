@@ -68,6 +68,7 @@ typedef struct  {
     time_t _time_stop;
     time_t _time_current;
     gchar *_recordfile;
+    gboolean _record_is_playing;
 } conference_obj_t;
 
 void create_new_conference (conference_state_t, const gchar*, conference_obj_t **);

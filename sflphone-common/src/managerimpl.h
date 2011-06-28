@@ -759,7 +759,7 @@ class ManagerImpl
 	 * Start playback fo a recorded file if and only if audio layer is not already started.
  	 * @param File path of the file to play
          */
-        void startRecordedFilePlayback(const std::string&);
+        bool startRecordedFilePlayback(const std::string&);
 
 	/**
 	 * Stop playback of recorded file

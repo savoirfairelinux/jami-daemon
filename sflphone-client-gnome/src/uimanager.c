@@ -79,7 +79,9 @@ static GtkWidget * voicemailToolbar;
 static GtkWidget * imToolbar;
 static GtkAction * imAction;
 static GtkWidget * playRecordWidget;
-static GtkWidget * playRecordAction;
+static GtkAction * playRecordAction;
+static GtkWidget * stopRecordWidget;
+static GtkAction * stopRecordAction;
 
 static GtkWidget * editable_num;
 static GtkDialog * edit_dialog;
@@ -185,6 +187,8 @@ update_actions()
 
 	if(is_inserted(GTK_WIDGET (playRecordWidget), GTK_WIDGET(toolbar)))
 	    gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(playRecordWidget));
+	if(is_inserted(GTK_WIDGET (stopRecordWidget), GTK_WIDGET(toolbar)))
+	    gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(stopRecordWidget));
     }
 
     // If addressbook support has been enabled and all addressbooks are loaded, display the icon
@@ -279,7 +283,10 @@ update_actions()
                     gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
 		else if(active_calltree == history) {
 		    if(selectedCall->_recordfile && (g_strcmp0(selectedCall->_recordfile, "") != 0)) {
-		        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM(playRecordWidget), 3);
+			if(selectedCall->_record_is_playing)
+			    gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM(stopRecordWidget), 3);
+			else
+		            gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM(playRecordWidget), 3);
 		    }
 		}
                 break;
@@ -715,9 +722,11 @@ call_record (void)
 }
 
 static void
-playback_record_cb(void)
+start_playback_record_cb(void)
 {
-    DEBUG("UIManager: Playback button pressed");
+    gboolean result;
+
+    DEBUG("UIManager: Start playback button pressed");
 
     callable_obj_t *selectedCall = calltab_get_selected_call (history);
     conference_obj_t *selectedConf = calltab_get_selected_conf (history);
@@ -727,10 +736,46 @@ playback_record_cb(void)
 	return;
     }
 
-    if(selectedCall)
-        dbus_start_recorded_file_playback(selectedCall->_recordfile);
-    else if(selectedConf)
-	dbus_start_recorded_file_playback(selectedConf->_recordfile);
+    if(selectedCall) {
+        result = dbus_start_recorded_file_playback(selectedCall->_recordfile);
+	selectedCall->_record_is_playing = result;
+    }
+    else if(selectedConf) {
+	result = dbus_start_recorded_file_playback(selectedConf->_recordfile);
+	selectedConf->_record_is_playing = result;
+    } 
+
+    update_actions();
+}
+
+static void
+stop_playback_record_cb(void)
+{
+    DEBUG("UIManager: Stop playback button pressed");
+
+    callable_obj_t *selectedCall = calltab_get_selected_call (history);
+    conference_obj_t *selectedConf = calltab_get_selected_conf(history);
+
+    if(selectedCall && selectedConf) {
+        ERROR("UIManager: Error: Two selected object in history treeview");
+	return;
+    }
+
+    if((selectedCall == NULL) && (selectedConf == NULL)) {
+        ERROR("UIManager: Error: No selected object in history treeview");
+	return;
+    }
+
+    if(selectedCall) {
+	dbus_stop_recorded_file_playback(selectedCall->_recordfile);
+	selectedCall->_record_is_playing = FALSE;
+    } 
+    else if(selectedConf) {
+        dbus_stop_recorded_file_playback(selectedConf->_recordfile);
+	selectedConf->_record_is_playing = FALSE;
+    }
+
+    update_actions();
 }
 
 static void
@@ -1000,8 +1045,10 @@ static const GtkActionEntry menu_entries[] = {
       N_ ("Minimize to system tray"), G_CALLBACK (call_minimize) },
     { "Quit", GTK_STOCK_CLOSE, N_ ("_Quit"), "<control>Q",
       N_ ("Quit the program"), G_CALLBACK (call_quit) },
-    { "PlayRecord", GTK_STOCK_MEDIA_PLAY,  N_ ("_Playback record"), NULL,
-      N_ ("Playback recorded file"), G_CALLBACK (playback_record_cb) },
+    { "StartPlaybackRecord", GTK_STOCK_MEDIA_PLAY,  N_ ("_Playback record"), NULL,
+      N_ ("Playback recorded file"), G_CALLBACK (start_playback_record_cb) },
+    { "StopPlaybackRecord", GTK_STOCK_MEDIA_PAUSE, N_ ("_Stop playback"), NULL,
+      N_ ("Stop recorded file playback"), G_CALLBACK (stop_playback_record_cb) },
 
     // Edit Menu
     { "Edit", NULL, N_ ("_Edit"), NULL, NULL, NULL },
@@ -1752,9 +1799,13 @@ create_toolbar_actions (GtkUIManager *ui_manager, GtkWidget **widget)
     historyButton = gtk_ui_manager_get_widget (ui_manager,
                     "/ToolbarActions/HistoryToolbar");
     playRecordWidget = gtk_ui_manager_get_widget(ui_manager,
-		    "/ToolbarActions/PlayRecordToolbar");
+		    "/ToolbarActions/StartPlaybackRecordToolbar");
     playRecordAction = gtk_ui_manager_get_action(ui_manager, 
-		    "/ToolbarActions/PlayRecord");
+		    "/ToolbarActions/StartPlaybackRecord");
+    stopRecordWidget = gtk_ui_manager_get_widget(ui_manager,
+		    "/ToolbarActions/StopPlaybackRecordToolbar");
+    stopRecordAction = gtk_ui_manager_get_action(ui_manager,
+		    "/ToolbarActions/StopPlaybackRecord");
     if(abookfactory_is_addressbook_loaded()) {
         contactButton = gtk_ui_manager_get_widget (ui_manager, "/ToolbarActions/AddressbookToolbar");
     }

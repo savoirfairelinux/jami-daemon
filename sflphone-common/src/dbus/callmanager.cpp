@@ -283,10 +283,10 @@ CallManager::getParticipantList (const std::string& confID)
     return Manager::instance().getParticipantList (confID);
 }
 
-void
+bool
 CallManager::startRecordedFilePlayback(const std::string& filepath)
 {
-    Manager::instance().startRecordedFilePlayback(filepath);
+    return Manager::instance().startRecordedFilePlayback(filepath);
 }
 
 void

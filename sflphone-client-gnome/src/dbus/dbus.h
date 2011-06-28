@@ -638,7 +638,7 @@ void dbus_send_text_message (const gchar* callID, const gchar *message);
  * Start playback of a recorded
  * @param The recorded file to start playback with
  */
-void dbus_start_recorded_file_playback(const gchar *);
+gboolean dbus_start_recorded_file_playback(const gchar *);
 
 /**
  * Stop playback of a recorded filie
