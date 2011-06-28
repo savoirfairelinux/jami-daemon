@@ -144,7 +144,7 @@ void SDPTest::testInitialOfferFirstCodec ()
 
     _session->receivingAnswerAfterInitialOffer(remoteAnswer);
 
-    _session->startNegociation();
+    _session->startNegotiation();
 
     _session->updateInternalState();
 
@@ -177,9 +177,9 @@ void SDPTest::testInitialAnswerFirstCodec ()
     _session->setLocalIP("127.0.0.1");
 	_session->setLocalPublishedAudioPort(49567);
 
-    _session->recieveOffer(remoteOffer, codecSelection);
+    _session->receiveOffer(remoteOffer, codecSelection);
 
-    _session->startNegociation();
+    _session->startNegotiation();
 
     _session->updateInternalState();
 
@@ -217,7 +217,7 @@ void SDPTest::testInitialOfferLastCodec ()
 
     _session->receivingAnswerAfterInitialOffer(remoteAnswer);
 
-    _session->startNegociation();
+    _session->startNegotiation();
 
     _session->updateInternalState();
 
@@ -250,9 +250,9 @@ void SDPTest::testInitialAnswerLastCodec ()
     _session->setLocalIP("127.0.0.1");
 	_session->setLocalPublishedAudioPort(49567);
 
-    _session->recieveOffer(remoteOffer, codecSelection);
+    _session->receiveOffer(remoteOffer, codecSelection);
 
-    _session->startNegociation();
+    _session->startNegotiation();
 
     _session->updateInternalState();
 
@@ -292,7 +292,7 @@ void SDPTest::testReinvite ()
 
     _session->receivingAnswerAfterInitialOffer(remoteAnswer);
 
-    _session->startNegociation();
+    _session->startNegotiation();
 
     _session->updateInternalState();
 
@@ -304,9 +304,9 @@ void SDPTest::testReinvite ()
 
     pjmedia_sdp_parse(_testPool, (char*)sdp_reinvite, strlen(sdp_reinvite), &reinviteOffer);
 
-    _session->recieveOffer(reinviteOffer, codecSelection);
+    _session->receiveOffer(reinviteOffer, codecSelection);
 
-    _session->startNegociation();
+    _session->startNegotiation();
 
     _session->updateInternalState();
 

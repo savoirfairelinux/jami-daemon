@@ -48,7 +48,6 @@ LLIBS=$(CPPUNIT_LIBS) \
 	../src/sflphoned-eventthread.o \
 	../src/sflphoned-managerimpl_registration.o \
 	../src/sflphoned-numbercleaner.o \
-	../src/sflphoned-observer.o \
 	../src/sflphoned-voiplink.o \
 	../src/sflphoned-preferences.o \
 	../src/libsflphone.la
