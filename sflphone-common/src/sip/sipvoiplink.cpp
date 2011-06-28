@@ -1029,7 +1029,7 @@ SIPVoIPLink::offhold (const CallID& id) throw (VoipLinkException)
         call->getVideoRtp()->start();
 
     }
-    catch (SdpException &e) {
+    catch (const SdpException &e) {
     	_error("UserAgent: Exception: %s", e.what());
     } 
     catch (...) {
@@ -1382,7 +1382,7 @@ SIPVoIPLink::getCurrentCodecName(const CallID& id)
 	    return name;
         }
     }
-    catch (SdpException &e) {
+    catch (const SdpException &e) {
 	_error("UserAgent: Exception: %s", e.what());
     }
 

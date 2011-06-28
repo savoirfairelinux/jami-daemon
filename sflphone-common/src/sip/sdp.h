@@ -137,8 +137,9 @@ class Sdp
 
         /**
          * Return the codec of the first media after negotiation
+         * @throw SdpException
          */
-        sfl::AudioCodec* getSessionMedia (void) throw(SdpException);
+        sfl::AudioCodec* getSessionMedia (void);
 
         /*
          * On building an invite outside a dialog, build the local offer and create the
@@ -493,8 +494,9 @@ class Sdp
          * Adds a sdes attribute to the given media section.
          *
          * @param media The media to add the srtp attribute to
+         * @throw SdpException
          */
-        void addSdesAttribute (std::vector<std::string>& crypto) throw (SdpException);
+        void addSdesAttribute (std::vector<std::string>& crypto);
 
         /*
          * Adds a zrtp-hash  attribute to
@@ -504,8 +506,9 @@ class Sdp
          *
          * @param media The media to add the zrtp-hash attribute to
          * @param hash  The hash to which the attribute should be set to
+         * @throw SdpException
          */
-        void addZrtpAttribute (pjmedia_sdp_media* media, std::string hash) throw (SdpException);
+        void addZrtpAttribute (pjmedia_sdp_media* media, std::string hash);
 
         std::string convertIntToString (int value);
 
