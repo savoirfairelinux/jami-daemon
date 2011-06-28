@@ -31,6 +31,7 @@
  */
 
 #include "sdp.h"
+#include "sdpmedia.h"
 #include "global.h"
 #include "manager.h"
 #define ZRTP_VERSION "1.10"

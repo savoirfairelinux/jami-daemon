@@ -41,10 +41,11 @@
 #include <pj/pool.h>
 #include <pj/assert.h>
 #include <vector>
-
-#include "sdpmedia.h"
-
+#include <string>
 #include <exception>
+
+#include "global.h" // FIXME: CodecOrder shouldn't be in global.h
+class sdpMedia;
 
 namespace sfl {
     class AudioCodec;
