@@ -1011,19 +1011,40 @@
                    <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
 		   <tp:docstring>
 		   </tp:docstring>
-		   <arg type="a{ss}" name="shortcutsMap" direction="in">
-			   <tp:docstring>
+		   <arg type="a{ss}" name="shortcutsMap" direction="in"> <tp:docstring>
 			   </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="startVideoPreview" tp:name-for-bindings="startVideoPreview">
-	   </method>
-	   <method name="stopVideoPreview" tp:name-for-bindings="stopVideoPreview">
+		   <arg type="i" name="width" direction="in">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+		   <arg type="i" name="height" direction="in">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+		   <arg type="s" name="format" direction="in">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+		   <arg type="i" name="shmId" direction="out">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+		   <arg type="i" name="semId" direction="out">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+		   <arg type="i" name="videoBufferSize" direction="out">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
 	   </method>
 
-       <signal name="videoStarted" tp:name-for-bindings="videoStarted">
-	   </signal>
+	   <method name="stopVideoPreview" tp:name-for-bindings="stopVideoPreview">
+	   </method>
 
        <signal name="videoStopped" tp:name-for-bindings="videoStopped">
 	   </signal>

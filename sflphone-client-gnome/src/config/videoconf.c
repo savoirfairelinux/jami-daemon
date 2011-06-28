@@ -36,6 +36,8 @@
 #include "dbus.h"
 #include "video/video_preview.h"
 
+#include <clutter/clutter.h>
+
 static GtkWidget *v4l2Device;
 static GtkWidget *v4l2Input;
 static GtkWidget *v4l2Size;
@@ -110,12 +112,21 @@ preview_is_running_cb(GObject *obj, GParamSpec *pspec, gpointer user_data)
 static VideoPreview *preview = NULL;
 static GtkWidget *preview_button = NULL;
 
+static GtkWidget *drawarea = NULL;
+static int drawWidth  = 20 * 16;
+static int drawHeight = 20 * 9;
+static const char *drawFormat;
+
+
 void
-video_started_cb()
+video_started_cb(DBusGProxy *proxy, gint OUT_shmId, gint OUT_semId, gint OUT_videoBufferSize, GError *error, gpointer userdata)
 {
+    (void)proxy;
+    (void)error;
+    (void)userdata;
     DEBUG("Preview started");
     if (preview == NULL) {
-        preview = video_preview_new();
+        preview = video_preview_new(drawarea, drawWidth, drawHeight, drawFormat, OUT_shmId, OUT_semId, OUT_videoBufferSize);
         g_signal_connect (preview, "notify::running",
                 G_CALLBACK (preview_is_running_cb),
                 preview_button);
@@ -138,7 +149,15 @@ preview_button_clicked(GtkButton *button, gpointer data UNUSED)
     preview_button = GTK_WIDGET(button);
     if (g_strcmp0(gtk_button_get_label(button), "_Start preview")  == 0) {
         gtk_button_set_label(button, "_Stop preview");
-        dbus_start_video_preview();
+
+        static const char *formats[2] = { "rgb24", "bgra" };
+
+        if (clutter_init(NULL, NULL) == CLUTTER_INIT_SUCCESS) {
+            drawFormat = formats[0];
+        } else {
+            drawFormat = formats[1];
+        }
+        dbus_start_video_preview(drawWidth, drawHeight, drawFormat);
     }
     else {
         /* user clicked stop */
@@ -146,7 +165,6 @@ preview_button_clicked(GtkButton *button, gpointer data UNUSED)
         dbus_stop_video_preview();
     }
 }
-
 
 GtkWidget* create_video_configuration()
 {
@@ -170,6 +188,11 @@ GtkWidget* create_video_configuration()
     gtk_table_attach(GTK_TABLE(table), preview_button, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 6);
     g_signal_connect(G_OBJECT(preview_button), "clicked", G_CALLBACK(preview_button_clicked), NULL);
     gtk_widget_show(GTK_WIDGET(preview_button));
+
+    drawarea = gtk_drawing_area_new();
+    gtk_widget_set_size_request (drawarea, drawWidth, drawHeight);
+    gtk_table_attach(GTK_TABLE(table), drawarea, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 6);
+    gtk_widget_show(GTK_WIDGET(drawarea));
 
     gnome_main_section_new_with_table (_ ("Video4Linux2"), &frame, &table, 1, 4);
     gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);

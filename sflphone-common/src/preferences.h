@@ -602,8 +602,10 @@ class VideoPreference : public Serializable
         std::map<std::string, std::string> getVideoSettings(void) {
             std::map<std::string, std::string> map;
             VideoV4l2Device &dev = v4l2_list->getDevice();
-            map["device"] = dev.device;
-            map["channel"] = dev.getChannelIndex();
+            map["input"] = dev.device;
+            std::stringstream channelstr;
+            channelstr << dev.getChannelIndex();
+            map["channel"] = channelstr.str();
             VideoV4l2Channel &chan = dev.getChannel();
             VideoV4l2Size &size = chan.getSize();
             std::stringstream ss;

@@ -35,17 +35,16 @@
 
 namespace sfl_video {
 
-VideoPreview::VideoPreview(const std::string &device) : device_(device) {}
+VideoPreview::VideoPreview(const std::map<std::string, std::string> &args) : args_(args) {}
 
 bool VideoPreview::start()
 {
-    using std::string;
-    using std::map;
-    map<string, string> args;
-    args["input"] = device_;
-    receiveThread_.reset(new VideoReceiveThread(args));
+    receiveThread_.reset(new VideoReceiveThread(args_));
     receiveThread_->start();
     receiveThread_->waitForShm();
+    shmKey_ = receiveThread_->getShmKey();
+    semKey_ = receiveThread_->getSemKey();
+    videoBufferSize_ = receiveThread_->getVideoBufferSize();
     return true;
 }
 

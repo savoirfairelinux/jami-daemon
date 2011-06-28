@@ -1,5 +1,7 @@
 /*
  *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright © 2008 Rémi Denis-Courmont
+ *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -37,6 +39,7 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavutil/opt.h>
+#include <libavutil/pixdesc.h>
 #include <libavdevice/avdevice.h>
 #include <libswscale/swscale.h>
 }
@@ -47,9 +50,14 @@ extern "C" {
 #include <sys/sem.h>     /* semaphore functions and structs.    */
 #include <sys/shm.h>
 
+#include <time.h>
+#include <cstdlib>
+
 namespace sfl_video {
 
 namespace { // anonymouse namespace
+
+static char program_path[PATH_MAX+1] = "";
 
 #if _SEM_SEMUN_UNDEFINED
 union semun
@@ -61,33 +69,19 @@ union semun
 };
 #endif
 
-typedef struct {
-    unsigned size;
-    unsigned width;
-    unsigned height;
-} FrameInfo;
-
-#define TEMPFILE "/tmp/frame.txt"
-
-void postFrameSize(unsigned width, unsigned height, unsigned numBytes)
-{
-    FILE *tmp = fopen(TEMPFILE, "w");
-
-    /* write to file*/
-    fprintf(tmp, "%u\n", numBytes);
-    fprintf(tmp, "%u\n", width);
-    fprintf(tmp, "%u\n", height);
-    fclose(tmp);
-}
-
-int createSemSet()
+int createSemSet(int shm_id, int shmKey, int *semKey)
 {
     /* this variable will contain the semaphore set. */
     int sem_set_id;
-    key_t key = ftok("/tmp", 'b');
-
     /* semaphore value, for semctl().                */
     union semun sem_val;
+    key_t key;
+
+    do
+		key = ftok(program_path, rand());
+    while(key == shmKey);
+
+    *semKey = key;
 
     /* first we create a semaphore set with a single semaphore, */
     /* whose counter is initialized to '0'.                     */
@@ -96,6 +90,7 @@ int createSemSet()
         perror("semget");
         exit(1);
     }
+
     sem_val.val = 0;
     semctl(sem_set_id, 0, SETVAL, sem_val);
     return sem_set_id;
@@ -127,13 +122,17 @@ sem_signal(int sem_set_id)
 }
 
 /* join and/or create a shared memory segment */
-int createShm(unsigned numBytes)
+int createShm(unsigned numBytes, int *shmKey)
 {
     key_t key;
     int shm_id;
     /* connect to and possibly create a segment with 644 permissions
        (rw-r--r--) */
-    key = ftok("/tmp", 'c');
+
+    srand(time(NULL));
+    int proj_id = rand();
+    key = ftok(program_path, proj_id);
+    *shmKey = key;
     shm_id = shmget(key, numBytes, 0644 | IPC_CREAT);
 
     return shm_id;
@@ -174,12 +173,11 @@ void cleanupShm(int shm_id, uint8_t *data)
     destroyShm(shm_id);
 }
 
-int bufferSizeRGB24(int width, int height)
+int bufferSize(int width, int height, int format)
 {
-    int numBytes;
+	enum PixelFormat fmt = (enum PixelFormat) format;
     // determine required buffer size and allocate buffer
-    numBytes = avpicture_get_size(PIX_FMT_RGB24, width, height);
-    return numBytes * sizeof(uint8_t);
+    return sizeof(uint8_t) * avpicture_get_size(fmt, width, height);
 }
 
 } // end anonymous namespace
@@ -189,6 +187,17 @@ void VideoReceiveThread::setup()
 {
     av_register_all();
     avdevice_register_all();
+    setProgramPath();
+
+    dstWidth_ = atoi(args_["width"].c_str());
+    dstHeight_ = atoi(args_["height"].c_str());
+    format_ = av_get_pix_fmt(args_["format"].c_str());
+    if (format_ == -1)
+    {
+        std::cerr << "Couldn't find a pixel format for `" << args_["format"]
+                  << "'" << std::endl;
+        cleanup();
+    }
 
     AVInputFormat *file_iformat = 0;
     // it's a v4l device if starting with /dev/video
@@ -214,8 +223,8 @@ void VideoReceiveThread::setup()
     // Open video file
     if (avformat_open_input(&inputCtx_, args_["input"].c_str(), file_iformat, &options) != 0)
     {
-        std::cerr <<  "Could not open input file " << args_["input"] <<
-            std::endl;
+        std::cerr <<  "Could not open input file \"" << args_["input"] <<
+        	"\"" << std::endl;
         cleanup();
     }
 
@@ -268,22 +277,19 @@ void VideoReceiveThread::setup()
         cleanup();
     }
 
-    unsigned numBytes;
     // determine required buffer size and allocate buffer
-    numBytes = bufferSizeRGB24(decoderCtx_->width, decoderCtx_->height);
-    /*printf("%u bytes\n", numBytes);*/
-    postFrameSize(decoderCtx_->width, decoderCtx_->height, numBytes);
+    videoBufferSize_ = bufferSize(dstWidth_, dstHeight_, format_);
 
     // create shared memory segment and attach to it
-    shmID_ = createShm(numBytes);
+    shmID_ = createShm(videoBufferSize_, &shmKey_);
     shmBuffer_  = attachShm(shmID_);
-    semSetID_ = createSemSet();
+    semSetID_ = createSemSet(shmID_, shmKey_, &semKey_);
     shmReady_.signal();
 
     // assign appropriate parts of buffer to image planes in scaledPicture 
     avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
             reinterpret_cast<uint8_t*>(shmBuffer_),
-            PIX_FMT_RGB24, decoderCtx_->width, decoderCtx_->height);
+            (enum PixelFormat) format_, dstWidth_, dstHeight_);
 
     // allocate video frame
     rawFrame_ = avcodec_alloc_frame();
@@ -326,8 +332,8 @@ SwsContext * VideoReceiveThread::createScalingContext()
 {
     // Create scaling context, no scaling done here
     SwsContext *imgConvertCtx = sws_getContext(decoderCtx_->width,
-            decoderCtx_->height, decoderCtx_->pix_fmt, decoderCtx_->width,
-            decoderCtx_->height, PIX_FMT_RGB24, SWS_BICUBIC,
+            decoderCtx_->height, decoderCtx_->pix_fmt, dstWidth_,
+            dstHeight_, (enum PixelFormat) format_, SWS_BICUBIC,
             NULL, NULL, NULL);
     if (imgConvertCtx == 0)
     {
@@ -343,16 +349,21 @@ VideoReceiveThread::VideoReceiveThread(const std::map<std::string, std::string> 
     shmBuffer_(0),
     shmID_(-1),
     semSetID_(-1),
+    shmKey_(-1),
+    semKey_(-1),
     decoderCtx_(0),
     rawFrame_(0),
     scaledPicture_(0),
     videoStreamIndex_(-1),
-    inputCtx_(0)
+    inputCtx_(0),
+    dstWidth_(-1),
+    dstHeight_(-1)
     {}
 
 void VideoReceiveThread::run()
 {
     setup();
+
     AVPacket inpacket;
     int frameFinished;
     SwsContext *imgConvertCtx = createScalingContext();
@@ -390,6 +401,47 @@ void VideoReceiveThread::stop()
 VideoReceiveThread::~VideoReceiveThread()
 {
     terminate();
+}
+
+void VideoReceiveThread::setProgramPath()
+{
+	if (*program_path)
+		return;
+
+	// fallback
+	strcpy(program_path, "/tmp");
+
+    char *line = NULL;
+    size_t linelen = 0;
+    uintptr_t needle = (uintptr_t)createSemSet;
+
+    /* Find the path to sflphoned (i.e. ourselves) */
+    FILE *maps = fopen ("/proc/self/maps", "rt");
+    if (maps == NULL)
+		return;
+
+    for (;;)
+    {
+        ssize_t len = getline (&line, &linelen, maps);
+        if (len == -1)
+            break;
+
+        void *start, *end;
+        if (sscanf (line, "%p-%p", &start, &end) < 2)
+            continue;
+        if (needle < (uintptr_t)start || (uintptr_t)end <= needle)
+            continue;
+        char *dir = strchr (line, '/');
+        if (!end || !dir )
+            continue;
+        char *nl  = strchr (line, '\n');
+        if (*nl)
+        	*nl = '\0';
+        strncpy(program_path, dir, PATH_MAX);
+        break;
+    }
+    free (line);
+    fclose (maps);
 }
 
 } // end namespace sfl_video

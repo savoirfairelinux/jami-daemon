@@ -33,6 +33,7 @@
 
 #include <tr1/memory>
 #include <string>
+#include <map>
 
 namespace sfl_video {
 
@@ -40,12 +41,20 @@ class VideoReceiveThread;
 
 class VideoPreview {
     public:
-        VideoPreview(const std::string &device);
+        VideoPreview(const std::map<std::string, std::string> &args);
         bool start();
         bool stop();
+
+        int getShmKey(void) { return shmKey_; }
+        int getSemKey(void) { return semKey_; }
+        int getVideoBufferSize(void) { return videoBufferSize_; }
+
     private:
         std::tr1::shared_ptr<VideoReceiveThread> receiveThread_;
-        const std::string device_;
+        std::map<std::string, std::string> args_;
+        int shmKey_;
+        int semKey_;
+        int videoBufferSize_;
 };
 
 }

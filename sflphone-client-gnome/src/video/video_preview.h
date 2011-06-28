@@ -32,6 +32,7 @@
 #define __VIDEO_PREVIEW_H__
 
 #include <glib-object.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
@@ -60,7 +61,7 @@ struct _VideoPreviewClass {
 };
 
 /* Public interface */
-VideoPreview *video_preview_new();
+VideoPreview *video_preview_new(GtkWidget *drawarea, int width, int height, const char *format, int shmkey, int semkey, int vbsize);
 int video_preview_run(VideoPreview *preview);
 void video_preview_stop(VideoPreview *preview);
 

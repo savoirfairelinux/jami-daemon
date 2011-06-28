@@ -32,11 +32,12 @@
 #define __VIDEO_CONF_H__
 
 #include <gtk/gtk.h>
+#include <dbus.h>
 
 GtkWidget* create_video_configuration();
 GtkWidget* videocodecs_box();
 GtkWidget* v4l2_box();
-void video_started_cb();
+void video_started_cb(DBusGProxy *proxy, gint OUT_shmId, gint OUT_semId, gint OUT_videoBufferSize, GError *error, gpointer userdata);
 void video_stopped_cb();
 
 #endif // __VIDEO_CONF_H__

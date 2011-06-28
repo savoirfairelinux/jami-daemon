@@ -961,13 +961,25 @@ void ConfigurationManager::setShortcuts (
 }
 
 
-void ConfigurationManager::startVideoPreview()
+void ConfigurationManager::startVideoPreview(const int32_t &width, const int32_t &height, const std::string &fmt, int32_t &shmKey, int32_t &semKey, int32_t &videoBufferSize)
 {
     _debug("Starting video preview");
-    preview_.reset(new sfl_video::VideoPreview(Manager::instance().videoPreference.v4l2_list->getDevice().device));
+    using std::map;
+    using std::string;
+
+    map<string, string> args(Manager::instance().videoPreference.getVideoSettings());
+    std::stringstream ssWidth, ssHeight;
+    ssWidth << width;
+	args["width"] = ssWidth.str();
+	ssHeight << height;
+    args["height"] = ssHeight.str();
+    args["format"] = fmt;
+
+    preview_.reset(new sfl_video::VideoPreview(args));
     preview_->start();
-    // notify client via dbus
-    videoStarted();
+    shmKey = preview_->getShmKey();
+    semKey = preview_->getSemKey();
+    videoBufferSize = preview_->getVideoBufferSize();
 }
 
 void ConfigurationManager::stopVideoPreview()

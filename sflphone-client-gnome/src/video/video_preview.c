@@ -38,7 +38,11 @@
 #include <sys/sem.h> /* semaphore functions and structs. */
 #include <sys/shm.h>
 
+#include <assert.h>
+#include <string.h>
+
 #include <clutter/clutter.h>
+#include <cairo.h>
 
 #define VIDEO_PREVIEW_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), \
             VIDEO_PREVIEW_TYPE, VideoPreviewPrivate))
@@ -51,6 +55,13 @@ enum
 {
     PROP_0,
     PROP_RUNNING,
+    PROP_WIDTH,
+    PROP_HEIGHT,
+    PROP_FORMAT,
+    PROP_DRAWAREA,
+    PROP_SHMKEY,
+    PROP_SEMKEY,
+    PROP_VIDEO_BUFFER_SIZE,
     PROP_LAST
 };
 
@@ -59,22 +70,29 @@ static GParamSpec *properties[PROP_LAST];
 static void video_preview_finalize (GObject *gobject);
 static void video_preview_get_property (GObject *object, guint prop_id,
                             GValue *value, GParamSpec *pspec);
+static void video_preview_set_property (GObject *object, guint prop_id,
+                            const GValue *value, GParamSpec *pspec);
 
 /* Our private member structure */
 struct _VideoPreviewPrivate {
     guint width;
     guint height;
+    gchar *format;
+
     gchar *shm_buffer;
     gint sem_set_id;
+
+    gint sem_key;
+    gint shm_key;
+    gint videobuffersize;
+    gboolean using_clutter;
     ClutterActor *texture;
+
+    gpointer drawarea;
+    cairo_t *cairo;
+
     gboolean is_running;
 };
-
-typedef struct _FrameInfo {
-    unsigned size;
-    unsigned width;
-    unsigned height;
-} FrameInfo;
 
 /* See /bits/sem.h line 55 for why this is necessary */
 #if _SEM_SEMUN_UNDEFINED
@@ -87,39 +105,22 @@ union semun
 };
 #endif
 
-#define TEMPFILE "/tmp/frame.txt"
-
-/* FIXME: this will be replaced by a dbus call */
-static FrameInfo *
-getFrameInfo()
-{
-    FrameInfo *info;
-    FILE *tmp = fopen(TEMPFILE, "r");
-    if (tmp == NULL) {
-        g_print("Error: Could not open file %s\n", TEMPFILE);
-        /* FIXME: this should error out gracefully */
-        return NULL;
-    }
-    info = (FrameInfo *) g_malloc(sizeof(FrameInfo));
-    if (fscanf(tmp, "%u\n%u\n%u\n", &info->size, &info->width, &info->height) <= 0)
-        g_print("Error: Could not read %s\n", TEMPFILE);
-
-    return info;
-}
-
 /* join and/or create a shared memory segment */
 static int
-getShm(unsigned numBytes)
+getShm(unsigned numBytes, int shmKey)
 {
-    key_t key;
+    key_t key = shmKey;
     int shm_id;
     /* connect to a segment with 600 permissions
        (r--r--r--) */
-    key = ftok("/tmp", 'c');
     shm_id = shmget(key, numBytes, 0644);
+
+    if (shm_id == -1)
+      perror("shmget");
 
     return shm_id;
 }
+
 
 /* attach a shared memory segment */
 static char *
@@ -147,11 +148,11 @@ detachShm(char *data)
 }
 
 static int
-get_sem_set()
+get_sem_set(int semKey)
 {
     /* this variable will contain the semaphore set. */
     int sem_set_id;
-    key_t key = ftok("/tmp", 'b');
+    key_t key = semKey;
 
     /* semaphore value, for semctl().                */
     union semun sem_val;
@@ -168,28 +169,49 @@ get_sem_set()
     return sem_set_id;
 }
 
-
 static void
 video_preview_class_init (VideoPreviewClass *klass) 
 {
+    int i;
     GObjectClass *gobject_class;                                                  
     gobject_class = G_OBJECT_CLASS (klass); 
 
     g_type_class_add_private (klass, sizeof (VideoPreviewPrivate));
     gobject_class->finalize = video_preview_finalize;       
     gobject_class->get_property = video_preview_get_property;
+    gobject_class->set_property = video_preview_set_property;
 
     properties[PROP_RUNNING] = g_param_spec_boolean ("running", "Running",
                                                      "True if preview is running",
                                                      FALSE,
                                                      G_PARAM_READABLE);
 
-    g_object_class_install_property (gobject_class, PROP_RUNNING,
-                                     properties[PROP_RUNNING]);
+    properties[PROP_DRAWAREA] = g_param_spec_pointer ("drawarea", "DrawArea",
+                                                     "Pointer to the drawing area",
+                                                     G_PARAM_READABLE|G_PARAM_WRITABLE|G_PARAM_CONSTRUCT_ONLY);
 
-    /* Initialize Clutter */
-    if (clutter_init (NULL, NULL) != CLUTTER_INIT_SUCCESS)
-        g_print("Error: could not initialize clutter!\n");
+    properties[PROP_WIDTH] = g_param_spec_int ("width", "Width", "Width of preview video", G_MININT, G_MAXINT, -1,
+                                                     G_PARAM_READABLE|G_PARAM_WRITABLE|G_PARAM_CONSTRUCT_ONLY);
+
+
+    properties[PROP_HEIGHT] = g_param_spec_int ("height", "Height", "Height of preview video", G_MININT, G_MAXINT, -1,
+                                                     G_PARAM_READABLE|G_PARAM_WRITABLE|G_PARAM_CONSTRUCT_ONLY);
+
+    properties[PROP_FORMAT] = g_param_spec_pointer ("format", "Format", "Pixel format of preview video",
+                                                     G_PARAM_READABLE|G_PARAM_WRITABLE|G_PARAM_CONSTRUCT_ONLY);
+
+    properties[PROP_SHMKEY] = g_param_spec_int ("shmkey", "ShmKey", "Unique key for shared memory identifier", G_MININT, G_MAXINT, -1,
+                                                     G_PARAM_READABLE|G_PARAM_WRITABLE|G_PARAM_CONSTRUCT_ONLY);
+
+    properties[PROP_SEMKEY] = g_param_spec_int ("semkey", "SemKey", "Unique key for semaphore identifier", G_MININT, G_MAXINT, -1,
+                                                     G_PARAM_READABLE|G_PARAM_WRITABLE|G_PARAM_CONSTRUCT_ONLY);
+
+    properties[PROP_VIDEO_BUFFER_SIZE] = g_param_spec_int ("vbsize", "VideoBufferSize", "Size of shared memory buffer", G_MININT, G_MAXINT, -1,
+                                                     G_PARAM_READABLE|G_PARAM_WRITABLE|G_PARAM_CONSTRUCT_ONLY);
+
+    for (i = PROP_0 + 1; i < PROP_LAST; i++) {
+        g_object_class_install_property (gobject_class, i, properties[i]);
+    }
 }
 
 static void
@@ -207,6 +229,68 @@ video_preview_get_property (GObject *object, guint prop_id,
         case PROP_RUNNING:
             g_value_set_boolean (value, priv->is_running);
             break;
+        case PROP_DRAWAREA:
+            g_value_set_pointer(value, priv->drawarea);
+            break;
+        case PROP_WIDTH:
+            g_value_set_int(value, priv->width);
+            break;
+        case PROP_HEIGHT:
+            g_value_set_int(value, priv->height);
+            break;
+        case PROP_FORMAT:
+            g_value_set_pointer(value, priv->format);
+            break;
+        case PROP_SHMKEY:
+            g_value_set_int(value, priv->shm_key);
+            break;
+        case PROP_SEMKEY:
+            g_value_set_int(value, priv->sem_key);
+            break;
+        case PROP_VIDEO_BUFFER_SIZE:
+            g_value_set_int(value, priv->videobuffersize);
+            break;
+
+        default:
+            G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+            break;
+    }
+}
+
+static void
+video_preview_set_property (GObject *object, guint prop_id,
+                            const GValue *value, GParamSpec *pspec)
+{
+    VideoPreview *preview;
+    VideoPreviewPrivate *priv;
+
+    preview = VIDEO_PREVIEW(object);
+    priv = preview->priv;
+
+    switch (prop_id)
+    {
+        case PROP_DRAWAREA:
+            priv->drawarea = g_value_get_pointer(value);
+            break;
+        case PROP_WIDTH:
+            priv->width = g_value_get_int(value);
+            break;
+        case PROP_HEIGHT:
+            priv->height = g_value_get_int(value);
+            break;
+        case PROP_FORMAT:
+            priv->format = g_value_get_pointer(value);
+            break;
+        case PROP_SHMKEY:
+            priv->shm_key = g_value_get_int(value);
+            break;
+        case PROP_SEMKEY:
+            priv->sem_key = g_value_get_int(value);
+            break;
+        case PROP_VIDEO_BUFFER_SIZE:
+            priv->videobuffersize = g_value_get_int(value);
+            break;
+
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
             break;
@@ -221,25 +305,8 @@ video_preview_init (VideoPreview *self)
 
     self->priv = priv = VIDEO_PREVIEW_GET_PRIVATE (self);
 
-    /* update the object state depending on constructor properties */
-    int shm_id = -1;
-    FrameInfo *info = getFrameInfo();
-    if (info)
-    {
-        priv->width = info->width;
-        priv->height = info->height;
-        shm_id = getShm(info->size);
-        g_free (info);
-    }
-    if (shm_id != -1) {
-        priv->shm_buffer = attachShm(shm_id);
-        priv->sem_set_id = get_sem_set();
-    }
-    else {
-        priv->shm_buffer = NULL;
-        priv->sem_set_id = -1;
-    }
     priv->texture = NULL;
+    priv->cairo = NULL;
 }
 
 static void
@@ -280,35 +347,68 @@ sem_wait(int sem_set_id)
     return semop(sem_set_id, &sem_op, 1);
 }
 
-/* round integer value up to next multiple of 4 */
+/* round int value up to next multiple of 4 */
 static int
-round_up_4(int value)
+align(int value)
 {
     return (value + 3) &~ 3;
 }
 
 static void
-readFrameFromShm(int width, int height, char *data, int sem_set_id,
-        ClutterActor *texture)
+readFrameFromShm(VideoPreviewPrivate *priv)
 {
-    if (sem_set_id != -1) {
-        if (sem_wait(sem_set_id) != -1) {
-            clutter_texture_set_from_rgb_data (CLUTTER_TEXTURE(texture),
-                    (void*)data,
-                    FALSE,
-                    width,
-                    height,
-                    round_up_4(3 * width),
-                    3,
-                    0,
-                    NULL);
+    int width = priv->width;
+    int height = priv->height;
+    void *data = priv->shm_buffer;
+    int sem_set_id = priv->sem_set_id;
+    ClutterActor *texture = priv->texture;
+
+    if (sem_set_id == -1)
+        return;
+
+    if (sem_wait(sem_set_id) == -1) {
+      if (errno != EAGAIN) {
+          g_print("Could not read from shared memory!\n");
+          perror("shm: ");
+      }
+      return;
+    }
+
+    if (priv->using_clutter) {
+      if (strcmp(priv->format, "rgb24")) {
+          g_print("clutter render: Unknown pixel format `%s'\n", priv->format);
+      }
+
+        clutter_texture_set_from_rgb_data (CLUTTER_TEXTURE(texture),
+                (void*)data,
+                FALSE,
+                width,
+                height,
+                align(3 /* bytes per pixel */ * width), // stride
+                3,
+                0,
+                NULL);
+    } else {
+        cairo_format_t format;
+        if (!strcmp(priv->format, "bgra"))
+            format = CAIRO_FORMAT_RGB24;
+        else {
+            g_print("cairo render: Unknown pixel format `%s'\n", priv->format);
+            return;
         }
-        else
-        {
-            if (errno != EAGAIN) {
-                g_print("Could not read from shared memory!\n");
-                perror("shm: ");
-            }
+
+        int stride = cairo_format_stride_for_width (format, width);
+        assert(stride == align(4*width));
+
+        cairo_surface_t *surface = cairo_image_surface_create_for_data (data,
+                                                                 format,
+                                                                 width,
+                                                                 height,
+                                                                 stride);
+        if (surface) {
+            cairo_set_source_surface(priv->cairo, surface, 0, 0);
+            cairo_paint(priv->cairo);
+            cairo_surface_destroy(surface);
         }
     }
 }
@@ -318,9 +418,9 @@ updateTexture(gpointer data)
 {
     VideoPreview *preview = (VideoPreview *) data;
     VideoPreviewPrivate *priv = VIDEO_PREVIEW_GET_PRIVATE(preview);
+
     if (priv->shm_buffer != NULL) {
-        readFrameFromShm(priv->width, priv->height, priv->shm_buffer,
-                priv->sem_set_id, priv->texture);
+        readFrameFromShm(priv);
         return TRUE;
     }
     else
@@ -333,11 +433,19 @@ updateTexture(gpointer data)
  * Create a new #VideoPreview instance.                                        
  */                                                                             
 VideoPreview *
-video_preview_new (void)
+video_preview_new (GtkWidget *drawarea, int width, int height, const char *format, int semkey, int shmkey, int vbsize)
 {
     VideoPreview *result;
 
-    result = g_object_new (VIDEO_PREVIEW_TYPE, NULL);
+    result = g_object_new (VIDEO_PREVIEW_TYPE,
+          "drawarea", (gpointer)drawarea,
+          "width", (gint)width,
+          "height", (gint)height,
+          "format", (gpointer)format,
+          "semkey", (gint)semkey,
+          "shmkey", (gint)shmkey,
+          "vbsize", (gint)vbsize,
+          NULL);
     return result;
 }
 
@@ -358,30 +466,47 @@ video_preview_run(VideoPreview *preview)
 {
     VideoPreviewPrivate * priv = VIDEO_PREVIEW_GET_PRIVATE(preview);
 
-    ClutterActor *stage;
+    int shm_id = getShm(priv->videobuffersize, priv->sem_key);
+    priv->shm_buffer = attachShm(shm_id);
+    priv->sem_set_id = get_sem_set(priv->shm_key);
 
-    /* Get a stage */
-    stage = clutter_stage_new ();
-    g_signal_connect (stage, "delete-event", G_CALLBACK(on_stage_delete),
-            preview);
-    clutter_actor_set_size(stage,
-            priv->width,
-            priv->height);
+    priv->using_clutter = !strcmp(priv->format, "rgb24");
+    g_print("Preview: using %s render\n", priv->using_clutter ? "clutter" : "cairo");
 
-    priv->texture = clutter_texture_new();
+    if (priv->using_clutter) {
+        ClutterActor *stage;
 
-    clutter_stage_set_title(CLUTTER_STAGE (stage), "Video Test");
-    /* Add ClutterTexture to the stage */
-    clutter_container_add(CLUTTER_CONTAINER (stage), priv->texture, NULL);
+        /* Get a stage */
+        stage = clutter_stage_new ();
+        g_signal_connect (stage, "delete-event", G_CALLBACK(on_stage_delete),
+                preview);
+        clutter_actor_set_size(stage,
+                priv->width,
+                priv->height);
+
+        priv->texture = clutter_texture_new();
+
+        clutter_stage_set_title(CLUTTER_STAGE (stage), "Video Test");
+        /* Add ClutterTexture to the stage */
+        clutter_container_add(CLUTTER_CONTAINER (stage), priv->texture, NULL);
+
+        clutter_actor_show_all(stage);
+    } else {
+        if (!priv->cairo) {
+            GtkWidget *drawarea = priv->drawarea;
+            GdkWindow *w = gtk_widget_get_window(drawarea);
+            priv->cairo = gdk_cairo_create(w);
+        }
+    }
 
     /* frames are read and saved here */
     g_idle_add(updateTexture, preview);
 
-    clutter_actor_show_all(stage);
-
     priv->is_running = TRUE;
     /* emit the notify signal for this property */
     g_object_notify_by_pspec (G_OBJECT(preview), properties[PROP_RUNNING]);
+
+    g_object_get(G_OBJECT(preview), "drawarea", &priv->drawarea, NULL);
 
     return 0;
 }
@@ -392,9 +517,13 @@ video_preview_stop(VideoPreview *preview)
     VideoPreviewPrivate *priv = VIDEO_PREVIEW_GET_PRIVATE(preview);
     g_idle_remove_by_data((void*)preview);
     priv->is_running = FALSE;
-    /* Destroy stage, which is texture's parent */
-    if (priv->texture && CLUTTER_IS_ACTOR(priv->texture)) {
-        ClutterActor *stage = clutter_actor_get_parent(priv->texture);
-        clutter_actor_destroy(stage);
+    if (priv->using_clutter) {
+        /* Destroy stage, which is texture's parent */
+        if (priv->texture && CLUTTER_IS_ACTOR(priv->texture)) {
+            ClutterActor *stage = clutter_actor_get_parent(priv->texture);
+            clutter_actor_destroy(stage);
+        }
+    } else {
+        cairo_destroy(priv->cairo);
     }
 }

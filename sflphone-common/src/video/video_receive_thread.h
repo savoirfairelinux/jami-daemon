@@ -34,6 +34,7 @@
 #include <cc++/thread.h>
 #include <map>
 #include <string>
+#include <limits.h>
 
 class SwsContext;
 class AVCodecContext;
@@ -54,22 +55,37 @@ class VideoReceiveThread : public ost::Thread {
         uint8_t *shmBuffer_;
         int shmID_;
         int semSetID_;
+        int shmKey_;
+        int semKey_;
+        int videoBufferSize_;
+
         AVCodecContext *decoderCtx_;
         AVFrame *rawFrame_;
         AVFrame *scaledPicture_;
         int videoStreamIndex_;
         AVFormatContext *inputCtx_;
 
+        int dstWidth_;
+        int dstHeight_;
+        int format_;
+
         void setup();
         void cleanup();
         SwsContext * createScalingContext();
         ost::Event shmReady_;
+
+        void setProgramPath();
+
     public:
         explicit VideoReceiveThread(const std::map<std::string, std::string> &args);
         virtual ~VideoReceiveThread();
         virtual void run();
         void stop();
         void waitForShm();
+
+        int getShmKey(void) { return shmKey_; }
+        int getSemKey(void) { return semKey_; }
+        int getVideoBufferSize(void) { return videoBufferSize_; }
 };
 }
 
