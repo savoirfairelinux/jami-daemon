@@ -715,10 +715,22 @@ call_record (void)
 }
 
 static void
-playback_record(void)
+playback_record_cb(void)
 {
-
     DEBUG("UIManager: Playback button pressed");
+
+    callable_obj_t *selectedCall = calltab_get_selected_call (history);
+    conference_obj_t *selectedConf = calltab_get_selected_conf (history);
+
+    if((selectedCall == NULL) && (selectedConf == NULL)) {
+        ERROR("UIManager: Error: No selected object in playback record callback");
+	return;
+    }
+
+    if(selectedCall)
+        dbus_start_recorded_file_playback(selectedCall->_recordfile);
+    else if(selectedConf)
+	dbus_start_recorded_file_playback(selectedConf->_recordfile);
 }
 
 static void
@@ -989,7 +1001,7 @@ static const GtkActionEntry menu_entries[] = {
     { "Quit", GTK_STOCK_CLOSE, N_ ("_Quit"), "<control>Q",
       N_ ("Quit the program"), G_CALLBACK (call_quit) },
     { "PlayRecord", GTK_STOCK_MEDIA_PLAY,  N_ ("_Playback record"), NULL,
-      N_ ("Playback recorded file"), G_CALLBACK (playback_record) },
+      N_ ("Playback recorded file"), G_CALLBACK (playback_record_cb) },
 
     // Edit Menu
     { "Edit", NULL, N_ ("_Edit"), NULL, NULL, NULL },

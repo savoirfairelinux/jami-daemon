@@ -127,6 +127,8 @@ HistoryItem::HistoryItem (std::string serialized_form)
 
     _confID = confID;
     _timeAdded = timeAdded;
+
+    _recording_file = recordFile;
 }
 
 HistoryItem::~HistoryItem ()
