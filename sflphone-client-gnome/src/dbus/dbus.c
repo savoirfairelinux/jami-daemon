@@ -489,8 +489,23 @@ conference_removed_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
 static void
 record_playback_filepath_cb (DBusGProxy *proxy UNUSED, const gchar *id, const gchar *filepath)
 {
+    callable_obj_t *call = NULL;
+    conference_obj_t *conf = NULL;
+
     DEBUG("DBUS: Filepath for call %s: %s", id, filepath); 
-    
+
+    call = calllist_get_call(current_calls, id);
+    conf = conferencelist_get(current_calls, id);
+
+    if(call) {
+	if(call->_recordfile == NULL) 
+            call->_recordfile = g_strdup(filepath);
+    }
+    else if(conf) {
+        if(conf->_recordfile == NULL)
+            conf->_recordfile = g_strdup(filepath); 
+    }
+        
 }
 
 
