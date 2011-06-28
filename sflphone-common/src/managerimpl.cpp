@@ -257,6 +257,8 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 
     _debug ("Manager: New outgoing call %s to %s", call_id.c_str(), to.c_str());
 
+    stopTone();
+
     CallID current_call_id = getCurrentCallId();
 
     if (hookPreference.getNumberEnabled()) {
