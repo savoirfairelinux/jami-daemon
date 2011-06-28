@@ -277,9 +277,11 @@ update_actions()
 
                 if (active_calltree == current_calls)
                     gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
-		else if(active_calltree == history)
-		    gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM(playRecordWidget), 3);
-
+		else if(active_calltree == history) {
+		    if(selectedCall->_recordfile && (g_strcmp0(selectedCall->_recordfile, "") != 0)) {
+		        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM(playRecordWidget), 3);
+		    }
+		}
                 break;
             case CALL_STATE_CURRENT:
                 DEBUG ("UIManager: Call State Current");
