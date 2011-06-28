@@ -576,10 +576,10 @@ void Sdp::addVideoMediaDescription()
     pjmedia_sdp_media* med;
     int nb_media, i;
 
-    med = PJ_POOL_ZALLOC_T (memPool, pjmedia_sdp_media);
+    med = PJ_POOL_ZALLOC_T (memPool_, pjmedia_sdp_media);
     for (i=0; i<nb_media; i++) {
         setMediaDescriptorLine (getLocalMediaCap() [i], &med);
-        localSession->media[i] = med;
+        localSession_->media[i] = med;
     }
 #endif
 }
@@ -715,7 +715,6 @@ void Sdp::addAttributeToLocalAudioMedia(std::string attr)
 void Sdp::removeAttributeFromLocalAudioMedia(std::string attr)
 {
 	pjmedia_sdp_media_remove_all_attr (localSession_->media[0], attr.c_str());
-
 }
 
 void Sdp::setRemoteIpFromSdp (const pjmedia_sdp_session *r_sdp)
