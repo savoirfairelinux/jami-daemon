@@ -2965,9 +2965,8 @@ bool ManagerImpl::getMd5CredentialHashing (void)
 
 void ManagerImpl::setRecordingCall (const CallID& id)
 {
-
-	Call *call = NULL;
-	Conference *conf = NULL;
+    Call *call = NULL;
+    Conference *conf = NULL;
     Recordable* rec = NULL;
 
     if (!isConference (id)) {
@@ -2988,9 +2987,15 @@ void ManagerImpl::setRecordingCall (const CallID& id)
         rec = static_cast<Recordable *>(conf);
     }
 
-    if (rec != NULL) {
-        rec->setRecording();
+    if (rec == NULL) {
+	_error("Manager: Error: Could not find recordable instance %s", id.c_str());
+	return;
     }
+
+    rec->setRecording();
+
+    if(_dbus)
+	_dbus->getCallManager()->recordPlaybackFilepath(id, rec->getFileName());  
 }
 
 bool ManagerImpl::isRecording (const CallID& id)
@@ -3007,6 +3012,15 @@ bool ManagerImpl::isRecording (const CallID& id)
     return ret;
 }
 
+void ManagerImpl::startRecordedFilePlayback(const std::string& filepath) 
+{
+    _debug("Manager: Start recorded file playback %s", filepath.c_str());
+}
+
+void ManagerImpl::stopRecordedFilePlayback(const std::string& filepath)
+{
+    _debug("Manager: Stop recorded file playback %s", filepath.c_str());
+}
 
 void ManagerImpl::setHistoryLimit (const int& days)
 {

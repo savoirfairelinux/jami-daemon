@@ -100,6 +100,10 @@ class CallManager
         std::vector< std::string > getParticipantList (const std::string& confID);
         std::map< std::string, std::string > getConferenceDetails (const std::string& callID);
 
+  	/* File Playback methods */
+ 	void startRecordedFilePlayback(const std::string& filepath);
+	void stopRecordedFilePlayback(const std::string& filepath);
+
         /* General audio methods */
         void setVolume (const std::string& device, const double& value);
         double getVolume (const std::string& device);

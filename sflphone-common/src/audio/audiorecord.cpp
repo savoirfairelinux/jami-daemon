@@ -133,6 +133,11 @@ void AudioRecord::initFileName (std::string peerNumber)
     savePath_.append (fName);
 }
 
+std::string AudioRecord::getFileName()
+{
+    return savePath_;
+}
+
 bool AudioRecord::openFile()
 {
 
