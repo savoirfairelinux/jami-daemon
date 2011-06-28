@@ -185,7 +185,7 @@ GtkWidget* create_video_configuration()
     gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
 
     preview_button = gtk_button_new_with_mnemonic(_("_Start preview"));
-    gtk_table_attach(GTK_TABLE(table), preview_button, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 6);
+    gtk_table_attach(GTK_TABLE(table), preview_button, 0, 1, 0, 1, 0, 0, 0, 6);
     g_signal_connect(G_OBJECT(preview_button), "clicked", G_CALLBACK(preview_button_clicked), NULL);
     gtk_widget_show(GTK_WIDGET(preview_button));
 

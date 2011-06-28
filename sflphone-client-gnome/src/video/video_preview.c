@@ -304,9 +304,6 @@ video_preview_init (VideoPreview *self)
     VideoPreviewPrivate *priv;
 
     self->priv = priv = VIDEO_PREVIEW_GET_PRIVATE (self);
-
-    priv->texture = NULL;
-    priv->cairo = NULL;
 }
 
 static void
@@ -405,9 +402,14 @@ readFrameFromShm(VideoPreviewPrivate *priv)
                                                                  width,
                                                                  height,
                                                                  stride);
+
         if (surface) {
             cairo_set_source_surface(priv->cairo, surface, 0, 0);
-            cairo_paint(priv->cairo);
+
+            cairo_status_t status = cairo_surface_status(surface);
+            if (status != CAIRO_STATUS_SURFACE_FINISHED) {
+                cairo_paint(priv->cairo);
+            }
             cairo_surface_destroy(surface);
         }
     }
@@ -419,12 +421,11 @@ updateTexture(gpointer data)
     VideoPreview *preview = (VideoPreview *) data;
     VideoPreviewPrivate *priv = VIDEO_PREVIEW_GET_PRIVATE(preview);
 
-    if (priv->shm_buffer != NULL) {
-        readFrameFromShm(priv);
-        return TRUE;
-    }
-    else
+    if (!priv || !priv->shm_buffer)
         return FALSE;
+
+    readFrameFromShm(priv);
+    return TRUE;
 }
 
 /**                                                                             
@@ -447,6 +448,19 @@ video_preview_new (GtkWidget *drawarea, int width, int height, const char *forma
           "vbsize", (gint)vbsize,
           NULL);
     return result;
+}
+
+static gint
+on_drawarea_unrealize(GtkWidget *drawarea, gpointer data)
+{
+    (void)drawarea;
+    VideoPreviewPrivate *priv = VIDEO_PREVIEW_GET_PRIVATE(data);
+    if (priv) {
+        priv->cairo = NULL; // context will be destroyed by gdk
+        video_preview_stop(data);
+    }
+    g_object_notify_by_pspec(G_OBJECT(data), properties[PROP_RUNNING]);
+    return FALSE; // call other handlers
 }
 
 static gint
@@ -492,15 +506,14 @@ video_preview_run(VideoPreview *preview)
 
         clutter_actor_show_all(stage);
     } else {
-        if (!priv->cairo) {
-            GtkWidget *drawarea = priv->drawarea;
-            GdkWindow *w = gtk_widget_get_window(drawarea);
-            priv->cairo = gdk_cairo_create(w);
-        }
+        GtkWidget *drawarea = priv->drawarea;
+        g_signal_connect(drawarea, "unrealize", G_CALLBACK(on_drawarea_unrealize), preview);
+        GdkWindow *w = gtk_widget_get_window(drawarea);
+        priv->cairo = gdk_cairo_create(w);
     }
 
     /* frames are read and saved here */
-    g_idle_add(updateTexture, preview);
+    g_timeout_add(1000/25, updateTexture, preview);
 
     priv->is_running = TRUE;
     /* emit the notify signal for this property */
@@ -524,6 +537,7 @@ video_preview_stop(VideoPreview *preview)
             clutter_actor_destroy(stage);
         }
     } else {
-        cairo_destroy(priv->cairo);
+        if (priv->cairo)
+            cairo_destroy(priv->cairo);
     }
 }
