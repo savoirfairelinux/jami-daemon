@@ -11,10 +11,17 @@ class FakeThread : public ost::Thread {
         virtual void run()
         {
             std::cout << "I'm a thread's execution " << x_ << std::endl;
+            event_.signal();
         }
         virtual void final()
         {
             std::cout << "final" << std::endl;
+        }
+
+        // called from other threads
+        void waitForEvent()
+        {
+            event_.wait();
         }
 
         /* terminate() should always be called at the start of any
@@ -24,16 +31,21 @@ class FakeThread : public ost::Thread {
         virtual ~FakeThread()
         {
             terminate();
-            std::cout << "destructor" << std::endl;
+            std::cout << __PRETTY_FUNCTION__ << std::endl;
         }
     private:
         int x_;
+        ost::Event event_;
 };
 
 int main()
 {
     FakeThread *th = new FakeThread;
     th->start();
+    th->waitForEvent();
+    std::cout << "event has happened..." << std::endl;
+    th->waitForEvent(); // this should not block since it's been signalled and not reset
+    std::cout << "yup, event has happened..." << std::endl;
     th->join();
     delete th;
     return 0;
