@@ -35,7 +35,6 @@ dnl AC_CONFIG_FILES([stamp-h], [echo timestamp > stamp-h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([libs/Makefile \
 		libs/utilspp/Makefile \
-		libs/utilspp/functor/Makefile \
 		libs/utilspp/singleton/Makefile \
 		libs/dbus-c++/Makefile \
 		libs/dbus-c++/src/Makefile \
