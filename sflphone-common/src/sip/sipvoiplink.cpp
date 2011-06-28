@@ -768,7 +768,7 @@ SIPVoIPLink::answer (const CallID& id) throw (VoipLinkException)
 
     if (status == PJ_SUCCESS) {
 
-        _debug ("UserAgent: SDP Negociation success! : call %s ", call->getCallId().c_str());
+        _debug ("UserAgent: SDP negotiation success! : call %s ", call->getCallId().c_str());
         // Create and send a 200(OK) response
         if((status = pjsip_inv_answer (inv_session, PJSIP_SC_OK, NULL, NULL, &tdata)) != PJ_SUCCESS) {
         	throw VoipLinkException("Could not init invite request answer (200 OK)");
@@ -782,7 +782,7 @@ SIPVoIPLink::answer (const CallID& id) throw (VoipLinkException)
 
         return true;
     } else {
-        // Create and send a 488/Not acceptable because the SDP negociation failed
+        // Create and send a 488/Not acceptable because the SDP negotiation failed
         if((status = pjsip_inv_answer (inv_session, PJSIP_SC_NOT_ACCEPTABLE_HERE, NULL, NULL, &tdata)) != PJ_SUCCESS) {
         	throw VoipLinkException("Could not init invite answer (488 not acceptable here)");
         }
@@ -790,7 +790,7 @@ SIPVoIPLink::answer (const CallID& id) throw (VoipLinkException)
         	throw VoipLinkException("Could not init invite request answer (488 NOT ACCEPTABLE HERE)");
         }
         // Terminate the call
-        _debug ("UserAgent: SDP Negociation failed, terminate call %s ", call->getCallId().c_str());
+        _debug ("UserAgent: SDP negotiation failed, terminate call %s ", call->getCallId().c_str());
 
         if(call->getAudioRtp()) {
         	throw VoipLinkException("No audio rtp session for this call");
@@ -3344,8 +3344,8 @@ void sdp_request_offer_cb (pjsip_inv_session *inv, const pjmedia_sdp_session *of
 
     SIPAccount *account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (accId));
 
-    status = call->getLocalSDP()->recieveOffer (offer, account->getActiveCodecs ());
-    call->getLocalSDP()->startNegociation();
+    status = call->getLocalSDP()->receiveOffer (offer, account->getActiveCodecs ());
+    call->getLocalSDP()->startNegotiation();
 
     status = pjsip_inv_set_sdp_answer (call->getInvSession(), call->getLocalSDP()->getLocalSdpSession());
 
@@ -3412,7 +3412,7 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
 
     call = reinterpret_cast<SIPCall *> (inv->mod_data[getModId()]);
     if (call == NULL) {
-        _debug ("UserAgent: Call declined by peer, SDP negociation stopped");
+        _debug ("UserAgent: Call declined by peer, SDP negotiation stopped");
         return;
     }
 
@@ -3485,7 +3485,7 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
         sfl::SdesNegotiator sdesnego (localCapabilities, crypto_offer);
 
         if (sdesnego.negotiate()) {
-            _debug ("UserAgent: SDES negociation successfull");
+            _debug ("UserAgent: SDES negotiation successfull");
             nego_success = true;
 
             _debug ("UserAgent: Set remote cryptographic context");
@@ -3507,7 +3507,7 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
         // We did not found any crypto context for this media
         // @TODO if SRTPONLY, CallFail
 
-        _debug ("UserAgent: Did not found any crypto or negociation failed but Sdes enabled");
+        _debug ("UserAgent: Did not found any crypto or negotiation failed but Sdes enabled");
         call->getAudioRtp()->stop();
         call->getAudioRtp()->setSrtpEnabled (false);
 
@@ -3987,7 +3987,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
     // Set the codec map, IP, peer number and so on... for the SIPCall object
     setCallMediaLocal (call, addrToUse);
 
-    // We retrieve the remote sdp offer in the rdata struct to begin the negociation
+    // We retrieve the remote sdp offer in the rdata struct to begin the negotiation
     call->getLocalSDP()->setLocalIP (addrSdp);
 
     // Init audio rtp session
@@ -4032,7 +4032,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
                 sfl::SdesNegotiator sdesnego (localCapabilities, crypto_offer);
 
                 if (sdesnego.negotiate()) {
-                    _debug ("UserAgent: SDES negociation successfull \n");
+                    _debug ("UserAgent: SDES negotiation successfull \n");
                     nego_success = true;
 
                     try {
@@ -4048,7 +4048,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
     }
 
 
-    status = call->getLocalSDP()->recieveOffer (r_sdp, account->getActiveCodecs ());
+    status = call->getLocalSDP()->receiveOffer (r_sdp, account->getActiveCodecs ());
     if (status!=PJ_SUCCESS) {
         delete call;
         call = NULL;
@@ -4701,8 +4701,6 @@ bool setCallMediaLocal (SIPCall* call, const std::string &localIP)
         AccountID account_id = Manager::instance().getAccountFromCall (call->getCallId ());
 
         account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
-
-
 
         // Setting Audio
         unsigned int callLocalAudioPort = RANDOM_LOCAL_PORT;
