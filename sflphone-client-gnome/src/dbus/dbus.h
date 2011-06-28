@@ -623,6 +623,9 @@ void
 dbus_join_participant (const gchar* sel_callID, const gchar* drag_callID);
 
 void
+dbus_create_conf_from_participant_list(const gchar **list);
+
+void
 dbus_join_conference (const gchar* sel_confID, const gchar* drag_confID);
 
 void

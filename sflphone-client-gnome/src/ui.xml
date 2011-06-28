@@ -54,6 +54,7 @@
     <separator/>
     <toolitem name="VoicemailToolbar" action="Voicemail"/>
     <toolitem name="HistoryToolbar" action="History"/>
+    <toolitem name="PlayRecordToolbar" action="PlayRecord"/> 
   </toolbar>
 
   <popup name="PopupMenu">

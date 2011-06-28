@@ -78,6 +78,8 @@ static GtkAction * voicemailAction;
 static GtkWidget * voicemailToolbar;
 static GtkWidget * imToolbar;
 static GtkAction * imAction;
+static GtkWidget * playRecordWidget;
+static GtkWidget * playRecordAction;
 
 static GtkWidget * editable_num;
 static GtkDialog * edit_dialog;
@@ -180,6 +182,9 @@ update_actions()
     if (eel_gconf_get_integer (HISTORY_ENABLED)) {
         gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (historyButton), -1);
         gtk_widget_set_sensitive (GTK_WIDGET (historyButton), TRUE);
+
+	if(is_inserted(GTK_WIDGET (playRecordWidget), GTK_WIDGET(toolbar)))
+	    gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(playRecordWidget));
     }
 
     // If addressbook support has been enabled and all addressbooks are loaded, display the icon
@@ -262,6 +267,8 @@ update_actions()
 
                 if (active_calltree == current_calls)
                     gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
+	        if (active_calltree == current_calls)
+		    gtk_action_set_sensitive (GTK_ACTION(playRecordAction), TRUE);
 
                 //gtk_action_set_sensitive( GTK_ACTION(newCallMenu),TRUE);
                 g_object_ref (newCallWidget);
@@ -270,6 +277,8 @@ update_actions()
 
                 if (active_calltree == current_calls)
                     gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
+		else if(active_calltree == history)
+		    gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM(playRecordWidget), 3);
 
                 break;
             case CALL_STATE_CURRENT:
@@ -704,6 +713,13 @@ call_record (void)
 }
 
 static void
+playback_record(void)
+{
+
+    DEBUG("UIManager: Playback button pressed");
+}
+
+static void
 call_configuration_assistant (void * foo UNUSED)
 {
 #if GTK_CHECK_VERSION(2,10,0)
@@ -970,6 +986,8 @@ static const GtkActionEntry menu_entries[] = {
       N_ ("Minimize to system tray"), G_CALLBACK (call_minimize) },
     { "Quit", GTK_STOCK_CLOSE, N_ ("_Quit"), "<control>Q",
       N_ ("Quit the program"), G_CALLBACK (call_quit) },
+    { "PlayRecord", GTK_STOCK_MEDIA_PLAY,  N_ ("_Playback record"), NULL,
+      N_ ("Playback recorded file"), G_CALLBACK (playback_record) },
 
     // Edit Menu
     { "Edit", NULL, N_ ("_Edit"), NULL, NULL, NULL },
@@ -1137,8 +1155,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
     // TODO update the selection to make sure the call under the mouse is the call selected
 
     // call type boolean
-    gboolean pickup = FALSE, hangup = FALSE, hold = FALSE, copy = FALSE,
-             record = FALSE, im = FALSE;
+    gboolean pickup = FALSE, hangup = FALSE, hold = FALSE, copy = FALSE, record = FALSE, im = FALSE;
     gboolean accounts = FALSE;
 
     // conference type boolean
@@ -1720,6 +1737,10 @@ create_toolbar_actions (GtkUIManager *ui_manager, GtkWidget **widget)
                    "/ToolbarActions/InstantMessagingToolbar");
     historyButton = gtk_ui_manager_get_widget (ui_manager,
                     "/ToolbarActions/HistoryToolbar");
+    playRecordWidget = gtk_ui_manager_get_widget(ui_manager,
+		    "/ToolbarActions/PlayRecordToolbar");
+    playRecordAction = gtk_ui_manager_get_action(ui_manager, 
+		    "/ToolbarActions/PlayRecord");
     if(abookfactory_is_addressbook_loaded()) {
         contactButton = gtk_ui_manager_get_widget (ui_manager, "/ToolbarActions/AddressbookToolbar");
     }

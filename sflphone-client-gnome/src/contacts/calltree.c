@@ -34,13 +34,16 @@
 #include <stdlib.h>
 #include <glib/gprintf.h>
 #include <eel-gconf-extensions.h>
-#include <calllist.h>
-#include <conferencelist.h>
-#include <mainwindow.h>
-#include <history.h>
+
+#include "dbus.h"
+#include "calllist.h"
+#include "conferencelist.h"
+#include "mainwindow.h"
+#include "history.h"
+#include "calltree.h"
 #include "uimanager.h"
 #include "actions.h"
-#include "../imwindow.h"
+#include "imwindow.h"
 #include "searchbar.h"
 
 // Messages used in menu item
