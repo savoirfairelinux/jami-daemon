@@ -140,7 +140,7 @@ bool Sdp::hasSessionMedia(void) const
     return not sessionAudioMedia_.empty();
 }
 
-sfl::AudioCodec* Sdp::getSessionMedia (void) throw(SdpException)
+sfl::AudioCodec* Sdp::getSessionMedia (void)
 {
 
     int nbMedia;
@@ -236,11 +236,7 @@ void Sdp::setMediaDescriptorLine (sdpMedia *media, pjmedia_sdp_media** p_med)
     med->attr[ med->attr_count++] = attr;
 
     if (!zrtpHelloHash_.empty()) {
-        try {
-            addZrtpAttribute (med, zrtpHelloHash_);
-        } catch (...) {
-            throw;
-        }
+        addZrtpAttribute (med, zrtpHelloHash_);
     }
 
     setTelephoneEventRtpmap(med);
@@ -565,7 +561,7 @@ void Sdp::addAudioMediaDescription()
 }
 
 
-void Sdp::addSdesAttribute (std::vector<std::string>& crypto) throw (SdpException)
+void Sdp::addSdesAttribute (std::vector<std::string>& crypto)
 {
 
     // temporary buffer used to store crypto attribute
@@ -608,7 +604,7 @@ void Sdp::addSdesAttribute (std::vector<std::string>& crypto) throw (SdpExceptio
 }
 
 
-void Sdp::addZrtpAttribute (pjmedia_sdp_media* media, std::string hash) throw (SdpException)
+void Sdp::addZrtpAttribute (pjmedia_sdp_media* media, std::string hash)
 {
     pjmedia_sdp_attr *attribute;
     char tempbuf[256];
