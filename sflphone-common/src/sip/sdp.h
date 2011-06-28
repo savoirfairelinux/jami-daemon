@@ -42,7 +42,7 @@
 #include <pj/assert.h>
 #include <vector>
 #include <string>
-#include <exception>
+#include <stdexcept>
 
 #include "global.h" // FIXME: CodecOrder shouldn't be in global.h
 class sdpMedia;
@@ -51,20 +51,11 @@ namespace sfl {
     class AudioCodec;
 }
 
-class SdpException : public std::exception
+class SdpException : public std::runtime_error
 {
     public:
-        SdpException (const std::string& str="") throw() : errstr (str) {}
-
-        virtual ~SdpException() throw() {}
-
-        virtual const char *what() const throw() {
-            std::string expt ("SDP: SdpException occured: ");
-            expt.append (errstr);
-            return expt.c_str();
-        }
-    private:
-        std::string errstr;
+        SdpException (const std::string& str="") :
+            std::runtime_error("SDP: SdpException occured: " + str) {}
 };
 
 typedef std::vector<std::string> CryptoOffer;
