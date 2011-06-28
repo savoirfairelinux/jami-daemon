@@ -188,12 +188,22 @@ void conference_participant_list_update (gchar** participants, conference_obj_t*
 {
     gchar* call_id;
     gchar** part;
+    callable_obj_t *call;
 
     DEBUG ("Conference: Participant list update");
 
     if(conf == NULL) {
     	ERROR("Conference: Error: Conference is NULL");
         return;
+    }
+
+    for(part = participants; *part; part++) {
+	call_id = (gchar *) (*part);
+	call = calllist_get_call(current_calls, call_id);
+	if(call->_confID != NULL) {
+	    g_free(call->_confID);
+	    call->_confID = NULL;
+	}
     }
 
     if (conf->participant_list) {
@@ -203,6 +213,8 @@ void conference_participant_list_update (gchar** participants, conference_obj_t*
 
     for (part = participants; *part; part++) {
         call_id = (gchar*) (*part);
+	call = calllist_get_call(current_calls, call_id);
+	call->_confID = g_strdup(conf->_confID);
         conference_add_participant (call_id, conf);
     }
 

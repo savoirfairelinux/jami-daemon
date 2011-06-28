@@ -278,6 +278,11 @@ sflphone_hung_up (callable_obj_t * c)
     call_remove_all_errors (c);
     update_actions();
 
+    if(c->_confID) {
+	g_free(c->_confID);
+	c->_confID = NULL;
+    }
+
     // test wether the widget contain text, if not remove it
     if ( (im_window_get_nb_tabs() > 1) && c->_im_widget && ! (IM_WIDGET (c->_im_widget)->containText))
         im_window_remove_tab (c->_im_widget);
@@ -1350,7 +1355,10 @@ void sflphone_fill_history (void)
 {
     gchar **entries, *current_entry;
     callable_obj_t *history_entry;
+    callable_obj_t *call;
+    QueueElement *element;
     conference_obj_t *conference_entry;
+    guint i = 0, n = 0;
 
     DEBUG ("======================================================= SFLphone: Loading history");
 
@@ -1362,15 +1370,59 @@ void sflphone_fill_history (void)
 
         current_entry = *entries;
 
+	DEBUG("============================================ entry: %s", current_entry);
+
         // do something with key and value
         create_history_entry_from_serialized_form (current_entry, &history_entry);
                 
 	// Add it and update the GUI
         calllist_add_call (history, history_entry);
-	calltree_add_call (history, history_entry, NULL);
+
+        if(history_entry->_confID && g_strcmp0(history_entry->_confID, "") != 0) {
+	    conference_obj_t *conf;
+
+	    DEBUG("----------------- conf id: %s", history_entry->_confID);
+
+	    // process conference
+	    conf = conferencelist_get(history, history_entry->_confID);
+	    if(conf == NULL) {
+	        // conference does not exist yet, create it
+		create_new_conference(CONFERENCE_STATE_ACTIVE_ATACHED, history_entry->_confID, &conf);
+	        conferencelist_add(history, conf);	
+	    }
+	     
+	    conference_add_participant(history_entry->_callID, conf);
+
+	    // conference start timestamp corespond to 
+	    if(conf->_time_start > history_entry->_time_added) {
+	        conf->_time_start = history_entry->_time_added;
+            } 
+        }
 	
         entries++;
     }
+
+    // fill 
+    n = calllist_get_size(history);
+    DEBUG("CALL SIZE: %d", n);
+    for(i = 0; i < n; i++) {
+	element = calllist_get_nth(history, i);
+	if(element->type == HIST_CALL) {
+	    call = element->elem.call; 
+	    DEBUG("%d ADDING: %s", i, call->_callID);
+            calltree_add_call (history, call, NULL);
+        }
+    }
+
+    n = conferencelist_get_size(history);
+    DEBUG("CONFERENCE SIZE: %d", n);
+    for(i = 0; i < n; i++) {
+        conference_obj_t *conf = conferencelist_get_nth(history, i);
+	if(conf == NULL) {
+	    DEBUG("??????????????????????");
+        }
+	calltree_add_conference(history, conf);
+    } 
 
     DEBUG ("======================================================== SFLphone: Loading history ...(end)");
 }

@@ -186,7 +186,7 @@ std::string HistoryItem::serialize (void)
 
     // Serialize it
     res << _call_type << separator << _number << separator << name << separator << _timestamp_start << separator << _timestamp_stop 
-	<< separator << _id << separator << accountID << separator << _recording_file;
+	<< separator << _id << separator << accountID << separator << _recording_file << separator << _confID << separator << _timeAdded;
 
     return res.str();
 }

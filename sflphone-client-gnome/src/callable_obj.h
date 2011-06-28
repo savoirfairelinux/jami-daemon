@@ -105,6 +105,7 @@ typedef struct  {
     gchar* _state_code_description; // A textual description of _state_code
     gchar* _callID;                 // The call ID
     gchar* _confID;                 // The conference ID (NULL if don't participate to a conference)
+    gchar* _historyConfID;	    // Persistent conf id to be stored in history
     gchar* _accountID;              // The account the call is made with
     time_t _time_start;             // The timestamp the call was initiating
     time_t _time_current;           // Clock increment to display call's elapsed time
@@ -159,8 +160,9 @@ typedef struct  {
     /* Associated IM widget */
     GtkWidget *_im_widget;
 
-    // thread id to increment clock
-    // pthread_t tid;
+    /**
+     * Thread id to increment clock
+     */
     GThread *tid;
 
     int clockStarted;

@@ -15,7 +15,6 @@ sflphoned_SOURCES = \
 		preferences.cpp \
 		managerimpl.cpp \
 		managerimpl_registration.cpp \
-		observer.cpp \
 		eventthread.cpp \
 		accountcreator.cpp \
 		call.cpp \
@@ -54,7 +53,6 @@ noinst_HEADERS = \
 		managerimpl.h \
 		manager.h \
 		global.h \
-		observer.h \
 		eventthread.h \
 		user_cfg.h \
 		account.h \

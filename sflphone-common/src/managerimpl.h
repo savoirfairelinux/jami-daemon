@@ -42,7 +42,6 @@
 #include <cc++/thread.h>
 #include "dbus/dbusmanager.h"
 
-#include "observer.h"
 #include "config/config.h"
 
 #include "account.h"

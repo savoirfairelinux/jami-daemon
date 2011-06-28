@@ -201,7 +201,6 @@ call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state
         if (strcmp (state, "HUNGUP") == 0) {
             if (c->_state == CALL_STATE_CURRENT) {
                 // peer hung up, the conversation was established, so _stop has been initialized with the current time value
-                DEBUG ("DBUS: call state current");
                 set_timestamp (&c->_time_stop);
                 calltree_update_call (history, c, NULL);
             }
@@ -249,10 +248,8 @@ call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state
             type = g_hash_table_lookup (call_details, "CALL_TYPE");
 
             if (g_strcasecmp (type, "0") == 0) {
-                // DEBUG("incoming\n");
                 new_call->_history_state = INCOMING;
             } else {
-                // DEBUG("outgoing\n");
                 new_call->_history_state = OUTGOING;
             }
 
@@ -261,8 +258,6 @@ call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state
             calltree_add_call (current_calls, new_call, NULL);
             update_actions();
             calltree_display (current_calls);
-
-            //sflphone_incoming_call (new_call);
         }
     }
 }
@@ -346,8 +341,8 @@ conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
 {
     DEBUG ("DBUS: Conference %s added", confID);
 
-    conference_obj_t* new_conf;
-    callable_obj_t* call;
+    conference_obj_t *new_conf;
+    callable_obj_t *call, *history_entry;
     gchar* call_id;
     gchar** participants;
     gchar** part;
@@ -364,8 +359,6 @@ conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
         call_id = (gchar*) (*part);
         call = calllist_get_call (current_calls, call_id);
 
-	DEBUG("PART:                                       %s", call_id);
-
         // if a text widget is already created, disable it, use conference widget instead
         if (call->_im_widget) {
             im_widget_update_state (IM_WIDGET (call->_im_widget), FALSE);
@@ -378,6 +371,7 @@ conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
         }
 
         call->_confID = g_strdup (confID);
+	call->_historyConfID = g_strdup (confID);
     }
 
 
