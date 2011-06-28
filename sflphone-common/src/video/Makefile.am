@@ -2,7 +2,7 @@ include $(top_srcdir)/globals.mak
 
 SUBDIRS=test
 
-noinst_PROGRAMS = ffmpeg2rtp ffmpeg2shm
+check_PROGRAMS = ffmpeg2rtp ffmpeg2shm
 noinst_LTLIBRARIES = libvideo.la
 libvideo_la_SOURCES = video_endpoint.cpp video_endpoint.h \
 							libav_utils.cpp libav_utils.h \
