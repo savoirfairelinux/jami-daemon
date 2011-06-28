@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -34,7 +34,7 @@
 #include "sdpmedia.h"
 #include "global.h"
 #include "manager.h"
-#define ZRTP_VERSION "1.10"
+static const char* const ZRTP_VERSION = "1.10";
 
 static const pj_str_t STR_AUDIO = { (char*) "audio", 5};
 static const pj_str_t STR_VIDEO = { (char*) "video", 5};
@@ -169,6 +169,17 @@ sfl::AudioCodec* Sdp::getSessionMedia (void)
     return static_cast<sfl::AudioCodec *>(codec);
 }
 
+namespace
+{
+std::string convertIntToString (int value)
+{
+    std::ostringstream result;
+    result << value;
+    return result.str();
+}
+} // end anonymous namespace
+
+
 void Sdp::setMediaDescriptorLine (sdpMedia *media, pjmedia_sdp_media** p_med)
 {
 
@@ -203,7 +214,7 @@ void Sdp::setMediaDescriptorLine (sdpMedia *media, pjmedia_sdp_media** p_med)
 
     for (i=0; i<count; i++) {
         codec = media->get_media_codec_list() [i];
-        tmp = this->convertIntToString (codec->getPayloadType ());
+        tmp = convertIntToString (codec->getPayloadType ());
         _debug ("%s", tmp.c_str());
         pj_strdup2 (memPool_, &med->desc.fmt[i], tmp.c_str());
 
@@ -486,12 +497,12 @@ void Sdp::updateInternalState() {
 	setMediaTransportInfoFromRemoteSdp (activeRemoteSession_);
 }
 
-void Sdp::addProtocol (void)
+void Sdp::addProtocol ()
 {
     localSession_->origin.version = 0;
 }
 
-void Sdp::addOrigin (void)
+void Sdp::addOrigin ()
 {
     pj_time_val tv;
     pj_gettimeofday (&tv);
@@ -507,25 +518,23 @@ void Sdp::addOrigin (void)
     localSession_->origin.addr = pj_str ( (char*) localIpAddr_.c_str());
 }
 
-void Sdp::addSessionName (void)
+void Sdp::addSessionName ()
 {
 
     localSession_->name = STR_SDP_NAME;
 }
 
 
-void Sdp::addConnectionInfo (void)
+void Sdp::addConnectionInfo ()
 {
-
     localSession_->conn->net_type = localSession_->origin.net_type;
     localSession_->conn->addr_type = localSession_->origin.addr_type;
     localSession_->conn->addr = localSession_->origin.addr;
 }
 
 
-void Sdp::addTiming (void)
+void Sdp::addTiming ()
 {
-
     // RFC 3264: An offer/answer model session description protocol
     // As the session is created and destroyed through an external signaling mean (SIP), the line
     // should have a value of "0 0".
@@ -560,14 +569,12 @@ void Sdp::addAudioMediaDescription()
     }
 }
 
-
-void Sdp::addSdesAttribute (std::vector<std::string>& crypto)
+void Sdp::addSdesAttribute (const std::vector<std::string>& crypto)
 {
-
     // temporary buffer used to store crypto attribute
     char tempbuf[256];
 
-    std::vector<std::string>::iterator iter = crypto.begin();
+    std::vector<std::string>::const_iterator iter = crypto.begin();
 
     while (iter != crypto.end()) {
 
@@ -599,7 +606,7 @@ void Sdp::addSdesAttribute (std::vector<std::string>& crypto)
         }
 
 
-        iter++;
+        ++iter;
     }
 }
 
@@ -644,7 +651,7 @@ void Sdp::cleanSessionMedia()
             _debug ("delete media");
             media = *iter;
             delete media;
-            iter++;
+            ++iter;
         }
 
         sessionAudioMedia_.clear();
@@ -656,7 +663,7 @@ void Sdp::cleanLocalMediaCapabilities()
 {
     _info ("SDP: Clean local media capabilities");
 
-    if (localAudioMediaCap_.size() > 0) {
+    if (not localAudioMediaCap_.empty()) {
 
         std::vector<sdpMedia *>::iterator iter = localAudioMediaCap_.begin();
         sdpMedia *media;
@@ -664,7 +671,7 @@ void Sdp::cleanLocalMediaCapabilities()
         while (iter != localAudioMediaCap_.end()) {
             media = *iter;
             delete media;
-            iter++;
+            ++iter;
         }
 
         localAudioMediaCap_.clear();
@@ -673,17 +680,12 @@ void Sdp::cleanLocalMediaCapabilities()
 
 void Sdp::setPortToAllMedia (int port)
 {
-
-    std::vector<sdpMedia*> medias;
-    int i, size;
-
     setLocalPublishedAudioPort (port);
 
-    size = localAudioMediaCap_.size();
+    int size = localAudioMediaCap_.size();
 
-    for (i=0; i<size; i++) {
+    for (int i = 0; i < size; i++)
         localAudioMediaCap_[i]->set_port (port);
-    }
 }
 
 void Sdp::addAttributeToLocalAudioMedia(std::string attr)
@@ -701,13 +703,6 @@ void Sdp::removeAttributeFromLocalAudioMedia(std::string attr)
 
 }
 
-std::string Sdp::convertIntToString (int value)
-{
-    std::ostringstream result;
-    result << value;
-    return result.str();
-}
-
 void Sdp::setRemoteIpFromSdp (const pjmedia_sdp_session *r_sdp)
 {
 
@@ -718,12 +713,8 @@ void Sdp::setRemoteIpFromSdp (const pjmedia_sdp_session *r_sdp)
 
 void Sdp::setRemoteAudioPortFromSdp (pjmedia_sdp_media *r_media)
 {
-
-    int remote_port;
-
-    remote_port = r_media->desc.port;
-    _info ("SDP: Remote Audio Port from fetching SDP: %d", remote_port);
-    this->setRemoteAudioPort (remote_port);
+    _info ("SDP: Remote Audio Port from fetching SDP: %d", r_media->desc.port);
+    this->setRemoteAudioPort (r_media->desc.port);
 }
 
 void Sdp::setMediaTransportInfoFromRemoteSdp (const pjmedia_sdp_session *remote_sdp)
@@ -845,9 +836,7 @@ void Sdp::getRemoteSdpCryptoFromOffer (const pjmedia_sdp_session* remote_sdp, Cr
 
                 crypto_offer.push_back (full_attr);
             }
-
         }
     }
-
 }
 

@@ -496,7 +496,7 @@ class Sdp
          * @param media The media to add the srtp attribute to
          * @throw SdpException
          */
-        void addSdesAttribute (std::vector<std::string>& crypto);
+        void addSdesAttribute (const std::vector<std::string>& crypto);
 
         /*
          * Adds a zrtp-hash  attribute to
@@ -509,8 +509,6 @@ class Sdp
          * @throw SdpException
          */
         void addZrtpAttribute (pjmedia_sdp_media* media, std::string hash);
-
-        std::string convertIntToString (int value);
 
         void setRemoteIpFromSdp (const pjmedia_sdp_session *r_sdp);
 
