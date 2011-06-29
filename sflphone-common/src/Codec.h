@@ -32,8 +32,6 @@
 
 #include "MimeParameters.h" // TODO Move to some higher directory
 
-#include <tr1/memory>
-
 #include <cc++/digest.h>
 
 /**
@@ -64,7 +62,7 @@ class Codec : public virtual MimeParameters
         /**
          * @return A copy of the current codec.
          */
-        virtual Codec* clone() const = 0;
+        //virtual Codec* clone() const = 0;
 
         /**
          * Build a unique hash code for identifying the codec uniquely.

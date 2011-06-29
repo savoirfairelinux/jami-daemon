@@ -136,7 +136,7 @@ class AudioCodec : public Codec
         /**
          * @Override
          */
-        virtual AudioCodec* clone() const = 0;
+        //virtual AudioCodec* clone() const = 0;
 
     protected:
         /** Holds SDP-compliant codec name */

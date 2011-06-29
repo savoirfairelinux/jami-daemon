@@ -134,9 +134,11 @@ class Ulaw : public sfl::AudioCodec
         /**
          * @Override
          */
+#if 0
         Ulaw* clone() const {
             return new Ulaw (*this);
         }
+#endif
 
 };
 
