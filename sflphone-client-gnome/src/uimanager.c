@@ -180,15 +180,14 @@ update_actions()
 
     gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (newCallWidget), 0);
 
+    if(is_inserted(GTK_WIDGET (playRecordWidget), GTK_WIDGET(toolbar)))
+	gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(playRecordWidget));
+    if(is_inserted(GTK_WIDGET (stopRecordWidget), GTK_WIDGET(toolbar)))
+	gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(stopRecordWidget));
 
     if (eel_gconf_get_integer (HISTORY_ENABLED)) {
         gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (historyButton), -1);
         gtk_widget_set_sensitive (GTK_WIDGET (historyButton), TRUE);
-
-	if(is_inserted(GTK_WIDGET (playRecordWidget), GTK_WIDGET(toolbar)))
-	    gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(playRecordWidget));
-	if(is_inserted(GTK_WIDGET (stopRecordWidget), GTK_WIDGET(toolbar)))
-	    gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(stopRecordWidget));
     }
 
     // If addressbook support has been enabled and all addressbooks are loaded, display the icon

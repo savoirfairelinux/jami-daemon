@@ -1454,7 +1454,7 @@ void calltree_add_history_conference(conference_obj_t *conf)
         ERROR("CallTree: Error conference is NULL");
     }
 
-    DEBUG("---------------------------------------------------------- CallTree: Add conference %s to history", conf->_confID);
+    DEBUG("CallTree: Add conference %s to history", conf->_confID);
 
     gtk_tree_store_prepend(history->store, &iter, NULL);
 
@@ -1501,23 +1501,17 @@ void calltree_display (calltab_t *tab)
 
     /* case 1: we want to display the main calltree */
     if (tab==current_calls) {
-
         DEBUG ("CallTree: Display main tab");
-
 
         if (active_calltree==contacts) {
             gtk_toggle_tool_button_set_active ( (GtkToggleToolButton*) contactButton, FALSE);
         } else {
             gtk_toggle_tool_button_set_active ( (GtkToggleToolButton*) historyButton, FALSE);
         }
-
-        // gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)currentCallsButton, TRUE);
-
     }
 
     /* case 2: we want to display the history */
     else if (tab == history) {
-
         DEBUG ("ConferenceList: Display history tab");
 
         if (active_calltree==contacts) {
@@ -1528,7 +1522,6 @@ void calltree_display (calltab_t *tab)
     }
 
     else if (tab==contacts) {
-
         DEBUG ("CallTree: Display contact tab");
 
         if (active_calltree==history) {
