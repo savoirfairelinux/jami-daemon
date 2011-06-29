@@ -547,8 +547,9 @@ sflphone_pick_up()
                 calltree_update_call (history, selectedCall, NULL);
 
                 // if instant messaging window is visible, create new tab (deleted automatically if not used)
-                if (im_window_is_visible())
+                if (selectedCall->_im_widget && im_window_is_visible()) {
                     im_widget_display ( (IMWidget **) (&selectedCall->_im_widget), NULL, selectedCall->_callID, NULL);
+	        }
 
                 dbus_accept (selectedCall);
                 stop_notification();
