@@ -192,9 +192,13 @@ std::vector<sfl::Codec*> AudioCodecFactory::scanCodecDirectory (void)
 
     std::string libDir = std::string (CODECS_DIR).append ("/");
     std::string homeDir = std::string (HOMEDIR)  + DIR_SEPARATOR_STR + "." + PROGDIR + "/";
+    // look for a CODECS_PATH environment variable...used in tests
+    const char *envDir = getenv("CODECS_PATH");
     std::vector<std::string> dirToScan;
     dirToScan.push_back (homeDir);
     dirToScan.push_back (libDir);
+    if (envDir)
+        dirToScan.push_back(std::string(envDir) + DIR_SEPARATOR_STR);
 
     for (i = 0 ; (unsigned int) i < dirToScan.size() ; i++) {
         std::string dirStr = dirToScan[i];
