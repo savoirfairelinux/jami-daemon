@@ -298,7 +298,7 @@ row_activated (GtkTreeView       *tree_view UNUSED,
 
 static void 
 calltree_create_conf_from_participant_list(GSList *list) {
-    gchar **participant_list, participant_number;
+    gchar **participant_list;
     gint list_length = g_slist_length(list);
     gint i = 0;
     gint c = 0;
@@ -329,7 +329,7 @@ calltree_create_conf_from_participant_list(GSList *list) {
     participant_list = (void *) realloc(participant_list, (c+1) *sizeof(void*));
     *(participant_list+c) = NULL;
 
-    dbus_create_conf_from_participant_list(participant_list);
+    dbus_create_conf_from_participant_list((const gchar **)participant_list);
 }
 
 /* Catch cursor-activated signal. That is, when the entry is single clicked */
@@ -1444,7 +1444,7 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, G
 void calltree_add_history_conference(conference_obj_t *conf) 
 {
     GdkPixbuf *pixbuf = NULL;
-    gchar *description = "Conference: ", *date = "", *duration = "";
+    gchar *description = "Conference: ", *date = "";
     GtkTreeIter iter;
     gchar *call_id;
     callable_obj_t *call; 
