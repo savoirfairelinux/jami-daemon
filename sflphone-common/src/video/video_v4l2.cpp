@@ -124,6 +124,44 @@ static unsigned int pixelformat_score(unsigned pixelformat)
     return UINT_MAX - 1;
 }
 
+VideoV4l2Size::VideoV4l2Size(unsigned height, unsigned width) : height(height), width(width), _currentRate(0) {}
+
+std::vector<std::string> VideoV4l2Size::getRateList()
+{
+	std::vector<std::string> v;
+	std::stringstream ss;
+
+	size_t n = rates.size();
+	unsigned i;
+	for (i = 0 ; i < n ; i++) {
+		VideoV4l2Rate rate = rates[i];
+		std::stringstream ss;
+		ss << (float)rate.den / rate.num;
+		v.push_back(ss.str());
+	}
+
+	return v;
+}
+
+void VideoV4l2Size::setRate(unsigned index)
+{
+    if (index >= rates.size())
+        index = rates.size() - 1;
+    _currentRate = index;
+}
+
+unsigned VideoV4l2Size::getRateIndex()
+{
+    return _currentRate;
+}
+
+VideoV4l2Rate &VideoV4l2Size::getRate()
+{
+    return rates[_currentRate];
+}
+
+
+
 void VideoV4l2Size::GetFrameRates(int fd, unsigned int pixel_format)
 {
     struct v4l2_frmivalenum frmival = {
@@ -161,6 +199,58 @@ void VideoV4l2Size::GetFrameRates(int fd, unsigned int pixel_format)
         break;
     }
 }
+
+VideoV4l2Channel::VideoV4l2Channel(unsigned idx, const char *s) : idx(idx), name(s), _currentSize(0) { }
+
+void VideoV4l2Channel::SetFourcc(unsigned code)
+{
+    fourcc[0] = code;
+    fourcc[1] = code >> 8;
+    fourcc[2] = code >> 16;
+    fourcc[3] = code >> 24;
+    fourcc[4] = '\0';
+}
+
+const char * VideoV4l2Channel::GetFourcc()
+{
+	return fourcc;
+}
+
+void VideoV4l2Channel::setSize(unsigned index)
+{
+    if (index >= sizes.size())
+        index = sizes.size() - 1;
+    _currentSize = index;
+}
+
+std::vector<std::string> VideoV4l2Channel::getSizeList(void)
+{
+    std::vector<std::string> v;
+
+    size_t n = sizes.size();
+    unsigned i;
+    for (i = 0 ; i < n ; i++) {
+        VideoV4l2Size &size = sizes[i];
+        std::stringstream ss;
+        ss << size.width << "x" << size.height;
+        v.push_back(ss.str());
+    }
+
+    return v;
+}
+
+
+unsigned VideoV4l2Channel::getSizeIndex()
+{
+    return _currentSize;
+}
+
+VideoV4l2Size &VideoV4l2Channel::getSize()
+{
+    return sizes[_currentSize];
+}
+
+
 
 unsigned int VideoV4l2Channel::GetSizes(int fd, unsigned int pixelformat)
 {
@@ -270,5 +360,35 @@ VideoV4l2Device::VideoV4l2Device(int fd, const std::string &device) : _currentCh
     }
     this->device = device;
 }
+
+std::vector<std::string> VideoV4l2Device::getChannelList(void)
+{
+    std::vector<std::string> v;
+
+    size_t n = channels.size();
+    unsigned i;
+    for (i = 0 ; i < n ; i++)
+        v.push_back(channels[i].name);
+
+    return v;
+}
+
+void VideoV4l2Device::setChannel(unsigned index)
+{
+    if (index >= channels.size())
+        index = channels.size() - 1;
+    _currentChannel = index;
+}
+
+unsigned VideoV4l2Device::getChannelIndex()
+{
+    return _currentChannel;
+}
+
+VideoV4l2Channel &VideoV4l2Device::getChannel()
+{
+    return channels[_currentChannel];
+}
+
 
 } // end namespace sfl

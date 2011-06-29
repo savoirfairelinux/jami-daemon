@@ -55,46 +55,21 @@ class VideoV4l2Rate {
 
 class VideoV4l2Size {
     public:
-        VideoV4l2Size(unsigned height, unsigned width) : height(height), width(width), _currentRate(0) {}
+        VideoV4l2Size(unsigned height, unsigned width);
 
         /**
          * @throw std::runtime_error
          */
         void GetFrameRates(int fd, unsigned int pixel_format);
+        std::vector<std::string> getRateList();
 
-        std::vector<std::string> getRateList() {
-            std::vector<std::string> v;
-            std::stringstream ss;
 
-            size_t n = rates.size();
-            unsigned i;
-            for (i = 0 ; i < n ; i++) {
-                VideoV4l2Rate rate = rates[i];
-                std::stringstream ss;
-                ss << (float)rate.den / rate.num;
-                v.push_back(ss.str());
-            }
-
-            return v;
-        }
-
+        void setRate(unsigned index);
+        unsigned getRateIndex();
+        VideoV4l2Rate &getRate();
 
         unsigned height;
         unsigned width;
-
-        void setRate(unsigned index) {
-            if (index >= rates.size())
-                index = rates.size() - 1;
-            _currentRate = index;
-        }
-
-        unsigned getRateIndex() {
-            return _currentRate;
-        }
-
-        VideoV4l2Rate &getRate() {
-            return rates[_currentRate];
-        }
 
     private:
         std::vector<VideoV4l2Rate> rates;
@@ -103,7 +78,7 @@ class VideoV4l2Size {
 
 class VideoV4l2Channel {
     public:
-        VideoV4l2Channel(unsigned idx, const char *s) : idx(idx), name(s), _currentSize(0) { }
+        VideoV4l2Channel(unsigned idx, const char *s);
 
         /**
          * @throw std::runtime_error
@@ -114,47 +89,18 @@ class VideoV4l2Channel {
          */
         unsigned int GetSizes(int fd, unsigned int pixel_format);
 
-        void SetFourcc(unsigned code) {
-            fourcc[0] = code;
-            fourcc[1] = code >> 8;
-            fourcc[2] = code >> 16;
-            fourcc[3] = code >> 24;
-            fourcc[4] = '\0';
-        }
+        void SetFourcc(unsigned code);
+        const char * GetFourcc();
 
-        const char * GetFourcc() { return fourcc; }
+        void setSize(unsigned index);
+
+        std::vector<std::string> getSizeList(void);
+        unsigned getSizeIndex();
+
+        VideoV4l2Size &getSize();
+
         unsigned idx;
         std::string name;
-
-        void setSize(unsigned index) {
-            if (index >= sizes.size())
-                index = sizes.size() - 1;
-            _currentSize = index;
-        }
-
-        std::vector<std::string> getSizeList(void) {
-            std::vector<std::string> v;
-
-            size_t n = sizes.size();
-            unsigned i;
-            for (i = 0 ; i < n ; i++) {
-                VideoV4l2Size &size = sizes[i];
-                std::stringstream ss;
-                ss << size.width << "x" << size.height;
-                v.push_back(ss.str());
-            }
-
-            return v;
-        }
-
-
-        unsigned getSizeIndex() {
-            return _currentSize;
-        }
-
-        VideoV4l2Size &getSize() {
-            return sizes[_currentSize];
-        }
 
     private:
         std::vector<VideoV4l2Size> sizes;
@@ -172,30 +118,10 @@ class VideoV4l2Device {
         std::string device;
         std::string name;
 
-        std::vector<std::string> getChannelList(void) {
-            std::vector<std::string> v;
-
-            size_t n = channels.size();
-            unsigned i;
-            for (i = 0 ; i < n ; i++) 
-                v.push_back(channels[i].name);
-
-            return v;
-        }
-
-        void setChannel(unsigned index) {
-            if (index >= channels.size())
-                index = channels.size() - 1;
-            _currentChannel = index;
-        }
-
-        unsigned getChannelIndex() {
-            return _currentChannel;
-        }
-
-        VideoV4l2Channel &getChannel() {
-            return channels[_currentChannel];
-        }
+        std::vector<std::string> getChannelList(void);
+        void setChannel(unsigned index);
+        unsigned getChannelIndex();
+        VideoV4l2Channel &getChannel();
 
     private:
         std::vector<VideoV4l2Channel> channels;
