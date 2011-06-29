@@ -135,15 +135,6 @@ class Alaw : public sfl::AudioCodec
         std::string getDescription() const {
             return "audio/PCMA 8000 (\"alaw\") codec.";
         }
-
-        /**
-         * @Override
-         */
-        Alaw* clone() const {
-            return new Alaw (*this);
-        }
-
-
 };
 
 // the class factories

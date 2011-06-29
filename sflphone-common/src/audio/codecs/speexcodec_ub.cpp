@@ -123,14 +123,6 @@ class Speex : public sfl::AudioCodec
             return "audio/speex 32000 (\"ultra wide band\") codec. Based on libspeex, by Jean-Marc Valin.";
         }
 
-        /**
-         * @Override
-         */
-        Speex* clone() const {
-            return new Speex (*this);
-        }
-
-
     private:
         const SpeexMode* _speexModePtr;
         SpeexBits  _speex_dec_bits;

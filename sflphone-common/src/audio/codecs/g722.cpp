@@ -829,14 +829,6 @@ class G722 : public sfl::AudioCodec
             return "G722 codec. Most of the code comes from Steve Underwood (<steveu@coppice.org>) for the Asterisk project.";
         }
 
-        /**
-         * @Override
-         */
-        G722* clone() const {
-            return new G722 (*this);
-        }
-
-
     private:
 
         g722_decode_state_t *decode_s;

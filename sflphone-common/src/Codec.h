@@ -32,8 +32,6 @@
 
 #include "MimeParameters.h" // TODO Move to some higher directory
 
-#include <tr1/memory>
-
 #include <cc++/digest.h>
 
 /**
@@ -60,11 +58,6 @@ class Codec : public virtual MimeParameters
          * @return Additional information (description) about this codec. This is meant to be shown to the user.
          */
         virtual std::string getDescription() const = 0;
-
-        /**
-         * @return A copy of the current codec.
-         */
-        virtual Codec* clone() const = 0;
 
         /**
          * Build a unique hash code for identifying the codec uniquely.
