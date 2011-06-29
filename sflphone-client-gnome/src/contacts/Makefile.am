@@ -7,7 +7,6 @@ libcontacts_la_SOURCES = \
   calllist.c \
   calltab.c \
   calltree.c \
-  gtkcellrendererbutton.c \
   history.c \
   addrbookfactory.c \
   conferencelist.c
