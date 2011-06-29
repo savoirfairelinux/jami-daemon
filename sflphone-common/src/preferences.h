@@ -614,7 +614,7 @@ class VideoPreference : public Serializable
             VideoV4l2Rate &rate = size.getRate();
 
             std::stringstream framestr;
-            framestr << rate.num << "/" << rate.den;
+            framestr << rate.den << "/" << rate.num;
             map["framerate"] = framestr.str();
 
             return map;
