@@ -365,6 +365,7 @@ void create_history_entry_from_serialized_form (gchar *entry, callable_obj_t **c
     new_call->_confID = g_strdup(confID);
     new_call->_historyConfID = g_strdup(confID);
     new_call->_time_added = convert_gchar_to_timestamp(time_start);
+    new_call->_record_is_playing = FALSE;
 
     *call = new_call;
 }

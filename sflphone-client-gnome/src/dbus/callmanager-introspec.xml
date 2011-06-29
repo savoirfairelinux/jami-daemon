@@ -349,9 +349,9 @@
 			<arg type="s" name="filepath"/>
 		</signal>
 
-		<signal name="recordPlaybackResult" tp:name-for-bindings="recordPlaybackResult">
+		<signal name="recordPlaybackStoped" tp:name-for-bindings="recordPlaybackStoped">
 			<tp:docstring/>
-			<arg type="b" name="callID" />
+			<arg type="s" name="filepath" />
 		</signal>
 			
 

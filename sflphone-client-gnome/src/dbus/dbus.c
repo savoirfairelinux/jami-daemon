@@ -95,7 +95,7 @@ static void
 record_playback_filepath_cb (DBusGProxy *, const gchar *, const gchar *);
 
 static void
-record_playback_result_cb (DBusGProxy *, const gchar *, const gboolean);
+record_playback_stoped_cb (DBusGProxy *, const gchar *);
 
 static void
 accounts_changed_cb (DBusGProxy *, void *);
@@ -518,35 +518,50 @@ record_playback_filepath_cb (DBusGProxy *proxy UNUSED, const gchar *id, const gc
         if(conf->_recordfile == NULL)
             conf->_recordfile = g_strdup(filepath); 
     }
-        
 }
 
 static void
-record_playback_result_cb (DBusGProxy *proxy UNUSED, const gchar *id, const gboolean result)
+record_playback_stoped_cb (DBusGProxy *proxy UNUSED, const gchar *filepath)
 {
+    QueueElement *element;
     callable_obj_t *call = NULL;
     conference_obj_t *conf = NULL;
+    gint calllist_size, conflist_size;
+    gchar *recfile;
+    gint i;
 
-    DEBUG("DBUS: Result for %s: %s", id, result ? "ok" : "bad");
+    DEBUG("DBUS: Playback stoped for %s", filepath);
 
-    call = calllist_get_call(history, id);
-    conf = conferencelist_get(history, id);
+    calllist_size = calllist_get_size(history);
+    conflist_size = conferencelist_get_size(history);
 
-    if(call && conf) {
-	ERROR("DBUS: Two object for this ID");
-	return;
+    for(i = 0; i < calllist_size; i++) {
+        recfile = NULL;
+        element = calllist_get_nth(history, i);	
+	if(element == NULL) {
+            ERROR("DBUS: ERROR: Could not find %dth call", i);
+	    break;
+        }
+	
+	if(element->type == HIST_CALL) {
+	    call =  element->elem.call;
+	    recfile = call->_recordfile;
+	    if(recfile && (g_strcmp0(recfile, filepath) == 0)) {
+	        call->_record_is_playing = FALSE;
+	    }
+	}
     }
 
-    if(!call && !conf) {
-        ERROR("DBUS: Could not get object");
-	return; 
-    }
+    for(i = 0; i < conflist_size; i++) {
+        conf = conferencelist_get(history, i);
+	if(conf == NULL) {
+	    ERROR("DBUS: ERROR: Could not find %dth conf", i);
+	    break;
+	}
 
-    if(call) {
-	call->_record_is_playing = result;
-    }
-    else if(conf) {
-	conf->_record_is_playing = result;
+	recfile = conf->_recordfile;
+	if(recfile && (g_strcmp0(recfile, filepath) == 0))
+	    conf->_record_is_playing = FALSE;
     }
 
     update_actions();   
@@ -815,10 +830,9 @@ dbus_connect (GError **error)
 				G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal (callManagerProxy, "recordPlaybackFilepath",
 				G_CALLBACK (record_playback_filepath_cb), NULL, NULL);
-    dbus_g_proxy_add_signal (callManagerProxy, "recordPlaybackResult", G_TYPE_BOOLEAN,
-				G_TYPE_STRING, G_TYPE_INVALID);
-    dbus_g_proxy_add_signal(callManagerProxy, "recordPlaybackResult",
-				G_CALLBACK (record_playback_result_cb), NULL, NULL);
+    dbus_g_proxy_add_signal (callManagerProxy, "recordPlaybackStoped", G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal(callManagerProxy, "recordPlaybackStoped",
+    				G_CALLBACK (record_playback_stoped_cb), NULL, NULL);
 
     /* Security related callbacks */
 

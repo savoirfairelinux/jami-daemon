@@ -76,6 +76,9 @@ void create_new_conference (conference_state_t state, const gchar* confID, confe
     new_conf->participant_list = NULL;
     new_conf->participant_number = NULL;
 
+    new_conf->_recordfile = NULL;
+    new_conf->_record_is_playing = FALSE;
+
     set_conference_timestamp(&new_conf->_time_start);
 
     *conf = new_conf;
@@ -127,6 +130,9 @@ void create_new_conference_from_details (const gchar *conf_id, GHashTable *detai
     } else if (g_strcasecmp (state_str, "HOLD_REC") == 0) {
         new_conf->_state = CONFERENCE_STATE_HOLD_RECORD;
     }
+
+    new_conf->_recordfile = NULL;
+    new_conf->_record_is_playing = FALSE;
 
     *conf = new_conf;
 }
@@ -328,12 +334,7 @@ void create_conference_history_entry_from_serialized(gchar **ptr, conference_obj
 static void process_conference_participant_from_serialized(gchar *participant, conference_obj_t *conf)
 {
     gchar **ptr = NULL;
-    gchar **numberptr = NULL;
     gchar *delim = ";";
-    gchar *delimnumber = ",";
-    gchar *numberaccount;
-    guint token = 0;
-    callable_obj_t *tmp_call = NULL;
     gint tok = 0;
     
 
@@ -342,45 +343,6 @@ static void process_conference_participant_from_serialized(gchar *participant, c
     ptr = g_strsplit(participant, delim, 3);
     while(ptr != NULL && (tok < 2)) {
 	gchar *call_id = NULL;
-/*
-	gchar *phone_number = NULL;
-	gchar *account = NULL;
-	gchar *name = "";
-	token = 0;
-	numberaccount = *ptr;
-	numberptr = g_strsplit(numberaccount, delimnumber, 2);
-*/
-/*
-	while(numberptr != NULL && (token < 3)) {
-	    switch(token) {
-	 	case 0:
-		    phone_number = *numberptr;
-		    break;
-	        case 1:
-		    call_id = *ptr;
-		    break;
-		case 2:
-		    account = *numberptr;
-		    // remove the ";" character at the end of the account string
-		    if(g_str_has_suffix(account, ";")) {
-		        int len = strlen(account);
-		    	gchar *tmpchar = g_strdup(account);
-			g_strlcpy(account, tmpchar, len);
-		    }
-		    break;
-		default:
-		    break;
-	    }
-	    token++;
-	    numberptr++;
-	}
-*/
-
-	// we should create call here and add it to the conference to be inserted in history
-	// create_new_call(HISTORY_ENTRY, CALL_STATE_DIALING, call_id, account, name, phone_number, &tmp_call);  
-	// calllist_add_history_call(tmp_call);
-	// calllist_add_call(history, tmp_call);
-        // calllist_add_call(current_calls, tmp_call);
 
 	conference_add_participant(call_id, conf);
 	

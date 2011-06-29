@@ -2404,6 +2404,10 @@ void ManagerImpl::ringtone (const AccountID& accountID)
         _toneMutex.enterMutex();
 
         if (_audiofile) {
+	    if(_dbus) {
+		std::string filepath = _audiofile->getFilePath();
+		_dbus->getCallManager()->recordPlaybackStoped(filepath);
+	    }
             delete _audiofile;
             _audiofile = NULL;
         }
@@ -3031,7 +3035,11 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
     _toneMutex.enterMutex();
 
     if(_audiofile) {
-        delete _audiofile;
+	 if(_dbus) {
+	     std::string file = _audiofile->getFilePath();
+	     _dbus->getCallManager()->recordPlaybackStoped(file);
+         }
+	 delete _audiofile;
 	_audiofile = NULL;
     }
 
@@ -3229,25 +3237,21 @@ void ManagerImpl::setEchoCancelState(std::string state)
 
 int ManagerImpl::getEchoCancelTailLength(void)
 {
-	_debug("-------------------------------------- getEchoTailLength %d", audioPreference.getEchoCancelTailLength());
 	return audioPreference.getEchoCancelTailLength();
 }
 
 void ManagerImpl::setEchoCancelTailLength(int length)
 {
-	_debug("------------------------------------- setEchoTailLength %d", length);
 	audioPreference.setEchoCancelTailLength(length);
 }
 
 int ManagerImpl::getEchoCancelDelay(void)
 {
-	_debug("------------------------------------- getEchoCancelDelay %d", audioPreference.getEchoCancelDelay());
 	return audioPreference.getEchoCancelDelay();
 }
 
 void ManagerImpl::setEchoCancelDelay(int delay)
 {
-	_debug("------------------------------------- setEchoCancelDelay %d", delay);
 	audioPreference.setEchoCancelDelay(delay);
 }
 

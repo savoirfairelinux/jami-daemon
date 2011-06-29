@@ -1140,7 +1140,7 @@ sflphone_add_participant (const gchar* callID, const gchar* confID)
 
     set_timestamp(&call->_time_added);
 
-    iter = calltree_get_gtkiter_from_id(history, confID);
+    iter = calltree_get_gtkiter_from_id(history, (gchar *)confID);
 
     calltree_add_call(history, call, &iter);
 
@@ -1368,11 +1368,11 @@ void sflphone_fill_conference_list (void)
 
 void sflphone_fill_history (void)
 {
-    gchar **entries, *current_entry;
+    const gchar **entries;
+    gchar *current_entry;
     callable_obj_t *history_entry;
     callable_obj_t *call;
     QueueElement *element;
-    conference_obj_t *conference_entry;
     guint i = 0, n = 0;
 
     DEBUG ("======================================================= SFLphone: Loading history");
@@ -1380,10 +1380,8 @@ void sflphone_fill_history (void)
     entries = dbus_get_history ();
 
     while (*entries) {
-    	const gchar *delim = "|";
-	gchar **ptr;
 
-        current_entry = *entries;
+        current_entry = (gchar *)*entries;
 
 	DEBUG("============================================ entry: %s", current_entry);
 
@@ -1447,7 +1445,6 @@ void sflphone_save_history (void)
     gint size;
     gint i;
     QueueElement *current;
-    conference_obj_t *conf;
     GHashTable *result = NULL;
     gchar **ordered_result;
     gchar *key, *value;

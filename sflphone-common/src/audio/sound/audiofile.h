@@ -76,7 +76,11 @@ public:
      * @param sampleRate	The sample rate to read it
      * @return bool   True on success
      */
-    virtual void loadFile (const std::string& filename, sfl::AudioCodec *codec , unsigned int sampleRate) throw(AudioFileException) = 0;
+    virtual void loadFile (const std::string &, sfl::AudioCodec *, unsigned int) throw(AudioFileException) = 0;
+
+    std::string getFilePath(void) {
+	return filepath;
+    }
 
     /**
      * Start the sound file
@@ -105,6 +109,10 @@ protected:
 
     /** start or not */
     bool _start;
+    
+    /** The absolute path to the sound file */
+    std::string filepath;
+
 };
 
 
@@ -144,9 +152,6 @@ class RawFile : public AudioFile
         // Assignment Operator
         RawFile& operator= (const RawFile& rh);
 
-        /** The absolute path to the sound file */
-        std::string filename;
-
         /** Your preferred codec */
         sfl::AudioCodec* audioCodec;
 };
@@ -177,7 +182,7 @@ class WaveFile : public AudioFile
         /**
          * Test if the specified file already exist
          */
-        bool isFileExist (const std::string& fileName);
+        bool isFileExist (const std::string&);
 
         /**
          * Test if file opend
@@ -191,7 +196,7 @@ class WaveFile : public AudioFile
              * @param sampleRate	The sample rate to read it
              * @return bool   True on success
              */
-        virtual void loadFile (const std::string& filename, sfl::AudioCodec *codec , unsigned int sampleRate) throw(AudioFileException);
+        virtual void loadFile (const std::string&, sfl::AudioCodec *, unsigned int) throw(AudioFileException);
 
     private:
 
@@ -246,11 +251,6 @@ class WaveFile : public AudioFile
          * File stream
          */
         std::fstream fileStream;
-
-        /**
-         * File name
-         */
-        std::string fileName;
 
 };
 
