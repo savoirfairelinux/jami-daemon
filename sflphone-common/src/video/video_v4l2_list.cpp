@@ -57,7 +57,7 @@ extern "C" {
 
 namespace sfl_video {
 
-VideoV4l2List::VideoV4l2List() : _currentDevice(0)
+VideoV4l2List::VideoV4l2List() : _currentDevice(-1)
 {
 #ifdef HAVE_UDEV
     struct udev *udev;
@@ -196,6 +196,8 @@ bool VideoV4l2List::addDevice(const std::string &dev)
     VideoV4l2Device v(fd, s);
     GiveUniqueName(v, devices);
     devices.push_back(v);
+    if (_currentDevice < 0)
+    	_currentDevice = 0;
 
     close(fd);
     return true;
@@ -230,7 +232,16 @@ std::vector<std::string> VideoV4l2List::getDeviceList(void)
     return v;
 }
 
-unsigned VideoV4l2List::getDeviceIndex()
+int VideoV4l2List::getDeviceIndex(const std::string &name)
+{
+	for (size_t i = 0; i < devices.size(); i++)
+		if (devices[i].name == name)
+			return i;
+
+	return -1;
+}
+
+int VideoV4l2List::getDeviceIndex()
 {
     return _currentDevice;
 }

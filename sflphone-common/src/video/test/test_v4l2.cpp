@@ -41,10 +41,14 @@ using namespace sfl_video;
 
 int main()
 {
-    unsigned idx;
+    int idx;
     VideoV4l2List list;
     std::vector<std::string> v = list.getDeviceList();
     idx = list.getDeviceIndex();
+    if (idx < 0) {
+    	cout << "No devices found!" << endl;
+    	return 0;
+    }
     list.setDevice(idx);
 
     size_t i, n = v.size();

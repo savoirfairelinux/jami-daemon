@@ -43,7 +43,8 @@ class VideoV4l2List {
         VideoV4l2List();
 
         void setDevice(unsigned index);
-        unsigned getDeviceIndex(void);
+        int getDeviceIndex(void);
+        int getDeviceIndex(const std::string &name);
         std::vector<std::string> getDeviceList(void);
         VideoV4l2Device &getDevice(void);
 
@@ -53,7 +54,7 @@ class VideoV4l2List {
          */
         bool addDevice(const std::string &dev);
         std::vector<VideoV4l2Device> devices;
-        unsigned _currentDevice;
+        int _currentDevice;
 };
 
 } // namespace sfl_video
