@@ -101,8 +101,7 @@ update_actions()
 {
 
     DEBUG ("UIManager: Update action");
-
-
+		
     gtk_action_set_sensitive (GTK_ACTION (newCallAction), TRUE);
     gtk_action_set_sensitive (GTK_ACTION (pickUpAction), FALSE);
     gtk_action_set_sensitive (GTK_ACTION (hangUpAction), FALSE);
@@ -270,10 +269,11 @@ update_actions()
 
                 if (active_calltree == current_calls)
                     gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
-	        if (active_calltree == current_calls)
+	        if (active_calltree == history) {
 		    gtk_action_set_sensitive (GTK_ACTION(playRecordAction), TRUE);
+		    gtk_action_set_sensitive (GTK_ACTION(stopRecordAction), TRUE);
+		}
 
-                //gtk_action_set_sensitive( GTK_ACTION(newCallMenu),TRUE);
                 g_object_ref (newCallWidget);
                 gtk_container_remove (GTK_CONTAINER (toolbar), GTK_WIDGET (newCallWidget));
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (pickUpWidget), 0);
