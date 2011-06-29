@@ -34,6 +34,7 @@
 #include "config.h"
 #endif
 
+#include <cstdio>
 #include <iostream>
 #include <stdexcept> // for std::runtime_error
 #include <sstream>
@@ -139,6 +140,52 @@ udev_error:
     }
 }
 
+namespace {
+
+int GetNumber(const std::string &name, size_t *sharp)
+{
+	size_t len = name.length();
+	if (len < 3) {
+		// name is too short to be numbered
+		return -1;
+	}
+
+	for (size_t c = len; c; --c) {
+		if (name[c] == '#') {
+			unsigned i;
+			printf("looking `%s'\n", name.substr(c).c_str());
+			if (sscanf(name.substr(c).c_str(), "#%u", &i) != 1)
+				return -1;
+			*sharp = c;
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+void GiveUniqueName(VideoV4l2Device &dev, const std::vector<VideoV4l2Device> &devices)
+{
+    const std::string &name = dev.name;
+    start:
+    for (size_t i = 0; i < devices.size(); i++) {
+		if (name == devices[i].name) {
+			size_t sharp;
+			int num = GetNumber(name, &sharp);
+			if (num < 0) // not numbered
+				dev.name += " #0";
+			else {
+				std::stringstream ss;
+				ss  << num+1;
+				dev.name.replace(sharp+1, ss.str().length(), ss.str());
+			}
+			goto start; // we changed the name, let's look again if it is unique
+		}
+	}
+}
+
+} // end anonymous namespace
+
 bool VideoV4l2List::addDevice(const std::string &dev)
 {
     int fd = open(dev.c_str(), O_RDWR);
@@ -147,6 +194,7 @@ bool VideoV4l2List::addDevice(const std::string &dev)
 
     std::string s(dev);
     VideoV4l2Device v(fd, s);
+    GiveUniqueName(v, devices);
     devices.push_back(v);
 
     close(fd);
