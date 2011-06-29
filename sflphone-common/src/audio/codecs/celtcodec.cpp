@@ -156,6 +156,14 @@ class Celt : public sfl::AudioCodec
             return "audio/celt 32000 (\"HD\") codec. Based on libcelt, by Jean-Marc Valin.";
         }
 
+        /**
+         * @Override
+         */
+        Celt* clone() const {
+            return new Celt (*this);
+        }
+
+
     private:
 
         CELTMode *_mode;

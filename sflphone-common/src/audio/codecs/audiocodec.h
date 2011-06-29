@@ -133,6 +133,11 @@ class AudioCodec : public Codec
          */
         unsigned int getFrameSize() const;
 
+        /**
+         * @Override
+         */
+        virtual AudioCodec* clone() const = 0;
+
     protected:
         /** Holds SDP-compliant codec name */
         std::string _codecName; // what we put inside sdp
