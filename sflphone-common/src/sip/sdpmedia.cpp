@@ -32,6 +32,7 @@
 #include <string.h>
 #include <sstream>
 #include <iostream>
+#include "Codec.h"
 
 static const char* streamDirectionStr[] = {
     "sendrecv",
@@ -89,7 +90,7 @@ sdpMedia::~sdpMedia()
 }
 
 
-std::string sdpMedia::get_media_type_str (void)
+std::string sdpMedia::get_media_type_str (void) const
 {
     std::string value;
 
@@ -139,7 +140,7 @@ void sdpMedia::clear_codec_list (void)
 }
 
 
-std::string sdpMedia::get_stream_direction_str (void)
+std::string sdpMedia::get_stream_direction_str (void) const
 {
     std::string value;
 
@@ -152,26 +153,3 @@ std::string sdpMedia::get_stream_direction_str (void)
 
     return value;
 }
-
-
-std::string sdpMedia::to_string (void)
-{
-    std::ostringstream display;
-    int size, i;
-
-    size = _codec_list.size();
-
-    display << get_media_type_str();
-    display << ":" << get_port();
-    display << ":";
-
-    for (i=0; i<size; i++) {
-        display << _codec_list[i]->getMimeSubtype() << "/";
-    }
-
-    display << ":" << get_stream_direction_str() << std::endl;
-
-    return display.str();
-}
-
-

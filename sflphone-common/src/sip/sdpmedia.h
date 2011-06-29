@@ -32,8 +32,7 @@
 #define _SDP_MEDIA
 
 #include <vector>
-
-#include "audio/codecs/audiocodecfactory.h"
+#include <string>
 
 #define DEFAULT_STREAM_DIRECTION    "sendrecv"
 
@@ -75,10 +74,12 @@ enum mediaType {
     MEDIA_COUNT
 };
 
+namespace sfl {
+    class Codec;
+}
+
 typedef enum streamDirection streamDirection;
 typedef enum mediaType mediaType;
-
-#include "audio/codecs/audiocodec.h"
 
 class sdpMedia
 {
@@ -97,14 +98,14 @@ class sdpMedia
         /*
          * Read accessor. Return the type of media
          */
-        mediaType get_media_type() {
+        mediaType get_media_type() const {
             return _media_type;
         }
 
         /*
          * Read accessor. Return the type of media
          */
-        std::string get_media_type_str();
+        std::string get_media_type_str() const;
 
         /*
          * Set the media type
@@ -116,7 +117,7 @@ class sdpMedia
         /*
          * Read accessor. Return the transport port
          */
-        int get_port() {
+        int get_port() const {
             return _port;
         }
 
@@ -147,11 +148,6 @@ class sdpMedia
         void clear_codec_list (void);
 
         /*
-         * Return a string description of the current media
-         */
-        std::string to_string (void);
-
-        /*
          * Set the stream direction of the current media
          * ie: sendrecv, sendonly,...
          */
@@ -163,7 +159,7 @@ class sdpMedia
          * Get the stream direction of the current media
          * ie: sendrecv, sendonly,...
          */
-        streamDirection get_stream_direction (void) {
+        streamDirection get_stream_direction (void) const {
             return _stream_type;
         }
 
@@ -171,7 +167,7 @@ class sdpMedia
          * Get the stream direction string description of the current media
          * ie: sendrecv, sendonly,...
          */
-        std::string get_stream_direction_str (void);
+        std::string get_stream_direction_str (void) const;
 
     private:
         /* The type of media */
