@@ -51,6 +51,12 @@
 #define CHK_VALID_CALL   if (call == NULL) { _debug("IAX: Call doesn't exists"); \
 	return false; }
 
+namespace {
+    const char * const HOOKS = "Hooks"; /** Hooks section */
+    const char * const URLHOOK_IAX2_ENABLED = "Hooks.iax2_enabled";
+    const char * const URLHOOK_COMMAND = "Hooks.url_command";
+} // end anonymous namespace
+
 IAXVoIPLink::IAXVoIPLink (const AccountID& accountID) : VoIPLink (accountID)
     , _evThread (NULL)
     , _regSession (NULL)

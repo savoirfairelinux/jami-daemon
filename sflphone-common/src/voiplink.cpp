@@ -31,7 +31,6 @@
  *  as that of the covered work.
  */
 
-#include "user_cfg.h"
 #include "voiplink.h"
 #include "manager.h"
 

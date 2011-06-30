@@ -464,7 +464,6 @@ ConfigTreeIterator::next()
 
     return tk;
 }
-
 } // end namespace ConfigTree
 
 
