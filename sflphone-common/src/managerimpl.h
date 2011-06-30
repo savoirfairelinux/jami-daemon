@@ -1216,6 +1216,16 @@ class ManagerImpl
         void audioLayerMutexUnlock(void) { _audiolayerMutex.leaveMutex(); }
 
         /**
+         * Enter the mutex for libavcodec
+         */
+        void avcodecLock(void) { _avcodecMutex.enterMutex(); }
+
+        /**
+         * Leave the mutex for libavcodec
+         */
+        void avcodecUnlock(void) { _avcodecMutex.leaveMutex(); }
+
+        /**
          * Helper function that creates an MD5 Hash from the credential
          * information provided as parameters. The hash is computed as
          * MD5(username ":" realm ":" password).
@@ -1287,6 +1297,9 @@ class ManagerImpl
 
         /** Protected current call access */
         ost::Mutex _currentCallMutex;
+
+        /** Protected libavcodec access */
+        ost::Mutex _avcodecMutex;
 
         /** Audio layer */
         AudioLayer* _audiodriver;
