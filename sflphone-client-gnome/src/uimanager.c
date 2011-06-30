@@ -101,8 +101,7 @@ update_actions()
 {
 
     DEBUG ("UIManager: Update action");
-
-
+		
     gtk_action_set_sensitive (GTK_ACTION (newCallAction), TRUE);
     gtk_action_set_sensitive (GTK_ACTION (pickUpAction), FALSE);
     gtk_action_set_sensitive (GTK_ACTION (hangUpAction), FALSE);
@@ -180,15 +179,14 @@ update_actions()
 
     gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (newCallWidget), 0);
 
+    if(is_inserted(GTK_WIDGET (playRecordWidget), GTK_WIDGET(toolbar)))
+	gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(playRecordWidget));
+    if(is_inserted(GTK_WIDGET (stopRecordWidget), GTK_WIDGET(toolbar)))
+	gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(stopRecordWidget));
 
     if (eel_gconf_get_integer (HISTORY_ENABLED)) {
         gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (historyButton), -1);
         gtk_widget_set_sensitive (GTK_WIDGET (historyButton), TRUE);
-
-	if(is_inserted(GTK_WIDGET (playRecordWidget), GTK_WIDGET(toolbar)))
-	    gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(playRecordWidget));
-	if(is_inserted(GTK_WIDGET (stopRecordWidget), GTK_WIDGET(toolbar)))
-	    gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(stopRecordWidget));
     }
 
     // If addressbook support has been enabled and all addressbooks are loaded, display the icon
@@ -271,10 +269,11 @@ update_actions()
 
                 if (active_calltree == current_calls)
                     gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
-	        if (active_calltree == current_calls)
+	        if (active_calltree == history) {
 		    gtk_action_set_sensitive (GTK_ACTION(playRecordAction), TRUE);
+		    gtk_action_set_sensitive (GTK_ACTION(stopRecordAction), TRUE);
+		}
 
-                //gtk_action_set_sensitive( GTK_ACTION(newCallMenu),TRUE);
                 g_object_ref (newCallWidget);
                 gtk_container_remove (GTK_CONTAINER (toolbar), GTK_WIDGET (newCallWidget));
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (pickUpWidget), 0);
@@ -384,6 +383,15 @@ update_actions()
                         gtk_action_set_sensitive (GTK_ACTION (imAction), TRUE);
                         gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (imToolbar), 4);
                     }
+		}
+		else if(active_calltree == history) {
+		    if(selectedConf->_recordfile && (g_strcmp0(selectedConf->_recordfile, "") != 0)) {
+                        if(selectedConf->_record_is_playing)
+                            gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM(stopRecordWidget), 3);
+                        else
+                            gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM(playRecordWidget), 3);
+                    }
+
 		}
                 break;
             case CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD:

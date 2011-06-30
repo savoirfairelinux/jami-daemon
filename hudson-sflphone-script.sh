@@ -29,7 +29,7 @@ pushd sflphone-common/test
 rm -rf $XML_RESULTS
 make check
 # if at least one test failed, exit
-./test --xml || exit 1
+CODECS_PATH="../src/audio/codecs" FAKE_PLUGIN_DIR="../src/plug-in/test/" FAKE_PLUGIN_NAME="../src/plug-in/test/libplugintest.so" ./test --xml || exit 1
 popd
 
 # Compile the client

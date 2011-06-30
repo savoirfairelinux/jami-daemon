@@ -1,5 +1,8 @@
 include ../globals.mak
 
+TESTS_ENVIRONMENT = CODECS_PATH="$(top_builddir)/src/audio/codecs" \
+					FAKE_PLUGIN_DIR="$(top_builddir)/src/plug-in/test/" \
+					FAKE_PLUGIN_NAME="$(top_builddir)/src/plug-in/test/libplugintest.so"
 check_PROGRAMS = test
 
 test_CXXFLAGS = $(CPPUNIT_CFLAGS)

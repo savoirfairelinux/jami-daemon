@@ -56,6 +56,15 @@ PluginManager::~PluginManager()
     _instance = 0;
 }
 
+namespace {
+bool hasSharedExtension(const std::string &fn)
+{
+    size_t dot_position = fn.rfind(".");
+    return (dot_position != std::string::npos and
+            fn.substr(dot_position) == ".so");
+}
+}
+
 int
 PluginManager::loadPlugins (const std::string &path)
 {
@@ -69,7 +78,10 @@ PluginManager::loadPlugins (const std::string &path)
     const std::string cDir = ".";
 
     /* The directory in which plugins are dropped. Default: /usr/lib/sflphone/plugins/ */
-    (path == "") ? pluginDir = std::string (PLUGINS_DIR).append ("/") :pluginDir = path;
+    if (path.empty())
+        pluginDir = std::string (PLUGINS_DIR).append("/");
+    else
+        pluginDir = path;
     _debug ("Loading plugins from %s...", pluginDir.c_str());
 
     dir = opendir (pluginDir.c_str());
@@ -80,9 +92,9 @@ PluginManager::loadPlugins (const std::string &path)
         while ( (dirStruct=readdir (dir))) {
             /* Get the name of the current item in the directory */
             current = dirStruct->d_name;
-            /* Test if the current item is not the parent or the current directory */
+            /* Test if the current item is not the parent or the current directory and that it ends with .so*/
 
-            if (current != pDir && current != cDir) {
+            if (current != pDir && current != cDir and hasSharedExtension(current)) {
 
                 /* Load the dynamic library */
                 library = loadDynamicLibrary (pluginDir + current);
