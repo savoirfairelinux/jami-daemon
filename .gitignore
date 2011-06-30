@@ -15,6 +15,8 @@ Makefile
 *.so
 *.raw
 *.pod
+.libs
+.deps
 
 # Binary translation files
 *.mo
@@ -46,7 +48,6 @@ sflphone-client-gnome/stamp-h1
 # Ignore built stuff
 /src/sflphoned
 /src/sflphone
-/src/.libs
 
 # Ignore sflphone-common stuff
 /sflphone-common/autom4te.cache
@@ -222,7 +223,6 @@ config_auto.h
 /sflphone-common/libs/libiax2/doc/html
 /sflphone-common/libs/libiax2/config.*
 /sflphone-common/libs/libiax2/autom4te.cache
-/sflphone-common/libs/libiax2/src/.libs
 /sflphone-common/libs/libiax2/libtool
 /sflphone-common/libs/libiax2/ltmain.sh
 /sflphone-common/libs/libiax2/iax-config
@@ -246,7 +246,6 @@ config_auto.h
 /sflphone-common/libs/dbus-c++/doc/Doxyfile
 /sflphone-common/libs/dbus-c++/doc/Makefile
 /sflphone-common/libs/dbus-c++/examples/Makefile
-/sflphone-common/libs/dbus-c++/examples/echo/.libs/
 /sflphone-common/libs/dbus-c++/examples/echo/Makefile
 /sflphone-common/libs/dbus-c++/examples/echo/echo-client-glue.h
 /sflphone-common/libs/dbus-c++/examples/echo/echo-client-mt
@@ -254,10 +253,8 @@ config_auto.h
 /sflphone-common/libs/dbus-c++/examples/echo/echo-server-glue.h
 /sflphone-common/libs/dbus-c++/examples/glib/Makefile
 /sflphone-common/libs/dbus-c++/examples/glib/dbus-glue.h
-/sflphone-common/libs/dbus-c++/examples/hal/.libs/
 /sflphone-common/libs/dbus-c++/examples/hal/Makefile
 /sflphone-common/libs/dbus-c++/examples/hal/hal-listen
-/sflphone-common/libs/dbus-c++/examples/properties/.libs/
 /sflphone-common/libs/dbus-c++/examples/properties/Makefile
 /sflphone-common/libs/dbus-c++/examples/properties/propsgs-client
 /sflphone-common/libs/dbus-c++/examples/properties/propsgs-glue-adaptor.h
@@ -265,9 +262,7 @@ config_auto.h
 /sflphone-common/libs/dbus-c++/examples/properties/propsgs-server
 /sflphone-common/libs/dbus-c++/include/dbus-c++/config.h
 /sflphone-common/libs/dbus-c++/include/dbus-c++/stamp-h1
-/sflphone-common/libs/dbus-c++/src/.libs/
 /sflphone-common/libs/dbus-c++/src/Makefile
-/sflphone-common/libs/dbus-c++/tools/.libs/
 /sflphone-common/libs/dbus-c++/tools/Makefile
 /sflphone-common/libs/dbus-c++/tools/dbusxx-introspect
 /sflphone-common/libs/dbus-c++/tools/dbusxx-xml2cpp
