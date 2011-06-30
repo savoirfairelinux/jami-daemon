@@ -1384,18 +1384,24 @@ void sflphone_fill_history (void)
 
         current_entry = (gchar *)*entries;
 
-	DEBUG("============================================ entry: %s", current_entry);
+	DEBUG("entry: %s", current_entry);
 
+	// Parsed a conference
 	if(g_str_has_prefix(current_entry, "9999")) {
 	    // create a conference entry
 	    create_conference_history_entry_from_serialized(current_entry, &history_conf);
 
+	    // verify if this conference have been already created yet
 	    conf = conferencelist_get(history, history_conf->_confID);
 	    if(conf == NULL) {
+		// if this conference haven't been created yet, add it to the conference list
 		conferencelist_add(history, history_conf);
 	    }
 	    else {
+		// if this conference is already created since one of the participant have already
+		// been unserialized, update the recordfile value 
 		conf->_recordfile = g_strdup(history_conf->_recordfile);
+		DEBUG("----------------- add record file: %s", conf->_recordfile);
 	    }
 	} 
 	else {
