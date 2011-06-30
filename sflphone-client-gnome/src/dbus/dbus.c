@@ -553,7 +553,7 @@ record_playback_stoped_cb (DBusGProxy *proxy UNUSED, const gchar *filepath)
     }
 
     for(i = 0; i < conflist_size; i++) {
-        conf = conferencelist_get(history, i);
+        conf = conferencelist_get_nth(history, i);
 	if(conf == NULL) {
 	    ERROR("DBUS: ERROR: Could not find %dth conf", i);
 	    break;

@@ -2316,7 +2316,11 @@ void ManagerImpl::stopTone ()
     }
 
     if (_audiofile) {
+	std::string filepath = _audiofile->getFilePath();
+	_dbus->getCallManager()->recordPlaybackStoped(filepath);
         _audiofile->stop();
+	delete _audiofile;
+	_audiofile = NULL;
     }
 
     _toneMutex.leaveMutex();
@@ -3042,7 +3046,7 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
 	     _dbus->getCallManager()->recordPlaybackStoped(file);
          }
 	 delete _audiofile;
-	_audiofile = NULL;
+	 _audiofile = NULL;
     }
 
     try {
