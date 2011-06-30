@@ -348,7 +348,7 @@ align(int value)
     return (value + 3) &~ 3;
 }
 
-static void
+static gboolean
 readFrameFromShm(VideoPreviewPrivate *priv)
 {
     int width = priv->width;
@@ -358,20 +358,20 @@ readFrameFromShm(VideoPreviewPrivate *priv)
     ClutterActor *texture = priv->texture;
 
     if (sem_set_id == -1)
-        return;
+        return FALSE;
 
     if (sem_wait(sem_set_id) == -1) {
       if (errno != EAGAIN) {
           g_print("Could not read from shared memory!\n");
           perror("shm: ");
       }
-      return;
+      return FALSE;
     }
 
     if (priv->using_clutter) {
         if (strcmp(priv->format, "rgb24")) {
             g_print("clutter render: Unknown pixel format `%s'\n", priv->format);
-            return;
+            return FALSE;
         }
 
         clutter_texture_set_from_rgb_data (CLUTTER_TEXTURE(texture),
@@ -386,7 +386,7 @@ readFrameFromShm(VideoPreviewPrivate *priv)
     } else {
         if (strcmp(priv->format, "bgra")) {
             g_print("cairo render: Unknown pixel format `%s'\n", priv->format); 
-            return;
+            return FALSE;
         }
 
         cairo_format_t format = CAIRO_FORMAT_RGB24;
@@ -409,6 +409,8 @@ readFrameFromShm(VideoPreviewPrivate *priv)
             cairo_surface_destroy(surface);
         }
     }
+
+    return TRUE;
 }
 
 static gboolean
@@ -417,11 +419,14 @@ updateTexture(gpointer data)
     VideoPreview *preview = (VideoPreview *) data;
     VideoPreviewPrivate *priv = VIDEO_PREVIEW_GET_PRIVATE(preview);
 
-    if (!priv || !priv->shm_buffer)
-        return FALSE;
+    gboolean ret = priv && priv->shm_buffer && readFrameFromShm(priv);
 
-    readFrameFromShm(priv);
-    return TRUE;
+    if (!ret) {
+        video_preview_stop(data);
+        g_object_notify_by_pspec(G_OBJECT(data), properties[PROP_RUNNING]);
+    }
+
+    return ret;
 }
 
 /**                                                                             
