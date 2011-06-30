@@ -108,7 +108,7 @@ preview_is_running_cb(GObject *obj, GParamSpec *pspec, gpointer user_data)
     g_object_get(obj, "running", &running, NULL);
     if (!running) {
         GtkButton *button = GTK_BUTTON(user_data);
-        gtk_button_set_label(button, "_Start preview");
+        gtk_button_set_label(button, "_Start");
         dbus_stop_video_preview();
     }
     return TRUE;
@@ -153,8 +153,8 @@ static void
 preview_button_clicked(GtkButton *button, gpointer data UNUSED)
 {
     preview_button = GTK_WIDGET(button);
-    if (g_strcmp0(gtk_button_get_label(button), "_Start preview")  == 0) {
-        gtk_button_set_label(button, "_Stop preview");
+    if (g_strcmp0(gtk_button_get_label(button), "_Start")  == 0) {
+        gtk_button_set_label(button, "_Stop");
 
         static const char *formats[2] = { "rgb24", "bgra" };
 
@@ -163,7 +163,7 @@ preview_button_clicked(GtkButton *button, gpointer data UNUSED)
     }
     else {
         /* user clicked stop */
-        gtk_button_set_label(button, "_Start preview");
+        gtk_button_set_label(button, "_Start");
         dbus_stop_video_preview();
     }
 }
@@ -789,7 +789,8 @@ GtkWidget* create_video_configuration()
     gnome_main_section_new_with_table (_ ("Preview"), &frame, &table, 1, 2);
     gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
 
-    preview_button = gtk_button_new_with_mnemonic(_("_Start preview"));
+    preview_button = gtk_button_new_with_mnemonic(_("_Start"));
+    gtk_widget_set_size_request(preview_button, 80, 30);
     gtk_table_attach(GTK_TABLE(table), preview_button, 0, 1, 0, 1, 0, 0, 0, 6);
     g_signal_connect(G_OBJECT(preview_button), "clicked", G_CALLBACK(preview_button_clicked), NULL);
     gtk_widget_show(GTK_WIDGET(preview_button));
