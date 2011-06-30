@@ -475,7 +475,7 @@ on_stage_delete(ClutterStage *stage, ClutterEvent *event, gpointer data)
 }
 
 
-int
+void
 video_preview_run(VideoPreview *preview)
 {
     VideoPreviewPrivate * priv = VIDEO_PREVIEW_GET_PRIVATE(preview);
@@ -516,8 +516,6 @@ video_preview_run(VideoPreview *preview)
     g_object_notify_by_pspec (G_OBJECT(preview), properties[PROP_RUNNING]);
 
     g_object_get(G_OBJECT(preview), "drawarea", &priv->drawarea, NULL);
-
-    return 0;
 }
 
 void
@@ -526,14 +524,6 @@ video_preview_stop(VideoPreview *preview)
     VideoPreviewPrivate *priv = VIDEO_PREVIEW_GET_PRIVATE(preview);
     g_idle_remove_by_data((void*)preview);
     priv->is_running = FALSE;
-    if (priv->using_clutter) {
-        /* Destroy stage, which is texture's parent */
-        if (priv->texture && CLUTTER_IS_ACTOR(priv->texture)) {
-            ClutterActor *stage = clutter_actor_get_parent(priv->texture);
-            clutter_actor_destroy(stage);
-        }
-    } else {
-        if (priv->cairo)
-            cairo_destroy(priv->cairo);
-    }
+    if (!priv->using_clutter && priv->cairo)
+        cairo_destroy(priv->cairo);
 }
