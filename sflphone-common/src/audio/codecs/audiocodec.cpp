@@ -83,7 +83,7 @@ uint8 AudioCodec::getPayloadType (void) const
     return _payload;
 }
 
-bool AudioCodec::hasDynamicPayload (void)
+bool AudioCodec::hasDynamicPayload (void) const
 {
     return _hasDynamicPayload;
 }

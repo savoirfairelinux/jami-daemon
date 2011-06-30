@@ -129,21 +129,6 @@ class Alaw : public sfl::AudioCodec
 
             return a^0x55; // A-law has alternate bits inverted for transmission
         }
-        /**
-         * @Override
-         */
-        std::string getDescription() const {
-            return "audio/PCMA 8000 (\"alaw\") codec.";
-        }
-
-        /**
-         * @Override
-         */
-        Alaw* clone() const {
-            return new Alaw (*this);
-        }
-
-
 };
 
 // the class factories
