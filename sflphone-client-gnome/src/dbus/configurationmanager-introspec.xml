@@ -1076,5 +1076,8 @@
        <signal name="videoStopped" tp:name-for-bindings="videoStopped">
 	   </signal>
 
+	   <signal name="videoDeviceEvent" tp:name-for-bindings="videoDeviceEvent">
+	   </signal>  
+
    </interface>
 	   </node>

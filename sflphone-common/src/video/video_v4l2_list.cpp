@@ -56,6 +56,8 @@ extern "C" {
 
 #include "video_v4l2_list.h"
 
+#include "manager.h"
+
 namespace sfl_video {
 
 static int is_v4l2(struct udev_device *dev)
@@ -226,7 +228,7 @@ void VideoV4l2List::run()
 				_debug("udev: adding %s", node);
                 try {
                     addDevice(node);
-    				//FIXME : notify preferences change
+    				Manager::instance().notifyVideoDeviceEvent();
                 } catch (const std::runtime_error &e) {
                     _error(e.what());
                 }
@@ -265,7 +267,7 @@ void VideoV4l2List::delDevice(const std::string &node)
     for (i = 0 ; i < n ; i++) {
         if (devices[i].device == node) {
         	devices.erase(devices.begin() + i);
-			//FIXME : notify preferences change
+			Manager::instance().notifyVideoDeviceEvent();
         	return;
         }
     }

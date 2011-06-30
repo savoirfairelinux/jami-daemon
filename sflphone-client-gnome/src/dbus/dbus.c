@@ -905,6 +905,11 @@ dbus_connect (GError **error)
     dbus_g_proxy_connect_signal (configurationManagerProxy, "errorAlert",
                                  G_CALLBACK (error_alert), NULL, NULL);
 
+    /* Video related signals */
+    dbus_g_proxy_add_signal (configurationManagerProxy, "videoDeviceEvent", G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal(configurationManagerProxy, "videoDeviceEvent",
+                                G_CALLBACK (video_device_event_cb), NULL, NULL);
+
     /* Defines a default timeout for the proxies */
 #if HAVE_DBUS_G_PROXY_SET_DEFAULT_TIMEOUT
     dbus_g_proxy_set_default_timeout (callManagerProxy, DEFAULT_DBUS_TIMEOUT);

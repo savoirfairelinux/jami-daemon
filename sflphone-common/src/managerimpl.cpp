@@ -4790,3 +4790,7 @@ std::vector<std::string> ManagerImpl::getParticipantList (
 }
 
 
+void ManagerImpl::notifyVideoDeviceEvent()
+{
+	_dbus->getConfigurationManager()->videoDeviceEvent();
+}

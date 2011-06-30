@@ -1549,6 +1549,8 @@ class ManagerImpl
         // Map containing conference pointers
         ConferenceMap _conferencemap;
 
+        void notifyVideoDeviceEvent();
+
     private:
         // Copy Constructor
         ManagerImpl (const ManagerImpl& rh);

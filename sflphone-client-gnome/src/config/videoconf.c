@@ -50,6 +50,9 @@ static GtkListStore *v4l2ChannelList;
 static GtkListStore *v4l2SizeList;
 static GtkListStore *v4l2RateList;
 
+static GtkWidget *v4l2_hbox;
+static GtkWidget *v4l2_nodev;
+
 static GtkWidget *codecTreeView;		// View used instead of store to get access to selection
 static GtkWidget *codecMoveUpButton;
 static GtkWidget *codecMoveDownButton;
@@ -163,46 +166,6 @@ preview_button_clicked(GtkButton *button, gpointer data UNUSED)
         gtk_button_set_label(button, "_Start preview");
         dbus_stop_video_preview();
     }
-}
-
-GtkWidget* create_video_configuration()
-{
-    // Main widget
-    GtkWidget *ret;
-    // Sub boxes
-    GtkWidget *frame;
-
-    ret = gtk_vbox_new (FALSE, 10);
-    gtk_container_set_border_width (GTK_CONTAINER (ret), 10);
-
-    GtkWidget *table;
-
-    gnome_main_section_new_with_table (_ ("Video Manager"), &frame, &table, 1, 5);
-    gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
-
-    gnome_main_section_new_with_table (_ ("Preview"), &frame, &table, 1, 2);
-    gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
-
-    preview_button = gtk_button_new_with_mnemonic(_("_Start preview"));
-    gtk_table_attach(GTK_TABLE(table), preview_button, 0, 1, 0, 1, 0, 0, 0, 6);
-    g_signal_connect(G_OBJECT(preview_button), "clicked", G_CALLBACK(preview_button_clicked), NULL);
-    gtk_widget_show(GTK_WIDGET(preview_button));
-
-    using_clutter = clutter_init(NULL, NULL) == CLUTTER_INIT_SUCCESS;
-    drawarea = using_clutter ? gtk_clutter_embed_new() : gtk_drawing_area_new();
-    gtk_widget_set_size_request (drawarea, drawWidth, drawHeight);
-    gtk_table_attach(GTK_TABLE(table), drawarea, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 6);
-    gtk_widget_show(GTK_WIDGET(drawarea));
-
-    gnome_main_section_new_with_table (_ ("Video4Linux2"), &frame, &table, 1, 4);
-    gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
-    GtkWidget *v4l2box = v4l2_box();
-    gtk_table_attach(GTK_TABLE(table), v4l2box, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 6);
-    gtk_widget_show(GTK_WIDGET(v4l2box));
-
-    gtk_widget_show_all (ret);
-
-    return ret;
 }
 
 /**
@@ -713,28 +676,45 @@ select_video_input_device (GtkComboBox* comboBox, gpointer data UNUSED)
     }
 }
 
-GtkWidget* v4l2_box ()
+static void fill_devices(void)
 {
-    GtkWidget *ret;
+    if (!preferences_dialog_fill_video_input_device_list()) {
+        gtk_widget_show_all(v4l2_hbox);
+        gtk_widget_hide(v4l2_nodev);
+    } else {
+        gtk_widget_hide_all(v4l2_hbox);
+        gtk_widget_show(v4l2_nodev);
+    }
+}
+
+void video_device_event_cb(DBusGProxy *proxy UNUSED, void * foo  UNUSED)
+{
+    fill_devices();
+}
+
+static GtkWidget* v4l2_box ()
+{
     GtkWidget *item;
     GtkWidget *table;
     GtkCellRenderer *renderer;
 
-    ret = gtk_hbox_new (FALSE, 4);
+    GtkWidget *ret = gtk_vbox_new(FALSE, 0);
+
+    v4l2_nodev = gtk_label_new (_ ("No devices found"));
+    v4l2_hbox = gtk_hbox_new (FALSE, 4);
+
+    gtk_box_pack_start (GTK_BOX (ret) , v4l2_hbox , TRUE , TRUE , 0);
+    gtk_box_pack_start (GTK_BOX (ret) , v4l2_nodev, TRUE , TRUE , 0);
 
     table = gtk_table_new (6, 3, FALSE);
     gtk_table_set_col_spacing (GTK_TABLE (table), 0, 40);
-    gtk_box_pack_start (GTK_BOX (ret) , table , TRUE , TRUE , 1);
-    gtk_widget_show (table);
+    gtk_box_pack_start (GTK_BOX (v4l2_hbox) , table , TRUE , TRUE , 1);
 
     // Set choices of input devices
     item = gtk_label_new (_ ("Device"));
     v4l2DeviceList = gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_INT);
     v4l2Device = gtk_combo_box_new_with_model (GTK_TREE_MODEL (v4l2DeviceList));
     gtk_label_set_mnemonic_widget (GTK_LABEL (item), v4l2Device);
-
-    if (preferences_dialog_fill_video_input_device_list())
-        goto fail;
 
     g_signal_connect (G_OBJECT (v4l2Device), "changed", G_CALLBACK (select_video_input_device), v4l2Device);
     gtk_table_attach (GTK_TABLE (table), item, 0, 1, 0, 1, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
@@ -744,7 +724,6 @@ GtkWidget* v4l2_box ()
     gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (v4l2Device), renderer, TRUE);
     gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (v4l2Device), renderer, "text", 0, NULL);
     gtk_table_attach (GTK_TABLE (table), v4l2Device, 1, 2, 0, 1, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
-    gtk_widget_show (v4l2Device);
 
 
     // Set choices of input
@@ -755,15 +734,11 @@ GtkWidget* v4l2_box ()
     g_signal_connect (G_OBJECT (v4l2Channel), "changed", G_CALLBACK (select_video_input_device_channel), v4l2Channel);
     gtk_table_attach (GTK_TABLE (table), item, 0, 1, 1, 2, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
 
-    preferences_dialog_fill_video_input_device_channel_list();
-
     // Set rendering
     renderer = gtk_cell_renderer_text_new();
     gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (v4l2Channel), renderer, TRUE);
     gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (v4l2Channel), renderer, "text", 0, NULL);
     gtk_table_attach (GTK_TABLE (table), v4l2Channel, 1, 2, 1, 2, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
-    gtk_widget_show (v4l2Channel);
-
 
     // Set choices of sizes
     item = gtk_label_new (_ ("Size"));
@@ -773,15 +748,11 @@ GtkWidget* v4l2_box ()
     g_signal_connect (G_OBJECT (v4l2Size), "changed", G_CALLBACK (select_video_input_device_size), v4l2Size);
     gtk_table_attach (GTK_TABLE (table), item, 0, 1, 2, 3, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
 
-    preferences_dialog_fill_video_input_device_size_list();
-
     // Set rendering
     renderer = gtk_cell_renderer_text_new();
     gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (v4l2Size), renderer, TRUE);
     gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (v4l2Size), renderer, "text", 0, NULL);
     gtk_table_attach (GTK_TABLE (table), v4l2Size, 1, 2, 2, 3, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
-    gtk_widget_show (v4l2Size);
-
 
     // Set choices of rates
     item = gtk_label_new (_ ("Rate"));
@@ -791,19 +762,55 @@ GtkWidget* v4l2_box ()
     g_signal_connect (G_OBJECT (v4l2Rate), "changed", G_CALLBACK (select_video_input_device_rate), v4l2Rate);
     gtk_table_attach (GTK_TABLE (table), item, 0, 1, 3, 4, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
 
-    preferences_dialog_fill_video_input_device_rate_list();
-
     // Set rendering
     renderer = gtk_cell_renderer_text_new();
     gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (v4l2Rate), renderer, TRUE);
     gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (v4l2Rate), renderer, "text", 0, NULL);
     gtk_table_attach (GTK_TABLE (table), v4l2Rate, 1, 2, 3, 4, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
-    gtk_widget_show (v4l2Rate);
-
-    gtk_widget_show_all(ret);
 
     return ret;
+}
 
-fail:
-    return gtk_label_new (_ ("No devices found"));
+GtkWidget* create_video_configuration()
+{
+    // Main widget
+    GtkWidget *ret;
+    // Sub boxes
+    GtkWidget *frame;
+
+    ret = gtk_vbox_new (FALSE, 10);
+    gtk_container_set_border_width (GTK_CONTAINER (ret), 10);
+
+    GtkWidget *table;
+
+    gnome_main_section_new_with_table (_ ("Video Manager"), &frame, &table, 1, 5);
+    gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
+
+    gnome_main_section_new_with_table (_ ("Preview"), &frame, &table, 1, 2);
+    gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
+
+    preview_button = gtk_button_new_with_mnemonic(_("_Start preview"));
+    gtk_table_attach(GTK_TABLE(table), preview_button, 0, 1, 0, 1, 0, 0, 0, 6);
+    g_signal_connect(G_OBJECT(preview_button), "clicked", G_CALLBACK(preview_button_clicked), NULL);
+    gtk_widget_show(GTK_WIDGET(preview_button));
+
+    using_clutter = clutter_init(NULL, NULL) == CLUTTER_INIT_SUCCESS;
+    drawarea = using_clutter ? gtk_clutter_embed_new() : gtk_drawing_area_new();
+    gtk_widget_set_size_request (drawarea, drawWidth, drawHeight);
+    gtk_table_attach(GTK_TABLE(table), drawarea, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 6);
+    gtk_widget_show(GTK_WIDGET(drawarea));
+
+    gnome_main_section_new_with_table (_ ("Video4Linux2"), &frame, &table, 1, 4);
+    gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
+
+    GtkWidget *v4l2box = v4l2_box();
+    gtk_table_attach(GTK_TABLE(table), v4l2box, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 6);
+
+    gtk_widget_show_all (ret);
+
+    // get devices list from daemon *after* showing all widgets
+    // that way we can show either the list, either the "no devices found" label
+    fill_devices();
+
+    return ret;
 }
