@@ -914,6 +914,8 @@ void ManagerImpl::removeConference (const ConfID& conference_id)
     else {
         _error ("Manager: Error: Cannot remove conference: %s", conference_id.c_str());
     }
+
+    delete conf;
 }
 
 Conference*

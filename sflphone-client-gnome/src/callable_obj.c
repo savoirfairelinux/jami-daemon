@@ -499,8 +499,7 @@ gchar* serialize_history_call_entry (callable_obj_t *entry)
                           account_id, separator,
 			  record_file, separator,
 			  confID, separator,
-			  time_added,
-                          NULL);
+			  time_added, NULL);
 
     return result;
 }

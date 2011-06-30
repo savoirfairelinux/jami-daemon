@@ -266,9 +266,10 @@ gchar *serialize_history_conference_entry(conference_obj_t *entry)
 			time_start, separator,
 			time_stop, separator,
 			confID, separator,
-			"", separator, // peer AccountID
-			entry->_recordfile ? entry->_recordfile : "",
-			NULL); 
+			"empty", separator, // peer AccountID
+			entry->_recordfile ? entry->_recordfile : "", separator,
+			"empty", separator,
+			"empty", NULL); 
   	
 
     return result;
@@ -291,14 +292,14 @@ void create_conference_history_entry_from_serialized(gchar *entry, conference_ob
     
     DEBUG("Conference: Create a conference from serialized form");
  
-    ptr = g_strsplit(entry, delim, 8);
-    while(ptr != NULL && token < 8) {
+    ptr = g_strsplit(entry, delim, 10);
+    while(ptr != NULL && token < 10) {
         switch(token) {
             case 0:
 		history_state = MISSED;
 		break;
 	    case 1:
-		participant = g_strdup(*ptr);
+		participant = *ptr;
 		break;
 	    case 2:
 		name = *ptr;
@@ -318,6 +319,8 @@ void create_conference_history_entry_from_serialized(gchar *entry, conference_ob
 	    case 7:
 	        recordfile = *ptr;
 		break;
+	    case 8:
+	    case 9: 
 	    default:
 	        break;
 	}
@@ -328,10 +331,11 @@ void create_conference_history_entry_from_serialized(gchar *entry, conference_ob
 
     // create a new empty conference
     create_new_conference(state, confID, conf);
-    
-    // process_conference_participant_from_serialized(participant, *conf);
-
-    g_free(participant);
+  
+    (*conf)->_time_start = convert_gchar_to_timestamp(time_start); 
+    (*conf)->_time_stop = convert_gchar_to_timestamp(time_stop);
+    (*conf)->_recordfile = g_strdup(recordfile);
+ 
 }
 
 static void process_conference_participant_from_serialized(gchar *participant, conference_obj_t *conf)
