@@ -1031,7 +1031,6 @@ SIPVoIPLink::offhold (const CallID& id) throw (VoipLinkException)
         call->getAudioRtp()->initAudioRtpConfig (call);
         call->getAudioRtp()->initAudioSymmetricRtpSession (call);
         call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
-        call->getVideoRtp()->updateDestination(call->getLocalIp(), call->getLocalVideoPort());
         call->getVideoRtp()->start();
 
     }
