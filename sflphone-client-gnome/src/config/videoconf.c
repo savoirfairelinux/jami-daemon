@@ -38,6 +38,7 @@
 #include <assert.h>
 
 #include <clutter/clutter.h>
+#include <clutter-gtk/clutter-gtk.h>
 
 static GtkWidget *v4l2Device;
 static GtkWidget *v4l2Channel;
@@ -114,6 +115,7 @@ static VideoPreview *preview = NULL;
 static GtkWidget *preview_button = NULL;
 
 static GtkWidget *drawarea = NULL;
+static int using_clutter;
 static int drawWidth  = 20 * 16;
 static int drawHeight = 20 * 9;
 static const char *drawFormat;
@@ -153,11 +155,7 @@ preview_button_clicked(GtkButton *button, gpointer data UNUSED)
 
         static const char *formats[2] = { "rgb24", "bgra" };
 
-        if (clutter_init(NULL, NULL) == CLUTTER_INIT_SUCCESS) {
-            drawFormat = formats[0];
-        } else {
-            drawFormat = formats[1];
-        }
+        drawFormat = using_clutter ? formats[0] : formats[1];
         dbus_start_video_preview(drawWidth, drawHeight, drawFormat);
     }
     else {
@@ -190,7 +188,8 @@ GtkWidget* create_video_configuration()
     g_signal_connect(G_OBJECT(preview_button), "clicked", G_CALLBACK(preview_button_clicked), NULL);
     gtk_widget_show(GTK_WIDGET(preview_button));
 
-    drawarea = gtk_drawing_area_new();
+    using_clutter = clutter_init(NULL, NULL) == CLUTTER_INIT_SUCCESS;
+    drawarea = using_clutter ? gtk_clutter_embed_new() : gtk_drawing_area_new();
     gtk_widget_set_size_request (drawarea, drawWidth, drawHeight);
     gtk_table_attach(GTK_TABLE(table), drawarea, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 6);
     gtk_widget_show(GTK_WIDGET(drawarea));

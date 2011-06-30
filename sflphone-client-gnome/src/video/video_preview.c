@@ -42,6 +42,7 @@
 #include <string.h>
 
 #include <clutter/clutter.h>
+#include <clutter-gtk/clutter-gtk.h>
 #include <cairo.h>
 
 #define VIDEO_PREVIEW_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), \
@@ -372,9 +373,10 @@ readFrameFromShm(VideoPreviewPrivate *priv)
     }
 
     if (priv->using_clutter) {
-      if (strcmp(priv->format, "rgb24")) {
-          g_print("clutter render: Unknown pixel format `%s'\n", priv->format);
-      }
+        if (strcmp(priv->format, "rgb24")) {
+            g_print("clutter render: Unknown pixel format `%s'\n", priv->format);
+            return;
+        }
 
         clutter_texture_set_from_rgb_data (CLUTTER_TEXTURE(texture),
                 (void*)data,
@@ -386,14 +388,12 @@ readFrameFromShm(VideoPreviewPrivate *priv)
                 0,
                 NULL);
     } else {
-        cairo_format_t format;
-        if (!strcmp(priv->format, "bgra"))
-            format = CAIRO_FORMAT_RGB24;
-        else {
-            g_print("cairo render: Unknown pixel format `%s'\n", priv->format);
+        if (strcmp(priv->format, "bgra")) {
+            g_print("cairo render: Unknown pixel format `%s'\n", priv->format); 
             return;
         }
 
+        cairo_format_t format = CAIRO_FORMAT_RGB24;
         int stride = cairo_format_stride_for_width (format, width);
         assert(stride == align(4*width));
 
@@ -487,29 +487,25 @@ video_preview_run(VideoPreview *preview)
     priv->using_clutter = !strcmp(priv->format, "rgb24");
     g_print("Preview: using %s render\n", priv->using_clutter ? "clutter" : "cairo");
 
+    g_signal_connect(priv->drawarea, "unrealize", G_CALLBACK(on_drawarea_unrealize), preview);
+
     if (priv->using_clutter) {
         ClutterActor *stage;
 
-        /* Get a stage */
-        stage = clutter_stage_new ();
+        stage = gtk_clutter_embed_get_stage (GTK_CLUTTER_EMBED(priv->drawarea));
+        assert(stage);
         g_signal_connect (stage, "delete-event", G_CALLBACK(on_stage_delete),
                 preview);
-        clutter_actor_set_size(stage,
-                priv->width,
-                priv->height);
+        //clutter_actor_set_size(stage, priv->width, priv->height);
 
         priv->texture = clutter_texture_new();
 
-        clutter_stage_set_title(CLUTTER_STAGE (stage), "Video Test");
         /* Add ClutterTexture to the stage */
         clutter_container_add(CLUTTER_CONTAINER (stage), priv->texture, NULL);
 
         clutter_actor_show_all(stage);
     } else {
-        GtkWidget *drawarea = priv->drawarea;
-        g_signal_connect(drawarea, "unrealize", G_CALLBACK(on_drawarea_unrealize), preview);
-        GdkWindow *w = gtk_widget_get_window(drawarea);
-        priv->cairo = gdk_cairo_create(w);
+        priv->cairo = gdk_cairo_create(gtk_widget_get_window(priv->drawarea));
     }
 
     /* frames are read and saved here */
