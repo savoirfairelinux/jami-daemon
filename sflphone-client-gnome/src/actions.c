@@ -1369,10 +1369,10 @@ void sflphone_fill_conference_list (void)
 
 void sflphone_fill_history (void)
 {
-    const gchar **entries;
+    const gchar **entries, **history_entries;
     gchar *current_entry;
-    callable_obj_t *history_entry;
-    callable_obj_t *call;
+    callable_obj_t *history_call, *call;
+    conference_obj_t *history_conf, *conf;
     QueueElement *element;
     guint i = 0, n = 0;
 
@@ -1386,35 +1386,51 @@ void sflphone_fill_history (void)
 
 	DEBUG("============================================ entry: %s", current_entry);
 
-        // do something with key and value
-        create_history_entry_from_serialized_form (current_entry, &history_entry);
-                
-	// Add it and update the GUI
-        calllist_add_call (history, history_entry);
+	if(g_str_has_prefix(current_entry, "9999")) {
+	    // create a conference entry
+	    create_conference_history_entry_from_serialized(current_entry, &history_conf);
 
-        if(history_entry->_confID && g_strcmp0(history_entry->_confID, "") != 0) {
-	    conference_obj_t *conf;
-
-	    DEBUG("----------------- conf id: %s", history_entry->_confID);
-
-	    // process conference
-	    conf = conferencelist_get(history, history_entry->_confID);
+	    conf = conferencelist_get(history, history_conf->_confID);
 	    if(conf == NULL) {
-	        // conference does not exist yet, create it
-		create_new_conference(CONFERENCE_STATE_ACTIVE_ATACHED, history_entry->_confID, &conf);
-	        conferencelist_add(history, conf);	
+		conferencelist_add(history, history_conf);
 	    }
-	     
-	    conference_add_participant(history_entry->_callID, conf);
+	    else {
+		conf->_recordfile = g_strdup(history_conf->_recordfile);
+	    }
+	} 
+	else {
 
-	    // conference start timestamp corespond to 
-	    if(conf->_time_start > history_entry->_time_added) {
-	        conf->_time_start = history_entry->_time_added;
-            } 
+            // do something with key and value
+            create_history_entry_from_serialized_form (current_entry, &history_call);
+                
+	    // Add it and update the GUI
+            calllist_add_call (history, history_call);
+
+            if(history_call->_confID && g_strcmp0(history_call->_confID, "") != 0) {
+
+	        DEBUG("----------------- conf id: %s", history_call->_confID);
+
+	        // process conference
+	        conf = conferencelist_get(history, history_call->_confID);
+	        if(conf == NULL) {
+	            // conference does not exist yet, create it
+		    create_new_conference(CONFERENCE_STATE_ACTIVE_ATACHED, history_call->_confID, &conf);
+	            conferencelist_add(history, conf);	
+	        }
+	     
+	        conference_add_participant(history_call->_callID, conf);
+
+	        // conference start timestamp corespond to 
+	        if(conf->_time_start > history_call->_time_added) {
+	            conf->_time_start = history_call->_time_added;
+                }
+	    } 
         }
 	
         entries++;
     }
+
+    entries = history_entries;
 
     // fill 
     n = calllist_get_size(history);
@@ -1446,6 +1462,7 @@ void sflphone_save_history (void)
     gint size;
     gint i;
     QueueElement *current;
+    conference_obj_t *conf;
     GHashTable *result = NULL;
     gchar **ordered_result;
     gchar *key, *value;
@@ -1456,7 +1473,6 @@ void sflphone_save_history (void)
     g_hash_table_ref (result);
 
     size = calllist_get_size (history);
-
     for (i = 0; i < size; i++) {
         current = calllist_get_nth (history, i);
 
@@ -1481,6 +1497,20 @@ void sflphone_save_history (void)
 	else {
 	    WARN("SFLphone: Warning: %dth element is null", i);
         }
+    }
+
+    size = conferencelist_get_size(history);
+    for(i = 0; i < size; i++) {
+        conf = conferencelist_get_nth(history, i);
+	if(conf == NULL) {
+ 	    DEBUG("SFLphone: Error: Could not get %dth conference", i);
+	    break;
+        }
+        value = serialize_history_conference_entry(conf);
+	key = convert_timestamp_to_gchar(conf->_time_start);
+
+	g_hash_table_replace(result, (gpointer) key,
+		g_slist_append(g_hash_table_lookup(result, key), (gpointer) value));
     }
 
     sflphone_order_history_hash_table(result, &ordered_result);
