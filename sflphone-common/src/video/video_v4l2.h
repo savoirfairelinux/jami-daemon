@@ -45,14 +45,6 @@ extern "C" {
 
 namespace sfl_video {
 
-class VideoV4l2Rate {
-    public:
-        VideoV4l2Rate(unsigned num, unsigned den) : den(den), num(num) {}
-
-        unsigned den;
-        unsigned num;
-};
-
 class VideoV4l2Size {
     public:
         VideoV4l2Size(unsigned height, unsigned width);
@@ -63,17 +55,11 @@ class VideoV4l2Size {
         void GetFrameRates(int fd, unsigned int pixel_format);
         std::vector<std::string> getRateList();
 
-
-        void setRate(unsigned index);
-        unsigned getRateIndex();
-        VideoV4l2Rate &getRate();
-
         unsigned height;
         unsigned width;
 
     private:
-        std::vector<VideoV4l2Rate> rates;
-        unsigned _currentRate;
+        std::vector<float> rates;
 };
 
 class VideoV4l2Channel {
@@ -92,12 +78,8 @@ class VideoV4l2Channel {
         void SetFourcc(unsigned code);
         const char * GetFourcc();
 
-        void setSize(unsigned index);
-
         std::vector<std::string> getSizeList(void);
-        unsigned getSizeIndex();
-
-        VideoV4l2Size &getSize();
+        VideoV4l2Size getSize(const std::string &name);
 
         unsigned idx;
         std::string name;
@@ -105,7 +87,6 @@ class VideoV4l2Channel {
     private:
         std::vector<VideoV4l2Size> sizes;
         char fourcc[5];
-        unsigned _currentSize;
 };
 
 class VideoV4l2Device {
@@ -119,13 +100,11 @@ class VideoV4l2Device {
         std::string name;
 
         std::vector<std::string> getChannelList(void);
-        void setChannel(unsigned index);
-        unsigned getChannelIndex();
-        VideoV4l2Channel &getChannel();
+
+        VideoV4l2Channel &getChannel(const std::string &name);
 
     private:
         std::vector<VideoV4l2Channel> channels;
-        unsigned _currentChannel;
 };
 
 } // namespace sfl_video

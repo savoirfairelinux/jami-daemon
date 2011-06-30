@@ -109,9 +109,9 @@ static const unsigned pixelformats_supported[] = {
  *
  * Other entries in the array are YUV formats
  *
- * RGB / grey / palette formats are not supported because most cameras support 
+ * RGB / grey / palette formats are not supported because most cameras support
  * YUV input
- * 
+ *
  */
 
 static unsigned int pixelformat_score(unsigned pixelformat)
@@ -124,7 +124,7 @@ static unsigned int pixelformat_score(unsigned pixelformat)
     return UINT_MAX - 1;
 }
 
-VideoV4l2Size::VideoV4l2Size(unsigned height, unsigned width) : height(height), width(width), _currentRate(0) {}
+VideoV4l2Size::VideoV4l2Size(unsigned height, unsigned width) : height(height), width(width) {}
 
 std::vector<std::string> VideoV4l2Size::getRateList()
 {
@@ -134,32 +134,13 @@ std::vector<std::string> VideoV4l2Size::getRateList()
 	size_t n = rates.size();
 	unsigned i;
 	for (i = 0 ; i < n ; i++) {
-		VideoV4l2Rate rate = rates[i];
 		std::stringstream ss;
-		ss << (float)rate.den / rate.num;
+		ss << rates[i];
 		v.push_back(ss.str());
 	}
 
 	return v;
 }
-
-void VideoV4l2Size::setRate(unsigned index)
-{
-    if (index >= rates.size())
-        index = rates.size() - 1;
-    _currentRate = index;
-}
-
-unsigned VideoV4l2Size::getRateIndex()
-{
-    return _currentRate;
-}
-
-VideoV4l2Rate &VideoV4l2Size::getRate()
-{
-    return rates[_currentRate];
-}
-
 
 
 void VideoV4l2Size::GetFrameRates(int fd, unsigned int pixel_format)
@@ -172,8 +153,7 @@ void VideoV4l2Size::GetFrameRates(int fd, unsigned int pixel_format)
     };
 
     if (ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival)) {
-        VideoV4l2Rate rate(1, 25);
-        rates.push_back(rate);
+        rates.push_back(25);
         _error("could not query frame interval for size");
         return;
     }
@@ -181,26 +161,24 @@ void VideoV4l2Size::GetFrameRates(int fd, unsigned int pixel_format)
     switch(frmival.type) {
     case V4L2_FRMIVAL_TYPE_DISCRETE:
         do {
-            VideoV4l2Rate rate(frmival.discrete.numerator,
-                           frmival.discrete.denominator);
-            rates.push_back(rate);
+            rates.push_back(frmival.discrete.denominator/frmival.discrete.numerator);
             frmival.index++;
         } while (!ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival));
         break;
     case V4L2_FRMIVAL_TYPE_CONTINUOUS:
-        rates.push_back(VideoV4l2Rate(1,25));
+        rates.push_back(25);
         // TODO
         _error("Continuous Frame Intervals not supported");
         break;
     case V4L2_FRMIVAL_TYPE_STEPWISE:
-        rates.push_back(VideoV4l2Rate(1, 25));
+        rates.push_back(25);
         // TODO
         _error("Stepwise Frame Intervals not supported");
         break;
     }
 }
 
-VideoV4l2Channel::VideoV4l2Channel(unsigned idx, const char *s) : idx(idx), name(s), _currentSize(0) { }
+VideoV4l2Channel::VideoV4l2Channel(unsigned idx, const char *s) : idx(idx), name(s) { }
 
 void VideoV4l2Channel::SetFourcc(unsigned code)
 {
@@ -214,13 +192,6 @@ void VideoV4l2Channel::SetFourcc(unsigned code)
 const char * VideoV4l2Channel::GetFourcc()
 {
 	return fourcc;
-}
-
-void VideoV4l2Channel::setSize(unsigned index)
-{
-    if (index >= sizes.size())
-        index = sizes.size() - 1;
-    _currentSize = index;
 }
 
 std::vector<std::string> VideoV4l2Channel::getSizeList(void)
@@ -237,17 +208,6 @@ std::vector<std::string> VideoV4l2Channel::getSizeList(void)
     }
 
     return v;
-}
-
-
-unsigned VideoV4l2Channel::getSizeIndex()
-{
-    return _currentSize;
-}
-
-VideoV4l2Size &VideoV4l2Channel::getSize()
-{
-    return sizes[_currentSize];
 }
 
 
@@ -301,26 +261,27 @@ void VideoV4l2Channel::GetFormat(int fd)
         throw std::runtime_error("VIDIOC_S_INPUT failed");
 
     struct v4l2_fmtdesc fmt;
-    fmt.index = idx = 0;
+    unsigned fmt_index;
+    fmt.index = fmt_index = 0;
     fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
     unsigned int best_score = UINT_MAX;
     unsigned int best_idx = 0;
     unsigned int pixelformat = 0;
     while (!ioctl(fd, VIDIOC_ENUM_FMT, &fmt)) {
-        if (idx != fmt.index)
+        if (fmt_index != fmt.index)
             break;
-       
+
         unsigned int score = pixelformat_score(fmt.pixelformat);
         if (score < best_score) {
             pixelformat = fmt.pixelformat;
-            best_idx = idx;
+            best_idx = fmt_index;
             best_score = score;
         }
 
-        fmt.index = ++idx;
+        fmt.index = ++fmt_index;
     }
-    if (idx == 0)
+    if (fmt_index == 0)
         throw std::runtime_error("Could not enumerate formats");
 
     fmt.index = best_idx;
@@ -329,7 +290,20 @@ void VideoV4l2Channel::GetFormat(int fd)
     SetFourcc(pixelformat);
 }
 
-VideoV4l2Device::VideoV4l2Device(int fd, const std::string &device) : _currentChannel(0)
+VideoV4l2Size VideoV4l2Channel::getSize(const std::string &name)
+{
+	for (size_t i = 0; i < sizes.size(); i++) {
+		std::stringstream ss;
+		ss << sizes[i].width << "x" << sizes[i].height;
+		if (ss.str() == name)
+			return sizes[i];
+	}
+
+	throw std::runtime_error("No size found");
+}
+
+
+VideoV4l2Device::VideoV4l2Device(int fd, const std::string &device)
 {
     unsigned idx;
 
@@ -341,7 +315,6 @@ VideoV4l2Device::VideoV4l2Device(int fd, const std::string &device) : _currentCh
         throw std::runtime_error("not a capture device");
 
     name = std::string((const char*)cap.card);
-    _error("%s", name.c_str());
 
     struct v4l2_input input;
     input.index = idx = 0;
@@ -373,21 +346,13 @@ std::vector<std::string> VideoV4l2Device::getChannelList(void)
     return v;
 }
 
-void VideoV4l2Device::setChannel(unsigned index)
+VideoV4l2Channel &VideoV4l2Device::getChannel(const std::string &name)
 {
-    if (index >= channels.size())
-        index = channels.size() - 1;
-    _currentChannel = index;
-}
+	for (size_t i = 0; i < channels.size(); i++)
+		if (channels[i].name == name)
+			return channels[i];
 
-unsigned VideoV4l2Device::getChannelIndex()
-{
-    return _currentChannel;
-}
-
-VideoV4l2Channel &VideoV4l2Device::getChannel()
-{
-    return channels[_currentChannel];
+	throw std::runtime_error("No channel found");
 }
 
 

@@ -645,57 +645,57 @@ std::vector<std::string> ConfigurationManager::getVideoInputDeviceList()
     return Manager::instance().getVideoInputDeviceList();
 }
 
-std::vector<std::string> ConfigurationManager::getVideoInputDeviceChannelList()
+std::vector<std::string> ConfigurationManager::getVideoInputDeviceChannelList(const std::string &dev)
 {
-    return Manager::instance().getVideoInputDeviceChannelList();
+    return Manager::instance().getVideoInputDeviceChannelList(dev);
 }
 
-std::vector<std::string> ConfigurationManager::getVideoInputDeviceSizeList()
+std::vector<std::string> ConfigurationManager::getVideoInputDeviceSizeList(const std::string &dev, const std::string &channel)
 {
-    return Manager::instance().getVideoInputDeviceSizeList();
+    return Manager::instance().getVideoInputDeviceSizeList(dev, channel);
 }
 
-std::vector<std::string> ConfigurationManager::getVideoInputDeviceRateList()
+std::vector<std::string> ConfigurationManager::getVideoInputDeviceRateList(const std::string &dev, const std::string &channel, const std::string &size)
 {
-    return Manager::instance().getVideoInputDeviceRateList();
+    return Manager::instance().getVideoInputDeviceRateList(dev, channel, size);
 }
 
-int32_t ConfigurationManager::getVideoInputDevice()
+std::string ConfigurationManager::getVideoInputDevice()
 {
     return Manager::instance().getVideoInputDevice();
 }
 
-int32_t ConfigurationManager::getVideoInputDeviceChannel()
+std::string ConfigurationManager::getVideoInputDeviceChannel()
 {
     return Manager::instance().getVideoInputDeviceChannel();
 }
 
-int32_t ConfigurationManager::getVideoInputDeviceSize()
+std::string ConfigurationManager::getVideoInputDeviceSize()
 {
     return Manager::instance().getVideoInputDeviceSize();
 }
 
-int32_t ConfigurationManager::getVideoInputDeviceRate()
+std::string ConfigurationManager::getVideoInputDeviceRate()
 {
     return Manager::instance().getVideoInputDeviceRate();
 }
 
-void ConfigurationManager::setVideoInputDevice(const int32_t& api)
+void ConfigurationManager::setVideoInputDevice(const std::string& api)
 {
     Manager::instance().setVideoInputDevice(api);
 }
 
-void ConfigurationManager::setVideoInputDeviceChannel(const int32_t& api)
+void ConfigurationManager::setVideoInputDeviceChannel(const std::string& api)
 {
     Manager::instance().setVideoInputDeviceChannel(api);
 }
 
-void ConfigurationManager::setVideoInputDeviceSize(const int32_t& api)
+void ConfigurationManager::setVideoInputDeviceSize(const std::string& api)
 {
     Manager::instance().setVideoInputDeviceSize(api);
 }
 
-void ConfigurationManager::setVideoInputDeviceRate(const int32_t& api)
+void ConfigurationManager::setVideoInputDeviceRate(const std::string& api)
 {
     Manager::instance().setVideoInputDeviceRate(api);
 }

@@ -665,20 +665,31 @@ void AudioPreference::unserialize (Conf::MappingNode *map)
 
 }
 
-
-
 VideoPreference::VideoPreference() :
-    _videoDevice(0)
-    , _videoInput(0)
-    , _videoSize(0)
-    , _videoRate(0)
+    _Device("")
+    , _Channel("")
+    , _Size("")
+    , _Rate("")
 {
-    v4l2_list = new sfl_video::VideoV4l2List();
+	_v4l2_list = new VideoV4l2List();
+	_v4l2_list->start();
 }
 
 VideoPreference::~VideoPreference()
 {
-    delete v4l2_list;
+	delete _v4l2_list;
+}
+
+std::map<std::string, std::string> VideoPreference::getVideoSettings(void) {
+    std::map<std::string, std::string> map;
+    std::stringstream ss;
+    map["input"] = _v4l2_list->getDeviceNode(_Device);
+    ss << _v4l2_list->getChannelNum(_Device, _Channel);
+    map["channel"] = ss.str();
+    map["video_size"] = _Size;
+    map["framerate"] = _Rate;
+
+    return map;
 }
 
 void VideoPreference::serialize (Conf::YamlEmitter *emitter)
@@ -690,23 +701,15 @@ void VideoPreference::serialize (Conf::YamlEmitter *emitter)
 
     Conf::MappingNode preferencemap (NULL);
 
-    std::stringstream devstr;
-    devstr << _videoDevice;
-    Conf::ScalarNode videoDevice(devstr.str());
-    std::stringstream inputstr;
-    inputstr << _videoInput;
-    Conf::ScalarNode videoInput(inputstr.str());
-    std::stringstream sizestr;
-    sizestr << _videoDevice;
-    Conf::ScalarNode videoSize(sizestr.str());
-    std::stringstream frameratestr;
-    frameratestr << _videoDevice;
-    Conf::ScalarNode videoRate (frameratestr.str());
+    Conf::ScalarNode Device(_Device);
+    Conf::ScalarNode Channel(_Channel);
+    Conf::ScalarNode Size(_Size);
+    Conf::ScalarNode Rate (_Rate);
 
-    preferencemap.setKeyValue (videoDeviceKey, &videoDevice);
-    preferencemap.setKeyValue (videoInputKey, &videoInput);
-    preferencemap.setKeyValue (videoSizeKey, &videoSize);
-    preferencemap.setKeyValue (videoRateKey, &videoRate);
+    preferencemap.setKeyValue (videoDeviceKey, &Device);
+    preferencemap.setKeyValue (videoChannelKey, &Channel);
+    preferencemap.setKeyValue (videoSizeKey, &Size);
+    preferencemap.setKeyValue (videoRateKey, &Rate);
 
     emitter->serializeVideoPreference (&preferencemap);
 
@@ -723,20 +726,21 @@ void VideoPreference::unserialize (Conf::MappingNode *map)
 
 
     val = (Conf::ScalarNode *) (map->getValue (videoDeviceKey));
-    if (val)
-        _videoDevice = atoi(val->getValue().data());
+    if (val) {
+        _Device = val->getValue().data();
+    }
 
-    val = (Conf::ScalarNode *) (map->getValue (videoInputKey));
+    val = (Conf::ScalarNode *) (map->getValue (videoChannelKey));
     if (val)
-        _videoInput = atoi(val->getValue().data());
+        _Channel = val->getValue().data();
 
     val = (Conf::ScalarNode *) (map->getValue (videoSizeKey));
     if (val)
-        _videoSize = atoi(val->getValue().data());
+        _Size = val->getValue().data();
 
     val = (Conf::ScalarNode *) (map->getValue (videoRateKey));
     if (val)
-        _videoRate = atoi(val->getValue().data());
+        _Rate = val->getValue().data();
 }
 
 

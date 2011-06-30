@@ -36,64 +36,40 @@
 using namespace std;
 
 #include "video_v4l2_list.h"
-#include "video_v4l2.h"
+//#include "video_v4l2.h"
 using namespace sfl_video;
 
 int main()
 {
-    int idx;
     VideoV4l2List list;
-    std::vector<std::string> v = list.getDeviceList();
-    idx = list.getDeviceIndex();
-    if (idx < 0) {
-    	cout << "No devices found!" << endl;
-    	return 0;
+    std::vector<std::string> devlist = list.getDeviceList();
+
+    for (size_t i=0; i<devlist.size(); i++) {
+        const std::string &dev = devlist[i];
+        cout << dev << endl;
+
+        std::vector<std::string> channellist = list.getChannelList(dev);
+        for (size_t i=0; i<channellist.size(); i++) {
+            const std::string &chan = channellist[i];
+            cout << '\t' << chan << endl;
+
+            std::vector<std::string> sizelist = list.getSizeList(dev, chan);
+            for (size_t i=0; i<sizelist.size(); i++) {
+                const std::string &size = sizelist[i];
+                cout << "\t\t" << size << endl;
+
+                std::vector<std::string> ratelist = list.getRateList(dev, chan, size);
+                for (size_t i=0; i<ratelist.size(); i++) {
+                    const std::string &rate = ratelist[i];
+                    cout << "\t\t\t" << rate << endl;
+                }
+                cout << endl;
+            }
+            cout << endl;
+        }
+        cout << endl;
     }
-    list.setDevice(idx);
-
-    size_t i, n = v.size();
-    assert(idx < n);
-    for (i=0; i<n; i++) {
-        cout << ((idx == i) ? " * " : "   ");
-        cout << v[i] << endl;
-    }
-
-    VideoV4l2Device &dev = list.getDevice();
-    idx = dev.getChannelIndex();
-    dev.setChannel(idx);
-    v = dev.getChannelList();
-
-    n = v.size();
-    assert(idx < n);
-    for (i=0; i<n; i++) {
-        cout << ((idx == i) ? " * " : "   ");
-        cout << "\t" << v[i] << endl;
-    }
-
-    VideoV4l2Channel &chan = dev.getChannel();
-    VideoV4l2Size &size = chan.getSize();
-    idx = chan.getSizeIndex();
-    chan.setSize(idx);
-    v = chan.getSizeList();
-
-    n = v.size();
-    assert(idx < n);
-    for (i=0; i<n; i++) {
-        cout << ((idx == i) ? " * " : "   ");
-        cout << "\t\t" << v[i] << endl;
-    }
-
-    //VideoV4l2Rate &rate = chan.getRate();
-    idx = size.getRateIndex();
-    size.setRate(idx);
-    v = size.getRateList();
-
-    n = v.size();
-    assert(idx < n);
-    for (i=0; i<n; i++) {
-        cout << ((idx == i) ? " * " : "   ");
-        cout << "\t\t\t" << v[i] << endl;
-    }
+    cout << endl;
 
     return 0;
 }

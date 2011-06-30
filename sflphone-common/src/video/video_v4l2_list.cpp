@@ -39,6 +39,8 @@
 #include <stdexcept> // for std::runtime_error
 #include <sstream>
 
+#include <cc++/thread.h>
+
 #include "logger.h"
 
 #ifdef HAVE_UDEV
@@ -57,7 +59,7 @@ extern "C" {
 
 namespace sfl_video {
 
-VideoV4l2List::VideoV4l2List() : _currentDevice(-1)
+VideoV4l2List::VideoV4l2List()
 {
 #ifdef HAVE_UDEV
     struct udev *udev;
@@ -153,7 +155,6 @@ int GetNumber(const std::string &name, size_t *sharp)
 	for (size_t c = len; c; --c) {
 		if (name[c] == '#') {
 			unsigned i;
-			printf("looking `%s'\n", name.substr(c).c_str());
 			if (sscanf(name.substr(c).c_str(), "#%u", &i) != 1)
 				return -1;
 			*sharp = c;
@@ -166,7 +167,7 @@ int GetNumber(const std::string &name, size_t *sharp)
 
 void GiveUniqueName(VideoV4l2Device &dev, const std::vector<VideoV4l2Device> &devices)
 {
-    const std::string &name = dev.name;
+	const std::string &name = dev.name;
     start:
     for (size_t i = 0; i < devices.size(); i++) {
 		if (name == devices[i].name) {
@@ -186,8 +187,43 @@ void GiveUniqueName(VideoV4l2Device &dev, const std::vector<VideoV4l2Device> &de
 
 } // end anonymous namespace
 
+VideoV4l2List::~VideoV4l2List()
+{
+	terminate();
+}
+
+void VideoV4l2List::run()
+{
+	sleep(1000000);
+	_mutex.enter();
+	//FIXME : notify preferences change
+	_mutex.leave();
+}
+
+void VideoV4l2List::finalize()
+{
+
+}
+
+void VideoV4l2List::delDevice(const std::string &node)
+{
+	ost::MutexLock lock(_mutex);
+    std::vector<std::string> v;
+
+    size_t n = devices.size();
+    unsigned i;
+    for (i = 0 ; i < n ; i++) {
+        if (devices[i].device == node) {
+        	devices.erase(devices.begin() + i);
+        	// update preferences
+        	return;
+        }
+    }
+}
+
 bool VideoV4l2List::addDevice(const std::string &dev)
 {
+	ost::MutexLock lock(_mutex);
     int fd = open(dev.c_str(), O_RDWR);
     if (fd == -1)
         return false;
@@ -196,23 +232,32 @@ bool VideoV4l2List::addDevice(const std::string &dev)
     VideoV4l2Device v(fd, s);
     GiveUniqueName(v, devices);
     devices.push_back(v);
-    if (_currentDevice < 0)
-    	_currentDevice = 0;
 
-    close(fd);
+    ::close(fd);
     return true;
 }
 
-void VideoV4l2List::setDevice(unsigned index)
+std::vector<std::string> VideoV4l2List::getChannelList(const std::string &dev)
 {
-    if (index >= devices.size())
-        index = devices.size() - 1;
+	ost::MutexLock lock(_mutex);
+	return getDevice(dev).getChannelList();
+}
 
-    _currentDevice = index;
+std::vector<std::string> VideoV4l2List::getSizeList(const std::string &dev, const std::string &channel)
+{
+	ost::MutexLock lock(_mutex);
+	return getDevice(dev).getChannel(channel).getSizeList();
+}
+
+std::vector<std::string> VideoV4l2List::getRateList(const std::string &dev, const std::string &channel, const std::string &size)
+{
+	ost::MutexLock lock(_mutex);
+	return getDevice(dev).getChannel(channel).getSize(size).getRateList();
 }
 
 std::vector<std::string> VideoV4l2List::getDeviceList(void)
 {
+	ost::MutexLock lock(_mutex);
     std::vector<std::string> v;
 
     size_t n = devices.size();
@@ -232,23 +277,27 @@ std::vector<std::string> VideoV4l2List::getDeviceList(void)
     return v;
 }
 
-int VideoV4l2List::getDeviceIndex(const std::string &name)
+VideoV4l2Device &VideoV4l2List::getDevice(const std::string &name)
 {
-	for (size_t i = 0; i < devices.size(); i++)
+	ost::MutexLock lock(_mutex);
+	for (size_t i = 0; i < devices.size(); i++) {
 		if (devices[i].name == name)
-			return i;
+			return devices[i];
+	}
 
-	return -1;
+	throw std::runtime_error("No device found");
 }
 
-int VideoV4l2List::getDeviceIndex()
+unsigned VideoV4l2List::getChannelNum(const std::string &dev, const std::string &name)
 {
-    return _currentDevice;
+	ost::MutexLock lock(_mutex);
+	return getDevice(dev).getChannel(name).idx;
 }
 
-VideoV4l2Device &VideoV4l2List::getDevice()
+const std::string &VideoV4l2List::getDeviceNode(const std::string &name)
 {
-    return devices[_currentDevice];
+	ost::MutexLock lock(_mutex);
+	return getDevice(name).device;
 }
 
 } // namespace sfl_video

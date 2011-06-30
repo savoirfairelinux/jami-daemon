@@ -31,10 +31,20 @@
 #include <unistd.h> // for sleep
 #include "test_video_preview.h"
 #include "video_preview.h"
+#include <map>
+#include <string>
+
+using namespace std;
 
 void VideoPreviewTest::testPreview()
 {
-    sfl_video::VideoPreview preview("/dev/video0");
+    std::map<std::string, std::string> args;
+    args["input"] = "/dev/video0";
+    args["format"] = "rgb24";
+    args["width"] = "640";
+    args["height"] = "480";
+
+    sfl_video::VideoPreview preview(args);
     preview.start();
     sleep(10);
     preview.stop();

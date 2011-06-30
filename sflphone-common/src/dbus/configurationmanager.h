@@ -112,17 +112,17 @@ class ConfigurationManager
         int getEchoCancelDelay(void);
 
         std::vector<std::string> getVideoInputDeviceList();
-        std::vector<std::string> getVideoInputDeviceChannelList();
-        std::vector<std::string> getVideoInputDeviceSizeList();
-        std::vector<std::string> getVideoInputDeviceRateList();
-        void setVideoInputDevice(const int32_t& api);
-        void setVideoInputDeviceChannel(const int32_t& api);
-        void setVideoInputDeviceSize(const int32_t& api);
-        void setVideoInputDeviceRate(const int32_t& api);
-        int32_t getVideoInputDevice();
-        int32_t getVideoInputDeviceChannel();
-        int32_t getVideoInputDeviceSize();
-        int32_t getVideoInputDeviceRate();
+        std::vector<std::string> getVideoInputDeviceChannelList(const std::string &dev);
+        std::vector<std::string> getVideoInputDeviceSizeList(const std::string &dev, const std::string &channel);
+        std::vector<std::string> getVideoInputDeviceRateList(const std::string &dev, const std::string &channel, const std::string &size);
+        void setVideoInputDevice(const std::string& api);
+        void setVideoInputDeviceChannel(const std::string& api);
+        void setVideoInputDeviceSize(const std::string& api);
+        void setVideoInputDeviceRate(const std::string& api);
+        std::string getVideoInputDevice();
+        std::string getVideoInputDeviceChannel();
+        std::string getVideoInputDeviceSize();
+        std::string getVideoInputDeviceRate();
 
         std::vector< std::string > getToneLocaleList();
         std::vector< std::string > getPlaybackDeviceList();

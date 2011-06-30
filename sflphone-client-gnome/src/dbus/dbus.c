@@ -1353,7 +1353,7 @@ dbus_set_account_details (account_t *a)
 gchar*
 dbus_add_account (account_t *a)
 {
-    gchar* accountId;
+    gchar* accountId = NULL;
     GError *error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_add_account (
         configurationManagerProxy, a->properties, &accountId, &error);
@@ -1489,7 +1489,7 @@ dbus_audio_codec_details (int payload)
 {
 
     GError *error = NULL;
-    gchar ** array;
+    gchar ** array = NULL;
     org_sflphone_SFLphone_ConfigurationManager_get_audio_codec_details (
         configurationManagerProxy, payload, &array, &error);
 
@@ -1507,7 +1507,7 @@ dbus_video_codec_details (int payload)
 {
 
     GError *error = NULL;
-    gchar ** array;
+    gchar ** array = NULL;
     org_sflphone_SFLphone_ConfigurationManager_get_video_codec_details (
         configurationManagerProxy, payload, &array, &error);
 
@@ -1543,7 +1543,7 @@ gchar**
 dbus_get_active_audio_codec_list (gchar *accountID)
 {
 
-    gchar ** array;
+    gchar ** array = NULL;
     GError *error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_get_active_audio_codec_list (
         configurationManagerProxy, accountID, &array, &error);
@@ -1617,7 +1617,7 @@ dbus_set_audio_plugin (gchar* audioPlugin)
 gchar**
 dbus_get_audio_output_device_list()
 {
-    gchar** array;
+    gchar** array = NULL;
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_get_audio_output_device_list (
         configurationManagerProxy, &array, &error);
@@ -1684,7 +1684,7 @@ dbus_set_audio_ringtone_device (const int index)
 gchar**
 dbus_get_audio_input_device_list()
 {
-    gchar** array;
+    gchar** array = NULL;
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_get_audio_input_device_list (
         configurationManagerProxy, &array, &error);
@@ -1703,7 +1703,7 @@ dbus_get_audio_input_device_list()
 gchar**
 dbus_get_current_audio_devices_index()
 {
-    gchar** array;
+    gchar** array = NULL;
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_get_current_audio_devices_index (
         configurationManagerProxy, &array, &error);
@@ -1876,7 +1876,7 @@ dbus_set_echo_cancel_delay(int delay)
 gchar*
 dbus_get_ringtone_choice (const gchar *accountID)
 {
-    gchar* tone;
+    gchar* tone = NULL;
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_get_ringtone_choice (
         configurationManagerProxy, accountID, &tone, &error);
@@ -2115,7 +2115,7 @@ gchar*
 dbus_get_record_path (void)
 {
     GError* error = NULL;
-    gchar *path;
+    gchar *path = NULL;
     org_sflphone_SFLphone_ConfigurationManager_get_record_path (
         configurationManagerProxy, &path, &error);
 
@@ -2201,90 +2201,90 @@ dbus_get_audio_manager (void)
         configurationManagerProxy, &api, &error);
 
     if (error) {
-        ERROR ("Error calling dbus_get_audio_manager");
+        ERROR ("Error calling dbus_get_audio_manager: %s", error->message);
         g_error_free (error);
     }
 
     return api;
 }
 
-unsigned
+gchar *
 dbus_get_video_input_device_channel ()
 {
-    gint index;
+    gchar *str = NULL;
     GError* error = NULL;
 
     org_sflphone_SFLphone_ConfigurationManager_get_video_input_device_channel(
-        configurationManagerProxy, &index, &error);
+        configurationManagerProxy, &str, &error);
 
     if (error) {
-        ERROR ("Error calling dbus_get_video_input_device_channel");
+        ERROR ("Error calling dbus_get_video_input_device_channel: %s", error->message);
         g_error_free (error);
     }
 
-    return index;
+    return str;
 }
 
-unsigned
+gchar *
 dbus_get_video_input_device_size ()
 {
-    gint index;
+    gchar *str = NULL;
     GError* error = NULL;
 
     org_sflphone_SFLphone_ConfigurationManager_get_video_input_device_size(
-        configurationManagerProxy, &index, &error);
+        configurationManagerProxy, &str, &error);
 
     if (error) {
-        ERROR ("Error calling dbus_get_video_input_device_size");
+        ERROR ("Error calling dbus_get_video_input_device_size: %s", error->message);
         g_error_free (error);
     }
 
-    return index;
+    return str;
 }
 
-unsigned
+gchar *
 dbus_get_video_input_device_rate ()
 {
-    gint index;
+    gchar *str = NULL;
     GError* error = NULL;
 
     org_sflphone_SFLphone_ConfigurationManager_get_video_input_device_rate(
-        configurationManagerProxy, &index, &error);
+        configurationManagerProxy, &str, &error);
 
     if (error) {
-        ERROR ("Error calling dbus_get_video_input_device_rate");
+        ERROR ("Error calling dbus_get_video_input_device_rate: %s", error->message);
         g_error_free (error);
     }
 
-    return index;
+    return str;
 }
 
-unsigned
+gchar *
 dbus_get_video_input_device ()
 {
-    gint index;
+    gchar *str = NULL;
     GError* error = NULL;
 
     org_sflphone_SFLphone_ConfigurationManager_get_video_input_device(
-        configurationManagerProxy, &index, &error);
+        configurationManagerProxy, &str, &error);
 
     if (error) {
-        ERROR ("Error calling dbus_get_video_input_device");
+        ERROR ("Error calling dbus_get_video_input_device: %s", error->message);
         g_error_free (error);
     }
 
-    return index;
+    return str;
 }
 
 /**
- * Set video input device from its index
+ * Set video input device
  */
 void
-dbus_set_video_input_device (const int index)
+dbus_set_video_input_device (const gchar *device)
 {
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_set_video_input_device(
-        configurationManagerProxy, index, &error);
+        configurationManagerProxy, device, &error);
 
     if (error) {
         ERROR ("Failed to call set_video_input_device() on ConfigurationManager: %s", error->message);
@@ -2293,14 +2293,14 @@ dbus_set_video_input_device (const int index)
 }
 
 /**
- * Set video input device input from its index
+ * Set video input device channel
  */
 void
-dbus_set_video_input_device_channel (const int index)
+dbus_set_video_input_device_channel (const gchar *channel)
 {
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_set_video_input_device_channel(
-        configurationManagerProxy, index, &error);
+        configurationManagerProxy, channel, &error);
 
     if (error) {
         ERROR ("Failed to call set_video_input_device_channel() on ConfigurationManager: %s", error->message);
@@ -2309,14 +2309,14 @@ dbus_set_video_input_device_channel (const int index)
 }
 
 /**
- * Set video input size from its index
+ * Set video input size
  */
 void
-dbus_set_video_input_size (const int index)
+dbus_set_video_input_size (const gchar *size)
 {
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_set_video_input_device_size(
-        configurationManagerProxy, index, &error);
+        configurationManagerProxy, size, &error);
 
     if (error) {
         ERROR ("Failed to call set_video_input_device_size() on ConfigurationManager: %s", error->message);
@@ -2325,14 +2325,14 @@ dbus_set_video_input_size (const int index)
 }
 
 /**
- * Set video input rate from its index
+ * Set video input rate
  */
 void
-dbus_set_video_input_rate (const int index)
+dbus_set_video_input_rate (const gchar *rate)
 {
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_set_video_input_device_rate(
-        configurationManagerProxy, index, &error);
+        configurationManagerProxy, rate, &error);
 
     if (error) {
         ERROR ("Failed to call set_video_input_device_rate() on ConfigurationManager: %s", error->message);
@@ -2368,13 +2368,13 @@ dbus_get_video_input_device_list()
  * Get a list of inputs supported by the video input device
  */
 gchar**
-dbus_get_video_input_device_channel_list()
+dbus_get_video_input_device_channel_list(const gchar *dev)
 {
     gchar** array = NULL;
     GError* error = NULL;
 
     if (!org_sflphone_SFLphone_ConfigurationManager_get_video_input_device_channel_list (
-                configurationManagerProxy, &array, &error)) {
+                configurationManagerProxy, dev, &array, &error)) {
         if (error->domain == DBUS_GERROR && error->code
                 == DBUS_GERROR_REMOTE_EXCEPTION) {
             ERROR ("Caught remote method (get_video_input_device_channel_list) exception  %s: %s", dbus_g_error_get_name (error), error->message);
@@ -2391,13 +2391,13 @@ dbus_get_video_input_device_channel_list()
  * Get a list of resolutions supported by the video input
  */
 gchar**
-dbus_get_video_input_device_size_list()
+dbus_get_video_input_device_size_list(const gchar *dev, const gchar *channel)
 {
-    gchar** array;
+    gchar** array = NULL;
     GError* error = NULL;
 
     if (!org_sflphone_SFLphone_ConfigurationManager_get_video_input_device_size_list (
-                configurationManagerProxy, &array, &error)) {
+                configurationManagerProxy, dev, channel, &array, &error)) {
         if (error->domain == DBUS_GERROR && error->code
                 == DBUS_GERROR_REMOTE_EXCEPTION) {
             ERROR ("Caught remote method (get_video_input_device_size_list) exception  %s: %s", dbus_g_error_get_name (error), error->message);
@@ -2416,13 +2416,13 @@ dbus_get_video_input_device_size_list()
  * Get a list of frame rates supported by the video input resolution
  */
 gchar**
-dbus_get_video_input_device_rate_list()
+dbus_get_video_input_device_rate_list(const gchar *dev, const gchar *channel, const gchar *size)
 {
-    gchar** array;
+    gchar** array = NULL;
     GError* error = NULL;
 
     if (!org_sflphone_SFLphone_ConfigurationManager_get_video_input_device_rate_list (
-                configurationManagerProxy, &array, &error)) {
+                configurationManagerProxy, dev, channel, size, &array, &error)) {
         if (error->domain == DBUS_GERROR && error->code
                 == DBUS_GERROR_REMOTE_EXCEPTION) {
             ERROR ("Caught remote method (get_video_input_device_rate_list) exception  %s: %s", dbus_g_error_get_name (error), error->message);

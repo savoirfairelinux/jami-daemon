@@ -680,63 +680,63 @@ class ManagerImpl
          * Get the list of available inputs for the current V4L2 device 
          * @return std::vector<std::string> A list of the V4L2 inputs
          */
-        std::vector<std::string> getVideoInputDeviceChannelList();
+        std::vector<std::string> getVideoInputDeviceChannelList(const std::string &dev);
 
         /**
          * Get the list of available resolutions for the current V4L2 device/input pair
          * @return std::vector<std::string> A list of frame sizes
          */
-        std::vector<std::string> getVideoInputDeviceSizeList();
+        std::vector<std::string> getVideoInputDeviceSizeList(const std::string &dev, const std::string &channel);
 
         /**
          * Get the list of available frame rates for the current V4L2 device/input/resolution
          * @return std::vector<std::string> A list of the possible frame rates
          */
-        std::vector<std::string> getVideoInputDeviceRateList();
+        std::vector<std::string> getVideoInputDeviceRateList(const std::string &dev, const std::string &channel, const std::string &size);
 
         /**
          * Get video input device index
          */
-        int32_t getVideoInputDevice();
+        std::string getVideoInputDevice();
 
         /**
          * Get video input device input index
          */
-        int32_t getVideoInputDeviceChannel();
+        std::string getVideoInputDeviceChannel();
 
         /**
          * Get video input device size index
          */
-        int32_t getVideoInputDeviceSize();
+        std::string getVideoInputDeviceSize();
 
         /**
          * Get video input device rate index
          */
-        int32_t getVideoInputDeviceRate();
+        std::string getVideoInputDeviceRate();
 
         /**
          * Set video input device
          * @param index The index of the V4L2 device
          */
-        void setVideoInputDevice(const int32_t& api);
+        void setVideoInputDevice(const std::string& api);
 
         /**
          * Set v4l2 input
          * @param index The index of the V4L2 input 
          */
-        void setVideoInputDeviceChannel(const int32_t& api);
+        void setVideoInputDeviceChannel(const std::string& api);
 
         /**
          * Set video input resolution
          * @param index The index of the resolution in the list of supported sizes
          */
-        void setVideoInputDeviceSize(const int32_t& api);
+        void setVideoInputDeviceSize(const std::string& api);
 
         /**
          * Set video input frame rate
          * @param index The index of the frame rate in the list of supported rates
          */
-        void setVideoInputDeviceRate(const int32_t& api);
+        void setVideoInputDeviceRate(const std::string& api);
 
         /**
          * Convert a list of payload in a special format, readable by the server.

@@ -96,7 +96,7 @@ const Conf::Key echoDelayKey ("echoDelayLength");
 
 // video preferences
 const Conf::Key videoDeviceKey ("v4l2Dev");
-const Conf::Key videoInputKey ("v4l2Input");
+const Conf::Key videoChannelKey ("v4l2Channel");
 const Conf::Key videoSizeKey ("v4l2Size");
 const Conf::Key videoRateKey ("v4l2Rate");
 
@@ -599,69 +599,67 @@ class VideoPreference : public Serializable
 
         virtual void unserialize (Conf::MappingNode *map);
 
-        std::map<std::string, std::string> getVideoSettings(void) {
-            std::map<std::string, std::string> map;
-            VideoV4l2Device &dev = v4l2_list->getDevice();
-            map["input"] = dev.device;
-            std::stringstream channelstr;
-            channelstr << dev.getChannelIndex();
-            map["channel"] = channelstr.str();
-            VideoV4l2Channel &chan = dev.getChannel();
-            VideoV4l2Size &size = chan.getSize();
-            std::stringstream ss;
-            ss << size.width << "x" << size.height;
-            map["video_size"] = ss.str();
-            VideoV4l2Rate &rate = size.getRate();
+        std::map<std::string, std::string> getVideoSettings(void);
 
-            std::stringstream framestr;
-            framestr << rate.den << "/" << rate.num;
-            map["framerate"] = framestr.str();
-
-            return map;
+        const std::string &getDevice(void) {
+            return _Device;
         }
 
-        int getVideoDevice(void) {
-            return _videoDevice;
+        void setDevice(const std::string &device) {
+            _Device = device;
         }
 
-        void setVideoDevice(int device) {
-            _videoDevice = device;
+        const std::string & getChannel(void) {
+            return _Channel;
         }
 
-        int getVideoInput(void) {
-            return _videoInput;
+        void setChannel(const std::string & input) {
+            _Channel = input;
         }
 
-        void setVideoInput(int input) {
-            _videoInput = input;
+        const std::string & getSize(void) {
+            return _Size;
         }
 
-        int getVideoSize(void) {
-            return _videoSize;
+        void setSize(const std::string & size) {
+            _Size = size;
         }
 
-        void setVideoSize(int size) {
-            _videoSize = size;
+        const std::string & getRate(void) {
+            return _Rate;
         }
 
-        int getVideoRate(void) {
-            return _videoRate;
+        void setRate(const std::string & rate) {
+            _Rate = rate;
         }
 
-        void setVideoRate(int rate) {
-            _videoRate = rate;
+        std::vector<std::string> getDeviceList() {
+        	return _v4l2_list->getDeviceList();
         }
 
-        // V4L2 devices
-        sfl_video::VideoV4l2List *v4l2_list;
+        std::vector<std::string> getChannelList(const std::string &dev) {
+        	return _v4l2_list->getChannelList(dev);
+        }
+
+        std::vector<std::string> getSizeList(const std::string &dev, const std::string &channel) {
+        	return _v4l2_list->getSizeList(dev, channel);
+        }
+
+        std::vector<std::string> getRateList(const std::string &dev, const std::string &channel, const std::string &size) {
+        	return _v4l2_list->getRateList(dev, channel, size);
+        }
+
+
     private:
 
-        int _videoDevice;
-        int _videoInput;
-        int _videoSize;
-        int _videoRate;
-};
+        // V4L2 devices
+        sfl_video::VideoV4l2List *_v4l2_list;
 
+        std::string _Device;
+        std::string _Channel;
+        std::string _Size;
+        std::string _Rate;
+};
 
 class ShortcutPreferences : public Serializable
 {

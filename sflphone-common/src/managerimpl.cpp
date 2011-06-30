@@ -51,8 +51,6 @@
 #include "iax/iaxvoiplink.h"
 #include "manager.h"
 #include "dbus/configurationmanager.h"
-#include "video/video_v4l2.h"
-#include "video/video_v4l2_list.h"
 
 #include "conference.h"
 
@@ -2863,62 +2861,62 @@ std::vector<std::string> ManagerImpl::getCurrentAudioDevicesIndex ()
 
 std::vector<std::string> ManagerImpl::getVideoInputDeviceList()
 {
-    return videoPreference.v4l2_list->getDeviceList();
+    return videoPreference.getDeviceList();
 }
 
-std::vector<std::string> ManagerImpl::getVideoInputDeviceChannelList()
+std::vector<std::string> ManagerImpl::getVideoInputDeviceChannelList(const std::string &dev)
 {
-    return videoPreference.v4l2_list->getDevice().getChannelList();
+    return videoPreference.getChannelList(dev);
 }
 
-std::vector<std::string> ManagerImpl::getVideoInputDeviceSizeList()
+std::vector<std::string> ManagerImpl::getVideoInputDeviceSizeList(const std::string &dev, const std::string &channel)
 {
-    return videoPreference.v4l2_list->getDevice().getChannel().getSizeList();
+    return videoPreference.getSizeList(dev, channel);
 }
 
-std::vector<std::string> ManagerImpl::getVideoInputDeviceRateList()
+std::vector<std::string> ManagerImpl::getVideoInputDeviceRateList(const std::string &dev, const std::string &channel, const std::string &size)
 {
-    return videoPreference.v4l2_list->getDevice().getChannel().getSize().getRateList();
+    return videoPreference.getRateList(dev, channel, size);
 }
 
-int32_t ManagerImpl::getVideoInputDevice()
+std::string ManagerImpl::getVideoInputDevice()
 {
-    return videoPreference.v4l2_list->getDeviceIndex();
+    return videoPreference.getDevice();
 }
 
-int32_t ManagerImpl::getVideoInputDeviceChannel()
+std::string ManagerImpl::getVideoInputDeviceChannel()
 {
-    return videoPreference.v4l2_list->getDevice().getChannelIndex();
+    return videoPreference.getChannel();
 }
 
-int32_t ManagerImpl::getVideoInputDeviceSize()
+std::string ManagerImpl::getVideoInputDeviceSize()
 {
-    return videoPreference.v4l2_list->getDevice().getChannel().getSizeIndex();
+    return videoPreference.getSize();
 }
 
-int32_t ManagerImpl::getVideoInputDeviceRate()
+std::string ManagerImpl::getVideoInputDeviceRate()
 {
-    return videoPreference.v4l2_list->getDevice().getChannel().getSize().getRateIndex();
+    return videoPreference.getRate();
 }
 
-void ManagerImpl::setVideoInputDevice(const int32_t& api)
+void ManagerImpl::setVideoInputDevice(const std::string& api)
 {
-    videoPreference.v4l2_list->setDevice(api);
+    videoPreference.setDevice(api);
 }
 
-void ManagerImpl::setVideoInputDeviceChannel(const int32_t& api)
+void ManagerImpl::setVideoInputDeviceChannel(const std::string& api)
 {
-    videoPreference.v4l2_list->getDevice().setChannel(api);
+    videoPreference.setChannel(api);
 }
 
-void ManagerImpl::setVideoInputDeviceSize(const int32_t& api)
+void ManagerImpl::setVideoInputDeviceSize(const std::string& api)
 {
-    videoPreference.v4l2_list->getDevice().getChannel().setSize(api);
+    videoPreference.setSize(api);
 }
 
-void ManagerImpl::setVideoInputDeviceRate(const int32_t& api)
+void ManagerImpl::setVideoInputDeviceRate(const std::string& api)
 {
-    videoPreference.v4l2_list->getDevice().getChannel().getSize().setRate(api);
+    videoPreference.setRate(api);
 }
 
 int ManagerImpl::isIax2Enabled (void)

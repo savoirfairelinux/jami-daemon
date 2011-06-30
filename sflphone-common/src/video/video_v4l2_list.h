@@ -33,28 +33,37 @@
 
 #include <string>
 #include <vector>
-
+#include <cc++/thread.h>
 #include "video_v4l2.h"
+
 
 namespace sfl_video {
 
-class VideoV4l2List {
+class VideoV4l2List : public ost::Thread {
     public:
         VideoV4l2List();
+        ~VideoV4l2List();
 
-        void setDevice(unsigned index);
-        int getDeviceIndex(void);
-        int getDeviceIndex(const std::string &name);
+        virtual void run();
+        virtual void finalize();
+
         std::vector<std::string> getDeviceList(void);
-        VideoV4l2Device &getDevice(void);
+        std::vector<std::string> getChannelList(const std::string &dev);
+        std::vector<std::string> getSizeList(const std::string &dev, const std::string &channel);
+        std::vector<std::string> getRateList(const std::string &dev, const std::string &channel, const std::string &size);
+
+        VideoV4l2Device &getDevice(const std::string &name);
+        const std::string &getDeviceNode(const std::string &name);
+        unsigned getChannelNum(const std::string &dev, const std::string &name);
 
     private:
         /**
          * @throw std::runtime_error
          */
+        void delDevice(const std::string &node);
         bool addDevice(const std::string &dev);
         std::vector<VideoV4l2Device> devices;
-        int _currentDevice;
+        ost::Mutex _mutex;
 };
 
 } // namespace sfl_video

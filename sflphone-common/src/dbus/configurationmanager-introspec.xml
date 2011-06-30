@@ -478,6 +478,10 @@
 		   <tp:docstring>
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+		   <arg type="s" name="device" direction="in">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
 		   <arg type="as" name="list" direction="out">
 			   <tp:docstring>
 			   </tp:docstring>
@@ -488,6 +492,14 @@
 		   <tp:docstring>
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+		   <arg type="s" name="device" direction="in">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+		   <arg type="s" name="channel" direction="in">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
 		   <arg type="as" name="list" direction="out">
 			   <tp:docstring>
 			   </tp:docstring>
@@ -498,6 +510,18 @@
 		   <tp:docstring>
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+		   <arg type="s" name="device" direction="in">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+		   <arg type="s" name="channel" direction="in">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+		   <arg type="s" name="size" direction="in">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
 		   <arg type="as" name="list" direction="out">
 			   <tp:docstring>
 			   </tp:docstring>
@@ -507,7 +531,7 @@
 	   <method name="getVideoInputDevice" tp:name-for-bindings="getVideoInputDevice">
 		   <tp:docstring>
 		   </tp:docstring>
-		   <arg type="i" name="index" direction="out">
+		   <arg type="s" name="device" direction="out">
 			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>
@@ -516,7 +540,7 @@
 	   <method name="getVideoInputDeviceChannel" tp:name-for-bindings="getVideoInputDeviceChannel">
 		   <tp:docstring>
 		   </tp:docstring>
-		   <arg type="i" name="index" direction="out">
+		   <arg type="s" name="channel" direction="out">
 			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>
@@ -525,7 +549,7 @@
 	   <method name="getVideoInputDeviceSize" tp:name-for-bindings="getVideoInputDeviceSize">
 		   <tp:docstring>
 		   </tp:docstring>
-		   <arg type="i" name="index" direction="out">
+		   <arg type="s" name="size" direction="out">
 			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>
@@ -534,7 +558,7 @@
 	   <method name="getVideoInputDeviceRate" tp:name-for-bindings="getVideoInputDeviceRate">
 		   <tp:docstring>
 		   </tp:docstring>
-		   <arg type="i" name="index" direction="out">
+		   <arg type="s" name="rate" direction="out">
 			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>
@@ -543,7 +567,7 @@
 	   <method name="setVideoInputDevice" tp:name-for-bindings="setVideoInputDevice">
 		   <tp:docstring>
 		   </tp:docstring>
-		   <arg type="i" name="index" direction="in">
+		   <arg type="s" name="device" direction="in">
 			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>
@@ -552,7 +576,7 @@
 	   <method name="setVideoInputDeviceChannel" tp:name-for-bindings="setVideoInputDeviceChannel">
 		   <tp:docstring>
 		   </tp:docstring>
-		   <arg type="i" name="index" direction="in">
+		   <arg type="s" name="channel" direction="in">
 			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>
@@ -561,7 +585,7 @@
 	   <method name="setVideoInputDeviceSize" tp:name-for-bindings="setVideoInputDeviceSize">
 		   <tp:docstring>
 		   </tp:docstring>
-		   <arg type="i" name="index" direction="in">
+		   <arg type="s" name="size" direction="in">
 			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>
@@ -570,7 +594,7 @@
 	   <method name="setVideoInputDeviceRate" tp:name-for-bindings="setVideoInputDeviceRate">
 		   <tp:docstring>
 		   </tp:docstring>
-		   <arg type="i" name="index" direction="in">
+		   <arg type="s" name="rate" direction="in">
 			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>
