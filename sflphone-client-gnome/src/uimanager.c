@@ -384,6 +384,15 @@ update_actions()
                         gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (imToolbar), 4);
                     }
 		}
+		else if(active_calltree == history) {
+		    if(selectedConf->_recordfile && (g_strcmp0(selectedConf->_recordfile, "") != 0)) {
+                        if(selectedConf->_record_is_playing)
+                            gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM(stopRecordWidget), 3);
+                        else
+                            gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM(playRecordWidget), 3);
+                    }
+
+		}
                 break;
             case CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD:
             case CONFERENCE_STATE_ACTIVE_DETACHED_RECORD:

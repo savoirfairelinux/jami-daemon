@@ -260,7 +260,7 @@ gchar *serialize_history_conference_entry(conference_obj_t *entry)
 	DEBUG("Conference: Participant number: %s, concatenation: %s", tmp, participantstr);
     }
 
-    result = g_strconcat("2188", separator,
+    result = g_strconcat("9999", separator,
 			participantstr, separator, // peer number
 			peer_name, separator,
 			time_start, separator,
@@ -274,7 +274,7 @@ gchar *serialize_history_conference_entry(conference_obj_t *entry)
     return result;
 }
 
-void create_conference_history_entry_from_serialized(gchar **ptr, conference_obj_t **conf)
+void create_conference_history_entry_from_serialized(gchar *entry, conference_obj_t **conf)
 {
     history_state_t history_state = MISSED;
     gint token = 0;
@@ -286,9 +286,12 @@ void create_conference_history_entry_from_serialized(gchar **ptr, conference_obj
     gchar *accountID = "";
     gchar *recordfile = "";
     const gchar *confID = "";
+    gchar **ptr;
+    gchar *delim = "|";
     
     DEBUG("Conference: Create a conference from serialized form");
  
+    ptr = g_strsplit(entry, delim, 8);
     while(ptr != NULL && token < 8) {
         switch(token) {
             case 0:
@@ -326,7 +329,7 @@ void create_conference_history_entry_from_serialized(gchar **ptr, conference_obj
     // create a new empty conference
     create_new_conference(state, confID, conf);
     
-    process_conference_participant_from_serialized(participant, *conf);
+    // process_conference_participant_from_serialized(participant, *conf);
 
     g_free(participant);
 }
