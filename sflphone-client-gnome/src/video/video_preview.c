@@ -302,17 +302,13 @@ video_preview_set_property (GObject *object, guint prop_id,
 static void
 video_preview_init (VideoPreview *self)
 {
-    VideoPreviewPrivate *priv;
-
-    self->priv = priv = VIDEO_PREVIEW_GET_PRIVATE (self);
+    self->priv = VIDEO_PREVIEW_GET_PRIVATE (self);
 }
 
 static void
 video_preview_finalize (GObject *obj)
 {
     VideoPreview *self = VIDEO_PREVIEW (obj);
-
-    g_idle_remove_by_data((void*)self);
 
     /* finalize might be called multiple times, so we must guard against
      * calling g_object_unref() on an invalid GObject.
@@ -460,20 +456,9 @@ on_drawarea_unrealize(GtkWidget *drawarea, gpointer data)
         video_preview_stop(data);
     }
     g_object_notify_by_pspec(G_OBJECT(data), properties[PROP_RUNNING]);
+    g_object_unref(G_OBJECT(data));
     return FALSE; // call other handlers
 }
-
-static gint
-on_stage_delete(ClutterStage *stage, ClutterEvent *event, gpointer data)
-{
-    (void) event;
-    (void) stage;
-    video_preview_stop(data);
-    /* notify explicitly so that the owner of this preview can react */
-    g_object_notify_by_pspec(G_OBJECT(data), properties[PROP_RUNNING]);
-    return TRUE; /* don't call the default delete-event handler */
-}
-
 
 void
 video_preview_run(VideoPreview *preview)
@@ -487,6 +472,7 @@ video_preview_run(VideoPreview *preview)
     priv->using_clutter = !strcmp(priv->format, "rgb24");
     g_print("Preview: using %s render\n", priv->using_clutter ? "clutter" : "cairo");
 
+    g_object_ref(preview);
     g_signal_connect(priv->drawarea, "unrealize", G_CALLBACK(on_drawarea_unrealize), preview);
 
     if (priv->using_clutter) {
@@ -494,10 +480,6 @@ video_preview_run(VideoPreview *preview)
 
         stage = gtk_clutter_embed_get_stage (GTK_CLUTTER_EMBED(priv->drawarea));
         assert(stage);
-        g_signal_connect (stage, "delete-event", G_CALLBACK(on_stage_delete),
-                preview);
-        //clutter_actor_set_size(stage, priv->width, priv->height);
-
         priv->texture = clutter_texture_new();
 
         /* Add ClutterTexture to the stage */
@@ -522,8 +504,9 @@ void
 video_preview_stop(VideoPreview *preview)
 {
     VideoPreviewPrivate *priv = VIDEO_PREVIEW_GET_PRIVATE(preview);
-    g_idle_remove_by_data((void*)preview);
-    priv->is_running = FALSE;
-    if (!priv->using_clutter && priv->cairo)
-        cairo_destroy(priv->cairo);
+    if (priv) {
+        priv->is_running = FALSE;
+        if (!priv->using_clutter && priv->cairo)
+            cairo_destroy(priv->cairo);
+    }
 }
