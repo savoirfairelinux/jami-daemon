@@ -79,9 +79,7 @@ static GtkWidget * voicemailToolbar;
 static GtkWidget * imToolbar;
 static GtkAction * imAction;
 static GtkWidget * playRecordWidget;
-static GtkAction * playRecordAction;
 static GtkWidget * stopRecordWidget;
-static GtkAction * stopRecordAction;
 
 static GtkWidget * editable_num;
 static GtkDialog * edit_dialog;
@@ -101,7 +99,7 @@ update_actions()
 {
 
     DEBUG ("UIManager: Update action");
-		
+	
     gtk_action_set_sensitive (GTK_ACTION (newCallAction), TRUE);
     gtk_action_set_sensitive (GTK_ACTION (pickUpAction), FALSE);
     gtk_action_set_sensitive (GTK_ACTION (hangUpAction), FALSE);
@@ -157,6 +155,7 @@ update_actions()
     gtk_action_set_sensitive (GTK_ACTION (recordAction), FALSE);
     gtk_widget_set_sensitive (GTK_WIDGET (recordWidget), FALSE);
     gtk_action_set_sensitive (GTK_ACTION (copyAction), FALSE);
+
     if(abookfactory_is_addressbook_loaded()) { 
         gtk_widget_set_sensitive (GTK_WIDGET (contactButton), FALSE);
     }
@@ -269,10 +268,6 @@ update_actions()
 
                 if (active_calltree == current_calls)
                     gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
-	        if (active_calltree == history) {
-		    gtk_action_set_sensitive (GTK_ACTION(playRecordAction), TRUE);
-		    gtk_action_set_sensitive (GTK_ACTION(stopRecordAction), TRUE);
-		}
 
                 g_object_ref (newCallWidget);
                 gtk_container_remove (GTK_CONTAINER (toolbar), GTK_WIDGET (newCallWidget));
@@ -282,10 +277,12 @@ update_actions()
                     gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
 		else if(active_calltree == history) {
 		    if(selectedCall->_recordfile && (g_strcmp0(selectedCall->_recordfile, "") != 0)) {
-			if(selectedCall->_record_is_playing)
+			if(selectedCall->_record_is_playing) {
 			    gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM(stopRecordWidget), 3);
-			else
+			}
+			else {
 		            gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM(playRecordWidget), 3);
+			}
 		    }
 		}
                 break;
@@ -744,11 +741,18 @@ start_playback_record_cb(void)
 	return;
     }
 
+    if(selectedCall && selectedConf) {
+	ERROR("UIManager: Error: Two selected object in playback record callback");
+	return;
+    }
+
     if(selectedCall) {
+	DEBUG("UIManager: Start selected call file playback %s", selectedCall->_recordfile);
         result = dbus_start_recorded_file_playback(selectedCall->_recordfile);
 	selectedCall->_record_is_playing = result;
     }
     else if(selectedConf) {
+	DEBUG("UIMAnager: Start selected conf file playback %s", selectedConf->_recordfile);
 	result = dbus_start_recorded_file_playback(selectedConf->_recordfile);
 	selectedConf->_record_is_playing = result;
     } 
@@ -775,11 +779,21 @@ stop_playback_record_cb(void)
     }
 
     if(selectedCall) {
+        if(selectedCall->_recordfile == NULL) {
+            ERROR("UIManager: Error: Record file is NULL");
+	    return;
+        }
 	dbus_stop_recorded_file_playback(selectedCall->_recordfile);
+	DEBUG("UIManager: Stop selected call file playback %s", selectedCall->_recordfile);
 	selectedCall->_record_is_playing = FALSE;
     } 
     else if(selectedConf) {
+        if(selectedConf->_recordfile == NULL) {
+            ERROR("UIManager: Error: Record file is NULL");
+	    return;
+	}
         dbus_stop_recorded_file_playback(selectedConf->_recordfile);
+	DEBUG("UIMAnager: Start selected call file playback: %s", selectedConf->_recordfile);
 	selectedConf->_record_is_playing = FALSE;
     }
 
@@ -1808,12 +1822,8 @@ create_toolbar_actions (GtkUIManager *ui_manager, GtkWidget **widget)
                     "/ToolbarActions/HistoryToolbar");
     playRecordWidget = gtk_ui_manager_get_widget(ui_manager,
 		    "/ToolbarActions/StartPlaybackRecordToolbar");
-    playRecordAction = gtk_ui_manager_get_action(ui_manager, 
-		    "/ToolbarActions/StartPlaybackRecord");
     stopRecordWidget = gtk_ui_manager_get_widget(ui_manager,
 		    "/ToolbarActions/StopPlaybackRecordToolbar");
-    stopRecordAction = gtk_ui_manager_get_action(ui_manager,
-		    "/ToolbarActions/StopPlaybackRecord");
     if(abookfactory_is_addressbook_loaded()) {
         contactButton = gtk_ui_manager_get_widget (ui_manager, "/ToolbarActions/AddressbookToolbar");
     }
