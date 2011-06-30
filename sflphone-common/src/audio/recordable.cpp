@@ -33,6 +33,8 @@
 Recordable::Recordable() : recorder (&recAudio, Manager::instance().getMainBuffer())
 {
 
+    _debug("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Recordable Constructor -=-=-=-=-=-=-=-=-=--=-=-=-");
+
     FILE_TYPE fileType = FILE_WAV;
     SOUND_FORMAT soundFormat = INT16;
 
@@ -42,6 +44,8 @@ Recordable::Recordable() : recorder (&recAudio, Manager::instance().getMainBuffe
 
 Recordable::~Recordable()
 {
+    _debug("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Recordable Destructor -=-=-=-=-=-=-=-=-=-=-=-=-=-");
+
     if (recAudio.isOpenFile()) {
         recAudio.closeFile();
     }
