@@ -30,65 +30,6 @@
 #ifndef __SFL_MIME_PARAMETERS_H__
 #define __SFL_MIME_PARAMETERS_H__
 
-/**
- * Start a new payload format definition.
- */
-#define MIME_PAYLOAD_FORMAT_DEFINITION( mime, subtype, payloadType, clock ) \
-		private: \
-			uint8 payload; \
-		public: \
-		virtual ~MimeParameters##subtype() {}; \
-        std::string getMimeType() const { \
-            return std::string( mime ); \
-        } \
-        std::string getMimeSubtype() const { \
-            return std::string( #subtype ); \
-        } \
-        uint8 getPayloadType() const { \
-            return payload; \
-        } \
-        void setPayloadType(uint8 pt) { \
-			payload = pt; \
-		} \
-        uint32 getClockRate() const { \
-            return clock; \
-        } \
-	    MimeParameters##subtype() : payload(payloadType) {
-
-/**
- * An alias for MIME_PARAMETER_OPTIONAL
- */
-#define MIME_PARAMETER(name, handler)	\
-	addOptionalParameter( name ); \
-	addHandler( name, handler );
-
-/**
- * Defines an optional parameter.
- */
-#define MIME_PARAMETER_OPTIONAL(name, handler) \
-	addOptionalParameter( name ); \
-	addHandler( name, handler );
-
-/**
- * Defines a required parameter. The value of this parameter
- * should be obtained when sending the initial SDP offer.
- */
-#define MIME_PARAMETER_REQUIRED(name, handler) \
-	addRequiredParameter( name ); \
-	addHandler( name, handler );
-
-/**
- * End a payload format definition.
- */
-#define MIME_PAYLOAD_FORMAT_DEFINITION_END() \
-        }
-
-#define MIME_PARAMETER_KEEP_IF_EQUAL MimeParameters::addParameterIfEqual
-
-#define MIME_PARAMETER_KEEP_MINIMUM MimeParameters::addParameterMinimum
-
-#define MIME_PARAMETER_KEEP_REMOTE MimeParameters::addParameterRemote
-
 #include <cstddef>
 
 using std::ptrdiff_t;
@@ -97,7 +38,7 @@ using std::ptrdiff_t;
 #include <stdexcept>
 #include <vector>
 #include <map>
-#include <errno.h>
+#include <cerrno>
 
 #include "global.h"
 #include "sip/Fmtp.h"
@@ -156,14 +97,14 @@ class MimeParameters
          * @param name The name that identifies the MIME parameter.
          * @return The value that is set for this parameter.
          */
-        virtual std::string getParameter (const std::string& name) = 0;
+        virtual std::string getParameter (const std::string& name) const = 0;
 
         /**
          * @return A string containing the codec specific parameters, formatted by default as :
          * "PARAM_LIST : PARAM_NAME = VALUE SEMI_COLON PARAM_LIST | PARAM_END
          *  PARAM_END : empty"
          */
-        virtual std::string getParametersFormatted() {
+        virtual std::string getParametersFormatted() const {
         	// TODO Instead of putting everything into the same vector,
         	// enforce the required vs optional aspect. Unfilled required params. should
         	// result in exception throwing.
