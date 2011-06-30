@@ -546,7 +546,7 @@ preferences_dialog_fill_video_input_device_rate_list()
 
 
 /**
- * Set the video input device rate on the server with its index
+ * Set the video input device rate on the server
  */
 static void
 select_video_input_device_rate (GtkComboBox* comboBox, gpointer data UNUSED)
@@ -598,7 +598,7 @@ preferences_dialog_fill_video_input_device_size_list()
 }
 
 /**
- * Set the video input device size on the server with its index
+ * Set the video input device size on the server
  */
 static void
 select_video_input_device_size (GtkComboBox* comboBox, gpointer data UNUSED)
@@ -651,7 +651,7 @@ preferences_dialog_fill_video_input_device_channel_list()
 }
 
 /**
- * Set the video input device input on the server with its index
+ * Set the video input device input on the server
  */
 static void
 select_video_input_device_channel (GtkComboBox* comboBox, gpointer data UNUSED)
@@ -701,7 +701,7 @@ preferences_dialog_fill_video_input_device_list()
 }
 
 /**
- * Set the video input device on the server with its index
+ * Set the video input device on the server
  */
 static void
 select_video_input_device (GtkComboBox* comboBox, gpointer data UNUSED)
