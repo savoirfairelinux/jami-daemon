@@ -211,7 +211,7 @@ std::vector<sfl::Codec*> AudioCodecFactory::scanCodecDirectory (void)
 
             while ( (dirStruct = readdir (dir))) {
                 tmp =  dirStruct -> d_name ;
-                if (tmp == CURRENT_DIR || tmp == PARENT_DIR) {} else {
+                if (tmp != CURRENT_DIR and tmp != PARENT_DIR) {
                     if (seemsValid (tmp) && !alreadyInCache (tmp)) {
                         _Cache.push_back (tmp);
                         audioCodec = loadCodec (dirStr.append (tmp));
@@ -421,7 +421,3 @@ std::vector <std::string> AudioCodecFactory::getCodecSpecifications (const int32
     return v;
 
 }
-
-
-
-

@@ -123,23 +123,6 @@ class Ulaw : public sfl::AudioCodec
 
             return u;
         }
-
-        /**
-         * @Override
-         */
-        std::string getDescription() const {
-            return "audio/PCMU 8000 (\"ulaw\") codec.";
-        }
-
-        /**
-         * @Override
-         */
-#if 0
-        Ulaw* clone() const {
-            return new Ulaw (*this);
-        }
-#endif
-
 };
 
 // the class factories

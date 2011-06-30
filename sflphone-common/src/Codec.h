@@ -38,7 +38,7 @@
  * Interface for both audio codecs as well as video codecs.
  */
 namespace sfl {
-class Codec : public virtual MimeParameters
+class Codec : public MimeParameters
 {
     public:
         Codec() {};
@@ -53,16 +53,6 @@ class Codec : public virtual MimeParameters
          * @return The expected bandwidth used by this codec.
          */
         virtual double getBandwidth() const = 0;
-
-        /**
-         * @return Additional information (description) about this codec. This is meant to be shown to the user.
-         */
-        virtual std::string getDescription() const = 0;
-
-        /**
-         * @return A copy of the current codec.
-         */
-        //virtual Codec* clone() const = 0;
 
         /**
          * Build a unique hash code for identifying the codec uniquely.

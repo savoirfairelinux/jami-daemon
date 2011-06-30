@@ -75,7 +75,7 @@ class AudioCodec : public Codec
         /**
          * @Override
          */
-        std::string getParameter (const std::string& name UNUSED) {
+        std::string getParameter (const std::string& name UNUSED) const {
             return "";
         };
 
@@ -106,7 +106,7 @@ class AudioCodec : public Codec
         /**
          * @return true if this payload is a dynamic one.
          */
-        bool hasDynamicPayload();
+        bool hasDynamicPayload() const;
 
         /**
          * @Override
@@ -132,11 +132,6 @@ class AudioCodec : public Codec
          * @return the framing size for this codec.
          */
         unsigned int getFrameSize() const;
-
-        /**
-         * @Override
-         */
-        //virtual AudioCodec* clone() const = 0;
 
     protected:
         /** Holds SDP-compliant codec name */

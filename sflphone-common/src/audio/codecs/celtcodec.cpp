@@ -149,13 +149,6 @@ class Celt : public sfl::AudioCodec
             return len;
         }
 
-        /**
-         * @Override
-         */
-        std::string getDescription() const {
-            return "audio/celt 32000 (\"HD\") codec. Based on libcelt, by Jean-Marc Valin.";
-        }
-
     private:
 
         CELTMode *_mode;
