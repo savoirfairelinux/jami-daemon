@@ -689,11 +689,9 @@
 	   </method>
 
 	   <method name="setNoiseSuppressState" tp:name-for-bindings="setNoiseSuppressState">
-	           <tp:docstring>
-		   </tp:docstring>
 	           <arg type="s" name="state" direction="in">
 	           <tp:docstring>
-		   </tp:docstring>
+               </tp:docstring>
 	           </arg>
 	   </method>
 	   

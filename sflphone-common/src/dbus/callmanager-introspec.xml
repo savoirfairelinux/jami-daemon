@@ -340,6 +340,21 @@
 			</arg>
 		</method>
 
+		<signal name="recordPlaybackFilepath" tp:name-for-bindings="recordPlaybackFilepath">
+			<tp:docstring>
+			  Once after starting recording for the first time, this signal is emited to 
+			  provide the recorded file path to client application.
+			</tp:docstring>
+			<arg type="s" name="callID" />
+			<arg type="s" name="filepath"/>
+		</signal>
+
+		<signal name="recordPlaybackStoped" tp:name-for-bindings="recordPlaybackStoped">
+			<tp:docstring/>
+			<arg type="s" name="filepath" />
+		</signal>
+			
+
 		<method name="getCallDetails" tp:name-for-bindings="getCallDetails">
 			<tp:docstring>
 			  Get all the details about a specific call.
@@ -589,6 +604,20 @@
 			    The conference ID.
 			  </tp:docstring>
 			</arg>
+		</method>
+ 	        
+                <method name="startRecordedFilePlayback" tp:name-for-bindings="startRecordedFilePlayback">
+			<tp:added version="0.9.14"/>
+			<tp:docstring>
+			</tp:docstring>
+			<arg type="s" name="filepath" direction="in"/>
+			<arg type="b" name="result" direction="out"/>
+	        </method>
+
+		<method name="stopRecordedFilePlayback" tp:name-for-bindings="stopRecordedFilePlayback">
+			<tp:added version="0.9.14"/>
+			<tp:docstring/>
+			<arg type="s" name="filepath" direction="in"/>
 		</method>
 
 		<signal name="sipCallStateChanged" tp:name-for-bindings="sipCallStateChanged">

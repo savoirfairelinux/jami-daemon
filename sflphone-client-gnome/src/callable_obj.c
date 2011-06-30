@@ -235,12 +235,12 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
     obj->_peer_number = g_strdup (peer_number);
     obj->_peer_info = g_strdup (get_peer_info (peer_name, peer_number));
     obj->_recordfile = NULL;
+    obj->_record_is_playing = FALSE;
 
     obj->_trsft_to = "";
     set_timestamp (& (obj->_time_start));
     set_timestamp (& (obj->_time_current));
     set_timestamp (& (obj->_time_stop));
-    // g_snprintf(obj->_timestr, 20, "00:00");
 
     if (g_strcasecmp (callID, "") == 0)
         call_id = generate_call_id ();
@@ -365,6 +365,7 @@ void create_history_entry_from_serialized_form (gchar *entry, callable_obj_t **c
     new_call->_confID = g_strdup(confID);
     new_call->_historyConfID = g_strdup(confID);
     new_call->_time_added = convert_gchar_to_timestamp(time_start);
+    new_call->_record_is_playing = FALSE;
 
     *call = new_call;
 }

@@ -83,7 +83,6 @@ conferencelist_clean_history(void)
 {
     conference_obj_t *conf;
     guint size = conferencelist_get_size(history);
-    guint i;
 
     DEBUG("ConferenceList: clean history");
 
@@ -189,7 +188,7 @@ conference_obj_t* conferencelist_get (calltab_t *tab, const gchar* conf_id)
 
 conference_obj_t* conferencelist_get_nth (calltab_t *tab, guint n)
 {
-    GList* c; 
+    conference_obj_t *c; 
 
     if(tab == NULL) {
         ERROR("ConferenceList: Error: Calltab is NULL");
@@ -203,7 +202,7 @@ conference_obj_t* conferencelist_get_nth (calltab_t *tab, guint n)
 	return NULL;
     }
 
-    return (conference_obj_t*) c;
+    return c;
 }
 
 conference_obj_t *conferencelist_pop_head(calltab_t *tab)

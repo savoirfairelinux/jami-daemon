@@ -816,30 +816,6 @@ class ManagerImpl
         bool getMd5CredentialHashing (void);
 
         /**
-         * Tells if the user wants to display the dialpad or not
-         * @return int 1 if dialpad has to be displayed
-         *	       0 otherwise
-         */
-        // int getDialpad( void );
-
-        /**
-         * Set the dialpad visible or not
-         */
-        // void setDialpad (bool display);
-
-        /**
-         * Tells if the user wants to display the volume controls or not
-         * @return int 1 if the controls have to be displayed
-         *	       0 otherwise
-         */
-        // int getVolumeControls( void );
-
-        /**
-         * Set the volume controls ( mic and speaker ) visible or not
-         */
-        // void setVolumeControls (bool display);
-
-        /**
          * Set recording on / off
          * Start recording
          * @param id  The call identifier
@@ -850,6 +826,18 @@ class ManagerImpl
          * Return true if the call is currently recorded
          */
         bool isRecording (const CallID& id);
+
+	/**
+	 * Start playback fo a recorded file if and only if audio layer is not already started.
+ 	 * @param File path of the file to play
+         */
+        bool startRecordedFilePlayback(const std::string&);
+
+	/**
+	 * Stop playback of recorded file
+	 * @param File of the file to stop
+	 */
+        void stopRecordedFilePlayback(const std::string&);
 
         /**
          * Set the maximum number of days to keep in the history

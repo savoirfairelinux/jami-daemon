@@ -582,7 +582,7 @@ void dbus_set_accounts_order (const gchar* order);
  * Get a list of serialized hisotry entries
  * @return The list of history entries
  */
-gchar **dbus_get_history (void);
+const gchar **dbus_get_history (void);
 
 /**
  * Set the history entries into the daemon. The daemon then write teh content 
@@ -650,6 +650,9 @@ void
 dbus_join_participant (const gchar* sel_callID, const gchar* drag_callID);
 
 void
+dbus_create_conf_from_participant_list(const gchar **list);
+
+void
 dbus_join_conference (const gchar* sel_confID, const gchar* drag_confID);
 
 void
@@ -662,5 +665,18 @@ void dbus_send_text_message (const gchar* callID, const gchar *message);
 void dbus_start_video_preview ();
 
 void dbus_stop_video_preview ();
+
+/**
+ * Start playback of a recorded
+ * @param The recorded file to start playback with
+ */
+gboolean dbus_start_recorded_file_playback(const gchar *);
+
+/**
+ * Stop playback of a recorded filie
+ * @param The recorded file to pause
+ */
+void dbus_stop_recorded_file_playback(const gchar *);
+
 
 #endif

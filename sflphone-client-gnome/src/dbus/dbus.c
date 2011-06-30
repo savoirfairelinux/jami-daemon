@@ -60,6 +60,72 @@ DBusGProxy * configurationManagerProxy;
 DBusGProxy * instanceProxy;
 
 static void
+new_call_created_cb (DBusGProxy *, const gchar *, const gchar *, const gchar *, void *);
+
+static void
+incoming_call_cb (DBusGProxy *, const gchar *, const gchar *, const gchar *, void *);
+
+static void
+zrtp_negotiation_failed_cb (DBusGProxy *, const gchar *, const gchar *, const gchar *, void *);
+
+static void
+current_selected_audio_codec (DBusGProxy *, const gchar *, const gchar *, void *);
+
+static void
+volume_changed_cb (DBusGProxy *, const gchar *, const gdouble, void *);
+
+static void
+voice_mail_cb (DBusGProxy *, const gchar *, const guint, void *);
+
+static void
+incoming_message_cb (DBusGProxy *, const gchar *, const gchar *, const gchar *, void *);
+
+static void
+call_state_cb (DBusGProxy *, const gchar *, const gchar *, void *);
+
+static void
+conference_changed_cb (DBusGProxy *, const gchar *, const gchar *, void *);
+
+static void
+conference_created_cb (DBusGProxy *, const gchar *, void *);
+
+static void
+conference_removed_cb (DBusGProxy *, const gchar *, void *);
+
+static void
+record_playback_filepath_cb (DBusGProxy *, const gchar *, const gchar *);
+
+static void
+record_playback_stoped_cb (DBusGProxy *, const gchar *);
+
+static void
+accounts_changed_cb (DBusGProxy *, void *);
+
+static void
+transfer_succeded_cb (DBusGProxy *, void *);
+
+static void
+transfer_failed_cb (DBusGProxy *, void *);
+
+static void
+secure_sdes_on_cb (DBusGProxy *, const gchar *, void *);
+
+static void
+secure_sdes_off_cb (DBusGProxy *, const gchar *, void *);
+
+static void
+secure_zrtp_on_cb (DBusGProxy *, const gchar *, const gchar *, void *);
+
+static void
+secure_zrtp_off_cb (DBusGProxy *, const gchar *, void *);
+
+static void
+show_zrtp_sas_cb (DBusGProxy *, const gchar *, const gchar *, const gboolean, void *);
+
+static void
+confirm_go_clear_cb (DBusGProxy *, const gchar *, void *);
+
+static void
 new_call_created_cb (DBusGProxy *proxy UNUSED, const gchar *accountID,
 		     const gchar *callID, const gchar *to, void *foo UNUSED)
 {
@@ -342,7 +408,7 @@ conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
     DEBUG ("DBUS: Conference %s added", confID);
 
     conference_obj_t *new_conf;
-    callable_obj_t *call, *history_entry;
+    callable_obj_t *call;
     gchar* call_id;
     gchar** participants;
     gchar** part;
@@ -359,11 +425,13 @@ conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
         call_id = (gchar*) (*part);
         call = calllist_get_call (current_calls, call_id);
 
+	// set when this call have been added to the conference
+        set_timestamp(&call->_time_added);
+
         // if a text widget is already created, disable it, use conference widget instead
         if (call->_im_widget) {
             im_widget_update_state (IM_WIDGET (call->_im_widget), FALSE);
         }
-
 
         // if one of these participant is currently recording, the whole conference will be recorded
         if(call->_state == CALL_STATE_RECORD) {
@@ -420,6 +488,84 @@ conference_removed_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
     }
 
     conferencelist_remove (current_calls, c->_confID);
+}
+
+static void
+record_playback_filepath_cb (DBusGProxy *proxy UNUSED, const gchar *id, const gchar *filepath)
+{
+    callable_obj_t *call = NULL;
+    conference_obj_t *conf = NULL;
+
+    DEBUG("DBUS: Filepath for %s: %s", id, filepath); 
+
+    call = calllist_get_call(current_calls, id);
+    conf = conferencelist_get(current_calls, id);
+
+    if(call && conf) {
+	ERROR("DBUS: Two object for this callid");
+	return;
+    }
+
+    if(!call && !conf) {
+        ERROR("DBUS: Could not get object");
+	return;
+    } 
+
+    if(call) {
+	if(call->_recordfile == NULL) 
+            call->_recordfile = g_strdup(filepath);
+    }
+    else if(conf) {
+        if(conf->_recordfile == NULL)
+            conf->_recordfile = g_strdup(filepath); 
+    }
+}
+
+static void
+record_playback_stoped_cb (DBusGProxy *proxy UNUSED, const gchar *filepath)
+{
+    QueueElement *element;
+    callable_obj_t *call = NULL;
+    conference_obj_t *conf = NULL;
+    gint calllist_size, conflist_size;
+    gchar *recfile;
+    gint i;
+
+    DEBUG("DBUS: Playback stoped for %s", filepath);
+
+    calllist_size = calllist_get_size(history);
+    conflist_size = conferencelist_get_size(history);
+
+    for(i = 0; i < calllist_size; i++) {
+        recfile = NULL;
+        element = calllist_get_nth(history, i);	
+	if(element == NULL) {
+            ERROR("DBUS: ERROR: Could not find %dth call", i);
+	    break;
+        }
+	
+	if(element->type == HIST_CALL) {
+	    call =  element->elem.call;
+	    recfile = call->_recordfile;
+	    if(recfile && (g_strcmp0(recfile, filepath) == 0)) {
+	        call->_record_is_playing = FALSE;
+	    }
+	}
+    }
+
+    for(i = 0; i < conflist_size; i++) {
+        conf = conferencelist_get(history, i);
+	if(conf == NULL) {
+	    ERROR("DBUS: ERROR: Could not find %dth conf", i);
+	    break;
+	}
+
+	recfile = conf->_recordfile;
+	if(recfile && (g_strcmp0(recfile, filepath) == 0))
+	    conf->_record_is_playing = FALSE;
+    }
+
+    update_actions();   
 }
 
 static void
@@ -680,6 +826,15 @@ dbus_connect (GError **error)
     dbus_g_proxy_connect_signal (callManagerProxy, "conferenceRemoved",
                                  G_CALLBACK (conference_removed_cb), NULL, NULL);
 
+    /* Playback related signals */
+    dbus_g_proxy_add_signal (callManagerProxy, "recordPlaybackFilepath", G_TYPE_STRING,
+				G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal (callManagerProxy, "recordPlaybackFilepath",
+				G_CALLBACK (record_playback_filepath_cb), NULL, NULL);
+    dbus_g_proxy_add_signal (callManagerProxy, "recordPlaybackStoped", G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal(callManagerProxy, "recordPlaybackStoped",
+    				G_CALLBACK (record_playback_stoped_cb), NULL, NULL);
+
     /* Security related callbacks */
 
     dbus_g_proxy_add_signal (callManagerProxy, "secureSdesOn", G_TYPE_STRING,
@@ -829,6 +984,39 @@ dbus_unhold_conference (const conference_obj_t * c)
         ERROR ("Failed to call unhold() on CallManager: %s",
                error->message);
         g_error_free (error);
+    }
+}
+
+gboolean
+dbus_start_recorded_file_playback(const gchar *filepath)
+{
+    DEBUG("DBUS: Start recorded file playback %s", filepath);
+
+    GError *error = NULL;
+    gboolean result;
+
+    org_sflphone_SFLphone_CallManager_start_recorded_file_playback(callManagerProxy,
+	filepath, &result, &error);
+
+    if(error) {
+        ERROR("Failed to call recorded file playback: %s", error->message);
+	g_error_free(error);
+    }
+
+    return result;
+}
+
+void
+dbus_stop_recorded_file_playback(const gchar *filepath)
+{
+    DEBUG("DBUS: Stop recorded file playback %s", filepath);
+    GError *error = NULL;
+    org_sflphone_SFLphone_CallManager_stop_recorded_file_playback(callManagerProxy,
+	filepath, &error);
+
+    if(error) {
+        ERROR("Failed to call stop recorded file playback: %s", error->message);
+	g_error_free(error);
     }
 }
 
@@ -2491,7 +2679,7 @@ dbus_set_accounts_order (const gchar* order)
     }
 }
 
-gchar **
+const gchar **
 dbus_get_history (void)
 {
     GError *error = NULL;

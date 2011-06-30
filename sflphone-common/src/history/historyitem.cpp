@@ -127,6 +127,8 @@ HistoryItem::HistoryItem (std::string serialized_form)
 
     _confID = confID;
     _timeAdded = timeAdded;
+
+    _recording_file = recordFile;
 }
 
 HistoryItem::~HistoryItem ()
@@ -148,6 +150,7 @@ bool HistoryItem::save (Conf::ConfigTree **history)
     sectionstr = section.str();
 
     _error("-- Unserialized type: %s", call_type.str().c_str());
+    /*
     _error("-- Unserialized time start: %s", _timestamp_start.c_str());
     _error("-- Unserialized time stop: %s", _timestamp_stop.c_str());
     _error("-- Unserialized number: %s", _number.c_str());
@@ -157,6 +160,7 @@ bool HistoryItem::save (Conf::ConfigTree **history)
     _error("-- Unserialized record file: %s", _recording_file.c_str());
     _error("-- Unserialized conference id:%s", _confID.c_str());
     _error("-- Unserialized time added: %s", _timeAdded.c_str());
+    */
 
     res = ( (*history)->setConfigTreeItem (sectionstr, "type", call_type.str())
 	    && (*history)->setConfigTreeItem (sectionstr, "timestamp_start", _timestamp_start)
@@ -168,7 +172,8 @@ bool HistoryItem::save (Conf::ConfigTree **history)
 	    && (*history)->setConfigTreeItem (sectionstr, "recordfile", _recording_file)
 	    && (*history)->setConfigTreeItem (sectionstr, "confid", _confID)
 	    && (*history)->setConfigTreeItem (sectionstr, "timeadded", _timeAdded));
-	   
+
+
     return res;
 }
 

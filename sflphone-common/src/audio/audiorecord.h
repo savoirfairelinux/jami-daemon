@@ -47,13 +47,30 @@ class AudioRecord
 
         ~AudioRecord();
 
+	/**
+	 * Set the sampling rate for this recorder
+ 	 */
         void setSndSamplingRate (int smplRate);
 
+	/**
+	 * Get the recrding sampling rate
+	 */
         int getSndSamplingRate(void) const;
 
+	/**
+	 * Set the recording option
+	 */
         void setRecordingOption (FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate, std::string path);
 
+	/**
+	 * Init recording file path
+	 */
         void initFileName (std::string peerNumber);
+
+        /**
+	 * Return the filepath of the recording
+	 */
+	std::string getFileName(void);
 
         /**
          * Check if no otehr file is opened, then create a new one

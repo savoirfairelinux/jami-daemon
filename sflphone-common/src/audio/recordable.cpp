@@ -53,12 +53,14 @@ void Recordable::initRecFileName (std::string filename)
     recAudio.initFileName (filename);
 }
 
+std::string Recordable::getFileName()
+{
+    return recAudio.getFileName(); 
+}
 
 void Recordable::setRecordingSmplRate (int smplRate)
 {
-
     recAudio.setSndSamplingRate (smplRate);
-
 }
 
 int Recordable::getRecordingSmplRate() const

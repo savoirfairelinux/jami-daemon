@@ -94,6 +94,8 @@ class PluginManagerTest : public CppUnit::TestCase {
         void testUnloadPlugins ();
 
     private:
+        std::string FAKE_PLUGIN_DIR;
+        std::string FAKE_PLUGIN_NAME;
         PluginManager *_pm;
         LibraryManager *library;
         Plugin *plugin;

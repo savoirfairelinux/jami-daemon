@@ -628,7 +628,7 @@
 	   </method>
 
 	   <method name="setAudioRingtoneDevice" tp:name-for-bindings="setAudioRingtoneDevice">
-	           <tp:docstring>
+	       <tp:docstring>
 		   </tp:docstring>
 		   <arg type="i" name="index" direction="in">
 		     <tp:docstring>
@@ -690,6 +690,8 @@
 
 	   <method name="setNoiseSuppressState" tp:name-for-bindings="setNoiseSuppressState">
 	           <arg type="s" name="state" direction="in">
+	           <tp:docstring>
+               </tp:docstring>
 	           </arg>
 	   </method>
 	   
@@ -1011,36 +1013,37 @@
                    <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
 		   <tp:docstring>
 		   </tp:docstring>
-		   <arg type="a{ss}" name="shortcutsMap" direction="in"> <tp:docstring>
+		   <arg type="a{ss}" name="shortcutsMap" direction="in">
+			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="startVideoPreview" tp:name-for-bindings="startVideoPreview">
-		   <arg type="i" name="width" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-		   <arg type="i" name="height" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-		   <arg type="s" name="format" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-		   <arg type="i" name="shmId" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-		   <arg type="i" name="semId" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-		   <arg type="i" name="videoBufferSize" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
+           <arg type="i" name="width" direction="in">
+               <tp:docstring>
+               </tp:docstring>
+           </arg>
+           <arg type="i" name="height" direction="in">
+               <tp:docstring>
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="format" direction="in">
+               <tp:docstring>
+               </tp:docstring>
+           </arg>
+           <arg type="i" name="shmKey" direction="out">
+               <tp:docstring>
+               </tp:docstring>
+           </arg>
+           <arg type="i" name="semKey" direction="out">
+               <tp:docstring>
+               </tp:docstring>
+           </arg>
+           <arg type="i" name="videoBufferSize" direction="out">
+               <tp:docstring>
+               </tp:docstring>
+           </arg>
 	   </method>
 
 	   <method name="stopVideoPreview" tp:name-for-bindings="stopVideoPreview">

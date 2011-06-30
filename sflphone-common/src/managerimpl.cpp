@@ -259,6 +259,8 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 
     _debug ("Manager: New outgoing call %s to %s", call_id.c_str(), to.c_str());
 
+    stopTone();
+
     CallID current_call_id = getCurrentCallId();
 
     if (hookPreference.getNumberEnabled()) {
@@ -1866,13 +1868,13 @@ bool ManagerImpl::incomingCall (Call* call, const AccountID& accountId)
     }
 
     if (!hasCurrentCall()) {
-        _debug ("Manager: Has no current call");
+        _debug ("Manager: Has no current call start ringing");
 
         call->setConnectionState (Call::Ringing);
         ringtone (accountId);
 
     } else {
-        _debug ("Manager: has current call");
+        _debug ("Manager: has current call, beep in current audio stream");
     }
 
     addWaitingCall (call->getCallId());
@@ -2362,7 +2364,7 @@ void ManagerImpl::ringtone (const AccountID& accountID)
 {
     std::string ringchoice;
     sfl::AudioCodec *codecForTone;
-    int layer, samplerate;
+    int samplerate;
 
     _debug ("Manager: Ringtone");
 
@@ -2397,8 +2399,6 @@ void ManagerImpl::ringtone (const AccountID& accountID)
             return;
         }
 
-        layer = _audiodriver->getLayerType();
-
         samplerate = _audiodriver->getSampleRate();
         codecForTone = static_cast<sfl::AudioCodec *>(_audioCodecFactory.getFirstCodecAvailable());
 
@@ -2407,6 +2407,10 @@ void ManagerImpl::ringtone (const AccountID& accountID)
         _toneMutex.enterMutex();
 
         if (_audiofile) {
+	    if(_dbus) {
+		std::string filepath = _audiofile->getFilePath();
+		_dbus->getCallManager()->recordPlaybackStoped(filepath);
+	    }
             delete _audiofile;
             _audiofile = NULL;
         }
@@ -3028,9 +3032,8 @@ bool ManagerImpl::getMd5CredentialHashing (void)
 
 void ManagerImpl::setRecordingCall (const CallID& id)
 {
-
-	Call *call = NULL;
-	Conference *conf = NULL;
+    Call *call = NULL;
+    Conference *conf = NULL;
     Recordable* rec = NULL;
 
     if (!isConference (id)) {
@@ -3051,9 +3054,15 @@ void ManagerImpl::setRecordingCall (const CallID& id)
         rec = static_cast<Recordable *>(conf);
     }
 
-    if (rec != NULL) {
-        rec->setRecording();
+    if (rec == NULL) {
+	_error("Manager: Error: Could not find recordable instance %s", id.c_str());
+	return;
     }
+
+    rec->setRecording();
+
+    if(_dbus)
+	_dbus->getCallManager()->recordPlaybackFilepath(id, rec->getFileName());  
 }
 
 bool ManagerImpl::isRecording (const CallID& id)
@@ -3070,6 +3079,70 @@ bool ManagerImpl::isRecording (const CallID& id)
     return ret;
 }
 
+bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath) 
+{
+    int sampleRate;
+ 
+    _debug("Manager: Start recorded file playback %s", filepath.c_str());
+
+    audioLayerMutexLock();
+
+    if(!_audiodriver) {
+	_error("Manager: Error: No audio layer in start recorded file playback");
+    }
+
+    sampleRate = _audiodriver->getSampleRate();
+
+    audioLayerMutexUnlock();
+
+    _toneMutex.enterMutex();
+
+    if(_audiofile) {
+	 if(_dbus) {
+	     std::string file = _audiofile->getFilePath();
+	     _dbus->getCallManager()->recordPlaybackStoped(file);
+         }
+	 delete _audiofile;
+	_audiofile = NULL;
+    }
+
+    try {
+        _audiofile = static_cast<AudioFile *>(new WaveFile());
+
+        _audiofile->loadFile(filepath, NULL, sampleRate);
+    }
+    catch(AudioFileException &e) {
+        _error("Manager: Exception: %s", e.what());
+    }
+
+    _audiofile->start();
+
+    _toneMutex.leaveMutex();
+
+    audioLayerMutexLock();
+    _audiodriver->startStream();
+    audioLayerMutexUnlock(); 
+
+    return true;
+}
+
+
+void ManagerImpl::stopRecordedFilePlayback(const std::string& filepath)
+{
+    _debug("Manager: Stop recorded file playback %s", filepath.c_str());
+
+    audioLayerMutexLock();
+    _audiodriver->stopStream();
+    audioLayerMutexUnlock();
+
+    _toneMutex.enterMutex();
+    if(_audiofile != NULL) {
+        _audiofile->stop();
+	delete _audiofile;
+	_audiofile = NULL;
+    }
+    _toneMutex.leaveMutex();
+}
 
 void ManagerImpl::setHistoryLimit (const int& days)
 {
@@ -3227,25 +3300,21 @@ void ManagerImpl::setEchoCancelState(std::string state)
 
 int ManagerImpl::getEchoCancelTailLength(void)
 {
-	_debug("-------------------------------------- getEchoTailLength %d", audioPreference.getEchoCancelTailLength());
 	return audioPreference.getEchoCancelTailLength();
 }
 
 void ManagerImpl::setEchoCancelTailLength(int length)
 {
-	_debug("------------------------------------- setEchoTailLength %d", length);
 	audioPreference.setEchoCancelTailLength(length);
 }
 
 int ManagerImpl::getEchoCancelDelay(void)
 {
-	_debug("------------------------------------- getEchoCancelDelay %d", audioPreference.getEchoCancelDelay());
 	return audioPreference.getEchoCancelDelay();
 }
 
 void ManagerImpl::setEchoCancelDelay(int delay)
 {
-	_debug("------------------------------------- setEchoCancelDelay %d", delay);
 	audioPreference.setEchoCancelDelay(delay);
 }
 

@@ -1,5 +1,7 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+
+	    if(_dbus)
+		_dbus *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *
  *  Inspired by tonegenerator of
@@ -44,7 +46,7 @@
 
 #include "manager.h"
 
-RawFile::RawFile() : filename(), audioCodec (NULL)
+RawFile::RawFile() : audioCodec (NULL)
 {
     AudioFile::_start = false;
 }
@@ -63,20 +65,20 @@ void RawFile::loadFile (const std::string& name, sfl::AudioCodec* codec, unsigne
     // if the filename was already load, with the same samplerate
     // we do nothing
 
-    if ((filename == name) && (_sampleRate == (int)sampleRate)) {
+    if ((filepath == name) && (_sampleRate == (int)sampleRate)) {
 	return;
     }
 
-    filename = name;
+    filepath = name;
 
     // no filename to load
-    if (filename.empty()) {
+    if (filepath.empty()) {
         throw AudioFileException("Unable to open audio file: filename is empty");
     }
 
     std::fstream file;
 
-    file.open (filename.c_str(), std::fstream::in);
+    file.open (filepath.c_str(), std::fstream::in);
     if (!file.is_open()) {
         throw AudioFileException("Unable to open audio file");
     }
@@ -236,9 +238,11 @@ bool WaveFile::isFileOpened()
 void WaveFile::openExistingWaveFile (const std::string& fileName, int audioSamplingRate) throw(AudioFileException)
 {
 
-	int maxIteration = 0;
+    int maxIteration = 0;
 
     _debug ("WaveFile: Opening %s", fileName.c_str());
+    filepath = fileName;
+
     fileStream.open (fileName.c_str(), std::ios::in | std::ios::binary);
 
     char riff[4] = {};
@@ -437,12 +441,12 @@ void WaveFile::openExistingWaveFile (const std::string& fileName, int audioSampl
 }
 
 
-void WaveFile::loadFile (const std::string& filename, sfl::AudioCodec * /*codec*/, unsigned int sampleRate) throw(AudioFileException)
+void WaveFile::loadFile (const std::string& name, sfl::AudioCodec * /*codec*/, unsigned int sampleRate) throw(AudioFileException)
 {
-    _debug("WaveFile: Load new file %s", filename.c_str());
+    _debug("WaveFile: Load new file %s", name.c_str());
 
     try { 
-        openFile (filename, sampleRate);
+        openFile (name, sampleRate);
     }
     catch(AudioFileException &e) {
         throw;

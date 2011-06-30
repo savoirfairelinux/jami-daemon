@@ -547,8 +547,9 @@ sflphone_pick_up()
                 calltree_update_call (history, selectedCall, NULL);
 
                 // if instant messaging window is visible, create new tab (deleted automatically if not used)
-                if (im_window_is_visible())
+                if (selectedCall->_im_widget && im_window_is_visible()) {
                     im_widget_display ( (IMWidget **) (&selectedCall->_im_widget), NULL, selectedCall->_callID, NULL);
+	        }
 
                 dbus_accept (selectedCall);
                 stop_notification();
@@ -1127,7 +1128,22 @@ sflphone_join_participant (const gchar* sel_callID, const gchar* drag_callID)
 void
 sflphone_add_participant (const gchar* callID, const gchar* confID)
 {
-    DEBUG ("sflphone add participant %s to conference %s", callID, confID);
+    GtkTreeIter iter;
+    callable_obj_t *call;
+
+    DEBUG (">SFLphone: Add participant %s to conference %s", callID, confID);
+
+    call = calllist_get_call(current_calls, callID);
+    if(call == NULL) {
+	ERROR("SFLphone: Error: Could not find call");
+	return;
+    }
+
+    set_timestamp(&call->_time_added);
+
+    iter = calltree_get_gtkiter_from_id(history, (gchar *)confID);
+
+    calltree_add_call(history, call, &iter);
 
     dbus_add_participant (callID, confID);
 }
@@ -1353,11 +1369,11 @@ void sflphone_fill_conference_list (void)
 
 void sflphone_fill_history (void)
 {
-    gchar **entries, *current_entry;
-    callable_obj_t *history_entry;
-    callable_obj_t *call;
+    const gchar **entries, **history_entries;
+    gchar *current_entry;
+    callable_obj_t *history_call, *call;
+    conference_obj_t *history_conf, *conf;
     QueueElement *element;
-    conference_obj_t *conference_entry;
     guint i = 0, n = 0;
 
     DEBUG ("======================================================= SFLphone: Loading history");
@@ -1365,42 +1381,56 @@ void sflphone_fill_history (void)
     entries = dbus_get_history ();
 
     while (*entries) {
-    	const gchar *delim = "|";
-	gchar **ptr;
 
-        current_entry = *entries;
+        current_entry = (gchar *)*entries;
 
 	DEBUG("============================================ entry: %s", current_entry);
 
-        // do something with key and value
-        create_history_entry_from_serialized_form (current_entry, &history_entry);
-                
-	// Add it and update the GUI
-        calllist_add_call (history, history_entry);
+	if(g_str_has_prefix(current_entry, "9999")) {
+	    // create a conference entry
+	    create_conference_history_entry_from_serialized(current_entry, &history_conf);
 
-        if(history_entry->_confID && g_strcmp0(history_entry->_confID, "") != 0) {
-	    conference_obj_t *conf;
-
-	    DEBUG("----------------- conf id: %s", history_entry->_confID);
-
-	    // process conference
-	    conf = conferencelist_get(history, history_entry->_confID);
+	    conf = conferencelist_get(history, history_conf->_confID);
 	    if(conf == NULL) {
-	        // conference does not exist yet, create it
-		create_new_conference(CONFERENCE_STATE_ACTIVE_ATACHED, history_entry->_confID, &conf);
-	        conferencelist_add(history, conf);	
+		conferencelist_add(history, history_conf);
 	    }
-	     
-	    conference_add_participant(history_entry->_callID, conf);
+	    else {
+		conf->_recordfile = g_strdup(history_conf->_recordfile);
+	    }
+	} 
+	else {
 
-	    // conference start timestamp corespond to 
-	    if(conf->_time_start > history_entry->_time_added) {
-	        conf->_time_start = history_entry->_time_added;
-            } 
+            // do something with key and value
+            create_history_entry_from_serialized_form (current_entry, &history_call);
+                
+	    // Add it and update the GUI
+            calllist_add_call (history, history_call);
+
+            if(history_call->_confID && g_strcmp0(history_call->_confID, "") != 0) {
+
+	        DEBUG("----------------- conf id: %s", history_call->_confID);
+
+	        // process conference
+	        conf = conferencelist_get(history, history_call->_confID);
+	        if(conf == NULL) {
+	            // conference does not exist yet, create it
+		    create_new_conference(CONFERENCE_STATE_ACTIVE_ATACHED, history_call->_confID, &conf);
+	            conferencelist_add(history, conf);	
+	        }
+	     
+	        conference_add_participant(history_call->_callID, conf);
+
+	        // conference start timestamp corespond to 
+	        if(conf->_time_start > history_call->_time_added) {
+	            conf->_time_start = history_call->_time_added;
+                }
+	    } 
         }
 	
         entries++;
     }
+
+    entries = history_entries;
 
     // fill 
     n = calllist_get_size(history);
@@ -1443,7 +1473,6 @@ void sflphone_save_history (void)
     g_hash_table_ref (result);
 
     size = calllist_get_size (history);
-
     for (i = 0; i < size; i++) {
         current = calllist_get_nth (history, i);
 
@@ -1468,6 +1497,20 @@ void sflphone_save_history (void)
 	else {
 	    WARN("SFLphone: Warning: %dth element is null", i);
         }
+    }
+
+    size = conferencelist_get_size(history);
+    for(i = 0; i < size; i++) {
+        conf = conferencelist_get_nth(history, i);
+	if(conf == NULL) {
+ 	    DEBUG("SFLphone: Error: Could not get %dth conference", i);
+	    break;
+        }
+        value = serialize_history_conference_entry(conf);
+	key = convert_timestamp_to_gchar(conf->_time_start);
+
+	g_hash_table_replace(result, (gpointer) key,
+		g_slist_append(g_hash_table_lookup(result, key), (gpointer) value));
     }
 
     sflphone_order_history_hash_table(result, &ordered_result);

@@ -34,13 +34,16 @@
 #include <stdlib.h>
 #include <glib/gprintf.h>
 #include <eel-gconf-extensions.h>
-#include <calllist.h>
-#include <conferencelist.h>
-#include <mainwindow.h>
-#include <history.h>
+
+#include "dbus.h"
+#include "calllist.h"
+#include "conferencelist.h"
+#include "mainwindow.h"
+#include "history.h"
+#include "calltree.h"
 #include "uimanager.h"
 #include "actions.h"
-#include "../imwindow.h"
+#include "imwindow.h"
 #include "searchbar.h"
 
 // Messages used in menu item
@@ -295,7 +298,7 @@ row_activated (GtkTreeView       *tree_view UNUSED,
 
 static void 
 calltree_create_conf_from_participant_list(GSList *list) {
-    gchar **participant_list, participant_number;
+    gchar **participant_list;
     gint list_length = g_slist_length(list);
     gint i = 0;
     gint c = 0;
@@ -326,7 +329,7 @@ calltree_create_conf_from_participant_list(GSList *list) {
     participant_list = (void *) realloc(participant_list, (c+1) *sizeof(void*));
     *(participant_list+c) = NULL;
 
-    dbus_create_conf_from_participant_list(participant_list);
+    dbus_create_conf_from_participant_list((const gchar **)participant_list);
 }
 
 /* Catch cursor-activated signal. That is, when the entry is single clicked */
@@ -1050,7 +1053,6 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
         WARN ("CallTree: This widget doesn't exist - This is a bug in the application.");
     }
 
-
     //Resize it
     if (pixbuf) {
         if (gdk_pixbuf_get_width (pixbuf) > 32 || gdk_pixbuf_get_height (pixbuf) > 32) {
@@ -1442,7 +1444,7 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, G
 void calltree_add_history_conference(conference_obj_t *conf) 
 {
     GdkPixbuf *pixbuf = NULL;
-    gchar *description = "Conference: ", *date = "", *duration = "";
+    gchar *description = "Conference: ", *date = "";
     GtkTreeIter iter;
     gchar *call_id;
     callable_obj_t *call; 
@@ -1452,7 +1454,7 @@ void calltree_add_history_conference(conference_obj_t *conf)
         ERROR("CallTree: Error conference is NULL");
     }
 
-    DEBUG("---------------------------------------------------------- CallTree: Add conference %s to history", conf->_confID);
+    DEBUG("CallTree: Add conference %s to history", conf->_confID);
 
     gtk_tree_store_prepend(history->store, &iter, NULL);
 
@@ -1499,23 +1501,17 @@ void calltree_display (calltab_t *tab)
 
     /* case 1: we want to display the main calltree */
     if (tab==current_calls) {
-
         DEBUG ("CallTree: Display main tab");
-
 
         if (active_calltree==contacts) {
             gtk_toggle_tool_button_set_active ( (GtkToggleToolButton*) contactButton, FALSE);
         } else {
             gtk_toggle_tool_button_set_active ( (GtkToggleToolButton*) historyButton, FALSE);
         }
-
-        // gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)currentCallsButton, TRUE);
-
     }
 
     /* case 2: we want to display the history */
     else if (tab == history) {
-
         DEBUG ("ConferenceList: Display history tab");
 
         if (active_calltree==contacts) {
@@ -1526,7 +1522,6 @@ void calltree_display (calltab_t *tab)
     }
 
     else if (tab==contacts) {
-
         DEBUG ("CallTree: Display contact tab");
 
         if (active_calltree==history) {
@@ -1651,7 +1646,7 @@ static void drag_end_cb (GtkWidget * widget UNUSED, GdkDragContext * context UNU
                 if (selected_call->_confID) {
 
                     gtk_tree_path_up (spath);
-                    gtk_tree_model_get_iter (GTK_TREE_MODEL (model), &parent_conference, spath);
+                gtk_tree_model_get_iter (GTK_TREE_MODEL (model), &parent_conference, spath);
 
                     calltree_add_call (current_calls, selected_call, &parent_conference);
                 } else {
@@ -1718,7 +1713,7 @@ static void drag_end_cb (GtkWidget * widget UNUSED, GdkDragContext * context UNU
 		    selected_call->_historyConfID = NULL;
 		}
 		selected_call->_historyConfID = g_strdup(dragged_call_id);
-                sflphone_add_participant (selected_call_id, dragged_call_id);
+	        sflphone_add_participant (selected_call_id, dragged_call_id);
             } else if (selected_type == A_CONFERENCE && dragged_type == A_CALL) {
 
                 // dragged a conference on a single call
@@ -1726,7 +1721,6 @@ static void drag_end_cb (GtkWidget * widget UNUSED, GdkDragContext * context UNU
 
                 calltree_remove_conference (current_calls, conf, NULL);
                 calltree_add_conference (current_calls, conf);
-
 
             } else if (selected_type == A_CONFERENCE && dragged_type == A_CONFERENCE) {
 
@@ -1992,6 +1986,40 @@ static void menuitem_response( gchar *string )
     // The create conference option will hide if tow call from the same conference are draged on each other
     gtk_widget_show(menu_items);
 
-    printf ("%s\n", string);
+    printf("%s\n", string);
 }
 
+GtkTreeIter calltree_get_gtkiter_from_id(calltab_t *tab, gchar *id)
+{
+    GtkTreeIter iter;
+    GValue val;
+    GtkTreeModel *tree_model;
+    conference_obj_t *conf;
+    callable_obj_t *call;
+
+    tree_model = GTK_TREE_MODEL(tab->store);
+
+    gtk_tree_model_get_iter_first(tree_model, &iter);
+
+    while(gtk_tree_model_iter_next(tree_model, &iter)) {
+        val.g_type = 0;
+        gtk_tree_model_get_value (tree_model, &iter, COLUMN_ACCOUNT_PTR, &val);
+	
+        if(gtk_tree_model_iter_has_child(tree_model, &iter)) {
+            conf = (conference_obj_t *) g_value_get_pointer (&val);
+
+	    if(g_strcmp0(conf->_confID, id) == 0) {
+		return iter;
+	    }
+	}
+	else {
+	    call = (callable_obj_t *) g_value_get_pointer(&val);
+
+	    if(g_strcmp0(call->_callID, id) == 0) {
+	        return iter;
+	    }
+	}
+    }
+
+    return iter;
+}

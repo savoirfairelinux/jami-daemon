@@ -56,7 +56,6 @@ typedef enum {
   * This struct holds information about a conference.
   */
 typedef struct  {
-
     conference_state_t _state;       // The state of the call
     gchar *_confID;                  // The call ID
     gboolean _conference_secured;    // the security state of the conference
@@ -68,6 +67,7 @@ typedef struct  {
     time_t _time_stop;
     time_t _time_current;
     gchar *_recordfile;
+    gboolean _record_is_playing;
 } conference_obj_t;
 
 void create_new_conference (conference_state_t, const gchar*, conference_obj_t **);
@@ -86,6 +86,6 @@ void conference_participant_list_update (gchar**, conference_obj_t*);
 
 gchar *serialize_history_conference_entry(conference_obj_t *entry);
 
-void create_conference_history_entry_from_serialized(gchar **, conference_obj_t **);
+void create_conference_history_entry_from_serialized(gchar *, conference_obj_t **);
 
 #endif
