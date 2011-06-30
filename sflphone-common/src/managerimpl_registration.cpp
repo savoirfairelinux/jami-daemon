@@ -37,7 +37,6 @@
 
 #include "account.h"
 #include "dbus/callmanager.h"
-#include "user_cfg.h"
 #include "global.h"
 #include "sip/sipaccount.h"
 
@@ -72,7 +71,7 @@ ManagerImpl::registerAccounts()
 
                 status = iter->second->registerVoIPLink();
 
-                if (status != SUCCESS) {
+                if (status != 0) {
                     flag = false;
                 }
             }
@@ -88,9 +87,10 @@ ManagerImpl::registerAccounts()
     }
     audioLayerMutexUnlock();
 
-    ASSERT (flag, true);
-
-    return SUCCESS;
+    if (flag)
+        return 0;
+    else
+        return 1;
 }
 
 //THREAD=Main
@@ -114,7 +114,7 @@ ManagerImpl::initRegisterAccounts()
             if (iter->second->isEnabled()) {
                 status = iter->second->registerVoIPLink();
 
-                if (status != SUCCESS) {
+                if (status != 0) {
                     flag = false;
                 }
             }
@@ -130,9 +130,10 @@ ManagerImpl::initRegisterAccounts()
     }
     audioLayerMutexUnlock();
 
-    ASSERT (flag, true);
-
-    return SUCCESS;
+    if (flag)
+        return 0;
+    else
+        return 1;
 }
 
 void ManagerImpl::restartPJSIP (void)

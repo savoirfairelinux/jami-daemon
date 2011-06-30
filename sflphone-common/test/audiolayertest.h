@@ -48,7 +48,6 @@
 #include "manager.h"
 
 #include "config/config.h"
-#include "user_cfg.h"
 
 #include "audio/audiolayer.h"
 #include "audio/alsa/alsalayer.h"

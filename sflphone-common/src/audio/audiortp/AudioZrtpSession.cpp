@@ -29,7 +29,6 @@
  */
 #include "AudioZrtpSession.h"
 #include "ZrtpSessionCallback.h"
-#include "user_cfg.h"
 
 #include "sip/sipcall.h"
 #include "sip/sdp.h"

@@ -58,7 +58,6 @@
 #include "sip/sipvoiplink.h"
 
 #include "config/config.h"
-#include "user_cfg.h"
 
 using namespace sfl;
 

@@ -38,7 +38,6 @@
 #include <dirent.h>
 
 #include "global.h"
-#include "user_cfg.h"
 #include "audiocodec.h"
 
 /** Enable us to keep the handle pointer on the codec dynamicaly loaded so that we could destroy when we dont need it anymore */

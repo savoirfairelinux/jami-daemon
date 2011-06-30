@@ -37,11 +37,9 @@
 
 #include "account.h"
 #include "dbus/callmanager.h"
-#include "user_cfg.h"
 #include "global.h"
 #include "sip/sipaccount.h"
 
-//#include "audio/audiolayer.h"
 #include "audio/alsa/alsalayer.h"
 #include "audio/pulseaudio/pulselayer.h"
 #include "audio/sound/tonelist.h"
@@ -54,8 +52,8 @@
 
 #include "conference.h"
 
-#include <errno.h>
-#include <time.h>
+#include <cerrno>
+#include <ctime>
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
@@ -3752,7 +3750,7 @@ bool ManagerImpl::getConfigBool (const std::string& section,
                                  const std::string& name)
 {
     try {
-        return (_config.getConfigTreeItemValue (section, name) == TRUE_STR) ? true
+        return (_config.getConfigTreeItemValue (section, name) == Conf::TRUE_STR) ? true
                : false;
     } catch (Conf::ConfigTreeItemException& e) {
         throw e;

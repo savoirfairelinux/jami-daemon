@@ -40,7 +40,6 @@
 #include <cc++/common.h>
 #include "global.h"
 
-#include "user_cfg.h"
 #include "dbus/dbusmanager.h"
 #include "manager.h"
 
@@ -167,7 +166,7 @@ main (int argc, char **argv)
         else {
             fclose (fp);
 
-            if (kill (atoi (cOldPid), 0) == SUCCESS) {
+            if (kill (atoi (cOldPid), 0) == 0) {
                 fprintf (stderr, "There is already a sflphoned daemon running in the system. Starting Failed.");
                 exit (-1);
             } else {

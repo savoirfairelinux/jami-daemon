@@ -31,7 +31,17 @@
 #include "preferences.h"
 #include <sstream>
 #include "global.h"
-#include "user_cfg.h"
+        
+const char * const Preferences::DFT_ZONE = "North America";
+
+namespace {
+    static const char * const DFT_PULSE_LENGTH_STR ="250";  /** Default DTMF lenght */
+    static const char * const ZRTP_ZIDFILE = "zidFile";     /** The filename used for storing ZIDs */
+    static const char * const ALSA_DFT_CARD	= "0";          /** Default sound card index */
+    static const char * const DFT_FRAME_SIZE = "20";        /** Default frame size in millisecond */
+    static const char * const DFT_VOL_SPKR_STR = "100";     /** Default speaker volume */
+    static const char * const DFT_VOL_MICRO_STR	= "100";    /** Default mic volume */
+} // end anonymous namespace
 
 Preferences::Preferences() :  _accountOrder ("")
     , _audioApi (1) // 1 is pulseaudio, 0 alsa
