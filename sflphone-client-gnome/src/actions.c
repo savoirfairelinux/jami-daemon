@@ -1344,7 +1344,7 @@ void sflphone_fill_conference_list (void)
     gchar* conf_id;
     conference_obj_t* conf;
 
-    DEBUG ("sflphone_fill_conference_list");
+    DEBUG ("SFLphone: Fill conference list");
 
     conferences = dbus_get_conference_list();
 
@@ -1352,8 +1352,6 @@ void sflphone_fill_conference_list (void)
         for (; *conferences; conferences++) {
             conf = g_new0 (conference_obj_t, 1);
             conf_id = (gchar*) (*conferences);
-
-            DEBUG ("   fetching conference: %s", conf_id);
 
             conference_details = (GHashTable*) dbus_get_conference_details (conf_id);
 
@@ -1376,15 +1374,11 @@ void sflphone_fill_history (void)
     QueueElement *element;
     guint i = 0, n = 0;
 
-    DEBUG ("======================================================= SFLphone: Loading history");
-
     entries = dbus_get_history ();
 
     while (*entries) {
 
         current_entry = (gchar *)*entries;
-
-	DEBUG("entry: %s", current_entry);
 
 	// Parsed a conference
 	if(g_str_has_prefix(current_entry, "9999")) {
@@ -1401,7 +1395,6 @@ void sflphone_fill_history (void)
 		// if this conference is already created since one of the participant have already
 		// been unserialized, update the recordfile value 
 		conf->_recordfile = g_strdup(history_conf->_recordfile);
-		DEBUG("----------------- add record file: %s", conf->_recordfile);
 	    }
 	} 
 	else {
@@ -1414,8 +1407,6 @@ void sflphone_fill_history (void)
 
             if(history_call->_confID && g_strcmp0(history_call->_confID, "") != 0) {
 
-	        DEBUG("----------------- conf id: %s", history_call->_confID);
-
 	        // process conference
 	        conf = conferencelist_get(history, history_call->_confID);
 	        if(conf == NULL) {
@@ -1423,7 +1414,8 @@ void sflphone_fill_history (void)
 		    create_new_conference(CONFERENCE_STATE_ACTIVE_ATACHED, history_call->_confID, &conf);
 	            conferencelist_add(history, conf);	
 	        }
-	     
+	    
+		// add this participant to the conference 
 	        conference_add_participant(history_call->_callID, conf);
 
 	        // conference start timestamp corespond to 
@@ -1436,31 +1428,26 @@ void sflphone_fill_history (void)
         entries++;
     }
 
-    entries = history_entries;
-
-    // fill 
+    // fill the treeview wtih calls
     n = calllist_get_size(history);
-    DEBUG("CALL SIZE: %d", n);
     for(i = 0; i < n; i++) {
 	element = calllist_get_nth(history, i);
 	if(element->type == HIST_CALL) {
 	    call = element->elem.call; 
-	    DEBUG("%d ADDING: %s", i, call->_callID);
             calltree_add_call (history, call, NULL);
         }
     }
 
+    // fill the treeview with conferences
     n = conferencelist_get_size(history);
-    DEBUG("CONFERENCE SIZE: %d", n);
     for(i = 0; i < n; i++) {
         conference_obj_t *conf = conferencelist_get_nth(history, i);
 	if(conf == NULL) {
-	    DEBUG("??????????????????????");
+	    DEBUG("SFLphone: Error: Could not find conference");
         }
 	calltree_add_conference(history, conf);
     } 
 
-    DEBUG ("======================================================== SFLphone: Loading history ...(end)");
 }
 
 void sflphone_save_history (void)
@@ -1473,8 +1460,6 @@ void sflphone_save_history (void)
     gchar **ordered_result;
     gchar *key, *value;
 
-    DEBUG ("==================================================== SFLphone: Saving history");
-
     result = g_hash_table_new (NULL, g_str_equal);
     g_hash_table_ref (result);
 
@@ -1486,12 +1471,10 @@ void sflphone_save_history (void)
 	    if(current->type == HIST_CALL) {
                 value = serialize_history_call_entry (current->elem.call);
 		key =  convert_timestamp_to_gchar (current->elem.call->_time_start);
-		DEBUG("--------------------------------- SFLphone: Serialize call [%s]: %s", key, value);
             }
 	    else if(current->type == HIST_CONFERENCE) {
                 value = serialize_history_conference_entry(current->elem.conf);
 		key = convert_timestamp_to_gchar (current->elem.conf->_time_start);
-		DEBUG("--------------------------------- SFLphone: Serialize conference [%s]: %s", key, value);
             }
  	    else {
 		ERROR("SFLphone: Error: Unknown type for serialization");

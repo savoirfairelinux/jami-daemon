@@ -126,16 +126,6 @@ int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list, int 
 	confID = getConfigString(*iter, "confid", history_list);
         time_added = getConfigString(*iter, "timeadded", history_list);
 
-    	_error("Unserialized time start: %s", timestamp_start.c_str());
-    	_error("Unserialized time stop: %s", timestamp_stop.c_str());
-    	_error("Unserialized number: %s", number.c_str());
-	_error("Unserialized callid: %s", callID.c_str());
-    	_error("Unserialized account: %s", accountID.c_str());
-    	_error("Unserialized name: %s", name.c_str());
-    	_error("Unserialized record file: %s", recording_file.c_str());
-	_error("Unserialized confid: %s", confID.c_str());
-        _error("Unserialized timeadded: %s", time_added.c_str());
-
         // Make a check on the start timestamp to know it is loadable according to CONFIG_HISTORY_LIMIT
 
         if (atoi (timestamp_start.c_str ()) >= ( (int) current_timestamp - history_limit)) {
@@ -261,14 +251,11 @@ std::vector<std::string> HistoryManager::get_history_serialized (void)
 
     iter = _history_items.begin ();
 
-    _error("HistoryManager: History items size: %d", _history_items.size());
-
     while (iter != _history_items.end()) {
         current = *iter;
 
         if (current) {
             res = current->serialize ();
-	    _error("%s", res.c_str());
             serialized.push_back(res);
         }
 
