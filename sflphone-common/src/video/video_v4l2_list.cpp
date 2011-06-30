@@ -43,11 +43,8 @@
 
 #include "logger.h"
 
-#ifdef HAVE_UDEV
 #include <libudev.h>
 #include <cstring>
-#endif //HAVE_UDEV
-
 
 extern "C" {
 #include <sys/types.h>
@@ -55,39 +52,46 @@ extern "C" {
 #include <fcntl.h>
 }
 
+#include <cerrno>
+
 #include "video_v4l2_list.h"
 
 namespace sfl_video {
 
-VideoV4l2List::VideoV4l2List()
+static int is_v4l2(struct udev_device *dev)
 {
-#ifdef HAVE_UDEV
-    struct udev *udev;
-    struct udev_monitor *mon = NULL;
+	const char *version;
+	version = udev_device_get_property_value (dev, "ID_V4L_VERSION");
+	/* we do not support video4linux 1 */
+	return version && strcmp (version, "1");
+}
+
+VideoV4l2List::VideoV4l2List() : _udev_mon(NULL)
+{
     struct udev_list_entry *devlist;
     struct udev_enumerate *devenum;
 
-    udev = udev_new();
-    if (!udev)
-        goto udev_error;
+    _udev = udev_new();
+    if (!_udev)
+        goto udev_failed;
 
-    mon = udev_monitor_new_from_netlink (udev, "udev");
-    if (!mon)
-        goto udev_error;
-    if (udev_monitor_filter_add_match_subsystem_devtype (mon, "video4linux", NULL))
-        goto udev_error;
+    _udev_mon = udev_monitor_new_from_netlink (_udev, "udev");
+    if (!_udev_mon)
+        goto udev_failed;
+    if (udev_monitor_filter_add_match_subsystem_devtype (_udev_mon, "video4linux", NULL))
+        goto udev_failed;
 
     /* Enumerate existing devices */
-    devenum = udev_enumerate_new (udev);
+    devenum = udev_enumerate_new (_udev);
     if (devenum == NULL)
-        goto udev_error;
+        goto udev_failed;
     if (udev_enumerate_add_match_subsystem (devenum, "video4linux"))
     {
         udev_enumerate_unref (devenum);
-        goto udev_error;
+        goto udev_failed;
     }
 
-    udev_monitor_enable_receiving (mon);
+    udev_monitor_enable_receiving (_udev_mon);
     /* Note that we enumerate _after_ monitoring is enabled so that we do not
      * loose device events occuring while we are enumerating. We could still
      * loose events if the Netlink socket receive buffer overflows. */
@@ -97,12 +101,9 @@ VideoV4l2List::VideoV4l2List()
     udev_list_entry_foreach (deventry, devlist)
     {
         const char *path = udev_list_entry_get_name (deventry);
-        struct udev_device *dev = udev_device_new_from_syspath (udev, path);
+        struct udev_device *dev = udev_device_new_from_syspath (_udev, path);
 
-        const char *version; 
-        version = udev_device_get_property_value (dev, "ID_V4L_VERSION");
-        /* we do not support video4linux 1 */
-        if (version && strcmp (version, "1")) {
+        if (is_v4l2(dev)) {
             const char *devpath = udev_device_get_devnode (dev);
             if (devpath) {
                 try {
@@ -115,17 +116,18 @@ VideoV4l2List::VideoV4l2List()
         udev_device_unref (dev);
     }
 
-    udev_monitor_unref (mon);
-    udev_unref (udev);
     return;
 
-udev_error:
-    if (mon)
-        udev_monitor_unref (mon);
-    if (udev)
-        udev_unref (udev);
+udev_failed:
 
-#endif // HAVE_UDEV
+	_error("udev enumeration failed");
+
+	if (_udev_mon)
+        udev_monitor_unref (_udev_mon);
+    if (_udev)
+        udev_unref (_udev);
+    _udev_mon = NULL;
+    _udev = NULL;
 
     /* fallback : go through /dev/video* */
     int idx;
@@ -190,14 +192,62 @@ void GiveUniqueName(VideoV4l2Device &dev, const std::vector<VideoV4l2Device> &de
 VideoV4l2List::~VideoV4l2List()
 {
 	terminate();
+    if (_udev_mon)
+        udev_monitor_unref (_udev_mon);
+    if (_udev)
+        udev_unref (_udev);
 }
 
 void VideoV4l2List::run()
 {
-	sleep(1000000);
-	_mutex.enter();
-	//FIXME : notify preferences change
-	_mutex.leave();
+	if (!_udev_mon)
+		return;
+
+	int fd = udev_monitor_get_fd(_udev_mon);
+    fd_set set;
+    FD_ZERO(&set);
+    FD_SET(fd, &set);
+	for (;;) {
+		struct udev_device *dev;
+		const char *node, *action;
+		int ret = select(fd+1, &set, NULL, NULL, NULL);
+		switch(ret) {
+
+		case 1:
+			dev = udev_monitor_receive_device(_udev_mon);
+			if (!is_v4l2(dev)) {
+				udev_device_unref(dev);
+				continue;
+			}
+
+			node = udev_device_get_devnode(dev);
+			action = udev_device_get_action(dev);
+			if (!strcmp(action, "add")) {
+				_debug("udev: adding %s", node);
+                try {
+                    addDevice(node);
+    				//FIXME : notify preferences change
+                } catch (const std::runtime_error &e) {
+                    _error(e.what());
+                }
+			} else if (!strcmp(action, "remove")) {
+				_debug("udev: removing %s", node);
+				delDevice(std::string(node));
+			}
+			udev_device_unref(dev);
+			continue;
+
+		default:
+			_error("select() returned %d (%m)", ret);
+			return;
+
+		case -1:
+			if (errno == EAGAIN)
+				continue;
+			_error("udev monitoring thread: select failed (%m)");
+			return;
+		}
+	}
 }
 
 void VideoV4l2List::finalize()
@@ -215,7 +265,7 @@ void VideoV4l2List::delDevice(const std::string &node)
     for (i = 0 ; i < n ; i++) {
         if (devices[i].device == node) {
         	devices.erase(devices.begin() + i);
-        	// update preferences
+			//FIXME : notify preferences change
         	return;
         }
     }

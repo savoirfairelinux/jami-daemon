@@ -34,6 +34,8 @@
 #include <string>
 #include <vector>
 #include <cc++/thread.h>
+#include <libudev.h>
+
 #include "video_v4l2.h"
 
 
@@ -64,6 +66,9 @@ class VideoV4l2List : public ost::Thread {
         bool addDevice(const std::string &dev);
         std::vector<VideoV4l2Device> devices;
         ost::Mutex _mutex;
+
+        struct udev *_udev;
+        struct udev_monitor *_udev_mon;
 };
 
 } // namespace sfl_video

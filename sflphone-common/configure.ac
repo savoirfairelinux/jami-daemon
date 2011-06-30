@@ -240,15 +240,7 @@ PKG_CHECK_EXISTS([dbus-1 >= $DBUS_RECURSIVE_MUTEX_VERSION],
 	[AC_DEFINE(DBUS_HAS_RECURSIVE_MUTEX, , [DBus supports recursive mutexes (needs DBus >= 0.95)])]
 	)
 
-AC_ARG_ENABLE(udev,
-        AS_HELP_STRING(
-            [--disable-udev],
-            [enable video4linux devices detection (enabled by default)]
-            )
-        )
-
-test "x$enable_udev" != "xno" && PKG_CHECK_MODULES(UDEV, libudev >= 142, [AC_DEFINE([HAVE_UDEV], [], [Using libudev])])
-
+PKG_CHECK_MODULES(UDEV, libudev >= 142)
 
 AC_ARG_WITH(debug,
 		AS_HELP_STRING(
