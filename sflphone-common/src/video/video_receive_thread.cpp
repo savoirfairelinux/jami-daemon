@@ -53,6 +53,8 @@ extern "C" {
 #include <time.h>
 #include <cstdlib>
 
+#include "manager.h"
+
 namespace sfl_video {
 
 namespace { // anonymouse namespace
@@ -263,8 +265,10 @@ void VideoReceiveThread::setup()
     }
 
     // open codec
-    // FIXME: calls to avcodec_open/close should be protected by a mutex
-    if (avcodec_open(decoderCtx_, inputDecoder) < 0)
+    Manager::instance().avcodecLock();
+    int ret = avcodec_open(decoderCtx_, inputDecoder);
+    Manager::instance().avcodecUnlock();
+    if (ret < 0)
     {
         std::cerr << "Could not open codec!" << std::endl;
         cleanup();
@@ -315,9 +319,11 @@ void VideoReceiveThread::cleanup()
         av_free(rawFrame_);
 
     // doesn't need to be freed, we didn't use avcodec_alloc_context
-    // FIXME: calls to avcodec_open/close should be protected by a mutex
-    if (decoderCtx_)
+    if (decoderCtx_) {
+        Manager::instance().avcodecLock();
         avcodec_close(decoderCtx_);
+        Manager::instance().avcodecUnlock();
+    }
 
     // close the video file
     if (inputCtx_)

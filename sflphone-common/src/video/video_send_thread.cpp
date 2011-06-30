@@ -41,6 +41,8 @@ extern "C" {
 #include <libswscale/swscale.h>
 }
 
+#include "manager.h"
+
 namespace sfl_video {
 
 void VideoSendThread::print_error(const char *filename, int err)
@@ -132,6 +134,7 @@ void VideoSendThread::prepareEncoderContext()
 
 void VideoSendThread::setup()
 {
+    int ret;
     av_register_all();
     avdevice_register_all();
 
@@ -198,8 +201,10 @@ void VideoSendThread::setup()
     }
 
     // open codec
-    // FIXME: calls to avcodec_open/close should be protected by a mutex
-    if (avcodec_open(inputDecoderCtx_, inputDecoder) < 0)
+    Manager::instance().avcodecLock();
+    ret = avcodec_open(inputDecoderCtx_, inputDecoder);
+    Manager::instance().avcodecUnlock();
+    if (ret < 0)
     {
         std::cerr << "Could not open codec!" << std::endl;
         cleanup();
@@ -236,8 +241,10 @@ void VideoSendThread::setup()
     scaledPicture_ = avcodec_alloc_frame();
 
     // open encoder
-    // FIXME: calls to avcodec_open/close should be protected by a mutex
-    if (avcodec_open(encoderCtx_, encoder) < 0)
+    Manager::instance().avcodecLock();
+    ret = avcodec_open(encoderCtx_, encoder);
+    Manager::instance().avcodecUnlock();
+    if (ret < 0)
     {
         std::cerr << "Could not open encoder" << std::endl;
         cleanup();
@@ -318,7 +325,7 @@ void VideoSendThread::cleanup()
         av_free(rawFrame_);
 
     // close the codecs
-    // FIXME: calls to avcodec_open/close should be protected by a mutex
+    Manager::instance().avcodecLock();
     if (encoderCtx_)
     {
         avcodec_close(encoderCtx_);
@@ -326,9 +333,9 @@ void VideoSendThread::cleanup()
     }
 
     // doesn't need to be freed, we didn't use avcodec_alloc_context
-    // FIXME: calls to avcodec_open/close should be protected by a mutex
     if (inputDecoderCtx_)
         avcodec_close(inputDecoderCtx_);
+    Manager::instance().avcodecUnlock();
 
     // close the video file
     if (inputCtx_)
