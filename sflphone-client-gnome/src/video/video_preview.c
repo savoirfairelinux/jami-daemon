@@ -360,12 +360,12 @@ readFrameFromShm(VideoPreviewPrivate *priv)
     if (sem_set_id == -1)
         return FALSE;
 
-    if (sem_wait(sem_set_id) == -1) {
+    while (sem_wait(sem_set_id) == -1) {
       if (errno != EAGAIN) {
           g_print("Could not read from shared memory!\n");
           perror("shm: ");
+          return FALSE;
       }
-      return FALSE;
     }
 
     if (priv->using_clutter) {
