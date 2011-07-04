@@ -39,12 +39,8 @@
 
 namespace sfl_video {
 
-VideoRtpSession::VideoRtpSession(const std::string &input,
-        const std::string &codec,
-        int bitrate,
-        const std::string &destinationURI) :
-    input_(input), codec_(codec), bitrate_(bitrate),
-    destinationURI_(destinationURI)
+VideoRtpSession::VideoRtpSession(std::map<std::string,std::string> args) :
+    args_(args)
 {
 }
 
@@ -52,19 +48,8 @@ void VideoRtpSession::test()
 {
     assert(sendThread_.get() == 0);
     assert(receiveThread_.get() == 0);
-    std::cerr << "Capturing from " << input_ << ", encoding to " << codec_ <<
-        " at " << bitrate_ << " bps, sending to " << destinationURI_ <<
-        std::endl;
-    std::map<std::string, std::string> args;
-    args["input"] = input_;
-    args["codec"] = codec_;
-    std::stringstream bitstr;
-    bitstr << bitrate_;
 
-    args["bitrate"] = bitstr.str();
-    args["destination"] = destinationURI_;
-
-    sendThread_.reset(new VideoSendThread(args));
+    sendThread_.reset(new VideoSendThread(args_));
     sendThread_->start();
 
     /* block until SDP is ready */
@@ -75,25 +60,14 @@ void VideoRtpSession::test()
 void VideoRtpSession::test_loopback()
 {
     assert(sendThread_.get() == 0);
-    std::cerr << "Capturing from " << input_ << ", encoding to " << codec_ <<
-        " at " << bitrate_ << " bps, sending to " << destinationURI_ <<
-        std::endl;
-    std::map<std::string, std::string> args;
-    args["input"] = input_;
-    args["codec"] = codec_;
-    std::stringstream bitstr;
-    bitstr << bitrate_;
 
-    args["bitrate"] = bitstr.str();
-    args["destination"] = destinationURI_;
-
-    sendThread_.reset(new VideoSendThread(args));
+    sendThread_.reset(new VideoSendThread(args_));
     sendThread_->start();
 
     sendThread_->waitForSDP();
+    std::map<std::string, std::string> args(args_);
     args["input"] = "test.sdp";
-    std::cerr << "Receiving at " << destinationURI_ <<
-        ", writing to shared memory" << std::endl;
+
     receiveThread_.reset(new VideoReceiveThread(args));
     receiveThread_->start();
 }
@@ -102,21 +76,12 @@ void VideoRtpSession::start()
 {
     assert(sendThread_.get() == 0);
     assert(receiveThread_.get() == 0);
-    std::cerr << "Capturing from " << input_ << ", encoding to " << codec_ <<
-        " at " << bitrate_ << " bps, sending to " << destinationURI_ <<
-        std::endl;
-    std::map<std::string, std::string> args;
-    args["input"] = input_;
-    args["codec"] = codec_;
-    std::stringstream bitstr;
-    bitstr << bitrate_;
 
-    args["bitrate"] = bitstr.str();
-    args["destination"] = destinationURI_;
-
-    sendThread_.reset(new VideoSendThread(args));
+    sendThread_.reset(new VideoSendThread(args_));
     sendThread_->start();
 
+    sendThread_->waitForSDP();
+    std::map<std::string, std::string> args(args_);
     args["input"] = "test.sdp";
     receiveThread_.reset(new VideoReceiveThread(args));
     receiveThread_->start();

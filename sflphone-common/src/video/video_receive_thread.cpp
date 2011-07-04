@@ -72,7 +72,7 @@ union semun
 };
 #endif
 
-int createSemSet(int shm_id, int shmKey, int *semKey)
+int createSemSet(int shmKey, int *semKey)
 {
     /* this variable will contain the semaphore set. */
     int sem_set_id;
@@ -137,6 +137,9 @@ int createShm(unsigned numBytes, int *shmKey)
     key = ftok(program_path, proj_id);
     *shmKey = key;
     shm_id = shmget(key, numBytes, 0644 | IPC_CREAT);
+
+    if (shm_id == -1)
+        perror("shmget");
 
     return shm_id;
 }
@@ -288,7 +291,7 @@ void VideoReceiveThread::setup()
     // create shared memory segment and attach to it
     shmID_ = createShm(videoBufferSize_, &shmKey_);
     shmBuffer_  = attachShm(shmID_);
-    semSetID_ = createSemSet(shmID_, shmKey_, &semKey_);
+    semSetID_ = createSemSet(shmKey_, &semKey_);
     shmReady_.signal();
 
     // allocate video frame

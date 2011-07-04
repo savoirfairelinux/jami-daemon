@@ -31,20 +31,26 @@
 #include <iostream>
 #include <cassert>
 #include <unistd.h> // for sleep
-#include "test_video_rtp.h"
-#include "video_rtp_factory.h"
-
-void VideoRtpTest::testRTPSession()
-{
-    sfl_video::VideoRtpFactory videortp;
-    videortp.start();
-    sleep(10);
-    videortp.stop();
-}
+#include <map>
+#include <string>
+#include "video_rtp_session.h"
 
 int main (int argc, char* argv[])
 {
-    VideoRtpTest test;
-    test.testRTPSession();
+    std::map<std::string, std::string> args;
+    args["input"]       = "/dev/video0";
+    args["codec"]       = "mpeg4";
+    args["bitrate"]     = "1000000";
+    args["destination"] = "rtp://127.0.0.1:5000";
+    args["format"]      = "rgb24";
+    args["width"]       = "640";
+    args["height"]      = "480";
+
+    sfl_video::VideoRtpSession videosend(args);
+    //sfl_video::VideoRtpSession videorecv("rtp://127.0.0.1:5000", "libx264", 1000000, "rtp://127.0.0.1:5000", "rgb24");
+    videosend.start();
+    sleep(10);
+    videosend.stop();
+
     return 0;
 }

@@ -30,14 +30,24 @@
 
 #include "video_rtp_factory.h"
 #include "video_rtp_session.h"
+#include <map>
+#include <string>
 
 namespace sfl_video 
 {
 
-VideoRtpFactory::VideoRtpFactory() :
-    session_(new VideoRtpSession("/dev/video0", "mpeg4", 1000000,
-                                 "rtp://127.0.0.1:5000"))
+VideoRtpFactory::VideoRtpFactory()
 {
+    std::map<std::string, std::string> args;
+    args["input"]       = "/dev/video0";
+    args["codec"]       = "mpeg4";
+    args["bitrate"]     = "1000000";
+    args["destination"] = "rtp://127.0.0.1:5000";
+    args["format"]      = "rgb24";
+    args["width"]       = "640";
+    args["height"]      = "480";
+
+    session_ = std::tr1::shared_ptr<VideoRtpSession>(new VideoRtpSession(args));
 }
 
 void VideoRtpFactory::start()
