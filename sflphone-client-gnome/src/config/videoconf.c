@@ -108,7 +108,7 @@ preview_is_running_cb(GObject *obj, GParamSpec *pspec, gpointer user_data)
     g_object_get(obj, "running", &running, NULL);
     if (!running) {
         GtkButton *button = GTK_BUTTON(user_data);
-        gtk_button_set_label(button, "_Start");
+        gtk_button_set_label(button, _("_Start"));
         dbus_stop_video_preview();
     }
     return TRUE;
@@ -153,8 +153,8 @@ static void
 preview_button_clicked(GtkButton *button, gpointer data UNUSED)
 {
     preview_button = GTK_WIDGET(button);
-    if (g_strcmp0(gtk_button_get_label(button), "_Start")  == 0) {
-        gtk_button_set_label(button, "_Stop");
+    if (g_strcmp0(gtk_button_get_label(button), _("_Start")) == 0) {
+        gtk_button_set_label(button, _("_Stop"));
 
         static const char *formats[2] = { "rgb24", "bgra" };
 
@@ -163,7 +163,7 @@ preview_button_clicked(GtkButton *button, gpointer data UNUSED)
     }
     else {
         /* user clicked stop */
-        gtk_button_set_label(button, "_Start");
+        gtk_button_set_label(button, _("_Start"));
         dbus_stop_video_preview();
     }
 }
