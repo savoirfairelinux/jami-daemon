@@ -42,6 +42,7 @@ extern "C" {
 }
 
 #include "manager.h"
+#include "libx264-ultrafast.ffpreset.h"
 
 namespace sfl_video {
 
@@ -84,33 +85,7 @@ void VideoSendThread::waitForSDP()
 
 void VideoSendThread::forcePresetX264()
 {
-    std::cerr << "get x264 preset time" << std::endl;
-    //int opt_name_count = 0;
-    FILE *f = 0;
-    // FIXME: hardcoded! should look for FFMPEG_DATADIR
-    const char* preset_filename = "libx264-ultrafast.ffpreset";
-    /* open preset file for libx264 */
-    f = fopen(preset_filename, "r");
-    if (f == 0)
-    {
-        std::cerr << "File for preset ' " << preset_filename << "' not"
-            "found" << std::endl;
-        cleanup();
-    }
-
-    /* grab preset file and put it in character buffer */
-    fseek(f, 0, SEEK_END);
-    long pos = ftell(f);
-    fseek(f, 0, SEEK_SET);
-
-    char *encoder_options_string = reinterpret_cast<char*>(malloc(pos + 1));
-    fread(encoder_options_string, pos, 1, f);
-    encoder_options_string[pos] = '\0';
-    fclose(f);
-
-    std::cerr << "Encoder options: " << encoder_options_string << std::endl;
-    av_set_options_string(encoderCtx_, encoder_options_string, "=", "\n");
-    free(encoder_options_string); // free allocated memory
+    av_set_options_string(encoderCtx_, x264_preset_ultrafast, "=", "\n");
 }
 
 void VideoSendThread::prepareEncoderContext()
