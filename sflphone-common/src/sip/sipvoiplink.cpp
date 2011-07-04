@@ -32,6 +32,10 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "sipvoiplink.h"
 
 #include "manager.h"
@@ -1389,7 +1393,7 @@ SIPVoIPLink::getCurrentCodecName(const CallID& id)
 std::string SIPVoIPLink::getUseragentName (const AccountID& id)
 {
     /*
-    useragent << PROGNAME << "/" << SFLPHONED_VERSION;
+    useragent << PROGNAME << "/" << PACKAGE_VERSION;
     return useragent.str();
     */
 
@@ -1400,7 +1404,7 @@ std::string SIPVoIPLink::getUseragentName (const AccountID& id)
     useragent << account->getUseragent();
 
     if (useragent.str() == "sflphone" || useragent.str() == "")
-        useragent << "/" << SFLPHONED_VERSION;
+        useragent << "/" << PACKAGE_VERSION;
 
     return useragent.str ();
 }

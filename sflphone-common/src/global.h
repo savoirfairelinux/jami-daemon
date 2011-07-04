@@ -43,8 +43,6 @@
 #include <vector>
 #include "logger.h"
 
-#define SFLPHONED_VERSION "0.9.14"		/** Version number */
-
 #define HOMEDIR					(getenv ("HOME"))				/** Home directory */
 #define XDG_DATA_HOME			(getenv ("XDG_DATA_HOME"))
 #define XDG_CONFIG_HOME			(getenv ("XDG_CONFIG_HOME"))
