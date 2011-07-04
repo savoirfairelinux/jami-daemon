@@ -54,6 +54,7 @@ extern "C" {
 #include <cstdlib>
 
 #include "manager.h"
+#include "video_picture.h"
 
 namespace sfl_video {
 
@@ -290,11 +291,6 @@ void VideoReceiveThread::setup()
     semSetID_ = createSemSet(shmID_, shmKey_, &semKey_);
     shmReady_.signal();
 
-    // assign appropriate parts of buffer to image planes in scaledPicture 
-    avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
-            reinterpret_cast<uint8_t*>(shmBuffer_),
-            (enum PixelFormat) format_, dstWidth_, dstHeight_);
-
     // allocate video frame
     rawFrame_ = avcodec_alloc_frame();
 }
@@ -373,6 +369,8 @@ void VideoReceiveThread::run()
     AVPacket inpacket;
     int frameFinished;
     SwsContext *imgConvertCtx = createScalingContext();
+    enum PixelFormat fmt = (enum PixelFormat) format_;
+    int bpp = (av_get_bits_per_pixel(&av_pix_fmt_descriptors[fmt]) + 7) & ~7;
 
     while (not interrupted_ and av_read_frame(inputCtx_, &inpacket) >= 0)
     {
@@ -383,9 +381,18 @@ void VideoReceiveThread::run()
             avcodec_decode_video2(decoderCtx_, rawFrame_, &frameFinished, &inpacket);
             if (frameFinished)
             {
+                VideoPicture *pic = new VideoPicture(bpp, dstWidth_, dstHeight_, rawFrame_->pts);
+    // assign appropriate parts of buffer to image planes in scaledPicture 
+    avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
+            reinterpret_cast<uint8_t*>(pic->data), fmt, dstWidth_, dstHeight_);
+
                 sws_scale(imgConvertCtx, rawFrame_->data, rawFrame_->linesize,
                         0, decoderCtx_->height, scaledPicture_->data,
                         scaledPicture_->linesize);
+
+                // FIXME : put pictures in a pool and use the PTS to get them out and displayed from a separate thread
+                memcpy(shmBuffer_, pic->data, pic->Size());
+                delete pic;
 
                 /* signal the semaphore that a new frame is ready */ 
                 sem_signal(semSetID_);
