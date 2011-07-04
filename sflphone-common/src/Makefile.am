@@ -7,20 +7,7 @@ libexec_PROGRAMS = sflphoned
 
 SUBDIRS = dbus audio config plug-in hooks history sip iax im video
 
-# Add here the cpp files to be build with sflphone
-sflphoned_SOURCES = \
-		conference.cpp \
-		voiplink.cpp \
-		main.cpp \
-		preferences.cpp \
-		managerimpl.cpp \
-		managerimpl_registration.cpp \
-		eventthread.cpp \
-		accountcreator.cpp \
-		call.cpp \
-		account.cpp \
-		logger.cpp \
-		numbercleaner.cpp 
+sflphoned_SOURCES = main.cpp
 
 # Redefine the USE_IAX variable here, so that it could be used in managerimpl
 if USE_IAX
@@ -104,5 +91,14 @@ libsflphone_la_CFLAGS = \
 		@yaml_CFLAGS@ \
 	 	@xml_CFLAGS@
 
-libsflphone_la_SOURCES =
-
+libsflphone_la_SOURCES = conference.cpp \
+		voiplink.cpp \
+		preferences.cpp \
+		managerimpl.cpp \
+		managerimpl_registration.cpp \
+		eventthread.cpp \
+		accountcreator.cpp \
+		call.cpp \
+		account.cpp \
+		logger.cpp \
+		numbercleaner.cpp 
