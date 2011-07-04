@@ -984,10 +984,12 @@ void ConfigurationManager::startVideoPreview(const int32_t &width, const int32_t
 
 void ConfigurationManager::stopVideoPreview()
 {
-    _debug("Stopping video preview");
-    preview_->stop();
-    preview_.reset();
-    // notify client via dbus
-    videoStopped();
+	if (preview_.get()) {
+		_debug("Stopping video preview");
+		preview_->stop();
+		preview_.reset();
+		// notify client via dbus
+		videoStopped();
+	}
 }
 
