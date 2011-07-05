@@ -786,6 +786,12 @@ GtkWidget* create_video_configuration()
     gnome_main_section_new_with_table (_ ("Video Manager"), &frame, &table, 1, 5);
     gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
 
+    gnome_main_section_new_with_table (_ ("Video4Linux2"), &frame, &table, 1, 4);
+    gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
+
+    GtkWidget *v4l2box = v4l2_box();
+    gtk_table_attach(GTK_TABLE(table), v4l2box, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 6);
+
     gnome_main_section_new_with_table (_ ("Preview"), &frame, &table, 1, 2);
     gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
 
@@ -798,16 +804,10 @@ GtkWidget* create_video_configuration()
     using_clutter = clutter_init(NULL, NULL) == CLUTTER_INIT_SUCCESS;
     drawarea = using_clutter ? gtk_clutter_embed_new() : gtk_drawing_area_new();
     gtk_widget_set_size_request (drawarea, drawWidth, drawHeight);
-    gtk_table_attach(GTK_TABLE(table), drawarea, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 6);
-    gtk_widget_show(GTK_WIDGET(drawarea));
-
-    gnome_main_section_new_with_table (_ ("Video4Linux2"), &frame, &table, 1, 4);
-    gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
-
-    GtkWidget *v4l2box = v4l2_box();
-    gtk_table_attach(GTK_TABLE(table), v4l2box, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 6);
+    gtk_table_attach(GTK_TABLE(table), drawarea, 0, 1, 1, 2, 0, 0, 0, 6);
 
     gtk_widget_show_all (ret);
+    gtk_widget_hide(drawarea);
 
     // get devices list from daemon *after* showing all widgets
     // that way we can show either the list, either the "no devices found" label

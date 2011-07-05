@@ -470,6 +470,7 @@ video_preview_run(VideoPreview *preview)
 {
     VideoPreviewPrivate * priv = VIDEO_PREVIEW_GET_PRIVATE(preview);
 
+    gtk_widget_show(priv->drawarea);
     int shm_id = getShm(priv->videobuffersize, priv->sem_key);
     priv->shm_buffer = attachShm(shm_id);
     priv->sem_set_id = get_sem_set(priv->shm_key);
@@ -510,6 +511,10 @@ video_preview_stop(VideoPreview *preview)
 {
     VideoPreviewPrivate *priv = VIDEO_PREVIEW_GET_PRIVATE(preview);
     if (priv) {
+        if (priv->drawarea) {
+            gtk_widget_hide(priv->drawarea);
+            priv->drawarea = NULL;
+        }
         priv->is_running = FALSE;
         if (!priv->using_clutter && priv->cairo)
             cairo_destroy(priv->cairo);
