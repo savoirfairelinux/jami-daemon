@@ -33,7 +33,6 @@
 #include "logger.h"
 
 static gint is_confID_confstruct(gconstpointer, gconstpointer);
-static gchar *generate_conf_id (void);
 
 static gint is_confID_confstruct (gconstpointer a, gconstpointer b)
 {
@@ -45,17 +44,6 @@ static gint is_confID_confstruct (gconstpointer a, gconstpointer b)
         return 1;
     }
 }
-
-static gchar *generate_conf_id (void)
-{
-    gchar *conf_id;
-
-    conf_id = g_new0 (gchar, 30);
-    g_sprintf (conf_id, "%d", rand());
-    
-    return conf_id;
-}
-
 
 void conferencelist_init(calltab_t *tab)
 {

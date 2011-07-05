@@ -1369,7 +1369,7 @@ void sflphone_fill_conference_list (void)
 
 void sflphone_fill_history (void)
 {
-    const gchar **entries, **history_entries;
+    const gchar **entries;
     gchar *current_entry;
     callable_obj_t *history_call, *call;
     conference_obj_t *history_conf, *conf;
@@ -1435,8 +1435,6 @@ void sflphone_fill_history (void)
 	
         entries++;
     }
-
-    entries = history_entries;
 
     // fill 
     n = calllist_get_size(history);

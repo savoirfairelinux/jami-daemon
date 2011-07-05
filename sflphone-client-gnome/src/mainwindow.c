@@ -57,7 +57,6 @@ static GtkWidget * dialpad = NULL;
 static GtkWidget * speaker_control = NULL;
 static GtkWidget * mic_control = NULL;
 static GtkWidget * statusBar = NULL;
-static GtkWidget * filterEntry = NULL;
 static PidginScrollBook *embedded_error_notebook;
 
 static gchar *status_current_message = NULL;
