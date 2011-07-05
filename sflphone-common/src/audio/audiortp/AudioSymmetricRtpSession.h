@@ -41,6 +41,7 @@
 
 #include "global.h"
 
+#include "AudioRtpSession.h"
 #include "AudioRtpRecordHandler.h"
 #include "sip/sipcall.h"
 #include "audio/codecs/audiocodec.h"
@@ -55,7 +56,7 @@ namespace sfl
 {
 
 // class AudioSymmetricRtpSession : protected ost::Thread, public ost::TimerPort, public AudioRtpRecordHandler, public ost::TRTPSessionBase<ost::DualRTPUDPIPv4Channel,ost::DualRTPUDPIPv4Channel,ost::AVPQueue>
-class AudioSymmetricRtpSession : public ost::TimerPort, public AudioRtpRecordHandler, public ost::SymmetricRTPSession
+class AudioSymmetricRtpSession : public AudioRtpSession, public ost::TimerPort, public ost::SymmetricRTPSession
 {
     public:
         /**
@@ -68,43 +69,18 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public AudioRtpRecordHan
 
         virtual void final ();
 
-        void terminateRtpSession();
-
         // Thread associated method
         // virtual void run ();
 
-        virtual bool onRTPPacketRecv (ost::IncomingRTPPkt&);
+        virtual bool onRTPPacketRecv (ost::IncomingRTPPkt& pkt) { return AudioRtpSession::onRTPPacketRecv(pkt); }
 
-        int startRtpThread (AudioCodec*);
-
-        void stopRtpThread (void);
-
-        /**
-         * Used mostly when receiving a reinvite
-         */
-        void updateDestinationIpAddress (void);
-
-        /**
-        * Send DTMF over RTP (RFC2833). The timestamp and sequence number must be
-        * incremented as if it was microphone audio. This function change the payload type of the rtp session,
-        * send the appropriate DTMF digit using this payload, discard coresponding data from mainbuffer and get
-        * back the codec payload for further audio processing.
-        */
-        void sendDtmfEvent (sfl::DtmfEvent *dtmf);
-
-        void callInitialized (bool init) {
-            _callInitialized = init;
+        int startSymmetricRtpThread (void) {
+            return _rtpThread->start();
         }
 
-        /**
-         * Update session audio codec dynamically
-         */
-        void updateSessionMedia (AudioCodec *);
-
-        /**
-         * Send encoded data to peer
-         */
-        void sendMicData();
+        void stopSymmetricRtpThread (void) {
+            _rtpThread->running = false;
+        }
 
     private:
 
@@ -114,87 +90,16 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public AudioRtpRecordHan
                 AudioRtpThread (AudioSymmetricRtpSession *session);
                 ~AudioRtpThread();
 
-                void stopRtpThread (void) {
-                    running = false;
-                }
-
                 virtual void run();
+
+                bool running;
 
             private:
                 AudioSymmetricRtpSession *rtpSession;
-
-                bool running;
         };
-
-        /**
-         * Set RTP Sockets send/receive timeouts
-         */
-        void setSessionTimeouts (void);
-
-        /**
-         * Set the audio codec for this RTP session
-         */
-        void setSessionMedia (AudioCodec*);
-
-
-        /**
-         * Retreive destination address for this session. Stored in CALL
-         */
-        void setDestinationIpAddress (void);
-
-        /**
-         * Receive data from peer
-         */
-        void receiveSpeakerData ();
-
-        // This semaphore is not used
-        // but is needed in order to avoid
-        // ambiguous compiling problem.
-        // It is set to 0, and since it is
-        // optional in ost::thread, then
-        // it amounts to the same as doing
-        // start() with no semaphore at all.
-        ost::Semaphore *_mainloopSemaphore;
-
-        // Main destination address for this rtp session.
-        // Stored in case or reINVITE, which may require to forget
-        // this destination and update a new one.
-        ost::InetHostAddress _remote_ip;
-
-
-        // Main destination port for this rtp session.
-        // Stored in case reINVITE, which may require to forget
-        // this destination and update a new one
-        unsigned short _remote_port;
-
-        /**
-         * Timestamp for this session
-         */
-        int _timestamp;
-
-        /**
-         * Timestamp incrementation value based on codec period length (framesize)
-         * except for G722 which require a 8 kHz incrementation.
-         */
-        int _timestampIncrement;
-
-        /**
-         * Timestamp reset freqeuncy specified in number of packet sent
-         */
-        short _timestampCount;
-
-        /**
-         * Call initialized
-         */
-        bool _callInitialized;
-
         SpeexEchoCancel echoCanceller;
 
     protected:
-
-        SIPCall * _ca;
-
-        bool _isStarted;
 
         AudioRtpThread *_rtpThread;
 

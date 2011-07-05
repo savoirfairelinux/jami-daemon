@@ -71,10 +71,10 @@ timeval2microtimeout (const timeval& t)
     return ( (t.tv_sec * 1000000ul) + t.tv_usec);
 }
 
-class AudioSymmetricRtpSessionException: public std::exception
+class AudioRtpSessionException: public std::exception
 {
     virtual const char* what() const throw() {
-        return "AudioSymmetricRtpSessionException occured";
+        return "AudioRtpSessionException occured";
     }
 };
 
@@ -232,7 +232,7 @@ class AudioRtpRecordHandler
 
     private:
 
-        SIPCall *_ca;
+        CallID& _id;
 
  	EchoSuppress echoCanceller;
 

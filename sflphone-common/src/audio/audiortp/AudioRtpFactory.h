@@ -35,6 +35,7 @@
 #include <cc++/thread.h>
 #include "account.h" // for typedef of AccountID (std::string)
 #include <ccrtp/CryptoContext.h>
+#include "AudioRtpSession.h"
 
 #include "sip/SdesNegotiator.h"
 
@@ -47,16 +48,7 @@ namespace sfl
 {
 
 class AudioZrtpSession;
-class AudioSrtpSession;
 class AudioCodec;
-
-// Possible kind of rtp session
-typedef enum RtpMethod {
-    Symmetric,
-    Zrtp,
-    Sdes
-} RtpMethod;
-
 
 class UnsupportedRtpSessionType : public std::logic_error
 {
@@ -118,29 +110,13 @@ class AudioRtpFactory
 
         /**
          * @param None
-         * @return The internal audio rtp thread of the type specified in the configuration
-         * file. initAudioSymmetricRtpSession must have been called prior to that.
-         */
-        void * getAudioSymmetricRtpSession (void) const {
-            return _rtpSession;
-        }
-
-        /**
-         * @param None
          * @return The internal audio rtp session type
          *         Symmetric = 0
          *         Zrtp = 1
          *         Sdes = 2
          */
         RtpMethod getAudioRtpType (void) const {
-            return _rtpSessionType;
-        }
-
-        /**
-         * @param Set internal audio rtp session type (Symmetric, Zrtp, Sdes)
-         */
-        void setAudioRtpType (RtpMethod type) {
-            _rtpSessionType = type;
+            return _rtpSession->getAudioRtpType();
         }
 
         /**
@@ -192,8 +168,7 @@ class AudioRtpFactory
     private:
         void registerAccount(Account *account, const AccountID &id);
         void registerAccount(SIPAccount *account, const AccountID &id);
-        void * _rtpSession;
-        RtpMethod _rtpSessionType;
+        AudioRtpSession *_rtpSession;
         ost::Mutex _audioRtpThreadMutex;
 
         // Field used when initializinga udio rtp session

@@ -126,7 +126,7 @@ AudioRtpRecord::~AudioRtpRecord()
 }
 
 
-AudioRtpRecordHandler::AudioRtpRecordHandler (SIPCall *ca) : _audioRtpRecord (), _ca (ca), echoCanceller(ca->getMemoryPool()), gainController(8000, -10.0) 
+AudioRtpRecordHandler::AudioRtpRecordHandler (SIPCall *ca) : _audioRtpRecord (), _id (ca->getCallId()), echoCanceller(ca->getMemoryPool()), gainController(8000, -10.0)
 {
 
 }
@@ -227,7 +227,7 @@ void AudioRtpRecordHandler::updateNoiseSuppress()
 
     _audioRtpRecord._noiseSuppress = NULL;
 
-    _debug ("AudioSymmetricRtpSession: Update noise suppressor with sampling rate %d and frame size %d", getCodecSampleRate(), getCodecFrameSize());
+    _debug ("AudioRtpSession: Update noise suppressor with sampling rate %d and frame size %d", getCodecSampleRate(), getCodecFrameSize());
 
     NoiseSuppress *noiseSuppress = new NoiseSuppress (getCodecFrameSize(), getCodecSampleRate());
     AudioProcessing *processing = new AudioProcessing (noiseSuppress);
@@ -249,7 +249,7 @@ void AudioRtpRecordHandler::putDtmfEvent (int digit)
     dtmf->newevent = true;
     dtmf->length = 1000;
     getEventQueue()->push_back (dtmf);
-    _debug ("AudioSymmetricRtpSession: Put Dtmf Event %d", digit);
+    _debug ("AudioRtpSession: Put Dtmf Event %d", digit);
 }
 
 #ifdef DUMP_PROCESS_DATA_ENCODE
@@ -275,13 +275,13 @@ int AudioRtpRecordHandler::processDataEncode (void)
     int bytesToGet = computeNbByteAudioLayer (mainBufferSampleRate, fixedCodecFramesize);
 
     // available bytes inside ringbuffer
-    int availBytesFromMic = Manager::instance().getMainBuffer()->availForGet (_ca->getCallId());
+    int availBytesFromMic = Manager::instance().getMainBuffer()->availForGet (_id);
 
     if (availBytesFromMic < bytesToGet)
         return 0;
 
     // Get bytes from micRingBuffer to data_from_mic
-    int nbSample = Manager::instance().getMainBuffer()->getData (micData, bytesToGet, 100, _ca->getCallId()) / sizeof (SFLDataFormat);
+    int nbSample = Manager::instance().getMainBuffer()->getData (micData, bytesToGet, 100, _id) / sizeof (SFLDataFormat);
 
     // process mic fade in
     if (!_audioRtpRecord._micFadeInComplete)
@@ -393,7 +393,7 @@ void AudioRtpRecordHandler::processDataDecode (unsigned char *spkrData, unsigned
         }
 
         // put data in audio layer, size in byte
-        Manager::instance().getMainBuffer()->putData (spkrDataConverted, nbSample * sizeof (SFLDataFormat), 100, _ca->getCallId());
+        Manager::instance().getMainBuffer()->putData (spkrDataConverted, nbSample * sizeof (SFLDataFormat), 100, _id);
 
 
     } else {
@@ -401,7 +401,7 @@ void AudioRtpRecordHandler::processDataDecode (unsigned char *spkrData, unsigned
     	    echoCanceller.putData(spkrDataDecoded, expandedSize);
     	}
         // put data in audio layer, size in byte
-        Manager::instance().getMainBuffer()->putData (spkrDataDecoded, expandedSize, 100, _ca->getCallId());
+        Manager::instance().getMainBuffer()->putData (spkrDataDecoded, expandedSize, 100, _id);
     }
 }
 

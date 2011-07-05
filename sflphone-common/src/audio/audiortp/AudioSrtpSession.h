@@ -30,6 +30,7 @@
 #ifndef __SFL_AUDIO_SRTP_SESSION_H__
 #define __SFL_AUDIO_SRTP_SESSION_H__
 
+#include "AudioRtpSession.h"
 #include "AudioSymmetricRtpSession.h"
 #include "sip/SdesNegotiator.h"
 
@@ -65,13 +66,6 @@ class SIPCall;
 
 namespace sfl
 {
-
-class SrtpException: public std::exception
-{
-        virtual const char* what() const throw() {
-            return "ZRTP ZID initialization failed.";
-        }
-};
 
 class AudioSrtpSession : public AudioSymmetricRtpSession
 {
