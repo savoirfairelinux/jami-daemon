@@ -33,7 +33,7 @@
 #include "AudioRtpFactory.h"
 #include "AudioZrtpSession.h"
 #include "AudioSrtpSession.h"
-#include "AudioRtpSession.h"
+#include "AudioSymmetricRtpSession.h"
 #include "manager.h"
 #include "sip/sdp.h"
 #include "sip/sipcall.h"
@@ -102,7 +102,7 @@ void AudioRtpFactory::registerAccount(SIPAccount *sipaccount, const AccountID& a
     _helloHashEnabled = sipaccount->getZrtpHelloHash();
 }
 
-void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
+void AudioRtpFactory::initAudioSymmetricRtpSession (SIPCall * ca)
 {
     ost::MutexLock m (_audioRtpThreadMutex);
 
@@ -138,7 +138,7 @@ void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
         }
     } else {
         _rtpSessionType = Symmetric;
-        _rtpSession = new AudioRtpSession (ca);
+        _rtpSession = new AudioSymmetricRtpSession (ca);
         _debug ("AudioRtpFactory: Starting a symmetric unencrypted rtp session");
     }
 }
@@ -166,8 +166,8 @@ void AudioRtpFactory::start (AudioCodec* audiocodec)
         case Symmetric:
             _debug ("Starting symmetric rtp thread");
 
-            if (static_cast<AudioRtpSession *> (_rtpSession)->startRtpThread (audiocodec) != 0) {
-                throw AudioRtpFactoryException ("AudioRtpFactory: Error: Failed to start AudioRtpSession thread");
+            if (static_cast<AudioSymmetricRtpSession *> (_rtpSession)->startRtpThread (audiocodec) != 0) {
+                throw AudioRtpFactoryException ("AudioRtpFactory: Error: Failed to start AudioSymmetricRtpSession thread");
             }
 
             break;
@@ -202,7 +202,7 @@ void AudioRtpFactory::stop (void)
                 break;
 
             case Symmetric:
-                static_cast<AudioRtpSession *> (_rtpSession)->stopRtpThread();
+                static_cast<AudioSymmetricRtpSession *> (_rtpSession)->stopRtpThread();
                 break;
 
             case Zrtp:
@@ -232,7 +232,7 @@ int AudioRtpFactory::getSessionMedia()
             payloadType = static_cast<AudioSrtpSession *> (_rtpSession)->getCodecPayloadType();
             break;
         case Symmetric:
-            payloadType = static_cast<AudioRtpSession *> (_rtpSession)->getCodecPayloadType();
+            payloadType = static_cast<AudioSymmetricRtpSession *> (_rtpSession)->getCodecPayloadType();
             break;
         case Zrtp:
             payloadType = static_cast<AudioZrtpSession *> (_rtpSession)->getCodecPayloadType();
@@ -255,7 +255,7 @@ void AudioRtpFactory::updateSessionMedia (AudioCodec *audiocodec)
             static_cast<AudioSrtpSession *> (_rtpSession)->updateSessionMedia (audiocodec);
             break;
         case Symmetric:
-            static_cast<AudioRtpSession *> (_rtpSession)->updateSessionMedia (audiocodec);
+            static_cast<AudioSymmetricRtpSession *> (_rtpSession)->updateSessionMedia (audiocodec);
             break;
         case Zrtp:
             static_cast<AudioZrtpSession *> (_rtpSession)->updateSessionMedia (audiocodec);
@@ -281,7 +281,7 @@ void AudioRtpFactory::updateDestinationIpAddress (void)
             break;
 
         case Symmetric:
-            static_cast<AudioRtpSession *> (_rtpSession)->updateDestinationIpAddress();
+            static_cast<AudioSymmetricRtpSession *> (_rtpSession)->updateDestinationIpAddress();
             break;
 
         case Zrtp:

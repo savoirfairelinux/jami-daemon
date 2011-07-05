@@ -62,7 +62,7 @@
 
 using namespace sfl;
 
-class AudioRtpSession;
+class AudioSymmetricRtpSession;
 //class AudioRtpFactory;
 class SIPVoIPLink;
 

@@ -715,7 +715,7 @@ Call *SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) 
 	try {
 		_info ("UserAgent: Creating new rtp session");
 		call->getAudioRtp()->initAudioRtpConfig (call);
-		call->getAudioRtp()->initAudioRtpSession (call);
+		call->getAudioRtp()->initAudioSymmetricRtpSession (call);
 		call->getAudioRtp()->initLocalCryptoInfo (call);
 		_info ("UserAgent: Start audio rtp session");
 		call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
@@ -1024,7 +1024,7 @@ SIPVoIPLink::offhold (const CallID& id) throw (VoipLinkException)
         }
 
         call->getAudioRtp()->initAudioRtpConfig (call);
-        call->getAudioRtp()->initAudioRtpSession (call);
+        call->getAudioRtp()->initAudioSymmetricRtpSession (call);
         call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
         call->getVideoRtp()->start();
 
@@ -1804,7 +1804,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const CallID& id, const std::string& to)
         // since SDES require crypto attribute.
         try {
             call->getAudioRtp()->initAudioRtpConfig (call);
-            call->getAudioRtp()->initAudioRtpSession (call);
+            call->getAudioRtp()->initAudioSymmetricRtpSession (call);
             call->getAudioRtp()->initLocalCryptoInfo (call);
             call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
             call->getVideoRtp()->start ();
@@ -3516,7 +3516,7 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
         SIPAccount *account = (SIPAccount *) Manager::instance().getAccount (accountID);
 
         if (account->getSrtpFallback())
-            call->getAudioRtp()->initAudioRtpSession (call);
+            call->getAudioRtp()->initAudioSymmetricRtpSession (call);
     }
 
     if (!sdpSession)
@@ -3994,7 +3994,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
     try {
         _debug ("UserAgent: Create RTP session for this call");
         call->getAudioRtp()->initAudioRtpConfig (call);
-        call->getAudioRtp()->initAudioRtpSession (call);
+        call->getAudioRtp()->initAudioSymmetricRtpSession (call);
     } catch (...) {
         _warn ("UserAgent: Error: Failed to create rtp thread from answer");
     }

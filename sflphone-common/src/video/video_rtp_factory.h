@@ -48,7 +48,7 @@ class VideoRtpFactory {
         void start();
         /**
          * Stop the audio rtp thread of the type specified in the configuration
-         * file. initAudioRtpSession must have been called prior to that.
+         * file. initAudioSymmetricRtpSession must have been called prior to that.
          * @param None
          */
         void stop();

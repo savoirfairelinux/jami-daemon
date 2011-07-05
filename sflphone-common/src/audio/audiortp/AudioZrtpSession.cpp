@@ -78,7 +78,7 @@ AudioZrtpSession::AudioZrtpSession (SIPCall * sipcall, const std::string& zidFil
 
 AudioZrtpSession::~AudioZrtpSession()
 {
-    _debug ("AudioZrtpSession: Delete AudioRtpSession instance");
+    _debug ("AudioZrtpSession: Delete AudioSymmetricRtpSession instance");
 
     try {
         terminate();
@@ -153,7 +153,7 @@ void AudioZrtpSession::setSessionTimeouts (void)
 
 void AudioZrtpSession::setSessionMedia (AudioCodec* audioCodec)
 {
-    _debug ("AudioRtpSession: Set session media");
+    _debug ("AudioSymmetricRtpSession: Set session media");
 
     // set internal codec info for this session
     setRtpMedia (audioCodec);
@@ -177,10 +177,10 @@ void AudioZrtpSession::setSessionMedia (AudioCodec* audioCodec)
 
     // Even if specified as a 16 kHz codec, G722 requires rtp sending rate to be 8 kHz
     if (dynamic) {
-        _debug ("AudioRtpSession: Setting dynamic payload format");
+        _debug ("AudioSymmetricRtpSession: Setting dynamic payload format");
         setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, smplRate));
     } else {
-        _debug ("AudioRtpSession: Setting static payload format");
+        _debug ("AudioSymmetricRtpSession: Setting static payload format");
         setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) payloadType));
     }
 
@@ -188,7 +188,7 @@ void AudioZrtpSession::setSessionMedia (AudioCodec* audioCodec)
 
 void AudioZrtpSession::updateSessionMedia (AudioCodec *audioCodec)
 {
-    _debug ("AudioRtpSession: Update session media");
+    _debug ("AudioSymmetricRtpSession: Update session media");
 
     //
     updateRtpMedia (audioCodec);
@@ -205,16 +205,16 @@ void AudioZrtpSession::updateSessionMedia (AudioCodec *audioCodec)
         _timestampIncrement = frameSize;
 
     _debug ("AudioRptSession: Codec payload: %d", payloadType);
-    _debug ("AudioRtpSession: Codec sampling rate: %d", smplRate);
-    _debug ("AudioRtpSession: Codec frame size: %d", frameSize);
-    _debug ("AudioRtpSession: RTP timestamp increment: %d", _timestampIncrement);
+    _debug ("AudioSymmetricRtpSession: Codec sampling rate: %d", smplRate);
+    _debug ("AudioSymmetricRtpSession: Codec frame size: %d", frameSize);
+    _debug ("AudioSymmetricRtpSession: RTP timestamp increment: %d", _timestampIncrement);
 
     // Even if specified as a 16 kHz codec, G722 requires rtp sending rate to be 8 kHz
     if (dynamic) {
-        _debug ("AudioRtpSession: Setting dynamic payload format");
+        _debug ("AudioSymmetricRtpSession: Setting dynamic payload format");
         setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, smplRate));
     } else {
-        _debug ("AudioRtpSession: Setting static payload format");
+        _debug ("AudioSymmetricRtpSession: Setting static payload format");
         setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) payloadType));
     }
 }
@@ -225,7 +225,7 @@ void AudioZrtpSession::setDestinationIpAddress (void)
 
     if (_ca == NULL) {
         _error ("AudioZrtpSession: Sipcall is gone.");
-        throw AudioRtpSessionException();
+        throw AudioSymmetricRtpSessionException();
     }
 
     // Store remote ip in case we would need to forget current destination

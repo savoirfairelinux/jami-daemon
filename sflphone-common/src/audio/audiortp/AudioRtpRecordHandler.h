@@ -71,10 +71,10 @@ timeval2microtimeout (const timeval& t)
     return ( (t.tv_sec * 1000000ul) + t.tv_usec);
 }
 
-class AudioRtpSessionException: public std::exception
+class AudioSymmetricRtpSessionException: public std::exception
 {
     virtual const char* what() const throw() {
-        return "AudioRtpSessionException occured";
+        return "AudioSymmetricRtpSessionException occured";
     }
 };
 

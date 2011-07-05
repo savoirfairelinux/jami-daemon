@@ -227,7 +227,7 @@ void AudioRtpRecordHandler::updateNoiseSuppress()
 
     _audioRtpRecord._noiseSuppress = NULL;
 
-    _debug ("AudioRtpSession: Update noise suppressor with sampling rate %d and frame size %d", getCodecSampleRate(), getCodecFrameSize());
+    _debug ("AudioSymmetricRtpSession: Update noise suppressor with sampling rate %d and frame size %d", getCodecSampleRate(), getCodecFrameSize());
 
     NoiseSuppress *noiseSuppress = new NoiseSuppress (getCodecFrameSize(), getCodecSampleRate());
     AudioProcessing *processing = new AudioProcessing (noiseSuppress);
@@ -249,7 +249,7 @@ void AudioRtpRecordHandler::putDtmfEvent (int digit)
     dtmf->newevent = true;
     dtmf->length = 1000;
     getEventQueue()->push_back (dtmf);
-    _debug ("AudioRtpSession: Put Dtmf Event %d", digit);
+    _debug ("AudioSymmetricRtpSession: Put Dtmf Event %d", digit);
 }
 
 #ifdef DUMP_PROCESS_DATA_ENCODE
