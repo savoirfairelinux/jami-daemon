@@ -3,7 +3,7 @@
 
 #ifdef FREEBSD
 # include <machine/endian.h>
-#elif defined(LINUX)  
+#elif defined(__linux__)
 # include <endian.h>
 # include <features.h>
 # include <sys/types.h>
