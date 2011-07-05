@@ -1119,11 +1119,9 @@ uimanager_new (GtkUIManager **_ui_manager)
     gchar *path;
     guint manager_id = 0;
     GError *error = NULL;
-    gint nb_entries, nb_menu_entries;
+    gint nb_entries;
 
     nb_entries = abookfactory_is_addressbook_loaded() ? 7 : 6;
-    nb_menu_entries = abookfactory_is_addressbook_loaded() ? 7 : 6;
-
 
     window = get_main_window();
     ui_manager = gtk_ui_manager_new();
