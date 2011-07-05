@@ -225,7 +225,7 @@ class AudioRtpRecordHandler
 
     private:
 
-        SIPCall *_ca;
+        CallID& _id;
 
  	EchoSuppress echoCanceller;
 

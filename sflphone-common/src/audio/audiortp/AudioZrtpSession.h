@@ -39,7 +39,7 @@ using std::ptrdiff_t;
 #include <libzrtpcpp/ZrtpQueue.h>
 #include <libzrtpcpp/ZrtpUserCallback.h>
 
-#include "AudioRtpRecordHandler.h"
+#include "AudioRtpSession.h"
 #include <cc++/numbers.h> // OST::Time
 
 class SIPCall;
@@ -55,7 +55,7 @@ class ZrtpZidException: public std::runtime_error
 };
 
 // class AudioZrtpSession : public ost::TimerPort, public ost::SymmetricZRTPSession, public AudioRtpRecordHandler
-class AudioZrtpSession : protected ost::Thread, public AudioRtpRecordHandler, public ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue>
+class AudioZrtpSession : public AudioRtpSession, protected ost::Thread, public ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue>
 {
     public:
         AudioZrtpSession (SIPCall * sipcall, const std::string& zidFilename);
@@ -67,100 +67,13 @@ class AudioZrtpSession : protected ost::Thread, public AudioRtpRecordHandler, pu
         // Thread associated method
         virtual void run ();
 
-        virtual bool onRTPPacketRecv (ost::IncomingRTPPkt&);
-
-        int startRtpThread (AudioCodec *);
-
-        void stopRtpThread (void);
-
-        /**
-         * Used mostly when receiving a reinvite
-         */
-        void updateDestinationIpAddress (void);
-
-        /**
-         * Update audio codec dynamically
-         */
-        void updateSessionMedia (AudioCodec *);
-
-        /**
-         * Send DTMF over RTP (RFC2833). The timestamp and sequence number must be
-         * incremented as if it was microphone audio. This function change the payload type of the rtp session,
-         * send the appropriate DTMF digit using this payload, discard coresponding data from mainbuffer and get
-         * back the codec payload for further audio processing.
-         */
-        void sendDtmfEvent (sfl::DtmfEvent *dtmf);
+        virtual bool onRTPPacketRecv (ost::IncomingRTPPkt& pkt) { return AudioRtpSession::onRTPPacketRecv(pkt); }
 
     private:
 
         void initializeZid (void);
 
-        /**
-         * Set RTP Sockets send/receive timeouts
-         */
-        void setSessionTimeouts (void);
-
-        /**
-         * Set the audio codec for this RTP session
-         */
-        void setSessionMedia (AudioCodec*);
-
-        /**
-         * Retreive destination address for this session. Stored in CALL
-         */
-        void setDestinationIpAddress (void);
-
-        /**
-         * Send encoded data to peer
-         */
-        void sendMicData();
-
-        /**
-         * Receive data from peer
-         */
-        void receiveSpeakerData ();
-
         std::string _zidFilename;
-
-        // This semaphore is not used
-        // but is needed in order to avoid
-        // ambiguous compiling problem.
-        // It is set to 0, and since it is
-        // optional in ost::thread, then
-        // it amounts to the same as doing
-        // start() with no semaphore at all.
-        ost::Semaphore * _mainloopSemaphore;
-
-        // Main destination address for this rtp session.
-        // Stored in case or reINVITE, which may require to forget
-        // this destination and update a new one.
-        ost::InetHostAddress _remote_ip;
-
-
-        // Main destination port for this rtp session.
-        // Stored in case reINVITE, which may require to forget
-        // this destination and update a new one
-        unsigned short _remote_port;
-
-        /**
-         * Timestamp for this session
-         */
-        int _timestamp;
-
-        /**
-         * Timestamp incrementation value based on codec period length (framesize)
-         * except for G722 which require a 8 kHz incrementation.
-         */
-        int _timestampIncrement;
-
-        /**
-         * Timestamp reset freqeuncy specified in number of packet sent
-         */
-        short _timestampCount;
-
-        SIPCall * _ca;
-
-        bool _isStarted;
 };
 
 }

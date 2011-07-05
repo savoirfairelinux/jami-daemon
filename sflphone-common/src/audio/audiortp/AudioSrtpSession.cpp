@@ -57,6 +57,7 @@ AudioSrtpSession::AudioSrtpSession (SIPCall * sipcall) :
     _remoteMasterSaltLength (0),
     _remoteOfferIsSet (false)
 {
+	this->_type = Sdes;
 }
 
 AudioSrtpSession::~AudioSrtpSession()
@@ -311,7 +312,6 @@ std::string AudioSrtpSession::encodeBase64 (unsigned char *input, int length)
 
     return output;
 }
-#pragma GCC diagnostic warning "-Wunused-value"
 
 char* AudioSrtpSession::decodeBase64 (unsigned char *input, int length)
 {
