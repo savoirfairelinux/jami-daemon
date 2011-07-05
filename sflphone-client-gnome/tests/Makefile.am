@@ -26,25 +26,25 @@ SFLPHONE_OBJ = $(top_builddir)/src/accountlist.o \
 ###########################################################
 
 check_global_SOURCES =		check_global.c
-check_global_CFLAGS =		@CHECK_CFLAGS@ @DEPS_CFLAGS@
-check_global_LDADD =		$(SFLPHONE_LIBS) $(SFLPHONE_OBJ) @CHECK_LIBS@ $(DEPS_LIBS) @LIBSEXY_LIBS@
+check_global_CFLAGS =		@CHECK_CFLAGS@ @SFLGTK_CFLAGS@ @DBUSGLIB_CFLAGS@
+check_global_LDADD =		$(SFLPHONE_LIBS) $(SFLPHONE_OBJ) @CHECK_LIBS@ @LIBSEXY_LIBS@ @SFLGTK_LIBS@ @DBUSGLIB_LIBS@
 
 ###########################################################
 
 check_contacts_SOURCES =	check_contacts.c
-check_contacts_CFLAGS =		@CHECK_CFLAGS@ @DEPS_CFLAGS@
-check_contacts_LDADD =		$(SFLPHONE_LIBS) $(SFLPHONE_OBJ) @CHECK_LIBS@ $(DEPS_LIBS) @LIBSEXY_LIBS@
+check_contacts_CFLAGS =		@CHECK_CFLAGS@ @SFLGTK_CFLAGS@
+check_contacts_LDADD =		$(SFLPHONE_LIBS) $(SFLPHONE_OBJ) @CHECK_LIBS@ @LIBSEXY_LIBS@
 
 ###########################################################
 
 check_config_SOURCES =		check_config.c
-check_config_CFLAGS = 		@CHECK_CFLAGS@ @DEPS_CFLAGS@
-check_config_LDADD =		$(SFLPHONE_LIBS) $(SFLPHONE_OBJ) @CHECK_LIBS@ @DEPS_LIBS@ @LIBSEXY_LIBS@
+check_config_CFLAGS = 		@CHECK_CFLAGS@ @SFLGTK_CFLAGS@
+check_config_LDADD =		$(SFLPHONE_LIBS) $(SFLPHONE_OBJ) @CHECK_LIBS@ @LIBSEXY_LIBS@
 
 ###########################################################
 
 check_dbus_SOURCES =		check_dbus.c
-check_dbus_CFLAGS = 		@CHECK_CFLAGS@ @DEPS_CFLAGS@
-check_dbus_LDADD =		$(SFLPHONE_LIBS) $(SFLPHONE_OBJ) @CHECK_LIBS@ @DEPS_LIBS@ @LIBSEXY_LIBS@
+check_dbus_CFLAGS = 		@CHECK_CFLAGS@ @SFLGTK_CFLAGS@
+check_dbus_LDADD =		$(SFLPHONE_LIBS) $(SFLPHONE_OBJ) @CHECK_LIBS@ @LIBSEXY_LIBS@
 
 ###########################################################
