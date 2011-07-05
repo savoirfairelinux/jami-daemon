@@ -31,8 +31,8 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#ifndef __SFL_AUDIO_RTP_SESSION_H__
-#define __SFL_AUDIO_RTP_SESSION_H__
+#ifndef __SFL_AUDIO_SYMMETRIC_RTP_SESSION_H__
+#define __SFL_AUDIO_SYMMETRIC_RTP_SESSION_H__
 
 #include <iostream>
 #include <exception>
@@ -204,5 +204,5 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public AudioRtpRecordHan
 };
 
 }
-#endif // __AUDIO_RTP_SESSION_H__
+#endif // __AUDIO_SYMMETRIC_RTP_SESSION_H__
 
