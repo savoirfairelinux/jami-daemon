@@ -54,17 +54,17 @@ using std::ptrdiff_t;
 namespace sfl
 {
 
-// class AudioRtpSession : protected ost::Thread, public ost::TimerPort, public AudioRtpRecordHandler, public ost::TRTPSessionBase<ost::DualRTPUDPIPv4Channel,ost::DualRTPUDPIPv4Channel,ost::AVPQueue>
-class AudioRtpSession : public ost::TimerPort, public AudioRtpRecordHandler, public ost::SymmetricRTPSession
+// class AudioSymmetricRtpSession : protected ost::Thread, public ost::TimerPort, public AudioRtpRecordHandler, public ost::TRTPSessionBase<ost::DualRTPUDPIPv4Channel,ost::DualRTPUDPIPv4Channel,ost::AVPQueue>
+class AudioSymmetricRtpSession : public ost::TimerPort, public AudioRtpRecordHandler, public ost::SymmetricRTPSession
 {
     public:
         /**
         * Constructor
         * @param sipcall The pointer on the SIP call
         */
-        AudioRtpSession (SIPCall* sipcall);
+        AudioSymmetricRtpSession (SIPCall* sipcall);
 
-        ~AudioRtpSession();
+        ~AudioSymmetricRtpSession();
 
         virtual void final ();
 
@@ -111,7 +111,7 @@ class AudioRtpSession : public ost::TimerPort, public AudioRtpRecordHandler, pub
         class AudioRtpThread : public ost::Thread, public ost::TimerPort
         {
             public:
-                AudioRtpThread (AudioRtpSession *session);
+                AudioRtpThread (AudioSymmetricRtpSession *session);
                 ~AudioRtpThread();
 
                 void stopRtpThread (void) {
@@ -121,7 +121,7 @@ class AudioRtpSession : public ost::TimerPort, public AudioRtpRecordHandler, pub
                 virtual void run();
 
             private:
-                AudioRtpSession *rtpSession;
+                AudioSymmetricRtpSession *rtpSession;
 
                 bool running;
         };

@@ -3,7 +3,7 @@ include $(top_srcdir)/globals.mak
 noinst_LTLIBRARIES = libaudiortp.la
 
 libaudiortp_la_SOURCES = \
-		AudioRtpSession.cpp \
+		AudioSymmetricRtpSession.cpp \
 		AudioRtpRecordHandler.cpp \
 		AudioRtpFactory.cpp \
 		AudioZrtpSession.cpp \
@@ -13,7 +13,7 @@ libaudiortp_la_SOURCES = \
 noinst_HEADERS = \
 		AudioRtpRecordHandler.h \
 		AudioRtpFactory.h \
-		AudioRtpSession.h \
+		AudioSymmetricRtpSession.h \
 		AudioZrtpSession.h \
 		ZrtpSessionCallback.h \
 		AudioSrtpSession.h 

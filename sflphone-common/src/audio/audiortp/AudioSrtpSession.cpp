@@ -46,7 +46,7 @@ namespace sfl
 {
 
 AudioSrtpSession::AudioSrtpSession (SIPCall * sipcall) :
-    AudioRtpSession (sipcall),
+    AudioSymmetricRtpSession (sipcall),
     _remoteCryptoCtx (NULL),
     _localCryptoCtx (NULL),
     _localCryptoSuite (0),

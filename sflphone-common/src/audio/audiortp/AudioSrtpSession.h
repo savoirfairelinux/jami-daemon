@@ -30,7 +30,7 @@
 #ifndef __SFL_AUDIO_SRTP_SESSION_H__
 #define __SFL_AUDIO_SRTP_SESSION_H__
 
-#include "AudioRtpSession.h"
+#include "AudioSymmetricRtpSession.h"
 #include "sip/SdesNegotiator.h"
 
 #include <ccrtp/CryptoContext.h>
@@ -66,7 +66,7 @@ class SIPCall;
 namespace sfl
 {
 
-class AudioSrtpSession : public AudioRtpSession
+class AudioSrtpSession : public AudioSymmetricRtpSession
 {
     public:
 
