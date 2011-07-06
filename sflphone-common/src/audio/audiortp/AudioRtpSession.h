@@ -146,7 +146,6 @@ class AudioRtpSession : public AudioRtpRecordHandler
          */
         short _timestampCount;
 
-
         bool _isStarted;
 
         RtpMethod _type;
