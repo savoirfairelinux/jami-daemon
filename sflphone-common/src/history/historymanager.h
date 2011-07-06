@@ -35,7 +35,6 @@
 
 #include "historyitem.h"
 #include <global.h>
-#include <user_cfg.h>
 
 #define DAY_UNIX_TIMESTAMP      86400   // Number of seconds in one day: 60 x 60 x 24
 

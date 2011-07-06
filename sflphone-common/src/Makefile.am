@@ -41,7 +41,6 @@ noinst_HEADERS = \
 		manager.h \
 		global.h \
 		eventthread.h \
-		user_cfg.h \
 		account.h \
 		accountcreator.h \
 		call.h \

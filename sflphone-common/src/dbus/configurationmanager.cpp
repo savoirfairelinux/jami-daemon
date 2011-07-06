@@ -30,7 +30,7 @@
  *  as that of the covered work.
  */
 
-#include <global.h>
+#include "global.h"
 #include <configurationmanager.h>
 #include <sstream>
 #include "../manager.h"

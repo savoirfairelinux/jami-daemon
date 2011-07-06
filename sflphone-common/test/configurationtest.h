@@ -49,7 +49,6 @@
 #include "manager.h"
 #include "audio/audiolayer.h"
 #include "global.h"
-#include "user_cfg.h"
 #include "config/yamlparser.h"
 #include "config/yamlemitter.h"
 #include "config/yamlnode.h"

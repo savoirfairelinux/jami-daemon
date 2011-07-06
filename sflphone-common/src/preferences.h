@@ -113,6 +113,8 @@ class Preferences : public Serializable
 
     public:
 
+        static const char * const DFT_ZONE;
+
         Preferences();
 
         ~Preferences();
@@ -719,7 +721,6 @@ class ShortcutPreferences : public Serializable
         std::string _popup;
         std::string _toggleHold;
         std::string _togglePickupHangup;
-
 };
 
 #endif

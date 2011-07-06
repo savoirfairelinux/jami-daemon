@@ -37,11 +37,9 @@
 
 #include "account.h"
 #include "dbus/callmanager.h"
-#include "user_cfg.h"
 #include "global.h"
 #include "sip/sipaccount.h"
 
-//#include "audio/audiolayer.h"
 #include "audio/alsa/alsalayer.h"
 #include "audio/pulseaudio/pulselayer.h"
 #include "audio/sound/tonelist.h"
@@ -54,8 +52,8 @@
 
 #include "conference.h"
 
-#include <errno.h>
-#include <time.h>
+#include <cerrno>
+#include <ctime>
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
@@ -916,6 +914,8 @@ void ManagerImpl::removeConference (const ConfID& conference_id)
     else {
         _error ("Manager: Error: Cannot remove conference: %s", conference_id.c_str());
     }
+
+    delete conf;
 }
 
 Conference*
@@ -2315,7 +2315,11 @@ void ManagerImpl::stopTone ()
     }
 
     if (_audiofile) {
+	std::string filepath = _audiofile->getFilePath();
+	_dbus->getCallManager()->recordPlaybackStoped(filepath);
         _audiofile->stop();
+	delete _audiofile;
+	_audiofile = NULL;
     }
 
     _toneMutex.leaveMutex();
@@ -3101,7 +3105,7 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
 	     _dbus->getCallManager()->recordPlaybackStoped(file);
          }
 	 delete _audiofile;
-	_audiofile = NULL;
+	 _audiofile = NULL;
     }
 
     try {
@@ -3807,7 +3811,7 @@ bool ManagerImpl::getConfigBool (const std::string& section,
                                  const std::string& name)
 {
     try {
-        return (_config.getConfigTreeItemValue (section, name) == TRUE_STR) ? true
+        return (_config.getConfigTreeItemValue (section, name) == Conf::TRUE_STR) ? true
                : false;
     } catch (Conf::ConfigTreeItemException& e) {
         throw e;

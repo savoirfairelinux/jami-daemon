@@ -54,7 +54,7 @@ void ConfigurationTest::testDefaultValuePreferences()
 {
     _debug ("-------------------- ConfigurationTest::testDefaultValuePreferences --------------------\n");
 
-    CPPUNIT_ASSERT (Manager::instance().preferences.getZoneToneChoice() == DFT_ZONE);
+    CPPUNIT_ASSERT (Manager::instance().preferences.getZoneToneChoice() == Preferences::DFT_ZONE);
 }
 
 void ConfigurationTest::testDefaultValueSignalisation()

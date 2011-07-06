@@ -28,7 +28,6 @@
  *  as that of the covered work.
  */
 #include "AudioSrtpSession.h"
-#include "user_cfg.h"
 
 #include "sip/sipcall.h"
 
@@ -39,12 +38,9 @@
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
 
-
 #include <cstdio>
 #include <cstring>
 #include <cerrno>
-
-
 
 namespace sfl
 {

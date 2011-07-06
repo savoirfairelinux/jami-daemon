@@ -30,7 +30,6 @@
  */
 #include "accountcreator.h"
 #include "sip/sipaccount.h"
-#include "user_cfg.h"
 
 #ifdef USE_IAX
 #include "iax/iaxaccount.h"

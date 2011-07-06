@@ -64,7 +64,7 @@ void AudioSymmetricRtpSession::final()
     delete this;
 }
 
-AudioSymmetricRtpSession::AudioRtpThread::AudioRtpThread (AudioSymmetricRtpSession *session) : rtpSession (session), running (true)
+AudioSymmetricRtpSession::AudioRtpThread::AudioRtpThread (AudioSymmetricRtpSession *session) : running (true), rtpSession (session)
 {
     _debug ("AudioSymmetricRtpSession: Create new rtp thread");
 }

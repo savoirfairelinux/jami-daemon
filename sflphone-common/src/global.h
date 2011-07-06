@@ -33,7 +33,6 @@
 #ifndef __GLOBAL_H__
 #define __GLOBAL_H__
 
-#include <assert.h>
 #include <stdio.h>
 #include <libintl.h>
 #include <locale.h>
@@ -44,13 +43,11 @@
 #include <vector>
 #include "logger.h"
 
-#define SFLPHONED_VERSION "0.9.14"		/** Version number */
-
 #define HOMEDIR					(getenv ("HOME"))				/** Home directory */
 #define XDG_DATA_HOME			(getenv ("XDG_DATA_HOME"))
 #define XDG_CONFIG_HOME			(getenv ("XDG_CONFIG_HOME"))
 #define XDG_CACHE_HOME			(getenv ("XDG_CACHE_HOME"))
-#define ZRTP_ZID_FILENAME       "sfl.zid"
+const char * const ZRTP_ZID_FILENAME = "sfl.zid";
 
 typedef float float32;
 typedef short int16;
@@ -68,10 +65,6 @@ const FILE_TYPE  FILE_WAV = 2;
 static const SOUND_FORMAT INT16 = 0x2; // TODO shold change these symbols
 static const SOUND_FORMAT INT32 = 0x8;
 
-#define SUCCESS                 0
-
-#define ASSERT( expected , value)       if( value == expected ) return SUCCESS; \
-                                        else return 1;
 #define PIDFILE "sfl.pid"
 
 #ifdef DATAFORMAT_IS_FLOAT
@@ -173,6 +166,8 @@ typedef enum {
 /** The struct to reflect the order the user wants to use the codecs */
 typedef std::vector<AudioCodecType> CodecOrder;
 
-
+const char * const IP2IP_PROFILE = "IP2IP";
+const char * const DIR_SEPARATOR_STR = "/"; // Directory separator char
+const char DIR_SEPARATOR_CH = '/'; /** Directory separator string */
 
 #endif	// __GLOBAL_H__

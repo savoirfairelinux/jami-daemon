@@ -271,7 +271,7 @@ int IAXAccount::registerVoIPLink()
 		_error("IAXAccount: %s", e.what());
 	}
 
-    return SUCCESS;
+    return 0;
 }
 
 int
@@ -281,13 +281,13 @@ IAXAccount::unregisterVoIPLink()
         _link->sendUnregister (_accountID);
         _link->terminate();
 
-        return SUCCESS;
+        return 0;
 	}
 	catch(VoipLinkException &e) {
 		_error("IAXAccount: %s", e.what());
 	}
 
-	return SUCCESS;
+	return 0;
 }
 
 void

@@ -32,9 +32,13 @@
 
 #include "sipaccount.h"
 #include "manager.h"
-#include "user_cfg.h"
 #include <pwd.h>
 #include <sstream>
+
+namespace {
+    const char * const DFT_STUN_SERVER = "stun.sflphone.org"; /** Default STUN server address */
+    const char *DFT_EXPIRE_VALUE = "600"; /** Default expire value for registration */
+} // end anonymous namespace
 
 Credentials::Credentials() : credentialCount (0) {}
 
@@ -841,7 +845,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 
 
     if (_accountID == IP2IP_PROFILE) {
-        registrationStateCode = EMPTY_FIELD;
+        registrationStateCode = ""; // emtpy field
         registrationStateDescription = "Direct IP call";
     } else {
         state = getRegistrationState();
@@ -934,7 +938,7 @@ int SIPAccount::initCredential (void)
 
     if (cred_info == NULL) {
         _error ("SipAccount: Error: Failed to set cred_info for account %s", _accountID.c_str());
-        return !SUCCESS;
+        return 1;
     }
 
     pj_bzero (cred_info, sizeof (pjsip_cred_info) * getCredentialCount());
@@ -1000,14 +1004,14 @@ int SIPAccount::initCredential (void)
 
     _cred = cred_info;
 
-    return SUCCESS;
+    return 0;
 }
 
 
 int SIPAccount::registerVoIPLink()
 {
     if (_hostname.length() >= PJ_MAX_HOSTNAME) {
-        return !SUCCESS;
+        return 1;
     }
 
     // Init set of additional credentials, if supplied by the user
@@ -1040,7 +1044,7 @@ int SIPAccount::registerVoIPLink()
         _error("SIPAccount: %s", e.what());
     }
 
-    return SUCCESS;
+    return 0;
 }
 
 int SIPAccount::unregisterVoIPLink()
