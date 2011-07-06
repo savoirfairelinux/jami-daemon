@@ -28,10 +28,11 @@
  *  as that of the covered work.
  */
 
-#include <iostream>
-#include <string.h>
-
 #include "sdptest.h"
+#include <iostream>
+#include <cstring>
+
+#include "audio/codecs/audiocodec.h"
 
 
 enum session_type
