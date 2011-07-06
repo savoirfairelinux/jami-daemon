@@ -27,6 +27,7 @@ else
 fi
 
 AC_PROG_CC
+AM_PROG_CC_C_O dnl for per target flags, i.e. test_program_CFLAGS
 AC_PROG_INSTALL
 AC_HEADER_STDC
 LT_INIT

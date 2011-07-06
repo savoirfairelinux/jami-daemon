@@ -288,7 +288,7 @@ int account_list_get_sip_account_number (void)
     for (i=0; i<size ; i++) {
         current = account_list_get_nth (i);
 
-        if (strcmp (g_hash_table_lookup (current->properties, ACCOUNT_TYPE), "SIP") == 0)
+        if (current && strcmp (g_hash_table_lookup (current->properties, ACCOUNT_TYPE), "SIP") == 0)
             n++;
     }
 
