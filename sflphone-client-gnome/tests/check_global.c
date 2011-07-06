@@ -171,20 +171,6 @@ START_TEST (test_get_current_account)
 }
 END_TEST
 
-START_TEST (test_current_account_has_mailbox)
-{
-    account_t *test = create_test_account ("test");
-
-    account_list_init ();
-    account_list_add (test);
-    fail_unless (account_list_current_account_has_mailbox () == FALSE, "current account has a default mailbox");
-
-    g_hash_table_replace (test->properties, ACCOUNT_MAILBOX, "888");
-    fail_unless (account_list_current_account_has_mailbox () == TRUE, "current account has not no voicemail number");
-}
-END_TEST
-
-
 Suite *
 global_suite (void)
 {
@@ -197,7 +183,6 @@ global_suite (void)
   tcase_add_test (tc_cases, test_get_by_id);
   tcase_add_test (tc_cases, test_get_account_position);
   tcase_add_test (tc_cases, test_get_current_account);
-  tcase_add_test (tc_cases, test_current_account_has_mailbox);
   suite_add_tcase (s, tc_cases);
 
   return s;

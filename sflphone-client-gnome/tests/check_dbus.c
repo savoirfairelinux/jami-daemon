@@ -33,7 +33,8 @@
 
 START_TEST (test_dbus_connect)
 {
-    fail_unless (dbus_connect () == TRUE, "dbus_connect () returns FALSE");
+    GError *error = NULL;
+    fail_unless (dbus_connect (&error) == TRUE, "dbus_connect () returns FALSE");
 }
 END_TEST
 
