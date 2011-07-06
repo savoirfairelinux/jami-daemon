@@ -724,7 +724,7 @@ Call *SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) 
 		_info ("UserAgent: Start audio rtp session");
 		call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
 		_info ("UserAgent: Start video rtp session");
-        call->getVideoRtp()->updateDestination(call->getLocalIp(), call->getLocalVideoPort());
+        call->getVideoRtp()->updateDestination(call->getLocalSDP()->getRemoteIP(), call->getLocalSDP()->getRemoteVideoPort());
 		call->getVideoRtp()->start();
 	} catch (...) {
 		throw VoipLinkException ("Could not start rtp session for early media");
@@ -1813,7 +1813,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const CallID& id, const std::string& to)
             call->getAudioRtp()->initAudioSymmetricRtpSession (call);
             call->getAudioRtp()->initLocalCryptoInfo (call);
             call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
-            call->getVideoRtp()->updateDestination(call->getLocalIp(), call->getLocalVideoPort());
+            call->getVideoRtp()->updateDestination(call->getLocalSDP()->getRemoteIP(), call->getLocalSDP()->getRemoteVideoPort());
             call->getVideoRtp()->start ();
         } catch (...) {
             _debug ("UserAgent: Unable to create RTP Session in new IP2IP call (%s:%d)", __FILE__, __LINE__);
@@ -3466,7 +3466,7 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
 
     try {
         call->getAudioRtp()->updateDestinationIpAddress();
-        call->getVideoRtp()->updateDestination(call->getLocalIp(), call->getLocalVideoPort());
+        call->getVideoRtp()->updateDestination(call->getLocalSDP()->getRemoteIP(), call->getLocalSDP()->getRemoteVideoPort());
         call->getAudioRtp()->setDtmfPayloadType(sdpSession->getTelephoneEventType());
     } catch (...) {
 
@@ -4072,7 +4072,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
     try {
         _debug ("UserAgent: Create RTP session for this call");
         call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
-        call->getVideoRtp()->updateDestination(call->getLocalIp(), call->getLocalVideoPort());
+        call->getVideoRtp()->updateDestination(call->getLocalSDP()->getRemoteIP(), call->getLocalSDP()->getRemoteVideoPort());
         call->getVideoRtp()->start();
     } catch (...) {
         _warn ("UserAgent: Error: Failed to create rtp thread from answer");

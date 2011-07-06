@@ -241,7 +241,7 @@ void AudioRtpSession::sendMicData()
 
 void AudioRtpSession::setSessionTimeouts (void)
 {
-    _debug ("AudioZrtpSession: Set session scheduling timeout (%d) and expireTimeout (%d)", sfl::schedulingTimeout, sfl::expireTimeout);
+    _debug ("AudioRtpSession: Set session scheduling timeout (%d) and expireTimeout (%d)", sfl::schedulingTimeout, sfl::expireTimeout);
 
     _queue->setSchedulingTimeout (sfl::schedulingTimeout);
     _queue->setExpireTimeout (sfl::expireTimeout);
@@ -249,10 +249,10 @@ void AudioRtpSession::setSessionTimeouts (void)
 
 void AudioRtpSession::setDestinationIpAddress (void)
 {
-    _info ("AudioZrtpSession: Setting IP address for the RTP session");
+    _info ("AudioRtpSession: Setting IP address for the RTP session");
 
     if (_ca == NULL) {
-        _error ("AudioZrtpSession: Sipcall is gone.");
+        _error ("AudioRtpSession: Sipcall is gone.");
         throw AudioRtpSessionException();
     }
 
@@ -260,7 +260,7 @@ void AudioRtpSession::setDestinationIpAddress (void)
     _remote_ip = ost::InetHostAddress (_ca->getLocalSDP()->getRemoteIP().c_str());
 
     if (!_remote_ip) {
-        _warn ("AudioZrtpSession: Target IP address (%s) is not correct!",
+        _warn ("AudioRtpSession: Target IP address (%s) is not correct!",
                _ca->getLocalSDP()->getRemoteIP().data());
         return;
     }
@@ -268,24 +268,24 @@ void AudioRtpSession::setDestinationIpAddress (void)
     // Store remote port in case we would need to forget current destination
     _remote_port = (unsigned short) _ca->getLocalSDP()->getRemoteAudioPort();
 
-    _info ("AudioZrtpSession: New remote address for session: %s:%d",
+    _info ("AudioRtpSession: New remote address for session: %s:%d",
            _ca->getLocalSDP()->getRemoteIP().data(), _remote_port);
 
     if (!_queue->addDestination (_remote_ip, _remote_port)) {
-        _warn ("AudioZrtpSession: Can't add new destination to session!");
+        _warn ("AudioRtpSession: Can't add new destination to session!");
         return;
     }
 }
 
 void AudioRtpSession::updateDestinationIpAddress (void)
 {
-    _debug ("AudioZrtpSession: Update destination ip address");
+    _debug ("AudioRtpSession: Update destination ip address");
 
     // Destination address are stored in a list in ccrtp
     // This method remove the current destination entry
 
     if (!_queue->forgetDestination (_remote_ip, _remote_port, _remote_port+1))
-        _warn ("AudioZrtpSession: Could not remove previous destination");
+        _warn ("AudioRtpSession: Could not remove previous destination");
 
     // new destination is stored in call
     // we just need to recall this method
