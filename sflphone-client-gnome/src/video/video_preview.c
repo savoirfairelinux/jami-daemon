@@ -423,7 +423,11 @@ updateTexture(gpointer data)
 
     if (!ret) {
         video_preview_stop(data);
+#if GLIB_CHECK_VERSION(2,26,0)
         g_object_notify_by_pspec(G_OBJECT(data), properties[PROP_RUNNING]);
+#else
+        g_print("Warning: expected glib version >= 2.26.0\n"); // FIXME
+#endif
     }
 
     return ret;
@@ -460,7 +464,11 @@ on_drawarea_unrealize(GtkWidget *drawarea, gpointer data)
         priv->cairo = NULL; // context will be destroyed by gdk
         video_preview_stop(data);
     }
+#if GLIB_CHECK_VERSION(2,26,0)
     g_object_notify_by_pspec(G_OBJECT(data), properties[PROP_RUNNING]);
+#else
+    g_print("Warning: expected glib version >= 2.26.0\n"); // FIXME
+#endif
     g_object_unref(G_OBJECT(data));
     return FALSE; // call other handlers
 }
@@ -501,7 +509,11 @@ video_preview_run(VideoPreview *preview)
 
     priv->is_running = TRUE;
     /* emit the notify signal for this property */
+#if GLIB_CHECK_VERSION(2,26,0)
     g_object_notify_by_pspec (G_OBJECT(preview), properties[PROP_RUNNING]);
+#else
+    g_print("Warning: expected glib version >= 2.26.0\n"); // FIXME
+#endif
 
     g_object_get(G_OBJECT(preview), "drawarea", &priv->drawarea, NULL);
 }
