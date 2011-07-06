@@ -803,6 +803,7 @@ SIPVoIPLink::answer (const CallID& id) throw (VoipLinkException)
 
         try {
             call->getAudioRtp()->stop ();
+            call->getVideoRtp()->stop ();
         }
         catch(...) {
         	throw VoipLinkException("Could not stop rtp session");
