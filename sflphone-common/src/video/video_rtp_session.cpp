@@ -48,6 +48,7 @@ void VideoRtpSession::updateDestination(const std::string &destination,
         unsigned int port)
 {
     std::stringstream tmp;
+    assert(not destination.empty());
     tmp << "rtp://" << destination << ":" << port;
     args_["destination"] = tmp.str();
     std::cerr << "updated dest to " << args_["destination"] << std::endl;
@@ -91,7 +92,6 @@ void VideoRtpSession::start()
 
     sendThread_->waitForSDP();
     std::map<std::string, std::string> args(args_);
-    args["input"] = "test.sdp";
     receiveThread_.reset(new VideoReceiveThread(args));
     receiveThread_->start();
 }
