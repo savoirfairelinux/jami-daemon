@@ -123,16 +123,16 @@ START_TEST (test_get_account_position)
 
     pos = account_list_get_position (test);
     pos1 = account_list_get_position (test2);
-    fail_if (pos == -1, "ERROR - bad account position");
+    fail_if (pos == (guint)-1, "ERROR - bad account position");
     fail_unless (pos == 0, "ERROR - bad account position");
 
-    fail_if (pos1 == -1, "ERROR - bad account position");
+    fail_if (pos1 == (guint)-1, "ERROR - bad account position");
     fail_unless (pos1 == 1, "ERROR - bad account position");
     
     account_list_set_current (test);
     pos = account_list_get_position (test);
     pos1 = account_list_get_position (test2);
-    fail_if (pos == -1, "ERROR - bad account position");
+    fail_if (pos == (guint)-1, "ERROR - bad account position");
     fail_unless (pos == 0, "ERROR - bad account position");
     fail_unless (pos1 == 1, "ERROR - bad account position");
 }
