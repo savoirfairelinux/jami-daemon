@@ -107,7 +107,6 @@ static int drawWidth  = 20 * 16;
 static int drawHeight = 20 * 9;
 static const char *drawFormat;
 static VideoPreview *preview = NULL;
-static gulong unrealize_handler_id;
 
 /* This gets called when the video preview is stopped */
 static gboolean
@@ -819,8 +818,8 @@ GtkWidget* create_video_configuration()
     }
     if (!using_clutter) 
         drawarea = gtk_drawing_area_new();
-    unrealize_handler_id = g_signal_connect(drawarea, "unrealize",
-                                    G_CALLBACK(on_drawarea_unrealize), NULL);
+    g_signal_connect(drawarea, "unrealize", G_CALLBACK(on_drawarea_unrealize),
+                     NULL);
     gtk_widget_set_size_request (drawarea, drawWidth, drawHeight);
     gtk_table_attach(GTK_TABLE(table), drawarea, 0, 1, 1, 2, 0, 0, 0, 6);
 
