@@ -225,7 +225,9 @@ void VideoReceiveThread::prepareSDP()
     os << "m=video 5000 RTP/AVP 96" << std::endl;  
     os << "b=AS:1000" << std::endl;
     os << "a=rtpmap:96 MP4V-ES/90000" << std::endl;
-    os << "a=fmtp:96 profile-level-id=1; config=000001B001000001B58913000001000000012000C48D8800F50A041E1463000001B24C61766335332E352E30" << std::endl;
+    os << "a=rtpmap:96 H264/90000" << std::endl;
+    os << "a=fmtp:96 packetization-mode=1; sprop-parameter-sets=Z0LAHtoCgPaEAAADAAQAAAMA8DxYuoA=,aM48gA==" << std::endl;
+
     os.close();
 }
 

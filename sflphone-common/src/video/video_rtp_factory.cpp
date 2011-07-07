@@ -40,7 +40,7 @@ VideoRtpFactory::VideoRtpFactory()
 {
     std::map<std::string, std::string> args;
     args["input"]       = "/dev/video0";
-    args["codec"]       = "mpeg4";
+    args["codec"]       = "libx264";
     args["bitrate"]     = "1000000";
     args["destination"] = "rtp://127.0.0.1:5000";
     args["format"]      = "rgb24";
