@@ -73,8 +73,10 @@ class VideoReceiveThread : public ost::Thread {
         void cleanup();
         SwsContext * createScalingContext();
         ost::Event shmReady_;
+        std::string sdpFilename_;
 
         void setProgramPath();
+        void prepareSDP();
 
     public:
         explicit VideoReceiveThread(const std::map<std::string, std::string> &args);

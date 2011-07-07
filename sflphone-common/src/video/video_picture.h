@@ -47,7 +47,7 @@ class VideoPicture {
         const unsigned height;  /** image height    */
         const uint64_t pts;     /** presentation timestamp */
 
-        size_t Size() { return (bpp >> 3) * width * height; }
+        size_t Size() const { return (bpp >> 3) * width * height; }
 };
 }
 

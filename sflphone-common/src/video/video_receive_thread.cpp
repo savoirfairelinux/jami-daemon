@@ -186,8 +186,48 @@ int bufferSize(int width, int height, int format)
     return sizeof(uint8_t) * avpicture_get_size(fmt, width, height);
 }
 
+
+std::string openTemp(std::string path, std::ofstream& f)
+{
+    path += "/XXXXXX";
+    std::vector<char> dst_path(path.begin(), path.end());
+    dst_path.push_back('\0');
+
+    int fd = -1;
+    while (fd == -1)
+    {
+        fd = mkstemp(&dst_path[0]);
+        if (fd != -1)
+        {
+            path.assign(dst_path.begin(), dst_path.end() - 1);
+            f.open(path.c_str(),
+                    std::ios_base::trunc | std::ios_base::out);
+            close(fd);
+        }
+    }
+    return path;
+}
+
 } // end anonymous namespace
 
+void VideoReceiveThread::prepareSDP()
+{
+    // this memory will be released on next call to tmpnam
+    std::ofstream os;
+    sdpFilename_ = openTemp("/tmp", os);
+
+    os << "v=0" << std::endl;
+    os << "o=- 0 0 IN IP4 127.0.0.1" << std::endl;
+    os << "s=No Name" << std::endl;
+    os << "c=IN IP4 127.0.0.1" << std::endl;
+    os << "t=0 0" << std::endl;
+    os << "a=tool:libavformat 53.2.0" << std::endl;
+    os << "m=video 5000 RTP/AVP 96" << std::endl;  
+    os << "b=AS:200" << std::endl;
+    os << "a=rtpmap:96 MP4V-ES/90000" << std::endl;
+    os << "a=fmtp:96 profile-level-id=1" << std::endl;
+    os.close();
+}
 
 void VideoReceiveThread::setup()
 {
@@ -201,13 +241,26 @@ void VideoReceiveThread::setup()
     if (format_ == -1)
     {
         std::cerr << "Couldn't find a pixel format for `" << args_["format"]
-                  << "'" << std::endl;
+            << "'" << std::endl;
         cleanup();
     }
 
     AVInputFormat *file_iformat = 0;
     // it's a v4l device if starting with /dev/video
-    if (args_["input"].substr(0, strlen("/dev/video")) == "/dev/video")
+    // FIXME: This is not the most robust way of checking if we mean to use a
+    // v4l device
+    if (args_["input"].empty())
+    {
+        prepareSDP();
+        args_["input"] = sdpFilename_;
+        file_iformat = av_find_input_format("sdp");
+        if (!file_iformat)
+        {
+            std::cerr << "Could not find format!" << std::endl;
+            cleanup();
+        }
+    }
+    else if (args_["input"].substr(0, strlen("/dev/video")) == "/dev/video")
     {
         std::cerr << "Using v4l2 format" << std::endl;
         file_iformat = av_find_input_format("video4linux2");
@@ -218,6 +271,7 @@ void VideoReceiveThread::setup()
         }
     }
 
+    prepareSDP();
     AVDictionary *options = NULL;
     if (!args_["framerate"].empty())
         av_dict_set(&options, "framerate", args_["framerate"].c_str(), 0);
@@ -230,7 +284,7 @@ void VideoReceiveThread::setup()
     if (avformat_open_input(&inputCtx_, args_["input"].c_str(), file_iformat, &options) != 0)
     {
         std::cerr <<  "Could not open input file \"" << args_["input"] <<
-        	"\"" << std::endl;
+            "\"" << std::endl;
         cleanup();
     }
 
@@ -363,7 +417,7 @@ VideoReceiveThread::VideoReceiveThread(const std::map<std::string, std::string> 
     inputCtx_(0),
     dstWidth_(-1),
     dstHeight_(-1)
-    {}
+{}
 
 void VideoReceiveThread::run()
 {
@@ -384,18 +438,18 @@ void VideoReceiveThread::run()
             avcodec_decode_video2(decoderCtx_, rawFrame_, &frameFinished, &inpacket);
             if (frameFinished)
             {
-                VideoPicture *pic = new VideoPicture(bpp, dstWidth_, dstHeight_, rawFrame_->pts);
-    // assign appropriate parts of buffer to image planes in scaledPicture 
-    avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
-            reinterpret_cast<uint8_t*>(pic->data), fmt, dstWidth_, dstHeight_);
+                VideoPicture pic(bpp, dstWidth_, dstHeight_, rawFrame_->pts);
+                // assign appropriate parts of buffer to image planes in scaledPicture
+                avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
+                        reinterpret_cast<uint8_t*>(pic.data), fmt, dstWidth_, dstHeight_);
 
                 sws_scale(imgConvertCtx, rawFrame_->data, rawFrame_->linesize,
                         0, decoderCtx_->height, scaledPicture_->data,
                         scaledPicture_->linesize);
 
                 // FIXME : put pictures in a pool and use the PTS to get them out and displayed from a separate thread
-                memcpy(shmBuffer_, pic->data, pic->Size());
-                delete pic;
+                // i.e., picturePool_.push_back(pic);
+                memcpy(shmBuffer_, pic.data, pic.Size());
 
                 /* signal the semaphore that a new frame is ready */ 
                 sem_signal(semSetID_);
@@ -410,7 +464,7 @@ void VideoReceiveThread::run()
 
 void VideoReceiveThread::stop()
 {
-    // FIXME: not thread safe, add mutex
+    // FIXME: not thread safe
     interrupted_ = true;
 }
 
@@ -421,11 +475,11 @@ VideoReceiveThread::~VideoReceiveThread()
 
 void VideoReceiveThread::setProgramPath()
 {
-	if (*program_path)
-		return;
+    if (*program_path)
+        return;
 
-	// fallback
-	strcpy(program_path, "/tmp");
+    // fallback
+    strcpy(program_path, "/tmp");
 
     char *line = NULL;
     size_t linelen = 0;
@@ -434,7 +488,7 @@ void VideoReceiveThread::setProgramPath()
     /* Find the path to sflphoned (i.e. ourselves) */
     FILE *maps = fopen ("/proc/self/maps", "rt");
     if (maps == NULL)
-		return;
+        return;
 
     for (;;)
     {
@@ -452,7 +506,7 @@ void VideoReceiveThread::setProgramPath()
             continue;
         char *nl  = strchr (line, '\n');
         if (*nl)
-        	*nl = '\0';
+            *nl = '\0';
         strncpy(program_path, dir, PATH_MAX);
         break;
     }
