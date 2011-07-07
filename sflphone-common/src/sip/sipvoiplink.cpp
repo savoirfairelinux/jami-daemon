@@ -1029,8 +1029,6 @@ SIPVoIPLink::offhold (const CallID& id) throw (VoipLinkException)
         call->getAudioRtp()->initAudioRtpConfig (call);
         call->getAudioRtp()->initAudioSymmetricRtpSession (call);
         call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
-        call->getVideoRtp()->start();
-
     }
     catch (const SdpException &e) {
     	_error("UserAgent: Exception: %s", e.what());

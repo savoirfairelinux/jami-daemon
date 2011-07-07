@@ -40,6 +40,11 @@ class VideoPicture {
             data = malloc(Size());
         }
 
+        ~VideoPicture()
+        {
+            free(data);
+        }
+
         void* data; /** raw image data  */
 
         const unsigned bpp;     /** bits per pixel  */
