@@ -62,7 +62,7 @@ struct _VideoPreviewClass {
 
 /* Public interface */
 VideoPreview *video_preview_new(GtkWidget *drawarea, int width, int height, const char *format, int shmkey, int semkey, int vbsize);
-void video_preview_run(VideoPreview *preview);
+int video_preview_run(VideoPreview *preview);
 void video_preview_stop(VideoPreview *preview);
 
 G_END_DECLS

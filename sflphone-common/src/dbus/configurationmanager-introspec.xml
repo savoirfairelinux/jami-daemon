@@ -1073,9 +1073,6 @@
 	   <method name="stopVideoPreview" tp:name-for-bindings="stopVideoPreview">
 	   </method>
 
-       <signal name="videoStopped" tp:name-for-bindings="videoStopped">
-	   </signal>
-
        <signal name="videoDeviceEvent" tp:name-for-bindings="videoDeviceEvent">
        </signal>
 
