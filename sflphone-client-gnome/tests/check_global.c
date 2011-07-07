@@ -101,16 +101,6 @@ START_TEST (test_get_by_id)
 }
 END_TEST
 
-START_TEST (test_sip_account)
-{
-    account_t *test = create_test_account ("test");
-
-    account_list_init ();
-    account_list_add (test);
-    fail_unless (account_list_get_sip_account_number () == 1, "ERROR - BAD SIP ACCOUNT NUMBER");
-}
-END_TEST
-
 START_TEST (test_get_account_position)
 {
     guint pos, pos1;
@@ -179,7 +169,6 @@ global_suite (void)
   TCase *tc_cases = tcase_create ("Accounts");
   tcase_add_test (tc_cases, test_add_account);
   tcase_add_test (tc_cases, test_ordered_list);
-  tcase_add_test (tc_cases, test_sip_account);
   tcase_add_test (tc_cases, test_get_by_id);
   tcase_add_test (tc_cases, test_get_account_position);
   tcase_add_test (tc_cases, test_get_current_account);
