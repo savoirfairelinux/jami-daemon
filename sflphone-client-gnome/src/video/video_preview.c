@@ -417,7 +417,7 @@ video_preview_stop(VideoPreview *preview)
 
     priv->is_running = FALSE;
 
-    gtk_widget_hide(priv->drawarea);
+    gdk_window_clear(gtk_widget_get_window(priv->drawarea));
 
     if (!priv->using_clutter)
         cairo_destroy(priv->cairo);
@@ -499,8 +499,6 @@ video_preview_run(VideoPreview *preview)
 
     priv->using_clutter = !strcmp(priv->format, "rgb24");
     g_print("Preview: using %s render\n", priv->using_clutter ? "clutter" : "cairo");
-
-    gtk_widget_show(priv->drawarea);
 
     if (priv->using_clutter) {
         ClutterActor *stage;

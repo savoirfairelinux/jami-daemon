@@ -818,13 +818,14 @@ GtkWidget* create_video_configuration()
     }
     if (!using_clutter) 
         drawarea = gtk_drawing_area_new();
+
+    gdk_window_clear(gtk_widget_get_window(drawarea));
     g_signal_connect(drawarea, "unrealize", G_CALLBACK(on_drawarea_unrealize),
                      NULL);
     gtk_widget_set_size_request (drawarea, drawWidth, drawHeight);
     gtk_table_attach(GTK_TABLE(table), drawarea, 0, 1, 1, 2, 0, 0, 0, 6);
 
     gtk_widget_show_all (ret);
-    gtk_widget_hide(drawarea);
 
     // get devices list from daemon *after* showing all widgets
     // that way we can show either the list, either the "no devices found" label
