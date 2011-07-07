@@ -265,8 +265,7 @@ void AudioRtpSession::setDestinationIpAddress (void)
         return;
     }
 
-    // Store remote port in case we would need to forget current destination
-    _remote_port = (unsigned short) _ca->getLocalSDP()->getRemoteAudioPort();
+    // Store remote port in case we would need to forget current destination _remote_port = (unsigned short) _ca->getLocalSDP()->getRemoteAudioPort();
 
     _info ("AudioRtpSession: New remote address for session: %s:%d",
            _ca->getLocalSDP()->getRemoteIP().data(), _remote_port);
