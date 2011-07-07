@@ -92,6 +92,7 @@ void VideoRtpSession::start()
 
     sendThread_->waitForSDP();
     std::map<std::string, std::string> args(args_);
+    args["input"] = "";
     receiveThread_.reset(new VideoReceiveThread(args));
     receiveThread_->start();
 }
