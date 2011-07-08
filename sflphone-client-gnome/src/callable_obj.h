@@ -222,11 +222,6 @@ free_callable_obj_t (callable_obj_t *c);
 void
 stop_call_clock (callable_obj_t *c);
 
-/**
- * @return gchar* A random ID
- */
-gchar* generate_call_id (void);
-
 gchar* get_peer_info (gchar*, gchar*);
 
 history_state_t get_history_state_from_id (gchar *indice);

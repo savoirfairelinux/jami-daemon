@@ -214,7 +214,6 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
 
     GError *err1 = NULL ;
     callable_obj_t *obj;
-    gchar *call_id;
 
     DEBUG ("CallableObj: Create new call");
 
@@ -243,12 +242,14 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
     set_timestamp (& (obj->_time_stop));
 
     if (g_strcasecmp (callID, "") == 0)
-        call_id = generate_call_id ();
+    {
+        obj->_callID = g_new0 (gchar, 30);
+        if (obj->_callID)
+            g_sprintf (obj->_callID, "%d", rand());
+    }
     else
-        call_id = callID;
+        obj->_callID = g_strdup (callID);
 
-    // Set the IDs
-    obj->_callID = g_strdup (call_id);
     obj->clockStarted = 1;
 
     if (obj->_type == CALL) {
@@ -395,15 +396,6 @@ void free_callable_obj_t (callable_obj_t *c)
 void attach_thumbnail (callable_obj_t *call, GdkPixbuf *pixbuf)
 {
     call->_contact_thumbnail = pixbuf;
-}
-
-gchar* generate_call_id (void)
-{
-    gchar *call_id;
-
-    call_id = g_new0 (gchar, 30);
-    g_sprintf (call_id, "%d", rand());
-    return call_id;
 }
 
 gchar* get_peer_info (gchar* number, gchar* name)
