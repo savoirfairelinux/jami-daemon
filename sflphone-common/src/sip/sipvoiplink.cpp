@@ -3688,8 +3688,7 @@ void registration_cb (struct pjsip_regc_cbparam *param)
 
 
         // TODO: there id a race condition for this ressource when closing the application
-        if (account)
-            account->setRegistrationStateDetailed (details);
+        account->setRegistrationStateDetailed (details);
     }
 
     if (param->status == PJ_SUCCESS) {
