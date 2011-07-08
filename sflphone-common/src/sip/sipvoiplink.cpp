@@ -1446,8 +1446,7 @@ SIPVoIPLink::dtmfSipInfo (SIPCall *call, char code)
 {
 
     int duration;
-    const int body_len = 1000;
-    char *dtmf_body;
+    char dtmf_body[1000];
     pj_status_t status;
     pjsip_tx_data *tdata;
     pj_str_t methodName, content;
@@ -1466,10 +1465,6 @@ SIPVoIPLink::dtmfSipInfo (SIPCall *call, char code)
 
     duration = Manager::instance().voipPreferences.getPulseLength();
 
-    dtmf_body = new char[body_len];
-
-    snprintf (dtmf_body, body_len - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
-
     pj_strdup2 (tmp_pool, &methodName, "INFO");
     pjsip_method_init_np (&method, &methodName);
 
@@ -1485,6 +1480,8 @@ SIPVoIPLink::dtmfSipInfo (SIPCall *call, char code)
     pj_strdup2 (tmp_pool, &ctype.type, "application");
 
     pj_strdup2 (tmp_pool, &ctype.subtype, "dtmf-relay");
+
+    snprintf (dtmf_body, sizeof dtmf_body - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
 
     /* Create "application/dtmf-relay" message body. */
     pj_strdup2 (tmp_pool, &content, dtmf_body);
