@@ -30,11 +30,13 @@
 
 #include "audiorecorder.h"
 #include "mainbuffer.h"
+#include <assert.h>
 
 int AudioRecorder::count = 0;
 
 AudioRecorder::AudioRecorder (AudioRecord  *arec, MainBuffer *mb) : Thread()
 {
+    assert(mb);
     setCancel (cancelDeferred);
 
     ++count;
@@ -64,9 +66,6 @@ void AudioRecorder::run (void)
     SFLDataFormat buffer[bufferLength];
 
     while (true) {
-
-        if (!mbuffer)
-            _warn ("AudioRecorder: Error: No instance of ringbuffer");
 
         int availBytes = mbuffer->availForGet (recorderId);
 
