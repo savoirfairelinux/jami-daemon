@@ -99,22 +99,6 @@ void active_is_always_recording ()
     dbus_set_is_always_recording(enabled);
 }
 
-/* This gets called when the video preview window is closed */
-static gboolean
-preview_is_running_cb(GObject *obj, GParamSpec *pspec, gpointer user_data)
-{
-    (void) pspec;
-    gboolean running = FALSE;
-    g_object_get(obj, "running", &running, NULL);
-    if (!running) {
-        GtkButton *button = GTK_BUTTON(user_data);
-        gtk_button_set_label(button, _("_Start"));
-        dbus_stop_video_preview();
-    }
-    return TRUE;
-}
-
-static VideoPreview *preview = NULL;
 static GtkWidget *preview_button = NULL;
 
 static GtkWidget *drawarea = NULL;
@@ -122,31 +106,40 @@ static int using_clutter;
 static int drawWidth  = 20 * 16;
 static int drawHeight = 20 * 9;
 static const char *drawFormat;
+static VideoPreview *preview = NULL;
 
-
+/* This gets called when the video preview is stopped */
+static gboolean
+preview_is_running_cb(GObject *obj, GParamSpec *pspec, gpointer user_data)
+{
+    (void) pspec;
+    gboolean running = FALSE;
+    g_object_get(obj, "running", &running, NULL);
+    GtkButton *button = GTK_BUTTON(user_data);
+    if (running) {
+        gtk_button_set_label(button, _("_Stop"));
+    } else {
+        gtk_button_set_label(button, _("_Start"));
+        preview = NULL;
+    }
+    return TRUE;
+}
 void
 video_started_cb(DBusGProxy *proxy, gint OUT_shmId, gint OUT_semId, gint OUT_videoBufferSize, GError *error, gpointer userdata)
 {
     (void)proxy;
     (void)error;
     (void)userdata;
-    DEBUG("Preview started");
-    if (preview == NULL) {
-        preview = video_preview_new(drawarea, drawWidth, drawHeight, drawFormat, OUT_shmId, OUT_semId, OUT_videoBufferSize);
-        g_signal_connect (preview, "notify::running",
-                G_CALLBACK (preview_is_running_cb),
-                preview_button);
-        video_preview_run(preview);
-    }
-}
 
-void
-video_stopped_cb()
-{
-    DEBUG("Preview stopped");
-    video_preview_stop(preview);
-    g_object_unref(preview);
-    preview = NULL;
+    if (OUT_shmId == -1 || OUT_semId == -1 || OUT_videoBufferSize == -1) {
+        return;
+    }
+
+    DEBUG("Preview started");
+    preview = video_preview_new(drawarea, drawWidth, drawHeight, drawFormat, OUT_shmId, OUT_semId, OUT_videoBufferSize);
+    g_signal_connect (preview, "notify::running", G_CALLBACK (preview_is_running_cb), preview_button);
+    if (video_preview_run(preview))
+        g_object_unref(preview);
 }
 
 static void
@@ -154,17 +147,17 @@ preview_button_clicked(GtkButton *button, gpointer data UNUSED)
 {
     preview_button = GTK_WIDGET(button);
     if (g_strcmp0(gtk_button_get_label(button), _("_Start")) == 0) {
-        gtk_button_set_label(button, _("_Stop"));
 
         static const char *formats[2] = { "rgb24", "bgra" };
 
         drawFormat = using_clutter ? formats[0] : formats[1];
         dbus_start_video_preview(drawWidth, drawHeight, drawFormat);
     }
-    else {
-        /* user clicked stop */
-        gtk_button_set_label(button, _("_Start"));
-        dbus_stop_video_preview();
+    else { /* user clicked stop */
+        if (!preview) /* preview was not created yet on the server */
+            return ;
+        video_preview_stop(preview);
+        preview = NULL;
     }
 }
 
@@ -771,6 +764,20 @@ static GtkWidget* v4l2_box ()
     return ret;
 }
 
+static gint
+on_drawarea_unrealize(GtkWidget *drawarea, gpointer data)
+{
+    (void)drawarea;(void)data;
+    if (preview) {
+        gboolean running = FALSE;
+        g_object_get(preview, "running", &running, NULL);
+        if (running)
+            video_preview_stop(preview);
+    }
+
+    return FALSE; // call other handlers
+}
+
 GtkWidget* create_video_configuration()
 {
     // Main widget
@@ -802,12 +809,23 @@ GtkWidget* create_video_configuration()
     gtk_widget_show(GTK_WIDGET(preview_button));
 
     using_clutter = clutter_init(NULL, NULL) == CLUTTER_INIT_SUCCESS;
-    drawarea = using_clutter ? gtk_clutter_embed_new() : gtk_drawing_area_new();
+    if (using_clutter) {
+        drawarea = gtk_clutter_embed_new();
+        if (!gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(drawarea))) {
+            gtk_widget_destroy(drawarea);
+            using_clutter = 0;
+        }
+    }
+    if (!using_clutter) 
+        drawarea = gtk_drawing_area_new();
+
+    gdk_window_clear(gtk_widget_get_window(drawarea));
+    g_signal_connect(drawarea, "unrealize", G_CALLBACK(on_drawarea_unrealize),
+                     NULL);
     gtk_widget_set_size_request (drawarea, drawWidth, drawHeight);
     gtk_table_attach(GTK_TABLE(table), drawarea, 0, 1, 1, 2, 0, 0, 0, 6);
 
     gtk_widget_show_all (ret);
-    gtk_widget_hide(drawarea);
 
     // get devices list from daemon *after* showing all widgets
     // that way we can show either the list, either the "no devices found" label

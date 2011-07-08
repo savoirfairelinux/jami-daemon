@@ -963,6 +963,14 @@ void ConfigurationManager::setShortcuts (
 
 void ConfigurationManager::startVideoPreview(const int32_t &width, const int32_t &height, const std::string &fmt, int32_t &shmKey, int32_t &semKey, int32_t &videoBufferSize)
 {
+    if (preview_.get()) {
+        _error("Video preview was already started!");
+        shmKey = -1;
+        semKey = -1;
+        videoBufferSize = -1;
+        return;
+    }
+
     _debug("Starting video preview");
     using std::map;
     using std::string;
@@ -988,8 +996,6 @@ void ConfigurationManager::stopVideoPreview()
 		_debug("Stopping video preview");
 		preview_->stop();
 		preview_.reset();
-		// notify client via dbus
-		videoStopped();
 	}
 }
 

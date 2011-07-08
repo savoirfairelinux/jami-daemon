@@ -45,6 +45,8 @@
 #include <clutter-gtk/clutter-gtk.h>
 #include <cairo.h>
 
+#include "dbus.h"
+
 #define VIDEO_PREVIEW_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), \
             VIDEO_PREVIEW_TYPE, VideoPreviewPrivate))
 
@@ -309,15 +311,8 @@ static void
 video_preview_finalize (GObject *obj)
 {
     VideoPreview *self = VIDEO_PREVIEW (obj);
-
-    /* finalize might be called multiple times, so we must guard against
-     * calling g_object_unref() on an invalid GObject.
-     */
-    if (self->priv->shm_buffer != NULL)
-    {
+    if (self->priv->shm_buffer)
         detachShm(self->priv->shm_buffer);
-        self->priv->shm_buffer = NULL;
-    }
 
     /* Chain up to the parent class */
     G_OBJECT_CLASS (video_preview_parent_class)->finalize (obj);
@@ -413,21 +408,50 @@ readFrameFromShm(VideoPreviewPrivate *priv)
     return TRUE;
 }
 
+void
+video_preview_stop(VideoPreview *preview)
+{
+    VideoPreviewPrivate *priv = VIDEO_PREVIEW_GET_PRIVATE(preview);
+    assert(priv);
+    gboolean notify_daemon = priv->is_running;
+
+    priv->is_running = FALSE;
+
+    gdk_window_clear(gtk_widget_get_window(priv->drawarea));
+
+    if (!priv->using_clutter)
+        cairo_destroy(priv->cairo);
+
+#if GLIB_CHECK_VERSION(2,26,0)
+    g_object_notify_by_pspec(G_OBJECT(preview), properties[PROP_RUNNING]);
+#else
+    g_object_notify(G_OBJECT(preview), "running");
+#endif
+
+    g_object_unref(G_OBJECT(preview));
+
+    if (notify_daemon)
+        dbus_stop_video_preview();
+}
+
 static gboolean
 updateTexture(gpointer data)
 {
     VideoPreview *preview = (VideoPreview *) data;
     VideoPreviewPrivate *priv = VIDEO_PREVIEW_GET_PRIVATE(preview);
 
-    gboolean ret = priv && priv->shm_buffer && readFrameFromShm(priv);
+    if (!priv->is_running) {
+        /* preview was stopped already */
+        g_object_unref(G_OBJECT(data));
+        return FALSE;
+    }
+
+    gboolean ret = readFrameFromShm(priv);
 
     if (!ret) {
+        priv->is_running = FALSE; // no need to notify daemon
         video_preview_stop(data);
-#if GLIB_CHECK_VERSION(2,26,0)
-        g_object_notify_by_pspec(G_OBJECT(data), properties[PROP_RUNNING]);
-#else
-        g_print("Warning: expected glib version >= 2.26.0\n"); // FIXME
-#endif
+        g_object_unref(G_OBJECT(data));
     }
 
     return ret;
@@ -455,39 +479,26 @@ video_preview_new (GtkWidget *drawarea, int width, int height, const char *forma
     return result;
 }
 
-static gint
-on_drawarea_unrealize(GtkWidget *drawarea, gpointer data)
-{
-    (void)drawarea;
-    VideoPreviewPrivate *priv = VIDEO_PREVIEW_GET_PRIVATE(data);
-    if (priv) {
-        priv->cairo = NULL; // context will be destroyed by gdk
-        video_preview_stop(data);
-    }
-#if GLIB_CHECK_VERSION(2,26,0)
-    g_object_notify_by_pspec(G_OBJECT(data), properties[PROP_RUNNING]);
-#else
-    g_print("Warning: expected glib version >= 2.26.0\n"); // FIXME
-#endif
-    g_object_unref(G_OBJECT(data));
-    return FALSE; // call other handlers
-}
-
-void
+int
 video_preview_run(VideoPreview *preview)
 {
     VideoPreviewPrivate * priv = VIDEO_PREVIEW_GET_PRIVATE(preview);
+    priv->shm_buffer = NULL;
 
-    gtk_widget_show(priv->drawarea);
     int shm_id = getShm(priv->videobuffersize, priv->sem_key);
+    if (shm_id == -1)
+        return 1;
+
     priv->shm_buffer = attachShm(shm_id);
+    if (!priv->shm_buffer)
+        return 1;
+
     priv->sem_set_id = get_sem_set(priv->shm_key);
+    if (priv->sem_set_id == -1)
+        return 1;
 
     priv->using_clutter = !strcmp(priv->format, "rgb24");
     g_print("Preview: using %s render\n", priv->using_clutter ? "clutter" : "cairo");
-
-    g_object_ref(preview);
-    g_signal_connect(priv->drawarea, "unrealize", G_CALLBACK(on_drawarea_unrealize), preview);
 
     if (priv->using_clutter) {
         ClutterActor *stage;
@@ -502,9 +513,11 @@ video_preview_run(VideoPreview *preview)
         clutter_actor_show_all(stage);
     } else {
         priv->cairo = gdk_cairo_create(gtk_widget_get_window(priv->drawarea));
+        assert(priv->cairo);
     }
 
     /* frames are read and saved here */
+    g_object_ref(preview);
     g_timeout_add(1000/25, updateTexture, preview);
 
     priv->is_running = TRUE;
@@ -512,23 +525,8 @@ video_preview_run(VideoPreview *preview)
 #if GLIB_CHECK_VERSION(2,26,0)
     g_object_notify_by_pspec (G_OBJECT(preview), properties[PROP_RUNNING]);
 #else
-    g_print("Warning: expected glib version >= 2.26.0\n"); // FIXME
+    g_object_notify(G_OBJECT(data), "running");
 #endif
 
-    g_object_get(G_OBJECT(preview), "drawarea", &priv->drawarea, NULL);
-}
-
-void
-video_preview_stop(VideoPreview *preview)
-{
-    VideoPreviewPrivate *priv = VIDEO_PREVIEW_GET_PRIVATE(preview);
-    if (priv) {
-        if (priv->drawarea) {
-            gtk_widget_hide(priv->drawarea);
-            priv->drawarea = NULL;
-        }
-        priv->is_running = FALSE;
-        if (!priv->using_clutter && priv->cairo)
-            cairo_destroy(priv->cairo);
-    }
+    return 0;
 }
