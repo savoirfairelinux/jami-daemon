@@ -829,5 +829,13 @@
 			<arg type="b" name="yesNo" direction="in"/>
 		</method>
 
+	   <signal name="receivingVideoEvent" tp:name-for-bindings="receivingVideoEvent">
+           <arg type="i" name="shmKey">
+           </arg>
+           <arg type="i" name="semKey">
+           </arg>
+           <arg type="i" name="videoBufferSize">
+           </arg>
+	   </signal>
 	</interface>
 </node>

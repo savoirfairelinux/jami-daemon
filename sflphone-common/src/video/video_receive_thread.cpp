@@ -253,6 +253,7 @@ void VideoReceiveThread::setup()
     // v4l device
     if (args_["input"].empty())
     {
+        std::cerr << "Preparing SDP" << std::endl;
         prepareSDP();
         args_["input"] = sdpFilename_;
         file_iformat = av_find_input_format("sdp");
@@ -273,7 +274,6 @@ void VideoReceiveThread::setup()
         }
     }
 
-    prepareSDP();
     AVDictionary *options = NULL;
     if (!args_["framerate"].empty())
         av_dict_set(&options, "framerate", args_["framerate"].c_str(), 0);
@@ -289,6 +289,8 @@ void VideoReceiveThread::setup()
             "\"" << std::endl;
         cleanup();
     }
+    else
+        std::cerr << "Opened input " << args_["input"] << std::endl;
 
     // retrieve stream information
     if (av_find_stream_info(inputCtx_) < 0)

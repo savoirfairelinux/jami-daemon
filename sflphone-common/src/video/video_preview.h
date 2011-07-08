@@ -45,9 +45,9 @@ class VideoPreview {
         bool start();
         bool stop();
 
-        int getShmKey(void) { return shmKey_; }
-        int getSemKey(void) { return semKey_; }
-        int getVideoBufferSize(void) { return videoBufferSize_; }
+        int getShmKey(void) const { return shmKey_; }
+        int getSemKey(void) const { return semKey_; }
+        int getVideoBufferSize(void) const { return videoBufferSize_; }
 
     private:
         std::tr1::shared_ptr<VideoReceiveThread> receiveThread_;

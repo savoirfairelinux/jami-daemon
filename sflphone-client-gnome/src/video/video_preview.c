@@ -364,7 +364,7 @@ readFrameFromShm(VideoPreviewPrivate *priv)
     }
 
     if (priv->using_clutter) {
-        if (strcmp(priv->format, "rgb24")) {
+        if (g_strcmp0(priv->format, "rgb24")) {
             g_print("clutter render: Unknown pixel format `%s'\n", priv->format);
             return FALSE;
         }
@@ -379,7 +379,7 @@ readFrameFromShm(VideoPreviewPrivate *priv)
                 0,
                 NULL);
     } else {
-        if (strcmp(priv->format, "bgra")) {
+        if (g_strcmp0(priv->format, "bgra")) {
             g_print("cairo render: Unknown pixel format `%s'\n", priv->format); 
             return FALSE;
         }
@@ -463,7 +463,7 @@ updateTexture(gpointer data)
  * Create a new #VideoPreview instance.                                        
  */                                                                             
 VideoPreview *
-video_preview_new (GtkWidget *drawarea, int width, int height, const char *format, int semkey, int shmkey, int vbsize)
+video_preview_new (GtkWidget *drawarea, int width, int height, const char *format, int shmkey, int semkey, int vbsize)
 {
     VideoPreview *result;
 
@@ -472,8 +472,8 @@ video_preview_new (GtkWidget *drawarea, int width, int height, const char *forma
           "width", (gint)width,
           "height", (gint)height,
           "format", (gpointer)format,
-          "semkey", (gint)semkey,
           "shmkey", (gint)shmkey,
+          "semkey", (gint)semkey,
           "vbsize", (gint)vbsize,
           NULL);
     return result;
@@ -485,7 +485,7 @@ video_preview_run(VideoPreview *preview)
     VideoPreviewPrivate * priv = VIDEO_PREVIEW_GET_PRIVATE(preview);
     priv->shm_buffer = NULL;
 
-    int shm_id = getShm(priv->videobuffersize, priv->sem_key);
+    int shm_id = getShm(priv->videobuffersize, priv->shm_key);
     if (shm_id == -1)
         return 1;
 
@@ -493,11 +493,11 @@ video_preview_run(VideoPreview *preview)
     if (!priv->shm_buffer)
         return 1;
 
-    priv->sem_set_id = get_sem_set(priv->shm_key);
+    priv->sem_set_id = get_sem_set(priv->sem_key);
     if (priv->sem_set_id == -1)
         return 1;
 
-    priv->using_clutter = !strcmp(priv->format, "rgb24");
+    priv->using_clutter = !g_strcmp0(priv->format, "rgb24");
     g_print("Preview: using %s render\n", priv->using_clutter ? "clutter" : "cairo");
 
     if (priv->using_clutter) {

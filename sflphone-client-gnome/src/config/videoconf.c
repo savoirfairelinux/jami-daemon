@@ -53,6 +53,20 @@ static GtkListStore *v4l2RateList;
 static GtkWidget *v4l2_hbox;
 static GtkWidget *v4l2_nodev;
 
+static GtkWidget *receivingVideoWindow;
+static GtkWidget *receivingVideoArea;
+static VideoPreview *video_renderer = NULL;
+
+static GtkWidget *preview_button = NULL;
+
+static GtkWidget *drawarea = NULL;
+static int using_clutter;
+static int drawWidth  = 20 * 16;
+static int drawHeight = 20 * 9;
+static const char *drawFormat;
+static VideoPreview *preview = NULL;
+
+
 static GtkWidget *codecTreeView;		// View used instead of store to get access to selection
 static GtkWidget *codecMoveUpButton;
 static GtkWidget *codecMoveDownButton;
@@ -99,15 +113,6 @@ void active_is_always_recording ()
     dbus_set_is_always_recording(enabled);
 }
 
-static GtkWidget *preview_button = NULL;
-
-static GtkWidget *drawarea = NULL;
-static int using_clutter;
-static int drawWidth  = 20 * 16;
-static int drawHeight = 20 * 9;
-static const char *drawFormat;
-static VideoPreview *preview = NULL;
-
 /* This gets called when the video preview is stopped */
 static gboolean
 preview_is_running_cb(GObject *obj, GParamSpec *pspec, gpointer user_data)
@@ -135,7 +140,7 @@ video_started_cb(DBusGProxy *proxy, gint OUT_shmId, gint OUT_semId, gint OUT_vid
         return;
     }
 
-    DEBUG("Preview started");
+    DEBUG("Preview started shm:%d sem:%d size:%d", OUT_shmId, OUT_semId, OUT_videoBufferSize);
     preview = video_preview_new(drawarea, drawWidth, drawHeight, drawFormat, OUT_shmId, OUT_semId, OUT_videoBufferSize);
     g_signal_connect (preview, "notify::running", G_CALLBACK (preview_is_running_cb), preview_button);
     if (video_preview_run(preview))
@@ -683,6 +688,35 @@ static void fill_devices(void)
 void video_device_event_cb(DBusGProxy *proxy UNUSED, void * foo  UNUSED)
 {
     fill_devices();
+}
+
+// FIXME: Should not be in config, only doing clutter case for now
+void receiving_video_event_cb(DBusGProxy *proxy, gint shmId, gint semId, gint videoBufferSize, GError *error, gpointer userdata)
+{
+    receivingVideoWindow = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+    (void)proxy;
+    (void)error;
+    (void)userdata;
+    gboolean using_clutter = clutter_init(NULL, NULL) == CLUTTER_INIT_SUCCESS;
+    g_assert(using_clutter);
+    receivingVideoArea = gtk_clutter_embed_new();
+    g_assert(receivingVideoArea);
+    g_assert(gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(receivingVideoArea)));
+
+    if (shmId == -1 || semId == -1 || videoBufferSize == -1)
+        return;
+
+    gtk_container_add(GTK_CONTAINER(receivingVideoWindow), receivingVideoArea);
+    gtk_widget_set_size_request (receivingVideoArea, drawWidth, drawHeight);
+    gtk_widget_show_all(receivingVideoWindow);
+
+    drawFormat = "rgb24";
+    DEBUG("Video started for shm:%d sem:%d bufferSz:%d", shmId, semId, videoBufferSize);
+
+    video_renderer = video_preview_new(receivingVideoArea, drawWidth, drawHeight, drawFormat, shmId, semId, videoBufferSize);
+    g_assert(video_renderer);
+    if (video_preview_run(video_renderer))
+        g_object_unref(video_renderer);
 }
 
 static GtkWidget* v4l2_box ()

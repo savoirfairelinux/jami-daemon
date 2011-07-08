@@ -50,10 +50,11 @@ class VideoRtpSession {
         void stop();
         void updateDestination(const std::string &destination,
                                unsigned int port);
+
     private:
         std::tr1::shared_ptr<VideoSendThread> sendThread_;
         std::tr1::shared_ptr<VideoReceiveThread> receiveThread_;
-        std::map<std::string,std::string> args_;
+        std::map<std::string, std::string> args_;
 };
 
 }
