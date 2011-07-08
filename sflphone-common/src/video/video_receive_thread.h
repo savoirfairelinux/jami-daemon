@@ -45,6 +45,8 @@ class AVFrame;
 namespace sfl_video {
 class VideoReceiveThread : public ost::Thread {
     private:
+        bool test_source_;
+        unsigned frameNumber_;
         std::map<std::string, std::string> args_;
         volatile sig_atomic_t interrupted_;
 
