@@ -7,44 +7,29 @@ SFLPHONE_LIBS = $(top_builddir)/src/contacts/libcontacts.la \
 				$(top_builddir)/src/dbus/libdbus.la \
 				$(top_builddir)/src/config/libconfig.la
 
-SFLPHONE_OBJ = $(top_builddir)/src/accountlist.o \
-				$(top_builddir)/src/actions.o \
-				$(top_builddir)/src/assistant.o \
-				$(top_builddir)/src/call.o \
-				$(top_builddir)/src/codeclist.o \
-				$(top_builddir)/src/dialpad.o \
-				$(top_builddir)/src/errors.o \
-				$(top_builddir)/src/mainwindow.o \
-				$(top_builddir)/src/menus.o \
-				$(top_builddir)/src/reqaccount.o \
-				$(top_builddir)/src/sflnotify.o \
-				$(top_builddir)/src/sliders.o \
-				$(top_builddir)/src/statusicon.o \
-				$(top_builddir)/src/timestamp.o \
-				$(top_builddir)/src/toolbar.o
-
 ###########################################################
 
-check_global_SOURCES =		check_global.c
+check_global_SOURCES =		check_global.c $(top_srcdir)/src/accountlist.c $(top_srcdir)/src/logger.c
 check_global_CFLAGS =		@CHECK_CFLAGS@ @SFLGTK_CFLAGS@ @DBUSGLIB_CFLAGS@
-check_global_LDADD =		$(SFLPHONE_LIBS) $(SFLPHONE_OBJ) @CHECK_LIBS@ @LIBSEXY_LIBS@ @SFLGTK_LIBS@ @DBUSGLIB_LIBS@
+check_global_LDADD =		$(SFLPHONE_LIBS) @CHECK_LIBS@ @LIBSEXY_LIBS@ @SFLGTK_LIBS@ @DBUSGLIB_LIBS@
 
 ###########################################################
 
 check_contacts_SOURCES =	check_contacts.c
 check_contacts_CFLAGS =		@CHECK_CFLAGS@ @SFLGTK_CFLAGS@
-check_contacts_LDADD =		$(SFLPHONE_LIBS) $(SFLPHONE_OBJ) @CHECK_LIBS@ @LIBSEXY_LIBS@
+check_contacts_LDADD =		$(SFLPHONE_LIBS) @CHECK_LIBS@ @LIBSEXY_LIBS@
 
 ###########################################################
 
 check_config_SOURCES =		check_config.c
 check_config_CFLAGS = 		@CHECK_CFLAGS@ @SFLGTK_CFLAGS@
-check_config_LDADD =		$(SFLPHONE_LIBS) $(SFLPHONE_OBJ) @CHECK_LIBS@ @LIBSEXY_LIBS@
+check_config_LDADD =		$(SFLPHONE_LIBS) @CHECK_LIBS@ @LIBSEXY_LIBS@
 
 ###########################################################
 
-check_dbus_SOURCES =		check_dbus.c
-check_dbus_CFLAGS = 		@CHECK_CFLAGS@ @SFLGTK_CFLAGS@
-check_dbus_LDADD =		$(SFLPHONE_LIBS) $(SFLPHONE_OBJ) @CHECK_LIBS@ @LIBSEXY_LIBS@
+check_dbus_SOURCES =		check_dbus.c $(top_srcdir)/src/logger.c $(top_srcdir)/src/accountlist.c $(top_srcdir)/src/actions.c $(top_srcdir)/src/codeclist.c $(top_srcdir)/src/dialpad.c $(top_srcdir)/src/errors.c $(top_srcdir)/src/mainwindow.c $(top_srcdir)/src/reqaccount.c $(top_srcdir)/src/sflnotify.c $(top_srcdir)/src/sliders.c $(top_srcdir)/src/statusicon.c $(top_srcdir)/src/callable_obj.c $(top_srcdir)/src/eel-gconf-extensions.c $(top_srcdir)/src/uimanager.c $(top_srcdir)/src/conference_obj.c $(top_srcdir)/src/shortcuts.c $(top_srcdir)/src/imwindow.c
+
+check_dbus_CFLAGS = 		@CHECK_CFLAGS@ @SFLGTK_CFLAGS@ @DBUSGLIB_CFLAGS@ @WEBKIT_CFLAGS@ @LIBGNOMEUI_CFLAGS@
+check_dbus_LDADD =			$(SFLPHONE_LIBS) @CHECK_LIBS@ @LIBSEXY_LIBS@ $(top_builddir)/src/widget/libwidget.la $(top_builddir)/src/video/libvideo.la $(top_builddir)/src/icons/libicons.la
 
 ###########################################################

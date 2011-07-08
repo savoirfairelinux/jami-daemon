@@ -101,16 +101,6 @@ START_TEST (test_get_by_id)
 }
 END_TEST
 
-START_TEST (test_sip_account)
-{
-    account_t *test = create_test_account ("test");
-
-    account_list_init ();
-    account_list_add (test);
-    fail_unless (account_list_get_sip_account_number () == 1, "ERROR - BAD SIP ACCOUNT NUMBER");
-}
-END_TEST
-
 START_TEST (test_get_account_position)
 {
     guint pos, pos1;
@@ -123,16 +113,16 @@ START_TEST (test_get_account_position)
 
     pos = account_list_get_position (test);
     pos1 = account_list_get_position (test2);
-    fail_if (pos == -1, "ERROR - bad account position");
+    fail_if (pos == (guint)-1, "ERROR - bad account position");
     fail_unless (pos == 0, "ERROR - bad account position");
 
-    fail_if (pos1 == -1, "ERROR - bad account position");
+    fail_if (pos1 == (guint)-1, "ERROR - bad account position");
     fail_unless (pos1 == 1, "ERROR - bad account position");
     
     account_list_set_current (test);
     pos = account_list_get_position (test);
     pos1 = account_list_get_position (test2);
-    fail_if (pos == -1, "ERROR - bad account position");
+    fail_if (pos == (guint)-1, "ERROR - bad account position");
     fail_unless (pos == 0, "ERROR - bad account position");
     fail_unless (pos1 == 1, "ERROR - bad account position");
 }
@@ -171,20 +161,6 @@ START_TEST (test_get_current_account)
 }
 END_TEST
 
-START_TEST (test_current_account_has_mailbox)
-{
-    account_t *test = create_test_account ("test");
-
-    account_list_init ();
-    account_list_add (test);
-    fail_unless (account_list_current_account_has_mailbox () == FALSE, "current account has a default mailbox");
-
-    g_hash_table_replace (test->properties, ACCOUNT_MAILBOX, "888");
-    fail_unless (account_list_current_account_has_mailbox () == TRUE, "current account has not no voicemail number");
-}
-END_TEST
-
-
 Suite *
 global_suite (void)
 {
@@ -193,11 +169,9 @@ global_suite (void)
   TCase *tc_cases = tcase_create ("Accounts");
   tcase_add_test (tc_cases, test_add_account);
   tcase_add_test (tc_cases, test_ordered_list);
-  tcase_add_test (tc_cases, test_sip_account);
   tcase_add_test (tc_cases, test_get_by_id);
   tcase_add_test (tc_cases, test_get_account_position);
   tcase_add_test (tc_cases, test_get_current_account);
-  tcase_add_test (tc_cases, test_current_account_has_mailbox);
   suite_add_tcase (s, tc_cases);
 
   return s;
