@@ -363,6 +363,9 @@ void VideoReceiveThread::waitForShm()
 
 void VideoReceiveThread::cleanup()
 {
+    // make sure no one is waiting for the SHM event which will never come if we've
+    // error'd out
+    shmReady_.signal();
     // free shared memory
     cleanupSemaphore(semSetID_);
     cleanupShm(shmID_, shmBuffer_);
