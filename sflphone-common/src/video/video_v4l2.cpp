@@ -145,6 +145,11 @@ std::vector<std::string> VideoV4l2Size::getRateList()
 
 void VideoV4l2Size::GetFrameRates(int fd, unsigned int pixel_format)
 {
+    if (fd == -1) { // SFL_TEST
+        rates.push_back(25);
+        return;
+    }
+
     struct v4l2_frmivalenum frmival = {
         0,
         pixel_format,
@@ -214,6 +219,13 @@ std::vector<std::string> VideoV4l2Channel::getSizeList(void)
 
 unsigned int VideoV4l2Channel::GetSizes(int fd, unsigned int pixelformat)
 {
+    if (fd == -1) { //SFL_TEST
+        VideoV4l2Size s(108, 192);
+        s.GetFrameRates(-1, 0);
+        sizes.push_back(s);
+        return 0;
+    }
+
     struct v4l2_frmsizeenum frmsize;
     frmsize.index = 0;
     frmsize.pixel_format = pixelformat;
@@ -305,6 +317,16 @@ VideoV4l2Size VideoV4l2Channel::getSize(const std::string &name)
 
 VideoV4l2Device::VideoV4l2Device(int fd, const std::string &device)
 {
+    if (fd == -1) {
+        VideoV4l2Channel c(0, "#^&");
+        c.GetSizes(-1, 0);
+        channels.push_back(c);
+        name = "TEST";
+
+        this->device = device;
+        return;
+    }
+
     unsigned idx;
 
     struct v4l2_capability cap;

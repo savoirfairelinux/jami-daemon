@@ -42,6 +42,7 @@ FrameInfo getFrameSize()
     printf("Size is %u\n", info.size);
     printf("Width is %u\n", info.width);
     printf("Height is %u\n", info.height);
+    fclose(tmp);
     return info;
 }
 

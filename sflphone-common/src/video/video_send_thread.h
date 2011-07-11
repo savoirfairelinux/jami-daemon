@@ -45,6 +45,7 @@ namespace sfl_video {
 
 class VideoSendThread : public ost::Thread {
     private:
+        bool test_source_;
         static void print_error(const char *filename, int err);
         void forcePresetX264();
         void print_and_save_sdp();

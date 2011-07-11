@@ -73,6 +73,8 @@ VideoV4l2List::VideoV4l2List() : _udev_mon(NULL)
     struct udev_list_entry *devlist;
     struct udev_enumerate *devenum;
 
+    addDevice("SFLTEST");
+
     _udev = udev_new();
     if (!_udev)
         goto udev_failed;
@@ -276,6 +278,12 @@ void VideoV4l2List::delDevice(const std::string &node)
 bool VideoV4l2List::addDevice(const std::string &dev)
 {
 	ost::MutexLock lock(_mutex);
+
+    if (dev == "SFLTEST") {
+        devices.push_back(VideoV4l2Device(-1, dev));
+        return true;
+    }
+
     int fd = open(dev.c_str(), O_RDWR);
     if (fd == -1)
         return false;
