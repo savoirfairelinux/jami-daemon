@@ -61,8 +61,8 @@ static GtkWidget *preview_button = NULL;
 
 static GtkWidget *drawarea = NULL;
 static int using_clutter;
-static int drawWidth  = 20 * 16;
-static int drawHeight = 20 * 9;
+static int drawWidth  = 640;
+static int drawHeight = 480;
 static const char *drawFormat;
 static VideoPreview *preview = NULL;
 
