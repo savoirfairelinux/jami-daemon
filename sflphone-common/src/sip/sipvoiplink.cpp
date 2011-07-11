@@ -799,6 +799,7 @@ SIPVoIPLink::answer (const CallID& id) throw (VoipLinkException)
         }
 
         try {
+            _debug("Stopping RTP session");
             call->getAudioRtp()->stop ();
             call->getVideoRtp()->stop ();
         }
@@ -3459,9 +3460,10 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
 
     try {
         call->getAudioRtp()->updateDestinationIpAddress();
+        call->getAudioRtp()->setDtmfPayloadType(sdpSession->getTelephoneEventType());
+        // Mon Jul 11 11:31:16 EDT 2011:tmatth:FIXME
         call->getVideoRtp()->updateDestination(call->getLocalSDP()->getRemoteIP(), call->getLocalSDP()->getRemoteVideoPort());
         call->getVideoRtp()->start();
-        call->getAudioRtp()->setDtmfPayloadType(sdpSession->getTelephoneEventType());
     } catch (...) {
 
     }
