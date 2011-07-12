@@ -247,92 +247,93 @@ void VideoReceiveThread::setup()
     }
 
     AVInputFormat *file_iformat = 0;
-    // it's a v4l device if starting with /dev/video
-    // FIXME: This is not the most robust way of checking if we mean to use a
-    // v4l device
-    if (args_["input"].empty())
+
+    if (!test_source_)
     {
-        std::cerr << "Preparing SDP" << std::endl;
-        prepareSDP();
-        args_["input"] = sdpFilename_;
-        file_iformat = av_find_input_format("sdp");
-        if (!file_iformat)
+        // it's a v4l device if starting with /dev/video
+        // FIXME: This is not the most robust way of checking if we mean to use a
+        // v4l device
+        if (args_["input"].empty())
         {
-            std::cerr << "Could not find format!" << std::endl;
+            prepareSDP();
+            args_["input"] = sdpFilename_;
+            file_iformat = av_find_input_format("sdp");
+            if (!file_iformat)
+            {
+                std::cerr << "Could not find format!" << std::endl;
+                cleanup();
+            }
+        }
+        else if (args_["input"].substr(0, strlen("/dev/video")) == "/dev/video")
+        {
+            std::cerr << "Using v4l2 format" << std::endl;
+            file_iformat = av_find_input_format("video4linux2");
+            if (!file_iformat)
+            {
+                std::cerr << "Could not find format!" << std::endl;
+                cleanup();
+            }
+        }
+
+        AVDictionary *options = NULL;
+        if (!args_["framerate"].empty())
+            av_dict_set(&options, "framerate", args_["framerate"].c_str(), 0);
+        if (!args_["video_size"].empty())
+            av_dict_set(&options, "video_size", args_["video_size"].c_str(), 0);
+        if (!args_["channel"].empty())
+            av_dict_set(&options, "channel", args_["channel"].c_str(), 0);
+
+        // Open video file
+        if (avformat_open_input(&inputCtx_, args_["input"].c_str(), file_iformat, &options) != 0)
+        {
+            std::cerr <<  "Could not open input file \"" << args_["input"] <<
+                "\"" << std::endl;
             cleanup();
         }
-    }
-    else if (args_["input"].substr(0, strlen("/dev/video")) == "/dev/video")
-    {
-        std::cerr << "Using v4l2 format" << std::endl;
-        file_iformat = av_find_input_format("video4linux2");
-        if (!file_iformat)
+
+        // retrieve stream information
+        if (av_find_stream_info(inputCtx_) < 0)
         {
-            std::cerr << "Could not find format!" << std::endl;
+            std::cerr << "Could not find stream info!" << std::endl;
             cleanup();
         }
-    }
 
-    AVDictionary *options = NULL;
-    if (!args_["framerate"].empty())
-        av_dict_set(&options, "framerate", args_["framerate"].c_str(), 0);
-    if (!args_["video_size"].empty())
-        av_dict_set(&options, "video_size", args_["video_size"].c_str(), 0);
-    if (!args_["channel"].empty())
-        av_dict_set(&options, "channel", args_["channel"].c_str(), 0);
-
-    // Open video file
-    if (avformat_open_input(&inputCtx_, args_["input"].c_str(), file_iformat, &options) != 0)
-    {
-        std::cerr <<  "Could not open input file \"" << args_["input"] <<
-            "\"" << std::endl;
-        cleanup();
-    }
-    else
-        std::cerr << "Opened input " << args_["input"] << std::endl;
-
-    // retrieve stream information
-    if (av_find_stream_info(inputCtx_) < 0)
-    {
-        std::cerr << "Could not find stream info!" << std::endl;
-        cleanup();
-    }
-
-    // find the first video stream from the input
-    unsigned i;
-    for (i = 0; i < inputCtx_->nb_streams; i++)
-    {
-        if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
+        // find the first video stream from the input
+        unsigned i;
+        for (i = 0; i < inputCtx_->nb_streams; i++)
         {
-            videoStreamIndex_ = i;
-            break;
+            if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
+            {
+                videoStreamIndex_ = i;
+                break;
+            }
         }
-    }
-    if (videoStreamIndex_ == -1)
-    {
-        std::cerr << "Could not find video stream!" << std::endl;
-        cleanup();
-    }
+        if (videoStreamIndex_ == -1)
+        {
+            std::cerr << "Could not find video stream!" << std::endl;
+            cleanup();
+        }
 
-    // Get a pointer to the codec context for the video stream
-    decoderCtx_ = inputCtx_->streams[videoStreamIndex_]->codec;
+        // Get a pointer to the codec context for the video stream
+        decoderCtx_ = inputCtx_->streams[videoStreamIndex_]->codec;
 
-    // find the decoder for the video stream
-    AVCodec *inputDecoder = avcodec_find_decoder(decoderCtx_->codec_id);
-    if (inputDecoder == NULL)
-    {
-        std::cerr << "Unsupported codec!" << std::endl;
-        cleanup();
-    }
+        // find the decoder for the video stream
+        AVCodec *inputDecoder = avcodec_find_decoder(decoderCtx_->codec_id);
+        if (inputDecoder == NULL)
+        {
+            std::cerr << "Unsupported codec!" << std::endl;
+            cleanup();
+        }
 
-    // open codec
-    Manager::instance().avcodecLock();
-    int ret = avcodec_open(decoderCtx_, inputDecoder);
-    Manager::instance().avcodecUnlock();
-    if (ret < 0)
-    {
-        std::cerr << "Could not open codec!" << std::endl;
-        cleanup();
+        // open codec
+        Manager::instance().avcodecLock();
+        int ret = avcodec_open(decoderCtx_, inputDecoder);
+        Manager::instance().avcodecUnlock();
+        if (ret < 0)
+        {
+            std::cerr << "Could not open codec!" << std::endl;
+            cleanup();
+        }
     }
 
     scaledPicture_ = avcodec_alloc_frame();
@@ -423,7 +424,9 @@ VideoReceiveThread::VideoReceiveThread(const std::map<std::string, std::string> 
     inputCtx_(0),
     dstWidth_(-1),
     dstHeight_(-1)
-{}
+{
+    test_source_ = (args_["input"] == "SFLTEST");
+}
 
 void VideoReceiveThread::run()
 {
@@ -431,36 +434,77 @@ void VideoReceiveThread::run()
 
     AVPacket inpacket;
     int frameFinished;
-    SwsContext *imgConvertCtx = createScalingContext();
+    SwsContext *imgConvertCtx = 0;
     enum PixelFormat fmt = (enum PixelFormat) format_;
     int bpp = (av_get_bits_per_pixel(&av_pix_fmt_descriptors[fmt]) + 7) & ~7;
+    VideoPicture *pic;
 
-    while (not interrupted_ and av_read_frame(inputCtx_, &inpacket) >= 0)
+    if (!test_source_)
+        imgConvertCtx = createScalingContext();
+
+    for (;;)
     {
-        // is this a packet from the video stream?
-        if (inpacket.stream_index == videoStreamIndex_)
+        if (interrupted_)
+            break;
+
+        if (!test_source_)
         {
+            if (av_read_frame(inputCtx_, &inpacket) < 0)
+                break;
+
+            // is this a packet from the video stream?
+            if (inpacket.stream_index != videoStreamIndex_)
+                goto next_packet;
+
             // decode video frame from camera
             avcodec_decode_video2(decoderCtx_, rawFrame_, &frameFinished, &inpacket);
-            if (frameFinished)
-            {
-                VideoPicture pic(bpp, dstWidth_, dstHeight_, rawFrame_->pts);
-                // assign appropriate parts of buffer to image planes in scaledPicture
-                avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
-                        reinterpret_cast<uint8_t*>(pic.data), fmt, dstWidth_, dstHeight_);
+            if (!frameFinished)
+                goto next_packet;
 
-                sws_scale(imgConvertCtx, rawFrame_->data, rawFrame_->linesize,
-                        0, decoderCtx_->height, scaledPicture_->data,
-                        scaledPicture_->linesize);
+            pic = new VideoPicture(bpp, dstWidth_, dstHeight_, rawFrame_->pts);
+            // assign appropriate parts of buffer to image planes in scaledPicture
+            avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
+                    reinterpret_cast<uint8_t*>(pic->data), fmt, dstWidth_, dstHeight_);
 
-                // FIXME : put pictures in a pool and use the PTS to get them out and displayed from a separate thread
-                // i.e., picturePool_.push_back(pic);
-                memcpy(shmBuffer_, pic.data, pic.Size());
-
-                /* signal the semaphore that a new frame is ready */ 
-                sem_signal(semSetID_);
-            }
+            sws_scale(imgConvertCtx, rawFrame_->data, rawFrame_->linesize,
+                    0, decoderCtx_->height, scaledPicture_->data,
+                    scaledPicture_->linesize);
         }
+        else
+        {
+            pic = new VideoPicture(bpp, dstWidth_, dstHeight_, frameNumber_);
+            // assign appropriate parts of buffer to image planes in scaledPicture
+            avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
+                    reinterpret_cast<uint8_t*>(pic->data), fmt, dstWidth_, dstHeight_);
+            const AVPixFmtDescriptor *pixdesc = &av_pix_fmt_descriptors[format_];
+            int components = pixdesc->nb_components;
+            int planes = 0;
+            for (int i = 0; i < components; i++)
+                if (pixdesc->comp[i].plane > planes)
+                    planes = pixdesc->comp[i].plane;
+            planes++;
+
+            int i = frameNumber_++;
+            const unsigned pitch = scaledPicture_->linesize[0];
+
+            for(int y=0;y<dstHeight_;y++)
+                for(int x=0;x<pitch;x++) {
+                    scaledPicture_->data[0][y * pitch + x] = x + y + i * planes;
+                }
+        }
+
+        // FIXME : put pictures in a pool and use the PTS to get them out and displayed from a separate thread
+        // i.e., picturePool_.push_back(pic);
+        memcpy(shmBuffer_, pic->data, pic->Size());
+        delete pic;
+
+        /* signal the semaphore that a new frame is ready */ 
+        sem_signal(semSetID_);
+
+        if (test_source_)
+            continue;
+
+next_packet:
         // free the packet that was allocated by av_read_frame
         av_free_packet(&inpacket);
     }

@@ -361,8 +361,10 @@ readFrameFromShm(VideoPreviewPrivate *priv)
           perror("shm: ");
           return FALSE;
       }
-      else
+      else {
+          /* No new frame, so we'll try later */
           return TRUE;
+      }
     }
 
     if (priv->using_clutter) {

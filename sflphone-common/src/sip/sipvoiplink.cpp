@@ -802,7 +802,7 @@ SIPVoIPLink::answer (const CallID& id) throw (VoipLinkException)
         try {
             _debug("Stopping RTP session");
             call->getAudioRtp()->stop ();
-            call->getVideoRtp()->stop ();
+            //call->getVideoRtp()->stop ();
         }
         catch(...) {
         	throw VoipLinkException("Could not stop rtp session");
@@ -864,7 +864,7 @@ SIPVoIPLink::hangup (const CallID& id) throw (VoipLinkException)
     try {
         if (Manager::instance().isCurrentCall (id)) {
             call->getAudioRtp()->stop();
-            call->getVideoRtp()->stop();
+            //call->getVideoRtp()->stop();
         }
     }
     catch(...) {
@@ -911,7 +911,7 @@ SIPVoIPLink::peerHungup (const CallID& id) throw (VoipLinkException)
         if (Manager::instance().isCurrentCall (id)) {
             _debug ("UserAgent: Stopping AudioRTP for hangup");
             call->getAudioRtp()->stop();
-            call->getVideoRtp()->stop();
+            //call->getVideoRtp()->stop();
         }
     }
     catch(...) {
@@ -957,7 +957,7 @@ SIPVoIPLink::onhold (const CallID& id) throw (VoipLinkException)
 
     try {
         call->getAudioRtp()->stop();
-        call->getVideoRtp()->stop();
+        //call->getVideoRtp()->stop();
     }
     catch (...) {
     	throw VoipLinkException("Could not stop audio rtp session");
@@ -1324,7 +1324,7 @@ SIPVoIPLink::refuse (const CallID& id)
 
     // Stop Audio RTP session
     call->getAudioRtp()->stop();
-    call->getVideoRtp()->stop();
+    //call->getVideoRtp()->stop();
 
     // User refuse current call. Notify peer
     status = pjsip_inv_end_session (call->getInvSession(), PJSIP_SC_DECLINE, NULL, &tdata);   //603
@@ -1664,9 +1664,11 @@ SIPVoIPLink::SIPCallServerFailure (SIPCall *call)
             call->getAudioRtp()->stop();
         }
 
+#if 0
         if (call->getVideoRtp ()) {
             call->getVideoRtp()->stop();
         }
+#endif
     }
 }
 
@@ -1685,7 +1687,7 @@ SIPVoIPLink::SIPCallClosed (SIPCall *call)
     if (Manager::instance().isCurrentCall (id)) {
         _debug ("UserAgent: Stopping AudioRTP when closing");
         call->getAudioRtp()->stop();
-        call->getVideoRtp()->stop();
+        //call->getVideoRtp()->stop();
     }
 
     Manager::instance().peerHungupCall (id);
@@ -3462,11 +3464,11 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
 
     try {
         call->getAudioRtp()->updateDestinationIpAddress();
+        //call->getVideoRtp()->updateDestination(call->getLocalSDP()->getRemoteIP(), call->getLocalSDP()->getRemoteVideoPort());
+        //call->getVideoRtp()->start();
         call->getAudioRtp()->setDtmfPayloadType(sdpSession->getTelephoneEventType());
-        // Mon Jul 11 11:31:16 EDT 2011:tmatth:FIXME
-        call->getVideoRtp()->updateDestination(call->getLocalSDP()->getRemoteIP(), call->getLocalSDP()->getRemoteVideoPort());
     } catch (...) {
-
+        // Tue Jul 12 12:17:20 EDT 2011:tmatth:FIXME: why are we silencing exceptions here?
     }
 
     // Get the crypto attribute containing srtp's cryptographic context (keys, cipher)

@@ -37,6 +37,7 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavutil/opt.h>
+#include <libavutil/pixdesc.h>
 #include <libavdevice/avdevice.h>
 #include <libswscale/swscale.h>
 }
@@ -338,7 +339,6 @@ SwsContext * VideoSendThread::createScalingContext()
     return imgConvertCtx;
 }
 
-
 VideoSendThread::VideoSendThread(const std::map<std::string, std::string> &args) :
     args_(args),
     interrupted_(false),
@@ -354,7 +354,9 @@ VideoSendThread::VideoSendThread(const std::map<std::string, std::string> &args)
     inputCtx_(0),
     outputCtx_(0),
     sdp_("")
-{}
+{
+    test_source_ = (args_["input"] == "SFLTEST");
+}
 
 void VideoSendThread::run()
 {
@@ -362,60 +364,93 @@ void VideoSendThread::run()
     AVPacket inpacket;
     int frameFinished;
     int64_t frameNumber = 0;
-    SwsContext *imgConvertCtx = createScalingContext();
+    SwsContext *imgConvertCtx = 0;
+    int ret, encodedSize;
 
-    while (not interrupted_ and av_read_frame(inputCtx_, &inpacket) >= 0)
+    if (!test_source_)
+        imgConvertCtx = createScalingContext();
+
+    for (;;)
     {
-        // is this a packet from the video stream?
-        if (inpacket.stream_index == videoStreamIndex_)
-        {
+        if (interrupted_)
+            break;
+
+        if (!test_source_) {
+
+            if (av_read_frame(inputCtx_, &inpacket) < 0)
+                break;
+
+            // is this a packet from the video stream?
+            if (inpacket.stream_index != videoStreamIndex_)
+                goto next_packet;
+
             // decode video frame from camera
             avcodec_decode_video2(inputDecoderCtx_, rawFrame_, &frameFinished, &inpacket);
-            if (frameFinished)
-            {
-                sws_scale(imgConvertCtx, rawFrame_->data, rawFrame_->linesize,
-                        0, inputDecoderCtx_->height, scaledPicture_->data,
-                        scaledPicture_->linesize);
+            if (!frameFinished)
+                goto next_packet;
 
-                // Set presentation timestamp on our scaled frame before encoding it
-                scaledPicture_->pts = frameNumber;
-                frameNumber++;
+            sws_scale(imgConvertCtx, rawFrame_->data, rawFrame_->linesize,
+                    0, inputDecoderCtx_->height, scaledPicture_->data,
+                    scaledPicture_->linesize);
 
-                int encodedSize = avcodec_encode_video(encoderCtx_,
-                        outbuf_, outbufSize_, scaledPicture_);
+        } else {
+            const AVPixFmtDescriptor *pixdesc = &av_pix_fmt_descriptors[encoderCtx_->pix_fmt];
+            int components = pixdesc->nb_components;
+            int planes = 0;
+            for (int i = 0; i < components; i++)
+                if (pixdesc->comp[i].plane > planes)
+                    planes = pixdesc->comp[i].plane;
+            planes++;
 
-                if (encodedSize > 0) {
-                    AVPacket opkt;
-                    av_init_packet(&opkt);
+            int i = frameNumber;
+            const unsigned pitch = scaledPicture_->linesize[0];
 
-                    opkt.data = outbuf_;
-                    opkt.size = encodedSize;
-
-                    // rescale pts from encoded video framerate to rtp
-                    // clock rate
-                    if (static_cast<unsigned>(encoderCtx_->coded_frame->pts) !=
-                            AV_NOPTS_VALUE)
-                        opkt.pts = av_rescale_q(encoderCtx_->coded_frame->pts,
-                                encoderCtx_->time_base, videoStream_->time_base);
-                    else
-                        opkt.pts = 0;
-
-                    // is it a key frame?
-                    if (encoderCtx_->coded_frame->key_frame)
-                        opkt.flags |= AV_PKT_FLAG_KEY;
-                    opkt.stream_index = videoStream_->index;
-
-                    // write the compressed frame in the media file
-                    int ret = av_interleaved_write_frame(outputCtx_, &opkt);
-                    if (ret < 0)
-                    {
-                        print_error("av_interleaved_write_frame() error", ret);
-                        cleanup();
-                    }
-                    av_free_packet(&opkt);
+            for(int y=0;y<encoderCtx_->height;y++)
+                for(int x=0;x<pitch;x++) {
+                    scaledPicture_->data[0][y * pitch + x] = x + y + i * planes;
                 }
-            }
+ 
         }
+
+        // Set presentation timestamp on our scaled frame before encoding it
+        scaledPicture_->pts = frameNumber++;
+
+        encodedSize = avcodec_encode_video(encoderCtx_,
+                outbuf_, outbufSize_, scaledPicture_);
+
+        if (encodedSize <= 0)
+            goto next_packet;
+
+        AVPacket opkt;
+        av_init_packet(&opkt);
+
+        opkt.data = outbuf_;
+        opkt.size = encodedSize;
+
+        // rescale pts from encoded video framerate to rtp
+        // clock rate
+        if (static_cast<unsigned>(encoderCtx_->coded_frame->pts) !=
+                AV_NOPTS_VALUE)
+            opkt.pts = av_rescale_q(encoderCtx_->coded_frame->pts,
+                    encoderCtx_->time_base, videoStream_->time_base);
+        else
+            opkt.pts = 0;
+
+        // is it a key frame?
+        if (encoderCtx_->coded_frame->key_frame)
+            opkt.flags |= AV_PKT_FLAG_KEY;
+        opkt.stream_index = videoStream_->index;
+
+        // write the compressed frame in the media file
+        ret = av_interleaved_write_frame(outputCtx_, &opkt);
+        if (ret < 0)
+        {
+            print_error("av_interleaved_write_frame() error", ret);
+            cleanup();
+        }
+        av_free_packet(&opkt);
+
+next_packet:
         // free the packet that was allocated by av_read_frame
         av_free_packet(&inpacket);
     }
