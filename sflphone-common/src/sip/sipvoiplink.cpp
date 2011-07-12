@@ -723,6 +723,7 @@ Call *SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) 
 		call->getAudioRtp()->initLocalCryptoInfo (call);
 		_info ("UserAgent: Start audio rtp session");
 		call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
+        call->getVideoRtp()->updateDestination(call->getLocalSDP()->getRemoteIP(), call->getLocalSDP()->getRemoteVideoPort());
 		call->getVideoRtp()->start();
 	} catch (...) {
 		throw VoipLinkException ("Could not start rtp session for early media");
@@ -1664,11 +1665,9 @@ SIPVoIPLink::SIPCallServerFailure (SIPCall *call)
             call->getAudioRtp()->stop();
         }
 
-#if 0
         if (call->getVideoRtp ()) {
             call->getVideoRtp()->stop();
         }
-#endif
     }
 }
 
@@ -1687,7 +1686,7 @@ SIPVoIPLink::SIPCallClosed (SIPCall *call)
     if (Manager::instance().isCurrentCall (id)) {
         _debug ("UserAgent: Stopping AudioRTP when closing");
         call->getAudioRtp()->stop();
-        //call->getVideoRtp()->stop();
+        call->getVideoRtp()->stop();
     }
 
     Manager::instance().peerHungupCall (id);
@@ -3464,8 +3463,7 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
 
     try {
         call->getAudioRtp()->updateDestinationIpAddress();
-        //call->getVideoRtp()->updateDestination(call->getLocalSDP()->getRemoteIP(), call->getLocalSDP()->getRemoteVideoPort());
-        //call->getVideoRtp()->start();
+        call->getVideoRtp()->updateDestination(call->getLocalSDP()->getRemoteIP(), call->getLocalSDP()->getRemoteVideoPort());
         call->getAudioRtp()->setDtmfPayloadType(sdpSession->getTelephoneEventType());
     } catch (...) {
         // Tue Jul 12 12:17:20 EDT 2011:tmatth:FIXME: why are we silencing exceptions here?
@@ -4071,6 +4069,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
     try {
         _debug ("UserAgent: Create RTP session for this call");
         call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
+        call->getVideoRtp()->start ();
     } catch (...) {
         _warn ("UserAgent: Error: Failed to create rtp thread from answer");
     }

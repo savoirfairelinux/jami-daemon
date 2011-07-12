@@ -92,7 +92,7 @@ void VideoRtpSession::start()
     sendThread_.reset(new VideoSendThread(args_));
     sendThread_->start();
 
-//    sendThread_->waitForSDP();
+    sendThread_->waitForSDP();
     std::map<std::string, std::string> rxArgs;
     // reset input to null, not whatever it was for the sender
     rxArgs["input"] = "";
