@@ -723,6 +723,7 @@ Call *SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) 
 		call->getAudioRtp()->initLocalCryptoInfo (call);
 		_info ("UserAgent: Start audio rtp session");
 		call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
+		call->getVideoRtp()->start();
 	} catch (...) {
 		throw VoipLinkException ("Could not start rtp session for early media");
 	}
@@ -1809,6 +1810,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const CallID& id, const std::string& to)
             call->getAudioRtp()->initAudioSymmetricRtpSession (call);
             call->getAudioRtp()->initLocalCryptoInfo (call);
             call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
+            call->getVideoRtp()->start();
         } catch (...) {
             _debug ("UserAgent: Unable to create RTP Session in new IP2IP call (%s:%d)", __FILE__, __LINE__);
         }
@@ -3463,7 +3465,6 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
         call->getAudioRtp()->setDtmfPayloadType(sdpSession->getTelephoneEventType());
         // Mon Jul 11 11:31:16 EDT 2011:tmatth:FIXME
         call->getVideoRtp()->updateDestination(call->getLocalSDP()->getRemoteIP(), call->getLocalSDP()->getRemoteVideoPort());
-        call->getVideoRtp()->start();
     } catch (...) {
 
     }
