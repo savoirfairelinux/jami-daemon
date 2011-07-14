@@ -101,16 +101,6 @@ void VideoRtpSession::start()
     rxArgs["height"] = "480";
     receiveThread_.reset(new VideoReceiveThread(rxArgs));
     receiveThread_->start();
-    receiveThread_->waitForShm();
-
-    // publish our new video stream's existence
-    std::cerr << "Publishing shm:" << receiveThread_->getShmKey() <<
-        " sem: " << receiveThread_->getSemKey() << " size: " <<
-        receiveThread_->getVideoBufferSize() << std::endl;
-
-    DBusManager::instance().getCallManager()->receivingVideoEvent(receiveThread_->getShmKey(),
-            receiveThread_->getSemKey(),
-            receiveThread_->getVideoBufferSize());
 }
 
 void VideoRtpSession::stop()

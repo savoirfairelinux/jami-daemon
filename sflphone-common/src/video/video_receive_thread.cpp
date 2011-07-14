@@ -54,6 +54,7 @@ extern "C" {
 #include <cstdlib>
 
 #include "manager.h"
+#include "dbus/callmanager.h"
 #include "video_picture.h"
 
 namespace sfl_video {
@@ -354,6 +355,14 @@ void VideoReceiveThread::setup()
 
     // allocate video frame
     rawFrame_ = avcodec_alloc_frame();
+    
+    // publish our new video stream's existence
+    std::cerr << "Publishing shm:" << shmKey_ << " sem: " << semKey_ <<
+        " size: " << videoBufferSize_ << std::endl;
+
+    DBusManager::instance().getCallManager()->receivingVideoEvent(shmKey_,
+            semKey_, videoBufferSize_);
+
 }
 
 // NOT called from this (the run() ) thread
