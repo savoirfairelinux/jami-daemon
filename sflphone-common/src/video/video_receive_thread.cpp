@@ -292,11 +292,10 @@ void VideoReceiveThread::setup()
         }
 
         // retrieve stream information
-        while (av_find_stream_info(inputCtx_) < 0)
+        if (av_find_stream_info(inputCtx_) < 0)
         {
             std::cerr << "Could not find stream info!" << std::endl;
-            sleep(1);
-            //cleanup();
+            cleanup();
         }
 
         // find the first video stream from the input
@@ -340,7 +339,7 @@ void VideoReceiveThread::setup()
     scaledPicture_ = avcodec_alloc_frame();
     if (scaledPicture_ == 0)
     {
-        std::cerr << "Could not allocate output frame!" << std::endl;
+        std::cerr << "Could not allocated output frame!" << std::endl;
         cleanup();
     }
 

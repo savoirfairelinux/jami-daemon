@@ -101,7 +101,6 @@ void VideoRtpSession::start()
     rxArgs["height"] = "480";
     receiveThread_.reset(new VideoReceiveThread(rxArgs));
     receiveThread_->start();
-
     receiveThread_->waitForShm();
 
     // publish our new video stream's existence
