@@ -41,6 +41,7 @@
 #include "manager.h"
 
 #include "sip/sdp.h"
+#include "sip/Pattern.h"
 #include "sipcall.h"
 #include "sipaccount.h"
 #include "eventthread.h"
@@ -1744,6 +1745,27 @@ SIPVoIPLink::getSIPCall (const CallID& id)
     return NULL;
 }
 
+namespace
+{
+    std::string getIPFromSIP(std::string sipURI)
+    {
+        //Remove sip: prefix
+        size_t found = sipURI.find(":");
+        if (found!=std::string::npos)
+            sipURI.erase (0, found + 1);
+
+        found = sipURI.find ("@");
+        if (found!=std::string::npos)
+            sipURI.erase (found);
+
+        found = sipURI.find (">");
+
+        if (found != std::string::npos)
+            sipURI.erase(found);
+        return sipURI;
+    }
+}
+
 bool SIPVoIPLink::SIPNewIpToIpCall (const CallID& id, const std::string& to)
 {
     SIPCall *call;
@@ -1809,7 +1831,8 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const CallID& id, const std::string& to)
             call->getAudioRtp()->initAudioSymmetricRtpSession (call);
             call->getAudioRtp()->initLocalCryptoInfo (call);
             call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
-            call->getVideoRtp()->updateDestination(call->getLocalSDP()->getRemoteIP(), call->getLocalSDP()->getRemoteVideoPort());
+            std::string toUriIP(getIPFromSIP(toUri));
+            call->getVideoRtp()->updateDestination(toUriIP, call->getLocalSDP()->getRemoteVideoPort());
             call->getVideoRtp()->start();
         } catch (...) {
             _debug ("UserAgent: Unable to create RTP Session in new IP2IP call (%s:%d)", __FILE__, __LINE__);
