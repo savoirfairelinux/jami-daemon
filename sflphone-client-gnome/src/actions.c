@@ -1367,7 +1367,7 @@ void sflphone_fill_conference_list (void)
 
 void sflphone_fill_history (void)
 {
-    const gchar **entries, **history_entries;
+    const gchar **entries;
     gchar *current_entry;
     callable_obj_t *history_call, *call;
     conference_obj_t *history_conf, *conf;
@@ -1428,7 +1428,7 @@ void sflphone_fill_history (void)
         entries++;
     }
 
-    // fill the treeview wtih calls
+    // fill the treeview with calls
     n = calllist_get_size(history);
     for(i = 0; i < n; i++) {
 	element = calllist_get_nth(history, i);

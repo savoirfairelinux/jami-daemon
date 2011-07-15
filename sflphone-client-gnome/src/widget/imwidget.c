@@ -409,6 +409,7 @@ im_widget_infobar (IMWidget *im)
         msg1 = g_strdup ("");
 
     GtkWidget *call_label = gtk_label_new (msg1);
+    g_free (msg1);
 
     if (im_widget_call)
         im->info_state = call_state_image_widget (im_widget_call->_state);
@@ -429,9 +430,6 @@ im_widget_infobar (IMWidget *im)
 
     /* Show the info bar */
     gtk_widget_show (infobar);
-
-    /* Clean up */
-    free (msg1);
 }
 
 GtkWidget*

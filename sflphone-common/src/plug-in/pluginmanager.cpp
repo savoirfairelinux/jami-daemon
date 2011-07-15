@@ -87,34 +87,37 @@ PluginManager::loadPlugins (const std::string &path)
     dir = opendir (pluginDir.c_str());
     /* Test if the directory exists or is readable */
 
-    if (dir) {
-        /* Read the directory */
-        while ( (dirStruct=readdir (dir))) {
-            /* Get the name of the current item in the directory */
-            current = dirStruct->d_name;
-            /* Test if the current item is not the parent or the current directory and that it ends with .so*/
-
-            if (current != pDir && current != cDir and hasSharedExtension(current)) {
-
-                /* Load the dynamic library */
-                library = loadDynamicLibrary (pluginDir + current);
-
-                /* Instanciate the plugin object */
-
-                if (instanciatePlugin (library, &plugin) != 0) {
-                    _debug ("Error instanciating the plugin ...");
-                    return 1;
-                }
-
-                /* Regitering the current plugin */
-                if (registerPlugin (plugin, library) != 0) {
-                    _debug ("Error registering the plugin ...");
-                    return 1;
-                }
-            }
-        }
-    } else
+    if (!dir)
         return 1;
+
+    /* Read the directory */
+    while ( (dirStruct=readdir (dir))) {
+        /* Get the name of the current item in the directory */
+        current = dirStruct->d_name;
+
+        /* Test if the current item is not the parent or the current directory and that it ends with .so*/
+        if (current == pDir || current == cDir || !hasSharedExtension(current))
+            continue;
+
+
+        /* Load the dynamic library */
+        library = loadDynamicLibrary (pluginDir + current);
+
+        /* Instanciate the plugin object */
+
+        if (instanciatePlugin (library, &plugin) != 0) {
+            _debug ("Error instanciating the plugin ...");
+            closedir(dir);
+            return 1;
+        }
+
+        /* Regitering the current plugin */
+        if (registerPlugin (plugin, library) != 0) {
+            _debug ("Error registering the plugin ...");
+            closedir(dir);
+            return 1;
+        }
+    }
 
     /* Close the directory */
     closedir (dir);

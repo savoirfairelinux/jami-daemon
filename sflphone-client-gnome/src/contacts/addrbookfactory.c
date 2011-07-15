@@ -65,14 +65,14 @@ void abookfactory_load_module(AddrBookFactory *factory) {
 
     DEBUG("AddressbookFactory: Loading addressbook: %s", pluginpath);
 
-    ab = g_malloc(sizeof(AddrBookHandle));
-
     handle = dlopen(pluginpath, RTLD_LAZY);
+    g_free(pluginpath);
     if(handle == NULL) {
         ERROR("AddressbookFactory: Error: Could not load addressbook");
         return;
     }
-    g_free(pluginpath);
+
+    ab = g_malloc(sizeof(AddrBookHandle));
 
     ab->init = dlsym(handle, "addressbook_init");
     if(ab->init == NULL) {

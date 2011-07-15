@@ -28,7 +28,6 @@
 
 #include <check.h>
 #include <stdlib.h>
-#include "../src/contacts/addressbook/eds.h"
 #include "../src/contacts/addressbook.h"
 
 

@@ -21,12 +21,13 @@ AC_ARG_WITH(debug,
 		[with_debug=no]
 	)
 if test "x$with_debug" = "xfull" -o "x$with_debug" = "xyes"; then
-	CFLAGS="-g -O0 -DDEBUG -Wall -Wextra"
+	CFLAGS="-g -O0 -Wall -Wextra"
 else
 	CFLAGS="$CFLAGS -Wall -Wextra"
 fi
 
 AC_PROG_CC
+AM_PROG_CC_C_O dnl for per target flags, i.e. test_program_CFLAGS
 AC_PROG_INSTALL
 AC_HEADER_STDC
 LT_INIT
