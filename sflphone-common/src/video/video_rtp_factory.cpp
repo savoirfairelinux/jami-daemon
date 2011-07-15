@@ -38,16 +38,22 @@ namespace sfl_video
 
 VideoRtpFactory::VideoRtpFactory()
 {
-    std::map<std::string, std::string> args;
-    args["input"]       = "/dev/video0";
-    args["codec"]       = "libx264";
-    args["bitrate"]     = "1000000";
-    args["destination"] = "rtp://127.0.0.1:5000";
-    args["format"]      = "rgb24";
-    args["width"]       = "640";
-    args["height"]      = "480";
+    std::map<std::string, std::string> txArgs, rxArgs;
+    txArgs["input"]       = "/dev/video0";
+    txArgs["codec"]       = "libx264";
+    txArgs["bitrate"]     = "1000000";
+    txArgs["destination"] = "rtp://127.0.0.1:5000";
+    txArgs["format"]      = "rgb24";
+    txArgs["width"]       = "640";
+    txArgs["height"]      = "480";
 
-    session_ = std::tr1::shared_ptr<VideoRtpSession>(new VideoRtpSession(args));
+    rxArgs["codec"] = txArgs["codec"];
+    rxArgs["bitrate"] = txArgs["bitrate"];
+    rxArgs["format"] = txArgs["format"];
+    rxArgs["width"] = txArgs["width"];
+    rxArgs["height"] = txArgs["height"];
+
+    session_ = std::tr1::shared_ptr<VideoRtpSession>(new VideoRtpSession(txArgs, rxArgs));
 }
 
 void VideoRtpFactory::start()

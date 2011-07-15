@@ -42,7 +42,8 @@ class VideoReceiveThread;
 
 class VideoRtpSession {
     public:
-        VideoRtpSession(std::map<std::string,std::string> args);
+        VideoRtpSession(const std::map<std::string,std::string> &txArgs,
+                        const std::map<std::string,std::string> &rxArgs);
 
         void start();
         void test();
@@ -54,7 +55,8 @@ class VideoRtpSession {
     private:
         std::tr1::shared_ptr<VideoSendThread> sendThread_;
         std::tr1::shared_ptr<VideoReceiveThread> receiveThread_;
-        std::map<std::string, std::string> args_;
+        std::map<std::string, std::string> txArgs_;
+        std::map<std::string, std::string> rxArgs_;
 };
 
 }

@@ -21,29 +21,29 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    map<string, string> args;
-    args["input"] =  argv[1];
-    args["codec"] = "mpeg4";
-    args["bitrate"] = "1000000";
-    args["destination"] = "rtp://127.0.0.1:5000";
+    map<string, string> txArgs, rxArgs;
+    txArgs["input"] =  argv[1];
+    txArgs["codec"] = "mpeg4";
+    txArgs["bitrate"] = "1000000";
+    txArgs["destination"] = "rtp://127.0.0.1:5000";
 
     switch (argc)
     {
         case 5:
-            args["destination"] = argv[4];
+            txArgs["destination"] = argv[4];
             /* fallthrough */
         case 4:
-            args["bitrate"] = argv[3];
+            txArgs["bitrate"] = argv[3];
             /* fallthrough */
         case 3:
-            args["codec"] = argv[2];
+            txArgs["codec"] = argv[2];
             /* fallthrough */
         case 2:
         default:
             break;
     }
 
-    sfl_video::VideoRtpSession session(args);
+    sfl_video::VideoRtpSession session(txArgs, rxArgs);
     session.test();
     while (not interrupted)
         sleep(1);

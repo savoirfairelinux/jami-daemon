@@ -41,8 +41,9 @@
 
 namespace sfl_video {
 
-VideoRtpSession::VideoRtpSession(std::map<std::string,std::string> args) :
-    args_(args)
+VideoRtpSession::VideoRtpSession(const std::map<std::string,std::string> &txArgs,
+                                 const std::map<std::string,std::string> &rxArgs) :
+    txArgs_(txArgs), rxArgs_(rxArgs)
 {
 }
 
@@ -52,8 +53,18 @@ void VideoRtpSession::updateDestination(const std::string &destination,
     std::stringstream tmp;
     assert(not destination.empty());
     tmp << "rtp://" << destination << ":" << port;
-    args_["destination"] = tmp.str();
-    std::cerr << "updated dest to " << args_["destination"] << std::endl;
+    txArgs_["destination"] = tmp.str();
+    std::cerr << "updated dest to " << txArgs_["destination"] << std::endl;
+
+    /// Restart if send thread already exists
+    if (sendThread_.get())
+    {
+        sendThread_->stop();
+        sendThread_->join();
+        std::cerr << "RESTARTING VIDEO SEND THREAD!!!!" << std::endl;
+        sendThread_.reset(new VideoSendThread(txArgs_));
+        sendThread_->start();
+    }
 }
 
 void VideoRtpSession::test()
@@ -61,7 +72,7 @@ void VideoRtpSession::test()
     assert(sendThread_.get() == 0);
     assert(receiveThread_.get() == 0);
 
-    sendThread_.reset(new VideoSendThread(args_));
+    sendThread_.reset(new VideoSendThread(txArgs_));
     sendThread_->start();
 
     /* block until SDP is ready */
@@ -73,14 +84,13 @@ void VideoRtpSession::test_loopback()
 {
     assert(sendThread_.get() == 0);
 
-    sendThread_.reset(new VideoSendThread(args_));
+    sendThread_.reset(new VideoSendThread(txArgs_));
     sendThread_->start();
 
     sendThread_->waitForSDP();
-    std::map<std::string, std::string> args(args_);
-    args["input"] = "test.sdp";
+    rxArgs_["input"] = "test.sdp";
 
-    receiveThread_.reset(new VideoReceiveThread(args));
+    receiveThread_.reset(new VideoReceiveThread(rxArgs_));
     receiveThread_->start();
 }
 
@@ -89,17 +99,16 @@ void VideoRtpSession::start()
     assert(sendThread_.get() == 0);
     assert(receiveThread_.get() == 0);
 
-    sendThread_.reset(new VideoSendThread(args_));
+    sendThread_.reset(new VideoSendThread(txArgs_));
     sendThread_->start();
 
     sendThread_->waitForSDP();
-    std::map<std::string, std::string> rxArgs;
     // reset input to null, not whatever it was for the sender
-    rxArgs["input"] = "";
-    rxArgs["format"] = "rgb24";
-    rxArgs["width"] = "640";
-    rxArgs["height"] = "480";
-    receiveThread_.reset(new VideoReceiveThread(rxArgs));
+    rxArgs_["input"] = "";
+    rxArgs_["format"] = "rgb24";
+    rxArgs_["width"] = "640";
+    rxArgs_["height"] = "480";
+    receiveThread_.reset(new VideoReceiveThread(rxArgs_));
     receiveThread_->start();
 }
 

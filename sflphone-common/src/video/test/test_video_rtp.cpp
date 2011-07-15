@@ -37,20 +37,27 @@
 
 int main (int argc, char* argv[])
 {
-    std::map<std::string, std::string> args;
-    args["input"]       = "/dev/video0";
-    args["codec"]       = "mpeg4";
-    args["bitrate"]     = "1000000";
-    args["destination"] = "rtp://127.0.0.1:5000";
-    args["format"]      = "rgb24";
-    args["width"]       = "640";
-    args["height"]      = "480";
+    std::map<std::string, std::string> txArgs, rxArgs;
+    txArgs["input"]       = "/dev/video0";
+    txArgs["codec"]       = "mpeg4";
+    txArgs["bitrate"]     = "1000000";
+    txArgs["destination"] = "rtp://127.0.0.1:5000";
+    txArgs["format"]      = "rgb24";
+    txArgs["width"]       = "640";
+    txArgs["height"]      = "480";
 
-    sfl_video::VideoRtpSession videosend(args);
+    rxArgs["input"]       = "test.sdp";
+    rxArgs["codec"]       = "mpeg4";
+    rxArgs["bitrate"]     = "1000000";
+    rxArgs["format"]      = "rgb24";
+    rxArgs["width"]       = "640";
+    rxArgs["height"]      = "480";
+
+    sfl_video::VideoRtpSession session(txArgs, rxArgs);
     //sfl_video::VideoRtpSession videorecv("rtp://127.0.0.1:5000", "libx264", 1000000, "rtp://127.0.0.1:5000", "rgb24");
-    videosend.start();
+    session.start();
     sleep(10);
-    videosend.stop();
+    session.stop();
 
     return 0;
 }
