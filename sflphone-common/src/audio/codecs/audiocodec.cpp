@@ -31,6 +31,8 @@
  */
 
 #include "audiocodec.h"
+using std::ptrdiff_t;
+#include <ccrtp/rtp.h>
 
 namespace sfl {
 
