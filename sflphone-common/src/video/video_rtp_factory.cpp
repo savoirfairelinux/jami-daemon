@@ -67,6 +67,11 @@ void VideoRtpFactory::stop()
     session_->stop();
 }
 
+bool VideoRtpFactory::started() const
+{
+    return session_->started();
+}
+
 void VideoRtpFactory::updateDestination(const std::string &dest,
                                         unsigned int port)
 {

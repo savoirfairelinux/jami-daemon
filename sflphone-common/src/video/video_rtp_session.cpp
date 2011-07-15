@@ -43,7 +43,7 @@ namespace sfl_video {
 
 VideoRtpSession::VideoRtpSession(const std::map<std::string,std::string> &txArgs,
                                  const std::map<std::string,std::string> &rxArgs) :
-    txArgs_(txArgs), rxArgs_(rxArgs)
+    txArgs_(txArgs), rxArgs_(rxArgs), started_(false)
 {
 }
 
@@ -64,7 +64,6 @@ void VideoRtpSession::updateDestination(const std::string &destination,
         {
             sendThread_->stop();
             sendThread_->join();
-            std::cerr << "RESTARTING VIDEO SEND THREAD!!!!" << std::endl;
             sendThread_.reset(new VideoSendThread(txArgs_));
             sendThread_->start();
         }
@@ -114,6 +113,7 @@ void VideoRtpSession::start()
     rxArgs_["height"] = "480";
     receiveThread_.reset(new VideoReceiveThread(rxArgs_));
     receiveThread_->start();
+    started_ = true;
 }
 
 void VideoRtpSession::stop()
@@ -136,6 +136,7 @@ void VideoRtpSession::stop()
     // destroy objects
     receiveThread_.reset();
     sendThread_.reset();
+    started_ = false;
 }
 
 } // end namspace sfl_video

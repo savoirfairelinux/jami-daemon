@@ -3488,7 +3488,8 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
         call->getAudioRtp()->setDtmfPayloadType(sdpSession->getTelephoneEventType());
         // this will restart our send thread if it's already playing
         call->getVideoRtp()->updateDestination(call->getLocalSDP()->getRemoteIP(), call->getLocalSDP()->getRemoteVideoPort());
-
+        if (not call->getVideoRtp()->started()) // Fri Jul 15 10:53:49 EDT 2011:tmatth:FIXME: this logic should be moved to session
+            call->getVideoRtp()->start();
     } catch (...) {
         // Tue Jul 12 12:17:20 EDT 2011:tmatth:FIXME: why are we silencing exceptions here?
     }
