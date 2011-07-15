@@ -356,13 +356,17 @@ void VideoReceiveThread::setup()
     // allocate video frame
     rawFrame_ = avcodec_alloc_frame();
     
-    // publish our new video stream's existence
-    std::cerr << "Publishing shm:" << shmKey_ << " sem: " << semKey_ <<
-        " size: " << videoBufferSize_ << std::endl;
+    // we're receiving RTP
+    if (args_["input"] == sdpFilename_)
+    {
+        // publish our new video stream's existence
+        std::cerr << "Publishing shm:" << shmKey_ << " sem: " << semKey_ <<
+            " size: " << videoBufferSize_ << std::endl;
 
-    DBusManager::instance().getCallManager()->receivingVideoEvent(shmKey_,
-            semKey_, videoBufferSize_);
-
+        // Fri Jul 15 12:15:59 EDT 2011:tmatth:FIXME: access to call manager like this is not thread-safe
+        DBusManager::instance().getCallManager()->receivingVideoEvent(shmKey_,
+                semKey_, videoBufferSize_);
+    }
 }
 
 // NOT called from this (the run() ) thread
