@@ -449,9 +449,9 @@ bool ManagerImpl::hangupCall (const CallID& callId)
     _debug ("Manager: Send DBUS call state change (HUNGUP) for id %s", callId.c_str());
     _dbus->getCallManager()->callStateChanged (callId, "HUNGUP");
 
-    if(!isValidCall(callId)) {
+    if (not isValidCall(callId) and not getConfigFromCall(callId) == Call::IPtoIP) {
     	_error("Manager: Error: Could not hang up call, call not valid");
-    	return false;
+        return false;
     }
 
     // Disconnect streams
