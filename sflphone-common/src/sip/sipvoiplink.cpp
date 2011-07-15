@@ -545,8 +545,7 @@ void SIPVoIPLink::sendRegister (AccountID id) throw(VoipLinkException)
     // Add User-Agent Header
     pj_list_init (&hdr_list);
 
-    const char *useragent_name = getUseragentName (id).c_str();
-    pj_str_t useragent = pj_str ( (char *) useragent_name);
+    pj_str_t useragent = pj_str ((char*)getUseragentName (id).c_str());
     pjsip_generic_string_hdr *h = pjsip_generic_string_hdr_create (_pool, &STR_USER_AGENT, &useragent);
 
     pj_list_push_back (&hdr_list, (pjsip_hdr*) h);
@@ -1455,8 +1454,7 @@ SIPVoIPLink::dtmfSipInfo (SIPCall *call, char code)
 {
 
     int duration;
-    const int body_len = 1000;
-    char *dtmf_body;
+    char dtmf_body[1000];
     pj_status_t status;
     pjsip_tx_data *tdata;
     pj_str_t methodName, content;
@@ -1475,10 +1473,6 @@ SIPVoIPLink::dtmfSipInfo (SIPCall *call, char code)
 
     duration = Manager::instance().voipPreferences.getPulseLength();
 
-    dtmf_body = new char[body_len];
-
-    snprintf (dtmf_body, body_len - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
-
     pj_strdup2 (tmp_pool, &methodName, "INFO");
     pjsip_method_init_np (&method, &methodName);
 
@@ -1494,6 +1488,8 @@ SIPVoIPLink::dtmfSipInfo (SIPCall *call, char code)
     pj_strdup2 (tmp_pool, &ctype.type, "application");
 
     pj_strdup2 (tmp_pool, &ctype.subtype, "dtmf-relay");
+
+    snprintf (dtmf_body, sizeof dtmf_body - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
 
     /* Create "application/dtmf-relay" message body. */
     pj_strdup2 (tmp_pool, &content, dtmf_body);
@@ -3733,8 +3729,7 @@ void registration_cb (struct pjsip_regc_cbparam *param)
 
 
         // TODO: there id a race condition for this ressource when closing the application
-        if (account)
-            account->setRegistrationStateDetailed (details);
+        account->setRegistrationStateDetailed (details);
     }
 
     if (param->status == PJ_SUCCESS) {

@@ -38,8 +38,6 @@
 
 static void set_conference_timestamp (time_t *);
 static void conference_add_participant_number(const gchar *, conference_obj_t *);
-static void process_conference_participant_from_serialized(gchar *, conference_obj_t *);
-
 static void set_conference_timestamp (time_t *timestamp) 
 {
     time_t tmp;
@@ -337,23 +335,3 @@ void create_conference_history_entry_from_serialized(gchar *entry, conference_ob
     (*conf)->_recordfile = g_strdup(recordfile);
  
 }
-
-static void process_conference_participant_from_serialized(gchar *participant, conference_obj_t *conf)
-{
-    gchar **ptr = NULL;
-    gchar *delim = ";";
-    gint tok = 0;
-    
-
-    DEBUG("Conference: Process participant from serialized form");
-
-    ptr = g_strsplit(participant, delim, 3);
-    while(ptr != NULL && (tok < 2)) {
-	gchar *call_id = NULL;
-
-	conference_add_participant(call_id, conf);
-	
-	tok++;
-	ptr++;
-    }
-} 

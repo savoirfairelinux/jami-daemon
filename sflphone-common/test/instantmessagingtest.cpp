@@ -161,7 +161,6 @@ static void XMLCALL startElementCallback(void *userData, const char *name, const
     char value[50];
 
     const char **att;
-    const char **val; 
     for (att = atts; *att; att += 2) {
 
 	const char **val = att+1;

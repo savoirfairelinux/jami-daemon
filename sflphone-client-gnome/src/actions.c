@@ -1428,7 +1428,7 @@ void sflphone_fill_history (void)
         entries++;
     }
 
-    // fill the treeview wtih calls
+    // fill the treeview with calls
     n = calllist_get_size(history);
     for(i = 0; i < n; i++) {
 	element = calllist_get_nth(history, i);
