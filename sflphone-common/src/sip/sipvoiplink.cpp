@@ -802,7 +802,7 @@ SIPVoIPLink::answer (const CallID& id) throw (VoipLinkException)
         try {
             _debug("Stopping RTP session");
             call->getAudioRtp()->stop ();
-            //call->getVideoRtp()->stop ();
+            call->getVideoRtp()->stop ();
         }
         catch(...) {
         	throw VoipLinkException("Could not stop rtp session");
@@ -864,7 +864,7 @@ SIPVoIPLink::hangup (const CallID& id) throw (VoipLinkException)
     try {
         if (Manager::instance().isCurrentCall (id)) {
             call->getAudioRtp()->stop();
-            //call->getVideoRtp()->stop();
+            call->getVideoRtp()->stop();
         }
     }
     catch(...) {
@@ -911,7 +911,7 @@ SIPVoIPLink::peerHungup (const CallID& id) throw (VoipLinkException)
         if (Manager::instance().isCurrentCall (id)) {
             _debug ("UserAgent: Stopping AudioRTP for hangup");
             call->getAudioRtp()->stop();
-            //call->getVideoRtp()->stop();
+            call->getVideoRtp()->stop();
         }
     }
     catch(...) {
@@ -957,7 +957,7 @@ SIPVoIPLink::onhold (const CallID& id) throw (VoipLinkException)
 
     try {
         call->getAudioRtp()->stop();
-        //call->getVideoRtp()->stop();
+        call->getVideoRtp()->stop();
     }
     catch (...) {
     	throw VoipLinkException("Could not stop audio rtp session");
@@ -1324,7 +1324,7 @@ SIPVoIPLink::refuse (const CallID& id)
 
     // Stop Audio RTP session
     call->getAudioRtp()->stop();
-    //call->getVideoRtp()->stop();
+    call->getVideoRtp()->stop();
 
     // User refuse current call. Notify peer
     status = pjsip_inv_end_session (call->getInvSession(), PJSIP_SC_DECLINE, NULL, &tdata);   //603
@@ -4091,7 +4091,6 @@ transaction_request_cb (pjsip_rx_data *rdata)
     try {
         _debug ("UserAgent: Create RTP session for this call");
         call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
-        call->getVideoRtp()->start ();
     } catch (...) {
         _warn ("UserAgent: Error: Failed to create rtp thread from answer");
     }
