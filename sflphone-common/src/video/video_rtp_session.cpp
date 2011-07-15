@@ -53,17 +53,21 @@ void VideoRtpSession::updateDestination(const std::string &destination,
     std::stringstream tmp;
     assert(not destination.empty());
     tmp << "rtp://" << destination << ":" << port;
-    txArgs_["destination"] = tmp.str();
-    std::cerr << "updated dest to " << txArgs_["destination"] << std::endl;
-
-    /// Restart if send thread already exists
-    if (sendThread_.get())
+    // if destination has changed
+    if (tmp.str() != txArgs_["destination"])
     {
-        sendThread_->stop();
-        sendThread_->join();
-        std::cerr << "RESTARTING VIDEO SEND THREAD!!!!" << std::endl;
-        sendThread_.reset(new VideoSendThread(txArgs_));
-        sendThread_->start();
+        txArgs_["destination"] = tmp.str();
+        std::cerr << "updated dest to " << txArgs_["destination"] << std::endl;
+
+        /// Restart if send thread already exists
+        if (sendThread_.get())
+        {
+            sendThread_->stop();
+            sendThread_->join();
+            std::cerr << "RESTARTING VIDEO SEND THREAD!!!!" << std::endl;
+            sendThread_.reset(new VideoSendThread(txArgs_));
+            sendThread_->start();
+        }
     }
 }
 
