@@ -449,8 +449,11 @@ void VideoReceiveThread::run()
     int frameFinished;
     SwsContext *imgConvertCtx = 0;
     enum PixelFormat fmt = (enum PixelFormat) format_;
+#if 0
     int bpp = (av_get_bits_per_pixel(&av_pix_fmt_descriptors[fmt]) + 7) & ~7;
+    // Fri Jul 15 16:25:59 EDT 2011:tmatth:FIXME: commented out until this functionality is needed/used
     VideoPicture *pic;
+#endif
 
     if (!test_source_)
         imgConvertCtx = createScalingContext();
@@ -474,10 +477,16 @@ void VideoReceiveThread::run()
             if (!frameFinished)
                 goto next_packet;
 
+#if 0
+            // Fri Jul 15 16:25:59 EDT 2011:tmatth:FIXME: commented out until this functionality is needed/used
             pic = new VideoPicture(bpp, dstWidth_, dstHeight_, rawFrame_->pts);
+
             // assign appropriate parts of buffer to image planes in scaledPicture
             avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
                     reinterpret_cast<uint8_t*>(pic->data), fmt, dstWidth_, dstHeight_);
+#endif
+            avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
+                    reinterpret_cast<uint8_t*>(shmBuffer_), fmt, dstWidth_, dstHeight_);
 
             sws_scale(imgConvertCtx, rawFrame_->data, rawFrame_->linesize,
                     0, decoderCtx_->height, scaledPicture_->data,
@@ -485,10 +494,15 @@ void VideoReceiveThread::run()
         }
         else
         {
+#if 0
+            // Fri Jul 15 16:25:59 EDT 2011:tmatth:FIXME: commented out until this functionality is needed/used
             pic = new VideoPicture(bpp, dstWidth_, dstHeight_, frameNumber_);
-            // assign appropriate parts of buffer to image planes in scaledPicture
             avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
                     reinterpret_cast<uint8_t*>(pic->data), fmt, dstWidth_, dstHeight_);
+#endif
+            // assign appropriate parts of buffer to image planes in scaledPicture
+            avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
+                    reinterpret_cast<uint8_t*>(shmBuffer_), fmt, dstWidth_, dstHeight_);
             const AVPixFmtDescriptor *pixdesc = &av_pix_fmt_descriptors[format_];
             int components = pixdesc->nb_components;
             int planes = 0;
@@ -500,16 +514,18 @@ void VideoReceiveThread::run()
             int i = frameNumber_++;
             const unsigned pitch = scaledPicture_->linesize[0];
 
-            for(int y=0;y<dstHeight_;y++)
-                for(int x=0;x<pitch;x++) {
+            for (int y = 0; y < dstHeight_; y++)
+                for (unsigned x=0; x < pitch; x++)
                     scaledPicture_->data[0][y * pitch + x] = x + y + i * planes;
-                }
         }
 
+#if 0
+        // Fri Jul 15 16:25:59 EDT 2011:tmatth:FIXME: commented out until this functionality is needed/used
         // FIXME : put pictures in a pool and use the PTS to get them out and displayed from a separate thread
         // i.e., picturePool_.push_back(pic);
         memcpy(shmBuffer_, pic->data, pic->Size());
         delete pic;
+#endif
 
         /* signal the semaphore that a new frame is ready */ 
         sem_signal(semSetID_);
