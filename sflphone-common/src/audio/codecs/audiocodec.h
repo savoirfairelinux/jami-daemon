@@ -38,6 +38,11 @@
 
 #include "Codec.h"
 
+namespace ost {
+    class PayloadFormat;
+    class DynamicPayloadFormat;
+}
+
 namespace sfl {
 
 class AudioCodec : public Codec
@@ -70,12 +75,12 @@ class AudioCodec : public Codec
         /**
          * @Override
          */
-        void setParameter (const std::string& name UNUSED, const std::string& value UNUSED) {};
+        void setParameter (const std::string& /*name*/, const std::string& /*value*/) {};
 
         /**
          * @Override
          */
-        std::string getParameter (const std::string& name UNUSED) const {
+        std::string getParameter (const std::string& /*name*/) const {
             return "";
         };
 

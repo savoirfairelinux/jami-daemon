@@ -30,19 +30,36 @@
 #ifndef __SFL_CODEC_H__
 #define __SFL_CODEC_H__
 
-#include "MimeParameters.h" // TODO Move to some higher directory
-
 #include <cc++/digest.h>
 
 /**
  * Interface for both audio codecs as well as video codecs.
  */
 namespace sfl {
-class Codec : public MimeParameters
+class Codec
 {
     public:
         Codec() {};
         virtual ~Codec() {}
+        /**
+         * @return The mimesubtype for this codec. Eg. : "video"
+         */
+        virtual std::string getMimeType() const = 0;
+
+        /**
+         * @return The mimesubtype for this codec. Eg. : "theora"
+         */
+        virtual std::string getMimeSubtype() const = 0;
+
+        /**
+         * @return payload type numeric identifier.
+         */
+        virtual uint8 getPayloadType() const = 0;
+
+        /**
+         * @return RTP clock rate in Hz.
+         */
+        virtual uint32 getClockRate() const = 0;
 
         /**
          * @return The bitrate for which this codec is configured // TODO deal with VBR case.
