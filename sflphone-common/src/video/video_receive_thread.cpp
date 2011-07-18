@@ -214,19 +214,24 @@ std::string openTemp(std::string path, std::ofstream& f)
 void VideoReceiveThread::prepareSDP()
 {
     // this memory will be released on next call to tmpnam
+    std::stringstream ss;
     std::ofstream os;
     sdpFilename_ = openTemp("/tmp", os);
 
-    os << "v=0" << std::endl;
-    os << "o=- 0 0 IN IP4 127.0.0.1" << std::endl;
-    os << "s=No Name" << std::endl;
-    os << "c=IN IP4 127.0.0.1" << std::endl;
-    os << "t=0 0" << std::endl;
-    os << "a=tool:libavformat 53.2.0" << std::endl;
-    os << "m=video " << args_["incoming_rtp_port"] << " RTP/AVP 96" << std::endl;
-    os << "b=AS:1000" << std::endl;
-    os << "a=rtpmap:96 H264/90000" << std::endl;
-    os << "a=fmtp:96 packetization-mode=1; sprop-parameter-sets=Z0LAHtoCgPaEAAADAAQAAAMA8DxYuoA=,aM48gA==" << std::endl;
+    ss << "v=0" << std::endl;
+    ss << "o=- 0 0 IN IP4 127.0.0.1" << std::endl;
+    ss << "s=No Name" << std::endl;
+    ss << "c=IN IP4 127.0.0.1" << std::endl;
+    ss << "t=0 0" << std::endl;
+    ss << "a=tool:libavformat 53.2.0" << std::endl;
+    ss << "m=video " << args_["incoming_rtp_port"] << " RTP/AVP 96" << std::endl;
+    ss << "b=AS:1000" << std::endl;
+    ss << "a=rtpmap:96 H264/90000" << std::endl;
+    ss << "a=fmtp:96 packetization-mode=1; sprop-parameter-sets=Z0LAHtoCgPaEAAADAAQAAAMA8DxYuoA=,aM48gA==" << std::endl;
+
+    std::cerr << "Prepared SDP " << ss.str();
+
+    os << ss;
 
     os.close();
 }
