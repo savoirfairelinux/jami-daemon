@@ -213,6 +213,7 @@ std::string openTemp(std::string path, std::ofstream& f)
 
 void VideoReceiveThread::prepareSDP()
 {
+    assert(not args_["incoming_rtp_port"].empty());
     // this memory will be released on next call to tmpnam
     std::stringstream ss;
     std::ofstream os;
