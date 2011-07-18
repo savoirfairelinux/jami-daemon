@@ -223,7 +223,7 @@ void VideoReceiveThread::prepareSDP()
     os << "c=IN IP4 127.0.0.1" << std::endl;
     os << "t=0 0" << std::endl;
     os << "a=tool:libavformat 53.2.0" << std::endl;
-    os << "m=video 5000 RTP/AVP 96" << std::endl;  
+    os << "m=video " << args_["incoming_rtp_port"] << " RTP/AVP 96" << std::endl;
     os << "b=AS:1000" << std::endl;
     os << "a=rtpmap:96 H264/90000" << std::endl;
     os << "a=fmtp:96 packetization-mode=1; sprop-parameter-sets=Z0LAHtoCgPaEAAADAAQAAAMA8DxYuoA=,aM48gA==" << std::endl;

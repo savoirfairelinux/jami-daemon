@@ -41,6 +41,7 @@ class VideoRtpFactory {
         VideoRtpFactory();
         void updateDestination(const std::string &dest,
                                unsigned int port);
+        void updateIncomingRTPPort(unsigned int port);
         bool started() const;
 
         /**

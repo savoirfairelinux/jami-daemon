@@ -47,6 +47,28 @@ VideoRtpSession::VideoRtpSession(const std::map<std::string,std::string> &txArgs
 {
 }
 
+void VideoRtpSession::updateIncomingRTPPort(unsigned int port)
+{
+    std::stringstream tmp;
+    tmp << port;
+    // if port has changed
+    if (tmp.str() != rxArgs_["incoming_rtp_port"])
+    {
+        rxArgs_["incoming_rtp_port"] = tmp.str();
+        std::cerr << "updated incoming RTP port to " <<
+            rxArgs_["incoming_rtp_port"] << std::endl;
+
+        /// Restart if receiving thread already exists
+        if (receiveThread_.get())
+        {
+            receiveThread_->stop();
+            receiveThread_->join();
+            receiveThread_.reset(new VideoReceiveThread(rxArgs_));
+            receiveThread_->start();
+        }
+    }
+}
+
 void VideoRtpSession::updateDestination(const std::string &destination,
         unsigned int port)
 {
@@ -106,11 +128,6 @@ void VideoRtpSession::start()
     sendThread_->start();
 
     sendThread_->waitForSDP();
-    // reset input to null, not whatever it was for the sender
-    rxArgs_["input"] = "";
-    rxArgs_["format"] = "rgb24";
-    rxArgs_["width"] = "640";
-    rxArgs_["height"] = "480";
     receiveThread_.reset(new VideoReceiveThread(rxArgs_));
     receiveThread_->start();
     started_ = true;
@@ -119,7 +136,6 @@ void VideoRtpSession::start()
 void VideoRtpSession::stop()
 {
     std::cerr << "Stopping video rtp session " << std::endl;
-    // FIXME: all kinds of evil!!! interrupted should be atomic
     if (receiveThread_.get())
     {
         receiveThread_->stop();

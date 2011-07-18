@@ -62,8 +62,9 @@ Sdp::Sdp (pj_pool_t *pool)
     , localIpAddr_("")
 	, remoteIpAddr_("")
     , localAudioPort_(0)
+	, localVideoPort_(5000)
 	, remoteAudioPort_(0)
-	, remoteVideoPort_(5000) /// FIXME: this needs to come from pjsip
+	, remoteVideoPort_(5000)
 	, zrtpHelloHash_("")
 	, srtpCrypto_()
     , telephoneEventPayload_(101) // same as asterisk
