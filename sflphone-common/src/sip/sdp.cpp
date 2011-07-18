@@ -62,9 +62,9 @@ Sdp::Sdp (pj_pool_t *pool)
     , localIpAddr_("")
 	, remoteIpAddr_("")
     , localAudioPort_(0)
-	, localVideoPort_(5000)
+	, localVideoPort_(0)
 	, remoteAudioPort_(0)
-	, remoteVideoPort_(5000)
+	, remoteVideoPort_(0)
 	, zrtpHelloHash_("")
 	, srtpCrypto_()
     , telephoneEventPayload_(101) // same as asterisk
@@ -584,8 +584,8 @@ void Sdp::addVideoMediaDescription()
     // Get the right media format
     pj_strdup (memPool_, &med->desc.media, &STR_VIDEO);
     med->desc.port_count = 1;
-    // Mon Jul 18 15:15:36 EDT 2011:tmatth:FIXME: hardcoded
-    med->desc.port = 5000;
+    med->desc.port = getLocalPublishedVideoPort();
+    assert(med->desc.port != 0);
     pj_strdup (memPool_, &med->desc.transport, &STR_RTP_AVP);
     std::string tmp("96");
     _debug("%s", tmp.c_str());

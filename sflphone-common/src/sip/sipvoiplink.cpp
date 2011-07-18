@@ -134,7 +134,7 @@ void getRemoteSdpFromOffer (pjsip_rx_data *rdata, pjmedia_sdp_session** r_sdp);
 int getModId();
 
 /**
- * Set audio (SDP) configuration for a call
+ * Set audio and video (SDP) configuration for a call
  * localport, localip, localexternalport
  * @param call a SIPCall valid pointer
  * @return bool True
@@ -4753,7 +4753,6 @@ bool setCallMediaLocal (SIPCall* call, const std::string &localIP)
         call->setLocalIp (localIP);
         call->setLocalAudioPort (callLocalAudioPort);
         call->setLocalVideoPort (callLocalVideoPort);
-        //call->setLocalVideoPort (callLocalVideoPort);
 
         call->getLocalSDP()->setPortToAllMedia (callLocalExternAudioPort);
 
