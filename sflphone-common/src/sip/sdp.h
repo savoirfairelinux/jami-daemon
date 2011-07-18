@@ -558,12 +558,16 @@ class Sdp
         void setRemoteIpFromSdp (const pjmedia_sdp_session *r_sdp);
 
         void setRemoteAudioPortFromSdp (pjmedia_sdp_media *r_media);
+        
+        void setRemoteVideoPortFromSdp (pjmedia_sdp_media *r_media);
 
         void setMediaTransportInfoFromRemoteSdp (const pjmedia_sdp_session *remote_sdp);
 
         void getRemoteSdpTelephoneEventFromOffer(const pjmedia_sdp_session *remote_sdp);
 
-        void getRemoteSdpMediaFromOffer (const pjmedia_sdp_session* remote_sdp, pjmedia_sdp_media** r_media);
+        void getRemoteSdpMediaFromOffer (const pjmedia_sdp_session* remote_sdp,
+                                         pjmedia_sdp_media** r_media,
+                                         const std::string &media_type);
 };
 
 
