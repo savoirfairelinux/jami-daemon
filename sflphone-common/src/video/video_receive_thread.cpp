@@ -363,7 +363,8 @@ void VideoReceiveThread::setup()
         std::cerr << "Publishing shm:" << shmKey_ << " sem: " << semKey_ <<
             " size: " << videoBufferSize_ << std::endl;
 
-        // Fri Jul 15 12:15:59 EDT 2011:tmatth:FIXME: access to call manager like this is not thread-safe
+        // Fri Jul 15 12:15:59 EDT 2011:tmatth:FIXME: access to call manager
+        // from this thread may not be thread-safe
         DBusManager::instance().getCallManager()->receivingVideoEvent(shmKey_,
                 semKey_, videoBufferSize_);
     }
@@ -545,6 +546,9 @@ void VideoReceiveThread::stop()
 {
     // FIXME: not thread safe
     interrupted_ = true;
+
+    DBusManager::instance().getCallManager()->receivingVideoEvent(shmKey_,
+            semKey_, videoBufferSize_);
 }
 
 VideoReceiveThread::~VideoReceiveThread()
