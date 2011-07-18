@@ -46,6 +46,7 @@ VideoRtpFactory::VideoRtpFactory()
     txArgs["format"]      = "rgb24";
     txArgs["width"]       = "640";
     txArgs["height"]      = "480";
+    txArgs["framerate"]      = "30";
 
     rxArgs["codec"] = txArgs["codec"];
     rxArgs["bitrate"] = txArgs["bitrate"];
