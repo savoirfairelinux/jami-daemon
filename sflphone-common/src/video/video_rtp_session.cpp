@@ -139,4 +139,8 @@ void VideoRtpSession::stop()
     started_ = false;
 }
 
+VideoRtpSession::~VideoRtpSession()
+{
+    stop();
+}
 } // end namspace sfl_video

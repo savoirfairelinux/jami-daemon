@@ -38,6 +38,7 @@ GtkWidget* create_video_configuration();
 GtkWidget* videocodecs_box();
 void video_started_cb(DBusGProxy *proxy, gint OUT_shmId, gint OUT_semId, gint OUT_videoBufferSize, GError *error, gpointer userdata);
 void video_device_event_cb(DBusGProxy *proxy UNUSED, void * foo  UNUSED);
-void receiving_video_event_cb(DBusGProxy *proxy, gint shmId, gint semId, gint bideoBufferSize, GError *error, gpointer userdata);
+void receiving_video_event_cb(DBusGProxy *proxy, gint shmId, gint semId, gint videoBufferSize, GError *error, gpointer userdata);
+void stopped_receiving_video_event_cb(DBusGProxy *proxy, gint shmId, gint semId, GError *error, gpointer userdata);
 
 #endif // __VIDEO_CONF_H__

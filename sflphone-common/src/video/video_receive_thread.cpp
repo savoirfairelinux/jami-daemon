@@ -547,8 +547,8 @@ void VideoReceiveThread::stop()
     // FIXME: not thread safe
     interrupted_ = true;
 
-    DBusManager::instance().getCallManager()->receivingVideoEvent(shmKey_,
-            semKey_, videoBufferSize_);
+    DBusManager::instance().getCallManager()->stoppedReceivingVideoEvent(shmKey_,
+            semKey_);
 }
 
 VideoReceiveThread::~VideoReceiveThread()

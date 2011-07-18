@@ -44,6 +44,7 @@ class VideoRtpSession {
     public:
         VideoRtpSession(const std::map<std::string,std::string> &txArgs,
                         const std::map<std::string,std::string> &rxArgs);
+        ~VideoRtpSession();
 
         void start();
         void test();

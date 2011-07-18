@@ -66,7 +66,6 @@ static int drawHeight = 480;
 static const char *drawFormat;
 static VideoPreview *preview = NULL;
 
-
 static GtkWidget *codecTreeView;		// View used instead of store to get access to selection
 static GtkWidget *codecMoveUpButton;
 static GtkWidget *codecMoveDownButton;
@@ -129,6 +128,7 @@ preview_is_running_cb(GObject *obj, GParamSpec *pspec, gpointer user_data)
     }
     return TRUE;
 }
+
 void
 video_started_cb(DBusGProxy *proxy, gint OUT_shmId, gint OUT_semId, gint OUT_videoBufferSize, GError *error, gpointer userdata)
 {
@@ -690,20 +690,22 @@ void video_device_event_cb(DBusGProxy *proxy UNUSED, void * foo  UNUSED)
     fill_devices();
 }
 
-// FIXME: Should not be in config, only doing clutter case for now
-void receiving_video_event_cb(DBusGProxy *proxy, gint shmId, gint semId, gint videoBufferSize, GError *error, gpointer userdata)
+// FIXME: Should not be in config, also only handling clutter case for now
+void receiving_video_event_cb(DBusGProxy *proxy, gint shmKey, gint semKey, gint videoBufferSize, GError *error, gpointer userdata)
 {
-    receivingVideoWindow = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+    if (!receivingVideoWindow)
+        receivingVideoWindow = gtk_window_new (GTK_WINDOW_TOPLEVEL);
     (void)proxy;
     (void)error;
     (void)userdata;
     gboolean using_clutter = clutter_init(NULL, NULL) == CLUTTER_INIT_SUCCESS;
     g_assert(using_clutter);
-    receivingVideoArea = gtk_clutter_embed_new();
+    if (!receivingVideoArea)
+        receivingVideoArea = gtk_clutter_embed_new();
     g_assert(receivingVideoArea);
     g_assert(gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(receivingVideoArea)));
 
-    if (shmId == -1 || semId == -1 || videoBufferSize == -1)
+    if (shmKey == -1 || semKey == -1 || videoBufferSize == -1)
         return;
 
     gtk_container_add(GTK_CONTAINER(receivingVideoWindow), receivingVideoArea);
@@ -711,13 +713,38 @@ void receiving_video_event_cb(DBusGProxy *proxy, gint shmId, gint semId, gint vi
     gtk_widget_show_all(receivingVideoWindow);
 
     drawFormat = "rgb24";
-    DEBUG("Video started for shm:%d sem:%d bufferSz:%d", shmId, semId, videoBufferSize);
+    DEBUG("Video started for shm:%d sem:%d bufferSz:%d", shmKey, semKey, videoBufferSize);
 
-    video_renderer = video_preview_new(receivingVideoArea, drawWidth, drawHeight, drawFormat, shmId, semId, videoBufferSize);
+    video_renderer = video_preview_new(receivingVideoArea, drawWidth, drawHeight, drawFormat, shmKey, semKey, videoBufferSize);
     g_assert(video_renderer);
-    if (video_preview_run(video_renderer))
+    if (video_preview_run(video_renderer)) {
         g_object_unref(video_renderer);
+        video_renderer = NULL;
+        DEBUG("Could not run video renderer");
+    }
+    else
+        DEBUG("Running video renderer");
 }
+
+
+// FIXME: Should not be in config, only doing clutter case for now
+void stopped_receiving_video_event_cb(DBusGProxy *proxy, gint shmKey, gint semKey, GError *error, gpointer userdata)
+{
+    (void)proxy;
+    (void)error;
+    (void)userdata;
+
+    DEBUG("Video stopped for shm:%d sem:%d", shmKey, semKey);
+
+    if (video_renderer) {
+        if (receivingVideoWindow) {
+            gtk_widget_destroy(receivingVideoWindow);
+            receivingVideoArea = receivingVideoWindow = NULL;
+        }
+        video_renderer = NULL;
+    }
+}
+
 
 static GtkWidget* v4l2_box ()
 {
@@ -798,6 +825,7 @@ static GtkWidget* v4l2_box ()
     return ret;
 }
 
+
 static gint
 on_drawarea_unrealize(GtkWidget *drawarea, gpointer data)
 {
@@ -855,7 +883,7 @@ GtkWidget* create_video_configuration()
 
     gdk_window_clear(gtk_widget_get_window(drawarea));
     g_signal_connect(drawarea, "unrealize", G_CALLBACK(on_drawarea_unrealize),
-                     NULL);
+            NULL);
     gtk_widget_set_size_request (drawarea, drawWidth, drawHeight);
     gtk_table_attach(GTK_TABLE(table), drawarea, 0, 1, 1, 2, 0, 0, 0, 6);
 

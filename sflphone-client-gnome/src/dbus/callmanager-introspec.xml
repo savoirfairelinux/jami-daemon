@@ -837,5 +837,12 @@
            <arg type="i" name="videoBufferSize">
            </arg>
 	   </signal>
+
+       <signal name="stoppedReceivingVideoEvent" tp:name-for-bindings="stoppedReceivingVideoEvent">
+           <arg type="i" name="shmKey">
+           </arg>
+           <arg type="i" name="semKey">
+           </arg>
+	   </signal>
 	</interface>
 </node>

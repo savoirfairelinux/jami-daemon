@@ -912,7 +912,6 @@ dbus_connect (GError **error)
                                 G_CALLBACK (video_device_event_cb), NULL, NULL);
 
     /* Marshaller for INT INT INT */
-    /* VOID STRING STRING INT */
     dbus_g_object_register_marshaller (
         g_cclosure_user_marshal_VOID__INT_INT_INT, G_TYPE_NONE,
         G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
@@ -922,6 +921,17 @@ dbus_connect (GError **error)
                              G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(callManagerProxy, "receivingVideoEvent",
                                 G_CALLBACK (receiving_video_event_cb), NULL, NULL);
+
+    /* Marshaller for INT INT */
+    dbus_g_object_register_marshaller (
+        g_cclosure_user_marshal_VOID__INT_INT, G_TYPE_NONE,
+        G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
+
+    dbus_g_proxy_add_signal (callManagerProxy, "stoppedReceivingVideoEvent",
+                             G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal(callManagerProxy, "stoppedReceivingVideoEvent",
+                                G_CALLBACK (stopped_receiving_video_event_cb),
+                                NULL, NULL);
 
     /* Defines a default timeout for the proxies */
 #if HAVE_DBUS_G_PROXY_SET_DEFAULT_TIMEOUT

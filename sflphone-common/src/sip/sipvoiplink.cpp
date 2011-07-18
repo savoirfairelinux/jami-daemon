@@ -804,7 +804,7 @@ SIPVoIPLink::answer (const CallID& id) throw (VoipLinkException)
             call->getVideoRtp()->stop ();
         }
         catch(...) {
-        	throw VoipLinkException("Could not stop rtp session");
+            throw VoipLinkException("Could not stop rtp session");
         }
 
         removeCall (call->getCallId());
@@ -862,12 +862,13 @@ SIPVoIPLink::hangup (const CallID& id) throw (VoipLinkException)
     // Release RTP thread
     try {
         if (Manager::instance().isCurrentCall (id)) {
+            _debug("Stopping RTP session");
             call->getAudioRtp()->stop();
             call->getVideoRtp()->stop();
         }
     }
     catch(...) {
-    	throw VoipLinkException("Could not stop audio rtp session");
+    	throw VoipLinkException("Could not stop rtp session");
     }
 
     removeCall (id);
@@ -908,13 +909,13 @@ SIPVoIPLink::peerHungup (const CallID& id) throw (VoipLinkException)
     // Release RTP thread
     try {
         if (Manager::instance().isCurrentCall (id)) {
-            _debug ("UserAgent: Stopping AudioRTP for hangup");
+            _debug ("UserAgent: Stopping RTP for hangup");
             call->getAudioRtp()->stop();
             call->getVideoRtp()->stop();
         }
     }
     catch(...) {
-    	throw VoipLinkException("Could not stop audio rtp session");
+    	throw VoipLinkException("Could not stop rtp session");
     }
 
     removeCall (id);
@@ -959,7 +960,7 @@ SIPVoIPLink::onhold (const CallID& id) throw (VoipLinkException)
         call->getVideoRtp()->stop();
     }
     catch (...) {
-    	throw VoipLinkException("Could not stop audio rtp session");
+    	throw VoipLinkException("Could not stop rtp session");
     }
 
     _debug ("UserAgent: Stopping RTP session for on hold action");
@@ -1679,7 +1680,7 @@ SIPVoIPLink::SIPCallClosed (SIPCall *call)
     CallID id = call->getCallId();
 
     if (Manager::instance().isCurrentCall (id)) {
-        _debug ("UserAgent: Stopping AudioRTP when closing");
+        _debug ("UserAgent: Stopping RTP when closing");
         call->getAudioRtp()->stop();
         call->getVideoRtp()->stop();
     }
