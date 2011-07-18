@@ -4755,6 +4755,7 @@ bool setCallMediaLocal (SIPCall* call, const std::string &localIP)
         call->setLocalVideoPort (callLocalVideoPort);
 
         call->getLocalSDP()->setPortToAllMedia (callLocalExternAudioPort);
+        call->getLocalSDP()->setLocalPublishedVideoPort(callLocalVideoPort);
 
         return true;
     } else {
