@@ -229,9 +229,9 @@ void VideoReceiveThread::prepareSDP()
     ss << "a=rtpmap:96 H264/90000" << std::endl;
     ss << "a=fmtp:96 packetization-mode=1; sprop-parameter-sets=Z0LAHtoCgPaEAAADAAQAAAMA8DxYuoA=,aM48gA==" << std::endl;
 
-    std::cerr << "Prepared SDP " << ss.str();
+    std::cerr << "Prepared SDP " << std::endl << ss.str();
 
-    os << ss;
+    os << ss.str();
 
     os.close();
 }
