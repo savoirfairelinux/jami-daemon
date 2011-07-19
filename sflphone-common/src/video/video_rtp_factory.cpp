@@ -79,9 +79,9 @@ void VideoRtpFactory::updateDestination(const std::string &dest,
     session_->updateDestination(dest, port);
 }
 
-void VideoRtpFactory::updateIncomingRTPPort(unsigned int port)
+void VideoRtpFactory::updateSDP(Sdp *sdp)
 {
-    session_->updateIncomingRTPPort(port);
+    session_->updateSDP(sdp);
 }
 
 } // end namespace sfl_video

@@ -1829,7 +1829,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const CallID& id, const std::string& to)
             call->getAudioRtp()->initLocalCryptoInfo (call);
             call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
             std::string toUriIP(getIPFromSIP(toUri));
-            call->getVideoRtp()->updateIncomingRTPPort(call->getLocalSDP()->getLocalPublishedVideoPort());
+            call->getVideoRtp()->updateSDP(call->getLocalSDP());
             call->getVideoRtp()->updateDestination(toUriIP, call->getLocalSDP()->getRemoteVideoPort());
             call->getVideoRtp()->start();
         } catch (...) {
@@ -3484,11 +3484,12 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
     try {
         call->getAudioRtp()->updateDestinationIpAddress();
         call->getAudioRtp()->setDtmfPayloadType(sdpSession->getTelephoneEventType());
-        // this will restart our receive thread if it's already playing
-        call->getVideoRtp()->updateIncomingRTPPort(call->getLocalSDP()->getLocalPublishedVideoPort());
-        // this will restart our send thread if it's already playing
+
+        // this may restart our receive thread if it's already playing
+        call->getVideoRtp()->updateSDP(call->getLocalSDP());
+        // this may restart our send thread if it's already playing
         call->getVideoRtp()->updateDestination(call->getLocalSDP()->getRemoteIP(), call->getLocalSDP()->getRemoteVideoPort());
-        // Fri Jul 15 10:53:49 EDT 2011:tmatth:FIXME: this logic should be moved to session
+        // Fri Jul 15 10:53:49 EDT 2011:tmatth:FIXME: should this logic be moved to session ?
         if (not call->getVideoRtp()->started())
             call->getVideoRtp()->start();
     } catch (...) {

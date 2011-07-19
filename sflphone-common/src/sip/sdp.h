@@ -245,15 +245,7 @@ class Sdp
         }
 
         /**
-         * Set remote's IP addr. [not protected]
-         * @param ip  The remote IP address
-         */
-        void setRemoteIP (const std::string& ip) {
-            remoteIpAddr_ = ip;
-        }
-
-        /**
-         * Return IP of destination [mutex protected]
+         * Return IP of destination
          * @return const std:string	The remote IP address
          */
         const std::string& getRemoteIP() {
@@ -261,23 +253,7 @@ class Sdp
         }
 
         /**
-         * Set remote's audio port. [not protected]
-         * @param port  The remote audio port
-         */
-        void setRemoteAudioPort (unsigned int port) {
-            remoteAudioPort_ = port;
-        }
-
-        /**
-         * Set remote's video port. [not protected]
-         * @param port  The remote video port
-         */
-        void setRemoteVideoPort (unsigned int port) {
-            remoteVideoPort_ = port;
-        }
-
-        /**
-         * Return audio port at destination [mutex protected]
+         * Return audio port at destination
          * @return unsigned int The remote audio port
          */
         unsigned int getRemoteAudioPort() const {
@@ -286,7 +262,7 @@ class Sdp
 
 
         /**
-         * Return video port at destination [mutex protected]
+         * Return video port at destination
          * @return unsigned int The remote video port
          */
         unsigned int getRemoteVideoPort() const {
@@ -559,16 +535,9 @@ class Sdp
 
         void setRemoteAudioPortFromSdp (pjmedia_sdp_media *r_media);
         
-        void setRemoteVideoPortFromSdp (pjmedia_sdp_media *r_media);
-
-        void setMediaTransportInfoFromRemoteSdp (const pjmedia_sdp_session *remote_sdp);
+        void updateMediaTransportInfoFromRemoteSdp ();
 
         void getRemoteSdpTelephoneEventFromOffer(const pjmedia_sdp_session *remote_sdp);
-
-        void getRemoteSdpMediaFromOffer (const pjmedia_sdp_session* remote_sdp,
-                                         pjmedia_sdp_media** r_media,
-                                         const std::string &media_type);
 };
-
 
 #endif

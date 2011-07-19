@@ -33,6 +33,8 @@
 
 #include <tr1/memory>
 
+class Sdp;
+
 namespace sfl_video {
 class VideoRtpSession;
 
@@ -41,7 +43,7 @@ class VideoRtpFactory {
         VideoRtpFactory();
         void updateDestination(const std::string &dest,
                                unsigned int port);
-        void updateIncomingRTPPort(unsigned int port);
+        void updateSDP(Sdp *sdp);
         bool started() const;
 
         /**

@@ -35,6 +35,8 @@
 #include <map>
 #include <tr1/memory>
 
+class Sdp;
+
 namespace sfl_video {
 
 class VideoSendThread;
@@ -53,7 +55,7 @@ class VideoRtpSession {
         bool started() const { return started_; }
         void updateDestination(const std::string &destination,
                                unsigned int port);
-        void updateIncomingRTPPort(unsigned int port);
+        void updateSDP(Sdp *sdp);
 
     private:
         std::tr1::shared_ptr<VideoSendThread> sendThread_;

@@ -49,6 +49,29 @@ static const pj_str_t STR_RTPMAP = { (char*) "rtpmap", 6 };
 static const pj_str_t STR_CRYPTO = { (char*) "crypto", 6 };
 static const pj_str_t STR_TELEPHONE_EVENT = { (char*) "telephone-event", 15};
 
+namespace // anonymous
+{
+void getRemoteSdpMediaFromOffer (const pjmedia_sdp_session* remote_sdp,
+                                       pjmedia_sdp_media** r_media,
+                                       const std::string &media_type)
+{
+    int count;
+
+    if (!remote_sdp)
+        return;
+
+    count = remote_sdp->media_count;
+    *r_media =  NULL;
+
+
+    for (int i = 0; i < count; ++i) {
+        if (pj_stricmp2 (&remote_sdp->media[i]->desc.media, media_type.c_str()) == 0) {
+            *r_media = remote_sdp->media[i];
+            return;
+        }
+    }
+}
+}
 
 Sdp::Sdp (pj_pool_t *pool)
     : memPool_(pool)
@@ -497,7 +520,7 @@ pj_status_t Sdp::startNegotiation()
 void Sdp::updateInternalState() {
 
 	// Populate internal field
-	setMediaTransportInfoFromRemoteSdp (activeRemoteSession_);
+	updateMediaTransportInfoFromRemoteSdp();
 }
 
 void Sdp::addProtocol ()
@@ -600,6 +623,7 @@ void Sdp::addVideoMediaDescription()
     pjmedia_sdp_rtpmap_to_attr (memPool_, &rtpmap, &attr);
     med->attr[med->attr_count++] = attr;
 
+    // add it to the end
     localSession_->media[localAudioMediaCap_.size()] = med;
     ++localSession_->media_count;
 }
@@ -737,78 +761,46 @@ void Sdp::removeAttributeFromLocalAudioMedia(std::string attr)
 	pjmedia_sdp_media_remove_all_attr (localSession_->media[0], attr.c_str());
 }
 
-void Sdp::setRemoteIpFromSdp (const pjmedia_sdp_session *r_sdp)
+void Sdp::updateMediaTransportInfoFromRemoteSdp ()
 {
-
-    std::string remote_ip (r_sdp->conn->addr.ptr, r_sdp->conn->addr.slen);
-    _info ("SDP: Remote IP from fetching SDP: %s",  remote_ip.c_str());
-    setRemoteIP (remote_ip);
-}
-
-void Sdp::setRemoteAudioPortFromSdp (pjmedia_sdp_media *r_media)
-{
-    _info ("SDP: Remote Audio Port from fetching SDP: %d", r_media->desc.port);
-    setRemoteAudioPort (r_media->desc.port);
-}
-
-void Sdp::setRemoteVideoPortFromSdp (pjmedia_sdp_media *r_media)
-{
-    _info ("SDP: Remote Video Port from fetching SDP: %d", r_media->desc.port);
-    setRemoteVideoPort (r_media->desc.port);
-}
-
-void Sdp::setMediaTransportInfoFromRemoteSdp (const pjmedia_sdp_session *remote_sdp)
-{
-    pjmedia_sdp_media *r_media;
+    pjmedia_sdp_media *r_media = NULL;
 
     _info ("SDP: Fetching media from sdp");
 
-    if (!remote_sdp) {
+    if (!activeRemoteSession_) {
     	_error("Sdp: Error: Remote sdp is NULL while parsing media");
         return;
     }
 
     std::string media_type = "audio";
-    getRemoteSdpMediaFromOffer (remote_sdp, &r_media, media_type);
+    getRemoteSdpMediaFromOffer(activeRemoteSession_, &r_media, media_type);
 
     if (r_media == NULL) {
         _warn ("SDP: Error: no remote sdp audio media found in the remote offer");
         return;
     }
-    else setRemoteAudioPortFromSdp (r_media);
+    else {
+        _info ("SDP: Remote Audio Port from fetching SDP: %d", r_media->desc.port);
+        remoteAudioPort_ = r_media->desc.port;
+    }
 
-    setRemoteIpFromSdp (remote_sdp);
+    std::string remote_ip(activeRemoteSession_->conn->addr.ptr, activeRemoteSession_->conn->addr.slen);
+    _info ("SDP: Remote IP from fetching SDP: %s",  remote_ip.c_str());
+    remoteIpAddr_ = remote_ip;
 
     r_media = NULL;
     media_type = "video";
-    getRemoteSdpMediaFromOffer (remote_sdp, &r_media, media_type);
+    getRemoteSdpMediaFromOffer (activeRemoteSession_, &r_media, media_type);
     if (r_media == NULL) {
         _warn ("SDP: Error: no remote sdp video media found in the remote offer");
         return;
     }
-    else setRemoteVideoPortFromSdp (r_media);
-}
-
-void Sdp::getRemoteSdpMediaFromOffer (const pjmedia_sdp_session* remote_sdp,
-                                      pjmedia_sdp_media** r_media,
-                                      const std::string &media_type)
-{
-    int count;
-
-    if (!remote_sdp)
-        return;
-
-    count = remote_sdp->media_count;
-    *r_media =  NULL;
-
-
-    for (int i = 0; i < count; ++i) {
-        if (pj_stricmp2 (&remote_sdp->media[i]->desc.media, media_type.c_str()) == 0) {
-            *r_media = remote_sdp->media[i];
-            return;
-        }
+    else {
+        _info ("SDP: Remote Video Port from fetching SDP: %d", r_media->desc.port);
+        remoteVideoPort_ = r_media->desc.port;
     }
 }
+
 
 void Sdp::getRemoteSdpTelephoneEventFromOffer(const pjmedia_sdp_session *remote_sdp)
 {
@@ -846,7 +838,6 @@ void Sdp::getRemoteSdpTelephoneEventFromOffer(const pjmedia_sdp_session *remote_
 
 	    telephoneEventPayload_ = pj_strtoul (&rtpmap->pt);
 	}
-
 }
 
 void Sdp::getRemoteSdpCryptoFromOffer (const pjmedia_sdp_session* remote_sdp, CryptoOffer& crypto_offer)

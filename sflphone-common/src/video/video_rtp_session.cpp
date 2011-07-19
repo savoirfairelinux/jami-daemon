@@ -36,6 +36,7 @@
 #include <string>
 #include "video_send_thread.h"
 #include "video_receive_thread.h"
+#include "sip/sdp.h"
 #include "dbus/dbusmanager.h"
 #include "dbus/callmanager.h"
 
@@ -47,25 +48,28 @@ VideoRtpSession::VideoRtpSession(const std::map<std::string,std::string> &txArgs
 {
 }
 
-void VideoRtpSession::updateIncomingRTPPort(unsigned int port)
+void VideoRtpSession::updateSDP(Sdp *sdp)
 {
     std::stringstream tmp;
-    tmp << port;
+    tmp << sdp->getLocalPublishedVideoPort();
+    bool updated = false;
     // if port has changed
     if (tmp.str() != rxArgs_["incoming_rtp_port"])
     {
         rxArgs_["incoming_rtp_port"] = tmp.str();
         std::cerr << "updated incoming RTP port to " <<
             rxArgs_["incoming_rtp_port"] << std::endl;
+        updated = true;
+    }
 
-        /// Restart if receiving thread already exists
-        if (receiveThread_.get())
-        {
-            receiveThread_->stop();
-            receiveThread_->join();
-            receiveThread_.reset(new VideoReceiveThread(rxArgs_));
-            receiveThread_->start();
-        }
+    // Restart if receiving thread already exists and modifications have
+    // taken place
+    if (updated and receiveThread_.get())
+    {
+        receiveThread_->stop();
+        receiveThread_->join();
+        receiveThread_.reset(new VideoReceiveThread(rxArgs_));
+        receiveThread_->start();
     }
 }
 
