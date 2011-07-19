@@ -701,14 +701,16 @@ void receiving_video_event_cb(DBusGProxy *proxy, gint shmKey, gint semKey, gint 
     gboolean using_clutter = clutter_init(NULL, NULL) == CLUTTER_INIT_SUCCESS;
     g_assert(using_clutter);
     if (!receivingVideoArea)
+    {
         receivingVideoArea = gtk_clutter_embed_new();
+        gtk_container_add(GTK_CONTAINER(receivingVideoWindow), receivingVideoArea);
+    }
     g_assert(receivingVideoArea);
     g_assert(gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(receivingVideoArea)));
 
     if (shmKey == -1 || semKey == -1 || videoBufferSize == -1)
         return;
 
-    gtk_container_add(GTK_CONTAINER(receivingVideoWindow), receivingVideoArea);
     gtk_widget_set_size_request (receivingVideoArea, drawWidth, drawHeight);
     gtk_widget_show_all(receivingVideoWindow);
 
