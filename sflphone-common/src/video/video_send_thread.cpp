@@ -405,11 +405,9 @@ void VideoSendThread::run()
             int i = frameNumber;
             const unsigned pitch = scaledPicture_->linesize[0];
 
-            for(int y=0;y<encoderCtx_->height;y++)
-                for(int x=0;x<pitch;x++) {
+            for(int y = 0; y < encoderCtx_->height; y++)
+                for(unsigned x = 0; x < pitch; x++)
                     scaledPicture_->data[0][y * pitch + x] = x + y + i * planes;
-                }
- 
         }
 
         // Set presentation timestamp on our scaled frame before encoding it
