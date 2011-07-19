@@ -56,8 +56,8 @@ void VideoRtpSession::updateSDP(Sdp *sdp)
     if (desc != rxArgs_["receiving_sdp"])
     {
         rxArgs_["receiving_sdp"] = desc;
-        std::cerr << "updated incoming SDP to " <<
-            rxArgs_["receiving_sdp"] << std::endl;
+        _debug("%s:Updated incoming SDP to:\n %s", __PRETTY_FUNCTION__,
+               rxArgs_["receiving_sdp"].c_str());
         updated = true;
     }
 

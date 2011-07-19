@@ -633,9 +633,9 @@ std::string Sdp::getActiveVideoDescription() const
     std::stringstream ss;
     // Tue Jul 19 13:27:59 EDT 2011:tmatth:FIXME: assumes that video is last media
     ss << "v=0" << std::endl;
-    ss << "o=- 0 0 IN IP4 127.0.0.1" << std::endl;
+    ss << "o=- 0 0 IN IP4 " << localIpAddr_ << std::endl;
     ss << "s=No Name" << std::endl;
-    ss << "c=IN IP4 127.0.0.1" << std::endl;
+    ss << "c=IN IP4 " << remoteIpAddr_ << std::endl;
     ss << "t=0 0" << std::endl;
     ss << "a=tool:libavformat 53.2.0" << std::endl;
     ss << "m=video " << getLocalPublishedVideoPort() << " RTP/AVP 96" << std::endl;
