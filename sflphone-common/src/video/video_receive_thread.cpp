@@ -211,28 +211,14 @@ std::string openTemp(std::string path, std::ofstream& f)
 
 } // end anonymous namespace
 
-void VideoReceiveThread::prepareSDP()
+void VideoReceiveThread::loadSDP()
 {
-    assert(not args_["incoming_rtp_port"].empty());
+    assert(not args_["receiving_sdp"].empty());
     // this memory will be released on next call to tmpnam
-    std::stringstream ss;
     std::ofstream os;
     sdpFilename_ = openTemp("/tmp", os);
 
-    ss << "v=0" << std::endl;
-    ss << "o=- 0 0 IN IP4 127.0.0.1" << std::endl;
-    ss << "s=No Name" << std::endl;
-    ss << "c=IN IP4 127.0.0.1" << std::endl;
-    ss << "t=0 0" << std::endl;
-    ss << "a=tool:libavformat 53.2.0" << std::endl;
-    ss << "m=video " << args_["incoming_rtp_port"] << " RTP/AVP 96" << std::endl;
-    ss << "b=AS:1000" << std::endl;
-    ss << "a=rtpmap:96 H264/90000" << std::endl;
-    ss << "a=fmtp:96 packetization-mode=1; sprop-parameter-sets=Z0LAHtoCgPaEAAADAAQAAAMA8DxYuoA=,aM48gA==" << std::endl;
-
-    std::cerr << "Prepared SDP " << std::endl << ss.str();
-
-    os << ss.str();
+    os << args_["receiving_sdp"];
 
     os.close();
 }
@@ -262,7 +248,7 @@ void VideoReceiveThread::setup()
         // v4l device
         if (args_["input"].empty())
         {
-            prepareSDP();
+            loadSDP();
             args_["input"] = sdpFilename_;
             file_iformat = av_find_input_format("sdp");
             if (!file_iformat)

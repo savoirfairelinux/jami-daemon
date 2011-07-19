@@ -78,7 +78,7 @@ class VideoReceiveThread : public ost::Thread {
         std::string sdpFilename_;
 
         void setProgramPath();
-        void prepareSDP();
+        void loadSDP();
 
     public:
         explicit VideoReceiveThread(const std::map<std::string, std::string> &args);

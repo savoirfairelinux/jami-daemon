@@ -50,15 +50,14 @@ VideoRtpSession::VideoRtpSession(const std::map<std::string,std::string> &txArgs
 
 void VideoRtpSession::updateSDP(Sdp *sdp)
 {
-    std::stringstream tmp;
-    tmp << sdp->getLocalPublishedVideoPort();
     bool updated = false;
+    std::string desc = sdp->getActiveVideoDescription();
     // if port has changed
-    if (tmp.str() != rxArgs_["incoming_rtp_port"])
+    if (desc != rxArgs_["receiving_sdp"])
     {
-        rxArgs_["incoming_rtp_port"] = tmp.str();
-        std::cerr << "updated incoming RTP port to " <<
-            rxArgs_["incoming_rtp_port"] << std::endl;
+        rxArgs_["receiving_sdp"] = desc;
+        std::cerr << "updated incoming SDP to " <<
+            rxArgs_["receiving_sdp"] << std::endl;
         updated = true;
     }
 

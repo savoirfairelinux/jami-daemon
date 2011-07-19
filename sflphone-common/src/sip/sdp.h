@@ -105,15 +105,6 @@ class Sdp
         void setActiveLocalSdpSession (const pjmedia_sdp_session *sdp);
 
         /**
-         * read accessor. Return the negotiated local session
-         *
-         * @return pjmedia_sdp_session  The negotiated offer
-         */
-        pjmedia_sdp_session* getActiveLocalSdpSession (void) {
-            return activeLocalSession_;
-        }
-
-        /**
          * Retrieve the negotiated sdp offer from the sip payload.
          *
          * @param sdp   the negotiated offer
@@ -121,14 +112,10 @@ class Sdp
         void setActiveRemoteSdpSession (const pjmedia_sdp_session *sdp);
 
         /**
-         * read accessor. Return the negotiated offer
-         *
-         * @return pjmedia_sdp_session  The negotiated offer
+         * Returns a string version of the negotiated SDP fields which pertain
+         * to video.
          */
-        pjmedia_sdp_session* getActiveRemoteSdpSession (void) {
-            return activeRemoteSession_;
-        }
-
+        std::string getActiveVideoDescription() const;
 
         /**
          * Return whether or not the media have been determined for this sdp session
