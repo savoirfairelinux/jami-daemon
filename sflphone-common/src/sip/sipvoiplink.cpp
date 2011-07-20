@@ -1831,7 +1831,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const CallID& id, const std::string& to)
             std::string toUriIP(getIPFromSIP(toUri));
             call->getVideoRtp()->updateSDP(call->getLocalSDP());
             call->getVideoRtp()->updateDestination(toUriIP, call->getLocalSDP()->getRemoteVideoPort());
-            call->getVideoRtp()->start();
+            call->getVideoRtp()->start(call->getLocalSDP());
         } catch (...) {
             _debug ("UserAgent: Unable to create RTP Session in new IP2IP call (%s:%d)", __FILE__, __LINE__);
         }
@@ -3491,7 +3491,7 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
         call->getVideoRtp()->updateDestination(call->getLocalSDP()->getRemoteIP(), call->getLocalSDP()->getRemoteVideoPort());
         // Fri Jul 15 10:53:49 EDT 2011:tmatth:FIXME: should this logic be moved to session ?
         if (not call->getVideoRtp()->started())
-            call->getVideoRtp()->start();
+            call->getVideoRtp()->start(call->getLocalSDP());
     } catch (...) {
         // Tue Jul 12 12:17:20 EDT 2011:tmatth:FIXME: why are we silencing exceptions here?
     }

@@ -48,7 +48,7 @@ class VideoRtpSession {
                         const std::map<std::string,std::string> &rxArgs);
         ~VideoRtpSession();
 
-        void start();
+        void start(Sdp *sdp);
         void test();
         void test_loopback();
         void stop();

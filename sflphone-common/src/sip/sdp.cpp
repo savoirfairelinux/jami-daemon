@@ -595,6 +595,48 @@ void Sdp::addAudioMediaDescription()
     }
 }
 
+namespace {
+std::vector<std::string>
+&split(const std::string &s, char delim, std::vector<std::string> &elems)
+{
+    std::stringstream ss(s);
+    std::string item;
+    while(getline(ss, item, delim))
+        elems.push_back(item);
+
+    return elems;
+}
+
+
+std::vector<std::string> split(const std::string &s, char delim)
+{
+    std::vector<std::string> elems;
+    return split(s, delim, elems);
+}
+} // end anonymous namespace
+
+void Sdp::addAttributesFromVideoSDP(pjmedia_sdp_media* med)
+{
+    using std::string;
+    using std::vector;
+
+    const vector<string> tokens(split(videoSDP_, '\n'));
+    for (vector<string>::const_iterator iter = tokens.begin(); iter != tokens.end(); ++iter)
+    {
+        // if it's an attribute and not the tool attribute:
+        if ((*iter)[0] == 'a' and (*iter).find("tool") == string::npos)
+        {
+            size_t separator_pos = (*iter).find(":");
+            pjmedia_sdp_attr *attr = static_cast<pjmedia_sdp_attr *>(pj_pool_zalloc(memPool_, sizeof(pjmedia_sdp_attr)));
+            string name((*iter).substr(2, separator_pos - 2)); // skip a= 
+            string val((*iter).substr(separator_pos + 1, (*iter).size() - separator_pos));
+            pj_strdup2(memPool_, &attr->name, name.c_str());
+            pj_strdup2(memPool_, &attr->value, val.c_str());
+
+            med->attr[med->attr_count++] = attr;
+        }
+    }
+}
 
 void Sdp::addVideoMediaDescription()
 {
@@ -614,14 +656,7 @@ void Sdp::addVideoMediaDescription()
     _debug("%s", tmp.c_str());
     pj_strdup2 (memPool_, &med->desc.fmt[0], tmp.c_str());
     med->desc.fmt_count = 1;
-    pjmedia_sdp_rtpmap rtpmap;
-    rtpmap.pt = med->desc.fmt[0];
-    rtpmap.enc_name = pj_str((char*) "H264");
-    rtpmap.clock_rate = 90000;
-    rtpmap.param.slen = 0;
-    pjmedia_sdp_attr *attr;
-    pjmedia_sdp_rtpmap_to_attr (memPool_, &rtpmap, &attr);
-    med->attr[med->attr_count++] = attr;
+    addAttributesFromVideoSDP(med);
 
     // add it to the end
     localSession_->media[localAudioMediaCap_.size()] = med;
@@ -631,6 +666,13 @@ void Sdp::addVideoMediaDescription()
 std::string Sdp::getActiveVideoDescription() const
 {
     std::stringstream ss;
+    if (activeRemoteSession_)
+    {
+        static const int SIZE = 2048;
+        char buffer[SIZE];
+        pjmedia_sdp_print(activeRemoteSession_, buffer, SIZE);
+        _error("REMOTE SESSION LOOKS LIKE: %s", buffer);
+    }
     // Tue Jul 19 13:27:59 EDT 2011:tmatth:FIXME: this is called too early
     ss << "v=0" << std::endl;
     ss << "o=- 0 0 " << STR_IN.ptr << " " << STR_IP4.ptr << " " << localIpAddr_ << std::endl;

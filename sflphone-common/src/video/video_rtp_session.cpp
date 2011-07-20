@@ -122,7 +122,7 @@ void VideoRtpSession::test_loopback()
     receiveThread_->start();
 }
 
-void VideoRtpSession::start()
+void VideoRtpSession::start(Sdp *sdp)
 {
     assert(sendThread_.get() == 0);
     assert(receiveThread_.get() == 0);
@@ -131,6 +131,7 @@ void VideoRtpSession::start()
     sendThread_->start();
 
     sendThread_->waitForSDP();
+    sdp->updateVideoSDP(sendThread_->getSDP());
     receiveThread_.reset(new VideoReceiveThread(rxArgs_));
     receiveThread_->start();
     started_ = true;

@@ -79,6 +79,7 @@ class VideoSendThread : public ost::Thread {
         void waitForSDP();
         virtual void run();
         void stop();
+        std::string getSDP() const { return sdp_; }
 };
 }
 
