@@ -620,6 +620,7 @@ void Sdp::addAttributesFromVideoSDP(pjmedia_sdp_media* med)
     using std::string;
     using std::vector;
 
+    assert(not videoSDP_.empty());
     const vector<string> tokens(split(videoSDP_, '\n'));
     for (vector<string>::const_iterator iter = tokens.begin(); iter != tokens.end(); ++iter)
     {

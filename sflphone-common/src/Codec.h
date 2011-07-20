@@ -30,7 +30,7 @@
 #ifndef __SFL_CODEC_H__
 #define __SFL_CODEC_H__
 
-#include <cc++/digest.h>
+#include <cc++/missing.h>
 
 /**
  * Interface for both audio codecs as well as video codecs.
@@ -70,36 +70,6 @@ class Codec
          * @return The expected bandwidth used by this codec.
          */
         virtual double getBandwidth() const = 0;
-
-        /**
-         * Build a unique hash code for identifying the codec uniquely.
-         * Note that if multiple implementations of codec are provided,
-         * one should override this function in order to avoid conflicting
-         * hash codes.
-         *
-         * Hash code is a CRC32 digest made from :
-         * MIME "." MIME SUBTYPE "." PAYLOAD TYPE "." PAYLOAD CLOCKRATE
-         *
-         * @return a unique hash code identifying this codec.
-         */
-        virtual std::string hashCode() const {
-            ost::CRC32Digest digest;
-
-            std::ostringstream os;
-            os << getMimeType()
-            << "." << getMimeSubtype()
-            << "." << getPayloadType()
-            << "." << getClockRate();
-
-            std::string concat = os.str();
-
-            digest.putDigest ( (const unsigned char*) concat.c_str(), concat.length());
-
-            std::ostringstream buffer;
-            buffer << digest;
-
-            return buffer.str();
-        }
 };
 }
 
