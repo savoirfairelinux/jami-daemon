@@ -568,17 +568,6 @@ void Sdp::addTiming ()
     localSession_->time.start = localSession_->time.stop = 0;
 }
 
-void Sdp::addAttributes()
-{
-
-    pjmedia_sdp_attr *a;
-    localSession_->attr_count = 1;
-    a =  PJ_POOL_ZALLOC_T (memPool_, pjmedia_sdp_attr);
-    a->name=STR_SENDRECV;
-    localSession_->attr[0] = a;
-}
-
-
 void Sdp::addAudioMediaDescription()
 {
     pjmedia_sdp_media* med;
@@ -657,7 +646,14 @@ void Sdp::addVideoMediaDescription()
     _debug("%s", tmp.c_str());
     pj_strdup2 (memPool_, &med->desc.fmt[0], tmp.c_str());
     med->desc.fmt_count = 1;
-    addAttributesFromVideoSDP(med);
+    pjmedia_sdp_rtpmap rtpmap;
+    rtpmap.pt = med->desc.fmt[0];
+    rtpmap.enc_name = pj_str((char*) "H264");
+    rtpmap.clock_rate = 90000;
+    rtpmap.param.slen = 0;
+    pjmedia_sdp_attr *attr;
+    pjmedia_sdp_rtpmap_to_attr (memPool_, &rtpmap, &attr);
+    med->attr[med->attr_count++] = attr;
 
     // add it to the end
     localSession_->media[localAudioMediaCap_.size()] = med;
@@ -667,12 +663,12 @@ void Sdp::addVideoMediaDescription()
 std::string Sdp::getActiveVideoDescription() const
 {
     std::stringstream ss;
-    if (activeRemoteSession_)
+    if (activeLocalSession_)
     {
         static const int SIZE = 2048;
         char buffer[SIZE];
-        pjmedia_sdp_print(activeRemoteSession_, buffer, SIZE);
-        _error("REMOTE SESSION LOOKS LIKE: %s", buffer);
+        pjmedia_sdp_print(activeLocalSession_, buffer, SIZE);
+        _error("ACTIVE LOCAL SESSION LOOKS LIKE: %s", buffer);
     }
     // Tue Jul 19 13:27:59 EDT 2011:tmatth:FIXME: this is called too early
     ss << "v=0" << std::endl;

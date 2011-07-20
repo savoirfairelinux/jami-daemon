@@ -463,46 +463,6 @@ class Sdp
         void addTiming (void);
 
         /*
-         *  Optional field: Session information ("s=")
-         *  Provides textual information about the session.
-         */
-        void addSessionInfo (void) {}
-
-        /*
-         *  Optional field: Uri ("u=")
-         *  Add a pointer to additional information about the session.
-         */
-        void addUri (void) {}
-
-        /*
-         *  Optional fields: Email address and phone number ("e=" and "p=")
-         *  Add contact information for the person responsible for the conference.
-         */
-        void addEmail (void) {}
-
-        /*
-         *  Optional field: Bandwidth ("b=")
-         *  Denotes the proposed bandwidth to be used by the session or the media .
-         */
-        void addBandwidth (void) {}
-
-
-        /*
-         * Optional field: Time zones ("z=")
-         */
-        void addTimeZone (void) {}
-
-        /*
-         * Optional field: Encryption keys ("k=")
-         */
-        void addEncryptionKey (void) {}
-
-        /*
-         * Optional field: Attributes ("a=")
-         */
-        void addAttributes();
-
-        /*
          * Mandatory field: Media descriptions ("m=")
          */
         void addAudioMediaDescription();
