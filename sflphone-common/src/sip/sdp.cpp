@@ -615,11 +615,11 @@ void Sdp::addAttributesFromVideoSDP(pjmedia_sdp_media* med)
         if ((*iter)[0] == 'a' and (*iter).find("tool") == string::npos and
                 (*iter).find("rtpmap") == string::npos)
         {
-
             size_t separator_pos = (*iter).find(":");
             pjmedia_sdp_attr *attr = static_cast<pjmedia_sdp_attr *>(pj_pool_zalloc(memPool_, sizeof(pjmedia_sdp_attr)));
             string name((*iter).substr(2, separator_pos - 2)); // skip a= 
-            string val((*iter).substr(separator_pos + 1, (*iter).size() - separator_pos));
+            string val((*iter).substr(separator_pos)); // get from : to the end
+            _error("Grabbing attribute %s with value %s", name.c_str(), val.c_str());
             pj_strdup2(memPool_, &attr->name, name.c_str());
             pj_strdup2(memPool_, &attr->value, val.c_str());
 
@@ -681,8 +681,9 @@ std::string Sdp::getActiveVideoDescription() const
         pjmedia_sdp_print(activeRemoteSession_, buffer, SIZE);
         _error("ACTIVE REMOTE SESSION LOOKS LIKE: %s", buffer);
         std::string remoteStr(buffer);
-        size_t extra_pos = remoteStr.find("a=fmtp:96");
-        extraAttr = remoteStr.substr(extra_pos, remoteStr.size() - extra_pos);
+        const char *prefix = "a=fmtp:96";
+        size_t extra_pos = remoteStr.find(prefix);
+        extraAttr = remoteStr.substr(extra_pos - sizeof(prefix), remoteStr.size() - extra_pos);
         _error("Grabbed extra attributes: %s", extraAttr.c_str());
     }
     ss << "v=0" << std::endl;
