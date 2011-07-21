@@ -422,9 +422,14 @@ class Sdp
         void setLocalMediaCapabilities (CodecOrder selectedCodecs);
 
         /**
-         * Updates the sdp_media with attributes fro our videoSDP_ string
+         * Updates the sdp_media with attributes from our videoSDP_ string
          */
         void addAttributesFromVideoSDP(pjmedia_sdp_media* med);
+
+        /**
+         * Updates the sdp_media with attributes from our remoteSdp
+         */
+        void addAttributesFromRemoteSDP(pjmedia_sdp_media* med);
 
         /*
          * Build the local SDP offer

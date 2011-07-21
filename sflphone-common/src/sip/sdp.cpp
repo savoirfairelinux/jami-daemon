@@ -628,6 +628,44 @@ void Sdp::addAttributesFromVideoSDP(pjmedia_sdp_media* med)
     }
 }
 
+void Sdp::addAttributesFromRemoteSDP(pjmedia_sdp_media* med)
+{
+    using std::string;
+    using std::vector;
+
+    static const int SIZE = 2048;
+    char buffer[SIZE];
+    pjmedia_sdp_print(remoteSession_, buffer, SIZE);
+    string remoteStr(buffer);
+    string extraAttr;
+    const char *prefix = "a=fmtp:96";
+    size_t extra_pos = remoteStr.find(prefix);
+    if (extra_pos != string::npos)
+    {
+        extraAttr = remoteStr.substr(extra_pos);
+        _error("Grabbed extra attributes: %s", extraAttr.c_str());
+    }
+
+    const vector<string> tokens(split(remoteStr, '\n'));
+    for (vector<string>::const_iterator iter = tokens.begin(); iter != tokens.end(); ++iter)
+    {
+        // if it's an attribute, but neither the tool attribute nor an rtpmap attr
+        if ((*iter)[0] == 'a' and (*iter).find("tool") == string::npos and
+                (*iter).find("rtpmap") == string::npos)
+        {
+            size_t separator_pos = (*iter).find(":");
+            pjmedia_sdp_attr *attr = static_cast<pjmedia_sdp_attr *>(pj_pool_zalloc(memPool_, sizeof(pjmedia_sdp_attr)));
+            string name((*iter).substr(2, separator_pos - 2)); // skip a= 
+            string val((*iter).substr(separator_pos + 1)); // get from : to the end
+            _error("Grabbing attribute %s with value %s", name.c_str(), val.c_str());
+            pj_strdup2(memPool_, &attr->name, name.c_str());
+            pj_strdup2(memPool_, &attr->value, val.c_str());
+
+            med->attr[med->attr_count++] = attr;
+        }
+    }
+}
+
 void Sdp::addVideoMediaDescription()
 {
     // adds the following to the SDP for the local session:
@@ -657,9 +695,11 @@ void Sdp::addVideoMediaDescription()
 
     if (not videoSDP_.empty())
         addAttributesFromVideoSDP(med);
+    else
+        addAttributesFromRemoteSDP(med);
 
     // add it to the end
-    localSession_->media[localAudioMediaCap_.size()] = med;
+    localSession_->media[localSession_->media_count] = med;
     ++localSession_->media_count;
 }
 
