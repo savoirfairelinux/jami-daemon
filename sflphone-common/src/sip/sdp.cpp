@@ -683,8 +683,11 @@ std::string Sdp::getActiveVideoDescription() const
         std::string remoteStr(buffer);
         const char *prefix = "a=fmtp:96";
         size_t extra_pos = remoteStr.find(prefix);
-        extraAttr = remoteStr.substr(extra_pos - sizeof(prefix), remoteStr.size() - extra_pos);
-        _error("Grabbed extra attributes: %s", extraAttr.c_str());
+        if (extra_pos != std::string::npos)
+        {
+            extraAttr = remoteStr.substr(extra_pos);
+            _error("Grabbed extra attributes: %s", extraAttr.c_str());
+        }
     }
     ss << "v=0" << std::endl;
     ss << "o=- 0 0 " << STR_IN.ptr << " " << STR_IP4.ptr << " " << localIpAddr_ << std::endl;
