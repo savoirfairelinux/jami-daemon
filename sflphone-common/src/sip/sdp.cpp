@@ -681,7 +681,7 @@ std::string Sdp::getActiveVideoDescription() const
         pjmedia_sdp_print(activeRemoteSession_, buffer, SIZE);
         _error("ACTIVE REMOTE SESSION LOOKS LIKE: %s", buffer);
         std::string remoteStr(buffer);
-        size_t extra_pos = remoteStr.find("a=fmtp");
+        size_t extra_pos = remoteStr.find("a=fmtp:96");
         extraAttr = remoteStr.substr(extra_pos, remoteStr.size() - extra_pos);
         _error("Grabbed extra attributes: %s", extraAttr.c_str());
     }
