@@ -618,7 +618,7 @@ void Sdp::addAttributesFromVideoSDP(pjmedia_sdp_media* med)
             size_t separator_pos = (*iter).find(":");
             pjmedia_sdp_attr *attr = static_cast<pjmedia_sdp_attr *>(pj_pool_zalloc(memPool_, sizeof(pjmedia_sdp_attr)));
             string name((*iter).substr(2, separator_pos - 2)); // skip a= 
-            string val((*iter).substr(separator_pos)); // get from : to the end
+            string val((*iter).substr(separator_pos + 1)); // get from : to the end
             _error("Grabbing attribute %s with value %s", name.c_str(), val.c_str());
             pj_strdup2(memPool_, &attr->name, name.c_str());
             pj_strdup2(memPool_, &attr->value, val.c_str());
