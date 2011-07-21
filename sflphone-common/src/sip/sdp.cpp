@@ -608,7 +608,6 @@ void Sdp::addAttributesFromVideoSDP(pjmedia_sdp_media* med)
     using std::string;
     using std::vector;
 
-    assert(not videoSDP_.empty());
     const vector<string> tokens(split(videoSDP_, '\n'));
     for (vector<string>::const_iterator iter = tokens.begin(); iter != tokens.end(); ++iter)
     {
@@ -656,7 +655,8 @@ void Sdp::addVideoMediaDescription()
     pjmedia_sdp_rtpmap_to_attr (memPool_, &rtpmap, &attr);
     med->attr[med->attr_count++] = attr;
 
-    addAttributesFromVideoSDP(med);
+    if (not videoSDP_.empty())
+        addAttributesFromVideoSDP(med);
 
     // add it to the end
     localSession_->media[localAudioMediaCap_.size()] = med;
@@ -666,6 +666,7 @@ void Sdp::addVideoMediaDescription()
 std::string Sdp::getActiveVideoDescription() const
 {
     std::stringstream ss;
+    std::string extraAttr;
     if (activeLocalSession_)
     {
         static const int SIZE = 2048;
@@ -679,8 +680,11 @@ std::string Sdp::getActiveVideoDescription() const
         char buffer[SIZE];
         pjmedia_sdp_print(activeRemoteSession_, buffer, SIZE);
         _error("ACTIVE REMOTE SESSION LOOKS LIKE: %s", buffer);
+        std::string remoteStr(buffer);
+        size_t extra_pos = remoteStr.find("a=fmtp");
+        extraAttr = remoteStr.substr(extra_pos, remoteStr.size() - extra_pos);
+        _error("Grabbed extra attributes: %s", extraAttr.c_str());
     }
-    // Tue Jul 19 13:27:59 EDT 2011:tmatth:FIXME: this is called too early
     ss << "v=0" << std::endl;
     ss << "o=- 0 0 " << STR_IN.ptr << " " << STR_IP4.ptr << " " << localIpAddr_ << std::endl;
     ss << "s=" << STR_SDP_NAME.ptr << std::endl;
@@ -690,7 +694,7 @@ std::string Sdp::getActiveVideoDescription() const
     ss << "m=" << STR_VIDEO.ptr << " " << getLocalPublishedVideoPort() << " " << STR_RTP_AVP.ptr << " 96" << std::endl;
     ss << "b=AS:1000" << std::endl;
     ss << "a=rtpmap:96 H264/90000" << std::endl;
-    ss << "a=fmtp:96 packetization-mode=1; sprop-parameter-sets=Z0LAHtoCgPaEAAADAAQAAAMA8DxYuoA=,aM48gA==" << std::endl;
+    ss << extraAttr << std::endl;
 
     _debug("Receiving SDP \n%s", ss.str().c_str());
 
