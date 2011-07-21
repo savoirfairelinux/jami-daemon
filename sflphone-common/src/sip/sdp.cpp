@@ -546,7 +546,6 @@ void Sdp::addOrigin ()
 
 void Sdp::addSessionName ()
 {
-
     localSession_->name = STR_SDP_NAME;
 }
 
@@ -613,9 +612,11 @@ void Sdp::addAttributesFromVideoSDP(pjmedia_sdp_media* med)
     const vector<string> tokens(split(videoSDP_, '\n'));
     for (vector<string>::const_iterator iter = tokens.begin(); iter != tokens.end(); ++iter)
     {
-        // if it's an attribute and not the tool attribute:
-        if ((*iter)[0] == 'a' and (*iter).find("tool") == string::npos)
+        // if it's an attribute, but neither the tool attribute nor an rtpmap attr
+        if ((*iter)[0] == 'a' and (*iter).find("tool") == string::npos and
+                (*iter).find("rtpmap") == string::npos)
         {
+
             size_t separator_pos = (*iter).find(":");
             pjmedia_sdp_attr *attr = static_cast<pjmedia_sdp_attr *>(pj_pool_zalloc(memPool_, sizeof(pjmedia_sdp_attr)));
             string name((*iter).substr(2, separator_pos - 2)); // skip a= 
@@ -630,7 +631,7 @@ void Sdp::addAttributesFromVideoSDP(pjmedia_sdp_media* med)
 
 void Sdp::addVideoMediaDescription()
 {
-    // adds the following to the SDP:
+    // adds the following to the SDP for the local session:
     // m=video 5000 RTP/AVP 96
     // a=rtpmap:96 H264/90000
 
@@ -655,6 +656,8 @@ void Sdp::addVideoMediaDescription()
     pjmedia_sdp_rtpmap_to_attr (memPool_, &rtpmap, &attr);
     med->attr[med->attr_count++] = attr;
 
+    addAttributesFromVideoSDP(med);
+
     // add it to the end
     localSession_->media[localAudioMediaCap_.size()] = med;
     ++localSession_->media_count;
@@ -669,6 +672,13 @@ std::string Sdp::getActiveVideoDescription() const
         char buffer[SIZE];
         pjmedia_sdp_print(activeLocalSession_, buffer, SIZE);
         _error("ACTIVE LOCAL SESSION LOOKS LIKE: %s", buffer);
+    }
+    if (activeRemoteSession_)
+    {
+        static const int SIZE = 2048;
+        char buffer[SIZE];
+        pjmedia_sdp_print(activeRemoteSession_, buffer, SIZE);
+        _error("ACTIVE REMOTE SESSION LOOKS LIKE: %s", buffer);
     }
     // Tue Jul 19 13:27:59 EDT 2011:tmatth:FIXME: this is called too early
     ss << "v=0" << std::endl;

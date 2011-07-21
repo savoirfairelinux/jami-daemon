@@ -156,6 +156,8 @@ std::string fetchHeaderValue (pjsip_msg *msg, std::string field);
  */
 std::string getLocalAddressAssociatedToAccount (AccountID id);
 
+namespace
+{
 /*
  *  The global pool factory
  */
@@ -186,6 +188,8 @@ pj_thread_desc desc;
  * Url hook instance
  */
 UrlHook *urlhook;
+
+} // end anonymous namespace
 
 /**
  * Get the number of voicemail waiting in a SIP message
