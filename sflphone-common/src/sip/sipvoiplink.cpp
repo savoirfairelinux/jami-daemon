@@ -542,7 +542,8 @@ void SIPVoIPLink::sendRegister (AccountID id) throw(VoipLinkException)
     // Add User-Agent Header
     pj_list_init (&hdr_list);
 
-    pj_str_t useragent = pj_str ((char*)getUseragentName (id).c_str());
+	const std::string &agent = getUseragentName (id);
+    pj_str_t useragent = pj_str ((char*)agent.c_str());
     pjsip_generic_string_hdr *h = pjsip_generic_string_hdr_create (_pool, &STR_USER_AGENT, &useragent);
 
     pj_list_push_back (&hdr_list, (pjsip_hdr*) h);
