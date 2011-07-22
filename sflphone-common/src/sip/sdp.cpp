@@ -232,6 +232,7 @@ void Sdp::setMediaDescriptorLine (sdpMedia *media, pjmedia_sdp_media** p_med)
             rtpmap.clock_rate = codec->getClockRate();
         }
 
+        rtpmap.param.ptr = "";
         rtpmap.param.slen = 0;
 
         pjmedia_sdp_rtpmap_to_attr (memPool_, &rtpmap, &attr);
