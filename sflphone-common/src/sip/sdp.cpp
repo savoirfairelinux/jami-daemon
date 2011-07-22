@@ -636,10 +636,24 @@ void Sdp::addVideoMediaDescription()
     ++localSession_->media_count;
 }
 
+
+std::string Sdp::getRTPMapAttribute(int payloadType) const
+{
+    pjmedia_sdp_attr* attr;
+    pj_str_t payloadTypeStr;
+    payloadTypeStr.ptr = (char*) pj_pool_alloc(memPool_, 16);
+    payloadTypeStr.slen = pj_utoa(payloadType, payloadTypeStr.ptr);
+
+    attr = pjmedia_sdp_media_find_attr2(activeLocalSession_->media[activeLocalSession_->media_count - 1],
+                                        "rtpmap", &payloadTypeStr);
+    std::string result(attr->value.ptr, attr->value.slen);
+    return "a=rtpmap:" + result;
+}
+
 std::string Sdp::getActiveVideoDescription() const
 {
     std::stringstream ss;
-    std::string extraAttr;
+    static const int payloadType = 96;
     if (activeLocalSession_)
     {
         static const int SIZE = 2048;
@@ -653,14 +667,6 @@ std::string Sdp::getActiveVideoDescription() const
         char buffer[SIZE];
         pjmedia_sdp_print(activeRemoteSession_, buffer, SIZE);
         _error("ACTIVE REMOTE SESSION LOOKS LIKE: %s", buffer);
-        std::string remoteStr(buffer);
-        const char *prefix = "a=fmtp:96";
-        size_t extra_pos = remoteStr.find(prefix);
-        if (extra_pos != std::string::npos)
-        {
-            extraAttr = remoteStr.substr(extra_pos);
-            _error("Grabbed extra attributes: %s", extraAttr.c_str());
-        }
     }
     ss << "v=0" << std::endl;
     ss << "o=- 0 0 " << STR_IN.ptr << " " << STR_IP4.ptr << " " << localIpAddr_ << std::endl;
@@ -670,8 +676,9 @@ std::string Sdp::getActiveVideoDescription() const
     ss << "a=tool:libavformat 53.2.0" << std::endl;
     ss << "m=" << STR_VIDEO.ptr << " " << getLocalPublishedVideoPort() << " " << STR_RTP_AVP.ptr << " 96" << std::endl;
     ss << "b=AS:1000" << std::endl;
-    ss << "a=rtpmap:96 H264/90000" << std::endl;
-    ss << extraAttr << std::endl;
+    //ss << "a=rtpmap:96 H264/90000" << std::endl;
+    if (activeLocalSession_)
+        ss << getRTPMapAttribute(payloadType);
 
     _debug("Receiving SDP \n%s", ss.str().c_str());
 

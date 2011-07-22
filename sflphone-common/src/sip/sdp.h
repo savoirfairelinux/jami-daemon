@@ -395,6 +395,9 @@ class Sdp
 
         Sdp& operator= (const Sdp&); //No Assignment Operator
 
+
+        std::string getRTPMapAttribute(int payloadType) const;
+
         /*
          * Build the sdp media section
          * Add rtpmap field if necessary
