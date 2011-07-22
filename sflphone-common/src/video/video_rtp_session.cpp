@@ -130,8 +130,6 @@ void VideoRtpSession::start(Sdp *sdp)
     sendThread_.reset(new VideoSendThread(txArgs_));
     sendThread_->start();
 
-    sendThread_->waitForSDP();
-    sdp->updateVideoSDP(sendThread_->getSDP());
     receiveThread_.reset(new VideoReceiveThread(rxArgs_));
     receiveThread_->start();
     started_ = true;

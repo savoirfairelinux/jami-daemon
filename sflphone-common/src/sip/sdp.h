@@ -263,10 +263,6 @@ class Sdp
             return sessionAudioMedia_;
         }
 
-        void updateVideoSDP(const std::string &SDP_str) {
-            videoSDP_ = SDP_str;
-        }
-
         /**
          *
          */
@@ -395,11 +391,6 @@ class Sdp
          */
         unsigned int telephoneEventPayload_;
 
-        /**
-         * The SDP string that the video backend gave us
-         */
-        std::string videoSDP_;
-
         Sdp (const Sdp&); //No Copy Constructor
 
         Sdp& operator= (const Sdp&); //No Assignment Operator
@@ -420,16 +411,6 @@ class Sdp
          * @param List of codec in preference order
          */
         void setLocalMediaCapabilities (CodecOrder selectedCodecs);
-
-        /**
-         * Updates the sdp_media with attributes from our videoSDP_ string
-         */
-        void addAttributesFromVideoSDP(pjmedia_sdp_media* med);
-
-        /**
-         * Updates the sdp_media with attributes from our remoteSdp
-         */
-        void addAttributesFromRemoteSDP(pjmedia_sdp_media* med);
 
         /*
          * Build the local SDP offer
