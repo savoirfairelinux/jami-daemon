@@ -1833,9 +1833,6 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const CallID& id, const std::string& to)
             call->getAudioRtp()->initLocalCryptoInfo (call);
             call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
             std::string toUriIP(getIPFromSIP(toUri));
-            call->getVideoRtp()->updateSDP(call->getLocalSDP());
-            call->getVideoRtp()->updateDestination(toUriIP, call->getLocalSDP()->getRemoteVideoPort());
-            call->getVideoRtp()->start(call->getLocalSDP());
         } catch (...) {
             _debug ("UserAgent: Unable to create RTP Session in new IP2IP call (%s:%d)", __FILE__, __LINE__);
         }
