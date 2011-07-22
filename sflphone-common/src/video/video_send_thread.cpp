@@ -107,8 +107,10 @@ void VideoSendThread::prepareEncoderContext()
     // fps
     encoderCtx_->time_base = (AVRational){1, 30};
     encoderCtx_->pix_fmt = PIX_FMT_YUV420P;
-    // Place global headers in extradata instead of every keyframe.
-    encoderCtx_->flags |= CODEC_FLAG_GLOBAL_HEADER;
+    // Fri Jul 22 11:37:59 EDT 2011:tmatth:XXX: DON'T set this, we want our
+    // pps and sps to be sent in-band for RTP
+    // This is to place global headers in extradata instead of every keyframe.
+    // encoderCtx_->flags |= CODEC_FLAG_GLOBAL_HEADER;
 }
 
 void VideoSendThread::setup()
