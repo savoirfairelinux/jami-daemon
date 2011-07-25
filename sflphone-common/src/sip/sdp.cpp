@@ -257,7 +257,7 @@ void Sdp::setMediaDescriptorLine (sdpMedia *media, pjmedia_sdp_media** p_med)
             rtpmap.clock_rate = codec->getClockRate();
         }
 
-        rtpmap.param.ptr = "";
+        rtpmap.param.ptr = (char*) "";
         rtpmap.param.slen = 0;
 
         pjmedia_sdp_rtpmap_to_attr (memPool_, &rtpmap, &attr);
@@ -635,6 +635,12 @@ void Sdp::addVideoMediaDescription()
     // add it to the end
     localSession_->media[localSession_->media_count] = med;
     ++localSession_->media_count;
+
+    attr = (pjmedia_sdp_attr*) pj_pool_zalloc (memPool_, sizeof (pjmedia_sdp_attr));
+
+    pj_strdup2 (memPool_, &attr->name, "sendrecv");
+
+    med->attr[ med->attr_count++] = attr;
 }
 
 
