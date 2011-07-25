@@ -91,7 +91,7 @@ class Gsm : public sfl::AudioCodec
         gsm _encode_gsmhandle;
 };
 
-extern "C" sfl::Codec* create()
+extern "C" sfl::Codec* CODEC_ENTRY()
 {
     return new Gsm (3);
 }

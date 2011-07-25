@@ -215,7 +215,8 @@ std::vector<sfl::Codec*> AudioCodecFactory::scanCodecDirectory (void)
                     if (seemsValid (tmp) && !alreadyInCache (tmp)) {
                         _Cache.push_back (tmp);
                         audioCodec = loadCodec (dirStr.append (tmp));
-                        codecs.push_back (audioCodec);
+                        if (audioCodec)
+                            codecs.push_back (audioCodec);
                         dirStr = dirToScan[i];
                     }
                 }
@@ -235,15 +236,24 @@ sfl::Codec* AudioCodecFactory::loadCodec (std::string path)
     using std::cerr;
     void * codecHandle = dlopen (path.c_str() , RTLD_LAZY);
 
-    if (!codecHandle)
+    if (!codecHandle) {
         cerr << dlerror() << '\n';
+        return NULL;
+    }
 
     dlerror();
 
-    create_t* createCodec = (create_t*) dlsym (codecHandle , "create");
+    create_t* createCodec = (create_t*) dlsym (codecHandle , CODEC_ENTRY_SYMBOL);
 
-    if (dlerror())
-        cerr << dlerror() << '\n';
+    char *err = dlerror();
+    if (err)
+        cerr << err << '\n';
+
+    if (err || !createCodec) {
+        cerr << "Could not load codec " << path << '\n';
+        dlclose(codecHandle);
+        return NULL;
+    }
 
     sfl::Codec* a = createCodec();
 
@@ -278,10 +288,14 @@ sfl::Codec* AudioCodecFactory::instantiateCodec (AudioCodecType payload)
 
     while (iter != _CodecInMemory.end()) {
         if (iter->first->getPayloadType() == payload) {
-            create_t* createCodec = (create_t*) dlsym (iter->second , "create");
+            create_t* createCodec = (create_t*) dlsym (iter->second , CODEC_ENTRY_SYMBOL);
 
-            if (dlerror())
-                cerr << dlerror() << '\n';
+            char *err = dlerror();
+            if (err)
+                cerr << err << '\n';
+
+            if (err || !createCodec)
+                return NULL;
 
             sfl::Codec* a = createCodec();
 

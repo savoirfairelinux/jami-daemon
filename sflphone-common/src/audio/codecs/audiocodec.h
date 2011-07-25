@@ -38,6 +38,10 @@
 
 #include "Codec.h"
 
+/* bump when codec binary interface changes */
+#define CODEC_ENTRY create_0_9_14
+#define CODEC_ENTRY_SYMBOL "create_0_9_14"
+
 namespace ost {
     class PayloadFormat;
     class DynamicPayloadFormat;

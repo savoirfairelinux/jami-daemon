@@ -125,7 +125,7 @@ class Speex : public sfl::AudioCodec
 };
 
 // the class factories
-extern "C" sfl::Codec* create()
+extern "C" sfl::Codec* CODEC_ENTRY()
 {
     return new Speex (111);
 }
