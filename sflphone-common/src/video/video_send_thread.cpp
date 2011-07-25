@@ -102,8 +102,9 @@ void VideoSendThread::prepareEncoderContext()
     encoderCtx_->max_b_frames = 0;
     encoderCtx_->rtp_payload_size = 0; // Target GOB length
     // resolution must be a multiple of two
-    encoderCtx_->width = inputDecoderCtx_->width; // get resolution from input
-    encoderCtx_->height = inputDecoderCtx_->height;
+    encoderCtx_->width = args_["width"].empty() ? inputDecoderCtx_->width : atoi(args_["width"].c_str()); // get resolution from input
+    encoderCtx_->height = args_["height"].empty() ? inputDecoderCtx_->height : atoi(args_["height"].c_str());
+
     // fps
     encoderCtx_->time_base = (AVRational){1, 30};
     encoderCtx_->pix_fmt = PIX_FMT_YUV420P;

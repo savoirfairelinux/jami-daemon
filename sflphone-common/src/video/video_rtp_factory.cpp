@@ -44,8 +44,9 @@ VideoRtpFactory::VideoRtpFactory()
     txArgs["bitrate"]     = "1000000";
     txArgs["destination"] = "rtp://127.0.0.1:5000";
     txArgs["format"]      = "rgb24";
-    txArgs["width"]       = "640";
-    txArgs["height"]      = "480";
+    // default to CIF/SIF(625)
+    txArgs["width"]       = "352";
+    txArgs["height"]      = "288";
     txArgs["framerate"]      = "30";
 
     rxArgs["codec"] = txArgs["codec"];
