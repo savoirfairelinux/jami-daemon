@@ -45,7 +45,7 @@
 namespace sfl
 {
 
-AudioRtpFactory::AudioRtpFactory() : _rtpSession (NULL), remoteContext(NULL), localContext(NULL)
+AudioRtpFactory::AudioRtpFactory(SIPCall *ca) : _rtpSession (NULL), remoteContext(NULL), localContext(NULL), ca_(ca)
 {
 
 }
@@ -55,17 +55,15 @@ AudioRtpFactory::~AudioRtpFactory()
     stop();
 }
 
-void AudioRtpFactory::initAudioRtpConfig (SIPCall *ca)
+void AudioRtpFactory::initAudioRtpConfig ()
 {
-    assert (ca);
-
     if (_rtpSession != NULL) {
         _debugException ("An audio rtp thread was already created but not" \
                          "destroyed. Forcing it before continuing.");
         stop();
     }
 
-    std::string accountId(Manager::instance().getAccountFromCall (ca->getCallId()));
+    std::string accountId(Manager::instance().getAccountFromCall (ca_->getCallId()));
 
     _debug ("AudioRtpFactory: Init rtp session for account %s", accountId.c_str());
 
@@ -102,7 +100,7 @@ void AudioRtpFactory::registerAccount(SIPAccount *sipaccount, const std::string&
     _helloHashEnabled = sipaccount->getZrtpHelloHash();
 }
 
-void AudioRtpFactory::initAudioSymmetricRtpSession (SIPCall * ca)
+void AudioRtpFactory::initAudioSymmetricRtpSession ()
 {
     ost::MutexLock m (_audioRtpThreadMutex);
 
@@ -114,12 +112,12 @@ void AudioRtpFactory::initAudioSymmetricRtpSession (SIPCall * ca)
         switch (_keyExchangeProtocol) {
 
             case Zrtp:
-                _rtpSession = new AudioZrtpSession (ca, zidFilename);
+                _rtpSession = new AudioZrtpSession (ca_, zidFilename);
 
                 if (_helloHashEnabled) {
                     // TODO: be careful with that. The hello hash is computed asynchronously. Maybe it's
                     // not even available at that point.
-                    ca->getLocalSDP()->setZrtpHash (static_cast<AudioZrtpSession *> (_rtpSession)->getHelloHash());
+                    ca_->getLocalSDP()->setZrtpHash (static_cast<AudioZrtpSession *> (_rtpSession)->getHelloHash());
                     _debug ("AudioRtpFactory: Zrtp hello hash fed to SDP");
                 }
 
@@ -127,7 +125,7 @@ void AudioRtpFactory::initAudioSymmetricRtpSession (SIPCall * ca)
 
             case Sdes:
 
-                _rtpSession = new AudioSrtpSession (ca);
+                _rtpSession = new AudioSrtpSession (ca_);
                 break;
 
             default:
@@ -135,7 +133,7 @@ void AudioRtpFactory::initAudioSymmetricRtpSession (SIPCall * ca)
                 throw UnsupportedRtpSessionType();
         }
     } else {
-        _rtpSession = new AudioSymmetricRtpSession (ca);
+        _rtpSession = new AudioSymmetricRtpSession (ca_);
         _debug ("AudioRtpFactory: Starting a symmetric unencrypted rtp session");
     }
 }
@@ -222,12 +220,12 @@ sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
     }
 }
 
-void sfl::AudioRtpFactory::initLocalCryptoInfo (SIPCall * ca)
+void sfl::AudioRtpFactory::initLocalCryptoInfo ()
 {
     if (_rtpSession && _rtpSession->getAudioRtpType() == Sdes) {
         static_cast<AudioSrtpSession *> (_rtpSession)->initLocalCryptoInfo ();
 
-        ca->getLocalSDP()->setLocalSdpCrypto (static_cast<AudioSrtpSession *> (_rtpSession)->getLocalCryptoInfo());
+        ca_->getLocalSDP()->setLocalSdpCrypto (static_cast<AudioSrtpSession *> (_rtpSession)->getLocalCryptoInfo());
     }
 }
 

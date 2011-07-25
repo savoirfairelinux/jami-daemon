@@ -65,10 +65,10 @@ class AudioRtpFactoryException : public std::logic_error
 class AudioRtpFactory
 {
     public:
-        AudioRtpFactory();
+        AudioRtpFactory(SIPCall *ca);
         ~AudioRtpFactory();
 
-        void initAudioRtpConfig (SIPCall *ca);
+        void initAudioRtpConfig ();
 
         /**
          * 	Lazy instantiation method. Create a new RTP session of a given
@@ -76,7 +76,7 @@ class AudioRtpFactory
          * @param ca A pointer on a SIP call
          * @return A new AudioSymmetricRtpSession object
          */
-        void initAudioSymmetricRtpSession (SIPCall *ca);
+        void initAudioSymmetricRtpSession ();
 
         /**
          * Start the audio rtp thread of the type specified in the configuration
@@ -147,7 +147,7 @@ class AudioRtpFactory
          */
         sfl::AudioZrtpSession * getAudioZrtpSession();
 
-        void initLocalCryptoInfo (SIPCall *ca);
+        void initLocalCryptoInfo ();
 
         /**
          * Set remote cryptographic info. Should be called after negotiation in SDP
@@ -188,6 +188,8 @@ class AudioRtpFactory
 
         /** Local srtp crypto context to be set into outgoing data queue. */
         ost::CryptoContext *localContext;
+
+        SIPCall *ca_;
 };
 }
 #endif // __AUDIO_RTP_FACTORY_H__
