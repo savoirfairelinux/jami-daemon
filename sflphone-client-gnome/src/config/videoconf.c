@@ -61,8 +61,8 @@ static GtkWidget *preview_button = NULL;
 
 static GtkWidget *drawarea = NULL;
 static int using_clutter;
-static int drawWidth  = 640;
-static int drawHeight = 480;
+static int drawWidth  = 352; // FIXME: should come from dbus signals
+static int drawHeight = 288;
 static const char *drawFormat;
 static VideoPreview *preview = NULL;
 

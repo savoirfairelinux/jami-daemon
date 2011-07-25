@@ -682,7 +682,7 @@ std::string Sdp::getActiveVideoDescription() const
     ss << "t=0 0" << std::endl;
     ss << "a=tool:libavformat 53.2.0" << std::endl;
     ss << "m=" << STR_VIDEO.ptr << " " << getLocalPublishedVideoPort() << " " << STR_RTP_AVP.ptr << " 96" << std::endl;
-    ss << "b=AS:1000" << std::endl;
+    //ss << "b=AS:1000" << std::endl;
     //ss << "a=rtpmap:96 H264/90000" << std::endl;
     if (activeLocalSession_)
         ss << getRTPMapAttribute(payloadType);
