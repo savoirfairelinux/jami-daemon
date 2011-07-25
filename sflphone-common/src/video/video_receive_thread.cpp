@@ -56,12 +56,11 @@ extern "C" {
 #include "manager.h"
 #include "dbus/callmanager.h"
 #include "video_picture.h"
+#include "fileutils.h"
 
 namespace sfl_video {
 
 namespace { // anonymouse namespace
-
-static char program_path[PATH_MAX+1] = "";
 
 #if _SEM_SEMUN_UNDEFINED
 union semun
@@ -82,7 +81,7 @@ int createSemSet(int shmKey, int *semKey)
     key_t key;
 
     do
-		key = ftok(program_path, rand());
+		key = ftok(get_program_dir(), rand());
     while(key == shmKey);
 
     *semKey = key;
@@ -135,7 +134,7 @@ int createShm(unsigned numBytes, int *shmKey)
 
     srand(time(NULL));
     int proj_id = rand();
-    key = ftok(program_path, proj_id);
+    key = ftok(get_program_dir(), proj_id);
     *shmKey = key;
     shm_id = shmget(key, numBytes, 0644 | IPC_CREAT);
 
@@ -227,7 +226,6 @@ void VideoReceiveThread::setup()
 {
     av_register_all();
     avdevice_register_all();
-    setProgramPath();
 
     dstWidth_ = atoi(args_["width"].c_str());
     dstHeight_ = atoi(args_["height"].c_str());
@@ -546,47 +544,6 @@ void VideoReceiveThread::stop()
 VideoReceiveThread::~VideoReceiveThread()
 {
     terminate();
-}
-
-void VideoReceiveThread::setProgramPath()
-{
-    if (*program_path)
-        return;
-
-    // fallback
-    strcpy(program_path, "/tmp");
-
-    char *line = NULL;
-    size_t linelen = 0;
-    uintptr_t needle = (uintptr_t)createSemSet;
-
-    /* Find the path to sflphoned (i.e. ourselves) */
-    FILE *maps = fopen ("/proc/self/maps", "rt");
-    if (maps == NULL)
-        return;
-
-    for (;;)
-    {
-        ssize_t len = getline (&line, &linelen, maps);
-        if (len == -1)
-            break;
-
-        void *start, *end;
-        if (sscanf (line, "%p-%p", &start, &end) < 2)
-            continue;
-        if (needle < (uintptr_t)start || (uintptr_t)end <= needle)
-            continue;
-        char *dir = strchr (line, '/');
-        if (!end || !dir )
-            continue;
-        char *nl  = strchr (line, '\n');
-        if (*nl)
-            *nl = '\0';
-        strncpy(program_path, dir, PATH_MAX);
-        break;
-    }
-    free (line);
-    fclose (maps);
 }
 
 } // end namespace sfl_video

@@ -77,7 +77,6 @@ class VideoReceiveThread : public ost::Thread {
         ost::Event shmReady_;
         std::string sdpFilename_;
 
-        void setProgramPath();
         void loadSDP();
 
     public:

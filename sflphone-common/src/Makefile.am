@@ -45,7 +45,8 @@ noinst_HEADERS = \
 		accountcreator.h \
 		call.h \
 		logger.h \
-		numbercleaner.h
+		numbercleaner.h \
+		fileutils.h
 
 libsflphone_la_LIBADD = \
 	$(src)/libs/utilspp/libutilspp.la \
@@ -100,4 +101,5 @@ libsflphone_la_SOURCES = conference.cpp \
 		call.cpp \
 		account.cpp \
 		logger.cpp \
-		numbercleaner.cpp 
+		numbercleaner.cpp \
+		fileutils.cpp

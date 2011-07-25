@@ -35,6 +35,7 @@
 #include <cstdlib>
 
 #include "audiocodecfactory.h"
+#include "fileutils.h"
 
 
 AudioCodecFactory::AudioCodecFactory() : _CodecsMap(), _defaultCodecOrder(), _Cache(), _nbCodecs(), _CodecInMemory()
@@ -192,11 +193,13 @@ std::vector<sfl::Codec*> AudioCodecFactory::scanCodecDirectory (void)
 
     std::string libDir = std::string (CODECS_DIR).append ("/");
     std::string homeDir = std::string (HOMEDIR)  + DIR_SEPARATOR_STR + "." + PROGDIR + "/";
+    std::string srcDir = std::string(get_program_dir()) + DIR_SEPARATOR_STR + "audio/codecs/";
     // look for a CODECS_PATH environment variable...used in tests
     const char *envDir = getenv("CODECS_PATH");
     std::vector<std::string> dirToScan;
     dirToScan.push_back (homeDir);
     dirToScan.push_back (libDir);
+    dirToScan.push_back (srcDir);
     if (envDir)
         dirToScan.push_back(std::string(envDir) + DIR_SEPARATOR_STR);
 

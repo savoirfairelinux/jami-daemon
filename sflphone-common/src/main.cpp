@@ -39,6 +39,7 @@
 #include <sys/stat.h>
 #include <cc++/common.h>
 #include "global.h"
+#include "fileutils.h"
 
 #include "dbus/dbusmanager.h"
 #include "manager.h"
@@ -66,6 +67,8 @@ CommandOptionNoArg	help (
 int
 main (int argc, char **argv)
 {
+    set_program_dir(argv[0]);
+
     Logger::setConsoleLog (false);
     Logger::setDebugMode (false);
 
