@@ -48,7 +48,7 @@ VideoRtpSession::VideoRtpSession(const std::map<std::string,std::string> &txArgs
 {
 }
 
-void VideoRtpSession::updateSDP(Sdp *sdp)
+void VideoRtpSession::updateSDP(const Sdp *sdp)
 {
     bool updated = false;
     std::string desc = sdp->getActiveVideoDescription();
@@ -122,7 +122,7 @@ void VideoRtpSession::test_loopback()
     receiveThread_->start();
 }
 
-void VideoRtpSession::start(Sdp *sdp)
+void VideoRtpSession::start()
 {
     assert(sendThread_.get() == 0);
     assert(receiveThread_.get() == 0);

@@ -48,14 +48,14 @@ class VideoRtpSession {
                         const std::map<std::string,std::string> &rxArgs);
         ~VideoRtpSession();
 
-        void start(Sdp *sdp);
+        void start();
         void test();
         void test_loopback();
         void stop();
         bool started() const { return started_; }
         void updateDestination(const std::string &destination,
                                unsigned int port);
-        void updateSDP(Sdp *sdp);
+        void updateSDP(const Sdp *sdp);
 
     private:
         std::tr1::shared_ptr<VideoSendThread> sendThread_;

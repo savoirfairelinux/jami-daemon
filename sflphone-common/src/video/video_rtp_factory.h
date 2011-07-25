@@ -47,11 +47,10 @@ class VideoRtpFactory {
         bool started() const;
 
         /**
-         * Start the video RTP thread of the type specified in the configuration
-         * file.
+         * Start the video RTP threads
          * @param None
          */
-        void start(Sdp *sdp);
+        void start();
         /**
          * Stop the audio rtp thread of the type specified in the configuration
          * file. initAudioSymmetricRtpSession must have been called prior to that.

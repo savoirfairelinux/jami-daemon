@@ -57,9 +57,9 @@ VideoRtpFactory::VideoRtpFactory()
     session_ = std::tr1::shared_ptr<VideoRtpSession>(new VideoRtpSession(txArgs, rxArgs));
 }
 
-void VideoRtpFactory::start(Sdp *sdp)
+void VideoRtpFactory::start()
 {
-    session_->start(sdp);
+    session_->start();
 }
 
 void VideoRtpFactory::stop()
