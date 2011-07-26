@@ -35,27 +35,26 @@
 #include <cc++/file.h>
 #include <time.h>
 
+namespace {
+static void free_history(HistoryItemMap &history_items)
+{
+    HistoryItemMap::iterator iter;
+    for (iter = history_items.begin(); iter != history_items.end(); ++iter)
+        delete *iter;
+
+    history_items.clear ();
+}
+} // end anonymous namespace
+
 HistoryManager::HistoryManager ()
     :	_history_loaded (false),
         _history_path ("")
 {
-
 }
 
 HistoryManager::~HistoryManager ()
 {
-    HistoryItemMap::iterator iter = _history_items.begin();
-    HistoryItem * item;
-
-    while (iter != _history_items.end()) {
-        item = *iter;
-        delete item;
-        iter++;
-    }
-
-    // Clear the history map
-    _history_items.clear ();
-
+    free_history(_history_items);
 }
 
 int HistoryManager::load_history (int limit, std::string path)
@@ -277,29 +276,25 @@ int HistoryManager::set_serialized_history (std::vector<std::string> history, in
     _debug("HistoryManager: Set serialized history");
 
     // Clear the existing history
-    _history_items.clear ();
+    free_history(_history_items);
 
     // We want to save only the items recent enough (ie compared to CONFIG_HISTORY_LIMIT)
     // Get the current timestamp
     (void) time (&current_timestamp);
     history_limit = get_unix_timestamp_equivalent (limit);
-    iter = history.begin ();
 
-    while (iter != history.end ()) {
-	new_item = new HistoryItem(*iter);
-	if(new_item == NULL) {
-	    _error("HistoryManager: Error: Could not create history item");
- 	}
-	int item_timestamp = atoi(new_item->get_timestamp().c_str());
+    for (iter = history.begin () ; iter != history.end () ; iter ++) {
+        new_item = new HistoryItem(*iter);
+        if(new_item == NULL) {
+            _error("HistoryManager: Error: Could not create history item");
+        }
+        int item_timestamp = atoi(new_item->get_timestamp().c_str());
         if (item_timestamp >= ( (int) current_timestamp - history_limit)) {
             add_new_history_entry (new_item);
             items_added ++;
+        } else {
+            delete new_item;
         }
-	else {
-	    delete new_item;
-  	}
-
-        iter ++;
     }
 
     return items_added;
