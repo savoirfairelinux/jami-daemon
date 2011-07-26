@@ -396,7 +396,7 @@ SIPVoIPLink::getEvent()
 void SIPVoIPLink::sendRegister (AccountID id) throw(VoipLinkException)
 {
 
-    int expire_value;
+    int expire_value = 0;
 
     pj_status_t status;
     pjsip_tx_data *tdata;
