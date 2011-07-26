@@ -499,6 +499,8 @@ AudioPreference::AudioPreference() : _cardin (atoi (ALSA_DFT_CARD)) // ALSA_DFT_
     , _volumespkr (atoi (DFT_VOL_MICRO_STR)) // DFT_VOL_MICRO_STR
     , _noisereduce (true)
     , _echocancel(false)
+    , _echoCancelTailLength(100)
+    , _echoCancelDelay(0)
 {
 
 }
