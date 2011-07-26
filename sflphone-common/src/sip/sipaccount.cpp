@@ -150,7 +150,7 @@ SIPAccount::~SIPAccount()
     /* Delete accounts-related information */
     _regc = NULL;
     free_cred(_cred);
-    free (_tlsSetting);
+    delete _tlsSetting;
 }
 
 void SIPAccount::serialize (Conf::YamlEmitter *emitter)
@@ -944,8 +944,8 @@ void SIPAccount::initTlsConfiguration (void)
     // setTlsListenerPort(atoi(tlsPortStr.c_str()));
     setTlsListenerPort (atoi (_tlsPortStr.c_str()));
 
-    free (_tlsSetting);
-    _tlsSetting = (pjsip_tls_setting *) malloc (sizeof (pjsip_tls_setting));
+    delete _tlsSetting;
+    _tlsSetting = new pjsip_tls_setting;
 
     assert (_tlsSetting);
 
