@@ -101,7 +101,6 @@ VideoV4l2List::VideoV4l2List() : _udev_mon(NULL)
      * loose events if the Netlink socket receive buffer overflows. */
     udev_enumerate_scan_devices (devenum);
     devlist = udev_enumerate_get_list_entry (devenum);
-    udev_enumerate_unref (devenum);
     struct udev_list_entry *deventry;
     udev_list_entry_foreach (deventry, devlist)
     {
@@ -120,6 +119,7 @@ VideoV4l2List::VideoV4l2List() : _udev_mon(NULL)
         }
         udev_device_unref (dev);
     }
+    udev_enumerate_unref (devenum);
 
     return;
 
