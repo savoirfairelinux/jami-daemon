@@ -1014,55 +1014,53 @@ void AlsaLayer::audioCallback (void)
 
     SFLDataFormat* in = NULL;
 
-    if (is_capture_running()) {
+    if (!is_capture_running())
+        return;
 
-        micAvailBytes = snd_pcm_avail_update (_CaptureHandle);
+    micAvailBytes = snd_pcm_avail_update (_CaptureHandle);
 
-        if (micAvailBytes > 0) {
-            micAvailPut = getMainBuffer()->availForPut();
-            toPut = (micAvailBytes <= framesPerBufferAlsa) ? micAvailBytes : framesPerBufferAlsa;
-            in = (SFLDataFormat*) malloc (toPut * sizeof (SFLDataFormat));
-            toPut = read (in, toPut* sizeof (SFLDataFormat));
+    if (micAvailBytes < 0)
+        _debug ("Audio: Mic error: %s", snd_strerror (micAvailBytes));
+    if (micAvailBytes <= 0)
+        return;
+    
+    micAvailPut = getMainBuffer()->availForPut();
+    toPut = (micAvailBytes <= framesPerBufferAlsa) ? micAvailBytes : framesPerBufferAlsa;
+    in = (SFLDataFormat*) malloc (toPut * sizeof (SFLDataFormat));
+    toPut = read (in, toPut* sizeof (SFLDataFormat));
 
-            if (in) {
-                adjustVolume (in, toPut, SFL_PCM_CAPTURE);
+    adjustVolume (in, toPut, SFL_PCM_CAPTURE);
 
-                int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
+    int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
 
-                if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
+    if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
 
-                    SFLDataFormat* rsmpl_out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
+        SFLDataFormat* rsmpl_out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
 
-                    int nbSample = toPut / sizeof (SFLDataFormat);
-                    int nb_sample_up = nbSample;
+        int nbSample = toPut / sizeof (SFLDataFormat);
+        int nb_sample_up = nbSample;
 
-                    nbSample = _converter->downsampleData ( (SFLDataFormat*) in, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_up);
+        nbSample = _converter->downsampleData ( (SFLDataFormat*) in, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_up);
 
-                    _audiofilter->processAudio (rsmpl_out, nbSample*sizeof (SFLDataFormat));
+        _audiofilter->processAudio (rsmpl_out, nbSample*sizeof (SFLDataFormat));
 
-                    getMainBuffer()->putData (rsmpl_out, nbSample * sizeof (SFLDataFormat), 100);
+        getMainBuffer()->putData (rsmpl_out, nbSample * sizeof (SFLDataFormat), 100);
 
-                    free (rsmpl_out);
-                    rsmpl_out = 0;
+        free (rsmpl_out);
+        rsmpl_out = 0;
 
-                } else {
-                    SFLDataFormat* filter_out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
+    } else {
+        SFLDataFormat* filter_out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
 
-                    if (filter_out) {
-                        _audiofilter->processAudio (in, filter_out, toPut);
-                        // captureFile->write ( (const char *) filter_out, toPut);
-                        getMainBuffer()->putData (filter_out, toPut, 100);
-                        free (filter_out);
-                    }
-                }
-            }
-
-            free (in);
-            in=0;
-        } else if (micAvailBytes < 0) {
-            _debug ("Audio: Mic error: %s", snd_strerror (micAvailBytes));
+        if (filter_out) {
+            _audiofilter->processAudio (in, filter_out, toPut);
+            // captureFile->write ( (const char *) filter_out, toPut);
+            getMainBuffer()->putData (filter_out, toPut, 100);
+            free (filter_out);
         }
     }
+
+    free (in);
 }
 
 void* AlsaLayer::adjustVolume (void* buffer , int len, int stream)
