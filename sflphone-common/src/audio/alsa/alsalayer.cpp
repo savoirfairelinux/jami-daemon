@@ -1047,8 +1047,6 @@ void AlsaLayer::audioCallback (void)
         getMainBuffer()->putData (rsmpl_out, nbSample * sizeof (SFLDataFormat), 100);
 
         free (rsmpl_out);
-        rsmpl_out = 0;
-
     } else {
         SFLDataFormat* filter_out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
 
@@ -1065,18 +1063,17 @@ void AlsaLayer::audioCallback (void)
 
 void* AlsaLayer::adjustVolume (void* buffer , int len, int stream)
 {
-    int vol, i, size;
-    SFLDataFormat *src = NULL;
+    int vol = (stream == SFL_PCM_PLAYBACK)
+        ? _manager->getSpkrVolume()
+        : _manager->getMicVolume();
 
-    (stream == SFL_PCM_PLAYBACK) ? vol = _manager->getSpkrVolume() : vol = _manager->getMicVolume();
-
-    src = (SFLDataFormat*) buffer;
+    SFLDataFormat *src = (SFLDataFormat*) buffer;
 
     if (vol != 100) {
-        size = len / sizeof (SFLDataFormat);
+        int i, size = len / sizeof (SFLDataFormat);
 
         for (i = 0 ; i < size ; i++) {
-            src[i] = src[i] * vol  / 100 ;
+            src[i] = src[i] * vol / 100 ;
         }
     }
 
