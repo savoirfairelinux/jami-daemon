@@ -188,7 +188,6 @@ void AudioSrtpSession::initializeLocalMasterSalt (void)
 
 std::string AudioSrtpSession::getBase64ConcatenatedKeys()
 {
-
     _debug ("AudioSrtp: Get base64 concatenated keys");
 
     // compute concatenated master and salt length
@@ -203,14 +202,7 @@ std::string AudioSrtpSession::getBase64ConcatenatedKeys()
     memcpy ( (void*) (concatKeys + _localMasterKeyLength), (void*) _localMasterSalt, _localMasterSaltLength);
 
     // encode concatenated keys in base64
-    char *output = encodeBase64 ( (unsigned char*) concatKeys, concatLength);
-
-    // init string containing encoded data
-    std::string keys (output);
-
-    free (output);
-
-    return keys;
+    return encodeBase64 ( (unsigned char*) concatKeys, concatLength);
 }
 
 
@@ -296,13 +288,10 @@ void AudioSrtpSession::restoreCryptoContext(ost::CryptoContext *localContext, os
 	setOutQueueCryptoContext (localContext);
 }
 
-char* AudioSrtpSession::encodeBase64 (unsigned char *input, int length)
+std::string AudioSrtpSession::encodeBase64 (unsigned char *input, int length)
 {
     BIO *b64, *bmem;
     BUF_MEM *bptr ;
-
-    char *buffer = (char *) malloc (2*length);
-    memset (buffer, 0, 2*length);
 
     // init decoder
     b64 = BIO_new (BIO_f_base64());
@@ -320,12 +309,11 @@ char* AudioSrtpSession::encodeBase64 (unsigned char *input, int length)
     // get pointer to data
     BIO_get_mem_ptr (b64, &bptr);
 
-    // copy result in output buffer (-1 since we do not want the EOF character)
-    strncpy (buffer, (char*) (bptr->data), bptr->length);
+    std::string output(bptr->data, bptr->length);
 
     BIO_free_all (bmem);
 
-    return buffer;
+    return output;
 }
 #pragma GCC diagnostic warning "-Wunused-value"
 

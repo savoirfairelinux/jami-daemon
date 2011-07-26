@@ -155,7 +155,7 @@ class AudioSrtpSession : public AudioRtpSession
         /**
          * Encode input data as base64
          */
-        char* encodeBase64 (unsigned char *input, int length);
+        std::string encodeBase64 (unsigned char *input, int length);
 
         /**
          * Decode base64 data
