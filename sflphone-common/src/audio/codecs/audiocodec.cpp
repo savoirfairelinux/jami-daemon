@@ -115,4 +115,9 @@ double AudioCodec::getBandwidth (void) const
     return _bandwidth;
 }
 
+AudioCodec::~AudioCodec()
+{
+    delete _payloadFormat;
+}
+
 } // end namespace sfl
