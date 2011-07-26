@@ -76,7 +76,7 @@ void Sdp::setActiveLocalSdpSession (const pjmedia_sdp_session *sdp)
     int port;
     pjmedia_sdp_media *current;
     sdpMedia *media = NULL;
-    std::string type, dir;
+    std::string dir;
     CodecsMap codecs_list;
     pjmedia_sdp_attr *attribute = NULL;
     pjmedia_sdp_rtpmap *rtpmap;
@@ -93,7 +93,7 @@ void Sdp::setActiveLocalSdpSession (const pjmedia_sdp_session *sdp)
     for (int i = 0; i < nb_media ; i++) {
         // Retrieve the media
         current = activeLocalSession_->media[i];
-        type = current->desc.media.ptr;
+        std::string type (current->desc.media.ptr, current->desc.media.slen);
         port = current->desc.port;
         media = new sdpMedia (type, port);
         // Retrieve the payload
