@@ -43,6 +43,7 @@ AudioRtpSession::AudioRtpSession (SIPCall * sipcall) :
     AudioRtpRecordHandler (sipcall)
     , ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort())
     , _mainloopSemaphore (0)
+    , _remote_port (0)
     , _timestamp (0)
     , _timestampIncrement (0)
     , _timestampCount (0)
