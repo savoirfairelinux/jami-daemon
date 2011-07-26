@@ -208,24 +208,20 @@ std::string AudioSrtpSession::getBase64ConcatenatedKeys()
 
 void AudioSrtpSession::unBase64ConcatenatedKeys (std::string base64keys)
 {
-
     _remoteMasterKeyLength = sfl::CryptoSuites[_remoteCryptoSuite].masterKeyLength / 8;
     _remoteMasterSaltLength = sfl::CryptoSuites[_remoteCryptoSuite].masterSaltLength / 8;
-
-    // length of decoded data data
-    int length;
 
     // pointer to binary data
     char *dataptr = (char*) base64keys.data();
 
     // decode concatenated binary keys
-    char *output = decodeBase64 ( (unsigned char*) dataptr, strlen (dataptr), &length);
+    char *output = decodeBase64 ( (unsigned char*) dataptr, strlen (dataptr));
 
     // copy master and slt respectively
     memcpy ( (void*) _remoteMasterKey, (void*) output, _remoteMasterKeyLength);
     memcpy ( (void*) _remoteMasterSalt, (void*) (output + _remoteMasterKeyLength), _remoteMasterSaltLength);
 
-    free (output);
+    delete[] output;
 }
 
 
@@ -317,12 +313,9 @@ std::string AudioSrtpSession::encodeBase64 (unsigned char *input, int length)
 }
 #pragma GCC diagnostic warning "-Wunused-value"
 
-char* AudioSrtpSession::decodeBase64 (unsigned char *input, int length, int *length_out)
+char* AudioSrtpSession::decodeBase64 (unsigned char *input, int length)
 {
     BIO *b64, *bmem;
-
-    char *buffer = (char *) malloc (length);
-    memset (buffer, 0, length);
 
     // init decoder and read-only BIO buffer
     b64 = BIO_new (BIO_f_base64());
@@ -334,12 +327,14 @@ char* AudioSrtpSession::decodeBase64 (unsigned char *input, int length, int *len
     // create encoder chain
     bmem = BIO_push (b64, bmem);
 
-    *length_out = BIO_read (bmem, buffer, length);
+    char *buffer = new char[length];
+    memset (buffer, 0, length);
+
+    BIO_read (bmem, buffer, length);
 
     BIO_free_all (bmem);
 
     return buffer;
-
 }
 
 }
