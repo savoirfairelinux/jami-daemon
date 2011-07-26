@@ -48,15 +48,12 @@ typedef std::vector<yaml_event_t> YamlEventVector;
 class YamlParserException : public std::exception
 {
     public:
-        YamlParserException (const std::string& str="") throw() : errstr (str) {}
+        YamlParserException (const std::string& str="") : errstr ("YamlParserException occured: " + str) {}
 
         virtual ~YamlParserException() throw() {}
 
         virtual const char *what() const throw() {
-            std::string expt ("YamlParserException occured: ");
-            expt.append (errstr);
-
-            return expt.c_str();
+            return errstr.c_str();
         }
     private:
         std::string errstr;
