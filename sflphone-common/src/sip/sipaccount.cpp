@@ -73,6 +73,23 @@ void Credentials::unserialize (Conf::MappingNode *map)
         credentialCount = atoi (val->getValue().data());
 }
 
+namespace {
+static void free_cred(pjsip_cred_info *cred)
+{
+    if (!cred)
+        return;
+
+    unsigned i;
+    unsigned max = 1; /* getCredentialCount() see #6408 */ 
+    for (i = 0 ; i < max ; i++) {
+        free(cred[i].username.ptr);
+        free(cred[i].data.ptr);
+        free(cred[i].realm.ptr);
+    }
+    free (cred);
+}
+} // end anonymous namespace
+
 SIPAccount::SIPAccount (const AccountID& accountID)
     : Account (accountID, "SIP")
     , _routeSet ("")
@@ -132,7 +149,7 @@ SIPAccount::~SIPAccount()
 
     /* Delete accounts-related information */
     _regc = NULL;
-    free (_cred);
+    free_cred(_cred);
     free (_tlsSetting);
 }
 
@@ -798,11 +815,11 @@ void SIPAccount::initCredential (void)
     std::string digest;
 
     // Create the credential array
-    pjsip_cred_info *cred_info = (pjsip_cred_info *)
-            calloc(getCredentialCount(), sizeof (pjsip_cred_info));
+    free_cred(_cred);
+    _cred = (pjsip_cred_info *) calloc(getCredentialCount(), sizeof (pjsip_cred_info));
 
-    if (!cred_info) {
-        _error ("SipAccount: Error: Failed to set cred_info for account %s", _accountID.c_str());
+    if (!_cred) {
+        _error ("SipAccount: Error: Failed to set _cred for account %s", _accountID.c_str());
         return;
     }
 
@@ -811,18 +828,18 @@ void SIPAccount::initCredential (void)
 
     // Use authentication username if provided
     if (!_authenticationUsername.empty())
-        cred_info[0].username = pj_str (strdup (_authenticationUsername.c_str()));
+        _cred[0].username = pj_str (strdup (_authenticationUsername.c_str()));
     else
-        cred_info[0].username = pj_str (strdup (_username.c_str()));
+        _cred[0].username = pj_str (strdup (_username.c_str()));
 
     // Set password
-    cred_info[0].data =  pj_str (strdup (_password.c_str()));
+    _cred[0].data =  pj_str (strdup (_password.c_str()));
 
     // Set realm for that credential. * by default.
-    cred_info[0].realm = pj_str (strdup (_realm.c_str()));
+    _cred[0].realm = pj_str (strdup (_realm.c_str()));
 
-    cred_info[0].data_type = dataType;
-    cred_info[0].scheme = pj_str ( (char*) "digest");
+    _cred[0].data_type = dataType;
+    _cred[0].scheme = pj_str ( (char*) "digest");
 
 #if 0 // FIXME, unused. see https://projects.savoirfairelinux.com/issues/6408
     unsigned i;
@@ -830,19 +847,17 @@ void SIPAccount::initCredential (void)
     // Default credential already initialized, use credentials.getCredentialCount()
     for (i = 0; i < credentials.getCredentialCount(); i++) {
 
-        cred_info[i].username = pj_str (strdup (_username.c_str()));
-        cred_info[i].data = pj_str (strdup (_password.c_str()));
-        cred_info[i].realm = pj_str (strdup (_realm.c_str()));
+        _cred[i].username = pj_str (strdup (_username.c_str()));
+        _cred[i].data = pj_str (strdup (_password.c_str()));
+        _cred[i].realm = pj_str (strdup (_realm.c_str()));
 
-        cred_info[i].data_type = dataType;
+        _cred[i].data_type = dataType;
 
-        cred_info[i].scheme = pj_str ( (char*) "digest");
+        _cred[i].scheme = pj_str ( (char*) "digest");
 
-        _debug ("Setting credential %u realm = %s passwd = %s username = %s data_type = %d", i, _realm.c_str(), _password.c_str(), _username.c_str(), cred_info[i].data_type);
+        _debug ("Setting credential %u realm = %s passwd = %s username = %s data_type = %d", i, _realm.c_str(), _password.c_str(), _username.c_str(), _cred[i].data_type);
     }
 #endif
-
-    _cred = cred_info;
 }
 
 
