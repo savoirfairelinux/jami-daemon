@@ -59,7 +59,7 @@ class AudioCodec : public Codec
          */
         AudioCodec (const AudioCodec& codec);
 
-        virtual ~AudioCodec() {}
+        virtual ~AudioCodec();
 
         /**
          * @Override

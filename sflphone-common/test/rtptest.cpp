@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include <sstream>
+#include <cstddef>
 #include <ccrtp/rtp.h>
 #include <assert.h>
 #include <string>

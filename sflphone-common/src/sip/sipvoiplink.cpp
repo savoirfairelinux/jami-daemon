@@ -542,8 +542,8 @@ void SIPVoIPLink::sendRegister (AccountID id) throw(VoipLinkException)
     }
 
     pjsip_cred_info *cred = account->getCredInfo();
-    int credential_count = account->getCredentialCount();
-    _debug ("UserAgent: setting %d credentials in sendRegister", credential_count);
+    unsigned credential_count = account->getCredentialCount();
+    _debug ("UserAgent: setting %u credentials in sendRegister", credential_count);
     pjsip_regc_set_credentials (regc, credential_count, cred);
 
     // Add User-Agent Header
@@ -723,9 +723,9 @@ Call *SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) 
 
 	try {
 		_info ("UserAgent: Creating new rtp session");
-		call->getAudioRtp()->initAudioRtpConfig (call);
-		call->getAudioRtp()->initAudioSymmetricRtpSession (call);
-		call->getAudioRtp()->initLocalCryptoInfo (call);
+		call->getAudioRtp()->initAudioRtpConfig ();
+		call->getAudioRtp()->initAudioSymmetricRtpSession ();
+		call->getAudioRtp()->initLocalCryptoInfo ();
 		_info ("UserAgent: Start audio rtp session");
 		call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
 	} catch (...) {
@@ -1033,8 +1033,8 @@ SIPVoIPLink::offhold (const CallID& id) throw (VoipLinkException)
     	    throw VoipLinkException("Could not instantiate codec");
         }
 
-        call->getAudioRtp()->initAudioRtpConfig (call);
-        call->getAudioRtp()->initAudioSymmetricRtpSession (call);
+        call->getAudioRtp()->initAudioRtpConfig ();
+        call->getAudioRtp()->initAudioSymmetricRtpSession ();
         call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
     }
     catch (const SdpException &e) {
@@ -1829,9 +1829,9 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const CallID& id, const std::string& to)
         // Audio Rtp Session must be initialized before creating initial offer in SDP session
         // since SDES require crypto attribute.
         try {
-            call->getAudioRtp()->initAudioRtpConfig (call);
-            call->getAudioRtp()->initAudioSymmetricRtpSession (call);
-            call->getAudioRtp()->initLocalCryptoInfo (call);
+            call->getAudioRtp()->initAudioRtpConfig ();
+            call->getAudioRtp()->initAudioSymmetricRtpSession ();
+            call->getAudioRtp()->initLocalCryptoInfo ();
             call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
             std::string toUriIP(getIPFromSIP(toUri));
         } catch (...) {
@@ -3550,7 +3550,7 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
         SIPAccount *account = (SIPAccount *) Manager::instance().getAccount (accountID);
 
         if (account->getSrtpFallback())
-            call->getAudioRtp()->initAudioSymmetricRtpSession (call);
+            call->getAudioRtp()->initAudioSymmetricRtpSession ();
     }
 
     if (!sdpSession)
@@ -4026,8 +4026,8 @@ transaction_request_cb (pjsip_rx_data *rdata)
     // Init audio rtp session
     try {
         _debug ("UserAgent: Create RTP session for this call");
-        call->getAudioRtp()->initAudioRtpConfig (call);
-        call->getAudioRtp()->initAudioSymmetricRtpSession (call);
+        call->getAudioRtp()->initAudioRtpConfig ();
+        call->getAudioRtp()->initAudioSymmetricRtpSession ();
     } catch (...) {
         _warn ("UserAgent: Error: Failed to create rtp thread from answer");
     }
@@ -4071,7 +4071,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
                     try {
                         _debug ("UserAgent: Create RTP session for this call");
                         call->getAudioRtp()->setRemoteCryptoInfo (sdesnego);
-                        call->getAudioRtp()->initLocalCryptoInfo (call);
+                        call->getAudioRtp()->initLocalCryptoInfo ();
                     } catch (...) {
                         _warn ("UserAgent: Error: Failed to create rtp thread from answer");
                     }

@@ -29,8 +29,9 @@
  */
 
 #include <libgen.h>
+#include <cstdlib>
 
-static char *program_dir;
+static char *program_dir = NULL;
 
 void set_program_dir(char *program_path)
 {

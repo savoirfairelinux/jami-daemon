@@ -143,21 +143,21 @@ class Credentials : public Serializable
 
         virtual void unserialize (Conf::MappingNode *map);
 
-        int getCredentialCount (void) const {
+        unsigned getCredentialCount (void) const {
             return credentialCount;
         }
-        void setCredentialCount (int count) {
+        void setCredentialCount (unsigned count) {
             credentialCount = count;
         }
 
         void setNewCredential (const std::string &username,
                                const std::string &password,
                                const std::string &realm);
-        const CredentialItem *getCredential (int index) const;
+        const CredentialItem *getCredential (unsigned index) const;
 
     private:
 
-        int credentialCount;
+        unsigned credentialCount;
 
         CredentialItem credentialArray[10];
 
@@ -308,10 +308,10 @@ class SIPAccount : public Account
          * @param none
          * @return int The number of credentials set for this account.
          */
-        int getCredentialCount (void) const {
+        unsigned getCredentialCount (void) const {
             return credentials.getCredentialCount() + 1;
         }
-        void setCredentialCount (int count) {
+        void setCredentialCount (unsigned count) {
             return credentials.setCredentialCount (count);
         }
 
@@ -731,7 +731,7 @@ class SIPAccount : public Account
         /*
          * Initializes set of additional credentials, if supplied by the user.
          */
-        int initCredential (void);
+        void initCredential (void);
 
         /**
          * If username is not provided, as it happens for Direct ip calls,

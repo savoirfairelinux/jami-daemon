@@ -119,6 +119,7 @@ VideoV4l2List::VideoV4l2List() : _udev_mon(NULL)
         }
         udev_device_unref (dev);
     }
+    udev_enumerate_unref (devenum);
 
     return;
 

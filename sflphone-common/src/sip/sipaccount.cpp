@@ -34,6 +34,7 @@
 #include "manager.h"
 #include <pwd.h>
 #include <sstream>
+#include <cassert>
 
 namespace {
     const char * const DFT_STUN_SERVER = "stun.sflphone.org"; /** Default STUN server address */
@@ -51,36 +52,43 @@ void Credentials::setNewCredential (const std::string &username,
     credentialArray[credentialCount].username = username;
     credentialArray[credentialCount].password = password;
     credentialArray[credentialCount].realm = realm;
-
 }
 
-const CredentialItem *Credentials::getCredential (int index) const
+const CredentialItem *Credentials::getCredential (unsigned index) const
 {
-    if ( (index >= 0) && (index < credentialCount))
-        return & (credentialArray[index]);
-    else
-        return NULL;
+    if (index >= credentialCount)
+		return NULL;
+    return &credentialArray[index];
 }
 
 void Credentials::serialize (Conf::YamlEmitter *emitter UNUSED)
 {
-
 }
 
 void Credentials::unserialize (Conf::MappingNode *map)
 {
-
-    Conf::ScalarNode *val = NULL;
-
+    Conf::ScalarNode *val;
     val = (Conf::ScalarNode *) (map->getValue (credentialCountKey));
-
-    if (val) {
+    if (val)
         credentialCount = atoi (val->getValue().data());
-        val = NULL;
-    }
 }
 
+namespace {
+static void free_cred(pjsip_cred_info *cred)
+{
+    if (!cred)
+        return;
 
+    unsigned i;
+    unsigned max = 1; /* getCredentialCount() see #6408 */ 
+    for (i = 0 ; i < max ; i++) {
+        free(cred[i].username.ptr);
+        free(cred[i].data.ptr);
+        free(cred[i].realm.ptr);
+    }
+    free (cred);
+}
+} // end anonymous namespace
 
 SIPAccount::SIPAccount (const AccountID& accountID)
     : Account (accountID, "SIP")
@@ -141,7 +149,7 @@ SIPAccount::~SIPAccount()
 
     /* Delete accounts-related information */
     _regc = NULL;
-    free (_cred);
+    free_cred(_cred);
     free (_tlsSetting);
 }
 
@@ -283,168 +291,100 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
     Conf::MappingNode *zrtpMap;
     Conf::MappingNode *credMap;
 
-    if(map == NULL) {
-    	_error("SIPAccount: Error: map is NULL in SIPAccount");
-    }
+    assert(map);
 
     val = (Conf::ScalarNode *) (map->getValue (aliasKey));
-
-    if (val) {
+    if (val)
         _alias = val->getValue();
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (map->getValue (typeKey));
-
-    if (val) {
+    if (val)
         _type = val->getValue();
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (map->getValue (idKey));
-
-    if (val) {
+    if (val)
         _accountID = val->getValue();
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (map->getValue (usernameKey));
-
-    if (val) {
+    if (val)
         _username = val->getValue();
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (map->getValue (passwordKey));
-
-    if (val) {
+    if (val)
         _password = val->getValue();
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (map->getValue (hostnameKey));
-
-    if (val) {
+    if (val)
         _hostname = val->getValue();
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (map->getValue (accountEnableKey));
-
-    if (val) {
-        _enabled = (val->getValue() == "false") ? false : true;
-        val = NULL;
-    }
+    if (val)
+        _enabled = (val->getValue() != "false");
 
     val = (Conf::ScalarNode *) (map->getValue (mailboxKey));
-
-    if (val) {
+    if (val)
         _mailBox = val->getValue();
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (map->getValue (codecsKey));
-
-    if (val) {
+    if (val)
         _codecStr = val->getValue();
-        val = NULL;
-    }
 
     // Update codec list which one is used for SDP offer
     setActiveCodecs (Manager::instance ().unserialize (_codecStr));
 
     val = (Conf::ScalarNode *) (map->getValue (ringtonePathKey));
-
-    if (val) {
+    if (val)
         _ringtonePath = val->getValue();
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (map->getValue (ringtoneEnabledKey));
-
-    if (val) {
-        _ringtoneEnabled = (val->getValue() == "true") ? true : false;
-        val = NULL;
-    }
+    if (val)
+        _ringtoneEnabled = (val->getValue() == "true");
 
     val = (Conf::ScalarNode *) (map->getValue (expireKey));
-
-    if (val) {
+    if (val)
         _registrationExpire = val->getValue();
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (map->getValue (interfaceKey));
-
-    if (val) {
+    if (val)
         _interface = val->getValue();
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (map->getValue (portKey));
-
-    if (val) {
+    if (val)
         _localPort = atoi (val->getValue().data());
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (map->getValue (publishAddrKey));
-
-    if (val) {
+    if (val)
         _publishedIpAddress = val->getValue();
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (map->getValue (publishPortKey));
-
-    if (val) {
+    if (val)
         _publishedPort = atoi (val->getValue().data());
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (map->getValue (sameasLocalKey));
-
-    if (val) {
-        _publishedSameasLocal = (val->getValue().compare ("true") == 0) ? true : false;
-        val = NULL;
-    }
+    if (val)
+        _publishedSameasLocal = (val->getValue().compare ("true") == 0);
 
     val = (Conf::ScalarNode *) (map->getValue (resolveOnceKey));
-
-    if (val) {
-        _resolveOnce = (val->getValue().compare ("true") == 0) ? true : false;
-        val = NULL;
-    }
+    if (val)
+        _resolveOnce = (val->getValue().compare ("true") == 0);
 
     val = (Conf::ScalarNode *) (map->getValue (dtmfTypeKey));
-
-    if (val) {
+    if (val)
         _dtmfType = (val->getValue() == "overrtp") ? OVERRTP : SIPINFO;
-        val = NULL;
-    }
 
     // _dtmfType = atoi(val->getValue();
     val = (Conf::ScalarNode *) (map->getValue (serviceRouteKey));
-
-    if (val) {
+    if (val)
         _serviceRoute = val->getValue();
-        val = NULL;
-    }
 
     // stun enabled
     val = (Conf::ScalarNode *) (map->getValue (stunEnabledKey));
-
-    if (val) {
-        _stunEnabled = (val->getValue().compare ("true") == 0) ? true : false;
-        val = NULL;
-    }
+    if (val)
+        _stunEnabled = (val->getValue().compare ("true") == 0);
 
     val = (Conf::ScalarNode *) (map->getValue (stunServerKey));
-
-    if (val) {
+    if (val)
         _stunServer = val->getValue();
-        val = NULL;
-    }
 
     // Init stun server name with default server name
     _stunServerName = pj_str ( (char*) _stunServer.data());
@@ -455,11 +395,8 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
         credentials.unserialize (credMap);
 
     val = (Conf::ScalarNode *) (map->getValue (displayNameKey));
-
-    if (val) {
+    if (val)
         _displayName = val->getValue();
-        val = NULL;
-    }
 
     // get srtp submap
     srtpMap = (Conf::MappingNode *) (map->getValue (srtpKey));
@@ -468,25 +405,16 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
         throw SipAccountException (" did not found srtp map");
 
     val = (Conf::ScalarNode *) (srtpMap->getValue (srtpEnableKey));
-
-    if (val) {
-        _srtpEnabled = (val->getValue().compare ("true") == 0) ? true : false;
-        val = NULL;
-    }
+    if (val)
+        _srtpEnabled = (val->getValue().compare ("true") == 0);
 
     val = (Conf::ScalarNode *) (srtpMap->getValue (keyExchangeKey));
-
-    if (val) {
+    if (val)
         _srtpKeyExchange = val->getValue();
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (srtpMap->getValue (rtpFallbackKey));
-
-    if (val) {
-        _srtpFallback = (val->getValue().compare ("true") == 0) ? true : false;
-        val = NULL;
-    }
+    if (val)
+        _srtpFallback = (val->getValue().compare ("true") == 0);
 
     // get zrtp submap
     zrtpMap = (Conf::MappingNode *) (map->getValue (zrtpKey));
@@ -495,32 +423,20 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
         throw SipAccountException (" did not found zrtp map");
 
     val = (Conf::ScalarNode *) (zrtpMap->getValue (displaySasKey));
-
-    if (val) {
-        _zrtpDisplaySas = (val->getValue().compare ("true") == 0) ? true : false;
-        val = NULL;
-    }
+    if (val)
+        _zrtpDisplaySas = (val->getValue().compare ("true") == 0);
 
     val = (Conf::ScalarNode *) (zrtpMap->getValue (displaySasOnceKey));
-
-    if (val) {
-        _zrtpDisplaySasOnce = (val->getValue().compare ("true") == 0) ? true : false;
-        val = NULL;
-    }
+    if (val)
+        _zrtpDisplaySasOnce = (val->getValue().compare ("true") == 0);
 
     val = (Conf::ScalarNode *) (zrtpMap->getValue (helloHashEnabledKey));
-
-    if (val) {
-        _zrtpHelloHash = (val->getValue().compare ("true") == 0) ? true : false;
-        val = NULL;
-    }
+    if (val)
+        _zrtpHelloHash = (val->getValue().compare ("true") == 0);
 
     val = (Conf::ScalarNode *) (zrtpMap->getValue (notSuppWarningKey));
-
-    if (val) {
-        _zrtpNotSuppWarning = (val->getValue().compare ("true") == 0) ? true : false;
-        val = NULL;
-    }
+    if (val)
+        _zrtpNotSuppWarning = (val->getValue().compare ("true") == 0);
 
     // get tls submap
     tlsMap = (Conf::MappingNode *) (map->getValue (tlsKey));
@@ -529,98 +445,59 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
         throw SipAccountException (" did not found tls map");
 
     val = (Conf::ScalarNode *) (tlsMap->getValue (tlsEnableKey));
-
-    if (val) {
+    if (val)
         _tlsEnable = val->getValue();
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (tlsMap->getValue (tlsPortKey));
-
-    if (val) {
+    if (val)
         _tlsPortStr = val->getValue();
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (tlsMap->getValue (certificateKey));
-
-    if (val) {
+    if (val)
         _tlsCertificateFile = val->getValue();
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (tlsMap->getValue (calistKey));
-
-    if (val) {
+    if (val)
         _tlsCaListFile = val->getValue();
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (tlsMap->getValue (ciphersKey));
-
-    if (val) {
+    if (val)
         _tlsCiphers = val->getValue();
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (tlsMap->getValue (methodKey));
-
-    if (val) {
+    if (val)
         _tlsMethod = val->getValue();
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (tlsMap->getValue (timeoutKey));
-
-    if (val) _tlsNegotiationTimeoutSec = val->getValue();
-
     if (val) {
+        // FIXME
+        _tlsNegotiationTimeoutSec = val->getValue();
         _tlsNegotiationTimeoutMsec = val->getValue();
-        val=NULL;
     }
 
     val = (Conf::ScalarNode *) (tlsMap->getValue (tlsPasswordKey));
-
-    if (val) {
+    if (val)
         _tlsPassword = val->getValue();
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (tlsMap->getValue (privateKeyKey));
-
-    if (val) {
+    if (val)
         _tlsPrivateKeyFile = val->getValue();
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (tlsMap->getValue (requireCertifKey));
-
-    if (val) {
-        _tlsRequireClientCertificate = (val->getValue().compare ("true") == 0) ? true : false;
-        val = NULL;
-    }
+    if (val)
+        _tlsRequireClientCertificate = (val->getValue().compare ("true") == 0);
 
     val = (Conf::ScalarNode *) (tlsMap->getValue (serverKey));
-
-    if (val) {
+    if (val)
         _tlsServerName = val->getValue();
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (tlsMap->getValue (verifyClientKey));
-
-    if (val) {
-        _tlsVerifyServer = (val->getValue().compare ("true") == 0) ? true : false;
-        val = NULL;
-    }
+    if (val)
+        _tlsVerifyServer = (val->getValue().compare ("true") == 0);
 
     val = (Conf::ScalarNode *) (tlsMap->getValue (verifyServerKey));
-
-    if (val) {
-        _tlsVerifyClient = (val->getValue().compare ("true") == 0) ? true : false;
-        val = NULL;
-    }
-
+    if (val)
+        _tlsVerifyClient = (val->getValue().compare ("true") == 0);
 }
 
 
@@ -926,85 +803,61 @@ void SIPAccount::setVoIPLink()
 }
 
 
-int SIPAccount::initCredential (void)
+void SIPAccount::initCredential (void)
 {
-    bool md5HashingEnabled = false;
-    int dataType = 0;
-    md5HashingEnabled = Manager::instance().preferences.getMd5Hash();
-    std::string digest;
-
-    // Create the credential array
-    pjsip_cred_info * cred_info = (pjsip_cred_info *) malloc (sizeof (pjsip_cred_info) * (getCredentialCount()));
-
-    if (cred_info == NULL) {
-        _error ("SipAccount: Error: Failed to set cred_info for account %s", _accountID.c_str());
-        return 1;
-    }
-
-    pj_bzero (cred_info, sizeof (pjsip_cred_info) * getCredentialCount());
-
-    // Use authentication username if provided
-    if (!_authenticationUsername.empty())
-        cred_info[0].username = pj_str (strdup (_authenticationUsername.c_str()));
-    else
-        cred_info[0].username = pj_str (strdup (_username.c_str()));
-
-    // Set password
-    cred_info[0].data =  pj_str (strdup (_password.c_str()));
-
-    // Set realm for that credential. * by default.
-    cred_info[0].realm = pj_str (strdup (_realm.c_str()));
-
     // We want to make sure that the password is really
     // 32 characters long. Otherwise, pjsip will fail
     // on an assertion.
-    if (md5HashingEnabled && _password.length() == 32) {
-        dataType = PJSIP_CRED_DATA_DIGEST;
-        _debug ("Setting digest ");
-    } else {
-        dataType = PJSIP_CRED_DATA_PLAIN_PASSWD;
+    bool md5HashingEnabled = Manager::instance().preferences.getMd5Hash()
+                             && _password.length() == 32;
+    int dataType = md5HashingEnabled ? PJSIP_CRED_DATA_DIGEST 
+                                     : PJSIP_CRED_DATA_PLAIN_PASSWD;
+    std::string digest;
+
+    // Create the credential array
+    free_cred(_cred);
+    _cred = (pjsip_cred_info *) calloc(getCredentialCount(), sizeof (pjsip_cred_info));
+
+    if (!_cred) {
+        _error ("SipAccount: Error: Failed to set _cred for account %s", _accountID.c_str());
+        return;
     }
 
-    // Set the datatype
-    cred_info[0].data_type = dataType;
+    if (md5HashingEnabled )
+        _debug ("Setting digest ");
 
-    // Set the secheme
-    cred_info[0].scheme = pj_str ( (char*) "digest");
+    // Use authentication username if provided
+    if (!_authenticationUsername.empty())
+        _cred[0].username = pj_str (strdup (_authenticationUsername.c_str()));
+    else
+        _cred[0].username = pj_str (strdup (_username.c_str()));
 
-    int i;
+    // Set password
+    _cred[0].data =  pj_str (strdup (_password.c_str()));
+
+    // Set realm for that credential. * by default.
+    _cred[0].realm = pj_str (strdup (_realm.c_str()));
+
+    _cred[0].data_type = dataType;
+    _cred[0].scheme = pj_str ( (char*) "digest");
+
+#if 0 // FIXME, unused. see https://projects.savoirfairelinux.com/issues/6408
+    unsigned i;
 
     // Default credential already initialized, use credentials.getCredentialCount()
     for (i = 0; i < credentials.getCredentialCount(); i++) {
 
-        std::string username = _username;
-        std::string password = _password;
-        std::string realm = _realm;
+        _cred[i].username = pj_str (strdup (_username.c_str()));
+        _cred[i].data = pj_str (strdup (_password.c_str()));
+        _cred[i].realm = pj_str (strdup (_realm.c_str()));
 
-        cred_info[i].username = pj_str (strdup (username.c_str()));
-        cred_info[i].data = pj_str (strdup (password.c_str()));
-        cred_info[i].realm = pj_str (strdup (realm.c_str()));
+        _cred[i].data_type = dataType;
 
-        // We want to make sure that the password is really
-        // 32 characters long. Otherwise, pjsip will fail
-        // on an assertion.
+        _cred[i].scheme = pj_str ( (char*) "digest");
 
-        if (md5HashingEnabled && _password.length() == 32) {
-            dataType = PJSIP_CRED_DATA_DIGEST;
-            _debug ("Setting digest ");
-        } else {
-            dataType = PJSIP_CRED_DATA_PLAIN_PASSWD;
-        }
-
-        cred_info[i].data_type = dataType;
-
-        cred_info[i].scheme = pj_str ( (char*) "digest");
-
-        _debug ("Setting credential %d realm = %s passwd = %s username = %s data_type = %d", i, realm.c_str(), password.c_str(), username.c_str(), cred_info[i].data_type);
+        _debug ("Setting credential %u realm = %s passwd = %s username = %s data_type = %d", i, _realm.c_str(), _password.c_str(), _username.c_str(), _cred[i].data_type);
     }
-
-    _cred = cred_info;
-
-    return 0;
+#endif
 }
 
 
@@ -1019,7 +872,7 @@ int SIPAccount::registerVoIPLink()
 
     // Init TLS settings if the user wants to use TLS
     if (_tlsEnable == "true") {
-        _debug ("SIPAccount: TLS is ennabled for accounr %s", getAccountID().c_str());
+        _debug ("SIPAccount: TLS is enabled for account %s", getAccountID().c_str());
         _transportType = PJSIP_TRANSPORT_TLS;
         initTlsConfiguration();
     }
@@ -1033,8 +886,7 @@ int SIPAccount::registerVoIPLink()
     }
 
     try {
-        // In our definition of the
-        // ip2ip profile (aka Direct IP Calls),
+        // In our definition of the ip2ip profile (aka Direct IP Calls),
         // no registration should be performed
         if (_accountID != IP2IP_PROFILE) {
             _link->sendRegister (_accountID);
@@ -1063,49 +915,36 @@ int SIPAccount::unregisterVoIPLink()
     }
 
     return true;
-
 }
 
 pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum (const std::string& method)
 {
-    if (method == "Default") {
+    if (method == "Default")
         return PJSIP_SSL_UNSPECIFIED_METHOD;
-    }
 
-    if (method == "TLSv1") {
+    if (method == "TLSv1")
         return PJSIP_TLSV1_METHOD;
-    }
 
-    if (method == "SSLv2") {
+    if (method == "SSLv2")
         return PJSIP_SSLV2_METHOD;
-    }
 
-    if (method == "SSLv3") {
+    if (method == "SSLv3")
         return PJSIP_SSLV3_METHOD;
-    }
 
-    if (method == "SSLv23") {
+    if (method == "SSLv23")
         return PJSIP_SSLV23_METHOD;
-    }
 
     return PJSIP_SSL_UNSPECIFIED_METHOD;
 }
 
 void SIPAccount::initTlsConfiguration (void)
 {
-    /*
-     * Initialize structure to zero
-     */
-    if (_tlsSetting) {
-        free (_tlsSetting);
-        _tlsSetting = NULL;
-    }
-
     // TLS listener is unique and should be only modified through IP2IP_PROFILE
 
     // setTlsListenerPort(atoi(tlsPortStr.c_str()));
     setTlsListenerPort (atoi (_tlsPortStr.c_str()));
 
+    free (_tlsSetting);
     _tlsSetting = (pjsip_tls_setting *) malloc (sizeof (pjsip_tls_setting));
 
     assert (_tlsSetting);
@@ -1120,13 +959,12 @@ void SIPAccount::initTlsConfiguration (void)
     pj_cstr (&_tlsSetting->ciphers, _tlsCiphers.c_str());
     pj_cstr (&_tlsSetting->server_name, _tlsServerName.c_str());
 
-    _tlsSetting->verify_server = (_tlsVerifyServer == true) ? PJ_TRUE: PJ_FALSE;
-    _tlsSetting->verify_client = (_tlsVerifyClient == true) ? PJ_TRUE: PJ_FALSE;
-    _tlsSetting->require_client_cert = (_tlsRequireClientCertificate == true) ? PJ_TRUE: PJ_FALSE;
+    _tlsSetting->verify_server = _tlsVerifyServer ? PJ_TRUE: PJ_FALSE;
+    _tlsSetting->verify_client = _tlsVerifyClient ? PJ_TRUE: PJ_FALSE;
+    _tlsSetting->require_client_cert = _tlsRequireClientCertificate ? PJ_TRUE: PJ_FALSE;
 
     _tlsSetting->timeout.sec = atol (_tlsNegotiationTimeoutSec.c_str());
     _tlsSetting->timeout.msec = atol (_tlsNegotiationTimeoutMsec.c_str());
-
 }
 
 void SIPAccount::initStunConfiguration (void)
@@ -1368,4 +1206,3 @@ std::string SIPAccount::getContactHeader (const std::string& address, const std:
 
     return std::string (contact, len);
 }
-
