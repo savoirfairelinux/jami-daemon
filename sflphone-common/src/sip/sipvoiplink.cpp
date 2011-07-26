@@ -542,8 +542,8 @@ void SIPVoIPLink::sendRegister (AccountID id) throw(VoipLinkException)
     }
 
     pjsip_cred_info *cred = account->getCredInfo();
-    int credential_count = account->getCredentialCount();
-    _debug ("UserAgent: setting %d credentials in sendRegister", credential_count);
+    unsigned credential_count = account->getCredentialCount();
+    _debug ("UserAgent: setting %u credentials in sendRegister", credential_count);
     pjsip_regc_set_credentials (regc, credential_count, cred);
 
     // Add User-Agent Header
