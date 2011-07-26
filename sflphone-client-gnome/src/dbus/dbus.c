@@ -1206,6 +1206,7 @@ dbus_set_credential (account_t *a, int index)
         g_error_free (error);
     }
 }
+
 void
 dbus_delete_all_credential (account_t *a)
 {

@@ -52,20 +52,17 @@ void Credentials::setNewCredential (const std::string &username,
     credentialArray[credentialCount].username = username;
     credentialArray[credentialCount].password = password;
     credentialArray[credentialCount].realm = realm;
-
 }
 
-const CredentialItem *Credentials::getCredential (int index) const
+const CredentialItem *Credentials::getCredential (unsigned index) const
 {
-    if ( (index >= 0) && (index < credentialCount))
-        return & (credentialArray[index]);
-    else
-        return NULL;
+    if (index >= credentialCount)
+		return NULL;
+    return &credentialArray[index];
 }
 
 void Credentials::serialize (Conf::YamlEmitter *emitter UNUSED)
 {
-
 }
 
 void Credentials::unserialize (Conf::MappingNode *map)
@@ -75,8 +72,6 @@ void Credentials::unserialize (Conf::MappingNode *map)
     if (val)
         credentialCount = atoi (val->getValue().data());
 }
-
-
 
 SIPAccount::SIPAccount (const AccountID& accountID)
     : Account (accountID, "SIP")
@@ -791,22 +786,28 @@ void SIPAccount::setVoIPLink()
 }
 
 
-int SIPAccount::initCredential (void)
+void SIPAccount::initCredential (void)
 {
-    bool md5HashingEnabled = false;
-    int dataType = 0;
-    md5HashingEnabled = Manager::instance().preferences.getMd5Hash();
+    // We want to make sure that the password is really
+    // 32 characters long. Otherwise, pjsip will fail
+    // on an assertion.
+    bool md5HashingEnabled = Manager::instance().preferences.getMd5Hash()
+                             && _password.length() == 32;
+    int dataType = md5HashingEnabled ? PJSIP_CRED_DATA_DIGEST 
+                                     : PJSIP_CRED_DATA_PLAIN_PASSWD;
     std::string digest;
 
     // Create the credential array
-    pjsip_cred_info * cred_info = (pjsip_cred_info *) malloc (sizeof (pjsip_cred_info) * (getCredentialCount()));
+    pjsip_cred_info *cred_info = (pjsip_cred_info *)
+            calloc(getCredentialCount(), sizeof (pjsip_cred_info));
 
-    if (cred_info == NULL) {
+    if (!cred_info) {
         _error ("SipAccount: Error: Failed to set cred_info for account %s", _accountID.c_str());
-        return 1;
+        return;
     }
 
-    pj_bzero (cred_info, sizeof (pjsip_cred_info) * getCredentialCount());
+    if (md5HashingEnabled )
+        _debug ("Setting digest ");
 
     // Use authentication username if provided
     if (!_authenticationUsername.empty())
@@ -820,56 +821,28 @@ int SIPAccount::initCredential (void)
     // Set realm for that credential. * by default.
     cred_info[0].realm = pj_str (strdup (_realm.c_str()));
 
-    // We want to make sure that the password is really
-    // 32 characters long. Otherwise, pjsip will fail
-    // on an assertion.
-    if (md5HashingEnabled && _password.length() == 32) {
-        dataType = PJSIP_CRED_DATA_DIGEST;
-        _debug ("Setting digest ");
-    } else {
-        dataType = PJSIP_CRED_DATA_PLAIN_PASSWD;
-    }
-
-    // Set the datatype
     cred_info[0].data_type = dataType;
-
-    // Set the secheme
     cred_info[0].scheme = pj_str ( (char*) "digest");
 
-    int i;
+#if 0 // FIXME, unused. see https://projects.savoirfairelinux.com/issues/6408
+    unsigned i;
 
     // Default credential already initialized, use credentials.getCredentialCount()
     for (i = 0; i < credentials.getCredentialCount(); i++) {
 
-        std::string username = _username;
-        std::string password = _password;
-        std::string realm = _realm;
-
-        cred_info[i].username = pj_str (strdup (username.c_str()));
-        cred_info[i].data = pj_str (strdup (password.c_str()));
-        cred_info[i].realm = pj_str (strdup (realm.c_str()));
-
-        // We want to make sure that the password is really
-        // 32 characters long. Otherwise, pjsip will fail
-        // on an assertion.
-
-        if (md5HashingEnabled && _password.length() == 32) {
-            dataType = PJSIP_CRED_DATA_DIGEST;
-            _debug ("Setting digest ");
-        } else {
-            dataType = PJSIP_CRED_DATA_PLAIN_PASSWD;
-        }
+        cred_info[i].username = pj_str (strdup (_username.c_str()));
+        cred_info[i].data = pj_str (strdup (_password.c_str()));
+        cred_info[i].realm = pj_str (strdup (_realm.c_str()));
 
         cred_info[i].data_type = dataType;
 
         cred_info[i].scheme = pj_str ( (char*) "digest");
 
-        _debug ("Setting credential %d realm = %s passwd = %s username = %s data_type = %d", i, realm.c_str(), password.c_str(), username.c_str(), cred_info[i].data_type);
+        _debug ("Setting credential %u realm = %s passwd = %s username = %s data_type = %d", i, _realm.c_str(), _password.c_str(), _username.c_str(), cred_info[i].data_type);
     }
+#endif
 
     _cred = cred_info;
-
-    return 0;
 }
 
 
@@ -884,7 +857,7 @@ int SIPAccount::registerVoIPLink()
 
     // Init TLS settings if the user wants to use TLS
     if (_tlsEnable == "true") {
-        _debug ("SIPAccount: TLS is ennabled for accounr %s", getAccountID().c_str());
+        _debug ("SIPAccount: TLS is enabled for account %s", getAccountID().c_str());
         _transportType = PJSIP_TRANSPORT_TLS;
         initTlsConfiguration();
     }
@@ -898,8 +871,7 @@ int SIPAccount::registerVoIPLink()
     }
 
     try {
-        // In our definition of the
-        // ip2ip profile (aka Direct IP Calls),
+        // In our definition of the ip2ip profile (aka Direct IP Calls),
         // no registration should be performed
         if (_accountID != IP2IP_PROFILE) {
             _link->sendRegister (_accountID);
@@ -928,49 +900,36 @@ int SIPAccount::unregisterVoIPLink()
     }
 
     return true;
-
 }
 
 pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum (const std::string& method)
 {
-    if (method == "Default") {
+    if (method == "Default")
         return PJSIP_SSL_UNSPECIFIED_METHOD;
-    }
 
-    if (method == "TLSv1") {
+    if (method == "TLSv1")
         return PJSIP_TLSV1_METHOD;
-    }
 
-    if (method == "SSLv2") {
+    if (method == "SSLv2")
         return PJSIP_SSLV2_METHOD;
-    }
 
-    if (method == "SSLv3") {
+    if (method == "SSLv3")
         return PJSIP_SSLV3_METHOD;
-    }
 
-    if (method == "SSLv23") {
+    if (method == "SSLv23")
         return PJSIP_SSLV23_METHOD;
-    }
 
     return PJSIP_SSL_UNSPECIFIED_METHOD;
 }
 
 void SIPAccount::initTlsConfiguration (void)
 {
-    /*
-     * Initialize structure to zero
-     */
-    if (_tlsSetting) {
-        free (_tlsSetting);
-        _tlsSetting = NULL;
-    }
-
     // TLS listener is unique and should be only modified through IP2IP_PROFILE
 
     // setTlsListenerPort(atoi(tlsPortStr.c_str()));
     setTlsListenerPort (atoi (_tlsPortStr.c_str()));
 
+    free (_tlsSetting);
     _tlsSetting = (pjsip_tls_setting *) malloc (sizeof (pjsip_tls_setting));
 
     assert (_tlsSetting);
@@ -985,13 +944,12 @@ void SIPAccount::initTlsConfiguration (void)
     pj_cstr (&_tlsSetting->ciphers, _tlsCiphers.c_str());
     pj_cstr (&_tlsSetting->server_name, _tlsServerName.c_str());
 
-    _tlsSetting->verify_server = (_tlsVerifyServer == true) ? PJ_TRUE: PJ_FALSE;
-    _tlsSetting->verify_client = (_tlsVerifyClient == true) ? PJ_TRUE: PJ_FALSE;
-    _tlsSetting->require_client_cert = (_tlsRequireClientCertificate == true) ? PJ_TRUE: PJ_FALSE;
+    _tlsSetting->verify_server = _tlsVerifyServer ? PJ_TRUE: PJ_FALSE;
+    _tlsSetting->verify_client = _tlsVerifyClient ? PJ_TRUE: PJ_FALSE;
+    _tlsSetting->require_client_cert = _tlsRequireClientCertificate ? PJ_TRUE: PJ_FALSE;
 
     _tlsSetting->timeout.sec = atol (_tlsNegotiationTimeoutSec.c_str());
     _tlsSetting->timeout.msec = atol (_tlsNegotiationTimeoutMsec.c_str());
-
 }
 
 void SIPAccount::initStunConfiguration (void)
@@ -1233,4 +1191,3 @@ std::string SIPAccount::getContactHeader (const std::string& address, const std:
 
     return std::string (contact, len);
 }
-
