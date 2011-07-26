@@ -234,7 +234,7 @@ void VideoReceiveThread::setup()
     {
         std::cerr << "Couldn't find a pixel format for `" << args_["format"]
             << "'" << std::endl;
-        cleanup();
+        cleanupAndExit();
     }
 
     AVInputFormat *file_iformat = 0;
@@ -252,7 +252,7 @@ void VideoReceiveThread::setup()
             if (!file_iformat)
             {
                 std::cerr << "Could not find format!" << std::endl;
-                cleanup();
+                cleanupAndExit();
             }
         }
         else if (args_["input"].substr(0, strlen("/dev/video")) == "/dev/video")
@@ -262,7 +262,7 @@ void VideoReceiveThread::setup()
             if (!file_iformat)
             {
                 std::cerr << "Could not find format!" << std::endl;
-                cleanup();
+                cleanupAndExit();
             }
         }
 
@@ -279,14 +279,14 @@ void VideoReceiveThread::setup()
         {
             std::cerr <<  "Could not open input file \"" << args_["input"] <<
                 "\"" << std::endl;
-            cleanup();
+            cleanupAndExit();
         }
 
         // retrieve stream information
         if (av_find_stream_info(inputCtx_) < 0)
         {
             std::cerr << "Could not find stream info!" << std::endl;
-            cleanup();
+            cleanupAndExit();
         }
 
         // find the first video stream from the input
@@ -302,7 +302,7 @@ void VideoReceiveThread::setup()
         if (videoStreamIndex_ == -1)
         {
             std::cerr << "Could not find video stream!" << std::endl;
-            cleanup();
+            cleanupAndExit();
         }
 
         // Get a pointer to the codec context for the video stream
@@ -313,7 +313,7 @@ void VideoReceiveThread::setup()
         if (inputDecoder == NULL)
         {
             std::cerr << "Unsupported codec!" << std::endl;
-            cleanup();
+            cleanupAndExit();
         }
 
         // open codec
@@ -323,7 +323,7 @@ void VideoReceiveThread::setup()
         if (ret < 0)
         {
             std::cerr << "Could not open codec!" << std::endl;
-            cleanup();
+            cleanupAndExit();
         }
     }
 
@@ -331,7 +331,7 @@ void VideoReceiveThread::setup()
     if (scaledPicture_ == 0)
     {
         std::cerr << "Could not allocated output frame!" << std::endl;
-        cleanup();
+        cleanupAndExit();
     }
 
     // determine required buffer size and allocate buffer
@@ -392,10 +392,6 @@ void VideoReceiveThread::cleanup()
     // close the video file
     if (inputCtx_)
         av_close_input_file(inputCtx_);
-
-    std::cerr << "Exitting the decoder thread" << std::endl;
-    // exit this thread
-    exit();
 }
 
 SwsContext * VideoReceiveThread::createScalingContext()
@@ -408,13 +404,12 @@ SwsContext * VideoReceiveThread::createScalingContext()
     if (imgConvertCtx == 0)
     {
         std::cerr << "Cannot init the conversion context!" << std::endl;
-        cleanup();
+        cleanupAndExit();
     }
     return imgConvertCtx;
 }
 
 VideoReceiveThread::VideoReceiveThread(const std::map<std::string, std::string> &args) : args_(args),
-    interrupted_(false),
     scaledPictureBuf_(0),
     shmBuffer_(0),
     shmID_(-1),
@@ -430,30 +425,22 @@ VideoReceiveThread::VideoReceiveThread(const std::map<std::string, std::string> 
     dstHeight_(-1)
 {
     test_source_ = (args_["input"] == "SFLTEST");
+    setCancel(cancelImmediate);
 }
 
 void VideoReceiveThread::run()
 {
     setup();
-
     AVPacket inpacket;
     int frameFinished;
     SwsContext *imgConvertCtx = 0;
     enum PixelFormat fmt = (enum PixelFormat) format_;
-#if 0
-    int bpp = (av_get_bits_per_pixel(&av_pix_fmt_descriptors[fmt]) + 7) & ~7;
-    // Fri Jul 15 16:25:59 EDT 2011:tmatth:FIXME: commented out until this functionality is needed/used
-    VideoPicture *pic;
-#endif
 
     if (!test_source_)
         imgConvertCtx = createScalingContext();
 
     for (;;)
     {
-        if (interrupted_)
-            break;
-
         if (!test_source_)
         {
             if (av_read_frame(inputCtx_, &inpacket) < 0)
@@ -468,14 +455,6 @@ void VideoReceiveThread::run()
             if (!frameFinished)
                 goto next_packet;
 
-#if 0
-            // Fri Jul 15 16:25:59 EDT 2011:tmatth:FIXME: commented out until this functionality is needed/used
-            pic = new VideoPicture(bpp, dstWidth_, dstHeight_, rawFrame_->pts);
-
-            // assign appropriate parts of buffer to image planes in scaledPicture
-            avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
-                    reinterpret_cast<uint8_t*>(pic->data), fmt, dstWidth_, dstHeight_);
-#endif
             avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
                     reinterpret_cast<uint8_t*>(shmBuffer_), fmt, dstWidth_, dstHeight_);
 
@@ -485,12 +464,6 @@ void VideoReceiveThread::run()
         }
         else
         {
-#if 0
-            // Fri Jul 15 16:25:59 EDT 2011:tmatth:FIXME: commented out until this functionality is needed/used
-            pic = new VideoPicture(bpp, dstWidth_, dstHeight_, frameNumber_);
-            avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
-                    reinterpret_cast<uint8_t*>(pic->data), fmt, dstWidth_, dstHeight_);
-#endif
             // assign appropriate parts of buffer to image planes in scaledPicture
             avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
                     reinterpret_cast<uint8_t*>(shmBuffer_), fmt, dstWidth_, dstHeight_);
@@ -510,40 +483,35 @@ void VideoReceiveThread::run()
                     scaledPicture_->data[0][y * pitch + x] = x + y + i * planes;
         }
 
-#if 0
-        // Fri Jul 15 16:25:59 EDT 2011:tmatth:FIXME: commented out until this functionality is needed/used
-        // FIXME : put pictures in a pool and use the PTS to get them out and displayed from a separate thread
-        // i.e., picturePool_.push_back(pic);
-        memcpy(shmBuffer_, pic->data, pic->Size());
-        delete pic;
-#endif
-
         /* signal the semaphore that a new frame is ready */ 
         sem_signal(semSetID_);
 
         if (test_source_)
             continue;
 
-next_packet:
         // free the packet that was allocated by av_read_frame
+next_packet:
         av_free_packet(&inpacket);
     }
-    // free resources, exit thread
-    cleanup();
 }
 
-void VideoReceiveThread::stop()
+void VideoReceiveThread::cleanupAndExit()
 {
-    // FIXME: not thread safe
-    interrupted_ = true;
+    cleanup();
+    exit();
+}
 
-    DBusManager::instance().getCallManager()->stoppedReceivingVideoEvent(shmKey_,
-            semKey_);
+void VideoReceiveThread::final()
+{
+    cleanup();
 }
 
 VideoReceiveThread::~VideoReceiveThread()
 {
-    terminate();
+    ost::Thread::terminate();
+    // free resources, exit thread
+    DBusManager::instance().getCallManager()->stoppedReceivingVideoEvent(shmKey_,
+            semKey_);
 }
 
 } // end namespace sfl_video

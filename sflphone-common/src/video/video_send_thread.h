@@ -52,11 +52,12 @@ class VideoSendThread : public ost::Thread {
         void setup();
         void prepareEncoderContext();
         void cleanup();
+        void cleanupAndExit();
+        void final();
         SwsContext * createScalingContext();
         ost::Event sdpReady_;
 
         std::map<std::string, std::string> args_;
-        volatile sig_atomic_t interrupted_;
         /*-------------------------------------------------------------*/
         /* These variables should be used in thread (i.e. run()) only! */
         /*-------------------------------------------------------------*/
@@ -78,7 +79,6 @@ class VideoSendThread : public ost::Thread {
         // called from main thread 
         void waitForSDP();
         virtual void run();
-        void stop();
         std::string getSDP() const { return sdp_; }
 };
 }

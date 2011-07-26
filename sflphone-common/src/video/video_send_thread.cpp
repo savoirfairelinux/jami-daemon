@@ -129,7 +129,7 @@ void VideoSendThread::setup()
         if (!file_iformat)
         {
             std::cerr << "Could not find format!" << std::endl;
-            cleanup();
+            cleanupAndExit();
         }
     }
 
@@ -146,13 +146,13 @@ void VideoSendThread::setup()
     {
         std::cerr <<  "Could not open input file " << args_["input"] <<
             std::endl;
-        cleanup();
+        cleanupAndExit();
     }
 
     // retrieve stream information
     if (av_find_stream_info(inputCtx_) < 0) {
         std::cerr << "Could not find stream info!" << std::endl;
-        cleanup();
+        cleanupAndExit();
     }
 
     // find the first video stream from the input
@@ -168,7 +168,7 @@ void VideoSendThread::setup()
     if (videoStreamIndex_ == -1)
     {
         std::cerr << "Could not find video stream!" << std::endl;
-        cleanup();
+        cleanupAndExit();
     }
 
     // Get a pointer to the codec context for the video stream
@@ -179,7 +179,7 @@ void VideoSendThread::setup()
     if (inputDecoder == NULL)
     {
         std::cerr << "Unsupported codec!" << std::endl;
-        cleanup();
+        cleanupAndExit();
     }
 
     // open codec
@@ -189,7 +189,7 @@ void VideoSendThread::setup()
     if (ret < 0)
     {
         std::cerr << "Could not open codec!" << std::endl;
-        cleanup();
+        cleanupAndExit();
     }
 
     outputCtx_ = avformat_alloc_context();
@@ -199,7 +199,7 @@ void VideoSendThread::setup()
     {
         std::cerr << "Unable to find a suitable output format for " <<
             args_["destination"] << std::endl;
-        cleanup();
+        cleanupAndExit();
     }
     outputCtx_->oformat = file_oformat;
     strncpy(outputCtx_->filename, args_["destination"].c_str(),
@@ -211,7 +211,7 @@ void VideoSendThread::setup()
     if (encoder == 0)
     {
         std::cerr << "encoder not found" << std::endl;
-        cleanup();
+        cleanupAndExit();
     }
 
     prepareEncoderContext();
@@ -229,7 +229,7 @@ void VideoSendThread::setup()
     if (ret < 0)
     {
         std::cerr << "Could not open encoder" << std::endl;
-        cleanup();
+        cleanupAndExit();
     }
 
     // add video stream to outputformat context
@@ -237,7 +237,7 @@ void VideoSendThread::setup()
     if (videoStream_ == 0)
     {
         std::cerr << "Could not alloc stream" << std::endl;
-        cleanup();
+        cleanupAndExit();
     }
     videoStream_->codec = encoderCtx_;
 
@@ -248,7 +248,7 @@ void VideoSendThread::setup()
         {
             std::cerr << "Could not open '" << outputCtx_->filename << "'" <<
                 std::endl;
-            cleanup();
+            cleanupAndExit();
         }
     }
     else
@@ -262,7 +262,7 @@ void VideoSendThread::setup()
     {
         std::cerr << "Could not write header for output file (incorrect codec "
             << "parameters ?)" << std::endl;
-        cleanup();
+        cleanupAndExit();
     }
 
     // allocate video frame
@@ -280,6 +280,12 @@ void VideoSendThread::setup()
     scaledPicture_->linesize[0] = encoderCtx_->width;
     scaledPicture_->linesize[1] = encoderCtx_->width / 2;
     scaledPicture_->linesize[2] = encoderCtx_->width / 2;
+}
+
+void VideoSendThread::cleanupAndExit()
+{
+    cleanup();
+    exit();
 }
 
 void VideoSendThread::cleanup()
@@ -322,9 +328,6 @@ void VideoSendThread::cleanup()
     // close the video file
     if (inputCtx_)
         av_close_input_file(inputCtx_);
-
-    // exit this thread
-    exit();
 }
 
 SwsContext * VideoSendThread::createScalingContext()
@@ -337,14 +340,13 @@ SwsContext * VideoSendThread::createScalingContext()
     if (imgConvertCtx == 0)
     {
         std::cerr << "Cannot init the conversion context!" << std::endl;
-        cleanup();
+        cleanupAndExit();
     }
     return imgConvertCtx;
 }
 
 VideoSendThread::VideoSendThread(const std::map<std::string, std::string> &args) :
     args_(args),
-    interrupted_(false),
     scaledPictureBuf_(0),
     outbuf_(0),
     inputDecoderCtx_(0),
@@ -359,6 +361,7 @@ VideoSendThread::VideoSendThread(const std::map<std::string, std::string> &args)
     sdp_("")
 {
     test_source_ = (args_["input"] == "SFLTEST");
+    setCancel(cancelImmediate);
 }
 
 void VideoSendThread::run()
@@ -375,9 +378,6 @@ void VideoSendThread::run()
 
     for (;;)
     {
-        if (interrupted_)
-            break;
-
         if (!test_source_) {
 
             if (av_read_frame(inputCtx_, &inpacket) < 0)
@@ -447,26 +447,24 @@ void VideoSendThread::run()
         if (ret < 0)
         {
             print_error("av_interleaved_write_frame() error", ret);
-            cleanup();
+            cleanupAndExit();
         }
         av_free_packet(&opkt);
 
-next_packet:
         // free the packet that was allocated by av_read_frame
+next_packet:
         av_free_packet(&inpacket);
     }
-    // free resources, exit thread
-    cleanup();
 }
 
-void VideoSendThread::stop()
+void VideoSendThread::final()
 {
-    interrupted_ = true;
+    cleanup();
 }
 
 VideoSendThread::~VideoSendThread()
 {
-    terminate();
+    ost::Thread::terminate();
 }
 
 } // end namespace sfl_video

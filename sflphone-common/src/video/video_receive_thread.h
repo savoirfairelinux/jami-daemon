@@ -48,7 +48,6 @@ class VideoReceiveThread : public ost::Thread {
         bool test_source_;
         unsigned frameNumber_;
         std::map<std::string, std::string> args_;
-        volatile sig_atomic_t interrupted_;
 
         /*-------------------------------------------------------------*/
         /* These variables should be used in thread (i.e. run()) only! */
@@ -78,16 +77,17 @@ class VideoReceiveThread : public ost::Thread {
         std::string sdpFilename_;
 
         void loadSDP();
+        void final();
+        void cleanupAndExit();
 
     public:
         explicit VideoReceiveThread(const std::map<std::string, std::string> &args);
         virtual ~VideoReceiveThread();
         virtual void run();
-        void stop();
         void waitForShm();
 
-        int getShmKey(void) { return shmKey_; }
-        int getSemKey(void) { return semKey_; }
+        int getShmKey() { return shmKey_; }
+        int getSemKey() { return semKey_; }
         int getVideoBufferSize(void) { return videoBufferSize_; }
 };
 }

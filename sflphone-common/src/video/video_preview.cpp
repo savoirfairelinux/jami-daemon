@@ -51,9 +51,6 @@ bool VideoPreview::start()
 bool VideoPreview::stop()
 {
     std::cerr << "Stopping video preview " << std::endl;
-    // FIXME: all kinds of evil!!! interrupted should be atomic
-    receiveThread_->stop();
-    receiveThread_->join();
 
     // destroy objects
     receiveThread_.reset();
