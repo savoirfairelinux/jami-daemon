@@ -439,7 +439,6 @@ void SIPAccount::setAccountDetails (const std::map<std::string, std::string>& de
     std::string ua_name;
     std::string realm;
     std::string routeset;
-    std::string authenticationName;
 
     std::string resolveOnce;
     std::string registrationExpire;
@@ -507,7 +506,7 @@ void SIPAccount::setAccountDetails (const std::map<std::string, std::string>& de
 
     // sip credential
     find_in_map (REALM, realm)
-    find_in_map (AUTHENTICATION_USERNAME, authenticationName)
+    find_in_map (AUTHENTICATION_USERNAME, _authenticationUsername)
     find_in_map (USERAGENT, ua_name)
 
     setUseragent (ua_name);
@@ -575,15 +574,8 @@ void SIPAccount::setAccountDetails (const std::map<std::string, std::string>& de
         // TODO: This test is weak. Fix this.
         if ( (password.compare (getPassword()) != 0)) {
             _debug ("SipAccount: Password sent and password from config are different. Re-hashing");
-            std::string hash;
-
-            if (authenticationName.empty()) {
-                hash = Manager::instance().computeMd5HashFromCredential (username, password, realm);
-            } else {
-                hash = Manager::instance().computeMd5HashFromCredential (authenticationName, password, realm);
-            }
-
-            setPassword (hash);
+			std::string &authenticationUsername = _authenticationUsername.empty() ? username : _authenticationUsername;
+            setPassword (Manager::instance().computeMd5HashFromCredential (authenticationUsername, password, realm));
         }
     }
 }
