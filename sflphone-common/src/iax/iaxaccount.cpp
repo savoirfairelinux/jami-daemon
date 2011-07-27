@@ -172,48 +172,19 @@ void IAXAccount::unserialize (Conf::MappingNode *map)
 
 }
 
-void IAXAccount::setAccountDetails (const std::map<std::string, std::string>& details)
+void IAXAccount::setAccountDetails (std::map<std::string, std::string> details)
 {
-    std::map<std::string, std::string> map_cpy;
-    std::map<std::string, std::string>::iterator iter;
-
-    // Work on a copy
-    map_cpy = details;
-
-    std::string alias;
-    std::string type;
-    std::string hostname;
-    std::string username;
-    std::string password;
-    std::string mailbox;
-    std::string accountEnable;
-
-    std::string ua_name;
-
     // Account setting common to SIP and IAX
-    find_in_map (CONFIG_ACCOUNT_ALIAS, alias)
-    find_in_map (CONFIG_ACCOUNT_TYPE, type)
-    find_in_map (HOSTNAME, hostname)
-    find_in_map (USERNAME, username)
-    find_in_map (PASSWORD, password)
-    find_in_map (CONFIG_ACCOUNT_MAILBOX, mailbox);
-    find_in_map (CONFIG_ACCOUNT_ENABLE, accountEnable);
+    setAlias (details[CONFIG_ACCOUNT_ALIAS]);
+    setType (details[CONFIG_ACCOUNT_TYPE]);
+    setUsername (details[USERNAME]);
+    setHostname (details[HOSTNAME]);
+    setPassword (details[PASSWORD]);
+    setEnabled ( (details[CONFIG_ACCOUNT_ENABLE].compare ("true") == 0));
+    setMailBox (details[CONFIG_ACCOUNT_MAILBOX]);
 
-    setAlias (alias);
-    setType (type);
-    setUsername (username);
-    setHostname (hostname);
-    setPassword (password);
-    setEnabled ( (accountEnable.compare ("true") == 0) ? true : false);
-    setMailBox (mailbox);
-
-    std::string displayName;
-    find_in_map (DISPLAY_NAME, displayName)
-    setDisplayName (displayName);
-
-    find_in_map (USERAGENT, ua_name)
-    setUseragent (ua_name);
-
+    setDisplayName (details[DISPLAY_NAME]);
+    setUseragent (details[USERAGENT]);
 }
 
 std::map<std::string, std::string> IAXAccount::getAccountDetails() const

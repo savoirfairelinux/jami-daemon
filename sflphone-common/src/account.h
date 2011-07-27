@@ -149,8 +149,6 @@ const Conf::Key ringtonePathKey ("ringtonePath");
 const Conf::Key ringtoneEnabledKey ("ringtoneEnabled");
 const Conf::Key displayNameKey ("displayName");
 
-#define find_in_map(X, Y)  if((iter = map_cpy.find(X)) != map_cpy.end()) { Y = iter->second; }
-
 class Account : public Serializable
 {
 
@@ -175,7 +173,7 @@ class Account : public Serializable
          */
         virtual void unserialize (Conf::MappingNode *map) = 0;
 
-        virtual void setAccountDetails (const std::map<std::string, std::string>& details) = 0;
+        virtual void setAccountDetails (std::map<std::string, std::string> details) = 0;
 
         virtual std::map<std::string, std::string> getAccountDetails() const = 0;
 

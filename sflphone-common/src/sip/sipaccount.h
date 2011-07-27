@@ -188,7 +188,7 @@ class SIPAccount : public Account
 
         virtual void unserialize (Conf::MappingNode *map);
 
-        virtual void setAccountDetails (const std::map<std::string, std::string>& details);
+        virtual void setAccountDetails (std::map<std::string, std::string> details);
 
         virtual std::map<std::string, std::string> getAccountDetails() const;
 

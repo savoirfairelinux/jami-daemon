@@ -395,176 +395,73 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
 }
 
 
-void SIPAccount::setAccountDetails (const std::map<std::string, std::string>& details)
+void SIPAccount::setAccountDetails (std::map<std::string, std::string> details)
 {
-
-    std::map<std::string, std::string> map_cpy;
-    std::map<std::string, std::string>::iterator iter;
-
-    // Work on a copy
-    map_cpy = details;
-
-    std::string alias;
-    std::string type;
-    std::string hostname;
-    std::string username;
-    std::string password;
-    std::string mailbox;
-    std::string accountEnable;
-    std::string ringtonePath;
-    std::string ringtoneEnabled;
+	std::string password, username;
 
     // Account setting common to SIP and IAX
-    find_in_map (CONFIG_ACCOUNT_ALIAS, alias)
-    find_in_map (CONFIG_ACCOUNT_TYPE, type)
-    find_in_map (HOSTNAME, hostname)
-    find_in_map (USERNAME, username)
-    find_in_map (PASSWORD, password)
-    find_in_map (CONFIG_ACCOUNT_MAILBOX, mailbox);
-    find_in_map (CONFIG_ACCOUNT_ENABLE, accountEnable);
-    find_in_map (CONFIG_RINGTONE_PATH, ringtonePath);
-    find_in_map (CONFIG_RINGTONE_ENABLED, ringtoneEnabled);
-
-    setAlias (alias);
-    setType (type);
+    setAlias (details[CONFIG_ACCOUNT_ALIAS]);
+    setType (details[CONFIG_ACCOUNT_TYPE]);
+    username = details[USERNAME];
     setUsername (username);
-    setHostname (hostname);
+    setHostname (details[HOSTNAME]);
+    password = details[PASSWORD];
     setPassword (password);
-    setEnabled ( (accountEnable == "true"));
-    setRingtonePath (ringtonePath);
-    setRingtoneEnabled ( (ringtoneEnabled == "true"));
-    setMailBox (mailbox);
+    setEnabled ( (details[CONFIG_ACCOUNT_ENABLE] == "true"));
+    setRingtonePath (details[CONFIG_RINGTONE_PATH]);
+    setRingtoneEnabled ( (details[CONFIG_RINGTONE_ENABLED] == "true"));
+    setMailBox (details[CONFIG_ACCOUNT_MAILBOX]);
 
     // SIP specific account settings
-    std::string ua_name;
-    std::string realm;
-    std::string routeset;
-
-    std::string resolveOnce;
-    std::string registrationExpire;
-
-    std::string displayName;
-    std::string localInterface;
-    std::string publishedSameasLocal;
-    std::string localAddress;
-    std::string publishedAddress;
-    std::string localPort;
-    std::string publishedPort;
-    std::string stunEnable;
-    std::string stunServer;
-    std::string dtmfType;
-    std::string srtpEnable;
-    std::string srtpRtpFallback;
-    std::string zrtpDisplaySas;
-    std::string zrtpDisplaySasOnce;
-    std::string zrtpNotSuppWarning;
-    std::string zrtpHelloHash;
-    std::string srtpKeyExchange;
-
-    std::string tlsListenerPort;
-    std::string tlsEnable;
-    std::string tlsCaListFile;
-    std::string tlsCertificateFile;
-    std::string tlsPrivateKeyFile;
-    std::string tlsPassword;
-    std::string tlsMethod;
-    std::string tlsCiphers;
-    std::string tlsServerName;
-    std::string tlsVerifyServer;
-    std::string tlsVerifyClient;
-    std::string tlsRequireClientCertificate;
-    std::string tlsNegotiationTimeoutSec;
-    std::string tlsNegotiationTimeoutMsec;
 
     // general sip settings
-    find_in_map (DISPLAY_NAME, displayName)
-    find_in_map (ROUTESET, routeset)
-    find_in_map (LOCAL_INTERFACE, localInterface)
-    find_in_map (PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal)
-    find_in_map (PUBLISHED_ADDRESS, publishedAddress)
-    find_in_map (LOCAL_PORT, localPort)
-    find_in_map (PUBLISHED_PORT, publishedPort)
-    find_in_map (STUN_ENABLE, stunEnable)
-    find_in_map (STUN_SERVER, stunServer)
-    find_in_map (ACCOUNT_DTMF_TYPE, dtmfType)
-    find_in_map (CONFIG_ACCOUNT_RESOLVE_ONCE, resolveOnce)
-    find_in_map (CONFIG_ACCOUNT_REGISTRATION_EXPIRE, registrationExpire)
+    setDisplayName (details[DISPLAY_NAME]);
+    setServiceRoute (details[ROUTESET]);
+    setLocalInterface (details[LOCAL_INTERFACE]);
+    setPublishedSameasLocal (details[PUBLISHED_SAMEAS_LOCAL] == "true");
+    setPublishedAddress (details[PUBLISHED_ADDRESS]);
+    setLocalPort (atoi (details[LOCAL_PORT].c_str()));
+    setPublishedPort (atoi (details[PUBLISHED_PORT].c_str()));
+    setStunServer (details[STUN_SERVER]);
+    setStunEnabled (details[STUN_ENABLE] == "true");
+    setDtmfType ( (details[ACCOUNT_DTMF_TYPE] == "overrtp") ? OVERRTP : SIPINFO);
 
-    setDisplayName (displayName);
-    setServiceRoute (routeset);
-    setLocalInterface (localInterface);
-    setPublishedSameasLocal (publishedSameasLocal == "true");
-    setPublishedAddress (publishedAddress);
-    setLocalPort (atoi (localPort.data()));
-    setPublishedPort (atoi (publishedPort.data()));
-    setStunServer (stunServer);
-    setStunEnabled (stunEnable == "true");
-    setDtmfType ( (dtmfType == "overrtp") ? OVERRTP : SIPINFO);
-
-    setResolveOnce (resolveOnce == "true");
-    setRegistrationExpire (registrationExpire);
+    setResolveOnce (details[CONFIG_ACCOUNT_RESOLVE_ONCE] == "true");
+    setRegistrationExpire (details[CONFIG_ACCOUNT_REGISTRATION_EXPIRE]);
 
     // sip credential
-    find_in_map (REALM, realm)
-    find_in_map (AUTHENTICATION_USERNAME, _authenticationUsername)
-    find_in_map (USERAGENT, ua_name)
+    _realm = details[REALM];
+    _authenticationUsername = details[AUTHENTICATION_USERNAME];
 
-    setUseragent (ua_name);
+    setUseragent (details[USERAGENT]);
 
     // srtp settings
-    find_in_map (SRTP_ENABLE, srtpEnable)
-    find_in_map (SRTP_RTP_FALLBACK, srtpRtpFallback)
-    find_in_map (ZRTP_DISPLAY_SAS, zrtpDisplaySas)
-    find_in_map (ZRTP_DISPLAY_SAS_ONCE, zrtpDisplaySasOnce)
-    find_in_map (ZRTP_NOT_SUPP_WARNING, zrtpNotSuppWarning)
-    find_in_map (ZRTP_HELLO_HASH, zrtpHelloHash)
-    find_in_map (SRTP_KEY_EXCHANGE, srtpKeyExchange)
-
-    setSrtpEnable (srtpEnable == "true");
-    setSrtpFallback (srtpRtpFallback == "true");
-    setZrtpDisplaySas (zrtpDisplaySas == "true");
-    setZrtpDiaplaySasOnce (zrtpDisplaySasOnce == "true");
-    setZrtpNotSuppWarning (zrtpNotSuppWarning == "true");
-    setZrtpHelloHash (zrtpHelloHash == "true");
-    setSrtpKeyExchange (srtpKeyExchange);
+    setSrtpEnable (details[SRTP_ENABLE] == "true");
+    setSrtpFallback (details[SRTP_RTP_FALLBACK] == "true");
+    setZrtpDisplaySas (details[ZRTP_DISPLAY_SAS] == "true");
+    setZrtpDiaplaySasOnce (details[ZRTP_DISPLAY_SAS_ONCE] == "true");
+    setZrtpNotSuppWarning (details[ZRTP_NOT_SUPP_WARNING] == "true");
+    setZrtpHelloHash (details[ZRTP_HELLO_HASH] == "true");
+    setSrtpKeyExchange (details[SRTP_KEY_EXCHANGE]);
 
     // TLS settings
     // The TLS listener is unique and globally defined through IP2IP_PROFILE
-    if (_accountID == IP2IP_PROFILE) {
-        find_in_map (TLS_LISTENER_PORT, tlsListenerPort)
-    }
+    if (_accountID == IP2IP_PROFILE)
+    	setTlsListenerPort (atoi (details[TLS_LISTENER_PORT].c_str()));
 
-    find_in_map (TLS_ENABLE, tlsEnable)
-    find_in_map (TLS_CA_LIST_FILE, tlsCaListFile)
-    find_in_map (TLS_CERTIFICATE_FILE, tlsCertificateFile)
-    find_in_map (TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile)
-    find_in_map (TLS_PASSWORD, tlsPassword)
-    find_in_map (TLS_METHOD, tlsMethod)
-    find_in_map (TLS_CIPHERS, tlsCiphers)
-    find_in_map (TLS_SERVER_NAME, tlsServerName)
-    find_in_map (TLS_VERIFY_SERVER, tlsVerifyServer)
-    find_in_map (TLS_VERIFY_CLIENT, tlsVerifyClient)
-    find_in_map (TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate)
-    find_in_map (TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec)
-    find_in_map (TLS_NEGOTIATION_TIMEOUT_MSEC, tlsNegotiationTimeoutMsec)
-
-        if (_accountID == IP2IP_PROFILE) {
-            setTlsListenerPort (atoi (tlsListenerPort.data()));
-        }
-
-    setTlsEnable (tlsEnable);
-    setTlsCaListFile (tlsCaListFile);
-    setTlsCertificateFile (tlsCertificateFile);
-    setTlsPrivateKeyFile (tlsPrivateKeyFile);
-    setTlsPassword (tlsPassword);
-    setTlsMethod (tlsMethod);
-    setTlsCiphers (tlsCiphers);
-    setTlsServerName (tlsServerName);
-    setTlsVerifyServer (tlsVerifyServer == "true");
-    setTlsVerifyClient (tlsVerifyServer == "true");
-    setTlsRequireClientCertificate (tlsRequireClientCertificate == "true");
-    setTlsNegotiationTimeoutSec (tlsNegotiationTimeoutSec);
-    setTlsNegotiationTimeoutMsec (tlsNegotiationTimeoutMsec);
+    setTlsEnable (details[TLS_ENABLE]);
+    setTlsCaListFile (details[TLS_CA_LIST_FILE]);
+    setTlsCertificateFile (details[TLS_CERTIFICATE_FILE]);
+    setTlsPrivateKeyFile (details[TLS_PRIVATE_KEY_FILE]);
+    setTlsPassword (details[TLS_PASSWORD]);
+    setTlsMethod (details[TLS_METHOD]);
+    setTlsCiphers (details[TLS_CIPHERS]);
+    setTlsServerName (details[TLS_SERVER_NAME]);
+    setTlsVerifyServer (details[TLS_VERIFY_SERVER] == "true");
+    setTlsVerifyClient (details[TLS_VERIFY_CLIENT] == "true");
+    setTlsRequireClientCertificate (details[TLS_REQUIRE_CLIENT_CERTIFICATE] == "true");
+    setTlsNegotiationTimeoutSec (details[TLS_NEGOTIATION_TIMEOUT_SEC]);
+    setTlsNegotiationTimeoutMsec (details[TLS_NEGOTIATION_TIMEOUT_MSEC]);
 
     if (!Manager::instance().preferences.getMd5Hash()) {
         setPassword (password);
@@ -575,7 +472,7 @@ void SIPAccount::setAccountDetails (const std::map<std::string, std::string>& de
         if ( (password.compare (getPassword()) != 0)) {
             _debug ("SipAccount: Password sent and password from config are different. Re-hashing");
 			std::string &authenticationUsername = _authenticationUsername.empty() ? username : _authenticationUsername;
-            setPassword (Manager::instance().computeMd5HashFromCredential (authenticationUsername, password, realm));
+            setPassword (Manager::instance().computeMd5HashFromCredential (authenticationUsername, password, _realm));
         }
     }
 }
@@ -712,11 +609,9 @@ void SIPAccount::initCredential (void)
     if (md5HashingEnabled )
         _debug ("Setting digest ");
 
+    std::string &authenticationUsername = _authenticationUsername.empty() ? _username : _authenticationUsername;
     // Use authentication username if provided
-    if (!_authenticationUsername.empty())
-        _cred[0].username = pj_str (strdup (_authenticationUsername.c_str()));
-    else
-        _cred[0].username = pj_str (strdup (_username.c_str()));
+    _cred[0].username = pj_str (strdup (authenticationUsername.c_str()));
 
     // Set password
     _cred[0].data =  pj_str (strdup (_password.c_str()));
