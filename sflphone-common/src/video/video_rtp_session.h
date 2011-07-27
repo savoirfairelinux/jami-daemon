@@ -52,7 +52,6 @@ class VideoRtpSession {
         void test();
         void test_loopback();
         void stop();
-        bool started() const { return started_; }
         void updateDestination(const std::string &destination,
                                unsigned int port);
         void updateSDP(const Sdp *sdp);
@@ -62,7 +61,6 @@ class VideoRtpSession {
         std::tr1::shared_ptr<VideoReceiveThread> receiveThread_;
         std::map<std::string, std::string> txArgs_;
         std::map<std::string, std::string> rxArgs_;
-        bool started_;
 };
 
 }

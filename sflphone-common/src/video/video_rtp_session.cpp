@@ -44,7 +44,7 @@ namespace sfl_video {
 
 VideoRtpSession::VideoRtpSession(const std::map<std::string,std::string> &txArgs,
                                  const std::map<std::string,std::string> &rxArgs) :
-    txArgs_(txArgs), rxArgs_(rxArgs), started_(false)
+    txArgs_(txArgs), rxArgs_(rxArgs)
 {
 }
 
@@ -57,14 +57,6 @@ void VideoRtpSession::updateSDP(const Sdp *sdp)
         rxArgs_["receiving_sdp"] = desc;
         _debug("%s:Updated incoming SDP to:\n %s", __PRETTY_FUNCTION__,
                 rxArgs_["receiving_sdp"].c_str());
-
-        // Restart if receiving thread already exists and modifications have
-        // taken place
-        if (receiveThread_.get())
-        {
-            receiveThread_.reset(new VideoReceiveThread(rxArgs_));
-            receiveThread_->start();
-        }
     }
 }
 
@@ -78,17 +70,8 @@ void VideoRtpSession::updateDestination(const std::string &destination,
     if (tmp.str() != txArgs_["destination"])
     {
         txArgs_["destination"] = tmp.str();
-        std::cerr << "updated dest to " << txArgs_["destination"] << std::endl;
-
-#if 0
-        /// Restart if send thread already exists
-        if (sendThread_.get())
-        {
-            sendThread_->stop();
-            sendThread_.reset(new VideoSendThread(txArgs_));
-            sendThread_->start();
-        }
-#endif
+        _debug("%s updated dest to %s",  __PRETTY_FUNCTION__,
+               txArgs_["destination"].c_str());
     }
 }
 
@@ -102,7 +85,6 @@ void VideoRtpSession::test()
 
     /* block until SDP is ready */
     sendThread_->waitForSDP();
-    std::cerr << "SDP File written" << std::endl;
 }
 
 void VideoRtpSession::test_loopback()
@@ -129,20 +111,15 @@ void VideoRtpSession::start()
 
     receiveThread_.reset(new VideoReceiveThread(rxArgs_));
     receiveThread_->start();
-    started_ = true;
 }
 
 void VideoRtpSession::stop()
 {
-    std::cerr << "Stopping video rtp session " << std::endl;
     if (receiveThread_.get())
         receiveThread_.reset();
 
     if (sendThread_.get())
         sendThread_.reset();
-    std::cerr << "cancelled video rtp session " << std::endl;
-
-    started_ = false;
 }
 
 VideoRtpSession::~VideoRtpSession()

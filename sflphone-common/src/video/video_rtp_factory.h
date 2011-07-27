@@ -44,7 +44,6 @@ class VideoRtpFactory {
         void updateDestination(const std::string &dest,
                                unsigned int port);
         void updateSDP(Sdp *sdp);
-        bool started() const;
 
         /**
          * Start the video RTP threads

@@ -395,8 +395,7 @@ class Sdp
 
         Sdp& operator= (const Sdp&); //No Assignment Operator
 
-
-        std::string getRTPMapAttribute(int payloadType) const;
+        std::string getLineFromLocalSDP(const std::string &keyword) const;
 
         /*
          * Build the sdp media section
