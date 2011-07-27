@@ -122,6 +122,36 @@ YamlNode *MappingNode::getValue (Key key)
     }
 }
 
+void MappingNode::getValue (Key key, bool *b)
+{
+	ScalarNode *node = (ScalarNode*)getValue(key);
+	if (!node)
+		return;
+
+	const Value &v = node->getValue();
+	*b = v == "true";
+}
+
+void MappingNode::getValue (Key key, int *i)
+{
+	ScalarNode *node = (ScalarNode*)getValue(key);
+	if (!node)
+		return;
+
+	const Value &v = node->getValue();
+	*i = atoi(v.c_str());
+}
+
+void MappingNode::getValue (Key key, Value *v)
+{
+	ScalarNode *node = (ScalarNode*)getValue(key);
+	if (!node)
+		return;
+
+	*v = node->getValue();
+}
+
+
 void MappingNode::deleteChildNodes()
 {
     Mapping::iterator it = map.begin();

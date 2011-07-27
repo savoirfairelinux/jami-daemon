@@ -169,6 +169,9 @@ class MappingNode : public YamlNode
         void removeKeyValue (Key key);
 
         YamlNode *getValue (Key key);
+        void getValue (Key key, bool *b);
+        void getValue (Key key, int *i);
+        void getValue (Key key, Value *v);
 
         virtual void deleteChildNodes (void);
 

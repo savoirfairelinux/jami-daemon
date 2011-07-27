@@ -67,10 +67,9 @@ void Credentials::serialize (Conf::YamlEmitter *emitter UNUSED)
 
 void Credentials::unserialize (Conf::MappingNode *map)
 {
-    Conf::ScalarNode *val;
-    val = (Conf::ScalarNode *) (map->getValue (credentialCountKey));
-    if (val)
-        credentialCount = atoi (val->getValue().data());
+    int count;
+    map->getValue(credentialCountKey, &count);
+    credentialCount = count;
 }
 
 namespace {
@@ -286,7 +285,6 @@ void SIPAccount::serialize (Conf::YamlEmitter *emitter)
 
 void SIPAccount::unserialize (Conf::MappingNode *map)
 {
-    Conf::ScalarNode *val;
     Conf::MappingNode *srtpMap;
     Conf::MappingNode *tlsMap;
     Conf::MappingNode *zrtpMap;
@@ -294,57 +292,44 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
 
     assert(map);
 
-#define GETKEY(map, var, key) do { \
-    val = (Conf::ScalarNode *) (map->getValue (key)); \
-    if (val) \
-        var = val->getValue(); \
-    } while(0)
-#define GETBOOL(map, var, key) do { \
-    val = (Conf::ScalarNode *) (map->getValue (key)); \
-    if (val) \
-        var = !val->getValue().compare("true"); \
-    } while(0)
-#define GETINT(map, var, key) do { \
-    val = (Conf::ScalarNode *) (map->getValue (key)); \
-    if (val) \
-        var = atoi(val->getValue().data()); \
-    } while(0)
-
-    GETKEY(map, _alias, 	aliasKey);
-    GETKEY(map, _type, 	typeKey);
-    GETKEY(map, _accountID, idKey);
-    GETKEY(map, _username, usernameKey);
-    GETKEY(map, _password, passwordKey);
-    GETKEY(map, _hostname, hostnameKey);
-    GETBOOL(map, _enabled, accountEnableKey);
-    GETKEY(map, _mailBox, mailboxKey);
-    GETKEY(map, _codecStr, codecsKey);
+    map->getValue(aliasKey, &_alias);
+    map->getValue(typeKey, &_type);
+    map->getValue(idKey, &_accountID);
+    map->getValue(usernameKey, &_username);
+    map->getValue(passwordKey, &_password);
+    map->getValue(hostnameKey, &_hostname);
+    map->getValue(accountEnableKey, &_enabled);
+    map->getValue(mailboxKey, &_mailBox);
+    map->getValue(codecsKey, &_codecStr);
     // Update codec list which one is used for SDP offer
     setActiveCodecs (Manager::instance ().unserialize (_codecStr));
 
-    GETKEY(map, _ringtonePath, ringtonePathKey);
-    GETBOOL(map, _ringtoneEnabled, ringtoneEnabledKey);
-    GETKEY(map, _registrationExpire, expireKey);
-    GETKEY(map, _interface, interfaceKey);
-    GETINT(map, _localPort, portKey);
-    GETKEY(map, _publishedIpAddress, publishAddrKey);
-    GETINT(map, _publishedPort, publishPortKey);
-    GETBOOL(map, _publishedSameasLocal, sameasLocalKey);
-    GETBOOL(map, _resolveOnce, resolveOnceKey);
-    val = (Conf::ScalarNode *) (map->getValue (dtmfTypeKey));
-    if (val)
-        _dtmfType = (val->getValue() == "overrtp") ? OVERRTP : SIPINFO;
+    map->getValue(ringtonePathKey, &_ringtonePath);
+    map->getValue(ringtoneEnabledKey, &_ringtoneEnabled);
+    map->getValue(expireKey, &_registrationExpire);
+    map->getValue(interfaceKey, &_interface);
+    int port;
+    map->getValue(portKey, &port);
+    _localPort = port;
+    map->getValue(publishAddrKey, &_publishedIpAddress);
+    map->getValue(publishPortKey, &port);
+    _publishedPort = port;
+    map->getValue(sameasLocalKey, &_publishedSameasLocal);
+    map->getValue(resolveOnceKey, &_resolveOnce);
 
-    // _dtmfType = atoi(val->getValue();
-    GETKEY(map, _serviceRoute, serviceRouteKey);
+    std::string dtmfType;
+    map->getValue(dtmfTypeKey, &dtmfType);
+    _dtmfType = (dtmfType == "overrtp") ? OVERRTP : SIPINFO;
+
+    map->getValue(serviceRouteKey, &_serviceRoute);
     // stun enabled
-    GETBOOL(map, _stunEnabled, stunEnabledKey);
-    GETKEY(map, _stunServer, stunServerKey);
+    map->getValue(stunEnabledKey, &_stunEnabled);
+    map->getValue(stunServerKey, &_stunServer);
 
     // Init stun server name with default server name
     _stunServerName = pj_str ( (char*) _stunServer.data());
 
-    GETKEY(map, _displayName, displayNameKey);
+    map->getValue(displayNameKey, &_displayName);
 
 
     credMap = (Conf::MappingNode *) (map->getValue (credKey));
@@ -357,9 +342,9 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
     if (!srtpMap)
         throw SipAccountException (" did not found srtp map");
 
-    GETBOOL(srtpMap, _srtpEnabled, srtpEnableKey);
-    GETKEY(srtpMap, _srtpKeyExchange, keyExchangeKey);
-    GETBOOL(srtpMap, _srtpFallback, rtpFallbackKey);
+    srtpMap->getValue(srtpEnableKey, &_srtpEnabled);
+    srtpMap->getValue(keyExchangeKey, &_srtpKeyExchange);
+    srtpMap->getValue(rtpFallbackKey, &_srtpFallback);
 
 
     // get zrtp submap
@@ -367,10 +352,10 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
     if (!zrtpMap)
         throw SipAccountException (" did not found zrtp map");
 
-    GETBOOL(zrtpMap, _zrtpDisplaySas, displaySasKey);
-    GETBOOL(zrtpMap, _zrtpDisplaySasOnce, displaySasOnceKey);
-    GETBOOL(zrtpMap, _zrtpHelloHash, helloHashEnabledKey);
-    GETBOOL(zrtpMap, _zrtpNotSuppWarning, notSuppWarningKey);
+    zrtpMap->getValue(displaySasKey, &_zrtpDisplaySas);
+    zrtpMap->getValue(displaySasOnceKey, &_zrtpDisplaySasOnce);
+    zrtpMap->getValue(helloHashEnabledKey, &_zrtpHelloHash);
+    zrtpMap->getValue(notSuppWarningKey, &_zrtpNotSuppWarning);
 
 
     // get tls submap
@@ -378,21 +363,21 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
     if (!tlsMap)
         throw SipAccountException (" did not found tls map");
 
-    GETKEY(tlsMap, _tlsEnable, tlsEnableKey);
-    GETKEY(tlsMap, _tlsPortStr, tlsPortKey);
-    GETKEY(tlsMap, _tlsCertificateFile, certificateKey);
-    GETKEY(tlsMap, _tlsCaListFile, calistKey);
-    GETKEY(tlsMap, _tlsCiphers, ciphersKey);
-    GETKEY(tlsMap, _tlsMethod, methodKey);
-    GETKEY(tlsMap, _tlsPassword, tlsPasswordKey);
-    GETKEY(tlsMap, _tlsPrivateKeyFile, privateKeyKey);
-    GETBOOL(tlsMap, _tlsRequireClientCertificate, requireCertifKey);
-    GETKEY(tlsMap, _tlsServerName, serverKey);
-    GETBOOL(tlsMap, _tlsVerifyServer, verifyClientKey);
-    GETBOOL(tlsMap, _tlsVerifyClient, verifyServerKey);
+    tlsMap->getValue(tlsEnableKey, &_tlsEnable);
+    tlsMap->getValue(tlsPortKey, &_tlsPortStr);
+    tlsMap->getValue(certificateKey, &_tlsCertificateFile);
+    tlsMap->getValue(calistKey, &_tlsCaListFile);
+    tlsMap->getValue(ciphersKey, &_tlsCiphers);
+    tlsMap->getValue(methodKey, &_tlsMethod);
+    tlsMap->getValue(tlsPasswordKey, &_tlsPassword);
+    tlsMap->getValue(privateKeyKey, &_tlsPrivateKeyFile);
+    tlsMap->getValue(requireCertifKey, &_tlsRequireClientCertificate);
+    tlsMap->getValue(serverKey, &_tlsServerName);
+    tlsMap->getValue(verifyClientKey, &_tlsVerifyServer);
+    tlsMap->getValue(verifyServerKey, &_tlsVerifyClient);
     // FIXME
-    GETKEY(tlsMap, _tlsNegotiationTimeoutSec, timeoutKey);
-    GETKEY(tlsMap, _tlsNegotiationTimeoutMsec, timeoutKey);
+    tlsMap->getValue(timeoutKey, &_tlsNegotiationTimeoutSec);
+    tlsMap->getValue(timeoutKey, &_tlsNegotiationTimeoutMsec);
 }
 
 

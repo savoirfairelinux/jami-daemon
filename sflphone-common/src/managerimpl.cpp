@@ -4214,8 +4214,8 @@ void ManagerImpl::loadIptoipProfile()
             Conf::MappingNode *map = (Conf::MappingNode *) (*iterIP2IP);
 
             // Get the account id
-            Conf::ScalarNode * val = (Conf::ScalarNode *) (map->getValue (accID));
-            Conf::Value accountid = val->getValue();
+            Conf::Value accountid;
+            map->getValue (accID, &accountid);
 
             // if ID is IP2IP, unserialize
             if (accountid == "IP2IP") {
@@ -4283,33 +4283,17 @@ short ManagerImpl::loadAccountMap()
         Account *tmpAccount = NULL;
         Conf::MappingNode *map = (Conf::MappingNode *) (*iterSeq);
 
-        // Scalar node from yaml configuration
-        Conf::ScalarNode * val = NULL;
-
         // Search for account types (IAX/IP2IP)
-        val = (Conf::ScalarNode *) (map->getValue (accTypeKey));
-        Conf::Value accountType;
-
-        if (val)
-            accountType = val->getValue();
-        else
-            accountType = "SIP"; // Assume type is SIP if not specified
+        Conf::Value accountType = "SIP"; // Assume type is SIP if not specified
+        map->getValue (accTypeKey, &accountType);
 
         // search for account id
-        val = NULL;
-        val = (Conf::ScalarNode *) (map->getValue (accID));
         Conf::Value accountid;
-
-        if (val)
-            accountid = val->getValue();
+        map->getValue (accID, &accountid);
 
         // search for alias (to get rid of the "ghost" account)
-        val = NULL;
-        val = (Conf::ScalarNode *) (map->getValue (alias));
         Conf::Value accountAlias;
-
-        if (val)
-            accountAlias = val->getValue();
+        map->getValue (alias, &accountAlias);
 
         // do not insert in account map if id or alias is empty
         if (accountid.empty() || accountAlias.empty()) {

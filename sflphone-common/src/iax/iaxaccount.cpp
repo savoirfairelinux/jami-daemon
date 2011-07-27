@@ -90,86 +90,24 @@ void IAXAccount::serialize (Conf::YamlEmitter *emitter)
 
 void IAXAccount::unserialize (Conf::MappingNode *map)
 {
-    Conf::ScalarNode *val;
-
     if(map == NULL) {
     	_error("IAXAccount: Error: Map is NULL in unserialize");
     	return;
     }
 
-    val = (Conf::ScalarNode *) (map->getValue (aliasKey));
-
-    if (val) {
-        _alias = val->getValue();
-        val = NULL;
-    }
-
-    val = (Conf::ScalarNode *) (map->getValue (typeKey));
-
-    if (val) {
-        _type = val->getValue();
-        val = NULL;
-    }
-
-    val = (Conf::ScalarNode *) (map->getValue (idKey));
-
-    if (val) {
-        _accountID = val->getValue();
-        val = NULL;
-    }
-
-    val = (Conf::ScalarNode *) (map->getValue (usernameKey));
-
-    if (val) {
-        _username = val->getValue();
-        val = NULL;
-    }
-
-    val = (Conf::ScalarNode *) (map->getValue (passwordKey));
-
-    if (val) {
-        _password = val->getValue();
-        val = NULL;
-    }
-
-    val = (Conf::ScalarNode *) (map->getValue (hostnameKey));
-
-    if (val) {
-        _hostname = val->getValue();
-        val = NULL;
-    }
-
-    val = (Conf::ScalarNode *) (map->getValue (accountEnableKey));
-
-    if (val) {
-        _enabled = (val->getValue().compare ("true") == 0) ? true : false;
-        val = NULL;
-    }
-
-    val = (Conf::ScalarNode *) (map->getValue (mailboxKey));
-
-    if (val) {
-        _mailBox = val->getValue();
-        val = NULL;
-    }
-
-    val = (Conf::ScalarNode *) (map->getValue (codecsKey));
-
-    if (val) {
-        _codecStr = val->getValue();
-        val = NULL;
-    }
+    map->getValue(aliasKey, &_alias);
+    map->getValue(typeKey,  &_type);
+    map->getValue(idKey,    &_accountID);
+    map->getValue(usernameKey, &_username);
+    map->getValue(passwordKey, &_password);
+    map->getValue(hostnameKey, &_hostname);
+    map->getValue(accountEnableKey, &_enabled);
+    map->getValue(mailboxKey, &_mailBox);
+    map->getValue (codecsKey, &_codecStr);
 
     // Update codec list which one is used for SDP offer
     setActiveCodecs (Manager::instance ().unserialize (_codecStr));
-
-    val = (Conf::ScalarNode *) (map->getValue (displayNameKey));
-
-    if (val) {
-        _displayName = val->getValue();
-        val = NULL;
-    }
-
+    map->getValue (displayNameKey, &_displayName);
 }
 
 void IAXAccount::setAccountDetails (std::map<std::string, std::string> details)
