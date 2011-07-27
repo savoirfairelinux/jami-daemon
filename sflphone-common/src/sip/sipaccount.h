@@ -50,6 +50,8 @@ enum DtmfType { OVERRTP, SIPINFO};
 #define OVERRTPSTR "overrtp"
 #define SIPINFOSTR "sipinfo"
 
+
+
 // SIP specific configuration keys
 const Conf::Key expireKey ("expire");
 const Conf::Key interfaceKey ("interface");
@@ -357,7 +359,7 @@ class SIPAccount : public Account
          * account is set to TLS.
          */
         bool isTlsEnabled (void) const {
-            return (_transportType == PJSIP_TRANSPORT_TLS) ? true: false;
+            return _transportType == PJSIP_TRANSPORT_TLS;
         }
 
         /**
@@ -839,8 +841,6 @@ class SIPAccount : public Account
         bool _zrtpDisplaySasOnce;
         bool _zrtpHelloHash;
         bool _zrtpNotSuppWarning;
-
-
 };
 
 #endif

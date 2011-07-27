@@ -81,7 +81,7 @@ void Preferences::serialize (Conf::YamlEmitter *emiter)
     std::stringstream histmaxstr;
     histmaxstr << _historyMaxCalls;
     Conf::ScalarNode historyMaxCalls (histmaxstr.str());
-    Conf::ScalarNode notifyMails (_notifyMails ? "true" : "false");
+    Conf::ScalarNode notifyMails (_notifyMails);
     Conf::ScalarNode zoneToneChoice (_zoneToneChoice);
     std::stringstream expirestr;
     expirestr << _registrationExpire;
@@ -89,9 +89,9 @@ void Preferences::serialize (Conf::YamlEmitter *emiter)
     std::stringstream portstr;
     portstr << _portNum;
     Conf::ScalarNode portNum (portstr.str());
-    Conf::ScalarNode searchBarDisplay (_searchBarDisplay ? "true" : "false");
-    Conf::ScalarNode zeroConfenable (_zeroConfenable ? "true" : "false");
-    Conf::ScalarNode md5Hash (_md5Hash ? "true" : "false");
+    Conf::ScalarNode searchBarDisplay (_searchBarDisplay);
+    Conf::ScalarNode zeroConfenable (_zeroConfenable);
+    Conf::ScalarNode md5Hash (_md5Hash);
 
     preferencemap.setKeyValue (orderKey, &order);
     preferencemap.setKeyValue (audioApiKey, &audioapi);
@@ -221,12 +221,12 @@ void VoipPreference::serialize (Conf::YamlEmitter *emitter)
 
     Conf::MappingNode preferencemap (NULL);
 
-    Conf::ScalarNode playDtmf (_playDtmf ? "true" : "false");
-    Conf::ScalarNode playTones (_playTones ? "true" : "false");
+    Conf::ScalarNode playDtmf (_playDtmf);
+    Conf::ScalarNode playTones (_playTones);
     std::stringstream pulselengthstr;
     pulselengthstr << _pulseLength;
     Conf::ScalarNode pulseLength (pulselengthstr.str());
-    Conf::ScalarNode symmetricRtp (_symmetricRtp ? "true" : "false");
+    Conf::ScalarNode symmetricRtp (_symmetricRtp);
     Conf::ScalarNode zidFile (_zidFile.c_str());
 
     preferencemap.setKeyValue (playDtmfKey, &playDtmf);
@@ -309,15 +309,15 @@ void AddressbookPreference::serialize (Conf::YamlEmitter *emitter)
 
     Conf::MappingNode preferencemap (NULL);
 
-    Conf::ScalarNode photo (_photo ? "true" : "false");
-    Conf::ScalarNode enabled (_enabled ? "true" : "false");
+    Conf::ScalarNode photo (_photo);
+    Conf::ScalarNode enabled (_enabled);
     Conf::ScalarNode list (_list);
     std::stringstream maxresultstr;
     maxresultstr << _maxResults;
     Conf::ScalarNode maxResults (maxresultstr.str());
-    Conf::ScalarNode business (_business ? "true" : "false");
-    Conf::ScalarNode home (_home ? "true" : "false");
-    Conf::ScalarNode mobile (_mobile ? "true" : "false");
+    Conf::ScalarNode business (_business);
+    Conf::ScalarNode home (_home);
+    Conf::ScalarNode mobile (_mobile);
 
     preferencemap.setKeyValue (photoKey, &photo);
     preferencemap.setKeyValue (enabledKey, &enabled);
@@ -413,10 +413,10 @@ void HookPreference::serialize (Conf::YamlEmitter *emitter)
 
     Conf::MappingNode preferencemap (NULL);
 
-    Conf::ScalarNode iax2Enabled (_iax2Enabled ? "true" : "false");
+    Conf::ScalarNode iax2Enabled (_iax2Enabled);
     Conf::ScalarNode numberAddPrefix (_numberAddPrefix);
-    Conf::ScalarNode numberEnabled (_numberEnabled ? "true" : "false");
-    Conf::ScalarNode sipEnabled (_sipEnabled ? "true" : "false");
+    Conf::ScalarNode numberEnabled (_numberEnabled);
+    Conf::ScalarNode sipEnabled (_sipEnabled);
     Conf::ScalarNode urlCommand (_urlCommand);
     Conf::ScalarNode urlSipField (_urlSipField);
 
@@ -544,15 +544,15 @@ void AudioPreference::serialize (Conf::YamlEmitter *emitter)
 
     // general preference
     Conf::ScalarNode recordpath (_recordpath); //: /home/msavard/Bureau
-    Conf::ScalarNode alwaysRecording(_alwaysRecording ? "true" : "false");
+    Conf::ScalarNode alwaysRecording(_alwaysRecording);
     std::stringstream micstr;
     micstr << _volumemic;
     Conf::ScalarNode volumemic (micstr.str()); //:  100
     std::stringstream spkrstr;
     spkrstr << _volumespkr;
     Conf::ScalarNode volumespkr (spkrstr.str()); //: 100
-    Conf::ScalarNode noise (_noisereduce ? "true":"false");
-    Conf::ScalarNode echo(_echocancel ? "true" : "false");
+    Conf::ScalarNode noise (_noisereduce);
+    Conf::ScalarNode echo(_echocancel);
     std::stringstream tailstr;
     _debug("************************************************** serialize echotail %d", _echoCancelTailLength);
     tailstr << _echoCancelTailLength;

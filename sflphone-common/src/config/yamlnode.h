@@ -187,6 +187,7 @@ class ScalarNode : public YamlNode
     public:
 
         ScalarNode (Value v="", YamlNode *top=NULL) : YamlNode (SCALAR, top), val (v) {}
+        ScalarNode (bool b, YamlNode *top=NULL) : YamlNode (SCALAR, top), val (b ? "true" : "false") {}
 
         ~ScalarNode() {}
 

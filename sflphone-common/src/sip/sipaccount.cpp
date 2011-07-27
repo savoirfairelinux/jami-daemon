@@ -171,7 +171,7 @@ void SIPAccount::serialize (Conf::YamlEmitter *emitter)
     Conf::ScalarNode password (Account::_password);
     Conf::ScalarNode alias (Account::_alias);
     Conf::ScalarNode hostname (Account::_hostname);
-    Conf::ScalarNode enable (_enabled ? "true" : "false");
+    Conf::ScalarNode enable (_enabled);
     Conf::ScalarNode type (Account::_type);
     Conf::ScalarNode expire (_registrationExpire);
     Conf::ScalarNode interface (_interface);
@@ -185,13 +185,13 @@ void SIPAccount::serialize (Conf::YamlEmitter *emitter)
     std::stringstream publicportstr;
     publicportstr << _publishedPort;
     Conf::ScalarNode publishPort (publicportstr.str());
-    Conf::ScalarNode sameasLocal (_publishedSameasLocal ? "true" : "false");
-    Conf::ScalarNode resolveOnce (_resolveOnce ? "true" : "false");
+    Conf::ScalarNode sameasLocal (_publishedSameasLocal);
+    Conf::ScalarNode resolveOnce (_resolveOnce);
     Conf::ScalarNode codecs (_codecStr);
     Conf::ScalarNode ringtonePath (_ringtonePath);
-    Conf::ScalarNode ringtoneEnabled (_ringtoneEnabled ? "true" : "false");
+    Conf::ScalarNode ringtoneEnabled (_ringtoneEnabled);
     Conf::ScalarNode stunServer (_stunServer);
-    Conf::ScalarNode stunEnabled (_stunEnabled ? "true" : "false");
+    Conf::ScalarNode stunEnabled (_stunEnabled);
     Conf::ScalarNode displayName (_displayName);
     Conf::ScalarNode dtmfType (_dtmfType==OVERRTP ? "overrtp" : "sipinfo");
 
@@ -199,14 +199,14 @@ void SIPAccount::serialize (Conf::YamlEmitter *emitter)
     countstr << 0;
     Conf::ScalarNode count (countstr.str());
 
-    Conf::ScalarNode srtpenabled (_srtpEnabled ? "true" : "false");
+    Conf::ScalarNode srtpenabled (_srtpEnabled);
     Conf::ScalarNode keyExchange (_srtpKeyExchange);
-    Conf::ScalarNode rtpFallback (_srtpFallback ? "true" : "false");
+    Conf::ScalarNode rtpFallback (_srtpFallback);
 
-    Conf::ScalarNode displaySas (_zrtpDisplaySas ? "true" : "false");
-    Conf::ScalarNode displaySasOnce (_zrtpDisplaySasOnce ? "true" : "false");
-    Conf::ScalarNode helloHashEnabled (_zrtpHelloHash ? "true" : "false");
-    Conf::ScalarNode notSuppWarning (_zrtpNotSuppWarning ? "true" : "false");
+    Conf::ScalarNode displaySas (_zrtpDisplaySas);
+    Conf::ScalarNode displaySasOnce (_zrtpDisplaySasOnce);
+    Conf::ScalarNode helloHashEnabled (_zrtpHelloHash);
+    Conf::ScalarNode notSuppWarning (_zrtpNotSuppWarning);
 
     Conf::ScalarNode tlsport (_tlsPortStr);
     Conf::ScalarNode certificate (_tlsCertificateFile);
@@ -217,10 +217,10 @@ void SIPAccount::serialize (Conf::YamlEmitter *emitter)
     Conf::ScalarNode timeout (_tlsNegotiationTimeoutSec);
     Conf::ScalarNode tlspassword (_tlsPassword);
     Conf::ScalarNode privatekey (_tlsPrivateKeyFile);
-    Conf::ScalarNode requirecertif (_tlsRequireClientCertificate ? "true" : "false");
+    Conf::ScalarNode requirecertif (_tlsRequireClientCertificate);
     Conf::ScalarNode server (_tlsServerName);
-    Conf::ScalarNode verifyclient (_tlsVerifyServer ? "true" : "false");
-    Conf::ScalarNode verifyserver (_tlsVerifyClient ? "true" : "false");
+    Conf::ScalarNode verifyclient (_tlsVerifyServer);
+    Conf::ScalarNode verifyserver (_tlsVerifyClient);
 
     accountmap.setKeyValue (aliasKey, &alias);
     accountmap.setKeyValue (typeKey, &type);
@@ -281,6 +281,7 @@ void SIPAccount::serialize (Conf::YamlEmitter *emitter)
         _error ("ConfigTree: %s", e.what());
     }
 }
+
 
 
 void SIPAccount::unserialize (Conf::MappingNode *map)

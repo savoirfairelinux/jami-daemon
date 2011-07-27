@@ -183,7 +183,7 @@ void ConfigurationTest::testYamlEmitter()
     Conf::ScalarNode password ("pass181");
     Conf::ScalarNode alias ("sfl-181");
     Conf::ScalarNode hostname ("192.168.50.3");
-    Conf::ScalarNode enable ("true");
+    Conf::ScalarNode enable (true);
     Conf::ScalarNode type ("SIP");
     Conf::ScalarNode expire ("3600");
     Conf::ScalarNode interface ("default");
@@ -191,38 +191,38 @@ void ConfigurationTest::testYamlEmitter()
     Conf::ScalarNode mailbox ("97");
     Conf::ScalarNode publishAddr ("192.168.50.182");
     Conf::ScalarNode publishPort ("5060");
-    Conf::ScalarNode sameasLocal ("true");
-    Conf::ScalarNode resolveOnce ("false");
+    Conf::ScalarNode sameasLocal (true);
+    Conf::ScalarNode resolveOnce (false);
     Conf::ScalarNode codecs ("0/9/110/111/112/");
     Conf::ScalarNode stunServer ("stun.sflphone.org");
-    Conf::ScalarNode stunEnabled ("false");
+    Conf::ScalarNode stunEnabled (false);
     Conf::ScalarNode displayName ("Alexandre Savard");
     Conf::ScalarNode dtmfType ("sipinfo");
 
     Conf::ScalarNode count ("0");
 
-    Conf::ScalarNode srtpenabled ("false");
+    Conf::ScalarNode srtpenabled (false);
     Conf::ScalarNode keyExchange ("sdes");
-    Conf::ScalarNode rtpFallback ("false");
+    Conf::ScalarNode rtpFallback (false);
 
-    Conf::ScalarNode displaySas ("false");
-    Conf::ScalarNode displaySasOnce ("false");
-    Conf::ScalarNode helloHashEnabled ("false");
-    Conf::ScalarNode notSuppWarning ("false");
+    Conf::ScalarNode displaySas (false);
+    Conf::ScalarNode displaySasOnce (false);
+    Conf::ScalarNode helloHashEnabled (false);
+    Conf::ScalarNode notSuppWarning (false);
 
     Conf::ScalarNode tlsport ("");
     Conf::ScalarNode certificate ("");
     Conf::ScalarNode calist ("");
     Conf::ScalarNode ciphers ("");
-    Conf::ScalarNode tlsenabled ("false");
+    Conf::ScalarNode tlsenabled (false);
     Conf::ScalarNode tlsmethod ("TLSV1");
     Conf::ScalarNode timeout ("0");
     Conf::ScalarNode tlspassword ("");
     Conf::ScalarNode privatekey ("");
-    Conf::ScalarNode requirecertif ("true");
+    Conf::ScalarNode requirecertif (true);
     Conf::ScalarNode server ("");
-    Conf::ScalarNode verifyclient ("true");
-    Conf::ScalarNode verifyserver ("true");
+    Conf::ScalarNode verifyclient (true);
+    Conf::ScalarNode verifyserver (true);
 
     accountmap.setKeyValue (aliasKey, &alias);
     accountmap.setKeyValue (typeKey, &type);

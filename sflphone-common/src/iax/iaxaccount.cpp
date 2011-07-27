@@ -62,7 +62,7 @@ void IAXAccount::serialize (Conf::YamlEmitter *emitter)
     Conf::ScalarNode password (Account::_password);
     Conf::ScalarNode alias (Account::_alias);
     Conf::ScalarNode hostname (Account::_hostname);
-    Conf::ScalarNode enable (_enabled ? "true" : "false");
+    Conf::ScalarNode enable (_enabled);
     Conf::ScalarNode type (Account::_type);
     Conf::ScalarNode mailbox (_mailBox);
 

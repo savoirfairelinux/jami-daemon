@@ -4521,10 +4521,10 @@ std::map<std::string, std::string> ManagerImpl::getHookSettings ()
 void ManagerImpl::setHookSettings (const std::map<std::string, std::string>& settings)
 {
 
-    hookPreference.setIax2Enabled ( (settings.find ("URLHOOK_IAX2_ENABLED")->second == "true") ? true : false);
+    hookPreference.setIax2Enabled (settings.find ("URLHOOK_IAX2_ENABLED")->second == "true");
     hookPreference.setNumberAddPrefix (settings.find ("PHONE_NUMBER_HOOK_ADD_PREFIX")->second);
-    hookPreference.setNumberEnabled ( (settings.find ("PHONE_NUMBER_HOOK_ENABLED")->second == "true") ? true : false);
-    hookPreference.setSipEnabled ( (settings.find ("URLHOOK_SIP_ENABLED")->second == "true") ? true : false);
+    hookPreference.setNumberEnabled (settings.find ("PHONE_NUMBER_HOOK_ENABLED")->second == "true");
+    hookPreference.setSipEnabled (settings.find ("URLHOOK_SIP_ENABLED")->second == "true");
     hookPreference.setUrlCommand (settings.find ("URLHOOK_COMMAND")->second);
     hookPreference.setUrlSipField (settings.find ("URLHOOK_SIP_FIELD")->second);
 

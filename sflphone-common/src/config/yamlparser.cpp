@@ -306,10 +306,7 @@ void YamlParser::processScalar (YamlNode *topNode) throw(YamlParserException)
 		if (!topNode)
 			throw YamlParserException ("No container for scalar");
 
-		char buffer[1000];
-		snprintf (buffer, 1000, "%s", events[eventIndex].data.scalar.value);
-
-		ScalarNode *sclr = new ScalarNode (buffer, topNode);
+		ScalarNode *sclr = new ScalarNode (std::string((const char*)events[eventIndex].data.scalar.value), topNode);
 
 		switch (topNode->getType()) {
         case DOCUMENT:
