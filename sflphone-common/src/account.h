@@ -135,19 +135,19 @@ typedef enum RegistrationState {
 
 
 // General configuration keys for accounts
-const Conf::Key aliasKey ("alias");
-const Conf::Key typeKey ("type");
-const Conf::Key idKey ("id");
-const Conf::Key usernameKey ("username");
-const Conf::Key passwordKey ("password");
-const Conf::Key hostnameKey ("hostname");
-const Conf::Key accountEnableKey ("enable");
-const Conf::Key mailboxKey ("mailbox");
+const std::string aliasKey ("alias");
+const std::string typeKey ("type");
+const std::string idKey ("id");
+const std::string usernameKey ("username");
+const std::string passwordKey ("password");
+const std::string hostnameKey ("hostname");
+const std::string accountEnableKey ("enable");
+const std::string mailboxKey ("mailbox");
 
-const Conf::Key codecsKey ("codecs");  // 0/9/110/111/112/
-const Conf::Key ringtonePathKey ("ringtonePath");
-const Conf::Key ringtoneEnabledKey ("ringtoneEnabled");
-const Conf::Key displayNameKey ("displayName");
+const std::string codecsKey ("codecs");  // 0/9/110/111/112/
+const std::string ringtonePathKey ("ringtonePath");
+const std::string ringtoneEnabledKey ("ringtoneEnabled");
+const std::string displayNameKey ("displayName");
 
 class Account : public Serializable
 {

@@ -97,7 +97,7 @@ class YamlEmitter
 
     private:
 
-        void addMappingItem (int mappingid, Key key, YamlNode *node);
+        void addMappingItem (int mappingid, std::string key, YamlNode *node);
 
         std::string filename;
 

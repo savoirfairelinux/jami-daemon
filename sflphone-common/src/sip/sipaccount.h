@@ -53,50 +53,50 @@ enum DtmfType { OVERRTP, SIPINFO};
 
 
 // SIP specific configuration keys
-const Conf::Key expireKey ("expire");
-const Conf::Key interfaceKey ("interface");
-const Conf::Key portKey ("port");
-const Conf::Key publishAddrKey ("publishAddr");
-const Conf::Key publishPortKey ("publishPort");
-const Conf::Key sameasLocalKey ("sameasLocal");
-const Conf::Key resolveOnceKey ("resolveOnce");
-const Conf::Key dtmfTypeKey ("dtmfType");
-const Conf::Key serviceRouteKey ("serviceRoute");
+const std::string expireKey ("expire");
+const std::string interfaceKey ("interface");
+const std::string portKey ("port");
+const std::string publishAddrKey ("publishAddr");
+const std::string publishPortKey ("publishPort");
+const std::string sameasLocalKey ("sameasLocal");
+const std::string resolveOnceKey ("resolveOnce");
+const std::string dtmfTypeKey ("dtmfType");
+const std::string serviceRouteKey ("serviceRoute");
 
 // TODO: write an object to store credential which implement serializable
-const Conf::Key srtpKey ("srtp");
-const Conf::Key srtpEnableKey ("enable");
-const Conf::Key keyExchangeKey ("keyExchange");
-const Conf::Key rtpFallbackKey ("rtpFallback");
+const std::string srtpKey ("srtp");
+const std::string srtpEnableKey ("enable");
+const std::string keyExchangeKey ("keyExchange");
+const std::string rtpFallbackKey ("rtpFallback");
 
 // TODO: wirte an object to store zrtp params wich implement serializable
-const Conf::Key zrtpKey ("zrtp");
-const Conf::Key displaySasKey ("displaySas");
-const Conf::Key displaySasOnceKey ("displaySasOnce");
-const Conf::Key helloHashEnabledKey ("helloHashEnabled");
-const Conf::Key notSuppWarningKey ("notSuppWarning");
+const std::string zrtpKey ("zrtp");
+const std::string displaySasKey ("displaySas");
+const std::string displaySasOnceKey ("displaySasOnce");
+const std::string helloHashEnabledKey ("helloHashEnabled");
+const std::string notSuppWarningKey ("notSuppWarning");
 
 // TODO: write an object to store tls params which implement serializable
-const Conf::Key tlsKey ("tls");
-const Conf::Key tlsPortKey ("tlsPort");
-const Conf::Key certificateKey ("certificate");
-const Conf::Key calistKey ("calist");
-const Conf::Key ciphersKey ("ciphers");
-const Conf::Key tlsEnableKey ("enable");
-const Conf::Key methodKey ("method");
-const Conf::Key timeoutKey ("timeout");
-const Conf::Key tlsPasswordKey ("password");
-const Conf::Key privateKeyKey ("privateKey");
-const Conf::Key requireCertifKey ("requireCertif");
-const Conf::Key serverKey ("server");
-const Conf::Key verifyClientKey ("verifyClient");
-const Conf::Key verifyServerKey ("verifyServer");
+const std::string tlsKey ("tls");
+const std::string tlsPortKey ("tlsPort");
+const std::string certificateKey ("certificate");
+const std::string calistKey ("calist");
+const std::string ciphersKey ("ciphers");
+const std::string tlsEnableKey ("enable");
+const std::string methodKey ("method");
+const std::string timeoutKey ("timeout");
+const std::string tlsPasswordKey ("password");
+const std::string privateKeyKey ("privateKey");
+const std::string requireCertifKey ("requireCertif");
+const std::string serverKey ("server");
+const std::string verifyClientKey ("verifyClient");
+const std::string verifyServerKey ("verifyServer");
 
-const Conf::Key stunEnabledKey ("stunEnabled");
-const Conf::Key stunServerKey ("stunServer");
+const std::string stunEnabledKey ("stunEnabled");
+const std::string stunServerKey ("stunServer");
 
-const Conf::Key credKey ("credential");
-const Conf::Key credentialCountKey ("count");
+const std::string credKey ("credential");
+const std::string credentialCountKey ("count");
 
 class SIPVoIPLink;
 

@@ -116,7 +116,7 @@ void Preferences::unserialize (Conf::MappingNode *map)
     }
 
     map->getValue (orderKey, &_accountOrder);
-    Conf::Value audioApi;
+    std::string audioApi;
     map->getValue (audioApiKey, &audioApi);
     // 1 is pulseaudio, 0 is alsa
     _audioApi = (audioApi == "pulseaudio") ? 1 : 0;

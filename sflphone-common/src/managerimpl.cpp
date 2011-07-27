@@ -4206,7 +4206,7 @@ void ManagerImpl::loadIptoipProfile()
         Conf::SequenceNode *seq = parser->getAccountSequence();
 
         Conf::Sequence::iterator iterIP2IP = seq->getSequence()->begin();
-        Conf::Key accID ("id");
+        std::string accID ("id");
 
         // Iterate over every account maps
         while (iterIP2IP != seq->getSequence()->end()) {
@@ -4214,7 +4214,7 @@ void ManagerImpl::loadIptoipProfile()
             Conf::MappingNode *map = (Conf::MappingNode *) (*iterIP2IP);
 
             // Get the account id
-            Conf::Value accountid;
+            std::string accountid;
             map->getValue (accID, &accountid);
 
             // if ID is IP2IP, unserialize
@@ -4273,9 +4273,9 @@ short ManagerImpl::loadAccountMap()
     // Each element in sequence is a new account to create
     Conf::Sequence::iterator iterSeq = seq->getSequence()->begin();
 
-    Conf::Key accTypeKey ("type");
-    Conf::Key accID ("id");
-    Conf::Key alias ("alias");
+    std::string accTypeKey ("type");
+    std::string accID ("id");
+    std::string alias ("alias");
 
     while (iterSeq != seq->getSequence()->end()) {
 
@@ -4284,15 +4284,15 @@ short ManagerImpl::loadAccountMap()
         Conf::MappingNode *map = (Conf::MappingNode *) (*iterSeq);
 
         // Search for account types (IAX/IP2IP)
-        Conf::Value accountType = "SIP"; // Assume type is SIP if not specified
+        std::string accountType = "SIP"; // Assume type is SIP if not specified
         map->getValue (accTypeKey, &accountType);
 
         // search for account id
-        Conf::Value accountid;
+        std::string accountid;
         map->getValue (accID, &accountid);
 
         // search for alias (to get rid of the "ghost" account)
-        Conf::Value accountAlias;
+        std::string accountAlias;
         map->getValue (alias, &accountAlias);
 
         // do not insert in account map if id or alias is empty

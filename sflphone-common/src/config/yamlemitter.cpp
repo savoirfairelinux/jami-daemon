@@ -341,7 +341,7 @@ void YamlEmitter::serializeShortcutPreference (MappingNode *map) throw(YamlEmitt
 }
 
 
-void YamlEmitter::addMappingItem (int mappingid, Key key, YamlNode *node)
+void YamlEmitter::addMappingItem (int mappingid, std::string key, YamlNode *node)
 {
 
     if (node->getType() == SCALAR) {

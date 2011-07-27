@@ -42,10 +42,8 @@ namespace Conf
 
 class YamlNode;
 
-typedef std::string Key;
-typedef std::string Value;
 typedef std::list<YamlNode *> Sequence;
-typedef std::map<Key, YamlNode *> Mapping;
+typedef std::map<std::string, YamlNode *> Mapping;
 
 class YamlNodeException : public std::exception
 {
@@ -160,18 +158,18 @@ class MappingNode : public YamlNode
 
         void addNode (YamlNode *node);
 
-        void setTmpKey (Key key) {
+        void setTmpKey (std::string key) {
             tmpKey = key;
         }
 
-        void  setKeyValue (Key key, YamlNode *value);
+        void  setKeyValue (std::string key, YamlNode *value);
 
-        void removeKeyValue (Key key);
+        void removeKeyValue (std::string key);
 
-        YamlNode *getValue (Key key);
-        void getValue (Key key, bool *b);
-        void getValue (Key key, int *i);
-        void getValue (Key key, Value *v);
+        YamlNode *getValue (std::string key);
+        void getValue (std::string key, bool *b);
+        void getValue (std::string key, int *i);
+        void getValue (std::string key, std::string *s);
 
         virtual void deleteChildNodes (void);
 
@@ -179,7 +177,7 @@ class MappingNode : public YamlNode
 
         Mapping map;
 
-        Key tmpKey;
+        std::string tmpKey;
 
 };
 
@@ -189,24 +187,24 @@ class ScalarNode : public YamlNode
 
     public:
 
-        ScalarNode (Value v="", YamlNode *top=NULL) : YamlNode (SCALAR, top), val (v) {}
-        ScalarNode (bool b, YamlNode *top=NULL) : YamlNode (SCALAR, top), val (b ? "true" : "false") {}
+        ScalarNode (std::string s="", YamlNode *top=NULL) : YamlNode (SCALAR, top), str (s) {}
+        ScalarNode (bool b, YamlNode *top=NULL) : YamlNode (SCALAR, top), str (b ? "true" : "false") {}
 
         ~ScalarNode() {}
 
-        Value getValue() {
-            return val;
+        const std::string &getValue() {
+            return str;
         }
 
-        void setValue (Value v) {
-            val = v;
+        void setValue (const std::string &s) {
+            str = s;
         }
 
         virtual void deleteChildNodes (void) {}
 
     private:
 
-        Value val;
+        std::string str;
 
 };
 

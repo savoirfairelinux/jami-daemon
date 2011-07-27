@@ -413,9 +413,7 @@ void YamlParser::processMapping (YamlNode *topNode) throw(YamlParserException)
 			if (events[eventIndex].type != YAML_SCALAR_EVENT)
 				throw YamlParserException ("Mapping not followed by a key");
 
-			char buffer[1000];
-			snprintf (buffer, 1000, "%s", events[eventIndex].data.scalar.value);
-			map->setTmpKey (Key (buffer));
+			map->setTmpKey (std::string ((const char *)events[eventIndex].data.scalar.value));
 
 			eventIndex++;
 
@@ -494,13 +492,13 @@ void YamlParser::mainNativeDataMapping (MappingNode *map) throw(YamlParserExcept
 	try {
 		Mapping::iterator iter = map->getMapping()->begin();
 
-		Key accounts ("accounts");
-		Key addressbook ("addressbook");
-		Key audio ("audio");
-		Key hooks ("hooks");
-		Key preferences ("preferences");
-		Key voiplink ("voipPreferences");
-		Key shortcuts ("shortcuts");
+		std::string accounts ("accounts");
+		std::string addressbook ("addressbook");
+		std::string audio ("audio");
+		std::string hooks ("hooks");
+		std::string preferences ("preferences");
+		std::string voiplink ("voipPreferences");
+		std::string shortcuts ("shortcuts");
 
 		while (iter != map->getMapping()->end()) {
 
