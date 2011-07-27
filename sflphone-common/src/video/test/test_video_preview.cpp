@@ -45,9 +45,7 @@ void VideoPreviewTest::testPreview()
     args["height"] = "480";
 
     sfl_video::VideoPreview preview(args);
-    preview.start();
     sleep(10);
-    preview.stop();
 }
 
 int main (int argc, char* argv[])

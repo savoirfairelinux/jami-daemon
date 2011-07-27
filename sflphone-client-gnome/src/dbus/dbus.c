@@ -2959,12 +2959,17 @@ dbus_start_video_preview (int width, int height, const char *format)
     }
 }
 
+static void preview_stopped_cb()
+{
+    DEBUG("Video preview has stopped");
+}
+
 void
 dbus_stop_video_preview ()
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_stop_video_preview(
-        configurationManagerProxy, &error);
+    org_sflphone_SFLphone_ConfigurationManager_stop_video_preview_async(
+        configurationManagerProxy, preview_stopped_cb, &error);
 
     if (error) {
         ERROR ("Failed to call stop_video_preview () on ConfigurationManager: %s",

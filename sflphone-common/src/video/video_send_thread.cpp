@@ -454,6 +454,7 @@ void VideoSendThread::run()
         // free the packet that was allocated by av_read_frame
 next_packet:
         av_free_packet(&inpacket);
+        yield();
     }
 }
 

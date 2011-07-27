@@ -143,8 +143,10 @@ video_started_cb(DBusGProxy *proxy, gint OUT_shmId, gint OUT_semId, gint OUT_vid
     DEBUG("Preview started shm:%d sem:%d size:%d", OUT_shmId, OUT_semId, OUT_videoBufferSize);
     preview = video_preview_new(drawarea, drawWidth, drawHeight, drawFormat, OUT_shmId, OUT_semId, OUT_videoBufferSize);
     g_signal_connect (preview, "notify::running", G_CALLBACK (preview_is_running_cb), preview_button);
-    if (video_preview_run(preview))
+    if (video_preview_run(preview)) {
+        ERROR("Video preview run returned an error, unreffing\n");
         g_object_unref(preview);
+    }
 }
 
 static void
