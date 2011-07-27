@@ -115,15 +115,11 @@ void VideoRtpSession::start()
 
 void VideoRtpSession::stop()
 {
+    _debug(__PRETTY_FUNCTION__);
     if (receiveThread_.get())
         receiveThread_.reset();
 
     if (sendThread_.get())
         sendThread_.reset();
-}
-
-VideoRtpSession::~VideoRtpSession()
-{
-    stop();
 }
 } // end namspace sfl_video

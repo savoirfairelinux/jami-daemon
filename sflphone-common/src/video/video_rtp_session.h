@@ -46,12 +46,11 @@ class VideoRtpSession {
     public:
         VideoRtpSession(const std::map<std::string,std::string> &txArgs,
                         const std::map<std::string,std::string> &rxArgs);
-        ~VideoRtpSession();
 
         void start();
+        void stop();
         void test();
         void test_loopback();
-        void stop();
         void updateDestination(const std::string &destination,
                                unsigned int port);
         void updateSDP(const Sdp *sdp);

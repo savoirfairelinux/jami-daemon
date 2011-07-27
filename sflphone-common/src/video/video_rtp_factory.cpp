@@ -55,7 +55,7 @@ VideoRtpFactory::VideoRtpFactory()
     rxArgs["width"] = txArgs["width"];
     rxArgs["height"] = txArgs["height"];
 
-    session_ = std::tr1::shared_ptr<VideoRtpSession>(new VideoRtpSession(txArgs, rxArgs));
+    session_.reset(new VideoRtpSession(txArgs, rxArgs));
 }
 
 void VideoRtpFactory::start()

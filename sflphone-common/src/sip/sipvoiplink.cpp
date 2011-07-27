@@ -961,6 +961,7 @@ SIPVoIPLink::onhold (const CallID& id) throw (VoipLinkException)
     call->setState (Call::Hold);
 
     try {
+        _debug ("UserAgent: stopping RTP Session");
         call->getAudioRtp()->stop();
         call->getVideoRtp()->stop();
     }
@@ -1327,7 +1328,8 @@ SIPVoIPLink::refuse (const CallID& id)
         return false;
     }
 
-    // Stop Audio RTP session
+    // Stop RTP session
+    _debug ("UserAgent: stopping RTP Session");
     call->getAudioRtp()->stop();
     call->getVideoRtp()->stop();
 
@@ -1667,6 +1669,7 @@ SIPVoIPLink::SIPCallServerFailure (SIPCall *call)
         }
 
         if (call->getVideoRtp ()) {
+            _debug ("UserAgent: stopping video RTP Session");
             call->getVideoRtp()->stop();
         }
     }
