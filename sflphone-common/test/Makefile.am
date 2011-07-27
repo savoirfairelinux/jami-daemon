@@ -41,16 +41,4 @@ test_SOURCES = \
 	gaincontroltest.h \
 	gaincontroltest.cpp
 
-LLIBS=$(CPPUNIT_LIBS) \
-	../src/sflphoned-logger.o \
-	../src/sflphoned-managerimpl.o \
-	../src/sflphoned-account.o\
-	../src/sflphoned-accountcreator.o \
-	../src/sflphoned-call.o \
-	../src/sflphoned-conference.o \
-	../src/sflphoned-eventthread.o \
-	../src/sflphoned-managerimpl_registration.o \
-	../src/sflphoned-numbercleaner.o \
-	../src/sflphoned-voiplink.o \
-	../src/sflphoned-preferences.o \
-	../src/libsflphone.la
+LLIBS=$(CPPUNIT_LIBS) ../src/libsflphone.la
