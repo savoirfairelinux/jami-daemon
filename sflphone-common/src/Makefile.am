@@ -20,7 +20,8 @@ sflphoned_SOURCES = \
 		call.cpp \
 		account.cpp \
 		logger.cpp \
-		numbercleaner.cpp 
+		numbercleaner.cpp \
+		fileutils.cpp
 
 # Redefine the USE_IAX variable here, so that it could be used in managerimpl
 if USE_IAX
@@ -58,7 +59,8 @@ noinst_HEADERS = \
 		accountcreator.h \
 		call.h \
 		logger.h \
-		numbercleaner.h
+		numbercleaner.h \
+		fileutils.h
 
 libsflphone_la_LIBADD = \
 	$(src)/libs/utilspp/libutilspp.la \
