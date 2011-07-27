@@ -69,6 +69,7 @@ GtkWidget * entryID;
 GtkWidget * entryAlias;
 GtkWidget * protocolComboBox;
 GtkWidget * entryUsername;
+GtkWidget * entryAuthenticationUsername;
 GtkWidget * entryRouteSet;
 GtkWidget * entryHostname;
 GtkWidget * entryPassword;
@@ -112,9 +113,6 @@ GtkWidget * overrtp;
 
 GHashTable * directIpCallsProperties = NULL;
 
-gchar *current_username;
-
-
 // Credentials
 enum {
     COLUMN_CREDENTIAL_REALM,
@@ -134,6 +132,7 @@ static void reset()
     protocolComboBox = NULL;
     entryHostname = NULL;
     entryUsername = NULL;
+    entryAuthenticationUsername = NULL;
     entryPassword = NULL;
     entryUseragent = NULL;
     entryMailbox = NULL;
@@ -222,10 +221,7 @@ static GPtrArray* getNewCredential (GHashTable * properties)
                         -1);
 
     g_hash_table_insert (properties, g_strdup (ACCOUNT_REALM), realm);
-
-    // better use the current_username as it is the account username in the
-    // g_hash_table_insert(properties, g_strdup(ACCOUNT_AUTHENTICATION_USERNAME), username);
-    g_hash_table_insert (properties, g_strdup (ACCOUNT_AUTHENTICATION_USERNAME), current_username);
+    g_hash_table_insert(properties, g_strdup(ACCOUNT_AUTHENTICATION_USERNAME), username);
 
     // Do not change the password if nothing has been changed by the user
     if (g_strcasecmp (password, PW_HIDDEN) != 0)
@@ -245,7 +241,7 @@ static GPtrArray* getNewCredential (GHashTable * properties)
 
         new_table = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
         g_hash_table_insert (new_table, g_strdup (ACCOUNT_REALM), realm);
-        g_hash_table_insert (new_table, g_strdup (ACCOUNT_USERNAME), username);
+        g_hash_table_insert (new_table, g_strdup (ACCOUNT_AUTHENTICATION_USERNAME), username);
         g_hash_table_insert (new_table, g_strdup (ACCOUNT_PASSWORD), password);
 
         g_ptr_array_add (credential_array, new_table);
@@ -287,6 +283,7 @@ static GtkWidget* create_basic_tab (account_t **a)
     gchar *curAccountType = "SIP";
     gchar *curAlias = "";
     gchar *curUsername = "";
+    gchar *curAuthenticationUsername = "";
     gchar *curHostname = "";
     gchar *curPassword = "";
     /* TODO: add curProxy, and add boxes for Proxy support */
@@ -307,6 +304,7 @@ static GtkWidget* create_basic_tab (account_t **a)
         curHostname = g_hash_table_lookup (currentAccount->properties, ACCOUNT_HOSTNAME);
         curPassword = g_hash_table_lookup (currentAccount->properties, ACCOUNT_PASSWORD);
         curUsername = g_hash_table_lookup (currentAccount->properties, ACCOUNT_USERNAME);
+        curAuthenticationUsername = g_hash_table_lookup (currentAccount->properties, ACCOUNT_AUTHENTICATION_USERNAME);
         curRouteSet = g_hash_table_lookup(currentAccount->properties, ACCOUNT_ROUTE);
         curMailbox = g_hash_table_lookup (currentAccount->properties, ACCOUNT_MAILBOX);
         curMailbox = curMailbox != NULL ? curMailbox : "";
@@ -392,6 +390,27 @@ static GtkWidget* create_basic_tab (account_t **a)
     if (strcmp (curAccountType, "SIP") == 0) {
         g_signal_connect (G_OBJECT (entryUsername), "changed", G_CALLBACK (update_credential_cb), NULL);
         g_object_set_data (G_OBJECT (entryUsername), "column", GINT_TO_POINTER (COLUMN_CREDENTIAL_USERNAME));
+    }
+
+    row++;
+    label = gtk_label_new_with_mnemonic (_ ("_Authentication User name"));
+    gtk_table_attach (GTK_TABLE (table), label, 0, 1, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+#if GTK_CHECK_VERSION(2,16,0)
+    entryAuthenticationUsername = gtk_entry_new();
+    gtk_entry_set_icon_from_pixbuf (GTK_ENTRY (entryAuthenticationUsername), GTK_ENTRY_ICON_PRIMARY, gdk_pixbuf_new_from_file (ICONS_DIR "/stock_person.svg", NULL));
+#else
+    entryAuthenticationUsername = sexy_icon_entry_new();
+    image = gtk_image_new_from_file (ICONS_DIR "/stock_person.svg");
+    sexy_icon_entry_set_icon (SEXY_ICON_ENTRY (entryAuthenticationUsername), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE (image));
+#endif
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryAuthenticationUsername);
+    gtk_entry_set_text (GTK_ENTRY (entryAuthenticationUsername), curAuthenticationUsername);
+    gtk_table_attach (GTK_TABLE (table), entryAuthenticationUsername, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+
+    if (strcmp (curAccountType, "SIP") == 0) {
+        g_signal_connect (G_OBJECT (entryAuthenticationUsername), "changed", G_CALLBACK (update_credential_cb), NULL);
+        g_object_set_data (G_OBJECT (entryAuthenticationUsername), "column", GINT_TO_POINTER (COLUMN_CREDENTIAL_USERNAME));
     }
 
     row++;
@@ -1424,15 +1443,14 @@ void show_account_window (account_t * a)
                               g_strdup (ACCOUNT_USERNAME),
                               g_strdup ( (gchar *) gtk_entry_get_text (GTK_ENTRY (entryUsername))));
         g_hash_table_replace (currentAccount->properties,
+                              g_strdup (ACCOUNT_AUTHENTICATION_USERNAME),
+                              g_strdup ( (gchar *) gtk_entry_get_text (GTK_ENTRY (entryAuthenticationUsername))));
+        g_hash_table_replace (currentAccount->properties,
                               g_strdup (ACCOUNT_PASSWORD),
                               g_strdup ( (gchar *) gtk_entry_get_text (GTK_ENTRY (entryPassword))));
         g_hash_table_replace (currentAccount->properties,
                               g_strdup (ACCOUNT_MAILBOX),
                               g_strdup ( (gchar *) gtk_entry_get_text (GTK_ENTRY (entryMailbox))));
-
-        // Variable used to update credentials
-        current_username = (gchar *) g_hash_table_lookup (currentAccount->properties, g_strdup (ACCOUNT_USERNAME));
-
     }
 
     if (proto && strcmp (proto, "SIP") == 0) {
