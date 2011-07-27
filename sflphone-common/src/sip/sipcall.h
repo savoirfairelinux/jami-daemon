@@ -47,7 +47,7 @@ class AudioRtpFactory;
 
 namespace sfl_video
 {
-class VideoRtpFactory;
+class VideoRtpSession;
 }
 
 /**
@@ -120,7 +120,7 @@ class SIPCall : public Call
         /**
          * Returns a pointer to the VideoRtp object
          */
-        sfl_video::VideoRtpFactory * getVideoRtp (void) {
+        sfl_video::VideoRtpSession * getVideoRtp () {
             return videortp_;
         }
 
@@ -172,7 +172,7 @@ class SIPCall : public Call
         /**
          * Video Rtp Session factory
          */
-        sfl_video::VideoRtpFactory * videortp_;
+        sfl_video::VideoRtpSession * videortp_;
 
         /**
          * Event subscription structure

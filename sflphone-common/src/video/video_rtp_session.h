@@ -44,8 +44,9 @@ class VideoReceiveThread;
 
 class VideoRtpSession {
     public:
-        VideoRtpSession(const std::map<std::string,std::string> &txArgs,
-                        const std::map<std::string,std::string> &rxArgs);
+        VideoRtpSession();
+        VideoRtpSession(const std::map<std::string, std::string> &txArgs,
+                        const std::map<std::string, std::string> &rxArgs);
 
         void start();
         void stop();

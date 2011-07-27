@@ -667,9 +667,7 @@ std::string Sdp::getActiveVideoDescription() const
     ss << "s=" << STR_SDP_NAME.ptr << std::endl;
     ss << "c=" << STR_IN.ptr << " " << STR_IP4.ptr << " " << remoteIpAddr_ << std::endl;
     ss << "t=0 0" << std::endl;
-    //ss << "m=" << STR_VIDEO.ptr << " " << getLocalPublishedVideoPort() << " " << STR_RTP_AVP.ptr << " 96" << std::endl;
     //ss << "b=AS:1000" << std::endl;
-    //ss << "a=rtpmap:96 H264/90000" << std::endl;
 
     std::string videoLine(getLineFromLocalSDP("m=video"));
     _error("Adding video line %s", videoLine.c_str());

@@ -42,11 +42,29 @@
 
 namespace sfl_video {
 
-VideoRtpSession::VideoRtpSession(const std::map<std::string,std::string> &txArgs,
-                                 const std::map<std::string,std::string> &rxArgs) :
-    txArgs_(txArgs), rxArgs_(rxArgs)
+VideoRtpSession::VideoRtpSession()
 {
+    txArgs_["input"]       = "/dev/video0";
+    txArgs_["codec"]       = "libx264";
+    txArgs_["bitrate"]     = "1000000";
+    txArgs_["destination"] = "rtp://127.0.0.1:5000";
+    txArgs_["format"]      = "rgb24";
+    // default to CIF/SIF(625)
+    txArgs_["width"]       = "352";
+    txArgs_["height"]      = "288";
+    txArgs_["framerate"]      = "30";
+
+    rxArgs_["codec"] = txArgs_["codec"];
+    rxArgs_["bitrate"] = txArgs_["bitrate"];
+    rxArgs_["format"] = txArgs_["format"];
+    rxArgs_["width"] = txArgs_["width"];
+    rxArgs_["height"] = txArgs_["height"];
 }
+
+VideoRtpSession::VideoRtpSession(const std::map<std::string, std::string> &txArgs,
+                const std::map<std::string, std::string> &rxArgs) :
+    txArgs_(txArgs), rxArgs_(rxArgs)
+{}
 
 void VideoRtpSession::updateSDP(const Sdp *sdp)
 {

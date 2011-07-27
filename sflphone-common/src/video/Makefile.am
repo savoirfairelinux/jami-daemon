@@ -7,7 +7,6 @@ noinst_LTLIBRARIES = libvideo.la
 libvideo_la_SOURCES = video_endpoint.cpp video_endpoint.h \
 							libav_utils.cpp libav_utils.h \
 							video_rtp_session.cpp video_rtp_session.h \
-							video_rtp_factory.cpp video_rtp_factory.h \
 							video_send_thread.h video_send_thread.cpp \
 							video_receive_thread.h video_receive_thread.cpp \
 							video_preview.h video_preview.cpp \

@@ -56,7 +56,7 @@
 #include "audio/audiolayer.h"
 #include "audio/audiortp/AudioRtpFactory.h"
 
-#include "video/video_rtp_factory.h"
+#include "video/video_rtp_session.h"
 
 #include "pjsip/sip_endpoint.h"
 #include "pjsip/sip_transport_tls.h"

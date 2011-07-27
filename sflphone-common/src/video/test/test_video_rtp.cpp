@@ -37,24 +37,7 @@
 
 int main (int argc, char* argv[])
 {
-    std::map<std::string, std::string> txArgs, rxArgs;
-    txArgs["input"]       = "/dev/video0";
-    txArgs["codec"]       = "mpeg4";
-    txArgs["bitrate"]     = "1000000";
-    txArgs["destination"] = "rtp://127.0.0.1:5000";
-    txArgs["format"]      = "rgb24";
-    txArgs["width"]       = "640";
-    txArgs["height"]      = "480";
-
-    rxArgs["input"]       = "test.sdp";
-    rxArgs["codec"]       = "mpeg4";
-    rxArgs["bitrate"]     = "1000000";
-    rxArgs["format"]      = "rgb24";
-    rxArgs["width"]       = "640";
-    rxArgs["height"]      = "480";
-
-    sfl_video::VideoRtpSession session(txArgs, rxArgs);
-    //sfl_video::VideoRtpSession videorecv("rtp://127.0.0.1:5000", "libx264", 1000000, "rtp://127.0.0.1:5000", "rgb24");
+    sfl_video::VideoRtpSession session;
     session.start();
     sleep(10);
     session.stop();
