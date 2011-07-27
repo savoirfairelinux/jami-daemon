@@ -639,45 +639,17 @@ void Sdp::addZrtpAttribute (pjmedia_sdp_media* media, std::string hash)
     }
 }
 
-void Sdp::cleanSessionMedia()
+Sdp::~Sdp()
 {
-    _info ("SDP: Clean session media");
+    std::vector<sdpMedia *>::iterator iter = sessionAudioMedia_.begin();
 
-    if (not sessionAudioMedia_.empty()) {
+    for (iter = sessionAudioMedia_.begin(); iter != sessionAudioMedia_.end(); ++iter)
+        delete *iter;
 
-        std::vector<sdpMedia *>::iterator iter = sessionAudioMedia_.begin();
-        sdpMedia *media;
-
-        while (iter != sessionAudioMedia_.end()) {
-            _debug ("delete media");
-            media = *iter;
-            delete media;
-            ++iter;
-        }
-
-        sessionAudioMedia_.clear();
-    }
+    for (iter = localAudioMediaCap_.begin(); iter != localAudioMediaCap_.end(); ++iter)
+        delete *iter;
 }
 
-
-void Sdp::cleanLocalMediaCapabilities()
-{
-    _info ("SDP: Clean local media capabilities");
-
-    if (not localAudioMediaCap_.empty()) {
-
-        std::vector<sdpMedia *>::iterator iter = localAudioMediaCap_.begin();
-        sdpMedia *media;
-
-        while (iter != localAudioMediaCap_.end()) {
-            media = *iter;
-            delete media;
-            ++iter;
-        }
-
-        localAudioMediaCap_.clear();
-    }
-}
 
 void Sdp::setPortToAllMedia (int port)
 {
