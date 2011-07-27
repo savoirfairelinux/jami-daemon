@@ -69,8 +69,6 @@ main (int argc, char **argv)
 {
     set_program_dir(argv[0]);
 
-    int exit_code = 0;
-
     Logger::setConsoleLog (false);
     Logger::setDebugMode (false);
 
@@ -195,27 +193,20 @@ main (int argc, char **argv)
         }
     }
 
-    bool initOK = false;
-
     try {
         // TODO Use $XDG_CONFIG_HOME to save the config file (which default to $HOME/.config)
         Manager::instance().initConfigFile();
         Manager::instance().init();
-        initOK = true;
     } catch (std::exception &e) {
         std::cerr << e.what() << std::endl;
-        exit_code = -1;
+        return 1;
     } catch (...) {
         fprintf (stderr, "An exception occured when initializing the system.");
-        exit_code = -1;
+        return 1;
     }
 
-    if (initOK) {
-        Manager::instance().setDBusManager (&DBusManager::instance());
-        exit_code = DBusManager::instance().exec();  // UI Loop
-    }
-
-    return exit_code;
+    Manager::instance().setDBusManager (&DBusManager::instance());
+    return DBusManager::instance().exec();  // UI Loop
 }
 
 // EOF
