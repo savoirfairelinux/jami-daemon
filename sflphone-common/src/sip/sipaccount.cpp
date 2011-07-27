@@ -293,211 +293,105 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
 
     assert(map);
 
-    val = (Conf::ScalarNode *) (map->getValue (aliasKey));
-    if (val)
-        _alias = val->getValue();
+#define GETKEY(map, var, key) do { \
+    val = (Conf::ScalarNode *) (map->getValue (key)); \
+    if (val) \
+        var = val->getValue(); \
+    } while(0)
+#define GETBOOL(map, var, key) do { \
+    val = (Conf::ScalarNode *) (map->getValue (key)); \
+    if (val) \
+        var = !val->getValue().compare("true"); \
+    } while(0)
+#define GETINT(map, var, key) do { \
+    val = (Conf::ScalarNode *) (map->getValue (key)); \
+    if (val) \
+        var = atoi(val->getValue().data()); \
+    } while(0)
 
-    val = (Conf::ScalarNode *) (map->getValue (typeKey));
-    if (val)
-        _type = val->getValue();
-
-    val = (Conf::ScalarNode *) (map->getValue (idKey));
-    if (val)
-        _accountID = val->getValue();
-
-    val = (Conf::ScalarNode *) (map->getValue (usernameKey));
-    if (val)
-        _username = val->getValue();
-
-    val = (Conf::ScalarNode *) (map->getValue (passwordKey));
-    if (val)
-        _password = val->getValue();
-
-    val = (Conf::ScalarNode *) (map->getValue (hostnameKey));
-    if (val)
-        _hostname = val->getValue();
-
-    val = (Conf::ScalarNode *) (map->getValue (accountEnableKey));
-    if (val)
-        _enabled = (val->getValue() != "false");
-
-    val = (Conf::ScalarNode *) (map->getValue (mailboxKey));
-    if (val)
-        _mailBox = val->getValue();
-
-    val = (Conf::ScalarNode *) (map->getValue (codecsKey));
-    if (val)
-        _codecStr = val->getValue();
-
+    GETKEY(map, _alias, 	aliasKey);
+    GETKEY(map, _type, 	typeKey);
+    GETKEY(map, _accountID, idKey);
+    GETKEY(map, _username, usernameKey);
+    GETKEY(map, _password, passwordKey);
+    GETKEY(map, _hostname, hostnameKey);
+    GETBOOL(map, _enabled, accountEnableKey);
+    GETKEY(map, _mailBox, mailboxKey);
+    GETKEY(map, _codecStr, codecsKey);
     // Update codec list which one is used for SDP offer
     setActiveCodecs (Manager::instance ().unserialize (_codecStr));
 
-    val = (Conf::ScalarNode *) (map->getValue (ringtonePathKey));
-    if (val)
-        _ringtonePath = val->getValue();
-
-    val = (Conf::ScalarNode *) (map->getValue (ringtoneEnabledKey));
-    if (val)
-        _ringtoneEnabled = (val->getValue() == "true");
-
-    val = (Conf::ScalarNode *) (map->getValue (expireKey));
-    if (val)
-        _registrationExpire = val->getValue();
-
-    val = (Conf::ScalarNode *) (map->getValue (interfaceKey));
-    if (val)
-        _interface = val->getValue();
-
-    val = (Conf::ScalarNode *) (map->getValue (portKey));
-    if (val)
-        _localPort = atoi (val->getValue().data());
-
-    val = (Conf::ScalarNode *) (map->getValue (publishAddrKey));
-    if (val)
-        _publishedIpAddress = val->getValue();
-
-    val = (Conf::ScalarNode *) (map->getValue (publishPortKey));
-    if (val)
-        _publishedPort = atoi (val->getValue().data());
-
-    val = (Conf::ScalarNode *) (map->getValue (sameasLocalKey));
-    if (val)
-        _publishedSameasLocal = (val->getValue().compare ("true") == 0);
-
-    val = (Conf::ScalarNode *) (map->getValue (resolveOnceKey));
-    if (val)
-        _resolveOnce = (val->getValue().compare ("true") == 0);
-
+    GETKEY(map, _ringtonePath, ringtonePathKey);
+    GETBOOL(map, _ringtoneEnabled, ringtoneEnabledKey);
+    GETKEY(map, _registrationExpire, expireKey);
+    GETKEY(map, _interface, interfaceKey);
+    GETINT(map, _localPort, portKey);
+    GETKEY(map, _publishedIpAddress, publishAddrKey);
+    GETINT(map, _publishedPort, publishPortKey);
+    GETBOOL(map, _publishedSameasLocal, sameasLocalKey);
+    GETBOOL(map, _resolveOnce, resolveOnceKey);
     val = (Conf::ScalarNode *) (map->getValue (dtmfTypeKey));
     if (val)
         _dtmfType = (val->getValue() == "overrtp") ? OVERRTP : SIPINFO;
 
     // _dtmfType = atoi(val->getValue();
-    val = (Conf::ScalarNode *) (map->getValue (serviceRouteKey));
-    if (val)
-        _serviceRoute = val->getValue();
-
+    GETKEY(map, _serviceRoute, serviceRouteKey);
     // stun enabled
-    val = (Conf::ScalarNode *) (map->getValue (stunEnabledKey));
-    if (val)
-        _stunEnabled = (val->getValue().compare ("true") == 0);
-
-    val = (Conf::ScalarNode *) (map->getValue (stunServerKey));
-    if (val)
-        _stunServer = val->getValue();
+    GETBOOL(map, _stunEnabled, stunEnabledKey);
+    GETKEY(map, _stunServer, stunServerKey);
 
     // Init stun server name with default server name
     _stunServerName = pj_str ( (char*) _stunServer.data());
 
-    credMap = (Conf::MappingNode *) (map->getValue (credKey));
+    GETKEY(map, _displayName, displayNameKey);
 
+
+    credMap = (Conf::MappingNode *) (map->getValue (credKey));
     if (credMap)
         credentials.unserialize (credMap);
 
-    val = (Conf::ScalarNode *) (map->getValue (displayNameKey));
-    if (val)
-        _displayName = val->getValue();
 
     // get srtp submap
     srtpMap = (Conf::MappingNode *) (map->getValue (srtpKey));
-
     if (!srtpMap)
         throw SipAccountException (" did not found srtp map");
 
-    val = (Conf::ScalarNode *) (srtpMap->getValue (srtpEnableKey));
-    if (val)
-        _srtpEnabled = (val->getValue().compare ("true") == 0);
+    GETBOOL(srtpMap, _srtpEnabled, srtpEnableKey);
+    GETKEY(srtpMap, _srtpKeyExchange, keyExchangeKey);
+    GETBOOL(srtpMap, _srtpFallback, rtpFallbackKey);
 
-    val = (Conf::ScalarNode *) (srtpMap->getValue (keyExchangeKey));
-    if (val)
-        _srtpKeyExchange = val->getValue();
-
-    val = (Conf::ScalarNode *) (srtpMap->getValue (rtpFallbackKey));
-    if (val)
-        _srtpFallback = (val->getValue().compare ("true") == 0);
 
     // get zrtp submap
     zrtpMap = (Conf::MappingNode *) (map->getValue (zrtpKey));
-
     if (!zrtpMap)
         throw SipAccountException (" did not found zrtp map");
 
-    val = (Conf::ScalarNode *) (zrtpMap->getValue (displaySasKey));
-    if (val)
-        _zrtpDisplaySas = (val->getValue().compare ("true") == 0);
+    GETBOOL(zrtpMap, _zrtpDisplaySas, displaySasKey);
+    GETBOOL(zrtpMap, _zrtpDisplaySasOnce, displaySasOnceKey);
+    GETBOOL(zrtpMap, _zrtpHelloHash, helloHashEnabledKey);
+    GETBOOL(zrtpMap, _zrtpNotSuppWarning, notSuppWarningKey);
 
-    val = (Conf::ScalarNode *) (zrtpMap->getValue (displaySasOnceKey));
-    if (val)
-        _zrtpDisplaySasOnce = (val->getValue().compare ("true") == 0);
-
-    val = (Conf::ScalarNode *) (zrtpMap->getValue (helloHashEnabledKey));
-    if (val)
-        _zrtpHelloHash = (val->getValue().compare ("true") == 0);
-
-    val = (Conf::ScalarNode *) (zrtpMap->getValue (notSuppWarningKey));
-    if (val)
-        _zrtpNotSuppWarning = (val->getValue().compare ("true") == 0);
 
     // get tls submap
     tlsMap = (Conf::MappingNode *) (map->getValue (tlsKey));
-
     if (!tlsMap)
         throw SipAccountException (" did not found tls map");
 
-    val = (Conf::ScalarNode *) (tlsMap->getValue (tlsEnableKey));
-    if (val)
-        _tlsEnable = val->getValue();
-
-    val = (Conf::ScalarNode *) (tlsMap->getValue (tlsPortKey));
-    if (val)
-        _tlsPortStr = val->getValue();
-
-    val = (Conf::ScalarNode *) (tlsMap->getValue (certificateKey));
-    if (val)
-        _tlsCertificateFile = val->getValue();
-
-    val = (Conf::ScalarNode *) (tlsMap->getValue (calistKey));
-    if (val)
-        _tlsCaListFile = val->getValue();
-
-    val = (Conf::ScalarNode *) (tlsMap->getValue (ciphersKey));
-    if (val)
-        _tlsCiphers = val->getValue();
-
-    val = (Conf::ScalarNode *) (tlsMap->getValue (methodKey));
-    if (val)
-        _tlsMethod = val->getValue();
-
-    val = (Conf::ScalarNode *) (tlsMap->getValue (timeoutKey));
-    if (val) {
-        // FIXME
-        _tlsNegotiationTimeoutSec = val->getValue();
-        _tlsNegotiationTimeoutMsec = val->getValue();
-    }
-
-    val = (Conf::ScalarNode *) (tlsMap->getValue (tlsPasswordKey));
-    if (val)
-        _tlsPassword = val->getValue();
-
-    val = (Conf::ScalarNode *) (tlsMap->getValue (privateKeyKey));
-    if (val)
-        _tlsPrivateKeyFile = val->getValue();
-
-    val = (Conf::ScalarNode *) (tlsMap->getValue (requireCertifKey));
-    if (val)
-        _tlsRequireClientCertificate = (val->getValue().compare ("true") == 0);
-
-    val = (Conf::ScalarNode *) (tlsMap->getValue (serverKey));
-    if (val)
-        _tlsServerName = val->getValue();
-
-    val = (Conf::ScalarNode *) (tlsMap->getValue (verifyClientKey));
-    if (val)
-        _tlsVerifyServer = (val->getValue().compare ("true") == 0);
-
-    val = (Conf::ScalarNode *) (tlsMap->getValue (verifyServerKey));
-    if (val)
-        _tlsVerifyClient = (val->getValue().compare ("true") == 0);
+    GETKEY(tlsMap, _tlsEnable, tlsEnableKey);
+    GETKEY(tlsMap, _tlsPortStr, tlsPortKey);
+    GETKEY(tlsMap, _tlsCertificateFile, certificateKey);
+    GETKEY(tlsMap, _tlsCaListFile, calistKey);
+    GETKEY(tlsMap, _tlsCiphers, ciphersKey);
+    GETKEY(tlsMap, _tlsMethod, methodKey);
+    GETKEY(tlsMap, _tlsPassword, tlsPasswordKey);
+    GETKEY(tlsMap, _tlsPrivateKeyFile, privateKeyKey);
+    GETBOOL(tlsMap, _tlsRequireClientCertificate, requireCertifKey);
+    GETKEY(tlsMap, _tlsServerName, serverKey);
+    GETBOOL(tlsMap, _tlsVerifyServer, verifyClientKey);
+    GETBOOL(tlsMap, _tlsVerifyClient, verifyServerKey);
+    // FIXME
+    GETKEY(tlsMap, _tlsNegotiationTimeoutSec, timeoutKey);
+    GETKEY(tlsMap, _tlsNegotiationTimeoutMsec, timeoutKey);
 }
 
 
