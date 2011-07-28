@@ -225,8 +225,10 @@ void VideoReceiveThread::loadSDP()
 
 void VideoReceiveThread::setup()
 {
+    Manager::instance().avcodecLock();
     av_register_all();
     avdevice_register_all();
+    Manager::instance().avcodecUnlock();
 
     dstWidth_ = atoi(args_["width"].c_str());
     dstHeight_ = atoi(args_["height"].c_str());

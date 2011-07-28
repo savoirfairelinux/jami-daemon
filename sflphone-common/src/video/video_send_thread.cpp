@@ -123,8 +123,10 @@ void VideoSendThread::prepareEncoderContext()
 void VideoSendThread::setup()
 {
     int ret;
+    Manager::instance().avcodecLock();
     av_register_all();
     avdevice_register_all();
+    Manager::instance().avcodecUnlock();
 
     AVInputFormat *file_iformat = 0;
     // it's a v4l device if starting with /dev/video
