@@ -340,45 +340,40 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
 
     // get srtp submap
     srtpMap = (Conf::MappingNode *) (map->getValue (srtpKey));
-    if (!srtpMap)
-        throw SipAccountException (" did not found srtp map");
-
-    srtpMap->getValue(srtpEnableKey, &_srtpEnabled);
-    srtpMap->getValue(keyExchangeKey, &_srtpKeyExchange);
-    srtpMap->getValue(rtpFallbackKey, &_srtpFallback);
-
+    if (srtpMap) {
+        srtpMap->getValue(srtpEnableKey, &_srtpEnabled);
+        srtpMap->getValue(keyExchangeKey, &_srtpKeyExchange);
+        srtpMap->getValue(rtpFallbackKey, &_srtpFallback);
+    }
 
     // get zrtp submap
     zrtpMap = (Conf::MappingNode *) (map->getValue (zrtpKey));
-    if (!zrtpMap)
-        throw SipAccountException (" did not found zrtp map");
-
-    zrtpMap->getValue(displaySasKey, &_zrtpDisplaySas);
-    zrtpMap->getValue(displaySasOnceKey, &_zrtpDisplaySasOnce);
-    zrtpMap->getValue(helloHashEnabledKey, &_zrtpHelloHash);
-    zrtpMap->getValue(notSuppWarningKey, &_zrtpNotSuppWarning);
-
+    if (zrtpMap) {
+        zrtpMap->getValue(displaySasKey, &_zrtpDisplaySas);
+        zrtpMap->getValue(displaySasOnceKey, &_zrtpDisplaySasOnce);
+        zrtpMap->getValue(helloHashEnabledKey, &_zrtpHelloHash);
+        zrtpMap->getValue(notSuppWarningKey, &_zrtpNotSuppWarning);
+    }
 
     // get tls submap
     tlsMap = (Conf::MappingNode *) (map->getValue (tlsKey));
-    if (!tlsMap)
-        throw SipAccountException (" did not found tls map");
-
-    tlsMap->getValue(tlsEnableKey, &_tlsEnable);
-    tlsMap->getValue(tlsPortKey, &_tlsPortStr);
-    tlsMap->getValue(certificateKey, &_tlsCertificateFile);
-    tlsMap->getValue(calistKey, &_tlsCaListFile);
-    tlsMap->getValue(ciphersKey, &_tlsCiphers);
-    tlsMap->getValue(methodKey, &_tlsMethod);
-    tlsMap->getValue(tlsPasswordKey, &_tlsPassword);
-    tlsMap->getValue(privateKeyKey, &_tlsPrivateKeyFile);
-    tlsMap->getValue(requireCertifKey, &_tlsRequireClientCertificate);
-    tlsMap->getValue(serverKey, &_tlsServerName);
-    tlsMap->getValue(verifyClientKey, &_tlsVerifyServer);
-    tlsMap->getValue(verifyServerKey, &_tlsVerifyClient);
-    // FIXME
-    tlsMap->getValue(timeoutKey, &_tlsNegotiationTimeoutSec);
-    tlsMap->getValue(timeoutKey, &_tlsNegotiationTimeoutMsec);
+    if (tlsMap) {
+        tlsMap->getValue(tlsEnableKey, &_tlsEnable);
+        tlsMap->getValue(tlsPortKey, &_tlsPortStr);
+        tlsMap->getValue(certificateKey, &_tlsCertificateFile);
+        tlsMap->getValue(calistKey, &_tlsCaListFile);
+        tlsMap->getValue(ciphersKey, &_tlsCiphers);
+        tlsMap->getValue(methodKey, &_tlsMethod);
+        tlsMap->getValue(tlsPasswordKey, &_tlsPassword);
+        tlsMap->getValue(privateKeyKey, &_tlsPrivateKeyFile);
+        tlsMap->getValue(requireCertifKey, &_tlsRequireClientCertificate);
+        tlsMap->getValue(serverKey, &_tlsServerName);
+        tlsMap->getValue(verifyClientKey, &_tlsVerifyServer);
+        tlsMap->getValue(verifyServerKey, &_tlsVerifyClient);
+        // FIXME
+        tlsMap->getValue(timeoutKey, &_tlsNegotiationTimeoutSec);
+        tlsMap->getValue(timeoutKey, &_tlsNegotiationTimeoutMsec);
+    }
 }
 
 

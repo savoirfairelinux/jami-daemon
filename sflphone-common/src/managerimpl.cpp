@@ -4219,13 +4219,7 @@ void ManagerImpl::loadIptoipProfile()
 
             // if ID is IP2IP, unserialize
             if (accountid == "IP2IP") {
-
-                try {
-                    _directIpAccount->unserialize (map);
-                } catch (SipAccountException &e) {
-                    _error ("Manager: %s", e.what());
-                }
-
+                _directIpAccount->unserialize (map);
                 break;
             }
 
@@ -4303,14 +4297,7 @@ short ManagerImpl::loadAccountMap()
 
         // Fill account with configuration preferences
         if (tmpAccount != NULL) {
-
-            try {
-
-                tmpAccount->unserialize (map);
-            } catch (SipAccountException &e) {
-                _error ("Manager: %s", e.what());
-            }
-
+            tmpAccount->unserialize (map);
             _accountMap[accountid] = tmpAccount;
 
             tmpAccount->setVoIPLink();
