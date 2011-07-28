@@ -155,7 +155,7 @@ class SIPAccount : public Account
          * Constructor
          * @param accountID The account identifier
          */
-        SIPAccount (const AccountID& accountID);
+        SIPAccount (const std::string& accountID);
 
         /* Copy Constructor */
         SIPAccount (const SIPAccount& rh);

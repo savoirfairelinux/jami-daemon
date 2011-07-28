@@ -33,7 +33,7 @@
 
 #include <stdexcept>
 #include <cc++/thread.h>
-#include "account.h" // for typedef of AccountID (std::string)
+#include "account.h" // for typedef of std::string (std::string)
 #include <ccrtp/CryptoContext.h>
 
 #include "sip/SdesNegotiator.h"
@@ -190,8 +190,8 @@ class AudioRtpFactory
         void sendDtmfDigit (int digit);
 
     private:
-        void registerAccount(Account *account, const AccountID &id);
-        void registerAccount(SIPAccount *account, const AccountID &id);
+        void registerAccount(Account *account, const std::string &id);
+        void registerAccount(SIPAccount *account, const std::string &id);
         void * _rtpSession;
         RtpMethod _rtpSessionType;
         ost::Mutex _audioRtpThreadMutex;

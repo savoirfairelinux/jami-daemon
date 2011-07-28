@@ -247,7 +247,7 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
     }
 
     // Call ID must be unique
-    if (getAccountFromCall (call_id) != AccountNULL) {
+    if (getAccountFromCall (call_id) != "") {
         _error ("Manager: Error: Call id already exists in outgoing call");
         return false;
     }
@@ -340,7 +340,7 @@ bool ManagerImpl::answerCall (const CallID& call_id)
     CallID current_call_id = getCurrentCallId();
 
     // Retreive call coresponding to this id
-    AccountID account_id = getAccountFromCall (call_id);
+    std::string account_id = getAccountFromCall (call_id);
     Call *call = getAccountLink (account_id)->getCall (call_id);
     if (call == NULL) {
         _error("Manager: Error: Call is null");
@@ -473,10 +473,10 @@ bool ManagerImpl::hangupCall (const CallID& callId)
 
     if (getConfigFromCall (callId) == Call::IPtoIP) {
         /* Direct IP to IP call */
-        returnValue = SIPVoIPLink::instance (AccountNULL)->hangup (callId);
+        returnValue = SIPVoIPLink::instance ("")->hangup (callId);
     }
     else {
-    	AccountID accountId = getAccountFromCall (callId);
+    	std::string accountId = getAccountFromCall (callId);
         returnValue = getAccountLink (accountId)->hangup (callId);
         removeCallAccount (callId);
     }
@@ -492,7 +492,7 @@ bool ManagerImpl::hangupConference (const ConfID& id)
 
     ConferenceMap::iterator iter_conf = _conferencemap.find (id);
 
-    AccountID currentAccountId;
+    std::string currentAccountId;
 
     if (iter_conf != _conferencemap.end()) {
         Conference *conf = iter_conf->second;
@@ -519,7 +519,7 @@ bool ManagerImpl::hangupConference (const ConfID& id)
 //THREAD=Main
 bool ManagerImpl::cancelCall (const CallID& id)
 {
-    AccountID accountid;
+    std::string accountid;
     bool returnValue;
 
     _debug ("Manager: Cancel call");
@@ -529,14 +529,14 @@ bool ManagerImpl::cancelCall (const CallID& id)
     /* Direct IP to IP call */
 
     if (getConfigFromCall (id) == Call::IPtoIP) {
-        returnValue = SIPVoIPLink::instance (AccountNULL)->cancel (id);
+        returnValue = SIPVoIPLink::instance ("")->cancel (id);
     }
 
     /* Classic call, attached to an account */
     else {
         accountid = getAccountFromCall (id);
 
-        if (accountid == AccountNULL) {
+        if (accountid == "") {
             _debug ("! Manager Cancel Call: Call doesn't exists");
             return false;
         }
@@ -561,7 +561,7 @@ bool ManagerImpl::cancelCall (const CallID& id)
 //THREAD=Main
 bool ManagerImpl::onHoldCall (const CallID& callId)
 {
-    AccountID account_id;
+    std::string account_id;
     bool returnValue = false;
 
     _debug ("Manager: Put call %s on hold", callId.c_str());
@@ -574,13 +574,13 @@ bool ManagerImpl::onHoldCall (const CallID& callId)
 
     	if (getConfigFromCall (callId) == Call::IPtoIP) {
     		/* Direct IP to IP call */
-    		returnValue = SIPVoIPLink::instance (AccountNULL)-> onhold (callId);
+    		returnValue = SIPVoIPLink::instance ("")-> onhold (callId);
     	}
     	else {
     		/* Classic call, attached to an account */
     		account_id = getAccountFromCall (callId);
 
-    		if (account_id == AccountNULL) {
+    		if (account_id == "") {
     			_debug ("Manager: Account ID %s or callid %s doesn't exists in call onHold", account_id.c_str(), callId.c_str());
     			return false;
     		}
@@ -619,7 +619,7 @@ bool ManagerImpl::onHoldCall (const CallID& callId)
 bool ManagerImpl::offHoldCall (const CallID& callId)
 {
 
-    AccountID accountId;
+    std::string accountId;
     bool returnValue, isRec;
     std::string codecName;
 
@@ -646,8 +646,8 @@ bool ManagerImpl::offHoldCall (const CallID& callId)
 
     /* Direct IP to IP call */
     if (getConfigFromCall (callId) == Call::IPtoIP) {
-        // is_rec = SIPVoIPLink::instance (AccountNULL)-> isRecording (call_id);
-        returnValue = SIPVoIPLink::instance (AccountNULL)-> offhold (callId);
+        // is_rec = SIPVoIPLink::instance ("")-> isRecording (call_id);
+        returnValue = SIPVoIPLink::instance ("")-> offhold (callId);
     }
     /* Classic call, attached to an account */
     else {
@@ -671,7 +671,7 @@ bool ManagerImpl::offHoldCall (const CallID& callId)
     }
 
     if (participToConference (callId)) {
-        AccountID currentAccountId;
+        std::string currentAccountId;
         Call* call = NULL;
 
         currentAccountId = getAccountFromCall (callId);
@@ -716,14 +716,14 @@ bool ManagerImpl::transferCall (const CallID& callId, const std::string& to)
 
     // Direct IP to IP call
     if (getConfigFromCall (callId) == Call::IPtoIP) {
-        returnValue = SIPVoIPLink::instance (AccountNULL)-> transfer (callId, to);
+        returnValue = SIPVoIPLink::instance ("")-> transfer (callId, to);
     }
     // Classic call, attached to an account
     else {
 
-        AccountID accountid = getAccountFromCall (callId);
+        std::string accountid = getAccountFromCall (callId);
 
-        if (accountid == AccountNULL) {
+        if (accountid == "") {
             _warn ("Manager: Call doesn't exists");
             return false;
         }
@@ -767,13 +767,13 @@ bool ManagerImpl::attendedTransfer(const CallID& transferID, const CallID& targe
 
     // Direct IP to IP call
     if (getConfigFromCall (transferID) == Call::IPtoIP) {
-        returnValue = SIPVoIPLink::instance (AccountNULL)-> attendedTransfer(transferID, targetID);
+        returnValue = SIPVoIPLink::instance ("")-> attendedTransfer(transferID, targetID);
     }
     else {	// Classic call, attached to an account
 
-        AccountID accountid = getAccountFromCall (transferID);
+        std::string accountid = getAccountFromCall (transferID);
 
-        if (accountid == AccountNULL) {
+        if (accountid == "") {
             _warn ("Manager: Call doesn't exists");
 	    return false;
         }
@@ -790,7 +790,7 @@ bool ManagerImpl::attendedTransfer(const CallID& transferID, const CallID& targe
 //THREAD=Main : Call:Incoming
 bool ManagerImpl::refuseCall (const CallID& id)
 {
-    AccountID accountid;
+    std::string accountid;
     bool returnValue;
 
     _debug ("Manager: Refuse call %s", id.c_str());
@@ -812,14 +812,14 @@ bool ManagerImpl::refuseCall (const CallID& id)
     /* Direct IP to IP call */
 
     if (getConfigFromCall (id) == Call::IPtoIP) {
-        returnValue = SIPVoIPLink::instance (AccountNULL)-> refuse (id);
+        returnValue = SIPVoIPLink::instance ("")-> refuse (id);
     }
 
     /* Classic call, attached to an account */
     else {
         accountid = getAccountFromCall (id);
 
-        if (accountid == AccountNULL) {
+        if (accountid == "") {
             _warn ("Manager: Call doesn't exists");
             return false;
         }
@@ -921,7 +921,7 @@ void ManagerImpl::removeConference (const ConfID& conference_id)
 Conference*
 ManagerImpl::getConferenceFromCallID (const CallID& call_id)
 {
-    AccountID account_id;
+    std::string account_id;
     Call* call = NULL;
 
     account_id = getAccountFromCall (call_id);
@@ -944,7 +944,7 @@ void ManagerImpl::holdConference (const CallID& id)
     ConferenceMap::iterator iter_conf = _conferencemap.find (id);
     bool isRec = false;
 
-    AccountID currentAccountId;
+    std::string currentAccountId;
 
     Call* call = NULL;
 
@@ -997,7 +997,7 @@ void ManagerImpl::unHoldConference (const CallID& id)
     ConferenceMap::iterator iter_conf = _conferencemap.find (id);
     bool isRec = false;
 
-    AccountID currentAccountId;
+    std::string currentAccountId;
 
     Call* call = NULL;
 
@@ -1056,7 +1056,7 @@ bool ManagerImpl::isConference (const CallID& id)
 
 bool ManagerImpl::participToConference (const CallID& call_id)
 {
-    AccountID accountId = getAccountFromCall (call_id);
+    std::string accountId = getAccountFromCall (call_id);
     Call *call = getAccountLink (accountId)->getCall (call_id);
 
     if (call == NULL) {
@@ -1081,7 +1081,7 @@ void ManagerImpl::addParticipant (const CallID& callId, const CallID& conference
     	return;
     }
 
-    AccountID currentAccountId = getAccountFromCall (callId);
+    std::string currentAccountId = getAccountFromCall (callId);
     Call *call = getAccountLink (currentAccountId)->getCall (callId);
     if(call == NULL) {
     	_error("Manager: Error: Call id is not valid");
@@ -1238,7 +1238,7 @@ void ManagerImpl::joinParticipant (const CallID& callId1, const CallID& callId2)
     Conference *conf = createConference (callId1, callId2);
 
     // Set corresponding conference ids for call 1
-    AccountID currentAccountId1 = getAccountFromCall (callId1);
+    std::string currentAccountId1 = getAccountFromCall (callId1);
     Call *call1 = getAccountLink (currentAccountId1)->getCall (callId1);
     if(call1 == NULL) {
     	_error("Manager: Could not find call %s", callId1.c_str());
@@ -1247,7 +1247,7 @@ void ManagerImpl::joinParticipant (const CallID& callId1, const CallID& callId2)
     getMainBuffer()->unBindAll(callId1);
 
     // Set corresponding conderence details
-    AccountID currentAccountId2 = getAccountFromCall (callId2);
+    std::string currentAccountId2 = getAccountFromCall (callId2);
     Call *call2 = getAccountLink (currentAccountId2)->getCall (callId2);
     if(call2 == NULL) {
     	_error("Manager: Could not find call %s", callId2.c_str());
@@ -1388,7 +1388,7 @@ void ManagerImpl::detachParticipant (const CallID& call_id,
 
     if (call_id != default_id) {
 
-        AccountID currentAccountId = getAccountFromCall (call_id);
+        std::string currentAccountId = getAccountFromCall (call_id);
         Call *call = getAccountLink (currentAccountId)->getCall (call_id);
 
         if(call == NULL) {
@@ -1465,7 +1465,7 @@ void ManagerImpl::removeParticipant (const CallID& call_id)
     // TODO: add conference_id as a second parameter
     Conference* conf;
 
-    AccountID currentAccountId;
+    std::string currentAccountId;
     Call* call = NULL;
 
     // this call is no more a conference participant
@@ -1517,7 +1517,7 @@ void ManagerImpl::processRemainingParticipant (CallID current_call_id, Conferenc
 
         _debug ("Manager: Only one remaining participant");
 
-        AccountID currentAccountId;
+        std::string currentAccountId;
         Call* call = NULL;
 
         ParticipantSet participants = conf->getParticipantList();
@@ -1599,7 +1599,7 @@ void ManagerImpl::addStream (const CallID& call_id)
 
     _debug ("Manager: Add audio stream %s", call_id.c_str());
 
-    AccountID currentAccountId;
+    std::string currentAccountId;
     Call* call = NULL;
 
     currentAccountId = getAccountFromCall (call_id);
@@ -1705,7 +1705,7 @@ bool ManagerImpl::sendDtmf (const CallID& id, char code)
 {
     _debug ("Manager: Send DTMF for call %s", id.c_str());
 
-    AccountID accountid = getAccountFromCall (id);
+    std::string accountid = getAccountFromCall (id);
 
     playDtmf (code);
 
@@ -1833,7 +1833,7 @@ bool ManagerImpl::isWaitingCall (const CallID& id)
 // Management of event peer IP-phone
 ////////////////////////////////////////////////////////////////////////////////
 // SipEvent Thread
-bool ManagerImpl::incomingCall (Call* call, const AccountID& accountId)
+bool ManagerImpl::incomingCall (Call* call, const std::string& accountId)
 {
 
     std::string from, number, display_name, display;
@@ -1848,7 +1848,7 @@ bool ManagerImpl::incomingCall (Call* call, const AccountID& accountId)
     associateCallToAccount (call->getCallId(), accountId);
 
     // If account is null it is an ip to ip call
-    if (accountId == AccountNULL) {
+    if (accountId == "") {
         associateConfigToCall (call->getCallId(), Call::IPtoIP);
     } else {
         // strip sip: which is not required and bring confusion with ip to ip calls
@@ -1924,7 +1924,7 @@ void ManagerImpl::incomingMessage (const CallID& callID,
             if (*iter_participant == callID)
                 continue;
 
-            AccountID accountId = getAccountFromCall (*iter_participant);
+            std::string accountId = getAccountFromCall (*iter_participant);
 
             _debug ("Manager: Send message to %s, (%s)", (*iter_participant).c_str(), accountId.c_str());
 
@@ -1985,7 +1985,7 @@ bool ManagerImpl::sendTextMessage (const CallID& callID, const std::string& mess
 
         while (iter_participant != participants.end()) {
 
-            AccountID accountId = getAccountFromCall (*iter_participant);
+            std::string accountId = getAccountFromCall (*iter_participant);
 
             Account *account = getAccount (accountId);
 
@@ -2024,7 +2024,7 @@ bool ManagerImpl::sendTextMessage (const CallID& callID, const std::string& mess
 
         while (iter_participant != participants.end()) {
 
-            AccountID accountId = getAccountFromCall (*iter_participant);
+            std::string accountId = getAccountFromCall (*iter_participant);
 
             Account *account = getAccount (accountId);
 
@@ -2049,7 +2049,7 @@ bool ManagerImpl::sendTextMessage (const CallID& callID, const std::string& mess
 
     } else {
 
-        AccountID accountId = getAccountFromCall (callID);
+        std::string accountId = getAccountFromCall (callID);
 
         Account *account = getAccount (accountId);
 
@@ -2130,7 +2130,7 @@ void ManagerImpl::peerRingingCall (const CallID& id)
 //THREAD=VoIP Call=Outgoing/Ingoing
 void ManagerImpl::peerHungupCall (const CallID& call_id)
 {
-    AccountID account_id;
+    std::string account_id;
     bool returnValue;
 
     _debug ("Manager: Peer hungup call %s", call_id.c_str());
@@ -2155,7 +2155,7 @@ void ManagerImpl::peerHungupCall (const CallID& call_id)
 
     /* Direct IP to IP call */
     if (getConfigFromCall (call_id) == Call::IPtoIP) {
-        SIPVoIPLink::instance (AccountNULL)->hangup (call_id);
+        SIPVoIPLink::instance ("")->hangup (call_id);
     }
     else {
         account_id = getAccountFromCall (call_id);
@@ -2242,7 +2242,7 @@ void ManagerImpl::callFailure (const CallID& call_id)
 }
 
 //THREAD=VoIP
-void ManagerImpl::startVoiceMessageNotification (const AccountID& accountId,
+void ManagerImpl::startVoiceMessageNotification (const std::string& accountId,
         int nb_msg)
 {
     if (_dbus) {
@@ -2361,7 +2361,7 @@ void ManagerImpl::ringback ()
 /**
  * Multi Thread
  */
-void ManagerImpl::ringtone (const AccountID& accountID)
+void ManagerImpl::ringtone (const std::string& accountID)
 {
     std::string ringchoice;
     sfl::AudioCodec *codecForTone;
@@ -2679,7 +2679,7 @@ std::string ManagerImpl::serialize (std::vector<std::string> v)
 std::string ManagerImpl::getCurrentCodecName (const CallID& id)
 {
 
-    AccountID accountid = getAccountFromCall (id);
+    std::string accountid = getAccountFromCall (id);
     VoIPLink* link = getAccountLink (accountid);
     Call* call = link->getCall (id);
     std::string codecName = "";
@@ -2871,7 +2871,7 @@ int ManagerImpl::isIax2Enabled (void)
 #endif
 }
 
-int ManagerImpl::isRingtoneEnabled (const AccountID& id)
+int ManagerImpl::isRingtoneEnabled (const std::string& id)
 {
     Account *account = getAccount (id);
 
@@ -2883,7 +2883,7 @@ int ManagerImpl::isRingtoneEnabled (const AccountID& id)
     return account->getRingtoneEnabled() ? 1 : 0;
 }
 
-void ManagerImpl::ringtoneEnabled (const AccountID& id)
+void ManagerImpl::ringtoneEnabled (const std::string& id)
 {
 
     Account *account = getAccount (id);
@@ -2897,7 +2897,7 @@ void ManagerImpl::ringtoneEnabled (const AccountID& id)
 
 }
 
-std::string ManagerImpl::getRingtoneChoice (const AccountID& id)
+std::string ManagerImpl::getRingtoneChoice (const std::string& id)
 {
 
     // retreive specified account id
@@ -2926,7 +2926,7 @@ std::string ManagerImpl::getRingtoneChoice (const AccountID& id)
     return tone_path;
 }
 
-void ManagerImpl::setRingtoneChoice (const std::string& tone, const AccountID& id)
+void ManagerImpl::setRingtoneChoice (const std::string& tone, const std::string& id)
 {
 
     _debug ("Manager: Set ringtone path %s to account", tone.c_str());
@@ -2979,7 +2979,7 @@ void ManagerImpl::setRecordingCall (const CallID& id)
 
     if (!isConference (id)) {
         _debug ("Manager: Set recording for call %s", id.c_str());
-        AccountID accountid = getAccountFromCall (id);
+        std::string accountid = getAccountFromCall (id);
         call = getAccountLink (accountid)->getCall (id);
         rec = static_cast<Recordable *>(call);
     } else {
@@ -3009,7 +3009,7 @@ void ManagerImpl::setRecordingCall (const CallID& id)
 bool ManagerImpl::isRecording (const CallID& id)
 {
 
-    AccountID accountid = getAccountFromCall (id);
+    std::string accountid = getAccountFromCall (id);
     Recordable* rec = (Recordable*) getAccountLink (accountid)->getCall (id);
 
     bool ret = false;
@@ -3864,7 +3864,7 @@ std::vector<std::string> ManagerImpl::getAccountList ()
 }
 
 std::map<std::string, std::string> ManagerImpl::getAccountDetails (
-    const AccountID& accountID)
+    const std::string& accountID)
 {
     // Default account used to get default parameters if requested by client (to build new account)
     static const SIPAccount DEFAULT_ACCOUNT("default");
@@ -3985,7 +3985,7 @@ std::string ManagerImpl::addAccount (
     std::string accountType, account_list;
     Account* newAccount;
     std::stringstream accountID;
-    AccountID newAccountID;
+    std::string newAccountID;
 
     accountID << "Account:" << time (NULL);
     newAccountID = accountID.str();
@@ -4042,7 +4042,7 @@ std::string ManagerImpl::addAccount (
     return accountID.str();
 }
 
-void ManagerImpl::deleteAllCredential (const AccountID& accountID)
+void ManagerImpl::deleteAllCredential (const std::string& accountID)
 {
 
     _debug ("Manager: delete all credential");
@@ -4062,7 +4062,7 @@ void ManagerImpl::deleteAllCredential (const AccountID& accountID)
     }
 }
 
-void ManagerImpl::removeAccount (const AccountID& accountID)
+void ManagerImpl::removeAccount (const std::string& accountID)
 {
     // Get it down and dying
     Account* remAccount = NULL;
@@ -4088,9 +4088,9 @@ void ManagerImpl::removeAccount (const AccountID& accountID)
 
 // ACCOUNT handling
 bool ManagerImpl::associateCallToAccount (const CallID& callID,
-        const AccountID& accountID)
+        const std::string& accountID)
 {
-    if (getAccountFromCall (callID) == AccountNULL) { // nothing with the same ID
+    if (getAccountFromCall (callID) == "") { // nothing with the same ID
         if (accountExists (accountID)) { // account id exist in AccountMap
             ost::MutexLock m (_callAccountMapMutex);
             _callAccountMap[callID] = accountID;
@@ -4104,13 +4104,13 @@ bool ManagerImpl::associateCallToAccount (const CallID& callID,
     }
 }
 
-AccountID ManagerImpl::getAccountFromCall (const CallID& callID)
+std::string ManagerImpl::getAccountFromCall (const CallID& callID)
 {
     ost::MutexLock m (_callAccountMapMutex);
     CallAccountMap::iterator iter = _callAccountMap.find (callID);
 
     if (iter == _callAccountMap.end()) {
-        return AccountNULL;
+        return "";
     } else {
         return iter->second;
     }
@@ -4149,7 +4149,7 @@ CallID ManagerImpl::getNewCallID ()
     // when it's not found, it return ""
     // generate, something like s10000s20000s4394040
 
-    while (getAccountFromCall (random_id.str()) != AccountNULL) {
+    while (getAccountFromCall (random_id.str()) != "") {
         random_id.clear();
         random_id << "s";
         random_id << (unsigned) rand();
@@ -4338,7 +4338,7 @@ void ManagerImpl::unloadAccountMap ()
 
 }
 
-bool ManagerImpl::accountExists (const AccountID& accountID)
+bool ManagerImpl::accountExists (const std::string& accountID)
 {
     AccountMap::iterator iter = _accountMap.find (accountID);
 
@@ -4350,7 +4350,7 @@ bool ManagerImpl::accountExists (const AccountID& accountID)
 }
 
 Account*
-ManagerImpl::getAccount (const AccountID& accountID)
+ManagerImpl::getAccount (const std::string& accountID)
 {
     AccountMap::iterator iter = _accountMap.find (accountID);
 
@@ -4362,7 +4362,7 @@ ManagerImpl::getAccount (const AccountID& accountID)
     return _directIpAccount;
 }
 
-AccountID ManagerImpl::getAccountIdFromNameAndServer (
+std::string ManagerImpl::getAccountIdFromNameAndServer (
     const std::string& userName, const std::string& server)
 {
 
@@ -4409,8 +4409,8 @@ AccountID ManagerImpl::getAccountIdFromNameAndServer (
 
     _debug ("Manager: Username %s or server %s doesn't match any account, using IP2IP", userName.c_str(), server.c_str());
 
-    // Failed again! return AccountNULL
-    return AccountNULL;
+    // Failed again! return ""
+    return "";
 }
 
 std::map<std::string, int32_t> ManagerImpl::getAddressbookSettings ()
@@ -4552,7 +4552,7 @@ std::map<std::string, std::string> ManagerImpl::getCallDetails (const CallID& ca
 {
 
     std::map<std::string, std::string> call_details;
-    AccountID accountid;
+    std::string accountid;
     Account *account;
     VoIPLink *link;
     Call *call = NULL;
@@ -4584,7 +4584,7 @@ std::map<std::string, std::string> ManagerImpl::getCallDetails (const CallID& ca
         call_details.insert (std::pair<std::string, std::string> ("CALL_TYPE", type.str()));
     } else {
         _error ("Manager: Error: getCallDetails()");
-        call_details.insert (std::pair<std::string, std::string> ("ACCOUNTID", AccountNULL));
+        call_details.insert (std::pair<std::string, std::string> ("ACCOUNTID", ""));
         call_details.insert (std::pair<std::string, std::string> ("PEER_NUMBER", "Unknown"));
         call_details.insert (std::pair<std::string, std::string> ("PEER_NAME", "Unknown"));
         call_details.insert (std::pair<std::string, std::string> ("DISPLAY_NAME", "Unknown"));

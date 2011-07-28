@@ -40,7 +40,7 @@
 class IAXAccount : public Account
 {
     public:
-        IAXAccount (const AccountID& accountID);
+        IAXAccount (const std::string& accountID);
 
         ~IAXAccount();
 

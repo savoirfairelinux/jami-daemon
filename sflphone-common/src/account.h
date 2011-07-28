@@ -48,8 +48,6 @@ class VoIPLink;
  * It contains account, configuration, VoIP Link and Calls (inside the VoIPLink)
  */
 
-typedef std::string AccountID;
-
 /** Contains all the state an Voip can be in */
 typedef enum RegistrationState {
     Unregistered,
@@ -63,8 +61,6 @@ typedef enum RegistrationState {
     ErrorConfStun,
     NumberOfState
 } RegistrationState;
-
-#define AccountNULL ""
 
 // Account identifier
 #define ACCOUNT_ID                          "Account.id"
@@ -155,7 +151,7 @@ class Account : public Serializable
 
     public:
 
-        Account (const AccountID& accountID, const std::string &type);
+        Account (const std::string& accountID, const std::string &type);
 
         /**
          * Virtual destructor
@@ -187,7 +183,7 @@ class Account : public Serializable
          * Get the account ID
          * @return constant account id
          */
-        const AccountID& getAccountID() const {
+        const std::string& getAccountID() const {
             return _accountID;
         }
 
@@ -368,7 +364,7 @@ class Account : public Serializable
         /**
          * Account ID are assign in constructor and shall not changed
          */
-        AccountID _accountID;
+        std::string _accountID;
 
         /**
          * Account login information: username

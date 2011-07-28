@@ -76,10 +76,10 @@ class HistoryManager;
 class SIPAccount;
 
 /** Define a type for a AccountMap container */
-typedef std::map<AccountID, Account*> AccountMap;
+typedef std::map<std::string, Account*> AccountMap;
 
-/** Define a type for a CallID to AccountID Map inside ManagerImpl */
-typedef std::map<CallID, AccountID> CallAccountMap;
+/** Define a type for a CallID to std::string Map inside ManagerImpl */
+typedef std::map<CallID, std::string> CallAccountMap;
 
 typedef std::map<CallID, Call::CallConfiguration> CallConfigMap;
 
@@ -199,7 +199,7 @@ class ManagerImpl
          * @return bool true on success
          *		  false otherwise
          */
-        bool outgoingCall (const AccountID&, const CallID&, const std::string&, const std::string& = "");
+        bool outgoingCall (const std::string&, const CallID&, const std::string&, const std::string& = "");
 
         /**
          * Functions which occur with a user's action
@@ -434,7 +434,7 @@ class ManagerImpl
          * @param accountId an account id
          * @return bool True if the call was added correctly
          */
-        bool incomingCall (Call* call, const AccountID& accountId);
+        bool incomingCall (Call* call, const std::string& accountId);
 
         /**
          * Notify the user that the recipient of the call has answered and the put the
@@ -477,7 +477,7 @@ class ManagerImpl
          * @param accountId	  The account identifier
          * @param nb_msg The number of messages
          */
-        void startVoiceMessageNotification (const AccountID& accountId, int nb_msg);
+        void startVoiceMessageNotification (const std::string& accountId, int nb_msg);
 
         /**
          * Notify the client through DBus that registration state has been updated
@@ -517,7 +517,7 @@ class ManagerImpl
          * @param accountID	  The account identifier
          * @return std::map< std::string, std::string > The account details
          */
-        std::map< std::string, std::string > getAccountDetails (const AccountID& accountID);
+        std::map< std::string, std::string > getAccountDetails (const std::string& accountID);
 
         /**
          * Retrieve details about a given call
@@ -574,14 +574,14 @@ class ManagerImpl
          * purge from configuration.
          * @param accountID	The account unique ID
          */
-        void removeAccount (const AccountID& accountID);
+        void removeAccount (const std::string& accountID);
 
 
         /**
          * Deletes all credentials defined for an account
          * @param accountID The account unique ID
          */
-        void deleteAllCredential (const AccountID& accountID);
+        void deleteAllCredential (const std::string& accountID);
 
         /**
          * Get current codec name
@@ -687,25 +687,25 @@ class ManagerImpl
          * @return int	1 if enabled
          *	        0 otherwise
          */
-        int isRingtoneEnabled (const AccountID& id);
+        int isRingtoneEnabled (const std::string& id);
 
         /**
          * Set the ringtone option
          * Inverse current value
          */
-        void ringtoneEnabled (const AccountID& id);
+        void ringtoneEnabled (const std::string& id);
 
         /**
          * Get the ringtone
          * @return gchar* The file name selected as a ringtone
          */
-        std::string getRingtoneChoice (const AccountID& id);
+        std::string getRingtoneChoice (const std::string& id);
 
         /**
          * Set a ringtone
          * @param tone The file name of the ringtone
          */
-        void setRingtoneChoice (const std::string&, const AccountID& id);
+        void setRingtoneChoice (const std::string&, const std::string& id);
 
         /**
          * Get the recording path from configuration tree
@@ -997,7 +997,7 @@ class ManagerImpl
         /**
          * Handle played music when an incoming call occurs
          */
-        void ringtone (const AccountID& accountID);
+        void ringtone (const std::string& accountID);
 
         /**
          * Handle played music when a congestion occurs
@@ -1353,15 +1353,15 @@ class ManagerImpl
 
     public:
 
-        /** Associate a new CallID to a AccountID
+        /** Associate a new CallID to a std::string
          * Protected by mutex
          * @param callID the new CallID not in the list yet
          * @param accountID the known accountID present in accountMap
          * @return bool True if the new association is create
          */
-        bool associateCallToAccount (const CallID& callID, const AccountID& accountID);
+        bool associateCallToAccount (const CallID& callID, const std::string& accountID);
 
-        /** Remove a CallID/AccountID association
+        /** Remove a CallID/std::string association
          * Protected by mutex
          * @param callID the CallID to remove
          * @return bool True if association is removed
@@ -1411,7 +1411,7 @@ class ManagerImpl
         * @return bool True if the account exists
         *		  false otherwise
         */
-        bool accountExists (const AccountID& accountID);
+        bool accountExists (const std::string& accountID);
 
 	/**
 	 * Get a list of serialized history entries
@@ -1429,25 +1429,25 @@ class ManagerImpl
          * @param accountID account ID to get
          * @return Account*	 The account pointer or 0
          */
-        Account* getAccount (const AccountID& accountID);
+        Account* getAccount (const std::string& accountID);
 
-        /** Return the AccountID from a CallID
+        /** Return the std::string from a CallID
          * Protected by mutex
          * @param callID the CallID in the list
-         * @return AccountID  The accountID associated or "" if the callID is not found
+         * @return std::string  The accountID associated or "" if the callID is not found
          */
-        AccountID getAccountFromCall (const CallID& callID);
+        std::string getAccountFromCall (const CallID& callID);
 
         /**
          * Get the voip link from the account pointer
          * @param accountID	  Account ID to get
          * @return VoIPLink*   The voip link from the account pointer or 0
          */
-        VoIPLink* getAccountLink (const AccountID& accountID=AccountNULL);
+        VoIPLink* getAccountLink (const std::string& accountID="");
 
         VoIPLink* getSIPAccountLink (void);
 
-        AccountID getAccountIdFromNameAndServer (const std::string& userName, const std::string& server);
+        std::string getAccountIdFromNameAndServer (const std::string& userName, const std::string& server);
 
         int getLocalIp2IpPort();
 

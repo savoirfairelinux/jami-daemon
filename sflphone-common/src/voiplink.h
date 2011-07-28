@@ -40,9 +40,6 @@
 
 class Account;
 
-/** Define AccountID type */
-typedef std::string AccountID;
-
 /** Define a map that associate a Call object to a call identifier */
 typedef std::map<CallID, Call*> CallMap;
 
@@ -64,7 +61,7 @@ class VoIPLink
          * Constructor
          * @param accountID The account identifier
          */
-        VoIPLink (const AccountID& accountID);
+        VoIPLink (const std::string& accountID);
 
         /**
          * Virtual destructor
@@ -103,7 +100,7 @@ class VoIPLink
          * @return bool True on success
          *		  false otherwise
          */
-        virtual void sendRegister (AccountID id) throw (VoipLinkException) = 0;
+        virtual void sendRegister (std::string id) throw (VoipLinkException) = 0;
 
         /**
          * Virtual method
@@ -111,7 +108,7 @@ class VoIPLink
          * @return bool True on success
          *		  false otherwise
          */
-        virtual void sendUnregister (AccountID id) throw (VoipLinkException) = 0;
+        virtual void sendUnregister (std::string id) throw (VoipLinkException) = 0;
 
         /**
          * Place a new call
@@ -226,9 +223,9 @@ class VoIPLink
         bool clearCallMap();
 
         /**
-         * @return AccountID  parent Account's ID
+         * @return std::string  parent Account's ID
          */
-        AccountID& getAccountID (void) {
+        std::string& getAccountID (void) {
             return _accountID;
         }
 
@@ -237,7 +234,7 @@ class VoIPLink
         /**
          * @param accountID The account identifier
          */
-        void setAccountID (const AccountID& accountID) {
+        void setAccountID (const std::string& accountID) {
             _accountID = accountID;
         }
 
@@ -252,7 +249,7 @@ class VoIPLink
         /**
          * ID of parent's Account
          */
-        AccountID _accountID;
+        std::string _accountID;
 
     protected:
         /** Contains all the calls for this Link, protected by mutex */

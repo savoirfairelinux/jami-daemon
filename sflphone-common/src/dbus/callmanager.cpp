@@ -358,7 +358,7 @@ CallManager::startTone (const int32_t& start , const int32_t& type)
 sfl::AudioZrtpSession * CallManager::getAudioZrtpSession (const std::string& callID)
 {
     SIPVoIPLink * link = NULL;
-    link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (AccountNULL));
+    link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (""));
 
     if (!link) {
         throw CallManagerException("Failed to get sip link");

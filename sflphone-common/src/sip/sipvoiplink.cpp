@@ -151,7 +151,7 @@ std::string fetchHeaderValue (pjsip_msg *msg, std::string field);
 /**
  * Helper function that retreive IP address from local udp transport
  */
-std::string getLocalAddressAssociatedToAccount (AccountID id);
+std::string getLocalAddressAssociatedToAccount (std::string id);
 
 /*
  *  The global pool factory
@@ -187,7 +187,7 @@ UrlHook *urlhook;
 /**
  * Get the number of voicemail waiting in a SIP message
  */
-void setVoicemailInfo (AccountID account, pjsip_msg_body *body);
+void setVoicemailInfo (std::string account, pjsip_msg_body *body);
 
 pj_bool_t stun_sock_on_status_cb (pj_stun_sock *stun_sock, pj_stun_sock_op op, pj_status_t status);
 pj_bool_t stun_sock_on_rx_data_cb (pj_stun_sock *stun_sock, void *pkt, unsigned pkt_len, const pj_sockaddr_t *src_addr, unsigned addr_len);
@@ -289,7 +289,7 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata);
 SIPVoIPLink* SIPVoIPLink::_instance = NULL;
 
 
-SIPVoIPLink::SIPVoIPLink (const AccountID& accountID)
+SIPVoIPLink::SIPVoIPLink (const std::string& accountID)
     : VoIPLink (accountID)
     , _nbTryListenAddr (2)   // number of times to try to start SIP listener
     , _regPort (atoi (DEFAULT_SIP_PORT))
@@ -314,7 +314,7 @@ SIPVoIPLink::~SIPVoIPLink()
 
 }
 
-SIPVoIPLink* SIPVoIPLink::instance (const AccountID& id)
+SIPVoIPLink* SIPVoIPLink::instance (const std::string& id)
 {
 
     if (!_instance) {
@@ -393,7 +393,7 @@ SIPVoIPLink::getEvent()
 
 }
 
-void SIPVoIPLink::sendRegister (AccountID id) throw(VoipLinkException)
+void SIPVoIPLink::sendRegister (std::string id) throw(VoipLinkException)
 {
 
     int expire_value = 0;
@@ -607,7 +607,7 @@ void SIPVoIPLink::sendRegister (AccountID id) throw(VoipLinkException)
     }
 }
 
-void SIPVoIPLink::sendUnregister (AccountID id) throw(VoipLinkException)
+void SIPVoIPLink::sendUnregister (std::string id) throw(VoipLinkException)
 {
 
     pj_status_t status = 0;
@@ -820,7 +820,7 @@ SIPVoIPLink::hangup (const CallID& id) throw (VoipLinkException)
         throw VoipLinkException("Call is NULL while hanging up");
     }
 
-    AccountID account_id = Manager::instance().getAccountFromCall (id);
+    std::string account_id = Manager::instance().getAccountFromCall (id);
     SIPAccount *account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
     if(account == NULL) {
     	throw VoipLinkException("Could not find account for this call");
@@ -1138,7 +1138,7 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to) throw (VoipLinkE
 
     call->stopRecording();
 
-    AccountID account_id = Manager::instance().getAccountFromCall (id);
+    std::string account_id = Manager::instance().getAccountFromCall (id);
     SIPAccount *account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
     if (account == NULL) {
     	throw VoipLinkException("Could not find account");
@@ -1390,7 +1390,7 @@ SIPVoIPLink::getCurrentCodecName(const CallID& id)
     return name;
 }
 
-std::string SIPVoIPLink::getUseragentName (const AccountID& id)
+std::string SIPVoIPLink::getUseragentName (const std::string& id)
 {
     /*
     useragent << PROGNAME << "/" << PACKAGE_VERSION;
@@ -1419,7 +1419,7 @@ SIPVoIPLink::carryingDTMFdigits (const CallID& id, char code)
         return false;
     }
 
-    AccountID accountID = Manager::instance().getAccountFromCall (id);
+    std::string accountID = Manager::instance().getAccountFromCall (id);
     SIPAccount *account = static_cast<SIPAccount *> (Manager::instance().getAccount (accountID));
 
     if (!account) {
@@ -1546,7 +1546,7 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
     _error ("UserAgent: pool capacity %d", pj_pool_get_capacity (_pool));
     _error ("UserAgent: pool size %d", pj_pool_get_used_size (_pool));
 
-    AccountID id = Manager::instance().getAccountFromCall (call->getCallId());
+    std::string id = Manager::instance().getAccountFromCall (call->getCallId());
 
     // Get the basic information about the callee account
     SIPAccount * account = NULL;
@@ -2057,7 +2057,7 @@ bool SIPVoIPLink::pjsipInit()
     return PJ_SUCCESS;
 }
 
-pj_status_t SIPVoIPLink::stunServerResolve (AccountID id)
+pj_status_t SIPVoIPLink::stunServerResolve (std::string id)
 {
     pj_str_t stunServer;
     pj_uint16_t stunPort;
@@ -2116,7 +2116,7 @@ pj_status_t SIPVoIPLink::stunServerResolve (AccountID id)
 
 
 
-bool SIPVoIPLink::acquireTransport (const AccountID& accountID)
+bool SIPVoIPLink::acquireTransport (const std::string& accountID)
 {
 
     SIPAccount* account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (accountID));
@@ -2219,7 +2219,7 @@ bool SIPVoIPLink::createDefaultSipUdpTransport()
         _regPort = RANDOM_SIP_PORT;
 
         _debug ("UserAgent: Trying to initialize SIP listener on port %d", _regPort);
-        // If no AccountID specified, pointer to transport is stored in _localUDPTransport
+        // If no std::string specified, pointer to transport is stored in _localUDPTransport
         errPjsip = createUdpTransport();
 
         if (errPjsip != PJ_SUCCESS) {
@@ -2245,7 +2245,7 @@ void SIPVoIPLink::createDefaultSipTlsListener()
 }
 
 
-void SIPVoIPLink::createTlsListener (const AccountID& accountID)
+void SIPVoIPLink::createTlsListener (const std::string& accountID)
 {
 
     pjsip_tpfactory *tls;
@@ -2309,7 +2309,7 @@ void SIPVoIPLink::createTlsListener (const AccountID& accountID)
 }
 
 
-bool SIPVoIPLink::createSipTransport (AccountID id)
+bool SIPVoIPLink::createSipTransport (std::string id)
 {
 
     SIPAccount* account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
@@ -2389,7 +2389,7 @@ bool SIPVoIPLink::addTransportToMap (std::string key, pjsip_transport* transport
 }
 
 
-int SIPVoIPLink::createUdpTransport (AccountID id)
+int SIPVoIPLink::createUdpTransport (std::string id)
 {
 
     pj_status_t status;
@@ -2717,7 +2717,7 @@ int SIPVoIPLink::findLocalPortFromUri (const std::string& uri, pjsip_transport *
 }
 
 
-pj_status_t SIPVoIPLink::createTlsTransport (const AccountID& accountID, std::string remoteAddr)
+pj_status_t SIPVoIPLink::createTlsTransport (const std::string& accountID, std::string remoteAddr)
 {
     pj_status_t success;
 
@@ -2755,7 +2755,7 @@ pj_status_t SIPVoIPLink::createTlsTransport (const AccountID& accountID, std::st
     return success;
 }
 
-pj_status_t SIPVoIPLink::createAlternateUdpTransport (AccountID id)
+pj_status_t SIPVoIPLink::createAlternateUdpTransport (std::string id)
 {
     pj_sockaddr_in boundAddr;
     pjsip_host_port a_name;
@@ -2868,7 +2868,7 @@ pj_status_t SIPVoIPLink::createAlternateUdpTransport (AccountID id)
 }
 
 
-void SIPVoIPLink::shutdownSipTransport (const AccountID& accountID)
+void SIPVoIPLink::shutdownSipTransport (const std::string& accountID)
 {
 
     _debug ("UserAgent: Shutdown Sip Transport");
@@ -3104,7 +3104,7 @@ static void dns_cb (pj_status_t status, void *token, const struct pjsip_server_a
     }
 }
 
-void setVoicemailInfo (AccountID account, pjsip_msg_body *body)
+void setVoicemailInfo (std::string account, pjsip_msg_body *body)
 {
 
     int voicemail = 0, pos_begin, pos_end;
@@ -3164,7 +3164,7 @@ void invite_session_state_changed_cb (pjsip_inv_session *inv, pjsip_event *e)
     if (call->getCallConfiguration () == Call::IPtoIP) {
         link = SIPVoIPLink::instance ("");
     } else {
-        AccountID accId = Manager::instance().getAccountFromCall (call->getCallId());
+        std::string accId = Manager::instance().getAccountFromCall (call->getCallId());
         link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
     }
 
@@ -3270,7 +3270,7 @@ void invite_session_state_changed_cb (pjsip_inv_session *inv, pjsip_event *e)
 
         _debug ("UserAgent: State: %s. Cause: %.*s", invitationStateMap[inv->state], (int) inv->cause_text.slen, inv->cause_text.ptr);
 
-        AccountID accId = Manager::instance().getAccountFromCall (call->getCallId());
+        std::string accId = Manager::instance().getAccountFromCall (call->getCallId());
         if((link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId))) == NULL)
         	return;
 
@@ -3315,7 +3315,7 @@ void sdp_request_offer_cb (pjsip_inv_session *inv, const pjmedia_sdp_session *of
 
     SIPCall *call;
     pj_status_t status;
-    AccountID accId;
+    std::string accId;
     SIPVoIPLink *link;
 
     call = (SIPCall*) inv->mod_data[getModId() ];
@@ -3351,7 +3351,7 @@ void sdp_create_offer_cb (pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
     call = reinterpret_cast<SIPCall*> (inv->mod_data[_mod_ua.id]);
 
     CallID callid = call->getCallId();
-    AccountID accountid = Manager::instance().getAccountFromCall (callid);
+    std::string accountid = Manager::instance().getAccountFromCall (callid);
 
     SIPAccount *account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (accountid));
 
@@ -3402,7 +3402,7 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
         return;
     }
 
-    link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (AccountNULL));
+    link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (""));
     if (link == NULL) {
         _warn ("UserAgent: Error: Failed to get sip link");
         return;
@@ -3498,7 +3498,7 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
         call->getAudioRtp()->setSrtpEnabled (false);
 
         // if RTPFALLBACK, change RTP session
-        AccountID accountID = Manager::instance().getAccountFromCall (call->getCallId());
+        std::string accountID = Manager::instance().getAccountFromCall (call->getCallId());
         SIPAccount *account = (SIPAccount *) Manager::instance().getAccount (accountID);
 
         if (account->getSrtpFallback())
@@ -3668,7 +3668,7 @@ void transaction_state_changed_cb (pjsip_inv_session *inv UNUSED, pjsip_transact
 
 void registration_cb (struct pjsip_regc_cbparam *param)
 {
-	AccountID *accountid = static_cast<AccountID *>(param->token);
+	std::string *accountid = static_cast<std::string *>(param->token);
     SIPAccount * account = static_cast<SIPAccount *> (Manager::instance().getAccount(*accountid));
 
     if (account == NULL) {
@@ -3804,11 +3804,11 @@ transaction_request_cb (pjsip_rx_data *rdata)
     _debug ("UserAgent: The receiver is: %s@%s", userName.data(), server.data());
 
     // Get the account id of callee from username and server
-    AccountID account_id = Manager::instance().getAccountIdFromNameAndServer (userName, server);
+    std::string account_id = Manager::instance().getAccountIdFromNameAndServer (userName, server);
     _debug ("UserAgent: Account ID for this call, %s", account_id.c_str());
 
     /* If we don't find any account to receive the call */
-    if (account_id == AccountNULL) {
+    if (account_id == "") {
         _debug ("UserAgent: Username %s doesn't match any account, using IP2IP!",userName.c_str());
     }
 
@@ -4349,7 +4349,7 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
     sipUri = std::string (uri);
 
     CallID currentCallId = currentCall->getCallId();
-    // AccountID accId = Manager::instance().getAccountFromCall (currentCallId);
+    // std::string accId = Manager::instance().getAccountFromCall (currentCallId);
 
     CallID newCallId = Manager::instance().getNewCallID();
 
@@ -4683,7 +4683,7 @@ bool setCallMediaLocal (SIPCall* call, const std::string &localIP)
 
     if (call) {
 
-        AccountID account_id = Manager::instance().getAccountFromCall (call->getCallId ());
+        std::string account_id = Manager::instance().getAccountFromCall (call->getCallId ());
 
         account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
 
@@ -4870,7 +4870,7 @@ pj_bool_t stun_sock_on_rx_data_cb (pj_stun_sock *stun_sock UNUSED, void *pkt UNU
 }
 
 
-std::string getLocalAddressAssociatedToAccount (AccountID id)
+std::string getLocalAddressAssociatedToAccount (std::string id)
 {
     SIPAccount *account = NULL;
     pj_sockaddr_in local_addr_ipv4;

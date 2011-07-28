@@ -89,7 +89,7 @@ static void free_cred(pjsip_cred_info *cred)
 }
 } // end anonymous namespace
 
-SIPAccount::SIPAccount (const AccountID& accountID)
+SIPAccount::SIPAccount (const std::string& accountID)
     : Account (accountID, "SIP")
     , _routeSet ("")
     , _pool (NULL)

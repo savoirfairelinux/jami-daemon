@@ -34,7 +34,7 @@
 #include "voiplink.h"
 #include "manager.h"
 
-VoIPLink::VoIPLink (const AccountID& accountID) : _accountID (accountID), _localPort (0),  _initDone (false)
+VoIPLink::VoIPLink (const std::string& accountID) : _accountID (accountID), _localPort (0),  _initDone (false)
 {
 }
 
@@ -102,7 +102,7 @@ bool VoIPLink::clearCallMap()
 
 Account* VoIPLink::getAccountPtr (void)
 {
-    AccountID id;
+    std::string id;
 
     id = getAccountID();
     return Manager::instance().getAccount (id);

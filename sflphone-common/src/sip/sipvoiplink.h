@@ -90,7 +90,7 @@ class SIPVoIPLink : public VoIPLink
          * Singleton method. Enable to retrieve the unique static instance
          * @return SIPVoIPLink* A pointer on the object
          */
-        static SIPVoIPLink* instance (const AccountID& id);
+        static SIPVoIPLink* instance (const std::string& id);
 
         /**
          * Increment the number of SIP account connected to this link
@@ -125,14 +125,14 @@ class SIPVoIPLink : public VoIPLink
          * @return bool True on success
          *		  false otherwise
          */
-        virtual void sendRegister (AccountID id) throw(VoipLinkException);
+        virtual void sendRegister (std::string id) throw(VoipLinkException);
 
         /**
          * Build and send SIP unregistration request
          * @return bool True on success
          *		  false otherwise
          */
-        virtual void sendUnregister (AccountID id) throw(VoipLinkException);
+        virtual void sendUnregister (std::string id) throw(VoipLinkException);
 
         /**
          * Place a new call
@@ -309,7 +309,7 @@ class SIPVoIPLink : public VoIPLink
         /**
          * Retrive useragent name from account
          */
-        std::string getUseragentName (const AccountID& id);
+        std::string getUseragentName (const std::string& id);
 
         /**
          * List all the interfaces on the system and return
@@ -375,7 +375,7 @@ class SIPVoIPLink : public VoIPLink
          * putting its reference counter to zero. PJSIP assumes transport destruction since
          * this action can be delayed by ongoing SIP transactions.
          */
-        void shutdownSipTransport (const AccountID& accountID);
+        void shutdownSipTransport (const std::string& accountID);
 
         /**
          * Send a SIP message to a call identified by its callid
@@ -409,7 +409,7 @@ class SIPVoIPLink : public VoIPLink
          * Constructor
          * @param accountID The account identifier
          */
-        SIPVoIPLink (const AccountID& accountID);
+        SIPVoIPLink (const std::string& accountID);
 
         /* The singleton instance */
         static SIPVoIPLink* _instance;
@@ -432,7 +432,7 @@ class SIPVoIPLink : public VoIPLink
         /**
          * Resolve public address for this account
          */
-        pj_status_t stunServerResolve (AccountID id);
+        pj_status_t stunServerResolve (std::string id);
 
 
         /**
@@ -444,7 +444,7 @@ class SIPVoIPLink : public VoIPLink
          * @return bool True if the account is successfully created or successfully obtained
          * from the transport map
          */
-        bool acquireTransport (const AccountID& accountID);
+        bool acquireTransport (const std::string& accountID);
 
 
         /**
@@ -462,7 +462,7 @@ class SIPVoIPLink : public VoIPLink
         /**
          * Create the default TLS litener according to account settings.
          */
-        void createTlsListener (const AccountID& accountID);
+        void createTlsListener (const std::string& accountID);
 
 
         /**
@@ -471,7 +471,7 @@ class SIPVoIPLink : public VoIPLink
          * @param id The account id for which a transport must
          * be created.
          */
-        bool createSipTransport (AccountID id);
+        bool createSipTransport (std::string id);
 
 
         /**
@@ -489,7 +489,7 @@ class SIPVoIPLink : public VoIPLink
         * be created.
         * @return pj_status_t PJ_SUCCESS on success
         */
-        int createUdpTransport (AccountID = "");
+        int createUdpTransport (std::string = "");
 
         /**
          * Create a TLS transport from the default TLS listener from
@@ -497,7 +497,7 @@ class SIPVoIPLink : public VoIPLink
          * be created.
          * @return pj_status_t PJ_SUCCESS on success
          */
-        pj_status_t createTlsTransport (const AccountID& id,  std::string remoteAddr);
+        pj_status_t createTlsTransport (const std::string& id,  std::string remoteAddr);
 
         /**
          * Create a UDP transport using stun server to resove public address
@@ -505,7 +505,7 @@ class SIPVoIPLink : public VoIPLink
          * be created.
          * @return pj_status_t PJ_SUCCESS on success
          */
-        pj_status_t createAlternateUdpTransport (AccountID id);
+        pj_status_t createAlternateUdpTransport (std::string id);
 
         /**
          * Get the correct address to use (ie advertised) from
