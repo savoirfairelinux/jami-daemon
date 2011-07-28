@@ -232,13 +232,6 @@ class VoIPLink
         Account* getAccountPtr (void);
 
         /**
-         * @param accountID The account identifier
-         */
-        void setAccountID (const std::string& accountID) {
-            _accountID = accountID;
-        }
-
-        /**
          * Get the call pointer from the call map (protected by mutex)
          * @param id A Call ID
          * @return Call*  Call pointer or 0

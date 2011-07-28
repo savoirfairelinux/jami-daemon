@@ -102,8 +102,5 @@ bool VoIPLink::clearCallMap()
 
 Account* VoIPLink::getAccountPtr (void)
 {
-    std::string id;
-
-    id = getAccountID();
-    return Manager::instance().getAccount (id);
+    return Manager::instance().getAccount (_accountID);
 }
