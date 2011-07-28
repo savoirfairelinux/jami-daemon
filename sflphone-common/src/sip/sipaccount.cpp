@@ -551,13 +551,10 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 }
 
 
-// void SIPAccount::setVoIPLink(VoIPLink *link) {
 void SIPAccount::setVoIPLink()
 {
-
     _link = SIPVoIPLink::instance ("");
     dynamic_cast<SIPVoIPLink*> (_link)->incrementClients();
-
 }
 
 
@@ -638,7 +635,7 @@ int SIPAccount::registerVoIPLink()
         _transportType = PJSIP_TRANSPORT_START_OTHER;
         initStunConfiguration ();
     } else {
-        _stunServerName = pj_str ( (char*) _stunServer.data());
+        _stunServerName = pj_str ( (char*) _stunServer.c_str());
     }
 
     try {
@@ -695,8 +692,6 @@ pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum (const std::string& method)
 void SIPAccount::initTlsConfiguration (void)
 {
     // TLS listener is unique and should be only modified through IP2IP_PROFILE
-
-    // setTlsListenerPort(atoi(tlsPortStr.c_str()));
     setTlsListenerPort (atoi (_tlsPortStr.c_str()));
 
     delete _tlsSetting;
@@ -762,42 +757,31 @@ void SIPAccount::loadConfig()
 
 bool SIPAccount::fullMatch (const std::string& username, const std::string& hostname) const
 {
-    return (userMatch (username) && hostnameMatch (hostname));
+    return userMatch (username) && hostnameMatch (hostname);
 }
 
 bool SIPAccount::userMatch (const std::string& username) const
 {
-    if (username.empty()) {
-        return false;
-    }
-
-    return (username == getUsername());
+    return !username.empty() && username == getUsername();
 }
 
 bool SIPAccount::hostnameMatch (const std::string& hostname) const
 {
-    return (hostname == getHostname());
+    return hostname == getHostname();
 }
 
 std::string SIPAccount::getMachineName (void) const
 {
-    std::string hostname;
-    hostname = std::string (pj_gethostname()->ptr, pj_gethostname()->slen);
-    return hostname;
+    return std::string (pj_gethostname()->ptr, pj_gethostname()->slen);
 }
 
 std::string SIPAccount::getLoginName (void) const
 {
     std::string username;
 
-    uid_t uid = getuid();
-
-    struct passwd * user_info = NULL;
-    user_info = getpwuid (uid);
-
-    if (user_info != NULL) {
+    struct passwd * user_info = getpwuid (getuid());
+    if (user_info)
         username = user_info->pw_name;
-    }
 
     return username;
 }
