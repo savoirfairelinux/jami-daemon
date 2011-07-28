@@ -97,7 +97,6 @@ void IAXAccount::unserialize (Conf::MappingNode *map)
 
     map->getValue(aliasKey, &_alias);
     map->getValue(typeKey,  &_type);
-    map->getValue(idKey,    &_accountID);
     map->getValue(usernameKey, &_username);
     map->getValue(passwordKey, &_password);
     map->getValue(hostnameKey, &_hostname);

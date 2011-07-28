@@ -364,7 +364,7 @@ class Account : public Serializable
         /**
          * Account ID are assign in constructor and shall not changed
          */
-        std::string _accountID;
+        const std::string _accountID;
 
         /**
          * Account login information: username

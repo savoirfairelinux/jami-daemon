@@ -296,7 +296,6 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
 
     map->getValue(aliasKey, &_alias);
     map->getValue(typeKey, &_type);
-    map->getValue(idKey, &_accountID);
     map->getValue(usernameKey, &_username);
     map->getValue(authenticationUsernameKey, &_authenticationUsername);
     map->getValue(passwordKey, &_password);
