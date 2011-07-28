@@ -68,6 +68,8 @@ VideoRtpSession::VideoRtpSession(const std::map<std::string, std::string> &txArg
 
 void VideoRtpSession::updateSDP(const Sdp *sdp)
 {
+    assert(receiveThread_.get() == 0);
+
     std::string desc = sdp->getActiveVideoDescription();
     // if port has changed
     if (desc != rxArgs_["receiving_sdp"])
@@ -81,8 +83,10 @@ void VideoRtpSession::updateSDP(const Sdp *sdp)
 void VideoRtpSession::updateDestination(const std::string &destination,
         unsigned int port)
 {
-    std::stringstream tmp;
+    assert(sendThread_.get() == 0);
     assert(not destination.empty());
+
+    std::stringstream tmp;
     tmp << "rtp://" << destination << ":" << port;
     // if destination has changed
     if (tmp.str() != txArgs_["destination"])

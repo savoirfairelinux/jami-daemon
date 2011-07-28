@@ -33,6 +33,7 @@
 #define __SIPCALL_H__
 
 #include "call.h"
+#include <tr1/memory>
 
 class Sdp;
 class pjsip_evsub;
@@ -121,7 +122,7 @@ class SIPCall : public Call
          * Returns a pointer to the VideoRtp object
          */
         sfl_video::VideoRtpSession * getVideoRtp () {
-            return videortp_;
+            return videortp_.get();
         }
 
         /**
@@ -172,7 +173,7 @@ class SIPCall : public Call
         /**
          * Video Rtp Session factory
          */
-        sfl_video::VideoRtpSession * videortp_;
+        std::tr1::shared_ptr<sfl_video::VideoRtpSession> videortp_;
 
         /**
          * Event subscription structure

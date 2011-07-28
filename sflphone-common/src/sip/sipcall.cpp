@@ -45,7 +45,7 @@ SIPCall::SIPCall (const CallID& id, Call::CallType type, pj_caching_pool *cachin
     , _did (0)
     , _tid (0)
     , _audiortp (new sfl::AudioRtpFactory(this))
-    , videortp_ (new sfl_video::VideoRtpSession())
+    , videortp_ (new sfl_video::VideoRtpSession)
     , _xferSub (NULL)
     , _invSession (NULL)
     , _local_sdp (NULL)
@@ -66,8 +66,6 @@ SIPCall::~SIPCall()
 
     delete _audiortp;
     _audiortp = NULL;
-    delete videortp_;
-    videortp_ = NULL;
 
     delete _local_sdp;
     _local_sdp = NULL;

@@ -4424,42 +4424,11 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
     }
 
     Manager::instance().hangupCall(currentCall->getCallId());
-
-//    SIPCall* sipCall = dynamic_cast<SIPCall *>(newCall);
-
-//    SIPVoIPLink *link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
-//    if(link == NULL) {
-//    	_debug("UserAgent: Error could not retreive voip link from call");
-//    	return;
-//    }
-//
-//    if (link) {
-//        newCall = dynamic_cast<SIPCall *> (link->getCall (newCallId));
-//
-//        if (!newCall) {
-//            _debug ("UserAgent: can not find the call from sipvoiplink!");
-//            return;
-//        }
-//    }
-
-//    if (sub) {
-//        /* Put the server subscription in inv_data.
-//         * Subsequent state changed in pjsua_inv_on_state_changed() will be
-//         * reported back to the server subscription.
-//         */
-//        currentCall->setXferSub (sub);
-//
-//        /* Put the invite_data in the subscription. */
-//        pjsip_evsub_set_mod_data (sub, _mod_ua.id, currentCall);
-//    }
 }
-
 
 
 void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
 {
-
-
     PJ_UNUSED_ARG (event);
 
     /*
