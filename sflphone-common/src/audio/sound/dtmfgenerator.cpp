@@ -62,22 +62,6 @@ const DTMFGenerator::DTMFTone DTMFGenerator::tones[NUM_TONES] = {
 };
 
 
-DTMFException::DTMFException (const char* _reason) throw() : reason (_reason)
-{
-}
-
-
-DTMFException::~DTMFException() throw()
-{
-}
-
-const char* DTMFException::what() const throw()
-{
-    return reason;
-}
-
-
-
 /*
  * Initialize the generator
  */
