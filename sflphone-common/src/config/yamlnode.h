@@ -34,7 +34,7 @@
 #include <string>
 #include <list>
 #include <map>
-#include <exception>
+#include <stdexcept>
 
 namespace Conf
 {
@@ -44,25 +44,6 @@ class YamlNode;
 
 typedef std::list<YamlNode *> Sequence;
 typedef std::map<std::string, YamlNode *> Mapping;
-
-class YamlNodeException : public std::exception
-{
-
-    public:
-        YamlNodeException (const std::string& str="") throw() : errstr (str) {}
-
-        virtual ~YamlNodeException() throw() {}
-
-        virtual const char *what() const throw() {
-            std::string expt ("YamlNodeException occured: ");
-            expt.append (errstr);
-
-            return expt.c_str();
-        }
-    private:
-        std::string errstr;
-
-};
 
 enum NodeType { DOCUMENT, SCALAR, MAPPING, SEQUENCE };
 

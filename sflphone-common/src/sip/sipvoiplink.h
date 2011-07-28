@@ -62,22 +62,6 @@ class SIPCall;
 // To set the verbosity. From 0 (min) to 6 (max)
 #define PJ_LOG_LEVEL 0
 
-class SIPVoipLinkException : public std::exception
-{
-    public:
-        SIPVoipLinkException (const std::string& str="") throw() : errstr (str) {}
-
-        virtual ~SIPVoipLinkException() throw() {}
-
-        virtual const char *what() const throw() {
-            std::string expt ("UserAgent: SIPVoipLinkException occured: ");
-            expt.append (errstr);
-            return expt.c_str();
-        }
-    private:
-        std::string errstr;
-};
-
 /**
  * @file sipvoiplink.h
  * @brief Specific VoIPLink for SIP (SIP core for incoming and outgoing events).

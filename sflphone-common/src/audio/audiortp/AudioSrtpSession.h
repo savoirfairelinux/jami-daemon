@@ -66,13 +66,6 @@ class SIPCall;
 namespace sfl
 {
 
-class SrtpException: public std::exception
-{
-        virtual const char* what() const throw() {
-            return "ZRTP ZID initialization failed.";
-        }
-};
-
 class AudioSrtpSession : public AudioRtpSession
 {
     public:
