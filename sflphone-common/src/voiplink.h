@@ -59,9 +59,8 @@ class VoIPLink
     public:
         /**
          * Constructor
-         * @param accountID The account identifier
          */
-        VoIPLink (const std::string& accountID);
+        VoIPLink ();
 
         /**
          * Virtual destructor
@@ -223,26 +222,11 @@ class VoIPLink
         bool clearCallMap();
 
         /**
-         * @return std::string  parent Account's ID
-         */
-        std::string& getAccountID (void) {
-            return _accountID;
-        }
-
-        Account* getAccountPtr (void);
-
-        /**
          * Get the call pointer from the call map (protected by mutex)
          * @param id A Call ID
          * @return Call*  Call pointer or 0
          */
         Call* getCall (const CallID& id);
-
-    private:
-        /**
-         * ID of parent's Account
-         */
-        std::string _accountID;
 
     protected:
         /** Contains all the calls for this Link, protected by mutex */

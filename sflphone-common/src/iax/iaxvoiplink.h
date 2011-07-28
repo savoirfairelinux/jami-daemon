@@ -218,6 +218,8 @@ class IAXVoIPLink : public VoIPLink
 
     private:
 
+        Account* getAccountPtr (void);
+
         /*
          * Decode the message count IAX send.
          * Returns only the new messages number
@@ -324,6 +326,8 @@ class IAXVoIPLink : public VoIPLink
 
         /* URL hook */
         UrlHook *urlhook;
+
+        const std::string _accountID;
 };
 
 #endif

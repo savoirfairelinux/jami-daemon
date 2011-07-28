@@ -553,7 +553,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 
 void SIPAccount::setVoIPLink()
 {
-    _link = SIPVoIPLink::instance ("");
+    _link = SIPVoIPLink::instance ();
     dynamic_cast<SIPVoIPLink*> (_link)->incrementClients();
 }
 

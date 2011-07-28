@@ -285,7 +285,7 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
     if (callConfig == Call::IPtoIP) {
         _debug ("Manager: Start IP2IP call");
         /* We need to retrieve the sip voiplink instance */
-        siplink = SIPVoIPLink::instance ("");
+        siplink = SIPVoIPLink::instance ();
 
         if (siplink->SIPNewIpToIpCall(call_id, to_cleaned)) {
             switchCall (call_id);
@@ -473,7 +473,7 @@ bool ManagerImpl::hangupCall (const CallID& callId)
 
     if (getConfigFromCall (callId) == Call::IPtoIP) {
         /* Direct IP to IP call */
-        returnValue = SIPVoIPLink::instance ("")->hangup (callId);
+        returnValue = SIPVoIPLink::instance ()->hangup (callId);
     }
     else {
     	std::string accountId = getAccountFromCall (callId);
@@ -529,7 +529,7 @@ bool ManagerImpl::cancelCall (const CallID& id)
     /* Direct IP to IP call */
 
     if (getConfigFromCall (id) == Call::IPtoIP) {
-        returnValue = SIPVoIPLink::instance ("")->cancel (id);
+        returnValue = SIPVoIPLink::instance ()->cancel (id);
     }
 
     /* Classic call, attached to an account */
@@ -574,7 +574,7 @@ bool ManagerImpl::onHoldCall (const CallID& callId)
 
     	if (getConfigFromCall (callId) == Call::IPtoIP) {
     		/* Direct IP to IP call */
-    		returnValue = SIPVoIPLink::instance ("")-> onhold (callId);
+    		returnValue = SIPVoIPLink::instance ()-> onhold (callId);
     	}
     	else {
     		/* Classic call, attached to an account */
@@ -646,8 +646,8 @@ bool ManagerImpl::offHoldCall (const CallID& callId)
 
     /* Direct IP to IP call */
     if (getConfigFromCall (callId) == Call::IPtoIP) {
-        // is_rec = SIPVoIPLink::instance ("")-> isRecording (call_id);
-        returnValue = SIPVoIPLink::instance ("")-> offhold (callId);
+        // is_rec = SIPVoIPLink::instance ()-> isRecording (call_id);
+        returnValue = SIPVoIPLink::instance ()-> offhold (callId);
     }
     /* Classic call, attached to an account */
     else {
@@ -716,7 +716,7 @@ bool ManagerImpl::transferCall (const CallID& callId, const std::string& to)
 
     // Direct IP to IP call
     if (getConfigFromCall (callId) == Call::IPtoIP) {
-        returnValue = SIPVoIPLink::instance ("")-> transfer (callId, to);
+        returnValue = SIPVoIPLink::instance ()-> transfer (callId, to);
     }
     // Classic call, attached to an account
     else {
@@ -767,7 +767,7 @@ bool ManagerImpl::attendedTransfer(const CallID& transferID, const CallID& targe
 
     // Direct IP to IP call
     if (getConfigFromCall (transferID) == Call::IPtoIP) {
-        returnValue = SIPVoIPLink::instance ("")-> attendedTransfer(transferID, targetID);
+        returnValue = SIPVoIPLink::instance ()-> attendedTransfer(transferID, targetID);
     }
     else {	// Classic call, attached to an account
 
@@ -812,7 +812,7 @@ bool ManagerImpl::refuseCall (const CallID& id)
     /* Direct IP to IP call */
 
     if (getConfigFromCall (id) == Call::IPtoIP) {
-        returnValue = SIPVoIPLink::instance ("")-> refuse (id);
+        returnValue = SIPVoIPLink::instance ()-> refuse (id);
     }
 
     /* Classic call, attached to an account */
@@ -2155,7 +2155,7 @@ void ManagerImpl::peerHungupCall (const CallID& call_id)
 
     /* Direct IP to IP call */
     if (getConfigFromCall (call_id) == Call::IPtoIP) {
-        SIPVoIPLink::instance ("")->hangup (call_id);
+        SIPVoIPLink::instance ()->hangup (call_id);
     }
     else {
         account_id = getAccountFromCall (call_id);
@@ -4236,7 +4236,6 @@ void ManagerImpl::loadIptoipProfile()
     // We need the IP2IP settings to be loaded at this time as they are used
     // for default sip transport
 
-    // _directIpAccount->setVoIPLink(SIPVoIPLink::instance (""));
     _directIpAccount->setVoIPLink();
 
 }

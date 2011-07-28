@@ -90,7 +90,7 @@ class SIPVoIPLink : public VoIPLink
          * Singleton method. Enable to retrieve the unique static instance
          * @return SIPVoIPLink* A pointer on the object
          */
-        static SIPVoIPLink* instance (const std::string& id);
+        static SIPVoIPLink* instance ();
 
         /**
          * Increment the number of SIP account connected to this link
@@ -405,11 +405,7 @@ class SIPVoIPLink : public VoIPLink
         int _nbTryListenAddr;
 
     private:
-        /**
-         * Constructor
-         * @param accountID The account identifier
-         */
-        SIPVoIPLink (const std::string& accountID);
+        SIPVoIPLink ();
 
         /* The singleton instance */
         static SIPVoIPLink* _instance;

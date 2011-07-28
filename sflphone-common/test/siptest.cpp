@@ -202,7 +202,7 @@ void SIPTest::testSimpleIncomingIpCall ()
     sleep(2);
 
     // gtrab call id from sipvoiplink 
-    SIPVoIPLink *siplink = SIPVoIPLink::instance (""); 
+    SIPVoIPLink *siplink = SIPVoIPLink::instance ();
 
     CPPUNIT_ASSERT(siplink->_callMap.size() == 1);
     CallMap::iterator iterCallId = siplink->_callMap.begin();
@@ -318,7 +318,7 @@ void SIPTest::testTwoIncomingIpCall ()
     sleep(1);
 
     // gtrab call id from sipvoiplink 
-    SIPVoIPLink *sipLink = SIPVoIPLink::instance ("");
+    SIPVoIPLink *sipLink = SIPVoIPLink::instance ();
 
     CPPUNIT_ASSERT(sipLink->_callMap.size() == 1);
     CallMap::iterator iterCallId = sipLink->_callMap.begin();
@@ -428,7 +428,7 @@ void SIPTest::testIncomingIpCallSdp ()
     sleep(2);
 
     // gtrab call id from sipvoiplink 
-    SIPVoIPLink *siplink = SIPVoIPLink::instance ("");
+    SIPVoIPLink *siplink = SIPVoIPLink::instance ();
 
     CPPUNIT_ASSERT(siplink->_callMap.size() == 1);
     CallMap::iterator iterCallId = siplink->_callMap.begin();

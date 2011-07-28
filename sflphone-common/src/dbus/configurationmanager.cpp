@@ -803,38 +803,17 @@ void ConfigurationManager::setHistory (const std::vector<std::string>& entries)
 std::string ConfigurationManager::getAddrFromInterfaceName (
     const std::string& interface)
 {
-
-    std::string address = SIPVoIPLink::instance ("")->getInterfaceAddrFromName (
-                              interface);
-
-    return address;
+    return SIPVoIPLink::instance()->getInterfaceAddrFromName (interface);
 }
 
 std::vector<std::string> ConfigurationManager::getAllIpInterface (void)
 {
-
-    std::vector<std::string> vector;
-    SIPVoIPLink * sipLink = NULL;
-    sipLink = SIPVoIPLink::instance ("");
-
-    if (sipLink != NULL) {
-        vector = sipLink->getAllIpInterface();
-    }
-
-    return vector;
+    return SIPVoIPLink::instance()->getAllIpInterface();
 }
 
 std::vector<std::string> ConfigurationManager::getAllIpInterfaceByName (void)
 {
-    std::vector<std::string> vector;
-    SIPVoIPLink * sipLink = NULL;
-    sipLink = SIPVoIPLink::instance ("");
-
-    if (sipLink != NULL) {
-        vector = sipLink->getAllIpInterfaceByName();
-    }
-
-    return vector;
+    return SIPVoIPLink::instance()->getAllIpInterfaceByName();
 }
 
 

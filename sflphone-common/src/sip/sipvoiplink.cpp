@@ -289,8 +289,8 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata);
 SIPVoIPLink* SIPVoIPLink::_instance = NULL;
 
 
-SIPVoIPLink::SIPVoIPLink (const std::string& accountID)
-    : VoIPLink (accountID)
+SIPVoIPLink::SIPVoIPLink ()
+    : VoIPLink ()
     , _nbTryListenAddr (2)   // number of times to try to start SIP listener
     , _regPort (atoi (DEFAULT_SIP_PORT))
     , _clients (0)
@@ -314,12 +314,12 @@ SIPVoIPLink::~SIPVoIPLink()
 
 }
 
-SIPVoIPLink* SIPVoIPLink::instance (const std::string& id)
+SIPVoIPLink* SIPVoIPLink::instance ()
 {
 
     if (!_instance) {
         _debug ("UserAgent: Create new SIPVoIPLink instance");
-        _instance = new SIPVoIPLink (id);
+        _instance = new SIPVoIPLink;
     }
 
     return _instance;
@@ -3162,7 +3162,7 @@ void invite_session_state_changed_cb (pjsip_inv_session *inv, pjsip_event *e)
     // If the call is a direct IP-to-IP call
     SIPVoIPLink * link = NULL;
     if (call->getCallConfiguration () == Call::IPtoIP) {
-        link = SIPVoIPLink::instance ("");
+        link = SIPVoIPLink::instance ();
     } else {
         std::string accId = Manager::instance().getAccountFromCall (call->getCallId());
         link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
@@ -3741,7 +3741,7 @@ void registration_cb (struct pjsip_regc_cbparam *param)
             // shutdown this transport since useless
             // if(account->getAccountTransport() != _localUDPTransport) {
 
-            SIPVoIPLink::instance ("")->shutdownSipTransport (account->getAccountID());
+            SIPVoIPLink::instance ()->shutdownSipTransport (account->getAccountID());
             //}
 
         } else {
@@ -3752,7 +3752,7 @@ void registration_cb (struct pjsip_regc_cbparam *param)
                 account->setRegistrationState (Unregistered);
                 account->setRegister (false);
 
-                SIPVoIPLink::instance ("")->shutdownSipTransport (account->getAccountID());
+                SIPVoIPLink::instance ()->shutdownSipTransport (account->getAccountID());
 
                 // pjsip_regc_destroy(param->regc);
                 // account->setRegistrationInfo(NULL);
@@ -3762,7 +3762,7 @@ void registration_cb (struct pjsip_regc_cbparam *param)
         account->setRegistrationState (ErrorAuth);
         account->setRegister (false);
 
-        SIPVoIPLink::instance ("")->shutdownSipTransport (account->getAccountID());
+        SIPVoIPLink::instance ()->shutdownSipTransport (account->getAccountID());
     }
 
 }
@@ -3938,7 +3938,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
 
         // May use the published address as well
 
-        addrToUse = SIPVoIPLink::instance ("")->getInterfaceAddrFromName (account->getLocalInterface ());
+        addrToUse = SIPVoIPLink::instance ()->getInterfaceAddrFromName (account->getLocalInterface ());
         account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = addrToUse;
         // Set the appropriate transport to have the right VIA header
         link->initTransportSelector (account->getAccountTransport (), &tp, call->getMemoryPool());
@@ -4353,7 +4353,7 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
 
     CallID newCallId = Manager::instance().getNewCallID();
 
-    Call *newCall = SIPVoIPLink::instance(IP2IP_PROFILE)->newOutgoingCall(newCallId, sipUri);
+    Call *newCall = SIPVoIPLink::instance()->newOutgoingCall(newCallId, sipUri);
 
    //  if (!Manager::instance().outgoingCall (accId, newCallId, sipUri)) {
     if(newCall == NULL) {

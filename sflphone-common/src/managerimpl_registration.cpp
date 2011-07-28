@@ -154,7 +154,7 @@ void ManagerImpl::restartPJSIP (void)
     if (siplink) {
         _debug ("ManagerImpl::Terminate sip\n");
         siplink->terminate ();
-        siplink = SIPVoIPLink::instance ("");
+        siplink = SIPVoIPLink::instance ();
         _debug ("ManagerImpl::Init new sip\n");
         siplink->init ();
     }
@@ -176,7 +176,7 @@ VoIPLink* ManagerImpl::getAccountLink (const std::string& accountID)
 
         return 0;
     } else
-        return SIPVoIPLink::instance ("");
+        return SIPVoIPLink::instance ();
 }
 
 VoIPLink* ManagerImpl::getSIPAccountLink()
