@@ -552,8 +552,6 @@ class SIPVoIPLink : public VoIPLink
          */
         int _clients;
 
-        // The pjsip client registration information
-        pjsip_regc *_regc;
 
         friend class SIPTest;
 };

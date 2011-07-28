@@ -93,6 +93,7 @@ SIPAccount::SIPAccount (const AccountID& accountID)
     : Account (accountID, "SIP")
     , _routeSet ("")
     , _pool (NULL)
+    , _regc (NULL)
     , _bRegister (false)
     , _registrationExpire ("")
     , _interface ("default")
@@ -146,6 +147,7 @@ SIPAccount::~SIPAccount()
         dynamic_cast<SIPVoIPLink*> (_link)->decrementClients();
 
     /* Delete accounts-related information */
+    _regc = NULL;
     free_cred(_cred);
     delete _tlsSetting;
 }
@@ -659,6 +661,7 @@ int SIPAccount::unregisterVoIPLink()
 
     try {
         _link->sendUnregister (_accountID);
+        setRegistrationInfo (NULL);
     }
     catch(VoipLinkException &e) {
         _error("SIPAccount: %s", e.what());

@@ -259,6 +259,27 @@ class SIPAccount : public Account
         }
 
         /**
+         * Get the registration stucture that is used
+         * for PJSIP in the registration process.
+         * Settings are loaded from configuration file.
+         * @param void
+         * @return pjsip_regc* A pointer to the registration structure
+         */
+        pjsip_regc* getRegistrationInfo (void) const {
+            return _regc;
+        }
+
+        /**
+         * Set the registration structure that is used
+         * for PJSIP in the registration process;
+         * @pram A pointer to the new registration structure
+         * @return void
+         */
+        void setRegistrationInfo (pjsip_regc *regc) {
+            _regc = regc;
+        }
+
+        /**
          * Get the number of credentials defined for
          * this account.
          * @param none
@@ -716,6 +737,8 @@ class SIPAccount : public Account
         pj_pool_t *_pool;
 
 
+        // The pjsip client registration information
+        pjsip_regc *_regc;
         // To check if the account is registered
         bool _bRegister;
 
