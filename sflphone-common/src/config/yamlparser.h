@@ -69,10 +69,6 @@ class YamlParser
 
         ~YamlParser();
 
-        void open() throw(YamlParserException);
-
-        void close() throw(YamlParserException);
-
         void serializeEvents() throw(YamlParserException);
 
         YamlDocument *composeEvents() throw(YamlParserException);
@@ -83,28 +79,28 @@ class YamlParser
             return accountSequence;
         };
 
-        SequenceNode *getPreferenceSequence (void) {
-            return preferenceSequence;
+        MappingNode *getPreferenceNode (void) {
+            return preferenceNode;
         }
 
-        SequenceNode *getAddressbookSequence (void) {
-            return addressbookSequence;
+        MappingNode *getAddressbookNode (void) {
+            return addressbookNode;
         }
 
-        SequenceNode *getAudioSequence (void) {
-            return audioSequence;
+        MappingNode *getAudioNode (void) {
+            return audioNode;
         }
 
-        SequenceNode *getHookSequence (void) {
-            return hooksSequence;
+        MappingNode *getHookNode (void) {
+            return hooksNode;
         }
 
-        SequenceNode *getVoipPreferenceSequence (void) {
-            return voiplinkSequence;
+        MappingNode *getVoipPreferenceNode (void) {
+            return voiplinkNode;
         }
 
-        SequenceNode *getShortcutSequence (void) {
-            return shortcutSequence;
+        MappingNode *getShortcutNode (void) {
+            return shortcutNode;
         }
 
     private:
@@ -124,7 +120,7 @@ class YamlParser
 
         void processMapping (YamlNode *topNode) throw(YamlParserException);
 
-        void mainNativeDataMapping (MappingNode *map) throw(YamlParserException);
+        void mainNativeDataMapping (MappingNode *map);
 
         /**
          * Configuration file name
@@ -147,11 +143,6 @@ class YamlParser
         YamlEventVector events;
 
         /**
-         *
-         */
-        unsigned char buffer[PARSER_BUFFERSIZE];
-
-        /**
          * Number of event actually parsed
          */
         int eventNumber;
@@ -162,18 +153,17 @@ class YamlParser
 
         SequenceNode *accountSequence;
 
-        SequenceNode *preferenceSequence;
+        MappingNode *preferenceNode;
 
-        SequenceNode *addressbookSequence;
+        MappingNode *addressbookNode;
 
-        SequenceNode *audioSequence;
+        MappingNode *audioNode;
 
-        SequenceNode *hooksSequence;
+        MappingNode *hooksNode;
 
-        SequenceNode *voiplinkSequence;
+        MappingNode *voiplinkNode;
 
-        SequenceNode *shortcutSequence;
-
+        MappingNode *shortcutNode;
 };
 
 }

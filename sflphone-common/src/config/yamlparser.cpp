@@ -45,26 +45,13 @@ YamlParser::YamlParser (const char *file) : filename (file)
     , doc (NULL)
     , eventIndex (0)
     , accountSequence (NULL)
-    , preferenceSequence (NULL)
-    , addressbookSequence (NULL)
-    , audioSequence (NULL)
-    , hooksSequence (NULL)
-    , voiplinkSequence (NULL)
-    , shortcutSequence (NULL)
+    , preferenceNode (NULL)
+    , addressbookNode (NULL)
+    , audioNode (NULL)
+    , hooksNode (NULL)
+    , voiplinkNode (NULL)
+    , shortcutNode (NULL)
 {
-    memset (buffer, 0, PARSER_BUFFERSIZE);
-
-    open();
-}
-
-YamlParser::~YamlParser()
-{
-    close();
-}
-
-void YamlParser::open() throw(YamlParserException)
-{
-
     fd = fopen (filename.c_str(), "rb");
 
     if (!fd)
@@ -76,7 +63,7 @@ void YamlParser::open() throw(YamlParserException)
     yaml_parser_set_input_file (&parser, fd);
 }
 
-void YamlParser::close() throw(YamlParserException)
+YamlParser::~YamlParser()
 {
     if (!fd)
         throw YamlParserException ("File descriptor not valid");
@@ -486,46 +473,17 @@ void YamlParser::constructNativeData() throw(YamlParserException)
 }
 
 
-void YamlParser::mainNativeDataMapping (MappingNode *map) throw(YamlParserException)
+void YamlParser::mainNativeDataMapping (MappingNode *map)
 {
+	Mapping *mapping = map->getMapping();
 
-	try {
-		Mapping::iterator iter = map->getMapping()->begin();
-
-		std::string accounts ("accounts");
-		std::string addressbook ("addressbook");
-		std::string audio ("audio");
-		std::string hooks ("hooks");
-		std::string preferences ("preferences");
-		std::string voiplink ("voipPreferences");
-		std::string shortcuts ("shortcuts");
-
-		while (iter != map->getMapping()->end()) {
-
-			if (accounts.compare (iter->first) == 0) {
-				accountSequence = (SequenceNode *) (iter->second);
-			} else if (addressbook.compare (iter->first) == 0) {
-				addressbookSequence = (SequenceNode *) (iter->second);
-			} else if (audio.compare (iter->first) == 0) {
-				audioSequence = (SequenceNode *) (iter->second);
-			} else if (hooks.compare (iter->first) == 0) {
-				hooksSequence = (SequenceNode *) (iter->second);
-			} else if (preferences.compare (iter->first) == 0) {
-				preferenceSequence = (SequenceNode *) (iter->second);
-			} else if (voiplink.compare (iter->first) == 0) {
-				voiplinkSequence = (SequenceNode *) (iter->second);
-			} else if (shortcuts.compare (iter->first) == 0) {
-				shortcutSequence = (SequenceNode *) (iter->second);
-			} else {
-				throw YamlParserException ("Unknown map key in configuration");
-			}
-
-			iter++;
-		}
-	}
-	catch(YamlParserException &e) {
-		throw;
-	}
+	accountSequence	= (SequenceNode*)(*mapping)["accounts"];
+	addressbookNode = (MappingNode*)(*mapping)["addressbook"];
+	audioNode       = (MappingNode*)(*mapping)["audio"];
+	hooksNode       = (MappingNode*)(*mapping)["hooks"];
+	preferenceNode  = (MappingNode*)(*mapping)["preferences"];
+	voiplinkNode    = (MappingNode*)(*mapping)["voipPreferences"];
+	shortcutNode    = (MappingNode*)(*mapping)["shortcuts"];
 }
 
 }

@@ -31,6 +31,7 @@
 #include "preferences.h"
 #include <sstream>
 #include "global.h"
+#include <cassert>
         
 const char * const Preferences::DFT_ZONE = "North America";
 
@@ -409,13 +410,7 @@ void AudioPreference::serialize (Conf::YamlEmitter *emitter)
 
 void AudioPreference::unserialize (Conf::MappingNode *map)
 {
-    if (map == NULL) {
-        _error ("AudioPreference: Error: Preference map is NULL");
-        return;
-    }
-
-    Conf::MappingNode *alsamap = NULL;
-    Conf::MappingNode *pulsemap = NULL;
+	assert(map);
 
     map->getValue (recordpathKey, &_recordpath);
     map->getValue (alwaysRecordingKey, &_alwaysRecording);
@@ -424,7 +419,7 @@ void AudioPreference::unserialize (Conf::MappingNode *map)
     map->getValue (noiseReduceKey, &_noisereduce);
     map->getValue(echoCancelKey, &_echocancel);
 
-    alsamap = (Conf::MappingNode *) (map->getValue ("alsa"));
+    Conf::MappingNode *alsamap = (Conf::MappingNode *) (map->getValue ("alsa"));
     if (alsamap) {
     	alsamap->getValue (cardinKey, &_cardin);
 		alsamap->getValue (cardoutKey, &_cardout);
@@ -434,8 +429,7 @@ void AudioPreference::unserialize (Conf::MappingNode *map)
 		alsamap->getValue (pluginKey, &_plugin);
     }
 
-
-    pulsemap = (Conf::MappingNode *) (map->getValue ("pulse"));
+    Conf::MappingNode *pulsemap = (Conf::MappingNode *) (map->getValue ("pulse"));
     if (pulsemap) {
     	pulsemap->getValue (devicePlaybackKey, &_devicePlayback);
     	pulsemap->getValue (deviceRecordKey, &_deviceRecord);

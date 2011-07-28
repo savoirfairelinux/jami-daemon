@@ -4249,7 +4249,6 @@ void ManagerImpl::loadIptoipProfile()
 
 short ManagerImpl::loadAccountMap()
 {
-
     _debug ("Manager: Load account map");
 
     // Conf::YamlParser *parser;
@@ -4261,23 +4260,18 @@ short ManagerImpl::loadAccountMap()
     }
 
     // build preferences
-    preferences.unserialize ( (Conf::MappingNode *) (parser->getPreferenceSequence()));
-    voipPreferences.unserialize ( (Conf::MappingNode *) (parser->getVoipPreferenceSequence()));
-    addressbookPreference.unserialize ( (Conf::MappingNode *) (parser->getAddressbookSequence()));
-    hookPreference.unserialize ( (Conf::MappingNode *) (parser->getHookSequence()));
-    audioPreference.unserialize ( (Conf::MappingNode *) (parser->getAudioSequence()));
-    shortcutPreferences.unserialize ( (Conf::MappingNode *) (parser->getShortcutSequence()));
+    preferences.unserialize (parser->getPreferenceNode());
+    voipPreferences.unserialize (parser->getVoipPreferenceNode());
+    addressbookPreference.unserialize (parser->getAddressbookNode());
+    hookPreference.unserialize (parser->getHookNode());
+    audioPreference.unserialize (parser->getAudioNode());
+    shortcutPreferences.unserialize (parser->getShortcutNode());
 
     Conf::SequenceNode *seq = parser->getAccountSequence();
 
     // Each element in sequence is a new account to create
-    Conf::Sequence::iterator iterSeq = seq->getSequence()->begin();
-
-    std::string accTypeKey ("type");
-    std::string accID ("id");
-    std::string alias ("alias");
-
-    while (iterSeq != seq->getSequence()->end()) {
+    Conf::Sequence::iterator iterSeq;
+    for (iterSeq = seq->getSequence()->begin(); iterSeq != seq->getSequence()->end(); ++iterSeq) {
 
         // Pointer to the account and account preferences map
         Account *tmpAccount = NULL;
@@ -4285,19 +4279,18 @@ short ManagerImpl::loadAccountMap()
 
         // Search for account types (IAX/IP2IP)
         std::string accountType = "SIP"; // Assume type is SIP if not specified
-        map->getValue (accTypeKey, &accountType);
+        map->getValue ("type", &accountType);
 
         // search for account id
         std::string accountid;
-        map->getValue (accID, &accountid);
+        map->getValue ("id", &accountid);
 
         // search for alias (to get rid of the "ghost" account)
         std::string accountAlias;
-        map->getValue (alias, &accountAlias);
+        map->getValue ("alias", &accountAlias);
 
         // do not insert in account map if id or alias is empty
         if (accountid.empty() || accountAlias.empty()) {
-            iterSeq++;
             continue;
         }
 
@@ -4323,8 +4316,6 @@ short ManagerImpl::loadAccountMap()
             tmpAccount->setVoIPLink();
             nbAccount++;
         }
-
-        iterSeq++;
     }
 
     try {
