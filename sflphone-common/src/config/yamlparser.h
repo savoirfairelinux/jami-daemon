@@ -34,7 +34,7 @@
 #include "yamlnode.h"
 #include <yaml.h>
 #include <stdio.h>
-#include <exception>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -45,18 +45,11 @@ namespace Conf
 
 typedef std::vector<yaml_event_t> YamlEventVector;
 
-class YamlParserException : public std::exception
+class YamlParserException : public std::runtime_error
 {
     public:
-        YamlParserException (const std::string& str="") : errstr ("YamlParserException occured: " + str) {}
-
-        virtual ~YamlParserException() throw() {}
-
-        virtual const char *what() const throw() {
-            return errstr.c_str();
-        }
-    private:
-        std::string errstr;
+        YamlParserException (const std::string& str="") :
+            std::runtime_error("YamlParserException occured: " + str) {}
 };
 
 
