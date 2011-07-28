@@ -45,25 +45,27 @@ extern "C" {
 #include "manager.h"
 #include "libx264-ultrafast.ffpreset.h"
 
-namespace sfl_video {
-
-void VideoSendThread::print_error(const char *filename, int err)
+namespace
 {
-    char errbuf[128];
-    const char *errbuf_ptr = errbuf;
+    void print_error(const char *msg, int err)
+    {
+        char errbuf[128];
+        const char *errbuf_ptr = errbuf;
 
-    if (av_strerror(err, errbuf, sizeof(errbuf)) < 0)
-        errbuf_ptr = strerror(AVUNERROR(err));
-    std::cerr << filename << ":" <<  errbuf_ptr << std::endl;
-}
+        if (av_strerror(err, errbuf, sizeof(errbuf)) < 0)
+            errbuf_ptr = strerror(AVUNERROR(err));
+        _error("%s:%s", msg, errbuf_ptr);
+    }
+} // end anonymous namespace
+
+namespace sfl_video {
 
 void VideoSendThread::print_and_save_sdp()
 {
     size_t sdp_size = outputCtx_->streams[0]->codec->extradata_size + 2048;
     char *sdp = reinterpret_cast<char*>(malloc(sdp_size)); /* theora sdp can be huge */
-    std::cerr << "sdp_size: " << sdp_size << std::endl;
+    _debug("VideoSendThread:sdp_size: %d", sdp_size);
     av_sdp_create(&outputCtx_, 1, sdp, sdp_size);
-    std::ofstream sdp_file("test.sdp");
     std::istringstream iss(sdp);
     std::string line;
     sdp_ = "";
@@ -71,12 +73,9 @@ void VideoSendThread::print_and_save_sdp()
     {
         /* strip windows line ending */
         line = line.substr(0, line.length() - 1);
-        sdp_file << line << std::endl;
         sdp_ += line + "\n";
     }
-    std::cerr << sdp_ << std::endl;
-    sdp_file << std::endl;
-    sdp_file.close();
+    _debug("%s", sdp_.c_str());
     free(sdp);
     sdpReady_.signal();
 }
@@ -102,8 +101,15 @@ void VideoSendThread::prepareEncoderContext()
     encoderCtx_->max_b_frames = 0;
     encoderCtx_->rtp_payload_size = 0; // Target GOB length
     // resolution must be a multiple of two
-    encoderCtx_->width = args_["width"].empty() ? inputDecoderCtx_->width : atoi(args_["width"].c_str()); // get resolution from input
-    encoderCtx_->height = args_["height"].empty() ? inputDecoderCtx_->height : atoi(args_["height"].c_str());
+    if (args_["width"].empty())
+        encoderCtx_->width = inputDecoderCtx_->width;
+    else
+        encoderCtx_->width = atoi(args_["width"].c_str());
+
+    if (args_["height"].empty())
+        encoderCtx_->height = inputDecoderCtx_->height;
+    else
+        encoderCtx_->height = atoi(args_["height"].c_str());
 
     // fps
     encoderCtx_->time_base = (AVRational){1, 30};
@@ -124,11 +130,11 @@ void VideoSendThread::setup()
     // it's a v4l device if starting with /dev/video
     if (args_["input"].substr(0, strlen("/dev/video")) == "/dev/video")
     {
-        std::cerr << "Using v4l2 format" << std::endl;
+        _debug("%s:Using v4l2 format", __PRETTY_FUNCTION__);
         file_iformat = av_find_input_format("video4linux2");
         if (!file_iformat)
         {
-            std::cerr << "Could not find format!" << std::endl;
+            _error("Could not find format video4linux2");
             cleanupAndExit();
         }
     }
@@ -144,14 +150,14 @@ void VideoSendThread::setup()
     // Open video file
     if (avformat_open_input(&inputCtx_, args_["input"].c_str(), file_iformat, &options) != 0)
     {
-        std::cerr <<  "Could not open input file " << args_["input"] <<
-            std::endl;
+        _error("Could not open input file %s", args_["input"].c_str());
         cleanupAndExit();
     }
 
     // retrieve stream information
-    if (av_find_stream_info(inputCtx_) < 0) {
-        std::cerr << "Could not find stream info!" << std::endl;
+    if (av_find_stream_info(inputCtx_) < 0)
+    {
+        _error("Could not find stream info!");
         cleanupAndExit();
     }
 
@@ -167,7 +173,7 @@ void VideoSendThread::setup()
     }
     if (videoStreamIndex_ == -1)
     {
-        std::cerr << "Could not find video stream!" << std::endl;
+        _error("%s:Could not find video stream!", __PRETTY_FUNCTION__);
         cleanupAndExit();
     }
 
@@ -178,7 +184,7 @@ void VideoSendThread::setup()
     AVCodec *inputDecoder = avcodec_find_decoder(inputDecoderCtx_->codec_id);
     if (inputDecoder == NULL)
     {
-        std::cerr << "Unsupported codec!" << std::endl;
+        _error("%s:Unsupported codec!", __PRETTY_FUNCTION__);
         cleanupAndExit();
     }
 
@@ -188,7 +194,7 @@ void VideoSendThread::setup()
     Manager::instance().avcodecUnlock();
     if (ret < 0)
     {
-        std::cerr << "Could not open codec!" << std::endl;
+        _error("%s:Could not open codec!", __PRETTY_FUNCTION__);
         cleanupAndExit();
     }
 
@@ -197,20 +203,20 @@ void VideoSendThread::setup()
     AVOutputFormat *file_oformat = av_guess_format("rtp", args_["destination"].c_str(), NULL);
     if (!file_oformat)
     {
-        std::cerr << "Unable to find a suitable output format for " <<
-            args_["destination"] << std::endl;
+        _error("Unable to find a suitable output format for %s",
+            args_["destination"].c_str());
         cleanupAndExit();
     }
     outputCtx_->oformat = file_oformat;
     strncpy(outputCtx_->filename, args_["destination"].c_str(),
-            sizeof(outputCtx_->filename));
+            sizeof outputCtx_->filename);
 
     AVCodec *encoder = 0;
     /* find the video encoder */
     encoder = avcodec_find_encoder_by_name(args_["codec"].c_str());
     if (encoder == 0)
     {
-        std::cerr << "encoder not found" << std::endl;
+        _error("%s:Encoder not found!", __PRETTY_FUNCTION__);
         cleanupAndExit();
     }
 
@@ -228,7 +234,7 @@ void VideoSendThread::setup()
     Manager::instance().avcodecUnlock();
     if (ret < 0)
     {
-        std::cerr << "Could not open encoder" << std::endl;
+        _error("%s:Could not open encoder!", __PRETTY_FUNCTION__);
         cleanupAndExit();
     }
 
@@ -236,7 +242,7 @@ void VideoSendThread::setup()
     videoStream_ = av_new_stream(outputCtx_, 0);
     if (videoStream_ == 0)
     {
-        std::cerr << "Could not alloc stream" << std::endl;
+        _error("%s:Could not alloc stream!", __PRETTY_FUNCTION__);
         cleanupAndExit();
     }
     videoStream_->codec = encoderCtx_;
@@ -246,13 +252,12 @@ void VideoSendThread::setup()
     {
         if (avio_open(&outputCtx_->pb, outputCtx_->filename, AVIO_FLAG_WRITE) < 0)
         {
-            std::cerr << "Could not open '" << outputCtx_->filename << "'" <<
-                std::endl;
+            _error("%s:Could not open \"%s\"!", outputCtx_->filename);
             cleanupAndExit();
         }
     }
     else
-        std::cerr << "No need to open" << std::endl;
+        _debug("No need to open \"%s\"", outputCtx_->filename);
 
     av_dump_format(outputCtx_, 0, outputCtx_->filename, 1);
     print_and_save_sdp();
@@ -260,8 +265,8 @@ void VideoSendThread::setup()
     // write the stream header, if any
     if (avformat_write_header(outputCtx_, NULL) < 0)
     {
-        std::cerr << "Could not write header for output file (incorrect codec "
-            << "parameters ?)" << std::endl;
+        _error("%s:Could not write header for output file (incorrect codec "
+            "parameters ?)", __PRETTY_FUNCTION__);
         cleanupAndExit();
     }
 
@@ -290,6 +295,7 @@ void VideoSendThread::cleanupAndExit()
 
 void VideoSendThread::cleanup()
 {
+    _debug("%s", __PRETTY_FUNCTION__);
     // make sure no one is waiting for the SDP which will never come if we've
     // error'd out
     sdpReady_.signal();
@@ -339,7 +345,7 @@ SwsContext * VideoSendThread::createScalingContext()
             NULL, NULL, NULL);
     if (imgConvertCtx == 0)
     {
-        std::cerr << "Cannot init the conversion context!" << std::endl;
+        _error("%s:Cannot init the conversion context!", __PRETTY_FUNCTION__);
         cleanupAndExit();
     }
     return imgConvertCtx;

@@ -136,7 +136,7 @@ void VideoRtpSession::start()
 
 void VideoRtpSession::stop()
 {
-    _debug(__PRETTY_FUNCTION__);
+    _debug("%s", __PRETTY_FUNCTION__);
     if (receiveThread_.get())
         receiveThread_.reset();
 

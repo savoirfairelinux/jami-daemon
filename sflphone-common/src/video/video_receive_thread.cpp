@@ -90,7 +90,7 @@ int createSemSet(int shmKey, int *semKey)
     /* whose counter is initialized to '0'.                     */
     sem_set_id = semget(key, 1, 0600 | IPC_CREAT);
     if (sem_set_id == -1) {
-        perror("semget");
+        _error("%s:semget:%m", __PRETTY_FUNCTION__);
         exit(1);
     }
 
@@ -139,7 +139,7 @@ int createShm(unsigned numBytes, int *shmKey)
     shm_id = shmget(key, numBytes, 0644 | IPC_CREAT);
 
     if (shm_id == -1)
-        perror("shmget");
+        _error("%s:shmget:%m", __PRETTY_FUNCTION__);
 
     return shm_id;
 }
@@ -152,7 +152,7 @@ uint8_t *attachShm(int shm_id)
     /* attach to the segment and get a pointer to it */
     data = reinterpret_cast<uint8_t*>(shmat(shm_id, (void *)0, 0));
     if (data == (uint8_t *)(-1)) {
-        perror("shmat");
+        _error("%s:shmat:%m", __PRETTY_FUNCTION__);
         data = NULL;
     }
 
@@ -162,9 +162,8 @@ uint8_t *attachShm(int shm_id)
 void detachShm(uint8_t *data)
 {
     /* detach from the segment: */
-    if (shmdt(data) == -1) {
-        perror("shmdt");
-    }
+    if (shmdt(data) == -1)
+        _error("%s:shmdt:%m", __PRETTY_FUNCTION__);
 }
 
 void destroyShm(int shm_id)
@@ -218,6 +217,8 @@ void VideoReceiveThread::loadSDP()
     sdpFilename_ = openTemp("/tmp", os);
 
     os << args_["receiving_sdp"];
+    _debug("%s:loaded SDP %s", __PRETTY_FUNCTION__,
+            args_["receiving_sdp"].c_str());
 
     os.close();
 }
@@ -232,8 +233,8 @@ void VideoReceiveThread::setup()
     format_ = av_get_pix_fmt(args_["format"].c_str());
     if (format_ == -1)
     {
-        std::cerr << "Couldn't find a pixel format for `" << args_["format"]
-            << "'" << std::endl;
+        _error("%s:Couldn't find a pixel format for \"%s\"",
+                __PRETTY_FUNCTION__, args_["format"].c_str());
         cleanupAndExit();
     }
 
@@ -241,9 +242,6 @@ void VideoReceiveThread::setup()
 
     if (!test_source_)
     {
-        // it's a v4l device if starting with /dev/video
-        // FIXME: This is not the most robust way of checking if we mean to use a
-        // v4l device
         if (args_["input"].empty())
         {
             loadSDP();
@@ -251,17 +249,20 @@ void VideoReceiveThread::setup()
             file_iformat = av_find_input_format("sdp");
             if (!file_iformat)
             {
-                std::cerr << "Could not find format!" << std::endl;
+                _error("%s:Could not find format \"sdp\"", __PRETTY_FUNCTION__);
                 cleanupAndExit();
             }
         }
         else if (args_["input"].substr(0, strlen("/dev/video")) == "/dev/video")
         {
-            std::cerr << "Using v4l2 format" << std::endl;
+            // it's a v4l device if starting with /dev/video
+            // FIXME: This is not the most robust way of checking if we mean to use a
+            // v4l device
+            _debug("Using v4l2 format");
             file_iformat = av_find_input_format("video4linux2");
             if (!file_iformat)
             {
-                std::cerr << "Could not find format!" << std::endl;
+                _error("%s:Could not find format!", __PRETTY_FUNCTION__);
                 cleanupAndExit();
             }
         }
@@ -277,15 +278,15 @@ void VideoReceiveThread::setup()
         // Open video file
         if (avformat_open_input(&inputCtx_, args_["input"].c_str(), file_iformat, &options) != 0)
         {
-            std::cerr <<  "Could not open input file \"" << args_["input"] <<
-                "\"" << std::endl;
+            _error("%s:Could not open input file \"%s\"", __PRETTY_FUNCTION__,
+                    args_["input"].c_str());
             cleanupAndExit();
         }
 
         // retrieve stream information
         if (av_find_stream_info(inputCtx_) < 0)
         {
-            std::cerr << "Could not find stream info!" << std::endl;
+            _error("%s:Could not find stream info!", __PRETTY_FUNCTION__);
             cleanupAndExit();
         }
 
@@ -301,7 +302,7 @@ void VideoReceiveThread::setup()
         }
         if (videoStreamIndex_ == -1)
         {
-            std::cerr << "Could not find video stream!" << std::endl;
+            _error("%s:Could not find video stream!", __PRETTY_FUNCTION__);
             cleanupAndExit();
         }
 
@@ -312,7 +313,7 @@ void VideoReceiveThread::setup()
         AVCodec *inputDecoder = avcodec_find_decoder(decoderCtx_->codec_id);
         if (inputDecoder == NULL)
         {
-            std::cerr << "Unsupported codec!" << std::endl;
+            _error("%s:Unsupported codec!", __PRETTY_FUNCTION__);
             cleanupAndExit();
         }
 
@@ -322,7 +323,7 @@ void VideoReceiveThread::setup()
         Manager::instance().avcodecUnlock();
         if (ret < 0)
         {
-            std::cerr << "Could not open codec!" << std::endl;
+            _error("%s:Could not open codec!", __PRETTY_FUNCTION__);
             cleanupAndExit();
         }
     }
@@ -330,7 +331,7 @@ void VideoReceiveThread::setup()
     scaledPicture_ = avcodec_alloc_frame();
     if (scaledPicture_ == 0)
     {
-        std::cerr << "Could not allocated output frame!" << std::endl;
+        _error("%s:Could not allocated output frame!", __PRETTY_FUNCTION__);
         cleanupAndExit();
     }
 
@@ -367,6 +368,7 @@ void VideoReceiveThread::waitForShm()
 
 void VideoReceiveThread::cleanup()
 {
+    _debug("%s", __PRETTY_FUNCTION__);
     // make sure no one is waiting for the SHM event which will never come if we've
     // error'd out
     shmReady_.signal();
@@ -402,7 +404,7 @@ SwsContext * VideoReceiveThread::createScalingContext()
             NULL, NULL, NULL);
     if (imgConvertCtx == 0)
     {
-        std::cerr << "Cannot init the conversion context!" << std::endl;
+        _error("Cannot init the conversion context!");
         cleanupAndExit();
     }
     return imgConvertCtx;
