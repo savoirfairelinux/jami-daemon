@@ -48,6 +48,8 @@ class IAXCall;
 class AudioCodec;
 class AudioLayer;
 
+class IAXAccount;
+
 /**
  * @file iaxvoiplink.h
  * @brief VoIPLink contains a thread that listen to external events
@@ -218,7 +220,7 @@ class IAXVoIPLink : public VoIPLink
 
     private:
 
-        Account* getAccountPtr (void);
+        IAXAccount* getAccountPtr (void);
 
         /*
          * Decode the message count IAX send.

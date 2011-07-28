@@ -427,7 +427,7 @@ IAXVoIPLink::sendRegister (std::string id UNUSED) throw(VoipLinkException)
 {
     _debug ("IAX: Sending registration");
 
-    IAXAccount *account = dynamic_cast<IAXAccount *> (getAccountPtr());
+    IAXAccount *account = getAccountPtr();
 
     if (!account) {
     	throw VoipLinkException("Account is NULL in send register");
@@ -473,7 +473,7 @@ IAXVoIPLink::sendUnregister (std::string id UNUSED) throw(VoipLinkException)
 {
     _debug ("IAXVoipLink: Send unregister");
 
-    IAXAccount *account = dynamic_cast<IAXAccount*> (getAccountPtr());
+    IAXAccount *account = getAccountPtr();
 
     if (!account) {
         throw VoipLinkException("Account is NULL in send unregister");
@@ -759,7 +759,7 @@ IAXVoIPLink::iaxOutgoingInvite (IAXCall* call)
 
     call->setSession (newsession);
 
-    account = dynamic_cast<IAXAccount*> (getAccountPtr());
+    account = getAccountPtr();
     username = account->getUsername();
     strNum = username + ":" + account->getPassword() + "@" + account->getHostname() + "/" + call->getPeerNumber();
 
@@ -1248,7 +1248,7 @@ void IAXVoIPLink::updateAudiolayer (void)
     _mutexIAX.leaveMutex();
 }
 
-Account* IAXVoIPLink::getAccountPtr (void)
+IAXAccount* IAXVoIPLink::getAccountPtr (void)
 {
-    return Manager::instance().getAccount (_accountID);
+    return dynamic_cast<IAXAccount *> (Manager::instance().getAccount (_accountID));
 }
