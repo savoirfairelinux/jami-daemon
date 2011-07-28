@@ -34,7 +34,7 @@
 #ifndef __AUDIOFILE_H__
 #define __AUDIOFILE_H__
 
-#include <exception>
+#include <stdexcept>
 #include <fstream>
 
 #include "audio/audioloop.h"
@@ -43,22 +43,11 @@ namespace sfl {
 class AudioCodec;
 }
 
-class AudioFileException : public std::exception
+class AudioFileException : public std::runtime_error
 {
 public:
-    AudioFileException (const std::string& str="") throw() : errstr(str) {}
-
-    virtual ~AudioFileException() throw() {}
-
-    virtual const char *what() const throw() {
-        std::string expt("AudioFile: AudioFileException occured: ");
-        expt.append(errstr);
-        return expt.c_str();
-    }
-
-private:
-    std::string errstr;
-
+    AudioFileException (const std::string& str="") :
+        std::runtime_error("AudioFile: AudioFileException occured: " + str) {}
 };
 
 /**
