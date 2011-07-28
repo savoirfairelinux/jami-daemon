@@ -95,13 +95,13 @@ void MappingNode::addNode (YamlNode *node)
     map.insert (it, std::pair<std::string, YamlNode *> (tmpKey, node));
 }
 
-void MappingNode::setKeyValue (std::string key, YamlNode *value)
+void MappingNode::setKeyValue (const std::string &key, YamlNode *value)
 {
     Mapping::iterator it = map.end();
     map.insert (it, std::pair<std::string, YamlNode *> (key, value));
 }
 
-void MappingNode::removeKeyValue (std::string key)
+void MappingNode::removeKeyValue (const std::string &key)
 {
 
     Mapping::iterator it = map.find (key);
@@ -109,7 +109,7 @@ void MappingNode::removeKeyValue (std::string key)
 }
 
 
-YamlNode *MappingNode::getValue (std::string key)
+YamlNode *MappingNode::getValue (const std::string &key)
 {
 
     Mapping::iterator it = map.find (key);
@@ -122,7 +122,7 @@ YamlNode *MappingNode::getValue (std::string key)
     }
 }
 
-void MappingNode::getValue (std::string key, bool *b)
+void MappingNode::getValue (const std::string &key, bool *b)
 {
 	ScalarNode *node = (ScalarNode*)getValue(key);
 	if (!node)
@@ -132,7 +132,7 @@ void MappingNode::getValue (std::string key, bool *b)
 	*b = v == "true";
 }
 
-void MappingNode::getValue (std::string key, int *i)
+void MappingNode::getValue (const std::string &key, int *i)
 {
 	ScalarNode *node = (ScalarNode*)getValue(key);
 	if (!node)
@@ -142,7 +142,7 @@ void MappingNode::getValue (std::string key, int *i)
 	*i = atoi(v.c_str());
 }
 
-void MappingNode::getValue (std::string key, std::string *v)
+void MappingNode::getValue (const std::string &key, std::string *v)
 {
 	ScalarNode *node = (ScalarNode*)getValue(key);
 	if (!node)

@@ -143,14 +143,14 @@ class MappingNode : public YamlNode
             tmpKey = key;
         }
 
-        void  setKeyValue (std::string key, YamlNode *value);
+        void  setKeyValue (const std::string &key, YamlNode *value);
 
-        void removeKeyValue (std::string key);
+        void removeKeyValue (const std::string &key);
 
-        YamlNode *getValue (std::string key);
-        void getValue (std::string key, bool *b);
-        void getValue (std::string key, int *i);
-        void getValue (std::string key, std::string *s);
+        YamlNode *getValue (const std::string &key);
+        void getValue (const std::string &key, bool *b);
+        void getValue (const std::string &key, int *i);
+        void getValue (const std::string &key, std::string *s);
 
         virtual void deleteChildNodes (void);
 
