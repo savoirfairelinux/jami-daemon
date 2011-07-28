@@ -165,6 +165,7 @@ void SIPAccount::serialize (Conf::YamlEmitter *emitter)
 
     Conf::ScalarNode id (Account::_accountID);
     Conf::ScalarNode username (Account::_username);
+    Conf::ScalarNode authenticationUsername (_authenticationUsername);
     Conf::ScalarNode password (Account::_password);
     Conf::ScalarNode alias (Account::_alias);
     Conf::ScalarNode hostname (Account::_hostname);
@@ -223,6 +224,7 @@ void SIPAccount::serialize (Conf::YamlEmitter *emitter)
     accountmap.setKeyValue (typeKey, &type);
     accountmap.setKeyValue (idKey, &id);
     accountmap.setKeyValue (usernameKey, &username);
+    accountmap.setKeyValue (authenticationUsernameKey, &authenticationUsername);
     accountmap.setKeyValue (passwordKey, &password);
     accountmap.setKeyValue (hostnameKey, &hostname);
     accountmap.setKeyValue (accountEnableKey, &enable);
@@ -294,6 +296,7 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
     map->getValue(typeKey, &_type);
     map->getValue(idKey, &_accountID);
     map->getValue(usernameKey, &_username);
+    map->getValue(authenticationUsernameKey, &_authenticationUsername);
     map->getValue(passwordKey, &_password);
     map->getValue(hostnameKey, &_hostname);
     map->getValue(accountEnableKey, &_enabled);

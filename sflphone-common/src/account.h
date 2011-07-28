@@ -139,6 +139,7 @@ const std::string aliasKey ("alias");
 const std::string typeKey ("type");
 const std::string idKey ("id");
 const std::string usernameKey ("username");
+const std::string authenticationUsernameKey ("authenticationUsername");
 const std::string passwordKey ("password");
 const std::string hostnameKey ("hostname");
 const std::string accountEnableKey ("enable");
