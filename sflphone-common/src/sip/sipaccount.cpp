@@ -467,28 +467,23 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 {
     std::map<std::string, std::string> a;
 
-    a.insert (std::pair<std::string, std::string> (ACCOUNT_ID, _accountID));
+    a[ACCOUNT_ID] = _accountID;
     // The IP profile does not allow to set an alias
-    (_accountID == IP2IP_PROFILE) ?
-        a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ALIAS, IP2IP_PROFILE)) :
-        a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ALIAS, getAlias()));
+    a[CONFIG_ACCOUNT_ALIAS] = (_accountID == IP2IP_PROFILE) ? IP2IP_PROFILE : getAlias();
 
-    a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ENABLE, isEnabled() ? "true" : "false"));
-    a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_TYPE, getType()));
-    a.insert (std::pair<std::string, std::string> (HOSTNAME, getHostname()));
-    a.insert (std::pair<std::string, std::string> (USERNAME, getUsername()));
-    a.insert (std::pair<std::string, std::string> (PASSWORD, getPassword()));
+    a[CONFIG_ACCOUNT_ENABLE] = isEnabled() ? "true" : "false";
+    a[CONFIG_ACCOUNT_TYPE] = getType();
+    a[HOSTNAME] = getHostname();
+    a[USERNAME] = getUsername();
+    a[PASSWORD] = getPassword();
 
-    a.insert (std::pair<std::string, std::string> (CONFIG_RINGTONE_PATH, getRingtonePath()));
-    a.insert (std::pair<std::string, std::string> (CONFIG_RINGTONE_ENABLED, getRingtoneEnabled() ? "true" : "false"));
-
-    a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_MAILBOX, getMailBox()));
-
+    a[CONFIG_RINGTONE_PATH] = getRingtonePath();
+    a[CONFIG_RINGTONE_ENABLED] = getRingtoneEnabled() ? "true" : "false";
+    a[CONFIG_ACCOUNT_MAILBOX] = getMailBox();
 
     RegistrationState state = Unregistered;
     std::string registrationStateCode;
     std::string registrationStateDescription;
-
 
     if (_accountID == IP2IP_PROFILE) {
         registrationStateCode = ""; // emtpy field
@@ -502,61 +497,57 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
         registrationStateDescription = getRegistrationStateDetailed().second;
     }
 
-
-    (_accountID == IP2IP_PROFILE) ?
-        a.insert (std::pair<std::string, std::string> (REGISTRATION_STATUS, "READY")) :
-        a.insert (std::pair<std::string, std::string> (REGISTRATION_STATUS, Manager::instance().mapStateNumberToString (state)));
-
-    a.insert (std::pair<std::string, std::string> (REGISTRATION_STATE_CODE, registrationStateCode));
-    a.insert (std::pair<std::string, std::string> (REGISTRATION_STATE_DESCRIPTION, registrationStateDescription));
+    a[REGISTRATION_STATUS] = (_accountID == IP2IP_PROFILE) ? "READY": Manager::instance().mapStateNumberToString (state);
+    a[REGISTRATION_STATE_CODE] = registrationStateCode;
+    a[REGISTRATION_STATE_DESCRIPTION] = registrationStateDescription;
 
     // Add sip specific details
-    a.insert (std::pair<std::string, std::string> (ROUTESET, getServiceRoute()));
-    a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_RESOLVE_ONCE, isResolveOnce() ? "true" : "false"));
-    a.insert (std::pair<std::string, std::string> (REALM, _realm));
-    a.insert (std::pair<std::string, std::string> (USERAGENT, getUseragent()));
+    a[ROUTESET] = getServiceRoute();
+    a[CONFIG_ACCOUNT_RESOLVE_ONCE] = isResolveOnce() ? "true" : "false";
+    a[REALM] = _realm;
+    a[USERAGENT] = getUseragent();
 
-    a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_REGISTRATION_EXPIRE, getRegistrationExpire()));
-    a.insert (std::pair<std::string, std::string> (LOCAL_INTERFACE, getLocalInterface()));
-    a.insert (std::pair<std::string, std::string> (PUBLISHED_SAMEAS_LOCAL, getPublishedSameasLocal() ? "true" : "false"));
-    a.insert (std::pair<std::string, std::string> (PUBLISHED_ADDRESS, getPublishedAddress()));
+    a[CONFIG_ACCOUNT_REGISTRATION_EXPIRE] = getRegistrationExpire();
+    a[LOCAL_INTERFACE] = getLocalInterface();
+    a[PUBLISHED_SAMEAS_LOCAL] = getPublishedSameasLocal() ? "true" : "false";
+    a[PUBLISHED_ADDRESS] = getPublishedAddress();
 
     std::stringstream localport;
     localport << getLocalPort();
-    a.insert (std::pair<std::string, std::string> (LOCAL_PORT, localport.str()));
+    a[LOCAL_PORT] = localport.str();
     std::stringstream publishedport;
     publishedport << getPublishedPort();
-    a.insert (std::pair<std::string, std::string> (PUBLISHED_PORT, publishedport.str()));
-    a.insert (std::pair<std::string, std::string> (STUN_ENABLE, isStunEnabled() ? "true" : "false"));
-    a.insert (std::pair<std::string, std::string> (STUN_SERVER, getStunServer()));
-    a.insert (std::pair<std::string, std::string> (ACCOUNT_DTMF_TYPE, (getDtmfType() == OVERRTP) ? "overrtp" : "sipinfo"));
+    a[PUBLISHED_PORT] = publishedport.str();
+    a[STUN_ENABLE] = isStunEnabled() ? "true" : "false";
+    a[STUN_SERVER] = getStunServer();
+    a[ACCOUNT_DTMF_TYPE] = (getDtmfType() == OVERRTP) ? "overrtp" : "sipinfo";
 
-    a.insert (std::pair<std::string, std::string> (SRTP_KEY_EXCHANGE, getSrtpKeyExchange()));
-    a.insert (std::pair<std::string, std::string> (SRTP_ENABLE, getSrtpEnable() ? "true" : "false"));
-    a.insert (std::pair<std::string, std::string> (SRTP_RTP_FALLBACK, getSrtpFallback() ? "true" : "false"));
+    a[SRTP_KEY_EXCHANGE] = getSrtpKeyExchange();
+    a[SRTP_ENABLE] = getSrtpEnable() ? "true" : "false";
+    a[SRTP_RTP_FALLBACK] = getSrtpFallback() ? "true" : "false";
 
-    a.insert (std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS, getZrtpDisplaySas() ? "true" : "false"));
-    a.insert (std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS_ONCE, getZrtpDiaplaySasOnce() ? "true" : "false"));
-    a.insert (std::pair<std::string, std::string> (ZRTP_HELLO_HASH, getZrtpHelloHash() ? "true" : "false"));
-    a.insert (std::pair<std::string, std::string> (ZRTP_NOT_SUPP_WARNING, getZrtpNotSuppWarning() ? "true" : "false"));
+    a[ZRTP_DISPLAY_SAS] = getZrtpDisplaySas() ? "true" : "false";
+    a[ZRTP_DISPLAY_SAS_ONCE] = getZrtpDiaplaySasOnce() ? "true" : "false";
+    a[ZRTP_HELLO_HASH] = getZrtpHelloHash() ? "true" : "false";
+    a[ZRTP_NOT_SUPP_WARNING] = getZrtpNotSuppWarning() ? "true" : "false";
 
     // TLS listener is unique and parameters are modified through IP2IP_PROFILE
     std::stringstream tlslistenerport;
     tlslistenerport << getTlsListenerPort();
-    a.insert (std::pair<std::string, std::string> (TLS_LISTENER_PORT, tlslistenerport.str()));
-    a.insert (std::pair<std::string, std::string> (TLS_ENABLE, getTlsEnable()));
-    a.insert (std::pair<std::string, std::string> (TLS_CA_LIST_FILE, getTlsCaListFile()));
-    a.insert (std::pair<std::string, std::string> (TLS_CERTIFICATE_FILE, getTlsCertificateFile()));
-    a.insert (std::pair<std::string, std::string> (TLS_PRIVATE_KEY_FILE, getTlsPrivateKeyFile()));
-    a.insert (std::pair<std::string, std::string> (TLS_PASSWORD, getTlsPassword()));
-    a.insert (std::pair<std::string, std::string> (TLS_METHOD, getTlsMethod()));
-    a.insert (std::pair<std::string, std::string> (TLS_CIPHERS, getTlsCiphers()));
-    a.insert (std::pair<std::string, std::string> (TLS_SERVER_NAME, getTlsServerName()));
-    a.insert (std::pair<std::string, std::string> (TLS_VERIFY_SERVER, getTlsVerifyServer() ? "true" : "false"));
-    a.insert (std::pair<std::string, std::string> (TLS_VERIFY_CLIENT, getTlsVerifyClient() ? "true" : "false"));
-    a.insert (std::pair<std::string, std::string> (TLS_REQUIRE_CLIENT_CERTIFICATE, getTlsRequireClientCertificate() ? "true" : "false"));
-    a.insert (std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_SEC, getTlsNegotiationTimeoutSec()));
-    a.insert (std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_MSEC, getTlsNegotiationTimeoutMsec()));
+    a[TLS_LISTENER_PORT] = tlslistenerport.str();
+    a[TLS_ENABLE] = getTlsEnable();
+    a[TLS_CA_LIST_FILE] = getTlsCaListFile();
+    a[TLS_CERTIFICATE_FILE] = getTlsCertificateFile();
+    a[TLS_PRIVATE_KEY_FILE] = getTlsPrivateKeyFile();
+    a[TLS_PASSWORD] = getTlsPassword();
+    a[TLS_METHOD] = getTlsMethod();
+    a[TLS_CIPHERS] = getTlsCiphers();
+    a[TLS_SERVER_NAME] = getTlsServerName();
+    a[TLS_VERIFY_SERVER] = getTlsVerifyServer() ? "true" : "false";
+    a[TLS_VERIFY_CLIENT] = getTlsVerifyClient() ? "true" : "false";
+    a[TLS_REQUIRE_CLIENT_CERTIFICATE] = getTlsRequireClientCertificate() ? "true" : "false";
+    a[TLS_NEGOTIATION_TIMEOUT_SEC] = getTlsNegotiationTimeoutSec();
+    a[TLS_NEGOTIATION_TIMEOUT_MSEC] = getTlsNegotiationTimeoutMsec();
 
     return a;
 }
