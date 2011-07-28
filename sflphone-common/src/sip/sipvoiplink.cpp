@@ -1663,15 +1663,6 @@ SIPVoIPLink::SIPCallServerFailure (SIPCall *call)
         CallID id = call->getCallId();
         Manager::instance().callFailure (id);
         removeCall (id);
-
-        if (call->getAudioRtp ()) {
-            call->getAudioRtp()->stop();
-        }
-
-        if (call->getVideoRtp ()) {
-            _debug ("UserAgent: stopping video RTP Session");
-            call->getVideoRtp()->stop();
-        }
     }
 }
 
@@ -1695,7 +1686,6 @@ SIPVoIPLink::SIPCallClosed (SIPCall *call)
 
     Manager::instance().peerHungupCall (id);
     removeCall (id);
-
 }
 
 void

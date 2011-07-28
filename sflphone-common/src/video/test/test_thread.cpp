@@ -21,9 +21,9 @@ class CancellableBusyThread : public ost::Thread {
 
         virtual void final()
         {
-            std::cout << __PRETTY_FUNCTION__ << std::endl;
             delete x_;
             x_ = 0;
+            std::cout << __PRETTY_FUNCTION__ << std::endl;
         }
 
         /* terminate() should always be called at the start of any

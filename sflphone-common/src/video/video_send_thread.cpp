@@ -304,19 +304,34 @@ void VideoSendThread::cleanup()
     // header; otherwise write_trailer may try to use memory that
     // was freed on av_codec_close()
     if (outputCtx_ and outputCtx_->priv_data)
+    {
         av_write_trailer(outputCtx_);
+        outputCtx_ = 0;
+    }
 
     if (scaledPictureBuf_)
+    {
         av_free(scaledPictureBuf_);
+        scaledPictureBuf_ = 0;
+    }
     if (outbuf_)
+    {
         av_free(outbuf_);
+        outbuf_ = 0;
+    }
 
     // free the scaled frame
     if (scaledPicture_)
+    {
         av_free(scaledPicture_);
+        scaledPicture_ = 0;
+    }
     // free the YUV frame
     if (rawFrame_)
+    {
         av_free(rawFrame_);
+        rawFrame_ = 0;
+    }
 
     // close the codecs
     Manager::instance().avcodecLock();
@@ -324,16 +339,23 @@ void VideoSendThread::cleanup()
     {
         avcodec_close(encoderCtx_);
         av_freep(&encoderCtx_);
+        encoderCtx_ = 0;
     }
 
     // doesn't need to be freed, we didn't use avcodec_alloc_context
     if (inputDecoderCtx_)
+    {
         avcodec_close(inputDecoderCtx_);
+        inputDecoderCtx_ = 0;
+    }
     Manager::instance().avcodecUnlock();
 
     // close the video file
     if (inputCtx_)
+    {
         av_close_input_file(inputCtx_);
+        inputCtx_ = 0;
+    }
 }
 
 SwsContext * VideoSendThread::createScalingContext()

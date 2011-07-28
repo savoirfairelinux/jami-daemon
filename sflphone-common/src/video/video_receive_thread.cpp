@@ -375,24 +375,38 @@ void VideoReceiveThread::cleanup()
     // free shared memory
     cleanupSemaphore(semSetID_);
     cleanupShm(shmID_, shmBuffer_);
+    semSetID_ = -1;
+    shmID_ = -1;
+    shmBuffer_ = 0;
 
     // free the scaled frame
     if (scaledPicture_)
+    {
         av_free(scaledPicture_);
+        scaledPicture_ = 0;
+    }
     // free the YUV frame
     if (rawFrame_)
+    {
         av_free(rawFrame_);
+        rawFrame_ = 0;
+    }
 
     // doesn't need to be freed, we didn't use avcodec_alloc_context
-    if (decoderCtx_) {
+    if (decoderCtx_)
+    {
         Manager::instance().avcodecLock();
         avcodec_close(decoderCtx_);
         Manager::instance().avcodecUnlock();
+        decoderCtx_ = 0;
     }
 
     // close the video file
     if (inputCtx_)
+    {
         av_close_input_file(inputCtx_);
+        inputCtx_ = 0;
+    }
 }
 
 SwsContext * VideoReceiveThread::createScalingContext()
