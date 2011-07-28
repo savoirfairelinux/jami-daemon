@@ -32,7 +32,7 @@
 #define __YAMLEMITTER_H__
 
 #include <yaml.h>
-#include <exception>
+#include <stdexcept>
 #include <string>
 #include "yamlnode.h"
 
@@ -42,22 +42,11 @@ namespace Conf
 #define EMITTER_BUFFERSIZE 65536
 #define EMITTER_MAXEVENT 1024
 
-class YamlEmitterException : public std::exception
+class YamlEmitterException : public std::runtime_error
 {
     public:
-        YamlEmitterException (const std::string& str="") throw() : errstr (str) {}
-
-        virtual ~YamlEmitterException() throw() {}
-
-        virtual const char *what() const throw() {
-            std::string expt ("YamlParserException occured: ");
-            expt.append (errstr);
-
-            return expt.c_str();
-        }
-    private:
-        std::string errstr;
-
+        YamlEmitterException (const std::string& str="") :
+            std::runtime_error("YamlParserException occured: " + str) {}
 };
 
 class YamlEmitter
