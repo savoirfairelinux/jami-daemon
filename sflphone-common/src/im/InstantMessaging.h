@@ -45,7 +45,7 @@
 
 #include <map>
 #include <list>
-#include <exception>
+#include <stdexcept>
 
 #include <iax-client.h>
 
@@ -65,21 +65,11 @@ namespace sfl
 const std::string IM_XML_URI ("uri");
 const std::string BOUNDARY ("--boundary");
 
-class InstantMessageException : public std::exception
+class InstantMessageException : public std::runtime_error
 {
     public:
-        InstantMessageException (const std::string& str="") throw() : errstr (str) {}
-
-        virtual ~InstantMessageException() throw() {}
-
-        virtual const char *what() const throw() {
-            std::string expt ("InstantMessageException occured: ");
-            expt.append (errstr);
-
-            return expt.c_str();
-        }
-    private:
-        std::string errstr;
+        InstantMessageException (const std::string& str="") :
+            std::runtime_error("InstantMessageException occured: " + str) {}
 };
 
 class InstantMessaging
