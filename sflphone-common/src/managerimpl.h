@@ -1445,8 +1445,6 @@ class ManagerImpl
          */
         VoIPLink* getAccountLink (const std::string& accountID="");
 
-        VoIPLink* getSIPAccountLink (void);
-
         std::string getAccountIdFromNameAndServer (const std::string& userName, const std::string& server);
 
         int getLocalIp2IpPort();

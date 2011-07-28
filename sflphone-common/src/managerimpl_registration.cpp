@@ -139,25 +139,17 @@ ManagerImpl::initRegisterAccounts()
 void ManagerImpl::restartPJSIP (void)
 {
     _debug ("ManagerImpl::restartPJSIP\n");
-    VoIPLink *link = getSIPAccountLink();
-    SIPVoIPLink *siplink = NULL;
-
-    if (link) {
-        siplink = dynamic_cast<SIPVoIPLink*> (getSIPAccountLink ());
-    }
-
+    SIPVoIPLink *siplink = SIPVoIPLink::instance ();
     _debug ("ManagerImpl::unregister sip account\n");
 
     this->unregisterCurSIPAccounts();
     /* Terminate and initialize the PJSIP library */
 
-    if (siplink) {
-        _debug ("ManagerImpl::Terminate sip\n");
-        siplink->terminate ();
-        siplink = SIPVoIPLink::instance ();
-        _debug ("ManagerImpl::Init new sip\n");
-        siplink->init ();
-    }
+	_debug ("ManagerImpl::Terminate sip\n");
+	siplink->terminate ();
+	siplink = SIPVoIPLink::instance ();
+	_debug ("ManagerImpl::Init new sip\n");
+	siplink->init ();
 
     _debug ("ManagerImpl::register sip account\n");
 
@@ -177,26 +169,6 @@ VoIPLink* ManagerImpl::getAccountLink (const std::string& accountID)
         return 0;
     } else
         return SIPVoIPLink::instance ();
-}
-
-VoIPLink* ManagerImpl::getSIPAccountLink()
-{
-    /* We are looking for the first SIP account we met because all the SIP accounts have the same voiplink */
-    Account *account;
-    AccountMap::iterator iter = _accountMap.begin();
-
-    while (iter != _accountMap.end()) {
-
-        account = iter->second;
-
-        if (account->getType() == "sip") {
-            return account->getVoIPLink();
-        }
-
-        ++iter;
-    }
-
-    return NULL;
 }
 
 pjsip_regc *getSipRegcFromID (const std::string& id UNUSED)
