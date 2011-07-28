@@ -46,8 +46,7 @@ VideoRtpSession::VideoRtpSession()
 {
     txArgs_["input"]       = "/dev/video0";
     txArgs_["codec"]       = "libx264";
-    txArgs_["bitrate"]     = "1000000";
-    txArgs_["destination"] = "rtp://127.0.0.1:5000";
+    txArgs_["bitrate"]     = "500000";
     txArgs_["format"]      = "rgb24";
     // default to CIF/SIF(625)
     txArgs_["width"]       = "352";

@@ -350,9 +350,8 @@ void VideoReceiveThread::setup()
     if (args_["input"] == sdpFilename_)
     {
         // publish our new video stream's existence
-        std::cerr << "Publishing shm:" << shmKey_ << " sem: " << semKey_ <<
-            " size: " << videoBufferSize_ << std::endl;
-
+        _debug("Publishing shm: %d sem: %d size: %d", shmKey_, semKey_,
+                videoBufferSize_);
         // Fri Jul 15 12:15:59 EDT 2011:tmatth:FIXME: access to call manager
         // from this thread may not be thread-safe
         DBusManager::instance().getCallManager()->receivingVideoEvent(shmKey_,
