@@ -34,6 +34,8 @@
 #ifndef __VOIP_LINK_H__
 #define __VOIP_LINK_H__
 
+#include <stdexcept>
+
 #include "call.h"
 
 class Account;
@@ -44,20 +46,11 @@ typedef std::string AccountID;
 /** Define a map that associate a Call object to a call identifier */
 typedef std::map<CallID, Call*> CallMap;
 
-class VoipLinkException : public std::exception
+class VoipLinkException : public std::runtime_error
 {
     public:
-        VoipLinkException (const std::string& str="") throw() : errstr (str) {}
-
-        virtual ~VoipLinkException() throw() {}
-
-        virtual const char *what() const throw() {
-            std::string expt ("UserAgent: VoipLinkException occured: ");
-            expt.append (errstr);
-            return expt.c_str();
-        }
-    private:
-        std::string errstr;
+        VoipLinkException (const std::string& str="") :
+        	std::runtime_error("UserAgent: VoipLinkException occured: " + str) {}
 };
 
 /**
