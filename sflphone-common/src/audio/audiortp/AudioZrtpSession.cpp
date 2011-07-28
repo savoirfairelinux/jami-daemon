@@ -222,11 +222,6 @@ void AudioZrtpSession::setDestinationIpAddress (void)
 {
     _info ("AudioZrtpSession: Setting IP address for the RTP session");
 
-    if (_ca == NULL) {
-        _error ("AudioZrtpSession: Sipcall is gone.");
-        throw AudioRtpSessionException();
-    }
-
     // Store remote ip in case we would need to forget current destination
     _remote_ip = ost::InetHostAddress (_ca->getLocalSDP()->getRemoteIP().c_str());
 
