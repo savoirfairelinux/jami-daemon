@@ -507,6 +507,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[CONFIG_ACCOUNT_RESOLVE_ONCE] = isResolveOnce() ? "true" : "false";
     a[REALM] = _realm;
     a[USERAGENT] = getUseragent();
+    a[AUTHENTICATION_USERNAME] = _authenticationUsername;
 
     a[CONFIG_ACCOUNT_REGISTRATION_EXPIRE] = getRegistrationExpire();
     a[LOCAL_INTERFACE] = getLocalInterface();

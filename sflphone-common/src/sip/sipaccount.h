@@ -236,13 +236,6 @@ class SIPAccount : public Account
             return _cred;
         }
 
-        const std::string& getAuthenticationUsername (void) const {
-            return _authenticationUsername;
-        }
-        void setAuthenticationUsername (const std::string& username) {
-            _authenticationUsername = username;
-        }
-
         bool isResolveOnce (void) const {
             return _resolveOnce;
         }
