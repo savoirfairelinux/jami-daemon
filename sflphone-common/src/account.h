@@ -177,7 +177,7 @@ class Account : public Serializable
         /**
          * Load the settings for this account.
          */
-        virtual void loadConfig();
+        virtual void loadConfig() = 0;
 
         /**
          * Get the account ID

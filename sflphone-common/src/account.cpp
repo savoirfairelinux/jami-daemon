@@ -54,18 +54,6 @@ Account::~Account()
 {
 }
 
-void Account::loadConfig()
-{
-
-    // If IAX is not supported, do not register this account
-#ifndef USE_IAX
-
-    if (_type == "IAX")
-        _enabled = false;
-
-#endif
-}
-
 void Account::setRegistrationState (RegistrationState state)
 {
     if (state != _registrationState) {

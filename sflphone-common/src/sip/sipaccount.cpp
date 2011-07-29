@@ -751,9 +751,6 @@ void SIPAccount::loadConfig()
     } else {
         _transportType = PJSIP_TRANSPORT_UDP;
     }
-
-    // Account generic
-    Account::loadConfig();
 }
 
 bool SIPAccount::fullMatch (const std::string& username, const std::string& hostname) const

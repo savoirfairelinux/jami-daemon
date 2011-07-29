@@ -201,6 +201,8 @@ IAXAccount::unregisterVoIPLink()
 void
 IAXAccount::loadConfig()
 {
-    // Account generic
-    Account::loadConfig();
+    // If IAX is not supported, do not register this account
+#ifndef USE_IAX
+	_enabled = false;
+#endif
 }
