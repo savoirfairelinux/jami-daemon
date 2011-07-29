@@ -3243,16 +3243,10 @@ void invite_session_state_changed_cb (pjsip_inv_session *inv, pjsip_event *e)
 
     if (inv->state != PJSIP_INV_STATE_CONFIRMED) {
         // Update UI with the current status code and description
-        pjsip_transaction * tsx = NULL;
-        tsx = e->body.tsx_state.tsx;
-        int statusCode = 404;
-
-        if (tsx != NULL) {
-            statusCode = tsx->status_code;
-        }
-
-        const pj_str_t * description = pjsip_get_status_text (statusCode);
+        pjsip_transaction * tsx = e->body.tsx_state.tsx;
+        int statusCode = tsx ? tsx->status_code : 404;
         if (statusCode) {
+            const pj_str_t * description = pjsip_get_status_text (statusCode);
             // test wether or not dbus manager is instantiated, if not no need to notify the client
             if (Manager::instance().getDbusManager())
                 DBusManager::instance().getCallManager()->sipCallStateChanged (call->getCallId(), std::string (description->ptr, description->slen), statusCode);
