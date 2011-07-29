@@ -1570,8 +1570,8 @@ class ManagerImpl
          */
         void checkCallConfiguration (const CallID& id, const std::string& to, Call::CallConfiguration *callConfig);
 
-        Conf::YamlParser *parser;
-        Conf::YamlEmitter *emitter;
+        Conf::YamlParser *parser_;
+        Conf::YamlEmitter *emitter_;
 
 #ifdef TEST
         bool testCallAccountMap();

@@ -73,15 +73,16 @@
 #define MD5_APPEND(pms,buf,len) pj_md5_update(pms, (const pj_uint8_t*)buf, len)
 
 ManagerImpl::ManagerImpl (void) :
-    _hasTriedToRegister (false), _config(), _currentCallId2(),
-    _currentCallMutex(), _audiodriver (NULL),
-    _dtmfKey (NULL), _audioCodecFactory(), _toneMutex(),
-    _telephoneTone (NULL), _audiofile (NULL), _spkr_volume (0),
-    _mic_volume (0), _mutex(), _dbus (NULL), _waitingCall(),
-    _waitingCallMutex(), _nbIncomingWaitingCall (0), _path (""),
-    _setupLoaded (false), _callAccountMap(),
+    _hasTriedToRegister(false), _config(), _currentCallId2(),
+    _currentCallMutex(), _audiodriver(0),
+    _dtmfKey(0), _audioCodecFactory(), _toneMutex(),
+    _telephoneTone(0), _audiofile(0), _spkr_volume(0),
+    _mic_volume(0), _mutex(), _dbus(0), _waitingCall(),
+    _waitingCallMutex(), _nbIncomingWaitingCall(0), _path(""),
+    _setupLoaded(false), _callAccountMap(),
     _callAccountMapMutex(), _callConfigMap(), _accountMap(),
-    _directIpAccount (NULL), _cleaner (NULL), _history (NULL)
+    _directIpAccount(0), _cleaner(0), _history(0), parser_(0),
+    emitter_(0)
 {
 
     // initialize random generator for call id
@@ -1668,8 +1669,7 @@ bool ManagerImpl::saveConfig (void)
     AccountMap::iterator iter = _accountMap.begin();
 
     try {
-        // emitter = new Conf::YamlEmitter("sequenceEmitter.yml");
-        emitter = new Conf::YamlEmitter (_path.c_str());
+        emitter_ = new Conf::YamlEmitter (_path.c_str());
 
         while (iter != _accountMap.end()) {
 
@@ -1679,21 +1679,21 @@ bool ManagerImpl::saveConfig (void)
                 continue;
             }
 
-            iter->second->serialize (emitter);
+            iter->second->serialize (emitter_);
             iter++;
         }
 
-        preferences.serialize (emitter);
-        voipPreferences.serialize (emitter);
-        addressbookPreference.serialize (emitter);
-        hookPreference.serialize (emitter);
-        audioPreference.serialize (emitter);
-        videoPreference.serialize (emitter);
-        shortcutPreferences.serialize (emitter);
+        preferences.serialize (emitter_);
+        voipPreferences.serialize (emitter_);
+        addressbookPreference.serialize (emitter_);
+        hookPreference.serialize (emitter_);
+        audioPreference.serialize (emitter_);
+        videoPreference.serialize (emitter_);
+        shortcutPreferences.serialize (emitter_);
 
-        emitter->serializeData();
+        emitter_->serializeData();
 
-        delete emitter;
+        delete emitter_;
     } catch (Conf::YamlEmitterException &e) {
         _error ("ConfigTree: %s", e.what());
     }
@@ -2618,14 +2618,13 @@ void ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
     if (fileExist) {
         try {
 
-            // parser = new Conf::YamlParser("sequenceParser.yml");
-            parser = new Conf::YamlParser (_path.c_str());
+            parser_ = new Conf::YamlParser (_path.c_str());
 
-            parser->serializeEvents();
+            parser_->serializeEvents();
 
-            parser->composeEvents();
+            parser_->composeEvents();
 
-            parser->constructNativeData();
+            parser_->constructNativeData();
 
             _setupLoaded = true;
 
@@ -4264,7 +4263,7 @@ void ManagerImpl::loadIptoipProfile()
 
         _debug ("Manager: Loading IP2IP profile preferences from config");
 
-        Conf::SequenceNode *seq = parser->getAccountSequence();
+        Conf::SequenceNode *seq = parser_->getAccountSequence();
 
         Conf::Sequence::iterator iterIP2IP = seq->getSequence()->begin();
         Conf::Key accID ("id");
@@ -4313,7 +4312,6 @@ short ManagerImpl::loadAccountMap()
 
     _debug ("Manager: Load account map");
 
-    // Conf::YamlParser *parser;
     int nbAccount = 0;
 
     if (!_setupLoaded) {
@@ -4322,15 +4320,15 @@ short ManagerImpl::loadAccountMap()
     }
 
     // build preferences
-    preferences.unserialize ( (Conf::MappingNode *) (parser->getPreferenceSequence()));
-    voipPreferences.unserialize ( (Conf::MappingNode *) (parser->getVoipPreferenceSequence()));
-    addressbookPreference.unserialize ( (Conf::MappingNode *) (parser->getAddressbookSequence()));
-    hookPreference.unserialize ( (Conf::MappingNode *) (parser->getHookSequence()));
-    audioPreference.unserialize ( (Conf::MappingNode *) (parser->getAudioSequence()));
-    videoPreference.unserialize ( (Conf::MappingNode *) (parser->getVideoSequence()));
-    shortcutPreferences.unserialize ( (Conf::MappingNode *) (parser->getShortcutSequence()));
+    preferences.unserialize ( (Conf::MappingNode *) (parser_->getPreferenceSequence()));
+    voipPreferences.unserialize ( (Conf::MappingNode *) (parser_->getVoipPreferenceSequence()));
+    addressbookPreference.unserialize ( (Conf::MappingNode *) (parser_->getAddressbookSequence()));
+    hookPreference.unserialize ( (Conf::MappingNode *) (parser_->getHookSequence()));
+    audioPreference.unserialize ( (Conf::MappingNode *) (parser_->getAudioSequence()));
+    videoPreference.unserialize ( (Conf::MappingNode *) (parser_->getVideoSequence()));
+    shortcutPreferences.unserialize ( (Conf::MappingNode *) (parser_->getShortcutSequence()));
 
-    Conf::SequenceNode *seq = parser->getAccountSequence();
+    Conf::SequenceNode *seq = parser_->getAccountSequence();
 
     // Each element in sequence is a new account to create
     Conf::Sequence::iterator iterSeq = seq->getSequence()->begin();
@@ -4406,12 +4404,12 @@ short ManagerImpl::loadAccountMap()
     }
 
     try {
-        delete parser;
+        delete parser_;
     } catch (Conf::YamlParserException &e) {
         _error ("Manager: %s", e.what());
     }
 
-    parser = NULL;
+    parser_ = NULL;
 
     return nbAccount;
 
