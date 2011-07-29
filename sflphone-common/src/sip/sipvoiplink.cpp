@@ -3479,7 +3479,6 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
     call->getAudioRtp()->updateDestinationIpAddress();
     call->getAudioRtp()->setDtmfPayloadType(sdpSession->getTelephoneEventType());
 
-    // this may restart our receive thread if it's already playing
     call->getVideoRtp()->updateSDP(call->getLocalSDP());
     call->getVideoRtp()->updateDestination(call->getLocalSDP()->getRemoteIP(), call->getLocalSDP()->getRemoteVideoPort());
     call->getVideoRtp()->start();

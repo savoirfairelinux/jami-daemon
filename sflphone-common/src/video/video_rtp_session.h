@@ -61,8 +61,9 @@ class VideoRtpSession {
         std::tr1::shared_ptr<VideoReceiveThread> receiveThread_;
         std::map<std::string, std::string> txArgs_;
         std::map<std::string, std::string> rxArgs_;
+        bool sending_;
+        bool receiving_;
 };
-
 }
 
 #endif // __VIDEO_RTP_SESSION_H__

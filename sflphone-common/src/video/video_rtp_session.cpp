@@ -62,7 +62,7 @@ VideoRtpSession::VideoRtpSession()
 
 VideoRtpSession::VideoRtpSession(const std::map<std::string, std::string> &txArgs,
                 const std::map<std::string, std::string> &rxArgs) :
-    txArgs_(txArgs), rxArgs_(rxArgs)
+    txArgs_(txArgs), rxArgs_(rxArgs), sending_(true), receiving_(false)
 {}
 
 void VideoRtpSession::updateSDP(const Sdp *sdp)
@@ -76,6 +76,12 @@ void VideoRtpSession::updateSDP(const Sdp *sdp)
         rxArgs_["receiving_sdp"] = desc;
         _debug("%s:Updated incoming SDP to:\n %s", __PRETTY_FUNCTION__,
                 rxArgs_["receiving_sdp"].c_str());
+    }
+
+    if (desc.find("m=video 0") != std::string::npos)
+    {
+        _debug("Receiving video disabled, port was set to 0");
+        receiving_ = false;
     }
 }
 
@@ -93,6 +99,12 @@ void VideoRtpSession::updateDestination(const std::string &destination,
         txArgs_["destination"] = tmp.str();
         _debug("%s updated dest to %s",  __PRETTY_FUNCTION__,
                txArgs_["destination"].c_str());
+    }
+
+    if (port == 0)
+    {
+        _debug("Sending video disabled, port was set to 0");
+        sending_ = false;
     }
 }
 
@@ -127,11 +139,21 @@ void VideoRtpSession::start()
     assert(sendThread_.get() == 0);
     assert(receiveThread_.get() == 0);
 
-    sendThread_.reset(new VideoSendThread(txArgs_));
-    sendThread_->start();
+    if (sending_)
+    {
+        sendThread_.reset(new VideoSendThread(txArgs_));
+        sendThread_->start();
+    }
+    else
+        _debug("Video sending disabled");
 
-    receiveThread_.reset(new VideoReceiveThread(rxArgs_));
-    receiveThread_->start();
+    if (receiving_)
+    {
+        receiveThread_.reset(new VideoReceiveThread(rxArgs_));
+        receiveThread_->start();
+    }
+    else
+        _debug("Video receiving disabled");
 }
 
 void VideoRtpSession::stop()
