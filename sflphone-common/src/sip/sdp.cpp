@@ -365,12 +365,12 @@ int Sdp::createLocalSession (CodecOrder selectedCodecs)
     }
 
     memset(buffer, 0, 1000);
-    pjmedia_sdp_print(localSession_, buffer, 1000);
-    _debug("SDP: Local SDP Session:\n%s", buffer);
+    int size = pjmedia_sdp_print(localSession_, buffer, 1000);
+    std::string localStr(buffer, size);
+    _debug("SDP: Local SDP Session:\n%s", localStr.c_str());
 
     // Validate the sdp session
     return pjmedia_sdp_validate (localSession_);
-
 }
 
 int Sdp::createOffer (CodecOrder selectedCodecs)
@@ -414,8 +414,9 @@ int Sdp::receiveOffer (const pjmedia_sdp_session* remote, CodecOrder selectedCod
     }
 
     memset(buffer, 0, 1000);
-    pjmedia_sdp_print(remote, buffer, 1000);
-    _debug("SDP: Remote SDP Session:\n%s", buffer);
+    int size = pjmedia_sdp_print(remote, buffer, 1000);
+    std::string remoteStr(buffer, size);
+    _debug("SDP: Remote SDP Session:\n%s", remoteStr.c_str());
 
     // If called for the first time
     if (localSession_ == NULL) {
@@ -636,8 +637,8 @@ std::string Sdp::getLineFromLocalSDP(const std::string &keyword) const
     assert(activeLocalSession_);
     static const int SIZE = 2048;
     char buffer[SIZE];
-    pjmedia_sdp_print(activeLocalSession_, buffer, SIZE);
-    std::string sdp(buffer);
+    int size = pjmedia_sdp_print(activeLocalSession_, buffer, SIZE);
+    std::string sdp(buffer, size);
     const vector<string> tokens(split(sdp, '\n'));
     for (vector<string>::const_iterator iter = tokens.begin(); iter != tokens.end(); ++iter)
         if ((*iter).find(keyword) != string::npos)
@@ -652,15 +653,17 @@ std::string Sdp::getActiveVideoDescription() const
     {
         static const int SIZE = 2048;
         char buffer[SIZE];
-        pjmedia_sdp_print(activeLocalSession_, buffer, SIZE);
-        _error("ACTIVE LOCAL SESSION LOOKS LIKE: %s", buffer);
+        int size = pjmedia_sdp_print(activeLocalSession_, buffer, SIZE);
+        std::string localStr(buffer, size);
+        _error("ACTIVE LOCAL SESSION LOOKS LIKE: %s", localStr.c_str());
     }
     if (activeRemoteSession_)
     {
         static const int SIZE = 2048;
         char buffer[SIZE];
-        pjmedia_sdp_print(activeRemoteSession_, buffer, SIZE);
-        _error("ACTIVE REMOTE SESSION LOOKS LIKE: %s", buffer);
+        int size = pjmedia_sdp_print(activeRemoteSession_, buffer, SIZE);
+        std::string remoteStr(buffer, size);
+        _error("ACTIVE REMOTE SESSION LOOKS LIKE: %s", remoteStr.c_str());
     }
     ss << "v=0" << std::endl;
     ss << "o=- 0 0 " << STR_IN.ptr << " " << STR_IP4.ptr << " " << localIpAddr_ << std::endl;
