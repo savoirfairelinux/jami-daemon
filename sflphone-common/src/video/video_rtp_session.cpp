@@ -42,7 +42,7 @@
 
 namespace sfl_video {
 
-VideoRtpSession::VideoRtpSession()
+VideoRtpSession::VideoRtpSession() : sending_(true), receiving_(true)
 {
     txArgs_["input"]       = "/dev/video0";
     txArgs_["codec"]       = "libx264";
