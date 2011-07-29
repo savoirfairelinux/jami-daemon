@@ -490,6 +490,7 @@ next_packet:
 
 void VideoSendThread::final()
 {
+    _error("%s", __PRETTY_FUNCTION__);
     cleanup();
 }
 

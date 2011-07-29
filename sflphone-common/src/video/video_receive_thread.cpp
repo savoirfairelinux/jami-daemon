@@ -521,6 +521,7 @@ void VideoReceiveThread::cleanupAndExit()
 
 void VideoReceiveThread::final()
 {
+    _error("%s", __PRETTY_FUNCTION__);
     cleanup();
 }
 

@@ -29,6 +29,7 @@
  */
 
 #include <string>
+#include <cstring> // for memset
 #include <vector>
 #include <climits>
 #include <stdexcept>
@@ -227,6 +228,7 @@ unsigned int VideoV4l2Channel::GetSizes(int fd, unsigned int pixelformat)
     }
 
     struct v4l2_frmsizeenum frmsize;
+    memset(&frmsize, 0x0, sizeof frmsize);
     frmsize.index = 0;
     frmsize.pixel_format = pixelformat;
     if (ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize))
@@ -256,6 +258,7 @@ unsigned int VideoV4l2Channel::GetSizes(int fd, unsigned int pixelformat)
 
 fallback:
     struct v4l2_format fmt;
+    memset(&fmt, 0x0, sizeof fmt);
     fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     if (ioctl(fd, VIDIOC_G_FMT, &fmt) < 0)
         throw std::runtime_error("Couldnt get format");
@@ -273,6 +276,7 @@ void VideoV4l2Channel::GetFormat(int fd)
         throw std::runtime_error("VIDIOC_S_INPUT failed");
 
     struct v4l2_fmtdesc fmt;
+    memset(&fmt, 0x0, sizeof fmt);
     unsigned fmt_index;
     fmt.index = fmt_index = 0;
     fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -339,6 +343,7 @@ VideoV4l2Device::VideoV4l2Device(int fd, const std::string &device)
     name = std::string((const char*)cap.card);
 
     struct v4l2_input input;
+    memset(&input, 0x0, sizeof input);
     input.index = idx = 0;
     while (!ioctl(fd, VIDIOC_ENUMINPUT, &input)) {
         if (idx != input.index)
