@@ -3910,27 +3910,17 @@ std::string ManagerImpl::computeMd5HashFromCredential (
     unsigned char digest[16];
     char ha1[PJSIP_MD5STRLEN];
 
-    pj_str_t usernamePjFormat = pj_str (strdup (username.c_str()));
-    pj_str_t passwordPjFormat = pj_str (strdup (password.c_str()));
-    pj_str_t realmPjFormat = pj_str (strdup (realm.c_str()));
-
     /* Compute md5 hash = MD5(username ":" realm ":" password) */
     pj_md5_init (&pms);
-    MD5_APPEND (&pms, usernamePjFormat.ptr, usernamePjFormat.slen);
+    MD5_APPEND (&pms, username.data(), username.length());
     MD5_APPEND (&pms, ":", 1);
-    MD5_APPEND (&pms, realmPjFormat.ptr, realmPjFormat.slen);
+    MD5_APPEND (&pms, realm.data(), realm.length());
     MD5_APPEND (&pms, ":", 1);
-    MD5_APPEND (&pms, passwordPjFormat.ptr, passwordPjFormat.slen);
+    MD5_APPEND (&pms, password.data(), password.length());
     pj_md5_final (&pms, digest);
 
     digest2str (digest, ha1);
-
-    char ha1_null_terminated[PJSIP_MD5STRLEN + 1];
-    memcpy (ha1_null_terminated, ha1, sizeof (char) * PJSIP_MD5STRLEN);
-    ha1_null_terminated[PJSIP_MD5STRLEN] = '\0';
-
-    std::string hashedDigest = ha1_null_terminated;
-    return hashedDigest;
+    return std::string(ha1, PJSIP_MD5STRLEN);
 }
 
 void ManagerImpl::setCredential (const std::string& accountID UNUSED,
