@@ -62,7 +62,7 @@ VideoRtpSession::VideoRtpSession()
 
 VideoRtpSession::VideoRtpSession(const std::map<std::string, std::string> &txArgs,
                 const std::map<std::string, std::string> &rxArgs) :
-    txArgs_(txArgs), rxArgs_(rxArgs), sending_(true), receiving_(false)
+    txArgs_(txArgs), rxArgs_(rxArgs), sending_(true), receiving_(true)
 {}
 
 void VideoRtpSession::updateSDP(const Sdp *sdp)
