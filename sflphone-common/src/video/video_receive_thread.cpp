@@ -105,7 +105,6 @@ cleanupSemaphore(int sem_set_id)
     semctl(sem_set_id, 0, IPC_RMID);
 }
 
-
 /*
  * function: sem_signal. signals the process that a frame is ready.
  * input:    semaphore set ID.
@@ -237,7 +236,7 @@ void VideoReceiveThread::setup()
     {
         _error("%s:Couldn't find a pixel format for \"%s\"",
                 __PRETTY_FUNCTION__, args_["format"].c_str());
-        cleanupAndExit();
+        exit();
     }
 
     AVInputFormat *file_iformat = 0;
@@ -252,7 +251,7 @@ void VideoReceiveThread::setup()
             if (!file_iformat)
             {
                 _error("%s:Could not find format \"sdp\"", __PRETTY_FUNCTION__);
-                cleanupAndExit();
+                exit();
             }
         }
         else if (args_["input"].substr(0, strlen("/dev/video")) == "/dev/video")
@@ -265,7 +264,7 @@ void VideoReceiveThread::setup()
             if (!file_iformat)
             {
                 _error("%s:Could not find format!", __PRETTY_FUNCTION__);
-                cleanupAndExit();
+                exit();
             }
         }
 
@@ -282,14 +281,14 @@ void VideoReceiveThread::setup()
         {
             _error("%s:Could not open input file \"%s\"", __PRETTY_FUNCTION__,
                     args_["input"].c_str());
-            cleanupAndExit();
+            exit();
         }
 
         // retrieve stream information
         if (av_find_stream_info(inputCtx_) < 0)
         {
             _error("%s:Could not find stream info!", __PRETTY_FUNCTION__);
-            cleanupAndExit();
+            exit();
         }
 
         // find the first video stream from the input
@@ -305,7 +304,7 @@ void VideoReceiveThread::setup()
         if (videoStreamIndex_ == -1)
         {
             _error("%s:Could not find video stream!", __PRETTY_FUNCTION__);
-            cleanupAndExit();
+            exit();
         }
 
         // Get a pointer to the codec context for the video stream
@@ -316,7 +315,7 @@ void VideoReceiveThread::setup()
         if (inputDecoder == NULL)
         {
             _error("%s:Unsupported codec!", __PRETTY_FUNCTION__);
-            cleanupAndExit();
+            exit();
         }
 
         // open codec
@@ -326,7 +325,7 @@ void VideoReceiveThread::setup()
         if (ret < 0)
         {
             _error("%s:Could not open codec!", __PRETTY_FUNCTION__);
-            cleanupAndExit();
+            exit();
         }
     }
 
@@ -334,7 +333,7 @@ void VideoReceiveThread::setup()
     if (scaledPicture_ == 0)
     {
         _error("%s:Could not allocated output frame!", __PRETTY_FUNCTION__);
-        cleanupAndExit();
+        exit();
     }
 
     // determine required buffer size and allocate buffer
@@ -381,6 +380,12 @@ void VideoReceiveThread::cleanup()
     shmID_ = -1;
     shmBuffer_ = 0;
 
+    if (imgConvertCtx_)
+    {
+        sws_freeContext(imgConvertCtx_);
+        imgConvertCtx_ = 0;
+    }
+
     // free the scaled frame
     if (scaledPicture_)
     {
@@ -409,25 +414,24 @@ void VideoReceiveThread::cleanup()
         av_close_input_file(inputCtx_);
         inputCtx_ = 0;
     }
+    _debug("Finished %s", __PRETTY_FUNCTION__);
 }
 
-SwsContext * VideoReceiveThread::createScalingContext()
+void VideoReceiveThread::createScalingContext()
 {
     // Create scaling context, no scaling done here
-    SwsContext *imgConvertCtx = sws_getContext(decoderCtx_->width,
+    imgConvertCtx_ = sws_getCachedContext(imgConvertCtx_, decoderCtx_->width,
             decoderCtx_->height, decoderCtx_->pix_fmt, dstWidth_,
             dstHeight_, (enum PixelFormat) format_, SWS_BICUBIC,
             NULL, NULL, NULL);
-    if (imgConvertCtx == 0)
+    if (imgConvertCtx_ == 0)
     {
         _error("Cannot init the conversion context!");
-        cleanupAndExit();
+        exit();
     }
-    return imgConvertCtx;
 }
 
 VideoReceiveThread::VideoReceiveThread(const std::map<std::string, std::string> &args) : args_(args),
-    scaledPictureBuf_(0),
     shmBuffer_(0),
     shmID_(-1),
     semSetID_(-1),
@@ -438,6 +442,7 @@ VideoReceiveThread::VideoReceiveThread(const std::map<std::string, std::string> 
     scaledPicture_(0),
     videoStreamIndex_(-1),
     inputCtx_(0),
+    imgConvertCtx_(0),
     dstWidth_(-1),
     dstHeight_(-1)
 {
@@ -450,11 +455,10 @@ void VideoReceiveThread::run()
     setup();
     AVPacket inpacket;
     int frameFinished;
-    SwsContext *imgConvertCtx = 0;
     enum PixelFormat fmt = (enum PixelFormat) format_;
 
     if (!test_source_)
-        imgConvertCtx = createScalingContext();
+        createScalingContext();
 
     for (;;)
     {
@@ -475,7 +479,7 @@ void VideoReceiveThread::run()
             avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
                     reinterpret_cast<uint8_t*>(shmBuffer_), fmt, dstWidth_, dstHeight_);
 
-            sws_scale(imgConvertCtx, rawFrame_->data, rawFrame_->linesize,
+            sws_scale(imgConvertCtx_, rawFrame_->data, rawFrame_->linesize,
                     0, decoderCtx_->height, scaledPicture_->data,
                     scaledPicture_->linesize);
         }
@@ -513,24 +517,13 @@ next_packet:
     }
 }
 
-void VideoReceiveThread::cleanupAndExit()
-{
-    cleanup();
-    exit();
-}
-
-void VideoReceiveThread::final()
-{
-    _error("%s", __PRETTY_FUNCTION__);
-    cleanup();
-}
-
 VideoReceiveThread::~VideoReceiveThread()
 {
-    ost::Thread::terminate();
     // free resources, exit thread
     DBusManager::instance().getCallManager()->stoppedReceivingVideoEvent(shmKey_,
             semKey_);
+    ost::Thread::terminate();
+    cleanup();
 }
 
 } // end namespace sfl_video

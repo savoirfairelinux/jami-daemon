@@ -137,7 +137,7 @@ void VideoSendThread::setup()
         if (!file_iformat)
         {
             _error("Could not find format video4linux2");
-            cleanupAndExit();
+            exit();
         }
     }
 
@@ -153,14 +153,14 @@ void VideoSendThread::setup()
     if (avformat_open_input(&inputCtx_, args_["input"].c_str(), file_iformat, &options) != 0)
     {
         _error("Could not open input file %s", args_["input"].c_str());
-        cleanupAndExit();
+        exit();
     }
 
     // retrieve stream information
     if (av_find_stream_info(inputCtx_) < 0)
     {
         _error("Could not find stream info!");
-        cleanupAndExit();
+        exit();
     }
 
     // find the first video stream from the input
@@ -176,7 +176,7 @@ void VideoSendThread::setup()
     if (videoStreamIndex_ == -1)
     {
         _error("%s:Could not find video stream!", __PRETTY_FUNCTION__);
-        cleanupAndExit();
+        exit();
     }
 
     // Get a pointer to the codec context for the video stream
@@ -187,7 +187,7 @@ void VideoSendThread::setup()
     if (inputDecoder == NULL)
     {
         _error("%s:Unsupported codec!", __PRETTY_FUNCTION__);
-        cleanupAndExit();
+        exit();
     }
 
     // open codec
@@ -197,7 +197,7 @@ void VideoSendThread::setup()
     if (ret < 0)
     {
         _error("%s:Could not open codec!", __PRETTY_FUNCTION__);
-        cleanupAndExit();
+        exit();
     }
 
     outputCtx_ = avformat_alloc_context();
@@ -207,7 +207,7 @@ void VideoSendThread::setup()
     {
         _error("Unable to find a suitable output format for %s",
             args_["destination"].c_str());
-        cleanupAndExit();
+        exit();
     }
     outputCtx_->oformat = file_oformat;
     strncpy(outputCtx_->filename, args_["destination"].c_str(),
@@ -219,7 +219,7 @@ void VideoSendThread::setup()
     if (encoder == 0)
     {
         _error("%s:Encoder not found!", __PRETTY_FUNCTION__);
-        cleanupAndExit();
+        exit();
     }
 
     prepareEncoderContext();
@@ -237,7 +237,7 @@ void VideoSendThread::setup()
     if (ret < 0)
     {
         _error("%s:Could not open encoder!", __PRETTY_FUNCTION__);
-        cleanupAndExit();
+        exit();
     }
 
     // add video stream to outputformat context
@@ -245,7 +245,7 @@ void VideoSendThread::setup()
     if (videoStream_ == 0)
     {
         _error("%s:Could not alloc stream!", __PRETTY_FUNCTION__);
-        cleanupAndExit();
+        exit();
     }
     videoStream_->codec = encoderCtx_;
 
@@ -255,7 +255,7 @@ void VideoSendThread::setup()
         if (avio_open(&outputCtx_->pb, outputCtx_->filename, AVIO_FLAG_WRITE) < 0)
         {
             _error("%s:Could not open \"%s\"!", outputCtx_->filename);
-            cleanupAndExit();
+            exit();
         }
     }
     else
@@ -269,7 +269,7 @@ void VideoSendThread::setup()
     {
         _error("%s:Could not write header for output file (incorrect codec "
             "parameters ?)", __PRETTY_FUNCTION__);
-        cleanupAndExit();
+        exit();
     }
 
     // allocate video frame
@@ -289,18 +289,16 @@ void VideoSendThread::setup()
     scaledPicture_->linesize[2] = encoderCtx_->width / 2;
 }
 
-void VideoSendThread::cleanupAndExit()
-{
-    cleanup();
-    exit();
-}
-
 void VideoSendThread::cleanup()
 {
-    _debug("%s", __PRETTY_FUNCTION__);
+    _debug("Begin %s", __PRETTY_FUNCTION__);
     // make sure no one is waiting for the SDP which will never come if we've
     // error'd out
     sdpReady_.signal();
+
+    sws_freeContext(imgConvertCtx_);
+    imgConvertCtx_ = 0;
+
     // write the trailer, if any.  the trailer must be written
     // before you close the CodecContexts open when you wrote the
     // header; otherwise write_trailer may try to use memory that
@@ -358,21 +356,21 @@ void VideoSendThread::cleanup()
         av_close_input_file(inputCtx_);
         inputCtx_ = 0;
     }
+    _debug("Finished %s", __PRETTY_FUNCTION__);
 }
 
-SwsContext * VideoSendThread::createScalingContext()
+void VideoSendThread::createScalingContext()
 {
     // Create scaling context
-    SwsContext *imgConvertCtx = sws_getContext(inputDecoderCtx_->width,
+    imgConvertCtx_ = sws_getCachedContext(imgConvertCtx_, inputDecoderCtx_->width,
             inputDecoderCtx_->height, inputDecoderCtx_->pix_fmt, encoderCtx_->width,
             encoderCtx_->height, encoderCtx_->pix_fmt, SWS_BICUBIC,
             NULL, NULL, NULL);
-    if (imgConvertCtx == 0)
+    if (imgConvertCtx_ == 0)
     {
         _error("%s:Cannot init the conversion context!", __PRETTY_FUNCTION__);
-        cleanupAndExit();
+        exit();
     }
-    return imgConvertCtx;
 }
 
 VideoSendThread::VideoSendThread(const std::map<std::string, std::string> &args) :
@@ -388,6 +386,7 @@ VideoSendThread::VideoSendThread(const std::map<std::string, std::string> &args)
     videoStream_(0),
     inputCtx_(0),
     outputCtx_(0),
+    imgConvertCtx_(0),
     sdp_("")
 {
     test_source_ = (args_["input"] == "SFLTEST");
@@ -400,11 +399,10 @@ void VideoSendThread::run()
     AVPacket inpacket;
     int frameFinished;
     int64_t frameNumber = 0;
-    SwsContext *imgConvertCtx = 0;
     int ret, encodedSize;
 
     if (!test_source_)
-        imgConvertCtx = createScalingContext();
+        createScalingContext();
 
     for (;;)
     {
@@ -422,7 +420,7 @@ void VideoSendThread::run()
             if (!frameFinished)
                 goto next_packet;
 
-            sws_scale(imgConvertCtx, rawFrame_->data, rawFrame_->linesize,
+            sws_scale(imgConvertCtx_, rawFrame_->data, rawFrame_->linesize,
                     0, inputDecoderCtx_->height, scaledPicture_->data,
                     scaledPicture_->linesize);
 
@@ -477,7 +475,7 @@ void VideoSendThread::run()
         if (ret < 0)
         {
             print_error("av_interleaved_write_frame() error", ret);
-            cleanupAndExit();
+            exit();
         }
         av_free_packet(&opkt);
 
@@ -488,15 +486,10 @@ next_packet:
     }
 }
 
-void VideoSendThread::final()
-{
-    _error("%s", __PRETTY_FUNCTION__);
-    cleanup();
-}
-
 VideoSendThread::~VideoSendThread()
 {
     ost::Thread::terminate();
+    cleanup();
 }
 
 } // end namespace sfl_video

@@ -51,9 +51,7 @@ class VideoSendThread : public ost::Thread {
         void setup();
         void prepareEncoderContext();
         void cleanup();
-        void cleanupAndExit();
-        void final();
-        SwsContext * createScalingContext();
+        void createScalingContext();
         ost::Event sdpReady_;
 
         std::map<std::string, std::string> args_;
@@ -71,6 +69,7 @@ class VideoSendThread : public ost::Thread {
         AVStream *videoStream_;
         AVFormatContext *inputCtx_;
         AVFormatContext *outputCtx_;
+        SwsContext *imgConvertCtx_;
         std::string sdp_;
     public:
         explicit VideoSendThread(const std::map<std::string, std::string> &args);

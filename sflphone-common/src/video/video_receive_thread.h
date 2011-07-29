@@ -52,7 +52,6 @@ class VideoReceiveThread : public ost::Thread {
         /*-------------------------------------------------------------*/
         /* These variables should be used in thread (i.e. run()) only! */
         /*-------------------------------------------------------------*/
-        uint8_t *scaledPictureBuf_;
         uint8_t *shmBuffer_;
         int shmID_;
         int semSetID_;
@@ -65,6 +64,7 @@ class VideoReceiveThread : public ost::Thread {
         AVFrame *scaledPicture_;
         int videoStreamIndex_;
         AVFormatContext *inputCtx_;
+        SwsContext *imgConvertCtx_;
 
         int dstWidth_;
         int dstHeight_;
@@ -72,13 +72,11 @@ class VideoReceiveThread : public ost::Thread {
 
         void setup();
         void cleanup();
-        SwsContext * createScalingContext();
+        void createScalingContext();
         ost::Event shmReady_;
         std::string sdpFilename_;
 
         void loadSDP();
-        void final();
-        void cleanupAndExit();
 
     public:
         explicit VideoReceiveThread(const std::map<std::string, std::string> &args);
