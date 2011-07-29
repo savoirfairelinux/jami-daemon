@@ -182,58 +182,31 @@ pjsip_regc *getSipRegcFromID (const std::string& id UNUSED)
 
 void ManagerImpl::unregisterCurSIPAccounts()
 {
-    Account *current;
-
-    AccountMap::iterator iter = _accountMap.begin();
-
-    while (iter != _accountMap.end()) {
-        current = iter->second;
-
-        if (current) {
-            if (current->isEnabled() && current->getType() == "sip") {
+    AccountMap::iterator iter;
+    for (iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
+        Account *current = iter->second;
+        if (current && current->isEnabled() && current->getType() == "sip")
                 current->unregisterVoIPLink();
-            }
-        }
-
-        iter++;
     }
 }
 
 void ManagerImpl::registerCurSIPAccounts (void)
 {
-
-    Account *current;
-
-    AccountMap::iterator iter = _accountMap.begin();
-
-    while (iter != _accountMap.end()) {
-        current = iter->second;
-
-        if (current) {
-            if (current->isEnabled() && current->getType() == "sip") {
-                //current->setVoIPLink(link);
+    AccountMap::iterator iter;
+    for (iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
+        Account *current = iter->second;
+        if (current && current->isEnabled() && current->getType() == "sip")
                 current->registerVoIPLink();
-            }
-        }
-
-        current = NULL;
-
-        iter++;
     }
 }
 
 void
 ManagerImpl::sendRegister (const std::string& accountID , const int32_t& enable)
 {
-
     // Update the active field
     Account* acc = getAccount (accountID);
 
-    if (enable == 1)
-        acc->setEnabled (true);
-    else
-        acc->setEnabled (false);
-
+	acc->setEnabled (!!enable);
     acc->loadConfig();
 
     Manager::instance().saveConfig();
@@ -248,6 +221,4 @@ ManagerImpl::sendRegister (const std::string& accountID , const int32_t& enable)
         _debug ("Send unregister for account %s\n" , accountID.c_str());
         acc->unregisterVoIPLink();
     }
-
 }
-
