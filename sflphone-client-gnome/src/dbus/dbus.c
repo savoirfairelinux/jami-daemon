@@ -1185,20 +1185,13 @@ dbus_get_account_details (gchar * accountID)
 }
 
 void
-dbus_set_credential (account_t *a, int index)
+dbus_set_credentials (account_t *a)
 {
     GError *error = NULL;
-    
-    DEBUG ("DBUS: Sending credential %d to server", index);
-    
-    GHashTable * credential = g_ptr_array_index (a->credential_information, index);
+    DEBUG ("DBUS: Sending credentials to server");
 
-    if (credential == NULL) {
-        DEBUG ("Credential %d was deleted", index);
-    } else {
-        org_sflphone_SFLphone_ConfigurationManager_set_credential (
-            configurationManagerProxy, a->accountID, index, credential, &error);
-    }
+    org_sflphone_SFLphone_ConfigurationManager_set_credentials (
+        configurationManagerProxy, a->accountID, a->credential_information, &error);
 
     if (error) {
         ERROR ("Failed to call set_credential() on ConfigurationManager: %s",
@@ -1208,69 +1201,23 @@ dbus_set_credential (account_t *a, int index)
 }
 
 void
-dbus_delete_all_credential (account_t *a)
+dbus_get_credentials (account_t *a)
 {
     GError *error = NULL;
-    
-    DEBUG ("DBUS: Deleting all credentials");
+    DEBUG("DBUS: Get credential for account %s", a->accountID);
 
-    org_sflphone_SFLphone_ConfigurationManager_delete_all_credential (
-        configurationManagerProxy, a->accountID, &error);
+    if (org_sflphone_SFLphone_ConfigurationManager_get_credentials (
+                configurationManagerProxy, a->accountID, &a->credential_information, &error))
+        return;
 
-    if (error) {
-        ERROR ("Failed to call deleteAllCredential on ConfigurationManager: %s",
-               error->message);
-        g_error_free (error);
-    }
-}
-
-int
-dbus_get_number_of_credential (gchar * accountID)
-{
-    GError *error = NULL;
-    int number = 0;
-
-    DEBUG ("DBUS: Getting number of credential for account %s", accountID);
-
-    if (!org_sflphone_SFLphone_ConfigurationManager_get_number_of_credential (
-                configurationManagerProxy, accountID, &number, &error)) {
-        if (error->domain == DBUS_GERROR && error->code
-                == DBUS_GERROR_REMOTE_EXCEPTION) {
-            ERROR ("Caught remote method (get_account_details) exception  %s: %s", dbus_g_error_get_name (error), error->message);
-        } else {
-            ERROR ("Error while calling get_account_details: %s", error->message);
-        }
-
-        g_error_free (error);
-        return 0;
+    if (error->domain == DBUS_GERROR && error->code
+            == DBUS_GERROR_REMOTE_EXCEPTION) {
+        ERROR ("Caught remote method (get_account_details) exception  %s: %s", dbus_g_error_get_name (error), error->message);
     } else {
-        DEBUG ("%d credential(s) found for account %s", number, accountID);
-        return number;
+        ERROR ("Error while calling get_account_details: %s", error->message);
     }
-}
 
-GHashTable*
-dbus_get_credential (gchar * accountID, int index)
-{
-    GError *error = NULL;
-    GHashTable * details;
-
-    DEBUG("DBUS: Get credential for account %s", accountID);
-
-    if (!org_sflphone_SFLphone_ConfigurationManager_get_credential (
-                configurationManagerProxy, accountID, index, &details, &error)) {
-        if (error->domain == DBUS_GERROR && error->code
-                == DBUS_GERROR_REMOTE_EXCEPTION) {
-            ERROR ("Caught remote method (get_account_details) exception  %s: %s", dbus_g_error_get_name (error), error->message);
-        } else {
-            ERROR ("Error while calling get_account_details: %s", error->message);
-        }
-
-        g_error_free (error);
-        return NULL;
-    } else {
-        return details;
-    }
+    g_error_free (error);
 }
 
 GHashTable*

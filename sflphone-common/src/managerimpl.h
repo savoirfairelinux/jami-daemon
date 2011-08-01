@@ -576,13 +576,6 @@ class ManagerImpl
          */
         void removeAccount (const std::string& accountID);
 
-
-        /**
-         * Deletes all credentials defined for an account
-         * @param accountID The account unique ID
-         */
-        void deleteAllCredential (const std::string& accountID);
-
         /**
          * Get current codec name
          * @param call id
@@ -729,18 +722,6 @@ class ManagerImpl
          * once answered
          */
         void setIsAlwaysRecording(bool isAlwaysRec);
-
-        /**
-         * Set a credential for a given account. If it
-         * does not exist yet, it will be created.
-         */
-        void setCredential (const std::string& accountID, const int32_t& index, const std::map< std::string, std::string >& details);
-
-        /**
-         * Retreive the value set in the configuration file.
-         * @return True if credentials hashing is enabled.
-         */
-        bool getMd5CredentialHashing (void);
 
         /**
          * Set recording on / off
@@ -1141,14 +1122,6 @@ class ManagerImpl
          * Leave the mutex for audio layer
          */
         void audioLayerMutexUnlock(void) { _audiolayerMutex.leaveMutex(); }
-
-        /**
-         * Helper function that creates an MD5 Hash from the credential
-         * information provided as parameters. The hash is computed as
-         * MD5(username ":" realm ":" password).
-         *
-         */
-        std::string computeMd5HashFromCredential (const std::string& username, const std::string& password, const std::string& realm);
 
     private:
         /* Transform digest to string.

@@ -79,7 +79,6 @@
 #define ACCOUNT_USERNAME                   "username"
 #define ACCOUNT_ROUTE                      "routeset"
 #define ACCOUNT_PASSWORD                   "password"
-#define ACCOUNT_AUTHENTICATION_USERNAME    "authenticationUsername"
 #define ACCOUNT_REALM                      "realm"
 #define ACCOUNT_KEY_EXCHANGE               "SRTP.keyExchange"
 #define ACCOUNT_SRTP_ENABLED               "SRTP.enable"

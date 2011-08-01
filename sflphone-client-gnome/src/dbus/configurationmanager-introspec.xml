@@ -27,7 +27,6 @@
 						<li>USERNAME: The username (or extension) of the account</li>
 						<li>PASSWORD: The password associated to the account</li>
 						<li>REALM</li>
-						<li>AUTHENTICATION_USERNAME</li>
 						<li>CONFIG_ACCOUNT_MAILBOX: Number to dial to access the voicemail box</li>
 						<li>CONFIG_ACCOUNT_REGISTRATION_EXPIRE: SIP header expiration value (Default: 1600)</li>
 						<li>LOCAL_INTERFACE: The network interface (Default: eth0)</li>
@@ -83,7 +82,7 @@
 			</arg>
 		</method>
 
-		<method name="setCredential" tp:name-for-bindings="setCredential">
+		<method name="setCredentials" tp:name-for-bindings="setCredentials">
 			<tp:docstring>
 			</tp:docstring>
                         <annotation name="com.trolltech.QtDBus.QtTypeName.In2" value="MapStringString"/>
@@ -91,20 +90,7 @@
 				<tp:docstring>
 				</tp:docstring>
 			</arg>
-			<arg type="i" name="index" direction="in">
-				<tp:docstring>
-				</tp:docstring>
-			</arg>
-			<arg type="a{ss}" name="credentialInformation" direction="in" tp:type="String_String_Map">
-				<tp:docstring>
-				</tp:docstring>
-			</arg>
-		</method>
-
-		<method name="deleteAllCredential" tp:name-for-bindings="deleteAllCredential">
-			<tp:docstring>
-			</tp:docstring>
-			<arg type="s" name="accountID" direction="in">
+			<arg type="aa{ss}" name="credentialInformation" direction="in" tp:type="String_String_Map">
 				<tp:docstring>
 				</tp:docstring>
 			</arg>
@@ -160,7 +146,7 @@
 		   </arg>
 	   </method>
 
-	   <method name="getCredential" tp:name-for-bindings="getCredential">
+	   <method name="getCredentials" tp:name-for-bindings="getCredentials">
 		   <tp:docstring>
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
@@ -168,24 +154,7 @@
 			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>
-		   <arg type="i" name="index" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-		   <arg type="a{ss}" name="credentialInformation" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
-
-	   <method name="getNumberOfCredential" tp:name-for-bindings="getNumberOfCredential">
-		   <tp:docstring>
-		   </tp:docstring>
-		   <arg type="s" name="accountID" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-		   <arg type="i" name="numberOfCredential" direction="out">
+		   <arg type="aa{ss}" name="credentialInformation" direction="out">
 			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>

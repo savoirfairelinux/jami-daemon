@@ -73,9 +73,9 @@ class ConfigurationManager
         std::map< std::string, std::string > getTlsSettingsDefault (void);
         void setIp2IpDetails (const std::map< std::string, std::string >& details);
         std::map< std::string, std::string > getIp2IpDetails (void);
-        std::map< std::string, std::string > getCredential (const std::string& accountID, const int32_t& index);
-        int32_t getNumberOfCredential (const std::string& accountID);
-        void setCredential (const std::string& accountID, const int32_t& index, const std::map< std::string, std::string >& details);
+
+        std::vector< std::map< std::string, std::string > > getCredentials (const std::string& accountID);
+        void setCredentials (const std::string& accountID, const std::vector< std::map< std::string, std::string > >& details);
 
         std::vector< std::string > getAudioCodecList (void);
         std::vector< std::string > getSupportedTlsMethod (void);

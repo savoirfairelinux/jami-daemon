@@ -37,12 +37,14 @@
 
 #include <sstream>
 
+
 #include "account.h"
 #include "sipvoiplink.h"
 #include "pjsip/sip_transport_tls.h"
 #include "pjsip/sip_types.h"
 #include "config/serializable.h"
 #include <exception>
+#include <vector>
 #include <map>
 
 enum DtmfType { OVERRTP, SIPINFO};
@@ -96,7 +98,6 @@ const std::string stunEnabledKey ("stunEnabled");
 const std::string stunServerKey ("stunServer");
 
 const std::string credKey ("credential");
-const std::string credentialCountKey ("count");
 
 class SIPVoIPLink;
 
@@ -104,49 +105,6 @@ class SIPVoIPLink;
  * @file sipaccount.h
  * @brief A SIP Account specify SIP specific functions and object (SIPCall/SIPVoIPLink)
  */
-
-class CredentialItem
-{
-    public:
-
-        std::string username;
-        std::string password;
-        std::string realm;
-};
-
-
-class Credentials : public Serializable
-{
-    public:
-
-        Credentials();
-
-        ~Credentials();
-
-        virtual void serialize (Conf::YamlEmitter *emitter);
-
-        virtual void unserialize (Conf::MappingNode *map);
-
-        unsigned getCredentialCount (void) const {
-            return credentialCount;
-        }
-        void setCredentialCount (unsigned count) {
-            credentialCount = count;
-        }
-
-        void setNewCredential (const std::string &username,
-                               const std::string &password,
-                               const std::string &realm);
-        const CredentialItem *getCredential (unsigned index) const;
-
-    private:
-
-        unsigned credentialCount;
-
-        CredentialItem credentialArray[10];
-
-};
-
 
 class SIPAccount : public Account
 {
@@ -211,12 +169,22 @@ class SIPAccount : public Account
          */
         int unregisterVoIPLink();
 
-        void setCredInfo (pjsip_cred_info *cred) {
-            _cred = cred;
-        }
         pjsip_cred_info *getCredInfo() const {
             return _cred;
         }
+
+        /**
+         * Get the number of credentials defined for
+         * this account.
+         * @param none
+         * @return int The number of credentials set for this account.
+         */
+        unsigned getCredentialCount (void) const {
+            return credentials_.size();
+        }
+
+        void setCredentials (const std::vector<std::map<std::string, std::string> >& details);
+        const std::vector<std::map<std::string, std::string> > &getCredentials (void);
 
         bool isResolveOnce (void) const {
             return _resolveOnce;
@@ -224,7 +192,6 @@ class SIPAccount : public Account
         void setResolveOnce (bool reslv) {
             _resolveOnce = reslv;
         }
-
 
         /**
          * A client sendings a REGISTER request MAY suggest an expiration
@@ -277,19 +244,6 @@ class SIPAccount : public Account
          */
         void setRegistrationInfo (pjsip_regc *regc) {
             _regc = regc;
-        }
-
-        /**
-         * Get the number of credentials defined for
-         * this account.
-         * @param none
-         * @return int The number of credentials set for this account.
-         */
-        unsigned getCredentialCount (void) const {
-            return credentials.getCredentialCount() + 1;
-        }
-        void setCredentialCount (unsigned count) {
-            return credentials.setCredentialCount (count);
         }
 
         /**
@@ -577,13 +531,6 @@ class SIPAccount : public Account
         }
         // void setSrtpKeyExchange
 
-        std::string getRealm (void) const {
-            return _realm;
-        }
-        void setRealm (const std::string &r) {
-            _realm = r;
-        }
-
         std::string getTlsEnable (void) const {
             return _tlsEnable;
         }
@@ -677,6 +624,8 @@ class SIPAccount : public Account
 
     private:
 
+        std::vector< std::map<std::string, std::string > > credentials_;
+
         /**
          * Call specific memory pool initialization size (based on empirical data)
          */
@@ -704,11 +653,6 @@ class SIPAccount : public Account
          * Initializes STUN config from the config file
          */
         void initStunConfiguration (void);
-
-        /*
-         * Initializes set of additional credentials, if supplied by the user.
-         */
-        void initCredential (void);
 
         /**
          * If username is not provided, as it happens for Direct ip calls,
@@ -774,9 +718,6 @@ class SIPAccount : public Account
 
         //Credential information
         pjsip_cred_info *_cred;
-        std::string _realm;
-        std::string _authenticationUsername;
-        Credentials credentials;
 
         // The TLS settings, if tls is chosen as
         // a sip transport.

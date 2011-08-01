@@ -41,54 +41,6 @@ namespace {
     const char *DFT_EXPIRE_VALUE = "600"; /** Default expire value for registration */
 } // end anonymous namespace
 
-Credentials::Credentials() : credentialCount (0) {}
-
-Credentials::~Credentials() {}
-
-void Credentials::setNewCredential (const std::string &username,
-                                    const std::string &password,
-                                    const std::string &realm)
-{
-    credentialArray[credentialCount].username = username;
-    credentialArray[credentialCount].password = password;
-    credentialArray[credentialCount].realm = realm;
-}
-
-const CredentialItem *Credentials::getCredential (unsigned index) const
-{
-    if (index >= credentialCount)
-		return NULL;
-    return &credentialArray[index];
-}
-
-void Credentials::serialize (Conf::YamlEmitter *emitter UNUSED)
-{
-}
-
-void Credentials::unserialize (Conf::MappingNode *map)
-{
-    int count;
-    map->getValue(credentialCountKey, &count);
-    credentialCount = count;
-}
-
-namespace {
-static void free_cred(pjsip_cred_info *cred)
-{
-    if (!cred)
-        return;
-
-    unsigned i;
-    unsigned max = 1; /* getCredentialCount() see #6408 */ 
-    for (i = 0 ; i < max ; i++) {
-        free(cred[i].username.ptr);
-        free(cred[i].data.ptr);
-        free(cred[i].realm.ptr);
-    }
-    free (cred);
-}
-} // end anonymous namespace
-
 SIPAccount::SIPAccount (const std::string& accountID)
     : Account (accountID, "SIP")
     , _routeSet ("")
@@ -107,8 +59,6 @@ SIPAccount::SIPAccount (const std::string& accountID)
     , _transport (NULL)
     , _resolveOnce (false)
     , _cred (NULL)
-    , _realm (DEFAULT_REALM)
-    , _authenticationUsername ("")
     , _tlsSetting (NULL)
     , _dtmfType (OVERRTP)
     , _tlsEnable ("false")
@@ -148,7 +98,7 @@ SIPAccount::~SIPAccount()
 
     /* Delete accounts-related information */
     _regc = NULL;
-    free_cred(_cred);
+    delete[] _cred;
     delete _tlsSetting;
 }
 
@@ -160,14 +110,12 @@ void SIPAccount::serialize (Conf::YamlEmitter *emitter)
 	}
 
     Conf::MappingNode accountmap (NULL);
-    Conf::MappingNode credentialmap (NULL);
     Conf::MappingNode srtpmap (NULL);
     Conf::MappingNode zrtpmap (NULL);
     Conf::MappingNode tlsmap (NULL);
 
     Conf::ScalarNode id (Account::_accountID);
     Conf::ScalarNode username (Account::_username);
-    Conf::ScalarNode authenticationUsername (_authenticationUsername);
     Conf::ScalarNode password (Account::_password);
     Conf::ScalarNode alias (Account::_alias);
     Conf::ScalarNode hostname (Account::_hostname);
@@ -226,8 +174,6 @@ void SIPAccount::serialize (Conf::YamlEmitter *emitter)
     accountmap.setKeyValue (typeKey, &type);
     accountmap.setKeyValue (idKey, &id);
     accountmap.setKeyValue (usernameKey, &username);
-    accountmap.setKeyValue (authenticationUsernameKey, &authenticationUsername);
-    accountmap.setKeyValue (passwordKey, &password);
     accountmap.setKeyValue (hostnameKey, &hostname);
     accountmap.setKeyValue (accountEnableKey, &enable);
     accountmap.setKeyValue (mailboxKey, &mailbox);
@@ -258,10 +204,20 @@ void SIPAccount::serialize (Conf::YamlEmitter *emitter)
     zrtpmap.setKeyValue (helloHashEnabledKey, &helloHashEnabled);
     zrtpmap.setKeyValue (notSuppWarningKey, &notSuppWarning);
 
-    accountmap.setKeyValue (credKey, &credentialmap);
-    credentialmap.setKeyValue (credentialCountKey, &count);
+    Conf::SequenceNode credentialseq (NULL);
+    accountmap.setKeyValue (credKey, &credentialseq);
 
-    accountmap.setKeyValue (tlsKey, &tlsmap);
+	std::vector<std::map<std::string, std::string> >::const_iterator it;
+	for (it = credentials_.begin(); it != credentials_.end(); ++it) {
+		std::map<std::string, std::string> cred = *it;
+		Conf::MappingNode *map = new Conf::MappingNode(NULL);
+		map->setKeyValue(USERNAME, new Conf::ScalarNode(cred[USERNAME]));
+		map->setKeyValue(PASSWORD, new Conf::ScalarNode(cred[PASSWORD]));
+		map->setKeyValue(REALM, new Conf::ScalarNode(cred[REALM]));
+		credentialseq.addNode(map);
+	}
+
+	accountmap.setKeyValue (tlsKey, &tlsmap);
     tlsmap.setKeyValue (tlsPortKey, &tlsport);
     tlsmap.setKeyValue (certificateKey, &certificate);
     tlsmap.setKeyValue (calistKey, &calist);
@@ -281,6 +237,16 @@ void SIPAccount::serialize (Conf::YamlEmitter *emitter)
     } catch (Conf::YamlEmitterException &e) {
         _error ("ConfigTree: %s", e.what());
     }
+
+    Conf::Sequence *seq = credentialseq.getSequence();
+    Conf::Sequence::iterator seqit;
+    for (seqit = seq->begin(); seqit != seq->end(); ++seqit) {
+    	Conf::MappingNode *node = (Conf::MappingNode*)*seqit;
+    	delete node->getValue(USERNAME);
+		delete node->getValue(PASSWORD);
+		delete node->getValue(REALM);
+    	delete node;
+    }
 }
 
 
@@ -290,15 +256,12 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
     Conf::MappingNode *srtpMap;
     Conf::MappingNode *tlsMap;
     Conf::MappingNode *zrtpMap;
-    Conf::MappingNode *credMap;
 
     assert(map);
 
     map->getValue(aliasKey, &_alias);
     map->getValue(typeKey, &_type);
     map->getValue(usernameKey, &_username);
-    map->getValue(authenticationUsernameKey, &_authenticationUsername);
-    map->getValue(passwordKey, &_password);
     map->getValue(hostnameKey, &_hostname);
     map->getValue(accountEnableKey, &_enabled);
     map->getValue(mailboxKey, &_mailBox);
@@ -333,11 +296,46 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
 
     map->getValue(displayNameKey, &_displayName);
 
+	std::vector<std::map<std::string, std::string> > creds;
 
-    credMap = (Conf::MappingNode *) (map->getValue (credKey));
-    if (credMap)
-        credentials.unserialize (credMap);
+	Conf::YamlNode *credNode = map->getValue (credKey);
 
+	/* We check if the credential key is a sequence
+	 * because it was a mapping in a previous version of
+	 * the configuration file.
+	 */
+	if (credNode && credNode->getType() == Conf::SEQUENCE) {
+	    Conf::SequenceNode *credSeq = (Conf::SequenceNode *) credNode;
+		Conf::Sequence::iterator it;
+		Conf::Sequence *seq = credSeq->getSequence();
+		for(it = seq->begin(); it != seq->end(); ++it) {
+			Conf::MappingNode *cred = (Conf::MappingNode *) (*it);
+			std::string user;
+			std::string pass;
+			std::string realm;
+			cred->getValue(USERNAME, &user);
+			cred->getValue(PASSWORD, &pass);
+			cred->getValue(REALM, &realm);
+			std::map<std::string, std::string> map;
+			map[USERNAME] = user;
+			map[PASSWORD] = pass;
+			map[REALM] = realm;
+			printf("UNSERIALIZED %s %s %s\n", user.c_str(), pass.c_str(), realm.c_str());
+			creds.push_back(map);
+		}
+	}
+    if (creds.empty()) {
+    	// migration from old file format
+		std::map<std::string, std::string> credmap;
+		std::string password;
+	    map->getValue(passwordKey, &password);
+
+		credmap[USERNAME] = _username;
+		credmap[PASSWORD] = password;
+		credmap[REALM] = "*";
+		creds.push_back(credmap);
+    }
+    setCredentials (creds);
 
     // get srtp submap
     srtpMap = (Conf::MappingNode *) (map->getValue (srtpKey));
@@ -380,16 +378,11 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
 
 void SIPAccount::setAccountDetails (std::map<std::string, std::string> details)
 {
-	std::string password, username;
-
     // Account setting common to SIP and IAX
     setAlias (details[CONFIG_ACCOUNT_ALIAS]);
     setType (details[CONFIG_ACCOUNT_TYPE]);
-    username = details[USERNAME];
-    setUsername (username);
+    setUsername (details[USERNAME]);
     setHostname (details[HOSTNAME]);
-    password = details[PASSWORD];
-    setPassword (password);
     setEnabled ( (details[CONFIG_ACCOUNT_ENABLE] == "true"));
     setRingtonePath (details[CONFIG_RINGTONE_PATH]);
     setRingtoneEnabled ( (details[CONFIG_RINGTONE_ENABLED] == "true"));
@@ -411,10 +404,6 @@ void SIPAccount::setAccountDetails (std::map<std::string, std::string> details)
 
     setResolveOnce (details[CONFIG_ACCOUNT_RESOLVE_ONCE] == "true");
     setRegistrationExpire (details[CONFIG_ACCOUNT_REGISTRATION_EXPIRE]);
-
-    // sip credential
-    _realm = details[REALM];
-    _authenticationUsername = details[AUTHENTICATION_USERNAME];
 
     setUseragent (details[USERAGENT]);
 
@@ -445,19 +434,6 @@ void SIPAccount::setAccountDetails (std::map<std::string, std::string> details)
     setTlsRequireClientCertificate (details[TLS_REQUIRE_CLIENT_CERTIFICATE] == "true");
     setTlsNegotiationTimeoutSec (details[TLS_NEGOTIATION_TIMEOUT_SEC]);
     setTlsNegotiationTimeoutMsec (details[TLS_NEGOTIATION_TIMEOUT_MSEC]);
-
-    if (!Manager::instance().preferences.getMd5Hash()) {
-        setPassword (password);
-    } else {
-        // Make sure not to re-hash the password field if
-        // it is already saved as a MD5 Hash.
-        // TODO: This test is weak. Fix this.
-        if ( (password.compare (getPassword()) != 0)) {
-            _debug ("SipAccount: Password sent and password from config are different. Re-hashing");
-			std::string &authenticationUsername = _authenticationUsername.empty() ? username : _authenticationUsername;
-            setPassword (Manager::instance().computeMd5HashFromCredential (authenticationUsername, password, _realm));
-        }
-    }
 }
 
 std::map<std::string, std::string> SIPAccount::getAccountDetails() const
@@ -472,7 +448,6 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[CONFIG_ACCOUNT_TYPE] = getType();
     a[HOSTNAME] = getHostname();
     a[USERNAME] = getUsername();
-    a[PASSWORD] = getPassword();
 
     a[CONFIG_RINGTONE_PATH] = getRingtonePath();
     a[CONFIG_RINGTONE_ENABLED] = getRingtoneEnabled() ? "true" : "false";
@@ -501,9 +476,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     // Add sip specific details
     a[ROUTESET] = getServiceRoute();
     a[CONFIG_ACCOUNT_RESOLVE_ONCE] = isResolveOnce() ? "true" : "false";
-    a[REALM] = _realm;
     a[USERAGENT] = getUseragent();
-    a[AUTHENTICATION_USERNAME] = _authenticationUsername;
 
     a[CONFIG_ACCOUNT_REGISTRATION_EXPIRE] = getRegistrationExpire();
     a[LOCAL_INTERFACE] = getLocalInterface();
@@ -558,70 +531,11 @@ void SIPAccount::setVoIPLink()
 }
 
 
-void SIPAccount::initCredential (void)
-{
-    // We want to make sure that the password is really
-    // 32 characters long. Otherwise, pjsip will fail
-    // on an assertion.
-    bool md5HashingEnabled = Manager::instance().preferences.getMd5Hash()
-                             && _password.length() == 32;
-    int dataType = md5HashingEnabled ? PJSIP_CRED_DATA_DIGEST 
-                                     : PJSIP_CRED_DATA_PLAIN_PASSWD;
-    std::string digest;
-
-    // Create the credential array
-    free_cred(_cred);
-    _cred = (pjsip_cred_info *) calloc(getCredentialCount(), sizeof (pjsip_cred_info));
-
-    if (!_cred) {
-        _error ("SipAccount: Error: Failed to set _cred for account %s", _accountID.c_str());
-        return;
-    }
-
-    if (md5HashingEnabled )
-        _debug ("Setting digest ");
-
-    std::string &authenticationUsername = _authenticationUsername.empty() ? _username : _authenticationUsername;
-    // Use authentication username if provided
-    _cred[0].username = pj_str (strdup (authenticationUsername.c_str()));
-
-    // Set password
-    _cred[0].data =  pj_str (strdup (_password.c_str()));
-
-    // Set realm for that credential. * by default.
-    _cred[0].realm = pj_str (strdup (_realm.c_str()));
-
-    _cred[0].data_type = dataType;
-    _cred[0].scheme = pj_str ( (char*) "digest");
-
-#if 0 // FIXME, unused. see https://projects.savoirfairelinux.com/issues/6408
-    unsigned i;
-
-    // Default credential already initialized, use credentials.getCredentialCount()
-    for (i = 0; i < credentials.getCredentialCount(); i++) {
-
-        _cred[i].username = pj_str (strdup (_username.c_str()));
-        _cred[i].data = pj_str (strdup (_password.c_str()));
-        _cred[i].realm = pj_str (strdup (_realm.c_str()));
-
-        _cred[i].data_type = dataType;
-
-        _cred[i].scheme = pj_str ( (char*) "digest");
-
-        _debug ("Setting credential %u realm = %s passwd = %s username = %s data_type = %d", i, _realm.c_str(), _password.c_str(), _username.c_str(), _cred[i].data_type);
-    }
-#endif
-}
-
-
 int SIPAccount::registerVoIPLink()
 {
     if (_hostname.length() >= PJ_MAX_HOSTNAME) {
         return 1;
     }
-
-    // Init set of additional credentials, if supplied by the user
-    initCredential();
 
     // Init TLS settings if the user wants to use TLS
     if (_tlsEnable == "true") {
@@ -942,4 +856,96 @@ std::string SIPAccount::getContactHeader (const std::string& address, const std:
             transport.c_str());
 
     return std::string (contact, len);
+}
+
+
+namespace {
+std::string computeMd5HashFromCredential (
+    const std::string& username, const std::string& password,
+    const std::string& realm)
+{
+#define MD5_APPEND(pms,buf,len) pj_md5_update(pms, (const pj_uint8_t*)buf, len)
+
+    pj_md5_context pms;
+
+    /* Compute md5 hash = MD5(username ":" realm ":" password) */
+    pj_md5_init (&pms);
+    MD5_APPEND (&pms, username.data(), username.length());
+    MD5_APPEND (&pms, ":", 1);
+    MD5_APPEND (&pms, realm.data(), realm.length());
+    MD5_APPEND (&pms, ":", 1);
+    MD5_APPEND (&pms, password.data(), password.length());
+
+    unsigned char digest[16];
+    pj_md5_final (&pms, digest);
+
+    char hash[32];
+    int i;
+    for (i = 0; i < 16; ++i) {
+        pj_val_to_hex_digit (digest[i], &hash[2*i]);
+    }
+
+    return std::string(hash, 32);
+}
+
+
+} // anon namespace
+
+void SIPAccount::setCredentials (const std::vector<std::map<std::string, std::string> >& creds)
+{
+    bool md5HashingEnabled = Manager::instance().preferences.getMd5Hash();
+    std::vector< std::map<std::string, std::string> >::iterator it;
+
+	assert(creds.size() > 0); // we can not authenticate without credentials
+
+	credentials_ = creds;
+
+    /* md5 hashing */
+    for(it = credentials_.begin(); it != credentials_.end(); ++it) {
+        std::string username = (*it)[USERNAME];
+        std::string realm = (*it)[REALM];
+        std::string password = (*it)[PASSWORD];
+
+        if (md5HashingEnabled) {
+            // TODO: Fix this.
+            // This is an extremly weak test in order to check
+            // if the password is a hashed value. This is done
+            // because deleteCredential() is called before this
+            // method. Therefore, we cannot check if the value
+            // is different from the one previously stored in
+            // the configuration file. This is to avoid to
+            // re-hash a hashed password.
+
+            if (password.length() != 32) {
+                (*it)[PASSWORD] = computeMd5HashFromCredential(username, password, realm);
+            }
+        }
+    }
+
+    std::string digest;
+    size_t n = getCredentialCount();
+
+    // Create the credential array
+    delete[] _cred;
+    _cred = new pjsip_cred_info[n];
+
+    unsigned i;
+    for (i = 0; i < n; i++) {
+    	const std::string &password = credentials_[i][PASSWORD];
+    	int dataType = (md5HashingEnabled && password.length() == 32)
+			? PJSIP_CRED_DATA_DIGEST
+			: PJSIP_CRED_DATA_PLAIN_PASSWD;
+
+        _cred[i].username = pj_str ((char*)credentials_[i][USERNAME].c_str());
+        _cred[i].data = pj_str ((char*)password.c_str());
+        _cred[i].realm = pj_str ((char*)credentials_[i][REALM].c_str());
+
+        _cred[i].data_type = dataType;
+        _cred[i].scheme = pj_str ( (char*) "digest");
+    }
+}
+
+const std::vector<std::map<std::string, std::string> > &SIPAccount::getCredentials (void)
+{
+    return credentials_;
 }

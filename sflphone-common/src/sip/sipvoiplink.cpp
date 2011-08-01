@@ -534,10 +534,9 @@ void SIPVoIPLink::sendRegister (std::string id) throw(VoipLinkException)
         pjsip_regc_set_route_set (regc, route_set);
     }
 
-    pjsip_cred_info *cred = account->getCredInfo();
-    unsigned credential_count = account->getCredentialCount();
-    _debug ("UserAgent: setting %u credentials in sendRegister", credential_count);
-    pjsip_regc_set_credentials (regc, credential_count, cred);
+    unsigned count = account->getCredentialCount();
+    pjsip_cred_info *info = account->getCredInfo();
+    pjsip_regc_set_credentials (regc, count, info);
 
     // Add User-Agent Header
     pj_list_init (&hdr_list);
@@ -1603,7 +1602,7 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
 
     // Set auth information
-    pjsip_auth_clt_set_credentials (&dialog->auth_sess, 1, account->getCredInfo());
+    pjsip_auth_clt_set_credentials (&dialog->auth_sess, account->getCredentialCount(), account->getCredInfo());
 
     // Associate current call in the invite session
     inv->mod_data[getModId() ] = call;

@@ -2964,12 +2964,6 @@ void ManagerImpl::setIsAlwaysRecording(bool isAlwaysRec)
 	return audioPreference.setIsAlwaysRecording(isAlwaysRec);
 }
 
-bool ManagerImpl::getMd5CredentialHashing (void)
-{
-    return preferences.getMd5Hash();
-}
-
-
 
 void ManagerImpl::setRecordingCall (const CallID& id)
 {
@@ -3884,52 +3878,6 @@ std::map<std::string, std::string> ManagerImpl::getAccountDetails (
 
 }
 
-/* Transform digest to string.
- * output must be at least PJSIP_MD5STRLEN+1 bytes.
- * Helper function taken from sip_auth_client.c in
- * pjproject-1.0.3.
- *
- * NOTE: THE OUTPUT STRING IS NOT NULL TERMINATED!
- */
-
-void ManagerImpl::digest2str (const unsigned char digest[], char *output)
-{
-    int i;
-
-    for (i = 0; i < 16; ++i) {
-        pj_val_to_hex_digit (digest[i], output);
-        output += 2;
-    }
-}
-
-std::string ManagerImpl::computeMd5HashFromCredential (
-    const std::string& username, const std::string& password,
-    const std::string& realm)
-{
-    pj_md5_context pms;
-    unsigned char digest[16];
-    char ha1[PJSIP_MD5STRLEN];
-
-    /* Compute md5 hash = MD5(username ":" realm ":" password) */
-    pj_md5_init (&pms);
-    MD5_APPEND (&pms, username.data(), username.length());
-    MD5_APPEND (&pms, ":", 1);
-    MD5_APPEND (&pms, realm.data(), realm.length());
-    MD5_APPEND (&pms, ":", 1);
-    MD5_APPEND (&pms, password.data(), password.length());
-    pj_md5_final (&pms, digest);
-
-    digest2str (digest, ha1);
-    return std::string(ha1, PJSIP_MD5STRLEN);
-}
-
-void ManagerImpl::setCredential (const std::string& accountID UNUSED,
-                                 const int32_t& index UNUSED, const std::map<std::string, std::string>& details UNUSED)
-{
-
-    _debug ("Manager: set credential");
-}
-
 // method to reduce the if/else mess.
 // Even better, switch to XML !
 
@@ -4030,26 +3978,6 @@ std::string ManagerImpl::addAccount (
         _dbus->getConfigurationManager()->accountsChanged();
 
     return accountID.str();
-}
-
-void ManagerImpl::deleteAllCredential (const std::string& accountID)
-{
-
-    _debug ("Manager: delete all credential");
-
-    Account *account = getAccount (accountID);
-
-    if (!account)
-        return;
-
-    if (account->getType() != "SIP")
-        return;
-
-    SIPAccount *sipaccount = (SIPAccount *) account;
-
-    if (accountID.empty() == false) {
-        sipaccount->setCredentialCount (0);
-    }
 }
 
 void ManagerImpl::removeAccount (const std::string& accountID)
