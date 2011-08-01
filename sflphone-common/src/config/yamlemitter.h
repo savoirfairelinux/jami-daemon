@@ -46,7 +46,7 @@ class YamlEmitterException : public std::runtime_error
 {
     public:
         YamlEmitterException (const std::string& str="") :
-            std::runtime_error("YamlParserException occured: " + str) {}
+            std::runtime_error("YamlEmitterException occured: " + str) {}
 };
 
 class YamlEmitter
