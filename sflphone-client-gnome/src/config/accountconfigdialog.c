@@ -504,12 +504,6 @@ static void cell_edited_cb (GtkCellRendererText *renderer, gchar *path_desc, gch
         if (g_strcasecmp (text, gtk_entry_get_text (GTK_ENTRY (entryUsername))) != 0) {
             g_signal_handlers_disconnect_by_func (G_OBJECT (entryUsername), G_CALLBACK (update_credential_cb), NULL);
         }
-
-        if (column == COLUMN_CREDENTIAL_PASSWORD) {
-            gtk_entry_set_text (GTK_ENTRY (entryPassword), text);
-            text = "*****";
-
-        }
     }
 
     gtk_tree_model_get_iter (model, &iter, path);
