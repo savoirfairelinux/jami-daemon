@@ -34,6 +34,7 @@
 #include <sstream>
 #include <map>
 #include <string>
+#include "../manager.h"
 #include "video_send_thread.h"
 #include "video_receive_thread.h"
 #include "sip/sdp.h"
@@ -44,14 +45,13 @@ namespace sfl_video {
 
 VideoRtpSession::VideoRtpSession() : sending_(true), receiving_(true)
 {
-    txArgs_["input"]       = "/dev/video0";
+    txArgs_ = Manager::instance().videoPreference.getVideoSettings();
     txArgs_["codec"]       = "libx264";
     txArgs_["bitrate"]     = "500000";
     txArgs_["format"]      = "rgb24";
     // default to CIF/SIF(625)
     txArgs_["width"]       = "352";
     txArgs_["height"]      = "288";
-    txArgs_["framerate"]      = "30";
 
     rxArgs_["codec"] = txArgs_["codec"];
     rxArgs_["bitrate"] = txArgs_["bitrate"];
