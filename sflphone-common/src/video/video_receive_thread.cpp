@@ -508,7 +508,10 @@ void VideoReceiveThread::run()
         sem_signal(semSetID_);
 
         if (test_source_)
+        {
+            yield();
             continue;
+        }
 
         // free the packet that was allocated by av_read_frame
 next_packet:
