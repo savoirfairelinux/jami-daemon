@@ -53,10 +53,6 @@ VideoRtpSession::VideoRtpSession() : sending_(true), receiving_(true)
     rxArgs_["codec"] = txArgs_["codec"];
     rxArgs_["bitrate"] = txArgs_["bitrate"];
     rxArgs_["format"] = txArgs_["format"];
-
-    // default to CIF/SIF(625)
-    rxArgs_["width"] = "352";
-    rxArgs_["height"] = "288";
 }
 
 VideoRtpSession::VideoRtpSession(const std::map<std::string, std::string> &txArgs,

@@ -836,6 +836,10 @@
            </arg>
            <arg type="i" name="videoBufferSize">
            </arg>
+           <arg type="i" name="destWidth">
+           </arg>
+           <arg type="i" name="destHeight">
+           </arg>
 	   </signal>
 
        <signal name="stoppedReceivingVideoEvent" tp:name-for-bindings="stoppedReceivingVideoEvent">

@@ -693,7 +693,9 @@ void video_device_event_cb(DBusGProxy *proxy UNUSED, void * foo  UNUSED)
 }
 
 // FIXME: Should not be in config, also only handling clutter case for now
-void receiving_video_event_cb(DBusGProxy *proxy, gint shmKey, gint semKey, gint videoBufferSize, GError *error, gpointer userdata)
+void receiving_video_event_cb(DBusGProxy *proxy, gint shmKey, gint semKey,
+                              gint videoBufferSize, gint destWidth,
+                              gint destHeight, GError *error, gpointer userdata)
 {
     if (!receivingVideoWindow)
         receivingVideoWindow = gtk_window_new (GTK_WINDOW_TOPLEVEL);
@@ -713,13 +715,14 @@ void receiving_video_event_cb(DBusGProxy *proxy, gint shmKey, gint semKey, gint 
     if (shmKey == -1 || semKey == -1 || videoBufferSize == -1)
         return;
 
-    gtk_widget_set_size_request (receivingVideoArea, drawWidth, drawHeight);
+    gtk_widget_set_size_request (receivingVideoArea, destWidth, destHeight);
     gtk_widget_show_all(receivingVideoWindow);
 
     drawFormat = "rgb24";
-    DEBUG("Video started for shm:%d sem:%d bufferSz:%d", shmKey, semKey, videoBufferSize);
+    DEBUG("Video started for shm:%d sem:%d bufferSz:%d width:%d height:%d",
+           shmKey, semKey, videoBufferSize, drawWidth, drawHeight);
 
-    video_renderer = video_preview_new(receivingVideoArea, drawWidth, drawHeight, drawFormat, shmKey, semKey, videoBufferSize);
+    video_renderer = video_preview_new(receivingVideoArea, destWidth, destHeight, drawFormat, shmKey, semKey, videoBufferSize);
     g_assert(video_renderer);
     if (video_preview_run(video_renderer)) {
         g_object_unref(video_renderer);

@@ -336,6 +336,12 @@ void VideoReceiveThread::setup()
         exit();
     }
 
+    if (dstWidth_ == 0 and dstHeight_ == 0)
+    {
+        dstWidth_ = decoderCtx_->width;
+        dstHeight_ = decoderCtx_->height;
+    }
+
     // determine required buffer size and allocate buffer
     videoBufferSize_ = bufferSize(dstWidth_, dstHeight_, format_);
 
@@ -357,7 +363,7 @@ void VideoReceiveThread::setup()
         // Fri Jul 15 12:15:59 EDT 2011:tmatth:FIXME: access to call manager
         // from this thread may not be thread-safe
         DBusManager::instance().getCallManager()->receivingVideoEvent(shmKey_,
-                semKey_, videoBufferSize_);
+                semKey_, videoBufferSize_, dstWidth_, dstHeight_);
     }
 }
 

@@ -911,14 +911,14 @@ dbus_connect (GError **error)
     dbus_g_proxy_connect_signal(configurationManagerProxy, "videoDeviceEvent",
                                 G_CALLBACK (video_device_event_cb), NULL, NULL);
 
-    /* Marshaller for INT INT INT */
+    /* Marshaller for INT INT INT INT INT */
     dbus_g_object_register_marshaller (
-        g_cclosure_user_marshal_VOID__INT_INT_INT, G_TYPE_NONE,
-        G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
+        g_cclosure_user_marshal_VOID__INT_INT_INT_INT_INT, G_TYPE_NONE,
+        G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
 
     dbus_g_proxy_add_signal (callManagerProxy, "receivingVideoEvent",
-                             G_TYPE_INT, G_TYPE_INT, G_TYPE_INT,
-                             G_TYPE_INVALID);
+                             G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT,
+                             G_TYPE_INT, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(callManagerProxy, "receivingVideoEvent",
                                 G_CALLBACK (receiving_video_event_cb), NULL, NULL);
 
