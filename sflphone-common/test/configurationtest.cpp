@@ -254,7 +254,25 @@ void ConfigurationTest::testYamlEmitter()
     zrtpmap.setKeyValue (notSuppWarningKey, &notSuppWarning);
 
     accountmap.setKeyValue (credKey, &credentialmap);
-    credentialmap.setKeyValue (credentialCountKey, &count);
+    Conf::SequenceNode credentialseq (NULL);
+    accountmap.setKeyValue (credKey, &credentialseq);
+
+    Conf::MappingNode credmap1(NULL);
+    Conf::MappingNode credmap2(NULL);
+    Conf::ScalarNode user1("user");
+    Conf::ScalarNode pass1("pass");
+    Conf::ScalarNode realm1("*");
+    Conf::ScalarNode user2("john");
+    Conf::ScalarNode pass2("doe");
+    Conf::ScalarNode realm2("fbi");
+    credmap1.setKeyValue(USERNAME, &user1);
+    credmap1.setKeyValue(PASSWORD, &pass1);
+    credmap1.setKeyValue(REALM, &realm1);
+    credmap2.setKeyValue(USERNAME, &user2);
+    credmap2.setKeyValue(PASSWORD, &pass2);
+    credmap2.setKeyValue(REALM, &realm2);
+    credentialseq.addNode(&credmap1);
+    credentialseq.addNode(&credmap2);
 
     accountmap.setKeyValue (tlsKey, &tlsmap);
     tlsmap.setKeyValue (tlsPortKey, &tlsport);
