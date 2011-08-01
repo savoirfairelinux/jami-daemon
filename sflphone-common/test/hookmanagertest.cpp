@@ -49,10 +49,7 @@ void HookManagerTest::testAddAction ()
 {
     _debug ("-------------------- HookManagerTest::testAddAction --------------------\n");
 
-    int status;
-
-    // status = urlhook->addAction ("http://www.google.ca/?arg1=arg1&arg2=nvls&x=2&y=45&z=1", "x-www-browser");
-    // CPPUNIT_ASSERT (status == 0);
+    // CPPUNIT_ASSERT (urlhook->addAction ("http://www.google.ca/?arg1=arg1&arg2=nvls&x=2&y=45&z=1", "x-www-browser") == 0);
 }
 
 void HookManagerTest::testLargeUrl ()
