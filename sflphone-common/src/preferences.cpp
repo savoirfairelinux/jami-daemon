@@ -690,13 +690,17 @@ VideoPreference::~VideoPreference()
 	delete _v4l2_list;
 }
 
-std::map<std::string, std::string> VideoPreference::getVideoSettings(void) {
+std::map<std::string, std::string> VideoPreference::getVideoSettings()
+{
     std::map<std::string, std::string> map;
     std::stringstream ss;
     map["input"] = _v4l2_list->getDeviceNode(_Device);
     ss << _v4l2_list->getChannelNum(_Device, _Channel);
     map["channel"] = ss.str();
     map["video_size"] = _Size;
+    size_t x_pos = _Size.find("x");
+    map["width"] = _Size.substr(0, x_pos);
+    map["height"] = _Size.substr(x_pos + 1);
     map["framerate"] = _Rate;
 
     return map;
