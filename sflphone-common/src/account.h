@@ -273,13 +273,6 @@ class Account : public Serializable
             _hostname = hostname;
         }
 
-        std::string getPassword (void) const {
-            return _password;
-        }
-        void setPassword (const std::string &password) {
-            _password = password;
-        }
-
         std::string getAlias (void) const {
             return _alias;
         }
@@ -374,11 +367,6 @@ class Account : public Serializable
          * Account login information: hostname
          */
         std::string _hostname;
-
-        /**
-         * Account login information: password
-         */
-        std::string _password;
 
         /**
          * Account login information: Alias

@@ -116,7 +116,6 @@ void SIPAccount::serialize (Conf::YamlEmitter *emitter)
 
     Conf::ScalarNode id (Account::_accountID);
     Conf::ScalarNode username (Account::_username);
-    Conf::ScalarNode password (Account::_password);
     Conf::ScalarNode alias (Account::_alias);
     Conf::ScalarNode hostname (Account::_hostname);
     Conf::ScalarNode enable (_enabled);

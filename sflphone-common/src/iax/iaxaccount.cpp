@@ -59,7 +59,7 @@ void IAXAccount::serialize (Conf::YamlEmitter *emitter)
 
     Conf::ScalarNode id (Account::_accountID);
     Conf::ScalarNode username (Account::_username);
-    Conf::ScalarNode password (Account::_password);
+    Conf::ScalarNode password (_password);
     Conf::ScalarNode alias (Account::_alias);
     Conf::ScalarNode hostname (Account::_hostname);
     Conf::ScalarNode enable (_enabled);
@@ -116,7 +116,7 @@ void IAXAccount::setAccountDetails (std::map<std::string, std::string> details)
     setType (details[CONFIG_ACCOUNT_TYPE]);
     setUsername (details[USERNAME]);
     setHostname (details[HOSTNAME]);
-    setPassword (details[PASSWORD]);
+    _password = (details[PASSWORD]);
     setEnabled ( (details[CONFIG_ACCOUNT_ENABLE].compare ("true") == 0));
     setMailBox (details[CONFIG_ACCOUNT_MAILBOX]);
 
@@ -171,7 +171,6 @@ int IAXAccount::registerVoIPLink()
         // Stuff needed for IAX registration
         setHostname (_hostname);
         setUsername (_username);
-        setPassword (_password);
 
         _link->sendRegister (_accountID);
 	}
