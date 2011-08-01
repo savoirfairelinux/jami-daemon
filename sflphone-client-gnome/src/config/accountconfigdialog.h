@@ -45,9 +45,9 @@
  */
 void show_account_window (account_t *a);
 
-GtkWidget* create_registration_expire (account_t **a);
+GtkWidget* create_registration_expire (account_t *a);
 
-GtkWidget* create_direct_ip_calls_tab (account_t **a);
+GtkWidget* create_direct_ip_calls_tab (account_t *a);
 
 
 #endif

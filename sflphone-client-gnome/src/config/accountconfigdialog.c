@@ -238,12 +238,11 @@ static void update_credential_cb (GtkWidget *widget, gpointer data UNUSED)
 
 }
 
-static GtkWidget* create_basic_tab (account_t **a)
+static GtkWidget* create_basic_tab (account_t *currentAccount)
 {
 
     GtkWidget * frame;
     GtkWidget * table;
-    account_t *currentAccount;
     GtkWidget * clearTextCheckbox;
 #if GTK_CHECK_VERSION(2,16,0)
 #else
@@ -260,8 +259,6 @@ static GtkWidget* create_basic_tab (account_t **a)
     gchar *curMailbox = "";
     gchar *curUseragent = "";
     gchar *curRouteSet = "";
-
-    currentAccount = *a;
 
     int row = 0;
 
@@ -418,7 +415,6 @@ static GtkWidget* create_basic_tab (account_t **a)
     gtk_widget_show_all (table);
     gtk_container_set_border_width (GTK_CONTAINER (table), 10);
 
-    *a = currentAccount;
     return frame;
 }
 
@@ -709,7 +705,7 @@ static void same_as_local_cb (GtkWidget * widget, gpointer data UNUSED)
 
 
 
-GtkWidget* create_credential_widget (account_t **a)
+GtkWidget* create_credential_widget (account_t *a)
 {
 
     GtkWidget *frame, *table, *scrolledWindowCredential, *addButton;
@@ -772,7 +768,7 @@ GtkWidget* create_credential_widget (account_t **a)
     gtk_container_add (GTK_CONTAINER (scrolledWindowCredential), treeViewCredential);
 
     DEBUG ("Credential pas ok");
-    fill_treeview_with_credential (credentialStore, *a);
+    fill_treeview_with_credential (credentialStore, a);
     DEBUG ("Credential ok");
 
     /* Credential Buttons */
@@ -800,27 +796,27 @@ GtkWidget* create_credential_widget (account_t **a)
 }
 
 
-GtkWidget* create_security_widget (account_t **a)
+GtkWidget* create_security_widget (account_t *a)
 {
 
     GtkWidget *frame, *table, *sipTlsAdvancedButton, *label;
     gchar *curSRTPEnabled = NULL, *curKeyExchange = NULL, *curTLSEnabled = NULL;
 
     // Load from SIP/IAX/Unknown ?
-    if ( (*a)) {
-        curKeyExchange = g_hash_table_lookup ( (*a)->properties, ACCOUNT_KEY_EXCHANGE);
+    if (a) {
+        curKeyExchange = g_hash_table_lookup (a->properties, ACCOUNT_KEY_EXCHANGE);
 
         if (curKeyExchange == NULL) {
             curKeyExchange = "none";
         }
 
-        curSRTPEnabled = g_hash_table_lookup ( (*a)->properties, ACCOUNT_SRTP_ENABLED);
+        curSRTPEnabled = g_hash_table_lookup (a->properties, ACCOUNT_SRTP_ENABLED);
 
         if (curSRTPEnabled == NULL) {
             curSRTPEnabled = "false";
         }
 
-        curTLSEnabled = g_hash_table_lookup ( (*a)->properties, TLS_ENABLE);
+        curTLSEnabled = g_hash_table_lookup (a->properties, TLS_ENABLE);
 
         if (curTLSEnabled == NULL) {
             curTLSEnabled = "false";
@@ -836,7 +832,7 @@ GtkWidget* create_security_widget (account_t **a)
     sipTlsAdvancedButton = gtk_button_new_from_stock (GTK_STOCK_EDIT);
     gtk_table_attach_defaults (GTK_TABLE (table), sipTlsAdvancedButton, 2, 3, 0, 1);
     gtk_widget_set_sensitive (GTK_WIDGET (sipTlsAdvancedButton), FALSE);
-    g_signal_connect (G_OBJECT (sipTlsAdvancedButton), "clicked", G_CALLBACK (show_advanced_tls_options_cb), (*a)->properties);
+    g_signal_connect (G_OBJECT (sipTlsAdvancedButton), "clicked", G_CALLBACK (show_advanced_tls_options_cb),a->properties);
 
     useSipTlsCheckBox = gtk_check_button_new_with_mnemonic (_ ("Use TLS transport (sips)"));
     g_signal_connect (useSipTlsCheckBox, "toggled", G_CALLBACK (use_sip_tls_cb), sipTlsAdvancedButton);
@@ -853,7 +849,7 @@ GtkWidget* create_security_widget (account_t **a)
     gtk_combo_box_append_text (GTK_COMBO_BOX (keyExchangeCombo), _ ("Disabled"));
 
     advancedZrtpButton = gtk_button_new_from_stock (GTK_STOCK_PREFERENCES);
-    g_signal_connect (G_OBJECT (advancedZrtpButton), "clicked", G_CALLBACK (show_advanced_zrtp_options_cb), (*a)->properties);
+    g_signal_connect (G_OBJECT (advancedZrtpButton), "clicked", G_CALLBACK (show_advanced_zrtp_options_cb),a->properties);
 
     if (g_strcmp0 (curSRTPEnabled, "false") == 0) {
         gtk_combo_box_set_active (GTK_COMBO_BOX (keyExchangeCombo), 2);
@@ -869,7 +865,7 @@ GtkWidget* create_security_widget (account_t **a)
         }
     }
 
-    g_signal_connect (G_OBJECT (GTK_COMBO_BOX (keyExchangeCombo)), "changed", G_CALLBACK (key_exchange_changed_cb), *a);
+    g_signal_connect (G_OBJECT (GTK_COMBO_BOX (keyExchangeCombo)), "changed", G_CALLBACK (key_exchange_changed_cb), a);
 
     gtk_table_attach_defaults (GTK_TABLE (table), label, 0, 1, 1, 2);
     gtk_table_attach_defaults (GTK_TABLE (table), keyExchangeCombo, 1, 2, 1, 2);
@@ -881,7 +877,7 @@ GtkWidget* create_security_widget (account_t **a)
 }
 
 
-GtkWidget * create_security_tab (account_t **a)
+GtkWidget * create_security_tab (account_t *a)
 {
     GtkWidget * frame;
     GtkWidget * ret;
@@ -902,16 +898,16 @@ GtkWidget * create_security_tab (account_t **a)
     return ret;
 }
 
-GtkWidget* create_registration_expire (account_t **a)
+GtkWidget* create_registration_expire (account_t *a)
 {
 
     GtkWidget *table, *frame, *label;
 
     gchar *resolve_once=NULL, *account_expire=NULL;
 
-    if (*a) {
-        resolve_once = g_hash_table_lookup ( (*a)->properties, ACCOUNT_RESOLVE_ONCE);
-        account_expire = g_hash_table_lookup ( (*a)->properties, ACCOUNT_REGISTRATION_EXPIRE);
+    if (a) {
+        resolve_once = g_hash_table_lookup (a->properties, ACCOUNT_RESOLVE_ONCE);
+        account_expire = g_hash_table_lookup (a->properties, ACCOUNT_REGISTRATION_EXPIRE);
     }
 
     gnome_main_section_new_with_table (_ ("Registration"), &frame, &table, 2, 3);
@@ -936,16 +932,16 @@ GtkWidget* create_registration_expire (account_t **a)
     return frame;
 }
 
-GtkWidget* create_network (account_t **a)
+GtkWidget* create_network (account_t *a)
 {
 
     GtkWidget *table, *frame, *label;
     gchar *local_interface = NULL;
     gchar *local_port = NULL;
 
-    if (*a) {
-        local_interface = g_hash_table_lookup ( (*a)->properties, LOCAL_INTERFACE);
-        local_port = g_hash_table_lookup ( (*a)->properties, LOCAL_PORT);
+    if (a) {
+        local_interface = g_hash_table_lookup (a->properties, LOCAL_INTERFACE);
+        local_port = g_hash_table_lookup (a->properties, LOCAL_PORT);
     }
 
     gnome_main_section_new_with_table (_ ("Network Interface"), &frame, &table, 2, 3);
@@ -1040,7 +1036,7 @@ GtkWidget* create_network (account_t **a)
     return frame;
 }
 
-GtkWidget* create_published_address (account_t **a)
+GtkWidget* create_published_address (account_t *a)
 {
 
     GtkWidget *table, *frame;
@@ -1052,22 +1048,22 @@ GtkWidget* create_published_address (account_t **a)
     gchar *published_sameas_local = NULL;
 
     // Get the user configuration
-    if (*a) {
+    if (a) {
 
-        use_tls = g_hash_table_lookup ( (*a)->properties,  TLS_ENABLE);
-        published_sameas_local = g_hash_table_lookup ( (*a)->properties,  PUBLISHED_SAMEAS_LOCAL);
+        use_tls = g_hash_table_lookup (a->properties,  TLS_ENABLE);
+        published_sameas_local = g_hash_table_lookup (a->properties,  PUBLISHED_SAMEAS_LOCAL);
 
         if (g_strcasecmp (published_sameas_local, "true") == 0) {
-            published_address = dbus_get_address_from_interface_name (g_hash_table_lookup ( (*a)->properties, LOCAL_INTERFACE));
-            published_port = g_hash_table_lookup ( (*a)->properties,  LOCAL_PORT);
+            published_address = dbus_get_address_from_interface_name (g_hash_table_lookup (a->properties, LOCAL_INTERFACE));
+            published_port = g_hash_table_lookup (a->properties,  LOCAL_PORT);
         } else {
-            published_address = g_hash_table_lookup ( (*a)->properties,  PUBLISHED_ADDRESS);
-            published_port = g_hash_table_lookup ( (*a)->properties,  PUBLISHED_PORT);
+            published_address = g_hash_table_lookup (a->properties,  PUBLISHED_ADDRESS);
+            published_port = g_hash_table_lookup (a->properties,  PUBLISHED_PORT);
         }
 
-        stun_enable = g_hash_table_lookup ( (*a)->properties,  ACCOUNT_SIP_STUN_ENABLED);
-        stun_server = g_hash_table_lookup ( (*a)->properties,  ACCOUNT_SIP_STUN_SERVER);
-        published_sameas_local = g_hash_table_lookup ( (*a)->properties,  PUBLISHED_SAMEAS_LOCAL);
+        stun_enable = g_hash_table_lookup (a->properties,  ACCOUNT_SIP_STUN_ENABLED);
+        stun_server = g_hash_table_lookup (a->properties,  ACCOUNT_SIP_STUN_SERVER);
+        published_sameas_local = g_hash_table_lookup (a->properties,  PUBLISHED_SAMEAS_LOCAL);
     }
 
     gnome_main_section_new_with_table (_ ("Published address"), &frame, &table, 2, 3);
@@ -1136,7 +1132,7 @@ GtkWidget* create_published_address (account_t **a)
     return frame;
 }
 
-GtkWidget* create_advanced_tab (account_t **a)
+GtkWidget* create_advanced_tab (account_t *a)
 {
 
     // Build the advanced tab, to appear on the account configuration panel
@@ -1177,12 +1173,11 @@ void ringtone_enabled (GtkWidget *widget UNUSED, gpointer fileChooser, const gch
 }
 
 
-GtkWidget* create_audiocodecs_configuration (account_t **a)
+GtkWidget* create_audiocodecs_configuration (account_t *currentAccount)
 {
 
     // Main widget
     GtkWidget *ret, *audiocodecs, *dtmf, *box, *frame, *sipinfo, *table;
-    account_t *currentAccount = *a;
     gchar *currentDtmfType = "";
     gboolean dtmf_are_rtp = TRUE;
     gpointer p;
@@ -1190,7 +1185,7 @@ GtkWidget* create_audiocodecs_configuration (account_t **a)
     ret = gtk_vbox_new (FALSE, 10);
     gtk_container_set_border_width (GTK_CONTAINER (ret), 10);
 
-    box = audiocodecs_box (a);
+    box = audiocodecs_box (currentAccount);
 
     // Box for the audiocodecs
     gnome_main_section_new (_ ("Audio"), &audiocodecs);
@@ -1310,7 +1305,7 @@ void show_account_window (account_t * a)
     if (g_strcasecmp (currentAccount->accountID, IP2IP) != 0) {
 
         /* General Settings */
-        tab = create_basic_tab (&currentAccount);
+        tab = create_basic_tab (currentAccount);
 
         gtk_notebook_append_page (GTK_NOTEBOOK (notebook), tab, gtk_label_new (_ ("Basic")));
         gtk_notebook_page_num (GTK_NOTEBOOK (notebook), tab);
@@ -1319,7 +1314,7 @@ void show_account_window (account_t * a)
     }
 
     /* Audio Codecs */
-    audiocodecs_tab = create_audiocodecs_configuration (&currentAccount);
+    audiocodecs_tab = create_audiocodecs_configuration (currentAccount);
     gtk_notebook_append_page (GTK_NOTEBOOK (notebook), audiocodecs_tab, gtk_label_new (_ ("Audio")));
     gtk_notebook_page_num (GTK_NOTEBOOK (notebook), audiocodecs_tab);
 
@@ -1333,19 +1328,19 @@ void show_account_window (account_t * a)
     if (g_strcasecmp (currentAccount->accountID, IP2IP) != 0) {
 
         /* Advanced */
-        advanced_tab = create_advanced_tab (&currentAccount);
+        advanced_tab = create_advanced_tab (currentAccount);
         gtk_notebook_append_page (GTK_NOTEBOOK (notebook), advanced_tab, gtk_label_new (_ ("Advanced")));
         gtk_notebook_page_num (GTK_NOTEBOOK (notebook), advanced_tab);
 
         /* Security */
-        security_tab = create_security_tab (&currentAccount);
+        security_tab = create_security_tab (currentAccount);
         gtk_notebook_append_page (GTK_NOTEBOOK (notebook), security_tab, gtk_label_new (_ ("Security")));
         gtk_notebook_page_num (GTK_NOTEBOOK (notebook),security_tab);
 
     } else {
 
         /* Custom tab for the IP to IP profile */
-        ip_tab = create_direct_ip_calls_tab (&currentAccount);
+        ip_tab = create_direct_ip_calls_tab (currentAccount);
         gtk_notebook_prepend_page (GTK_NOTEBOOK (notebook), ip_tab, gtk_label_new (_ ("Network")));
         gtk_notebook_page_num (GTK_NOTEBOOK (notebook), ip_tab);
     }
@@ -1527,7 +1522,7 @@ void show_account_window (account_t * a)
     gtk_widget_destroy (GTK_WIDGET (dialog));
 }
 
-GtkWidget* create_direct_ip_calls_tab (account_t **a)
+GtkWidget* create_direct_ip_calls_tab (account_t *a)
 {
 
     GtkWidget *ret, *frame, *label;

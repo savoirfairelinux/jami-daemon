@@ -34,7 +34,7 @@
 #include "actions.h"
 
 GtkWidget* create_audio_configuration (void);
-GtkWidget* create_audiocodecs_configuration (account_t **a);
+GtkWidget* create_audiocodecs_configuration (account_t *a);
 
 GtkWidget* api_box();
 GtkWidget* alsa_box();
