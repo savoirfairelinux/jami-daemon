@@ -112,7 +112,8 @@ void VideoSendThread::prepareEncoderContext()
         encoderCtx_->height = atoi(args_["height"].c_str());
 
     // fps
-    encoderCtx_->time_base = (AVRational){1, 30};
+    int fps = args_["framerate"].empty() ? 30 :  atoi(args_["framerate"].c_str());
+    encoderCtx_->time_base = (AVRational){1, fps};
     encoderCtx_->pix_fmt = PIX_FMT_YUV420P;
     // Fri Jul 22 11:37:59 EDT 2011:tmatth:XXX: DON'T set this, we want our
     // pps and sps to be sent in-band for RTP
