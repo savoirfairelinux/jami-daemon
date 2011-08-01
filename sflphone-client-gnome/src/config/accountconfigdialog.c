@@ -48,8 +48,6 @@
 #include <libsexy/sexy-icon-entry.h>
 #endif
 
-#define PW_HIDDEN		"*****"
-
 #include <string.h>
 #include <dbus/dbus.h>
 #include <config.h>
@@ -269,7 +267,13 @@ static GtkWidget* create_basic_tab (account_t *currentAccount)
         curAccountType = g_hash_table_lookup (currentAccount->properties, ACCOUNT_TYPE);
         curAlias = g_hash_table_lookup (currentAccount->properties, ACCOUNT_ALIAS);
         curHostname = g_hash_table_lookup (currentAccount->properties, ACCOUNT_HOSTNAME);
-        curPassword = g_hash_table_lookup (currentAccount->properties, ACCOUNT_PASSWORD);
+        if (strcmp (curAccountType, "SIP") == 0) {
+            /* get password from credentials list */
+            GHashTable * element = g_ptr_array_index (currentAccount->credential_information, 0);
+            curPassword = g_hash_table_lookup (element, ACCOUNT_PASSWORD);
+        } else {
+            curPassword = g_hash_table_lookup (currentAccount->properties, ACCOUNT_PASSWORD);
+        }
         curUsername = g_hash_table_lookup (currentAccount->properties, ACCOUNT_USERNAME);
         curRouteSet = g_hash_table_lookup(currentAccount->properties, ACCOUNT_ROUTE);
         curMailbox = g_hash_table_lookup (currentAccount->properties, ACCOUNT_MAILBOX);
@@ -503,7 +507,8 @@ static void cell_edited_cb (GtkCellRendererText *renderer, gchar *path_desc, gch
 
         if (column == COLUMN_CREDENTIAL_PASSWORD) {
             gtk_entry_set_text (GTK_ENTRY (entryPassword), text);
-            text = PW_HIDDEN;
+            text = "*****";
+
         }
     }
 
