@@ -59,9 +59,6 @@ class VideoV4l2List : public ost::Thread {
         unsigned getChannelNum(const std::string &dev, const std::string &name);
 
     private:
-        /**
-         * @throw std::runtime_error
-         */
         void delDevice(const std::string &node);
         bool addDevice(const std::string &dev);
         std::vector<VideoV4l2Device> devices;
