@@ -36,7 +36,7 @@
 #ifndef DTMFGENERATOR_H
 #define DTMFGENERATOR_H
 
-#include <exception>
+#include <stdexcept>
 #include <string.h>
 
 #include "tone.h"
@@ -47,34 +47,10 @@
  * @file dtmfgenerator.h
  * @brief DMTF Generator Exception
  */
-class DTMFException : public std::exception
+class DTMFException : public std::runtime_error
 {
-    private:
-
-        /** Message */
-        const char* reason;
     public:
-        /**
-         * Constructor
-         * @param _reason An error message
-         */
-        DTMFException (const char* _reason) throw();
-
-        /**
-         * Destructor
-         */
-        virtual ~DTMFException() throw();
-        /*
-            // Copy Constructor
-            DTMFException(const DTMFException& rh) throw();
-
-            // Assignment Operator
-            DTMFException& operator=( const DTMFException& rh) throw();
-        */
-        /**
-         * @return const char* The error
-         */
-        virtual const char* what() const throw();
+        DTMFException(const std::string& str) : std::runtime_error(str) {};
 };
 
 /*

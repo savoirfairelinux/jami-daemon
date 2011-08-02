@@ -48,6 +48,8 @@ class IAXCall;
 class AudioCodec;
 class AudioLayer;
 
+class IAXAccount;
+
 /**
  * @file iaxvoiplink.h
  * @brief VoIPLink contains a thread that listen to external events
@@ -62,7 +64,7 @@ class IAXVoIPLink : public VoIPLink
          * Constructor
          * @param accountID	The account containing the voip link
          */
-        IAXVoIPLink (const AccountID& accountID);
+        IAXVoIPLink (const std::string& accountID);
 
         /**
          * Destructor
@@ -95,7 +97,7 @@ class IAXVoIPLink : public VoIPLink
          * Send out registration
          * @return bool The new registration state (are we registered ?)
          */
-        virtual void sendRegister (AccountID id) throw(VoipLinkException);
+        virtual void sendRegister (std::string id) throw(VoipLinkException);
 
         /**
          * Destroy registration session
@@ -104,7 +106,7 @@ class IAXVoIPLink : public VoIPLink
          * @return bool true if we're registered upstream
          *		  false otherwise
          */
-        virtual void sendUnregister (AccountID id) throw(VoipLinkException);
+        virtual void sendUnregister (std::string id) throw(VoipLinkException);
 
         /**
          * Create a new outgoing call
@@ -218,6 +220,8 @@ class IAXVoIPLink : public VoIPLink
 
     private:
 
+        IAXAccount* getAccountPtr (void);
+
         /*
          * Decode the message count IAX send.
          * Returns only the new messages number
@@ -324,6 +328,8 @@ class IAXVoIPLink : public VoIPLink
 
         /* URL hook */
         UrlHook *urlhook;
+
+        const std::string _accountID;
 };
 
 #endif

@@ -39,11 +39,6 @@
  */
 
 /**
- * Fill the codec list widget with the data the server send
- */
-void preferences_dialog_fill_codec_list();
-
-/**
  * Fill the input audio plugin list widget with the data the server send
  * Currently not used
  */

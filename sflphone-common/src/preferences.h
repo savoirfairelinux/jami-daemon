@@ -37,75 +37,75 @@
 using namespace sfl_video;
 
 // general preferences
-const Conf::Key orderKey ("order");                         // :	1234/2345/
-const Conf::Key audioApiKey ("audioApi");                   // :	0
-const Conf::Key historyLimitKey ("historyLimit");           // :	30
-const Conf::Key historyMaxCallsKey ("historyMaxCalls");     // :	20
-const Conf::Key notifyMailsKey ("notifyMails");             // :	false
-const Conf::Key zoneToneChoiceKey ("zoneToneChoice");       // :	North America
-const Conf::Key registrationExpireKey ("registrationExpire");// :	180
-const Conf::Key portNumKey ("portNum");                     // :	5060
-const Conf::Key searchBarDisplayKey ("searchBarDisplay");   // :	true
-const Conf::Key zeroConfenableKey ("zeroConfenable");       // :	false
-const Conf::Key md5HashKey ("md5Hash");                     // :	false
+const std::string orderKey ("order");                         // :	1234/2345/
+const std::string audioApiKey ("audioApi");                   // :	0
+const std::string historyLimitKey ("historyLimit");           // :	30
+const std::string historyMaxCallsKey ("historyMaxCalls");     // :	20
+const std::string notifyMailsKey ("notifyMails");             // :	false
+const std::string zoneToneChoiceKey ("zoneToneChoice");       // :	North America
+const std::string registrationExpireKey ("registrationExpire");// :	180
+const std::string portNumKey ("portNum");                     // :	5060
+const std::string searchBarDisplayKey ("searchBarDisplay");   // :	true
+const std::string zeroConfenableKey ("zeroConfenable");       // :	false
+const std::string md5HashKey ("md5Hash");                     // :	false
 
 // voip preferences
-const Conf::Key playDtmfKey ("playDtmf"); // true                    true
-const Conf::Key playTonesKey ("playTones"); // true
-const Conf::Key pulseLengthKey ("pulseLength"); //=250
-const Conf::Key symmetricRtpKey ("symmetric");// =true
-const Conf::Key zidFileKey ("zidFile");// =sfl.zid
+const std::string playDtmfKey ("playDtmf"); // true                    true
+const std::string playTonesKey ("playTones"); // true
+const std::string pulseLengthKey ("pulseLength"); //=250
+const std::string symmetricRtpKey ("symmetric");// =true
+const std::string zidFileKey ("zidFile");// =sfl.zid
 
 // addressbook preferences
-const Conf::Key photoKey ("photo");//		false
-const Conf::Key enabledKey ("enabled");//		true
-const Conf::Key listKey ("list");//		1243608768.30329.0@emilou-desktop/1243456917.15690.23@emilou-desktop/
-const Conf::Key maxResultsKey ("maxResults");//		25
-const Conf::Key businessKey ("business");//		true
-const Conf::Key homeKey ("home");//		false
-const Conf::Key mobileKey ("mobile");//		false
+const std::string photoKey ("photo");//		false
+const std::string enabledKey ("enabled");//		true
+const std::string listKey ("list");//		1243608768.30329.0@emilou-desktop/1243456917.15690.23@emilou-desktop/
+const std::string maxResultsKey ("maxResults");//		25
+const std::string businessKey ("business");//		true
+const std::string homeKey ("home");//		false
+const std::string mobileKey ("mobile");//		false
 
 // hooks preferences
-const Conf::Key iax2EnabledKey ("iax2Enabled");// :		false
-const Conf::Key numberAddPrefixKey ("numberAddPrefix");//:	false
-const Conf::Key numberEnabledKey ("numberEnabled"); //:	false
-const Conf::Key sipEnabledKey ("sipEnabled"); //:		false
-const Conf::Key urlCommandKey ("urlCommand"); //:		x-www-browser
-const Conf::Key urlSipFieldKey ("urlSipField"); //:		X-sflphone-url
+const std::string iax2EnabledKey ("iax2Enabled");// :		false
+const std::string numberAddPrefixKey ("numberAddPrefix");//:	false
+const std::string numberEnabledKey ("numberEnabled"); //:	false
+const std::string sipEnabledKey ("sipEnabled"); //:		false
+const std::string urlCommandKey ("urlCommand"); //:		x-www-browser
+const std::string urlSipFieldKey ("urlSipField"); //:		X-sflphone-url
 
 // audio preferences
-const Conf::Key alsamapKey ("alsa");
-const Conf::Key pulsemapKey ("pulse");
-const Conf::Key cardinKey ("cardIn");// : 0
-const Conf::Key cardoutKey ("cardOut");// 0
-const Conf::Key cardringKey ("cardRing");// : 0
-const Conf::Key framesizeKey ("frameSize");// : 20
-const Conf::Key pluginKey ("plugin"); //: default
-const Conf::Key smplrateKey ("smplRate");//: 44100
-const Conf::Key devicePlaybackKey ("devicePlayback");//:
-const Conf::Key deviceRecordKey ("deviceRecord");// :
-const Conf::Key deviceRingtoneKey ("deviceRingtone");// :
-const Conf::Key recordpathKey ("recordPath");//: /home/msavard/Bureau
-const Conf::Key alwaysRecordingKey("alwaysRecording");
-const Conf::Key volumemicKey ("volumeMic");//:  100
-const Conf::Key volumespkrKey ("volumeSpkr");//: 100
-const Conf::Key noiseReduceKey ("noiseReduce");
-const Conf::Key echoCancelKey ("echoCancel");
-const Conf::Key echoTailKey ("echoTailLength");
-const Conf::Key echoDelayKey ("echoDelayLength");
+const std::string alsamapKey ("alsa");
+const std::string pulsemapKey ("pulse");
+const std::string cardinKey ("cardIn");// : 0
+const std::string cardoutKey ("cardOut");// 0
+const std::string cardringKey ("cardRing");// : 0
+const std::string framesizeKey ("frameSize");// : 20
+const std::string pluginKey ("plugin"); //: default
+const std::string smplrateKey ("smplRate");//: 44100
+const std::string devicePlaybackKey ("devicePlayback");//:
+const std::string deviceRecordKey ("deviceRecord");// :
+const std::string deviceRingtoneKey ("deviceRingtone");// :
+const std::string recordpathKey ("recordPath");//: /home/msavard/Bureau
+const std::string alwaysRecordingKey("alwaysRecording");
+const std::string volumemicKey ("volumeMic");//:  100
+const std::string volumespkrKey ("volumeSpkr");//: 100
+const std::string noiseReduceKey ("noiseReduce");
+const std::string echoCancelKey ("echoCancel");
+const std::string echoTailKey ("echoTailLength");
+const std::string echoDelayKey ("echoDelayLength");
 
 // video preferences
-const Conf::Key videoDeviceKey ("v4l2Dev");
-const Conf::Key videoChannelKey ("v4l2Channel");
-const Conf::Key videoSizeKey ("v4l2Size");
-const Conf::Key videoRateKey ("v4l2Rate");
+const std::string videoDeviceKey ("v4l2Dev");
+const std::string videoChannelKey ("v4l2Channel");
+const std::string videoSizeKey ("v4l2Size");
+const std::string videoRateKey ("v4l2Rate");
 
 // shortcut preferences
-const Conf::Key hangupShortKey ("hangUp");
-const Conf::Key pickupShortKey ("pickUp");
-const Conf::Key popupShortKey ("popupWindow");
-const Conf::Key toggleHoldShortKey ("toggleHold");
-const Conf::Key togglePickupHangupShortKey ("togglePickupHangup");
+const std::string hangupShortKey ("hangUp");
+const std::string pickupShortKey ("pickUp");
+const std::string popupShortKey ("popupWindow");
+const std::string toggleHoldShortKey ("toggleHold");
+const std::string togglePickupHangupShortKey ("togglePickupHangup");
 
 
 class Preferences : public Serializable

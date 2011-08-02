@@ -291,68 +291,28 @@ void ConfigurationManager::setTlsSettings (const std::map<std::string, std::stri
 
 }
 
-std::map<std::string, std::string> ConfigurationManager::getCredential (
-    const std::string& accountID, const int32_t& index)
+std::vector<std::map<std::string, std::string> > ConfigurationManager::getCredentials (
+    const std::string& accountID)
 {
-
     Account *account = Manager::instance().getAccount (accountID);
+    std::vector<std::map<std::string, std::string> > credentialInformation;
 
-    std::map<std::string, std::string> credentialInformation;
-
-    if (account->getType() != "SIP")
+    if (!account || account->getType() != "SIP")
         return credentialInformation;
 
     SIPAccount *sipaccount = (SIPAccount *) account;
-
-
-    if (index == 0) {
-        std::string username = sipaccount->getUsername();
-        std::string password = sipaccount->getPassword();
-        std::string realm = sipaccount->getRealm();
-
-        credentialInformation.insert (std::pair<std::string, std::string> (USERNAME, username));
-        credentialInformation.insert (std::pair<std::string, std::string> (PASSWORD, password));
-        credentialInformation.insert (std::pair<std::string, std::string> (REALM, realm));
-    } else {
-
-        // TODO: implement for extra credentials
-        std::string username = sipaccount->getUsername();
-        std::string password = sipaccount->getPassword();
-        std::string realm = sipaccount->getRealm();
-
-        credentialInformation.insert (std::pair<std::string, std::string> (USERNAME, username));
-        credentialInformation.insert (std::pair<std::string, std::string> (PASSWORD, password));
-        credentialInformation.insert (std::pair<std::string, std::string> (REALM, realm));
-    }
-
-    return credentialInformation;
+    return sipaccount->getCredentials();
 }
 
-int32_t ConfigurationManager::getNumberOfCredential (
-    const std::string& accountID)
+void ConfigurationManager::setCredentials (const std::string& accountID,
+        const std::vector<std::map<std::string, std::string> >& details)
 {
-
     Account *account = Manager::instance().getAccount (accountID);
 
-    if (!account)
-        return 0;
-
-    if (account->getType() == "SIP") {
-        SIPAccount *sipaccount = static_cast<SIPAccount *> (account);
-        return sipaccount->getCredentialCount();
-    } else
-        return 0;
-}
-
-void ConfigurationManager::setCredential (const std::string& accountID,
-        const int32_t& index, const std::map<std::string, std::string>& details)
-{
-    Manager::instance().setCredential (accountID, index, details);
-}
-
-void ConfigurationManager::deleteAllCredential (const std::string& accountID)
-{
-    Manager::instance().deleteAllCredential (accountID);
+    if (account && account->getType() == "SIP") {
+        SIPAccount *sipaccount = (SIPAccount *) account;
+        sipaccount->setCredentials(details);
+    }
 }
 
 void ConfigurationManager::setAccountDetails (const std::string& accountID,
@@ -896,38 +856,17 @@ void ConfigurationManager::setHistory (const std::vector<std::string>& entries)
 std::string ConfigurationManager::getAddrFromInterfaceName (
         const std::string& interface)
 {
-
-    std::string address = SIPVoIPLink::instance ("")->getInterfaceAddrFromName (
-            interface);
-
-    return address;
+    return SIPVoIPLink::instance()->getInterfaceAddrFromName (interface);
 }
 
 std::vector<std::string> ConfigurationManager::getAllIpInterface (void)
 {
-
-    std::vector<std::string> vector;
-    SIPVoIPLink * sipLink = NULL;
-    sipLink = SIPVoIPLink::instance ("");
-
-    if (sipLink != NULL) {
-        vector = sipLink->getAllIpInterface();
-    }
-
-    return vector;
+    return SIPVoIPLink::instance()->getAllIpInterface();
 }
 
 std::vector<std::string> ConfigurationManager::getAllIpInterfaceByName (void)
 {
-    std::vector<std::string> vector;
-    SIPVoIPLink * sipLink = NULL;
-    sipLink = SIPVoIPLink::instance ("");
-
-    if (sipLink != NULL) {
-        vector = sipLink->getAllIpInterfaceByName();
-    }
-
-    return vector;
+    return SIPVoIPLink::instance()->getAllIpInterfaceByName();
 }
 
 

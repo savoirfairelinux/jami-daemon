@@ -71,13 +71,6 @@ timeval2microtimeout (const timeval& t)
     return ( (t.tv_sec * 1000000ul) + t.tv_usec);
 }
 
-class AudioRtpSessionException: public std::exception
-{
-    virtual const char* what() const throw() {
-        return "AudioRtpSessionException occured";
-    }
-};
-
 typedef struct DtmfEvent {
     ost::RTPPacket::RFC2833Payload payload;
     int factor;

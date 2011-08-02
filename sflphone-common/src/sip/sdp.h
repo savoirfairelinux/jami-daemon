@@ -72,6 +72,8 @@ class Sdp
          */
         Sdp (pj_pool_t *pool);
 
+        ~Sdp();
+
         /**
          * Accessor for the internal memory pool
          */

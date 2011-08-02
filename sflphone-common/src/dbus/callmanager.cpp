@@ -358,26 +358,23 @@ CallManager::startTone (const int32_t& start , const int32_t& type)
 sfl::AudioZrtpSession * CallManager::getAudioZrtpSession (const std::string& callID)
 {
     SIPVoIPLink * link = NULL;
-    link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (AccountNULL));
+    link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (""));
 
     if (!link) {
-        _debug ("CallManager: Failed to get sip link");
-        throw CallManagerException();
+        throw CallManagerException("Failed to get sip link");
     }
 
     SIPCall *call = link->getSIPCall (callID);
 
     if (!call) {
-        _debug ("CallManager: Call id %d is not valid", callID.c_str());
-        throw CallManagerException();
+        throw CallManagerException("Call id " + callID + " is not valid");
     }
 
     sfl::AudioRtpFactory * audioRtp = NULL;
     audioRtp = call->getAudioRtp();
 
     if (!audioRtp) {
-        _debug ("CallManager: Failed to get AudioRtpFactory");
-        throw CallManagerException();
+        throw CallManagerException("Failed to get AudioRtpFactory");
     }
 
     sfl::AudioZrtpSession * zSession = NULL;
@@ -385,8 +382,7 @@ sfl::AudioZrtpSession * CallManager::getAudioZrtpSession (const std::string& cal
     zSession = audioRtp->getAudioZrtpSession();
 
     if (!zSession) {
-        _debug ("CallManager: Failed to get AudioZrtpSession");
-        throw CallManagerException();
+        throw CallManagerException("Failed to get AudioZrtpSession");
     }
 
     return zSession;
