@@ -346,7 +346,7 @@ VideoV4l2Device &VideoV4l2List::getDevice(const std::string &name)
 			return devices[i];
 	}
 
-	throw std::runtime_error("No device found");
+	throw std::runtime_error("No device found: " + name);
 }
 
 unsigned VideoV4l2List::getChannelNum(const std::string &dev, const std::string &name)
