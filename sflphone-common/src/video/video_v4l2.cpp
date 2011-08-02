@@ -315,7 +315,7 @@ VideoV4l2Size VideoV4l2Channel::getSize(const std::string &name)
 			return sizes[i];
 	}
 
-	throw std::runtime_error("No size found");
+	return sizes.back();
 }
 
 
@@ -335,7 +335,7 @@ VideoV4l2Device::VideoV4l2Device(int fd, const std::string &device)
 
     struct v4l2_capability cap;
     if (ioctl(fd, VIDIOC_QUERYCAP, &cap))
-        throw std::runtime_error("could not query capabilities");
+    	throw std::runtime_error("could not query capabilities");
 
     if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE))
         throw std::runtime_error("not a capture device");
@@ -379,7 +379,7 @@ VideoV4l2Channel &VideoV4l2Device::getChannel(const std::string &name)
 		if (channels[i].name == name)
 			return channels[i];
 
-	throw std::runtime_error("No channel found");
+	return channels.back();
 }
 
 
