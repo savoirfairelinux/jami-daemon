@@ -39,7 +39,7 @@
 #include "eel-gconf-extensions.h"
 
 #include "addrbookfactory.h"
-#include "accountconfigdialog.h"
+#include "preferencesdialog.h"
 #include "addressbook-config.h"
 #include "shortcuts-config.h"
 #include "audioconf.h"

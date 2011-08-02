@@ -53,6 +53,7 @@
 #include <config.h>
 #include <gtk/gtk.h>
 
+#include "utils.h"
 
 /**
  * TODO: tidy this up
@@ -897,7 +898,7 @@ GtkWidget * create_security_tab (account_t *a)
     return ret;
 }
 
-GtkWidget* create_registration_expire (account_t *a)
+static GtkWidget* create_registration_expire (account_t *a)
 {
 
     GtkWidget *table, *frame, *label;
@@ -1256,14 +1257,43 @@ GtkWidget* create_audiocodecs_configuration (account_t *currentAccount)
 
 }
 
-void show_account_window (account_t * a)
+GtkWidget* create_direct_ip_calls_tab (account_t *a)
+{
+
+    GtkWidget *ret, *frame, *label;
+    gchar *description;
+
+    ret = gtk_vbox_new (FALSE, 10);
+    gtk_container_set_border_width (GTK_CONTAINER (ret), 10);
+
+    description = g_markup_printf_escaped (_ ("This profile is used when you want to reach a remote peer simply by typing a sip URI such as <b>sip:remotepeer</b>. The settings you define here will also be used if no account can be matched to an incoming or outgoing call."));
+    label = gtk_label_new (NULL);
+    gtk_label_set_markup (GTK_LABEL (label), description);
+    gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+    gtk_box_pack_start (GTK_BOX (ret), label, FALSE, FALSE, 0);
+
+    GtkRequisition requisition;
+    gtk_widget_size_request (GTK_WIDGET (ret), &requisition);
+    gtk_widget_set_size_request (GTK_WIDGET (label), 350, -1);
+    gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
+
+    frame = create_network (a);
+    gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
+
+    frame = create_security_widget (a);
+    gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
+
+    gtk_widget_show_all (ret);
+    return ret;
+
+}
+
+void show_account_window (account_t * currentAccount)
 {
 
     GtkWidget * notebook;
     GtkWidget *tab, *audiocodecs_tab, *ip_tab;
     gint response;
-    account_t *currentAccount;
-
 
     // Firstly we reset
     reset();
@@ -1272,8 +1302,6 @@ void show_account_window (account_t * a)
     // we must resolve published address from interface name
     gchar * local_interface;
     gchar * published_address;
-
-    currentAccount = a;
 
     if (currentAccount == NULL) {
         DEBUG ("Config: Fetching default values for new account");
@@ -1519,36 +1547,5 @@ void show_account_window (account_t * a)
     codec_list_update_to_daemon (currentAccount);
 
     gtk_widget_destroy (GTK_WIDGET (dialog));
-}
-
-GtkWidget* create_direct_ip_calls_tab (account_t *a)
-{
-
-    GtkWidget *ret, *frame, *label;
-    gchar *description;
-
-    ret = gtk_vbox_new (FALSE, 10);
-    gtk_container_set_border_width (GTK_CONTAINER (ret), 10);
-
-    description = g_markup_printf_escaped (_ ("This profile is used when you want to reach a remote peer simply by typing a sip URI such as <b>sip:remotepeer</b>. The settings you define here will also be used if no account can be matched to an incoming or outgoing call."));
-    label = gtk_label_new (NULL);
-    gtk_label_set_markup (GTK_LABEL (label), description);
-    gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-    gtk_box_pack_start (GTK_BOX (ret), label, FALSE, FALSE, 0);
-
-    GtkRequisition requisition;
-    gtk_widget_size_request (GTK_WIDGET (ret), &requisition);
-    gtk_widget_set_size_request (GTK_WIDGET (label), 350, -1);
-    gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
-
-    frame = create_network (a);
-    gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
-
-    frame = create_security_widget (a);
-    gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
-
-    gtk_widget_show_all (ret);
-    return ret;
-
 }
 
