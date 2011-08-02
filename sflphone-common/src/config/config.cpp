@@ -308,7 +308,7 @@ ConfigTree::saveConfigTree (const std::string& fileName)
     file.close();
 
     if (chmod (fileName.c_str(), S_IRUSR | S_IWUSR)) {
-        _error ("ConfigTree: Error: Failed to set permission on configuration: %s",strerror (errno));
+        _error ("ConfigTree: Error: Failed to set permission on configuration: %m");
     }
 
     return true;
@@ -398,7 +398,7 @@ ConfigTree::populateFromFile (const std::string& fileName)
     file.close();
 
     if (chmod (fileName.c_str(), S_IRUSR | S_IWUSR)) {
-        _debug ("Failed to set permission on configuration file because: %s",strerror (errno));
+        _debug ("Failed to set permission on configuration file because: %m");
     }
 
     return 1;

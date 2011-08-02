@@ -200,7 +200,7 @@ int HistoryManager::create_history_path (std::string path)
         if (mkdir (userdata.data(), 0755) != 0) {
             // If directory	creation failed
             if (errno != EEXIST) {
-                _debug ("HistoryManager: Cannot create directory: %s", strerror (errno));
+                _debug ("HistoryManager: Cannot create directory: %m");
                 return -1;
             }
         }
