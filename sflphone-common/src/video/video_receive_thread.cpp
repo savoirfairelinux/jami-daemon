@@ -284,7 +284,7 @@ void VideoReceiveThread::setup()
             exit();
         }
 
-        int ret = 0;
+        int ret;
         // retrieve stream information
         {
             ost::MutexLock lock(Manager::instance().avcodecMutex());
@@ -325,7 +325,6 @@ void VideoReceiveThread::setup()
         }
 
         // open codec
-        ret = 0;
         {
             ost::MutexLock lock(Manager::instance().avcodecMutex());
             ret = avcodec_open(decoderCtx_, inputDecoder);
