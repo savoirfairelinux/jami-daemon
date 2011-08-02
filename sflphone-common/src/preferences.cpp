@@ -497,25 +497,10 @@ void VideoPreference::unserialize (Conf::MappingNode *map)
         return;
     }
 
-    Conf::ScalarNode *val = NULL;
-
-
-    val = (Conf::ScalarNode *) (map->getValue (videoDeviceKey));
-    if (val) {
-        _Device = val->getValue().data();
-    }
-
-    val = (Conf::ScalarNode *) (map->getValue (videoChannelKey));
-    if (val)
-        _Channel = val->getValue().data();
-
-    val = (Conf::ScalarNode *) (map->getValue (videoSizeKey));
-    if (val)
-        _Size = val->getValue().data();
-
-    val = (Conf::ScalarNode *) (map->getValue (videoRateKey));
-    if (val)
-        _Rate = val->getValue().data();
+    map->getValue (videoDeviceKey, &_Device);
+    map->getValue (videoChannelKey, &_Channel);
+    map->getValue (videoSizeKey, &_Size);
+    map->getValue (videoRateKey, &_Rate);
 }
 
 
