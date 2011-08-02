@@ -1173,7 +1173,7 @@ void ringtone_enabled (GtkWidget *widget UNUSED, gpointer fileChooser, const gch
 }
 
 
-GtkWidget* create_audiocodecs_configuration (account_t *currentAccount)
+static GtkWidget* create_audiocodecs_configuration (account_t *currentAccount)
 {
 
     // Main widget
