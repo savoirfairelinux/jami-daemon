@@ -877,6 +877,18 @@ GtkWidget* create_video_configuration()
     g_signal_connect(G_OBJECT(preview_button), "clicked", G_CALLBACK(preview_button_clicked), NULL);
     gtk_widget_show(GTK_WIDGET(preview_button));
 
+    gchar **list = dbus_get_call_list();
+    gchar **orig = list;
+    int active_call = 0;
+    while (list && *list) {
+        active_call = 1;
+        g_free(*list++);
+    }
+    g_free(orig);
+
+    if (active_call)
+        gtk_widget_set_sensitive(GTK_WIDGET(preview_button), FALSE);
+
     using_clutter = clutter_init(NULL, NULL) == CLUTTER_INIT_SUCCESS;
     if (using_clutter) {
         drawarea = gtk_clutter_embed_new();
