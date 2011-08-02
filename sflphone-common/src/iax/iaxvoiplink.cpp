@@ -57,7 +57,7 @@ namespace {
     const char * const URLHOOK_COMMAND = "Hooks.url_command";
 } // end anonymous namespace
 
-IAXVoIPLink::IAXVoIPLink (const AccountID& accountID) : VoIPLink (accountID)
+IAXVoIPLink::IAXVoIPLink (const std::string& accountID) : VoIPLink ()
     , _evThread (NULL)
     , _regSession (NULL)
     , _nextRefreshStamp (0)
@@ -70,6 +70,7 @@ IAXVoIPLink::IAXVoIPLink (const AccountID& accountID) : VoIPLink (accountID)
     , converter (NULL)
     , converterSamplingRate (0)
     , urlhook (NULL)
+	, _accountID(accountID)
 {
     _evThread = new EventThread (this);
 
@@ -422,11 +423,11 @@ IAXVoIPLink::getIAXCall (const CallID& id)
 
 
 void
-IAXVoIPLink::sendRegister (AccountID id UNUSED) throw(VoipLinkException)
+IAXVoIPLink::sendRegister (std::string id UNUSED) throw(VoipLinkException)
 {
     _debug ("IAX: Sending registration");
 
-    IAXAccount *account = dynamic_cast<IAXAccount *> (getAccountPtr());
+    IAXAccount *account = getAccountPtr();
 
     if (!account) {
     	throw VoipLinkException("Account is NULL in send register");
@@ -468,11 +469,11 @@ IAXVoIPLink::sendRegister (AccountID id UNUSED) throw(VoipLinkException)
 }
 
 void
-IAXVoIPLink::sendUnregister (AccountID id UNUSED) throw(VoipLinkException)
+IAXVoIPLink::sendUnregister (std::string id UNUSED) throw(VoipLinkException)
 {
     _debug ("IAXVoipLink: Send unregister");
 
-    IAXAccount *account = dynamic_cast<IAXAccount*> (getAccountPtr());
+    IAXAccount *account = getAccountPtr();
 
     if (!account) {
         throw VoipLinkException("Account is NULL in send unregister");
@@ -758,14 +759,14 @@ IAXVoIPLink::iaxOutgoingInvite (IAXCall* call)
 
     call->setSession (newsession);
 
-    account = dynamic_cast<IAXAccount*> (getAccountPtr());
+    account = getAccountPtr();
     username = account->getUsername();
     strNum = username + ":" + account->getPassword() + "@" + account->getHostname() + "/" + call->getPeerNumber();
 
     wait = 0;
     /** @todo Make preference dynamic, and configurable */
-    audio_format_preferred =  call->getFirstMatchingFormat (call->getSupportedFormat (getAccountID ()), getAccountID ());
-    audio_format_capability = call->getSupportedFormat (getAccountID ());
+    audio_format_preferred =  call->getFirstMatchingFormat (call->getSupportedFormat (_accountID), _accountID);
+    audio_format_capability = call->getSupportedFormat (_accountID);
 
     _debug ("IAX New call: %s", strNum.c_str());
     iax_call (newsession, username.c_str(), username.c_str(), strNum.c_str(), lang, wait, audio_format_preferred, audio_format_capability);
@@ -1073,8 +1074,7 @@ IAXVoIPLink::iaxHandleRegReply (iax_event* event)
     std::string account_id;
     IAXAccount *account;
 
-    account_id = getAccountID();
-    account = dynamic_cast<IAXAccount *> (Manager::instance().getAccount (account_id));
+    account = dynamic_cast<IAXAccount *> (Manager::instance().getAccount (_accountID));
 
     if (event->etype == IAX_EVENT_REGREJ) {
         /* Authentication failed! */
@@ -1095,7 +1095,7 @@ IAXVoIPLink::iaxHandleRegReply (iax_event* event)
         //new_voicemails = processIAXMsgCount(event->ies.msgcount);
         //_debug("iax voicemail number notification: %i", new_voicemails);
         // Notify the client if new voicemail waiting for the current account
-        //account_id = getAccountID();
+        //account_id = getstd::string();
         //Manager::instance().startVoiceMessageNotification(account_id.c_str(), new_voicemails);
 
         iax_destroy (_regSession);
@@ -1184,14 +1184,14 @@ IAXVoIPLink::iaxHandlePrecallEvent (iax_event* event)
             // if peerNumber exist append it to the name string
             call->initRecFileName (std::string (event->ies.calling_number));
 
-            if (Manager::instance().incomingCall (call, getAccountID())) {
+            if (Manager::instance().incomingCall (call, _accountID)) {
                 /** @todo Faudra considérer éventuellement le champ CODEC PREFS pour
                  * l'établissement du codec de transmission */
 
                 // Remote lists its capabilities
-                int format = call->getFirstMatchingFormat (event->ies.capability, getAccountID ());
+                int format = call->getFirstMatchingFormat (event->ies.capability, _accountID);
                 // Remote asks for preferred codec voiceformat
-                int pref_format = call->getFirstMatchingFormat (event->ies.format, getAccountID ());
+                int pref_format = call->getFirstMatchingFormat (event->ies.format, _accountID);
 
                 // Priority to remote's suggestion. In case it's a forwarding, no transcoding
                 // will be needed from the server, thus less latency.
@@ -1248,3 +1248,7 @@ void IAXVoIPLink::updateAudiolayer (void)
     _mutexIAX.leaveMutex();
 }
 
+IAXAccount* IAXVoIPLink::getAccountPtr (void)
+{
+    return dynamic_cast<IAXAccount *> (Manager::instance().getAccount (_accountID));
+}

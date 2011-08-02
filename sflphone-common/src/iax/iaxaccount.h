@@ -40,7 +40,7 @@
 class IAXAccount : public Account
 {
     public:
-        IAXAccount (const AccountID& accountID);
+        IAXAccount (const std::string& accountID);
 
         ~IAXAccount();
 
@@ -48,7 +48,7 @@ class IAXAccount : public Account
 
         virtual void unserialize (Conf::MappingNode *map);
 
-        void setAccountDetails (const std::map<std::string, std::string>& details);
+        void setAccountDetails (std::map<std::string, std::string> details);
 
         std::map<std::string, std::string> getAccountDetails() const;
 
@@ -69,7 +69,16 @@ class IAXAccount : public Account
          */
         int unregisterVoIPLink();
 
+        const std::string &getPassword (void) const {
+        	return _password;
+        }
+
     private:
+
+        /**
+         * Account login information: password
+         */
+        std::string _password;
 };
 
 #endif

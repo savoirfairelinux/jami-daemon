@@ -45,7 +45,7 @@ AccountCreator::~AccountCreator()
 }
 
 Account*
-AccountCreator::createAccount (AccountType type, AccountID accountID)
+AccountCreator::createAccount (AccountType type, std::string accountID)
 {
     switch (type) {
 

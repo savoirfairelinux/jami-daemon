@@ -34,30 +34,20 @@
 #ifndef __VOIP_LINK_H__
 #define __VOIP_LINK_H__
 
+#include <stdexcept>
+
 #include "call.h"
 
 class Account;
 
-/** Define AccountID type */
-typedef std::string AccountID;
-
 /** Define a map that associate a Call object to a call identifier */
 typedef std::map<CallID, Call*> CallMap;
 
-class VoipLinkException : public std::exception
+class VoipLinkException : public std::runtime_error
 {
     public:
-        VoipLinkException (const std::string& str="") throw() : errstr (str) {}
-
-        virtual ~VoipLinkException() throw() {}
-
-        virtual const char *what() const throw() {
-            std::string expt ("UserAgent: VoipLinkException occured: ");
-            expt.append (errstr);
-            return expt.c_str();
-        }
-    private:
-        std::string errstr;
+        VoipLinkException (const std::string& str="") :
+        	std::runtime_error("UserAgent: VoipLinkException occured: " + str) {}
 };
 
 /**
@@ -69,9 +59,8 @@ class VoIPLink
     public:
         /**
          * Constructor
-         * @param accountID The account identifier
          */
-        VoIPLink (const AccountID& accountID);
+        VoIPLink ();
 
         /**
          * Virtual destructor
@@ -110,7 +99,7 @@ class VoIPLink
          * @return bool True on success
          *		  false otherwise
          */
-        virtual void sendRegister (AccountID id) throw (VoipLinkException) = 0;
+        virtual void sendRegister (std::string id) throw (VoipLinkException) = 0;
 
         /**
          * Virtual method
@@ -118,7 +107,7 @@ class VoIPLink
          * @return bool True on success
          *		  false otherwise
          */
-        virtual void sendUnregister (AccountID id) throw (VoipLinkException) = 0;
+        virtual void sendUnregister (std::string id) throw (VoipLinkException) = 0;
 
         /**
          * Place a new call
@@ -233,33 +222,11 @@ class VoIPLink
         bool clearCallMap();
 
         /**
-         * @return AccountID  parent Account's ID
-         */
-        AccountID& getAccountID (void) {
-            return _accountID;
-        }
-
-        Account* getAccountPtr (void);
-
-        /**
-         * @param accountID The account identifier
-         */
-        void setAccountID (const AccountID& accountID) {
-            _accountID = accountID;
-        }
-
-        /**
          * Get the call pointer from the call map (protected by mutex)
          * @param id A Call ID
          * @return Call*  Call pointer or 0
          */
         Call* getCall (const CallID& id);
-
-    private:
-        /**
-         * ID of parent's Account
-         */
-        AccountID _accountID;
 
     protected:
         /** Contains all the calls for this Link, protected by mutex */

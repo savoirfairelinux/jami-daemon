@@ -49,12 +49,13 @@ namespace sfl
 {
 
 AudioZrtpSession::AudioZrtpSession (SIPCall * sipcall, const std::string& zidFilename) :
-    AudioRtpSession(sipcall, Zrtp, static_cast<ost::RTPDataQueue *>(this), static_cast<ost::Thread *>(this))
-    , ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue> (ost::InetHostAddress (sipcall->getLocalIp().c_str()),
+    // ost::SymmetricZRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
+    ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue> (ost::InetHostAddress (sipcall->getLocalIp().c_str()),
             sipcall->getLocalAudioPort(),
             0,
             ost::MembershipBookkeeping::defaultMembersHashSize,
             ost::defaultApplication())
+    ,AudioRtpSession(sipcall, Zrtp, static_cast<ost::RTPDataQueue *>(this), static_cast<ost::Thread *>(this))
     , _zidFilename (zidFilename)
 {
     _debug ("AudioZrtpSession initialized");
@@ -88,7 +89,7 @@ void AudioZrtpSession::initializeZid (void)
 {
 
     if (_zidFilename.empty()) {
-        throw ZrtpZidException();
+        throw ZrtpZidException("zid filename empty");
     }
 
     std::string zidCompleteFilename;
@@ -118,12 +119,12 @@ void AudioZrtpSession::initializeZid (void)
 
     if (remove (zidCompleteFilename.c_str()) !=0) {
         _debug ("Failed to remove zid file because of: %s", strerror (errno));
-        throw ZrtpZidException();
+        throw ZrtpZidException("zid file deletion failed");
     }
 
     if (initialize (zidCompleteFilename.c_str()) < 0) {
         _debug ("ZRTP initialization failed");
-        throw ZrtpZidException();
+        throw ZrtpZidException("zid initialization failed");
     }
 
     return;

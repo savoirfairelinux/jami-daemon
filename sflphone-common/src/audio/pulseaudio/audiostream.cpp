@@ -200,7 +200,7 @@ AudioStream::createStream (pa_context* c, std::string *deviceName)
 
     _info ("Audio: Create pulseaudio stream: %d", _sample_spec.rate);
 
-    pa_buffer_attr* attributes = (pa_buffer_attr*) malloc (sizeof (pa_buffer_attr));
+    pa_buffer_attr* attributes = new pa_buffer_attr;
 
 
     if (! (s = pa_stream_new (c, _streamDescription.c_str() , &_sample_spec, &channel_map)))
@@ -270,7 +270,7 @@ AudioStream::createStream (pa_context* c, std::string *deviceName)
     pa_stream_set_state_callback (s , stream_state_callback, _mainloop);
 
 
-    free (attributes);
+    delete attributes;
 
     return s;
 }

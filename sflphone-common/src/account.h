@@ -48,8 +48,6 @@ class VoIPLink;
  * It contains account, configuration, VoIP Link and Calls (inside the VoIPLink)
  */
 
-typedef std::string AccountID;
-
 /** Contains all the state an Voip can be in */
 typedef enum RegistrationState {
     Unregistered,
@@ -63,8 +61,6 @@ typedef enum RegistrationState {
     ErrorConfStun,
     NumberOfState
 } RegistrationState;
-
-#define AccountNULL ""
 
 // Account identifier
 #define ACCOUNT_ID                          "Account.id"
@@ -84,7 +80,6 @@ typedef enum RegistrationState {
 #define HOSTNAME                            "hostname"
 #define USERNAME                            "username"
 #define ROUTESET                            "routeset"
-#define AUTHENTICATION_USERNAME             "authenticationUsername"
 #define PASSWORD                            "password"
 #define REALM                               "realm"
 #define DEFAULT_REALM                       "*"
@@ -135,28 +130,27 @@ typedef enum RegistrationState {
 
 
 // General configuration keys for accounts
-const Conf::Key aliasKey ("alias");
-const Conf::Key typeKey ("type");
-const Conf::Key idKey ("id");
-const Conf::Key usernameKey ("username");
-const Conf::Key passwordKey ("password");
-const Conf::Key hostnameKey ("hostname");
-const Conf::Key accountEnableKey ("enable");
-const Conf::Key mailboxKey ("mailbox");
+const std::string aliasKey ("alias");
+const std::string typeKey ("type");
+const std::string idKey ("id");
+const std::string usernameKey ("username");
+const std::string authenticationUsernameKey ("authenticationUsername");
+const std::string passwordKey ("password");
+const std::string hostnameKey ("hostname");
+const std::string accountEnableKey ("enable");
+const std::string mailboxKey ("mailbox");
 
-const Conf::Key codecsKey ("codecs");  // 0/9/110/111/112/
-const Conf::Key ringtonePathKey ("ringtonePath");
-const Conf::Key ringtoneEnabledKey ("ringtoneEnabled");
-const Conf::Key displayNameKey ("displayName");
-
-#define find_in_map(X, Y)  if((iter = map_cpy.find(X)) != map_cpy.end()) { Y = iter->second; }
+const std::string codecsKey ("codecs");  // 0/9/110/111/112/
+const std::string ringtonePathKey ("ringtonePath");
+const std::string ringtoneEnabledKey ("ringtoneEnabled");
+const std::string displayNameKey ("displayName");
 
 class Account : public Serializable
 {
 
     public:
 
-        Account (const AccountID& accountID, const std::string &type);
+        Account (const std::string& accountID, const std::string &type);
 
         /**
          * Virtual destructor
@@ -175,20 +169,20 @@ class Account : public Serializable
          */
         virtual void unserialize (Conf::MappingNode *map) = 0;
 
-        virtual void setAccountDetails (const std::map<std::string, std::string>& details) = 0;
+        virtual void setAccountDetails (std::map<std::string, std::string> details) = 0;
 
         virtual std::map<std::string, std::string> getAccountDetails() const = 0;
 
         /**
          * Load the settings for this account.
          */
-        virtual void loadConfig();
+        virtual void loadConfig() = 0;
 
         /**
          * Get the account ID
          * @return constant account id
          */
-        const AccountID& getAccountID() const {
+        const std::string& getAccountID() const {
             return _accountID;
         }
 
@@ -279,13 +273,6 @@ class Account : public Serializable
             _hostname = hostname;
         }
 
-        std::string getPassword (void) const {
-            return _password;
-        }
-        void setPassword (const std::string &password) {
-            _password = password;
-        }
-
         std::string getAlias (void) const {
             return _alias;
         }
@@ -369,7 +356,7 @@ class Account : public Serializable
         /**
          * Account ID are assign in constructor and shall not changed
          */
-        AccountID _accountID;
+        const std::string _accountID;
 
         /**
          * Account login information: username
@@ -380,11 +367,6 @@ class Account : public Serializable
          * Account login information: hostname
          */
         std::string _hostname;
-
-        /**
-         * Account login information: password
-         */
-        std::string _password;
 
         /**
          * Account login information: Alias
