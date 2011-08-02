@@ -43,13 +43,13 @@
 #pragma GCC diagnostic warning "-Wunused-parameter"
 
 #include <dbus-c++/dbus.h>
-#include <exception>
+#include <stdexcept>
 
-class CallManagerException: public std::exception
+class CallManagerException: public std::runtime_error
 {
-        virtual const char* what() const throw() {
-            return "A CallManagerException occured";
-        }
+    public:
+        CallManagerException(const std::string& str="") :
+            std::runtime_error("A CallManagerException occured: " + str) {}
 };
 
 namespace sfl

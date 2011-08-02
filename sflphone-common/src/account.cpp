@@ -33,7 +33,7 @@
 #include "account.h"
 #include "manager.h"
 
-Account::Account (const AccountID& accountID, const std::string &type) :
+Account::Account (const std::string& accountID, const std::string &type) :
     _accountID (accountID)
     , _link (NULL)
     , _enabled (true)
@@ -52,18 +52,6 @@ Account::Account (const AccountID& accountID, const std::string &type) :
 
 Account::~Account()
 {
-}
-
-void Account::loadConfig()
-{
-
-    // If IAX is not supported, do not register this account
-#ifndef USE_IAX
-
-    if (_type == "IAX")
-        _enabled = false;
-
-#endif
 }
 
 void Account::setRegistrationState (RegistrationState state)
@@ -103,14 +91,10 @@ void Account::setActiveCodecs (const std::vector <std::string> &list)
 
     // list contains the ordered payload of active codecs picked by the user for this account
     // we used the CodecOrder vector to save the order.
-    int i=0;
-    int payload;
-    size_t size = list.size();
-
-    while ( (unsigned int) i < size) {
-        payload = std::atoi (list[i].data());
+    size_t i, size = list.size();
+    for (i = 0; i < size; i++) {
+        int payload = std::atoi (list[i].data());
         _codecOrder.push_back ( (AudioCodecType) payload);
-        i++;
     }
 
     // update the codec string according to new codec selection

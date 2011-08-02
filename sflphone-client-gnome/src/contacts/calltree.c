@@ -1976,7 +1976,6 @@ static void menuitem_response( gchar *string )
         DEBUG("Calltree: Transfering call %s, to %s", selected_call->_peer_number, dragged_call->_peer_number);
         dbus_attended_transfer(selected_call, dragged_call);
         calltree_remove_call(current_calls, selected_call, NULL);
-	calllist_remove_call(current_calls, selected_call->_callID);
     }
     else {
         DEBUG("CallTree: Error unknown option selected in menu %s", string);

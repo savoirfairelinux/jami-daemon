@@ -34,7 +34,7 @@
 #include "voiplink.h"
 #include "manager.h"
 
-VoIPLink::VoIPLink (const AccountID& accountID) : _accountID (accountID), _localPort (0),  _initDone (false)
+VoIPLink::VoIPLink () : _localPort (0),  _initDone (false)
 {
 }
 
@@ -62,7 +62,7 @@ bool VoIPLink::removeCall (const CallID& id)
     _debug ("VoipLink: delete call");
     terminateCall (id);
 
-    _debug ("VoipLink: removing call from list");
+    _debug ("VoipLink: removing call %s from list", id.c_str());
 
     if (_callMap.erase (id)) {
         return true;
@@ -98,12 +98,4 @@ bool VoIPLink::clearCallMap()
     _callMap.clear();
 
     return true;
-}
-
-Account* VoIPLink::getAccountPtr (void)
-{
-    AccountID id;
-
-    id = getAccountID();
-    return Manager::instance().getAccount (id);
 }

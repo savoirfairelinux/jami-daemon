@@ -46,13 +46,6 @@ class DBusManagerImpl;
 namespace sfl
 {
 
-class ZrtpSessionCallbackException: public std::exception
-{
-        virtual const char* what() const throw() {
-            return "An exception occured while being in a zrtp callback\n";
-        }
-};
-
 class ZrtpSessionCallback: public ZrtpUserCallback
 {
     public:

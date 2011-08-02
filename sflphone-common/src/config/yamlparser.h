@@ -34,7 +34,7 @@
 #include "yamlnode.h"
 #include <yaml.h>
 #include <stdio.h>
-#include <exception>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -45,21 +45,11 @@ namespace Conf
 
 typedef std::vector<yaml_event_t> YamlEventVector;
 
-class YamlParserException : public std::exception
+class YamlParserException : public std::runtime_error
 {
     public:
-        YamlParserException (const std::string& str="") throw() : errstr (str) {}
-
-        virtual ~YamlParserException() throw() {}
-
-        virtual const char *what() const throw() {
-            std::string expt ("YamlParserException occured: ");
-            expt.append (errstr);
-
-            return expt.c_str();
-        }
-    private:
-        std::string errstr;
+        YamlParserException (const std::string& str="") :
+            std::runtime_error("YamlParserException occured: " + str) {}
 };
 
 
@@ -72,10 +62,6 @@ class YamlParser
 
         ~YamlParser();
 
-        void open() throw(YamlParserException);
-
-        void close() throw(YamlParserException);
-
         void serializeEvents() throw(YamlParserException);
 
         YamlDocument *composeEvents() throw(YamlParserException);
@@ -86,32 +72,32 @@ class YamlParser
             return accountSequence;
         };
 
-        SequenceNode *getPreferenceSequence (void) {
-            return preferenceSequence;
+        MappingNode *getPreferenceNode (void) {
+            return preferenceNode;
         }
 
-        SequenceNode *getAddressbookSequence (void) {
-            return addressbookSequence;
+        MappingNode *getAddressbookNode (void) {
+            return addressbookNode;
         }
 
-        SequenceNode *getVideoSequence (void) {
-            return videoSequence;
+        MappingNode *getAudioNode (void) {
+            return audioNode;
         }
 
-        SequenceNode *getAudioSequence (void) {
-            return audioSequence;
+        MappingNode *getVideoNode (void) {
+            return videoNode;
         }
 
-        SequenceNode *getHookSequence (void) {
-            return hooksSequence;
+        MappingNode *getHookNode (void) {
+            return hooksNode;
         }
 
-        SequenceNode *getVoipPreferenceSequence (void) {
-            return voiplinkSequence;
+        MappingNode *getVoipPreferenceNode (void) {
+            return voiplinkNode;
         }
 
-        SequenceNode *getShortcutSequence (void) {
-            return shortcutSequence;
+        MappingNode *getShortcutNode (void) {
+            return shortcutNode;
         }
 
     private:
@@ -131,7 +117,7 @@ class YamlParser
 
         void processMapping (YamlNode *topNode) throw(YamlParserException);
 
-        void mainNativeDataMapping (MappingNode *map) throw(YamlParserException);
+        void mainNativeDataMapping (MappingNode *map);
 
         /**
          * Configuration file name
@@ -154,11 +140,6 @@ class YamlParser
         YamlEventVector events;
 
         /**
-         *
-         */
-        unsigned char buffer[PARSER_BUFFERSIZE];
-
-        /**
          * Number of event actually parsed
          */
         int eventNumber;
@@ -169,20 +150,19 @@ class YamlParser
 
         SequenceNode *accountSequence;
 
-        SequenceNode *preferenceSequence;
+        MappingNode *preferenceNode;
 
-        SequenceNode *addressbookSequence;
+        MappingNode *addressbookNode;
 
-        SequenceNode *audioSequence;
+        MappingNode *audioNode;
 
-        SequenceNode *videoSequence;
+        MappingNode *videoNode;
 
-        SequenceNode *hooksSequence;
+        MappingNode *hooksNode;
 
-        SequenceNode *voiplinkSequence;
+        MappingNode *voiplinkNode;
 
-        SequenceNode *shortcutSequence;
-
+        MappingNode *shortcutNode;
 };
 
 }

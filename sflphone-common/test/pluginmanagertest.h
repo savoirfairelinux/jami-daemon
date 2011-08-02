@@ -65,7 +65,11 @@ class PluginManagerTest : public CppUnit::TestCase {
     CPPUNIT_TEST_SUITE_END();
 
     public:
-        PluginManagerTest() : CppUnit::TestCase("Plugin Manager Tests") {}
+        PluginManagerTest() : CppUnit::TestCase("Plugin Manager Tests")
+            , _pm(0)
+            , library(0)
+            , plugin(0)
+        {}
         
         /*
          * Code factoring - Common resources can be initialized here.

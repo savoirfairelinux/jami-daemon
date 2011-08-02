@@ -53,7 +53,7 @@ class AccountCreator
          * @param type type of the account
          * @param accountID   accountID (must be unique for each account)
          */
-        static Account* createAccount (AccountType type, AccountID accountID);
+        static Account* createAccount (AccountType type, std::string accountID);
 
     private:
         /** Hidden constructor */

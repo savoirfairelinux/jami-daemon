@@ -194,7 +194,7 @@
     		<listitem><para>Click the <menuchoice><guimenu>Apply</guimenu></menuchoice> button.</para></listitem>
 		</orderedlist>
 		<para>You may now check the state of your account(s). If it is registered, you may now use it to make calls.</para>
-		<note>You can setup as many accounts as you wish.</note>
+		<note><para>You can setup as many accounts as you wish.</para></note>
 	</sect3>
 
 	<sect3 id="account_edit">

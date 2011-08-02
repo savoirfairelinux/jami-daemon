@@ -133,13 +133,9 @@ void PluginManagerTest::tearDown()
     delete _pm;
     _pm=0;
 
-    if (plugin)
-        delete plugin;
-
+    delete plugin;
     plugin = 0;
 
-    if (library)
-        delete library;
-
+    delete library;
     library = 0;
 }

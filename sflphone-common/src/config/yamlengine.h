@@ -40,14 +40,6 @@
 namespace Conf
 {
 
-class YamlEngineException : public std::exception
-{
-
-        virtual const char *what() const throw() {
-            return "YamlEngineException occured";
-        }
-};
-
 class YamlEngine : public Engine
 {
 

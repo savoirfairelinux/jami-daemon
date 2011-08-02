@@ -37,12 +37,14 @@
 
 #include <sstream>
 
+
 #include "account.h"
 #include "sipvoiplink.h"
 #include "pjsip/sip_transport_tls.h"
 #include "pjsip/sip_types.h"
 #include "config/serializable.h"
 #include <exception>
+#include <vector>
 #include <map>
 
 enum DtmfType { OVERRTP, SIPINFO};
@@ -50,51 +52,52 @@ enum DtmfType { OVERRTP, SIPINFO};
 #define OVERRTPSTR "overrtp"
 #define SIPINFOSTR "sipinfo"
 
+
+
 // SIP specific configuration keys
-const Conf::Key expireKey ("expire");
-const Conf::Key interfaceKey ("interface");
-const Conf::Key portKey ("port");
-const Conf::Key publishAddrKey ("publishAddr");
-const Conf::Key publishPortKey ("publishPort");
-const Conf::Key sameasLocalKey ("sameasLocal");
-const Conf::Key resolveOnceKey ("resolveOnce");
-const Conf::Key dtmfTypeKey ("dtmfType");
-const Conf::Key serviceRouteKey ("serviceRoute");
+const std::string expireKey ("expire");
+const std::string interfaceKey ("interface");
+const std::string portKey ("port");
+const std::string publishAddrKey ("publishAddr");
+const std::string publishPortKey ("publishPort");
+const std::string sameasLocalKey ("sameasLocal");
+const std::string resolveOnceKey ("resolveOnce");
+const std::string dtmfTypeKey ("dtmfType");
+const std::string serviceRouteKey ("serviceRoute");
 
 // TODO: write an object to store credential which implement serializable
-const Conf::Key srtpKey ("srtp");
-const Conf::Key srtpEnableKey ("enable");
-const Conf::Key keyExchangeKey ("keyExchange");
-const Conf::Key rtpFallbackKey ("rtpFallback");
+const std::string srtpKey ("srtp");
+const std::string srtpEnableKey ("enable");
+const std::string keyExchangeKey ("keyExchange");
+const std::string rtpFallbackKey ("rtpFallback");
 
 // TODO: wirte an object to store zrtp params wich implement serializable
-const Conf::Key zrtpKey ("zrtp");
-const Conf::Key displaySasKey ("displaySas");
-const Conf::Key displaySasOnceKey ("displaySasOnce");
-const Conf::Key helloHashEnabledKey ("helloHashEnabled");
-const Conf::Key notSuppWarningKey ("notSuppWarning");
+const std::string zrtpKey ("zrtp");
+const std::string displaySasKey ("displaySas");
+const std::string displaySasOnceKey ("displaySasOnce");
+const std::string helloHashEnabledKey ("helloHashEnabled");
+const std::string notSuppWarningKey ("notSuppWarning");
 
 // TODO: write an object to store tls params which implement serializable
-const Conf::Key tlsKey ("tls");
-const Conf::Key tlsPortKey ("tlsPort");
-const Conf::Key certificateKey ("certificate");
-const Conf::Key calistKey ("calist");
-const Conf::Key ciphersKey ("ciphers");
-const Conf::Key tlsEnableKey ("enable");
-const Conf::Key methodKey ("method");
-const Conf::Key timeoutKey ("timeout");
-const Conf::Key tlsPasswordKey ("password");
-const Conf::Key privateKeyKey ("privateKey");
-const Conf::Key requireCertifKey ("requireCertif");
-const Conf::Key serverKey ("server");
-const Conf::Key verifyClientKey ("verifyClient");
-const Conf::Key verifyServerKey ("verifyServer");
+const std::string tlsKey ("tls");
+const std::string tlsPortKey ("tlsPort");
+const std::string certificateKey ("certificate");
+const std::string calistKey ("calist");
+const std::string ciphersKey ("ciphers");
+const std::string tlsEnableKey ("enable");
+const std::string methodKey ("method");
+const std::string timeoutKey ("timeout");
+const std::string tlsPasswordKey ("password");
+const std::string privateKeyKey ("privateKey");
+const std::string requireCertifKey ("requireCertif");
+const std::string serverKey ("server");
+const std::string verifyClientKey ("verifyClient");
+const std::string verifyServerKey ("verifyServer");
 
-const Conf::Key stunEnabledKey ("stunEnabled");
-const Conf::Key stunServerKey ("stunServer");
+const std::string stunEnabledKey ("stunEnabled");
+const std::string stunServerKey ("stunServer");
 
-const Conf::Key credKey ("credential");
-const Conf::Key credentialCountKey ("count");
+const std::string credKey ("credential");
 
 class SIPVoIPLink;
 
@@ -103,67 +106,6 @@ class SIPVoIPLink;
  * @brief A SIP Account specify SIP specific functions and object (SIPCall/SIPVoIPLink)
  */
 
-class SipAccountException : public std::exception
-{
-    public:
-        SipAccountException (const std::string& str="") throw() : errstr (str) {}
-
-        virtual ~SipAccountException() throw() {}
-
-        virtual const char *what() const throw() {
-            std::string expt ("SipAccountException occured: ");
-            expt.append (errstr);
-
-            return expt.c_str();
-        }
-    private:
-        std::string errstr;
-
-};
-
-class CredentialItem
-{
-    public:
-
-        std::string username;
-        std::string password;
-        std::string realm;
-};
-
-
-class Credentials : public Serializable
-{
-    public:
-
-        Credentials();
-
-        ~Credentials();
-
-        virtual void serialize (Conf::YamlEmitter *emitter);
-
-        virtual void unserialize (Conf::MappingNode *map);
-
-        unsigned getCredentialCount (void) const {
-            return credentialCount;
-        }
-        void setCredentialCount (unsigned count) {
-            credentialCount = count;
-        }
-
-        void setNewCredential (const std::string &username,
-                               const std::string &password,
-                               const std::string &realm);
-        const CredentialItem *getCredential (unsigned index) const;
-
-    private:
-
-        unsigned credentialCount;
-
-        CredentialItem credentialArray[10];
-
-};
-
-
 class SIPAccount : public Account
 {
     public:
@@ -171,7 +113,7 @@ class SIPAccount : public Account
          * Constructor
          * @param accountID The account identifier
          */
-        SIPAccount (const AccountID& accountID);
+        SIPAccount (const std::string& accountID);
 
         /* Copy Constructor */
         SIPAccount (const SIPAccount& rh);
@@ -188,7 +130,7 @@ class SIPAccount : public Account
 
         virtual void unserialize (Conf::MappingNode *map);
 
-        virtual void setAccountDetails (const std::map<std::string, std::string>& details);
+        virtual void setAccountDetails (std::map<std::string, std::string> details);
 
         virtual std::map<std::string, std::string> getAccountDetails() const;
 
@@ -227,19 +169,22 @@ class SIPAccount : public Account
          */
         int unregisterVoIPLink();
 
-        void setCredInfo (pjsip_cred_info *cred) {
-            _cred = cred;
-        }
         pjsip_cred_info *getCredInfo() const {
             return _cred;
         }
 
-        const std::string& getAuthenticationUsername (void) const {
-            return _authenticationUsername;
+        /**
+         * Get the number of credentials defined for
+         * this account.
+         * @param none
+         * @return int The number of credentials set for this account.
+         */
+        unsigned getCredentialCount (void) const {
+            return credentials_.size();
         }
-        void setAuthenticationUsername (const std::string& username) {
-            _authenticationUsername = username;
-        }
+
+        void setCredentials (const std::vector<std::map<std::string, std::string> >& details);
+        const std::vector<std::map<std::string, std::string> > &getCredentials (void);
 
         bool isResolveOnce (void) const {
             return _resolveOnce;
@@ -247,7 +192,6 @@ class SIPAccount : public Account
         void setResolveOnce (bool reslv) {
             _resolveOnce = reslv;
         }
-
 
         /**
          * A client sendings a REGISTER request MAY suggest an expiration
@@ -303,19 +247,6 @@ class SIPAccount : public Account
         }
 
         /**
-         * Get the number of credentials defined for
-         * this account.
-         * @param none
-         * @return int The number of credentials set for this account.
-         */
-        unsigned getCredentialCount (void) const {
-            return credentials.getCredentialCount() + 1;
-        }
-        void setCredentialCount (unsigned count) {
-            return credentials.setCredentialCount (count);
-        }
-
-        /**
          * @return pjsip_tls_setting structure, filled from the configuration
          * file, that can be used directly by PJSIP to initialize
          * TLS transport.
@@ -357,7 +288,7 @@ class SIPAccount : public Account
          * account is set to TLS.
          */
         bool isTlsEnabled (void) const {
-            return (_transportType == PJSIP_TRANSPORT_TLS) ? true: false;
+            return _transportType == PJSIP_TRANSPORT_TLS;
         }
 
         /**
@@ -600,13 +531,6 @@ class SIPAccount : public Account
         }
         // void setSrtpKeyExchange
 
-        std::string getRealm (void) const {
-            return _realm;
-        }
-        void setRealm (const std::string &r) {
-            _realm = r;
-        }
-
         std::string getTlsEnable (void) const {
             return _tlsEnable;
         }
@@ -700,6 +624,8 @@ class SIPAccount : public Account
 
     private:
 
+        std::vector< std::map<std::string, std::string > > credentials_;
+
         /**
          * Call specific memory pool initialization size (based on empirical data)
          */
@@ -727,11 +653,6 @@ class SIPAccount : public Account
          * Initializes STUN config from the config file
          */
         void initStunConfiguration (void);
-
-        /*
-         * Initializes set of additional credentials, if supplied by the user.
-         */
-        void initCredential (void);
 
         /**
          * If username is not provided, as it happens for Direct ip calls,
@@ -797,9 +718,6 @@ class SIPAccount : public Account
 
         //Credential information
         pjsip_cred_info *_cred;
-        std::string _realm;
-        std::string _authenticationUsername;
-        Credentials credentials;
 
         // The TLS settings, if tls is chosen as
         // a sip transport.
@@ -839,8 +757,6 @@ class SIPAccount : public Account
         bool _zrtpDisplaySasOnce;
         bool _zrtpHelloHash;
         bool _zrtpNotSuppWarning;
-
-
 };
 
 #endif

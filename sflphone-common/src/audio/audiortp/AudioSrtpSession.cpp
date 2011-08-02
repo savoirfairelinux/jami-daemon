@@ -189,7 +189,6 @@ void AudioSrtpSession::initializeLocalMasterSalt (void)
 
 std::string AudioSrtpSession::getBase64ConcatenatedKeys()
 {
-
     _debug ("AudioSrtp: Get base64 concatenated keys");
 
     // compute concatenated master and salt length
@@ -204,37 +203,26 @@ std::string AudioSrtpSession::getBase64ConcatenatedKeys()
     memcpy ( (void*) (concatKeys + _localMasterKeyLength), (void*) _localMasterSalt, _localMasterSaltLength);
 
     // encode concatenated keys in base64
-    char *output = encodeBase64 ( (unsigned char*) concatKeys, concatLength);
-
-    // init string containing encoded data
-    std::string keys (output);
-
-    free (output);
-
-    return keys;
+    return encodeBase64 ( (unsigned char*) concatKeys, concatLength);
 }
 
 
 void AudioSrtpSession::unBase64ConcatenatedKeys (std::string base64keys)
 {
-
     _remoteMasterKeyLength = sfl::CryptoSuites[_remoteCryptoSuite].masterKeyLength / 8;
     _remoteMasterSaltLength = sfl::CryptoSuites[_remoteCryptoSuite].masterSaltLength / 8;
-
-    // length of decoded data data
-    int length;
 
     // pointer to binary data
     char *dataptr = (char*) base64keys.data();
 
     // decode concatenated binary keys
-    char *output = decodeBase64 ( (unsigned char*) dataptr, strlen (dataptr), &length);
+    char *output = decodeBase64 ( (unsigned char*) dataptr, strlen (dataptr));
 
     // copy master and slt respectively
     memcpy ( (void*) _remoteMasterKey, (void*) output, _remoteMasterKeyLength);
     memcpy ( (void*) _remoteMasterSalt, (void*) (output + _remoteMasterKeyLength), _remoteMasterSaltLength);
 
-    free (output);
+    delete[] output;
 }
 
 
@@ -297,13 +285,10 @@ void AudioSrtpSession::restoreCryptoContext(ost::CryptoContext *localContext, os
 	setOutQueueCryptoContext (localContext);
 }
 
-char* AudioSrtpSession::encodeBase64 (unsigned char *input, int length)
+std::string AudioSrtpSession::encodeBase64 (unsigned char *input, int length)
 {
     BIO *b64, *bmem;
     BUF_MEM *bptr ;
-
-    char *buffer = (char *) malloc (2*length);
-    memset (buffer, 0, 2*length);
 
     // init decoder
     b64 = BIO_new (BIO_f_base64());
@@ -321,20 +306,16 @@ char* AudioSrtpSession::encodeBase64 (unsigned char *input, int length)
     // get pointer to data
     BIO_get_mem_ptr (b64, &bptr);
 
-    // copy result in output buffer (-1 since we do not want the EOF character)
-    strncpy (buffer, (char*) (bptr->data), bptr->length);
+    std::string output(bptr->data, bptr->length);
 
     BIO_free_all (bmem);
 
-    return buffer;
+    return output;
 }
 
-char* AudioSrtpSession::decodeBase64 (unsigned char *input, int length, int *length_out)
+char* AudioSrtpSession::decodeBase64 (unsigned char *input, int length)
 {
     BIO *b64, *bmem;
-
-    char *buffer = (char *) malloc (length);
-    memset (buffer, 0, length);
 
     // init decoder and read-only BIO buffer
     b64 = BIO_new (BIO_f_base64());
@@ -346,12 +327,14 @@ char* AudioSrtpSession::decodeBase64 (unsigned char *input, int length, int *len
     // create encoder chain
     bmem = BIO_push (b64, bmem);
 
-    *length_out = BIO_read (bmem, buffer, length);
+    char *buffer = new char[length];
+    memset (buffer, 0, length);
+
+    BIO_read (bmem, buffer, length);
 
     BIO_free_all (bmem);
 
     return buffer;
-
 }
 
 }

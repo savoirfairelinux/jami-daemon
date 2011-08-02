@@ -31,6 +31,7 @@
 #define __SFL_AUDIO_ZRTP_SESSION_H__
 
 #include <cstddef>
+#include <stdexcept>
 
 using std::ptrdiff_t;
 #include <ccrtp/rtp.h>
@@ -46,11 +47,11 @@ class SIPCall;
 namespace sfl
 {
 
-class ZrtpZidException: public std::exception
+class ZrtpZidException: public std::runtime_error
 {
-        virtual const char* what() const throw() {
-            return "ZRTP ZID initialization failed.";
-        }
+    public:
+        ZrtpZidException (const std::string& str="") :
+            std::runtime_error("ZRTP ZID initialization failed." + str) {}
 };
 
 // class AudioZrtpSession : public ost::TimerPort, public ost::SymmetricZRTPSession, public AudioRtpRecordHandler

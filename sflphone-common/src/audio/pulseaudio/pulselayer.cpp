@@ -396,8 +396,8 @@ void PulseLayer::context_state_callback (pa_context* c, void* user_data)
 
         default:
             _warn ("Audio: Error : %s" , pa_strerror (pa_context_errno (c)));
+            pa_threaded_mainloop_signal (pulse->m, 0);
             pulse->disconnectAudioStream();
-            exit (0);
             break;
     }
 }

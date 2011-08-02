@@ -139,25 +139,17 @@ ManagerImpl::initRegisterAccounts()
 void ManagerImpl::restartPJSIP (void)
 {
     _debug ("ManagerImpl::restartPJSIP\n");
-    VoIPLink *link = getSIPAccountLink();
-    SIPVoIPLink *siplink = NULL;
-
-    if (link) {
-        siplink = dynamic_cast<SIPVoIPLink*> (getSIPAccountLink ());
-    }
-
+    SIPVoIPLink *siplink = SIPVoIPLink::instance ();
     _debug ("ManagerImpl::unregister sip account\n");
 
     this->unregisterCurSIPAccounts();
     /* Terminate and initialize the PJSIP library */
 
-    if (siplink) {
-        _debug ("ManagerImpl::Terminate sip\n");
-        siplink->terminate ();
-        siplink = SIPVoIPLink::instance ("");
-        _debug ("ManagerImpl::Init new sip\n");
-        siplink->init ();
-    }
+	_debug ("ManagerImpl::Terminate sip\n");
+	siplink->terminate ();
+	siplink = SIPVoIPLink::instance ();
+	_debug ("ManagerImpl::Init new sip\n");
+	siplink->init ();
 
     _debug ("ManagerImpl::register sip account\n");
 
@@ -165,9 +157,9 @@ void ManagerImpl::restartPJSIP (void)
     this->registerCurSIPAccounts ();
 }
 
-VoIPLink* ManagerImpl::getAccountLink (const AccountID& accountID)
+VoIPLink* ManagerImpl::getAccountLink (const std::string& accountID)
 {
-    if (accountID!=AccountNULL) {
+    if (accountID!="") {
         Account* acc = getAccount (accountID);
 
         if (acc) {
@@ -176,30 +168,10 @@ VoIPLink* ManagerImpl::getAccountLink (const AccountID& accountID)
 
         return 0;
     } else
-        return SIPVoIPLink::instance ("");
+        return SIPVoIPLink::instance ();
 }
 
-VoIPLink* ManagerImpl::getSIPAccountLink()
-{
-    /* We are looking for the first SIP account we met because all the SIP accounts have the same voiplink */
-    Account *account;
-    AccountMap::iterator iter = _accountMap.begin();
-
-    while (iter != _accountMap.end()) {
-
-        account = iter->second;
-
-        if (account->getType() == "sip") {
-            return account->getVoIPLink();
-        }
-
-        ++iter;
-    }
-
-    return NULL;
-}
-
-pjsip_regc *getSipRegcFromID (const AccountID& id UNUSED)
+pjsip_regc *getSipRegcFromID (const std::string& id UNUSED)
 {
     /*SIPAccount *tmp = dynamic_cast<SIPAccount *>getAccount(id);
     if(tmp != NULL)
@@ -210,58 +182,31 @@ pjsip_regc *getSipRegcFromID (const AccountID& id UNUSED)
 
 void ManagerImpl::unregisterCurSIPAccounts()
 {
-    Account *current;
-
-    AccountMap::iterator iter = _accountMap.begin();
-
-    while (iter != _accountMap.end()) {
-        current = iter->second;
-
-        if (current) {
-            if (current->isEnabled() && current->getType() == "sip") {
+    AccountMap::iterator iter;
+    for (iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
+        Account *current = iter->second;
+        if (current && current->isEnabled() && current->getType() == "sip")
                 current->unregisterVoIPLink();
-            }
-        }
-
-        iter++;
     }
 }
 
 void ManagerImpl::registerCurSIPAccounts (void)
 {
-
-    Account *current;
-
-    AccountMap::iterator iter = _accountMap.begin();
-
-    while (iter != _accountMap.end()) {
-        current = iter->second;
-
-        if (current) {
-            if (current->isEnabled() && current->getType() == "sip") {
-                //current->setVoIPLink(link);
+    AccountMap::iterator iter;
+    for (iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
+        Account *current = iter->second;
+        if (current && current->isEnabled() && current->getType() == "sip")
                 current->registerVoIPLink();
-            }
-        }
-
-        current = NULL;
-
-        iter++;
     }
 }
 
 void
 ManagerImpl::sendRegister (const std::string& accountID , const int32_t& enable)
 {
-
     // Update the active field
     Account* acc = getAccount (accountID);
 
-    if (enable == 1)
-        acc->setEnabled (true);
-    else
-        acc->setEnabled (false);
-
+	acc->setEnabled (!!enable);
     acc->loadConfig();
 
     Manager::instance().saveConfig();
@@ -276,6 +221,4 @@ ManagerImpl::sendRegister (const std::string& accountID , const int32_t& enable)
         _debug ("Send unregister for account %s\n" , accountID.c_str());
         acc->unregisterVoIPLink();
     }
-
 }
-

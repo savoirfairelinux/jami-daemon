@@ -4,6 +4,7 @@ TESTS_ENVIRONMENT = CODECS_PATH="$(top_builddir)/src/audio/codecs" \
 					FAKE_PLUGIN_DIR="$(top_builddir)/src/plug-in/test/" \
 					FAKE_PLUGIN_NAME="$(top_builddir)/src/plug-in/test/libplugintest.so"
 check_PROGRAMS = test
+TESTS = run_tests.sh
 
 test_CXXFLAGS = $(CPPUNIT_CFLAGS)
 test_LDADD = $(LLIBS) @LIBCRYPTO_LIBS@
@@ -41,16 +42,4 @@ test_SOURCES = \
 	gaincontroltest.h \
 	gaincontroltest.cpp
 
-LLIBS=$(CPPUNIT_LIBS) \
-	../src/logger.o \
-	../src/managerimpl.o \
-	../src/account.o\
-	../src/accountcreator.o \
-	../src/call.o \
-	../src/conference.o \
-	../src/eventthread.o \
-	../src/managerimpl_registration.o \
-	../src/numbercleaner.o \
-	../src/voiplink.o \
-	../src/preferences.o \
-	../src/libsflphone.la
+LLIBS=$(CPPUNIT_LIBS) ../src/libsflphone.la

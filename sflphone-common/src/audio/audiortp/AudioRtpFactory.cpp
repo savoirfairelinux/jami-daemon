@@ -63,7 +63,7 @@ void AudioRtpFactory::initAudioRtpConfig ()
         stop();
     }
 
-    AccountID accountId(Manager::instance().getAccountFromCall (ca_->getCallId()));
+    std::string accountId(Manager::instance().getAccountFromCall (ca_->getCallId()));
 
     _debug ("AudioRtpFactory: Init rtp session for account %s", accountId.c_str());
 
@@ -76,7 +76,7 @@ void AudioRtpFactory::initAudioRtpConfig ()
     registerAccount(account, accountId);
 }
 
-void AudioRtpFactory::registerAccount(Account * /*account*/, const AccountID & /* id */)
+void AudioRtpFactory::registerAccount(Account * /*account*/, const std::string & /* id */)
 {
     _srtpEnabled = false;
     _keyExchangeProtocol = Symmetric;
@@ -84,7 +84,7 @@ void AudioRtpFactory::registerAccount(Account * /*account*/, const AccountID & /
 }
 
 
-void AudioRtpFactory::registerAccount(SIPAccount *sipaccount, const AccountID& accountId)
+void AudioRtpFactory::registerAccount(SIPAccount *sipaccount, const std::string& accountId)
 {
     _srtpEnabled = sipaccount->getSrtpEnable();
     std::string tempkey(sipaccount->getSrtpKeyExchange());

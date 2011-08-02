@@ -43,8 +43,8 @@ namespace sfl
 {
 
 AudioSymmetricRtpSession::AudioSymmetricRtpSession (SIPCall * sipcall) :
-	AudioRtpSession(sipcall, Symmetric, static_cast<ost::RTPDataQueue *>(this), static_cast<ost::Thread *>(this))
-    , ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort())
+    ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort())
+	,AudioRtpSession(sipcall, Symmetric, static_cast<ost::RTPDataQueue *>(this), static_cast<ost::Thread *>(this))
     , _rtpThread (new AudioRtpThread (this))
 {
     _info ("AudioSymmetricRtpSession: Setting new RTP session with destination %s:%d", _ca->getLocalIp().c_str(), _ca->getLocalAudioPort());
@@ -64,7 +64,7 @@ void AudioSymmetricRtpSession::final()
     delete this;
 }
 
-AudioSymmetricRtpSession::AudioRtpThread::AudioRtpThread (AudioSymmetricRtpSession *session) : running (true), rtpSession (session)
+AudioSymmetricRtpSession::AudioRtpThread::AudioRtpThread (AudioSymmetricRtpSession *session) : rtpSession (session), running (true)
 {
     _debug ("AudioSymmetricRtpSession: Create new rtp thread");
 }

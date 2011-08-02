@@ -45,27 +45,14 @@ YamlParser::YamlParser (const char *file) : filename (file)
     , doc (NULL)
     , eventIndex (0)
     , accountSequence (NULL)
-    , preferenceSequence (NULL)
-    , addressbookSequence (NULL)
-    , audioSequence (NULL)
-    , videoSequence (NULL)
-    , hooksSequence (NULL)
-    , voiplinkSequence (NULL)
-    , shortcutSequence (NULL)
+    , preferenceNode (NULL)
+    , addressbookNode (NULL)
+    , audioNode (NULL)
+	, videoNode (NULL)
+    , hooksNode (NULL)
+    , voiplinkNode (NULL)
+    , shortcutNode (NULL)
 {
-    memset (buffer, 0, PARSER_BUFFERSIZE);
-
-    open();
-}
-
-YamlParser::~YamlParser()
-{
-    close();
-}
-
-void YamlParser::open() throw(YamlParserException)
-{
-
     fd = fopen (filename.c_str(), "rb");
 
     if (!fd)
@@ -77,7 +64,7 @@ void YamlParser::open() throw(YamlParserException)
     yaml_parser_set_input_file (&parser, fd);
 }
 
-void YamlParser::close() throw(YamlParserException)
+YamlParser::~YamlParser()
 {
     if (!fd)
         throw YamlParserException ("File descriptor not valid");
@@ -307,10 +294,7 @@ void YamlParser::processScalar (YamlNode *topNode) throw(YamlParserException)
 		if (!topNode)
 			throw YamlParserException ("No container for scalar");
 
-		char buffer[1000];
-		snprintf (buffer, 1000, "%s", events[eventIndex].data.scalar.value);
-
-		ScalarNode *sclr = new ScalarNode (buffer, topNode);
+		ScalarNode *sclr = new ScalarNode (std::string((const char*)events[eventIndex].data.scalar.value), topNode);
 
 		switch (topNode->getType()) {
         case DOCUMENT:
@@ -417,9 +401,7 @@ void YamlParser::processMapping (YamlNode *topNode) throw(YamlParserException)
 			if (events[eventIndex].type != YAML_SCALAR_EVENT)
 				throw YamlParserException ("Mapping not followed by a key");
 
-			char buffer[1000];
-			snprintf (buffer, 1000, "%s", events[eventIndex].data.scalar.value);
-			map->setTmpKey (Key (buffer));
+			map->setTmpKey (std::string ((const char *)events[eventIndex].data.scalar.value));
 
 			eventIndex++;
 
@@ -492,49 +474,18 @@ void YamlParser::constructNativeData() throw(YamlParserException)
 }
 
 
-void YamlParser::mainNativeDataMapping (MappingNode *map) throw(YamlParserException)
+void YamlParser::mainNativeDataMapping (MappingNode *map)
 {
+	Mapping *mapping = map->getMapping();
 
-	try {
-		Mapping::iterator iter = map->getMapping()->begin();
-
-		Key accounts ("accounts");
-		Key addressbook ("addressbook");
-		Key audio ("audio");
-		Key video ("video");
-		Key hooks ("hooks");
-		Key preferences ("preferences");
-		Key voiplink ("voipPreferences");
-		Key shortcuts ("shortcuts");
-
-		while (iter != map->getMapping()->end()) {
-
-			if (accounts.compare (iter->first) == 0) {
-				accountSequence = (SequenceNode *) (iter->second);
-			} else if (addressbook.compare (iter->first) == 0) {
-				addressbookSequence = (SequenceNode *) (iter->second);
-			} else if (audio.compare (iter->first) == 0) {
-				audioSequence = (SequenceNode *) (iter->second);
-			} else if (video.compare (iter->first) == 0) {
-				videoSequence = (SequenceNode *) (iter->second);
-			} else if (hooks.compare (iter->first) == 0) {
-				hooksSequence = (SequenceNode *) (iter->second);
-			} else if (preferences.compare (iter->first) == 0) {
-				preferenceSequence = (SequenceNode *) (iter->second);
-			} else if (voiplink.compare (iter->first) == 0) {
-				voiplinkSequence = (SequenceNode *) (iter->second);
-			} else if (shortcuts.compare (iter->first) == 0) {
-				shortcutSequence = (SequenceNode *) (iter->second);
-			} else {
-				throw YamlParserException ("Unknown map key in configuration");
-			}
-
-			iter++;
-		}
-	}
-	catch(YamlParserException &e) {
-		throw;
-	}
+	accountSequence	= (SequenceNode*)(*mapping)["accounts"];
+	addressbookNode = (MappingNode*)(*mapping)["addressbook"];
+	audioNode       = (MappingNode*)(*mapping)["audio"];
+	videoNode       = (MappingNode*)(*mapping)["video"];
+	hooksNode       = (MappingNode*)(*mapping)["hooks"];
+	preferenceNode  = (MappingNode*)(*mapping)["preferences"];
+	voiplinkNode    = (MappingNode*)(*mapping)["voipPreferences"];
+	shortcutNode    = (MappingNode*)(*mapping)["shortcuts"];
 }
 
 }

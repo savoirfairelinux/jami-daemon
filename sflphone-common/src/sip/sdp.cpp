@@ -101,7 +101,7 @@ void Sdp::setActiveLocalSdpSession (const pjmedia_sdp_session *sdp)
     int port;
     pjmedia_sdp_media *current;
     sdpMedia *media = NULL;
-    std::string type, dir;
+    std::string dir;
     CodecsMap codecs_list;
     pjmedia_sdp_attr *attribute = NULL;
     pjmedia_sdp_rtpmap *rtpmap;
@@ -118,7 +118,7 @@ void Sdp::setActiveLocalSdpSession (const pjmedia_sdp_session *sdp)
     for (int i = 0; i < nb_media ; i++) {
         // Retrieve the media
         current = activeLocalSession_->media[i];
-        type = current->desc.media.ptr;
+        std::string type (current->desc.media.ptr, current->desc.media.slen);
         port = current->desc.port;
         media = new sdpMedia (type, port);
         // Retrieve the payload
@@ -257,7 +257,7 @@ void Sdp::setMediaDescriptorLine (sdpMedia *media, pjmedia_sdp_media** p_med)
             rtpmap.clock_rate = codec->getClockRate();
         }
 
-        rtpmap.param.ptr = (char*) "";
+        rtpmap.param.ptr = ((char* const)"");
         rtpmap.param.slen = 0;
 
         pjmedia_sdp_rtpmap_to_attr (memPool_, &rtpmap, &attr);
@@ -750,49 +750,17 @@ void Sdp::addZrtpAttribute (pjmedia_sdp_media* media, std::string hash)
         throw SdpException ("Could not add zrtp attribute to media");
 }
 
-void Sdp::cleanSessionMedia()
+Sdp::~Sdp()
 {
-    _info ("SDP: Clean session media");
+    std::vector<sdpMedia *>::iterator iter = sessionAudioMedia_.begin();
 
-    if (not sessionAudioMedia_.empty())
-    {
+    for (iter = sessionAudioMedia_.begin(); iter != sessionAudioMedia_.end(); ++iter)
+        delete *iter;
 
-        std::vector<sdpMedia *>::iterator iter = sessionAudioMedia_.begin();
-        sdpMedia *media;
-
-        while (iter != sessionAudioMedia_.end())
-        {
-            _debug ("delete media");
-            media = *iter;
-            delete media;
-            ++iter;
-        }
-
-        sessionAudioMedia_.clear();
-    }
+    for (iter = localAudioMediaCap_.begin(); iter != localAudioMediaCap_.end(); ++iter)
+        delete *iter;
 }
 
-
-void Sdp::cleanLocalMediaCapabilities()
-{
-    _info ("SDP: Clean local media capabilities");
-
-    if (not localAudioMediaCap_.empty())
-    {
-
-        std::vector<sdpMedia *>::iterator iter = localAudioMediaCap_.begin();
-        sdpMedia *media;
-
-        while (iter != localAudioMediaCap_.end())
-        {
-            media = *iter;
-            delete media;
-            ++iter;
-        }
-
-        localAudioMediaCap_.clear();
-    }
-}
 
 void Sdp::setPortToAllMedia (int port)
 {

@@ -340,20 +340,7 @@ void sflphone_fill_account_list (void)
         a->properties = details;
 
         /* Fill the actual array of credentials */
-        int number_of_credential = dbus_get_number_of_credential (a->accountID);
-
-        if (number_of_credential) {
-            a->credential_information = g_ptr_array_new();
-        } else {
-            a->credential_information = NULL;
-        }
-
-        int credential_index;
-
-        for (credential_index = 0; credential_index < number_of_credential; credential_index++) {
-            GHashTable * credential_information = dbus_get_credential (a->accountID, credential_index);
-            g_ptr_array_add (a->credential_information, credential_information);
-        }
+        dbus_get_credentials (a);
 
         gchar * status = g_hash_table_lookup (details, REGISTRATION_STATUS);
 

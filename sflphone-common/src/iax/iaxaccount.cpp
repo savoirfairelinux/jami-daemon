@@ -35,7 +35,7 @@
 #include "iaxvoiplink.h"
 #include "manager.h"
 
-IAXAccount::IAXAccount (const AccountID& accountID)
+IAXAccount::IAXAccount (const std::string& accountID)
     : Account (accountID, "iax2")
 {
     _link = new IAXVoIPLink (accountID);
@@ -59,10 +59,10 @@ void IAXAccount::serialize (Conf::YamlEmitter *emitter)
 
     Conf::ScalarNode id (Account::_accountID);
     Conf::ScalarNode username (Account::_username);
-    Conf::ScalarNode password (Account::_password);
+    Conf::ScalarNode password (_password);
     Conf::ScalarNode alias (Account::_alias);
     Conf::ScalarNode hostname (Account::_hostname);
-    Conf::ScalarNode enable (_enabled ? "true" : "false");
+    Conf::ScalarNode enable (_enabled);
     Conf::ScalarNode type (Account::_type);
     Conf::ScalarNode mailbox (_mailBox);
 
@@ -90,130 +90,38 @@ void IAXAccount::serialize (Conf::YamlEmitter *emitter)
 
 void IAXAccount::unserialize (Conf::MappingNode *map)
 {
-    Conf::ScalarNode *val;
-
     if(map == NULL) {
     	_error("IAXAccount: Error: Map is NULL in unserialize");
     	return;
     }
 
-    val = (Conf::ScalarNode *) (map->getValue (aliasKey));
-
-    if (val) {
-        _alias = val->getValue();
-        val = NULL;
-    }
-
-    val = (Conf::ScalarNode *) (map->getValue (typeKey));
-
-    if (val) {
-        _type = val->getValue();
-        val = NULL;
-    }
-
-    val = (Conf::ScalarNode *) (map->getValue (idKey));
-
-    if (val) {
-        _accountID = val->getValue();
-        val = NULL;
-    }
-
-    val = (Conf::ScalarNode *) (map->getValue (usernameKey));
-
-    if (val) {
-        _username = val->getValue();
-        val = NULL;
-    }
-
-    val = (Conf::ScalarNode *) (map->getValue (passwordKey));
-
-    if (val) {
-        _password = val->getValue();
-        val = NULL;
-    }
-
-    val = (Conf::ScalarNode *) (map->getValue (hostnameKey));
-
-    if (val) {
-        _hostname = val->getValue();
-        val = NULL;
-    }
-
-    val = (Conf::ScalarNode *) (map->getValue (accountEnableKey));
-
-    if (val) {
-        _enabled = (val->getValue().compare ("true") == 0) ? true : false;
-        val = NULL;
-    }
-
-    val = (Conf::ScalarNode *) (map->getValue (mailboxKey));
-
-    if (val) {
-        _mailBox = val->getValue();
-        val = NULL;
-    }
-
-    val = (Conf::ScalarNode *) (map->getValue (codecsKey));
-
-    if (val) {
-        _codecStr = val->getValue();
-        val = NULL;
-    }
+    map->getValue(aliasKey, &_alias);
+    map->getValue(typeKey,  &_type);
+    map->getValue(usernameKey, &_username);
+    map->getValue(passwordKey, &_password);
+    map->getValue(hostnameKey, &_hostname);
+    map->getValue(accountEnableKey, &_enabled);
+    map->getValue(mailboxKey, &_mailBox);
+    map->getValue (codecsKey, &_codecStr);
 
     // Update codec list which one is used for SDP offer
     setActiveCodecs (Manager::instance ().unserialize (_codecStr));
-
-    val = (Conf::ScalarNode *) (map->getValue (displayNameKey));
-
-    if (val) {
-        _displayName = val->getValue();
-        val = NULL;
-    }
-
+    map->getValue (displayNameKey, &_displayName);
 }
 
-void IAXAccount::setAccountDetails (const std::map<std::string, std::string>& details)
+void IAXAccount::setAccountDetails (std::map<std::string, std::string> details)
 {
-    std::map<std::string, std::string> map_cpy;
-    std::map<std::string, std::string>::iterator iter;
-
-    // Work on a copy
-    map_cpy = details;
-
-    std::string alias;
-    std::string type;
-    std::string hostname;
-    std::string username;
-    std::string password;
-    std::string mailbox;
-    std::string accountEnable;
-
-    std::string ua_name;
-
     // Account setting common to SIP and IAX
-    find_in_map (CONFIG_ACCOUNT_ALIAS, alias)
-    find_in_map (CONFIG_ACCOUNT_TYPE, type)
-    find_in_map (HOSTNAME, hostname)
-    find_in_map (USERNAME, username)
-    find_in_map (PASSWORD, password)
-    find_in_map (CONFIG_ACCOUNT_MAILBOX, mailbox);
-    find_in_map (CONFIG_ACCOUNT_ENABLE, accountEnable);
+    setAlias (details[CONFIG_ACCOUNT_ALIAS]);
+    setType (details[CONFIG_ACCOUNT_TYPE]);
+    setUsername (details[USERNAME]);
+    setHostname (details[HOSTNAME]);
+    _password = (details[PASSWORD]);
+    setEnabled ( (details[CONFIG_ACCOUNT_ENABLE].compare ("true") == 0));
+    setMailBox (details[CONFIG_ACCOUNT_MAILBOX]);
 
-    setAlias (alias);
-    setType (type);
-    setUsername (username);
-    setHostname (hostname);
-    setPassword (password);
-    setEnabled ( (accountEnable.compare ("true") == 0) ? true : false);
-    setMailBox (mailbox);
-
-    std::string displayName;
-    find_in_map (DISPLAY_NAME, displayName)
-    setDisplayName (displayName);
-
-    find_in_map (USERAGENT, ua_name)
-    setUseragent (ua_name);
-
+    setDisplayName (details[DISPLAY_NAME]);
+    setUseragent (details[USERAGENT]);
 }
 
 std::map<std::string, std::string> IAXAccount::getAccountDetails() const
@@ -263,7 +171,6 @@ int IAXAccount::registerVoIPLink()
         // Stuff needed for IAX registration
         setHostname (_hostname);
         setUsername (_username);
-        setPassword (_password);
 
         _link->sendRegister (_accountID);
 	}
@@ -293,6 +200,8 @@ IAXAccount::unregisterVoIPLink()
 void
 IAXAccount::loadConfig()
 {
-    // Account generic
-    Account::loadConfig();
+    // If IAX is not supported, do not register this account
+#ifndef USE_IAX
+	_enabled = false;
+#endif
 }
