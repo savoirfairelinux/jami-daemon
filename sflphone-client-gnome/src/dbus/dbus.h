@@ -535,7 +535,7 @@ void dbus_set_accounts_order (const gchar* order);
  * Get a list of serialized hisotry entries
  * @return The list of history entries
  */
-const gchar **dbus_get_history (void);
+gchar **dbus_get_history (void);
 
 /**
  * Set the history entries into the daemon. The daemon then write teh content 

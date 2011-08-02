@@ -321,7 +321,7 @@ initialize_binding (const gchar* action, guint key, GdkModifierType mask)
 static void
 initialize_accelerators_list ()
 {
-    GList* shortcutsKeysElement, *shortcutsKeys = NULL;
+    GList* shortcutsKeysElement, *shortcutsKeys;
     int i = 0;
 
     shortcutsKeys = g_hash_table_get_keys (shortcutsMap);
@@ -340,6 +340,7 @@ initialize_accelerators_list ()
 
         i++;
     }
+    g_list_free(shortcutsKeys);
 
     // last element must be null
     accelerators_list[i].action = 0;

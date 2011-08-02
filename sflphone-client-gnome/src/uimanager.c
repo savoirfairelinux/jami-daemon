@@ -954,7 +954,7 @@ edit_paste (void * foo UNUSED)
                                                 NULL);
                     selectedCall->_peer_info = get_peer_info (temp,
                                                selectedCall->_peer_name);
-                    // g_free(temp);
+                    g_free(temp);
                     calltree_update_call (current_calls, selectedCall, NULL);
 
                 }
