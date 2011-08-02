@@ -266,12 +266,19 @@ class Sdp
         /**
          *
          */
-        void addAttributeToLocalAudioMedia(std::string);
+        void addAttributeToLocalAudioMedia(const std::string &attr);
 
         /**
          *
          */
-        void removeAttributeFromLocalAudioMedia(std::string);
+        void removeAttributeFromLocalAudioMedia(const std::string &attr);
+
+        void addAttributeToLocalVideoMedia(const std::string &attr);
+
+        /**
+         *
+         */
+        void removeAttributeFromLocalVideoMedia(const std::string &attr);
 
         /**
          * Get SRTP master key

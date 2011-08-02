@@ -804,8 +804,9 @@ void Sdp::setPortToAllMedia (int port)
         localAudioMediaCap_[i]->set_port (port);
 }
 
-void Sdp::addAttributeToLocalAudioMedia(std::string attr)
+void Sdp::addAttributeToLocalAudioMedia(const std::string &attr)
 {
+    assert(pj_stricmp2(&localSession_->media[0]->desc.media, "audio") == 0);
     pjmedia_sdp_attr *attribute;
 
     attribute = pjmedia_sdp_attr_create (memPool_, attr.c_str(), NULL);
@@ -813,9 +814,26 @@ void Sdp::addAttributeToLocalAudioMedia(std::string attr)
     pjmedia_sdp_media_add_attr (localSession_->media[0], attribute);
 }
 
-void Sdp::removeAttributeFromLocalAudioMedia(std::string attr)
+void Sdp::removeAttributeFromLocalAudioMedia(const std::string &attr)
 {
+    assert(pj_stricmp2(&localSession_->media[0]->desc.media, "audio") == 0);
     pjmedia_sdp_media_remove_all_attr (localSession_->media[0], attr.c_str());
+}
+
+void Sdp::removeAttributeFromLocalVideoMedia(const std::string &attr)
+{
+    assert(pj_stricmp2(&localSession_->media[1]->desc.media, "video") == 0);
+    pjmedia_sdp_media_remove_all_attr (localSession_->media[1], attr.c_str());
+}
+
+void Sdp::addAttributeToLocalVideoMedia(const std::string &attr)
+{
+    assert(pj_stricmp2(&localSession_->media[1]->desc.media, "video") == 0);
+    pjmedia_sdp_attr *attribute;
+
+    attribute = pjmedia_sdp_attr_create (memPool_, attr.c_str(), NULL);
+
+    pjmedia_sdp_media_add_attr(localSession_->media[1], attribute);
 }
 
 void Sdp::updateMediaTransportInfoFromRemoteSdp ()

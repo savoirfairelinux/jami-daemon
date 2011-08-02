@@ -62,12 +62,12 @@ VideoRtpSession::VideoRtpSession(const std::map<std::string, std::string> &txArg
 
 void VideoRtpSession::updateSDP(const Sdp *sdp)
 {
-    assert(receiveThread_.get() == 0);
-
     std::string desc = sdp->getActiveVideoDescription();
     // if port has changed
     if (desc != rxArgs_["receiving_sdp"])
     {
+        assert(receiveThread_.get() == 0);
+
         rxArgs_["receiving_sdp"] = desc;
         _debug("%s:Updated incoming SDP to:\n %s", __PRETTY_FUNCTION__,
                 rxArgs_["receiving_sdp"].c_str());
@@ -78,12 +78,23 @@ void VideoRtpSession::updateSDP(const Sdp *sdp)
         _debug("Receiving video disabled, port was set to 0");
         receiving_ = false;
     }
+    else if (desc.find("sendonly") != std::string::npos)
+    {
+        _debug("Receiving video disabled, video set to sendonly");
+        receiving_ = false;
+        sending_ = true;
+    }
+    else if (desc.find("recvonly") != std::string::npos)
+    {
+        _debug("Sending video disabled, video set to recvonly");
+        sending_ = false;
+        receiving_ = true;
+    }
 }
 
 void VideoRtpSession::updateDestination(const std::string &destination,
         unsigned int port)
 {
-    assert(sendThread_.get() == 0);
     assert(not destination.empty());
 
     std::stringstream tmp;
@@ -91,6 +102,7 @@ void VideoRtpSession::updateDestination(const std::string &destination,
     // if destination has changed
     if (tmp.str() != txArgs_["destination"])
     {
+        assert(sendThread_.get() == 0);
         txArgs_["destination"] = tmp.str();
         _debug("%s updated dest to %s",  __PRETTY_FUNCTION__,
                txArgs_["destination"].c_str());
@@ -131,11 +143,10 @@ void VideoRtpSession::test_loopback()
 
 void VideoRtpSession::start()
 {
-    assert(sendThread_.get() == 0);
-    assert(receiveThread_.get() == 0);
-
     if (sending_)
     {
+        if (sendThread_.get())
+            _warn("Restarting video sender");
         sendThread_.reset(new VideoSendThread(txArgs_));
         sendThread_->start();
     }
@@ -144,6 +155,8 @@ void VideoRtpSession::start()
 
     if (receiving_)
     {
+        if (receiveThread_.get())
+            _warn("Restarting video receiver");
         receiveThread_.reset(new VideoReceiveThread(rxArgs_));
         receiveThread_->start();
     }

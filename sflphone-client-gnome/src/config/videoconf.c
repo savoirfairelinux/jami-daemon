@@ -720,7 +720,7 @@ void receiving_video_event_cb(DBusGProxy *proxy, gint shmKey, gint semKey,
 
     drawFormat = "rgb24";
     DEBUG("Video started for shm:%d sem:%d bufferSz:%d width:%d height:%d",
-           shmKey, semKey, videoBufferSize, drawWidth, drawHeight);
+           shmKey, semKey, videoBufferSize, destWidth, destHeight);
 
     video_renderer = video_preview_new(receivingVideoArea, destWidth, destHeight, drawFormat, shmKey, semKey, videoBufferSize);
     g_assert(video_renderer);

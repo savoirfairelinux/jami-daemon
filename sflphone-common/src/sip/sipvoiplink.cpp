@@ -979,7 +979,11 @@ SIPVoIPLink::onhold (const CallID& id) throw (VoipLinkException)
     sdpSession->removeAttributeFromLocalAudioMedia("sendrecv");
     sdpSession->removeAttributeFromLocalAudioMedia("sendonly");
 
+    sdpSession->removeAttributeFromLocalVideoMedia("sendrecv");
+    sdpSession->removeAttributeFromLocalVideoMedia("sendonly");
+
     sdpSession->addAttributeToLocalAudioMedia("sendonly");
+    sdpSession->addAttributeToLocalVideoMedia("sendonly");
 
     // Create re-INVITE with new offer
     status = SIPSessionReinvite (call);
@@ -998,7 +1002,7 @@ SIPVoIPLink::offhold (const CallID& id) throw (VoipLinkException)
     pj_status_t status;
     SIPCall *call;
 
-    _debug ("UserAgent: retrive call from hold status");
+    _debug ("UserAgent: retrieve call from hold status");
 
     call = getSIPCall (id);
 
@@ -3475,9 +3479,17 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
 
     // Update internal field for
     sdpSession->updateInternalState();
+    bool audioRTPSessionValid = true;
 
-    call->getAudioRtp()->updateDestinationIpAddress();
-    call->getAudioRtp()->setDtmfPayloadType(sdpSession->getTelephoneEventType());
+    try {
+        call->getAudioRtp()->updateDestinationIpAddress();
+        call->getAudioRtp()->setDtmfPayloadType(sdpSession->getTelephoneEventType());
+    }
+    catch (const AudioRtpFactoryException &e)
+    {
+        _error(e.what());
+        audioRTPSessionValid = false;
+    }
 
     call->getVideoRtp()->updateSDP(call->getLocalSDP());
     call->getVideoRtp()->updateDestination(call->getLocalSDP()->getRemoteIP(), call->getLocalSDP()->getRemoteVideoPort());
@@ -3521,7 +3533,7 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
 
 
     // We did not found any crypto context for this media, RTP fallback
-    if (!nego_success && call->getAudioRtp()->getAudioRtpType() == sfl::Sdes) {
+    if (audioRTPSessionValid and !nego_success && call->getAudioRtp()->getAudioRtpType() == sfl::Sdes) {
 
         // We did not found any crypto context for this media
         // @TODO if SRTPONLY, CallFail

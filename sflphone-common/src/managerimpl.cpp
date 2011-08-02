@@ -582,7 +582,7 @@ bool ManagerImpl::onHoldCall (const CallID& callId)
     		account_id = getAccountFromCall (callId);
 
     		if (account_id == AccountNULL) {
-    			_debug ("Manager: Account ID %s or callid %s doesn't exists in call onHold", account_id.c_str(), callId.c_str());
+                _error ("Manager: Account ID %s or callid %s doesn't exists in call onHold", account_id.c_str(), callId.c_str());
     			return false;
     		}
     		returnValue = getAccountLink (account_id)->onhold (callId);
