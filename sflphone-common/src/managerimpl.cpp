@@ -4235,7 +4235,7 @@ short ManagerImpl::loadAccountMap()
     addressbookPreference.unserialize (parser_->getAddressbookNode());
     hookPreference.unserialize (parser_->getHookNode());
     audioPreference.unserialize (parser_->getAudioNode());
-    videoPreference.unserialize (parser_->getAudioNode());
+    videoPreference.unserialize (parser_->getVideoNode());
     shortcutPreferences.unserialize (parser_->getShortcutNode());
 
     Conf::SequenceNode *seq = parser_->getAccountSequence();
