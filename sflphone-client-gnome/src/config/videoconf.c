@@ -900,7 +900,9 @@ GtkWidget* create_video_configuration()
     if (!using_clutter) 
         drawarea = gtk_drawing_area_new();
 
-    gdk_window_clear(gtk_widget_get_window(drawarea));
+    GdkWindow *win = gtk_widget_get_window(drawarea);
+    if (win)
+        gdk_window_clear(win);
     g_signal_connect(drawarea, "unrealize", G_CALLBACK(on_drawarea_unrealize),
             NULL);
     gtk_widget_set_size_request (drawarea, drawWidth, drawHeight);
