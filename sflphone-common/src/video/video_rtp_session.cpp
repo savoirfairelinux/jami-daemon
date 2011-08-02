@@ -73,10 +73,17 @@ void VideoRtpSession::updateSDP(const Sdp *sdp)
                 rxArgs_["receiving_sdp"].c_str());
     }
 
-    if (desc.find("m=video 0") != std::string::npos)
+    if (desc.find("sendrecv") != std::string::npos)
     {
-        _debug("Receiving video disabled, port was set to 0");
+        _debug("Sending and receiving video");
+        receiving_ = true;
+        sending_ = true;
+    }
+    else if (desc.find("inactive") != std::string::npos)
+    {
+        _debug("Video is inactive");
         receiving_ = false;
+        sending_ = false;
     }
     else if (desc.find("sendonly") != std::string::npos)
     {
@@ -89,6 +96,13 @@ void VideoRtpSession::updateSDP(const Sdp *sdp)
         _debug("Sending video disabled, video set to recvonly");
         sending_ = false;
         receiving_ = true;
+    }
+    // even if it says sendrecv or recvonly, our peer may disable video by
+    // setting the port to 0
+    if (desc.find("m=video 0") != std::string::npos)
+    {
+        _debug("Receiving video disabled, port was set to 0");
+        receiving_ = false;
     }
 }
 
