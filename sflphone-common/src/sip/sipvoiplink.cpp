@@ -982,7 +982,7 @@ SIPVoIPLink::onhold (const CallID& id) throw (VoipLinkException)
     sdpSession->removeAttributeFromLocalVideoMedia("sendonly");
 
     sdpSession->addAttributeToLocalAudioMedia("sendonly");
-    sdpSession->addAttributeToLocalVideoMedia("sendonly");
+    sdpSession->addAttributeToLocalVideoMedia("inactive");
 
     // Create re-INVITE with new offer
     status = SIPSessionReinvite (call);
