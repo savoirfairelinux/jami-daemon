@@ -69,8 +69,6 @@ void codec_list_init (GQueue **queue)
 
 void codec_capabilities_load (void)
 {
-
-    gchar **codecs = NULL, **specs = NULL;
     guint payload;
 
     // Create the queue object that will contain the global list of audio codecs
@@ -80,7 +78,8 @@ void codec_capabilities_load (void)
     codecsCapabilities = g_queue_new();
 
     // This is a global list inherited by all accounts
-    codecs = (gchar**) dbus_audio_codec_list ();
+    gchar **codecs = dbus_audio_codec_list ();
+    gchar **codecs_orig = codecs;
 
     if (codecs != NULL) {
         // Add the codecs in the list
@@ -88,11 +87,13 @@ void codec_capabilities_load (void)
 
             codec_t *c;
             payload = atoi (*codecs);
-            DEBUG("payload %d\n", payload);
-            specs = (gchar **) dbus_audio_codec_details (payload);
+            gchar **specs = dbus_audio_codec_details (payload);
             codec_create_new_with_specs (payload, specs, TRUE, &c);
+            g_strfreev(specs);
             g_queue_push_tail (codecsCapabilities, (gpointer*) c);
+            g_free(*codecs);
         }
+        g_free(codecs_orig);
     }
 
     // If we didn't load any codecs, problem ...
@@ -107,7 +108,6 @@ void codec_capabilities_load (void)
 
 void account_create_codec_list (account_t **acc)
 {
-
     GQueue *_codecs;
 
     _codecs = (*acc)->codecs;
@@ -145,7 +145,7 @@ void codec_create_new_with_specs (gint payload, gchar **specs, gboolean active, 
 
     codec = g_new0 (codec_t, 1);
     codec->_payload = payload;
-    codec->name = specs[0];
+    codec->name = strdup(specs[0]);
     codec->sample_rate = atoi (specs[1]);
     codec->_bitrate = atoi (specs[2]);
     codec->_bandwidth = atoi (specs[3]);

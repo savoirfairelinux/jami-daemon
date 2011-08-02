@@ -232,7 +232,7 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
     obj->_accountID = g_strdup (accountID);
     obj->_peer_name = g_strdup (peer_name);
     obj->_peer_number = g_strdup (peer_number);
-    obj->_peer_info = g_strdup (get_peer_info (peer_name, peer_number));
+    obj->_peer_info = get_peer_info (peer_name, peer_number);
     obj->_recordfile = NULL;
     obj->_record_is_playing = FALSE;
 
@@ -311,10 +311,11 @@ void create_history_entry_from_serialized_form (gchar *entry, callable_obj_t **c
     callable_obj_t *new_call;
     history_state_t history_state = MISSED;
     gint token = 0;
-    gchar **ptr;
+    gchar **ptr, **ptr_orig;
     gchar *delim = "|";
  
     ptr = g_strsplit(entry, delim, 10);
+    ptr_orig = ptr;
     while (ptr != NULL && token < 10) {
         switch (token) {
             case 0:
@@ -369,6 +370,7 @@ void create_history_entry_from_serialized_form (gchar *entry, callable_obj_t **c
     new_call->_record_is_playing = FALSE;
 
     *call = new_call;
+    g_strfreev(ptr_orig);
 }
 
 void free_callable_obj_t (callable_obj_t *c)
@@ -400,10 +402,7 @@ void attach_thumbnail (callable_obj_t *call, GdkPixbuf *pixbuf)
 
 gchar* get_peer_info (gchar* number, gchar* name)
 {
-    gchar *info;
-
-    info = g_strconcat ("\"", name, "\" <", number, ">", NULL);
-    return info;
+    return g_strconcat ("\"", name, "\" <", number, ">", NULL);
 }
 
 history_state_t get_history_state_from_id (gchar *indice)
@@ -454,20 +453,27 @@ gchar* get_call_duration (callable_obj_t *obj)
 
 }
 
+static const gchar* get_history_id_from_state (history_state_t state)
+{
+    static const gchar *tab[LAST] = { "0", "1", "2" };
+    if (state >= LAST)
+        return "";
+    return tab[state];
+}
+
 gchar* serialize_history_call_entry (callable_obj_t *entry)
 {
     // "0|514-276-5468|Savoir-faire Linux|144562458" for instance
-    gchar *peer_number = "", *peer_name = "", *account_id = "";
-    gchar *result = "";
+    gchar *peer_number, *peer_name, *account_id;
     gchar *separator = "|";
-    gchar *history_state = "", *time_start = "", *time_stop = "";
-    gchar *record_file = "";
-    gchar *confID = "", *time_added = "";
+    gchar *time_start, *time_stop ;
+    gchar *record_file;
+    gchar *confID , *time_added;
 
     gchar *call_id = entry->_callID;
 
     // Need the string form for the history state
-    history_state = get_history_id_from_state (entry->_history_state);
+    const gchar *history_state = get_history_id_from_state (entry->_history_state);
     // and the timestamps
     time_start = convert_timestamp_to_gchar (entry->_time_start);
     time_stop = convert_timestamp_to_gchar (entry->_time_stop);
@@ -480,9 +486,9 @@ gchar* serialize_history_call_entry (callable_obj_t *entry)
     confID = (entry->_historyConfID == NULL) ? "" : entry->_historyConfID;
     DEBUG("==================================== SERIALIZE: CONFID %s", confID);
 
-    record_file = g_strdup((entry->_recordfile == NULL) ? "" : entry->_recordfile);
+    record_file = (entry->_recordfile == NULL) ? "" : entry->_recordfile;
 
-    result = g_strconcat (history_state, separator,
+    gchar *result = g_strconcat (history_state, separator,
                           peer_number, separator,
                           peer_name, separator,
                           time_start, separator,
@@ -492,23 +498,10 @@ gchar* serialize_history_call_entry (callable_obj_t *entry)
 			  record_file, separator,
 			  confID, separator,
 			  time_added, NULL);
-
+    g_free(time_start);
+    g_free(time_stop);
+    g_free(time_added);
     return result;
-}
-
-gchar* get_history_id_from_state (history_state_t state)
-{
-    // Refer to history_state_t enum in callable_obj.h
-    switch (state) {
-        case MISSED:
-            return "0";
-        case INCOMING:
-            return "1";
-        case OUTGOING:
-            return "2";
-        default:
-            return "0";
-    }
 }
 
 // gchar* get_formatted_start_timestamp (callable_obj_t *obj)

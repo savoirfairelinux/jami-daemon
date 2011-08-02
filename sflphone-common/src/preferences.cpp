@@ -532,47 +532,20 @@ std::map<std::string, std::string> ShortcutPreferences::getShortcuts()
 }
 
 
-void ShortcutPreferences::setShortcuts (std::map<std::string, std::string> map_cpy)
+void ShortcutPreferences::setShortcuts (std::map<std::string, std::string> map)
 {
-    std::map<std::string, std::string>::iterator it;
-
-    it = map_cpy.find (hangupShortKey);
-
-    if (it != map_cpy.end()) {
-        _hangup = it->second;
-    }
-
-    it = map_cpy.find (pickupShortKey);
-
-    if (it != map_cpy.end()) {
-        _pickup = it->second;
-    }
-
-    it = map_cpy.find (popupShortKey);
-
-    if (it != map_cpy.end()) {
-        _popup = it->second;
-    }
-
-    it = map_cpy.find (toggleHoldShortKey);
-
-    if (it != map_cpy.end()) {
-        _toggleHold = it->second;
-    }
-
-    it = map_cpy.find (togglePickupHangupShortKey);
-
-    if (it != map_cpy.end()) {
-        _togglePickupHangup = it->second;
-    }
+    _hangup = map[hangupShortKey];
+    _pickup = map[pickupShortKey];
+    _popup = map[popupShortKey];
+    _toggleHold = map[toggleHoldShortKey];
+    _togglePickupHangup = map[togglePickupHangupShortKey];
 
     /*
     for (int i = 0; i < (int)shortcutsKeys.size(); i++) {
       std::string key = shortcutsKeys.at(i);
-      it = map_cpy.find(key);
-      if (it != shortcutsMap.end()) {
-        Manager::instance().setConfig("Shortcuts", key, it->second);
-      }
+      std::string val = map[key];
+      if (val != "")
+        Manager::instance().setConfig("Shortcuts", key, val);
     }
     */
 }

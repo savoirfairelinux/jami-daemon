@@ -118,7 +118,7 @@ void AudioZrtpSession::initializeZid (void)
     _debug ("Initialization from ZID file failed. Trying to remove...");
 
     if (remove (zidCompleteFilename.c_str()) !=0) {
-        _debug ("Failed to remove zid file because of: %s", strerror (errno));
+        _debug ("Failed to remove zid file: %m");
         throw ZrtpZidException("zid file deletion failed");
     }
 

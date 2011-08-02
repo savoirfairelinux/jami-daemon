@@ -2655,14 +2655,14 @@ dbus_set_accounts_order (const gchar* order)
     }
 }
 
-const gchar **
+gchar **
 dbus_get_history (void)
 {
     GError *error = NULL;
-    const gchar **entries = NULL;
+    gchar **entries = NULL;
 
     org_sflphone_SFLphone_ConfigurationManager_get_history (
-        configurationManagerProxy, (char ***)&entries, &error);
+        configurationManagerProxy, &entries, &error);
 
     if (error) {
         ERROR ("Error calling get history: %s", error->message);
