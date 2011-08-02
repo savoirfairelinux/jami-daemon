@@ -147,7 +147,7 @@ std::vector<std::string> VideoV4l2Size::getRateList()
 void VideoV4l2Size::GetFrameRates(int fd, unsigned int pixel_format)
 {
     if (fd == -1) { // SFL_TEST
-        rates.push_back(25);
+        rates.push_back(30);
         return;
     }
 
@@ -221,7 +221,7 @@ std::vector<std::string> VideoV4l2Channel::getSizeList(void)
 unsigned int VideoV4l2Channel::GetSizes(int fd, unsigned int pixelformat)
 {
     if (fd == -1) { //SFL_TEST
-        VideoV4l2Size s(108, 192);
+        VideoV4l2Size s(288, 352);
         s.GetFrameRates(-1, 0);
         sizes.push_back(s);
         return 0;

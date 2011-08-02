@@ -124,82 +124,91 @@ void VideoSendThread::prepareEncoderContext()
 void VideoSendThread::setup()
 {
     int ret;
-    Manager::instance().avcodecLock();
-    av_register_all();
-    avdevice_register_all();
-    Manager::instance().avcodecUnlock();
-
-    AVInputFormat *file_iformat = 0;
-    // it's a v4l device if starting with /dev/video
-    if (args_["input"].substr(0, strlen("/dev/video")) == "/dev/video")
     {
-        _debug("%s:Using v4l2 format", __PRETTY_FUNCTION__);
-        file_iformat = av_find_input_format("video4linux2");
-        if (!file_iformat)
+        ost::MutexLock lock(Manager::instance().avcodecMutex());
+        av_register_all();
+        avdevice_register_all();
+    }
+
+    if (!test_source_)
+    {
+        AVInputFormat *file_iformat = 0;
+        // it's a v4l device if starting with /dev/video
+        if (args_["input"].substr(0, strlen("/dev/video")) == "/dev/video")
         {
-            _error("Could not find format video4linux2");
+            _debug("%s:Using v4l2 format", __PRETTY_FUNCTION__);
+            file_iformat = av_find_input_format("video4linux2");
+            if (!file_iformat)
+            {
+                _error("Could not find format video4linux2");
+                exit();
+            }
+        }
+
+        AVDictionary *options = NULL;
+        if (!args_["framerate"].empty())
+            av_dict_set(&options, "framerate", args_["framerate"].c_str(), 0);
+        if (!args_["video_size"].empty())
+            av_dict_set(&options, "video_size", args_["video_size"].c_str(), 0);
+        if (!args_["channel"].empty())
+            av_dict_set(&options, "channel", args_["channel"].c_str(), 0);
+
+        // Open video file
+        if (avformat_open_input(&inputCtx_, args_["input"].c_str(), file_iformat, &options) != 0)
+        {
+            _error("Could not open input file %s", args_["input"].c_str());
             exit();
         }
-    }
 
-    AVDictionary *options = NULL;
-    if (!args_["framerate"].empty())
-        av_dict_set(&options, "framerate", args_["framerate"].c_str(), 0);
-    if (!args_["video_size"].empty())
-        av_dict_set(&options, "video_size", args_["video_size"].c_str(), 0);
-    if (!args_["channel"].empty())
-        av_dict_set(&options, "channel", args_["channel"].c_str(), 0);
-
-    // Open video file
-    if (avformat_open_input(&inputCtx_, args_["input"].c_str(), file_iformat, &options) != 0)
-    {
-        _error("Could not open input file %s", args_["input"].c_str());
-        exit();
-    }
-
-    // retrieve stream information
-    if (av_find_stream_info(inputCtx_) < 0)
-    {
-        _error("Could not find stream info!");
-        exit();
-    }
-
-    // find the first video stream from the input
-    unsigned i;
-    for (i = 0; i < inputCtx_->nb_streams; i++)
-    {
-        if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
         {
-            videoStreamIndex_ = i;
-            break;
+            ost::MutexLock lock(Manager::instance().avcodecMutex());
+            // retrieve stream information
+            if (av_find_stream_info(inputCtx_) < 0)
+            {
+                _error("Could not find stream info!");
+                exit();
+            }
         }
-    }
-    if (videoStreamIndex_ == -1)
-    {
-        _error("%s:Could not find video stream!", __PRETTY_FUNCTION__);
-        exit();
-    }
 
-    // Get a pointer to the codec context for the video stream
-    inputDecoderCtx_ = inputCtx_->streams[videoStreamIndex_]->codec;
+        // find the first video stream from the input
+        unsigned i;
+        for (i = 0; i < inputCtx_->nb_streams; i++)
+        {
+            if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
+            {
+                videoStreamIndex_ = i;
+                break;
+            }
+        }
+        if (videoStreamIndex_ == -1)
+        {
+            _error("%s:Could not find video stream!", __PRETTY_FUNCTION__);
+            exit();
+        }
 
-    // find the decoder for the video stream
-    AVCodec *inputDecoder = avcodec_find_decoder(inputDecoderCtx_->codec_id);
-    if (inputDecoder == NULL)
-    {
-        _error("%s:Unsupported codec!", __PRETTY_FUNCTION__);
-        exit();
-    }
+        // Get a pointer to the codec context for the video stream
+        inputDecoderCtx_ = inputCtx_->streams[videoStreamIndex_]->codec;
 
-    // open codec
-    Manager::instance().avcodecLock();
-    ret = avcodec_open(inputDecoderCtx_, inputDecoder);
-    Manager::instance().avcodecUnlock();
-    if (ret < 0)
-    {
-        _error("%s:Could not open codec!", __PRETTY_FUNCTION__);
-        exit();
-    }
+        // find the decoder for the video stream
+        AVCodec *inputDecoder = avcodec_find_decoder(inputDecoderCtx_->codec_id);
+        if (inputDecoder == NULL)
+        {
+            _error("%s:Unsupported codec!", __PRETTY_FUNCTION__);
+            exit();
+        }
+
+        // open codec
+        {
+            ost::MutexLock lock(Manager::instance().avcodecMutex());
+            ret = avcodec_open(inputDecoderCtx_, inputDecoder);
+        }
+        if (ret < 0)
+        {
+            _error("%s:Could not open codec!", __PRETTY_FUNCTION__);
+            exit();
+        }
+
+    } // end if ! test_source_
 
     outputCtx_ = avformat_alloc_context();
 
@@ -207,7 +216,7 @@ void VideoSendThread::setup()
     if (!file_oformat)
     {
         _error("Unable to find a suitable output format for %s",
-            args_["destination"].c_str());
+                args_["destination"].c_str());
         exit();
     }
     outputCtx_->oformat = file_oformat;
@@ -232,9 +241,10 @@ void VideoSendThread::setup()
     scaledPicture_ = avcodec_alloc_frame();
 
     // open encoder
-    Manager::instance().avcodecLock();
-    ret = avcodec_open(encoderCtx_, encoder);
-    Manager::instance().avcodecUnlock();
+    {
+        ost::MutexLock lock(Manager::instance().avcodecMutex());
+        ret = avcodec_open(encoderCtx_, encoder);
+    }
     if (ret < 0)
     {
         _error("%s:Could not open encoder!", __PRETTY_FUNCTION__);
@@ -269,7 +279,7 @@ void VideoSendThread::setup()
     if (avformat_write_header(outputCtx_, NULL) < 0)
     {
         _error("%s:Could not write header for output file (incorrect codec "
-            "parameters ?)", __PRETTY_FUNCTION__);
+                "parameters ?)", __PRETTY_FUNCTION__);
         exit();
     }
 
@@ -335,21 +345,22 @@ void VideoSendThread::cleanup()
     }
 
     // close the codecs
-    Manager::instance().avcodecLock();
-    if (encoderCtx_)
     {
-        avcodec_close(encoderCtx_);
-        av_freep(&encoderCtx_);
-        encoderCtx_ = 0;
-    }
+        ost::MutexLock lock(Manager::instance().avcodecMutex());
+        if (encoderCtx_)
+        {
+            avcodec_close(encoderCtx_);
+            av_freep(&encoderCtx_);
+            encoderCtx_ = 0;
+        }
 
-    // doesn't need to be freed, we didn't use avcodec_alloc_context
-    if (inputDecoderCtx_)
-    {
-        avcodec_close(inputDecoderCtx_);
-        inputDecoderCtx_ = 0;
+        // doesn't need to be freed, we didn't use avcodec_alloc_context
+        if (inputDecoderCtx_)
+        {
+            avcodec_close(inputDecoderCtx_);
+            inputDecoderCtx_ = 0;
+        }
     }
-    Manager::instance().avcodecUnlock();
 
     // close the video file
     if (inputCtx_)

@@ -224,10 +224,11 @@ void VideoReceiveThread::loadSDP()
 
 void VideoReceiveThread::setup()
 {
-    Manager::instance().avcodecLock();
-    av_register_all();
-    avdevice_register_all();
-    Manager::instance().avcodecUnlock();
+    {
+        ost::MutexLock lock(Manager::instance().avcodecMutex());
+        av_register_all();
+        avdevice_register_all();
+    }
 
     dstWidth_ = atoi(args_["width"].c_str());
     dstHeight_ = atoi(args_["height"].c_str());
@@ -284,11 +285,14 @@ void VideoReceiveThread::setup()
             exit();
         }
 
-        // retrieve stream information
-        if (av_find_stream_info(inputCtx_) < 0)
         {
-            _error("%s:Could not find stream info!", __PRETTY_FUNCTION__);
-            exit();
+            ost::MutexLock lock(Manager::instance().avcodecMutex());
+            // retrieve stream information
+            if (av_find_stream_info(inputCtx_) < 0)
+            {
+                _error("%s:Could not find stream info!", __PRETTY_FUNCTION__);
+                exit();
+            }
         }
 
         // find the first video stream from the input
@@ -319,9 +323,11 @@ void VideoReceiveThread::setup()
         }
 
         // open codec
-        Manager::instance().avcodecLock();
-        int ret = avcodec_open(decoderCtx_, inputDecoder);
-        Manager::instance().avcodecUnlock();
+        int ret = 0;
+        {
+            ost::MutexLock lock(Manager::instance().avcodecMutex());
+            ret = avcodec_open(decoderCtx_, inputDecoder);
+        }
         if (ret < 0)
         {
             _error("%s:Could not open codec!", __PRETTY_FUNCTION__);
@@ -353,7 +359,7 @@ void VideoReceiveThread::setup()
 
     // allocate video frame
     rawFrame_ = avcodec_alloc_frame();
-    
+
     // we're receiving RTP
     if (args_["input"] == sdpFilename_)
     {
@@ -408,9 +414,8 @@ void VideoReceiveThread::cleanup()
     // doesn't need to be freed, we didn't use avcodec_alloc_context
     if (decoderCtx_)
     {
-        Manager::instance().avcodecLock();
+        ost::MutexLock lock(Manager::instance().avcodecMutex());
         avcodec_close(decoderCtx_);
-        Manager::instance().avcodecUnlock();
         decoderCtx_ = 0;
     }
 

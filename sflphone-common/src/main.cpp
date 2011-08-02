@@ -168,7 +168,7 @@ main (int argc, char **argv)
             fclose (fp);
 
             if (kill (atoi (cOldPid), 0) == 0) {
-                fprintf (stderr, "There is already a sflphoned daemon running in the system. Starting Failed.");
+                std::cerr << "There is already a sflphoned daemon running in the system. Starting Failed." << std::endl;
                 exit (-1);
             } else {
                 if ( (fp = fopen (homepid,"w")) == NULL) {

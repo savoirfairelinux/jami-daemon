@@ -1199,12 +1199,7 @@ class ManagerImpl
         /**
          * Enter the mutex for libavcodec
          */
-        void avcodecLock(void) { _avcodecMutex.enterMutex(); }
-
-        /**
-         * Leave the mutex for libavcodec
-         */
-        void avcodecUnlock(void) { _avcodecMutex.leaveMutex(); }
+        ost::Mutex& avcodecMutex() { return avcodecMutex_; }
 
     private:
         /* Transform digest to string.
@@ -1272,7 +1267,7 @@ class ManagerImpl
         ost::Mutex _currentCallMutex;
 
         /** Protected libavcodec access */
-        ost::Mutex _avcodecMutex;
+        ost::Mutex avcodecMutex_;
 
         /** Audio layer */
         AudioLayer* _audiodriver;
