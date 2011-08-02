@@ -163,11 +163,13 @@ void VideoSendThread::setup()
         {
             ost::MutexLock lock(Manager::instance().avcodecMutex());
             // retrieve stream information
-            if (av_find_stream_info(inputCtx_) < 0)
-            {
-                _error("Could not find stream info!");
-                exit();
-            }
+            ret = av_find_stream_info(inputCtx_);
+        }
+
+        if (ret < 0)
+        {
+            _error("Could not find stream info!");
+            exit();
         }
 
         // find the first video stream from the input

@@ -284,14 +284,17 @@ void VideoReceiveThread::setup()
             exit();
         }
 
+        int ret = 0;
+        // retrieve stream information
         {
             ost::MutexLock lock(Manager::instance().avcodecMutex());
-            // retrieve stream information
-            if (av_find_stream_info(inputCtx_) < 0)
-            {
-                _error("%s:Could not find stream info!", __PRETTY_FUNCTION__);
-                exit();
-            }
+            ret = av_find_stream_info(inputCtx_);
+        }
+
+        if (ret < 0)
+        {
+            _error("%s:Could not find stream info!", __PRETTY_FUNCTION__);
+            exit();
         }
 
         // find the first video stream from the input
@@ -322,7 +325,7 @@ void VideoReceiveThread::setup()
         }
 
         // open codec
-        int ret = 0;
+        ret = 0;
         {
             ost::MutexLock lock(Manager::instance().avcodecMutex());
             ret = avcodec_open(decoderCtx_, inputDecoder);
