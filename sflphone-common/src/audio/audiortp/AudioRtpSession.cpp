@@ -43,12 +43,12 @@
 namespace sfl
 {
 AudioRtpSession::AudioRtpSession (SIPCall * sipcall, RtpMethod type, ost::RTPDataQueue *queue, ost::Thread *thread) :
-					_ca (sipcall)
-					, AudioRtpRecordHandler (sipcall)
+					AudioRtpRecordHandler (sipcall)
+					, _ca (sipcall)
 					, _timestamp (0)
-                    , _isStarted (false)
 					, _timestampIncrement (0)
 					, _timestampCount (0)
+                    , _isStarted (false)
 					, _type(type)
 					, _queue(queue)
 					, _thread(thread)
