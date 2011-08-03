@@ -1401,6 +1401,17 @@ void sflphone_fill_history (void)
 
 }
 
+#if ! (GLIB_CHECK_VERSION(2,28,0))
+static void
+g_slist_free_full (GSList         *list,
+		   GDestroyNotify  free_func)
+{
+  g_slist_foreach (list, (GFunc) free_func, NULL);
+  g_slist_free (list);
+}
+#endif
+
+
 static void hist_free_elt(gpointer list)
 {
     g_slist_free_full ((GSList *)list, g_free);
