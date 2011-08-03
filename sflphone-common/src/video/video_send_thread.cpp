@@ -157,14 +157,6 @@ void VideoSendThread::setup()
             exit();
         }
 
-        // retrieve stream information
-        ret = av_find_stream_info(inputCtx_);
-        if (ret < 0)
-        {
-            _error("Could not find stream info!");
-            exit();
-        }
-
         // find the first video stream from the input
         unsigned i;
         for (i = 0; i < inputCtx_->nb_streams; i++)
