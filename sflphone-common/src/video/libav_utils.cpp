@@ -63,14 +63,6 @@ bool isSupportedCodec(const char *name)
 
 std::list<std::string> installedCodecs()
 {
-    // FIXME: not thread safe
-    static bool registered = false;
-    if (not registered)
-    {
-        av_register_all();
-        registered = true;
-    }
-
     std::list<std::string> codecs;
     AVCodec *p = NULL, *p2;
     const char *last_name = "000";
@@ -123,7 +115,7 @@ static int avcodecManageMutex(void **mutex, enum AVLockOp op)
     return 0;
 }
 
-void sfl_avcodec_init_locking()
+void sfl_avcodec_init()
 {
     static int done = 0;
     ost::MutexLock lock(avcodec_lock);
@@ -131,6 +123,10 @@ void sfl_avcodec_init_locking()
         return;
 
     done = 1;
+
+    av_register_all();
+    av_register_all();
+
     av_lockmgr_register(avcodecManageMutex);
 }
 

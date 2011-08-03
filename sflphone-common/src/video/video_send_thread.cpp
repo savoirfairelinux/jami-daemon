@@ -123,9 +123,7 @@ void VideoSendThread::prepareEncoderContext()
 void VideoSendThread::setup()
 {
     int ret;
-    libav_utils::sfl_avcodec_init_locking();
-    av_register_all();
-    avdevice_register_all();
+    libav_utils::sfl_avcodec_init();
 
     if (!test_source_)
     {

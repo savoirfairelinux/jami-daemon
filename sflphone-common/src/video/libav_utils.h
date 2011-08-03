@@ -45,7 +45,7 @@ namespace libav_utils {
      */
     bool isSupportedCodec(const char *codec);
 
-    void sfl_avcodec_init_locking();
+    void sfl_avcodec_init();
 }
 
 #endif // __LIBAV_UTILS_H__

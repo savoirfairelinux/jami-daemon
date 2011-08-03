@@ -222,9 +222,7 @@ void VideoReceiveThread::loadSDP()
 
 void VideoReceiveThread::setup()
 {
-    libav_utils::sfl_avcodec_init_locking();
-    av_register_all();
-    avdevice_register_all();
+    libav_utils::sfl_avcodec_init();
 
     dstWidth_ = atoi(args_["width"].c_str());
     dstHeight_ = atoi(args_["height"].c_str());
