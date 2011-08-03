@@ -29,9 +29,8 @@
  *  as that of the covered work.
  */
 
-#define __STDC_CONSTANT_MACROS
-
 #include "video_receive_thread.h"
+#include "libav_utils.h"
 
 // libav includes
 extern "C" {
@@ -223,11 +222,9 @@ void VideoReceiveThread::loadSDP()
 
 void VideoReceiveThread::setup()
 {
-    {
-        ost::MutexLock lock(Manager::instance().avcodecMutex());
-        av_register_all();
-        avdevice_register_all();
-    }
+    libav_utils::sfl_avcodec_init_locking();
+    av_register_all();
+    avdevice_register_all();
 
     dstWidth_ = atoi(args_["width"].c_str());
     dstHeight_ = atoi(args_["height"].c_str());
@@ -286,11 +283,7 @@ void VideoReceiveThread::setup()
 
         int ret;
         // retrieve stream information
-        {
-            ost::MutexLock lock(Manager::instance().avcodecMutex());
-            ret = av_find_stream_info(inputCtx_);
-        }
-
+        ret = av_find_stream_info(inputCtx_);
         if (ret < 0)
         {
             _error("%s:Could not find stream info!", __PRETTY_FUNCTION__);
@@ -325,10 +318,7 @@ void VideoReceiveThread::setup()
         }
 
         // open codec
-        {
-            ost::MutexLock lock(Manager::instance().avcodecMutex());
-            ret = avcodec_open(decoderCtx_, inputDecoder);
-        }
+        ret = avcodec_open(decoderCtx_, inputDecoder);
         if (ret < 0)
         {
             _error("%s:Could not open codec!", __PRETTY_FUNCTION__);
@@ -415,7 +405,6 @@ void VideoReceiveThread::cleanup()
     // doesn't need to be freed, we didn't use avcodec_alloc_context
     if (decoderCtx_)
     {
-        ost::MutexLock lock(Manager::instance().avcodecMutex());
         avcodec_close(decoderCtx_);
         decoderCtx_ = 0;
     }

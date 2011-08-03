@@ -28,9 +28,8 @@
  *  as that of the covered work.
  */
 
-#define __STDC_CONSTANT_MACROS
-
 #include "video_send_thread.h"
+#include "libav_utils.h"
 
 // libav includes
 extern "C" {
@@ -124,11 +123,9 @@ void VideoSendThread::prepareEncoderContext()
 void VideoSendThread::setup()
 {
     int ret;
-    {
-        ost::MutexLock lock(Manager::instance().avcodecMutex());
-        av_register_all();
-        avdevice_register_all();
-    }
+    libav_utils::sfl_avcodec_init_locking();
+    av_register_all();
+    avdevice_register_all();
 
     if (!test_source_)
     {
@@ -160,12 +157,8 @@ void VideoSendThread::setup()
             exit();
         }
 
-        {
-            ost::MutexLock lock(Manager::instance().avcodecMutex());
-            // retrieve stream information
-            ret = av_find_stream_info(inputCtx_);
-        }
-
+        // retrieve stream information
+        ret = av_find_stream_info(inputCtx_);
         if (ret < 0)
         {
             _error("Could not find stream info!");
@@ -200,10 +193,7 @@ void VideoSendThread::setup()
         }
 
         // open codec
-        {
-            ost::MutexLock lock(Manager::instance().avcodecMutex());
-            ret = avcodec_open(inputDecoderCtx_, inputDecoder);
-        }
+        ret = avcodec_open(inputDecoderCtx_, inputDecoder);
         if (ret < 0)
         {
             _error("%s:Could not open codec!", __PRETTY_FUNCTION__);
@@ -243,10 +233,7 @@ void VideoSendThread::setup()
     scaledPicture_ = avcodec_alloc_frame();
 
     // open encoder
-    {
-        ost::MutexLock lock(Manager::instance().avcodecMutex());
-        ret = avcodec_open(encoderCtx_, encoder);
-    }
+    ret = avcodec_open(encoderCtx_, encoder);
     if (ret < 0)
     {
         _error("%s:Could not open encoder!", __PRETTY_FUNCTION__);
@@ -347,21 +334,18 @@ void VideoSendThread::cleanup()
     }
 
     // close the codecs
+    if (encoderCtx_)
     {
-        ost::MutexLock lock(Manager::instance().avcodecMutex());
-        if (encoderCtx_)
-        {
-            avcodec_close(encoderCtx_);
-            av_freep(&encoderCtx_);
-            encoderCtx_ = 0;
-        }
+        avcodec_close(encoderCtx_);
+        av_freep(&encoderCtx_);
+        encoderCtx_ = 0;
+    }
 
-        // doesn't need to be freed, we didn't use avcodec_alloc_context
-        if (inputDecoderCtx_)
-        {
-            avcodec_close(inputDecoderCtx_);
-            inputDecoderCtx_ = 0;
-        }
+    // doesn't need to be freed, we didn't use avcodec_alloc_context
+    if (inputDecoderCtx_)
+    {
+        avcodec_close(inputDecoderCtx_);
+        inputDecoderCtx_ = 0;
     }
 
     // close the video file

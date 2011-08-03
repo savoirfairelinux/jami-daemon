@@ -34,8 +34,9 @@
 #include <string>
 #include <iostream>
 
+#include <cc++/thread.h>
+
 extern "C" {
-#define __STDC_CONSTANT_MACROS
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 }
@@ -100,4 +101,37 @@ std::list<std::string> installedCodecs()
     }
     return codecs;
 }
+
+static ost::Mutex avcodec_lock;
+
+static int avcodecManageMutex(void **mutex, enum AVLockOp op)
+{
+    (void)mutex; // no need to store our mutex in ffmpeg
+    switch(op) {
+    case AV_LOCK_CREATE:
+        break; // our mutex is already created
+    case AV_LOCK_DESTROY:
+        break; // our mutex doesn't need to be destroyed
+    case AV_LOCK_OBTAIN:
+        avcodec_lock.enter();
+        break;
+    case AV_LOCK_RELEASE:
+        avcodec_lock.leave();
+        break;
+    }
+
+    return 0;
+}
+
+void sfl_avcodec_init_locking()
+{
+    static int done = 0;
+    ost::MutexLock lock(avcodec_lock);
+    if (done)
+        return;
+
+    done = 1;
+    av_lockmgr_register(avcodecManageMutex);
+}
+
 } // end namespace libav_utils

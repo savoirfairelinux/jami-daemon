@@ -1196,11 +1196,6 @@ class ManagerImpl
          */
         void audioLayerMutexUnlock(void) { _audiolayerMutex.leaveMutex(); }
 
-        /**
-         * Enter the mutex for libavcodec
-         */
-        ost::Mutex& avcodecMutex() { return avcodecMutex_; }
-
     private:
         /* Transform digest to string.
         * output must be at least PJSIP_MD5STRLEN+1 bytes.
@@ -1265,9 +1260,6 @@ class ManagerImpl
 
         /** Protected current call access */
         ost::Mutex _currentCallMutex;
-
-        /** Protected libavcodec access */
-        ost::Mutex avcodecMutex_;
 
         /** Audio layer */
         AudioLayer* _audiodriver;
