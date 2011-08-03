@@ -48,7 +48,11 @@ void VideoEndpointTest::testIsSupportedCodec()
 void VideoEndpointTest::testListInstalledCodecs()
 {
     /* This would list codecs */
-    libav_utils::installedCodecs();
+	std::cout << "Installed codecs:" << std::endl;
+	std::list<std::string> list = libav_utils::installedCodecs();
+    std::list<std::string>::iterator it;
+	for (it = list.begin(); it != list.end(); ++it)
+		std::cout << '\t' << *it << std::endl;
 }
 
 void VideoEndpointTest::testCodecMap()
