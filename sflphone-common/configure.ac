@@ -193,6 +193,7 @@ PKG_CHECK_MODULES(SAMPLERATE, samplerate >= ${LIBSAMPLERATE_MIN_VERSION},, AC_MS
 dnl The libav versions correspond to the last libav release: 0.7
 dnl Check for libavcodec development package - name: libavcodec-dev
 PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 53.5.0,, AC_MSG_ERROR([Missing libavcodec package: libavcodec-dev]))
+LIBAVCODEC_CFLAGS="${LIBAVCODEC_CFLAGS} -D__STDC_CONSTANT_MACROS"
 
 dnl Check for libavformat development package - name: libavformat-dev
 PKG_CHECK_MODULES(LIBAVFORMAT, libavformat >= 53.2.0,, AC_MSG_ERROR([Missing libavformat package: libavformat-dev]))
