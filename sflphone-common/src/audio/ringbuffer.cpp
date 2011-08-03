@@ -46,7 +46,7 @@
 int RingBuffer::count_rb = 0;
 
 // Create  a ring buffer with 'size' bytes
-RingBuffer::RingBuffer (int size, CallID call_id) : mEnd (0)
+RingBuffer::RingBuffer (int size, std::string call_id) : mEnd (0)
     , mBufferSize (size > MIN_BUFFER_SIZE ? size : MIN_BUFFER_SIZE)
     , mBuffer (NULL)
     , buffer_id (call_id)
@@ -65,7 +65,7 @@ RingBuffer::~RingBuffer()
 }
 
 void
-RingBuffer::flush (CallID call_id)
+RingBuffer::flush (std::string call_id)
 {
 
     storeReadPointer (mEnd, call_id);
@@ -104,7 +104,7 @@ RingBuffer::putLen()
 }
 
 int
-RingBuffer::getLen (CallID call_id)
+RingBuffer::getLen (std::string call_id)
 {
 
     int mStart = getReadPointer (call_id);
@@ -126,7 +126,7 @@ RingBuffer::debug()
 }
 
 int
-RingBuffer::getReadPointer (CallID call_id)
+RingBuffer::getReadPointer (std::string call_id)
 {
 
     if (getNbReadPointer() == 0)
@@ -163,7 +163,7 @@ RingBuffer::getSmallestReadPointer()
 }
 
 void
-RingBuffer::storeReadPointer (int pointer_value, CallID call_id)
+RingBuffer::storeReadPointer (int pointer_value, std::string call_id)
 {
 
     ReadPointer::iterator iter = _readpointer.find (call_id);
@@ -178,16 +178,16 @@ RingBuffer::storeReadPointer (int pointer_value, CallID call_id)
 
 
 void
-RingBuffer::createReadPointer (CallID call_id)
+RingBuffer::createReadPointer (std::string call_id)
 {
     if (!hasThisReadPointer (call_id))
-        _readpointer.insert (std::pair<CallID, int> (call_id, mEnd));
+        _readpointer.insert (std::pair<std::string, int> (call_id, mEnd));
 
 }
 
 
 void
-RingBuffer::removeReadPointer (CallID call_id)
+RingBuffer::removeReadPointer (std::string call_id)
 {
     ReadPointer::iterator iter = _readpointer.find (call_id);
 
@@ -197,7 +197,7 @@ RingBuffer::removeReadPointer (CallID call_id)
 
 
 bool
-RingBuffer::hasThisReadPointer (CallID call_id)
+RingBuffer::hasThisReadPointer (std::string call_id)
 {
     ReadPointer::iterator iter = _readpointer.find (call_id);
 
@@ -292,7 +292,7 @@ RingBuffer::Put (void* buffer, int toCopy, unsigned short volume)
 //
 
 int
-RingBuffer::AvailForGet (CallID call_id)
+RingBuffer::AvailForGet (std::string call_id)
 {
     // Used space
 
@@ -301,7 +301,7 @@ RingBuffer::AvailForGet (CallID call_id)
 
 // Get will move 'toCopy' bytes from the internal FIFO to 'buffer'
 int
-RingBuffer::Get (void *buffer, int toCopy, unsigned short volume, CallID call_id)
+RingBuffer::Get (void *buffer, int toCopy, unsigned short volume, std::string call_id)
 {
 
     if (getNbReadPointer() == 0)
@@ -364,7 +364,7 @@ RingBuffer::Get (void *buffer, int toCopy, unsigned short volume, CallID call_id
 
 // Used to discard some bytes.
 int
-RingBuffer::Discard (int toDiscard, CallID call_id)
+RingBuffer::Discard (int toDiscard, std::string call_id)
 {
 
     int len = getLen (call_id);

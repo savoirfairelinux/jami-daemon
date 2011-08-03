@@ -41,11 +41,11 @@
 #include "call.h"
 #include "ringbuffer.h"
 
-typedef std::map<CallID, RingBuffer*> RingBufferMap;
+typedef std::map<std::string, RingBuffer*> RingBufferMap;
 
-typedef std::set<CallID> CallIDSet;
+typedef std::set<std::string> CallIDSet;
 
-typedef std::map<CallID, CallIDSet*> CallIDMap;
+typedef std::map<std::string, CallIDSet*> CallIDMap;
 
 class MainBuffer
 {
@@ -66,80 +66,80 @@ class MainBuffer
          * Bind together two audio streams so taht a client will be able
          * to put and get data specifying its callid only.
          */
-        void bindCallID (CallID call_id1, CallID call_id2 = default_id);
+        void bindCallID (std::string call_id1, std::string call_id2 = default_id);
 
         /**
          * Add a new call_id to unidirectional outgoing stream
          * \param call_id New call id to be added for this stream
          * \param process_id Process that require this stream
          */
-        void bindHalfDuplexOut (CallID process_id, CallID call_id = default_id);
+        void bindHalfDuplexOut (std::string process_id, std::string call_id = default_id);
 
         /**
          * Unbind two calls
          */
-        void unBindCallID (CallID call_id1, CallID call_id2 = default_id);
+        void unBindCallID (std::string call_id1, std::string call_id2 = default_id);
 
         /**
          * Unbind a unidirectional stream
          */
-        void unBindHalfDuplexOut (CallID process_id, CallID call_id = default_id);
+        void unBindHalfDuplexOut (std::string process_id, std::string call_id = default_id);
 
-        void unBindAll (CallID call_id);
+        void unBindAll (std::string call_id);
 
-        void unBindAllHalfDuplexOut (CallID process_id);
+        void unBindAllHalfDuplexOut (std::string process_id);
 
-        int putData (void *buffer, int toCopy, unsigned short volume = 100, CallID call_id = default_id);
+        int putData (void *buffer, int toCopy, unsigned short volume = 100, std::string call_id = default_id);
 
-        int getData (void *buffer, int toCopy, unsigned short volume = 100, CallID call_id = default_id);
+        int getData (void *buffer, int toCopy, unsigned short volume = 100, std::string call_id = default_id);
 
-        int availForPut (CallID call_id = default_id);
+        int availForPut (std::string call_id = default_id);
 
-        int availForGet (CallID call_id = default_id);
+        int availForGet (std::string call_id = default_id);
 
-        int discard (int toDiscard, CallID call_id = default_id);
+        int discard (int toDiscard, std::string call_id = default_id);
 
-        void flush (CallID call_id = default_id);
+        void flush (std::string call_id = default_id);
 
         void flushAllBuffers();
 
         void flushDefault();
 
-        void syncBuffers (CallID call_id);
+        void syncBuffers (std::string call_id);
 
         void stateInfo();
 
     private:
 
-        CallIDSet* getCallIDSet (CallID call_id);
+        CallIDSet* getCallIDSet (std::string call_id);
 
-        bool createCallIDSet (CallID set_id);
+        bool createCallIDSet (std::string set_id);
 
-        bool removeCallIDSet (CallID set_id);
+        bool removeCallIDSet (std::string set_id);
 
         /**
          * Add a new call id to this set
          */
-        void addCallIDtoSet (CallID set_id, CallID call_id);
+        void addCallIDtoSet (std::string set_id, std::string call_id);
 
-        void removeCallIDfromSet (CallID set_id, CallID call_id);
+        void removeCallIDfromSet (std::string set_id, std::string call_id);
 
         /**
          * Create a new ringbuffer with default readpointer
          */
-        RingBuffer* createRingBuffer (CallID call_id);
+        RingBuffer* createRingBuffer (std::string call_id);
 
-        bool removeRingBuffer (CallID call_id);
+        bool removeRingBuffer (std::string call_id);
 
-        RingBuffer* getRingBuffer (CallID call_id);
+        RingBuffer* getRingBuffer (std::string call_id);
 
-        int getDataByID (void *buffer, int toCopy, unsigned short volume, CallID call_id, CallID reader_id);
+        int getDataByID (void *buffer, int toCopy, unsigned short volume, std::string call_id, std::string reader_id);
 
-        int availForGetByID (CallID call_id, CallID reader_id);
+        int availForGetByID (std::string call_id, std::string reader_id);
 
-        int discardByID (int toDiscard, CallID call_id, CallID reader_id);
+        int discardByID (int toDiscard, std::string call_id, std::string reader_id);
 
-        void flushByID (CallID call_id, CallID reader_id);
+        void flushByID (std::string call_id, std::string reader_id);
 
         RingBufferMap _ringBufferMap;
 

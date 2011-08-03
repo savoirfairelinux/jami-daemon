@@ -140,49 +140,49 @@ class SIPVoIPLink : public VoIPLink
          * @param toUrl  The Sip address of the recipient of the call
          * @return Call* The current call
          */
-        virtual Call* newOutgoingCall (const CallID& id, const std::string& toUrl) throw (VoipLinkException);
+        virtual Call* newOutgoingCall (const std::string& id, const std::string& toUrl) throw (VoipLinkException);
 
         /**
          * Answer the call
          * @param id The call identifier
          * @return True on success
          */
-        virtual bool answer (const CallID& id) throw (VoipLinkException);
+        virtual bool answer (const std::string& id) throw (VoipLinkException);
 
         /**
          * Hang up the call
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool hangup (const CallID& id) throw (VoipLinkException);
+        virtual bool hangup (const std::string& id) throw (VoipLinkException);
 
         /**
          * Hang up the call
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool peerHungup (const CallID& id) throw (VoipLinkException);
+        virtual bool peerHungup (const std::string& id) throw (VoipLinkException);
 
         /**
          * Cancel the call
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool cancel (const CallID& id) throw (VoipLinkException);
+        virtual bool cancel (const std::string& id) throw (VoipLinkException);
 
         /**
          * Put the call on hold
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool onhold (const CallID& id) throw (VoipLinkException);
+        virtual bool onhold (const std::string& id) throw (VoipLinkException);
 
         /**
          * Put the call off hold
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool offhold (const CallID& id) throw (VoipLinkException);
+        virtual bool offhold (const std::string& id) throw (VoipLinkException);
 
         /**
          * Transfer the call
@@ -190,7 +190,7 @@ class SIPVoIPLink : public VoIPLink
          * @param to The recipient of the transfer
          * @return bool True on success
          */
-        virtual bool transfer (const CallID& id, const std::string& to) throw (VoipLinkException);
+        virtual bool transfer (const std::string& id, const std::string& to) throw (VoipLinkException);
 
         /**
          * Attended transfer
@@ -198,7 +198,7 @@ class SIPVoIPLink : public VoIPLink
          * @param The target call id
          * @return True on success
          */
-        virtual bool attendedTransfer(const CallID&, const CallID&);
+        virtual bool attendedTransfer(const std::string&, const std::string&);
 
         /**
          * Handle the incoming refer msg, not finished yet
@@ -210,12 +210,12 @@ class SIPVoIPLink : public VoIPLink
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool refuse (const CallID& id);
+        virtual bool refuse (const std::string& id);
 
         /**
          * Terminate only one call
          */
-        virtual void terminateCall (const CallID& id);
+        virtual void terminateCall (const std::string& id);
 
         /**
          * Send DTMF refering to account configuration
@@ -223,7 +223,7 @@ class SIPVoIPLink : public VoIPLink
          * @param code  The char code
          * @return bool True on success
          */
-        virtual bool carryingDTMFdigits (const CallID& id, char code);
+        virtual bool carryingDTMFdigits (const std::string& id, char code);
 
         /**
          * Send Dtmf using SIP INFO message
@@ -255,7 +255,7 @@ class SIPVoIPLink : public VoIPLink
          * @param The call id
          * @param The target sip uri
          */
-        bool SIPNewIpToIpCall (const CallID& id, const std::string& to);
+        bool SIPNewIpToIpCall (const std::string& id, const std::string& to);
 
         /**
          * Tell the user that the call was answered
@@ -298,13 +298,13 @@ class SIPVoIPLink : public VoIPLink
          * @param id  The call identifier
          * @return SIPCall*	  A pointer on SIPCall object
          */
-        SIPCall* getSIPCall (const CallID& id);
+        SIPCall* getSIPCall (const std::string& id);
 
         /**
          * Return the codec protocol used for this call
          * @param id The call identifier
          */
-        std::string getCurrentCodecName(const CallID& id);
+        std::string getCurrentCodecName(const std::string& id);
 
         /**
          * Retrive useragent name from account

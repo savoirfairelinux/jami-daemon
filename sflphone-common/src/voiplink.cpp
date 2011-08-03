@@ -55,7 +55,7 @@ bool VoIPLink::addCall (Call* call)
     return false;
 }
 
-bool VoIPLink::removeCall (const CallID& id)
+bool VoIPLink::removeCall (const std::string& id)
 {
     ost::MutexLock m (_callMapMutex);
 
@@ -71,7 +71,7 @@ bool VoIPLink::removeCall (const CallID& id)
     return false;
 }
 
-Call* VoIPLink::getCall (const CallID& id)
+Call* VoIPLink::getCall (const std::string& id)
 {
     ost::MutexLock m (_callMapMutex);
     CallMap::iterator iter = _callMap.find (id);

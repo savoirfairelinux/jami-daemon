@@ -225,7 +225,7 @@ class AudioRtpRecordHandler
 
     private:
 
-        CallID& _id;
+        std::string& _id;
 
  	EchoSuppress echoCanceller;
 

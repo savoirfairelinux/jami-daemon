@@ -32,7 +32,7 @@
 #include "manager.h"
 #include "audio/mainbuffer.h"
 
-Call::Call (const CallID& id, Call::CallType type)
+Call::Call (const std::string& id, Call::CallType type)
     : _callMutex()
     , _localIPAddress ("")
     , _localAudioPort (0)
@@ -170,7 +170,7 @@ Call::setRecording()
         _debug ("Call: Call not recording yet, set ringbuffers");
 
         MainBuffer *mbuffer = Manager::instance().getMainBuffer();
-        CallID process_id = Recordable::recorder.getRecorderID();
+        std::string process_id = Recordable::recorder.getRecorderID();
 
         mbuffer->bindHalfDuplexOut (process_id, _id);
         mbuffer->bindHalfDuplexOut (process_id);
@@ -183,7 +183,7 @@ Call::setRecording()
         _debug ("Call: Stop recording");
 
         MainBuffer *mbuffer = Manager::instance().getMainBuffer();
-        CallID process_id = Recordable::recorder.getRecorderID();
+        std::string process_id = Recordable::recorder.getRecorderID();
 
         mbuffer->unBindHalfDuplexOut (process_id, _id);
         mbuffer->unBindHalfDuplexOut (process_id);

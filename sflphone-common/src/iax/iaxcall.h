@@ -50,7 +50,7 @@ class IAXCall : public Call
          * @param id  The unique ID of the call
          * @param type  The type of the call
          */
-        IAXCall (const CallID& id, Call::CallType type);
+        IAXCall (const std::string& id, Call::CallType type);
 
         /**
          * Destructor

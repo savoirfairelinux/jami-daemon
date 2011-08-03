@@ -86,7 +86,7 @@ class Recordable
 	 * Virtual method to be implemented in order to the main
 	 * buffer to retreive the recorded id.
 	 */
-        virtual std::string getRecFileId() = 0;
+        virtual std::string getRecFileId() const = 0;
 
         /**
          * An instance of audio recorder

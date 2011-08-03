@@ -33,7 +33,7 @@
 #include "manager.h"
 #include "global.h" // for _debug
 
-IAXCall::IAXCall (const CallID& id, Call::CallType type) : Call (id, type), _session (NULL)
+IAXCall::IAXCall (const std::string& id, Call::CallType type) : Call (id, type), _session (NULL)
 {
 }
 

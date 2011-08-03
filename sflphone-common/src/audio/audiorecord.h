@@ -36,8 +36,6 @@
 
 #include "global.h"
 
-typedef std::string CallID;
-
 class AudioRecord
 {
 
