@@ -234,7 +234,7 @@ IAXVoIPLink::terminateIAXCall()
     _callMap.clear();
 }
 
-void IAXVoIPLink::terminateCall (const CallID& id)
+void IAXVoIPLink::terminateCall (const std::string& id)
 {
     IAXCall* call = getIAXCall (id);
 
@@ -410,7 +410,7 @@ IAXVoIPLink::sendAudioFromMic (void)
 
 
 IAXCall*
-IAXVoIPLink::getIAXCall (const CallID& id)
+IAXVoIPLink::getIAXCall (const std::string& id)
 {
     Call* call = getCall (id);
 
@@ -496,7 +496,7 @@ IAXVoIPLink::sendUnregister (std::string id UNUSED) throw(VoipLinkException)
 }
 
 Call*
-IAXVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) throw(VoipLinkException)
+IAXVoIPLink::newOutgoingCall (const std::string& id, const std::string& toUrl) throw(VoipLinkException)
 {
     IAXCall* call = new IAXCall (id, Call::Outgoing);
     call->setCodecMap (Manager::instance().getAudioCodecFactory());
@@ -520,7 +520,7 @@ IAXVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) throw(
 
 
 bool
-IAXVoIPLink::answer (const CallID& id) throw (VoipLinkException)
+IAXVoIPLink::answer (const std::string& id) throw (VoipLinkException)
 {
     IAXCall* call = getIAXCall (id);
     call->setCodecMap (Manager::instance().getAudioCodecFactory());
@@ -543,7 +543,7 @@ IAXVoIPLink::answer (const CallID& id) throw (VoipLinkException)
 }
 
 bool
-IAXVoIPLink::hangup (const CallID& id) throw (VoipLinkException)
+IAXVoIPLink::hangup (const std::string& id) throw (VoipLinkException)
 {
     _debug ("IAXVoIPLink: Hangup");
 
@@ -569,7 +569,7 @@ IAXVoIPLink::hangup (const CallID& id) throw (VoipLinkException)
 
 
 bool
-IAXVoIPLink::peerHungup (const CallID& id) throw (VoipLinkException)
+IAXVoIPLink::peerHungup (const std::string& id) throw (VoipLinkException)
 {
     _debug ("IAXVoIPLink: Peer hung up");
 
@@ -592,7 +592,7 @@ IAXVoIPLink::peerHungup (const CallID& id) throw (VoipLinkException)
 
 
 bool
-IAXVoIPLink::onhold (const CallID& id) throw (VoipLinkException)
+IAXVoIPLink::onhold (const std::string& id) throw (VoipLinkException)
 {
     IAXCall* call = getIAXCall (id);
     if(call == NULL) {
@@ -614,7 +614,7 @@ IAXVoIPLink::onhold (const CallID& id) throw (VoipLinkException)
 }
 
 bool
-IAXVoIPLink::offhold (const CallID& id) throw (VoipLinkException)
+IAXVoIPLink::offhold (const std::string& id) throw (VoipLinkException)
 {
     IAXCall* call = getIAXCall (id);
 
@@ -632,7 +632,7 @@ IAXVoIPLink::offhold (const CallID& id) throw (VoipLinkException)
 }
 
 bool
-IAXVoIPLink::transfer (const CallID& id, const std::string& to) throw (VoipLinkException)
+IAXVoIPLink::transfer (const std::string& id, const std::string& to) throw (VoipLinkException)
 {
     IAXCall* call = getIAXCall (id);
 
@@ -652,14 +652,14 @@ IAXVoIPLink::transfer (const CallID& id, const std::string& to) throw (VoipLinkE
 }
 
 bool
-IAXVoIPLink::attendedTransfer(const CallID& /*transferID*/, const CallID& /*targetID*/)
+IAXVoIPLink::attendedTransfer(const std::string& /*transferID*/, const std::string& /*targetID*/)
 {
 	// TODO implement attended transfer for IAX
 	return false;
 }
 
 bool
-IAXVoIPLink::refuse (const CallID& id)
+IAXVoIPLink::refuse (const std::string& id)
 {
     IAXCall* call = getIAXCall (id);
     std::string reason = "Call rejected manually.";
@@ -677,7 +677,7 @@ IAXVoIPLink::refuse (const CallID& id)
 
 
 bool
-IAXVoIPLink::carryingDTMFdigits (const CallID& id, char code)
+IAXVoIPLink::carryingDTMFdigits (const std::string& id, char code)
 {
     IAXCall* call = getIAXCall (id);
 
@@ -712,7 +712,7 @@ IAXVoIPLink::sendTextMessage (sfl::InstantMessaging *module,
 
 
 std::string
-IAXVoIPLink::getCurrentCodecName(const CallID& /*id*/)
+IAXVoIPLink::getCurrentCodecName(const std::string& /*id*/)
 {
     IAXCall *call = NULL;
     sfl::AudioCodec *audioCodec = NULL;
@@ -803,7 +803,7 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
     // call should not be 0
     // note activity?
     //
-    CallID id = call->getCallId();
+    std::string id = call->getCallId();
 
     switch (event->etype) {
 
@@ -1135,7 +1135,7 @@ void
 IAXVoIPLink::iaxHandlePrecallEvent (iax_event* event)
 {
     IAXCall* call = NULL;
-    CallID   id;
+    std::string   id;
     std::string reason = "Error ringing user.";
 
     switch (event->etype) {

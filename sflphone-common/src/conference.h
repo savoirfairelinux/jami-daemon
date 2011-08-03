@@ -39,9 +39,7 @@
 // class ManagerImpl;
 // class Call;
 
-typedef std::string ConfID;
-
-typedef std::set<CallID> ParticipantSet;
+typedef std::set<std::string> ParticipantSet;
 
 class Conference: public Recordable
 {
@@ -65,7 +63,7 @@ class Conference: public Recordable
         /**
          * Return the conference id
          */
-        std::string getConfID() {
+        std::string getConfID() const {
             return _id;
         }
 
@@ -94,17 +92,17 @@ class Conference: public Recordable
         /**
          * Add a new participant to the conference
          */
-        void add (CallID participant_id);
+        void add (std::string participant_id);
 
         /**
          * Remove a participant from the conference
          */
-        void remove (CallID participant_id);
+        void remove (std::string participant_id);
 
         /**
          * Bind a participant to the conference
          */
-        void bindParticipant (CallID participant_id);
+        void bindParticipant (std::string participant_id);
 
         /**
          * Get the participant list for this conference
@@ -114,7 +112,7 @@ class Conference: public Recordable
         /**
          * Get recording file ID
          */
-        std::string getRecFileId() {
+        std::string getRecFileId() const {
             return getConfID();
         }
 
@@ -128,7 +126,7 @@ class Conference: public Recordable
         /**
          * Unique ID of the conference
          */
-        CallID _id;
+        std::string _id;
 
         /**
          * Conference state
