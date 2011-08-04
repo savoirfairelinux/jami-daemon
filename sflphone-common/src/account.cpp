@@ -41,6 +41,7 @@ Account::Account (const std::string& accountID, const std::string &type) :
     , _type (type)
     , _registrationState (Unregistered)
     , _codecOrder ()
+	, _videoCodecOrder ()
     , _codecStr ("")
     , _ringtonePath ("/usr/share/sflphone/ringtones/konga.ul")
     , _ringtoneEnabled (true)
