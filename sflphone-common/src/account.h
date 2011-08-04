@@ -141,6 +141,7 @@ const std::string accountEnableKey ("enable");
 const std::string mailboxKey ("mailbox");
 
 const std::string codecsKey ("codecs");  // 0/9/110/111/112/
+const std::string videocodecsKey ("videocodecs");
 const std::string ringtonePathKey ("ringtonePath");
 const std::string ringtoneEnabledKey ("ringtoneEnabled");
 const std::string displayNameKey ("displayName");
@@ -289,6 +290,14 @@ class Account : public Serializable
 
         /**
          * Accessor to data structures
+         * @return std::vector<std::string>& The list that reflects the user's choice
+         */
+        const std::vector<std::string>& getActiveVideoCodecs (void) const {
+            return _videoCodecOrder;
+        }
+
+        /**
+         * Accessor to data structures
          * @return CodecOrder& The list that reflects the user's choice
          */
         const CodecOrder& getActiveCodecs (void) const {
@@ -300,6 +309,7 @@ class Account : public Serializable
          * SDP offer and configuration respectively
          */
         void setActiveCodecs (const std::vector <std::string>& list);
+        void setActiveVideoCodecs (const std::vector <std::string>& list);
 
         std::string getRingtonePath (void) const {
             return _ringtonePath;
@@ -402,6 +412,11 @@ class Account : public Serializable
          * This is a protocol Code:Description pair.
          */
         std::pair<int, std::string> _registrationStateDetailed;
+
+        /**
+         * Vector containing the order of the video codecs
+         */
+        std::vector<std::string> _videoCodecOrder;
 
         /**
          * Vector containing the order of the codecs

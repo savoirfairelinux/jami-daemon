@@ -367,7 +367,7 @@ row_single_click (GtkTreeView *tree_view UNUSED, void * data UNUSED)
                 DEBUG ("Display SAS once %s", displaySasOnce);
             } else {
                 GHashTable * properties = NULL;
-                sflphone_get_ip2ip_properties (&properties);
+                properties = sflphone_get_ip2ip_properties ();
 
                 if (properties != NULL) {
                     displaySasOnce = g_hash_table_lookup (properties, ACCOUNT_DISPLAY_SAS_ONCE);
@@ -802,7 +802,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
             }
         } else {
             GHashTable * properties = NULL;
-            sflphone_get_ip2ip_properties (&properties);
+            properties = sflphone_get_ip2ip_properties ();
 
             if (properties != NULL) {
                 srtp_enabled = g_hash_table_lookup (properties, ACCOUNT_SRTP_ENABLED);
@@ -851,6 +851,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
                     calltree_display_call_info (c, DISPLAY_TYPE_STATE_CODE, audio_codec, &description);
                 }
             }
+            g_free(audio_codec);
 
             /* Update icons */
             if (tab == current_calls) {

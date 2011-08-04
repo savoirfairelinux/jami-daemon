@@ -1461,6 +1461,40 @@ dbus_video_codec_list()
 }
 
 gchar**
+dbus_get_active_video_codec_list (gchar *accountID)
+{
+
+    gchar ** array = NULL;
+    GError *error = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_get_active_video_codec_list (
+        configurationManagerProxy, accountID, &array, &error);
+
+    if (error) {
+        ERROR ("Failed to call get_active_audio_codec_list() on ConfigurationManager: %s",
+               error->message);
+        g_error_free (error);
+    }
+
+    return array;
+}
+
+void
+dbus_set_active_video_codec_list (const gchar** list, const gchar *accountID)
+{
+
+    GError *error = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_set_active_video_codec_list (
+        configurationManagerProxy, list, accountID, &error);
+
+    if (error) {
+        ERROR ("Failed to call set_active_audio_codec_list() on ConfigurationManager: %s",
+               error->message);
+        g_error_free (error);
+    }
+}
+
+
+gchar**
 dbus_audio_codec_details (int payload)
 {
 
@@ -1479,13 +1513,13 @@ dbus_audio_codec_details (int payload)
 }
 
 gchar**
-dbus_video_codec_details (int payload)
+dbus_video_codec_details (gchar *codec)
 {
 
     GError *error = NULL;
     gchar ** array = NULL;
     org_sflphone_SFLphone_ConfigurationManager_get_video_codec_details (
-        configurationManagerProxy, payload, &array, &error);
+        configurationManagerProxy, codec, &array, &error);
 
     if (error) {
         ERROR ("Failed to call get_video_codec_details() on ConfigurationManager: %s",

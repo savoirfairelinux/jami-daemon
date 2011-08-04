@@ -32,6 +32,7 @@
 
 #include "account.h"
 #include "manager.h"
+#include "video/video_endpoint.h"
 
 Account::Account (const std::string& accountID, const std::string &type) :
     _accountID (accountID)
@@ -80,9 +81,14 @@ void Account::loadDefaultCodecs()
     codecList.push_back ("112");
 
     setActiveCodecs (codecList);
+
+    setActiveVideoCodecs(sfl_video::getVideoCodecList());
 }
 
-
+void Account::setActiveVideoCodecs (const std::vector <std::string> &list)
+{
+	_videoCodecOrder = list;
+}
 
 void Account::setActiveCodecs (const std::vector <std::string> &list)
 {

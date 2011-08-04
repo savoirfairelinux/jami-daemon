@@ -31,21 +31,14 @@
 #ifndef __LIBAV_UTILS_H__
 #define __LIBAV_UTILS_H__
 
-#include <list>
+#include <vector>
+#include <map>
 #include <string>
 
 namespace libav_utils {
-    /**
-     * Returns the list of codecs installed at runtime and that we support
-     */
-    std::list<std::string> installedCodecs();
-    /**
-     * Returns true if a given codec is supported, that is to say it's use
-     * has been anticipated and it has been tested.
-     */
-    bool isSupportedCodec(const char *codec);
-
     void sfl_avcodec_init();
+    std::map<std::string, std::string> encodersMap();
+    std::vector<std::string> getVideoCodecList();
 }
 
 #endif // __LIBAV_UTILS_H__

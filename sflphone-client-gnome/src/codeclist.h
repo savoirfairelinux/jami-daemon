@@ -39,17 +39,15 @@
 
 typedef struct {
     /** Payload of the codec */
-    gint _payload;
+    gint payload;
     /** Tells if the codec has been activated */
     gboolean is_active;
     /** String description */
     gchar * name;
     /** Sample rate */
-    int sample_rate;
+    gchar * sample_rate;
     /** Bitrate */
-    gdouble _bitrate;
-    /** Bandwidth */
-    gdouble _bandwidth;
+    gchar * bitrate;
 } codec_t;
 
 /** @struct codec_t
@@ -59,48 +57,15 @@ typedef struct {
   */
 
 /**
- * This function initialize a specific codec list.
- */
-void codec_list_init (GQueue **q);
-
-/**
  * This function initialize the system wide codec list.
+ * @return FALSE if initialization failed
  */
-void codec_capabilities_load (void);
-
-/**
- * This function empty and free a specific codec list.
- */
-void codec_list_clear (GQueue **q);
+gboolean codecs_load (void);
 
 /**
  * This function empty and free the system wide codec list.
  */
-void system_codec_list_clear (void);
-
-/**
- * This function append an codec to list.
- * @param c The codec you want to add
- */
-void codec_list_add (codec_t * c, GQueue **q);
-
-/**
- * Set a codec active. An active codec will be used for codec negociation
- * @param name The string description of the codec
- */
-void codec_set_active (codec_t **c);
-
-/**
- * Set a codec inactive. An active codec won't be used for codec negociation
- * @param name The string description of the codec
- */
-void codec_set_inactive (codec_t **c);
-
-/**
- * Return the number of codecs in the list
- * @return guint The number of codecs in the list
- */
-guint codec_list_get_size();
+void codecs_unload (void);
 
 /**
  * Return the codec structure that corresponds to the string description
@@ -108,14 +73,6 @@ guint codec_list_get_size();
  * @return codec_t* A codec or NULL
  */
 codec_t * codec_list_get_by_name (gconstpointer name, GQueue *q);
-
-/**
- * Return the codec at the nth position in the list
- * @param index The position of the codec you want
- * @return codec_t* A codec or NULL
- */
-codec_t* codec_list_get_nth (guint index, GQueue *q);
-codec_t* capabilities_get_nth (guint index);
 
 /**
  * Set the prefered codec first in the codec list
@@ -126,54 +83,22 @@ void codec_set_prefered_order (guint index, GQueue *q);
 /**
  * Move the codec from an unit up in the codec_list
  * @param index The current index in the list
+ * @param q
+ * @param up true if moving upwards
  */
-void codec_list_move_codec_up (guint index, GQueue **q);
-
-/**
- * Move the codec from an unit down in the codec_list
- * @param index The current index in the list
- */
-void codec_list_move_codec_down (guint index, GQueue **q);
+void codec_list_move (guint index, GQueue *q, gboolean up);
 
 /**
  * Notify modifications on codecs to the server
  */
 void codec_list_update_to_daemon (account_t *acc);
 
-codec_t* codec_list_get_by_payload (gconstpointer payload, GQueue *q);
+codec_t* codec_list_get_by_payload (int payload, GQueue *q);
 
-GQueue* get_system_codec_list (void);
+GQueue* get_video_codecs_list (void);
 
-/**
- * Instanciate a new codecs with the given payload.
- * Fetches codec specification through D-Bus
- *
- * @param payload		The unique RTP payload
- * @param active		Whether or not this codec should active (checked)
- * @param c			A pointer to receive the new codec instance
- */
-void codec_create_new (gint payload, gboolean active, codec_t **c);
+GQueue* get_audio_codecs_list (void);
 
-/*
- * Instanciate a new codec with the given specification
- *
- * @param payload	The unique RTP payload
- * @param specs		A list of codec specifications. Ordered: name, sample rate, bit rate, bandwith
- * @param active	Whether or not this codec should active (checked)
- * @param c			A pointer to receive the new codec instance
- */
-void codec_create_new_with_specs (gint payload, gchar **specs, gboolean active, codec_t **c);
-
-
-void codec_create_new_from_caps (codec_t *original, codec_t **copy);
-/*
- * Attach a codec list to a specific account
- *
- * @param acc		A pointer on the account to modify
- */
-void account_create_codec_list (account_t **acc);
-
+codec_t *codec_create_new_from_caps (codec_t *original);
 
 #endif
-
-

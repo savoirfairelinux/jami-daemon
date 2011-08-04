@@ -52,6 +52,8 @@
 
 #include "conference.h"
 
+#include "video/libav_utils.h"
+
 #include <cerrno>
 #include <ctime>
 #include <cstdlib>
@@ -87,6 +89,9 @@ ManagerImpl::ManagerImpl (void) :
 
     // initialize random generator for call id
     srand (time (NULL));
+
+    // initialize libav libraries
+    libav_utils::sfl_avcodec_init();
 
     _cleaner = new NumberCleaner();
     _history = new HistoryManager();

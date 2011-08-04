@@ -30,7 +30,6 @@
  */
 
 #include "video_receive_thread.h"
-#include "libav_utils.h"
 
 // libav includes
 extern "C" {
@@ -222,8 +221,6 @@ void VideoReceiveThread::loadSDP()
 
 void VideoReceiveThread::setup()
 {
-    libav_utils::sfl_avcodec_init();
-
     dstWidth_ = atoi(args_["width"].c_str());
     dstHeight_ = atoi(args_["height"].c_str());
     format_ = av_get_pix_fmt(args_["format"].c_str());

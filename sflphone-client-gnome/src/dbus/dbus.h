@@ -215,10 +215,10 @@ gchar** dbus_audio_codec_details (int payload);
 
 /**
  * ConfigurationManager - Get the video codec details
- * @param payload The payload of the video codec
+ * @param codec The name of the video codec
  * @return gchar** The video codec details
  */
-gchar** dbus_video_codec_details (int payload);
+gchar** dbus_video_codec_details (gchar *codec);
 
 /**
  * ConfigurationManager - Get the default audio codec list
@@ -238,6 +238,18 @@ gchar** dbus_get_active_audio_codec_list (gchar *accountID);
  * @param list The list of audio codecs
  */
 void dbus_set_active_audio_codec_list (const gchar** list, const gchar*);
+
+/**
+ * ConfigurationManager - Get the list of the audio codecs used for media negotiation
+ * @return gchar** The list of audio codecs
+ */
+gchar** dbus_get_active_video_codec_list (gchar *accountID);
+
+/**
+ * ConfigurationManager - Set the list of audio codecs used for media negociation
+ * @param list The list of audio codecs
+ */
+void dbus_set_active_video_codec_list (const gchar** list, const gchar*);
 
 /**
  * CallManager - return the audio codec name

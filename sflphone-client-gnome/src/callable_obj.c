@@ -96,19 +96,13 @@ gchar* call_get_peer_number (const gchar *format)
 
 gchar* call_get_audio_codec (callable_obj_t *obj)
 {
-    gchar *audio_codec = "";
-    codec_t *codec;
-    gchar *format ="";
-    int samplerate;
-
+    gchar *format = NULL;
     if (obj) {
-        audio_codec = dbus_get_current_audio_codec_name (obj);
-        codec = codec_list_get_by_name (audio_codec, NULL);
-
-        if (codec) {
-            samplerate = codec->sample_rate;
-            format = g_markup_printf_escaped ("%s/%i", audio_codec, samplerate);
-        }
+        gchar *audio_codec = dbus_get_current_audio_codec_name (obj);
+        codec_t *codec = codec_list_get_by_name (audio_codec, get_audio_codecs_list());
+        if (codec)
+            format = g_markup_printf_escaped ("%s/%s", audio_codec, codec->sample_rate);
+        g_free(audio_codec);
     }
 
     return format;

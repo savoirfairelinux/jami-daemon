@@ -596,7 +596,7 @@ void Sdp::addVideoMediaDescription()
     rtpmap.enc_name = pj_str((char*) "H264");
     rtpmap.clock_rate = 90000;
     rtpmap.param.slen = 0;
-    rtpmap.param.ptr = "";
+    rtpmap.param.ptr = (char* const)"";
     pjmedia_sdp_attr *attr;
     pjmedia_sdp_rtpmap_to_attr (memPool_, &rtpmap, &attr);
     med->attr[med->attr_count++] = attr;

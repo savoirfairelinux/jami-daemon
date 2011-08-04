@@ -397,23 +397,7 @@ std::vector<std::string> ConfigurationManager::getAudioCodecList (void)
  */
 std::vector<std::string> ConfigurationManager::getVideoCodecList (void)
 {
-    std::vector<std::string> list;
-    typedef std::map<int, std::string> VideoCodecsMap;
-    VideoCodecsMap codecs = sfl_video::getCodecsMap();
-    VideoCodecsMap::iterator iter = codecs.begin();
-
-    while (iter != codecs.end()) {
-        std::stringstream ss;
-
-        if (not iter->second.empty()) {
-            ss << iter->first;
-            list.push_back(ss.str());
-        }
-
-        iter++;
-    }
-
-    return list;
+    return sfl_video::getVideoCodecList();
 }
 
 std::vector<std::string> ConfigurationManager::getSupportedTlsMethod (void)
@@ -435,9 +419,9 @@ std::vector<std::string> ConfigurationManager::getAudioCodecDetails (
 }
 
 std::vector<std::string> ConfigurationManager::getVideoCodecDetails (
-        const int32_t& payload)
+        const std::string& codec)
 {
-    return sfl_video::getCodecSpecifications(payload);
+    return sfl_video::getCodecSpecifications(codec);
 }
 
 std::vector<std::string> ConfigurationManager::getActiveAudioCodecList (
@@ -480,6 +464,32 @@ void ConfigurationManager::setActiveAudioCodecList (
 
     if (acc != NULL) {
         acc->setActiveCodecs (list);
+    }
+
+    Manager::instance().saveConfig();
+}
+
+std::vector<std::string> ConfigurationManager::getActiveVideoCodecList (
+        const std::string& accountID)
+{
+    std::vector<std::string> v;
+    Account *acc = Manager::instance().getAccount (accountID);
+
+    if (acc != NULL) {
+        v = acc->getActiveVideoCodecs();
+    }
+
+    return v;
+
+}
+
+void ConfigurationManager::setActiveVideoCodecList (
+        const std::vector<std::string>& list, const std::string& accountID)
+{
+    Account *acc = Manager::instance().getAccount (accountID);
+
+    if (acc != NULL) {
+        acc->setActiveVideoCodecs (list);
     }
 
     Manager::instance().saveConfig();

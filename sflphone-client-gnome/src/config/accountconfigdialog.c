@@ -1254,7 +1254,7 @@ static GtkWidget* create_audiocodecs_configuration (account_t *currentAccount)
     return ret;
 }
 
-GtkWidget* create_videocodecs_configuration (account_t **a)
+GtkWidget* create_videocodecs_configuration (account_t *a)
 {
 
     // Main widget
@@ -1329,7 +1329,7 @@ void show_account_window (account_t * currentAccount)
         currentAccount = g_new0 (account_t, 1);
         currentAccount->properties = dbus_get_account_details (NULL);
         currentAccount->accountID = "new";
-        sflphone_fill_codec_list_per_account (&currentAccount);
+        sflphone_fill_codec_list_per_account (currentAccount);
     }
 
     dialog = GTK_DIALOG (gtk_dialog_new_with_buttons (_ ("Account settings"),
@@ -1367,7 +1367,7 @@ void show_account_window (account_t * currentAccount)
     gtk_notebook_page_num (GTK_NOTEBOOK (notebook), audiocodecs_tab);
     
     /* Video Codecs */
-    videocodecs_tab = create_videocodecs_configuration (&currentAccount);
+    videocodecs_tab = create_videocodecs_configuration (currentAccount);
     gtk_notebook_append_page (GTK_NOTEBOOK (notebook), videocodecs_tab, gtk_label_new (_ ("Video")));
     gtk_notebook_page_num (GTK_NOTEBOOK (notebook), videocodecs_tab);
 

@@ -370,7 +370,12 @@ gboolean sflphone_init (GError **error)
     history = calltab_init (TRUE, HISTORY);
 
     account_list_init ();
-    codec_capabilities_load ();
+    if (!codecs_load ()) {
+        ERROR ("No codecs found");
+        dbus_unregister (getpid());
+        exit (1);
+    }
+
     conferencelist_init (current_calls);
     conferencelist_init (history);
 
@@ -391,9 +396,9 @@ void sflphone_fill_ip2ip_profile (void)
     ip2ip_profile = (GHashTable *) dbus_get_ip2_ip_details();
 }
 
-void sflphone_get_ip2ip_properties (GHashTable **properties)
+GHashTable *sflphone_get_ip2ip_properties (void)
 {
-    *properties	= ip2ip_profile;
+    return ip2ip_profile;
 }
 
 void
@@ -1186,83 +1191,86 @@ sflphone_rec_call()
 
 void sflphone_fill_codec_list ()
 {
-
-    guint account_list_size;
-    guint i;
-    account_t *current = NULL;
-
-    DEBUG ("SFLphone: Fill codec list");
-
-    account_list_size = account_list_get_size ();
+    guint i, account_list_size = account_list_get_size ();
 
     for (i=0; i<account_list_size; i++) {
-        current = account_list_get_nth (i);
-
-        if (current) {
-            sflphone_fill_codec_list_per_account (&current);
-        }
+        account_t *current =  account_list_get_nth (i);
+        if (current)
+            sflphone_fill_codec_list_per_account (current);
     }
-
 }
 
-void sflphone_fill_codec_list_per_account (account_t **account)
+static void sflphone_fill_codec_list_per_account_cat (account_t *account, gboolean is_audio)
 {
-
     gchar **order;
-    gchar** pl;
     GQueue *codeclist;
-    gboolean active = FALSE;
+    order = is_audio
+          ? dbus_get_active_audio_codec_list (account->accountID)
+          : dbus_get_active_video_codec_list (account->accountID);
 
-    order = (gchar**) dbus_get_active_audio_codec_list ( (*account)->accountID);
+    if (is_audio) {
+        if (!account->codecs)
+            account->codecs = g_queue_new();
+        codeclist = account->codecs;
+    } else {
+      if (!account->vcodecs)
+          account->vcodecs = g_queue_new();
+          codeclist = account->vcodecs;
+    }
 
-    codeclist = (*account)->codecs;
-
-    // First clean the list
-    codec_list_clear (&codeclist);
+    g_queue_clear (codeclist);
 
     if (! (*order))
         ERROR ("SFLphone: No codec list provided");
 
+    GQueue* codecs = is_audio ? get_audio_codecs_list() : get_video_codecs_list();
+    gchar **pl;
     for (pl=order; *pl; pl++) {
-        codec_t * cpy = NULL;
+        codec_t *orig;
+        if (is_audio)
+            orig = codec_list_get_by_payload (atoi(*pl), codecs);
+        else
+            orig = codec_list_get_by_name(*pl, codecs);
+        codec_t *c = codec_create_new_from_caps (orig);
 
-        // Each account will have a copy of the system-wide capabilities
-        codec_create_new_from_caps (codec_list_get_by_payload ( (gconstpointer) (size_t) atoi (*pl), NULL), &cpy);
-
-        if (cpy) {
-            cpy->is_active = TRUE;
-            codec_list_add (cpy, &codeclist);
-        } else
-            ERROR ("SFLphone: Couldn't find codec");
+        if (c)
+            g_queue_push_tail (codeclist, (gpointer) c);
+        else
+            ERROR ("SFLphone: Couldn't find codec %s %p", *pl, orig);
+        g_free(*pl);
     }
+    g_free(order);
 
-    // Test here if we just added some active codec.
-    active = (codeclist->length == 0) ? TRUE : FALSE;
+    // if no codecs were added, activate them all
+    gboolean active = codeclist->length == 0;
 
-    guint caps_size = codec_list_get_size (), i=0;
-
+    guint i, caps_size = g_queue_get_length(codecs);
     for (i=0; i<caps_size; i++) {
-
-        codec_t * current_cap = capabilities_get_nth (i);
-
+        codec_t * codec = g_queue_peek_nth (codecs, i);
+        gboolean found;
         // Check if this codec has already been enabled for this account
-        if (codec_list_get_by_payload ( (gconstpointer) (size_t) (current_cap->_payload), codeclist) == NULL) {
-            // codec_t *cpy;
-            // codec_create_new_from_caps (current_cap, &cpy);
-            current_cap->is_active = active;
-            codec_list_add (current_cap, &codeclist);
-        } else {
+        if (is_audio)
+            found = codec_list_get_by_payload (codec->payload, codeclist) != NULL;
+        else
+            found = codec_list_get_by_name(codec->name, codeclist) != NULL;
+        if (!found) {
+            codec->is_active = active;
+            g_queue_push_tail (codeclist, (gpointer)codec);
         }
-
     }
-
-    (*account)->codecs = codeclist;
 }
+
+void sflphone_fill_codec_list_per_account (account_t *account)
+{
+    sflphone_fill_codec_list_per_account_cat(account, TRUE);
+    sflphone_fill_codec_list_per_account_cat(account, FALSE);
+}
+
 
 void sflphone_fill_call_list (void)
 {
 
-    gchar** calls = (gchar**) dbus_get_call_list();
+    gchar** calls = dbus_get_call_list();
     GHashTable *call_details;
     callable_obj_t *c;
     gchar *callID;

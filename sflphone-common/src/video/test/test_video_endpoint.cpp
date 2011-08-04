@@ -36,15 +36,6 @@
 #include "video_endpoint.h"
 #include "libav_utils.h"
 
-void VideoEndpointTest::testIsSupportedCodec()
-{
-    /* This would list codecs */
-    assert(libav_utils::isSupportedCodec("mpeg4"));
-    assert(not libav_utils::isSupportedCodec("mp3"));
-    assert(not libav_utils::isSupportedCodec("xan_wc4"));
-    assert(not libav_utils::isSupportedCodec("schroedinger"));
-}
-
 void VideoEndpointTest::testListInstalledCodecs()
 {
     /* This would list codecs */
@@ -73,6 +64,5 @@ int main (int argc, char* argv[])
     VideoEndpointTest test;
     test.testListInstalledCodecs();
     test.testCodecMap();
-    test.testIsSupportedCodec();
     return 0;
 }

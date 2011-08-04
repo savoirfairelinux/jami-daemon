@@ -107,15 +107,6 @@ class AudioCodecFactory
         double getBitRate (AudioCodecType payload);
 
         /**
-         * Get the bandwidth for one call with the specified codec.
-         * The value has been calculated with the further information:
-         * RTp communication, SIP protocol (the value with IAX2 is very close), no RTCP, one simultaneous call, for one channel (the incoming one).
-         * @param payload The payload of the codec
-         * @return double The bandwidth
-         */
-        double getBandwidthPerCall (AudioCodecType payload);
-
-        /**
          * Get the clock rate of the specified codec
          * @param payload The payload of the codec
          * @return int The clock rate of the specified codec

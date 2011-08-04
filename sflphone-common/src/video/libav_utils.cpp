@@ -29,11 +29,11 @@
  */
 
 #include "libav_utils.h"
-#include <list>
+#include <vector>
 #include <algorithm>
 #include <string>
 #include <iostream>
-
+#include <assert.h>
 #include <cc++/thread.h>
 
 extern "C" {
@@ -41,34 +41,36 @@ extern "C" {
 #include <libavformat/avformat.h>
 }
 
-namespace libav_utils {
 
-bool isSupportedCodec(const char *name)
+
+static std::map<std::string, std::string> encoders;
+static std::vector<std::string> video_codecs;
+/* application wide mutex to protect concurrent access to avcodec */
+static ost::Mutex avcodec_lock;
+
+namespace {
+
+std::string friendlyName(const std::string &codec)
 {
-    static std::list<std::string> SUPPORTED_CODECS;
-    if (SUPPORTED_CODECS.empty())
-    {
-        SUPPORTED_CODECS.push_back("mpeg4");
-        SUPPORTED_CODECS.push_back("h263p");
-        SUPPORTED_CODECS.push_back("libx264");
-        SUPPORTED_CODECS.push_back("libtheora");
-        SUPPORTED_CODECS.push_back("libvpx");
-    }
-
-    return std::find(SUPPORTED_CODECS.begin(), SUPPORTED_CODECS.end(), name) !=
-        SUPPORTED_CODECS.end();
+	std::map<std::string, std::string>::const_iterator it;
+	for (it = encoders.begin(); it != encoders.end(); ++it)
+		if (it->second == codec)
+			return it->first;
+	return "";
 }
 
-
-
-std::list<std::string> installedCodecs()
+void findInstalledVideoCodecs()
 {
-    std::list<std::string> codecs;
-    AVCodec *p = NULL, *p2;
+	std::vector<std::string> sfl_codecs;
+	std::map<std::string, std::string>::const_iterator it;
+	for (it = encoders.begin(); it != encoders.end(); ++it)
+		sfl_codecs.push_back(it->second);
+
+
     const char *last_name = "000";
     while (true)
     {
-        p2 = NULL;
+        AVCodec *p = NULL, *p2 = NULL;
         while ((p = av_codec_next(p)))
         {
             if((p2 == NULL or strcmp(p->name, p2->name) < 0) and
@@ -81,20 +83,22 @@ std::list<std::string> installedCodecs()
             break;
         last_name = p2->name;
 
-        switch(p2->type) 
-        {
-            case AVMEDIA_TYPE_VIDEO:
-                if (isSupportedCodec(p2->name))
-                    codecs.push_back(p2->name);
-                break;
-            default:
-                break;
-        }
+        if (p2->type == AVMEDIA_TYPE_VIDEO)
+            if (std::find(sfl_codecs.begin(), sfl_codecs.end(), p2->name) != sfl_codecs.end())
+				video_codecs.push_back(friendlyName(p2->name));
     }
-    return codecs;
 }
 
-static ost::Mutex avcodec_lock;
+
+} // end anon namespace
+
+namespace libav_utils {
+
+
+std::vector<std::string> getVideoCodecList()
+{
+	return video_codecs;
+}
 
 static int avcodecManageMutex(void **mutex, enum AVLockOp op)
 {
@@ -115,6 +119,11 @@ static int avcodecManageMutex(void **mutex, enum AVLockOp op)
     return 0;
 }
 
+std::map<std::string, std::string> encodersMap()
+{
+	return encoders;
+}
+
 void sfl_avcodec_init()
 {
     static int done = 0;
@@ -128,6 +137,15 @@ void sfl_avcodec_init()
     av_register_all();
 
     av_lockmgr_register(avcodecManageMutex);
+
+    /* list of codecs tested and confirmed to work */
+    encoders["H264"] 		= "libx264";
+    encoders["H263-2000"]	= "h263p";
+    //encoders["MP4V-ES"] 	= "mpeg4video";
+    //encoders["VP8"]			= "libvpx";
+    //encoders["THEORA"]		= "libtheora";
+
+    findInstalledVideoCodecs();
 }
 
 } // end namespace libav_utils

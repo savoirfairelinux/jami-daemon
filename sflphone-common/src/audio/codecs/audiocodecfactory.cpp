@@ -129,24 +129,13 @@ double AudioCodecFactory::getBitRate (AudioCodecType payload)
         return 0.0;
 }
 
-double AudioCodecFactory::getBandwidthPerCall (AudioCodecType payload)
-{
-
-    CodecsMap::iterator iter = _CodecsMap.find (payload);
-
-    if (iter!=_CodecsMap.end())
-        return (iter->second->getBandwidth());
-    else
-        return 0.0;
-}
-
 int AudioCodecFactory::getSampleRate (AudioCodecType payload)
 {
 
     CodecsMap::iterator iter = _CodecsMap.find (payload);
 
     if (iter!=_CodecsMap.end())
-        return (iter->second->getClockRate());
+        return (iter->second->getClockRate() / 1000);
     else
         return 0;
 }
@@ -421,21 +410,15 @@ std::vector <std::string> AudioCodecFactory::getCodecSpecifications (const int32
     // Add the name of the codec
     v.push_back (getCodecName ( (AudioCodecType) payload));
 
-    // Add the sample rate
-    ss << getSampleRate ( (AudioCodecType) payload);
-    v.push_back ( (ss.str()).data());
-    ss.str ("");
-
     // Add the bit rate
     ss << getBitRate ( (AudioCodecType) payload);
     v.push_back ( (ss.str()).data());
     ss.str ("");
 
-    // Add the bandwidth information
-    ss << getBandwidthPerCall ( (AudioCodecType) payload);
+    // Add the sample rate
+    ss << getSampleRate ( (AudioCodecType) payload);
     v.push_back ( (ss.str()).data());
     ss.str ("");
 
     return v;
-
 }

@@ -134,6 +134,7 @@ main (int argc, char *argv[])
     /* start the main loop */
     gtk_main ();
 
+    codecs_unload();
     shortcuts_destroy_bindings();
 
 OUT:
