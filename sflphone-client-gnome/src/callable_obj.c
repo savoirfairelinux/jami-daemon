@@ -105,7 +105,7 @@ gchar* call_get_audio_codec (callable_obj_t *obj)
         g_free(audio_codec);
     }
 
-    return format;
+    return strdup("");
 }
 
 void call_add_error (callable_obj_t * call, gpointer dialog)
