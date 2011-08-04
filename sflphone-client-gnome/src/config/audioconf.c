@@ -90,13 +90,20 @@ static void preferences_dialog_fill_codec_list (account_t *a)
         if (c) {
             DEBUG ("%s", c->name);
             gtk_list_store_append (codecStore, &iter);
+            gchar *samplerate = g_strdup_printf ("%d kHz", c->sample_rate/1000);
+            gchar *bitrate = g_strdup_printf ("%.1f kbps", c->_bitrate);
+            gchar *bw = g_strdup_printf ("%.1f kbps", c->_bandwidth);
+
             gtk_list_store_set (codecStore, &iter,
-                                COLUMN_CODEC_ACTIVE,	c->is_active,									// Active
-                                COLUMN_CODEC_NAME,		c->name,										// Name
-                                COLUMN_CODEC_FREQUENCY,	g_strdup_printf ("%d kHz", c->sample_rate/1000),	// Frequency (kHz)
-                                COLUMN_CODEC_BITRATE,	g_strdup_printf ("%.1f kbps", c->_bitrate),		// Bitrate (kbps)
-                                COLUMN_CODEC_BANDWIDTH,	g_strdup_printf ("%.1f kbps", c->_bandwidth),	// Bandwidth (kpbs)
+                                COLUMN_CODEC_ACTIVE,	c->is_active,
+                                COLUMN_CODEC_NAME,		c->name,
+                                COLUMN_CODEC_FREQUENCY,	samplerate,
+                                COLUMN_CODEC_BITRATE,	bitrate,
+                                COLUMN_CODEC_BANDWIDTH,	bw,
                                 -1);
+            g_free(samplerate);
+            g_free(bitrate);
+            g_free(bw);
         }
     }
 }
