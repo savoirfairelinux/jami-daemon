@@ -1581,7 +1581,6 @@ void sflphone_get_interface_addr_from_name (char *iface_name, char **iface_addr,
 
     struct ifreq ifr;
     int fd;
-    int err;
     // static char iface_addr[18];
     char *tmp_addr;
 
@@ -1596,7 +1595,7 @@ void sflphone_get_interface_addr_from_name (char *iface_name, char **iface_addr,
     strcpy (ifr.ifr_name, iface_name);
     ifr.ifr_addr.sa_family = AF_INET;
 
-    if ( (err = ioctl (fd, SIOCGIFADDR, &ifr)) < 0)
+    if ( ioctl (fd, SIOCGIFADDR, &ifr) < 0)
         DEBUG ("getInterfaceAddrFromName use default interface (0.0.0.0)\n");
 
 
