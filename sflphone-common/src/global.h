@@ -103,12 +103,6 @@ static const SOUND_FORMAT INT32 = 0x8;
 #define SFL_PCM_CAPTURE		0x0023		/** To open capture device only */
 #define SFL_PCM_RINGTONE        0x0024
 
-#ifdef USE_IAX
-#define	IAX2_ENABLED  true			/** IAX2 support */
-#else
-#define	IAX2_ENABLED  false			/** IAX2 support */
-#endif
-
 #define GSM_STRING_DESCRIPTION	  "gsm"		/** GSM codec string description */
 #define SPEEX_STRING_DESCRIPTION  "speex"	/** SPEEX codec string description */
 #define ILBC_STRING_DESCRIPTION   "ilbc"		/** Ilbc codec string description */

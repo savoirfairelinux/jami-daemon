@@ -329,7 +329,7 @@ AS_IF([test "x$with_gsm" != xno],
 		]
 	 )
 
-AC_DEFINE([HAVE_GSM], test "x$with_gsm" = "xyes", [Define if you have libgsm])
+AC_DEFINE_UNQUOTED([HAVE_GSM], `if test "x$with_gsm" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have libgsm])
 AM_CONDITIONAL(BUILD_GSM, test "x$with_gsm" = "xyes" )
 
 dnl Check for libspeex
@@ -385,7 +385,7 @@ AC_ARG_WITH([iax2],
 		[],
 		[with_iax2=yes])
 
-AC_DEFINE([HAVE_IAX], test "x$with_iax2" = "xyes", [Define if you have libiax2])
+AC_DEFINE_UNQUOTED([HAVE_IAX], `if test "x$with_iax2" = "xyes"; then echo 1; else echo 0;fi`, [Define if you have libiax2])
 AM_CONDITIONAL(USE_IAX, test "x$with_iax2" = "xyes" )
 
 	dnl Check for network-manager

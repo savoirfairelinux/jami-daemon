@@ -33,6 +33,8 @@
  *  as that of the covered work.
  */
 
+#include "config.h"
+
 #include "managerimpl.h"
 
 #include "account.h"
@@ -2864,11 +2866,7 @@ std::vector<std::string> ManagerImpl::getCurrentAudioDevicesIndex ()
 
 int ManagerImpl::isIax2Enabled (void)
 {
-#ifdef USE_IAX
-    return true;
-#else
-    return false;
-#endif
+    return HAVE_IAX;
 }
 
 int ManagerImpl::isRingtoneEnabled (const std::string& id)

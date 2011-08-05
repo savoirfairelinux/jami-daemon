@@ -31,7 +31,7 @@
 #include "accountcreator.h"
 #include "sip/sipaccount.h"
 
-#ifdef USE_IAX
+#if HAVE_IAX
 #include "iax/iaxaccount.h"
 #endif
 
@@ -59,7 +59,7 @@ AccountCreator::createAccount (AccountType type, std::string accountID)
             return new SIPAccount (IP2IP_PROFILE);
             break;
         }
-#ifdef USE_IAX
+#if HAVE_IAX
 
         case IAX_ACCOUNT: {
             _debug ("AccountCreator: create account %s", accountID.c_str());
