@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -43,8 +43,8 @@ namespace sfl
 {
 
 AudioSymmetricRtpSession::AudioSymmetricRtpSession (SIPCall * sipcall) :
-    ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort())
-	,AudioRtpSession(sipcall, Symmetric, static_cast<ost::RTPDataQueue *>(this), static_cast<ost::Thread *>(this))
+	AudioRtpSession(sipcall, Symmetric, static_cast<ost::RTPDataQueue *>(this), static_cast<ost::Thread *>(this))
+    ,ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort())
     , _rtpThread (new AudioRtpThread (this))
 {
     _info ("AudioSymmetricRtpSession: Setting new RTP session with destination %s:%d", _ca->getLocalIp().c_str(), _ca->getLocalAudioPort());
@@ -64,7 +64,7 @@ void AudioSymmetricRtpSession::final()
     delete this;
 }
 
-AudioSymmetricRtpSession::AudioRtpThread::AudioRtpThread (AudioSymmetricRtpSession *session) : rtpSession (session), running (true)
+AudioSymmetricRtpSession::AudioRtpThread::AudioRtpThread (AudioSymmetricRtpSession *session) : running (true), rtpSession (session)
 {
     _debug ("AudioSymmetricRtpSession: Create new rtp thread");
 }

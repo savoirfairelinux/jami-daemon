@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
@@ -55,7 +55,7 @@ bool VoIPLink::addCall (Call* call)
     return false;
 }
 
-bool VoIPLink::removeCall (const CallID& id)
+bool VoIPLink::removeCall (const std::string& id)
 {
     ost::MutexLock m (_callMapMutex);
 
@@ -71,7 +71,7 @@ bool VoIPLink::removeCall (const CallID& id)
     return false;
 }
 
-Call* VoIPLink::getCall (const CallID& id)
+Call* VoIPLink::getCall (const std::string& id)
 {
     ost::MutexLock m (_callMapMutex);
     CallMap::iterator iter = _callMap.find (id);

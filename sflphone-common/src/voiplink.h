@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
@@ -41,7 +41,7 @@
 class Account;
 
 /** Define a map that associate a Call object to a call identifier */
-typedef std::map<CallID, Call*> CallMap;
+typedef std::map<std::string, Call*> CallMap;
 
 class VoipLinkException : public std::runtime_error
 {
@@ -91,7 +91,7 @@ class VoIPLink
          * Virtual method
          * Delete calls
          */
-        virtual void terminateCall (const CallID& id) = 0;
+        virtual void terminateCall (const std::string& id) = 0;
 
         /**
          * Virtual method
@@ -115,49 +115,49 @@ class VoIPLink
          * @param toUrl  The address of the recipient of the call
          * @return Call* The current call
          */
-        virtual Call* newOutgoingCall (const CallID& id, const std::string& toUrl) throw (VoipLinkException) = 0;
+        virtual Call* newOutgoingCall (const std::string& id, const std::string& toUrl) throw (VoipLinkException) = 0;
 
         /**
          * Answer the call
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool answer (const CallID& id) throw (VoipLinkException) = 0;
+        virtual bool answer (const std::string& id) throw (VoipLinkException) = 0;
 
         /**
          * Hang up a call
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool hangup (const CallID& id)  throw (VoipLinkException) = 0;
+        virtual bool hangup (const std::string& id)  throw (VoipLinkException) = 0;
 
         /**
         * Peer Hung up a call
         * @param id The call identifier
         * @return bool True on success
         */
-        virtual bool peerHungup (const CallID& id) throw (VoipLinkException) = 0;
+        virtual bool peerHungup (const std::string& id) throw (VoipLinkException) = 0;
 
         /**
          * Cancel the call dialing
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool cancel (const CallID& id) throw (VoipLinkException) = 0;
+        virtual bool cancel (const std::string& id) throw (VoipLinkException) = 0;
 
         /**
          * Put a call on hold
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool onhold (const CallID& id) throw (VoipLinkException) = 0;
+        virtual bool onhold (const std::string& id) throw (VoipLinkException) = 0;
 
         /**
          * Resume a call from hold state
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool offhold (const CallID& id) throw (VoipLinkException) = 0;
+        virtual bool offhold (const std::string& id) throw (VoipLinkException) = 0;
 
         /**
          * Transfer a call to specified URI
@@ -165,7 +165,7 @@ class VoIPLink
          * @param to The recipient of the call
          * @return bool True on success
          */
-        virtual bool transfer (const CallID& id, const std::string& to) throw (VoipLinkException) = 0;
+        virtual bool transfer (const std::string& id, const std::string& to) throw (VoipLinkException) = 0;
 
         /**
          * Attended transfer
@@ -173,14 +173,14 @@ class VoIPLink
          * @param The target call id
          * @return True on success
          */
-        virtual bool attendedTransfer (const CallID&, const CallID&) = 0;
+        virtual bool attendedTransfer (const std::string&, const std::string&) = 0;
 
         /**
          * Refuse incoming call
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool refuse (const CallID& id) = 0;
+        virtual bool refuse (const std::string& id) = 0;
 
         /**
          * Send DTMF
@@ -188,13 +188,13 @@ class VoIPLink
          * @param code  The char code
          * @return bool True on success
          */
-        virtual bool carryingDTMFdigits (const CallID& id, char code) = 0;
+        virtual bool carryingDTMFdigits (const std::string& id, char code) = 0;
 
         /**
          * Return the codec protocol used for this call
          * @param id The call identifier
          */
-        virtual std::string getCurrentCodecName(const CallID& id) = 0;
+        virtual std::string getCurrentCodecName(const std::string& id) = 0;
 
         bool initDone (void) {
             return _initDone;
@@ -213,7 +213,7 @@ class VoIPLink
          * @param id A Call ID
          * @return bool True if the call was correctly removed
          */
-        bool removeCall (const CallID& id);
+        bool removeCall (const std::string& id);
 
         /**
          * Remove all the call from the map
@@ -226,7 +226,7 @@ class VoIPLink
          * @param id A Call ID
          * @return Call*  Call pointer or 0
          */
-        Call* getCall (const CallID& id);
+        Call* getCall (const std::string& id);
 
     protected:
         /** Contains all the calls for this Link, protected by mutex */

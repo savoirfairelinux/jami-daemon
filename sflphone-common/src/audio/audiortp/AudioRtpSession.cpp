@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -46,9 +46,9 @@ AudioRtpSession::AudioRtpSession (SIPCall * sipcall, RtpMethod type, ost::RTPDat
 					AudioRtpRecordHandler (sipcall)
 					, _ca (sipcall)
 					, _timestamp (0)
-                    , _isStarted (false)
 					, _timestampIncrement (0)
 					, _timestampCount (0)
+                    , _isStarted (false)
 					, _type(type)
 					, _queue(queue)
 					, _thread(thread)

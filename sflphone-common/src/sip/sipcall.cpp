@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
@@ -40,7 +40,7 @@
 const int SIPCall::CALL_MEMPOOL_INIT_SIZE = 16384;
 const int SIPCall::CALL_MEMPOOL_INC_SIZE = 16384;   // Must be large enough to clone sdp sessions
 
-SIPCall::SIPCall (const CallID& id, Call::CallType type, pj_caching_pool *caching_pool) : Call (id, type)
+SIPCall::SIPCall (const std::string& id, Call::CallType type, pj_caching_pool *caching_pool) : Call (id, type)
     , _cid (0)
     , _did (0)
     , _tid (0)

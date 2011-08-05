@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -65,7 +65,7 @@ class SIPCall : public Call
          * @param type  The type of the call. Could be Incoming
          *						 Outgoing
          */
-        SIPCall (const CallID& id, Call::CallType type, pj_caching_pool *caching_pool);
+        SIPCall (const std::string& id, Call::CallType type, pj_caching_pool *caching_pool);
 
         /**
          * Destructor

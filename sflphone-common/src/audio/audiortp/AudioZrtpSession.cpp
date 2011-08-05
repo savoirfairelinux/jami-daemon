@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *
@@ -50,12 +50,12 @@ namespace sfl
 
 AudioZrtpSession::AudioZrtpSession (SIPCall * sipcall, const std::string& zidFilename) :
     // ost::SymmetricZRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
-    ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue> (ost::InetHostAddress (sipcall->getLocalIp().c_str()),
+    AudioRtpSession(sipcall, Zrtp, static_cast<ost::RTPDataQueue *>(this), static_cast<ost::Thread *>(this))
+    ,ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue> (ost::InetHostAddress (sipcall->getLocalIp().c_str()),
             sipcall->getLocalAudioPort(),
             0,
             ost::MembershipBookkeeping::defaultMembersHashSize,
             ost::defaultApplication())
-    ,AudioRtpSession(sipcall, Zrtp, static_cast<ost::RTPDataQueue *>(this), static_cast<ost::Thread *>(this))
     , _zidFilename (zidFilename)
 {
     _debug ("AudioZrtpSession initialized");

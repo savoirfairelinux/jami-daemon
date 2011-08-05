@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
@@ -64,7 +64,7 @@ int AudioLayer::putUrgent (void* buffer, int toCopy)
     return 0;
 }
 
-int AudioLayer::putMain (void *buffer, int toCopy, CallID call_id)
+int AudioLayer::putMain (void *buffer, int toCopy, std::string call_id)
 {
     int a;
 

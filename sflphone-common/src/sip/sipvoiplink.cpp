@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yun Liu <yun.liu@savoirfairelinux.com>
@@ -116,7 +116,7 @@ pjsip_tpfactory *_localTlsListener = NULL;
 
 /** A map to retreive SFLphone internal call id
  *  Given a SIP call ID (usefull for transaction sucha as transfer)*/
-std::map<std::string, CallID> transferCallID;
+std::map<std::string, std::string> transferCallID;
 
 
 const pj_str_t STR_USER_AGENT = { (char*) "User-Agent", 10 };
@@ -657,7 +657,7 @@ void SIPVoIPLink::sendUnregister (std::string id) throw(VoipLinkException)
     account->setRegister (false);
 }
 
-Call *SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) throw (VoipLinkException)
+Call *SIPVoIPLink::newOutgoingCall (const std::string& id, const std::string& toUrl) throw (VoipLinkException)
 {
     SIPAccount * account = NULL;
     pj_status_t status;
@@ -757,7 +757,7 @@ Call *SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) 
 }
 
 bool
-SIPVoIPLink::answer (const CallID& id) throw (VoipLinkException)
+SIPVoIPLink::answer (const std::string& id) throw (VoipLinkException)
 {
     pj_status_t status = PJ_SUCCESS;
     pjsip_tx_data *tdata;
@@ -818,7 +818,7 @@ SIPVoIPLink::answer (const CallID& id) throw (VoipLinkException)
 }
 
 bool
-SIPVoIPLink::hangup (const CallID& id) throw (VoipLinkException)
+SIPVoIPLink::hangup (const std::string& id) throw (VoipLinkException)
 {
     pj_status_t status;
     pjsip_tx_data *tdata = NULL;
@@ -881,7 +881,7 @@ SIPVoIPLink::hangup (const CallID& id) throw (VoipLinkException)
 }
 
 bool
-SIPVoIPLink::peerHungup (const CallID& id) throw (VoipLinkException)
+SIPVoIPLink::peerHungup (const std::string& id) throw (VoipLinkException)
 {
     pj_status_t status;
     pjsip_tx_data *tdata = NULL;
@@ -928,7 +928,7 @@ SIPVoIPLink::peerHungup (const CallID& id) throw (VoipLinkException)
 }
 
 bool
-SIPVoIPLink::cancel (const CallID& id) throw (VoipLinkException)
+SIPVoIPLink::cancel (const std::string& id) throw (VoipLinkException)
 {
     _info ("UserAgent: Cancel call %s", id.c_str());
 
@@ -944,7 +944,7 @@ SIPVoIPLink::cancel (const CallID& id) throw (VoipLinkException)
 
 
 bool
-SIPVoIPLink::onhold (const CallID& id) throw (VoipLinkException)
+SIPVoIPLink::onhold (const std::string& id) throw (VoipLinkException)
 {
 	Sdp *sdpSession;
     pj_status_t status;
@@ -995,7 +995,7 @@ SIPVoIPLink::onhold (const CallID& id) throw (VoipLinkException)
 }
 
 bool
-SIPVoIPLink::offhold (const CallID& id) throw (VoipLinkException)
+SIPVoIPLink::offhold (const std::string& id) throw (VoipLinkException)
 {
 	Sdp *sdpSession;
     pj_status_t status;
@@ -1090,7 +1090,7 @@ SIPVoIPLink::sendTextMessage (sfl::InstantMessaging *module, const std::string& 
 
         std::string formatedMessage = module->appendUriList (message, list);
 
-        status = module->send_sip_message (call->getInvSession (), (CallID&) callID, formatedMessage);
+        status = module->send_sip_message (call->getInvSession (), (std::string&) callID, formatedMessage);
 
     } else {
         /* Notify the client of an error */
@@ -1137,7 +1137,7 @@ int SIPSessionReinvite (SIPCall *call)
 }
 
 bool
-SIPVoIPLink::transfer (const CallID& id, const std::string& to) throw (VoipLinkException)
+SIPVoIPLink::transfer (const std::string& id, const std::string& to) throw (VoipLinkException)
 {
 
     std::string tmp_to;
@@ -1196,7 +1196,7 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to) throw (VoipLinkE
 
     // Put SIP call id in map in order to retrieve call during transfer callback
     std::string callidtransfer (call->getInvSession()->dlg->call_id->id.ptr, call->getInvSession()->dlg->call_id->id.slen);
-    transferCallID.insert (std::pair<std::string, CallID> (callidtransfer, call->getCallId()));
+    transferCallID.insert (std::pair<std::string, std::string> (callidtransfer, call->getCallId()));
 
     /* Send. */
     status = pjsip_xfer_send_request (sub, tdata);
@@ -1207,7 +1207,7 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to) throw (VoipLinkE
     return true;
 }
 
-bool SIPVoIPLink::attendedTransfer(const CallID& transferId, const CallID& targetId)
+bool SIPVoIPLink::attendedTransfer(const std::string& transferId, const std::string& targetId)
 {
 	char str_dest_buf[PJSIP_MAX_URL_SIZE*2];
 	pj_str_t str_dest;
@@ -1286,7 +1286,7 @@ bool SIPVoIPLink::attendedTransfer(const CallID& transferId, const CallID& targe
     std::string callidtransfer (transferCall->getInvSession()->dlg->call_id->id.ptr,
     							transferCall->getInvSession()->dlg->call_id->id.slen);
     _debug ("%s", callidtransfer.c_str());
-    transferCallID.insert (std::pair<std::string, CallID> (callidtransfer, transferCall->getCallId()));
+    transferCallID.insert (std::pair<std::string, std::string> (callidtransfer, transferCall->getCallId()));
 
 
     /* Send. */
@@ -1310,7 +1310,7 @@ bool SIPVoIPLink::transferStep2 (SIPCall* call)
 }
 
 bool
-SIPVoIPLink::refuse (const CallID& id)
+SIPVoIPLink::refuse (const std::string& id)
 {
     SIPCall *call;
     pj_status_t status;
@@ -1358,7 +1358,7 @@ SIPVoIPLink::refuse (const CallID& id)
 }
 
 void
-SIPVoIPLink::terminateCall (const CallID& id)
+SIPVoIPLink::terminateCall (const std::string& id)
 {
     _debug ("UserAgent: Terminate call %s", id.c_str());
 
@@ -1372,7 +1372,7 @@ SIPVoIPLink::terminateCall (const CallID& id)
 }
 
 std::string
-SIPVoIPLink::getCurrentCodecName(const CallID& id)
+SIPVoIPLink::getCurrentCodecName(const std::string& id)
 {
 
     SIPCall *call = NULL;
@@ -1428,7 +1428,7 @@ std::string SIPVoIPLink::getUseragentName (const std::string& id)
 }
 
 bool
-SIPVoIPLink::carryingDTMFdigits (const CallID& id, char code)
+SIPVoIPLink::carryingDTMFdigits (const std::string& id, char code)
 {
     SIPCall *call = getSIPCall (id);
 
@@ -1663,7 +1663,7 @@ SIPVoIPLink::SIPCallServerFailure (SIPCall *call)
 {
     if (call != 0) {
         _error ("UserAgent: Error: Server error!");
-        CallID id = call->getCallId();
+        std::string id = call->getCallId();
         Manager::instance().callFailure (id);
         removeCall (id);
     }
@@ -1679,7 +1679,7 @@ SIPVoIPLink::SIPCallClosed (SIPCall *call)
         return;
     }
 
-    CallID id = call->getCallId();
+    std::string id = call->getCallId();
 
     if (Manager::instance().isCurrentCall (id)) {
         _debug ("UserAgent: Stopping RTP when closing");
@@ -1701,7 +1701,7 @@ SIPVoIPLink::SIPCallReleased (SIPCall *call)
     // if we are here.. something when wrong before...
     _debug ("UserAgent: SIP call release");
 
-    CallID id = call->getCallId();
+    std::string id = call->getCallId();
 
     Manager::instance().callFailure (id);
 
@@ -1732,7 +1732,7 @@ SIPVoIPLink::SIPCallAnswered (SIPCall *call, pjsip_rx_data *rdata UNUSED)
 
 
 SIPCall*
-SIPVoIPLink::getSIPCall (const CallID& id)
+SIPVoIPLink::getSIPCall (const std::string& id)
 {
     Call* call = getCall (id);
 
@@ -1764,7 +1764,7 @@ namespace
     }
 }
 
-bool SIPVoIPLink::SIPNewIpToIpCall (const CallID& id, const std::string& to)
+bool SIPVoIPLink::SIPNewIpToIpCall (const std::string& id, const std::string& to)
 {
     SIPCall *call;
     pj_status_t status;
@@ -3380,7 +3380,7 @@ void sdp_create_offer_cb (pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
     SIPCall * call = NULL;
     call = reinterpret_cast<SIPCall*> (inv->mod_data[_mod_ua.id]);
 
-    CallID callid = call->getCallId();
+    std::string callid = call->getCallId();
     std::string accountid = Manager::instance().getAccountFromCall (callid);
 
     SIPAccount *account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (accountid));
@@ -3815,7 +3815,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
     pjsip_tx_data *tdata;
     pjsip_tx_data *response;
     SIPVoIPLink *link;
-    CallID id;
+    std::string id;
     SIPCall* call;
     pjsip_inv_session *inv;
     pjmedia_sdp_session *r_sdp;
@@ -4386,10 +4386,10 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
     /* Now make the outgoing call. */
     sipUri = std::string (uri);
 
-    CallID currentCallId = currentCall->getCallId();
+    std::string currentCallId = currentCall->getCallId();
     // std::string accId = Manager::instance().getAccountFromCall (currentCallId);
 
-    CallID newCallId = Manager::instance().getNewCallID();
+    std::string newCallId = Manager::instance().getNewCallID();
 
     Call *newCall = SIPVoIPLink::instance()->newOutgoingCall(newCallId, sipUri);
 
@@ -4533,8 +4533,8 @@ void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
 
         // Get call coresponding to this transaction
         std::string transferID (r_data->msg_info.cid->id.ptr, r_data->msg_info.cid->id.slen);
-        std::map<std::string, CallID>::iterator it = transferCallID.find (transferID);
-        CallID cid = it->second;
+        std::map<std::string, std::string>::iterator it = transferCallID.find (transferID);
+        std::string cid = it->second;
         SIPCall *call = dynamic_cast<SIPCall *> (link->getCall (cid));
         if (!call) {
             _warn ("UserAgent:  Call with id %s doesn't exit!", cid.c_str());

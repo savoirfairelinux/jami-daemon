@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -205,7 +205,7 @@ void ManagerImpl::terminate ()
 
 }
 
-bool ManagerImpl::isCurrentCall (const CallID& callId)
+bool ManagerImpl::isCurrentCall (const std::string& callId)
 {
     return (_currentCallId2 == callId ? true : false);
 }
@@ -221,13 +221,13 @@ bool ManagerImpl::hasCurrentCall ()
     return false;
 }
 
-const CallID&
+const std::string&
 ManagerImpl::getCurrentCallId ()
 {
     return _currentCallId2;
 }
 
-void ManagerImpl::switchCall (const CallID& id)
+void ManagerImpl::switchCall (const std::string& id)
 {
     ost::MutexLock m (_currentCallMutex);
     _debug ("----- Switch current call id to %s -----", id.c_str());
@@ -240,7 +240,7 @@ void ManagerImpl::switchCall (const CallID& id)
 /* Main Thread */
 
 bool ManagerImpl::outgoingCall (const std::string& account_id,
-                                const CallID& call_id, const std::string& to, const std::string& conf_id)
+                                const std::string& call_id, const std::string& to, const std::string& conf_id)
 {
 
     std::string pattern, to_cleaned;
@@ -263,7 +263,7 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 
     stopTone();
 
-    CallID current_call_id = getCurrentCallId();
+    std::string current_call_id = getCurrentCallId();
 
     if (hookPreference.getNumberEnabled()) {
         _cleaner->set_phone_number_prefix (hookPreference.getNumberAddPrefix());
@@ -334,7 +334,7 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 }
 
 //THREAD=Main : for outgoing Call
-bool ManagerImpl::answerCall (const CallID& call_id)
+bool ManagerImpl::answerCall (const std::string& call_id)
 {
 
     _debug ("Manager: Answer call %s", call_id.c_str());
@@ -343,7 +343,7 @@ bool ManagerImpl::answerCall (const CallID& call_id)
     stopTone();
 
     // store the current call id
-    CallID current_call_id = getCurrentCallId();
+    std::string current_call_id = getCurrentCallId();
 
     // Retreive call coresponding to this id
     std::string account_id = getAccountFromCall (call_id);
@@ -416,7 +416,7 @@ bool ManagerImpl::answerCall (const CallID& call_id)
 }
 
 //THREAD=Main
-bool ManagerImpl::hangupCall (const CallID& callId)
+bool ManagerImpl::hangupCall (const std::string& callId)
 {
     bool returnValue = true;
 
@@ -447,7 +447,7 @@ bool ManagerImpl::hangupCall (const CallID& callId)
     }
 
     // store the current call id
-    CallID currentCallId = getCurrentCallId();
+    std::string currentCallId = getCurrentCallId();
 
     stopTone();
 
@@ -492,7 +492,7 @@ bool ManagerImpl::hangupCall (const CallID& callId)
     return returnValue;
 }
 
-bool ManagerImpl::hangupConference (const ConfID& id)
+bool ManagerImpl::hangupConference (const std::string& id)
 {
     _debug ("Manager: Hangup conference %s", id.c_str());
 
@@ -523,7 +523,7 @@ bool ManagerImpl::hangupConference (const ConfID& id)
 }
 
 //THREAD=Main
-bool ManagerImpl::cancelCall (const CallID& id)
+bool ManagerImpl::cancelCall (const std::string& id)
 {
     std::string accountid;
     bool returnValue;
@@ -565,7 +565,7 @@ bool ManagerImpl::cancelCall (const CallID& id)
 }
 
 //THREAD=Main
-bool ManagerImpl::onHoldCall (const CallID& callId)
+bool ManagerImpl::onHoldCall (const std::string& callId)
 {
     std::string account_id;
     bool returnValue = false;
@@ -574,7 +574,7 @@ bool ManagerImpl::onHoldCall (const CallID& callId)
 
     stopTone();
 
-    CallID current_call_id = getCurrentCallId();
+    std::string current_call_id = getCurrentCallId();
 
     try {
 
@@ -622,7 +622,7 @@ bool ManagerImpl::onHoldCall (const CallID& callId)
 }
 
 //THREAD=Main
-bool ManagerImpl::offHoldCall (const CallID& callId)
+bool ManagerImpl::offHoldCall (const std::string& callId)
 {
 
     std::string accountId;
@@ -635,7 +635,7 @@ bool ManagerImpl::offHoldCall (const CallID& callId)
 
     stopTone();
 
-    CallID currentCallId = getCurrentCallId();
+    std::string currentCallId = getCurrentCallId();
 
     //Place current call on hold if it isn't
 
@@ -697,13 +697,13 @@ bool ManagerImpl::offHoldCall (const CallID& callId)
 }
 
 //THREAD=Main
-bool ManagerImpl::transferCall (const CallID& callId, const std::string& to)
+bool ManagerImpl::transferCall (const std::string& callId, const std::string& to)
 {
     bool returnValue = false;;
 
     _info ("Manager: Transfer call %s", callId.c_str());
 
-    CallID currentCallId = getCurrentCallId();
+    std::string currentCallId = getCurrentCallId();
 
     if(participToConference(callId)) {
 	Conference *conf = getConferenceFromCallID(callId);
@@ -765,7 +765,7 @@ void ManagerImpl::transferSucceded ()
 
 }
 
-bool ManagerImpl::attendedTransfer(const CallID& transferID, const CallID& targetID)
+bool ManagerImpl::attendedTransfer(const std::string& transferID, const std::string& targetID)
 {
     bool returnValue = false;
 
@@ -794,14 +794,14 @@ bool ManagerImpl::attendedTransfer(const CallID& transferID, const CallID& targe
 }
 
 //THREAD=Main : Call:Incoming
-bool ManagerImpl::refuseCall (const CallID& id)
+bool ManagerImpl::refuseCall (const std::string& id)
 {
     std::string accountid;
     bool returnValue;
 
     _debug ("Manager: Refuse call %s", id.c_str());
 
-    CallID current_call_id = getCurrentCallId();
+    std::string current_call_id = getCurrentCallId();
 
     stopTone();
 
@@ -853,7 +853,7 @@ bool ManagerImpl::refuseCall (const CallID& id)
 }
 
 Conference*
-ManagerImpl::createConference (const CallID& id1, const CallID& id2)
+ManagerImpl::createConference (const std::string& id1, const std::string& id2)
 {
     _debug ("Manager: Create conference with call %s and %s", id1.c_str(), id2.c_str());
 
@@ -863,7 +863,7 @@ ManagerImpl::createConference (const CallID& id1, const CallID& id2)
     conf->add (id2);
 
     // Add conference to map
-    _conferencemap.insert (std::pair<CallID, Conference*> (conf->getConfID(), conf));
+    _conferencemap.insert (std::pair<std::string, Conference*> (conf->getConfID(), conf));
 
     // broadcast a signal over dbus
     if (_dbus) {
@@ -873,7 +873,7 @@ ManagerImpl::createConference (const CallID& id1, const CallID& id2)
     return conf;
 }
 
-void ManagerImpl::removeConference (const ConfID& conference_id)
+void ManagerImpl::removeConference (const std::string& conference_id)
 {
 
     _debug ("Manager: Remove conference %s", conference_id.c_str());
@@ -925,7 +925,7 @@ void ManagerImpl::removeConference (const ConfID& conference_id)
 }
 
 Conference*
-ManagerImpl::getConferenceFromCallID (const CallID& call_id)
+ManagerImpl::getConferenceFromCallID (const std::string& call_id)
 {
     std::string account_id;
     Call* call = NULL;
@@ -942,7 +942,7 @@ ManagerImpl::getConferenceFromCallID (const CallID& call_id)
     }
 }
 
-void ManagerImpl::holdConference (const CallID& id)
+void ManagerImpl::holdConference (const std::string& id)
 {
     _debug ("Manager: Hold conference()");
 
@@ -995,7 +995,7 @@ void ManagerImpl::holdConference (const CallID& id)
 
 }
 
-void ManagerImpl::unHoldConference (const CallID& id)
+void ManagerImpl::unHoldConference (const std::string& id)
 {
     _debug ("Manager: Unhold conference()");
 
@@ -1049,7 +1049,7 @@ void ManagerImpl::unHoldConference (const CallID& id)
 
 }
 
-bool ManagerImpl::isConference (const CallID& id)
+bool ManagerImpl::isConference (const std::string& id)
 {
     ConferenceMap::iterator iter = _conferencemap.find (id);
 
@@ -1060,7 +1060,7 @@ bool ManagerImpl::isConference (const CallID& id)
     }
 }
 
-bool ManagerImpl::participToConference (const CallID& call_id)
+bool ManagerImpl::participToConference (const std::string& call_id)
 {
     std::string accountId = getAccountFromCall (call_id);
     Call *call = getAccountLink (accountId)->getCall (call_id);
@@ -1077,7 +1077,7 @@ bool ManagerImpl::participToConference (const CallID& call_id)
     return true;
 }
 
-void ManagerImpl::addParticipant (const CallID& callId, const CallID& conferenceId)
+void ManagerImpl::addParticipant (const std::string& callId, const std::string& conferenceId)
 {
     _debug ("Manager: Add participant %s to %s", callId.c_str(), conferenceId.c_str());
 
@@ -1095,7 +1095,7 @@ void ManagerImpl::addParticipant (const CallID& callId, const CallID& conference
     }
 
     // store the current call id (it will change in offHoldCall or in answerCall)
-    CallID current_call_id = getCurrentCallId();
+    std::string current_call_id = getCurrentCallId();
 
     // detach from prior communication and switch to this conference
     if (current_call_id != callId) {
@@ -1154,10 +1154,10 @@ void ManagerImpl::addParticipant (const CallID& callId, const CallID& conference
     addStream(callId);
 }
 
-void ManagerImpl::addMainParticipant (const CallID& conference_id)
+void ManagerImpl::addMainParticipant (const std::string& conference_id)
 {
     if (hasCurrentCall()) {
-        CallID current_call_id = getCurrentCallId();
+        std::string current_call_id = getCurrentCallId();
 
         if (isConference (current_call_id)) {
             detachParticipant (default_id, current_call_id);
@@ -1216,7 +1216,7 @@ void ManagerImpl::addMainParticipant (const CallID& conference_id)
     switchCall (conference_id);
 }
 
-void ManagerImpl::joinParticipant (const CallID& callId1, const CallID& callId2)
+void ManagerImpl::joinParticipant (const std::string& callId1, const std::string& callId2)
 {
 	bool isRec = false;
 
@@ -1225,7 +1225,7 @@ void ManagerImpl::joinParticipant (const CallID& callId1, const CallID& callId2)
     std::map<std::string, std::string> call1Details = getCallDetails (callId1);
     std::map<std::string, std::string> call2Details = getCallDetails (callId2);
 
-    CallID current_call_id = getCurrentCallId();
+    std::string current_call_id = getCurrentCallId();
     _debug ("Manager: Current Call ID %s", current_call_id.c_str());
 
     // detach from the conference and switch to this conference
@@ -1362,7 +1362,7 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
 
     // Create the conference if and only if at least 2 calls have been successfully created
     if(successCounter >= 2 ) {
-        _conferencemap.insert(std::pair<CallID, Conference *> (conf->getConfID(), conf));
+        _conferencemap.insert(std::pair<std::string, Conference *> (conf->getConfID(), conf));
 
         if (_dbus) {
             _dbus->getCallManager()->conferenceCreated (conf->getConfID());
@@ -1383,14 +1383,14 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
     
 }
 
-void ManagerImpl::detachParticipant (const CallID& call_id,
-                                     const CallID& current_id)
+void ManagerImpl::detachParticipant (const std::string& call_id,
+                                     const std::string& current_id)
 {
 
     _debug ("Manager: Detach participant %s (current id: %s)", call_id.c_str(), current_id.c_str());
 
 
-    CallID current_call_id = getCurrentCallId();
+    std::string current_call_id = getCurrentCallId();
 
     if (call_id != default_id) {
 
@@ -1464,7 +1464,7 @@ void ManagerImpl::detachParticipant (const CallID& call_id,
     }
 }
 
-void ManagerImpl::removeParticipant (const CallID& call_id)
+void ManagerImpl::removeParticipant (const std::string& call_id)
 {
     _debug ("Manager: Remove participant %s", call_id.c_str());
 
@@ -1497,7 +1497,7 @@ void ManagerImpl::removeParticipant (const CallID& call_id)
     getMainBuffer()->stateInfo();
 }
 
-void ManagerImpl::processRemainingParticipant (CallID current_call_id, Conference *conf)
+void ManagerImpl::processRemainingParticipant (std::string current_call_id, Conference *conf)
 {
 
     _debug ("Manager: Process remaining %d participant(s) from conference %s",
@@ -1559,8 +1559,8 @@ void ManagerImpl::processRemainingParticipant (CallID current_call_id, Conferenc
 
 }
 
-void ManagerImpl::joinConference (const CallID& conf_id1,
-                                  const CallID& conf_id2)
+void ManagerImpl::joinConference (const std::string& conf_id1,
+                                  const std::string& conf_id2)
 {
     _debug ("Manager: Join conference %s, %s", conf_id1.c_str(), conf_id2.c_str());
 
@@ -1600,7 +1600,7 @@ void ManagerImpl::joinConference (const CallID& conf_id1,
 
 }
 
-void ManagerImpl::addStream (const CallID& call_id)
+void ManagerImpl::addStream (const std::string& call_id)
 {
 
     _debug ("Manager: Add audio stream %s", call_id.c_str());
@@ -1655,7 +1655,7 @@ void ManagerImpl::addStream (const CallID& call_id)
     getMainBuffer()->stateInfo();
 }
 
-void ManagerImpl::removeStream (const CallID& call_id)
+void ManagerImpl::removeStream (const std::string& call_id)
 {
     _debug ("Manager: Remove audio stream %s", call_id.c_str());
 
@@ -1707,7 +1707,7 @@ bool ManagerImpl::saveConfig (void)
 }
 
 //THREAD=Main
-bool ManagerImpl::sendDtmf (const CallID& id, char code)
+bool ManagerImpl::sendDtmf (const std::string& id, char code)
 {
     _debug ("Manager: Send DTMF for call %s", id.c_str());
 
@@ -1801,7 +1801,7 @@ bool ManagerImpl::incomingCallWaiting ()
     return (_nbIncomingWaitingCall > 0) ? true : false;
 }
 
-void ManagerImpl::addWaitingCall (const CallID& id)
+void ManagerImpl::addWaitingCall (const std::string& id)
 {
 
     _info ("Manager: Add waiting call %s (%d calls)", id.c_str(), _nbIncomingWaitingCall);
@@ -1811,7 +1811,7 @@ void ManagerImpl::addWaitingCall (const CallID& id)
     _nbIncomingWaitingCall++;
 }
 
-void ManagerImpl::removeWaitingCall (const CallID& id)
+void ManagerImpl::removeWaitingCall (const std::string& id)
 {
 
     _info ("Manager: Remove waiting call %s (%d calls)", id.c_str(), _nbIncomingWaitingCall);
@@ -1824,7 +1824,7 @@ void ManagerImpl::removeWaitingCall (const CallID& id)
     }
 }
 
-bool ManagerImpl::isWaitingCall (const CallID& id)
+bool ManagerImpl::isWaitingCall (const std::string& id)
 {
     CallIDSet::iterator iter = _waitingCall.find (id);
 
@@ -1912,7 +1912,7 @@ bool ManagerImpl::incomingCall (Call* call, const std::string& accountId)
 
 
 //THREAD=VoIP
-void ManagerImpl::incomingMessage (const CallID& callID,
+void ManagerImpl::incomingMessage (const std::string& callID,
                                    const std::string& from,
                                    const std::string& message)
 {
@@ -1970,7 +1970,7 @@ void ManagerImpl::incomingMessage (const CallID& callID,
 
 
 //THREAD=VoIP
-bool ManagerImpl::sendTextMessage (const CallID& callID, const std::string& message, const std::string& from)
+bool ManagerImpl::sendTextMessage (const std::string& callID, const std::string& message, const std::string& from)
 {
 
     if (isConference (callID)) {
@@ -2080,7 +2080,7 @@ bool ManagerImpl::sendTextMessage (const CallID& callID, const std::string& mess
 }
 
 //THREAD=VoIP CALL=Outgoing
-void ManagerImpl::peerAnsweredCall (const CallID& id)
+void ManagerImpl::peerAnsweredCall (const std::string& id)
 {
 
     _debug ("Manager: Peer answered call %s", id.c_str());
@@ -2117,7 +2117,7 @@ void ManagerImpl::peerAnsweredCall (const CallID& id)
 }
 
 //THREAD=VoIP Call=Outgoing
-void ManagerImpl::peerRingingCall (const CallID& id)
+void ManagerImpl::peerRingingCall (const std::string& id)
 {
 
     _debug ("Manager: Peer call %s ringing", id.c_str());
@@ -2134,7 +2134,7 @@ void ManagerImpl::peerRingingCall (const CallID& id)
 }
 
 //THREAD=VoIP Call=Outgoing/Ingoing
-void ManagerImpl::peerHungupCall (const CallID& call_id)
+void ManagerImpl::peerHungupCall (const std::string& call_id)
 {
     std::string account_id;
     bool returnValue;
@@ -2142,7 +2142,7 @@ void ManagerImpl::peerHungupCall (const CallID& call_id)
     _debug ("Manager: Peer hungup call %s", call_id.c_str());
 
     // store the current call id
-    CallID current_call_id = getCurrentCallId();
+    std::string current_call_id = getCurrentCallId();
 
     if (participToConference (call_id)) {
 
@@ -2191,7 +2191,7 @@ void ManagerImpl::peerHungupCall (const CallID& call_id)
 }
 
 //THREAD=VoIP
-void ManagerImpl::callBusy (const CallID& id)
+void ManagerImpl::callBusy (const std::string& id)
 {
     _debug ("Manager: Call %s busy", id.c_str());
 
@@ -2210,7 +2210,7 @@ void ManagerImpl::callBusy (const CallID& id)
 }
 
 //THREAD=VoIP
-void ManagerImpl::callFailure (const CallID& call_id)
+void ManagerImpl::callFailure (const std::string& call_id)
 {
     if (_dbus) {
         _dbus->getCallManager()->callStateChanged (call_id, "FAILURE");
@@ -2221,7 +2221,7 @@ void ManagerImpl::callFailure (const CallID& call_id)
         switchCall ("");
     }
 
-    CallID current_call_id = getCurrentCallId();
+    std::string current_call_id = getCurrentCallId();
 
     if (participToConference (call_id)) {
 
@@ -2681,7 +2681,7 @@ std::string ManagerImpl::serialize (std::vector<std::string> v)
     return res;
 }
 
-std::string ManagerImpl::getCurrentCodecName (const CallID& id)
+std::string ManagerImpl::getCurrentCodecName (const std::string& id)
 {
 
     std::string accountid = getAccountFromCall (id);
@@ -3030,7 +3030,7 @@ void ManagerImpl::setIsAlwaysRecording(bool isAlwaysRec)
 }
 
 
-void ManagerImpl::setRecordingCall (const CallID& id)
+void ManagerImpl::setRecordingCall (const std::string& id)
 {
     Call *call = NULL;
     Conference *conf = NULL;
@@ -3065,7 +3065,7 @@ void ManagerImpl::setRecordingCall (const CallID& id)
 	_dbus->getCallManager()->recordPlaybackFilepath(id, rec->getFileName());  
 }
 
-bool ManagerImpl::isRecording (const CallID& id)
+bool ManagerImpl::isRecording (const std::string& id)
 {
 
     std::string accountid = getAccountFromCall (id);
@@ -4070,7 +4070,7 @@ void ManagerImpl::removeAccount (const std::string& accountID)
 }
 
 // ACCOUNT handling
-bool ManagerImpl::associateCallToAccount (const CallID& callID,
+bool ManagerImpl::associateCallToAccount (const std::string& callID,
         const std::string& accountID)
 {
     if (getAccountFromCall (callID) == "") { // nothing with the same ID
@@ -4087,7 +4087,7 @@ bool ManagerImpl::associateCallToAccount (const CallID& callID,
     }
 }
 
-std::string ManagerImpl::getAccountFromCall (const CallID& callID)
+std::string ManagerImpl::getAccountFromCall (const std::string& callID)
 {
     ost::MutexLock m (_callAccountMapMutex);
     CallAccountMap::iterator iter = _callAccountMap.find (callID);
@@ -4099,7 +4099,7 @@ std::string ManagerImpl::getAccountFromCall (const CallID& callID)
     }
 }
 
-bool ManagerImpl::removeCallAccount (const CallID& callID)
+bool ManagerImpl::removeCallAccount (const std::string& callID)
 {
     ost::MutexLock m (_callAccountMapMutex);
 
@@ -4110,7 +4110,7 @@ bool ManagerImpl::removeCallAccount (const CallID& callID)
     return false;
 }
 
-bool ManagerImpl::isValidCall(const CallID& callID)
+bool ManagerImpl::isValidCall(const std::string& callID)
 {
 	ost::MutexLock m(_callAccountMapMutex);
 	CallAccountMap::iterator iter = _callAccountMap.find (callID);
@@ -4124,7 +4124,7 @@ bool ManagerImpl::isValidCall(const CallID& callID)
 
 }
 
-CallID ManagerImpl::getNewCallID ()
+std::string ManagerImpl::getNewCallID ()
 {
     std::ostringstream random_id ("s");
     random_id << (unsigned) rand();
@@ -4478,7 +4478,7 @@ void ManagerImpl::setHookSettings (const std::map<std::string, std::string>& set
     // saveConfig();
 }
 
-void ManagerImpl::checkCallConfiguration (const CallID& id,
+void ManagerImpl::checkCallConfiguration (const std::string& id,
         const std::string &to, Call::CallConfiguration *callConfig)
 {
     Call::CallConfiguration config;
@@ -4495,7 +4495,7 @@ void ManagerImpl::checkCallConfiguration (const CallID& id,
     *callConfig = config;
 }
 
-bool ManagerImpl::associateConfigToCall (const CallID& callID,
+bool ManagerImpl::associateConfigToCall (const std::string& callID,
         Call::CallConfiguration config)
 {
 
@@ -4508,7 +4508,7 @@ bool ManagerImpl::associateConfigToCall (const CallID& callID,
     }
 }
 
-Call::CallConfiguration ManagerImpl::getConfigFromCall (const CallID& callID)
+Call::CallConfiguration ManagerImpl::getConfigFromCall (const std::string& callID)
 {
 
     CallConfigMap::iterator iter = _callConfigMap.find (callID);
@@ -4520,7 +4520,7 @@ Call::CallConfiguration ManagerImpl::getConfigFromCall (const CallID& callID)
     }
 }
 
-bool ManagerImpl::removeCallConfig (const CallID& callID)
+bool ManagerImpl::removeCallConfig (const std::string& callID)
 {
 
     if (_callConfigMap.erase (callID)) {
@@ -4530,7 +4530,7 @@ bool ManagerImpl::removeCallConfig (const CallID& callID)
     return false;
 }
 
-std::map<std::string, std::string> ManagerImpl::getCallDetails (const CallID& callID)
+std::map<std::string, std::string> ManagerImpl::getCallDetails (const std::string& callID)
 {
 
     std::map<std::string, std::string> call_details;
@@ -4608,7 +4608,7 @@ std::vector<std::string> ManagerImpl::getCallList (void)
 }
 
 std::map<std::string, std::string> ManagerImpl::getConferenceDetails (
-    const ConfID& confID)
+    const std::string& confID)
 {
 
     std::map<std::string, std::string> conf_details;

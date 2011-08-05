@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -47,8 +47,6 @@
  * @brief A call is the base class for protocol-based calls
  */
 
-typedef std::string CallID;
-
 class Call: public Recordable
 {
     public:
@@ -84,14 +82,14 @@ class Call: public Recordable
          * @param id Unique identifier of the call
          * @param type set definitely this call as incoming/outgoing
          */
-        Call (const CallID& id, Call::CallType type);
+        Call (const std::string& id, Call::CallType type);
         virtual ~Call();
 
         /**
          * Return a reference on the call id
          * @return call id
          */
-        CallID& getCallId() {
+        std::string& getCallId() {
             return _id;
         }
 
@@ -99,11 +97,11 @@ class Call: public Recordable
              * Return a reference on the conference id
              * @return call id
              */
-        const CallID& getConfId() const {
+        const std::string& getConfId() const {
             return _confID;
         }
 
-        void setConfId (CallID id) {
+        void setConfId (std::string id) {
             _confID = id;
         }
 
@@ -250,7 +248,7 @@ class Call: public Recordable
          */
         unsigned int getLocalVideoPort();
 
-        std::string getRecFileId (void) {
+        std::string getRecFileId (void) const {
             return getPeerName();
         }
 
@@ -276,10 +274,10 @@ class Call: public Recordable
         unsigned int _localVideoPort;
 
         /** Unique ID of the call */
-        CallID _id;
+        std::string _id;
 
         /** Unique conference ID, used exclusively in case of a conferece */
-        CallID _confID;
+        std::string _confID;
 
         /** Type of the call */
         CallType _type;

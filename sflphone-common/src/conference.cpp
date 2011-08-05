@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author : Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *
@@ -71,7 +71,7 @@ void Conference::setState (ConferenceState state)
 }
 
 
-void Conference::add (CallID participant_id)
+void Conference::add (std::string participant_id)
 {
 
     _debug ("Conference:: add participant %s", participant_id.c_str());
@@ -82,7 +82,7 @@ void Conference::add (CallID participant_id)
 }
 
 
-void Conference::remove (CallID participant_id)
+void Conference::remove (std::string participant_id)
 {
 
 
@@ -94,7 +94,7 @@ void Conference::remove (CallID participant_id)
 
 }
 
-void Conference::bindParticipant (CallID participant_id)
+void Conference::bindParticipant (std::string participant_id)
 {
 
     if (_nbParticipant >= 1) {
@@ -174,7 +174,7 @@ bool Conference::setRecording()
 
         ParticipantSet::iterator iter = _participants.begin();
 
-        CallID process_id = Recordable::recorder.getRecorderID();
+        std::string process_id = Recordable::recorder.getRecorderID();
 
         while (iter != _participants.end()) {
             mbuffer->bindHalfDuplexOut (process_id, *iter);
@@ -193,7 +193,7 @@ bool Conference::setRecording()
 
         ParticipantSet::iterator iter = _participants.begin();
 
-        CallID process_id = Recordable::recorder.getRecorderID();
+        std::string process_id = Recordable::recorder.getRecorderID();
 
         while (iter != _participants.end()) {
             mbuffer->unBindHalfDuplexOut (process_id, *iter);

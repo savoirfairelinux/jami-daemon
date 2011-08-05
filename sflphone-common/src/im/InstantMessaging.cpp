@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
@@ -93,7 +93,7 @@ bool InstantMessaging::init ()
     return true;
 }
 
-int InstantMessaging::openArchive (CallID& id)
+int InstantMessaging::openArchive (std::string& id)
 {
 
     // Create a new file stream
@@ -104,7 +104,7 @@ int InstantMessaging::openArchive (CallID& id)
     return (int) imFiles.size ();
 }
 
-int InstantMessaging::closeArchive (CallID& id)
+int InstantMessaging::closeArchive (std::string& id)
 {
 
     // Erase it from the map
@@ -112,7 +112,7 @@ int InstantMessaging::closeArchive (CallID& id)
     return (int) imFiles.size ();
 }
 
-bool InstantMessaging::saveMessage (const std::string& message, const std::string& author, CallID& id, int mode)
+bool InstantMessaging::saveMessage (const std::string& message, const std::string& author, std::string& id, int mode)
 {
 
     // We need here to write the text message in the right file.
@@ -133,7 +133,7 @@ bool InstantMessaging::saveMessage (const std::string& message, const std::strin
     return true;
 }
 
-std::string InstantMessaging::receive (const std::string& message, const std::string& author, CallID& id)
+std::string InstantMessaging::receive (const std::string& message, const std::string& author, std::string& id)
 {
 
     // We just receive a TEXT message. Before sent it to the recipient, we must assure that the message is complete.
@@ -153,13 +153,13 @@ std::string InstantMessaging::receive (const std::string& message, const std::st
 
 }
 
-pj_status_t InstantMessaging::notify (CallID& id)
+pj_status_t InstantMessaging::notify (std::string& id)
 {
     // Notify the clients through a D-Bus signal
     return PJ_SUCCESS;
 }
 
-pj_status_t InstantMessaging::sip_send (pjsip_inv_session *session, CallID& id, const std::string& text)
+pj_status_t InstantMessaging::sip_send (pjsip_inv_session *session, std::string& id, const std::string& text)
 {
 
     pjsip_method msg_method;
@@ -221,7 +221,7 @@ pj_status_t InstantMessaging::sip_send (pjsip_inv_session *session, CallID& id, 
     return PJ_SUCCESS;
 }
 
-pj_status_t InstantMessaging::send_sip_message (pjsip_inv_session *session, CallID& id, const std::string& message)
+pj_status_t InstantMessaging::send_sip_message (pjsip_inv_session *session, std::string& id, const std::string& message)
 {
 
     /* Check the length of the message */
@@ -246,7 +246,7 @@ pj_status_t InstantMessaging::send_sip_message (pjsip_inv_session *session, Call
 }
 
 
-bool InstantMessaging::iax_send (iax_session* session, const CallID& id, const std::string& message)
+bool InstantMessaging::iax_send (iax_session* session, const std::string& id, const std::string& message)
 {
     if (iax_send_text (session, message.c_str()) != -1)
         return true;
@@ -256,7 +256,7 @@ bool InstantMessaging::iax_send (iax_session* session, const CallID& id, const s
 
 }
 
-bool InstantMessaging::send_iax_message (iax_session* session, const CallID& id, const std::string& message)
+bool InstantMessaging::send_iax_message (iax_session* session, const std::string& id, const std::string& message)
 {
 
     bool ret;

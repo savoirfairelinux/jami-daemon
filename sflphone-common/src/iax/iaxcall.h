@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *
@@ -50,7 +50,7 @@ class IAXCall : public Call
          * @param id  The unique ID of the call
          * @param type  The type of the call
          */
-        IAXCall (const CallID& id, Call::CallType type);
+        IAXCall (const std::string& id, Call::CallType type);
 
         /**
          * Destructor

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author:  Jerome Oufella <jerome.oufella@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -144,7 +144,7 @@ class AudioLayer
          * @param toCopy    The size of the buffer
          * @return int      The number of bytes copied
          */
-        int putMain (void* buffer, int toCopy, CallID call_id = default_id);
+        int putMain (void* buffer, int toCopy, std::string call_id = default_id);
 
         void flushMain (void);
 
