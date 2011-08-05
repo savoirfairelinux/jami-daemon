@@ -148,14 +148,6 @@ class sdpMedia
         void clear_codec_list (void);
 
         /*
-         * Set the stream direction of the current media
-         * ie: sendrecv, sendonly,...
-         */
-        void set_stream_direction (int direction) {
-            _stream_type = (streamDirection) direction;
-        }
-
-        /*
          * Get the stream direction of the current media
          * ie: sendrecv, sendonly,...
          */
