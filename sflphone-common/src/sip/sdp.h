@@ -116,8 +116,9 @@ class Sdp
         /**
          * Returns a string version of the negotiated SDP fields which pertain
          * to video.
+         * Second member of the vector is the video codec rtp name
          */
-        std::string getActiveVideoDescription() const;
+        std::vector<std::string> getActiveVideoDescription() const;
 
         /**
          * Return whether or not the media have been determined for this sdp session

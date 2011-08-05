@@ -141,7 +141,7 @@ void sfl_avcodec_init()
 
     /* list of codecs tested and confirmed to work */
     encoders["H264"] 		= "libx264";
-    encoders["H263-2000"]	= "h263p";
+    encoders["H263"]		= "h263p";
     //encoders["MP4V-ES"] 	= "mpeg4video";
     //encoders["VP8"]			= "libvpx";
     //encoders["THEORA"]		= "libtheora";

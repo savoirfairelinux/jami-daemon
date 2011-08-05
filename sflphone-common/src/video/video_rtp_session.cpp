@@ -40,13 +40,13 @@
 #include "sip/sdp.h"
 #include "dbus/dbusmanager.h"
 #include "dbus/callmanager.h"
+#include "libav_utils.h"
 
 namespace sfl_video {
 
 VideoRtpSession::VideoRtpSession() : sending_(true), receiving_(true)
 {
     txArgs_ = Manager::instance().videoPreference.getVideoSettings();
-    txArgs_["codec"]       = "libx264";
     txArgs_["bitrate"]     = "500000";
 
     rxArgs_["format"] = "rgb24";
@@ -59,7 +59,8 @@ VideoRtpSession::VideoRtpSession(const std::map<std::string, std::string> &txArg
 
 void VideoRtpSession::updateSDP(const Sdp *sdp)
 {
-    std::string desc = sdp->getActiveVideoDescription();
+    std::vector<std::string> v = sdp->getActiveVideoDescription();
+    const std::string &desc = v[0];
     // if port has changed
     if (desc != rxArgs_["receiving_sdp"])
     {
@@ -101,6 +102,8 @@ void VideoRtpSession::updateSDP(const Sdp *sdp)
         _debug("Receiving video disabled, port was set to 0");
         receiving_ = false;
     }
+
+    txArgs_["codec"] = libav_utils::encodersMap()[v[1]];
 }
 
 void VideoRtpSession::updateDestination(const std::string &destination,

@@ -260,7 +260,6 @@ void Sdp::setMediaDescriptorLine (sdpMedia *media)
 
 		rtpmap.pt = med->desc.fmt[i];
         rtpmap.enc_name = pj_str ((char*)enc_name);
-        printf("===> %s %d\n", enc_name, clock_rate);
         rtpmap.clock_rate = clock_rate;
         rtpmap.param.ptr = ((char* const)"");
         rtpmap.param.slen = 0;
@@ -620,7 +619,7 @@ std::string Sdp::getLineFromLocalSDP(const std::string &keyword) const
     return "";
 }                                                                               
 
-std::string Sdp::getActiveVideoDescription() const
+std::vector<std::string> Sdp::getActiveVideoDescription() const
 {
     std::stringstream ss;
     if (activeLocalSession_)
@@ -629,7 +628,7 @@ std::string Sdp::getActiveVideoDescription() const
         char buffer[SIZE];
         int size = pjmedia_sdp_print(activeLocalSession_, buffer, SIZE);
         std::string localStr(buffer, size);
-        _error("ACTIVE LOCAL SESSION LOOKS LIKE: %s", localStr.c_str());
+        _debug("ACTIVE LOCAL SESSION LOOKS LIKE: %s", localStr.c_str());
     }
     if (activeRemoteSession_)
     {
@@ -637,7 +636,7 @@ std::string Sdp::getActiveVideoDescription() const
         char buffer[SIZE];
         int size = pjmedia_sdp_print(activeRemoteSession_, buffer, SIZE);
         std::string remoteStr(buffer, size);
-        _error("ACTIVE REMOTE SESSION LOOKS LIKE: %s", remoteStr.c_str());
+        _debug("ACTIVE REMOTE SESSION LOOKS LIKE: %s", remoteStr.c_str());
     }
     ss << "v=0" << std::endl;
     ss << "o=- 0 0 " << STR_IN.ptr << " " << STR_IP4.ptr << " " << localIpAddr_ << std::endl;
@@ -647,15 +646,28 @@ std::string Sdp::getActiveVideoDescription() const
     //ss << "b=AS:1000" << std::endl;
 
     std::string videoLine(getLineFromLocalSDP("m=video"));
-    _error("Adding video line %s", videoLine.c_str());
     ss << videoLine << std::endl;
-    std::string vCodecLine(getLineFromLocalSDP("H264"));
-    _error("Adding rtpmap attribute %s", vCodecLine.c_str());
+
+    int payload;
+    sscanf(videoLine.c_str(), "m=video %*d %*s %d", &payload);
+
+    std::ostringstream s;
+    s << "a=rtpmap:";
+    s << payload;
+
+    std::string vCodecLine(getLineFromLocalSDP(s.str()));
     ss << vCodecLine << std::endl;
+
+    char codec[32];
+    codec[0] = '\0';
+    sscanf(vCodecLine.c_str(), "a=rtpmap:%*d %31[^/]", codec);
 
     _debug("Receiving SDP \n%s", ss.str().c_str());
 
-    return ss.str();
+    std::vector<std::string> v;
+    v.push_back(ss.str());
+    v.push_back(std::string(codec));
+    return v;
 }
 
 void Sdp::addSdesAttribute (const std::vector<std::string>& crypto)
