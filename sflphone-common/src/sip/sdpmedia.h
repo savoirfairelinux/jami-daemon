@@ -34,8 +34,6 @@
 #include <vector>
 #include <string>
 
-#define DEFAULT_STREAM_DIRECTION    "sendrecv"
-
 #define MIME_TYPE_AUDIO     0
 #define MIME_TYPE_VIDEO     1
 #define MIME_TYPE_UNKNOWN   2
@@ -45,19 +43,6 @@
  * @brief   A class to describe a media. It can be either a video codec or an audio codec.
  *          it maintains internally a list of codecs to use in the SDP session and negociation
  */
-
-/*
- * This enum contains the different media stream direction.
- * To be added in the SDP attributes
- * The last one is only here to have to size information, otherwise the enum struct doesn't provide any means to know it
- */
-enum streamDirection {
-    SEND_RECEIVE,
-    SEND_ONLY,
-    RECEIVE_ONLY,
-    INACTIVE,
-    DIR_COUNT
-};
 
 /*
  * This enum contains the different media types.
@@ -78,21 +63,23 @@ namespace sfl {
     class Codec;
 }
 
-typedef enum streamDirection streamDirection;
 typedef enum mediaType mediaType;
 
 class sdpMedia
 {
     public:
         sdpMedia (int type);
-        sdpMedia (std::string type, int port, std::string dir = DEFAULT_STREAM_DIRECTION);
-        ~sdpMedia();
+        sdpMedia (std::string type, int port);
 
         /*
          * Read accessor. Return the list of codecs
          */
-        std::vector<sfl::Codec*> get_media_codec_list() {
+        std::vector<sfl::Codec*> get_media_audio_codec_list() {
             return _audio_codec_list;
+        }
+
+        std::vector<std::string> get_media_video_codec_list() {
+            return _video_codec_list;
         }
 
         /*
@@ -104,16 +91,9 @@ class sdpMedia
 
         /*
          * Add a codec in the current media codecs vector
-         *
-         * @param payload     The payload type
          */
         void add_codec (sfl::Codec *codec);
-
-        /*
-         * Get the stream direction string description of the current media
-         * ie: sendrecv, sendonly,...
-         */
-        const char *get_stream_direction_str (void) const;
+        void add_codec (std::string codec);
 
         /* the transport port */
         int port;
@@ -124,9 +104,7 @@ class sdpMedia
 
         /* The media codec vector */
         std::vector< sfl::Codec* > _audio_codec_list;
-
-        /* The stream direction */
-        streamDirection _stream_type;
+        std::vector< std::string > _video_codec_list;
 };
 
 #endif // _SDP_MEDIA

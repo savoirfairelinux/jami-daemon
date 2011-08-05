@@ -34,52 +34,28 @@
 #include <iostream>
 #include "Codec.h"
 
-static const char* streamDirectionStr[DIR_COUNT] = {
-    "sendrecv",
-    "sendonly",
-    "recvonly",
-    "inactive"
-};
-
-static const char* mediaTypeStr[MEDIA_COUNT] = {
-    "audio",
-    "video",
-    "application",
-    "text",
-    "image",
-    "message"
-};
-
 sdpMedia::sdpMedia (int type)
-    : _media_type ( (mediaType) type), _audio_codec_list (0), port (0), _stream_type (SEND_RECEIVE) {}
+    : _media_type ( (mediaType) type), _audio_codec_list (0), _video_codec_list (0), port (0) {}
 
 
-sdpMedia::sdpMedia (std::string type, int port, std::string dir)
-    : _media_type ( (mediaType)-1), _audio_codec_list (0), port (port),
-      _stream_type ( (streamDirection)-1)
+sdpMedia::sdpMedia (std::string type, int port)
+    : _media_type ( (mediaType)-1), _audio_codec_list (0), _video_codec_list (0), port (port)
 {
-    unsigned int i;
+	static const char* mediaTypeStr[MEDIA_COUNT] = {
+	    "audio",
+	    "video",
+	    "application",
+	    "text",
+	    "image",
+	    "message"
+	};
 
+    unsigned int i;
     for (i=0 ; i<MEDIA_COUNT ; i++)
-        if (!strcmp (type.c_str(), mediaTypeStr[i])) {
+        if (type == mediaTypeStr[i]) {
             _media_type = (mediaType) i;
             break;
         }
-
-    if (!strcmp (dir.c_str(), "default"))
-        dir = DEFAULT_STREAM_DIRECTION;
-
-    for (i=0; i<DIR_COUNT; i++)
-        if (!strcmp (dir.c_str(), streamDirectionStr[i])) {
-            _stream_type = (streamDirection) i;
-            break;
-        }
-}
-
-
-sdpMedia::~sdpMedia()
-{
-    _audio_codec_list.clear();
 }
 
 void sdpMedia::add_codec (sfl::Codec* codec)
@@ -87,10 +63,7 @@ void sdpMedia::add_codec (sfl::Codec* codec)
     _audio_codec_list.push_back (codec);
 }
 
-const char *sdpMedia::get_stream_direction_str (void) const
+void sdpMedia::add_codec (std::string codec)
 {
-    if (_stream_type < 0 || _stream_type >= DIR_COUNT)
-        return "unknown";
-
-    return streamDirectionStr[ _stream_type ];
+    _video_codec_list.push_back (codec);
 }
