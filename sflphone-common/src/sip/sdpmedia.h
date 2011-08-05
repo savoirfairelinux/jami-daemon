@@ -92,7 +92,7 @@ class sdpMedia
          * Read accessor. Return the list of codecs
          */
         std::vector<sfl::Codec*> get_media_codec_list() {
-            return _codec_list;
+            return _audio_codec_list;
         }
 
         /*
@@ -123,7 +123,7 @@ class sdpMedia
         mediaType _media_type;
 
         /* The media codec vector */
-        std::vector< sfl::Codec* > _codec_list;
+        std::vector< sfl::Codec* > _audio_codec_list;
 
         /* The stream direction */
         streamDirection _stream_type;

@@ -51,11 +51,11 @@ static const char* mediaTypeStr[MEDIA_COUNT] = {
 };
 
 sdpMedia::sdpMedia (int type)
-    : _media_type ( (mediaType) type), _codec_list (0), port (0), _stream_type (SEND_RECEIVE) {}
+    : _media_type ( (mediaType) type), _audio_codec_list (0), port (0), _stream_type (SEND_RECEIVE) {}
 
 
 sdpMedia::sdpMedia (std::string type, int port, std::string dir)
-    : _media_type ( (mediaType)-1), _codec_list (0), port (port),
+    : _media_type ( (mediaType)-1), _audio_codec_list (0), port (port),
       _stream_type ( (streamDirection)-1)
 {
     unsigned int i;
@@ -79,12 +79,12 @@ sdpMedia::sdpMedia (std::string type, int port, std::string dir)
 
 sdpMedia::~sdpMedia()
 {
-    _codec_list.clear();
+    _audio_codec_list.clear();
 }
 
 void sdpMedia::add_codec (sfl::Codec* codec)
 {
-    _codec_list.push_back (codec);
+    _audio_codec_list.push_back (codec);
 }
 
 const char *sdpMedia::get_stream_direction_str (void) const
