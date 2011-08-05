@@ -39,6 +39,7 @@
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
+#include <libavdevice/avdevice.h>
 }
 
 
@@ -134,7 +135,7 @@ void sfl_avcodec_init()
     done = 1;
 
     av_register_all();
-    av_register_all();
+    avdevice_register_all();
 
     av_lockmgr_register(avcodecManageMutex);
 
