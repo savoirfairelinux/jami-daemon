@@ -159,7 +159,7 @@ class sdpMedia
          * Get the stream direction string description of the current media
          * ie: sendrecv, sendonly,...
          */
-        std::string get_stream_direction_str (void) const;
+        const char *get_stream_direction_str (void) const;
 
     private:
         /* The type of media */

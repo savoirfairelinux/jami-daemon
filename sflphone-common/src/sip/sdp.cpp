@@ -268,7 +268,7 @@ void Sdp::setMediaDescriptorLine (sdpMedia *media, pjmedia_sdp_media** p_med)
     // Add the direction stream
     attr = (pjmedia_sdp_attr*) pj_pool_zalloc (memPool_, sizeof (pjmedia_sdp_attr));
 
-    pj_strdup2 (memPool_, &attr->name, media->get_stream_direction_str().c_str());
+    pj_strdup2 (memPool_, &attr->name, media->get_stream_direction_str());
 
     med->attr[ med->attr_count++] = attr;
 

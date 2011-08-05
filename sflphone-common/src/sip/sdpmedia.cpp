@@ -140,16 +140,10 @@ void sdpMedia::clear_codec_list (void)
 }
 
 
-std::string sdpMedia::get_stream_direction_str (void) const
+const char *sdpMedia::get_stream_direction_str (void) const
 {
-    std::string value;
+    if (_stream_type < 0 || _stream_type >= DIR_COUNT)
+        return "unknown";
 
-    // Test the range of the value
-
-    if (_stream_type >= 0 && _stream_type < DIR_COUNT)
-        value = streamDirectionStr[ _stream_type ];
-    else
-        value = "unknown";
-
-    return value;
+    return streamDirectionStr[ _stream_type ];
 }
