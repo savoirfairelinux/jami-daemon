@@ -34,14 +34,14 @@
 #include <iostream>
 #include "Codec.h"
 
-static const char* streamDirectionStr[] = {
+static const char* streamDirectionStr[DIR_COUNT] = {
     "sendrecv",
     "sendonly",
     "recvonly",
     "inactive"
 };
 
-static const char* mediaTypeStr[] = {
+static const char* mediaTypeStr[MEDIA_COUNT] = {
     "audio",
     "video",
     "application",
