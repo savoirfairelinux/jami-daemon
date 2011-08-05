@@ -167,7 +167,7 @@ void dbus_send_register (gchar* accountID , const guint enable);
  * ConfigurationManager - Add an account to the list
  * @param a The account to add
  */
-gchar* dbus_add_account (account_t *a);
+void dbus_add_account (account_t *a);
 
 /**
  * ConfigurationManager - Remove an account from the list

@@ -1297,21 +1297,19 @@ dbus_set_account_details (account_t *a)
         g_error_free (error);
     }
 }
-gchar*
+void
 dbus_add_account (account_t *a)
 {
-    gchar* accountId;
     GError *error = NULL;
+    g_free(a->accountID);
     org_sflphone_SFLphone_ConfigurationManager_add_account (
-        configurationManagerProxy, a->properties, &accountId, &error);
+        configurationManagerProxy, a->properties, &a->accountID, &error);
 
     if (error) {
         ERROR ("Failed to call add_account() on ConfigurationManager: %s",
                error->message);
         g_error_free (error);
     }
-
-    return accountId;
 }
 
 void

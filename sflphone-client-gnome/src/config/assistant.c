@@ -249,7 +249,7 @@ void build_wizard (void)
         current->properties = g_hash_table_new (NULL, g_str_equal);
     }
 
-    current->accountID = "new";
+    current->accountID = g_strdup("new");
 
     wiz->assistant = gtk_assistant_new();
 
