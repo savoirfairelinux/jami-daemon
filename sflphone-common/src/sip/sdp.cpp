@@ -80,7 +80,7 @@ Sdp::Sdp (pj_pool_t *pool)
 	, remoteSession_(NULL)
     , activeLocalSession_(NULL)
     , activeRemoteSession_(NULL)
-    , localAudioMediaCap_()
+    , localAudioMediaCap_(NULL)
     , sessionAudioMedia_(0)
     , localIpAddr_("")
 	, remoteIpAddr_("")
@@ -307,14 +307,11 @@ void Sdp::setLocalMediaCapabilities (CodecOrder selectedCodecs)
     CodecsMap codecs_list;
     CodecsMap::iterator iter;
 
-    // Clean it first
-    localAudioMediaCap_.clear();
-
     _debug ("SDP: Fetch local media capabilities. Local extern audio port: %i" , getLocalPublishedAudioPort());
 
-    /* Only one audio media used right now */
-    audio = new sdpMedia (MIME_TYPE_AUDIO);
-    audio->set_port (getLocalPublishedAudioPort());
+    delete localAudioMediaCap_;
+    localAudioMediaCap_ = new sdpMedia (MIME_TYPE_AUDIO);
+    localAudioMediaCap_->set_port (getLocalPublishedAudioPort());
 
     /* We retrieve the codecs selected by the user */
     codecs_list = Manager::instance().getAudioCodecFactory().getCodecsMap();
@@ -327,13 +324,11 @@ void Sdp::setLocalMediaCapabilities (CodecOrder selectedCodecs)
         iter=codecs_list.find (selectedCodecs[i]);
 
         if (iter!=codecs_list.end()) {
-            audio->add_codec (iter->second);
+        	localAudioMediaCap_->add_codec (iter->second);
         } else {
             _warn ("SDP: Couldn't find audio codec");
         }
     }
-
-    localAudioMediaCap_.push_back (audio);
 }
 
 int Sdp::createLocalSession (CodecOrder selectedCodecs)
@@ -559,18 +554,13 @@ void Sdp::addTiming ()
 
 void Sdp::addAudioMediaDescription()
 {
-    pjmedia_sdp_media* med;
-    int nb_media, i;
+    pjmedia_sdp_media* med = PJ_POOL_ZALLOC_T (memPool_, pjmedia_sdp_media);
 
-    med = PJ_POOL_ZALLOC_T (memPool_, pjmedia_sdp_media);
-    nb_media = localAudioMediaCap_.size();
     // For DTMF RTP events
-    localSession_->media_count = nb_media;
+    localSession_->media_count = 1;
 
-    for (i=0; i<nb_media; i++) {
-        setMediaDescriptorLine (localAudioMediaCap_[i], &med);
-        localSession_->media[i] = med;
-    }
+	setMediaDescriptorLine (localAudioMediaCap_, &med);
+	localSession_->media[0] = med;
 }
 
 void Sdp::addVideoMediaDescription()
@@ -758,19 +748,15 @@ Sdp::~Sdp()
     for (iter = sessionAudioMedia_.begin(); iter != sessionAudioMedia_.end(); ++iter)
         delete *iter;
 
-    for (iter = localAudioMediaCap_.begin(); iter != localAudioMediaCap_.end(); ++iter)
-        delete *iter;
+    delete localAudioMediaCap_;
 }
 
 
 void Sdp::setPortToAllMedia (int port)
 {
     setLocalPublishedAudioPort (port);
-
-    int size = localAudioMediaCap_.size();
-
-    for (int i = 0; i < size; i++)
-        localAudioMediaCap_[i]->set_port (port);
+    if (localAudioMediaCap_)
+    	localAudioMediaCap_->set_port (port);
 }
 
 void Sdp::addAttributeToLocalAudioMedia(const std::string &attr)

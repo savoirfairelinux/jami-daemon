@@ -348,7 +348,7 @@ class Sdp
         /**
          * Codec Map used for offer
          */
-        std::vector<sdpMedia *> localAudioMediaCap_;
+        sdpMedia *localAudioMediaCap_;
 
         /**
          * The media that will be used by the session (after the SDP negotiation)
