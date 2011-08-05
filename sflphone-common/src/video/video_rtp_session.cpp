@@ -48,11 +48,8 @@ VideoRtpSession::VideoRtpSession() : sending_(true), receiving_(true)
     txArgs_ = Manager::instance().videoPreference.getVideoSettings();
     txArgs_["codec"]       = "libx264";
     txArgs_["bitrate"]     = "500000";
-    txArgs_["format"]      = "rgb24";
 
-    rxArgs_["codec"] = txArgs_["codec"];
-    rxArgs_["bitrate"] = txArgs_["bitrate"];
-    rxArgs_["format"] = txArgs_["format"];
+    rxArgs_["format"] = "rgb24";
 }
 
 VideoRtpSession::VideoRtpSession(const std::map<std::string, std::string> &txArgs,
