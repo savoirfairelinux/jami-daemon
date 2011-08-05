@@ -221,7 +221,7 @@ void Sdp::setMediaDescriptorLine (sdpMedia *media, pjmedia_sdp_media** p_med)
     pj_strdup (memPool_, &med->desc.media,
             (media->get_media_type() == MIME_TYPE_AUDIO) ? &STR_AUDIO : &STR_VIDEO);
     med->desc.port_count = 1;
-    med->desc.port = media->get_port();
+    med->desc.port = media->port;
 
     // in case of sdes, media are tagged as "RTP/SAVP", RTP/AVP elsewhere
     if (srtpCrypto_.empty()) {
@@ -311,7 +311,7 @@ void Sdp::setLocalMediaCapabilities (CodecOrder selectedCodecs)
 
     delete localAudioMediaCap_;
     localAudioMediaCap_ = new sdpMedia (MIME_TYPE_AUDIO);
-    localAudioMediaCap_->set_port (getLocalPublishedAudioPort());
+    localAudioMediaCap_->port = getLocalPublishedAudioPort();
 
     /* We retrieve the codecs selected by the user */
     codecs_list = Manager::instance().getAudioCodecFactory().getCodecsMap();
@@ -756,7 +756,7 @@ void Sdp::setPortToAllMedia (int port)
 {
     setLocalPublishedAudioPort (port);
     if (localAudioMediaCap_)
-    	localAudioMediaCap_->set_port (port);
+    	localAudioMediaCap_->port = port;
 }
 
 void Sdp::addAttributeToLocalAudioMedia(const std::string &attr)

@@ -103,32 +103,6 @@ class sdpMedia
         }
 
         /*
-         * Read accessor. Return the type of media
-         */
-        std::string get_media_type_str() const;
-
-        /*
-         * Set the media type
-         */
-        void set_media_type (int type) {
-            _media_type = (mediaType) type;
-        }
-
-        /*
-         * Read accessor. Return the transport port
-         */
-        int get_port() const {
-            return _port;
-        }
-
-        /*
-         * Write accessor. Set the transport port
-         */
-        void set_port (int port) {
-            _port = port;
-        }
-
-        /*
          * Add a codec in the current media codecs vector
          *
          * @param payload     The payload type
@@ -136,30 +110,13 @@ class sdpMedia
         void add_codec (sfl::Codec *codec);
 
         /*
-         * Remove a codec from the current media codecs vector
-         *
-         * @param codec_name    The codec encoding name
-         */
-        void remove_codec (std::string codec_name);
-
-        /*
-         * Remove all the codecs from the list
-         */
-        void clear_codec_list (void);
-
-        /*
-         * Get the stream direction of the current media
-         * ie: sendrecv, sendonly,...
-         */
-        streamDirection get_stream_direction (void) const {
-            return _stream_type;
-        }
-
-        /*
          * Get the stream direction string description of the current media
          * ie: sendrecv, sendonly,...
          */
         const char *get_stream_direction_str (void) const;
+
+        /* the transport port */
+        int port;
 
     private:
         /* The type of media */
@@ -167,9 +124,6 @@ class sdpMedia
 
         /* The media codec vector */
         std::vector< sfl::Codec* > _codec_list;
-
-        /* the transport port */
-        int _port;
 
         /* The stream direction */
         streamDirection _stream_type;
