@@ -62,20 +62,11 @@ SIPCall::~SIPCall()
 {
     _debug ("SIPCall: Delete call");
 
-    delete _audiortp;
-    _audiortp = NULL;
-
     delete _local_sdp;
-    _local_sdp = NULL;
-
     _debug ("SDP: pool capacity %d", pj_pool_get_capacity (_pool));
     _debug ("SDP: pool size %d", pj_pool_get_used_size (_pool));
 
     // Release memory allocated for SDP
     pj_pool_release (_pool);
-    _pool = NULL;
-
+    delete _audiortp;
 }
-
-
-

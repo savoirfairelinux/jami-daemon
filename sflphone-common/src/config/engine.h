@@ -45,6 +45,7 @@ class Engine
         virtual void write() = 0;
 
         virtual void read() = 0;
+        virtual ~Engine();
 
 };
 

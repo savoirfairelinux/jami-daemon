@@ -40,9 +40,7 @@
  */
 class Algorithm
 {
-
     public:
-
         virtual void reset (void) = 0;
 
         /**
@@ -76,6 +74,7 @@ class Algorithm
          */
         virtual void process (SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes) = 0;
 
+        virtual ~Algorithm() {};
 };
 
 #endif

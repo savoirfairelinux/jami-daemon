@@ -238,7 +238,7 @@ AC_ARG_WITH(debug,
 	if test "x$with_debug" = "xfull" -o "x$with_debug" = "xyes"; then
 	CXXFLAGS="$USE_EXCEPTIONS $USER_INCLUDES -g -O0 -Wno-return-type"
 	else
-	CXXFLAGS="-g -Wall -O2"
+	CXXFLAGS="-g -Wall -O2 -Wnon-virtual-dtor"
 	fi
 
 AC_CHECK_LIB([expat], XML_ParserCreate_MM,

@@ -123,7 +123,7 @@ class AudioRtpRecordHandler
 {
     public:
         AudioRtpRecordHandler (SIPCall *ca);
-        ~AudioRtpRecordHandler();
+        virtual ~AudioRtpRecordHandler();
 
         /**
          *  Set rtp media for this session

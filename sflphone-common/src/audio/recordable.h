@@ -40,7 +40,7 @@ class Recordable
 
         Recordable();
 
-        ~Recordable();
+        virtual ~Recordable();
 
         /**
          * Return recording state (true/false)

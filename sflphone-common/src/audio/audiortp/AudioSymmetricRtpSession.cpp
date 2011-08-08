@@ -59,7 +59,6 @@ AudioSymmetricRtpSession::~AudioSymmetricRtpSession()
 
 void AudioSymmetricRtpSession::final()
 {
-
     delete _rtpThread;
 
     delete this;

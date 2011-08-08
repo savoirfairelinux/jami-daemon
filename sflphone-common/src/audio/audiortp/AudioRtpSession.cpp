@@ -306,7 +306,9 @@ int AudioRtpSession::startRtpThread (AudioCodec* audiocodec)
 	if (_type == Zrtp)
 		return ret;
 
-    return static_cast<AudioSymmetricRtpSession*>(this)->startSymmetricRtpThread();
+    AudioSymmetricRtpSession *self = dynamic_cast<AudioSymmetricRtpSession*>(this);
+    assert(self);
+    return self->startSymmetricRtpThread();
 }
 
 void AudioRtpSession::stopRtpThread ()
