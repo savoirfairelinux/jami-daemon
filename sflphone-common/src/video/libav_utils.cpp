@@ -51,42 +51,18 @@ static ost::Mutex avcodec_lock;
 
 namespace {
 
-std::string friendlyName(const std::string &codec)
-{
-	std::map<std::string, std::string>::const_iterator it;
-	for (it = encoders.begin(); it != encoders.end(); ++it)
-		if (it->second == codec)
-			return it->first;
-	return "";
-}
-
 void findInstalledVideoCodecs()
 {
-	std::vector<std::string> sfl_codecs;
+	std::vector<std::string> libav_codecs;
+    AVCodec *p = NULL;
+    while ((p = av_codec_next(p)))
+        if (p->type == AVMEDIA_TYPE_VIDEO)
+            libav_codecs.push_back(p->name);
+
 	std::map<std::string, std::string>::const_iterator it;
-	for (it = encoders.begin(); it != encoders.end(); ++it)
-		sfl_codecs.push_back(it->second);
-
-
-    const char *last_name = "000";
-    while (true)
-    {
-        AVCodec *p = NULL, *p2 = NULL;
-        while ((p = av_codec_next(p)))
-        {
-            if((p2 == NULL or strcmp(p->name, p2->name) < 0) and
-                strcmp(p->name, last_name) > 0)
-            {
-                p2 = p;
-            }
-        }
-        if (p2 == NULL)
-            break;
-        last_name = p2->name;
-
-        if (p2->type == AVMEDIA_TYPE_VIDEO)
-            if (std::find(sfl_codecs.begin(), sfl_codecs.end(), p2->name) != sfl_codecs.end())
-				video_codecs.push_back(friendlyName(p2->name));
+    for (it = encoders.begin(); it != encoders.end(); ++it) {
+        if (std::find(libav_codecs.begin(), libav_codecs.end(), it->second) != libav_codecs.end())
+        video_codecs.push_back(it->first);
     }
 }
 
@@ -140,11 +116,20 @@ void sfl_avcodec_init()
     av_lockmgr_register(avcodecManageMutex);
 
     /* list of codecs tested and confirmed to work */
-    encoders["H264"] 		= "libx264";
-    encoders["H263"]		= "h263p";
+    encoders["H264"] 		    = "libx264";
+    encoders["H263-2000"]		= "h263p";
+
+    // TODO
     //encoders["MP4V-ES"] 	= "mpeg4video";
     //encoders["VP8"]			= "libvpx";
     //encoders["THEORA"]		= "libtheora";
+
+    // ffmpeg hardcodes RTP output format to H263-2000
+    // but it can receive H263-1998
+    //encoders["H263-1998"]		= "h263p";
+
+    // ffmpeg doesn't know RTP format for H263 (payload type = 34)
+    //encoders["H263"]          = "h263";
 
     findInstalledVideoCodecs();
 }
