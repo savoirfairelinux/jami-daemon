@@ -56,7 +56,7 @@ namespace sfl
 {
 
 // class AudioSymmetricRtpSession : protected ost::Thread, public ost::TimerPort, public AudioRtpRecordHandler, public ost::TRTPSessionBase<ost::DualRTPUDPIPv4Channel,ost::DualRTPUDPIPv4Channel,ost::AVPQueue>
-class AudioSymmetricRtpSession : public AudioRtpSession, public ost::TimerPort, public ost::SymmetricRTPSession
+class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTPSession, public AudioRtpSession
 {
     public:
         /**
