@@ -32,333 +32,220 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <unistd.h>
 
 #include "dbus.h"
 
-static GQueue * codecsCapabilities = NULL;
+static GQueue audioCodecs = G_QUEUE_INIT;
+static GQueue videoCodecs = G_QUEUE_INIT;
 
-gint
-is_name_codecstruct (gconstpointer a, gconstpointer b)
+/*
+ * Instanciate a new codec
+ *
+ * @param payload       The unique RTP payload
+ * @return codec        The new codec instance, or NULL
+ */
+static codec_t *codec_create (gint payload, gchar **specs)
 {
-    codec_t * c = (codec_t *) a;
+    codec_t *codec = g_new0 (codec_t, 1);
+    if (!codec) {
+        g_strfreev(specs);
+        return NULL;
+    }
 
-    if (strcmp (c->name, (const gchar *) b) ==0)
-        return 0;
-    else
-        return 1;
+    codec->payload = payload;
+    codec->name = specs[0];
+    codec->bitrate = specs[1];
+    codec->sample_rate = specs[2];
+    codec->is_active = TRUE;
+
+    g_free(specs);
+
+    return codec;
 }
 
-gint
-is_payload_codecstruct (gconstpointer a, gconstpointer b)
+static gboolean codecs_audio_load (void)
 {
-    codec_t * c = (codec_t *) a;
-
-    if (c->_payload == GPOINTER_TO_INT (b))
-        return 0;
-    else
-        return 1;
-}
-
-void codec_list_init (GQueue **queue)
-{
-
-    // Create the queue object that will contain the audio codecs
-    *queue = g_queue_new();
-}
-
-void codec_capabilities_load (void)
-{
-    guint payload;
-
-    // Create the queue object that will contain the global list of audio codecs
-    if (codecsCapabilities != NULL)
-        g_queue_free (codecsCapabilities);
-
-    codecsCapabilities = g_queue_new();
-
-    // This is a global list inherited by all accounts
-    gchar **codecs = dbus_audio_codec_list ();
+    gchar **codecs = dbus_audio_codec_list();
     gchar **codecs_orig = codecs;
 
-    if (codecs != NULL) {
-        // Add the codecs in the list
-        for (; *codecs; codecs++) {
+    if (!codecs)
+        return FALSE;
 
-            codec_t *c;
-            payload = atoi (*codecs);
-            gchar **specs = dbus_audio_codec_details (payload);
-            codec_create_new_with_specs (payload, specs, TRUE, &c);
-            g_strfreev(specs);
-            g_queue_push_tail (codecsCapabilities, (gpointer*) c);
-            g_free(*codecs);
-        }
-        g_free(codecs_orig);
+    // Add the codecs in the list
+    for (; *codecs; codecs++) {
+        int payload = atoi(*codecs);
+        codec_t *c = codec_create(payload, dbus_audio_codec_details(payload));
+        if (c)
+            g_queue_push_tail (&audioCodecs, (gpointer*) c);
+        g_free(*codecs);
     }
+    g_free(codecs_orig);
 
     // If we didn't load any codecs, problem ...
-    if (g_queue_get_length (codecsCapabilities) == 0) {
-
-        // Error message
-        ERROR ("No audio codecs found");
-        dbus_unregister (getpid());
-        exit (1);
-    }
-}
-
-void account_create_codec_list (account_t **acc)
-{
-    GQueue *_codecs;
-
-    _codecs = (*acc)->codecs;
-
-    if (_codecs != NULL)
-        g_queue_free (_codecs);
-
-    _codecs = g_queue_new ();
-
-    (*acc)->codecs = _codecs;
-}
-
-void codec_create_new (gint payload, gboolean active, codec_t **c)
-{
-
-    codec_t *codec;
-    gchar **specs;
-
-    codec = g_new0 (codec_t, 1);
-    codec->_payload = payload;
-    specs = (gchar **) dbus_audio_codec_details (payload);
-    codec->name = specs[0];
-    codec->sample_rate = atoi (specs[1]);
-    codec->_bitrate = atoi (specs[2]);
-    codec->_bandwidth = atoi (specs[3]);
-    codec->is_active = active;
-
-    *c = codec;
-}
-
-void codec_create_new_with_specs (gint payload, gchar **specs, gboolean active, codec_t **c)
-{
-
-    codec_t *codec;
-
-    codec = g_new0 (codec_t, 1);
-    codec->_payload = payload;
-    codec->name = strdup(specs[0]);
-    codec->sample_rate = atoi (specs[1]);
-    codec->_bitrate = atoi (specs[2]);
-    codec->_bandwidth = atoi (specs[3]);
-    codec->is_active = active;
-
-    *c = codec;
-}
-
-void codec_create_new_from_caps (codec_t *original, codec_t **copy)
-{
-
-    codec_t *codec;
-
-    if (!original) {
-        *copy = NULL;
-        return;
+    if (g_queue_get_length (&audioCodecs) == 0) {
+        return FALSE;
     }
 
-    codec = g_new0 (codec_t, 1);
-    codec->_payload = original->_payload;
-    codec->name = original->name;
-    codec->sample_rate = original->sample_rate;
-    codec->_bitrate = original->_bitrate;
-    codec->_bandwidth = original->_bandwidth;
-    codec->is_active = original->is_active;
-
-    *copy = codec;
+    return TRUE;
 }
 
-
-void codec_list_clear (GQueue **queue)
+static gboolean codecs_video_load (void)
 {
+    gchar **codecs = dbus_video_codec_list();
+    gchar **codecs_orig = codecs;
 
-    if (*queue != NULL)
-        g_queue_free (*queue);
+    if (!codecs)
+        return FALSE;
 
-    *queue = g_queue_new();
-}
-
-/*void codec_list_clear (void) {
-
-	g_queue_free (codecsCapabilities);
-	codecsCapabilities = g_queue_new();
-}*/
-
-void codec_list_add (codec_t * c, GQueue **queue)
-{
-
-    // Add a codec to a specific list
-    g_queue_push_tail (*queue, (gpointer *) c);
-}
-
-void codec_set_active (codec_t **c)
-{
-
-    if (c) {
-        DEBUG ("%s set active", (*c)->name);
-        (*c)->is_active = TRUE;
+    int payload = 96; // dynamic payloads
+    // Add the codecs in the list
+    for (; *codecs; codecs++) {
+        codec_t *c = codec_create(payload++, dbus_video_codec_details(*codecs));
+        if (c)
+            g_queue_push_tail (&videoCodecs, (gpointer*) c);
+        g_free(*codecs);
     }
-}
+    g_free(codecs_orig);
 
-void codec_set_inactive (codec_t **c)
-{
-
-    if (c) {
-        DEBUG ("%s set active", (*c)->name);
-        (*c)->is_active = FALSE;
+    // If we didn't load any codecs, problem ...
+    if (g_queue_get_length (&videoCodecs) == 0) {
+        return FALSE;
     }
+
+    return TRUE;
 }
 
-guint codec_list_get_size ()
+gboolean codecs_load(void)
 {
+    return codecs_audio_load() && codecs_video_load();
+}
 
-    // The system wide codec list and the one per account have exactly the same size
-    // The only difference may be the order and the enabled codecs
-    return g_queue_get_length (codecsCapabilities);
+static void codec_free(gpointer data, gpointer user_data UNUSED)
+{
+    codec_t *codec = (codec_t*)data;
+    g_free(codec->name);
+    g_free(codec->sample_rate);
+    g_free(codec->bitrate);
+}
+
+void codecs_unload (void)
+{
+    g_queue_foreach(&audioCodecs, codec_free, NULL);
+}
+
+codec_t *codec_create_new_from_caps (codec_t *original)
+{
+    if (!original)
+        return NULL;
+
+    codec_t *codec = g_new0 (codec_t, 1);
+    if (codec) {
+        memcpy(codec, original, sizeof *codec);
+        codec->is_active = TRUE;
+    }
+
+    return codec;
+}
+
+static gint
+is_name_codecstruct (gconstpointer a, gconstpointer b)
+{
+    return strcmp (((codec_t*)a)->name, (const gchar *) b);
 }
 
 codec_t* codec_list_get_by_name (gconstpointer name, GQueue *q)
 {
-
-    // If NULL is passed as argument, we look into the global capabilities
-    if (q == NULL)
-        q = codecsCapabilities;
-
     GList * c = g_queue_find_custom (q, name, is_name_codecstruct);
-
-    if (c)
-        return (codec_t *) c->data;
-    else
-        return NULL;
+    return c ? (codec_t *) c->data : NULL;
 }
 
-codec_t* codec_list_get_by_payload (gconstpointer payload, GQueue *q)
+static gint
+is_payload_codecstruct (gconstpointer a, gconstpointer b)
 {
-
-    // If NULL is passed as argument, we look into the global capabilities
-    if (q == NULL)
-        q = codecsCapabilities;
-
-    GList * c = g_queue_find_custom (q, payload, is_payload_codecstruct);
-
-    if (c)
-        return (codec_t *) c->data;
-    else
-        return NULL;
+    return ((codec_t*)a)->payload != GPOINTER_TO_INT (b);
 }
 
-codec_t* codec_list_get_nth (guint index, GQueue *q)
+codec_t* codec_list_get_by_payload (int payload, GQueue *q)
 {
-    return g_queue_peek_nth (q, index);
-}
-
-codec_t* capabilities_get_nth (guint index)
-{
-
-    return g_queue_peek_nth (codecsCapabilities, index);
+    GList * c = g_queue_find_custom (q, (gconstpointer)(uintptr_t)payload, is_payload_codecstruct);
+    return c ? (codec_t *) c->data : NULL;
 }
 
 void codec_set_prefered_order (guint index, GQueue *q)
 {
-
-    codec_t * prefered = codec_list_get_nth (index, q);
+    codec_t * prefered = g_queue_peek_nth (q, index);
     g_queue_pop_nth (q, index);
     g_queue_push_head (q, prefered);
 }
 
-void codec_list_move_codec_up (guint index, GQueue **q)
+void codec_list_move (guint index, GQueue *q, gboolean up)
 {
+    guint already = up ? 0 : q->length;
+    gint  new = up ? index - 1 : index + 1;
 
-    DEBUG ("Codec list Size: %i \n", codec_list_get_size ());
+    if (index == already)
+        return;
 
-    GQueue *tmp = *q;
-
-    if (index != 0) {
-        gpointer codec = g_queue_pop_nth (tmp, index);
-        g_queue_push_nth (tmp, codec, index-1);
-    }
-
-    *q = tmp;
-
+    gpointer codec = g_queue_pop_nth (q, index);
+    g_queue_push_nth (q, codec, new);
 }
 
-void codec_list_move_codec_down (guint index, GQueue **q)
+static void codec_list_update_to_daemon_cat (account_t *acc, gboolean is_audio)
 {
+    gchar** codecList = NULL;
 
-    DEBUG ("Codec list Size: %i \n",codec_list_get_size());
-
-    GQueue *tmp = *q;
-
-    if (index != tmp->length) {
-        gpointer codec = g_queue_pop_nth (tmp, index);
-        g_queue_push_nth (tmp, codec, index+1);
-    }
-
-    *q = tmp;
-
-}
-
-void codec_list_update_to_daemon (account_t *acc)
-{
-
-    // String listing codecs payloads
-    const gchar** codecList;
-
-    // Length of the codec list
-    int length = acc->codecs->length;
-
-    // Initiate double array char list for one string
-    codecList = (void*) malloc (sizeof (void*));
+    GQueue *q = is_audio ? acc->codecs : acc->vcodecs;
+    int length = q->length;
 
     // Get all codecs in queue
-    int c = 0;
-    int i = 0;
+    int i, c = 0;
 
     for (i = 0; i < length; i++) {
-        codec_t* currentCodec = codec_list_get_nth (i, acc->codecs);
+        codec_t* currentCodec = g_queue_peek_nth (q, i);
 
-        // Assert not null
-        if (currentCodec) {
-            // Save only if active
-            if (currentCodec->is_active) {
-                // Reallocate memory each time more than one active codec is found
-                if (c!=0)
-                    codecList = (void*) realloc (codecList, (c+1) *sizeof (void*));
+        // Save only if active
+        if (currentCodec && currentCodec->is_active) {
+            codecList = (void*) realloc (codecList, (c+1) *sizeof (void*));
 
-                // Allocate memory for the payload
-                * (codecList+c) = (gchar*) malloc (sizeof (gchar*));
-                char payload[10];
-                // Put payload string in char array
-                sprintf (payload, "%d", currentCodec->_payload);
-                strcpy ( (char*) * (codecList+c), payload);
-                c++;
-            }
+            if (is_audio)
+                * (codecList+c) = g_strdup_printf("%d", currentCodec->payload);
+            else
+                * (codecList+c) = g_strdup(currentCodec->name);
+            c++;
         }
     }
 
     // Allocate NULL array at the end for Dbus
     codecList = (void*) realloc (codecList, (c+1) *sizeof (void*));
     * (codecList+c) = NULL;
+    c++;
 
     // call dbus function with array of strings
-    dbus_set_active_audio_codec_list (codecList, acc->accountID);
+    if (is_audio)
+        dbus_set_active_audio_codec_list ((const gchar**)codecList, acc->accountID);
+    else
+        dbus_set_active_video_codec_list ((const gchar**)codecList, acc->accountID);
 
     // Delete memory
-    for (i = 0; i < c; i++) {
-        free ( (gchar*) * (codecList+i));
-    }
-
+    for (i = 0; i < c; i++)
+        free (*(codecList+i));
     free (codecList);
 }
 
-GQueue* get_system_codec_list (void)
+void codec_list_update_to_daemon (account_t *acc)
 {
-    return  codecsCapabilities;
+    codec_list_update_to_daemon_cat (acc, TRUE);
+    codec_list_update_to_daemon_cat (acc, FALSE);
+}
+
+GQueue* get_audio_codecs_list (void)
+{
+    return &audioCodecs;
+}
+
+GQueue* get_video_codecs_list (void)
+{
+    return &videoCodecs;
 }

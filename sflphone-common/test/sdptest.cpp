@@ -135,11 +135,15 @@ void SDPTest::testInitialOfferFirstCodec ()
 	codecSelection.push_back(PAYLOAD_CODEC_ALAW);
 	codecSelection.push_back(PAYLOAD_CODEC_G722);
 
+    std::vector<std::string> videoCodecs;
+    videoCodecs.push_back("H264");
+    videoCodecs.push_back("H263");
+
 	_session->setLocalIP("127.0.0.1");
 	_session->setLocalPublishedAudioPort(49567);
 	_session->setLocalPublishedVideoPort(49568);
 
-    _session->createOffer(codecSelection);
+    _session->createOffer(codecSelection, videoCodecs);
 
     // pjmedia_sdp_parse(_testPool, test[0].offer_answer[0].sdp2, strlen(test[0].offer_answer[0].sdp2), &remoteAnswer);
     pjmedia_sdp_parse(_testPool, (char*)sdp_answer1, strlen(sdp_answer1), &remoteAnswer);
@@ -175,13 +179,17 @@ void SDPTest::testInitialAnswerFirstCodec ()
 	codecSelection.push_back(PAYLOAD_CODEC_ALAW);
 	codecSelection.push_back(PAYLOAD_CODEC_G722);
 
+    std::vector<std::string> videoCodecs;
+    videoCodecs.push_back("H264");
+    videoCodecs.push_back("H263");
+
     pjmedia_sdp_parse(_testPool, (char*)sdp_offer1, strlen(sdp_offer1), &remoteOffer);
 
     _session->setLocalIP("127.0.0.1");
 	_session->setLocalPublishedAudioPort(49567);
 	_session->setLocalPublishedVideoPort(49568);
 
-    _session->receiveOffer(remoteOffer, codecSelection);
+    _session->receiveOffer(remoteOffer, codecSelection, videoCodecs);
 
     _session->startNegotiation();
 
@@ -212,11 +220,15 @@ void SDPTest::testInitialOfferLastCodec ()
 	codecSelection.push_back(PAYLOAD_CODEC_ALAW);
 	codecSelection.push_back(PAYLOAD_CODEC_G722);
 
+    std::vector<std::string> videoCodecs;
+    videoCodecs.push_back("H264");
+    videoCodecs.push_back("H263");
+
 	_session->setLocalIP("127.0.0.1");
 	_session->setLocalPublishedAudioPort(49567);
 	_session->setLocalPublishedVideoPort(49568);
 
-    _session->createOffer(codecSelection);
+    _session->createOffer(codecSelection, videoCodecs);
 
     // pjmedia_sdp_parse(_testPool, test[0].offer_answer[0].sdp2, strlen(test[0].offer_answer[0].sdp2), &remoteAnswer);
     pjmedia_sdp_parse(_testPool, (char*)sdp_answer2, strlen(sdp_answer2), &remoteAnswer);
@@ -252,13 +264,17 @@ void SDPTest::testInitialAnswerLastCodec ()
 	codecSelection.push_back(PAYLOAD_CODEC_ALAW);
 	codecSelection.push_back(PAYLOAD_CODEC_G722);
 
+    std::vector<std::string> videoCodecs;
+    videoCodecs.push_back("H264");
+    videoCodecs.push_back("H263");
+
     pjmedia_sdp_parse(_testPool, (char*)sdp_offer2, strlen(sdp_offer2), &remoteOffer);
 
     _session->setLocalIP("127.0.0.1");
 	_session->setLocalPublishedAudioPort(49567);
 	_session->setLocalPublishedVideoPort(49568);
 
-    _session->receiveOffer(remoteOffer, codecSelection);
+    _session->receiveOffer(remoteOffer, codecSelection, videoCodecs);
 
     _session->startNegotiation();
 
@@ -291,11 +307,15 @@ void SDPTest::testReinvite ()
 	codecSelection.push_back(PAYLOAD_CODEC_ALAW);
 	codecSelection.push_back(PAYLOAD_CODEC_G722);
 
+    std::vector<std::string> videoCodecs;
+    videoCodecs.push_back("H264");
+    videoCodecs.push_back("H263");
+
 	_session->setLocalIP("127.0.0.1");
 	_session->setLocalPublishedAudioPort(49567);
 	_session->setLocalPublishedVideoPort(49568);
 
-    _session->createOffer(codecSelection);
+    _session->createOffer(codecSelection, videoCodecs);
 
     // pjmedia_sdp_parse(_testPool, test[0].offer_answer[0].sdp2, strlen(test[0].offer_answer[0].sdp2), &remoteAnswer);
     pjmedia_sdp_parse(_testPool, (char*)sdp_answer1, strlen(sdp_answer1), &remoteAnswer);
@@ -315,7 +335,7 @@ void SDPTest::testReinvite ()
 
     pjmedia_sdp_parse(_testPool, (char*)sdp_reinvite, strlen(sdp_reinvite), &reinviteOffer);
 
-    _session->receiveOffer(reinviteOffer, codecSelection);
+    _session->receiveOffer(reinviteOffer, codecSelection, videoCodecs);
 
     _session->startNegotiation();
 

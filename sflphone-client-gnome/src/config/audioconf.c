@@ -70,33 +70,35 @@ static void active_is_always_recording (void);
  */
 static void preferences_dialog_fill_codec_list (account_t *a)
 {
-
     GtkListStore *codecStore;
     GtkTreeIter iter;
-    GQueue *current;
 
     // Get model of view and clear it
     codecStore = GTK_LIST_STORE (gtk_tree_view_get_model (GTK_TREE_VIEW (codecTreeView)));
     gtk_list_store_clear (codecStore);
 
-    current = a ? a->codecs : get_system_codec_list ();
+    GQueue *list = a ? a->codecs : get_audio_codecs_list ();
 
     // Insert codecs
     unsigned int i;
 
-    for (i = 0; i < current->length; i++) {
-        codec_t *c = codec_list_get_nth (i, current);
+    for (i = 0; i < list->length; i++) {
+        codec_t *c = g_queue_peek_nth (list, i);
 
         if (c) {
             DEBUG ("%s", c->name);
             gtk_list_store_append (codecStore, &iter);
+            gchar *samplerate = g_strdup_printf ("%s kHz", c->sample_rate);
+            gchar *bitrate = g_strdup_printf ("%s kbps", c->bitrate);
+
             gtk_list_store_set (codecStore, &iter,
-                                COLUMN_CODEC_ACTIVE,	c->is_active,									// Active
-                                COLUMN_CODEC_NAME,		c->name,										// Name
-                                COLUMN_CODEC_FREQUENCY,	g_strdup_printf ("%d kHz", c->sample_rate/1000),	// Frequency (kHz)
-                                COLUMN_CODEC_BITRATE,	g_strdup_printf ("%.1f kbps", c->_bitrate),		// Bitrate (kbps)
-                                COLUMN_CODEC_BANDWIDTH,	g_strdup_printf ("%.1f kbps", c->_bandwidth),	// Bandwidth (kpbs)
+                                COLUMN_CODEC_ACTIVE,	c->is_active,
+                                COLUMN_CODEC_NAME,	c->name,
+                                COLUMN_CODEC_FREQUENCY,	samplerate,
+                                COLUMN_CODEC_BITRATE,	bitrate,
                                 -1);
+            g_free(samplerate);
+            g_free(bitrate);
         }
     }
 }
@@ -526,11 +528,11 @@ codec_active_toggled (GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoin
     printf ("%i\n", g_queue_get_length (acc->codecs));
 
     if ( (g_strcasecmp (name,"speex") ==0) && (g_strcasecmp (srate,"8 kHz") ==0))
-        codec = codec_list_get_by_payload ( (gconstpointer) 110, acc->codecs);
+        codec = codec_list_get_by_payload (110, acc->codecs);
     else if ( (g_strcasecmp (name,"speex") ==0) && (g_strcasecmp (srate,"16 kHz") ==0))
-        codec = codec_list_get_by_payload ( (gconstpointer) 111, acc->codecs);
+        codec = codec_list_get_by_payload (111, acc->codecs);
     else if ( (g_strcasecmp (name,"speex") ==0) && (g_strcasecmp (srate,"32 kHz") ==0))
-        codec = codec_list_get_by_payload ( (gconstpointer) 112, acc->codecs);
+        codec = codec_list_get_by_payload (112, acc->codecs);
     else
         codec = codec_list_get_by_name ( (gconstpointer) name, acc->codecs);
 
@@ -545,11 +547,7 @@ codec_active_toggled (GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoin
     gtk_tree_path_free (treePath);
 
     // Modify codec queue to represent change
-    if (active) {
-        codec_set_active (&codec);
-    } else {
-        codec_set_inactive (&codec);
-    }
+    codec->is_active = active;
 }
 
 /**
@@ -565,18 +563,10 @@ static void codec_move (gboolean moveUp, gpointer data)
     GtkTreeSelection *selection;
     GtkTreePath *treePath;
     gchar *path;
-    account_t *acc;
-    GQueue *acc_q;
 
     // Get view, model and selection of codec store
     model = gtk_tree_view_get_model (GTK_TREE_VIEW (codecTreeView));
     selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (codecTreeView));
-
-    // Retrieve the user data
-    acc = (account_t*) data;
-
-    if (acc)
-        acc_q = acc->codecs;
 
     // Find selected iteration and create a copy
     gtk_tree_selection_get_selected (GTK_TREE_SELECTION (selection), &model, &iter);
@@ -585,8 +575,7 @@ static void codec_move (gboolean moveUp, gpointer data)
     // Find path of iteration
     path = gtk_tree_model_get_string_from_iter (GTK_TREE_MODEL (model), &iter);
     treePath = gtk_tree_path_new_from_string (path);
-    gint *indices = gtk_tree_path_get_indices (treePath);
-    gint indice = indices[0];
+    gint indice = *gtk_tree_path_get_indices (treePath);
 
     // Depending on button direction get new path
     if (moveUp)
@@ -609,11 +598,7 @@ static void codec_move (gboolean moveUp, gpointer data)
     g_free (path);
 
     // Perpetuate changes in codec queue
-    if (moveUp)
-        codec_list_move_codec_up (indice, &acc_q);
-    else
-        codec_list_move_codec_down (indice, &acc_q);
-
+    codec_list_move (indice, ((account_t*)data)->codecs, moveUp);
 }
 
 /**
@@ -691,11 +676,6 @@ GtkWidget* audiocodecs_box (account_t *a)
     // Bandwith column
     renderer = gtk_cell_renderer_text_new();
     treeViewColumn = gtk_tree_view_column_new_with_attributes (_ ("Bitrate"), renderer, "text", COLUMN_CODEC_BITRATE, NULL);
-    gtk_tree_view_append_column (GTK_TREE_VIEW (codecTreeView), treeViewColumn);
-
-    // Frequency column
-    renderer = gtk_cell_renderer_text_new();
-    treeViewColumn = gtk_tree_view_column_new_with_attributes (_ ("Bandwidth"), renderer, "text", COLUMN_CODEC_BANDWIDTH, NULL);
     gtk_tree_view_append_column (GTK_TREE_VIEW (codecTreeView), treeViewColumn);
 
     g_object_unref (G_OBJECT (codecStore));

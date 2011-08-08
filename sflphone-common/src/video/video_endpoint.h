@@ -36,8 +36,12 @@
 #include <map>
 
 namespace sfl_video {
-    std::vector<std::string> getCodecSpecifications(int payload);
-    std::map<int, std::string> getCodecsMap();
+	/**
+	 * Returns the list of codecs installed at runtime and that we support
+	 */
+	std::vector<std::string> getVideoCodecList();
+
+    std::vector<std::string> getCodecSpecifications(const std::string &codec);
 }
 
 #endif // __VIDEO_ENDPOINT_H__

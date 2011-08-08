@@ -172,7 +172,7 @@ void sflphone_fill_ip2ip_profile (void);
  * @return The internal hash table representing
  * the settings for the ip2ip profile.
  */
-void sflphone_get_ip2ip_properties (GHashTable **properties);
+GHashTable *sflphone_get_ip2ip_properties (void);
 
 /**
  * Initialize the accounts data structure
@@ -192,7 +192,7 @@ void sflphone_set_current_account();
  */
 void sflphone_fill_codec_list ();
 
-void sflphone_fill_codec_list_per_account (account_t **);
+void sflphone_fill_codec_list_per_account (account_t *);
 
 
 void sflphone_add_participant();

@@ -30,7 +30,6 @@
  */
 
 #include "video_receive_thread.h"
-#include "libav_utils.h"
 
 // libav includes
 extern "C" {
@@ -223,10 +222,6 @@ void VideoReceiveThread::loadSDP()
 
 void VideoReceiveThread::setup()
 {
-    libav_utils::sfl_avcodec_init_locking();
-    av_register_all();
-    avdevice_register_all();
-
     dstWidth_ = atoi(args_["width"].c_str());
     dstHeight_ = atoi(args_["height"].c_str());
     format_ = av_get_pix_fmt(args_["format"].c_str());
@@ -466,8 +461,11 @@ void VideoReceiveThread::run()
     {
         if (!test_source_)
         {
-            if (av_read_frame(inputCtx_, &inpacket) < 0)
+            errno = av_read_frame(inputCtx_, &inpacket);
+            if (errno < 0) {
+                _error("Couldn't read frame : %m\n");
                 break;
+            }
 
             // is this a packet from the video stream?
             if (inpacket.stream_index != videoStreamIndex_)

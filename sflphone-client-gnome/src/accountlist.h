@@ -82,8 +82,9 @@ typedef struct  {
     GHashTable * properties;
     GPtrArray * credential_information;
 
-    /* The codec list */
+    /* The codec lists */
     GQueue *codecs;
+    GQueue *vcodecs;
     guint _messages_number;
 } account_t;
 

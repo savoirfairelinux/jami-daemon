@@ -36,39 +36,20 @@
 #include "video_endpoint.h"
 #include "libav_utils.h"
 
-void VideoEndpointTest::testIsSupportedCodec()
-{
-    /* This would list codecs */
-    assert(libav_utils::isSupportedCodec("mpeg4"));
-    assert(not libav_utils::isSupportedCodec("mp3"));
-    assert(not libav_utils::isSupportedCodec("xan_wc4"));
-    assert(not libav_utils::isSupportedCodec("schroedinger"));
-}
-
 void VideoEndpointTest::testListInstalledCodecs()
 {
     /* This would list codecs */
-    libav_utils::installedCodecs();
-}
-
-void VideoEndpointTest::testCodecMap()
-{
-    /* This would list codecs */
-    typedef std::map<int, std::string> MapType;
-    const MapType CODECS_MAP(sfl_video::getCodecsMap());
-    int count = 0;
-    for (MapType::const_iterator iter = CODECS_MAP.begin(); iter != CODECS_MAP.end(); ++iter)
-        if (iter->second == "MP4V-ES")
-            count++;
-
-    assert(count == 1);
+	std::cout << "Installed codecs:" << std::endl;
+    std::vector<std::string> codecs = sfl_video::getVideoCodecList();
+    std::vector<std::string>::iterator it;
+	for (it = codecs.begin(); it != codecs.end(); ++it)
+		std::cout << '\t' << *it << std::endl;
 }
 
 int main (int argc, char* argv[])
 {
+    libav_utils::sfl_avcodec_init();
     VideoEndpointTest test;
     test.testListInstalledCodecs();
-    test.testCodecMap();
-    test.testIsSupportedCodec();
     return 0;
 }

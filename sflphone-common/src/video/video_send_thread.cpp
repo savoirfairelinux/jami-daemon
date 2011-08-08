@@ -29,7 +29,6 @@
  */
 
 #include "video_send_thread.h"
-#include "libav_utils.h"
 
 // libav includes
 extern "C" {
@@ -123,9 +122,6 @@ void VideoSendThread::prepareEncoderContext()
 void VideoSendThread::setup()
 {
     int ret;
-    libav_utils::sfl_avcodec_init_locking();
-    av_register_all();
-    avdevice_register_all();
 
     if (!test_source_)
     {
