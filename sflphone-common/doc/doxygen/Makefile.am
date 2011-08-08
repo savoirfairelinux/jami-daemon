@@ -12,7 +12,7 @@ all: doxygen-trac
 doxygen-trac: clean core-doc-trac gtk-gui-doc-trac
 
 %-doc-trac : %-doc
-	ln -s ${html_parent_dir}/$< ${html_parent_dir}/$</html
+	ln -sf ${html_parent_dir}/$< ${html_parent_dir}/$</html
 
 doc: clean core-doc gtk-gui-doc
 

@@ -18,13 +18,8 @@ unittest:
 	@echo " -- You need the cppunit devel package to compile the unitary tests."
 endif
 
-doc:
-	@(cd doc; make)
-	@echo ""
-	@echo "D-Bus API HTML documentation has been generated in doc/dbus-api/doc/spec"
-	@echo ""
-
 ACLOCAL_AMFLAGS = -I m4
-SUBDIRS = libs src ringtones man $(TESTS_DIR)
+SUBDIRS = libs src ringtones man $(TESTS_DIR) doc
+
 EXTRA_DIST = m4/*.m4 images/* README.gentoo
 
