@@ -252,16 +252,7 @@ PulseLayer::~PulseLayer (void)
 {
     closeLayer ();
 
-    if (_converter) {
-        delete _converter;
-        _converter = NULL;
-    }
-
-    delete AudioLayer::_dcblocker;
-    AudioLayer::_dcblocker = NULL;
-
-    delete AudioLayer::_audiofilter;
-    AudioLayer::_audiofilter = NULL;
+    delete _converter;
 }
 
 void
@@ -402,7 +393,7 @@ void PulseLayer::context_state_callback (pa_context* c, void* user_data)
     }
 }
 
-bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int indexRing UNUSED, int sampleRate, int frameSize , int stream UNUSED, std::string plugin UNUSED)
+void PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int indexRing UNUSED, int sampleRate, int frameSize , int stream UNUSED, std::string plugin UNUSED)
 {
     _debug ("Audio: Open device sampling rate %d, frame size %d", _audioSampleRate, _frameSize);
 
@@ -417,8 +408,6 @@ bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int indexR
     // Instantiate the algorithm
     AudioLayer::_dcblocker = new DcBlocker();
     AudioLayer::_audiofilter = new AudioProcessing (static_cast<Algorithm *> (_dcblocker));
-
-    return true;
 }
 
 
