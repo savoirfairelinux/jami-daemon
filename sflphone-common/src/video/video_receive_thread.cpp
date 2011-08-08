@@ -131,7 +131,7 @@ uint8_t *attachShm(int shm_id)
 void detachShm(uint8_t *data)
 {
     /* detach from the segment: */
-    if (shmdt(data) == -1)
+    if (data and shmdt(data) == -1)
         _error("%s:shmdt:%m", __PRETTY_FUNCTION__);
 }
 
