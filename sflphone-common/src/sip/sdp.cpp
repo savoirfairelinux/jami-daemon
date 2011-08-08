@@ -649,7 +649,8 @@ std::vector<std::string> Sdp::getActiveVideoDescription() const
     ss << videoLine << std::endl;
 
     int payload;
-    sscanf(videoLine.c_str(), "m=video %*d %*s %d", &payload);
+    if (sscanf(videoLine.c_str(), "m=video %*d %*s %d", &payload) != 1)
+		payload = 0;
 
     std::ostringstream s;
     s << "a=rtpmap:";
