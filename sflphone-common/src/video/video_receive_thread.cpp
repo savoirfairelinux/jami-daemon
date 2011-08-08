@@ -460,8 +460,11 @@ void VideoReceiveThread::run()
     {
         if (!test_source_)
         {
-            if (av_read_frame(inputCtx_, &inpacket) < 0)
+            errno = av_read_frame(inputCtx_, &inpacket);
+            if (errno < 0) {
+                _error("Couldn't read frame : %m\n");
                 break;
+            }
 
             // is this a packet from the video stream?
             if (inpacket.stream_index != videoStreamIndex_)
