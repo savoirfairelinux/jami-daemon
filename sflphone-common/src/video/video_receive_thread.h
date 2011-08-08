@@ -73,6 +73,7 @@ class VideoReceiveThread : public ost::Thread {
         void setup();
         void cleanup();
         void createScalingContext();
+        int createSemSet(int shmKey, int *semKey);
         ost::Event shmReady_;
         std::string sdpFilename_;
 

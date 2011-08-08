@@ -138,7 +138,7 @@ void VideoSendThread::setup()
             if (!file_iformat)
             {
                 _error("Could not find format video4linux2");
-                exit();
+                ost::Thread::exit();
             }
         }
 
@@ -154,7 +154,7 @@ void VideoSendThread::setup()
         if (avformat_open_input(&inputCtx_, args_["input"].c_str(), file_iformat, &options) != 0)
         {
             _error("Could not open input file %s", args_["input"].c_str());
-            exit();
+            ost::Thread::exit();
         }
 
         // find the first video stream from the input
@@ -170,7 +170,7 @@ void VideoSendThread::setup()
         if (videoStreamIndex_ == -1)
         {
             _error("%s:Could not find video stream!", __PRETTY_FUNCTION__);
-            exit();
+            ost::Thread::exit();
         }
 
         // Get a pointer to the codec context for the video stream
@@ -181,7 +181,7 @@ void VideoSendThread::setup()
         if (inputDecoder == NULL)
         {
             _error("%s:Unsupported codec!", __PRETTY_FUNCTION__);
-            exit();
+            ost::Thread::exit();
         }
 
         // open codec
@@ -189,7 +189,7 @@ void VideoSendThread::setup()
         if (ret < 0)
         {
             _error("%s:Could not open codec!", __PRETTY_FUNCTION__);
-            exit();
+            ost::Thread::exit();
         }
 
     } // end if ! test_source_
@@ -201,7 +201,7 @@ void VideoSendThread::setup()
     {
         _error("Unable to find a suitable output format for %s",
                 args_["destination"].c_str());
-        exit();
+        ost::Thread::exit();
     }
     outputCtx_->oformat = file_oformat;
     strncpy(outputCtx_->filename, args_["destination"].c_str(),
@@ -213,7 +213,7 @@ void VideoSendThread::setup()
     if (encoder == 0)
     {
         _error("%s:Encoder not found!", __PRETTY_FUNCTION__);
-        exit();
+        ost::Thread::exit();
     }
 
     prepareEncoderContext();
@@ -229,7 +229,7 @@ void VideoSendThread::setup()
     if (ret < 0)
     {
         _error("%s:Could not open encoder!", __PRETTY_FUNCTION__);
-        exit();
+        ost::Thread::exit();
     }
 
     // add video stream to outputformat context
@@ -237,7 +237,7 @@ void VideoSendThread::setup()
     if (videoStream_ == 0)
     {
         _error("%s:Could not alloc stream!", __PRETTY_FUNCTION__);
-        exit();
+        ost::Thread::exit();
     }
     videoStream_->codec = encoderCtx_;
 
@@ -247,7 +247,7 @@ void VideoSendThread::setup()
         if (avio_open(&outputCtx_->pb, outputCtx_->filename, AVIO_FLAG_WRITE) < 0)
         {
             _error("%s:Could not open \"%s\"!", outputCtx_->filename);
-            exit();
+            ost::Thread::exit();
         }
     }
     else
@@ -261,7 +261,7 @@ void VideoSendThread::setup()
     {
         _error("%s:Could not write header for output file (incorrect codec "
                 "parameters ?)", __PRETTY_FUNCTION__);
-        exit();
+        ost::Thread::exit();
     }
 
     // allocate video frame
@@ -359,7 +359,7 @@ void VideoSendThread::createScalingContext()
     if (imgConvertCtx_ == 0)
     {
         _error("%s:Cannot init the conversion context!", __PRETTY_FUNCTION__);
-        exit();
+        ost::Thread::exit();
     }
 }
 
@@ -465,7 +465,7 @@ void VideoSendThread::run()
         if (ret < 0)
         {
             print_error("av_interleaved_write_frame() error", ret);
-            exit();
+            ost::Thread::exit();
         }
         av_free_packet(&opkt);
 

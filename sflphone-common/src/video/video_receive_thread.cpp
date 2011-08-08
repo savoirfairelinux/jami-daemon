@@ -70,33 +70,6 @@ union semun
 };
 #endif
 
-int createSemSet(int shmKey, int *semKey)
-{
-    /* this variable will contain the semaphore set. */
-    int sem_set_id;
-    /* semaphore value, for semctl().                */
-    union semun sem_val;
-    key_t key;
-
-    do
-		key = ftok(get_program_dir(), rand());
-    while(key == shmKey);
-
-    *semKey = key;
-
-    /* first we create a semaphore set with a single semaphore, */
-    /* whose counter is initialized to '0'.                     */
-    sem_set_id = semget(key, 1, 0600 | IPC_CREAT);
-    if (sem_set_id == -1) {
-        _error("%s:semget:%m", __PRETTY_FUNCTION__);
-        exit(1);
-    }
-
-    sem_val.val = 0;
-    semctl(sem_set_id, 0, SETVAL, sem_val);
-    return sem_set_id;
-}
-
 void
 cleanupSemaphore(int sem_set_id)
 {
@@ -206,6 +179,34 @@ std::string openTemp(std::string path, std::ofstream& f)
 
 } // end anonymous namespace
 
+int VideoReceiveThread::createSemSet(int shmKey, int *semKey)
+{
+    /* this variable will contain the semaphore set. */
+    int sem_set_id;
+    /* semaphore value, for semctl().                */
+    union semun sem_val;
+    key_t key;
+
+    do
+		key = ftok(get_program_dir(), rand());
+    while(key == shmKey);
+
+    *semKey = key;
+
+    /* first we create a semaphore set with a single semaphore, */
+    /* whose counter is initialized to '0'.                     */
+    sem_set_id = semget(key, 1, 0600 | IPC_CREAT);
+    if (sem_set_id == -1) {
+        _error("%s:semget:%m", __PRETTY_FUNCTION__);
+        ost::Thread::exit();
+    }
+
+    sem_val.val = 0;
+    semctl(sem_set_id, 0, SETVAL, sem_val);
+    return sem_set_id;
+}
+
+
 void VideoReceiveThread::loadSDP()
 {
     assert(not args_["receiving_sdp"].empty());
@@ -233,7 +234,7 @@ void VideoReceiveThread::setup()
     {
         _error("%s:Couldn't find a pixel format for \"%s\"",
                 __PRETTY_FUNCTION__, args_["format"].c_str());
-        exit();
+        ost::Thread::exit();
     }
 
     AVInputFormat *file_iformat = 0;
@@ -248,7 +249,7 @@ void VideoReceiveThread::setup()
             if (!file_iformat)
             {
                 _error("%s:Could not find format \"sdp\"", __PRETTY_FUNCTION__);
-                exit();
+                ost::Thread::exit();
             }
         }
         else if (args_["input"].substr(0, strlen("/dev/video")) == "/dev/video")
@@ -261,7 +262,7 @@ void VideoReceiveThread::setup()
             if (!file_iformat)
             {
                 _error("%s:Could not find format!", __PRETTY_FUNCTION__);
-                exit();
+                ost::Thread::exit();
             }
         }
 
@@ -278,7 +279,7 @@ void VideoReceiveThread::setup()
         {
             _error("%s:Could not open input file \"%s\"", __PRETTY_FUNCTION__,
                     args_["input"].c_str());
-            exit();
+            ost::Thread::exit();
         }
 
         int ret;
@@ -287,7 +288,7 @@ void VideoReceiveThread::setup()
         if (ret < 0)
         {
             _error("%s:Could not find stream info!", __PRETTY_FUNCTION__);
-            exit();
+            ost::Thread::exit();
         }
 
         // find the first video stream from the input
@@ -303,7 +304,7 @@ void VideoReceiveThread::setup()
         if (videoStreamIndex_ == -1)
         {
             _error("%s:Could not find video stream!", __PRETTY_FUNCTION__);
-            exit();
+            ost::Thread::exit();
         }
 
         // Get a pointer to the codec context for the video stream
@@ -314,7 +315,7 @@ void VideoReceiveThread::setup()
         if (inputDecoder == NULL)
         {
             _error("%s:Unsupported codec!", __PRETTY_FUNCTION__);
-            exit();
+            ost::Thread::exit();
         }
 
         // open codec
@@ -322,7 +323,7 @@ void VideoReceiveThread::setup()
         if (ret < 0)
         {
             _error("%s:Could not open codec!", __PRETTY_FUNCTION__);
-            exit();
+            ost::Thread::exit();
         }
     }
 
@@ -330,7 +331,7 @@ void VideoReceiveThread::setup()
     if (scaledPicture_ == 0)
     {
         _error("%s:Could not allocated output frame!", __PRETTY_FUNCTION__);
-        exit();
+        ost::Thread::exit();
     }
 
     if (dstWidth_ == 0 and dstHeight_ == 0)
@@ -428,7 +429,7 @@ void VideoReceiveThread::createScalingContext()
     if (imgConvertCtx_ == 0)
     {
         _error("Cannot init the conversion context!");
-        exit();
+        ost::Thread::exit();
     }
 }
 
