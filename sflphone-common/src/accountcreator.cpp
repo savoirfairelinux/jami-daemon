@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *
@@ -31,7 +31,7 @@
 #include "accountcreator.h"
 #include "sip/sipaccount.h"
 
-#ifdef USE_IAX
+#if HAVE_IAX
 #include "iax/iaxaccount.h"
 #endif
 
@@ -59,7 +59,7 @@ AccountCreator::createAccount (AccountType type, std::string accountID)
             return new SIPAccount (IP2IP_PROFILE);
             break;
         }
-#ifdef USE_IAX
+#if HAVE_IAX
 
         case IAX_ACCOUNT: {
             _debug ("AccountCreator: create account %s", accountID.c_str());

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -32,6 +32,8 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
+
+#include "config.h"
 
 #include "managerimpl.h"
 
@@ -2924,11 +2926,7 @@ void ManagerImpl::setVideoInputDeviceRate(const std::string& api)
 
 int ManagerImpl::isIax2Enabled (void)
 {
-#ifdef USE_IAX
-    return true;
-#else
-    return false;
-#endif
+    return HAVE_IAX;
 }
 
 int ManagerImpl::isRingtoneEnabled (const std::string& id)

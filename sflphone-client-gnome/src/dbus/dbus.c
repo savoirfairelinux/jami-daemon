@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
@@ -1326,21 +1326,20 @@ dbus_set_account_details (account_t *a)
         g_error_free (error);
     }
 }
-gchar*
+
+void
 dbus_add_account (account_t *a)
 {
-    gchar* accountId = NULL;
     GError *error = NULL;
+    g_free(a->accountID);
     org_sflphone_SFLphone_ConfigurationManager_add_account (
-        configurationManagerProxy, a->properties, &accountId, &error);
+        configurationManagerProxy, a->properties, &a->accountID, &error);
 
     if (error) {
         ERROR ("Failed to call add_account() on ConfigurationManager: %s",
                error->message);
         g_error_free (error);
     }
-
-    return accountId;
 }
 
 void
@@ -1500,7 +1499,7 @@ gchar*
 dbus_get_current_audio_codec_name (const callable_obj_t * c)
 {
 
-    gchar* codecName = "";
+    gchar* codecName;
     GError* error = NULL;
 
     org_sflphone_SFLphone_CallManager_get_current_audio_codec_name (callManagerProxy,
@@ -1508,6 +1507,7 @@ dbus_get_current_audio_codec_name (const callable_obj_t * c)
 
     if (error) {
         g_error_free (error);
+        codecName = g_strdup("");
     }
 
     DEBUG ("%s: codecName : %s", __PRETTY_FUNCTION__, codecName);
@@ -1717,7 +1717,7 @@ dbus_get_audio_device_index (const gchar *name)
 gchar*
 dbus_get_current_audio_output_plugin()
 {
-    gchar* plugin = "";
+    gchar* plugin;
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_get_current_audio_output_plugin (
         configurationManagerProxy, &plugin, &error);
@@ -1725,6 +1725,7 @@ dbus_get_current_audio_output_plugin()
     if (error) {
         ERROR ("Failed to call get_current_audio_output_plugin() on ConfigurationManager: %s", error->message);
         g_error_free (error);
+        plugin = g_strdup("");
     }
 
     return plugin;
@@ -1737,13 +1738,14 @@ dbus_get_current_audio_output_plugin()
 gchar*
 dbus_get_noise_suppress_state()
 {
-    gchar* state = "";
+    gchar* state;
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_get_noise_suppress_state (configurationManagerProxy, &state, &error);
 
     if (error) {
         ERROR ("DBus: Failed to call get_noise_suppress_state() on ConfigurationManager: %s", error->message);
         g_error_free (error);
+        state = g_strdup("");
     }
 
     return state;
@@ -1769,12 +1771,13 @@ gchar *
 dbus_get_echo_cancel_state(void)
 {
     GError *error = NULL;
-    gchar *state = "";
+    gchar *state;
     org_sflphone_SFLphone_ConfigurationManager_get_echo_cancel_state(configurationManagerProxy, &state, &error);
 
     if(error) {
         ERROR("DBus: Failed to call get_echo_cancel_state() on ConfigurationManager: %s", error->message);
         g_error_free(error);
+        state = g_strdup("");
     }
 
     return state;
@@ -2412,41 +2415,6 @@ dbus_get_video_input_device_rate_list(const gchar *dev, const gchar *channel, co
         return array;
     }
 }
-
-/*
-   void
-   dbus_set_sip_address( const gchar* address )
-   {
-   GError* error = NULL;
-   org_sflphone_SFLphone_ConfigurationManager_set_sip_address(
-   configurationManagerProxy,
-   address,
-   &error);
-   if(error)
-   {
-   g_error_free(error);
-   }
-   }
- */
-
-/*
-
-   gint
-   dbus_get_sip_address( void )
-   {
-   GError* error = NULL;
-   gint address;
-   org_sflphone_SFLphone_ConfigurationManager_get_sip_address(
-   configurationManagerProxy,
-   &address,
-   &error);
-   if(error)
-   {
-   g_error_free(error);
-   }
-   return address;
-   }
- */
 
 GHashTable*
 dbus_get_addressbook_settings (void)

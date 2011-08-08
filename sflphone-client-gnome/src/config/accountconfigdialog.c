@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
@@ -239,7 +239,6 @@ static void update_credential_cb (GtkWidget *widget, gpointer data UNUSED)
 
 static GtkWidget* create_basic_tab (account_t *currentAccount)
 {
-
     GtkWidget * frame;
     GtkWidget * table;
     GtkWidget * clearTextCheckbox;
@@ -249,38 +248,41 @@ static GtkWidget* create_basic_tab (account_t *currentAccount)
 #endif
 
     // Default settings
-    gchar *curAccountType = "SIP";
-    gchar *curAlias = "";
-    gchar *curUsername = "";
-    gchar *curHostname = "";
-    gchar *curPassword = "";
+    gchar *curAccountType;
+    gchar *curAlias;
+    gchar *curUsername;
+    gchar *curHostname;
+    gchar *curPassword;
     /* TODO: add curProxy, and add boxes for Proxy support */
-    gchar *curMailbox = "";
-    gchar *curUseragent = "";
-    gchar *curRouteSet = "";
+    gchar *curMailbox;
+    gchar *curUseragent;
+    gchar *curRouteSet;
 
     int row = 0;
 
+    g_assert(currentAccount);
     DEBUG ("Config: Create basic account tab");
 
     // Load from SIP/IAX/Unknown ?
-    if (currentAccount) {
-        curAccountType = g_hash_table_lookup (currentAccount->properties, ACCOUNT_TYPE);
-        curAlias = g_hash_table_lookup (currentAccount->properties, ACCOUNT_ALIAS);
-        curHostname = g_hash_table_lookup (currentAccount->properties, ACCOUNT_HOSTNAME);
-        if (strcmp (curAccountType, "SIP") == 0) {
+    curAccountType = g_hash_table_lookup (currentAccount->properties, ACCOUNT_TYPE);
+    curAlias = g_hash_table_lookup (currentAccount->properties, ACCOUNT_ALIAS);
+    curHostname = g_hash_table_lookup (currentAccount->properties, ACCOUNT_HOSTNAME);
+    if (strcmp (curAccountType, "SIP") == 0) {
             /* get password from credentials list */
+            if (currentAccount->credential_information) {
             GHashTable * element = g_ptr_array_index (currentAccount->credential_information, 0);
             curPassword = g_hash_table_lookup (element, ACCOUNT_PASSWORD);
         } else {
-            curPassword = g_hash_table_lookup (currentAccount->properties, ACCOUNT_PASSWORD);
+            curPassword = "";
         }
-        curUsername = g_hash_table_lookup (currentAccount->properties, ACCOUNT_USERNAME);
-        curRouteSet = g_hash_table_lookup(currentAccount->properties, ACCOUNT_ROUTE);
-        curMailbox = g_hash_table_lookup (currentAccount->properties, ACCOUNT_MAILBOX);
-        curMailbox = curMailbox != NULL ? curMailbox : "";
-        curUseragent = g_hash_table_lookup (currentAccount->properties, ACCOUNT_USERAGENT);
+    } else {
+        curPassword = g_hash_table_lookup (currentAccount->properties, ACCOUNT_PASSWORD);
     }
+    curUsername = g_hash_table_lookup (currentAccount->properties, ACCOUNT_USERNAME);
+    curRouteSet = g_hash_table_lookup(currentAccount->properties, ACCOUNT_ROUTE);
+    curMailbox = g_hash_table_lookup (currentAccount->properties, ACCOUNT_MAILBOX);
+    curMailbox = curMailbox != NULL ? curMailbox : "";
+    curUseragent = g_hash_table_lookup (currentAccount->properties, ACCOUNT_USERAGENT);
 
     gnome_main_section_new (_ ("Account Parameters"), &frame);
     gtk_widget_show (frame);
@@ -428,13 +430,16 @@ static void fill_treeview_with_credential (GtkListStore * credentialStore, accou
     GtkTreeIter iter;
     gtk_list_store_clear (credentialStore);
 
-    if (account->credential_information == NULL) {
-        DEBUG ("No credential defined");
-        return;
+    if (!account->credential_information) {
+        account->credential_information = g_ptr_array_sized_new(1);
+        GHashTable * new_table = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+        g_hash_table_insert (new_table, g_strdup (ACCOUNT_REALM), g_strdup("*"));
+        g_hash_table_insert (new_table, g_strdup (ACCOUNT_USERNAME), g_strdup(""));
+        g_hash_table_insert (new_table, g_strdup (ACCOUNT_PASSWORD), g_strdup(""));
+        g_ptr_array_add (account->credential_information, new_table);
     }
 
     unsigned int i;
-
     for (i = 0; i < account->credential_information->len; i++) {
         GHashTable * element = g_ptr_array_index (account->credential_information, i);
         gtk_list_store_append (credentialStore, &iter);
@@ -767,9 +772,7 @@ GtkWidget* create_credential_widget (account_t *a)
 
     gtk_container_add (GTK_CONTAINER (scrolledWindowCredential), treeViewCredential);
 
-    DEBUG ("Credential pas ok");
     fill_treeview_with_credential (credentialStore, a);
-    DEBUG ("Credential ok");
 
     /* Credential Buttons */
     hbox = gtk_hbox_new (FALSE, 10);
@@ -1328,7 +1331,8 @@ void show_account_window (account_t * currentAccount)
         DEBUG ("Config: Fetching default values for new account");
         currentAccount = g_new0 (account_t, 1);
         currentAccount->properties = dbus_get_account_details (NULL);
-        currentAccount->accountID = "new";
+        currentAccount->accountID = g_strdup("new"); //FIXME : replace with NULL for new accounts
+        currentAccount->credential_information = NULL;
         sflphone_fill_codec_list_per_account (&currentAccount);
     }
 
@@ -1549,6 +1553,13 @@ void show_account_window (account_t * currentAccount)
 
     }
 
+    /** @todo Verify if it's the best condition to check */
+    if (g_strcasecmp (currentAccount->accountID, "new") == 0) {
+        dbus_add_account (currentAccount);
+    } else {
+        dbus_set_account_details (currentAccount);
+    }
+
     if (currentProtocol && strcmp (currentProtocol, "SIP") == 0) {
 
         /* Set new credentials if any */
@@ -1560,13 +1571,6 @@ void show_account_window (account_t * currentAccount)
             if (currentAccount->credential_information)
                 dbus_set_credentials (currentAccount);
         }
-    }
-
-    /** @todo Verify if it's the best condition to check */
-    if (g_strcasecmp (currentAccount->accountID, "new") == 0) {
-        dbus_add_account (currentAccount);
-    } else {
-        dbus_set_account_details (currentAccount);
     }
 
     // Perpetuate changes to the deamon

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *
@@ -691,7 +691,7 @@ process_dialing (callable_obj_t *c, guint keyval, gchar *key)
             sflphone_place_call (c);
             break;
         case 65307: /* ESCAPE */
-            sflphone_hang_up (c);
+            sflphone_hang_up ();
             break;
         case 65288: { /* BACKSPACE */
             /* Brackets mandatory because of local vars */
@@ -865,7 +865,7 @@ sflphone_keypad (guint keyval, gchar * key)
 			calllist_remove_call(current_calls, c->_callID);
                         break;
                     case 65307: /* ESCAPE */
-                        sflphone_unset_transfert (c);
+                        sflphone_unset_transfert ();
                         break;
                     default: // When a call is on transfert, typing new numbers will add it to c->_peer_number
                         process_dialing (c, keyval, key);
@@ -1581,7 +1581,6 @@ void sflphone_get_interface_addr_from_name (char *iface_name, char **iface_addr,
 
     struct ifreq ifr;
     int fd;
-    int err;
     // static char iface_addr[18];
     char *tmp_addr;
 
@@ -1596,7 +1595,7 @@ void sflphone_get_interface_addr_from_name (char *iface_name, char **iface_addr,
     strcpy (ifr.ifr_name, iface_name);
     ifr.ifr_addr.sa_family = AF_INET;
 
-    if ( (err = ioctl (fd, SIOCGIFADDR, &ifr)) < 0)
+    if ( ioctl (fd, SIOCGIFADDR, &ifr) < 0)
         DEBUG ("getInterfaceAddrFromName use default interface (0.0.0.0)\n");
 
 

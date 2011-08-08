@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -102,12 +102,6 @@ static const SOUND_FORMAT INT32 = 0x8;
 #define SFL_PCM_PLAYBACK	0x0022		/** To open playback device only */
 #define SFL_PCM_CAPTURE		0x0023		/** To open capture device only */
 #define SFL_PCM_RINGTONE        0x0024
-
-#ifdef USE_IAX
-#define	IAX2_ENABLED  true			/** IAX2 support */
-#else
-#define	IAX2_ENABLED  false			/** IAX2 support */
-#endif
 
 #define GSM_STRING_DESCRIPTION	  "gsm"		/** GSM codec string description */
 #define SPEEX_STRING_DESCRIPTION  "speex"	/** SPEEX codec string description */
