@@ -65,11 +65,6 @@ class Codec
          * @return The bitrate for which this codec is configured // TODO deal with VBR case.
          */
         virtual double getBitRate() const = 0;
-
-        /**
-         * @return The expected bandwidth used by this codec.
-         */
-        virtual double getBandwidth() const = 0;
 };
 }
 

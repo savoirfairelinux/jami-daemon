@@ -135,6 +135,13 @@ void SIPAccount::serialize (Conf::YamlEmitter *emitter)
     Conf::ScalarNode sameasLocal (_publishedSameasLocal);
     Conf::ScalarNode resolveOnce (_resolveOnce);
     Conf::ScalarNode codecs (_codecStr);
+    std::vector<std::string>::const_iterator git;
+    for(git = _videoCodecOrder.begin() ; git != _videoCodecOrder.end(); ++git)
+		std::cout << *git << std::endl;
+    std::cout << Manager::instance ().serialize (_videoCodecOrder) << std::endl;
+
+    Conf::ScalarNode vcodecs (Manager::instance ().serialize (_videoCodecOrder));
+
     Conf::ScalarNode ringtonePath (_ringtonePath);
     Conf::ScalarNode ringtoneEnabled (_ringtoneEnabled);
     Conf::ScalarNode stunServer (_stunServer);
@@ -189,6 +196,7 @@ void SIPAccount::serialize (Conf::YamlEmitter *emitter)
     accountmap.setKeyValue (dtmfTypeKey, &dtmfType);
     accountmap.setKeyValue (displayNameKey, &displayName);
     accountmap.setKeyValue (codecsKey, &codecs);
+    accountmap.setKeyValue (videocodecsKey, &vcodecs);
     accountmap.setKeyValue (ringtonePathKey, &ringtonePath);
     accountmap.setKeyValue (ringtoneEnabledKey, &ringtoneEnabled);
 
@@ -265,8 +273,12 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
     map->getValue(accountEnableKey, &_enabled);
     map->getValue(mailboxKey, &_mailBox);
     map->getValue(codecsKey, &_codecStr);
+    std::string vcodecs;
+    map->getValue(videocodecsKey, &vcodecs);
     // Update codec list which one is used for SDP offer
     setActiveCodecs (Manager::instance ().unserialize (_codecStr));
+
+    setActiveVideoCodecs (Manager::instance ().unserialize (vcodecs));
 
     map->getValue(ringtonePathKey, &_ringtonePath);
     map->getValue(ringtoneEnabledKey, &_ringtoneEnabled);

@@ -752,7 +752,7 @@
 	   <method name="getVideoCodecDetails" tp:name-for-bindings="getVideoCodecDetails">
 		   <tp:docstring>
 		   </tp:docstring>
-		   <arg type="i" name="payload" direction="in">
+		   <arg type="s" name="codec" direction="in">
 			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>
@@ -762,6 +762,34 @@
 			   </tp:docstring>
 		   </arg>
 	   </method>
+
+       <method name="getActiveVideoCodecList" tp:name-for-bindings="getActiveVideoCodecList">
+               <tp:docstring>
+               </tp:docstring>
+               <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+               <arg type="s" name="accountID" direction="in">
+                       <tp:docstring>
+                       </tp:docstring>
+               </arg>
+               <arg type="as" name="list" direction="out">
+                       <tp:docstring>
+                       </tp:docstring>
+               </arg>
+       </method>
+
+       <method name="setActiveVideoCodecList" tp:name-for-bindings="setActiveVideoCodecList">
+               <tp:docstring>
+               </tp:docstring>
+               <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="VectorString"/>
+               <arg type="as" name="list" direction="in">
+                       <tp:docstring>
+                       </tp:docstring>
+               </arg>
+               <arg type="s" name="accountID" direction="in">
+                       <tp:docstring>
+                       </tp:docstring>
+               </arg>
+       </method>
 
 	   <!--    General Settings Panel         -->
 

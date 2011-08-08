@@ -39,62 +39,31 @@ namespace sfl_video {
 
 /* anonymous namespace */
 namespace {
-std::string encoderName(int payload)
-{
-    std::string result = getCodecsMap()[payload];
-    if (result.empty())
-        return "MISSING";
-    else
-        return result;
-}
-
 int FAKE_BITRATE()
 {
-    return 1000000;
+    return 1000;
 }
 
-int getBitRate(int payload)
-{
-    return FAKE_BITRATE();
-}
-
-int getBandwidthPerCall(int payload)
+int getBitRate(const std::string &codec)
 {
     return FAKE_BITRATE();
 }
 } // end anonymous namespace
 
-std::map<int, std::string> getCodecsMap()
+std::vector<std::string> getVideoCodecList()
 {
-    static std::map<int, std::string> CODECS_MAP;
-    if (CODECS_MAP.empty())
-    {
-        CODECS_MAP[96] = "H263-2000";
-        CODECS_MAP[97] = "H264";
-        CODECS_MAP[98] = "MP4V-ES";
-        CODECS_MAP[99] = "VP8";
-        CODECS_MAP[100] = "THEORA";
-    }
-    return CODECS_MAP;
+	return libav_utils::getVideoCodecList();
 }
 
-std::vector<std::string> getCodecSpecifications(int payload)
+std::vector<std::string> getCodecSpecifications(const std::string &codec)
 {
-    std::vector<std::string> v;
+    std::vector<std::string> v(1, codec);
     std::stringstream ss;
 
-    // Add the name of the codec
-    v.push_back (encoderName(payload));
-
     // Add the bit rate
-    ss << getBitRate(payload);
+    ss << getBitRate(codec);
     v.push_back(ss.str());
     ss.str("");
-
-    // Add the bandwidth information
-    ss << getBandwidthPerCall(payload);
-    v.push_back (ss.str());
-    ss.str ("");
 
     return v;
 }

@@ -44,8 +44,8 @@
 #include <string>
 #include <stdexcept>
 
+#include "sdpmedia.h"
 #include "global.h" // FIXME: CodecOrder shouldn't be in global.h
-class sdpMedia;
 
 namespace sfl {
     class AudioCodec;
@@ -116,8 +116,9 @@ class Sdp
         /**
          * Returns a string version of the negotiated SDP fields which pertain
          * to video.
+         * Second member of the vector is the video codec rtp name
          */
-        std::string getActiveVideoDescription() const;
+        std::vector<std::string> getActiveVideoDescription() const;
 
         /**
          * Return whether or not the media have been determined for this sdp session
@@ -134,7 +135,7 @@ class Sdp
          * On building an invite outside a dialog, build the local offer and create the
          * SDP negotiator instance with it.
          */
-        int createOffer (CodecOrder selectedCodecs);
+        int createOffer (CodecOrder selectedCodecs, const std::vector<std::string> &videoCodecs);
 
         /*
         * On receiving an invite outside a dialog, build the local offer and create the
@@ -142,7 +143,7 @@ class Sdp
         *
         * @param remote    The remote offer
         */
-        int receiveOffer (const pjmedia_sdp_session* remote, CodecOrder selectedCodecs);
+        int receiveOffer (const pjmedia_sdp_session* remote, CodecOrder selectedCodecs, const std::vector<std::string> &videoCodecs);
 
         /*
          * On receiving a message, check if it contains SDP and negotiate. Should be used for
@@ -183,15 +184,6 @@ class Sdp
         void cleanLocalMediaCapabilities (void);
 
         /*
-         * Attribute the specified port to every medias provided
-         * This is valid only because we are using one media
-         * We should change this to support multiple medias
-         *
-         * @param port  The media port
-         */
-        void setPortToAllMedia (int port);
-
-        /*
          * Write accessor. Set the local IP address that will be used in the sdp session
          */
         void setLocalIP (const std::string &ip_addr) {
@@ -210,6 +202,8 @@ class Sdp
          */
         void  setLocalPublishedAudioPort (int port) {
             localAudioPort_ = port;
+            if (localAudioMediaCap_)
+            	localAudioMediaCap_->port = port;
         }
 
         /**
@@ -217,6 +211,8 @@ class Sdp
          */
         void  setLocalPublishedVideoPort (int port) {
             localVideoPort_ = port;
+            if (localVideoMediaCap_)
+            	localVideoMediaCap_->port = port;
         }
 
         /**
@@ -348,7 +344,8 @@ class Sdp
         /**
          * Codec Map used for offer
          */
-        std::vector<sdpMedia *> localAudioMediaCap_;
+        sdpMedia *localAudioMediaCap_;
+        sdpMedia *localVideoMediaCap_;
 
         /**
          * The media that will be used by the session (after the SDP negotiation)
@@ -411,9 +408,8 @@ class Sdp
          * Add rtpmap field if necessary
          *
          * @param media The media to add to SDP
-         * @param med   The structure to receive the media section
          */
-        void setMediaDescriptorLine (sdpMedia* media, pjmedia_sdp_media** p_med);
+        void setMediaDescriptorLine (sdpMedia* media);
 
         void setTelephoneEventRtpmap(pjmedia_sdp_media *med);
 
@@ -422,11 +418,12 @@ class Sdp
          * @param List of codec in preference order
          */
         void setLocalMediaCapabilities (CodecOrder selectedCodecs);
+        void setLocalMediaVideoCapabilities (const std::vector<std::string> &videoCodecs);
 
         /*
          * Build the local SDP offer
          */
-        int createLocalSession (CodecOrder selectedCodecs);
+        int createLocalSession (CodecOrder selectedCodecs, const std::vector<std::string> &videoCodecs);
 
         /*
          *  Mandatory field: Protocol version ("v=")
@@ -458,16 +455,6 @@ class Sdp
          *  Specify the start and the stop time for a session.
          */
         void addTiming (void);
-
-        /*
-         * Mandatory field: Media descriptions ("m=")
-         */
-        void addAudioMediaDescription();
-
-        /*
-         * Mandatory field: Media descriptions ("m=")
-         */
-        void addVideoMediaDescription();
 
         /*
          * Adds a sdes attribute to the given media section.

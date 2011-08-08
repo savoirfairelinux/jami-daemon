@@ -736,7 +736,7 @@ Call *SIPVoIPLink::newOutgoingCall (const std::string& id, const std::string& to
 
 	// Building the local SDP offer
 	call->getLocalSDP()->setLocalIP (addrSdp);
-	status = call->getLocalSDP()->createOffer (account->getActiveCodecs ());
+	status = call->getLocalSDP()->createOffer (account->getActiveCodecs (), account->getActiveVideoCodecs());
 	if (status != PJ_SUCCESS) {
 		delete call;
 		call = NULL;
@@ -1836,7 +1836,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const std::string& id, const std::string& to
 
         // Building the local SDP offer
         call->getLocalSDP()->setLocalIP (addrSdp);
-        status = call->getLocalSDP()->createOffer (account->getActiveCodecs ());
+        status = call->getLocalSDP()->createOffer (account->getActiveCodecs (), account->getActiveVideoCodecs());
         if(status != PJ_SUCCESS) {
         	_error("UserAgent: Failed to create local offer\n");
         }
@@ -3360,7 +3360,7 @@ void sdp_request_offer_cb (pjsip_inv_session *inv, const pjmedia_sdp_session *of
 
     SIPAccount *account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (accId));
 
-    status = call->getLocalSDP()->receiveOffer (offer, account->getActiveCodecs ());
+    status = call->getLocalSDP()->receiveOffer (offer, account->getActiveCodecs (), account->getActiveVideoCodecs());
     call->getLocalSDP()->startNegotiation();
 
     status = pjsip_inv_set_sdp_answer (call->getInvSession(), call->getLocalSDP()->getLocalSdpSession());
@@ -3409,7 +3409,7 @@ void sdp_create_offer_cb (pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 
     // Building the local SDP offer
     call->getLocalSDP()->setLocalIP (addrSdp);
-    call->getLocalSDP()->createOffer (account->getActiveCodecs());
+    call->getLocalSDP()->createOffer (account->getActiveCodecs(), account->getActiveVideoCodecs());
 
     *p_offer = call->getLocalSDP()->getLocalSdpSession();
 
@@ -4071,7 +4071,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
     }
 
 
-    status = call->getLocalSDP()->receiveOffer (r_sdp, account->getActiveCodecs ());
+    status = call->getLocalSDP()->receiveOffer (r_sdp, account->getActiveCodecs (), account->getActiveVideoCodecs());
     if (status!=PJ_SUCCESS) {
         delete call;
         call = NULL;
@@ -4716,7 +4716,7 @@ bool setCallMediaLocal (SIPCall* call, const std::string &localIP)
         call->setLocalAudioPort (callLocalAudioPort);
         call->setLocalVideoPort (callLocalVideoPort);
 
-        call->getLocalSDP()->setPortToAllMedia (callLocalExternAudioPort);
+        call->getLocalSDP()->setLocalPublishedAudioPort (callLocalExternAudioPort);
         call->getLocalSDP()->setLocalPublishedVideoPort(callLocalVideoPort);
 
         return true;
