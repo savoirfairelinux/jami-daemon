@@ -36,10 +36,6 @@ AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([libs/Makefile \
 		libs/utilspp/Makefile \
 		libs/utilspp/singleton/Makefile \
-		libs/dbus-c++/Makefile \
-		libs/dbus-c++/src/Makefile \
-		libs/dbus-c++/tools/Makefile \
-		libs/dbus-c++/data/Makefile \
 		libs/iax2/Makefile])
 
 AC_CONFIG_FILES([src/Makefile \
@@ -204,28 +200,12 @@ dnl Check for libzrtpcpp, a ccRTP extension providing zrtp key exchange
 LIBZRTPCPP_MIN_VERSION=1.3.0
 PKG_CHECK_MODULES(ZRTPCPP, libzrtpcpp >= ${LIBZRTPCPP_MIN_VERSION},, AC_MSG_ERROR([Missing zrtp development package: libzrtpcpp-dev]))
 
-
-dnl DBus-C++ detection (used to be in library own build system)
-DBUS_REQUIRED_VERSION=0.60
-PKG_CHECK_MODULES(dbus, [dbus-1 >= $DBUS_REQUIRED_VERSION],,
-	AC_MSG_ERROR([You need the DBus libraries (version 0.6 or better)]
-				[http://gitorious.org/dbus-cplusplus]))
-
-DBUS_API_STABLE_VERSION=1.0.0
-PKG_CHECK_EXISTS([dbus-1 < $DBUS_API_STABLE_VERSION],
-	[AC_DEFINE(DBUS_API_SUBJECT_TO_CHANGE, , [unstable DBus])]
-	)
-
-DBUS_THREADS_INIT_DEFAULT_VERSION=0.93
-PKG_CHECK_EXISTS([dbus-1 >= $DBUS_THREADS_INIT_DEFAULT_VERSION],
-	[AC_DEFINE(DBUS_HAS_THREADS_INIT_DEFAULT, , [dbus_threads_init_default (needs DBus >= 0.93)])]
-	)
-
-DBUS_RECURSIVE_MUTEX_VERSION=0.95
-PKG_CHECK_EXISTS([dbus-1 >= $DBUS_RECURSIVE_MUTEX_VERSION],
-	[AC_DEFINE(DBUS_HAS_RECURSIVE_MUTEX, , [DBus supports recursive mutexes (needs DBus >= 0.95)])]
-	)
-
+dnl DBus-C++ detection
+dnl pkg-config doesn't like 0.6.0-pre1 version number, it assumes that it is 
+dnl more recent than (unreleased) 0.6.0
+DBUS_CPP_REQUIRED_VERSION=0.6.0-pre1
+PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,,
+	AC_MSG_ERROR([You need the DBus-c++ libraries (version $DBUS_CPP_REQUIRED_VERSION or better)]))
 
 AC_ARG_WITH(debug,
 		AS_HELP_STRING(
@@ -290,21 +270,6 @@ AC_MSG_ERROR([You need the Perl-Compatible Regular Expressions library (pcre)])
 	PCRE_CFLAGS=
 	AC_SUBST(PCRE_LIBS)
 AC_SUBST(PCRE_CFLAGS)
-
-
-
-
-# For the tools/, we need libdbus-c++ for the "build" architecture as well
-
-	AM_CONDITIONAL(CROSS_COMPILING, test "$cross_compiling" = "yes")
-
-	AC_ARG_WITH(build-libdbus-cxx,
-			AS_HELP_STRING([--with-build-libdbus-cxx],
-				[For cross compilation: path to libdbus-cxx which was compiled for the 'build' system.]),
-			[ BUILD_LIBDBUS_CXX_DIR=${withval} ],
-			[ BUILD_LIBDBUS_CXX_DIR="\$(top_builddir)" ]
-			)
-AC_SUBST(BUILD_LIBDBUS_CXX_DIR)
 
 dnl Check for libcppunit-dev
 CPPUNIT_MIN_VERSION=1.12

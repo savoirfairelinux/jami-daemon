@@ -1,7 +1,5 @@
 include $(top_srcdir)/globals.mak
 
-DBUSXX=$(top_srcdir)/libs/dbus-c++/tools/dbusxx-xml2cpp
-
 noinst_LTLIBRARIES = libdbus.la
 
 BUILT_SOURCES=                      \
@@ -11,7 +9,7 @@ BUILT_SOURCES=                      \
 
 # Rule to generate the binding headers
 %-glue.h: %-introspec.xml Makefile.am
-	$(DBUSXX) $< --adaptor=$@
+	dbusxx-xml2cpp $< --adaptor=$@
 
 libdbus_la_SOURCES = \
     callmanager.cpp \
@@ -26,9 +24,10 @@ else
 NETWORKMANAGER=
 endif
 
-libdbus_la_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" $(NETWORKMANAGER)
-
-libdbus_la_LIBADD = $(top_srcdir)/libs/dbus-c++/src/libdbus-c++-1.la
+libdbus_la_CXXFLAGS = \
+            -DPREFIX=\"$(prefix)\" \
+            -DPROGSHAREDIR=\"${datadir}/sflphone\" \
+            $(NETWORKMANAGER)
 
 noinst_HEADERS =            \
     callmanager.h           \
