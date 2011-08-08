@@ -67,11 +67,6 @@ class Codec
         virtual double getBitRate() const = 0;
 
         /**
-         * @return The expected bandwidth used by this codec.
-         */
-        virtual double getBandwidth() const = 0;
-
-        /**
          * Build a unique hash code for identifying the codec uniquely.
          * Note that if multiple implementations of codec are provided,
          * one should override this function in order to avoid conflicting

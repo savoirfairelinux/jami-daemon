@@ -50,7 +50,6 @@ class Speex : public sfl::AudioCodec
             _frameSize = 160; // samples, 20 ms at 8kHz
             _channel = 1;
             _bitrate = 24;
-            _bandwidth = 0;
             _hasDynamicPayload = true;
             initSpeex();
         }

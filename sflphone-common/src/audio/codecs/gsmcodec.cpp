@@ -49,7 +49,6 @@ class Gsm : public sfl::AudioCodec
             _frameSize = 160; // samples, 20 ms at 8kHz
             _channel = 1;
             _bitrate = 13.3;
-            _bandwidth = 29.2;
             _hasDynamicPayload = false;
 
             if (! (_decode_gsmhandle = gsm_create()))

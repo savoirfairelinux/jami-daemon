@@ -129,11 +129,6 @@ class AudioCodec : public Codec
         double getBitRate() const;
 
         /**
-         * @Override
-         */
-        double getBandwidth() const;
-
-        /**
          * @return the framing size for this codec.
          */
         unsigned int getFrameSize() const;
