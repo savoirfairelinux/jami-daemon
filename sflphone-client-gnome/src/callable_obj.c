@@ -39,18 +39,6 @@
 #define UNIX_DAY			86400
 #define UNIX_WEEK			86400 * 6
 #define UNIX_TWO_DAYS		        86400 * 2
-/*
-gint is_callID_callstruct (gconstpointer a, gconstpointer b)
-{
-   callable_obj_t * c = (callable_obj_t*) a;
-
-    if (g_strcasecmp (c->_callID, (const gchar*) b) == 0) {
-        return 0;
-    } else {
-        return 1;
-    }
-}
-*/
 
 gint get_state_callstruct (gconstpointer a, gconstpointer b)
 {
@@ -179,7 +167,6 @@ void threaded_clock_incrementer (void *pc)
 
 
         usleep (1000000);
-
     }
 
     DEBUG ("CallableObj: Stopping Thread");

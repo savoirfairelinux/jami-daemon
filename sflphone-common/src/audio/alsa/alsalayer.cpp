@@ -68,10 +68,7 @@ AlsaLayer::~AlsaLayer (void)
     _debug ("Audio: Destroy of ALSA layer");
     closeLayer();
 
-    if (_converter) {
-        delete _converter;
-        _converter = NULL;
-    }
+    delete _converter;
 }
 
 bool
@@ -103,7 +100,7 @@ AlsaLayer::closeLayer()
     return true;
 }
 
-bool
+void
 AlsaLayer::openDevice (int indexIn, int indexOut, int indexRing, int sampleRate, int frameSize, int stream , std::string plugin)
 {
     /* Close the devices before open it */
@@ -136,8 +133,6 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int indexRing, int sampleRate,
 
     AudioLayer::_dcblocker = new DcBlocker();
     AudioLayer::_audiofilter = new AudioProcessing (static_cast<Algorithm *> (_dcblocker));
-
-    return true;
 }
 
 void
@@ -801,14 +796,13 @@ AlsaLayer::soundCardIndexExist (int card , int stream)
     ss << card ;
     name.append (ss.str());
 
-    if (snd_ctl_open (&handle, name.c_str(), 0) == 0) {
-        snd_pcm_info_set_stream (pcminfo , (stream == SFL_PCM_PLAYBACK) ? SND_PCM_STREAM_PLAYBACK : SND_PCM_STREAM_CAPTURE);
+    if (snd_ctl_open (&handle, name.c_str(), 0) != 0)
+		return false;
 
-        if (snd_ctl_pcm_info (handle , pcminfo) < 0) return false;
-        else
-            return true;
-    } else
-        return false;
+    snd_pcm_info_set_stream (pcminfo , (stream == SFL_PCM_PLAYBACK) ? SND_PCM_STREAM_PLAYBACK : SND_PCM_STREAM_CAPTURE);
+	bool ret =  snd_ctl_pcm_info (handle , pcminfo) >= 0;
+	snd_ctl_close(handle);
+	return ret;
 }
 
 int

@@ -1,7 +1,6 @@
- 
 SUBDIRS = dbus-api
 if ENABLE_DOXYGEN
-    SUBDIRS += doxygen
+	SUBDIRS += doxygen
 endif
 
 .PHONY: doc

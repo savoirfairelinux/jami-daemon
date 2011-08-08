@@ -263,7 +263,7 @@ update_actions()
                                     1);
                 break;
             case CALL_STATE_DIALING:
-		DEBUG("UIManager: Call State Dialing");
+                DEBUG("UIManager: Call State Dialing");
                 gtk_action_set_sensitive (GTK_ACTION (pickUpAction), TRUE);
 
                 if (active_calltree == current_calls)
@@ -275,16 +275,14 @@ update_actions()
 
                 if (active_calltree == current_calls)
                     gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
-		else if(active_calltree == history) {
-		    if(selectedCall->_recordfile && (g_strcmp0(selectedCall->_recordfile, "") != 0)) {
-			if(selectedCall->_record_is_playing) {
-			    gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM(stopRecordWidget), 3);
-			}
-			else {
-		            gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM(playRecordWidget), 3);
-			}
-		    }
-		}
+                else if (active_calltree == history) {
+                    if (selectedCall->_recordfile && (g_strcmp0(selectedCall->_recordfile, "") != 0)) {
+                        if (selectedCall->_record_is_playing)
+                            gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM(stopRecordWidget), 3);
+                        else
+                            gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM(playRecordWidget), 3);
+                    }
+                }
                 break;
             case CALL_STATE_CURRENT:
                 DEBUG ("UIManager: Call State Current");
