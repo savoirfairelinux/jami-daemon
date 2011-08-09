@@ -66,19 +66,9 @@ int AudioLayer::putUrgent (void* buffer, int toCopy)
 
 int AudioLayer::putMain (void *buffer, int toCopy, std::string call_id)
 {
-    int a;
-
     ost::MutexLock guard (_mutex);
-    a = getMainBuffer()->availForPut (call_id);
 
-    if (a >= toCopy) {
-        return getMainBuffer()->putData (buffer, toCopy, call_id);
-    } else {
-        _debug ("Chopping sound, Ouch! RingBuffer full ?");
-        return getMainBuffer()->putData (buffer, a, call_id);
-    }
-
-    return 0;
+    return getMainBuffer()->putData (buffer, toCopy, call_id);
 }
 
 void AudioLayer::notifyincomingCall()

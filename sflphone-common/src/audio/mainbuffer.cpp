@@ -323,21 +323,6 @@ int MainBuffer::putData (void *buffer, int toCopy, std::string call_id)
 
 }
 
-int MainBuffer::availForPut (std::string call_id)
-{
-
-    ost::MutexLock guard (_mutex);
-
-    RingBuffer* ringbuffer = getRingBuffer (call_id);
-
-    if (ringbuffer == NULL)
-        return 0;
-    else
-        return ringbuffer->AvailForPut();
-
-}
-
-
 int MainBuffer::getData (void *buffer, int toCopy, std::string call_id)
 {
     ost::MutexLock guard (_mutex);

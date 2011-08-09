@@ -93,8 +93,6 @@ class MainBuffer
 
         int getData (void *buffer, int toCopy, std::string call_id = default_id);
 
-        int availForPut (std::string call_id = default_id);
-
         int availForGet (std::string call_id = default_id);
 
         int discard (int toDiscard, std::string call_id = default_id);
