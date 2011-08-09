@@ -50,18 +50,9 @@ void AudioLayer::flushUrgent (void)
 
 int AudioLayer::putUrgent (void* buffer, int toCopy)
 {
-    int a;
-
     ost::MutexLock guard (_mutex);
-    a = _urgentRingBuffer.AvailForPut();
 
-    if (a >= toCopy) {
-        return _urgentRingBuffer.Put (buffer, toCopy);
-    } else {
-        return _urgentRingBuffer.Put (buffer, a);
-    }
-
-    return 0;
+    return _urgentRingBuffer.Put (buffer, toCopy);
 }
 
 int AudioLayer::putMain (void *buffer, int toCopy, std::string call_id)

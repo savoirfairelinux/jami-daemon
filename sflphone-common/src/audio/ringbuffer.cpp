@@ -178,13 +178,6 @@ RingBuffer::getNbReadPointer()
 //
 // For the writer only:
 //
-int
-RingBuffer::AvailForPut()
-{
-    // Always keep 4 bytes safe (?)
-
-    return mBufferSize - putLen();
-}
 
 // This one puts some data inside the ring buffer.
 int

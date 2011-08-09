@@ -95,12 +95,6 @@ class RingBuffer
         int getNbReadPointer();
 
         /**
-         * To get how much space is available in the buffer to write in
-         * @return int The available size
-         */
-        int AvailForPut (void);
-
-        /**
          * Write data in the ring buffer
          * @param buffer Data to copied
          * @param toCopy Number of bytes to copy
