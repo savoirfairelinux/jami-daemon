@@ -89,7 +89,7 @@ class MainBuffer
 
         void unBindAllHalfDuplexOut (std::string process_id);
 
-        int putData (void *buffer, int toCopy, std::string call_id = default_id);
+        void putData (void *buffer, int toCopy, std::string call_id = default_id);
 
         int getData (void *buffer, int toCopy, std::string call_id = default_id);
 

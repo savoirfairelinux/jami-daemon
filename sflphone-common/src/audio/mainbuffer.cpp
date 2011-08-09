@@ -298,15 +298,13 @@ void MainBuffer::unBindAllHalfDuplexOut (std::string process_id)
 }
 
 
-int MainBuffer::putData (void *buffer, int toCopy, std::string call_id)
+void MainBuffer::putData (void *buffer, int toCopy, std::string call_id)
 {
     ost::MutexLock guard (_mutex);
 
     RingBuffer* ring_buffer = getRingBuffer (call_id);
-    if (!ring_buffer)
-        return 0;
-
-    return ring_buffer->Put (buffer, toCopy);
+    if (ring_buffer)
+    	ring_buffer->Put (buffer, toCopy);
 }
 
 int MainBuffer::getData (void *buffer, int toCopy, std::string call_id)
