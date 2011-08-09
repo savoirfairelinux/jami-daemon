@@ -1009,7 +1009,6 @@ void AlsaLayer::audioCallback (void)
 
     // Additionally handle the mic's audio stream
     int micAvailBytes;
-    int micAvailPut;
     int toPut;
 
     SFLDataFormat* in = NULL;
@@ -1024,7 +1023,6 @@ void AlsaLayer::audioCallback (void)
     if (micAvailBytes <= 0)
         return;
     
-    micAvailPut = getMainBuffer()->availForPut();
     toPut = (micAvailBytes <= framesPerBufferAlsa) ? micAvailBytes : framesPerBufferAlsa;
     in = (SFLDataFormat*) malloc (toPut * sizeof (SFLDataFormat));
     toPut = read (in, toPut* sizeof (SFLDataFormat));
