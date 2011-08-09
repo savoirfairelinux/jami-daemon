@@ -1038,7 +1038,7 @@ void AlsaLayer::audioCallback (void)
 
         _audiofilter->processAudio (rsmpl_out, nbSample*sizeof (SFLDataFormat));
 
-        getMainBuffer()->putData (rsmpl_out, nbSample * sizeof (SFLDataFormat), 100);
+        getMainBuffer()->putData (rsmpl_out, nbSample * sizeof (SFLDataFormat));
 
         free (rsmpl_out);
     } else {
@@ -1047,7 +1047,7 @@ void AlsaLayer::audioCallback (void)
         if (filter_out) {
             _audiofilter->processAudio (in, filter_out, toPut);
             // captureFile->write ( (const char *) filter_out, toPut);
-            getMainBuffer()->putData (filter_out, toPut, 100);
+            getMainBuffer()->putData (filter_out, toPut);
             free (filter_out);
         }
     }

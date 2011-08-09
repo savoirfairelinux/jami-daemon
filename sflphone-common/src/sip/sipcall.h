@@ -100,13 +100,6 @@ class SIPCall : public Call
         }
 
         /**
-         * Set the local SDP session
-         */
-        void setLocalSDP (Sdp *local_sdp) {
-            _local_sdp = local_sdp;
-        }
-
-        /**
          * Returns a pointer to the AudioRtp object
          */
         sfl::AudioRtpFactory * getAudioRtp (void) {

@@ -177,7 +177,7 @@ void MainBufferTest::testCallIDSet()
     CPPUNIT_ASSERT (iter_map ==_mainbuffer._callIDMap.end());
 
     // test callidset creation
-    CPPUNIT_ASSERT (_mainbuffer.createCallIDSet (test_id) == true);
+    _mainbuffer.createCallIDSet (test_id);
     CPPUNIT_ASSERT (_mainbuffer._callIDMap.size() == 1);
     iter_map = _mainbuffer._callIDMap.find (test_id);
     CPPUNIT_ASSERT (iter_map->first == test_id);
@@ -929,14 +929,14 @@ void MainBufferTest::testGetPutDataByID()
 
     // pu by test_id get by test_id
     CPPUNIT_ASSERT (_mainbuffer.availForPut (test_id) == avail_for_put_defaultid);
-    CPPUNIT_ASSERT (_mainbuffer.putData (&test_input2, sizeof (int), 100, test_id) == sizeof (int));
+    CPPUNIT_ASSERT (_mainbuffer.putData (&test_input2, sizeof (int), test_id) == sizeof (int));
     CPPUNIT_ASSERT (_mainbuffer.availForGetByID (test_id, default_id) == sizeof (int));
     CPPUNIT_ASSERT (_mainbuffer.getDataByID (&test_output, sizeof (int), 100, test_id, default_id) == sizeof (int));
     CPPUNIT_ASSERT (_mainbuffer.availForGetByID (test_id, default_id) == 0);
     CPPUNIT_ASSERT (test_input2 == test_output);
 
     // put/get by false id
-    CPPUNIT_ASSERT (_mainbuffer.putData (&test_input2, sizeof (int), 100, false_id) == 0);
+    CPPUNIT_ASSERT (_mainbuffer.putData (&test_input2, sizeof (int), false_id) == 0);
     CPPUNIT_ASSERT (_mainbuffer.getDataByID (&test_input2, sizeof (int), 100, false_id, false_id) == 0);
     CPPUNIT_ASSERT (_mainbuffer.getDataByID (&test_input2, sizeof (int), 100, default_id, false_id) == 0);
     CPPUNIT_ASSERT (_mainbuffer.getDataByID (&test_input2, sizeof (int), 100, false_id, default_id) == 0);
@@ -969,7 +969,7 @@ void MainBufferTest::testGetPutData()
 
     // put by default_id, get by test_id
     CPPUNIT_ASSERT (_mainbuffer.availForPut() == avail_for_put_defaultid);
-    CPPUNIT_ASSERT (_mainbuffer.putData (&test_input1, sizeof (int), 100) == sizeof (int));
+    CPPUNIT_ASSERT (_mainbuffer.putData (&test_input1, sizeof (int)) == sizeof (int));
     CPPUNIT_ASSERT (_mainbuffer.availForPut() == (avail_for_put_defaultid - (int) sizeof (int)));
     CPPUNIT_ASSERT (_mainbuffer.availForGet (test_id) == sizeof (int));
     CPPUNIT_ASSERT (_mainbuffer.getData (&test_output, sizeof (int), 100, test_id) == sizeof (int));
@@ -983,7 +983,7 @@ void MainBufferTest::testGetPutData()
 
     // put by test_id, get by default_id
     CPPUNIT_ASSERT (_mainbuffer.availForPut (test_id) == avail_for_put_testid);
-    CPPUNIT_ASSERT (_mainbuffer.putData (&test_input2, sizeof (int), 100, test_id) == sizeof (int));
+    CPPUNIT_ASSERT (_mainbuffer.putData (&test_input2, sizeof (int), test_id) == sizeof (int));
     CPPUNIT_ASSERT (_mainbuffer.availForPut (test_id) == (avail_for_put_testid - (int) sizeof (int)));
     CPPUNIT_ASSERT (_mainbuffer.availForGet() == sizeof (int));
     CPPUNIT_ASSERT (_mainbuffer.getData (&test_output, sizeof (int), 100) == sizeof (int));
@@ -1007,7 +1007,7 @@ void MainBufferTest::testDiscardFlush()
     // int test_output_size;
     // int init_size;
 
-    CPPUNIT_ASSERT (_mainbuffer.putData (&test_input1, sizeof (int), 100, test_id) == sizeof (int));
+    CPPUNIT_ASSERT (_mainbuffer.putData (&test_input1, sizeof (int), test_id) == sizeof (int));
     CPPUNIT_ASSERT (_mainbuffer.availForGet() == sizeof (int));
     _mainbuffer.discard (sizeof (int));
     CPPUNIT_ASSERT (_mainbuffer.availForGet() == 0);
@@ -1341,7 +1341,7 @@ void MainBufferTest::testConference()
     CPPUNIT_ASSERT (_mainbuffer.availForGet (test_id1) == 0);
     CPPUNIT_ASSERT (_mainbuffer.availForGet (test_id2) == 0);
     // put data test ring buffers
-    CPPUNIT_ASSERT (_mainbuffer.putData (&testint, sizeof (int), 100) == sizeof (int));
+    CPPUNIT_ASSERT (_mainbuffer.putData (&testint, sizeof (int)) == sizeof (int));
     test_ring_buffer = _mainbuffer.getRingBuffer (default_id);
     CPPUNIT_ASSERT (test_ring_buffer->putLen() == sizeof (int));
     CPPUNIT_ASSERT (test_ring_buffer->AvailForPut() == (int) (init_put_defaultid - sizeof (int)));

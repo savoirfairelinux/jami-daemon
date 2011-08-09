@@ -181,7 +181,6 @@ void AudioRtpSession::sendDtmfEvent (sfl::DtmfEvent *dtmf)
 
     dtmf->payload.duration++;
 
-
     // next packet is going to be the last one
     if ( (dtmf->length - increment) < increment)
         dtmf->payload.ebit = true;
@@ -195,26 +194,16 @@ void AudioRtpSession::sendDtmfEvent (sfl::DtmfEvent *dtmf)
 
 void AudioRtpSession::receiveSpeakerData ()
 {
-    const ost::AppDataUnit* adu = NULL;
-
-    int packetTimestamp = _queue->getFirstTimestamp();
-
-    adu = _queue->getData (packetTimestamp);
-
-    if (!adu) {
+    const ost::AppDataUnit* adu = _queue->getData (_queue->getFirstTimestamp());
+    if (!adu)
         return;
-    }
 
-    unsigned char* spkrDataIn = NULL;
-    unsigned int size = 0;
-
-    spkrDataIn  = (unsigned char*) adu->getData(); // data in char
-    size = adu->getSize(); // size in char
+    unsigned char* spkrDataIn = (unsigned char*) adu->getData(); // data in char
+    unsigned int size = adu->getSize(); // size in char
 
     // DTMF over RTP, size must be over 4 in order to process it as voice data
-    if (size > 4) {
+    if (size > 4)
         processDataDecode (spkrDataIn, size);
-    }
 
     delete adu;
 }
@@ -327,7 +316,6 @@ void AudioRtpSession::stopRtpThread ()
 bool AudioRtpSession::onRTPPacketRecv (ost::IncomingRTPPkt&)
 {
     receiveSpeakerData();
-
     return true;
 }
 

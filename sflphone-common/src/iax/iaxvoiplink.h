@@ -320,12 +320,6 @@ class IAXVoIPLink : public VoIPLink
 
         int converterSamplingRate;
 
-        /** number of sample */
-        int nbSample_;
-
-        /** number of sample before conversion (recording) */
-        int nbSampleForRec_;
-
         /* URL hook */
         UrlHook *urlhook;
 

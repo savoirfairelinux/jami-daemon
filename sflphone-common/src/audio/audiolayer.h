@@ -70,8 +70,7 @@ class AudioLayer
          * @param manager An instance of managerimpl
          */
         AudioLayer (ManagerImpl* manager , int type)
-            : _defaultVolume (100)
-            , _layerType (type)
+            : _layerType (type)
         	, _isStarted(false)
             , _manager (manager)
             , _urgentRingBuffer (SIZEBUF, default_id)
@@ -244,12 +243,6 @@ class AudioLayer
         void setMainBuffer (MainBuffer* mainbuffer) {
             _mainBuffer = mainbuffer;
         }
-
-        /**
-         * Default volume for incoming RTP and Urgent sounds.
-         */
-        unsigned short _defaultVolume; // 100
-
 
         /**
          * Set the audio recorder

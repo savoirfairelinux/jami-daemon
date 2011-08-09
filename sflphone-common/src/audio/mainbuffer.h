@@ -89,7 +89,7 @@ class MainBuffer
 
         void unBindAllHalfDuplexOut (std::string process_id);
 
-        int putData (void *buffer, int toCopy, unsigned short volume = 100, std::string call_id = default_id);
+        int putData (void *buffer, int toCopy, std::string call_id = default_id);
 
         int getData (void *buffer, int toCopy, unsigned short volume = 100, std::string call_id = default_id);
 
@@ -113,7 +113,7 @@ class MainBuffer
 
         CallIDSet* getCallIDSet (std::string call_id);
 
-        bool createCallIDSet (std::string set_id);
+        void createCallIDSet (std::string set_id);
 
         bool removeCallIDSet (std::string set_id);
 
@@ -144,8 +144,6 @@ class MainBuffer
         RingBufferMap _ringBufferMap;
 
         CallIDMap _callIDMap;
-
-        SFLDataFormat* mixBuffer;
 
         ost::Mutex _mutex;
 
