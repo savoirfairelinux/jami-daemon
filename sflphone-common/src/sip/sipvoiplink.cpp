@@ -3674,13 +3674,9 @@ void registration_cb (struct pjsip_regc_cbparam *param)
     const pj_str_t * description = pjsip_get_status_text (param->code);
 
     if (param->code && description) {
-
-        //std::string descriptionprint(description->ptr, description->slen);
-        //_debug("Received client registration callback wiht code: %i, %s\n", param->code, descriptionprint.c_str());
-        DBusManager::instance().getCallManager()->registrationStateChanged (account->getAccountID(), std::string (description->ptr, description->slen), param->code);
-        std::pair<int, std::string> details (param->code, std::string (description->ptr, description->slen));
-
-
+        std::string state(description->ptr, description->slen);
+        DBusManager::instance().getCallManager()->registrationStateChanged (account->getAccountID(), state, param->code);
+        std::pair<int, std::string> details (param->code, state);
         // TODO: there id a race condition for this ressource when closing the application
         account->setRegistrationStateDetailed (details);
     }
