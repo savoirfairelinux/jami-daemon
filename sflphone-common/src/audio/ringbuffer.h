@@ -26,9 +26,6 @@
 
 #include <fstream>
 
-
-typedef unsigned char* samplePtr;
-
 typedef std::map<std::string, int> ReadPointer;
 
 static std::string default_id = "audiolayer_id";
@@ -159,7 +156,7 @@ class RingBuffer
         /** Buffer size */
         int           mBufferSize;
         /** Data */
-        samplePtr     mBuffer;
+        unsigned char *mBuffer;
 
         ReadPointer   _readpointer;
 
