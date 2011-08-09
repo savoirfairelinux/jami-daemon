@@ -126,7 +126,7 @@ AudioRtpRecord::~AudioRtpRecord()
 }
 
 
-AudioRtpRecordHandler::AudioRtpRecordHandler (SIPCall *ca) : _audioRtpRecord (), _id (ca->getCallId()), echoCanceller(ca->getMemoryPool()), gainController(8000, -10.0)
+AudioRtpRecordHandler::AudioRtpRecordHandler (SIPCall *ca) : _audioRtpRecord (), id_ (ca->getCallId()), echoCanceller(ca->getMemoryPool()), gainController(8000, -10.0)
 {
 
 }
@@ -275,13 +275,13 @@ int AudioRtpRecordHandler::processDataEncode (void)
     int bytesToGet = computeNbByteAudioLayer (mainBufferSampleRate, fixedCodecFramesize);
 
     // available bytes inside ringbuffer
-    int availBytesFromMic = Manager::instance().getMainBuffer()->availForGet (_id);
+    int availBytesFromMic = Manager::instance().getMainBuffer()->availForGet (id_);
 
     if (availBytesFromMic < bytesToGet)
         return 0;
 
     // Get bytes from micRingBuffer to data_from_mic
-    int nbSample = Manager::instance().getMainBuffer()->getData (micData, bytesToGet, 100, _id) / sizeof (SFLDataFormat);
+    int nbSample = Manager::instance().getMainBuffer()->getData (micData, bytesToGet, 100, id_) / sizeof (SFLDataFormat);
 
     // process mic fade in
     if (!_audioRtpRecord._micFadeInComplete)
@@ -393,7 +393,7 @@ void AudioRtpRecordHandler::processDataDecode (unsigned char *spkrData, unsigned
         }
 
         // put data in audio layer, size in byte
-        Manager::instance().getMainBuffer()->putData (spkrDataConverted, nbSample * sizeof (SFLDataFormat), 100, _id);
+        Manager::instance().getMainBuffer()->putData (spkrDataConverted, nbSample * sizeof (SFLDataFormat), 100, id_);
 
 
     } else {
@@ -401,7 +401,7 @@ void AudioRtpRecordHandler::processDataDecode (unsigned char *spkrData, unsigned
     	    echoCanceller.putData(spkrDataDecoded, expandedSize);
     	}
         // put data in audio layer, size in byte
-        Manager::instance().getMainBuffer()->putData (spkrDataDecoded, expandedSize, 100, _id);
+        Manager::instance().getMainBuffer()->putData (spkrDataDecoded, expandedSize, 100, id_);
     }
 }
 

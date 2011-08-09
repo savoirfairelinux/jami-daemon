@@ -141,7 +141,7 @@ class InstantMessaging
            * @param message	The message contained in the TEXT message
          * @param id		The call recipient of the message
          */
-        std::string receive (const std::string& message, const std::string& author, std::string& id);
+        std::string receive (const std::string& message, const std::string& author, const std::string& id);
 
         /*
          * Send a SIP string message inside a call
@@ -168,7 +168,7 @@ class InstantMessaging
          *
             * @param id	The callID to notify (TODO: accountID?)
          */
-        pj_status_t notify (std::string& id);
+        pj_status_t notify (const std::string& /*id*/);
 
 
         /**

@@ -86,10 +86,10 @@ class Call: public Recordable
         virtual ~Call();
 
         /**
-         * Return a reference on the call id
+         * Return a copy of the call id
          * @return call id
          */
-        std::string& getCallId() {
+        std::string getCallId() const {
             return _id;
         }
 
