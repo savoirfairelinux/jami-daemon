@@ -82,12 +82,12 @@ main (int argc, char **argv)
 
     if (help.numSet) {
         std::cerr << args->printUsage();
-        ::exit (0);
+        return 0;
     }
     else if (args->argsHaveError()) {
         std::cerr << args->printErrors();
         std::cerr << args->printUsage();
-        ::exit (1);
+        return 1;
     }
 
     if (console.numSet) {
@@ -134,7 +134,7 @@ main (int argc, char **argv)
             //Create it
             if (mkdir (sfldir, 0755) != 0) {
                 fprintf (stderr, "Creating directory %s failed. Exited.", sfldir);
-                exit (-1);
+                return 1;
             }
         }
 
@@ -145,14 +145,14 @@ main (int argc, char **argv)
             //Create it
             if (mkdir (sfldir, 0755) != 0) {
                 fprintf (stderr, "Creating directory %s failed. Exited.", sfldir);
-                exit (-1);
+                return 1;
             }
         }
 
         // PID file doesn't exists, create and write pid in it
         if ( (fp = fopen (homepid,"w")) == NULL) {
             fprintf (stderr, "Creating PID file %s failed. Exited.", homepid);
-            exit (-1);
+            return 1;
         } else {
             fputs (cPid , fp);
             fclose (fp);
@@ -169,11 +169,11 @@ main (int argc, char **argv)
 
             if (kill (atoi (cOldPid), 0) == 0) {
                 fprintf (stderr, "There is already a sflphoned daemon running in the system. Starting Failed.");
-                exit (-1);
+                return 1;
             } else {
                 if ( (fp = fopen (homepid,"w")) == NULL) {
                     fprintf (stderr, "Writing to PID file %s failed. Exited.", homepid);
-                    exit (-1);
+                    return 1;
                 } else {
                     fputs (cPid , fp);
                     fclose (fp);
