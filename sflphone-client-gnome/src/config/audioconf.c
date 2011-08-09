@@ -58,7 +58,6 @@ enum {
     COLUMN_CODEC_NAME,
     COLUMN_CODEC_FREQUENCY,
     COLUMN_CODEC_BITRATE,
-    COLUMN_CODEC_BANDWIDTH,
     CODEC_COLUMN_COUNT
 };
 
@@ -95,7 +94,6 @@ static void preferences_dialog_fill_codec_list (account_t *a)
                                 COLUMN_CODEC_NAME,		c->name,										// Name
                                 COLUMN_CODEC_FREQUENCY,	g_strdup_printf ("%d kHz", c->sample_rate/1000),	// Frequency (kHz)
                                 COLUMN_CODEC_BITRATE,	g_strdup_printf ("%.1f kbps", c->_bitrate),		// Bitrate (kbps)
-                                COLUMN_CODEC_BANDWIDTH,	g_strdup_printf ("%.1f kbps", c->_bandwidth),	// Bandwidth (kpbs)
                                 -1);
         }
     }
@@ -691,11 +689,6 @@ GtkWidget* audiocodecs_box (account_t *a)
     // Bandwith column
     renderer = gtk_cell_renderer_text_new();
     treeViewColumn = gtk_tree_view_column_new_with_attributes (_ ("Bitrate"), renderer, "text", COLUMN_CODEC_BITRATE, NULL);
-    gtk_tree_view_append_column (GTK_TREE_VIEW (codecTreeView), treeViewColumn);
-
-    // Frequency column
-    renderer = gtk_cell_renderer_text_new();
-    treeViewColumn = gtk_tree_view_column_new_with_attributes (_ ("Bandwidth"), renderer, "text", COLUMN_CODEC_BANDWIDTH, NULL);
     gtk_tree_view_append_column (GTK_TREE_VIEW (codecTreeView), treeViewColumn);
 
     g_object_unref (G_OBJECT (codecStore));

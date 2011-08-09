@@ -129,11 +129,6 @@ class AudioCodec : public Codec
         double getBitRate() const;
 
         /**
-         * @Override
-         */
-        double getBandwidth() const;
-
-        /**
          * @return the framing size for this codec.
          */
         unsigned int getFrameSize() const;
@@ -159,29 +154,6 @@ class AudioCodec : public Codec
 
         bool _hasDynamicPayload;
 
-        void setCodecName (const std::string& codecName) {
-            _codecName = codecName;
-        }
-
-        void setClockRate (uint32 rate) {
-            _clockRate = rate;
-        }
-
-        void setChannel (uint8 channel) {
-            _channel = channel;
-        }
-
-        void setFrameSize (unsigned size) {
-            _frameSize = size;
-        }
-
-        void setBitrate (double rate) {
-            _bitrate = rate;
-        }
-
-        void setBandwidth (double bandwidth) {
-            _bandwidth = bandwidth;
-        }
     private:
         uint8 _payload;
 

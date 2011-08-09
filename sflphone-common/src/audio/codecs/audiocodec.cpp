@@ -38,15 +38,15 @@ namespace sfl {
 
 AudioCodec::AudioCodec (uint8 payload, const std::string &codecName) :
         _codecName (codecName), _clockRate (8000), _channel (1), _bitrate (0.0),
-        _bandwidth (0), _hasDynamicPayload (false), _payload(payload)
+        _hasDynamicPayload (false), _payload(payload)
 {
     init (payload, _clockRate);
 }
 
 AudioCodec::AudioCodec (const AudioCodec& codec) :
         _codecName (codec._codecName), _clockRate (codec._clockRate), _channel (
-            codec._channel), _bitrate (codec._bitrate), _bandwidth (
-                codec._bandwidth), _hasDynamicPayload (false), _payload(codec._payload)
+            codec._channel), _bitrate (codec._bitrate),
+            _hasDynamicPayload (false), _payload(codec._payload)
 {
     init (codec._payload, codec._clockRate);
 }
@@ -108,11 +108,6 @@ uint8 AudioCodec::getChannel (void) const
 double AudioCodec::getBitRate (void) const
 {
     return _bitrate;
-}
-
-double AudioCodec::getBandwidth (void) const
-{
-    return _bandwidth;
 }
 
 AudioCodec::~AudioCodec()

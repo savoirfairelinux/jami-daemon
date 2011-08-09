@@ -48,8 +48,6 @@ typedef struct {
     int sample_rate;
     /** Bitrate */
     gdouble _bitrate;
-    /** Bandwidth */
-    gdouble _bandwidth;
 } codec_t;
 
 /** @struct codec_t
@@ -158,7 +156,7 @@ void codec_create_new (gint payload, gboolean active, codec_t **c);
  * Instanciate a new codec with the given specification
  *
  * @param payload	The unique RTP payload
- * @param specs		A list of codec specifications. Ordered: name, sample rate, bit rate, bandwith
+ * @param specs		A list of codec specifications. Ordered: name, sample rate, bit rate
  * @param active	Whether or not this codec should active (checked)
  * @param c			A pointer to receive the new codec instance
  */

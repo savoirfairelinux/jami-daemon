@@ -132,7 +132,6 @@ void codec_create_new (gint payload, gboolean active, codec_t **c)
     codec->name = specs[0];
     codec->sample_rate = atoi (specs[1]);
     codec->_bitrate = atoi (specs[2]);
-    codec->_bandwidth = atoi (specs[3]);
     codec->is_active = active;
 
     *c = codec;
@@ -148,7 +147,6 @@ void codec_create_new_with_specs (gint payload, gchar **specs, gboolean active, 
     codec->name = strdup(specs[0]);
     codec->sample_rate = atoi (specs[1]);
     codec->_bitrate = atoi (specs[2]);
-    codec->_bandwidth = atoi (specs[3]);
     codec->is_active = active;
 
     *c = codec;
@@ -169,7 +167,6 @@ void codec_create_new_from_caps (codec_t *original, codec_t **copy)
     codec->name = original->name;
     codec->sample_rate = original->sample_rate;
     codec->_bitrate = original->_bitrate;
-    codec->_bandwidth = original->_bandwidth;
     codec->is_active = original->is_active;
 
     *copy = codec;
