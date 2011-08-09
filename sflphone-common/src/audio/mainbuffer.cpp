@@ -40,6 +40,9 @@ MainBuffer::MainBuffer() : _internalSamplingRate (8000)
 
 MainBuffer::~MainBuffer()
 {
+    // delete any ring buffers that didn't get removed
+    for (RingBufferMap::iterator iter = _ringBufferMap.begin(); iter != _ringBufferMap.end(); ++iter)
+        delete iter->second;
 }
 
 
