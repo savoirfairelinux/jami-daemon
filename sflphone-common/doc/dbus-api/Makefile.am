@@ -19,7 +19,7 @@ doc/spec/index.html: $(XMLS) tools/doc-generator.py tools/specparser.py $(TEMPLA
 	@install -d tmp/doc
 	$(PYTHON) tools/doc-generator.py spec/all.xml doc/spec sflphone-spec org.sflphone.SFLphone
 
-all:	$(GENERATED_FILES)
+doc:	$(GENERATED_FILES)
 
 clean:	
 	rm -rf $(GENERATED_FILES)

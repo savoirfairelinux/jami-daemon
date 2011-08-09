@@ -33,6 +33,7 @@
 #define SIPCALL_H
 
 #include "call.h"
+#include <cassert>
 
 class Sdp;
 class pjsip_evsub;
@@ -116,7 +117,8 @@ class SIPCall : public Call
          * Return the local memory pool for this call
          */
         pj_pool_t *getMemoryPool(void) {
-            return _pool;
+            assert(pool_);
+            return pool_;
         }
 
     private:
@@ -175,7 +177,7 @@ class SIPCall : public Call
         /**
          * The pool to allocate memory, released once call hang up
          */
-        pj_pool_t *_pool;
+        pj_pool_t *pool_;
 
 };
 

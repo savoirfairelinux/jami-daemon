@@ -93,7 +93,8 @@ class AudioLayer
          */
         virtual ~AudioLayer (void) {
             delete _time;
-            _time = NULL;
+            delete _dcblocker;
+            delete _audiofilter;
         }
 
         virtual bool closeLayer (void) = 0;
@@ -111,7 +112,7 @@ class AudioLayer
          *			  SFL_PCM_BOTH
          * @param plugin	  The alsa plugin ( dmix , default , front , surround , ...)
          */
-        virtual bool openDevice (int indexIn, int indexOut, int indexRing, int sampleRate, int frameSize, int stream , std::string plugin) = 0;
+        virtual void openDevice (int indexIn, int indexOut, int indexRing, int sampleRate, int frameSize, int stream , std::string plugin) = 0;
 
         /**
          * Start the capture stream and prepare the playback stream.

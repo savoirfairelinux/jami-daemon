@@ -313,10 +313,11 @@ int AudioRtpSession::startRtpThread (AudioCodec* audiocodec)
 
 void AudioRtpSession::stopRtpThread ()
 {
-    _debug ("AudioSymmetricRtpSession: Stoping main thread");
-
     if (_type != Zrtp) {
-        static_cast<AudioSymmetricRtpSession*>(this)->stopSymmetricRtpThread();
+        AudioSymmetricRtpSession *self = dynamic_cast<AudioSymmetricRtpSession*>(this);
+        assert(self);
+        _debug ("AudioSymmetricRtpSession: Stopping main thread");
+        self->stopSymmetricRtpThread();
     }
 
     _queue->disableStack();

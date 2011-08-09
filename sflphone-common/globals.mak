@@ -33,8 +33,6 @@ SIP_CFLAGS=-I$(src)/libs/pjproject/pjsip/include \
 		   -I$(src)/libs/pjproject/pjmedia/include \
 		   -I$(src)/libs/pjproject/pjnath/include
 
-DBUSCPP_CFLAGS=$(top_srcdir)/libs/dbus-c++/include/dbus-c++
-
 if BUILD_SPEEX
 SPEEXCODEC=-DHAVE_SPEEX_CODEC
 else
@@ -50,13 +48,13 @@ endif
 # Preprocessor flags
 AM_CPPFLAGS = \
 	-I$(src)/libs \
-	-I$(src)/libs/dbus-c++/include \
 	-I$(src)/libs/iax2 \
 	-I$(src)/libs/pjproject \
 	-I$(src)/src \
 	-I$(src)/src/config \
 	-I$(src)/test \
 	$(SIP_CFLAGS) \
+	@DBUSCPP_CFLAGS@ \
 	-DPREFIX=\"$(prefix)\" \
 	-DPROGSHAREDIR=\"${datadir}/sflphone\" \
 	-DCODECS_DIR=\""$(sflcodecdir)"\" \

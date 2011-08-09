@@ -77,7 +77,7 @@ class PulseLayer : public AudioLayer
          *			  SFL_PCM_BOTH
          * @param plugin	  The alsa plugin ( dmix , default , front , surround , ...)
          */
-        bool openDevice (int indexIn, int indexOut, int indexRing, int sampleRate, int frameSize , int stream, std::string plugin) ;
+        void openDevice (int indexIn, int indexOut, int indexRing, int sampleRate, int frameSize , int stream, std::string plugin) ;
 
         DeviceList* getSinkList (void) {
             return &_sinkList;

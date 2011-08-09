@@ -119,7 +119,7 @@ void AudioLayerTest::testPulseConnect()
     _pulselayer->setErrorMessage (-1);
 
     try {
-        CPPUNIT_ASSERT (_pulselayer->openDevice (numCardIn, numCardOut, numCardRing, sampleRate, frameSize, SFL_PCM_BOTH, alsaPlugin) == true);
+        _pulselayer->openDevice (numCardIn, numCardOut, numCardRing, sampleRate, frameSize, SFL_PCM_BOTH, alsaPlugin);
     } catch (...) {
         _debug ("Exception occured wile opening device! ");
     }

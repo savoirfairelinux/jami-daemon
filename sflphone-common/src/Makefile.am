@@ -51,7 +51,6 @@ noinst_HEADERS = \
 libsflphone_la_LIBADD = \
 	$(src)/libs/utilspp/libutilspp.la \
 	$(src)/libs/iax2/libiax2.la \
-	$(src)/libs/dbus-c++/src/libdbus-c++-1.la \
 	$(IAX_LIB) \
 	./im/libim.la \
 	./sip/libsiplink.la \
@@ -74,7 +73,8 @@ libsflphone_la_LDFLAGS = \
 		@libssl_LIBS@ \
 		@UUID_LIBS@ \
 		@yaml_LIBS@ \
-		@xml_LIBS@
+		@xml_LIBS@ \
+		@DBUSCPP_LIBS@
 
 libsflphone_la_CFLAGS = \
 		@CCGNU2_CFLAGS@ \

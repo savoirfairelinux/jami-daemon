@@ -3981,8 +3981,10 @@ transaction_request_cb (pjsip_rx_data *rdata)
     if (rdata->msg_info.msg->body) {
 
         char sdpbuffer[1000];
-        rdata->msg_info.msg->body->print_body (rdata->msg_info.msg->body, sdpbuffer, 1000);
-        std::string sdpoffer = std::string (sdpbuffer);
+        int len = rdata->msg_info.msg->body->print_body (rdata->msg_info.msg->body, sdpbuffer, 1000);
+        if (len == -1) // error
+                       len = 0;
+        std::string sdpoffer = std::string (sdpbuffer, len);
         size_t start = sdpoffer.find ("a=crypto:");
 
         // Found crypto header in SDP
