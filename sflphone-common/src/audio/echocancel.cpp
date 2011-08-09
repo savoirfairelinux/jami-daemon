@@ -250,7 +250,7 @@ int EchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputData, in
     _delayDetector.process (inputData, nbBytes);
 
     if (_spkrStoped) {
-        bcopy (inputData, outputData, nbBytes);
+        memcpy(outputData, inputData, nbBytes);
         return nbBytes;
     }
 
@@ -299,7 +299,7 @@ int EchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputData, in
 
             // echoFile->write((const char *)_tmpOut, byteSize);
 
-            bcopy (_tmpOut, outputData+ (nbFrame*_smplPerFrame), byteSize);
+            memcpy(outputData+ (nbFrame*_smplPerFrame), _tmpOut, byteSize);
 
             // used to sync with speaker
             _processedByte += byteSize;
@@ -314,7 +314,7 @@ int EchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputData, in
 
             performEchoCancelNoSpkr (_tmpMic, _tmpOut);
 
-            bcopy (_tmpOut, outputData+ (nbFrame*_smplPerFrame), byteSize);
+            memcpy (outputData+ (nbFrame*_smplPerFrame), _tmpOut, byteSize);
             ++nbFrame;
         }
 

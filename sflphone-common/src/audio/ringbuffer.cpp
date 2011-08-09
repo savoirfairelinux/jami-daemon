@@ -257,7 +257,7 @@ RingBuffer::Put (void* buffer, int toCopy)
             block = mBufferSize - pos;
         }
 
-        bcopy (src, mBuffer + pos, block);
+        memcpy (mBuffer + pos, src, block);
 
         src += block;
 
@@ -322,7 +322,7 @@ RingBuffer::Get (void *buffer, int toCopy, std::string call_id)
             block = mBufferSize - mStart;
         }
 
-        bcopy (mBuffer + mStart, dest, block);
+        memcpy (dest, mBuffer + mStart, block);
 
         dest += block;
 

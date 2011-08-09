@@ -130,8 +130,7 @@ Tone::genBuffer (const std::string& definition)
 
     _buffer = new SFLDataFormat[_size];
 
-    // src, dest, tocopy
-    bcopy (buffer, _buffer, _size*sizeof (SFLDataFormat)); // copy char, not SFLDataFormat.
+    memcpy (_buffer, buffer, _size*sizeof (SFLDataFormat)); // copy char, not SFLDataFormat.
 
     delete[] buffer;
 
