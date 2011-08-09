@@ -91,7 +91,7 @@ class AudioLoop
         int _pos;
 
         /** Sample rate */
-        int _sampleRate;
+        unsigned int _sampleRate;
 
     private:
 

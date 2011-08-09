@@ -58,23 +58,18 @@ RawFile::~RawFile()
 // load file in mono format
 void RawFile::loadFile (const std::string& name, sfl::AudioCodec* codec, unsigned int sampleRate = 8000) throw(AudioFileException)
 {
-    _debug("RawFile: Load new file %s", name.c_str());
-
     audioCodec = codec;
 
     // if the filename was already load, with the same samplerate
     // we do nothing
-
-    if ((filepath == name) && (_sampleRate == (int)sampleRate)) {
-	return;
-    }
+    if (filepath == name && _sampleRate == sampleRate)
+    	return;
 
     filepath = name;
 
     // no filename to load
-    if (filepath.empty()) {
+    if (filepath.empty())
         throw AudioFileException("Unable to open audio file: filename is empty");
-    }
 
     std::fstream file;
 
@@ -185,7 +180,7 @@ WaveFile::~WaveFile()
 
 
 
-void WaveFile::openFile (const std::string& fileName, int audioSamplingRate) throw(AudioFileException)
+void WaveFile::openFile (const std::string& fileName, unsigned int audioSamplingRate) throw(AudioFileException)
 {
     try {
 
@@ -213,7 +208,7 @@ bool WaveFile::isFileExist (const std::string& fileName)
 }
 
 
-void WaveFile::openExistingWaveFile (const std::string& fileName, int audioSamplingRate) throw(AudioFileException)
+void WaveFile::openExistingWaveFile (const std::string& fileName, unsigned int audioSamplingRate) throw(AudioFileException)
 {
 
     int maxIteration = 0;
@@ -398,7 +393,7 @@ void WaveFile::openExistingWaveFile (const std::string& fileName, int audioSampl
     }
 
     _size = nbSample;
-    _sampleRate = (int) audioSamplingRate;
+    _sampleRate = audioSamplingRate;
 
     // Copy audio into audioloopi
     if (srate != audioSamplingRate) {

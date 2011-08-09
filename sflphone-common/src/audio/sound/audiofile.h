@@ -161,7 +161,7 @@ class WaveFile : public AudioFile
          * @param The internal sampling rate, file will be resampled
          *        if it's sampling rate does not correspond to internal one
          */
-        void openFile (const std::string&, int) throw(AudioFileException);
+        void openFile (const std::string&, unsigned int) throw(AudioFileException);
 
         /**
          * Test if the specified file already exist
@@ -184,7 +184,7 @@ class WaveFile : public AudioFile
          * @param File name
          * @param Audio sampling rate
          */
-        void openExistingWaveFile (const std::string&, int) throw(AudioFileException);
+        void openExistingWaveFile (const std::string&, unsigned int) throw(AudioFileException);
 
         /**
          * Sound format for this file (16/32 bits)
