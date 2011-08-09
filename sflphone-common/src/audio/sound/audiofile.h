@@ -164,19 +164,9 @@ class WaveFile : public AudioFile
         void openFile (const std::string&, int) throw(AudioFileException);
 
         /**
-         * Close an opened file
-         */
-        bool closeFile();
-
-        /**
          * Test if the specified file already exist
          */
         bool isFileExist (const std::string&);
-
-        /**
-         * Test if file opend
-         */
-        bool isFileOpened();
 
         /**
          * Load a sound file in memory

@@ -199,15 +199,6 @@ void WaveFile::openFile (const std::string& fileName, int audioSamplingRate) thr
 }
 
 
-
-bool WaveFile::closeFile()
-{
-    fileStream.close();
-
-    return true;
-}
-
-
 bool WaveFile::isFileExist (const std::string& fileName)
 {
     std::fstream fs (fileName.c_str(), std::ios_base::in);
@@ -219,19 +210,6 @@ bool WaveFile::isFileExist (const std::string& fileName)
 
     _debug ("WaveFile: File \"%s\" exists", fileName.c_str());
     return true;
-}
-
-
-bool WaveFile::isFileOpened()
-{
-
-    if (fileStream.is_open()) {
-        _debug ("WaveFile: file is openened");
-        return true;
-    } else {
-        _debug ("WaveFile: file is not openend");
-        return false;
-    }
 }
 
 
@@ -442,8 +420,6 @@ void WaveFile::openExistingWaveFile (const std::string& fileName, int audioSampl
 
 void WaveFile::loadFile (const std::string& name, sfl::AudioCodec * /*codec*/, unsigned int sampleRate) throw(AudioFileException)
 {
-    _debug("WaveFile: Load new file %s", name.c_str());
-
     try { 
         openFile (name, sampleRate);
     }
