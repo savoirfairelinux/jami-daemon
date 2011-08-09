@@ -314,11 +314,11 @@ int MainBuffer::putData (void *buffer, int toCopy, std::string call_id)
 
     if (a >= toCopy) {
 
-        return ring_buffer->Put (buffer, toCopy, 100);
+        return ring_buffer->Put (buffer, toCopy);
 
     } else {
 
-        return ring_buffer->Put (buffer, a, 100);
+        return ring_buffer->Put (buffer, a);
     }
 
 }

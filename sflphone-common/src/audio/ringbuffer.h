@@ -107,10 +107,9 @@ class RingBuffer
          * Write data in the ring buffer
          * @param buffer Data to copied
          * @param toCopy Number of bytes to copy
-         * @param volume The volume
          * @return int Number of bytes copied
          */
-        int Put (void* buffer, int toCopy, unsigned short volume = 100);
+        int Put (void* buffer, int toCopy);
 
         /**
          * To get how much space is available in the buffer to read in

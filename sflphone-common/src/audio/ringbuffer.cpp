@@ -227,9 +227,8 @@ RingBuffer::AvailForPut()
 }
 
 // This one puts some data inside the ring buffer.
-// Change the volume if it's not 100
 int
-RingBuffer::Put (void* buffer, int toCopy, unsigned short volume)
+RingBuffer::Put (void* buffer, int toCopy)
 {
     samplePtr src;
     int block;
@@ -258,18 +257,6 @@ RingBuffer::Put (void* buffer, int toCopy, unsigned short volume)
             block = mBufferSize - pos;
         }
 
-        // Gain adjustment (when Mic vol. is changed)
-        if (volume != 100) {
-            SFLDataFormat* start = (SFLDataFormat*) src;
-            int nbSample = block / sizeof (SFLDataFormat);
-
-            for (int i=0; i<nbSample; i++) {
-                start[i] = start[i] * volume / 100;
-            }
-        }
-
-        // bcopy(src, dest, len)
-        //fprintf(stderr, "has %d put %d\t", len, block);
         bcopy (src, mBuffer + pos, block);
 
         src += block;
