@@ -83,7 +83,6 @@ static const SOUND_FORMAT INT32 = 0x8;
 #define CODECDIR         "codecs"		/** Codecs directory */
 
 #define SIZEBUF 		 400000 /** About 12 sec of buffering at 8000 Hz*/
-#define STATIC_BUFSIZE 	 5000
 
 #define ALSA_DFT_CARD_ID     0			/** Index of the default soundcard */
 
