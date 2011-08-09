@@ -180,13 +180,12 @@ RingBuffer::getNbReadPointer()
 //
 
 // This one puts some data inside the ring buffer.
-int
+void
 RingBuffer::Put (void* buffer, int toCopy)
 {
     int len = putLen();
     if (toCopy > mBufferSize - len)
         toCopy = mBufferSize - len;
-    int copied = toCopy;
 
     unsigned char *src = (unsigned char *) buffer;
 
@@ -204,9 +203,6 @@ RingBuffer::Put (void* buffer, int toCopy)
     }
 
     mEnd = pos;
-
-    // How many items copied.
-    return copied;
 }
 
 //

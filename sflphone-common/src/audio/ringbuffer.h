@@ -98,9 +98,8 @@ class RingBuffer
          * Write data in the ring buffer
          * @param buffer Data to copied
          * @param toCopy Number of bytes to copy
-         * @return int Number of bytes copied
          */
-        int Put (void* buffer, int toCopy);
+        void Put (void* buffer, int toCopy);
 
         /**
          * To get how much space is available in the buffer to read in
