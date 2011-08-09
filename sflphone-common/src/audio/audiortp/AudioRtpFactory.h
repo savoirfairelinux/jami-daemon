@@ -116,7 +116,7 @@ class AudioRtpFactory
          *         Sdes = 2
          */
         RtpMethod getAudioRtpType (void) const {
-            return _rtpSession->getAudioRtpType();
+        	return _keyExchangeProtocol;
         }
 
         /**
@@ -163,7 +163,7 @@ class AudioRtpFactory
 
         // Field used when initializinga udio rtp session
         // May be set manually or from config using initAudioRtpConfig
-        int _keyExchangeProtocol;
+        RtpMethod _keyExchangeProtocol;
 
         // Field used when initializinga udio rtp session
         // May be set manually or from config using initAudioRtpConfig
