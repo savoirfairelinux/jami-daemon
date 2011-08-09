@@ -47,7 +47,7 @@ class SamplerateConverter
         * internal buffer size. Converter must be reinitialized
         * every time these parameters change
         */
-        SamplerateConverter (int freq=44100, int frameSize=20);
+        SamplerateConverter (int freq, int frameSize);
 
         /** Destructor */
         ~SamplerateConverter (void);
@@ -58,9 +58,8 @@ class SamplerateConverter
          * @param SamplerateConverter1 The lower sample rate
          * @param SamplerateConverter2 The higher sample rate
          * @param nbSamples	  The number of samples to process
-         * @return int The number of samples after the operation
          */
-        int upsampleData (SFLDataFormat* dataIn , SFLDataFormat* dataOut , int samplerate1 , int samplerate2 , int nbSamples);
+        void upsampleData (SFLDataFormat* dataIn , SFLDataFormat* dataOut , int samplerate1 , int samplerate2 , int nbSamples);
 
         /**
          * Downsample from the samplerate1 to the samplerate2
@@ -68,9 +67,8 @@ class SamplerateConverter
          * @param SamplerateConverter1 The lower sample rate
          * @param SamplerateConverter2 The higher sample rate
          * @param nbSamples	  The number of samples to process
-         * @return int The number of samples after the operation
          */
-        int downsampleData (SFLDataFormat* dataIn , SFLDataFormat* dataOut , int samplerate1 , int samplerate2 , int nbSamples);
+        void downsampleData (SFLDataFormat* dataIn , SFLDataFormat* dataOut , int samplerate1 , int samplerate2 , int nbSamples);
 
         /**
          * Convert short table to floats for audio processing
@@ -88,12 +86,6 @@ class SamplerateConverter
         // Assignment Operator
         SamplerateConverter& operator= (const SamplerateConverter& rh);
 
-        void init (void);
-
-        /** Audio layer caracteristics */
-        int _frequence;
-        int _framesize;
-
         /** Downsampled/Upsampled float buffers for the mic data processing */
         float32* _floatBufferDownMic;
         float32* _floatBufferUpMic;
@@ -105,10 +97,6 @@ class SamplerateConverter
         float32* _floatBufferUpSpkr;
         /** libSamplerateConverter converter for incoming voice */
         SRC_STATE*    _src_state_spkr;
-        /** libSamplerateConverter error */
-        int _src_err;
-
-
 };
 
 #endif //_SAMPLE_RATE_H

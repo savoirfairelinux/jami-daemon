@@ -397,20 +397,19 @@ void WaveFile::openExistingWaveFile (const std::string& fileName, int audioSampl
         while (remainingSamples > 0) {
 
             int toProcess = remainingSamples > nbSampleMax ? nbSampleMax : remainingSamples;
-            int nbSamplesConverted = 0;
 
             if (srate < audioSamplingRate) {
-                nbSamplesConverted = _converter.upsampleData (in, out, srate, audioSamplingRate, toProcess);
+                _converter.upsampleData (in, out, srate, audioSamplingRate, toProcess);
             } else if (srate > audioSamplingRate) {
-                nbSamplesConverted = _converter.downsampleData (in, out, audioSamplingRate, srate, toProcess);
+                _converter.downsampleData (in, out, audioSamplingRate, srate, toProcess);
             }
 
             // nbSamplesConverted = nbSamplesConverted*2;
 
             in += toProcess;
-            out += nbSamplesConverted;
+            out += toProcess;
             remainingSamples -= toProcess;
-            totalprocessed += nbSamplesConverted;
+            totalprocessed += toProcess;
         }
     }
 

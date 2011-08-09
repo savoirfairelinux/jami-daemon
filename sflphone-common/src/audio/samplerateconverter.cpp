@@ -31,67 +31,19 @@
 #include "samplerateconverter.h"
 #include "manager.h"
 
-SamplerateConverter::SamplerateConverter (int freq , int fs)
-    : _frequence (freq)
-    , _framesize (fs)
-    , _floatBufferDownMic (NULL)
+SamplerateConverter::SamplerateConverter (int freq , int fs) :
+    _floatBufferDownMic (NULL)
     , _floatBufferUpMic (NULL)
     , _src_state_mic (NULL)
     , _floatBufferDownSpkr (NULL)
     , _floatBufferUpSpkr (NULL)
     , _src_state_spkr (NULL)
-    , _src_err (0)
 {
-    init();
-}
+    int err;
+    _src_state_mic  = src_new (SRC_LINEAR, 1, &err);
+    _src_state_spkr = src_new (SRC_LINEAR, 1, &err);
 
-SamplerateConverter::~SamplerateConverter (void)
-{
-
-    if (_floatBufferUpMic) {
-        delete [] _floatBufferUpMic;
-        _floatBufferUpMic = NULL;
-    }
-
-    if (_floatBufferDownMic) {
-        delete [] _floatBufferDownMic;
-        _floatBufferDownMic = NULL;
-    }
-
-    if (_floatBufferUpSpkr) {
-        delete [] _floatBufferUpSpkr;
-        _floatBufferUpSpkr = NULL;
-    }
-
-    if (_floatBufferDownSpkr) {
-        delete [] _floatBufferDownSpkr;
-        _floatBufferDownSpkr = NULL;
-    }
-
-    // libSamplerateConverter-related
-    if (_src_state_mic) {
-        _src_state_mic  = src_delete (_src_state_mic);
-        _src_state_mic = NULL;
-    }
-
-    if (_src_state_spkr) {
-        _src_state_spkr = src_delete (_src_state_spkr);
-        _src_state_spkr = NULL;
-    }
-}
-
-void SamplerateConverter::init (void)
-{
-
-    // libSamplerateConverter-related
-    // Set the converter type for the upsampling and the downsampling
-    // interpolator SRC_SINC_BEST_QUALITY
-    // interpolator SRC_SINC_FASTEST
-    // interpolator SRC_LINEAR
-    _src_state_mic  = src_new (SRC_LINEAR, 1, &_src_err);
-    _src_state_spkr = src_new (SRC_LINEAR, 1, &_src_err);
-
-    int nbSamplesMax = (int) ( (_frequence * _framesize) / 1000);
+    int nbSamplesMax = (int) ( (freq * fs) / 1000);
 
     _floatBufferDownMic  = new float32[nbSamplesMax];
     _floatBufferUpMic = new float32[nbSamplesMax];
@@ -99,78 +51,71 @@ void SamplerateConverter::init (void)
     _floatBufferUpSpkr = new float32[nbSamplesMax];
 }
 
+SamplerateConverter::~SamplerateConverter (void)
+{
+	delete [] _floatBufferUpMic;
+	delete [] _floatBufferDownMic;
+	delete [] _floatBufferUpSpkr;
+	delete [] _floatBufferDownSpkr;
+
+	src_delete (_src_state_mic);
+	src_delete (_src_state_spkr);
+}
+
 void
 SamplerateConverter::Short2FloatArray (const short *in, float *out, int len)
 {
     // factor is 1/(2^15), used to rescale the short int range to the
     // [-1.0 - 1.0] float range.
-#define S2F_FACTOR .000030517578125f;
 
-    while (len) {
-        len--;
-        out[len] = (float) in[len] * S2F_FACTOR;
-    }
+    while (len--)
+        out[len] = (float) in[len] * .000030517578125f;
 }
 
 
 //TODO Add ifdef for int16 or float32 type
-int SamplerateConverter::upsampleData (SFLDataFormat* dataIn , SFLDataFormat* dataOut, int samplerate1 , int samplerate2 , int nbSamples)
+void SamplerateConverter::upsampleData (SFLDataFormat* dataIn , SFLDataFormat* dataOut, int samplerate1 , int samplerate2 , int nbSamples)
 {
-
     double upsampleFactor = (double) samplerate2 / samplerate1 ;
 
-    int nbSamplesMax = (int) (samplerate2 * _framesize / 1000);
+    if (upsampleFactor == 1)
+    	return;
 
-    if (upsampleFactor != 1 && dataIn != NULL) {
-        SRC_DATA src_data;
-        src_data.data_in = _floatBufferDownSpkr;
-        src_data.data_out = _floatBufferUpSpkr;
-        src_data.input_frames = nbSamples;
-        src_data.output_frames = (int) floor (upsampleFactor * nbSamples);
-        src_data.src_ratio = upsampleFactor;
-        src_data.end_of_input = 0; // More data will come
-        // _debug("    upsample %d %d %f %d" , src_data.input_frames , src_data.output_frames, src_data.src_ratio , nbSamples);
-        // Override libsamplerate conversion function
-        Short2FloatArray (dataIn , _floatBufferDownSpkr, nbSamples);
-        //src_short_to_float_array (dataIn , _floatBufferDownSpkr, nbSamples);
-        //_debug("upsample %d %f %d" ,  src_data.output_frames, src_data.src_ratio , nbSamples);
-        src_process (_src_state_spkr, &src_data);
-        // _debug("    upsample %d %d %d" , samplerate1, samplerate2 , nbSamples);
-        nbSamples  = (src_data.output_frames_gen > nbSamplesMax) ? nbSamplesMax : src_data.output_frames_gen;
-        src_float_to_short_array (_floatBufferUpSpkr, dataOut, nbSamples);
-        //_debug("upsample %d %d %d" , samplerate1, samplerate2 , nbSamples);
-    }
+    SRC_DATA src_data;
+	src_data.data_in = _floatBufferDownSpkr;
+	src_data.data_out = _floatBufferUpSpkr;
+	src_data.input_frames = nbSamples;
+	src_data.output_frames = nbSamples;
+	src_data.src_ratio = upsampleFactor;
+	src_data.end_of_input = 0; // More data will come
 
-    return nbSamples;
+	Short2FloatArray (dataIn , _floatBufferDownSpkr, nbSamples);
+	src_process (_src_state_spkr, &src_data);
+
+	assert(nbSamples == src_data.output_frames_gen);
+	src_float_to_short_array (_floatBufferUpSpkr, dataOut, nbSamples);
 }
 
 //TODO Add ifdef for int16 or float32 type
-int SamplerateConverter::downsampleData (SFLDataFormat* dataIn , SFLDataFormat* dataOut , int samplerate1 , int samplerate2 , int nbSamples)
+void SamplerateConverter::downsampleData (SFLDataFormat* dataIn , SFLDataFormat* dataOut , int samplerate1 , int samplerate2 , int nbSamples)
 {
-
     double downsampleFactor = (double) samplerate1 / samplerate2;
 
-    int nbSamplesMax = (int) (samplerate1 * _framesize / 1000);
+    if (downsampleFactor == 1)
+		return;
 
-    if (downsampleFactor != 1) {
-        SRC_DATA src_data;
-        src_data.data_in = _floatBufferUpMic;
-        src_data.data_out = _floatBufferDownMic;
-        src_data.input_frames = nbSamples;
-        src_data.output_frames = (int) floor (downsampleFactor * nbSamples);
-        src_data.src_ratio = downsampleFactor;
-        src_data.end_of_input = 0; // More data will come
-        //_debug("downsample %d %f %d" ,  src_data.output_frames, src_data.src_ratio , nbSamples);
-        // Override libsamplerate conversion function
-        Short2FloatArray (dataIn , _floatBufferUpMic, nbSamples);
-        //src_short_to_float_array (dataIn, _floatBufferUpMic, nbSamples);
-        //_debug("downsample %d %f %d" ,  src_data.output_frames, src_data.src_ratio , nbSamples);
-        src_process (_src_state_mic, &src_data);
-        //_debug("downsample %d %f %d" ,  src_data.output_frames, src_data.src_ratio , nbSamples);
-        nbSamples  = (src_data.output_frames_gen > nbSamplesMax) ? nbSamplesMax : src_data.output_frames_gen;
-        //_debug("downsample %d %f %d" ,  src_data.output_frames, src_data.src_ratio , nbSamples);
-        src_float_to_short_array (_floatBufferDownMic , dataOut , nbSamples);
-    }
+	SRC_DATA src_data;
+	src_data.data_in = _floatBufferUpMic;
+	src_data.data_out = _floatBufferDownMic;
+	src_data.input_frames = nbSamples;
+	src_data.output_frames = nbSamples;
+	src_data.src_ratio = downsampleFactor;
+	src_data.end_of_input = 0; // More data will come
 
-    return nbSamples;
+	Short2FloatArray (dataIn , _floatBufferUpMic, nbSamples);
+	src_process (_src_state_mic, &src_data);
+
+	assert(nbSamples == src_data.output_frames_gen);
+
+	src_float_to_short_array (_floatBufferDownMic , dataOut , nbSamples);
 }

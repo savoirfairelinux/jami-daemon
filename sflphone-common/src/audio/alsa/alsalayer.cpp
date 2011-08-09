@@ -830,7 +830,6 @@ void AlsaLayer::audioCallback (void)
     AudioLoop *file_tone;
 
     SFLDataFormat *out = NULL;
-    SFLDataFormat *rsmpl_out = NULL;
 
     notifyincomingCall();
 
@@ -934,20 +933,12 @@ void AlsaLayer::audioCallback (void)
                         out[i] = out[i] * spkrVolume / 100;
 
                 if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
+                    SFLDataFormat *rsmpl_out = (SFLDataFormat*) malloc (playbackAvailBytes);
+					memset (out, 0, playbackAvailBytes);
 
-                    // Do sample rate conversion
-                    int nb_sample_down = toGet / sizeof (SFLDataFormat);
-
-                    if (rsmpl_out) {
-                        rsmpl_out = (SFLDataFormat*) malloc (playbackAvailBytes);
-                        memset (out, 0, playbackAvailBytes);
-
-                        int nbSample = _converter->upsampleData ( (SFLDataFormat*) out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_down);
-                        write (rsmpl_out, nbSample*sizeof (SFLDataFormat), _PlaybackHandle);
-                        free (rsmpl_out);
-                    }
-
-                    rsmpl_out = 0;
+					_converter->upsampleData ( (SFLDataFormat*) out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, toGet / sizeof (SFLDataFormat));
+					write (rsmpl_out, toGet, _PlaybackHandle);
+					free (rsmpl_out);
 
                 } else {
 
@@ -1035,14 +1026,11 @@ void AlsaLayer::audioCallback (void)
 
         SFLDataFormat* rsmpl_out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
 
-        int nbSample = toPut / sizeof (SFLDataFormat);
-        int nb_sample_up = nbSample;
+        _converter->downsampleData ( (SFLDataFormat*) in, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, toPut / sizeof (SFLDataFormat));
 
-        nbSample = _converter->downsampleData ( (SFLDataFormat*) in, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_up);
+        _audiofilter->processAudio (rsmpl_out, toPut);
 
-        _audiofilter->processAudio (rsmpl_out, nbSample*sizeof (SFLDataFormat));
-
-        getMainBuffer()->putData (rsmpl_out, nbSample * sizeof (SFLDataFormat));
+        getMainBuffer()->putData (rsmpl_out, toPut);
 
         free (rsmpl_out);
     } else {

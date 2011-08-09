@@ -315,7 +315,7 @@ IAXVoIPLink::sendAudioFromMic (void)
 		int compSize;
 		if (audioCodec->getClockRate() && ((int) audioCodec->getClockRate() != _mainBufferSampleRate)) {
 			// resample
-			bytes = converter->downsampleData (micData , micDataConverted , (int) audioCodec->getClockRate(), _mainBufferSampleRate, bytes);
+			converter->downsampleData (micData , micDataConverted , (int) audioCodec->getClockRate(), _mainBufferSampleRate, bytes);
 			compSize = audioCodec->encode (micDataEncoded, micDataConverted , bytes);
 		} else {
 			compSize = audioCodec->encode (micDataEncoded, micData, bytes);
@@ -928,67 +928,47 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
         return;
 
     if (audiolayer) {
-
-        Manager::instance().getMainBuffer ()->setInternalSamplingRate (audioCodec->getClockRate ());
-
-        // If we receive datalen == 0, some things of the jitter buffer in libiax2/iax.c
-        // were triggered
-
-        int _mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
-
-        // On-the-fly codec changing (normally, when we receive a full packet)
-        // as per http://tools.ietf.org/id/draft-guy-iax-03.txt
-        // - subclass holds the voiceformat property.
-
-        if (event->subclass && event->subclass != call->getFormat()) {
-            _debug ("iaxHandleVoiceEvent: no format found in call setting it to %i", event->subclass);
-            call->setFormat (event->subclass);
-        }
-
-        data = (unsigned char*) event->data;
-
-        size   = event->datalen;
-
-        // Decode data with relevant codec
-        max = (int) (audioCodec->getClockRate() * audiolayer->getFrameSize() / 1000);
-
-        if (size > max) {
-            _debug ("The size %d is bigger than expected %d. Packet cropped. Ouch!", size, max);
-            size = max;
-        }
-
-        expandedSize = audioCodec->decode (spkrDataDecoded , data , size);
-
-        nbInt16      = expandedSize/sizeof (int16);
-
-        if (nbInt16 > max) {
-            _debug ("We have decoded an IAX VOICE packet larger than expected: %i VS %i. Cropping.", nbInt16, max);
-            nbInt16 = max;
-        }
-
-        nbSample_ = nbInt16;
-
-        // test if resampling is required
-
-        if (audioCodec->getClockRate() && ((int) audioCodec->getClockRate() != _mainBufferSampleRate)) {
-
-            // resample
-            nbInt16 = converter->upsampleData (spkrDataDecoded, spkrDataConverted, audioCodec->getClockRate(), _mainBufferSampleRate, nbSample_);
-
-            /* Write the data to the mic ring buffer */
-            audiolayer->getMainBuffer()->putData (spkrDataConverted, nbInt16 * sizeof (SFLDataFormat), call->getCallId());
-
-        } else {
-
-            /* Write the data to the mic ring buffer */
-            audiolayer->getMainBuffer()->putData (spkrDataDecoded, nbInt16 * sizeof (SFLDataFormat), call->getCallId());
-
-        }
-
-    } else {
         _debug ("IAX: incoming audio, but no sound card open");
+        return;
     }
 
+	Manager::instance().getMainBuffer ()->setInternalSamplingRate (audioCodec->getClockRate ());
+
+	// If we receive datalen == 0, some things of the jitter buffer in libiax2/iax.c
+	// were triggered
+
+	int _mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
+
+	// On-the-fly codec changing (normally, when we receive a full packet)
+	// as per http://tools.ietf.org/id/draft-guy-iax-03.txt
+	// - subclass holds the voiceformat property.
+
+	if (event->subclass && event->subclass != call->getFormat()) {
+		_debug ("iaxHandleVoiceEvent: no format found in call setting it to %i", event->subclass);
+		call->setFormat (event->subclass);
+	}
+
+	data = (unsigned char*) event->data;
+
+	size   = event->datalen;
+
+	// Decode data with relevant codec
+	max = (int) (audioCodec->getClockRate() * audiolayer->getFrameSize() / 1000);
+
+	if (size > max) {
+		_debug ("The size %d is bigger than expected %d. Packet cropped. Ouch!", size, max);
+		size = max;
+	}
+
+	expandedSize = audioCodec->decode (spkrDataDecoded , data , size);
+
+	if (audioCodec->getClockRate() && ((int) audioCodec->getClockRate() != _mainBufferSampleRate)) {
+		converter->upsampleData (spkrDataDecoded, spkrDataConverted, audioCodec->getClockRate(), _mainBufferSampleRate, expandedSize);
+		audiolayer->getMainBuffer()->putData (spkrDataConverted, expandedSize, call->getCallId());
+
+	} else {
+		audiolayer->getMainBuffer()->putData (spkrDataDecoded, expandedSize, call->getCallId());
+	}
 }
 
 /**
