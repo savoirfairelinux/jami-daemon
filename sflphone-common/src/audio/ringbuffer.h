@@ -121,10 +121,9 @@ class RingBuffer
          * Get data in the ring buffer
          * @param buffer Data to copied
          * @param toCopy Number of bytes to copy
-         * @param volume The volume
          * @return int Number of bytes copied
          */
-        int Get (void* buffer, int toCopy, unsigned short volume = 100, std::string call_id = default_id);
+        int Get (void* buffer, int toCopy, std::string call_id = default_id);
 
         /**
          * Discard data from the buffer

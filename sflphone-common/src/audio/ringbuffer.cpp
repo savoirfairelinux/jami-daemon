@@ -288,7 +288,7 @@ RingBuffer::AvailForGet (std::string call_id)
 
 // Get will move 'toCopy' bytes from the internal FIFO to 'buffer'
 int
-RingBuffer::Get (void *buffer, int toCopy, unsigned short volume, std::string call_id)
+RingBuffer::Get (void *buffer, int toCopy, std::string call_id)
 {
 
     if (getNbReadPointer() == 0)
@@ -315,7 +315,6 @@ RingBuffer::Get (void *buffer, int toCopy, unsigned short volume, std::string ca
 
     int mStart = getReadPointer (call_id);
 
-    //fprintf(stderr, "G");
     while (toCopy) {
         block = toCopy;
 
@@ -323,16 +322,6 @@ RingBuffer::Get (void *buffer, int toCopy, unsigned short volume, std::string ca
             block = mBufferSize - mStart;
         }
 
-        if (volume!=100) {
-            SFLDataFormat* start = (SFLDataFormat*) (mBuffer + mStart);
-            int nbSample = block / sizeof (SFLDataFormat);
-
-            for (int i=0; i<nbSample; i++) {
-                start[i] = start[i] * volume / 100;
-            }
-        }
-
-        // bcopy(src, dest, len)
         bcopy (mBuffer + mStart, dest, block);
 
         dest += block;

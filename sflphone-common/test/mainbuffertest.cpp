@@ -388,7 +388,7 @@ void MainBufferTest::testRingBufferNonDefaultID()
 
     CPPUNIT_ASSERT (test_ring_buffer->AvailForGet (test_id) == 2*sizeof (int));
     CPPUNIT_ASSERT (test_ring_buffer->getLen (test_id) == 2*sizeof (int));
-    CPPUNIT_ASSERT (test_ring_buffer->Get (&testget, sizeof (int), 100,  test_id) == sizeof (int));
+    CPPUNIT_ASSERT (test_ring_buffer->Get (&testget, sizeof (int), test_id) == sizeof (int));
     CPPUNIT_ASSERT (test_ring_buffer->AvailForGet (test_id) == sizeof (int));
     CPPUNIT_ASSERT (test_ring_buffer->getLen (test_id) == sizeof (int));
     CPPUNIT_ASSERT (testget == testint1);
@@ -1120,13 +1120,13 @@ void MainBufferTest::testRingBufferSeveralPointers()
     CPPUNIT_ASSERT (test_ring_buffer->AvailForGet (test_pointer2) == 4*sizeof (int));
 
 
-    CPPUNIT_ASSERT (test_ring_buffer->Get (&testoutput, sizeof (int), 100, test_pointer1) == sizeof (int));
+    CPPUNIT_ASSERT (test_ring_buffer->Get (&testoutput, sizeof (int), test_pointer1) == sizeof (int));
     CPPUNIT_ASSERT (testoutput == testint1);
     CPPUNIT_ASSERT (test_ring_buffer->AvailForPut() == initPutLen - 4* (int) sizeof (int));
     CPPUNIT_ASSERT (test_ring_buffer->AvailForGet (test_pointer1) == 3*sizeof (int));
     CPPUNIT_ASSERT (test_ring_buffer->AvailForGet (test_pointer2) == 4*sizeof (int));
 
-    CPPUNIT_ASSERT (test_ring_buffer->Get (&testoutput, sizeof (int), 100, test_pointer2) == sizeof (int));
+    CPPUNIT_ASSERT (test_ring_buffer->Get (&testoutput, sizeof (int), test_pointer2) == sizeof (int));
     CPPUNIT_ASSERT (testoutput == testint1);
     CPPUNIT_ASSERT (test_ring_buffer->AvailForPut() == initPutLen - 3* (int) sizeof (int));
     CPPUNIT_ASSERT (test_ring_buffer->AvailForGet (test_pointer1) == 3*sizeof (int));

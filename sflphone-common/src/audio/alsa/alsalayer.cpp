@@ -860,7 +860,11 @@ void AlsaLayer::audioCallback (void)
         memset (out, 0, toGet);
 
         if (out) {
-            _urgentRingBuffer.Get (out, toGet, spkrVolume);
+            _urgentRingBuffer.Get (out, toGet);
+            if (spkrVolume!=100)
+                for (int i=0; i<toGet / sizeof (SFLDataFormat); i++)
+                    out[i] = out[i] * spkrVolume / 100;
+
             write (out, toGet, _PlaybackHandle);
             free (out);
         }

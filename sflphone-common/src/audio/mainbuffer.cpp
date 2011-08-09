@@ -391,7 +391,7 @@ int MainBuffer::getDataByID (void *buffer, int toCopy, std::string call_id, std:
         return 0;
     }
 
-    return ring_buffer->Get (buffer, toCopy, 100, reader_id);
+    return ring_buffer->Get (buffer, toCopy, reader_id);
 }
 
 
