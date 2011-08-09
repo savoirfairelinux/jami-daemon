@@ -127,20 +127,6 @@ class AudioRtpFactory
         }
 
         /**
-         * Manually set the keyExchangeProtocol parameter (usefull for RTP fallback)
-         */
-        void setKeyExchangeProtocol (int proto) {
-            _keyExchangeProtocol = proto;
-        }
-
-        /**
-         * Manually set the setHelloHashEnabled parameter (usefull for RTP fallback)
-         */
-        void setHelloHashEnabled (bool enable) {
-            _helloHashEnabled = enable;
-        }
-
-        /**
          * Get the current AudioZrtpSession. Throws an AudioRtpFactoryException
          * if the current rtp thread is null, or if it's not of the correct type.
          * @return The current AudioZrtpSession thread.
