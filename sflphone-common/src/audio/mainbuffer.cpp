@@ -298,7 +298,7 @@ void MainBuffer::unBindAllHalfDuplexOut (std::string process_id)
 }
 
 
-int MainBuffer::putData (void *buffer, int toCopy, unsigned short volume, std::string call_id)
+int MainBuffer::putData (void *buffer, int toCopy, std::string call_id)
 {
     ost::MutexLock guard (_mutex);
 
@@ -314,11 +314,11 @@ int MainBuffer::putData (void *buffer, int toCopy, unsigned short volume, std::s
 
     if (a >= toCopy) {
 
-        return ring_buffer->Put (buffer, toCopy, volume);
+        return ring_buffer->Put (buffer, toCopy, 100);
 
     } else {
 
-        return ring_buffer->Put (buffer, a, volume);
+        return ring_buffer->Put (buffer, a, 100);
     }
 
 }

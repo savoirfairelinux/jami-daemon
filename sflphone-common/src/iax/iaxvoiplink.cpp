@@ -976,12 +976,12 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
             nbInt16 = converter->upsampleData (spkrDataDecoded, spkrDataConverted, audioCodec->getClockRate(), _mainBufferSampleRate, nbSample_);
 
             /* Write the data to the mic ring buffer */
-            audiolayer->getMainBuffer()->putData (spkrDataConverted, nbInt16 * sizeof (SFLDataFormat), 100, call->getCallId());
+            audiolayer->getMainBuffer()->putData (spkrDataConverted, nbInt16 * sizeof (SFLDataFormat), call->getCallId());
 
         } else {
 
             /* Write the data to the mic ring buffer */
-            audiolayer->getMainBuffer()->putData (spkrDataDecoded, nbInt16 * sizeof (SFLDataFormat), 100, call->getCallId());
+            audiolayer->getMainBuffer()->putData (spkrDataDecoded, nbInt16 * sizeof (SFLDataFormat), call->getCallId());
 
         }
 

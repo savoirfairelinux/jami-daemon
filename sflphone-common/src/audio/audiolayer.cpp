@@ -72,10 +72,10 @@ int AudioLayer::putMain (void *buffer, int toCopy, std::string call_id)
     a = getMainBuffer()->availForPut (call_id);
 
     if (a >= toCopy) {
-        return getMainBuffer()->putData (buffer, toCopy, 100, call_id);
+        return getMainBuffer()->putData (buffer, toCopy, call_id);
     } else {
         _debug ("Chopping sound, Ouch! RingBuffer full ?");
-        return getMainBuffer()->putData (buffer, a, 100, call_id);
+        return getMainBuffer()->putData (buffer, a, call_id);
     }
 
     return 0;

@@ -383,7 +383,7 @@ void AudioRtpRecordHandler::processDataDecode (unsigned char *spkrData, unsigned
         }
 
         // put data in audio layer, size in byte
-        Manager::instance().getMainBuffer()->putData (spkrDataConverted, nbSample * sizeof (SFLDataFormat), 100, _id);
+        Manager::instance().getMainBuffer()->putData (spkrDataConverted, nbSample * sizeof (SFLDataFormat), _id);
 
 
     } else {
@@ -391,7 +391,7 @@ void AudioRtpRecordHandler::processDataDecode (unsigned char *spkrData, unsigned
     	    echoCanceller.putData(spkrDataDecoded, expandedSize);
     	}
         // put data in audio layer, size in byte
-        Manager::instance().getMainBuffer()->putData (spkrDataDecoded, expandedSize, 100, _id);
+        Manager::instance().getMainBuffer()->putData (spkrDataDecoded, expandedSize, _id);
     }
 }
 

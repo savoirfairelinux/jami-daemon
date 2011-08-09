@@ -889,7 +889,7 @@ void PulseLayer::readFromMic (void)
             // remove dc offset
             _audiofilter->processAudio (rsmpl_out, nbSample*sizeof (SFLDataFormat));
 
-            getMainBuffer()->putData (rsmpl_out, nbSample*sizeof (SFLDataFormat), 100);
+            getMainBuffer()->putData (rsmpl_out, nbSample*sizeof (SFLDataFormat));
 
             pa_xfree (rsmpl_out);
 
@@ -902,7 +902,7 @@ void PulseLayer::readFromMic (void)
             // remove dc offset
             _audiofilter->processAudio ( (SFLDataFormat *) data, filter_out, r);
 
-            getMainBuffer()->putData (filter_out, r, 100);
+            getMainBuffer()->putData (filter_out, r);
 
             pa_xfree (filter_out);
         }
