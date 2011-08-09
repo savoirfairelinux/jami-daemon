@@ -37,7 +37,7 @@
 #include "tone.h"
 #include <math.h>
 #include <cstdlib>
-#include <strings.h>
+#include <cstring>
 
 #define TABLE_LENGTH 4096
 double TWOPI = 2 * M_PI;

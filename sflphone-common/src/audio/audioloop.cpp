@@ -34,7 +34,7 @@
 
 #include "audioloop.h"
 #include <math.h>
-#include <strings.h>
+#include <cstring>
 
 AudioLoop::AudioLoop() :_buffer (0),  _size (0), _pos (0), _sampleRate (0)
 {
