@@ -133,7 +133,7 @@ class MainBuffer
 
         RingBuffer* getRingBuffer (std::string call_id);
 
-        int getDataByID (void *buffer, int toCopy, unsigned short volume, std::string call_id, std::string reader_id);
+        int getDataByID (void *buffer, int toCopy, std::string call_id, std::string reader_id);
 
         int availForGetByID (std::string call_id, std::string reader_id);
 

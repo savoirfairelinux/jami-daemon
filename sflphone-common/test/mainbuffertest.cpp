@@ -911,7 +911,7 @@ void MainBufferTest::testGetPutDataByID()
     // put by default_id get by test_id without preleminary put
     avail_for_put_defaultid = _mainbuffer.availForPut();
     CPPUNIT_ASSERT (_mainbuffer.availForGetByID (default_id, test_id) == 0);
-    CPPUNIT_ASSERT (_mainbuffer.getDataByID (&test_output, sizeof (int), 100, default_id, test_id) == 0);
+    CPPUNIT_ASSERT (_mainbuffer.getDataByID (&test_output, sizeof (int), default_id, test_id) == 0);
 
     // put by default_id, get by test_id
     CPPUNIT_ASSERT (_mainbuffer.availForPut() == avail_for_put_defaultid);

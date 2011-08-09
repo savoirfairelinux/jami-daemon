@@ -353,7 +353,7 @@ int MainBuffer::getData (void *buffer, int toCopy, std::string call_id)
         CallIDSet::iterator iter_id = callid_set->begin();
 
         if (iter_id != callid_set->end()) {
-            return getDataByID (buffer, toCopy, 100, *iter_id, call_id);
+            return getDataByID (buffer, toCopy, *iter_id, call_id);
         } else
             return 0;
     } else {
@@ -367,7 +367,7 @@ int MainBuffer::getData (void *buffer, int toCopy, std::string call_id)
             int nbSmplToCopy = toCopy / sizeof (SFLDataFormat);
             SFLDataFormat mixBuffer[nbSmplToCopy];
             memset (mixBuffer, 0, toCopy);
-            size = getDataByID (mixBuffer, toCopy, 100, *iter_id, call_id);
+            size = getDataByID (mixBuffer, toCopy, *iter_id, call_id);
 
             if (size > 0) {
                 for (int k = 0; k < nbSmplToCopy; k++) {
@@ -383,7 +383,7 @@ int MainBuffer::getData (void *buffer, int toCopy, std::string call_id)
 }
 
 
-int MainBuffer::getDataByID (void *buffer, int toCopy, unsigned short volume, std::string call_id, std::string reader_id)
+int MainBuffer::getDataByID (void *buffer, int toCopy, std::string call_id, std::string reader_id)
 {
     RingBuffer* ring_buffer = getRingBuffer (call_id);
 
@@ -391,7 +391,7 @@ int MainBuffer::getDataByID (void *buffer, int toCopy, unsigned short volume, st
         return 0;
     }
 
-    return ring_buffer->Get (buffer, toCopy, volume, reader_id);
+    return ring_buffer->Get (buffer, toCopy, 100, reader_id);
 }
 
 
