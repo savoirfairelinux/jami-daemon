@@ -75,14 +75,6 @@ public:
 	~AudioStream();
 
 	/**
-	 * Write data to the main abstraction ring buffer.
-	 * @param buffer The buffer containing the data to be played
-	 * @param toCopy The number of samples, in bytes
-	 * @return int The number of bytes played
-	 */
-	int putMain(void* buffer, int toCopy);
-
-	/**
 	 * Write data to the urgent abstraction ring buffer. ( dtmf , double calls )
 	 * @param buffer The buffer containing the data to be played
 	 * @param toCopy The number of samples, in bytes

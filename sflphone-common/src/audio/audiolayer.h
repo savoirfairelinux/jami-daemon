@@ -137,14 +137,6 @@ class AudioLayer
          */
         void putUrgent (void* buffer, int toCopy);
 
-        /**
-         * Put voice data in the main sound buffer
-         * @param buffer    The buffer containing the voice data ()
-         * @param toCopy    The size of the buffer
-         * @return int      The number of bytes copied
-         */
-        int putMain (void* buffer, int toCopy, std::string call_id = default_id);
-
         void flushMain (void);
 
         void flushUrgent (void);

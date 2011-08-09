@@ -55,13 +55,6 @@ void AudioLayer::putUrgent (void* buffer, int toCopy)
     _urgentRingBuffer.Put (buffer, toCopy);
 }
 
-int AudioLayer::putMain (void *buffer, int toCopy, std::string call_id)
-{
-    ost::MutexLock guard (_mutex);
-
-    return getMainBuffer()->putData (buffer, toCopy, call_id);
-}
-
 void AudioLayer::notifyincomingCall()
 {
     // Notify (with a beep) an incoming call when there is already a call
