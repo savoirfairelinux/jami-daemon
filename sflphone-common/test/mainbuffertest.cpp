@@ -177,7 +177,7 @@ void MainBufferTest::testCallIDSet()
     CPPUNIT_ASSERT (iter_map ==_mainbuffer._callIDMap.end());
 
     // test callidset creation
-    CPPUNIT_ASSERT (_mainbuffer.createCallIDSet (test_id) == true);
+    _mainbuffer.createCallIDSet (test_id);
     CPPUNIT_ASSERT (_mainbuffer._callIDMap.size() == 1);
     iter_map = _mainbuffer._callIDMap.find (test_id);
     CPPUNIT_ASSERT (iter_map->first == test_id);
