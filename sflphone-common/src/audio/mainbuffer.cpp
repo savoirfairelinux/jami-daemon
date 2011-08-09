@@ -338,7 +338,7 @@ int MainBuffer::availForPut (std::string call_id)
 }
 
 
-int MainBuffer::getData (void *buffer, int toCopy, unsigned short volume, std::string call_id)
+int MainBuffer::getData (void *buffer, int toCopy, std::string call_id)
 {
     ost::MutexLock guard (_mutex);
 
@@ -353,7 +353,7 @@ int MainBuffer::getData (void *buffer, int toCopy, unsigned short volume, std::s
         CallIDSet::iterator iter_id = callid_set->begin();
 
         if (iter_id != callid_set->end()) {
-            return getDataByID (buffer, toCopy, volume, *iter_id, call_id);
+            return getDataByID (buffer, toCopy, 100, *iter_id, call_id);
         } else
             return 0;
     } else {
@@ -367,7 +367,7 @@ int MainBuffer::getData (void *buffer, int toCopy, unsigned short volume, std::s
             int nbSmplToCopy = toCopy / sizeof (SFLDataFormat);
             SFLDataFormat mixBuffer[nbSmplToCopy];
             memset (mixBuffer, 0, toCopy);
-            size = getDataByID (mixBuffer, toCopy, volume, *iter_id, call_id);
+            size = getDataByID (mixBuffer, toCopy, 100, *iter_id, call_id);
 
             if (size > 0) {
                 for (int k = 0; k < nbSmplToCopy; k++) {

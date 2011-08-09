@@ -280,7 +280,7 @@ int AudioRtpRecordHandler::processDataEncode (void)
         return 0;
 
     // Get bytes from micRingBuffer to data_from_mic
-    int nbSample = Manager::instance().getMainBuffer()->getData (micData, bytesToGet, 100, _id) / sizeof (SFLDataFormat);
+    int nbSample = Manager::instance().getMainBuffer()->getData (micData, bytesToGet, _id) / sizeof (SFLDataFormat);
 
     // process mic fade in
     if (!_audioRtpRecord._micFadeInComplete)

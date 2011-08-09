@@ -924,8 +924,10 @@ void AlsaLayer::audioCallback (void)
             memset (out, 0, maxNbBytesToGet);
 
             if (normalAvailBytes) {
-
-                getMainBuffer()->getData (out, toGet, spkrVolume);
+                getMainBuffer()->getData (out, toGet);
+                if (spkrVolume!=100)
+                    for (int i=0; i<toGet / sizeof (SFLDataFormat); i++)
+                        out[i] = out[i] * spkrVolume / 100;
 
                 if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
 

@@ -91,7 +91,7 @@ class MainBuffer
 
         int putData (void *buffer, int toCopy, std::string call_id = default_id);
 
-        int getData (void *buffer, int toCopy, unsigned short volume = 100, std::string call_id = default_id);
+        int getData (void *buffer, int toCopy, std::string call_id = default_id);
 
         int availForPut (std::string call_id = default_id);
 

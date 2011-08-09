@@ -744,7 +744,7 @@ void PulseLayer::writeToSpeaker (void)
         out = (SFLDataFormat*) pa_xmalloc (writeableSize);
         memset (out, 0, writeableSize);
 
-        _urgentRingBuffer.Get (out, writeableSize, 100);
+        _urgentRingBuffer.Get (out, writeableSize);
 
         pa_stream_write (playback->pulseStream(), out, writeableSize, NULL, 0, PA_SEEK_RELATIVE);
 
@@ -803,7 +803,7 @@ void PulseLayer::writeToSpeaker (void)
             out = (SFLDataFormat*) pa_xmalloc (maxNbBytesToGet);
             memset (out, 0, maxNbBytesToGet);
 
-            getMainBuffer()->getData (out, byteToGet, 100);
+            getMainBuffer()->getData (out, byteToGet);
 
             // test if resampling is required
             if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {

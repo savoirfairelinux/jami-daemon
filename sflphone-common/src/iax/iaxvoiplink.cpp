@@ -310,7 +310,7 @@ IAXVoIPLink::sendAudioFromMic (void)
 			continue;
 
 		// Get bytes from micRingBuffer to data_from_mic
-        int bytes = audiolayer->getMainBuffer()->getData (micData, needed, 100, currentCall->getCallId()) / sizeof (SFLDataFormat);
+        int bytes = audiolayer->getMainBuffer()->getData (micData, needed, currentCall->getCallId()) / sizeof (SFLDataFormat);
 
 		int compSize;
 		if (audioCodec->getClockRate() && ((int) audioCodec->getClockRate() != _mainBufferSampleRate)) {
