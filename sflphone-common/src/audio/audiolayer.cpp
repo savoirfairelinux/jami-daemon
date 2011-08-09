@@ -48,11 +48,11 @@ void AudioLayer::flushUrgent (void)
 }
 
 
-int AudioLayer::putUrgent (void* buffer, int toCopy)
+void AudioLayer::putUrgent (void* buffer, int toCopy)
 {
     ost::MutexLock guard (_mutex);
 
-    return _urgentRingBuffer.Put (buffer, toCopy);
+    _urgentRingBuffer.Put (buffer, toCopy);
 }
 
 int AudioLayer::putMain (void *buffer, int toCopy, std::string call_id)
