@@ -315,7 +315,7 @@ IAXVoIPLink::sendAudioFromMic (void)
 		int compSize;
 		if (audioCodec->getClockRate() && ((int) audioCodec->getClockRate() != _mainBufferSampleRate)) {
 			// resample
-			converter->downsampleData (micData , micDataConverted , (int) audioCodec->getClockRate(), _mainBufferSampleRate, bytes);
+			converter->resample (micData , micDataConverted , (int) audioCodec->getClockRate(), _mainBufferSampleRate, bytes);
 			compSize = audioCodec->encode (micDataEncoded, micDataConverted , bytes);
 		} else {
 			compSize = audioCodec->encode (micDataEncoded, micData, bytes);
@@ -963,7 +963,7 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
 	expandedSize = audioCodec->decode (spkrDataDecoded , data , size);
 
 	if (audioCodec->getClockRate() && ((int) audioCodec->getClockRate() != _mainBufferSampleRate)) {
-		converter->upsampleData (spkrDataDecoded, spkrDataConverted, audioCodec->getClockRate(), _mainBufferSampleRate, expandedSize);
+		converter->resample (spkrDataDecoded, spkrDataConverted, audioCodec->getClockRate(), _mainBufferSampleRate, expandedSize);
 		audiolayer->getMainBuffer()->putData (spkrDataConverted, expandedSize, call->getCallId());
 
 	} else {

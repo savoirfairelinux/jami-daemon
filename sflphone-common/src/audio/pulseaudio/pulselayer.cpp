@@ -806,7 +806,7 @@ void PulseLayer::writeToSpeaker (void)
                 SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (writeableSize);
                 memset (out, 0, writeableSize);
 
-                _converter->upsampleData ( (SFLDataFormat*) out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, byteToGet / sizeof (SFLDataFormat));
+                _converter->resample ( (SFLDataFormat*) out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, byteToGet / sizeof (SFLDataFormat));
 
                 if ( byteToGet > (unsigned int) writeableSize)
                     _warn ("Audio: Error: nbsbyte exceed buffer length");
@@ -868,7 +868,7 @@ void PulseLayer::readFromMic (void)
             SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (readableSize);
             memset (rsmpl_out, 0, readableSize);
 
-            _converter->downsampleData ( (SFLDataFormat *) data, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, r / sizeof (SFLDataFormat));
+            _converter->resample ( (SFLDataFormat *) data, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, r / sizeof (SFLDataFormat));
 
             // remove dc offset
             _audiofilter->processAudio (rsmpl_out, r);

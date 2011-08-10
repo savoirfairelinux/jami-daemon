@@ -287,7 +287,7 @@ int AudioRtpRecordHandler::processDataEncode (void)
 
     // test if resampling is required
     if (codecSampleRate != mainBufferSampleRate) {
-        _audioRtpRecord._converter->downsampleData (micData, micDataConverted, codecSampleRate, mainBufferSampleRate, bytes / sizeof(SFLDataFormat));
+        _audioRtpRecord._converter->resample (micData, micDataConverted, codecSampleRate, mainBufferSampleRate, bytes / sizeof(SFLDataFormat));
 
         _audioRtpRecord.audioProcessMutex.enter();
 
@@ -359,7 +359,7 @@ void AudioRtpRecordHandler::processDataDecode (unsigned char *spkrData, unsigned
     // test if resampling is required
     if (codecSampleRate != mainBufferSampleRate) {
         // Do sample rate conversion
-        _audioRtpRecord._converter->upsampleData (spkrDataDecoded, spkrDataConverted, codecSampleRate, mainBufferSampleRate, nbSample);
+        _audioRtpRecord._converter->resample (spkrDataDecoded, spkrDataConverted, codecSampleRate, mainBufferSampleRate, nbSample);
 
         if(Manager::instance().getEchoCancelState() == "enabled") {
             echoCanceller.putData(spkrDataConverted, expandedSize);

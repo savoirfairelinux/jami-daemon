@@ -53,22 +53,13 @@ class SamplerateConverter
         ~SamplerateConverter (void);
 
         /**
-         * Upsample from the samplerate1 to the samplerate2
+         * resample from the samplerate1 to the samplerate2
          * @param data  The data buffer
-         * @param SamplerateConverter1 The lower sample rate
-         * @param SamplerateConverter2 The higher sample rate
+         * @param SamplerateConverter1 The original sample rate
+         * @param SamplerateConverter2 The desired sample rate
          * @param nbSamples	  The number of samples to process
          */
-        void upsampleData (SFLDataFormat* dataIn , SFLDataFormat* dataOut , int samplerate1 , int samplerate2 , int nbSamples);
-
-        /**
-         * Downsample from the samplerate1 to the samplerate2
-         * @param data  The data buffer
-         * @param SamplerateConverter1 The lower sample rate
-         * @param SamplerateConverter2 The higher sample rate
-         * @param nbSamples	  The number of samples to process
-         */
-        void downsampleData (SFLDataFormat* dataIn , SFLDataFormat* dataOut , int samplerate1 , int samplerate2 , int nbSamples);
+        void resample (SFLDataFormat* dataIn , SFLDataFormat* dataOut , int samplerate1 , int samplerate2 , int nbSamples);
 
         /**
          * Convert short table to floats for audio processing
@@ -86,17 +77,10 @@ class SamplerateConverter
         // Assignment Operator
         SamplerateConverter& operator= (const SamplerateConverter& rh);
 
-        /** Downsampled/Upsampled float buffers for the mic data processing */
-        float32* _floatBufferDownMic;
-        float32* _floatBufferUpMic;
-        /** libSamplerateConverter converter for outgoing voice */
-        SRC_STATE*    _src_state_mic;
+        float32* _floatBufferIn;
+        float32* _floatBufferOut;
 
-        /** Downsampled/Upsampled float buffers for the speaker data processing */
-        float32* _floatBufferDownSpkr;
-        float32* _floatBufferUpSpkr;
-        /** libSamplerateConverter converter for incoming voice */
-        SRC_STATE*    _src_state_spkr;
+        SRC_STATE* _src_state;
 };
 
 #endif //_SAMPLE_RATE_H

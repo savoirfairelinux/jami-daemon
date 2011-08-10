@@ -250,9 +250,9 @@ WaveFile::WaveFile (const std::string& fileName, unsigned int audioSamplingRate)
 	    }
 
 		if (srate < audioSamplingRate)
-			_converter.upsampleData (tempBuffer, _buffer, srate, audioSamplingRate, nbSamples);
+			_converter.resample (tempBuffer, _buffer, srate, audioSamplingRate, nbSamples);
 		else if (srate > audioSamplingRate)
-			_converter.downsampleData (tempBuffer, _buffer, audioSamplingRate, srate, nbSamples);
+			_converter.resample (tempBuffer, _buffer, audioSamplingRate, srate, nbSamples);
 
 		delete[] tempBuffer;
     } else {

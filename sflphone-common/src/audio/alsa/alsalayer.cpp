@@ -936,7 +936,7 @@ void AlsaLayer::audioCallback (void)
                     SFLDataFormat *rsmpl_out = (SFLDataFormat*) malloc (playbackAvailBytes);
 					memset (out, 0, playbackAvailBytes);
 
-					_converter->upsampleData ( (SFLDataFormat*) out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, toGet / sizeof (SFLDataFormat));
+					_converter->resample ( (SFLDataFormat*) out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, toGet / sizeof (SFLDataFormat));
 					write (rsmpl_out, toGet, _PlaybackHandle);
 					free (rsmpl_out);
 
@@ -1026,7 +1026,7 @@ void AlsaLayer::audioCallback (void)
 
         SFLDataFormat* rsmpl_out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
 
-        _converter->downsampleData ( (SFLDataFormat*) in, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, toPut / sizeof (SFLDataFormat));
+        _converter->resample ( (SFLDataFormat*) in, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, toPut / sizeof (SFLDataFormat));
 
         _audiofilter->processAudio (rsmpl_out, toPut);
 
