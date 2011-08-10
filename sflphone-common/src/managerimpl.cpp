@@ -2407,8 +2407,17 @@ void ManagerImpl::ringtone (const std::string& accountID)
 			_audiofile = new WaveFile(ringchoice, samplerate);
 		}
 		else {
-		    sfl::AudioCodec *codecForTone = static_cast<sfl::AudioCodec *>(_audioCodecFactory.getFirstCodecAvailable());
-			_audiofile = new RawFile(ringchoice, codecForTone, samplerate);
+			sfl::Codec *codec;
+			if (ringchoice.find (".ul") != std::string::npos)
+			     codec = _audioCodecFactory.getCodec(PAYLOAD_CODEC_ULAW);
+			/*
+			 * FIXME : RawFile() only handles ULAW
+			 else if (ringchoice.find (".au") != std::string::npos)
+			     codec = _audioCodecFactory.getCodec(PAYLOAD_CODEC_GSM);
+			 */
+			else
+		        throw AudioFileException("Couldn't guess an appropriate decoder");
+			_audiofile = new RawFile(ringchoice, static_cast<sfl::AudioCodec *>(codec), samplerate);
 		}
 	}
 	catch (AudioFileException &e) {
