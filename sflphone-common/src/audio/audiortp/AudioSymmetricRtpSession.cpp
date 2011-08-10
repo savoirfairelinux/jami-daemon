@@ -54,14 +54,12 @@ AudioSymmetricRtpSession::AudioSymmetricRtpSession (SIPCall * sipcall) :
 
 AudioSymmetricRtpSession::~AudioSymmetricRtpSession()
 {
-    ost::Thread::terminate();
     _info ("AudioSymmetricRtpSession: Delete AudioSymmetricRtpSession instance");
 }
 
 void AudioSymmetricRtpSession::final()
 {
     delete _rtpThread;
-
     delete this;
 }
 
