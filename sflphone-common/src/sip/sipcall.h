@@ -33,9 +33,9 @@
 #define SIPCALL_H
 
 #include "call.h"
+#include "sdp.h"
 #include <cassert>
 
-class Sdp;
 class pjsip_evsub;
 class pj_caching_pool;
 class pj_pool_t;
@@ -96,7 +96,7 @@ class SIPCall : public Call
          * Return the local SDP session
          */
         Sdp* getLocalSDP (void) {
-            return _local_sdp;
+            return &local_sdp_;
         }
 
         /**
@@ -110,7 +110,6 @@ class SIPCall : public Call
          * Return the local memory pool for this call
          */
         pj_pool_t *getMemoryPool(void) {
-            assert(pool_);
             return pool_;
         }
 
@@ -163,15 +162,14 @@ class SIPCall : public Call
         pjsip_inv_session *_invSession;
 
         /**
-         * The SDP session
-         */
-        Sdp *_local_sdp;
-
-        /**
          * The pool to allocate memory, released once call hang up
          */
         pj_pool_t *pool_;
 
+        /**
+         * The SDP session
+         */
+        Sdp local_sdp_;
 };
 
 #endif

@@ -46,28 +46,18 @@ SIPCall::SIPCall (const std::string& id, Call::CallType type, pj_caching_pool *c
     , _audiortp (new sfl::AudioRtpFactory(this))
     , _xferSub (NULL)
     , _invSession (NULL)
-    , _local_sdp (NULL)
-	, pool_(NULL)
+	, pool_(pj_pool_create(&caching_pool->factory, id.c_str(), CALL_MEMPOOL_INIT_SIZE,
+                            CALL_MEMPOOL_INC_SIZE, NULL))
+    , local_sdp_(pool_)
 {
     _debug ("SIPCall: Create new call %s", id.c_str());
-
-    // Create memory pool for application, initialization value is based on empiric values.
-    pool_ = pj_pool_create (&caching_pool->factory, id.c_str(), CALL_MEMPOOL_INIT_SIZE,
-                            CALL_MEMPOOL_INC_SIZE, NULL);
-
-    _local_sdp = new Sdp (pool_);
 }
 
 SIPCall::~SIPCall()
 {
     _debug ("SIPCall: Delete call");
-
     _debug ("SDP: pool capacity %d", pj_pool_get_capacity (pool_));
     _debug ("SDP: pool size %d", pj_pool_get_used_size (pool_));
 
-    pj_pool_release (pool_);
-    pool_ = 0;
-    // Release memory allocated for SDP
-    delete _local_sdp;
     delete _audiortp;
 }

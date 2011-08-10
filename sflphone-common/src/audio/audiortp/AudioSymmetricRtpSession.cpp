@@ -54,12 +54,16 @@ AudioSymmetricRtpSession::AudioSymmetricRtpSession (SIPCall * sipcall) :
 
 AudioSymmetricRtpSession::~AudioSymmetricRtpSession()
 {
+    // XXX: DON'T call any members of this (i.e. AudioSymmetricRtpSession and
+    // the classes from which it is derived, or touch any of their data
     _info ("AudioSymmetricRtpSession: Delete AudioSymmetricRtpSession instance");
 }
 
 void AudioSymmetricRtpSession::final()
 {
     delete _rtpThread;
+
+    // See: http://www.parashift.com/c++-faq-lite/freestore-mgmt.html#faq-16.15
     delete this;
 }
 
