@@ -2173,6 +2173,8 @@ void ManagerImpl::peerHungupCall (const std::string& call_id)
 
     removeCallAccount (call_id);
 
+    removeStream(call_id);
+
     int nbCalls = getCallList().size();
 
     // stop streams
