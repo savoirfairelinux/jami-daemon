@@ -403,7 +403,7 @@ void PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int indexR
     flushUrgent();
 
     // use 1 sec buffer for resampling
-    _converter = new SamplerateConverter (_audioSampleRate, 1000);
+    _converter = new SamplerateConverter (_audioSampleRate);
 
     // Instantiate the algorithm
     AudioLayer::_dcblocker = new DcBlocker();

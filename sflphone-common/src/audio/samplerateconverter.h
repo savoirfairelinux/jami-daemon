@@ -47,7 +47,7 @@ class SamplerateConverter
         * internal buffer size. Converter must be reinitialized
         * every time these parameters change
         */
-        SamplerateConverter (int freq, int frameSize);
+        SamplerateConverter (int freq);
 
         /** Destructor */
         ~SamplerateConverter (void);
@@ -77,8 +77,11 @@ class SamplerateConverter
         // Assignment Operator
         SamplerateConverter& operator= (const SamplerateConverter& rh);
 
+        /* temporary buffers */
         float32* _floatBufferIn;
         float32* _floatBufferOut;
+        size_t _samples; // size in samples of temporary buffers
+        int _maxFreq; // maximal output frequency
 
         SRC_STATE* _src_state;
 };

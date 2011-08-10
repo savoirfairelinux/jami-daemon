@@ -30,16 +30,17 @@
 
 #include "samplerateconverter.h"
 #include "manager.h"
+#include <cassert>
 
-SamplerateConverter::SamplerateConverter (int freq , int fs)
+SamplerateConverter::SamplerateConverter (int freq) : _maxFreq(freq)
 {
     int err;
     _src_state = src_new (SRC_LINEAR, 1, &err);
 
-    int nbSamplesMax = (int) ( (freq * fs) / 1000);
+    _samples = (freq * 20) / 1000; // start with 20 ms buffers
 
-    _floatBufferIn = new float32[nbSamplesMax];
-    _floatBufferOut = new float32[nbSamplesMax];
+    _floatBufferIn = new float32[_samples];
+    _floatBufferOut = new float32[_samples];
 }
 
 SamplerateConverter::~SamplerateConverter (void)
@@ -61,29 +62,34 @@ SamplerateConverter::Short2FloatArray (const short *in, float *out, int len)
 }
 
 //TODO Add ifdef for int16 or float32 type
-void SamplerateConverter::resample (SFLDataFormat* dataIn , SFLDataFormat* dataOut , int samplerate1 , int samplerate2 , int nbSamples)
+void SamplerateConverter::resample (SFLDataFormat* dataIn , SFLDataFormat* dataOut , int inputFreq , int outputFreq , int nbSamples)
 {
-    double sampleFactor;
-    if (samplerate1 > samplerate2)
-		sampleFactor = (double) samplerate1 / samplerate2;
-    else
-		sampleFactor = (double) samplerate2 / samplerate1;
+	assert(outputFreq <= _maxFreq);
 
+    double sampleFactor = (double) inputFreq / outputFreq;
     if (sampleFactor == 1)
 		return;
+
+    int outSamples = nbSamples * sampleFactor;
+    if (outSamples > _samples) {
+    	/* grow buffer if needed */
+    	_samples = outSamples;
+    	delete [] _floatBufferIn;
+    	delete [] _floatBufferOut;
+        _floatBufferIn = new float32[_samples];
+        _floatBufferOut = new float32[_samples];
+    }
 
 	SRC_DATA src_data;
 	src_data.data_in = _floatBufferIn;
 	src_data.data_out = _floatBufferOut;
 	src_data.input_frames = nbSamples;
-	src_data.output_frames = nbSamples;
+	src_data.output_frames = outSamples;
 	src_data.src_ratio = sampleFactor;
 	src_data.end_of_input = 0; // More data will come
 
 	Short2FloatArray (dataIn , _floatBufferIn, nbSamples);
 	src_process (_src_state, &src_data);
 
-	assert(nbSamples == src_data.output_frames_gen);
-
-	src_float_to_short_array (_floatBufferOut, dataOut , nbSamples);
+	src_float_to_short_array (_floatBufferOut, dataOut , outSamples);
 }

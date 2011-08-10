@@ -212,7 +212,7 @@ WaveFile::WaveFile (const std::string& fileName, unsigned int audioSamplingRate)
 
     // Sample rate converter initialized with 88200 sample long
     int converterSamples  = (srate > audioSamplingRate) ? srate : audioSamplingRate;
-    SamplerateConverter _converter (converterSamples, 2000);
+    SamplerateConverter _converter (converterSamples);
 
     // Get length of data from the header.
     SINT32 bytes;

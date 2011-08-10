@@ -77,7 +77,7 @@ IAXVoIPLink::IAXVoIPLink (const std::string& accountID) : VoIPLink ()
     // to get random number for RANDOM_PORT
     srand (time (NULL));
 
-    converter = new SamplerateConverter (44100, 20);
+    converter = new SamplerateConverter (44100);
 
     // int nbSamplesMax = (int) (converter->getFrequence() * converter->getFramesize() / 1000);
     int nbSamplesMax = (44100 * 20) / 1000;

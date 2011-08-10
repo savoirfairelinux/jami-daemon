@@ -190,7 +190,7 @@ void AudioRtpRecordHandler::initBuffers()
     // (internal buffers initialized with maximal sampling rate and frame size)
     int rate = getCodecSampleRate();
     int fs = getCodecFrameSize();
-    _audioRtpRecord._converter = new SamplerateConverter (rate, fs);
+    _audioRtpRecord._converter = new SamplerateConverter (rate);
 
     int nbSamplesMax = (int) ( (getCodecSampleRate() * getCodecFrameSize() / 1000));
     _audioRtpRecord._micData = new SFLDataFormat[nbSamplesMax];

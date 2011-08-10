@@ -129,7 +129,7 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int indexRing, int sampleRate,
     _audioThread = NULL;
 
     // use 1 sec buffer for resampling
-    _converter = new SamplerateConverter (_audioSampleRate, 1000);
+    _converter = new SamplerateConverter (_audioSampleRate);
 
     AudioLayer::_dcblocker = new DcBlocker();
     AudioLayer::_audiofilter = new AudioProcessing (static_cast<Algorithm *> (_dcblocker));
