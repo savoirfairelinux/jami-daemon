@@ -62,9 +62,6 @@ AudioSymmetricRtpSession::~AudioSymmetricRtpSession()
 void AudioSymmetricRtpSession::final()
 {
     delete _rtpThread;
-
-    // See: http://www.parashift.com/c++-faq-lite/freestore-mgmt.html#faq-16.15
-    delete this;
 }
 
 AudioSymmetricRtpSession::AudioRtpThread::AudioRtpThread (AudioSymmetricRtpSession *session) : running (true), rtpSession (session)
@@ -74,7 +71,6 @@ AudioSymmetricRtpSession::AudioRtpThread::AudioRtpThread (AudioSymmetricRtpSessi
 
 AudioSymmetricRtpSession::AudioRtpThread::~AudioRtpThread()
 {
-    ost::Thread::terminate();
     _debug ("AudioSymmetricRtpSession: Delete rtp thread");
 }
 

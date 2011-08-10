@@ -55,7 +55,6 @@ using std::ptrdiff_t;
 namespace sfl
 {
 
-// class AudioSymmetricRtpSession : protected ost::Thread, public ost::TimerPort, public AudioRtpRecordHandler, public ost::TRTPSessionBase<ost::DualRTPUDPIPv4Channel,ost::DualRTPUDPIPv4Channel,ost::AVPQueue>
 class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTPSession, public AudioRtpSession
 {
     public:
@@ -68,9 +67,6 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTP
         ~AudioSymmetricRtpSession();
 
         virtual void final ();
-
-        // Thread associated method
-        // virtual void run ();
 
         virtual bool onRTPPacketRecv (ost::IncomingRTPPkt& pkt) { return AudioRtpSession::onRTPPacketRecv(pkt); }
 
