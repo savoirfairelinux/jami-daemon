@@ -69,8 +69,6 @@ int NoiseSuppress::process (SFLDataFormat *inputData, SFLDataFormat *outputData,
     return 0;
 }
 
-void NoiseSuppress::process (SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes) {}
-
 void NoiseSuppress::initNewNoiseSuppressor (int smplPerFrame, int samplingRate)
 {
     _noiseState = speex_preprocess_state_init (smplPerFrame, samplingRate);

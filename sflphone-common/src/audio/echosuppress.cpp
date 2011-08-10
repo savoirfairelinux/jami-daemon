@@ -74,5 +74,3 @@ int EchoSuppress::getData(SFLDataFormat *outputData)
 void EchoSuppress::process (SFLDataFormat *data UNUSED, int nbBytes UNUSED) {}
 
 int EchoSuppress::process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes) { return 0; }
-
-void EchoSuppress::process (SFLDataFormat *micData UNUSED, SFLDataFormat *spkrData UNUSED, SFLDataFormat *outputData UNUSED, int nbBytes UNUSED) {}

@@ -69,14 +69,6 @@ class DcBlocker : public Algorithm
          */
         virtual int process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes);
 
-        /**
-         * Perform echo cancellation, application must provide its own buffer
-         * \param micData containing mixed echo and voice data
-         * \param spkrData containing far-end voice data to be sent to speakers
-         * \param outputData containing the processed data
-         */
-        virtual void process (SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes);
-
     private:
 
         SFLDataFormat _y, _x, _xm1, _ym1;

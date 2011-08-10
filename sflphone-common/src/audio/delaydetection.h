@@ -114,8 +114,6 @@ class DelayDetection : public Algorithm
 
         virtual int process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes);
 
-        virtual void process (SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes);
-
     private:
 
         enum State {

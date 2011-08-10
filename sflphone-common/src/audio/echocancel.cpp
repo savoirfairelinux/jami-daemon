@@ -330,11 +330,6 @@ int EchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputData, in
     return nbFrame * _smplPerFrame;
 }
 
-void EchoCancel::process (SFLDataFormat *micData UNUSED, SFLDataFormat *spkrData UNUSED, SFLDataFormat *outputData UNUSED, int nbBytes UNUSED)
-{
-
-}
-
 void EchoCancel::setSamplingRate (int smplRate)
 {
 

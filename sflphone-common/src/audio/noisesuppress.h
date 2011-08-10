@@ -70,11 +70,6 @@ class NoiseSuppress : public Algorithm
         */
         virtual int process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes);
 
-        /**
-        * Unused
-         */
-        virtual void process (SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes);
-
     private:
 
         void initNewNoiseSuppressor (int _smplPerFrame, int samplingRate);
