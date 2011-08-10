@@ -1,7 +1,4 @@
-/*
-
-	    if(_dbus)
-		_dbus *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+/**  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *
  *  Inspired by tonegenerator of
@@ -46,35 +43,15 @@
 
 #include "manager.h"
 
-RawFile::RawFile() : audioCodec (NULL)
-{
-    AudioFile::_start = false;
-}
-
-RawFile::~RawFile()
-{
-}
-
 // load file in mono format
-void RawFile::loadFile (const std::string& name, sfl::AudioCodec* codec, unsigned int sampleRate = 8000) throw(AudioFileException)
+RawFile::RawFile(const std::string& name, sfl::AudioCodec* codec, unsigned int sampleRate)
+	: audioCodec (codec)
 {
-    _debug("RawFile: Load new file %s", name.c_str());
-
-    audioCodec = codec;
-
-    // if the filename was already load, with the same samplerate
-    // we do nothing
-
-    if ((filepath == name) && (_sampleRate == (int)sampleRate)) {
-	return;
-    }
-
     filepath = name;
 
     // no filename to load
-    if (filepath.empty()) {
+    if (filepath.empty())
         throw AudioFileException("Unable to open audio file: filename is empty");
-    }
 
     std::fstream file;
 
@@ -164,102 +141,28 @@ void RawFile::loadFile (const std::string& name, sfl::AudioCodec* codec, unsigne
 }
 
 
-
-
-WaveFile::WaveFile () : byteCounter (0)
-    , nbChannels (1)
-    , fileLength (0)
-    , dataOffset (0)
-    , channels (0)
-    , dataType (0)
-    , fileRate (0)
-{
-    AudioFile::_start = false;
-}
-
-
-WaveFile::~WaveFile()
-{
-    _debug ("WaveFile: Destructor Called!");
-}
-
-
-
-void WaveFile::openFile (const std::string& fileName, int audioSamplingRate) throw(AudioFileException)
-{
-    try {
-
-        if (isFileExist (fileName)) {
-            openExistingWaveFile (fileName, audioSamplingRate);
-        }
-    }
-    catch(AudioFileException &e) {
-        throw;
-    }
-}
-
-
-
-bool WaveFile::closeFile()
-{
-    fileStream.close();
-
-    return true;
-}
-
-
-bool WaveFile::isFileExist (const std::string& fileName)
+WaveFile::WaveFile (const std::string& fileName, unsigned int audioSamplingRate)
 {
     std::fstream fs (fileName.c_str(), std::ios_base::in);
+	if (!fs)
+        throw AudioFileException("File " + fileName + " doesn't exist");
 
-    if (!fs) {
-        _debug ("WaveFile: file \"%s\" doesn't exist", fileName.c_str());
-        return false;
-    }
-
-    _debug ("WaveFile: File \"%s\" exists", fileName.c_str());
-    return true;
-}
-
-
-bool WaveFile::isFileOpened()
-{
-
-    if (fileStream.is_open()) {
-        _debug ("WaveFile: file is openened");
-        return true;
-    } else {
-        _debug ("WaveFile: file is not openend");
-        return false;
-    }
-}
-
-
-void WaveFile::openExistingWaveFile (const std::string& fileName, int audioSamplingRate) throw(AudioFileException)
-{
-
-    int maxIteration = 0;
-
-    _debug ("WaveFile: Opening %s", fileName.c_str());
     filepath = fileName;
-
+    std::fstream fileStream;
     fileStream.open (fileName.c_str(), std::ios::in | std::ios::binary);
 
-    char riff[4] = {};
+    char riff[4] = { 0, 0, 0, 0 };
     fileStream.read (riff, 4);
-    if (strncmp ("RIFF", riff, 4) != 0) {
+    if (strncmp ("RIFF", riff, 4) != 0)
         throw AudioFileException("File is not of RIFF format");
-    }
 
-    char fmt[4] = {};
-    maxIteration = 10;
-    while ((maxIteration > 0) && strncmp ("fmt ", fmt, 4)) {
+    char fmt[4] = { 0, 0, 0, 0 };
+    int maxIteration = 10;
+    while (maxIteration-- && strncmp ("fmt ", fmt, 4))
         fileStream.read (fmt, 4);
-        maxIteration--;
-    }
-    if(maxIteration == 0) {
+
+    if(maxIteration == 0)
         throw AudioFileException("Could not find \"fmt \" chunk");
-    }
 
     SINT32 chunk_size; // fmt chunk size
     unsigned short formatTag; // data compression tag
@@ -267,188 +170,95 @@ void WaveFile::openExistingWaveFile (const std::string& fileName, int audioSampl
     fileStream.read ( (char*) &chunk_size, 4); // Read fmt chunk size.
     fileStream.read ( (char*) &formatTag, 2);
 
-    _debug ("WaveFile: Chunk size: %d", chunk_size);
-    _debug ("WaveFile: Format tag: %d", formatTag);
-
-    if (formatTag != 1) { // PCM = 1, FLOAT = 3
+    if (formatTag != 1) // PCM = 1, FLOAT = 3
         throw AudioFileException("File contains an unsupported data format type");
-    }
 
     // Get number of channels from the header.
     SINT16 chan;
     fileStream.read ( (char*) &chan, 2);
-    channels = chan;
-    _debug ("WaveFile: Channel %d", channels);
 
+    if(chan > 2)
+    	throw AudioFileException("WaveFile: unsupported number of channels");
 
     // Get file sample rate from the header.
     SINT32 srate;
     fileStream.read ( (char*) &srate, 4);
-    fileRate = (double) srate;
-    _debug ("WaveFile: Sampling rate %d", srate);
 
     SINT32 avgb;
     fileStream.read ( (char*) &avgb, 4);
-    _debug ("WaveFile: Average byte %d", avgb);\
 
     SINT16 blockal;
     fileStream.read ( (char*) &blockal, 2);
-    _debug ("WaveFile: Block alignment %d", blockal);
-
 
     // Determine the data type
-    dataType = 0;
+    SOUND_FORMAT dataType;
     SINT16 dt;
     fileStream.read ( (char*) &dt, 2);
-    _debug ("WaveFile: dt %d", dt);
-    if (formatTag == 1) {
-        if (dt == 8)
-            dataType = 1; // SINT8;
-        else if (dt == 16)
-            dataType = 2; // SINT16;
-        else if (dt == 32)
-            dataType = 3; // SINT32;
-    }
-    else {
-        throw AudioFileException("File's bits per sample with is not supported");
-    }
+	if (dt == 8)
+		dataType = 1; // SINT8;
+	else if (dt == 16)
+		dataType = 2; // SINT16;
+	else if (dt == 32)
+		dataType = 3; // SINT32;
+	else {
+		throw AudioFileException("File's bits per sample with is not supported");
+	}
 
     // Find the "data" chunk
-    char data[4] = {};
+    char data[4] = { 0, 0, 0, 0 };
     maxIteration = 10;
-    while ((maxIteration > 0) && strncmp ("data", data, 4)) {
+    while (maxIteration-- && strncmp ("data", data, 4))
         fileStream.read (data, 4);
-        maxIteration--;
-    }
-
 
     // Sample rate converter initialized with 88200 sample long
     int converterSamples  = (srate > audioSamplingRate) ? srate : audioSamplingRate;
-    SamplerateConverter _converter (converterSamples, 2000);
-
-    int nbSampleMax = 512;
+    SamplerateConverter _converter (converterSamples);
 
     // Get length of data from the header.
     SINT32 bytes;
     fileStream.read ( (char*) &bytes, 4);
-    _debug ("WaveFile: data size in byte %d", bytes);
 
-    fileLength = 8 * bytes / dt / channels;  // sample frames
-    _debug ("WaveFile: data size in frame %ld", fileLength);
+    unsigned long nbSamples = 8 * bytes / dt / chan;  // sample frames
+
+    _debug ("WaveFile: frame size %ld, data size %d align %d rate %d avgbyte %d chunk size %d dt %d",
+    		nbSamples, bytes,  blockal, srate, avgb, chunk_size, dt);
 
     // Should not be longer than a minute
-    if (fileLength > (unsigned int) (60*srate))
-        fileLength = 60*srate;
+    if (nbSamples > (unsigned int) (60*srate))
+        nbSamples = 60*srate;
 
-    SFLDataFormat *tempBuffer = new SFLDataFormat[fileLength];
-    if (!tempBuffer) {
+    SFLDataFormat *tempBuffer = new SFLDataFormat[nbSamples];
+    if (!tempBuffer)
         throw AudioFileException("Could not allocate temporary buffer");
-    }
 
-    SFLDataFormat *tempBufferRsmpl = NULL;
-
-    fileStream.read ( (char *) tempBuffer, fileLength*sizeof (SFLDataFormat));
+    fileStream.read ( (char *) tempBuffer, nbSamples*sizeof (SFLDataFormat));
 
     // mix two channels together if stereo
-    if(channels == 2) {
-    	int tmp = 0;
-    	unsigned j = 0;
-    	for(unsigned int i = 0; i < fileLength-1; i+=2) {
-    		tmp = (tempBuffer[i] + tempBuffer[i+1]) / 2;
-    		// saturate
-    		if(tmp > SHRT_MAX) {
-    			tmp = SHRT_MAX;
-    		}
-    		tempBuffer[j++] = (SFLDataFormat)tmp;
-    	}
-
-    	fileLength /= 2;
+    if(chan == 2) {
+    	for(unsigned int i = 0; i < nbSamples-1; i+=2)
+    		tempBuffer[i/2] = (tempBuffer[i] + tempBuffer[i+1]) / 2;
+    	nbSamples /= 2;
     }
-    else if(channels > 2) {
-	delete [] tempBuffer;
-    	throw AudioFileException("WaveFile: unsupported number of channels");
-    }
-
-    // compute size of final buffer
-    int nbSample;
 
     if (srate != audioSamplingRate) {
-        nbSample = (int) ( (float) fileLength * ( (float) audioSamplingRate / (float) srate));
+        nbSamples = (int) ( (float) nbSamples * ( (float) audioSamplingRate / (float) srate));
+
+	    _buffer = new SFLDataFormat[nbSamples];
+	    if (_buffer == NULL) {
+	    	delete[] tempBuffer;
+	        throw AudioFileException("Could not allocate buffer for audio");
+	    }
+
+		if (srate < audioSamplingRate)
+			_converter.resample (tempBuffer, _buffer, srate, audioSamplingRate, nbSamples);
+		else if (srate > audioSamplingRate)
+			_converter.resample (tempBuffer, _buffer, audioSamplingRate, srate, nbSamples);
+
+		delete[] tempBuffer;
     } else {
-        nbSample = fileLength;
+    	_buffer = tempBuffer;
     }
 
-    int totalprocessed = 0;
-
-    // require resampling
-    if (srate != audioSamplingRate) {
-
-        // initialize remaining samples to process
-        int remainingSamples = fileLength;
-
-        tempBufferRsmpl = new SFLDataFormat[nbSample];
-        if (!tempBufferRsmpl) {
-            throw AudioFileException("Could not allocate temporary buffer for ressampling");
-        }
-
-        SFLDataFormat *in = tempBuffer;
-        SFLDataFormat *out = tempBufferRsmpl;
-
-        while (remainingSamples > 0) {
-
-            int toProcess = remainingSamples > nbSampleMax ? nbSampleMax : remainingSamples;
-            int nbSamplesConverted = 0;
-
-            if (srate < audioSamplingRate) {
-                nbSamplesConverted = _converter.upsampleData (in, out, srate, audioSamplingRate, toProcess);
-            } else if (srate > audioSamplingRate) {
-                nbSamplesConverted = _converter.downsampleData (in, out, audioSamplingRate, srate, toProcess);
-            }
-
-            // nbSamplesConverted = nbSamplesConverted*2;
-
-            in += toProcess;
-            out += nbSamplesConverted;
-            remainingSamples -= toProcess;
-            totalprocessed += nbSamplesConverted;
-        }
-    }
-
-    // Init audio loop buffer info
-    _buffer = new SFLDataFormat[nbSample];
-    if (_buffer == NULL) {
-        throw AudioFileException("Could not allocate buffer for audio");
-    }
-
-    _size = nbSample;
-    _sampleRate = (int) audioSamplingRate;
-
-    // Copy audio into audioloopi
-    if (srate != audioSamplingRate) {
-        memcpy ( (void *) _buffer, (void *) tempBufferRsmpl, nbSample*sizeof (SFLDataFormat));
-    }
-    else {
-        memcpy ( (void *) _buffer, (void *) tempBuffer, nbSample*sizeof (SFLDataFormat));
-    }
-
-    _debug ("WaveFile: file successfully opened");
-
-    delete[] tempBuffer;
-
-    if (tempBufferRsmpl) {
-        delete[] tempBufferRsmpl;
-    }
-}
-
-
-void WaveFile::loadFile (const std::string& name, sfl::AudioCodec * /*codec*/, unsigned int sampleRate) throw(AudioFileException)
-{
-    _debug("WaveFile: Load new file %s", name.c_str());
-
-    try { 
-        openFile (name, sampleRate);
-    }
-    catch(AudioFileException &e) {
-        throw;
-    }
+    _size = nbSamples;
+    _sampleRate = audioSamplingRate;
 }

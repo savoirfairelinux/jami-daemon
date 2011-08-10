@@ -26,9 +26,6 @@
 
 #include <fstream>
 
-
-typedef unsigned char* samplePtr;
-
 typedef std::map<std::string, int> ReadPointer;
 
 static std::string default_id = "audiolayer_id";
@@ -98,18 +95,11 @@ class RingBuffer
         int getNbReadPointer();
 
         /**
-         * To get how much space is available in the buffer to write in
-         * @return int The available size
-         */
-        int AvailForPut (void);
-
-        /**
          * Write data in the ring buffer
          * @param buffer Data to copied
          * @param toCopy Number of bytes to copy
-         * @return int Number of bytes copied
          */
-        int Put (void* buffer, int toCopy);
+        void Put (void* buffer, int toCopy);
 
         /**
          * To get how much space is available in the buffer to read in
@@ -121,10 +111,9 @@ class RingBuffer
          * Get data in the ring buffer
          * @param buffer Data to copied
          * @param toCopy Number of bytes to copy
-         * @param volume The volume
          * @return int Number of bytes copied
          */
-        int Get (void* buffer, int toCopy, unsigned short volume = 100, std::string call_id = default_id);
+        int Get (void* buffer, int toCopy, std::string call_id = default_id);
 
         /**
          * Discard data from the buffer
@@ -160,7 +149,7 @@ class RingBuffer
         /** Buffer size */
         int           mBufferSize;
         /** Data */
-        samplePtr     mBuffer;
+        unsigned char *mBuffer;
 
         ReadPointer   _readpointer;
 

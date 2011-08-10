@@ -86,5 +86,3 @@ int DcBlocker::process (SFLDataFormat *inputData, SFLDataFormat *outputData, int
     return 0;
 
 }
-
-void DcBlocker::process (SFLDataFormat *micData UNUSED, SFLDataFormat *spkrData UNUSED, SFLDataFormat *outputData UNUSED, int nbBytes UNUSED) {}

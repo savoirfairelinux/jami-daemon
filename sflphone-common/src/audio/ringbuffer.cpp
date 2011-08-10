@@ -90,56 +90,30 @@ RingBuffer::flushAll ()
 int
 RingBuffer::putLen()
 {
-    int mStart;
-
-    if (_readpointer.size() >= 1) {
-        mStart = getSmallestReadPointer();
-    } else {
-        mStart = 0;
-    }
-
-    int length = (mEnd + mBufferSize - mStart) % mBufferSize;
-
-    return length;
+    int mStart = (_readpointer.size() >= 1) ? getSmallestReadPointer() : 0;
+    return (mEnd + mBufferSize - mStart) % mBufferSize;
 }
 
 int
 RingBuffer::getLen (std::string call_id)
 {
-
-    int mStart = getReadPointer (call_id);
-
-    int length = (mEnd + mBufferSize - mStart) % mBufferSize;
-
-
-    // _debug("    *RingBuffer::getLen: buffer_id %s, call_id %s, mStart %i, mEnd %i, length %i, buffersie %i", buffer_id.c_str(), call_id.c_str(), mStart, mEnd, length, mBufferSize);
-    return length;
-
+    return (mEnd + mBufferSize - getReadPointer (call_id)) % mBufferSize;
 }
 
 void
 RingBuffer::debug()
 {
-    int mStart = getSmallestReadPointer();
-
-    _debug ("Start=%d; End=%d; BufferSize=%d", mStart, mEnd, mBufferSize);
+    _debug ("Start=%d; End=%d; BufferSize=%d", getSmallestReadPointer(), mEnd, mBufferSize);
 }
 
 int
 RingBuffer::getReadPointer (std::string call_id)
 {
-
     if (getNbReadPointer() == 0)
         return 0;
 
     ReadPointer::iterator iter = _readpointer.find (call_id);
-
-    if (iter == _readpointer.end()) {
-        return 0;
-    } else {
-        return iter->second;
-    }
-
+	return (iter != _readpointer.end()) ? iter->second : 0;
 }
 
 int
@@ -150,14 +124,10 @@ RingBuffer::getSmallestReadPointer()
 
     int smallest = mBufferSize;
 
-    ReadPointer::iterator iter = _readpointer.begin();
-
-    while (iter != _readpointer.end()) {
+    ReadPointer::iterator iter;
+    for (iter = _readpointer.begin(); iter != _readpointer.end(); ++iter)
         if (iter->second < smallest)
             smallest = iter->second;
-
-        iter++;
-    }
 
     return smallest;
 }
@@ -165,7 +135,6 @@ RingBuffer::getSmallestReadPointer()
 void
 RingBuffer::storeReadPointer (int pointer_value, std::string call_id)
 {
-
     ReadPointer::iterator iter = _readpointer.find (call_id);
 
     if (iter != _readpointer.end()) {
@@ -173,7 +142,6 @@ RingBuffer::storeReadPointer (int pointer_value, std::string call_id)
     } else {
         _debug ("storeReadPointer: Cannot find \"%s\" readPointer in \"%s\" ringbuffer", call_id.c_str(), buffer_id.c_str());
     }
-
 }
 
 
@@ -182,7 +150,6 @@ RingBuffer::createReadPointer (std::string call_id)
 {
     if (!hasThisReadPointer (call_id))
         _readpointer.insert (std::pair<std::string, int> (call_id, mEnd));
-
 }
 
 
@@ -190,7 +157,6 @@ void
 RingBuffer::removeReadPointer (std::string call_id)
 {
     ReadPointer::iterator iter = _readpointer.find (call_id);
-
     if (iter != _readpointer.end())
         _readpointer.erase (iter);
 }
@@ -199,13 +165,7 @@ RingBuffer::removeReadPointer (std::string call_id)
 bool
 RingBuffer::hasThisReadPointer (std::string call_id)
 {
-    ReadPointer::iterator iter = _readpointer.find (call_id);
-
-    if (iter == _readpointer.end()) {
-        return false;
-    } else {
-        return true;
-    }
+    return _readpointer.find (call_id) != _readpointer.end();
 }
 
 
@@ -218,60 +178,31 @@ RingBuffer::getNbReadPointer()
 //
 // For the writer only:
 //
-int
-RingBuffer::AvailForPut()
-{
-    // Always keep 4 bytes safe (?)
-
-    return mBufferSize - putLen();
-}
 
 // This one puts some data inside the ring buffer.
-int
+void
 RingBuffer::Put (void* buffer, int toCopy)
 {
-    samplePtr src;
-    int block;
-    int copied;
-    int pos;
-
     int len = putLen();
-
-
     if (toCopy > mBufferSize - len)
         toCopy = mBufferSize - len;
 
-    src = (samplePtr) buffer;
+    unsigned char *src = (unsigned char *) buffer;
 
-
-    copied = 0;
-
-    pos = mEnd;
+    int pos = mEnd;
 
     while (toCopy) {
-        block = toCopy;
+        int block = toCopy;
+        if (block > mBufferSize - pos) // Wrap block around ring ?
+            block = mBufferSize - pos; // Fill in to the end of the buffer
 
-        // Wrap block around ring ?
-        if (block > (mBufferSize - pos)) {
-            // Fill in to the end of the buffer
-            block = mBufferSize - pos;
-        }
-
-        bcopy (src, mBuffer + pos, block);
-
+        memcpy (mBuffer + pos, src, block);
         src += block;
-
         pos = (pos + block) % mBufferSize;
-
         toCopy -= block;
-
-        copied += block;
     }
 
     mEnd = pos;
-
-    // How many items copied.
-    return copied;
 }
 
 //
@@ -288,64 +219,34 @@ RingBuffer::AvailForGet (std::string call_id)
 
 // Get will move 'toCopy' bytes from the internal FIFO to 'buffer'
 int
-RingBuffer::Get (void *buffer, int toCopy, unsigned short volume, std::string call_id)
+RingBuffer::Get (void *buffer, int toCopy, std::string call_id)
 {
-
     if (getNbReadPointer() == 0)
         return 0;
 
     if (!hasThisReadPointer (call_id))
         return 0;
 
-    samplePtr dest;
-
-    int block;
-
-    int copied;
-
     int len = getLen (call_id);
-
-
     if (toCopy > len)
         toCopy = len;
+    int copied = toCopy;
 
-    dest = (samplePtr) buffer;
-
-    copied = 0;
-
+    unsigned char *dest = (unsigned char *) buffer;
     int mStart = getReadPointer (call_id);
 
-    //fprintf(stderr, "G");
     while (toCopy) {
-        block = toCopy;
-
-        if (block > (mBufferSize - mStart)) {
+        int block = toCopy;
+        if (block > mBufferSize - mStart)
             block = mBufferSize - mStart;
-        }
 
-        if (volume!=100) {
-            SFLDataFormat* start = (SFLDataFormat*) (mBuffer + mStart);
-            int nbSample = block / sizeof (SFLDataFormat);
-
-            for (int i=0; i<nbSample; i++) {
-                start[i] = start[i] * volume / 100;
-            }
-        }
-
-        // bcopy(src, dest, len)
-        bcopy (mBuffer + mStart, dest, block);
-
+        memcpy (dest, mBuffer + mStart, block);
         dest += block;
-
         mStart = (mStart + block) % mBufferSize;
-
         toCopy -= block;
-
-        copied += block;
     }
 
     storeReadPointer (mStart, call_id);
-
     return copied;
 }
 

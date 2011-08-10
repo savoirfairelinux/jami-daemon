@@ -301,47 +301,16 @@ void MainBuffer::unBindAllHalfDuplexOut (std::string process_id)
 }
 
 
-int MainBuffer::putData (void *buffer, int toCopy, std::string call_id)
+void MainBuffer::putData (void *buffer, int toCopy, std::string call_id)
 {
     ost::MutexLock guard (_mutex);
 
     RingBuffer* ring_buffer = getRingBuffer (call_id);
-
-    if (ring_buffer == NULL) {
-        return 0;
-    }
-
-    int a;
-
-    a = ring_buffer->AvailForPut();
-
-    if (a >= toCopy) {
-
-        return ring_buffer->Put (buffer, toCopy);
-
-    } else {
-
-        return ring_buffer->Put (buffer, a);
-    }
-
+    if (ring_buffer)
+    	ring_buffer->Put (buffer, toCopy);
 }
 
-int MainBuffer::availForPut (std::string call_id)
-{
-
-    ost::MutexLock guard (_mutex);
-
-    RingBuffer* ringbuffer = getRingBuffer (call_id);
-
-    if (ringbuffer == NULL)
-        return 0;
-    else
-        return ringbuffer->AvailForPut();
-
-}
-
-
-int MainBuffer::getData (void *buffer, int toCopy, unsigned short volume, std::string call_id)
+int MainBuffer::getData (void *buffer, int toCopy, std::string call_id)
 {
     ost::MutexLock guard (_mutex);
 
@@ -356,7 +325,7 @@ int MainBuffer::getData (void *buffer, int toCopy, unsigned short volume, std::s
         CallIDSet::iterator iter_id = callid_set->begin();
 
         if (iter_id != callid_set->end()) {
-            return getDataByID (buffer, toCopy, volume, *iter_id, call_id);
+            return getDataByID (buffer, toCopy, *iter_id, call_id);
         } else
             return 0;
     } else {
@@ -370,7 +339,7 @@ int MainBuffer::getData (void *buffer, int toCopy, unsigned short volume, std::s
             int nbSmplToCopy = toCopy / sizeof (SFLDataFormat);
             SFLDataFormat mixBuffer[nbSmplToCopy];
             memset (mixBuffer, 0, toCopy);
-            size = getDataByID (mixBuffer, toCopy, volume, *iter_id, call_id);
+            size = getDataByID (mixBuffer, toCopy, *iter_id, call_id);
 
             if (size > 0) {
                 for (int k = 0; k < nbSmplToCopy; k++) {
@@ -386,7 +355,7 @@ int MainBuffer::getData (void *buffer, int toCopy, unsigned short volume, std::s
 }
 
 
-int MainBuffer::getDataByID (void *buffer, int toCopy, unsigned short volume, std::string call_id, std::string reader_id)
+int MainBuffer::getDataByID (void *buffer, int toCopy, std::string call_id, std::string reader_id)
 {
     RingBuffer* ring_buffer = getRingBuffer (call_id);
 
@@ -394,7 +363,7 @@ int MainBuffer::getDataByID (void *buffer, int toCopy, unsigned short volume, st
         return 0;
     }
 
-    return ring_buffer->Get (buffer, toCopy, volume, reader_id);
+    return ring_buffer->Get (buffer, toCopy, reader_id);
 }
 
 

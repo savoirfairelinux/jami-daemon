@@ -37,7 +37,7 @@
 #include "tone.h"
 #include <math.h>
 #include <cstdlib>
-#include <strings.h>
+#include <cstring>
 
 #define TABLE_LENGTH 4096
 double TWOPI = 2 * M_PI;
@@ -130,8 +130,7 @@ Tone::genBuffer (const std::string& definition)
 
     _buffer = new SFLDataFormat[_size];
 
-    // src, dest, tocopy
-    bcopy (buffer, _buffer, _size*sizeof (SFLDataFormat)); // copy char, not SFLDataFormat.
+    memcpy (_buffer, buffer, _size*sizeof (SFLDataFormat)); // copy char, not SFLDataFormat.
 
     delete[] buffer;
 

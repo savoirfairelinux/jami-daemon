@@ -57,16 +57,6 @@ class SpeexEchoCancel : public Algorithm
          */
         virtual int process (SFLDataFormat *, SFLDataFormat *, int);
 
-        /**
-         * Perform echo cancellation, application must provide its own buffer
-         * \param micData containing mixed echo and voice data
-         * \param spkrData containing far-end voice data to be sent to speakers
-         * \param outputData containing the processed data
-	 * \param size in bytes
-         */
-
-        virtual void process (SFLDataFormat *, SFLDataFormat *, SFLDataFormat *, int);
-
     private:
 
         SpeexEchoState *_echoState;

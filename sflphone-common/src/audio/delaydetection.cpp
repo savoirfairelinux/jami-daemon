@@ -217,8 +217,6 @@ int DelayDetection::process (SFLDataFormat *intputData UNUSED, SFLDataFormat *ou
     return 0;
 }
 
-void DelayDetection::process (SFLDataFormat *micData UNUSED, SFLDataFormat *spkrData UNUSED, SFLDataFormat *outputData UNUSED, int nbBytes UNUSED) {}
-
 void DelayDetection::crossCorrelate (float *ref, float *seg, float *res, int refSize, int segSize)
 {
 
