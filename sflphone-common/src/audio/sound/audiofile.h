@@ -56,52 +56,13 @@ public:
 class AudioFile : public AudioLoop
 {
 public:
-
-    /**
-     * Load a sound file in memory
-     *
-     * @param filename  The absolute path to the file
-     * @param codec     The codec to decode and encode it
-     * @param sampleRate	The sample rate to read it
-     * @return bool   True on success
-     */
-    virtual void loadFile (const std::string &, sfl::AudioCodec *, unsigned int) throw(AudioFileException) = 0;
-
-    std::string getFilePath(void) {
-	return filepath;
-    }
-
-    /**
-     * Start the sound file
-     */
-    void start() {
-        _start = true;
-    }
-
-    /**
-     * Stop the sound file
-     */
-    void stop() {
-        _start = false;
-    }
-
-    /**
-     * Tells whether or not the file is playing
-     * @return bool True if yes
-     *		  false otherwise
-     */
-    bool isStarted() {
-        return _start;
+    const std::string &getFilePath(void) const{
+    	return filepath;
     }
 
 protected:
-
-    /** start or not */
-    bool _start;
-    
     /** The absolute path to the sound file */
     std::string filepath;
-
 };
 
 
@@ -117,22 +78,7 @@ class RawFile : public AudioFile
         /**
          * Constructor
          */
-        RawFile();
-
-        /**
-         * Destructor
-         */
-        ~RawFile();
-
-
-        /**
-         * Load a sound file in memory
-         * @param filename  The absolute path to the file
-         * @param codec     The codec to decode and encode it
-         * @param sampleRate	The sample rate to read it
-         * @return bool   True on success
-         */
-        virtual void loadFile (const std::string&, sfl::AudioCodec *, unsigned int sampleRate) throw(AudioFileException);
+        RawFile(const std::string& name, sfl::AudioCodec* codec, unsigned int sampleRate = 8000);
 
     private:
         // Copy Constructor
@@ -149,89 +95,12 @@ class WaveFile : public AudioFile
 {
 
     public:
-
-        WaveFile();
-
-        ~WaveFile();
-
-        /**
-         * Open a file give a file name
-         *
-         * @param A reference to a string containing the filename
-         * @param The internal sampling rate, file will be resampled
-         *        if it's sampling rate does not correspond to internal one
-         */
-        void openFile (const std::string&, unsigned int) throw(AudioFileException);
-
-        /**
-         * Test if the specified file already exist
-         */
-        bool isFileExist (const std::string&);
-
-        /**
-         * Load a sound file in memory
-             * @param filename  The absolute path to the file
-             * @param codec     The codec to decode and encode it
-             * @param sampleRate	The sample rate to read it
-             * @return bool   True on success
-             */
-        virtual void loadFile (const std::string&, sfl::AudioCodec *, unsigned int) throw(AudioFileException);
-
-    private:
-
-        /**
-         * Open an existing wave file
-         * @param File name
-         * @param Audio sampling rate
-         */
-        void openExistingWaveFile (const std::string&, unsigned int) throw(AudioFileException);
-
-        /**
-         * Sound format for this file (16/32 bits)
-         */
-        SOUND_FORMAT sndFormat;
- 
-        /**
-         * Nb of bytes for this file 
-         */
-        long byteCounter;
-
-        /**
-         * Number of channels for this file
-	 */
-        int nbChannels;
-
-        /**
-         * Total file length
-         */
-        unsigned long fileLength;
-
-        /**
-         * Audio data start offset in bytes
-         */
-        unsigned long dataOffset;
-
-        /**
-         * Channels
-         */
-        SINT16 channels;
-
-        /**
-         * Data type
-         */
-        SOUND_FORMAT dataType;
-
-        /**
-         * File sampling rate
-         */
-        double fileRate;
-
-        /**
-         * File stream
-         */
-        std::fstream fileStream;
-
+		/**
+		 * Load a sound file in memory
+			 * @param filename  The absolute path to the file
+			 * @param sampleRate	The sample rate to read it
+			 */
+		WaveFile(const std::string&, unsigned int);
 };
 
 #endif
-

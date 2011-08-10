@@ -84,7 +84,7 @@ class AudioLoop
         /** The data buffer */
         SFLDataFormat* _buffer;
 
-        /** Number of int16 inside the buffer, not the delay */
+        /** Number of samples inside the buffer */
         int _size;
 
         /** current position, set to 0, when initialize */
