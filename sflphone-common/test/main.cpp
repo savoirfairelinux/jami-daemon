@@ -32,6 +32,8 @@
 #include <manager.h>
 #include <constants.h>
 
+#include <cstdlib>
+
 #include <cppunit/CompilerOutputter.h>
 #include <cppunit/XmlOutputter.h>
 #include <cppunit/extensions/TestFactoryRegistry.h>
@@ -39,7 +41,6 @@
 
 int main (int argc, char* argv[])
 {
-
     printf ("\nSFLphone Daemon Test Suite, by Savoir-Faire Linux 2004-2010\n\n");
     Logger::setConsoleLog (true);
     Logger::setDebugMode (true);
@@ -65,7 +66,7 @@ int main (int argc, char* argv[])
                 printf (" - %s\n", suite->getChildTestAt (i)->getName().c_str());
             }
 
-            exit (0);
+            return 0;
         } else if (strcmp ("--debug", argv[1]) == 0) {
             argvIndex++;
 
@@ -89,6 +90,7 @@ int main (int argc, char* argv[])
     }
 
     printf ("\n\n=== SFLphone initialization ===\n\n");
+    system("cp " CONFIG_SAMPLE " " CONFIG_SAMPLE ".bak");
     Manager::instance().initConfigFile (true, CONFIG_SAMPLE);
     Manager::instance().init();
 
@@ -98,7 +100,8 @@ int main (int argc, char* argv[])
 
     if (suite->getChildTestCount() == 0) {
         _error ("Invalid test suite name: %s", testSuiteName.c_str());
-        exit (-1);
+        system("mv " CONFIG_SAMPLE ".bak " CONFIG_SAMPLE);
+        return 1;
     }
 
     // Adds the test to the list of test to run
@@ -120,6 +123,7 @@ int main (int argc, char* argv[])
 
     Manager::instance().terminate();
 
-    // Return error code 1 if the one of test failed.
+    system("mv " CONFIG_SAMPLE ".bak " CONFIG_SAMPLE);
+
     return wasSucessful ? 0 : 1;
 }
