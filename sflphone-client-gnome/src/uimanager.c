@@ -1017,6 +1017,8 @@ call_mailbox_cb (void)
 
     create_new_call (CALL, CALL_STATE_DIALING, "", account_id, _ ("Voicemail"), to,
                      &mailbox_call);
+    g_free(to);
+    g_free(account_id);
     DEBUG ("TO : %s" , mailbox_call->_peer_number);
     calllist_add_call (current_calls, mailbox_call);
     calltree_add_call (current_calls, mailbox_call, NULL);
@@ -1678,8 +1680,8 @@ ok_cb (GtkWidget *widget UNUSED, gpointer userdata)
     original = (callable_obj_t*) userdata;
 
     // Create the new call
-    create_new_call (CALL, CALL_STATE_DIALING, "", g_strdup (original->_accountID),
-                     original->_peer_name, g_strdup (new_number), &modified_call);
+    create_new_call (CALL, CALL_STATE_DIALING, "", original->_accountID,
+                     original->_peer_name, new_number, &modified_call);
 
     // Update the internal data structure and the GUI
     calllist_add_call (current_calls, modified_call);
@@ -1724,7 +1726,7 @@ show_edit_number (callable_obj_t *call)
 #endif
 
     if (call)
-        gtk_entry_set_text (GTK_ENTRY (editable_num), g_strdup (call->_peer_number));
+        gtk_entry_set_text (GTK_ENTRY (editable_num), call->_peer_number);
     else
         ERROR ("This a bug, the call should be defined. menus.c line 1051");
 

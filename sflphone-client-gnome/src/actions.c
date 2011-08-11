@@ -770,6 +770,8 @@ sflphone_new_call()
     peer_number = g_strdup ("");
     peer_name = g_strdup ("");
     create_new_call (CALL, CALL_STATE_DIALING, "", "", peer_name, peer_number, &c);
+    g_free(peer_number);
+    g_free(peer_name);
 
     c->_history_state = OUTGOING;
 
