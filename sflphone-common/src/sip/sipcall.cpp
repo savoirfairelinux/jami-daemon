@@ -48,7 +48,7 @@ SIPCall::SIPCall (const std::string& id, Call::CallType type, pj_caching_pool *c
     , _invSession (NULL)
 	, pool_(pj_pool_create(&caching_pool->factory, id.c_str(), CALL_MEMPOOL_INIT_SIZE,
                             CALL_MEMPOOL_INC_SIZE, NULL))
-    , local_sdp_(pool_)
+    , local_sdp_(new Sdp(pool_))
 {
     _debug ("SIPCall: Create new call %s", id.c_str());
 }
@@ -58,6 +58,8 @@ SIPCall::~SIPCall()
     _debug ("SIPCall: Delete call");
     _debug ("SDP: pool capacity %d", pj_pool_get_capacity (pool_));
     _debug ("SDP: pool size %d", pj_pool_get_used_size (pool_));
+    delete local_sdp_;
+    pj_pool_release (pool_);
 
     delete _audiortp;
 }

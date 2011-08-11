@@ -198,7 +198,7 @@ void ManagerImpl::terminate ()
 
     _debug ("Manager: Unload audio codecs ");
     _audioCodecFactory.deleteHandlePointer();
-
+    audioLayerMutexUnlock();
 }
 
 bool ManagerImpl::isCurrentCall (const std::string& callId)

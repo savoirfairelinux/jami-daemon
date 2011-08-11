@@ -114,6 +114,7 @@ void SDPTest::tearDown()
 {
 	delete _session;
 	_session = NULL;
+    pj_pool_release (_testPool);
 }
 
 

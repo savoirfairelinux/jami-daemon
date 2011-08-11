@@ -33,13 +33,13 @@
 #define SIPCALL_H
 
 #include "call.h"
-#include "sdp.h"
 #include <cassert>
 
 class pjsip_evsub;
 class pj_caching_pool;
 class pj_pool_t;
 class pjsip_inv_session;
+class Sdp;
 
 namespace sfl
 {
@@ -96,7 +96,7 @@ class SIPCall : public Call
          * Return the local SDP session
          */
         Sdp* getLocalSDP (void) {
-            return &local_sdp_;
+            return local_sdp_;
         }
 
         /**
@@ -169,7 +169,7 @@ class SIPCall : public Call
         /**
          * The SDP session
          */
-        Sdp local_sdp_;
+        Sdp *local_sdp_;
 };
 
 #endif

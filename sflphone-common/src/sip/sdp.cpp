@@ -648,7 +648,6 @@ Sdp::~Sdp()
 
     for (iter = localAudioMediaCap_.begin(); iter != localAudioMediaCap_.end(); ++iter)
         delete *iter;
-    pj_pool_release (memPool_);
 }
 
 
