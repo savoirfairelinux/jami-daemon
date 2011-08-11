@@ -46,7 +46,7 @@ class DBusManagerImpl
         ConfigurationManager * getConfigurationManager() {
             return _configurationManager;
         };
-        int exec();
+        void exec();
         void exit();
         static const char* SERVER_NAME;
 

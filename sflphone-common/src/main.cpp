@@ -206,7 +206,8 @@ main (int argc, char **argv)
     }
 
     Manager::instance().setDBusManager (&DBusManager::instance());
-    return DBusManager::instance().exec();  // UI Loop
+    DBusManager::instance().exec();  // UI Loop
+    return 0;
 }
 
 // EOF
