@@ -207,6 +207,8 @@ AC_ARG_WITH(debug,
 			[CXXFLAGS="-O2"]
 			)
 
+CXXFLAGS="${CXXFLAGS} -Wno-return-type -Wall -Wextra -Wnon-virtual-dtor"
+
 AC_CHECK_LIB([expat], XML_ParserCreate_MM,
 		[AC_CHECK_HEADERS(expat.h, have_expat=true, have_expat=false)],
 	have_expat=false)

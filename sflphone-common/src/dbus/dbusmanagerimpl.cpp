@@ -38,7 +38,7 @@
 
 const char* DBusManagerImpl::SERVER_NAME = "org.sflphone.SFLphone";
 
-int
+void
 DBusManagerImpl::exec()
 {
 
@@ -61,8 +61,6 @@ DBusManagerImpl::exec()
 
     _debug ("Starting DBus event loop");
     _dispatcher.enter();
-
-    return 1;
 }
 
 void

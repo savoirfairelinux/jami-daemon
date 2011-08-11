@@ -410,15 +410,14 @@ std::vector <std::string> AudioCodecFactory::getCodecSpecifications (const int32
     // Add the name of the codec
     v.push_back (getCodecName ( (AudioCodecType) payload));
 
-    // Add the bit rate
-    ss << getBitRate ( (AudioCodecType) payload);
-    v.push_back ( (ss.str()).data());
-    ss.str ("");
-
     // Add the sample rate
     ss << getSampleRate ( (AudioCodecType) payload);
     v.push_back ( (ss.str()).data());
     ss.str ("");
+
+    // Add the bit rate
+    ss << getBitRate ( (AudioCodecType) payload);
+    v.push_back ( (ss.str()).data());
 
     return v;
 }

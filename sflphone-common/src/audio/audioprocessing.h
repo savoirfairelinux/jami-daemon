@@ -83,11 +83,6 @@ class AudioProcessing
          */
         int processAudio (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes);
 
-        /**
-         * Process some audio data.
-         */
-        void processAudio (SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes);
-
     private:
 
         Algorithm *_algorithm;

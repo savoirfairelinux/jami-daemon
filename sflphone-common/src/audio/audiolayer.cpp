@@ -48,37 +48,11 @@ void AudioLayer::flushUrgent (void)
 }
 
 
-int AudioLayer::putUrgent (void* buffer, int toCopy)
+void AudioLayer::putUrgent (void* buffer, int toCopy)
 {
-    int a;
-
     ost::MutexLock guard (_mutex);
-    a = _urgentRingBuffer.AvailForPut();
 
-    if (a >= toCopy) {
-        return _urgentRingBuffer.Put (buffer, toCopy, _defaultVolume);
-    } else {
-        return _urgentRingBuffer.Put (buffer, a, _defaultVolume);
-    }
-
-    return 0;
-}
-
-int AudioLayer::putMain (void *buffer, int toCopy, std::string call_id)
-{
-    int a;
-
-    ost::MutexLock guard (_mutex);
-    a = getMainBuffer()->availForPut (call_id);
-
-    if (a >= toCopy) {
-        return getMainBuffer()->putData (buffer, toCopy, _defaultVolume, call_id);
-    } else {
-        _debug ("Chopping sound, Ouch! RingBuffer full ?");
-        return getMainBuffer()->putData (buffer, a, _defaultVolume, call_id);
-    }
-
-    return 0;
+    _urgentRingBuffer.Put (buffer, toCopy);
 }
 
 void AudioLayer::notifyincomingCall()

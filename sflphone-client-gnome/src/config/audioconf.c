@@ -58,7 +58,6 @@ enum {
     COLUMN_CODEC_NAME,
     COLUMN_CODEC_FREQUENCY,
     COLUMN_CODEC_BITRATE,
-    COLUMN_CODEC_BANDWIDTH,
     CODEC_COLUMN_COUNT
 };
 
@@ -88,7 +87,7 @@ static void preferences_dialog_fill_codec_list (account_t *a)
         if (c) {
             DEBUG ("%s", c->name);
             gtk_list_store_append (codecStore, &iter);
-            gchar *samplerate = g_strdup_printf ("%s kHz", c->sample_rate);
+            gchar *samplerate = g_strdup_printf ("%d kHz", c->sample_rate);
             gchar *bitrate = g_strdup_printf ("%s kbps", c->bitrate);
 
             gtk_list_store_set (codecStore, &iter,

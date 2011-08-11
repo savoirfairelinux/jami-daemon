@@ -54,7 +54,6 @@ class G722 : public sfl::AudioCodec
             _frameSize = 320; // samples, 20 ms at 16kHz
             _channel   = 1;
             _bitrate = 64;
-            _bandwidth = 80;
             _hasDynamicPayload = false;
 
 

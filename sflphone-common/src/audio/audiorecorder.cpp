@@ -71,7 +71,7 @@ void AudioRecorder::run (void)
 
         int toGet = (availBytes < bufferLength) ? availBytes : bufferLength;
 
-        mbuffer->getData (buffer, toGet, 100, recorderId);
+        mbuffer->getData (buffer, toGet, recorderId);
 
         if (availBytes > 0) {
 

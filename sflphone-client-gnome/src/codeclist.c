@@ -91,6 +91,38 @@ static gboolean codecs_audio_load (void)
     return TRUE;
 }
 
+void codec_create_new (gint payload, gboolean active, codec_t **c)
+{
+
+    codec_t *codec;
+    gchar **specs;
+
+    codec = g_new0 (codec_t, 1);
+    codec->payload = payload;
+    specs = (gchar **) dbus_audio_codec_details (payload);
+    codec->name = specs[0];
+    codec->sample_rate = atoi (specs[1]);
+    codec->bitrate = atoi (specs[2]);
+    codec->is_active = active;
+
+    *c = codec;
+}
+
+void codec_create_new_with_specs (gint payload, gchar **specs, gboolean active, codec_t **c)
+{
+
+    codec_t *codec;
+
+    codec = g_new0 (codec_t, 1);
+    codec->payload = payload;
+    codec->name = strdup(specs[0]);
+    codec->sample_rate = atoi (specs[1]);
+    codec->bitrate = atoi (specs[2]);
+    codec->is_active = active;
+
+    *c = codec;
+}
+
 static gboolean codecs_video_load (void)
 {
     gchar **codecs = dbus_video_codec_list();
@@ -113,7 +145,6 @@ static gboolean codecs_video_load (void)
     if (g_queue_get_length (&videoCodecs) == 0) {
         return FALSE;
     }
-
     return TRUE;
 }
 

@@ -123,7 +123,7 @@ class AudioRtpRecordHandler
 {
     public:
         AudioRtpRecordHandler (SIPCall *ca);
-        ~AudioRtpRecordHandler();
+        virtual ~AudioRtpRecordHandler();
 
         /**
          *  Set rtp media for this session
@@ -174,14 +174,6 @@ class AudioRtpRecordHandler
             return _audioRtpRecord._micDataEncoded;
         }
 
-        float computeCodecFrameSize (int codecSamplePerFrame, int codecClockRate) const {
-            return ( (float) codecSamplePerFrame * 1000.0) / (float) codecClockRate;
-        }
-
-        int computeNbByteAudioLayer (int mainBufferSamplingRate, float codecFrameSize) const {
-            return (int) ( ( (float) mainBufferSamplingRate * codecFrameSize * sizeof (SFLDataFormat)) / 1000.0);
-        }
-
         void init (void);
 
         /**
@@ -225,9 +217,9 @@ class AudioRtpRecordHandler
 
     private:
 
-        std::string& _id;
+        const std::string id_;
 
- 	EchoSuppress echoCanceller;
+        EchoSuppress echoCanceller;
 
         GainControl gainController;
 };

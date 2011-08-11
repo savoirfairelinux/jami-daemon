@@ -403,7 +403,7 @@ void PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int indexR
     flushUrgent();
 
     // use 1 sec buffer for resampling
-    _converter = new SamplerateConverter (_audioSampleRate, 1000);
+    _converter = new SamplerateConverter (_audioSampleRate);
 
     // Instantiate the algorithm
     AudioLayer::_dcblocker = new DcBlocker();
@@ -744,7 +744,7 @@ void PulseLayer::writeToSpeaker (void)
         out = (SFLDataFormat*) pa_xmalloc (writeableSize);
         memset (out, 0, writeableSize);
 
-        _urgentRingBuffer.Get (out, writeableSize, 100);
+        _urgentRingBuffer.Get (out, writeableSize);
 
         pa_stream_write (playback->pulseStream(), out, writeableSize, NULL, 0, PA_SEEK_RELATIVE);
 
@@ -768,7 +768,6 @@ void PulseLayer::writeToSpeaker (void)
                 pa_stream_write (playback->pulseStream(), out, copied * sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
 
                 pa_xfree (out);
- 
         }
     }
     else {
@@ -794,42 +793,32 @@ void PulseLayer::writeToSpeaker (void)
         byteToGet = (normalAvailBytes < (int) (maxNbBytesToGet)) ? normalAvailBytes : maxNbBytesToGet;
 
         if (byteToGet) {
-
             // Sending an odd number of byte breaks the audio!
-            if ( (byteToGet%2) != 0) {
-                byteToGet = byteToGet-1;
-	    }
+        	byteToGet &= ~1;
 
             out = (SFLDataFormat*) pa_xmalloc (maxNbBytesToGet);
             memset (out, 0, maxNbBytesToGet);
 
-            getMainBuffer()->getData (out, byteToGet, 100);
+            getMainBuffer()->getData (out, byteToGet);
 
             // test if resampling is required
             if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
-
                 SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (writeableSize);
                 memset (out, 0, writeableSize);
 
-                // Do sample rate conversion
-                int nb_sample_down = byteToGet / sizeof (SFLDataFormat);
+                _converter->resample ( (SFLDataFormat*) out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, byteToGet / sizeof (SFLDataFormat));
 
-                int nbSample = _converter->upsampleData ( (SFLDataFormat*) out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_down);
-
-                if ( (nbSample*sizeof (SFLDataFormat)) > (unsigned int) writeableSize) {
+                if ( byteToGet > (unsigned int) writeableSize)
                     _warn ("Audio: Error: nbsbyte exceed buffer length");
-		}
 
-	 	// write resample data
-                pa_stream_write (playback->pulseStream(), rsmpl_out, nbSample*sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
+                pa_stream_write (playback->pulseStream(), rsmpl_out, byteToGet, NULL, 0, PA_SEEK_RELATIVE);
 
-	        // free resampling buffer
                 pa_xfree (rsmpl_out);
 
             } else {
 		// write origin data
                 pa_stream_write (playback->pulseStream(), out, byteToGet, NULL, 0, PA_SEEK_RELATIVE);
-	    }
+            }
 
 	    // free audio buffer used to get data from 
             pa_xfree (out);
@@ -855,7 +844,6 @@ void PulseLayer::writeToSpeaker (void)
 	_urgentRingBuffer.Discard (byteToGet);
 
     }
-
 }
 
 void PulseLayer::readFromMic (void)
@@ -880,16 +868,12 @@ void PulseLayer::readFromMic (void)
             SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (readableSize);
             memset (rsmpl_out, 0, readableSize);
 
-            int nbSample = r / sizeof (SFLDataFormat);
-
-            int nb_sample_up = nbSample;
-
-            nbSample = _converter->downsampleData ( (SFLDataFormat *) data, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_up);
+            _converter->resample ( (SFLDataFormat *) data, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, r / sizeof (SFLDataFormat));
 
             // remove dc offset
-            _audiofilter->processAudio (rsmpl_out, nbSample*sizeof (SFLDataFormat));
+            _audiofilter->processAudio (rsmpl_out, r);
 
-            getMainBuffer()->putData (rsmpl_out, nbSample*sizeof (SFLDataFormat), 100);
+            getMainBuffer()->putData (rsmpl_out, r);
 
             pa_xfree (rsmpl_out);
 
@@ -902,7 +886,7 @@ void PulseLayer::readFromMic (void)
             // remove dc offset
             _audiofilter->processAudio ( (SFLDataFormat *) data, filter_out, r);
 
-            getMainBuffer()->putData (filter_out, r, 100);
+            getMainBuffer()->putData (filter_out, r);
 
             pa_xfree (filter_out);
         }

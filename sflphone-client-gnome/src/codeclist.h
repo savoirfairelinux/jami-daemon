@@ -45,7 +45,7 @@ typedef struct {
     /** String description */
     gchar * name;
     /** Sample rate */
-    gchar * sample_rate;
+    gint sample_rate;
     /** Bitrate */
     gchar * bitrate;
 } codec_t;
@@ -98,7 +98,32 @@ codec_t* codec_list_get_by_payload (int payload, GQueue *q);
 GQueue* get_video_codecs_list (void);
 
 GQueue* get_audio_codecs_list (void);
+/**
+ * Instanciate a new codecs with the given payload.
+ * Fetches codec specification through D-Bus
+ *
+ * @param payload		The unique RTP payload
+ * @param active		Whether or not this codec should active (checked)
+ * @param c			A pointer to receive the new codec instance
+ */
+void codec_create_new (gint payload, gboolean active, codec_t **c);
+
+/*
+ * Instanciate a new codec with the given specification
+ *
+ * @param payload	The unique RTP payload
+ * @param specs		A list of codec specifications. Ordered: name, sample rate, bit rate
+ * @param active	Whether or not this codec should active (checked)
+ * @param c			A pointer to receive the new codec instance
+ */
+void codec_create_new_with_specs (gint payload, gchar **specs, gboolean active, codec_t **c);
+
+/*
+ * Attach a codec list to a specific account
+ *
+ * @param acc		A pointer on the account to modify
+ */
+void account_create_codec_list (account_t **acc);
 
 codec_t *codec_create_new_from_caps (codec_t *original);
-
 #endif

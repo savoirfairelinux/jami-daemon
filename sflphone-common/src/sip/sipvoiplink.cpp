@@ -665,9 +665,6 @@ Call *SIPVoIPLink::newOutgoingCall (const std::string& id, const std::string& to
 
     // Create a new SIP call
     SIPCall* call = new SIPCall (id, Call::Outgoing, _cp);
-    if(call == NULL) {
-    	throw VoipLinkException("Could not create new SIP call");
-    }
 
     // Find the account associated to this call
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (Manager::instance().getAccountFromCall (id)));
@@ -676,7 +673,6 @@ Call *SIPVoIPLink::newOutgoingCall (const std::string& id, const std::string& to
     	call->setConnectionState (Call::Disconnected);
     	call->setState (Call::Error);
     	delete call;
-    	call = NULL;
     	// TODO: We should investigate how we could get rid of this error and create a IP2IP call instead
     	throw VoipLinkException("Could not get account for this call");
     }
@@ -716,7 +712,6 @@ Call *SIPVoIPLink::newOutgoingCall (const std::string& id, const std::string& to
     if (audiocodec == NULL) {
     	_error ("UserAgent: Could not instantiate codec");
     	delete call;
-    	call = NULL;
     	throw VoipLinkException ("Could not instantiate codec for early media");
     }
 
@@ -739,7 +734,6 @@ Call *SIPVoIPLink::newOutgoingCall (const std::string& id, const std::string& to
 	status = call->getLocalSDP()->createOffer (account->getActiveCodecs (), account->getActiveVideoCodecs());
 	if (status != PJ_SUCCESS) {
 		delete call;
-		call = NULL;
 		throw VoipLinkException ("Could not create local sdp offer for new call");
 	}
 
@@ -749,7 +743,6 @@ Call *SIPVoIPLink::newOutgoingCall (const std::string& id, const std::string& to
 		addCall (call);
 	} else {
 		delete call;
-		call = NULL;
 		throw VoipLinkException("Could not send outgoing INVITE request for new call");
 	}
 
@@ -1367,7 +1360,6 @@ SIPVoIPLink::terminateCall (const std::string& id)
     if (call) {
         // terminate the sip call
         delete call;
-        call = 0;
     }
 }
 
@@ -3719,13 +3711,9 @@ void registration_cb (struct pjsip_regc_cbparam *param)
     const pj_str_t * description = pjsip_get_status_text (param->code);
 
     if (param->code && description) {
-
-        //std::string descriptionprint(description->ptr, description->slen);
-        //_debug("Received client registration callback wiht code: %i, %s\n", param->code, descriptionprint.c_str());
-        DBusManager::instance().getCallManager()->registrationStateChanged (account->getAccountID(), std::string (description->ptr, description->slen), param->code);
-        std::pair<int, std::string> details (param->code, std::string (description->ptr, description->slen));
-
-
+        std::string state(description->ptr, description->slen);
+        DBusManager::instance().getCallManager()->registrationStateChanged (account->getAccountID(), state, param->code);
+        std::pair<int, std::string> details (param->code, state);
         // TODO: there id a race condition for this ressource when closing the application
         account->setRegistrationStateDetailed (details);
     }
@@ -4026,8 +4014,10 @@ transaction_request_cb (pjsip_rx_data *rdata)
     if (rdata->msg_info.msg->body) {
 
         char sdpbuffer[1000];
-        rdata->msg_info.msg->body->print_body (rdata->msg_info.msg->body, sdpbuffer, 1000);
-        std::string sdpoffer = std::string (sdpbuffer);
+        int len = rdata->msg_info.msg->body->print_body (rdata->msg_info.msg->body, sdpbuffer, 1000);
+        if (len == -1) // error
+                       len = 0;
+        std::string sdpoffer = std::string (sdpbuffer, len);
         size_t start = sdpoffer.find ("a=crypto:");
 
         // Found crypto header in SDP

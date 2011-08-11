@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include <sstream>
+#include <cstdlib>
 
 #include "historytest.h"
 #include "manager.h"
@@ -41,6 +42,7 @@ using std::endl;
 
 void HistoryTest::setUp()
 {
+    system("cp " HISTORY_SAMPLE " " HISTORY_SAMPLE ".bak");
     // Instanciate the cleaner singleton
     history = new HistoryManager();
 }
@@ -51,11 +53,7 @@ void HistoryTest::test_create_history_path()
     _debug ("-------------------- HistoryTest::test_create_history_path --------------------\n");
 
     int result;
-    char *cpath;
-    std::string path;
-
-    cpath = getenv ("XDG_DATA_HOME");
-    (cpath != NULL) ? path = std::string (cpath) : path = std::string ("/") + HISTORY_SAMPLE;
+    std::string path(HISTORY_SAMPLE);
 
     result = history->create_history_path(path);
     CPPUNIT_ASSERT (result == 0);
@@ -228,4 +226,5 @@ void HistoryTest::tearDown()
     // Delete the history object
     delete history;
     history = 0;
+    system("mv " HISTORY_SAMPLE ".bak " HISTORY_SAMPLE);
 }

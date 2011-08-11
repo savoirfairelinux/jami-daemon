@@ -43,13 +43,10 @@ class Serializable
 {
 
     public:
-
+        virtual ~Serializable() {};
         virtual void serialize (Conf::YamlEmitter *emitter) = 0;
 
         virtual void unserialize (Conf::MappingNode *map) = 0;
-
-    private:
-
 };
 
 #endif

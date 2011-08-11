@@ -34,7 +34,7 @@
 
 #include "audioloop.h"
 #include <math.h>
-#include <strings.h>
+#include <cstring>
 
 AudioLoop::AudioLoop() :_buffer (0),  _size (0), _pos (0), _sampleRate (0)
 {
@@ -65,8 +65,7 @@ AudioLoop::getNext (SFLDataFormat* output, int nb, short volume)
             block = _size-pos;
         }
 
-        // src, dest, len
-        bcopy (_buffer+pos, output, block*sizeof (SFLDataFormat)); // short>char conversion
+        memcpy(output, _buffer+pos, block*sizeof (SFLDataFormat)); // short>char conversion
 
         if (volume!=100) {
             for (int i=0; i<block; i++) {

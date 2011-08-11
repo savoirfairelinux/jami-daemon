@@ -70,8 +70,7 @@ class AudioLayer
          * @param manager An instance of managerimpl
          */
         AudioLayer (ManagerImpl* manager , int type)
-            : _defaultVolume (100)
-            , _layerType (type)
+            : _layerType (type)
         	, _isStarted(false)
             , _manager (manager)
             , _urgentRingBuffer (SIZEBUF, default_id)
@@ -135,17 +134,8 @@ class AudioLayer
          * Copy data in the urgent buffer.
          * @param buffer The buffer containing the data to be played ( ringtones )
          * @param toCopy The size of the buffer
-         * @return int  The number of bytes copied in the urgent buffer
          */
-        int putUrgent (void* buffer, int toCopy);
-
-        /**
-         * Put voice data in the main sound buffer
-         * @param buffer    The buffer containing the voice data ()
-         * @param toCopy    The size of the buffer
-         * @return int      The number of bytes copied
-         */
-        int putMain (void* buffer, int toCopy, std::string call_id = default_id);
+        void putUrgent (void* buffer, int toCopy);
 
         void flushMain (void);
 
@@ -244,12 +234,6 @@ class AudioLayer
         void setMainBuffer (MainBuffer* mainbuffer) {
             _mainBuffer = mainbuffer;
         }
-
-        /**
-         * Default volume for incoming RTP and Urgent sounds.
-         */
-        unsigned short _defaultVolume; // 100
-
 
         /**
          * Set the audio recorder

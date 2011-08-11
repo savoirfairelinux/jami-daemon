@@ -43,7 +43,6 @@ class Celt : public sfl::AudioCodec
             _frameSize = 320;  // fixed frameSize, TODO: support variable size from 64 to 512
             _channel = 1;
             _bitrate = 0;
-            _bandwidth = 0;
             _hasDynamicPayload = true;
 
             initCelt();

@@ -35,81 +35,52 @@
 
 MainBuffer::MainBuffer() : _internalSamplingRate (8000)
 {
-    mixBuffer = new SFLDataFormat[STATIC_BUFSIZE];
 }
 
 
 MainBuffer::~MainBuffer()
 {
-
-    delete [] mixBuffer;
-    mixBuffer = NULL;
+    // delete any ring buffers that didn't get removed
+    for (RingBufferMap::iterator iter = _ringBufferMap.begin(); iter != _ringBufferMap.end(); ++iter)
+        delete iter->second;
 }
 
 
 void MainBuffer::setInternalSamplingRate (int sr)
 {
-	_debug("MainBuffer: Set internal sampling rate");
-
     if (sr > _internalSamplingRate) {
-
-        _debug ("MainBuffer: Internal sampling rate changed %d", sr);
-
-        // This call takes the mutex
         flushAllBuffers();
-
-        // ost::MutexLock guard (_mutex);
-
         _internalSamplingRate = sr;
-
-        // Manager::instance().audioSamplingRateChanged(sr);
-
     }
 }
 
 CallIDSet* MainBuffer::getCallIDSet (std::string call_id)
 {
-
     CallIDMap::iterator iter = _callIDMap.find (call_id);
-
-    if (iter != _callIDMap.end())
-        return iter->second;
-    else
-        return NULL;
-
+    return (iter != _callIDMap.end()) ? iter->second : NULL;
 }
 
-bool MainBuffer::createCallIDSet (std::string set_id)
+void MainBuffer::createCallIDSet (std::string set_id)
 {
-
-    CallIDSet* newCallIDSet = new CallIDSet;
-
-    _callIDMap.insert (std::pair<std::string, CallIDSet*> (set_id, newCallIDSet));
-
-    return true;
-
+    _callIDMap.insert (std::pair<std::string, CallIDSet*> (set_id, new CallIDSet));
 }
 
 bool MainBuffer::removeCallIDSet (std::string set_id)
 {
-
-
     CallIDSet* callid_set = getCallIDSet (set_id);
 
-    if (callid_set != NULL) {
-        if (_callIDMap.erase (set_id) != 0) {
-            delete callid_set;
-            callid_set = NULL;
-            return true;
-        } else {
-            _debug ("removeCallIDSet error while removing callid set %s!", set_id.c_str());
-            return false;
-        }
-    } else {
+    if (!callid_set) {
         _debug ("removeCallIDSet error callid set %s does not exist!", set_id.c_str());
         return false;
     }
 
+    if (_callIDMap.erase (set_id) == 0) {
+		_debug ("removeCallIDSet error while removing callid set %s!", set_id.c_str());
+		return false;
+    }
+	delete callid_set;
+	callid_set = NULL;
+	return true;
 }
 
 void MainBuffer::addCallIDtoSet (std::string set_id, std::string call_id)
@@ -148,9 +119,7 @@ RingBuffer* MainBuffer::getRingBuffer (std::string call_id)
 RingBuffer* MainBuffer::createRingBuffer (std::string call_id)
 {
     RingBuffer* newRingBuffer = new RingBuffer (SIZEBUF, call_id);
-
     _ringBufferMap.insert (std::pair<std::string, RingBuffer*> (call_id, newRingBuffer));
-
     return newRingBuffer;
 }
 
@@ -332,58 +301,22 @@ void MainBuffer::unBindAllHalfDuplexOut (std::string process_id)
 }
 
 
-int MainBuffer::putData (void *buffer, int toCopy, unsigned short volume, std::string call_id)
+void MainBuffer::putData (void *buffer, int toCopy, std::string call_id)
 {
     ost::MutexLock guard (_mutex);
 
     RingBuffer* ring_buffer = getRingBuffer (call_id);
-
-    if (ring_buffer == NULL) {
-        return 0;
-    }
-
-    int a;
-
-    a = ring_buffer->AvailForPut();
-
-    if (a >= toCopy) {
-
-        return ring_buffer->Put (buffer, toCopy, volume);
-
-    } else {
-
-        return ring_buffer->Put (buffer, a, volume);
-    }
-
+    if (ring_buffer)
+    	ring_buffer->Put (buffer, toCopy);
 }
 
-int MainBuffer::availForPut (std::string call_id)
-{
-
-    ost::MutexLock guard (_mutex);
-
-    RingBuffer* ringbuffer = getRingBuffer (call_id);
-
-    if (ringbuffer == NULL)
-        return 0;
-    else
-        return ringbuffer->AvailForPut();
-
-}
-
-
-int MainBuffer::getData (void *buffer, int toCopy, unsigned short volume, std::string call_id)
+int MainBuffer::getData (void *buffer, int toCopy, std::string call_id)
 {
     ost::MutexLock guard (_mutex);
 
     CallIDSet* callid_set = getCallIDSet (call_id);
 
-    int nbSmplToCopy = toCopy / sizeof (SFLDataFormat);
-
-    if (callid_set == NULL)
-        return 0;
-
-    if (callid_set->empty()) {
+    if (!callid_set || callid_set->empty()) {
         return 0;
     }
 
@@ -392,22 +325,21 @@ int MainBuffer::getData (void *buffer, int toCopy, unsigned short volume, std::s
         CallIDSet::iterator iter_id = callid_set->begin();
 
         if (iter_id != callid_set->end()) {
-            return getDataByID (buffer, toCopy, volume, *iter_id, call_id);
+            return getDataByID (buffer, toCopy, *iter_id, call_id);
         } else
             return 0;
     } else {
-
-        memset (buffer, 0, nbSmplToCopy*sizeof (SFLDataFormat));
+        memset (buffer, 0, toCopy);
 
         int size = 0;
 
         CallIDSet::iterator iter_id = callid_set->begin();
 
         while (iter_id != callid_set->end()) {
-
+            int nbSmplToCopy = toCopy / sizeof (SFLDataFormat);
+            SFLDataFormat mixBuffer[nbSmplToCopy];
             memset (mixBuffer, 0, toCopy);
-
-            size = getDataByID (mixBuffer, toCopy, volume, (std::string) (*iter_id), call_id);
+            size = getDataByID (mixBuffer, toCopy, *iter_id, call_id);
 
             if (size > 0) {
                 for (int k = 0; k < nbSmplToCopy; k++) {
@@ -423,7 +355,7 @@ int MainBuffer::getData (void *buffer, int toCopy, unsigned short volume, std::s
 }
 
 
-int MainBuffer::getDataByID (void *buffer, int toCopy, unsigned short volume, std::string call_id, std::string reader_id)
+int MainBuffer::getDataByID (void *buffer, int toCopy, std::string call_id, std::string reader_id)
 {
     RingBuffer* ring_buffer = getRingBuffer (call_id);
 
@@ -431,7 +363,7 @@ int MainBuffer::getDataByID (void *buffer, int toCopy, unsigned short volume, st
         return 0;
     }
 
-    return ring_buffer->Get (buffer, toCopy, volume, reader_id);
+    return ring_buffer->Get (buffer, toCopy, reader_id);
 }
 
 

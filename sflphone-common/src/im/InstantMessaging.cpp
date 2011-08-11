@@ -75,7 +75,7 @@ static void XMLCALL startElementCallback (void *userData, const char *name, cons
 
 }
 
-static void XMLCALL endElementCallback (void *userData, const char *name)
+static void XMLCALL endElementCallback (void * /*userData*/, const char * /*name*/)
 {
     // std::cout << "endElement " << name << std::endl;
 }
@@ -133,7 +133,7 @@ bool InstantMessaging::saveMessage (const std::string& message, const std::strin
     return true;
 }
 
-std::string InstantMessaging::receive (const std::string& message, const std::string& author, std::string& id)
+std::string InstantMessaging::receive (const std::string& message, const std::string& /*author*/, const std::string& /*id*/)
 {
 
     // We just receive a TEXT message. Before sent it to the recipient, we must assure that the message is complete.
@@ -153,7 +153,7 @@ std::string InstantMessaging::receive (const std::string& message, const std::st
 
 }
 
-pj_status_t InstantMessaging::notify (std::string& id)
+pj_status_t InstantMessaging::notify (const std::string& /*id*/)
 {
     // Notify the clients through a D-Bus signal
     return PJ_SUCCESS;
@@ -246,7 +246,7 @@ pj_status_t InstantMessaging::send_sip_message (pjsip_inv_session *session, std:
 }
 
 
-bool InstantMessaging::iax_send (iax_session* session, const std::string& id, const std::string& message)
+bool InstantMessaging::iax_send (iax_session* session, const std::string& /*id*/, const std::string& message)
 {
     if (iax_send_text (session, message.c_str()) != -1)
         return true;

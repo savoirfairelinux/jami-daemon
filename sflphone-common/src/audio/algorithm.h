@@ -40,9 +40,7 @@
  */
 class Algorithm
 {
-
     public:
-
         virtual void reset (void) = 0;
 
         /**
@@ -66,16 +64,11 @@ class Algorithm
          * for audio processing that require synchronization between spkrdata and
          */
         virtual int process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes) = 0;
-
-        /**
-         * Class implementing this interface must define this function
-         * for audio processing that require synchronization between spkr and mic
-         * \param micData
-         * \param spkrData
-         * \param outputData
+        /*
+         * Ensure that implementors of this interface will be deleted properly
+         * if we delete them via a pointer to their base class.
          */
-        virtual void process (SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes) = 0;
-
+        virtual ~Algorithm() {};
 };
 
 #endif

@@ -35,11 +35,11 @@
 #include "call.h"
 #include <tr1/memory>
 
-class Sdp;
 class pjsip_evsub;
 class pj_caching_pool;
 class pj_pool_t;
 class pjsip_inv_session;
+class Sdp;
 
 namespace sfl
 {
@@ -101,14 +101,7 @@ class SIPCall : public Call
          * Return the local SDP session
          */
         Sdp* getLocalSDP (void) {
-            return _local_sdp;
-        }
-
-        /**
-         * Set the local SDP session
-         */
-        void setLocalSDP (Sdp *local_sdp) {
-            _local_sdp = local_sdp;
+            return local_sdp_;
         }
 
         /**
@@ -129,7 +122,7 @@ class SIPCall : public Call
          * Return the local memory pool for this call
          */
         pj_pool_t *getMemoryPool(void) {
-            return _pool;
+            return pool_;
         }
 
     private:
@@ -186,15 +179,14 @@ class SIPCall : public Call
         pjsip_inv_session *_invSession;
 
         /**
-         * The SDP session
-         */
-        Sdp *_local_sdp;
-
-        /**
          * The pool to allocate memory, released once call hang up
          */
-        pj_pool_t *_pool;
+        pj_pool_t *pool_;
 
+        /**
+         * The SDP session
+         */
+        Sdp *local_sdp_;
 };
 
 #endif // __SIPCALL_H__

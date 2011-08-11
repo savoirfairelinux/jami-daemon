@@ -172,6 +172,7 @@ void AudioRtpFactory::stop (void)
         }
 
         _rtpSession->stopRtpThread();
+        delete _rtpSession;
 
         _rtpSession = NULL;
     } catch (...) {

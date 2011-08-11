@@ -178,7 +178,7 @@ typedef struct  {
 
 } callable_obj_t;
 
-void create_new_call (callable_type_t, call_state_t, gchar*, gchar*, gchar*, gchar*, callable_obj_t **);
+void create_new_call (callable_type_t, call_state_t, const gchar* const, const gchar* const, const gchar* const, const gchar* const, callable_obj_t **);
 
 void create_new_call_from_details (const gchar *, GHashTable *, callable_obj_t **);
 
@@ -223,7 +223,7 @@ free_callable_obj_t (callable_obj_t *c);
 void
 stop_call_clock (callable_obj_t *c);
 
-gchar* get_peer_info (gchar*, gchar*);
+gchar* get_peer_info (const gchar* const, const gchar* const);
 
 history_state_t get_history_state_from_id (gchar *indice);
 
@@ -237,7 +237,7 @@ void set_timestamp (time_t*);
 
 gchar* convert_timestamp_to_gchar (time_t);
 
-time_t convert_gchar_to_timestamp (gchar*);
+time_t convert_gchar_to_timestamp (const gchar*);
 
 gchar* call_get_audio_codec (callable_obj_t *obj);
 

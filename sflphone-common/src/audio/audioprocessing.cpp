@@ -71,10 +71,3 @@ int AudioProcessing::processAudio (SFLDataFormat *inputData, SFLDataFormat *outp
     else
         return 0;
 }
-
-
-void AudioProcessing::processAudio (SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes)
-{
-    if (_algorithm)
-        _algorithm->process (micData, spkrData, outputData, nbBytes);
-}

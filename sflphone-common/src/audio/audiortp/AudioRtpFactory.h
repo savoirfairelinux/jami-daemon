@@ -116,7 +116,7 @@ class AudioRtpFactory
          *         Sdes = 2
          */
         RtpMethod getAudioRtpType (void) const {
-            return _rtpSession->getAudioRtpType();
+        	return _keyExchangeProtocol;
         }
 
         /**
@@ -124,20 +124,6 @@ class AudioRtpFactory
          */
         void setSrtpEnabled (bool enable) {
             _srtpEnabled = enable;
-        }
-
-        /**
-         * Manually set the keyExchangeProtocol parameter (usefull for RTP fallback)
-         */
-        void setKeyExchangeProtocol (int proto) {
-            _keyExchangeProtocol = proto;
-        }
-
-        /**
-         * Manually set the setHelloHashEnabled parameter (usefull for RTP fallback)
-         */
-        void setHelloHashEnabled (bool enable) {
-            _helloHashEnabled = enable;
         }
 
         /**
@@ -177,7 +163,7 @@ class AudioRtpFactory
 
         // Field used when initializinga udio rtp session
         // May be set manually or from config using initAudioRtpConfig
-        int _keyExchangeProtocol;
+        RtpMethod _keyExchangeProtocol;
 
         // Field used when initializinga udio rtp session
         // May be set manually or from config using initAudioRtpConfig

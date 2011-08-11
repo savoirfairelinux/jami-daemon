@@ -44,10 +44,11 @@ AudioCodec::AudioCodec (uint8 payload, const std::string &codecName) :
 }
 
 AudioCodec::AudioCodec (const AudioCodec& codec) :
-        _codecName (codec._codecName), _clockRate (codec._clockRate), _channel (
-            codec._channel), _bitrate (codec._bitrate), _hasDynamicPayload (false), _payload(codec._payload)
+    _codecName(codec._codecName), _clockRate(codec._clockRate),
+    _channel(codec._channel), _bitrate (codec._bitrate),
+    _hasDynamicPayload (false), _payload(codec._payload)
 {
-    init (codec._payload, codec._clockRate);
+    init(codec._payload, codec._clockRate);
 }
 
 void AudioCodec::init (uint8 payloadType, uint32 clockRate)

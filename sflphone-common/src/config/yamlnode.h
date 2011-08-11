@@ -54,7 +54,7 @@ class YamlNode
 
         YamlNode (NodeType t, YamlNode *top=NULL) : type (t), topNode (top) {}
 
-        ~YamlNode (void) {}
+        virtual ~YamlNode (void) {}
 
         NodeType getType (void) {
             return type;

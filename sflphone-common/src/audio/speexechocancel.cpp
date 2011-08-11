@@ -205,8 +205,3 @@ int SpeexEchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputDat
 
     return nbFrame * EC_FRAME_SIZE * sizeof(SFLDataFormat);
 }
-
-void SpeexEchoCancel::process (SFLDataFormat *micData UNUSED, SFLDataFormat *spkrData UNUSED, SFLDataFormat *outputData UNUSED, int nbBytes UNUSED)
-{
-
-}

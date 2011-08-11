@@ -204,7 +204,7 @@ void ManagerImpl::terminate ()
 
     _debug ("Manager: Unload audio codecs ");
     _audioCodecFactory.deleteHandlePointer();
-
+    audioLayerMutexUnlock();
 }
 
 bool ManagerImpl::isCurrentCall (const std::string& callId)
@@ -2179,6 +2179,8 @@ void ManagerImpl::peerHungupCall (const std::string& call_id)
 
     removeCallAccount (call_id);
 
+    removeStream(call_id);
+
     int nbCalls = getCallList().size();
 
     // stop streams
@@ -2322,11 +2324,9 @@ void ManagerImpl::stopTone ()
     }
 
     if (_audiofile) {
-	std::string filepath = _audiofile->getFilePath();
-	_dbus->getCallManager()->recordPlaybackStoped(filepath);
-        _audiofile->stop();
-	delete _audiofile;
-	_audiofile = NULL;
+		std::string filepath = _audiofile->getFilePath();
+		_dbus->getCallManager()->recordPlaybackStoped(filepath);
+		delete _audiofile;
     }
 
     _toneMutex.leaveMutex();
@@ -2371,90 +2371,73 @@ void ManagerImpl::ringback ()
  */
 void ManagerImpl::ringtone (const std::string& accountID)
 {
-    std::string ringchoice;
-    sfl::AudioCodec *codecForTone;
-    int samplerate;
-
-    _debug ("Manager: Ringtone");
-
     Account *account = getAccount (accountID);
-
     if (!account) {
         _warn ("Manager: Warning: invalid account in ringtone");
         return;
     }
 
-    if (account->getRingtoneEnabled()) {
-
-        _debug ("Manager: Tone is enabled");
-        //TODO Comment this because it makes the daemon crashes since the main thread
-        //synchronizes the ringtone thread.
-
-        ringchoice = account->getRingtonePath();
-        //if there is no / inside the path
-
-        if (ringchoice.find (DIR_SEPARATOR_CH) == std::string::npos) {
-            // check inside global share directory
-            ringchoice = std::string (PROGSHAREDIR) + DIR_SEPARATOR_STR
-                         + RINGDIR + DIR_SEPARATOR_STR + ringchoice;
-        }
-
-        audioLayerMutexLock();
-
-
-        if (!_audiodriver) {
-            _error ("Manager: Error: no audio layer in ringtone");
-            audioLayerMutexUnlock();
-            return;
-        }
-
-        samplerate = _audiodriver->getSampleRate();
-        codecForTone = static_cast<sfl::AudioCodec *>(_audioCodecFactory.getFirstCodecAvailable());
-
-        audioLayerMutexUnlock();
-
-        _toneMutex.enterMutex();
-
-        if (_audiofile) {
-	    if(_dbus) {
-		std::string filepath = _audiofile->getFilePath();
-		_dbus->getCallManager()->recordPlaybackStoped(filepath);
-	    }
-            delete _audiofile;
-            _audiofile = NULL;
-        }
-
-        std::string wave (".wav");
-        size_t found = ringchoice.find (wave);
-
-        try {
-
-            if (found != std::string::npos) {
-                _audiofile = static_cast<AudioFile *> (new WaveFile());
-            }
-            else {
-                _audiofile = static_cast<AudioFile *> (new RawFile());
-            }
-
-            _debug ("Manager: ringChoice: %s, codecForTone: %d, samplerate %d", ringchoice.c_str(), codecForTone->getPayloadType(), samplerate);
-
-            _audiofile->loadFile (ringchoice, codecForTone, samplerate);
-        }
-        catch (AudioFileException &e) {
-	    _error("Manager: Exception: %s", e.what());
-        }
-    
-        _audiofile->start();
-        _toneMutex.leaveMutex();
-
-        audioLayerMutexLock();
-        // start audio if not started AND flush all buffers (main and urgent)
-        _audiodriver->startStream();
-        audioLayerMutexUnlock();
-
-    } else {
-        ringback();
+    if (!account->getRingtoneEnabled()) {
+    	ringback();
+    	return;
     }
+
+    std::string ringchoice = account->getRingtonePath();
+	if (ringchoice.find (DIR_SEPARATOR_CH) == std::string::npos) {
+		// check inside global share directory
+		ringchoice = std::string (PROGSHAREDIR) + DIR_SEPARATOR_STR
+					 + RINGDIR + DIR_SEPARATOR_STR + ringchoice;
+	}
+
+	audioLayerMutexLock();
+
+	if (!_audiodriver) {
+		_error ("Manager: Error: no audio layer in ringtone");
+		audioLayerMutexUnlock();
+		return;
+	}
+
+	int samplerate = _audiodriver->getSampleRate();
+
+	audioLayerMutexUnlock();
+
+	_toneMutex.enterMutex();
+
+	if (_audiofile) {
+		if(_dbus)
+			_dbus->getCallManager()->recordPlaybackStoped(_audiofile->getFilePath());
+		delete _audiofile;
+		_audiofile = NULL;
+	}
+
+	try {
+		if (ringchoice.find (".wav") != std::string::npos) {
+			_audiofile = new WaveFile(ringchoice, samplerate);
+		}
+		else {
+			sfl::Codec *codec;
+			if (ringchoice.find (".ul") != std::string::npos)
+			     codec = _audioCodecFactory.getCodec(PAYLOAD_CODEC_ULAW);
+			/*
+			 * FIXME : RawFile() only handles ULAW
+			 else if (ringchoice.find (".au") != std::string::npos)
+			     codec = _audioCodecFactory.getCodec(PAYLOAD_CODEC_GSM);
+			 */
+			else
+		        throw AudioFileException("Couldn't guess an appropriate decoder");
+			_audiofile = new RawFile(ringchoice, static_cast<sfl::AudioCodec *>(codec), samplerate);
+		}
+	}
+	catch (AudioFileException &e) {
+		_error("Manager: Exception: %s", e.what());
+	}
+
+	_toneMutex.leaveMutex();
+
+	audioLayerMutexLock();
+	// start audio if not started AND flush all buffers (main and urgent)
+	_audiodriver->startStream();
+	audioLayerMutexUnlock();
 }
 
 AudioLoop*
@@ -2473,15 +2456,7 @@ ManagerImpl::getTelephoneFile ()
 {
     ost::MutexLock m (_toneMutex);
 
-    if (!_audiofile) {
-        return NULL;
-    }
-
-    if (_audiofile->isStarted()) {
-        return _audiofile;
-    } else {
-        return NULL;
-    }
+    return _audiofile;
 }
 
 void ManagerImpl::notificationIncomingCall (void)
@@ -3065,16 +3040,9 @@ void ManagerImpl::setRecordingCall (const std::string& id)
 
 bool ManagerImpl::isRecording (const std::string& id)
 {
-
     std::string accountid = getAccountFromCall (id);
     Recordable* rec = (Recordable*) getAccountLink (accountid)->getCall (id);
-
-    bool ret = false;
-
-    if (rec)
-        ret = rec->isRecording();
-
-    return ret;
+    return rec && rec->isRecording();
 }
 
 bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath) 
@@ -3096,24 +3064,18 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
     _toneMutex.enterMutex();
 
     if(_audiofile) {
-	 if(_dbus) {
-	     std::string file = _audiofile->getFilePath();
-	     _dbus->getCallManager()->recordPlaybackStoped(file);
-         }
-	 delete _audiofile;
-	 _audiofile = NULL;
+		if(_dbus)
+			_dbus->getCallManager()->recordPlaybackStoped(_audiofile->getFilePath());
+		delete _audiofile;
+		_audiofile = NULL;
     }
 
     try {
-        _audiofile = static_cast<AudioFile *>(new WaveFile());
-
-        _audiofile->loadFile(filepath, NULL, sampleRate);
+        _audiofile = new WaveFile(filepath, sampleRate);
     }
-    catch(AudioFileException &e) {
+    catch(const AudioFileException &e) {
         _error("Manager: Exception: %s", e.what());
     }
-
-    _audiofile->start();
 
     _toneMutex.leaveMutex();
 
@@ -3134,11 +3096,8 @@ void ManagerImpl::stopRecordedFilePlayback(const std::string& filepath)
     audioLayerMutexUnlock();
 
     _toneMutex.enterMutex();
-    if(_audiofile != NULL) {
-        _audiofile->stop();
-	delete _audiofile;
+    delete _audiofile;
 	_audiofile = NULL;
-    }
     _toneMutex.leaveMutex();
 }
 
