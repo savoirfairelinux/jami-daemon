@@ -64,7 +64,6 @@ static gchar ** sflphone_order_history_hash_table(GHashTable *result)
     gint size = 0;
     gchar **ordered_list = NULL;
 
-    
     assert(result);
     while (g_hash_table_size (result)) {
         gpointer key, key_to_min, value;
@@ -81,15 +80,15 @@ static gchar ** sflphone_order_history_hash_table(GHashTable *result)
             }
         }
 
-	if(g_hash_table_lookup_extended(result, key_to_min, &key, &value)) {
-	    GSList *llist = (GSList *)value;
-	    while(llist) {
-                ordered_list = (void *) g_realloc(ordered_list, (size + 1)*sizeof(void *));
-		*(ordered_list + size) = g_strdup((gchar *)llist->data);
-		size++;
-		llist = g_slist_next(llist);
- 	    } 	
-	    g_hash_table_remove(result, key_to_min);
+        if (g_hash_table_lookup_extended(result, key_to_min, &key, &value)) {
+            GSList *llist = (GSList *)value;
+            while (llist) {
+                ordered_list = (void *) g_realloc(ordered_list, (size + 1) * sizeof (void *));
+                *(ordered_list + size) = g_strdup((gchar *)llist->data);
+                size++;
+                llist = g_slist_next(llist);
+            }
+            g_hash_table_remove(result, key_to_min);
         }
     }
 
@@ -628,6 +627,7 @@ sflphone_set_transfert()
 
     if (c) {
         c->_state = CALL_STATE_TRANSFERT;
+        g_free(c->_trsft_to);
         c->_trsft_to = g_strdup ("");
         calltree_update_call (current_calls, c, NULL);
     }
@@ -642,6 +642,7 @@ sflphone_unset_transfert()
 
     if (c) {
         c->_state = CALL_STATE_CURRENT;
+        g_free(c->_trsft_to);
         c->_trsft_to = g_strdup ("");
         calltree_update_call (current_calls, c, NULL);
     }
@@ -751,14 +752,9 @@ process_dialing (callable_obj_t *c, guint keyval, gchar *key)
 callable_obj_t *
 sflphone_new_call()
 {
-
-    callable_obj_t *c;
-    callable_obj_t * current_selected_call;
-    gchar *peer_name, *peer_number;
-
     DEBUG ("Actions: Sflphone new call");
 
-    current_selected_call = calltab_get_selected_call (current_calls);
+    callable_obj_t *current_selected_call = calltab_get_selected_call (current_calls);
 
     if ( (current_selected_call != NULL) && (current_selected_call->_confID == NULL))
         sflphone_on_hold();
@@ -767,11 +763,8 @@ sflphone_new_call()
     if (calllist_get_size (current_calls) == 0)
         dbus_start_tone (TRUE , (current_account_has_new_message ()  > 0) ? TONE_WITH_MESSAGE : TONE_WITHOUT_MESSAGE) ;
 
-    peer_number = g_strdup ("");
-    peer_name = g_strdup ("");
-    create_new_call (CALL, CALL_STATE_DIALING, "", "", peer_name, peer_number, &c);
-    g_free(peer_number);
-    g_free(peer_name);
+    callable_obj_t *c;
+    create_new_call (CALL, CALL_STATE_DIALING, "", "", "", "", &c);
 
     c->_history_state = OUTGOING;
 
