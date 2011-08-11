@@ -658,9 +658,6 @@ Call *SIPVoIPLink::newOutgoingCall (const std::string& id, const std::string& to
 
     // Create a new SIP call
     SIPCall* call = new SIPCall (id, Call::Outgoing, _cp);
-    if(call == NULL) {
-    	throw VoipLinkException("Could not create new SIP call");
-    }
 
     // Find the account associated to this call
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (Manager::instance().getAccountFromCall (id)));
@@ -669,7 +666,6 @@ Call *SIPVoIPLink::newOutgoingCall (const std::string& id, const std::string& to
     	call->setConnectionState (Call::Disconnected);
     	call->setState (Call::Error);
     	delete call;
-    	call = NULL;
     	// TODO: We should investigate how we could get rid of this error and create a IP2IP call instead
     	throw VoipLinkException("Could not get account for this call");
     }
@@ -709,7 +705,6 @@ Call *SIPVoIPLink::newOutgoingCall (const std::string& id, const std::string& to
     if (audiocodec == NULL) {
     	_error ("UserAgent: Could not instantiate codec");
     	delete call;
-    	call = NULL;
     	throw VoipLinkException ("Could not instantiate codec for early media");
     }
 
@@ -732,7 +727,6 @@ Call *SIPVoIPLink::newOutgoingCall (const std::string& id, const std::string& to
 	status = call->getLocalSDP()->createOffer (account->getActiveCodecs ());
 	if (status != PJ_SUCCESS) {
 		delete call;
-		call = NULL;
 		throw VoipLinkException ("Could not create local sdp offer for new call");
 	}
 
@@ -742,7 +736,6 @@ Call *SIPVoIPLink::newOutgoingCall (const std::string& id, const std::string& to
 		addCall (call);
 	} else {
 		delete call;
-		call = NULL;
 		throw VoipLinkException("Could not send outgoing INVITE request for new call");
 	}
 
@@ -1348,7 +1341,6 @@ SIPVoIPLink::terminateCall (const std::string& id)
     if (call) {
         // terminate the sip call
         delete call;
-        call = 0;
     }
 }
 
@@ -1647,10 +1639,6 @@ SIPVoIPLink::SIPCallServerFailure (SIPCall *call)
         std::string id = call->getCallId();
         Manager::instance().callFailure (id);
         removeCall (id);
-
-        if (call->getAudioRtp ()) {
-            call->getAudioRtp()->stop();
-        }
     }
 }
 
