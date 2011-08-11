@@ -84,22 +84,14 @@ gchar* call_get_peer_number (const gchar *format)
 
 gchar* call_get_audio_codec (callable_obj_t *obj)
 {
-    gchar *audio_codec = "";
-    codec_t *codec;
-    gchar *format ="";
-    int samplerate;
-
     if (obj) {
-        audio_codec = dbus_get_current_audio_codec_name (obj);
-        codec = codec_list_get_by_name (audio_codec, NULL);
-
-        if (codec) {
-            samplerate = codec->sample_rate;
-            format = g_markup_printf_escaped ("%s/%i", audio_codec, samplerate);
-        }
+        const gchar * const audio_codec = dbus_get_current_audio_codec_name (obj);
+        const codec_t * const codec = codec_list_get_by_name (audio_codec, NULL);
+        if (codec)
+            return g_markup_printf_escaped ("%s/%i", audio_codec, codec->sample_rate);
     }
 
-    return format;
+    return g_strdup("");
 }
 
 void call_add_error (callable_obj_t * call, gpointer dialog)
@@ -196,9 +188,13 @@ void stop_call_clock (callable_obj_t *c)
     }
 }
 
-void create_new_call (callable_type_t type, call_state_t state, gchar* callID , gchar* accountID, gchar* peer_name, gchar* peer_number, callable_obj_t ** new_call)
+void create_new_call (callable_type_t type, call_state_t state,
+                      const gchar* const callID,
+                      const gchar* const accountID,
+                      const gchar* const peer_name,
+                      const gchar* const peer_number,
+                      callable_obj_t ** new_call)
 {
-
     GError *err1 = NULL ;
     callable_obj_t *obj;
 
@@ -215,18 +211,7 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
     obj->_type = type;
     obj->_state = state;
     obj->_state_code = 0;
-    obj->_state_code_description = "";
-    obj->_accountID = g_strdup (accountID);
-    obj->_peer_name = g_strdup (peer_name);
-    obj->_peer_number = g_strdup (peer_number);
-    obj->_peer_info = get_peer_info (peer_name, peer_number);
-    obj->_recordfile = NULL;
-    obj->_record_is_playing = FALSE;
-
-    obj->_trsft_to = "";
-    set_timestamp (& (obj->_time_start));
-    set_timestamp (& (obj->_time_current));
-    set_timestamp (& (obj->_time_stop));
+    obj->_state_code_description = NULL;
 
     if (g_strcasecmp (callID, "") == 0)
     {
@@ -236,6 +221,24 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
     }
     else
         obj->_callID = g_strdup (callID);
+
+    obj->_confID = NULL;
+    obj->_historyConfID = NULL;
+    obj->_accountID = g_strdup (accountID);
+
+    set_timestamp (& (obj->_time_start));
+    set_timestamp (& (obj->_time_current));
+    set_timestamp (& (obj->_time_stop));
+
+    obj->_srtp_cipher = NULL;
+    obj->_sas = NULL;
+    obj->_peer_name = g_strdup (peer_name);
+    obj->_peer_number = g_strdup (peer_number);
+    obj->_trsft_to = NULL;
+    obj->_peer_info = get_peer_info (peer_name, peer_number);
+    obj->_audio_codec = NULL;
+    obj->_recordfile = NULL;
+    obj->_record_is_playing = FALSE;
 
     obj->clockStarted = 1;
 
@@ -247,8 +250,6 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
         }
     }
 
-    obj->_confID = NULL;
-    obj->_historyConfID = NULL;
     obj->_time_added = 0;
 
     *new_call = obj;
@@ -256,15 +257,13 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
 
 void create_new_call_from_details (const gchar *call_id, GHashTable *details, callable_obj_t **call)
 {
-    gchar *peer_name, *peer_number, *accountID, *state_str;
     callable_obj_t *new_call;
     call_state_t state;
 
-    accountID = g_hash_table_lookup (details, "ACCOUNTID");
-    peer_number = g_hash_table_lookup (details, "PEER_NUMBER");
-    peer_name = g_hash_table_lookup (details, "DISPLAY_NAME");
-    state_str = g_hash_table_lookup (details, "CALL_STATE");
-
+    const gchar * const accountID = g_hash_table_lookup (details, "ACCOUNTID");
+    const gchar * const peer_number = g_hash_table_lookup (details, "PEER_NUMBER");
+    const gchar * const peer_name = g_hash_table_lookup (details, "DISPLAY_NAME");
+    const gchar * const state_str = g_hash_table_lookup (details, "CALL_STATE");
 
     if (g_strcasecmp (state_str, "CURRENT") == 0)
         state = CALL_STATE_CURRENT;
@@ -284,22 +283,27 @@ void create_new_call_from_details (const gchar *call_id, GHashTable *details, ca
     else
         state = CALL_STATE_FAILURE;
 
-    create_new_call (CALL, state, (gchar*) call_id, accountID, peer_name, call_get_peer_number (peer_number), &new_call);
+    create_new_call (CALL, state, call_id, accountID, peer_name, call_get_peer_number (peer_number), &new_call);
     *call = new_call;
 }
 
 void create_history_entry_from_serialized_form (gchar *entry, callable_obj_t **call)
 {
-    gchar *peer_name = "", *peer_number = "";
-    gchar *callID = "", *accountID = ""; 
-    gchar *time_start = "", *time_stop = "";
-    gchar *recordfile = "";
-    gchar *confID = "", *time_added = "";
+    const gchar *peer_name = "";
+    const gchar *peer_number = "";
+    const gchar *callID = "";
+    const gchar *accountID = "";
+    const gchar *time_start = "";
+    const gchar *time_stop = "";
+    const gchar *recordfile = "";
+    const gchar *confID = "";
+    const gchar *time_added = "";
     callable_obj_t *new_call;
     history_state_t history_state = MISSED;
     gint token = 0;
-    gchar **ptr, **ptr_orig;
-    gchar *delim = "|";
+    gchar ** ptr;
+    gchar ** ptr_orig;
+    static const gchar * const delim = "|";
  
     ptr = g_strsplit(entry, delim, 10);
     ptr_orig = ptr;
@@ -367,15 +371,17 @@ void free_callable_obj_t (callable_obj_t *c)
     stop_call_clock (c);
 
     g_free (c->_callID);
+    g_free (c->_confID);
+    g_free (c->_historyConfID);
     g_free (c->_accountID);
+    g_free (c->_srtp_cipher);
+    g_free (c->_sas);
     g_free (c->_peer_name);
     g_free (c->_peer_number);
+    g_free (c->_trsft_to);
     g_free (c->_peer_info);
-
-    if(c->_recordfile != NULL) {
-        g_free(c->_recordfile);
- 	c->_recordfile = NULL;
-    }
+    g_free (c->_audio_codec);
+    g_free (c->_recordfile);
 
     g_free (c);
 
@@ -387,7 +393,7 @@ void attach_thumbnail (callable_obj_t *call, GdkPixbuf *pixbuf)
     call->_contact_thumbnail = pixbuf;
 }
 
-gchar* get_peer_info (gchar* number, gchar* name)
+gchar* get_peer_info (const gchar* const number, const gchar* const name)
 {
     return g_strconcat ("\"", name, "\" <", number, ">", NULL);
 }
@@ -452,7 +458,7 @@ gchar* serialize_history_call_entry (callable_obj_t *entry)
 {
     // "0|514-276-5468|Savoir-faire Linux|144562458" for instance
     gchar *peer_number, *peer_name, *account_id;
-    gchar *separator = "|";
+    static const gchar * const separator = "|";
     gchar *time_start, *time_stop ;
     gchar *record_file;
     gchar *confID , *time_added;
@@ -532,12 +538,12 @@ void set_timestamp (time_t *timestamp)
     *timestamp=tmp;
 }
 
-gchar* convert_timestamp_to_gchar (time_t timestamp)
+gchar* convert_timestamp_to_gchar (const time_t timestamp)
 {
     return g_markup_printf_escaped ("%i", (int) timestamp);
 }
 
-time_t convert_gchar_to_timestamp (gchar *timestamp)
+time_t convert_gchar_to_timestamp (const gchar *timestamp)
 {
     return (time_t) atoi (timestamp);
 }
