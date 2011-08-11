@@ -82,6 +82,8 @@ class AudioLayer
             , _outChannel (1)
             , _errorMessage (0)
             , _mutex ()
+            , _dcblocker(0)
+            , _audiofilter(0)
         	, _countNotificationTime(0)
             , _time (new ost::Time()) {
 

@@ -52,6 +52,7 @@ AlsaLayer::AlsaLayer (ManagerImpl* manager)
     , _is_open_capture (false)
     , _trigger_request (false)
     , _audioThread (NULL)
+    , _converter (0)
 
 {
     _debug ("Audio: Build ALSA layer");
@@ -132,7 +133,7 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int indexRing, int sampleRate,
     _converter = new SamplerateConverter (_audioSampleRate);
 
     AudioLayer::_dcblocker = new DcBlocker();
-    AudioLayer::_audiofilter = new AudioProcessing (static_cast<Algorithm *> (_dcblocker));
+    AudioLayer::_audiofilter = new AudioProcessing (_dcblocker);
 }
 
 void

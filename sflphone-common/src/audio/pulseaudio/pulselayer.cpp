@@ -237,6 +237,7 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
     , playback (NULL)
     , record (NULL)
     , ringtone (NULL)
+    , _converter(0)
 {
     _urgentRingBuffer.createReadPointer();
 
