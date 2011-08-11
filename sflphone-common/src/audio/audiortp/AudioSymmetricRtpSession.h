@@ -78,6 +78,7 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTP
         void stopSymmetricRtpThread (void) {
             assert(_rtpThread);
             _rtpThread->running = false;
+            _rtpThread->join();
         }
 
     private:
