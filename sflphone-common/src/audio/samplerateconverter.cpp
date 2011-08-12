@@ -64,16 +64,17 @@ SamplerateConverter::Short2FloatArray (const short *in, float *out, int len)
 //TODO Add ifdef for int16 or float32 type
 void SamplerateConverter::resample (SFLDataFormat* dataIn , SFLDataFormat* dataOut , int inputFreq , int outputFreq , int nbSamples)
 {
-	assert(outputFreq <= _maxFreq);
-
     double sampleFactor = (double) outputFreq / inputFreq;
     if (sampleFactor == 1.0)
 		return;
 
-    int outSamples = nbSamples * sampleFactor;
-    if (outSamples > _samples) {
+    unsigned int outSamples = nbSamples * sampleFactor;
+    unsigned int maxSamples = outSamples;
+    if (maxSamples < (unsigned int)nbSamples)
+    	maxSamples = nbSamples;
+    if (maxSamples > _samples) {
     	/* grow buffer if needed */
-    	_samples = outSamples;
+    	_samples = maxSamples;
     	delete [] _floatBufferIn;
     	delete [] _floatBufferOut;
         _floatBufferIn = new float32[_samples];

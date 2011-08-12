@@ -69,12 +69,13 @@ void AudioRtpSession::updateSessionMedia (AudioCodec *audioCodec)
     // Update internal codec for this session
     updateRtpMedia (audioCodec);
 
+    // store codec info locally
     int payloadType = getCodecPayloadType();
     int frameSize = getCodecFrameSize();
     int smplRate = getCodecSampleRate();
-    int dynamic = getHasDynamicPayload();
+    bool dynamic = getHasDynamicPayload();
 
-    // G722 requires timetamp to be incremented at 8khz
+    // G722 requires timestamp to be incremented at 8khz
     if (payloadType == g722PayloadType)
         _timestampIncrement = g722RtpTimeincrement;
     else
@@ -84,7 +85,6 @@ void AudioRtpSession::updateSessionMedia (AudioCodec *audioCodec)
     _debug ("AudioSymmetricRtpSession: Codec sampling rate: %d", smplRate);
     _debug ("AudioSymmetricRtpSession: Codec frame size: %d", frameSize);
     _debug ("AudioSymmetricRtpSession: RTP timestamp increment: %d", _timestampIncrement);
-
 
     if (payloadType == g722PayloadType) {
         _debug ("AudioSymmetricRtpSession: Setting G722 payload format");
@@ -118,7 +118,7 @@ void AudioRtpSession::setSessionMedia (AudioCodec *audioCodec)
     int smplRate = getCodecSampleRate();
     bool dynamic = getHasDynamicPayload();
 
-    // G722 requires timestamp to be incremented at 8 kHz
+    // G722 requires timestamp to be incremented at 8kHz
     if (payloadType == g722PayloadType)
         _timestampIncrement = g722RtpTimeincrement;
     else
@@ -203,7 +203,7 @@ void AudioRtpSession::receiveSpeakerData ()
 
     // DTMF over RTP, size must be over 4 in order to process it as voice data
     if (size > 4)
-        processDataDecode (spkrDataIn, size);
+        processDataDecode (spkrDataIn, size, adu->getType());
 
     delete adu;
 }

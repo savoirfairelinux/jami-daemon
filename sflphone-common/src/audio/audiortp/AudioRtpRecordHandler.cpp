@@ -159,7 +159,6 @@ int AudioRtpRecordHandler::processDataEncode (void)
     int bytesToGet = samplesToGet * sizeof (SFLDataFormat);
 
     if (Manager::instance().getMainBuffer()->availForGet (id_) < bytesToGet) {
-    	_error("%s : not enough data available", __PRETTY_FUNCTION__);
         return 0;
     }
 
@@ -190,14 +189,17 @@ int AudioRtpRecordHandler::processDataEncode (void)
     }
 
 	_audioRtpRecord.audioCodecMutex.enter();
-	int compSize = _audioRtpRecord._audioCodec->encode (micDataEncoded, out, getCodecFrameSize());
+	int compSize = _audioRtpRecord._audioCodec->encode (micDataEncoded, out, DEC_BUFFER_SIZE);
 	_audioRtpRecord.audioCodecMutex.leave();
 
     return compSize;
 }
 
-void AudioRtpRecordHandler::processDataDecode (unsigned char *spkrData, unsigned int size)
+void AudioRtpRecordHandler::processDataDecode (unsigned char *spkrData, unsigned int size, int payloadType)
 {
+	if (getCodecPayloadType() != payloadType)
+		return;
+
     int codecSampleRate = getCodecSampleRate();
 
     SFLDataFormat *spkrDataDecoded = _audioRtpRecord.decData;
@@ -207,12 +209,10 @@ void AudioRtpRecordHandler::processDataDecode (unsigned char *spkrData, unsigned
 
     _audioRtpRecord.audioCodecMutex.enter();
 
-    // Return the size of data in bytes
-    int expandedSize = _audioRtpRecord._audioCodec->decode (spkrDataDecoded , spkrData , size);
+    // Return the size of data in samples
+    int inSamples = _audioRtpRecord._audioCodec->decode (spkrDataDecoded , spkrData , size);
 
     _audioRtpRecord.audioCodecMutex.leave();
-
-    int inSamples = expandedSize / sizeof (SFLDataFormat);
 
     fadeIn (spkrDataDecoded, inSamples, &_audioRtpRecord._micAmplFactor);
 

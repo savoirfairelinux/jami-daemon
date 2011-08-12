@@ -94,23 +94,16 @@ class Speex : public sfl::AudioCodec
             _speex_enc_state = 0;
         }
 
-        virtual int decode (short *dst, unsigned char *src, unsigned int size) {
-
-            // int ratio = 320 / _speex_frame_size;
-            speex_bits_read_from (&_speex_dec_bits, (char*) src, size);
+        virtual int decode (short *dst, unsigned char *src, size_t buf_size) {
+            speex_bits_read_from (&_speex_dec_bits, (char*) src, buf_size);
             speex_decode_int (_speex_dec_state, &_speex_dec_bits, dst);
-
-            // return size in bytes
-            return _frameSize * 2;
+            return _frameSize;
         }
 
-        virtual int encode (unsigned char *dst, short *src, unsigned int size) {
+        virtual int encode (unsigned char *dst, short *src, size_t buf_size) {
             speex_bits_reset (&_speex_enc_bits);
-
             speex_encode_int (_speex_enc_state, src, &_speex_enc_bits);
-            int nbBytes = speex_bits_write (&_speex_enc_bits, (char*) dst, size);
-
-            return nbBytes;
+            return speex_bits_write (&_speex_enc_bits, (char*) dst, buf_size);
         }
 
     private:

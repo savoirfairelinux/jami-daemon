@@ -289,14 +289,15 @@ IAXVoIPLink::sendAudioFromMic (void)
 		int compSize;
 		unsigned int audioRate = audioCodec->getClockRate();
 		int outSamples;
+		SFLDataFormat *in;
 		if (audioRate != mainBufferSampleRate) {
-	        int outSamples = ((float) samples * ( (float) mainBufferSampleRate / (float) audioRate));
 			converter->resample (decData , resampledData , audioRate, mainBufferSampleRate, samples);
-			compSize = audioCodec->encode (encodedData, resampledData , outSamples * sizeof(SFLDataFormat));
+			in = resampledData;
 		} else {
 			outSamples = samples;
-			compSize = audioCodec->encode (encodedData, decData, bytes);
+			in = decData;
 		}
+		compSize = audioCodec->encode (encodedData, in, DEC_BUFFER_SIZE);
 
 		// Send it out!
 		_mutexIAX.enterMutex();
@@ -915,15 +916,15 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
 		size = max;
 	}
 
-	int expandedSize = audioCodec->decode (decData, data , size);
+	int samples = audioCodec->decode (decData, data , size);
+	int outSize = samples * sizeof(SFLDataFormat);
 	unsigned int audioRate = audioCodec->getClockRate();
-	int inSamples = expandedSize / sizeof(SFLDataFormat);
 	if (audioRate != mainBufferSampleRate) {
-		int outSize = expandedSize * (mainBufferSampleRate / audioRate);
-		converter->resample (decData, resampledData, mainBufferSampleRate, audioRate, inSamples);
+		outSize = (double)outSize * (mainBufferSampleRate / audioRate);
+		converter->resample (decData, resampledData, mainBufferSampleRate, audioRate, samples);
 		audiolayer->getMainBuffer()->putData (resampledData, outSize, call->getCallId());
 	} else {
-		audiolayer->getMainBuffer()->putData (decData, expandedSize, call->getCallId());
+		audiolayer->getMainBuffer()->putData (decData, outSize, call->getCallId());
 	}
 }
 

@@ -144,7 +144,7 @@ class AudioRtpRecordHandler
             return _audioRtpRecord._codecFrameSize;
         }
 
-        int getHasDynamicPayload (void) const {
+        bool getHasDynamicPayload (void) const {
             return _audioRtpRecord._hasDynamicPayloadType;
         }
 
@@ -172,7 +172,7 @@ class AudioRtpRecordHandler
         /**
          * Decode audio data received from peer
          */
-        void processDataDecode (unsigned char * spkrData, unsigned int size);
+        void processDataDecode (unsigned char * spkrData, unsigned int size, int payloadType);
 
         /**
         * Ramp In audio data to avoid audio click from peer

@@ -30,13 +30,13 @@
  */
 
 
-
+#include "global.h"
 #include "../common.h"
 #include "audiocodec.h"
+#include <cassert>
 
 class Ulaw : public sfl::AudioCodec
 {
-
     public:
         // 0 PCMU A 8000 1 [RFC3551]
         Ulaw (int payload=0)
@@ -48,23 +48,24 @@ class Ulaw : public sfl::AudioCodec
             _hasDynamicPayload = false;
         }
 
-        virtual int decode (short *dst, unsigned char *src, unsigned int size) {
-            int16* end = dst+size;
+        virtual int decode (short *dst, unsigned char *src, size_t buf_size) {
+        	assert(buf_size == _frameSize / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat));
+            unsigned char* end = src+buf_size;
 
-            while (dst<end)
+            while (src<end)
                 *dst++ = ULawDecode (*src++);
 
-            return size<<1;
+            return _frameSize;
         }
 
-        virtual int encode (unsigned char *dst, short *src, unsigned int size) {
-            size >>= 1;
-            uint8* end = dst+size;
+        virtual int encode (unsigned char *dst, short *src, size_t buf_size) {
+        	assert(buf_size >= _frameSize / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat));
+            uint8* end = dst+_frameSize;
 
             while (dst<end)
                 *dst++ = ULawEncode (*src++);
 
-            return size;
+            return _frameSize / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat);;
         }
 
         int ULawDecode (uint8 ulaw) {
