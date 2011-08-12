@@ -3407,7 +3407,6 @@ void ManagerImpl::switchAudioManager (void)
 
 void ManagerImpl::audioSamplingRateChanged (int samplerate)
 {
-
     int type, currentSamplerate, framesize, numCardIn, numCardOut, numCardRing;
     std::string alsaPlugin;
     bool wasActive;
@@ -3448,7 +3447,6 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
     wasActive = _audiodriver->isStarted();
 
     delete _audiodriver;
-    _audiodriver = NULL;
 
     switch (type) {
 
@@ -3465,14 +3463,9 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
             break;
 
         default:
-            _warn ("Manager: Error: audio layer unknown");
-            break;
-    }
-
-    if(_audiodriver == NULL) {
-    	_debug("Manager: Error: Audio driver could not be initialized");
-    	audioLayerMutexUnlock();
-    	return;
+            _error ("Manager: Error: audio layer unknown");
+        	audioLayerMutexUnlock();
+        	return;
     }
 
     _audiodriver->setErrorMessage (-1);
@@ -3491,25 +3484,13 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
     unsigned int sampleRate = _audiodriver->getSampleRate();
 
     delete _telephoneTone;
-    _telephoneTone = NULL;
-
     _debugInit ("Manager: Load telephone tone");
     std::string country = preferences.getZoneToneChoice();
     _telephoneTone = new TelephoneTone (country, sampleRate);
 
-    if(_telephoneTone == NULL) {
-        _debug("Manager: Error: Telephone tone is NULL");
-    }
-     
     delete _dtmfKey;
-    _dtmfKey = NULL;
-
     _debugInit ("Manager: Loading DTMF key with sample rate %d", sampleRate);
     _dtmfKey = new DTMF (sampleRate);
-
-    if(_dtmfKey == NULL) {
-        _debug("Manager: Error: DtmfKey is NULL");
-    }
 
     // Restart audio layer if it was active
     if (wasActive) {
