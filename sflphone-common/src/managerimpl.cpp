@@ -475,7 +475,14 @@ bool ManagerImpl::hangupCall (const std::string& callId)
 
     if (getConfigFromCall (callId) == Call::IPtoIP) {
         /* Direct IP to IP call */
-        returnValue = SIPVoIPLink::instance ()->hangup (callId);
+        try {
+            returnValue = SIPVoIPLink::instance ()->hangup (callId);
+        }
+        catch (const VoipLinkException &e)
+        {
+            _error("%s", e.what());
+            returnValue = 1;
+        }
     }
     else {
     	std::string accountId = getAccountFromCall (callId);
