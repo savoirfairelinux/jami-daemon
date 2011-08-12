@@ -232,18 +232,17 @@ static void playback_overflow_callback (pa_stream* s UNUSED, void* userdata UNUS
 
 PulseLayer::PulseLayer (ManagerImpl* manager)
     : AudioLayer (manager , PULSEAUDIO)
-    , context (NULL)
-    , m (NULL)
-    , playback (NULL)
-    , record (NULL)
-    , ringtone (NULL)
+    , context(0)
+    , m(0)
+    , playback(0)
+    , record(0)
+    , ringtone(0)
     , _converter(0)
+    , byteCounter(0)
 {
     _urgentRingBuffer.createReadPointer();
 
     AudioLayer::_noisesuppressstate = true;
-
-    byteCounter = 0;
 
     openLayer();
 }

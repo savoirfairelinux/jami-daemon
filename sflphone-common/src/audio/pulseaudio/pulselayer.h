@@ -116,14 +116,6 @@ class PulseLayer : public AudioLayer
         }
 
         /**
-         * UNUSED in pulseaudio layer
-         */
-        //std::vector<std::string> getSoundCardsInfo( int stream UNUSED ) {
-        //std::vector<std::string> tmp;
-        //return tmp;
-        //}
-
-        /**
          * Reduce volume of every audio applications connected to the same sink
          */
         void reducePulseAppsVolume (void);

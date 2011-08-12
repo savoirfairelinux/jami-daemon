@@ -74,8 +74,11 @@ class AudioLayer
         	, _isStarted(false)
             , _manager (manager)
             , _urgentRingBuffer (SIZEBUF, default_id)
+            , _mainBuffer(0)
+            , _recorder(0)
             , _indexIn (0)
             , _indexOut (0)
+            , _indexRing(0)
             , _audioSampleRate (0)
             , _frameSize (0)
             , _inChannel (1)
@@ -84,8 +87,9 @@ class AudioLayer
             , _mutex ()
             , _dcblocker(0)
             , _audiofilter(0)
+            , _noisesuppressstate(false)
         	, _countNotificationTime(0)
-            , _time (new ost::Time()) {
+            , _time (new ost::Time) {
 
         }
 
@@ -94,8 +98,8 @@ class AudioLayer
          */
         virtual ~AudioLayer (void) {
             delete _time;
-            delete _dcblocker;
             delete _audiofilter;
+            delete _dcblocker;
         }
 
         virtual bool closeLayer (void) = 0;
@@ -241,7 +245,6 @@ class AudioLayer
          * Set the audio recorder
          */
         void setRecorderInstance (Recordable* rec) {
-            _recorder = NULL;
             _recorder = rec;
         }
 
