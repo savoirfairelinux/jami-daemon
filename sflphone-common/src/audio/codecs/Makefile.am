@@ -66,7 +66,7 @@ endif
 
 noinst_PROGRAMS = libcodec_ulaw.so libcodec_alaw.so libcodec_g722.so $(GSM_LIB) $(SPEEX_NB_LIB) $(SPEEX_WB_LIB) $(SPEEX_UB_LIB) $(CELT_LIB)
 
-noinst_HEADERS = audiocodec.h audiocodecfactory.h
+noinst_HEADERS = audiocodec.h audiocodecfactory.h speexcodec.h
 
 libcodec_ulaw_so_SOURCES = ulaw.cpp
 libcodec_ulaw_so_CFLAGS = -fPIC -g -Wall
