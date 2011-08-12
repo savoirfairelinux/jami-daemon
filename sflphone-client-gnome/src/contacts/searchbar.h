@@ -89,7 +89,7 @@ void deactivateWaitingLayer();
 /**
  * Set focus on addressbook search bar
  */
-void set_forcus_on_addressbook_searchbar (void);
+void set_focus_on_addressbook_searchbar (void);
 
 /**
  * Reload combo box to update list of active addressbook

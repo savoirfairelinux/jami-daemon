@@ -45,10 +45,11 @@
   * @brief The GtkTreeView that list calls in the main window.
   */
 
-enum {
+typedef enum {
     A_CALL,
-    A_CONFERENCE
-};
+    A_CONFERENCE,
+    A_INVALID
+} CallType;
 
 
 /**
