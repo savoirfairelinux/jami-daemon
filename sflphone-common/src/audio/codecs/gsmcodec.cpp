@@ -33,6 +33,8 @@
 #include "audiocodec.h"
 extern "C" {
 #include <gsm/gsm.h>
+#include <cassert>
+
 }
 
 /**
@@ -52,10 +54,10 @@ class Gsm : public sfl::AudioCodec
             _hasDynamicPayload = false;
 
             if (! (_decode_gsmhandle = gsm_create()))
-                printf ("ERROR: decode_gsm_create");
+                printf ("ERROR: decode_gsm_create\n");
 
             if (! (_encode_gsmhandle = gsm_create()))
-                printf ("AudioCodec: ERROR: encode_gsm_create");
+                printf ("AudioCodec: ERROR: encode_gsm_create\n");
         }
 
         Gsm (const Gsm&);
@@ -67,20 +69,19 @@ class Gsm : public sfl::AudioCodec
             gsm_destroy (_encode_gsmhandle);
         }
 
-        virtual int	decode	(short * dst, unsigned char * src, unsigned int size) {
-            // _debug("Decoded by gsm ");
-            (void) size;
+        virtual int	decode	(short * dst, unsigned char * src, size_t buf_size) {
+        	assert(buf_size == 33);
+        	(void) buf_size;
 
             if (gsm_decode (_decode_gsmhandle, (gsm_byte*) src, (gsm_signal*) dst) < 0)
-                printf ("ERROR: gsm_decode");
+                printf ("ERROR: gsm_decode\n");
 
-            return 320;
+            return _frameSize;
         }
 
-        virtual int	encode	(unsigned char * dst, short * src, unsigned int size) {
-
-            // _debug("Encoded by gsm ");
-            (void) size;
+        virtual int	encode	(unsigned char * dst, short * src, size_t buf_size) {
+            (void) buf_size;
+            assert(buf_size >= 33);
             gsm_encode (_encode_gsmhandle, (gsm_signal*) src, (gsm_byte*) dst);
             return 33;
         }

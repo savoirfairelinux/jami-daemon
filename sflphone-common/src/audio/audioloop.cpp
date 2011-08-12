@@ -46,20 +46,19 @@ AudioLoop::~AudioLoop()
     _buffer = 0;
 }
 
-int
-AudioLoop::getNext (SFLDataFormat* output, int nb, short volume)
+void
+AudioLoop::getNext (SFLDataFormat* output, int samples, short volume)
 {
-    int copied = 0;
     int block;
     int pos = _pos;
 
     if(_size == 0) {
     	_error("AudioLoop: Error: Audio loop size is 0");
-    	return 0;
+    	return;
     }
 
-    while (nb) {
-        block = nb;
+    while (samples) {
+        block = samples;
 
         if (block > (_size-pos)) {
             block = _size-pos;
@@ -79,13 +78,9 @@ AudioLoop::getNext (SFLDataFormat* output, int nb, short volume)
         // should adjust sound here, in output???
         pos = (pos + block) % _size;
 
-        nb -= block;
-
-        copied += block;
+        samples -= block;
     }
 
     _pos = pos;
-
-    return copied;
 }
 

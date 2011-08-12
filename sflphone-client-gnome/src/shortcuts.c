@@ -352,12 +352,9 @@ initialize_accelerators_list ()
 static void
 update_shortcuts_map (const gchar* action, guint key, GdkModifierType mask)
 {
-    gchar buffer[7];
-
     // Bindings: MASKxCODE
-    sprintf (buffer, "%dx%d", mask, key);
-
-    g_hash_table_replace (shortcutsMap, g_strdup (action), g_strdup (buffer));
+    gchar *buffer = g_strdup_printf("%dx%d", mask, key);
+    g_hash_table_replace (shortcutsMap, g_strdup (action), buffer);
 }
 
 static void
@@ -439,7 +436,7 @@ shortcuts_initialize_bindings ()
     for (shortcutsKeysElement = shortcutsKeys; shortcutsKeysElement; shortcutsKeysElement
             = shortcutsKeysElement->next) {
         action = shortcutsKeysElement->data;
-        maskAndKey = g_strdup (g_hash_table_lookup (shortcutsMap, action));
+        maskAndKey = g_hash_table_lookup (shortcutsMap, action);
 
         token1 = strtok (maskAndKey, "x");
         token2 = strtok (NULL, "x");

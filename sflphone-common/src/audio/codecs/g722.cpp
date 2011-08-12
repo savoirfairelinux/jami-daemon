@@ -32,12 +32,14 @@
 
 
 
+#include "global.h"
 #include "../common.h"
 #include "audiocodec.h"
 #include "g722.h"
 
 #include <stdlib.h>
 #include <string.h>
+#include <cassert>
 
 #define TRUE 1
 #define FALSE 0
@@ -70,25 +72,15 @@ class G722 : public sfl::AudioCodec
         	g722_encode_release();
         }
 
-        virtual int decode (short *dst, unsigned char *src, unsigned int size) {
-
-            int in_byte = size;
-            int out_samples;
-
-            out_samples = g722_decode ( (int16_t*) dst, (const uint8_t*) src, in_byte);
-
-            return out_samples * 2;
+        virtual int decode (short *dst, unsigned char *src, size_t buf_size) {
+        	assert(buf_size == _frameSize / sizeof(SFLDataFormat) * encode_s->bits_per_sample / 8);
+            return g722_decode ( (int16_t*) dst, (const uint8_t*) src, buf_size);
         }
 
-        virtual int encode (unsigned char *dst, short *src, unsigned int size) {
-
-            // 2 bytes per sample (int16)
-            int in_samples = size / 2;
-            int out_bytes;
-
-            out_bytes = g722_encode ( (uint8_t*) dst, (const int16_t*) src, in_samples);
-
-            return out_bytes;
+        virtual int encode (unsigned char *dst, short *src, size_t buf_size) {
+            int out = g722_encode ( (uint8_t*) dst, (const int16_t*) src, _frameSize);
+            assert((size_t)out <= buf_size);
+            return out;
         }
 
 

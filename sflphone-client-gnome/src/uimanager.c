@@ -678,8 +678,8 @@ call_pick_up (void * foo UNUSED)
 	selectedCall = calltab_get_selected_call(active_calltree);
 
         if (selectedCall) {
-            create_new_call (CALL, CALL_STATE_DIALING, "", "", "",
-                             selectedCall->_peer_number, &new_call);
+            new_call = create_new_call (CALL, CALL_STATE_DIALING, "", "", "",
+                             selectedCall->_peer_number);
 
             calllist_add_call (current_calls, new_call);
             calltree_add_call (current_calls, new_call, NULL);
@@ -835,8 +835,8 @@ call_back (void * foo UNUSED)
 	return;
     }
 
-    create_new_call (CALL, CALL_STATE_DIALING, "", "",
-                         selected_call->_peer_name, selected_call->_peer_number, &new_call);
+    new_call = create_new_call (CALL, CALL_STATE_DIALING, "", "",
+                         selected_call->_peer_name, selected_call->_peer_number);
 
     calllist_add_call (current_calls, new_call);
     calltree_add_call (current_calls, new_call, NULL);
@@ -1015,8 +1015,9 @@ call_mailbox_cb (void)
     to = g_strdup (g_hash_table_lookup (current->properties, ACCOUNT_MAILBOX));
     account_id = g_strdup (current->accountID);
 
-    create_new_call (CALL, CALL_STATE_DIALING, "", account_id, _ ("Voicemail"), to,
-                     &mailbox_call);
+    mailbox_call = create_new_call (CALL, CALL_STATE_DIALING, "", account_id, _ ("Voicemail"), to);
+    g_free(to);
+    g_free(account_id);
     DEBUG ("TO : %s" , mailbox_call->_peer_number);
     calllist_add_call (current_calls, mailbox_call);
     calltree_add_call (current_calls, mailbox_call, NULL);
@@ -1667,17 +1668,13 @@ show_popup_menu_contacts (GtkWidget *my_widget, GdkEventButton *event)
 static void
 ok_cb (GtkWidget *widget UNUSED, gpointer userdata)
 {
-
-    gchar *new_number;
-    callable_obj_t *modified_call, *original;
-
     // Change the number of the selected call before calling
-    new_number = (gchar*) gtk_entry_get_text (GTK_ENTRY (editable_num));
-    original = (callable_obj_t*) userdata;
+    const gchar * const new_number = (gchar*) gtk_entry_get_text (GTK_ENTRY (editable_num));
+    callable_obj_t *original = (callable_obj_t*) userdata;
 
     // Create the new call
-    create_new_call (CALL, CALL_STATE_DIALING, "", g_strdup (original->_accountID),
-                     original->_peer_name, g_strdup (new_number), &modified_call);
+    callable_obj_t *modified_call = create_new_call (CALL, CALL_STATE_DIALING, "", original->_accountID,
+                     original->_peer_name, new_number);
 
     // Update the internal data structure and the GUI
     calllist_add_call (current_calls, modified_call);
@@ -1722,7 +1719,7 @@ show_edit_number (callable_obj_t *call)
 #endif
 
     if (call)
-        gtk_entry_set_text (GTK_ENTRY (editable_num), g_strdup (call->_peer_number));
+        gtk_entry_set_text (GTK_ENTRY (editable_num), call->_peer_number);
     else
         ERROR ("This a bug, the call should be defined. menus.c line 1051");
 

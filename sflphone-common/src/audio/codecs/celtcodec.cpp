@@ -45,15 +45,6 @@ class Celt : public sfl::AudioCodec
             _bitrate = 0;
             _hasDynamicPayload = true;
 
-            initCelt();
-
-        }
-
-        Celt (const Celt&);
-        Celt& operator= (const Celt&);
-
-        void initCelt() {
-
             int error = 0;
 
             _mode = celt_mode_create (_clockRate, _frameSize, &error);
@@ -112,39 +103,35 @@ class Celt : public sfl::AudioCodec
 
         }
 
+        Celt (const Celt&);
+        Celt& operator= (const Celt&);
+
         ~Celt() {
-            terminateCelt();
-        }
-
-        void terminateCelt() {
-
             celt_encoder_destroy (_enc);
             celt_decoder_destroy (_dec);
-
             celt_mode_destroy (_mode);
         }
 
-        virtual int decode (short *dst, unsigned char *src, unsigned int size) {
+        virtual int decode (short *dst, unsigned char *src, size_t buf_size) {
 #ifdef BUILD_CELT_91 // == 91
             //int err = 0;
-            /*err =*/ celt_decode (_dec, src, size, (celt_int16*) dst, size);
+            /*err =*/ celt_decode (_dec, src, buf_size, (celt_int16*) dst, _frameSize);
 #endif
 #ifdef BUILD_CELT_71
             //int err = 0; // FIXME: check error code
-            /*err =*/ celt_decode (_dec, src, size, (celt_int16*) dst);
+            /*err =*/ celt_decode (_dec, src, buf_size, (celt_int16*) dst);
 #endif
-            return _frameSize * sizeof (celt_int16);
+            return _frameSize;
         }
 
-        virtual int encode (unsigned char *dst, short *src, unsigned int size) {
+        virtual int encode (unsigned char *dst, short *src, size_t buf_size) {
             int len = 0;
 #ifdef BUILD_CELT_91// == 91
-            len = celt_encode (_enc, (celt_int16*) src, size, dst, 40);
+            len = celt_encode (_enc, (celt_int16*) src, _frameSize, dst, buf_size);
 #endif
 #ifdef BUILD_CELT_71
-            len = celt_encode (_enc, (celt_int16*) src, (celt_int16 *) src, dst, 40);
+            len = celt_encode (_enc, (celt_int16*) src, (celt_int16 *) src, dst, buf_size);
 #endif
-            // returns the number of bytes writen
             return len;
         }
 

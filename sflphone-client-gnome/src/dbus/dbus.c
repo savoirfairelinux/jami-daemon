@@ -129,14 +129,13 @@ static void
 new_call_created_cb (DBusGProxy *proxy UNUSED, const gchar *accountID,
 		     const gchar *callID, const gchar *to, void *foo UNUSED)
 {
-    callable_obj_t *c;
-    gchar *peer_name = (gchar *)to;
-    gchar *peer_number = (gchar *)to;
+    const gchar *peer_name = to;
+    const gchar *peer_number = to;
 
     DEBUG("DBUS: New Call (%s) created to (%s)", callID, to);
 
-    create_new_call(CALL, CALL_STATE_RINGING, g_strdup(callID), g_strdup(accountID), 
-			peer_name, peer_number, &c);
+    callable_obj_t *c = create_new_call(CALL, CALL_STATE_RINGING, callID, accountID,
+			peer_name, peer_number);
 
     set_timestamp(&c->_time_start);
 
@@ -165,8 +164,8 @@ incoming_call_cb (DBusGProxy *proxy UNUSED, const gchar* accountID,
     DEBUG ("DBus incoming peer name: %s", peer_name);
     DEBUG ("DBus incoming peer number: %s", peer_number);
 
-    create_new_call (CALL, CALL_STATE_INCOMING, g_strdup (callID), g_strdup (
-                         accountID), peer_name, peer_number, &c);
+    c = create_new_call (CALL, CALL_STATE_INCOMING, callID, accountID, peer_name,
+                     peer_number);
 #if GTK_CHECK_VERSION(2,10,0)
     status_tray_icon_blink (TRUE);
     popup_main_window();
@@ -299,7 +298,6 @@ call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state
         if ((strcmp (state, "RINGING")) == 0 ||
             (strcmp (state, "CURRENT")) == 0 ||
             (strcmp (state, "RECORD"))) {
-            callable_obj_t *new_call;
             GHashTable *call_details;
             gchar *type;
 
@@ -307,7 +305,7 @@ call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state
 
             // We fetch the details associated to the specified call
             call_details = dbus_get_call_details (callID);
-            create_new_call_from_details (callID, call_details, &new_call);
+            callable_obj_t *new_call = create_new_call_from_details (callID, call_details);
 
             // Restore the callID to be synchronous with the daemon
             new_call->_callID = g_strdup (callID);
@@ -407,41 +405,33 @@ conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
 {
     DEBUG ("DBUS: Conference %s added", confID);
 
-    conference_obj_t *new_conf;
-    callable_obj_t *call;
-    gchar* call_id;
-    gchar** participants;
-    gchar** part;
+    conference_obj_t *new_conf = create_new_conference (CONFERENCE_STATE_ACTIVE_ATACHED, confID);
 
-    create_new_conference (CONFERENCE_STATE_ACTIVE_ATACHED, confID, &new_conf);
-
-    participants = (gchar**) dbus_get_participant_list (new_conf->_confID);
+    gchar **participants = (gchar**) dbus_get_participant_list (new_conf->_confID);
 
     // Update conference list
     conference_participant_list_update (participants, new_conf);
 
+    gchar** part;
     // Add conference ID in in each calls
     for (part = participants; *part; part++) {
-        call_id = (gchar*) (*part);
-        call = calllist_get_call (current_calls, call_id);
+        const gchar *const call_id = (gchar*) (*part);
+        callable_obj_t *call = calllist_get_call (current_calls, call_id);
 
-	// set when this call have been added to the conference
+        // set when this call have been added to the conference
         set_timestamp(&call->_time_added);
 
         // if a text widget is already created, disable it, use conference widget instead
-        if (call->_im_widget) {
+        if (call->_im_widget)
             im_widget_update_state (IM_WIDGET (call->_im_widget), FALSE);
-        }
 
         // if one of these participant is currently recording, the whole conference will be recorded
-        if(call->_state == CALL_STATE_RECORD) {
+        if(call->_state == CALL_STATE_RECORD)
             new_conf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD;
-        }
 
         call->_confID = g_strdup (confID);
-	call->_historyConfID = g_strdup (confID);
+        call->_historyConfID = g_strdup (confID);
     }
-
 
     set_timestamp(&new_conf->_time_start);
 

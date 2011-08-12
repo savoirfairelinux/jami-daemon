@@ -306,14 +306,10 @@ class IAXVoIPLink : public VoIPLink
         /** Connection to audio card/device */
         AudioLayer* audiolayer;
 
-        /** Mic-data related buffers */
-        SFLDataFormat* micData;
-        SFLDataFormat* micDataConverted;
-        unsigned char* micDataEncoded;
-
-        /** Speaker-data related buffers */
-        SFLDataFormat* spkrDataDecoded;
-        SFLDataFormat* spkrDataConverted;
+        /** encoder/decoder/resampler buffers */
+        SFLDataFormat decData[DEC_BUFFER_SIZE];
+        SFLDataFormat resampledData[DEC_BUFFER_SIZE];
+        unsigned char encodedData[DEC_BUFFER_SIZE];
 
         /** Sample rate converter object */
         SamplerateConverter* converter;

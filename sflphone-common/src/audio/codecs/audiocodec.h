@@ -42,6 +42,11 @@
 #define CODEC_ENTRY create_0_9_14
 #define CODEC_ENTRY_SYMBOL "create_0_9_14"
 
+// We assume all decoders will be fed 20ms of audio or less
+// And we'll resample them to 44.1kHz or less
+// Also assume mono
+#define DEC_BUFFER_SIZE ((44100 * 20) / 1000)
+
 namespace ost {
     class PayloadFormat;
     class DynamicPayloadFormat;
@@ -90,15 +95,17 @@ class AudioCodec : public Codec
 
         /**
          * Decode an input buffer and fill the output buffer with the decoded data
-         * @return the number of bytes decoded
+         * @param buffer_size : the size of the input buffer
+         * @return the number of samples decoded
          */
-        virtual int decode (short *, unsigned char *, unsigned int) = 0;
+        virtual int decode (short *dst, unsigned char *buf, size_t buffer_size) = 0;
 
         /**
          * Encode an input buffer and fill the output buffer with the encoded data
+         * @param buffer_size : the maximum size of encoded data buffer (dst)
          * @return the number of bytes encoded
          */
-        virtual int encode (unsigned char *, short *, unsigned int) = 0;
+        virtual int encode (unsigned char *dst, short *src, size_t buffer_size) = 0;
 
         /**
          * @Override

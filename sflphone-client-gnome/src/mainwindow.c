@@ -418,7 +418,6 @@ statusbar_push_message (const gchar *left_hand_message, const gchar *right_hand_
     gchar *message_to_display;
 
     g_mutex_lock (gmutex);
-    // pthread_mutex_lock (&statusbar_message_mutex);
 
     g_free (status_current_message);
     // store the left hand message so that it can be reused in case of clock update
@@ -436,7 +435,6 @@ statusbar_push_message (const gchar *left_hand_message, const gchar *right_hand_
 
     g_free (message_to_display);
 
-    // pthread_mutex_unlock (&statusbar_message_mutex);
     g_mutex_unlock (gmutex);
 }
 
@@ -457,10 +455,8 @@ statusbar_update_clock (gchar *msg)
     }
 
 
-    // pthread_mutex_lock (&statusbar_message_mutex);
     g_mutex_lock (gmutex);
     message = g_strdup (status_current_message);
-    // pthread_mutex_unlock (&statusbar_message_mutex);
     g_mutex_unlock (gmutex);
 
     if (message) {
@@ -469,8 +465,6 @@ statusbar_update_clock (gchar *msg)
     }
 
     g_free (message);
-    message = NULL;
-
 }
 
 static void

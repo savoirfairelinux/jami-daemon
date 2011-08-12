@@ -60,9 +60,8 @@ class AudioLoop
          * @param output  The data buffer
          * @param nb of int16 to send
          * @param volume  The volume
-         * @return the number of int16 sent (nb*2)
          */
-        int getNext (SFLDataFormat* output, int nb, short volume=100);
+        void getNext (SFLDataFormat* output, int samples, short volume=100);
 
         /**
          * Reset the pointer position

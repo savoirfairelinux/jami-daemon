@@ -43,100 +43,81 @@
 
 #include "manager.h"
 
-// load file in mono format
 RawFile::RawFile(const std::string& name, sfl::AudioCodec* codec, unsigned int sampleRate)
 	: audioCodec (codec)
 {
     filepath = name;
-
-    // no filename to load
     if (filepath.empty())
         throw AudioFileException("Unable to open audio file: filename is empty");
 
+
     std::fstream file;
-
     file.open (filepath.c_str(), std::fstream::in);
-    if (!file.is_open()) {
+    if (!file.is_open())
         throw AudioFileException("Unable to open audio file");
-    }
 
-    // get length of file:
     file.seekg (0, std::ios::end);
-    int length = file.tellg();
+    size_t length = file.tellg();
     file.seekg (0, std::ios::beg);
 
-    // allocate memory:
-    char fileBuffer[length];
-
-    // read data as a block:
+    char *fileBuffer = new char[length];
     file.read (fileBuffer,length);
-
     file.close();
 
+    unsigned int frameSize = audioCodec->getFrameSize();
+    unsigned int bitrate   = audioCodec->getBitRate() * 1000 / 8;
+    unsigned int audioRate = audioCodec->getClockRate();
+    unsigned int encFrameSize = frameSize * bitrate / audioRate;
+    unsigned int decodedSize = length * (frameSize / encFrameSize);
 
-    // Decode file.ul
-    // expandedsize is the number of bytes, not the number of int
-    // expandedsize should be exactly two time more, else failed
-    int16 monoBuffer[length];
-
-    unsigned int expandedsize = audioCodec->decode (monoBuffer, reinterpret_cast<unsigned char *>(fileBuffer), length);
-    if (expandedsize != length * sizeof(int16)) {
-        throw AudioFileException("Audio file error on loading audio file!");
+    SFLDataFormat *monoBuffer = new SFLDataFormat[decodedSize];
+    SFLDataFormat *bufpos = monoBuffer;
+    unsigned char *filepos = reinterpret_cast<unsigned char *>(fileBuffer);
+    _size = decodedSize;
+    while(length >= encFrameSize) {
+    	bufpos += audioCodec->decode (bufpos, filepos, encFrameSize);
+    	filepos += encFrameSize;
+    	length -= encFrameSize;
     }
+    delete[] fileBuffer;
 
-    unsigned int nbSampling = expandedsize / sizeof(int16);
-
-    // we need to change the sample rating here:
-    // case 1: we don't have to resample : only do splitting and convert
-    if (sampleRate == 8000) {
-        // just s
-        _size   = nbSampling;
-        _buffer = new SFLDataFormat[_size];
+    if (sampleRate == audioRate) {
 #ifdef DATAFORMAT_IS_FLOAT
-        // src to dest
-        src_short_to_float_array (monoBuffer, _buffer, nbSampling);
+        _buffer = new SFLDataFormat[_size];
+        src_short_to_float_array (monoBuffer, _buffer, _size);
+        delete[] monoBuffer;
 #else
-        // dest to src
-        memcpy (_buffer, monoBuffer, _size*sizeof (SFLDataFormat));
+        _buffer = monoBuffer;
 #endif
 
     } else {
-        // case 2: we need to convert it and split it
-        // convert here
-        double factord = (double) sampleRate / 8000;
-        float* floatBufferIn = new float[nbSampling];
-        int    sizeOut  = (int) (ceil (factord*nbSampling));
-        src_short_to_float_array (monoBuffer, floatBufferIn, nbSampling);
-        SFLDataFormat* bufferTmp = new SFLDataFormat[sizeOut];
+        double factord = (double) sampleRate / audioRate;
+        float* floatBufferIn = new float[_size];
+        int    sizeOut  = ceil(factord*_size);
+        src_short_to_float_array (monoBuffer, floatBufferIn, _size);
+        delete[] monoBuffer;
+        SFLDataFormat* _buffer = new SFLDataFormat[sizeOut];
 
         SRC_DATA src_data;
         src_data.data_in = floatBufferIn;
-        src_data.input_frames = nbSampling;
+        src_data.input_frames = _size;
         src_data.output_frames = sizeOut;
         src_data.src_ratio = factord;
 
 #ifdef DATAFORMAT_IS_FLOAT
-        // case number 2.1: the output is float32 : convert directly in _bufferTmp
-        src_data.data_out = bufferTmp;
+        src_data.data_out = _buffer;
         src_simple (&src_data, SRC_SINC_BEST_QUALITY, 1);
 #else
-        // case number 2.2: the output is int16 : convert and change to int16
         float* floatBufferOut = new float[sizeOut];
         src_data.data_out = floatBufferOut;
 
         src_simple (&src_data, SRC_SINC_BEST_QUALITY, 1);
-        src_float_to_short_array (floatBufferOut, bufferTmp, src_data.output_frames_gen);
+        src_float_to_short_array (floatBufferOut, _buffer, src_data.output_frames_gen);
 
         delete [] floatBufferOut;
 #endif
         delete [] floatBufferIn;
-        nbSampling = src_data.output_frames_gen;
-
-        // if we are in mono, we send the bufferTmp location and don't delete it
-        // else we split the audio in 2 and put it into buffer
-        _size = nbSampling;
-        _buffer = bufferTmp;  // just send the buffer pointer;
-        bufferTmp = 0;
+        _size = src_data.output_frames_gen;
     }
 }
 
@@ -211,7 +192,7 @@ WaveFile::WaveFile (const std::string& fileName, unsigned int audioSamplingRate)
         fileStream.read (data, 4);
 
     // Sample rate converter initialized with 88200 sample long
-    int converterSamples  = (srate > audioSamplingRate) ? srate : audioSamplingRate;
+    int converterSamples  = ((unsigned int)srate > audioSamplingRate) ? srate : audioSamplingRate;
     SamplerateConverter _converter (converterSamples);
 
     // Get length of data from the header.
@@ -240,20 +221,10 @@ WaveFile::WaveFile (const std::string& fileName, unsigned int audioSamplingRate)
     	nbSamples /= 2;
     }
 
-    if (srate != audioSamplingRate) {
-        nbSamples = (int) ( (float) nbSamples * ( (float) audioSamplingRate / (float) srate));
-
-	    _buffer = new SFLDataFormat[nbSamples];
-	    if (_buffer == NULL) {
-	    	delete[] tempBuffer;
-	        throw AudioFileException("Could not allocate buffer for audio");
-	    }
-
-		if (srate < audioSamplingRate)
-			_converter.resample (tempBuffer, _buffer, srate, audioSamplingRate, nbSamples);
-		else if (srate > audioSamplingRate)
-			_converter.resample (tempBuffer, _buffer, audioSamplingRate, srate, nbSamples);
-
+    if ((unsigned int)srate != audioSamplingRate) {
+        int outSamples = ((float) nbSamples * ( (float) audioSamplingRate / (float) srate));
+	    _buffer = new SFLDataFormat[outSamples];
+		_converter.resample (tempBuffer, _buffer, srate, audioSamplingRate, nbSamples);
 		delete[] tempBuffer;
     } else {
     	_buffer = tempBuffer;

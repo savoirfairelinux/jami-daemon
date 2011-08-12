@@ -97,7 +97,6 @@ escape_single_quotes (const gchar *message)
 void
 im_widget_add_message (IMWidget *im, const gchar *from, const gchar *message, gint level)
 {
-
     if (im) {
 
         /* Compute the date the message was sent */
@@ -118,7 +117,7 @@ im_widget_add_message (IMWidget *im, const gchar *from, const gchar *message, gi
         /* Cleanup */
         g_free (script);
         g_free (message_escaped);
-
+        g_free (msgtime);
     }
 }
 
@@ -298,7 +297,6 @@ GtkWidget *
 im_widget_new_with_first_message (const gchar *message UNUSED)
 {
     return GTK_WIDGET (g_object_new (IM_WIDGET_TYPE, NULL));
-    // return GTK_WIDGET (g_object_new (IM_WIDGET_TYPE, "first_message", message, NULL));
 }
 
 

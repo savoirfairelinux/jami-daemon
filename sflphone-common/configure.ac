@@ -306,13 +306,19 @@ AC_ARG_WITH([celt],
 		[with_celt=yes])
 
 AS_IF([test "x$with_celt" != xno],
-	PKG_CHECK_MODULES(CELT, celt >= 0.9.1,
+	[PKG_CHECK_MODULES(CELT, celt >= 0.9.1,
 		[
-			with_celt_91=yes; AC_MSG_NOTICE([Using celt 0.9.1]); AC_SUBST(BUILD_CELT_91)
+			with_celt_91=yes; AC_MSG_NOTICE([Using celt 0.9.1])
     	],
     	[
-			PKG_CHECK_MODULES(CELT, celt >= 0.7.1, [with_celt_71=yes; AC_MSG_NOTICE([Using celt 0.7.1]); AC_SUBST(BUILD_CELT_71)], AC_MSG_FAILURE([libcelt link test failed.   You may use --without-celt to compile without celt codec support.]))
-    	])
+			PKG_CHECK_MODULES(CELT, celt >= 0.7.1,
+            [
+                with_celt_71=yes; AC_MSG_NOTICE([Using celt 0.7.1])
+            ],
+            [
+                AC_MSG_FAILURE([libcelt link test failed.   You may use --without-celt to compile without celt codec support.])
+            ])
+    	])]
 )
 
 # AC_SUBST(BUILD_CELT)

@@ -29,8 +29,10 @@
  *  as that of the covered work.
  */
 
+#include "global.h"
 #include "../common.h"
 #include "audiocodec.h"
+#include <cassert>
 
 class Alaw : public sfl::AudioCodec
 {
@@ -48,23 +50,24 @@ class Alaw : public sfl::AudioCodec
 
         virtual ~Alaw() {}
 
-        virtual int decode (short *dst, unsigned char *src, unsigned int size) {
-            int16* end = dst+size;
+        virtual int decode (short *dst, unsigned char *src, size_t buf_size) {
+        	assert(buf_size == _frameSize / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat));
+        	unsigned char* end = src+buf_size;
 
-            while (dst<end)
+            while (src<end)
                 *dst++ = ALawDecode (*src++);
 
-            return size<<1;
+            return _frameSize;
         }
 
-        virtual int encode (unsigned char *dst, short *src, unsigned int size) {
-            size >>= 1;
-            uint8* end = dst+size;
+        virtual int encode (unsigned char *dst, short *src, size_t buf_size) {
+        	assert(buf_size >= _frameSize / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat));
+            uint8* end = dst+_frameSize;
 
             while (dst<end)
                 *dst++ = ALawEncode (*src++);
 
-            return size;
+            return _frameSize / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat);
         }
 
 

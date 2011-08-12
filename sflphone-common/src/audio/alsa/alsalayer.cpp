@@ -33,8 +33,6 @@
 
 #include "managerimpl.h"
 
-int framesPerBufferAlsa = 2048;
-
 // Constructor
 AlsaLayer::AlsaLayer (ManagerImpl* manager)
     : AudioLayer (manager , ALSA)
@@ -52,6 +50,7 @@ AlsaLayer::AlsaLayer (ManagerImpl* manager)
     , _is_open_capture (false)
     , _trigger_request (false)
     , _audioThread (NULL)
+    , _converter (0)
 
 {
     _debug ("Audio: Build ALSA layer");
@@ -132,7 +131,7 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int indexRing, int sampleRate,
     _converter = new SamplerateConverter (_audioSampleRate);
 
     AudioLayer::_dcblocker = new DcBlocker();
-    AudioLayer::_audiofilter = new AudioProcessing (static_cast<Algorithm *> (_dcblocker));
+    AudioLayer::_audiofilter = new AudioProcessing (_dcblocker);
 }
 
 void
@@ -427,7 +426,7 @@ bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle, int type, int rate)
     /* Set sample rate. If we can't set to the desired exact value, we set to the nearest acceptable */
     dir=0;
 
-    rate = getSampleRate();
+    rate = _audioSampleRate;
 
     exact_ivalue = rate;
 
@@ -824,12 +823,12 @@ AlsaLayer::soundCardGetIndex (std::string description)
 void AlsaLayer::audioCallback (void)
 {
 
-    int toGet, urgentAvailBytes, normalAvailBytes;
+    int urgentAvailBytes;
     unsigned short spkrVolume, micVolume;
     AudioLoop *tone;
     AudioLoop *file_tone;
-
-    SFLDataFormat *out = NULL;
+    unsigned int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
+    bool resample = _audioSampleRate != _mainBufferSampleRate;
 
     notifyincomingCall();
 
@@ -852,119 +851,68 @@ void AlsaLayer::audioCallback (void)
     int playbackAvailBytes = playbackAvailSmpl*sizeof (SFLDataFormat);
 
     if (urgentAvailBytes > 0) {
-
         // Urgent data (dtmf, incoming call signal) come first.
-        toGet = (urgentAvailBytes < (int) (playbackAvailBytes)) ? urgentAvailBytes : playbackAvailBytes;
-        out = (SFLDataFormat*) malloc (toGet);
-        memset (out, 0, toGet);
+        int toGet = urgentAvailBytes;
+        if (toGet > playbackAvailBytes)
+			toGet = playbackAvailBytes;
+        SFLDataFormat *out = (SFLDataFormat*) malloc (toGet);
+		_urgentRingBuffer.Get (out, toGet);
+		if (spkrVolume != 100)
+			for (unsigned int i=0; i < toGet / sizeof (SFLDataFormat); i++)
+				out[i] = out[i] * spkrVolume / 100;
 
-        if (out) {
-            _urgentRingBuffer.Get (out, toGet);
-            if (spkrVolume!=100)
-                for (int i=0; i<toGet / sizeof (SFLDataFormat); i++)
-                    out[i] = out[i] * spkrVolume / 100;
-
-            write (out, toGet, _PlaybackHandle);
-            free (out);
-        }
-
-        out=NULL;
-
+		write (out, toGet, _PlaybackHandle);
+		free (out);
         // Consume the regular one as well (same amount of bytes)
         getMainBuffer()->discard (toGet);
-
     } else {
+    	// regular audio data
+        int toGet = getMainBuffer()->availForGet();
 
-        normalAvailBytes = getMainBuffer()->availForGet();
+        if (toGet <= 0) {
+        	// no audio available, play tone or silence
+			SFLDataFormat *out = (SFLDataFormat *) malloc (playbackAvailBytes);
 
-        if (tone && (normalAvailBytes <= 0)) {
+			if (tone)
+				tone->getNext (out, playbackAvailSmpl, spkrVolume);
+			else if (file_tone && !_RingtoneHandle)
+				file_tone->getNext (out, playbackAvailSmpl, spkrVolume);
+			else
+				memset(out, 0, playbackAvailBytes);
 
-            out = (SFLDataFormat *) malloc (playbackAvailBytes);
-            memset (out, 0, playbackAvailBytes);
-
-            if (out) {
-		_debug("Write tone (normal %d) (playbackAvail %d)", normalAvailBytes, playbackAvailBytes);
-                tone->getNext (out, playbackAvailSmpl, spkrVolume);
-                write (out , playbackAvailBytes, _PlaybackHandle);
-                free (out);
-            }
-
-            out = NULL;
-
-        } else if (file_tone && !_RingtoneHandle && (normalAvailBytes <= 0)) {
-
-            out = (SFLDataFormat *) malloc (playbackAvailBytes);
-            memset (out, 0, playbackAvailBytes);
-
-            if (out) {
-                file_tone->getNext (out, playbackAvailSmpl, spkrVolume);
-                write (out, playbackAvailBytes, _PlaybackHandle);
-                free (out);
-            }
-
-            out = NULL;
-
+            write (out, playbackAvailBytes, _PlaybackHandle);
+			free (out);
         } else {
-            // If nothing urgent, play the regular sound samples
+        	// play the regular sound samples
 
-            int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
-            int maxNbSamplesToGet = playbackAvailSmpl;
             int maxNbBytesToGet = playbackAvailBytes;
-
-            // Compute maximal value to get into the ring buffer
-
-            if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
-
-                double upsampleFactor = (double) _audioSampleRate / _mainBufferSampleRate;
-                maxNbSamplesToGet = (int) ( (double) playbackAvailSmpl  / upsampleFactor);
-                maxNbBytesToGet = maxNbSamplesToGet * sizeof (SFLDataFormat);
-
+            // Compute maximal value to get from the ring buffer
+            double resampleFactor = 1.0;
+            if (resample) {
+                resampleFactor = (double) _audioSampleRate / _mainBufferSampleRate;
+                maxNbBytesToGet = (double) toGet / resampleFactor;
             }
 
-            toGet = (normalAvailBytes < (int) maxNbBytesToGet) ? normalAvailBytes : maxNbBytesToGet;
+            if (toGet > maxNbBytesToGet)
+            	toGet = maxNbBytesToGet;
 
-            out = (SFLDataFormat*) malloc (maxNbBytesToGet);
-            memset (out, 0, maxNbBytesToGet);
+			SFLDataFormat *out = (SFLDataFormat*) malloc (toGet);
+			getMainBuffer()->getData (out, toGet);
+			if (spkrVolume!=100)
+				for (unsigned int i=0; i<toGet / sizeof (SFLDataFormat); i++)
+					out[i] = out[i] * spkrVolume / 100;
 
-            if (normalAvailBytes) {
-                getMainBuffer()->getData (out, toGet);
-                if (spkrVolume!=100)
-                    for (int i=0; i<toGet / sizeof (SFLDataFormat); i++)
-                        out[i] = out[i] * spkrVolume / 100;
-
-                if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
-                    SFLDataFormat *rsmpl_out = (SFLDataFormat*) malloc (playbackAvailBytes);
-					memset (out, 0, playbackAvailBytes);
-
-					_converter->resample ( (SFLDataFormat*) out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, toGet / sizeof (SFLDataFormat));
-					write (rsmpl_out, toGet, _PlaybackHandle);
-					free (rsmpl_out);
-
-                } else {
-
-                    write (out, toGet, _PlaybackHandle);
-
-                }
-            } else {
-
-                if (!tone && !file_tone) {
-
-                    SFLDataFormat *zeros = (SFLDataFormat*) malloc (playbackAvailBytes);
-
-                    if (zeros) {
-                        bzero (zeros, playbackAvailBytes);
-                        write (zeros, playbackAvailBytes, _PlaybackHandle);
-                        free (zeros);
-                    }
-
-                    zeros = NULL;
-                }
-            }
-
-            _urgentRingBuffer.Discard (toGet);
-
-            free (out);
-            out = NULL;
+			if (resample) {
+				int inSamples = toGet / sizeof(SFLDataFormat);
+				int outSamples = inSamples * resampleFactor;
+				SFLDataFormat *rsmpl_out = (SFLDataFormat*) malloc (outSamples * sizeof(SFLDataFormat));
+				_converter->resample (out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, inSamples);
+				write (rsmpl_out, outSamples * sizeof(SFLDataFormat), _PlaybackHandle);
+				free (rsmpl_out);
+			} else {
+				write (out, toGet, _PlaybackHandle);
+			}
+			free (out);
         }
     }
 
@@ -972,96 +920,68 @@ void AlsaLayer::audioCallback (void)
 
         int ringtoneAvailSmpl = snd_pcm_avail_update (_RingtoneHandle);
         int ringtoneAvailBytes = ringtoneAvailSmpl*sizeof (SFLDataFormat);
-        out = (SFLDataFormat *) malloc (ringtoneAvailBytes);
-
-        if (out) {
-            file_tone->getNext (out, ringtoneAvailSmpl, spkrVolume);
-            write (out, ringtoneAvailBytes, _RingtoneHandle);
-            free (out);
-        }
-
-        out = NULL;
-
+        SFLDataFormat *out = (SFLDataFormat *) malloc (ringtoneAvailBytes);
+		file_tone->getNext (out, ringtoneAvailSmpl, spkrVolume);
+		write (out, ringtoneAvailBytes, _RingtoneHandle);
+		free (out);
     } else if (_RingtoneHandle) {
 
         int ringtoneAvailSmpl = snd_pcm_avail_update (_RingtoneHandle);
         int ringtoneAvailBytes = ringtoneAvailSmpl*sizeof (SFLDataFormat);
 
-        out = (SFLDataFormat *) malloc (ringtoneAvailBytes);
-
-        if (out) {
-            memset (out, 0, ringtoneAvailBytes);
-            write (out, ringtoneAvailBytes, _RingtoneHandle);
-            free (out);
-        }
-
-        out = NULL;
+        SFLDataFormat *out = (SFLDataFormat *) malloc (ringtoneAvailBytes);
+		memset (out, 0, ringtoneAvailBytes);
+		write (out, ringtoneAvailBytes, _RingtoneHandle);
+		free (out);
     }
 
     // Additionally handle the mic's audio stream
-    int micAvailBytes;
-    int toPut;
-
-    SFLDataFormat* in = NULL;
-
     if (!is_capture_running())
         return;
 
-    micAvailBytes = snd_pcm_avail_update (_CaptureHandle);
-
-    if (micAvailBytes < 0)
-        _debug ("Audio: Mic error: %s", snd_strerror (micAvailBytes));
-    if (micAvailBytes <= 0)
+    int toPutSamples = snd_pcm_avail_update (_CaptureHandle);
+    if (toPutSamples <= 0) {
+        if (toPutSamples < 0)
+        	_error ("Audio: Mic error: %s", snd_strerror (toPutSamples));
         return;
+    }
     
-    toPut = (micAvailBytes <= framesPerBufferAlsa) ? micAvailBytes : framesPerBufferAlsa;
-    in = (SFLDataFormat*) malloc (toPut * sizeof (SFLDataFormat));
-    toPut = read (in, toPut* sizeof (SFLDataFormat));
+    const int framesPerBufferAlsa = 2048;
+    if (toPutSamples > framesPerBufferAlsa)
+    	toPutSamples = framesPerBufferAlsa;
 
-    adjustVolume (in, toPut, SFL_PCM_CAPTURE);
+    int toPutBytes = toPutSamples * sizeof(SFLDataFormat);
+    SFLDataFormat* in = (SFLDataFormat*) malloc (toPutBytes);
+    int bytes = read (in, toPutBytes);
+    if (toPutBytes != bytes) {
+    	_error("ALSA MIC : Couldn't read!");
+    	free(in);
+    	return;
+    }
+    adjustVolume (in, toPutSamples, _manager->getSpkrVolume());
 
-    int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
-
-    if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
-
-        SFLDataFormat* rsmpl_out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
-
-        _converter->resample ( (SFLDataFormat*) in, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, toPut / sizeof (SFLDataFormat));
-
-        _audiofilter->processAudio (rsmpl_out, toPut);
-
-        getMainBuffer()->putData (rsmpl_out, toPut);
-
+    if (resample) {
+    	int outSamples = toPutSamples * ((double) _audioSampleRate / _mainBufferSampleRate);
+    	int outBytes = outSamples * sizeof (SFLDataFormat);
+        SFLDataFormat* rsmpl_out = (SFLDataFormat*) malloc (outBytes);
+        _converter->resample ( (SFLDataFormat*) in, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, toPutSamples);
+        _audiofilter->processAudio (rsmpl_out, outBytes);
+        getMainBuffer()->putData (rsmpl_out, outBytes);
         free (rsmpl_out);
     } else {
-        SFLDataFormat* filter_out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
-
-        if (filter_out) {
-            _audiofilter->processAudio (in, filter_out, toPut);
-            // captureFile->write ( (const char *) filter_out, toPut);
-            getMainBuffer()->putData (filter_out, toPut);
-            free (filter_out);
-        }
+        SFLDataFormat* filter_out = (SFLDataFormat*) malloc (toPutBytes);
+		_audiofilter->processAudio (in, filter_out, toPutBytes);
+		// captureFile->write ( (const char *) filter_out, toPut);
+		getMainBuffer()->putData (filter_out, toPutBytes);
+		free (filter_out);
     }
 
     free (in);
 }
 
-void* AlsaLayer::adjustVolume (void* buffer , int len, int stream)
+void AlsaLayer::adjustVolume (SFLDataFormat *src , int samples, int volume)
 {
-    int vol = (stream == SFL_PCM_PLAYBACK)
-        ? _manager->getSpkrVolume()
-        : _manager->getMicVolume();
-
-    SFLDataFormat *src = (SFLDataFormat*) buffer;
-
-    if (vol != 100) {
-        int i, size = len / sizeof (SFLDataFormat);
-
-        for (i = 0 ; i < size ; i++) {
-            src[i] = src[i] * vol / 100 ;
-        }
-    }
-
-    return src ;
+    if (volume != 100)
+        for (int i = 0 ; i < samples; i++)
+            src[i] = src[i] * volume / 100 ;
 }

@@ -95,21 +95,15 @@ class AudioRtpRecord
         ost::Mutex audioCodecMutex;
         int _codecPayloadType;
         bool _hasDynamicPayloadType;
-        SFLDataFormat *_micData;
-        SFLDataFormat *_micDataConverted;
-        SFLDataFormat *_micDataEchoCancelled;
-        unsigned char *_micDataEncoded;
-        SFLDataFormat *_spkrDataDecoded;
-        SFLDataFormat *_spkrDataConverted;
+        SFLDataFormat decData[DEC_BUFFER_SIZE];
+        SFLDataFormat resampledData[DEC_BUFFER_SIZE];
+        unsigned char encodedData[DEC_BUFFER_SIZE];
         SamplerateConverter *_converter;
         int _codecSampleRate;
         int _codecFrameSize;
         int _converterSamplingRate;
         EventQueue _eventQueue;
-        bool _micFadeInComplete;
-        bool _spkrFadeInComplete;
         SFLDataFormat _micAmplFactor;
-        SFLDataFormat _spkrAmplFactor;
         AudioProcessing *_audioProcess;
         NoiseSuppress *_noiseSuppress;
         ost::Mutex audioProcessMutex;
@@ -150,7 +144,7 @@ class AudioRtpRecordHandler
             return _audioRtpRecord._codecFrameSize;
         }
 
-        int getHasDynamicPayload (void) const {
+        bool getHasDynamicPayload (void) const {
             return _audioRtpRecord._hasDynamicPayloadType;
         }
 
@@ -162,29 +156,13 @@ class AudioRtpRecordHandler
             return _audioRtpRecord._eventQueue.size();
         }
 
-        SFLDataFormat *getMicData (void) {
-            return _audioRtpRecord._micData;
+        const unsigned char *getMicDataEncoded (void) const {
+            return _audioRtpRecord.encodedData;
         }
 
-        SFLDataFormat *getMicDataConverted (void) const {
-            return _audioRtpRecord._micDataConverted;
-        }
-
-        unsigned char *getMicDataEncoded (void) const {
-            return _audioRtpRecord._micDataEncoded;
-        }
-
-        void init (void);
-
-        /**
-         * Allocate memory for RTP buffers and fill them with zeros
-         * @prereq Session codec needs to be initialized prior calling this method
-         */
         void initBuffers (void);
 
         void initNoiseSuppress (void);
-
-        void updateNoiseSuppress (void);
 
         /**
          * Encode audio data from mainbuffer
@@ -194,12 +172,12 @@ class AudioRtpRecordHandler
         /**
          * Decode audio data received from peer
          */
-        void processDataDecode (unsigned char * spkrData, unsigned int size);
+        void processDataDecode (unsigned char * spkrData, unsigned int size, int payloadType);
 
         /**
         * Ramp In audio data to avoid audio click from peer
         */
-        bool fadeIn (SFLDataFormat *audio, int size, SFLDataFormat *factor);
+        void fadeIn (SFLDataFormat *audio, int size, SFLDataFormat *factor);
 
         void setDtmfPayloadType(unsigned int payloadType) {
         	_audioRtpRecord._dtmfPayloadType = payloadType;

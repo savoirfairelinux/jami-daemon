@@ -481,7 +481,14 @@ bool ManagerImpl::hangupCall (const std::string& callId)
 
     if (getConfigFromCall (callId) == Call::IPtoIP) {
         /* Direct IP to IP call */
-        returnValue = SIPVoIPLink::instance ()->hangup (callId);
+        try {
+            returnValue = SIPVoIPLink::instance ()->hangup (callId);
+        }
+        catch (const VoipLinkException &e)
+        {
+            _error("%s", e.what());
+            returnValue = 1;
+        }
     }
     else {
     	std::string accountId = getAccountFromCall (callId);
@@ -2327,6 +2334,7 @@ void ManagerImpl::stopTone ()
 		std::string filepath = _audiofile->getFilePath();
 		_dbus->getCallManager()->recordPlaybackStoped(filepath);
 		delete _audiofile;
+		_audiofile = NULL;
     }
 
     _toneMutex.leaveMutex();
@@ -2416,13 +2424,8 @@ void ManagerImpl::ringtone (const std::string& accountID)
 		}
 		else {
 			sfl::Codec *codec;
-			if (ringchoice.find (".ul") != std::string::npos)
+			if (ringchoice.find (".ul") != std::string::npos || ringchoice.find (".au") != std::string::npos)
 			     codec = _audioCodecFactory.getCodec(PAYLOAD_CODEC_ULAW);
-			/*
-			 * FIXME : RawFile() only handles ULAW
-			 else if (ringchoice.find (".au") != std::string::npos)
-			     codec = _audioCodecFactory.getCodec(PAYLOAD_CODEC_GSM);
-			 */
 			else
 		        throw AudioFileException("Couldn't guess an appropriate decoder");
 			_audiofile = new RawFile(ringchoice, static_cast<sfl::AudioCodec *>(codec), samplerate);
@@ -3472,7 +3475,6 @@ void ManagerImpl::switchAudioManager (void)
 
 void ManagerImpl::audioSamplingRateChanged (int samplerate)
 {
-
     int type, currentSamplerate, framesize, numCardIn, numCardOut, numCardRing;
     std::string alsaPlugin;
     bool wasActive;
@@ -3513,7 +3515,6 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
     wasActive = _audiodriver->isStarted();
 
     delete _audiodriver;
-    _audiodriver = NULL;
 
     switch (type) {
 
@@ -3530,14 +3531,9 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
             break;
 
         default:
-            _warn ("Manager: Error: audio layer unknown");
-            break;
-    }
-
-    if(_audiodriver == NULL) {
-    	_debug("Manager: Error: Audio driver could not be initialized");
-    	audioLayerMutexUnlock();
-    	return;
+            _error ("Manager: Error: audio layer unknown");
+        	audioLayerMutexUnlock();
+        	return;
     }
 
     _audiodriver->setErrorMessage (-1);
@@ -3556,25 +3552,13 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
     unsigned int sampleRate = _audiodriver->getSampleRate();
 
     delete _telephoneTone;
-    _telephoneTone = NULL;
-
     _debugInit ("Manager: Load telephone tone");
     std::string country = preferences.getZoneToneChoice();
     _telephoneTone = new TelephoneTone (country, sampleRate);
 
-    if(_telephoneTone == NULL) {
-        _debug("Manager: Error: Telephone tone is NULL");
-    }
-     
     delete _dtmfKey;
-    _dtmfKey = NULL;
-
     _debugInit ("Manager: Loading DTMF key with sample rate %d", sampleRate);
     _dtmfKey = new DTMF (sampleRate);
-
-    if(_dtmfKey == NULL) {
-        _debug("Manager: Error: DtmfKey is NULL");
-    }
 
     // Restart audio layer if it was active
     if (wasActive) {

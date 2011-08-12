@@ -36,10 +36,6 @@
 #include  <unistd.h>
 
 
-#define UNIX_DAY			86400
-#define UNIX_WEEK			86400 * 6
-#define UNIX_TWO_DAYS		        86400 * 2
-
 gint get_state_callstruct (gconstpointer a, gconstpointer b)
 {
     callable_obj_t * c = (callable_obj_t*) a;
@@ -192,12 +188,11 @@ void stop_call_clock (callable_obj_t *c)
     }
 }
 
-void create_new_call (callable_type_t type, call_state_t state,
+callable_obj_t *create_new_call (callable_type_t type, call_state_t state,
                       const gchar* const callID,
                       const gchar* const accountID,
                       const gchar* const peer_name,
-                      const gchar* const peer_number,
-                      callable_obj_t ** new_call)
+                      const gchar* const peer_number)
 {
     GError *err1 = NULL ;
     callable_obj_t *obj;
@@ -256,12 +251,11 @@ void create_new_call (callable_type_t type, call_state_t state,
 
     obj->_time_added = 0;
 
-    *new_call = obj;
+    return obj;
 }
 
-void create_new_call_from_details (const gchar *call_id, GHashTable *details, callable_obj_t **call)
+callable_obj_t *create_new_call_from_details (const gchar *call_id, GHashTable *details)
 {
-    callable_obj_t *new_call;
     call_state_t state;
 
     const gchar * const accountID = g_hash_table_lookup (details, "ACCOUNTID");
@@ -287,11 +281,10 @@ void create_new_call_from_details (const gchar *call_id, GHashTable *details, ca
     else
         state = CALL_STATE_FAILURE;
 
-    create_new_call (CALL, state, call_id, accountID, peer_name, call_get_peer_number (peer_number), &new_call);
-    *call = new_call;
+    return create_new_call (CALL, state, call_id, accountID, peer_name, call_get_peer_number (peer_number));
 }
 
-void create_history_entry_from_serialized_form (gchar *entry, callable_obj_t **call)
+callable_obj_t *create_history_entry_from_serialized_form (const gchar *entry)
 {
     const gchar *peer_name = "";
     const gchar *peer_number = "";
@@ -308,7 +301,7 @@ void create_history_entry_from_serialized_form (gchar *entry, callable_obj_t **c
     gchar ** ptr;
     gchar ** ptr_orig;
     static const gchar * const delim = "|";
- 
+
     ptr = g_strsplit(entry, delim, 10);
     ptr_orig = ptr;
     while (ptr != NULL && token < 10) {
@@ -354,7 +347,7 @@ void create_history_entry_from_serialized_form (gchar *entry, callable_obj_t **c
     if (g_strcasecmp (peer_name, "empty") == 0)
         peer_name = "";
 
-    create_new_call (HISTORY_ENTRY, CALL_STATE_DIALING, callID, accountID, peer_name, peer_number, &new_call);
+    new_call = create_new_call (HISTORY_ENTRY, CALL_STATE_DIALING, callID, accountID, peer_name, peer_number);
     new_call->_history_state = history_state;
     new_call->_time_start = convert_gchar_to_timestamp (time_start);
     new_call->_time_stop = convert_gchar_to_timestamp (time_stop);
@@ -364,8 +357,8 @@ void create_history_entry_from_serialized_form (gchar *entry, callable_obj_t **c
     new_call->_time_added = convert_gchar_to_timestamp(time_added);
     new_call->_record_is_playing = FALSE;
 
-    *call = new_call;
     g_strfreev(ptr_orig);
+    return new_call;
 }
 
 void free_callable_obj_t (callable_obj_t *c)
@@ -504,6 +497,9 @@ gchar* serialize_history_call_entry (callable_obj_t *entry)
 // gchar* get_formatted_start_timestamp (callable_obj_t *obj)
 gchar *get_formatted_start_timestamp (time_t time_start)
 {
+    enum { UNIX_DAY = 86400,
+           UNIX_WEEK = UNIX_DAY * 6,
+           UNIX_TWO_DAYS = UNIX_DAY * 2};
 
     struct tm* ptr;
     time_t lt, now;
