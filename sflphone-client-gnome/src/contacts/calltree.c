@@ -237,22 +237,18 @@ row_activated (GtkTreeView       *tree_view UNUSED,
                         WARN ("Row activated - Should not happen!");
                         break;
                 }
-            }
-
-            // If history or contact: double click action places a new call
-            else {
-
+            } else {
+                // If history or contact: double click action places a new call
                 account_id = g_strdup (selectedCall->_accountID);
 
                 // Create a new call
                 create_new_call (CALL, CALL_STATE_DIALING, "", account_id, selectedCall->_peer_name, selectedCall->_peer_number, &new_call);
-		// sflphone_place_call(new_call);
 
                 calllist_add_call(current_calls, new_call);
                 calltree_add_call (current_calls, new_call, NULL);
                 // Function sflphone_place_call (new_call) is processed in process_dialing
                 sflphone_place_call(new_call);
-		calltree_display (current_calls);
+                calltree_display (current_calls);
             }
         }
     } else if (calltab_get_selected_type (active_calltree) == A_CONFERENCE) {
@@ -1331,11 +1327,6 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
         g_object_unref (G_OBJECT (pixbuf));
     }
 
-/*
-    if(tab == history) {
-        return;
-    }
-*/
     conference_participant = conf->participant_list;
 
     if (conference_participant) {
@@ -1347,7 +1338,6 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 
             call_id = (gchar*) (conference_participant->data);
             call = calllist_get_call(tab, call_id);
-            // create_new_call_from_details (conf_id, conference_details, &c);
 
             calltree_remove_call (tab, call, NULL);
             calltree_add_call (tab, call, &iter);

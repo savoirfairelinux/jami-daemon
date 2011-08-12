@@ -129,12 +129,12 @@ new_call_created_cb (DBusGProxy *proxy UNUSED, const gchar *accountID,
 		     const gchar *callID, const gchar *to, void *foo UNUSED)
 {
     callable_obj_t *c;
-    gchar *peer_name = (gchar *)to;
-    gchar *peer_number = (gchar *)to;
+    const gchar *peer_name = to;
+    const gchar *peer_number = to;
 
     DEBUG("DBUS: New Call (%s) created to (%s)", callID, to);
 
-    create_new_call(CALL, CALL_STATE_RINGING, g_strdup(callID), g_strdup(accountID), 
+    create_new_call(CALL, CALL_STATE_RINGING, callID, accountID,
 			peer_name, peer_number, &c);
 
     set_timestamp(&c->_time_start);
@@ -164,8 +164,8 @@ incoming_call_cb (DBusGProxy *proxy UNUSED, const gchar* accountID,
     DEBUG ("DBus incoming peer name: %s", peer_name);
     DEBUG ("DBus incoming peer number: %s", peer_number);
 
-    create_new_call (CALL, CALL_STATE_INCOMING, g_strdup (callID), g_strdup (
-                         accountID), peer_name, peer_number, &c);
+    create_new_call (CALL, CALL_STATE_INCOMING, callID, accountID, peer_name,
+                     peer_number, &c);
 #if GTK_CHECK_VERSION(2,10,0)
     status_tray_icon_blink (TRUE);
     popup_main_window();
