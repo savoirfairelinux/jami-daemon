@@ -45,14 +45,6 @@ class Celt : public sfl::AudioCodec
             _bitrate = 0;
             _hasDynamicPayload = true;
 
-            initCelt();
-        }
-
-        Celt (const Celt&);
-        Celt& operator= (const Celt&);
-
-        void initCelt() {
-
             int error = 0;
 
             _mode = celt_mode_create (_clockRate, _frameSize, &error);
@@ -111,15 +103,12 @@ class Celt : public sfl::AudioCodec
 
         }
 
+        Celt (const Celt&);
+        Celt& operator= (const Celt&);
+
         ~Celt() {
-            terminateCelt();
-        }
-
-        void terminateCelt() {
-
             celt_encoder_destroy (_enc);
             celt_decoder_destroy (_dec);
-
             celt_mode_destroy (_mode);
         }
 
