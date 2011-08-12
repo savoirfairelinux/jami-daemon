@@ -38,6 +38,11 @@
 
 #include "Codec.h"
 
+// We assume all decoders will be fed 20ms of audio or less
+// And we'll resample them to 44.1kHz or less
+// Also assume mono
+#define DEC_BUFFER_SIZE ((44100 * 20) / 1000)
+
 namespace ost {
     class PayloadFormat;
     class DynamicPayloadFormat;

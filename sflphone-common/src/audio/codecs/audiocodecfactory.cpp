@@ -388,7 +388,6 @@ bool AudioCodecFactory::isCodecLoaded (int payload)
 
 std::vector <std::string> AudioCodecFactory::getCodecSpecifications (const int32_t& payload)
 {
-
     _debug ("CodecDescriptor: Gathering codec specifications for payload %i", payload);
 
     std::vector<std::string> v;
@@ -408,5 +407,4 @@ std::vector <std::string> AudioCodecFactory::getCodecSpecifications (const int32
     ss.str ("");
 
     return v;
-
 }

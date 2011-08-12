@@ -292,7 +292,7 @@ class AlsaLayer : public AudioLayer
          */
         void handle_xrun_playback (snd_pcm_t *handle);
 
-        void* adjustVolume (void* buffer , int len, int stream);
+        void adjustVolume (SFLDataFormat* buffer , int samples, int volume);
 
         /**
          * Handles to manipulate playback stream

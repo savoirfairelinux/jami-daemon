@@ -66,8 +66,8 @@ void SamplerateConverter::resample (SFLDataFormat* dataIn , SFLDataFormat* dataO
 {
 	assert(outputFreq <= _maxFreq);
 
-    double sampleFactor = (double) inputFreq / outputFreq;
-    if (sampleFactor == 1)
+    double sampleFactor = (double) outputFreq / inputFreq;
+    if (sampleFactor == 1.0)
 		return;
 
     int outSamples = nbSamples * sampleFactor;

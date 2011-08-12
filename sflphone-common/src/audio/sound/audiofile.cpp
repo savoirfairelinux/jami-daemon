@@ -241,19 +241,9 @@ WaveFile::WaveFile (const std::string& fileName, unsigned int audioSamplingRate)
     }
 
     if (srate != audioSamplingRate) {
-        nbSamples = (int) ( (float) nbSamples * ( (float) audioSamplingRate / (float) srate));
-
-	    _buffer = new SFLDataFormat[nbSamples];
-	    if (_buffer == NULL) {
-	    	delete[] tempBuffer;
-	        throw AudioFileException("Could not allocate buffer for audio");
-	    }
-
-		if (srate < audioSamplingRate)
-			_converter.resample (tempBuffer, _buffer, srate, audioSamplingRate, nbSamples);
-		else if (srate > audioSamplingRate)
-			_converter.resample (tempBuffer, _buffer, audioSamplingRate, srate, nbSamples);
-
+        int outSamples = ((float) nbSamples * ( (float) audioSamplingRate / (float) srate));
+	    _buffer = new SFLDataFormat[outSamples];
+		_converter.resample (tempBuffer, _buffer, srate, audioSamplingRate, nbSamples);
 		delete[] tempBuffer;
     } else {
     	_buffer = tempBuffer;
