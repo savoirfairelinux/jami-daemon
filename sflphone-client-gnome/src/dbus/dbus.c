@@ -128,14 +128,13 @@ static void
 new_call_created_cb (DBusGProxy *proxy UNUSED, const gchar *accountID,
 		     const gchar *callID, const gchar *to, void *foo UNUSED)
 {
-    callable_obj_t *c;
     const gchar *peer_name = to;
     const gchar *peer_number = to;
 
     DEBUG("DBUS: New Call (%s) created to (%s)", callID, to);
 
-    create_new_call(CALL, CALL_STATE_RINGING, callID, accountID,
-			peer_name, peer_number, &c);
+    callable_obj_t *c = create_new_call(CALL, CALL_STATE_RINGING, callID, accountID,
+			peer_name, peer_number);
 
     set_timestamp(&c->_time_start);
 
@@ -164,8 +163,8 @@ incoming_call_cb (DBusGProxy *proxy UNUSED, const gchar* accountID,
     DEBUG ("DBus incoming peer name: %s", peer_name);
     DEBUG ("DBus incoming peer number: %s", peer_number);
 
-    create_new_call (CALL, CALL_STATE_INCOMING, callID, accountID, peer_name,
-                     peer_number, &c);
+    c = create_new_call (CALL, CALL_STATE_INCOMING, callID, accountID, peer_name,
+                     peer_number);
 #if GTK_CHECK_VERSION(2,10,0)
     status_tray_icon_blink (TRUE);
     popup_main_window();
@@ -298,7 +297,6 @@ call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state
         if ((strcmp (state, "RINGING")) == 0 ||
             (strcmp (state, "CURRENT")) == 0 ||
             (strcmp (state, "RECORD"))) {
-            callable_obj_t *new_call;
             GHashTable *call_details;
             gchar *type;
 
@@ -306,7 +304,7 @@ call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state
 
             // We fetch the details associated to the specified call
             call_details = dbus_get_call_details (callID);
-            create_new_call_from_details (callID, call_details, &new_call);
+            callable_obj_t *new_call = create_new_call_from_details (callID, call_details);
 
             // Restore the callID to be synchronous with the daemon
             new_call->_callID = g_strdup (callID);

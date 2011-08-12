@@ -66,7 +66,7 @@ void calllist_add_contact (gchar *contact_name, gchar *contact_phone, contact_ty
 
     /* Check if the information is valid */
     if (g_strcasecmp (contact_phone, EMPTY_ENTRY) != 0) {
-        create_new_call (CONTACT, CALL_STATE_DIALING, "", "", contact_name, contact_phone, &new_call);
+        new_call = create_new_call (CONTACT, CALL_STATE_DIALING, "", "", contact_name, contact_phone);
 
         // Attach a pixbuf to a contact
         if (photo) {

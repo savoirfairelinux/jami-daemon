@@ -221,8 +221,7 @@ row_activated (GtkTreeView       *tree_view UNUSED,
                 }
             } else {
                 // If history or contact: double click action places a new call
-                callable_obj_t* new_call;
-                create_new_call (CALL, CALL_STATE_DIALING, "", selectedCall->_accountID, selectedCall->_peer_name, selectedCall->_peer_number, &new_call);
+                callable_obj_t* new_call = create_new_call (CALL, CALL_STATE_DIALING, "", selectedCall->_accountID, selectedCall->_peer_name, selectedCall->_peer_number);
 
                 calllist_add_call(current_calls, new_call);
                 calltree_add_call (current_calls, new_call, NULL);

@@ -178,11 +178,11 @@ typedef struct  {
 
 } callable_obj_t;
 
-void create_new_call (callable_type_t, call_state_t, const gchar* const, const gchar* const, const gchar* const, const gchar* const, callable_obj_t **);
+callable_obj_t *create_new_call (callable_type_t, call_state_t, const gchar* const, const gchar* const, const gchar* const, const gchar* const);
 
-void create_new_call_from_details (const gchar *, GHashTable *, callable_obj_t **);
+callable_obj_t *create_new_call_from_details (const gchar *, GHashTable *);
 
-void create_history_entry_from_serialized_form (gchar *, callable_obj_t **);
+callable_obj_t *create_history_entry_from_serialized_form (const gchar *);
 
 void call_add_error (callable_obj_t * call, gpointer dialog);
 
