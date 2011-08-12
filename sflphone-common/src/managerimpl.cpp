@@ -2321,6 +2321,7 @@ void ManagerImpl::stopTone ()
 		std::string filepath = _audiofile->getFilePath();
 		_dbus->getCallManager()->recordPlaybackStoped(filepath);
 		delete _audiofile;
+		_audiofile = NULL;
     }
 
     _toneMutex.leaveMutex();
@@ -2410,13 +2411,8 @@ void ManagerImpl::ringtone (const std::string& accountID)
 		}
 		else {
 			sfl::Codec *codec;
-			if (ringchoice.find (".ul") != std::string::npos)
+			if (ringchoice.find (".ul") != std::string::npos || ringchoice.find (".au") != std::string::npos)
 			     codec = _audioCodecFactory.getCodec(PAYLOAD_CODEC_ULAW);
-			/*
-			 * FIXME : RawFile() only handles ULAW
-			 else if (ringchoice.find (".au") != std::string::npos)
-			     codec = _audioCodecFactory.getCodec(PAYLOAD_CODEC_GSM);
-			 */
 			else
 		        throw AudioFileException("Couldn't guess an appropriate decoder");
 			_audiofile = new RawFile(ringchoice, static_cast<sfl::AudioCodec *>(codec), samplerate);
