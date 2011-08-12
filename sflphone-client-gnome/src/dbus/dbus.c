@@ -404,41 +404,33 @@ conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
 {
     DEBUG ("DBUS: Conference %s added", confID);
 
-    conference_obj_t *new_conf;
-    callable_obj_t *call;
-    gchar* call_id;
-    gchar** participants;
-    gchar** part;
+    conference_obj_t *new_conf = create_new_conference (CONFERENCE_STATE_ACTIVE_ATACHED, confID);
 
-    create_new_conference (CONFERENCE_STATE_ACTIVE_ATACHED, confID, &new_conf);
-
-    participants = (gchar**) dbus_get_participant_list (new_conf->_confID);
+    gchar **participants = (gchar**) dbus_get_participant_list (new_conf->_confID);
 
     // Update conference list
     conference_participant_list_update (participants, new_conf);
 
+    gchar** part;
     // Add conference ID in in each calls
     for (part = participants; *part; part++) {
-        call_id = (gchar*) (*part);
-        call = calllist_get_call (current_calls, call_id);
+        const gchar *const call_id = (gchar*) (*part);
+        callable_obj_t *call = calllist_get_call (current_calls, call_id);
 
-	// set when this call have been added to the conference
+        // set when this call have been added to the conference
         set_timestamp(&call->_time_added);
 
         // if a text widget is already created, disable it, use conference widget instead
-        if (call->_im_widget) {
+        if (call->_im_widget)
             im_widget_update_state (IM_WIDGET (call->_im_widget), FALSE);
-        }
 
         // if one of these participant is currently recording, the whole conference will be recorded
-        if(call->_state == CALL_STATE_RECORD) {
+        if(call->_state == CALL_STATE_RECORD)
             new_conf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD;
-        }
 
         call->_confID = g_strdup (confID);
-	call->_historyConfID = g_strdup (confID);
+        call->_historyConfID = g_strdup (confID);
     }
-
 
     set_timestamp(&new_conf->_time_start);
 

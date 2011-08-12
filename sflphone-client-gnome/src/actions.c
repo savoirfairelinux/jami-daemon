@@ -1283,8 +1283,6 @@ void sflphone_fill_conference_list (void)
 
     gchar** conferences;
     GHashTable *conference_details;
-    gchar* conf_id;
-    conference_obj_t* conf;
 
     DEBUG ("SFLphone: Fill conference list");
 
@@ -1292,12 +1290,12 @@ void sflphone_fill_conference_list (void)
 
     if (conferences) {
         for (; *conferences; conferences++) {
-            conf = g_new0 (conference_obj_t, 1);
-            conf_id = (gchar*) (*conferences);
+            conference_obj_t *conf = g_new0 (conference_obj_t, 1);
+            const gchar * const conf_id = (gchar*) (*conferences);
 
             conference_details = (GHashTable*) dbus_get_conference_details (conf_id);
 
-            create_new_conference_from_details (conf_id, conference_details, &conf);
+            conf = create_new_conference_from_details (conf_id, conference_details);
 
             conf->_confID = g_strdup (conf_id);
 
@@ -1311,7 +1309,6 @@ void sflphone_fill_history (void)
 {
     gchar **entries, **entries_orig;
     callable_obj_t *history_call, *call;
-    conference_obj_t *history_conf, *conf;
     QueueElement *element;
     guint i = 0, n = 0;
 
@@ -1321,18 +1318,17 @@ void sflphone_fill_history (void)
         gchar *current_entry = *entries;
 
         // Parsed a conference
-        if(g_str_has_prefix(current_entry, "9999")) {
+        if (g_str_has_prefix(current_entry, "9999")) {
             // create a conference entry
-            create_conference_history_entry_from_serialized(current_entry, &history_conf);
+            conference_obj_t *history_conf = create_conference_history_entry_from_serialized(current_entry);
 
-            // verify if this conference have been already created yet
-            conf = conferencelist_get(history, history_conf->_confID);
-            if(conf == NULL) {
-                // if this conference haven't been created yet, add it to the conference list
+            // verify if this conference has been already created yet
+            conference_obj_t *conf = conferencelist_get(history, history_conf->_confID);
+            // if this conference hasn't been created yet, add it to the conference list
+            if (!conf)
                 conferencelist_add(history, history_conf);
-            }
             else {
-                // if this conference is already created since one of the participant have already
+                // if this conference was already created since one of the participant have already
                 // been unserialized, update the recordfile value
                 conf->_recordfile = g_strdup(history_conf->_recordfile);
             }
@@ -1347,10 +1343,10 @@ void sflphone_fill_history (void)
             if (history_call->_confID && g_strcmp0(history_call->_confID, "") != 0) {
 
                 // process conference
-                conf = conferencelist_get(history, history_call->_confID);
+                conference_obj_t *conf = conferencelist_get(history, history_call->_confID);
                 if (!conf) {
                     // conference does not exist yet, create it
-                    create_new_conference(CONFERENCE_STATE_ACTIVE_ATACHED, history_call->_confID, &conf);
+                    conf = create_new_conference(CONFERENCE_STATE_ACTIVE_ATACHED, history_call->_confID);
                     conferencelist_add(history, conf);
                 }
 
