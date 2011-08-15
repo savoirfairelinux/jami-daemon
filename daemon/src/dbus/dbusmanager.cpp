@@ -46,6 +46,8 @@ DBusManager::DBusManager()
 #endif
 {
     try {
+        DBus::default_dispatcher = &_dispatcher;
+
         DBus::Connection sessionConnection = DBus::Connection::SessionBus();
         sessionConnection.request_name ("org.sflphone.SFLphone");
 
@@ -58,7 +60,6 @@ DBusManager::DBusManager()
         _networkManager = new NetworkManager (systemConnection, "/org/freedesktop/NetworkManager", "");
     #endif
 
-        DBus::default_dispatcher = &_dispatcher;
         _connected = true;
     } catch (const DBus::Error &err) {
         _error("%s: %s\n", err.name(), err.what());
