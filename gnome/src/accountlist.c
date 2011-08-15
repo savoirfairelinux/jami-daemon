@@ -112,7 +112,6 @@ account_list_get_by_state (account_state_t state)
     } else {
         return NULL;
     }
-
 }
 
 account_t *
@@ -120,10 +119,8 @@ account_list_get_by_id (gchar * accountID)
 {
     GList * c = g_queue_find_custom (accountQueue, accountID, is_accountID_struct);
 
-    if(c == NULL) {
-    	ERROR("AccountList: Could not find account %s", accountID);
-	return NULL;
-    } 
+    if(c == NULL)
+        return NULL;
 
     return (account_t *) c->data;
 }
