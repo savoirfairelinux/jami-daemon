@@ -76,6 +76,7 @@ void AudioRtpRecordHandler::setRtpMedia (AudioCodec* audioCodec)
 {
     _audioRtpRecord.audioCodecMutex.enter();
 
+	delete _audioRtpRecord._audioCodec;
     // Set varios codec info to reduce indirection
     _audioRtpRecord._audioCodec = audioCodec;
     _audioRtpRecord._codecPayloadType = audioCodec->getPayloadType();
