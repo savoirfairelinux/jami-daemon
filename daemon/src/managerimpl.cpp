@@ -4028,42 +4028,27 @@ void ManagerImpl::unloadAccountMap ()
 {
     _debug ("Manager: Unload account map");
 
-    AccountMap::iterator iter = _accountMap.begin();
-
-    while (iter != _accountMap.end()) {
+    AccountMap::iterator iter;
+    for (iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
         // Avoid removing the IP2IP account twice
-        if (iter->first != "") {
+        if (iter->first != "")
             delete iter->second;
-            iter->second = NULL;
-        }
-
-        iter++;
     }
 
     _accountMap.clear();
-
-
 }
 
 bool ManagerImpl::accountExists (const std::string& accountID)
 {
-    AccountMap::iterator iter = _accountMap.find (accountID);
-
-    if (iter == _accountMap.end()) {
-        return false;
-    }
-
-    return true;
+    return _accountMap.find (accountID) != _accountMap.end();
 }
 
 Account*
 ManagerImpl::getAccount (const std::string& accountID)
 {
-    AccountMap::iterator iter = _accountMap.find (accountID);
-
-    if (iter != _accountMap.end()) {
-        return iter->second;
-    }
+    Account *a = _accountMap[accountID];
+    if (a)
+		return a;
 
     _debug ("Manager: Did not found account %s, returning IP2IP account", accountID.c_str());
     return _directIpAccount;
