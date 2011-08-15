@@ -42,8 +42,6 @@ Pattern::Pattern (const std::string& pattern, const std::string& options) :
     _count (0),
     _options (0)
 {
-
-    // printf("Pattern constructor called for %s!\n", pattern.c_str());
     // Set offsets
     _offset[0] = _offset[1] = 0;
 
@@ -133,13 +131,9 @@ std::vector<std::string> Pattern::groups (void)
                              &stringList);
 
     std::vector<std::string> matchedSubstrings;
-    int i = 1;
 
-    while (stringList[i] != NULL) {
+    for (int i = 1; stringList[i] != NULL; i++)
         matchedSubstrings.push_back (stringList[i]);
-        // printf ("Substr: <start>%s<end>", stringList[i]);
-        i++;
-    }
 
     pcre_free_substring_list (stringList);
 
@@ -284,7 +278,6 @@ bool Pattern::matches (const std::string& subject) throw (match_error)
     // Matching failed.
     if (rc < 0) {
         _offset[0] = _offset[1] = 0;
-        // printf("  Matching failed with %d\n", rc);
         return false;
     }
 
@@ -319,8 +312,6 @@ std::vector<std::string> Pattern::split (void)
         tokenStart = start();
         substringSplitted.push_back (_subject.substr (tokenEnd + 1,
                                      tokenStart - tokenEnd - 1));
-        // printf("split: %s\n", _subject.substr (tokenEnd + 1,
-        // 					 tokenStart - tokenEnd - 1).c_str());
         tokenEnd = end();
     }
 

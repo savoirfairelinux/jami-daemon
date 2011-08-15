@@ -94,72 +94,69 @@ static void sink_input_info_callback (pa_context *c UNUSED, const pa_sink_info *
 {
     char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cv[PA_CVOLUME_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
 
-    if (!eol) {
+    if (eol)
+		return;
 
-        printf ("Sink %u\n"
-                "    Name: %s\n"
-                "    Driver: %s\n"
-                "    Description: %s\n"
-                "    Sample Specification: %s\n"
-                "    Channel Map: %s\n"
-                "    Owner Module: %u\n"
-                "    Volume: %s\n"
-                "    Monitor Source: %u\n"
-                "    Latency: %0.0f usec\n"
-                "    Flags: %s%s%s\n",
-                i->index,
-                i->name,
-                i->driver,
-                i->description,
-                pa_sample_spec_snprint (s, sizeof (s), &i->sample_spec),
-                pa_channel_map_snprint (cm, sizeof (cm), &i->channel_map),
-                i->owner_module,
-                i->mute ? "muted" : pa_cvolume_snprint (cv, sizeof (cv), &i->volume),
-                i->monitor_source,
-                (double) i->latency,
-                i->flags & PA_SINK_HW_VOLUME_CTRL ? "HW_VOLUME_CTRL " : "",
-                i->flags & PA_SINK_LATENCY ? "LATENCY " : "",
-                i->flags & PA_SINK_HARDWARE ? "HARDWARE" : "");
+	_debug ("Sink %u\n"
+			"    Name: %s\n"
+			"    Driver: %s\n"
+			"    Description: %s\n"
+			"    Sample Specification: %s\n"
+			"    Channel Map: %s\n"
+			"    Owner Module: %u\n"
+			"    Volume: %s\n"
+			"    Monitor Source: %u\n"
+			"    Latency: %0.0f usec\n"
+			"    Flags: %s%s%s\n",
+			i->index,
+			i->name,
+			i->driver,
+			i->description,
+			pa_sample_spec_snprint (s, sizeof (s), &i->sample_spec),
+			pa_channel_map_snprint (cm, sizeof (cm), &i->channel_map),
+			i->owner_module,
+			i->mute ? "muted" : pa_cvolume_snprint (cv, sizeof (cv), &i->volume),
+			i->monitor_source,
+			(double) i->latency,
+			i->flags & PA_SINK_HW_VOLUME_CTRL ? "HW_VOLUME_CTRL " : "",
+			i->flags & PA_SINK_LATENCY ? "LATENCY " : "",
+			i->flags & PA_SINK_HARDWARE ? "HARDWARE" : "");
 
-        std::string deviceName (i->name);
-        ( (PulseLayer *) userdata)->getSinkList()->push_back (deviceName);
-
-    }
+	((PulseLayer *)userdata)->getSinkList()->push_back (i->name);
 }
 
 static void source_input_info_callback (pa_context *c UNUSED, const pa_source_info *i, int eol, void *userdata)
 {
     char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cv[PA_CVOLUME_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
 
-    if (!eol) {
-        printf ("Sink %u\n"
-                "    Name: %s\n"
-                "    Driver: %s\n"
-                "    Description: %s\n"
-                "    Sample Specification: %s\n"
-                "    Channel Map: %s\n"
-                "    Owner Module: %u\n"
-                "    Volume: %s\n"
-                "    Monitor if Sink: %u\n"
-                "    Latency: %0.0f usec\n"
-                "    Flags: %s%s%s\n",
-                i->index,
-                i->name,
-                i->driver,
-                i->description,
-                pa_sample_spec_snprint (s, sizeof (s), &i->sample_spec),
-                pa_channel_map_snprint (cm, sizeof (cm), &i->channel_map),
-                i->owner_module,
-                i->mute ? "muted" : pa_cvolume_snprint (cv, sizeof (cv), &i->volume),
-                i->monitor_of_sink,
-                (double) i->latency,
-                i->flags & PA_SOURCE_HW_VOLUME_CTRL ? "HW_VOLUME_CTRL " : "",
-                i->flags & PA_SOURCE_LATENCY ? "LATENCY " : "",
-                i->flags & PA_SOURCE_HARDWARE ? "HARDWARE" : "");
-        std::string deviceName (i->name);
-        ( (PulseLayer *) userdata)->getSourceList()->push_back (deviceName);
+    if (!eol)
+		return;
+	_debug ("Sink %u\n"
+			"    Name: %s\n"
+			"    Driver: %s\n"
+			"    Description: %s\n"
+			"    Sample Specification: %s\n"
+			"    Channel Map: %s\n"
+			"    Owner Module: %u\n"
+			"    Volume: %s\n"
+			"    Monitor if Sink: %u\n"
+			"    Latency: %0.0f usec\n"
+			"    Flags: %s%s%s\n",
+			i->index,
+			i->name,
+			i->driver,
+			i->description,
+			pa_sample_spec_snprint (s, sizeof (s), &i->sample_spec),
+			pa_channel_map_snprint (cm, sizeof (cm), &i->channel_map),
+			i->owner_module,
+			i->mute ? "muted" : pa_cvolume_snprint (cv, sizeof (cv), &i->volume),
+			i->monitor_of_sink,
+			(double) i->latency,
+			i->flags & PA_SOURCE_HW_VOLUME_CTRL ? "HW_VOLUME_CTRL " : "",
+			i->flags & PA_SOURCE_LATENCY ? "LATENCY " : "",
+			i->flags & PA_SOURCE_HARDWARE ? "HARDWARE" : "");
 
-    }
+	((PulseLayer *)userdata)->getSourceList()->push_back (i->name);
 }
 
 

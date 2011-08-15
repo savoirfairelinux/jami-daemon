@@ -319,7 +319,6 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
 			map[USERNAME] = user;
 			map[PASSWORD] = pass;
 			map[REALM] = realm;
-			printf("UNSERIALIZED %s %s %s\n", user.c_str(), pass.c_str(), realm.c_str());
 			creds.push_back(map);
 		}
 	}

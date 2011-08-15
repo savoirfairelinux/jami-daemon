@@ -377,7 +377,7 @@ bool AudioRecord::openExistingRawFile()
 
 bool AudioRecord::openExistingWavFile()
 {
-    _info ("AudioRecord: Open existing wave file");
+    _info ("%s(%s)\n", __PRETTY_FUNCTION__, fileName_);
 
     fp = fopen (fileName_, "rb+");
 
@@ -385,8 +385,6 @@ bool AudioRecord::openExistingWavFile()
         _warn ("AudioRecord: Error: could not open WAV file!");
         return false;
     }
-
-    printf ("AudioRecord::openExistingWavFile()::Tried to open %s ",fileName_);
 
     if (fseek (fp, 40, SEEK_SET) != 0) // jump to data length
         _warn ("AudioRecord: Error: Couldn't seek offset 40 in the file ");

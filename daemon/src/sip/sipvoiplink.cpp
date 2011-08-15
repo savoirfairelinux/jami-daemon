@@ -4636,7 +4636,7 @@ std::vector<std::string> SIPVoIPLink::getAllIpInterfaceByName (void)
     for (int i = 0; i < nifaces; i++) {
         _debug ("  %s  ", ifreqs[i].ifr_name);
         ifaceList.push_back (std::string (ifreqs[i].ifr_name));
-        printf ("    %s\n", getInterfaceAddrFromName (std::string (ifreqs[i].ifr_name)).c_str());
+        _debug ("    %s\n", getInterfaceAddrFromName (ifreqs[i].ifr_name).c_str());
     }
 
     return ifaceList;

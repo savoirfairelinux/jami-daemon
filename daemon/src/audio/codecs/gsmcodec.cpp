@@ -31,10 +31,11 @@
 
 
 #include "audiocodec.h"
-extern "C" {
-#include <gsm/gsm.h>
+#include "logger.h"
 #include <cassert>
 
+extern "C" {
+#include <gsm/gsm.h>
 }
 
 /**
@@ -54,10 +55,10 @@ class Gsm : public sfl::AudioCodec
             _hasDynamicPayload = false;
 
             if (! (_decode_gsmhandle = gsm_create()))
-                printf ("ERROR: decode_gsm_create\n");
+                _error("ERROR: decode_gsm_create\n");
 
             if (! (_encode_gsmhandle = gsm_create()))
-                printf ("AudioCodec: ERROR: encode_gsm_create\n");
+                _error("ERROR: encode_gsm_create\n");
         }
 
         Gsm (const Gsm&);
@@ -74,7 +75,7 @@ class Gsm : public sfl::AudioCodec
         	(void) buf_size;
 
             if (gsm_decode (_decode_gsmhandle, (gsm_byte*) src, (gsm_signal*) dst) < 0)
-                printf ("ERROR: gsm_decode\n");
+                _error("ERROR: gsm_decode\n");
 
             return _frameSize;
         }
