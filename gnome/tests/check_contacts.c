@@ -31,12 +31,6 @@
 #include "../src/contacts/addressbook.h"
 
 
-void plop()
-{
-  printf("plop\n");
-}
-
-
 START_TEST (test_eds)
 {
 }
