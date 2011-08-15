@@ -76,6 +76,12 @@ HistoryItem::HistoryItem (std::string serialized_form)
 		case 3: // The start timestamp
 			_timestamp_start = tmp;
 			break;
+        case 4: // The end timestamp
+            _timestamp_stop = tmp;
+            break;
+        case 5: // The ID
+            _id = tmp;
+            break;
 		case 6: // The account ID
 			_account_id = tmp;
 			break;
@@ -95,9 +101,6 @@ HistoryItem::HistoryItem (std::string serialized_form)
 
         indice ++;
     }
-
-    _id = "";
-    _timestamp_stop = "";
 }
 
 HistoryItem::~HistoryItem ()
