@@ -261,7 +261,6 @@ account_list_get_registered_accounts (void)
 
 gchar* account_list_get_current_id (void)
 {
-
     account_t *current;
 
     current = account_list_get_current ();
@@ -274,8 +273,7 @@ gchar* account_list_get_current_id (void)
 
 gchar * account_list_get_ordered_list (void)
 {
-
-    gchar *order="";
+    gchar *order = strdup("");
     guint i;
 
     for (i=0; i < account_list_get_size(); i++) {
@@ -283,7 +281,9 @@ gchar * account_list_get_ordered_list (void)
         account = account_list_get_nth (i);
 
         if (account != NULL) {
-            order = g_strconcat (order, account->accountID, "/", NULL);
+            gchar *new_order = g_strconcat (order, account->accountID, "/", NULL);
+            g_free (order);
+            order = new_order;
         }
     }
 
@@ -301,9 +301,8 @@ guint account_list_get_position (account_t *account)
     for (i=0; i<size; i++) {
         tmp = account_list_get_nth (i);
 
-        if (g_strcasecmp (tmp->accountID, account->accountID) == 0) {
+        if (g_strcasecmp (tmp->accountID, account->accountID) == 0)
             return i;
-        }
     }
 
     // Not found
