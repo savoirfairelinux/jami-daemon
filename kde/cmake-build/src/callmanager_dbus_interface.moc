@@ -1,0 +1,426 @@
+/****************************************************************************
+** Meta object code from reading C++ file 'callmanager_dbus_interface.h'
+**
+** Created: Tue Apr 20 14:19:42 2010
+**      by: The Qt Meta Object Compiler version 62 (Qt 4.6.2)
+**
+** WARNING! All changes made in this file will be lost!
+*****************************************************************************/
+
+#include "callmanager_dbus_interface.h"
+#if !defined(Q_MOC_OUTPUT_REVISION)
+#error "The header file 'callmanager_dbus_interface.h' doesn't include <QObject>."
+#elif Q_MOC_OUTPUT_REVISION != 62
+#error "This file was generated using the moc from 4.6.2. It"
+#error "cannot be used with the include files from this version of Qt."
+#error "(The moc has changed too much.)"
+#endif
+
+QT_BEGIN_MOC_NAMESPACE
+static const uint qt_meta_data_CallManagerInterface[] = {
+
+ // content:
+       4,       // revision
+       0,       // classname
+       0,    0, // classinfo
+      56,   14, // methods
+       0,    0, // properties
+       0,    0, // enums/sets
+       0,    0, // constructors
+       0,       // flags
+      21,       // signalCount
+
+ // signals: signature, parameters, type, tag, flags
+      35,   22,   21,   21, 0x05,
+      82,   69,   21,   21, 0x05,
+     124,  117,   21,   21, 0x05,
+     151,  117,   21,   21, 0x05,
+     185,  178,   21,   21, 0x05,
+     226,  209,   21,   21, 0x05,
+     286,  264,   21,   21, 0x05,
+     342,  324,   21,   21, 0x05,
+     396,  375,   21,   21, 0x05,
+     442,  178,   21,   21, 0x05,
+     465,  178,   21,   21, 0x05,
+     487,  178,   21,   21, 0x05,
+     524,  510,   21,   21, 0x05,
+     574,  554,   21,   21, 0x05,
+     622,  604,   21,   21, 0x05,
+     663,   21,   21,   21, 0x05,
+     680,   21,   21,   21, 0x05,
+     715,  699,   21,   21, 0x05,
+     757,  744,   21,   21, 0x05,
+     810,  787,   21,   21, 0x05,
+     857,  178,   21,   21, 0x05,
+
+ // slots: signature, parameters, type, tag, flags
+     903,  178,  883,   21, 0x0a,
+     935,  919,  883,   21, 0x0a,
+     966,  117,  883,   21, 0x0a,
+    1008,  994,  883,   21, 0x0a,
+    1040,  178,  883,   21, 0x0a,
+    1102,  178, 1067,   21, 0x0a,
+    1157,   21, 1126,   21, 0x0a,
+    1171,  178, 1067,   21, 0x0a,
+    1201,   21, 1126,   21, 0x0a,
+    1248,   21, 1221,   21, 0x0a,
+    1267,  178, 1221,   21, 0x0a,
+    1320,  178, 1296,   21, 0x0a,
+    1344,  117, 1126,   21, 0x0a,
+    1405, 1398, 1372,   21, 0x0a,
+    1424,  178,  883,   21, 0x0a,
+    1440,  117,  883,   21, 0x0a,
+    1466,  178,  883,   21, 0x0a,
+    1480,  117,  883,   21, 0x0a,
+    1527, 1504,  883,   21, 0x0a,
+    1582, 1559,  883,   21, 0x0a,
+    1635, 1615,  883,   21, 0x0a,
+    1680, 1670,  883,   21, 0x0a,
+    1723, 1719,  883,   21, 0x0a,
+    1741,  178,  883,   21, 0x0a,
+    1757,  178,  883,   21, 0x0a,
+    1781,  178,  883,   21, 0x0a,
+    1807,  178,  883,   21, 0x0a,
+    1847, 1834,  883,   21, 0x0a,
+    1878,  178,  883,   21, 0x0a,
+    1900,  178,  883,   21, 0x0a,
+    1924,  744,  883,   21, 0x0a,
+    1961, 1950,  883,   21, 0x0a,
+    1980, 1670,  883,   21, 0x0a,
+    2007,  178,  883,   21, 0x0a,
+    2023,  117,  883,   21, 0x0a,
+
+       0        // eod
+};
+
+static const char qt_meta_stringdata_CallManagerInterface[] = {
+    "CallManagerInterface\0\0callID,state\0"
+    "callStateChanged(QString,QString)\0"
+    "confID,state\0conferenceChanged(QString,QString)\0"
+    "confID\0conferenceCreated(QString)\0"
+    "conferenceRemoved(QString)\0callID\0"
+    "confirmGoClear(QString)\0callID,codecName\0"
+    "currentSelectedCodec(QString,QString)\0"
+    "accountID,callID,from\0"
+    "incomingCall(QString,QString,QString)\0"
+    "accountID,message\0incomingMessage(QString,QString)\0"
+    "accountID,state,code\0"
+    "registrationStateChanged(QString,QString,int)\0"
+    "secureSdesOff(QString)\0secureSdesOn(QString)\0"
+    "secureZrtpOff(QString)\0callID,cipher\0"
+    "secureZrtpOn(QString,QString)\0"
+    "callID,sas,verified\0showSAS(QString,QString,bool)\0"
+    "callID,state,code\0"
+    "sipCallStateChanged(QString,QString,int)\0"
+    "transferFailed()\0transferSucceded()\0"
+    "accountID,count\0voiceMailNotify(QString,int)\0"
+    "device,value\0volumeChanged(QString,double)\0"
+    "callID,reason,severity\0"
+    "zrtpNegotiationFailed(QString,QString,QString)\0"
+    "zrtpNotSuppOther(QString)\0QDBusPendingReply<>\0"
+    "accept(QString)\0callID,accepted\0"
+    "acceptEnrollment(QString,bool)\0"
+    "addMainParticipant(QString)\0callID,confID\0"
+    "addParticipant(QString,QString)\0"
+    "detachParticipant(QString)\0"
+    "QDBusPendingReply<MapStringString>\0"
+    "getCallDetails(QString)\0"
+    "QDBusPendingReply<QStringList>\0"
+    "getCallList()\0getConferenceDetails(QString)\0"
+    "getConferenceList()\0QDBusPendingReply<QString>\0"
+    "getCurrentCallID()\0getCurrentCodecName(QString)\0"
+    "QDBusPendingReply<bool>\0getIsRecording(QString)\0"
+    "getParticipantList(QString)\0"
+    "QDBusPendingReply<double>\0device\0"
+    "getVolume(QString)\0hangUp(QString)\0"
+    "hangUpConference(QString)\0hold(QString)\0"
+    "holdConference(QString)\0sel_confID,drag_confID\0"
+    "joinConference(QString,QString)\0"
+    "sel_callID,drag_callID\0"
+    "joinParticipant(QString,QString)\0"
+    "accountID,callID,to\0"
+    "placeCall(QString,QString,QString)\0"
+    "callID,to\0placeCallFirstAccount(QString,QString)\0"
+    "key\0playDTMF(QString)\0refuse(QString)\0"
+    "requestGoClear(QString)\0"
+    "resetSASVerified(QString)\0"
+    "setConfirmGoClear(QString)\0callID,yesNo\0"
+    "setPBXEnrollment(QString,bool)\0"
+    "setRecording(QString)\0setSASVerified(QString)\0"
+    "setVolume(QString,double)\0start,type\0"
+    "startTone(int,int)\0transfert(QString,QString)\0"
+    "unhold(QString)\0unholdConference(QString)\0"
+};
+
+const QMetaObject CallManagerInterface::staticMetaObject = {
+    { &QDBusAbstractInterface::staticMetaObject, qt_meta_stringdata_CallManagerInterface,
+      qt_meta_data_CallManagerInterface, 0 }
+};
+
+#ifdef Q_NO_DATA_RELOCATION
+const QMetaObject &CallManagerInterface::getStaticMetaObject() { return staticMetaObject; }
+#endif //Q_NO_DATA_RELOCATION
+
+const QMetaObject *CallManagerInterface::metaObject() const
+{
+    return QObject::d_ptr->metaObject ? QObject::d_ptr->metaObject : &staticMetaObject;
+}
+
+void *CallManagerInterface::qt_metacast(const char *_clname)
+{
+    if (!_clname) return 0;
+    if (!strcmp(_clname, qt_meta_stringdata_CallManagerInterface))
+        return static_cast<void*>(const_cast< CallManagerInterface*>(this));
+    return QDBusAbstractInterface::qt_metacast(_clname);
+}
+
+int CallManagerInterface::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
+{
+    _id = QDBusAbstractInterface::qt_metacall(_c, _id, _a);
+    if (_id < 0)
+        return _id;
+    if (_c == QMetaObject::InvokeMetaMethod) {
+        switch (_id) {
+        case 0: callStateChanged((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
+        case 1: conferenceChanged((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
+        case 2: conferenceCreated((*reinterpret_cast< const QString(*)>(_a[1]))); break;
+        case 3: conferenceRemoved((*reinterpret_cast< const QString(*)>(_a[1]))); break;
+        case 4: confirmGoClear((*reinterpret_cast< const QString(*)>(_a[1]))); break;
+        case 5: currentSelectedCodec((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
+        case 6: incomingCall((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2])),(*reinterpret_cast< const QString(*)>(_a[3]))); break;
+        case 7: incomingMessage((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
+        case 8: registrationStateChanged((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2])),(*reinterpret_cast< int(*)>(_a[3]))); break;
+        case 9: secureSdesOff((*reinterpret_cast< const QString(*)>(_a[1]))); break;
+        case 10: secureSdesOn((*reinterpret_cast< const QString(*)>(_a[1]))); break;
+        case 11: secureZrtpOff((*reinterpret_cast< const QString(*)>(_a[1]))); break;
+        case 12: secureZrtpOn((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
+        case 13: showSAS((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2])),(*reinterpret_cast< bool(*)>(_a[3]))); break;
+        case 14: sipCallStateChanged((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2])),(*reinterpret_cast< int(*)>(_a[3]))); break;
+        case 15: transferFailed(); break;
+        case 16: transferSucceded(); break;
+        case 17: voiceMailNotify((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2]))); break;
+        case 18: volumeChanged((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< double(*)>(_a[2]))); break;
+        case 19: zrtpNegotiationFailed((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2])),(*reinterpret_cast< const QString(*)>(_a[3]))); break;
+        case 20: zrtpNotSuppOther((*reinterpret_cast< const QString(*)>(_a[1]))); break;
+        case 21: { QDBusPendingReply<> _r = accept((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 22: { QDBusPendingReply<> _r = acceptEnrollment((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< bool(*)>(_a[2])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 23: { QDBusPendingReply<> _r = addMainParticipant((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 24: { QDBusPendingReply<> _r = addParticipant((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 25: { QDBusPendingReply<> _r = detachParticipant((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 26: { QDBusPendingReply<MapStringString> _r = getCallDetails((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<MapStringString>*>(_a[0]) = _r; }  break;
+        case 27: { QDBusPendingReply<QStringList> _r = getCallList();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QStringList>*>(_a[0]) = _r; }  break;
+        case 28: { QDBusPendingReply<MapStringString> _r = getConferenceDetails((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<MapStringString>*>(_a[0]) = _r; }  break;
+        case 29: { QDBusPendingReply<QStringList> _r = getConferenceList();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QStringList>*>(_a[0]) = _r; }  break;
+        case 30: { QDBusPendingReply<QString> _r = getCurrentCallID();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QString>*>(_a[0]) = _r; }  break;
+        case 31: { QDBusPendingReply<QString> _r = getCurrentCodecName((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QString>*>(_a[0]) = _r; }  break;
+        case 32: { QDBusPendingReply<bool> _r = getIsRecording((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<bool>*>(_a[0]) = _r; }  break;
+        case 33: { QDBusPendingReply<QStringList> _r = getParticipantList((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QStringList>*>(_a[0]) = _r; }  break;
+        case 34: { QDBusPendingReply<double> _r = getVolume((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<double>*>(_a[0]) = _r; }  break;
+        case 35: { QDBusPendingReply<> _r = hangUp((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 36: { QDBusPendingReply<> _r = hangUpConference((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 37: { QDBusPendingReply<> _r = hold((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 38: { QDBusPendingReply<> _r = holdConference((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 39: { QDBusPendingReply<> _r = joinConference((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 40: { QDBusPendingReply<> _r = joinParticipant((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 41: { QDBusPendingReply<> _r = placeCall((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2])),(*reinterpret_cast< const QString(*)>(_a[3])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 42: { QDBusPendingReply<> _r = placeCallFirstAccount((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 43: { QDBusPendingReply<> _r = playDTMF((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 44: { QDBusPendingReply<> _r = refuse((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 45: { QDBusPendingReply<> _r = requestGoClear((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 46: { QDBusPendingReply<> _r = resetSASVerified((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 47: { QDBusPendingReply<> _r = setConfirmGoClear((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 48: { QDBusPendingReply<> _r = setPBXEnrollment((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< bool(*)>(_a[2])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 49: { QDBusPendingReply<> _r = setRecording((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 50: { QDBusPendingReply<> _r = setSASVerified((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 51: { QDBusPendingReply<> _r = setVolume((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< double(*)>(_a[2])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 52: { QDBusPendingReply<> _r = startTone((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 53: { QDBusPendingReply<> _r = transfert((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 54: { QDBusPendingReply<> _r = unhold((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 55: { QDBusPendingReply<> _r = unholdConference((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        default: ;
+        }
+        _id -= 56;
+    }
+    return _id;
+}
+
+// SIGNAL 0
+void CallManagerInterface::callStateChanged(const QString & _t1, const QString & _t2)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)), const_cast<void*>(reinterpret_cast<const void*>(&_t2)) };
+    QMetaObject::activate(this, &staticMetaObject, 0, _a);
+}
+
+// SIGNAL 1
+void CallManagerInterface::conferenceChanged(const QString & _t1, const QString & _t2)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)), const_cast<void*>(reinterpret_cast<const void*>(&_t2)) };
+    QMetaObject::activate(this, &staticMetaObject, 1, _a);
+}
+
+// SIGNAL 2
+void CallManagerInterface::conferenceCreated(const QString & _t1)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
+    QMetaObject::activate(this, &staticMetaObject, 2, _a);
+}
+
+// SIGNAL 3
+void CallManagerInterface::conferenceRemoved(const QString & _t1)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
+    QMetaObject::activate(this, &staticMetaObject, 3, _a);
+}
+
+// SIGNAL 4
+void CallManagerInterface::confirmGoClear(const QString & _t1)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
+    QMetaObject::activate(this, &staticMetaObject, 4, _a);
+}
+
+// SIGNAL 5
+void CallManagerInterface::currentSelectedCodec(const QString & _t1, const QString & _t2)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)), const_cast<void*>(reinterpret_cast<const void*>(&_t2)) };
+    QMetaObject::activate(this, &staticMetaObject, 5, _a);
+}
+
+// SIGNAL 6
+void CallManagerInterface::incomingCall(const QString & _t1, const QString & _t2, const QString & _t3)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)), const_cast<void*>(reinterpret_cast<const void*>(&_t2)), const_cast<void*>(reinterpret_cast<const void*>(&_t3)) };
+    QMetaObject::activate(this, &staticMetaObject, 6, _a);
+}
+
+// SIGNAL 7
+void CallManagerInterface::incomingMessage(const QString & _t1, const QString & _t2)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)), const_cast<void*>(reinterpret_cast<const void*>(&_t2)) };
+    QMetaObject::activate(this, &staticMetaObject, 7, _a);
+}
+
+// SIGNAL 8
+void CallManagerInterface::registrationStateChanged(const QString & _t1, const QString & _t2, int _t3)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)), const_cast<void*>(reinterpret_cast<const void*>(&_t2)), const_cast<void*>(reinterpret_cast<const void*>(&_t3)) };
+    QMetaObject::activate(this, &staticMetaObject, 8, _a);
+}
+
+// SIGNAL 9
+void CallManagerInterface::secureSdesOff(const QString & _t1)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
+    QMetaObject::activate(this, &staticMetaObject, 9, _a);
+}
+
+// SIGNAL 10
+void CallManagerInterface::secureSdesOn(const QString & _t1)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
+    QMetaObject::activate(this, &staticMetaObject, 10, _a);
+}
+
+// SIGNAL 11
+void CallManagerInterface::secureZrtpOff(const QString & _t1)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
+    QMetaObject::activate(this, &staticMetaObject, 11, _a);
+}
+
+// SIGNAL 12
+void CallManagerInterface::secureZrtpOn(const QString & _t1, const QString & _t2)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)), const_cast<void*>(reinterpret_cast<const void*>(&_t2)) };
+    QMetaObject::activate(this, &staticMetaObject, 12, _a);
+}
+
+// SIGNAL 13
+void CallManagerInterface::showSAS(const QString & _t1, const QString & _t2, bool _t3)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)), const_cast<void*>(reinterpret_cast<const void*>(&_t2)), const_cast<void*>(reinterpret_cast<const void*>(&_t3)) };
+    QMetaObject::activate(this, &staticMetaObject, 13, _a);
+}
+
+// SIGNAL 14
+void CallManagerInterface::sipCallStateChanged(const QString & _t1, const QString & _t2, int _t3)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)), const_cast<void*>(reinterpret_cast<const void*>(&_t2)), const_cast<void*>(reinterpret_cast<const void*>(&_t3)) };
+    QMetaObject::activate(this, &staticMetaObject, 14, _a);
+}
+
+// SIGNAL 15
+void CallManagerInterface::transferFailed()
+{
+    QMetaObject::activate(this, &staticMetaObject, 15, 0);
+}
+
+// SIGNAL 16
+void CallManagerInterface::transferSucceded()
+{
+    QMetaObject::activate(this, &staticMetaObject, 16, 0);
+}
+
+// SIGNAL 17
+void CallManagerInterface::voiceMailNotify(const QString & _t1, int _t2)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)), const_cast<void*>(reinterpret_cast<const void*>(&_t2)) };
+    QMetaObject::activate(this, &staticMetaObject, 17, _a);
+}
+
+// SIGNAL 18
+void CallManagerInterface::volumeChanged(const QString & _t1, double _t2)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)), const_cast<void*>(reinterpret_cast<const void*>(&_t2)) };
+    QMetaObject::activate(this, &staticMetaObject, 18, _a);
+}
+
+// SIGNAL 19
+void CallManagerInterface::zrtpNegotiationFailed(const QString & _t1, const QString & _t2, const QString & _t3)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)), const_cast<void*>(reinterpret_cast<const void*>(&_t2)), const_cast<void*>(reinterpret_cast<const void*>(&_t3)) };
+    QMetaObject::activate(this, &staticMetaObject, 19, _a);
+}
+
+// SIGNAL 20
+void CallManagerInterface::zrtpNotSuppOther(const QString & _t1)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
+    QMetaObject::activate(this, &staticMetaObject, 20, _a);
+}
+QT_END_MOC_NAMESPACE

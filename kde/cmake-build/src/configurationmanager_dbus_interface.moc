@@ -1,0 +1,439 @@
+/****************************************************************************
+** Meta object code from reading C++ file 'configurationmanager_dbus_interface.h'
+**
+** Created: Tue Apr 20 14:19:42 2010
+**      by: The Qt Meta Object Compiler version 62 (Qt 4.6.2)
+**
+** WARNING! All changes made in this file will be lost!
+*****************************************************************************/
+
+#include "configurationmanager_dbus_interface.h"
+#if !defined(Q_MOC_OUTPUT_REVISION)
+#error "The header file 'configurationmanager_dbus_interface.h' doesn't include <QObject>."
+#elif Q_MOC_OUTPUT_REVISION != 62
+#error "This file was generated using the moc from 4.6.2. It"
+#error "cannot be used with the include files from this version of Qt."
+#error "(The moc has changed too much.)"
+#endif
+
+QT_BEGIN_MOC_NAMESPACE
+static const uint qt_meta_data_ConfigurationManagerInterface[] = {
+
+ // content:
+       4,       // revision
+       0,       // classname
+       0,    0, // classinfo
+      92,   14, // methods
+       0,    0, // properties
+       0,    0, // enums/sets
+       0,    0, // constructors
+       0,       // flags
+       2,       // signalCount
+
+ // signals: signature, parameters, type, tag, flags
+      31,   30,   30,   30, 0x05,
+      54,   49,   30,   30, 0x05,
+
+ // slots: signature, parameters, type, tag, flags
+     105,   97,   70,   30, 0x0a,
+     163,  153,  133,   30, 0x0a,
+     198,  192,  133,   30, 0x0a,
+     259,  153,  224,   30, 0x0a,
+     317,   30,  286,   30, 0x0a,
+     334,  153,  286,   30, 0x0a,
+     372,  362,   70,   30, 0x0a,
+     406,   30,  286,   30, 0x0a,
+     459,   30,  427,   30, 0x0a,
+     484,   30,  286,   30, 0x0a,
+     504,   30,  286,   30, 0x0a,
+     558,  553,  530,   30, 0x0a,
+     587,   30,  286,   30, 0x0a,
+     613,   30,  530,   30, 0x0a,
+     631,   30,  286,   30, 0x0a,
+     666,  658,  286,   30, 0x0a,
+     687,   30,  286,   30, 0x0a,
+     718,  702,  224,   30, 0x0a,
+     745,   30,  286,   30, 0x0a,
+     775,   30,   70,   30, 0x0a,
+     805,   30,  530,   30, 0x0a,
+     818,   30,  224,   30, 0x0a,
+     831,   30,   70,   30, 0x0a,
+     851,   30,  530,   30, 0x0a,
+     869,   30,  224,   30, 0x0a,
+     887,   30,  286,   30, 0x0a,
+     913,   30,  224,   30, 0x0a,
+     931,   30,  530,   30, 0x0a,
+     947,   30,  530,   30, 0x0a,
+     959,  153,  530,   30, 0x0a,
+     990,   30,  286,   30, 0x0a,
+    1017,   30,  286,   30, 0x0a,
+    1041,   30,  286,   30, 0x0a,
+    1063,   30,   70,   30, 0x0a,
+    1079,   30,   70,   30, 0x0a,
+    1099,   30,  286,   30, 0x0a,
+    1117,   30,  530,   30, 0x0a,
+    1132,   30,  427,   30, 0x0a,
+    1147,   30,  286,   30, 0x0a,
+    1171,  153,  224,   30, 0x0a,
+    1195,   30,  224,   30, 0x0a,
+    1219,   30,  286,   30, 0x0a,
+    1239,   30,   70,   30, 0x0a,
+    1252,   30,  530,   30, 0x0a,
+    1272,   30,  530,   30, 0x0a,
+    1290,   30,  530,   30, 0x0a,
+    1311,   30,  530,   30, 0x0a,
+    1332,   30,  530,   30, 0x0a,
+    1349,   30,  530,   30, 0x0a,
+    1389,   30, 1365,   30, 0x0a,
+    1414,   30,  530,   30, 0x0a,
+    1434,   30,  530,   30, 0x0a,
+    1450,   30,   70,   30, 0x0a,
+    1472,   30,  530,   30, 0x0a,
+    1494, 1484,  133,   30, 0x0a,
+    1517,   30,  133,   30, 0x0a,
+    1552, 1535,  133,   30, 0x0a,
+    1596, 1578,  133,   30, 0x0a,
+    1645, 1639,  133,   30, 0x0a,
+    1686, 1671,  133,   30, 0x0a,
+    1735, 1726,  133,   30, 0x0a,
+    1767, 1726,  133,   30, 0x0a,
+    1810, 1804,  133,   30, 0x0a,
+    1839, 1835,  133,   30, 0x0a,
+    1860, 1804,  133,   30, 0x0a,
+    1924, 1886,  133,   30, 0x0a,
+    1975, 1967,  133,   30, 0x0a,
+    2000, 1992,  133,   30, 0x0a,
+    2028,   30,  133,   30, 0x0a,
+    2053, 2048,  133,   30, 0x0a,
+    2074, 1726,  133,   30, 0x0a,
+    2119, 2107,  133,   30, 0x0a,
+    2148,   97,  133,   30, 0x0a,
+    2181,   30,  133,   30, 0x0a,
+    2205, 2197,  133,   30, 0x0a,
+    2235,   30,  133,   30, 0x0a,
+    2264, 2247,  133,   30, 0x0a,
+    2299, 2107,  133,   30, 0x0a,
+    2333, 2329,  133,   30, 0x0a,
+    2361, 2356,  133,   30, 0x0a,
+    2388,   30,  133,   30, 0x0a,
+    2416, 2403,  133,   30, 0x0a,
+    2443, 1578,  133,   30, 0x0a,
+    2483, 1967,  133,   30, 0x0a,
+    2514, 2507,  133,   30, 0x0a,
+    2540, 2535,  133,   30, 0x0a,
+    2569, 2564,  133,   30, 0x0a,
+    2599, 2593,  133,   30, 0x0a,
+    2619,   30,  133,   30, 0x0a,
+    2633,   30,  133,   30, 0x0a,
+
+       0        // eod
+};
+
+static const char qt_meta_stringdata_ConfigurationManagerInterface[] = {
+    "ConfigurationManagerInterface\0\0"
+    "accountsChanged()\0code\0errorAlert(int)\0"
+    "QDBusPendingReply<QString>\0details\0"
+    "addAccount(MapStringString)\0"
+    "QDBusPendingReply<>\0accountID\0"
+    "deleteAllCredential(QString)\0value\0"
+    "enableStatusIcon(QString)\0"
+    "QDBusPendingReply<MapStringString>\0"
+    "getAccountDetails(QString)\0"
+    "QDBusPendingReply<QStringList>\0"
+    "getAccountList()\0getActiveCodecList(QString)\0"
+    "interface\0getAddrFromInterfaceName(QString)\0"
+    "getAddressbookList()\0"
+    "QDBusPendingReply<MapStringInt>\0"
+    "getAddressbookSettings()\0getAllIpInterface()\0"
+    "getAllIpInterfaceByName()\0"
+    "QDBusPendingReply<int>\0name\0"
+    "getAudioDeviceIndex(QString)\0"
+    "getAudioInputDeviceList()\0getAudioManager()\0"
+    "getAudioOutputDeviceList()\0payload\0"
+    "getCodecDetails(int)\0getCodecList()\0"
+    "accountID,index\0getCredential(QString,int)\0"
+    "getCurrentAudioDevicesIndex()\0"
+    "getCurrentAudioOutputPlugin()\0"
+    "getDialpad()\0getHistory()\0getHistoryEnabled()\0"
+    "getHistoryLimit()\0getHookSettings()\0"
+    "getInputAudioPluginList()\0getIp2IpDetails()\0"
+    "getMailNotify()\0getNotify()\0"
+    "getNumberOfCredential(QString)\0"
+    "getOutputAudioPluginList()\0"
+    "getPlaybackDeviceList()\0getRecordDeviceList()\0"
+    "getRecordPath()\0getRingtoneChoice()\0"
+    "getRingtoneList()\0getSearchbar()\0"
+    "getShortcuts()\0getSupportedTlsMethod()\0"
+    "getTlsSettings(QString)\0getTlsSettingsDefault()\0"
+    "getToneLocaleList()\0getVersion()\0"
+    "getVolumeControls()\0getWindowHeight()\0"
+    "getWindowPositionX()\0getWindowPositionY()\0"
+    "getWindowWidth()\0isIax2Enabled()\0"
+    "QDBusPendingReply<bool>\0"
+    "isMd5CredentialHashing()\0isRingtoneEnabled()\0"
+    "isStartHidden()\0isStatusIconEnabled()\0"
+    "popupMode()\0accoundID\0removeAccount(QString)\0"
+    "ringtoneEnabled()\0accountID,expire\0"
+    "sendRegister(QString,int)\0accountID,details\0"
+    "setAccountDetails(QString,MapStringString)\0"
+    "order\0setAccountsOrder(QString)\0"
+    "list,accountID\0setActiveCodecList(QStringList,QString)\0"
+    "settings\0setAddressbookList(QStringList)\0"
+    "setAddressbookSettings(MapStringInt)\0"
+    "index\0setAudioInputDevice(int)\0api\0"
+    "setAudioManager(int)\0setAudioOutputDevice(int)\0"
+    "accountID,index,credentialInformation\0"
+    "setCredential(QString,int,MapStringString)\0"
+    "display\0setDialpad(bool)\0entries\0"
+    "setHistory(MapStringString)\0"
+    "setHistoryEnabled()\0days\0setHistoryLimit(int)\0"
+    "setHookSettings(MapStringString)\0"
+    "audioPlugin\0setInputAudioPlugin(QString)\0"
+    "setIp2IpDetails(MapStringString)\0"
+    "setMailNotify()\0enabled\0"
+    "setMd5CredentialHashing(bool)\0setNotify()\0"
+    "accountID,number\0setNumberOfCredential(QString,int)\0"
+    "setOutputAudioPlugin(QString)\0rec\0"
+    "setRecordPath(QString)\0tone\0"
+    "setRingtoneChoice(QString)\0setSearchbar()\0"
+    "shortcutsMap\0setShortcuts(MapStringInt)\0"
+    "setTlsSettings(QString,MapStringString)\0"
+    "setVolumeControls(bool)\0height\0"
+    "setWindowHeight(int)\0posX\0"
+    "setWindowPositionX(int)\0posY\0"
+    "setWindowPositionY(int)\0width\0"
+    "setWindowWidth(int)\0startHidden()\0"
+    "switchPopupMode()\0"
+};
+
+const QMetaObject ConfigurationManagerInterface::staticMetaObject = {
+    { &QDBusAbstractInterface::staticMetaObject, qt_meta_stringdata_ConfigurationManagerInterface,
+      qt_meta_data_ConfigurationManagerInterface, 0 }
+};
+
+#ifdef Q_NO_DATA_RELOCATION
+const QMetaObject &ConfigurationManagerInterface::getStaticMetaObject() { return staticMetaObject; }
+#endif //Q_NO_DATA_RELOCATION
+
+const QMetaObject *ConfigurationManagerInterface::metaObject() const
+{
+    return QObject::d_ptr->metaObject ? QObject::d_ptr->metaObject : &staticMetaObject;
+}
+
+void *ConfigurationManagerInterface::qt_metacast(const char *_clname)
+{
+    if (!_clname) return 0;
+    if (!strcmp(_clname, qt_meta_stringdata_ConfigurationManagerInterface))
+        return static_cast<void*>(const_cast< ConfigurationManagerInterface*>(this));
+    return QDBusAbstractInterface::qt_metacast(_clname);
+}
+
+int ConfigurationManagerInterface::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
+{
+    _id = QDBusAbstractInterface::qt_metacall(_c, _id, _a);
+    if (_id < 0)
+        return _id;
+    if (_c == QMetaObject::InvokeMetaMethod) {
+        switch (_id) {
+        case 0: accountsChanged(); break;
+        case 1: errorAlert((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 2: { QDBusPendingReply<QString> _r = addAccount((*reinterpret_cast< MapStringString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QString>*>(_a[0]) = _r; }  break;
+        case 3: { QDBusPendingReply<> _r = deleteAllCredential((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 4: { QDBusPendingReply<> _r = enableStatusIcon((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 5: { QDBusPendingReply<MapStringString> _r = getAccountDetails((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<MapStringString>*>(_a[0]) = _r; }  break;
+        case 6: { QDBusPendingReply<QStringList> _r = getAccountList();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QStringList>*>(_a[0]) = _r; }  break;
+        case 7: { QDBusPendingReply<QStringList> _r = getActiveCodecList((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QStringList>*>(_a[0]) = _r; }  break;
+        case 8: { QDBusPendingReply<QString> _r = getAddrFromInterfaceName((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QString>*>(_a[0]) = _r; }  break;
+        case 9: { QDBusPendingReply<QStringList> _r = getAddressbookList();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QStringList>*>(_a[0]) = _r; }  break;
+        case 10: { QDBusPendingReply<MapStringInt> _r = getAddressbookSettings();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<MapStringInt>*>(_a[0]) = _r; }  break;
+        case 11: { QDBusPendingReply<QStringList> _r = getAllIpInterface();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QStringList>*>(_a[0]) = _r; }  break;
+        case 12: { QDBusPendingReply<QStringList> _r = getAllIpInterfaceByName();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QStringList>*>(_a[0]) = _r; }  break;
+        case 13: { QDBusPendingReply<int> _r = getAudioDeviceIndex((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<int>*>(_a[0]) = _r; }  break;
+        case 14: { QDBusPendingReply<QStringList> _r = getAudioInputDeviceList();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QStringList>*>(_a[0]) = _r; }  break;
+        case 15: { QDBusPendingReply<int> _r = getAudioManager();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<int>*>(_a[0]) = _r; }  break;
+        case 16: { QDBusPendingReply<QStringList> _r = getAudioOutputDeviceList();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QStringList>*>(_a[0]) = _r; }  break;
+        case 17: { QDBusPendingReply<QStringList> _r = getCodecDetails((*reinterpret_cast< int(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QStringList>*>(_a[0]) = _r; }  break;
+        case 18: { QDBusPendingReply<QStringList> _r = getCodecList();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QStringList>*>(_a[0]) = _r; }  break;
+        case 19: { QDBusPendingReply<MapStringString> _r = getCredential((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<MapStringString>*>(_a[0]) = _r; }  break;
+        case 20: { QDBusPendingReply<QStringList> _r = getCurrentAudioDevicesIndex();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QStringList>*>(_a[0]) = _r; }  break;
+        case 21: { QDBusPendingReply<QString> _r = getCurrentAudioOutputPlugin();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QString>*>(_a[0]) = _r; }  break;
+        case 22: { QDBusPendingReply<int> _r = getDialpad();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<int>*>(_a[0]) = _r; }  break;
+        case 23: { QDBusPendingReply<MapStringString> _r = getHistory();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<MapStringString>*>(_a[0]) = _r; }  break;
+        case 24: { QDBusPendingReply<QString> _r = getHistoryEnabled();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QString>*>(_a[0]) = _r; }  break;
+        case 25: { QDBusPendingReply<int> _r = getHistoryLimit();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<int>*>(_a[0]) = _r; }  break;
+        case 26: { QDBusPendingReply<MapStringString> _r = getHookSettings();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<MapStringString>*>(_a[0]) = _r; }  break;
+        case 27: { QDBusPendingReply<QStringList> _r = getInputAudioPluginList();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QStringList>*>(_a[0]) = _r; }  break;
+        case 28: { QDBusPendingReply<MapStringString> _r = getIp2IpDetails();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<MapStringString>*>(_a[0]) = _r; }  break;
+        case 29: { QDBusPendingReply<int> _r = getMailNotify();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<int>*>(_a[0]) = _r; }  break;
+        case 30: { QDBusPendingReply<int> _r = getNotify();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<int>*>(_a[0]) = _r; }  break;
+        case 31: { QDBusPendingReply<int> _r = getNumberOfCredential((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<int>*>(_a[0]) = _r; }  break;
+        case 32: { QDBusPendingReply<QStringList> _r = getOutputAudioPluginList();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QStringList>*>(_a[0]) = _r; }  break;
+        case 33: { QDBusPendingReply<QStringList> _r = getPlaybackDeviceList();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QStringList>*>(_a[0]) = _r; }  break;
+        case 34: { QDBusPendingReply<QStringList> _r = getRecordDeviceList();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QStringList>*>(_a[0]) = _r; }  break;
+        case 35: { QDBusPendingReply<QString> _r = getRecordPath();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QString>*>(_a[0]) = _r; }  break;
+        case 36: { QDBusPendingReply<QString> _r = getRingtoneChoice();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QString>*>(_a[0]) = _r; }  break;
+        case 37: { QDBusPendingReply<QStringList> _r = getRingtoneList();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QStringList>*>(_a[0]) = _r; }  break;
+        case 38: { QDBusPendingReply<int> _r = getSearchbar();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<int>*>(_a[0]) = _r; }  break;
+        case 39: { QDBusPendingReply<MapStringInt> _r = getShortcuts();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<MapStringInt>*>(_a[0]) = _r; }  break;
+        case 40: { QDBusPendingReply<QStringList> _r = getSupportedTlsMethod();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QStringList>*>(_a[0]) = _r; }  break;
+        case 41: { QDBusPendingReply<MapStringString> _r = getTlsSettings((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<MapStringString>*>(_a[0]) = _r; }  break;
+        case 42: { QDBusPendingReply<MapStringString> _r = getTlsSettingsDefault();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<MapStringString>*>(_a[0]) = _r; }  break;
+        case 43: { QDBusPendingReply<QStringList> _r = getToneLocaleList();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QStringList>*>(_a[0]) = _r; }  break;
+        case 44: { QDBusPendingReply<QString> _r = getVersion();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QString>*>(_a[0]) = _r; }  break;
+        case 45: { QDBusPendingReply<int> _r = getVolumeControls();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<int>*>(_a[0]) = _r; }  break;
+        case 46: { QDBusPendingReply<int> _r = getWindowHeight();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<int>*>(_a[0]) = _r; }  break;
+        case 47: { QDBusPendingReply<int> _r = getWindowPositionX();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<int>*>(_a[0]) = _r; }  break;
+        case 48: { QDBusPendingReply<int> _r = getWindowPositionY();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<int>*>(_a[0]) = _r; }  break;
+        case 49: { QDBusPendingReply<int> _r = getWindowWidth();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<int>*>(_a[0]) = _r; }  break;
+        case 50: { QDBusPendingReply<int> _r = isIax2Enabled();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<int>*>(_a[0]) = _r; }  break;
+        case 51: { QDBusPendingReply<bool> _r = isMd5CredentialHashing();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<bool>*>(_a[0]) = _r; }  break;
+        case 52: { QDBusPendingReply<int> _r = isRingtoneEnabled();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<int>*>(_a[0]) = _r; }  break;
+        case 53: { QDBusPendingReply<int> _r = isStartHidden();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<int>*>(_a[0]) = _r; }  break;
+        case 54: { QDBusPendingReply<QString> _r = isStatusIconEnabled();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<QString>*>(_a[0]) = _r; }  break;
+        case 55: { QDBusPendingReply<int> _r = popupMode();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<int>*>(_a[0]) = _r; }  break;
+        case 56: { QDBusPendingReply<> _r = removeAccount((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 57: { QDBusPendingReply<> _r = ringtoneEnabled();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 58: { QDBusPendingReply<> _r = sendRegister((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 59: { QDBusPendingReply<> _r = setAccountDetails((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< MapStringString(*)>(_a[2])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 60: { QDBusPendingReply<> _r = setAccountsOrder((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 61: { QDBusPendingReply<> _r = setActiveCodecList((*reinterpret_cast< const QStringList(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 62: { QDBusPendingReply<> _r = setAddressbookList((*reinterpret_cast< const QStringList(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 63: { QDBusPendingReply<> _r = setAddressbookSettings((*reinterpret_cast< MapStringInt(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 64: { QDBusPendingReply<> _r = setAudioInputDevice((*reinterpret_cast< int(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 65: { QDBusPendingReply<> _r = setAudioManager((*reinterpret_cast< int(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 66: { QDBusPendingReply<> _r = setAudioOutputDevice((*reinterpret_cast< int(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 67: { QDBusPendingReply<> _r = setCredential((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])),(*reinterpret_cast< MapStringString(*)>(_a[3])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 68: { QDBusPendingReply<> _r = setDialpad((*reinterpret_cast< bool(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 69: { QDBusPendingReply<> _r = setHistory((*reinterpret_cast< MapStringString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 70: { QDBusPendingReply<> _r = setHistoryEnabled();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 71: { QDBusPendingReply<> _r = setHistoryLimit((*reinterpret_cast< int(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 72: { QDBusPendingReply<> _r = setHookSettings((*reinterpret_cast< MapStringString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 73: { QDBusPendingReply<> _r = setInputAudioPlugin((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 74: { QDBusPendingReply<> _r = setIp2IpDetails((*reinterpret_cast< MapStringString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 75: { QDBusPendingReply<> _r = setMailNotify();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 76: { QDBusPendingReply<> _r = setMd5CredentialHashing((*reinterpret_cast< bool(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 77: { QDBusPendingReply<> _r = setNotify();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 78: { QDBusPendingReply<> _r = setNumberOfCredential((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 79: { QDBusPendingReply<> _r = setOutputAudioPlugin((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 80: { QDBusPendingReply<> _r = setRecordPath((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 81: { QDBusPendingReply<> _r = setRingtoneChoice((*reinterpret_cast< const QString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 82: { QDBusPendingReply<> _r = setSearchbar();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 83: { QDBusPendingReply<> _r = setShortcuts((*reinterpret_cast< MapStringInt(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 84: { QDBusPendingReply<> _r = setTlsSettings((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< MapStringString(*)>(_a[2])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 85: { QDBusPendingReply<> _r = setVolumeControls((*reinterpret_cast< bool(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 86: { QDBusPendingReply<> _r = setWindowHeight((*reinterpret_cast< int(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 87: { QDBusPendingReply<> _r = setWindowPositionX((*reinterpret_cast< int(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 88: { QDBusPendingReply<> _r = setWindowPositionY((*reinterpret_cast< int(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 89: { QDBusPendingReply<> _r = setWindowWidth((*reinterpret_cast< int(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 90: { QDBusPendingReply<> _r = startHidden();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        case 91: { QDBusPendingReply<> _r = switchPopupMode();
+            if (_a[0]) *reinterpret_cast< QDBusPendingReply<>*>(_a[0]) = _r; }  break;
+        default: ;
+        }
+        _id -= 92;
+    }
+    return _id;
+}
+
+// SIGNAL 0
+void ConfigurationManagerInterface::accountsChanged()
+{
+    QMetaObject::activate(this, &staticMetaObject, 0, 0);
+}
+
+// SIGNAL 1
+void ConfigurationManagerInterface::errorAlert(int _t1)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
+    QMetaObject::activate(this, &staticMetaObject, 1, _a);
+}
+QT_END_MOC_NAMESPACE

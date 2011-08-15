@@ -7,9 +7,9 @@
 XML_RESULTS="cppunitresults.xml"
 
 set -x
- 
+
 # Compile the daemon
-pushd sflphone-common
+pushd daemon
 ./autogen.sh
 # Compile pjproject first
 pushd libs/pjproject
@@ -24,14 +24,14 @@ make doc
 popd
 
 # Run the unit tests for the daemon
-pushd sflphone-common/test
+pushd daemon/test
 # Remove the previous XML test file
 rm -rf $XML_RESULTS
 make check || exit 1
 popd
 
 # Compile the client
-pushd sflphone-client-gnome
+pushd gnome
 ./autogen.sh
 ./configure --prefix=/usr
 make clean

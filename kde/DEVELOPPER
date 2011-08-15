@@ -1,0 +1,23 @@
+From now on, those coding guideline must be applied to prevent more fragmentation of the coding style:
+-Class name must start with a caps
+-Funtion and variables names must -not- start with a caps
+-Words in functions must be separated by caps "addNewCall"
+-Pointer symbol should be merge with the type QWidget* aWidget
+-Indentation must be 3 (three) -space- wide, every IDE have options to set that
+-Classes and functions bracket must look like:
+   void MyClass::myFunction()
+   {
+
+   }
+-If, while, case and for most look like this:
+   if () {
+
+   }
+   else {
+
+   }
+-One line if without braces are allowed
+-The .h HAVE TO BE COMMENTED following the doxygen syntax
+-"Autoconnect" functions are allowed
+-Qt STL and macro are recommaded
+-KDE class are prefered over pure Qt classes

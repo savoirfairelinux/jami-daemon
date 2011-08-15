@@ -1,0 +1,116 @@
+<chapter id="basic-use">
+
+<chapterinfo>
+<authorgroup>
+<author><firstname>J&eacute;r&eacute;my</firstname><surname>Quentin</surname></author>
+<!-- TRANS:ROLES_OF_TRANSLATORS -->
+</authorgroup>
+</chapterinfo>
+
+<title>Basic use of &sflphone-client-kde;</title>
+
+<para>Although &sflphone; is enterprise oriented, its interface is very easy to use and you can use the basic features without any particular skills or knowings.</para>
+
+<sect1 id="basic-use-mainwindow">
+<title>Presentation of the main window</title>
+
+<para>The main window is composed of three main parts : the &actions-p;, the &screen-p; and the &dialpad-p; (although you can hide the two last ones in the Settings menu). The screen part has three positions.
+The &current-w; : it is the one you are by default, it shows the current, dialing and incoming calls.
+The &history-w; : it shows the past calls and enables you to call someone you called earlier or from whom you missed a call. 
+The &address-w; : it enables you to look in the address book of KDE and to call somebody if his number is available.
+
+To switch between those windows, click on the history and address book buttons. If none of these buttons is triggerred, you are currently in the &current-w;, if the history button is triggerred, you are in the &history-w;, and if the address book button is triggerred, you are in the &address-w;. 
+
+</para>
+
+</sect1>
+
+
+<sect1 id="basic-use-call">
+<title>Making a call</title>
+
+<sect2 id="basic-use-call-current">
+<title>Dialing one's number</title>
+
+
+<para> If you know the number of the people you want to call, you may just type it on the dialpad or on your keyboard while you are in the &current-w;, then click on the Accept button in the &actions-p;'s toolbar or in the "actions" menu, or type enter on your keyboard, or even double-click on the number to call once you have finished dialing it.</para>
+
+<para>Following behaviour, common part...</para>
+
+</sect2>
+
+<sect2 id="basic-use-call-history">
+<title>Calling from call history</title>
+
+
+<para> If you want to call somebody from whom you missed a call, or you already called earlier, you may go to the &history-w;. The detailed use of this window and its features (search...) is described in this section. Once you are in it, find the number or name of the person you want to call, then select it and click on the Accept button in the &actions-p;'s toolbar or in the "actions" menu, or type enter on your keyboard, or double-click on the number.</para>
+
+<para>The screen will come back to the &current-w; with a new ringing call with the number you chose in the &history-w;.</para>
+
+<para> Note that you can also right click and select Edit before call to modify the number in the history before calling it.</para>
+
+<para>Following behaviour, common part...</para>
+
+</sect2>
+
+<sect2 id="basic-use-call-address">
+<title>Calling from address book</title>
+
+
+<para> If you have your KAddressBook configured and filled with some phone numbers, you can go to the &address-w;. The detailed use of this window and its features (search...) is described in this section. Once you are in it, find the name of the person you want to call with the right phone number (&pt-home;, &pt-work; or &pt-cell;), then select it and click on the Accept button in the &actions-p;'s toolbar or in the "actions" menu, or type enter on your keyboard, or double-click on the number.</para>
+
+<para>The screen will come back to the &current-w; with a new ringing call with the number you chose in the &address-w;.</para> 
+
+<para> Note that you can also right click and select Edit before call to modify the number in the address book before calling it.</para>
+
+<para>Following behaviour, common part...</para>
+
+</sect2>
+
+</sect1>
+
+<sect1 id="basic-use-becalled">
+<title>Receiving a call</title>
+
+
+<para> When one of the account registered in &sflphone; receives an incoming call, it will be displayed as a new item in the &current-w; with the "incoming" icon. You can either accept or refuse it. To accept it, select the item and click on the Accept button which replaced the Call button in toolbar and Actions menu, or double click the item, or type Enter. To refuse it, select it and click on the refuse button that replaced the Hang up button in toolbar and Actions menu or type Escape.</para>
+
+<para>Following behaviour, common part...</para>
+
+</sect1>
+
+
+<sect1 id="basic-use-ringing">
+<title>The call is ringing</title>
+
+
+<para> Once you called a number, the call is normally in ringing state. It will then pass to Current or Busy state, according to the decision of the called peer to accept or refuse the call. If it's in Busy state, you can just hang it up with the Hang up button or typing Escape.
+</para>
+
+<para>If the number doesn't exist or if any other error occured (see the list of common errors here), it is in failure state, then you can Hang it up with the Hang up button or typing Escape. </para>
+
+<para>Following behaviour, common part...</para>
+
+</sect1>
+
+<sect1 id="basic-use-current">
+<title>The call is current</title>
+
+
+<para> Once the call is in current state, you can now communicate with your peer. You have a bunch of useful features when in current state that are described in the common use chapter. To end the call, select it and click on Hang up button in toolbar or type Escape. </para>
+
+</sect1>
+
+
+
+<sect1 id="basic-use-config">
+<title>Configuration panel</title>
+
+<para>The configuration panel is built in accordance with KDE specifications. It is divided by options type. The panel at left shows the different option pages you can reach. Click on one of them to acceed to the corresponding page. The changes you make are not applied until you click OK or Apply. Clicking Cancel will cancel and forget every change you made since the last Apply or OK command. Be careful not to forget some changes you made in some other pages if you wanted to Cancel it. </para>
+
+<para>There is also a specific Apply button just for the account list which is useful to manage these accounts and valid your changes to see if the accounts are well registered. </para>
+
+</sect1>
+
+
+</chapter>
