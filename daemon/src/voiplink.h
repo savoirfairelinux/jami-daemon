@@ -211,9 +211,8 @@ class VoIPLink
 
         /** Remove a call from the call map (protected by mutex)
          * @param id A Call ID
-         * @return bool True if the call was correctly removed
          */
-        bool removeCall (const std::string& id);
+        void removeCall (const std::string& id);
 
         /**
          * Remove all the call from the map

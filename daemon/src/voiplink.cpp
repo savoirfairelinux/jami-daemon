@@ -55,20 +55,15 @@ bool VoIPLink::addCall (Call* call)
     return false;
 }
 
-bool VoIPLink::removeCall (const std::string& id)
+void VoIPLink::removeCall (const std::string& id)
 {
     ost::MutexLock m (_callMapMutex);
 
-    _debug ("VoipLink: delete call");
-    terminateCall (id);
-
     _debug ("VoipLink: removing call %s from list", id.c_str());
 
-    if (_callMap.erase (id)) {
-        return true;
-    }
+    _callMap.erase (id);
 
-    return false;
+    terminateCall (id);
 }
 
 Call* VoIPLink::getCall (const std::string& id)
