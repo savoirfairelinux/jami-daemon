@@ -189,18 +189,12 @@ void ManagerImpl::terminate ()
 
 bool ManagerImpl::isCurrentCall (const std::string& callId)
 {
-    return (_currentCallId2 == callId ? true : false);
+    return _currentCallId2 == callId;
 }
 
 bool ManagerImpl::hasCurrentCall ()
 {
-    // _debug ("ManagerImpl::hasCurrentCall current call ID = %s", _currentCallId2.c_str());
-
-    if (_currentCallId2 != "") {
-        return true;
-    }
-
-    return false;
+	return _currentCallId2 != "";
 }
 
 const std::string&
