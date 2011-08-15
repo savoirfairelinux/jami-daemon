@@ -63,8 +63,6 @@
 #include <sys/types.h> // mkdir(2)
 #include <sys/stat.h>  // mkdir(2)
 
-#include <pwd.h>       // getpwuid
-
 #define DIRECT_IP_CALL	"IP CALL"
 
 #define fill_config_str(name, value) \
@@ -2403,13 +2401,6 @@ std::string ManagerImpl::getConfigFile (void)
 void ManagerImpl::initConfigFile (std::string alternate)
 {
     _debug ("Manager: Init config file");
-
-    // Init display name to the username under which
-    // this sflphone instance is running.
-    uid_t uid = getuid();
-
-    struct passwd * user_info = NULL;
-    user_info = getpwuid (uid);
 
     // Loads config from ~/.sflphone/sflphoned.yml or so..
     _path = (alternate != "") ? alternate : getConfigFile();
