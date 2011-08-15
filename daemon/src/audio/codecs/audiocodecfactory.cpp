@@ -226,18 +226,19 @@ sfl::Codec* AudioCodecFactory::loadCodec (std::string path)
 {
 
     CodecHandlePointer p;
-    using std::cerr;
     void * codecHandle = dlopen (path.c_str() , RTLD_LAZY);
 
-    if (!codecHandle)
-        cerr << dlerror() << '\n';
+    if (!codecHandle) {
+    	_error("%s\n", dlerror());
+    	return NULL;
+    }
 
     dlerror();
 
     create_t* createCodec = (create_t*) dlsym (codecHandle , "create");
-
-    if (dlerror())
-        cerr << dlerror() << '\n';
+    char *error = dlerror();
+    if (error)
+    	_error("%s\n", error);
 
     sfl::Codec* a = createCodec();
 
@@ -252,11 +253,11 @@ sfl::Codec* AudioCodecFactory::loadCodec (std::string path)
 void AudioCodecFactory::unloadCodec (CodecHandlePointer p)
 {
 
-    using std::cerr;
     destroy_t* destroyCodec = (destroy_t*) dlsym (p.second , "destroy");
 
-    if (dlerror())
-        cerr << dlerror() << '\n';
+    char *error = dlerror();
+    if (error)
+    	_error("%s\n", error);
 
     destroyCodec (p.first);
 
@@ -265,24 +266,18 @@ void AudioCodecFactory::unloadCodec (CodecHandlePointer p)
 
 sfl::Codec* AudioCodecFactory::instantiateCodec (AudioCodecType payload)
 {
+    std::vector< CodecHandlePointer >::iterator iter;
 
-    using std::cerr;
-
-    std::vector< CodecHandlePointer >::iterator iter = _CodecInMemory.begin();
-
-    while (iter != _CodecInMemory.end()) {
+    for (iter = _CodecInMemory.begin(); iter != _CodecInMemory.end(); ++iter) {
         if (iter->first->getPayloadType() == payload) {
             create_t* createCodec = (create_t*) dlsym (iter->second , "create");
 
-            if (dlerror())
-                cerr << dlerror() << '\n';
-
-            sfl::Codec* a = createCodec();
-
-            return a;
+            char *error = dlerror();
+            if (error)
+            	_error("%s\n", error);
+            else
+				return createCodec();
         }
-
-        iter++;
     }
 
     return NULL;
