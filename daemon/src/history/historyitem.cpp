@@ -152,7 +152,7 @@ std::string HistoryItem::serialize (void)
     // For the account ID, check also if the accountID corresponds to an existing account
     // ie the account may have been removed
     std::string accountID(_account_id);
-    if (_account_id == "" || non_valid_account (_account_id))
+    if (_account_id == "" || not valid_account (_account_id))
     	accountID = "empty";
 
     // Serialize it
@@ -163,7 +163,7 @@ std::string HistoryItem::serialize (void)
 }
 
 
-bool HistoryItem::non_valid_account (std::string id)
+bool HistoryItem::valid_account (std::string id)
 {
-    return !Manager::instance().accountExists (id);
+    return Manager::instance().accountExists (id);
 }
