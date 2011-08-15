@@ -171,9 +171,7 @@ void AudioRtpFactory::stop (void)
 			remoteContext = static_cast<AudioSrtpSession *> (_rtpSession)->_remoteCryptoCtx;
         }
 
-        _rtpSession->stopRtpThread();
         delete _rtpSession;
-
         _rtpSession = NULL;
     } catch (...) {
         _debugException ("AudioRtpFactory: Error: Exception caught when stopping the audio rtp session");
