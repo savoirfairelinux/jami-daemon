@@ -42,7 +42,7 @@ GtkWidget *contactButton;
 
 GtkAction *volumeToggle;
 
-gboolean uimanager_new (GtkUIManager**);
+GtkUIManager *uimanager_new (void);
 
 void update_voicemail_status (void);
 

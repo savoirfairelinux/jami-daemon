@@ -1108,52 +1108,32 @@ static const GtkToggleActionEntry toggle_menu_entries[] = {
     { "Addressbook", GTK_STOCK_ADDRESSBOOK, N_ ("_Address book"), NULL, N_ ("Address book"), G_CALLBACK (toggle_addressbook_cb), FALSE }
 };
 
-gboolean
-uimanager_new (GtkUIManager **_ui_manager)
+GtkUIManager *uimanager_new (void)
 {
-
-    GtkUIManager *ui_manager;
-    GtkActionGroup *action_group;
-    GtkWidget *window;
-    gchar *path;
-    guint manager_id = 0;
+    guint manager_id;
     GError *error = NULL;
-    gint nb_entries, nb_menu_entries;
 
-    nb_entries = abookfactory_is_addressbook_loaded() ? 7 : 6;
-    nb_menu_entries = abookfactory_is_addressbook_loaded() ? 7 : 6;
+    gint nb_entries = abookfactory_is_addressbook_loaded() ? 7 : 6;
 
-
-    window = get_main_window();
-    ui_manager = gtk_ui_manager_new();
+    GtkWidget *window = get_main_window();
+    GtkUIManager *ui_manager = gtk_ui_manager_new();
 
     /* Create an accel group for window's shortcuts */
-    path = g_build_filename (SFLPHONE_UIDIR_UNINSTALLED, "./ui.xml", NULL);
-
+    gchar *path = g_build_filename (SFLPHONE_UIDIR_UNINSTALLED, "./ui.xml", NULL);
     if (g_file_test (path, G_FILE_TEST_EXISTS)) {
         manager_id = gtk_ui_manager_add_ui_from_file (ui_manager, path, &error);
-
-        if (error != NULL) {
-            g_error_free (error);
-            return FALSE;
-        }
-
-        g_free (path);
     } else {
+        g_free (path);
         path = g_build_filename (SFLPHONE_UIDIR, "./ui.xml", NULL);
-
-        if (g_file_test (path, G_FILE_TEST_EXISTS)) {
-            manager_id = gtk_ui_manager_add_ui_from_file (ui_manager, path, &error);
-
-            if (error != NULL) {
-                g_error_free (error);
-                return FALSE;
-            }
-
-            g_free (path);
-        } else
-            return FALSE;
+        if (!g_file_test (path, G_FILE_TEST_EXISTS))
+            goto fail;
+        manager_id = gtk_ui_manager_add_ui_from_file (ui_manager, path, &error);
     }
+
+    if (error)
+        goto fail;
+
+    g_free (path);
     
     if(abookfactory_is_addressbook_loaded()) {
  	// These actions must be loaded dynamically and is not specified in the xml description
@@ -1167,7 +1147,7 @@ uimanager_new (GtkUIManager **_ui_manager)
                           GTK_UI_MANAGER_TOOLITEM, FALSE);	
     }
     
-    action_group = gtk_action_group_new ("SFLphoneWindowActions");
+    GtkActionGroup *action_group = gtk_action_group_new ("SFLphoneWindowActions");
     // To translate label and tooltip entries
     gtk_action_group_set_translation_domain (action_group, "sflphone-client-gnome");
     gtk_action_group_add_actions (action_group, menu_entries, G_N_ELEMENTS (menu_entries), window);
@@ -1175,9 +1155,15 @@ uimanager_new (GtkUIManager **_ui_manager)
     //gtk_action_group_add_radio_actions (action_group, radio_menu_entries, G_N_ELEMENTS (radio_menu_entries), CALLTREE_CALLS, G_CALLBACK (calltree_switch_cb), window);
     gtk_ui_manager_insert_action_group (ui_manager, action_group, 0);
 
-    *_ui_manager = ui_manager;
+    return ui_manager;
 
-    return TRUE;
+fail:
+    if (error)
+        g_error_free (error);
+
+    g_free (path);
+    g_free (ui_manager);
+    return NULL;
 }
 
 static void

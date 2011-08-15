@@ -184,7 +184,6 @@ create_main_window ()
 {
     GtkWidget *widget;
     GError *error = NULL;
-    gboolean ret;
     const char *window_title = "SFLphone VoIP Client";
     int width, height, position_x, position_y;
 
@@ -226,9 +225,9 @@ create_main_window ()
 
     gtk_widget_set_name (window, "mainwindow");
 
-    ret = uimanager_new (&ui_manager);
+    ui_manager = uimanager_new ();
 
-    if (!ret) {
+    if (!ui_manager) {
         ERROR ("Could not load xml GUI\n");
         g_error_free (error);
         exit (1);
