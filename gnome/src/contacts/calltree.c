@@ -1042,7 +1042,8 @@ void calltree_add_history_entry (callable_obj_t *c, GtkTreeIter *parent)
     duration = get_call_duration (c);
     gchar * full_duration = g_strconcat (date , duration , NULL);
     g_free (duration);
-    description = g_strconcat (description , full_duration, NULL);
+    gchar * full_description = g_strconcat (description , full_duration, NULL);
+    g_free (description);
     g_free (full_duration);
 
     //Resize it
@@ -1056,12 +1057,12 @@ void calltree_add_history_entry (callable_obj_t *c, GtkTreeIter *parent)
 
     gtk_tree_store_set (history->store, &iter,
             0, pixbuf, // Icon
-            1, description, // Description
+            1, full_description, // Description
             2, pixbuf_security, // Icon
             3, c,      // Pointer
             -1);
 
-    g_free (description);
+    g_free (full_description);
 
     if (pixbuf != NULL)
         g_object_unref (G_OBJECT (pixbuf));
