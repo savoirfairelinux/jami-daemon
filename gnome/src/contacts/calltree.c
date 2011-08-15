@@ -1058,6 +1058,7 @@ void calltree_add_history_entry (callable_obj_t *c, GtkTreeIter *parent)
     date = get_formatted_start_timestamp (c->_time_start);
     duration = get_call_duration (c);
     gchar * full_duration = g_strconcat (date , duration , NULL);
+    g_free (date);
     g_free (duration);
     gchar * full_description = g_strconcat (description , full_duration, NULL);
     g_free (description);

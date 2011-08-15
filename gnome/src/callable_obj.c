@@ -414,8 +414,6 @@ history_state_t get_history_state_from_id (gchar *indice)
 
 gchar* get_call_duration (callable_obj_t *obj)
 {
-
-    gchar *res;
     int duration;
     time_t start, end;
 
@@ -426,21 +424,24 @@ gchar* get_call_duration (callable_obj_t *obj)
         return g_markup_printf_escaped ("<small>Duration:</small> 0:00");
 
     duration = (int) difftime (end, start);
+    gchar *result;
 
     if (duration / 60 == 0) {
         if (duration < 10)
-            res = g_markup_printf_escaped ("00:0%i", duration);
+            result = g_markup_printf_escaped ("00:0%i", duration);
         else
-            res = g_markup_printf_escaped ("00:%i", duration);
+            result = g_markup_printf_escaped ("00:%i", duration);
     } else {
         if (duration%60 < 10)
-            res = g_markup_printf_escaped ("%i:0%i" , duration/60 , duration%60);
+            result = g_markup_printf_escaped ("%i:0%i" , duration/60 , duration%60);
         else
-            res = g_markup_printf_escaped ("%i:%i" , duration/60 , duration%60);
+            result = g_markup_printf_escaped ("%i:%i" , duration/60 , duration%60);
     }
 
-    return g_markup_printf_escaped ("<small>Duration:</small> %s", res);
-
+    gchar *old_result = result;
+    result = g_markup_printf_escaped ("<small>Duration:</small> %s", old_result);
+    g_free(old_result);
+    return result;
 }
 
 static const gchar* get_history_id_from_state (history_state_t state)
