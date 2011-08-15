@@ -80,14 +80,18 @@ gchar* call_get_peer_number (const gchar *format)
 
 gchar* call_get_audio_codec (callable_obj_t *obj)
 {
+    gchar *result = NULL;
     if (obj) {
-        const gchar * const audio_codec = dbus_get_current_audio_codec_name (obj);
+        gchar * const audio_codec = dbus_get_current_audio_codec_name (obj);
         const codec_t * const codec = codec_list_get_by_name (audio_codec, NULL);
-        if (codec)
-            return g_markup_printf_escaped ("%s/%i", audio_codec, codec->sample_rate);
+        if (codec) {
+            result = g_markup_printf_escaped ("%s/%i", audio_codec, codec->sample_rate);
+            g_free (audio_codec);
+        }
     }
-
-    return g_strdup("");
+    else
+        result = g_strdup("");
+    return result;
 }
 
 void call_add_error (callable_obj_t * call, gpointer dialog)
@@ -489,7 +493,6 @@ gchar* serialize_history_call_entry (callable_obj_t *entry)
     return result;
 }
 
-// gchar* get_formatted_start_timestamp (callable_obj_t *obj)
 gchar *get_formatted_start_timestamp (time_t time_start)
 {
     enum { UNIX_DAY = 86400,
