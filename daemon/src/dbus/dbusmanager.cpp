@@ -37,20 +37,32 @@
 #include "networkmanager.h"
 
 DBusManager::DBusManager()
-{
-    DBus::default_dispatcher = &_dispatcher;
-
-    DBus::Connection sessionConnection = DBus::Connection::SessionBus();
-    sessionConnection.request_name ("org.sflphone.SFLphone");
-
-    _callManager = new CallManager (sessionConnection);
-    _configurationManager = new ConfigurationManager (sessionConnection);
-    _instanceManager = new Instance (sessionConnection);
-
+    : _connected(false)
+	, _callManager(NULL)
+    , _configurationManager(NULL)
+    , _instanceManager(NULL)
 #ifdef USE_NETWORKMANAGER
-    DBus::Connection systemConnection = DBus::Connection::SystemBus();
-    _networkManager = new NetworkManager (systemConnection, "/org/freedesktop/NetworkManager", "");
+    , _networkManager(NULL)
 #endif
+{
+    try {
+        DBus::Connection sessionConnection = DBus::Connection::SessionBus();
+        sessionConnection.request_name ("org.sflphone.SFLphone");
+
+        _callManager = new CallManager (sessionConnection);
+        _configurationManager = new ConfigurationManager (sessionConnection);
+        _instanceManager = new Instance (sessionConnection);
+
+    #ifdef USE_NETWORKMANAGER
+        DBus::Connection systemConnection = DBus::Connection::SystemBus();
+        _networkManager = new NetworkManager (systemConnection, "/org/freedesktop/NetworkManager", "");
+    #endif
+
+        DBus::default_dispatcher = &_dispatcher;
+        _connected = true;
+    } catch (const DBus::Error &err) {
+        _error("%s: %s\n", err.name(), err.what());
+    }
 }
 
 DBusManager::~DBusManager()

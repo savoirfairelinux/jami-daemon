@@ -2147,10 +2147,8 @@ void ManagerImpl::startVoiceMessageNotification (const std::string& accountId,
 
 void ManagerImpl::connectionStatusNotification ()
 {
-
-    _debug ("Manager: connectionStatusNotification");
-
-    _dbus.getConfigurationManager()->accountsChanged();
+    if (_dbus.isConnected())
+    	_dbus.getConfigurationManager()->accountsChanged();
 }
 
 /**
@@ -3752,7 +3750,8 @@ std::string ManagerImpl::addAccount (
 
     saveConfig();
 
-    _dbus.getConfigurationManager()->accountsChanged();
+    if (_dbus.isConnected())
+        _dbus.getConfigurationManager()->accountsChanged();
 
     return accountID.str();
 }
@@ -3776,7 +3775,8 @@ void ManagerImpl::removeAccount (const std::string& accountID)
 
     _debug ("REMOVE ACCOUNT");
 
-    _dbus.getConfigurationManager()->accountsChanged();
+    if (_dbus.isConnected())
+        _dbus.getConfigurationManager()->accountsChanged();
 }
 
 // ACCOUNT handling
@@ -4367,5 +4367,3 @@ std::vector<std::string> ManagerImpl::getParticipantList (
 
     return v;
 }
-
-
