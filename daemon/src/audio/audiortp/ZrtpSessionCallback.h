@@ -41,7 +41,6 @@ using std::ptrdiff_t;
 #include <map>
 
 class SIPCall;
-class DBusManagerImpl;
 
 namespace sfl
 {

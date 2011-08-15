@@ -28,12 +28,40 @@
  *  as that of the covered work.
  */
 
-#ifndef __DBUSMANAGERSINGLETON_H__
-#define __DBUSMANAGERSINGLETON_H__
+#ifndef __DBUSMANAGERIMPL_H__
+#define __DBUSMANAGERIMPL_H__
 
-#include "utilspp/Singleton.hpp"
-#include "dbusmanagerimpl.h"
+#include "instance.h"
 
-typedef utilspp::SingletonHolder< DBusManagerImpl > DBusManager;
+class ConfigurationManager;
+class CallManager;
+class NetworkManager;
 
-#endif // __DBUSMANAGERSINGLETON_H__
+class DBusManager
+{
+    public:
+		DBusManager();
+		~DBusManager();
+
+        CallManager * getCallManager() const {
+            return _callManager;
+        };
+        ConfigurationManager * getConfigurationManager() const {
+            return _configurationManager;
+        };
+
+        void exec();
+        void exit();
+        static const char* SERVER_NAME;
+
+    private:
+        CallManager*          _callManager;
+        ConfigurationManager* _configurationManager;
+        Instance*             _instanceManager;
+        DBus::BusDispatcher   _dispatcher;
+#if USE_NETWORKMANAGER
+        NetworkManager* _networkManager;
+#endif
+};
+
+#endif

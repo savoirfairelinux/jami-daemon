@@ -48,9 +48,11 @@
 
 using namespace ost;
 
+/*
 CommandOptionArg	level (
     "log-level", "l", "Log level (not yet implemented)"
 );
+*/
 
 CommandOptionNoArg	console (
     "console", "c", "Log in console (instead of syslog)"
@@ -90,15 +92,11 @@ main (int argc, char **argv)
         return 1;
     }
 
-    if (console.numSet) {
-        _info ("Console logging activated");
+    if (console.numSet)
         Logger::setConsoleLog (true);
-    }
 
-    if (debug.numSet) {
-        _info ("Debug mode activated");
+    if (debug.numSet)
         Logger::setDebugMode (true);
-    }
 
     FILE *fp;
     char homepid[128];
@@ -195,8 +193,8 @@ main (int argc, char **argv)
 
     try {
         // TODO Use $XDG_CONFIG_HOME to save the config file (which default to $HOME/.config)
-        Manager::instance().initConfigFile();
-        Manager::instance().init();
+    	Manager::instance().initConfigFile();
+    	Manager::instance().init();
     } catch (std::exception &e) {
         std::cerr << e.what() << std::endl;
         return 1;
@@ -205,8 +203,9 @@ main (int argc, char **argv)
         return 1;
     }
 
-    Manager::instance().setDBusManager (&DBusManager::instance());
-    DBusManager::instance().exec();  // UI Loop
+    _debug ("Starting DBus event loop");
+    Manager::instance().getDbusManager()->exec();
+
     return 0;
 }
 

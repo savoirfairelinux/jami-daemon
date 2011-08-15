@@ -3223,8 +3223,7 @@ void invite_session_state_changed_cb (pjsip_inv_session *inv, pjsip_event *e)
         if (statusCode) {
             const pj_str_t * description = pjsip_get_status_text (statusCode);
             // test wether or not dbus manager is instantiated, if not no need to notify the client
-            if (Manager::instance().getDbusManager())
-                DBusManager::instance().getCallManager()->sipCallStateChanged (call->getCallId(), std::string (description->ptr, description->slen), statusCode);
+            Manager::instance().getDbusManager()->getCallManager()->sipCallStateChanged (call->getCallId(), std::string (description->ptr, description->slen), statusCode);
         }
     }
 
@@ -3449,9 +3448,9 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
                 call->getAudioRtp()->setRemoteCryptoInfo (sdesnego);
             } catch (...) {}
 
-            DBusManager::instance().getCallManager()->secureSdesOn (call->getCallId());
+            Manager::instance().getDbusManager()->getCallManager()->secureSdesOn (call->getCallId());
         } else {
-            DBusManager::instance().getCallManager()->secureSdesOff (call->getCallId());
+            Manager::instance().getDbusManager()->getCallManager()->secureSdesOff (call->getCallId());
         }
     }
 
@@ -3651,7 +3650,7 @@ void registration_cb (struct pjsip_regc_cbparam *param)
 
     if (param->code && description) {
         std::string state(description->ptr, description->slen);
-        DBusManager::instance().getCallManager()->registrationStateChanged (account->getAccountID(), state, param->code);
+        Manager::instance().getDbusManager()->getCallManager()->registrationStateChanged (account->getAccountID(), state, param->code);
         std::pair<int, std::string> details (param->code, state);
         // TODO: there id a race condition for this ressource when closing the application
         account->setRegistrationStateDetailed (details);
