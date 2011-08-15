@@ -100,15 +100,17 @@ static gboolean history_is_visible (GtkTreeModel* model, GtkTreeIter* iter, gpoi
         history_entry = (gpointer) g_value_get_pointer (&obj);
     }
 
+    gboolean result = TRUE;
+
     if (text != NULL) {
         if (history_entry) {
             // Filter according to the type of call
             // MISSED, INCOMING, OUTGOING, ALL
             if ( (int) get_current_history_search_type () == SEARCH_ALL)
-                return g_regex_match_simple (search, text, G_REGEX_CASELESS, 0);
+                result = g_regex_match_simple (search, text, G_REGEX_CASELESS, 0);
             else {
                 // We need a match on the history_state_t and the current search type
-                return (history_entry->_history_state + 1) == (guint) get_current_history_search_type () &&
+                result = (history_entry->_history_state + 1) == (guint) get_current_history_search_type () &&
                        g_regex_match_simple (search, text, G_REGEX_CASELESS, 0);
             }
         }
@@ -118,5 +120,5 @@ static gboolean history_is_visible (GtkTreeModel* model, GtkTreeIter* iter, gpoi
     g_value_unset (&val);
     g_value_unset (&obj);
 
-    return TRUE;
+    return result;
 }
