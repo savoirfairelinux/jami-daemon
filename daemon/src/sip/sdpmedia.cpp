@@ -111,24 +111,16 @@ void sdpMedia::add_codec (sfl::Codec* codec)
 void sdpMedia::remove_codec (std::string codecName)
 {
     // Look for the codec by its encoding name
-    int i;
-    int size;
-    std::string enc_name;
     std::vector<sfl::Codec*>::iterator iter;
 
-    size = _codec_list.size();
-    std::cout << "vector size: " << size << std::endl;
+    size_t size = _codec_list.size();
 
-    for (i=0 ; i<size ; i++) {
-        std::cout << _codec_list[i]->getMimeSubtype().c_str() << std::endl;
-
+    for (unsigned int i=0 ; i<size ; i++)
         if (strcmp (_codec_list[i]->getMimeSubtype().c_str(), codecName.c_str()) == 0) {
-            std::cout << "erase " <<_codec_list[i]->getMimeSubtype() << std::endl;
             iter = _codec_list.begin() +i;
             _codec_list.erase (iter);
             break;
         }
-    }
 }
 
 

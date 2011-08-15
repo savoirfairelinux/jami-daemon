@@ -164,7 +164,7 @@ int HistoryManager::save_history_items_map (Conf::ConfigTree *history_list)
             if (item->save (&history_list))
                 items_saved ++;
         } else {
-            std::cout << "[DEBUG]: can't save NULL history item." << std::endl;
+            _debug("can't save NULL history item\n");
         }
 
         iter ++;

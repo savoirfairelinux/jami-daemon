@@ -30,7 +30,7 @@
  */
 
 #include "InstantMessaging.h"
-
+#include "logger.h"
 #include "expat.h"
 
 namespace sfl
@@ -77,7 +77,6 @@ static void XMLCALL startElementCallback (void *userData, const char *name, cons
 
 static void XMLCALL endElementCallback (void * /*userData*/, const char * /*name*/)
 {
-    // std::cout << "endElement " << name << std::endl;
 }
 
 
@@ -348,8 +347,8 @@ InstantMessaging::UriList InstantMessaging::parseXmlUriList (std::string& urilis
     XML_SetElementHandler (parser, startElementCallback, endElementCallback);
 
     if (XML_Parse (parser, urilist.c_str(), urilist.size(), 1) == XML_STATUS_ERROR) {
-        std::cout << "Error: " << XML_ErrorString (XML_GetErrorCode (parser))
-                  << " at line " << XML_GetCurrentLineNumber (parser) << std::endl;
+    	_error("%s at line %lu\n", XML_ErrorString (XML_GetErrorCode (parser)),
+								  XML_GetCurrentLineNumber (parser));
         throw InstantMessageException ("Error while parsing uri-list xml content");
     }
 

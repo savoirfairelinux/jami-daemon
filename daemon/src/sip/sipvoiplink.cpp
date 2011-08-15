@@ -2954,8 +2954,6 @@ pjsip_route_hdr *SIPVoIPLink::createRouteSet(Account *account, pj_pool_t *hdr_po
 		port = "0";
 	}
 
-	std::cout << "Host: " << host << ", Port: " << port << std::endl;
-
     route_set = pjsip_route_hdr_create (hdr_pool);
     pjsip_route_hdr *routing = pjsip_route_hdr_create (hdr_pool);
     pjsip_sip_uri *url = pjsip_sip_uri_create (hdr_pool, 0);
@@ -3107,7 +3105,6 @@ void setVoicemailInfo (std::string account, pjsip_msg_body *body)
     try {
 
         voicemail_str = msg_body.substr (pos_begin + voice_str.length(), pos_end - (pos_begin + voice_str.length()));
-        std::cout << "voicemail number : " << voicemail_str << std::endl;
         voicemail = atoi (voicemail_str.c_str());
     } catch (std::out_of_range& e) {
         std::cerr << e.what() << std::endl;
@@ -4543,8 +4540,6 @@ std::string fetchHeaderValue (pjsip_msg *msg, std::string field)
     pjsip_generic_string_hdr * hdr;
     std::string value, url;
     size_t pos;
-
-    std::cout << "fetch header value" << std::endl;
 
     /* Convert the field name into pjsip type */
     name = pj_str ( (char*) field.c_str());

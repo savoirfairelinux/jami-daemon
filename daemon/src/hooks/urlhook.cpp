@@ -50,7 +50,6 @@ int UrlHook::addAction (std::string field_value, std::string command)
         temp = field_value.substr (0, pos);
         field_value.erase (0, pos + 1);
         args.push_back (temp);
-        std::cout << temp << " " << std::endl;
     }
 
     command_bg = command + " ";

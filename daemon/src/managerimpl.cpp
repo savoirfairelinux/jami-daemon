@@ -301,7 +301,7 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 
     _debug ("Manager: Selecting account %s", account_id.c_str());
 
-    // Is this accout exist
+    // Is this account exist
     if (!accountExists (account_id)) {
         _error ("Manager: Error: Account doesn't exist in new outgoing call");
         return false;
@@ -2540,36 +2540,32 @@ void ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
     struct passwd * user_info = NULL;
     user_info = getpwuid (uid);
 
-    std::string path;
     // Loads config from ~/.sflphone/sflphoned.yml or so..
 
     if (createSettingsPath() == 1 && load_user_value) {
-
-        (alternate == "") ? path = _path : path = alternate;
-        std::cout << path << std::endl;
-
-        _path = path;
+    	if (alternate != "")
+    		_path = alternate;
     }
 
-    _debug ("Manager: configuration file path: %s", path.c_str());
+    _debug ("Manager: configuration file path: %s", _path.c_str());
 
 
     bool fileExist = true;
     bool out = false;
 
-    if (path.empty()) {
+    if (_path.empty()) {
         _error ("Manager: Error: XDG config file path is empty!");
         fileExist = false;
     }
 
     std::fstream file;
 
-    file.open (path.data(), std::fstream::in);
+    file.open (_path.data(), std::fstream::in);
 
     if (!file.is_open()) {
 
-        _debug ("Manager: File %s not opened, create new one", path.c_str());
-        file.open (path.data(), std::fstream::out);
+        _debug ("Manager: File %s not opened, create new one", _path.c_str());
+        file.open (_path.data(), std::fstream::out);
         out = true;
 
         if (!file.is_open()) {
