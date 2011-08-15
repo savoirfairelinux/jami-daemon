@@ -320,11 +320,10 @@ create_main_window ()
 
         int response = gtk_dialog_run (GTK_DIALOG (dialog));
 
-        gtk_widget_destroy (GTK_WIDGET (dialog));
+        gtk_widget_destroy (dialog);
 
-        if (response == GTK_RESPONSE_YES) {
+        if (response == GTK_RESPONSE_YES)
             show_preferences_dialog();
-        }
 
 #endif
     }
@@ -346,10 +345,10 @@ get_main_window ()
 }
 
 void
-main_window_message (GtkMessageType type, gchar * markup)
+main_window_message (GtkMessageType type, const gchar * const markup)
 {
 
-    GtkWidget * dialog = gtk_message_dialog_new_with_markup (
+    GtkWidget * dialog = gtk_message_dialog_new(
                              GTK_WINDOW (get_main_window()), GTK_DIALOG_MODAL
                              | GTK_DIALOG_DESTROY_WITH_PARENT, type, GTK_BUTTONS_CLOSE, NULL);
 
@@ -357,23 +356,23 @@ main_window_message (GtkMessageType type, gchar * markup)
     gtk_message_dialog_set_markup (GTK_MESSAGE_DIALOG (dialog), markup);
 
     gtk_dialog_run (GTK_DIALOG (dialog));
-    gtk_widget_destroy (GTK_WIDGET (dialog));
+    gtk_widget_destroy (dialog);
 }
 
 void
-main_window_error_message (gchar * markup)
+main_window_error_message (const gchar * const markup)
 {
     main_window_message (GTK_MESSAGE_ERROR, markup);
 }
 
 void
-main_window_warning_message (gchar * markup)
+main_window_warning_message (const gchar * const markup)
 {
     main_window_message (GTK_MESSAGE_WARNING, markup);
 }
 
 void
-main_window_info_message (gchar * markup)
+main_window_info_message (const gchar * const markup)
 {
     main_window_message (GTK_MESSAGE_INFO, markup);
 }
@@ -386,10 +385,8 @@ main_window_dialpad (gboolean state)
         gtk_box_pack_end (GTK_BOX (subvbox), dialpad, FALSE /*expand*/,
                           TRUE /*fill*/, 0 /*padding*/);
         gtk_widget_show_all (dialpad);
-    } else {
-	
+    } else
         gtk_container_remove (GTK_CONTAINER (subvbox), dialpad);
-    }
 }
 
 void
@@ -411,7 +408,7 @@ main_window_volume_controls (gboolean state)
 }
 
 void
-statusbar_push_message (const gchar *left_hand_message, const gchar *right_hand_message, guint id)
+statusbar_push_message (const gchar * const left_hand_message, const gchar * const right_hand_message, guint id)
 {
     // The actual message to be push in the statusbar
     gchar *message_to_display;
@@ -444,7 +441,7 @@ statusbar_pop_message (guint id)
 }
 
 void
-statusbar_update_clock (gchar *msg)
+statusbar_update_clock (const gchar * const msg)
 {
     gchar *message = NULL;
 
@@ -520,8 +517,8 @@ main_window_zrtp_not_supported (callable_obj_t * c)
 }
 
 void
-main_window_zrtp_negotiation_failed (const gchar* callID, const gchar* reason,
-                                     const gchar* severity)
+main_window_zrtp_negotiation_failed (const gchar* const callID, const gchar* const reason,
+                                     const gchar* const severity)
 {
     gchar* peer_number = "(number unknown)";
     callable_obj_t * c = NULL;

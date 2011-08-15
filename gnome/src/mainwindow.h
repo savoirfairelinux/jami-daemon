@@ -78,19 +78,19 @@ void main_window_volume_controls (gboolean state);
  * Display an error message
  * @param markup  The error message
  */
-void main_window_error_message (gchar * markup);
+void main_window_error_message (const gchar * const markup);
 
 /**
  * Display a warning message
  * @param markup  The warning message
  */
-void main_window_warning_message (gchar * markup);
+void main_window_warning_message (const gchar * const markup);
 
 /**
  * Display an info message
  * @param markup  The info message
  */
-void main_window_info_message (gchar * markup);
+void main_window_info_message (const gchar * const markup);
 
 /**
  * Push a message on the statusbar stack
@@ -98,7 +98,7 @@ void main_window_info_message (gchar * markup);
  * @param right_hand_message The message to display on the right side
  * @param id  The identifier of the message
  */
-void statusbar_push_message (const gchar *left_hand_message, const gchar *right_hand_message, guint id);
+void statusbar_push_message (const gchar * const left_hand_message, const gchar * const right_hand_message, guint id);
 
 /**
  * Pop a message from the statusbar stack
@@ -110,7 +110,7 @@ void statusbar_pop_message (guint id);
  * Update selected call's clock in statusbar
  * @param id  The identifier of the message
  */
-void statusbar_update_clock (gchar *time);
+void statusbar_update_clock (const gchar * const time);
 
 gboolean focus_is_on_calltree;
 

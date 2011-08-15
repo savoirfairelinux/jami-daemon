@@ -470,7 +470,6 @@ gchar* serialize_history_call_entry (callable_obj_t *entry)
     account_id = (entry->_accountID == NULL || g_strcasecmp (entry->_accountID,"") == 0) ? "empty": entry->_accountID;
 
     confID = (entry->_historyConfID == NULL) ? "" : entry->_historyConfID;
-    DEBUG("==================================== SERIALIZE: CONFID %s", confID);
 
     record_file = (entry->_recordfile == NULL) ? "" : entry->_recordfile;
 

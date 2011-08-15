@@ -956,7 +956,7 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
             default:
                 WARN ("Update calltree add - Should not happen!");
         }
-        if (g_strcasecmp (srtp_enabled, "true") == 0)
+        if (srtp_enabled && g_strcasecmp (srtp_enabled, "true") == 0)
             pixbuf_security = gdk_pixbuf_new_from_file (ICONS_DIR "/secure_off.svg", NULL);
 
     } else if (tab == contacts) {
@@ -1010,7 +1010,7 @@ void calltree_add_history_entry (callable_obj_t *c, GtkTreeIter *parent)
     gchar *date = NULL;
     gchar *duration = NULL;
 
-    const gchar * description = calltree_display_call_info (c, DISPLAY_TYPE_HISTORY, NULL);
+    gchar * description = calltree_display_call_info (c, DISPLAY_TYPE_HISTORY, NULL);
 
     gtk_tree_store_prepend (history->store, &iter, parent);
 
@@ -1040,8 +1040,10 @@ void calltree_add_history_entry (callable_obj_t *c, GtkTreeIter *parent)
 
     date = get_formatted_start_timestamp (c->_time_start);
     duration = get_call_duration (c);
-    duration = g_strconcat (date , duration , NULL);
-    description = g_strconcat (description , duration, NULL);
+    gchar * full_duration = g_strconcat (date , duration , NULL);
+    g_free (duration);
+    description = g_strconcat (description , full_duration, NULL);
+    g_free (full_duration);
 
     //Resize it
     if (pixbuf)
@@ -1058,6 +1060,8 @@ void calltree_add_history_entry (callable_obj_t *c, GtkTreeIter *parent)
             2, pixbuf_security, // Icon
             3, c,      // Pointer
             -1);
+
+    g_free (description);
 
     if (pixbuf != NULL)
         g_object_unref (G_OBJECT (pixbuf));
