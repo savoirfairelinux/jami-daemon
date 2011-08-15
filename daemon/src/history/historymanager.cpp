@@ -243,22 +243,13 @@ std::vector<std::string> HistoryManager::get_history_serialized (void)
 {
     std::vector<std::string> serialized;
     HistoryItemMap::iterator iter;
-    HistoryItem *current;
-    std::string res;
 
     _debug("HistoryManager: Get history serialized");
 
-    iter = _history_items.begin ();
-
-    while (iter != _history_items.end()) {
-        current = *iter;
-
-        if (current) {
-            res = current->serialize ();
-            serialized.push_back(res);
-        }
-
-        iter ++;
+    for (iter = _history_items.begin (); iter != _history_items.end(); ++iter) {
+        HistoryItem *current = *iter;
+        if (current)
+            serialized.push_back(current->serialize ());
     }
 
     return serialized;
