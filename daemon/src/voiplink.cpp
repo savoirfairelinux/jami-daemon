@@ -61,9 +61,8 @@ void VoIPLink::removeCall (const std::string& id)
 
     _debug ("VoipLink: removing call %s from list", id.c_str());
 
-    _callMap.erase (id);
-
-    terminateCall (id);
+    delete _callMap[id];
+    _callMap.erase(id);
 }
 
 Call* VoIPLink::getCall (const std::string& id)

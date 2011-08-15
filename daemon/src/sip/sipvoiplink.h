@@ -213,11 +213,6 @@ class SIPVoIPLink : public VoIPLink
         virtual bool refuse (const std::string& id);
 
         /**
-         * Terminate only one call
-         */
-        virtual void terminateCall (const std::string& id);
-
-        /**
          * Send DTMF refering to account configuration
          * @param id The call identifier
          * @param code  The char code

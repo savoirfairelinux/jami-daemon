@@ -1330,19 +1330,6 @@ SIPVoIPLink::refuse (const std::string& id)
     return true;
 }
 
-void
-SIPVoIPLink::terminateCall (const std::string& id)
-{
-    _debug ("UserAgent: Terminate call %s", id.c_str());
-
-    SIPCall *call = getSIPCall (id);
-
-    if (call) {
-        // terminate the sip call
-        delete call;
-    }
-}
-
 std::string
 SIPVoIPLink::getCurrentCodecName(const std::string& id)
 {

@@ -181,19 +181,6 @@ IAXVoIPLink::terminateIAXCall()
     _callMap.clear();
 }
 
-void IAXVoIPLink::terminateCall (const std::string& id)
-{
-    IAXCall* call = getIAXCall (id);
-
-    if (call) {
-        _debug ("IAXVoIPLink: Terminate call");
-        delete call;
-        call = 0;
-    }
-}
-
-
-
 void
 IAXVoIPLink::getEvent()
 {
