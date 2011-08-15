@@ -955,7 +955,7 @@ edit_paste (void * foo UNUSED)
                     selectedCall->_peer_info = get_peer_info (temp,
                                                selectedCall->_peer_name);
                     g_free (temp);
-                    g_free (onNo);
+                    g_free (oneNo);
                     calltree_update_call (current_calls, selectedCall, NULL);
 
                 }
@@ -966,7 +966,7 @@ edit_paste (void * foo UNUSED)
         selectedCall = sflphone_new_call();
 
         gchar * before = selectedCall->_peer_number;
-        new_peer_number = g_strconcat (selectedCall->_peer_number, no,
+        gchar *new_peer_number = g_strconcat (selectedCall->_peer_number, no,
                                      NULL);
         g_free (selectedCall->_peer_number);
         selectedCall->_peer_number = new_peer_number;
