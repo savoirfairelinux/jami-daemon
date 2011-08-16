@@ -432,6 +432,16 @@ void SIPAccount::setAccountDetails (std::map<std::string, std::string> details)
     setTlsRequireClientCertificate (details[TLS_REQUIRE_CLIENT_CERTIFICATE] == "true");
     setTlsNegotiationTimeoutSec (details[TLS_NEGOTIATION_TIMEOUT_SEC]);
     setTlsNegotiationTimeoutMsec (details[TLS_NEGOTIATION_TIMEOUT_MSEC]);
+
+    if (getCredentialCount() == 0) { // credentials not set, construct 1 entry
+        std::vector<std::map<std::string, std::string> > v;
+        std::map<std::string, std::string> map;
+        map[USERNAME] = getUsername();
+        map[PASSWORD] = details[PASSWORD];
+        map[REALM]    = "*";
+        v.push_back(map);
+        setCredentials(v);
+    }
 }
 
 std::map<std::string, std::string> SIPAccount::getAccountDetails() const
