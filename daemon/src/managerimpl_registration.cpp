@@ -157,14 +157,13 @@ void ManagerImpl::restartPJSIP (void)
     this->registerCurSIPAccounts ();
 }
 
-VoIPLink* ManagerImpl::getAccountLink (const std::string& accountID)
+VoIPLink* ManagerImpl::getAccountLink (const std::string& accountID) const
 {
-    if (accountID!="") {
+    if (not accountID.empty()) {
         Account* acc = getAccount (accountID);
 
-        if (acc) {
+        if (acc)
             return acc->getVoIPLink();
-        }
 
         return 0;
     } else
@@ -173,10 +172,6 @@ VoIPLink* ManagerImpl::getAccountLink (const std::string& accountID)
 
 pjsip_regc *getSipRegcFromID (const std::string& id UNUSED)
 {
-    /*SIPAccount *tmp = dynamic_cast<SIPAccount *>getAccount(id);
-    if(tmp != NULL)
-      return tmp->getSipRegc();
-    else*/
     return NULL;
 }
 

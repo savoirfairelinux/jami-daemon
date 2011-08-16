@@ -484,7 +484,7 @@ class ManagerImpl
          * Get account list
          * @return std::vector<std::string> A list of accoundIDs
          */
-        std::vector< std::string >  getAccountList();
+        std::vector< std::string >  getAccountList() const;
 
         /**
          * Set the account order in the config file
@@ -495,14 +495,14 @@ class ManagerImpl
          * Load the accounts order set by the user from the sflphonedrc config file
          * @return std::vector<std::string> A vector containing the account ID's
          */
-        std::vector<std::string> loadAccountOrder ();
+        std::vector<std::string> loadAccountOrder () const;
 
         /**
          * Retrieve details about a given account
          * @param accountID	  The account identifier
          * @return std::map< std::string, std::string > The account details
          */
-        std::map< std::string, std::string > getAccountDetails (const std::string& accountID);
+        std::map< std::string, std::string > getAccountDetails (const std::string& accountID) const;
 
         /**
          * Retrieve details about a given call
@@ -515,27 +515,27 @@ class ManagerImpl
          * Get call list
          * @return std::vector<std::string> A list of call IDs
          */
-        std::vector< std::string >  getCallList (void);
+        std::vector< std::string >  getCallList (void) const;
 
         /**
          * Retrieve details about a given call
          * @param callID	  The account identifier
          * @return std::map< std::string, std::string > The call details
          */
-        std::map< std::string, std::string > getConferenceDetails (const std::string& callID);
+        std::map< std::string, std::string > getConferenceDetails (const std::string& callID) const;
 
         /**
          * Get call list
          * @return std::vector<std::string> A list of call IDs
          */
-        std::vector< std::string >  getConferenceList (void);
+        std::vector< std::string >  getConferenceList (void) const;
 
 
         /**
          * Get a list of participant to a conference
          * @return std::vector<std::string> A list of call IDs
          */
-        std::vector< std::string >  getParticipantList (const std::string& confID);
+        std::vector< std::string >  getParticipantList (const std::string& confID) const;
 
         /**
          * Save the details of an existing account, given the account ID
@@ -604,42 +604,42 @@ class ManagerImpl
          * @param name The string description of an audio device
          * @return int  His index
          */
-        int getAudioDeviceIndex (const std::string name);
+        int getAudioDeviceIndex (const std::string &name);
 
         /**
          * Get current alsa plugin
          * @return std::string  The Alsa plugin
          */
-        std::string getCurrentAudioOutputPlugin (void);
+        std::string getCurrentAudioOutputPlugin (void) const;
 
         /**
          * Get the noise reduction engin state from
          * the current audio layer.
          */
-        std::string getNoiseSuppressState (void);
+        std::string getNoiseSuppressState (void) const;
 
         /**
          * Set the noise reduction engin state in the current
          * audio layer.
          */
-        void setNoiseSuppressState (std::string state);
+        void setNoiseSuppressState (const std::string &state);
 
         /**
          * Get the echo canceller engin state from
          * the current audio layer
          */
-        std::string getEchoCancelState(void);
+        std::string getEchoCancelState(void) const;
 
         /**
          * Set the echo canceller engin state
          */
-        void setEchoCancelState(std::string state);
+        void setEchoCancelState(const std::string &state);
 
-        int getEchoCancelTailLength(void);
+        int getEchoCancelTailLength(void) const;
 
         void setEchoCancelTailLength(int);
 
-        int getEchoCancelDelay(void);
+        int getEchoCancelDelay(void) const;
 
         void setEchoCancelDelay(int);
 
@@ -648,7 +648,7 @@ class ManagerImpl
          * Required format: payloads separated with one slash.
          * @return std::string The serializabled string
          */
-        static std::string serialize (std::vector<std::string> v);
+        static std::string serialize (const std::vector<std::string> &v);
 
         static std::vector<std::string> unserialize (std::string v);
 
@@ -677,7 +677,7 @@ class ManagerImpl
          * Get the ringtone
          * @return gchar* The file name selected as a ringtone
          */
-        std::string getRingtoneChoice (const std::string& id);
+        std::string getRingtoneChoice (const std::string& id) const;
 
         /**
          * Set a ringtone
@@ -689,7 +689,7 @@ class ManagerImpl
          * Get the recording path from configuration tree
          * @return the string correspoding to the path
          */
-        std::string getRecordPath (void);
+        std::string getRecordPath (void) const;
 
         /**
          * Set the recoding path in the configuration tree
@@ -700,7 +700,7 @@ class ManagerImpl
         /**
          * Get is always recording functionality
          */
-        bool getIsAlwaysRecording(void);
+        bool getIsAlwaysRecording(void) const;
 
         /**
          * Set is always recording functionality, every calls will then be set in RECORDING mode
@@ -742,12 +742,7 @@ class ManagerImpl
          * Get the maximum number of days to keep in the history
          * @return double The number of days
          */
-        int getHistoryLimit (void);
-
-        // void setHistoryEnabled (void);
-
-        // std::string getHistoryEnabled (void);
-
+        int getHistoryLimit (void) const;
 
         /**
          * Configure the start-up option
@@ -763,41 +758,6 @@ class ManagerImpl
         void startHidden (void);
 
         /**
-         * Configure the popup behaviour
-         * @return int	1 if it should popup on incoming calls
-         *		0 if it should never popups
-         */
-        // int popupMode( void );
-
-        /**
-         * Configure the popup behaviour
-         * When SFLphone is in the system tray, you can configure when it popups
-         * Never or only on incoming calls
-         */
-        // void switchPopupMode( void );
-
-        /**
-         * Determine whether or not the search bar (history) should be displayed
-         */
-        // int getSearchbar( void );
-
-        /**
-         * Configure the search bar behaviour
-         */
-        // void setSearchbar( void );
-
-        /**
-         * Set the desktop notification level
-         */
-        // void setNotify( void );
-
-        /**
-         * Get the desktop notification level
-         * @return int The notification level
-         */
-        // int32_t getNotify( void );
-
-        /**
          * Set the desktop mail notification level
          */
         void setMailNotify (void);
@@ -806,7 +766,7 @@ class ManagerImpl
         /**
          * Addressbook configuration
          */
-        std::map<std::string, int32_t> getAddressbookSettings (void);
+        std::map<std::string, int32_t> getAddressbookSettings (void) const;
 
         /**
          * Addressbook configuration
@@ -821,12 +781,12 @@ class ManagerImpl
         /**
          * Addressbook list
          */
-        std::vector <std::string> getAddressbookList (void);
+        std::vector <std::string> getAddressbookList (void) const;
 
         /**
          * Hook configuration
          */
-        std::map<std::string, std::string> getHookSettings (void);
+        std::map<std::string, std::string> getHookSettings (void) const;
 
         /**
          * Hook configuration
@@ -840,7 +800,7 @@ class ManagerImpl
          *		    0 ALSA
          *		    1 PULSEAUDIO
          */
-        int32_t getAudioManager (void);
+        int32_t getAudioManager (void) const;
 
         /**
          * Set the audio manager
@@ -859,13 +819,13 @@ class ManagerImpl
          * Get the desktop mail notification level
          * @return int The mail notification level
          */
-        int32_t getMailNotify (void);
+        int32_t getMailNotify (void) const;
 
         /**
          * Get the list of the active codecs
          * @return std::vector< ::std::string >  The list of active codecs
          */
-        std::vector< ::std::string > getActiveCodecList (void);
+        std::vector< ::std::string > getActiveCodecList (void) const;
 
         /*
          * Notify the client that an error occured
@@ -882,7 +842,7 @@ class ManagerImpl
          * @return bool	true on success
          *			false otherwise
          */
-        bool getConfig (const std::string& section, const std::string& name, TokenList& arg);
+        bool getConfig (const std::string& section, const std::string& name, TokenList& arg) const;
 
         /**
          * Change a specific value in the configuration tree.
@@ -926,7 +886,7 @@ class ManagerImpl
          * @return int    The int value
          */
 
-        int getConfigInt (const std::string& section, const std::string& name);
+        int getConfigInt (const std::string& section, const std::string& name) const;
 
         /**
            * Get a bool from the configuration tree
@@ -936,7 +896,7 @@ class ManagerImpl
            * @return bool    The bool value
            */
 
-        bool getConfigBool (const std::string& section, const std::string& name);
+        bool getConfigBool (const std::string& section, const std::string& name) const;
 
         /**
          * Get a string from the configuration tree
@@ -945,7 +905,7 @@ class ManagerImpl
          * @param name    The parameter name
          * @return sdt::string    The string value
          */
-        std::string getConfigString (const std::string& section, const std::string& name);
+        std::string getConfigString (const std::string& section, const std::string& name) const;
 
         /**
          * Retrieve the soundcards index in the user config file and try to open audio devices
@@ -1009,7 +969,7 @@ class ManagerImpl
          * Write by main thread only
          * @return unsigned short	The volume value
          */
-        unsigned short getSpkrVolume (void) {
+        unsigned short getSpkrVolume (void) const {
             return _spkr_volume;
         }
 
@@ -1027,7 +987,7 @@ class ManagerImpl
          * Write by main thread only
          * @return unsigned short	The volume value
          */
-        unsigned short getMicVolume (void) {
+        unsigned short getMicVolume (void) const {
             return _mic_volume;
         }
 
@@ -1065,7 +1025,7 @@ class ManagerImpl
          * Get the current call id
          * @return std::string	The call id or ""
          */
-        const std::string& getCurrentCallId();
+        const std::string& getCurrentCallId() const;
 
         /**
          * Check if a call is the current one
@@ -1112,7 +1072,7 @@ class ManagerImpl
         /**
          * Create config directory in home user and return configuration file path
          */
-        std::string getConfigFile (void);
+        std::string getConfigFile (void) const;
 
         /*
          * Initialize audiocodec with config setting
@@ -1243,7 +1203,7 @@ class ManagerImpl
 
         bool associateConfigToCall (const std::string& callID, Call::CallConfiguration config);
 
-        Call::CallConfiguration getConfigFromCall (const std::string& callID);
+        Call::CallConfiguration getConfigFromCall (const std::string& callID) const;
 
         bool removeCallConfig (const std::string& callID);
 
@@ -1275,14 +1235,6 @@ class ManagerImpl
          *
          */
         MainBuffer _mainBuffer;
-
-
-        /**
-         * Instant messaging module, resposible to initiate, format, parse,
-         * send, and receive instant messages.
-         */
-        sfl::InstantMessaging *_imModule;
-
 
     public:
 
@@ -1319,7 +1271,7 @@ class ManagerImpl
         /**
          * Return a pointer to the instance of InstantMessaging
          */
-        sfl::InstantMessaging *getInstantMessageModule (void) {
+        sfl::InstantMessaging *getInstantMessageModule (void) const {
             return _imModule;
         }
 
@@ -1350,7 +1302,7 @@ class ManagerImpl
 	 * Get a list of serialized history entries
 	 * @return A list of serialized entry
   	 */
-        std::vector<std::string> getHistorySerialized (void);
+        std::vector<std::string> getHistorySerialized (void) const;
 
 	/**
 	 * Set a list of serialized history entries
@@ -1362,7 +1314,7 @@ class ManagerImpl
          * @param accountID account ID to get
          * @return Account*	 The account pointer or 0
          */
-        Account* getAccount (const std::string& accountID);
+        Account* getAccount (const std::string& accountID) const;
 
         /** Return the std::string from a CallID
          * Protected by mutex
@@ -1376,13 +1328,13 @@ class ManagerImpl
          * @param accountID	  Account ID to get
          * @return VoIPLink*   The voip link from the account pointer or 0
          */
-        VoIPLink* getAccountLink (const std::string& accountID="");
+        VoIPLink* getAccountLink (const std::string& accountID="") const;
 
-        std::string getAccountIdFromNameAndServer (const std::string& userName, const std::string& server);
+        std::string getAccountIdFromNameAndServer (const std::string& userName, const std::string& server) const;
 
-        int getLocalIp2IpPort();
+        int getLocalIp2IpPort() const;
 
-        std::string getStunServer (void);
+        std::string getStunServer (void) const;
         void setStunServer (const std::string &server);
 
         int isStunEnabled (void);
@@ -1415,6 +1367,12 @@ class ManagerImpl
           * To handle the persistent history
           */
         HistoryManager * _history;
+
+        /**
+         * Instant messaging module, resposible to initiate, format, parse,
+         * send, and receive instant messages.
+         */
+        sfl::InstantMessaging *_imModule;
 
         /**
          * Check if the call is a classic call or a direct IP-to-IP call

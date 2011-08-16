@@ -450,16 +450,15 @@ ShortcutPreferences::ShortcutPreferences() : _hangup ("")
 ShortcutPreferences::~ShortcutPreferences() {}
 
 
-std::map<std::string, std::string> ShortcutPreferences::getShortcuts()
+std::map<std::string, std::string> ShortcutPreferences::getShortcuts() const
 {
-
     std::map<std::string, std::string> shortcutsMap;
 
-    shortcutsMap.insert (std::pair<std::string, std::string> (hangupShortKey, _hangup));
-    shortcutsMap.insert (std::pair<std::string, std::string> (pickupShortKey, _pickup));
-    shortcutsMap.insert (std::pair<std::string, std::string> (popupShortKey, _popup));
-    shortcutsMap.insert (std::pair<std::string, std::string> (toggleHoldShortKey, _toggleHold));
-    shortcutsMap.insert (std::pair<std::string, std::string> (togglePickupHangupShortKey, _togglePickupHangup));
+    shortcutsMap[hangupShortKey] = _hangup;
+    shortcutsMap[pickupShortKey] = _pickup;
+    shortcutsMap[popupShortKey] = _popup;
+    shortcutsMap[toggleHoldShortKey] = _toggleHold;
+    shortcutsMap[togglePickupHangupShortKey] = _togglePickupHangup;
 
     return shortcutsMap;
 }
@@ -472,15 +471,6 @@ void ShortcutPreferences::setShortcuts (std::map<std::string, std::string> map)
     _popup = map[popupShortKey];
     _toggleHold = map[toggleHoldShortKey];
     _togglePickupHangup = map[togglePickupHangupShortKey];
-
-    /*
-    for (int i = 0; i < (int)shortcutsKeys.size(); i++) {
-      std::string key = shortcutsKeys.at(i);
-      std::string val = map[key];
-      if (val != "")
-        Manager::instance().setConfig("Shortcuts", key, val);
-    }
-    */
 }
 
 
