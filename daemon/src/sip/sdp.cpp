@@ -356,8 +356,6 @@ void Sdp::setLocalMediaCapabilities (CodecOrder selectedCodecs)
 
 int Sdp::createLocalSession (CodecOrder selectedCodecs, const std::vector<std::string> &videoCodecs)
 {
-    char buffer[1000];
-
     _info ("SDP: Create local session");
 
     // Build local media capabilities
@@ -380,12 +378,11 @@ int Sdp::createLocalSession (CodecOrder selectedCodecs, const std::vector<std::s
 	setMediaDescriptorLine (localAudioMediaCap_);
 	setMediaDescriptorLine (localVideoMediaCap_);
 
-    if (!srtpCrypto_.empty()) {
+    if (!srtpCrypto_.empty())
         addSdesAttribute (srtpCrypto_);
-    }
 
-    memset(buffer, 0, 1000);
-    int size = pjmedia_sdp_print(localSession_, buffer, 1000);
+    char buffer[10000];
+    int size = pjmedia_sdp_print(localSession_, buffer, sizeof buffer);
     std::string localStr(buffer, size);
     _debug("SDP: Local SDP Session:\n%s", localStr.c_str());
 
