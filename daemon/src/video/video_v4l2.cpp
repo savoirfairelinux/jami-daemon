@@ -151,12 +151,11 @@ void VideoV4l2Size::GetFrameRates(int fd, unsigned int pixel_format)
         return;
     }
 
-    struct v4l2_frmivalenum frmival = {
-        0,
-        pixel_format,
-        width,
-        height,
-    };
+    v4l2_frmivalenum frmival;
+    memset(&frmival, 0x0, sizeof frmival);
+    frmival.pixel_format = pixel_format;
+    frmival.width = width;
+    frmival.height = height;
 
     if (ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival)) {
         rates.push_back(25);
@@ -227,7 +226,7 @@ unsigned int VideoV4l2Channel::GetSizes(int fd, unsigned int pixelformat)
         return 0;
     }
 
-    struct v4l2_frmsizeenum frmsize;
+    v4l2_frmsizeenum frmsize;
     memset(&frmsize, 0x0, sizeof frmsize);
     frmsize.index = 0;
     frmsize.pixel_format = pixelformat;
@@ -257,7 +256,7 @@ unsigned int VideoV4l2Channel::GetSizes(int fd, unsigned int pixelformat)
     }
 
 fallback:
-    struct v4l2_format fmt;
+    v4l2_format fmt;
     memset(&fmt, 0x0, sizeof fmt);
     fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     if (ioctl(fd, VIDIOC_G_FMT, &fmt) < 0)
@@ -275,7 +274,7 @@ void VideoV4l2Channel::GetFormat(int fd)
     if (ioctl(fd, VIDIOC_S_INPUT, &idx))
         throw std::runtime_error("VIDIOC_S_INPUT failed");
 
-    struct v4l2_fmtdesc fmt;
+    v4l2_fmtdesc fmt;
     memset(&fmt, 0x0, sizeof fmt);
     unsigned fmt_index;
     fmt.index = fmt_index = 0;
@@ -333,7 +332,7 @@ VideoV4l2Device::VideoV4l2Device(int fd, const std::string &device)
 
     unsigned idx;
 
-    struct v4l2_capability cap;
+    v4l2_capability cap;
     if (ioctl(fd, VIDIOC_QUERYCAP, &cap))
     	throw std::runtime_error("could not query capabilities");
 
@@ -342,7 +341,7 @@ VideoV4l2Device::VideoV4l2Device(int fd, const std::string &device)
 
     name = std::string((const char*)cap.card);
 
-    struct v4l2_input input;
+    v4l2_input input;
     memset(&input, 0x0, sizeof input);
     input.index = idx = 0;
     while (!ioctl(fd, VIDIOC_ENUMINPUT, &input)) {
