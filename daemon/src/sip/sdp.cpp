@@ -245,7 +245,7 @@ void Sdp::setMediaDescriptorLine (sdpMedia *media)
         } else {
 			enc_name = video_list[i].c_str();
 			clock_rate = 90000;
-			payload = dynamic_payload++;
+            payload = dynamic_payload++;
         }
 
         std::ostringstream s;
@@ -331,12 +331,6 @@ void Sdp::setLocalMediaVideoCapabilities (const std::vector<std::string> &videoC
 
 void Sdp::setLocalMediaCapabilities (CodecOrder selectedCodecs)
 {
-
-    unsigned int i;
-    sdpMedia *audio;
-    CodecsMap codecs_list;
-    CodecsMap::iterator iter;
-
     _debug ("SDP: Fetch local media capabilities. Local extern audio port: %i" , getLocalPublishedAudioPort());
 
     delete localAudioMediaCap_;
@@ -344,15 +338,14 @@ void Sdp::setLocalMediaCapabilities (CodecOrder selectedCodecs)
     localAudioMediaCap_->port = getLocalPublishedAudioPort();
 
     /* We retrieve the codecs selected by the user */
-    codecs_list = Manager::instance().getAudioCodecFactory().getCodecsMap();
+    CodecsMap codecs_list = Manager::instance().getAudioCodecFactory().getCodecsMap();
 
     if (selectedCodecs.size() == 0) {
         throw SdpException ("No selected codec while building local SDP offer");
     }
 
-    for (i=0; i<selectedCodecs.size(); i++) {
-        iter=codecs_list.find (selectedCodecs[i]);
-
+    for (unsigned int i=0; i<selectedCodecs.size(); i++) {
+        CodecsMap::iterator iter = codecs_list.find (selectedCodecs[i]);
         if (iter!=codecs_list.end()) {
         	localAudioMediaCap_->add_codec (iter->second);
         } else {
