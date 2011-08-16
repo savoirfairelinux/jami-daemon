@@ -355,7 +355,7 @@ void VideoReceiveThread::setup()
                 videoBufferSize_);
         // Fri Jul 15 12:15:59 EDT 2011:tmatth:FIXME: access to call manager
         // from this thread may not be thread-safe
-        DBusManager::instance().getCallManager()->receivingVideoEvent(shmKey_,
+        Manager::instance().getDbusManager()->getCallManager()->receivingVideoEvent(shmKey_,
                 semKey_, videoBufferSize_, dstWidth_, dstHeight_);
     }
 }
@@ -523,7 +523,7 @@ next_packet:
 VideoReceiveThread::~VideoReceiveThread()
 {
     // free resources, exit thread
-    DBusManager::instance().getCallManager()->stoppedReceivingVideoEvent(shmKey_,
+	Manager::instance().getDbusManager()->getCallManager()->stoppedReceivingVideoEvent(shmKey_,
             semKey_);
     ost::Thread::terminate();
     cleanup();

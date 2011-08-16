@@ -33,6 +33,7 @@
 #include "sip/sipcall.h"
 #include "dbus/dbusmanager.h"
 #include "dbus/callmanager.h"
+#include "manager.h"
 
 #include <cstdlib>
 #include <string>
@@ -127,21 +128,21 @@ void
 ZrtpSessionCallback::secureOn (std::string cipher)
 {
     _debug ("Zrtp: Secure mode is on with cipher %s", cipher.c_str());
-    DBusManager::instance().getCallManager()->secureZrtpOn (_sipcall->getCallId(), cipher);
+    Manager::instance().getDbusManager()->getCallManager()->secureZrtpOn (_sipcall->getCallId(), cipher);
 }
 
 void
 ZrtpSessionCallback::secureOff (void)
 {
     _debug ("Zrtp: Secure mode is off");
-    DBusManager::instance().getCallManager()->secureZrtpOff (_sipcall->getCallId());
+    Manager::instance().getDbusManager()->getCallManager()->secureZrtpOff (_sipcall->getCallId());
 }
 
 void
 ZrtpSessionCallback::showSAS (std::string sas, bool verified)
 {
     _debug ("Zrtp: SAS is: %s", sas.c_str());
-    DBusManager::instance().getCallManager()->showSAS (_sipcall->getCallId(), sas, verified);
+    Manager::instance().getDbusManager()->getCallManager()->showSAS (_sipcall->getCallId(), sas, verified);
 }
 
 
@@ -149,7 +150,7 @@ void
 ZrtpSessionCallback::zrtpNotSuppOther()
 {
     _debug ("Zrtp: Callee does not support ZRTP");
-    DBusManager::instance().getCallManager()->zrtpNotSuppOther (_sipcall->getCallId());
+    Manager::instance().getDbusManager()->getCallManager()->zrtpNotSuppOther (_sipcall->getCallId());
 }
 
 
@@ -214,12 +215,12 @@ ZrtpSessionCallback::zrtpNegotiationFailed (MessageSeverity severity, int subCod
 
         if (msg != NULL) {
             _debug ("%s", msg->c_str());
-            DBusManager::instance().getCallManager()->zrtpNegotiationFailed (_sipcall->getCallId(), *msg, "ZRTP");
+            Manager::instance().getDbusManager()->getCallManager()->zrtpNegotiationFailed (_sipcall->getCallId(), *msg, "ZRTP");
         }
     } else {
         msg = _severeMap[subCode];
         _debug ("%s", msg->c_str());
-        DBusManager::instance().getCallManager()->zrtpNegotiationFailed (_sipcall->getCallId(), *msg, "severe");
+        Manager::instance().getDbusManager()->getCallManager()->zrtpNegotiationFailed (_sipcall->getCallId(), *msg, "severe");
     }
 }
 
@@ -227,7 +228,7 @@ void
 ZrtpSessionCallback::confirmGoClear()
 {
     _debug ("Zrtp: Received go clear message. Until confirmation, ZRTP won't send any data");
-    DBusManager::instance().getCallManager()->zrtpNotSuppOther (_sipcall->getCallId());
+    Manager::instance().getDbusManager()->getCallManager()->zrtpNotSuppOther (_sipcall->getCallId());
 }
 
 std::map<int32, std::string*>ZrtpSessionCallback::_infoMap;

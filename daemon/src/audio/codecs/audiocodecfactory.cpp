@@ -226,12 +226,11 @@ sfl::Codec* AudioCodecFactory::loadCodec (std::string path)
 {
 
     CodecHandlePointer p;
-    using std::cerr;
     void * codecHandle = dlopen (path.c_str() , RTLD_LAZY);
 
     if (!codecHandle) {
-        cerr << dlerror() << '\n';
-        return NULL;
+    	_error("%s\n", dlerror());
+    	return NULL;
     }
 
     dlerror();
@@ -240,10 +239,10 @@ sfl::Codec* AudioCodecFactory::loadCodec (std::string path)
 
     char *err = dlerror();
     if (err)
-        cerr << err << '\n';
+        _error("%s\n", err);
 
     if (err || !createCodec) {
-        cerr << "Could not load codec " << path << '\n';
+        _error("Could not load codec %s\n", path.c_str());
         dlclose(codecHandle);
         return NULL;
     }
@@ -261,11 +260,11 @@ sfl::Codec* AudioCodecFactory::loadCodec (std::string path)
 void AudioCodecFactory::unloadCodec (CodecHandlePointer p)
 {
 
-    using std::cerr;
     destroy_t* destroyCodec = (destroy_t*) dlsym (p.second , "destroy");
 
-    if (dlerror())
-        cerr << dlerror() << '\n';
+    char *error = dlerror();
+    if (error)
+    	_error("%s\n", error);
 
     destroyCodec (p.first);
 
@@ -274,28 +273,18 @@ void AudioCodecFactory::unloadCodec (CodecHandlePointer p)
 
 sfl::Codec* AudioCodecFactory::instantiateCodec (AudioCodecType payload)
 {
+    std::vector< CodecHandlePointer >::iterator iter;
 
-    using std::cerr;
-
-    std::vector< CodecHandlePointer >::iterator iter = _CodecInMemory.begin();
-
-    while (iter != _CodecInMemory.end()) {
+    for (iter = _CodecInMemory.begin(); iter != _CodecInMemory.end(); ++iter) {
         if (iter->first->getPayloadType() == payload) {
             create_t* createCodec = (create_t*) dlsym (iter->second , CODEC_ENTRY_SYMBOL);
 
-            char *err = dlerror();
-            if (err)
-                cerr << err << '\n';
-
-            if (err || !createCodec)
-                return NULL;
-
-            sfl::Codec* a = createCodec();
-
-            return a;
+            char *error = dlerror();
+            if (error)
+            	_error("%s\n", error);
+            else
+				return createCodec();
         }
-
-        iter++;
     }
 
     return NULL;

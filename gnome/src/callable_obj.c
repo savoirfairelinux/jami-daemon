@@ -80,18 +80,18 @@ gchar* call_get_peer_number (const gchar *format)
 
 gchar* call_get_audio_codec (callable_obj_t *obj)
 {
-    gchar *format = NULL;
+    gchar *result = NULL;
     if (obj) {
-        gchar *audio_codec = dbus_get_current_audio_codec_name (obj);
-        codec_t *codec = codec_list_get_by_name (audio_codec, get_audio_codecs_list());
-        if (codec)
-            format = g_markup_printf_escaped ("%s/%d", audio_codec, codec->sample_rate);
-        g_free(audio_codec);
+        gchar * const audio_codec = dbus_get_current_audio_codec_name (obj);
+        const codec_t * const codec = codec_list_get_by_name (audio_codec, NULL);
+        if (codec) {
+            result = g_markup_printf_escaped ("%s/%i", audio_codec, codec->sample_rate);
+            g_free (audio_codec);
+        }
     }
-
-    if (!format)
-        format = strdup("");
-    return format;
+    else
+        result = g_strdup("");
+    return result;
 }
 
 void call_add_error (callable_obj_t * call, gpointer dialog)
@@ -414,8 +414,6 @@ history_state_t get_history_state_from_id (gchar *indice)
 
 gchar* get_call_duration (callable_obj_t *obj)
 {
-
-    gchar *res;
     int duration;
     time_t start, end;
 
@@ -426,21 +424,24 @@ gchar* get_call_duration (callable_obj_t *obj)
         return g_markup_printf_escaped ("<small>Duration:</small> 0:00");
 
     duration = (int) difftime (end, start);
+    gchar *result;
 
     if (duration / 60 == 0) {
         if (duration < 10)
-            res = g_markup_printf_escaped ("00:0%i", duration);
+            result = g_markup_printf_escaped ("00:0%i", duration);
         else
-            res = g_markup_printf_escaped ("00:%i", duration);
+            result = g_markup_printf_escaped ("00:%i", duration);
     } else {
         if (duration%60 < 10)
-            res = g_markup_printf_escaped ("%i:0%i" , duration/60 , duration%60);
+            result = g_markup_printf_escaped ("%i:0%i" , duration/60 , duration%60);
         else
-            res = g_markup_printf_escaped ("%i:%i" , duration/60 , duration%60);
+            result = g_markup_printf_escaped ("%i:%i" , duration/60 , duration%60);
     }
 
-    return g_markup_printf_escaped ("<small>Duration:</small> %s", res);
-
+    gchar *old_result = result;
+    result = g_markup_printf_escaped ("<small>Duration:</small> %s", old_result);
+    g_free(old_result);
+    return result;
 }
 
 static const gchar* get_history_id_from_state (history_state_t state)
@@ -474,7 +475,6 @@ gchar* serialize_history_call_entry (callable_obj_t *entry)
     account_id = (entry->_accountID == NULL || g_strcasecmp (entry->_accountID,"") == 0) ? "empty": entry->_accountID;
 
     confID = (entry->_historyConfID == NULL) ? "" : entry->_historyConfID;
-    DEBUG("==================================== SERIALIZE: CONFID %s", confID);
 
     record_file = (entry->_recordfile == NULL) ? "" : entry->_recordfile;
 
@@ -494,7 +494,6 @@ gchar* serialize_history_call_entry (callable_obj_t *entry)
     return result;
 }
 
-// gchar* get_formatted_start_timestamp (callable_obj_t *obj)
 gchar *get_formatted_start_timestamp (time_t time_start)
 {
     enum { UNIX_DAY = 86400,

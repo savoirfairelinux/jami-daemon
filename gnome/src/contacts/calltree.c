@@ -402,6 +402,12 @@ calltree_display_call_info (callable_obj_t * c, CallDisplayType display_type, co
     gchar * display_number = NULL;
     gboolean free_display_number = FALSE;
     gchar * description = NULL;
+    gchar * temp_codec;
+    if (audio_codec == NULL)
+        temp_codec = g_strdup("");
+    else
+        temp_codec = g_strdup(audio_codec);
+
 
     DEBUG ("CallTree: Display call info");
 
@@ -468,20 +474,20 @@ calltree_display_call_info (callable_obj_t * c, CallDisplayType display_type, co
                     description = g_markup_printf_escaped ("<b>%s</b><i>%s</i>\n<i>%s (%d)</i>  <i>%s</i>",
                             display_number, c->_peer_name,
                             c->_state_code_description, c->_state_code,
-                            audio_codec);
+                            temp_codec);
                 } else {
                     description = g_markup_printf_escaped ("<b>%s</b><i>%s</i>\n<i>%s</i>",
-                            display_number, c->_peer_name, audio_codec);
+                            display_number, c->_peer_name, temp_codec);
                 }
             } else {
                 if (c->_state_code) {
                     description = g_markup_printf_escaped ("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>  <i>%s</i>",
                             c->_peer_name, display_number,
                             c->_state_code_description, c->_state_code,
-                            audio_codec);
+                            temp_codec);
                 } else {
                     description = g_markup_printf_escaped ("<b>%s</b>   <i>%s</i>\n<i>%s</i>",
-                            c->_peer_name, display_number, audio_codec);
+                            c->_peer_name, display_number, temp_codec);
                 }
             }
             DEBUG ("CallTree: Display a state code, description: %s", description);
@@ -511,6 +517,8 @@ calltree_display_call_info (callable_obj_t * c, CallDisplayType display_type, co
 
     if (free_display_number)
         g_free (display_number);
+
+    g_free (temp_codec);
 
     return description;
 }
@@ -767,7 +775,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 
             /* Update text */
             gchar * description = NULL;
-            gchar * const audio_codec = call_get_audio_codec (c);
+            gchar * audio_codec = call_get_audio_codec (c);
 
             if (c->_state == CALL_STATE_TRANSFERT) {
                 description = calltree_display_call_info (c, DISPLAY_TYPE_CALL_TRANSFER, NULL);
@@ -868,11 +876,20 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
                 else // parent is not NULL this is a conference participant
                     pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
 
+                gchar *old_description = description;
+                g_free (old_description);
+
                 description = calltree_display_call_info (c, DISPLAY_TYPE_HISTORY, NULL);
-                const gchar * const date = get_formatted_start_timestamp (c->_time_start);
-                const gchar *duration = get_call_duration (c);
-                duration = g_strconcat (date , duration , NULL);
-                description = g_strconcat (description , duration, NULL);
+                gchar * date = get_formatted_start_timestamp (c->_time_start);
+                gchar *duration = get_call_duration (c);
+                gchar *full_duration = g_strconcat (date , duration , NULL);
+                g_free (date);
+                g_free (duration);
+
+                old_description = description;
+                description = g_strconcat (old_description , full_duration, NULL);
+                g_free (full_duration);
+                g_free (old_description);
             }
 
             gtk_tree_store_set (store, &iter,
@@ -918,7 +935,7 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 
     if (c) {
         account_details = account_list_get_by_id (c->_accountID);
-        if(account_details == NULL)
+        if (account_details == NULL)
             ERROR("CallTree: Could not find account %s", c->_accountID);
         else {
             srtp_enabled = g_hash_table_lookup (account_details->properties, ACCOUNT_SRTP_ENABLED);
@@ -957,7 +974,7 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
             default:
                 WARN ("Update calltree add - Should not happen!");
         }
-        if (g_strcasecmp (srtp_enabled, "true") == 0)
+        if (srtp_enabled && g_strcasecmp (srtp_enabled, "true") == 0)
             pixbuf_security = gdk_pixbuf_new_from_file (ICONS_DIR "/secure_off.svg", NULL);
 
     } else if (tab == contacts) {
@@ -1011,7 +1028,7 @@ void calltree_add_history_entry (callable_obj_t *c, GtkTreeIter *parent)
     gchar *date = NULL;
     gchar *duration = NULL;
 
-    const gchar * description = calltree_display_call_info (c, DISPLAY_TYPE_HISTORY, NULL);
+    gchar * description = calltree_display_call_info (c, DISPLAY_TYPE_HISTORY, NULL);
 
     gtk_tree_store_prepend (history->store, &iter, parent);
 
@@ -1041,8 +1058,12 @@ void calltree_add_history_entry (callable_obj_t *c, GtkTreeIter *parent)
 
     date = get_formatted_start_timestamp (c->_time_start);
     duration = get_call_duration (c);
-    duration = g_strconcat (date , duration , NULL);
-    description = g_strconcat (description , duration, NULL);
+    gchar * full_duration = g_strconcat (date , duration , NULL);
+    g_free (date);
+    g_free (duration);
+    gchar * full_description = g_strconcat (description , full_duration, NULL);
+    g_free (description);
+    g_free (full_duration);
 
     //Resize it
     if (pixbuf)
@@ -1055,10 +1076,12 @@ void calltree_add_history_entry (callable_obj_t *c, GtkTreeIter *parent)
 
     gtk_tree_store_set (history->store, &iter,
             0, pixbuf, // Icon
-            1, description, // Description
+            1, full_description, // Description
             2, pixbuf_security, // Icon
             3, c,      // Pointer
             -1);
+
+    g_free (full_description);
 
     if (pixbuf != NULL)
         g_object_unref (G_OBJECT (pixbuf));

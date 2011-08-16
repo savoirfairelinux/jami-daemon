@@ -1349,19 +1349,6 @@ SIPVoIPLink::refuse (const std::string& id)
     return true;
 }
 
-void
-SIPVoIPLink::terminateCall (const std::string& id)
-{
-    _debug ("UserAgent: Terminate call %s", id.c_str());
-
-    SIPCall *call = getSIPCall (id);
-
-    if (call) {
-        // terminate the sip call
-        delete call;
-    }
-}
-
 std::string
 SIPVoIPLink::getCurrentCodecName(const std::string& id)
 {
@@ -2994,8 +2981,6 @@ pjsip_route_hdr *SIPVoIPLink::createRouteSet(Account *account, pj_pool_t *hdr_po
 		port = "0";
 	}
 
-	std::cout << "Host: " << host << ", Port: " << port << std::endl;
-
     route_set = pjsip_route_hdr_create (hdr_pool);
     pjsip_route_hdr *routing = pjsip_route_hdr_create (hdr_pool);
     pjsip_sip_uri *url = pjsip_sip_uri_create (hdr_pool, 0);
@@ -3147,7 +3132,6 @@ void setVoicemailInfo (std::string account, pjsip_msg_body *body)
     try {
 
         voicemail_str = msg_body.substr (pos_begin + voice_str.length(), pos_end - (pos_begin + voice_str.length()));
-        std::cout << "voicemail number : " << voicemail_str << std::endl;
         voicemail = atoi (voicemail_str.c_str());
     } catch (std::out_of_range& e) {
         std::cerr << e.what() << std::endl;
@@ -3266,8 +3250,7 @@ void invite_session_state_changed_cb (pjsip_inv_session *inv, pjsip_event *e)
         if (statusCode) {
             const pj_str_t * description = pjsip_get_status_text (statusCode);
             // test wether or not dbus manager is instantiated, if not no need to notify the client
-            if (Manager::instance().getDbusManager())
-                DBusManager::instance().getCallManager()->sipCallStateChanged (call->getCallId(), std::string (description->ptr, description->slen), statusCode);
+            Manager::instance().getDbusManager()->getCallManager()->sipCallStateChanged (call->getCallId(), std::string (description->ptr, description->slen), statusCode);
         }
     }
 
@@ -3500,9 +3483,9 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
                 call->getAudioRtp()->setRemoteCryptoInfo (sdesnego);
             } catch (...) {}
 
-            DBusManager::instance().getCallManager()->secureSdesOn (call->getCallId());
+            Manager::instance().getDbusManager()->getCallManager()->secureSdesOn (call->getCallId());
         } else {
-            DBusManager::instance().getCallManager()->secureSdesOff (call->getCallId());
+            Manager::instance().getDbusManager()->getCallManager()->secureSdesOff (call->getCallId());
         }
     }
 
@@ -3702,7 +3685,7 @@ void registration_cb (struct pjsip_regc_cbparam *param)
 
     if (param->code && description) {
         std::string state(description->ptr, description->slen);
-        DBusManager::instance().getCallManager()->registrationStateChanged (account->getAccountID(), state, param->code);
+        Manager::instance().getDbusManager()->getCallManager()->registrationStateChanged (account->getAccountID(), state, param->code);
         std::pair<int, std::string> details (param->code, state);
         // TODO: there id a race condition for this ressource when closing the application
         account->setRegistrationStateDetailed (details);
@@ -4596,8 +4579,6 @@ std::string fetchHeaderValue (pjsip_msg *msg, std::string field)
     std::string value, url;
     size_t pos;
 
-    std::cout << "fetch header value" << std::endl;
-
     /* Convert the field name into pjsip type */
     name = pj_str ( (char*) field.c_str());
 
@@ -4688,7 +4669,7 @@ std::vector<std::string> SIPVoIPLink::getAllIpInterfaceByName (void)
     for (int i = 0; i < nifaces; i++) {
         _debug ("  %s  ", ifreqs[i].ifr_name);
         ifaceList.push_back (std::string (ifreqs[i].ifr_name));
-        printf ("    %s\n", getInterfaceAddrFromName (std::string (ifreqs[i].ifr_name)).c_str());
+        _debug ("    %s\n", getInterfaceAddrFromName (ifreqs[i].ifr_name).c_str());
     }
 
     return ifaceList;

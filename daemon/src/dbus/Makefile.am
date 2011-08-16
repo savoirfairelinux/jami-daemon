@@ -15,7 +15,7 @@ libdbus_la_SOURCES = \
     callmanager.cpp \
     configurationmanager.cpp  \
     instance.cpp  \
-    dbusmanagerimpl.cpp  \
+    dbusmanager.cpp  \
     networkmanager.cpp
 
 if USE_NETWORKMANAGER
@@ -34,7 +34,6 @@ noinst_HEADERS =            \
     configurationmanager.h  \
     instance.h              \
     dbusmanager.h           \
-    dbusmanagerimpl.h       \
     networkmanager_proxy.h  \
     networkmanager.h        \
     $(BUILT_SOURCES)

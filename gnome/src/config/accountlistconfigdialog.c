@@ -337,7 +337,9 @@ static void account_move (gboolean moveUp, gpointer data)
 
 
     // Set the order in the configuration file
-    dbus_set_accounts_order (account_list_get_ordered_list ());
+    gchar *ordered_account_list = account_list_get_ordered_list ();
+    dbus_set_accounts_order (ordered_account_list);
+    g_free (ordered_account_list);
 }
 
 /**

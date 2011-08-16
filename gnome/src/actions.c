@@ -735,15 +735,14 @@ process_dialing (callable_obj_t *c, guint keyval, gchar *key)
             if (keyval < 127 || (keyval > 65400 && keyval < 65466)) {
 
                 if (c->_state == CALL_STATE_TRANSFERT) {
-                    c->_trsft_to = g_strconcat (c->_trsft_to, key, NULL);
+                    gchar *new_trsft = g_strconcat (c->_trsft_to, key, NULL);
+                    g_free (c->_trsft_to);
+                    c->_trsft_to = new_trsft;
                 } else {
                     dbus_play_dtmf (key);
-                    c->_peer_number = g_strconcat (c->_peer_number, key, NULL);
-                }
-
-                if (c->_state == CALL_STATE_DIALING) {
-                    //g_free(c->_peer_name);
-                    //c->_peer_name = g_strconcat("\"\" <", c->_peer_number, ">", NULL);
+                    gchar *new_peer_number = g_strconcat (c->_peer_number, key, NULL);
+                    g_free (c->_peer_number);
+                    c->_peer_number = new_peer_number;
                 }
 
                 calltree_update_call (current_calls, c, NULL);
@@ -821,16 +820,6 @@ sflphone_keypad (guint keyval, gchar * key)
                     default:
                         // To play the dtmf when calling mail box for instance
                         dbus_play_dtmf (key);
-
-                        if (keyval < 255 || (keyval >65453 && keyval < 65466)) {
-                            //gchar * temp = g_strconcat(call_get_number(c), key, NULL);
-                            //gchar * before = c->from;
-                            //c->from = g_strconcat("\"",call_get_name(c) ,"\" <", temp, ">", NULL);
-                            //g_free(before);
-                            //g_free(temp);
-                            //update_callable_obj_tree(current_calls,c);
-                        }
-
                         break;
                 }
 

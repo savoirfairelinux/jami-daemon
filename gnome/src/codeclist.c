@@ -57,10 +57,11 @@ static codec_t *codec_create (gint payload, gchar **specs)
     codec->payload = payload;
     codec->name = specs[0];
     codec->bitrate = specs[1];
-    codec->sample_rate = atoi(specs[2]);
+    codec->sample_rate = specs[2] ? atoi(specs[2]) : 0;
     codec->is_active = TRUE;
 
-    g_strfreev(specs);
+    free(specs[2]);
+    free(specs);
 
     return codec;
 }
@@ -84,31 +85,7 @@ static gboolean codecs_audio_load (void)
     g_free(codecs_orig);
 
     // If we didn't load any codecs, problem ...
-    if (g_queue_get_length (&audioCodecs) == 0) {
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-void codec_create_new (gint payload, gboolean active, codec_t **c)
-{
-    gchar **specs = (gchar **) dbus_audio_codec_details (payload);
-    codec_create_new_with_specs(payload, specs, active, c);
-}
-
-void codec_create_new_with_specs (gint payload, gchar **specs, gboolean active, codec_t **c)
-{
-    codec_t *codec;
-
-    codec = g_new0 (codec_t, 1);
-    codec->payload = payload;
-    codec->name = strdup(specs[0]);
-    codec->sample_rate = atoi (specs[1]);
-    codec->bitrate = strdup (specs[2]);
-    codec->is_active = active;
-
-    *c = codec;
+    return g_queue_get_length (&audioCodecs) > 0;
 }
 
 static gboolean codecs_video_load (void)
@@ -130,10 +107,7 @@ static gboolean codecs_video_load (void)
     g_free(codecs_orig);
 
     // If we didn't load any codecs, problem ...
-    if (g_queue_get_length (&videoCodecs) == 0) {
-        return FALSE;
-    }
-    return TRUE;
+    return g_queue_get_length (&videoCodecs) > 0;
 }
 
 gboolean codecs_load(void)

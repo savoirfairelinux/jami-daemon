@@ -60,6 +60,7 @@ AudioRtpSession::AudioRtpSession (SIPCall * sipcall, RtpMethod type, ost::RTPDat
 AudioRtpSession::~AudioRtpSession()
 {
     _info ("AudioRtpSession: Delete AudioRtpSession instance");
+    _queue->disableStack();
 }
 
 void AudioRtpSession::updateSessionMedia (AudioCodec *audioCodec)
@@ -298,17 +299,6 @@ int AudioRtpSession::startRtpThread (AudioCodec* audiocodec)
     AudioSymmetricRtpSession *self = dynamic_cast<AudioSymmetricRtpSession*>(this);
     assert(self);
     return self->startSymmetricRtpThread();
-}
-
-void AudioRtpSession::stopRtpThread ()
-{
-    _queue->disableStack();
-    if (_type != Zrtp) {
-        AudioSymmetricRtpSession *self = dynamic_cast<AudioSymmetricRtpSession*>(this);
-        assert(self);
-        _debug ("AudioSymmetricRtpSession: Stopping main thread");
-        self->stopSymmetricRtpThread();
-    }
 }
 
 

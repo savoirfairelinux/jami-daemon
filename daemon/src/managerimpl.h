@@ -170,14 +170,6 @@ class ManagerImpl
         void terminate (void);
 
         /**
-         * Set user interface manager.
-         * @param man The DBUS interface implementation
-         */
-        void setDBusManager (DBusManagerImpl* man) {
-            _dbus = man;
-        }
-
-        /**
          * Accessor to audiodriver.
          * it's multi-thread and use mutex internally
          * @return AudioLayer*  The audio layer object
@@ -387,13 +379,6 @@ class ManagerImpl
          *	    false otherwise
          */
         bool saveConfig (void);
-
-        /**
-         * Send registration to all enabled accounts
-         * @return 0 on registration success
-         *          1 otherelse
-         */
-        int initRegisterAccounts();
 
         /**
          * @return true if we tried to register once
@@ -736,9 +721,9 @@ class ManagerImpl
          * Required format: payloads separated with one slash.
          * @return std::string The serializabled string
          */
-        std::string serialize (std::vector<std::string> v);
+        static std::string serialize (std::vector<std::string> v);
 
-        std::vector<std::string> unserialize (std::string v);
+        static std::vector<std::string> unserialize (std::string v);
 
         /**
          * Tells if IAX2 support is enabled
@@ -1132,7 +1117,7 @@ class ManagerImpl
          * Fills the local _config (Conf::ConfigTree) with the default contents.
          * Called in main.cpp, just before Manager::init().
          */
-        void initConfigFile (bool load_user_value=true, std::string alternate="");
+        void initConfigFile (std::string alternate="");
 
         /**
          * Tell if the setup was already loaded
@@ -1215,14 +1200,9 @@ class ManagerImpl
         int app_is_running (std::string process);
 
         /**
-         * Create .PROGNAME directory in home user and create
-         * configuration tree from the settings file if this file exists.
-         *
-         * @return	0 if creating file failed
-         *			1 if config-file exists
-         *			2 if file doesn't exist yet.
+         * Create config directory in home user and return configuration file path
          */
-        int createSettingsPath (void);
+        std::string getConfigFile (void);
 
         /*
          * Initialize audiocodec with config setting
@@ -1297,7 +1277,7 @@ class ManagerImpl
         /**
          * Multithread variable (non protected)
          */
-        DBusManagerImpl * _dbus;
+        DBusManager _dbus;
 
         /**
          * Waiting Call Vectors
@@ -1444,11 +1424,11 @@ class ManagerImpl
         bool hasCurrentCall();
 
         /**
-         * Return the current DBusManagerImpl
-         * @return A pointer to the DBusManagerImpl instance
+         * Return the current DBusManager
+         * @return A pointer to the DBusManager instance
          */
-        DBusManagerImpl * getDbusManager() {
-            return _dbus;
+        DBusManager * getDbusManager() {
+            return &_dbus;
         }
 
         /**
@@ -1515,6 +1495,13 @@ class ManagerImpl
 
         // Assignment Operator
         ManagerImpl& operator= (const ManagerImpl& rh);
+
+        /**
+         * Send registration to all enabled accounts
+         * @return 0 on registration success
+         *          1 otherelse
+         */
+        int initRegisterAccounts();
 
         NumberCleaner *_cleaner;
 

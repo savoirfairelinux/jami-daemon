@@ -73,9 +73,8 @@ void Preferences::serialize (Conf::YamlEmitter *emiter)
 	Conf::MappingNode preferencemap (NULL);
 
     Conf::ScalarNode order (_accountOrder);
-    // std::stringstream audiostr;
-    // audiostr << _audioApi;
-    Conf::ScalarNode audioapi (_audioApi == 1 ? "pulseaudio" : "alsa");
+    std::string audioapistr = (_audioApi == 1) ? "pulseaudio" : "alsa";
+    Conf::ScalarNode audioapi (audioapistr);
     std::stringstream histlimitstr;
     histlimitstr << _historyLimit;
     Conf::ScalarNode historyLimit (histlimitstr.str());

@@ -144,7 +144,7 @@ config_auto.h
 /gnome/install-sh
 /gnome/missing
 /gnome/mkinstalldirs
-/gnome/src/gnome
+/gnome/src/sflphone-client-gnome
 /gnome/autom4te*
 /gnome/sflphone.desktop
 /gnome/confdefs.h

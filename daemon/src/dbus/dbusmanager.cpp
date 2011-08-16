@@ -28,7 +28,7 @@
  *  as that of the covered work.
  */
 
-#include <dbusmanagerimpl.h>
+#include <dbusmanager.h>
 #include "global.h"
 #include "manager.h"
 
@@ -36,39 +36,38 @@
 #include "configurationmanager.h"
 #include "networkmanager.h"
 
-const char* DBusManagerImpl::SERVER_NAME = "org.sflphone.SFLphone";
-
-void
-DBusManagerImpl::exec()
-{
-
-    DBus::default_dispatcher = &_dispatcher;
-
-    DBus::Connection sessionConnection = DBus::Connection::SessionBus();
-    DBus::Connection systemConnection = DBus::Connection::SystemBus();
-    sessionConnection.request_name (SERVER_NAME);
-
-    _callManager = new CallManager (sessionConnection);
-    _configurationManager = new ConfigurationManager (sessionConnection);
-    _instanceManager = new Instance (sessionConnection);
-
+DBusManager::DBusManager()
+    : _connected(false)
+	, _callManager(NULL)
+    , _configurationManager(NULL)
+    , _instanceManager(NULL)
 #ifdef USE_NETWORKMANAGER
-    _networkManager = new NetworkManager (systemConnection, "/org/freedesktop/NetworkManager", "");
+    , _networkManager(NULL)
 #endif
+{
+    try {
+        DBus::default_dispatcher = &_dispatcher;
 
-    // Register accounts
-    Manager::instance().initRegisterAccounts(); //getEvents();
+        DBus::Connection sessionConnection = DBus::Connection::SessionBus();
+        sessionConnection.request_name ("org.sflphone.SFLphone");
 
-    _debug ("Starting DBus event loop");
-    _dispatcher.enter();
+        _callManager = new CallManager (sessionConnection);
+        _configurationManager = new ConfigurationManager (sessionConnection);
+        _instanceManager = new Instance (sessionConnection);
+
+    #ifdef USE_NETWORKMANAGER
+        DBus::Connection systemConnection = DBus::Connection::SystemBus();
+        _networkManager = new NetworkManager (systemConnection, "/org/freedesktop/NetworkManager", "");
+    #endif
+
+        _connected = true;
+    } catch (const DBus::Error &err) {
+        _error("%s: %s\n", err.name(), err.what());
+    }
 }
 
-void
-DBusManagerImpl::exit()
+DBusManager::~DBusManager()
 {
-
-    _dispatcher.leave();
-
     delete _callManager;
     delete _configurationManager;
     delete _instanceManager;
@@ -76,6 +75,16 @@ DBusManagerImpl::exit()
 #ifdef USE_NETWORKMANAGER
     delete _networkManager;
 #endif
+}
 
+void DBusManager::exec()
+{
+    _dispatcher.enter();
+}
+
+void
+DBusManager::exit()
+{
+    _dispatcher.leave();
 }
 

@@ -276,7 +276,7 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
     std::string vcodecs;
     map->getValue(videocodecsKey, &vcodecs);
     // Update codec list which one is used for SDP offer
-    setActiveCodecs (Manager::instance ().unserialize (_codecStr));
+    setActiveCodecs (ManagerImpl::unserialize (_codecStr));
 
     setActiveVideoCodecs (Manager::instance ().unserialize (vcodecs));
 
@@ -331,7 +331,6 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
 			map[USERNAME] = user;
 			map[PASSWORD] = pass;
 			map[REALM] = realm;
-			printf("UNSERIALIZED %s %s %s\n", user.c_str(), pass.c_str(), realm.c_str());
 			creds.push_back(map);
 		}
 	}

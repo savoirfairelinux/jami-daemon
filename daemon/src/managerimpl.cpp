@@ -65,8 +65,6 @@
 #include <sys/types.h> // mkdir(2)
 #include <sys/stat.h>  // mkdir(2)
 
-#include <pwd.h>       // getpwuid
-
 #define DIRECT_IP_CALL	"IP CALL"
 
 #define fill_config_str(name, value) \
@@ -77,13 +75,13 @@
 #define MD5_APPEND(pms,buf,len) pj_md5_update(pms, (const pj_uint8_t*)buf, len)
 
 ManagerImpl::ManagerImpl (void) :
-    _hasTriedToRegister(false), _config(), _currentCallId2(),
-    _currentCallMutex(), _audiodriver(0),
-    _dtmfKey(0), _audioCodecFactory(), _toneMutex(),
-    _telephoneTone(0), _audiofile(0), _spkr_volume(0),
-    _mic_volume(0), _mutex(), _dbus(0), _waitingCall(),
-    _waitingCallMutex(), _nbIncomingWaitingCall(0), _path(""),
-    _setupLoaded(false), _callAccountMap(),
+    _hasTriedToRegister (false), _config(), _currentCallId2(),
+    _currentCallMutex(), _audiodriver (NULL),
+    _dtmfKey (NULL), _audioCodecFactory(), _toneMutex(),
+    _telephoneTone (NULL), _audiofile (NULL), _spkr_volume (0),
+    _mic_volume (0), _mutex(), _waitingCall(),
+    _waitingCallMutex(), _nbIncomingWaitingCall (0), _path (""),
+    _setupLoaded (false), _callAccountMap(),
     _callAccountMapMutex(), _callConfigMap(), _accountMap(),
     _directIpAccount(0), _cleaner(0), _history(0), parser_(0),
     emitter_(0)
@@ -113,31 +111,16 @@ ManagerImpl::ManagerImpl (void) :
 // never call if we use only the singleton...
 ManagerImpl::~ManagerImpl (void)
 {
-    if (_audiofile) {
-        delete _audiofile;
-        _audiofile = NULL;
-    }
-
+	delete _audiofile;
     delete _cleaner;
-    _cleaner = NULL;
     delete _history;
-    _history = NULL;
     delete _imModule;
-    _imModule = NULL;
-
-    _debug ("Manager: %s stop correctly.", PROGNAME);
 }
 
 void ManagerImpl::init ()
 {
-
-    _debug ("Manager: Init");
-
     // Load accounts, init map
     buildConfiguration();
-
-    _debug ("Manager: account map loaded");
-
     initVolume();
     initAudioDriver();
     selectAudioDriver();
@@ -170,7 +153,8 @@ void ManagerImpl::init ()
     // Init the instant messaging module
     _imModule->init();
 
-
+    // Register accounts
+    initRegisterAccounts(); //getEvents();
 }
 
 void ManagerImpl::terminate ()
@@ -209,18 +193,12 @@ void ManagerImpl::terminate ()
 
 bool ManagerImpl::isCurrentCall (const std::string& callId)
 {
-    return (_currentCallId2 == callId ? true : false);
+    return _currentCallId2 == callId;
 }
 
 bool ManagerImpl::hasCurrentCall ()
 {
-    // _debug ("ManagerImpl::hasCurrentCall current call ID = %s", _currentCallId2.c_str());
-
-    if (_currentCallId2 != "") {
-        return true;
-    }
-
-    return false;
+	return _currentCallId2 != "";
 }
 
 const std::string&
@@ -307,7 +285,7 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 
     _debug ("Manager: Selecting account %s", account_id.c_str());
 
-    // Is this accout exist
+    // Is this account exist
     if (!accountExists (account_id)) {
         _error ("Manager: Error: Account doesn't exist in new outgoing call");
         return false;
@@ -402,16 +380,11 @@ bool ManagerImpl::answerCall (const std::string& call_id)
     }
 
     // update call state on client side
-    if (_dbus == NULL) {
-    	_error("Manager: Error: DBUS was not initialized");
-    	return false;
-    }
-
     if(audioPreference.getIsAlwaysRecording()) {
-        _dbus->getCallManager()->callStateChanged (call_id, "RECORD");
+        _dbus.getCallManager()->callStateChanged (call_id, "RECORD");
     }
     else {
-    	_dbus->getCallManager()->callStateChanged(call_id, "CURRENT");
+    	_dbus.getCallManager()->callStateChanged(call_id, "CURRENT");
     }
 
     return true;
@@ -443,11 +416,6 @@ bool ManagerImpl::hangupCall (const std::string& callId)
     }
 
 
-    if (_dbus == NULL) {
-    	_error("Manager: Error: Dbus layer have not been instantiated");
-    	return false;
-    }
-
     // store the current call id
     std::string currentCallId = getCurrentCallId();
 
@@ -455,7 +423,7 @@ bool ManagerImpl::hangupCall (const std::string& callId)
 
     /* Broadcast a signal over DBus */
     _debug ("Manager: Send DBUS call state change (HUNGUP) for id %s", callId.c_str());
-    _dbus->getCallManager()->callStateChanged (callId, "HUNGUP");
+    _dbus.getCallManager()->callStateChanged (callId, "HUNGUP");
 
     if (not isValidCall(callId) and not getConfigFromCall(callId) == Call::IPtoIP) {
     	_error("Manager: Error: Could not hang up call, call not valid");
@@ -618,12 +586,7 @@ bool ManagerImpl::onHoldCall (const std::string& callId)
         switchCall ("");
     }
 
-    if (_dbus == NULL) {
-    	_error("Manager: Error: DBUS not initialized");
-    	return false;
-    }
-
-    _dbus->getCallManager()->callStateChanged (callId, "HOLD");
+    _dbus.getCallManager()->callStateChanged (callId, "HOLD");
 
     getMainBuffer()->stateInfo();
 
@@ -674,16 +637,7 @@ bool ManagerImpl::offHoldCall (const std::string& callId)
         returnValue = getAccountLink (accountId)->offhold (callId);
     }
 
-    if (_dbus == NULL) {
-     	_error("Manager: Error: DBUS not initialized");   
-    }
-
-    if (isRec) {
-    	_dbus->getCallManager()->callStateChanged (callId, "UNHOLD_RECORD");
-    }
-    else {
-        _dbus->getCallManager()->callStateChanged (callId, "UNHOLD_CURRENT");
-    }
+    _dbus.getCallManager()->callStateChanged (callId, isRec ? "UNHOLD_RECORD" : "UNHOLD_CURRENT");
 
     if (participToConference (callId)) {
         std::string currentAccountId;
@@ -757,21 +711,12 @@ bool ManagerImpl::transferCall (const std::string& callId, const std::string& to
 
 void ManagerImpl::transferFailed ()
 {
-
-    _debug ("Manager: Transfer failed");
-
-    if (_dbus)
-        _dbus->getCallManager()->transferFailed();
+	_dbus.getCallManager()->transferFailed();
 }
 
 void ManagerImpl::transferSucceded ()
 {
-
-    _debug ("Manager: Transfer succeded");
-
-    if (_dbus)
-        _dbus->getCallManager()->transferSucceded();
-
+	_dbus.getCallManager()->transferSucceded();
 }
 
 bool ManagerImpl::attendedTransfer(const std::string& transferID, const std::string& targetID)
@@ -849,8 +794,7 @@ bool ManagerImpl::refuseCall (const std::string& id)
     if (returnValue) {
         removeWaitingCall (id);
 
-        if (_dbus)
-            _dbus->getCallManager()->callStateChanged (id, "HUNGUP");
+        _dbus.getCallManager()->callStateChanged (id, "HUNGUP");
     }
 
     // Disconnect streams
@@ -875,9 +819,7 @@ ManagerImpl::createConference (const std::string& id1, const std::string& id2)
     _conferencemap.insert (std::pair<std::string, Conference*> (conf->getConfID(), conf));
 
     // broadcast a signal over dbus
-    if (_dbus) {
-        _dbus->getCallManager()->conferenceCreated (conf->getConfID());
-    }
+    _dbus.getCallManager()->conferenceCreated (conf->getConfID());
 
     return conf;
 }
@@ -903,9 +845,7 @@ void ManagerImpl::removeConference (const std::string& conference_id)
     }
 
     // broadcast a signal over dbus
-    if (_dbus) {
-        _dbus->getCallManager()->conferenceRemoved (conference_id);
-    }
+    _dbus.getCallManager()->conferenceRemoved (conference_id);
 
     // We now need to bind the audio to the remain participant
 
@@ -989,17 +929,8 @@ void ManagerImpl::holdConference (const std::string& id)
 
         }
 
-        if(isRec) {
-        	conf->setState(Conference::HOLD_REC);
-        }
-        else {
-            conf->setState (Conference::HOLD);
-        }
-
-        if (_dbus) {
-            _dbus->getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
-        }
-
+        conf->setState(isRec ? Conference::HOLD_REC : Conference::HOLD);
+        _dbus.getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
     }
 
 }
@@ -1044,16 +975,8 @@ void ManagerImpl::unHoldConference (const std::string& id)
 
         }
 
-        if(isRec) {
-            conf->setState (Conference::ACTIVE_ATTACHED_REC);
-        }
-        else {
-        	conf->setState (Conference::ACTIVE_ATTACHED);
-        }
-
-        if (_dbus) {
-            _dbus->getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
-        }
+        conf->setState (isRec ? Conference::ACTIVE_ATTACHED_REC : Conference::ACTIVE_ATTACHED);
+        _dbus.getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
     }
 
 }
@@ -1215,9 +1138,7 @@ void ManagerImpl::addMainParticipant (const std::string& conference_id)
         	_warn("Manager: Warning: Invalid conference state while adding main participant");
         }
 
-        if (_dbus)
-            _dbus->getCallManager()->conferenceChanged (conference_id, conf->getStateStr());
-
+        _dbus.getCallManager()->conferenceChanged (conference_id, conf->getStateStr());
     }
 
     audioLayerMutexUnlock();
@@ -1345,49 +1266,44 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
     Conference *conf = new Conference();
 
     for(unsigned int i = 0; i < participantList.size(); i++) {
-	std::string numberaccount = participantList[i];
-	std::string tostr = numberaccount.substr(0, numberaccount.find(","));
-        std::string account = numberaccount.substr(numberaccount.find(",")+1, numberaccount.size());
-		
-	std::string generatedCallID = getNewCallID();
+		std::string numberaccount = participantList[i];
+		std::string tostr = numberaccount.substr(0, numberaccount.find(","));
+			std::string account = numberaccount.substr(numberaccount.find(",")+1, numberaccount.size());
 
-	// Manager methods may behave differently if the call id particip to a conference
-	conf->add(generatedCallID);
+		std::string generatedCallID = getNewCallID();
 
-	switchCall("");
+		// Manager methods may behave differently if the call id particip to a conference
+		conf->add(generatedCallID);
 
-	// Create call
-	callSuccess = outgoingCall(account, generatedCallID, tostr, conf->getConfID());
+		switchCall("");
 
-        // If not able to create call remove this participant from the conference
-	if(!callSuccess)
-	    conf->remove(generatedCallID);
+		// Create call
+		callSuccess = outgoingCall(account, generatedCallID, tostr, conf->getConfID());
 
-	if(_dbus && callSuccess) {
-	    _dbus->getCallManager()->newCallCreated(account, generatedCallID, tostr);
-	    successCounter++;
-	}	
+			// If not able to create call remove this participant from the conference
+		if(!callSuccess)
+			conf->remove(generatedCallID);
+		else {
+			_dbus.getCallManager()->newCallCreated(account, generatedCallID, tostr);
+			successCounter++;
+		}
     }
 
     // Create the conference if and only if at least 2 calls have been successfully created
     if(successCounter >= 2 ) {
         _conferencemap.insert(std::pair<std::string, Conference *> (conf->getConfID(), conf));
 
-        if (_dbus) {
-            _dbus->getCallManager()->conferenceCreated (conf->getConfID());
-        }
+        _dbus.getCallManager()->conferenceCreated (conf->getConfID());
 
-	audioLayerMutexLock();
-	if(_audiodriver) {
-	    conf->setRecordingSmplRate(_audiodriver->getSampleRate());
-        }
-	audioLayerMutexUnlock();
+		audioLayerMutexLock();
+		if(_audiodriver)
+			conf->setRecordingSmplRate(_audiodriver->getSampleRate());
 
-	getMainBuffer()->stateInfo();
-    }
-    else {
-	delete conf;
-	conf = NULL;
+		audioLayerMutexUnlock();
+
+		getMainBuffer()->stateInfo();
+    } else {
+		delete conf;
     }
     
 }
@@ -1464,9 +1380,7 @@ void ManagerImpl::detachParticipant (const std::string& call_id,
         	_warn("Manager: Warning: Undefined behavior, invalid conference state in detach participant");
         }
 
-        if (_dbus) {
-        	_dbus->getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
-        }
+        _dbus.getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
 
         switchCall ("");
 
@@ -1912,9 +1826,7 @@ bool ManagerImpl::incomingCall (Call* call, const std::string& accountId)
     display.append (" ");
     display.append (from);
 
-    if (_dbus) {
-        _dbus->getCallManager()->incomingCall (accountId, call->getCallId(), display.c_str());
-    }
+    _dbus.getCallManager()->incomingCall (accountId, call->getCallId(), display.c_str());
 
     return true;
 }
@@ -1965,16 +1877,11 @@ void ManagerImpl::incomingMessage (const std::string& callID,
         }
 
         // in case of a conference we must notify client using conference id
-        if (_dbus) {
-            _dbus->getCallManager()->incomingMessage (conf->getConfID(), from, message);
-        }
+        _dbus.getCallManager()->incomingMessage (conf->getConfID(), from, message);
 
     } else {
-
-        if (_dbus) {
-            _dbus->getCallManager()->incomingMessage (callID, from, message);
-        }
-    }
+    	_dbus.getCallManager()->incomingMessage (callID, from, message);
+	}
 }
 
 
@@ -2110,36 +2017,21 @@ void ManagerImpl::peerAnsweredCall (const std::string& id)
 
     if(audioPreference.getIsAlwaysRecording()) {
     	setRecordingCall(id);
-    }
-
-    if(_dbus == NULL) {
-    	_error("Manager: Error: DBUS not initialized");
-    	return;
-    }
-
-    if(audioPreference.getIsAlwaysRecording()) {
-    	_dbus->getCallManager()->callStateChanged (id, "RECORD");
-    }
-    else {
-    	_dbus->getCallManager()->callStateChanged(id, "CURRENT");
+    	_dbus.getCallManager()->callStateChanged (id, "RECORD");
+    } else {
+    	_dbus.getCallManager()->callStateChanged(id, "CURRENT");
     }
 }
 
 //THREAD=VoIP Call=Outgoing
 void ManagerImpl::peerRingingCall (const std::string& id)
 {
-
     _debug ("Manager: Peer call %s ringing", id.c_str());
 
-    if (isCurrentCall (id)) {
+    if (isCurrentCall (id))
         ringback();
-    }
 
-    if (_dbus == NULL) {
-    	_error("Manager: Error: DBUS not initialized");
-    }
-
-    _dbus->getCallManager()->callStateChanged (id, "RINGING");
+    _dbus.getCallManager()->callStateChanged (id, "RINGING");
 }
 
 //THREAD=VoIP Call=Outgoing/Ingoing
@@ -2178,9 +2070,7 @@ void ManagerImpl::peerHungupCall (const std::string& call_id)
     }
 
     /* Broadcast a signal over DBus */
-    if (_dbus) {
-        _dbus->getCallManager()->callStateChanged (call_id, "HUNGUP");
-    }
+    _dbus.getCallManager()->callStateChanged (call_id, "HUNGUP");
 
     removeWaitingCall (call_id);
 
@@ -2206,9 +2096,7 @@ void ManagerImpl::callBusy (const std::string& id)
 {
     _debug ("Manager: Call %s busy", id.c_str());
 
-    if (_dbus) {
-        _dbus->getCallManager()->callStateChanged (id, "BUSY");
-    }
+    _dbus.getCallManager()->callStateChanged (id, "BUSY");
 
     if (isCurrentCall (id)) {
         playATone (Tone::TONE_BUSY);
@@ -2223,9 +2111,7 @@ void ManagerImpl::callBusy (const std::string& id)
 //THREAD=VoIP
 void ManagerImpl::callFailure (const std::string& call_id)
 {
-    if (_dbus) {
-        _dbus->getCallManager()->callStateChanged (call_id, "FAILURE");
-    }
+	_dbus.getCallManager()->callStateChanged (call_id, "FAILURE");
 
     if (isCurrentCall (call_id)) {
         playATone (Tone::TONE_BUSY);
@@ -2262,19 +2148,13 @@ void ManagerImpl::callFailure (const std::string& call_id)
 void ManagerImpl::startVoiceMessageNotification (const std::string& accountId,
         int nb_msg)
 {
-    if (_dbus) {
-        _dbus->getCallManager()->voiceMailNotify (accountId, nb_msg);
-    }
+	_dbus.getCallManager()->voiceMailNotify (accountId, nb_msg);
 }
 
 void ManagerImpl::connectionStatusNotification ()
 {
-
-    _debug ("Manager: connectionStatusNotification");
-
-    if (_dbus != NULL) {
-        _dbus->getConfigurationManager()->accountsChanged();
-    }
+    if (_dbus.isConnected())
+    	_dbus.getConfigurationManager()->accountsChanged();
 }
 
 /**
@@ -2332,7 +2212,7 @@ void ManagerImpl::stopTone ()
 
     if (_audiofile) {
 		std::string filepath = _audiofile->getFilePath();
-		_dbus->getCallManager()->recordPlaybackStoped(filepath);
+		_dbus.getCallManager()->recordPlaybackStoped(filepath);
 		delete _audiofile;
 		_audiofile = NULL;
     }
@@ -2412,8 +2292,7 @@ void ManagerImpl::ringtone (const std::string& accountID)
 	_toneMutex.enterMutex();
 
 	if (_audiofile) {
-		if(_dbus)
-			_dbus->getCallManager()->recordPlaybackStoped(_audiofile->getFilePath());
+		_dbus.getCallManager()->recordPlaybackStoped(_audiofile->getFilePath());
 		delete _audiofile;
 		_audiofile = NULL;
 	}
@@ -2498,84 +2377,56 @@ void ManagerImpl::notificationIncomingCall (void)
 ///////////////////////////////////////////////////////////////////////////////
 /**
  * Initialization: Main Thread
- * @return 1: ok
- -1: error directory
  */
-int ManagerImpl::createSettingsPath (void)
+std::string ManagerImpl::getConfigFile (void)
 {
-
-    std::string xdg_config, xdg_env;
-
-    _debug ("XDG_CONFIG_HOME: %s", XDG_CONFIG_HOME);
-
-    xdg_config = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".config"
+	std::string configdir = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".config"
                  + DIR_SEPARATOR_STR + PROGDIR;
 
     if (XDG_CONFIG_HOME != NULL) {
-        xdg_env = std::string (XDG_CONFIG_HOME);
-        (xdg_env.length() > 0) ? _path = xdg_env : _path = xdg_config;
-    } else
-        _path = xdg_config;
+        std::string xdg_env = std::string (XDG_CONFIG_HOME);
+        if (xdg_env != "")
+        	configdir = xdg_env;
+    }
 
-    if (mkdir (_path.data(), 0700) != 0) {
+    if (mkdir (configdir.data(), 0700) != 0) {
         // If directory	creation failed
         if (errno != EEXIST) {
             _debug ("Cannot create directory: %m");
-            return -1;
         }
     }
 
-    // Load user's configuration
-    _path = _path + DIR_SEPARATOR_STR + PROGNAME + ".yml";
-
-    return 1;
+    return configdir + DIR_SEPARATOR_STR + PROGNAME + ".yml";
 }
 
 /**
  * Initialization: Main Thread
  */
-void ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
+void ManagerImpl::initConfigFile (std::string alternate)
 {
-
     _debug ("Manager: Init config file");
 
-    // Init display name to the username under which
-    // this sflphone instance is running.
-    uid_t uid = getuid();
-
-    struct passwd * user_info = NULL;
-    user_info = getpwuid (uid);
-
-    std::string path;
     // Loads config from ~/.sflphone/sflphoned.yml or so..
-
-    if (createSettingsPath() == 1 && load_user_value) {
-
-        (alternate == "") ? path = _path : path = alternate;
-        std::cout << path << std::endl;
-
-        _path = path;
-    }
-
-    _debug ("Manager: configuration file path: %s", path.c_str());
+    _path = (alternate != "") ? alternate : getConfigFile();
+    _debug ("Manager: configuration file path: %s", _path.c_str());
 
 
     bool fileExist = true;
     bool out = false;
 
-    if (path.empty()) {
+    if (_path.empty()) {
         _error ("Manager: Error: XDG config file path is empty!");
         fileExist = false;
     }
 
     std::fstream file;
 
-    file.open (path.data(), std::fstream::in);
+    file.open (_path.data(), std::fstream::in);
 
     if (!file.is_open()) {
 
-        _debug ("Manager: File %s not opened, create new one", path.c_str());
-        file.open (path.data(), std::fstream::out);
+        _debug ("Manager: File %s not opened, create new one", _path.c_str());
+        file.open (_path.data(), std::fstream::out);
         out = true;
 
         if (!file.is_open()) {
@@ -2651,12 +2502,10 @@ std::vector<std::string> ManagerImpl::unserialize (std::string s)
 
 std::string ManagerImpl::serialize (std::vector<std::string> v)
 {
-    unsigned int i;
     std::string res;
 
-    for (i = 0; i < v.size(); i++) {
+    for (unsigned int i = 0; i < v.size(); i++)
         res += v[i] + "/";
-    }
 
     return res;
 }
@@ -3037,8 +2886,7 @@ void ManagerImpl::setRecordingCall (const std::string& id)
 
     rec->setRecording();
 
-    if(_dbus)
-	_dbus->getCallManager()->recordPlaybackFilepath(id, rec->getFileName());  
+	_dbus.getCallManager()->recordPlaybackFilepath(id, rec->getFileName());
 }
 
 bool ManagerImpl::isRecording (const std::string& id)
@@ -3067,8 +2915,7 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
     _toneMutex.enterMutex();
 
     if(_audiofile) {
-		if(_dbus)
-			_dbus->getCallManager()->recordPlaybackStoped(_audiofile->getFilePath());
+    	_dbus.getCallManager()->recordPlaybackStoped(_audiofile->getFilePath());
 		delete _audiofile;
 		_audiofile = NULL;
     }
@@ -3172,10 +3019,8 @@ int32_t ManagerImpl::getAudioManager (void)
 
 void ManagerImpl::notifyErrClient (const int32_t& errCode)
 {
-    if (_dbus) {
-        _debug ("Manager: NOTIFY ERR NUMBER %d" , errCode);
-        _dbus -> getConfigurationManager() -> errorAlert (errCode);
-    }
+	_debug ("Manager: NOTIFY ERR NUMBER %d" , errCode);
+	_dbus.getConfigurationManager() -> errorAlert (errCode);
 }
 
 int ManagerImpl::getAudioDeviceIndex (const std::string name)
@@ -3619,10 +3464,6 @@ int ManagerImpl::getLocalIp2IpPort (void)
  */
 bool ManagerImpl::getCallStatus (const std::string& sequenceId UNUSED)
 {
-    if (!_dbus) {
-        return false;
-    }
-
     ost::MutexLock m (_callAccountMapMutex);
 
     CallAccountMap::iterator iter = _callAccountMap.begin();
@@ -3912,13 +3753,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID,
     }
 
     // Update account details to the client side
-    if (_dbus) {
-        _error("Manager: Error: Dbus not initialized");
-        return;
-    }
-
-    _dbus->getConfigurationManager()->accountsChanged();
-
+    _dbus.getConfigurationManager()->accountsChanged();
 }
 
 std::string ManagerImpl::addAccount (
@@ -3980,8 +3815,8 @@ std::string ManagerImpl::addAccount (
 
     saveConfig();
 
-    if (_dbus)
-        _dbus->getConfigurationManager()->accountsChanged();
+    if (_dbus.isConnected())
+        _dbus.getConfigurationManager()->accountsChanged();
 
     return accountID.str();
 }
@@ -4005,9 +3840,8 @@ void ManagerImpl::removeAccount (const std::string& accountID)
 
     _debug ("REMOVE ACCOUNT");
 
-    if (_dbus)
-        _dbus->getConfigurationManager()->accountsChanged();
-
+    if (_dbus.isConnected())
+        _dbus.getConfigurationManager()->accountsChanged();
 }
 
 // ACCOUNT handling
@@ -4244,42 +4078,27 @@ void ManagerImpl::unloadAccountMap ()
 {
     _debug ("Manager: Unload account map");
 
-    AccountMap::iterator iter = _accountMap.begin();
-
-    while (iter != _accountMap.end()) {
+    AccountMap::iterator iter;
+    for (iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
         // Avoid removing the IP2IP account twice
-        if (iter->first != "") {
+        if (iter->first != "")
             delete iter->second;
-            iter->second = NULL;
-        }
-
-        iter++;
     }
 
     _accountMap.clear();
-
-
 }
 
 bool ManagerImpl::accountExists (const std::string& accountID)
 {
-    AccountMap::iterator iter = _accountMap.find (accountID);
-
-    if (iter == _accountMap.end()) {
-        return false;
-    }
-
-    return true;
+    return _accountMap.find (accountID) != _accountMap.end();
 }
 
 Account*
 ManagerImpl::getAccount (const std::string& accountID)
 {
-    AccountMap::iterator iter = _accountMap.find (accountID);
-
-    if (iter != _accountMap.end()) {
-        return iter->second;
-    }
+    Account *a = _accountMap[accountID];
+    if (a)
+		return a;
 
     _debug ("Manager: Did not found account %s, returning IP2IP account", accountID.c_str());
     return _directIpAccount;
@@ -4373,7 +4192,7 @@ void ManagerImpl::setAddressbookList (const std::vector<std::string>& list)
 {
     _debug ("Manager: Set addressbook list");
 
-    std::string s = serialize (list);
+    std::string s = ManagerImpl::serialize (list);
     _debug("Manager: New addressbook list: %s", s.c_str());
     addressbookPreference.setList (s);
 
@@ -4382,9 +4201,7 @@ void ManagerImpl::setAddressbookList (const std::vector<std::string>& list)
 
 std::vector<std::string> ManagerImpl::getAddressbookList (void)
 {
-
-    std::string s = addressbookPreference.getList();
-    return unserialize (s);
+    return unserialize (addressbookPreference.getList());
 }
 
 std::map<std::string, std::string> ManagerImpl::getHookSettings ()
@@ -4619,5 +4436,5 @@ std::vector<std::string> ManagerImpl::getParticipantList (
 
 void ManagerImpl::notifyVideoDeviceEvent()
 {
-	_dbus->getConfigurationManager()->videoDeviceEvent();
+	_dbus.getConfigurationManager()->videoDeviceEvent();
 }

@@ -97,11 +97,11 @@ class Call: public Recordable
              * Return a reference on the conference id
              * @return call id
              */
-        const std::string& getConfId() const {
+        std::string getConfId() const {
             return _confID;
         }
 
-        void setConfId (std::string id) {
+        void setConfId (const std::string &id) {
             _confID = id;
         }
 

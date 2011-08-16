@@ -106,9 +106,6 @@ GainControl::DetectionAverage::DetectionAverage(double sr, double ta, double tr)
 {
     g_a = exp(-1.0 / (samplingRate * (teta_a / 1000.0)));        
     g_r = exp(-1.0 / (samplingRate * (teta_r / 1000.0)));
-
-    std::cout << "GainControl: g_attack: " << g_a << ", teta_attack: " << teta_a 
-		<< ", g_release: " << g_r << ", teta_release: " << teta_r << std::endl;
 }
 
 double GainControl::DetectionAverage::getAverage(double in)
@@ -125,7 +122,6 @@ double GainControl::DetectionAverage::getAverage(double in)
 
 GainControl::Limiter::Limiter(double r, double thresh) : ratio(r), threshold(thresh)
 {
-    std::cout << "GainControl: limiter threshold: " << threshold << std::endl;
 }
 
 double GainControl::Limiter::limit(double in)

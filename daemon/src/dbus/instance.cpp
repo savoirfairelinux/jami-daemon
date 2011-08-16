@@ -55,20 +55,14 @@ Instance::Unregister (const int32_t& pid UNUSED)
     count --;
 
     if (count <= 0) {
-
-
         Manager::instance().terminate();
-
-        DBusManager::instance().exit();
-
+        Manager::instance().getDbusManager()->exit();
     }
 }
 
 int32_t
 Instance::getRegistrationCount (void)
 {
-
     return count;
-
 }
 

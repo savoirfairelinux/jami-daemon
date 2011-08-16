@@ -56,7 +56,6 @@ main (int argc, char *argv[])
         if (g_strcmp0 (argv[i], "--debug") == 0)
             set_log_level (LOG_DEBUG);
 
-    // GtkWidget *window;
     g_thread_init (NULL);
     gdk_threads_init ();
     gdk_threads_enter ();
@@ -91,10 +90,8 @@ main (int argc, char *argv[])
                         NULL) ;
 
     if (!sflphone_init (&error)) {
-        gchar *markup;
-
         ERROR (error->message);
-        markup = g_markup_printf_escaped (
+        gchar *markup = g_markup_printf_escaped (
                      _ ("Unable to initialize.\nMake sure the daemon is running.\nError: %s"),
                      error->message);
 

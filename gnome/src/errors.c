@@ -34,7 +34,7 @@
 void
 sflphone_throw_exception (int err)
 {
-    gchar* markup="";
+    gchar* markup = NULL;
 
     switch (err) {
         case ALSA_PLAYBACK_DEVICE:
@@ -48,6 +48,7 @@ sflphone_throw_exception (int err)
             break;
     }
 
-    main_window_error_message (markup);
-    free (markup);
+    if (markup)
+        main_window_error_message (markup);
+    g_free (markup);
 }

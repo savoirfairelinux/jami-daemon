@@ -88,7 +88,7 @@ class HistoryItem
         /*
          * @return true if the account ID corresponds to a loaded account
          */
-        bool non_valid_account (std::string);
+        bool valid_account (std::string);
 
         /*
          * Timestamp representing the date of the call

@@ -89,12 +89,6 @@ class VoIPLink
 
         /**
          * Virtual method
-         * Delete calls
-         */
-        virtual void terminateCall (const std::string& id) = 0;
-
-        /**
-         * Virtual method
          * Build and send account registration request
          * @return bool True on success
          *		  false otherwise
@@ -211,9 +205,8 @@ class VoIPLink
 
         /** Remove a call from the call map (protected by mutex)
          * @param id A Call ID
-         * @return bool True if the call was correctly removed
          */
-        bool removeCall (const std::string& id);
+        void removeCall (const std::string& id);
 
         /**
          * Remove all the call from the map

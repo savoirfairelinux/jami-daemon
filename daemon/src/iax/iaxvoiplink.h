@@ -89,11 +89,6 @@ class IAXVoIPLink : public VoIPLink
         virtual void terminate (void);
 
         /**
-         * Terminate on call
-         */
-        virtual void terminateCall (const std::string& id);
-
-        /**
          * Send out registration
          * @return bool The new registration state (are we registered ?)
          */

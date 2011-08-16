@@ -1523,7 +1523,7 @@ gchar*
 dbus_get_current_audio_codec_name (const callable_obj_t * c)
 {
 
-    gchar* codecName;
+    gchar* codecName = NULL;
     GError* error = NULL;
 
     org_sflphone_SFLphone_CallManager_get_current_audio_codec_name (callManagerProxy,
@@ -1531,6 +1531,7 @@ dbus_get_current_audio_codec_name (const callable_obj_t * c)
 
     if (error) {
         g_error_free (error);
+        g_free (codecName);
         codecName = g_strdup("");
     }
 

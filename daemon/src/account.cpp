@@ -105,6 +105,5 @@ void Account::setActiveCodecs (const std::vector <std::string> &list)
     }
 
     // update the codec string according to new codec selection
-    _codecStr = Manager::instance ().serialize (list);
-
+    _codecStr = ManagerImpl::serialize (list);
 }

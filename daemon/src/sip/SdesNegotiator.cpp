@@ -133,9 +133,7 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse (void)
 
         if (tagPattern->matches()) {
             try {
-                // std::cout << "Parsing the tag field";
                 tag = tagPattern->group ("tag");
-                // std::cout << ": " << tag << std::endl;
             } catch (match_error& exception) {
                 throw parse_error ("Error while parsing the tag field");
             }
@@ -151,9 +149,7 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse (void)
 
         if (cryptoSuitePattern->matches()) {
             try {
-                // std::cout << "Parsing the crypto suite field";
                 cryptoSuite = cryptoSuitePattern->group ("cryptoSuite");
-                // std::cout << ": " << cryptoSuite << std::endl;
             } catch (match_error& exception) {
                 throw parse_error ("Error while parsing the crypto-suite field");
             }
@@ -251,14 +247,16 @@ bool SdesNegotiator::negotiate (void)
 
                     _authTagLength = _cryptoSuite.substr (_cryptoSuite.size()-2, 2);
 
+                    /*
                     std::cout << "Negotiate tag: " + (*iter_offer)->getTag() << std::endl;
                     std::cout << "Crypto Suite: " + _cryptoSuite << std::endl;
                     std::cout << "SRTP Key Method: " + _srtpKeyMethod << std::endl;
                     std::cout << "SRTP Key Info: " + _srtpKeyInfo << std::endl;
-                    // std::cout << "Lifetime: " + _lifetime << std::endl;
-                    // std::cout << "MKI Value: " + _mkiValue << std::endl;
-                    // std::cout << "MKI Length: " + _mkiLength << std::endl;
+                    std::cout << "Lifetime: " + _lifetime << std::endl;
+                    std::cout << "MKI Value: " + _mkiValue << std::endl;
+                    std::cout << "MKI Length: " + _mkiLength << std::endl;
                     std::cout << "Auth tag length: " + _authTagLength << std::endl;
+                    */
                 }
 
                 iter_local++;

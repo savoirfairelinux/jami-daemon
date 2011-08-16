@@ -29,6 +29,7 @@
  */
 
 #include "audiocodec.h"
+#include "logger.h"
 #include <cstdio>
 #include <celt/celt.h>
 
@@ -52,40 +53,39 @@ class Celt : public sfl::AudioCodec
             if (error != CELT_OK) {
                 switch (error) {
                     case CELT_BAD_ARG:
-                        printf ("Celt: Error: An (or more) invalid argument (e.g. out of range)\n");
+                        _error ("Celt: An (or more) invalid argument (e.g. out of range)\n");
                         break;
                     case CELT_INVALID_MODE:
-                        printf ("Celt: Error: The mode struct passed is invalid\n");
+                        _error("Celt: The mode struct passed is invalid\n");
                         break;
                     case CELT_INTERNAL_ERROR:
-                        printf ("Celt: Error: An internal error was detected\n");
+                        _error("Celt: An internal error was detected\n");
                         break;
                     case CELT_CORRUPTED_DATA:
-                        printf ("Celt: Error: The data passed (e.g. compressed data to decoder) is corrupted\n");
+                        _error("Celt: The data passed (e.g. compressed data to decoder) is corrupted\n");
                         break;
                     case CELT_UNIMPLEMENTED:
-                        printf ("Celt: Error: Invalid/unsupported request numbe\n");
+                        _error("Celt: Invalid/unsupported request numbe\n");
                         break;
                     case CELT_INVALID_STATE:
-                        printf ("Celt: Error: An encoder or decoder structure is invalid or already freed\n");
+                        _error("Celt: An encoder or decoder structure is invalid or already freed\n");
                         break;
                     case CELT_ALLOC_FAIL:
-                        printf ("Celt: Error: Memory allocation has failed\n");
+                        _error("Celt: Memory allocation has failed\n");
                         break;
                     default:
-                        printf ("Celt: Error");
+                        _error("Celt: Unknown error %d\n", error);
                 }
 
             }
 
-            if (_mode == NULL) {
-                printf ("Celt: Error: Failed to create Celt mode");
-            }
+            if (_mode == NULL)
+                _error("Celt: Failed to create Celt mode");
 
             // bytes_per_packet = 1024;
             // if (bytes_per_packet < 0 || bytes_per_packet > MAX_PACKET)
             // {
-            //     printf ("bytes per packet must be between 0 and %d");
+            //     _error("bytes per packet must be between 0 and %d");
             // }
 
             // celt_mode_info(mode, CELT_GET_FRAME_SIZE, &frame_size);
