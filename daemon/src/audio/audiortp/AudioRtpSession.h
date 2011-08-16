@@ -67,6 +67,17 @@ class AudioRtpSession : public AudioRtpRecordHandler
         RtpMethod getAudioRtpType() { return _type; }
         void updateSessionMedia (AudioCodec *audioCodec);
 
+        int startRtpThread (AudioCodec*);
+
+        /**
+         * Used mostly when receiving a reinvite
+         */
+        void updateDestinationIpAddress (void);
+
+    protected:
+
+        bool onRTPPacketRecv (ost::IncomingRTPPkt&);
+
         /**
          * Send DTMF over RTP (RFC2833). The timestamp and sequence number must be
          * incremented as if it was microphone audio. This function change the payload type of the rtp session,
@@ -76,19 +87,20 @@ class AudioRtpSession : public AudioRtpRecordHandler
         void sendDtmfEvent (sfl::DtmfEvent *dtmf);
 
         /**
-         * Used mostly when receiving a reinvite
+         * Send encoded data to peer
          */
-        void updateDestinationIpAddress (void);
+        void sendMicData();
 
+        SIPCall *_ca;
 
-        int startRtpThread (AudioCodec*);
+        RtpMethod _type;
 
-        void stopRtpThread (void);
+    private:
 
-        bool onRTPPacketRecv (ost::IncomingRTPPkt&);
-
-
-    protected:
+        /**
+         * Set the audio codec for this RTP session
+         */
+        void setSessionMedia (AudioCodec*);
 
         /**
          * Set RTP Sockets send/receive timeouts
@@ -106,24 +118,10 @@ class AudioRtpSession : public AudioRtpRecordHandler
          */
         void receiveSpeakerData ();
 
-        /**
-         * Send encoded data to peer
-         */
-        void sendMicData();
-
-        /**
-         * Set the audio codec for this RTP session
-         */
-        void setSessionMedia (AudioCodec*);
-
-
-        SIPCall *_ca;
-
         // Main destination address for this rtp session.
         // Stored in case or reINVITE, which may require to forget
         // this destination and update a new one.
         ost::InetHostAddress _remote_ip;
-
 
         // Main destination port for this rtp session.
         // Stored in case reINVITE, which may require to forget
@@ -142,13 +140,11 @@ class AudioRtpSession : public AudioRtpRecordHandler
         int _timestampIncrement;
 
         /**
-         * Timestamp reset freqeuncy specified in number of packet sent
+         * Timestamp reset frequency specified in number of packet sent
          */
         short _timestampCount;
 
         bool _isStarted;
-
-        RtpMethod _type;
 
         ost::RTPDataQueue *_queue;
 
