@@ -445,8 +445,7 @@ void VideoSendThread::run()
 
         // rescale pts from encoded video framerate to rtp
         // clock rate
-        if (static_cast<unsigned>(encoderCtx_->coded_frame->pts) !=
-                AV_NOPTS_VALUE)
+        if (encoderCtx_->coded_frame->pts != (int64_t)AV_NOPTS_VALUE)
             opkt.pts = av_rescale_q(encoderCtx_->coded_frame->pts,
                     encoderCtx_->time_base, videoStream_->time_base);
         else
