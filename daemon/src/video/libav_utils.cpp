@@ -35,6 +35,7 @@
 #include <iostream>
 #include <assert.h>
 #include <cc++/thread.h>
+#include "logger.h"
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -62,7 +63,9 @@ void findInstalledVideoCodecs()
 	std::map<std::string, std::string>::const_iterator it;
     for (it = encoders.begin(); it != encoders.end(); ++it) {
         if (std::find(libav_codecs.begin(), libav_codecs.end(), it->second) != libav_codecs.end())
-        video_codecs.push_back(it->first);
+        	video_codecs.push_back(it->first);
+        else
+        	_error("Didn't find \"%s\" encoder\n", it->second.c_str());
     }
 }
 
@@ -121,7 +124,7 @@ void sfl_avcodec_init()
     encoders["VP8"]			    = "libvpx";
 
     // TODO
-    //encoders["MP4V-ES"] 	= "mpeg4video";
+    encoders["MP4V-ES"] 	= "mpeg4";
     //encoders["THEORA"]		= "libtheora";
 
     // ffmpeg hardcodes RTP output format to H263-2000
