@@ -31,6 +31,7 @@
 #include <dbusmanager.h>
 #include "global.h"
 #include "manager.h"
+#include "instance.h"
 
 #include "callmanager.h"
 #include "configurationmanager.h"
@@ -46,6 +47,7 @@ DBusManager::DBusManager()
 #endif
 {
     try {
+        DBus::_init_threading();
         DBus::default_dispatcher = &_dispatcher;
 
         DBus::Connection sessionConnection = DBus::Connection::SessionBus();
@@ -68,13 +70,12 @@ DBusManager::DBusManager()
 
 DBusManager::~DBusManager()
 {
-    delete _callManager;
-    delete _configurationManager;
-    delete _instanceManager;
-
 #ifdef USE_NETWORKMANAGER
     delete _networkManager;
 #endif
+    delete _instanceManager;
+    delete _configurationManager;
+    delete _callManager;
 }
 
 void DBusManager::exec()

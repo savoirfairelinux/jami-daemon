@@ -3058,22 +3058,11 @@ void ManagerImpl::setEchoCancelDelay(int delay)
 	audioPreference.setEchoCancelDelay(delay);
 }
 
-int ManagerImpl::app_is_running (std::string process)
-{
-    std::ostringstream cmd;
-
-    cmd << "ps -C " << process;
-    return system (cmd.str().c_str());
-}
-
 /**
  * Initialization: Main Thread
  */
 bool ManagerImpl::initAudioDriver (void)
 {
-
-    int error;
-
     _debugInit ("Manager: AudioLayer Creation");
 
     audioLayerMutexLock();
@@ -3082,7 +3071,7 @@ bool ManagerImpl::initAudioDriver (void)
         _audiodriver = new AlsaLayer (this);
         _audiodriver->setMainBuffer (&_mainBuffer);
     } else if (preferences.getAudioApi() == PULSEAUDIO) {
-        if (app_is_running ("pulseaudio") == 0) {
+        if (system("ps -C pulseaudio") == 0) {
             _audiodriver = new PulseLayer (this);
             _audiodriver->setMainBuffer (&_mainBuffer);
         } else {
@@ -3099,7 +3088,7 @@ bool ManagerImpl::initAudioDriver (void)
         audioLayerMutexUnlock();
         return false;
     } else {
-        error = _audiodriver->getErrorMessage();
+        int error = _audiodriver->getErrorMessage();
 
         if (error == -1) {
             _debug ("Manager: Init audio driver: %d", error);
@@ -3111,7 +3100,6 @@ bool ManagerImpl::initAudioDriver (void)
     audioLayerMutexUnlock();
 
     return true;
-
 }
 
 /**
@@ -3175,12 +3163,10 @@ void ManagerImpl::selectAudioDriver (void)
 
     /* Notify the error if there is one */
 
-    if (_audiodriver -> getErrorMessage() != -1) {
+    if (_audiodriver -> getErrorMessage() != -1)
         notifyErrClient (_audiodriver -> getErrorMessage());
-    }
 
     audioLayerMutexUnlock();
-
 }
 
 void ManagerImpl::switchAudioManager (void)
@@ -3270,14 +3256,13 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
 
     // Only modify internal sampling rate if new sampling rate is higher
     currentSamplerate = _mainBuffer.getInternalSamplingRate();
-    if(currentSamplerate >= samplerate) {
+    if (currentSamplerate >= samplerate) {
     	_debug("Manager: No need to update audio layer sampling rate");
     	audioLayerMutexUnlock();
     	return;
     }
-    else {
+    else
         _debug ("Manager: Audio sampling rate changed");
-    }
 
     type = _audiodriver->getLayerType();
     framesize = audioPreference.getFramesize();
@@ -3295,6 +3280,7 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
     wasActive = _audiodriver->isStarted();
 
     delete _audiodriver;
+    _audiodriver = 0;
 
     switch (type) {
 
@@ -3341,9 +3327,8 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
     _dtmfKey = new DTMF (sampleRate);
 
     // Restart audio layer if it was active
-    if (wasActive) {
+    if (wasActive)
         _audiodriver->startStream();
-    }
 
     audioLayerMutexUnlock();
 }
@@ -3515,8 +3500,8 @@ int ManagerImpl::getConfigInt (const std::string& section,
 {
     try {
         return _config.getConfigTreeItemIntValue (section, name);
-    } catch (Conf::ConfigTreeItemException& e) {
-        throw e;
+    } catch (const Conf::ConfigTreeItemException& e) {
+        throw;
     }
 
     return 0;
@@ -3528,8 +3513,8 @@ bool ManagerImpl::getConfigBool (const std::string& section,
     try {
         return (_config.getConfigTreeItemValue (section, name) == Conf::TRUE_STR) ? true
                : false;
-    } catch (Conf::ConfigTreeItemException& e) {
-        throw e;
+    } catch (const Conf::ConfigTreeItemException& e) {
+        throw;
     }
 
     return false;
@@ -3541,8 +3526,8 @@ std::string ManagerImpl::getConfigString (const std::string& section,
 {
     try {
         return _config.getConfigTreeItemValue (section, name);
-    } catch (Conf::ConfigTreeItemException& e) {
-        throw e;
+    } catch (const Conf::ConfigTreeItemException& e) {
+        throw;
     }
 
     return "";

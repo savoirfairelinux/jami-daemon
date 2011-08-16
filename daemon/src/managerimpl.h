@@ -1109,23 +1109,6 @@ class ManagerImpl
         void audioLayerMutexUnlock(void) { _audiolayerMutex.leaveMutex(); }
 
     private:
-        /* Transform digest to string.
-        * output must be at least PJSIP_MD5STRLEN+1 bytes.
-        * Helper function taken from sip_auth_client.c in
-        * pjproject-1.0.3.
-        *
-        * NOTE: THE OUTPUT STRING IS NOT NULL TERMINATED!
-        */
-        void digest2str (const unsigned char digest[], char *output);
-
-        /**
-         * Check if a process is running with the system command
-         *
-         * @return 0 on success
-         *          1 otherelse
-         */
-        int app_is_running (std::string process);
-
         /**
          * Create config directory in home user and return configuration file path
          */
@@ -1158,6 +1141,8 @@ class ManagerImpl
          * @return false if the driver is uninitialize
          */
         bool playATone (Tone::TONEID toneId);
+
+        DBusManager _dbus;
 
         /** The configuration tree. It contains accounts parameters, general user settings ,audio settings, ... */
         Conf::ConfigTree _config;
@@ -1200,11 +1185,6 @@ class ManagerImpl
          * Mutex used to protect audio layer
          */
         ost::Mutex _audiolayerMutex;
-
-        /**
-         * Multithread variable (non protected)
-         */
-        DBusManager _dbus;
 
         /**
          * Waiting Call Vectors
