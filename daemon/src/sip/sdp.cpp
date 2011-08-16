@@ -306,7 +306,7 @@ void Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media *med)
 void Sdp::setLocalMediaVideoCapabilities (const std::vector<std::string> &videoCodecs)
 {
     if (videoCodecs.size() == 0) {
-        throw SdpException ("No selected codec while building local SDP offer");
+        throw SdpException ("No selected video codec while building local SDP offer");
     }
 
     delete localVideoMediaCap_;
@@ -341,7 +341,7 @@ void Sdp::setLocalMediaCapabilities (CodecOrder selectedCodecs)
     CodecsMap codecs_list = Manager::instance().getAudioCodecFactory().getCodecsMap();
 
     if (selectedCodecs.size() == 0) {
-        throw SdpException ("No selected codec while building local SDP offer");
+        throw SdpException ("No selected audio codec while building local SDP offer");
     }
 
     for (unsigned int i=0; i<selectedCodecs.size(); i++) {
