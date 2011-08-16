@@ -66,16 +66,12 @@ AudioCodecFactory::init()
     std::vector<sfl::Codec*> CodecDynamicList = scanCodecDirectory();
     _nbCodecs = CodecDynamicList.size();
 
-    if (_nbCodecs <= 0) {
-        _error ("CodecDescriptro: Error - No codecs available in directory %s" , CODECS_DIR);
-    }
+    if (_nbCodecs <= 0)
+        _error ("CodecDescriptor: Error - No codecs available");
 
-    int i;
-
-    for (i = 0 ; i < _nbCodecs ; i++) {
+    for (int i = 0 ; i < _nbCodecs ; i++) {
         _CodecsMap[ (AudioCodecType) CodecDynamicList[i]->getPayloadType() ] = CodecDynamicList[i];
         _debug ("CodecDescriptor: %s" , CodecDynamicList[i]->getMimeSubtype().c_str());
-
     }
 }
 
@@ -176,10 +172,7 @@ AudioCodecFactory::deleteHandlePointer (void)
 
 std::vector<sfl::Codec*> AudioCodecFactory::scanCodecDirectory (void)
 {
-
     std::vector<sfl::Codec*> codecs;
-    std::string tmp;
-    int i;
 
     std::string libDir = std::string (CODECS_DIR).append ("/");
     std::string homeDir = std::string (HOMEDIR)  + DIR_SEPARATOR_STR + "." + PROGDIR + "/";
@@ -194,24 +187,26 @@ std::vector<sfl::Codec*> AudioCodecFactory::scanCodecDirectory (void)
     if (progDir)
         dirToScan.push_back(std::string(progDir) + DIR_SEPARATOR_STR + "audio/codecs/");
 
-    for (i = 0 ; (unsigned int) i < dirToScan.size() ; i++) {
+    for (int i = 0 ; (unsigned int) i < dirToScan.size() ; i++) {
         std::string dirStr = dirToScan[i];
         _debug ("CodecDescriptor: Scanning %s to find audio codecs....",  dirStr.c_str());
         DIR *dir = opendir (dirStr.c_str());
         sfl::Codec* audioCodec;
 
-        if (dir) {
-            dirent *dirStruct;
+        if (!dir)
+            continue;
 
-            while ( (dirStruct = readdir (dir))) {
-                tmp =  dirStruct -> d_name ;
-                if (tmp != CURRENT_DIR and tmp != PARENT_DIR) {
-                    if (seemsValid (tmp) && !alreadyInCache (tmp)) {
-                        _Cache.push_back (tmp);
-                        audioCodec = loadCodec (dirStr.append (tmp));
-                        codecs.push_back (audioCodec);
-                        dirStr = dirToScan[i];
-                    }
+        dirent *dirStruct;
+        while ( (dirStruct = readdir (dir))) {
+            std::string file = dirStruct -> d_name ;
+            if (file == CURRENT_DIR or file == PARENT_DIR)
+                continue;
+
+            if (seemsValid (file) && !alreadyInCache (file)) {
+                audioCodec = loadCodec (dirStr+file);
+                if (audioCodec) {
+                    codecs.push_back (audioCodec);
+                    _Cache.push_back (file);
                 }
             }
         }
