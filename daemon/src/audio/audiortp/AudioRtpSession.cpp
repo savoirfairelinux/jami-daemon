@@ -45,11 +45,11 @@ namespace sfl
 AudioRtpSession::AudioRtpSession (SIPCall * sipcall, RtpMethod type, ost::RTPDataQueue *queue, ost::Thread *thread) :
 					AudioRtpRecordHandler (sipcall)
 					, _ca (sipcall)
+					, _type(type)
 					, _timestamp (0)
 					, _timestampIncrement (0)
 					, _timestampCount (0)
-                    , _isStarted (false)
-					, _type(type)
+					, _isStarted (false)
 					, _queue(queue)
 					, _thread(thread)
 {
