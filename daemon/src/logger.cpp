@@ -49,7 +49,7 @@ void log (const int level, const char* format, ...)
     string prefix = "<> ";
     char buffer[4096];
     string message = "";
-    string color_prefix = "";
+    const char *color_prefix = "";
 
     switch (level) {
         case LOG_ERR: {
@@ -84,8 +84,11 @@ void log (const int level, const char* format, ...)
     syslog (level, "%s", message.c_str());
 
     if (consoleLog) {
-        message = color_prefix + message + END_COLOR + "\n";
-        fprintf (stderr, "%s", message.c_str());
+        fputs(color_prefix, stderr);
+        va_start (ap, format);
+        vfprintf (stderr, format, ap);
+        va_end (ap);
+        fputs(END_COLOR"\n", stderr);
     }
 }
 
