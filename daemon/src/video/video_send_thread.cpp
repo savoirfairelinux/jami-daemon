@@ -51,7 +51,8 @@ namespace
         const char *errbuf_ptr = errbuf;
 
         if (av_strerror(err, errbuf, sizeof(errbuf)) < 0)
-            errbuf_ptr = strerror(AVUNERROR(err));
+        	strerror_r(AVUNERROR(err), errbuf, sizeof errbuf);
+
         _error("%s:%s", msg, errbuf_ptr);
     }
 } // end anonymous namespace
@@ -203,12 +204,12 @@ void VideoSendThread::setup()
     strncpy(outputCtx_->filename, args_["destination"].c_str(),
             sizeof outputCtx_->filename);
 
-    AVCodec *encoder = 0;
     /* find the video encoder */
-    encoder = avcodec_find_encoder_by_name(args_["codec"].c_str());
+    const char *enc_name = args_["codec"].c_str();
+    AVCodec *encoder = avcodec_find_encoder_by_name(enc_name);
     if (encoder == 0)
     {
-        _error("%s:Encoder not found!", __PRETTY_FUNCTION__);
+        _error("%s:Encoder \"%s\" not found!", __PRETTY_FUNCTION__, enc_name);
         ost::Thread::exit();
     }
 
