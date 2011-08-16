@@ -103,7 +103,13 @@ void VideoRtpSession::updateSDP(const Sdp *sdp)
         receiving_ = false;
     }
 
-    txArgs_["codec"] = libav_utils::encodersMap()[v[1]];
+    std::string codec = libav_utils::encodersMap()[v[1]];
+    if (codec == "") {
+    	_debug("Couldn't find encoder for \"%s\"\n", v[1].c_str());
+    	sending_ = false;
+    } else {
+    	txArgs_["codec"] = codec;
+    }
 }
 
 void VideoRtpSession::updateDestination(const std::string &destination,
