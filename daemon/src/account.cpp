@@ -88,9 +88,7 @@ void Account::loadDefaultCodecs()
 
 void Account::setActiveVideoCodecs (const std::vector <std::string> &list)
 {
-	if (list.empty())
-		list = sfl_video::getVideoCodecList();
-	_videoCodecOrder = list;
+	_videoCodecOrder = !list.empty() ? list : sfl_video::getVideoCodecList();
 }
 
 void Account::setActiveCodecs (const std::vector <std::string> &list)
