@@ -41,15 +41,12 @@ bool debugMode = false;
 
 void log (const int level, const char* format, ...)
 {
-    using std::string;
     if (!debugMode && level == LOG_DEBUG)
         return;
 
     va_list ap;
-    string prefix = "<> ";
-    char buffer[4096];
-    string message = "";
-    string color_prefix = "";
+    const char *prefix = "<> ";
+    const char *color_prefix = "";
 
     switch (level) {
         case LOG_ERR: {
@@ -74,19 +71,15 @@ void log (const int level, const char* format, ...)
         }
     }
 
+    char buffer[8192];
     va_start (ap, format);
-    vsprintf (buffer, format, ap);
+    vsnprintf (buffer, sizeof buffer, format, ap);
     va_end (ap);
 
-    message = buffer;
-    message = prefix + message;
+    if (consoleLog)
+        fprintf(stderr, "%s%s"END_COLOR"\n", color_prefix, buffer);
 
-    syslog (level, "%s", message.c_str());
-
-    if (consoleLog) {
-        message = color_prefix + message + END_COLOR + "\n";
-        fprintf (stderr, "%s", message.c_str());
-    }
+    syslog (level, "%s%s", prefix, buffer);
 }
 
 void setConsoleLog (bool c)
