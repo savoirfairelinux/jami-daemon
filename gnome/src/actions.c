@@ -451,7 +451,8 @@ sflphone_hang_up()
 
     calltree_update_call (history, selectedCall, NULL);
 
-    stop_call_clock (selectedCall);
+    if (selectedCall)
+        stop_call_clock (selectedCall);
 
     calltree_update_clock();
 }
