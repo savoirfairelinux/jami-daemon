@@ -3,7 +3,7 @@ check_PROGRAMS=test_video_endpoint test_video_rtp test_thread test_video_preview
 
 
 test_video_endpoint_SOURCES=test_video_endpoint.cpp test_video_endpoint.h
-test_video_endpoint_LDADD=$(top_builddir)/src/video/libvideo.la
+test_video_endpoint_LDADD=$(top_builddir)/src/libsflphone.la $(top_builddir)/src/video/libvideo.la
 
 test_video_rtp_SOURCES=test_video_rtp.cpp
 test_video_rtp_LDADD=$(top_builddir)/src/libsflphone.la $(top_builddir)/src/video/libvideo.la
