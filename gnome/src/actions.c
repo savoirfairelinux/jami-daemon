@@ -136,7 +136,6 @@ sflphone_notify_voice_mail (const gchar* accountID , guint count)
 
 static gboolean _is_direct_call (callable_obj_t * c)
 {
-
     if (g_strcasecmp (c->_accountID, EMPTY_ENTRY) == 0) {
         if (!g_str_has_prefix (c->_peer_number, "sip:")) {
             gchar * new_number = g_strconcat ("sip:", c->_peer_number, NULL);
@@ -144,18 +143,11 @@ static gboolean _is_direct_call (callable_obj_t * c)
             c->_peer_number = new_number;
         }
 
-        return 1;
+        return TRUE;
     }
 
-    if (g_str_has_prefix (c->_peer_number, "sip:")) {
-        return 1;
-    }
-
-    if (g_str_has_prefix (c->_peer_number, "sips:")) {
-        return 1;
-    }
-
-    return 0;
+    return g_str_has_prefix (c->_peer_number, "sip:") ||
+           g_str_has_prefix (c->_peer_number, "sips:");
 }
 
 
@@ -909,7 +901,6 @@ static int _place_direct_call (const callable_obj_t * c)
 
 static int _place_registered_call (callable_obj_t * c)
 {
-
     account_t * current = NULL;
 
     if (c == NULL) {
@@ -917,13 +908,11 @@ static int _place_registered_call (callable_obj_t * c)
         return -1;
     }
 
-    if (c->_state != CALL_STATE_DIALING) {
+    if (c->_state != CALL_STATE_DIALING)
         return -1;
-    }
 
-    if (g_strcasecmp (c->_peer_number, "") == 0) {
+    if (!*c->_peer_number)
         return -1;
-    }
 
     if (account_list_get_size() == 0) {
         notify_no_accounts();

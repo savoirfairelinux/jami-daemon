@@ -397,130 +397,59 @@ button_pressed (GtkWidget* widget, GdkEventButton *event, gpointer user_data UNU
 static gchar *
 calltree_display_call_info (callable_obj_t * c, CallDisplayType display_type, const gchar * const audio_codec)
 {
-    gchar * peer_number = c->_peer_number;
-    gchar * hostname = NULL;
-    gchar * display_number = NULL;
-    gboolean free_display_number = FALSE;
-    gchar * description = NULL;
-    gchar * temp_codec;
-    if (audio_codec == NULL)
-        temp_codec = g_strdup("");
-    else
-        temp_codec = g_strdup(audio_codec);
+    gchar display_number[strlen(c->_peer_number) + 1];
+    strcpy(display_number, c->_peer_number);
 
-
-    DEBUG ("CallTree: Display call info");
-
-    // If call is outgoing, keep the hostname, strip it elsewhere
-    if (c->_type == CALL && c->_history_state == OUTGOING) {
-        display_number = peer_number;
-    } else {
+    if (c->_type != CALL || c->_history_state != OUTGOING) {
         // Get the hostname for this call (NULL if not existent)
-        hostname = g_strrstr (peer_number, "@");
+        gchar * hostname = g_strrstr (c->_peer_number, "@");
 
         // Test if we are dialing a new number
-        if (g_strcmp0 ("", c->_peer_number) != 0) {
-            // Strip the hostname if existent
-            if (hostname) {
-                display_number = g_strndup (peer_number, hostname - peer_number);
-                free_display_number = TRUE;
-            }
-            else
-                display_number = peer_number;
-        }
-        else
-            display_number = peer_number;
+        if (*c->_peer_number && hostname)
+            display_number[hostname - c->_peer_number] = '\0';
     }
 
     // Different display depending on type
-    switch (display_type) {
-        case DISPLAY_TYPE_CALL:
-            if (c->_state_code == 0) {
-                if (g_strcmp0 ("", c->_peer_name) == 0) {
-                    description = g_markup_printf_escaped ("<b>%s</b><i>%s</i>",
-                            display_number, c->_peer_name);
-                } else {
-                    description = g_markup_printf_escaped ("<b>%s</b>   <i>%s</i>",
-                            c->_peer_name, display_number);
-                }
-            } else {
-                if (g_strcmp0 ("", c->_peer_name) == 0) {
-                    description = g_markup_printf_escaped ("<b>%s</b><i>%s</i>\n<i>%s (%d)</i>",
-                            display_number, c->_peer_name,
-                            c->_state_code_description, c->_state_code);
-                } else {
-                    description = g_markup_printf_escaped ("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>",
-                            c->_peer_name, display_number,
-                            c->_state_code_description, c->_state_code);
-                }
-            }
-            DEBUG ("CallTree: Display a normal call, description: %s", description);
-            break;
-
-        case DISPLAY_TYPE_CALL_TRANSFER:
-            if (g_strcmp0 ("", c->_peer_name) == 0) {
-                description = g_markup_printf_escaped ("<b>%s</b><i>%s</i>\n<i>Transfer to:%s</i> ",
-                        display_number, c->_peer_name, c->_trsft_to);
-            } else {
-                description = g_markup_printf_escaped ("<b>%s</b>   <i>%s</i>\n<i>Transfer to:%s</i> ",
-                        c->_peer_name, display_number, c->_trsft_to);
-            }
-            DEBUG ("CallTree: Display a call transfer, description: %s", description);
-            break;
-
-        case DISPLAY_TYPE_STATE_CODE :
-            if (g_strcmp0 ("", c->_peer_name) == 0) {
-                if (c->_state_code) {
-                    description = g_markup_printf_escaped ("<b>%s</b><i>%s</i>\n<i>%s (%d)</i>  <i>%s</i>",
-                            display_number, c->_peer_name,
-                            c->_state_code_description, c->_state_code,
-                            temp_codec);
-                } else {
-                    description = g_markup_printf_escaped ("<b>%s</b><i>%s</i>\n<i>%s</i>",
-                            display_number, c->_peer_name, temp_codec);
-                }
-            } else {
-                if (c->_state_code) {
-                    description = g_markup_printf_escaped ("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>  <i>%s</i>",
-                            c->_peer_name, display_number,
-                            c->_state_code_description, c->_state_code,
-                            temp_codec);
-                } else {
-                    description = g_markup_printf_escaped ("<b>%s</b>   <i>%s</i>\n<i>%s</i>",
-                            c->_peer_name, display_number, temp_codec);
-                }
-            }
-            DEBUG ("CallTree: Display a state code, description: %s", description);
-            break;
-
-        case DISPLAY_TYPE_SAS:
-            if (g_strcmp0 ("", c->_peer_name) == 0) {
-                description = g_markup_printf_escaped ("<b>%s</b><i>%s</i>\n<i>Confirm SAS <b>%s</b> ?</i> ",
-                        display_number, c->_peer_name, c->_sas);
-            } else {
-                description = g_markup_printf_escaped ("<b>%s</b>   <i>%s</i>\n<i>Confirm SAS <b>%s</b> ?</i> ",
-                        c->_peer_name, display_number, c->_sas);
-            }
-            DEBUG ("CallTree: Display a call with sas, description: %s", description);
-            break;
-        case DISPLAY_TYPE_HISTORY :
-            if (g_strcmp0 ("", c->_peer_name) == 0) {
-                description = g_markup_printf_escaped ("<b>%s</b><i>%s</i>",
-                        display_number, c->_peer_name);
-            } else {
-                description = g_markup_printf_escaped ("<b>%s</b>   <i>%s</i>",
-                        c->_peer_name, display_number);
-            }
-            DEBUG ("CallTree: Display history entry %s", description);
-            break;
+    const gchar *name, *details = NULL;
+    if (*c->_peer_name) {
+        name = c->_peer_name;
+        details = display_number;
+    } else {
+        name = display_number;
+        details = "";
     }
 
-    if (free_display_number)
-        g_free (display_number);
+    gchar *desc = g_markup_printf_escaped ("<b>%s</b>   <i>%s</i>", name, details);
+    gchar *suffix = NULL;
 
-    g_free (temp_codec);
+    switch (display_type) {
+    case DISPLAY_TYPE_CALL:
+        if (c->_state_code)
+            suffix = g_markup_printf_escaped ("\n<i>%s (%d)</i>", c->_state_code_description, c->_state_code);
+        break;
+    case DISPLAY_TYPE_STATE_CODE :
+        if (c->_state_code)
+            suffix = g_markup_printf_escaped ("\n<i>%s (%d)</i>  <i>%s</i>",
+                    c->_state_code_description, c->_state_code,
+                    audio_codec);
+        else
+            suffix = g_markup_printf_escaped ("\n<i>%s</i>", audio_codec);
+        break;
+    case DISPLAY_TYPE_CALL_TRANSFER:
+        suffix = g_markup_printf_escaped ("\n<i>Transfer to:%s</i> ", c->_trsft_to);
+        break;
+    case DISPLAY_TYPE_SAS:
+        suffix = g_markup_printf_escaped ("\n<i>Confirm SAS <b>%s</b> ?</i>", c->_sas);
+        break;
+    case DISPLAY_TYPE_HISTORY :
+    default:
+        break;
+    }
 
-    return description;
+    gchar *msg = g_strconcat(desc, suffix, NULL);
+    g_free(desc);
+    g_free(suffix);
+    return msg;
 }
 
 
@@ -778,10 +707,10 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
             gchar * audio_codec = call_get_audio_codec (c);
 
             if (c->_state == CALL_STATE_TRANSFERT) {
-                description = calltree_display_call_info (c, DISPLAY_TYPE_CALL_TRANSFER, NULL);
+                description = calltree_display_call_info (c, DISPLAY_TYPE_CALL_TRANSFER, "");
             } else {
-                if ((c->_sas != NULL) && (display_sas == TRUE) && (c->_srtp_state == SRTP_STATE_ZRTP_SAS_UNCONFIRMED) && (c->_zrtp_confirmed == FALSE))
-                    description = calltree_display_call_info (c, DISPLAY_TYPE_SAS, NULL);
+                if (c->_sas && display_sas && c->_srtp_state == SRTP_STATE_ZRTP_SAS_UNCONFIRMED && !c->_zrtp_confirmed)
+                    description = calltree_display_call_info (c, DISPLAY_TYPE_SAS, "");
                 else
                     description = calltree_display_call_info (c, DISPLAY_TYPE_STATE_CODE, audio_codec);
             }
@@ -878,7 +807,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
                 gchar *old_description = description;
                 g_free (old_description);
 
-                description = calltree_display_call_info (c, DISPLAY_TYPE_HISTORY, NULL);
+                description = calltree_display_call_info (c, DISPLAY_TYPE_HISTORY, "");
                 gchar * date = get_formatted_start_timestamp (c->_time_start);
                 gchar *duration = get_call_duration (c);
                 gchar *full_duration = g_strconcat (date , duration , NULL);
@@ -928,7 +857,7 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 
     // New call in the list
 
-    const gchar * description = calltree_display_call_info (c, DISPLAY_TYPE_CALL, NULL);
+    const gchar * description = calltree_display_call_info (c, DISPLAY_TYPE_CALL, "");
 
     gtk_tree_store_prepend (tab->store, &iter, parent);
 
@@ -1027,7 +956,7 @@ void calltree_add_history_entry (callable_obj_t *c, GtkTreeIter *parent)
     gchar *date = NULL;
     gchar *duration = NULL;
 
-    gchar * description = calltree_display_call_info (c, DISPLAY_TYPE_HISTORY, NULL);
+    gchar * description = calltree_display_call_info (c, DISPLAY_TYPE_HISTORY, "");
 
     gtk_tree_store_prepend (history->store, &iter, parent);
 

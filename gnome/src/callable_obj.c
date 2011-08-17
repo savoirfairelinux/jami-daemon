@@ -461,8 +461,6 @@ gchar* serialize_history_call_entry (callable_obj_t *entry)
     gchar *record_file;
     gchar *confID , *time_added;
 
-    gchar *call_id = entry->_callID;
-
     // Need the string form for the history state
     const gchar *history_state = get_history_id_from_state (entry->_history_state);
     // and the timestamps
@@ -470,20 +468,20 @@ gchar* serialize_history_call_entry (callable_obj_t *entry)
     time_stop = convert_timestamp_to_gchar (entry->_time_stop);
     time_added = convert_timestamp_to_gchar (entry->_time_added);
 
-    peer_number = (entry->_peer_number == NULL) ? "" : entry->_peer_number;
-    peer_name = (entry->_peer_name == NULL || g_strcasecmp (entry->_peer_name,"") == 0) ? "empty": entry->_peer_name;
-    account_id = (entry->_accountID == NULL || g_strcasecmp (entry->_accountID,"") == 0) ? "empty": entry->_accountID;
+    peer_number = entry->_peer_number ? entry->_peer_number : "";
+    peer_name = (entry->_peer_name && *entry->_peer_name) ? entry->_peer_name : "empty";
+    account_id = (entry->_accountID && *entry->_accountID) ? entry->_accountID : "empty";
 
-    confID = (entry->_historyConfID == NULL) ? "" : entry->_historyConfID;
+    confID = entry->_historyConfID ? entry->_historyConfID : "";
 
-    record_file = (entry->_recordfile == NULL) ? "" : entry->_recordfile;
+    record_file = entry->_recordfile ? entry->_recordfile : "";
 
     gchar *result = g_strconcat (history_state, separator,
                           entry->_peer_number, separator,
                           peer_name, separator,
                           time_start, separator,
 			  time_stop, separator,
-			  call_id, separator,
+			  entry->_callID, separator,
                           account_id, separator,
 			  record_file, separator,
 			  confID, separator,
@@ -550,11 +548,7 @@ time_t convert_gchar_to_timestamp (const gchar *timestamp)
 gchar*
 get_peer_information (callable_obj_t *c)
 {
-
-    if (g_strcasecmp (c->_peer_name, "") == 0)
-        return g_strdup (c->_peer_number);
-    else
-        return g_strdup (c->_peer_name);
+    return *c->_peer_name ? c->_peer_name : c->_peer_number;
 }
 
 
