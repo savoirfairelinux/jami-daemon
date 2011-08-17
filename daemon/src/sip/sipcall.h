@@ -71,31 +71,11 @@ class SIPCall : public Call
          * Destructor
          */
         ~SIPCall ();
-        /**
-         * Get event subscription internal structure
-         */
-        pjsip_evsub *getXferSub() {
-            return _xferSub;
-        }
 
         /**
-         * Set event subscription internal structure
+         * The invite session to be reused in case of transfer
          */
-        void setXferSub (pjsip_evsub* sub) {
-            _xferSub = sub;
-        }
-
-        void setInvSession (pjsip_inv_session* inv) {
-            _invSession = inv;
-        }
-
-        pjsip_inv_session *getInvSession() {
-            return _invSession;
-        }
-
-        void replaceInvSession (pjsip_inv_session *inv) {
-            _invSession = inv;
-        }
+        pjsip_inv_session *inv;
 
         /**
          * Return the local SDP session
@@ -144,21 +124,6 @@ class SIPCall : public Call
         static const int CALL_MEMPOOL_INC_SIZE;
 
         /**
-         * Call identifier
-         */
-        int _cid;
-
-        /**
-         * Domain identifier
-         */
-        int _did;
-
-        /**
-         * Transaction identifier
-         */
-        int _tid;
-
-        /**
          * Audio Rtp Session factory
          */
         sfl::AudioRtpFactory * _audiortp;
@@ -167,16 +132,6 @@ class SIPCall : public Call
          * Video Rtp Session factory
          */
         std::tr1::shared_ptr<sfl_video::VideoRtpSession> videortp_;
-
-        /**
-         * Event subscription structure
-         */
-        pjsip_evsub *_xferSub;
-
-        /**
-         * The invite session to be reused in case of transfer
-         */
-        pjsip_inv_session *_invSession;
 
         /**
          * The pool to allocate memory, released once call hang up

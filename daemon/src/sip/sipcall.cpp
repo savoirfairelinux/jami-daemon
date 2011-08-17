@@ -41,13 +41,9 @@ const int SIPCall::CALL_MEMPOOL_INIT_SIZE = 16384;
 const int SIPCall::CALL_MEMPOOL_INC_SIZE = 16384;   // Must be large enough to clone sdp sessions
 
 SIPCall::SIPCall (const std::string& id, Call::CallType type, pj_caching_pool *caching_pool) : Call (id, type)
-    , _cid (0)
-    , _did (0)
-    , _tid (0)
+	, inv (NULL)
     , _audiortp (new sfl::AudioRtpFactory(this))
     , videortp_ (new sfl_video::VideoRtpSession)
-    , _xferSub (NULL)
-    , _invSession (NULL)
 	, pool_(pj_pool_create(&caching_pool->factory, id.c_str(), CALL_MEMPOOL_INIT_SIZE,
                             CALL_MEMPOOL_INC_SIZE, NULL))
     , local_sdp_(new Sdp(pool_))

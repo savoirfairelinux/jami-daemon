@@ -762,7 +762,7 @@ SIPVoIPLink::answer (const std::string& id) throw (VoipLinkException)
         throw VoipLinkException("Call is NULL while answering");
     }
 
-    inv_session = call->getInvSession();
+    inv_session = call->inv;
 
     if (status == PJ_SUCCESS) {
 
@@ -827,7 +827,7 @@ SIPVoIPLink::hangup (const std::string& id) throw (VoipLinkException)
     }
 
 
-    pjsip_inv_session *inv = call->getInvSession();
+    pjsip_inv_session *inv = call->inv;
     if(inv == NULL) {
     	throw VoipLinkException("No invite session for this call");
     }
@@ -887,20 +887,20 @@ SIPVoIPLink::peerHungup (const std::string& id) throw (VoipLinkException)
     }
 
     // User hangup current call. Notify peer
-    status = pjsip_inv_end_session (call->getInvSession(), 404, NULL, &tdata);
+    status = pjsip_inv_end_session (call->inv, 404, NULL, &tdata);
     if (status != PJ_SUCCESS)
         return false;
 
     if (tdata == NULL)
         return true;
 
-    status = pjsip_inv_send_msg (call->getInvSession(), tdata);
+    status = pjsip_inv_send_msg (call->inv, tdata);
 
     if (status != PJ_SUCCESS)
         return false;
 
     // Make sure user data is NULL in callbacks
-    call->getInvSession()->mod_data[getModId() ] = NULL;
+    call->inv->mod_data[getModId() ] = NULL;
 
     // Release RTP thread
     try {
@@ -1082,7 +1082,7 @@ SIPVoIPLink::sendTextMessage (sfl::InstantMessaging *module, const std::string& 
 
         std::string formatedMessage = module->appendUriList (message, list);
 
-        status = module->send_sip_message (call->getInvSession (), (std::string&) callID, formatedMessage);
+        status = module->send_sip_message (call->inv, (std::string&) callID, formatedMessage);
 
     } else {
         /* Notify the client of an error */
@@ -1114,13 +1114,13 @@ int SIPSessionReinvite (SIPCall *call)
     }
 
     // Build the reinvite request
-    status = pjsip_inv_reinvite (call->getInvSession(), NULL, local_sdp, &tdata);
+    status = pjsip_inv_reinvite (call->inv, NULL, local_sdp, &tdata);
 
     if (status != PJ_SUCCESS)
         return 1;   // !PJ_SUCCESS
 
     // Send it
-    status = pjsip_inv_send_msg (call->getInvSession(), tdata);
+    status = pjsip_inv_send_msg (call->inv, tdata);
 
     if (status != PJ_SUCCESS)
         return 1;   // !PJ_SUCCESS
@@ -1166,7 +1166,7 @@ SIPVoIPLink::transfer (const std::string& id, const std::string& to) throw (Voip
     pj_bzero (&xfer_cb, sizeof (xfer_cb));
     xfer_cb.on_evsub_state = &transfer_client_cb;
 
-    status = pjsip_xfer_create_uac (call->getInvSession()->dlg, &xfer_cb, &sub);
+    status = pjsip_xfer_create_uac (call->inv->dlg, &xfer_cb, &sub);
     if (status != PJ_SUCCESS) {
     	throw VoipLinkException("Could not create xfer request");
     }
@@ -1187,7 +1187,7 @@ SIPVoIPLink::transfer (const std::string& id, const std::string& to) throw (Voip
     }
 
     // Put SIP call id in map in order to retrieve call during transfer callback
-    std::string callidtransfer (call->getInvSession()->dlg->call_id->id.ptr, call->getInvSession()->dlg->call_id->id.slen);
+    std::string callidtransfer (call->inv->dlg->call_id->id.ptr, call->inv->dlg->call_id->id.slen);
     transferCallID.insert (std::pair<std::string, std::string> (callidtransfer, call->getCallId()));
 
     /* Send. */
@@ -1217,7 +1217,7 @@ bool SIPVoIPLink::attendedTransfer(const std::string& transferId, const std::str
 	str_dest.slen = 0;
 
     SIPCall *targetCall = getSIPCall (targetId);
-    target_dlg = targetCall->getInvSession()->dlg;
+    target_dlg = targetCall->inv->dlg;
 
     /* Print URI */
     str_dest_buf[0] = '<';
@@ -1250,7 +1250,7 @@ bool SIPVoIPLink::attendedTransfer(const std::string& transferId, const std::str
     pj_bzero (&xfer_cb, sizeof (xfer_cb));
     xfer_cb.on_evsub_state = &transfer_client_cb;
 
-    status = pjsip_xfer_create_uac (transferCall->getInvSession()->dlg, &xfer_cb, &sub);
+    status = pjsip_xfer_create_uac (transferCall->inv->dlg, &xfer_cb, &sub);
 
     if (status != PJ_SUCCESS) {
     	_warn ("UserAgent: Unable to create xfer -- %d", status);
@@ -1275,8 +1275,8 @@ bool SIPVoIPLink::attendedTransfer(const std::string& transferId, const std::str
     }
 
     // Put SIP call id in map in order to retrieve call during transfer callback
-    std::string callidtransfer (transferCall->getInvSession()->dlg->call_id->id.ptr,
-    							transferCall->getInvSession()->dlg->call_id->id.slen);
+    std::string callidtransfer (transferCall->inv->dlg->call_id->id.ptr,
+    							transferCall->inv->dlg->call_id->id.slen);
     _debug ("%s", callidtransfer.c_str());
     transferCallID.insert (std::pair<std::string, std::string> (callidtransfer, transferCall->getCallId()));
 
@@ -1329,18 +1329,18 @@ SIPVoIPLink::refuse (const std::string& id)
     call->getVideoRtp()->stop();
 
     // User refuse current call. Notify peer
-    status = pjsip_inv_end_session (call->getInvSession(), PJSIP_SC_DECLINE, NULL, &tdata);   //603
+    status = pjsip_inv_end_session (call->inv, PJSIP_SC_DECLINE, NULL, &tdata);   //603
 
     if (status != PJ_SUCCESS)
         return false;
 
-    status = pjsip_inv_send_msg (call->getInvSession(), tdata);
+    status = pjsip_inv_send_msg (call->inv, tdata);
 
     if (status != PJ_SUCCESS)
         return false;
 
     // Make sure the pointer is NULL in callbacks
-    call->getInvSession()->mod_data[getModId() ] = NULL;
+    call->inv->mod_data[getModId() ] = NULL;
 
     removeCall (id);
 
@@ -1457,7 +1457,7 @@ SIPVoIPLink::dtmfSipInfo (SIPCall *call, char code)
     pjsip_method_init_np (&method, &methodName);
 
     /* Create request message. */
-    status = pjsip_dlg_create_request (call->getInvSession()->dlg, &method, -1, &tdata);
+    status = pjsip_dlg_create_request (call->inv->dlg, &method, -1, &tdata);
 
     if (status != PJ_SUCCESS) {
         _debug ("UserAgent: Unable to create INFO request -- %d", status);
@@ -1483,7 +1483,7 @@ SIPVoIPLink::dtmfSipInfo (SIPCall *call, char code)
     }
 
     /* Send the request. */
-    status = pjsip_dlg_send_request (call->getInvSession()->dlg, tdata, getModId(), NULL);
+    status = pjsip_dlg_send_request (call->inv->dlg, tdata, getModId(), NULL);
 
     if (status != PJ_SUCCESS) {
         _debug ("UserAgent: Unable to send MESSAGE request -- %d", status);
@@ -1599,7 +1599,7 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
 
     // Associate current invite session in the call
-    call->setInvSession (inv);
+    call->inv = inv;
 
     // Set the appropriate transport
     pjsip_tpselector *tp;
@@ -1901,7 +1901,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const std::string& id, const std::string& to
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
 
     // Associate current invite session in the call
-    call->setInvSession (inv);
+    call->inv = inv;
 
     status = pjsip_inv_send_msg (inv, tdata);
 
@@ -3166,74 +3166,6 @@ void invite_session_state_changed_cb (pjsip_inv_session *inv, pjsip_event *e)
         return;
     }
 
-    // If this is an outgoing INVITE that was created because of
-    // REFER/transfer, send NOTIFY to transferer.
-    if (call->getXferSub() && e->type==PJSIP_EVENT_TSX_STATE) {
-
-    	_debug("UserAgent: Call state changed during transfer");
-
-        int st_code = -1;
-        pjsip_evsub_state ev_state = PJSIP_EVSUB_STATE_ACTIVE;
-
-        switch (call->getInvSession()->state) {
-
-            case PJSIP_INV_STATE_NULL:
-            	_debug("PJSIP_INV_STATE_NULL");
-            	break;
-            case PJSIP_INV_STATE_CALLING:
-            	_debug("\n");
-                /* Do nothing */
-            	_debug("PJSIP_INV_STATE_CALLING");
-                break;
-            case PJSIP_INV_STATE_EARLY:
-            case PJSIP_INV_STATE_CONNECTING:
-                st_code = e->body.tsx_state.tsx->status_code;
-                ev_state = PJSIP_EVSUB_STATE_ACTIVE;
-                _debug("PJSIP_INV_STATE_EARLY, PJSIP_INV_STATE_CONNECTING");
-                break;
-            case PJSIP_INV_STATE_CONFIRMED:
-                /* When state is confirmed, send the final 200/OK and terminate
-                 * subscription.
-                 */
-                st_code = e->body.tsx_state.tsx->status_code;
-                ev_state = PJSIP_EVSUB_STATE_TERMINATED;
-                _debug("PJSIP_INV_STATE_CONFIRMED");
-                break;
-
-            case PJSIP_INV_STATE_DISCONNECTED:
-                st_code = e->body.tsx_state.tsx->status_code;
-                ev_state = PJSIP_EVSUB_STATE_TERMINATED;
-                _debug("PJSIP_EVSUB_STATE_TERMINATED");
-                break;
-
-            case PJSIP_INV_STATE_INCOMING:
-                /* Nothing to do. Just to keep gcc from complaining about
-                 * unused enums.
-                 */
-            	_debug("PJSIP_INV_STATE_INCOMING");
-                break;
-        }
-
-        if (st_code != -1) {
-            pjsip_tx_data *tdata;
-            pj_status_t status;
-
-            status = pjsip_xfer_notify (call->getXferSub(), ev_state, st_code, NULL, &tdata);
-
-            if (status != PJ_SUCCESS) {
-                _debug ("UserAgent: Unable to create NOTIFY -- %d", status);
-            } else {
-                status = pjsip_xfer_send_request (call->getXferSub(), tdata);
-
-                if (status != PJ_SUCCESS) {
-                    _debug ("UserAgent: Unable to send NOTIFY -- %d", status);
-                }
-            }
-        }
-
-        return;
-    }
-
     if (inv->state != PJSIP_INV_STATE_CONFIRMED) {
         // Update UI with the current status code and description
         pjsip_transaction * tsx = e->body.tsx_state.tsx;
@@ -3319,7 +3251,7 @@ void sdp_request_offer_cb (pjsip_inv_session *inv, const pjmedia_sdp_session *of
     status = call->getLocalSDP()->receiveOffer (offer, account->getActiveCodecs (), account->getActiveVideoCodecs());
     call->getLocalSDP()->startNegotiation();
 
-    status = pjsip_inv_set_sdp_answer (call->getInvSession(), call->getLocalSDP()->getLocalSdpSession());
+    status = pjsip_inv_set_sdp_answer (call->inv, call->getLocalSDP()->getLocalSdpSession());
 
     if (link) {
         link->SIPHandleReinvite (call);
@@ -4096,7 +4028,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
          if (status == PJ_SUCCESS && tdata)
              status = pjsip_inv_send_msg(replaced_inv, tdata);
 
-         call->replaceInvSession(inv);
+         call->inv = inv;
     }
     else { // Prooceed with normal call flow
 
@@ -4109,7 +4041,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
         PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
     	// Associate invite session to the current call
-    	call->setInvSession (inv);
+    	call->inv = inv;
 
     	// Update the connection state
     	call->setConnectionState (Call::Ringing);
@@ -4385,12 +4317,12 @@ void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
             _debug ("UserAgent: Received 200 OK on call transfered, stop call!");
             pjsip_tx_data *tdata;
 
-            status = pjsip_inv_end_session (call->getInvSession(), PJSIP_SC_GONE, NULL, &tdata);
+            status = pjsip_inv_end_session (call->inv, PJSIP_SC_GONE, NULL, &tdata);
 
             if (status != PJ_SUCCESS) {
                 _debug ("UserAgent: Fail to create end session msg!");
             } else {
-                status = pjsip_inv_send_msg (call->getInvSession(), tdata);
+                status = pjsip_inv_send_msg (call->inv, tdata);
 
                 if (status != PJ_SUCCESS) {
                     _debug ("UserAgent: Fail to send end session msg!");
@@ -4448,10 +4380,6 @@ void transfer_server_cb (pjsip_evsub *sub, pjsip_event *event)
         }
 
         pjsip_evsub_set_mod_data (sub, _mod_ua.id, NULL);
-
-        call->setXferSub (NULL);
-
-        // Manager::instance().hangupCall(call->getCallId());
 
         _error ("UserAgent: Xfer server subscription terminated");
     }
