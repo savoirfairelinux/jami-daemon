@@ -80,16 +80,14 @@ gchar* call_get_peer_number (const gchar *format)
 
 gchar* call_get_audio_codec (callable_obj_t *obj)
 {
-    if (obj) {
-        gchar * const audio_codec = dbus_get_current_audio_codec_name (obj);
-        account_t *acc = account_list_get_by_id(obj->_accountID);
-        if (acc) {
-            const codec_t * const codec = codec_list_get_by_name (audio_codec, acc->codecs);
-            if (codec) {
-                gchar *result = g_markup_printf_escaped ("%s/%i", audio_codec, codec->sample_rate);
-                g_free (audio_codec);
-                return result;
-            }
+    gchar * const audio_codec = dbus_get_current_audio_codec_name (obj);
+    account_t *acc = account_list_get_by_id(obj->_accountID);
+    if (acc) {
+        const codec_t * const codec = codec_list_get_by_name (audio_codec, acc->codecs);
+        if (codec) {
+            gchar *result = g_markup_printf_escaped ("%s/%i", audio_codec, codec->sample_rate);
+            g_free (audio_codec);
+            return result;
         }
     }
 
