@@ -54,18 +54,18 @@ void MainBuffer::setInternalSamplingRate (int sr)
     }
 }
 
-CallIDSet* MainBuffer::getCallIDSet (std::string call_id)
+CallIDSet* MainBuffer::getCallIDSet (const std::string & call_id)
 {
     CallIDMap::iterator iter = _callIDMap.find (call_id);
     return (iter != _callIDMap.end()) ? iter->second : NULL;
 }
 
-void MainBuffer::createCallIDSet (std::string set_id)
+void MainBuffer::createCallIDSet (const std::string & set_id)
 {
     _callIDMap.insert (std::pair<std::string, CallIDSet*> (set_id, new CallIDSet));
 }
 
-bool MainBuffer::removeCallIDSet (std::string set_id)
+bool MainBuffer::removeCallIDSet (const std::string & set_id)
 {
     CallIDSet* callid_set = getCallIDSet (set_id);
 
@@ -83,13 +83,13 @@ bool MainBuffer::removeCallIDSet (std::string set_id)
 	return true;
 }
 
-void MainBuffer::addCallIDtoSet (std::string set_id, std::string call_id)
+void MainBuffer::addCallIDtoSet (const std::string & set_id, const std::string & call_id)
 {
     CallIDSet* callid_set = getCallIDSet (set_id);
     callid_set->insert (call_id);
 }
 
-void MainBuffer::removeCallIDfromSet (std::string set_id, std::string call_id)
+void MainBuffer::removeCallIDfromSet (const std::string & set_id, const std::string & call_id)
 {
     CallIDSet* callid_set = getCallIDSet (set_id);
 
@@ -104,7 +104,7 @@ void MainBuffer::removeCallIDfromSet (std::string set_id, std::string call_id)
 }
 
 
-RingBuffer* MainBuffer::getRingBuffer (std::string call_id)
+RingBuffer* MainBuffer::getRingBuffer (const std::string & call_id)
 {
     RingBufferMap::iterator iter = _ringBufferMap.find (call_id);
 
@@ -116,7 +116,7 @@ RingBuffer* MainBuffer::getRingBuffer (std::string call_id)
 }
 
 
-RingBuffer* MainBuffer::createRingBuffer (std::string call_id)
+RingBuffer* MainBuffer::createRingBuffer (const std::string & call_id)
 {
     RingBuffer* newRingBuffer = new RingBuffer (SIZEBUF, call_id);
     _ringBufferMap.insert (std::pair<std::string, RingBuffer*> (call_id, newRingBuffer));
@@ -124,7 +124,7 @@ RingBuffer* MainBuffer::createRingBuffer (std::string call_id)
 }
 
 
-bool MainBuffer::removeRingBuffer (std::string call_id)
+bool MainBuffer::removeRingBuffer (const std::string & call_id)
 {
     RingBuffer* ring_buffer = getRingBuffer (call_id);
 
@@ -143,7 +143,7 @@ bool MainBuffer::removeRingBuffer (std::string call_id)
 }
 
 
-void MainBuffer::bindCallID (std::string call_id1, std::string call_id2)
+void MainBuffer::bindCallID (const std::string & call_id1, const std::string & call_id2)
 {
     ost::MutexLock guard (_mutex);
 
@@ -172,7 +172,7 @@ void MainBuffer::bindCallID (std::string call_id1, std::string call_id2)
 
 }
 
-void MainBuffer::bindHalfDuplexOut (std::string process_id, std::string call_id)
+void MainBuffer::bindHalfDuplexOut (const std::string & process_id, const std::string & call_id)
 {
     ost::MutexLock guard (_mutex);
 
@@ -190,7 +190,7 @@ void MainBuffer::bindHalfDuplexOut (std::string process_id, std::string call_id)
 }
 
 
-void MainBuffer::unBindCallID (std::string call_id1, std::string call_id2)
+void MainBuffer::unBindCallID (const std::string & call_id1, const std::string & call_id2)
 {
     ost::MutexLock guard (_mutex);
 
@@ -223,7 +223,7 @@ void MainBuffer::unBindCallID (std::string call_id1, std::string call_id2)
     }
 }
 
-void MainBuffer::unBindHalfDuplexOut (std::string process_id, std::string call_id)
+void MainBuffer::unBindHalfDuplexOut (const std::string & process_id, const std::string & call_id)
 {
     ost::MutexLock guard (_mutex);
 
@@ -254,7 +254,7 @@ void MainBuffer::unBindHalfDuplexOut (std::string process_id, std::string call_i
 }
 
 
-void MainBuffer::unBindAll (std::string call_id)
+void MainBuffer::unBindAll (const std::string & call_id)
 {
     CallIDSet* callid_set = getCallIDSet (call_id);
 
@@ -278,7 +278,7 @@ void MainBuffer::unBindAll (std::string call_id)
 }
 
 
-void MainBuffer::unBindAllHalfDuplexOut (std::string process_id)
+void MainBuffer::unBindAllHalfDuplexOut (const std::string & process_id)
 {
     CallIDSet* callid_set = getCallIDSet (process_id);
 
@@ -301,7 +301,7 @@ void MainBuffer::unBindAllHalfDuplexOut (std::string process_id)
 }
 
 
-void MainBuffer::putData (void *buffer, int toCopy, std::string call_id)
+void MainBuffer::putData (void *buffer, int toCopy, const std::string & call_id)
 {
     ost::MutexLock guard (_mutex);
 
@@ -310,7 +310,7 @@ void MainBuffer::putData (void *buffer, int toCopy, std::string call_id)
     	ring_buffer->Put (buffer, toCopy);
 }
 
-int MainBuffer::getData (void *buffer, int toCopy, std::string call_id)
+int MainBuffer::getData (void *buffer, int toCopy, const std::string & call_id)
 {
     ost::MutexLock guard (_mutex);
 
@@ -355,7 +355,7 @@ int MainBuffer::getData (void *buffer, int toCopy, std::string call_id)
 }
 
 
-int MainBuffer::getDataByID (void *buffer, int toCopy, std::string call_id, std::string reader_id)
+int MainBuffer::getDataByID (void *buffer, int toCopy, const std::string & call_id, const std::string & reader_id)
 {
     RingBuffer* ring_buffer = getRingBuffer (call_id);
 
@@ -367,7 +367,7 @@ int MainBuffer::getDataByID (void *buffer, int toCopy, std::string call_id, std:
 }
 
 
-int MainBuffer::availForGet (std::string call_id)
+int MainBuffer::availForGet (const std::string & call_id)
 {
     ost::MutexLock guard (_mutex);
 
@@ -383,7 +383,7 @@ int MainBuffer::availForGet (std::string call_id)
     if (callid_set->size() == 1) {
         CallIDSet::iterator iter_id = callid_set->begin();
 
-        if ( (call_id != default_id) && (*iter_id == call_id)) {
+        if ( (call_id != Call::DEFAULT_ID) && (*iter_id == call_id)) {
             _debug ("This problem should not occur since we have %i element", (int) callid_set->size());
         }
 
@@ -410,9 +410,9 @@ int MainBuffer::availForGet (std::string call_id)
 }
 
 
-int MainBuffer::availForGetByID (std::string call_id, std::string reader_id)
+int MainBuffer::availForGetByID (const std::string & call_id, const std::string & reader_id)
 {
-    if ( (call_id != default_id) && (reader_id == call_id)) {
+    if ( (call_id != Call::DEFAULT_ID) && (reader_id == call_id)) {
         _error ("MainBuffer: Error: RingBuffer has a readpointer on tiself");
     }
 
@@ -427,7 +427,7 @@ int MainBuffer::availForGetByID (std::string call_id, std::string reader_id)
 }
 
 
-int MainBuffer::discard (int toDiscard, std::string call_id)
+int MainBuffer::discard (int toDiscard, const std::string & call_id)
 {
     ost::MutexLock guard (_mutex);
 
@@ -460,7 +460,7 @@ int MainBuffer::discard (int toDiscard, std::string call_id)
 }
 
 
-int MainBuffer::discardByID (int toDiscard, std::string call_id, std::string reader_id)
+int MainBuffer::discardByID (int toDiscard, const std::string & call_id, const std::string & reader_id)
 {
     RingBuffer* ringbuffer = getRingBuffer (call_id);
 
@@ -473,7 +473,7 @@ int MainBuffer::discardByID (int toDiscard, std::string call_id, std::string rea
 
 
 
-void MainBuffer::flush (std::string call_id)
+void MainBuffer::flush (const std::string & call_id)
 {
     ost::MutexLock guard (_mutex);
 
@@ -503,11 +503,11 @@ void MainBuffer::flushDefault()
 {
     ost::MutexLock guard (_mutex);
 
-    flushByID (default_id, default_id);
+    flushByID (Call::DEFAULT_ID, Call::DEFAULT_ID);
 }
 
 
-void MainBuffer::flushByID (std::string call_id, std::string reader_id)
+void MainBuffer::flushByID (const std::string & call_id, const std::string & reader_id)
 {
     RingBuffer* ringbuffer = getRingBuffer (call_id);
 
@@ -528,7 +528,7 @@ void MainBuffer::flushAllBuffers()
     }
 }
 
-void MainBuffer:: syncBuffers (std::string call_id)
+void MainBuffer:: syncBuffers (const std::string & call_id)
 {
     CallIDSet* callid_set = getCallIDSet (call_id);
 

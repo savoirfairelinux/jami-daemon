@@ -48,8 +48,6 @@ class Conference: public Recordable
 
         enum ConferenceState {ACTIVE_ATTACHED, ACTIVE_DETACHED, ACTIVE_ATTACHED_REC, ACTIVE_DETACHED_REC, HOLD, HOLD_REC};
 
-        static int count;
-
         /**
          * Constructor for this class, increment static counter
          */
@@ -144,7 +142,5 @@ class Conference: public Recordable
         int _nbParticipant;
 
 };
-
-// Conference::count = 0;
 
 #endif

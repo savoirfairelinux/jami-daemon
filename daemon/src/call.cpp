@@ -32,6 +32,8 @@
 #include "manager.h"
 #include "audio/mainbuffer.h"
 
+const char * const Call::DEFAULT_ID = "audiolayer_id";
+
 Call::Call (const std::string& id, Call::CallType type)
     : _callMutex()
     , _localIPAddress ("")

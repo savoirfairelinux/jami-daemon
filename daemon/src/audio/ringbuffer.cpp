@@ -46,7 +46,7 @@
 int RingBuffer::count_rb = 0;
 
 // Create  a ring buffer with 'size' bytes
-RingBuffer::RingBuffer (int size, std::string call_id) : mEnd (0)
+RingBuffer::RingBuffer (int size, const std::string &call_id) : mEnd (0)
     , mBufferSize (size > MIN_BUFFER_SIZE ? size : MIN_BUFFER_SIZE)
     , mBuffer (NULL)
     , buffer_id (call_id)
@@ -65,7 +65,7 @@ RingBuffer::~RingBuffer()
 }
 
 void
-RingBuffer::flush (std::string call_id)
+RingBuffer::flush (const std::string &call_id)
 {
 
     storeReadPointer (mEnd, call_id);
@@ -95,7 +95,7 @@ RingBuffer::putLen()
 }
 
 int
-RingBuffer::getLen (std::string call_id)
+RingBuffer::getLen (const std::string &call_id)
 {
     return (mEnd + mBufferSize - getReadPointer (call_id)) % mBufferSize;
 }
@@ -107,7 +107,7 @@ RingBuffer::debug()
 }
 
 int
-RingBuffer::getReadPointer (std::string call_id)
+RingBuffer::getReadPointer (const std::string &call_id)
 {
     if (getNbReadPointer() == 0)
         return 0;
@@ -133,7 +133,7 @@ RingBuffer::getSmallestReadPointer()
 }
 
 void
-RingBuffer::storeReadPointer (int pointer_value, std::string call_id)
+RingBuffer::storeReadPointer (int pointer_value, const std::string &call_id)
 {
     ReadPointer::iterator iter = _readpointer.find (call_id);
 
@@ -146,7 +146,7 @@ RingBuffer::storeReadPointer (int pointer_value, std::string call_id)
 
 
 void
-RingBuffer::createReadPointer (std::string call_id)
+RingBuffer::createReadPointer (const std::string &call_id)
 {
     if (!hasThisReadPointer (call_id))
         _readpointer.insert (std::pair<std::string, int> (call_id, mEnd));
@@ -154,7 +154,7 @@ RingBuffer::createReadPointer (std::string call_id)
 
 
 void
-RingBuffer::removeReadPointer (std::string call_id)
+RingBuffer::removeReadPointer (const std::string &call_id)
 {
     ReadPointer::iterator iter = _readpointer.find (call_id);
     if (iter != _readpointer.end())
@@ -163,7 +163,7 @@ RingBuffer::removeReadPointer (std::string call_id)
 
 
 bool
-RingBuffer::hasThisReadPointer (std::string call_id)
+RingBuffer::hasThisReadPointer (const std::string &call_id)
 {
     return _readpointer.find (call_id) != _readpointer.end();
 }
@@ -210,7 +210,7 @@ RingBuffer::Put (void* buffer, int toCopy)
 //
 
 int
-RingBuffer::AvailForGet (std::string call_id)
+RingBuffer::AvailForGet (const std::string &call_id)
 {
     // Used space
 
@@ -219,7 +219,7 @@ RingBuffer::AvailForGet (std::string call_id)
 
 // Get will move 'toCopy' bytes from the internal FIFO to 'buffer'
 int
-RingBuffer::Get (void *buffer, int toCopy, std::string call_id)
+RingBuffer::Get (void *buffer, int toCopy, const std::string &call_id)
 {
     if (getNbReadPointer() == 0)
         return 0;
@@ -252,7 +252,7 @@ RingBuffer::Get (void *buffer, int toCopy, std::string call_id)
 
 // Used to discard some bytes.
 int
-RingBuffer::Discard (int toDiscard, std::string call_id)
+RingBuffer::Discard (int toDiscard, const std::string &call_id)
 {
 
     int len = getLen (call_id);

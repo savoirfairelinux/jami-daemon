@@ -73,7 +73,7 @@ class AudioLayer
             : _layerType (type)
         	, _isStarted(false)
             , _manager (manager)
-            , _urgentRingBuffer (SIZEBUF, default_id)
+            , _urgentRingBuffer (SIZEBUF, Call::DEFAULT_ID)
             , _mainBuffer(0)
             , _recorder(0)
             , _indexIn (0)
