@@ -80,18 +80,20 @@ gchar* call_get_peer_number (const gchar *format)
 
 gchar* call_get_audio_codec (callable_obj_t *obj)
 {
-    gchar *result = NULL;
     if (obj) {
         gchar * const audio_codec = dbus_get_current_audio_codec_name (obj);
-        const codec_t * const codec = codec_list_get_by_name (audio_codec, NULL);
-        if (codec) {
-            result = g_markup_printf_escaped ("%s/%i", audio_codec, codec->sample_rate);
-            g_free (audio_codec);
+        account_t *acc = account_list_get_by_id(obj->_accountID);
+        if (acc) {
+            const codec_t * const codec = codec_list_get_by_name (audio_codec, acc->codecs);
+            if (codec) {
+                gchar *result = g_markup_printf_escaped ("%s/%i", audio_codec, codec->sample_rate);
+                g_free (audio_codec);
+                return result;
+            }
         }
     }
-    else
-        result = g_strdup("");
-    return result;
+
+    return g_strdup("");
 }
 
 void call_add_error (callable_obj_t * call, gpointer dialog)
@@ -173,19 +175,8 @@ void threaded_clock_incrementer (void *pc)
 
 void stop_call_clock (callable_obj_t *c)
 {
-
-    DEBUG ("CallableObj: Stop call clock");
-
-    if (!c) {
-        ERROR ("CallableObj: Callable object is NULL");
-        return;
-    }
-
-    if (c->_type == CALL && c->clockStarted) {
+    if (c->_type == CALL && c->clockStarted)
         c->clockStarted = 0;
-        /// no need to join here, only need to call g_thread_exit at the end of the threaded function
-        // g_thread_join (c->tid);
-    }
 }
 
 callable_obj_t *create_new_call (callable_type_t type, call_state_t state,
@@ -194,23 +185,16 @@ callable_obj_t *create_new_call (callable_type_t type, call_state_t state,
                       const gchar* const peer_name,
                       const gchar* const peer_number)
 {
-    GError *err1 = NULL ;
-    callable_obj_t *obj;
-
-    DEBUG ("CallableObj: Create new call");
-
-    DEBUG ("CallableObj: Account: %s", accountID);
+    DEBUG ("CallableObj: Create new call (Account: %s)", accountID);
 
     // Allocate memory
-    obj = g_new0 (callable_obj_t, 1);
+    callable_obj_t *obj = g_new0 (callable_obj_t, 1);
 
     obj->_error_dialogs = g_ptr_array_new();
 
     // Set fields
     obj->_type = type;
     obj->_state = state;
-    obj->_state_code = 0;
-    obj->_state_code_description = NULL;
 
     if (g_strcasecmp (callID, "") == 0)
     {
@@ -221,35 +205,24 @@ callable_obj_t *create_new_call (callable_type_t type, call_state_t state,
     else
         obj->_callID = g_strdup (callID);
 
-    obj->_confID = NULL;
-    obj->_historyConfID = NULL;
     obj->_accountID = g_strdup (accountID);
 
     set_timestamp (& (obj->_time_start));
     set_timestamp (& (obj->_time_current));
     set_timestamp (& (obj->_time_stop));
 
-    obj->_srtp_cipher = NULL;
-    obj->_sas = NULL;
     obj->_peer_name = g_strdup (peer_name);
     obj->_peer_number = g_strdup (peer_number);
-    obj->_trsft_to = NULL;
     obj->_peer_info = get_peer_info (peer_name, peer_number);
-    obj->_audio_codec = NULL;
-    obj->_recordfile = NULL;
-    obj->_record_is_playing = FALSE;
-
     obj->clockStarted = 1;
 
     if (obj->_type == CALL) {
-        // pthread_create(&(obj->tid), NULL, threaded_clock_incrementer, obj);
-        if ( (obj->tid = g_thread_create ( (GThreadFunc) threaded_clock_incrementer, (void *) obj, TRUE, &err1)) == NULL) {
+        GError *err1 = NULL ;
+        if (!g_thread_create ( (GThreadFunc) threaded_clock_incrementer, (void *) obj, TRUE, &err1)) {
             DEBUG ("Thread creation failed!");
             g_error_free (err1) ;
         }
     }
-
-    obj->_time_added = 0;
 
     return obj;
 }
@@ -377,7 +350,6 @@ void free_callable_obj_t (callable_obj_t *c)
     g_free (c->_peer_number);
     g_free (c->_trsft_to);
     g_free (c->_peer_info);
-    g_free (c->_audio_codec);
     g_free (c->_recordfile);
 
     g_free (c);
