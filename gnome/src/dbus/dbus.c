@@ -1520,6 +1520,27 @@ dbus_video_codec_details (gchar *codec)
 }
 
 gchar*
+dbus_get_current_video_codec_name (const callable_obj_t * c)
+{
+
+    gchar* codecName = NULL;
+    GError* error = NULL;
+
+    org_sflphone_SFLphone_CallManager_get_current_video_codec_name (callManagerProxy,
+            c->_callID, &codecName, &error);
+
+    if (error) {
+        g_error_free (error);
+        g_free (codecName);
+        codecName = g_strdup("");
+    }
+
+    DEBUG ("%s: codecName : %s", __PRETTY_FUNCTION__, codecName);
+
+    return codecName;
+}
+
+gchar*
 dbus_get_current_audio_codec_name (const callable_obj_t * c)
 {
 

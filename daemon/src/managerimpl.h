@@ -567,6 +567,13 @@ class ManagerImpl
         void removeAccount (const std::string& accountID);
 
         /**
+         * Get current video codec name
+         * @param call id 
+         * @return std::string The video codec name
+         */
+        std::string getCurrentVideoCodecName (const std::string& id);
+
+        /**
          * Get current codec name
          * @param call id
          * @return std::string The codec name

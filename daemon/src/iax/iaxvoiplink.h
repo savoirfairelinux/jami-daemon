@@ -207,6 +207,7 @@ class IAXVoIPLink : public VoIPLink
          * @param id The call identifier
          */
         virtual std::string getCurrentCodecName(const std::string& id);
+        virtual std::string getCurrentVideoCodecName(const std::string& id);
 
 
     public: // iaxvoiplink only

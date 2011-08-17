@@ -252,6 +252,12 @@ gchar** dbus_get_active_video_codec_list (gchar *accountID);
 void dbus_set_active_video_codec_list (const gchar** list, const gchar*);
 
 /**
+ * CallManager - return the video codec name
+ * @param callable_obj_t* current call
+ */
+gchar* dbus_get_current_video_codec_name (const callable_obj_t * c);
+
+/**
  * CallManager - return the audio codec name
  * @param callable_obj_t* current call
  */

@@ -314,6 +314,12 @@ CallManager::getCurrentAudioCodecName (const std::string& callID)
     return Manager::instance().getCurrentCodecName (callID).c_str();
 }
 
+std::string
+CallManager::getCurrentVideoCodecName (const std::string& callID)
+{
+    return Manager::instance().getCurrentVideoCodecName (callID).c_str();
+}
+
 
 std::map< std::string, std::string >
 CallManager::getCallDetails (const std::string& callID)

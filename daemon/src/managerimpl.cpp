@@ -2447,6 +2447,26 @@ std::string ManagerImpl::serialize (const std::vector<std::string> &v)
     return res;
 }
 
+std::string ManagerImpl::getCurrentVideoCodecName (const std::string& id)
+{
+
+    std::string accountid = getAccountFromCall (id);
+    VoIPLink* link = getAccountLink (accountid);
+    Call* call = link->getCall (id);
+    std::string codecName;
+
+    _debug("Manager: Get current video codec name");
+
+    if (call) {
+        Call::CallState state = call->getState();
+        if (state == Call::Active or state == Call::Conferencing) {
+            codecName = link->getCurrentVideoCodecName(id);
+        }
+    }
+
+    return codecName;	
+}
+
 std::string ManagerImpl::getCurrentCodecName (const std::string& id)
 {
 

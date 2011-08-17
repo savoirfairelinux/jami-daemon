@@ -1009,7 +1009,7 @@ SIPVoIPLink::offhold (const std::string& id) throw (VoipLinkException)
     try {
         // Retreive previously selected codec
         AudioCodecType pl;
-        sfl::Codec *sessionMedia = sdpSession->getSessionMedia();
+        sfl::Codec *sessionMedia = sdpSession->getSessionAudioCodec();
         if (sessionMedia == NULL) {
             // throw VoipLinkException("Could not find session media");
     	    _warn("UserAgent: Session media not yet initialized, using default (ULAW)");
@@ -1350,40 +1350,31 @@ SIPVoIPLink::refuse (const std::string& id)
 }
 
 std::string
+SIPVoIPLink::getCurrentVideoCodecName(const std::string& id)
+{
+    SIPCall *call = getSIPCall (id);
+	if(call == NULL) {
+		_error("UserAgent: Error: No current call");
+		return "";
+	}
+
+	return call->getLocalSDP()->getSessionVideoCodec();
+}
+
+std::string
 SIPVoIPLink::getCurrentCodecName(const std::string& id)
 {
+	SIPCall *call = getSIPCall (id);
+	if(call == NULL) {
+		_error("UserAgent: Error: No current call");
+		return "";
+	}
 
-    SIPCall *call = NULL;
-    sfl::Codec *ac = NULL;
-    std::string name = "";
+	sfl::Codec *ac = call->getLocalSDP()->getSessionAudioCodec();
+	if (ac)
+		return ac->getMimeSubtype();
 
-    try {
-        // call = getSIPCall (Manager::instance().getCurrentCallId());
-        call = getSIPCall (id);
-        if(call == NULL) {
-            _error("UserAgent: Error: No current call");
-   	    // return empty string
-            return name;
-        }
-    
-        if(call->getLocalSDP()->hasSessionMedia()) {
-            ac = call->getLocalSDP()->getSessionMedia();
-        }
-        else {
-	    return name;
-        }
-    }
-    catch (const SdpException &e) {
-	_error("UserAgent: Exception: %s", e.what());
-    }
-
-    if (ac == NULL) {
-	_error("UserAgent: Error: No codec initialized for this session");
-    }
-
-    name = ac->getMimeSubtype();
-
-    return name;
+    return "";
 }
 
 std::string SIPVoIPLink::getUseragentName (const std::string& id)
@@ -3511,7 +3502,7 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
     if (!sdpSession)
         return;
 
-    sfl::AudioCodec *sessionMedia = sdpSession->getSessionMedia();
+    sfl::AudioCodec *sessionMedia = sdpSession->getSessionAudioCodec();
 
     if (!sessionMedia)
         return;

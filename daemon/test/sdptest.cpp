@@ -158,7 +158,7 @@ void SDPTest::testInitialOfferFirstCodec ()
     CPPUNIT_ASSERT(_session->getRemoteAudioPort() == 49920);
     CPPUNIT_ASSERT(_session->getLocalIP() == "127.0.0.1");
     CPPUNIT_ASSERT(_session->getRemoteIP() == "host.example.com");
-    CPPUNIT_ASSERT(_session->getSessionMedia()->getMimeSubtype() == "PCMU");
+    CPPUNIT_ASSERT(_session->getSessionAudioCodec()->getMimeSubtype() == "PCMU");
 
 }
 
@@ -199,7 +199,7 @@ void SDPTest::testInitialAnswerFirstCodec ()
     CPPUNIT_ASSERT(_session->getRemoteAudioPort() == 49920);
     CPPUNIT_ASSERT(_session->getLocalIP() == "127.0.0.1");
     CPPUNIT_ASSERT(_session->getRemoteIP() == "host.example.com");
-    CPPUNIT_ASSERT(_session->getSessionMedia()->getMimeSubtype() == "PCMU");
+    CPPUNIT_ASSERT(_session->getSessionAudioCodec()->getMimeSubtype() == "PCMU");
 
 }
 
@@ -243,7 +243,7 @@ void SDPTest::testInitialOfferLastCodec ()
     CPPUNIT_ASSERT(_session->getRemoteAudioPort() == 49920);
     CPPUNIT_ASSERT(_session->getLocalIP() == "127.0.0.1");
     CPPUNIT_ASSERT(_session->getRemoteIP() == "host.example.com");
-    CPPUNIT_ASSERT(_session->getSessionMedia()->getMimeSubtype() == "G722");
+    CPPUNIT_ASSERT(_session->getSessionAudioCodec()->getMimeSubtype() == "G722");
 
 }
 
@@ -284,7 +284,7 @@ void SDPTest::testInitialAnswerLastCodec ()
     CPPUNIT_ASSERT(_session->getRemoteAudioPort() == 49920);
     CPPUNIT_ASSERT(_session->getLocalIP() == "127.0.0.1");
     CPPUNIT_ASSERT(_session->getRemoteIP() == "host.example.com");
-    CPPUNIT_ASSERT(_session->getSessionMedia()->getMimeSubtype() == "G722");
+    CPPUNIT_ASSERT(_session->getSessionAudioCodec()->getMimeSubtype() == "G722");
 
 }
 
@@ -330,7 +330,7 @@ void SDPTest::testReinvite ()
     CPPUNIT_ASSERT(_session->getRemoteAudioPort() == 49920);
     CPPUNIT_ASSERT(_session->getLocalIP() == "127.0.0.1");
     CPPUNIT_ASSERT(_session->getRemoteIP() == "host.example.com");
-    CPPUNIT_ASSERT(_session->getSessionMedia()->getMimeSubtype() == "PCMU");
+    CPPUNIT_ASSERT(_session->getSessionAudioCodec()->getMimeSubtype() == "PCMU");
 
     pjmedia_sdp_parse(_testPool, (char*)sdp_reinvite, strlen(sdp_reinvite), &reinviteOffer);
 

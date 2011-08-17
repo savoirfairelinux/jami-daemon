@@ -110,6 +110,7 @@ class CallManager
         void setRecording (const std::string& callID);
         bool getIsRecording (const std::string& callID);
         std::string getCurrentAudioCodecName (const std::string& callID);
+        std::string getCurrentVideoCodecName (const std::string& callID);
         void playDTMF (const std::string& key);
         void startTone (const int32_t& start, const int32_t& type);
 

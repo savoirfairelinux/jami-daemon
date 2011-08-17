@@ -78,6 +78,11 @@ gchar* call_get_peer_number (const gchar *format)
     return number;
 }
 
+gchar* call_get_video_codec (callable_obj_t *obj)
+{
+    return dbus_get_current_video_codec_name (obj);
+}
+
 gchar* call_get_audio_codec (callable_obj_t *obj)
 {
     gchar * const audio_codec = dbus_get_current_audio_codec_name (obj);

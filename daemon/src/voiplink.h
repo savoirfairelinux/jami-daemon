@@ -189,6 +189,7 @@ class VoIPLink
          * @param id The call identifier
          */
         virtual std::string getCurrentCodecName(const std::string& id) = 0;
+        virtual std::string getCurrentVideoCodecName(const std::string& id) = 0;
 
         bool initDone (void) {
             return _initDone;

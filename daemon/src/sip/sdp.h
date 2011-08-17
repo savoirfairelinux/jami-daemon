@@ -129,7 +129,8 @@ class Sdp
          * Return the codec of the first media after negotiation
          * @throw SdpException
          */
-        sfl::AudioCodec* getSessionMedia (void);
+        sfl::AudioCodec* getSessionAudioCodec (void);
+        const std::string &getSessionVideoCodec (void);
 
         /*
          * On building an invite outside a dialog, build the local offer and create the
@@ -255,13 +256,6 @@ class Sdp
         }
 
         /**
-         * Get media list for this session
-         */
-        std::vector<sdpMedia *> getSessionMediaList (void) const {
-            return sessionAudioMedia_;
-        }
-
-        /**
          *
          */
         void addAttributeToLocalAudioMedia(const std::string &attr);
@@ -348,9 +342,10 @@ class Sdp
         sdpMedia *localVideoMediaCap_;
 
         /**
-         * The media that will be used by the session (after the SDP negotiation)
+         * The codecs that will be used by the session (after the SDP negotiation)
          */
-        std::vector<sdpMedia *> sessionAudioMedia_;
+        sfl::AudioCodec *sessionAudioCodec_;
+        std::string sessionVideoCodec_;
 
         /**
          * IP address

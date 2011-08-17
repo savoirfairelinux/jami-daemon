@@ -395,7 +395,8 @@ button_pressed (GtkWidget* widget, GdkEventButton *event, gpointer user_data UNU
 
 
 static gchar *
-calltree_display_call_info (callable_obj_t * c, CallDisplayType display_type, const gchar * const audio_codec)
+calltree_display_call_info (callable_obj_t * c, CallDisplayType display_type,
+        const gchar * const audio_codec, const gchar * const video_codec)
 {
     gchar display_number[strlen(c->_peer_number) + 1];
     strcpy(display_number, c->_peer_number);
@@ -409,6 +410,7 @@ calltree_display_call_info (callable_obj_t * c, CallDisplayType display_type, co
             display_number[hostname - c->_peer_number] = '\0';
     }
 
+    char *codec;
     // Different display depending on type
     const gchar *name, *details = NULL;
     if (*c->_peer_name) {
@@ -428,12 +430,18 @@ calltree_display_call_info (callable_obj_t * c, CallDisplayType display_type, co
             suffix = g_markup_printf_escaped ("\n<i>%s (%d)</i>", c->_state_code_description, c->_state_code);
         break;
     case DISPLAY_TYPE_STATE_CODE :
+        if (video_codec && *video_codec)
+            codec = g_strconcat(audio_codec, "/", video_codec, NULL);
+        else
+            codec = g_strdup(audio_codec);
+
         if (c->_state_code)
             suffix = g_markup_printf_escaped ("\n<i>%s (%d)</i>  <i>%s</i>",
                     c->_state_code_description, c->_state_code,
-                    audio_codec);
+                    codec);
         else
-            suffix = g_markup_printf_escaped ("\n<i>%s</i>", audio_codec);
+            suffix = g_markup_printf_escaped ("\n<i>%s</i>", codec);
+        free(codec);
         break;
     case DISPLAY_TYPE_CALL_TRANSFER:
         suffix = g_markup_printf_escaped ("\n<i>Transfer to:%s</i> ", c->_trsft_to);
@@ -705,16 +713,18 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
             /* Update text */
             gchar * description = NULL;
             gchar * audio_codec = call_get_audio_codec (c);
+            gchar * video_codec = call_get_video_codec (c);
 
             if (c->_state == CALL_STATE_TRANSFERT) {
-                description = calltree_display_call_info (c, DISPLAY_TYPE_CALL_TRANSFER, "");
+                description = calltree_display_call_info (c, DISPLAY_TYPE_CALL_TRANSFER, "", "");
             } else {
                 if (c->_sas && display_sas && c->_srtp_state == SRTP_STATE_ZRTP_SAS_UNCONFIRMED && !c->_zrtp_confirmed)
-                    description = calltree_display_call_info (c, DISPLAY_TYPE_SAS, "");
+                    description = calltree_display_call_info (c, DISPLAY_TYPE_SAS, "", "");
                 else
-                    description = calltree_display_call_info (c, DISPLAY_TYPE_STATE_CODE, audio_codec);
+                    description = calltree_display_call_info (c, DISPLAY_TYPE_STATE_CODE, audio_codec, video_codec);
             }
             g_free(audio_codec);
+            g_free(video_codec);
 
             /* Update icons */
             if (tab == current_calls) {
@@ -806,7 +816,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
                 gchar *old_description = description;
                 g_free (old_description);
 
-                description = calltree_display_call_info (c, DISPLAY_TYPE_HISTORY, "");
+                description = calltree_display_call_info (c, DISPLAY_TYPE_HISTORY, "", "");
                 gchar * date = get_formatted_start_timestamp (c->_time_start);
                 gchar *duration = get_call_duration (c);
                 gchar *full_duration = g_strconcat (date , duration , NULL);
@@ -856,7 +866,7 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 
     // New call in the list
 
-    const gchar * description = calltree_display_call_info (c, DISPLAY_TYPE_CALL, "");
+    const gchar * description = calltree_display_call_info (c, DISPLAY_TYPE_CALL, "", "");
 
     gtk_tree_store_prepend (tab->store, &iter, parent);
 
@@ -955,7 +965,7 @@ void calltree_add_history_entry (callable_obj_t *c, GtkTreeIter *parent)
     gchar *date = NULL;
     gchar *duration = NULL;
 
-    gchar * description = calltree_display_call_info (c, DISPLAY_TYPE_HISTORY, "");
+    gchar * description = calltree_display_call_info (c, DISPLAY_TYPE_HISTORY, "", "");
 
     gtk_tree_store_prepend (history->store, &iter, parent);
 

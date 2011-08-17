@@ -598,6 +598,11 @@ IAXVoIPLink::sendTextMessage (sfl::InstantMessaging *module,
     return true;
 }
 
+std::string
+IAXVoIPLink::getCurrentVideoCodecName(const std::string& /*id*/)
+{
+    return "";
+}
 
 std::string
 IAXVoIPLink::getCurrentCodecName(const std::string& /*id*/)

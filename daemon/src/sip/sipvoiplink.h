@@ -300,6 +300,7 @@ class SIPVoIPLink : public VoIPLink
          * @param id The call identifier
          */
         std::string getCurrentCodecName(const std::string& id);
+        std::string getCurrentVideoCodecName(const std::string& id);
 
         /**
          * Retrive useragent name from account
