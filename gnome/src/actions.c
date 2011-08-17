@@ -1046,7 +1046,6 @@ sflphone_join_participant (const gchar* sel_callID, const gchar* drag_callID)
 {
     DEBUG ("sflphone join participants %s and %s", sel_callID, drag_callID);
 
-
     dbus_join_participant (sel_callID, drag_callID);
 }
 
@@ -1060,9 +1059,9 @@ sflphone_add_participant (const gchar* callID, const gchar* confID)
     DEBUG (">SFLphone: Add participant %s to conference %s", callID, confID);
 
     call = calllist_get_call(current_calls, callID);
-    if(call == NULL) {
-	ERROR("SFLphone: Error: Could not find call");
-	return;
+    if (call == NULL) {
+        ERROR("SFLphone: Error: Could not find call");
+        return;
     }
 
     set_timestamp(&call->_time_added);
@@ -1160,7 +1159,6 @@ sflphone_rec_call()
 
 void sflphone_fill_codec_list ()
 {
-
     guint account_list_size;
     guint i;
     account_t *current = NULL;
@@ -1172,20 +1170,17 @@ void sflphone_fill_codec_list ()
     for (i=0; i<account_list_size; i++) {
         current = account_list_get_nth (i);
 
-        if (current) {
+        if (current)
             sflphone_fill_codec_list_per_account (&current);
-        }
     }
 
 }
 
 void sflphone_fill_codec_list_per_account (account_t **account)
 {
-
     gchar **order;
     gchar** pl;
     GQueue *codeclist;
-    gboolean active = FALSE;
 
     order = (gchar**) dbus_get_active_audio_codec_list ( (*account)->accountID);
 
@@ -1194,36 +1189,32 @@ void sflphone_fill_codec_list_per_account (account_t **account)
     // First clean the list
     codec_list_clear (&codeclist);
 
-    if (! (*order))
+    if (!(*order))
         ERROR ("SFLphone: No codec list provided");
+    else {
+        for (pl = order; *pl; pl++) {
+            codec_t * cpy = NULL;
 
-    for (pl=order; *pl; pl++) {
-        codec_t * cpy = NULL;
+            // Each account will have a copy of the system-wide capabilities
+            codec_create_new_from_caps (codec_list_get_by_payload ( (gconstpointer) (size_t) atoi (*pl), NULL), &cpy);
 
-        // Each account will have a copy of the system-wide capabilities
-        codec_create_new_from_caps (codec_list_get_by_payload ( (gconstpointer) (size_t) atoi (*pl), NULL), &cpy);
-
-        if (cpy) {
-            cpy->is_active = TRUE;
-            codec_list_add (cpy, &codeclist);
-        } else
-            ERROR ("SFLphone: Couldn't find codec");
+            if (cpy) {
+                cpy->is_active = TRUE;
+                codec_list_add (cpy, &codeclist);
+            } else
+                ERROR ("SFLphone: Couldn't find codec");
+        }
     }
 
-    // Test here if we just added some active codec.
-    active = (codeclist->length == 0) ? TRUE : FALSE;
+    guint caps_size = codec_list_get_size ();
 
-    guint caps_size = codec_list_get_size (), i=0;
-
+    guint i;
     for (i = 0; i < caps_size; i++) {
-
         codec_t * current_cap = capabilities_get_nth (i);
 
         // Check if this codec has already been enabled for this account
         if (codec_list_get_by_payload ( (gconstpointer) (size_t) (current_cap->_payload), codeclist) == NULL) {
-            // codec_t *cpy;
-            // codec_create_new_from_caps (current_cap, &cpy);
-            current_cap->is_active = active;
+            current_cap->is_active = FALSE;
             codec_list_add (current_cap, &codeclist);
         }
     }

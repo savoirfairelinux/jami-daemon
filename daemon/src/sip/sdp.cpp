@@ -276,12 +276,7 @@ void Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media *med)
 
 void Sdp::setLocalMediaCapabilities (CodecOrder selectedCodecs)
 {
-
-    unsigned int i;
     sdpMedia *audio;
-    CodecsMap codecs_list;
-    CodecsMap::iterator iter;
-
     // Clean it first
     localAudioMediaCap_.clear();
 
@@ -292,19 +287,18 @@ void Sdp::setLocalMediaCapabilities (CodecOrder selectedCodecs)
     audio->set_port (getLocalPublishedAudioPort());
 
     /* We retrieve the codecs selected by the user */
-    codecs_list = Manager::instance().getAudioCodecFactory().getCodecsMap();
+    CodecsMap codecs_list = Manager::instance().getAudioCodecFactory().getCodecsMap();
 
-    if (selectedCodecs.size() == 0) {
-        throw SdpException ("No selected codec while building local SDP offer");
-    }
+    if (selectedCodecs.size() == 0)
+        _warn("No selected codec while building local SDP offer");
+    else {
+        for (CodecOrder::const_iterator iter = selectedCodecs.begin(); iter != selectedCodecs.end(); ++iter) {
+            CodecsMap::const_iterator map_iter = codecs_list.find (*iter);
 
-    for (i=0; i<selectedCodecs.size(); i++) {
-        iter=codecs_list.find (selectedCodecs[i]);
-
-        if (iter!=codecs_list.end()) {
-            audio->add_codec (iter->second);
-        } else {
-            _warn ("SDP: Couldn't find audio codec");
+            if (map_iter != codecs_list.end())
+                audio->add_codec (map_iter->second);
+            else
+                _warn ("SDP: Couldn't find audio codec");
         }
     }
 
@@ -377,7 +371,7 @@ int Sdp::createOffer (CodecOrder selectedCodecs)
 
 int Sdp::receiveOffer (const pjmedia_sdp_session* remote, CodecOrder selectedCodecs)
 {
-	char buffer[1000];
+    char buffer[1000];
 
     _debug ("SDP: Receiving initial offer");
 
@@ -404,7 +398,7 @@ int Sdp::receiveOffer (const pjmedia_sdp_session* remote, CodecOrder selectedCod
     remoteSession_ = pjmedia_sdp_session_clone (memPool_, remote);
 
     status = pjmedia_sdp_neg_create_w_remote_offer (memPool_, localSession_,
-                                                    remoteSession_, &negotiator_);
+            remoteSession_, &negotiator_);
 
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
@@ -413,89 +407,77 @@ int Sdp::receiveOffer (const pjmedia_sdp_session* remote, CodecOrder selectedCod
 
 int Sdp::receivingAnswerAfterInitialOffer(const pjmedia_sdp_session* remote)
 {
-	pj_status_t status;
+    pj_status_t status;
 
-	if(pjmedia_sdp_neg_get_state(negotiator_) != PJMEDIA_SDP_NEG_STATE_LOCAL_OFFER) {
-		_warn("SDP: Session not in a valid state for receiving answer");
-	}
+    if (pjmedia_sdp_neg_get_state(negotiator_) != PJMEDIA_SDP_NEG_STATE_LOCAL_OFFER)
+        _warn("SDP: Session not in a valid state for receiving answer");
 
-	status = pjmedia_sdp_neg_set_remote_answer(memPool_, negotiator_, remote);
+    status = pjmedia_sdp_neg_set_remote_answer(memPool_, negotiator_, remote);
 
-	if(status != PJ_SUCCESS) {
-		_warn("SDP: Error: Could not set SDP remote answer");
-	}
+    if (status != PJ_SUCCESS)
+        _warn("SDP: Error: Could not set SDP remote answer");
 
-	if(pjmedia_sdp_neg_get_state(negotiator_) != PJMEDIA_SDP_NEG_STATE_WAIT_NEGO) {
-		_warn("SDP: Session not in a valid state after receiving answer");
-	}
+    if (pjmedia_sdp_neg_get_state(negotiator_) != PJMEDIA_SDP_NEG_STATE_WAIT_NEGO)
+        _warn("SDP: Session not in a valid state after receiving answer");
 
-	return status;
+    return status;
 }
 
 int Sdp::generateAnswerAfterInitialOffer(void)
 {
-	pj_status_t status;
+    pj_status_t status;
 
-	if(pjmedia_sdp_neg_get_state(negotiator_) != PJMEDIA_SDP_NEG_STATE_REMOTE_OFFER) {
-		_warn("SDP: Session not in a valid state for generating answer");
-	}
+    if(pjmedia_sdp_neg_get_state(negotiator_) != PJMEDIA_SDP_NEG_STATE_REMOTE_OFFER)
+        _warn("SDP: Session not in a valid state for generating answer");
 
-	status = pjmedia_sdp_neg_set_local_answer (memPool_, negotiator_, localSession_);
+    status = pjmedia_sdp_neg_set_local_answer (memPool_, negotiator_, localSession_);
 
-	if(status != PJ_SUCCESS) {
-		_warn("SDP: Error: could not set SDP local answer");
-	}
+    if (status != PJ_SUCCESS)
+        _warn("SDP: Error: could not set SDP local answer");
 
-	if(pjmedia_sdp_neg_get_state(negotiator_) != PJMEDIA_SDP_NEG_STATE_WAIT_NEGO) {
-		_warn("SDP: Session not in a valid state after generating answer");
-	}
+    if (pjmedia_sdp_neg_get_state(negotiator_) != PJMEDIA_SDP_NEG_STATE_WAIT_NEGO)
+        _warn("SDP: Session not in a valid state after generating answer");
 
-	return status;
-
+    return status;
 }
 
 pj_status_t Sdp::startNegotiation()
 {
     pj_status_t status;
-	const pjmedia_sdp_session *active_local;
-	const pjmedia_sdp_session *active_remote;
+    const pjmedia_sdp_session *active_local;
+    const pjmedia_sdp_session *active_remote;
 
     _debug ("SDP: Start negotiation");
 
-    if(negotiator_ == NULL) {
-    	_error("SDP: Error: negotiator is NULL in SDP session");
-    }
+    if (negotiator_ == NULL)
+        _error("SDP: Error: negotiator is NULL in SDP session");
 
-    if(pjmedia_sdp_neg_get_state(negotiator_) != PJMEDIA_SDP_NEG_STATE_WAIT_NEGO) {
-    	_warn("SDP: Warning: negotiator not in wright state for negotiation");
-    }
+    if (pjmedia_sdp_neg_get_state(negotiator_) != PJMEDIA_SDP_NEG_STATE_WAIT_NEGO)
+        _warn("SDP: Warning: negotiator not in wright state for negotiation");
 
     status = pjmedia_sdp_neg_negotiate (memPool_, negotiator_, 0);
-    if(status != PJ_SUCCESS) {
-    	return status;
-    }
+    if (status != PJ_SUCCESS)
+        return status;
 
-	status = pjmedia_sdp_neg_get_active_local(negotiator_, &active_local);
-	if(status != PJ_SUCCESS) {
-		_error("SDP: Could not retrieve local active session");
-	}
+    status = pjmedia_sdp_neg_get_active_local(negotiator_, &active_local);
+    if (status != PJ_SUCCESS)
+        _error("SDP: Could not retrieve local active session");
+    else
+        setActiveLocalSdpSession(active_local);
 
-	setActiveLocalSdpSession(active_local);
-
-	status = pjmedia_sdp_neg_get_active_remote(negotiator_, &active_remote);
-	if(status != PJ_SUCCESS) {
-		_error("SDP: Could not retrieve remote active session");
-	}
-
-	setActiveRemoteSdpSession(active_remote);
+    status = pjmedia_sdp_neg_get_active_remote(negotiator_, &active_remote);
+    if (status != PJ_SUCCESS)
+        _error("SDP: Could not retrieve remote active session");
+    else
+        setActiveRemoteSdpSession(active_remote);
 
     return status;
 }
 
-void Sdp::updateInternalState() {
-
-	// Populate internal field
-	setMediaTransportInfoFromRemoteSdp (activeRemoteSession_);
+void Sdp::updateInternalState()
+{
+    // Populate internal field
+    setMediaTransportInfoFromRemoteSdp (activeRemoteSession_);
 }
 
 void Sdp::addProtocol ()
@@ -521,7 +503,6 @@ void Sdp::addOrigin ()
 
 void Sdp::addSessionName ()
 {
-
     localSession_->name = STR_SDP_NAME;
 }
 
@@ -545,7 +526,6 @@ void Sdp::addTiming ()
 
 void Sdp::addAttributes()
 {
-
     pjmedia_sdp_attr *a;
     localSession_->attr_count = 1;
     a =  PJ_POOL_ZALLOC_T (memPool_, pjmedia_sdp_attr);
@@ -575,10 +555,9 @@ void Sdp::addSdesAttribute (const std::vector<std::string>& crypto)
     // temporary buffer used to store crypto attribute
     char tempbuf[256];
 
-    std::vector<std::string>::const_iterator iter = crypto.begin();
-
-    while (iter != crypto.end()) {
-
+    for (std::vector<std::string>::const_iterator iter = crypto.begin();
+            iter != crypto.end(); ++iter)
+    {
         // the attribute to add to sdp
         pjmedia_sdp_attr *attribute = (pjmedia_sdp_attr*) pj_pool_zalloc (memPool_, sizeof (pjmedia_sdp_attr));
 
@@ -588,7 +567,7 @@ void Sdp::addSdesAttribute (const std::vector<std::string>& crypto)
 
 
         int len = pj_ansi_snprintf (tempbuf, sizeof (tempbuf),
-                                    "%.*s", (int) (*iter).size(), (*iter).c_str());
+                "%.*s", (int) (*iter).size(), (*iter).c_str());
 
         attribute->value.slen = len;
         attribute->value.ptr = (char*) pj_pool_alloc (memPool_, attribute->value.slen+1);
@@ -598,16 +577,9 @@ void Sdp::addSdesAttribute (const std::vector<std::string>& crypto)
         int media_count = localSession_->media_count;
 
         // add crypto attribute to media
-        for (int i = 0; i < media_count; i++) {
-
-            if (pjmedia_sdp_media_add_attr (localSession_->media[i], attribute) != PJ_SUCCESS) {
-                // if(pjmedia_sdp_attr_add(&(_local_offer->attr_count), _local_offer->attr, attribute) != PJ_SUCCESS){
+        for (int i = 0; i < media_count; i++)
+            if (pjmedia_sdp_media_add_attr (localSession_->media[i], attribute) != PJ_SUCCESS)
                 throw SdpException ("Could not add sdes attribute to media");
-            }
-        }
-
-
-        ++iter;
     }
 }
 
@@ -624,41 +596,40 @@ void Sdp::addZrtpAttribute (pjmedia_sdp_media* media, std::string hash)
 
     /* Format: ":version value" */
     len = pj_ansi_snprintf (tempbuf, sizeof (tempbuf),
-                            "%.*s %.*s",
-                            4,
-                            ZRTP_VERSION,
-                            (int) hash.size(),
-                            hash.c_str());
+            "%.*s %.*s",
+            4,
+            ZRTP_VERSION,
+            (int) hash.size(),
+            hash.c_str());
 
     attribute->value.slen = len;
     attribute->value.ptr = (char*) pj_pool_alloc (memPool_, attribute->value.slen+1);
     pj_memcpy (attribute->value.ptr, tempbuf, attribute->value.slen+1);
 
-    if (pjmedia_sdp_media_add_attr (media, attribute) != PJ_SUCCESS) {
+    if (pjmedia_sdp_media_add_attr (media, attribute) != PJ_SUCCESS)
         throw SdpException ("Could not add zrtp attribute to media");
-    }
 }
 
 Sdp::~Sdp()
 {
-    std::vector<sdpMedia *>::iterator iter = sessionAudioMedia_.begin();
-
-    for (iter = sessionAudioMedia_.begin(); iter != sessionAudioMedia_.end(); ++iter)
+    typedef std::vector<sdpMedia *>::iterator MediaIterator;
+    for (MediaIterator iter = sessionAudioMedia_.begin();
+            iter != sessionAudioMedia_.end(); ++iter)
         delete *iter;
 
-    for (iter = localAudioMediaCap_.begin(); iter != localAudioMediaCap_.end(); ++iter)
+    for (MediaIterator iter = localAudioMediaCap_.begin();
+            iter != localAudioMediaCap_.end(); ++iter)
         delete *iter;
 }
 
 
 void Sdp::setPortToAllMedia (int port)
 {
+    typedef std::vector<sdpMedia *>::iterator MediaIterator;
     setLocalPublishedAudioPort (port);
 
-    int size = localAudioMediaCap_.size();
-
-    for (int i = 0; i < size; i++)
-        localAudioMediaCap_[i]->set_port (port);
+    for (MediaIterator iter = localAudioMediaCap_.begin(); iter != localAudioMediaCap_.end(); ++iter)
+        (*iter)->set_port (port);
 }
 
 void Sdp::addAttributeToLocalAudioMedia(std::string attr)
@@ -667,19 +638,18 @@ void Sdp::addAttributeToLocalAudioMedia(std::string attr)
 
     attribute = pjmedia_sdp_attr_create (memPool_, attr.c_str(), NULL);
 
-	pjmedia_sdp_media_add_attr (localSession_->media[0], attribute);
+    pjmedia_sdp_media_add_attr (localSession_->media[0], attribute);
 }
 
 void Sdp::removeAttributeFromLocalAudioMedia(std::string attr)
 {
-	pjmedia_sdp_media_remove_all_attr (localSession_->media[0], attr.c_str());
+    pjmedia_sdp_media_remove_all_attr (localSession_->media[0], attr.c_str());
 
 }
 
 void Sdp::setRemoteIpFromSdp (const pjmedia_sdp_session *r_sdp)
 {
-
-    std::string remote_ip (r_sdp->conn->addr.ptr, r_sdp->conn->addr.slen);
+    const std::string remote_ip (r_sdp->conn->addr.ptr, r_sdp->conn->addr.slen);
     _info ("SDP: Remote IP from fetching SDP: %s",  remote_ip.c_str());
     this->setRemoteIP (remote_ip);
 }
@@ -697,7 +667,7 @@ void Sdp::setMediaTransportInfoFromRemoteSdp (const pjmedia_sdp_session *remote_
     _info ("SDP: Fetching media from sdp");
 
     if (!remote_sdp) {
-    	_error("Sdp: Error: Remote sdp is NULL while parsing media");
+        _error("Sdp: Error: Remote sdp is NULL while parsing media");
         return;
     }
 
@@ -715,12 +685,10 @@ void Sdp::setMediaTransportInfoFromRemoteSdp (const pjmedia_sdp_session *remote_
 
 void Sdp::getRemoteSdpMediaFromOffer (const pjmedia_sdp_session* remote_sdp, pjmedia_sdp_media** r_media)
 {
-    int count;
-
     if (!remote_sdp)
         return;
 
-    count = remote_sdp->media_count;
+    int count = remote_sdp->media_count;
     *r_media =  NULL;
 
 
@@ -734,46 +702,42 @@ void Sdp::getRemoteSdpMediaFromOffer (const pjmedia_sdp_session* remote_sdp, pjm
 
 void Sdp::getRemoteSdpTelephoneEventFromOffer(const pjmedia_sdp_session *remote_sdp)
 {
-	int media_count, attr_count;
-	pjmedia_sdp_media *r_media = NULL;
-	pjmedia_sdp_attr *attribute;
-	pjmedia_sdp_rtpmap *rtpmap;
+    int media_count, attr_count;
+    pjmedia_sdp_media *r_media = NULL;
+    pjmedia_sdp_attr *attribute;
+    pjmedia_sdp_rtpmap *rtpmap;
 
-	if(!remote_sdp) {
-		_error("Sdp: Error: Remote sdp is NULL while parsing telephone event attribute");
-		return;
-	}
+    if(!remote_sdp) {
+        _error("Sdp: Error: Remote sdp is NULL while parsing telephone event attribute");
+        return;
+    }
 
-	media_count = remote_sdp->media_count;
+    media_count = remote_sdp->media_count;
 
-	for(int i = 0; i < media_count; i++) {
-		if(pj_stricmp2(&remote_sdp->media[i]->desc.media, "audio") == 0) {
-			r_media = remote_sdp->media[i];
-			break;
-		}
-	}
+    for (int i = 0; i < media_count; i++) {
+        if(pj_stricmp2(&remote_sdp->media[i]->desc.media, "audio") == 0) {
+            r_media = remote_sdp->media[i];
+            break;
+        }
+    }
 
-	if(r_media == NULL) {
-		_error("Sdp: Error: Could not found dtmf event gfrom remote sdp");
-		return;
-	}
+    if (r_media == NULL) {
+        _error("Sdp: Error: Could not found dtmf event gfrom remote sdp");
+        return;
+    }
 
-	attr_count = r_media->attr_count;
+    attr_count = r_media->attr_count;
 
-	attribute = pjmedia_sdp_attr_find(attr_count, r_media->attr, &STR_TELEPHONE_EVENT, NULL);
+    attribute = pjmedia_sdp_attr_find(attr_count, r_media->attr, &STR_TELEPHONE_EVENT, NULL);
 
-	if(attribute != NULL) {
-
-	    pjmedia_sdp_attr_to_rtpmap (memPool_, attribute, &rtpmap);
-
-	    telephoneEventPayload_ = pj_strtoul (&rtpmap->pt);
-	}
-
+    if (attribute != NULL) {
+        pjmedia_sdp_attr_to_rtpmap (memPool_, attribute, &rtpmap);
+        telephoneEventPayload_ = pj_strtoul (&rtpmap->pt);
+    }
 }
 
 void Sdp::getRemoteSdpCryptoFromOffer (const pjmedia_sdp_session* remote_sdp, CryptoOffer& crypto_offer)
 {
-
     int i, j;
     int attr_count, media_count;
     pjmedia_sdp_attr *attribute;
@@ -812,4 +776,3 @@ void Sdp::getRemoteSdpCryptoFromOffer (const pjmedia_sdp_session* remote_sdp, Cr
         }
     }
 }
-

@@ -368,21 +368,17 @@ std::vector<std::string> ConfigurationManager::getRingtoneList()
  */
 std::vector<std::string> ConfigurationManager::getAudioCodecList (void)
 {
-
     std::vector<std::string> list;
 
     CodecsMap codecs = Manager::instance().getAudioCodecFactory().getCodecsMap();
-    CodecsMap::iterator iter = codecs.begin();
 
-    while (iter != codecs.end()) {
+    for (CodecsMap::iterator iter = codecs.begin(); iter != codecs.end(); ++iter) {
         std::stringstream ss;
 
         if (iter->second != NULL) {
             ss << iter->first;
-            list.push_back ( (ss.str()).data());
+            list.push_back (ss.str());
         }
-
-        iter++;
     }
 
     return list;

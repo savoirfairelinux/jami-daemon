@@ -69,7 +69,6 @@ static void active_is_always_recording (void);
  */
 static void preferences_dialog_fill_codec_list (account_t *a)
 {
-
     GtkListStore *codecStore;
     GtkTreeIter iter;
     GQueue *current;
@@ -79,11 +78,12 @@ static void preferences_dialog_fill_codec_list (account_t *a)
     gtk_list_store_clear (codecStore);
 
     current = a ? a->codecs : get_system_codec_list ();
+    if (!a) DEBUG("Using system codec list");
 
     // Insert codecs
     unsigned int i;
 
-    for (i = 0; i < current->length; i++) {
+    for (i = 0; i < g_queue_get_length(current); i++) {
         codec_t *c = codec_list_get_nth (i, current);
 
         if (c) {
@@ -543,11 +543,10 @@ codec_active_toggled (GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoin
     gtk_tree_path_free (treePath);
 
     // Modify codec queue to represent change
-    if (active) {
+    if (active)
         codec_set_active (&codec);
-    } else {
+    else
         codec_set_inactive (&codec);
-    }
 }
 
 /**
