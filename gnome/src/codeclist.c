@@ -43,7 +43,7 @@ is_name_codecstruct (gconstpointer a, gconstpointer b)
 {
     codec_t * c = (codec_t *) a;
 
-    if (strcmp (c->name, (const gchar *) b) ==0)
+    if (g_strcmp0 (c->name, (const gchar *) b) == 0)
         return 0;
     else
         return 1;
@@ -58,13 +58,6 @@ is_payload_codecstruct (gconstpointer a, gconstpointer b)
         return 0;
     else
         return 1;
-}
-
-void codec_list_init (GQueue **queue)
-{
-
-    // Create the queue object that will contain the audio codecs
-    *queue = g_queue_new();
 }
 
 void codec_capabilities_load (void)

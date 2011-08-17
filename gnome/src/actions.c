@@ -301,25 +301,25 @@ void sflphone_fill_account_list (void)
 
         gchar * status = g_hash_table_lookup (details, REGISTRATION_STATUS);
 
-        if (strcmp (status, "REGISTERED") == 0) {
+        if (g_strcmp0 (status, "REGISTERED") == 0) {
             a->state = ACCOUNT_STATE_REGISTERED;
-        } else if (strcmp (status, "UNREGISTERED") == 0) {
+        } else if (g_strcmp0 (status, "UNREGISTERED") == 0) {
             a->state = ACCOUNT_STATE_UNREGISTERED;
-        } else if (strcmp (status, "TRYING") == 0) {
+        } else if (g_strcmp0 (status, "TRYING") == 0) {
             a->state = ACCOUNT_STATE_TRYING;
-        } else if (strcmp (status, "ERROR") == 0) {
+        } else if (g_strcmp0 (status, "ERROR") == 0) {
             a->state = ACCOUNT_STATE_ERROR;
-        } else if (strcmp (status , "ERROR_AUTH") == 0) {
+        } else if (g_strcmp0 (status , "ERROR_AUTH") == 0) {
             a->state = ACCOUNT_STATE_ERROR_AUTH;
-        } else if (strcmp (status , "ERROR_NETWORK") == 0) {
+        } else if (g_strcmp0 (status , "ERROR_NETWORK") == 0) {
             a->state = ACCOUNT_STATE_ERROR_NETWORK;
-        } else if (strcmp (status , "ERROR_HOST") == 0) {
+        } else if (g_strcmp0 (status , "ERROR_HOST") == 0) {
             a->state = ACCOUNT_STATE_ERROR_HOST;
-        } else if (strcmp (status , "ERROR_CONF_STUN") == 0) {
+        } else if (g_strcmp0 (status , "ERROR_CONF_STUN") == 0) {
             a->state = ACCOUNT_STATE_ERROR_CONF_STUN;
-        } else if (strcmp (status , "ERROR_EXIST_STUN") == 0) {
+        } else if (g_strcmp0 (status , "ERROR_EXIST_STUN") == 0) {
             a->state = ACCOUNT_STATE_ERROR_EXIST_STUN;
-        } else if (strcmp (status, "READY") == 0) {
+        } else if (g_strcmp0 (status, "READY") == 0) {
             a->state = IP2IP_PROFILE_STATUS;
         } else {
             a->state = ACCOUNT_STATE_INVALID;

@@ -262,7 +262,7 @@ call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state
     }
 
     if (c) {
-        if (strcmp (state, "HUNGUP") == 0) {
+        if (g_strcmp0 (state, "HUNGUP") == 0) {
             if (c->_state == CALL_STATE_CURRENT) {
                 // peer hung up, the conversation was established, so _stop has been initialized with the current time value
                 set_timestamp (&c->_time_stop);
@@ -273,30 +273,30 @@ call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state
             calltree_update_call (history, c, NULL);
             status_bar_display_account();
             sflphone_hung_up (c);
-        } else if (strcmp (state, "UNHOLD_CURRENT") == 0) {
+        } else if (g_strcmp0 (state, "UNHOLD_CURRENT") == 0) {
             sflphone_current (c);
-        } else if (strcmp (state, "UNHOLD_RECORD") == 0) {
+        } else if (g_strcmp0 (state, "UNHOLD_RECORD") == 0) {
             sflphone_record (c);
-        } else if (strcmp (state, "HOLD") == 0) {
+        } else if (g_strcmp0 (state, "HOLD") == 0) {
             sflphone_hold (c);
-        } else if (strcmp (state, "RINGING") == 0) {
+        } else if (g_strcmp0 (state, "RINGING") == 0) {
             sflphone_ringing (c);
-        } else if (strcmp (state, "CURRENT") == 0) {
+        } else if (g_strcmp0 (state, "CURRENT") == 0) {
             sflphone_current (c);
-        } else if (strcmp (state, "RECORD") == 0) {
+        } else if (g_strcmp0 (state, "RECORD") == 0) {
             sflphone_record (c);
-        } else if (strcmp (state, "FAILURE") == 0) {
+        } else if (g_strcmp0 (state, "FAILURE") == 0) {
             sflphone_fail (c);
-        } else if (strcmp (state, "BUSY") == 0) {
+        } else if (g_strcmp0 (state, "BUSY") == 0) {
             sflphone_busy (c);
         }
     } else {
         // The callID is unknow, threat it like a new call
         // If it were an incoming call, we won't be here
         // It means that a new call has been initiated with an other client (cli for instance)
-        if ((strcmp (state, "RINGING")) == 0 ||
-            (strcmp (state, "CURRENT")) == 0 ||
-            (strcmp (state, "RECORD"))) {
+        if ((g_strcmp0 (state, "RINGING")) == 0 ||
+            (g_strcmp0 (state, "CURRENT")) == 0 ||
+            (g_strcmp0 (state, "RECORD"))) {
             GHashTable *call_details;
             gchar *type;
 
@@ -348,17 +348,17 @@ conference_changed_cb (DBusGProxy *proxy UNUSED, const gchar* confID,
     calltree_remove_conference (current_calls, changed_conf, NULL);
 
     // update conference state
-    if (strcmp (state, "ACTIVE_ATACHED") == 0) {
+    if (g_strcmp0 (state, "ACTIVE_ATACHED") == 0) {
         changed_conf->_state = CONFERENCE_STATE_ACTIVE_ATACHED;
-    } else if (strcmp (state, "ACTIVE_DETACHED") == 0) {
+    } else if (g_strcmp0 (state, "ACTIVE_DETACHED") == 0) {
         changed_conf->_state = CONFERENCE_STATE_ACTIVE_DETACHED;
-    } else if (strcmp (state, "ACTIVE_ATTACHED_REC") == 0) {
+    } else if (g_strcmp0 (state, "ACTIVE_ATTACHED_REC") == 0) {
         changed_conf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD;
-    } else if (strcmp(state, "ACTIVE_DETACHED_REC") == 0) {
+    } else if (g_strcmp0(state, "ACTIVE_DETACHED_REC") == 0) {
         changed_conf->_state = CONFERENCE_STATE_ACTIVE_DETACHED_RECORD;
-    } else if (strcmp (state, "HOLD") == 0) {
+    } else if (g_strcmp0 (state, "HOLD") == 0) {
         changed_conf->_state = CONFERENCE_STATE_HOLD;
-    } else if (strcmp(state, "HOLD_REC") == 0) {
+    } else if (g_strcmp0(state, "HOLD_REC") == 0) {
         changed_conf->_state = CONFERENCE_STATE_HOLD_RECORD;
     } else {
         DEBUG ("Error: conference state not recognized");
@@ -525,33 +525,33 @@ record_playback_stoped_cb (DBusGProxy *proxy UNUSED, const gchar *filepath)
     calllist_size = calllist_get_size(history);
     conflist_size = conferencelist_get_size(history);
 
-    for(i = 0; i < calllist_size; i++) {
+    for (i = 0; i < calllist_size; i++) {
         recfile = NULL;
         element = calllist_get_nth(history, i);	
-	if(element == NULL) {
+        if (element == NULL) {
             ERROR("DBUS: ERROR: Could not find %dth call", i);
-	    break;
+            break;
         }
 	
-	if(element->type == HIST_CALL) {
-	    call =  element->elem.call;
-	    recfile = call->_recordfile;
-	    if(recfile && (g_strcmp0(recfile, filepath) == 0)) {
-	        call->_record_is_playing = FALSE;
-	    }
-	}
+        if (element->type == HIST_CALL) {
+            call =  element->elem.call;
+            recfile = call->_recordfile;
+            if(recfile && (g_strcmp0(recfile, filepath) == 0)) {
+                call->_record_is_playing = FALSE;
+            }
+        }
     }
 
     for(i = 0; i < conflist_size; i++) {
         conf = conferencelist_get_nth(history, i);
-	if(conf == NULL) {
-	    ERROR("DBUS: ERROR: Could not find %dth conf", i);
-	    break;
-	}
+        if(conf == NULL) {
+            ERROR("DBUS: ERROR: Could not find %dth conf", i);
+            break;
+        }
 
-	recfile = conf->_recordfile;
-	if(recfile && (g_strcmp0(recfile, filepath) == 0))
-	    conf->_record_is_playing = FALSE;
+        recfile = conf->_recordfile;
+        if (recfile && (g_strcmp0(recfile, filepath) == 0))
+            conf->_record_is_playing = FALSE;
     }
 
     update_actions();   

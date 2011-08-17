@@ -268,7 +268,7 @@ static GtkWidget* create_basic_tab (account_t *currentAccount)
     curAccountType = g_hash_table_lookup (currentAccount->properties, ACCOUNT_TYPE);
     curAlias = g_hash_table_lookup (currentAccount->properties, ACCOUNT_ALIAS);
     curHostname = g_hash_table_lookup (currentAccount->properties, ACCOUNT_HOSTNAME);
-    if (strcmp (curAccountType, "SIP") == 0) {
+    if (g_strcmp0 (curAccountType, "SIP") == 0) {
             /* get password from credentials list */
             if (currentAccount->credential_information) {
             GHashTable * element = g_ptr_array_index (currentAccount->credential_information, 0);
@@ -288,9 +288,9 @@ static GtkWidget* create_basic_tab (account_t *currentAccount)
     gnome_main_section_new (_ ("Account Parameters"), &frame);
     gtk_widget_show (frame);
 
-    if (strcmp (curAccountType, "SIP") == 0) {
+    if (g_strcmp0 (curAccountType, "SIP") == 0) {
         table = gtk_table_new (9, 2,  FALSE/* homogeneous */);
-    } else if (strcmp (curAccountType, "IAX") == 0) {
+    } else if (g_strcmp0 (curAccountType, "IAX") == 0) {
         table = gtk_table_new (8, 2, FALSE);
     }
 
@@ -318,9 +318,9 @@ static GtkWidget* create_basic_tab (account_t *currentAccount)
 
     if (is_iax_enabled()) gtk_combo_box_append_text (GTK_COMBO_BOX (protocolComboBox), "IAX");
 
-    if (strcmp (curAccountType, "SIP") == 0) {
+    if (g_strcmp0 (curAccountType, "SIP") == 0) {
         gtk_combo_box_set_active (GTK_COMBO_BOX (protocolComboBox),0);
-    } else if (strcmp (curAccountType, "IAX") == 0) {
+    } else if (g_strcmp0 (curAccountType, "IAX") == 0) {
         gtk_combo_box_set_active (GTK_COMBO_BOX (protocolComboBox),1);
     } else {
         DEBUG ("Config: Error: Account protocol not valid");
@@ -361,7 +361,7 @@ static GtkWidget* create_basic_tab (account_t *currentAccount)
     gtk_entry_set_text (GTK_ENTRY (entryUsername), curUsername);
     gtk_table_attach (GTK_TABLE (table), entryUsername, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-    if (strcmp (curAccountType, "SIP") == 0) {
+    if (g_strcmp0 (curAccountType, "SIP") == 0) {
         g_signal_connect (G_OBJECT (entryUsername), "changed", G_CALLBACK (update_credential_cb), NULL);
         g_object_set_data (G_OBJECT (entryUsername), "column", GINT_TO_POINTER (COLUMN_CREDENTIAL_USERNAME));
     }
@@ -383,7 +383,7 @@ static GtkWidget* create_basic_tab (account_t *currentAccount)
     gtk_entry_set_text (GTK_ENTRY (entryPassword), curPassword);
     gtk_table_attach (GTK_TABLE (table), entryPassword, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-    if (strcmp (curAccountType, "SIP") == 0) {
+    if (g_strcmp0 (curAccountType, "SIP") == 0) {
         g_signal_connect (G_OBJECT (entryPassword), "changed", G_CALLBACK (update_credential_cb), NULL);
         g_object_set_data (G_OBJECT (entryPassword), "column", GINT_TO_POINTER (COLUMN_CREDENTIAL_PASSWORD));
     }
@@ -859,9 +859,9 @@ GtkWidget* create_security_widget (account_t *a)
         gtk_combo_box_set_active (GTK_COMBO_BOX (keyExchangeCombo), 2);
         gtk_widget_set_sensitive (GTK_WIDGET (advancedZrtpButton), FALSE);
     } else {
-        if (strcmp (curKeyExchange, ZRTP) == 0) {
+        if (g_strcmp0 (curKeyExchange, ZRTP) == 0) {
             gtk_combo_box_set_active (GTK_COMBO_BOX (keyExchangeCombo),0);
-        } else if (strcmp (curKeyExchange, SDES) == 0) {
+        } else if (g_strcmp0 (curKeyExchange, SDES) == 0) {
             gtk_combo_box_set_active (GTK_COMBO_BOX (keyExchangeCombo),1);
         } else {
             gtk_combo_box_set_active (GTK_COMBO_BOX (keyExchangeCombo), 2);
@@ -1425,7 +1425,7 @@ void show_account_window (account_t * currentAccount)
                               g_strdup ( (gchar *) gtk_entry_get_text (GTK_ENTRY (entryMailbox))));
     }
 
-    if (proto && strcmp (proto, "SIP") == 0) {
+    if (proto && g_strcmp0 (proto, "SIP") == 0) {
 
         if (g_strcasecmp (currentAccount->accountID, IP2IP) != 0) {
 
@@ -1535,7 +1535,7 @@ void show_account_window (account_t * currentAccount)
         dbus_set_account_details (currentAccount);
     }
 
-    if (currentProtocol && strcmp (currentProtocol, "SIP") == 0) {
+    if (currentProtocol && g_strcmp0 (currentProtocol, "SIP") == 0) {
 
         /* Set new credentials if any */
         DEBUG ("Config: Setting credentials");

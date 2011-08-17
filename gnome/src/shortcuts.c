@@ -192,19 +192,19 @@ default_callback ()
 static void*
 get_action_callback (const gchar* action)
 {
-    if (strcmp (action, SHORTCUT_PICKUP) == 0)
+    if (g_strcmp0 (action, SHORTCUT_PICKUP) == 0)
         return pick_up_callback;
 
-    if (strcmp (action, SHORTCUT_HANGUP) == 0)
+    if (g_strcmp0 (action, SHORTCUT_HANGUP) == 0)
         return hang_up_callback;
 
-    if (strcmp (action, SHORTCUT_POPUP) == 0)
+    if (g_strcmp0 (action, SHORTCUT_POPUP) == 0)
         return popup_window_callback;
 
-    if (strcmp (action, SHORTCUT_TOGGLEPICKUPHANGUP) == 0)
+    if (g_strcmp0 (action, SHORTCUT_TOGGLEPICKUPHANGUP) == 0)
         return toggle_pick_up_hang_up_callback;
 
-    if (strcmp (action, SHORTCUT_TOGGLEHOLD) == 0)
+    if (g_strcmp0 (action, SHORTCUT_TOGGLEHOLD) == 0)
         return toggle_hold_callback;
 
     return default_callback;
@@ -295,7 +295,7 @@ initialize_binding (const gchar* action, guint key, GdkModifierType mask)
     int i = 0;
 
     while (accelerators_list[i].action != NULL) {
-        if (strcmp (action, accelerators_list[i].action) == 0) {
+        if (g_strcmp0 (action, accelerators_list[i].action) == 0) {
             break;
         }
 

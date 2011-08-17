@@ -151,7 +151,7 @@ void update_searchbar_addressbook_list()
             gtk_list_store_append (liststore, &iter);
             gtk_list_store_set (liststore, &iter, 0, book_data->name, -1);
 
-            if (strcmp (book_data->name, activeText) == 0) {
+            if (g_strcmp0 (book_data->name, activeText) == 0) {
                 activeIter = iter;
                 activeIsSet = TRUE;
             }
@@ -190,13 +190,13 @@ static void select_search_type (GtkWidget *item, GtkEntry  *entry UNUSED)
                                      gtk_menu_item_get_label (GTK_MENU_ITEM (item)));
 
 
-        if (strcmp ("Search is", gtk_menu_item_get_label (GTK_MENU_ITEM (item))) == 0) {
+        if (g_strcmp0 ("Search is", gtk_menu_item_get_label (GTK_MENU_ITEM (item))) == 0) {
             factory->addrbook->set_search_type(ABOOK_QUERY_IS);
         }
-        else if (strcmp ("Search begins with", gtk_menu_item_get_label (GTK_MENU_ITEM (item))) == 0) {
+        else if (g_strcmp0 ("Search begins with", gtk_menu_item_get_label (GTK_MENU_ITEM (item))) == 0) {
             factory->addrbook->set_search_type(ABOOK_QUERY_BEGINS_WITH);
         }
-        else if (strcmp ("Search contains", gtk_menu_item_get_label (GTK_MENU_ITEM (item))) == 0) {
+        else if (g_strcmp0 ("Search contains", gtk_menu_item_get_label (GTK_MENU_ITEM (item))) == 0) {
             factory->addrbook->set_search_type(ABOOK_QUERY_CONTAINS);
         }
   

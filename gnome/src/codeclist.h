@@ -56,10 +56,6 @@ typedef struct {
   * This match how the server internally works and the dbus API to save and retrieve the codecs details.
   */
 
-/**
- * This function initialize a specific codec list.
- */
-void codec_list_init (GQueue **q);
 
 /**
  * This function initialize the system wide codec list.
