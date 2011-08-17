@@ -122,9 +122,11 @@ void sfl_avcodec_init()
     encoders["H264"] 		    = "libx264";
     encoders["H263-2000"]		= "h263p";
     encoders["VP8"]			    = "libvpx";
+    encoders["MP4V-ES"]         = "mpeg4";
 
-    // TODO
-    encoders["MP4V-ES"] 	= "mpeg4";
+
+    //FFmpeg needs to be modified to allow us to send configuration
+    //inline, with CODEC_FLAG_GLOBAL_HEADER
     //encoders["THEORA"]		= "libtheora";
 
     // ffmpeg hardcodes RTP output format to H263-2000
