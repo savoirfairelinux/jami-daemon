@@ -787,8 +787,6 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
             }
             g_free(audio_codec);
 
-            g_free (audio_codec);
-
             /* Update icons */
             if (tab == current_calls) {
                 DEBUG ("Receiving in state %d", c->_state);
