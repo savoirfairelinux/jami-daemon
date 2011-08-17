@@ -255,22 +255,10 @@ class Sdp
             return remoteVideoPort_;
         }
 
-        /**
-         *
-         */
-        void addAttributeToLocalAudioMedia(const std::string &attr);
-
-        /**
-         *
-         */
-        void removeAttributeFromLocalAudioMedia(const std::string &attr);
-
-        void addAttributeToLocalVideoMedia(const std::string &attr);
-
-        /**
-         *
-         */
-        void removeAttributeFromLocalVideoMedia(const std::string &attr);
+        void addAttributeToLocalAudioMedia(const char *attr);
+        void removeAttributeFromLocalAudioMedia(const char *attr);
+        void addAttributeToLocalVideoMedia(const char *attr);
+        void removeAttributeFromLocalVideoMedia(const char *attr);
 
         /**
          * Get SRTP master key

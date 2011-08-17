@@ -36,7 +36,7 @@
 #include "manager.h"
 #include "video/video_endpoint.h"
 
-static const char* const ZRTP_VERSION = "1.10";
+#define ZRTP_VERSION "1.10"
 
 static const pj_str_t STR_AUDIO = { (char*) "audio", 5};
 static const pj_str_t STR_VIDEO = { (char*) "video", 5};
@@ -53,22 +53,20 @@ static const pj_str_t STR_TELEPHONE_EVENT = { (char*) "telephone-event", 15};
 
 namespace // anonymous
 {
-void getRemoteSdpMediaFromOffer (const pjmedia_sdp_session* remote_sdp,
-                                       pjmedia_sdp_media** r_media,
-                                       const std::string &media_type)
+
+pjmedia_sdp_media *getRemoteSdpMediaFromOffer (const pjmedia_sdp_session* remote_sdp,
+                                       const char *media_type)
 {
     if (!remote_sdp)
-        return;
+        return NULL;
 
-    for (unsigned i = 0; i < remote_sdp->media_count; ++i) {
-        if (pj_stricmp2 (&remote_sdp->media[i]->desc.media, media_type.c_str()) == 0) {
-            *r_media = remote_sdp->media[i];
-            return;
-        }
-    }
-    *r_media =  NULL;
+    for (unsigned i = 0; i < remote_sdp->media_count; ++i)
+        if (!pj_stricmp2 (&remote_sdp->media[i]->desc.media, media_type))
+            return remote_sdp->media[i];
+
+    return NULL;
 }
-}
+} // end of anon namespace
 
 Sdp::Sdp (pj_pool_t *pool)
     : memPool_(pool)
@@ -228,16 +226,13 @@ void Sdp::setMediaDescriptorLine (sdpMedia *media)
 
 void Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media *med)
 {
-    pjmedia_sdp_attr *attr_rtpmap = NULL;
-    pjmedia_sdp_attr *attr_fmtp = NULL;
-
-    attr_rtpmap = static_cast<pjmedia_sdp_attr *>(pj_pool_zalloc(memPool_, sizeof(pjmedia_sdp_attr)));
+    pjmedia_sdp_attr *attr_rtpmap = static_cast<pjmedia_sdp_attr *>(pj_pool_zalloc(memPool_, sizeof(pjmedia_sdp_attr)));
     attr_rtpmap->name = pj_str((char *) "rtpmap");
     attr_rtpmap->value = pj_str((char *) "101 telephone-event/8000");
 
     med->attr[med->attr_count++] = attr_rtpmap;
 
-    attr_fmtp = static_cast<pjmedia_sdp_attr *>(pj_pool_zalloc(memPool_, sizeof(pjmedia_sdp_attr)));
+    pjmedia_sdp_attr *attr_fmtp = static_cast<pjmedia_sdp_attr *>(pj_pool_zalloc(memPool_, sizeof(pjmedia_sdp_attr)));
     attr_fmtp->name = pj_str((char *) "fmtp");
     attr_fmtp->value = pj_str((char *) "101 0-15");
 
@@ -323,9 +318,9 @@ int Sdp::createLocalSession (CodecOrder selectedCodecs, const std::vector<std::s
         addSdesAttribute (srtpCrypto_);
 
     char buffer[10000];
-    int size = pjmedia_sdp_print(localSession_, buffer, sizeof buffer);
-    std::string localStr(buffer, size);
-    _debug("SDP: Local SDP Session:\n%s", localStr.c_str());
+    int size = pjmedia_sdp_print(localSession_, buffer, sizeof buffer - 1);
+    buffer[size] = '\0';
+    _debug("SDP: Local SDP Session:\n%s", buffer);
 
     // Validate the sdp session
     return pjmedia_sdp_validate (localSession_);
@@ -334,7 +329,6 @@ int Sdp::createLocalSession (CodecOrder selectedCodecs, const std::vector<std::s
 int Sdp::createOffer (CodecOrder selectedCodecs, const std::vector<std::string> &videoCodecs)
 {
     pj_status_t status;
-    pjmedia_sdp_neg_state state;
 
     _info ("SDP: Create initial offer");
 
@@ -352,7 +346,7 @@ int Sdp::createOffer (CodecOrder selectedCodecs, const std::vector<std::string> 
         return status;
     }
 
-    state = pjmedia_sdp_neg_get_state (negotiator_);
+    pjmedia_sdp_neg_get_state (negotiator_);
 
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
@@ -361,23 +355,20 @@ int Sdp::createOffer (CodecOrder selectedCodecs, const std::vector<std::string> 
 
 int Sdp::receiveOffer (const pjmedia_sdp_session* remote, CodecOrder selectedCodecs, const std::vector<std::string> &videoCodecs)
 {
-    char buffer[1000];
+    if (!remote)
+        return !PJ_SUCCESS;
 
     _debug ("SDP: Receiving initial offer");
 
     pj_status_t status;
 
-    if (!remote) {
-        return !PJ_SUCCESS;
-    }
-
-    memset(buffer, 0, 1000);
-    int size = pjmedia_sdp_print(remote, buffer, 1000);
-    std::string remoteStr(buffer, size);
-    _debug("SDP: Remote SDP Session:\n%s", remoteStr.c_str());
+    char buffer[1000];
+    int size = pjmedia_sdp_print(remote, buffer, sizeof buffer - 1);
+    buffer[size] = '\0';
+    _debug("SDP: Remote SDP Session:\n%s", buffer);
 
     // If called for the first time
-    if (localSession_ == NULL) {
+    if (!localSession_) {
         // Build the local offer to respond
         status = createLocalSession (selectedCodecs, videoCodecs);
         if (status != PJ_SUCCESS) {
@@ -520,28 +511,23 @@ namespace
     using std::string;
     using std::vector;
     using std::stringstream;
-    vector<string> &split(const string &s, char delim, vector<string> &elems)
+
+    vector<string> split(const string &s, char delim)
     {
+        vector<string> elems;
         stringstream ss(s);
         string item;
         while(getline(ss, item, delim))
             elems.push_back(item);
         return elems;
     }
-
-    vector<string> split(const string &s, char delim)
-    {
-        vector<string> elems;
-        return split(s, delim, elems);
-    }
 } // end anonymous namespace
 
 std::string Sdp::getLineFromLocalSDP(const std::string &keyword) const
 {
     assert(activeLocalSession_);
-    static const int SIZE = 2048;
-    char buffer[SIZE];
-    int size = pjmedia_sdp_print(activeLocalSession_, buffer, SIZE);
+    char buffer[2048];
+    int size = pjmedia_sdp_print(activeLocalSession_, buffer, sizeof buffer);
     std::string sdp(buffer, size);
     const vector<string> tokens(split(sdp, '\n'));
     for (vector<string>::const_iterator iter = tokens.begin(); iter != tokens.end(); ++iter)
@@ -604,12 +590,8 @@ std::vector<std::string> Sdp::getActiveVideoDescription() const
 
 void Sdp::addSdesAttribute (const std::vector<std::string>& crypto)
 {
-    // temporary buffer used to store crypto attribute
-    char tempbuf[256];
-
-    std::vector<std::string>::const_iterator iter = crypto.begin();
-
-    while (iter != crypto.end())
+    std::vector<std::string>::const_iterator iter;;
+    for (iter = crypto.begin(); iter != crypto.end(); ++iter)
     {
         // the attribute to add to sdp
         pjmedia_sdp_attr *attribute = (pjmedia_sdp_attr*) pj_pool_zalloc (memPool_, sizeof (pjmedia_sdp_attr));
@@ -617,55 +599,31 @@ void Sdp::addSdesAttribute (const std::vector<std::string>& crypto)
         attribute->name = pj_strdup3 (memPool_, "crypto");
 
         // _debug("crypto from sdp: %s", crypto.c_str());
-
-
-        int len = pj_ansi_snprintf (tempbuf, sizeof (tempbuf),
-                "%.*s", (int) (*iter).size(), (*iter).c_str());
-
-        attribute->value.slen = len;
-        attribute->value.ptr = (char*) pj_pool_alloc (memPool_, attribute->value.slen+1);
-        pj_memcpy (attribute->value.ptr, tempbuf, attribute->value.slen+1);
-
-        // get number of media for this SDP
-        int media_count = localSession_->media_count;
+        pj_strdup2(memPool_, &attribute->value, (*iter).c_str());
 
         // add crypto attribute to media
-        for (int i = 0; i < media_count; i++)
-        {
-
+        for (unsigned i = 0; i < localSession_->media_count; i++)
             if (pjmedia_sdp_media_add_attr (localSession_->media[i], attribute) != PJ_SUCCESS)
                 throw SdpException ("Could not add sdes attribute to media");
-        }
-
-        ++iter;
     }
 }
 
 
 void Sdp::addZrtpAttribute (pjmedia_sdp_media* media, std::string hash)
 {
-    pjmedia_sdp_attr *attribute;
-    char tempbuf[256];
-    int len;
-
-    attribute = (pjmedia_sdp_attr*) pj_pool_zalloc (memPool_, sizeof (pjmedia_sdp_attr));
+    pjmedia_sdp_attr *attribute = (pjmedia_sdp_attr*) pj_pool_zalloc (memPool_, sizeof (pjmedia_sdp_attr));
 
     attribute->name = pj_strdup3 (memPool_, "zrtp-hash");
 
     /* Format: ":version value" */
-    len = pj_ansi_snprintf (tempbuf, sizeof (tempbuf),
-            "%.*s %.*s",
-            4,
-            ZRTP_VERSION,
-            (int) hash.size(),
-            hash.c_str());
-
-    attribute->value.slen = len;
-    attribute->value.ptr = (char*) pj_pool_alloc (memPool_, attribute->value.slen+1);
-    pj_memcpy (attribute->value.ptr, tempbuf, attribute->value.slen+1);
-
-    if (pjmedia_sdp_media_add_attr (media, attribute) != PJ_SUCCESS)
-        throw SdpException ("Could not add zrtp attribute to media");
+    char *tmp;
+    if (asprintf(&tmp, ZRTP_VERSION" %s", hash.c_str()) != -1)
+    {
+		pj_strdup2(memPool_, &attribute->value, tmp);
+		free(tmp);
+		if (pjmedia_sdp_media_add_attr (media, attribute) != PJ_SUCCESS)
+			throw SdpException ("Could not add zrtp attribute to media");
+    }
 }
 
 Sdp::~Sdp()
@@ -675,108 +633,80 @@ Sdp::~Sdp()
 }
 
 
-void Sdp::addAttributeToLocalAudioMedia(const std::string &attr)
+void Sdp::addAttributeToLocalAudioMedia(const char *attr)
 {
     assert(pj_stricmp2(&localSession_->media[0]->desc.media, "audio") == 0);
-    pjmedia_sdp_attr *attribute;
-
-    attribute = pjmedia_sdp_attr_create (memPool_, attr.c_str(), NULL);
+    pjmedia_sdp_attr *attribute = pjmedia_sdp_attr_create (memPool_, attr, NULL);
 
     pjmedia_sdp_media_add_attr (localSession_->media[0], attribute);
 }
 
-void Sdp::removeAttributeFromLocalAudioMedia(const std::string &attr)
+void Sdp::removeAttributeFromLocalAudioMedia(const char *attr)
 {
     assert(pj_stricmp2(&localSession_->media[0]->desc.media, "audio") == 0);
-    pjmedia_sdp_media_remove_all_attr (localSession_->media[0], attr.c_str());
+    pjmedia_sdp_media_remove_all_attr (localSession_->media[0], attr);
 }
 
-void Sdp::removeAttributeFromLocalVideoMedia(const std::string &attr)
+void Sdp::removeAttributeFromLocalVideoMedia(const char *attr)
 {
     assert(pj_stricmp2(&localSession_->media[1]->desc.media, "video") == 0);
-    pjmedia_sdp_media_remove_all_attr (localSession_->media[1], attr.c_str());
+    pjmedia_sdp_media_remove_all_attr (localSession_->media[1], attr);
 }
 
-void Sdp::addAttributeToLocalVideoMedia(const std::string &attr)
+void Sdp::addAttributeToLocalVideoMedia(const char *attr)
 {
     assert(pj_stricmp2(&localSession_->media[1]->desc.media, "video") == 0);
-    pjmedia_sdp_attr *attribute;
 
-    attribute = pjmedia_sdp_attr_create (memPool_, attr.c_str(), NULL);
-
+    pjmedia_sdp_attr *attribute = pjmedia_sdp_attr_create (memPool_, attr, NULL);
     pjmedia_sdp_media_add_attr(localSession_->media[1], attribute);
 }
 
 void Sdp::updateMediaTransportInfoFromRemoteSdp ()
 {
-    pjmedia_sdp_media *r_media = NULL;
-
-    _info ("SDP: Fetching media from sdp");
+    pjmedia_sdp_media *r_media;
 
     if (!activeRemoteSession_) {
         _error("Sdp: Error: Remote sdp is NULL while parsing media");
         return;
     }
 
-    std::string media_type = "audio";
-    getRemoteSdpMediaFromOffer(activeRemoteSession_, &r_media, media_type);
+    remoteIpAddr_ = std::string (activeRemoteSession_->conn->addr.ptr, activeRemoteSession_->conn->addr.slen);
 
-    if (r_media == NULL) {
+    r_media = getRemoteSdpMediaFromOffer(activeRemoteSession_, "audio");
+    if (!r_media)
         _warn ("SDP: Error: no remote sdp audio media found in the remote offer");
-        return;
-    }
-    else {
-        _info ("SDP: Remote Audio Port from fetching SDP: %d", r_media->desc.port);
-        remoteAudioPort_ = r_media->desc.port;
-    }
+    else
+    	remoteAudioPort_ = r_media->desc.port;
 
-    std::string remote_ip(activeRemoteSession_->conn->addr.ptr, activeRemoteSession_->conn->addr.slen);
-    _info ("SDP: Remote IP from fetching SDP: %s",  remote_ip.c_str());
-    remoteIpAddr_ = remote_ip;
 
-    r_media = NULL;
-    media_type = "video";
-    getRemoteSdpMediaFromOffer (activeRemoteSession_, &r_media, media_type);
-    if (r_media == NULL) {
+    r_media = getRemoteSdpMediaFromOffer (activeRemoteSession_, "video");
+    if (!r_media)
         _warn ("SDP: Error: no remote sdp video media found in the remote offer");
-        return;
-    }
-    else {
-        _info ("SDP: Remote Video Port from fetching SDP: %d", r_media->desc.port);
-        remoteVideoPort_ = r_media->desc.port;
-    }
+    else
+    	remoteVideoPort_ = r_media->desc.port;
 }
 
 void Sdp::getRemoteSdpTelephoneEventFromOffer(const pjmedia_sdp_session *remote_sdp)
 {
-    int media_count, attr_count;
-    pjmedia_sdp_media *r_media = NULL;
-    pjmedia_sdp_attr *attribute;
-    pjmedia_sdp_rtpmap *rtpmap;
-
     if (!remote_sdp) {
         _error("Sdp: Error: Remote sdp is NULL while parsing telephone event attribute");
         return;
     }
 
-    media_count = remote_sdp->media_count;
-
-    for(int i = 0; i < media_count; i++) {
-        if (pj_stricmp2(&remote_sdp->media[i]->desc.media, "audio") == 0) {
+    pjmedia_sdp_media *r_media = NULL;
+    for(unsigned i = 0; !r_media && i < remote_sdp->media_count; i++)
+        if (pj_stricmp2(&remote_sdp->media[i]->desc.media, "audio") == 0)
             r_media = remote_sdp->media[i];
-            break;
-        }
-    }
 
-    if (r_media == NULL) {
+    if (!r_media) {
         _error("Sdp: Error: Could not found dtmf event gfrom remote sdp");
         return;
     }
 
-    attr_count = r_media->attr_count;
-    attribute = pjmedia_sdp_attr_find(attr_count, r_media->attr, &STR_TELEPHONE_EVENT, NULL);
+    pjmedia_sdp_attr *attribute = pjmedia_sdp_attr_find(r_media->attr_count, r_media->attr, &STR_TELEPHONE_EVENT, NULL);
 
-    if (attribute != NULL) {
+    if (attribute) {
+        pjmedia_sdp_rtpmap *rtpmap;
         pjmedia_sdp_attr_to_rtpmap (memPool_, attribute, &rtpmap);
         telephoneEventPayload_ = pj_strtoul (&rtpmap->pt);
     }
@@ -784,38 +714,17 @@ void Sdp::getRemoteSdpTelephoneEventFromOffer(const pjmedia_sdp_session *remote_
 
 void Sdp::getRemoteSdpCryptoFromOffer (const pjmedia_sdp_session* remote_sdp, CryptoOffer& crypto_offer)
 {
-    int i, j;
-    int attr_count, media_count;
-    pjmedia_sdp_attr *attribute;
-    pjmedia_sdp_media *media;
-
-    // get the number of media for this sdp session
-    media_count = remote_sdp->media_count;
-
-    // iterate over all media
-    for (i = 0; i < media_count; ++i)
+    for (unsigned i = 0; i < remote_sdp->media_count; ++i)
     {
-        // get media
-        media = remote_sdp->media[i];
-
-        // get number of attribute for this memdia
-        attr_count = media->attr_count;
-
-        // iterate over all attribute for this media
-        for (j = 0; j < attr_count; j++)
+        pjmedia_sdp_media *media = remote_sdp->media[i];
+        for (unsigned j = 0; j < media->attr_count; j++)
         {
-            attribute = media->attr[j];
-
-            // test if this attribute is a crypto
+            pjmedia_sdp_attr *attribute = media->attr[j];
             if (pj_stricmp2 (&attribute->name, "crypto") == 0)
             {
                 std::string attr (attribute->value.ptr, attribute->value.slen);
-
                 // @TODO our parser require the "a=crypto:" to be present
-                std::string full_attr = "a=crypto:";
-                full_attr += attr;
-
-                crypto_offer.push_back (full_attr);
+                crypto_offer.push_back (attr + "a=crypto:");
             }
         }
     }
