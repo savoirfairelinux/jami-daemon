@@ -159,9 +159,9 @@ class ConfigTree
          * @return The value of the corresponding item. The default value if the section exists
          *         but the item doesn't.
          */
-        std::string getConfigTreeItemValue (const std::string& section, const std::string& itemName);
-        int getConfigTreeItemIntValue (const std::string& section, const std::string& itemName);
-        bool getConfigTreeItemBoolValue (const std::string& section, const std::string& itemName);
+        std::string getConfigTreeItemValue (const std::string& section, const std::string& itemName) const;
+        int getConfigTreeItemIntValue (const std::string& section, const std::string& itemName) const;
+        bool getConfigTreeItemBoolValue (const std::string& section, const std::string& itemName) const;
 
         /**
          * Flush data to .ini file
@@ -173,11 +173,11 @@ class ConfigTree
          */
         int  populateFromFile (const std::string& fileName);
 
-        bool getConfigTreeItemToken (const std::string& section, const std::string& itemName, TokenList& arg);
+        bool getConfigTreeItemToken (const std::string& section, const std::string& itemName, TokenList& arg) const;
 
     private:
-        std::string getDefaultValue (const std::string& key);
-        ConfigTreeItem* getConfigTreeItem (const std::string& section, const std::string& itemName);
+        std::string getDefaultValue (const std::string& key) const;
+        const ConfigTreeItem* getConfigTreeItem (const std::string& section, const std::string& itemName) const;
 
         /**
          * List of sections. Each sections has an ItemList as child

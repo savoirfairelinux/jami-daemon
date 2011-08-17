@@ -31,11 +31,13 @@
 #ifndef __DBUSMANAGERIMPL_H__
 #define __DBUSMANAGERIMPL_H__
 
-#include "instance.h"
-
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#include <dbus-c++/dbus.h>
 class ConfigurationManager;
 class CallManager;
 class NetworkManager;
+class Instance;
 
 class DBusManager
 {
@@ -56,7 +58,6 @@ class DBusManager
 
         void exec();
         void exit();
-        static const char* SERVER_NAME;
 
     private:
         bool				  _connected;

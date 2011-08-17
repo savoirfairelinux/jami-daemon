@@ -71,14 +71,13 @@ void ConfigTree::addDefaultValue (const std::pair<std::string, std::string>& tok
     }
 }
 
-std::string ConfigTree::getDefaultValue (const std::string& key)
+std::string ConfigTree::getDefaultValue (const std::string& key) const
 {
-    std::map<std::string, std::string>::iterator it;
+    std::map<std::string, std::string>::const_iterator it;
     it = _defaultValueMap.find (key);
 
-    if (it == _defaultValueMap.end()) {
-        return std::string ("");
-    }
+    if (it == _defaultValueMap.end())
+        return "";
 
     return it->second;
 }
@@ -152,20 +151,19 @@ ConfigTree::addConfigTreeItem (const std::string& section, const ConfigTreeItem 
 }
 
 std::string
-ConfigTree::getConfigTreeItemValue (const std::string& section, const std::string& itemName)
+ConfigTree::getConfigTreeItemValue (const std::string& section, const std::string& itemName) const
 {
-    ConfigTreeItem* item = getConfigTreeItem (section, itemName);
+    const ConfigTreeItem* item = getConfigTreeItem (section, itemName);
 
-    if (item != NULL) {
+    if (item)
         return item->getValue();
-    }
 
     return getDefaultValue (itemName);
 }
 
 // throw a ConfigTreeItemException if not found
 int
-ConfigTree::getConfigTreeItemIntValue (const std::string& section, const std::string& itemName)
+ConfigTree::getConfigTreeItemIntValue (const std::string& section, const std::string& itemName) const
 {
     std::string configItem = getConfigTreeItemValue (section, itemName);
     int retval = atoi (configItem.data());
@@ -174,7 +172,7 @@ ConfigTree::getConfigTreeItemIntValue (const std::string& section, const std::st
 }
 
 bool
-ConfigTree::getConfigTreeItemBoolValue (const std::string& section, const std::string& itemName)
+ConfigTree::getConfigTreeItemBoolValue (const std::string& section, const std::string& itemName) const
 {
     std::string configItem = getConfigTreeItemValue (section, itemName);
 
@@ -186,9 +184,9 @@ ConfigTree::getConfigTreeItemBoolValue (const std::string& section, const std::s
 }
 
 bool
-ConfigTree::getConfigTreeItemToken (const std::string& section, const std::string& itemName, TokenList& arg)
+ConfigTree::getConfigTreeItemToken (const std::string& section, const std::string& itemName, TokenList& arg) const
 {
-    ConfigTreeItem *item = getConfigTreeItem (section, itemName);
+    const ConfigTreeItem *item = getConfigTreeItem (section, itemName);
 
     if (item) {
         arg.clear();
@@ -206,22 +204,18 @@ ConfigTree::getConfigTreeItemToken (const std::string& section, const std::strin
 /**
  * Return a ConfigTreeItem or NULL if not found
  */
-ConfigTreeItem*
-ConfigTree::getConfigTreeItem (const std::string& section, const std::string& itemName)
+const ConfigTreeItem*
+ConfigTree::getConfigTreeItem (const std::string& section, const std::string& itemName) const
 {
-    SectionMap::iterator iter = _sections.find (section);
+    SectionMap::const_iterator iter = _sections.find (section);
 
-    if (iter == _sections.end()) {
-        // _error("ConfigTree: Error: Did not found section %s in config tree", section.c_str());
+    if (iter == _sections.end())
         return NULL;
-    }
 
-    ItemMap::iterator iterItem = iter->second->find (itemName);
+    ItemMap::const_iterator iterItem = iter->second->find (itemName);
 
-    if (iterItem == iter->second->end()) {
-        // _error("ConfigTree: Error: Did not found item %s in config tree", itemName.c_str());
+    if (iterItem == iter->second->end())
         return NULL;
-    }
 
     return & (iterItem->second);
 }
