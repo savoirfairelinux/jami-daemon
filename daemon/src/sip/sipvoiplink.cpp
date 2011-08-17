@@ -81,26 +81,26 @@
 
 using namespace sfl;
 
-static char * invitationStateMap[] = {
-    (char*) "PJSIP_INV_STATE_NULL",
-    (char*) "PJSIP_INV_STATE_CALLING",
-    (char*) "PJSIP_INV_STATE_INCOMING",
-    (char*) "PJSIP_INV_STATE_EARLY",
-    (char*) "PJSIP_INV_STATE_CONNECTING",
-    (char*) "PJSIP_INV_STATE_CONFIRMED",
-    (char*) "PJSIP_INV_STATE_DISCONNECTED"
+static const char * invitationStateMap[] = {
+    "PJSIP_INV_STATE_NULL",
+    "PJSIP_INV_STATE_CALLING",
+    "PJSIP_INV_STATE_INCOMING",
+    "PJSIP_INV_STATE_EARLY",
+    "PJSIP_INV_STATE_CONNECTING",
+    "PJSIP_INV_STATE_CONFIRMED",
+    "PJSIP_INV_STATE_DISCONNECTED"
 };
 
-static char * transactionStateMap[] = {
-    (char*) "PJSIP_TSX_STATE_NULL" ,
-    (char*) "PJSIP_TSX_STATE_CALLING",
-    (char*) "PJSIP_TSX_STATE_TRYING",
-    (char*) "PJSIP_TSX_STATE_PROCEEDING",
-    (char*) "PJSIP_TSX_STATE_COMPLETED",
-    (char*) "PJSIP_TSX_STATE_CONFIRMED",
-    (char*) "PJSIP_TSX_STATE_TERMINATED",
-    (char*) "PJSIP_TSX_STATE_DESTROYED",
-    (char*) "PJSIP_TSX_STATE_MAX"
+static const char * transactionStateMap[] = {
+    "PJSIP_TSX_STATE_NULL" ,
+    "PJSIP_TSX_STATE_CALLING",
+    "PJSIP_TSX_STATE_TRYING",
+    "PJSIP_TSX_STATE_PROCEEDING",
+    "PJSIP_TSX_STATE_COMPLETED",
+    "PJSIP_TSX_STATE_CONFIRMED",
+    "PJSIP_TSX_STATE_TERMINATED",
+    "PJSIP_TSX_STATE_DESTROYED",
+    "PJSIP_TSX_STATE_MAX"
 };
 
 struct result {
@@ -3469,14 +3469,14 @@ void outgoing_request_forked_cb (pjsip_inv_session *inv UNUSED, pjsip_event *e U
 {
 }
 
-void transaction_state_changed_cb (pjsip_inv_session *inv UNUSED, pjsip_transaction *tsx, pjsip_event *e)
+void transaction_state_changed_cb (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e)
 {
     assert (tsx);
 
     pjsip_rx_data* r_data;
     pjsip_tx_data* t_data;
 
-    _debug ("UserAgent: Transaction changed to state %s", transactionStateMap[tsx->state]);
+    _debug ("UserAgent: Transaction changed to state %s (event %d)", transactionStateMap[tsx->state], e->type);
 
 
     if (tsx->role==PJSIP_ROLE_UAS && tsx->state==PJSIP_TSX_STATE_TRYING &&
@@ -3587,8 +3587,6 @@ void transaction_state_changed_cb (pjsip_inv_session *inv UNUSED, pjsip_transact
 
             Manager::instance ().incomingMessage (call->getCallId (), stripped, module->receive (message, stripped, call->getCallId ()));
         }
-
-
     }
 }
 
@@ -4074,32 +4072,32 @@ pj_bool_t transaction_response_cb (pjsip_rx_data *rdata)
     rdata->tp_info.transport->info,
     (int) pj_atomic_get (rdata->tp_info.transport->ref_cnt));
 
-    pjsip_dialog *dlg;
-    dlg = pjsip_rdata_get_dlg (rdata);
+    pjsip_dialog *dlg = pjsip_rdata_get_dlg (rdata);
 
-    if (dlg != NULL) {
-        pjsip_transaction *tsx = pjsip_rdata_get_tsx (rdata);
+    if (!dlg)
+    	return PJ_SUCCESS;
 
-        if (tsx != NULL && tsx->method.id == PJSIP_INVITE_METHOD) {
-            if (tsx->status_code < 200) {
-                _info ("UserAgent: Received provisional response");
-            } else if (tsx->status_code >= 300) {
-                _warn ("UserAgent: Dialog failed");
-                // pjsip_dlg_dec_session(dlg);
-                // ACK for non-2xx final response is sent by transaction.
-            } else {
-                _info ("UserAgent: Received 200 OK response");
-                sendAck (dlg, rdata);
-            }
-        }
-    }
+    pjsip_transaction *tsx = pjsip_rdata_get_tsx (rdata);
+
+	if (!tsx || tsx->method.id != PJSIP_INVITE_METHOD)
+		return PJ_SUCCESS;
+
+	if (tsx->status_code < 200) {
+		_info ("UserAgent: Received provisional response");
+	} else if (tsx->status_code >= 300) {
+		_warn ("UserAgent: Dialog failed");
+		// pjsip_dlg_dec_session(dlg);
+		// ACK for non-2xx final response is sent by transaction.
+	} else {
+		_info ("UserAgent: Received 200 OK response");
+		sendAck (dlg, rdata);
+	}
 
     return PJ_SUCCESS;
 }
 
 static void sendAck (pjsip_dialog *dlg, pjsip_rx_data *rdata)
 {
-
     pjsip_tx_data *tdata;
 
     // Create ACK request
