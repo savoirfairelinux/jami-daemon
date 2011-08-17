@@ -570,10 +570,8 @@ bool ManagerImpl::onHoldCall (const std::string& callId)
 bool ManagerImpl::offHoldCall (const std::string& callId)
 {
     std::string accountId;
-    bool returnValue, isRec;
+    bool returnValue = true;
     std::string codecName;
-
-    isRec = false;
 
     _debug ("Manager: Put call %s off hold", callId.c_str());
 
@@ -593,6 +591,8 @@ bool ManagerImpl::offHoldCall (const std::string& callId)
             detachParticipant (default_id, currentCallId);
     }
 
+    bool isRec = false;
+
     /* Direct IP to IP call */
     if (getConfigFromCall (callId) == Call::IPtoIP)
         returnValue = SIPVoIPLink::instance ()-> offhold (callId);
@@ -602,8 +602,12 @@ bool ManagerImpl::offHoldCall (const std::string& callId)
 
         _debug ("Manager: Setting offhold, Account %s, callid %s", accountId.c_str(), callId.c_str());
 
-        isRec = getAccountLink (accountId)->getCall (callId)->isRecording();
-        returnValue = getAccountLink (accountId)->offhold (callId);
+        Call * call = getAccountLink (accountId)->getCall (callId);
+        if (call)
+        {
+            isRec = call->isRecording();
+            returnValue = getAccountLink (accountId)->offhold (callId);
+        }
     }
 
     _dbus.getCallManager()->callStateChanged (callId, isRec ? "UNHOLD_RECORD" : "UNHOLD_CURRENT");
@@ -614,7 +618,8 @@ bool ManagerImpl::offHoldCall (const std::string& callId)
         currentAccountId = getAccountFromCall (callId);
         Call *call = getAccountLink (currentAccountId)->getCall (callId);
 
-        switchCall (call->getConfId());
+        if (call)
+            switchCall (call->getConfId());
 
     } else
         switchCall (callId);
@@ -643,10 +648,8 @@ bool ManagerImpl::transferCall (const std::string& callId, const std::string& to
         removeParticipant (callId);
         processRemainingParticipant (callId, conf);
     }
-    else {
-        if(!isConference(currentCallId))
+    else if (!isConference(currentCallId))
             switchCall("");
-    }
 
     // Direct IP to IP call
     if (getConfigFromCall (callId) == Call::IPtoIP)
