@@ -2581,7 +2581,6 @@ int ManagerImpl::isRingtoneEnabled (const std::string& id)
 
 void ManagerImpl::ringtoneEnabled (const std::string& id)
 {
-
     Account *account = getAccount (id);
 
     if (!account) {
@@ -2658,7 +2657,6 @@ void ManagerImpl::setIsAlwaysRecording(bool isAlwaysRec)
 {
 	return audioPreference.setIsAlwaysRecording(isAlwaysRec);
 }
-
 
 void ManagerImpl::setRecordingCall (const std::string& id)
 {
@@ -2833,7 +2831,7 @@ int ManagerImpl::getAudioDeviceIndex (const std::string &name)
 
     audioLayerMutexLock();
 
-    if(_audiodriver == NULL) {
+    if (_audiodriver == NULL) {
     	_error("Manager: Error: Audio layer not initialized");
     	audioLayerMutexUnlock();
     	return soundCardIndex;
@@ -2958,10 +2956,6 @@ bool ManagerImpl::initAudioDriver (void)
  */
 void ManagerImpl::selectAudioDriver (void)
 {
-    int layerType, numCardIn, numCardOut, numCardRing, sampleRate, frameSize;
-    std::string alsaPlugin;
-    AlsaLayer *alsalayer;
-
     audioLayerMutexLock();
 
     if (_audiodriver == NULL) {
@@ -2970,30 +2964,27 @@ void ManagerImpl::selectAudioDriver (void)
     	return;
     }
 
-    layerType = _audiodriver->getLayerType();
-    _debug ("Manager: Audio layer type: %d" , layerType);
-
     /* Retrieve the global devices info from the user config */
-    alsaPlugin = audioPreference.getPlugin();
-    numCardIn = audioPreference.getCardin();
-    numCardOut = audioPreference.getCardout();
-    numCardRing = audioPreference.getCardring();
+    std::string alsaPlugin(audioPreference.getPlugin());
+    int numCardIn = audioPreference.getCardin();
+    int numCardOut = audioPreference.getCardout();
+    int numCardRing = audioPreference.getCardring();
 
-    sampleRate = getMainBuffer()->getInternalSamplingRate();
-    frameSize = audioPreference.getFramesize();
+    int sampleRate = getMainBuffer()->getInternalSamplingRate();
+    int frameSize = audioPreference.getFramesize();
 
     /* Only for the ALSA layer, we check the sound card information */
 
-    if (layerType == ALSA) {
-        alsalayer = dynamic_cast<AlsaLayer*> (_audiodriver);
+    AlsaLayer *alsalayer = dynamic_cast<AlsaLayer*>(_audiodriver);
+    if (alsalayer) {
 
-        if (!alsalayer -> soundCardIndexExist (numCardIn, SFL_PCM_CAPTURE)) {
+        if (!alsalayer->soundCardIndexExist (numCardIn, SFL_PCM_CAPTURE)) {
             _debug (" Card with index %d doesn't exist or cannot capture. Switch to 0.", numCardIn);
             numCardIn = ALSA_DFT_CARD_ID;
             audioPreference.setCardin (ALSA_DFT_CARD_ID);
         }
 
-        if (!alsalayer -> soundCardIndexExist (numCardOut, SFL_PCM_PLAYBACK)) {
+        if (!alsalayer->soundCardIndexExist (numCardOut, SFL_PCM_PLAYBACK)) {
             _debug (" Card with index %d doesn't exist or cannot playback. Switch to 0.", numCardOut);
             numCardOut = ALSA_DFT_CARD_ID;
             audioPreference.setCardout (ALSA_DFT_CARD_ID);
@@ -3014,7 +3005,7 @@ void ManagerImpl::selectAudioDriver (void)
 
     /* Notify the error if there is one */
 
-    if (_audiodriver -> getErrorMessage() != -1)
+    if (_audiodriver-> getErrorMessage() != -1)
         notifyErrClient (_audiodriver -> getErrorMessage());
 
     audioLayerMutexUnlock();
@@ -3022,9 +3013,6 @@ void ManagerImpl::selectAudioDriver (void)
 
 void ManagerImpl::switchAudioManager (void)
 {
-    int type, samplerate, framesize, numCardIn, numCardOut, numCardRing;
-    std::string alsaPlugin;
-
     _debug ("Manager: Switching audio manager ");
 
     audioLayerMutexLock();
@@ -3036,18 +3024,18 @@ void ManagerImpl::switchAudioManager (void)
 
     bool wasStarted = _audiodriver->isStarted();
 
-    type = _audiodriver->getLayerType();
+    int type = _audiodriver->getLayerType();
 
-    samplerate = _mainBuffer.getInternalSamplingRate();
-    framesize = audioPreference.getFramesize();
+    int samplerate = _mainBuffer.getInternalSamplingRate();
+    int framesize = audioPreference.getFramesize();
 
     _debug ("Manager: samplerate: %d, framesize %d", samplerate, framesize);
 
-    alsaPlugin = audioPreference.getPlugin();
+    std::string alsaPlugin(audioPreference.getPlugin());
 
-    numCardIn = audioPreference.getCardin();
-    numCardOut = audioPreference.getCardout();
-    numCardRing = audioPreference.getCardring();
+    int numCardIn = audioPreference.getCardin();
+    int numCardOut = audioPreference.getCardout();
+    int numCardRing = audioPreference.getCardring();
 
     _debug ("Manager: Deleting current layer... ");
 
@@ -3055,7 +3043,6 @@ void ManagerImpl::switchAudioManager (void)
     _audiodriver = NULL;
 
     switch (type) {
-
         case ALSA:
             _debug ("Manager: Creating Pulseaudio layer...");
             _audiodriver = new PulseLayer (this);
@@ -3078,7 +3065,7 @@ void ManagerImpl::switchAudioManager (void)
     _audiodriver->openDevice (numCardIn, numCardOut, numCardRing, samplerate, framesize,
                               SFL_PCM_BOTH, alsaPlugin);
 
-    if (_audiodriver -> getErrorMessage() != -1)
+    if (_audiodriver->getErrorMessage() != -1)
         notifyErrClient (_audiodriver -> getErrorMessage());
 
     _debug ("Manager: Current device: %d ", type);
@@ -3091,10 +3078,6 @@ void ManagerImpl::switchAudioManager (void)
 
 void ManagerImpl::audioSamplingRateChanged (int samplerate)
 {
-    int type, currentSamplerate, framesize, numCardIn, numCardOut, numCardRing;
-    std::string alsaPlugin;
-    bool wasActive;
-
     audioLayerMutexLock();
 
     if (!_audiodriver) {
@@ -3105,7 +3088,7 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
 
 
     // Only modify internal sampling rate if new sampling rate is higher
-    currentSamplerate = _mainBuffer.getInternalSamplingRate();
+    int currentSamplerate = _mainBuffer.getInternalSamplingRate();
     if (currentSamplerate >= samplerate) {
     	_debug("Manager: No need to update audio layer sampling rate");
     	audioLayerMutexUnlock();
@@ -3114,20 +3097,20 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
     else
         _debug ("Manager: Audio sampling rate changed");
 
-    type = _audiodriver->getLayerType();
-    framesize = audioPreference.getFramesize();
+    int type = _audiodriver->getLayerType();
+    int framesize = audioPreference.getFramesize();
 
     _debug ("Manager: New samplerate: %d, New framesize %d", samplerate, framesize);
 
-    alsaPlugin = audioPreference.getPlugin();
+    std::string alsaPlugin(audioPreference.getPlugin());
 
-    numCardIn = audioPreference.getCardin();
-    numCardOut = audioPreference.getCardout();
-    numCardRing = audioPreference.getCardring();
+    int numCardIn = audioPreference.getCardin();
+    int numCardOut = audioPreference.getCardout();
+    int numCardRing = audioPreference.getCardring();
 
     _debug ("Manager: Deleting current layer...");
 
-    wasActive = _audiodriver->isStarted();
+    bool wasActive = _audiodriver->isStarted();
 
     delete _audiodriver;
     _audiodriver = 0;
@@ -3157,9 +3140,8 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
     _audiodriver->openDevice (numCardIn, numCardOut, numCardRing, samplerate, framesize,
                               SFL_PCM_BOTH, alsaPlugin);
 
-    if (_audiodriver -> getErrorMessage() != -1) {
+    if (_audiodriver -> getErrorMessage() != -1)
         notifyErrClient (_audiodriver -> getErrorMessage());
-    }
 
     _debug ("Manager: Current device: %d ", type);
 
@@ -3273,7 +3255,6 @@ std::string ManagerImpl::getConfigString (const std::string& section,
 bool ManagerImpl::setConfig (const std::string& section,
                              const std::string& name, const std::string& value)
 {
-
     return _config.setConfigTreeItem (section, name, value);
 }
 
@@ -3611,8 +3592,6 @@ short ManagerImpl::loadAccountMap()
 {
     _debug ("Manager: Load account map");
 
-    int nbAccount = 0;
-
     if (!_setupLoaded) {
     	_error("Manager: Error: Configuration file not loaded yet, could not load config");
     	return 0;
@@ -3630,6 +3609,7 @@ short ManagerImpl::loadAccountMap()
 
     // Each element in sequence is a new account to create
     Conf::Sequence::iterator iterSeq;
+    int nbAccount = 0;
     for (iterSeq = seq->getSequence()->begin(); iterSeq != seq->getSequence()->end(); ++iterSeq) {
 
         // Pointer to the account and account preferences map
@@ -3649,16 +3629,14 @@ short ManagerImpl::loadAccountMap()
         map->getValue ("alias", &accountAlias);
 
         // do not insert in account map if id or alias is empty
-        if (accountid.empty() || accountAlias.empty()) {
+        if (accountid.empty() or accountAlias.empty())
             continue;
-        }
 
         // Create a default account for specific type
-        if (accountType == "SIP" && accountid != "IP2IP") {
+        if (accountType == "SIP" && accountid != "IP2IP")
             tmpAccount = AccountCreator::createAccount (AccountCreator::SIP_ACCOUNT, accountid);
-        } else if (accountType == "IAX" && accountid != "IP2IP") {
+        else if (accountType == "IAX" and accountid != "IP2IP")
             tmpAccount = AccountCreator::createAccount (AccountCreator::IAX_ACCOUNT, accountid);
-        }
 
         // Fill account with configuration preferences
         if (tmpAccount != NULL) {
@@ -3720,11 +3698,9 @@ std::string ManagerImpl::getAccountIdFromNameAndServer (
     for (AccountMap::const_iterator iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
         SIPAccount *account = dynamic_cast<SIPAccount *> (iter->second);
 
-        if (account != NULL) {
-            if (account->fullMatch (userName, server)) {
-                _debug ("Manager: Matching account id in request is a fullmatch %s@%s", userName.c_str(), server.c_str());
-                return iter->first;
-            }
+        if (account  and account->fullMatch (userName, server)) {
+            _debug ("Manager: Matching account id in request is a fullmatch %s@%s", userName.c_str(), server.c_str());
+            return iter->first;
         }
     }
 
@@ -3732,11 +3708,9 @@ std::string ManagerImpl::getAccountIdFromNameAndServer (
     for (AccountMap::const_iterator iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
         SIPAccount *account = dynamic_cast<SIPAccount *> (iter->second);
 
-        if (account != NULL) {
-            if (account->hostnameMatch (server)) {
-                _debug ("Manager: Matching account id in request with hostname %s", server.c_str());
-                return iter->first;
-            }
+        if (account and account->hostnameMatch (server)) {
+            _debug ("Manager: Matching account id in request with hostname %s", server.c_str());
+            return iter->first;
         }
     }
 
@@ -3744,11 +3718,9 @@ std::string ManagerImpl::getAccountIdFromNameAndServer (
     for (AccountMap::const_iterator iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
         SIPAccount *account = dynamic_cast<SIPAccount *> (iter->second);
 
-        if (account != NULL) {
-            if (account->userMatch (userName)) {
-                _debug ("Manager: Matching account id in request with username %s", userName.c_str());
-                return iter->first;
-            }
+        if (account and account->userMatch (userName)) {
+            _debug ("Manager: Matching account id in request with username %s", userName.c_str());
+            return iter->first;
         }
     }
 
@@ -3821,7 +3793,6 @@ std::map<std::string, std::string> ManagerImpl::getHookSettings () const
 
 void ManagerImpl::setHookSettings (const std::map<std::string, std::string>& settings)
 {
-
     hookPreference.setIax2Enabled (settings.find ("URLHOOK_IAX2_ENABLED")->second == "true");
     hookPreference.setNumberAddPrefix (settings.find ("PHONE_NUMBER_HOOK_ADD_PREFIX")->second);
     hookPreference.setNumberEnabled (settings.find ("PHONE_NUMBER_HOOK_ENABLED")->second == "true");
@@ -3840,7 +3811,7 @@ void ManagerImpl::checkCallConfiguration (const std::string& id,
 {
     Call::CallConfiguration config;
 
-    if (to.find (SIP_SCHEME) == 0 || to.find (SIPS_SCHEME) == 0) {
+    if (to.find (SIP_SCHEME) == 0 or to.find (SIPS_SCHEME) == 0) {
         _debug ("Manager: Sip scheme detected (sip: or sips:), sending IP2IP Call");
         config = Call::IPtoIP;
     } else
@@ -3854,7 +3825,6 @@ void ManagerImpl::checkCallConfiguration (const std::string& id,
 bool ManagerImpl::associateConfigToCall (const std::string& callID,
         Call::CallConfiguration config)
 {
-
     if (getConfigFromCall (callID) == CallConfigNULL) { // nothing with the same ID
         _callConfigMap[callID] = config;
         _debug ("Manager: Associate call %s with config %d", callID.c_str(), config);
@@ -3865,51 +3835,40 @@ bool ManagerImpl::associateConfigToCall (const std::string& callID,
 
 Call::CallConfiguration ManagerImpl::getConfigFromCall (const std::string& callID) const
 {
-
     CallConfigMap::const_iterator iter = _callConfigMap.find (callID);
 
-    if (iter == _callConfigMap.end()) {
+    if (iter == _callConfigMap.end())
         return (Call::CallConfiguration) CallConfigNULL;
-    } else
+    else
         return iter->second;
 }
 
 bool ManagerImpl::removeCallConfig (const std::string& callID)
 {
-
-    if (_callConfigMap.erase (callID)) {
-        return true;
-    }
-
-    return false;
+    return _callConfigMap.erase (callID);
 }
 
 std::map<std::string, std::string> ManagerImpl::getCallDetails (const std::string& callID)
 {
-
-    std::map<std::string, std::string> call_details;
-    std::string accountid;
-    Account *account;
-    VoIPLink *link;
-    Call *call = NULL;
-    std::stringstream type;
-
     // We need here to retrieve the call information attached to the call ID
     // To achieve that, we need to get the voip link attached to the call
     // But to achieve that, we need to get the account the call was made with
 
     // So first we fetch the account
-    accountid = getAccountFromCall (callID);
+    const std::string accountid(getAccountFromCall (callID));
 
     // Then the VoIP link this account is linked with (IAX2 or SIP)
-    if ( (account = getAccount (accountid)) != NULL) {
-        link = account->getVoIPLink();
+    Call *call = NULL;
+    if (Account *account = getAccount (accountid)) {
+        VoIPLink *link = account->getVoIPLink();
 
         if (link)
             call = link->getCall (callID);
     }
 
+    std::map<std::string, std::string> call_details;
     if (call) {
+        std::ostringstream type;
         type << call->getCallType();
         call_details["ACCOUNTID"] = accountid;
         call_details["PEER_NUMBER"] = call->getPeerNumber();
