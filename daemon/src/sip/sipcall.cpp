@@ -44,7 +44,6 @@ SIPCall::SIPCall (const std::string& id, Call::CallType type, pj_caching_pool *c
     , _did (0)
     , _tid (0)
     , _audiortp (new sfl::AudioRtpFactory(this))
-    , _xferSub (NULL)
     , _invSession (NULL)
 	, pool_(pj_pool_create(&caching_pool->factory, id.c_str(), CALL_MEMPOOL_INIT_SIZE,
                             CALL_MEMPOOL_INC_SIZE, NULL))

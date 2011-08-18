@@ -3135,74 +3135,6 @@ void invite_session_state_changed_cb (pjsip_inv_session *inv, pjsip_event *e)
         return;
     }
 
-    // If this is an outgoing INVITE that was created because of
-    // REFER/transfer, send NOTIFY to transferer.
-    if (call->getXferSub() && e->type==PJSIP_EVENT_TSX_STATE) {
-
-    	_debug("UserAgent: Call state changed during transfer");
-
-        int st_code = -1;
-        pjsip_evsub_state ev_state = PJSIP_EVSUB_STATE_ACTIVE;
-
-        switch (call->getInvSession()->state) {
-
-            case PJSIP_INV_STATE_NULL:
-            	_debug("PJSIP_INV_STATE_NULL");
-            	break;
-            case PJSIP_INV_STATE_CALLING:
-            	_debug("\n");
-                /* Do nothing */
-            	_debug("PJSIP_INV_STATE_CALLING");
-                break;
-            case PJSIP_INV_STATE_EARLY:
-            case PJSIP_INV_STATE_CONNECTING:
-                st_code = e->body.tsx_state.tsx->status_code;
-                ev_state = PJSIP_EVSUB_STATE_ACTIVE;
-                _debug("PJSIP_INV_STATE_EARLY, PJSIP_INV_STATE_CONNECTING");
-                break;
-            case PJSIP_INV_STATE_CONFIRMED:
-                /* When state is confirmed, send the final 200/OK and terminate
-                 * subscription.
-                 */
-                st_code = e->body.tsx_state.tsx->status_code;
-                ev_state = PJSIP_EVSUB_STATE_TERMINATED;
-                _debug("PJSIP_INV_STATE_CONFIRMED");
-                break;
-
-            case PJSIP_INV_STATE_DISCONNECTED:
-                st_code = e->body.tsx_state.tsx->status_code;
-                ev_state = PJSIP_EVSUB_STATE_TERMINATED;
-                _debug("PJSIP_EVSUB_STATE_TERMINATED");
-                break;
-
-            case PJSIP_INV_STATE_INCOMING:
-                /* Nothing to do. Just to keep gcc from complaining about
-                 * unused enums.
-                 */
-            	_debug("PJSIP_INV_STATE_INCOMING");
-                break;
-        }
-
-        if (st_code != -1) {
-            pjsip_tx_data *tdata;
-            pj_status_t status;
-
-            status = pjsip_xfer_notify (call->getXferSub(), ev_state, st_code, NULL, &tdata);
-
-            if (status != PJ_SUCCESS) {
-                _debug ("UserAgent: Unable to create NOTIFY -- %d", status);
-            } else {
-                status = pjsip_xfer_send_request (call->getXferSub(), tdata);
-
-                if (status != PJ_SUCCESS) {
-                    _debug ("UserAgent: Unable to send NOTIFY -- %d", status);
-                }
-            }
-        }
-
-        return;
-    }
-
     if (inv->state != PJSIP_INV_STATE_CONFIRMED) {
         // Update UI with the current status code and description
         pjsip_transaction * tsx = e->body.tsx_state.tsx;
@@ -4117,7 +4049,6 @@ pj_bool_t transaction_response_cb (pjsip_rx_data *rdata)
 
 static void sendAck (pjsip_dialog *dlg, pjsip_rx_data *rdata)
 {
-
     pjsip_tx_data *tdata;
 
     // Create ACK request
@@ -4161,10 +4092,9 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
     /* Find optional Refer-Sub header */
     refer_sub = (pjsip_generic_string_hdr*)
     pjsip_msg_find_hdr_by_name (rdata->msg_info.msg, &str_refer_sub, NULL);
-    if (refer_sub) {
-        if (!pj_strnicmp2 (&refer_sub->hvalue, "true", 4) ==0)
+    if (refer_sub)
+        if (!pj_strnicmp2 (&refer_sub->hvalue, "true", 4) == 0)
             no_refer_sub = PJ_TRUE;
-    }
 
     /* Find optional Referred-By header (to be copied onto outgoing INVITE
      * request.
@@ -4220,7 +4150,7 @@ void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
         pjsip_generic_string_hdr *refer_sub;
         const pj_str_t REFER_SUB = { (char *) "Refer-Sub", 9 };
 
- 	/* Must be receipt of response message */
+        /* Must be receipt of response message */
         pj_assert(event->type == PJSIP_EVENT_TSX_STATE &&
                   event->body.tsx_state.type == PJSIP_EVENT_RX_MSG);
         rdata = event->body.tsx_state.src.rdata;
@@ -4231,19 +4161,16 @@ void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
                                                &REFER_SUB, NULL);
 
         /* Check if subscription is suppressed */
-        if (refer_sub && pj_stricmp2(&refer_sub->hvalue, "false")==0) {
-	    _debug("UserAgent: No subscription requested");
-        }
-	else {
-	    _debug("UserAgent: Transfer subscription reqeusted");
-	}	
-    }
+        if (refer_sub and pj_stricmp2(&refer_sub->hvalue, "false") == 0)
+            _debug("UserAgent: No subscription requested");
+        else
+            _debug("UserAgent: Transfer subscription reqeusted");
 
-    /*
-     * On incoming NOTIFY, notify application about call transfer progress.
-     */
-    else if (pjsip_evsub_get_state (sub) == PJSIP_EVSUB_STATE_ACTIVE ||
+    } else if (pjsip_evsub_get_state (sub) == PJSIP_EVSUB_STATE_ACTIVE or
     		pjsip_evsub_get_state (sub) == PJSIP_EVSUB_STATE_TERMINATED) {
+        /*
+         * On incoming NOTIFY, notify application about call transfer progress.
+         */
 
         pjsip_msg *msg;
         pjsip_msg_body *body;
@@ -4251,7 +4178,6 @@ void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
         pj_bool_t is_last;
         pj_bool_t cont;
         pj_status_t status;
-
 
         _debug("UserAgent: PJSIP_EVSUB_STATE_ACTIVE PJSIP_EVSUB_STATE_TERMINATED");
 
@@ -4264,12 +4190,10 @@ void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
         if (pjsip_evsub_get_state (sub) == PJSIP_EVSUB_STATE_TERMINATED) {
             pjsip_evsub_set_mod_data (sub, _mod_ua.id, NULL);
             _debug ("UserAgent: Xfer client subscription terminated");
-            // Manager::instance().hangupCall(call->getCallId());
-
         }
 
         /* Application is not interested with call progress status */
-        if (!link || !event) {
+        if (!link or !event) {
             _warn ("UserAgent: Either link or event is empty in transfer callback");
             return;
         }
@@ -4281,8 +4205,8 @@ void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
         std::string request =  pjsip_rx_data_get_info (r_data);
 
         /* This better be a NOTIFY request */
-        if (r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD &&
-        request.find (method_notify) != (size_t)-1) {
+        if (r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD and
+                request.find (method_notify) != std::string::npos) {
 
             /* Check if there's body */
             msg = r_data->msg_info.msg;
@@ -4294,8 +4218,8 @@ void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
             }
 
             /* Check for appropriate content */
-            if (pj_stricmp2 (&body->content_type.type, "message") != 0 ||
-            pj_stricmp2 (&body->content_type.subtype, "sipfrag") != 0) {
+            if (pj_stricmp2 (&body->content_type.type, "message") != 0 or
+                    pj_stricmp2 (&body->content_type.subtype, "sipfrag") != 0) {
                 _warn ("UserAgent: Warning! Received NOTIFY without message/sipfrag content");
                 return;
             }
@@ -4338,31 +4262,27 @@ void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
 
             status = pjsip_inv_end_session (call->getInvSession(), PJSIP_SC_GONE, NULL, &tdata);
 
-            if (status != PJ_SUCCESS) {
+            if (status != PJ_SUCCESS)
                 _debug ("UserAgent: Fail to create end session msg!");
-            } else {
+            else {
                 status = pjsip_inv_send_msg (call->getInvSession(), tdata);
 
-                if (status != PJ_SUCCESS) {
+                if (status != PJ_SUCCESS)
                     _debug ("UserAgent: Fail to send end session msg!");
-		}
             }
 
             Manager::instance().hangupCall(call->getCallId());
-
             cont = PJ_FALSE;
         }
 
-        if (!cont) {
+        if (!cont)
             pjsip_evsub_set_mod_data (sub, _mod_ua.id, NULL);
-        }
     }
 }
 
 
 void transfer_server_cb (pjsip_evsub *sub, pjsip_event *event)
 {
-
     PJ_UNUSED_ARG (event);
 
     /*
@@ -4399,10 +4319,6 @@ void transfer_server_cb (pjsip_evsub *sub, pjsip_event *event)
         }
 
         pjsip_evsub_set_mod_data (sub, _mod_ua.id, NULL);
-
-        call->setXferSub (NULL);
-
-        // Manager::instance().hangupCall(call->getCallId());
 
         _error ("UserAgent: Xfer server subscription terminated");
     }
