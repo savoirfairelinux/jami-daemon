@@ -46,23 +46,15 @@
 
 #include "audio/audiolayer.h"
 
-using namespace ost;
-
-/*
-CommandOptionArg	level (
-    "log-level", "l", "Log level (not yet implemented)"
-);
-*/
-
-CommandOptionNoArg	console (
+ost::CommandOptionNoArg	console (
     "console", "c", "Log in console (instead of syslog)"
 );
 
-CommandOptionNoArg	debug (
+ost::CommandOptionNoArg	debug (
     "debug", "d", "Debug mode (more verbose)"
 );
 
-CommandOptionNoArg	help (
+ost::CommandOptionNoArg	help (
     "help", "h", "Print help"
 );
 
@@ -77,7 +69,7 @@ main (int argc, char **argv)
     // makeCommandOptionParse allocates the object with operator new, so
     // auto_ptr is fine in this context.
     // TODO: This should eventually be replaced with std::unique_ptr for C++0x
-    std::auto_ptr<CommandOptionParse> args(makeCommandOptionParse (argc, argv, ""));
+    std::auto_ptr<ost::CommandOptionParse> args(ost::makeCommandOptionParse (argc, argv, ""));
 
     printf ("SFLphone Daemon %s, by Savoir-Faire Linux 2004-2011\n", VERSION);
     printf ("http://www.sflphone.org/\n");
@@ -160,7 +152,7 @@ main (int argc, char **argv)
         char *res;
         res = fgets (cOldPid, 64, fp);
 
-        if (res == NULL)	perror ("Error getting string from stream");
+        if (res == NULL) perror ("Error getting string from stream");
 
         else {
             fclose (fp);
@@ -176,18 +168,7 @@ main (int argc, char **argv)
                     fputs (cPid , fp);
                     fclose (fp);
                 }
-
             }
-        }
-    }
-
-    int sessionPort = 0;
-
-    if (argc == 2) {
-        char* ptrPort = strstr (argv[1], "--port=");
-
-        if (ptrPort != 0) {
-            sessionPort = atoi (ptrPort+7);
         }
     }
 
@@ -208,6 +189,4 @@ main (int argc, char **argv)
 
     return 0;
 }
-
-// EOF
 
