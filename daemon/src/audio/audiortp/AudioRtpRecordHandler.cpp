@@ -87,21 +87,6 @@ void AudioRtpRecordHandler::setRtpMedia (AudioCodec* audioCodec)
     _audioRtpRecord.audioCodecMutex.leave();
 }
 
-
-void AudioRtpRecordHandler::updateRtpMedia (AudioCodec *audioCodec)
-{
-    int lastSamplingRate = _audioRtpRecord._codecSampleRate;
-
-    setRtpMedia(audioCodec);
-
-    Manager::instance().audioSamplingRateChanged(_audioRtpRecord._codecSampleRate);
-
-    if (lastSamplingRate != _audioRtpRecord._codecSampleRate) {
-        _debug ("AudioRtpSession: Update noise suppressor with sampling rate %d and frame size %d", getCodecSampleRate(), getCodecFrameSize());
-        initNoiseSuppress();
-    }
-}
-
 void AudioRtpRecordHandler::initBuffers()
 {
     // Set sampling rate, main buffer choose the highest one

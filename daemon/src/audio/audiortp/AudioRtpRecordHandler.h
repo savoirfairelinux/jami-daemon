@@ -125,9 +125,6 @@ class AudioRtpRecordHandler
 
         void setRtpMedia (AudioCodec* audioCodec);
 
-        void updateRtpMedia (AudioCodec *audioCodec);
-
-
         AudioCodec *getAudioCodec (void) const {
             return _audioRtpRecord._audioCodec;
         }

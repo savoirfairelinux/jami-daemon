@@ -39,6 +39,7 @@
 #include "audio/audiolayer.h"
 #include <ccrtp/rtp.h>
 #include <ccrtp/oqueue.h>
+#include "manager.h"
 
 namespace sfl
 {
@@ -68,42 +69,17 @@ void AudioRtpSession::updateSessionMedia (AudioCodec *audioCodec)
     _debug ("AudioSymmetricRtpSession: Update session media");
 
     // Update internal codec for this session
-    updateRtpMedia (audioCodec);
+    int lastSamplingRate = _audioRtpRecord._codecSampleRate;
 
-    // store codec info locally
-    int payloadType = getCodecPayloadType();
-    int frameSize = getCodecFrameSize();
-    int smplRate = getCodecSampleRate();
-    bool dynamic = getHasDynamicPayload();
+    setSessionMedia(audioCodec);
 
-    // G722 requires timestamp to be incremented at 8khz
-    if (payloadType == g722PayloadType)
-        _timestampIncrement = g722RtpTimeincrement;
-    else
-        _timestampIncrement = frameSize;
+    Manager::instance().audioSamplingRateChanged(_audioRtpRecord._codecSampleRate);
 
-    _debug ("AudioRptSession: Codec payload: %d", payloadType);
-    _debug ("AudioSymmetricRtpSession: Codec sampling rate: %d", smplRate);
-    _debug ("AudioSymmetricRtpSession: Codec frame size: %d", frameSize);
-    _debug ("AudioSymmetricRtpSession: RTP timestamp increment: %d", _timestampIncrement);
-
-    if (payloadType == g722PayloadType) {
-        _debug ("AudioSymmetricRtpSession: Setting G722 payload format");
-        _queue->setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, g722RtpClockRate));
-    } else {
-        if (dynamic) {
-            _debug ("AudioSymmetricRtpSession: Setting dynamic payload format");
-            _queue->setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, smplRate));
-        } else {
-            _debug ("AudioSymmetricRtpSession: Setting static payload format");
-            _queue->setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) payloadType));
-        }
+    if (lastSamplingRate != _audioRtpRecord._codecSampleRate) {
+        _debug ("AudioRtpSession: Update noise suppressor with sampling rate %d and frame size %d", getCodecSampleRate(), getCodecFrameSize());
+        initNoiseSuppress();
     }
 
-    if (_type != Zrtp) {
-		_ca->setRecordingSmplRate (getCodecSampleRate());
-		_timestamp = _queue->getCurrentTimestamp();
-    }
 }
 
 void AudioRtpSession::setSessionMedia (AudioCodec *audioCodec)
