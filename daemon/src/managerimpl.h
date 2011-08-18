@@ -478,8 +478,6 @@ class ManagerImpl
          */
         void sendRegister (const ::std::string& accountId , const int32_t& enable);
 
-        bool getCallStatus (const std::string& sequenceId);
-
         /**
          * Get account list
          * @return std::vector<std::string> A list of accoundIDs
@@ -490,12 +488,6 @@ class ManagerImpl
          * Set the account order in the config file
          */
         void setAccountsOrder (const std::string& order);
-
-        /**
-         * Load the accounts order set by the user from the sflphonedrc config file
-         * @return std::vector<std::string> A vector containing the account ID's
-         */
-        std::vector<std::string> loadAccountOrder () const;
 
         /**
          * Retrieve details about a given account
@@ -736,7 +728,7 @@ class ManagerImpl
          * Set the maximum number of days to keep in the history
          * @param calls The number of days
          */
-        void setHistoryLimit (const int& days);
+        void setHistoryLimit (int days);
 
         /**
          * Get the maximum number of days to keep in the history
@@ -805,7 +797,7 @@ class ManagerImpl
         /**
          * Set the audio manager
          */
-        void setAudioManager (const int32_t& api);
+        void setAudioManager (int32_t api);
 
         void switchAudioManager (void);
 
@@ -832,7 +824,7 @@ class ManagerImpl
          * @param errCode The error code. Could be: ALSA_CAPTURE_ERROR
          *					       ALSA_PLAYBACK_ERROR
          */
-        void notifyErrClient (const int32_t& errCode);
+        void notifyErrClient (int32_t errCode);
 
         /**
          * Retrieve in the configuration tree the value of a parameter in a specific section
@@ -1057,7 +1049,13 @@ class ManagerImpl
          */
         void audioLayerMutexUnlock(void) { _audiolayerMutex.leaveMutex(); }
 
+        /**
+         * Load the accounts order set by the user from the sflphonedrc config file
+         * @return std::vector<std::string> A vector containing the account ID's
+         */
+        std::vector<std::string> loadAccountOrder () const;
     private:
+
         /**
          * Create config directory in home user and return configuration file path
          */
@@ -1362,7 +1360,7 @@ class ManagerImpl
          */
         void checkCallConfiguration (const std::string& id, const std::string& to, Call::CallConfiguration *callConfig);
 
-        Conf::YamlParser *parser;
+        Conf::YamlParser *parser_;
         Conf::YamlEmitter *emitter;
 
         friend class SIPTest;
