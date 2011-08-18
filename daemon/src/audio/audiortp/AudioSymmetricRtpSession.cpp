@@ -87,11 +87,10 @@ void AudioSymmetricRtpSession::AudioRtpThread::run()
     while (running) {
 
         // Send session
-        if (rtpSession->getEventQueueSize() > 0) {
-            rtpSession->sendDtmfEvent (rtpSession->getEventQueue()->front());
-        } else {
+        if (rtpSession->DtmfPending())
+            rtpSession->sendDtmfEvent ();
+        else
             rtpSession->sendMicData ();
-        }
 
         Thread::sleep (TimerPort::getTimer());
 

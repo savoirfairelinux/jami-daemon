@@ -124,12 +124,20 @@ void AudioRtpSession::setSessionMedia (AudioCodec *audioCodec)
 	}
 }
 
-void AudioRtpSession::sendDtmfEvent (sfl::DtmfEvent *dtmf)
+void AudioRtpSession::sendDtmfEvent ()
 {
-	const int increment = (_type == Zrtp) ? 160 : _timestampIncrement;
-    _debug ("AudioRtpSession: Send Dtmf");
+    ost::RTPPacket::RFC2833Payload payload;
 
-    _timestamp += increment;
+    payload.event = _audioRtpRecord._dtmfQueue.front();
+    payload.ebit = false; // end of event bit
+    payload.rbit = false; // reserved bit
+    payload.duration = 1; // duration for this event
+
+    _audioRtpRecord._dtmfQueue.pop_front();
+
+    _debug ("AudioRtpSession: Send RTP Dtmf (%d)", payload.event);
+
+    _timestamp += (_type == Zrtp) ? 160 : _timestampIncrement;
 
     // discard equivalent size of audio
     processDataEncode();
@@ -137,35 +145,12 @@ void AudioRtpSession::sendDtmfEvent (sfl::DtmfEvent *dtmf)
     // change Payload type for DTMF payload
     _queue->setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) getDtmfPayloadType(), 8000));
 
-    // Set marker in case this is a new Event
-    if (dtmf->newevent)
-        _queue->setMark (true);
-
-    // putData (_timestamp, (const unsigned char*) (& (dtmf->payload)), sizeof (ost::RTPPacket::RFC2833Payload));
-    _queue->sendImmediate (_timestamp, (const unsigned char *) (& (dtmf->payload)), sizeof (ost::RTPPacket::RFC2833Payload));
-
-    // This is no more a new event
-    if (dtmf->newevent) {
-        dtmf->newevent = false;
-        _queue->setMark (false);
-    }
+    _queue->setMark (true);
+    _queue->sendImmediate (_timestamp, (const unsigned char *) (&payload), sizeof (payload));
+    _queue->setMark (false);
 
     // get back the payload to audio
     _queue->setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) getCodecPayloadType()));
-
-    // decrease length remaining to process for this event
-    dtmf->length -= increment;
-
-    dtmf->payload.duration++;
-
-    // next packet is going to be the last one
-    if ( (dtmf->length - increment) < increment)
-        dtmf->payload.ebit = true;
-
-    if (dtmf->length < increment) {
-        delete dtmf;
-        getEventQueue()->pop_front();
-    }
 }
 
 

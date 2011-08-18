@@ -71,15 +71,6 @@ timeval2microtimeout (const timeval& t)
     return ( (t.tv_sec * 1000000ul) + t.tv_usec);
 }
 
-typedef struct DtmfEvent {
-    ost::RTPPacket::RFC2833Payload payload;
-    int factor;
-    int length;
-    bool newevent;
-} DtmfEvent;
-
-typedef std::list<DtmfEvent *> EventQueue;
-
 /**
  * Class meant to store internal data in order to encode/decode,
  * resample, process, and packetize audio streams. This class should not be
@@ -102,7 +93,7 @@ class AudioRtpRecord
         int _codecSampleRate;
         int _codecFrameSize;
         int _converterSamplingRate;
-        EventQueue _eventQueue;
+        std::list<int> _dtmfQueue;
         SFLDataFormat _micAmplFactor;
         AudioProcessing *_audioProcess;
         NoiseSuppress *_noiseSuppress;
@@ -145,12 +136,8 @@ class AudioRtpRecordHandler
             return _audioRtpRecord._hasDynamicPayloadType;
         }
 
-        EventQueue *getEventQueue (void) {
-            return &_audioRtpRecord._eventQueue;
-        }
-
-        int getEventQueueSize (void) const {
-            return _audioRtpRecord._eventQueue.size();
+        int DtmfPending (void) const {
+            return _audioRtpRecord._dtmfQueue.size() > 0;
         }
 
         const unsigned char *getMicDataEncoded (void) const {
