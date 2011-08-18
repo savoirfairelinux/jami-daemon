@@ -1122,17 +1122,6 @@ class ManagerImpl
          */
         int registerAccounts();
 
-        /**
-         * Restart PJSIP
-         * @param void
-         * @return void
-         */
-        void restartPJSIP();
-
-        void unregisterCurSIPAccounts (void);
-
-        void registerCurSIPAccounts (void);
-
         /*
          * Initialize audiodriver
          */

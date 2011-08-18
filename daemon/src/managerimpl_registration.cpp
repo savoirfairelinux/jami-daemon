@@ -136,26 +136,6 @@ ManagerImpl::initRegisterAccounts()
         return 1;
 }
 
-void ManagerImpl::restartPJSIP (void)
-{
-    _debug ("ManagerImpl::restartPJSIP\n");
-    SIPVoIPLink *siplink = SIPVoIPLink::instance ();
-    _debug ("ManagerImpl::unregister sip account\n");
-
-    this->unregisterCurSIPAccounts();
-    /* Terminate and initialize the PJSIP library */
-
-	_debug ("ManagerImpl::Terminate sip\n");
-	siplink->terminate ();
-	siplink = SIPVoIPLink::instance ();
-	_debug ("ManagerImpl::Init new sip\n");
-	siplink->init ();
-
-    _debug ("ManagerImpl::register sip account\n");
-
-    /* Then register all enabled SIP accounts */
-    this->registerCurSIPAccounts ();
-}
 
 VoIPLink* ManagerImpl::getAccountLink (const std::string& accountID) const
 {
@@ -170,30 +150,6 @@ VoIPLink* ManagerImpl::getAccountLink (const std::string& accountID) const
         return SIPVoIPLink::instance ();
 }
 
-pjsip_regc *getSipRegcFromID (const std::string& id UNUSED)
-{
-    return NULL;
-}
-
-void ManagerImpl::unregisterCurSIPAccounts()
-{
-    AccountMap::iterator iter;
-    for (iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
-        Account *current = iter->second;
-        if (current && current->isEnabled() && current->getType() == "sip")
-                current->unregisterVoIPLink();
-    }
-}
-
-void ManagerImpl::registerCurSIPAccounts (void)
-{
-    AccountMap::iterator iter;
-    for (iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
-        Account *current = iter->second;
-        if (current && current->isEnabled() && current->getType() == "sip")
-                current->registerVoIPLink();
-    }
-}
 
 void
 ManagerImpl::sendRegister (const std::string& accountID , const int32_t& enable)
