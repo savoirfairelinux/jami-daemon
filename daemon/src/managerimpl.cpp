@@ -6,7 +6,6 @@
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
- *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
@@ -1669,18 +1668,16 @@ void ManagerImpl::removeWaitingCall (const std::string& id)
     ost::MutexLock m (_waitingCallMutex);
     // should return more than 1 if it erase a call
 
-    if (_waitingCall.erase (id)) {
+    if (_waitingCall.erase (id))
         _nbIncomingWaitingCall--;
-    }
 }
 
 bool ManagerImpl::isWaitingCall (const std::string& id)
 {
     CallIDSet::iterator iter = _waitingCall.find (id);
 
-    if (iter != _waitingCall.end()) {
+    if (iter != _waitingCall.end())
         return false;
-    }
 
     return true;
 }
@@ -1691,11 +1688,7 @@ bool ManagerImpl::isWaitingCall (const std::string& id)
 // SipEvent Thread
 bool ManagerImpl::incomingCall (Call* call, const std::string& accountId)
 {
-
-    std::string from, number, display_name, display;
-
-    if (!call)
-        _error ("Manager: Error: no call at this point");
+    assert(call);
 
     stopTone();
 
@@ -1704,12 +1697,12 @@ bool ManagerImpl::incomingCall (Call* call, const std::string& accountId)
     associateCallToAccount (call->getCallId(), accountId);
 
     // If account is null it is an ip to ip call
-    if (accountId == "") {
+    if (accountId.empty())
         associateConfigToCall (call->getCallId(), Call::IPtoIP);
-    } else {
+    else {
         // strip sip: which is not required and bring confusion with ip to ip calls
         // when placing new call from history (if call is IAX, do nothing)
-        std::string peerNumber = call->getPeerNumber();
+        std::string peerNumber(call->getPeerNumber());
 
         int startIndex = peerNumber.find ("sip:");
 
@@ -1717,7 +1710,6 @@ bool ManagerImpl::incomingCall (Call* call, const std::string& accountId)
             std::string strippedPeerNumber = peerNumber.substr (startIndex + 4);
             call->setPeerNumber (strippedPeerNumber);
         }
-
     }
 
     if (!hasCurrentCall()) {
@@ -1726,17 +1718,16 @@ bool ManagerImpl::incomingCall (Call* call, const std::string& accountId)
         call->setConnectionState (Call::Ringing);
         ringtone (accountId);
 
-    } else {
+    } else
         _debug ("Manager: has current call, beep in current audio stream");
-    }
 
     addWaitingCall (call->getCallId());
 
-    from = call->getPeerName();
-    number = call->getPeerNumber();
-    display_name = call->getDisplayName();
+    std::string from(call->getPeerName());
+    std::string number(call->getPeerNumber());
+    std::string display_name(call->getDisplayName());
 
-    if (from != "" && number != "") {
+    if (not from.empty() and not number.empty()) {
         from.append (" <");
         from.append (number);
         from.append (">");
@@ -1749,7 +1740,7 @@ bool ManagerImpl::incomingCall (Call* call, const std::string& accountId)
     /* Broadcast a signal over DBus */
     _debug ("Manager: From: %s, Number: %s, Display Name: %s", from.c_str(), number.c_str(), display_name.c_str());
 
-    display = display_name;
+    std::string display(display_name);
     display.append (" ");
     display.append (from);
 
@@ -1764,21 +1755,19 @@ void ManagerImpl::incomingMessage (const std::string& callID,
                                    const std::string& from,
                                    const std::string& message)
 {
-
     if (participToConference (callID)) {
         _debug ("Manager: Particip to a conference, send message to everyone");
 
         Conference *conf = getConferenceFromCallID (callID);
 
         ParticipantSet participants = conf->getParticipantList();
-        ParticipantSet::iterator iter_participant = participants.begin();
-
-        while (iter_participant != participants.end()) {
+        for (ParticipantSet::const_iterator iter_participant = participants.begin();
+                iter_participant != participants.end(); ++iter_participant) {
 
             if (*iter_participant == callID)
                 continue;
 
-            std::string accountId = getAccountFromCall (*iter_participant);
+            std::string accountId(getAccountFromCall (*iter_participant));
 
             _debug ("Manager: Send message to %s, (%s)", (*iter_participant).c_str(), accountId.c_str());
 
@@ -1797,16 +1786,13 @@ void ManagerImpl::incomingMessage (const std::string& callID,
                 _debug ("Manager: Failed to get voip link while sending instant message");
                 return;
             }
-
-            iter_participant++;
         }
 
         // in case of a conference we must notify client using conference id
         _dbus.getCallManager()->incomingMessage (conf->getConfID(), from, message);
 
-    } else {
+    } else
     	_dbus.getCallManager()->incomingMessage (callID, from, message);
-	}
 }
 
 

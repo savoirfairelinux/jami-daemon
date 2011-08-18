@@ -3759,13 +3759,12 @@ transaction_request_cb (pjsip_rx_data *rdata)
     _debug ("UserAgent: Account ID for this call, %s", account_id.c_str());
 
     /* If we don't find any account to receive the call */
-    if (account_id == "") {
+    if (account_id.empty())
         _debug ("UserAgent: Username %s doesn't match any account, using IP2IP!",userName.c_str());
-    }
 
     /* Get the voip link associated to the incoming call */
     /* The account must before have been associated to the call in ManagerImpl */
-    if((link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (account_id))) == NULL) {
+    if ((link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (account_id))) == NULL) {
         _warn ("UserAgent: Error: cannot retrieve the voiplink from the account ID...");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
         							   NULL, NULL, NULL);
@@ -3796,7 +3795,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
         std::string method_name = "NOTIFY";
 
         // Retrieve all the message. Should contains only the method name but ...
-        std::string request =  rdata->msg_info.msg->line.req.method.name.ptr;
+        std::string request(rdata->msg_info.msg->line.req.method.name.ptr);
 
         // Check if the message is a notification
         if (request.find (method_name) != (size_t)-1) {
@@ -3847,35 +3846,30 @@ transaction_request_cb (pjsip_rx_data *rdata)
     /******************************************* URL HOOK *********************************************/
 
     if (Manager::instance().hookPreference.getSipEnabled()) {
-
         _debug ("UserAgent: Set sip url hooks");
 
-        std::string header_value;
-
-        header_value = fetchHeaderValue (rdata->msg_info.msg,
-        Manager::instance().hookPreference.getUrlSipField());
+        std::string header_value(fetchHeaderValue (rdata->msg_info.msg,
+                    Manager::instance().hookPreference.getUrlSipField()));
 
         if (header_value.size () < header_value.max_size()) {
-            if (header_value!="") {
+            if (not header_value.empty()) {
                 urlhook->addAction (header_value,
                 Manager::instance().hookPreference.getUrlCommand());
             }
         } else
             throw std::length_error ("UserAgent: Url exceeds std::string max_size");
-
     }
 
     /************************************************************************************************/
-
     _info ("UserAgent: Create a new call");
 
     // Generate a new call ID for the incoming call!
     id = Manager::instance().getNewCallID();
 
-    if((call = new SIPCall (id, Call::Incoming, _cp)) == NULL) {
+    if ((call = new SIPCall (id, Call::Incoming, _cp)) == NULL) {
         _warn ("UserAgent: Error: Unable to create an incoming call");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
-        NULL, NULL, NULL);
+                NULL, NULL, NULL);
         return false;
     }
 
@@ -3904,13 +3898,11 @@ transaction_request_cb (pjsip_rx_data *rdata)
 
     }
 
-    if (addrToUse == "0.0.0.0") {
+    if (addrToUse == "0.0.0.0")
         link->loadSIPLocalIP (&addrToUse);
-    }
 
-    if (addrSdp == "0.0.0.0") {
+    if (addrSdp == "0.0.0.0")
         addrSdp = addrToUse;
-    }
 
     call->setConnectionState (Call::Progressing);
     call->setPeerNumber (peerNumber);
@@ -3985,9 +3977,8 @@ transaction_request_cb (pjsip_rx_data *rdata)
         }
     }
 
-
     status = call->getLocalSDP()->receiveOffer (r_sdp, account->getActiveCodecs ());
-    if (status!=PJ_SUCCESS) {
+    if (status != PJ_SUCCESS) {
         delete call;
         call = NULL;
         _warn ("UserAgent: fail in receiving initial offer");
@@ -4038,7 +4029,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
     }
 
     // Check if call have been transfered
-    if(replaced_dlg) { // If Replace header present
+    if (replaced_dlg) { // If Replace header present
 
     	_debug("UserAgent: Replace request foud");
 
@@ -4046,7 +4037,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
 
     	// Always answer the new INVITE with 200, regardless whether
     	// the replaced call is in early or confirmed state.
-    	if((status = pjsip_inv_answer(inv, 200, NULL, NULL, &response)) == PJ_SUCCESS)
+    	if ((status = pjsip_inv_answer(inv, 200, NULL, NULL, &response)) == PJ_SUCCESS)
     		pjsip_inv_send_msg(inv, response);
 
     	// Get the INVITE session associated with the replaced dialog.
@@ -4058,8 +4049,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
              status = pjsip_inv_send_msg(replaced_inv, tdata);
 
          call->replaceInvSession(inv);
-    }
-    else { // Prooceed with normal call flow
+    } else { // Prooceed with normal call flow
 
         // Send a 180 Ringing response
         _info ("UserAgent: Send a 180 Ringing response");
@@ -4089,7 +4079,6 @@ transaction_request_cb (pjsip_rx_data *rdata)
     				NULL, NULL, NULL);
     		return false;
     	}
-
     }
 
     /* Done */
