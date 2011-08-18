@@ -1124,12 +1124,6 @@ class ManagerImpl
         short _mic_volume;
         // End of sound variable
 
-
-        // Multithread variable (protected by _mutex)
-        //
-        /** Mutex to protect access to code section */
-        ost::Mutex _mutex;
-
         /**
          * Mutex used to protect audio layer
          */
