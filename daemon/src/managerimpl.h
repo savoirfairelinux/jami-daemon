@@ -1454,7 +1454,6 @@ class ManagerImpl
 
 #ifdef TEST
         bool testCallAccountMap();
-        bool testAccountMap();
 #endif
         friend class SIPTest;
         friend class ConfigurationTest;
