@@ -1371,10 +1371,6 @@ class ManagerImpl
         Conf::YamlParser *parser;
         Conf::YamlEmitter *emitter;
 
-#ifdef TEST
-        bool testCallAccountMap();
-        bool testAccountMap();
-#endif
         friend class SIPTest;
         friend class ConfigurationTest;
         friend class HistoryTest;

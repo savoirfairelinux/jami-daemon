@@ -63,13 +63,6 @@
 #include <sys/types.h> // mkdir(2)
 #include <sys/stat.h>  // mkdir(2)
 
-#define fill_config_str(name, value) \
-  (_config.addConfigTreeItem(section, Conf::ConfigTreeItem(std::string(name), std::string(value), type_str)))
-#define fill_config_int(name, value) \
-  (_config.addConfigTreeItem(section, Conf::ConfigTreeItem(std::string(name), std::string(value), type_int)))
-
-#define MD5_APPEND(pms,buf,len) pj_md5_update(pms, (const pj_uint8_t*)buf, len)
-
 ManagerImpl::ManagerImpl (void) :
     _hasTriedToRegister (false), _config(), _currentCallId2(),
     _currentCallMutex(), _audiodriver (0),
@@ -84,16 +77,6 @@ ManagerImpl::ManagerImpl (void) :
 {
     // initialize random generator for call id
     srand (time (NULL));
-
-#ifdef TEST
-    testAccountMap();
-    loadAccountMap();
-    testCallAccountMap();
-    unloadAccountMap();
-#endif
-
-    // should be call before initConfigFile
-    // loadAccountMap();, called in init() now.
 }
 
 // never call if we use only the singleton...
