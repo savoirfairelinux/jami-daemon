@@ -54,16 +54,10 @@ AudioSymmetricRtpSession::AudioSymmetricRtpSession (SIPCall * sipcall) :
 
 AudioSymmetricRtpSession::~AudioSymmetricRtpSession()
 {
-    // XXX: DON'T call any members of this (i.e. AudioSymmetricRtpSession and
-    // the classes from which it is derived, or touch any of their data
     _info ("AudioSymmetricRtpSession: Delete AudioSymmetricRtpSession instance");
 
     _rtpThread->running = false;
     delete _rtpThread;
-}
-
-void AudioSymmetricRtpSession::final()
-{
 }
 
 AudioSymmetricRtpSession::AudioRtpThread::AudioRtpThread (AudioSymmetricRtpSession *session) : running (true), rtpSession (session)
