@@ -241,9 +241,8 @@ void Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media *med)
 
 void Sdp::setLocalMediaVideoCapabilities (const std::vector<std::string> &videoCodecs)
 {
-    if (videoCodecs.size() == 0) {
+    if (videoCodecs.empty())
         throw SdpException ("No selected video codec while building local SDP offer");
-    }
 
     delete localVideoMediaCap_;
     localVideoMediaCap_ = new sdpMedia (MIME_TYPE_VIDEO);
@@ -276,16 +275,16 @@ void Sdp::setLocalMediaCapabilities (CodecOrder selectedCodecs)
     /* We retrieve the codecs selected by the user */
     CodecsMap codecs_list = Manager::instance().getAudioCodecFactory().getCodecsMap();
 
-    if (selectedCodecs.size() == 0) {
-        throw SdpException ("No selected audio codec while building local SDP offer");
-    }
+    if (selectedCodecs.empty())
+        _warn("No selected codec while building local SDP offer");
+    else {
+        for (CodecOrder::const_iterator iter = selectedCodecs.begin(); iter != selectedCodecs.end(); ++iter) {
+            CodecsMap::const_iterator map_iter = codecs_list.find (*iter);
 
-    for (unsigned int i=0; i<selectedCodecs.size(); i++) {
-        CodecsMap::iterator iter = codecs_list.find (selectedCodecs[i]);
-        if (iter!=codecs_list.end()) {
-        	localAudioMediaCap_->add_codec (iter->second);
-        } else {
-            _warn ("SDP: Couldn't find audio codec");
+            if (map_iter != codecs_list.end())
+                localAudioMediaCap_->add_codec (map_iter->second);
+            else
+                _warn ("SDP: Couldn't find audio codec");
         }
     }
 }
@@ -353,7 +352,7 @@ int Sdp::createOffer (CodecOrder selectedCodecs, const std::vector<std::string> 
     return PJ_SUCCESS;
 }
 
-int Sdp::receiveOffer (const pjmedia_sdp_session* remote, CodecOrder selectedCodecs, const std::vector<std::string> &videoCodecs)
+int Sdp::receiveOffer (const pjmedia_sdp_session* remote, const CodecOrder &selectedCodecs, const std::vector<std::string> &videoCodecs)
 {
     if (!remote)
         return !PJ_SUCCESS;
@@ -445,14 +444,14 @@ pj_status_t Sdp::startNegotiation()
     status = pjmedia_sdp_neg_get_active_local(negotiator_, &active_local);
     if (status != PJ_SUCCESS)
         _error("SDP: Could not retrieve local active session");
-
-    setActiveLocalSdpSession(active_local);
+    else
+        setActiveLocalSdpSession(active_local);
 
     status = pjmedia_sdp_neg_get_active_remote(negotiator_, &active_remote);
     if (status != PJ_SUCCESS)
         _error("SDP: Could not retrieve remote active session");
-
-    setActiveRemoteSdpSession(active_remote);
+    else
+        setActiveRemoteSdpSession(active_remote);
 
     return status;
 }
@@ -590,15 +589,14 @@ std::vector<std::string> Sdp::getActiveVideoDescription() const
 
 void Sdp::addSdesAttribute (const std::vector<std::string>& crypto)
 {
-    std::vector<std::string>::const_iterator iter;;
-    for (iter = crypto.begin(); iter != crypto.end(); ++iter)
+    for (std::vector<std::string>::const_iterator iter = crypto.begin();
+            iter != crypto.end(); ++iter)
     {
         // the attribute to add to sdp
         pjmedia_sdp_attr *attribute = (pjmedia_sdp_attr*) pj_pool_zalloc (memPool_, sizeof (pjmedia_sdp_attr));
 
         attribute->name = pj_strdup3 (memPool_, "crypto");
 
-        // _debug("crypto from sdp: %s", crypto.c_str());
         pj_strdup2(memPool_, &attribute->value, (*iter).c_str());
 
         // add crypto attribute to media
@@ -615,7 +613,6 @@ void Sdp::addZrtpAttribute (pjmedia_sdp_media* media, std::string hash)
 
     attribute->name = pj_strdup3 (memPool_, "zrtp-hash");
 
-    /* Format: ":version value" */
     char *tmp;
     if (asprintf(&tmp, ZRTP_VERSION" %s", hash.c_str()) != -1)
     {
@@ -663,21 +660,16 @@ void Sdp::addAttributeToLocalVideoMedia(const char *attr)
 
 void Sdp::updateMediaTransportInfoFromRemoteSdp ()
 {
-    pjmedia_sdp_media *r_media;
 
-    if (!activeRemoteSession_) {
-        _error("Sdp: Error: Remote sdp is NULL while parsing media");
-        return;
-    }
+    _info ("SDP: Fetching media from sdp");
 
     remoteIpAddr_ = std::string (activeRemoteSession_->conn->addr.ptr, activeRemoteSession_->conn->addr.slen);
 
-    r_media = getRemoteSdpMediaFromOffer(activeRemoteSession_, "audio");
+    pjmedia_sdp_media *r_media = getRemoteSdpMediaFromOffer(activeRemoteSession_, "audio");
     if (!r_media)
         _warn ("SDP: Error: no remote sdp audio media found in the remote offer");
     else
     	remoteAudioPort_ = r_media->desc.port;
-
 
     r_media = getRemoteSdpMediaFromOffer (activeRemoteSession_, "video");
     if (!r_media)
@@ -699,7 +691,7 @@ void Sdp::getRemoteSdpTelephoneEventFromOffer(const pjmedia_sdp_session *remote_
             r_media = remote_sdp->media[i];
 
     if (!r_media) {
-        _error("Sdp: Error: Could not found dtmf event gfrom remote sdp");
+        _error("Sdp: Error: Could not find dtmf event from remote sdp");
         return;
     }
 
@@ -729,4 +721,3 @@ void Sdp::getRemoteSdpCryptoFromOffer (const pjmedia_sdp_session* remote_sdp, Cr
         }
     }
 }
-

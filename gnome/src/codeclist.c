@@ -41,7 +41,7 @@ static GQueue audioCodecs = G_QUEUE_INIT;
 static GQueue videoCodecs = G_QUEUE_INIT;
 
 /*
- * Instanciate a new codec
+ * Instantiate a new codec
  *
  * @param payload       The unique RTP payload
  * @return codec        The new codec instance, or NULL
@@ -144,7 +144,7 @@ codec_t *codec_create_new_from_caps (codec_t *original)
 static gint
 is_name_codecstruct (gconstpointer a, gconstpointer b)
 {
-    return strcmp (((codec_t*)a)->name, (const gchar *) b);
+    return g_strcmp0 (((codec_t*)a)->name, (const gchar *) b);
 }
 
 codec_t* codec_list_get_by_name (gconstpointer name, GQueue *q)
@@ -199,7 +199,7 @@ static void codec_list_update_to_daemon_cat (account_t *acc, gboolean is_audio)
 
         // Save only if active
         if (currentCodec && currentCodec->is_active) {
-            codecList = (void*) realloc (codecList, (c+1) *sizeof (void*));
+            codecList = (void*) g_realloc (codecList, (c+1) *sizeof (void*));
 
             if (is_audio)
                 * (codecList+c) = g_strdup_printf("%d", currentCodec->payload);
@@ -210,7 +210,7 @@ static void codec_list_update_to_daemon_cat (account_t *acc, gboolean is_audio)
     }
 
     // Allocate NULL array at the end for Dbus
-    codecList = (void*) realloc (codecList, (c+1) *sizeof (void*));
+    codecList = (void*) g_realloc (codecList, (c + 1) * sizeof (void*));
     * (codecList+c) = NULL;
     c++;
 
@@ -222,8 +222,8 @@ static void codec_list_update_to_daemon_cat (account_t *acc, gboolean is_audio)
 
     // Delete memory
     for (i = 0; i < c; i++)
-        free (*(codecList+i));
-    free (codecList);
+        g_free (*(codecList+i));
+    g_free (codecList);
 }
 
 void codec_list_update_to_daemon (account_t *acc)

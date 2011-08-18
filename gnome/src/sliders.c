@@ -83,7 +83,7 @@ slider_moved (GtkRange* range, gchar* device)
     DEBUG ("Volume changed for %s: %f ", device, value);
     dbus_set_volume (device, value);
 
-    if (strcmp (device, "speaker") == 0)
+    if (g_strcmp0 (device, "speaker") == 0)
         update_icons (SPEAKER);
     else
         update_icons (MIKE);
@@ -94,7 +94,7 @@ mute_cb (GtkWidget *widget, gchar*  device)
 {
     int dev;
 
-    if (strcmp (device, "speaker") == 0)
+    if (g_strcmp0 (device, "speaker") == 0)
         dev = SPEAKER;
     else
         dev = MIKE;
@@ -116,7 +116,7 @@ set_slider (const gchar * device, gdouble newval)
 {
     int dev;
 
-    if (strcmp (device, "speaker") == 0)
+    if (g_strcmp0 (device, "speaker") == 0)
         dev = SPEAKER;
     else
         dev = MIKE;
@@ -143,7 +143,7 @@ create_slider (const gchar * device)
     GtkWidget * ret;
     int dev=0;
 
-    if (strcmp (device, "speaker") == 0) {
+    if (g_strcmp0 (device, "speaker") == 0) {
         dev = SPEAKER;
         images[SPEAKER][MUTED] = gtk_image_new_from_file (ICONS_DIR "/speaker.svg");
         images[SPEAKER][VOL25] = gtk_image_new_from_file (ICONS_DIR "/speaker_25.svg");
@@ -153,7 +153,7 @@ create_slider (const gchar * device)
         g_object_ref (images[SPEAKER][VOL25]);
         g_object_ref (images[SPEAKER][VOL50]);
         g_object_ref (images[SPEAKER][VOL75]);
-    } else if (strcmp (device, "mic") == 0) {
+    } else if (g_strcmp0 (device, "mic") == 0) {
         dev = MIKE;
         images[MIKE][MUTED] = gtk_image_new_from_file (ICONS_DIR "/mic.svg");
         images[MIKE][VOL25] = gtk_image_new_from_file (ICONS_DIR "/mic_25.svg");
@@ -170,7 +170,7 @@ create_slider (const gchar * device)
 
 #if GTK_CHECK_VERSION(2,12,0)
 
-    if (strcmp (device , "speaker") == 0)
+    if (g_strcmp0 (device , "speaker") == 0)
         gtk_widget_set_tooltip_text (GTK_WIDGET (ret), _ ("Speakers volume"));
     else
         gtk_widget_set_tooltip_text (GTK_WIDGET (ret), _ ("Mic volume"));

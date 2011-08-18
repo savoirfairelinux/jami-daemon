@@ -28,8 +28,6 @@
 
 typedef std::map<std::string, int> ReadPointer;
 
-static std::string default_id = "audiolayer_id";
-
 class RingBuffer
 {
     public:
@@ -37,7 +35,7 @@ class RingBuffer
          * Constructor
          * @param size  Size of the buffer to create
          */
-        RingBuffer (int size, std::string call_id = default_id);
+        RingBuffer (int size, const std::string &call_id = Call::DEFAULT_ID);
 
         /**
          * Destructor
@@ -51,14 +49,14 @@ class RingBuffer
         /**
          * Reset the counters to 0 for this read pointer
          */
-        void flush (std::string call_id = default_id);
+        void flush (const std::string &call_id = Call::DEFAULT_ID);
 
         void flushAll();
 
         /**
          * Get read pointer coresponding to this call
          */
-        int getReadPointer (std::string call_id = default_id);
+        int getReadPointer (const std::string &call_id = Call::DEFAULT_ID);
 
         /**
          * Get the whole readpointer list for this ringbuffer
@@ -75,22 +73,22 @@ class RingBuffer
         /**
          * Move readpointer forward by pointer_value
          */
-        void storeReadPointer (int pointer_value, std::string call_id = default_id);
+        void storeReadPointer (int pointer_value, const std::string &call_id = Call::DEFAULT_ID);
 
         /**
          * Add a new readpointer for this ringbuffer
          */
-        void createReadPointer (std::string call_id = default_id);
+        void createReadPointer (const std::string &call_id = Call::DEFAULT_ID);
 
         /**
          * Remove a readpointer for this ringbuffer
          */
-        void removeReadPointer (std::string call_id = default_id);
+        void removeReadPointer (const std::string &call_id = Call::DEFAULT_ID);
 
         /**
          * Test if readpointer coresponding to this call is still active
          */
-        bool hasThisReadPointer (std::string call_id);
+        bool hasThisReadPointer (const std::string &call_id);
 
         int getNbReadPointer();
 
@@ -105,7 +103,7 @@ class RingBuffer
          * To get how much space is available in the buffer to read in
          * @return int The available size
          */
-        int AvailForGet (std::string call_id = default_id);
+        int AvailForGet (const std::string &call_id = Call::DEFAULT_ID);
 
         /**
          * Get data in the ring buffer
@@ -113,14 +111,14 @@ class RingBuffer
          * @param toCopy Number of bytes to copy
          * @return int Number of bytes copied
          */
-        int Get (void* buffer, int toCopy, std::string call_id = default_id);
+        int Get (void* buffer, int toCopy, const std::string &call_id = Call::DEFAULT_ID);
 
         /**
          * Discard data from the buffer
          * @param toDiscard Number of bytes to discard
          * @return int Number of bytes discarded
          */
-        int Discard (int toDiscard, std::string call_id = default_id);
+        int Discard (int toDiscard, const std::string &call_id = Call::DEFAULT_ID);
 
         /**
          * Total length of the ring buffer
@@ -128,7 +126,7 @@ class RingBuffer
          */
         int putLen();
 
-        int getLen (std::string call_id = default_id);
+        int getLen (const std::string &call_id = Call::DEFAULT_ID);
 
         /**
          * Debug function print mEnd, mStart, mBufferSize
@@ -163,7 +161,6 @@ class RingBuffer
         std::fstream *buffer_output_rec;
 
         static int count_rb;
-
 };
 
 

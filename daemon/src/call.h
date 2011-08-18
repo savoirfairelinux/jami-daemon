@@ -50,6 +50,7 @@
 class Call: public Recordable
 {
     public:
+        static const char * const DEFAULT_ID;
 
         /**
          * This determines if the call is a direct IP-to-IP call or a classic call, made with an existing account

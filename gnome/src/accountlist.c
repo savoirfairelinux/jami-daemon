@@ -38,17 +38,15 @@ static GQueue * accountQueue;
 /* GCompareFunc to compare a accountID (gchar* and a account_t) */
 gint is_accountID_struct (gconstpointer a, gconstpointer b)
 {
-
     if (!a || !b)
         return 1;
 
     account_t * c = (account_t*) a;
 
-    if (strcmp (c->accountID, (gchar*) b) == 0) {
+    if (g_strcmp0 (c->accountID, (gchar*) b) == 0)
         return 0;
-    } else {
+    else
         return 1;
-    }
 }
 
 /* GCompareFunc to get current call (gchar* and a account_t) */
@@ -57,16 +55,14 @@ gint get_state_struct (gconstpointer a, gconstpointer b)
 
     account_t * c = (account_t*) a;
 
-    if (c->state == * ( (account_state_t*) b)) {
+    if (c->state == * ( (account_state_t*) b))
         return 0;
-    } else {
+    else
         return 1;
-    }
 }
 
 void account_list_init ()
 {
-
     accountQueue = g_queue_new ();
 }
 
@@ -96,9 +92,8 @@ account_list_remove (const gchar * accountID)
 
     DEBUG("Account List remove");
 
-    if (c) {
+    if (c)
         g_queue_remove (accountQueue, c->data);
-    }
 }
 
 
@@ -107,11 +102,10 @@ account_list_get_by_state (account_state_t state)
 {
     GList * c = g_queue_find_custom (accountQueue, &state, get_state_struct);
 
-    if (c) {
+    if (c)
         return (account_t *) c->data;
-    } else {
+    else
         return NULL;
-    }
 }
 
 account_t *
@@ -119,7 +113,7 @@ account_list_get_by_id (gchar * accountID)
 {
     GList * c = g_queue_find_custom (accountQueue, accountID, is_accountID_struct);
 
-    if(c == NULL)
+    if (c == NULL)
         return NULL;
 
     return (account_t *) c->data;
@@ -127,13 +121,11 @@ account_list_get_by_id (gchar * accountID)
 
 guint account_list_get_size (void)
 {
-
     return g_queue_get_length (accountQueue);
 }
 
 account_t * account_list_get_nth (guint n)
 {
-
     return g_queue_peek_nth (accountQueue, n);
 }
 
@@ -250,7 +242,6 @@ account_list_get_registered_accounts (void)
     unsigned int i;
 
     for (i=0; i<account_list_get_size(); i++) {
-
         if (account_list_get_nth (i) -> state == (ACCOUNT_STATE_REGISTERED))
             res ++;
     }
@@ -334,9 +325,8 @@ void current_account_set_message_number (guint nb)
 
     current = account_list_get_current ();
 
-    if (current) {
+    if (current)
         current->_messages_number = nb;
-    }
 }
 
 guint current_account_get_message_number (void)
@@ -345,9 +335,9 @@ guint current_account_get_message_number (void)
 
     current = account_list_get_current ();
 
-    if (current) {
+    if (current)
         return current->_messages_number;
-    } else
+    else
         return 0;
 }
 
@@ -357,9 +347,8 @@ gboolean current_account_has_new_message (void)
 
     current = account_list_get_current ();
 
-    if (current) {
+    if (current)
         return (current->_messages_number > 0);
-    }
 
     return FALSE;
 }

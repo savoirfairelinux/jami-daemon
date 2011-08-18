@@ -301,25 +301,25 @@ void sflphone_fill_account_list (void)
 
         gchar * status = g_hash_table_lookup (details, REGISTRATION_STATUS);
 
-        if (strcmp (status, "REGISTERED") == 0) {
+        if (g_strcmp0 (status, "REGISTERED") == 0) {
             a->state = ACCOUNT_STATE_REGISTERED;
-        } else if (strcmp (status, "UNREGISTERED") == 0) {
+        } else if (g_strcmp0 (status, "UNREGISTERED") == 0) {
             a->state = ACCOUNT_STATE_UNREGISTERED;
-        } else if (strcmp (status, "TRYING") == 0) {
+        } else if (g_strcmp0 (status, "TRYING") == 0) {
             a->state = ACCOUNT_STATE_TRYING;
-        } else if (strcmp (status, "ERROR") == 0) {
+        } else if (g_strcmp0 (status, "ERROR") == 0) {
             a->state = ACCOUNT_STATE_ERROR;
-        } else if (strcmp (status , "ERROR_AUTH") == 0) {
+        } else if (g_strcmp0 (status , "ERROR_AUTH") == 0) {
             a->state = ACCOUNT_STATE_ERROR_AUTH;
-        } else if (strcmp (status , "ERROR_NETWORK") == 0) {
+        } else if (g_strcmp0 (status , "ERROR_NETWORK") == 0) {
             a->state = ACCOUNT_STATE_ERROR_NETWORK;
-        } else if (strcmp (status , "ERROR_HOST") == 0) {
+        } else if (g_strcmp0 (status , "ERROR_HOST") == 0) {
             a->state = ACCOUNT_STATE_ERROR_HOST;
-        } else if (strcmp (status , "ERROR_CONF_STUN") == 0) {
+        } else if (g_strcmp0 (status , "ERROR_CONF_STUN") == 0) {
             a->state = ACCOUNT_STATE_ERROR_CONF_STUN;
-        } else if (strcmp (status , "ERROR_EXIST_STUN") == 0) {
+        } else if (g_strcmp0 (status , "ERROR_EXIST_STUN") == 0) {
             a->state = ACCOUNT_STATE_ERROR_EXIST_STUN;
-        } else if (strcmp (status, "READY") == 0) {
+        } else if (g_strcmp0 (status, "READY") == 0) {
             a->state = IP2IP_PROFILE_STATUS;
         } else {
             a->state = ACCOUNT_STATE_INVALID;
@@ -1051,7 +1051,6 @@ sflphone_join_participant (const gchar* sel_callID, const gchar* drag_callID)
 {
     DEBUG ("sflphone join participants %s and %s", sel_callID, drag_callID);
 
-
     dbus_join_participant (sel_callID, drag_callID);
 }
 
@@ -1065,9 +1064,9 @@ sflphone_add_participant (const gchar* callID, const gchar* confID)
     DEBUG (">SFLphone: Add participant %s to conference %s", callID, confID);
 
     call = calllist_get_call(current_calls, callID);
-    if(call == NULL) {
-	ERROR("SFLphone: Error: Could not find call");
-	return;
+    if (call == NULL) {
+        ERROR("SFLphone: Error: Could not find call");
+        return;
     }
 
     set_timestamp(&call->_time_added);
@@ -1178,6 +1177,7 @@ static void sflphone_fill_codec_list_per_account_cat (account_t *account, gboole
 {
     gchar **order;
     GQueue *codeclist;
+
     order = is_audio
           ? dbus_get_active_audio_codec_list (account->accountID)
           : dbus_get_active_video_codec_list (account->accountID);
@@ -1194,7 +1194,7 @@ static void sflphone_fill_codec_list_per_account_cat (account_t *account, gboole
 
     g_queue_clear (codeclist);
 
-    if (! (*order))
+    if (!(*order))
         ERROR ("SFLphone: No codec list provided");
 
     GQueue* codecs = is_audio ? get_audio_codecs_list() : get_video_codecs_list();
@@ -1215,20 +1215,17 @@ static void sflphone_fill_codec_list_per_account_cat (account_t *account, gboole
     }
     g_free(order);
 
-    // if no codecs were added, activate them all
-    gboolean active = codeclist->length == 0;
-
-    guint i, caps_size = g_queue_get_length(codecs);
-    for (i=0; i<caps_size; i++) {
+    guint caps_size = g_queue_get_length (codecs);
+    guint i;
+    for (i = 0; i < caps_size; i++) {
         codec_t * codec = g_queue_peek_nth (codecs, i);
         gboolean found;
-        // Check if this codec has already been enabled for this account
         if (is_audio)
             found = codec_list_get_by_payload (codec->payload, codeclist) != NULL;
         else
             found = codec_list_get_by_name(codec->name, codeclist) != NULL;
         if (!found) {
-            codec->is_active = active;
+            codec->is_active = FALSE;
             g_queue_push_tail (codeclist, (gpointer)codec);
         }
     }

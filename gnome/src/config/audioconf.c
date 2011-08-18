@@ -741,7 +741,7 @@ active_noise_suppress (void)
 
     state = dbus_get_noise_suppress_state();
 
-    if (strcmp (state, "enabled") == 0) {
+    if (g_strcmp0 (state, "enabled") == 0) {
         newstate = "disabled";
     } else {
         newstate = "enabled";
@@ -758,7 +758,7 @@ active_echo_cancel(void)
 
     state = dbus_get_echo_cancel_state();
 
-    if(strcmp(state, "enabled") == 0) {
+    if(g_strcmp0(state, "enabled") == 0) {
         newstate = "disabled";
     } else {
         newstate = "enabled";
@@ -1015,7 +1015,7 @@ GtkWidget* create_audio_configuration()
     enableNoiseReduction = gtk_check_button_new_with_mnemonic (_ ("_Noise Reduction"));
     state = dbus_get_noise_suppress_state();
     noisesuppressActive = FALSE;
-    if (strcmp (state, "enabled") == 0)
+    if (g_strcmp0 (state, "enabled") == 0)
         noisesuppressActive = TRUE;
     else
         noisesuppressActive = FALSE;
@@ -1026,7 +1026,7 @@ GtkWidget* create_audio_configuration()
     enableEchoCancel = gtk_check_button_new_with_mnemonic(_("_Echo Cancellation"));
     state = dbus_get_echo_cancel_state();
     echoCancelActive = FALSE;
-    if (strcmp(state, "enabled") == 0) {
+    if (g_strcmp0(state, "enabled") == 0) {
         echoCancelActive = TRUE;
     }
     else {

@@ -3728,13 +3728,12 @@ transaction_request_cb (pjsip_rx_data *rdata)
     _debug ("UserAgent: Account ID for this call, %s", account_id.c_str());
 
     /* If we don't find any account to receive the call */
-    if (account_id == "") {
+    if (account_id.empty())
         _debug ("UserAgent: Username %s doesn't match any account, using IP2IP!",userName.c_str());
-    }
 
     /* Get the voip link associated to the incoming call */
     /* The account must before have been associated to the call in ManagerImpl */
-    if((link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (account_id))) == NULL) {
+    if ((link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (account_id))) == NULL) {
         _warn ("UserAgent: Error: cannot retrieve the voiplink from the account ID...");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
         							   NULL, NULL, NULL);
@@ -3765,7 +3764,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
         std::string method_name = "NOTIFY";
 
         // Retrieve all the message. Should contains only the method name but ...
-        std::string request =  rdata->msg_info.msg->line.req.method.name.ptr;
+        std::string request(rdata->msg_info.msg->line.req.method.name.ptr);
 
         // Check if the message is a notification
         if (request.find (method_name) != (size_t)-1) {
@@ -3816,35 +3815,30 @@ transaction_request_cb (pjsip_rx_data *rdata)
     /******************************************* URL HOOK *********************************************/
 
     if (Manager::instance().hookPreference.getSipEnabled()) {
-
         _debug ("UserAgent: Set sip url hooks");
 
-        std::string header_value;
-
-        header_value = fetchHeaderValue (rdata->msg_info.msg,
-        Manager::instance().hookPreference.getUrlSipField());
+        std::string header_value(fetchHeaderValue (rdata->msg_info.msg,
+                    Manager::instance().hookPreference.getUrlSipField()));
 
         if (header_value.size () < header_value.max_size()) {
-            if (header_value!="") {
+            if (not header_value.empty()) {
                 urlhook->addAction (header_value,
                 Manager::instance().hookPreference.getUrlCommand());
             }
         } else
             throw std::length_error ("UserAgent: Url exceeds std::string max_size");
-
     }
 
     /************************************************************************************************/
-
     _info ("UserAgent: Create a new call");
 
     // Generate a new call ID for the incoming call!
     id = Manager::instance().getNewCallID();
 
-    if((call = new SIPCall (id, Call::Incoming, _cp)) == NULL) {
+    if ((call = new SIPCall (id, Call::Incoming, _cp)) == NULL) {
         _warn ("UserAgent: Error: Unable to create an incoming call");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
-        NULL, NULL, NULL);
+                NULL, NULL, NULL);
         return false;
     }
 
@@ -3873,13 +3867,11 @@ transaction_request_cb (pjsip_rx_data *rdata)
 
     }
 
-    if (addrToUse == "0.0.0.0") {
+    if (addrToUse == "0.0.0.0")
         link->loadSIPLocalIP (&addrToUse);
-    }
 
-    if (addrSdp == "0.0.0.0") {
+    if (addrSdp == "0.0.0.0")
         addrSdp = addrToUse;
-    }
 
     call->setConnectionState (Call::Progressing);
     call->setPeerNumber (peerNumber);
@@ -3954,9 +3946,8 @@ transaction_request_cb (pjsip_rx_data *rdata)
         }
     }
 
-
     status = call->getLocalSDP()->receiveOffer (r_sdp, account->getActiveCodecs (), account->getActiveVideoCodecs());
-    if (status!=PJ_SUCCESS) {
+    if (status != PJ_SUCCESS) {
         delete call;
         call = NULL;
         _warn ("UserAgent: fail in receiving initial offer");
@@ -4007,7 +3998,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
     }
 
     // Check if call have been transfered
-    if(replaced_dlg) { // If Replace header present
+    if (replaced_dlg) { // If Replace header present
 
     	_debug("UserAgent: Replace request foud");
 
@@ -4015,7 +4006,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
 
     	// Always answer the new INVITE with 200, regardless whether
     	// the replaced call is in early or confirmed state.
-    	if((status = pjsip_inv_answer(inv, 200, NULL, NULL, &response)) == PJ_SUCCESS)
+    	if ((status = pjsip_inv_answer(inv, 200, NULL, NULL, &response)) == PJ_SUCCESS)
     		pjsip_inv_send_msg(inv, response);
 
     	// Get the INVITE session associated with the replaced dialog.
@@ -4027,8 +4018,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
              status = pjsip_inv_send_msg(replaced_inv, tdata);
 
          call->inv = inv;
-    }
-    else { // Prooceed with normal call flow
+    } else { // Prooceed with normal call flow
 
         // Send a 180 Ringing response
         _info ("UserAgent: Send a 180 Ringing response");
@@ -4058,7 +4048,6 @@ transaction_request_cb (pjsip_rx_data *rdata)
     				NULL, NULL, NULL);
     		return false;
     	}
-
     }
 
     /* Done */
@@ -4141,10 +4130,9 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
     /* Find optional Refer-Sub header */
     refer_sub = (pjsip_generic_string_hdr*)
     pjsip_msg_find_hdr_by_name (rdata->msg_info.msg, &str_refer_sub, NULL);
-    if (refer_sub) {
-        if (!pj_strnicmp2 (&refer_sub->hvalue, "true", 4) ==0)
+    if (refer_sub)
+        if (!pj_strnicmp2 (&refer_sub->hvalue, "true", 4) == 0)
             no_refer_sub = PJ_TRUE;
-    }
 
     /* Find optional Referred-By header (to be copied onto outgoing INVITE
      * request.
@@ -4199,7 +4187,7 @@ void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
         pjsip_generic_string_hdr *refer_sub;
         const pj_str_t REFER_SUB = { (char *) "Refer-Sub", 9 };
 
- 	/* Must be receipt of response message */
+        /* Must be receipt of response message */
         pj_assert(event->type == PJSIP_EVENT_TSX_STATE &&
                   event->body.tsx_state.type == PJSIP_EVENT_RX_MSG);
         rdata = event->body.tsx_state.src.rdata;
@@ -4210,19 +4198,16 @@ void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
                                                &REFER_SUB, NULL);
 
         /* Check if subscription is suppressed */
-        if (refer_sub && pj_stricmp2(&refer_sub->hvalue, "false")==0) {
-	    _debug("UserAgent: No subscription requested");
-        }
-	else {
-	    _debug("UserAgent: Transfer subscription reqeusted");
-	}	
-    }
+        if (refer_sub and pj_stricmp2(&refer_sub->hvalue, "false") == 0)
+            _debug("UserAgent: No subscription requested");
+        else
+            _debug("UserAgent: Transfer subscription reqeusted");
 
-    /*
-     * On incoming NOTIFY, notify application about call transfer progress.
-     */
-    else if (pjsip_evsub_get_state (sub) == PJSIP_EVSUB_STATE_ACTIVE ||
+    } else if (pjsip_evsub_get_state (sub) == PJSIP_EVSUB_STATE_ACTIVE or
     		pjsip_evsub_get_state (sub) == PJSIP_EVSUB_STATE_TERMINATED) {
+        /*
+         * On incoming NOTIFY, notify application about call transfer progress.
+         */
 
         pjsip_msg *msg;
         pjsip_msg_body *body;
@@ -4230,7 +4215,6 @@ void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
         pj_bool_t is_last;
         pj_bool_t cont;
         pj_status_t status;
-
 
         _debug("UserAgent: PJSIP_EVSUB_STATE_ACTIVE PJSIP_EVSUB_STATE_TERMINATED");
 
@@ -4243,12 +4227,10 @@ void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
         if (pjsip_evsub_get_state (sub) == PJSIP_EVSUB_STATE_TERMINATED) {
             pjsip_evsub_set_mod_data (sub, _mod_ua.id, NULL);
             _debug ("UserAgent: Xfer client subscription terminated");
-            // Manager::instance().hangupCall(call->getCallId());
-
         }
 
         /* Application is not interested with call progress status */
-        if (!link || !event) {
+        if (!link or !event) {
             _warn ("UserAgent: Either link or event is empty in transfer callback");
             return;
         }
@@ -4260,8 +4242,8 @@ void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
         std::string request =  pjsip_rx_data_get_info (r_data);
 
         /* This better be a NOTIFY request */
-        if (r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD &&
-        request.find (method_notify) != (size_t)-1) {
+        if (r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD and
+                request.find (method_notify) != std::string::npos) {
 
             /* Check if there's body */
             msg = r_data->msg_info.msg;
@@ -4273,8 +4255,8 @@ void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
             }
 
             /* Check for appropriate content */
-            if (pj_stricmp2 (&body->content_type.type, "message") != 0 ||
-            pj_stricmp2 (&body->content_type.subtype, "sipfrag") != 0) {
+            if (pj_stricmp2 (&body->content_type.type, "message") != 0 or
+                    pj_stricmp2 (&body->content_type.subtype, "sipfrag") != 0) {
                 _warn ("UserAgent: Warning! Received NOTIFY without message/sipfrag content");
                 return;
             }
@@ -4317,31 +4299,27 @@ void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
 
             status = pjsip_inv_end_session (call->inv, PJSIP_SC_GONE, NULL, &tdata);
 
-            if (status != PJ_SUCCESS) {
+            if (status != PJ_SUCCESS)
                 _debug ("UserAgent: Fail to create end session msg!");
-            } else {
+            else {
                 status = pjsip_inv_send_msg (call->inv, tdata);
 
-                if (status != PJ_SUCCESS) {
+                if (status != PJ_SUCCESS)
                     _debug ("UserAgent: Fail to send end session msg!");
-		}
             }
 
             Manager::instance().hangupCall(call->getCallId());
-
             cont = PJ_FALSE;
         }
 
-        if (!cont) {
+        if (!cont)
             pjsip_evsub_set_mod_data (sub, _mod_ua.id, NULL);
-        }
     }
 }
 
 
 void transfer_server_cb (pjsip_evsub *sub, pjsip_event *event)
 {
-
     PJ_UNUSED_ARG (event);
 
     /*

@@ -144,7 +144,7 @@ class Sdp
         *
         * @param remote    The remote offer
         */
-        int receiveOffer (const pjmedia_sdp_session* remote, CodecOrder selectedCodecs, const std::vector<std::string> &videoCodecs);
+        int receiveOffer (const pjmedia_sdp_session* remote, const CodecOrder &selectedCodecs, const std::vector<std::string> &videoCodecs);
 
         /*
          * On receiving a message, check if it contains SDP and negotiate. Should be used for

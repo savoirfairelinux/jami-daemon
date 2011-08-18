@@ -36,18 +36,11 @@
 #include "audio/audiolayer.h"
 #include "audio/mainbuffer.h"
 
-int Conference::count = 0;
-
 Conference::Conference() : _id (""), _confState (ACTIVE_ATTACHED), _nbParticipant (0)
 {
-    _nbParticipant = 0;
-
-    ++count;
-    _nbParticipant = 0;
     _id = Manager::instance().getNewCallID();
 
     Recordable::initRecFileName (_id);
-
 }
 
 
