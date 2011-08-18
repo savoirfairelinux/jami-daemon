@@ -70,7 +70,7 @@ ManagerImpl::ManagerImpl (void) :
     _currentCallMutex(), _audiodriver (0),
     _dtmfKey (0), _audioCodecFactory(), _toneMutex(),
     _telephoneTone (0), _audiofile (0), _spkr_volume (0),
-    _mic_volume (0), _mutex(), _waitingCall(),
+    _mic_volume (0), _waitingCall(),
     _waitingCallMutex(), _nbIncomingWaitingCall (0), _path (""),
     _setupLoaded (false), _callAccountMap(),
     _callAccountMapMutex(), _callConfigMap(), _accountMap(),
