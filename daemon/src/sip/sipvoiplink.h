@@ -227,22 +227,14 @@ class SIPVoIPLink : public VoIPLink
         /**
          * Send Dtmf over RTP
          */
-        bool dtmfOverRtp (SIPCall* call, char code);
-
-        /**
-         * Send an outgoing call invite
-         * @param call  The current call
-         * @return bool True if all is correct
-         */
-        bool SIPOutgoingInvite (SIPCall* call);
+        void dtmfOverRtp (SIPCall* call, char code);
 
         /**
          * Start a SIP Call
          * @param call  The current call
-         * @param subject Undocumented
          * @return true if all is correct
          */
-        bool SIPStartCall (SIPCall* call, const std::string& subject);
+        bool SIPStartCall (SIPCall* call);
 
         /**
          * Start a new SIP call using the IP2IP profile
@@ -411,12 +403,12 @@ class SIPVoIPLink : public VoIPLink
          * Function used to create a new sip transport or get an existing one from the map.
          * The SIP transport is "acquired" according to account's current settings.
          * This function should be called before registering an account
-         * @param accountID An account id for which transport is to be set
+         * @param account An account for which transport is to be set
          *
          * @return bool True if the account is successfully created or successfully obtained
          * from the transport map
          */
-        bool acquireTransport (const std::string& accountID);
+        bool acquireTransport (SIPAccount *account);
 
 
         /**
@@ -440,18 +432,17 @@ class SIPVoIPLink : public VoIPLink
         /**
          * General Sip transport creation method according to the
          * transport type specified in account settings
-         * @param id The account id for which a transport must
-         * be created.
+         * @param account The account for which a transport must be created.
          */
-        bool createSipTransport (std::string id);
+        bool createSipTransport (SIPAccount *account);
 
         /**
         * Create SIP UDP transport from account's setting
-        * @param id The account id for which a transport must
-        * be created.
-        * @return pj_status_t PJ_SUCCESS on success
+        * @param account The account for which a transport must be created.
+        * @param local True if the account is IP2IP
+        * @return the transport
         */
-        int createUdpTransport (std::string = "");
+        pjsip_transport * createUdpTransport (SIPAccount *account, bool local);
 
         /**
          * Create a TLS transport from the default TLS listener from

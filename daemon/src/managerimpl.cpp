@@ -3472,18 +3472,14 @@ bool ManagerImpl::associateCallToAccount (const std::string& callID,
 std::string ManagerImpl::getAccountFromCall (const std::string& callID)
 {
     ost::MutexLock m (_callAccountMapMutex);
-    CallAccountMap::iterator iter = _callAccountMap.find (callID);
+	CallAccountMap::iterator iter = _callAccountMap.find (callID);
 
-    if (iter == _callAccountMap.end())
-        return "";
-    else
-        return iter->second;
+	return (iter == _callAccountMap.end()) ? "" : iter->second;
 }
 
 bool ManagerImpl::removeCallAccount (const std::string& callID)
 {
     ost::MutexLock m (_callAccountMapMutex);
-
     return _callAccountMap.erase (callID);
 }
 
