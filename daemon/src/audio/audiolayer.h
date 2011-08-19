@@ -117,7 +117,7 @@ class AudioLayer
          *			  SFL_PCM_BOTH
          * @param plugin	  The alsa plugin ( dmix , default , front , surround , ...)
          */
-        virtual void openDevice (int indexIn, int indexOut, int indexRing, int sampleRate, int frameSize, int stream , std::string plugin) = 0;
+        virtual void openDevice (int indexIn, int indexOut, int indexRing, int sampleRate, int frameSize, int stream , const std::string &plugin) = 0;
 
         /**
          * Start the capture stream and prepare the playback stream.

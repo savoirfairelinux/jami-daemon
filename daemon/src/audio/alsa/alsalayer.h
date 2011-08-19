@@ -42,9 +42,6 @@
 class RingBuffer;
 class ManagerImpl;
 
-/** Associate a sound card index to its string description */
-typedef std::pair<int , std::string> HwIDPair;
-
 /**
  * @file  AlsaLayer.h
  * @brief Main sound class. Manages the data transfers between the application and the hardware.
@@ -79,7 +76,7 @@ class AlsaLayer : public AudioLayer
          *			  SFL_PCM_BOTH
          * @param plugin	  The alsa plugin ( dmix , default , front , surround , ...)
          */
-        void openDevice (int indexIn, int indexOut, int indexRing, int sampleRate, int frameSize, int stream, std::string plugin);
+        void openDevice (int indexIn, int indexOut, int indexRing, int sampleRate, int frameSize, int stream, const std::string &plugin);
 
         /**
          * Start the capture stream and prepare the playback stream.
@@ -152,7 +149,7 @@ class AlsaLayer : public AudioLayer
          * @return std::string  The name of the audio plugin
          */
         std::string getAudioPlugin (void) const {
-            return _audioPlugin;
+            return audioPlugin_;
         }
 
         void audioCallback (void);
@@ -174,63 +171,15 @@ class AlsaLayer : public AudioLayer
         virtual void setNoiseSuppressState (bool state);
 
     private:
+        /** Associate a sound card index to its string description */
+        typedef std::pair<int , std::string> HwIDPair;
+
 
         // Copy Constructor
         AlsaLayer (const AlsaLayer& rh);
 
         // Assignment Operator
         AlsaLayer& operator= (const AlsaLayer& rh);
-
-        bool is_playback_prepared (void) {
-            return _is_prepared_playback;
-        }
-        bool is_capture_prepared (void) {
-            return _is_prepared_capture;
-        }
-        void prepare_playback (void) {
-            _is_prepared_playback = true;
-        }
-        void prepare_capture (void) {
-            _is_prepared_capture = true;
-        }
-        bool is_capture_running (void) {
-            return _is_running_capture;
-        }
-        bool is_playback_running (void) {
-            return _is_running_playback;
-        }
-        void start_playback (void) {
-            _is_running_playback = true;
-        }
-        void stop_playback (void) {
-            _is_running_playback = false;
-            _is_prepared_playback = false;
-        }
-        void start_capture (void) {
-            _is_running_capture = true;
-        }
-        void stop_capture (void) {
-            _is_running_capture = false;
-            _is_prepared_capture = false;
-        }
-        void close_playback (void) {
-            _is_open_playback = false;
-        }
-        void close_capture (void) {
-            _is_open_capture = false;
-        }
-        void open_playback (void) {
-            _is_open_playback = true;
-        }
-        void open_capture (void) {
-            _is_open_capture = true;
-        }
-        bool is_capture_open (void) {
-            return _is_open_capture;
-        }
-        bool is_playback_open (void) {
-            return _is_open_playback;
-        }
 
         /**
          * Drop the pending frames and close the capture device
@@ -292,54 +241,49 @@ class AlsaLayer : public AudioLayer
          */
         void handle_xrun_playback (snd_pcm_t *handle);
 
-        void adjustVolume (SFLDataFormat* buffer , int samples, int volumePercentage);
-
         /**
          * Handles to manipulate playback stream
          * ALSA Library API
          */
-        snd_pcm_t* _PlaybackHandle;
+        snd_pcm_t* playbackHandle_;
 
         /**
          * Handles to manipulate ringtone stream
          *
          */
-        snd_pcm_t *_RingtoneHandle;
+        snd_pcm_t *ringtoneHandle_;
 
         /**
          * Handles to manipulate capture stream
          * ALSA Library API
          */
-        snd_pcm_t* _CaptureHandle;
+        snd_pcm_t* captureHandle_;
 
         /**
          * Alsa parameter - Size of a period in the hardware ring buffer
          */
-        snd_pcm_uframes_t _periodSize;
+        snd_pcm_uframes_t periodSize_;
 
         /**
          * name of the alsa audio plugin used
          */
-        std::string _audioPlugin;
+        std::string audioPlugin_;
 
         /** Vector to manage all soundcard index - description association of the system */
         std::vector<HwIDPair> IDSoundCards_;
 
-        bool _is_prepared_playback;
-        bool _is_prepared_capture;
-        bool _is_running_playback;
-        bool _is_running_capture;
-        bool _is_open_playback;
-        bool _is_open_capture;
-        bool _trigger_request;
+        bool is_playback_prepared_;
+        bool is_capture_prepared_;
+        bool is_playback_running_;
+        bool is_capture_running_;
+        bool is_playback_open_;
+        bool is_capture_open_;
+        bool trigger_request_;
 
-        AudioThread* _audioThread;
+        AudioThread* audioThread_;
 
         /** Sample rate converter object */
-        SamplerateConverter* _converter;
-
-        // ofstream *captureFile;
-
+        SamplerateConverter* converter_;
 };
 
 #endif // _ALSA_LAYER_H_

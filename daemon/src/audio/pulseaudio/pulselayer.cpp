@@ -32,30 +32,18 @@
 #include "pulselayer.h"
 #include "managerimpl.h"
 
-
-// #include <fstream>
-
-int framesPerBuffer = 2048;
-
-
-
-
-static  void playback_callback (pa_stream* s, size_t bytes, void* userdata)
+static void playback_callback (pa_stream* s, size_t bytes, void* userdata)
 {
-
     assert (s && bytes);
     assert (bytes > 0);
     static_cast<PulseLayer*> (userdata)->processPlaybackData();
-
 }
 
 static void capture_callback (pa_stream* s, size_t bytes, void* userdata)
 {
-
     assert (s && bytes);
     assert (bytes > 0);
     static_cast<PulseLayer*> (userdata)->processCaptureData();
-
 }
 
 static void ringtone_callback (pa_stream* s, size_t bytes, void* userdata)
@@ -390,7 +378,7 @@ void PulseLayer::context_state_callback (pa_context* c, void* user_data)
     }
 }
 
-void PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int indexRing UNUSED, int sampleRate, int frameSize , int stream UNUSED, std::string plugin UNUSED)
+void PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int indexRing UNUSED, int sampleRate, int frameSize , int stream UNUSED, const std::string &plugin UNUSED)
 {
     _debug ("Audio: Open device sampling rate %d, frame size %d", _audioSampleRate, _frameSize);
 
