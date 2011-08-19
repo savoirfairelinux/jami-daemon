@@ -84,7 +84,7 @@ class AudioRtpSession : public AudioRtpRecordHandler
          * send the appropriate DTMF digit using this payload, discard coresponding data from mainbuffer and get
          * back the codec payload for further audio processing.
          */
-        void sendDtmfEvent (sfl::DtmfEvent *dtmf);
+        void sendDtmfEvent ();
 
         /**
          * Send encoded data to peer

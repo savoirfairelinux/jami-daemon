@@ -605,30 +605,11 @@ IAXVoIPLink::getCurrentVideoCodecName(const std::string& /*id*/)
 }
 
 std::string
-IAXVoIPLink::getCurrentCodecName(const std::string& /*id*/)
+IAXVoIPLink::getCurrentCodecName(Call *c)
 {
-    IAXCall *call = NULL;
-    sfl::AudioCodec *audioCodec = NULL;
-    std::string name = "";
-
-    call = getIAXCall (Manager::instance().getCurrentCallId());
-
-    if(call == NULL) {
-	_error("IAX: Error: Could not load call");
-	return "";
-    }
-
-    AudioCodecType audioCodecType = call->getAudioCodec();
-    audioCodec= static_cast<sfl::AudioCodec *>(call->getAudioCodecFactory().getCodec (audioCodecType));
-
-    if(audioCodec == NULL) {
-        _error("IAX: Error: Could not load audio codec");
-        return "";
-    }
-
-    name = audioCodec->getMimeSubtype();
-
-    return name;
+    IAXCall *call = (IAXCall*)c;
+    sfl::Codec *audioCodec = call->getAudioCodecFactory().getCodec (call->getAudioCodec());
+    return audioCodec ? audioCodec->getMimeSubtype() : "";
 }
 
 

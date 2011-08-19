@@ -114,15 +114,7 @@ void AudioRtpRecordHandler::initNoiseSuppress()
 
 void AudioRtpRecordHandler::putDtmfEvent (int digit)
 {
-    sfl::DtmfEvent *dtmf = new sfl::DtmfEvent();
-    dtmf->payload.event = digit;
-    dtmf->payload.ebit = false; // end of event bit
-    dtmf->payload.rbit = false; // reserved bit
-    dtmf->payload.duration = 1; // duration for this event
-    dtmf->newevent = true;
-    dtmf->length = 1000;
-    getEventQueue()->push_back (dtmf);
-    _debug ("AudioRtpSession: Put Dtmf Event %d", digit);
+	_audioRtpRecord._dtmfQueue.push_back(digit);
 }
 
 #ifdef DUMP_PROCESS_DATA_ENCODE

@@ -480,14 +480,14 @@ class AudioPreference : public Serializable
         std::string getDevicePlayback (void) const {
             return _devicePlayback;
         }
-        void setDevicePlayback (std::string p) {
+        void setDevicePlayback (const std::string &p) {
             _devicePlayback = p;
         }
 
         std::string getDeviceRecord (void) const {
             return _deviceRecord;
         }
-        void setDeviceRecord (std::string r) {
+        void setDeviceRecord (const std::string &r) {
             _deviceRecord = r;
         }
 

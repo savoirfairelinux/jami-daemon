@@ -121,11 +121,6 @@ class Sdp
         std::vector<std::string> getActiveVideoDescription() const;
 
         /**
-         * Return whether or not the media have been determined for this sdp session
-         */
-        bool hasSessionMedia(void) const;
-
-        /**
          * Return the codec of the first media after negotiation
          * @throw SdpException
          */

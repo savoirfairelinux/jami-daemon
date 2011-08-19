@@ -20,19 +20,19 @@
 #ifndef SPEEXECHOCANCEL_H
 #define SPEEXECHOCANCEL_H
 
-#include "audioprocessing.h"
-#include <speex/speex_echo.h>
-#include "speex/speex_preprocess.h"
+#include "audio/algorithm.h"
 
-#include "ringbuffer.h"
+class RingBuffer;
+class SpeexEchoState_;
+typedef SpeexEchoState_ SpeexEchoState;
+class SpeexPreprocessState_;
+typedef SpeexPreprocessState_ SpeexPreprocessState;
 
 class SpeexEchoCancel : public Algorithm
 {
-
     public:
 
         SpeexEchoCancel();
-
         ~SpeexEchoCancel();
 
         virtual void reset (void);

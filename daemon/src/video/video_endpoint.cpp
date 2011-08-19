@@ -44,7 +44,7 @@ int FAKE_BITRATE()
     return 1000;
 }
 
-int getBitRate(const std::string &codec)
+int getBitRate(const std::string & /*codec*/)
 {
     return FAKE_BITRATE();
 }

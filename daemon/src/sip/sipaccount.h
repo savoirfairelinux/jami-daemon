@@ -469,10 +469,8 @@ class SIPAccount : public Account
         }
 
         void setAccountTransport (pjsip_transport *transport) {
-            _transport = transport;
+        	_transport = transport;
         }
-
-        std::string getTransportMapKey (void) const;
 
         DtmfType getDtmfType (void) const {
             return _dtmfType;
@@ -732,7 +730,7 @@ class SIPAccount : public Account
         DtmfType _dtmfType;
 
         std::string _tlsEnable;
-        std::string _tlsPortStr;
+        int _tlsPort;
         std::string _tlsCaListFile;
         std::string _tlsCertificateFile;
         std::string _tlsPrivateKeyFile;

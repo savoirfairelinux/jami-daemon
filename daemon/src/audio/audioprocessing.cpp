@@ -30,8 +30,7 @@
 
 
 #include "audioprocessing.h"
-
-
+#include "audio/algorithm.h"
 
 AudioProcessing::AudioProcessing (Algorithm *_algo) : _algorithm (_algo) {}
 

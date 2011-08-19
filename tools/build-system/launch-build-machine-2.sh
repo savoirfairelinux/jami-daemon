@@ -195,7 +195,7 @@ do
 
 	echo "  --> Retrieve new sources"
     DIRNAME=`get_dir_name ${LAUNCHPAD_PACKAGE}`
-	cp -r ${REFERENCE_REPOSITORY}/${DIRNAME} ${LAUNCHPAD_DIR}/${LAUNCHPAD_PACKAGE}
+	cp -r ${REFERENCE_REPOSITORY}/${DIRNAME}/* ${LAUNCHPAD_DIR}/${LAUNCHPAD_PACKAGE}
 
 	echo "  --> Update software version number (${SOFTWARE_VERSION})"
 	echo "${SOFTWARE_VERSION}" > ${LAUNCHPAD_DIR}/${LAUNCHPAD_PACKAGE}/VERSION
