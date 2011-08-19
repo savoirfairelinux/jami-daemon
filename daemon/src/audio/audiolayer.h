@@ -72,8 +72,6 @@ class AudioLayer
          */
         virtual ~AudioLayer (void);
 
-        virtual bool closeLayer (void) = 0;
-
         /**
          * Check if no devices are opened, otherwise close them.
          * Then open the specified devices by calling the private functions open_device
@@ -116,9 +114,6 @@ class AudioLayer
         void flushMain (void);
 
         void flushUrgent (void);
-
-
-        virtual bool isCaptureActive (void) = 0;
 
         /**
          * Write accessor to the error state

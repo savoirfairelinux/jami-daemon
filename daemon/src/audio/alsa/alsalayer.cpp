@@ -108,7 +108,7 @@ AlsaLayer::~AlsaLayer (void)
     delete converter_;
 }
 
-bool
+void
 AlsaLayer::closeLayer()
 {
     _debugAlsa ("Audio: Close ALSA streams");
@@ -132,8 +132,6 @@ AlsaLayer::closeLayer()
     captureHandle_ = NULL;
     playbackHandle_ = NULL;
     ringtoneHandle_ = NULL;
-
-    return true;
 }
 
 void
@@ -256,14 +254,6 @@ AlsaLayer::stopStream (void)
     /* Flush the ring buffers */
     flushUrgent ();
     flushMain ();
-}
-
-
-bool AlsaLayer::isCaptureActive (void)
-{
-    ost::MutexLock guard (_mutex);
-
-    return captureHandle_ and snd_pcm_state(captureHandle_) == SND_PCM_STATE_RUNNING;
 }
 
 void AlsaLayer::setNoiseSuppressState (bool state)

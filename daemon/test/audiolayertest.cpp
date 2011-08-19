@@ -32,6 +32,7 @@
 #include <sstream>
 
 #include "audiolayertest.h"
+#include "audio/pulseaudio/audiostream.h"
 
 #include <unistd.h>
 

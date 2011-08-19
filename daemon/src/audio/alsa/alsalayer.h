@@ -59,8 +59,6 @@ class AlsaLayer : public AudioLayer
          */
         ~AlsaLayer (void);
 
-        bool closeLayer (void);
-
         /**
          * Check if no devices are opened, otherwise close them.
          * Then open the specified devices by calling the private functions open_device
@@ -89,12 +87,6 @@ class AlsaLayer : public AudioLayer
          * ALSA Library API
          */
         void stopStream (void);
-
-        /**
-         * Query the capture device for number of bytes available in the hardware ring buffer
-         * @return int The number of bytes available
-         */
-        int canGetMic();
 
         /**
          * Get data from the capture device
@@ -152,8 +144,6 @@ class AlsaLayer : public AudioLayer
 
         void audioCallback (void);
 
-        bool isCaptureActive (void);
-
         /**
          * Get the noise suppressor state
          * @return true if noise suppressor activated
@@ -169,6 +159,8 @@ class AlsaLayer : public AudioLayer
         virtual void setNoiseSuppressState (bool state);
 
     private:
+        void closeLayer (void);
+
         /** Associate a sound card index to its string description */
         typedef std::pair<int , std::string> HwIDPair;
 
