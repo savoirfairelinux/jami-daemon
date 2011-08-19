@@ -36,17 +36,7 @@
 
 calltab_t* calltab_init (gboolean searchbar_type, gchar *name)
 {
-    calltab_t* ret;
-
-    ret = malloc (sizeof (calltab_t));
-
-    ret->store = NULL;
-    ret->view = NULL;
-    ret->tree = NULL;
-    ret->searchbar = NULL;
-    ret->callQueue = NULL;
-    ret->selectedCall = NULL;
-    ret->selectedConf = NULL;
+    calltab_t* ret = calloc (1, sizeof (calltab_t));
     ret->_name = g_strdup (name);
 
     calltree_create (ret, searchbar_type);
