@@ -732,7 +732,7 @@ class SIPAccount : public Account
         DtmfType _dtmfType;
 
         std::string _tlsEnable;
-        std::string _tlsPortStr;
+        int _tlsPort;
         std::string _tlsCaListFile;
         std::string _tlsCertificateFile;
         std::string _tlsPrivateKeyFile;

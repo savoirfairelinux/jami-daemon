@@ -360,11 +360,6 @@ class SIPVoIPLink : public VoIPLink
         pjsip_route_hdr *createRouteSet(Account *account, pj_pool_t *pool);
 
         /**
-         * Wrapper around getaddrinfo
-         */
-        bool dnsResolution(pjsip_tx_data *tdata);
-
-        /**
          * This function unset the transport for a given account. It tests wether the
          * associated transport is used by other accounts. If not, it shutdown the transport
          * putting its reference counter to zero. PJSIP assumes transport destruction since
@@ -418,7 +413,7 @@ class SIPVoIPLink : public VoIPLink
         /**
          * Delete link-related stuff like calls
          */
-        bool pjsipShutdown (void);
+        void pjsipShutdown (void);
 
         /**
          * Resolve public address for this account
