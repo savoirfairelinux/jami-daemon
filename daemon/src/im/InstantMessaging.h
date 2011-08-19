@@ -133,7 +133,7 @@ class InstantMessaging
          * @param id	The current call
          * @return True if the message could have been successfully saved, False otherwise
          */
-        bool saveMessage (const std::string& message, const std::string& author, std::string& id, int mode = MODE_APPEND);
+        bool saveMessage (const std::string& message, const std::string& author, const std::string& id, int mode = MODE_APPEND);
 
         /*
            * Receive a string SIP message, for a specific call
@@ -152,9 +152,9 @@ class InstantMessaging
          * @return pj_status_t  0 on success
          *                      1 otherwise
          */
-        pj_status_t sip_send (pjsip_inv_session*, std::string& id, const std::string&);
+        pj_status_t sip_send (pjsip_inv_session*, const std::string& id, const std::string&);
 
-        pj_status_t send_sip_message (pjsip_inv_session*, std::string& id, const std::string&);
+        pj_status_t send_sip_message (pjsip_inv_session*, const std::string& id, const std::string&);
 
         bool iax_send (iax_session* session, const std::string& id, const std::string& message);
 

@@ -45,7 +45,6 @@ IAXAccount::IAXAccount (const std::string& accountID)
 IAXAccount::~IAXAccount()
 {
     delete _link;
-    _link = NULL;
 }
 
 void IAXAccount::serialize (Conf::YamlEmitter *emitter)
@@ -172,7 +171,7 @@ int IAXAccount::registerVoIPLink()
         setHostname (_hostname);
         setUsername (_username);
 
-        _link->sendRegister (_accountID);
+        _link->sendRegister (this);
 	}
 	catch(VoipLinkException &e) {
 		_error("IAXAccount: %s", e.what());
@@ -185,7 +184,7 @@ int
 IAXAccount::unregisterVoIPLink()
 {
 	try {
-        _link->sendUnregister (_accountID);
+        _link->sendUnregister (this);
         _link->terminate();
 
         return 0;

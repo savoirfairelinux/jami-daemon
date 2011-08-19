@@ -105,9 +105,8 @@ class SIPVoIPLink : public VoIPLink
 
         /**
          * Try to initiate the pjsip engine/thread and set config
-         * @return bool True if OK
          */
-        virtual bool init (void);
+        virtual void init (void);
 
         /**
          * Shut the library and clean up
@@ -121,17 +120,13 @@ class SIPVoIPLink : public VoIPLink
 
         /**
          * Build and send SIP registration request
-         * @return bool True on success
-         *		  false otherwise
          */
-        virtual void sendRegister (std::string id) throw(VoipLinkException);
+        virtual void sendRegister (Account *a) throw(VoipLinkException);
 
         /**
          * Build and send SIP unregistration request
-         * @return bool True on success
-         *		  false otherwise
          */
-        virtual void sendUnregister (std::string id) throw(VoipLinkException);
+        virtual void sendUnregister (Account *a) throw(VoipLinkException);
 
         /**
          * Place a new call
@@ -143,31 +138,27 @@ class SIPVoIPLink : public VoIPLink
 
         /**
          * Answer the call
-         * @param id The call identifier
-         * @return True on success
+         * @param c The call
          */
-        virtual bool answer (const std::string& id) throw (VoipLinkException);
+        virtual void answer (Call *c) throw (VoipLinkException);
 
         /**
          * Hang up the call
          * @param id The call identifier
-         * @return bool True on success
          */
-        virtual bool hangup (const std::string& id) throw (VoipLinkException);
+        virtual void hangup (const std::string& id) throw (VoipLinkException);
 
         /**
          * Hang up the call
          * @param id The call identifier
-         * @return bool True on success
          */
-        virtual bool peerHungup (const std::string& id) throw (VoipLinkException);
+        virtual void peerHungup (const std::string& id) throw (VoipLinkException);
 
         /**
          * Cancel the call
          * @param id The call identifier
-         * @return bool True on success
          */
-        virtual bool cancel (const std::string& id) throw (VoipLinkException);
+        virtual void cancel (const std::string& id) throw (VoipLinkException);
 
         /**
          * Put the call on hold
@@ -198,11 +189,6 @@ class SIPVoIPLink : public VoIPLink
          * @return True on success
          */
         virtual bool attendedTransfer(const std::string&, const std::string&);
-
-        /**
-         * Handle the incoming refer msg, not finished yet
-         */
-        bool transferStep2 (SIPCall* call);
 
         /**
          * Refuse the call

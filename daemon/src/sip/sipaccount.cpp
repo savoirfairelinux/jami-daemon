@@ -566,7 +566,7 @@ int SIPAccount::registerVoIPLink()
         // In our definition of the ip2ip profile (aka Direct IP Calls),
         // no registration should be performed
         if (_accountID != IP2IP_PROFILE) {
-            _link->sendRegister (_accountID);
+            _link->sendRegister (this);
         }
     }
     catch(VoipLinkException &e) {
@@ -583,7 +583,7 @@ int SIPAccount::unregisterVoIPLink()
     }
 
     try {
-        _link->sendUnregister (_accountID);
+        _link->sendUnregister (this);
         setRegistrationInfo (NULL);
     }
     catch(VoipLinkException &e) {
