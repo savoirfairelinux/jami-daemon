@@ -708,17 +708,6 @@ std::string SIPAccount::getLoginName (void) const
     return username;
 }
 
-std::string SIPAccount::getTransportMapKey (void) const
-{
-
-    std::stringstream out;
-    out << getLocalPort();
-    std::string localPort = out.str();
-
-    return localPort;
-}
-
-
 std::string SIPAccount::getFromUri (void) const
 {
     char uri[PJSIP_MAX_URL_SIZE];

@@ -469,10 +469,8 @@ class SIPAccount : public Account
         }
 
         void setAccountTransport (pjsip_transport *transport) {
-            _transport = transport;
+        	_transport = transport;
         }
-
-        std::string getTransportMapKey (void) const;
 
         DtmfType getDtmfType (void) const {
             return _dtmfType;

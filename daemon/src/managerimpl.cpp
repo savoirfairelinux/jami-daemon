@@ -2394,7 +2394,7 @@ std::string ManagerImpl::getCurrentCodecName (const std::string& id)
     if (call) {
         Call::CallState state = call->getState();
         if (state == Call::Active or state == Call::Conferencing) {
-            codecName = link->getCurrentCodecName(id);
+            codecName = link->getCurrentCodecName(call);
         }
     }
 
@@ -3697,8 +3697,7 @@ std::string ManagerImpl::getAccountIdFromNameAndServer (
 
     for (AccountMap::const_iterator iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
         SIPAccount *account = dynamic_cast<SIPAccount *> (iter->second);
-
-        if (account  and account->fullMatch (userName, server)) {
+        if (account and account->isEnabled() and account->fullMatch (userName, server)) {
             _debug ("Manager: Matching account id in request is a fullmatch %s@%s", userName.c_str(), server.c_str());
             return iter->first;
         }
@@ -3708,7 +3707,7 @@ std::string ManagerImpl::getAccountIdFromNameAndServer (
     for (AccountMap::const_iterator iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
         SIPAccount *account = dynamic_cast<SIPAccount *> (iter->second);
 
-        if (account and account->hostnameMatch (server)) {
+        if (account and account->isEnabled() and account->hostnameMatch (server)) {
             _debug ("Manager: Matching account id in request with hostname %s", server.c_str());
             return iter->first;
         }
@@ -3718,7 +3717,7 @@ std::string ManagerImpl::getAccountIdFromNameAndServer (
     for (AccountMap::const_iterator iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
         SIPAccount *account = dynamic_cast<SIPAccount *> (iter->second);
 
-        if (account and account->userMatch (userName)) {
+        if (account and account->isEnabled() and account->userMatch (userName)) {
             _debug ("Manager: Matching account id in request with username %s", userName.c_str());
             return iter->first;
         }

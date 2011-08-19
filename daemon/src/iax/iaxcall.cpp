@@ -207,6 +207,3 @@ AudioCodecType IAXCall::getAudioCodec()
 {
     return _audioCodec;
 }
-
-
-
