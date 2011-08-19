@@ -33,14 +33,8 @@
 #define _PULSE_LAYER_H
 
 #include "audio/audiolayer.h"
-#include "audio/samplerateconverter.h"
-#include "audio/dcblocker.h"
-#include "audiostream.h"
-
 #include <pulse/pulseaudio.h>
 #include <pulse/stream.h>
-
-#include <stdlib.h>
 
 #include <list>
 #include <string>
@@ -51,6 +45,9 @@
 
 class RingBuffer;
 class ManagerImpl;
+class AudioStream;
+class DcBlocker;
+class SamplerateConverter;
 
 typedef std::list<std::string> DeviceList;
 
@@ -59,11 +56,6 @@ class PulseLayer : public AudioLayer
     public:
         PulseLayer (ManagerImpl* manager);
         ~PulseLayer (void);
-
-        void openLayer (void);
-
-        bool closeLayer (void);
-
         /**
          * Check if no devices are opened, otherwise close them.
          * Then open the specified devices by calling the private functions open_device
@@ -77,43 +69,29 @@ class PulseLayer : public AudioLayer
          *			  SFL_PCM_BOTH
          * @param plugin	  The alsa plugin ( dmix , default , front , surround , ...)
          */
-        void openDevice (int indexIn, int indexOut, int indexRing, int sampleRate, int frameSize , int stream, std::string plugin) ;
+        void openDevice (int indexIn, int indexOut, int indexRing, int sampleRate, int frameSize , int stream, const std::string &plugin) ;
 
         DeviceList* getSinkList (void) {
-            return &_sinkList;
+            return &sinkList_;
         }
 
         DeviceList* getSourceList (void) {
-            return &_sourceList;
+            return &sourceList_;
         }
 
         void updateSinkList (void);
 
         void updateSourceList (void);
 
-        bool inSinkList (std::string deviceName);
+        bool inSinkList (const std::string &deviceName) const;
 
-        bool inSourceList (std::string deviceName);
+        bool inSourceList (const std::string &deviceName) const;
 
         void startStream (void);
 
         void stopStream (void);
 
-        /**
-         * Query the capture device for number of bytes available in the hardware ring buffer
-         * @return int The number of bytes available
-         */
-        int canGetMic();
-
-        static void overflow (pa_stream* s, void* userdata);
-        static void underflow (pa_stream* s, void* userdata);
-        static void stream_state_callback (pa_stream* s, void* user_data);
         static void context_state_callback (pa_context* c, void* user_data);
-        // static void stream_suspended_callback ( pa_stream* s, void* userdata );
-
-        bool isCaptureActive (void) {
-            return true;
-        }
 
         /**
          * Reduce volume of every audio applications connected to the same sink
@@ -141,38 +119,38 @@ class PulseLayer : public AudioLayer
          * Accessor
          * @return AudioStream* The pointer on the playback AudioStream object
          */
-        AudioStream* getPlaybackStream() {
-            return playback;
+        AudioStream* getPlaybackStream() const {
+            return playback_;
         }
 
         /**
          * Accessor
          * @return AudioStream* The pointer on the record AudioStream object
          */
-        AudioStream* getRecordStream() {
-            return record;
+        AudioStream* getRecordStream() const {
+            return record_;
         }
 
         /**
          * Accessor
          * @return AudioStream* The pointer on the ringtone AudioStream object
          */
-        AudioStream* getRingtoneStream() {
-            return ringtone;
+        AudioStream* getRingtoneStream() const {
+            return ringtone_;
         }
 
-        int getSpkrVolume (void) {
-            return spkrVolume;
+        int getSpkrVolume (void) const {
+            return spkrVolume_;
         }
         void setSpkrVolume (int value) {
-            spkrVolume = value;
+            spkrVolume_ = value;
         }
 
-        int getMicVolume (void) {
-            return micVolume;
+        int getMicVolume (void) const {
+            return micVolume_;
         }
         void setMicVolume (int value) {
-            micVolume = value;
+            micVolume_ = value;
         }
 
         /**
@@ -194,20 +172,6 @@ class PulseLayer : public AudioLayer
          * Process speaker and microphone audio data
          */
         void processData (void);
-
-        /**
-         * Get the noise suppressor state
-         * @return true if noise suppressor activated
-         */
-        bool getNoiseSuppressState (void) const {
-            return AudioLayer::_noisesuppressstate;
-        }
-
-        /**
-         * Set the noise suppressor state
-         * @param state true if noise suppressor active, false elsewhere
-         */
-        void setNoiseSuppressState (bool state);
 
     private:
         // Copy Constructor
@@ -233,7 +197,7 @@ class PulseLayer : public AudioLayer
          * Create the audio streams into the given context
          * @param c	The pulseaudio context
          */
-        bool createStreams (pa_context* c);
+        void createStreams (pa_context* c);
 
         /**
          * Drop the pending frames and close the playback device
@@ -248,46 +212,47 @@ class PulseLayer : public AudioLayer
         /**
          * Close the connection with the local pulseaudio server
          */
-        bool disconnectAudioStream (void);
+        void disconnectAudioStream (void);
 
         /**
          * Get some information about the pulseaudio server
          */
         void serverinfo (void);
 
+        void openLayer (void);
+
+        void closeLayer (void);
+
+
         /** PulseAudio context and asynchronous loop */
-        pa_context* context;
-        pa_threaded_mainloop* m;
+        pa_context* context_;
+        pa_threaded_mainloop* mainloop_;
 
         /**
          * A stream object to handle the pulseaudio playback stream
          */
-        AudioStream* playback;
+        AudioStream* playback_;
 
         /**
          * A stream object to handle the pulseaudio capture stream
          */
-        AudioStream* record;
+        AudioStream* record_;
 
         /**
          * A special stream object to handle specific playback stream for ringtone
          */
-        AudioStream* ringtone;
+        AudioStream* ringtone_;
 
         /** Sample rate converter object */
-        SamplerateConverter * _converter;
+        SamplerateConverter * converter_;
 
-        int spkrVolume;
-        int micVolume;
+        int spkrVolume_;
+        int micVolume_;
 
-        DeviceList _sinkList;
-
-        DeviceList _sourceList;
-
-        int byteCounter;
+        DeviceList sinkList_;
+        DeviceList sourceList_;
 
     public:
-
         friend class AudioLayerTest;
 };
 

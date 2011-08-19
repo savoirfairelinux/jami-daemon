@@ -54,16 +54,10 @@ AudioSymmetricRtpSession::AudioSymmetricRtpSession (SIPCall * sipcall) :
 
 AudioSymmetricRtpSession::~AudioSymmetricRtpSession()
 {
-    // XXX: DON'T call any members of this (i.e. AudioSymmetricRtpSession and
-    // the classes from which it is derived, or touch any of their data
     _info ("AudioSymmetricRtpSession: Delete AudioSymmetricRtpSession instance");
 
     _rtpThread->running = false;
     delete _rtpThread;
-}
-
-void AudioSymmetricRtpSession::final()
-{
 }
 
 AudioSymmetricRtpSession::AudioRtpThread::AudioRtpThread (AudioSymmetricRtpSession *session) : running (true), rtpSession (session)
@@ -87,11 +81,10 @@ void AudioSymmetricRtpSession::AudioRtpThread::run()
     while (running) {
 
         // Send session
-        if (rtpSession->getEventQueueSize() > 0) {
-            rtpSession->sendDtmfEvent (rtpSession->getEventQueue()->front());
-        } else {
+        if (rtpSession->DtmfPending())
+            rtpSession->sendDtmfEvent ();
+        else
             rtpSession->sendMicData ();
-        }
 
         Thread::sleep (TimerPort::getTimer());
 

@@ -10,7 +10,7 @@
 
 #define ECHO_CANCEL_MEM_SIZE 1000
 
-EchoSuppress::EchoSuppress(pj_pool_t *pool)
+EchoSuppress::EchoSuppress(pj_pool_t * /*pool*/)
 {
 
     /*
@@ -45,7 +45,7 @@ void EchoSuppress::reset()
 
 }
 
-void EchoSuppress::putData (SFLDataFormat *inputData, int nbBytes)
+void EchoSuppress::putData (SFLDataFormat * /*inputData*/, int /*nbBytes*/)
 {
     /*
     pj_status_t status;
@@ -58,7 +58,7 @@ void EchoSuppress::putData (SFLDataFormat *inputData, int nbBytes)
     */
 }
 
-int EchoSuppress::getData(SFLDataFormat *outputData)
+int EchoSuppress::getData(SFLDataFormat * /*outputData*/)
 {
     /*
     pj_status_t status;
@@ -73,4 +73,4 @@ int EchoSuppress::getData(SFLDataFormat *outputData)
 
 void EchoSuppress::process (SFLDataFormat *data UNUSED, int nbBytes UNUSED) {}
 
-int EchoSuppress::process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes) { return 0; }
+int EchoSuppress::process (SFLDataFormat * /*inputData*/, SFLDataFormat * /*outputData*/, int /*nbBytes*/) { return 0; }

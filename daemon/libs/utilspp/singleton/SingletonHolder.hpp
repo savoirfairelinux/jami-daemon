@@ -28,7 +28,6 @@
 
 #include "CreationUsingNew.hpp"
 #include "LifetimeDefault.hpp"
-#include "LifetimeWithLongevity.hpp"
 #include "../ThreadingSingle.hpp"
 
 namespace utilspp

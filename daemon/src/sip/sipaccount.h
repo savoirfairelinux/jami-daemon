@@ -125,6 +125,7 @@ class SIPAccount : public Account
          * Virtual destructor
          */
         virtual ~SIPAccount();
+        void setRegistrationStateDetailed (const std::pair<int, std::string> &details) { registrationStateDetailed_ = details; }
 
         virtual void serialize (Conf::YamlEmitter *emitter);
 
@@ -469,10 +470,8 @@ class SIPAccount : public Account
         }
 
         void setAccountTransport (pjsip_transport *transport) {
-            _transport = transport;
+        	_transport = transport;
         }
-
-        std::string getTransportMapKey (void) const;
 
         DtmfType getDtmfType (void) const {
             return _dtmfType;
@@ -732,7 +731,7 @@ class SIPAccount : public Account
         DtmfType _dtmfType;
 
         std::string _tlsEnable;
-        std::string _tlsPortStr;
+        int _tlsPort;
         std::string _tlsCaListFile;
         std::string _tlsCertificateFile;
         std::string _tlsPrivateKeyFile;
@@ -757,6 +756,11 @@ class SIPAccount : public Account
         bool _zrtpDisplaySasOnce;
         bool _zrtpHelloHash;
         bool _zrtpNotSuppWarning;
+        /*
+        * Details about the registration state.
+        * This is a protocol Code:Description pair.
+        */
+        std::pair<int, std::string> registrationStateDetailed_;
 };
 
 #endif

@@ -42,7 +42,6 @@ noinst_HEADERS = \
 		global.h \
 		eventthread.h \
 		account.h \
-		accountcreator.h \
 		call.h \
 		logger.h \
 		numbercleaner.h \
@@ -96,7 +95,6 @@ libsflphone_la_SOURCES = conference.cpp \
 		managerimpl.cpp \
 		managerimpl_registration.cpp \
 		eventthread.cpp \
-		accountcreator.cpp \
 		call.cpp \
 		account.cpp \
 		logger.cpp \

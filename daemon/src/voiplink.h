@@ -39,6 +39,9 @@
 #include "call.h"
 
 class Account;
+namespace sfl {
+class InstantMessaging;
+};
 
 /** Define a map that associate a Call object to a call identifier */
 typedef std::map<std::string, Call*> CallMap;
@@ -77,9 +80,8 @@ class VoIPLink
         /**
          * Virtual method
          * Try to initiate the communication layer and set config
-         * @return bool True if OK
          */
-        virtual bool init (void) = 0;
+        virtual void init (void) = 0;
 
         /**
          * Virtual method
@@ -90,18 +92,14 @@ class VoIPLink
         /**
          * Virtual method
          * Build and send account registration request
-         * @return bool True on success
-         *		  false otherwise
          */
-        virtual void sendRegister (std::string id) throw (VoipLinkException) = 0;
+        virtual void sendRegister (Account *a) throw (VoipLinkException) = 0;
 
         /**
          * Virtual method
          * Build and send account unregistration request
-         * @return bool True on success
-         *		  false otherwise
          */
-        virtual void sendUnregister (std::string id) throw (VoipLinkException) = 0;
+        virtual void sendUnregister (Account *a) = 0;
 
         /**
          * Place a new call
@@ -113,31 +111,27 @@ class VoIPLink
 
         /**
          * Answer the call
-         * @param id The call identifier
-         * @return bool True on success
+         * @param c The call
          */
-        virtual bool answer (const std::string& id) throw (VoipLinkException) = 0;
+        virtual void answer (Call *c) throw (VoipLinkException) = 0;
 
         /**
          * Hang up a call
          * @param id The call identifier
-         * @return bool True on success
          */
-        virtual bool hangup (const std::string& id)  throw (VoipLinkException) = 0;
+        virtual void hangup (const std::string& id)  throw (VoipLinkException) = 0;
 
         /**
         * Peer Hung up a call
         * @param id The call identifier
-        * @return bool True on success
         */
-        virtual bool peerHungup (const std::string& id) throw (VoipLinkException) = 0;
+        virtual void peerHungup (const std::string& id) throw (VoipLinkException) = 0;
 
         /**
          * Cancel the call dialing
          * @param id The call identifier
-         * @return bool True on success
          */
-        virtual bool cancel (const std::string& id) throw (VoipLinkException) = 0;
+        virtual void cancel (const std::string& id) throw (VoipLinkException) = 0;
 
         /**
          * Put a call on hold
@@ -186,16 +180,21 @@ class VoIPLink
 
         /**
          * Return the codec protocol used for this call
-         * @param id The call identifier
+         * @param call The call
          */
-        virtual std::string getCurrentCodecName(const std::string& id) = 0;
+        virtual std::string getCurrentCodecName(Call *call) = 0;
 
-        bool initDone (void) {
-            return _initDone;
-        }
-        void initDone (bool state) {
-            _initDone = state;
-        }
+        /**
+         * Send a message to a call identified by its callid
+         *
+         * @param The InstantMessaging module which contains formating, parsing and sending method
+         * @param The Id of the call to send the message to
+         * @param The actual message to be transmitted
+         * @param The sender of this message (could be another participant of a conference)
+         *
+         * @return True if the message is sent without error, false elsewhere
+         */
+        virtual bool sendTextMessage (sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from) = 0;
 
         /** Add a call to the call map (protected by mutex)
          * @param call A call pointer with a unique pointer

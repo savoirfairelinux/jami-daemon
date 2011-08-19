@@ -125,8 +125,8 @@ static const SOUND_FORMAT INT32 = 0x8;
 
 #define UNUSED          __attribute__((__unused__))
 
-#define DEFAULT_SIP_PORT    "5060"
-#define DEFAULT_SIP_TLS_PORT "5061"
+#define DEFAULT_SIP_PORT    5060
+#define DEFAULT_SIP_TLS_PORT 5061
 
 #define HOOK_DEFAULT_SIP_FIELD      "X-sflphone-url"
 #define HOOK_DEFAULT_URL_COMMAND    "x-www-browser"

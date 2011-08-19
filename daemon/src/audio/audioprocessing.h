@@ -32,7 +32,9 @@
 #ifndef AUDIOPROCESSING_H
 #define AUDIOPROCESSING_H
 
-#include "algorithm.h"
+#include "global.h"
+
+class Algorithm;
 
 /**
  * Process audio buffers using specified at instantiation which may be

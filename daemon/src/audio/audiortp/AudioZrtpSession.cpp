@@ -147,11 +147,10 @@ void AudioZrtpSession::run ()
         }
 
         // Send session
-        if (getEventQueueSize() > 0) {
-            sendDtmfEvent (getEventQueue()->front());
-        } else {
+        if (DtmfPending())
+            sendDtmfEvent ();
+        else
             sendMicData ();
-        }
 
         setCancel (cancelDeferred);
         controlReceptionService();

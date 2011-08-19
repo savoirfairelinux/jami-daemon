@@ -66,19 +66,6 @@ class SIPCall : public Call
          * Destructor
          */
         ~SIPCall ();
-        /**
-         * Get event subscription internal structure
-         */
-        pjsip_evsub *getXferSub() {
-            return _xferSub;
-        }
-
-        /**
-         * Set event subscription internal structure
-         */
-        void setXferSub (pjsip_evsub* sub) {
-            _xferSub = sub;
-        }
 
         void setInvSession (pjsip_inv_session* inv) {
             _invSession = inv;
@@ -150,11 +137,6 @@ class SIPCall : public Call
          * Audio Rtp Session factory
          */
         sfl::AudioRtpFactory * _audiortp;
-
-        /**
-         * Event subscription structure
-         */
-        pjsip_evsub *_xferSub;
 
         /**
          * The invite session to be reused in case of transfer

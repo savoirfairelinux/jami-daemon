@@ -21,6 +21,8 @@
 #include <limits.h>
 
 #include "speexechocancel.h"
+#include <speex/speex_echo.h>
+#include <speex/speex_preprocess.h>
 #include "manager.h"
 
 // number of samples (20 ms)

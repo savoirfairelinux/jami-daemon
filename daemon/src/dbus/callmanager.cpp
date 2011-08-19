@@ -336,7 +336,7 @@ CallManager::getCurrentCallID()
 void
 CallManager::playDTMF (const std::string& key)
 {
-    Manager::instance().sendDtmf (Manager::instance().getCurrentCallId(), key.c_str() [0]);
+    Manager::instance().sendDtmf (Manager::instance().getCurrentCallId(), key.data() [0]);
 }
 
 void

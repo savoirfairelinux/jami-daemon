@@ -66,8 +66,6 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTP
 
         ~AudioSymmetricRtpSession();
 
-        virtual void final ();
-
         virtual bool onRTPPacketRecv (ost::IncomingRTPPkt& pkt) { return AudioRtpSession::onRTPPacketRecv(pkt); }
 
         int startSymmetricRtpThread (void) {

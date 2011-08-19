@@ -39,6 +39,7 @@
 #include "audio/audiolayer.h"
 #include <ccrtp/rtp.h>
 #include <ccrtp/oqueue.h>
+#include "manager.h"
 
 namespace sfl
 {
@@ -68,42 +69,17 @@ void AudioRtpSession::updateSessionMedia (AudioCodec *audioCodec)
     _debug ("AudioSymmetricRtpSession: Update session media");
 
     // Update internal codec for this session
-    updateRtpMedia (audioCodec);
+    int lastSamplingRate = _audioRtpRecord._codecSampleRate;
 
-    // store codec info locally
-    int payloadType = getCodecPayloadType();
-    int frameSize = getCodecFrameSize();
-    int smplRate = getCodecSampleRate();
-    bool dynamic = getHasDynamicPayload();
+    setSessionMedia(audioCodec);
 
-    // G722 requires timestamp to be incremented at 8khz
-    if (payloadType == g722PayloadType)
-        _timestampIncrement = g722RtpTimeincrement;
-    else
-        _timestampIncrement = frameSize;
+    Manager::instance().audioSamplingRateChanged(_audioRtpRecord._codecSampleRate);
 
-    _debug ("AudioRptSession: Codec payload: %d", payloadType);
-    _debug ("AudioSymmetricRtpSession: Codec sampling rate: %d", smplRate);
-    _debug ("AudioSymmetricRtpSession: Codec frame size: %d", frameSize);
-    _debug ("AudioSymmetricRtpSession: RTP timestamp increment: %d", _timestampIncrement);
-
-    if (payloadType == g722PayloadType) {
-        _debug ("AudioSymmetricRtpSession: Setting G722 payload format");
-        _queue->setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, g722RtpClockRate));
-    } else {
-        if (dynamic) {
-            _debug ("AudioSymmetricRtpSession: Setting dynamic payload format");
-            _queue->setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, smplRate));
-        } else {
-            _debug ("AudioSymmetricRtpSession: Setting static payload format");
-            _queue->setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) payloadType));
-        }
+    if (lastSamplingRate != _audioRtpRecord._codecSampleRate) {
+        _debug ("AudioRtpSession: Update noise suppressor with sampling rate %d and frame size %d", getCodecSampleRate(), getCodecFrameSize());
+        initNoiseSuppress();
     }
 
-    if (_type != Zrtp) {
-		_ca->setRecordingSmplRate (getCodecSampleRate());
-		_timestamp = _queue->getCurrentTimestamp();
-    }
 }
 
 void AudioRtpSession::setSessionMedia (AudioCodec *audioCodec)
@@ -148,12 +124,20 @@ void AudioRtpSession::setSessionMedia (AudioCodec *audioCodec)
 	}
 }
 
-void AudioRtpSession::sendDtmfEvent (sfl::DtmfEvent *dtmf)
+void AudioRtpSession::sendDtmfEvent ()
 {
-	const int increment = (_type == Zrtp) ? 160 : _timestampIncrement;
-    _debug ("AudioRtpSession: Send Dtmf");
+    ost::RTPPacket::RFC2833Payload payload;
 
-    _timestamp += increment;
+    payload.event = _audioRtpRecord._dtmfQueue.front();
+    payload.ebit = false; // end of event bit
+    payload.rbit = false; // reserved bit
+    payload.duration = 1; // duration for this event
+
+    _audioRtpRecord._dtmfQueue.pop_front();
+
+    _debug ("AudioRtpSession: Send RTP Dtmf (%d)", payload.event);
+
+    _timestamp += (_type == Zrtp) ? 160 : _timestampIncrement;
 
     // discard equivalent size of audio
     processDataEncode();
@@ -161,35 +145,12 @@ void AudioRtpSession::sendDtmfEvent (sfl::DtmfEvent *dtmf)
     // change Payload type for DTMF payload
     _queue->setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) getDtmfPayloadType(), 8000));
 
-    // Set marker in case this is a new Event
-    if (dtmf->newevent)
-        _queue->setMark (true);
-
-    // putData (_timestamp, (const unsigned char*) (& (dtmf->payload)), sizeof (ost::RTPPacket::RFC2833Payload));
-    _queue->sendImmediate (_timestamp, (const unsigned char *) (& (dtmf->payload)), sizeof (ost::RTPPacket::RFC2833Payload));
-
-    // This is no more a new event
-    if (dtmf->newevent) {
-        dtmf->newevent = false;
-        _queue->setMark (false);
-    }
+    _queue->setMark (true);
+    _queue->sendImmediate (_timestamp, (const unsigned char *) (&payload), sizeof (payload));
+    _queue->setMark (false);
 
     // get back the payload to audio
     _queue->setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) getCodecPayloadType()));
-
-    // decrease length remaining to process for this event
-    dtmf->length -= increment;
-
-    dtmf->payload.duration++;
-
-    // next packet is going to be the last one
-    if ( (dtmf->length - increment) < increment)
-        dtmf->payload.ebit = true;
-
-    if (dtmf->length < increment) {
-        delete dtmf;
-        getEventQueue()->pop_front();
-    }
 }
 
 

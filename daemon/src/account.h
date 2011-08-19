@@ -35,8 +35,8 @@
 #include <string>
 #include <vector>
 
+#include "global.h"
 #include "config/config.h"
-#include "voiplink.h"
 #include "config/serializable.h"
 
 class VoIPLink;
@@ -49,7 +49,7 @@ class VoIPLink;
  */
 
 /** Contains all the state an Voip can be in */
-typedef enum RegistrationState {
+enum RegistrationState {
     Unregistered,
     Trying,
     Registered,
@@ -60,90 +60,89 @@ typedef enum RegistrationState {
     ErrorExistStun,
     ErrorConfStun,
     NumberOfState
-} RegistrationState;
+};
 
 // Account identifier
-#define ACCOUNT_ID                          "Account.id"
+static const char *const ACCOUNT_ID                          = "Account.id";
 
 // Common account parameters
-#define CONFIG_ACCOUNT_TYPE                 "Account.type"
-#define CONFIG_ACCOUNT_ALIAS                "Account.alias"
-#define CONFIG_ACCOUNT_MAILBOX	            "Account.mailbox"
-#define CONFIG_ACCOUNT_ENABLE               "Account.enable"
-#define CONFIG_ACCOUNT_RESOLVE_ONCE         "Account.resolveOnce"
-#define CONFIG_ACCOUNT_REGISTRATION_EXPIRE  "Account.expire"
-#define CONFIG_CREDENTIAL_NUMBER            "Credential.count"
-#define ACCOUNT_DTMF_TYPE                   "Account.dtmfType"
-#define CONFIG_RINGTONE_PATH                "Account.ringtonePath"
-#define CONFIG_RINGTONE_ENABLED             "Account.ringtoneEnabled"
+static const char *const CONFIG_ACCOUNT_TYPE                 = "Account.type";
+static const char *const CONFIG_ACCOUNT_ALIAS                = "Account.alias";
+static const char *const CONFIG_ACCOUNT_MAILBOX	             = "Account.mailbox";
+static const char *const CONFIG_ACCOUNT_ENABLE               = "Account.enable";
+static const char *const CONFIG_ACCOUNT_RESOLVE_ONCE         = "Account.resolveOnce";
+static const char *const CONFIG_ACCOUNT_REGISTRATION_EXPIRE  = "Account.expire";
+static const char *const CONFIG_CREDENTIAL_NUMBER            = "Credential.count";
+static const char *const ACCOUNT_DTMF_TYPE                   = "Account.dtmfType";
+static const char *const CONFIG_RINGTONE_PATH                = "Account.ringtonePath";
+static const char *const CONFIG_RINGTONE_ENABLED             = "Account.ringtoneEnabled";
 
-#define HOSTNAME                            "hostname"
-#define USERNAME                            "username"
-#define ROUTESET                            "routeset"
-#define PASSWORD                            "password"
-#define REALM                               "realm"
-#define DEFAULT_REALM                       "*"
-#define USERAGENT							"useragent"
+static const char *const HOSTNAME                            = "hostname";
+static const char *const USERNAME                            = "username";
+static const char *const ROUTESET                            = "routeset";
+static const char *const PASSWORD                            = "password";
+static const char *const REALM                               = "realm";
+static const char *const DEFAULT_REALM                       = "*";
+static const char *const USERAGENT							 = "useragent";
 
-#define LOCAL_INTERFACE                     "Account.localInterface"
-#define PUBLISHED_SAMEAS_LOCAL              "Account.publishedSameAsLocal"
-#define LOCAL_PORT                          "Account.localPort"
-#define PUBLISHED_PORT                      "Account.publishedPort"
-#define PUBLISHED_ADDRESS                   "Account.publishedAddress"
+static const char *const LOCAL_INTERFACE                     = "Account.localInterface";
+static const char *const PUBLISHED_SAMEAS_LOCAL              = "Account.publishedSameAsLocal";
+static const char *const LOCAL_PORT                          = "Account.localPort";
+static const char *const PUBLISHED_PORT                      = "Account.publishedPort";
+static const char *const PUBLISHED_ADDRESS                   = "Account.publishedAddress";
 
-#define DISPLAY_NAME                        "Account.displayName"
-#define DEFAULT_ADDRESS                     "0.0.0.0"
+static const char *const DISPLAY_NAME                        = "Account.displayName";
+static const char *const DEFAULT_ADDRESS                     = "0.0.0.0";
 
 // SIP specific parameters
-#define SIP_PROXY                           "SIP.proxy"
-#define STUN_SERVER							"STUN.server"
-#define STUN_ENABLE							"STUN.enable"
+static const char *const SIP_PROXY                           = "SIP.proxy";
+static const char *const STUN_SERVER						 = "STUN.server";
+static const char *const STUN_ENABLE						 = "STUN.enable";
 
 // SRTP specific parameters
-#define SRTP_ENABLE                         "SRTP.enable"
-#define SRTP_KEY_EXCHANGE                   "SRTP.keyExchange"
-#define SRTP_ENCRYPTION_ALGO                "SRTP.encryptionAlgorithm"  // Provided by ccRTP,0=NULL,1=AESCM,2=AESF8 
-#define SRTP_RTP_FALLBACK                   "SRTP.rtpFallback"
-#define ZRTP_HELLO_HASH                     "ZRTP.helloHashEnable"
-#define ZRTP_DISPLAY_SAS                    "ZRTP.displaySAS"
-#define ZRTP_NOT_SUPP_WARNING               "ZRTP.notSuppWarning"
-#define ZRTP_DISPLAY_SAS_ONCE               "ZRTP.displaySasOnce"
+static const char *const SRTP_ENABLE                         = "SRTP.enable";
+static const char *const SRTP_KEY_EXCHANGE                   = "SRTP.keyExchange";
+static const char *const SRTP_ENCRYPTION_ALGO                = "SRTP.encryptionAlgorithm";  // Provided by ccRTP,0=NULL,1=AESCM,2=AESF8
+static const char *const SRTP_RTP_FALLBACK                   = "SRTP.rtpFallback";
+static const char *const ZRTP_HELLO_HASH                     = "ZRTP.helloHashEnable";
+static const char *const ZRTP_DISPLAY_SAS                    = "ZRTP.displaySAS";
+static const char *const ZRTP_NOT_SUPP_WARNING               = "ZRTP.notSuppWarning";
+static const char *const ZRTP_DISPLAY_SAS_ONCE               = "ZRTP.displaySasOnce";
 
-#define TLS_LISTENER_PORT                   "TLS.listenerPort"
-#define TLS_ENABLE                          "TLS.enable"
-#define TLS_CA_LIST_FILE                    "TLS.certificateListFile"
-#define TLS_CERTIFICATE_FILE                "TLS.certificateFile"
-#define TLS_PRIVATE_KEY_FILE                "TLS.privateKeyFile"
-#define TLS_PASSWORD                        "TLS.password"
-#define TLS_METHOD                          "TLS.method"
-#define TLS_CIPHERS                         "TLS.ciphers"
-#define TLS_SERVER_NAME                     "TLS.serverName"
-#define TLS_VERIFY_SERVER                   "TLS.verifyServer"
-#define TLS_VERIFY_CLIENT                   "TLS.verifyClient"
-#define TLS_REQUIRE_CLIENT_CERTIFICATE      "TLS.requireClientCertificate"
-#define TLS_NEGOTIATION_TIMEOUT_SEC         "TLS.negotiationTimeoutSec"
-#define TLS_NEGOTIATION_TIMEOUT_MSEC        "TLS.negotiationTimemoutMsec"
+static const char *const TLS_LISTENER_PORT                   = "TLS.listenerPort";
+static const char *const TLS_ENABLE                          = "TLS.enable";
+static const char *const TLS_CA_LIST_FILE                    = "TLS.certificateListFile";
+static const char *const TLS_CERTIFICATE_FILE                = "TLS.certificateFile";
+static const char *const TLS_PRIVATE_KEY_FILE                = "TLS.privateKeyFile";
+static const char *const TLS_PASSWORD                        = "TLS.password";
+static const char *const TLS_METHOD                          = "TLS.method";
+static const char *const TLS_CIPHERS                         = "TLS.ciphers";
+static const char *const TLS_SERVER_NAME                     = "TLS.serverName";
+static const char *const TLS_VERIFY_SERVER                   = "TLS.verifyServer";
+static const char *const TLS_VERIFY_CLIENT                   = "TLS.verifyClient";
+static const char *const TLS_REQUIRE_CLIENT_CERTIFICATE      = "TLS.requireClientCertificate";
+static const char *const TLS_NEGOTIATION_TIMEOUT_SEC         = "TLS.negotiationTimeoutSec";
+static const char *const TLS_NEGOTIATION_TIMEOUT_MSEC        = "TLS.negotiationTimemoutMsec";
 
-#define REGISTRATION_STATUS                 "Status"
-#define REGISTRATION_STATE_CODE             "Registration.code"
-#define REGISTRATION_STATE_DESCRIPTION      "Registration.description"
-
+static const char *const REGISTRATION_STATUS                 = "Status";
+static const char *const REGISTRATION_STATE_CODE             = "Registration.code";
+static const char *const REGISTRATION_STATE_DESCRIPTION      = "Registration.description";
 
 // General configuration keys for accounts
-const std::string aliasKey ("alias");
-const std::string typeKey ("type");
-const std::string idKey ("id");
-const std::string usernameKey ("username");
-const std::string authenticationUsernameKey ("authenticationUsername");
-const std::string passwordKey ("password");
-const std::string hostnameKey ("hostname");
-const std::string accountEnableKey ("enable");
-const std::string mailboxKey ("mailbox");
+static const char * const aliasKey = "alias";
+static const char * const typeKey = "type";
+static const char * const idKey = "id";
+static const char * const usernameKey = "username";
+static const char * const authenticationUsernameKey = "authenticationUsername";
+static const char * const passwordKey = "password";
+static const char * const hostnameKey = "hostname";
+static const char * const accountEnableKey = "enable";
+static const char * const mailboxKey = "mailbox";
 
-const std::string codecsKey ("codecs");  // 0/9/110/111/112/
-const std::string ringtonePathKey ("ringtonePath");
-const std::string ringtoneEnabledKey ("ringtoneEnabled");
-const std::string displayNameKey ("displayName");
+static const char * const codecsKey = "codecs";  // 0/9/110/111/112/
+static const char * const ringtonePathKey = "ringtonePath";
+static const char * const ringtoneEnabledKey = "ringtoneEnabled";
+static const char * const displayNameKey = "displayName";
 
 class Account : public Serializable
 {
@@ -182,8 +181,8 @@ class Account : public Serializable
          * Get the account ID
          * @return constant account id
          */
-        const std::string& getAccountID() const {
-            return _accountID;
+        std::string getAccountID() const {
+            return accountID_;
         }
 
         /**
@@ -191,7 +190,7 @@ class Account : public Serializable
          * @return VoIPLink* the pointer or 0
          */
         VoIPLink* getVoIPLink() const {
-            return _link;
+            return link_;
         }
 
         virtual void setVoIPLink () = 0;
@@ -214,11 +213,11 @@ class Account : public Serializable
          *	     false otherwise
          */
         bool isEnabled() const {
-            return _enabled;
+            return enabled_;
         }
 
-        void setEnabled (bool enabl) {
-            _enabled = enabl;
+        void setEnabled (bool enable) {
+            enabled_ = enable;
         }
 
         /**
@@ -226,65 +225,43 @@ class Account : public Serializable
          * @return RegistrationState	The registration state of underlying VoIPLink
          */
         RegistrationState getRegistrationState() const {
-            return _registrationState;
+            return registrationState_;
         }
 
         /**
          * Set the registration state of the specified link
          * @param state	The registration state of underlying VoIPLink
          */
-        void setRegistrationState (RegistrationState state);
-
-        /**
-         * Set the latest up-to-date state code
-         * for that account. These codes are
-         * those used in SIP and IAX (eg. 200, 500 ...)
-         * @param state The Code:Description state
-         * @return void
-         */
-        void setRegistrationStateDetailed (std::pair<int, std::string> state) {
-            _registrationStateDetailed = state;
-        }
-
-        /**
-         * Get the latest up-to-date state code
-         * for that account. These codes are
-         * those used in SIP and IAX (eg. 200, 500 ...)
-         * @param void
-         * @return std::pair<int, std::string> A Code:Description state
-         */
-        std::pair<int, std::string> getRegistrationStateDetailed (void) const {
-            return _registrationStateDetailed;
-        }
+        void setRegistrationState (const RegistrationState &state);
 
         /* They should be treated like macro definitions by the C++ compiler */
         std::string getUsername (void) const {
-            return _username;
+            return username_;
         }
 
         void setUsername (const std::string &username) {
-            _username = username;
+            username_ = username;
         }
 
         std::string getHostname (void) const {
-            return _hostname;
+            return hostname_;
         }
         void setHostname (const std::string &hostname) {
-            _hostname = hostname;
+            hostname_ = hostname;
         }
 
         std::string getAlias (void) const {
-            return _alias;
+            return alias_;
         }
         void setAlias (const std::string &alias) {
-            _alias = alias;
+            alias_ = alias;
         }
 
         std::string getType (void) const {
-            return _type;
+            return type_;
         }
         void setType (const std::string &type) {
-            _type = type;
+            type_ = type;
         }
 
         /**
@@ -292,7 +269,7 @@ class Account : public Serializable
          * @return CodecOrder& The list that reflects the user's choice
          */
         const CodecOrder& getActiveCodecs (void) const {
-            return _codecOrder;
+            return codecOrder_;
         }
 
         /**
@@ -302,39 +279,39 @@ class Account : public Serializable
         void setActiveCodecs (const std::vector <std::string>& list);
 
         std::string getRingtonePath (void) const {
-            return _ringtonePath;
+            return ringtonePath_;
         }
         void setRingtonePath (const std::string &path) {
-            _ringtonePath = path;
+            ringtonePath_ = path;
         }
 
         bool getRingtoneEnabled (void) const {
-            return _ringtoneEnabled;
+            return ringtoneEnabled_;
         }
-        void setRingtoneEnabled (bool enabl) {
-            _ringtoneEnabled = enabl;
+        void setRingtoneEnabled (bool enable) {
+            ringtoneEnabled_ = enable;
         }
 
         std::string getDisplayName (void) const {
-            return _displayName;
+            return displayName_;
         }
         void setDisplayName (const std::string &name) {
-            _displayName = name;
+            displayName_ = name;
         }
 
-        std::string getUseragent (void) const {
-            return _useragent;
+        std::string getUserAgent (void) const {
+            return userAgent_;
         }
         void setUseragent (const std::string &ua) {
-            _useragent = ua;
+            userAgent_ = ua;
         }
 
         std::string getMailBox (void) const {
-            return _mailBox;
+            return mailBox_;
         }
 
         void setMailBox (const std::string &mb) {
-            _mailBox = mb;
+            mailBox_ = mb;
         }
 
     private:
@@ -352,93 +329,85 @@ class Account : public Serializable
 
     protected:
 
-
         /**
          * Account ID are assign in constructor and shall not changed
          */
-        const std::string _accountID;
+        const std::string accountID_;
 
         /**
          * Account login information: username
          */
-        std::string _username;
+        std::string username_;
 
         /**
          * Account login information: hostname
          */
-        std::string _hostname;
+        std::string hostname_;
 
         /**
          * Account login information: Alias
          */
-        std::string _alias;
+        std::string alias_;
 
         /**
          * Voice over IP Link contains a listener thread and calls
          */
-        VoIPLink* _link;
+        VoIPLink* link_;
 
         /**
          * Tells if the link is enabled, active.
          * This implies the link will be initialized on startup.
          * Modified by the configuration (key: ENABLED)
          */
-        bool _enabled;
+        bool enabled_;
 
         /*
          * The account type
          * IAX2 or SIP
          */
-        std::string _type;
+        std::string type_;
 
         /*
          * The general, protocol neutral registration
          * state of the account
          */
-        RegistrationState _registrationState;
-
-        /*
-         * Details about the registration state.
-         * This is a protocol Code:Description pair.
-         */
-        std::pair<int, std::string> _registrationStateDetailed;
+        RegistrationState registrationState_;
 
         /**
          * Vector containing the order of the codecs
          */
-        CodecOrder _codecOrder;
+        CodecOrder codecOrder_;
 
         /**
          * List of codec obtained when parsing configuration and used
          * to generate codec order list
          */
-        std::string _codecStr;
+        std::string codecStr_;
 
         /**
          * Ringtone .au file used for this account
          */
-        std::string _ringtonePath;
+        std::string ringtonePath_;
 
         /**
          * Play ringtone when receiving a call
          */
-        bool _ringtoneEnabled;
+        bool ringtoneEnabled_;
 
         /**
          * Display name when calling
          */
-        std::string _displayName;
+        std::string displayName_;
 
         /**
          * Useragent used for registration
          */
-        std::string _useragent;
-
+        std::string userAgent_;
 
         /**
              * Account mail box
          */
-        std::string _mailBox;
+        std::string mailBox_;
 
 };
 

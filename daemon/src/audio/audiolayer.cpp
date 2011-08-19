@@ -30,43 +30,72 @@
  */
 
 #include "audiolayer.h"
+#include "audioprocessing.h"
+#include "audio/dcblocker.h"
 #include "manager.h"
+#include <cc++/numbers.h>
+
+AudioLayer::AudioLayer (ManagerImpl* manager , int type)
+    : layerType_ (type)
+    , isStarted_ (false)
+    , manager_ (manager)
+    , urgentRingBuffer_ (SIZEBUF, Call::DEFAULT_ID)
+    , mainBuffer_ (0)
+    , recorder_ (0)
+    , indexIn_ (0)
+    , indexOut_ (0)
+    , indexRing_ (0)
+    , audioSampleRate_ (0)
+    , frameSize_ (0)
+    , inChannel_ (1)
+    , outChannel_ (1)
+    , errorMessage_ (0)
+    , mutex_ ()
+    , dcblocker_ (0)
+    , audiofilter_ (0)
+    , noiseSuppressState_ (false)
+    , countNotificationTime_ (0)
+      , time_ (new ost::Time)
+{}
+
+
+AudioLayer::~AudioLayer ()
+{
+    delete time_;
+    delete audiofilter_;
+    delete dcblocker_;
+}
 
 void AudioLayer::flushMain (void)
 {
-    ost::MutexLock guard (_mutex);
-
+    ost::MutexLock guard (mutex_);
     // should pass call id
     getMainBuffer()->flushAllBuffers();
 }
 
-
 void AudioLayer::flushUrgent (void)
 {
-    ost::MutexLock guard (_mutex);
-    _urgentRingBuffer.flushAll();
+    ost::MutexLock guard (mutex_);
+    urgentRingBuffer_.flushAll();
 }
-
 
 void AudioLayer::putUrgent (void* buffer, int toCopy)
 {
-    ost::MutexLock guard (_mutex);
-
-    _urgentRingBuffer.Put (buffer, toCopy);
+    ost::MutexLock guard (mutex_);
+    urgentRingBuffer_.Put (buffer, toCopy);
 }
 
 void AudioLayer::notifyincomingCall()
 {
     // Notify (with a beep) an incoming call when there is already a call
     if (Manager::instance().incomingCallWaiting()) {
-        _countNotificationTime += _time->getSecond();
-        int countTimeModulo = _countNotificationTime % 5000;
+        countNotificationTime_ += time_->getSecond();
+        int countTimeModulo = countNotificationTime_ % 5000;
 
-        if ( (countTimeModulo - _countNotificationTime) < 0) {
+        if ((countTimeModulo - countNotificationTime_) < 0)
             Manager::instance().notificationIncomingCall();
-        }
 
-        _countNotificationTime = countTimeModulo;
+        countNotificationTime_ = countTimeModulo;
     }
 }
 

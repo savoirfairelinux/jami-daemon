@@ -59,11 +59,13 @@ std::map<std::string, std::string> ConfigurationManager::getAccountDetails (
 std::map<std::string, std::string> ConfigurationManager::getTlsSettingsDefault (
     void)
 {
-
     std::map<std::string, std::string> tlsSettingsDefault;
 
+    std::stringstream portstr;
+    portstr << DEFAULT_SIP_TLS_PORT;
+
     tlsSettingsDefault.insert (std::pair<std::string, std::string> (
-                                   TLS_LISTENER_PORT, DEFAULT_SIP_TLS_PORT));
+                                   TLS_LISTENER_PORT, portstr.str()));
     tlsSettingsDefault.insert (std::pair<std::string, std::string> (
                                    TLS_CA_LIST_FILE, ""));
     tlsSettingsDefault.insert (std::pair<std::string, std::string> (

@@ -87,21 +87,6 @@ void AudioRtpRecordHandler::setRtpMedia (AudioCodec* audioCodec)
     _audioRtpRecord.audioCodecMutex.leave();
 }
 
-
-void AudioRtpRecordHandler::updateRtpMedia (AudioCodec *audioCodec)
-{
-    int lastSamplingRate = _audioRtpRecord._codecSampleRate;
-
-    setRtpMedia(audioCodec);
-
-    Manager::instance().audioSamplingRateChanged(_audioRtpRecord._codecSampleRate);
-
-    if (lastSamplingRate != _audioRtpRecord._codecSampleRate) {
-        _debug ("AudioRtpSession: Update noise suppressor with sampling rate %d and frame size %d", getCodecSampleRate(), getCodecFrameSize());
-        initNoiseSuppress();
-    }
-}
-
 void AudioRtpRecordHandler::initBuffers()
 {
     // Set sampling rate, main buffer choose the highest one
@@ -129,15 +114,7 @@ void AudioRtpRecordHandler::initNoiseSuppress()
 
 void AudioRtpRecordHandler::putDtmfEvent (int digit)
 {
-    sfl::DtmfEvent *dtmf = new sfl::DtmfEvent();
-    dtmf->payload.event = digit;
-    dtmf->payload.ebit = false; // end of event bit
-    dtmf->payload.rbit = false; // reserved bit
-    dtmf->payload.duration = 1; // duration for this event
-    dtmf->newevent = true;
-    dtmf->length = 1000;
-    getEventQueue()->push_back (dtmf);
-    _debug ("AudioRtpSession: Put Dtmf Event %d", digit);
+	_audioRtpRecord._dtmfQueue.push_back(digit);
 }
 
 #ifdef DUMP_PROCESS_DATA_ENCODE

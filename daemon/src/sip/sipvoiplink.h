@@ -55,6 +55,7 @@ namespace sfl {
 
 class EventThread;
 class SIPCall;
+class SIPAccount;
 
 #define RANDOM_LOCAL_PORT ((rand() % 27250) + 5250)*2
 #define RANDOM_SIP_PORT   rand() % 64000 + 1024
@@ -71,8 +72,6 @@ class SIPCall;
 
 class SIPVoIPLink : public VoIPLink
 {
-	typedef std::map<std::string, pjsip_transport*>  SipTransportMap;
-
 	public:
 
 	    /* Copy Constructor */
@@ -106,9 +105,8 @@ class SIPVoIPLink : public VoIPLink
 
         /**
          * Try to initiate the pjsip engine/thread and set config
-         * @return bool True if OK
          */
-        virtual bool init (void);
+        virtual void init (void);
 
         /**
          * Shut the library and clean up
@@ -122,17 +120,13 @@ class SIPVoIPLink : public VoIPLink
 
         /**
          * Build and send SIP registration request
-         * @return bool True on success
-         *		  false otherwise
          */
-        virtual void sendRegister (std::string id) throw(VoipLinkException);
+        virtual void sendRegister (Account *a) throw(VoipLinkException);
 
         /**
          * Build and send SIP unregistration request
-         * @return bool True on success
-         *		  false otherwise
          */
-        virtual void sendUnregister (std::string id) throw(VoipLinkException);
+        virtual void sendUnregister (Account *a) throw(VoipLinkException);
 
         /**
          * Place a new call
@@ -144,31 +138,27 @@ class SIPVoIPLink : public VoIPLink
 
         /**
          * Answer the call
-         * @param id The call identifier
-         * @return True on success
+         * @param c The call
          */
-        virtual bool answer (const std::string& id) throw (VoipLinkException);
+        virtual void answer (Call *c) throw (VoipLinkException);
 
         /**
          * Hang up the call
          * @param id The call identifier
-         * @return bool True on success
          */
-        virtual bool hangup (const std::string& id) throw (VoipLinkException);
+        virtual void hangup (const std::string& id) throw (VoipLinkException);
 
         /**
          * Hang up the call
          * @param id The call identifier
-         * @return bool True on success
          */
-        virtual bool peerHungup (const std::string& id) throw (VoipLinkException);
+        virtual void peerHungup (const std::string& id) throw (VoipLinkException);
 
         /**
          * Cancel the call
          * @param id The call identifier
-         * @return bool True on success
          */
-        virtual bool cancel (const std::string& id) throw (VoipLinkException);
+        virtual void cancel (const std::string& id) throw (VoipLinkException);
 
         /**
          * Put the call on hold
@@ -201,11 +191,6 @@ class SIPVoIPLink : public VoIPLink
         virtual bool attendedTransfer(const std::string&, const std::string&);
 
         /**
-         * Handle the incoming refer msg, not finished yet
-         */
-        bool transferStep2 (SIPCall* call);
-
-        /**
          * Refuse the call
          * @param id The call identifier
          * @return bool True on success
@@ -228,22 +213,14 @@ class SIPVoIPLink : public VoIPLink
         /**
          * Send Dtmf over RTP
          */
-        bool dtmfOverRtp (SIPCall* call, char code);
-
-        /**
-         * Send an outgoing call invite
-         * @param call  The current call
-         * @return bool True if all is correct
-         */
-        bool SIPOutgoingInvite (SIPCall* call);
+        void dtmfOverRtp (SIPCall* call, char code);
 
         /**
          * Start a SIP Call
          * @param call  The current call
-         * @param subject Undocumented
          * @return true if all is correct
          */
-        bool SIPStartCall (SIPCall* call, const std::string& subject);
+        bool SIPStartCall (SIPCall* call);
 
         /**
          * Start a new SIP call using the IP2IP profile
@@ -277,15 +254,6 @@ class SIPVoIPLink : public VoIPLink
          */
         void SIPCallReleased (SIPCall *call);
 
-        /**
-         * Handle a re-invite request by the remote peer.
-         * A re-invite is an invite request inside a dialog.
-         * When receiving a re-invite, we updated information
-         * concerning medias
-         * @param sip call
-         */
-        void SIPHandleReinvite (SIPCall *call);
-
         pj_caching_pool *getMemoryPoolFactory();
 
         /**
@@ -297,14 +265,14 @@ class SIPVoIPLink : public VoIPLink
 
         /**
          * Return the codec protocol used for this call
-         * @param id The call identifier
+         * @param c The call identifier
          */
-        std::string getCurrentCodecName(const std::string& id);
+        std::string getCurrentCodecName(Call *c);
 
         /**
          * Retrive useragent name from account
          */
-        std::string getUseragentName (const std::string& id);
+        std::string getUseragentName (SIPAccount *);
 
         /**
          * List all the interfaces on the system and return
@@ -339,19 +307,15 @@ class SIPVoIPLink : public VoIPLink
         /**
          * Initialize the transport selector
          * @param transport		A transport associated with an account
-         * @param tp_sel		A pointer to receive the transport selector structure
          *
-         * @return pj_status_t		PJ_SUCCESS if the structure was successfully initialized
+         * @return          	A pointer to the transport selector structure
          */
-        pj_status_t initTransportSelector (pjsip_transport *, pjsip_tpselector **, pj_pool_t *);
+        pjsip_tpselector *initTransportSelector (pjsip_transport *, pj_pool_t *);
 
         /**
          * Requests PJSIP library for local IP address, using pj_gethostbyname()
-         * @param addr*                 A string to be initialized
-         *
-         * @return bool                 True if addr successfully initialized
          */
-        bool loadSIPLocalIP (std::string *addr);
+        std::string loadSIPLocalIP ();
 
         /**
          * Helper function for creating a route set from information
@@ -360,17 +324,12 @@ class SIPVoIPLink : public VoIPLink
         pjsip_route_hdr *createRouteSet(Account *account, pj_pool_t *pool);
 
         /**
-         * Wrapper around getaddrinfo
-         */
-        bool dnsResolution(pjsip_tx_data *tdata);
-
-        /**
          * This function unset the transport for a given account. It tests wether the
          * associated transport is used by other accounts. If not, it shutdown the transport
          * putting its reference counter to zero. PJSIP assumes transport destruction since
          * this action can be delayed by ongoing SIP transactions.
          */
-        void shutdownSipTransport (const std::string& accountID);
+        void shutdownSipTransport (SIPAccount *account);
 
         /**
          * Send a SIP message to a call identified by its callid
@@ -418,24 +377,24 @@ class SIPVoIPLink : public VoIPLink
         /**
          * Delete link-related stuff like calls
          */
-        bool pjsipShutdown (void);
+        void pjsipShutdown (void);
 
         /**
          * Resolve public address for this account
          */
-        pj_status_t stunServerResolve (std::string id);
+        pj_status_t stunServerResolve (SIPAccount *);
 
 
         /**
          * Function used to create a new sip transport or get an existing one from the map.
          * The SIP transport is "acquired" according to account's current settings.
          * This function should be called before registering an account
-         * @param accountID An account id for which transport is to be set
+         * @param account An account for which transport is to be set
          *
          * @return bool True if the account is successfully created or successfully obtained
          * from the transport map
          */
-        bool acquireTransport (const std::string& accountID);
+        bool acquireTransport (SIPAccount *account);
 
 
         /**
@@ -453,50 +412,37 @@ class SIPVoIPLink : public VoIPLink
         /**
          * Create the default TLS litener according to account settings.
          */
-        void createTlsListener (const std::string& accountID);
+        void createTlsListener (SIPAccount*);
 
 
         /**
          * General Sip transport creation method according to the
          * transport type specified in account settings
-         * @param id The account id for which a transport must
-         * be created.
+         * @param account The account for which a transport must be created.
          */
-        bool createSipTransport (std::string id);
-
-
-        /**
-         * Method to store newly created UDP transport in internal transport map.
-         * Transports are stored in order to retreive them in case
-         * several accounts would share the same port number for UDP transprt.
-         * @param key The transport's port number
-         * @param transport A pointer to the UDP transport
-         */
-        bool addTransportToMap (std::string key, pjsip_transport* transport);
+        bool createSipTransport (SIPAccount *account);
 
         /**
         * Create SIP UDP transport from account's setting
-        * @param id The account id for which a transport must
-        * be created.
-        * @return pj_status_t PJ_SUCCESS on success
+        * @param account The account for which a transport must be created.
+        * @param local True if the account is IP2IP
+        * @return the transport
         */
-        int createUdpTransport (std::string = "");
+        pjsip_transport * createUdpTransport (SIPAccount *account, bool local);
 
         /**
          * Create a TLS transport from the default TLS listener from
-         * @param id The account id for which a transport must
-         * be created.
+         * @param account The account for which a transport must be created.
          * @return pj_status_t PJ_SUCCESS on success
          */
-        pj_status_t createTlsTransport (const std::string& id,  std::string remoteAddr);
+        pj_status_t createTlsTransport (SIPAccount *, std::string remoteAddr);
 
         /**
          * Create a UDP transport using stun server to resove public address
-         * @param id The account id for which a transport must
-         * be created.
+         * @param account The account for which a transport must be created.
          * @return pj_status_t PJ_SUCCESS on success
          */
-        pj_status_t createAlternateUdpTransport (std::string id);
+        pj_status_t createAlternateUdpTransport (SIPAccount *account);
 
         /**
          * Get the correct address to use (ie advertised) from
@@ -521,7 +467,7 @@ class SIPVoIPLink : public VoIPLink
          * UDP Transports are stored in this map in order to retreive them in case
          * several accounts would share the same port number.
          */
-        SipTransportMap _transportMap;
+        std::map<pj_uint16_t, pjsip_transport*> _transportMap;
 
         /**
          * For registration use only
