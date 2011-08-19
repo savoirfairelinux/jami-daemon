@@ -116,7 +116,7 @@ class AlsaLayer : public AudioLayer
          * @param subdevice the subdevice number
          * @return std::string the concatenated string
          */
-        std::string buildDeviceTopo (std::string plugin, int card, int subdevice);
+        std::string buildDeviceTopo (const std::string &plugin, int card, int subdevice);
 
         /**
          * Scan the sound card available on the system
@@ -145,13 +145,13 @@ class AlsaLayer : public AudioLayer
          * @param description The string description
          * @return	int	  Its index
          */
-        int soundCardGetIndex (std::string description);
+        int soundCardGetIndex (const std::string &description);
 
         /**
          * Get the current audio plugin.
          * @return std::string  The name of the audio plugin
          */
-        std::string getAudioPlugin (void) {
+        std::string getAudioPlugin (void) const {
             return _audioPlugin;
         }
 
@@ -260,7 +260,7 @@ class AlsaLayer : public AudioLayer
          */
         bool open_device (std::string pcm_p, std::string pcm_c, std::string pcm_r,  int flag);
 
-        bool alsa_set_params (snd_pcm_t *pcm_handle, int type, int rate);
+        bool alsa_set_params (snd_pcm_t *pcm_handle, int type);
 
         /**
          * Copy a data buffer in the internal ring buffer
@@ -292,7 +292,7 @@ class AlsaLayer : public AudioLayer
          */
         void handle_xrun_playback (snd_pcm_t *handle);
 
-        void adjustVolume (SFLDataFormat* buffer , int samples, int volume);
+        void adjustVolume (SFLDataFormat* buffer , int samples, int volumePercentage);
 
         /**
          * Handles to manipulate playback stream
@@ -323,7 +323,7 @@ class AlsaLayer : public AudioLayer
         std::string _audioPlugin;
 
         /** Vector to manage all soundcard index - description association of the system */
-        std::vector<HwIDPair> IDSoundCards;
+        std::vector<HwIDPair> IDSoundCards_;
 
         bool _is_prepared_playback;
         bool _is_prepared_capture;
