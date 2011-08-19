@@ -88,14 +88,12 @@ IAXVoIPLink::~IAXVoIPLink()
 	delete converter;
 }
 
-bool
+void
 IAXVoIPLink::init()
 {
     // If it was done, don't do it again, until we call terminate()
-    if (initDone())
-        return false;
-
-    bool returnValue = false;
+    if (_initDone)
+        return;
 
     // _localAddress = "127.0.0.1";
     // port 0 is default
@@ -119,7 +117,6 @@ IAXVoIPLink::init()
         } else {
             _debug ("IAX Info: listening on port %d", last_port);
             _localPort = last_port;
-            returnValue = true;
             _evThread->start();
 
             audiolayer = Manager::instance().getAudioDriver();
@@ -132,23 +129,21 @@ IAXVoIPLink::init()
 
         nbTry--;
 
-        initDone (true);
+        _initDone = true;
     }
 
     if (port == IAX_FAILURE || nbTry==0) {
         _debug ("Fail to initialize iax");
 
-        initDone (false);
+        _initDone = false;
     }
-
-    return returnValue;
 }
 
 void
 IAXVoIPLink::terminate()
 {
     // If it was done, don't do it again, until we call init()
-    if (!initDone())
+    if (!_initDone)
         return;
 
     // iaxc_shutdown();
@@ -156,7 +151,7 @@ IAXVoIPLink::terminate()
     // Hangup all calls
     terminateIAXCall();
 
-    initDone (false);
+    _initDone = false;
 }
 
 void
@@ -221,16 +216,6 @@ IAXVoIPLink::getEvent()
     _mutexIAX.leaveMutex();
 
     sendAudioFromMic();
-
-    // Manager::instance().getAudioLayerMutex()->leave();
-
-    // Do the doodle-moodle to send audio from the microphone to the IAX channel.
-    // sendAudioFromMic();
-
-    // Refresh registration.
-    if (_nextRefreshStamp && _nextRefreshStamp - 2 < time (NULL)) {
-        sendRegister ("");
-    }
 
     // thread wait 3 millisecond
     _evThread->sleep (3);
@@ -314,15 +299,11 @@ IAXVoIPLink::getIAXCall (const std::string& id)
 
 
 void
-IAXVoIPLink::sendRegister (std::string id UNUSED) throw(VoipLinkException)
+IAXVoIPLink::sendRegister (Account *a) throw(VoipLinkException)
 {
     _debug ("IAX: Sending registration");
 
-    IAXAccount *account = getAccountPtr();
-
-    if (!account) {
-    	throw VoipLinkException("Account is NULL in send register");
-    }
+    IAXAccount *account = (IAXAccount*)a;
 
     if (account->getHostname().empty()) {
     	throw VoipLinkException("Account hostname is empty");
@@ -360,15 +341,11 @@ IAXVoIPLink::sendRegister (std::string id UNUSED) throw(VoipLinkException)
 }
 
 void
-IAXVoIPLink::sendUnregister (std::string id UNUSED) throw(VoipLinkException)
+IAXVoIPLink::sendUnregister (Account *a)
 {
     _debug ("IAXVoipLink: Send unregister");
 
-    IAXAccount *account = getAccountPtr();
-
-    if (!account) {
-        throw VoipLinkException("Account is NULL in send unregister");
-    }
+    IAXAccount *account = (IAXAccount*)a;
 
     _mutexIAX.enterMutex();
 
@@ -410,15 +387,13 @@ IAXVoIPLink::newOutgoingCall (const std::string& id, const std::string& toUrl) t
 }
 
 
-bool
-IAXVoIPLink::answer (const std::string& id) throw (VoipLinkException)
+void
+IAXVoIPLink::answer (Call *c) throw (VoipLinkException)
 {
-    IAXCall* call = getIAXCall (id);
+    IAXCall* call = (IAXCall*) c;
     call->setCodecMap (Manager::instance().getAudioCodecFactory());
 
     Manager::instance().addStream (call->getCallId());
-
-    CHK_VALID_CALL;
 
     _mutexIAX.enterMutex();
     iax_answer (call->getSession());
@@ -429,11 +404,9 @@ IAXVoIPLink::answer (const std::string& id) throw (VoipLinkException)
 
     // Flush main buffer
     audiolayer->flushMain();
-
-    return true;
 }
 
-bool
+void
 IAXVoIPLink::hangup (const std::string& id) throw (VoipLinkException)
 {
     _debug ("IAXVoIPLink: Hangup");
@@ -442,8 +415,6 @@ IAXVoIPLink::hangup (const std::string& id) throw (VoipLinkException)
     if(call == NULL) {
     	throw VoipLinkException("Could not find call");
     }
-
-    CHK_VALID_CALL;
 
     Manager::instance().getMainBuffer()->unBindAll (call->getCallId());
 
@@ -454,11 +425,10 @@ IAXVoIPLink::hangup (const std::string& id) throw (VoipLinkException)
     call->setSession (NULL);
 
     removeCall (id);
-    return true;
 }
 
 
-bool
+void
 IAXVoIPLink::peerHungup (const std::string& id) throw (VoipLinkException)
 {
     _debug ("IAXVoIPLink: Peer hung up");
@@ -468,14 +438,11 @@ IAXVoIPLink::peerHungup (const std::string& id) throw (VoipLinkException)
     	throw VoipLinkException("Could not find call");
     }
 
-    CHK_VALID_CALL;
-
     Manager::instance().getMainBuffer()->unBindAll (call->getCallId());
 
     call->setSession (NULL);
 
     removeCall (id);
-    return true;
 }
 
 
@@ -487,8 +454,6 @@ IAXVoIPLink::onhold (const std::string& id) throw (VoipLinkException)
     if(call == NULL) {
     	throw VoipLinkException("Call does not exist");
     }
-
-    CHK_VALID_CALL;
 
     Manager::instance().getMainBuffer()->unBindAll (call->getCallId());
 
@@ -506,7 +471,6 @@ bool
 IAXVoIPLink::offhold (const std::string& id) throw (VoipLinkException)
 {
     IAXCall* call = getIAXCall (id);
-
     CHK_VALID_CALL;
 
     Manager::instance().addStream (call->getCallId());
@@ -524,7 +488,6 @@ bool
 IAXVoIPLink::transfer (const std::string& id, const std::string& to) throw (VoipLinkException)
 {
     IAXCall* call = getIAXCall (id);
-
     CHK_VALID_CALL;
 
     char callto[to.length() +1];
@@ -551,7 +514,6 @@ bool
 IAXVoIPLink::refuse (const std::string& id)
 {
     IAXCall* call = getIAXCall (id);
-
     CHK_VALID_CALL;
 
     _mutexIAX.enterMutex();
@@ -568,7 +530,6 @@ bool
 IAXVoIPLink::carryingDTMFdigits (const std::string& id, char code)
 {
     IAXCall* call = getIAXCall (id);
-
     CHK_VALID_CALL;
 
     _mutexIAX.enterMutex();
@@ -584,7 +545,6 @@ IAXVoIPLink::sendTextMessage (sfl::InstantMessaging *module,
         const std::string& /*from*/)
 {
     IAXCall* call = getIAXCall (callID);
-
     CHK_VALID_CALL;
 
     // Must active the mutex for this session

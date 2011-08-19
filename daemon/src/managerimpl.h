@@ -209,9 +209,8 @@ class ManagerImpl
          * Functions which occur with a user's action
          * Hangup the call
          * @param id  The call identifier
-         * @return true on success
          */
-        bool hangupCall (const std::string& id);
+        void hangupCall (const std::string& id);
 
 
         /**
@@ -220,13 +219,6 @@ class ManagerImpl
          * @param id  The call identifier
          */
         bool hangupConference (const std::string& id);
-
-        /**
-         * Functions which occur with a user's action
-         * Cancel the call
-         * @param id  The call identifier
-         */
-        bool cancelCall (const std::string& id);
 
         /**
          * Functions which occur with a user's action

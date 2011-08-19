@@ -318,10 +318,7 @@ bool ManagerImpl::answerCall (const std::string& call_id)
     }
 
     try {
-        if (!getAccountLink (account_id)->answer (call_id)) {
-            removeCallAccount (call_id);
-            return false;
-        }
+        getAccountLink (account_id)->answer (call);
     }
     catch (const VoipLinkException &e) {
     	_error("Manager: Error: %s", e.what());
@@ -355,10 +352,8 @@ bool ManagerImpl::answerCall (const std::string& call_id)
 }
 
 //THREAD=Main
-bool ManagerImpl::hangupCall (const std::string& callId)
+void ManagerImpl::hangupCall (const std::string& callId)
 {
-    bool returnValue = true;
-
     _info ("Manager: Hangup call %s", callId.c_str());
 
     // First stop audio layer if there is no call anymore
@@ -369,7 +364,7 @@ bool ManagerImpl::hangupCall (const std::string& callId)
         if(_audiodriver == NULL) {
         	audioLayerMutexUnlock();
         	_error("Manager: Error: Audio layer was not instantiated");
-        	return returnValue;
+        	return;
         }
 
         _debug ("Manager: stop audio stream, there is no call remaining");
@@ -388,7 +383,7 @@ bool ManagerImpl::hangupCall (const std::string& callId)
 
     if (not isValidCall(callId) and not getConfigFromCall(callId) == Call::IPtoIP) {
     	_error("Manager: Error: Could not hang up call, call not valid");
-        return false;
+        return;
     }
 
     // Disconnect streams
@@ -410,23 +405,20 @@ bool ManagerImpl::hangupCall (const std::string& callId)
     if (getConfigFromCall (callId) == Call::IPtoIP) {
         /* Direct IP to IP call */
         try {
-            returnValue = SIPVoIPLink::instance()->hangup (callId);
+            SIPVoIPLink::instance()->hangup (callId);
         }
         catch (const VoipLinkException &e)
         {
             _error("%s", e.what());
-            returnValue = 1;
         }
     }
     else {
     	std::string accountId (getAccountFromCall (callId));
-        returnValue = getAccountLink (accountId)->hangup (callId);
+        getAccountLink (accountId)->hangup (callId);
         removeCallAccount (callId);
     }
 
     getMainBuffer()->stateInfo();
-
-    return returnValue;
 }
 
 bool ManagerImpl::hangupConference (const std::string& id)
@@ -459,45 +451,6 @@ bool ManagerImpl::hangupConference (const std::string& id)
     return true;
 }
 
-//THREAD=Main
-bool ManagerImpl::cancelCall (const std::string& id)
-{
-    std::string accountid;
-    bool returnValue;
-
-    _debug ("Manager: Cancel call");
-
-    stopTone();
-
-    /* Direct IP to IP call */
-
-    if (getConfigFromCall (id) == Call::IPtoIP)
-        returnValue = SIPVoIPLink::instance()->cancel (id);
-    else {
-        /* Classic call, attached to an account */
-        accountid = getAccountFromCall (id);
-
-        if (accountid.empty()) {
-            _debug ("! Manager Cancel Call: Call doesn't exists");
-            return false;
-        }
-
-        returnValue = getAccountLink (accountid)->cancel (id);
-
-        removeCallAccount (id);
-    }
-
-    // it could be a waiting call?
-    removeWaitingCall (id);
-
-    removeStream (id);
-
-    switchCall ("");
-
-    getMainBuffer()->stateInfo();
-
-    return returnValue;
-}
 
 //THREAD=Main
 bool ManagerImpl::onHoldCall (const std::string& callId)
@@ -1777,15 +1730,7 @@ void ManagerImpl::incomingMessage (const std::string& callID,
                 _debug ("Manager: Failed to get account while sending instant message");
                 return;
             }
-
-            if (account->getType() == "SIP")
-                dynamic_cast<SIPVoIPLink *> (getAccountLink (accountId))->sendTextMessage (_imModule, callID, message, from);
-            else if (account->getType() == "IAX")
-                dynamic_cast<IAXVoIPLink *> (account->getVoIPLink())->sendTextMessage (_imModule, callID, message, from);
-            else {
-                _debug ("Manager: Failed to get voip link while sending instant message");
-                return;
-            }
+            account->getVoIPLink()->sendTextMessage (_imModule, callID, message, from);
         }
 
         // in case of a conference we must notify client using conference id
@@ -1827,16 +1772,7 @@ bool ManagerImpl::sendTextMessage (const std::string& callID, const std::string&
                 return false;
             }
 
-            if (account->getType() == "SIP")
-                // link = dynamic_cast<SIPVoIPLink *> (getAccountLink (accountId));
-                dynamic_cast<SIPVoIPLink *> (getAccountLink (accountId))->sendTextMessage (_imModule, *iter_participant, message, from);
-            else if (account->getType() == "IAX")
-                // link = dynamic_cast<IAXVoIPLink *> (account->getVoIPLink());
-                dynamic_cast<IAXVoIPLink *> (account->getVoIPLink())->sendTextMessage (_imModule, *iter_participant, message, from);
-            else {
-                _debug ("Manager: Failed to get voip link while sending instant message");
-                return false;
-            }
+			account->getVoIPLink()->sendTextMessage (_imModule, *iter_participant, message, from);
         }
 
         return true;
@@ -1863,14 +1799,7 @@ bool ManagerImpl::sendTextMessage (const std::string& callID, const std::string&
                 return false;
             }
 
-            if (account->getType() == "SIP")
-                dynamic_cast<SIPVoIPLink *> (getAccountLink (accountId))->sendTextMessage (_imModule, *iter_participant, message, from);
-            else if (account->getType() == "IAX")
-                dynamic_cast<IAXVoIPLink *> (account->getVoIPLink())->sendTextMessage (_imModule, *iter_participant, message, from);
-            else {
-                _debug ("Manager: Failed to get voip link while sending instant message");
-                return false;
-            }
+			account->getVoIPLink()->sendTextMessage (_imModule, *iter_participant, message, from);
         }
     } else {
 
@@ -1883,14 +1812,7 @@ bool ManagerImpl::sendTextMessage (const std::string& callID, const std::string&
             return false;
         }
 
-        if (account->getType() == "SIP")
-            dynamic_cast<SIPVoIPLink *> (getAccountLink (accountId))->sendTextMessage (_imModule, callID, message, from);
-        else if (account->getType() == "IAX")
-            dynamic_cast<IAXVoIPLink *> (account->getVoIPLink())->sendTextMessage (_imModule, callID, message, from);
-        else {
-            _debug ("Manager: Failed to get voip link while sending instant message");
-            return false;
-        }
+        account->getVoIPLink()->sendTextMessage (_imModule, callID, message, from);
     }
 
     return true;
@@ -3557,18 +3479,14 @@ bool ManagerImpl::associateCallToAccount (const std::string& callID,
 std::string ManagerImpl::getAccountFromCall (const std::string& callID)
 {
     ost::MutexLock m (_callAccountMapMutex);
-    CallAccountMap::iterator iter = _callAccountMap.find (callID);
+	CallAccountMap::iterator iter = _callAccountMap.find (callID);
 
-    if (iter == _callAccountMap.end())
-        return "";
-    else
-        return iter->second;
+	return (iter == _callAccountMap.end()) ? "" : iter->second;
 }
 
 bool ManagerImpl::removeCallAccount (const std::string& callID)
 {
     ost::MutexLock m (_callAccountMapMutex);
-
     return _callAccountMap.erase (callID);
 }
 

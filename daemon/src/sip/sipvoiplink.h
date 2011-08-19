@@ -105,9 +105,8 @@ class SIPVoIPLink : public VoIPLink
 
         /**
          * Try to initiate the pjsip engine/thread and set config
-         * @return bool True if OK
          */
-        virtual bool init (void);
+        virtual void init (void);
 
         /**
          * Shut the library and clean up
@@ -121,17 +120,13 @@ class SIPVoIPLink : public VoIPLink
 
         /**
          * Build and send SIP registration request
-         * @return bool True on success
-         *		  false otherwise
          */
-        virtual void sendRegister (std::string id) throw(VoipLinkException);
+        virtual void sendRegister (Account *a) throw(VoipLinkException);
 
         /**
          * Build and send SIP unregistration request
-         * @return bool True on success
-         *		  false otherwise
          */
-        virtual void sendUnregister (std::string id) throw(VoipLinkException);
+        virtual void sendUnregister (Account *a) throw(VoipLinkException);
 
         /**
          * Place a new call
@@ -143,31 +138,27 @@ class SIPVoIPLink : public VoIPLink
 
         /**
          * Answer the call
-         * @param id The call identifier
-         * @return True on success
+         * @param c The call
          */
-        virtual bool answer (const std::string& id) throw (VoipLinkException);
+        virtual void answer (Call *c) throw (VoipLinkException);
 
         /**
          * Hang up the call
          * @param id The call identifier
-         * @return bool True on success
          */
-        virtual bool hangup (const std::string& id) throw (VoipLinkException);
+        virtual void hangup (const std::string& id) throw (VoipLinkException);
 
         /**
          * Hang up the call
          * @param id The call identifier
-         * @return bool True on success
          */
-        virtual bool peerHungup (const std::string& id) throw (VoipLinkException);
+        virtual void peerHungup (const std::string& id) throw (VoipLinkException);
 
         /**
          * Cancel the call
          * @param id The call identifier
-         * @return bool True on success
          */
-        virtual bool cancel (const std::string& id) throw (VoipLinkException);
+        virtual void cancel (const std::string& id) throw (VoipLinkException);
 
         /**
          * Put the call on hold
@@ -200,11 +191,6 @@ class SIPVoIPLink : public VoIPLink
         virtual bool attendedTransfer(const std::string&, const std::string&);
 
         /**
-         * Handle the incoming refer msg, not finished yet
-         */
-        bool transferStep2 (SIPCall* call);
-
-        /**
          * Refuse the call
          * @param id The call identifier
          * @return bool True on success
@@ -227,22 +213,14 @@ class SIPVoIPLink : public VoIPLink
         /**
          * Send Dtmf over RTP
          */
-        bool dtmfOverRtp (SIPCall* call, char code);
-
-        /**
-         * Send an outgoing call invite
-         * @param call  The current call
-         * @return bool True if all is correct
-         */
-        bool SIPOutgoingInvite (SIPCall* call);
+        void dtmfOverRtp (SIPCall* call, char code);
 
         /**
          * Start a SIP Call
          * @param call  The current call
-         * @param subject Undocumented
          * @return true if all is correct
          */
-        bool SIPStartCall (SIPCall* call, const std::string& subject);
+        bool SIPStartCall (SIPCall* call);
 
         /**
          * Start a new SIP call using the IP2IP profile
@@ -337,11 +315,8 @@ class SIPVoIPLink : public VoIPLink
 
         /**
          * Requests PJSIP library for local IP address, using pj_gethostbyname()
-         * @param addr*                 A string to be initialized
-         *
-         * @return bool                 True if addr successfully initialized
          */
-        bool loadSIPLocalIP (std::string *addr);
+        std::string loadSIPLocalIP ();
 
         /**
          * Helper function for creating a route set from information
@@ -415,12 +390,12 @@ class SIPVoIPLink : public VoIPLink
          * Function used to create a new sip transport or get an existing one from the map.
          * The SIP transport is "acquired" according to account's current settings.
          * This function should be called before registering an account
-         * @param accountID An account id for which transport is to be set
+         * @param account An account for which transport is to be set
          *
          * @return bool True if the account is successfully created or successfully obtained
          * from the transport map
          */
-        bool acquireTransport (const std::string& accountID);
+        bool acquireTransport (SIPAccount *account);
 
 
         /**
@@ -444,18 +419,17 @@ class SIPVoIPLink : public VoIPLink
         /**
          * General Sip transport creation method according to the
          * transport type specified in account settings
-         * @param id The account id for which a transport must
-         * be created.
+         * @param account The account for which a transport must be created.
          */
-        bool createSipTransport (std::string id);
+        bool createSipTransport (SIPAccount *account);
 
         /**
         * Create SIP UDP transport from account's setting
-        * @param id The account id for which a transport must
-        * be created.
-        * @return pj_status_t PJ_SUCCESS on success
+        * @param account The account for which a transport must be created.
+        * @param local True if the account is IP2IP
+        * @return the transport
         */
-        int createUdpTransport (std::string = "");
+        pjsip_transport * createUdpTransport (SIPAccount *account, bool local);
 
         /**
          * Create a TLS transport from the default TLS listener from

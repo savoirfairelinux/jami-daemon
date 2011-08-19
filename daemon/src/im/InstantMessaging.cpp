@@ -111,7 +111,7 @@ int InstantMessaging::closeArchive (std::string& id)
     return (int) imFiles.size ();
 }
 
-bool InstantMessaging::saveMessage (const std::string& message, const std::string& author, std::string& id, int mode)
+bool InstantMessaging::saveMessage (const std::string& message, const std::string& author, const std::string& id, int mode)
 {
 
     // We need here to write the text message in the right file.
@@ -158,7 +158,7 @@ pj_status_t InstantMessaging::notify (const std::string& /*id*/)
     return PJ_SUCCESS;
 }
 
-pj_status_t InstantMessaging::sip_send (pjsip_inv_session *session, std::string& id, const std::string& text)
+pj_status_t InstantMessaging::sip_send (pjsip_inv_session *session, const std::string& id, const std::string& text)
 {
 
     pjsip_method msg_method;
@@ -219,7 +219,7 @@ pj_status_t InstantMessaging::sip_send (pjsip_inv_session *session, std::string&
     return PJ_SUCCESS;
 }
 
-pj_status_t InstantMessaging::send_sip_message (pjsip_inv_session *session, std::string& id, const std::string& message)
+pj_status_t InstantMessaging::send_sip_message (pjsip_inv_session *session, const std::string& id, const std::string& message)
 {
 
     /* Check the length of the message */

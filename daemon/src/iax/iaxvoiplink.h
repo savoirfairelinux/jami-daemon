@@ -78,10 +78,8 @@ class IAXVoIPLink : public VoIPLink
 
         /**
          * Init the voip link
-         * @return true if successful
-         *	      false otherwise
          */
-        virtual bool init (void);
+        virtual void init (void);
 
         /**
          * Terminate a voip link by clearing the call list
@@ -90,18 +88,15 @@ class IAXVoIPLink : public VoIPLink
 
         /**
          * Send out registration
-         * @return bool The new registration state (are we registered ?)
          */
-        virtual void sendRegister (std::string id) throw(VoipLinkException);
+        virtual void sendRegister (Account *a) throw(VoipLinkException);
 
         /**
          * Destroy registration session
          * @todo Send an IAX_COMMAND_REGREL to force unregistration upstream.
          *       Urgency: low
-         * @return bool true if we're registered upstream
-         *		  false otherwise
          */
-        virtual void sendUnregister (std::string id) throw(VoipLinkException);
+        virtual void sendUnregister (Account *a);
 
         /**
          * Create a new outgoing call
@@ -113,37 +108,27 @@ class IAXVoIPLink : public VoIPLink
 
         /**
          * Answer a call
-         * @param id The ID of the call
-         * @return bool true on success
-         *		  false otherwise
+         * @param c The call
          */
-        virtual bool answer (const std::string& id) throw (VoipLinkException);
+        virtual void answer (Call *c) throw (VoipLinkException);
 
         /**
          * Hangup a call
          * @param id The ID of the call
-         * @return bool true on success
-         *		  false otherwise
          */
-        virtual bool hangup (const std::string& id) throw (VoipLinkException);
+        virtual void hangup (const std::string& id) throw (VoipLinkException);
 
         /**
          * Peer Hungup a call
          * @param id The ID of the call
-         * @return bool true on success
-         *		  false otherwise
          */
-        virtual bool peerHungup (const std::string& id) throw (VoipLinkException);
+        virtual void peerHungup (const std::string& id) throw (VoipLinkException);
 
         /**
          * Cancel a call
          * @param id The ID of the call
-         * @return bool true on success
-         *		  false otherwise
          */
-        virtual bool cancel (const std::string& id UNUSED) throw (VoipLinkException){
-            return false;
-        }
+        virtual void cancel (const std::string& id UNUSED) throw (VoipLinkException){}
 
         /**
          * Put a call on hold
