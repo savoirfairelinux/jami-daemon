@@ -102,16 +102,31 @@ calllist_init (calltab_t* tab)
     tab->selectedCall = NULL;
 }
 
+/*
+ * Function passed to calllist_clean to free every QueueElement.
+ */
+static void
+calllist_free_element(gpointer data, gpointer user_data)
+{
+    QueueElement *element = data;
+    if (element->type == HIST_CONFERENCE)
+        free_conference_obj_t (element->elem.conf);
+    else /* HIST_CALL */
+        free_callable_obj_t (element->elem.call);
+    free (element);
+}
+
 void
 calllist_clean (calltab_t* tab)
 {
+    g_queue_foreach (tab->callQueue, calllist_free_element, NULL);
     g_queue_free (tab->callQueue);
 }
 
 void
 calllist_reset (calltab_t* tab)
 {
-    g_queue_free (tab->callQueue);
+    calllist_clean (tab);
     tab->callQueue = g_queue_new();
 }
 

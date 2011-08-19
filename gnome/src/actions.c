@@ -199,7 +199,9 @@ sflphone_quit ()
 
         dbus_unregister (getpid());
         dbus_clean ();
-        //call_list_clean(); TODO
+        calllist_clean (current_calls);
+        calllist_clean (contacts);
+        calllist_clean (history);
         //account_list_clean()
         gtk_main_quit ();
     }
