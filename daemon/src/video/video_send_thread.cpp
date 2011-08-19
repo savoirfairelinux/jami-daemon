@@ -377,7 +377,7 @@ VideoSendThread::VideoSendThread(const std::map<std::string, std::string> &args)
     sdp_("")
 {
     test_source_ = (args_["input"] == "SFLTEST");
-    setCancel(cancelImmediate);
+    setCancel(cancelDeferred);
 }
 
 void VideoSendThread::run()
@@ -391,9 +391,9 @@ void VideoSendThread::run()
     if (!test_source_)
         createScalingContext();
 
-    for (;;)
+    while (not testCancel())
     {
-        if (!test_source_) {
+        if (not test_source_) {
 
             if (av_read_frame(inputCtx_, &inpacket) < 0)
                 break;
@@ -468,7 +468,6 @@ void VideoSendThread::run()
         // free the packet that was allocated by av_read_frame
 next_packet:
         av_free_packet(&inpacket);
-        yield();
     }
 }
 
