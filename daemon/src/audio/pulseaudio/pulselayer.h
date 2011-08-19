@@ -173,20 +173,6 @@ class PulseLayer : public AudioLayer
          */
         void processData (void);
 
-        /**
-         * Get the noise suppressor state
-         * @return true if noise suppressor activated
-         */
-        bool getNoiseSuppressState (void) const {
-            return AudioLayer::_noisesuppressstate;
-        }
-
-        /**
-         * Set the noise suppressor state
-         * @param state true if noise suppressor active, false elsewhere
-         */
-        void setNoiseSuppressState (bool state);
-
     private:
         // Copy Constructor
         PulseLayer (const PulseLayer& rh);

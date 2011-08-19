@@ -144,19 +144,6 @@ class AlsaLayer : public AudioLayer
 
         void audioCallback (void);
 
-        /**
-         * Get the noise suppressor state
-         * @return true if noise suppressor activated
-         */
-        virtual bool getNoiseSuppressState (void) const {
-            return AudioLayer::_noisesuppressstate;
-        }
-
-        /**
-         * Set the noise suppressor state
-         * @param state true if noise suppressor active, false elsewhere
-         */
-        virtual void setNoiseSuppressState (bool state);
 
     private:
         void closeLayer (void);

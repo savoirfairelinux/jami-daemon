@@ -92,11 +92,11 @@ AlsaLayer::AlsaLayer (ManagerImpl* manager)
 
 {
     _debug ("Audio: Build ALSA layer");
-    _urgentRingBuffer.createReadPointer();
+    urgentRingBuffer_.createReadPointer();
 
-    audioPlugin_ = AudioLayer::_manager->audioPreference.getPlugin();
+    audioPlugin_ = manager_->audioPreference.getPlugin();
 
-    AudioLayer::_noisesuppressstate = true;
+    noiseSuppressState_ = true;
 }
 
 // Destructor
@@ -146,26 +146,26 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int indexRing, int sampleRate,
     else if ( (stream == SFL_PCM_PLAYBACK or stream == SFL_PCM_BOTH) and is_playback_open_)
         closePlaybackStream ();
 
-    _indexIn = indexIn;
-    _indexOut = indexOut;
-    _indexRing = indexRing;
+    indexIn_ = indexIn;
+    indexOut_ = indexOut;
+    indexRing_ = indexRing;
 
-    _audioSampleRate = sampleRate;
-    _frameSize = frameSize;
+    audioSampleRate_ = sampleRate;
+    frameSize_ = frameSize;
 
     audioPlugin_ = plugin;
 
-    _debugAlsa (" Setting AlsaLayer: device     in=%2d, out=%2d, ring=%2d", _indexIn, _indexOut, _indexRing);
+    _debugAlsa (" Setting AlsaLayer: device     in=%2d, out=%2d, ring=%2d", indexIn_, indexOut_, indexRing_);
     _debugAlsa ("                   : alsa plugin=%s", audioPlugin_.c_str());
-    _debugAlsa ("                   : nb channel in=%2d, out=%2d", _inChannel, _outChannel);
-    _debugAlsa ("                   : sample rate=%5d, format=%s", _audioSampleRate, SFLDataFormatString);
+    _debugAlsa ("                   : nb channel in=%2d, out=%2d", inChannel_, outChannel_);
+    _debugAlsa ("                   : sample rate=%5d, format=%s", audioSampleRate_, SFLDataFormatString);
 
     audioThread_ = NULL;
 
     // use 1 sec buffer for resampling
-    converter_ = new SamplerateConverter (_audioSampleRate);
-    _dcblocker = new DcBlocker;
-    _audiofilter = new AudioProcessing (_dcblocker);
+    converter_ = new SamplerateConverter (audioSampleRate_);
+    dcblocker_ = new DcBlocker;
+    audiofilter_ = new AudioProcessing (dcblocker_);
 }
 
 void
@@ -173,8 +173,8 @@ AlsaLayer::startStream (void)
 {
     _debug ("Audio: Start stream");
 
-    if (_audiofilter)
-        _audiofilter->resetAlgorithm();
+    if (audiofilter_)
+        audiofilter_->resetAlgorithm();
 
     if (is_playback_running_ and is_capture_running_)
         return;
@@ -184,18 +184,18 @@ AlsaLayer::startStream (void)
     std::string pcmc;
 
     if (audioPlugin_ == PCM_DMIX_DSNOOP) {
-        pcmp = buildDeviceTopo (PCM_DMIX, _indexOut, 0);
-        pcmr = buildDeviceTopo (PCM_DMIX, _indexRing, 0);
-        pcmc = buildDeviceTopo (PCM_DSNOOP, _indexIn, 0);
+        pcmp = buildDeviceTopo (PCM_DMIX, indexOut_, 0);
+        pcmr = buildDeviceTopo (PCM_DMIX, indexRing_, 0);
+        pcmc = buildDeviceTopo (PCM_DSNOOP, indexIn_, 0);
     } else {
-        pcmp = buildDeviceTopo (audioPlugin_, _indexOut, 0);
-        pcmr = buildDeviceTopo (audioPlugin_, _indexRing, 0);
-        pcmc = buildDeviceTopo (audioPlugin_, _indexIn, 0);
+        pcmp = buildDeviceTopo (audioPlugin_, indexOut_, 0);
+        pcmr = buildDeviceTopo (audioPlugin_, indexRing_, 0);
+        pcmc = buildDeviceTopo (audioPlugin_, indexIn_, 0);
     }
 
-    _debug ("pcmp: %s, index %d", pcmp.c_str(), _indexOut);
-    _debug ("pcmr: %s, index %d", pcmr.c_str(), _indexRing);
-    _debug ("pcmc: %s, index %d", pcmc.c_str(), _indexIn);
+    _debug ("pcmp: %s, index %d", pcmp.c_str(), indexOut_);
+    _debug ("pcmr: %s, index %d", pcmr.c_str(), indexRing_);
+    _debug ("pcmc: %s, index %d", pcmc.c_str(), indexIn_);
 
     if (not is_capture_open_)
         open_device (pcmp, pcmc, pcmr, SFL_PCM_CAPTURE);
@@ -222,7 +222,7 @@ AlsaLayer::startStream (void)
         }
     }
 
-    _isStarted = true;
+    isStarted_ = true;
 }
 
 void
@@ -230,7 +230,7 @@ AlsaLayer::stopStream (void)
 {
     _debug ("Audio: Stop stream");
 
-    _isStarted = false;
+    isStarted_ = false;
 
     try {
         /* Stop the audio thread first */
@@ -254,12 +254,6 @@ AlsaLayer::stopStream (void)
     /* Flush the ring buffers */
     flushUrgent ();
     flushMain ();
-}
-
-void AlsaLayer::setNoiseSuppressState (bool state)
-{
-    // if a stream already opened
-    AudioLayer::_noisesuppressstate = state;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -430,17 +424,17 @@ bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle, int type)
     /* Set sample rate. If we can't set to the desired exact value, we set to the nearest acceptable */
     int dir = 0;
 
-    unsigned int exact_ivalue = _audioSampleRate;
+    unsigned int exact_ivalue = audioSampleRate_;
 
     if ((err = snd_pcm_hw_params_set_rate_near (pcm_handle, hwparams, &exact_ivalue, &dir) < 0)) {
         _debugAlsa ("Audio: Error: Cannot set sample rate (%s)", snd_strerror (err));
         return false;
     } else
-        _debug ("Audio: Set audio rate to %d", _audioSampleRate);
+        _debug ("Audio: Set audio rate to %d", audioSampleRate_);
 
     if (dir != 0) {
-        _debugAlsa ("Audio: Error: (%i) The chosen rate %d Hz is not supported by your hardware.Using %d Hz instead. ", type , _audioSampleRate, exact_ivalue);
-        _audioSampleRate = exact_ivalue;
+        _debugAlsa ("Audio: Error: (%i) The chosen rate %d Hz is not supported by your hardware.Using %d Hz instead. ", type , audioSampleRate_, exact_ivalue);
+        audioSampleRate_ = exact_ivalue;
     }
 
     /* Set the number of channels */
@@ -808,19 +802,19 @@ namespace
 
 void AlsaLayer::audioCallback (void)
 {
-    unsigned int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
-    bool resample = _audioSampleRate != _mainBufferSampleRate;
+    unsigned int mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
+    bool resample = audioSampleRate_ != mainBufferSampleRate;
 
     notifyincomingCall();
 
-    unsigned short spkrVolume = _manager->getSpkrVolume();
+    unsigned short spkrVolume = manager_->getSpkrVolume();
 
-    AudioLoop *tone = _manager->getTelephoneTone();
-    AudioLoop *file_tone = _manager->getTelephoneFile();
+    AudioLoop *tone = manager_->getTelephoneTone();
+    AudioLoop *file_tone = manager_->getTelephoneFile();
 
     // AvailForGet tell the number of chars inside the buffer
     // framePerBuffer are the number of data for one channel (left)
-    int urgentAvailBytes = _urgentRingBuffer.AvailForGet();
+    int urgentAvailBytes = urgentRingBuffer_.AvailForGet();
 
     if (!playbackHandle_ or !captureHandle_)
         return;
@@ -836,7 +830,7 @@ void AlsaLayer::audioCallback (void)
         if (toGet > playbackAvailBytes)
 			toGet = playbackAvailBytes;
         SFLDataFormat *out = (SFLDataFormat*) malloc (toGet);
-		_urgentRingBuffer.Get (out, toGet);
+		urgentRingBuffer_.Get (out, toGet);
         adjustVolume(out, toGet / sizeof(SFLDataFormat), spkrVolume);
 
 		write (out, toGet, playbackHandle_);
@@ -867,7 +861,7 @@ void AlsaLayer::audioCallback (void)
             // Compute maximal value to get from the ring buffer
             double resampleFactor = 1.0;
             if (resample) {
-                resampleFactor = (double) _audioSampleRate / _mainBufferSampleRate;
+                resampleFactor = (double) audioSampleRate_ / mainBufferSampleRate;
                 maxNbBytesToGet = (double) toGet / resampleFactor;
             }
 
@@ -882,7 +876,7 @@ void AlsaLayer::audioCallback (void)
 				int inSamples = toGet / sizeof(SFLDataFormat);
 				int outSamples = inSamples * resampleFactor;
 				SFLDataFormat *rsmpl_out = (SFLDataFormat*) malloc (outSamples * sizeof(SFLDataFormat));
-				converter_->resample (out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, inSamples);
+				converter_->resample (out, rsmpl_out, mainBufferSampleRate, audioSampleRate_, inSamples);
 				write (rsmpl_out, outSamples * sizeof(SFLDataFormat), playbackHandle_);
 				free (rsmpl_out);
 			} else {
@@ -932,19 +926,19 @@ void AlsaLayer::audioCallback (void)
     	free(in);
     	return;
     }
-    adjustVolume (in, toPutSamples, _manager->getSpkrVolume());
+    adjustVolume (in, toPutSamples, manager_->getSpkrVolume());
 
     if (resample) {
-    	int outSamples = toPutSamples * ((double) _audioSampleRate / _mainBufferSampleRate);
+    	int outSamples = toPutSamples * ((double) audioSampleRate_ / mainBufferSampleRate);
     	int outBytes = outSamples * sizeof (SFLDataFormat);
         SFLDataFormat* rsmpl_out = (SFLDataFormat*) malloc (outBytes);
-        converter_->resample ( (SFLDataFormat*) in, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, toPutSamples);
-        _audiofilter->processAudio (rsmpl_out, outBytes);
+        converter_->resample ( (SFLDataFormat*) in, rsmpl_out, mainBufferSampleRate, audioSampleRate_, toPutSamples);
+        audiofilter_->processAudio (rsmpl_out, outBytes);
         getMainBuffer()->putData (rsmpl_out, outBytes);
         free (rsmpl_out);
     } else {
         SFLDataFormat* filter_out = (SFLDataFormat*) malloc (toPutBytes);
-		_audiofilter->processAudio (in, filter_out, toPutBytes);
+		audiofilter_->processAudio (in, filter_out, toPutBytes);
 		getMainBuffer()->putData (filter_out, toPutBytes);
 		free (filter_out);
     }

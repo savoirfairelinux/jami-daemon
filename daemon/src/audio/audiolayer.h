@@ -101,7 +101,7 @@ class AudioLayer
          */
         virtual void stopStream (void) = 0;
 
-        bool isStarted(void) { return _isStarted; }
+        bool isStarted(void) const { return isStarted_; }
 
         /**
          * Send a chunk of data to the hardware buffer to start the playback
@@ -121,8 +121,8 @@ class AudioLayer
          *		    Could be: ALSA_PLAYBACK_DEVICE
          *			      ALSA_CAPTURE_DEVICE
          */
-        void setErrorMessage (const int& error) {
-            _errorMessage = error;
+        void setErrorMessage (int error) {
+            errorMessage_ = error;
         }
 
         /**
@@ -130,7 +130,7 @@ class AudioLayer
          * @return int  The error code
          */
         int getErrorMessage() const {
-            return _errorMessage;
+            return errorMessage_;
         }
 
         /**
@@ -139,7 +139,7 @@ class AudioLayer
          *			0 for the first available card on the system, 1 ...
          */
         int getIndexIn() const {
-            return _indexIn;
+            return indexIn_;
         }
 
         /**
@@ -148,7 +148,7 @@ class AudioLayer
          *			0 for the first available card on the system, 1 ...
          */
         int getIndexOut() const {
-            return _indexOut;
+            return indexOut_;
         }
 
         /**
@@ -157,7 +157,7 @@ class AudioLayer
              *			0 for the first available card on the system, 1 ...
              */
         int getIndexRing() const {
-            return _indexRing;
+            return indexRing_;
         }
 
         /**
@@ -166,7 +166,7 @@ class AudioLayer
          *			    default: 44100 HZ
          */
         unsigned int getSampleRate() const {
-            return _audioSampleRate;
+            return audioSampleRate_;
         }
 
         /**
@@ -175,7 +175,7 @@ class AudioLayer
          *			    default: 20 ms
          */
         unsigned int getFrameSize() const {
-            return _frameSize;
+            return frameSize_;
         }
 
         /**
@@ -184,7 +184,7 @@ class AudioLayer
              *
              */
         int getLayerType (void) const {
-            return _layerType;
+            return layerType_;
         }
 
         /**
@@ -196,54 +196,56 @@ class AudioLayer
              * @return MainBuffer* a pointer to the MainBuffer instance
              */
         MainBuffer* getMainBuffer (void) const {
-            return _mainBuffer;
+            return mainBuffer_;
         }
 
         /**
          * Set the mainbuffer once the audiolayer is created
          */
         void setMainBuffer (MainBuffer* mainbuffer) {
-            _mainBuffer = mainbuffer;
+            mainBuffer_ = mainbuffer;
         }
 
         /**
          * Set the audio recorder
          */
         void setRecorderInstance (Recordable* rec) {
-            _recorder = rec;
+            recorder_ = rec;
         }
 
         /**
          * Get the audio recorder
          */
         Recordable* getRecorderInstance (void) const {
-            return _recorder;
+            return recorder_;
         }
-
-        /**
-         * Get the noise suppressor state
-         * @return true if noise suppressor activated
-         */
-        virtual bool getNoiseSuppressState (void) const = 0;
 
         /**
          * Set the noise suppressor state
          * @param state true if noise suppressor active, false elsewhere
          */
-        virtual void setNoiseSuppressState (bool state) = 0;
+        void setNoiseSuppressState (bool state) { noiseSuppressState_ = state; }
+        
+        /**
+         * Get the noise suppressor state
+         * @return true if noise suppressor activated
+         */
+        bool getNoiseSuppressState (void) const {
+            return noiseSuppressState_;
+        }
 
         /**
          * Get the mutex lock for the entire audio layer
          */
         ost::Mutex* getMutexLock (void) {
-            return &_mutex;
+            return &mutex_;
         }
 
         void notifyincomingCall (void);
 
     protected:
 
-        int _layerType;
+        int layerType_;
 
         /**
          * Drop the pending frames and close the capture device
@@ -258,15 +260,15 @@ class AudioLayer
         /**
 	 * Wether or not the audio layer stream is started
          */
-        bool _isStarted;
+        bool isStarted_;
 
         /** Augment coupling, reduce indirect access */
-        ManagerImpl* _manager;
+        ManagerImpl* manager_;
 
         /**
          * Urgent ring buffer used for ringtones
          */
-        RingBuffer _urgentRingBuffer;
+        RingBuffer urgentRingBuffer_;
 
         /**
          * Instance of the MainBuffer for the whole application
@@ -275,72 +277,72 @@ class AudioLayer
          * Audio instances must be registered into the MainBuffer and bound together via the ManagerImpl.
          *
          */
-        MainBuffer* _mainBuffer;
+        MainBuffer* mainBuffer_;
 
         /**
          * A pointer to the recordable instance (may be a call or a conference)
          */
-        Recordable* _recorder;
+        Recordable* recorder_;
 
         /**
          * Number of audio cards on which capture stream has been opened
          */
-        int _indexIn;
+        int indexIn_;
 
         /**
          * Number of audio cards on which playback stream has been opened
          */
-        int _indexOut;
+        int indexOut_;
 
         /**
          * Number of audio cards on which ringtone stream has been opened
          */
-        int _indexRing;
+        int indexRing_;
 
         /**
          * Sample Rate SFLphone should send sound data to the sound card
          * The value can be set in the user config file- now: 44100HZ
          */
-        unsigned int _audioSampleRate;
+        unsigned int audioSampleRate_;
 
         /**
          * Length of the sound frame we capture or read in ms
          * The value can be set in the user config file - now: 20ms
          */
-        unsigned int _frameSize;
+        unsigned int frameSize_;
 
         /**
          * Input channel (mic) should be 1 mono
          */
-        unsigned int _inChannel;
+        unsigned int inChannel_;
 
         /**
          * Output channel (stereo) should be 1 mono
          */
-        unsigned int _outChannel;
+        unsigned int outChannel_;
 
         /** Contains the current error code */
-        int _errorMessage;
+        int errorMessage_;
 
         /**
          * Lock for the entire audio layer
          */
-        ost::Mutex _mutex;
+        ost::Mutex mutex_;
 
-        DcBlocker *_dcblocker;
-        AudioProcessing *_audiofilter;
+        DcBlocker *dcblocker_;
+        AudioProcessing *audiofilter_;
 
-        bool _noisesuppressstate;
+        bool noiseSuppressState_;
 
         /**
          * Time counter used to trigger incoming call notification
          */
-        int _countNotificationTime;
+        int countNotificationTime_;
 
         /**
          * Used to get formated system time in order to compute incoming call notification
          */
-        ost::Time * _time;
+        ost::Time * time_;
 };
 
 #endif // _AUDIO_LAYER_H_
