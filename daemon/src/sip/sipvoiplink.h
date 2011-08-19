@@ -276,15 +276,6 @@ class SIPVoIPLink : public VoIPLink
          */
         void SIPCallReleased (SIPCall *call);
 
-        /**
-         * Handle a re-invite request by the remote peer.
-         * A re-invite is an invite request inside a dialog.
-         * When receiving a re-invite, we updated information
-         * concerning medias
-         * @param sip call
-         */
-        void SIPHandleReinvite (SIPCall *call);
-
         pj_caching_pool *getMemoryPoolFactory();
 
         /**
@@ -363,7 +354,7 @@ class SIPVoIPLink : public VoIPLink
          * putting its reference counter to zero. PJSIP assumes transport destruction since
          * this action can be delayed by ongoing SIP transactions.
          */
-        void shutdownSipTransport (const std::string& accountID);
+        void shutdownSipTransport (SIPAccount *account);
 
         /**
          * Send a SIP message to a call identified by its callid

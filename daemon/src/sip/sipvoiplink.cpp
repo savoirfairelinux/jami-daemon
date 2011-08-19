@@ -2655,31 +2655,15 @@ pj_status_t SIPVoIPLink::createAlternateUdpTransport (SIPAccount *account)
 }
 
 
-void SIPVoIPLink::shutdownSipTransport (const std::string& accountID)
+void SIPVoIPLink::shutdownSipTransport (SIPAccount *account)
 {
-
     _debug ("UserAgent: Shutdown Sip Transport");
 
-    SIPAccount* account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (accountID));
-
-    if (!account)
-        return;
-
-    if (account->getAccountTransport()) {
-
-        _debug ("Transport bound to account, decrease ref count");
-
-        // decrease reference count added by pjsip_regc_send
-        // PJSIP's IDLE timer is set if counter reach 0
-
-        // there is still problems when account registration fails, so comment it for now
-        // status = pjsip_transport_dec_ref(account->getAccountTransport());
-
-        // detach transport from this account
+    pjsip_transport *tr = account->getAccountTransport();
+    if (tr) {
+        pjsip_transport_dec_ref(tr);
         account->setAccountTransport (NULL);
-
     }
-
 }
 
 std::string SIPVoIPLink::parseDisplayName(char * buffer)
@@ -2843,11 +2827,6 @@ void setVoicemailInfo (std::string account, pjsip_msg_body *body)
 		Manager::instance().startVoiceMessageNotification (account, voicemail);
 }
 
-void SIPVoIPLink::SIPHandleReinvite (SIPCall *call UNUSED)
-{
-    _debug ("UserAgent: Handle reinvite");
-}
-
 // This callback is called when the invite session state has changed
 void invite_session_state_changed_cb (pjsip_inv_session *inv, pjsip_event *e)
 {
@@ -2939,8 +2918,6 @@ void sdp_request_offer_cb (pjsip_inv_session *inv, const pjmedia_sdp_session *of
     call->getLocalSDP()->startNegotiation();
 
     pjsip_inv_set_sdp_answer (call->getInvSession(), call->getLocalSDP()->getLocalSdpSession());
-    SIPVoIPLink *link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
-	link->SIPHandleReinvite (call);
 }
 
 void sdp_create_offer_cb (pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
@@ -3262,7 +3239,7 @@ void registration_cb (struct pjsip_regc_cbparam *param)
         account->setRegistrationState (ErrorAuth);
         account->setRegister (false);
 
-        SIPVoIPLink::instance ()->shutdownSipTransport (account->getAccountID());
+        SIPVoIPLink::instance ()->shutdownSipTransport (account);
         return;
     }
 
@@ -3311,14 +3288,14 @@ void registration_cb (struct pjsip_regc_cbparam *param)
 
 		account->setRegister (false);
 
-		SIPVoIPLink::instance ()->shutdownSipTransport (account->getAccountID());
+		SIPVoIPLink::instance ()->shutdownSipTransport (account);
 
 	} else {
 		if (account->isRegister())
 			account->setRegistrationState (Registered);
 		else {
 			account->setRegistrationState (Unregistered);
-			SIPVoIPLink::instance ()->shutdownSipTransport (account->getAccountID());
+			SIPVoIPLink::instance ()->shutdownSipTransport (account);
 		}
 	}
 }
