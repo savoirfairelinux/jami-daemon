@@ -30,8 +30,46 @@
  */
 
 #include "alsalayer.h"
-
+#include "audio/dcblocker.h"
+#include "audio/audioprocessing.h"
+#include "eventthread.h"
+#include "audio/samplerateconverter.h"
 #include "managerimpl.h"
+
+class AlsaThread : public ost::Thread
+{
+    public:
+        AlsaThread (AlsaLayer *alsa);
+
+        ~AlsaThread () {
+            terminate();
+        }
+
+        virtual void run (void);
+
+    private:
+        AlsaThread (const AlsaThread& at);
+        AlsaThread& operator= (const AlsaThread& at);
+
+        AlsaLayer* _alsa;
+};
+
+AlsaThread::AlsaThread (AlsaLayer *alsa)
+    : Thread(), _alsa (alsa)
+{
+    setCancel (cancelDeferred);
+}
+
+/**
+ * Reimplementation of run()
+ */
+void AlsaThread::run (void)
+{
+    while (!testCancel()) {
+        _alsa->audioCallback();
+        Thread::sleep (20);
+    }
+}
 
 // Constructor
 AlsaLayer::AlsaLayer (ManagerImpl* manager)
@@ -179,7 +217,7 @@ AlsaLayer::startStream (void)
     if (audioThread_ == NULL) {
         try {
             _debug ("Audio: Start Audio Thread");
-            audioThread_ = new AudioThread (this);
+            audioThread_ = new AlsaThread (this);
             audioThread_->start();
         } catch (...) {
             _debugException ("Fail to start audio thread");
@@ -659,7 +697,7 @@ AlsaLayer::handle_xrun_playback (snd_pcm_t *handle)
 std::string
 AlsaLayer::buildDeviceTopo (const std::string &plugin, int card, int subdevice)
 {
-    std::stringstream ss,ss1;
+    std::stringstream ss, ss1;
     std::string pcm(plugin);
 
     if (pcm == PCM_DEFAULT)
@@ -923,4 +961,3 @@ void AlsaLayer::audioCallback (void)
 
     free (in);
 }
-

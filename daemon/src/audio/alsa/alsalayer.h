@@ -33,14 +33,12 @@
 #define _ALSA_LAYER_H
 
 #include "audio/audiolayer.h"
-#include "audio/samplerateconverter.h"
-#include "eventthread.h"
 #include <alsa/asoundlib.h>
 
-// #include <fstream>
-
+class SamplerateConverter;
 class RingBuffer;
 class ManagerImpl;
+class AlsaThread;
 
 /**
  * @file  AlsaLayer.h
@@ -280,7 +278,7 @@ class AlsaLayer : public AudioLayer
         bool is_capture_open_;
         bool trigger_request_;
 
-        AudioThread* audioThread_;
+        AlsaThread* audioThread_;
 
         /** Sample rate converter object */
         SamplerateConverter* converter_;

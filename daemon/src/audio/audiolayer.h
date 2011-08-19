@@ -34,17 +34,9 @@
 #ifndef _AUDIO_LAYER_H
 #define _AUDIO_LAYER_H
 
-#include <cc++/numbers.h> // for ost::Time
 #include <cc++/thread.h> // for ost::Mutex
 
-#include "global.h"
-#include "audiodevice.h"
 #include "ringbuffer.h"
-#include "mainbuffer.h"
-#include "dcblocker.h"
-#include "speexechocancel.h"
-#include "echocancel.h"
-
 
 /**
  * @file  audiolayer.h
@@ -52,12 +44,16 @@
  */
 
 class ManagerImpl;
+class DcBlocker;
+class MainBuffer;
+class AudioProcessing;
+namespace ost {
+    class Time;
+}
 
 class AudioLayer
 {
-
     private:
-
         //copy constructor
         AudioLayer (const AudioLayer& rh);
 
@@ -69,38 +65,12 @@ class AudioLayer
          * Constructor
          * @param manager An instance of managerimpl
          */
-        AudioLayer (ManagerImpl* manager , int type)
-            : _layerType (type)
-        	, _isStarted(false)
-            , _manager (manager)
-            , _urgentRingBuffer (SIZEBUF, Call::DEFAULT_ID)
-            , _mainBuffer(0)
-            , _recorder(0)
-            , _indexIn (0)
-            , _indexOut (0)
-            , _indexRing(0)
-            , _audioSampleRate (0)
-            , _frameSize (0)
-            , _inChannel (1)
-            , _outChannel (1)
-            , _errorMessage (0)
-            , _mutex ()
-            , _dcblocker(0)
-            , _audiofilter(0)
-            , _noisesuppressstate(false)
-        	, _countNotificationTime(0)
-            , _time (new ost::Time) {
-
-        }
+        AudioLayer (ManagerImpl* manager , int type);
 
         /**
          * Destructor
          */
-        virtual ~AudioLayer (void) {
-            delete _time;
-            delete _audiofilter;
-            delete _dcblocker;
-        }
+        virtual ~AudioLayer (void);
 
         virtual bool closeLayer (void) = 0;
 

@@ -30,6 +30,7 @@
  */
 
 #include "pulselayer.h"
+#include "audio/audioprocessing.h"
 #include "managerimpl.h"
 
 static void playback_callback (pa_stream* s, size_t bytes, void* userdata)
@@ -392,7 +393,7 @@ void PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int indexR
 
     // Instantiate the algorithm
     AudioLayer::_dcblocker = new DcBlocker();
-    AudioLayer::_audiofilter = new AudioProcessing (static_cast<Algorithm *> (_dcblocker));
+    AudioLayer::_audiofilter = new AudioProcessing (_dcblocker);
 }
 
 

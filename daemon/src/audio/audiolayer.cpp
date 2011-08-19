@@ -30,16 +30,48 @@
  */
 
 #include "audiolayer.h"
+#include "audioprocessing.h"
+#include "audio/dcblocker.h"
 #include "manager.h"
+#include <cc++/numbers.h>
+
+AudioLayer::AudioLayer (ManagerImpl* manager , int type)
+    : _layerType (type)
+    , _isStarted(false)
+    , _manager (manager)
+    , _urgentRingBuffer (SIZEBUF, Call::DEFAULT_ID)
+    , _mainBuffer(0)
+    , _recorder(0)
+    , _indexIn (0)
+    , _indexOut (0)
+    , _indexRing(0)
+    , _audioSampleRate (0)
+    , _frameSize (0)
+    , _inChannel (1)
+    , _outChannel (1)
+    , _errorMessage (0)
+    , _mutex ()
+    , _dcblocker(0)
+    , _audiofilter(0)
+    , _noisesuppressstate(false)
+    , _countNotificationTime(0)
+      , _time (new ost::Time)
+{}
+
+
+AudioLayer::~AudioLayer ()
+{
+    delete _time;
+    delete _audiofilter;
+    delete _dcblocker;
+}
 
 void AudioLayer::flushMain (void)
 {
     ost::MutexLock guard (_mutex);
-
     // should pass call id
     getMainBuffer()->flushAllBuffers();
 }
-
 
 void AudioLayer::flushUrgent (void)
 {
@@ -47,11 +79,9 @@ void AudioLayer::flushUrgent (void)
     _urgentRingBuffer.flushAll();
 }
 
-
 void AudioLayer::putUrgent (void* buffer, int toCopy)
 {
     ost::MutexLock guard (_mutex);
-
     _urgentRingBuffer.Put (buffer, toCopy);
 }
 
@@ -62,9 +92,8 @@ void AudioLayer::notifyincomingCall()
         _countNotificationTime += _time->getSecond();
         int countTimeModulo = _countNotificationTime % 5000;
 
-        if ( (countTimeModulo - _countNotificationTime) < 0) {
+        if ((countTimeModulo - _countNotificationTime) < 0)
             Manager::instance().notificationIncomingCall();
-        }
 
         _countNotificationTime = countTimeModulo;
     }
