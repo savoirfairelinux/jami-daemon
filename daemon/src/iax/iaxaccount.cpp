@@ -135,19 +135,9 @@ std::map<std::string, std::string> IAXAccount::getAccountDetails() const
     a[PASSWORD] = password_;
     a[CONFIG_ACCOUNT_MAILBOX] = mailBox_;
 
-    std::string registrationStateCode;
-    std::string registrationStateDescription;
-
     RegistrationState state(registrationState_);
-    int code = getRegistrationStateDetailed().first;
-    std::stringstream out;
-    out << code;
-    registrationStateCode = out.str();
-    registrationStateDescription = getRegistrationStateDetailed().second;
 
     a[REGISTRATION_STATUS] = Manager::instance().mapStateNumberToString (state);
-    a[REGISTRATION_STATE_CODE] = registrationStateCode;
-    a[REGISTRATION_STATE_DESCRIPTION] = registrationStateDescription;
     a[USERAGENT] = userAgent_;
 
     return a;

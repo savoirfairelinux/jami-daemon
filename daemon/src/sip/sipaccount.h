@@ -125,6 +125,7 @@ class SIPAccount : public Account
          * Virtual destructor
          */
         virtual ~SIPAccount();
+        void setRegistrationStateDetailed (const std::pair<int, std::string> &details) { registrationStateDetailed_ = details; }
 
         virtual void serialize (Conf::YamlEmitter *emitter);
 
@@ -755,6 +756,11 @@ class SIPAccount : public Account
         bool _zrtpDisplaySasOnce;
         bool _zrtpHelloHash;
         bool _zrtpNotSuppWarning;
+        /*
+        * Details about the registration state.
+        * This is a protocol Code:Description pair.
+        */
+        std::pair<int, std::string> registrationStateDetailed_;
 };
 
 #endif

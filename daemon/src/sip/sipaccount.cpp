@@ -468,15 +468,14 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     std::string registrationStateDescription;
 
     if (accountID_ == IP2IP_PROFILE) {
-        registrationStateCode = ""; // emtpy field
         registrationStateDescription = "Direct IP call";
     } else {
         state = getRegistrationState();
-        int code = getRegistrationStateDetailed().first;
+        int code = registrationStateDetailed_.first;
         std::stringstream out;
         out << code;
         registrationStateCode = out.str();
-        registrationStateDescription = getRegistrationStateDetailed().second;
+        registrationStateDescription = registrationStateDetailed_.second;
     }
 
     a[REGISTRATION_STATUS] = (accountID_ == IP2IP_PROFILE) ? "READY": Manager::instance().mapStateNumberToString (state);
