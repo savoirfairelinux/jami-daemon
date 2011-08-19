@@ -138,7 +138,7 @@ void calllist_add_history_call (callable_obj_t *obj)
         element = (QueueElement *)malloc(sizeof(QueueElement));
 	element->type = HIST_CALL;
 	element->elem.call = obj;  
-        g_queue_push_tail (history->callQueue, (gpointer *) element);
+        g_queue_push_tail (history->callQueue, (gpointer) element);
         calltree_add_call (history, obj, NULL);
     }
 }
@@ -151,7 +151,7 @@ void calllist_add_history_conference(conference_obj_t *obj)
 	element = (QueueElement *)malloc(sizeof(QueueElement));
 	element->type = HIST_CONFERENCE;
 	element->elem.conf = obj;
-        g_queue_push_tail (history->callQueue, (gpointer *)element);
+        g_queue_push_tail (history->callQueue, (gpointer) element);
 	calltree_add_conference (history, obj);
     }
 }
@@ -166,7 +166,7 @@ calllist_add_call (calltab_t* tab, callable_obj_t * c)
     element = (QueueElement *)malloc(sizeof(QueueElement));
     element->type = HIST_CALL;
     element->elem.call = c;
-    g_queue_push_tail (tab->callQueue, (gpointer *) element);
+    g_queue_push_tail (tab->callQueue, (gpointer) element);
 }
 
 void

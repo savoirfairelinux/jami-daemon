@@ -75,13 +75,13 @@ account_list_clean ()
 void
 account_list_add (account_t * c)
 {
-    g_queue_push_tail (accountQueue, (gpointer *) c);
+    g_queue_push_tail (accountQueue, (gpointer) c);
 }
 
 void
 account_list_add_at_nth (account_t * c, guint pos)
 {
-    g_queue_push_nth (accountQueue, (gpointer *) c, pos);
+    g_queue_push_nth (accountQueue, (gpointer) c, pos);
 }
 
 

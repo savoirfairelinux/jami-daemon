@@ -80,7 +80,7 @@ void codec_capabilities_load (void)
             gchar **specs = dbus_audio_codec_details (payload);
             codec_create_new_with_specs (payload, specs, TRUE, &c);
             g_strfreev(specs);
-            g_queue_push_tail (codecsCapabilities, (gpointer*) c);
+            g_queue_push_tail (codecsCapabilities, (gpointer) c);
             g_free(*codecs);
         }
         g_free(codecs_orig);
@@ -169,7 +169,7 @@ void codec_list_clear (GQueue **queue)
 void codec_list_add (codec_t * c, GQueue **queue)
 {
     // Add a codec to a specific list
-    g_queue_push_tail (*queue, (gpointer *) c);
+    g_queue_push_tail (*queue, (gpointer) c);
 }
 
 void codec_set_active (codec_t **c)
