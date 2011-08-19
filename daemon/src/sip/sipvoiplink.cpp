@@ -442,8 +442,7 @@ void SIPVoIPLink::sendRegister (Account *a) throw(VoipLinkException)
     account->setRegistrationState (Trying);
 
     // Create the registration according to the account ID
-    // status = pjsip_regc_create (_endpt, (void*) account, &registration_cb, &regc);
-    status = pjsip_regc_create (_endpt, (void *) &account->getAccountID(), &registration_cb, &regc);
+    status = pjsip_regc_create (_endpt, (void *) account, &registration_cb, &regc);
 
     if (status != PJ_SUCCESS) {
         _mutexSIP.leaveMutex();
@@ -1157,7 +1156,7 @@ std::string SIPVoIPLink::getUseragentName (SIPAccount *account)
 {
     std::ostringstream  useragent;
 
-    useragent << account->getUseragent();
+    useragent << account->getUserAgent();
 
     if (useragent.str() == "sflphone" || useragent.str() == "")
         useragent << "/" << PACKAGE_VERSION;
@@ -2932,8 +2931,7 @@ void transaction_state_changed_cb (pjsip_inv_session *inv UNUSED, pjsip_transact
 
 void registration_cb (struct pjsip_regc_cbparam *param)
 {
-	std::string *accountid = static_cast<std::string *>(param->token);
-    SIPAccount * account = static_cast<SIPAccount *> (Manager::instance().getAccount(*accountid));
+	SIPAccount *account = static_cast<SIPAccount *>(param->token);
 
     if (account == NULL) {
         _error("Account is NULL in registration_cb.");
