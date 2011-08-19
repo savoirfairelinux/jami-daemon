@@ -336,11 +336,8 @@ class SIPVoIPLink : public VoIPLink
 
         /**
          * Requests PJSIP library for local IP address, using pj_gethostbyname()
-         * @param addr*                 A string to be initialized
-         *
-         * @return bool                 True if addr successfully initialized
          */
-        bool loadSIPLocalIP (std::string *addr);
+        std::string loadSIPLocalIP ();
 
         /**
          * Helper function for creating a route set from information

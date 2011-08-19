@@ -660,7 +660,7 @@ Call *SIPVoIPLink::newOutgoingCall (const std::string& id, const std::string& to
     _debug ("UserAgent: Local address for thi call: %s", localAddr.c_str());
 
     if (localAddr == "0.0.0.0")
-    	loadSIPLocalIP (&localAddr);
+    	localAddr = loadSIPLocalIP ();
 
     setCallMediaLocal (call, localAddr);
 
@@ -668,7 +668,7 @@ Call *SIPVoIPLink::newOutgoingCall (const std::string& id, const std::string& to
     account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = getInterfaceAddrFromName (account->getLocalInterface ());
 
     if (addrSdp == "0.0.0.0")
-				loadSIPLocalIP (&addrSdp);
+		addrSdp = loadSIPLocalIP ();
 
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
@@ -1646,7 +1646,6 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const std::string& id, const std::string& to
     pjsip_dialog *dialog;
     pjsip_inv_session *inv;
     pjsip_tx_data *tdata;
-    std::string localAddress, addrSdp;
 
     _debug ("UserAgent: New IP2IP call %s to %s", id.c_str(), to.c_str());
 
@@ -1668,19 +1667,11 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const std::string& id, const std::string& to
     }
 
     // Set the local address
-    localAddress = getInterfaceAddrFromName (account->getLocalInterface ());
-    // Set SDP parameters - Set to local
-    addrSdp = localAddress;
-
-    // If local address bound to ANY, reslove it using PJSIP
+    std::string localAddress = getInterfaceAddrFromName (account->getLocalInterface ());
+    // If local address bound to ANY, resolve it using PJSIP
     if (localAddress == "0.0.0.0")
-        loadSIPLocalIP (&localAddress);
+        localAddress = loadSIPLocalIP ();
 
-    _debug ("UserAgent: Local Address for IP2IP call: %s", localAddress.c_str());
-
-    // Local address to appear in SDP
-    if (addrSdp == "0.0.0.0")
-        addrSdp = localAddress;
 
     _debug ("UserAgent: Media Address for IP2IP call: %s", localAddress.c_str());
 
@@ -1706,7 +1697,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const std::string& id, const std::string& to
     }
 
     // Building the local SDP offer
-    call->getLocalSDP()->setLocalIP (addrSdp);
+    call->getLocalSDP()->setLocalIP (localAddress);
     status = call->getLocalSDP()->createOffer (account->getActiveCodecs ());
     if (status != PJ_SUCCESS)
         _error("UserAgent: Failed to create local offer\n");
@@ -1870,7 +1861,8 @@ bool SIPVoIPLink::pjsipInit()
 
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
-    if (!loadSIPLocalIP (&addr)) {
+    addr = loadSIPLocalIP();
+    if (addr.empty()) {
         _debug ("UserAgent: Unable to determine network capabilities");
         return false;
     }
@@ -2148,8 +2140,7 @@ void SIPVoIPLink::createTlsListener (SIPAccount *account)
 
 
     // Init published address for this listener (Local IP address on port 5061)
-    std::string publishedAddress;
-    loadSIPLocalIP (&publishedAddress);
+    std::string publishedAddress = loadSIPLocalIP ();
 
     pj_bzero (&a_name, sizeof (pjsip_host_port));
     pj_cstr (&a_name.host, publishedAddress.c_str());
@@ -2246,11 +2237,11 @@ int SIPVoIPLink::createUdpTransport (std::string id)
     pjsip_host_port a_name;
     // char tmpIP[32];
     pjsip_transport *transport;
-    std::string listeningAddress = "0.0.0.0";
     int listeningPort = _regPort;
 
     /* Use my local address as default value */
-    if (!loadSIPLocalIP (&listeningAddress))
+    std::string listeningAddress = loadSIPLocalIP ();
+	if (listeningAddress.empty())
         return !PJ_SUCCESS;
 
     _debug ("UserAgent: Create UDP transport for account \"%s\"", id.c_str());
@@ -2261,8 +2252,7 @@ int SIPVoIPLink::createUdpTransport (std::string id)
     SIPAccount * account = NULL;
 
     // if account id is not specified, init _localUDPTransport
-    if (id != "")
-        account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
+	account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
     // Set information to the local address and port
     if (account == NULL) {
 
@@ -2288,7 +2278,7 @@ int SIPVoIPLink::createUdpTransport (std::string id)
 
         // Init bound address to ANY
         bound_addr.sin_addr.s_addr = pj_htonl (PJ_INADDR_ANY);
-        loadSIPLocalIP (&listeningAddress);
+        listeningAddress = loadSIPLocalIP ();
     } else {
 
         // bind this account to a specific interface
@@ -2316,7 +2306,7 @@ int SIPVoIPLink::createUdpTransport (std::string id)
     // We must specify this here to avoid the IP2IP_PROFILE
     // to create a transport with name 0.0.0.0 to appear in the via header
     if (id == IP2IP_PROFILE)
-        loadSIPLocalIP (&listeningAddress);
+    	listeningAddress = loadSIPLocalIP ();
 
     if (listeningAddress == "" || listeningPort == 0) {
         _error ("UserAgent: Error invalid address for new udp transport");
@@ -2439,7 +2429,7 @@ std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_
     std::string localaddr (localAddress.ptr, localAddress.slen);
 
     if (localaddr == "0.0.0.0")
-        loadSIPLocalIP (&localaddr);
+    	localaddr = loadSIPLocalIP ();
 
     _debug ("SIP: Local address discovered from attached transport: %s", localaddr.c_str());
 
@@ -2697,18 +2687,12 @@ void SIPVoIPLink::stripSipUriPrefix(std::string& sipUri)
     	sipUri.erase (found);
 }
 
-bool SIPVoIPLink::loadSIPLocalIP (std::string *addr)
+std::string SIPVoIPLink::loadSIPLocalIP ()
 {
     pj_sockaddr ip_addr;
-
-    if (pj_gethostip (pj_AF_INET(), &ip_addr) != PJ_SUCCESS) {
-        // Update the registration state if no network capabilities found
-        _debug ("UserAgent: Get host ip failed!");
-        return false;
-    } else {
-        *addr = std::string (pj_inet_ntoa (ip_addr.ipv4.sin_addr));
-        return true;
-    }
+    if (pj_gethostip (pj_AF_INET(), &ip_addr) == PJ_SUCCESS)
+        return std::string (pj_inet_ntoa (ip_addr.ipv4.sin_addr));
+    return "";
 }
 
 pjsip_route_hdr *SIPVoIPLink::createRouteSet(Account *account, pj_pool_t *hdr_pool)
@@ -2944,7 +2928,7 @@ void sdp_create_offer_cb (pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 
     // If local address bound to ANY, reslove it using PJSIP
     if (localAddress == "0.0.0.0") {
-        link->loadSIPLocalIP (&localAddress);
+    	localAddress = link->loadSIPLocalIP ();
     }
 
     // Local address to appear in SDP
@@ -3503,7 +3487,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
 			transport->obj_name, transport->info, (int) pj_atomic_get (transport->ref_cnt));
 
     if (addrToUse == "0.0.0.0")
-        link->loadSIPLocalIP (&addrToUse);
+    	addrToUse = link->loadSIPLocalIP ();
 
     if (addrSdp == "0.0.0.0")
         addrSdp = addrToUse;
