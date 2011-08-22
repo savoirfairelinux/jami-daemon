@@ -28,6 +28,7 @@ pushd daemon/test
 # Remove the previous XML test file
 rm -rf $XML_RESULTS
 make check || exit 1
+./run_tests.sh
 popd
 
 # Compile the client

@@ -366,4 +366,5 @@ BB_ENABLE_DOXYGEN
 # Go!
 AC_OUTPUT
 
+AC_CONFIG_SUBDIRS([libs/pjproject])
 AC_MSG_NOTICE([[Configuration done! Please make sure that pjsip library (libs/pjproject) has already been compiled. Run `make' to build the software.]])

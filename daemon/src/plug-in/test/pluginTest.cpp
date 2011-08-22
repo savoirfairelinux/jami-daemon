@@ -28,7 +28,7 @@
  *  as that of the covered work.
  */
 
-#include "../plugin.h"
+#include "plugin.h"
 
 #define MAJOR_VERSION   1
 #define MINOR_VERSION   0

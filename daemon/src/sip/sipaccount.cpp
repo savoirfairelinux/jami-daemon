@@ -93,8 +93,8 @@ SIPAccount::SIPAccount (const std::string& accountID)
 SIPAccount::~SIPAccount()
 {
     /* One SIP account less connected to the sip voiplink */
-    if (_accountID != "default")
-        dynamic_cast<SIPVoIPLink*> (_link)->decrementClients();
+    if (accountID_ != "default")
+        dynamic_cast<SIPVoIPLink*> (link_)->decrementClients();
 
     /* Delete accounts-related information */
     _regc = NULL;
@@ -114,12 +114,12 @@ void SIPAccount::serialize (Conf::YamlEmitter *emitter)
     Conf::MappingNode zrtpmap (NULL);
     Conf::MappingNode tlsmap (NULL);
 
-    Conf::ScalarNode id (Account::_accountID);
-    Conf::ScalarNode username (Account::_username);
-    Conf::ScalarNode alias (Account::_alias);
-    Conf::ScalarNode hostname (Account::_hostname);
-    Conf::ScalarNode enable (_enabled);
-    Conf::ScalarNode type (Account::_type);
+    Conf::ScalarNode id (Account::accountID_);
+    Conf::ScalarNode username (Account::username_);
+    Conf::ScalarNode alias (Account::alias_);
+    Conf::ScalarNode hostname (Account::hostname_);
+    Conf::ScalarNode enable (enabled_);
+    Conf::ScalarNode type (Account::type_);
     Conf::ScalarNode expire (_registrationExpire);
     Conf::ScalarNode interface (_interface);
     std::stringstream portstr;
@@ -127,26 +127,27 @@ void SIPAccount::serialize (Conf::YamlEmitter *emitter)
     Conf::ScalarNode port (portstr.str());
     Conf::ScalarNode serviceRoute (_serviceRoute);
 
-    Conf::ScalarNode mailbox (_mailBox);
+    Conf::ScalarNode mailbox (mailBox_);
     Conf::ScalarNode publishAddr (_publishedIpAddress);
     std::stringstream publicportstr;
     publicportstr << _publishedPort;
     Conf::ScalarNode publishPort (publicportstr.str());
     Conf::ScalarNode sameasLocal (_publishedSameasLocal);
     Conf::ScalarNode resolveOnce (_resolveOnce);
-    Conf::ScalarNode codecs (_codecStr);
-    std::vector<std::string>::const_iterator git;
-    for(git = _videoCodecOrder.begin() ; git != _videoCodecOrder.end(); ++git)
-		std::cout << *git << std::endl;
-    std::cout << Manager::instance ().serialize (_videoCodecOrder) << std::endl;
 
-    Conf::ScalarNode vcodecs (Manager::instance ().serialize (_videoCodecOrder));
+    Conf::ScalarNode codecs (codecStr_);
+    for (std::vector<std::string>::const_iterator git = videoCodecOrder_.begin();
+            git != videoCodecOrder_.end(); ++git)
+        _debug("%s", (*git).c_str());
+    _debug("%s", Manager::instance().serialize(videoCodecOrder_).c_str());
 
-    Conf::ScalarNode ringtonePath (_ringtonePath);
-    Conf::ScalarNode ringtoneEnabled (_ringtoneEnabled);
+    Conf::ScalarNode vcodecs(Manager::instance().serialize(videoCodecOrder_));
+
+    Conf::ScalarNode ringtonePath (ringtonePath_);
+    Conf::ScalarNode ringtoneEnabled (ringtoneEnabled_);
     Conf::ScalarNode stunServer (_stunServer);
     Conf::ScalarNode stunEnabled (_stunEnabled);
-    Conf::ScalarNode displayName (_displayName);
+    Conf::ScalarNode displayName (displayName_);
     Conf::ScalarNode dtmfType (_dtmfType==OVERRTP ? "overrtp" : "sipinfo");
 
     std::stringstream countstr;
@@ -243,7 +244,7 @@ void SIPAccount::serialize (Conf::YamlEmitter *emitter)
 
     try {
         emitter->serializeAccount (&accountmap);
-    } catch (Conf::YamlEmitterException &e) {
+    } catch (const Conf::YamlEmitterException &e) {
         _error ("ConfigTree: %s", e.what());
     }
 
@@ -268,22 +269,23 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
 
     assert(map);
 
-    map->getValue(aliasKey, &_alias);
-    map->getValue(typeKey, &_type);
-    map->getValue(usernameKey, &_username);
-    map->getValue(hostnameKey, &_hostname);
-    map->getValue(accountEnableKey, &_enabled);
-    map->getValue(mailboxKey, &_mailBox);
-    map->getValue(codecsKey, &_codecStr);
+    map->getValue(aliasKey, &alias_);
+    map->getValue(typeKey, &type_);
+    map->getValue(usernameKey, &username_);
+    map->getValue(hostnameKey, &hostname_);
+    map->getValue(accountEnableKey, &enabled_);
+    map->getValue(mailboxKey, &mailBox_);
+    map->getValue(codecsKey, &codecStr_);
     std::string vcodecs;
     map->getValue(videocodecsKey, &vcodecs);
+
     // Update codec list which one is used for SDP offer
-    setActiveCodecs (ManagerImpl::unserialize (_codecStr));
+    setActiveCodecs (ManagerImpl::unserialize (codecStr_));
 
-    setActiveVideoCodecs (Manager::instance ().unserialize (vcodecs));
+    setActiveVideoCodecs (Manager::instance().unserialize (vcodecs));
 
-    map->getValue(ringtonePathKey, &_ringtonePath);
-    map->getValue(ringtoneEnabledKey, &_ringtoneEnabled);
+    map->getValue(ringtonePathKey, &ringtonePath_);
+    map->getValue(ringtoneEnabledKey, &ringtoneEnabled_);
     map->getValue(expireKey, &_registrationExpire);
     map->getValue(interfaceKey, &_interface);
     int port;
@@ -307,7 +309,7 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
     // Init stun server name with default server name
     _stunServerName = pj_str ( (char*) _stunServer.data());
 
-    map->getValue(displayNameKey, &_displayName);
+    map->getValue(displayNameKey, &displayName_);
 
 	std::vector<std::map<std::string, std::string> > creds;
 
@@ -342,7 +344,7 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
 		std::string password;
 	    map->getValue(passwordKey, &password);
 
-		credmap[USERNAME] = _username;
+		credmap[USERNAME] = username_;
 		credmap[PASSWORD] = password;
 		credmap[REALM] = "*";
 		creds.push_back(credmap);
@@ -430,7 +432,7 @@ void SIPAccount::setAccountDetails (std::map<std::string, std::string> details)
 
     // TLS settings
     // The TLS listener is unique and globally defined through IP2IP_PROFILE
-    if (_accountID == IP2IP_PROFILE)
+    if (accountID_ == IP2IP_PROFILE)
     	setTlsListenerPort (atoi (details[TLS_LISTENER_PORT].c_str()));
 
     setTlsEnable (details[TLS_ENABLE]);
@@ -462,9 +464,9 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 {
     std::map<std::string, std::string> a;
 
-    a[ACCOUNT_ID] = _accountID;
+    a[ACCOUNT_ID] = accountID_;
     // The IP profile does not allow to set an alias
-    a[CONFIG_ACCOUNT_ALIAS] = (_accountID == IP2IP_PROFILE) ? IP2IP_PROFILE : getAlias();
+    a[CONFIG_ACCOUNT_ALIAS] = (accountID_ == IP2IP_PROFILE) ? IP2IP_PROFILE : getAlias();
 
     a[CONFIG_ACCOUNT_ENABLE] = isEnabled() ? "true" : "false";
     a[CONFIG_ACCOUNT_TYPE] = getType();
@@ -479,26 +481,25 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     std::string registrationStateCode;
     std::string registrationStateDescription;
 
-    if (_accountID == IP2IP_PROFILE) {
-        registrationStateCode = ""; // emtpy field
+    if (accountID_ == IP2IP_PROFILE) {
         registrationStateDescription = "Direct IP call";
     } else {
         state = getRegistrationState();
-        int code = getRegistrationStateDetailed().first;
+        int code = registrationStateDetailed_.first;
         std::stringstream out;
         out << code;
         registrationStateCode = out.str();
-        registrationStateDescription = getRegistrationStateDetailed().second;
+        registrationStateDescription = registrationStateDetailed_.second;
     }
 
-    a[REGISTRATION_STATUS] = (_accountID == IP2IP_PROFILE) ? "READY": Manager::instance().mapStateNumberToString (state);
+    a[REGISTRATION_STATUS] = (accountID_ == IP2IP_PROFILE) ? "READY": Manager::instance().mapStateNumberToString (state);
     a[REGISTRATION_STATE_CODE] = registrationStateCode;
     a[REGISTRATION_STATE_DESCRIPTION] = registrationStateDescription;
 
     // Add sip specific details
     a[ROUTESET] = getServiceRoute();
     a[CONFIG_ACCOUNT_RESOLVE_ONCE] = isResolveOnce() ? "true" : "false";
-    a[USERAGENT] = getUseragent();
+    a[USERAGENT] = getUserAgent();
 
     a[CONFIG_ACCOUNT_REGISTRATION_EXPIRE] = getRegistrationExpire();
     a[LOCAL_INTERFACE] = getLocalInterface();
@@ -548,14 +549,14 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 
 void SIPAccount::setVoIPLink()
 {
-    _link = SIPVoIPLink::instance ();
-    dynamic_cast<SIPVoIPLink*> (_link)->incrementClients();
+    link_ = SIPVoIPLink::instance ();
+    dynamic_cast<SIPVoIPLink*> (link_)->incrementClients();
 }
 
 
 int SIPAccount::registerVoIPLink()
 {
-    if (_hostname.length() >= PJ_MAX_HOSTNAME) {
+    if (hostname_.length() >= PJ_MAX_HOSTNAME) {
         return 1;
     }
 
@@ -577,11 +578,10 @@ int SIPAccount::registerVoIPLink()
     try {
         // In our definition of the ip2ip profile (aka Direct IP Calls),
         // no registration should be performed
-        if (_accountID != IP2IP_PROFILE) {
-            _link->sendRegister (this);
-        }
+        if (accountID_ != IP2IP_PROFILE)
+            link_->sendRegister (this);
     }
-    catch(VoipLinkException &e) {
+    catch (const VoipLinkException &e) {
         _error("SIPAccount: %s", e.what());
     }
 
@@ -590,15 +590,15 @@ int SIPAccount::registerVoIPLink()
 
 int SIPAccount::unregisterVoIPLink()
 {
-    if (_accountID == IP2IP_PROFILE) {
+    if (accountID_ == IP2IP_PROFILE) {
         return true;
     }
 
     try {
-        _link->sendUnregister (this);
+        link_->sendUnregister (this);
         setRegistrationInfo (NULL);
     }
-    catch(VoipLinkException &e) {
+    catch (const VoipLinkException &e) {
         _error("SIPAccount: %s", e.what());
         return false;
     }
@@ -726,8 +726,8 @@ std::string SIPAccount::getFromUri (void) const
 
     std::string scheme;
     std::string transport;
-    std::string username = _username;
-    std::string hostname = _hostname;
+    std::string username = username_;
+    std::string hostname = hostname_;
 
     // UDP does not require the transport specification
 
@@ -740,19 +740,14 @@ std::string SIPAccount::getFromUri (void) const
     }
 
     // Get login name if username is not specified
-    if (_username.empty()) {
+    if (username_.empty())
         username = getLoginName();
-    }
-
 
     // Get machine hostname if not provided
-    if (_hostname.empty()) {
+    if (hostname_.empty())
         hostname = getMachineName();
-    }
-
 
     int len = pj_ansi_snprintf (uri, PJSIP_MAX_URL_SIZE,
-
             "<%s%s@%s%s>",
             scheme.c_str(),
             username.c_str(),
@@ -787,7 +782,7 @@ std::string SIPAccount::getToUri (const std::string& username) const
     // Check if hostname is already specified
     if (username.find ("@") == std::string::npos) {
         // hostname not specified
-        hostname = _hostname;
+        hostname = hostname_;
     }
 
     int len = pj_ansi_snprintf (uri, PJSIP_MAX_URL_SIZE,
@@ -808,7 +803,7 @@ std::string SIPAccount::getServerUri (void) const
 
     std::string scheme;
     std::string transport;
-    std::string hostname = _hostname;
+    std::string hostname = hostname_;
 
     // UDP does not require the transport specification
 
@@ -850,16 +845,16 @@ std::string SIPAccount::getContactHeader (const std::string& address, const std:
         transport = "";
     }
 
-    _debug ("Display Name: %s", _displayName.c_str());
+    _debug ("Display Name: %s", displayName_.c_str());
 
     int len = pj_ansi_snprintf (contact, PJSIP_MAX_URL_SIZE,
 
             "%s%s<%s%s%s%s%s%s:%d%s>",
-            _displayName.c_str(),
-            (_displayName.empty() ? "" : " "),
+            displayName_.c_str(),
+            (displayName_.empty() ? "" : " "),
             scheme.c_str(),
-            _username.c_str(),
-            (_username.empty() ? "":"@"),
+            username_.c_str(),
+            (username_.empty() ? "":"@"),
             beginquote,
             address.c_str(),
             endquote,

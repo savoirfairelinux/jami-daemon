@@ -30,7 +30,7 @@
 
 #include <string.h>
 
-#include <assistant.h>
+#include "assistant.h"
 #include "reqaccount.h"
 
 // From version 2.16, gtk provides the functionalities libsexy used to provide

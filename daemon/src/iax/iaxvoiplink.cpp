@@ -265,6 +265,7 @@ IAXVoIPLink::sendAudioFromMic (void)
 		if (audioRate != mainBufferSampleRate) {
 			converter->resample (decData , resampledData , audioRate, mainBufferSampleRate, samples);
 			in = resampledData;
+            outSamples = 0;
 		} else {
 			outSamples = samples;
 			in = decData;

@@ -28,7 +28,7 @@
  *  as that of the covered work.
  */
 
-#include <stdio.h>
+#include <cstdio>
 #include <sstream>
 #include <cstdlib>
 

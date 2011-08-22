@@ -22,6 +22,7 @@ marshaller.h: marshaller.list
 
 libdbus_la_SOURCES=     \
     dbus.c              \
+	dbus.h				\
     $(BUILT_SOURCES)
 
 libdbus_la_LDFLAGS= $(DBUSGLIB_LDFLAGS) $(LIBNOTIFY_LDFLAGS) \

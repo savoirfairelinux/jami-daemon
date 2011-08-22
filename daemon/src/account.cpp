@@ -35,18 +35,18 @@
 #include "video/video_endpoint.h"
 
 Account::Account (const std::string& accountID, const std::string &type) :
-    _accountID (accountID)
-    , _link (NULL)
-    , _enabled (true)
-    , _type (type)
-    , _registrationState (Unregistered)
-	, _videoCodecOrder ()
-    , _codecOrder ()
-    , _codecStr ("")
-    , _ringtonePath ("/usr/share/sflphone/ringtones/konga.ul")
-    , _ringtoneEnabled (true)
-    , _displayName ("")
-    , _useragent ("SFLphone")
+    accountID_ (accountID)
+    , link_ (NULL)
+    , enabled_ (true)
+    , type_ (type)
+    , registrationState_ (Unregistered)
+    , codecOrder_ ()
+    , videoCodecOrder_ ()
+    , codecStr_ ("")
+    , ringtonePath_ ("/usr/share/sflphone/ringtones/konga.ul")
+    , ringtoneEnabled_ (true)
+    , displayName_ ("")
+    , userAgent_ ("SFLphone")
 {
     // Initialize the codec order, used when creating a new account
     loadDefaultCodecs();
@@ -56,10 +56,10 @@ Account::~Account()
 {
 }
 
-void Account::setRegistrationState (RegistrationState state)
+void Account::setRegistrationState (const RegistrationState &state)
 {
-    if (state != _registrationState) {
-        _registrationState = state;
+    if (state != registrationState_) {
+        registrationState_ = state;
 
         // Notify the client
         Manager::instance().connectionStatusNotification();
@@ -88,22 +88,22 @@ void Account::loadDefaultCodecs()
 
 void Account::setActiveVideoCodecs (const std::vector <std::string> &list)
 {
-	_videoCodecOrder = !list.empty() ? list : sfl_video::getVideoCodecList();
+	videoCodecOrder_ = !list.empty() ? list : sfl_video::getVideoCodecList();
 }
 
 void Account::setActiveCodecs (const std::vector <std::string> &list)
 {
     // first clear the previously stored codecs
-    _codecOrder.clear();
+    codecOrder_.clear();
 
     // list contains the ordered payload of active codecs picked by the user for this account
     // we used the CodecOrder vector to save the order.
-    size_t i, size = list.size();
-    for (i = 0; i < size; i++) {
-        int payload = std::atoi (list[i].data());
-        _codecOrder.push_back ( (AudioCodecType) payload);
+    for (std::vector<std::string>::const_iterator iter = list.begin(); iter != list.end();
+            ++iter) {
+        int payload = std::atoi (iter->c_str());
+        codecOrder_.push_back ( (AudioCodecType) payload);
     }
 
     // update the codec string according to new codec selection
-    _codecStr = ManagerImpl::serialize (list);
+    codecStr_ = ManagerImpl::serialize (list);
 }

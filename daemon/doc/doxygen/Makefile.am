@@ -1,7 +1,5 @@
 if ENABLE_DOXYGEN
 
-SUBDIRS =
-
 docdir = ${prefix}/share/doc/wifidog-@VERSION@
 html_parent_dir = .
 HTML_HEADER = 

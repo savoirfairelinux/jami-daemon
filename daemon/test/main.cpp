@@ -28,9 +28,9 @@
  *  as that of the covered work.
  */
 
-#include <logger.h>
-#include <manager.h>
-#include <constants.h>
+#include "logger.h"
+#include "manager.h"
+#include "constants.h"
 
 #include <cstdlib>
 
@@ -119,11 +119,11 @@ int main (int argc, char* argv[])
 	}
 
     // Run the tests.
-    bool wasSucessful = runner.run();
+    bool wasSuccessful = runner.run();
 
     Manager::instance().terminate();
 
     system("mv " CONFIG_SAMPLE ".bak " CONFIG_SAMPLE);
 
-    return wasSucessful ? 0 : 1;
+    return wasSuccessful ? 0 : 1;
 }

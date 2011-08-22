@@ -4,8 +4,11 @@ noinst_LTLIBRARIES = libwidget.la
 
 libwidget_la_SOURCES = \
 		gtkscrollbook.c \
+		gtkscrollbook.h \
+		minidialog.h \
 		minidialog.c \
-		imwidget.c
+		imwidget.c \
+		imwidget.h
 
 libwidget_la_LDFLAGS = $(DBUSGLIB_LDFLAGS) $(LIBNOTIFY_LDFLAGS) \
 			$(SFLGTK_LDFLAGS) $(SFLGLIB_LDFLAGS) $(WEBKIT_LDFLAGS) $(LIBGNOMEUI_LDFLAGS) \

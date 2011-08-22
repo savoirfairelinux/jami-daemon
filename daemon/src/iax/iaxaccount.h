@@ -69,8 +69,8 @@ class IAXAccount : public Account
          */
         int unregisterVoIPLink();
 
-        const std::string &getPassword (void) const {
-        	return _password;
+        std::string getPassword (void) const {
+        	return password_;
         }
 
     private:
@@ -78,7 +78,7 @@ class IAXAccount : public Account
         /**
          * Account login information: password
          */
-        std::string _password;
+        std::string password_;
 };
 
 #endif

@@ -38,35 +38,35 @@
 IAXAccount::IAXAccount (const std::string& accountID)
     : Account (accountID, "iax2")
 {
-    _link = new IAXVoIPLink (accountID);
+    link_ = new IAXVoIPLink (accountID);
 }
 
 
 IAXAccount::~IAXAccount()
 {
-    delete _link;
+    delete link_;
 }
 
 void IAXAccount::serialize (Conf::YamlEmitter *emitter)
 {
-	if(emitter == NULL) {
+	if (emitter == NULL) {
 		_error("IAXAccount: Error: emitter is NULL in serialize");
 		return;
 	}
 
     Conf::MappingNode accountmap (NULL);
 
-    Conf::ScalarNode id (Account::_accountID);
-    Conf::ScalarNode username (Account::_username);
-    Conf::ScalarNode password (_password);
-    Conf::ScalarNode alias (Account::_alias);
-    Conf::ScalarNode hostname (Account::_hostname);
-    Conf::ScalarNode enable (_enabled);
-    Conf::ScalarNode type (Account::_type);
-    Conf::ScalarNode mailbox (_mailBox);
+    Conf::ScalarNode id (accountID_);
+    Conf::ScalarNode username (username_);
+    Conf::ScalarNode password (password_);
+    Conf::ScalarNode alias (alias_);
+    Conf::ScalarNode hostname (hostname_);
+    Conf::ScalarNode enable (enabled_);
+    Conf::ScalarNode type (type_);
+    Conf::ScalarNode mailbox (mailBox_);
 
-    Conf::ScalarNode codecs (_codecStr);
-    Conf::ScalarNode displayName (_displayName);
+    Conf::ScalarNode codecs (codecStr_);
+    Conf::ScalarNode displayName (displayName_);
 
     accountmap.setKeyValue (aliasKey, &alias);
     accountmap.setKeyValue (typeKey, &type);
@@ -89,68 +89,56 @@ void IAXAccount::serialize (Conf::YamlEmitter *emitter)
 
 void IAXAccount::unserialize (Conf::MappingNode *map)
 {
-    if(map == NULL) {
+    if (map == NULL) {
     	_error("IAXAccount: Error: Map is NULL in unserialize");
     	return;
     }
 
-    map->getValue(aliasKey, &_alias);
-    map->getValue(typeKey,  &_type);
-    map->getValue(usernameKey, &_username);
-    map->getValue(passwordKey, &_password);
-    map->getValue(hostnameKey, &_hostname);
-    map->getValue(accountEnableKey, &_enabled);
-    map->getValue(mailboxKey, &_mailBox);
-    map->getValue (codecsKey, &_codecStr);
+    map->getValue(aliasKey, &alias_);
+    map->getValue(typeKey,  &type_);
+    map->getValue(usernameKey, &username_);
+    map->getValue(passwordKey, &password_);
+    map->getValue(hostnameKey, &hostname_);
+    map->getValue(accountEnableKey, &enabled_);
+    map->getValue(mailboxKey, &mailBox_);
+    map->getValue (codecsKey, &codecStr_);
 
     // Update codec list which one is used for SDP offer
-    setActiveCodecs (ManagerImpl::unserialize (_codecStr));
-    map->getValue (displayNameKey, &_displayName);
+    setActiveCodecs (ManagerImpl::unserialize (codecStr_));
+    map->getValue (displayNameKey, &displayName_);
 }
 
 void IAXAccount::setAccountDetails (std::map<std::string, std::string> details)
 {
     // Account setting common to SIP and IAX
-    setAlias (details[CONFIG_ACCOUNT_ALIAS]);
-    setType (details[CONFIG_ACCOUNT_TYPE]);
-    setUsername (details[USERNAME]);
-    setHostname (details[HOSTNAME]);
-    _password = (details[PASSWORD]);
-    setEnabled ( (details[CONFIG_ACCOUNT_ENABLE].compare ("true") == 0));
-    setMailBox (details[CONFIG_ACCOUNT_MAILBOX]);
-
-    setDisplayName (details[DISPLAY_NAME]);
-    setUseragent (details[USERAGENT]);
+    alias_ = details[CONFIG_ACCOUNT_ALIAS];
+    type_ = details[CONFIG_ACCOUNT_TYPE];
+    username_ = details[USERNAME];
+    hostname_ = details[HOSTNAME];
+    password_ = details[PASSWORD];
+    enabled_ = details[CONFIG_ACCOUNT_ENABLE] == "true";
+    mailBox_ = details[CONFIG_ACCOUNT_MAILBOX];
+    displayName_ = details[DISPLAY_NAME];
+    userAgent_ = details[USERAGENT];
 }
 
 std::map<std::string, std::string> IAXAccount::getAccountDetails() const
 {
     std::map<std::string, std::string> a;
 
-    a.insert (std::pair<std::string, std::string> (ACCOUNT_ID, _accountID));
-    a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ALIAS, getAlias()));
-    a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ENABLE, isEnabled() ? "true" : "false"));
-    a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_TYPE, getType()));
-    a.insert (std::pair<std::string, std::string> (HOSTNAME, getHostname()));
-    a.insert (std::pair<std::string, std::string> (USERNAME, getUsername()));
-    a.insert (std::pair<std::string, std::string> (PASSWORD, getPassword()));
-    a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_MAILBOX, getMailBox()));
+    a[ACCOUNT_ID] = accountID_;
+    a[CONFIG_ACCOUNT_ALIAS] = alias_;
+    a[CONFIG_ACCOUNT_ENABLE] = enabled_ ? "true" : "false";
+    a[CONFIG_ACCOUNT_TYPE] = type_;
+    a[HOSTNAME] = hostname_;
+    a[USERNAME] = username_;
+    a[PASSWORD] = password_;
+    a[CONFIG_ACCOUNT_MAILBOX] = mailBox_;
 
-    RegistrationState state = Unregistered;
-    std::string registrationStateCode;
-    std::string registrationStateDescription;
+    RegistrationState state(registrationState_);
 
-    state = getRegistrationState();
-    int code = getRegistrationStateDetailed().first;
-    std::stringstream out;
-    out << code;
-    registrationStateCode = out.str();
-    registrationStateDescription = getRegistrationStateDetailed().second;
-
-    a.insert (std::pair<std::string, std::string> (REGISTRATION_STATUS, Manager::instance().mapStateNumberToString (state)));
-    a.insert (std::pair<std::string, std::string> (REGISTRATION_STATE_CODE, registrationStateCode));
-    a.insert (std::pair<std::string, std::string> (REGISTRATION_STATE_DESCRIPTION, registrationStateDescription));
-    a.insert (std::pair<std::string, std::string> (USERAGENT, getUseragent()));
+    a[REGISTRATION_STATUS] = Manager::instance().mapStateNumberToString (state);
+    a[USERAGENT] = userAgent_;
 
     return a;
 }
@@ -158,22 +146,16 @@ std::map<std::string, std::string> IAXAccount::getAccountDetails() const
 
 void IAXAccount::setVoIPLink()
 {
-
 }
 
 int IAXAccount::registerVoIPLink()
 {
 	try {
+        link_->init();
 
-        _link->init();
-
-        // Stuff needed for IAX registration
-        setHostname (_hostname);
-        setUsername (_username);
-
-        _link->sendRegister (this);
+        link_->sendRegister (this);
 	}
-	catch(VoipLinkException &e) {
+	catch (const VoipLinkException &e) {
 		_error("IAXAccount: %s", e.what());
 	}
 
@@ -184,12 +166,11 @@ int
 IAXAccount::unregisterVoIPLink()
 {
 	try {
-        _link->sendUnregister (this);
-        _link->terminate();
-
+        link_->sendUnregister (this);
+        link_->terminate();
         return 0;
 	}
-	catch(VoipLinkException &e) {
+	catch (const VoipLinkException &e) {
 		_error("IAXAccount: %s", e.what());
 	}
 
@@ -201,6 +182,6 @@ IAXAccount::loadConfig()
 {
     // If IAX is not supported, do not register this account
 #if !HAVE_IAX
-	_enabled = false;
+	enabled_ = false;
 #endif
 }

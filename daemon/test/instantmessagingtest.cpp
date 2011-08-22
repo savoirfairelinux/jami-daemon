@@ -184,7 +184,7 @@ static void XMLCALL startElementCallback(void *userData, const char *name, const
 
 }
 
-static void XMLCALL endElementCallback(void *userData, const char *name)
+static void XMLCALL endElementCallback(void * /*userData*/, const char * /*name*/)
 {
     // std::cout << "endElement " << name << std::endl;    
 }
