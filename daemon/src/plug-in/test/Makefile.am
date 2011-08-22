@@ -2,11 +2,12 @@ include $(top_srcdir)/globals.mak
 
 PLUGIN_LIB = libplugintest.so
 libplugintest_so_SOURCES = pluginTest.cpp
-libplugintest_so_CXXFLAGS = -fPIC -g -Wall
+LLIBS=$(top_builddir)/src/plug-in/libplugin.la
+libplugintest_so_CXXFLAGS = -fPIC -g -Wall -I $(top_srcdir)/src/plug-in
 libplugintest_so_LDFLAGS = --shared -lc
 INSTALL_PLUGIN_RULE = install-libplugintest_so
 
-noinst_PROGRAMS = libplugintest.so
+check_PROGRAMS = libplugintest.so
 
 install-exec-local:  install-libplugintest_so
 uninstall-local:  uninstall-libplugintest_so

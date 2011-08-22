@@ -1,4 +1,4 @@
-SUBDIRS =
+if ENABLE_DOXYGEN
 
 docdir = ${prefix}/share/doc/wifidog-@VERSION@
 html_parent_dir = .
@@ -53,3 +53,5 @@ maintainer-clean-local: clean-local
             -e 's:@-html_footer-@:${HTML_FOOTER}:g'
 	rm $@.tmp3
 	mv $@.tmp4 $@
+
+endif

@@ -47,7 +47,13 @@ service_DATA = $(service_in_files:.service.in=.service)
 $(service_DATA): $(service_in_files) Makefile
 	sed -e "s|libexec|$(libdir)/sflphone|" $<> $@
 
-EXTRA_DIST = *.xml README
+EXTRA_DIST = README $(service_in_files) \
+			 callmanager-introspec.xml \
+			 configurationmanager-introspec.xml \
+			 contactmanager-introspec.xml \
+			 instance-introspec.xml \
+			 org.freedesktop.NetworkManager.xml
 
 CLEANFILES= \
-    $(BUILT_SOURCES)
+    $(BUILT_SOURCES) \
+	org.sflphone.SFLphone.service

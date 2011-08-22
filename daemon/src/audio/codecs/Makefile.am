@@ -66,7 +66,7 @@ endif
 
 noinst_PROGRAMS = libcodec_ulaw.so libcodec_alaw.so libcodec_g722.so $(GSM_LIB) $(SPEEX_NB_LIB) $(SPEEX_WB_LIB) $(SPEEX_UB_LIB) $(CELT_LIB)
 
-noinst_HEADERS = audiocodec.h audiocodecfactory.h speexcodec.h
+noinst_HEADERS = audiocodec.h audiocodecfactory.h speexcodec.h g722.h
 
 libcodec_ulaw_so_SOURCES = ulaw.cpp
 libcodec_ulaw_so_CFLAGS = -fPIC -g -Wall
@@ -94,20 +94,26 @@ install-libcodec_ulaw_so: libcodec_ulaw.so
 	mkdir -p $(sflcodecdir)
 	$(INSTALL_PROGRAM)  libcodec_ulaw.so $(sflcodecdir)
 install-libcodec_alaw_so: libcodec_alaw.so
+	mkdir -p $(sflcodecdir)
 	$(INSTALL_PROGRAM)  libcodec_alaw.so $(sflcodecdir)
 install-libcodec_g722_so: libcodec_g722.so
+	mkdir -p $(sflcodecdir)
 	$(INSTALL_PROGRAM)  libcodec_g722.so $(sflcodecdir)
 install-libcodec_gsm_so: libcodec_gsm.so
+	mkdir -p $(sflcodecdir)
 	$(INSTALL_PROGRAM)  libcodec_gsm.so $(sflcodecdir)
 install-libcodec_speex_nb_so: libcodec_speex_nb.so
+	mkdir -p $(sflcodecdir)
 	$(INSTALL_PROGRAM)  libcodec_speex_nb.so $(sflcodecdir)
 install-libcodec_speex_wb_so: libcodec_speex_wb.so
+	mkdir -p $(sflcodecdir)
 	$(INSTALL_PROGRAM)  libcodec_speex_wb.so $(sflcodecdir)
 install-libcodec_speex_ub_so: libcodec_speex_ub.so
+	mkdir -p $(sflcodecdir)
 	$(INSTALL_PROGRAM)  libcodec_speex_ub.so $(sflcodecdir)
 install-libcodec_celt_so: libcodec_celt.so
+	mkdir -p $(sflcodecdir)
 	$(INSTALL_PROGRAM)  libcodec_celt.so $(sflcodecdir)
-
 
 uninstall-libcodec_ulaw_so:
 	rm -f $(sflcodecdir)/libcodec_ulaw.so

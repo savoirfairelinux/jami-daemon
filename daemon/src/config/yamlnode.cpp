@@ -29,7 +29,7 @@
  */
 
 #include "yamlnode.h"
-#include "src/global.h"
+#include "global.h"
 
 namespace Conf
 {

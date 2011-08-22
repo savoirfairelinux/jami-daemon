@@ -1,5 +1,3 @@
-SUBDIRS = 
-
 noinst_LTLIBRARIES = libconfig.la
 
 libconfig_la_SOURCES = \
@@ -20,4 +18,4 @@ noinst_HEADERS = \
 
 libconfig_la_LDFLAGS = @yaml_LIBS@
 
-libconfig_la_CFLAGS = @yaml_CFLAGS@
+libconfig_la_CXXFLAGS = @yaml_CFLAGS@ -I $(top_srcdir)/src

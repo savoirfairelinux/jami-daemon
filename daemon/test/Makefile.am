@@ -4,12 +4,13 @@ TESTS_ENVIRONMENT = CODECS_PATH="$(top_builddir)/src/audio/codecs" \
 					FAKE_PLUGIN_DIR="$(top_builddir)/src/plug-in/test/" \
 					FAKE_PLUGIN_NAME="$(top_builddir)/src/plug-in/test/libplugintest.so"
 check_PROGRAMS = test
-TESTS = run_tests.sh
 
-test_CXXFLAGS = $(CPPUNIT_CFLAGS)
-test_LDADD = $(LLIBS) @LIBCRYPTO_LIBS@
+test_CXXFLAGS = -I .
+test_LDADD = $(top_builddir)/src/libsflphone.la @LIBCRYPTO_LIBS@ @CPPUNIT_LIBS@
 
+EXTRA_DIST = $(test_SOURCES) sflphoned-sample.yml history-sample.tpl run_tests.sh
 test_SOURCES = \
+	constants.h \
 	main.cpp \
 	validator.cpp \
 	validator.h \
@@ -41,5 +42,22 @@ test_SOURCES = \
 	echocanceltest.cpp \
 	gaincontroltest.h \
 	gaincontroltest.cpp
-
-LLIBS=$(CPPUNIT_LIBS) ../src/libsflphone.la
+	accounttest.h \
+	audiolayertest.h \
+	configurationtest.h \
+	constants.h \
+	delaydetectiontest.h \
+	echocanceltest.h \
+	gaincontroltest.h \
+	historytest.h \
+	hookmanagertest.h \
+	instantmessagingtest.h \
+	mainbuffertest.h \
+	numbercleanertest.h \
+	pluginmanagertest.h \
+	ringtonetest.h \
+	rtptest.h \
+	sdesnegotiatortest.h \
+	sdptest.h \
+	siptest.h \
+	validator.h

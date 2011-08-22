@@ -34,6 +34,8 @@ sflphoned_LDADD = ./libsflphone.la $(libssl_LIBS) -lcrypto
 noinst_LTLIBRARIES = libsflphone.la
 
 noinst_HEADERS = \
+		global.h \
+		Codec.h \
 		conference.h \
 		voiplink.h \
 		preferences.h \
@@ -48,8 +50,8 @@ noinst_HEADERS = \
 		fileutils.h
 
 libsflphone_la_LIBADD = \
-	$(src)/libs/utilspp/libutilspp.la \
-	$(src)/libs/iax2/libiax2.la \
+	$(top_builddir)/libs/utilspp/libutilspp.la \
+	$(top_builddir)/libs/iax2/libiax2.la \
 	$(IAX_LIB) \
 	./im/libim.la \
 	./sip/libsiplink.la \
