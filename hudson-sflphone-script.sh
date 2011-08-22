@@ -10,6 +10,7 @@ set -x
 
 # Compile the daemon
 pushd daemon
+make distclean
 ./autogen.sh
 # Compile pjproject first
 pushd libs/pjproject
@@ -33,6 +34,7 @@ popd
 
 # Compile the client
 pushd gnome
+make distclean
 ./autogen.sh
 ./configure --prefix=/usr
 make clean
