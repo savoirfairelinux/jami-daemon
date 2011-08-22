@@ -28,7 +28,7 @@ MOFILES=\
 MSGFMT=msgfmt
 
 # necessary files
-EXTRA_DIST= $(POFILES)
+EXTRA_DIST= $(POFILES) $(MOFILES)
 
 all:	$(MOFILES)	
 

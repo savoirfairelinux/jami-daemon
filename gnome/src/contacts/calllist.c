@@ -28,10 +28,10 @@
  *  as that of the covered work.
  */
 
-#include <calllist.h>
-#include <calltree.h>
-#include <contacts/searchbar.h>
-#include <eel-gconf-extensions.h>
+#include "calllist.h"
+#include "calltree.h"
+#include "contacts/searchbar.h"
+#include "eel-gconf-extensions.h"
 
 static
 gint is_callID_callstruct(gconstpointer a, gconstpointer b)
@@ -106,7 +106,7 @@ calllist_init (calltab_t* tab)
  * Function passed to calllist_clean to free every QueueElement.
  */
 static void
-calllist_free_element(gpointer data, gpointer user_data)
+calllist_free_element(gpointer data, gpointer user_data UNUSED)
 {
     QueueElement *element = data;
     if (element->type == HIST_CONFERENCE)

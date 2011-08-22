@@ -9,7 +9,15 @@ libcontacts_la_SOURCES = \
   calltree.c \
   history.c \
   addrbookfactory.c \
-  conferencelist.c
+  conferencelist.c \
+  addrbookfactory.h \
+  addressbook.h \
+  calllist.h \
+  calltab.h \
+  calltree.h \
+  conferencelist.h \
+  history.h \
+  searchbar.h
 
 libcontacts_la_LDFLAGS = $(DBUSGLIB_LDFLAGS) $(LIBNOTIFY_LDFLAGS) \
 				$(SFLGTK_LDFLAGS) $(SFLGLIB_LDFLAGS) $(WEBKIT_LDFLAGS) $(LIBGNOMEUI_LDFLAGS) \
@@ -18,4 +26,3 @@ libcontacts_la_LDFLAGS = $(DBUSGLIB_LDFLAGS) $(LIBNOTIFY_LDFLAGS) \
 libcontacts_la_CFLAGS = $(DBUSGLIB_CFLAGS) $(LIBNOTIFY_CFLAGS) \
 				$(SFLGTK_CFLAGS) $(SFLGLIB_CFLAGS) $(WEBKIT_CFLAGS) $(LIBGNOMEUI_CFLAGS) \
 				$(GNOMEDOCUTILS_CFLAGS)
-

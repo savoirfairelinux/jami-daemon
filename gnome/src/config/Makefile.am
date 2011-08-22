@@ -13,7 +13,18 @@ libconfig_la_SOURCES = \
   accountconfigdialog.c \
   hooks-config.c \
   audioconf.c \
-  utils.c 
+  utils.c \
+  accountconfigdialog.h \
+  accountlistconfigdialog.h \
+  addressbook-config.h \
+  assistant.h \
+  audioconf.h \
+  hooks-config.h \
+  preferencesdialog.h \
+  shortcuts-config.h \
+  tlsadvanceddialog.h \
+  utils.h \
+  zrtpadvanceddialog.h
 
 libconfig_la_LDFLAGS = $(DBUSGLIB_LDFLAGS) $(LIBNOTIFY_LDFLAGS) \
 			$(SFLGTK_LDFLAGS) $(SFLGLIB_LDFLAGS) $(WEBKIT_LDFLAGS) $(LIBGNOMEUI_LDFLAGS) \
