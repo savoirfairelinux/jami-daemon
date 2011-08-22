@@ -448,9 +448,9 @@ GtkTreeModel* createModel()
 {    
     browser_t browser_entries_full[NB_MAX_ENTRIES] = {
         {_ ("General"), "preferences-system", 0},
-        {_ ("Audio"), "multimedia-volume-control", 1},
-        {_ ("Video"), "multimedia-volume-control", 2},
-        {_ ("Hooks"), "gnome-globe", 3},
+        {_ ("Audio"), "audio-x-generic", 1},
+        {_ ("Video"), "camera-web", 2},
+        {_ ("Hooks"), "applications-development", 3},
         {_ ("Shortcuts"), "preferences-desktop-keyboard", 4},
         {_ ("Address Book"), "address-book-new", 5},
     };
