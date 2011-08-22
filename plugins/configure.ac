@@ -1,10 +1,7 @@
-AC_INIT([SFLphone],[0.9.14],[sflphoneteam@savoirfairelinux.com],[sflphone-plugins])
+AC_INIT([sflphone],[0.9.14],[sflphoneteam@savoirfairelinux.com],[sflphone-plugins])
 AC_CONFIG_HEADERS([config.h])
 
-PACKAGE=SFLphone
-VERSION=`cat VERSION`
-
-AM_INIT_AUTOMAKE($PACKAGE,$VERSION)
+AM_INIT_AUTOMAKE
 AC_CONFIG_MACRO_DIR([m4])
 
 dnl Silent build by default. Use make V=1 to increase verbosity
