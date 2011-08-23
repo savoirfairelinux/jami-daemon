@@ -29,10 +29,6 @@ LT_INIT
 dnl GCONF utilities
 AM_GCONF_SOURCE_2
 
-dnl uninstalled gsr ui dir
-AC_DEFINE_UNQUOTED(SFLPHONE_UIDIR_UNINSTALLED, "`pwd`/src/",
-  [path to uninstalled SFLphone UI dir])
-
 PKG_CHECK_MODULES(SFLGTK, gtk+-2.0 > 2.2)
 PKG_CHECK_MODULES(SFLGLIB, glib-2.0 >= 2.2)
 PKG_CHECK_MODULES(LIBEBOOK, libebook-1.2 >= 1.4)
