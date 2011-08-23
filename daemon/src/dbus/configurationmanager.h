@@ -105,8 +105,6 @@ class ConfigurationManager
         bool isMd5CredentialHashing (void);
         void setMd5CredentialHashing (const bool& enabled);
         int32_t isIax2Enabled (void);
-        std::string getRingtoneChoice (const std::string& accountID);
-        void setRingtoneChoice (const std::string& accountID, const std::string& tone);
         std::string getRecordPath (void);
         void setRecordPath (const std::string& recPath);
         bool getIsAlwaysRecording(void);

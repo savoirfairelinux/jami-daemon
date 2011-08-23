@@ -462,16 +462,6 @@ int32_t ConfigurationManager::isIax2Enabled (void)
     return Manager::instance().isIax2Enabled();
 }
 
-std::string ConfigurationManager::getRingtoneChoice (const std::string& accountID)
-{
-    return Manager::instance().getRingtoneChoice (accountID);
-}
-
-void ConfigurationManager::setRingtoneChoice (const std::string& accountID, const std::string& tone)
-{
-    Manager::instance().setRingtoneChoice (accountID, tone);
-}
-
 std::string ConfigurationManager::getRecordPath (void)
 {
     return Manager::instance().getRecordPath();

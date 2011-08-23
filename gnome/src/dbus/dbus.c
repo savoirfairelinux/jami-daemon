@@ -1763,33 +1763,6 @@ dbus_set_echo_cancel_delay(int delay)
     }
 }
 
-gchar*
-dbus_get_ringtone_choice (const gchar *accountID)
-{
-    gchar* tone;
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_ringtone_choice (
-        configurationManagerProxy, accountID, &tone, &error);
-
-    if (error) {
-        g_error_free (error);
-    }
-
-    return tone;
-}
-
-void
-dbus_set_ringtone_choice (const gchar *accountID, const gchar* tone)
-{
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_ringtone_choice (
-        configurationManagerProxy, accountID, tone, &error);
-
-    if (error) {
-        g_error_free (error);
-    }
-}
-
 
 int
 dbus_is_iax2_enabled()

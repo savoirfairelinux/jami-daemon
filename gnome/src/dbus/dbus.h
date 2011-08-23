@@ -326,18 +326,6 @@ void dbus_set_echo_cancel_delay(int delay);
 int dbus_is_iax2_enabled (void);
 
 /**
- * ConfigurationManager - Get the ringtone
- * @return gchar* The file name selected as a ringtone
- */
-gchar* dbus_get_ringtone_choice (const gchar *accountID);
-
-/**
- * ConfigurationManager - Set a ringtone
- * @param tone The file name of the ringtone
- */
-void dbus_set_ringtone_choice (const gchar *accountID, const gchar* tone);
-
-/**
  * ConfigurationManager - Gives the maximum number of days the user wants to have in the history
  * @return double The maximum number of days
  */

@@ -658,18 +658,6 @@ class ManagerImpl
         void ringtoneEnabled (const std::string& id);
 
         /**
-         * Get the ringtone
-         * @return gchar* The file name selected as a ringtone
-         */
-        std::string getRingtoneChoice (const std::string& id) const;
-
-        /**
-         * Set a ringtone
-         * @param tone The file name of the ringtone
-         */
-        void setRingtoneChoice (const std::string&, const std::string& id);
-
-        /**
          * Get the recording path from configuration tree
          * @return the string correspoding to the path
          */

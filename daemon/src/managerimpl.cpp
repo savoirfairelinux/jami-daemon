@@ -2508,51 +2508,6 @@ void ManagerImpl::ringtoneEnabled (const std::string& id)
 
 }
 
-std::string ManagerImpl::getRingtoneChoice (const std::string& id) const
-{
-
-    // retreive specified account id
-    Account *account = getAccount (id);
-
-    if (!account) {
-        _warn ("Manager: Warning: Not a valid account ID for ringone choice");
-        return "";
-    }
-
-    // we need the absolute path
-    std::string tone_name = account->getRingtonePath();
-    std::string tone_path;
-
-    if (tone_name.find (DIR_SEPARATOR_CH) == std::string::npos) {
-        // check in ringtone directory ($(PREFIX)/share/sflphone/ringtones)
-        tone_path = std::string (PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR
-                    + DIR_SEPARATOR_STR + tone_name;
-    } else {
-        // the absolute has been saved; do nothing
-        tone_path = tone_name;
-    }
-
-    _debug ("Manager: get ringtone path %s", tone_path.c_str());
-
-    return tone_path;
-}
-
-void ManagerImpl::setRingtoneChoice (const std::string& tone, const std::string& id)
-{
-    _debug ("Manager: Set ringtone path %s to account", tone.c_str());
-
-    // retreive specified account id
-    Account *account = getAccount (id);
-
-    if (!account) {
-        _warn ("Manager: Warning: Not a valid account ID for ringtone choice");
-        return;
-    }
-
-    // we save the absolute path
-    account->setRingtonePath (tone);
-}
-
 std::string ManagerImpl::getRecordPath (void) const
 {
     return audioPreference.getRecordpath();

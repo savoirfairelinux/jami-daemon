@@ -272,26 +272,6 @@
 		   </arg>
 	   </method>
 
-	   <method name="getRingtoneChoice" tp:name-for-bindings="getRingtoneChoice">
-		   <tp:docstring>
-		   </tp:docstring>
-		   <arg type="s" name="accountID" direction="in"/>
-		   <arg type="s" name="tone" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
-
-	   <method name="setRingtoneChoice" tp:name-for-bindings="setRingtoneChoice">
-		   <tp:docstring>
-		   </tp:docstring>
-		   <arg type="s" name="accountID" direction="in"/>
-		   <arg type="s" name="tone" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
-
 	   <method name="getAudioManager" tp:name-for-bindings="getAudioManager">
 		   <tp:docstring>
 		   </tp:docstring>
