@@ -139,14 +139,14 @@ class SIPAccount : public Account
          * Set route header to appears in sip messages for this account
          */
         void setRouteSet (const std::string &route) {
-            _routeSet = route;
+           routeSet_ = route;
         }
 
         /**
          * Get route header to appear in sip messages for this account
          */
         std::string getRouteSet (void) const {
-            return _routeSet;
+            return routeSet_;
         }
 
         /**
@@ -171,7 +171,7 @@ class SIPAccount : public Account
         int unregisterVoIPLink();
 
         pjsip_cred_info *getCredInfo() const {
-            return _cred;
+            return cred_;
         }
 
         /**
@@ -188,10 +188,10 @@ class SIPAccount : public Account
         const std::vector<std::map<std::string, std::string> > &getCredentials (void);
 
         bool isResolveOnce (void) const {
-            return _resolveOnce;
+            return resolveOnce_;
         }
         void setResolveOnce (bool reslv) {
-            _resolveOnce = reslv;
+            resolveOnce_ = reslv;
         }
 
         /**
@@ -202,7 +202,7 @@ class SIPAccount : public Account
          * @return A string describing the expiration value.
          */
         const std::string& getRegistrationExpire (void) const {
-            return _registrationExpire;
+            return registrationExpire_;
         }
 
         /**
@@ -211,7 +211,7 @@ class SIPAccount : public Account
          * @param A string describing the expiration value.
          */
         void setRegistrationExpire (const std::string &expr) {
-            _registrationExpire = expr;
+            registrationExpire_ = expr;
         }
 
         bool fullMatch (const std::string& username, const std::string& hostname) const;
@@ -220,10 +220,10 @@ class SIPAccount : public Account
 
         /* Registration flag */
         bool isRegister() const {
-            return _bRegister;
+            return bRegister_;
         }
         void setRegister (bool result) {
-            _bRegister = result;
+            bRegister_ = result;
         }
 
         /**
@@ -234,7 +234,7 @@ class SIPAccount : public Account
          * @return pjsip_regc* A pointer to the registration structure
          */
         pjsip_regc* getRegistrationInfo (void) const {
-            return _regc;
+            return regc_;
         }
 
         /**
@@ -244,7 +244,7 @@ class SIPAccount : public Account
          * @return void
          */
         void setRegistrationInfo (pjsip_regc *regc) {
-            _regc = regc;
+            regc_ = regc;
         }
 
         /**
@@ -253,7 +253,7 @@ class SIPAccount : public Account
          * TLS transport.
          */
         pjsip_tls_setting * getTlsSetting (void) const {
-            return _tlsSetting;
+            return tlsSetting_;
         }
 
         /**
@@ -262,14 +262,14 @@ class SIPAccount : public Account
          * an alternate UDP transport.
          */
         std::string getStunServer (void) const {
-            return _stunServer;
+            return stunServer_;
         }
         void setStunServer (const std::string &srv) {
-            _stunServer = srv;
+            stunServer_ = srv;
         }
 
         pj_str_t getStunServerName (void) const {
-            return _stunServerName;
+            return stunServerName_;
         }
 
         /**
@@ -278,10 +278,10 @@ class SIPAccount : public Account
          * an alternate UDP transport.
          */
         pj_uint16_t getStunPort (void) const {
-            return _stunPort;
+            return stunPort_;
         }
         void setStunPort (pj_uint16_t port) {
-            _stunPort = port;
+            stunPort_ = port;
         }
 
         /**
@@ -289,7 +289,7 @@ class SIPAccount : public Account
          * account is set to TLS.
          */
         bool isTlsEnabled (void) const {
-            return _transportType == PJSIP_TRANSPORT_TLS;
+            return transportType_ == PJSIP_TRANSPORT_TLS;
         }
 
         /**
@@ -297,14 +297,14 @@ class SIPAccount : public Account
          * account is set to OTHER.
          */
         bool isStunEnabled (void) const {
-            return _stunEnabled;
+            return stunEnabled_;
         }
 
         /**
          * Set wether or not stun is enabled for this account
          */
         void setStunEnabled (bool enabl) {
-            _stunEnabled = enabl;
+            stunEnabled_ = enabl;
         }
 
         /*
@@ -321,7 +321,7 @@ class SIPAccount : public Account
         /*
          * This method adds the correct scheme, hostname and append
          * the ;transport= parameter at the end of the uri, in accordance with RFC3261.
-         * It is expected that "port" is present in the internal _hostname.
+         * It is expected that "port" is present in the internal hostname_.
          *
          * @return pj_str_t "To" uri based on @param username
          * @param username A string formatted as : "username"
@@ -351,32 +351,32 @@ class SIPAccount : public Account
          * when binding the account to a new sip transport only.
          */
         void setLocalInterface (const std::string& interface) {
-            _interface = interface;
+            interface_ = interface;
         }
 
         /**
          * Get the local interface name on which this account is bound.
          */
         std::string getLocalInterface (void) const {
-            return _interface;
+            return interface_;
         }
 
         /**
          * Get a flag which determine the usage in sip headers of either the local
-         * IP address and port (_localAddress and _localPort) or to an address set
-         * manually (_publishedAddress and _publishedPort).
+         * IP address and port (_localAddress and localPort_) or to an address set
+         * manually (_publishedAddress and publishedPort_).
          */
         bool getPublishedSameasLocal() const {
-            return _publishedSameasLocal;
+            return publishedSameasLocal_;
         }
 
         /**
          * Set a flag which determine the usage in sip headers of either the local
-         * IP address and port (_localAddress and _localPort) or to an address set
-         * manually (_publishedAddress and _publishedPort).
+         * IP address and port (_localAddress and localPort_) or to an address set
+         * manually (_publishedAddress and publishedPort_).
          */
         void setPublishedSameasLocal (bool published) {
-            _publishedSameasLocal = published;
+            publishedSameasLocal_ = published;
         }
 
         /**
@@ -385,7 +385,7 @@ class SIPAccount : public Account
          * @return pj_uint16 The port used for that account
          */
         pj_uint16_t getLocalPort (void) const {
-            return (pj_uint16_t) _localPort;
+            return (pj_uint16_t) localPort_;
         }
 
         /**
@@ -393,7 +393,7 @@ class SIPAccount : public Account
          * @pram port The port used by this account.
          */
         void setLocalPort (pj_uint16_t port) {
-            _localPort = port;
+            localPort_ = port;
         }
 
         /**
@@ -402,7 +402,7 @@ class SIPAccount : public Account
          * @return pj_uint16 The port used for that account
          */
         pj_uint16_t getPublishedPort (void) const {
-            return (pj_uint16_t) _publishedPort;
+            return (pj_uint16_t) publishedPort_;
         }
 
         /**
@@ -411,7 +411,7 @@ class SIPAccount : public Account
          * @pram port The port used by this account.
          */
         void setPublishedPort (pj_uint16_t port) {
-            _publishedPort = port;
+            publishedPort_ = port;
         }
 
         /**
@@ -419,7 +419,7 @@ class SIPAccount : public Account
              * @return pj_uint16 The port used for that account
              */
         pj_uint16_t getTlsListenerPort (void) const {
-            return (pj_uint16_t) _tlsListenerPort;
+            return (pj_uint16_t) tlsListenerPort_;
         }
 
         /**
@@ -427,7 +427,7 @@ class SIPAccount : public Account
          * @pram port The port used for TLS listener.
          */
         void setTlsListenerPort (pj_uint16_t port) {
-            _tlsListenerPort = port;
+            tlsListenerPort_ = port;
         }
 
         /**
@@ -437,7 +437,7 @@ class SIPAccount : public Account
          * @return std::string The public IPV4 address formatted in the standard dot notation.
          */
         std::string getPublishedAddress (void) const {
-            return _publishedIpAddress;
+            return publishedIpAddress_;
         }
 
         /**
@@ -446,15 +446,15 @@ class SIPAccount : public Account
          * @return void
          */
         void setPublishedAddress (const std::string& publishedIpAddress) {
-            _publishedIpAddress = publishedIpAddress;
+            publishedIpAddress_ = publishedIpAddress;
         }
 
         std::string getServiceRoute (void) const {
-            return _serviceRoute;
+            return serviceRoute_;
         }
 
         void setServiceRoute (const std::string &route) {
-            _serviceRoute = route;
+            serviceRoute_ = route;
         }
 
         /**
@@ -462,163 +462,163 @@ class SIPAccount : public Account
          * @return pjsip_transport_type_e Transport type chosen by the user for this account.
          */
         pjsip_transport_type_e getTransportType (void) const {
-            return _transportType;
+            return transportType_;
         }
 
         pjsip_transport* getAccountTransport (void) const {
-            return _transport;
+            return transport_;
         }
 
         void setAccountTransport (pjsip_transport *transport) {
-        	_transport = transport;
+        	transport_ = transport;
         }
 
         DtmfType getDtmfType (void) const {
-            return _dtmfType;
+            return dtmfType_;
         }
         void setDtmfType (DtmfType type) {
-            _dtmfType = type;
+            dtmfType_ = type;
         }
 
         bool getSrtpEnable (void) const {
-            return _srtpEnabled;
+            return srtpEnabled_;
         }
         void setSrtpEnable (bool enabl) {
-            _srtpEnabled = enabl;
+            srtpEnabled_ = enabl;
         }
 
         std::string getSrtpKeyExchange (void) const {
-            return _srtpKeyExchange;
+            return srtpKeyExchange_;
         }
         void setSrtpKeyExchange (const std::string &key) {
-            _srtpKeyExchange = key;
+            srtpKeyExchange_ = key;
         }
 
         bool getSrtpFallback (void) const {
-            return _srtpFallback;
+            return srtpFallback_;
         }
         void setSrtpFallback (bool fallback) {
-            _srtpFallback = fallback;
+            srtpFallback_ = fallback;
         }
 
         bool getZrtpDisplaySas (void) const {
-            return _zrtpDisplaySas;
+            return zrtpDisplaySas_;
         }
         void setZrtpDisplaySas (bool sas) {
-            _zrtpDisplaySas = sas;
+            zrtpDisplaySas_ = sas;
         }
 
         bool getZrtpDiaplaySasOnce (void) const {
-            return _zrtpDisplaySasOnce;
+            return zrtpDisplaySasOnce_;
         }
         void setZrtpDiaplaySasOnce (bool sasonce) {
-            _zrtpDisplaySasOnce = sasonce;
+            zrtpDisplaySasOnce_ = sasonce;
         }
 
         bool getZrtpNotSuppWarning (void) const {
-            return _zrtpNotSuppWarning;
+            return zrtpNotSuppWarning_;
         }
         void setZrtpNotSuppWarning (bool warning) {
-            _zrtpNotSuppWarning = warning;
+            zrtpNotSuppWarning_ = warning;
         }
 
         bool getZrtpHelloHash (void) const {
-            return _zrtpHelloHash;
+            return zrtpHelloHash_;
         }
         void setZrtpHelloHash (bool hellohash) {
-            _zrtpHelloHash = hellohash;
+            zrtpHelloHash_ = hellohash;
         }
         // void setSrtpKeyExchange
 
         std::string getTlsEnable (void) const {
-            return _tlsEnable;
+            return tlsEnable_;
         }
         void setTlsEnable (const std::string &enabl) {
-            _tlsEnable = enabl;
+            tlsEnable_ = enabl;
         }
 
         std::string getTlsCaListFile (void) const {
-            return _tlsCaListFile;
+            return tlsCaListFile_;
         }
         void setTlsCaListFile (const std::string &calist) {
-            _tlsCaListFile = calist;
+            tlsCaListFile_ = calist;
         }
 
         std::string getTlsCertificateFile (void) const {
-            return _tlsCertificateFile;
+            return tlsCertificateFile_;
         }
         void setTlsCertificateFile (const std::string &cert) {
-            _tlsCertificateFile = cert;
+            tlsCertificateFile_ = cert;
         }
 
         std::string getTlsPrivateKeyFile (void) const {
-            return _tlsPrivateKeyFile;
+            return tlsPrivateKeyFile_;
         }
         void setTlsPrivateKeyFile (const std::string &priv) {
-            _tlsPrivateKeyFile = priv;
+            tlsPrivateKeyFile_ = priv;
         }
 
         std::string getTlsPassword (void) const {
-            return _tlsPassword;
+            return tlsPassword_;
         }
         void setTlsPassword (const std::string &pass) {
-            _tlsPassword = pass;
+            tlsPassword_ = pass;
         }
 
         std::string getTlsMethod (void) const {
-            return _tlsMethod;
+            return tlsMethod_;
         }
         void setTlsMethod (const std::string &meth) {
-            _tlsMethod = meth;
+            tlsMethod_ = meth;
         }
 
         std::string getTlsCiphers (void) const {
-            return _tlsCiphers;
+            return tlsCiphers_;
         }
         void setTlsCiphers (const std::string &cipher) {
-            _tlsCiphers = cipher;
+            tlsCiphers_ = cipher;
         }
 
         std::string getTlsServerName (void) const {
-            return _tlsServerName;
+            return tlsServerName_;
         }
         void setTlsServerName (const std::string &name) {
-            _tlsServerName = name;
+            tlsServerName_ = name;
         }
 
         bool getTlsVerifyServer (void) const {
-            return _tlsVerifyServer;
+            return tlsVerifyServer_;
         }
         void setTlsVerifyServer (bool verif) {
-            _tlsVerifyServer = verif;
+            tlsVerifyServer_ = verif;
         }
 
         bool getTlsVerifyClient (void) const {
-            return _tlsVerifyClient;
+            return tlsVerifyClient_;
         }
         void setTlsVerifyClient (bool verif) {
-            _tlsVerifyClient = verif;
+            tlsVerifyClient_ = verif;
         }
 
         bool getTlsRequireClientCertificate (void) const {
-            return _tlsRequireClientCertificate;
+            return tlsRequireClientCertificate_;
         }
         void setTlsRequireClientCertificate (bool require) {
-            _tlsRequireClientCertificate = require;
+            tlsRequireClientCertificate_ = require;
         }
 
         std::string getTlsNegotiationTimeoutSec (void) const {
-            return _tlsNegotiationTimeoutSec;
+            return tlsNegotiationTimeoutSec_;
         }
         void setTlsNegotiationTimeoutSec (const std::string &timeout) {
-            _tlsNegotiationTimeoutSec = timeout;
+            tlsNegotiationTimeoutSec_ = timeout;
         }
 
         std::string getTlsNegotiationTimeoutMsec (void) const {
-            return _tlsNegotiationTimeoutMsec;
+            return tlsNegotiationTimeoutMsec_;
         }
         void setTlsNegotiationTimeoutMsec (const std::string &timeout) {
-            _tlsNegotiationTimeoutMsec = timeout;
+            tlsNegotiationTimeoutMsec_ = timeout;
         }
 
     private:
@@ -672,90 +672,90 @@ class SIPAccount : public Account
         /**
          * List of routes (proxies) used for registration and calls
          */
-        std::string _routeSet;
+        std::string routeSet_;
 
         /**
          * Private pjsip memory pool for accounts
          */
-        pj_pool_t *_pool;
+        pj_pool_t *pool_;
 
 
         // The pjsip client registration information
-        pjsip_regc *_regc;
+        pjsip_regc *regc_;
         // To check if the account is registered
-        bool _bRegister;
+        bool bRegister_;
 
         // Network settings
-        std::string _registrationExpire;
+        std::string registrationExpire_;
 
         // interface name on which this account is bound
-        std::string _interface;
+        std::string interface_;
 
-        // Flag which determine if _localIpAddress or _publishedIpAddress is used in
+        // Flag which determine if localIpAddress_ or publishedIpAddress_ is used in
         // sip headers
-        bool _publishedSameasLocal;
+        bool publishedSameasLocal_;
 
-        std::string _publishedIpAddress;
+        std::string publishedIpAddress_;
 
-        pj_uint16_t _localPort;
-        pj_uint16_t _publishedPort;
+        pj_uint16_t localPort_;
+        pj_uint16_t publishedPort_;
 
-        std::string _serviceRoute;
+        std::string serviceRoute_;
 
         /**
          * The global TLS listener port which can be configured through the IP2IP_PROFILE
          */
-        pj_uint16_t _tlsListenerPort;
+        pj_uint16_t tlsListenerPort_;
 
-        pjsip_transport_type_e _transportType;
+        pjsip_transport_type_e transportType_;
 
-        pjsip_transport* _transport;
+        pjsip_transport* transport_;
 
         // Special hack that is not here to stay
         // See #1852
-        bool _resolveOnce;
+        bool resolveOnce_;
 
         //Credential information
-        pjsip_cred_info *_cred;
+        pjsip_cred_info *cred_;
 
         // The TLS settings, if tls is chosen as
         // a sip transport.
-        pjsip_tls_setting * _tlsSetting;
+        pjsip_tls_setting * tlsSetting_;
 
         // The STUN server name, if applicable for internal use only
-        pj_str_t _stunServerName;
+        pj_str_t stunServerName_;
 
         // The STUN server port, if applicable
-        pj_uint16_t _stunPort;
+        pj_uint16_t stunPort_;
 
-        DtmfType _dtmfType;
+        DtmfType dtmfType_;
 
-        std::string _tlsEnable;
-        int _tlsPort;
-        std::string _tlsCaListFile;
-        std::string _tlsCertificateFile;
-        std::string _tlsPrivateKeyFile;
-        std::string _tlsPassword;
-        std::string _tlsMethod;
-        std::string _tlsCiphers;
-        std::string _tlsServerName;
-        bool _tlsVerifyServer;
-        bool _tlsVerifyClient;
-        bool _tlsRequireClientCertificate;
-        std::string _tlsNegotiationTimeoutSec;
-        std::string _tlsNegotiationTimeoutMsec;
+        std::string tlsEnable_;
+        int tlsPort_;
+        std::string tlsCaListFile_;
+        std::string tlsCertificateFile_;
+        std::string tlsPrivateKeyFile_;
+        std::string tlsPassword_;
+        std::string tlsMethod_;
+        std::string tlsCiphers_;
+        std::string tlsServerName_;
+        bool tlsVerifyServer_;
+        bool tlsVerifyClient_;
+        bool tlsRequireClientCertificate_;
+        std::string tlsNegotiationTimeoutSec_;
+        std::string tlsNegotiationTimeoutMsec_;
 
-        std::string _stunServer;
-        bool _stunEnabled;
+        std::string stunServer_;
+        bool stunEnabled_;
 
-        bool _srtpEnabled;
-        std::string _srtpKeyExchange;
-        bool _srtpFallback;
+        bool srtpEnabled_;
+        std::string srtpKeyExchange_;
+        bool srtpFallback_;
 
-        bool _zrtpDisplaySas;
-        bool _zrtpDisplaySasOnce;
-        bool _zrtpHelloHash;
-        bool _zrtpNotSuppWarning;
+        bool zrtpDisplaySas_;
+        bool zrtpDisplaySasOnce_;
+        bool zrtpHelloHash_;
+        bool zrtpNotSuppWarning_;
         /*
         * Details about the registration state.
         * This is a protocol Code:Description pair.

@@ -323,7 +323,7 @@ class Account : public Serializable
 
         /**
          * Helper function used to load the default codec order from the codec factory
-         * setActiveCodecs is called to sync both _codecOrder and _codecStr
+         * setActiveCodecs is called to sync both codecOrder_ and codecStr_
          */
         void loadDefaultCodecs (void);
 
