@@ -32,6 +32,7 @@
 
 #include "sipaccount.h"
 #include "manager.h"
+#include "config.h"
 #include <pwd.h>
 #include <sstream>
 #include <cassert>
@@ -379,33 +380,33 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
 void SIPAccount::setAccountDetails (std::map<std::string, std::string> details)
 {
     // Account setting common to SIP and IAX
-    setAlias (details[CONFIG_ACCOUNT_ALIAS]);
-    setType (details[CONFIG_ACCOUNT_TYPE]);
-    setUsername (details[USERNAME]);
-    setHostname (details[HOSTNAME]);
-    setEnabled ( (details[CONFIG_ACCOUNT_ENABLE] == "true"));
-    setRingtonePath (details[CONFIG_RINGTONE_PATH]);
-    setRingtoneEnabled ( (details[CONFIG_RINGTONE_ENABLED] == "true"));
-    setMailBox (details[CONFIG_ACCOUNT_MAILBOX]);
+    alias_ = details[CONFIG_ACCOUNT_ALIAS];
+    type_ = details[CONFIG_ACCOUNT_TYPE];
+    username_ = details[USERNAME];
+    hostname_ = details[HOSTNAME];
+    enabled_ = details[CONFIG_ACCOUNT_ENABLE] == "true";
+    ringtonePath_ = details[CONFIG_RINGTONE_PATH];
+    ringtoneEnabled_ = details[CONFIG_RINGTONE_ENABLED] == "true";
+    mailBox_ = details[CONFIG_ACCOUNT_MAILBOX];
 
     // SIP specific account settings
 
     // general sip settings
-    setDisplayName (details[DISPLAY_NAME]);
-    setServiceRoute (details[ROUTESET]);
-    setLocalInterface (details[LOCAL_INTERFACE]);
-    setPublishedSameasLocal (details[PUBLISHED_SAMEAS_LOCAL] == "true");
-    setPublishedAddress (details[PUBLISHED_ADDRESS]);
-    setLocalPort (atoi (details[LOCAL_PORT].c_str()));
-    setPublishedPort (atoi (details[PUBLISHED_PORT].c_str()));
-    setStunServer (details[STUN_SERVER]);
-    setStunEnabled (details[STUN_ENABLE] == "true");
-    setDtmfType ( (details[ACCOUNT_DTMF_TYPE] == "overrtp") ? OVERRTP : SIPINFO);
+    displayName_ = details[DISPLAY_NAME];
+    serviceRoute_ = details[ROUTESET];
+    interface_ = details[LOCAL_INTERFACE];
+    publishedSameasLocal_ = details[PUBLISHED_SAMEAS_LOCAL] == "true";
+    publishedIpAddress_ = details[PUBLISHED_ADDRESS];
+    localPort_ = atoi (details[LOCAL_PORT].c_str());
+    publishedPort_ = atoi (details[PUBLISHED_PORT].c_str());
+    stunServer_ = details[STUN_SERVER];
+    stunEnabled_ = details[STUN_ENABLE] == "true";
+    dtmfType_ = details[ACCOUNT_DTMF_TYPE] == "overrtp" ? OVERRTP : SIPINFO;
 
-    setResolveOnce (details[CONFIG_ACCOUNT_RESOLVE_ONCE] == "true");
-    setRegistrationExpire (details[CONFIG_ACCOUNT_REGISTRATION_EXPIRE]);
+    resolveOnce_ = details[CONFIG_ACCOUNT_RESOLVE_ONCE] == "true";
+    registrationExpire_ = details[CONFIG_ACCOUNT_REGISTRATION_EXPIRE];
 
-    setUseragent (details[USERAGENT]);
+    userAgent_ = details[USERAGENT];
 
     // srtp settings
     setSrtpEnable (details[SRTP_ENABLE] == "true");
@@ -435,10 +436,10 @@ void SIPAccount::setAccountDetails (std::map<std::string, std::string> details)
     setTlsNegotiationTimeoutSec (details[TLS_NEGOTIATION_TIMEOUT_SEC]);
     setTlsNegotiationTimeoutMsec (details[TLS_NEGOTIATION_TIMEOUT_MSEC]);
 
-    if (getCredentialCount() == 0) { // credentials not set, construct 1 entry
+    if (credentials_.empty()) { // credentials not set, construct 1 entry
         std::vector<std::map<std::string, std::string> > v;
         std::map<std::string, std::string> map;
-        map[USERNAME] = getUsername();
+        map[USERNAME] = username_;
         map[PASSWORD] = details[PASSWORD];
         map[REALM]    = "*";
         v.push_back(map);
@@ -485,7 +486,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     // Add sip specific details
     a[ROUTESET] = getServiceRoute();
     a[CONFIG_ACCOUNT_RESOLVE_ONCE] = isResolveOnce() ? "true" : "false";
-    a[USERAGENT] = getUserAgent();
+    a[USERAGENT] = userAgent_;
 
     a[CONFIG_ACCOUNT_REGISTRATION_EXPIRE] = getRegistrationExpire();
     a[LOCAL_INTERFACE] = getLocalInterface();
@@ -677,17 +678,17 @@ void SIPAccount::loadConfig()
 
 bool SIPAccount::fullMatch (const std::string& username, const std::string& hostname) const
 {
-    return userMatch (username) && hostnameMatch (hostname);
+    return userMatch (username) and hostnameMatch (hostname);
 }
 
 bool SIPAccount::userMatch (const std::string& username) const
 {
-    return !username.empty() && username == getUsername();
+    return !username.empty() and username == username_;
 }
 
 bool SIPAccount::hostnameMatch (const std::string& hostname) const
 {
-    return hostname == getHostname();
+    return hostname == hostname_;
 }
 
 std::string SIPAccount::getMachineName (void) const
@@ -881,18 +882,24 @@ std::string computeMd5HashFromCredential (
 
 void SIPAccount::setCredentials (const std::vector<std::map<std::string, std::string> >& creds)
 {
+    using std::vector;
+    using std::string;
+    using std::map;
+
     bool md5HashingEnabled = Manager::instance().preferences.getMd5Hash();
-    std::vector< std::map<std::string, std::string> >::iterator it;
 
 	assert(creds.size() > 0); // we can not authenticate without credentials
 
 	credentials_ = creds;
 
     /* md5 hashing */
-    for(it = credentials_.begin(); it != credentials_.end(); ++it) {
-        std::string username = (*it)[USERNAME];
-        std::string realm = (*it)[REALM];
-        std::string password = (*it)[PASSWORD];
+    for (vector<map<string, string> >::iterator it = credentials_.begin(); it != credentials_.end(); ++it) {
+        map<string, string>::const_iterator val = (*it).find(USERNAME);
+        const std::string username = val != (*it).end() ? val->second : "";
+        val = (*it).find(REALM);
+        const std::string realm (val != (*it).end() ? val->second : "");
+        val = (*it).find(PASSWORD);
+        const std::string password (val != (*it).end() ? val->second : "");
 
         if (md5HashingEnabled) {
             // TODO: Fix this.
@@ -904,36 +911,50 @@ void SIPAccount::setCredentials (const std::vector<std::map<std::string, std::st
             // the configuration file. This is to avoid to
             // re-hash a hashed password.
 
-            if (password.length() != 32) {
+            if (password.length() != 32)
                 (*it)[PASSWORD] = computeMd5HashFromCredential(username, password, realm);
-            }
         }
     }
 
-    std::string digest;
-    size_t n = getCredentialCount();
-
     // Create the credential array
     delete[] cred_;
-    cred_ = new pjsip_cred_info[n];
+    cred_ = new pjsip_cred_info[credentials_.size()];
 
-    unsigned i;
-    for (i = 0; i < n; i++) {
-    	const std::string &password = credentials_[i][PASSWORD];
-    	int dataType = (md5HashingEnabled && password.length() == 32)
+    size_t i = 0;
+    for (vector<map<string, string > >::const_iterator iter = credentials_.begin();
+            iter != credentials_.end(); ++iter) {
+        map<string, string>::const_iterator val = (*iter).find(PASSWORD);
+    	const std::string password = val != (*iter).end() ? val->second : "";
+    	int dataType = (md5HashingEnabled and password.length() == 32)
 			? PJSIP_CRED_DATA_DIGEST
 			: PJSIP_CRED_DATA_PLAIN_PASSWD;
 
-        cred_[i].username = pj_str ((char*)credentials_[i][USERNAME].c_str());
-        cred_[i].data = pj_str ((char*)password.c_str());
-        cred_[i].realm = pj_str ((char*)credentials_[i][REALM].c_str());
+        val = (*iter).find(USERNAME);
+        if (val != (*iter).end())
+            cred_[i].username = pj_str ((char*) val->second.c_str());
+        cred_[i].data = pj_str ((char*) password.c_str());
+
+        val = (*iter).find(REALM);
+        if (val != (*iter).end())
+            cred_[i].realm = pj_str ((char*) val->second.c_str());
 
         cred_[i].data_type = dataType;
         cred_[i].scheme = pj_str ( (char*) "digest");
+        ++i;
     }
 }
 
 const std::vector<std::map<std::string, std::string> > &SIPAccount::getCredentials (void)
 {
     return credentials_;
+}
+
+std::string SIPAccount::getUserAgentName() const
+{
+    std::string result(userAgent_);
+
+    if (result == "sflphone" or result.empty())
+        result += "/" PACKAGE_VERSION;
+
+    return result;
 }

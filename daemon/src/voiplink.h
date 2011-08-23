@@ -93,7 +93,7 @@ class VoIPLink
          * Virtual method
          * Build and send account registration request
          */
-        virtual void sendRegister (Account *a) throw (VoipLinkException) = 0;
+        virtual void sendRegister (Account *a) = 0;
 
         /**
          * Virtual method

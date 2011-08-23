@@ -221,14 +221,6 @@ class Account : public Serializable
         }
 
         /**
-         * Get the registration state of the specified link
-         * @return RegistrationState	The registration state of underlying VoIPLink
-         */
-        RegistrationState getRegistrationState() const {
-            return registrationState_;
-        }
-
-        /**
          * Set the registration state of the specified link
          * @param state	The registration state of underlying VoIPLink
          */
@@ -237,10 +229,6 @@ class Account : public Serializable
         /* They should be treated like macro definitions by the C++ compiler */
         std::string getUsername (void) const {
             return username_;
-        }
-
-        void setUsername (const std::string &username) {
-            username_ = username;
         }
 
         std::string getHostname (void) const {
@@ -297,13 +285,6 @@ class Account : public Serializable
         }
         void setDisplayName (const std::string &name) {
             displayName_ = name;
-        }
-
-        std::string getUserAgent (void) const {
-            return userAgent_;
-        }
-        void setUseragent (const std::string &ua) {
-            userAgent_ = ua;
         }
 
         std::string getMailBox (void) const {

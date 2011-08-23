@@ -121,7 +121,7 @@ class SIPVoIPLink : public VoIPLink
         /**
          * Build and send SIP registration request
          */
-        virtual void sendRegister (Account *a) throw(VoipLinkException);
+        virtual void sendRegister (Account *a);
 
         /**
          * Build and send SIP unregistration request
@@ -272,7 +272,7 @@ class SIPVoIPLink : public VoIPLink
         /**
          * Retrive useragent name from account
          */
-        std::string getUseragentName (SIPAccount *);
+        std::string getUseragentName (SIPAccount *) const;
 
         /**
          * List all the interfaces on the system and return

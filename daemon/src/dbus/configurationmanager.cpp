@@ -221,10 +221,6 @@ std::map<std::string, std::string> ConfigurationManager::getTlsSettings()
 
 void ConfigurationManager::setTlsSettings (const std::map<std::string, std::string>& details)
 {
-
-    std::map<std::string, std::string> map_cpy = details;
-    std::map<std::string, std::string>::iterator it;
-
     SIPAccount * sipaccount = (SIPAccount *) Manager::instance().getAccount (IP2IP_PROFILE);
 
     if (!sipaccount) {
@@ -232,63 +228,64 @@ void ConfigurationManager::setTlsSettings (const std::map<std::string, std::stri
         return;
     }
 
-    it = map_cpy.find (TLS_LISTENER_PORT);
+    std::map<std::string, std::string>::const_iterator it;
+
+    it = details.find (TLS_LISTENER_PORT);
 
     if (it != details.end()) sipaccount->setTlsListenerPort (atoi (it->second.data()));
 
-    it = map_cpy.find (TLS_ENABLE);
+    it = details.find (TLS_ENABLE);
 
     if (it != details.end()) sipaccount->setTlsEnable (it->second);
 
-    it = map_cpy.find (TLS_CA_LIST_FILE);
+    it = details.find (TLS_CA_LIST_FILE);
 
-    if (it != map_cpy.end()) sipaccount->setTlsCaListFile (it->second);
+    if (it != details.end()) sipaccount->setTlsCaListFile (it->second);
 
-    it = map_cpy.find (TLS_CERTIFICATE_FILE);
+    it = details.find (TLS_CERTIFICATE_FILE);
 
-    if (it != map_cpy.end()) sipaccount->setTlsCertificateFile (it->second);
+    if (it != details.end()) sipaccount->setTlsCertificateFile (it->second);
 
-    it = map_cpy.find (TLS_PRIVATE_KEY_FILE);
+    it = details.find (TLS_PRIVATE_KEY_FILE);
 
-    if (it != map_cpy.end()) sipaccount->setTlsPrivateKeyFile (it->second);
+    if (it != details.end()) sipaccount->setTlsPrivateKeyFile (it->second);
 
-    it = map_cpy.find (TLS_PASSWORD);
+    it = details.find (TLS_PASSWORD);
 
-    if (it != map_cpy.end()) sipaccount->setTlsPassword (it->second);
+    if (it != details.end()) sipaccount->setTlsPassword (it->second);
 
-    it = map_cpy.find (TLS_METHOD);
+    it = details.find (TLS_METHOD);
 
-    if (it != map_cpy.end()) sipaccount->setTlsMethod (it->second);
+    if (it != details.end()) sipaccount->setTlsMethod (it->second);
 
-    it = map_cpy.find (TLS_CIPHERS);
+    it = details.find (TLS_CIPHERS);
 
-    if (it != map_cpy.end()) sipaccount->setTlsCiphers (it->second);
+    if (it != details.end()) sipaccount->setTlsCiphers (it->second);
 
-    it = map_cpy.find (TLS_SERVER_NAME);
+    it = details.find (TLS_SERVER_NAME);
 
-    if (it != map_cpy.end()) sipaccount->setTlsServerName (it->second);
+    if (it != details.end()) sipaccount->setTlsServerName (it->second);
 
-    it = map_cpy.find (TLS_VERIFY_CLIENT);
+    it = details.find (TLS_VERIFY_CLIENT);
 
-    if (it != map_cpy.end()) sipaccount->setTlsVerifyClient ( (it->second == "true") ? true : false);
+    if (it != details.end()) sipaccount->setTlsVerifyClient (it->second == "true");
 
-    it = map_cpy.find (TLS_REQUIRE_CLIENT_CERTIFICATE);
+    it = details.find (TLS_REQUIRE_CLIENT_CERTIFICATE);
 
-    if (it != map_cpy.end()) sipaccount->setTlsRequireClientCertificate ( (it->second == "true") ? true : false);
+    if (it != details.end()) sipaccount->setTlsRequireClientCertificate (it->second == "true");
 
-    it = map_cpy.find (TLS_NEGOTIATION_TIMEOUT_SEC);
+    it = details.find (TLS_NEGOTIATION_TIMEOUT_SEC);
 
-    if (it != map_cpy.end()) sipaccount->setTlsNegotiationTimeoutSec (it->second);
+    if (it != details.end()) sipaccount->setTlsNegotiationTimeoutSec (it->second);
 
-    it = map_cpy.find (TLS_NEGOTIATION_TIMEOUT_MSEC);
+    it = details.find (TLS_NEGOTIATION_TIMEOUT_MSEC);
 
-    if (it != map_cpy.end()) sipaccount->setTlsNegotiationTimeoutMsec (it->second);
+    if (it != details.end()) sipaccount->setTlsNegotiationTimeoutMsec (it->second);
 
     Manager::instance().saveConfig();
 
     // Update account details to the client side
     accountsChanged();
-
 }
 
 std::vector<std::map<std::string, std::string> > ConfigurationManager::getCredentials (
@@ -619,31 +616,6 @@ void ConfigurationManager::setIsAlwaysRecording(const bool& rec)
 {
 	Manager::instance().setIsAlwaysRecording(rec);
 }
-/*
-int32_t ConfigurationManager::getDialpad(void) {
-	return Manager::instance().getDialpad();
-}
-
-void ConfigurationManager::setDialpad(const bool& display) {
-	Manager::instance().setDialpad(display);
-}
-
-int32_t ConfigurationManager::getSearchbar(void) {
-	return Manager::instance().getSearchbar();
-}
-
-void ConfigurationManager::setSearchbar(void) {
-	Manager::instance().setSearchbar();
-}
-
-int32_t ConfigurationManager::getVolumeControls(void) {
-	return Manager::instance().getVolumeControls();
-}
-
-void ConfigurationManager::setVolumeControls(const bool& display) {
-	Manager::instance().setVolumeControls(display);
-}
-*/
 
 int32_t ConfigurationManager::getHistoryLimit (void)
 {
@@ -654,40 +626,6 @@ void ConfigurationManager::setHistoryLimit (const int32_t& days)
 {
     Manager::instance().setHistoryLimit (days);
 }
-
-/*
-void ConfigurationManager::setHistoryEnabled(void) {
-	Manager::instance().setHistoryEnabled();
-}
-
-std::string ConfigurationManager::getHistoryEnabled(void) {
-	return Manager::instance().getHistoryEnabled();
-}
-
-void ConfigurationManager::startHidden(void) {
-	Manager::instance().startHidden();
-}
-
-int32_t ConfigurationManager::isStartHidden(void) {
-	return Manager::instance().isStartHidden();
-}
-
-void ConfigurationManager::switchPopupMode(void) {
-	Manager::instance().switchPopupMode();
-}
-
-int32_t ConfigurationManager::popupMode(void) {
-	return Manager::instance().popupMode();
-}
-
-void ConfigurationManager::setNotify(void) {
-	Manager::instance().setNotify();
-}
-
-int32_t ConfigurationManager::getNotify(void) {
-	return Manager::instance().getNotify();
-}
-*/
 
 void ConfigurationManager::setAudioManager (const int32_t& api)
 {
@@ -784,23 +722,7 @@ std::map<std::string, std::string> ConfigurationManager::getShortcuts()
 void ConfigurationManager::setShortcuts (
     const std::map<std::string, std::string>& shortcutsMap)
 {
-
-    std::map<std::string, std::string> map_cpy = shortcutsMap;
-    /*
-      std::map<std::string, std::string> map_cpy = shortcutsMap;
-      std::map<std::string, std::string>::iterator it;
-
-      for (int i = 0; i < (int)shortcutsKeys.size(); i++) {
-      	std::string key = shortcutsKeys.at(i);
-      	it = map_cpy.find(key);
-      	if (it != shortcutsMap.end()) {
-
-      		Manager::instance().setConfig("Shortcuts", key, it->second);
-      	}
-      }
-    */
-    Manager::instance().shortcutPreferences.setShortcuts (map_cpy);
-
+    Manager::instance().shortcutPreferences.setShortcuts (shortcutsMap);
     Manager::instance().saveConfig();
 }
 

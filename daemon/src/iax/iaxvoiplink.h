@@ -89,7 +89,7 @@ class IAXVoIPLink : public VoIPLink
         /**
          * Send out registration
          */
-        virtual void sendRegister (Account *a) throw(VoipLinkException);
+        virtual void sendRegister (Account *a);
 
         /**
          * Destroy registration session

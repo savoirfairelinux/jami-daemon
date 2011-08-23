@@ -125,6 +125,7 @@ class SIPAccount : public Account
          * Virtual destructor
          */
         virtual ~SIPAccount();
+        std::string getUserAgentName() const;
         void setRegistrationStateDetailed (const std::pair<int, std::string> &details) { registrationStateDetailed_ = details; }
 
         virtual void serialize (Conf::YamlEmitter *emitter);
@@ -189,9 +190,6 @@ class SIPAccount : public Account
 
         bool isResolveOnce (void) const {
             return resolveOnce_;
-        }
-        void setResolveOnce (bool reslv) {
-            resolveOnce_ = reslv;
         }
 
         /**
