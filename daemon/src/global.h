@@ -159,8 +159,8 @@ typedef enum {
 /** The struct to reflect the order the user wants to use the codecs */
 typedef std::vector<AudioCodecType> CodecOrder;
 
-const char * const IP2IP_PROFILE = "IP2IP";
-const char * const DIR_SEPARATOR_STR = "/"; // Directory separator char
-const char DIR_SEPARATOR_CH = '/'; /** Directory separator string */
+#define IP2IP_PROFILE "IP2IP"
+#define DIR_SEPARATOR_STR "/" // Directory separator char
+#define DIR_SEPARATOR_CH = '/' /** Directory separator string */
 
 #endif	// __GLOBAL_H__

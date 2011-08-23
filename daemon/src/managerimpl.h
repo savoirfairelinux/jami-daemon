@@ -1041,11 +1041,6 @@ class ManagerImpl
          */
         std::string getConfigFile (void) const;
 
-        /*
-         * Initialize audiocodec with config setting
-         */
-        void initAudioCodec (void);
-
 
         /*
          * Initialize zeroconf module and scanning

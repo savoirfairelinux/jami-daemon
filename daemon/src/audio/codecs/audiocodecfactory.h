@@ -69,7 +69,7 @@ class AudioCodecFactory
          * Accessor to data structures
          * @return CodecsMap& The available codec
          */
-        CodecsMap& getCodecsMap() {
+        const CodecsMap& getCodecsMap() const {
             return _CodecsMap;
         }
 
@@ -118,14 +118,6 @@ class AudioCodecFactory
          * @param list The ordered list sent by DBus
          */
         void saveActiveCodecs (const std::vector<std::string>& list);
-
-        /**
-         * Get the number of codecs loaded in dynamic memory
-         * @return int The number
-         */
-        int getCodecsNumber (void) {
-            return _nbCodecs;
-        }
 
         /**
          * Unreferences the codecs loaded in memory
@@ -214,11 +206,6 @@ class AudioCodecFactory
          * Vector containing the complete name of the codec shared library scanned
          */
         std::vector<std::string> _Cache;
-
-        /**
-         * Number of codecs loaded
-         */
-        int _nbCodecs;
 
         /**
          * Vector containing pairs

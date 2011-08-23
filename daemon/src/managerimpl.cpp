@@ -97,7 +97,7 @@ void ManagerImpl::init ()
     selectAudioDriver();
 
     // Initialize the list of supported audio codecs
-    initAudioCodec();
+    _audioCodecFactory.init();
 
     audioLayerMutexLock();
 
@@ -2067,7 +2067,7 @@ void ManagerImpl::ringtone (const std::string& accountID)
     }
 
     std::string ringchoice = account->getRingtonePath();
-	if (ringchoice.find (DIR_SEPARATOR_CH) == std::string::npos) {
+	if (ringchoice.find (DIR_SEPARATOR_STR) == std::string::npos) {
 		// check inside global share directory
 		ringchoice = std::string (PROGSHAREDIR) + DIR_SEPARATOR_STR
 					 + RINGDIR + DIR_SEPARATOR_STR + ringchoice;
@@ -2257,19 +2257,6 @@ void ManagerImpl::initConfigFile (std::string alternate)
             _error ("Manager: %s", e.what());
         }
     }
-}
-
-/**
- * Initialization: Main Thread
- */
-void ManagerImpl::initAudioCodec (void)
-{
-    _info ("Manager: Init audio codecs");
-
-    /* Init list of all supported codecs by the application.
-     * This is a global list. Every account will inherit it.
-     */
-    _audioCodecFactory.init();
 }
 
 std::vector<std::string> ManagerImpl::unserialize (std::string s)
