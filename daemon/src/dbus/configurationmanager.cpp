@@ -125,7 +125,6 @@ std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails (void)
                    ip2ipAccountDetails, ip2ipAccountDetails.end()));
 
     return ip2ipAccountDetails;
-
 }
 
 void ConfigurationManager::setIp2IpDetails (const std::map<std::string,
@@ -191,7 +190,6 @@ void ConfigurationManager::setIp2IpDetails (const std::map<std::string,
 
 std::map<std::string, std::string> ConfigurationManager::getTlsSettings()
 {
-
     std::map<std::string, std::string> tlsSettings;
 
     SIPAccount *sipaccount = (SIPAccount *) Manager::instance().getAccount (IP2IP_PROFILE);
@@ -715,7 +713,6 @@ std::vector<std::string> ConfigurationManager::getAllIpInterfaceByName (void)
 
 std::map<std::string, std::string> ConfigurationManager::getShortcuts()
 {
-
     return Manager::instance().shortcutPreferences.getShortcuts();
 }
 

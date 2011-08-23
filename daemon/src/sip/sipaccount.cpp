@@ -31,6 +31,7 @@
 */
 
 #include "sipaccount.h"
+#include "sipvoiplink.h"
 #include "manager.h"
 #include "config.h"
 #include <pwd.h>
@@ -485,50 +486,50 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 
     // Add sip specific details
     a[ROUTESET] = getServiceRoute();
-    a[CONFIG_ACCOUNT_RESOLVE_ONCE] = isResolveOnce() ? "true" : "false";
+    a[CONFIG_ACCOUNT_RESOLVE_ONCE] = resolveOnce_ ? "true" : "false";
     a[USERAGENT] = userAgent_;
 
-    a[CONFIG_ACCOUNT_REGISTRATION_EXPIRE] = getRegistrationExpire();
-    a[LOCAL_INTERFACE] = getLocalInterface();
-    a[PUBLISHED_SAMEAS_LOCAL] = getPublishedSameasLocal() ? "true" : "false";
-    a[PUBLISHED_ADDRESS] = getPublishedAddress();
+    a[CONFIG_ACCOUNT_REGISTRATION_EXPIRE] = registrationExpire_;
+    a[LOCAL_INTERFACE] = interface_;
+    a[PUBLISHED_SAMEAS_LOCAL] = publishedSameasLocal_ ? "true" : "false";
+    a[PUBLISHED_ADDRESS] = publishedIpAddress_;
 
     std::stringstream localport;
-    localport << getLocalPort();
+    localport << localPort_;
     a[LOCAL_PORT] = localport.str();
     std::stringstream publishedport;
-    publishedport << getPublishedPort();
+    publishedport << publishedPort_;
     a[PUBLISHED_PORT] = publishedport.str();
-    a[STUN_ENABLE] = isStunEnabled() ? "true" : "false";
-    a[STUN_SERVER] = getStunServer();
-    a[ACCOUNT_DTMF_TYPE] = (getDtmfType() == OVERRTP) ? "overrtp" : "sipinfo";
+    a[STUN_ENABLE] = stunEnabled_ ? "true" : "false";
+    a[STUN_SERVER] = stunServer_;
+    a[ACCOUNT_DTMF_TYPE] = (dtmfType_ == OVERRTP) ? "overrtp" : "sipinfo";
 
-    a[SRTP_KEY_EXCHANGE] = getSrtpKeyExchange();
-    a[SRTP_ENABLE] = getSrtpEnable() ? "true" : "false";
-    a[SRTP_RTP_FALLBACK] = getSrtpFallback() ? "true" : "false";
+    a[SRTP_KEY_EXCHANGE] = srtpKeyExchange_;
+    a[SRTP_ENABLE] = srtpEnabled_ ? "true" : "false";
+    a[SRTP_RTP_FALLBACK] = srtpFallback_ ? "true" : "false";
 
-    a[ZRTP_DISPLAY_SAS] = getZrtpDisplaySas() ? "true" : "false";
-    a[ZRTP_DISPLAY_SAS_ONCE] = getZrtpDiaplaySasOnce() ? "true" : "false";
-    a[ZRTP_HELLO_HASH] = getZrtpHelloHash() ? "true" : "false";
-    a[ZRTP_NOT_SUPP_WARNING] = getZrtpNotSuppWarning() ? "true" : "false";
+    a[ZRTP_DISPLAY_SAS] = zrtpDisplaySas_ ? "true" : "false";
+    a[ZRTP_DISPLAY_SAS_ONCE] = zrtpDisplaySasOnce_ ? "true" : "false";
+    a[ZRTP_HELLO_HASH] = zrtpHelloHash_ ? "true" : "false";
+    a[ZRTP_NOT_SUPP_WARNING] = zrtpNotSuppWarning_ ? "true" : "false";
 
     // TLS listener is unique and parameters are modified through IP2IP_PROFILE
     std::stringstream tlslistenerport;
-    tlslistenerport << getTlsListenerPort();
+    tlslistenerport << tlsListenerPort_;
     a[TLS_LISTENER_PORT] = tlslistenerport.str();
-    a[TLS_ENABLE] = getTlsEnable();
-    a[TLS_CA_LIST_FILE] = getTlsCaListFile();
-    a[TLS_CERTIFICATE_FILE] = getTlsCertificateFile();
-    a[TLS_PRIVATE_KEY_FILE] = getTlsPrivateKeyFile();
-    a[TLS_PASSWORD] = getTlsPassword();
-    a[TLS_METHOD] = getTlsMethod();
-    a[TLS_CIPHERS] = getTlsCiphers();
-    a[TLS_SERVER_NAME] = getTlsServerName();
-    a[TLS_VERIFY_SERVER] = getTlsVerifyServer() ? "true" : "false";
-    a[TLS_VERIFY_CLIENT] = getTlsVerifyClient() ? "true" : "false";
-    a[TLS_REQUIRE_CLIENT_CERTIFICATE] = getTlsRequireClientCertificate() ? "true" : "false";
-    a[TLS_NEGOTIATION_TIMEOUT_SEC] = getTlsNegotiationTimeoutSec();
-    a[TLS_NEGOTIATION_TIMEOUT_MSEC] = getTlsNegotiationTimeoutMsec();
+    a[TLS_ENABLE] = tlsEnable_;
+    a[TLS_CA_LIST_FILE] = tlsCaListFile_;
+    a[TLS_CERTIFICATE_FILE] = tlsCertificateFile_;
+    a[TLS_PRIVATE_KEY_FILE] = tlsPrivateKeyFile_;
+    a[TLS_PASSWORD] = tlsPassword_;
+    a[TLS_METHOD] = tlsMethod_;
+    a[TLS_CIPHERS] = tlsCiphers_;
+    a[TLS_SERVER_NAME] = tlsServerName_;
+    a[TLS_VERIFY_SERVER] = tlsVerifyServer_ ? "true" : "false";
+    a[TLS_VERIFY_CLIENT] = tlsVerifyClient_ ? "true" : "false";
+    a[TLS_REQUIRE_CLIENT_CERTIFICATE] = tlsRequireClientCertificate_ ? "true" : "false";
+    a[TLS_NEGOTIATION_TIMEOUT_SEC] = tlsNegotiationTimeoutSec_;
+    a[TLS_NEGOTIATION_TIMEOUT_MSEC] = tlsNegotiationTimeoutMsec_;
 
     return a;
 }
@@ -549,7 +550,7 @@ int SIPAccount::registerVoIPLink()
 
     // Init TLS settings if the user wants to use TLS
     if (tlsEnable_ == "true") {
-        _debug ("SIPAccount: TLS is enabled for account %s", getAccountID().c_str());
+        _debug ("SIPAccount: TLS is enabled for account %s", accountID_.c_str());
         transportType_ = PJSIP_TRANSPORT_TLS;
         initTlsConfiguration();
     }
@@ -671,9 +672,8 @@ void SIPAccount::loadConfig()
     if (tlsEnable_ == "true") {
         initTlsConfiguration();
         transportType_ = PJSIP_TRANSPORT_TLS;
-    } else {
+    } else
         transportType_ = PJSIP_TRANSPORT_UDP;
-    }
 }
 
 bool SIPAccount::fullMatch (const std::string& username, const std::string& hostname) const

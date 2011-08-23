@@ -37,73 +37,72 @@
 
 #include <sstream>
 
-
 #include "account.h"
-#include "sipvoiplink.h"
 #include "pjsip/sip_transport_tls.h"
 #include "pjsip/sip_types.h"
-#include "config/serializable.h"
-#include <exception>
+#include "pjsip-ua/sip_regc.h"
 #include <vector>
 #include <map>
 
+namespace Conf {
+    class YamlEmitter;
+    class MappingNode;
+}
 enum DtmfType { OVERRTP, SIPINFO};
 
 #define OVERRTPSTR "overrtp"
 #define SIPINFOSTR "sipinfo"
 
-
-
 // SIP specific configuration keys
-const std::string expireKey ("expire");
-const std::string interfaceKey ("interface");
-const std::string portKey ("port");
-const std::string publishAddrKey ("publishAddr");
-const std::string publishPortKey ("publishPort");
-const std::string sameasLocalKey ("sameasLocal");
-const std::string resolveOnceKey ("resolveOnce");
-const std::string dtmfTypeKey ("dtmfType");
-const std::string serviceRouteKey ("serviceRoute");
+static const char *const expireKey = "expire";
+static const char *const interfaceKey = "interface";
+static const char *const portKey = "port";
+static const char *const publishAddrKey = "publishAddr";
+static const char *const publishPortKey = "publishPort";
+static const char *const sameasLocalKey = "sameasLocal";
+static const char *const resolveOnceKey = "resolveOnce";
+static const char *const dtmfTypeKey = "dtmfType";
+static const char *const serviceRouteKey = "serviceRoute";
 
 // TODO: write an object to store credential which implement serializable
-const std::string srtpKey ("srtp");
-const std::string srtpEnableKey ("enable");
-const std::string keyExchangeKey ("keyExchange");
-const std::string rtpFallbackKey ("rtpFallback");
+static const char *const srtpKey = "srtp";
+static const char *const srtpEnableKey = "enable";
+static const char *const keyExchangeKey = "keyExchange";
+static const char *const rtpFallbackKey = "rtpFallback";
 
 // TODO: wirte an object to store zrtp params wich implement serializable
-const std::string zrtpKey ("zrtp");
-const std::string displaySasKey ("displaySas");
-const std::string displaySasOnceKey ("displaySasOnce");
-const std::string helloHashEnabledKey ("helloHashEnabled");
-const std::string notSuppWarningKey ("notSuppWarning");
+static const char *const zrtpKey = "zrtp";
+static const char *const displaySasKey = "displaySas";
+static const char *const displaySasOnceKey = "displaySasOnce";
+static const char *const helloHashEnabledKey = "helloHashEnabled";
+static const char *const notSuppWarningKey = "notSuppWarning";
 
 // TODO: write an object to store tls params which implement serializable
-const std::string tlsKey ("tls");
-const std::string tlsPortKey ("tlsPort");
-const std::string certificateKey ("certificate");
-const std::string calistKey ("calist");
-const std::string ciphersKey ("ciphers");
-const std::string tlsEnableKey ("enable");
-const std::string methodKey ("method");
-const std::string timeoutKey ("timeout");
-const std::string tlsPasswordKey ("password");
-const std::string privateKeyKey ("privateKey");
-const std::string requireCertifKey ("requireCertif");
-const std::string serverKey ("server");
-const std::string verifyClientKey ("verifyClient");
-const std::string verifyServerKey ("verifyServer");
+static const char *const tlsKey = "tls";
+static const char *const tlsPortKey = "tlsPort";
+static const char *const certificateKey = "certificate";
+static const char *const calistKey = "calist";
+static const char *const ciphersKey = "ciphers";
+static const char *const tlsEnableKey = "enable";
+static const char *const methodKey = "method";
+static const char *const timeoutKey = "timeout";
+static const char *const tlsPasswordKey = "password";
+static const char *const privateKeyKey = "privateKey";
+static const char *const requireCertifKey = "requireCertif";
+static const char *const serverKey = "server";
+static const char *const verifyClientKey = "verifyClient";
+static const char *const verifyServerKey = "verifyServer";
 
-const std::string stunEnabledKey ("stunEnabled");
-const std::string stunServerKey ("stunServer");
+static const char *const stunEnabledKey = "stunEnabled";
+static const char *const stunServerKey = "stunServer";
 
-const std::string credKey ("credential");
+static const char *const credKey = "credential";
 
 class SIPVoIPLink;
 
 /**
  * @file sipaccount.h
- * @brief A SIP Account specify SIP specific functions and object (SIPCall/SIPVoIPLink)
+ * @brief A SIP Account specify SIP specific functions and object = SIPCall/SIPVoIPLink)
  */
 
 class SIPAccount : public Account
@@ -114,12 +113,6 @@ class SIPAccount : public Account
          * @param accountID The account identifier
          */
         SIPAccount (const std::string& accountID);
-
-        /* Copy Constructor */
-        SIPAccount (const SIPAccount& rh);
-
-        /* Assignment Operator */
-        SIPAccount& operator= (const SIPAccount& rh);
 
         /**
          * Virtual destructor
@@ -137,23 +130,8 @@ class SIPAccount : public Account
         virtual std::map<std::string, std::string> getAccountDetails() const;
 
         /**
-         * Set route header to appears in sip messages for this account
-         */
-        void setRouteSet (const std::string &route) {
-           routeSet_ = route;
-        }
-
-        /**
-         * Get route header to appear in sip messages for this account
-         */
-        std::string getRouteSet (void) const {
-            return routeSet_;
-        }
-
-        /**
          * Special setVoIPLink which increment SipVoIPLink's number of client.
          */
-        // void setVoIPLink(VoIPLink *link);
         void setVoIPLink();
 
         /**
@@ -559,6 +537,7 @@ class SIPAccount : public Account
         std::string getTlsPassword (void) const {
             return tlsPassword_;
         }
+
         void setTlsPassword (const std::string &pass) {
             tlsPassword_ = pass;
         }

@@ -1184,7 +1184,6 @@ SIPVoIPLink::carryingDTMFdigits (const std::string& id, char code)
     return true;
 }
 
-
 bool
 SIPVoIPLink::dtmfSipInfo (SIPCall *call, char code)
 {
