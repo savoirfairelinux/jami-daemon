@@ -128,6 +128,8 @@ class SIPAccount : public Account
         virtual void setAccountDetails (std::map<std::string, std::string> details);
 
         virtual std::map<std::string, std::string> getAccountDetails() const;
+        std::map<std::string, std::string> getIp2IpDetails (void) const;
+        std::map<std::string, std::string> getTlsSettings (void) const;
 
         /**
          * Special setVoIPLink which increment SipVoIPLink's number of client.
@@ -477,23 +479,14 @@ class SIPAccount : public Account
             srtpFallback_ = fallback;
         }
 
-        bool getZrtpDisplaySas (void) const {
-            return zrtpDisplaySas_;
-        }
         void setZrtpDisplaySas (bool sas) {
             zrtpDisplaySas_ = sas;
         }
 
-        bool getZrtpDiaplaySasOnce (void) const {
-            return zrtpDisplaySasOnce_;
-        }
         void setZrtpDiaplaySasOnce (bool sasonce) {
             zrtpDisplaySasOnce_ = sasonce;
         }
 
-        bool getZrtpNotSuppWarning (void) const {
-            return zrtpNotSuppWarning_;
-        }
         void setZrtpNotSuppWarning (bool warning) {
             zrtpNotSuppWarning_ = warning;
         }
@@ -504,11 +497,7 @@ class SIPAccount : public Account
         void setZrtpHelloHash (bool hellohash) {
             zrtpHelloHash_ = hellohash;
         }
-        // void setSrtpKeyExchange
 
-        std::string getTlsEnable (void) const {
-            return tlsEnable_;
-        }
         void setTlsEnable (const std::string &enabl) {
             tlsEnable_ = enabl;
         }

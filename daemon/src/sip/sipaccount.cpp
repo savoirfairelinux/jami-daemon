@@ -958,3 +958,53 @@ std::string SIPAccount::getUserAgentName() const
 
     return result;
 }
+
+std::map<std::string, std::string> SIPAccount::getIp2IpDetails (void) const
+{
+    assert(accountID_ == IP2IP_PROFILE);
+    std::map<std::string, std::string> ip2ipAccountDetails;
+    ip2ipAccountDetails[ACCOUNT_ID] = IP2IP_PROFILE;
+    ip2ipAccountDetails[SRTP_KEY_EXCHANGE] = srtpKeyExchange_;
+    ip2ipAccountDetails[SRTP_ENABLE] = srtpEnabled_ ? "true" : "false";
+    ip2ipAccountDetails[SRTP_RTP_FALLBACK] = srtpFallback_ ? "true" : "false";
+    ip2ipAccountDetails[ZRTP_DISPLAY_SAS] = zrtpDisplaySas_ ? "true" : "false";
+    ip2ipAccountDetails[ZRTP_HELLO_HASH] = zrtpHelloHash_ ? "true" : "false";
+    ip2ipAccountDetails[ZRTP_NOT_SUPP_WARNING] = zrtpNotSuppWarning_ ? "true" : "false";
+    ip2ipAccountDetails[ZRTP_DISPLAY_SAS_ONCE] = zrtpDisplaySasOnce_ ? "true" : "false";
+    ip2ipAccountDetails[LOCAL_INTERFACE] = interface_;
+    std::stringstream portstr;
+    portstr << localPort_;
+    ip2ipAccountDetails[LOCAL_PORT] = portstr.str();
+
+    std::map<std::string, std::string> tlsSettings;
+    tlsSettings = getTlsSettings();
+    std::copy (tlsSettings.begin(), tlsSettings.end(), std::inserter (
+                ip2ipAccountDetails, ip2ipAccountDetails.end()));
+
+    return ip2ipAccountDetails;
+}
+
+std::map<std::string, std::string> SIPAccount::getTlsSettings() const
+{
+    std::map<std::string, std::string> tlsSettings;
+    assert(accountID_ == IP2IP_PROFILE);
+
+    std::stringstream portstr;
+    portstr << tlsListenerPort_;
+    tlsSettings[TLS_LISTENER_PORT] = portstr.str();
+    tlsSettings[TLS_ENABLE] = tlsEnable_;
+    tlsSettings[TLS_CA_LIST_FILE] = tlsCaListFile_;
+    tlsSettings[TLS_CERTIFICATE_FILE] = tlsCertificateFile_;
+    tlsSettings[TLS_PRIVATE_KEY_FILE] = tlsPrivateKeyFile_;
+    tlsSettings[TLS_PASSWORD] = tlsPassword_;
+    tlsSettings[TLS_METHOD] = tlsMethod_;
+    tlsSettings[TLS_CIPHERS] = tlsCiphers_;
+    tlsSettings[TLS_SERVER_NAME] = tlsServerName_;
+    tlsSettings[TLS_VERIFY_SERVER] = tlsVerifyServer_ ? "true" : "false";
+    tlsSettings[TLS_VERIFY_CLIENT] = tlsVerifyClient_ ? "true" : "false";
+    tlsSettings[TLS_REQUIRE_CLIENT_CERTIFICATE] = tlsRequireClientCertificate_ ? "true" : "false";
+    tlsSettings[TLS_NEGOTIATION_TIMEOUT_SEC] = tlsNegotiationTimeoutSec_;
+    tlsSettings[TLS_NEGOTIATION_TIMEOUT_MSEC] = tlsNegotiationTimeoutMsec_;
+
+    return tlsSettings;
+}
