@@ -223,35 +223,6 @@
 		   </arg>
 	   </method>
 
-	   <method name="getToneLocaleList" tp:name-for-bindings="getToneLocaleList">
-		   <tp:docstring>
-		   </tp:docstring>
-		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
-		   <arg type="as" name="list" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
-
-	   <method name="getVersion" tp:name-for-bindings="getVersion">
-		   <tp:docstring>
-		   </tp:docstring>
-		   <arg type="s" name="version" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
-
-	   <method name="getRingtoneList" tp:name-for-bindings="getRingtoneList">
-		   <tp:docstring>
-		   </tp:docstring>
-		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
-		   <arg type="as" name="list" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
-
 	   <method name="getPlaybackDeviceList" tp:name-for-bindings="getPlaybackDeviceList">
 		   <tp:docstring>
 		   </tp:docstring>

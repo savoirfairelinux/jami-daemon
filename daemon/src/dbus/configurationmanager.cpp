@@ -121,20 +121,20 @@ std::map<std::string, std::string> ConfigurationManager::getTlsSettings()
 
     std::stringstream portstr;
     portstr << sipaccount->getTlsListenerPort();
-    tlsSettings.insert (std::pair<std::string, std::string> (TLS_LISTENER_PORT, portstr.str()));
-    tlsSettings.insert (std::pair<std::string, std::string> (TLS_ENABLE, sipaccount->getTlsEnable()));
-    tlsSettings.insert (std::pair<std::string, std::string> (TLS_CA_LIST_FILE, sipaccount->getTlsCaListFile()));
-    tlsSettings.insert (std::pair<std::string, std::string> (TLS_CERTIFICATE_FILE, sipaccount->getTlsCertificateFile()));
-    tlsSettings.insert (std::pair<std::string, std::string> (TLS_PRIVATE_KEY_FILE, sipaccount->getTlsPrivateKeyFile()));
-    tlsSettings.insert (std::pair<std::string, std::string> (TLS_PASSWORD, sipaccount->getTlsPassword()));
-    tlsSettings.insert (std::pair<std::string, std::string> (TLS_METHOD, sipaccount->getTlsMethod()));
-    tlsSettings.insert (std::pair<std::string, std::string> (TLS_CIPHERS, sipaccount->getTlsCiphers()));
-    tlsSettings.insert (std::pair<std::string, std::string> (TLS_SERVER_NAME, sipaccount->getTlsServerName()));
-    tlsSettings.insert (std::pair<std::string, std::string> (TLS_VERIFY_SERVER, sipaccount->getTlsVerifyServer() ? "true" : "false"));
-    tlsSettings.insert (std::pair<std::string, std::string> (TLS_VERIFY_CLIENT, sipaccount->getTlsVerifyClient() ? "true" : "false"));
-    tlsSettings.insert (std::pair<std::string, std::string> (TLS_REQUIRE_CLIENT_CERTIFICATE, sipaccount->getTlsRequireClientCertificate() ? "true" : "false"));
-    tlsSettings.insert (std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_SEC, sipaccount->getTlsNegotiationTimeoutSec()));
-    tlsSettings.insert (std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_MSEC, sipaccount->getTlsNegotiationTimeoutMsec()));
+    tlsSettings[TLS_LISTENER_PORT] = portstr.str();
+    tlsSettings[TLS_ENABLE] = sipaccount->getTlsEnable();
+    tlsSettings[TLS_CA_LIST_FILE] = sipaccount->getTlsCaListFile();
+    tlsSettings[TLS_CERTIFICATE_FILE] = sipaccount->getTlsCertificateFile();
+    tlsSettings[TLS_PRIVATE_KEY_FILE] = sipaccount->getTlsPrivateKeyFile();
+    tlsSettings[TLS_PASSWORD] = sipaccount->getTlsPassword();
+    tlsSettings[TLS_METHOD] = sipaccount->getTlsMethod();
+    tlsSettings[TLS_CIPHERS] = sipaccount->getTlsCiphers();
+    tlsSettings[TLS_SERVER_NAME] = sipaccount->getTlsServerName();
+    tlsSettings[TLS_VERIFY_SERVER] = sipaccount->getTlsVerifyServer() ? "true" : "false";
+    tlsSettings[TLS_VERIFY_CLIENT] = sipaccount->getTlsVerifyClient() ? "true" : "false";
+    tlsSettings[TLS_REQUIRE_CLIENT_CERTIFICATE] = sipaccount->getTlsRequireClientCertificate() ? "true" : "false";
+    tlsSettings[TLS_NEGOTIATION_TIMEOUT_SEC] = sipaccount->getTlsNegotiationTimeoutSec();
+    tlsSettings[TLS_NEGOTIATION_TIMEOUT_MSEC] = sipaccount->getTlsNegotiationTimeoutMsec();
 
     return tlsSettings;
 }
@@ -235,27 +235,6 @@ void ConfigurationManager::removeAccount (const std::string& accoundID)
 std::vector<std::string> ConfigurationManager::getAccountList()
 {
     return Manager::instance().getAccountList();
-}
-
-//TODO
-std::vector<std::string> ConfigurationManager::getToneLocaleList()
-{
-    std::vector<std::string> ret;
-    return ret;
-}
-
-//TODO
-std::string ConfigurationManager::getVersion()
-{
-    std::string ret ("");
-    return ret;
-}
-
-//TODO
-std::vector<std::string> ConfigurationManager::getRingtoneList()
-{
-    std::vector<std::string> ret;
-    return ret;
 }
 
 /**

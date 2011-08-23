@@ -94,10 +94,8 @@ class ConfigurationManager
         void setEchoCancelDelay(const int32_t& length);
         int getEchoCancelDelay(void);
 
-        std::vector< std::string > getToneLocaleList();
         std::vector< std::string > getPlaybackDeviceList();
         std::vector< std::string > getRecordDeviceList();
-        std::string getVersion();
         std::vector< std::string > getRingtoneList();
         int32_t getAudioManager (void);
         void setAudioManager (const int32_t& api);
