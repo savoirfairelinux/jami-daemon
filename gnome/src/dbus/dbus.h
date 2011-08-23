@@ -150,11 +150,6 @@ void dbus_get_credentials (account_t *a);
 GHashTable * dbus_get_ip2_ip_details (void);
 
 /**
- * ConfigurationManager - Set the details for the ip2ip profile
- */
-void dbus_set_ip2ip_details (GHashTable * properties);
-
-/**
  * ConfigurationManager - Send registration request
  * @param accountID The account to register/unregister
  * @param enable The flag for the type of registration
@@ -277,18 +272,6 @@ gchar** dbus_get_audio_plugin_list();
 void dbus_set_audio_plugin (gchar* audioPlugin);
 
 /**
- * ConfigurationManager - Select an input audio plugin
- * @param audioPlugin The string description of the plugin
- */
-void dbus_set_input_audio_plugin (gchar* audioPlugin);
-
-/**
- * ConfigurationManager - Select an output audio plugin
- * @param audioPlugin The string description of the plugin
- */
-void dbus_set_output_audio_plugin (gchar* audioPlugin);
-
-/**
  * ConfigurationManager - Get the list of available output audio devices
  * @return gchar** The list of devices
  */
@@ -367,53 +350,11 @@ int dbus_get_echo_cancel_delay(void);
 void dbus_set_echo_cancel_delay(int delay);
 
 /**
- * ConfigurationManager - Query to server to
- * know if MD5 credential hashing is enabled.
- * @return True if enabled, false otherwise
- *
- */
-gboolean dbus_is_md5_credential_hashing();
-
-/**
- * ConfigurationManager - Set whether or not
- * the server should store credential as
- * a md5 hash.
- * @param enabled
- */
-void dbus_set_md5_credential_hashing (gboolean enabled);
-
-/**
  * ConfigurationManager - Tells the GUI if IAX2 support is enabled
  * @return int 1 if IAX2 is enabled
  *	       0 otherwise
  */
 int dbus_is_iax2_enabled (void);
-
-/**
- * ConfigurationManager - Query the server about the ringtone option.
- * If ringtone is enabled, ringtone on incoming call use custom choice. If not, only standart tone.
- * @return int	1 if enabled
- *	        0 otherwise
- */
-int dbus_is_ringtone_enabled (const gchar *accountID);
-
-/**
- * ConfigurationManager - Set the ringtone option
- * Inverse current value
- */
-void dbus_ringtone_enabled (const gchar *accountID);
-
-/**
- * ConfigurationManager - Get the ringtone
- * @return gchar* The file name selected as a ringtone
- */
-gchar* dbus_get_ringtone_choice (const gchar *accountID);
-
-/**
- * ConfigurationManager - Set a ringtone
- * @param tone The file name of the ringtone
- */
-void dbus_set_ringtone_choice (const gchar *accountID, const gchar* tone);
 
 /**
  * ConfigurationManager - Gives the maximum number of days the user wants to have in the history

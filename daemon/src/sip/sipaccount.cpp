@@ -31,7 +31,9 @@
 */
 
 #include "sipaccount.h"
+#include "sipvoiplink.h"
 #include "manager.h"
+#include "config.h"
 #include <pwd.h>
 #include <sstream>
 #include <cassert>
@@ -43,51 +45,51 @@ namespace {
 
 SIPAccount::SIPAccount (const std::string& accountID)
     : Account (accountID, "SIP")
-    , _routeSet ("")
-    , _pool (NULL)
-    , _regc (NULL)
-    , _bRegister (false)
-    , _registrationExpire ("")
-    , _interface ("default")
-    , _publishedSameasLocal (true)
-    , _publishedIpAddress ("")
-    , _localPort (DEFAULT_SIP_PORT)
-    , _publishedPort (DEFAULT_SIP_PORT)
-    , _serviceRoute ("")
-    , _tlsListenerPort (DEFAULT_SIP_TLS_PORT)
-    , _transportType (PJSIP_TRANSPORT_UNSPECIFIED)
-    , _transport (NULL)
-    , _resolveOnce (false)
-    , _cred (NULL)
-    , _tlsSetting (NULL)
-    , _dtmfType (OVERRTP)
-    , _tlsEnable ("false")
-	, _tlsPort (DEFAULT_SIP_TLS_PORT)
-    , _tlsCaListFile ("")
-    , _tlsCertificateFile ("")
-    , _tlsPrivateKeyFile ("")
-    , _tlsPassword ("")
-    , _tlsMethod ("TLSv1")
-    , _tlsCiphers ("")
-    , _tlsServerName ("")
-    , _tlsVerifyServer (true)
-    , _tlsVerifyClient (true)
-    , _tlsRequireClientCertificate (true)
-    , _tlsNegotiationTimeoutSec ("2")
-    , _tlsNegotiationTimeoutMsec ("0")
-    , _stunServer (DFT_STUN_SERVER)
-    , _stunEnabled (false)
-    , _srtpEnabled (false)
-    , _srtpKeyExchange ("sdes")
-    , _srtpFallback (false)
-    , _zrtpDisplaySas (true)
-    , _zrtpDisplaySasOnce (false)
-    , _zrtpHelloHash (true)
-    , _zrtpNotSuppWarning (true)
+    , routeSet_ ("")
+    , pool_ (NULL)
+    , regc_ (NULL)
+    , bRegister_ (false)
+    , registrationExpire_ ("")
+    , interface_ ("default")
+    , publishedSameasLocal_ (true)
+    , publishedIpAddress_ ("")
+    , localPort_ (DEFAULT_SIP_PORT)
+    , publishedPort_ (DEFAULT_SIP_PORT)
+    , serviceRoute_ ("")
+    , tlsListenerPort_ (DEFAULT_SIP_TLS_PORT)
+    , transportType_ (PJSIP_TRANSPORT_UNSPECIFIED)
+    , transport_ (NULL)
+    , resolveOnce_ (false)
+    , cred_ (NULL)
+    , tlsSetting_ (NULL)
+    , dtmfType_ (OVERRTP)
+    , tlsEnable_ ("false")
+	, tlsPort_ (DEFAULT_SIP_TLS_PORT)
+    , tlsCaListFile_ ("")
+    , tlsCertificateFile_ ("")
+    , tlsPrivateKeyFile_ ("")
+    , tlsPassword_ ("")
+    , tlsMethod_ ("TLSv1")
+    , tlsCiphers_ ("")
+    , tlsServerName_ ("")
+    , tlsVerifyServer_ (true)
+    , tlsVerifyClient_ (true)
+    , tlsRequireClientCertificate_ (true)
+    , tlsNegotiationTimeoutSec_ ("2")
+    , tlsNegotiationTimeoutMsec_ ("0")
+    , stunServer_ (DFT_STUN_SERVER)
+    , stunEnabled_ (false)
+    , srtpEnabled_ (false)
+    , srtpKeyExchange_ ("sdes")
+    , srtpFallback_ (false)
+    , zrtpDisplaySas_ (true)
+    , zrtpDisplaySasOnce_ (false)
+    , zrtpHelloHash_ (true)
+    , zrtpNotSuppWarning_ (true)
 {
-    _stunServerName.ptr = NULL;
-    _stunServerName.slen = 0;
-    _stunPort = 0;
+    stunServerName_.ptr = NULL;
+    stunServerName_.slen = 0;
+    stunPort_ = 0;
 }
 
 SIPAccount::~SIPAccount()
@@ -97,9 +99,9 @@ SIPAccount::~SIPAccount()
         dynamic_cast<SIPVoIPLink*> (link_)->decrementClients();
 
     /* Delete accounts-related information */
-    _regc = NULL;
-    delete[] _cred;
-    delete _tlsSetting;
+    regc_ = NULL;
+    delete[] cred_;
+    delete tlsSetting_;
 }
 
 void SIPAccount::serialize (Conf::YamlEmitter *emitter)
@@ -120,21 +122,21 @@ void SIPAccount::serialize (Conf::YamlEmitter *emitter)
     Conf::ScalarNode hostname (Account::hostname_);
     Conf::ScalarNode enable (enabled_);
     Conf::ScalarNode type (Account::type_);
-    Conf::ScalarNode expire (_registrationExpire);
-    Conf::ScalarNode interface (_interface);
+    Conf::ScalarNode expire (registrationExpire_);
+    Conf::ScalarNode interface (interface_);
     std::stringstream portstr;
-    portstr << _localPort;
+    portstr << localPort_;
     Conf::ScalarNode port (portstr.str());
-    Conf::ScalarNode serviceRoute (_serviceRoute);
+    Conf::ScalarNode serviceRoute (serviceRoute_);
 
     Conf::ScalarNode mailbox (mailBox_);
-    Conf::ScalarNode publishAddr (_publishedIpAddress);
+    Conf::ScalarNode publishAddr (publishedIpAddress_);
     std::stringstream publicportstr;
-    publicportstr << _publishedPort;
+    publicportstr << publishedPort_;
     Conf::ScalarNode publishPort (publicportstr.str());
-    Conf::ScalarNode sameasLocal (_publishedSameasLocal);
-    Conf::ScalarNode resolveOnce (_resolveOnce);
 
+    Conf::ScalarNode sameasLocal (publishedSameasLocal_);
+    Conf::ScalarNode resolveOnce (resolveOnce_);
     Conf::ScalarNode codecs (codecStr_);
     for (std::vector<std::string>::const_iterator git = videoCodecOrder_.begin();
             git != videoCodecOrder_.end(); ++git)
@@ -145,39 +147,39 @@ void SIPAccount::serialize (Conf::YamlEmitter *emitter)
 
     Conf::ScalarNode ringtonePath (ringtonePath_);
     Conf::ScalarNode ringtoneEnabled (ringtoneEnabled_);
-    Conf::ScalarNode stunServer (_stunServer);
-    Conf::ScalarNode stunEnabled (_stunEnabled);
+    Conf::ScalarNode stunServer (stunServer_);
+    Conf::ScalarNode stunEnabled (stunEnabled_);
     Conf::ScalarNode displayName (displayName_);
-    Conf::ScalarNode dtmfType (_dtmfType==OVERRTP ? "overrtp" : "sipinfo");
+    Conf::ScalarNode dtmfType (dtmfType_==OVERRTP ? "overrtp" : "sipinfo");
 
     std::stringstream countstr;
     countstr << 0;
     Conf::ScalarNode count (countstr.str());
 
-    Conf::ScalarNode srtpenabled (_srtpEnabled);
-    Conf::ScalarNode keyExchange (_srtpKeyExchange);
-    Conf::ScalarNode rtpFallback (_srtpFallback);
+    Conf::ScalarNode srtpenabled (srtpEnabled_);
+    Conf::ScalarNode keyExchange (srtpKeyExchange_);
+    Conf::ScalarNode rtpFallback (srtpFallback_);
 
-    Conf::ScalarNode displaySas (_zrtpDisplaySas);
-    Conf::ScalarNode displaySasOnce (_zrtpDisplaySasOnce);
-    Conf::ScalarNode helloHashEnabled (_zrtpHelloHash);
-    Conf::ScalarNode notSuppWarning (_zrtpNotSuppWarning);
+    Conf::ScalarNode displaySas (zrtpDisplaySas_);
+    Conf::ScalarNode displaySasOnce (zrtpDisplaySasOnce_);
+    Conf::ScalarNode helloHashEnabled (zrtpHelloHash_);
+    Conf::ScalarNode notSuppWarning (zrtpNotSuppWarning_);
 
     portstr.str("");
-    portstr << _tlsPort;
+    portstr << tlsPort_;
     Conf::ScalarNode tlsport (portstr.str());
-    Conf::ScalarNode certificate (_tlsCertificateFile);
-    Conf::ScalarNode calist (_tlsCaListFile);
-    Conf::ScalarNode ciphers (_tlsCiphers);
-    Conf::ScalarNode tlsenabled (_tlsEnable);
-    Conf::ScalarNode tlsmethod (_tlsMethod);
-    Conf::ScalarNode timeout (_tlsNegotiationTimeoutSec);
-    Conf::ScalarNode tlspassword (_tlsPassword);
-    Conf::ScalarNode privatekey (_tlsPrivateKeyFile);
-    Conf::ScalarNode requirecertif (_tlsRequireClientCertificate);
-    Conf::ScalarNode server (_tlsServerName);
-    Conf::ScalarNode verifyclient (_tlsVerifyServer);
-    Conf::ScalarNode verifyserver (_tlsVerifyClient);
+    Conf::ScalarNode certificate (tlsCertificateFile_);
+    Conf::ScalarNode calist (tlsCaListFile_);
+    Conf::ScalarNode ciphers (tlsCiphers_);
+    Conf::ScalarNode tlsenabled (tlsEnable_);
+    Conf::ScalarNode tlsmethod (tlsMethod_);
+    Conf::ScalarNode timeout (tlsNegotiationTimeoutSec_);
+    Conf::ScalarNode tlspassword (tlsPassword_);
+    Conf::ScalarNode privatekey (tlsPrivateKeyFile_);
+    Conf::ScalarNode requirecertif (tlsRequireClientCertificate_);
+    Conf::ScalarNode server (tlsServerName_);
+    Conf::ScalarNode verifyclient (tlsVerifyServer_);
+    Conf::ScalarNode verifyserver (tlsVerifyClient_);
 
     accountmap.setKeyValue (aliasKey, &alias);
     accountmap.setKeyValue (typeKey, &type);
@@ -286,28 +288,28 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
 
     map->getValue(ringtonePathKey, &ringtonePath_);
     map->getValue(ringtoneEnabledKey, &ringtoneEnabled_);
-    map->getValue(expireKey, &_registrationExpire);
-    map->getValue(interfaceKey, &_interface);
+    map->getValue(expireKey, &registrationExpire_);
+    map->getValue(interfaceKey, &interface_);
     int port;
     map->getValue(portKey, &port);
-    _localPort = port;
-    map->getValue(publishAddrKey, &_publishedIpAddress);
+    localPort_ = port;
+    map->getValue(publishAddrKey, &publishedIpAddress_);
     map->getValue(publishPortKey, &port);
-    _publishedPort = port;
-    map->getValue(sameasLocalKey, &_publishedSameasLocal);
-    map->getValue(resolveOnceKey, &_resolveOnce);
+    publishedPort_ = port;
+    map->getValue(sameasLocalKey, &publishedSameasLocal_);
+    map->getValue(resolveOnceKey, &resolveOnce_);
 
     std::string dtmfType;
     map->getValue(dtmfTypeKey, &dtmfType);
-    _dtmfType = (dtmfType == "overrtp") ? OVERRTP : SIPINFO;
+    dtmfType_ = (dtmfType == "overrtp") ? OVERRTP : SIPINFO;
 
-    map->getValue(serviceRouteKey, &_serviceRoute);
+    map->getValue(serviceRouteKey, &serviceRoute_);
     // stun enabled
-    map->getValue(stunEnabledKey, &_stunEnabled);
-    map->getValue(stunServerKey, &_stunServer);
+    map->getValue(stunEnabledKey, &stunEnabled_);
+    map->getValue(stunServerKey, &stunServer_);
 
     // Init stun server name with default server name
-    _stunServerName = pj_str ( (char*) _stunServer.data());
+    stunServerName_ = pj_str ( (char*) stunServer_.data());
 
     map->getValue(displayNameKey, &displayName_);
 
@@ -354,38 +356,38 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
     // get srtp submap
     srtpMap = (Conf::MappingNode *) (map->getValue (srtpKey));
     if (srtpMap) {
-        srtpMap->getValue(srtpEnableKey, &_srtpEnabled);
-        srtpMap->getValue(keyExchangeKey, &_srtpKeyExchange);
-        srtpMap->getValue(rtpFallbackKey, &_srtpFallback);
+        srtpMap->getValue(srtpEnableKey, &srtpEnabled_);
+        srtpMap->getValue(keyExchangeKey, &srtpKeyExchange_);
+        srtpMap->getValue(rtpFallbackKey, &srtpFallback_);
     }
 
     // get zrtp submap
     zrtpMap = (Conf::MappingNode *) (map->getValue (zrtpKey));
     if (zrtpMap) {
-        zrtpMap->getValue(displaySasKey, &_zrtpDisplaySas);
-        zrtpMap->getValue(displaySasOnceKey, &_zrtpDisplaySasOnce);
-        zrtpMap->getValue(helloHashEnabledKey, &_zrtpHelloHash);
-        zrtpMap->getValue(notSuppWarningKey, &_zrtpNotSuppWarning);
+        zrtpMap->getValue(displaySasKey, &zrtpDisplaySas_);
+        zrtpMap->getValue(displaySasOnceKey, &zrtpDisplaySasOnce_);
+        zrtpMap->getValue(helloHashEnabledKey, &zrtpHelloHash_);
+        zrtpMap->getValue(notSuppWarningKey, &zrtpNotSuppWarning_);
     }
 
     // get tls submap
     tlsMap = (Conf::MappingNode *) (map->getValue (tlsKey));
     if (tlsMap) {
-        tlsMap->getValue(tlsEnableKey, &_tlsEnable);
-        tlsMap->getValue(tlsPortKey, &_tlsPort);
-        tlsMap->getValue(certificateKey, &_tlsCertificateFile);
-        tlsMap->getValue(calistKey, &_tlsCaListFile);
-        tlsMap->getValue(ciphersKey, &_tlsCiphers);
-        tlsMap->getValue(methodKey, &_tlsMethod);
-        tlsMap->getValue(tlsPasswordKey, &_tlsPassword);
-        tlsMap->getValue(privateKeyKey, &_tlsPrivateKeyFile);
-        tlsMap->getValue(requireCertifKey, &_tlsRequireClientCertificate);
-        tlsMap->getValue(serverKey, &_tlsServerName);
-        tlsMap->getValue(verifyClientKey, &_tlsVerifyServer);
-        tlsMap->getValue(verifyServerKey, &_tlsVerifyClient);
+        tlsMap->getValue(tlsEnableKey, &tlsEnable_);
+        tlsMap->getValue(tlsPortKey, &tlsPort_);
+        tlsMap->getValue(certificateKey, &tlsCertificateFile_);
+        tlsMap->getValue(calistKey, &tlsCaListFile_);
+        tlsMap->getValue(ciphersKey, &tlsCiphers_);
+        tlsMap->getValue(methodKey, &tlsMethod_);
+        tlsMap->getValue(tlsPasswordKey, &tlsPassword_);
+        tlsMap->getValue(privateKeyKey, &tlsPrivateKeyFile_);
+        tlsMap->getValue(requireCertifKey, &tlsRequireClientCertificate_);
+        tlsMap->getValue(serverKey, &tlsServerName_);
+        tlsMap->getValue(verifyClientKey, &tlsVerifyServer_);
+        tlsMap->getValue(verifyServerKey, &tlsVerifyClient_);
         // FIXME
-        tlsMap->getValue(timeoutKey, &_tlsNegotiationTimeoutSec);
-        tlsMap->getValue(timeoutKey, &_tlsNegotiationTimeoutMsec);
+        tlsMap->getValue(timeoutKey, &tlsNegotiationTimeoutSec_);
+        tlsMap->getValue(timeoutKey, &tlsNegotiationTimeoutMsec_);
     }
 }
 
@@ -393,33 +395,33 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
 void SIPAccount::setAccountDetails (std::map<std::string, std::string> details)
 {
     // Account setting common to SIP and IAX
-    setAlias (details[CONFIG_ACCOUNT_ALIAS]);
-    setType (details[CONFIG_ACCOUNT_TYPE]);
-    setUsername (details[USERNAME]);
-    setHostname (details[HOSTNAME]);
-    setEnabled ( (details[CONFIG_ACCOUNT_ENABLE] == "true"));
-    setRingtonePath (details[CONFIG_RINGTONE_PATH]);
-    setRingtoneEnabled ( (details[CONFIG_RINGTONE_ENABLED] == "true"));
-    setMailBox (details[CONFIG_ACCOUNT_MAILBOX]);
+    alias_ = details[CONFIG_ACCOUNT_ALIAS];
+    type_ = details[CONFIG_ACCOUNT_TYPE];
+    username_ = details[USERNAME];
+    hostname_ = details[HOSTNAME];
+    enabled_ = details[CONFIG_ACCOUNT_ENABLE] == "true";
+    ringtonePath_ = details[CONFIG_RINGTONE_PATH];
+    ringtoneEnabled_ = details[CONFIG_RINGTONE_ENABLED] == "true";
+    mailBox_ = details[CONFIG_ACCOUNT_MAILBOX];
 
     // SIP specific account settings
 
     // general sip settings
-    setDisplayName (details[DISPLAY_NAME]);
-    setServiceRoute (details[ROUTESET]);
-    setLocalInterface (details[LOCAL_INTERFACE]);
-    setPublishedSameasLocal (details[PUBLISHED_SAMEAS_LOCAL] == "true");
-    setPublishedAddress (details[PUBLISHED_ADDRESS]);
-    setLocalPort (atoi (details[LOCAL_PORT].c_str()));
-    setPublishedPort (atoi (details[PUBLISHED_PORT].c_str()));
-    setStunServer (details[STUN_SERVER]);
-    setStunEnabled (details[STUN_ENABLE] == "true");
-    setDtmfType ( (details[ACCOUNT_DTMF_TYPE] == "overrtp") ? OVERRTP : SIPINFO);
+    displayName_ = details[DISPLAY_NAME];
+    serviceRoute_ = details[ROUTESET];
+    interface_ = details[LOCAL_INTERFACE];
+    publishedSameasLocal_ = details[PUBLISHED_SAMEAS_LOCAL] == "true";
+    publishedIpAddress_ = details[PUBLISHED_ADDRESS];
+    localPort_ = atoi (details[LOCAL_PORT].c_str());
+    publishedPort_ = atoi (details[PUBLISHED_PORT].c_str());
+    stunServer_ = details[STUN_SERVER];
+    stunEnabled_ = details[STUN_ENABLE] == "true";
+    dtmfType_ = details[ACCOUNT_DTMF_TYPE] == "overrtp" ? OVERRTP : SIPINFO;
 
-    setResolveOnce (details[CONFIG_ACCOUNT_RESOLVE_ONCE] == "true");
-    setRegistrationExpire (details[CONFIG_ACCOUNT_REGISTRATION_EXPIRE]);
+    resolveOnce_ = details[CONFIG_ACCOUNT_RESOLVE_ONCE] == "true";
+    registrationExpire_ = details[CONFIG_ACCOUNT_REGISTRATION_EXPIRE];
 
-    setUseragent (details[USERAGENT]);
+    userAgent_ = details[USERAGENT];
 
     // srtp settings
     setSrtpEnable (details[SRTP_ENABLE] == "true");
@@ -449,10 +451,10 @@ void SIPAccount::setAccountDetails (std::map<std::string, std::string> details)
     setTlsNegotiationTimeoutSec (details[TLS_NEGOTIATION_TIMEOUT_SEC]);
     setTlsNegotiationTimeoutMsec (details[TLS_NEGOTIATION_TIMEOUT_MSEC]);
 
-    if (getCredentialCount() == 0) { // credentials not set, construct 1 entry
+    if (credentials_.empty()) { // credentials not set, construct 1 entry
         std::vector<std::map<std::string, std::string> > v;
         std::map<std::string, std::string> map;
-        map[USERNAME] = getUsername();
+        map[USERNAME] = username_;
         map[PASSWORD] = details[PASSWORD];
         map[REALM]    = "*";
         v.push_back(map);
@@ -466,25 +468,25 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 
     a[ACCOUNT_ID] = accountID_;
     // The IP profile does not allow to set an alias
-    a[CONFIG_ACCOUNT_ALIAS] = (accountID_ == IP2IP_PROFILE) ? IP2IP_PROFILE : getAlias();
+    a[CONFIG_ACCOUNT_ALIAS] = (accountID_ == IP2IP_PROFILE) ? IP2IP_PROFILE : alias_;
 
-    a[CONFIG_ACCOUNT_ENABLE] = isEnabled() ? "true" : "false";
-    a[CONFIG_ACCOUNT_TYPE] = getType();
-    a[HOSTNAME] = getHostname();
-    a[USERNAME] = getUsername();
+    a[CONFIG_ACCOUNT_ENABLE] = enabled_ ? "true" : "false";
+    a[CONFIG_ACCOUNT_TYPE] = type_;
+    a[HOSTNAME] = hostname_;
+    a[USERNAME] = username_;
 
-    a[CONFIG_RINGTONE_PATH] = getRingtonePath();
-    a[CONFIG_RINGTONE_ENABLED] = getRingtoneEnabled() ? "true" : "false";
-    a[CONFIG_ACCOUNT_MAILBOX] = getMailBox();
+    a[CONFIG_RINGTONE_PATH] = ringtonePath_;
+    a[CONFIG_RINGTONE_ENABLED] = ringtoneEnabled_ ? "true" : "false";
+    a[CONFIG_ACCOUNT_MAILBOX] = mailBox_;
 
     RegistrationState state = Unregistered;
     std::string registrationStateCode;
     std::string registrationStateDescription;
 
-    if (accountID_ == IP2IP_PROFILE) {
+    if (accountID_ == IP2IP_PROFILE)
         registrationStateDescription = "Direct IP call";
-    } else {
-        state = getRegistrationState();
+    else {
+        state = registrationState_;
         int code = registrationStateDetailed_.first;
         std::stringstream out;
         out << code;
@@ -498,50 +500,50 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 
     // Add sip specific details
     a[ROUTESET] = getServiceRoute();
-    a[CONFIG_ACCOUNT_RESOLVE_ONCE] = isResolveOnce() ? "true" : "false";
-    a[USERAGENT] = getUserAgent();
+    a[CONFIG_ACCOUNT_RESOLVE_ONCE] = resolveOnce_ ? "true" : "false";
+    a[USERAGENT] = userAgent_;
 
-    a[CONFIG_ACCOUNT_REGISTRATION_EXPIRE] = getRegistrationExpire();
-    a[LOCAL_INTERFACE] = getLocalInterface();
-    a[PUBLISHED_SAMEAS_LOCAL] = getPublishedSameasLocal() ? "true" : "false";
-    a[PUBLISHED_ADDRESS] = getPublishedAddress();
+    a[CONFIG_ACCOUNT_REGISTRATION_EXPIRE] = registrationExpire_;
+    a[LOCAL_INTERFACE] = interface_;
+    a[PUBLISHED_SAMEAS_LOCAL] = publishedSameasLocal_ ? "true" : "false";
+    a[PUBLISHED_ADDRESS] = publishedIpAddress_;
 
     std::stringstream localport;
-    localport << getLocalPort();
+    localport << localPort_;
     a[LOCAL_PORT] = localport.str();
     std::stringstream publishedport;
-    publishedport << getPublishedPort();
+    publishedport << publishedPort_;
     a[PUBLISHED_PORT] = publishedport.str();
-    a[STUN_ENABLE] = isStunEnabled() ? "true" : "false";
-    a[STUN_SERVER] = getStunServer();
-    a[ACCOUNT_DTMF_TYPE] = (getDtmfType() == OVERRTP) ? "overrtp" : "sipinfo";
+    a[STUN_ENABLE] = stunEnabled_ ? "true" : "false";
+    a[STUN_SERVER] = stunServer_;
+    a[ACCOUNT_DTMF_TYPE] = (dtmfType_ == OVERRTP) ? "overrtp" : "sipinfo";
 
-    a[SRTP_KEY_EXCHANGE] = getSrtpKeyExchange();
-    a[SRTP_ENABLE] = getSrtpEnable() ? "true" : "false";
-    a[SRTP_RTP_FALLBACK] = getSrtpFallback() ? "true" : "false";
+    a[SRTP_KEY_EXCHANGE] = srtpKeyExchange_;
+    a[SRTP_ENABLE] = srtpEnabled_ ? "true" : "false";
+    a[SRTP_RTP_FALLBACK] = srtpFallback_ ? "true" : "false";
 
-    a[ZRTP_DISPLAY_SAS] = getZrtpDisplaySas() ? "true" : "false";
-    a[ZRTP_DISPLAY_SAS_ONCE] = getZrtpDiaplaySasOnce() ? "true" : "false";
-    a[ZRTP_HELLO_HASH] = getZrtpHelloHash() ? "true" : "false";
-    a[ZRTP_NOT_SUPP_WARNING] = getZrtpNotSuppWarning() ? "true" : "false";
+    a[ZRTP_DISPLAY_SAS] = zrtpDisplaySas_ ? "true" : "false";
+    a[ZRTP_DISPLAY_SAS_ONCE] = zrtpDisplaySasOnce_ ? "true" : "false";
+    a[ZRTP_HELLO_HASH] = zrtpHelloHash_ ? "true" : "false";
+    a[ZRTP_NOT_SUPP_WARNING] = zrtpNotSuppWarning_ ? "true" : "false";
 
     // TLS listener is unique and parameters are modified through IP2IP_PROFILE
     std::stringstream tlslistenerport;
-    tlslistenerport << getTlsListenerPort();
+    tlslistenerport << tlsListenerPort_;
     a[TLS_LISTENER_PORT] = tlslistenerport.str();
-    a[TLS_ENABLE] = getTlsEnable();
-    a[TLS_CA_LIST_FILE] = getTlsCaListFile();
-    a[TLS_CERTIFICATE_FILE] = getTlsCertificateFile();
-    a[TLS_PRIVATE_KEY_FILE] = getTlsPrivateKeyFile();
-    a[TLS_PASSWORD] = getTlsPassword();
-    a[TLS_METHOD] = getTlsMethod();
-    a[TLS_CIPHERS] = getTlsCiphers();
-    a[TLS_SERVER_NAME] = getTlsServerName();
-    a[TLS_VERIFY_SERVER] = getTlsVerifyServer() ? "true" : "false";
-    a[TLS_VERIFY_CLIENT] = getTlsVerifyClient() ? "true" : "false";
-    a[TLS_REQUIRE_CLIENT_CERTIFICATE] = getTlsRequireClientCertificate() ? "true" : "false";
-    a[TLS_NEGOTIATION_TIMEOUT_SEC] = getTlsNegotiationTimeoutSec();
-    a[TLS_NEGOTIATION_TIMEOUT_MSEC] = getTlsNegotiationTimeoutMsec();
+    a[TLS_ENABLE] = tlsEnable_;
+    a[TLS_CA_LIST_FILE] = tlsCaListFile_;
+    a[TLS_CERTIFICATE_FILE] = tlsCertificateFile_;
+    a[TLS_PRIVATE_KEY_FILE] = tlsPrivateKeyFile_;
+    a[TLS_PASSWORD] = tlsPassword_;
+    a[TLS_METHOD] = tlsMethod_;
+    a[TLS_CIPHERS] = tlsCiphers_;
+    a[TLS_SERVER_NAME] = tlsServerName_;
+    a[TLS_VERIFY_SERVER] = tlsVerifyServer_ ? "true" : "false";
+    a[TLS_VERIFY_CLIENT] = tlsVerifyClient_ ? "true" : "false";
+    a[TLS_REQUIRE_CLIENT_CERTIFICATE] = tlsRequireClientCertificate_ ? "true" : "false";
+    a[TLS_NEGOTIATION_TIMEOUT_SEC] = tlsNegotiationTimeoutSec_;
+    a[TLS_NEGOTIATION_TIMEOUT_MSEC] = tlsNegotiationTimeoutMsec_;
 
     return a;
 }
@@ -561,18 +563,18 @@ int SIPAccount::registerVoIPLink()
     }
 
     // Init TLS settings if the user wants to use TLS
-    if (_tlsEnable == "true") {
-        _debug ("SIPAccount: TLS is enabled for account %s", getAccountID().c_str());
-        _transportType = PJSIP_TRANSPORT_TLS;
+    if (tlsEnable_ == "true") {
+        _debug ("SIPAccount: TLS is enabled for account %s", accountID_.c_str());
+        transportType_ = PJSIP_TRANSPORT_TLS;
         initTlsConfiguration();
     }
 
     // Init STUN settings for this account if the user selected it
-    if (_stunEnabled) {
-        _transportType = PJSIP_TRANSPORT_START_OTHER;
+    if (stunEnabled_) {
+        transportType_ = PJSIP_TRANSPORT_START_OTHER;
         initStunConfiguration ();
     } else {
-        _stunServerName = pj_str ( (char*) _stunServer.c_str());
+        stunServerName_ = pj_str ( (char*) stunServer_.c_str());
     }
 
     try {
@@ -629,29 +631,29 @@ pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum (const std::string& method)
 void SIPAccount::initTlsConfiguration (void)
 {
     // TLS listener is unique and should be only modified through IP2IP_PROFILE
-    setTlsListenerPort(_tlsPort);
+    setTlsListenerPort(tlsPort_);
 
-    delete _tlsSetting;
-    _tlsSetting = new pjsip_tls_setting;
+    delete tlsSetting_;
+    tlsSetting_ = new pjsip_tls_setting;
 
-    assert (_tlsSetting);
+    assert (tlsSetting_);
 
-    pjsip_tls_setting_default (_tlsSetting);
+    pjsip_tls_setting_default (tlsSetting_);
 
-    pj_cstr (&_tlsSetting->ca_list_file, _tlsCaListFile.c_str());
-    pj_cstr (&_tlsSetting->cert_file, _tlsCertificateFile.c_str());
-    pj_cstr (&_tlsSetting->privkey_file, _tlsPrivateKeyFile.c_str());
-    pj_cstr (&_tlsSetting->password, _tlsPassword.c_str());
-    _tlsSetting->method = sslMethodStringToPjEnum (_tlsMethod);
-    pj_cstr (&_tlsSetting->ciphers, _tlsCiphers.c_str());
-    pj_cstr (&_tlsSetting->server_name, _tlsServerName.c_str());
+    pj_cstr (&tlsSetting_->ca_list_file, tlsCaListFile_.c_str());
+    pj_cstr (&tlsSetting_->cert_file, tlsCertificateFile_.c_str());
+    pj_cstr (&tlsSetting_->privkey_file, tlsPrivateKeyFile_.c_str());
+    pj_cstr (&tlsSetting_->password, tlsPassword_.c_str());
+    tlsSetting_->method = sslMethodStringToPjEnum (tlsMethod_);
+    pj_cstr (&tlsSetting_->ciphers, tlsCiphers_.c_str());
+    pj_cstr (&tlsSetting_->server_name, tlsServerName_.c_str());
 
-    _tlsSetting->verify_server = _tlsVerifyServer ? PJ_TRUE: PJ_FALSE;
-    _tlsSetting->verify_client = _tlsVerifyClient ? PJ_TRUE: PJ_FALSE;
-    _tlsSetting->require_client_cert = _tlsRequireClientCertificate ? PJ_TRUE: PJ_FALSE;
+    tlsSetting_->verify_server = tlsVerifyServer_ ? PJ_TRUE: PJ_FALSE;
+    tlsSetting_->verify_client = tlsVerifyClient_ ? PJ_TRUE: PJ_FALSE;
+    tlsSetting_->require_client_cert = tlsRequireClientCertificate_ ? PJ_TRUE: PJ_FALSE;
 
-    _tlsSetting->timeout.sec = atol (_tlsNegotiationTimeoutSec.c_str());
-    _tlsSetting->timeout.msec = atol (_tlsNegotiationTimeoutMsec.c_str());
+    tlsSetting_->timeout.sec = atol (tlsNegotiationTimeoutSec_.c_str());
+    tlsSetting_->timeout.msec = atol (tlsNegotiationTimeoutMsec_.c_str());
 }
 
 void SIPAccount::initStunConfiguration (void)
@@ -659,49 +661,48 @@ void SIPAccount::initStunConfiguration (void)
     size_t pos;
     std::string stunServer, serverName, serverPort;
 
-    stunServer = _stunServer;
+    stunServer = stunServer_;
     // Init STUN socket
     pos = stunServer.find (':');
 
     if (pos == std::string::npos) {
-        _stunServerName = pj_str ( (char*) stunServer.data());
-        _stunPort = PJ_STUN_PORT;
+        stunServerName_ = pj_str ( (char*) stunServer.data());
+        stunPort_ = PJ_STUN_PORT;
         //stun_status = pj_sockaddr_in_init (&stun_srv.ipv4, &stun_adr, (pj_uint16_t) 3478);
     } else {
         serverName = stunServer.substr (0, pos);
         serverPort = stunServer.substr (pos + 1);
-        _stunPort = atoi (serverPort.data());
-        _stunServerName = pj_str ( (char*) serverName.data());
+        stunPort_ = atoi (serverPort.data());
+        stunServerName_ = pj_str ( (char*) serverName.data());
         //stun_status = pj_sockaddr_in_init (&stun_srv.ipv4, &stun_adr, (pj_uint16_t) nPort);
     }
 }
 
 void SIPAccount::loadConfig()
 {
-    if (_registrationExpire.empty())
-        _registrationExpire = DFT_EXPIRE_VALUE;
+    if (registrationExpire_.empty())
+        registrationExpire_ = DFT_EXPIRE_VALUE;
 
-    if (_tlsEnable == "true") {
+    if (tlsEnable_ == "true") {
         initTlsConfiguration();
-        _transportType = PJSIP_TRANSPORT_TLS;
-    } else {
-        _transportType = PJSIP_TRANSPORT_UDP;
-    }
+        transportType_ = PJSIP_TRANSPORT_TLS;
+    } else
+        transportType_ = PJSIP_TRANSPORT_UDP;
 }
 
 bool SIPAccount::fullMatch (const std::string& username, const std::string& hostname) const
 {
-    return userMatch (username) && hostnameMatch (hostname);
+    return userMatch (username) and hostnameMatch (hostname);
 }
 
 bool SIPAccount::userMatch (const std::string& username) const
 {
-    return !username.empty() && username == getUsername();
+    return !username.empty() and username == username_;
 }
 
 bool SIPAccount::hostnameMatch (const std::string& hostname) const
 {
-    return hostname == getHostname();
+    return hostname == hostname_;
 }
 
 std::string SIPAccount::getMachineName (void) const
@@ -731,13 +732,11 @@ std::string SIPAccount::getFromUri (void) const
 
     // UDP does not require the transport specification
 
-    if (_transportType == PJSIP_TRANSPORT_TLS) {
+    if (transportType_ == PJSIP_TRANSPORT_TLS) {
         scheme = "sips:";
-        transport = ";transport=" + std::string (pjsip_transport_get_type_name (_transportType));
-    } else {
+        transport = ";transport=" + std::string (pjsip_transport_get_type_name (transportType_));
+    } else
         scheme = "sip:";
-        transport = "";
-    }
 
     // Get login name if username is not specified
     if (username_.empty())
@@ -766,9 +765,9 @@ std::string SIPAccount::getToUri (const std::string& username) const
     std::string hostname = "";
 
     // UDP does not require the transport specification
-    if (_transportType == PJSIP_TRANSPORT_TLS) {
+    if (transportType_ == PJSIP_TRANSPORT_TLS) {
         scheme = "sips:";
-        transport = ";transport=" + std::string (pjsip_transport_get_type_name (_transportType));
+        transport = ";transport=" + std::string (pjsip_transport_get_type_name (transportType_));
     } else {
         scheme = "sip:";
         transport = "";
@@ -807,9 +806,9 @@ std::string SIPAccount::getServerUri (void) const
 
     // UDP does not require the transport specification
 
-    if (_transportType == PJSIP_TRANSPORT_TLS) {
+    if (transportType_ == PJSIP_TRANSPORT_TLS) {
         scheme = "sips:";
-        transport = ";transport=" + std::string (pjsip_transport_get_type_name (_transportType));
+        transport = ";transport=" + std::string (pjsip_transport_get_type_name (transportType_));
     } else {
         scheme = "sip:";
         transport = "";
@@ -837,13 +836,11 @@ std::string SIPAccount::getContactHeader (const std::string& address, const std:
 
     // UDP does not require the transport specification
 
-    if (_transportType == PJSIP_TRANSPORT_TLS) {
+    if (transportType_ == PJSIP_TRANSPORT_TLS) {
         scheme = "sips:";
-        transport = ";transport=" + std::string (pjsip_transport_get_type_name (_transportType));
-    } else {
+        transport = ";transport=" + std::string (pjsip_transport_get_type_name (transportType_));
+    } else
         scheme = "sip:";
-        transport = "";
-    }
 
     _debug ("Display Name: %s", displayName_.c_str());
 
@@ -899,18 +896,24 @@ std::string computeMd5HashFromCredential (
 
 void SIPAccount::setCredentials (const std::vector<std::map<std::string, std::string> >& creds)
 {
+    using std::vector;
+    using std::string;
+    using std::map;
+
     bool md5HashingEnabled = Manager::instance().preferences.getMd5Hash();
-    std::vector< std::map<std::string, std::string> >::iterator it;
 
 	assert(creds.size() > 0); // we can not authenticate without credentials
 
 	credentials_ = creds;
 
     /* md5 hashing */
-    for(it = credentials_.begin(); it != credentials_.end(); ++it) {
-        std::string username = (*it)[USERNAME];
-        std::string realm = (*it)[REALM];
-        std::string password = (*it)[PASSWORD];
+    for (vector<map<string, string> >::iterator it = credentials_.begin(); it != credentials_.end(); ++it) {
+        map<string, string>::const_iterator val = (*it).find(USERNAME);
+        const std::string username = val != (*it).end() ? val->second : "";
+        val = (*it).find(REALM);
+        const std::string realm (val != (*it).end() ? val->second : "");
+        val = (*it).find(PASSWORD);
+        const std::string password (val != (*it).end() ? val->second : "");
 
         if (md5HashingEnabled) {
             // TODO: Fix this.
@@ -922,36 +925,50 @@ void SIPAccount::setCredentials (const std::vector<std::map<std::string, std::st
             // the configuration file. This is to avoid to
             // re-hash a hashed password.
 
-            if (password.length() != 32) {
+            if (password.length() != 32)
                 (*it)[PASSWORD] = computeMd5HashFromCredential(username, password, realm);
-            }
         }
     }
 
-    std::string digest;
-    size_t n = getCredentialCount();
-
     // Create the credential array
-    delete[] _cred;
-    _cred = new pjsip_cred_info[n];
+    delete[] cred_;
+    cred_ = new pjsip_cred_info[credentials_.size()];
 
-    unsigned i;
-    for (i = 0; i < n; i++) {
-    	const std::string &password = credentials_[i][PASSWORD];
-    	int dataType = (md5HashingEnabled && password.length() == 32)
+    size_t i = 0;
+    for (vector<map<string, string > >::const_iterator iter = credentials_.begin();
+            iter != credentials_.end(); ++iter) {
+        map<string, string>::const_iterator val = (*iter).find(PASSWORD);
+    	const std::string password = val != (*iter).end() ? val->second : "";
+    	int dataType = (md5HashingEnabled and password.length() == 32)
 			? PJSIP_CRED_DATA_DIGEST
 			: PJSIP_CRED_DATA_PLAIN_PASSWD;
 
-        _cred[i].username = pj_str ((char*)credentials_[i][USERNAME].c_str());
-        _cred[i].data = pj_str ((char*)password.c_str());
-        _cred[i].realm = pj_str ((char*)credentials_[i][REALM].c_str());
+        val = (*iter).find(USERNAME);
+        if (val != (*iter).end())
+            cred_[i].username = pj_str ((char*) val->second.c_str());
+        cred_[i].data = pj_str ((char*) password.c_str());
 
-        _cred[i].data_type = dataType;
-        _cred[i].scheme = pj_str ( (char*) "digest");
+        val = (*iter).find(REALM);
+        if (val != (*iter).end())
+            cred_[i].realm = pj_str ((char*) val->second.c_str());
+
+        cred_[i].data_type = dataType;
+        cred_[i].scheme = pj_str ( (char*) "digest");
+        ++i;
     }
 }
 
 const std::vector<std::map<std::string, std::string> > &SIPAccount::getCredentials (void)
 {
     return credentials_;
+}
+
+std::string SIPAccount::getUserAgentName() const
+{
+    std::string result(userAgent_);
+
+    if (result == "sflphone" or result.empty())
+        result += "/" PACKAGE_VERSION;
+
+    return result;
 }

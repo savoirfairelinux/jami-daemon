@@ -157,7 +157,7 @@ ManagerImpl::sendRegister (const std::string& accountID , const int32_t& enable)
     // Update the active field
     Account* acc = getAccount (accountID);
 
-	acc->setEnabled (!!enable);
+	acc->setEnabled (enable);
     acc->loadConfig();
 
     Manager::instance().saveConfig();

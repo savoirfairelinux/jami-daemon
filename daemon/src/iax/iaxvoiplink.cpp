@@ -300,7 +300,7 @@ IAXVoIPLink::getIAXCall (const std::string& id)
 
 
 void
-IAXVoIPLink::sendRegister (Account *a) throw(VoipLinkException)
+IAXVoIPLink::sendRegister (Account *a)
 {
     _debug ("IAX: Sending registration");
 

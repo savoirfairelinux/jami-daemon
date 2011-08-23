@@ -1262,20 +1262,6 @@ dbus_get_ip2_ip_details (void)
 }
 
 void
-dbus_set_ip2ip_details (GHashTable * properties)
-{
-    GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_ip2_ip_details (
-        configurationManagerProxy, properties, &error);
-
-    if (error) {
-        ERROR ("Failed to call set_ip_2ip_details() on ConfigurationManager: %s",
-               error->message);
-        g_error_free (error);
-    }
-}
-
-void
 dbus_send_register (gchar* accountID, const guint enable)
 {
     GError *error = NULL;
@@ -1898,88 +1884,6 @@ dbus_set_echo_cancel_delay(int delay)
     }
 }
 
-gchar*
-dbus_get_ringtone_choice (const gchar *accountID)
-{
-    gchar* tone = NULL;
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_ringtone_choice (
-        configurationManagerProxy, accountID, &tone, &error);
-
-    if (error) {
-        g_error_free (error);
-    }
-
-    return tone;
-}
-
-void
-dbus_set_ringtone_choice (const gchar *accountID, const gchar* tone)
-{
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_ringtone_choice (
-        configurationManagerProxy, accountID, tone, &error);
-
-    if (error) {
-        g_error_free (error);
-    }
-}
-
-int
-dbus_is_ringtone_enabled (const gchar *accountID)
-{
-    int res;
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_is_ringtone_enabled (
-        configurationManagerProxy, accountID, &res, &error);
-
-    if (error) {
-        g_error_free (error);
-    }
-
-    return res;
-}
-
-void
-dbus_ringtone_enabled (const gchar *accountID)
-{
-    DEBUG ("DBUS: Ringtone enabled %s", accountID);
-
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_ringtone_enabled (
-        configurationManagerProxy, accountID, &error);
-
-    if (error) {
-        g_error_free (error);
-    }
-}
-
-gboolean
-dbus_is_md5_credential_hashing()
-{
-    int res;
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_is_md5_credential_hashing (
-        configurationManagerProxy, &res, &error);
-
-    if (error) {
-        g_error_free (error);
-    }
-
-    return res;
-}
-
-void
-dbus_set_md5_credential_hashing (gboolean enabled)
-{
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_md5_credential_hashing (
-        configurationManagerProxy, enabled, &error);
-
-    if (error) {
-        g_error_free (error);
-    }
-}
 
 int
 dbus_is_iax2_enabled()

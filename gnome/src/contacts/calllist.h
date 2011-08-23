@@ -41,7 +41,7 @@
 
 typedef enum { HIST_CONFERENCE, HIST_CALL } ElementType;
 
-typedef struct {
+typedef union {
    callable_obj_t *call;
    conference_obj_t *conf;
 } callableElement;

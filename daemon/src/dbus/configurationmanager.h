@@ -53,21 +53,19 @@ namespace sfl_video {
 }
 
 class ConfigurationManager
-    : public org::sflphone::SFLphone::ConfigurationManager_adaptor,
-  public DBus::IntrospectableAdaptor,
-  public DBus::ObjectAdaptor
+: public org::sflphone::SFLphone::ConfigurationManager_adaptor,
+    public DBus::IntrospectableAdaptor,
+    public DBus::ObjectAdaptor
 {
-    public:
-
-        ConfigurationManager (DBus::Connection& connection);
-        static const char* SERVER_PATH;
-
     private:
         std::vector<std::string> shortcutsKeys;
         // FIXME: this probably shouldn't live here
         std::tr1::shared_ptr<sfl_video::VideoPreview> preview_;
 
     public:
+
+        ConfigurationManager (DBus::Connection& connection);
+        static const char* SERVER_PATH;
 
         std::map< std::string, std::string > getAccountDetails (const std::string& accountID);
         void setAccountDetails (const std::string& accountID, const std::map< std::string, std::string >& details);
@@ -78,11 +76,6 @@ class ConfigurationManager
         void sendRegister (const std::string& accoundID , const int32_t& expire);
 
         std::map< std::string, std::string > getTlsSettingsDefault (void);
-        void setIp2IpDetails (const std::map< std::string, std::string >& details);
-        std::map< std::string, std::string > getIp2IpDetails (void);
-
-        std::vector< std::map< std::string, std::string > > getCredentials (const std::string& accountID);
-        void setCredentials (const std::string& accountID, const std::vector< std::map< std::string, std::string > >& details);
 
         std::vector< std::string > getAudioCodecList (void);
         std::vector< std::string > getVideoCodecList (void);
@@ -126,21 +119,10 @@ class ConfigurationManager
         std::string getVideoInputDeviceSize();
         std::string getVideoInputDeviceRate();
 
-        std::vector< std::string > getToneLocaleList();
-        std::vector< std::string > getPlaybackDeviceList();
-        std::vector< std::string > getRecordDeviceList();
-        std::string getVersion();
-        std::vector< std::string > getRingtoneList();
         int32_t getAudioManager (void);
         void setAudioManager (const int32_t& api);
 
-        bool isMd5CredentialHashing (void);
-        void setMd5CredentialHashing (const bool& enabled);
         int32_t isIax2Enabled (void);
-        int32_t isRingtoneEnabled (const std::string& accountID);
-        void ringtoneEnabled (const std::string& accountID);
-        std::string getRingtoneChoice (const std::string& accountID);
-        void setRingtoneChoice (const std::string& accountID, const std::string& tone);
         std::string getRecordPath (void);
         void setRecordPath (const std::string& recPath);
         bool getIsAlwaysRecording(void);
@@ -163,11 +145,15 @@ class ConfigurationManager
         std::map<std::string, std::string> getHookSettings (void);
         void setHookSettings (const std::map<std::string, std::string>& settings);
 
-	std::vector<std::string> getHistory(void);
+        std::vector<std::string> getHistory(void);
         void setHistory (const std::vector<std::string> &entries);
 
         std::map<std::string, std::string> getTlsSettings (void);
         void setTlsSettings (const std::map< std::string, std::string >& details);
+        std::map< std::string, std::string > getIp2IpDetails (void);
+
+        std::vector< std::map< std::string, std::string > > getCredentials (const std::string& accountID);
+        void setCredentials (const std::string& accountID, const std::vector< std::map< std::string, std::string > >& details);
 
         std::string getAddrFromInterfaceName (const std::string& interface);
 

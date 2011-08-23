@@ -717,13 +717,6 @@ class ManagerImpl
         static std::vector<std::string> unserialize (std::string v);
 
         /**
-         * Tells if IAX2 support is enabled
-         * @return int 1 if IAX2 is enabled
-         *	       0 otherwise
-         */
-        int isIax2Enabled (void);
-
-        /**
          * Ringtone option.
          * If ringtone is enabled, ringtone on incoming call use custom choice. If not, only standart tone.
          * @return int	1 if enabled
@@ -736,18 +729,6 @@ class ManagerImpl
          * Inverse current value
          */
         void ringtoneEnabled (const std::string& id);
-
-        /**
-         * Get the ringtone
-         * @return gchar* The file name selected as a ringtone
-         */
-        std::string getRingtoneChoice (const std::string& id) const;
-
-        /**
-         * Set a ringtone
-         * @param tone The file name of the ringtone
-         */
-        void setRingtoneChoice (const std::string&, const std::string& id);
 
         /**
          * Get the recording path from configuration tree
@@ -1132,11 +1113,6 @@ class ManagerImpl
          * Create config directory in home user and return configuration file path
          */
         std::string getConfigFile (void) const;
-
-        /*
-         * Initialize audiocodec with config setting
-         */
-        void initAudioCodec (void);
 
 
         /*

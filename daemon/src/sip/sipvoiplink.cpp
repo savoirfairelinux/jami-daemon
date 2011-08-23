@@ -364,13 +364,13 @@ SIPVoIPLink::getEvent()
 
 }
 
-void SIPVoIPLink::sendRegister (Account *a) throw(VoipLinkException)
+void SIPVoIPLink::sendRegister (Account *a)
 {
     pj_status_t status;
     pjsip_tx_data *tdata;
     pjsip_hdr hdr_list;
 
-    SIPAccount *account = (SIPAccount*)a;
+    SIPAccount *account = static_cast<SIPAccount*>(a);
 
     // Resolve hostname here and keep its
     // IP address for the whole time the
@@ -464,7 +464,7 @@ void SIPVoIPLink::sendRegister (Account *a) throw(VoipLinkException)
     ss << port;
     ss >> portStr;
 
-    std::string contactUri = account->getContactHeader (address, portStr);
+    std::string contactUri(account->getContactHeader (address, portStr));
 
     _debug ("UserAgent: sendRegister: fromUri: %s serverUri: %s contactUri: %s",
             fromUri.c_str(),
@@ -500,7 +500,7 @@ void SIPVoIPLink::sendRegister (Account *a) throw(VoipLinkException)
     // Add User-Agent Header
     pj_list_init (&hdr_list);
 
-	const std::string &agent = getUseragentName (account);
+	const std::string agent(account->getUserAgentName());
     pj_str_t useragent = pj_str ((char*)agent.c_str());
     pjsip_generic_string_hdr *h = pjsip_generic_string_hdr_create (_pool, &STR_USER_AGENT, &useragent);
 
@@ -1179,18 +1179,6 @@ SIPVoIPLink::getCurrentCodecName(Call *call)
     return "";
 }
 
-std::string SIPVoIPLink::getUseragentName (SIPAccount *account)
-{
-    std::ostringstream  useragent;
-
-    useragent << account->getUserAgent();
-
-    if (useragent.str() == "sflphone" || useragent.str().empty())
-        useragent << "/" << PACKAGE_VERSION;
-
-    return useragent.str ();
-}
-
 bool
 SIPVoIPLink::carryingDTMFdigits (const std::string& id, char code)
 {
@@ -1222,7 +1210,6 @@ SIPVoIPLink::carryingDTMFdigits (const std::string& id, char code)
 
     return true;
 }
-
 
 bool
 SIPVoIPLink::dtmfSipInfo (SIPCall *call, char code)
@@ -1324,7 +1311,6 @@ SIPVoIPLink::SIPStartCall (SIPCall* call)
         return false;
     }
 
-
     // Creates URI
     std::string fromUri = account->getFromUri();
     std::string toUri = call->getPeerNumber(); // expecting a fully well formed sip uri
@@ -1337,7 +1323,7 @@ SIPVoIPLink::SIPStartCall (SIPCall* call)
     ss << port;
     ss >> portStr;
 
-    std::string contactUri = account->getContactHeader (address, portStr);
+    std::string contactUri(account->getContactHeader (address, portStr));
 
     _debug ("UserAgent: FROM uri: %s, TO uri: %s, CONTACT uri: %s",
             fromUri.c_str(), toUri.c_str(), contactUri.c_str());
@@ -1607,7 +1593,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const std::string& id, const std::string& to
     ss << port;
     ss >> portStr;
 
-    std::string contactUri = account->getContactHeader (address, portStr);
+    std::string contactUri(account->getContactHeader (address, portStr));
 
     _debug ("UserAgent:  FROM uri: %s, TO uri: %s, CONTACT uri: %s",
             fromUri.c_str(), toUri.c_str(), contactUri.c_str());
