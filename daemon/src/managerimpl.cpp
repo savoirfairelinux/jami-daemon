@@ -2465,11 +2465,6 @@ std::vector<std::string> ManagerImpl::getCurrentAudioDevicesIndex ()
     return v;
 }
 
-int ManagerImpl::isIax2Enabled (void)
-{
-    return HAVE_IAX;
-}
-
 int ManagerImpl::isRingtoneEnabled (const std::string& id)
 {
     Account *account = getAccount (id);

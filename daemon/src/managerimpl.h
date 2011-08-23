@@ -637,13 +637,6 @@ class ManagerImpl
         static std::vector<std::string> unserialize (std::string v);
 
         /**
-         * Tells if IAX2 support is enabled
-         * @return int 1 if IAX2 is enabled
-         *	       0 otherwise
-         */
-        int isIax2Enabled (void);
-
-        /**
          * Ringtone option.
          * If ringtone is enabled, ringtone on incoming call use custom choice. If not, only standart tone.
          * @return int	1 if enabled

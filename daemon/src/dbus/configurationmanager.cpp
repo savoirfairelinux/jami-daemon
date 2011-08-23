@@ -32,6 +32,7 @@
 
 #include <configurationmanager.h>
 #include <sstream>
+#include "config.h"
 #include "../manager.h"
 #include "sip/sipvoiplink.h"
 #include "sip/sipaccount.h"
@@ -414,31 +415,13 @@ void ConfigurationManager::setEchoCancelDelay(const int32_t& delay)
 	Manager::instance().setEchoCancelDelay(delay);
 }
 
-std::vector<std::string> ConfigurationManager::getPlaybackDeviceList()
-{
-    std::vector<std::string> ret;
-    return ret;
-}
-
-std::vector<std::string> ConfigurationManager::getRecordDeviceList()
-{
-    std::vector<std::string> ret;
-    return ret;
-}
-
-bool ConfigurationManager::isMd5CredentialHashing (void)
-{
-    return Manager::instance().preferences.getMd5Hash();
-}
-
-void ConfigurationManager::setMd5CredentialHashing (const bool& enabled)
-{
-    Manager::instance().preferences.setMd5Hash (enabled);
-}
-
 int32_t ConfigurationManager::isIax2Enabled (void)
 {
-    return Manager::instance().isIax2Enabled();
+#ifdef HAVE_IAX
+    return HAVE_IAX;
+#else
+    return 0;
+#endif
 }
 
 std::string ConfigurationManager::getRecordPath (void)

@@ -94,14 +94,9 @@ class ConfigurationManager
         void setEchoCancelDelay(const int32_t& length);
         int getEchoCancelDelay(void);
 
-        std::vector< std::string > getPlaybackDeviceList();
-        std::vector< std::string > getRecordDeviceList();
-        std::vector< std::string > getRingtoneList();
         int32_t getAudioManager (void);
         void setAudioManager (const int32_t& api);
 
-        bool isMd5CredentialHashing (void);
-        void setMd5CredentialHashing (const bool& enabled);
         int32_t isIax2Enabled (void);
         std::string getRecordPath (void);
         void setRecordPath (const std::string& recPath);
