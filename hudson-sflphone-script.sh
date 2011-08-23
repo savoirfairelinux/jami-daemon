@@ -8,8 +8,17 @@ XML_RESULTS="cppunitresults.xml"
 
 set -x
 
+# Compile the plugins
+pushd plugins
+make distclean
+./autogen.sh
+./configure --prefix=/usr
+make -j
+popd
+
 # Compile the daemon
 pushd daemon
+make distclean
 ./autogen.sh
 # Compile pjproject first
 pushd libs/pjproject
@@ -21,22 +30,24 @@ popd
 make clean
 make -j
 make doc
+make check
 popd
 
 # Run the unit tests for the daemon
 pushd daemon/test
 # Remove the previous XML test file
 rm -rf $XML_RESULTS
-make check || exit 1
-./run_tests.sh
+./run_tests.sh || exit 1
 popd
 
 # Compile the client
 pushd gnome
+make distclean
 ./autogen.sh
 ./configure --prefix=/usr
 make clean
 make -j 1
+make check
 popd
 
 # SUCCESS
