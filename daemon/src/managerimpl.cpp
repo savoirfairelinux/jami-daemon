@@ -2474,7 +2474,7 @@ int ManagerImpl::isRingtoneEnabled (const std::string& id)
         return 0;
     }
 
-    return account->getRingtoneEnabled() ? 1 : 0;
+    return account->getRingtoneEnabled();
 }
 
 void ManagerImpl::ringtoneEnabled (const std::string& id)

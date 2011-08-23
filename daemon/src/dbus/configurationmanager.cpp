@@ -30,6 +30,8 @@
  *  as that of the covered work.
  */
 
+#include "config.h"
+
 #include <configurationmanager.h>
 #include <sstream>
 #include "config.h"
@@ -143,7 +145,6 @@ std::map<std::string, std::string> ConfigurationManager::getTlsSettings()
 void ConfigurationManager::setTlsSettings (const std::map<std::string, std::string>& details)
 {
     SIPAccount * sipaccount = (SIPAccount *) Manager::instance().getAccount (IP2IP_PROFILE);
-
     if (!sipaccount) {
         _debug ("ConfigurationManager: Error: No valid account in set TLS settings");
         return;
@@ -210,20 +211,17 @@ void ConfigurationManager::setTlsSettings (const std::map<std::string, std::stri
 }
 
 
-void ConfigurationManager::setAccountDetails (const std::string& accountID,
-        const std::map<std::string, std::string>& details)
+void ConfigurationManager::setAccountDetails (const std::string& accountID, const std::map<std::string, std::string>& details)
 {
     Manager::instance().setAccountDetails (accountID, details);
 }
 
-void ConfigurationManager::sendRegister (const std::string& accountID,
-        const int32_t& expire)
+void ConfigurationManager::sendRegister (const std::string& accountID, const int32_t& expire)
 {
     Manager::instance().sendRegister (accountID, expire);
 }
 
-std::string ConfigurationManager::addAccount (const std::map<std::string,
-        std::string>& details)
+std::string ConfigurationManager::addAccount (const std::map<std::string, std::string>& details)
 {
     return Manager::instance().addAccount (details);
 }
@@ -248,14 +246,12 @@ std::vector<std::string> ConfigurationManager::getAudioCodecList (void)
 
     const CodecsMap &codecs(Manager::instance().getAudioCodecFactory().getCodecsMap());
 
-    for (CodecsMap::const_iterator iter = codecs.begin(); iter != codecs.end(); ++iter) {
-        std::stringstream ss;
-
-        if (iter->second != NULL) {
+    for (CodecsMap::const_iterator iter = codecs.begin(); iter != codecs.end(); ++iter)
+        if (iter->second) {
+            std::stringstream ss;
             ss << iter->first;
             list.push_back (ss.str());
         }
-    }
 
     return list;
 }
@@ -271,21 +267,17 @@ std::vector<std::string> ConfigurationManager::getSupportedTlsMethod (void)
     return method;
 }
 
-std::vector<std::string> ConfigurationManager::getAudioCodecDetails (
-    const int32_t& payload)
+std::vector<std::string> ConfigurationManager::getAudioCodecDetails (const int32_t& payload)
 {
-    return Manager::instance().getAudioCodecFactory().getCodecSpecifications (
-               payload);
+    return Manager::instance().getAudioCodecFactory().getCodecSpecifications (payload);
 }
 
-std::vector<std::string> ConfigurationManager::getActiveAudioCodecList (
-    const std::string& accountID)
+std::vector<std::string> ConfigurationManager::getActiveAudioCodecList (const std::string& accountID)
 {
     std::vector<std::string> v;
 
     Account *acc = Manager::instance().getAccount (accountID);
-
-    if (acc != NULL) {
+    if (acc) {
         CodecOrder active(acc->getActiveCodecs());
 
         for (CodecOrder::const_iterator iter = active.begin(); iter != active.end(); ++iter) {
@@ -298,20 +290,13 @@ std::vector<std::string> ConfigurationManager::getActiveAudioCodecList (
     return v;
 }
 
-void ConfigurationManager::setActiveAudioCodecList (
-    const std::vector<std::string>& list, const std::string& accountID)
+void ConfigurationManager::setActiveAudioCodecList (const std::vector<std::string>& list, const std::string& accountID)
 {
-    _debug ("ConfigurationManager: Active codec list received");
-
-    Account *acc;
-
-    // Save the codecs list per account
-    acc = Manager::instance().getAccount (accountID);
-
-    if (acc != NULL)
+    Account *acc = Manager::instance().getAccount (accountID);
+    if (acc) {
         acc->setActiveCodecs (list);
-
-    Manager::instance().saveConfig();
+        Manager::instance().saveConfig();
+    }
 }
 
 
@@ -417,11 +402,7 @@ void ConfigurationManager::setEchoCancelDelay(const int32_t& delay)
 
 int32_t ConfigurationManager::isIax2Enabled (void)
 {
-#ifdef HAVE_IAX
     return HAVE_IAX;
-#else
-    return 0;
-#endif
 }
 
 std::string ConfigurationManager::getRecordPath (void)
@@ -474,14 +455,12 @@ int32_t ConfigurationManager::getMailNotify (void)
     return Manager::instance().getMailNotify();
 }
 
-std::map<std::string, int32_t> ConfigurationManager::getAddressbookSettings (
-    void)
+std::map<std::string, int32_t> ConfigurationManager::getAddressbookSettings (void)
 {
     return Manager::instance().getAddressbookSettings();
 }
 
-void ConfigurationManager::setAddressbookSettings (const std::map<std::string,
-        int32_t>& settings)
+void ConfigurationManager::setAddressbookSettings (const std::map<std::string, int32_t>& settings)
 {
     Manager::instance().setAddressbookSettings (settings);
 }
