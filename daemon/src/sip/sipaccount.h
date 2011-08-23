@@ -435,14 +435,6 @@ class SIPAccount : public Account
             serviceRoute_ = route;
         }
 
-        /**
-         * Get the chosen transport type.
-         * @return pjsip_transport_type_e Transport type chosen by the user for this account.
-         */
-        pjsip_transport_type_e getTransportType (void) const {
-            return transportType_;
-        }
-
         pjsip_transport* getAccountTransport (void) const {
             return transport_;
         }
@@ -502,87 +494,50 @@ class SIPAccount : public Account
             tlsEnable_ = enabl;
         }
 
-        std::string getTlsCaListFile (void) const {
-            return tlsCaListFile_;
-        }
         void setTlsCaListFile (const std::string &calist) {
             tlsCaListFile_ = calist;
         }
 
-        std::string getTlsCertificateFile (void) const {
-            return tlsCertificateFile_;
-        }
         void setTlsCertificateFile (const std::string &cert) {
             tlsCertificateFile_ = cert;
         }
 
-        std::string getTlsPrivateKeyFile (void) const {
-            return tlsPrivateKeyFile_;
-        }
         void setTlsPrivateKeyFile (const std::string &priv) {
             tlsPrivateKeyFile_ = priv;
-        }
-
-        std::string getTlsPassword (void) const {
-            return tlsPassword_;
         }
 
         void setTlsPassword (const std::string &pass) {
             tlsPassword_ = pass;
         }
 
-        std::string getTlsMethod (void) const {
-            return tlsMethod_;
-        }
         void setTlsMethod (const std::string &meth) {
             tlsMethod_ = meth;
         }
 
-        std::string getTlsCiphers (void) const {
-            return tlsCiphers_;
-        }
         void setTlsCiphers (const std::string &cipher) {
             tlsCiphers_ = cipher;
         }
 
-        std::string getTlsServerName (void) const {
-            return tlsServerName_;
-        }
         void setTlsServerName (const std::string &name) {
             tlsServerName_ = name;
         }
 
-        bool getTlsVerifyServer (void) const {
-            return tlsVerifyServer_;
-        }
         void setTlsVerifyServer (bool verif) {
             tlsVerifyServer_ = verif;
         }
 
-        bool getTlsVerifyClient (void) const {
-            return tlsVerifyClient_;
-        }
         void setTlsVerifyClient (bool verif) {
             tlsVerifyClient_ = verif;
         }
 
-        bool getTlsRequireClientCertificate (void) const {
-            return tlsRequireClientCertificate_;
-        }
         void setTlsRequireClientCertificate (bool require) {
             tlsRequireClientCertificate_ = require;
         }
 
-        std::string getTlsNegotiationTimeoutSec (void) const {
-            return tlsNegotiationTimeoutSec_;
-        }
         void setTlsNegotiationTimeoutSec (const std::string &timeout) {
             tlsNegotiationTimeoutSec_ = timeout;
         }
 
-        std::string getTlsNegotiationTimeoutMsec (void) const {
-            return tlsNegotiationTimeoutMsec_;
-        }
         void setTlsNegotiationTimeoutMsec (const std::string &timeout) {
             tlsNegotiationTimeoutMsec_ = timeout;
         }
