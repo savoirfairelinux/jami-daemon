@@ -36,6 +36,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
+
 #include "eel-gconf-extensions.h"
 
 #include "addrbookfactory.h"
@@ -75,12 +77,6 @@ enum {
     TEXT_COL,
     PAGE_NUMBER
 };
-
-typedef struct {
-    gchar* icon_descr;
-    gchar* icon_name;
-    gint page_number;
-} browser_t;
 
 // history preference parameters
 static int history_limit;
@@ -338,6 +334,55 @@ selection_changed_cb (GtkIconView *view, gpointer user_data UNUSED)
     g_list_free (list);
 }
 
+/*
+ * Get an 48x48 icon from the default theme or fallback to an application icon.
+ */
+static GdkPixbuf *get_icon(const gchar *name, GtkWidget *widget)
+{
+    GtkIconTheme *theme = gtk_icon_theme_get_default();
+    GdkPixbuf *pixbuf = gtk_icon_theme_load_icon(theme, name, 48, 0, NULL);
+    if (!pixbuf)
+        pixbuf = gtk_widget_render_icon(widget, name, GTK_ICON_SIZE_DIALOG, NULL);
+
+    return pixbuf;
+}
+
+static GtkTreeModel* create_model(GtkWidget *widget)
+{
+    static const struct {
+        gchar* icon_descr;
+        gchar* icon_name;
+        gint page_number;
+    } browser_entries_full[] = {
+        {"General", GTK_STOCK_PREFERENCES, 0},
+        {"Audio", GTK_STOCK_AUDIO_CARD, 1},
+        {"Video", "camera-web", 2},
+        {"Hooks", "applications-development", 3},
+        {"Shortcuts", "preferences-desktop-keyboard", 4},
+        {"Address Book", GTK_STOCK_ADDRESSBOOK, 5},
+    };
+    GdkPixbuf *pixbuf;
+    GtkTreeIter iter;
+    GtkListStore *store;
+    gint i, nb_entries;
+
+    store = gtk_list_store_new(3, GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_INT);
+    nb_entries = sizeof(browser_entries_full) / sizeof(browser_entries_full[0]);
+
+    for (i = 0; i < nb_entries; i++) {
+        gtk_list_store_append (store, &iter);
+        pixbuf = get_icon(browser_entries_full[i].icon_name, widget);
+        gtk_list_store_set(store, &iter,
+                           PIXBUF_COL, pixbuf,
+                           TEXT_COL, _(browser_entries_full[i].icon_descr),
+                           PAGE_NUMBER, browser_entries_full[i].page_number,
+                           -1);
+        if (pixbuf)
+            gdk_pixbuf_unref(pixbuf);
+    }
+
+    return GTK_TREE_MODEL(store);
+}
 
 
 /**
@@ -368,7 +413,7 @@ show_preferences_dialog ()
     hbox = gtk_hbox_new (FALSE, 10);
 
     // Create tree view
-    iconview = gtk_icon_view_new_with_model (createModel ());
+    iconview = gtk_icon_view_new_with_model(create_model(hbox));
     g_object_set (iconview,
                   "selection-mode", GTK_SELECTION_BROWSE,
                   "text-column", TEXT_COL,
@@ -438,52 +483,4 @@ show_preferences_dialog ()
 
     gtk_widget_destroy (GTK_WIDGET (dialog));
     return result;
-}
-
-#define NB_MAX_ENTRIES 6
-
-GtkTreeModel* createModel()
-{    
-    browser_t browser_entries_full[NB_MAX_ENTRIES] = {
-        {_ ("General"), "preferences-system", 0},
-        {_ ("Audio"), "audio-x-generic", 1},
-        {_ ("Video"), "camera-web", 2},
-        {_ ("Hooks"), "applications-development", 3},
-        {_ ("Shortcuts"), "preferences-desktop-keyboard", 4},
-        {_ ("Address Book"), "address-book-new", 5},
-    };
-
-    GdkPixbuf *pixbuf;
-    GtkTreeIter iter;
-    GtkListStore *store;
-    GError *error = NULL;
-    gint i, nb_entries;
-
-    nb_entries = abookfactory_is_addressbook_loaded() ? NB_MAX_ENTRIES : NB_MAX_ENTRIES - 1;
-
-    store = gtk_list_store_new (3, GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_INT);
-    GtkIconTheme* theme = gtk_icon_theme_get_default();
-
-
-    for (i = 0; i < nb_entries; i++) {
-
-        gtk_list_store_append (store, &iter);
-
-        pixbuf = gtk_icon_theme_load_icon (theme, browser_entries_full[i].icon_name, 48, 0, &error);
-
-        gtk_list_store_set (store, &iter,
-                            PIXBUF_COL, pixbuf,
-                            TEXT_COL, browser_entries_full[i].icon_descr,
-                            PAGE_NUMBER, browser_entries_full[i].page_number,
-                            -1);
-
-        if (pixbuf != NULL) {
-            gdk_pixbuf_unref (pixbuf);
-        } else {
-            DEBUG ("Couldn't load icon: %s", error->message);
-            g_clear_error (&error);
-        }
-    }
-
-    return GTK_TREE_MODEL (store);
 }

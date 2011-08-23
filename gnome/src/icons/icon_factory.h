@@ -51,9 +51,9 @@ G_BEGIN_DECLS
 #define GTK_STOCK_FAIL					"gnome-stock-fail"
 #define GTK_STOCK_USER					"gnome-stock-user"
 
-void init_icon_factory (void);
+#define GTK_STOCK_AUDIO_CARD				"audio-card"
 
-GtkIconSet* lookup_sflphone_factory (const gchar *stock_id);
+void init_icon_factory(void);
 
 G_END_DECLS
 

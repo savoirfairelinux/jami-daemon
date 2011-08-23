@@ -356,8 +356,7 @@ gboolean sflphone_init (GError **error)
 
     abookfactory_init_factory();
 
-    // Init icons factory
-    init_icon_factory ();
+    init_icon_factory();
 
     current_calls = calltab_init (FALSE, CURRENT_CALLS);
     contacts = calltab_init (TRUE, CONTACTS);
