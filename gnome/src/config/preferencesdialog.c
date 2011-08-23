@@ -294,8 +294,6 @@ save_configuration_parameters (void)
     // History config
     dbus_set_history_limit (history_limit);
 
-    // Direct IP calls config
-    // dbus_set_ip2ip_details (directIpCallsProperties);
 }
 
 void
