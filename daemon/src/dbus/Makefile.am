@@ -15,10 +15,10 @@ libdbus_la_SOURCES = \
     callmanager.cpp \
     configurationmanager.cpp  \
     instance.cpp  \
-    dbusmanager.cpp  \
-    networkmanager.cpp
+    dbusmanager.cpp
 
 if USE_NETWORKMANAGER
+libdbus_la_SOURCES += networkmanager.cpp
 NETWORKMANAGER=-DUSE_NETWORKMANAGER
 else
 NETWORKMANAGER=
