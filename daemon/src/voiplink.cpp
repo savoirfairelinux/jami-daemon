@@ -34,7 +34,7 @@
 #include "voiplink.h"
 #include "manager.h"
 
-VoIPLink::VoIPLink () : _localPort (0),  _initDone (false)
+VoIPLink::VoIPLink () : _localPort (0)
 {
 }
 

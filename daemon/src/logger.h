@@ -47,8 +47,8 @@ void setDebugMode (bool);
 #define _debug(...)	Logger::log(LOG_DEBUG, __VA_ARGS__)
 
 #define _debugException(...)	Logger::log(LOG_DEBUG, __VA_ARGS__)
-#define _debugInit(...)		Logger::log(LOG_DEBUG, __VA_ARGS__)
-#define _debugAlsa(...)		Logger::log(LOG_DEBUG, __VA_ARGS__)
+#define _debugInit(...)			Logger::log(LOG_DEBUG, __VA_ARGS__)
+#define _debugAlsa(...)			Logger::log(LOG_DEBUG, __VA_ARGS__)
 
 #define BLACK "\033[22;30m"
 #define RED "\033[22;31m"

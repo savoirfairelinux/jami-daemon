@@ -32,27 +32,11 @@
 #define URL_HOOK_H
 
 #include <string>
-#include <stdlib.h>
-
-#define RUN_COMMAND(command)   system(command);
 
 class UrlHook
 {
-
-    public:
-        /**
-         * Constructor
-         */
-        UrlHook ();
-
-        /**
-         * Destructor
-         */
-        ~UrlHook ();
-
-        int addAction (std::string, std::string);
-
-    private:
+public:
+	static void runAction (std::string, std::string);
 };
 
 #endif // URL_HOOK_H

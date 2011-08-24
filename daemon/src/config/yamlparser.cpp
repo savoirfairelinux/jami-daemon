@@ -39,7 +39,6 @@ namespace Conf
 {
 
 YamlParser::YamlParser (const char *file) : filename (file)
-	, fd(NULL)
 	, events()
     , eventNumber (0)
     , doc (NULL)
@@ -53,7 +52,6 @@ YamlParser::YamlParser (const char *file) : filename (file)
     , shortcutNode (NULL)
 {
     fd = fopen (filename.c_str(), "rb");
-
     if (!fd)
         throw YamlParserException ("Could not open file descriptor");
 
@@ -65,11 +63,7 @@ YamlParser::YamlParser (const char *file) : filename (file)
 
 YamlParser::~YamlParser()
 {
-    if (!fd)
-        throw YamlParserException ("File descriptor not valid");
-
-    if (fclose (fd))
-        throw YamlParserException ("Error closing file descriptor");
+	fclose (fd);
 
     yaml_parser_delete (&parser);
 
@@ -79,7 +73,6 @@ YamlParser::~YamlParser()
     if (doc) {
         doc->deleteChildNodes();
         delete doc;
-        doc = NULL;
     }
 }
 

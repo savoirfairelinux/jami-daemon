@@ -193,19 +193,17 @@ class Account : public Serializable
             return link_;
         }
 
-        virtual void setVoIPLink () = 0;
-
         /**
          * Register the underlying VoIPLink. Launch the event listener.
          * This should update the getRegistrationState() return value.
          */
-        virtual int registerVoIPLink() = 0;
+        virtual void registerVoIPLink() = 0;
 
         /**
          * Unregister the underlying VoIPLink. Stop the event listener.
          * This should update the getRegistrationState() return value.
          */
-        virtual int unregisterVoIPLink() = 0;
+        virtual void unregisterVoIPLink() = 0;
 
         /**
          * Tell if the account is enable or not.

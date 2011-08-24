@@ -52,8 +52,6 @@ class IAXAccount : public Account
 
         std::map<std::string, std::string> getAccountDetails() const;
 
-        void setVoIPLink ();
-
         /**
          * Actually useless, since config loading is done in init()
          */
@@ -62,12 +60,12 @@ class IAXAccount : public Account
         /**
          * Register an account
          */
-        int registerVoIPLink();
+        void registerVoIPLink();
 
         /**
          * Unregister an account
          */
-        int unregisterVoIPLink();
+        void unregisterVoIPLink();
 
         std::string getPassword (void) const {
         	return password_;

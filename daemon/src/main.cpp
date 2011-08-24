@@ -58,123 +58,87 @@ ost::CommandOptionNoArg	help (
     "help", "h", "Print help"
 );
 
+// returns true if directory exists
+static bool check_dir(const char *path)
+{
+	DIR *dir = opendir (path);
+
+	if (!dir) {	// doesn't exist
+		if (mkdir (path, 0755) != 0) {  // couldn't create the dir
+			perror(path);
+			return false;
+		}
+	} else {
+		closedir(dir);
+	}
+
+	return true;
+}
+
 int
 main (int argc, char **argv)
 {
     set_program_dir(argv[0]);
-
-    Logger::setConsoleLog (false);
-    Logger::setDebugMode (false);
-
     // makeCommandOptionParse allocates the object with operator new, so
     // auto_ptr is fine in this context.
     // TODO: This should eventually be replaced with std::unique_ptr for C++0x
     std::auto_ptr<ost::CommandOptionParse> args(ost::makeCommandOptionParse (argc, argv, ""));
 
-    printf ("SFLphone Daemon %s, by Savoir-Faire Linux 2004-2011\n", VERSION);
-    printf ("http://www.sflphone.org/\n");
+    printf ("SFLphone Daemon "VERSION", by Savoir-Faire Linux 2004-2011\n" \
+    		"http://www.sflphone.org/\n");
 
     if (help.numSet) {
         std::cerr << args->printUsage();
         return 0;
-    }
-    else if (args->argsHaveError()) {
+    } else if (args->argsHaveError()) {
         std::cerr << args->printErrors();
         std::cerr << args->printUsage();
         return 1;
     }
 
-    if (console.numSet)
-        Logger::setConsoleLog (true);
+    Logger::setConsoleLog (console.numSet);
+    Logger::setDebugMode (debug.numSet);
 
-    if (debug.numSet)
-        Logger::setDebugMode (true);
+    const char *xdg_env = XDG_CACHE_HOME;
+	std::string path = xdg_env ? xdg_env : std::string(HOMEDIR) + DIR_SEPARATOR_STR ".cache/";
 
-    FILE *fp;
-    char homepid[128];
-    char sfldir[128];
+	if (!check_dir(path.c_str()))
+		return 1;
+    path = path + "sflphone";
+	if (!check_dir(path.c_str()))
+		return 1;
 
-    unsigned int iPid = getpid();
-    char cPid[64], cOldPid[64];
-    snprintf (cPid, sizeof (cPid), "%d", iPid);
-    std::string xdg_cache, xdg_env, path;
+	std::string pidfile = path + "/" PIDFILE;
+    FILE *fp = fopen (pidfile.c_str(),"r");
+    if (fp) { // PID file exists. Check the former process still alive or not. If alive, give user a hint.
+    	int oldPid;
+    	if (fscanf(fp, "%d", &oldPid) != 1) {
+    		fprintf(stderr, "Couldn't read pidfile %s\n", pidfile.c_str());
+    		return 1;
+    	}
 
-    xdg_cache = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".cache/";
+		fclose (fp);
 
-    if (XDG_CACHE_HOME != NULL) {
-        xdg_env = std::string (XDG_CACHE_HOME);
-        (xdg_env.length() > 0) ? path = xdg_env
-                                        :		path = xdg_cache;
-    } else
-        path = xdg_cache;
+		if (kill (oldPid, 0) == 0) {
+			fprintf (stderr, "There is already a sflphoned daemon running in the system. Starting Failed.");
+			return 1;
+		}
+	}
 
-    // Use safe sprintf (Contribution #4952, Brendan Smith)
-    snprintf (sfldir, sizeof (sfldir), "%s", path.c_str ());
-
-    path  = path + "sflphone";
-
-    // Use safe sprintf (Contribution #4952, Brendan Smith)
-    snprintf (homepid, sizeof (homepid), "%s/%s", path.c_str (), PIDFILE);
-
-    if ( (fp = fopen (homepid,"r")) == NULL) {
-        // Check if $XDG_CACHE_HOME directory exists or not.
-        DIR *dir;
-
-        if ( (dir = opendir (sfldir)) == NULL) {
-            //Create it
-            if (mkdir (sfldir, 0755) != 0) {
-                fprintf (stderr, "Creating directory %s failed. Exited.", sfldir);
-                return 1;
-            }
-        }
-
-        // Then create the sflphone directory inside the $XDG_CACHE_HOME dir
-        snprintf (sfldir, sizeof (sfldir), "%s", path.c_str ());
-
-        if ( (dir = opendir (sfldir)) == NULL) {
-            //Create it
-            if (mkdir (sfldir, 0755) != 0) {
-                fprintf (stderr, "Creating directory %s failed. Exited.", sfldir);
-                return 1;
-            }
-        }
-
-        // PID file doesn't exists, create and write pid in it
-        if ( (fp = fopen (homepid,"w")) == NULL) {
-            fprintf (stderr, "Creating PID file %s failed. Exited.", homepid);
-            return 1;
-        } else {
-            fputs (cPid , fp);
-            fclose (fp);
-        }
+    // write pid file
+    fp = fopen (pidfile.c_str(),"w");
+    if (!fp) {
+    	perror(pidfile.c_str());
+        return 1;
     } else {
-        // PID file exists. Check the former process still alive or not. If alive, give user a hint.
-        char *res;
-        res = fgets (cOldPid, 64, fp);
+        std::ostringstream pidstr;
+        pidstr << getpid();
 
-        if (res == NULL) perror ("Error getting string from stream");
-
-        else {
-            fclose (fp);
-
-            if (kill (atoi (cOldPid), 0) == 0) {
-                fprintf (stderr, "There is already a sflphoned daemon running in the system. Starting Failed.");
-                return 1;
-            } else {
-                if ( (fp = fopen (homepid,"w")) == NULL) {
-                    fprintf (stderr, "Writing to PID file %s failed. Exited.", homepid);
-                    return 1;
-                } else {
-                    fputs (cPid , fp);
-                    fclose (fp);
-                }
-            }
-        }
+        fputs (pidstr.str().c_str() , fp);
+        fclose (fp);
     }
 
     try {
-        // TODO Use $XDG_CONFIG_HOME to save the config file (which default to $HOME/.config)
-    	Manager::instance().initConfigFile();
     	Manager::instance().init();
     } catch (std::exception &e) {
         std::cerr << e.what() << std::endl;
@@ -189,4 +153,3 @@ main (int argc, char **argv)
 
     return 0;
 }
-

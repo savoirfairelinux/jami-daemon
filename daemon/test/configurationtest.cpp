@@ -67,53 +67,6 @@ void ConfigurationTest::testDefaultValueSignalisation()
     CPPUNIT_ASSERT (Manager::instance().voipPreferences.getPulseLength() == 250);
 }
 
-void ConfigurationTest::testLoadSIPAccount()
-{
-    _debug ("-------------------- ConfigurationTest::testLoadSIPAccount --------------------\n");
-
-    AccountMap accounts;
-    Account *current;
-    std::ostringstream ss;
-    int nb_account; // Must be 1
-
-    // Load the account from the user file
-    nb_account = Manager::instance().loadAccountMap();
-    CPPUNIT_ASSERT_EQUAL (1, nb_account);
-    // Save the account information
-    accounts = Manager::instance()._accountMap;
-
-    AccountMap::iterator iter = accounts.begin();
-    CPPUNIT_ASSERT (Manager::instance().accountExists (iter->first) == true);
-
-    while (iter != accounts.end()) {
-        current = iter->second;
-        CPPUNIT_ASSERT (iter->first == current->getAccountID());
-        CPPUNIT_ASSERT (0 == current->getVoIPLink());
-        iter++;
-    }
-}
-
-void ConfigurationTest::testUnloadSIPAccount()
-{
-    _debug ("-------------------- ConfigurationTest::testUnloadSIPAccount --------------------\n");
-
-    AccountMap accounts;
-
-    // Load the accounts from the user file
-    Manager::instance().loadAccountMap();
-    // Unload the accounts
-    Manager::instance().unloadAccountMap();
-    // Save the account information
-    accounts = Manager::instance()._accountMap;
-
-    AccountMap::iterator iter = accounts.begin();
-    CPPUNIT_ASSERT (Manager::instance().accountExists (iter->first) == false);
-
-    if (iter != accounts.end()) {
-        CPPUNIT_FAIL ("Unload account map failed\n");
-    }
-}
-
 void ConfigurationTest::testInitVolume()
 {
     _debug ("-------------------- ConfigurationTest::testInitVolume --------------------\n");
@@ -148,29 +101,20 @@ void ConfigurationTest::testInitAudioDriver()
 
 void ConfigurationTest::testYamlParser()
 {
-
-    Conf::YamlParser *parser;
-
     try {
-
-        parser = new Conf::YamlParser ("ymlParser.yml");
+        Conf::YamlParser *parser = new Conf::YamlParser ("ymlParser.yml");
         parser->serializeEvents();
         parser->composeEvents();
         parser->constructNativeData();
 
         delete parser;
-        parser = NULL;
-
     } catch (Conf::YamlParserException &e) {
         _error ("ConfigTree: %s", e.what());
     }
-
 }
 
 void ConfigurationTest::testYamlEmitter()
 {
-    Conf::YamlEmitter *emitter;
-
     Conf::MappingNode accountmap (NULL);
     Conf::MappingNode credentialmap (NULL);
     Conf::MappingNode srtpmap (NULL);
@@ -290,7 +234,7 @@ void ConfigurationTest::testYamlEmitter()
     tlsmap.setKeyValue (verifyServerKey, &verifyserver);
 
     try {
-        emitter = new Conf::YamlEmitter ("/tmp/ymlEmiter.txt");
+        Conf::YamlEmitter *emitter = new Conf::YamlEmitter ("/tmp/ymlEmiter.txt");
 
         emitter->serializeAccount (&accountmap);
         emitter->serializeAccount (&accountmap);
@@ -300,5 +244,4 @@ void ConfigurationTest::testYamlEmitter()
     } catch (Conf::YamlEmitterException &e) {
         _error ("ConfigTree: %s", e.what());
     }
-
 }

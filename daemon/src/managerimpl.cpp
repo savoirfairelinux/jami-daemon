@@ -69,11 +69,10 @@ ManagerImpl::ManagerImpl (void) :
     _telephoneTone (0), _audiofile (0), _spkr_volume (0),
     _mic_volume (0), _waitingCall(),
     _waitingCallMutex(), _nbIncomingWaitingCall (0), _path (""),
-    _setupLoaded (false), _callAccountMap(),
+    _callAccountMap(),
     _callAccountMapMutex(), _callConfigMap(), _accountMap(),
-    _directIpAccount (0), _cleaner (new NumberCleaner),
-    _history (new HistoryManager), _imModule(new sfl::InstantMessaging),
-    parser_(0)
+    _cleaner (new NumberCleaner),
+    _history (new HistoryManager), _imModule(new sfl::InstantMessaging)
 {
     // initialize random generator for call id
     srand (time (NULL));
@@ -88,10 +87,30 @@ ManagerImpl::~ManagerImpl (void)
 	delete _audiofile;
 }
 
-void ManagerImpl::init ()
+void ManagerImpl::init (std::string config_file)
 {
-    // Load accounts, init map
-    buildConfiguration();
+	if (config_file.empty())
+		config_file = getConfigFile();
+    _path = config_file;
+
+    _debug ("Manager: configuration file path: %s", _path.c_str());
+
+    Conf::YamlParser *parser;
+
+	try {
+		parser = new Conf::YamlParser (_path.c_str());
+		parser->serializeEvents();
+		parser->composeEvents();
+		parser->constructNativeData();
+	} catch (Conf::YamlParserException &e) {
+		_error ("Manager: %s", e.what());
+		delete parser;
+		parser = NULL;
+	}
+
+	loadAccountMap(parser);
+	delete parser;
+
     initVolume();
     initAudioDriver();
     selectAudioDriver();
@@ -124,7 +143,7 @@ void ManagerImpl::init ()
     _imModule->init();
 
     // Register accounts
-    initRegisterAccounts(); //getEvents();
+    registerAccounts();
 }
 
 void ManagerImpl::terminate ()
@@ -132,30 +151,24 @@ void ManagerImpl::terminate ()
     _debug ("Manager: Terminate ");
 
     std::vector<std::string> callList(getCallList());
-    _debug ("Manager: Hangup %d remaining call", callList.size());
-    std::vector<std::string>::iterator iter = callList.begin();
+    _debug ("Manager: Hangup %zu remaining call", callList.size());
 
-    while (iter != callList.end()) {
+    std::vector<std::string>::iterator iter;
+    for (iter = callList.begin(); iter != callList.end(); ++iter)
         hangupCall (*iter);
-        iter++;
-    }
 
     unloadAccountMap();
 
-    _debug ("Manager: Unload DTMF key");
     delete _dtmfKey;
 
-    _debug ("Manager: Unload telephone tone");
     delete _telephoneTone;
     _telephoneTone = NULL;
 
     audioLayerMutexLock();
 
-    _debug ("Manager: Unload audio driver");
     delete _audiodriver;
     _audiodriver = NULL;
 
-    _debug ("Manager: Unload audio codecs ");
     _audioCodecFactory.deleteHandlePointer();
     audioLayerMutexUnlock();
 }
@@ -1468,7 +1481,7 @@ void ManagerImpl::removeStream (const std::string& call_id)
 }
 
 //THREAD=Main
-bool ManagerImpl::saveConfig (void)
+void ManagerImpl::saveConfig (void)
 {
     _debug ("Manager: Saving Configuration to XDG directory %s", _path.c_str());
     audioPreference.setVolumemic (getMicVolume());
@@ -1505,8 +1518,6 @@ bool ManagerImpl::saveConfig (void)
     } catch (Conf::YamlEmitterException &e) {
         _error ("ConfigTree: %s", e.what());
     }
-
-    return _setupLoaded;
 }
 
 //THREAD=Main
@@ -2188,75 +2199,6 @@ std::string ManagerImpl::getConfigFile (void) const
     }
 
     return configdir + DIR_SEPARATOR_STR + PROGNAME + ".yml";
-}
-
-/**
- * Initialization: Main Thread
- */
-void ManagerImpl::initConfigFile (std::string alternate)
-{
-    _debug ("Manager: Init config file");
-
-    // Loads config from ~/.sflphone/sflphoned.yml or so..
-    _path = (alternate != "") ? alternate : getConfigFile();
-    _debug ("Manager: configuration file path: %s", _path.c_str());
-
-
-    bool fileExists = true;
-
-    if (_path.empty()) {
-        _error ("Manager: Error: XDG config file path is empty!");
-        fileExists = false;
-    }
-
-    std::fstream file;
-
-    file.open (_path.data(), std::fstream::in);
-
-    if (!file.is_open()) {
-
-        _debug ("Manager: File %s not opened, create new one", _path.c_str());
-        file.open (_path.data(), std::fstream::out);
-
-        if (!file.is_open()) {
-            _error ("Manager: Error: could not create empty configurationfile!");
-            fileExists = false;
-        }
-
-        file.close();
-
-        fileExists = false;
-    }
-
-    // get length of file:
-    file.seekg (0, std::ios::end);
-    int length = file.tellg();
-
-    file.seekg (0, std::ios::beg);
-
-    if (length <= 0) {
-        _debug ("Manager: Configuration file length is empty", length);
-        file.close();
-        fileExists = false; // should load config
-    }
-
-    if (fileExists) {
-        try {
-            parser_ = new Conf::YamlParser (_path.c_str());
-
-            parser_->serializeEvents();
-
-            parser_->composeEvents();
-
-            parser_->constructNativeData();
-
-            _setupLoaded = true;
-
-            _debug ("Manager: Configuration file parsed successfully");
-        } catch (Conf::YamlParserException &e) {
-            _error ("Manager: %s", e.what());
-        }
-    }
 }
 
 std::vector<std::string> ManagerImpl::unserialize (std::string s)
@@ -3251,7 +3193,6 @@ std::string ManagerImpl::addAccount (
     Account* newAccount = NULL;
     if (accountType == "SIP") {
         newAccount = new SIPAccount(newAccountID);
-        newAccount->setVoIPLink();
     } else if (accountType == "IAX") {
         newAccount = new IAXAccount(newAccountID);
     } else {
@@ -3279,8 +3220,6 @@ std::string ManagerImpl::addAccount (
     }
 
     _debug ("AccountMap: %s", account_list.c_str());
-
-    newAccount->setVoIPLink();
 
     newAccount->registerVoIPLink();
 
@@ -3374,130 +3313,81 @@ std::vector<std::string> ManagerImpl::loadAccountOrder (void) const
     return unserialize (account_list);
 }
 
-short ManagerImpl::buildConfiguration ()
+void ManagerImpl::loadAccountMap(Conf::YamlParser *parser)
 {
-    _debug ("Manager: Loading account map");
-
-    loadIptoipProfile();
-
-    int nbAccount = loadAccountMap();
-
-    return nbAccount;
-}
-
-void ManagerImpl::loadIptoipProfile()
-{
-    _debug ("Manager: Create default \"account\" (used as default UDP transport)");
+	SIPVoIPLink *link = SIPVoIPLink::instance();
 
     // build a default IP2IP account with default parameters
-    _directIpAccount = new SIPAccount(IP2IP_PROFILE);
-    _accountMap[IP2IP_PROFILE] = _directIpAccount;
+    Account *ip2ip = new SIPAccount(IP2IP_PROFILE);
+    _accountMap[IP2IP_PROFILE] = ip2ip;
 
     // If configuration file parsed, load saved preferences
-    if (_setupLoaded) {
-
-        _debug ("Manager: Loading IP2IP profile preferences from config");
-
-        Conf::SequenceNode *seq = parser_->getAccountSequence();
-
-        // Iterate over every account maps
-        for (Conf::Sequence::const_iterator iterIP2IP = seq->getSequence()->begin(); iterIP2IP != seq->getSequence()->end(); ++iterIP2IP) {
-
-            Conf::MappingNode *map = (Conf::MappingNode *) (*iterIP2IP);
-
+    if (parser) {
+        Conf::Sequence *seq = parser->getAccountSequence()->getSequence();
+        for (Conf::Sequence::const_iterator iter = seq->begin(); iter != seq->end(); ++iter) {
+            Conf::MappingNode *map = (Conf::MappingNode *) (*iter);
             std::string accountid;
             map->getValue ("id", &accountid);
 
-            // if ID is IP2IP, unserialize
             if (accountid == "IP2IP") {
-                _directIpAccount->unserialize (map);
+                ip2ip->unserialize (map);
                 break;
             }
         }
     }
 
+
+    // Initialize default UDP transport according to
+    // IP to IP settings (most likely using port 5060)
+    link->createDefaultSipUdpTransport();
+
+    // Call this method to create TLS listener
+    link->createDefaultSipTlsListener();
+
+
     // Force IP2IP settings to be loaded to be loaded
     // No registration in the sense of the REGISTER method is performed.
-    _directIpAccount->registerVoIPLink();
+    ip2ip->registerVoIPLink();
 
-    // SIPVoIPlink is used as a singleton, it is the first call to instance here
-    // The SIP library initialization is done in the SIPVoIPLink constructor
-    // We need the IP2IP settings to be loaded at this time as they are used
-    // for default sip transport
+    if (!parser)
+    	return;
 
-    _directIpAccount->setVoIPLink();
+	// build preferences
+    preferences.unserialize (parser->getPreferenceNode());
+    voipPreferences.unserialize (parser->getVoipPreferenceNode());
+    addressbookPreference.unserialize (parser->getAddressbookNode());
+    hookPreference.unserialize (parser->getHookNode());
+    audioPreference.unserialize (parser->getAudioNode());
+    shortcutPreferences.unserialize (parser->getShortcutNode());
 
-}
-
-short ManagerImpl::loadAccountMap()
-{
-    _debug ("Manager: Load account map");
-
-    if (!_setupLoaded) {
-    	_error("Manager: Error: Configuration file not loaded yet, could not load config");
-    	return 0;
-    }
-
-    // build preferences
-    preferences.unserialize (parser_->getPreferenceNode());
-    voipPreferences.unserialize (parser_->getVoipPreferenceNode());
-    addressbookPreference.unserialize (parser_->getAddressbookNode());
-    hookPreference.unserialize (parser_->getHookNode());
-    audioPreference.unserialize (parser_->getAudioNode());
-    shortcutPreferences.unserialize (parser_->getShortcutNode());
-
-    Conf::SequenceNode *seq = parser_->getAccountSequence();
+    Conf::Sequence *seq = parser->getAccountSequence()->getSequence();
 
     // Each element in sequence is a new account to create
-    Conf::Sequence::iterator iterSeq;
-    int nbAccount = 0;
-    for (iterSeq = seq->getSequence()->begin(); iterSeq != seq->getSequence()->end(); ++iterSeq) {
+    for (Conf::Sequence::const_iterator iter = seq->begin(); iter != seq->end(); ++iter) {
+        Conf::MappingNode *map = (Conf::MappingNode *) (*iter);
 
-        // Pointer to the account and account preferences map
-        Account *tmpAccount = NULL;
-        Conf::MappingNode *map = (Conf::MappingNode *) (*iterSeq);
-
-        // Search for account types (IAX/IP2IP)
-        std::string accountType = "SIP"; // Assume type is SIP if not specified
+        std::string accountType;
         map->getValue ("type", &accountType);
 
-        // search for account id
         std::string accountid;
         map->getValue ("id", &accountid);
 
-        // search for alias (to get rid of the "ghost" account)
         std::string accountAlias;
         map->getValue ("alias", &accountAlias);
 
-        // do not insert in account map if id or alias is empty
-        if (accountid.empty() or accountAlias.empty())
+        if (accountid.empty() or accountAlias.empty() or accountid == IP2IP_PROFILE)
             continue;
 
-        // Create a default account for specific type
-        if (accountType == "SIP" && accountid != "IP2IP")
-            tmpAccount = new SIPAccount(accountid);
-        else if (accountType == "IAX" and accountid != "IP2IP")
-            tmpAccount = new IAXAccount(accountid);
+        Account *a;
+        if (accountType == "IAX")
+        	a = new IAXAccount(accountid);
+        else // assume SIP
+        	a = new SIPAccount(accountid);
 
-        // Fill account with configuration preferences
-        if (tmpAccount != NULL) {
-            tmpAccount->unserialize (map);
-            _accountMap[accountid] = tmpAccount;
+        _accountMap[accountid] = a;
 
-            tmpAccount->setVoIPLink();
-            nbAccount++;
-        }
+		a->unserialize (map);
     }
-
-    try {
-        delete parser_;
-    } catch (Conf::YamlParserException &e) {
-        _error ("Manager: %s", e.what());
-    }
-
-    parser_ = NULL;
-
-    return nbAccount;
 }
 
 void ManagerImpl::unloadAccountMap ()
@@ -3512,6 +3402,8 @@ void ManagerImpl::unloadAccountMap ()
     }
 
     _accountMap.clear();
+
+    delete SIPVoIPLink::instance();
 }
 
 bool ManagerImpl::accountExists (const std::string& accountID)
@@ -3527,7 +3419,7 @@ ManagerImpl::getAccount (const std::string& accountID) const
 		return iter->second;
 
     _debug ("Manager: Did not found account %s, returning IP2IP account", accountID.c_str());
-    return _directIpAccount;
+    return getAccount(IP2IP_PROFILE);
 }
 
 std::string ManagerImpl::getAccountIdFromNameAndServer (

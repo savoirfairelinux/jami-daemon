@@ -91,8 +91,7 @@ int main (int argc, char* argv[])
 
     printf ("\n\n=== SFLphone initialization ===\n\n");
     system("cp " CONFIG_SAMPLE " " CONFIG_SAMPLE ".bak");
-    Manager::instance().initConfigFile (CONFIG_SAMPLE);
-    Manager::instance().init();
+    Manager::instance().init(CONFIG_SAMPLE);
 
     // Get the top level suite from the registry
     printf ("\n\n=== Test Suite: %s ===\n\n", testSuiteName.c_str());

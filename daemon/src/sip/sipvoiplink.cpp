@@ -76,26 +76,26 @@
 
 using namespace sfl;
 
-static char * invitationStateMap[] = {
-    (char*) "PJSIP_INV_STATE_NULL",
-    (char*) "PJSIP_INV_STATE_CALLING",
-    (char*) "PJSIP_INV_STATE_INCOMING",
-    (char*) "PJSIP_INV_STATE_EARLY",
-    (char*) "PJSIP_INV_STATE_CONNECTING",
-    (char*) "PJSIP_INV_STATE_CONFIRMED",
-    (char*) "PJSIP_INV_STATE_DISCONNECTED"
+static const char * invitationStateMap[] = {
+    "PJSIP_INV_STATE_NULL",
+    "PJSIP_INV_STATE_CALLING",
+    "PJSIP_INV_STATE_INCOMING",
+    "PJSIP_INV_STATE_EARLY",
+    "PJSIP_INV_STATE_CONNECTING",
+    "PJSIP_INV_STATE_CONFIRMED",
+    "PJSIP_INV_STATE_DISCONNECTED"
 };
 
-static char * transactionStateMap[] = {
-    (char*) "PJSIP_TSX_STATE_NULL" ,
-    (char*) "PJSIP_TSX_STATE_CALLING",
-    (char*) "PJSIP_TSX_STATE_TRYING",
-    (char*) "PJSIP_TSX_STATE_PROCEEDING",
-    (char*) "PJSIP_TSX_STATE_COMPLETED",
-    (char*) "PJSIP_TSX_STATE_CONFIRMED",
-    (char*) "PJSIP_TSX_STATE_TERMINATED",
-    (char*) "PJSIP_TSX_STATE_DESTROYED",
-    (char*) "PJSIP_TSX_STATE_MAX"
+static const char * transactionStateMap[] = {
+    "PJSIP_TSX_STATE_NULL" ,
+    "PJSIP_TSX_STATE_CALLING",
+    "PJSIP_TSX_STATE_TRYING",
+    "PJSIP_TSX_STATE_PROCEEDING",
+    "PJSIP_TSX_STATE_COMPLETED",
+    "PJSIP_TSX_STATE_CONFIRMED",
+    "PJSIP_TSX_STATE_TERMINATED",
+    "PJSIP_TSX_STATE_DESTROYED",
+    "PJSIP_TSX_STATE_MAX"
 };
 
 struct result {
@@ -163,11 +163,6 @@ pjsip_module _mod_ua;
  */
 pj_thread_t *thread;
 pj_thread_desc desc;
-
-/*
- * Url hook instance
- */
-UrlHook *urlhook;
 
 /**
  * Get the number of voicemail waiting in a SIP message
@@ -266,52 +261,12 @@ SIPVoIPLink* SIPVoIPLink::_instance = NULL;
 
 
 SIPVoIPLink::SIPVoIPLink ()
-    : VoIPLink ()
-    , _nbTryListenAddr (2)   // number of times to try to start SIP listener
+    : _nbTryListenAddr (2)   // number of times to try to start SIP listener
     , _regPort (DEFAULT_SIP_PORT)
-    , _clients (0)
 {
-
-    _debug ("SIPVOIPLINK");
-    // to get random number for RANDOM_PORT
-    srand (time (NULL));
-
-    urlhook = new UrlHook ();
+    srand (time (NULL));    // to get random number for RANDOM_PORT
 
     /* Start pjsip initialization step */
-    init();
-}
-
-SIPVoIPLink::~SIPVoIPLink()
-{
-    terminate();
-
-}
-
-SIPVoIPLink* SIPVoIPLink::instance ()
-{
-
-    if (!_instance) {
-        _debug ("UserAgent: Create new SIPVoIPLink instance");
-        _instance = new SIPVoIPLink;
-    }
-
-    return _instance;
-}
-
-void SIPVoIPLink::decrementClients (void)
-{
-    if (--_clients == 0) {
-        _debug ("UserAgent: No SIP account anymore, terminate SIPVoIPLink");
-        delete SIPVoIPLink::_instance;
-    }
-}
-
-void SIPVoIPLink::init()
-{
-    if (_initDone)
-        return;
-
     // TODO This port should be the one configured for the IP profile
     // and not the global one
     _regPort = Manager::instance().getLocalIp2IpPort();
@@ -321,31 +276,27 @@ void SIPVoIPLink::init()
 
     /* Initialize the pjsip library */
     pjsipInit();
-
-    _initDone = true;
 }
 
-void
-SIPVoIPLink::terminate()
+SIPVoIPLink::~SIPVoIPLink()
 {
-    _debug ("UserAgent: Terminating SIPVoIPLink");
-
-    if (_evThread) {
-        _debug ("UserAgent: Deleting sip eventThread");
-        delete _evThread;
-        _evThread = NULL;
-    }
-
-
-    /* Clean shutdown of pjsip library */
-    if (_initDone) {
-        _debug ("UserAgent: Shutting down PJSIP");
-        pjsipShutdown();
-    }
-
-    _initDone = false;
-
+	delete _evThread;
+	pjsipShutdown();
 }
+
+SIPVoIPLink* SIPVoIPLink::instance ()
+{
+    if (!_instance) {
+        _debug ("UserAgent: Create new SIPVoIPLink instance");
+        _instance = new SIPVoIPLink;
+    }
+
+    return _instance;
+}
+
+void SIPVoIPLink::init() {}
+
+void SIPVoIPLink::terminate() {}
 
 void
 SIPVoIPLink::getEvent()
@@ -442,9 +393,7 @@ void SIPVoIPLink::sendRegister (Account *a)
     account->setRegistrationState (Trying);
 
     // Create the registration according to the account ID
-    status = pjsip_regc_create (_endpt, (void *) account, &registration_cb, &regc);
-
-    if (status != PJ_SUCCESS) {
+    if (pjsip_regc_create (_endpt, (void *) account, &registration_cb, &regc) != PJ_SUCCESS) {
         _mutexSIP.leaveMutex();
         throw VoipLinkException("UserAgent: Unable to create regc structure.");
     }
@@ -478,14 +427,13 @@ void SIPVoIPLink::sendRegister (Account *a)
     pj_cstr (&pjSrv, srvUri.c_str());
 
     // Initializes registration
-    status = pjsip_regc_init (regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, expire_value);
-    if (status != PJ_SUCCESS) {
+    if (pjsip_regc_init (regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, expire_value) != PJ_SUCCESS) {
         _mutexSIP.leaveMutex();
         throw VoipLinkException("Unable to initialize account registration structure");
     }
 
     // Fill route set
-    if (! (account->getServiceRoute().empty())) {
+    if (!account->getServiceRoute().empty()) {
         pjsip_route_hdr *route_set = createRouteSet(account, _pool);
         pjsip_regc_set_route_set (regc, route_set);
     }
@@ -505,7 +453,7 @@ void SIPVoIPLink::sendRegister (Account *a)
     pjsip_regc_add_headers (regc, &hdr_list);
 
 
-    if ((status = pjsip_regc_register (regc, PJ_TRUE, &tdata)) != PJ_SUCCESS) {
+    if (pjsip_regc_register (regc, PJ_TRUE, &tdata) != PJ_SUCCESS) {
         _mutexSIP.leaveMutex();
         throw VoipLinkException("Unable to initialize transaction data for account registration");
     }
@@ -551,13 +499,10 @@ void SIPVoIPLink::sendRegister (Account *a)
 
     account->setRegistrationInfo (regc);
 
-    if (account->getAccountTransport()) {
-
+    pjsip_transport *transport = account->getAccountTransport();
+    if (transport)
         _debug ("Sent account registration using transport: %s %s (refcnt=%d)",
-                account->getAccountTransport()->obj_name,
-                account->getAccountTransport()->info,
-                (int) pj_atomic_get (account->getAccountTransport()->ref_cnt));
-    }
+                transport->obj_name, transport->info, (int) pj_atomic_get(transport->ref_cnt));
 }
 
 void SIPVoIPLink::sendUnregister (Account *a) throw(VoipLinkException)
@@ -1670,13 +1615,6 @@ bool SIPVoIPLink::pjsipInit()
         return false;
     }
 
-    // Initialize default UDP transport according to
-    // IP to IP settings (most likely using port 5060)
-    createDefaultSipUdpTransport();
-
-    // Call this method to create TLS listener
-    createDefaultSipTlsListener();
-
     // Initialize transaction layer
     status = pjsip_tsx_layer_init_module (_endpt);
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
@@ -1869,28 +1807,22 @@ bool SIPVoIPLink::createDefaultSipUdpTransport()
 		account->setAccountTransport (transport);
     }
     return true;
-
 }
 
 
 void SIPVoIPLink::createDefaultSipTlsListener()
 {
-
     SIPAccount * account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (IP2IP_PROFILE));
-    if (account->isTlsEnabled()) {
+    if (account->isTlsEnabled())
         createTlsListener (account);
-    }
 }
 
 
 void SIPVoIPLink::createTlsListener (SIPAccount *account)
 {
-
     pjsip_tpfactory *tls;
     pj_sockaddr_in local_addr;
     pjsip_host_port a_name;
-    pj_status_t status;
-    pj_status_t success;
 
     _debug ("Create TLS listener");
 
@@ -1905,7 +1837,7 @@ void SIPVoIPLink::createTlsListener (SIPAccount *account)
 
     pj_str_t pjAddress;
     pj_cstr (&pjAddress, PJ_INADDR_ANY);
-    success = pj_sockaddr_in_set_str_addr (&local_addr, &pjAddress);
+    pj_sockaddr_in_set_str_addr (&local_addr, &pjAddress);
 
 
     // Init published address for this listener (Local IP address on port 5061)
@@ -1915,33 +1847,25 @@ void SIPVoIPLink::createTlsListener (SIPAccount *account)
     pj_cstr (&a_name.host, publishedAddress.c_str());
     a_name.port = account->getTlsListenerPort();
 
-    /* Get TLS settings. Expected to be filled */
-    pjsip_tls_setting * tls_setting = account->getTlsSetting();
-
-
     _debug ("UserAgent: TLS transport to be initialized with published address %.*s,"
     " published port %d,\n                  local address %.*s, local port %d",
     (int) a_name.host.slen, a_name.host.ptr,
-    (int) a_name.port, pjAddress.slen, pjAddress.ptr, (int) localTlsPort);
+    a_name.port, pjAddress.slen, pjAddress.ptr, (int) localTlsPort);
 
 
-    status = pjsip_tls_transport_start (_endpt, tls_setting, &local_addr, &a_name, 1, &tls);
+    pj_status_t status = pjsip_tls_transport_start (_endpt, account->getTlsSetting(), &local_addr, &a_name, 1, &tls);
 
     if (status != PJ_SUCCESS) {
         _debug ("UserAgent: Error creating SIP TLS listener (%d)", status);
     } else {
         _localTlsListener = tls;
     }
-
-    // return PJ_SUCCESS;
-
 }
 
 
 bool SIPVoIPLink::createSipTransport (SIPAccount *account)
 {
     if (account->isTlsEnabled()) {
-
         if (_localTlsListener == NULL)
             createTlsListener (account);
 
@@ -1985,12 +1909,7 @@ bool SIPVoIPLink::createSipTransport (SIPAccount *account)
 
 pjsip_transport *SIPVoIPLink::createUdpTransport (SIPAccount *account, bool local)
 {
-    pj_status_t status;
     pj_sockaddr_in bound_addr;
-    pjsip_host_port a_name;
-    // char tmpIP[32];
-    pjsip_transport *transport;
-    int listeningPort = _regPort;
 
     /* Use my local address as default value */
     std::string listeningAddress = loadSIPLocalIP ();
@@ -2001,11 +1920,9 @@ pjsip_transport *SIPVoIPLink::createUdpTransport (SIPAccount *account, bool loca
 	if (account->getLocalInterface () != "default")
 		listeningAddress = getInterfaceAddrFromName (account->getLocalInterface());
 
-	listeningPort = account->getLocalPort ();
+    int listeningPort = account->getLocalPort ();
 
     pj_memset (&bound_addr, 0, sizeof (bound_addr));
-
-    pj_str_t temporary_address;
 
     if (account->getLocalInterface () == "default") {
 
@@ -2013,8 +1930,8 @@ pjsip_transport *SIPVoIPLink::createUdpTransport (SIPAccount *account, bool loca
         bound_addr.sin_addr.s_addr = pj_htonl (PJ_INADDR_ANY);
         listeningAddress = loadSIPLocalIP ();
     } else {
-
         // bind this account to a specific interface
+        pj_str_t temporary_address;
         pj_strdup2 (_pool, &temporary_address, listeningAddress.c_str());
         bound_addr.sin_addr = pj_inet_addr (&temporary_address);
     }
@@ -2042,12 +1959,13 @@ pjsip_transport *SIPVoIPLink::createUdpTransport (SIPAccount *account, bool loca
     }
 
     /* Init published name */
+    pjsip_host_port a_name;
     pj_bzero (&a_name, sizeof (pjsip_host_port));
     pj_cstr (&a_name.host, listeningAddress.c_str());
     a_name.port = listeningPort;
 
-    status = pjsip_udp_transport_start (_endpt, &bound_addr, &a_name, 1, &transport);
-    if (status != PJ_SUCCESS)
+    pjsip_transport *transport;
+    if (pjsip_udp_transport_start (_endpt, &bound_addr, &a_name, 1, &transport) != PJ_SUCCESS)
         transport = NULL;
 
     // Print info from transport manager associated to endpoint
@@ -2443,25 +2361,25 @@ pjsip_route_hdr *SIPVoIPLink::createRouteSet(Account *account, pj_pool_t *hdr_po
 
 }
 
-void SIPVoIPLink::busySleep (unsigned msec)
+void SIPVoIPLink::pjsipShutdown (void)
 {
-
+    if (_endpt) {
+        _debug ("UserAgent: Shutting down...");
 #if defined(PJ_SYMBIAN) && PJ_SYMBIAN != 0
     /* Ideally we shouldn't call pj_thread_sleep() and rather
      * CActiveScheduler::WaitForAnyRequest() here, but that will
      * drag in Symbian header and it doesn't look pretty.
      */
-    pj_thread_sleep (msec);
+    pj_thread_sleep (1000);
 #else
     pj_time_val timeout, now, tv;
 
     pj_gettimeofday (&timeout);
-    timeout.msec += msec;
+    timeout.msec += 1000;
     pj_time_val_normalize (&timeout);
 
     tv.sec = 0;
     tv.msec = 10;
-    pj_time_val_normalize (&tv);
 
     do {
         pjsip_endpt_handle_events (_endpt, &tv);
@@ -2469,13 +2387,6 @@ void SIPVoIPLink::busySleep (unsigned msec)
     } while (PJ_TIME_VAL_LT (now, timeout));
 
 #endif
-}
-
-void SIPVoIPLink::pjsipShutdown (void)
-{
-    if (_endpt) {
-        _debug ("UserAgent: Shutting down...");
-        busySleep (1000);
     }
 
     pj_thread_join (thread);
@@ -3166,13 +3077,11 @@ transaction_request_cb (pjsip_rx_data *rdata)
     if (Manager::instance().hookPreference.getSipEnabled()) {
         _debug ("UserAgent: Set sip url hooks");
 
-        std::string header_value(fetchHeaderValue (rdata->msg_info.msg,
-                    Manager::instance().hookPreference.getUrlSipField()));
+        std::string header_value(fetchHeaderValue (rdata->msg_info.msg, Manager::instance().hookPreference.getUrlSipField()));
 
         if (header_value.size () < header_value.max_size()) {
             if (not header_value.empty()) {
-                urlhook->addAction (header_value,
-                Manager::instance().hookPreference.getUrlCommand());
+                UrlHook::runAction (Manager::instance().hookPreference.getUrlCommand(), header_value);
             }
         } else
             throw std::length_error ("UserAgent: Url exceeds std::string max_size");
@@ -3644,16 +3553,14 @@ std::vector<std::string> SIPVoIPLink::getAllIpInterfaceByName (void)
 
 std::string SIPVoIPLink::getInterfaceAddrFromName (std::string ifaceName)
 {
-    struct ifreq ifr;
-    int fd;
-
-    if ( (fd = socket (AF_INET, SOCK_DGRAM,0)) < 0) {
-        _error ("UserAgent: Error: could not open socket");
+    int fd = socket (AF_INET, SOCK_DGRAM,0);
+    if (fd < 0) {
+        _error ("UserAgent: Error: could not open socket: %m");
         return "";
     }
 
+    struct ifreq ifr;
     memset (&ifr, 0, sizeof (struct ifreq));
-
     strcpy (ifr.ifr_name, ifaceName.c_str());
     ifr.ifr_addr.sa_family = AF_INET;
 
