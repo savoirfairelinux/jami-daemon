@@ -35,7 +35,7 @@
 #include "eel-gconf-extensions.h"
 #include "dbus.h"
 #include "video/video_preview.h"
-#include <assert.h>
+#include "actions.h"
 #include "codeclist.h"
 
 #include <clutter/clutter.h>
@@ -415,7 +415,7 @@ static char *get_active_text(GtkComboBox *box)
 /* Return 0 if string was found in the combo box, != 0 if the string was not found */
 static int set_combo_index_from_str(GtkComboBox *box, const char *str, size_t max)
 {
-    assert(str);
+    g_assert(str);
 
     GtkTreeModel *model = gtk_combo_box_get_model (box);
     GtkTreeIter iter;
@@ -664,20 +664,29 @@ void video_device_event_cb(DBusGProxy *proxy UNUSED, void * foo  UNUSED)
     fill_devices();
 }
 
+static void receiving_video_window_destroyed_cb(GtkWidget *widget UNUSED, gpointer data UNUSED)
+{
+    sflphone_hang_up();
+}
+
+
 // FIXME: Should not be in config, also only handling clutter case for now
 void receiving_video_event_cb(DBusGProxy *proxy, gint shmKey, gint semKey,
                               gint videoBufferSize, gint destWidth,
                               gint destHeight, GError *error, gpointer userdata)
 {
-    if (!receivingVideoWindow)
+    if (!receivingVideoWindow) {
         receivingVideoWindow = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+        g_signal_connect (receivingVideoWindow, "destroy", G_CALLBACK (receiving_video_window_destroyed_cb), NULL);
+    }
+
     (void)proxy;
     (void)error;
     (void)userdata;
     gboolean using_clutter = clutter_init(NULL, NULL) == CLUTTER_INIT_SUCCESS;
     g_assert(using_clutter);
-    if (!receivingVideoArea)
-    {
+
+    if (!receivingVideoArea) {
         receivingVideoArea = gtk_clutter_embed_new();
         gtk_container_add(GTK_CONTAINER(receivingVideoWindow), receivingVideoArea);
     }
@@ -704,7 +713,6 @@ void receiving_video_event_cb(DBusGProxy *proxy, gint shmKey, gint semKey,
     else
         DEBUG("Running video renderer");
 }
-
 
 // FIXME: Should not be in config, only doing clutter case for now
 void stopped_receiving_video_event_cb(DBusGProxy *proxy, gint shmKey, gint semKey, GError *error, gpointer userdata)
