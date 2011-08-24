@@ -73,7 +73,7 @@ AudioZrtpSession::~AudioZrtpSession()
     try {
         terminate();
     } catch (...) {
-        _debugException ("AudioZrtpSession: Thread destructor didn't terminate correctly");
+        _debug ("AudioZrtpSession: Thread destructor didn't terminate correctly");
         throw;
     }
 

@@ -45,52 +45,40 @@ void log (const int level, const char* format, ...)
         return;
 
     va_list ap;
-    const char *prefix = "<> ";
-    const char *color_prefix = "";
 
-    switch (level) {
-        case LOG_ERR: {
-            prefix = "<error> ";
-            color_prefix = RED;
-            break;
+    if (consoleLog) {
+        const char *color_prefix = "";
+        switch (level) {
+            case LOG_ERR:
+                color_prefix = RED;
+                break;
+            case LOG_WARNING:
+                color_prefix = YELLOW;
+                break;
         }
-        case LOG_WARNING: {
-            prefix = "<warning> ";
-            color_prefix = LIGHT_RED;
-            break;
-        }
-        case LOG_INFO: {
-            prefix = "<info> ";
-            color_prefix = "";
-            break;
-        }
-        case LOG_DEBUG: {
-            prefix = "<debug> ";
-            color_prefix = "";
-            break;
-        }
+
+    	fputs(color_prefix, stderr);
+
+        va_start (ap, format);
+        vfprintf(stderr, format, ap);
+        va_end (ap);
+
+        fputs(END_COLOR"\n", stderr);
+    } else {
+		va_start (ap, format);
+		vsyslog (level, format, ap);
+		va_end (ap);
     }
-
-    char buffer[8192];
-    va_start (ap, format);
-    vsnprintf (buffer, sizeof buffer, format, ap);
-    va_end (ap);
-
-    if (consoleLog)
-        fprintf(stderr, "%s%s"END_COLOR"\n", color_prefix, buffer);
-
-    syslog (level, "%s%s", prefix, buffer);
 }
 
 void setConsoleLog (bool c)
 {
-    Logger::consoleLog = c;
+    consoleLog = c;
 }
 
 void setDebugMode (bool d)
 {
-    Logger::debugMode = d;
+    debugMode = d;
 }
 
 }
-

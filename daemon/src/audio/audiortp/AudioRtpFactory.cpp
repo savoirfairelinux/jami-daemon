@@ -58,7 +58,7 @@ AudioRtpFactory::~AudioRtpFactory()
 void AudioRtpFactory::initAudioRtpConfig ()
 {
     if (_rtpSession != NULL) {
-        _debugException ("An audio rtp thread was already created but not" \
+        _debug ("An audio rtp thread was already created but not" \
                          "destroyed. Forcing it before continuing.");
         stop();
     }
@@ -161,7 +161,7 @@ void AudioRtpFactory::stop (void)
     _info ("AudioRtpFactory: Stopping audio rtp session");
 
     if (_rtpSession == NULL) {
-        _debugException ("AudioRtpFactory: Rtp session already deleted");
+        _debug ("AudioRtpFactory: Rtp session already deleted");
         return;
     }
 
@@ -174,7 +174,7 @@ void AudioRtpFactory::stop (void)
         delete _rtpSession;
         _rtpSession = NULL;
     } catch (...) {
-        _debugException ("AudioRtpFactory: Error: Exception caught when stopping the audio rtp session");
+        _debug ("AudioRtpFactory: Error: Exception caught when stopping the audio rtp session");
         throw AudioRtpFactoryException ("AudioRtpFactory: Error: caught exception in AudioRtpFactory::stop");
     }
 }

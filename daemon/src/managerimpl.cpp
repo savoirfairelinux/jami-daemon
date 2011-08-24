@@ -123,11 +123,11 @@ void ManagerImpl::init (std::string config_file)
     if (_audiodriver) {
         unsigned int sampleRate = _audiodriver->getSampleRate();
 
-        _debugInit ("Manager: Load telephone tone");
+        _debug ("Manager: Load telephone tone");
         std::string country(preferences.getZoneToneChoice());
         _telephoneTone = new TelephoneTone (country, sampleRate);
 
-        _debugInit ("Manager: Loading DTMF key (%d)", sampleRate);
+        _debug ("Manager: Loading DTMF key (%d)", sampleRate);
 
         sampleRate = 8000;
 
@@ -2708,7 +2708,7 @@ void ManagerImpl::setEchoCancelDelay(int delay)
  */
 bool ManagerImpl::initAudioDriver (void)
 {
-    _debugInit ("Manager: AudioLayer Creation");
+    _debug ("Manager: AudioLayer Creation");
 
     audioLayerMutexLock();
 
@@ -2945,12 +2945,12 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
     unsigned int sampleRate = _audiodriver->getSampleRate();
 
     delete _telephoneTone;
-    _debugInit ("Manager: Load telephone tone");
+    _debug ("Manager: Load telephone tone");
     std::string country = preferences.getZoneToneChoice();
     _telephoneTone = new TelephoneTone (country, sampleRate);
 
     delete _dtmfKey;
-    _debugInit ("Manager: Loading DTMF key with sample rate %d", sampleRate);
+    _debug ("Manager: Loading DTMF key with sample rate %d", sampleRate);
     _dtmfKey = new DTMF (sampleRate);
 
     // Restart audio layer if it was active
@@ -2966,7 +2966,7 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
  */
 void ManagerImpl::initVolume ()
 {
-    _debugInit ("Initiate Volume");
+    _debug ("Initiate Volume");
     setSpkrVolume (audioPreference.getVolumespkr());
     setMicVolume (audioPreference.getVolumemic());
 }
