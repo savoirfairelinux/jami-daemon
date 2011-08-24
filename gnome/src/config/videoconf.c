@@ -725,7 +725,8 @@ void stopped_receiving_video_event_cb(DBusGProxy *proxy, gint shmKey, gint semKe
 
     if (video_renderer) {
         if (receivingVideoWindow) {
-            gtk_widget_destroy(receivingVideoWindow);
+            if (GTK_IS_WIDGET(receivingVideoWindow))
+                    gtk_widget_destroy(receivingVideoWindow);
             receivingVideoArea = receivingVideoWindow = NULL;
         }
         video_renderer = NULL;
@@ -881,7 +882,7 @@ GtkWidget* create_video_configuration()
         drawarea = gtk_drawing_area_new();
 
     GdkWindow *win = gtk_widget_get_window(drawarea);
-    if (win)
+    if (win && GDK_IS_WINDOW(win))
         gdk_window_clear(win);
     g_signal_connect(drawarea, "unrealize", G_CALLBACK(on_drawarea_unrealize),
             NULL);
