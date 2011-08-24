@@ -61,11 +61,6 @@ class AudioCodecFactory
         AudioCodecFactory();
 
         /**
-         * Destructor
-         */
-        ~AudioCodecFactory();
-
-        /**
          * Accessor to data structures
          * @return CodecsMap& The available codec
          */
@@ -111,7 +106,7 @@ class AudioCodecFactory
          * @param payload The payload of the codec
          * @return int The clock rate of the specified codec
          */
-        int getSampleRate (AudioCodecType payload);
+        int getSampleRate (AudioCodecType payload) const;
 
         /**
          * Set the order of codecs by their payload

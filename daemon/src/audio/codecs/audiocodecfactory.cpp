@@ -41,11 +41,6 @@ AudioCodecFactory::AudioCodecFactory() : _CodecsMap(), _defaultCodecOrder(), _Ca
 {
 }
 
-AudioCodecFactory::~AudioCodecFactory()
-{
-
-}
-
 void
 AudioCodecFactory::init()
 {
@@ -102,14 +97,12 @@ double AudioCodecFactory::getBitRate (AudioCodecType payload)
     return 0.0;
 }
 
-int AudioCodecFactory::getSampleRate (AudioCodecType payload)
+int AudioCodecFactory::getSampleRate (AudioCodecType payload) const
 {
-
-    CodecsMap::iterator iter = _CodecsMap.find (payload);
+    CodecsMap::const_iterator iter = _CodecsMap.find (payload);
 
     if (iter!=_CodecsMap.end())
-        return (iter->second->getClockRate() / 1000);
-
+        return (iter->second->getClockRate() * 0.001);
 	return 0;
 }
 
@@ -129,9 +122,9 @@ void AudioCodecFactory::saveActiveCodecs (const std::vector<std::string>& list)
 void
 AudioCodecFactory::deleteHandlePointer (void)
 {
-    for (size_t i = 0 ; i < _CodecInMemory.size() ; i++) {
-        unloadCodec (_CodecInMemory[i]);
-    }
+    for (std::vector<CodecHandlePointer>::const_iterator iter =
+            _CodecInMemory.begin(); iter != _CodecInMemory.end(); ++iter)
+        unloadCodec (*iter);
 
     _CodecInMemory.clear();
 }

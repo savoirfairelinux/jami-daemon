@@ -424,32 +424,32 @@ void SIPAccount::setAccountDetails (std::map<std::string, std::string> details)
     userAgent_ = details[USERAGENT];
 
     // srtp settings
-    setSrtpEnable (details[SRTP_ENABLE] == "true");
-    setSrtpFallback (details[SRTP_RTP_FALLBACK] == "true");
-    setZrtpDisplaySas (details[ZRTP_DISPLAY_SAS] == "true");
-    setZrtpDiaplaySasOnce (details[ZRTP_DISPLAY_SAS_ONCE] == "true");
-    setZrtpNotSuppWarning (details[ZRTP_NOT_SUPP_WARNING] == "true");
-    setZrtpHelloHash (details[ZRTP_HELLO_HASH] == "true");
-    setSrtpKeyExchange (details[SRTP_KEY_EXCHANGE]);
+    srtpEnabled_ = details[SRTP_ENABLE] == "true";
+    srtpFallback_ = details[SRTP_RTP_FALLBACK] == "true";
+    zrtpDisplaySas_ = details[ZRTP_DISPLAY_SAS] == "true";
+    zrtpDisplaySasOnce_ = details[ZRTP_DISPLAY_SAS_ONCE] == "true";
+    zrtpNotSuppWarning_ = details[ZRTP_NOT_SUPP_WARNING] == "true";
+    zrtpHelloHash_ = details[ZRTP_HELLO_HASH] == "true";
+    srtpKeyExchange_ = details[SRTP_KEY_EXCHANGE];
 
     // TLS settings
     // The TLS listener is unique and globally defined through IP2IP_PROFILE
     if (accountID_ == IP2IP_PROFILE)
-    	setTlsListenerPort (atoi (details[TLS_LISTENER_PORT].c_str()));
+        tlsListenerPort_ = atoi (details[TLS_LISTENER_PORT].c_str());
 
-    setTlsEnable (details[TLS_ENABLE]);
-    setTlsCaListFile (details[TLS_CA_LIST_FILE]);
-    setTlsCertificateFile (details[TLS_CERTIFICATE_FILE]);
-    setTlsPrivateKeyFile (details[TLS_PRIVATE_KEY_FILE]);
-    setTlsPassword (details[TLS_PASSWORD]);
-    setTlsMethod (details[TLS_METHOD]);
-    setTlsCiphers (details[TLS_CIPHERS]);
-    setTlsServerName (details[TLS_SERVER_NAME]);
-    setTlsVerifyServer (details[TLS_VERIFY_SERVER] == "true");
-    setTlsVerifyClient (details[TLS_VERIFY_CLIENT] == "true");
-    setTlsRequireClientCertificate (details[TLS_REQUIRE_CLIENT_CERTIFICATE] == "true");
-    setTlsNegotiationTimeoutSec (details[TLS_NEGOTIATION_TIMEOUT_SEC]);
-    setTlsNegotiationTimeoutMsec (details[TLS_NEGOTIATION_TIMEOUT_MSEC]);
+    tlsEnable_ = details[TLS_ENABLE];
+    tlsCaListFile_ = details[TLS_CA_LIST_FILE];
+    tlsCertificateFile_ = details[TLS_CERTIFICATE_FILE];
+    tlsPrivateKeyFile_ = details[TLS_PRIVATE_KEY_FILE];
+    tlsPassword_ = details[TLS_PASSWORD];
+    tlsMethod_ = details[TLS_METHOD];
+    tlsCiphers_ = details[TLS_CIPHERS];
+    tlsServerName_ = details[TLS_SERVER_NAME];
+    tlsVerifyServer_ = details[TLS_VERIFY_SERVER] == "true";
+    tlsVerifyClient_ = details[TLS_VERIFY_CLIENT] == "true";
+    tlsRequireClientCertificate_ = details[TLS_REQUIRE_CLIENT_CERTIFICATE] == "true";
+    tlsNegotiationTimeoutSec_ = details[TLS_NEGOTIATION_TIMEOUT_SEC];
+    tlsNegotiationTimeoutMsec_ = details[TLS_NEGOTIATION_TIMEOUT_MSEC];
 
     if (credentials_.empty()) { // credentials not set, construct 1 entry
         std::vector<std::map<std::string, std::string> > v;
@@ -499,7 +499,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[REGISTRATION_STATE_DESCRIPTION] = registrationStateDescription;
 
     // Add sip specific details
-    a[ROUTESET] = getServiceRoute();
+    a[ROUTESET] = serviceRoute_;
     a[CONFIG_ACCOUNT_RESOLVE_ONCE] = resolveOnce_ ? "true" : "false";
     a[USERAGENT] = userAgent_;
 
@@ -631,12 +631,10 @@ pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum (const std::string& method)
 void SIPAccount::initTlsConfiguration (void)
 {
     // TLS listener is unique and should be only modified through IP2IP_PROFILE
-    setTlsListenerPort(tlsPort_);
+    tlsListenerPort_ = tlsPort_;
 
     delete tlsSetting_;
     tlsSetting_ = new pjsip_tls_setting;
-
-    assert (tlsSetting_);
 
     pjsip_tls_setting_default (tlsSetting_);
 
@@ -705,12 +703,12 @@ bool SIPAccount::hostnameMatch (const std::string& hostname) const
     return hostname == hostname_;
 }
 
-std::string SIPAccount::getMachineName (void) const
+std::string SIPAccount::getMachineName (void)
 {
     return std::string (pj_gethostname()->ptr, pj_gethostname()->slen);
 }
 
-std::string SIPAccount::getLoginName (void) const
+std::string SIPAccount::getLoginName (void)
 {
     std::string username;
 
@@ -971,4 +969,113 @@ std::string SIPAccount::getUserAgentName() const
         result += "/" PACKAGE_VERSION;
 
     return result;
+}
+
+std::map<std::string, std::string> SIPAccount::getIp2IpDetails (void) const
+{
+    assert(accountID_ == IP2IP_PROFILE);
+    std::map<std::string, std::string> ip2ipAccountDetails;
+    ip2ipAccountDetails[ACCOUNT_ID] = IP2IP_PROFILE;
+    ip2ipAccountDetails[SRTP_KEY_EXCHANGE] = srtpKeyExchange_;
+    ip2ipAccountDetails[SRTP_ENABLE] = srtpEnabled_ ? "true" : "false";
+    ip2ipAccountDetails[SRTP_RTP_FALLBACK] = srtpFallback_ ? "true" : "false";
+    ip2ipAccountDetails[ZRTP_DISPLAY_SAS] = zrtpDisplaySas_ ? "true" : "false";
+    ip2ipAccountDetails[ZRTP_HELLO_HASH] = zrtpHelloHash_ ? "true" : "false";
+    ip2ipAccountDetails[ZRTP_NOT_SUPP_WARNING] = zrtpNotSuppWarning_ ? "true" : "false";
+    ip2ipAccountDetails[ZRTP_DISPLAY_SAS_ONCE] = zrtpDisplaySasOnce_ ? "true" : "false";
+    ip2ipAccountDetails[LOCAL_INTERFACE] = interface_;
+    std::stringstream portstr;
+    portstr << localPort_;
+    ip2ipAccountDetails[LOCAL_PORT] = portstr.str();
+
+    std::map<std::string, std::string> tlsSettings;
+    tlsSettings = getTlsSettings();
+    std::copy (tlsSettings.begin(), tlsSettings.end(), std::inserter (
+                ip2ipAccountDetails, ip2ipAccountDetails.end()));
+
+    return ip2ipAccountDetails;
+}
+
+std::map<std::string, std::string> SIPAccount::getTlsSettings() const
+{
+    std::map<std::string, std::string> tlsSettings;
+    assert(accountID_ == IP2IP_PROFILE);
+
+    std::stringstream portstr;
+    portstr << tlsListenerPort_;
+    tlsSettings[TLS_LISTENER_PORT] = portstr.str();
+    tlsSettings[TLS_ENABLE] = tlsEnable_;
+    tlsSettings[TLS_CA_LIST_FILE] = tlsCaListFile_;
+    tlsSettings[TLS_CERTIFICATE_FILE] = tlsCertificateFile_;
+    tlsSettings[TLS_PRIVATE_KEY_FILE] = tlsPrivateKeyFile_;
+    tlsSettings[TLS_PASSWORD] = tlsPassword_;
+    tlsSettings[TLS_METHOD] = tlsMethod_;
+    tlsSettings[TLS_CIPHERS] = tlsCiphers_;
+    tlsSettings[TLS_SERVER_NAME] = tlsServerName_;
+    tlsSettings[TLS_VERIFY_SERVER] = tlsVerifyServer_ ? "true" : "false";
+    tlsSettings[TLS_VERIFY_CLIENT] = tlsVerifyClient_ ? "true" : "false";
+    tlsSettings[TLS_REQUIRE_CLIENT_CERTIFICATE] = tlsRequireClientCertificate_ ? "true" : "false";
+    tlsSettings[TLS_NEGOTIATION_TIMEOUT_SEC] = tlsNegotiationTimeoutSec_;
+    tlsSettings[TLS_NEGOTIATION_TIMEOUT_MSEC] = tlsNegotiationTimeoutMsec_;
+
+    return tlsSettings;
+}
+
+void SIPAccount::setTlsSettings (const std::map<std::string, std::string>& details)
+{
+    assert(accountID_ == IP2IP_PROFILE);
+
+    std::map<std::string, std::string>::const_iterator it;
+
+    it = details.find (TLS_LISTENER_PORT);
+
+    if (it != details.end()) tlsListenerPort_ = atoi (it->second.c_str());
+
+    it = details.find (TLS_ENABLE);
+
+    if (it != details.end()) tlsEnable_ = it->second;
+
+    it = details.find (TLS_CA_LIST_FILE);
+
+    if (it != details.end()) tlsCaListFile_ = it->second;
+
+    it = details.find (TLS_CERTIFICATE_FILE);
+
+    if (it != details.end()) tlsCertificateFile_ = it->second;
+
+    it = details.find (TLS_PRIVATE_KEY_FILE);
+
+    if (it != details.end()) tlsPrivateKeyFile_ = it->second;
+
+    it = details.find (TLS_PASSWORD);
+
+    if (it != details.end()) tlsPassword_ = it->second;
+
+    it = details.find (TLS_METHOD);
+
+    if (it != details.end()) tlsMethod_ = it->second;
+
+    it = details.find (TLS_CIPHERS);
+
+    if (it != details.end()) tlsCiphers_ = it->second;
+
+    it = details.find (TLS_SERVER_NAME);
+
+    if (it != details.end()) tlsServerName_ = it->second;
+
+    it = details.find (TLS_VERIFY_CLIENT);
+
+    if (it != details.end()) tlsVerifyClient_ = it->second == "true";
+
+    it = details.find (TLS_REQUIRE_CLIENT_CERTIFICATE);
+
+    if (it != details.end()) tlsRequireClientCertificate_ = it->second == "true";
+
+    it = details.find (TLS_NEGOTIATION_TIMEOUT_SEC);
+
+    if (it != details.end()) tlsNegotiationTimeoutSec_ = it->second;
+
+    it = details.find (TLS_NEGOTIATION_TIMEOUT_MSEC);
+
+    if (it != details.end()) tlsNegotiationTimeoutMsec_ = it->second;
 }

@@ -62,19 +62,8 @@ std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails (void)
         _error ("ConfigurationManager: could not find account");
         return ip2ipAccountDetails;
     }
-
-    ip2ipAccountDetails[ACCOUNT_ID] = IP2IP_PROFILE;
-    ip2ipAccountDetails[SRTP_KEY_EXCHANGE] = sipaccount->getSrtpKeyExchange();
-    ip2ipAccountDetails[SRTP_ENABLE] = sipaccount->getSrtpEnable() ? "true" : "false";
-    ip2ipAccountDetails[SRTP_RTP_FALLBACK] = sipaccount->getSrtpFallback() ? "true" : "false";
-    ip2ipAccountDetails[ZRTP_DISPLAY_SAS] = sipaccount->getZrtpDisplaySas() ? "true" : "false";
-    ip2ipAccountDetails[ZRTP_HELLO_HASH] = sipaccount->getZrtpHelloHash() ? "true" : "false";
-    ip2ipAccountDetails[ZRTP_NOT_SUPP_WARNING] = sipaccount->getZrtpNotSuppWarning() ? "true" : "false";
-    ip2ipAccountDetails[ZRTP_DISPLAY_SAS_ONCE] = sipaccount->getZrtpDiaplaySasOnce() ? "true" : "false";
-    ip2ipAccountDetails[LOCAL_INTERFACE] = sipaccount->getLocalInterface();
-    std::stringstream portstr;
-    portstr << sipaccount->getLocalPort();
-    ip2ipAccountDetails[LOCAL_PORT] = portstr.str();
+    else
+        return sipaccount->getIp2IpDetails();
 
     std::map<std::string, std::string> tlsSettings;
     tlsSettings = getTlsSettings();
@@ -123,25 +112,7 @@ std::map<std::string, std::string> ConfigurationManager::getTlsSettings()
 
     if (!sipaccount)
         return tlsSettings;
-
-    std::stringstream portstr;
-    portstr << sipaccount->getTlsListenerPort();
-    tlsSettings[TLS_LISTENER_PORT] = portstr.str();
-    tlsSettings[TLS_ENABLE] = sipaccount->getTlsEnable();
-    tlsSettings[TLS_CA_LIST_FILE] = sipaccount->getTlsCaListFile();
-    tlsSettings[TLS_CERTIFICATE_FILE] = sipaccount->getTlsCertificateFile();
-    tlsSettings[TLS_PRIVATE_KEY_FILE] = sipaccount->getTlsPrivateKeyFile();
-    tlsSettings[TLS_PASSWORD] = sipaccount->getTlsPassword();
-    tlsSettings[TLS_METHOD] = sipaccount->getTlsMethod();
-    tlsSettings[TLS_CIPHERS] = sipaccount->getTlsCiphers();
-    tlsSettings[TLS_SERVER_NAME] = sipaccount->getTlsServerName();
-    tlsSettings[TLS_VERIFY_SERVER] = sipaccount->getTlsVerifyServer() ? "true" : "false";
-    tlsSettings[TLS_VERIFY_CLIENT] = sipaccount->getTlsVerifyClient() ? "true" : "false";
-    tlsSettings[TLS_REQUIRE_CLIENT_CERTIFICATE] = sipaccount->getTlsRequireClientCertificate() ? "true" : "false";
-    tlsSettings[TLS_NEGOTIATION_TIMEOUT_SEC] = sipaccount->getTlsNegotiationTimeoutSec();
-    tlsSettings[TLS_NEGOTIATION_TIMEOUT_MSEC] = sipaccount->getTlsNegotiationTimeoutMsec();
-
-    return tlsSettings;
+    return sipaccount->getTlsSettings();
 }
 
 void ConfigurationManager::setTlsSettings (const std::map<std::string, std::string>& details)
@@ -152,59 +123,7 @@ void ConfigurationManager::setTlsSettings (const std::map<std::string, std::stri
         return;
     }
 
-    std::map<std::string, std::string>::const_iterator it;
-
-    it = details.find (TLS_LISTENER_PORT);
-
-    if (it != details.end()) sipaccount->setTlsListenerPort (atoi (it->second.data()));
-
-    it = details.find (TLS_ENABLE);
-
-    if (it != details.end()) sipaccount->setTlsEnable (it->second);
-
-    it = details.find (TLS_CA_LIST_FILE);
-
-    if (it != details.end()) sipaccount->setTlsCaListFile (it->second);
-
-    it = details.find (TLS_CERTIFICATE_FILE);
-
-    if (it != details.end()) sipaccount->setTlsCertificateFile (it->second);
-
-    it = details.find (TLS_PRIVATE_KEY_FILE);
-
-    if (it != details.end()) sipaccount->setTlsPrivateKeyFile (it->second);
-
-    it = details.find (TLS_PASSWORD);
-
-    if (it != details.end()) sipaccount->setTlsPassword (it->second);
-
-    it = details.find (TLS_METHOD);
-
-    if (it != details.end()) sipaccount->setTlsMethod (it->second);
-
-    it = details.find (TLS_CIPHERS);
-
-    if (it != details.end()) sipaccount->setTlsCiphers (it->second);
-
-    it = details.find (TLS_SERVER_NAME);
-
-    if (it != details.end()) sipaccount->setTlsServerName (it->second);
-
-    it = details.find (TLS_VERIFY_CLIENT);
-
-    if (it != details.end()) sipaccount->setTlsVerifyClient (it->second == "true");
-
-    it = details.find (TLS_REQUIRE_CLIENT_CERTIFICATE);
-
-    if (it != details.end()) sipaccount->setTlsRequireClientCertificate (it->second == "true");
-
-    it = details.find (TLS_NEGOTIATION_TIMEOUT_SEC);
-
-    if (it != details.end()) sipaccount->setTlsNegotiationTimeoutSec (it->second);
-
-    it = details.find (TLS_NEGOTIATION_TIMEOUT_MSEC);
-
-    if (it != details.end()) sipaccount->setTlsNegotiationTimeoutMsec (it->second);
+    sipaccount->setTlsSettings(details);
 
     Manager::instance().saveConfig();
 
