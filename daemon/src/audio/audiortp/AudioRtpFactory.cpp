@@ -86,7 +86,7 @@ void AudioRtpFactory::registerAccount(Account * /*account*/, const std::string &
 
 void AudioRtpFactory::registerAccount(SIPAccount *sipaccount, const std::string& accountId)
 {
-    _srtpEnabled = sipaccount->getSrtpEnable();
+    _srtpEnabled = sipaccount->getSrtpEnabled();
     std::string tempkey(sipaccount->getSrtpKeyExchange());
 
     if (tempkey == "sdes")

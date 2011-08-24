@@ -130,6 +130,7 @@ class SIPAccount : public Account
         virtual std::map<std::string, std::string> getAccountDetails() const;
         std::map<std::string, std::string> getIp2IpDetails (void) const;
         std::map<std::string, std::string> getTlsSettings (void) const;
+        void setTlsSettings (const std::map<std::string, std::string>& details);
 
         /**
          * Special setVoIPLink which increment SipVoIPLink's number of client.
@@ -278,13 +279,6 @@ class SIPAccount : public Account
             return stunEnabled_;
         }
 
-        /**
-         * Set wether or not stun is enabled for this account
-         */
-        void setStunEnabled (bool enabl) {
-            stunEnabled_ = enabl;
-        }
-
         /*
          * @return pj_str_t "From" uri based on account information.
          * From RFC3261: "The To header field first and foremost specifies the desired
@@ -324,15 +318,6 @@ class SIPAccount : public Account
         std::string getContactHeader (const std::string& address, const std::string& port) const;
 
         /**
-         * Set the interface name on which this account is bound, "default" means
-         * that the account is bound to the ANY interafec (0.0.0.0). This method should be
-         * when binding the account to a new sip transport only.
-         */
-        void setLocalInterface (const std::string& interface) {
-            interface_ = interface;
-        }
-
-        /**
          * Get the local interface name on which this account is bound.
          */
         std::string getLocalInterface (void) const {
@@ -346,15 +331,6 @@ class SIPAccount : public Account
          */
         bool getPublishedSameasLocal() const {
             return publishedSameasLocal_;
-        }
-
-        /**
-         * Set a flag which determine the usage in sip headers of either the local
-         * IP address and port (_localAddress and localPort_) or to an address set
-         * manually (_publishedAddress and publishedPort_).
-         */
-        void setPublishedSameasLocal (bool published) {
-            publishedSameasLocal_ = published;
         }
 
         /**
@@ -396,17 +372,7 @@ class SIPAccount : public Account
              * Get the local port for TLS listener.
              * @return pj_uint16 The port used for that account
              */
-        pj_uint16_t getTlsListenerPort (void) const {
-            return (pj_uint16_t) tlsListenerPort_;
-        }
-
-        /**
-         * Set the local port for TLS listener.
-         * @pram port The port used for TLS listener.
-         */
-        void setTlsListenerPort (pj_uint16_t port) {
-            tlsListenerPort_ = port;
-        }
+        pj_uint16_t getTlsListenerPort (void) const { return (pj_uint16_t) tlsListenerPort_; }
 
         /**
          * Get the public IP address set by the user for this account.
@@ -431,10 +397,6 @@ class SIPAccount : public Account
             return serviceRoute_;
         }
 
-        void setServiceRoute (const std::string &route) {
-            serviceRoute_ = route;
-        }
-
         pjsip_transport* getAccountTransport (void) const {
             return transport_;
         }
@@ -446,122 +408,33 @@ class SIPAccount : public Account
         DtmfType getDtmfType (void) const {
             return dtmfType_;
         }
-        void setDtmfType (DtmfType type) {
-            dtmfType_ = type;
-        }
 
-        bool getSrtpEnable (void) const {
+        bool getSrtpEnabled (void) const {
             return srtpEnabled_;
-        }
-        void setSrtpEnable (bool enabl) {
-            srtpEnabled_ = enabl;
         }
 
         std::string getSrtpKeyExchange (void) const {
             return srtpKeyExchange_;
         }
-        void setSrtpKeyExchange (const std::string &key) {
-            srtpKeyExchange_ = key;
-        }
 
         bool getSrtpFallback (void) const {
             return srtpFallback_;
         }
-        void setSrtpFallback (bool fallback) {
-            srtpFallback_ = fallback;
-        }
-
-        void setZrtpDisplaySas (bool sas) {
-            zrtpDisplaySas_ = sas;
-        }
-
-        void setZrtpDiaplaySasOnce (bool sasonce) {
-            zrtpDisplaySasOnce_ = sasonce;
-        }
-
-        void setZrtpNotSuppWarning (bool warning) {
-            zrtpNotSuppWarning_ = warning;
-        }
 
         bool getZrtpHelloHash (void) const {
             return zrtpHelloHash_;
-        }
-        void setZrtpHelloHash (bool hellohash) {
-            zrtpHelloHash_ = hellohash;
-        }
-
-        void setTlsEnable (const std::string &enabl) {
-            tlsEnable_ = enabl;
-        }
-
-        void setTlsCaListFile (const std::string &calist) {
-            tlsCaListFile_ = calist;
-        }
-
-        void setTlsCertificateFile (const std::string &cert) {
-            tlsCertificateFile_ = cert;
-        }
-
-        void setTlsPrivateKeyFile (const std::string &priv) {
-            tlsPrivateKeyFile_ = priv;
-        }
-
-        void setTlsPassword (const std::string &pass) {
-            tlsPassword_ = pass;
-        }
-
-        void setTlsMethod (const std::string &meth) {
-            tlsMethod_ = meth;
-        }
-
-        void setTlsCiphers (const std::string &cipher) {
-            tlsCiphers_ = cipher;
-        }
-
-        void setTlsServerName (const std::string &name) {
-            tlsServerName_ = name;
-        }
-
-        void setTlsVerifyServer (bool verif) {
-            tlsVerifyServer_ = verif;
-        }
-
-        void setTlsVerifyClient (bool verif) {
-            tlsVerifyClient_ = verif;
-        }
-
-        void setTlsRequireClientCertificate (bool require) {
-            tlsRequireClientCertificate_ = require;
-        }
-
-        void setTlsNegotiationTimeoutSec (const std::string &timeout) {
-            tlsNegotiationTimeoutSec_ = timeout;
-        }
-
-        void setTlsNegotiationTimeoutMsec (const std::string &timeout) {
-            tlsNegotiationTimeoutMsec_ = timeout;
         }
 
     private:
 
         std::vector< std::map<std::string, std::string > > credentials_;
 
-        /**
-         * Call specific memory pool initialization size (based on empirical data)
-         */
-        static const int ACCOUNT_MEMPOOL_INIT_SIZE;
-
-        /**
-         * Call specific memory pool incrementation size
-         */
-        static const int ACCOUNT_MEMPOOL_INC_SIZE;
-
         /* Maps a string description of the SSL method
          * to the corresponding enum value in pjsip_ssl_method.
          * @param method The string representation
          * @return pjsip_ssl_method The corresponding value in the enum
          */
-        pjsip_ssl_method sslMethodStringToPjEnum (const std::string& method);
+        static pjsip_ssl_method sslMethodStringToPjEnum (const std::string& method);
 
         /*
          * Initializes tls settings from configuration file.
@@ -580,7 +453,7 @@ class SIPAccount : public Account
          * onto.
          * @return std::string The machine hostname as returned by pj_gethostname()
          */
-        std::string getMachineName (void) const;
+        static std::string getMachineName (void);
 
         /**
          * If username is not provided, as it happens for Direct ip calls,
@@ -588,7 +461,7 @@ class SIPAccount : public Account
          * running this program.
          * @return std::string The login name under which SFLPhone is running.
          */
-        std::string getLoginName (void) const;
+        static std::string getLoginName (void);
 
         /**
          * List of routes (proxies) used for registration and calls

@@ -121,59 +121,7 @@ void ConfigurationManager::setTlsSettings (const std::map<std::string, std::stri
         return;
     }
 
-    std::map<std::string, std::string>::const_iterator it;
-
-    it = details.find (TLS_LISTENER_PORT);
-
-    if (it != details.end()) sipaccount->setTlsListenerPort (atoi (it->second.data()));
-
-    it = details.find (TLS_ENABLE);
-
-    if (it != details.end()) sipaccount->setTlsEnable (it->second);
-
-    it = details.find (TLS_CA_LIST_FILE);
-
-    if (it != details.end()) sipaccount->setTlsCaListFile (it->second);
-
-    it = details.find (TLS_CERTIFICATE_FILE);
-
-    if (it != details.end()) sipaccount->setTlsCertificateFile (it->second);
-
-    it = details.find (TLS_PRIVATE_KEY_FILE);
-
-    if (it != details.end()) sipaccount->setTlsPrivateKeyFile (it->second);
-
-    it = details.find (TLS_PASSWORD);
-
-    if (it != details.end()) sipaccount->setTlsPassword (it->second);
-
-    it = details.find (TLS_METHOD);
-
-    if (it != details.end()) sipaccount->setTlsMethod (it->second);
-
-    it = details.find (TLS_CIPHERS);
-
-    if (it != details.end()) sipaccount->setTlsCiphers (it->second);
-
-    it = details.find (TLS_SERVER_NAME);
-
-    if (it != details.end()) sipaccount->setTlsServerName (it->second);
-
-    it = details.find (TLS_VERIFY_CLIENT);
-
-    if (it != details.end()) sipaccount->setTlsVerifyClient (it->second == "true");
-
-    it = details.find (TLS_REQUIRE_CLIENT_CERTIFICATE);
-
-    if (it != details.end()) sipaccount->setTlsRequireClientCertificate (it->second == "true");
-
-    it = details.find (TLS_NEGOTIATION_TIMEOUT_SEC);
-
-    if (it != details.end()) sipaccount->setTlsNegotiationTimeoutSec (it->second);
-
-    it = details.find (TLS_NEGOTIATION_TIMEOUT_MSEC);
-
-    if (it != details.end()) sipaccount->setTlsNegotiationTimeoutMsec (it->second);
+    sipaccount->setTlsSettings(details);
 
     Manager::instance().saveConfig();
 
