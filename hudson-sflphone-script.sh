@@ -4,7 +4,7 @@
 #
 # Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
 
-git clean -f -d
+git clean -f -d -x
 XML_RESULTS="cppunitresults.xml"
 
 set -x
