@@ -421,8 +421,11 @@ video_preview_stop(VideoPreview *preview)
 
     priv->is_running = FALSE;
 
-    if (GDK_IS_WINDOW(priv->drawarea))
-        gdk_window_clear(gtk_widget_get_window(priv->drawarea));
+    if (GTK_IS_WIDGET(priv->drawarea)) {
+        GdkWindow *win = gtk_widget_get_window(priv->drawarea);
+        if (GDK_IS_WINDOW(win))
+            gdk_window_clear(win);
+    }
 
     if (!priv->using_clutter)
         cairo_destroy(priv->cairo);
