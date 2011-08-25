@@ -845,8 +845,11 @@ SIPVoIPLink::offhold (const std::string& id) throw (VoipLinkException)
 
     sdpSession->removeAttributeFromLocalAudioMedia("sendrecv");
     sdpSession->removeAttributeFromLocalAudioMedia("sendonly");
+    sdpSession->removeAttributeFromLocalVideoMedia("sendrecv");
+    sdpSession->removeAttributeFromLocalVideoMedia("inactive");
 
     sdpSession->addAttributeToLocalAudioMedia("sendrecv");
+    sdpSession->addAttributeToLocalVideoMedia("sendrecv");
 
     /* Create re-INVITE with new offer */
     if (SIPSessionReinvite (call) != PJ_SUCCESS)

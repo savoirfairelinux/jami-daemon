@@ -59,7 +59,7 @@ VideoRtpSession::VideoRtpSession(const std::map<std::string, std::string> &txArg
 
 void VideoRtpSession::updateSDP(const Sdp *sdp)
 {
-    std::vector<std::string> v = sdp->getActiveVideoDescription();
+    std::vector<std::string> v(sdp->getActiveVideoDescription());
     const std::string &desc = v[0];
     // if port has changed
     if (desc != rxArgs_["receiving_sdp"])

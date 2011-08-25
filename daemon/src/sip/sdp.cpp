@@ -101,7 +101,7 @@ void Sdp::setActiveLocalSdpSession (const pjmedia_sdp_session *sdp)
     for (unsigned i = 0; i < activeLocalSession_->media_count ; i++) {
         // Retrieve the media
         pjmedia_sdp_media *current = activeLocalSession_->media[i];
-        std::string type (current->desc.media.ptr, current->desc.media.slen);
+        std::string type(current->desc.media.ptr, current->desc.media.slen);
 		// Retrieve the payload
 		pjmedia_sdp_attr *attribute = pjmedia_sdp_media_find_attr(current, &STR_RTPMAP, NULL);
 		if (!attribute)
@@ -109,11 +109,10 @@ void Sdp::setActiveLocalSdpSession (const pjmedia_sdp_session *sdp)
 		pjmedia_sdp_rtpmap *rtpmap;
 		pjmedia_sdp_attr_to_rtpmap (memPool_, attribute, &rtpmap);
 
-		if (type == "audio") {
+		if (type == "audio")
 			sessionAudioCodec_ = (sfl::AudioCodec*)audio_codecs_list[(AudioCodecType)pj_strtoul (&rtpmap->pt)];
-        } else if (type == "video") {
+        else if (type == "video")
 			sessionVideoCodec_ = std::string(rtpmap->enc_name.ptr, rtpmap->enc_name.slen);
-        }
     }
 }
 
@@ -545,14 +544,6 @@ std::vector<std::string> Sdp::getActiveVideoDescription() const
         std::string localStr(buffer, size);
         _debug("ACTIVE LOCAL SESSION LOOKS LIKE: %s", localStr.c_str());
     }
-    if (activeRemoteSession_)
-    {
-        static const int SIZE = 2048;
-        char buffer[SIZE];
-        int size = pjmedia_sdp_print(activeRemoteSession_, buffer, SIZE);
-        std::string remoteStr(buffer, size);
-        _debug("ACTIVE REMOTE SESSION LOOKS LIKE: %s", remoteStr.c_str());
-    }
     ss << "v=0" << std::endl;
     ss << "o=- 0 0 " << STR_IN.ptr << " " << STR_IP4.ptr << " " << localIpAddr_ << std::endl;
     ss << "s=" << STR_SDP_NAME.ptr << std::endl;
@@ -578,11 +569,31 @@ std::vector<std::string> Sdp::getActiveVideoDescription() const
     codec[0] = '\0';
     sscanf(vCodecLine.c_str(), "a=rtpmap:%*d %31[^/]", codec);
 
-    _debug("Receiving SDP \n%s", ss.str().c_str());
-
     std::vector<std::string> v;
+
+    unsigned videoIdx = 0;
+    while (pj_stricmp2(&activeLocalSession_->media[videoIdx]->desc.media, "video") != 0)
+        ++videoIdx;
+
+    // get direction string
+    static const pj_str_t DIRECTIONS[] = {{(char*)"sendrecv", 8},
+        {(char*)"sendonly", 8}, {(char*)"recvonly", 8} ,
+        {(char*)"inactive", 8}, {NULL, 0}};
+    const pj_str_t *guess = DIRECTIONS;
+    pjmedia_sdp_attr *direction = NULL;
+
+    while (!direction and guess->ptr)
+    {
+        direction = pjmedia_sdp_media_find_attr(activeLocalSession_->media[videoIdx], guess, NULL);
+        ++guess;
+    }
+
+    std::string dir_str("a=");
+    dir_str += std::string(direction->name.ptr, direction->name.slen);
+    ss << dir_str << std::endl;
+
     v.push_back(ss.str());
-    v.push_back(std::string(codec));
+    v.push_back(codec);
     return v;
 }
 
