@@ -588,9 +588,12 @@ std::vector<std::string> Sdp::getActiveVideoDescription() const
         ++guess;
     }
 
-    std::string dir_str("a=");
-    dir_str += std::string(direction->name.ptr, direction->name.slen);
-    ss << dir_str << std::endl;
+    if (direction)
+    {
+        std::string dir_str("a=");
+        dir_str += std::string(direction->name.ptr, direction->name.slen);
+        ss << dir_str << std::endl;
+    }
 
     v.push_back(ss.str());
     v.push_back(codec);
