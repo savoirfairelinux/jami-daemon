@@ -785,7 +785,7 @@ SIPVoIPLink::onhold (const std::string& id) throw (VoipLinkException)
     sdpSession->removeAttributeFromLocalAudioMedia("sendonly");
 
     sdpSession->removeAttributeFromLocalVideoMedia("sendrecv");
-    sdpSession->removeAttributeFromLocalVideoMedia("sendonly");
+    sdpSession->removeAttributeFromLocalVideoMedia("inactive");
 
     sdpSession->addAttributeToLocalAudioMedia("sendonly");
     sdpSession->addAttributeToLocalVideoMedia("inactive");

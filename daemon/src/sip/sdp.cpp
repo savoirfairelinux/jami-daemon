@@ -154,7 +154,7 @@ void Sdp::setMediaDescriptorLine (sdpMedia *media)
     std::vector<sfl::Codec*> audio_list;
     std::vector<std::string> video_list;
 
-    int i, count;
+    int count;
     if (audio) {
     	audio_list = media->get_media_audio_codec_list();
     	count = audio_list.size();
@@ -166,7 +166,7 @@ void Sdp::setMediaDescriptorLine (sdpMedia *media)
 
     med->desc.fmt_count = count;
 
-    for (i=0; i<count; i++) {
+    for (int i = 0; i < count; i++) {
         unsigned clock_rate;
         const char *enc_name;
         int payload;
@@ -176,11 +176,10 @@ void Sdp::setMediaDescriptorLine (sdpMedia *media)
             payload = codec->getPayloadType ();
             enc_name = codec->getMimeSubtype().c_str();
             // G722 require G722/8000 media description even if it is 16000 codec
-            if (codec->getPayloadType () == 9) {
+            if (codec->getPayloadType () == 9)
                 clock_rate = 8000;
-            } else {
+            else
                 clock_rate = codec->getClockRate();
-            }
         } else {
 			enc_name = video_list[i].c_str();
 			clock_rate = 90000;
@@ -215,11 +214,11 @@ void Sdp::setMediaDescriptorLine (sdpMedia *media)
 
     med->attr[ med->attr_count++] = attr;
 
-    if (!zrtpHelloHash_.empty()) {
+    if (!zrtpHelloHash_.empty())
         addZrtpAttribute (med, zrtpHelloHash_);
-    }
 
-    setTelephoneEventRtpmap(med);
+    if (audio)
+        setTelephoneEventRtpmap(med);
 
 	localSession_->media[localSession_->media_count++] = med;
 }
@@ -632,30 +631,37 @@ Sdp::~Sdp()
 
 void Sdp::addAttributeToLocalAudioMedia(const char *attr)
 {
-    assert(pj_stricmp2(&localSession_->media[0]->desc.media, "audio") == 0);
+    int i = 0;
+    while (pj_stricmp2(&localSession_->media[i]->desc.media, "audio") != 0)
+        ++i;
     pjmedia_sdp_attr *attribute = pjmedia_sdp_attr_create (memPool_, attr, NULL);
-
-    pjmedia_sdp_media_add_attr (localSession_->media[0], attribute);
+    pjmedia_sdp_media_add_attr (localSession_->media[i], attribute);
 }
 
 void Sdp::removeAttributeFromLocalAudioMedia(const char *attr)
 {
-    assert(pj_stricmp2(&localSession_->media[0]->desc.media, "audio") == 0);
-    pjmedia_sdp_media_remove_all_attr (localSession_->media[0], attr);
+    int i = 0;
+    while (pj_stricmp2(&localSession_->media[i]->desc.media, "audio") != 0)
+        ++i;
+    pjmedia_sdp_media_remove_all_attr (localSession_->media[i], attr);
 }
 
 void Sdp::removeAttributeFromLocalVideoMedia(const char *attr)
 {
-    assert(pj_stricmp2(&localSession_->media[1]->desc.media, "video") == 0);
-    pjmedia_sdp_media_remove_all_attr (localSession_->media[1], attr);
+    int i = 0;
+    while (pj_stricmp2(&localSession_->media[i]->desc.media, "video") != 0)
+        ++i;
+    pjmedia_sdp_media_remove_all_attr (localSession_->media[i], attr);
 }
 
 void Sdp::addAttributeToLocalVideoMedia(const char *attr)
 {
-    assert(pj_stricmp2(&localSession_->media[1]->desc.media, "video") == 0);
+    int i = 0;
+    while (pj_stricmp2(&localSession_->media[i]->desc.media, "video") != 0)
+        ++i;
 
     pjmedia_sdp_attr *attribute = pjmedia_sdp_attr_create (memPool_, attr, NULL);
-    pjmedia_sdp_media_add_attr(localSession_->media[1], attribute);
+    pjmedia_sdp_media_add_attr(localSession_->media[i], attribute);
 }
 
 void Sdp::updateMediaTransportInfoFromRemoteSdp ()
