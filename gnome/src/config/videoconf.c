@@ -664,7 +664,7 @@ void video_device_event_cb(DBusGProxy *proxy UNUSED, void * foo  UNUSED)
     fill_devices();
 }
 
-static void receiving_video_window_destroyed_cb(GtkWidget *widget UNUSED, gpointer data UNUSED)
+static void receiving_video_window_deleted_cb(GtkWidget *widget UNUSED, gpointer data UNUSED)
 {
     sflphone_hang_up();
 }
@@ -677,7 +677,7 @@ void receiving_video_event_cb(DBusGProxy *proxy, gint shmKey, gint semKey,
 {
     if (!receivingVideoWindow) {
         receivingVideoWindow = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-        g_signal_connect (receivingVideoWindow, "destroy", G_CALLBACK (receiving_video_window_destroyed_cb), NULL);
+        g_signal_connect (receivingVideoWindow, "delete-event", G_CALLBACK (receiving_video_window_deleted_cb), NULL);
     }
 
     (void)proxy;
