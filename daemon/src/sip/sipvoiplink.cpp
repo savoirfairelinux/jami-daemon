@@ -2694,7 +2694,7 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
         audioRTPSessionValid = false;
     }
 
-    call->getVideoRtp()->updateSDP(call->getLocalSDP());
+    call->getVideoRtp()->updateSDP(*call->getLocalSDP());
     call->getVideoRtp()->updateDestination(call->getLocalSDP()->getRemoteIP(), call->getLocalSDP()->getRemoteVideoPort());
     call->getVideoRtp()->start();
 

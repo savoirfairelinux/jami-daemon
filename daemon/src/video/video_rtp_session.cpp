@@ -57,15 +57,13 @@ VideoRtpSession::VideoRtpSession(const std::map<std::string, std::string> &txArg
     txArgs_(txArgs), rxArgs_(rxArgs), sending_(true), receiving_(true)
 {}
 
-void VideoRtpSession::updateSDP(const Sdp *sdp)
+void VideoRtpSession::updateSDP(const Sdp &sdp)
 {
-    std::vector<std::string> v(sdp->getActiveVideoDescription());
+    std::vector<std::string> v(sdp.getActiveVideoDescription());
     const std::string &desc = v[0];
     // if port has changed
     if (desc != rxArgs_["receiving_sdp"])
     {
-        assert(receiveThread_.get() == 0);
-
         rxArgs_["receiving_sdp"] = desc;
         _debug("%s:Updated incoming SDP to:\n %s", __PRETTY_FUNCTION__,
                 rxArgs_["receiving_sdp"].c_str());
@@ -104,12 +102,11 @@ void VideoRtpSession::updateSDP(const Sdp *sdp)
     }
 
     std::string codec = libav_utils::encodersMap()[v[1]];
-    if (codec == "") {
+    if (codec.empty()) {
     	_debug("Couldn't find encoder for \"%s\"\n", v[1].c_str());
     	sending_ = false;
-    } else {
+    } else
     	txArgs_["codec"] = codec;
-    }
 }
 
 void VideoRtpSession::updateDestination(const std::string &destination,

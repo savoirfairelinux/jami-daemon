@@ -54,7 +54,7 @@ class VideoRtpSession {
         void test_loopback();
         void updateDestination(const std::string &destination,
                                unsigned int port);
-        void updateSDP(const Sdp *sdp);
+        void updateSDP(const Sdp &sdp);
 
     private:
         std::tr1::shared_ptr<VideoSendThread> sendThread_;
