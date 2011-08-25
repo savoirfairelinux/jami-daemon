@@ -277,18 +277,15 @@ void VideoReceiveThread::setup()
             ost::Thread::exit();
         }
 
-        int ret;
         // retrieve stream information
-        ret = av_find_stream_info(inputCtx_);
-        if (ret < 0)
+        if (av_find_stream_info(inputCtx_) < 0)
         {
             _error("%s:Could not find stream info!", __PRETTY_FUNCTION__);
             ost::Thread::exit();
         }
 
         // find the first video stream from the input
-        unsigned i;
-        for (i = 0; i < inputCtx_->nb_streams; i++)
+        for (unsigned i = 0; i < inputCtx_->nb_streams; i++)
         {
             if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
             {
@@ -313,9 +310,7 @@ void VideoReceiveThread::setup()
             ost::Thread::exit();
         }
 
-        // open codec
-        ret = avcodec_open(decoderCtx_, inputDecoder);
-        if (ret < 0)
+        if (avcodec_open(decoderCtx_, inputDecoder) < 0)
         {
             _error("%s:Could not open codec!", __PRETTY_FUNCTION__);
             ost::Thread::exit();
@@ -364,54 +359,6 @@ void VideoReceiveThread::setup()
 void VideoReceiveThread::waitForShm()
 {
     shmReady_.wait();
-}
-
-void VideoReceiveThread::cleanup()
-{
-    _debug("%s", __PRETTY_FUNCTION__);
-    // make sure no one is waiting for the SHM event which will never come if we've
-    // error'd out
-    shmReady_.signal();
-    // free shared memory
-    cleanupSemaphore(semSetID_);
-    cleanupShm(shmID_, shmBuffer_);
-    semSetID_ = -1;
-    shmID_ = -1;
-    shmBuffer_ = 0;
-
-    if (imgConvertCtx_)
-    {
-        sws_freeContext(imgConvertCtx_);
-        imgConvertCtx_ = 0;
-    }
-
-    // free the scaled frame
-    if (scaledPicture_)
-    {
-        av_free(scaledPicture_);
-        scaledPicture_ = 0;
-    }
-    // free the YUV frame
-    if (rawFrame_)
-    {
-        av_free(rawFrame_);
-        rawFrame_ = 0;
-    }
-
-    // doesn't need to be freed, we didn't use avcodec_alloc_context
-    if (decoderCtx_)
-    {
-        avcodec_close(decoderCtx_);
-        decoderCtx_ = 0;
-    }
-
-    // close the video file
-    if (inputCtx_)
-    {
-        av_close_input_file(inputCtx_);
-        inputCtx_ = 0;
-    }
-    _debug("Finished %s", __PRETTY_FUNCTION__);
 }
 
 void VideoReceiveThread::createScalingContext()
@@ -522,7 +469,38 @@ VideoReceiveThread::~VideoReceiveThread()
 	Manager::instance().getDbusManager()->getCallManager()->stoppedReceivingVideoEvent(shmKey_,
             semKey_);
     ost::Thread::terminate();
-    cleanup();
+
+    _debug("%s", __PRETTY_FUNCTION__);
+    // make sure no one is waiting for the SHM event which will never come if we've
+    // error'd out
+    shmReady_.signal();
+    // free shared memory
+    cleanupSemaphore(semSetID_);
+    cleanupShm(shmID_, shmBuffer_);
+    semSetID_ = -1;
+    shmID_ = -1;
+    shmBuffer_ = 0;
+
+    if (imgConvertCtx_)
+        sws_freeContext(imgConvertCtx_);
+
+    // free the scaled frame
+    if (scaledPicture_)
+        av_free(scaledPicture_);
+
+    // free the YUV frame
+    if (rawFrame_)
+        av_free(rawFrame_);
+
+    // doesn't need to be freed, we didn't use avcodec_alloc_context
+    if (decoderCtx_)
+        avcodec_close(decoderCtx_);
+
+    // close the video file
+    if (inputCtx_)
+        av_close_input_file(inputCtx_);
+
+    _debug("Finished %s", __PRETTY_FUNCTION__);
 }
 
 } // end namespace sfl_video

@@ -71,7 +71,6 @@ class VideoReceiveThread : public ost::Thread {
         int format_;
 
         void setup();
-        void cleanup();
         void createScalingContext();
         int createSemSet(int shmKey, int *semKey);
         ost::Event shmReady_;

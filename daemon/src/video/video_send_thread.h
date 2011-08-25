@@ -50,7 +50,6 @@ class VideoSendThread : public ost::Thread {
         void print_and_save_sdp();
         void setup();
         void prepareEncoderContext();
-        void cleanup();
         void createScalingContext();
         ost::Event sdpReady_;
 

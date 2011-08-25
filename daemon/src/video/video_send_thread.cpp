@@ -122,8 +122,6 @@ void VideoSendThread::prepareEncoderContext()
 
 void VideoSendThread::setup()
 {
-    int ret;
-
     if (!test_source_)
     {
         AVInputFormat *file_iformat = 0;
@@ -182,13 +180,11 @@ void VideoSendThread::setup()
         }
 
         // open codec
-        ret = avcodec_open(inputDecoderCtx_, inputDecoder);
-        if (ret < 0)
+        if (avcodec_open(inputDecoderCtx_, inputDecoder) < 0)
         {
             _error("%s:Could not open codec!", __PRETTY_FUNCTION__);
             ost::Thread::exit();
         }
-
     } // end if ! test_source_
 
     outputCtx_ = avformat_alloc_context();
@@ -222,8 +218,8 @@ void VideoSendThread::setup()
     scaledPicture_ = avcodec_alloc_frame();
 
     // open encoder
-    ret = avcodec_open(encoderCtx_, encoder);
-    if (ret < 0)
+    
+    if (avcodec_open(encoderCtx_, encoder) < 0)
     {
         _error("%s:Could not open encoder!", __PRETTY_FUNCTION__);
         ost::Thread::exit();
@@ -276,74 +272,6 @@ void VideoSendThread::setup()
     scaledPicture_->linesize[0] = encoderCtx_->width;
     scaledPicture_->linesize[1] = encoderCtx_->width / 2;
     scaledPicture_->linesize[2] = encoderCtx_->width / 2;
-}
-
-void VideoSendThread::cleanup()
-{
-    _debug("Begin %s", __PRETTY_FUNCTION__);
-    // make sure no one is waiting for the SDP which will never come if we've
-    // error'd out
-    sdpReady_.signal();
-
-    sws_freeContext(imgConvertCtx_);
-    imgConvertCtx_ = 0;
-
-    // write the trailer, if any.  the trailer must be written
-    // before you close the CodecContexts open when you wrote the
-    // header; otherwise write_trailer may try to use memory that
-    // was freed on av_codec_close()
-    if (outputCtx_ and outputCtx_->priv_data)
-    {
-        av_write_trailer(outputCtx_);
-        outputCtx_ = 0;
-    }
-
-    if (scaledPictureBuf_)
-    {
-        av_free(scaledPictureBuf_);
-        scaledPictureBuf_ = 0;
-    }
-    if (outbuf_)
-    {
-        av_free(outbuf_);
-        outbuf_ = 0;
-    }
-
-    // free the scaled frame
-    if (scaledPicture_)
-    {
-        av_free(scaledPicture_);
-        scaledPicture_ = 0;
-    }
-    // free the YUV frame
-    if (rawFrame_)
-    {
-        av_free(rawFrame_);
-        rawFrame_ = 0;
-    }
-
-    // close the codecs
-    if (encoderCtx_)
-    {
-        avcodec_close(encoderCtx_);
-        av_freep(&encoderCtx_);
-        encoderCtx_ = 0;
-    }
-
-    // doesn't need to be freed, we didn't use avcodec_alloc_context
-    if (inputDecoderCtx_)
-    {
-        avcodec_close(inputDecoderCtx_);
-        inputDecoderCtx_ = 0;
-    }
-
-    // close the video file
-    if (inputCtx_)
-    {
-        av_close_input_file(inputCtx_);
-        inputCtx_ = 0;
-    }
-    _debug("Finished %s", __PRETTY_FUNCTION__);
 }
 
 void VideoSendThread::createScalingContext()
@@ -474,7 +402,51 @@ next_packet:
 VideoSendThread::~VideoSendThread()
 {
     ost::Thread::terminate();
-    cleanup();
+    // make sure no one is waiting for the SDP which will never come if we've
+    // error'd out
+    sdpReady_.signal();
+
+    sws_freeContext(imgConvertCtx_);
+    imgConvertCtx_ = 0;
+
+    // write the trailer, if any.  the trailer must be written
+    // before you close the CodecContexts open when you wrote the
+    // header; otherwise write_trailer may try to use memory that
+    // was freed on av_codec_close()
+    if (outputCtx_ and outputCtx_->priv_data)
+        av_write_trailer(outputCtx_);
+
+    if (scaledPictureBuf_)
+        av_free(scaledPictureBuf_);
+
+    if (outbuf_)
+        av_free(outbuf_);
+
+    // free the scaled frame
+    if (scaledPicture_)
+        av_free(scaledPicture_);
+
+    // free the YUV frame
+    if (rawFrame_)
+        av_free(rawFrame_);
+
+    // close the codecs
+    if (encoderCtx_)
+    {
+        avcodec_close(encoderCtx_);
+        av_freep(&encoderCtx_);
+    }
+
+    // doesn't need to be freed, we didn't use avcodec_alloc_context
+    if (inputDecoderCtx_)
+        avcodec_close(inputDecoderCtx_);
+
+    // close the video file
+    if (inputCtx_)
+        av_close_input_file(inputCtx_);
+
+    _debug("Finished %s", __PRETTY_FUNCTION__);
+
 }
 
 } // end namespace sfl_video
