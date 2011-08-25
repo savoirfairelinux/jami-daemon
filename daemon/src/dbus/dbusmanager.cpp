@@ -57,10 +57,10 @@ DBusManager::DBusManager()
         _configurationManager = new ConfigurationManager (sessionConnection);
         _instanceManager = new Instance (sessionConnection);
 
-    #ifdef USE_NETWORKMANAGER
+#ifdef USE_NETWORKMANAGER
         DBus::Connection systemConnection = DBus::Connection::SystemBus();
         _networkManager = new NetworkManager (systemConnection, "/org/freedesktop/NetworkManager", "");
-    #endif
+#endif
 
         _connected = true;
     } catch (const DBus::Error &err) {
@@ -88,4 +88,3 @@ DBusManager::exit()
 {
     _dispatcher.leave();
 }
-

@@ -5,6 +5,8 @@ TESTS_ENVIRONMENT = CODECS_PATH="$(top_builddir)/src/audio/codecs" \
 					FAKE_PLUGIN_NAME="$(top_builddir)/src/plug-in/test/libplugintest.so"
 check_PROGRAMS = test
 
+TESTS = run_tests.sh
+
 test_CXXFLAGS = -I .
 test_LDADD = $(top_builddir)/src/libsflphone.la @LIBCRYPTO_LIBS@ @CPPUNIT_LIBS@
 

@@ -64,7 +64,6 @@ IAXVoIPLink::IAXVoIPLink (const std::string& accountID) : VoIPLink ()
     , audiolayer (NULL)
     , converter (NULL)
     , converterSamplingRate (0)
-    , urlhook (NULL)
 	, _accountID(accountID)
 {
     _evThread = new EventThread (this);
@@ -73,7 +72,6 @@ IAXVoIPLink::IAXVoIPLink (const std::string& accountID) : VoIPLink ()
     srand (time (NULL));
 
     converter = new SamplerateConverter (44100);
-    urlhook = new UrlHook ();
 }
 
 
@@ -616,17 +614,10 @@ IAXVoIPLink::iaxFindCallBySession (struct iax_session* session)
     // access to callMap shoud use that
     // the code below is like findSIPCallWithCid()
     ost::MutexLock m (_callMapMutex);
-    IAXCall* call = NULL;
-    CallMap::iterator iter = _callMap.begin();
-
-    while (iter != _callMap.end()) {
-        call = dynamic_cast<IAXCall*> (iter->second);
-
-        if (call && call->getSession() == session) {
+    for (CallMap::iterator iter = _callMap.begin(); iter != _callMap.end(); ++iter) {
+        IAXCall* call = dynamic_cast<IAXCall*> (iter->second);
+        if (call && call->getSession() == session)
             return call;
-        }
-
-        iter++;
     }
 
     return NULL; // not found
@@ -745,9 +736,9 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
         case IAX_EVENT_URL:
 
             if (Manager::instance().getConfigString (HOOKS, URLHOOK_IAX2_ENABLED) == "1") {
-                if (strcmp ( (char*) event->data, "") != 0) {
+                if (*event->data) {
                     _debug ("> IAX_EVENT_URL received: %s", event->data);
-                    urlhook->addAction ( (char*) event->data, Manager::instance().getConfigString (HOOKS, URLHOOK_COMMAND));
+                    UrlHook::runAction (Manager::instance().getConfigString (HOOKS, URLHOOK_COMMAND), (char*) event->data);
                 }
             }
 

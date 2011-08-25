@@ -61,7 +61,7 @@ SIPAccount::SIPAccount (const std::string& accountID)
     , transport_ (NULL)
     , resolveOnce_ (false)
     , cred_ (NULL)
-    , tlsSetting_ (NULL)
+	, stunPort_(0)
     , dtmfType_ (OVERRTP)
     , tlsEnable_ ("false")
 	, tlsPort_ (DEFAULT_SIP_TLS_PORT)
@@ -89,28 +89,16 @@ SIPAccount::SIPAccount (const std::string& accountID)
 {
     stunServerName_.ptr = NULL;
     stunServerName_.slen = 0;
-    stunPort_ = 0;
+    link_ = SIPVoIPLink::instance ();
 }
 
 SIPAccount::~SIPAccount()
 {
-    /* One SIP account less connected to the sip voiplink */
-    if (accountID_ != "default")
-        dynamic_cast<SIPVoIPLink*> (link_)->decrementClients();
-
-    /* Delete accounts-related information */
-    regc_ = NULL;
     delete[] cred_;
-    delete tlsSetting_;
 }
 
 void SIPAccount::serialize (Conf::YamlEmitter *emitter)
 {
-	if(emitter == NULL) {
-		_error("SIPAccount: Error: emitter is NULL in serialize");
-		return;
-	}
-
     Conf::MappingNode accountmap (NULL);
     Conf::MappingNode srtpmap (NULL);
     Conf::MappingNode zrtpmap (NULL);
@@ -548,19 +536,10 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     return a;
 }
 
-
-void SIPAccount::setVoIPLink()
+void SIPAccount::registerVoIPLink()
 {
-    link_ = SIPVoIPLink::instance ();
-    dynamic_cast<SIPVoIPLink*> (link_)->incrementClients();
-}
-
-
-int SIPAccount::registerVoIPLink()
-{
-    if (hostname_.length() >= PJ_MAX_HOSTNAME) {
-        return 1;
-    }
+    if (hostname_.length() >= PJ_MAX_HOSTNAME)
+        return;
 
     // Init TLS settings if the user wants to use TLS
     if (tlsEnable_ == "true") {
@@ -577,35 +556,30 @@ int SIPAccount::registerVoIPLink()
         stunServerName_ = pj_str ( (char*) stunServer_.c_str());
     }
 
+    // In our definition of the ip2ip profile (aka Direct IP Calls),
+    // no registration should be performed
+    if (accountID_ == IP2IP_PROFILE)
+    	return;
+
     try {
-        // In our definition of the ip2ip profile (aka Direct IP Calls),
-        // no registration should be performed
-        if (accountID_ != IP2IP_PROFILE)
-            link_->sendRegister (this);
+        link_->sendRegister (this);
     }
     catch (const VoipLinkException &e) {
         _error("SIPAccount: %s", e.what());
     }
-
-    return 0;
 }
 
-int SIPAccount::unregisterVoIPLink()
+void SIPAccount::unregisterVoIPLink()
 {
-    if (accountID_ == IP2IP_PROFILE) {
-        return true;
-    }
+	if (accountID_ == IP2IP_PROFILE)
+		return;
 
     try {
-        link_->sendUnregister (this);
-        setRegistrationInfo (NULL);
+		link_->sendUnregister (this);
     }
     catch (const VoipLinkException &e) {
         _error("SIPAccount: %s", e.what());
-        return false;
     }
-
-    return true;
 }
 
 pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum (const std::string& method)
@@ -633,25 +607,22 @@ void SIPAccount::initTlsConfiguration (void)
     // TLS listener is unique and should be only modified through IP2IP_PROFILE
     tlsListenerPort_ = tlsPort_;
 
-    delete tlsSetting_;
-    tlsSetting_ = new pjsip_tls_setting;
+    pjsip_tls_setting_default (&tlsSetting_);
 
-    pjsip_tls_setting_default (tlsSetting_);
+    pj_cstr (&tlsSetting_.ca_list_file, tlsCaListFile_.c_str());
+    pj_cstr (&tlsSetting_.cert_file, tlsCertificateFile_.c_str());
+    pj_cstr (&tlsSetting_.privkey_file, tlsPrivateKeyFile_.c_str());
+    pj_cstr (&tlsSetting_.password, tlsPassword_.c_str());
+    tlsSetting_.method = sslMethodStringToPjEnum (tlsMethod_);
+    pj_cstr (&tlsSetting_.ciphers, tlsCiphers_.c_str());
+    pj_cstr (&tlsSetting_.server_name, tlsServerName_.c_str());
 
-    pj_cstr (&tlsSetting_->ca_list_file, tlsCaListFile_.c_str());
-    pj_cstr (&tlsSetting_->cert_file, tlsCertificateFile_.c_str());
-    pj_cstr (&tlsSetting_->privkey_file, tlsPrivateKeyFile_.c_str());
-    pj_cstr (&tlsSetting_->password, tlsPassword_.c_str());
-    tlsSetting_->method = sslMethodStringToPjEnum (tlsMethod_);
-    pj_cstr (&tlsSetting_->ciphers, tlsCiphers_.c_str());
-    pj_cstr (&tlsSetting_->server_name, tlsServerName_.c_str());
+    tlsSetting_.verify_server = tlsVerifyServer_ ? PJ_TRUE: PJ_FALSE;
+    tlsSetting_.verify_client = tlsVerifyClient_ ? PJ_TRUE: PJ_FALSE;
+    tlsSetting_.require_client_cert = tlsRequireClientCertificate_ ? PJ_TRUE: PJ_FALSE;
 
-    tlsSetting_->verify_server = tlsVerifyServer_ ? PJ_TRUE: PJ_FALSE;
-    tlsSetting_->verify_client = tlsVerifyClient_ ? PJ_TRUE: PJ_FALSE;
-    tlsSetting_->require_client_cert = tlsRequireClientCertificate_ ? PJ_TRUE: PJ_FALSE;
-
-    tlsSetting_->timeout.sec = atol (tlsNegotiationTimeoutSec_.c_str());
-    tlsSetting_->timeout.msec = atol (tlsNegotiationTimeoutMsec_.c_str());
+    tlsSetting_.timeout.sec = atol (tlsNegotiationTimeoutSec_.c_str());
+    tlsSetting_.timeout.msec = atol (tlsNegotiationTimeoutMsec_.c_str());
 }
 
 void SIPAccount::initStunConfiguration (void)

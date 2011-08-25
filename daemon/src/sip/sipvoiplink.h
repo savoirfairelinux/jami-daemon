@@ -74,34 +74,16 @@ class SIPVoIPLink : public VoIPLink
 {
 	public:
 
-	    /* Copy Constructor */
-        SIPVoIPLink (const SIPVoIPLink& rh);
-
-        /**
-         * Destructor
-         */
-        ~SIPVoIPLink();
-
-        /* Assignment Operator */
-        SIPVoIPLink& operator= (const SIPVoIPLink& rh);
+		/**
+		 * Destructor
+		 */
+		~SIPVoIPLink();
 
         /**
          * Singleton method. Enable to retrieve the unique static instance
          * @return SIPVoIPLink* A pointer on the object
          */
         static SIPVoIPLink* instance ();
-
-        /**
-         * Increment the number of SIP account connected to this link
-         */
-        void incrementClients (void) {
-            _clients++;
-        }
-
-        /**
-         * Decrement the number of SIP account connected to this link
-         */
-        void decrementClients (void);
 
         /**
          * Try to initiate the pjsip engine/thread and set config
@@ -359,13 +341,29 @@ class SIPVoIPLink : public VoIPLink
          */
         int _nbTryListenAddr;
 
+        /**
+         * Create the default UDP transport according ot Ip2Ip profile settings
+         */
+        bool createDefaultSipUdpTransport();
+
+
+        /**
+         * Create the default TLS litener using IP2IP_PROFILE settings
+         */
+        void createDefaultSipTlsListener();
+
     private:
+
+        /* Assignment Operator */
+        SIPVoIPLink& operator= (const SIPVoIPLink& rh);
+
+	    /* Copy Constructor */
+        SIPVoIPLink (const SIPVoIPLink& rh);
+
         SIPVoIPLink ();
 
         /* The singleton instance */
         static SIPVoIPLink* _instance;
-
-        void busySleep (unsigned msec);
 
         /**
          * Initialize the PJSIP library
@@ -396,19 +394,6 @@ class SIPVoIPLink : public VoIPLink
          * from the transport map
          */
         bool acquireTransport (SIPAccount *account);
-
-
-        /**
-         * Create the default UDP transport according ot Ip2Ip profile settings
-         */
-        bool createDefaultSipUdpTransport();
-
-
-        /**
-         * Create the default TLS litener using IP2IP_PROFILE settings
-         */
-        void createDefaultSipTlsListener();
-
 
         /**
          * Create the default TLS litener according to account settings.

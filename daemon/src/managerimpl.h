@@ -55,7 +55,6 @@
 #include "audio/codecs/audiocodecfactory.h" 
 
 #include "audio/mainbuffer.h"
-#include "yamlemitter.h"
 #include "yamlparser.h"
 #include "preferences.h"
 
@@ -66,7 +65,10 @@ class GuiFramework;
 class TelephoneTone;
 class VoIPLink;
 
-// class Conference;
+namespace Conf
+{
+    class YamlEmitter;
+}
 
 #ifdef USE_ZEROCONF
 class DNSService;
@@ -154,15 +156,10 @@ class ManagerImpl
         ShortcutPreferences shortcutPreferences;
 
         /**
-         * Method to build preferences from configuration
-         */
-        short buildConfiguration();
-
-        /**
          * Initialisation of thread (sound) and map.
          * Init a new VoIPLink, audio codec and audio driver
          */
-        void init (void);
+        void init (std::string config_file="");
 
         /**
          * Terminate all thread (sound, link) and unload AccountMap
@@ -367,10 +364,8 @@ class ManagerImpl
 
         /**
          * Save config to file
-         * @return true on success
-         *	    false otherwise
          */
-        bool saveConfig (void);
+        void saveConfig (void);
 
         /**
          * @return true if we tried to register once
@@ -1045,22 +1040,6 @@ class ManagerImpl
         void setMicVolume (unsigned short mic_vol);
 
         /**
-         * Init default values for the different fields in the config file.
-         * Fills the local _config (Conf::ConfigTree) with the default contents.
-         * Called in main.cpp, just before Manager::init().
-         */
-        void initConfigFile (std::string alternate="");
-
-        /**
-         * Tell if the setup was already loaded
-         * @return bool True if yes
-         *		  false otherwise
-         */
-        bool hasLoadedSetup() {
-            return _setupLoaded;
-        }
-
-        /**
          * Return a new random callid that is not present in the list
          * @return std::string A brand new callid
          */
@@ -1078,14 +1057,6 @@ class ManagerImpl
          * @return bool   True if the id is the current call
          */
         bool isCurrentCall (const std::string& callId);
-
-
-        /**
-         * Send registration to all enabled accounts
-         * @return 0 on registration success
-         *          1 otherelse
-         */
-        int registerAccounts();
 
         /*
          * Initialize audiodriver
@@ -1214,8 +1185,6 @@ class ManagerImpl
          */
         std::string _path;
 
-        int _setupLoaded;
-
 #ifdef USE_ZEROCONF
         // DNSService contain every zeroconf services
         //  configuration detected on the network
@@ -1240,15 +1209,10 @@ class ManagerImpl
          *Contains a list of account (sip, aix, etc) and their respective voiplink/calls */
         AccountMap _accountMap;
 
-        Account * _directIpAccount;
-
-        void loadIptoipProfile();
-
         /**
          * Load the account from configuration
-         * @return short Number of account
          */
-        short loadAccountMap();
+        void loadAccountMap(Conf::YamlParser *parser);
 
         /**
          * Unload the account (delete them)
@@ -1376,6 +1340,10 @@ class ManagerImpl
         ConferenceMap _conferencemap;
 
         void notifyVideoDeviceEvent();
+        /**
+         * Send registration to all enabled accounts
+         */
+        void registerAccounts();
 
     private:
         // Copy Constructor
@@ -1383,13 +1351,6 @@ class ManagerImpl
 
         // Assignment Operator
         ManagerImpl& operator= (const ManagerImpl& rh);
-
-        /**
-         * Send registration to all enabled accounts
-         * @return 0 on registration success
-         *          1 otherelse
-         */
-        int initRegisterAccounts();
 
         NumberCleaner *_cleaner;
 
@@ -1409,7 +1370,6 @@ class ManagerImpl
          */
         void checkCallConfiguration (const std::string& id, const std::string& to, Call::CallConfiguration *callConfig);
 
-        Conf::YamlParser *parser_;
         Conf::YamlEmitter *emitter_;
 
         friend class SIPTest;

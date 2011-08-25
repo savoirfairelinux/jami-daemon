@@ -61,7 +61,7 @@ class EventThread : public ost::Thread
         EventThread& operator= (const EventThread& rh); // assignment operator
 
         /** VoIPLink is the object being called by getEvents() method  */
-        VoIPLink*	_linkthread;
+        VoIPLink*	_link;
 };
 
 #endif // __EVENT_THREAD_H__

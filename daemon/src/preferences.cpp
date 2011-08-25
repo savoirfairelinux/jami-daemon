@@ -64,12 +64,6 @@ Preferences::~Preferences() {}
 
 void Preferences::serialize (Conf::YamlEmitter *emiter)
 {
-
-	if(emiter == NULL) {
-		_error("Preference: Error: emitter is NULL while serializing");
-		return;
-	}
-
 	Conf::MappingNode preferencemap (NULL);
 
     Conf::ScalarNode order (_accountOrder);
@@ -146,11 +140,6 @@ VoipPreference::~VoipPreference() {}
 
 void VoipPreference::serialize (Conf::YamlEmitter *emitter)
 {
-	if(emitter == NULL) {
-		_error("VoipPreference: Error: emitter is NULL while serializing");
-		return;
-	}
-
     Conf::MappingNode preferencemap (NULL);
 
     Conf::ScalarNode playDtmf (_playDtmf);
@@ -201,11 +190,6 @@ AddressbookPreference::~AddressbookPreference() {}
 
 void AddressbookPreference::serialize (Conf::YamlEmitter *emitter)
 {
-	if(emitter == NULL) {
-		_error("AddressbookPreference: Error: emitter is NULL while serializing");
-		return;
-	}
-
     Conf::MappingNode preferencemap (NULL);
 
     Conf::ScalarNode photo (_photo);
@@ -261,11 +245,6 @@ HookPreference::~HookPreference() {}
 
 void HookPreference::serialize (Conf::YamlEmitter *emitter)
 {
-	if(emitter == NULL) {
-		_error("HookPreference: Error: emitter is NULL while serializing");
-		return;
-	}
-
     Conf::MappingNode preferencemap (NULL);
 
     Conf::ScalarNode iax2Enabled (_iax2Enabled);
@@ -326,11 +305,6 @@ AudioPreference::~AudioPreference() {}
 
 void AudioPreference::serialize (Conf::YamlEmitter *emitter)
 {
-	if(emitter == NULL) {
-		_error("AudioPreference: Error: emitter is NULL while serializing");
-		return;
-	}
-
     Conf::MappingNode preferencemap (NULL);
     Conf::MappingNode alsapreferencemap (NULL);
     Conf::MappingNode pulsepreferencemap (NULL);
@@ -542,11 +516,6 @@ void ShortcutPreferences::setShortcuts (std::map<std::string, std::string> map)
 
 void ShortcutPreferences::serialize (Conf::YamlEmitter *emitter)
 {
-	if(emitter == NULL) {
-		_error("ShortcutPreferences: Error: emitter is NULL while serializing");
-		return;
-	}
-
     Conf::MappingNode preferencemap (NULL);
 
     Conf::ScalarNode hangup (_hangup);

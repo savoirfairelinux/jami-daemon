@@ -35,7 +35,7 @@
 #include <string>
 #include "video_rtp_session.h"
 
-int main (int argc, char* argv[])
+int main ()
 {
     sfl_video::VideoRtpSession session;
     session.start();

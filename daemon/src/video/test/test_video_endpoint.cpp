@@ -46,7 +46,7 @@ void VideoEndpointTest::testListInstalledCodecs()
 		std::cout << '\t' << *it << std::endl;
 }
 
-int main (int argc, char* argv[])
+int main ()
 {
     libav_utils::sfl_avcodec_init();
     VideoEndpointTest test;

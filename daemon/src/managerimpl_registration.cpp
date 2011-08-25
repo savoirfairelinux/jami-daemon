@@ -38,115 +38,41 @@
 #include "account.h"
 #include "dbus/callmanager.h"
 #include "global.h"
-#include "sip/sipaccount.h"
 
 #include "audio/audiolayer.h"
 #include "sip/sipvoiplink.h"
 #include "manager.h"
 #include "dbus/configurationmanager.h"
 
-#include "conference.h"
-
-#include <errno.h>
 #include <cstdlib>
 
-int
+void
 ManagerImpl::registerAccounts()
 {
-    int status;
-    bool flag = true;
     AccountMap::iterator iter;
 
-    _debugInit ("Manager: Initiate VoIP Links Registration");
-    iter = _accountMap.begin();
-
-    /* Loop on the account map previously loaded */
-
-    while (iter != _accountMap.end()) {
-        if (iter->second) {
-
-            if (iter->second->isEnabled()) {
-
-                _debug ("Register account %s", iter->first.c_str());
-
-                status = iter->second->registerVoIPLink();
-
-                if (status != 0) {
-                    flag = false;
-                }
-            }
-        }
-
-        iter++;
-    }
-
-    audioLayerMutexLock();
-    // calls the client notification here in case of errors at startup...
-    if (_audiodriver->getErrorMessage() != -1) {
-        notifyErrClient (_audiodriver->getErrorMessage());
-    }
-    audioLayerMutexUnlock();
-
-    if (flag)
-        return 0;
-    else
-        return 1;
-}
-
-//THREAD=Main
-int
-ManagerImpl::initRegisterAccounts()
-{
-    int status;
-    bool flag = true;
-    AccountMap::iterator iter;
-
-    _debugInit ("Manager: Initiate VoIP Links Registration");
-    iter = _accountMap.begin();
-
-    /* Loop on the account map previously loaded */
-
-    while (iter != _accountMap.end()) {
+    for (iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
         if (iter->second) {
             iter->second->loadConfig();
-
-            /* If the account is set as enabled, try to register */
-            if (iter->second->isEnabled()) {
-                status = iter->second->registerVoIPLink();
-
-                if (status != 0) {
-                    flag = false;
-                }
-            }
+            if (iter->second->isEnabled())
+                iter->second->registerVoIPLink();
         }
-
-        iter++;
     }
 
     audioLayerMutexLock();
-    // calls the client notification here in case of errors at startup...
-    if (_audiodriver->getErrorMessage() != -1) {
-        notifyErrClient (_audiodriver->getErrorMessage());
-    }
-    audioLayerMutexUnlock();
 
-    if (flag)
-        return 0;
-    else
-        return 1;
+    if (_audiodriver->getErrorMessage() != -1)
+        notifyErrClient (_audiodriver->getErrorMessage());
+
+    audioLayerMutexUnlock();
 }
 
 
 VoIPLink* ManagerImpl::getAccountLink (const std::string& accountID) const
 {
-    if (not accountID.empty()) {
-        Account* acc = getAccount (accountID);
-
-        if (acc)
-            return acc->getVoIPLink();
-
-        return 0;
-    } else
+    if (not accountID.empty())
+        return getAccount (accountID)->getVoIPLink();
+    else
         return SIPVoIPLink::instance ();
 }
 
@@ -154,7 +80,6 @@ VoIPLink* ManagerImpl::getAccountLink (const std::string& accountID) const
 void
 ManagerImpl::sendRegister (const std::string& accountID , const int32_t& enable)
 {
-    // Update the active field
     Account* acc = getAccount (accountID);
 
 	acc->setEnabled (enable);
@@ -162,14 +87,8 @@ ManagerImpl::sendRegister (const std::string& accountID , const int32_t& enable)
 
     Manager::instance().saveConfig();
 
-    // Test on the freshly updated value
-    if (acc->isEnabled()) {
-        // Verify we aren't already registered, then register
-        _debug ("Send register for account %s\n" , accountID.c_str());
+    if (acc->isEnabled())
         acc->registerVoIPLink();
-    } else {
-        // Verify we are already registered, then unregister
-        _debug ("Send unregister for account %s\n" , accountID.c_str());
+    else
         acc->unregisterVoIPLink();
-    }
 }

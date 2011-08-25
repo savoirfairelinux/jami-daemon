@@ -133,11 +133,6 @@ class SIPAccount : public Account
         void setTlsSettings (const std::map<std::string, std::string>& details);
 
         /**
-         * Special setVoIPLink which increment SipVoIPLink's number of client.
-         */
-        void setVoIPLink();
-
-        /**
          * Actually useless, since config loading is done in init()
          */
         void loadConfig();
@@ -145,12 +140,12 @@ class SIPAccount : public Account
         /**
          * Initialize the SIP voip link with the account parameters and send registration
          */
-        int registerVoIPLink();
+        void registerVoIPLink();
 
         /**
          * Send unregistration and clean all related stuff ( calls , thread )
          */
-        int unregisterVoIPLink();
+        void unregisterVoIPLink();
 
         pjsip_cred_info *getCredInfo() const {
             return cred_;
@@ -231,8 +226,8 @@ class SIPAccount : public Account
          * file, that can be used directly by PJSIP to initialize
          * TLS transport.
          */
-        pjsip_tls_setting * getTlsSetting (void) const {
-            return tlsSetting_;
+        const pjsip_tls_setting * getTlsSetting (void) const {
+            return &tlsSetting_;
         }
 
         /**
@@ -372,7 +367,17 @@ class SIPAccount : public Account
              * Get the local port for TLS listener.
              * @return pj_uint16 The port used for that account
              */
-        pj_uint16_t getTlsListenerPort (void) const { return (pj_uint16_t) tlsListenerPort_; }
+        pj_uint16_t getTlsListenerPort (void) const {
+        	return tlsListenerPort_;
+        }
+
+        /**
+         * Set the local port for TLS listener.
+         * @pram port The port used for TLS listener.
+         */
+        void setTlsListenerPort (pj_uint16_t port) {
+            tlsListenerPort_ = port;
+        }
 
         /**
          * Get the public IP address set by the user for this account.
@@ -514,7 +519,7 @@ class SIPAccount : public Account
 
         // The TLS settings, if tls is chosen as
         // a sip transport.
-        pjsip_tls_setting * tlsSetting_;
+        pjsip_tls_setting tlsSetting_;
 
         // The STUN server name, if applicable for internal use only
         pj_str_t stunServerName_;

@@ -297,8 +297,11 @@ class IAXVoIPLink : public VoIPLink
 
         int converterSamplingRate;
 
-        /* URL hook */
-        UrlHook *urlhook;
+        /** Whether init() was called already or not
+         * This should be used in init() and terminate(), to
+         * indicate that init() was called, or reset by terminate().
+         */
+        bool _initDone;
 
         const std::string _accountID;
 };

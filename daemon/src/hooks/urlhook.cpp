@@ -29,47 +29,13 @@
  */
 
 #include "urlhook.h"
-#include <iostream>
-#include <vector>
+#include <cstdlib>
 
-UrlHook::UrlHook () { }
-
-UrlHook::~UrlHook () { }
-
-int UrlHook::addAction (std::string field_value, std::string command)
+void UrlHook::runAction (std::string command, std::string args)
 {
-
-    std::string command_bg;
-    std::string temp;
-    std::vector <std::string> args;
-    size_t pos;
-    unsigned int i;
-
-    /* Escape the '&' char to not discard $_GET parameters in the URL - #2659 */
-    while ( (pos = field_value.find ("&", 0)) != std::string::npos) {
-        temp = field_value.substr (0, pos);
-        field_value.erase (0, pos + 1);
-        args.push_back (temp);
-    }
-
-    command_bg = command + " ";
-
-    pos = args.size ();
-
-    for (i=0; i<pos; i++) {
-        // Escape the "&"
-        command_bg += args[i] + "\\&";
-    }
-
-    // Retrieve the last argument
-    command_bg +=  field_value;
-
-    /* Execute the command in the background to not block the application */
-    command_bg += "&";
-
-    /* Execute a system call */
-    return RUN_COMMAND (command_bg.c_str());
-
+	//FIXME : use fork and execve, so no need to escape shell arguments
+	std::string cmd = command + "\"" + args + "\" &";
+    system(cmd.c_str());
 }
 
 

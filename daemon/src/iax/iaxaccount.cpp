@@ -143,38 +143,27 @@ std::map<std::string, std::string> IAXAccount::getAccountDetails() const
     return a;
 }
 
-
-void IAXAccount::setVoIPLink()
-{
-}
-
-int IAXAccount::registerVoIPLink()
+void IAXAccount::registerVoIPLink()
 {
 	try {
         link_->init();
-
         link_->sendRegister (this);
 	}
 	catch (const VoipLinkException &e) {
 		_error("IAXAccount: %s", e.what());
 	}
-
-    return 0;
 }
 
-int
+void
 IAXAccount::unregisterVoIPLink()
 {
 	try {
         link_->sendUnregister (this);
         link_->terminate();
-        return 0;
 	}
 	catch (const VoipLinkException &e) {
 		_error("IAXAccount: %s", e.what());
 	}
-
-	return 0;
 }
 
 void
