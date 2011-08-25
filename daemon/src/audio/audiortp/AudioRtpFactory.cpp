@@ -181,7 +181,7 @@ void AudioRtpFactory::stop (void)
 
 int AudioRtpFactory::getSessionMedia()
 {
-    _info ("AudioRtpFactory: Update session media");
+    _info (__PRETTY_FUNCTION__);
 
     if (_rtpSession == NULL) {
         throw AudioRtpFactoryException ("AudioRtpFactory: Error: RTP session was null when trying to get session media type");
