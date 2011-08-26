@@ -843,6 +843,7 @@ sflphone_keypad (guint keyval, gchar * key)
 static void place_direct_call (const callable_obj_t * c)
 {
     assert(c->_state == CALL_STATE_DIALING);
+        dbus_place_call (c);
 }
 
 static int place_registered_call (callable_obj_t * c)
