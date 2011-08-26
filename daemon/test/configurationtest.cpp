@@ -67,16 +67,6 @@ void ConfigurationTest::testDefaultValueSignalisation()
     CPPUNIT_ASSERT (Manager::instance().voipPreferences.getPulseLength() == 250);
 }
 
-void ConfigurationTest::testInitVolume()
-{
-    _debug ("-------------------- ConfigurationTest::testInitVolume --------------------\n");
-
-    Manager::instance().initVolume();
-
-    CPPUNIT_ASSERT (Manager::instance().audioPreference.getVolumespkr() == Manager::instance().getSpkrVolume());
-    CPPUNIT_ASSERT (Manager::instance().audioPreference.getVolumemic() == Manager::instance().getMicVolume());
-}
-
 void ConfigurationTest::testInitAudioDriver()
 {
     _debug ("-------------------- ConfigurationTest::testInitAudioDriver --------------------\n");

@@ -51,11 +51,6 @@ class IAXCall : public Call
         IAXCall (const std::string& id, Call::CallType type);
 
         /**
-         * Destructor
-         */
-        ~IAXCall();
-
-        /**
          * @return iax_session* The session pointer or NULL
          */
         iax_session* getSession() const {

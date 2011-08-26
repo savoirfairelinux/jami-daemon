@@ -47,24 +47,26 @@
 #include "call.h"
 #include "conference.h"
 
-#include "audio/sound/tonelist.h"  // for Tone::TONEID declaration
-#include "audio/sound/audiofile.h"
-#include "audio/sound/dtmf.h" // DTMF class contained by value here
+#include "audio/sound/tone.h"  // for Tone::TONEID declaration
 #include "audio/codecs/audiocodecfactory.h" 
 
 #include "audio/mainbuffer.h"
-#include "yamlemitter.h"
-#include "yamlparser.h"
 #include "preferences.h"
 
-#include "im/InstantMessaging.h"
+namespace sfl {
+    class InstantMessaging;
+}
 
+namespace Conf {
+    class YamlParser;
+    class YamlEmitter;
+}
+
+class DTMF;
+class AudioFile;
 class AudioLayer;
-class GuiFramework;
 class TelephoneTone;
 class VoIPLink;
-
-// class Conference;
 
 #ifdef USE_ZEROCONF
 class DNSService;
@@ -1160,7 +1162,6 @@ class ManagerImpl
             return _imModule;
         }
 
-
         /**
          * Tell if there is a current call processed
          * @return bool True if there is a current call
@@ -1261,10 +1262,6 @@ class ManagerImpl
         void checkCallConfiguration (const std::string& id, const std::string& to, Call::CallConfiguration *callConfig);
 
         Conf::YamlEmitter *emitter;
-
-        friend class SIPTest;
-        friend class ConfigurationTest;
-        friend class HistoryTest;
 };
 
 #endif // __MANAGER_H__
