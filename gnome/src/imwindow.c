@@ -38,10 +38,22 @@
 #include <imwindow.h>
 #include <contacts/calltab.h>
 #include <contacts/calltab.h>
+#include <sys/stat.h>
 
 /** Local variables */
 static GtkWidget *im_window = NULL;
 static GtkWidget *im_notebook = NULL;
+
+
+static void im_window_init();
+
+static GtkWindow *im_window_get()
+{
+    if (im_window == NULL)
+        im_window_init();
+
+    return GTK_WINDOW(im_window);
+}
 
 static gboolean window_configure_cb (GtkWidget *wini UNUSED, GdkEventConfigure *event)
 {
@@ -50,7 +62,7 @@ static gboolean window_configure_cb (GtkWidget *wini UNUSED, GdkEventConfigure *
     eel_gconf_set_integer (CONF_IM_WINDOW_WIDTH, event->width);
     eel_gconf_set_integer (CONF_IM_WINDOW_HEIGHT, event->height);
 
-    gtk_window_get_position (GTK_WINDOW (im_window_get()), &pos_x, &pos_y);
+    gtk_window_get_position (im_window_get(), &pos_x, &pos_y);
     eel_gconf_set_integer (CONF_IM_WINDOW_POSITION_X, pos_x);
     eel_gconf_set_integer (CONF_IM_WINDOW_POSITION_Y, pos_y);
 
@@ -106,7 +118,9 @@ im_window_init()
     gtk_container_set_border_width (GTK_CONTAINER (im_window), 0);
     gtk_window_set_title (GTK_WINDOW (im_window), window_title);
     gtk_window_set_default_size (GTK_WINDOW (im_window), width, height);
-    gtk_window_set_default_icon_from_file (LOGO, NULL);
+    struct stat st;
+    if (!stat(LOGO, &st))
+        gtk_window_set_default_icon_from_file (LOGO, NULL);
     gtk_window_set_position (GTK_WINDOW (im_window), GTK_WIN_POS_MOUSE);
 
     gtk_widget_set_name (im_window, "imwindow");
@@ -129,20 +143,9 @@ im_window_init()
     gtk_window_move (GTK_WINDOW (im_window), position_x, position_y);
 }
 
-GtkWidget *
-im_window_get()
-{
-    if (im_window == NULL)
-        im_window_init();
-
-    return im_window;
-}
-
-
 gboolean
 im_window_is_active ()
 {
-
     if (!im_window)
         return FALSE;
     else
@@ -152,13 +155,14 @@ im_window_is_active ()
 gboolean
 im_window_is_visible ()
 {
-    return gtk_widget_get_visible (im_window);
+    return gtk_widget_get_visible (GTK_WIDGET(im_window_get()));
 }
+
 
 void
 im_window_show ()
 {
-    gtk_window_present (GTK_WINDOW (im_window_get ()));
+    gtk_window_present (im_window_get ());
 }
 
 void
@@ -169,7 +173,7 @@ im_window_add (GtkWidget *widget)
         im_window_add_tab (widget);
 
         /* Show it all */
-        gtk_widget_show_all (im_window);
+        gtk_widget_show_all (GTK_WIDGET(im_window_get()));
     } 
     else {
         ERROR ("InstantMessaging: Error: Could not create the main instant messaging window");

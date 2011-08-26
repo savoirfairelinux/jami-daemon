@@ -44,6 +44,7 @@
 #include <widget/minidialog.h>
 #include "uimanager.h"
 
+#include <sys/stat.h>
 #include <gtk/gtk.h>
 #include <eel-gconf-extensions.h>
 
@@ -200,7 +201,9 @@ create_main_window ()
     gtk_container_set_border_width (GTK_CONTAINER (window), 0);
     gtk_window_set_title (GTK_WINDOW (window), window_title);
     gtk_window_set_default_size (GTK_WINDOW (window), width, height);
-    gtk_window_set_default_icon_from_file (LOGO, NULL);
+    struct stat st;
+    if (!stat(LOGO, &st))
+        gtk_window_set_default_icon_from_file (LOGO, NULL);
     gtk_window_set_position (GTK_WINDOW (window) , GTK_WIN_POS_MOUSE);
 
     /* Connect the destroy event of the window with our on_destroy function
