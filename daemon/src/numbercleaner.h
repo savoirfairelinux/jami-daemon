@@ -29,36 +29,14 @@
  *  as that of the covered work.
  */
 
-#ifndef _NUMBER_CLEANER_H
-#define _NUMBER_CLEANER_H
+#ifndef _NUMBER_CLEANER_H_
+#define _NUMBER_CLEANER_H_
 
-#include "logger.h"
 #include <string>
 
-class NumberCleaner
+namespace NumberCleaner
 {
-
-    public:
-        NumberCleaner (void);
-        ~NumberCleaner (void);
-
-        std::string clean (std::string to_clean);
-
-        void set_phone_number_prefix (std::string prefix) {
-            _debug ("Number: Set phone number prefix %s", _prefix.c_str());
-            _prefix = prefix;
-        }
-
-        std::string get_phone_number_prefix (void) const {
-            return _prefix;
-        }
-
-    private:
-
-        std::string _prefix;
-
-        void strip_char (std::string to_strip, std::string *num);
-
-};
+    std::string clean(std::string to_clean, const std::string &prefix = "");
+}
 
 #endif

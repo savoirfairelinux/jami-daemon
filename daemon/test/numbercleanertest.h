@@ -59,48 +59,26 @@ class NumberCleanerTest : public CppUnit::TestCase {
         CPPUNIT_TEST (test_format_4);
         CPPUNIT_TEST (test_format_5);
         CPPUNIT_TEST (test_format_6);
+        /*CPPUNIT_TEST (test_format_7);
+        CPPUNIT_TEST (test_format_8);
+        CPPUNIT_TEST (test_format_9);*/
         CPPUNIT_TEST (test_format_10);
     CPPUNIT_TEST_SUITE_END ();
 
     public:
         NumberCleanerTest() : CppUnit::TestCase("Hook Manager Tests") {}
         
-        /*
-         * Code factoring - Common resources can be initialized here.
-         * This method is called by unitcpp before each test
-         */
-        void setUp();
-
         void test_format_1 ();
-
         void test_format_2 ();
-
         void test_format_3 ();
-
         void test_format_4 ();
-        
         void test_format_5 ();
-
         void test_format_6 ();
-        
         void test_format_7 ();
-        
         void test_format_8 ();
-
         void test_format_9 ();
-        
         void test_format_10 ();
-
         void test_format_11 ();
-
-        /*
-         * Code factoring - Common resources can be released here.
-         * This method is called by unitcpp after each test
-         */
-        void tearDown ();
-
-    private:
-        NumberCleaner *cleaner;
 };
 
 /* Register our test module */

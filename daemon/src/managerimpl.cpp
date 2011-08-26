@@ -41,6 +41,7 @@
 #include "global.h"
 #include "sip/sipaccount.h"
 #include "iax/iaxaccount.h"
+#include "numbercleaner.h"
 
 #include "audio/alsa/alsalayer.h"
 #include "audio/pulseaudio/pulselayer.h"
@@ -71,7 +72,6 @@ ManagerImpl::ManagerImpl (void) :
     _waitingCallMutex(), _nbIncomingWaitingCall (0), _path (""),
     _callAccountMap(),
     _callAccountMapMutex(), _callConfigMap(), _accountMap(),
-    _cleaner (new NumberCleaner),
     _history (new HistoryManager), _imModule(new sfl::InstantMessaging)
 {
     // initialize random generator for call id
@@ -83,7 +83,6 @@ ManagerImpl::~ManagerImpl (void)
 {
     delete _imModule;
     delete _history;
-    delete _cleaner;
 	delete _audiofile;
 }
 
@@ -204,11 +203,6 @@ void ManagerImpl::switchCall (const std::string& id)
 bool ManagerImpl::outgoingCall (const std::string& account_id,
                                 const std::string& call_id, const std::string& to, const std::string& conf_id)
 {
-
-    std::string pattern, to_cleaned;
-    Call::CallConfiguration callConfig;
-    SIPVoIPLink *siplink;
-
     if (call_id.empty()) {
         _debug ("Manager: New outgoing call abbort, missing callid");
         return false;
@@ -226,13 +220,13 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 
     std::string current_call_id(getCurrentCallId());
 
+    std::string prefix;
     if (hookPreference.getNumberEnabled())
-        _cleaner->set_phone_number_prefix (hookPreference.getNumberAddPrefix());
-    else
-        _cleaner->set_phone_number_prefix ("");
+        prefix = hookPreference.getNumberAddPrefix();
 
-    to_cleaned = _cleaner->clean (to);
+    std::string to_cleaned(NumberCleaner::clean(to, prefix));
 
+    Call::CallConfiguration callConfig;
     /* Check what kind of call we are dealing with */
     checkCallConfiguration (call_id, to_cleaned, &callConfig);
 
@@ -250,9 +244,7 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
     if (callConfig == Call::IPtoIP) {
         _debug ("Manager: Start IP2IP call");
         /* We need to retrieve the sip voiplink instance */
-        siplink = SIPVoIPLink::instance ();
-
-        if (siplink->SIPNewIpToIpCall(call_id, to_cleaned)) {
+        if (SIPVoIPLink::instance()->SIPNewIpToIpCall(call_id, to_cleaned)) {
             switchCall (call_id);
             return true;
         } else
@@ -269,16 +261,13 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
         return false;
     }
 
-    if(!associateCallToAccount (call_id, account_id)) {
+    if(!associateCallToAccount (call_id, account_id))
     	_warn("Manager: Warning: Could not associate call id %s to account id %s", call_id.c_str(), account_id.c_str());
-    }
 
-    Call *call = NULL;
     try {
-        call = getAccountLink(account_id)->newOutgoingCall (call_id, to_cleaned);
+        Call *call = getAccountLink(account_id)->newOutgoingCall (call_id, to_cleaned);
 
         switchCall (call_id);
-
         call->setConfId(conf_id);
     } catch (const VoipLinkException &e) {
         callFailure (call_id);

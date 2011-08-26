@@ -241,8 +241,6 @@ HookPreference::HookPreference() : _iax2Enabled (false)
 
 }
 
-HookPreference::~HookPreference() {}
-
 void HookPreference::serialize (Conf::YamlEmitter *emitter)
 {
     Conf::MappingNode preferencemap (NULL);

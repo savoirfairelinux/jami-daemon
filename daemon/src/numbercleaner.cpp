@@ -30,36 +30,19 @@
  */
 
 #include "numbercleaner.h"
+#include <algorithm>
 
-#include <iostream>
-
-NumberCleaner::NumberCleaner (void) : _prefix ("")
-{
-}
-
-NumberCleaner::~NumberCleaner (void)
-{
-}
-
-std::string NumberCleaner::clean (std::string to_clean)
-{
-
-    strip_char (" ", &to_clean);
-    // TODO Check for IP to IP call
-    // strip_char (".", &to_clean);
-    strip_char ("-", &to_clean);
-    strip_char ("(", &to_clean);
-    strip_char (")", &to_clean);
-
-    return to_clean.insert (0, this->get_phone_number_prefix ());
-}
-
-void NumberCleaner::strip_char (std::string to_strip, std::string *num)
-{
-
-    std::size_t pos;
-
-    while ( (pos= (*num).find (to_strip)) != std::string::npos) {
-        *num = (*num).erase (pos, 1);
+namespace {
+    void strip_chars(const std::string &to_strip, std::string &num)
+    {
+        for (std::string::const_iterator iter = to_strip.begin();
+                iter != to_strip.end(); ++iter)
+            num.erase(std::remove(num.begin(), num.end(), *iter), num.end());
     }
+}
+
+std::string NumberCleaner::clean(std::string to_clean, const std::string &prefix)
+{
+    strip_chars(" -()", to_clean);
+    return to_clean.insert(0, prefix);
 }

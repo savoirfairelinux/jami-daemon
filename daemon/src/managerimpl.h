@@ -46,7 +46,6 @@
 
 #include "call.h"
 #include "conference.h"
-#include "numbercleaner.h"
 
 #include "audio/sound/tonelist.h"  // for Tone::TONEID declaration
 #include "audio/sound/audiofile.h"
@@ -1244,8 +1243,6 @@ class ManagerImpl
 
         // Assignment Operator
         ManagerImpl& operator= (const ManagerImpl& rh);
-
-        NumberCleaner *_cleaner;
 
         /**
           * To handle the persistent history

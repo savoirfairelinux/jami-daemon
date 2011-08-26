@@ -351,8 +351,6 @@ class HookPreference : public Serializable
 
         HookPreference();
 
-        ~HookPreference();
-
         virtual void serialize (Conf::YamlEmitter *emitter);
 
         virtual void unserialize (Conf::MappingNode *map);
