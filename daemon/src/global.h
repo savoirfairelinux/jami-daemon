@@ -116,7 +116,6 @@ static const SOUND_FORMAT INT32 = 0x8;
 #define NO_ERROR		      0x0000	/** No error - Everything alright */
 #define ALSA_CAPTURE_DEVICE           0x0001	/** Error while opening capture device */
 #define ALSA_PLAYBACK_DEVICE          0x0010	/** Error while opening playback device */
-#define NETWORK_UNREACHABLE           0x0011	/** Network unreachable */
 #define PULSEAUDIO_NOT_RUNNING          0x0100  /** Pulseaudio is not running */
 
 #define ALSA			  0

@@ -12,7 +12,6 @@ SFLPHONEGTK_LIBS=./contacts/libcontacts.la ./config/libconfig.la ./dbus/libdbus.
 
 sflphone_client_gnome_SOURCES = \
   main.c \
-  errors.c \
   logger.c \
   uimanager.c \
   sflnotify.c \
@@ -31,7 +30,7 @@ sflphone_client_gnome_SOURCES = \
   eel-gconf-extensions.c
 
 noinst_HEADERS =  actions.h sflnotify.h mainwindow.h dialpad.h codeclist.h \
-                  reqaccount.h errors.h sflphone_const.h uimanager.h \
+                  reqaccount.h sflphone_const.h uimanager.h \
                   accountlist.h sliders.h statusicon.h callable_obj.h conference_obj.h \
                   shortcuts.h eel-gconf-extensions.h logger.h imwindow.h
 

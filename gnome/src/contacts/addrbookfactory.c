@@ -31,6 +31,7 @@
 #include "addrbookfactory.h"
 #include "addressbook-config.h"
 
+#include "calltab.h"
 
 #include <glib.h>
 #include <dlfcn.h>

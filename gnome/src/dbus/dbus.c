@@ -50,93 +50,19 @@
 #include <widget/imwidget.h>
 
 #include <eel-gconf-extensions.h>
+#include <mainwindow.h>
 
 #define DEFAULT_DBUS_TIMEOUT 30000
 
-DBusGConnection * connection;
-DBusGProxy * callManagerProxy;
-DBusGProxy * configurationManagerProxy;
-DBusGProxy * instanceProxy;
-
-static void
-new_call_created_cb (DBusGProxy *, const gchar *, const gchar *, const gchar *, void *);
-
-static void
-incoming_call_cb (DBusGProxy *, const gchar *, const gchar *, const gchar *, void *);
-
-static void
-zrtp_negotiation_failed_cb (DBusGProxy *, const gchar *, const gchar *, const gchar *, void *);
-
-static void
-current_selected_audio_codec (DBusGProxy *, const gchar *, const gchar *, void *);
-
-static void
-volume_changed_cb (DBusGProxy *, const gchar *, const gdouble, void *);
-
-static void
-voice_mail_cb (DBusGProxy *, const gchar *, const guint, void *);
-
-static void
-incoming_message_cb (DBusGProxy *, const gchar *, const gchar *, const gchar *, void *);
-
-static void
-call_state_cb (DBusGProxy *, const gchar *, const gchar *, void *);
-
-static void
-conference_changed_cb (DBusGProxy *, const gchar *, const gchar *, void *);
-
-static void
-conference_created_cb (DBusGProxy *, const gchar *, void *);
-
-static void
-conference_removed_cb (DBusGProxy *, const gchar *, void *);
-
-static void
-record_playback_filepath_cb (DBusGProxy *, const gchar *, const gchar *);
-
-static void
-record_playback_stopped_cb (DBusGProxy *, const gchar *);
-
-static void
-accounts_changed_cb (DBusGProxy *, void *);
-
-static void
-transfer_succeded_cb (DBusGProxy *, void *);
-
-static void
-transfer_failed_cb (DBusGProxy *, void *);
-
-static void
-secure_sdes_on_cb (DBusGProxy *, const gchar *, void *);
-
-static void
-secure_sdes_off_cb (DBusGProxy *, const gchar *, void *);
-
-static void
-secure_zrtp_on_cb (DBusGProxy *, const gchar *, const gchar *, void *);
-
-static void
-secure_zrtp_off_cb (DBusGProxy *, const gchar *, void *);
-
-static void
-show_zrtp_sas_cb (DBusGProxy *, const gchar *, const gchar *, const gboolean, void *);
-
-static void
-confirm_go_clear_cb (DBusGProxy *, const gchar *, void *);
+static DBusGProxy *callManagerProxy, *configurationManagerProxy, *instanceProxy;
 
 static void
 new_call_created_cb (DBusGProxy *proxy UNUSED, const gchar *accountID,
 		     const gchar *callID, const gchar *to, void *foo UNUSED)
 {
-    const gchar *peer_name = to;
-    const gchar *peer_number = to;
-
     DEBUG("DBUS: New Call (%s) created to (%s)", callID, to);
 
-    callable_obj_t *c = create_new_call(CALL, CALL_STATE_RINGING, callID, accountID,
-			peer_name, peer_number);
-
-    time(&c->_time_start);
+    callable_obj_t *c = create_new_call(CALL, CALL_STATE_RINGING, callID, accountID, to, to);
 
     calllist_add_call(current_calls, c);
     calltree_add_call(current_calls, c, NULL);
@@ -158,6 +84,7 @@ incoming_call_cb (DBusGProxy *proxy UNUSED, const gchar* accountID,
     callable_obj_t *c = create_new_call (CALL, CALL_STATE_INCOMING, callID, accountID, peer_name, peer_number);
 
     g_free(peer_number);
+    g_free(peer_name);
 
 #if GTK_CHECK_VERSION(2,10,0)
     status_tray_icon_blink (TRUE);
@@ -172,27 +99,16 @@ static void
 zrtp_negotiation_failed_cb (DBusGProxy *proxy UNUSED, const gchar* callID,
                             const gchar* reason, const gchar* severity, void * foo  UNUSED)
 {
-    DEBUG ("DBUS: Zrtp negotiation failed.");
     main_window_zrtp_negotiation_failed (callID, reason, severity);
-    callable_obj_t * c = NULL;
-    c = calllist_get_call (current_calls, callID);
-
-    if (c) {
+    callable_obj_t *c = calllist_get_call (current_calls, callID);
+    if (c)
         notify_zrtp_negotiation_failed (c);
-    }
-}
-
-static void
-current_selected_audio_codec (DBusGProxy *proxy UNUSED, const gchar* callID UNUSED,
-                             const gchar* codecName UNUSED, void * foo  UNUSED)
-{
 }
 
 static void
 volume_changed_cb (DBusGProxy *proxy UNUSED, const gchar* device, const gdouble value,
                    void * foo  UNUSED)
 {
-    DEBUG ("DBUS: Volume of %s changed to %f.",device, value);
     set_slider (device, value);
 }
 
@@ -200,7 +116,6 @@ static void
 voice_mail_cb (DBusGProxy *proxy UNUSED, const gchar* accountID, const guint nb,
                void * foo  UNUSED)
 {
-    DEBUG ("DBUS: %d Voice mail waiting!",nb);
     sflphone_notify_voice_mail (accountID, nb);
 }
 
@@ -209,39 +124,28 @@ incoming_message_cb (DBusGProxy *proxy UNUSED, const gchar* callID UNUSED, const
 {
     DEBUG ("DBUS: Message \"%s\" from %s!", msg, from);
 
-    callable_obj_t *call = NULL;
-    conference_obj_t *conf = NULL;
-
     // do not display message if instant messaging is disabled
-    gboolean instant_messaging_enabled = TRUE;
-
-    if (eel_gconf_key_exists (INSTANT_MESSAGING_ENABLED))
-        instant_messaging_enabled = eel_gconf_get_integer (INSTANT_MESSAGING_ENABLED);
-
-    if (!instant_messaging_enabled)
+    if (eel_gconf_key_exists (INSTANT_MESSAGING_ENABLED) && !eel_gconf_get_integer (INSTANT_MESSAGING_ENABLED))
         return;
 
-    // Get the call information. (if this call exist)
-    call = calllist_get_call (current_calls, callID);
-
-    // Get the conference information (if this conference exist)
-    conf = conferencelist_get (current_calls, callID);
-
-    /* First check if the call is valid */
+    IMWidget **widget;
+    gchar *id;
+    callable_obj_t *call = calllist_get_call (current_calls, callID);
     if (call) {
-
-        /* Make the instant messaging main window pops, add messages only if the main window exist.
-           Elsewhere the message is displayed asynchronously*/
-        if (im_widget_display ( (IMWidget **) (&call->_im_widget), msg, call->_callID, from))
-            im_widget_add_message (IM_WIDGET (call->_im_widget), from, msg, 0);
-    } else if (conf) {
-        /* Make the instant messaging main window pops, add messages only if the main window exist.
-           Elsewhere the message is displayed asynchronously*/
-        if (im_widget_display ( (IMWidget **) (&conf->_im_widget), msg, conf->_confID, from))
-            im_widget_add_message (IM_WIDGET (conf->_im_widget), from, msg, 0);
+        widget = (IMWidget **) &call->_im_widget;
+        id = call->_callID;
     } else {
-        ERROR ("Message received, but no recipient found");
+        conference_obj_t *conf = conferencelist_get (current_calls, callID);
+        if (!conf) {
+            ERROR ("Message received, but no recipient found");
+            return;
+        }
+        widget = (IMWidget **) &conf->_im_widget;
+        id = conf->_confID;
     }
+
+    if (im_widget_display (widget, msg, id, from))
+        im_widget_add_message (*widget, from, msg, 0);
 }
 
 static void
@@ -253,7 +157,6 @@ call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state
     if (c) {
         if (g_strcmp0 (state, "HUNGUP") == 0) {
             if (c->_state == CALL_STATE_CURRENT) {
-                // peer hung up, the conversation was established, so _stop has been initialized with the current time value
                 time(&c->_time_stop);
                 calltree_update_call (history, c, NULL);
             }
@@ -306,19 +209,23 @@ call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state
     }
 }
 
+static void toggle_im(conference_obj_t *conf, gboolean activate)
+{
+    for (GSList *part = conf->participant_list; part; part = g_slist_next (part)) {
+        callable_obj_t *call = calllist_get_call (current_calls, part->data);
+        if (call && call->_im_widget)
+            im_widget_update_state (IM_WIDGET (call->_im_widget), activate);
+    }
+}
+
 static void
 conference_changed_cb (DBusGProxy *proxy UNUSED, const gchar* confID,
                        const gchar* state, void * foo  UNUSED)
 {
-
-    callable_obj_t *call;
-    gchar* call_id;
-
     DEBUG ("DBUS: Conference state changed: %s\n", state);
 
     // sflphone_display_transfer_status("Transfer successfull");
     conference_obj_t* changed_conf = conferencelist_get (current_calls, confID);
-    GSList * part;
 
     if(changed_conf == NULL) {
 	ERROR("DBUS: Conference is NULL in conference state changed");
@@ -346,35 +253,15 @@ conference_changed_cb (DBusGProxy *proxy UNUSED, const gchar* confID,
     }
 
     // reactivate instant messaging window for these calls
-    part = changed_conf->participant_list;
+    toggle_im(changed_conf, TRUE);
 
-    while (part) {
-        call_id = (gchar*) (part->data);
-        call = calllist_get_call (current_calls, call_id);
-
-        if (call && call->_im_widget)
-            im_widget_update_state (IM_WIDGET (call->_im_widget), TRUE);
-
-        part = g_slist_next (part);
-    }
-
-    // update conferece participants
-    conference_participant_list_update (dbus_get_participant_list (changed_conf->_confID), changed_conf);
+    gchar **list = dbus_get_participant_list(changed_conf->_confID);
+    conference_participant_list_update(list, changed_conf);
+    g_strfreev(list);
 
     // deactivate instant messaging window for new participants
-    part = changed_conf->participant_list;
+    toggle_im(changed_conf, FALSE);
 
-    while (part) {
-        call_id = (gchar*) (part->data);
-        call = calllist_get_call (current_calls, call_id);
-
-        if (call && call->_im_widget)
-            im_widget_update_state (IM_WIDGET (call->_im_widget), FALSE);
-
-        part = g_slist_next (part);
-    }
-
-    // add new conference to calltree
     calltree_add_conference (current_calls, changed_conf);
 }
 
@@ -385,15 +272,14 @@ conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
 
     conference_obj_t *new_conf = create_new_conference (CONFERENCE_STATE_ACTIVE_ATACHED, confID);
 
-    gchar **participants = (gchar**) dbus_get_participant_list (new_conf->_confID);
+    gchar **participants = dbus_get_participant_list (new_conf->_confID);
 
     // Update conference list
     conference_participant_list_update (participants, new_conf);
 
     // Add conference ID in in each calls
     for (gchar **part = participants; *part; part++) {
-        const gchar *const call_id = (gchar*) (*part);
-        callable_obj_t *call = calllist_get_call (current_calls, call_id);
+        callable_obj_t *call = calllist_get_call (current_calls, *part);
 
         // set when this call have been added to the conference
         time(&call->_time_added);
@@ -409,6 +295,8 @@ conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
         call->_confID = g_strdup (confID);
         call->_historyConfID = g_strdup (confID);
     }
+
+    g_strfreev(participants);
 
     time(&new_conf->_time_start);
 
@@ -430,27 +318,18 @@ conference_removed_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
     if (c->_im_widget)
         im_widget_update_state (IM_WIDGET (c->_im_widget), FALSE);
 
-    GSList *participant = c->participant_list;
-
     // remove all participant for this conference
-    while (participant) {
+    for (GSList *p = c->participant_list; p; p = conference_next_participant (p)) {
 
-        callable_obj_t *call = calllist_get_call (current_calls, (const gchar *) (participant->data));
-
+        callable_obj_t *call = calllist_get_call (current_calls, p->data);
         if (call) {
-            DEBUG ("DBUS: Remove participant %s", call->_callID);
-
-            if (call->_confID) {
-                g_free (call->_confID);
-                call->_confID = NULL;
-            }
+            g_free (call->_confID);
+            call->_confID = NULL;
 
             // if an instant messaging was previously disabled, enabled it
             if (call->_im_widget)
                 im_widget_update_state (IM_WIDGET (call->_im_widget), TRUE);
         }
-
-        participant = conference_next_participant (participant);
     }
 
     conferencelist_remove (current_calls, c->_confID);
@@ -486,7 +365,6 @@ record_playback_stopped_cb (DBusGProxy *proxy UNUSED, const gchar *filepath)
     DEBUG("DBUS: Playback stopped for %s", filepath);
 
     const gint calllist_size = calllist_get_size(history);
-
     for (gint i = 0; i < calllist_size; i++) {
         QueueElement *element = calllist_get_nth(history, i);
         if (element == NULL) {
@@ -498,7 +376,6 @@ record_playback_stopped_cb (DBusGProxy *proxy UNUSED, const gchar *filepath)
     }
 
     const gint conflist_size = conferencelist_get_size(history);
-
     for (gint i = 0; i < conflist_size; i++) {
         conference_obj_t *conf = conferencelist_get_nth(history, i);
         if (conf == NULL) {
@@ -518,12 +395,7 @@ accounts_changed_cb (DBusGProxy *proxy UNUSED, void * foo  UNUSED)
     sflphone_fill_account_list();
     sflphone_fill_ip2ip_profile();
     account_list_config_dialog_fill();
-
-    // Update the status bar in case something happened
-    // Should fix ticket #1215
     status_bar_display_account();
-
-    // Update the tooltip on the status icon
     statusicon_set_tooltip ();
 }
 
@@ -546,7 +418,6 @@ secure_sdes_on_cb (DBusGProxy *proxy UNUSED, const gchar *callID, void *foo UNUS
 {
     DEBUG ("DBUS: SRTP using SDES is on");
     callable_obj_t *c = calllist_get_call (current_calls, callID);
-
     if (c) {
         sflphone_srtp_sdes_on (c);
         notify_secure_on (c);
@@ -559,7 +430,6 @@ secure_sdes_off_cb (DBusGProxy *proxy UNUSED, const gchar *callID, void *foo UNU
 {
     DEBUG ("DBUS: SRTP using SDES is off");
     callable_obj_t *c = calllist_get_call (current_calls, callID);
-
     if (c) {
         sflphone_srtp_sdes_off (c);
         notify_secure_off (c);
@@ -571,11 +441,9 @@ secure_zrtp_on_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* c
                    void * foo  UNUSED)
 {
     DEBUG ("DBUS: SRTP using ZRTP is ON secure_on_cb");
-    callable_obj_t * c = calllist_get_call (current_calls, callID);
-
+    callable_obj_t *c = calllist_get_call (current_calls, callID);
     if (c) {
         c->_srtp_cipher = g_strdup (cipher);
-
         sflphone_srtp_zrtp_on (c);
         notify_secure_on (c);
     }
@@ -585,8 +453,7 @@ static void
 secure_zrtp_off_cb (DBusGProxy *proxy UNUSED, const gchar* callID, void * foo  UNUSED)
 {
     DEBUG ("DBUS: SRTP using ZRTP is OFF");
-    callable_obj_t * c = calllist_get_call (current_calls, callID);
-
+    callable_obj_t *c = calllist_get_call (current_calls, callID);
     if (c) {
         sflphone_srtp_zrtp_off (c);
         notify_secure_off (c);
@@ -599,7 +466,6 @@ show_zrtp_sas_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* sa
 {
     DEBUG ("DBUS: Showing SAS");
     callable_obj_t * c = calllist_get_call (current_calls, callID);
-
     if (c)
         sflphone_srtp_zrtp_show_sas (c, sas, verified);
 }
@@ -608,9 +474,7 @@ static void
 confirm_go_clear_cb (DBusGProxy *proxy UNUSED, const gchar* callID, void * foo  UNUSED)
 {
     DEBUG ("DBUS: Confirm Go Clear request");
-
     callable_obj_t * c = calllist_get_call (current_calls, callID);
-
     if (c)
         main_window_confirm_go_clear (c);
 }
@@ -620,7 +484,6 @@ zrtp_not_supported_cb (DBusGProxy *proxy UNUSED, const gchar* callID, void * foo
 {
     DEBUG ("ZRTP not supported on the other end");
     callable_obj_t * c = calllist_get_call (current_calls, callID);
-
     if (c) {
         main_window_zrtp_not_supported (c);
         notify_zrtp_not_supported (c);
@@ -632,33 +495,33 @@ sip_call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID,
                    const gchar* description, const guint code, void * foo  UNUSED)
 {
     DEBUG("DBUS: Sip call state changed %s", callID);
-
     callable_obj_t *c = calllist_get_call (current_calls, callID);
-    if (c == NULL) {
-        ERROR("DBUS: Error call is NULL in state changed (call may not have been created yet)");
-        return;
-    }
-
-    sflphone_call_state_changed (c, description, code);
+    if (c)
+        sflphone_call_state_changed (c, description, code);
 }
 
 static void
-error_alert (DBusGProxy *proxy UNUSED, int errCode, void * foo  UNUSED)
+error_alert (DBusGProxy *proxy UNUSED, int err, void * foo  UNUSED)
 {
-    ERROR ("DBUS: Error notifying : (%i)", errCode);
-    sflphone_throw_exception (errCode);
+    switch (err) {
+        case ALSA_PLAYBACK_DEVICE:
+            main_window_error_message(_("ALSA notification\n\nError while opening playback device"));
+            break;
+        case ALSA_CAPTURE_DEVICE:
+            main_window_error_message(_("ALSA notification\n\nError while opening capture device"));
+            break;
+        case PULSEAUDIO_NOT_RUNNING:
+            main_window_error_message(_("Pulseaudio notification\n\nPulseaudio is not running"));
+            break;
+    }
 }
 
 gboolean
 dbus_connect (GError **error)
 {
-    connection = NULL;
-    instanceProxy = NULL;
-
     g_type_init();
 
-    connection = dbus_g_bus_get (DBUS_BUS_SESSION, error);
-
+    DBusGConnection *connection = dbus_g_bus_get (DBUS_BUS_SESSION, error);
     if (connection == NULL)
         return FALSE;
 
@@ -699,15 +562,6 @@ dbus_connect (GError **error)
                              G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal (callManagerProxy, "zrtpNegotiationFailed",
                                  G_CALLBACK (zrtp_negotiation_failed_cb), NULL, NULL);
-
-    /* Current audio codec */
-    dbus_g_object_register_marshaller (
-        g_cclosure_user_marshal_VOID__STRING_STRING_STRING, G_TYPE_NONE,
-        G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
-    dbus_g_proxy_add_signal (callManagerProxy, "currentSelectedAudioCodec",
-                             G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
-    dbus_g_proxy_connect_signal (callManagerProxy, "currentSelectedAudioCodec",
-                                 G_CALLBACK (current_selected_audio_codec), NULL, NULL);
 
     /* Register a marshaller for STRING,STRING */
     dbus_g_object_register_marshaller (
@@ -865,14 +719,11 @@ dbus_clean()
 void
 dbus_hold (const callable_obj_t * c)
 {
-    DEBUG ("DBUS: Hold %s\n", c->_callID);
-
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_hold (callManagerProxy, c->_callID, &error);
 
     if (error) {
-        ERROR ("Failed to call hold() on CallManager: %s",
-               error->message);
+        ERROR ("Failed to call hold() on CallManager: %s", error->message);
         g_error_free (error);
     }
 }
@@ -880,14 +731,11 @@ dbus_hold (const callable_obj_t * c)
 void
 dbus_unhold (const callable_obj_t * c)
 {
-    DEBUG ("DBUS: Unhold call %s\n", c->_callID);
-
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_unhold (callManagerProxy, c->_callID, &error);
 
     if (error) {
-        ERROR ("Failed to call unhold() on CallManager: %s",
-               error->message);
+        ERROR ("Failed to call unhold() on CallManager: %s", error->message);
         g_error_free (error);
     }
 }
@@ -895,15 +743,11 @@ dbus_unhold (const callable_obj_t * c)
 void
 dbus_hold_conference (const conference_obj_t * c)
 {
-    DEBUG ("DBUS: Hold conference %s\n", c->_confID);
-
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_hold_conference (callManagerProxy,
-            c->_confID, &error);
+    org_sflphone_SFLphone_CallManager_hold_conference (callManagerProxy, c->_confID, &error);
 
     if (error) {
-        ERROR ("Failed to call hold() on CallManager: %s",
-               error->message);
+        ERROR ("Failed to call hold() on CallManager: %s", error->message);
         g_error_free (error);
     }
 }
@@ -911,15 +755,11 @@ dbus_hold_conference (const conference_obj_t * c)
 void
 dbus_unhold_conference (const conference_obj_t * c)
 {
-    DEBUG ("DBUS: Unold conference %s\n", c->_confID);
-
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_unhold_conference (callManagerProxy,
-            c->_confID, &error);
+    org_sflphone_SFLphone_CallManager_unhold_conference (callManagerProxy, c->_confID, &error);
 
     if (error) {
-        ERROR ("Failed to call unhold() on CallManager: %s",
-               error->message);
+        ERROR ("Failed to call unhold() on CallManager: %s", error->message);
         g_error_free (error);
     }
 }
@@ -927,8 +767,6 @@ dbus_unhold_conference (const conference_obj_t * c)
 gboolean
 dbus_start_recorded_file_playback(const gchar *filepath)
 {
-    DEBUG("DBUS: Start recorded file playback %s", filepath);
-
     GError *error = NULL;
     gboolean result;
 
@@ -946,7 +784,6 @@ dbus_start_recorded_file_playback(const gchar *filepath)
 void
 dbus_stop_recorded_file_playback(const gchar *filepath)
 {
-    DEBUG("DBUS: Stop recorded file playback %s", filepath);
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_stop_recorded_file_playback(callManagerProxy,
 	filepath, &error);
@@ -960,15 +797,11 @@ dbus_stop_recorded_file_playback(const gchar *filepath)
 void
 dbus_hang_up (const callable_obj_t * c)
 {
-    DEBUG ("DBUS: Hang up call %s\n", c->_callID);
-
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_hang_up (callManagerProxy, c->_callID,
-            &error);
+    org_sflphone_SFLphone_CallManager_hang_up (callManagerProxy, c->_callID, &error);
 
     if (error) {
-        ERROR ("Failed to call hang_up() on CallManager: %s",
-               error->message);
+        ERROR ("Failed to call hang_up() on CallManager: %s", error->message);
         g_error_free (error);
     }
 }
@@ -976,8 +809,6 @@ dbus_hang_up (const callable_obj_t * c)
 void
 dbus_hang_up_conference (const conference_obj_t * c)
 {
-    DEBUG ("DBUS: Hang up conference %s\n", c->_confID);
-
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_hang_up_conference (callManagerProxy, c->_confID, &error);
 
@@ -991,15 +822,10 @@ void
 dbus_transfert (const callable_obj_t * c)
 {
     GError *error = NULL;
-
-    DEBUG("DBUS: Transfer: %s\n", c->_callID);
-
-    org_sflphone_SFLphone_CallManager_transfert (callManagerProxy, c->_callID,
-            c->_trsft_to, &error);
+    org_sflphone_SFLphone_CallManager_transfert (callManagerProxy, c->_callID, c->_trsft_to, &error);
 
     if (error) {
-        ERROR ("Failed to call transfert() on CallManager: %s",
-               error->message);
+        ERROR ("Failed to call transfert() on CallManager: %s", error->message);
         g_error_free (error);
     }
 }
@@ -1007,15 +833,11 @@ dbus_transfert (const callable_obj_t * c)
 void
 dbus_attended_transfer (const callable_obj_t *transfer, const callable_obj_t *target)
 {
-    DEBUG("DBUS: Attended tramsfer %s to %s\n", transfer->_callID, target->_callID);
-
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_attended_transfer (callManagerProxy, transfer->_callID,
-        target->_callID, &error);
+    org_sflphone_SFLphone_CallManager_attended_transfer (callManagerProxy, transfer->_callID, target->_callID, &error);
 
     if (error) {
-        ERROR("Failed to call transfer() on CallManager: %s",
-              error->message);
+        ERROR("Failed to call transfer() on CallManager: %s", error->message);
         g_error_free(error);
     }
 }
@@ -1027,14 +849,11 @@ dbus_accept (const callable_obj_t * c)
     status_tray_icon_blink (FALSE);
 #endif
 
-    DEBUG ("DBUS: Accept call %s\n", c->_callID);
-
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_accept (callManagerProxy, c->_callID, &error);
 
     if (error) {
-        ERROR ("Failed to call accept(%s) on CallManager: %s", c->_callID,
-               (error->message == NULL ? g_quark_to_string (error->domain) : error->message));
+        ERROR ("Failed to call accept(%s) on CallManager: %s", c->_callID, error->message);
         g_error_free (error);
     }
 }
@@ -1045,15 +864,11 @@ dbus_refuse (const callable_obj_t * c)
 #if GTK_CHECK_VERSION(2,10,0)
     status_tray_icon_blink (FALSE);
 #endif
-
-    DEBUG ("DBUS: Refuse call %s\n", c->_callID);
-
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_refuse (callManagerProxy, c->_callID, &error);
 
     if (error) {
-        ERROR ("Failed to call refuse() on CallManager: %s",
-               error->message);
+        ERROR ("Failed to call refuse() on CallManager: %s", error->message);
         g_error_free (error);
     }
 }
@@ -1063,14 +878,11 @@ dbus_place_call (const callable_obj_t * c)
 {
     GError *error = NULL;
 
-    DEBUG("DBUS: Place call %s", c->_callID);
-
     org_sflphone_SFLphone_CallManager_place_call (callManagerProxy, c->_accountID,
             c->_callID, c->_peer_number, &error);
 
     if (error) {
-        ERROR ("Failed to call placeCall() on CallManager: %s",
-               error->message);
+        ERROR ("Failed to call placeCall() on CallManager: %s", error->message);
         g_error_free (error);
     }
 }

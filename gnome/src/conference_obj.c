@@ -104,6 +104,8 @@ conference_obj_t *create_new_conference_from_details (const gchar *conf_id, GHas
     // generate conference participant list
     conference_participant_list_update (participants, new_conf);
 
+    g_strfreev(participants);
+
     state_str = g_hash_table_lookup (details, "CONF_STATE");
 
     if (g_strcasecmp (state_str, "ACTIVE_ATACHED") == 0)
@@ -118,6 +120,7 @@ conference_obj_t *create_new_conference_from_details (const gchar *conf_id, GHas
         new_conf->_state = CONFERENCE_STATE_HOLD;
     else if (g_strcasecmp (state_str, "HOLD_REC") == 0)
         new_conf->_state = CONFERENCE_STATE_HOLD_RECORD;
+
 
     new_conf->_recordfile = NULL;
     new_conf->_record_is_playing = FALSE;

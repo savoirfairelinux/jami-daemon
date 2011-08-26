@@ -38,8 +38,8 @@
 #include <accountlist.h>
 #include <codeclist.h>
 #include <sflphone_const.h>
-#include <errors.h>
 #include <conference_obj.h>
+
 
 #define	UC(b)	(((int)b)&0xff)
 
