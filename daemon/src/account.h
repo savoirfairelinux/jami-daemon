@@ -59,7 +59,7 @@ enum RegistrationState {
     ErrorHost,
     ErrorExistStun,
     ErrorConfStun,
-    NumberOfState
+    NumberOfStates
 };
 
 // Account identifier
@@ -317,6 +317,7 @@ class Account : public Serializable
         void loadDefaultCodecs (void);
 
     protected:
+        static std::string mapStateNumberToString (RegistrationState state);
 
         /**
          * Account ID are assign in constructor and shall not changed

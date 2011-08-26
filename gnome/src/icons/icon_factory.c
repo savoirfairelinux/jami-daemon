@@ -33,8 +33,13 @@
 #include "icon_factory.h"
 #include "icons/pixmap_data.h"
 
-static void add_icon(GtkIconFactory *factory, const gchar *stock_id,
-		     const guint8 *icon_data)
+#include <gtk/gtkiconfactory.h>
+#include "icons/pixmap_data.h"
+#include "sflphone_const.h"
+
+static GtkIconFactory *icon_factory = NULL;
+
+void add_icon (GtkIconFactory *factory, const gchar *stock_id, const guint8 *icon_data, GtkIconSize size)
 {
     GdkPixbuf *pixbuf = gdk_pixbuf_new_from_inline(-1, icon_data, FALSE, NULL);
     assert(pixbuf);
@@ -53,27 +58,26 @@ static void add_icon(GtkIconFactory *factory, const gchar *stock_id,
     gtk_icon_set_unref(icons);
 }
 
-void init_icon_factory(void)
+void register_sflphone_stock_icons (GtkIconFactory *factory)
 {
-    GtkIconFactory *factory = gtk_icon_factory_new();
-
-    add_icon(factory, GTK_STOCK_PICKUP, gnome_stock_pickup);
-    add_icon(factory, GTK_STOCK_HANGUP, gnome_stock_hangup);
-    add_icon(factory, GTK_STOCK_DIAL, gnome_stock_dial);
-    add_icon(factory, GTK_STOCK_TRANSFER, gnome_stock_transfer);
-    add_icon(factory, GTK_STOCK_ONHOLD, gnome_stock_onhold);
-    add_icon(factory, GTK_STOCK_OFFHOLD, gnome_stock_offhold);
-    add_icon(factory, GTK_STOCK_IM, gnome_stock_im);
-    add_icon(factory, GTK_STOCK_CALL_CURRENT, gnome_stock_call_current);
-    add_icon(factory, GTK_STOCK_ADDRESSBOOK, gnome_stock_addressbook);
-    add_icon(factory, GTK_STOCK_CALLS, gnome_stock_calls);
-    add_icon(factory, GTK_STOCK_SFLPHONE, gnome_stock_sflphone);
-    add_icon(factory, GTK_STOCK_FAIL, gnome_stock_fail);
-    add_icon(factory, GTK_STOCK_USER, gnome_stock_user);
-
-    add_icon(factory, GTK_STOCK_AUDIO_CARD, audio_card);
-
-    gtk_icon_factory_add_default(factory);
+    add_icon (factory, GTK_STOCK_PICKUP, gnome_stock_pickup, GTK_ICON_SIZE_SMALL_TOOLBAR);
+    add_icon (factory, GTK_STOCK_HANGUP, gnome_stock_hangup, GTK_ICON_SIZE_SMALL_TOOLBAR);
+    add_icon (factory, GTK_STOCK_DIAL, gnome_stock_dial, GTK_ICON_SIZE_SMALL_TOOLBAR);
+    add_icon (factory, GTK_STOCK_TRANSFER, gnome_stock_transfer, GTK_ICON_SIZE_SMALL_TOOLBAR);
+    add_icon (factory, GTK_STOCK_ONHOLD, gnome_stock_onhold, GTK_ICON_SIZE_SMALL_TOOLBAR);
+    add_icon (factory, GTK_STOCK_OFFHOLD, gnome_stock_offhold, GTK_ICON_SIZE_SMALL_TOOLBAR);
+    add_icon (factory, GTK_STOCK_IM, gnome_stock_im, GTK_ICON_SIZE_SMALL_TOOLBAR);
+    add_icon (factory, GTK_STOCK_CALL_CURRENT, gnome_stock_call_current, GTK_ICON_SIZE_SMALL_TOOLBAR);
+    add_icon (factory, GTK_STOCK_ADDRESSBOOK, gnome_stock_addressbook, GTK_ICON_SIZE_SMALL_TOOLBAR);
+    add_icon (factory, GTK_STOCK_CALLS, gnome_stock_calls, GTK_ICON_SIZE_SMALL_TOOLBAR);
+    add_icon (factory, GTK_STOCK_SFLPHONE, gnome_stock_sflphone, GTK_ICON_SIZE_SMALL_TOOLBAR);
+    add_icon (factory, GTK_STOCK_FAIL, gnome_stock_fail, GTK_ICON_SIZE_SMALL_TOOLBAR);
+    add_icon (factory, GTK_STOCK_USER, gnome_stock_user, GTK_ICON_SIZE_SMALL_TOOLBAR);
 }
 
-
+void init_icon_factory (void)
+{
+    icon_factory = gtk_icon_factory_new ();
+    register_sflphone_stock_icons (icon_factory);
+    gtk_icon_factory_add_default (icon_factory);
+}

@@ -1343,7 +1343,7 @@ void calltree_display (calltab_t *tab)
 gboolean calltree_update_clock(gpointer data UNUSED)
 {
     char timestr[20];
-    char *msg = "";
+    const gchar *msg = "";
     long duration;
     callable_obj_t *c = calltab_get_selected_call (current_calls);
 

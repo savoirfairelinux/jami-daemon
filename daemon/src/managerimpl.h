@@ -44,7 +44,6 @@
 
 #include "config/config.h"
 
-#include "account.h"
 #include "call.h"
 #include "conference.h"
 #include "numbercleaner.h"
@@ -75,7 +74,7 @@ class DNSService;
 #endif
 
 class HistoryManager;
-class SIPAccount;
+class Account;
 
 /** Define a type for a AccountMap container */
 typedef std::map<std::string, Account*> AccountMap;
@@ -99,18 +98,6 @@ typedef std::map<std::string, Conference*> ConferenceCallMap;
 typedef std::map<std::string, Conference*> ConferenceMap;
 
 static std::string default_conf = "conf";
-
-static const char * mapStateToChar[] = {
-    "UNREGISTERED",
-    "TRYING",
-    "REGISTERED",
-    "ERROR",
-    "ERRORAUTH",
-    "ERRORNETWORK",
-    "ERRORHOST",
-    "ERROREXISTSTUN",
-    "ERRORCONFSTUN"
-};
 
 /** Manager (controller) of sflphone daemon */
 class ManagerImpl
@@ -905,18 +892,6 @@ class ManagerImpl
          *		      false otherwise
          */
         bool setConfig (const std::string& section, const std::string& name, int value);
-
-        std::string mapStateNumberToString (RegistrationState state) const {
-            std::string stringRepresentation;
-
-            if (state > NumberOfState) {
-                stringRepresentation = "ERROR";
-                return stringRepresentation;
-            }
-
-            stringRepresentation = mapStateToChar[state];
-            return stringRepresentation;
-        }
 
         /**
          * Get a int from the configuration tree

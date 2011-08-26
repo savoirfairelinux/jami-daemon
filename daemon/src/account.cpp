@@ -107,3 +107,23 @@ void Account::setActiveCodecs (const std::vector <std::string> &list)
     // update the codec string according to new codec selection
     codecStr_ = ManagerImpl::serialize (list);
 }
+
+std::string Account::mapStateNumberToString(RegistrationState state)
+{
+    static const char * mapStateToChar[] = {
+        "UNREGISTERED",
+        "TRYING",
+        "REGISTERED",
+        "ERROR",
+        "ERRORAUTH",
+        "ERRORNETWORK",
+        "ERRORHOST",
+        "ERROREXISTSTUN",
+        "ERRORCONFSTUN"
+    };
+
+    if (state > NumberOfStates)
+        return "ERROR";
+
+    return mapStateToChar[state];
+}

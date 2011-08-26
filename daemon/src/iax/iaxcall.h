@@ -34,13 +34,11 @@
 #include "call.h"
 #include "audio/codecs/audiocodecfactory.h"
 
-#include <iax-client.h>
-#include <frame.h>
-
 /**
  * @file: iaxcall.h
  * @brief IAXCall are IAX implementation of a normal Call
  */
+class iax_session;
 
 class IAXCall : public Call
 {
@@ -60,7 +58,7 @@ class IAXCall : public Call
         /**
          * @return iax_session* The session pointer or NULL
          */
-        struct iax_session* getSession() {
+        iax_session* getSession() const {
             return _session;
         }
 
@@ -68,7 +66,7 @@ class IAXCall : public Call
          * Set the session pointer
          * @param session the session pointer to assign
          */
-        void setSession (struct iax_session* session) {
+        void setSession (iax_session* session) {
             _session = session;
         }
 
@@ -84,7 +82,7 @@ class IAXCall : public Call
          * Get format for the voice codec used
          * @return int  Bitmask for codecs defined in iax/frame.h
          */
-        int getFormat() {
+        int getFormat() const {
             return _format;
         }
 
@@ -92,7 +90,7 @@ class IAXCall : public Call
         /**
          * @return int  The bitwise list of supported formats
          */
-        int getSupportedFormat (std::string accountID);
+        int getSupportedFormat (const std::string &accountID) const;
 
         /**
          * Return a format (int) with the first matching codec selected.
@@ -107,7 +105,7 @@ class IAXCall : public Call
          * @param needles  The format(s) (bitwise) you are looking for to match
          * @return int  The matching format, thus 0 if none matches
          */
-        int getFirstMatchingFormat (int needles, std::string accountID);
+        int getFirstMatchingFormat (int needles, const std::string &accountID) const;
 
         // AUDIO
         /**
@@ -132,7 +130,7 @@ class IAXCall : public Call
 
     private:
         /** Each call is associated with an iax_session */
-        struct iax_session* _session;
+        iax_session* _session;
 
         /**
          * Set the audio codec used.  [not protected]

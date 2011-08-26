@@ -302,7 +302,7 @@ create_main_window ()
 
     gmutex = g_mutex_new();
 
-    g_timeout_add(1000, calltree_update_clock, NULL);
+    g_timeout_add_seconds(1, calltree_update_clock, NULL);
 
     // Configuration wizard
     if (account_list_get_size () == 1) {
