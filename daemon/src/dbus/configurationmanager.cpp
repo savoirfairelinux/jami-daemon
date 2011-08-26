@@ -32,11 +32,12 @@
 
 #include "config.h"
 
-#include <configurationmanager.h>
+#include "configurationmanager.h"
 #include <sstream>
 #include "config.h"
 #include "../manager.h"
 #include "sip/sipvoiplink.h"
+#include "account.h"
 #include "sip/sipaccount.h"
 
 const char* ConfigurationManager::SERVER_PATH =
@@ -55,7 +56,7 @@ ConfigurationManager::ConfigurationManager (DBus::Connection& connection) :
 std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails (void)
 {
     std::map<std::string, std::string> ip2ipAccountDetails;
-    SIPAccount *sipaccount = (SIPAccount *) Manager::instance().getAccount (IP2IP_PROFILE);
+    SIPAccount *sipaccount = static_cast<SIPAccount *>(Manager::instance().getAccount (IP2IP_PROFILE));
     if (!sipaccount) {
         _error ("ConfigurationManager: could not find account");
         return ip2ipAccountDetails;

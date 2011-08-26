@@ -30,6 +30,7 @@
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <map>
+#include "account.h"
 #include "accounttest.h"
 #include "manager.h"
 #include "logger.h"

@@ -30,8 +30,8 @@
  */
 
 #include "iaxcall.h"
+#include "account.h"
 #include "manager.h"
-#include "global.h" // for _debug
 
 IAXCall::IAXCall (const std::string& id, Call::CallType type) : Call (id, type), _session (NULL)
 {
@@ -85,25 +85,22 @@ IAXCall::setFormat (int format)
 
 
 int
-IAXCall::getSupportedFormat (std::string accountID)
+IAXCall::getSupportedFormat (const std::string &accountID) const
 {
     CodecOrder map;
-    int format = 0;
-    unsigned int iter;
-    Account *account;
 
     _info ("IAX get supported format: ");
 
-    account = Manager::instance().getAccount (accountID);
+    Account *account = Manager::instance().getAccount (accountID);
 
-    if (account != NULL) {
+    if (account)
         map = account->getActiveCodecs();
-    } else {
+    else
         _error ("No IAx account could be found");
-    }
 
-    for (iter=0 ; iter < map.size() ; iter++) {
-        switch (map[iter]) {
+    int format = 0;
+    for (size_t i = 0; i != map.size() ; ++i) {
+        switch (map[i]) {
 
             case PAYLOAD_CODEC_ULAW:
                 _info ("PCMU ");
@@ -136,20 +133,17 @@ IAXCall::getSupportedFormat (std::string accountID)
     }
 
     return format;
-
 }
 
-int IAXCall::getFirstMatchingFormat (int needles, std::string accountID)
+int IAXCall::getFirstMatchingFormat (int needles, const std::string &accountID) const
 {
-
-    Account *account;
     CodecOrder map;
     int format = 0;
     unsigned int iter;
 
     _debug ("IAX get first matching codec: ");
 
-    account = Manager::instance().getAccount (accountID);
+    Account *account = Manager::instance().getAccount (accountID);
 
     if (account != NULL) {
         map = account->getActiveCodecs();
@@ -159,7 +153,6 @@ int IAXCall::getFirstMatchingFormat (int needles, std::string accountID)
 
     for (iter=0 ; iter < map.size() ; iter++) {
         switch (map[iter]) {
-
             case PAYLOAD_CODEC_ULAW:
                 _debug ("PCMU");
                 format = AST_FORMAT_ULAW;

@@ -468,7 +468,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
         registrationStateDescription = registrationStateDetailed_.second;
     }
 
-    a[REGISTRATION_STATUS] = (accountID_ == IP2IP_PROFILE) ? "READY": Manager::instance().mapStateNumberToString (state);
+    a[REGISTRATION_STATUS] = (accountID_ == IP2IP_PROFILE) ? "READY": mapStateNumberToString (state);
     a[REGISTRATION_STATE_CODE] = registrationStateCode;
     a[REGISTRATION_STATE_DESCRIPTION] = registrationStateDescription;
 
