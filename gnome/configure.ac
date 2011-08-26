@@ -23,7 +23,7 @@ else
 	CFLAGS="$CFLAGS -Wall -Wextra"
 fi
 
-AC_PROG_CC
+AC_PROG_CC_C99
 AM_PROG_CC_C_O dnl for per target flags, i.e. test_program_CFLAGS
 AC_PROG_INSTALL
 AC_HEADER_STDC

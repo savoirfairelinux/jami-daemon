@@ -227,8 +227,8 @@ gchar *serialize_history_conference_entry(conference_obj_t *entry)
 
     confID = entry->_confID;
 
-    time_start = convert_timestamp_to_gchar(entry->_time_start);
-    time_stop = convert_timestamp_to_gchar(entry->_time_stop);
+    time_start = g_strdup_printf ("%i", (int) entry->_time_start);
+    time_stop = g_strdup_printf ("%i", (int) entry->_time_stop);
 
     peer_name = (entry->_confID == NULL || g_strcasecmp(entry->_confID, "") == 0) ? "empty": entry->_confID;
 
@@ -314,8 +314,8 @@ conference_obj_t *create_conference_history_entry_from_serialized(gchar *entry)
     // create a new empty conference
     conference_obj_t *conf = create_new_conference(state, confID);
 
-    conf->_time_start = convert_gchar_to_timestamp(time_start);
-    conf->_time_stop = convert_gchar_to_timestamp(time_stop);
+    conf->_time_start = atoi(time_start);
+    conf->_time_stop = atoi(time_stop);
     conf->_recordfile = g_strdup(recordfile);
 
     return conf;

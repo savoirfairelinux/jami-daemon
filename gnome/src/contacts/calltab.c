@@ -40,7 +40,9 @@ calltab_t* calltab_init (gboolean searchbar_type, gchar *name)
     ret->_name = g_strdup (name);
 
     calltree_create (ret, searchbar_type);
-    calllist_init (ret);
+
+    ret->callQueue = g_queue_new ();
+    ret->selectedCall = NULL;
 
     return ret;
 }
@@ -82,18 +84,6 @@ conference_obj_t*
 calltab_get_selected_conf (calltab_t *tab)
 {
     return tab->selectedConf;
-}
-
-void
-calltab_unselect_all(calltab_t *tab) 
-{
-    if(tab == NULL) {
-        ERROR("CallTab: Tab is NULL");
-	return;
-    }
-
-    tab->selectedCall = NULL;
-    tab->selectedConf = NULL;
 }
 
 void

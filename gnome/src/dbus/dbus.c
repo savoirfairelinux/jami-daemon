@@ -136,12 +136,10 @@ new_call_created_cb (DBusGProxy *proxy UNUSED, const gchar *accountID,
     callable_obj_t *c = create_new_call(CALL, CALL_STATE_RINGING, callID, accountID,
 			peer_name, peer_number);
 
-    set_timestamp(&c->_time_start);
+    time(&c->_time_start);
 
     calllist_add_call(current_calls, c);
-    calllist_add_call(history, c);
     calltree_add_call(current_calls, c, NULL);
-    calltree_add_call(history, c, NULL);
 
     update_actions();
     calltree_display(current_calls);
@@ -151,26 +149,21 @@ static void
 incoming_call_cb (DBusGProxy *proxy UNUSED, const gchar* accountID,
                   const gchar* callID, const gchar* from, void * foo  UNUSED)
 {
-    callable_obj_t * c;
-    gchar *peer_name, *peer_number;
-    
-    DEBUG ("DBus: Incoming call (%s) from %s", callID, from);
-
     // We receive the from field under a formatted way. We want to extract the number and the name of the caller
-    peer_name = call_get_peer_name (from);
-    peer_number = call_get_peer_number (from);
+    gchar *peer_name = call_get_peer_name (from);
+    gchar *peer_number = call_get_peer_number (from);
 
-    DEBUG ("DBus incoming peer name: %s", peer_name);
-    DEBUG ("DBus incoming peer number: %s", peer_number);
+    DEBUG ("DBus: Incoming call (%s) from %s (%s : %s)", callID, from, peer_name, peer_number);
 
-    c = create_new_call (CALL, CALL_STATE_INCOMING, callID, accountID, peer_name,
-                     peer_number);
+    callable_obj_t *c = create_new_call (CALL, CALL_STATE_INCOMING, callID, accountID, peer_name, peer_number);
+
+    g_free(peer_number);
+
 #if GTK_CHECK_VERSION(2,10,0)
     status_tray_icon_blink (TRUE);
     popup_main_window();
 #endif
 
-    set_timestamp (&c->_time_start);
     notify_incoming_call (c);
     sflphone_incoming_call (c);
 }
@@ -257,15 +250,11 @@ call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state
 {
     DEBUG ("DBUS: Call %s state %s",callID, state);
     callable_obj_t *c = calllist_get_call (current_calls, callID);
-    if(c == NULL) {
-	ERROR("DBUS: Error: Call is NULL in ");
-    }
-
     if (c) {
         if (g_strcmp0 (state, "HUNGUP") == 0) {
             if (c->_state == CALL_STATE_CURRENT) {
                 // peer hung up, the conversation was established, so _stop has been initialized with the current time value
-                set_timestamp (&c->_time_stop);
+                time(&c->_time_stop);
                 calltree_update_call (history, c, NULL);
             }
 
@@ -291,33 +280,25 @@ call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state
             sflphone_busy (c);
         }
     } else {
+        ERROR("DBUS: Error: Call is NULL in %s", __func__);
+
         // The callID is unknow, threat it like a new call
         // If it were an incoming call, we won't be here
         // It means that a new call has been initiated with an other client (cli for instance)
         if ((g_strcmp0 (state, "RINGING")) == 0 ||
             (g_strcmp0 (state, "CURRENT")) == 0 ||
             (g_strcmp0 (state, "RECORD"))) {
-            GHashTable *call_details;
-            gchar *type;
 
             DEBUG ("DBUS: New ringing call! accountID: %s", callID);
 
             // We fetch the details associated to the specified call
-            call_details = dbus_get_call_details (callID);
+            GHashTable *call_details = dbus_get_call_details (callID);
             callable_obj_t *new_call = create_new_call_from_details (callID, call_details);
 
-            // Restore the callID to be synchronous with the daemon
-            new_call->_callID = g_strdup (callID);
-            type = g_hash_table_lookup (call_details, "CALL_TYPE");
-
-            if (g_strcasecmp (type, "0") == 0) {
-                new_call->_history_state = INCOMING;
-            } else {
-                new_call->_history_state = OUTGOING;
-            }
+            new_call->_history_state = (g_strcasecmp (g_hash_table_lookup (call_details, "CALL_TYPE"), "0") == 0)
+                      ? INCOMING : OUTGOING;
 
             calllist_add_call (current_calls, new_call);
-            calllist_add_call (history, new_call);
             calltree_add_call (current_calls, new_call, NULL);
             update_actions();
             calltree_display (current_calls);
@@ -418,7 +399,7 @@ conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
         callable_obj_t *call = calllist_get_call (current_calls, call_id);
 
         // set when this call have been added to the conference
-        set_timestamp(&call->_time_added);
+        time(&call->_time_added);
 
         // if a text widget is already created, disable it, use conference widget instead
         if (call->_im_widget)
@@ -432,7 +413,7 @@ conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
         call->_historyConfID = g_strdup (confID);
     }
 
-    set_timestamp(&new_conf->_time_start);
+    time(&new_conf->_time_start);
 
     conferencelist_add (current_calls, new_conf);
     conferencelist_add (history, new_conf);
@@ -657,10 +638,8 @@ confirm_go_clear_cb (DBusGProxy *proxy UNUSED, const gchar* callID, void * foo  
     DEBUG ("DBUS: Confirm Go Clear request");
 
     callable_obj_t * c = calllist_get_call (current_calls, callID);
-
-    if (c) {
-        sflphone_confirm_go_clear (c);
-    }
+    if (c)
+        main_window_confirm_go_clear (c);
 }
 
 static void
@@ -670,7 +649,7 @@ zrtp_not_supported_cb (DBusGProxy *proxy UNUSED, const gchar* callID, void * foo
     callable_obj_t * c = calllist_get_call (current_calls, callID);
 
     if (c) {
-        sflphone_srtp_zrtp_not_supported (c);
+        main_window_zrtp_not_supported (c);
         notify_zrtp_not_supported (c);
     }
 }

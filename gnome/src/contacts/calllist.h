@@ -73,10 +73,6 @@ void calllist_add_history_call (callable_obj_t *obj);
 
 void calllist_add_history_conference (conference_obj_t *obj);
 
-/** This function initialize a call list. */
-void
-calllist_init (calltab_t* tab);
-
 /** This function empty and free the call list. */
 void
 calllist_clean (calltab_t* tab);

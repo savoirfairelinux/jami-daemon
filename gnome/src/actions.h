@@ -58,9 +58,8 @@ gboolean sflphone_init () ;
 
 /**
  * Steps when closing the application.  Will ask for confirmation if a call is in progress.
- * @return TRUE if the user wants to quit, FALSE otherwise.
  */
-gboolean sflphone_quit () ;
+void sflphone_quit () ;
 
 /**
  * Hang up / refuse the current call
@@ -172,7 +171,7 @@ void sflphone_fill_ip2ip_profile (void);
  * @return The internal hash table representing
  * the settings for the ip2ip profile.
  */
-void sflphone_get_ip2ip_properties (GHashTable **properties);
+GHashTable *sflphone_get_ip2ip_properties(void);
 
 /**
  * Initialize the accounts data structure
@@ -264,24 +263,6 @@ void sflphone_srtp_zrtp_off (callable_obj_t * c);
 void sflphone_srtp_zrtp_show_sas (callable_obj_t * c, const gchar* sas, const gboolean verified);
 
 /**
- * Called when the remote peer does not support ZRTP
- * @param c* The current call
- */
-void sflphone_srtp_zrtp_not_supported (callable_obj_t * c);
-
-/**
- * Called when user wants to confirm go clear request.
- * @param c* The call to confirm the go clear request.
- */
-void sflphone_set_confirm_go_clear (callable_obj_t * c);
-
-/**
- * Called when user wants to confirm go clear request.
- * @param c* The call to confirm the go clear request.
- */
-void sflphone_confirm_go_clear (callable_obj_t * c);
-
-/**
  * Called when user wants to clear.
  * @param c* The call on which to go clear
  */
@@ -313,7 +294,5 @@ sflphone_srtp_sdes_off (callable_obj_t * c);
 void sflphone_fill_conference_list (void);
 
 void sflphone_conference_on_hold (const conference_obj_t * c);
-
-void sflphone_conference_hang_up();
 
 #endif

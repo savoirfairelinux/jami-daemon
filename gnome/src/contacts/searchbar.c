@@ -76,22 +76,16 @@ void searchbar_entry_changed (GtkEntry* entry UNUSED, gchar* arg1 UNUSED, gpoint
         // Search made only when text entry is activated
         // addressbook_search (entry);
     } else if (active_calltree == history) {
-        history_search (HistorySearchType);
+        history_search();
     }
 }
 
 static void cbox_changed_cb (GtkWidget *widget, gpointer user_data UNUSED)
 {
-    gchar *name;
-
-    DEBUG ("Searchbar: Addressbook changed callback");
-
-    name = gtk_combo_box_get_active_text (GTK_COMBO_BOX (widget));
-
     if(abookfactory_is_addressbook_loaded()) {
         DEBUG("Searchbar: Set new addressbook");
         AddrBookFactory *factory = abookfactory_get_factory();
-        factory->addrbook->set_current_book (name);
+        factory->addrbook->set_current_book (gtk_combo_box_get_active_text (GTK_COMBO_BOX (widget)));
         AddressBook_Config *addressbook_config;
         addressbook_config_load_parameters(&addressbook_config);
         factory->addrbook->search(factory->addrbook, GTK_ENTRY(addressbookentry), addressbook_config);
@@ -105,18 +99,15 @@ void set_focus_on_addressbook_searchbar ()
 
 void update_searchbar_addressbook_list()
 {
-    gint count;
     GtkTreeIter iter, activeIter;
     gchar *activeText;
     GSList *book_list_iterator;
     book_data_t *book_data;
     GSList *books_data = NULL;
-    gchar **book_list;
 
     if(abookfactory_is_addressbook_loaded()) {
         AddrBookFactory *factory = abookfactory_get_factory();
-        book_list = dbus_get_addressbook_list();
-        books_data = factory->addrbook->get_books_data(book_list);
+        books_data = factory->addrbook->get_books_data(dbus_get_addressbook_list());
     }
 
     if(books_data == NULL) {
@@ -138,7 +129,6 @@ void update_searchbar_addressbook_list()
     gtk_list_store_clear (liststore);
 
     // Populate menu
-    count = 0;
     gboolean activeIsSet = FALSE;
 
     for (book_list_iterator = books_data; book_list_iterator != NULL; book_list_iterator
@@ -155,8 +145,6 @@ void update_searchbar_addressbook_list()
                 activeIter = iter;
                 activeIsSet = TRUE;
             }
-
-            count++;
         }
     }
 
@@ -217,7 +205,7 @@ static void search_all (GtkWidget *item UNUSED, GtkEntry  *entry)
                                              _ ("Search all"),
                                              _ ("Click here to change the search type")));
 
-    history_search (HistorySearchType);
+    history_search();
 }
 
 static void search_by_missed (GtkWidget *item UNUSED, GtkEntry  *entry)
@@ -229,7 +217,7 @@ static void search_by_missed (GtkWidget *item UNUSED, GtkEntry  *entry)
                                      g_markup_printf_escaped ("%s\n%s",
                                              _ ("Search by missed call"),
                                              _ ("Click here to change the search type")));
-    history_search (HistorySearchType);
+    history_search();
 }
 
 static void search_by_incoming (GtkWidget *item UNUSED, GtkEntry *entry)
@@ -241,7 +229,7 @@ static void search_by_incoming (GtkWidget *item UNUSED, GtkEntry *entry)
                                      g_markup_printf_escaped ("%s\n%s",
                                              _ ("Search by incoming call"),
                                              _ ("Click here to change the search type")));
-    history_search (HistorySearchType);
+    history_search();
 }
 
 static void search_by_outgoing (GtkWidget *item UNUSED, GtkEntry  *entry)
@@ -253,7 +241,7 @@ static void search_by_outgoing (GtkWidget *item UNUSED, GtkEntry  *entry)
                                      g_markup_printf_escaped ("%s\n%s",
                                              _ ("Search by outgoing call"),
                                              _ ("Click here to change the search type")));
-    history_search (HistorySearchType);
+    history_search();
 }
 
 static void icon_press_cb (GtkEntry *entry, gint position, GdkEventButton *event, gpointer data UNUSED)
@@ -322,18 +310,6 @@ focus_on_searchbar_in()
     DEBUG ("Searchbar: Set focus on search bar");
     // gtk_widget_grab_focus(GTK_WIDGET(sw));
     focus_is_on_searchbar = TRUE;
-}
-
-void searchbar_init (calltab_t *tab)
-{
-    if (g_strcasecmp (tab->_name, CONTACTS) == 0) {
-    }
-    else if (g_strcasecmp (tab->_name, HISTORY) == 0) {
-        history_init();
-    }
-    else {
-        ERROR ("searchbar.c - searchbar_init should not happen within this widget\n");
-    }
 }
 
 GtkWidget* history_searchbar_new (void)
@@ -559,4 +535,3 @@ SearchType get_current_history_search_type (void)
 {
     return HistorySearchType;
 }
-
