@@ -139,9 +139,7 @@ new_call_created_cb (DBusGProxy *proxy UNUSED, const gchar *accountID,
     time(&c->_time_start);
 
     calllist_add_call(current_calls, c);
-    calllist_add_call(history, c);
     calltree_add_call(current_calls, c, NULL);
-    calltree_add_call(history, c, NULL);
 
     update_actions();
     calltree_display(current_calls);
@@ -252,10 +250,6 @@ call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state
 {
     DEBUG ("DBUS: Call %s state %s",callID, state);
     callable_obj_t *c = calllist_get_call (current_calls, callID);
-    if(c == NULL) {
-	ERROR("DBUS: Error: Call is NULL in ");
-    }
-
     if (c) {
         if (g_strcmp0 (state, "HUNGUP") == 0) {
             if (c->_state == CALL_STATE_CURRENT) {
@@ -286,33 +280,25 @@ call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state
             sflphone_busy (c);
         }
     } else {
+        ERROR("DBUS: Error: Call is NULL in %s", __func__);
+
         // The callID is unknow, threat it like a new call
         // If it were an incoming call, we won't be here
         // It means that a new call has been initiated with an other client (cli for instance)
         if ((g_strcmp0 (state, "RINGING")) == 0 ||
             (g_strcmp0 (state, "CURRENT")) == 0 ||
             (g_strcmp0 (state, "RECORD"))) {
-            GHashTable *call_details;
-            gchar *type;
 
             DEBUG ("DBUS: New ringing call! accountID: %s", callID);
 
             // We fetch the details associated to the specified call
-            call_details = dbus_get_call_details (callID);
+            GHashTable *call_details = dbus_get_call_details (callID);
             callable_obj_t *new_call = create_new_call_from_details (callID, call_details);
 
-            // Restore the callID to be synchronous with the daemon
-            new_call->_callID = g_strdup (callID);
-            type = g_hash_table_lookup (call_details, "CALL_TYPE");
-
-            if (g_strcasecmp (type, "0") == 0) {
-                new_call->_history_state = INCOMING;
-            } else {
-                new_call->_history_state = OUTGOING;
-            }
+            new_call->_history_state = (g_strcasecmp (g_hash_table_lookup (call_details, "CALL_TYPE"), "0") == 0)
+                      ? INCOMING : OUTGOING;
 
             calllist_add_call (current_calls, new_call);
-            calllist_add_call (history, new_call);
             calltree_add_call (current_calls, new_call, NULL);
             update_actions();
             calltree_display (current_calls);

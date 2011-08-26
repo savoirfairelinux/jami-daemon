@@ -329,13 +329,8 @@ void sflphone_fill_account_list (void)
 
 gboolean sflphone_init (GError **error)
 {
-    if (!dbus_connect (error)) {
+    if (!dbus_connect (error) || !dbus_register (getpid (), "Gtk+ Client", error))
         return FALSE;
-    }
-
-    if (!dbus_register (getpid (), "Gtk+ Client", error)) {
-        return FALSE;
-    }
 
     abookfactory_init_factory();
 
@@ -616,19 +611,16 @@ sflphone_display_transfer_status (const gchar* message)
 void
 sflphone_incoming_call (callable_obj_t * c)
 {
-    gchar *msg = "";
-
     c->_history_state = MISSED;
     calllist_add_call (current_calls, c);
-    calllist_add_call (history, c);
     calltree_add_call (current_calls, c, NULL);
-    calltree_add_call (history, c, NULL);
+
     update_actions();
     calltree_display (current_calls);
 
     // Change the status bar if we are dealing with a direct SIP call
     if (_is_direct_call (c)) {
-        msg = g_markup_printf_escaped (_ ("Direct SIP call"));
+        gchar *msg = g_markup_printf_escaped (_ ("Direct SIP call"));
         statusbar_pop_message (__MSG_ACCOUNT_DEFAULT);
         statusbar_push_message (msg , NULL, __MSG_ACCOUNT_DEFAULT);
         g_free (msg);
@@ -853,25 +845,14 @@ sflphone_keypad (guint keyval, gchar * key)
     }
 }
 
-static int _place_direct_call (const callable_obj_t * c)
+static void place_direct_call (const callable_obj_t * c)
 {
-    if (c->_state == CALL_STATE_DIALING) {
-        dbus_place_call (c);
-    } else {
-        return -1;
-    }
-
-    return 0;
+    assert(c->_state == CALL_STATE_DIALING);
 }
 
-static int _place_registered_call (callable_obj_t * c)
+static int place_registered_call (callable_obj_t * c)
 {
     account_t * current = NULL;
-
-    if (c == NULL) {
-        DEBUG ("Actions: Callable_obj_t is NULL in _place_registered_call");
-        return -1;
-    }
 
     if (c->_state != CALL_STATE_DIALING)
         return -1;
@@ -927,82 +908,47 @@ static int _place_registered_call (callable_obj_t * c)
 
     c->_history_state = OUTGOING;
 
-    calllist_add_call (history, c);
-    calltree_add_call (history, c, NULL);
-
     return 0;
 }
 
 void
 sflphone_place_call (callable_obj_t * c)
 {
-    gchar *msg = "";
-
-    if (c == NULL) {
-        DEBUG ("Actions: Unexpected condition: callable_obj_t is null in %s at %d", __FILE__, __LINE__);
-        return;
-    }
-
     DEBUG ("Actions: Placing call with %s @ %s and accountid %s", c->_peer_name, c->_peer_number, c->_accountID);
 
     if (_is_direct_call (c)) {
-        msg = g_markup_printf_escaped (_ ("Direct SIP call"));
+        gchar *msg = g_markup_printf_escaped (_ ("Direct SIP call"));
         statusbar_pop_message (__MSG_ACCOUNT_DEFAULT);
         statusbar_push_message (msg , NULL, __MSG_ACCOUNT_DEFAULT);
         g_free (msg);
 
-        if (_place_direct_call (c) < 0) {
-            DEBUG ("An error occured while placing direct call in %s at %d", __FILE__, __LINE__);
-            return;
-        }
-    } else {
-        if (_place_registered_call (c) < 0) {
-            DEBUG ("An error occured while placing registered call in %s at %d", __FILE__, __LINE__);
-            return;
-        }
-    }
+        place_direct_call (c);
+    } else if (place_registered_call (c) < 0)
+        DEBUG ("An error occured while placing registered call in %s at %d", __FILE__, __LINE__);
 }
 
 
 void
 sflphone_detach_participant (const gchar* callID)
 {
-    DEBUG ("Action: Detach participant from conference");
+    callable_obj_t * selectedCall;
+    if (callID == NULL)
+        selectedCall = calltab_get_selected_call (current_calls);
+    else
+        selectedCall = calllist_get_call (current_calls, callID);
 
-    if (callID == NULL) {
-        callable_obj_t * selectedCall = calltab_get_selected_call (current_calls);
-        DEBUG ("Action: Detach participant %s", selectedCall->_callID);
+    DEBUG ("Action: Detach participant %s", selectedCall->_callID);
 
-        if (selectedCall->_confID) {
-            g_free (selectedCall->_confID);
-            selectedCall->_confID = NULL;
-        }
-
-        // Instant messaging widget should have been deactivated during the conference
-        if (selectedCall->_im_widget)
-            im_widget_update_state (IM_WIDGET (selectedCall->_im_widget), TRUE);
-
-        calltree_remove_call (current_calls, selectedCall, NULL);
-        calltree_add_call (current_calls, selectedCall, NULL);
-        dbus_detach_participant (selectedCall->_callID);
-    } else {
-        callable_obj_t * selectedCall = calllist_get_call (current_calls, callID);
-        DEBUG ("Action: Darticipant %s", callID);
-
-        if (selectedCall->_confID) {
-            g_free (selectedCall->_confID);
-            selectedCall->_confID = NULL;
-        }
-
-        // Instant messagin widget should have been deactivated during the conference
-        if (selectedCall->_im_widget)
-            im_widget_update_state (IM_WIDGET (selectedCall->_im_widget), TRUE);
-
-        calltree_remove_call (current_calls, selectedCall, NULL);
-        calltree_add_call (current_calls, selectedCall, NULL);
-        dbus_detach_participant (callID);
+    if (selectedCall->_confID) {
+        g_free (selectedCall->_confID);
+        selectedCall->_confID = NULL;
     }
-
+    // Instant messaging widget should have been deactivated during the conference
+    if (selectedCall->_im_widget)
+        im_widget_update_state (IM_WIDGET (selectedCall->_im_widget), TRUE);
+    calltree_remove_call (current_calls, selectedCall, NULL);
+    calltree_add_call (current_calls, selectedCall, NULL);
+    dbus_detach_participant (selectedCall->_callID);
 }
 
 void

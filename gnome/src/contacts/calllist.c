@@ -36,25 +36,11 @@
 static
 gint is_callID_callstruct(gconstpointer a, gconstpointer b)
 {
-    QueueElement *c = (QueueElement *) a;
-    callable_obj_t *call;
-
-    if(c == NULL) {
-        return 1;
-    }
-
-    if(c->type != HIST_CALL) {
+    const QueueElement *c = a;
+    if(c == NULL || c->type != HIST_CALL)
 	return 1;
-    }
-    
-    call = c->elem.call;
 
-    if(g_strcasecmp(call->_callID, (const gchar *) b) == 0) {
-        return 0;
-    }
-    else {
-	return 1;	
-    }
+    return g_strcasecmp(c->elem.call->_callID, (const gchar *) b);
 }
 
 // TODO : sflphoneGTK : try to do this more generic
@@ -93,13 +79,6 @@ void calllist_add_contact (gchar *contact_name, gchar *contact_phone, contact_ty
     calltree_add_call (contacts, new_call, NULL);
 }
 
-void
-calllist_init (calltab_t* tab)
-{
-    tab->callQueue = g_queue_new ();
-    tab->selectedCall = NULL;
-}
-
 /*
  * Function passed to calllist_clean to free every QueueElement.
  */
@@ -130,10 +109,8 @@ calllist_reset (calltab_t* tab)
 
 void calllist_add_history_call (callable_obj_t *obj)
 {
-    QueueElement *element;  
-
     if (eel_gconf_get_integer (HISTORY_ENABLED)) {
-        element = (QueueElement *)malloc(sizeof(QueueElement));
+        QueueElement *element = malloc(sizeof(QueueElement));
 	element->type = HIST_CALL;
 	element->elem.call = obj;  
         g_queue_push_tail (history->callQueue, (gpointer) element);
@@ -143,10 +120,8 @@ void calllist_add_history_call (callable_obj_t *obj)
 
 void calllist_add_history_conference(conference_obj_t *obj)
 {
-    QueueElement *element;
-
     if(eel_gconf_get_integer (HISTORY_ENABLED)) {
-	element = (QueueElement *)malloc(sizeof(QueueElement));
+        QueueElement *element = malloc(sizeof(QueueElement));
 	element->type = HIST_CONFERENCE;
 	element->elem.conf = obj;
         g_queue_push_tail (history->callQueue, (gpointer) element);
@@ -157,11 +132,9 @@ void calllist_add_history_conference(conference_obj_t *obj)
 void
 calllist_add_call (calltab_t* tab, callable_obj_t * c)
 {
-    QueueElement *element;
-
     DEBUG("Calllist: Add Call %s", c->_callID);
 
-    element = (QueueElement *)malloc(sizeof(QueueElement));
+    QueueElement *element = malloc(sizeof(QueueElement));
     element->type = HIST_CALL;
     element->elem.call = c;
     g_queue_push_tail (tab->callQueue, (gpointer) element);
@@ -170,12 +143,8 @@ calllist_add_call (calltab_t* tab, callable_obj_t * c)
 void
 calllist_clean_history (void)
 {
-    guint i;
     guint size = calllist_get_size (history);
-
-    DEBUG ("CallList: History list size %d", size);
-
-    for (i = 0 ; i < size; i++) {
+    for (guint i = 0 ; i < size; i++) {
         QueueElement* c = calllist_get_nth (history , i);
 	if(c->type == HIST_CALL) {
             calltree_remove_call (history, c->elem.call, NULL);
@@ -189,36 +158,34 @@ calllist_clean_history (void)
     calllist_reset (history);
 }
 
-// TODO : sflphoneGTK : try to do this more generic
 void
 calllist_remove_from_history (callable_obj_t* c)
 {
     calllist_remove_call (history, c->_callID);
     calltree_remove_call (history, c, NULL);
-    DEBUG ("CallList: Size of history = %d" , calllist_get_size (history));
 }
 
 void
 calllist_remove_call (calltab_t* tab, const gchar * callID)
 {
-    QueueElement *element;
-    GList *c;
-    
     DEBUG("CallList: Remove call %s from list", callID);
 
-    c = g_queue_find_custom (tab->callQueue, callID, is_callID_callstruct);
+    GList *c = g_queue_find_custom (tab->callQueue, callID, is_callID_callstruct);
     if(c == NULL) {
         DEBUG("CallList: Could not remove call %s", callID);
     	return;
     }
 
-    element = (QueueElement *)c->data;
+    QueueElement *element = (QueueElement *)c->data;
     if(element->type != HIST_CALL) {
         ERROR("CallList: Error: Element %s is not a call", callID);
         return;
     }
 
     g_queue_remove (tab->callQueue, element);
+
+    calllist_add_call (history, element->elem.call);
+    calltree_add_call (history, element->elem.call, NULL);
 }
 
 
@@ -226,13 +193,7 @@ callable_obj_t *
 calllist_get_by_state (calltab_t* tab, call_state_t state)
 {
     GList * c = g_queue_find_custom (tab->callQueue, &state, get_state_callstruct);
-
-    if (c) {
-        return (callable_obj_t *) c->data;
-    } else {
-        return NULL;
-    }
-
+    return c ? c->data : NULL;
 }
 
 guint
@@ -250,9 +211,6 @@ calllist_get_nth (calltab_t* tab, guint n)
 callable_obj_t *
 calllist_get_call (calltab_t* tab, const gchar * callID)
 {
-    QueueElement *element;
-    callable_obj_t *call;
- 
     DEBUG("CallList: Get call: %s", callID);
     
     GList * c = g_queue_find_custom (tab->callQueue, callID, is_callID_callstruct);
@@ -261,13 +219,11 @@ calllist_get_call (calltab_t* tab, const gchar * callID)
         return NULL;
     }
 
-    element = (QueueElement *)c->data;
+    QueueElement *element = c->data;
     if(element->type != HIST_CALL) {
 	ERROR("CallList: Error: Element %s is not a call", callID);
 	return NULL;
     }
 
-    call = element->elem.call;
-
-    return call;
+    return element->elem.call;
 }
