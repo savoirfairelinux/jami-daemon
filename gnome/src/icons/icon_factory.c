@@ -39,7 +39,7 @@
 
 static GtkIconFactory *icon_factory = NULL;
 
-void add_icon (GtkIconFactory *factory, const gchar *stock_id, const guint8 *icon_data, GtkIconSize size)
+void add_icon (GtkIconFactory *factory, const gchar *stock_id, const guint8 *icon_data, GtkIconSize size UNUSED)
 {
     GdkPixbuf *pixbuf = gdk_pixbuf_new_from_inline(-1, icon_data, FALSE, NULL);
     assert(pixbuf);
