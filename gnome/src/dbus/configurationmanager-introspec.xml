@@ -279,7 +279,7 @@
 
 	   <!--      ///////////////////////               -->
 
-	   <!-- Audio Codecs-related methods -->
+	   <!-- Codecs-related methods -->
 
 	   <method name="getAudioCodecList" tp:name-for-bindings="getAudioCodecList">
 		   <tp:docstring>
@@ -575,7 +575,7 @@
 		   </arg>
 	   </method>
 
-       <method name="getNoiseSuppressState" tp:name-for-bindings="getNoiseSuppressState">
+       <method name="getEchoCancelState" tp:name-for-bindings="getNoiseSuppressState">
 	           <tp:docstring>
 		   </tp:docstring>
 		   <arg type="s" name="state" direction="out">
@@ -584,26 +584,10 @@
 		   </arg>
 	   </method>
 
-	   <method name="setNoiseSuppressState" tp:name-for-bindings="setNoiseSuppressState">
+	   <method name="setEchoCancelState" tp:name-for-bindings="setEchoCancelState">
 	           <arg type="s" name="state" direction="in">
-	           <tp:docstring>
-               </tp:docstring>
 	           </arg>
 	   </method>
-
-       <method name="getEchoCancelState" tp:name-for-bindings="getEchoCancelState">
-               <tp:docstring>
-               </tp:docstring>
-               <arg type="s" name="state" direction="out">
-                       <tp:docstring>
-                       </tp:docstring>
-               </arg>
-       </method>
-
-       <method name="setEchoCancelState" tp:name-for-bindings="setEchoCancelState">
-               <arg type="s" name="state" direction="in">
-               </arg>
-       </method>
 
 	   <method name="setEchoCancelTailLength" tp:name-for-bindings="setEchoCancelTailLength">
 	           <tp:docstring>
@@ -666,33 +650,51 @@
 		   </arg>
 	   </method>
 
-       <method name="getActiveVideoCodecList" tp:name-for-bindings="getActiveVideoCodecList">
-               <tp:docstring>
-               </tp:docstring>
-               <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
-               <arg type="s" name="accountID" direction="in">
-                       <tp:docstring>
-                       </tp:docstring>
-               </arg>
-               <arg type="as" name="list" direction="out">
-                       <tp:docstring>
-                       </tp:docstring>
-               </arg>
-       </method>
+	   <method name="getActiveVideoCodecList" tp:name-for-bindings="getActiveVideoCodecList">
+		   <tp:docstring>
+		   </tp:docstring>
+		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+		   <arg type="s" name="accountID" direction="in">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+		   <arg type="as" name="list" direction="out">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+	   </method>
 
-       <method name="setActiveVideoCodecList" tp:name-for-bindings="setActiveVideoCodecList">
-               <tp:docstring>
-               </tp:docstring>
-               <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="VectorString"/>
-               <arg type="as" name="list" direction="in">
-                       <tp:docstring>
-                       </tp:docstring>
-               </arg>
-               <arg type="s" name="accountID" direction="in">
-                       <tp:docstring>
-                       </tp:docstring>
-               </arg>
-       </method>
+	   <method name="setActiveVideoCodecList" tp:name-for-bindings="setActiveVideoCodecList">
+		   <tp:docstring>
+		   </tp:docstring>
+		   <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="VectorString"/>
+		   <arg type="as" name="list" direction="in">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+		   <arg type="s" name="accountID" direction="in">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+	   </method>
+
+
+	   <!--    General Settings Panel         -->
+
+
+	   <method name="getNoiseSuppressState" tp:name-for-bindings="getEchoCancelState">
+	           <tp:docstring>
+		   </tp:docstring>
+		   <arg type="s" name="state" direction="out">
+		           <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+	   </method>
+
+	   <method name="setNoiseSuppressState" tp:name-for-bindings="setNoiseSuppressState">
+	           <arg type="s" name="state" direction="in">
+	           </arg>
+	   </method>
 
 	   <!--    General Settings Panel         -->
 
