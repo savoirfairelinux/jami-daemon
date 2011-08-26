@@ -712,8 +712,9 @@ static void
 conference_hang_up (void)
 {
     DEBUG ("UIManager: Hang up button pressed (conference)");
-
-    sflphone_conference_hang_up();
+    conference_obj_t * selectedConf = calltab_get_selected_conf(current_calls);
+    if (selectedConf)
+        dbus_hang_up_conference (selectedConf);
 }
 
 static void
@@ -952,8 +953,7 @@ edit_paste (void * foo UNUSED)
                     gchar * temp = g_strconcat (selectedCall->_peer_number, oneNo,
                                                 NULL);
                     g_free (selectedCall->_peer_info);
-                    selectedCall->_peer_info = get_peer_info (temp,
-                                               selectedCall->_peer_name);
+                    selectedCall->_peer_info = get_peer_info (temp, selectedCall->_peer_name);
                     g_free (temp);
                     g_free (oneNo);
                     calltree_update_call (current_calls, selectedCall, NULL);

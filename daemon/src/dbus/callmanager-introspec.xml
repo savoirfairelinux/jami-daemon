@@ -349,7 +349,7 @@
 			<arg type="s" name="filepath"/>
 		</signal>
 
-		<signal name="recordPlaybackStoped" tp:name-for-bindings="recordPlaybackStoped">
+		<signal name="recordPlaybackStopped" tp:name-for-bindings="recordPlaybackStopped">
 			<tp:docstring/>
 			<arg type="s" name="filepath" />
 		</signal>

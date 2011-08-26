@@ -48,16 +48,13 @@ typedef enum {
 /**
  * Execute a search in history
  */
-void history_search (SearchType search_type);
+void history_search();
 
 /**
  * Initialize history
  */
 void
-history_init();
-
-
-void history_reinit (calltab_t* history);
+history_search_init();
 
 /**
  * Set history search bar widget (needed for is_visible)

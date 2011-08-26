@@ -3396,7 +3396,6 @@ void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
         /*
          * On incoming NOTIFY, notify application about call transfer progress.
          */
-        pjsip_status_line status_line;
 
         _debug("UserAgent: PJSIP_EVSUB_STATE_ACTIVE PJSIP_EVSUB_STATE_TERMINATED");
 
@@ -3412,14 +3411,15 @@ void transfer_client_cb (pjsip_evsub *sub, pjsip_event *event)
         }
 
         /* Application is not interested with call progress status */
-        if (!link or !event) {
-            _warn ("UserAgent: Either link or event is empty in transfer callback");
+        if (!link or !event)
             return;
-        }
-
 
         pjsip_rx_data* r_data = event->body.rx_msg.rdata;
+        if (!r_data)
+        	return;
         std::string request =  pjsip_rx_data_get_info (r_data);
+
+        pjsip_status_line status_line;
 
         /* This better be a NOTIFY request */
         if (r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD and

@@ -33,49 +33,33 @@
 #include <sflphone_const.h>
 #include <time.h>
 #include "contacts/calltree.h"
-#include  <unistd.h>
+#include <unistd.h>
+#include <assert.h>
 
 
 gint get_state_callstruct (gconstpointer a, gconstpointer b)
 {
     callable_obj_t * c = (callable_obj_t*) a;
+    call_state_t state = *((call_state_t*)b);
 
-    if (c->_state == * ( (call_state_t*) b)) {
-        return 0;
-    } else {
-        return 1;
-    }
+    return c->_state == state ? 0 : 1;
 }
 
 gchar* call_get_peer_name (const gchar *format)
 {
-    const gchar *end, *name;
-
-    DEBUG ("    callable_obj: %s", format);
-
-    end = g_strrstr (format, "<");
-
-    if (!end) {
-        return g_strndup (format, 0);
-    } else {
-        name = format;
-        return g_strndup (name, end - name);
-    }
+    const gchar *end = g_strrstr (format, "<");
+    return g_strndup (format, end ? end - format : 0);
 }
 
 gchar* call_get_peer_number (const gchar *format)
 {
-    DEBUG ("    callable_obj: %s", format);
-
-    gchar * number = g_strrstr (format, "<") + 1;
-    gchar * end = g_strrstr (format, ">");
+    gchar *number = g_strrstr (format, "<") + 1;
+    gchar *end = g_strrstr (format, ">");
 
     if (end && number)
-        number = g_strndup (number, end - number);
+        return g_strndup (number, end - number);
     else
-        number = g_strdup (format);
-
-    return number;
+        return g_strdup (format);
 }
 
 gchar* call_get_video_codec (callable_obj_t *obj)
@@ -85,18 +69,30 @@ gchar* call_get_video_codec (callable_obj_t *obj)
 
 gchar* call_get_audio_codec (callable_obj_t *obj)
 {
-    gchar * const audio_codec = dbus_get_current_audio_codec_name (obj);
-    account_t *acc = account_list_get_by_id(obj->_accountID);
-    if (acc) {
-        const codec_t * const codec = codec_list_get_by_name (audio_codec, acc->codecs);
-        if (codec) {
-            gchar *result = g_markup_printf_escaped ("%s/%i", audio_codec, codec->sample_rate);
-            g_free (audio_codec);
-            return result;
-        }
-    }
+    gchar *ret = NULL;
+    gchar *audio_codec = NULL;
+    if (!obj)
+        goto out;
 
-    return g_strdup("");
+    audio_codec = dbus_get_current_audio_codec_name (obj);
+    if (!audio_codec)
+        goto out;
+
+    account_t *acc = account_list_get_by_id(obj->_accountID);
+    if (!acc)
+        goto out;
+
+    const codec_t *const codec = codec_list_get_by_name (audio_codec, acc->codecs);
+    if (!codec)
+        goto out;
+
+    ret = g_strdup_printf("%s/%i", audio_codec, codec->sample_rate);
+
+out:
+    g_free(audio_codec);
+    if (ret == NULL)
+        return g_strdup("");
+    return ret;
 }
 
 void call_add_error (callable_obj_t * call, gpointer dialog)
@@ -114,74 +110,6 @@ void call_remove_all_errors (callable_obj_t * call)
     g_ptr_array_foreach (call->_error_dialogs, (GFunc) gtk_widget_destroy, NULL);
 }
 
-void threaded_clock_incrementer (void *pc)
-{
-
-    callable_obj_t *call = (callable_obj_t *) pc;
-
-
-    while (call->clockStarted) {
-
-        int duration;
-        time_t start, current;
-
-        gdk_threads_enter ();
-
-        set_timestamp (& (call->_time_current));
-
-        start = call->_time_start;
-        current = call->_time_current;
-
-        if (current == start) {
-            g_snprintf (call->_timestr, 20, "00:00");
-
-        }
-
-        duration = (int) difftime (current, start);
-
-        if (duration / 60 == 0) {
-            if (duration < 10) {
-                g_snprintf (call->_timestr, 20, "00:0%d", duration);
-            } else {
-                g_snprintf (call->_timestr, 20, "00:%d", duration);
-            }
-        } else {
-            if (duration%60 < 10) {
-                g_snprintf (call->_timestr, 20, "0%d:0%d", duration/60, duration%60);
-            } else {
-                g_snprintf (call->_timestr, 20, "%d:%d", duration/60, duration%60);
-            }
-        }
-
-        // Update clock only if call is active (current, hold, recording transfer)
-        if ( (call->_state != CALL_STATE_INVALID) &&
-                (call->_state != CALL_STATE_INCOMING) &&
-                (call->_state != CALL_STATE_RINGING) &&
-                (call->_state != CALL_STATE_DIALING) &&
-                (call->_state != CALL_STATE_FAILURE) &&
-                (call->_state != CALL_STATE_BUSY)) {
-            calltree_update_clock();
-        }
-
-        // gdk_flush();
-        gdk_threads_leave ();
-
-
-        usleep (1000000);
-    }
-
-    DEBUG ("CallableObj: Stopping Thread");
-
-    g_thread_exit (NULL);
-
-}
-
-void stop_call_clock (callable_obj_t *c)
-{
-    if (c->_type == CALL && c->clockStarted)
-        c->clockStarted = 0;
-}
-
 callable_obj_t *create_new_call (callable_type_t type, call_state_t state,
                       const gchar* const callID,
                       const gchar* const accountID,
@@ -190,42 +118,20 @@ callable_obj_t *create_new_call (callable_type_t type, call_state_t state,
 {
     DEBUG ("CallableObj: Create new call (Account: %s)", accountID);
 
-    // Allocate memory
     callable_obj_t *obj = g_new0 (callable_obj_t, 1);
 
     obj->_error_dialogs = g_ptr_array_new();
-
-    // Set fields
     obj->_type = type;
     obj->_state = state;
-
-    if (g_strcasecmp (callID, "") == 0)
-    {
-        obj->_callID = g_new0 (gchar, 30);
-        if (obj->_callID)
-            g_sprintf (obj->_callID, "%d", rand());
-    }
-    else
-        obj->_callID = g_strdup (callID);
-
+    obj->_callID = *callID ? g_strdup (callID) : g_strdup_printf("%d", rand());
     obj->_accountID = g_strdup (accountID);
 
-    set_timestamp (& (obj->_time_start));
-    set_timestamp (& (obj->_time_current));
-    set_timestamp (& (obj->_time_stop));
+    time (&obj->_time_start);
+    time (&obj->_time_stop);
 
     obj->_peer_name = g_strdup (peer_name);
     obj->_peer_number = g_strdup (peer_number);
     obj->_peer_info = get_peer_info (peer_name, peer_number);
-    obj->clockStarted = 1;
-
-    if (obj->_type == CALL) {
-        GError *err1 = NULL ;
-        if (!g_thread_create ( (GThreadFunc) threaded_clock_incrementer, (void *) obj, TRUE, &err1)) {
-            DEBUG ("Thread creation failed!");
-            g_error_free (err1) ;
-        }
-    }
 
     return obj;
 }
@@ -241,23 +147,21 @@ callable_obj_t *create_new_call_from_details (const gchar *call_id, GHashTable *
 
     if (g_strcasecmp (state_str, "CURRENT") == 0)
         state = CALL_STATE_CURRENT;
-
     else if (g_strcasecmp (state_str, "RINGING") == 0)
         state = CALL_STATE_RINGING;
-
     else if (g_strcasecmp (state_str, "INCOMING") == 0)
         state = CALL_STATE_INCOMING;
-
     else if (g_strcasecmp (state_str, "HOLD") == 0)
         state = CALL_STATE_HOLD;
-
     else if (g_strcasecmp (state_str, "BUSY") == 0)
         state = CALL_STATE_BUSY;
-
     else
         state = CALL_STATE_FAILURE;
 
-    return create_new_call (CALL, state, call_id, accountID, peer_name, call_get_peer_number (peer_number));
+    gchar *number = call_get_peer_number (peer_number);
+    callable_obj_t *c = create_new_call (CALL, state, call_id, accountID, peer_name, number);
+    g_free(number);
+    return c;
 }
 
 callable_obj_t *create_history_entry_from_serialized_form (const gchar *entry)
@@ -271,66 +175,37 @@ callable_obj_t *create_history_entry_from_serialized_form (const gchar *entry)
     const gchar *recordfile = "";
     const gchar *confID = "";
     const gchar *time_added = "";
-    callable_obj_t *new_call;
     history_state_t history_state = MISSED;
-    gint token = 0;
-    gchar ** ptr;
-    gchar ** ptr_orig;
-    static const gchar * const delim = "|";
 
-    ptr = g_strsplit(entry, delim, 10);
-    ptr_orig = ptr;
-    while (ptr != NULL && token < 10) {
+    gchar **ptr_orig = g_strsplit(entry, "|", 10);
+    gchar **ptr;
+    gint token;
+    for (ptr = ptr_orig, token = 0; ptr && token < 10; token++, ptr++)
         switch (token) {
-            case 0:
-                history_state = get_history_state_from_id (*ptr);
-                break;
-            case 1:
-                peer_number = *ptr;
-                break;
-            case 2:
-                peer_name = *ptr;
-                break;
-            case 3:
-		time_start = *ptr;
-		break;
-	    case 4:
-                time_stop = *ptr;
-                break;
-	    case 5:
-		callID = *ptr;
-		break;
-            case 6:
-                accountID = *ptr;
-                break;
-            case 7:
-		recordfile = *ptr;
-		break;
-	    case 8:
-		confID = *ptr;
-		break;
-	    case 9:
-		time_added = *ptr;
-		break;
-            default:
-                break;
+            case 0:     history_state = get_history_state_from_id (*ptr); break;
+            case 1:     peer_number = *ptr;     break;
+            case 2:     peer_name = *ptr;       break;
+            case 3:     time_start = *ptr;      break;
+            case 4:     time_stop = *ptr;       break;
+            case 5:     callID = *ptr;          break;
+            case 6:     accountID = *ptr;       break;
+            case 7:     recordfile = *ptr;      break;
+            case 8:     confID = *ptr;          break;
+            case 9:     time_added = *ptr;      break;
+            default:                            break;
         }
-
-        token++;
-        ptr++;
-    }
 
     if (g_strcasecmp (peer_name, "empty") == 0)
         peer_name = "";
 
-    new_call = create_new_call (HISTORY_ENTRY, CALL_STATE_DIALING, callID, accountID, peer_name, peer_number);
+    callable_obj_t *new_call = create_new_call (HISTORY_ENTRY, CALL_STATE_DIALING, callID, accountID, peer_name, peer_number);
     new_call->_history_state = history_state;
-    new_call->_time_start = convert_gchar_to_timestamp (time_start);
-    new_call->_time_stop = convert_gchar_to_timestamp (time_stop);
+    new_call->_time_start = atoi(time_start);
+    new_call->_time_stop = atoi(time_stop);
     new_call->_recordfile = g_strdup(recordfile);
     new_call->_confID = g_strdup(confID);
     new_call->_historyConfID = g_strdup(confID);
-    new_call->_time_added = convert_gchar_to_timestamp(time_added);
+    new_call->_time_added = atoi(time_start);
     new_call->_record_is_playing = FALSE;
 
     g_strfreev(ptr_orig);
@@ -339,10 +214,6 @@ callable_obj_t *create_history_entry_from_serialized_form (const gchar *entry)
 
 void free_callable_obj_t (callable_obj_t *c)
 {
-    DEBUG ("CallableObj: Free callable object");
-
-    stop_call_clock (c);
-
     g_free (c->_callID);
     g_free (c->_confID);
     g_free (c->_historyConfID);
@@ -356,13 +227,6 @@ void free_callable_obj_t (callable_obj_t *c)
     g_free (c->_recordfile);
 
     g_free (c);
-
-    calltree_update_clock();
-}
-
-void attach_thumbnail (callable_obj_t *call, GdkPixbuf *pixbuf)
-{
-    call->_contact_thumbnail = pixbuf;
 }
 
 gchar* get_peer_info (const gchar* const number, const gchar* const name)
@@ -372,16 +236,9 @@ gchar* get_peer_info (const gchar* const number, const gchar* const name)
 
 history_state_t get_history_state_from_id (gchar *indice)
 {
+    history_state_t state = atoi(indice);
 
-    history_state_t state;
-
-    if (g_strcasecmp (indice, "0") ==0)
-        state = MISSED;
-    else if (g_strcasecmp (indice, "1") ==0)
-        state = INCOMING;
-    else if (g_strcasecmp (indice, "2") ==0)
-        state = OUTGOING;
-    else
+    if (state > LAST)
         state = MISSED;
 
     return state;
@@ -389,34 +246,10 @@ history_state_t get_history_state_from_id (gchar *indice)
 
 gchar* get_call_duration (callable_obj_t *obj)
 {
-    int duration;
-    time_t start, end;
-
-    start = obj->_time_start;
-    end = obj->_time_stop;
-
-    if (start == end)
-        return g_markup_printf_escaped ("<small>Duration:</small> 0:00");
-
-    duration = (int) difftime (end, start);
-    gchar *result;
-
-    if (duration / 60 == 0) {
-        if (duration < 10)
-            result = g_markup_printf_escaped ("00:0%i", duration);
-        else
-            result = g_markup_printf_escaped ("00:%i", duration);
-    } else {
-        if (duration%60 < 10)
-            result = g_markup_printf_escaped ("%i:0%i" , duration/60 , duration%60);
-        else
-            result = g_markup_printf_escaped ("%i:%i" , duration/60 , duration%60);
-    }
-
-    gchar *old_result = result;
-    result = g_markup_printf_escaped ("<small>Duration:</small> %s", old_result);
-    g_free(old_result);
-    return result;
+    long duration = difftime (obj->_time_stop, obj->_time_start);
+    if (duration < 0)
+        duration = 0;
+    return g_strdup_printf("<small>Duration:</small> %.2ld:%.2ld" , duration/60 , duration%60);
 }
 
 static const gchar* get_history_id_from_state (history_state_t state)
@@ -439,16 +272,15 @@ gchar* serialize_history_call_entry (callable_obj_t *entry)
     // Need the string form for the history state
     const gchar *history_state = get_history_id_from_state (entry->_history_state);
     // and the timestamps
-    time_start = convert_timestamp_to_gchar (entry->_time_start);
-    time_stop = convert_timestamp_to_gchar (entry->_time_stop);
-    time_added = convert_timestamp_to_gchar (entry->_time_added);
+    time_start = g_strdup_printf ("%i", (int) entry->_time_start);
+    time_stop = g_strdup_printf ("%i", (int) entry->_time_stop);
+    time_added = g_strdup_printf ("%i", (int) entry->_time_added);
 
     peer_number = entry->_peer_number ? entry->_peer_number : "";
     peer_name = (entry->_peer_name && *entry->_peer_name) ? entry->_peer_name : "empty";
     account_id = (entry->_accountID && *entry->_accountID) ? entry->_accountID : "empty";
 
     confID = entry->_historyConfID ? entry->_historyConfID : "";
-
     record_file = entry->_recordfile ? entry->_recordfile : "";
 
     gchar *result = g_strconcat (history_state, separator,
@@ -467,63 +299,32 @@ gchar* serialize_history_call_entry (callable_obj_t *entry)
     return result;
 }
 
-gchar *get_formatted_start_timestamp (time_t time_start)
+gchar *get_formatted_start_timestamp (time_t start)
 {
-    enum { UNIX_DAY = 86400,
-           UNIX_WEEK = UNIX_DAY * 6,
-           UNIX_TWO_DAYS = UNIX_DAY * 2};
+    time_t now = time (NULL);
+    struct tm start_tm;
 
-    struct tm* ptr;
-    time_t lt, now;
-    unsigned char str[100];
+    localtime_r (&start, &start_tm);
+    time_t diff = now - start;
+    if (diff < 0)
+        diff = 0;
+    const char *fmt;
 
-    // Fetch the current timestamp
-    (void) time (&now);
-    lt = time_start;
-
-    ptr = localtime (&lt);
-
-    if (now - lt < UNIX_WEEK) {
-        if (now-lt < UNIX_DAY) {
-            strftime ( (char *) str, 100, N_ ("today at %R"), (const struct tm *) ptr);
+    if (diff < 60 * 60 * 24 * 7) { // less than 1 week
+        if (diff < 60 * 60 * 24) { // less than 1 day
+            fmt = N_("today at %R");
         } else {
-            if (now - lt < UNIX_TWO_DAYS) {
-                strftime ( (char *) str, 100, N_ ("yesterday at %R"), (const struct tm *) ptr);
-            } else {
-                strftime ( (char *) str, 100, N_ ("%A at %R"), (const struct tm *) ptr);
+            if (diff < 60 * 60 * 24 * 2) { // less than 2 days
+                fmt = N_("yesterday at %R");
+            } else { // between 2 days and 1 week
+                fmt = N_("%A at %R");
             }
         }
-    } else {
-        strftime ( (char *) str, 100, N_ ("%x at %R"), (const struct tm *) ptr);
+    } else { // more than 1 week
+        fmt = N_("%x at %R");
     }
 
-    // result function of the current locale
-    return g_markup_printf_escaped ("\n%s\n" , str);
+    char str[100];
+    strftime(str, sizeof str, fmt, &start_tm);
+    return g_markup_printf_escaped ("%s\n", str);
 }
-
-void set_timestamp (time_t *timestamp)
-{
-    time_t tmp;
-
-    // Set to the current value
-    (void) time (&tmp);
-    *timestamp=tmp;
-}
-
-gchar* convert_timestamp_to_gchar (const time_t timestamp)
-{
-    return g_markup_printf_escaped ("%i", (int) timestamp);
-}
-
-time_t convert_gchar_to_timestamp (const gchar *timestamp)
-{
-    return (time_t) atoi (timestamp);
-}
-
-gchar*
-get_peer_information (callable_obj_t *c)
-{
-    return *c->_peer_name ? c->_peer_name : c->_peer_number;
-}
-
-
