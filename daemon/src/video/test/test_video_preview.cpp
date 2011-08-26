@@ -48,7 +48,7 @@ void VideoPreviewTest::testPreview()
     sleep(10);
 }
 
-int main (int argc, char* argv[])
+int main ()
 {
     VideoPreviewTest test;
     test.testPreview();
