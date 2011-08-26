@@ -329,9 +329,7 @@ row_single_click (GtkTreeView *tree_view UNUSED, void * data UNUSED)
                 displaySasOnce = g_hash_table_lookup (account_details->properties, ACCOUNT_DISPLAY_SAS_ONCE);
                 DEBUG ("Display SAS once %s", displaySasOnce);
             } else {
-                GHashTable * properties = NULL;
-                sflphone_get_ip2ip_properties (&properties);
-
+                GHashTable *properties = sflphone_get_ip2ip_properties();
                 if (properties != NULL) {
                     displaySasOnce = g_hash_table_lookup (properties, ACCOUNT_DISPLAY_SAS_ONCE);
                     DEBUG ("IP2IP displaysasonce %s", displaySasOnce);
@@ -377,25 +375,22 @@ row_single_click (GtkTreeView *tree_view UNUSED, void * data UNUSED)
 static gboolean
 button_pressed (GtkWidget* widget, GdkEventButton *event, gpointer user_data UNUSED)
 {
-    if (event->button == 3 && event->type == GDK_BUTTON_PRESS) {
-        if (active_calltree == current_calls) {
-            show_popup_menu (widget,  event);
-            return TRUE;
-        } else if (active_calltree == history) {
-            show_popup_menu_history (widget,  event);
-            return TRUE;
-        } else {
-            show_popup_menu_contacts (widget, event);
-            return TRUE;
-        }
-    }
+    if (event->button != 3 || event->type != GDK_BUTTON_PRESS)
+        return FALSE;
 
-    return FALSE;
+    if (active_calltree == current_calls)
+        show_popup_menu (widget,  event);
+    else if (active_calltree == history)
+        show_popup_menu_history (widget,  event);
+    else
+        show_popup_menu_contacts (widget, event);
+
+    return TRUE;
 }
 
 
 static gchar *
-calltree_display_call_info (callable_obj_t * c, CallDisplayType display_type, const gchar * const audio_codec)
+calltree_display_call_info (callable_obj_t * c, CallDisplayType display_type, const gchar *const audio_codec)
 {
     gchar display_number[strlen(c->_peer_number) + 1];
     strcpy(display_number, c->_peer_number);
@@ -419,7 +414,7 @@ calltree_display_call_info (callable_obj_t * c, CallDisplayType display_type, co
         details = "";
     }
 
-    gchar *desc = g_markup_printf_escaped ("<b>%s</b>   <i>%s</i>", name, details);
+    gchar *desc = g_markup_printf_escaped ("<b>%s</b>   <i>%s</i>   ", name, details);
     gchar *suffix = NULL;
 
     switch (display_type) {
@@ -674,8 +669,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
             if (g_strcasecmp (g_hash_table_lookup (account_details->properties, ACCOUNT_ZRTP_DISPLAY_SAS),"false") == 0)
                 display_sas = FALSE;
         } else {
-            GHashTable * properties = NULL;
-            sflphone_get_ip2ip_properties (&properties);
+            GHashTable * properties = sflphone_get_ip2ip_properties();
 
             if (properties != NULL) {
                 srtp_enabled = g_hash_table_lookup (properties, ACCOUNT_SRTP_ENABLED);
@@ -863,9 +857,7 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 
     if (c) {
         account_details = account_list_get_by_id (c->_accountID);
-        if (account_details == NULL)
-            ERROR("CallTree: Could not find account %s", c->_accountID);
-        else {
+        if (account_details) {
             srtp_enabled = g_hash_table_lookup (account_details->properties, ACCOUNT_SRTP_ENABLED);
             key_exchange = g_hash_table_lookup (account_details->properties, ACCOUNT_KEY_EXCHANGE);
         }
@@ -938,7 +930,7 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 
     gtk_tree_selection_select_iter (gtk_tree_view_get_selection (GTK_TREE_VIEW (tab->view)), &iter);
 
-    history_reinit (history);
+    //history_init();
 }
 
 void calltree_add_history_entry (callable_obj_t *c, GtkTreeIter *parent)
@@ -1019,7 +1011,7 @@ void calltree_add_history_entry (callable_obj_t *c, GtkTreeIter *parent)
 
     gtk_tree_view_set_model (GTK_TREE_VIEW (history->view), GTK_TREE_MODEL (history->store));
 
-    history_reinit (history);
+    history_search();
 }
 
 
@@ -1262,7 +1254,7 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, G
 void calltree_add_history_conference(conference_obj_t *conf) 
 {
     GdkPixbuf *pixbuf = NULL;
-    const gchar *description = "Conference: ";
+    const gchar *description = "Conference: \n";
     GtkTreeIter iter;
     GSList *conference_participant;
 
@@ -1290,7 +1282,7 @@ void calltree_add_history_conference(conference_obj_t *conf)
         if (call)
             calltree_add_history_entry(call, &iter);
         else
-            ERROR("ConferenceList: Error: Could not find call %s", call_id);
+            ERROR("ConferenceList: Error: Could not find call \"%s\"", call_id);
 
         conference_participant = conference_next_participant(conference_participant); 
     }
@@ -1354,13 +1346,7 @@ void calltree_display (calltab_t *tab)
 void calltree_update_clock()
 {
     callable_obj_t *c = calltab_get_selected_call (current_calls);
-
-    if (!c) {
-        statusbar_update_clock ("");
-        return;
-    }
-
-    if (!(c->_timestr)) {
+    if (!c || !c->_timestr) {
         statusbar_update_clock ("");
         return;
     }
@@ -1752,32 +1738,23 @@ static void menuitem_response( gchar *string )
 GtkTreeIter calltree_get_gtkiter_from_id(calltab_t *tab, gchar *id)
 {
     GtkTreeIter iter;
-    GValue val;
-    GtkTreeModel *tree_model;
-    conference_obj_t *conf;
-    callable_obj_t *call;
-
-    tree_model = GTK_TREE_MODEL(tab->store);
+    GtkTreeModel *tree_model = GTK_TREE_MODEL(tab->store);
 
     gtk_tree_model_get_iter_first(tree_model, &iter);
 
     while(gtk_tree_model_iter_next(tree_model, &iter)) {
-        val.g_type = 0;
+        GValue val = { .g_type = 0 };
         gtk_tree_model_get_value (tree_model, &iter, COLUMN_ACCOUNT_PTR, &val);
 
         if(gtk_tree_model_iter_has_child(tree_model, &iter)) {
-            conf = (conference_obj_t *) g_value_get_pointer (&val);
-
-            if(g_strcmp0(conf->_confID, id) == 0) {
+            conference_obj_t *conf = (conference_obj_t *) g_value_get_pointer (&val);
+            if(g_strcmp0(conf->_confID, id) == 0)
                 return iter;
-            }
         }
         else {
-            call = (callable_obj_t *) g_value_get_pointer(&val);
-
-            if(g_strcmp0(call->_callID, id) == 0) {
+            callable_obj_t *call = (callable_obj_t *) g_value_get_pointer(&val);
+            if(g_strcmp0(call->_callID, id) == 0)
                 return iter;
-            }
         }
     }
 

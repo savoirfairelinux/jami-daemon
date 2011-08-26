@@ -172,7 +172,7 @@ void sflphone_fill_ip2ip_profile (void);
  * @return The internal hash table representing
  * the settings for the ip2ip profile.
  */
-void sflphone_get_ip2ip_properties (GHashTable **properties);
+GHashTable *sflphone_get_ip2ip_properties(void);
 
 /**
  * Initialize the accounts data structure
@@ -313,7 +313,5 @@ sflphone_srtp_sdes_off (callable_obj_t * c);
 void sflphone_fill_conference_list (void);
 
 void sflphone_conference_on_hold (const conference_obj_t * c);
-
-void sflphone_conference_hang_up();
 
 #endif

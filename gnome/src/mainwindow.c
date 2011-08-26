@@ -297,8 +297,7 @@ create_main_window ()
     /* dont't show the contact list */
     gtk_widget_hide (contacts->tree);
 
-    searchbar_init (history);
-    searchbar_init (contacts);
+    //history_init(); // init search
 
     /* don't show waiting layer */
     gtk_widget_hide (waitingLayer);
@@ -489,8 +488,7 @@ main_window_zrtp_not_supported (callable_obj_t * c)
         DEBUG ("Warning Enabled %s", warning_enabled);
     } else {
         DEBUG ("Account is null callID %s", c->_callID);
-        GHashTable * properties = NULL;
-        sflphone_get_ip2ip_properties (&properties);
+        GHashTable * properties = sflphone_get_ip2ip_properties();
 
         if (properties != NULL) {
             warning_enabled = g_hash_table_lookup (properties,

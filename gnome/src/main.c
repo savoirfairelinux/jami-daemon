@@ -43,6 +43,7 @@
 #include <stdlib.h>
 
 #include "shortcuts.h"
+#include "history.h"
 
 int
 main (int argc, char *argv[])
@@ -116,19 +117,16 @@ main (int argc, char *argv[])
 
     status_bar_display_account ();
 
-    // Load the history
     sflphone_fill_history ();
-
-    // Get the active calls and conferences at startup
     sflphone_fill_call_list ();
     sflphone_fill_conference_list ();
+    history_search_init();
 
     // Update the GUI
     update_actions ();
 
     shortcuts_initialize_bindings();
 
-    /* start the main loop */
     gtk_main ();
 
     shortcuts_destroy_bindings();

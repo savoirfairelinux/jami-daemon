@@ -250,6 +250,7 @@ sflphone_hung_up (callable_obj_t * c)
 #if GTK_CHECK_VERSION(2,10,0)
     status_tray_icon_blink (FALSE);
 #endif
+
     stop_call_clock(c);
     calltree_update_clock();
 }
@@ -385,9 +386,9 @@ void sflphone_fill_ip2ip_profile (void)
     ip2ip_profile = (GHashTable *) dbus_get_ip2_ip_details();
 }
 
-void sflphone_get_ip2ip_properties (GHashTable **properties)
+GHashTable *sflphone_get_ip2ip_properties(void)
 {
-    *properties	= ip2ip_profile;
+    return ip2ip_profile;
 }
 
 void
@@ -416,7 +417,7 @@ sflphone_hang_up()
                 dbus_hang_up (selectedCall);
                 call_remove_all_errors (selectedCall);
                 selectedCall->_state = CALL_STATE_DIALING;
-                set_timestamp (&selectedCall->_time_stop);
+                time (&selectedCall->_time_stop);
 
                 //if ( (im_window_get_nb_tabs() > 1) && selectedCall->_im_widget &&
                 //        ! (IM_WIDGET (selectedCall->_im_widget)->containText))
@@ -440,7 +441,7 @@ sflphone_hang_up()
             case CALL_STATE_TRANSFERT:
                 dbus_hang_up (selectedCall);
                 call_remove_all_errors (selectedCall);
-                set_timestamp (&selectedCall->_time_stop);
+                time (&selectedCall->_time_stop);
                 break;
             default:
                 WARN ("Should not happen in sflphone_hang_up()!");
@@ -453,78 +454,57 @@ sflphone_hang_up()
 
     calltree_update_call (history, selectedCall, NULL);
 
-    if (selectedCall)
-        stop_call_clock (selectedCall);
-
     calltree_update_clock();
 }
-
-
-void
-sflphone_conference_hang_up()
-{
-    conference_obj_t * selectedConf = calltab_get_selected_conf(current_calls);
-
-    if (selectedConf) {
-        dbus_hang_up_conference (selectedConf);
-    }
-}
-
 
 void
 sflphone_pick_up()
 {
-    callable_obj_t * selectedCall = NULL;
-    selectedCall = calltab_get_selected_call (active_calltree);
+    callable_obj_t *selectedCall = calltab_get_selected_call (active_calltree);
 
     DEBUG("SFLphone: Pick up");
 
-    if (selectedCall) {
-        switch (selectedCall->_state) {
-            case CALL_STATE_DIALING:
-                sflphone_place_call (selectedCall);
-
-                // if instant messaging window is visible, create new tab (deleted automatically if not used)
-                if (im_window_is_visible())
-                    im_widget_display ( (IMWidget **) (&selectedCall->_im_widget), NULL, selectedCall->_callID, NULL);
-
-                break;
-            case CALL_STATE_INCOMING:
-                selectedCall->_history_state = INCOMING;
-                calltree_update_call (history, selectedCall, NULL);
-
-                // if instant messaging window is visible, create new tab (deleted automatically if not used)
-                if (selectedCall->_im_widget && im_window_is_visible()) {
-                    im_widget_display ( (IMWidget **) (&selectedCall->_im_widget), NULL, selectedCall->_callID, NULL);
-	        }
-
-                dbus_accept (selectedCall);
-                stop_notification();
-                break;
-            case CALL_STATE_HOLD:
-                sflphone_new_call();
-                break;
-            case CALL_STATE_TRANSFERT:
-                dbus_transfert (selectedCall);
-                set_timestamp (&selectedCall->_time_stop);
-                calltree_remove_call(current_calls, selectedCall, NULL);
-                calllist_remove_call(current_calls, selectedCall->_callID);
-		break;
-            case CALL_STATE_CURRENT:
-            case CALL_STATE_RECORD:
-                sflphone_new_call();
-                break;
-            case CALL_STATE_RINGING:
-                sflphone_new_call();
-                break;
-            default:
-                WARN ("Should not happen in sflphone_pick_up()!");
-                break;
-        }
-    } else {
+    if (!selectedCall) {
         sflphone_new_call();
+        return;
     }
+    switch (selectedCall->_state) {
+        case CALL_STATE_DIALING:
+            sflphone_place_call (selectedCall);
 
+            // if instant messaging window is visible, create new tab (deleted automatically if not used)
+            if (im_window_is_visible())
+                im_widget_display ( (IMWidget **) (&selectedCall->_im_widget), NULL, selectedCall->_callID, NULL);
+
+            break;
+        case CALL_STATE_INCOMING:
+            selectedCall->_history_state = INCOMING;
+            calltree_update_call (history, selectedCall, NULL);
+
+            // if instant messaging window is visible, create new tab (deleted automatically if not used)
+            if (selectedCall->_im_widget && im_window_is_visible()) {
+                im_widget_display ( (IMWidget **) (&selectedCall->_im_widget), NULL, selectedCall->_callID, NULL);
+            }
+
+            dbus_accept (selectedCall);
+            stop_notification();
+            break;
+        case CALL_STATE_TRANSFERT:
+            dbus_transfert (selectedCall);
+            time (&selectedCall->_time_stop);
+            calltree_remove_call(current_calls, selectedCall, NULL);
+            calllist_remove_call(current_calls, selectedCall->_callID);
+            break;
+        case CALL_STATE_CURRENT:
+        case CALL_STATE_HOLD:
+        case CALL_STATE_RECORD:
+        case CALL_STATE_RINGING:
+            sflphone_new_call();
+            break;
+        default:
+            WARN ("Should not happen in sflphone_pick_up()!");
+            break;
+    }
 }
 
 void
@@ -597,7 +577,7 @@ sflphone_current (callable_obj_t * c)
 {
 
     if (c->_state != CALL_STATE_HOLD)
-        set_timestamp (&c->_time_start);
+        time (&c->_time_start);
 
     c->_state = CALL_STATE_CURRENT;
     calltree_update_call (current_calls, c, NULL);
@@ -608,7 +588,7 @@ void
 sflphone_record (callable_obj_t * c)
 {
     if (c->_state != CALL_STATE_HOLD)
-        set_timestamp (&c->_time_start);
+        time (&c->_time_start);
 
     c->_state = CALL_STATE_RECORD;
     calltree_update_call (current_calls, c, NULL);
@@ -804,7 +784,7 @@ sflphone_keypad (guint keyval, gchar * key)
                 switch (keyval) {
                     case 65307: /* ESCAPE */
                         dbus_hang_up (c);
-                        set_timestamp (&c->_time_stop);
+                        time (&c->_time_stop);
                         calltree_update_call (history, c, NULL);
                         break;
                     default:
@@ -839,7 +819,7 @@ sflphone_keypad (guint keyval, gchar * key)
                     case 65293: /* ENTER */
                     case 65421: /* ENTER numpad */
                         dbus_transfert (c);
-                        set_timestamp (&c->_time_stop);
+                        time (&c->_time_stop);
                         calltree_remove_call(current_calls, c, NULL);
 			calllist_remove_call(current_calls, c->_callID);
                         break;
@@ -1066,7 +1046,7 @@ sflphone_add_participant (const gchar* callID, const gchar* confID)
         return;
     }
 
-    set_timestamp(&call->_time_added);
+    time(&call->_time_added);
 
     iter = calltree_get_gtkiter_from_id(history, (gchar *)confID);
 
@@ -1397,7 +1377,7 @@ void sflphone_save_history (void)
             ERROR("SFLphone: Error: Unknown type for serialization");
             break;
         }
-        gchar *key = convert_timestamp_to_gchar (current->elem.call->_time_start);
+        gchar *key = g_strdup_printf ("%i", (int) current->elem.call->_time_start);
 
         g_hash_table_replace (result, (gpointer) key,
                 g_slist_append(g_hash_table_lookup(result, key),(gpointer) value));
@@ -1412,7 +1392,7 @@ void sflphone_save_history (void)
         }
 
         gchar *value = serialize_history_conference_entry(conf);
-        gchar *key = convert_timestamp_to_gchar(conf->_time_start);
+        gchar *key = g_strdup_printf ("%i", (int) conf->_time_start);
 
         g_hash_table_replace(result, (gpointer) key,
                 g_slist_append(g_hash_table_lookup(result, key), (gpointer) value));
@@ -1427,7 +1407,6 @@ void sflphone_save_history (void)
 void
 sflphone_srtp_sdes_on (callable_obj_t * c)
 {
-
     c->_srtp_state = SRTP_STATE_SDES_SUCCESS;
 
     calltree_update_call (current_calls, c, NULL);

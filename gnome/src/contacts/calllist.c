@@ -60,39 +60,37 @@ gint is_callID_callstruct(gconstpointer a, gconstpointer b)
 // TODO : sflphoneGTK : try to do this more generic
 void calllist_add_contact (gchar *contact_name, gchar *contact_phone, contact_type_t type, GdkPixbuf *photo)
 {
-
-    callable_obj_t *new_call;
-    GdkPixbuf *pixbuf;
-
     /* Check if the information is valid */
-    if (g_strcasecmp (contact_phone, EMPTY_ENTRY) != 0) {
-        new_call = create_new_call (CONTACT, CALL_STATE_DIALING, "", "", contact_name, contact_phone);
+    if (g_strcasecmp (contact_phone, EMPTY_ENTRY) == 0)
+        return;
 
-        // Attach a pixbuf to a contact
-        if (photo) {
-            attach_thumbnail (new_call, gdk_pixbuf_copy (photo));
-        } else {
-            switch (type) {
-                case CONTACT_PHONE_BUSINESS:
-                    pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/users.svg", NULL);
-                    break;
-                case CONTACT_PHONE_HOME:
-                    pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/home.svg", NULL);
-                    break;
-                case CONTACT_PHONE_MOBILE:
-                    pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/phone.svg", NULL);
-                    break;
-                default:
-                    pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/contact_default.svg", NULL);
-                    break;
-            }
+    callable_obj_t *new_call = create_new_call (CONTACT, CALL_STATE_DIALING, "", "", contact_name, contact_phone);
 
-            attach_thumbnail (new_call, pixbuf);
+    // Attach a pixbuf to a contact
+    if (photo) {
+        new_call->_contact_thumbnail = gdk_pixbuf_copy (photo);
+    } else {
+        GdkPixbuf *pixbuf;
+        switch (type) {
+            case CONTACT_PHONE_BUSINESS:
+                pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/users.svg", NULL);
+                break;
+            case CONTACT_PHONE_HOME:
+                pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/home.svg", NULL);
+                break;
+            case CONTACT_PHONE_MOBILE:
+                pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/phone.svg", NULL);
+                break;
+            default:
+                pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/contact_default.svg", NULL);
+                break;
         }
 
-        calllist_add_call (contacts, new_call);
-        calltree_add_call (contacts, new_call, NULL);
+        new_call->_contact_thumbnail = pixbuf;
     }
+
+    calllist_add_call (contacts, new_call);
+    calltree_add_call (contacts, new_call, NULL);
 }
 
 void

@@ -109,7 +109,6 @@ typedef struct  {
     gchar* _historyConfID;	    // Persistent conf id to be stored in history
     gchar* _accountID;              // The account the call is made with
     time_t _time_start;             // The timestamp the call was initiating
-    time_t _time_current;           // Clock increment to display call's elapsed time
     time_t _time_stop;              // The timestamp the call was over
     gchar _timestr[20];             // The timestamp as a string format for disply in statusbar
     history_state_t _history_state; // The history state if necessary
@@ -164,10 +163,12 @@ typedef struct  {
     /* Associated IM widget */
     GtkWidget *_im_widget;
 
-    int clockStarted;
-
     time_t _time_added;
 
+    GThread *clock_thread;
+    GCond *cond;
+    GMutex *mutex;
+    gboolean exitClockThread;
 } callable_obj_t;
 
 callable_obj_t *create_new_call (callable_type_t, call_state_t, const gchar* const, const gchar* const, const gchar* const, const gchar* const);
@@ -207,9 +208,6 @@ gchar* call_get_peer_name (const gchar*);
 gchar* call_get_peer_number (const gchar*);
 
 void
-attach_thumbnail (callable_obj_t *, GdkPixbuf *);
-
-void
 free_callable_obj_t (callable_obj_t *c);
 
 void
@@ -225,14 +223,6 @@ gchar* serialize_history_call_entry(callable_obj_t *entry);
 
 gchar* get_formatted_start_timestamp (time_t);
 
-void set_timestamp (time_t*);
-
-gchar* convert_timestamp_to_gchar (time_t);
-
-time_t convert_gchar_to_timestamp (const gchar*);
-
 gchar* call_get_audio_codec (callable_obj_t *obj);
-
-gchar* get_peer_information (callable_obj_t *c);
 
 #endif
