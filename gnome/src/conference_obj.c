@@ -36,8 +36,6 @@
 #include "calltab.h"
 #include "calllist.h"
 
-static void conference_add_participant_number(const gchar *, conference_obj_t *);
-
 conference_obj_t *create_new_conference (conference_state_t state, const gchar* const confID)
 {
     conference_obj_t *new_conf;
@@ -104,6 +102,8 @@ conference_obj_t *create_new_conference_from_details (const gchar *conf_id, GHas
     // generate conference participant list
     conference_participant_list_update (participants, new_conf);
 
+    g_strfreev(participants);
+
     state_str = g_hash_table_lookup (details, "CONF_STATE");
 
     if (g_strcasecmp (state_str, "ACTIVE_ATACHED") == 0)
@@ -118,6 +118,7 @@ conference_obj_t *create_new_conference_from_details (const gchar *conf_id, GHas
         new_conf->_state = CONFERENCE_STATE_HOLD;
     else if (g_strcasecmp (state_str, "HOLD_REC") == 0)
         new_conf->_state = CONFERENCE_STATE_HOLD_RECORD;
+
 
     new_conf->_recordfile = NULL;
     new_conf->_record_is_playing = FALSE;
@@ -136,6 +137,19 @@ void free_conference_obj_t (conference_obj_t *c)
     g_free (c);
 }
 
+static
+void conference_add_participant_number(const gchar *call_id, conference_obj_t *conf)
+{
+    callable_obj_t *call = calllist_get_call(current_calls, call_id);
+    if (!call) {
+        ERROR("Conference: Error: Could not find %s", call_id);
+        return;
+    }
+
+    gchar *number_account = g_strconcat(call->_peer_number, ",", call->_accountID, NULL);
+
+    conf->participant_number = g_slist_append(conf->participant_number, number_account);
+}
 
 void conference_add_participant (const gchar* call_id, conference_obj_t* conf)
 {
@@ -146,22 +160,6 @@ void conference_add_participant (const gchar* call_id, conference_obj_t* conf)
 
     // store the phone number of this participant
     conference_add_participant_number(call_id, conf);
-}
-
-static
-void conference_add_participant_number(const gchar *call_id, conference_obj_t *conf)
-{
-    gchar *number_account;
-
-    callable_obj_t *call = calllist_get_call(current_calls, call_id);
-    if (!call) {
-        ERROR("Conference: Error: Could not find");
-        return;
-    }
-
-    number_account = g_strconcat(call->_peer_number, ",", call->_accountID, NULL);
-
-    conf->participant_number = g_slist_append(conf->participant_number, (gpointer) number_account);
 }
 
 void conference_remove_participant (const gchar* call_id, conference_obj_t* conf)

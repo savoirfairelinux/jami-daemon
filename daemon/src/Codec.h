@@ -30,7 +30,7 @@
 #ifndef __SFL_CODEC_H__
 #define __SFL_CODEC_H__
 
-#include <cc++/missing.h>
+#include <cc++/config.h> // for types
 
 /**
  * Interface for both audio codecs as well as video codecs.

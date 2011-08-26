@@ -48,6 +48,7 @@
 #include "audioconf.h"
 #include "videoconf.h"
 #include "uimanager.h"
+#include "mainwindow.h"
 
 /**
  * Local variables

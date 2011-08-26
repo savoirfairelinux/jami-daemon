@@ -426,14 +426,6 @@
 			<arg type="s" name="message" direction="in"/>
 		</method>
 
-		<signal name="currentSelectedAudioCodec" tp:name-for-bindings="currentSelectedAudioCodec">
-			<tp:docstring>
-			  Unused
-			</tp:docstring>
-			<arg type="s" name="callID" />
-			<arg type="s" name="codecName"/>
-		</signal>
-
 		<signal name="newCallCreated" tp:name-for-bindings="newCallCreated">
 			<tp:docstring>
 			  <p>Notify that a cell have been created.</p>

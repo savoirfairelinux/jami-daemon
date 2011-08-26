@@ -30,6 +30,7 @@
 
 #include <dialpad.h>
 #include <actions.h>
+#include "calltab.h"
 
 /**
  * button pressed event

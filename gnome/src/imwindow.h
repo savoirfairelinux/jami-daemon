@@ -42,12 +42,6 @@
   * @brief The IM window of the client.
   */
 
-/*! @function
- * Display the IM window
- * @return GtkWidget* The IM window
- */
-GtkWidget *im_window_get();
-
 /*!	@function
 @abstract	Add IM widget to the IM window
  */

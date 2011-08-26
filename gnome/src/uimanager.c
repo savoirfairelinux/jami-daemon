@@ -53,6 +53,8 @@
 #include "accountlist.h"
 #include "config/accountlistconfigdialog.h"
 
+#include <sys/stat.h>
+
 void show_edit_number (callable_obj_t *call);
 
 static GtkWidget *toolbar;
@@ -1731,12 +1733,13 @@ show_edit_number (callable_obj_t *call)
 
 }
 
-GtkWidget*
+static GtkWidget*
 create_waiting_icon()
 {
-    GtkWidget * waiting_icon;
-    waiting_icon = gtk_image_menu_item_new_with_label ("");
-    gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (waiting_icon),
+    GtkWidget * waiting_icon = gtk_image_menu_item_new_with_label ("");
+    struct stat st;
+    if (!stat(ICONS_DIR "/wait-on.gif", &st))
+        gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (waiting_icon),
                                    gtk_image_new_from_animation (gdk_pixbuf_animation_new_from_file (
                                            ICONS_DIR "/wait-on.gif", NULL)));
     gtk_menu_item_set_right_justified (GTK_MENU_ITEM (waiting_icon), TRUE);

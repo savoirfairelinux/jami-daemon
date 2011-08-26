@@ -34,6 +34,8 @@
 #include <string.h>
 #include <eel-gconf-extensions.h>
 #include "dbus/dbus.h"
+#include "uimanager.h"
+#include "mainwindow.h"
 
 /* FIXME: these should be in a struct rather than at file scope */
 static GtkListStore *pluginlist;

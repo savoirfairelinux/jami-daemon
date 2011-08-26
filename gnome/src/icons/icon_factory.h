@@ -47,4 +47,6 @@
 
 #define GTK_STOCK_AUDIO_CARD			"audio-card"
 
+void init_icon_factory();
+
 #endif
