@@ -2019,7 +2019,7 @@ void ManagerImpl::stopTone ()
 
     if (_audiofile) {
 		std::string filepath = _audiofile->getFilePath();
-		_dbus.getCallManager()->recordPlaybackStoped(filepath);
+		_dbus.getCallManager()->recordPlaybackStopped(filepath);
 		delete _audiofile;
 		_audiofile = NULL;
     }
@@ -2099,7 +2099,7 @@ void ManagerImpl::ringtone (const std::string& accountID)
 	_toneMutex.enterMutex();
 
 	if (_audiofile) {
-		_dbus.getCallManager()->recordPlaybackStoped(_audiofile->getFilePath());
+		_dbus.getCallManager()->recordPlaybackStopped(_audiofile->getFilePath());
 		delete _audiofile;
 		_audiofile = NULL;
 	}
@@ -2511,7 +2511,7 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
     _toneMutex.enterMutex();
 
     if (_audiofile) {
-    	_dbus.getCallManager()->recordPlaybackStoped(_audiofile->getFilePath());
+    	_dbus.getCallManager()->recordPlaybackStopped(_audiofile->getFilePath());
 		delete _audiofile;
 		_audiofile = NULL;
     }
