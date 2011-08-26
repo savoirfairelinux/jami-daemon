@@ -70,8 +70,6 @@ START_TEST (test_add_account)
     account_list_init ();
     account_list_add (test);
     fail_unless (account_list_get_registered_accounts () == 1, "ERROR");
-    account_list_remove (test->accountID);
-    fail_unless (account_list_get_registered_accounts () == 0, "ERROR");
 }
 END_TEST
 
@@ -98,33 +96,6 @@ START_TEST (test_get_by_id)
     account_list_add (test);
     tmp = account_list_get_by_id (test->accountID);
     fail_unless (g_strcasecmp (tmp->accountID, test->accountID) == 0, "ERROR - ACCOUNTLIST_GET_BY_ID");
-}
-END_TEST
-
-START_TEST (test_get_account_position)
-{
-    guint pos, pos1;
-    account_t *test = create_test_account ("test");
-    account_t *test2 = create_test_account ("test2");
-    
-    account_list_init ();
-    account_list_add (test);
-    account_list_add (test2);
-
-    pos = account_list_get_position (test);
-    pos1 = account_list_get_position (test2);
-    fail_if (pos == (guint)-1, "ERROR - bad account position");
-    fail_unless (pos == 0, "ERROR - bad account position");
-
-    fail_if (pos1 == (guint)-1, "ERROR - bad account position");
-    fail_unless (pos1 == 1, "ERROR - bad account position");
-    
-    account_list_set_current (test);
-    pos = account_list_get_position (test);
-    pos1 = account_list_get_position (test2);
-    fail_if (pos == (guint)-1, "ERROR - bad account position");
-    fail_unless (pos == 0, "ERROR - bad account position");
-    fail_unless (pos1 == 1, "ERROR - bad account position");
 }
 END_TEST
 
@@ -170,7 +141,6 @@ global_suite (void)
   tcase_add_test (tc_cases, test_add_account);
   tcase_add_test (tc_cases, test_ordered_list);
   tcase_add_test (tc_cases, test_get_by_id);
-  tcase_add_test (tc_cases, test_get_account_position);
   tcase_add_test (tc_cases, test_get_current_account);
   suite_add_tcase (s, tc_cases);
 
