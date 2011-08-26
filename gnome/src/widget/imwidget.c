@@ -34,6 +34,9 @@
 #include <contacts/conferencelist.h>
 #include <JavaScriptCore/JavaScript.h>
 #include <gdk/gdkkeysyms.h>
+#include <gtk/gtk.h>
+#include "sflphone_const.h"
+
 
 #define WEBKIT_DIR "file://" DATA_DIR "/webkit/"
 
