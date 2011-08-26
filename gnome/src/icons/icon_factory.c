@@ -32,6 +32,10 @@
 #include "icons/pixmap_data.h"
 
 
+#include <gtk/gtkiconfactory.h>
+#include "icons/pixmap_data.h"
+#include "sflphone_const.h"
+
 static GtkIconFactory *icon_factory = NULL;
 
 void add_icon (GtkIconFactory *factory, const gchar *stock_id, const guint8 *icon_data, GtkIconSize size)
@@ -60,12 +64,6 @@ void add_icon (GtkIconFactory *factory, const gchar *stock_id, const guint8 *ico
         DEBUG ("Icon %s already exists in factory\n", stock_id);
 }
 
-GtkIconSet* lookup_sflphone_factory (const gchar *stock_id)
-{
-
-    return gtk_icon_factory_lookup (icon_factory, stock_id);
-}
-
 void register_sflphone_stock_icons (GtkIconFactory *factory)
 {
     add_icon (factory, GTK_STOCK_PICKUP, gnome_stock_pickup, GTK_ICON_SIZE_SMALL_TOOLBAR);
@@ -85,13 +83,8 @@ void register_sflphone_stock_icons (GtkIconFactory *factory)
 
 void init_icon_factory (void)
 {
-    // Init the factory
     icon_factory = gtk_icon_factory_new ();
-
-    // Load icons
     register_sflphone_stock_icons (icon_factory);
-
-    // Specify a default icon set
     gtk_icon_factory_add_default (icon_factory);
 }
 

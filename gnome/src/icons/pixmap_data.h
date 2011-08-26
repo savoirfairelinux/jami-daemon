@@ -31,7 +31,7 @@
 #ifndef PIXMAP_DATA_H
 #define PIXMAP_DATA_H
 
-G_BEGIN_DECLS
+#include <glib.h>
 
 /* GdkPixbuf RGBA C-Source image dump */
 
@@ -2191,10 +2191,5 @@ static const guint8 gnome_stock_user[] =
     "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
     "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
 };
-
-
-
-
-G_END_DECLS
 
 #endif
