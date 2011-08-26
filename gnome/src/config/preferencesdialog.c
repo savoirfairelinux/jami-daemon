@@ -46,6 +46,7 @@
 #include "hooks-config.h"
 #include "audioconf.h"
 #include "uimanager.h"
+#include "mainwindow.h"
 
 /**
  * Local variables

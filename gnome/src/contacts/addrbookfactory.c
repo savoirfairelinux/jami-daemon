@@ -32,6 +32,7 @@
 #include "addressbook-config.h"
 
 #include "calltab.h"
+#include "calltree.h"
 
 #include <glib.h>
 #include <dlfcn.h>

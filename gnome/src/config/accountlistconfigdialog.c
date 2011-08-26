@@ -30,28 +30,28 @@
  */
 
 
-#include <accountlistconfigdialog.h>
-#include <dbus/dbus.h>
-#include <accountconfigdialog.h>
-#include <actions.h>
-#include <utils.h>
+#include "accountlistconfigdialog.h"
+#include "dbus/dbus.h"
+#include "accountconfigdialog.h"
+#include "actions.h"
+#include "mainwindow.h"
+#include "utils.h"
 #include <string.h>
 #include <libgnome/gnome-help.h>
 
 #define CONTEXT_ID_REGISTRATION 0
 
-GtkWidget *addButton;
-GtkWidget *editButton;
-GtkWidget *deleteButton;
-GtkWidget *restoreButton;
-GtkWidget *accountMoveDownButton;
-GtkWidget *accountMoveUpButton;
-GtkWidget * status_bar;
-GtkListStore * accountStore;
+static GtkWidget *addButton;
+static GtkWidget *editButton;
+static GtkWidget *deleteButton;
+static GtkWidget *accountMoveDownButton;
+static GtkWidget *accountMoveUpButton;
+static GtkWidget * status_bar;
+static GtkListStore * accountStore;
 
-GtkDialog * accountListDialog = NULL;
+static GtkDialog * accountListDialog = NULL;
 
-account_t * selectedAccount = NULL;
+static account_t * selectedAccount = NULL;
 // Account properties
 enum {
     COLUMN_ACCOUNT_ALIAS,
@@ -67,8 +67,8 @@ enum {
  */
 static void delete_account_cb (void)
 {
-    if(selectedAccount == NULL) {
-	ERROR("Config: Error: No selected account in delete action");
+    if (selectedAccount == NULL) {
+        ERROR("Config: Error: No selected account in delete action");
         return;
     }
 
@@ -81,7 +81,7 @@ static void delete_account_cb (void)
  */
 static void edit_account_cb (void)
 {
-    if(selectedAccount == NULL) {
+    if (selectedAccount == NULL) {
         ERROR("Config: Error: No selected account in edit action");
         return;
     }
@@ -94,7 +94,6 @@ static void edit_account_cb (void)
  */
 static void add_account_cb (void)
 {
-
     show_account_window (NULL);
 }
 
@@ -103,10 +102,9 @@ static void add_account_cb (void)
  */
 void account_list_config_dialog_fill()
 {
-
     if (accountListDialog == NULL) {
         DEBUG("Config: No account dialog, returning");
-	return;
+        return;
     }
 
     GtkTreeIter iter;
@@ -115,7 +113,7 @@ void account_list_config_dialog_fill()
 
     // IP2IP account must be first
     account_t *a = account_list_get_by_id ("IP2IP");
-    if(a == NULL) {
+    if (a == NULL) {
         ERROR("Config: Error: Could not find IP2IP account");
         return;
     }
@@ -132,11 +130,10 @@ void account_list_config_dialog_fill()
                             COLUMN_ACCOUNT_DATA, a,   // Pointer
                             -1);
 
-    unsigned int i;
-    for (i = 0; i < account_list_get_size(); i++) {
+    for (size_t i = 0; i < account_list_get_size(); i++) {
         a = account_list_get_nth (i);
 
-        if(a==NULL) {
+        if (a == NULL) {
             ERROR("Config: Error: Account %d is NULL while parsing the list", i);
             return;
         }
