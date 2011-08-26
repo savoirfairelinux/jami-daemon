@@ -110,7 +110,6 @@ typedef struct  {
     gchar* _accountID;              // The account the call is made with
     time_t _time_start;             // The timestamp the call was initiating
     time_t _time_stop;              // The timestamp the call was over
-    gchar _timestr[20];             // The timestamp as a string format for disply in statusbar
     history_state_t _history_state; // The history state if necessary
     srtp_state_t _srtp_state;       // The state of security on the call
     gchar* _srtp_cipher;            // Cipher used for the srtp session
@@ -164,11 +163,6 @@ typedef struct  {
     GtkWidget *_im_widget;
 
     time_t _time_added;
-
-    GThread *clock_thread;
-    GCond *cond;
-    GMutex *mutex;
-    gboolean exitClockThread;
 } callable_obj_t;
 
 callable_obj_t *create_new_call (callable_type_t, call_state_t, const gchar* const, const gchar* const, const gchar* const, const gchar* const);
@@ -209,9 +203,6 @@ gchar* call_get_peer_number (const gchar*);
 
 void
 free_callable_obj_t (callable_obj_t *c);
-
-void
-stop_call_clock (callable_obj_t *c);
 
 gchar* get_peer_info (const gchar* const, const gchar* const);
 

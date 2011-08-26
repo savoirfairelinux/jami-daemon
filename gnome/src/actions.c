@@ -155,45 +155,30 @@ void
 status_bar_display_account ()
 {
     gchar* msg;
-    account_t* acc;
 
     statusbar_pop_message (__MSG_ACCOUNT_DEFAULT);
 
-    DEBUG ("status_bar_display_account begin");
-
-    acc = account_list_get_current ();
+    account_t *acc = account_list_get_current ();
+    status_tray_icon_online (acc != NULL);
 
     if (acc) {
-        status_tray_icon_online (TRUE);
         msg = g_markup_printf_escaped ("%s %s (%s)" ,
                                        _ ("Using account"),
                                        (gchar*) g_hash_table_lookup (acc->properties , ACCOUNT_ALIAS),
                                        (gchar*) g_hash_table_lookup (acc->properties , ACCOUNT_TYPE));
     } else {
-        status_tray_icon_online (FALSE);
         msg = g_markup_printf_escaped (_ ("No registered accounts"));
     }
 
     statusbar_push_message (msg, NULL,  __MSG_ACCOUNT_DEFAULT);
     g_free (msg);
-
-    DEBUG ("status_bar_display_account_end");
 }
 
 
-gboolean
+void
 sflphone_quit ()
 {
-    gboolean quit = FALSE;
-    guint count = calllist_get_size (current_calls);
-
-    if (count > 0) {
-        quit = main_window_ask_quit();
-    } else {
-        quit = TRUE;
-    }
-
-    if (quit) {
+    if (calllist_get_size(current_calls) == 0 || main_window_ask_quit()) {
         // Save the history
         sflphone_save_history ();
 
@@ -205,8 +190,6 @@ sflphone_quit ()
         //account_list_clean()
         gtk_main_quit ();
     }
-
-    return quit;
 }
 
 void
@@ -251,8 +234,7 @@ sflphone_hung_up (callable_obj_t * c)
     status_tray_icon_blink (FALSE);
 #endif
 
-    stop_call_clock(c);
-    calltree_update_clock();
+    statusbar_update_clock("");
 }
 
 /** Internal to actions: Fill account list */
@@ -454,7 +436,7 @@ sflphone_hang_up()
 
     calltree_update_call (history, selectedCall, NULL);
 
-    calltree_update_clock();
+    statusbar_update_clock("");
 }
 
 void
@@ -1353,15 +1335,13 @@ static void hist_free_elt(gpointer list)
 
 void sflphone_save_history (void)
 {
-    gint size;
-    gint i;
     QueueElement *current;
     conference_obj_t *conf;
 
     GHashTable *result = g_hash_table_new_full (NULL, g_str_equal, g_free, hist_free_elt);
 
-    size = calllist_get_size (history);
-    for (i = 0; i < size; i++) {
+    gint size = calllist_get_size (history);
+    for (gint i = 0; i < size; i++) {
         current = calllist_get_nth (history, i);
         if (!current) {
             WARN("SFLphone: Warning: %dth element is null", i);
@@ -1384,7 +1364,7 @@ void sflphone_save_history (void)
     }
 
     size = conferencelist_get_size(history);
-    for(i = 0; i < size; i++) {
+    for(gint i = 0; i < size; i++) {
         conf = conferencelist_get_nth(history, i);
         if(!conf) {
             DEBUG("SFLphone: Error: Could not get %dth conference", i);
@@ -1443,34 +1423,11 @@ sflphone_srtp_zrtp_off (callable_obj_t * c)
 void
 sflphone_srtp_zrtp_show_sas (callable_obj_t * c, const gchar* sas, const gboolean verified)
 {
-    if (c == NULL) {
-        DEBUG ("Panic callable obj is NULL in %s at %d", __FILE__, __LINE__);
-    }
-
     c->_sas = g_strdup (sas);
-
-    if (verified == TRUE) {
-        c->_srtp_state = SRTP_STATE_ZRTP_SAS_CONFIRMED;
-    } else {
-        c->_srtp_state = SRTP_STATE_ZRTP_SAS_UNCONFIRMED;
-    }
+    c->_srtp_state = verified ? SRTP_STATE_ZRTP_SAS_CONFIRMED : SRTP_STATE_ZRTP_SAS_UNCONFIRMED;
 
     calltree_update_call (current_calls, c, NULL);
     update_actions();
-}
-
-void
-sflphone_srtp_zrtp_not_supported (callable_obj_t * c)
-{
-    DEBUG ("ZRTP not supported");
-    main_window_zrtp_not_supported (c);
-}
-
-/* Method on sflphoned */
-void
-sflphone_set_confirm_go_clear (callable_obj_t * c)
-{
-    dbus_set_confirm_go_clear (c);
 }
 
 void
@@ -1482,14 +1439,6 @@ sflphone_request_go_clear (void)
         dbus_request_go_clear (selectedCall);
     }
 }
-
-/* Signal sent by sflphoned */
-void
-sflphone_confirm_go_clear (callable_obj_t * c)
-{
-    main_window_confirm_go_clear (c);
-}
-
 
 void
 sflphone_call_state_changed (callable_obj_t * c, const gchar * description, const guint code)

@@ -118,10 +118,10 @@ void
 row_activated (GtkTreeView *, GtkTreePath *, GtkTreeViewColumn *, void *);
 
 /**
- * Update elapced time based on selected calltree's call
+ * Update elapsed time based on selected calltree's call
  */
-void
-calltree_update_clock();
+gboolean
+calltree_update_clock(gpointer);
 
 /**
  * Get the iter to a row provided the callID/confID

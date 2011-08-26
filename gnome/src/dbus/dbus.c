@@ -652,10 +652,8 @@ confirm_go_clear_cb (DBusGProxy *proxy UNUSED, const gchar* callID, void * foo  
     DEBUG ("DBUS: Confirm Go Clear request");
 
     callable_obj_t * c = calllist_get_call (current_calls, callID);
-
-    if (c) {
-        sflphone_confirm_go_clear (c);
-    }
+    if (c)
+        main_window_confirm_go_clear (c);
 }
 
 static void
@@ -665,7 +663,7 @@ zrtp_not_supported_cb (DBusGProxy *proxy UNUSED, const gchar* callID, void * foo
     callable_obj_t * c = calllist_get_call (current_calls, callID);
 
     if (c) {
-        sflphone_srtp_zrtp_not_supported (c);
+        main_window_zrtp_not_supported (c);
         notify_zrtp_not_supported (c);
     }
 }

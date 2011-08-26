@@ -604,8 +604,6 @@ void
 calltree_remove_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 {
     GtkTreeIter iter;
-    GValue val;
-    callable_obj_t * iterCall;
     GtkTreeStore* store = tab->store;
 
     if (!c)
@@ -614,17 +612,15 @@ calltree_remove_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
     DEBUG ("CallTree: Remove call %s", c->_callID);
 
     int nbChild = gtk_tree_model_iter_n_children (GTK_TREE_MODEL (store), parent);
-    int i;
-
-    for (i = 0; i < nbChild; i++) {
+    for (int i = 0; i < nbChild; i++) {
         if (gtk_tree_model_iter_nth_child (GTK_TREE_MODEL (store), &iter, parent, i)) {
             if (gtk_tree_model_iter_has_child (GTK_TREE_MODEL (store), &iter))
                 calltree_remove_call (tab, c, &iter);
 
-            val.g_type = 0;
+            GValue val = { .g_type = 0 };
             gtk_tree_model_get_value (GTK_TREE_MODEL (store), &iter, COLUMN_ACCOUNT_PTR, &val);
 
-            iterCall = (callable_obj_t*) g_value_get_pointer (&val);
+            callable_obj_t * iterCall = g_value_get_pointer (&val);
             g_value_unset (&val);
 
             if (iterCall == c)
@@ -632,16 +628,12 @@ calltree_remove_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
         }
     }
 
-    callable_obj_t * selectedCall = calltab_get_selected_call (tab);
-
-    if (selectedCall == c)
+    if (calltab_get_selected_call (tab) == c)
         calltab_select_call (tab, NULL);
 
     update_actions();
 
-    calltree_update_clock();
-
-    DEBUG ("Calltree remove call ended");
+    statusbar_update_clock("");
 }
 
 void
@@ -1202,50 +1194,47 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, G
     conference_obj_t *tempconf = NULL;
     GtkTreeStore* store = tab->store;
     int nbParticipant;
-    int i, j;
 
     DEBUG ("CallTree: Remove conference %s", conf->_confID);
 
     int nbChild = gtk_tree_model_iter_n_children (GTK_TREE_MODEL (store), parent);
 
-    for (i = 0; i < nbChild; i++) {
+    for (int i = 0; i < nbChild; i++) {
+        if (!gtk_tree_model_iter_nth_child (GTK_TREE_MODEL (store), &iter_parent, parent, i))
+            continue;
+        if (!gtk_tree_model_iter_has_child (GTK_TREE_MODEL (store), &iter_parent))
+           continue;
 
-        if (gtk_tree_model_iter_nth_child (GTK_TREE_MODEL (store), &iter_parent, parent, i)) {
-            if (gtk_tree_model_iter_has_child (GTK_TREE_MODEL (store), &iter_parent)) {
+        calltree_remove_conference (tab, conf, &iter_parent);
 
-                calltree_remove_conference (tab, conf, &iter_parent);
+        confval.g_type = 0;
+        gtk_tree_model_get_value (GTK_TREE_MODEL (store), &iter_parent, COLUMN_ACCOUNT_PTR, &confval);
 
-                confval.g_type = 0;
-                gtk_tree_model_get_value (GTK_TREE_MODEL (store), &iter_parent, COLUMN_ACCOUNT_PTR, &confval);
+        tempconf = (conference_obj_t*) g_value_get_pointer (&confval);
+        g_value_unset (&confval);
 
-                tempconf = (conference_obj_t*) g_value_get_pointer (&confval);
-                g_value_unset (&confval);
+        if (tempconf != conf)
+            continue;
 
-                if (tempconf == conf) {
+        nbParticipant = gtk_tree_model_iter_n_children (GTK_TREE_MODEL (store), &iter_parent);
+        DEBUG ("CallTree: nbParticipant: %d", nbParticipant);
 
-                    nbParticipant = gtk_tree_model_iter_n_children (GTK_TREE_MODEL (store), &iter_parent);
-                    DEBUG ("CallTree: nbParticipant: %d", nbParticipant);
+        for (int j = 0; j < nbParticipant; j++) {
+            if (!gtk_tree_model_iter_nth_child (GTK_TREE_MODEL (store), &iter_child, &iter_parent, j))
+                continue;
 
-                    for (j = 0; j < nbParticipant; j++) {
-                        callable_obj_t *call = NULL;
+            callval.g_type = 0;
+            gtk_tree_model_get_value (GTK_TREE_MODEL (store), &iter_child, COLUMN_ACCOUNT_PTR, &callval);
 
-                        if (gtk_tree_model_iter_nth_child (GTK_TREE_MODEL (store), &iter_child, &iter_parent, j)) {
+            callable_obj_t *call = g_value_get_pointer (&callval);
+            g_value_unset (&callval);
 
-                            callval.g_type = 0;
-                            gtk_tree_model_get_value (GTK_TREE_MODEL (store), &iter_child, COLUMN_ACCOUNT_PTR, &callval);
-
-                            call = (callable_obj_t*) g_value_get_pointer (&callval);
-                            g_value_unset (&callval);
-
-                            // do not add back call in history calltree when cleaning it
-                            if (call && tab != history)
-                                calltree_add_call (tab, call, NULL);
-                        }
-                    }
-                    gtk_tree_store_remove (store, &iter_parent);
-                }
-            }
+            // do not add back call in history calltree when cleaning it
+            if (call && tab != history)
+                calltree_add_call (tab, call, NULL);
         }
+
+        gtk_tree_store_remove (store, &iter_parent);
     }
 
     update_actions();
@@ -1343,25 +1332,31 @@ void calltree_display (calltab_t *tab)
 }
 
 
-void calltree_update_clock()
+gboolean calltree_update_clock(gpointer data UNUSED)
 {
+    char timestr[20];
+    char *msg = "";
+    long duration;
     callable_obj_t *c = calltab_get_selected_call (current_calls);
-    if (!c || !c->_timestr) {
-        statusbar_update_clock ("");
-        return;
-    }
 
-    if ((c->_state != CALL_STATE_INVALID) &&
-            (c->_state != CALL_STATE_INCOMING) &&
-            (c->_state != CALL_STATE_RINGING) &&
-            (c->_state != CALL_STATE_DIALING) &&
-            (c->_state != CALL_STATE_FAILURE) &&
-            (c->_state != CALL_STATE_BUSY)) {
+    if (c)
+        switch (c->_state) {
+        case CALL_STATE_INVALID:
+        case CALL_STATE_INCOMING:
+        case CALL_STATE_RINGING:
+        case CALL_STATE_FAILURE:
+        case CALL_STATE_DIALING:
+        case CALL_STATE_BUSY:
+            break;
+        default:
+            duration = difftime (time(NULL), c->_time_start);
+            if (duration < 0)
+                duration = 0;
+            g_snprintf (timestr, sizeof(timestr), "%.2ld:%.2ld", duration / 60, duration % 60);
+            msg = timestr;
+        }
 
-        // TODO this make the whole thing crash...
-        statusbar_update_clock (c->_timestr);
-    } else
-        statusbar_update_clock ("");
+    statusbar_update_clock (msg);
 }
 
 

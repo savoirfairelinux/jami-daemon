@@ -58,9 +58,8 @@ gboolean sflphone_init () ;
 
 /**
  * Steps when closing the application.  Will ask for confirmation if a call is in progress.
- * @return TRUE if the user wants to quit, FALSE otherwise.
  */
-gboolean sflphone_quit () ;
+void sflphone_quit () ;
 
 /**
  * Hang up / refuse the current call
@@ -262,24 +261,6 @@ void sflphone_srtp_zrtp_off (callable_obj_t * c);
  * @param verified* Weather the SAS was confirmed or not.
  */
 void sflphone_srtp_zrtp_show_sas (callable_obj_t * c, const gchar* sas, const gboolean verified);
-
-/**
- * Called when the remote peer does not support ZRTP
- * @param c* The current call
- */
-void sflphone_srtp_zrtp_not_supported (callable_obj_t * c);
-
-/**
- * Called when user wants to confirm go clear request.
- * @param c* The call to confirm the go clear request.
- */
-void sflphone_set_confirm_go_clear (callable_obj_t * c);
-
-/**
- * Called when user wants to confirm go clear request.
- * @param c* The call to confirm the go clear request.
- */
-void sflphone_confirm_go_clear (callable_obj_t * c);
 
 /**
  * Called when user wants to clear.

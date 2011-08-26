@@ -105,60 +105,6 @@ void call_remove_all_errors (callable_obj_t * call)
     g_ptr_array_foreach (call->_error_dialogs, (GFunc) gtk_widget_destroy, NULL);
 }
 
-static void threaded_clock_incrementer (void *pc)
-{
-    callable_obj_t *call = (callable_obj_t *) pc;
-
-    for(;;) {
-        gdk_threads_enter ();
-
-        int duration = difftime (time(NULL), call->_time_start);
-
-        g_snprintf (call->_timestr, 20, "%.2d:%.2d", duration % 60, duration / 60);
-
-        // Update clock only if call is active (current, hold, recording transfer)
-        if ( (call->_state != CALL_STATE_INVALID) &&
-                (call->_state != CALL_STATE_INCOMING) &&
-                (call->_state != CALL_STATE_RINGING) &&
-                (call->_state != CALL_STATE_DIALING) &&
-                (call->_state != CALL_STATE_FAILURE) &&
-                (call->_state != CALL_STATE_BUSY)) {
-            calltree_update_clock();
-        }
-
-        gdk_threads_leave ();
-
-        GTimeVal abs_time;
-        g_get_current_time(&abs_time);
-        g_time_val_add(&abs_time, 1000000);
-        g_mutex_lock(call->mutex);
-        g_cond_timed_wait(call->cond, call->mutex, &abs_time);
-        gboolean ret = call->exitClockThread;
-        g_mutex_unlock(call->mutex);
-
-        if (ret == TRUE)
-            break;
-    }
-
-    g_thread_exit (NULL);
-}
-
-void stop_call_clock (callable_obj_t *c)
-{
-    assert(c->_type == CALL);
-
-    g_mutex_lock(c->mutex);
-    c->exitClockThread = TRUE;
-    g_cond_signal(c->cond);
-    g_mutex_unlock(c->mutex);
-
-    g_thread_join(c->clock_thread);
-    g_mutex_free(c->mutex);
-    g_cond_free(c->cond);
-
-    c->clock_thread = NULL;
-}
-
 callable_obj_t *create_new_call (callable_type_t type, call_state_t state,
                       const gchar* const callID,
                       const gchar* const accountID,
@@ -181,13 +127,6 @@ callable_obj_t *create_new_call (callable_type_t type, call_state_t state,
     obj->_peer_name = g_strdup (peer_name);
     obj->_peer_number = g_strdup (peer_number);
     obj->_peer_info = get_peer_info (peer_name, peer_number);
-
-    if (obj->_type == CALL) {
-        obj->mutex = g_mutex_new();
-        obj->cond = g_cond_new();
-        obj->exitClockThread = FALSE;
-        obj->clock_thread = g_thread_create((GThreadFunc) threaded_clock_incrementer, (void *) obj, TRUE, NULL);
-    }
 
     return obj;
 }
@@ -283,8 +222,6 @@ void free_callable_obj_t (callable_obj_t *c)
     g_free (c->_recordfile);
 
     g_free (c);
-
-    calltree_update_clock();
 }
 
 gchar* get_peer_info (const gchar* const number, const gchar* const name)

@@ -297,13 +297,12 @@ create_main_window ()
     /* dont't show the contact list */
     gtk_widget_hide (contacts->tree);
 
-    //history_init(); // init search
-
     /* don't show waiting layer */
     gtk_widget_hide (waitingLayer);
 
-    // pthread_mutex_init (&statusbar_message_mutex, NULL);
     gmutex = g_mutex_new();
+
+    g_timeout_add(1000, calltree_update_clock, NULL);
 
     // Configuration wizard
     if (account_list_get_size () == 1) {
@@ -441,16 +440,8 @@ statusbar_pop_message (guint id)
 void
 statusbar_update_clock (const gchar * const msg)
 {
-    gchar *message = NULL;
-
-    if (!msg) {
-        statusbar_pop_message (__MSG_ACCOUNT_DEFAULT);
-        statusbar_push_message (message, NULL, __MSG_ACCOUNT_DEFAULT);
-    }
-
-
     g_mutex_lock (gmutex);
-    message = g_strdup (status_current_message);
+    gchar *message = g_strdup (status_current_message);
     g_mutex_unlock (gmutex);
 
     if (message) {
@@ -554,7 +545,7 @@ main_window_confirm_go_clear (callable_obj_t * c)
     mini_dialog = pidgin_mini_dialog_new (_ ("Confirm Go Clear"), desc,
                                           GTK_STOCK_STOP);
     pidgin_mini_dialog_add_button (mini_dialog, _ ("Confirm"),
-                                   (PidginMiniDialogCallback) sflphone_set_confirm_go_clear, NULL);
+                                   (PidginMiniDialogCallback) dbus_set_confirm_go_clear, NULL);
     pidgin_mini_dialog_add_button (mini_dialog, _ ("Stop Call"), sflphone_hang_up,
                                    NULL);
 
