@@ -94,28 +94,10 @@ typedef struct  {
 void account_list_init ();
 
 /**
- * This function empty and free the account list.
- */
-void account_list_clean ();
-
-/**
  * This function append an account to list.
  * @param a The account you want to add
  */
 void account_list_add (account_t * a);
-
-/**
- * This function append an account to list at a given position.
- * @param a The account you want to add
- * @param pos THe position in the list to insert the account
- */
-void account_list_add_at_nth (account_t * a, guint pos);
-
-/**
- * This function remove an account from list.
- * @param accountID The accountID of the account you want to remove
- */
-void account_list_remove (const gchar * accountID);
 
 /**
  * Return the first account that corresponds to the state
@@ -192,8 +174,6 @@ void account_list_move_down (guint index);
 gchar* account_list_get_current_id (void);
 
 gchar * account_list_get_ordered_list (void);
-
-guint account_list_get_position (account_t *account);
 
 gboolean current_account_has_mailbox (void);
 

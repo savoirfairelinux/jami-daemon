@@ -101,22 +101,18 @@ static gchar ** sflphone_order_history_hash_table(GHashTable *result)
 void
 sflphone_notify_voice_mail (const gchar* accountID , guint count)
 {
-    gchar *id;
-    gchar *current_id;
-    account_t *current;
-
     // We want to notify only the current account; ie the first in the list
-    id = g_strdup (accountID);
-    current_id = account_list_get_current_id ();
+    gchar *id = g_strdup (accountID);
+    const gchar * const current_id = account_list_get_current_id ();
 
     DEBUG ("sflphone_notify_voice_mail begin");
 
-    if (g_strcasecmp (id, current_id) != 0 || account_list_get_size() == 0)
+    if (g_ascii_strcasecmp (id, current_id) != 0 || account_list_get_size() == 0)
         return;
 
     // Set the number of voice messages for the current account
     current_account_set_message_number (count);
-    current = account_list_get_current ();
+    account_t *current = account_list_get_current ();
 
     // Update the voicemail tool button
     update_voicemail_status ();
@@ -187,7 +183,6 @@ sflphone_quit ()
         calllist_clean (current_calls);
         calllist_clean (contacts);
         calllist_clean (history);
-        //account_list_clean()
         gtk_main_quit ();
     }
 }
