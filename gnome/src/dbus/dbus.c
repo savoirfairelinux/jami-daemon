@@ -612,7 +612,7 @@ confirm_go_clear_cb (DBusGProxy *proxy UNUSED, const gchar* callID, void * foo  
     callable_obj_t * c = calllist_get_call (current_calls, callID);
 
     if (c)
-        sflphone_confirm_go_clear (c);
+        main_window_confirm_go_clear (c);
 }
 
 static void
