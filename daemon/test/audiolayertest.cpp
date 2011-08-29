@@ -117,8 +117,6 @@ void AudioLayerTest::testPulseConnect()
     CPPUNIT_ASSERT (_pulselayer->getPlaybackStream() == NULL);
     CPPUNIT_ASSERT (_pulselayer->getRecordStream() == NULL);
 
-    _pulselayer->setErrorMessage (-1);
-
     try {
         _pulselayer->openDevice (numCardIn, numCardOut, numCardRing, sampleRate, frameSize, SFL_PCM_BOTH, alsaPlugin);
     } catch (...) {

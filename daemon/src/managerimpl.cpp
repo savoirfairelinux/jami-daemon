@@ -2056,12 +2056,11 @@ void ManagerImpl::setAudioPlugin (const std::string& audioPlugin)
 
     if (CHECK_INTERFACE (layerType , ALSA)) {
         _debug ("Set input audio plugin");
-        _audiodriver -> setErrorMessage (-1);
         _audiodriver -> openDevice (_audiodriver->getIndexIn(), _audiodriver->getIndexOut(),
                                     _audiodriver->getIndexRing(), _audiodriver -> getSampleRate(),
                                     _audiodriver -> getFrameSize(), SFL_PCM_BOTH, audioPlugin);
 
-        if (_audiodriver -> getErrorMessage() != -1)
+        if (_audiodriver -> getErrorMessage())
             notifyErrClient (_audiodriver -> getErrorMessage());
     }
     audioLayerMutexUnlock();
@@ -2080,8 +2079,6 @@ void ManagerImpl::setAudioDevice (const int index, int streamType)
     	audioLayerMutexUnlock();
     	return;
     }
-
-    _audiodriver -> setErrorMessage (-1);
 
     AlsaLayer *alsaLayer = dynamic_cast<AlsaLayer*>(_audiodriver);
     if (!alsaLayer) {
@@ -2119,7 +2116,7 @@ void ManagerImpl::setAudioDevice (const int index, int streamType)
             _warn ("Unknown stream type");
     }
 
-    if (_audiodriver -> getErrorMessage() != -1)
+    if (_audiodriver -> getErrorMessage())
         notifyErrClient (_audiodriver -> getErrorMessage());
 
     audioLayerMutexUnlock();
@@ -2482,44 +2479,22 @@ void ManagerImpl::setEchoCancelDelay(int delay)
 /**
  * Initialization: Main Thread
  */
-bool ManagerImpl::initAudioDriver (void)
+void ManagerImpl::initAudioDriver (void)
 {
-    _debug ("Manager: AudioLayer Creation");
-
     audioLayerMutexLock();
 
-    if (preferences.getAudioApi() == ALSA) {
+    if (preferences.getAudioApi() == PULSEAUDIO && system("ps -C pulseaudio") == 0) {
+		_audiodriver = new PulseLayer (this);
+	} else {
+		preferences.setAudioApi (ALSA);
         _audiodriver = new AlsaLayer (this);
-        _audiodriver->setMainBuffer (&_mainBuffer);
-    } else if (preferences.getAudioApi() == PULSEAUDIO) {
-        if (system("ps -C pulseaudio") == 0) {
-            _audiodriver = new PulseLayer (this);
-            _audiodriver->setMainBuffer (&_mainBuffer);
-        } else {
-            _audiodriver = new AlsaLayer (this);
-            preferences.setAudioApi (ALSA);
-            _audiodriver->setMainBuffer (&_mainBuffer);
-        }
-    } else
-        _debug ("Error - Audio API unknown");
-
-    if (_audiodriver == NULL) {
-        _debug ("Manager: Init audio driver error");
-        audioLayerMutexUnlock();
-        return false;
-    } else {
-        int error = _audiodriver->getErrorMessage();
-
-        if (error == -1) {
-            _debug ("Manager: Init audio driver: %d", error);
-            audioLayerMutexUnlock();
-            return false;
-        }
     }
 
-    audioLayerMutexUnlock();
+	int error = _audiodriver->getErrorMessage();
+	if (error)
+		_error("Audio driver init: %d", error);
 
-    return true;
+    audioLayerMutexUnlock();
 }
 
 /**
@@ -2568,15 +2543,13 @@ void ManagerImpl::selectAudioDriver (void)
         }
     }
 
-    _audiodriver->setErrorMessage (-1);
-
     /* Open the audio devices */
     _audiodriver->openDevice (numCardIn, numCardOut, numCardRing, sampleRate, frameSize,
                               SFL_PCM_BOTH, alsaPlugin);
 
     /* Notify the error if there is one */
 
-    if (_audiodriver-> getErrorMessage() != -1)
+    if (_audiodriver-> getErrorMessage())
         notifyErrClient (_audiodriver -> getErrorMessage());
 
     audioLayerMutexUnlock();
@@ -2611,32 +2584,15 @@ void ManagerImpl::switchAudioManager (void)
     _debug ("Manager: Deleting current layer... ");
 
     delete _audiodriver;
-    _audiodriver = NULL;
-
-    switch (type) {
-        case ALSA:
-            _debug ("Manager: Creating Pulseaudio layer...");
-            _audiodriver = new PulseLayer (this);
-            _audiodriver->setMainBuffer (&_mainBuffer);
-            break;
-
-        case PULSEAUDIO:
-            _debug ("Manager: Creating ALSA layer...");
-            _audiodriver = new AlsaLayer (this);
-            _audiodriver->setMainBuffer (&_mainBuffer);
-            break;
-
-        default:
-            _warn ("Manager: Error: audio layer unknown");
-            break;
-    }
-
-    _audiodriver->setErrorMessage (-1);
+    if (type == PULSEAUDIO)
+    	_audiodriver = new PulseLayer (this);
+    else
+    	_audiodriver = new AlsaLayer (this);
 
     _audiodriver->openDevice (numCardIn, numCardOut, numCardRing, samplerate, framesize,
                               SFL_PCM_BOTH, alsaPlugin);
 
-    if (_audiodriver->getErrorMessage() != -1)
+    if (_audiodriver->getErrorMessage())
         notifyErrClient (_audiodriver -> getErrorMessage());
 
     _debug ("Manager: Current device: %d ", type);
@@ -2684,34 +2640,15 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
     bool wasActive = _audiodriver->isStarted();
 
     delete _audiodriver;
-    _audiodriver = 0;
-
-    switch (type) {
-
-        case PULSEAUDIO:
-            _debug ("Manager: Creating Pulseaudio layer...");
-            _audiodriver = new PulseLayer (this);
-            _audiodriver->setMainBuffer (&_mainBuffer);
-            break;
-
-        case ALSA:
-            _debug ("Manager: Creating ALSA layer...");
-            _audiodriver = new AlsaLayer (this);
-            _audiodriver->setMainBuffer (&_mainBuffer);
-            break;
-
-        default:
-            _error ("Manager: Error: audio layer unknown");
-        	audioLayerMutexUnlock();
-        	return;
-    }
-
-    _audiodriver->setErrorMessage (-1);
+    if (type == PULSEAUDIO)
+    	_audiodriver = new PulseLayer (this);
+    else
+    	_audiodriver = new AlsaLayer (this);
 
     _audiodriver->openDevice (numCardIn, numCardOut, numCardRing, samplerate, framesize,
                               SFL_PCM_BOTH, alsaPlugin);
 
-    if (_audiodriver -> getErrorMessage() != -1)
+    if (_audiodriver -> getErrorMessage())
         notifyErrClient (_audiodriver -> getErrorMessage());
 
     _debug ("Manager: Current device: %d ", type);

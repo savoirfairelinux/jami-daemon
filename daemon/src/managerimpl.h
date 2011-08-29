@@ -933,19 +933,10 @@ class ManagerImpl
          */
         bool isCurrentCall (const std::string& callId);
 
-        /*
-         * Initialize audiodriver
-         */
-        bool initAudioDriver (void);
+        void initAudioDriver (void);
 
-        /**
-         * Enter the mutex for the audio layer
-         */
         void audioLayerMutexLock(void) { _audiolayerMutex.enterMutex(); }
 
-        /**
-         * Leave the mutex for audio layer
-         */
         void audioLayerMutexUnlock(void) { _audiolayerMutex.leaveMutex(); }
 
         /**

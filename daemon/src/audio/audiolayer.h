@@ -37,6 +37,7 @@
 #include <cc++/thread.h> // for ost::Mutex
 #include <sys/time.h>
 
+#include "manager.h"
 #include "ringbuffer.h"
 
 /**
@@ -44,7 +45,6 @@
  * @brief Main sound class. Manages the data transfers between the application and the hardware.
  */
 
-class ManagerImpl;
 class DcBlocker;
 class MainBuffer;
 class AudioProcessing;
@@ -197,14 +197,7 @@ class AudioLayer
              * @return MainBuffer* a pointer to the MainBuffer instance
              */
         MainBuffer* getMainBuffer (void) const {
-            return mainBuffer_;
-        }
-
-        /**
-         * Set the mainbuffer once the audiolayer is created
-         */
-        void setMainBuffer (MainBuffer* mainbuffer) {
-            mainBuffer_ = mainbuffer;
+            return manager_->getMainBuffer();
         }
 
         /**
@@ -270,15 +263,6 @@ class AudioLayer
          * Urgent ring buffer used for ringtones
          */
         RingBuffer urgentRingBuffer_;
-
-        /**
-         * Instance of the MainBuffer for the whole application
-         *
-         * In order to send signal to other parts of the application, one must pass through the mainbuffer.
-         * Audio instances must be registered into the MainBuffer and bound together via the ManagerImpl.
-         *
-         */
-        MainBuffer* mainBuffer_;
 
         /**
          * A pointer to the recordable instance (may be a call or a conference)
