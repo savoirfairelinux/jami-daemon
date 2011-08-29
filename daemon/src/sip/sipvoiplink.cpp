@@ -76,7 +76,8 @@
 
 using namespace sfl;
 
-static const char * invitationStateMap[] = {
+namespace {
+static const char * const invitationStateMap[] = {
     "PJSIP_INV_STATE_NULL",
     "PJSIP_INV_STATE_CALLING",
     "PJSIP_INV_STATE_INCOMING",
@@ -86,7 +87,7 @@ static const char * invitationStateMap[] = {
     "PJSIP_INV_STATE_DISCONNECTED"
 };
 
-static const char * transactionStateMap[] = {
+static const char * const transactionStateMap[] = {
     "PJSIP_TSX_STATE_NULL" ,
     "PJSIP_TSX_STATE_CALLING",
     "PJSIP_TSX_STATE_TRYING",
@@ -112,7 +113,6 @@ pjsip_tpfactory *_localTlsListener = NULL;
 /** A map to retreive SFLphone internal call id
  *  Given a SIP call ID (usefull for transaction sucha as transfer)*/
 std::map<std::string, std::string> transferCallID;
-
 
 const pj_str_t STR_USER_AGENT = { (char*) "User-Agent", 10 };
 
@@ -254,6 +254,8 @@ void transfer_server_cb (pjsip_evsub *sub, pjsip_event *event);
  * Helper function to process refer function on call transfer
  */
 void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata);
+
+} // end anonymous namespace
 
 /*************************************************************************************************/
 
@@ -505,9 +507,8 @@ void SIPVoIPLink::sendRegister (Account *a)
                 transport->obj_name, transport->info, (int) pj_atomic_get(transport->ref_cnt));
 }
 
-void SIPVoIPLink::sendUnregister (Account *a) throw(VoipLinkException)
+void SIPVoIPLink::sendUnregister (Account *a)
 {
-    pjsip_tx_data *tdata = NULL;
     SIPAccount *account = (SIPAccount *)a;
 
     // If an transport is attached to this account, detach it and decrease reference counter
@@ -527,9 +528,10 @@ void SIPVoIPLink::sendUnregister (Account *a) throw(VoipLinkException)
     }
 
     pjsip_regc *regc = account->getRegistrationInfo();
-    if(!regc)
+    if (!regc)
     	throw VoipLinkException("Registration structure is NULL");
 
+    pjsip_tx_data *tdata = NULL;
     if (pjsip_regc_unregister (regc, &tdata) != PJ_SUCCESS)
     	throw VoipLinkException("Unable to unregister sip account");
 
@@ -539,7 +541,7 @@ void SIPVoIPLink::sendUnregister (Account *a) throw(VoipLinkException)
     account->setRegister (false);
 }
 
-Call *SIPVoIPLink::newOutgoingCall (const std::string& id, const std::string& toUrl) throw (VoipLinkException)
+Call *SIPVoIPLink::newOutgoingCall (const std::string& id, const std::string& toUrl)
 {
     SIPAccount * account = NULL;
     std::string localAddr, addrSdp;
@@ -629,7 +631,7 @@ Call *SIPVoIPLink::newOutgoingCall (const std::string& id, const std::string& to
 }
 
 void
-SIPVoIPLink::answer (Call *c) throw (VoipLinkException)
+SIPVoIPLink::answer (Call *c)
 {
     pjsip_tx_data *tdata;
 
@@ -652,33 +654,28 @@ SIPVoIPLink::answer (Call *c) throw (VoipLinkException)
 }
 
 void
-SIPVoIPLink::hangup (const std::string& id) throw (VoipLinkException)
+SIPVoIPLink::hangup (const std::string& id)
 {
-    pjsip_tx_data *tdata = NULL;
-
     SIPCall* call = getSIPCall (id);
-    if (call == NULL) {
+    if (call == NULL)
         throw VoipLinkException("Call is NULL while hanging up");
-    }
 
     std::string account_id = Manager::instance().getAccountFromCall (id);
     SIPAccount *account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
-    if(account == NULL) {
+    if (account == NULL)
     	throw VoipLinkException("Could not find account for this call");
-    }
-
 
     pjsip_inv_session *inv = call->getInvSession();
-    if(inv == NULL) {
+    if (inv == NULL)
     	throw VoipLinkException("No invite session for this call");
-    }
 
     // Looks for sip routes
-    if (! (account->getServiceRoute().empty())) {
+    if (not (account->getServiceRoute().empty())) {
         pjsip_route_hdr *route_set = createRouteSet(account, inv->pool);
         pjsip_dlg_set_route_set (inv->dlg, route_set);
     }
 
+    pjsip_tx_data *tdata = NULL;
     // User hangup current call. Notify peer
     if (pjsip_inv_end_session (inv, 404, NULL, &tdata) != PJ_SUCCESS || !tdata)
         return;
@@ -694,7 +691,7 @@ SIPVoIPLink::hangup (const std::string& id) throw (VoipLinkException)
         if (Manager::instance().isCurrentCall (id))
             call->getAudioRtp()->stop();
     }
-    catch(...) {
+    catch (...) {
     	throw VoipLinkException("Could not stop audio rtp session");
     }
 
@@ -702,7 +699,7 @@ SIPVoIPLink::hangup (const std::string& id) throw (VoipLinkException)
 }
 
 void
-SIPVoIPLink::peerHungup (const std::string& id) throw (VoipLinkException)
+SIPVoIPLink::peerHungup (const std::string& id)
 {
     _info ("UserAgent: Peer hungup");
 
@@ -728,7 +725,7 @@ SIPVoIPLink::peerHungup (const std::string& id) throw (VoipLinkException)
             call->getAudioRtp()->stop();
         }
     }
-    catch(...) {
+    catch (...) {
     	throw VoipLinkException("Could not stop audio rtp session");
     }
 
@@ -736,21 +733,20 @@ SIPVoIPLink::peerHungup (const std::string& id) throw (VoipLinkException)
 }
 
 void
-SIPVoIPLink::cancel (const std::string& id) throw (VoipLinkException)
+SIPVoIPLink::cancel (const std::string& id)
 {
     _info ("UserAgent: Cancel call %s", id.c_str());
 
     SIPCall* call = getSIPCall (id);
-    if (!call) {
+    if (!call)
     	throw VoipLinkException("Call does not exist");
-    }
 
     removeCall (id);
 }
 
 
 bool
-SIPVoIPLink::onhold (const std::string& id) throw (VoipLinkException)
+SIPVoIPLink::onhold (const std::string& id)
 {
     SIPCall *call = getSIPCall (id);
     if (!call)
@@ -782,42 +778,36 @@ SIPVoIPLink::onhold (const std::string& id) throw (VoipLinkException)
 }
 
 bool
-SIPVoIPLink::offhold (const std::string& id) throw (VoipLinkException)
+SIPVoIPLink::offhold (const std::string& id)
 {
     _debug ("UserAgent: retrive call from hold status");
 
     SIPCall *call = getSIPCall (id);
-    if (call == NULL) {
+    if (call == NULL)
     	throw VoipLinkException("Could not find call");
-    }
 
 	Sdp *sdpSession = call->getLocalSDP();
-    if (sdpSession == NULL) {
+    if (sdpSession == NULL)
     	throw VoipLinkException("Could not find sdp session");
-    }
 
     try {
         // Retreive previously selected codec
         AudioCodecType pl;
         sfl::Codec *sessionMedia = sdpSession->getSessionMedia();
         if (sessionMedia == NULL) {
-            // throw VoipLinkException("Could not find session media");
     	    _warn("UserAgent: Session media not yet initialized, using default (ULAW)");
     	    pl = PAYLOAD_CODEC_ULAW;
         }
-        else {
-    	    // Get PayloadType for this codec
+        else
     	    pl = (AudioCodecType) sessionMedia->getPayloadType();
-        }
 
         _debug ("UserAgent: Payload from session media %d", pl);
 
 
         // Create a new instance for this codec
         sfl::Codec* audiocodec = Manager::instance().getAudioCodecFactory().instantiateCodec (pl);
-        if (audiocodec == NULL) {
+        if (audiocodec == NULL)
     	    throw VoipLinkException("Could not instantiate codec");
-        }
 
         call->getAudioRtp()->initAudioRtpConfig ();
         call->getAudioRtp()->initAudioSymmetricRtpSession ();
@@ -850,13 +840,8 @@ SIPVoIPLink::sendTextMessage (sfl::InstantMessaging *module, const std::string& 
     _debug ("SipVoipLink: Send text message to %s, from %s", callID.c_str(), from.c_str());
 
     SIPCall *call = getSIPCall (callID);
-    if (!call) {
-        /* Notify the client of an error */
-        /*Manager::instance ().incomingMessage (	"",
-        										"sflphoned",
-        										"Unable to send a message outside a call.");*/
+    if (!call)
     	return !PJ_SUCCESS;
-    }
 
 	/* Send IM message */
 	sfl::InstantMessaging::UriList list;
@@ -870,69 +855,39 @@ SIPVoIPLink::sendTextMessage (sfl::InstantMessaging *module, const std::string& 
 	return module->send_sip_message (call->getInvSession (), callID, formatedMessage);
 }
 
-int SIPSessionReinvite (SIPCall *call)
-{
-    pjsip_tx_data *tdata;
-
-    _debug("UserAgent: Sending re-INVITE request");
-
-    pjmedia_sdp_session *local_sdp = call->getLocalSDP()->getLocalSdpSession();
-    if (!local_sdp) {
-        _debug ("UserAgent: Error: Unable to find local sdp");
-        return !PJ_SUCCESS;
-    }
-
-    // Build the reinvite request
-    pj_status_t status = pjsip_inv_reinvite (call->getInvSession(), NULL, local_sdp, &tdata);
-    if (status != PJ_SUCCESS)
-        return status;
-
-    // Send it
-    return pjsip_inv_send_msg (call->getInvSession(), tdata);
-}
-
 bool
-SIPVoIPLink::transfer (const std::string& id, const std::string& to) throw (VoipLinkException)
+SIPVoIPLink::transfer (const std::string& id, const std::string& to)
 {
-
-    std::string tmp_to;
-    pjsip_evsub *sub;
-    pjsip_tx_data *tdata;
-
-    struct pjsip_evsub_user xfer_cb;
-    pj_status_t status;
-
     SIPCall *call = getSIPCall (id);
-    if (call == NULL) {
+    if (call == NULL)
     	throw VoipLinkException("Could not find call");
-    }
 
     call->stopRecording();
 
-    std::string account_id = Manager::instance().getAccountFromCall (id);
-    SIPAccount *account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
-    if (account == NULL) {
+    std::string account_id(Manager::instance().getAccountFromCall(id));
+    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount (account_id));
+    if (account == NULL)
     	throw VoipLinkException("Could not find account");
-    }
 
     std::string dest;
     pj_str_t pjDest;
 
     if (to.find ("@") == std::string::npos) {
-        dest = account->getToUri (to);
+        dest = account->getToUri(to);
         pj_cstr (&pjDest, dest.c_str());
     }
 
     _info ("UserAgent: Transfering to %s", dest.c_str());
 
+    pjsip_evsub_user xfer_cb;
     /* Create xfer client subscription. */
     pj_bzero (&xfer_cb, sizeof (xfer_cb));
     xfer_cb.on_evsub_state = &transfer_client_cb;
 
-    status = pjsip_xfer_create_uac (call->getInvSession()->dlg, &xfer_cb, &sub);
-    if (status != PJ_SUCCESS) {
+    pjsip_evsub *sub;
+    pj_status_t status = pjsip_xfer_create_uac (call->getInvSession()->dlg, &xfer_cb, &sub);
+    if (status != PJ_SUCCESS)
     	throw VoipLinkException("Could not create xfer request");
-    }
 
     /* Associate this voiplink of call with the client subscription
      * We can not just associate call with the client subscription
@@ -944,13 +899,14 @@ SIPVoIPLink::transfer (const std::string& id, const std::string& to) throw (Voip
     /*
      * Create REFER request.
      */
+    pjsip_tx_data *tdata;
+
     status = pjsip_xfer_initiate (sub, &pjDest, &tdata);
-    if (status != PJ_SUCCESS) {
+    if (status != PJ_SUCCESS)
     	throw VoipLinkException("Could not create REFER request");
-    }
 
     // Put SIP call id in map in order to retrieve call during transfer callback
-    std::string callidtransfer (call->getInvSession()->dlg->call_id->id.ptr, call->getInvSession()->dlg->call_id->id.slen);
+    std::string callidtransfer(call->getInvSession()->dlg->call_id->id.ptr, call->getInvSession()->dlg->call_id->id.slen);
     transferCallID.insert (std::pair<std::string, std::string> (callidtransfer, call->getCallId()));
 
     /* Send. */
@@ -1030,7 +986,6 @@ bool SIPVoIPLink::attendedTransfer(const std::string& transferId, const std::str
     							transferCall->getInvSession()->dlg->call_id->id.slen);
     _debug ("%s", callidtransfer.c_str());
     transferCallID.insert (std::pair<std::string, std::string> (callidtransfer, transferCall->getCallId()));
-
 
     /* Send. */
     return pjsip_xfer_send_request (sub, tdata) == PJ_SUCCESS;
@@ -2411,6 +2366,28 @@ void SIPVoIPLink::pjsipShutdown (void)
     pj_shutdown();
 }
 
+namespace {
+int SIPSessionReinvite (SIPCall *call)
+{
+    pjsip_tx_data *tdata;
+
+    _debug("UserAgent: Sending re-INVITE request");
+
+    pjmedia_sdp_session *local_sdp = call->getLocalSDP()->getLocalSdpSession();
+    if (!local_sdp) {
+        _debug ("UserAgent: Error: Unable to find local sdp");
+        return !PJ_SUCCESS;
+    }
+
+    // Build the reinvite request
+    pj_status_t status = pjsip_inv_reinvite (call->getInvSession(), NULL, local_sdp, &tdata);
+    if (status != PJ_SUCCESS)
+        return status;
+
+    // Send it
+    return pjsip_inv_send_msg (call->getInvSession(), tdata);
+}
+
 int getModId()
 {
     return _mod_ua.id;
@@ -3080,9 +3057,8 @@ transaction_request_cb (pjsip_rx_data *rdata)
         std::string header_value(fetchHeaderValue (rdata->msg_info.msg, Manager::instance().hookPreference.getUrlSipField()));
 
         if (header_value.size () < header_value.max_size()) {
-            if (not header_value.empty()) {
+            if (not header_value.empty())
                 UrlHook::runAction (Manager::instance().hookPreference.getUrlCommand(), header_value);
-            }
         } else
             throw std::length_error ("UserAgent: Url exceeds std::string max_size");
     }
@@ -3486,27 +3462,6 @@ std::string fetchHeaderValue (pjsip_msg *msg, std::string field)
     return value.substr (0, pos);
 }
 
-std::vector<std::string> SIPVoIPLink::getAllIpInterface (void)
-{
-    pj_sockaddr addrList[16];
-    unsigned int addrCnt = PJ_ARRAY_SIZE (addrList);
-
-    std::vector<std::string> ifaceList;
-
-    if (pj_enum_ip_interface (pj_AF_INET(), &addrCnt, addrList) != PJ_SUCCESS)
-        return ifaceList;
-
-    for (int i = 0; i < (int) addrCnt; i++) {
-        char tmpAddr[PJ_INET_ADDRSTRLEN];
-        pj_sockaddr_print (&addrList[i], tmpAddr, sizeof (tmpAddr), 0);
-        ifaceList.push_back (std::string (tmpAddr));
-        _debug ("Local interface %s", tmpAddr);
-    }
-
-    return ifaceList;
-}
-
-
 static int get_iface_list (struct ifconf *ifconf)
 {
     int sock, rval;
@@ -3521,6 +3476,7 @@ static int get_iface_list (struct ifconf *ifconf)
 
     return rval;
 }
+} // end anonymous namespace
 
 std::vector<std::string> SIPVoIPLink::getAllIpInterfaceByName (void)
 {
@@ -3574,3 +3530,25 @@ std::string SIPVoIPLink::getInterfaceAddrFromName (std::string ifaceName)
 
     return addr;
 }
+
+std::vector<std::string> SIPVoIPLink::getAllIpInterface (void)
+{
+    pj_sockaddr addrList[16];
+    unsigned int addrCnt = PJ_ARRAY_SIZE (addrList);
+
+    std::vector<std::string> ifaceList;
+
+    if (pj_enum_ip_interface (pj_AF_INET(), &addrCnt, addrList) != PJ_SUCCESS)
+        return ifaceList;
+
+    for (int i = 0; i < (int) addrCnt; i++) {
+        char tmpAddr[PJ_INET_ADDRSTRLEN];
+        pj_sockaddr_print (&addrList[i], tmpAddr, sizeof (tmpAddr), 0);
+        ifaceList.push_back (std::string (tmpAddr));
+        _debug ("Local interface %s", tmpAddr);
+    }
+
+    return ifaceList;
+}
+
+

@@ -107,45 +107,45 @@ class VoIPLink
          * @param toUrl  The address of the recipient of the call
          * @return Call* The current call
          */
-        virtual Call* newOutgoingCall (const std::string& id, const std::string& toUrl) throw (VoipLinkException) = 0;
+        virtual Call* newOutgoingCall (const std::string& id, const std::string& toUrl) = 0;
 
         /**
          * Answer the call
          * @param c The call
          */
-        virtual void answer (Call *c) throw (VoipLinkException) = 0;
+        virtual void answer (Call *c) = 0;
 
         /**
          * Hang up a call
          * @param id The call identifier
          */
-        virtual void hangup (const std::string& id)  throw (VoipLinkException) = 0;
+        virtual void hangup (const std::string& id) = 0;
 
         /**
         * Peer Hung up a call
         * @param id The call identifier
         */
-        virtual void peerHungup (const std::string& id) throw (VoipLinkException) = 0;
+        virtual void peerHungup (const std::string& id) = 0;
 
         /**
          * Cancel the call dialing
          * @param id The call identifier
          */
-        virtual void cancel (const std::string& id) throw (VoipLinkException) = 0;
+        virtual void cancel (const std::string& id) = 0;
 
         /**
          * Put a call on hold
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool onhold (const std::string& id) throw (VoipLinkException) = 0;
+        virtual bool onhold (const std::string& id) = 0;
 
         /**
          * Resume a call from hold state
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool offhold (const std::string& id) throw (VoipLinkException) = 0;
+        virtual bool offhold (const std::string& id) = 0;
 
         /**
          * Transfer a call to specified URI
@@ -153,7 +153,7 @@ class VoIPLink
          * @param to The recipient of the call
          * @return bool True on success
          */
-        virtual bool transfer (const std::string& id, const std::string& to) throw (VoipLinkException) = 0;
+        virtual bool transfer (const std::string& id, const std::string& to) = 0;
 
         /**
          * Attended transfer

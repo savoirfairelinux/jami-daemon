@@ -287,44 +287,34 @@ IAXVoIPLink::sendAudioFromMic (void)
 IAXCall*
 IAXVoIPLink::getIAXCall (const std::string& id)
 {
-    Call* call = getCall (id);
-
-    if (call) {
-        return dynamic_cast<IAXCall*> (call);
-    }
-
-    return NULL;
+    return dynamic_cast<IAXCall*>(getCall(id));
 }
-
 
 void
 IAXVoIPLink::sendRegister (Account *a)
 {
     _debug ("IAX: Sending registration");
 
-    IAXAccount *account = (IAXAccount*)a;
+    IAXAccount *account = dynamic_cast<IAXAccount*>(a);
 
-    if (account->getHostname().empty()) {
+    if (account->getHostname().empty())
     	throw VoipLinkException("Account hostname is empty");
-    }
 
-    if (account->getUsername().empty()) {
+    if (account->getUsername().empty())
     	throw VoipLinkException("Account username is empty");
-    }
 
     // lock
     _mutexIAX.enterMutex();
 
     // Always use a brand new session
-    if (_regSession) {
+    if (_regSession)
         iax_destroy (_regSession);
-    }
 
     _regSession = iax_session_new();
 
-    if (!_regSession) {
+    if (!_regSession)
         _debug ("IAX: Error when generating new session for register");
-    } else {
+    else {
         _debug ("IAX: Sending registration to %s with user %s", account->getHostname().c_str() , account->getUsername().c_str());
         int val = iax_register (_regSession, account->getHostname().data(), account->getUsername().data(), account->getPassword().data(), 120);
         _debug ("IAX: Return value: %d", val);
@@ -363,7 +353,7 @@ IAXVoIPLink::sendUnregister (Account *a)
 }
 
 Call*
-IAXVoIPLink::newOutgoingCall (const std::string& id, const std::string& toUrl) throw(VoipLinkException)
+IAXVoIPLink::newOutgoingCall (const std::string& id, const std::string& toUrl)
 {
     IAXCall* call = new IAXCall (id, Call::Outgoing);
     call->setCodecMap (Manager::instance().getAudioCodecFactory());
@@ -387,7 +377,7 @@ IAXVoIPLink::newOutgoingCall (const std::string& id, const std::string& toUrl) t
 
 
 void
-IAXVoIPLink::answer (Call *c) throw (VoipLinkException)
+IAXVoIPLink::answer (Call *c)
 {
     IAXCall* call = (IAXCall*) c;
     call->setCodecMap (Manager::instance().getAudioCodecFactory());
@@ -406,14 +396,13 @@ IAXVoIPLink::answer (Call *c) throw (VoipLinkException)
 }
 
 void
-IAXVoIPLink::hangup (const std::string& id) throw (VoipLinkException)
+IAXVoIPLink::hangup (const std::string& id)
 {
     _debug ("IAXVoIPLink: Hangup");
 
     IAXCall* call = getIAXCall (id);
-    if(call == NULL) {
+    if (call == NULL)
     	throw VoipLinkException("Could not find call");
-    }
 
     Manager::instance().getMainBuffer()->unBindAll (call->getCallId());
 
@@ -428,14 +417,13 @@ IAXVoIPLink::hangup (const std::string& id) throw (VoipLinkException)
 
 
 void
-IAXVoIPLink::peerHungup (const std::string& id) throw (VoipLinkException)
+IAXVoIPLink::peerHungup (const std::string& id)
 {
     _debug ("IAXVoIPLink: Peer hung up");
 
     IAXCall* call = getIAXCall (id);
-    if(call == NULL) {
+    if (call == NULL)
     	throw VoipLinkException("Could not find call");
-    }
 
     Manager::instance().getMainBuffer()->unBindAll (call->getCallId());
 
@@ -447,12 +435,11 @@ IAXVoIPLink::peerHungup (const std::string& id) throw (VoipLinkException)
 
 
 bool
-IAXVoIPLink::onhold (const std::string& id) throw (VoipLinkException)
+IAXVoIPLink::onhold (const std::string& id)
 {
     IAXCall* call = getIAXCall (id);
-    if(call == NULL) {
+    if (call == NULL)
     	throw VoipLinkException("Call does not exist");
-    }
 
     Manager::instance().getMainBuffer()->unBindAll (call->getCallId());
 
@@ -467,7 +454,7 @@ IAXVoIPLink::onhold (const std::string& id) throw (VoipLinkException)
 }
 
 bool
-IAXVoIPLink::offhold (const std::string& id) throw (VoipLinkException)
+IAXVoIPLink::offhold (const std::string& id)
 {
     IAXCall* call = getIAXCall (id);
     CHK_VALID_CALL;
@@ -484,7 +471,7 @@ IAXVoIPLink::offhold (const std::string& id) throw (VoipLinkException)
 }
 
 bool
-IAXVoIPLink::transfer (const std::string& id, const std::string& to) throw (VoipLinkException)
+IAXVoIPLink::transfer (const std::string& id, const std::string& to)
 {
     IAXCall* call = getIAXCall (id);
     CHK_VALID_CALL;

@@ -108,7 +108,7 @@ class SIPVoIPLink : public VoIPLink
         /**
          * Build and send SIP unregistration request
          */
-        virtual void sendUnregister (Account *a) throw(VoipLinkException);
+        virtual void sendUnregister (Account *a);
 
         /**
          * Place a new call
@@ -116,45 +116,45 @@ class SIPVoIPLink : public VoIPLink
          * @param toUrl  The Sip address of the recipient of the call
          * @return Call* The current call
          */
-        virtual Call* newOutgoingCall (const std::string& id, const std::string& toUrl) throw (VoipLinkException);
+        virtual Call* newOutgoingCall (const std::string& id, const std::string& toUrl);
 
         /**
          * Answer the call
          * @param c The call
          */
-        virtual void answer (Call *c) throw (VoipLinkException);
+        virtual void answer (Call *c);
 
         /**
          * Hang up the call
          * @param id The call identifier
          */
-        virtual void hangup (const std::string& id) throw (VoipLinkException);
+        virtual void hangup (const std::string& id);
 
         /**
          * Hang up the call
          * @param id The call identifier
          */
-        virtual void peerHungup (const std::string& id) throw (VoipLinkException);
+        virtual void peerHungup (const std::string& id);
 
         /**
          * Cancel the call
          * @param id The call identifier
          */
-        virtual void cancel (const std::string& id) throw (VoipLinkException);
+        virtual void cancel (const std::string& id);
 
         /**
          * Put the call on hold
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool onhold (const std::string& id) throw (VoipLinkException);
+        virtual bool onhold (const std::string& id);
 
         /**
          * Put the call off hold
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool offhold (const std::string& id) throw (VoipLinkException);
+        virtual bool offhold (const std::string& id);
 
         /**
          * Transfer the call
@@ -162,7 +162,7 @@ class SIPVoIPLink : public VoIPLink
          * @param to The recipient of the transfer
          * @return bool True on success
          */
-        virtual bool transfer (const std::string& id, const std::string& to) throw (VoipLinkException);
+        virtual bool transfer (const std::string& id, const std::string& to);
 
         /**
          * Attended transfer
