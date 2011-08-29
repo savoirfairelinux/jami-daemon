@@ -36,7 +36,6 @@
 #define SIPVOIPLINK_H
 
 #include <map>
-#include <exception>
 
 //////////////////////////////
 /* PJSIP imports */
@@ -56,9 +55,6 @@ namespace sfl {
 class EventThread;
 class SIPCall;
 class SIPAccount;
-
-#define RANDOM_LOCAL_PORT ((rand() % 27250) + 5250)*2
-#define RANDOM_SIP_PORT   rand() % 64000 + 1024
 
 // To set the verbosity. From 0 (min) to 6 (max)
 #define PJ_LOG_LEVEL 0
@@ -297,11 +293,6 @@ class SIPVoIPLink : public VoIPLink
         bool sendTextMessage (sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from);
 
         /**
-         * when we init the listener, how many times we try to bind a port?
-         */
-        int _nbTryListenAddr;
-
-        /**
          * Create the default UDP transport according ot Ip2Ip profile settings
          */
         void createDefaultSipUdpTransport();
@@ -333,7 +324,7 @@ class SIPVoIPLink : public VoIPLink
         SIPVoIPLink ();
 
         /* The singleton instance */
-        static SIPVoIPLink* _instance;
+        static SIPVoIPLink* instance_;
 
         /**
          * Initialize the PJSIP library
@@ -422,28 +413,17 @@ class SIPVoIPLink : public VoIPLink
          * UDP Transports are stored in this map in order to retreive them in case
          * several accounts would share the same port number.
          */
-        std::map<pj_uint16_t, pjsip_transport*> _transportMap;
-
-        /**
-         * For registration use only
-         */
-        int _regPort;
+        std::map<pj_uint16_t, pjsip_transport*> transportMap_;
 
         /**
          * Threading object
          */
-        EventThread* _evThread;
+        EventThread* evThread_;
 
         /**
          * Global mutex for the sip voiplink
          */
-        ost::Mutex _mutexSIP;
-
-        /**
-         * Number of SIP accounts connected to the link
-         */
-        int _clients;
-
+        ost::Mutex mutexSIP_;
 
         friend class SIPTest;
 };

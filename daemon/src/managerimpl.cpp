@@ -1703,7 +1703,7 @@ void ManagerImpl::peerRingingCall (const std::string& id)
 {
     _debug ("Manager: Peer call %s ringing", id.c_str());
 
-    if (isCurrentCall (id))
+    if (isCurrentCall(id))
         ringback();
 
     _dbus.getCallManager()->callStateChanged (id, "RINGING");
