@@ -39,7 +39,6 @@ using std::ptrdiff_t;
 #include "sip/sipcall.h"
 #include "audio/codecs/audiocodec.h"
 #include "audio/samplerateconverter.h"
-#include "audio/audioprocessing.h"
 #include "audio/noisesuppress.h"
 #include "audio/speexechocancel.h"
 #include "audio/echosuppress.h"

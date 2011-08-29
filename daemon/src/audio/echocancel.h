@@ -35,7 +35,6 @@
 #include <cc++/thread.h>
 #include <speex/speex_preprocess.h>
 
-#include "audioprocessing.h"
 #include "ringbuffer.h"
 #include "delaydetection.h"
 

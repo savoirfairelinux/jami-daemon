@@ -31,7 +31,6 @@
 
 #include "alsalayer.h"
 #include "audio/dcblocker.h"
-#include "audio/audioprocessing.h"
 #include "eventthread.h"
 #include "audio/samplerateconverter.h"
 #include "managerimpl.h"

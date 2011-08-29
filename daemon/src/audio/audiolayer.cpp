@@ -31,7 +31,6 @@
 
 #include <ctime>
 #include "audiolayer.h"
-#include "audioprocessing.h"
 #include "audio/dcblocker.h"
 #include "manager.h"
 
