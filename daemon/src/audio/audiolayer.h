@@ -78,14 +78,13 @@ class AudioLayer
          * @param indexIn	The number of the card chosen for capture
          * @param indexOut	The number of the card chosen for playback
          * @param sampleRate  The sample rate
-         * @param frameSize	  The frame size
          * @param stream	  To indicate which kind of stream you want to open
          *			  SFL_PCM_CAPTURE
          *			  SFL_PCM_PLAYBACK
          *			  SFL_PCM_BOTH
          * @param plugin	  The alsa plugin ( dmix , default , front , surround , ...)
          */
-        virtual void openDevice (int indexIn, int indexOut, int indexRing, int sampleRate, int frameSize, int stream , const std::string &plugin) = 0;
+        virtual void openDevice (int indexIn, int indexOut, int indexRing, int sampleRate, int stream , const std::string &plugin) = 0;
 
         /**
          * Start the capture stream and prepare the playback stream.
@@ -149,15 +148,6 @@ class AudioLayer
          */
         unsigned int getSampleRate() const {
             return audioSampleRate_;
-        }
-
-        /**
-         * Get the frame size of the audio layer
-         * @return unsigned int The frame size
-         *			    default: 20 ms
-         */
-        unsigned int getFrameSize() const {
-            return frameSize_;
         }
 
         /**
@@ -251,22 +241,6 @@ class AudioLayer
          * The value can be set in the user config file- now: 44100HZ
          */
         unsigned int audioSampleRate_;
-
-        /**
-         * Length of the sound frame we capture or read in ms
-         * The value can be set in the user config file - now: 20ms
-         */
-        unsigned int frameSize_;
-
-        /**
-         * Input channel (mic) should be 1 mono
-         */
-        unsigned int inChannel_;
-
-        /**
-         * Output channel (stereo) should be 1 mono
-         */
-        unsigned int outChannel_;
 
         /**
          * Lock for the entire audio layer

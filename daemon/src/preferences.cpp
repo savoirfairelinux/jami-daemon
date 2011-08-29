@@ -39,7 +39,6 @@ namespace {
     static const char * const DFT_PULSE_LENGTH_STR ="250";  /** Default DTMF lenght */
     static const char * const ZRTP_ZIDFILE = "zidFile";     /** The filename used for storing ZIDs */
     static const char * const ALSA_DFT_CARD	= "0";          /** Default sound card index */
-    static const char * const DFT_FRAME_SIZE = "20";        /** Default frame size in millisecond */
     static const char * const DFT_VOL_SPKR_STR = "100";     /** Default speaker volume */
     static const char * const DFT_VOL_MICRO_STR	= "100";    /** Default mic volume */
 } // end anonymous namespace
@@ -282,7 +281,6 @@ void HookPreference::unserialize (Conf::MappingNode *map)
 AudioPreference::AudioPreference() : _cardin (atoi (ALSA_DFT_CARD)) // ALSA_DFT_CARD
     , _cardout (atoi (ALSA_DFT_CARD)) // ALSA_DFT_CARD
     , _cardring (atoi (ALSA_DFT_CARD)) // ALSA_DFT_CARD
-    , _framesize (atoi (DFT_FRAME_SIZE)) // DFT_FRAME_SIZE
     , _plugin ("default") // PCM_DEFAULT
     , _smplrate (44100) // DFT_SAMPLE_RATE
     , _devicePlayback ("")
@@ -318,9 +316,6 @@ void AudioPreference::serialize (Conf::YamlEmitter *emitter)
     std::stringstream ringstr;
     ringstr << _cardring;
     Conf::ScalarNode cardring (ringstr.str());// 0
-    std::stringstream framestr;
-    framestr << _framesize;
-    Conf::ScalarNode framesize (framestr.str()); // 20
     Conf::ScalarNode plugin (_plugin); // default
 
     std::stringstream ratestr;
@@ -361,7 +356,6 @@ void AudioPreference::serialize (Conf::YamlEmitter *emitter)
     alsapreferencemap.setKeyValue (cardinKey, &cardin);
     alsapreferencemap.setKeyValue (cardoutKey, &cardout);
     alsapreferencemap.setKeyValue (cardringKey, &cardring);
-    alsapreferencemap.setKeyValue (framesizeKey, &framesize);
     alsapreferencemap.setKeyValue (pluginKey, &plugin);
     alsapreferencemap.setKeyValue (smplrateKey, &smplrate);
 
@@ -395,7 +389,6 @@ void AudioPreference::unserialize (Conf::MappingNode *map)
     	alsamap->getValue (cardinKey, &_cardin);
 		alsamap->getValue (cardoutKey, &_cardout);
 		alsamap->getValue (cardringKey, &_cardring);
-		alsamap->getValue (framesizeKey, &_framesize);
 		alsamap->getValue (smplrateKey, &_smplrate);
 		alsamap->getValue (pluginKey, &_plugin);
     }

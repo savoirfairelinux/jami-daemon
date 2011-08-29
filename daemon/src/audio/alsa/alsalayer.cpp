@@ -133,7 +133,7 @@ AlsaLayer::closeLayer()
 }
 
 void
-AlsaLayer::openDevice (int indexIn, int indexOut, int indexRing, int sampleRate, int frameSize, int stream , const std::string &plugin)
+AlsaLayer::openDevice (int indexIn, int indexOut, int indexRing, int sampleRate, int stream , const std::string &plugin)
 {
     /* Close the devices before open it */
     if (stream == SFL_PCM_BOTH and is_capture_open_ and is_playback_open_) {
@@ -149,13 +149,11 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int indexRing, int sampleRate,
     indexRing_ = indexRing;
 
     audioSampleRate_ = sampleRate;
-    frameSize_ = frameSize;
 
     audioPlugin_ = plugin;
 
     _debug (" Setting AlsaLayer: device     in=%2d, out=%2d, ring=%2d", indexIn_, indexOut_, indexRing_);
     _debug ("                   : alsa plugin=%s", audioPlugin_.c_str());
-    _debug ("                   : nb channel in=%2d, out=%2d", inChannel_, outChannel_);
     _debug ("                   : sample rate=%5d, format=%s", audioSampleRate_, SFLDataFormatString);
 
     audioThread_ = NULL;

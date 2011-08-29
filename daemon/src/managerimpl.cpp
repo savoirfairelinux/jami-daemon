@@ -2056,7 +2056,7 @@ void ManagerImpl::setAudioPlugin (const std::string& audioPlugin)
     if (_audiodriver -> getLayerType() == ALSA) {
         _audiodriver -> openDevice (_audiodriver->getIndexIn(), _audiodriver->getIndexOut(),
                                     _audiodriver->getIndexRing(), _audiodriver -> getSampleRate(),
-                                    _audiodriver -> getFrameSize(), SFL_PCM_BOTH, audioPlugin);
+                                    SFL_PCM_BOTH, audioPlugin);
     }
     audioLayerMutexUnlock();
 }
@@ -2089,22 +2089,19 @@ void ManagerImpl::setAudioDevice (const int index, int streamType)
         case SFL_PCM_PLAYBACK:
             _debug ("Manager: Set output device");
             _audiodriver->openDevice (_audiodriver->getIndexIn(), index, _audiodriver->getIndexRing(),
-                                      _audiodriver->getSampleRate(), _audiodriver->getFrameSize(),
-                                      SFL_PCM_PLAYBACK, alsaplugin);
+                                      _audiodriver->getSampleRate(), SFL_PCM_PLAYBACK, alsaplugin);
             audioPreference.setCardout (index);
             break;
         case SFL_PCM_CAPTURE:
             _debug ("Manager: Set input device");
             _audiodriver->openDevice (index, _audiodriver->getIndexOut(), _audiodriver->getIndexRing(),
-                                      _audiodriver->getSampleRate(), _audiodriver->getFrameSize(),
-                                      SFL_PCM_CAPTURE, alsaplugin);
+                                      _audiodriver->getSampleRate(), SFL_PCM_CAPTURE, alsaplugin);
             audioPreference.setCardin (index);
             break;
         case SFL_PCM_RINGTONE:
             _debug ("Manager: Set ringtone device");
             _audiodriver->openDevice (_audiodriver->getIndexOut(), _audiodriver->getIndexOut(), index,
-                                      _audiodriver->getSampleRate(), _audiodriver->getFrameSize(),
-                                      SFL_PCM_RINGTONE, alsaplugin);
+                                      _audiodriver->getSampleRate(), SFL_PCM_RINGTONE, alsaplugin);
             audioPreference.setCardring (index);
             break;
         default:
@@ -2491,7 +2488,6 @@ void ManagerImpl::selectAudioDriver (void)
     int numCardRing = audioPreference.getCardring();
 
     int sampleRate = getMainBuffer()->getInternalSamplingRate();
-    int frameSize = audioPreference.getFramesize();
 
     /* Only for the ALSA layer, we check the sound card information */
 
@@ -2518,8 +2514,7 @@ void ManagerImpl::selectAudioDriver (void)
     }
 
     /* Open the audio devices */
-    _audiodriver->openDevice (numCardIn, numCardOut, numCardRing, sampleRate, frameSize,
-                              SFL_PCM_BOTH, alsaPlugin);
+    _audiodriver->openDevice (numCardIn, numCardOut, numCardRing, sampleRate, SFL_PCM_BOTH, alsaPlugin);
 
     audioLayerMutexUnlock();
 }
@@ -2540,9 +2535,6 @@ void ManagerImpl::switchAudioManager (void)
     int type = _audiodriver->getLayerType();
 
     int samplerate = _mainBuffer.getInternalSamplingRate();
-    int framesize = audioPreference.getFramesize();
-
-    _debug ("Manager: samplerate: %d, framesize %d", samplerate, framesize);
 
     std::string alsaPlugin(audioPreference.getPlugin());
 
@@ -2558,8 +2550,7 @@ void ManagerImpl::switchAudioManager (void)
     else
     	_audiodriver = new AlsaLayer();
 
-    _audiodriver->openDevice (numCardIn, numCardOut, numCardRing, samplerate, framesize,
-                              SFL_PCM_BOTH, alsaPlugin);
+    _audiodriver->openDevice (numCardIn, numCardOut, numCardRing, samplerate, SFL_PCM_BOTH, alsaPlugin);
 
     _debug ("Manager: Current device: %d ", type);
 
@@ -2591,9 +2582,8 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
         _debug ("Manager: Audio sampling rate changed");
 
     int type = _audiodriver->getLayerType();
-    int framesize = audioPreference.getFramesize();
 
-    _debug ("Manager: New samplerate: %d, New framesize %d", samplerate, framesize);
+    _debug ("Manager: New samplerate: %d", samplerate);
 
     std::string alsaPlugin(audioPreference.getPlugin());
 
@@ -2611,8 +2601,7 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
     else
     	_audiodriver = new PulseLayer;
 
-    _audiodriver->openDevice (numCardIn, numCardOut, numCardRing, samplerate, framesize,
-                              SFL_PCM_BOTH, alsaPlugin);
+    _audiodriver->openDevice (numCardIn, numCardOut, numCardRing, samplerate, SFL_PCM_BOTH, alsaPlugin);
 
     _debug ("Manager: Current device: %d ", type);
 

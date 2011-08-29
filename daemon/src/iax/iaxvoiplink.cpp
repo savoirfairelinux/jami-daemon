@@ -713,7 +713,7 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
 	unsigned int size = event->datalen;
 
 	// Decode data with relevant codec
-	unsigned int max = audioCodec->getClockRate() * audiolayer_->getFrameSize() / 1000;
+	unsigned int max = audioCodec->getClockRate() * 20 / 1000;
 
 	if (size > max) {
 		_debug ("The size %d is bigger than expected %d. Packet cropped. Ouch!", size, max);

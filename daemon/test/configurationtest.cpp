@@ -44,7 +44,6 @@ void ConfigurationTest::testDefaultValueAudio()
     CPPUNIT_ASSERT (Manager::instance().audioPreference.getCardin() == 0); // ALSA_DFT_CARD);
     CPPUNIT_ASSERT (Manager::instance().audioPreference.getCardout() == 0); // ALSA_DFT_CARD);
     CPPUNIT_ASSERT (Manager::instance().audioPreference.getSmplrate() == 44100); // DFT_SAMPLE_RATE);
-    CPPUNIT_ASSERT (Manager::instance().audioPreference.getFramesize() == 20); // DFT_FRAME_SIZE);
     CPPUNIT_ASSERT (Manager::instance().audioPreference.getPlugin() == PCM_DEFAULT);
     CPPUNIT_ASSERT (Manager::instance().audioPreference.getVolumespkr() == 100);
     CPPUNIT_ASSERT (Manager::instance().audioPreference.getVolumemic() == 100);

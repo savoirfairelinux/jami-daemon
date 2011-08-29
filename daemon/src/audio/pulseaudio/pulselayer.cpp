@@ -370,12 +370,9 @@ void PulseLayer::context_state_callback (pa_context* c, void* user_data)
     }
 }
 
-void PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int indexRing UNUSED, int sampleRate, int frameSize , int stream UNUSED, const std::string &plugin UNUSED)
+void PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int indexRing UNUSED, int sampleRate, int stream UNUSED, const std::string &plugin UNUSED)
 {
-    _debug ("Audio: Open device sampling rate %d, frame size %d", audioSampleRate_, frameSize_);
-
     audioSampleRate_ = sampleRate;
-    frameSize_ = frameSize;
 
     flushUrgent();
 

@@ -64,14 +64,13 @@ class AlsaLayer : public AudioLayer
          * @param indexIn	The number of the card chosen for capture
          * @param indexOut	The number of the card chosen for playback
          * @param sampleRate  The sample rate
-         * @param frameSize	  The frame size
          * @param stream	  To indicate which kind of stream you want to open
          *			  SFL_PCM_CAPTURE
          *			  SFL_PCM_PLAYBACK
          *			  SFL_PCM_BOTH
          * @param plugin	  The alsa plugin ( dmix , default , front , surround , ...)
          */
-        void openDevice (int indexIn, int indexOut, int indexRing, int sampleRate, int frameSize, int stream, const std::string &plugin);
+        void openDevice (int indexIn, int indexOut, int indexRing, int sampleRate, int stream, const std::string &plugin);
 
         /**
          * Start the capture stream and prepare the playback stream.
