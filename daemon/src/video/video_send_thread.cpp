@@ -393,9 +393,10 @@ void VideoSendThread::run()
         }
         av_free_packet(&opkt);
 
-        // free the packet that was allocated by av_read_frame
 next_packet:
-        av_free_packet(&inpacket);
+        // free the packet allocated by av_read_frame() unless using test source
+        if (not test_source_)
+            av_free_packet(&inpacket);
     }
 }
 
