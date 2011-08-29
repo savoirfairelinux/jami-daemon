@@ -878,11 +878,6 @@ class ManagerImpl
          */
         bool incomingCallWaiting (void);
 
-        /**
-         * Notification of incoming call when you are already busy
-         */
-        void notificationIncomingCall (void);
-
         /*
          * Inline functions to manage speaker volume control
          * Read by main thread and AudioLayer thread

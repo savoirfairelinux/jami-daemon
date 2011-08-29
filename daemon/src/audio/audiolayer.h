@@ -35,6 +35,7 @@
 #define _AUDIO_LAYER_H
 
 #include <cc++/thread.h> // for ost::Mutex
+#include <sys/time.h>
 
 #include "ringbuffer.h"
 
@@ -334,15 +335,11 @@ class AudioLayer
 
         bool noiseSuppressState_;
 
+    private:
         /**
-         * Time counter used to trigger incoming call notification
+         * Time of the last incoming call notification
          */
-        int countNotificationTime_;
-
-        /**
-         * Used to get formated system time in order to compute incoming call notification
-         */
-        ost::Time * time_;
+        time_t lastNotificationTime_;
 };
 
 #endif // _AUDIO_LAYER_H_

@@ -1470,7 +1470,7 @@ bool ManagerImpl::playDtmf (char code)
 // Multi-thread
 bool ManagerImpl::incomingCallWaiting ()
 {
-    return (_nbIncomingWaitingCall > 0) ? true : false;
+    return _nbIncomingWaitingCall > 0;
 }
 
 void ManagerImpl::addWaitingCall (const std::string& id)
@@ -1975,34 +1975,6 @@ ManagerImpl::getTelephoneFile ()
     ost::MutexLock m (_toneMutex);
 
     return _audiofile;
-}
-
-void ManagerImpl::notificationIncomingCall (void)
-{
-    audioLayerMutexLock();
-
-    if(_audiodriver == NULL) {
-    	_error("Manager: Error: Audio layer not initialized");
-    	audioLayerMutexUnlock();
-    	return;
-    }
-
-    _debug ("ManagerImpl: Notification incoming call");
-
-    // Enable notification only if more than one call
-    if (hasCurrentCall()) {
-        std::ostringstream frequency;
-        frequency << "440/" << 160;
-        Tone tone (frequency.str(), _audiodriver->getSampleRate());
-        unsigned int nbSample = tone.getSize();
-        SFLDataFormat buf[nbSample];
-        tone.getNext (buf, nbSample);
-        /* Put the data in the urgent ring buffer */
-        _audiodriver->flushUrgent();
-        _audiodriver->putUrgent (buf, sizeof (SFLDataFormat) * nbSample);
-    }
-
-    audioLayerMutexUnlock();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
