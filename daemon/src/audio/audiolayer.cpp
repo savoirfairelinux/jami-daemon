@@ -35,8 +35,7 @@
 #include "manager.h"
 
 AudioLayer::AudioLayer (int type)
-    : layerType_ (type)
-    , isStarted_ (false)
+    : isStarted_ (false)
     , urgentRingBuffer_ (SIZEBUF, Call::DEFAULT_ID)
     , recorder_ (0)
     , indexIn_ (0)
@@ -49,6 +48,7 @@ AudioLayer::AudioLayer (int type)
     , errorMessage_ (0)
     , mutex_ ()
 	, audioPref(Manager::instance().audioPreference)
+	, layerType_ (type)
     , lastNotificationTime_ (0)
 {}
 

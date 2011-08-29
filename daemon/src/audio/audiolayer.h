@@ -224,8 +224,6 @@ class AudioLayer
 
     protected:
 
-        int layerType_;
-
         /**
          * Drop the pending frames and close the capture device
          */
@@ -301,6 +299,10 @@ class AudioLayer
         AudioPreference &audioPref;
 
     private:
+
+        const int layerType_;
+
+
         /**
          * Time of the last incoming call notification
          */

@@ -2628,9 +2628,9 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
 
     delete _audiodriver;
     if (type == PULSEAUDIO)
-    	_audiodriver = new PulseLayer;
-    else
     	_audiodriver = new AlsaLayer;
+    else
+    	_audiodriver = new PulseLayer;
 
     _audiodriver->openDevice (numCardIn, numCardOut, numCardRing, samplerate, framesize,
                               SFL_PCM_BOTH, alsaPlugin);
