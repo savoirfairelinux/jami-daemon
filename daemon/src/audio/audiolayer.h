@@ -116,24 +116,6 @@ class AudioLayer
         void flushUrgent (void);
 
         /**
-         * Write accessor to the error state
-         * @param error The error code
-         *		    Could be: ALSA_PLAYBACK_DEVICE
-         *			      ALSA_CAPTURE_DEVICE
-         */
-        void setErrorMessage (int error) {
-            errorMessage_ = error;
-        }
-
-        /**
-         * Read accessor to the error state
-         * @return int  The error code
-         */
-        int getErrorMessage() const {
-            return errorMessage_;
-        }
-
-        /**
          * Get the index of the audio card for capture
          * @return int The index of the card used for capture
          *			0 for the first available card on the system, 1 ...
@@ -285,9 +267,6 @@ class AudioLayer
          * Output channel (stereo) should be 1 mono
          */
         unsigned int outChannel_;
-
-        /** Contains the current error code */
-        int errorMessage_;
 
         /**
          * Lock for the entire audio layer

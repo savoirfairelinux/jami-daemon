@@ -34,6 +34,7 @@
 #include "eventthread.h"
 #include "audio/samplerateconverter.h"
 #include "managerimpl.h"
+#include "dbus/configurationmanager.h"
 
 class AlsaThread : public ost::Thread
 {
@@ -505,7 +506,7 @@ AlsaLayer::open_device (std::string pcm_p, std::string pcm_c, std::string pcm_r,
         int err;
         if ((err = snd_pcm_open (&playbackHandle_, pcm_p.c_str(), SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
             _warn ("Audio: Error while opening playback device %s",  pcm_p.c_str());
-            setErrorMessage (ALSA_PLAYBACK_DEVICE);
+            Manager::instance().getDbusManager()->getConfigurationManager()->errorAlert(ALSA_PLAYBACK_DEVICE);
             is_playback_open_ = false;
             return false;
         }
@@ -538,7 +539,7 @@ AlsaLayer::open_device (std::string pcm_p, std::string pcm_c, std::string pcm_r,
         if (snd_pcm_open (&captureHandle_,  pcm_c.c_str(),  SND_PCM_STREAM_CAPTURE, 0) < 0) {
             _warn ("Audio: Error: Opening capture device %s",  pcm_c.c_str());
 
-            setErrorMessage (ALSA_CAPTURE_DEVICE);
+            Manager::instance().getDbusManager()->getConfigurationManager()->errorAlert(ALSA_CAPTURE_DEVICE);
             is_capture_open_ = false;
             return false;
         }

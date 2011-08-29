@@ -2050,18 +2050,13 @@ std::string ManagerImpl::getCurrentCodecName (const std::string& id)
 void ManagerImpl::setAudioPlugin (const std::string& audioPlugin)
 {
 	audioLayerMutexLock();
-    int layerType = _audiodriver -> getLayerType();
 
     audioPreference.setPlugin (audioPlugin);
 
-    if (CHECK_INTERFACE (layerType , ALSA)) {
-        _debug ("Set input audio plugin");
+    if (_audiodriver -> getLayerType() == ALSA) {
         _audiodriver -> openDevice (_audiodriver->getIndexIn(), _audiodriver->getIndexOut(),
                                     _audiodriver->getIndexRing(), _audiodriver -> getSampleRate(),
                                     _audiodriver -> getFrameSize(), SFL_PCM_BOTH, audioPlugin);
-
-        if (_audiodriver -> getErrorMessage())
-            notifyErrClient (_audiodriver -> getErrorMessage());
     }
     audioLayerMutexUnlock();
 }
@@ -2115,9 +2110,6 @@ void ManagerImpl::setAudioDevice (const int index, int streamType)
         default:
             _warn ("Unknown stream type");
     }
-
-    if (_audiodriver -> getErrorMessage())
-        notifyErrClient (_audiodriver -> getErrorMessage());
 
     audioLayerMutexUnlock();
 }
@@ -2391,7 +2383,6 @@ int32_t ManagerImpl::getAudioManager (void) const
 
 void ManagerImpl::notifyErrClient (int32_t errCode)
 {
-	_debug ("Manager: NOTIFY ERR NUMBER %d" , errCode);
 	_dbus.getConfigurationManager()->errorAlert(errCode);
 }
 
@@ -2477,10 +2468,6 @@ void ManagerImpl::initAudioDriver (void)
         _audiodriver = new AlsaLayer;
     }
 
-	int error = _audiodriver->getErrorMessage();
-	if (error)
-		_error("Audio driver init: %d", error);
-
     audioLayerMutexUnlock();
 }
 
@@ -2534,11 +2521,6 @@ void ManagerImpl::selectAudioDriver (void)
     _audiodriver->openDevice (numCardIn, numCardOut, numCardRing, sampleRate, frameSize,
                               SFL_PCM_BOTH, alsaPlugin);
 
-    /* Notify the error if there is one */
-
-    if (_audiodriver-> getErrorMessage())
-        notifyErrClient (_audiodriver -> getErrorMessage());
-
     audioLayerMutexUnlock();
 }
 
@@ -2578,9 +2560,6 @@ void ManagerImpl::switchAudioManager (void)
 
     _audiodriver->openDevice (numCardIn, numCardOut, numCardRing, samplerate, framesize,
                               SFL_PCM_BOTH, alsaPlugin);
-
-    if (_audiodriver->getErrorMessage())
-        notifyErrClient (_audiodriver -> getErrorMessage());
 
     _debug ("Manager: Current device: %d ", type);
 
@@ -2634,9 +2613,6 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
 
     _audiodriver->openDevice (numCardIn, numCardOut, numCardRing, samplerate, framesize,
                               SFL_PCM_BOTH, alsaPlugin);
-
-    if (_audiodriver -> getErrorMessage())
-        notifyErrClient (_audiodriver -> getErrorMessage());
 
     _debug ("Manager: Current device: %d ", type);
 
