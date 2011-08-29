@@ -64,9 +64,8 @@ class AudioLayer
     public:
         /**
          * Constructor
-         * @param manager An instance of managerimpl
          */
-        AudioLayer (ManagerImpl* manager , int type);
+        AudioLayer (int type);
 
         /**
          * Destructor
@@ -197,7 +196,7 @@ class AudioLayer
              * @return MainBuffer* a pointer to the MainBuffer instance
              */
         MainBuffer* getMainBuffer (void) const {
-            return manager_->getMainBuffer();
+            return Manager::instance().getMainBuffer();
         }
 
         /**
@@ -212,20 +211,6 @@ class AudioLayer
          */
         Recordable* getRecorderInstance (void) const {
             return recorder_;
-        }
-
-        /**
-         * Set the noise suppressor state
-         * @param state true if noise suppressor active, false elsewhere
-         */
-        void setNoiseSuppressState (bool state) { noiseSuppressState_ = state; }
-        
-        /**
-         * Get the noise suppressor state
-         * @return true if noise suppressor activated
-         */
-        bool getNoiseSuppressState (void) const {
-            return noiseSuppressState_;
         }
 
         /**
@@ -255,9 +240,6 @@ class AudioLayer
 	 * Wether or not the audio layer stream is started
          */
         bool isStarted_;
-
-        /** Augment coupling, reduce indirect access */
-        ManagerImpl* manager_;
 
         /**
          * Urgent ring buffer used for ringtones
@@ -317,7 +299,7 @@ class AudioLayer
         DcBlocker *dcblocker_;
         AudioProcessing *audiofilter_;
 
-        bool noiseSuppressState_;
+        AudioPreference &audioPref;
 
     private:
         /**

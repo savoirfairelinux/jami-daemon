@@ -35,10 +35,9 @@
 #include "audio/dcblocker.h"
 #include "manager.h"
 
-AudioLayer::AudioLayer (ManagerImpl* manager , int type)
+AudioLayer::AudioLayer (int type)
     : layerType_ (type)
     , isStarted_ (false)
-    , manager_ (manager)
     , urgentRingBuffer_ (SIZEBUF, Call::DEFAULT_ID)
     , recorder_ (0)
     , indexIn_ (0)
@@ -52,7 +51,7 @@ AudioLayer::AudioLayer (ManagerImpl* manager , int type)
     , mutex_ ()
     , dcblocker_ (0)
     , audiofilter_ (0)
-    , noiseSuppressState_ (false)
+	, audioPref(Manager::instance().audioPreference)
     , lastNotificationTime_ (0)
 {}
 

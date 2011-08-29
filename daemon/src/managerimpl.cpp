@@ -2431,18 +2431,9 @@ std::string ManagerImpl::getNoiseSuppressState (void) const
 
 void ManagerImpl::setNoiseSuppressState (const std::string &state)
 {
-    _debug ("Manager: Set noise suppress state: %s", state.c_str());
-
     bool isEnabled = (state == "enabled");
 
     audioPreference.setNoiseReduce (isEnabled);
-
-    audioLayerMutexLock();
-
-    if (_audiodriver)
-        _audiodriver->setNoiseSuppressState (isEnabled);
-
-    audioLayerMutexUnlock();
 }
 
 std::string ManagerImpl::getEchoCancelState() const
@@ -2484,10 +2475,10 @@ void ManagerImpl::initAudioDriver (void)
     audioLayerMutexLock();
 
     if (preferences.getAudioApi() == PULSEAUDIO && system("ps -C pulseaudio") == 0) {
-		_audiodriver = new PulseLayer (this);
+		_audiodriver = new PulseLayer;
 	} else {
 		preferences.setAudioApi (ALSA);
-        _audiodriver = new AlsaLayer (this);
+        _audiodriver = new AlsaLayer;
     }
 
 	int error = _audiodriver->getErrorMessage();
@@ -2585,9 +2576,9 @@ void ManagerImpl::switchAudioManager (void)
 
     delete _audiodriver;
     if (type == PULSEAUDIO)
-    	_audiodriver = new PulseLayer (this);
+    	_audiodriver = new PulseLayer();
     else
-    	_audiodriver = new AlsaLayer (this);
+    	_audiodriver = new AlsaLayer();
 
     _audiodriver->openDevice (numCardIn, numCardOut, numCardRing, samplerate, framesize,
                               SFL_PCM_BOTH, alsaPlugin);
@@ -2641,9 +2632,9 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
 
     delete _audiodriver;
     if (type == PULSEAUDIO)
-    	_audiodriver = new PulseLayer (this);
+    	_audiodriver = new PulseLayer;
     else
-    	_audiodriver = new AlsaLayer (this);
+    	_audiodriver = new AlsaLayer;
 
     _audiodriver->openDevice (numCardIn, numCardOut, numCardRing, samplerate, framesize,
                               SFL_PCM_BOTH, alsaPlugin);

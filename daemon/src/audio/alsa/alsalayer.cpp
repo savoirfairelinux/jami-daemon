@@ -72,8 +72,8 @@ void AlsaThread::run (void)
 }
 
 // Constructor
-AlsaLayer::AlsaLayer (ManagerImpl* manager)
-    : AudioLayer (manager, ALSA)
+AlsaLayer::AlsaLayer ()
+    : AudioLayer (ALSA)
     , playbackHandle_ (NULL)
     , ringtoneHandle_ (NULL)
     , captureHandle_ (NULL)
@@ -94,9 +94,7 @@ AlsaLayer::AlsaLayer (ManagerImpl* manager)
     _debug ("Audio: Build ALSA layer");
     urgentRingBuffer_.createReadPointer();
 
-    audioPlugin_ = manager_->audioPreference.getPlugin();
-
-    noiseSuppressState_ = true;
+    audioPlugin_ = audioPref.getPlugin();
 }
 
 // Destructor
@@ -807,10 +805,10 @@ void AlsaLayer::audioCallback (void)
 
     notifyincomingCall();
 
-    unsigned short spkrVolume = manager_->getSpkrVolume();
+    unsigned short spkrVolume = Manager::instance().getSpkrVolume();
 
-    AudioLoop *tone = manager_->getTelephoneTone();
-    AudioLoop *file_tone = manager_->getTelephoneFile();
+    AudioLoop *tone = Manager::instance().getTelephoneTone();
+    AudioLoop *file_tone = Manager::instance().getTelephoneFile();
 
     // AvailForGet tell the number of chars inside the buffer
     // framePerBuffer are the number of data for one channel (left)
@@ -926,7 +924,7 @@ void AlsaLayer::audioCallback (void)
     	free(in);
     	return;
     }
-    adjustVolume (in, toPutSamples, manager_->getSpkrVolume());
+    adjustVolume (in, toPutSamples, Manager::instance().getSpkrVolume());
 
     if (resample) {
     	int outSamples = toPutSamples * ((double) audioSampleRate_ / mainBufferSampleRate);

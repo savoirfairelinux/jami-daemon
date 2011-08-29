@@ -218,8 +218,8 @@ void playback_overflow_callback (pa_stream* s UNUSED, void* userdata UNUSED)
 } // end anonymous namespace
 
 
-PulseLayer::PulseLayer (ManagerImpl* manager)
-    : AudioLayer (manager , PULSEAUDIO)
+PulseLayer::PulseLayer ()
+    : AudioLayer (PULSEAUDIO)
     , context_(0)
     , mainloop_(0)
     , playback_(0)
@@ -228,8 +228,6 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
     , converter_(0)
 {
     urgentRingBuffer_.createReadPointer();
-
-    noiseSuppressState_ = true;
 
     openLayer();
 }
@@ -428,9 +426,9 @@ void PulseLayer::createStreams (pa_context* c)
 
     playback_ = new AudioStream (c, mainloop_, PLAYBACK_STREAM_NAME, PLAYBACK_STREAM, audioSampleRate_);
 
-    std::string playbackDevice(manager_->audioPreference.getDevicePlayback());
-    std::string recordDevice(manager_->audioPreference.getDeviceRecord());
-    std::string ringtoneDevice(manager_->audioPreference.getDeviceRingtone());
+    std::string playbackDevice(audioPref.getDevicePlayback());
+    std::string recordDevice(audioPref.getDeviceRecord());
+    std::string ringtoneDevice(audioPref.getDeviceRingtone());
 
     _debug ("Audio: Device for playback: %s", playbackDevice.c_str());
     _debug ("Audio: Device for record: %s", recordDevice.c_str());
@@ -493,7 +491,7 @@ void PulseLayer::closeCaptureStream (void)
 
             if (name && strlen (name)) {
                 _debug ("Audio: record device to be stored in config: %s", name);
-                manager_->audioPreference.setDeviceRecord (name);
+                audioPref.setDeviceRecord (name);
             }
         }
 
@@ -511,7 +509,7 @@ void PulseLayer::closePlaybackStream (void)
 
             if (name && strlen (name)) {
                 _debug ("Audio: playback device to be stored in config: %s", name);
-                manager_->audioPreference.setDevicePlayback (name);
+                audioPref.setDevicePlayback (name);
             }
         }
 
@@ -525,7 +523,7 @@ void PulseLayer::closePlaybackStream (void)
 
             if (name && strlen (name)) {
                 _debug ("Audio: ringtone device to be stored in config: %s", name);
-                manager_->audioPreference.setDeviceRingtone (name);
+                audioPref.setDeviceRingtone (name);
             }
         }
 
@@ -646,7 +644,7 @@ void PulseLayer::writeToSpeaker (void)
         return;
     }
 
-    AudioLoop *toneToPlay = manager_->getTelephoneTone();
+    AudioLoop *toneToPlay = Manager::instance().getTelephoneTone();
     if (toneToPlay) {
 		if (playback_->getStreamState() == PA_STREAM_READY) {
 			SFLDataFormat *out = (SFLDataFormat*) pa_xmalloc (writeableSizeBytes);
@@ -744,7 +742,7 @@ end:
 
 void PulseLayer::ringtoneToSpeaker (void)
 {
-    AudioLoop* fileToPlay = manager_->getTelephoneFile();
+    AudioLoop* fileToPlay = Manager::instance().getTelephoneFile();
     int writableSize = pa_stream_writable_size (ringtone_->pulseStream());
 
     if (fileToPlay) {

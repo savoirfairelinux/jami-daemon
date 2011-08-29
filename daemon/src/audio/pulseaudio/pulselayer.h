@@ -54,7 +54,7 @@ typedef std::list<std::string> DeviceList;
 class PulseLayer : public AudioLayer
 {
     public:
-        PulseLayer (ManagerImpl* manager);
+        PulseLayer ();
         ~PulseLayer (void);
         /**
          * Check if no devices are opened, otherwise close them.

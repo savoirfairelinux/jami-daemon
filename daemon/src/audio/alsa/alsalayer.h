@@ -50,9 +50,8 @@ class AlsaLayer : public AudioLayer
     public:
         /**
          * Constructor
-         * @param manager An instance of managerimpl
          */
-        AlsaLayer (ManagerImpl* manager);
+        AlsaLayer ();
 
         /**
          * Destructor
