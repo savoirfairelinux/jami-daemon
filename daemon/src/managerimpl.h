@@ -327,14 +327,6 @@ class ManagerImpl
         void removeParticipant (const std::string& call_id);
 
         /**
-         * Process remaining participant given a conference and the current call id.
-         * Mainly called when a participant is detached or hagned up
-         * @param current call id
-         * @param conference pointer
-         */
-        void processRemainingParticipant (std::string current_call_id, Conference *conf);
-
-        /**
          * Join two conference together into one unique conference
          */
         void joinConference (const std::string& conf_id1, const std::string& conf_id2);
@@ -359,12 +351,6 @@ class ManagerImpl
          * @param   code: pressed key.
          */
         bool sendDtmf (const std::string& id, char code);
-
-        /**
-         * Play the dtmf-associated sound
-         * @param code  The pressed key
-         */
-        bool playDtmf (char code);
 
         /**
          * Play a ringtone
@@ -973,6 +959,19 @@ class ManagerImpl
          */
         std::vector<std::string> loadAccountOrder () const;
     private:
+        /**
+         * Play the dtmf-associated sound
+         * @param code  The pressed key
+         */
+        bool playDtmf (char code);
+
+        /**
+         * Process remaining participant given a conference and the current call id.
+         * Mainly called when a participant is detached or hagned up
+         * @param current call id
+         * @param conference pointer
+         */
+        void processRemainingParticipant (const std::string &current_call_id, Conference *conf);
 
         /**
          * Create config directory in home user and return configuration file path
