@@ -46,7 +46,6 @@ AudioRtpRecord::AudioRtpRecord () : _audioCodec (NULL)
     , _codecSampleRate (0)
     , _codecFrameSize (0)
     , _micAmplFactor (initFadeinFactor)
-    , _audioProcess (NULL)
     , _noiseSuppress (NULL)
     , _callId ("")
     , _dtmfPayloadType(101) // same as Asterisk
@@ -59,7 +58,6 @@ AudioRtpRecord::~AudioRtpRecord()
 {
     delete _converter;
     delete _audioCodec;
-    delete _audioProcess;
     delete _noiseSuppress;
 }
 
@@ -103,11 +101,9 @@ void AudioRtpRecordHandler::initNoiseSuppress()
 {
     _audioRtpRecord.audioProcessMutex.enter();
 
-    delete _audioRtpRecord._audioProcess;
     delete _audioRtpRecord._noiseSuppress;
 
     _audioRtpRecord._noiseSuppress = new NoiseSuppress (getCodecFrameSize(), getCodecSampleRate());
-    _audioRtpRecord._audioProcess = new AudioProcessing (_audioRtpRecord._noiseSuppress);
 
     _audioRtpRecord.audioProcessMutex.leave();
 }
@@ -153,7 +149,7 @@ int AudioRtpRecordHandler::processDataEncode (void)
 
 	_audioRtpRecord.audioProcessMutex.enter();
 	if (Manager::instance().audioPreference.getNoiseReduce())
-		_audioRtpRecord._audioProcess->processAudio (micData, bytesToGet);
+		_audioRtpRecord._noiseSuppress->process(micData, bytesToGet);
 	_audioRtpRecord.audioProcessMutex.leave();
 
 #ifdef DUMP_PROCESS_DATA_ENCODE

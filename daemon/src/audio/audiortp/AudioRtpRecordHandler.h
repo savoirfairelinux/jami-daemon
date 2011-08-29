@@ -95,7 +95,6 @@ class AudioRtpRecord
         int _converterSamplingRate;
         std::list<int> _dtmfQueue;
         SFLDataFormat _micAmplFactor;
-        AudioProcessing *_audioProcess;
         NoiseSuppress *_noiseSuppress;
         ost::Mutex audioProcessMutex;
         std::string _callId;
