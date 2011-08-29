@@ -40,6 +40,7 @@
 #include "dbus/callmanager.h"
 #include "global.h"
 #include "sip/sipaccount.h"
+#include "im/InstantMessaging.h"
 #include "iax/iaxaccount.h"
 #include "numbercleaner.h"
 
@@ -822,74 +823,52 @@ void ManagerImpl::holdConference (const std::string& id)
 
 void ManagerImpl::unHoldConference (const std::string& id)
 {
-    _debug ("Manager: Unhold conference()");
-
-    Conference *conf;
     ConferenceMap::iterator iter_conf = _conferencemap.find (id);
-    bool isRec = false;
-
-    std::string currentAccountId;
-
-    Call* call = NULL;
-
     if (iter_conf != _conferencemap.end()) {
-        conf = iter_conf->second;
+        bool isRec = false;
 
-        ParticipantSet participants = conf->getParticipantList();
-        ParticipantSet::iterator iter_participant = participants.begin();
+        Conference *conf = iter_conf->second;
 
-        if((conf->getState() == Conference::ACTIVE_ATTACHED_REC) ||
-           (conf->getState() == Conference::ACTIVE_DETACHED_REC) ||
-           (conf->getState() == Conference::HOLD_REC)) {
-        	isRec = true;
-        }
+        if (conf->getState() == Conference::ACTIVE_ATTACHED_REC or
+            conf->getState() == Conference::ACTIVE_DETACHED_REC or
+            conf->getState() == Conference::HOLD_REC)
+            isRec = true;
 
-        while (iter_participant != participants.end()) {
-            _debug ("    unholdConference: participant %s", (*iter_participant).c_str());
-            currentAccountId = getAccountFromCall (*iter_participant);
-            call = getAccountLink (currentAccountId)->getCall (*iter_participant);
+        ParticipantSet participants(conf->getParticipantList());
+
+        for (ParticipantSet::const_iterator iter = participants.begin(); iter!= participants.end(); ++iter) {
+            _debug ("    unholdConference: participant %s", (*iter).c_str());
+            std::string currentAccountId(getAccountFromCall(*iter));
+            Call *call = getAccountLink(currentAccountId)->getCall(*iter);
 
             // if one call is currently recording, the conference is in state recording
-            if(call->isRecording()) {
-            	isRec = true;
-            }
+            isRec |= call->isRecording();
 
-            offHoldCall (*iter_participant);
-
-            iter_participant++;
-
+            offHoldCall (*iter);
         }
 
-        conf->setState (isRec ? Conference::ACTIVE_ATTACHED_REC : Conference::ACTIVE_ATTACHED);
+        conf->setState(isRec ? Conference::ACTIVE_ATTACHED_REC : Conference::ACTIVE_ATTACHED);
         _dbus.getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
     }
-
 }
 
 bool ManagerImpl::isConference (const std::string& id)
 {
-    ConferenceMap::iterator iter = _conferencemap.find (id);
-
-    if (iter == _conferencemap.end()) {
-        return false;
-    } else {
-        return true;
-    }
+    return (_conferencemap.find(id) != _conferencemap.end());
 }
 
 bool ManagerImpl::participToConference (const std::string& call_id)
 {
-    std::string accountId = getAccountFromCall (call_id);
-    Call *call = getAccountLink (accountId)->getCall (call_id);
+    std::string accountId(getAccountFromCall(call_id));
+    Call *call = getAccountLink (accountId)->getCall(call_id);
 
     if (call == NULL) {
     	_error("Manager: Error call is NULL in particip to conference");
         return false;
     }
 
-    if (call->getConfId() == "") {
+    if (call->getConfId().empty())
         return false;
-    }
 
     return true;
 }
@@ -897,30 +876,28 @@ bool ManagerImpl::participToConference (const std::string& call_id)
 void ManagerImpl::addParticipant (const std::string& callId, const std::string& conferenceId)
 {
     _debug ("Manager: Add participant %s to %s", callId.c_str(), conferenceId.c_str());
-
     ConferenceMap::iterator iter = _conferencemap.find (conferenceId);
     if (iter == _conferencemap.end()) {
     	_error("Manager: Error: Conference id is not valid");
     	return;
     }
 
-    std::string currentAccountId = getAccountFromCall (callId);
+    std::string currentAccountId(getAccountFromCall (callId));
     Call *call = getAccountLink (currentAccountId)->getCall (callId);
-    if(call == NULL) {
+    if (call == NULL) {
     	_error("Manager: Error: Call id is not valid");
     	return;
     }
 
     // store the current call id (it will change in offHoldCall or in answerCall)
-    std::string current_call_id = getCurrentCallId();
+    std::string current_call_id(getCurrentCallId());
 
     // detach from prior communication and switch to this conference
     if (current_call_id != callId) {
-        if (isConference (current_call_id)) {
+        if (isConference (current_call_id))
             detachParticipant (Call::DEFAULT_ID, current_call_id);
-        } else {
+        else
             onHoldCall (current_call_id);
-        }
     }
     // TODO: remove this ugly hack => There should be different calls when double clicking
     // a conference to add main participant to it, or (in this case) adding a participant
@@ -952,18 +929,15 @@ void ManagerImpl::addParticipant (const std::string& callId, const std::string& 
     	conf->bindParticipant (callId);
     }
 
-    ParticipantSet participants = conf->getParticipantList();
-    if(participants.empty()) {
+    ParticipantSet participants(conf->getParticipantList());
+    if (participants.empty())
     	_error("Manager: Error: Participant list is empty for this conference");
-    }
 
     // reset ring buffer for all conference participant
-    ParticipantSet::iterator iter_p = participants.begin();
-    while (iter_p != participants.end()) {
-    	// flush conference participants only
-    	getMainBuffer()->flush (*iter_p);
-    	iter_p++;
-    }
+    // flush conference participants only
+    for (ParticipantSet::const_iterator iter_p = participants.begin();
+            iter_p != participants.end(); ++iter_p)
+    	getMainBuffer()->flush(*iter_p);
 
     getMainBuffer()->flush (Call::DEFAULT_ID);
 
@@ -974,54 +948,41 @@ void ManagerImpl::addParticipant (const std::string& callId, const std::string& 
 void ManagerImpl::addMainParticipant (const std::string& conference_id)
 {
     if (hasCurrentCall()) {
-        std::string current_call_id = getCurrentCallId();
+        std::string current_call_id(getCurrentCallId());
 
-        if (isConference (current_call_id)) {
-            detachParticipant (Call::DEFAULT_ID, current_call_id);
-        } else {
-            onHoldCall (current_call_id);
-        }
+        if (isConference(current_call_id))
+            detachParticipant(Call::DEFAULT_ID, current_call_id);
+        else
+            onHoldCall(current_call_id);
     }
-
-    ConferenceMap::iterator iter = _conferencemap.find (conference_id);
-
-    Conference *conf = NULL;
 
     audioLayerMutexLock();
 
     _debug("Manager: Add Main Participant");
 
+    ConferenceMap::const_iterator iter = _conferencemap.find (conference_id);
     if (iter != _conferencemap.end()) {
-        conf = iter->second;
+        Conference *conf = iter->second;
 
         ParticipantSet participants = conf->getParticipantList();
 
-        ParticipantSet::iterator iter_participant = participants.begin();
-
-        while (iter_participant != participants.end()) {
-            getMainBuffer()->bindCallID (*iter_participant, Call::DEFAULT_ID);
-            iter_participant++;
-        }
+        for (ParticipantSet::const_iterator iter_p = participants.begin();
+                iter_p != participants.end(); ++iter_p)
+            getMainBuffer()->bindCallID(*iter_p, Call::DEFAULT_ID);
 
         // Reset ringbuffer's readpointers
-        iter_participant = participants.begin();
+        for (ParticipantSet::const_iterator iter_p = participants.begin();
+                iter_p != participants.end(); ++iter_p)
+            getMainBuffer()->flush(*iter_p);
 
-        while (iter_participant != participants.end()) {
-            getMainBuffer()->flush (*iter_participant);
-            iter_participant++;
-        }
+        getMainBuffer()->flush(Call::DEFAULT_ID);
 
-        getMainBuffer()->flush (Call::DEFAULT_ID);
-
-        if(conf->getState() == Conference::ACTIVE_DETACHED) {
-            conf->setState (Conference::ACTIVE_ATTACHED);
-        }
-        else if(conf->getState() == Conference::ACTIVE_DETACHED_REC) {
+        if (conf->getState() == Conference::ACTIVE_DETACHED)
+            conf->setState(Conference::ACTIVE_ATTACHED);
+        else if (conf->getState() == Conference::ACTIVE_DETACHED_REC)
         	conf->setState(Conference::ACTIVE_ATTACHED_REC);
-        }
-        else {
+        else
         	_warn("Manager: Warning: Invalid conference state while adding main participant");
-        }
 
         _dbus.getCallManager()->conferenceChanged (conference_id, conf->getStateStr());
     }
@@ -1515,9 +1476,7 @@ void ManagerImpl::saveConfig (void)
 //THREAD=Main
 bool ManagerImpl::sendDtmf (const std::string& id, char code)
 {
-    _debug ("Manager: Send DTMF for call %s", id.c_str());
-
-    std::string accountid = getAccountFromCall (id);
+    std::string accountid(getAccountFromCall(id));
     playDtmf (code);
     return getAccountLink (accountid)->carryingDTMFdigits (id, code);
 }
@@ -2226,8 +2185,6 @@ std::string ManagerImpl::getCurrentCodecName (const std::string& id)
     Call* call = link->getCall (id);
     std::string codecName;
 
-    _debug("Manager: Get current codec name");
-
     if (call) {
         Call::CallState state = call->getState();
         if (state == Call::Active or state == Call::Conferencing) {
@@ -2374,8 +2331,6 @@ std::vector<std::string> ManagerImpl::getAudioInputDeviceList (void)
  */
 std::vector<std::string> ManagerImpl::getCurrentAudioDevicesIndex ()
 {
-    _debug ("Get current audio devices index");
-
     audioLayerMutexLock();
 
     std::vector<std::string> v;
@@ -2614,8 +2569,6 @@ int ManagerImpl::getAudioDeviceIndex (const std::string &name)
     AlsaLayer *alsalayer;
     int soundCardIndex = 0;
 
-    _debug ("Manager: Get audio device index");
-
     audioLayerMutexLock();
 
     if (_audiodriver == NULL) {
@@ -2636,8 +2589,6 @@ int ManagerImpl::getAudioDeviceIndex (const std::string &name)
 
 std::string ManagerImpl::getCurrentAudioOutputPlugin (void) const
 {
-    _debug ("Manager: Get alsa plugin");
-
     return audioPreference.getPlugin();
 }
 
@@ -3068,7 +3019,6 @@ std::vector<std::string> ManagerImpl::getAccountList () const
 {
     using std::vector;
     using std::string;
-    _debug ("Manager: Get account list");
     vector<string> account_order(loadAccountOrder());
 
     // The IP2IP profile is always available, and first in the list
@@ -3327,7 +3277,6 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser *parser)
             }
         }
     }
-
 
     // Initialize default UDP transport according to
     // IP to IP settings (most likely using port 5060)

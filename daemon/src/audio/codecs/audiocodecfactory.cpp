@@ -65,13 +65,12 @@ void AudioCodecFactory::setDefaultOrder()
 std::string
 AudioCodecFactory::getCodecName (AudioCodecType payload)
 {
-    std::string resNull = "";
     CodecsMap::iterator iter = _CodecsMap.find (payload);
 
     if (iter!=_CodecsMap.end())
         return (iter->second->getMimeSubtype());
 
-    return resNull;
+    return "";
 }
 
 sfl::Codec*

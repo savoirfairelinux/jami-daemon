@@ -31,11 +31,14 @@
 #include "iaxvoiplink.h"
 #include "iaxcall.h"
 #include "eventthread.h"
+#include "im/InstantMessaging.h"
 #include "iaxaccount.h"
 #include "manager.h"
+#include "hooks/urlhook.h"
 #include "audio/audiolayer.h"
+#include "audio/samplerateconverter.h"
 
-#include <math.h>
+#include <cmath>
 #include <dlfcn.h>
 
 #define IAX_BLOCKING    1
@@ -546,10 +549,10 @@ IAXVoIPLink::sendTextMessage (sfl::InstantMessaging *module,
 
 
 std::string
-IAXVoIPLink::getCurrentCodecName(Call *c)
+IAXVoIPLink::getCurrentCodecName(Call *c) const
 {
-    IAXCall *call = (IAXCall*)c;
-    sfl::Codec *audioCodec = call->getAudioCodecFactory().getCodec (call->getAudioCodec());
+    IAXCall *call = dynamic_cast<IAXCall*>(c);
+    sfl::Codec *audioCodec = call->getAudioCodecFactory().getCodec(call->getAudioCodec());
     return audioCodec ? audioCodec->getMimeSubtype() : "";
 }
 
@@ -557,15 +560,9 @@ IAXVoIPLink::getCurrentCodecName(Call *c)
 bool
 IAXVoIPLink::iaxOutgoingInvite (IAXCall* call)
 {
-
-    struct iax_session *newsession;
     ost::MutexLock m (_mutexIAX);
-    std::string username, strNum;
-    char *lang=NULL;
-    int wait, audio_format_preferred, audio_format_capability;
-    IAXAccount *account;
 
-    newsession = iax_session_new();
+    iax_session *newsession = iax_session_new();
 
     if (!newsession) {
         _debug ("IAX Error: Can't make new session for a new call");
@@ -574,17 +571,17 @@ IAXVoIPLink::iaxOutgoingInvite (IAXCall* call)
 
     call->setSession (newsession);
 
-    account = getAccountPtr();
-    username = account->getUsername();
-    strNum = username + ":" + account->getPassword() + "@" + account->getHostname() + "/" + call->getPeerNumber();
+    IAXAccount *account = dynamic_cast<IAXAccount *>(Manager::instance().getAccount (_accountID));
+    std::string username(account->getUsername());
+    std::string strNum(username + ":" + account->getPassword() + "@" + account->getHostname() + "/" + call->getPeerNumber());
 
-    wait = 0;
     /** @todo Make preference dynamic, and configurable */
-    audio_format_preferred =  call->getFirstMatchingFormat (call->getSupportedFormat (_accountID), _accountID);
-    audio_format_capability = call->getSupportedFormat (_accountID);
+    int audio_format_preferred =  call->getFirstMatchingFormat (call->getSupportedFormat (_accountID), _accountID);
+    int audio_format_capability = call->getSupportedFormat (_accountID);
 
     _debug ("IAX New call: %s", strNum.c_str());
-    iax_call (newsession, username.c_str(), username.c_str(), strNum.c_str(), lang, wait, audio_format_preferred, audio_format_capability);
+    iax_call(newsession, username.c_str(), username.c_str(), strNum.c_str(),
+              NULL, 0, audio_format_preferred, audio_format_capability);
 
     return true;
 }
@@ -740,22 +737,20 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
 void
 IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
 {
-    if (!event->datalen) {
-        // Skip this empty packet.
-        //_debug("IAX: Skipping empty jitter-buffer interpolated packet");
+    // Skip this empty packet.
+    if (!event->datalen)
         return;
-    }
 
     if (audiolayer) {
         _debug ("IAX: incoming audio, but no sound card open");
         return;
     }
 
-    sfl::AudioCodec *audioCodec = static_cast<sfl::AudioCodec *>(call->getAudioCodecFactory().getCodec (call->getAudioCodec()));
+    sfl::AudioCodec *audioCodec = static_cast<sfl::AudioCodec *>(call->getAudioCodecFactory().getCodec(call->getAudioCodec()));
     if (!audioCodec)
         return;
 
-	Manager::instance().getMainBuffer ()->setInternalSamplingRate (audioCodec->getClockRate ());
+	Manager::instance().getMainBuffer()->setInternalSamplingRate(audioCodec->getClockRate());
 	unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
 
 	// On-the-fly codec changing (normally, when we receive a full packet)
@@ -785,9 +780,8 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
 		outSize = (double)outSize * (mainBufferSampleRate / audioRate);
 		converter->resample (decData, resampledData, mainBufferSampleRate, audioRate, samples);
 		audiolayer->getMainBuffer()->putData (resampledData, outSize, call->getCallId());
-	} else {
+	} else
 		audiolayer->getMainBuffer()->putData (decData, outSize, call->getCallId());
-	}
 }
 
 /**
@@ -796,11 +790,7 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
 void
 IAXVoIPLink::iaxHandleRegReply (iax_event* event)
 {
-
-    std::string account_id;
-    IAXAccount *account;
-
-    account = dynamic_cast<IAXAccount *> (Manager::instance().getAccount (_accountID));
+    IAXAccount *account = dynamic_cast<IAXAccount *> (Manager::instance().getAccount (_accountID));
 
     if (event->etype == IAX_EVENT_REGREJ) {
         /* Authentication failed! */
@@ -815,14 +805,6 @@ IAXVoIPLink::iaxHandleRegReply (iax_event* event)
     else if (event->etype == IAX_EVENT_REGACK) {
         /* Authentication succeeded */
         _mutexIAX.enterMutex();
-
-        // Looking for the voicemail information
-        //if( event->ies != 0 )
-        //new_voicemails = processIAXMsgCount(event->ies.msgcount);
-        //_debug("iax voicemail number notification: %i", new_voicemails);
-        // Notify the client if new voicemail waiting for the current account
-        //account_id = getstd::string();
-        //Manager::instance().startVoiceMessageNotification(account_id.c_str(), new_voicemails);
 
         iax_destroy (_regSession);
         _mutexIAX.leaveMutex();
@@ -967,9 +949,4 @@ void IAXVoIPLink::updateAudiolayer (void)
     _mutexIAX.enterMutex();
     audiolayer = Manager::instance().getAudioDriver();
     _mutexIAX.leaveMutex();
-}
-
-IAXAccount* IAXVoIPLink::getAccountPtr (void)
-{
-    return dynamic_cast<IAXAccount *> (Manager::instance().getAccount (_accountID));
 }

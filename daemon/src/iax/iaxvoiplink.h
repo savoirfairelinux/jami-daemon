@@ -34,14 +34,14 @@
 
 #include "voiplink.h"
 #include <iax-client.h>
+#include "audio/codecs/audiocodec.h" // for DEC_BUFFER_SIZE
 #include "global.h"
 
-#include "audio/codecs/audiocodecfactory.h"
-#include "audio/samplerateconverter.h"
-#include "hooks/urlhook.h"
+namespace sfl {
+    class InstantMessaging;
+}
 
-#include "im/InstantMessaging.h"
-
+class SamplerateConverter;
 class EventThread;
 class IAXCall;
 
@@ -191,7 +191,7 @@ class IAXVoIPLink : public VoIPLink
          * Return the codec protocol used for this call
          * @param id The call identifier
          */
-        virtual std::string getCurrentCodecName(Call *c);
+        virtual std::string getCurrentCodecName(Call *c) const;
 
 
     public: // iaxvoiplink only
@@ -199,9 +199,6 @@ class IAXVoIPLink : public VoIPLink
         void updateAudiolayer (void);
 
     private:
-
-        IAXAccount* getAccountPtr (void);
-
         /*
          * Decode the message count IAX send.
          * Returns only the new messages number

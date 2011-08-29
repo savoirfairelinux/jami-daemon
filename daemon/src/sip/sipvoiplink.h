@@ -188,16 +188,6 @@ class SIPVoIPLink : public VoIPLink
         virtual bool carryingDTMFdigits (const std::string& id, char code);
 
         /**
-         * Send Dtmf using SIP INFO message
-         */
-        bool dtmfSipInfo (SIPCall *call, char code);
-
-        /**
-         * Send Dtmf over RTP
-         */
-        void dtmfOverRtp (SIPCall* call, char code);
-
-        /**
          * Start a SIP Call
          * @param call  The current call
          * @return true if all is correct
@@ -249,7 +239,7 @@ class SIPVoIPLink : public VoIPLink
          * Return the codec protocol used for this call
          * @param c The call identifier
          */
-        std::string getCurrentCodecName(Call *c);
+        std::string getCurrentCodecName(Call *c) const;
 
         /**
          * Retrive useragent name from account
@@ -264,7 +254,7 @@ class SIPVoIPLink : public VoIPLink
          * of IPV4 address available on all of the interfaces on
          * the system.
          */
-        std::vector<std::string> getAllIpInterface (void);
+        std::vector<std::string> getAllIpInterface (void) const;
 
         /**
         * List all the interfaces on the system and return
@@ -274,7 +264,7 @@ class SIPVoIPLink : public VoIPLink
         * of interface name available on all of the interfaces on
         * the system.
         */
-        std::vector<std::string> getAllIpInterfaceByName (void);
+        std::vector<std::string> getAllIpInterfaceByName (void) const;
 
         /**
          * List all the interfaces on the system and return
@@ -284,7 +274,7 @@ class SIPVoIPLink : public VoIPLink
          * of interface name available on all of the interfaces on
          * the system.
          */
-        std::string getInterfaceAddrFromName (std::string ifaceName);
+        std::string getInterfaceAddrFromName (const std::string &ifaceName) const;
 
         /**
          * Initialize the transport selector
@@ -293,11 +283,6 @@ class SIPVoIPLink : public VoIPLink
          * @return          	A pointer to the transport selector structure
          */
         pjsip_tpselector *initTransportSelector (pjsip_transport *, pj_pool_t *);
-
-        /**
-         * Requests PJSIP library for local IP address, using pj_gethostbyname()
-         */
-        std::string loadSIPLocalIP ();
 
         /**
          * Helper function for creating a route set from information
@@ -326,16 +311,6 @@ class SIPVoIPLink : public VoIPLink
         bool sendTextMessage (sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from);
 
         /**
-         * Retrieve display name from the
-         */
-        static std::string parseDisplayName(char *);
-
-        /**
-         * Remove the "sip:" or "sips:" from input uri
-         */
-        static void stripSipUriPrefix(std::string&);
-
-        /**
          * when we init the listener, how many times we try to bind a port?
          */
         int _nbTryListenAddr;
@@ -343,8 +318,7 @@ class SIPVoIPLink : public VoIPLink
         /**
          * Create the default UDP transport according ot Ip2Ip profile settings
          */
-        bool createDefaultSipUdpTransport();
-
+        void createDefaultSipUdpTransport();
 
         /**
          * Create the default TLS litener using IP2IP_PROFILE settings
@@ -352,6 +326,11 @@ class SIPVoIPLink : public VoIPLink
         void createDefaultSipTlsListener();
 
     private:
+        /**
+         * Send Dtmf using SIP INFO message
+         */
+        void dtmfSipInfo (SIPCall *call, char code);
+        void dtmfOverRtp (SIPCall *call, char code);
 
         /* Assignment Operator */
         SIPVoIPLink& operator= (const SIPVoIPLink& rh);
@@ -398,7 +377,6 @@ class SIPVoIPLink : public VoIPLink
          * Create the default TLS litener according to account settings.
          */
         void createTlsListener (SIPAccount*);
-
 
         /**
          * General Sip transport creation method according to the

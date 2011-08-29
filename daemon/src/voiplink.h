@@ -182,7 +182,7 @@ class VoIPLink
          * Return the codec protocol used for this call
          * @param call The call
          */
-        virtual std::string getCurrentCodecName(Call *call) = 0;
+        virtual std::string getCurrentCodecName(Call *call) const = 0;
 
         /**
          * Send a message to a call identified by its callid
