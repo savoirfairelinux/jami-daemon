@@ -188,13 +188,6 @@ class SIPVoIPLink : public VoIPLink
         virtual bool carryingDTMFdigits (const std::string& id, char code);
 
         /**
-         * Start a SIP Call
-         * @param call  The current call
-         * @return true if all is correct
-         */
-        bool SIPStartCall (SIPCall* call);
-
-        /**
          * Start a new SIP call using the IP2IP profile
          * @param The call id
          * @param The target sip uri
@@ -218,13 +211,6 @@ class SIPVoIPLink : public VoIPLink
          * @param
          */
         void SIPCallClosed (SIPCall *call);
-
-        /**
-         * The call pointer was released
-         * If the call was not cleared before, report an error
-         * @param sip call
-         */
-        void SIPCallReleased (SIPCall *call);
 
         pj_caching_pool *getMemoryPoolFactory();
 
@@ -326,6 +312,12 @@ class SIPVoIPLink : public VoIPLink
         void createDefaultSipTlsListener();
 
     private:
+        /**
+         * Start a SIP Call
+         * @param call  The current call
+         * @return true if all is correct
+         */
+        bool SIPStartCall (SIPCall* call);
         /**
          * Send Dtmf using SIP INFO message
          */
