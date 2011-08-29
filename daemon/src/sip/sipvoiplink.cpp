@@ -3398,7 +3398,7 @@ static int get_iface_list (struct ifconf *ifconf)
 }
 } // end anonymous namespace
 
-std::vector<std::string> SIPVoIPLink::getAllIpInterfaceByName (void) const
+std::vector<std::string> SIPVoIPLink::getAllIpInterfaceByName (void)
 {
     static ifreq ifreqs[20];
     ifconf ifconf;
@@ -3426,7 +3426,7 @@ std::vector<std::string> SIPVoIPLink::getAllIpInterfaceByName (void) const
     return ifaceList;
 }
 
-std::string SIPVoIPLink::getInterfaceAddrFromName (const std::string &ifaceName) const
+std::string SIPVoIPLink::getInterfaceAddrFromName (const std::string &ifaceName)
 {
     int fd = socket (AF_INET, SOCK_DGRAM,0);
     if (fd < 0) {
@@ -3435,8 +3435,8 @@ std::string SIPVoIPLink::getInterfaceAddrFromName (const std::string &ifaceName)
     }
 
     ifreq ifr;
-    memset (&ifr, 0, sizeof(ifreq));
-    strcpy (ifr.ifr_name, ifaceName.c_str());
+    memset(&ifr, 0, sizeof(ifreq));
+    strcpy(ifr.ifr_name, ifaceName.c_str());
     ifr.ifr_addr.sa_family = AF_INET;
 
     if (ioctl (fd, SIOCGIFADDR, &ifr) < 0)
@@ -3450,7 +3450,7 @@ std::string SIPVoIPLink::getInterfaceAddrFromName (const std::string &ifaceName)
     return addr;
 }
 
-std::vector<std::string> SIPVoIPLink::getAllIpInterface (void) const
+std::vector<std::string> SIPVoIPLink::getAllIpInterface (void)
 {
     pj_sockaddr addrList[16];
     unsigned int addrCnt = PJ_ARRAY_SIZE (addrList);

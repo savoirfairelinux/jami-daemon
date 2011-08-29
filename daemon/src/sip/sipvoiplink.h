@@ -254,7 +254,7 @@ class SIPVoIPLink : public VoIPLink
          * of IPV4 address available on all of the interfaces on
          * the system.
          */
-        std::vector<std::string> getAllIpInterface (void) const;
+        static std::vector<std::string> getAllIpInterface (void);
 
         /**
         * List all the interfaces on the system and return
@@ -264,7 +264,7 @@ class SIPVoIPLink : public VoIPLink
         * of interface name available on all of the interfaces on
         * the system.
         */
-        std::vector<std::string> getAllIpInterfaceByName (void) const;
+        static std::vector<std::string> getAllIpInterfaceByName (void);
 
         /**
          * List all the interfaces on the system and return
@@ -274,7 +274,7 @@ class SIPVoIPLink : public VoIPLink
          * of interface name available on all of the interfaces on
          * the system.
          */
-        std::string getInterfaceAddrFromName (const std::string &ifaceName) const;
+        static std::string getInterfaceAddrFromName (const std::string &ifaceName);
 
         /**
          * Initialize the transport selector
