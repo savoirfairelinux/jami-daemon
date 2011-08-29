@@ -61,11 +61,6 @@ class VoIPLink
 {
     public:
         /**
-         * Constructor
-         */
-        VoIPLink ();
-
-        /**
          * Virtual destructor
          */
         virtual ~VoIPLink (void);
@@ -82,12 +77,6 @@ class VoIPLink
          * Try to initiate the communication layer and set config
          */
         virtual void init (void) = 0;
-
-        /**
-         * Virtual method
-         * Delete link-related stuff like calls
-         */
-        virtual void terminate (void) = 0;
 
         /**
          * Virtual method
@@ -200,18 +189,7 @@ class VoIPLink
          * @param call A call pointer with a unique pointer
          * @return bool True if the call was unique and added
          */
-        bool addCall (Call* call);
-
-        /** Remove a call from the call map (protected by mutex)
-         * @param id A Call ID
-         */
-        void removeCall (const std::string& id);
-
-        /**
-         * Remove all the call from the map
-         * @return bool True on success
-         */
-        bool clearCallMap();
+        void addCall (Call* call);
 
         /**
          * Get the call pointer from the call map (protected by mutex)
@@ -227,8 +205,10 @@ class VoIPLink
         /** Mutex to protect call map */
         ost::Mutex _callMapMutex;
 
-        /** Get local listening port (5060 for SIP, ...) */
-        unsigned int _localPort;
+        /** Remove a call from the call map (protected by mutex)
+         * @param id A Call ID
+         */
+        void removeCall (const std::string& id);
 };
 
 #endif // __VOIP_LINK_H__

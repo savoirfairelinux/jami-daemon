@@ -183,10 +183,6 @@ class IAXVoIPLink : public VoIPLink
 
         virtual bool sendTextMessage (sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from);
 
-        bool isContactPresenceSupported() {
-            return false;
-        }
-
         /**
          * Return the codec protocol used for this call
          * @param id The call identifier
@@ -266,40 +262,39 @@ class IAXVoIPLink : public VoIPLink
         bool iaxOutgoingInvite (IAXCall* call);
 
         /** Threading object */
-        EventThread* _evThread;
+        EventThread* evThread_;
 
         /** registration session : 0 if not register */
-        struct iax_session* _regSession;
+        struct iax_session* regSession_;
 
         /** Timestamp of when we should refresh the registration up with
          * the registrar.  Values can be: EPOCH timestamp, 0 if we want no registration, 1
          * to force a registration. */
-        int _nextRefreshStamp;
+        int nextRefreshStamp_;
 
         /** Mutex for iax_ calls, since we're the only one dealing with the incorporated
          * iax_stuff inside this class. */
-        ost::Mutex _mutexIAX;
+        ost::Mutex mutexIAX_;
 
         /** Connection to audio card/device */
-        AudioLayer* audiolayer;
+        AudioLayer* audiolayer_;
 
         /** encoder/decoder/resampler buffers */
         SFLDataFormat decData[DEC_BUFFER_SIZE];
         SFLDataFormat resampledData[DEC_BUFFER_SIZE];
         unsigned char encodedData[DEC_BUFFER_SIZE];
 
+        int converterSamplingRate_;
         /** Sample rate converter object */
-        SamplerateConverter* converter;
-
-        int converterSamplingRate;
+        SamplerateConverter* converter_;
 
         /** Whether init() was called already or not
          * This should be used in init() and terminate(), to
          * indicate that init() was called, or reset by terminate().
          */
-        bool _initDone;
+        bool initDone_;
 
-        const std::string _accountID;
+        const std::string accountID_;
 };
 
 #endif
