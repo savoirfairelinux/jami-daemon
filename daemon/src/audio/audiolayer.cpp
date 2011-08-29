@@ -49,8 +49,6 @@ AudioLayer::AudioLayer (int type)
     , outChannel_ (1)
     , errorMessage_ (0)
     , mutex_ ()
-    , dcblocker_ (0)
-    , audiofilter_ (0)
 	, audioPref(Manager::instance().audioPreference)
     , lastNotificationTime_ (0)
 {}
@@ -58,8 +56,6 @@ AudioLayer::AudioLayer (int type)
 
 AudioLayer::~AudioLayer ()
 {
-    delete audiofilter_;
-    delete dcblocker_;
 }
 
 void AudioLayer::flushMain (void)

@@ -39,15 +39,15 @@
 
 #include "manager.h"
 #include "ringbuffer.h"
+#include "dcblocker.h"
 
 /**
  * @file  audiolayer.h
  * @brief Main sound class. Manages the data transfers between the application and the hardware.
  */
 
-class DcBlocker;
 class MainBuffer;
-class AudioProcessing;
+
 namespace ost {
     class Time;
 }
@@ -296,8 +296,7 @@ class AudioLayer
          */
         ost::Mutex mutex_;
 
-        DcBlocker *dcblocker_;
-        AudioProcessing *audiofilter_;
+        DcBlocker dcblocker_;
 
         AudioPreference &audioPref;
 

@@ -2425,20 +2425,16 @@ std::string ManagerImpl::getCurrentAudioOutputPlugin (void) const
 
 std::string ManagerImpl::getNoiseSuppressState (void) const
 {
-    // noise suppress disabled by default
     return audioPreference.getNoiseReduce() ? "enabled" : "disabled";
 }
 
 void ManagerImpl::setNoiseSuppressState (const std::string &state)
 {
-    bool isEnabled = (state == "enabled");
-
-    audioPreference.setNoiseReduce (isEnabled);
+    audioPreference.setNoiseReduce (state == "enabled");
 }
 
 std::string ManagerImpl::getEchoCancelState() const
 {
-	// echo canceller disabled by default
 	return audioPreference.getEchoCancel() ? "enabled" : "disabled";
 }
 

@@ -162,8 +162,6 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int indexRing, int sampleRate,
 
     // use 1 sec buffer for resampling
     converter_ = new SamplerateConverter (audioSampleRate_);
-    dcblocker_ = new DcBlocker;
-    audiofilter_ = new AudioProcessing (dcblocker_);
 }
 
 void
@@ -171,8 +169,7 @@ AlsaLayer::startStream (void)
 {
     _debug ("Audio: Start stream");
 
-    if (audiofilter_)
-        audiofilter_->resetAlgorithm();
+	dcblocker_.reset();
 
     if (is_playback_running_ and is_capture_running_)
         return;
@@ -931,12 +928,12 @@ void AlsaLayer::audioCallback (void)
     	int outBytes = outSamples * sizeof (SFLDataFormat);
         SFLDataFormat* rsmpl_out = (SFLDataFormat*) malloc (outBytes);
         converter_->resample ( (SFLDataFormat*) in, rsmpl_out, mainBufferSampleRate, audioSampleRate_, toPutSamples);
-        audiofilter_->processAudio (rsmpl_out, outBytes);
+        dcblocker_.process(rsmpl_out, outBytes);
         getMainBuffer()->putData (rsmpl_out, outBytes);
         free (rsmpl_out);
     } else {
         SFLDataFormat* filter_out = (SFLDataFormat*) malloc (toPutBytes);
-		audiofilter_->processAudio (in, filter_out, toPutBytes);
+        dcblocker_.process(in, filter_out, toPutBytes);
 		getMainBuffer()->putData (filter_out, toPutBytes);
 		free (filter_out);
     }

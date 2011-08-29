@@ -382,10 +382,6 @@ void PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int indexR
 
     // use 1 sec buffer for resampling
     converter_ = new SamplerateConverter (audioSampleRate_);
-
-    // Instantiate the algorithm
-    dcblocker_ = new DcBlocker;
-    audiofilter_ = new AudioProcessing (dcblocker_);
 }
 
 
@@ -723,13 +719,13 @@ void PulseLayer::readFromMic (void)
 		SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (outBytes);
 		converter_->resample ( (SFLDataFormat *) data, rsmpl_out, mainBufferSampleRate, audioSampleRate_, inSamples);
 		// remove dc offset
-		audiofilter_->processAudio (rsmpl_out, outBytes);
+		dcblocker_.process(rsmpl_out, outBytes);
 		getMainBuffer()->putData (rsmpl_out, outBytes);
 		pa_xfree (rsmpl_out);
 	} else {
 		SFLDataFormat* filter_out = (SFLDataFormat*) pa_xmalloc (r);
 		// remove dc offset
-		audiofilter_->processAudio ( (SFLDataFormat *) data, filter_out, r);
+		dcblocker_.process( (SFLDataFormat *) data, filter_out, r);
 		getMainBuffer()->putData (filter_out, r);
 		pa_xfree (filter_out);
 	}
