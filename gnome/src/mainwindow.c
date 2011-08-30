@@ -345,39 +345,6 @@ get_main_window ()
 }
 
 void
-main_window_message (GtkMessageType type, const gchar * const markup)
-{
-
-    GtkWidget * dialog = gtk_message_dialog_new(
-                             GTK_WINDOW (get_main_window()), GTK_DIALOG_MODAL
-                             | GTK_DIALOG_DESTROY_WITH_PARENT, type, GTK_BUTTONS_CLOSE, NULL);
-
-    gtk_window_set_title (GTK_WINDOW (dialog), _ ("SFLphone Error"));
-    gtk_message_dialog_set_markup (GTK_MESSAGE_DIALOG (dialog), markup);
-
-    gtk_dialog_run (GTK_DIALOG (dialog));
-    gtk_widget_destroy (dialog);
-}
-
-void
-main_window_error_message (const gchar * const markup)
-{
-    main_window_message (GTK_MESSAGE_ERROR, markup);
-}
-
-void
-main_window_warning_message (const gchar * const markup)
-{
-    main_window_message (GTK_MESSAGE_WARNING, markup);
-}
-
-void
-main_window_info_message (const gchar * const markup)
-{
-    main_window_message (GTK_MESSAGE_INFO, markup);
-}
-
-void
 main_window_dialpad (gboolean state)
 {
     if (state) {

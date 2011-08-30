@@ -75,24 +75,6 @@ void main_window_dialpad (gboolean state);
 void main_window_volume_controls (gboolean state);
 
 /**
- * Display an error message
- * @param markup  The error message
- */
-void main_window_error_message (const gchar * const markup);
-
-/**
- * Display a warning message
- * @param markup  The warning message
- */
-void main_window_warning_message (const gchar * const markup);
-
-/**
- * Display an info message
- * @param markup  The info message
- */
-void main_window_info_message (const gchar * const markup);
-
-/**
  * Push a message on the statusbar stack
  * @param left_hand_message The message to display on the left side
  * @param right_hand_message The message to display on the right side

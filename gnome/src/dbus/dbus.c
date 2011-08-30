@@ -503,17 +503,30 @@ sip_call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID,
 static void
 error_alert (DBusGProxy *proxy UNUSED, int err, void * foo  UNUSED)
 {
+    const gchar *msg;
     switch (err) {
         case ALSA_PLAYBACK_DEVICE:
-            main_window_error_message(_("ALSA notification\n\nError while opening playback device"));
+            msg = _("ALSA notification\n\nError while opening playback device");
             break;
         case ALSA_CAPTURE_DEVICE:
-            main_window_error_message(_("ALSA notification\n\nError while opening capture device"));
+            msg = _("ALSA notification\n\nError while opening capture device");
             break;
         case PULSEAUDIO_NOT_RUNNING:
-            main_window_error_message(_("Pulseaudio notification\n\nPulseaudio is not running"));
+            msg = _("Pulseaudio notification\n\nPulseaudio is not running");
             break;
+        default:
+            return;
     }
+
+    GtkWidget * dialog = gtk_message_dialog_new(
+                             GTK_WINDOW (get_main_window()),
+                             GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_ERROR,
+                             GTK_BUTTONS_CLOSE, "%s", msg);
+
+    gtk_window_set_title (GTK_WINDOW (dialog), _ ("SFLphone Error"));
+
+    g_signal_connect(dialog, "response", G_CALLBACK (gtk_widget_destroy), NULL);
+    gtk_widget_show(dialog);
 }
 
 gboolean
