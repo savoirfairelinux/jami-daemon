@@ -74,11 +74,14 @@ void AlsaThread::run (void)
 // Constructor
 AlsaLayer::AlsaLayer ()
     : AudioLayer (ALSA)
+	, indexIn_ (audioPref.getCardin())
+	, indexOut_ (audioPref.getCardout())
+	, indexRing_ (audioPref.getCardring())
     , playbackHandle_ (NULL)
     , ringtoneHandle_ (NULL)
     , captureHandle_ (NULL)
     , periodSize_ (160)
-    , audioPlugin_ ("default")
+    , audioPlugin_ (audioPref.getPlugin())
     , IDSoundCards_ ()
     , is_playback_prepared_ (false)
     , is_capture_prepared_ (false)
@@ -88,85 +91,30 @@ AlsaLayer::AlsaLayer ()
     , is_capture_open_ (false)
     , trigger_request_ (false)
     , audioThread_ (NULL)
-    , converter_ (0)
-
 {
-    _debug ("Audio: Build ALSA layer");
-    urgentRingBuffer_.createReadPointer();
-
-    audioPlugin_ = audioPref.getPlugin();
 }
 
 // Destructor
 AlsaLayer::~AlsaLayer (void)
 {
-    _debug ("Audio: Destroy of ALSA layer");
-    closeLayer();
-
-    delete converter_;
-}
-
-void
-AlsaLayer::closeLayer()
-{
-    _debug ("Audio: Close ALSA streams");
-
-    try {
-        /* Stop the audio thread first */
-        if (audioThread_) {
-            _debug ("Audio: Stop Audio Thread");
-            delete audioThread_;
-            audioThread_ = NULL;
-        }
-    } catch (...) {
-        _debug ("Audio: Exception: when stopping audiortp");
-        throw;
-    }
+	delete audioThread_;
 
     /* Then close the audio devices */
     closeCaptureStream();
     closePlaybackStream();
-
-    captureHandle_ = NULL;
-    playbackHandle_ = NULL;
-    ringtoneHandle_ = NULL;
 }
 
-void
-AlsaLayer::openDevice (int indexIn, int indexOut, int indexRing, int sampleRate, int stream , const std::string &plugin)
+void AlsaLayer::setPlugin(const std::string &plugin)
 {
-    /* Close the devices before open it */
-    if (stream == SFL_PCM_BOTH and is_capture_open_ and is_playback_open_) {
-        closeCaptureStream();
-        closePlaybackStream();
-    } else if ( (stream == SFL_PCM_CAPTURE or stream == SFL_PCM_BOTH) and is_capture_open_)
-        closeCaptureStream ();
-    else if ( (stream == SFL_PCM_PLAYBACK or stream == SFL_PCM_BOTH) and is_playback_open_)
-        closePlaybackStream ();
-
-    indexIn_ = indexIn;
-    indexOut_ = indexOut;
-    indexRing_ = indexRing;
-
-    audioSampleRate_ = sampleRate;
-
     audioPlugin_ = plugin;
-
-    _debug (" Setting AlsaLayer: device     in=%2d, out=%2d, ring=%2d", indexIn_, indexOut_, indexRing_);
-    _debug ("                   : alsa plugin=%s", audioPlugin_.c_str());
-    _debug ("                   : sample rate=%5d, format=%s", audioSampleRate_, SFLDataFormatString);
-
-    audioThread_ = NULL;
-
-    // use 1 sec buffer for resampling
-    converter_ = new SamplerateConverter (audioSampleRate_);
+	delete audioThread_;
+	audioThread_ = NULL;
+	// FIXME : restart audio thread
 }
 
 void
 AlsaLayer::startStream (void)
 {
-    _debug ("Audio: Start stream");
-
 	dcblocker_.reset();
 
     if (is_playback_running_ and is_capture_running_)
@@ -190,12 +138,55 @@ AlsaLayer::startStream (void)
     _debug ("pcmr: %s, index %d", pcmr.c_str(), indexRing_);
     _debug ("pcmc: %s, index %d", pcmc.c_str(), indexIn_);
 
-    if (not is_capture_open_)
-        open_device (pcmp, pcmc, pcmr, SFL_PCM_CAPTURE);
+    if (not is_capture_open_) {
+        _debug ("Audio: Open capture device");
 
-    if (not is_playback_open_)
-        open_device (pcmp, pcmc, pcmr, SFL_PCM_PLAYBACK);
+        if (snd_pcm_open (&captureHandle_,  pcmc.c_str(),  SND_PCM_STREAM_CAPTURE, 0) < 0) {
+            _warn ("Audio: Error: Opening capture device %s",  pcmc.c_str());
 
+            Manager::instance().getDbusManager()->getConfigurationManager()->errorAlert(ALSA_CAPTURE_DEVICE);
+            is_capture_open_ = false;
+        }
+
+        if (!alsa_set_params (captureHandle_, 0)) {
+            _warn ("Audio: Error: Capture failed");
+            snd_pcm_close (captureHandle_);
+            is_capture_open_ = false;
+        }
+
+        is_capture_open_ = true;
+    }
+
+    if (not is_playback_open_) {
+
+        _debug ("Audio: Open playback device (and ringtone)");
+
+        int err;
+        if ((err = snd_pcm_open (&playbackHandle_, pcmp.c_str(), SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
+            _warn ("Audio: Error while opening playback device %s",  pcmp.c_str());
+            Manager::instance().getDbusManager()->getConfigurationManager()->errorAlert(ALSA_PLAYBACK_DEVICE);
+            is_playback_open_ = false;
+        }
+
+        if (!alsa_set_params (playbackHandle_, 1)) {
+            _warn ("Audio: Error: Playback failed");
+            snd_pcm_close (playbackHandle_);
+            is_playback_open_ = false;
+        }
+
+        if (getIndexOut() != getIndexRing()) {
+
+            if ((err = snd_pcm_open (&ringtoneHandle_, pcmr.c_str(), SND_PCM_STREAM_PLAYBACK, 0)) < 0)
+                _warn ("Audio: Error: Opening ringtone device %s", pcmr.c_str());
+
+            if (!alsa_set_params (ringtoneHandle_, 1)) {
+                _warn ("Audio: Error: Ringtone failed");
+                snd_pcm_close (ringtoneHandle_);
+            }
+        }
+
+        is_playback_open_ = true;
+    }
     prepareCaptureStream ();
     preparePlaybackStream ();
 
@@ -225,17 +216,8 @@ AlsaLayer::stopStream (void)
 
     isStarted_ = false;
 
-    try {
-        /* Stop the audio thread first */
-        if (audioThread_) {
-            _debug ("Audio: Stop audio thread");
-            delete audioThread_;
-            audioThread_ = NULL;
-        }
-    } catch (...) {
-        _debug ("Audio: Exception: when stopping audiortp");
-        throw;
-    }
+	delete audioThread_;
+	audioThread_ = NULL;
 
     closeCaptureStream ();
     closePlaybackStream ();
@@ -266,6 +248,32 @@ void AlsaLayer::stopCaptureStream (void)
             is_capture_prepared_ = false;
         }
     }
+}
+
+void AlsaLayer::setIndexRing(int index)
+{
+	indexRing_ = index;
+	delete audioThread_;
+	audioThread_ = NULL;
+}
+
+
+void AlsaLayer::setIndexOut(int index)
+{
+	indexOut_ = index;
+	if (is_playback_open_)
+		closePlaybackStream ();
+	delete audioThread_;
+	audioThread_ = NULL;
+}
+
+void AlsaLayer::setIndexIn(int index)
+{
+	indexIn_ = index;
+	if (is_capture_open_)
+		closeCaptureStream ();
+	delete audioThread_;
+	audioThread_ = NULL;
 }
 
 void AlsaLayer::closeCaptureStream (void)
@@ -427,7 +435,8 @@ bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle, int type)
 
     if (dir != 0) {
         _debug ("Audio: Error: (%i) The chosen rate %d Hz is not supported by your hardware.Using %d Hz instead. ", type , audioSampleRate_, exact_ivalue);
-        audioSampleRate_ = exact_ivalue;
+        //audioSampleRate_ = exact_ivalue;
+        // FIXME
     }
 
     /* Set the number of channels */
@@ -490,68 +499,6 @@ bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle, int type)
     }
 
     snd_pcm_sw_params_free (swparams);
-    return true;
-}
-
-
-bool
-AlsaLayer::open_device (std::string pcm_p, std::string pcm_c, std::string pcm_r, int flag)
-{
-    if (flag == SFL_PCM_BOTH or flag == SFL_PCM_PLAYBACK) {
-
-        _debug ("Audio: Open playback device (and ringtone)");
-
-        int err;
-        if ((err = snd_pcm_open (&playbackHandle_, pcm_p.c_str(), SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
-            _warn ("Audio: Error while opening playback device %s",  pcm_p.c_str());
-            Manager::instance().getDbusManager()->getConfigurationManager()->errorAlert(ALSA_PLAYBACK_DEVICE);
-            is_playback_open_ = false;
-            return false;
-        }
-
-        if (!alsa_set_params (playbackHandle_, 1)) {
-            _warn ("Audio: Error: Playback failed");
-            snd_pcm_close (playbackHandle_);
-            is_playback_open_ = false;
-            return false;
-        }
-
-        if (getIndexOut() != getIndexRing()) {
-
-            if ((err = snd_pcm_open (&ringtoneHandle_, pcm_r.c_str(), SND_PCM_STREAM_PLAYBACK, 0)) < 0)
-                _warn ("Audio: Error: Opening ringtone device %s", pcm_r.c_str());
-
-            if (!alsa_set_params (ringtoneHandle_, 1)) {
-                _warn ("Audio: Error: Ringtone failed");
-                snd_pcm_close (ringtoneHandle_);
-            }
-        }
-
-        is_playback_open_ = true;
-    }
-
-    if (flag == SFL_PCM_BOTH or flag == SFL_PCM_CAPTURE) {
-
-        _debug ("Audio: Open capture device");
-
-        if (snd_pcm_open (&captureHandle_,  pcm_c.c_str(),  SND_PCM_STREAM_CAPTURE, 0) < 0) {
-            _warn ("Audio: Error: Opening capture device %s",  pcm_c.c_str());
-
-            Manager::instance().getDbusManager()->getConfigurationManager()->errorAlert(ALSA_CAPTURE_DEVICE);
-            is_capture_open_ = false;
-            return false;
-        }
-
-        if (!alsa_set_params (captureHandle_, 0)) {
-            _warn ("Audio: Error: Capture failed");
-            snd_pcm_close (captureHandle_);
-            is_capture_open_ = false;
-            return false;
-        }
-
-        is_capture_open_ = true;
-    }
-
     return true;
 }
 

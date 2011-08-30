@@ -35,7 +35,6 @@
 #include "audio/audiolayer.h"
 #include <alsa/asoundlib.h>
 
-class SamplerateConverter;
 class RingBuffer;
 class ManagerImpl;
 class AlsaThread;
@@ -57,20 +56,6 @@ class AlsaLayer : public AudioLayer
          * Destructor
          */
         ~AlsaLayer (void);
-
-        /**
-         * Check if no devices are opened, otherwise close them.
-         * Then open the specified devices by calling the private functions open_device
-         * @param indexIn	The number of the card chosen for capture
-         * @param indexOut	The number of the card chosen for playback
-         * @param sampleRate  The sample rate
-         * @param stream	  To indicate which kind of stream you want to open
-         *			  SFL_PCM_CAPTURE
-         *			  SFL_PCM_PLAYBACK
-         *			  SFL_PCM_BOTH
-         * @param plugin	  The alsa plugin ( dmix , default , front , surround , ...)
-         */
-        void openDevice (int indexIn, int indexOut, int indexRing, int sampleRate, int stream, const std::string &plugin);
 
         /**
          * Start the capture stream and prepare the playback stream.
@@ -123,7 +108,7 @@ class AlsaLayer : public AudioLayer
          * @return bool True if it exists and supports the mode
          *		    false otherwise
          */
-        bool soundCardIndexExist (int card , int stream);
+        static bool soundCardIndexExist (int card , int stream);
 
         /**
          * An index is associated with its string description
@@ -142,9 +127,55 @@ class AlsaLayer : public AudioLayer
 
         void audioCallback (void);
 
+        /**
+         * Get the index of the audio card for capture
+         * @return int The index of the card used for capture
+         *                     0 for the first available card on the system, 1 ...
+         */
+        int getIndexIn() const {
+            return indexIn_;
+        }
+        void setIndexIn(int);
+
+        /**
+         * Get the index of the audio card for playback
+         * @return int The index of the card used for playback
+         *                     0 for the first available card on the system, 1 ...
+         */
+        int getIndexOut() const {
+            return indexOut_;
+        }
+        void setIndexOut(int);
+
+        /**
+		 * Get the index of the audio card for ringtone (could be differnet from playback)
+		 * @return int The index of the card used for ringtone
+		 *                 0 for the first available card on the system, 1 ...
+		 */
+        int getIndexRing() const {
+            return indexRing_;
+        }
+        void setIndexRing(int);
+
+        void setPlugin(const std::string &plugin);
 
     private:
-        void closeLayer (void);
+
+
+        /**
+         * Number of audio cards on which capture stream has been opened
+         */
+        int indexIn_;
+
+        /**
+         * Number of audio cards on which playback stream has been opened
+         */
+        int indexOut_;
+
+        /**
+         * Number of audio cards on which ringtone stream has been opened
+         */
+        int indexRing_;
 
         /** Associate a sound card index to its string description */
         typedef std::pair<int , std::string> HwIDPair;
@@ -169,20 +200,6 @@ class AlsaLayer : public AudioLayer
         void stopPlaybackStream (void);
         void startPlaybackStream (void);
         void preparePlaybackStream (void);
-
-        /**
-         * Open the specified device.
-         * ALSA Library API
-         * @param pcm_p The string name for the playback device
-         * @param pcm_c The string name for the capture device
-         * @param flag  To indicate which kind of stream you want to open
-         *		    SFL_PCM_CAPTURE
-         *		    SFL_PCM_PLAYBACK
-         *		    SFL_PCM_BOTH
-         * @return true if successful
-         *	       false otherwise
-         */
-        bool open_device (std::string pcm_p, std::string pcm_c, std::string pcm_r,  int flag);
 
         bool alsa_set_params (snd_pcm_t *pcm_handle, int type);
 
@@ -256,9 +273,6 @@ class AlsaLayer : public AudioLayer
         bool trigger_request_;
 
         AlsaThread* audioThread_;
-
-        /** Sample rate converter object */
-        SamplerateConverter* converter_;
 };
 
 #endif // _ALSA_LAYER_H_

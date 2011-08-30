@@ -219,45 +219,41 @@ void playback_overflow_callback (pa_stream* s UNUSED, void* userdata UNUSED)
 
 PulseLayer::PulseLayer ()
     : AudioLayer (PULSEAUDIO)
-    , context_(0)
-    , mainloop_(0)
     , playback_(0)
     , record_(0)
     , ringtone_(0)
-    , converter_(0)
 {
-    urgentRingBuffer_.createReadPointer();
+    setenv ("PULSE_PROP_media.role", "phone", 1);
 
-    openLayer();
-}
+	mainloop_ = pa_threaded_mainloop_new();
+	if (!mainloop_)
+		_error("Couldn't create pulseaudio mainloop");
 
-// Destructor
-PulseLayer::~PulseLayer (void)
-{
-    closeLayer ();
-    delete converter_;
-}
+	context_ = pa_context_new (pa_threaded_mainloop_get_api (mainloop_) , "SFLphone");
+	if (!context_)
+		_error("Couldn't create pulseaudio context");
 
-void
-PulseLayer::openLayer (void)
-{
-	if (isStarted_)
-		return;
+    pa_context_set_state_callback (context_, context_state_callback, this);
 
-	_info ("Audio: Open Pulseaudio layer");
+    if (pa_context_connect (context_, NULL , PA_CONTEXT_NOAUTOSPAWN , NULL) < 0)
+        _error("Could not connect pulseaudio context to the server");
 
-	connectPulseAudioServer();
+    pa_threaded_mainloop_lock (mainloop_);
+
+    if (pa_threaded_mainloop_start (mainloop_) < 0)
+        _error("Failed to start pulseaudio mainloop");
+    pa_threaded_mainloop_wait (mainloop_);
+
+    if (pa_context_get_state (context_) != PA_CONTEXT_READY)
+        _error("Couldn't connect to pulse audio server");
+
+    pa_threaded_mainloop_unlock (mainloop_);
 
 	isStarted_ = true;
 }
 
-void
-PulseLayer::closeLayer (void)
+PulseLayer::~PulseLayer (void)
 {
-    _info ("Audio: Close Pulseaudio layer");
-
-    isStarted_ = false;
-
     disconnectAudioStream();
 
     if (mainloop_)
@@ -266,69 +262,10 @@ PulseLayer::closeLayer (void)
     if (context_) {
         pa_context_disconnect (context_);
         pa_context_unref (context_);
-        context_ = NULL;
     }
 
-    if (mainloop_) {
+    if (mainloop_)
         pa_threaded_mainloop_free (mainloop_);
-        mainloop_ = NULL;
-    }
-}
-
-void
-PulseLayer::connectPulseAudioServer (void)
-{
-    _info ("Audio: Connect to Pulseaudio server");
-
-    setenv ("PULSE_PROP_media.role", "phone", 1);
-
-    pa_context_flags_t flag = PA_CONTEXT_NOAUTOSPAWN ;
-
-    if (!mainloop_) {
-
-        // Instantiate a mainloop
-        _info ("Audio: Creating PulseAudio mainloop");
-
-        if (! (mainloop_ = pa_threaded_mainloop_new()))
-            _warn ("Audio: Error: while creating pulseaudio mainloop");
-
-        assert (mainloop_);
-    }
-
-    if (!context_) {
-
-        // Instantiate a context
-        if (! (context_ = pa_context_new (pa_threaded_mainloop_get_api (mainloop_) , "SFLphone")))
-            _warn ("Audio: Error: while creating pulseaudio context");
-
-        assert (context_);
-    }
-
-    // set context state callback before starting the mainloop
-    pa_context_set_state_callback (context_, context_state_callback, this);
-
-    _info ("Audio: Connect the context to the server");
-
-    if (pa_context_connect (context_, NULL , flag , NULL) < 0) {
-        _warn ("Audio: Error: Could not connect context to the server");
-    }
-
-    // Lock the loop before starting it
-    pa_threaded_mainloop_lock (mainloop_);
-
-    if (pa_threaded_mainloop_start (mainloop_) < 0)
-        _warn ("Audio: Error: Failed to start pulseaudio mainloop");
-
-    pa_threaded_mainloop_wait (mainloop_);
-
-    // Run the main loop
-    if (pa_context_get_state (context_) != PA_CONTEXT_READY) {
-        _warn ("Audio: Error: connecting to pulse audio server");
-    }
-
-    pa_threaded_mainloop_unlock (mainloop_);
-
-    _info ("Audio: Context creation done");
 }
 
 void PulseLayer::context_state_callback (pa_context* c, void* user_data)
@@ -368,16 +305,6 @@ void PulseLayer::context_state_callback (pa_context* c, void* user_data)
             pulse->disconnectAudioStream();
             break;
     }
-}
-
-void PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int indexRing UNUSED, int sampleRate, int stream UNUSED, const std::string &plugin UNUSED)
-{
-    audioSampleRate_ = sampleRate;
-
-    flushUrgent();
-
-    // use 1 sec buffer for resampling
-    converter_ = new SamplerateConverter (audioSampleRate_);
 }
 
 

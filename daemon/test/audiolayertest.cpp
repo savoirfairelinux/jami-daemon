@@ -108,12 +108,6 @@ void AudioLayerTest::testPulseConnect()
     CPPUNIT_ASSERT (_pulselayer->getPlaybackStream() == NULL);
     CPPUNIT_ASSERT (_pulselayer->getRecordStream() == NULL);
 
-    try {
-        _pulselayer->openDevice (sampleRate);
-    } catch (...) {
-        _debug ("Exception occured wile opening device! ");
-    }
-
     sleep (1);
 
     CPPUNIT_ASSERT (_pulselayer->getPlaybackStream() == NULL);

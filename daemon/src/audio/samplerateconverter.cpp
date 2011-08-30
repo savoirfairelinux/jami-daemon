@@ -34,6 +34,7 @@
 
 SamplerateConverter::SamplerateConverter (int freq) : _maxFreq(freq)
 {
+	printf("FREQ %d\n", freq);
     int err;
     _src_state = src_new (SRC_LINEAR, 1, &err);
 

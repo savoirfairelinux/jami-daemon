@@ -37,20 +37,20 @@
 AudioLayer::AudioLayer (int type)
     : isStarted_ (false)
     , urgentRingBuffer_ (SIZEBUF, Call::DEFAULT_ID)
-    , recorder_ (0)
-    , indexIn_ (0)
-    , indexOut_ (0)
-    , indexRing_ (0)
-    , audioSampleRate_ (0)
+	, audioSampleRate_(Manager::instance().getMainBuffer()->getInternalSamplingRate())
     , mutex_ ()
 	, audioPref(Manager::instance().audioPreference)
+	, converter_ (new SamplerateConverter(audioSampleRate_))
 	, layerType_ (type)
     , lastNotificationTime_ (0)
-{}
+{
+    urgentRingBuffer_.createReadPointer();
+}
 
 
 AudioLayer::~AudioLayer ()
 {
+	delete converter_;
 }
 
 void AudioLayer::flushMain (void)

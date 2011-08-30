@@ -40,6 +40,7 @@
 #include "manager.h"
 #include "ringbuffer.h"
 #include "dcblocker.h"
+#include "samplerateconverter.h"
 
 /**
  * @file  audiolayer.h
@@ -73,20 +74,6 @@ class AudioLayer
         virtual ~AudioLayer (void);
 
         /**
-         * Check if no devices are opened, otherwise close them.
-         * Then open the specified devices by calling the private functions open_device
-         * @param indexIn	The number of the card chosen for capture
-         * @param indexOut	The number of the card chosen for playback
-         * @param sampleRate  The sample rate
-         * @param stream	  To indicate which kind of stream you want to open
-         *			  SFL_PCM_CAPTURE
-         *			  SFL_PCM_PLAYBACK
-         *			  SFL_PCM_BOTH
-         * @param plugin	  The alsa plugin ( dmix , default , front , surround , ...)
-         */
-        virtual void openDevice (int indexIn, int indexOut, int indexRing, int sampleRate, int stream , const std::string &plugin) = 0;
-
-        /**
          * Start the capture stream and prepare the playback stream.
          * The playback starts accordingly to its threshold
          * ALSA Library API
@@ -114,32 +101,6 @@ class AudioLayer
 
         void flushUrgent (void);
 
-        /**
-         * Get the index of the audio card for capture
-         * @return int The index of the card used for capture
-         *			0 for the first available card on the system, 1 ...
-         */
-        int getIndexIn() const {
-            return indexIn_;
-        }
-
-        /**
-         * Get the index of the audio card for playback
-         * @return int The index of the card used for playback
-         *			0 for the first available card on the system, 1 ...
-         */
-        int getIndexOut() const {
-            return indexOut_;
-        }
-
-        /**
-             * Get the index of the audio card for ringtone (could be differnet from playback)
-             * @return int The index of the card used for ringtone
-             *			0 for the first available card on the system, 1 ...
-             */
-        int getIndexRing() const {
-            return indexRing_;
-        }
 
         /**
          * Get the sample rate of the audio layer
@@ -169,20 +130,6 @@ class AudioLayer
              */
         MainBuffer* getMainBuffer (void) const {
             return Manager::instance().getMainBuffer();
-        }
-
-        /**
-         * Set the audio recorder
-         */
-        void setRecorderInstance (Recordable* rec) {
-            recorder_ = rec;
-        }
-
-        /**
-         * Get the audio recorder
-         */
-        Recordable* getRecorderInstance (void) const {
-            return recorder_;
         }
 
         /**
@@ -217,30 +164,10 @@ class AudioLayer
         RingBuffer urgentRingBuffer_;
 
         /**
-         * A pointer to the recordable instance (may be a call or a conference)
-         */
-        Recordable* recorder_;
-
-        /**
-         * Number of audio cards on which capture stream has been opened
-         */
-        int indexIn_;
-
-        /**
-         * Number of audio cards on which playback stream has been opened
-         */
-        int indexOut_;
-
-        /**
-         * Number of audio cards on which ringtone stream has been opened
-         */
-        int indexRing_;
-
-        /**
          * Sample Rate SFLphone should send sound data to the sound card
          * The value can be set in the user config file- now: 44100HZ
          */
-        unsigned int audioSampleRate_;
+        const unsigned int audioSampleRate_;
 
         /**
          * Lock for the entire audio layer
@@ -250,6 +177,8 @@ class AudioLayer
         DcBlocker dcblocker_;
 
         AudioPreference &audioPref;
+
+        SamplerateConverter *converter_;
 
     private:
 

@@ -56,19 +56,6 @@ class PulseLayer : public AudioLayer
     public:
         PulseLayer ();
         ~PulseLayer (void);
-        /**
-         * Check if no devices are opened, otherwise close them.
-         * Then open the specified devices by calling the private functions open_device
-         * @param indexIn	The number of the card chosen for capture
-         * @param indexOut	The number of the card chosen for playback
-         * @param sampleRate  The sample rate
-         * @param stream	  To indicate which kind of stream you want to open
-         *			  SFL_PCM_CAPTURE
-         *			  SFL_PCM_PLAYBACK
-         *			  SFL_PCM_BOTH
-         * @param plugin	  The alsa plugin ( dmix , default , front , surround , ...)
-         */
-        void openDevice (int indexIn, int indexOut, int indexRing, int sampleRate, int stream, const std::string &plugin) ;
 
         DeviceList* getSinkList (void) {
             return &sinkList_;
@@ -204,11 +191,6 @@ class PulseLayer : public AudioLayer
         void closePlaybackStream (void);
 
         /**
-         * Establishes the connection with the local pulseaudio server
-         */
-        void connectPulseAudioServer (void);
-
-        /**
          * Close the connection with the local pulseaudio server
          */
         void disconnectAudioStream (void);
@@ -217,11 +199,6 @@ class PulseLayer : public AudioLayer
          * Get some information about the pulseaudio server
          */
         void serverinfo (void);
-
-        void openLayer (void);
-
-        void closeLayer (void);
-
 
         /** PulseAudio context and asynchronous loop */
         pa_context* context_;
@@ -241,9 +218,6 @@ class PulseLayer : public AudioLayer
          * A special stream object to handle specific playback stream for ringtone
          */
         AudioStream* ringtone_;
-
-        /** Sample rate converter object */
-        SamplerateConverter * converter_;
 
         int spkrVolume_;
         int micVolume_;
