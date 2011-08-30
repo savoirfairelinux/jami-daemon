@@ -2053,8 +2053,19 @@ void ManagerImpl::setAudioPlugin (const std::string& audioPlugin)
     audioPreference.setPlugin (audioPlugin);
 
     AlsaLayer *alsa = dynamic_cast<AlsaLayer*>(_audiodriver);
-    if (alsa)
-    	alsa->setPlugin(audioPlugin);
+    if (!alsa) {
+        _error("Can't find alsa device");
+        audioLayerMutexUnlock();
+        return ;
+    }
+
+    bool wasStarted = _audiodriver->isStarted();
+
+    // Recreate audio driver with new settings
+    delete _audiodriver;
+    _audiodriver = new AlsaLayer;
+    if (wasStarted)
+        _audiodriver->startStream();
 
     audioLayerMutexUnlock();
 }
@@ -2073,22 +2084,28 @@ void ManagerImpl::setAudioDevice (const int index, int streamType)
         return ;
     }
 
+    bool wasStarted = _audiodriver->isStarted();
+
     switch (streamType) {
         case SFL_PCM_PLAYBACK:
-        	alsaLayer->setIndexOut(index);
             audioPreference.setCardout (index);
             break;
         case SFL_PCM_CAPTURE:
-        	alsaLayer->setIndexIn(index);
             audioPreference.setCardin (index);
             break;
         case SFL_PCM_RINGTONE:
-        	alsaLayer->setIndexRing(index);
             audioPreference.setCardring (index);
             break;
         default:
             break;
     }
+
+    // Recreate audio driver with new settings
+    delete _audiodriver;
+    _audiodriver = new AlsaLayer;
+
+    if (wasStarted)
+        _audiodriver->startStream();
 
     audioLayerMutexUnlock();
 }

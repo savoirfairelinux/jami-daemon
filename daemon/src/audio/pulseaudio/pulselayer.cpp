@@ -310,21 +310,14 @@ void PulseLayer::context_state_callback (pa_context* c, void* user_data)
 
 void PulseLayer::updateSinkList (void)
 {
-    _debug ("Audio: Update sink list");
-
     getSinkList()->clear();
-
     pa_context_get_sink_info_list (context_, sink_input_info_callback,  this);
 }
 
 void PulseLayer::updateSourceList (void)
 {
-    _debug ("Audio: Update source list");
-
     getSourceList()->clear();
-
     pa_context_get_source_info_list (context_, source_input_info_callback, this);
-
 }
 
 bool PulseLayer::inSinkList (const std::string &deviceName) const
@@ -341,22 +334,15 @@ bool PulseLayer::inSourceList (const std::string &deviceName) const
 
 void PulseLayer::createStreams (pa_context* c)
 {
-    _info ("Audio: Create streams");
-
-    playback_ = new AudioStream (c, mainloop_, PLAYBACK_STREAM_NAME, PLAYBACK_STREAM, audioSampleRate_);
-
     std::string playbackDevice(audioPref.getDevicePlayback());
     std::string recordDevice(audioPref.getDeviceRecord());
     std::string ringtoneDevice(audioPref.getDeviceRingtone());
 
-    _debug ("Audio: Device for playback: %s", playbackDevice.c_str());
-    _debug ("Audio: Device for record: %s", recordDevice.c_str());
-    _debug ("Audio: Device for ringtone: %s", ringtoneDevice.c_str());
+    _debug ("PulseAudio: Devices: playback %s , record %s , ringtone %s",
+    		playbackDevice.c_str(), recordDevice.c_str(), ringtoneDevice.c_str());
 
-    if (inSinkList (playbackDevice))
-        playback_->connectStream (&playbackDevice);
-    else
-        playback_->connectStream (NULL);
+    playback_ = new AudioStream (c, mainloop_, PLAYBACK_STREAM_NAME, PLAYBACK_STREAM, audioSampleRate_);
+	playback_->connectStream(inSinkList(playbackDevice) ? &playbackDevice : NULL);
 
     pa_stream_set_write_callback (playback_->pulseStream(), playback_callback, this);
     pa_stream_set_overflow_callback (playback_->pulseStream(), playback_overflow_callback, this);
@@ -365,22 +351,14 @@ void PulseLayer::createStreams (pa_context* c)
     pa_stream_set_latency_update_callback (playback_->pulseStream(), latency_update_callback, this);
 
     record_ = new AudioStream (c, mainloop_, CAPTURE_STREAM_NAME, CAPTURE_STREAM, audioSampleRate_);
-
-    if (inSourceList (recordDevice))
-        record_->connectStream (&recordDevice);
-    else
-        record_->connectStream (NULL);
+	record_->connectStream (inSourceList(recordDevice) ? &recordDevice : NULL);
 
     pa_stream_set_read_callback (record_->pulseStream() , capture_callback, this);
     pa_stream_set_moved_callback (record_->pulseStream(), stream_moved_callback, this);
     pa_stream_set_latency_update_callback (record_->pulseStream(), latency_update_callback, this);
 
     ringtone_ = new AudioStream (c, mainloop_, RINGTONE_STREAM_NAME, RINGTONE_STREAM, audioSampleRate_);
-
-    if (inSourceList (ringtoneDevice))
-        ringtone_->connectStream (&ringtoneDevice);
-    else
-        ringtone_->connectStream (NULL);
+	ringtone_->connectStream(inSourceList(ringtoneDevice) ? &ringtoneDevice : NULL);
 
     pa_stream_set_write_callback (ringtone_->pulseStream(), ringtone_callback, this);
     pa_stream_set_moved_callback (ringtone_->pulseStream(), stream_moved_callback, this);
@@ -394,42 +372,12 @@ void PulseLayer::createStreams (pa_context* c)
 
 void PulseLayer::disconnectAudioStream (void)
 {
-    _info ("Audio: Disconnect audio stream");
-
-    closePlaybackStream();
-    closeCaptureStream();
-}
-
-
-void PulseLayer::closeCaptureStream (void)
-{
-    if (record_) {
-
-        if (record_->pulseStream()) {
-            const char *name = pa_stream_get_device_name (record_->pulseStream());
-
-            if (name && strlen (name)) {
-                _debug ("Audio: record device to be stored in config: %s", name);
-                audioPref.setDeviceRecord (name);
-            }
-        }
-
-        delete record_;
-        record_ = NULL;
-    }
-}
-
-
-void PulseLayer::closePlaybackStream (void)
-{
     if (playback_) {
         if (playback_->pulseStream()) {
             const char *name = pa_stream_get_device_name (playback_->pulseStream());
 
-            if (name && strlen (name)) {
-                _debug ("Audio: playback device to be stored in config: %s", name);
+            if (name && *name)
                 audioPref.setDevicePlayback (name);
-            }
         }
 
         delete playback_;
@@ -437,20 +385,27 @@ void PulseLayer::closePlaybackStream (void)
     }
 
     if (ringtone_) {
-        if (ringtone_->pulseStream()) {
-            const char *name = pa_stream_get_device_name (ringtone_->pulseStream());
+		if (ringtone_->pulseStream()) {
+			const char *name = pa_stream_get_device_name (ringtone_->pulseStream());
+			if (name && *name)
+				audioPref.setDeviceRingtone (name);
+		}
 
-            if (name && strlen (name)) {
-                _debug ("Audio: ringtone device to be stored in config: %s", name);
-                audioPref.setDeviceRingtone (name);
-            }
-        }
+		delete ringtone_;
+		ringtone_ = NULL;
+    }
 
-        delete ringtone_;
-        ringtone_ = NULL;
+    if (record_) {
+		if (record_->pulseStream()) {
+			const char *name = pa_stream_get_device_name (record_->pulseStream());
+			if (name && *name)
+				audioPref.setDeviceRecord (name);
+		}
+
+		delete record_;
+		record_ = NULL;
     }
 }
-
 
 void PulseLayer::startStream (void)
 {

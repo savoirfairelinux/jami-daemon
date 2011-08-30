@@ -104,12 +104,20 @@ AlsaLayer::~AlsaLayer (void)
     closePlaybackStream();
 }
 
-void AlsaLayer::setPlugin(const std::string &plugin)
+bool AlsaLayer::openDevice(snd_pcm_t **pcm, const std::string &dev, snd_pcm_stream_t stream)
 {
-    audioPlugin_ = plugin;
-	delete audioThread_;
-	audioThread_ = NULL;
-	// FIXME : restart audio thread
+	int err = snd_pcm_open(pcm, dev.c_str(),stream, 0);
+    if (err < 0) {
+        _error("Alsa: couldn't open device %s : %s",  dev.c_str(), snd_strerror(err));
+        return false;
+    }
+
+	if (!alsa_set_params(*pcm)) {
+		snd_pcm_close(*pcm);
+		return false;
+	}
+
+	return true;
 }
 
 void
@@ -125,13 +133,13 @@ AlsaLayer::startStream (void)
     std::string pcmc;
 
     if (audioPlugin_ == PCM_DMIX_DSNOOP) {
-        pcmp = buildDeviceTopo (PCM_DMIX, indexOut_, 0);
-        pcmr = buildDeviceTopo (PCM_DMIX, indexRing_, 0);
-        pcmc = buildDeviceTopo (PCM_DSNOOP, indexIn_, 0);
+        pcmp = buildDeviceTopo (PCM_DMIX, indexOut_);
+        pcmr = buildDeviceTopo (PCM_DMIX, indexRing_);
+        pcmc = buildDeviceTopo (PCM_DSNOOP, indexIn_);
     } else {
-        pcmp = buildDeviceTopo (audioPlugin_, indexOut_, 0);
-        pcmr = buildDeviceTopo (audioPlugin_, indexRing_, 0);
-        pcmc = buildDeviceTopo (audioPlugin_, indexIn_, 0);
+        pcmp = buildDeviceTopo (audioPlugin_, indexOut_);
+        pcmr = buildDeviceTopo (audioPlugin_, indexRing_);
+        pcmc = buildDeviceTopo (audioPlugin_, indexIn_);
     }
 
     _debug ("pcmp: %s, index %d", pcmp.c_str(), indexOut_);
@@ -139,54 +147,22 @@ AlsaLayer::startStream (void)
     _debug ("pcmc: %s, index %d", pcmc.c_str(), indexIn_);
 
     if (not is_capture_open_) {
-        _debug ("Audio: Open capture device");
-
-        if (snd_pcm_open (&captureHandle_,  pcmc.c_str(),  SND_PCM_STREAM_CAPTURE, 0) < 0) {
-            _warn ("Audio: Error: Opening capture device %s",  pcmc.c_str());
-
+    	is_capture_open_ = openDevice(&captureHandle_, pcmc, SND_PCM_STREAM_CAPTURE);
+    	if (not is_capture_open_) {
             Manager::instance().getDbusManager()->getConfigurationManager()->errorAlert(ALSA_CAPTURE_DEVICE);
-            is_capture_open_ = false;
-        }
-
-        if (!alsa_set_params (captureHandle_, 0)) {
-            _warn ("Audio: Error: Capture failed");
-            snd_pcm_close (captureHandle_);
-            is_capture_open_ = false;
-        }
-
-        is_capture_open_ = true;
+    	}
     }
 
     if (not is_playback_open_) {
-
-        _debug ("Audio: Open playback device (and ringtone)");
-
-        int err;
-        if ((err = snd_pcm_open (&playbackHandle_, pcmp.c_str(), SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
-            _warn ("Audio: Error while opening playback device %s",  pcmp.c_str());
+    	is_playback_open_ = openDevice(&playbackHandle_, pcmp, SND_PCM_STREAM_PLAYBACK);
+    	if (not is_playback_open_)
             Manager::instance().getDbusManager()->getConfigurationManager()->errorAlert(ALSA_PLAYBACK_DEVICE);
-            is_playback_open_ = false;
-        }
 
-        if (!alsa_set_params (playbackHandle_, 1)) {
-            _warn ("Audio: Error: Playback failed");
-            snd_pcm_close (playbackHandle_);
-            is_playback_open_ = false;
-        }
-
-        if (getIndexOut() != getIndexRing()) {
-
-            if ((err = snd_pcm_open (&ringtoneHandle_, pcmr.c_str(), SND_PCM_STREAM_PLAYBACK, 0)) < 0)
-                _warn ("Audio: Error: Opening ringtone device %s", pcmr.c_str());
-
-            if (!alsa_set_params (ringtoneHandle_, 1)) {
-                _warn ("Audio: Error: Ringtone failed");
-                snd_pcm_close (ringtoneHandle_);
-            }
-        }
-
-        is_playback_open_ = true;
+    	if (getIndexOut() != getIndexRing())
+    		if (!openDevice(&ringtoneHandle_, pcmr, SND_PCM_STREAM_PLAYBACK))
+    			Manager::instance().getDbusManager()->getConfigurationManager()->errorAlert(ALSA_PLAYBACK_DEVICE);
     }
+
     prepareCaptureStream ();
     preparePlaybackStream ();
 
@@ -197,13 +173,8 @@ AlsaLayer::startStream (void)
     flushUrgent();
 
     if (audioThread_ == NULL) {
-        try {
-            _debug ("Audio: Start Audio Thread");
-            audioThread_ = new AlsaThread (this);
-            audioThread_->start();
-        } catch (...) {
-            _debug ("Fail to start audio thread");
-        }
+		audioThread_ = new AlsaThread (this);
+		audioThread_->start();
     }
 
     isStarted_ = true;
@@ -248,32 +219,6 @@ void AlsaLayer::stopCaptureStream (void)
             is_capture_prepared_ = false;
         }
     }
-}
-
-void AlsaLayer::setIndexRing(int index)
-{
-	indexRing_ = index;
-	delete audioThread_;
-	audioThread_ = NULL;
-}
-
-
-void AlsaLayer::setIndexOut(int index)
-{
-	indexOut_ = index;
-	if (is_playback_open_)
-		closePlaybackStream ();
-	delete audioThread_;
-	audioThread_ = NULL;
-}
-
-void AlsaLayer::setIndexIn(int index)
-{
-	indexIn_ = index;
-	if (is_capture_open_)
-		closeCaptureStream ();
-	delete audioThread_;
-	audioThread_ = NULL;
 }
 
 void AlsaLayer::closeCaptureStream (void)
@@ -389,7 +334,7 @@ void AlsaLayer::preparePlaybackStream (void)
     }
 }
 
-bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle, int type)
+bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle)
 {
     snd_pcm_hw_params_t *hwparams = NULL;
     snd_pcm_sw_params_t *swparams = NULL;
@@ -428,13 +373,13 @@ bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle, int type)
     unsigned int exact_ivalue = audioSampleRate_;
 
     if ((err = snd_pcm_hw_params_set_rate_near (pcm_handle, hwparams, &exact_ivalue, &dir) < 0)) {
-        _debug ("Audio: Error: Cannot set sample rate (%s)", snd_strerror (err));
+        _error("Alsa: Cannot set sample rate (%s)", snd_strerror (err));
         return false;
     } else
-        _debug ("Audio: Set audio rate to %d", audioSampleRate_);
+        _debug ("Alsa: Set audio rate to %d", audioSampleRate_);
 
     if (dir != 0) {
-        _debug ("Audio: Error: (%i) The chosen rate %d Hz is not supported by your hardware.Using %d Hz instead. ", type , audioSampleRate_, exact_ivalue);
+        _error("Alsa: The chosen rate %d Hz is not supported by your hardware.Using %d Hz instead. ", audioSampleRate_, exact_ivalue);
         //audioSampleRate_ = exact_ivalue;
         // FIXME
     }
@@ -456,7 +401,7 @@ bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle, int type)
     }
 
     if (dir != 0)
-        _debug ("Audio: Warning: (%i) The chosen period size %lu bytes is not supported by your hardware.Using %lu instead. ", type, periodsize, exact_lvalue);
+        _warn("Alsa: The chosen period size %lu bytes is not supported by your hardware.Using %lu instead. ", periodsize, exact_lvalue);
 
     periodSize_ = exact_lvalue;
     /* Set the number of fragments */
@@ -619,36 +564,22 @@ AlsaLayer::handle_xrun_playback (snd_pcm_t *handle)
 }
 
 std::string
-AlsaLayer::buildDeviceTopo (const std::string &plugin, int card, int subdevice)
+AlsaLayer::buildDeviceTopo (const std::string &plugin, int card)
 {
-    std::stringstream ss, ss1;
+    std::stringstream ss;
     std::string pcm(plugin);
 
     if (pcm == PCM_DEFAULT)
         return pcm;
 
-    ss << card;
+    ss << ":" << card;
 
-    pcm.append (":");
-
-    pcm.append (ss.str());
-
-    if (subdevice != 0) {
-        pcm.append (",");
-        ss1 << subdevice;
-        pcm.append (ss1.str());
-    }
-
-    _debug ("Audio: Device topo: %s", pcm.c_str());
-
-    return pcm;
+    return pcm + ss.str();
 }
 
 std::vector<std::string>
 AlsaLayer::getSoundCardsInfo (int stream)
 {
-    _debug ("Audio: Get sound cards info: ");
-
     snd_ctl_t* handle;
     snd_ctl_card_info_t *info;
     snd_pcm_info_t* pcminfo;
@@ -656,7 +587,6 @@ AlsaLayer::getSoundCardsInfo (int stream)
     snd_pcm_info_alloca (&pcminfo);
 
     int numCard = -1 ;
-    std::string description;
 
     std::vector<std::string> cards_id;
     if (snd_card_next (&numCard) < 0 || numCard < 0)
@@ -679,7 +609,7 @@ AlsaLayer::getSoundCardsInfo (int stream)
                                 numCard,
                                 snd_ctl_card_info_get_id (info),
                                 snd_ctl_card_info_get_name (info));
-                    description = snd_ctl_card_info_get_name (info);
+                    std::string description = snd_ctl_card_info_get_name (info);
                     description.append (" - ");
                     description.append (snd_pcm_info_get_name (pcminfo));
                     cards_id.push_back (description);

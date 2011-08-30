@@ -83,10 +83,9 @@ class AlsaLayer : public AudioLayer
          * Concatenate two strings. Used to build a valid pcm device name.
          * @param plugin the alsa PCM name
          * @param card the sound card number
-         * @param subdevice the subdevice number
          * @return std::string the concatenated string
          */
-        std::string buildDeviceTopo (const std::string &plugin, int card, int subdevice);
+        std::string buildDeviceTopo (const std::string &plugin, int card);
 
         /**
          * Scan the sound card available on the system
@@ -135,7 +134,6 @@ class AlsaLayer : public AudioLayer
         int getIndexIn() const {
             return indexIn_;
         }
-        void setIndexIn(int);
 
         /**
          * Get the index of the audio card for playback
@@ -145,7 +143,6 @@ class AlsaLayer : public AudioLayer
         int getIndexOut() const {
             return indexOut_;
         }
-        void setIndexOut(int);
 
         /**
 		 * Get the index of the audio card for ringtone (could be differnet from playback)
@@ -155,12 +152,11 @@ class AlsaLayer : public AudioLayer
         int getIndexRing() const {
             return indexRing_;
         }
-        void setIndexRing(int);
-
-        void setPlugin(const std::string &plugin);
 
     private:
 
+
+        bool openDevice(snd_pcm_t **pcm, const std::string &dev, snd_pcm_stream_t stream);
 
         /**
          * Number of audio cards on which capture stream has been opened
@@ -201,7 +197,7 @@ class AlsaLayer : public AudioLayer
         void startPlaybackStream (void);
         void preparePlaybackStream (void);
 
-        bool alsa_set_params (snd_pcm_t *pcm_handle, int type);
+        bool alsa_set_params (snd_pcm_t *pcm_handle);
 
         /**
          * Copy a data buffer in the internal ring buffer

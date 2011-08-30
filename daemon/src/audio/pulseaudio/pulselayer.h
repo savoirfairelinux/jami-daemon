@@ -166,12 +166,6 @@ class PulseLayer : public AudioLayer
         // Assignment Operator
         PulseLayer& operator= (const PulseLayer& rh);
 
-
-        /**
-         * Drop the pending frames and close the capture device
-         */
-        void closeCaptureStream (void);
-
         /**
          * Write data from the ring buffer to the harware and read data from the hardware
          */
@@ -184,11 +178,6 @@ class PulseLayer : public AudioLayer
          * @param c	The pulseaudio context
          */
         void createStreams (pa_context* c);
-
-        /**
-         * Drop the pending frames and close the playback device
-         */
-        void closePlaybackStream (void);
 
         /**
          * Close the connection with the local pulseaudio server

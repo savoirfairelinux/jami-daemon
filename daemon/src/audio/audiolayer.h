@@ -142,19 +142,9 @@ class AudioLayer
         void notifyincomingCall (void);
 
     protected:
-
-        /**
-         * Drop the pending frames and close the capture device
-         */
-        virtual void closeCaptureStream (void) = 0;
-
-        /**
-         * Drop the pending frames and close the playback device
-         */
-        virtual void closePlaybackStream (void) = 0;
  
         /**
-	 * Wether or not the audio layer stream is started
+         * Wether or not the audio layer stream is started
          */
         bool isStarted_;
 
