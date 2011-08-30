@@ -28,43 +28,43 @@
  *  as that of the covered work.
  */
 
-#ifndef __VIDEO_PREVIEW_H__
-#define __VIDEO_PREVIEW_H__
+#ifndef __VIDEO_RENDERER_H__
+#define __VIDEO_RENDERER_H__
 
 #include <glib-object.h>
 #include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
-#define VIDEO_PREVIEW_TYPE              (video_preview_get_type())
-#define VIDEO_PREVIEW(obj)              (G_TYPE_CHECK_INSTANCE_CAST((obj), VIDEO_PREVIEW_TYPE, VideoPreview))
-#define VIDEO_PREVIEW_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST((klass), VIDEO_PREVIEW_TYPE, VideoPreviewClass))
-#define IS_VIDEO_PREVIEW(obj)           (G_TYPE_CHECK_INSTANCE_TYPE((obj), VIDEO_PREVIEW_TYPE))
-#define IS_VIDEO_PREVIEW_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE((klass), VIDEO_PREVIEW_TYPE))
-#define VIDEO_PREVIEW_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS((obj), VIDEO_PREVIEW_TYPE, VideoPreviewClass))
-#define VIDEO_PREVIEW_CAST(obj)         ((VideoPreview*)(obj))
-#define VIDEO_PREVIEW_CLASS_CAST(klass) ((VideoPreviewClass*)(klass))
+#define VIDEO_RENDERER_TYPE              (video_renderer_get_type())
+#define VIDEO_RENDERER(obj)              (G_TYPE_CHECK_INSTANCE_CAST((obj), VIDEO_RENDERER_TYPE, VideoRenderer))
+#define VIDEO_RENDERER_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST((klass), VIDEO_RENDERER_TYPE, VideoRendererClass))
+#define IS_VIDEO_RENDERER(obj)           (G_TYPE_CHECK_INSTANCE_TYPE((obj), VIDEO_RENDERER_TYPE))
+#define IS_VIDEO_RENDERER_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE((klass), VIDEO_RENDERER_TYPE))
+#define VIDEO_RENDERER_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS((obj), VIDEO_RENDERER_TYPE, VideoRendererClass))
+#define VIDEO_RENDERER_CAST(obj)         ((VideoRenderer*)(obj))
+#define VIDEO_RENDERER_CLASS_CAST(klass) ((VideoRendererClass*)(klass))
 
-typedef struct _VideoPreview      VideoPreview;
-typedef struct _VideoPreviewClass VideoPreviewClass;
+typedef struct _VideoRenderer      VideoRenderer;
+typedef struct _VideoRendererClass VideoRendererClass;
 
-typedef struct _VideoPreviewPrivate VideoPreviewPrivate;
+typedef struct _VideoRendererPrivate VideoRendererPrivate;
 
-struct _VideoPreview {
+struct _VideoRenderer {
     GObject parent;
     /* Private */
-    VideoPreviewPrivate *priv;
+    VideoRendererPrivate *priv;
 };
 
-struct _VideoPreviewClass {
+struct _VideoRendererClass {
     GObjectClass parent_class;
 };
 
 /* Public interface */
-VideoPreview *video_preview_new(GtkWidget *drawarea, int width, int height, const char *format, int shmkey, int semkey, int vbsize);
-int video_preview_run(VideoPreview *preview);
-void video_preview_stop(VideoPreview *preview);
+VideoRenderer *video_renderer_new(GtkWidget *drawarea, int width, int height, const char *format, int shmkey, int semkey, int vbsize);
+int video_renderer_run(VideoRenderer *preview);
+void video_renderer_stop(VideoRenderer *preview);
 
 G_END_DECLS
 
-#endif // __VIDEO_PREVIEW_H__
+#endif // __VIDEO_RENDERER_H__

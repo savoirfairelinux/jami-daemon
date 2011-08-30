@@ -34,7 +34,7 @@
 #include "utils.h"
 #include "eel-gconf-extensions.h"
 #include "dbus.h"
-#include "video/video_preview.h"
+#include "video/video_renderer.h"
 #include "actions.h"
 #include "codeclist.h"
 
@@ -56,7 +56,7 @@ static GtkWidget *v4l2_nodev;
 
 static GtkWidget *receivingVideoWindow;
 static GtkWidget *receivingVideoArea;
-static VideoPreview *video_renderer = NULL;
+static VideoRenderer *video_renderer = NULL;
 
 static GtkWidget *preview_button = NULL;
 
@@ -65,7 +65,7 @@ static int using_clutter;
 static int drawWidth  = 352; // FIXME: should come from dbus signals
 static int drawHeight = 288;
 static const char *drawFormat;
-static VideoPreview *preview = NULL;
+static VideoRenderer *preview = NULL;
 
 static GtkWidget *codecTreeView;		// View used instead of store to get access to selection
 static GtkWidget *codecMoveUpButton;
@@ -141,9 +141,9 @@ video_started_cb(DBusGProxy *proxy, gint OUT_shmId, gint OUT_semId, gint OUT_vid
     }
 
     DEBUG("Preview started shm:%d sem:%d size:%d", OUT_shmId, OUT_semId, OUT_videoBufferSize);
-    preview = video_preview_new(drawarea, drawWidth, drawHeight, drawFormat, OUT_shmId, OUT_semId, OUT_videoBufferSize);
+    preview = video_renderer_new(drawarea, drawWidth, drawHeight, drawFormat, OUT_shmId, OUT_semId, OUT_videoBufferSize);
     g_signal_connect (preview, "notify::running", G_CALLBACK (preview_is_running_cb), preview_button);
-    if (video_preview_run(preview)) {
+    if (video_renderer_run(preview)) {
         ERROR("Video preview run returned an error, unreffing\n");
         g_object_unref(preview);
     }
@@ -163,7 +163,8 @@ preview_button_clicked(GtkButton *button, gpointer data UNUSED)
     else { /* user clicked stop */
         if (!preview) /* preview was not created yet on the server */
             return ;
-        video_preview_stop(preview);
+        video_renderer_stop(preview);
+	dbus_stop_video_preview();
         preview = NULL;
     }
 }
@@ -703,9 +704,9 @@ void receiving_video_event_cb(DBusGProxy *proxy, gint shmKey, gint semKey,
     DEBUG("Video started for shm:%d sem:%d bufferSz:%d width:%d height:%d",
            shmKey, semKey, videoBufferSize, destWidth, destHeight);
 
-    video_renderer = video_preview_new(receivingVideoArea, destWidth, destHeight, drawFormat, shmKey, semKey, videoBufferSize);
+    video_renderer = video_renderer_new(receivingVideoArea, destWidth, destHeight, drawFormat, shmKey, semKey, videoBufferSize);
     g_assert(video_renderer);
-    if (video_preview_run(video_renderer)) {
+    if (video_renderer_run(video_renderer)) {
         g_object_unref(video_renderer);
         video_renderer = NULL;
         DEBUG("Could not run video renderer");
@@ -821,8 +822,10 @@ on_drawarea_unrealize(GtkWidget *drawarea, gpointer data)
     if (preview) {
         gboolean running = FALSE;
         g_object_get(preview, "running", &running, NULL);
-        if (running)
-            video_preview_stop(preview);
+        if (running) {
+            video_renderer_stop(preview);
+	    dbus_stop_video_preview();
+	}
     }
 
     return FALSE; // call other handlers

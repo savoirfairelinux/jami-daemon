@@ -2,7 +2,7 @@ include ../../globals.mak
 
 noinst_LTLIBRARIES = libvideo.la
 
-libvideo_la_SOURCES = video_preview.c
+libvideo_la_SOURCES = video_renderer.c
 
 libvideo_la_LDFLAGS = @CLUTTER_LDFLAGS@ @CLUTTERGTK_LDFLAGS@
 

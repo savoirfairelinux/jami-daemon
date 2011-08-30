@@ -28,7 +28,7 @@
  *  as that of the covered work.
  */
 
-#include "video_preview.h"
+#include "video_renderer.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -47,12 +47,12 @@
 
 #include "dbus.h"
 
-#define VIDEO_PREVIEW_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), \
-            VIDEO_PREVIEW_TYPE, VideoPreviewPrivate))
+#define VIDEO_RENDERER_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), \
+            VIDEO_RENDERER_TYPE, VideoRendererPrivate))
 
-/* This macro will implement the video_preview_get_type function
+/* This macro will implement the video_renderer_get_type function
    and define a parent class pointer accessible from the whole .c file */
-G_DEFINE_TYPE (VideoPreview, video_preview, G_TYPE_OBJECT);
+G_DEFINE_TYPE (VideoRenderer, video_renderer, G_TYPE_OBJECT);
 
 enum
 {
@@ -70,14 +70,14 @@ enum
 
 static GParamSpec *properties[PROP_LAST];
 
-static void video_preview_finalize (GObject *gobject);
-static void video_preview_get_property (GObject *object, guint prop_id,
+static void video_renderer_finalize (GObject *gobject);
+static void video_renderer_get_property (GObject *object, guint prop_id,
                             GValue *value, GParamSpec *pspec);
-static void video_preview_set_property (GObject *object, guint prop_id,
+static void video_renderer_set_property (GObject *object, guint prop_id,
                             const GValue *value, GParamSpec *pspec);
 
 /* Our private member structure */
-struct _VideoPreviewPrivate {
+struct _VideoRendererPrivate {
     guint width;
     guint height;
     gchar *format;
@@ -173,16 +173,16 @@ get_sem_set(int semKey)
 }
 
 static void
-video_preview_class_init (VideoPreviewClass *klass) 
+video_renderer_class_init (VideoRendererClass *klass)
 {
     int i;
-    GObjectClass *gobject_class;                                                  
-    gobject_class = G_OBJECT_CLASS (klass); 
+    GObjectClass *gobject_class;
+    gobject_class = G_OBJECT_CLASS (klass);
 
-    g_type_class_add_private (klass, sizeof (VideoPreviewPrivate));
-    gobject_class->finalize = video_preview_finalize;       
-    gobject_class->get_property = video_preview_get_property;
-    gobject_class->set_property = video_preview_set_property;
+    g_type_class_add_private (klass, sizeof (VideoRendererPrivate));
+    gobject_class->finalize = video_renderer_finalize;
+    gobject_class->get_property = video_renderer_get_property;
+    gobject_class->set_property = video_renderer_set_property;
 
     properties[PROP_RUNNING] = g_param_spec_boolean ("running", "Running",
                                                      "True if preview is running",
@@ -218,13 +218,13 @@ video_preview_class_init (VideoPreviewClass *klass)
 }
 
 static void
-video_preview_get_property (GObject *object, guint prop_id,
+video_renderer_get_property (GObject *object, guint prop_id,
                             GValue *value, GParamSpec *pspec)
 {
-    VideoPreview *preview;
-    VideoPreviewPrivate *priv;
+    VideoRenderer *preview;
+    VideoRendererPrivate *priv;
 
-    preview = VIDEO_PREVIEW(object);
+    preview = VIDEO_RENDERER(object);
     priv = preview->priv;
 
     switch (prop_id)
@@ -261,13 +261,13 @@ video_preview_get_property (GObject *object, guint prop_id,
 }
 
 static void
-video_preview_set_property (GObject *object, guint prop_id,
+video_renderer_set_property (GObject *object, guint prop_id,
                             const GValue *value, GParamSpec *pspec)
 {
-    VideoPreview *preview;
-    VideoPreviewPrivate *priv;
+    VideoRenderer *preview;
+    VideoRendererPrivate *priv;
 
-    preview = VIDEO_PREVIEW(object);
+    preview = VIDEO_RENDERER(object);
     priv = preview->priv;
 
     switch (prop_id)
@@ -302,20 +302,20 @@ video_preview_set_property (GObject *object, guint prop_id,
 
 
 static void
-video_preview_init (VideoPreview *self)
+video_renderer_init (VideoRenderer *self)
 {
-    self->priv = VIDEO_PREVIEW_GET_PRIVATE (self);
+    self->priv = VIDEO_RENDERER_GET_PRIVATE (self);
 }
 
 static void
-video_preview_finalize (GObject *obj)
+video_renderer_finalize (GObject *obj)
 {
-    VideoPreview *self = VIDEO_PREVIEW (obj);
+    VideoRenderer *self = VIDEO_RENDERER (obj);
     if (self->priv->shm_buffer)
         detachShm(self->priv->shm_buffer);
 
     /* Chain up to the parent class */
-    G_OBJECT_CLASS (video_preview_parent_class)->finalize (obj);
+    G_OBJECT_CLASS (video_renderer_parent_class)->finalize (obj);
 }
 
 /*
@@ -344,7 +344,7 @@ align(int value)
 }
 
 static gboolean
-readFrameFromShm(VideoPreviewPrivate *priv)
+readFrameFromShm(VideoRendererPrivate *priv)
 {
     int width = priv->width;
     int height = priv->height;
@@ -384,7 +384,7 @@ readFrameFromShm(VideoPreviewPrivate *priv)
                 NULL);
     } else {
         if (g_strcmp0(priv->format, "bgra")) {
-            g_print("cairo render: Unknown pixel format `%s'\n", priv->format); 
+            g_print("cairo render: Unknown pixel format `%s'\n", priv->format);
             return FALSE;
         }
 
@@ -413,9 +413,9 @@ readFrameFromShm(VideoPreviewPrivate *priv)
 }
 
 void
-video_preview_stop(VideoPreview *preview)
+video_renderer_stop(VideoRenderer *preview)
 {
-    VideoPreviewPrivate *priv = VIDEO_PREVIEW_GET_PRIVATE(preview);
+    VideoRendererPrivate *priv = VIDEO_RENDERER_GET_PRIVATE(preview);
     assert(priv);
     gboolean notify_daemon = priv->is_running;
 
@@ -437,16 +437,13 @@ video_preview_stop(VideoPreview *preview)
 #endif
 
     g_object_unref(G_OBJECT(preview));
-
-    if (notify_daemon)
-        dbus_stop_video_preview();
 }
 
 static gboolean
 updateTexture(gpointer data)
 {
-    VideoPreview *preview = (VideoPreview *) data;
-    VideoPreviewPrivate *priv = VIDEO_PREVIEW_GET_PRIVATE(preview);
+    VideoRenderer *preview = (VideoRenderer *) data;
+    VideoRendererPrivate *priv = VIDEO_RENDERER_GET_PRIVATE(preview);
 
     if (!priv->is_running) {
         /* preview was stopped already */
@@ -458,24 +455,24 @@ updateTexture(gpointer data)
 
     if (!ret) {
         priv->is_running = FALSE; // no need to notify daemon
-        video_preview_stop(data);
+        video_renderer_stop(data);
         g_object_unref(G_OBJECT(data));
     }
 
     return ret;
 }
 
-/**                                                                             
- * video_preview_new:                                                         
- *                                                                              
- * Create a new #VideoPreview instance.                                        
- */                                                                             
-VideoPreview *
-video_preview_new (GtkWidget *drawarea, int width, int height, const char *format, int shmkey, int semkey, int vbsize)
+/**
+ * video_renderer_new:
+ *
+ * Create a new #VideoRenderer instance.
+ */
+VideoRenderer *
+video_renderer_new (GtkWidget *drawarea, int width, int height, const char *format, int shmkey, int semkey, int vbsize)
 {
-    VideoPreview *result;
+    VideoRenderer *result;
 
-    result = g_object_new (VIDEO_PREVIEW_TYPE,
+    result = g_object_new (VIDEO_RENDERER_TYPE,
           "drawarea", (gpointer)drawarea,
           "width", (gint)width,
           "height", (gint)height,
@@ -488,9 +485,9 @@ video_preview_new (GtkWidget *drawarea, int width, int height, const char *forma
 }
 
 int
-video_preview_run(VideoPreview *preview)
+video_renderer_run(VideoRenderer *preview)
 {
-    VideoPreviewPrivate * priv = VIDEO_PREVIEW_GET_PRIVATE(preview);
+    VideoRendererPrivate * priv = VIDEO_RENDERER_GET_PRIVATE(preview);
     priv->shm_buffer = NULL;
 
     int shm_id = getShm(priv->videobuffersize, priv->shm_key);
