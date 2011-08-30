@@ -142,10 +142,6 @@ AlsaLayer::startStream (void)
         pcmc = buildDeviceTopo (audioPlugin_, indexIn_);
     }
 
-    _debug ("pcmp: %s, index %d", pcmp.c_str(), indexOut_);
-    _debug ("pcmr: %s, index %d", pcmr.c_str(), indexRing_);
-    _debug ("pcmc: %s, index %d", pcmc.c_str(), indexIn_);
-
     if (not is_capture_open_) {
     	is_capture_open_ = openDevice(&captureHandle_, pcmc, SND_PCM_STREAM_CAPTURE);
     	if (not is_capture_open_) {
@@ -183,23 +179,21 @@ AlsaLayer::startStream (void)
 void
 AlsaLayer::stopStream (void)
 {
-    _debug ("Audio: Stop stream");
-
     isStarted_ = false;
 
 	delete audioThread_;
 	audioThread_ = NULL;
 
-    closeCaptureStream ();
-    closePlaybackStream ();
+    closeCaptureStream();
+    closePlaybackStream();
 
     playbackHandle_ = NULL;
     captureHandle_ = NULL;
     ringtoneHandle_ = NULL;
 
     /* Flush the ring buffers */
-    flushUrgent ();
-    flushMain ();
+    flushUrgent();
+    flushMain();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -209,11 +203,9 @@ AlsaLayer::stopStream (void)
 void AlsaLayer::stopCaptureStream (void)
 {
     if (captureHandle_) {
-        _debug ("Audio: Stop ALSA capture");
-
-        int err;
-        if ((err = snd_pcm_drop (captureHandle_)) < 0)
-            _debug ("Audio: Error: stopping ALSA capture: %s", snd_strerror (err));
+        int err = snd_pcm_drop (captureHandle_);
+        if (err < 0)
+            _error("ALSA: couldn't stop capture: %s", snd_strerror (err));
         else {
             is_capture_running_ = false;
             is_capture_prepared_ = false;
@@ -227,11 +219,9 @@ void AlsaLayer::closeCaptureStream (void)
         stopCaptureStream ();
 
     if (is_capture_open_) {
-        _debug ("Audio: Close ALSA capture");
-
-        int err;
-        if ((err = snd_pcm_close (captureHandle_)) < 0)
-            _debug ("Audio: Error: Closing ALSA capture: %s", snd_strerror (err));
+        int err = snd_pcm_close (captureHandle_);
+        if (err < 0)
+            _error("ALSA: Couldn't close capture: %s", snd_strerror (err));
         else
             is_capture_open_ = false;
     }
@@ -240,46 +230,26 @@ void AlsaLayer::closeCaptureStream (void)
 void AlsaLayer::startCaptureStream (void)
 {
     if (captureHandle_ and not is_capture_running_) {
-        _debug ("Audio: Start ALSA capture");
-
-        int err;
-        if ((err = snd_pcm_start (captureHandle_)) < 0)
-            _debug ("Error starting ALSA capture: %s",  snd_strerror (err));
+        int err = snd_pcm_start (captureHandle_);
+        if (err < 0)
+            _error("ALSA: Couldn't start capture: %s",  snd_strerror (err));
         else
             is_capture_running_ = true;
-    }
-}
-
-void AlsaLayer::prepareCaptureStream (void)
-{
-    int err;
-
-    if (is_capture_open_ and not is_capture_prepared_) {
-        _debug ("Audio: Prepare ALSA capture");
-
-        if ((err = snd_pcm_prepare (captureHandle_)) < 0)
-            _debug ("Audio: Error: preparing ALSA capture: %s", snd_strerror (err));
-        else
-            is_capture_prepared_ = true;
     }
 }
 
 void AlsaLayer::stopPlaybackStream (void)
 {
     if (ringtoneHandle_ and is_playback_running_) {
-        _debug ("Audio: Stop ALSA ringtone");
-
-        int err;
-        if ((err = snd_pcm_drop (ringtoneHandle_)) < 0)
-            _debug ("Audio: Error: Stop ALSA ringtone: %s", snd_strerror (err));
+        int err = snd_pcm_drop (ringtoneHandle_);
+        if (err < 0)
+            _error("ALSA: Couldn't stop ringtone: %s", snd_strerror (err));
     }
 
     if (playbackHandle_ and is_playback_running_) {
-        _debug ("Audio: Stop ALSA playback");
-
-        int err;
-        if ((err = snd_pcm_drop (playbackHandle_)) < 0)
-            _debug ("Audio: Error: Stopping ALSA playback: %s", snd_strerror (err));
+        int err = snd_pcm_drop (playbackHandle_);
+        if (err < 0)
+            _error("ALSA: Couldn't stop playback: %s", snd_strerror (err));
         else {
             is_playback_running_ = false;
             is_playback_prepared_ = false;
@@ -294,14 +264,16 @@ void AlsaLayer::closePlaybackStream (void)
         stopPlaybackStream();
 
     if (is_playback_open_) {
-        _debug ("Audio: Close ALSA playback");
-
         int err;
-        if (ringtoneHandle_ and (err = snd_pcm_close (ringtoneHandle_)) < 0)
-                _warn ("Audio: Error: Closing ALSA ringtone: %s", snd_strerror (err));
+        if (ringtoneHandle_) {
+        	err = snd_pcm_close (ringtoneHandle_);
+        	if (err < 0)
+        		_error("ALSA: Couldn't stop ringtone: %s", snd_strerror (err));
+        }
 
-        if ((err = snd_pcm_close (playbackHandle_)) < 0)
-            _warn ("Audio: Error: Closing ALSA playback: %s", snd_strerror (err));
+        err = snd_pcm_close (playbackHandle_);
+        if (err < 0)
+            _error("ALSA: Coulnd't close playback: %s", snd_strerror (err));
         else
             is_playback_open_ = false;
     }
@@ -311,24 +283,31 @@ void AlsaLayer::closePlaybackStream (void)
 void AlsaLayer::startPlaybackStream (void)
 {
     if (playbackHandle_ and not is_playback_running_) {
-        _debug ("Audio: Start ALSA playback");
-
-        int err;
-        if ((err = snd_pcm_start (playbackHandle_)) < 0)
-            _debug ("Audio: Error: Starting ALSA playback: %s", snd_strerror (err));
+        int err = snd_pcm_start (playbackHandle_);
+        if (err  < 0)
+            _error("ALSA: Couldn't start playback: %s", snd_strerror (err));
         else
             is_playback_running_ = true;
+    }
+}
+
+void AlsaLayer::prepareCaptureStream (void)
+{
+    if (is_capture_open_ and not is_capture_prepared_) {
+        int err = snd_pcm_prepare (captureHandle_);
+        if (err < 0)
+            _error("ALSA: Couldn't prepare capture: %s", snd_strerror (err));
+        else
+            is_capture_prepared_ = true;
     }
 }
 
 void AlsaLayer::preparePlaybackStream (void)
 {
     if (is_playback_open_ and not is_playback_prepared_) {
-        _debug ("Audio: Prepare playback stream");
-
-        int err;
-        if ((err = snd_pcm_prepare (playbackHandle_)) < 0)
-            _debug ("Audio: Preparing the device: %s", snd_strerror (err));
+        int err = snd_pcm_prepare (playbackHandle_);
+        if (err < 0)
+            _error("ALSA: Couldn't prepare playback: %s", snd_strerror (err));
         else
             is_playback_prepared_ = true;
     }
@@ -524,8 +503,6 @@ AlsaLayer::read (void* buffer, int toCopy)
 void
 AlsaLayer::handle_xrun_capture (void)
 {
-    _debug ("Audio: Handle xrun capture");
-
     snd_pcm_status_t* status;
     snd_pcm_status_alloca (&status);
 
@@ -542,8 +519,6 @@ AlsaLayer::handle_xrun_capture (void)
 void
 AlsaLayer::handle_xrun_playback (snd_pcm_t *handle)
 {
-    _debug ("Audio: Handle xrun playback");
-
     snd_pcm_status_t* status;
     snd_pcm_status_alloca (&status);
 
@@ -554,7 +529,6 @@ AlsaLayer::handle_xrun_playback (snd_pcm_t *handle)
         int state = snd_pcm_status_get_state (status);
 
         if (state  == SND_PCM_STATE_XRUN) {
-            _debug ("Audio: audio device in state SND_PCM_STATE_XRUN, restart device");
             stopPlaybackStream ();
             preparePlaybackStream ();
 
@@ -603,7 +577,8 @@ AlsaLayer::getSoundCardsInfo (int stream)
                 snd_pcm_info_set_device (pcminfo , 0);
                 snd_pcm_info_set_stream (pcminfo, (stream == SFL_PCM_CAPTURE) ? SND_PCM_STREAM_CAPTURE : SND_PCM_STREAM_PLAYBACK);
 
-                if (snd_ctl_pcm_info (handle ,pcminfo) < 0) _debug (" Cannot get info");
+                if (snd_ctl_pcm_info (handle ,pcminfo) < 0)
+					_debug (" Cannot get info");
                 else {
                     _debug ("card %i : %s [%s]",
                                 numCard,
@@ -796,7 +771,7 @@ void AlsaLayer::audioCallback (void)
     	free(in);
     	return;
     }
-    adjustVolume (in, toPutSamples, Manager::instance().getSpkrVolume());
+    adjustVolume (in, toPutSamples, spkrVolume);
 
     if (resample) {
     	int outSamples = toPutSamples * ((double) audioSampleRate_ / mainBufferSampleRate);
