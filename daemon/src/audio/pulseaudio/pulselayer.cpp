@@ -42,21 +42,21 @@ void playback_callback (pa_stream* s, size_t bytes, void* userdata)
 {
     assert (s && bytes);
     assert (bytes > 0);
-    static_cast<PulseLayer*> (userdata)->processPlaybackData();
+    static_cast<PulseLayer*> (userdata)->writeToSpeaker();
 }
 
 void capture_callback (pa_stream* s, size_t bytes, void* userdata)
 {
     assert (s && bytes);
     assert (bytes > 0);
-    static_cast<PulseLayer*> (userdata)->processCaptureData();
+    static_cast<PulseLayer*> (userdata)->readFromMic();
 }
 
 void ringtone_callback (pa_stream* s, size_t bytes, void* userdata)
 {
     assert (s && bytes);
     assert (bytes > 0);
-    static_cast<PulseLayer*> (userdata)->processRingtoneData();
+    static_cast<PulseLayer*> (userdata)->ringtoneToSpeaker();
 }
 
 void stream_moved_callback (pa_stream *s, void *userdata UNUSED)
@@ -405,72 +405,20 @@ PulseLayer::stopStream (void)
     disconnectAudioStream();
 }
 
-
-
-void PulseLayer::processPlaybackData (void)
-{
-    // Handle the data for the speakers
-    if (playback_ and playback_->pulseStream() and (pa_stream_get_state (playback_->pulseStream()) == PA_STREAM_READY)) {
-
-        // If the playback buffer is full, we don't overflow it; wait for it to have free space
-        if (pa_stream_writable_size (playback_->pulseStream()) == 0)
-            return;
-
-        writeToSpeaker();
-    }
-
-}
-
-void PulseLayer::processCaptureData (void)
-{
-    // Handle the mic
-    // We check if the stream is ready
-    if (record_ and record_->pulseStream() and pa_stream_get_state (record_->pulseStream()) == PA_STREAM_READY)
-        readFromMic();
-}
-
-void PulseLayer::processRingtoneData (void)
-{
-    // handle ringtone playback
-    if (ringtone_ and ringtone_->pulseStream() and (pa_stream_get_state (ringtone_->pulseStream()) == PA_STREAM_READY)) {
-
-        // If the playback buffer is full, we don't overflow it; wait for it to have free space
-        if (pa_stream_writable_size (ringtone_->pulseStream()) == 0)
-            return;
-
-        ringtoneToSpeaker();
-    }
-}
-
-
-void PulseLayer::processData (void)
-{
-    // Handle the data for the speakers
-    if (playback_ and playback_->pulseStream() and (pa_stream_get_state (playback_->pulseStream()) == PA_STREAM_READY)) {
-
-        // If the playback buffer is full, we don't overflow it; wait for it to have free space
-        if (pa_stream_writable_size (playback_->pulseStream()) == 0)
-            return;
-
-        writeToSpeaker();
-    }
-
-    // Handle the mic
-    // We check if the stream is ready
-    if (record_ and record_->pulseStream() and (pa_stream_get_state (record_->pulseStream()) == PA_STREAM_READY))
-        readFromMic();
-}
-
 void PulseLayer::writeToSpeaker (void)
 {
-    notifyincomingCall();
+    if (!playback_ or !playback_->isReady())
+    	return;
 
     // available bytes to be written in pulseaudio internal buffer
     int writeableSizeBytes = pa_stream_writable_size (playback_->pulseStream());
-    if (writeableSizeBytes < 0) {
+    if (writeableSizeBytes < 0)
         _error("Pulse: playback error : %s", pa_strerror (writeableSizeBytes));
+    if (writeableSizeBytes <= 0)
         return;
-    }
+
+    notifyincomingCall();
+
 
     int urgentBytes = urgentRingBuffer_.AvailForGet();
     if (urgentBytes > writeableSizeBytes)
@@ -530,7 +478,6 @@ void PulseLayer::writeToSpeaker (void)
 	SFLDataFormat *out = (SFLDataFormat*) pa_xmalloc (inBytes);
 	getMainBuffer()->getData (out, inBytes);
 
-	// test if resampling is required
 	if (resample) {
 		SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (outBytes);
 		converter_->resample (out, rsmpl_out, mainBufferSampleRate, audioSampleRate_, inSamples);
@@ -544,6 +491,9 @@ void PulseLayer::writeToSpeaker (void)
 
 void PulseLayer::readFromMic (void)
 {
+    if (!record_ or !record_->isReady())
+		return;
+
     const char *data = NULL;
     size_t r;
     SFLDataFormat *out;
@@ -581,12 +531,14 @@ end:
 
 void PulseLayer::ringtoneToSpeaker (void)
 {
-    int writableSize = pa_stream_writable_size (ringtone_->pulseStream());
+    if (!ringtone_ or !ringtone_->isReady())
+		return;
 
-    if (!ringtone_->isReady()) {
-        _error("PulseAudio: Error: Ringtone stream not in state ready");
+    int writableSize = pa_stream_writable_size (ringtone_->pulseStream());
+    if (writableSize < 0)
+        _error("Pulse: ringtone error : %s", pa_strerror (writableSize));
+    if (writableSize <= 0)
         return;
-    }
 
     SFLDataFormat *out = (SFLDataFormat *) pa_xmalloc (writableSize);
 

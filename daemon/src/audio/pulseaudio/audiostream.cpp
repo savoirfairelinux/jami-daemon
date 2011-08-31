@@ -130,5 +130,7 @@ AudioStream::stream_state_callback (pa_stream* s, void* user_data)
 
 bool AudioStream::isReady (void)
 {
+	if (!_audiostream)
+		return false;
     return pa_stream_get_state (_audiostream) == PA_STREAM_READY;
 }

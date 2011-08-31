@@ -65,6 +65,14 @@ class PulseLayer : public AudioLayer
             return &sourceList_;
         }
 
+        /**
+         * Write data from the ring buffer to the harware and read data from the hardware
+         */
+        void readFromMic (void);
+        void writeToSpeaker (void);
+        void ringtoneToSpeaker (void);
+
+
         void updateSinkList (void);
 
         void updateSourceList (void);
@@ -79,80 +87,12 @@ class PulseLayer : public AudioLayer
 
         static void context_state_callback (pa_context* c, void* user_data);
 
-        void setPlaybackVolume (int volume);
-        void setCaptureVolume (int volume);
-
-        /**
-         * Accessor
-         * @return AudioStream* The pointer on the playback AudioStream object
-         */
-        AudioStream* getPlaybackStream() const {
-            return playback_;
-        }
-
-        /**
-         * Accessor
-         * @return AudioStream* The pointer on the record AudioStream object
-         */
-        AudioStream* getRecordStream() const {
-            return record_;
-        }
-
-        /**
-         * Accessor
-         * @return AudioStream* The pointer on the ringtone AudioStream object
-         */
-        AudioStream* getRingtoneStream() const {
-            return ringtone_;
-        }
-
-        int getSpkrVolume (void) const {
-            return spkrVolume_;
-        }
-        void setSpkrVolume (int value) {
-            spkrVolume_ = value;
-        }
-
-        int getMicVolume (void) const {
-            return micVolume_;
-        }
-        void setMicVolume (int value) {
-            micVolume_ = value;
-        }
-
-        /**
-         * Handle used to write voice data to speaker
-         */
-        void processPlaybackData (void);
-
-        /**
-         * Handle used to write voice data to microphone
-         */
-        void processCaptureData (void);
-
-        /**
-         * Handle used to write audio data to speaker
-         */
-        void processRingtoneData (void);
-
-        /**
-         * Process speaker and microphone audio data
-         */
-        void processData (void);
-
     private:
         // Copy Constructor
         PulseLayer (const PulseLayer& rh);
 
         // Assignment Operator
         PulseLayer& operator= (const PulseLayer& rh);
-
-        /**
-         * Write data from the ring buffer to the harware and read data from the hardware
-         */
-        void readFromMic (void);
-        void writeToSpeaker (void);
-        void ringtoneToSpeaker (void);
 
         /**
          * Create the audio streams into the given context
@@ -183,9 +123,6 @@ class PulseLayer : public AudioLayer
          * A special stream object to handle specific playback stream for ringtone
          */
         AudioStream* ringtone_;
-
-        int spkrVolume_;
-        int micVolume_;
 
         DeviceList sinkList_;
         DeviceList sourceList_;
