@@ -79,25 +79,6 @@ class PulseLayer : public AudioLayer
 
         static void context_state_callback (pa_context* c, void* user_data);
 
-        /**
-         * Reduce volume of every audio applications connected to the same sink
-         */
-        void reducePulseAppsVolume (void);
-
-        /**
-         * Restore the volume of every audio applications connected to the same sink to PA_VOLUME_NORM
-         */
-        void restorePulseAppsVolume (void);
-
-        /**
-         * Set the volume of a sink.
-         * @param index The index of the stream
-         * @param channels	The stream's number of channels
-         * @param volume The new volume (between 0 and 100)
-         */
-        void setSinkVolume (int index, int channels, int volume);
-        void setSourceVolume (int index, int channels, int volume);
-
         void setPlaybackVolume (int volume);
         void setCaptureVolume (int volume);
 
@@ -183,11 +164,6 @@ class PulseLayer : public AudioLayer
          * Close the connection with the local pulseaudio server
          */
         void disconnectAudioStream (void);
-
-        /**
-         * Get some information about the pulseaudio server
-         */
-        void serverinfo (void);
 
         /** PulseAudio context and asynchronous loop */
         pa_context* context_;

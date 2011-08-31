@@ -2541,25 +2541,13 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
  */
 void ManagerImpl::initVolume ()
 {
-    _debug ("Initiate Volume");
     setSpkrVolume (audioPreference.getVolumespkr());
     setMicVolume (audioPreference.getVolumemic());
 }
 
 void ManagerImpl::setSpkrVolume (unsigned short spkr_vol)
 {
-    /* Set the manager sound volume */
     _spkr_volume = spkr_vol;
-
-    audioLayerMutexLock();
-
-    /* Only for PulseAudio */
-    PulseLayer *pulselayer = dynamic_cast<PulseLayer*> (_audiodriver);
-
-    if (pulselayer and pulselayer->getLayerType() == PULSEAUDIO)
-                pulselayer->setPlaybackVolume (spkr_vol);
-
-    audioLayerMutexUnlock();
 }
 
 void ManagerImpl::setMicVolume (unsigned short mic_vol)
@@ -2569,9 +2557,7 @@ void ManagerImpl::setMicVolume (unsigned short mic_vol)
 
 int ManagerImpl::getLocalIp2IpPort (void) const
 {
-    // The SIP port used for default account (IP to IP) calls=
     return preferences.getPortNum();
-
 }
 
 
