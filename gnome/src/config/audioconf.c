@@ -718,23 +718,17 @@ GtkWidget* audiocodecs_box (account_t *a)
 void
 select_audio_manager (void)
 {
-    DEBUG ("audio manager selected");
-
     if (!SHOW_ALSA_CONF && !gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (pulse))) {
         dbus_set_audio_manager (ALSA);
-        DEBUG (" display alsa conf panel");
         alsabox = alsa_box();
         gtk_container_add (GTK_CONTAINER (alsa_conf) , alsabox);
         gtk_widget_show (alsa_conf);
         gtk_widget_set_sensitive (GTK_WIDGET (alsa_conf), TRUE);
-
         gtk_action_set_sensitive (GTK_ACTION (volumeToggle), TRUE);
     } else if (SHOW_ALSA_CONF && gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (pulse))) {
         dbus_set_audio_manager (PULSEAUDIO);
-        DEBUG (" remove alsa conf panel");
         gtk_container_remove (GTK_CONTAINER (alsa_conf) , alsabox);
         gtk_widget_hide (alsa_conf);
-
         if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (volumeToggle))) {
             main_window_volume_controls (FALSE);
             eel_gconf_set_integer (SHOW_VOLUME_CONTROLS, FALSE);
@@ -742,8 +736,6 @@ select_audio_manager (void)
         }
 
         gtk_action_set_sensitive (GTK_ACTION (volumeToggle), FALSE);
-    } else {
-        DEBUG ("alsa conf panel...nothing");
     }
 }
 
