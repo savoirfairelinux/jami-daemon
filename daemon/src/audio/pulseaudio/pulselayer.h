@@ -39,17 +39,7 @@
 #include <list>
 #include <string>
 
-#define PLAYBACK_STREAM_NAME	    "SFLphone playback"
-#define CAPTURE_STREAM_NAME	    "SFLphone capture"
-#define RINGTONE_STREAM_NAME        "SFLphone ringtone"
-
-class RingBuffer;
-class ManagerImpl;
 class AudioStream;
-class DcBlocker;
-class SamplerateConverter;
-
-typedef std::list<std::string> DeviceList;
 
 class PulseLayer : public AudioLayer
 {
@@ -57,11 +47,11 @@ class PulseLayer : public AudioLayer
         PulseLayer ();
         ~PulseLayer (void);
 
-        DeviceList* getSinkList (void) {
+        std::list<std::string>* getSinkList (void) {
             return &sinkList_;
         }
 
-        DeviceList* getSourceList (void) {
+        std::list<std::string>* getSourceList (void) {
             return &sourceList_;
         }
 
@@ -124,8 +114,14 @@ class PulseLayer : public AudioLayer
          */
         AudioStream* ringtone_;
 
-        DeviceList sinkList_;
-        DeviceList sourceList_;
+        std::list<std::string> sinkList_;
+        std::list<std::string> sourceList_;
+
+        /*
+         * Buffers used to avoid doing malloc/free in the audio thread
+         */
+        SFLDataFormat *mic_buffer_;
+        size_t mic_buf_size_;
 
     public:
         friend class AudioLayerTest;

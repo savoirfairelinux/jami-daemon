@@ -197,6 +197,8 @@ PulseLayer::PulseLayer ()
     , playback_(0)
     , record_(0)
     , ringtone_(0)
+	, mic_buffer_(NULL)
+	, mic_buf_size_(0)
 {
     setenv ("PULSE_PROP_media.role", "phone", 1);
 
@@ -241,6 +243,8 @@ PulseLayer::~PulseLayer (void)
 
     if (mainloop_)
         pa_threaded_mainloop_free (mainloop_);
+
+    delete[] mic_buffer_;
 }
 
 void PulseLayer::context_state_callback (pa_context* c, void* user_data)
@@ -314,19 +318,19 @@ void PulseLayer::createStreams (pa_context* c)
     _debug ("PulseAudio: Devices: playback %s , record %s , ringtone %s",
     		playbackDevice.c_str(), recordDevice.c_str(), ringtoneDevice.c_str());
 
-    playback_ = new AudioStream (c, mainloop_, PLAYBACK_STREAM_NAME, PLAYBACK_STREAM, audioSampleRate_,
+    playback_ = new AudioStream (c, mainloop_, "SFLphone playback", PLAYBACK_STREAM, audioSampleRate_,
     		inSinkList(playbackDevice) ? &playbackDevice : NULL);
 
     pa_stream_set_write_callback (playback_->pulseStream(), playback_callback, this);
     pa_stream_set_moved_callback (playback_->pulseStream(), stream_moved_callback, this);
 
-    record_ = new AudioStream (c, mainloop_, CAPTURE_STREAM_NAME, CAPTURE_STREAM, audioSampleRate_,
+    record_ = new AudioStream (c, mainloop_, "SFLphone capture", CAPTURE_STREAM, audioSampleRate_,
     		inSourceList(recordDevice) ? &recordDevice : NULL);
 
     pa_stream_set_read_callback (record_->pulseStream() , capture_callback, this);
     pa_stream_set_moved_callback (record_->pulseStream(), stream_moved_callback, this);
 
-    ringtone_ = new AudioStream (c, mainloop_, RINGTONE_STREAM_NAME, RINGTONE_STREAM, audioSampleRate_,
+    ringtone_ = new AudioStream (c, mainloop_, "SFLphone ringtone", RINGTONE_STREAM, audioSampleRate_,
     		inSourceList(ringtoneDevice) ? &ringtoneDevice : NULL);
 
     pa_stream_set_write_callback (ringtone_->pulseStream(), ringtone_callback, this);
@@ -410,24 +414,26 @@ void PulseLayer::writeToSpeaker (void)
     if (!playback_ or !playback_->isReady())
     	return;
 
+    pa_stream *s = playback_->pulseStream();
+
     // available bytes to be written in pulseaudio internal buffer
-    int writeableSizeBytes = pa_stream_writable_size (playback_->pulseStream());
-    if (writeableSizeBytes < 0)
-        _error("Pulse: playback error : %s", pa_strerror (writeableSizeBytes));
-    if (writeableSizeBytes <= 0)
+    int writable = pa_stream_writable_size(s);
+    if (writable < 0)
+        _error("Pulse: playback error : %s", pa_strerror(writable));
+    if (writable <= 0)
         return;
+    size_t bytes = writable;
+	void *data;
 
     notifyincomingCall();
 
-
-    int urgentBytes = urgentRingBuffer_.AvailForGet();
-    if (urgentBytes > writeableSizeBytes)
-    	urgentBytes = writeableSizeBytes;
+    size_t urgentBytes = urgentRingBuffer_.AvailForGet();
+    if (urgentBytes > bytes)
+    	urgentBytes = bytes;
     if (urgentBytes) {
-    	SFLDataFormat *out = (SFLDataFormat*) pa_xmalloc (urgentBytes);
-        urgentRingBuffer_.Get (out, urgentBytes);
-        pa_stream_write (playback_->pulseStream(), out, urgentBytes, NULL, 0, PA_SEEK_RELATIVE);
-        pa_xfree (out);
+    	pa_stream_begin_write(s, &data, &urgentBytes);
+        urgentRingBuffer_.Get (data, urgentBytes);
+        pa_stream_write (s, data, urgentBytes, NULL, 0, PA_SEEK_RELATIVE);
         // Consume the regular one as well (same amount of bytes)
         getMainBuffer()->discard (urgentBytes);
         return;
@@ -436,22 +442,20 @@ void PulseLayer::writeToSpeaker (void)
     AudioLoop *toneToPlay = Manager::instance().getTelephoneTone();
     if (toneToPlay) {
 		if (playback_->isReady()) {
-			SFLDataFormat *out = (SFLDataFormat*) pa_xmalloc (writeableSizeBytes);
-			toneToPlay->getNext (out, writeableSizeBytes / sizeof (SFLDataFormat), 100);
-			pa_stream_write (playback_->pulseStream(), out, writeableSizeBytes, NULL, 0, PA_SEEK_RELATIVE);
-			pa_xfree (out);
+			pa_stream_begin_write(s, &data, &bytes);
+			toneToPlay->getNext ((SFLDataFormat*)data, bytes / sizeof (SFLDataFormat), 100);
+			pa_stream_write (s, data, bytes, NULL, 0, PA_SEEK_RELATIVE);
 		}
 		return;
     }
 
 	flushUrgent(); // flush remaining samples in _urgentRingBuffer
 
-	int availSamples = getMainBuffer()->availForGet() / sizeof(SFLDataFormat);
+	size_t availSamples = getMainBuffer()->availForGet() / sizeof(SFLDataFormat);
 	if (availSamples == 0) {
-		// play silence
-		SFLDataFormat* zeros = (SFLDataFormat*) pa_xmalloc0(writeableSizeBytes);
-		pa_stream_write (playback_->pulseStream(), zeros, writeableSizeBytes, NULL, 0, PA_SEEK_RELATIVE);
-		pa_xfree (zeros);
+		pa_stream_begin_write(s, &data, &bytes);
+		memset(data, 0, bytes);
+		pa_stream_write (s, data, bytes, NULL, 0, PA_SEEK_RELATIVE);
 		return;
 	}
 
@@ -459,10 +463,10 @@ void PulseLayer::writeToSpeaker (void)
 	bool resample = audioSampleRate_ != mainBufferSampleRate;
 
 	// how much samples we can write in the output
-	int outSamples = writeableSizeBytes / sizeof(SFLDataFormat);
+	size_t outSamples = bytes / sizeof(SFLDataFormat);
 
 	// how much samples we want to read from the buffer
-	int inSamples = outSamples;
+	size_t inSamples = outSamples;
 
 	double resampleFactor = 1.;
 	if (resample) {
@@ -472,21 +476,19 @@ void PulseLayer::writeToSpeaker (void)
 
 	if (inSamples > availSamples)
 		inSamples = availSamples;
-	int outBytes = (double)inSamples * resampleFactor * sizeof(SFLDataFormat);
+	size_t outBytes = (double)inSamples * resampleFactor * sizeof(SFLDataFormat);
 
-	int inBytes = inSamples * sizeof (SFLDataFormat);
-	SFLDataFormat *out = (SFLDataFormat*) pa_xmalloc (inBytes);
-	getMainBuffer()->getData (out, inBytes);
+	size_t inBytes = inSamples * sizeof (SFLDataFormat);
+	pa_stream_begin_write(s, &data, &inBytes);
+	getMainBuffer()->getData (data, inBytes);
 
 	if (resample) {
 		SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (outBytes);
-		converter_->resample (out, rsmpl_out, mainBufferSampleRate, audioSampleRate_, inSamples);
-		pa_stream_write (playback_->pulseStream(), rsmpl_out, outBytes, NULL, 0, PA_SEEK_RELATIVE);
+		converter_->resample((SFLDataFormat*)data, rsmpl_out, mainBufferSampleRate, audioSampleRate_, inSamples);
+		pa_stream_write (s, rsmpl_out, outBytes, NULL, 0, PA_SEEK_RELATIVE);
 		pa_xfree (rsmpl_out);
 	} else
-		pa_stream_write (playback_->pulseStream(), out, inBytes, NULL, 0, PA_SEEK_RELATIVE);
-
-	pa_xfree (out);
+		pa_stream_write (s, data, inBytes, NULL, 0, PA_SEEK_RELATIVE);
 }
 
 void PulseLayer::readFromMic (void)
@@ -495,33 +497,34 @@ void PulseLayer::readFromMic (void)
 		return;
 
     const char *data = NULL;
-    size_t r;
-    SFLDataFormat *out;
+    size_t bytes;
+    size_t samples;
 
 	unsigned int mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
 	bool resample = audioSampleRate_ != mainBufferSampleRate;
 
-    if (pa_stream_peek (record_->pulseStream() , (const void**) &data , &r) < 0 or !data) {
+    if (pa_stream_peek (record_->pulseStream() , (const void**) &data , &bytes) < 0 or !data) {
         _error("Audio: Error capture stream peek failed: %s" , pa_strerror (pa_context_errno (context_)));
         goto end;
     }
 
 	if (resample) {
 		double resampleFactor = (double) audioSampleRate_ / mainBufferSampleRate;
-		r = (double) r * resampleFactor;
+		bytes = (double) bytes * resampleFactor;
 	}
 
-	out = (SFLDataFormat*) pa_xmalloc (r);
-
-	if (resample) {
-		converter_->resample ( (SFLDataFormat *) data, out, mainBufferSampleRate, audioSampleRate_, r / sizeof(SFLDataFormat));
-		dcblocker_.process(out, r);
-	} else {
-		dcblocker_.process( (SFLDataFormat *) data, out, r);
+	samples = bytes / sizeof(SFLDataFormat);
+	if (bytes > mic_buf_size_) {
+		mic_buf_size_ = bytes;
+		delete[] mic_buffer_;
+		mic_buffer_ = new SFLDataFormat[samples];
 	}
 
-	getMainBuffer()->putData (out, r);
-	pa_xfree (out);
+	if (resample)
+		converter_->resample((SFLDataFormat*)data, mic_buffer_, mainBufferSampleRate, audioSampleRate_, samples);
+
+	dcblocker_.process(resample ? mic_buffer_ : (SFLDataFormat*)data, mic_buffer_, bytes);
+	getMainBuffer()->putData(mic_buffer_, bytes);
 
 end:
     if (pa_stream_drop (record_->pulseStream()) < 0)
@@ -532,22 +535,25 @@ end:
 void PulseLayer::ringtoneToSpeaker (void)
 {
     if (!ringtone_ or !ringtone_->isReady())
-		return;
+    	return;
 
-    int writableSize = pa_stream_writable_size (ringtone_->pulseStream());
-    if (writableSize < 0)
-        _error("Pulse: ringtone error : %s", pa_strerror (writableSize));
-    if (writableSize <= 0)
+    pa_stream *s = ringtone_->pulseStream();
+
+    int writable = pa_stream_writable_size (s);
+    if (writable < 0)
+        _error("Pulse: ringtone error : %s", pa_strerror (writable));
+    if (writable <= 0)
         return;
 
-    SFLDataFormat *out = (SFLDataFormat *) pa_xmalloc (writableSize);
+    size_t bytes = writable;
+	void *data;
 
+	pa_stream_begin_write(s, &data, &bytes);
     AudioLoop *fileToPlay = Manager::instance().getTelephoneFile();
     if (fileToPlay)
-        fileToPlay->getNext (out, writableSize/sizeof (SFLDataFormat), 100);
+        fileToPlay->getNext((SFLDataFormat*)data, bytes / sizeof(SFLDataFormat), 100);
     else
-        memset (out, 0, writableSize);
+        memset(data, 0, bytes);
 
-    pa_stream_write (ringtone_->pulseStream(), out, writableSize, NULL, 0, PA_SEEK_RELATIVE);
-    pa_xfree (out);
+    pa_stream_write(s, data, bytes, NULL, 0, PA_SEEK_RELATIVE);
 }

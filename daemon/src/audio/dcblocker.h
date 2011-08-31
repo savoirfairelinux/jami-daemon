@@ -57,16 +57,7 @@ class DcBlocker : public Algorithm
          */
         virtual int getData (SFLDataFormat *outputData);
 
-        /**
-         * Perform dc blocking given the input data
-         */
-        virtual void process (SFLDataFormat *data, int nbBytes);
-
-        /**
-         * Perform echo cancellation using internal buffers
-         * \param inputData containing mixed echo and voice data
-         * \param outputData containing
-         */
+        virtual void process (SFLDataFormat *inputData, int nbBytes);
         virtual int process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes);
 
     private:
