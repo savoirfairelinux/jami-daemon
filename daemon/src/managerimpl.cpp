@@ -123,35 +123,19 @@ void ManagerImpl::init (std::string config_file)
     audioLayerMutexLock();
 
     if (_audiodriver) {
-        unsigned int sampleRate = _audiodriver->getSampleRate();
-
-        _debug ("Manager: Load telephone tone");
-        std::string country(preferences.getZoneToneChoice());
-        _telephoneTone = new TelephoneTone (country, sampleRate);
-
-        _debug ("Manager: Loading DTMF key (%d)", sampleRate);
-
-        sampleRate = 8000;
-
-        _dtmfKey = new DTMF (sampleRate);
+        _telephoneTone = new TelephoneTone (preferences.getZoneToneChoice(), _audiodriver->getSampleRate());
+        _dtmfKey = new DTMF (8000);
     }
 
     audioLayerMutexUnlock();
 
-    // Load the history
     _history->load_history (preferences.getHistoryLimit());
-
-    // Init the instant messaging module
     _imModule->init();
-
-    // Register accounts
     registerAccounts();
 }
 
 void ManagerImpl::terminate ()
 {
-    _debug ("Manager: Terminate ");
-
     std::vector<std::string> callList(getCallList());
     _debug ("Manager: Hangup %zu remaining call", callList.size());
 
@@ -2334,8 +2318,6 @@ void ManagerImpl::setMailNotify (void)
 
 void ManagerImpl::setAudioManager (int32_t api)
 {
-    _debug ("Manager: Setting audio manager ");
-
     audioLayerMutexLock();
 
     if (!_audiodriver) {
@@ -2481,13 +2463,11 @@ void ManagerImpl::initAudioDriver (void)
 
 void ManagerImpl::switchAudioManager (void)
 {
-    _debug ("Manager: Switching audio manager ");
-
     audioLayerMutexLock();
 
     bool wasStarted = _audiodriver->isStarted();
 
-    int newType = (_audiodriver->getLayerType()) == PULSEAUDIO ? ALSA : PULSEAUDIO;
+    int newType = (_audiodriver->getLayerType() == PULSEAUDIO) ? ALSA : PULSEAUDIO;
     delete _audiodriver;
 
     if (newType == ALSA)
@@ -2533,9 +2513,9 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
 
     delete _audiodriver;
     if (type == PULSEAUDIO)
-    	_audiodriver = new AlsaLayer;
-    else
     	_audiodriver = new PulseLayer;
+    else
+    	_audiodriver = new AlsaLayer;
 
     unsigned int sampleRate = _audiodriver->getSampleRate();
 
