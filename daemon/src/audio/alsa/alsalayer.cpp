@@ -443,7 +443,7 @@ AlsaLayer::getSoundCardsInfo (int stream)
         ss << numCard;
         std::string name = "hw:" + ss.str();
 
-        if (snd_ctl_open (&handle, name.c_str(), 0) != 0) {
+        if (snd_ctl_open (&handle, name.c_str(), 0) == 0) {
             if (snd_ctl_card_info (handle, info) == 0) {
                 snd_pcm_info_set_device (pcminfo , 0);
                 snd_pcm_info_set_stream (pcminfo, (stream == SFL_PCM_CAPTURE) ? SND_PCM_STREAM_CAPTURE : SND_PCM_STREAM_PLAYBACK);
