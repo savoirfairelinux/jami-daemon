@@ -113,14 +113,15 @@ main (int argc, char **argv)
     if (fp) { // PID file exists. Check the former process still alive or not. If alive, give user a hint.
     	int oldPid;
     	if (fscanf(fp, "%d", &oldPid) != 1) {
-    		fprintf(stderr, "Couldn't read pidfile %s\n", pidfile.c_str());
+            std::cerr << "Couldn't read pidfile " << pidfile.c_str() << std::endl;
     		return 1;
     	}
 
 		fclose (fp);
 
 		if (kill (oldPid, 0) == 0) {
-			fprintf (stderr, "There is already a sflphoned daemon running in the system. Starting Failed.");
+            std::cerr << "There is already a sflphoned daemon running in " <<
+                "the system. Starting Failed." << std::endl;
 			return 1;
 		}
 	}
@@ -140,11 +141,12 @@ main (int argc, char **argv)
 
     try {
     	Manager::instance().init();
-    } catch (std::exception &e) {
+    } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return 1;
     } catch (...) {
-        fprintf (stderr, "An exception occured when initializing the system.");
+        std::cerr <<  "An unknown exception occured when initializing the " <<
+            "system." << std::endl;
         return 1;
     }
 
