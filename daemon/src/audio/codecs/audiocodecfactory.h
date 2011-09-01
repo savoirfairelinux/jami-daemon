@@ -40,30 +40,23 @@
 #include "global.h"
 #include "audiocodec.h"
 
-/** Enable us to keep the handle pointer on the codec dynamicaly loaded so that we could destroy when we dont need it anymore */
-typedef std::pair<sfl::Codec* , void*> CodecHandlePointer;
-/** Maps a pointer on an audiocodec object to a payload */
-typedef std::map<AudioCodecType , sfl::Codec*> CodecsMap;
-
 /*
  * @file codecdescriptor.h
  * @brief Handle audio codecs, load them in memory
  */
 
+/** Maps a pointer on an audiocodec object to a payload */
+typedef std::map<AudioCodecType, sfl::Codec*> CodecsMap;
+
 class AudioCodecFactory
 {
     public:
-        /**
-         * Constructor
-         */
-        AudioCodecFactory();
-
         /**
          * Accessor to data structures
          * @return CodecsMap& The available codec
          */
         const CodecsMap& getCodecsMap() const {
-            return _CodecsMap;
+            return codecsMap_;
         }
 
         /**
@@ -118,13 +111,6 @@ class AudioCodecFactory
         void deleteHandlePointer (void);
 
         /**
-         * Get the first element of the CodecsMap struct.
-         * i.e the one with the lowest payload
-         * @return AudioCodec	The pointer on the codec object
-         */
-        sfl::Codec* getFirstCodecAvailable (void);
-
-        /**
          * Instantiate a codec, used in AudioRTP to get an instance of Codec per call
          * @param CodecHandlePointer	The map containing the pointer on the object and the pointer on the handle function
          */
@@ -147,20 +133,23 @@ class AudioCodecFactory
         bool isCodecLoaded (int payload);
 
     private:
+        /** Enable us to keep the handle pointer on the codec dynamicaly loaded so that we could destroy when we dont need it anymore */
+        typedef std::pair<sfl::Codec* , void*> CodecHandlePointer;
+
 
         /**
          * Scan the installation directory ( --prefix configure option )
          * And load the dynamic library
          * @return std::vector<AudioCodec*> The list of the codec object successfully loaded in memory
          */
-        std::vector<sfl::Codec *> scanCodecDirectory (void);
+        std::vector<sfl::Codec *> scanCodecDirectory ();
 
         /**
          * Load a codec
          * @param std::string	The path of the shared ( dynamic ) library.
          * @return AudioCodec*  the pointer of the object loaded.
          */
-        sfl::Codec* loadCodec (std::string);
+        sfl::Codec* loadCodec (const std::string &path);
 
         /**
          * Unload a codec
@@ -174,7 +163,7 @@ class AudioCodecFactory
          * @return bool True if the file name begins with libcodec_ and ends with .so
          *		false otherwise
          */
-        bool seemsValid (std::string);
+        static bool seemsValid (const std::string &lib);
 
         /**
          * Check if the codecs shared library has already been scanned during the session
@@ -183,28 +172,28 @@ class AudioCodecFactory
          * @return bool True if the codecs has been scanned
          *	    false otherwise
          */
-        bool alreadyInCache (std::string);
+        bool alreadyInCache (const std::string &lib);
 
         /**
          * Map the payload of a codec and the object associated ( AudioCodec * )
          */
-        CodecsMap _CodecsMap;
+        CodecsMap codecsMap_;
 
         /**
          * Vector containing a default order for the codecs
          */
-        CodecOrder _defaultCodecOrder;
+        CodecOrder defaultCodecOrder_;
 
         /**
          * Vector containing the complete name of the codec shared library scanned
          */
-        std::vector<std::string> _Cache;
+        std::vector<std::string> libCache_;
 
         /**
          * Vector containing pairs
          * Pair between pointer on function handle and pointer on audiocodec object
          */
-        std::vector< CodecHandlePointer > _CodecInMemory;
+        std::vector< CodecHandlePointer > codecInMemory_;
 };
 
 #endif // __CODEC_DESCRIPTOR_H__

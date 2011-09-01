@@ -2294,11 +2294,6 @@ int32_t ManagerImpl::getAudioManager (void) const
 }
 
 
-void ManagerImpl::notifyErrClient (int32_t errCode)
-{
-	_dbus.getConfigurationManager()->errorAlert(errCode);
-}
-
 int ManagerImpl::getAudioDeviceIndex (const std::string &name)
 {
     int soundCardIndex = 0;

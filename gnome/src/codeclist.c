@@ -87,12 +87,8 @@ void codec_capabilities_load (void)
     }
 
     // If we didn't load any codecs, problem ...
-    if (g_queue_get_length (codecsCapabilities) == 0) {
-        // Error message
+    if (g_queue_get_length (codecsCapabilities) == 0)
         ERROR ("No audio codecs found");
-        dbus_unregister (getpid());
-        exit (1);
-    }
 }
 
 void account_create_codec_list (account_t **acc)

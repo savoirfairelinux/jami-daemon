@@ -756,13 +756,6 @@ class ManagerImpl
          */
         std::vector< ::std::string > getActiveCodecList (void) const;
 
-        /*
-         * Notify the client that an error occured
-         * @param errCode The error code. Could be: ALSA_CAPTURE_ERROR
-         *					       ALSA_PLAYBACK_ERROR
-         */
-        void notifyErrClient (int32_t errCode);
-
         /**
          * Retrieve in the configuration tree the value of a parameter in a specific section
          * @param section	The section to look in

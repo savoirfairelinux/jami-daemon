@@ -514,6 +514,9 @@ error_alert (DBusGProxy *proxy UNUSED, int err, void * foo  UNUSED)
         case PULSEAUDIO_NOT_RUNNING:
             msg = _("Pulseaudio notification\n\nPulseaudio is not running");
             break;
+        case CODECS_NOT_LOADED:
+            msg = _("Codecs notification\n\nCodecs not found");
+            break;
         default:
             return;
     }

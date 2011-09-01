@@ -113,10 +113,11 @@ static const SOUND_FORMAT INT32 = 0x8;
 #define NOTIFY_ALL		          TRUE_STR		/** Desktop notification level 0: never notify */
 
 // Error codes for error handling
-#define NO_ERROR		      0x0000	/** No error - Everything alright */
-#define ALSA_CAPTURE_DEVICE           0x0001	/** Error while opening capture device */
-#define ALSA_PLAYBACK_DEVICE          0x0010	/** Error while opening playback device */
-#define PULSEAUDIO_NOT_RUNNING          0x0100  /** Pulseaudio is not running */
+#define NO_ERROR		            0x0000	/** No error - Everything alright */
+#define ALSA_CAPTURE_DEVICE         0x0001	/** Error while opening capture device */
+#define ALSA_PLAYBACK_DEVICE        0x0010	/** Error while opening playback device */
+#define PULSEAUDIO_NOT_RUNNING      0x0100  /** Pulseaudio is not running */
+#define CODECS_NOT_LOADED           0x1000  /** Codecs not found */
 
 #define ALSA			  0
 #define PULSEAUDIO		  1
