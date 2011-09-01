@@ -120,7 +120,6 @@ static const SOUND_FORMAT INT32 = 0x8;
 
 #define ALSA			  0
 #define PULSEAUDIO		  1
-#define CHECK_INTERFACE( layer , api )		  (layer == api)
 
 #define UNUSED          __attribute__((__unused__))
 

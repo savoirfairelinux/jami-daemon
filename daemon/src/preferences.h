@@ -79,7 +79,6 @@ const std::string pulsemapKey ("pulse");
 const std::string cardinKey ("cardIn");// : 0
 const std::string cardoutKey ("cardOut");// 0
 const std::string cardringKey ("cardRing");// : 0
-const std::string framesizeKey ("frameSize");// : 20
 const std::string pluginKey ("plugin"); //: default
 const std::string smplrateKey ("smplRate");//: 44100
 const std::string devicePlaybackKey ("devicePlayback");//:
@@ -360,8 +359,6 @@ class HookPreference : public Serializable
 
         HookPreference();
 
-        ~HookPreference();
-
         virtual void serialize (Conf::YamlEmitter *emitter);
 
         virtual void unserialize (Conf::MappingNode *map);
@@ -453,13 +450,6 @@ class AudioPreference : public Serializable
         }
         void setCardring (int c) {
             _cardring = c;
-        }
-
-        int getFramesize (void) const {
-            return _framesize;
-        }
-        void setFramesize (int f) {
-            _framesize = f;
         }
 
         std::string getPlugin (void) const {
@@ -566,7 +556,6 @@ class AudioPreference : public Serializable
         int _cardin; // 0
         int _cardout; // 0
         int _cardring;// 0
-        int _framesize; // 20
         std::string _plugin; // default
         int _smplrate;// 44100
 

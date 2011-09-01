@@ -12,14 +12,12 @@ libaudio_la_SOURCES = \
 		audiorecorder.cpp \
 		recordable.cpp \
 		audiolayer.cpp \
-		audiodevice.cpp \
 		samplerateconverter.cpp \
 		delaydetection.cpp \
 		echocancel.cpp \
 		echosuppress.cpp \
 		speexechocancel.cpp \
 		noisesuppress.cpp \
-		audioprocessing.cpp \
 		gaincontrol.cpp \
 		dcblocker.cpp \
 		$(SPEEX_SOURCES_CPP)
@@ -32,7 +30,6 @@ noinst_HEADERS = \
 		audiorecord.h \
 		audiorecorder.h \
 		audiolayer.h \
-		audiodevice.h \
 	 	recordable.h \
 		algorithm.h \
 		delaydetection.h \
@@ -40,7 +37,6 @@ noinst_HEADERS = \
 		echosuppress.h \
 		speexechocancel.h \
 		noisesuppress.h \
-		audioprocessing.h \
 		gaincontrol.h \
 		dcblocker.h \
 		samplerateconverter.h

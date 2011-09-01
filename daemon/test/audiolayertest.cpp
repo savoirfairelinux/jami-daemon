@@ -44,7 +44,6 @@ void AudioLayerTest::testAudioLayerConfig()
     _debug ("-------------------- AudioLayerTest::testAudioLayerConfig --------------------\n");
 
     CPPUNIT_ASSERT( Manager::instance().audioPreference.getSmplrate() == 44100);
-    CPPUNIT_ASSERT( Manager::instance().audioPreference.getFramesize() == 20);
 
     // alsa preferences
     CPPUNIT_ASSERT( Manager::instance().audioPreference.getCardin() == 0);
@@ -62,8 +61,6 @@ void AudioLayerTest::testAudioLayerConfig()
 
     // TODO: Fix tests
     //CPPUNIT_ASSERT ( (int) Manager::instance().getAudioDriver()->getSampleRate() == sampling_rate);
-
-    //CPPPUNIT_ASSERT ( (int) Manager::instance().getAudioDriver()->getFrameSize() == frame_size);
 }
 
 void AudioLayerTest::testAudioLayerSwitch()
@@ -103,36 +100,4 @@ void AudioLayerTest::testPulseConnect()
     _pulselayer = (PulseLayer*) Manager::instance().getAudioDriver();
 
     CPPUNIT_ASSERT (_pulselayer->getLayerType() == PULSEAUDIO);
-
-    std::string alsaPlugin;
-    int numCardIn, numCardOut, numCardRing, sampleRate, frameSize;
-
-    alsaPlugin = manager->audioPreference.getPlugin();
-    numCardIn = manager->audioPreference.getCardin();
-    numCardOut = manager->audioPreference.getCardout();
-    numCardRing = manager->audioPreference.getCardring();
-    sampleRate = manager->audioPreference.getSmplrate();
-    frameSize = manager->audioPreference.getFramesize();
-
-    CPPUNIT_ASSERT (_pulselayer->getPlaybackStream() == NULL);
-    CPPUNIT_ASSERT (_pulselayer->getRecordStream() == NULL);
-
-    _pulselayer->setErrorMessage (-1);
-
-    try {
-        _pulselayer->openDevice (numCardIn, numCardOut, numCardRing, sampleRate, frameSize, SFL_PCM_BOTH, alsaPlugin);
-    } catch (...) {
-        _debug ("Exception occured wile opening device! ");
-    }
-
-    sleep (1);
-
-    CPPUNIT_ASSERT (_pulselayer->getPlaybackStream() == NULL);
-    CPPUNIT_ASSERT (_pulselayer->getRecordStream() == NULL);
-
-    _pulselayer->startStream();
-
-    CPPUNIT_ASSERT (_pulselayer->getPlaybackStream()->pulseStream() != NULL);
-    CPPUNIT_ASSERT (_pulselayer->getRecordStream()->pulseStream() != NULL);
-
 }

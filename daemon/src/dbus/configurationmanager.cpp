@@ -529,17 +529,17 @@ void ConfigurationManager::setHistory (const std::vector<std::string>& entries)
 std::string ConfigurationManager::getAddrFromInterfaceName (
         const std::string& interface)
 {
-    return SIPVoIPLink::instance()->getInterfaceAddrFromName (interface);
+    return SIPVoIPLink::getInterfaceAddrFromName (interface);
 }
 
 std::vector<std::string> ConfigurationManager::getAllIpInterface (void)
 {
-    return SIPVoIPLink::instance()->getAllIpInterface();
+    return SIPVoIPLink::getAllIpInterface();
 }
 
 std::vector<std::string> ConfigurationManager::getAllIpInterfaceByName (void)
 {
-    return SIPVoIPLink::instance()->getAllIpInterfaceByName();
+    return SIPVoIPLink::getAllIpInterfaceByName();
 }
 
 std::map<std::string, std::string> ConfigurationManager::getShortcuts()

@@ -39,7 +39,6 @@ guint holdConnId;     //The hold_menu signal connection ID
 
 GtkWidget *historyButton;
 GtkWidget *contactButton;
-
 GtkAction *volumeToggle;
 
 GtkUIManager *uimanager_new (void);
@@ -54,9 +53,9 @@ void show_popup_menu_history (GtkWidget *my_widget, GdkEventButton *event);
 
 void show_popup_menu_contacts (GtkWidget *my_widget, GdkEventButton *event);
 
-void create_menus (GtkUIManager *ui_manager, GtkWidget **widget);
+GtkWidget *create_menus (GtkUIManager *ui_manager);
 
-void create_toolbar_actions (GtkUIManager *ui_manager, GtkWidget **widget);
+GtkWidget *create_toolbar_actions (GtkUIManager *ui_manager);
 
 G_END_DECLS
 

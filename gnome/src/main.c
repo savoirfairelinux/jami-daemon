@@ -92,15 +92,18 @@ main (int argc, char *argv[])
 
     if (!sflphone_init (&error)) {
         ERROR (error->message);
-        gchar *markup = g_markup_printf_escaped (
-                     _ ("Unable to initialize.\nMake sure the daemon is running.\nError: %s"),
-                     error->message);
+        GtkWidget *dialog = gtk_message_dialog_new(
+                                 GTK_WINDOW (get_main_window()),
+                                 GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+                                 GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE,
+                                 "Unable to initialize.\nMake sure the daemon is running.\nError: %s",
+                                 error->message);
 
-        main_window_error_message (markup);
+        gtk_window_set_title (GTK_WINDOW (dialog), _ ("SFLphone Error"));
+        gtk_dialog_run (GTK_DIALOG (dialog));
+        gtk_widget_destroy (dialog);
 
-        g_free (markup);
         g_error_free (error);
-
         goto OUT;
     }
 

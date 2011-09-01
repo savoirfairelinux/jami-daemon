@@ -43,7 +43,6 @@ class VoIPLink;
 
 class EventThread : public ost::Thread
 {
-
     public:
         /**
          * Thread constructor

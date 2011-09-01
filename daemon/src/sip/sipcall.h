@@ -73,11 +73,6 @@ class SIPCall : public Call
         ~SIPCall ();
 
         /**
-         * The invite session to be reused in case of transfer
-         */
-        pjsip_inv_session *inv;
-
-        /**
          * Return the local SDP session
          */
         Sdp* getLocalSDP (void) {
@@ -105,6 +100,11 @@ class SIPCall : public Call
             return pool_;
         }
 
+        /**
+         * The invite session to be reused in case of transfer
+         */
+        pjsip_inv_session *inv;
+
     private:
 
         // Copy Constructor
@@ -112,16 +112,6 @@ class SIPCall : public Call
 
         // Assignment Operator
         SIPCall& operator= (const SIPCall& rh);
-
-        /**
-         * Call specific memory pool initialization size (based on empirical data)
-         */
-        static const int CALL_MEMPOOL_INIT_SIZE;
-
-        /**
-         * Call specific memory pool incrementation size
-         */
-        static const int CALL_MEMPOOL_INC_SIZE;
 
         /**
          * Audio Rtp Session factory

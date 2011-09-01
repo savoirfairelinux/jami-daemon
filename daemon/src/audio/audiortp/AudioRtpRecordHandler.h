@@ -39,7 +39,6 @@ using std::ptrdiff_t;
 #include "sip/sipcall.h"
 #include "audio/codecs/audiocodec.h"
 #include "audio/samplerateconverter.h"
-#include "audio/audioprocessing.h"
 #include "audio/noisesuppress.h"
 #include "audio/speexechocancel.h"
 #include "audio/echosuppress.h"
@@ -95,7 +94,6 @@ class AudioRtpRecord
         int _converterSamplingRate;
         std::list<int> _dtmfQueue;
         SFLDataFormat _micAmplFactor;
-        AudioProcessing *_audioProcess;
         NoiseSuppress *_noiseSuppress;
         ost::Mutex audioProcessMutex;
         std::string _callId;

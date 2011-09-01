@@ -35,18 +35,20 @@
 #define _AUDIO_LAYER_H
 
 #include <cc++/thread.h> // for ost::Mutex
+#include <sys/time.h>
 
+#include "manager.h"
 #include "ringbuffer.h"
+#include "dcblocker.h"
+#include "samplerateconverter.h"
 
 /**
  * @file  audiolayer.h
  * @brief Main sound class. Manages the data transfers between the application and the hardware.
  */
 
-class ManagerImpl;
-class DcBlocker;
 class MainBuffer;
-class AudioProcessing;
+
 namespace ost {
     class Time;
 }
@@ -63,29 +65,13 @@ class AudioLayer
     public:
         /**
          * Constructor
-         * @param manager An instance of managerimpl
          */
-        AudioLayer (ManagerImpl* manager , int type);
+        AudioLayer (int type);
 
         /**
          * Destructor
          */
         virtual ~AudioLayer (void);
-
-        /**
-         * Check if no devices are opened, otherwise close them.
-         * Then open the specified devices by calling the private functions open_device
-         * @param indexIn	The number of the card chosen for capture
-         * @param indexOut	The number of the card chosen for playback
-         * @param sampleRate  The sample rate
-         * @param frameSize	  The frame size
-         * @param stream	  To indicate which kind of stream you want to open
-         *			  SFL_PCM_CAPTURE
-         *			  SFL_PCM_PLAYBACK
-         *			  SFL_PCM_BOTH
-         * @param plugin	  The alsa plugin ( dmix , default , front , surround , ...)
-         */
-        virtual void openDevice (int indexIn, int indexOut, int indexRing, int sampleRate, int frameSize, int stream , const std::string &plugin) = 0;
 
         /**
          * Start the capture stream and prepare the playback stream.
@@ -115,50 +101,6 @@ class AudioLayer
 
         void flushUrgent (void);
 
-        /**
-         * Write accessor to the error state
-         * @param error The error code
-         *		    Could be: ALSA_PLAYBACK_DEVICE
-         *			      ALSA_CAPTURE_DEVICE
-         */
-        void setErrorMessage (int error) {
-            errorMessage_ = error;
-        }
-
-        /**
-         * Read accessor to the error state
-         * @return int  The error code
-         */
-        int getErrorMessage() const {
-            return errorMessage_;
-        }
-
-        /**
-         * Get the index of the audio card for capture
-         * @return int The index of the card used for capture
-         *			0 for the first available card on the system, 1 ...
-         */
-        int getIndexIn() const {
-            return indexIn_;
-        }
-
-        /**
-         * Get the index of the audio card for playback
-         * @return int The index of the card used for playback
-         *			0 for the first available card on the system, 1 ...
-         */
-        int getIndexOut() const {
-            return indexOut_;
-        }
-
-        /**
-             * Get the index of the audio card for ringtone (could be differnet from playback)
-             * @return int The index of the card used for ringtone
-             *			0 for the first available card on the system, 1 ...
-             */
-        int getIndexRing() const {
-            return indexRing_;
-        }
 
         /**
          * Get the sample rate of the audio layer
@@ -167,15 +109,6 @@ class AudioLayer
          */
         unsigned int getSampleRate() const {
             return audioSampleRate_;
-        }
-
-        /**
-         * Get the frame size of the audio layer
-         * @return unsigned int The frame size
-         *			    default: 20 ms
-         */
-        unsigned int getFrameSize() const {
-            return frameSize_;
         }
 
         /**
@@ -196,42 +129,7 @@ class AudioLayer
              * @return MainBuffer* a pointer to the MainBuffer instance
              */
         MainBuffer* getMainBuffer (void) const {
-            return mainBuffer_;
-        }
-
-        /**
-         * Set the mainbuffer once the audiolayer is created
-         */
-        void setMainBuffer (MainBuffer* mainbuffer) {
-            mainBuffer_ = mainbuffer;
-        }
-
-        /**
-         * Set the audio recorder
-         */
-        void setRecorderInstance (Recordable* rec) {
-            recorder_ = rec;
-        }
-
-        /**
-         * Get the audio recorder
-         */
-        Recordable* getRecorderInstance (void) const {
-            return recorder_;
-        }
-
-        /**
-         * Set the noise suppressor state
-         * @param state true if noise suppressor active, false elsewhere
-         */
-        void setNoiseSuppressState (bool state) { noiseSuppressState_ = state; }
-        
-        /**
-         * Get the noise suppressor state
-         * @return true if noise suppressor activated
-         */
-        bool getNoiseSuppressState (void) const {
-            return noiseSuppressState_;
+            return Manager::instance().getMainBuffer();
         }
 
         /**
@@ -244,26 +142,11 @@ class AudioLayer
         void notifyincomingCall (void);
 
     protected:
-
-        int layerType_;
-
-        /**
-         * Drop the pending frames and close the capture device
-         */
-        virtual void closeCaptureStream (void) = 0;
-
-        /**
-         * Drop the pending frames and close the playback device
-         */
-        virtual void closePlaybackStream (void) = 0;
  
         /**
-	 * Wether or not the audio layer stream is started
+         * Wether or not the audio layer stream is started
          */
         bool isStarted_;
-
-        /** Augment coupling, reduce indirect access */
-        ManagerImpl* manager_;
 
         /**
          * Urgent ring buffer used for ringtones
@@ -271,78 +154,31 @@ class AudioLayer
         RingBuffer urgentRingBuffer_;
 
         /**
-         * Instance of the MainBuffer for the whole application
-         *
-         * In order to send signal to other parts of the application, one must pass through the mainbuffer.
-         * Audio instances must be registered into the MainBuffer and bound together via the ManagerImpl.
-         *
-         */
-        MainBuffer* mainBuffer_;
-
-        /**
-         * A pointer to the recordable instance (may be a call or a conference)
-         */
-        Recordable* recorder_;
-
-        /**
-         * Number of audio cards on which capture stream has been opened
-         */
-        int indexIn_;
-
-        /**
-         * Number of audio cards on which playback stream has been opened
-         */
-        int indexOut_;
-
-        /**
-         * Number of audio cards on which ringtone stream has been opened
-         */
-        int indexRing_;
-
-        /**
          * Sample Rate SFLphone should send sound data to the sound card
          * The value can be set in the user config file- now: 44100HZ
          */
-        unsigned int audioSampleRate_;
-
-        /**
-         * Length of the sound frame we capture or read in ms
-         * The value can be set in the user config file - now: 20ms
-         */
-        unsigned int frameSize_;
-
-        /**
-         * Input channel (mic) should be 1 mono
-         */
-        unsigned int inChannel_;
-
-        /**
-         * Output channel (stereo) should be 1 mono
-         */
-        unsigned int outChannel_;
-
-        /** Contains the current error code */
-        int errorMessage_;
+        const unsigned int audioSampleRate_;
 
         /**
          * Lock for the entire audio layer
          */
         ost::Mutex mutex_;
 
-        DcBlocker *dcblocker_;
-        AudioProcessing *audiofilter_;
+        DcBlocker dcblocker_;
 
-        bool noiseSuppressState_;
+        AudioPreference &audioPref;
+
+        SamplerateConverter *converter_;
+
+    private:
+
+        const int layerType_;
+
 
         /**
-         * Time counter used to trigger incoming call notification
+         * Time of the last incoming call notification
          */
-        int countNotificationTime_;
-
-        /**
-         * Used to get formated system time in order to compute incoming call notification
-         */
-        ost::Time * time_;
+        time_t lastNotificationTime_;
 };
 
 #endif // _AUDIO_LAYER_H_

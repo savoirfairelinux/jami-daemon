@@ -33,7 +33,6 @@
 
 #include <speex/speex_preprocess.h>
 #include "algorithm.h"
-#include "audioprocessing.h"
 
 
 class NoiseSuppress : public Algorithm

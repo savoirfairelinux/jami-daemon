@@ -44,7 +44,6 @@ void ConfigurationTest::testDefaultValueAudio()
     CPPUNIT_ASSERT (Manager::instance().audioPreference.getCardin() == 0); // ALSA_DFT_CARD);
     CPPUNIT_ASSERT (Manager::instance().audioPreference.getCardout() == 0); // ALSA_DFT_CARD);
     CPPUNIT_ASSERT (Manager::instance().audioPreference.getSmplrate() == 44100); // DFT_SAMPLE_RATE);
-    CPPUNIT_ASSERT (Manager::instance().audioPreference.getFramesize() == 20); // DFT_FRAME_SIZE);
     CPPUNIT_ASSERT (Manager::instance().audioPreference.getPlugin() == PCM_DEFAULT);
     CPPUNIT_ASSERT (Manager::instance().audioPreference.getVolumespkr() == 100);
     CPPUNIT_ASSERT (Manager::instance().audioPreference.getVolumemic() == 100);
@@ -65,16 +64,6 @@ void ConfigurationTest::testDefaultValueSignalisation()
     CPPUNIT_ASSERT (Manager::instance().voipPreferences.getPlayDtmf() == true);
     CPPUNIT_ASSERT (Manager::instance().voipPreferences.getPlayTones() == true);
     CPPUNIT_ASSERT (Manager::instance().voipPreferences.getPulseLength() == 250);
-}
-
-void ConfigurationTest::testInitVolume()
-{
-    _debug ("-------------------- ConfigurationTest::testInitVolume --------------------\n");
-
-    Manager::instance().initVolume();
-
-    CPPUNIT_ASSERT (Manager::instance().audioPreference.getVolumespkr() == Manager::instance().getSpkrVolume());
-    CPPUNIT_ASSERT (Manager::instance().audioPreference.getVolumemic() == Manager::instance().getMicVolume());
 }
 
 void ConfigurationTest::testInitAudioDriver()

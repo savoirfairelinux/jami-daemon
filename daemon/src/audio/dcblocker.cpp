@@ -51,20 +51,7 @@ int DcBlocker::getData (SFLDataFormat *outputData UNUSED)
 
 void DcBlocker::process (SFLDataFormat *data, int nbBytes)
 {
-    // y(n) = x(n) - x(n-1) + R y(n-1) , R = 0.9999
-
-    int nbSamples = nbBytes / sizeof (SFLDataFormat);
-
-    for (int i = 0; i < nbSamples; i++) {
-        _x = data[i];
-
-        _y = (SFLDataFormat) ( (float) _x - (float) _xm1 + 0.995 * (float) _ym1);
-        _xm1 = _x;
-        _ym1 = _y;
-
-        data[i] = _y;
-
-    }
+	abort(); // use the 3 args prototype with input == output
 }
 
 int DcBlocker::process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes)

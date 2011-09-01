@@ -61,11 +61,6 @@ class VoIPLink
 {
     public:
         /**
-         * Constructor
-         */
-        VoIPLink ();
-
-        /**
          * Virtual destructor
          */
         virtual ~VoIPLink (void);
@@ -85,12 +80,6 @@ class VoIPLink
 
         /**
          * Virtual method
-         * Delete link-related stuff like calls
-         */
-        virtual void terminate (void) = 0;
-
-        /**
-         * Virtual method
          * Build and send account registration request
          */
         virtual void sendRegister (Account *a) = 0;
@@ -107,45 +96,45 @@ class VoIPLink
          * @param toUrl  The address of the recipient of the call
          * @return Call* The current call
          */
-        virtual Call* newOutgoingCall (const std::string& id, const std::string& toUrl) throw (VoipLinkException) = 0;
+        virtual Call* newOutgoingCall (const std::string& id, const std::string& toUrl) = 0;
 
         /**
          * Answer the call
          * @param c The call
          */
-        virtual void answer (Call *c) throw (VoipLinkException) = 0;
+        virtual void answer (Call *c) = 0;
 
         /**
          * Hang up a call
          * @param id The call identifier
          */
-        virtual void hangup (const std::string& id)  throw (VoipLinkException) = 0;
+        virtual void hangup (const std::string& id) = 0;
 
         /**
         * Peer Hung up a call
         * @param id The call identifier
         */
-        virtual void peerHungup (const std::string& id) throw (VoipLinkException) = 0;
+        virtual void peerHungup (const std::string& id) = 0;
 
         /**
          * Cancel the call dialing
          * @param id The call identifier
          */
-        virtual void cancel (const std::string& id) throw (VoipLinkException) = 0;
+        virtual void cancel (const std::string& id) = 0;
 
         /**
          * Put a call on hold
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool onhold (const std::string& id) throw (VoipLinkException) = 0;
+        virtual bool onhold (const std::string& id) = 0;
 
         /**
          * Resume a call from hold state
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool offhold (const std::string& id) throw (VoipLinkException) = 0;
+        virtual bool offhold (const std::string& id) = 0;
 
         /**
          * Transfer a call to specified URI
@@ -153,7 +142,7 @@ class VoIPLink
          * @param to The recipient of the call
          * @return bool True on success
          */
-        virtual bool transfer (const std::string& id, const std::string& to) throw (VoipLinkException) = 0;
+        virtual bool transfer (const std::string& id, const std::string& to) = 0;
 
         /**
          * Attended transfer
@@ -183,7 +172,7 @@ class VoIPLink
          * @param call The call
          */
         virtual std::string getCurrentVideoCodecName(const std::string& id) = 0;
-        virtual std::string getCurrentCodecName(Call *call) = 0;
+        virtual std::string getCurrentCodecName(Call *call) const = 0;
 
         /**
          * Send a message to a call identified by its callid
@@ -201,18 +190,7 @@ class VoIPLink
          * @param call A call pointer with a unique pointer
          * @return bool True if the call was unique and added
          */
-        bool addCall (Call* call);
-
-        /** Remove a call from the call map (protected by mutex)
-         * @param id A Call ID
-         */
-        void removeCall (const std::string& id);
-
-        /**
-         * Remove all the call from the map
-         * @return bool True on success
-         */
-        bool clearCallMap();
+        void addCall (Call* call);
 
         /**
          * Get the call pointer from the call map (protected by mutex)
@@ -228,8 +206,10 @@ class VoIPLink
         /** Mutex to protect call map */
         ost::Mutex _callMapMutex;
 
-        /** Get local listening port (5060 for SIP, ...) */
-        unsigned int _localPort;
+        /** Remove a call from the call map (protected by mutex)
+         * @param id A Call ID
+         */
+        void removeCall (const std::string& id);
 };
 
 #endif // __VOIP_LINK_H__

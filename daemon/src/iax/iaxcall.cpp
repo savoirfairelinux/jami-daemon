@@ -30,16 +30,12 @@
  */
 
 #include "iaxcall.h"
+#include "iax2/frame.h"
 #include "account.h"
 #include "manager.h"
 
 IAXCall::IAXCall (const std::string& id, Call::CallType type) : Call (id, type), _session (NULL)
 {
-}
-
-IAXCall::~IAXCall()
-{
-    _session = NULL; // just to be sure to don't have unknown pointer, do not delete it!
 }
 
 void

@@ -29,41 +29,28 @@
  *  as that of the covered work.
  */
 
+#include <ctime>
 #include "audiolayer.h"
-#include "audioprocessing.h"
 #include "audio/dcblocker.h"
 #include "manager.h"
-#include <cc++/numbers.h>
 
-AudioLayer::AudioLayer (ManagerImpl* manager , int type)
-    : layerType_ (type)
-    , isStarted_ (false)
-    , manager_ (manager)
+AudioLayer::AudioLayer (int type)
+    : isStarted_ (false)
     , urgentRingBuffer_ (SIZEBUF, Call::DEFAULT_ID)
-    , mainBuffer_ (0)
-    , recorder_ (0)
-    , indexIn_ (0)
-    , indexOut_ (0)
-    , indexRing_ (0)
-    , audioSampleRate_ (0)
-    , frameSize_ (0)
-    , inChannel_ (1)
-    , outChannel_ (1)
-    , errorMessage_ (0)
+	, audioSampleRate_(Manager::instance().getMainBuffer()->getInternalSamplingRate())
     , mutex_ ()
-    , dcblocker_ (0)
-    , audiofilter_ (0)
-    , noiseSuppressState_ (false)
-    , countNotificationTime_ (0)
-      , time_ (new ost::Time)
-{}
+	, audioPref(Manager::instance().audioPreference)
+	, converter_ (new SamplerateConverter(audioSampleRate_))
+	, layerType_ (type)
+    , lastNotificationTime_ (0)
+{
+    urgentRingBuffer_.createReadPointer();
+}
 
 
 AudioLayer::~AudioLayer ()
 {
-    delete time_;
-    delete audiofilter_;
-    delete dcblocker_;
+	delete converter_;
 }
 
 void AudioLayer::flushMain (void)
@@ -85,17 +72,33 @@ void AudioLayer::putUrgent (void* buffer, int toCopy)
     urgentRingBuffer_.Put (buffer, toCopy);
 }
 
+// Notify (with a beep) an incoming call when there is already a call in progress
 void AudioLayer::notifyincomingCall()
 {
-    // Notify (with a beep) an incoming call when there is already a call
-    if (Manager::instance().incomingCallWaiting()) {
-        countNotificationTime_ += time_->getSecond();
-        int countTimeModulo = countNotificationTime_ % 5000;
+    if (!Manager::instance().incomingCallWaiting())
+    	return;
 
-        if ((countTimeModulo - countNotificationTime_) < 0)
-            Manager::instance().notificationIncomingCall();
+	time_t now = time(NULL);
 
-        countNotificationTime_ = countTimeModulo;
-    }
+	// Notify maximum once every 5 seconds
+	if (difftime(now, lastNotificationTime_) < 5)
+		return;
+
+	lastNotificationTime_ = now;
+
+	// Enable notification only if more than one call
+	if (!Manager::instance().hasCurrentCall())
+		return;
+
+	Tone tone ("440/160", getSampleRate());
+	unsigned int nbSample = tone.getSize();
+	SFLDataFormat buf[nbSample];
+	tone.getNext (buf, nbSample);
+
+	/* Put the data in the urgent ring buffer */
+	Manager::instance().audioLayerMutexLock();
+	flushUrgent();
+	putUrgent (buf, sizeof buf);
+	Manager::instance().audioLayerMutexUnlock();
 }
 

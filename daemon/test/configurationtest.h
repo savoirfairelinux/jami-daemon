@@ -61,7 +61,6 @@ class ConfigurationTest: public CppUnit::TestFixture {
 	 * Use cppunit library macros to add unit test the factory
 	 */
 CPPUNIT_TEST_SUITE( ConfigurationTest );
-//      CPPUNIT_TEST( testInitVolume );
 //      CPPUNIT_TEST( testDefaultValueAudio );
 //	CPPUNIT_TEST( testDefaultValuePreferences );
 //	CPPUNIT_TEST( testDefaultValueSignalisation );
@@ -93,8 +92,6 @@ public:
 	void testLoadSIPAccount();
 
 	void testUnloadSIPAccount();
-
-	void testInitVolume();
 
 	void testInitAudioDriver();
 

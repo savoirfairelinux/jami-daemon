@@ -34,14 +34,14 @@
 
 #include "voiplink.h"
 #include <iax-client.h>
+#include "audio/codecs/audiocodec.h" // for DEC_BUFFER_SIZE
 #include "global.h"
 
-#include "audio/codecs/audiocodecfactory.h"
-#include "audio/samplerateconverter.h"
-#include "hooks/urlhook.h"
+namespace sfl {
+    class InstantMessaging;
+}
 
-#include "im/InstantMessaging.h"
-
+class SamplerateConverter;
 class EventThread;
 class IAXCall;
 
@@ -104,31 +104,31 @@ class IAXVoIPLink : public VoIPLink
          * @param toUrl The address to call
          * @return Call*  A pointer on the call
          */
-        virtual Call* newOutgoingCall (const std::string& id, const std::string& toUrl) throw(VoipLinkException);
+        virtual Call* newOutgoingCall (const std::string& id, const std::string& toUrl);
 
         /**
          * Answer a call
          * @param c The call
          */
-        virtual void answer (Call *c) throw (VoipLinkException);
+        virtual void answer (Call *c);
 
         /**
          * Hangup a call
          * @param id The ID of the call
          */
-        virtual void hangup (const std::string& id) throw (VoipLinkException);
+        virtual void hangup (const std::string& id);
 
         /**
          * Peer Hungup a call
          * @param id The ID of the call
          */
-        virtual void peerHungup (const std::string& id) throw (VoipLinkException);
+        virtual void peerHungup (const std::string& id);
 
         /**
          * Cancel a call
          * @param id The ID of the call
          */
-        virtual void cancel (const std::string& id UNUSED) throw (VoipLinkException){}
+        virtual void cancel (const std::string& id UNUSED) {}
 
         /**
          * Put a call on hold
@@ -136,7 +136,7 @@ class IAXVoIPLink : public VoIPLink
          * @return bool true on success
          *		  false otherwise
          */
-        virtual bool onhold (const std::string& id) throw (VoipLinkException);
+        virtual bool onhold (const std::string& id);
 
         /**
          * Put a call off hold
@@ -144,7 +144,7 @@ class IAXVoIPLink : public VoIPLink
          * @return bool true on success
          *		  false otherwise
          */
-        virtual bool offhold (const std::string& id) throw (VoipLinkException);
+        virtual bool offhold (const std::string& id);
 
         /**
          * Transfer a call
@@ -153,7 +153,7 @@ class IAXVoIPLink : public VoIPLink
          * @return bool true on success
          *		  false otherwise
          */
-        virtual bool transfer (const std::string& id, const std::string& to) throw (VoipLinkException);
+        virtual bool transfer (const std::string& id, const std::string& to);
 
         /**
          * Perform attended transfer
@@ -183,26 +183,18 @@ class IAXVoIPLink : public VoIPLink
 
         virtual bool sendTextMessage (sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from);
 
-        bool isContactPresenceSupported() {
-            return false;
-        }
-
         /**
          * Return the codec protocol used for this call
          * @param id The call identifier
          */
         virtual std::string getCurrentVideoCodecName(const std::string& id);
-        virtual std::string getCurrentCodecName(Call *c);
-
+        virtual std::string getCurrentCodecName(Call *c) const;
 
     public: // iaxvoiplink only
 
         void updateAudiolayer (void);
 
     private:
-
-        IAXAccount* getAccountPtr (void);
-
         /*
          * Decode the message count IAX send.
          * Returns only the new messages number
@@ -270,40 +262,39 @@ class IAXVoIPLink : public VoIPLink
         bool iaxOutgoingInvite (IAXCall* call);
 
         /** Threading object */
-        EventThread* _evThread;
+        EventThread* evThread_;
 
         /** registration session : 0 if not register */
-        struct iax_session* _regSession;
+        struct iax_session* regSession_;
 
         /** Timestamp of when we should refresh the registration up with
          * the registrar.  Values can be: EPOCH timestamp, 0 if we want no registration, 1
          * to force a registration. */
-        int _nextRefreshStamp;
+        int nextRefreshStamp_;
 
         /** Mutex for iax_ calls, since we're the only one dealing with the incorporated
          * iax_stuff inside this class. */
-        ost::Mutex _mutexIAX;
+        ost::Mutex mutexIAX_;
 
         /** Connection to audio card/device */
-        AudioLayer* audiolayer;
+        AudioLayer* audiolayer_;
 
         /** encoder/decoder/resampler buffers */
         SFLDataFormat decData[DEC_BUFFER_SIZE];
         SFLDataFormat resampledData[DEC_BUFFER_SIZE];
         unsigned char encodedData[DEC_BUFFER_SIZE];
 
+        int converterSamplingRate_;
         /** Sample rate converter object */
-        SamplerateConverter* converter;
-
-        int converterSamplingRate;
+        SamplerateConverter* converter_;
 
         /** Whether init() was called already or not
          * This should be used in init() and terminate(), to
          * indicate that init() was called, or reset by terminate().
          */
-        bool _initDone;
+        bool initDone_;
 
-        const std::string _accountID;
+        const std::string accountID_;
 };
 
 #endif

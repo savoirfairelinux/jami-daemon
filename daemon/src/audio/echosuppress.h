@@ -11,7 +11,6 @@
 #include "pjmedia/echo.h"
 #include "pj/pool.h"
 
-#include "audioprocessing.h"
 #include "audio/algorithm.h"
 
 class EchoSuppress : public Algorithm {

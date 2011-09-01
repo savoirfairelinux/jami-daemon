@@ -40,15 +40,20 @@
 #include "dbus/callmanager.h"
 #include "global.h"
 #include "sip/sipaccount.h"
+#include "im/InstantMessaging.h"
 #include "iax/iaxaccount.h"
+#include "numbercleaner.h"
 
 #include "audio/alsa/alsalayer.h"
 #include "audio/pulseaudio/pulselayer.h"
 #include "audio/sound/tonelist.h"
+#include "audio/sound/audiofile.h"
+#include "audio/sound/dtmf.h"
 #include "history/historymanager.h"
 #include "sip/sipvoiplink.h"
 #include "iax/iaxvoiplink.h"
 #include "manager.h"
+
 #include "dbus/configurationmanager.h"
 
 #include "conference.h"
@@ -73,7 +78,6 @@ ManagerImpl::ManagerImpl (void) :
     _waitingCallMutex(), _nbIncomingWaitingCall (0), _path (""),
     _callAccountMap(),
     _callAccountMapMutex(), _callConfigMap(), _accountMap(),
-    _cleaner (new NumberCleaner),
     _history (new HistoryManager), _imModule(new sfl::InstantMessaging)
 {
     // initialize random generator for call id
@@ -88,7 +92,6 @@ ManagerImpl::~ManagerImpl (void)
 {
     delete _imModule;
     delete _history;
-    delete _cleaner;
 	delete _audiofile;
 }
 
@@ -118,7 +121,6 @@ void ManagerImpl::init (std::string config_file)
 
     initVolume();
     initAudioDriver();
-    selectAudioDriver();
 
     // Initialize the list of supported audio codecs
     _audioCodecFactory.init();
@@ -126,35 +128,19 @@ void ManagerImpl::init (std::string config_file)
     audioLayerMutexLock();
 
     if (_audiodriver) {
-        unsigned int sampleRate = _audiodriver->getSampleRate();
-
-        _debug ("Manager: Load telephone tone");
-        std::string country(preferences.getZoneToneChoice());
-        _telephoneTone = new TelephoneTone (country, sampleRate);
-
-        _debug ("Manager: Loading DTMF key (%d)", sampleRate);
-
-        sampleRate = 8000;
-
-        _dtmfKey = new DTMF (sampleRate);
+        _telephoneTone = new TelephoneTone (preferences.getZoneToneChoice(), _audiodriver->getSampleRate());
+        _dtmfKey = new DTMF (8000);
     }
 
     audioLayerMutexUnlock();
 
-    // Load the history
     _history->load_history (preferences.getHistoryLimit());
-
-    // Init the instant messaging module
     _imModule->init();
-
-    // Register accounts
     registerAccounts();
 }
 
 void ManagerImpl::terminate ()
 {
-    _debug ("Manager: Terminate ");
-
     std::vector<std::string> callList(getCallList());
     _debug ("Manager: Hangup %zu remaining call", callList.size());
 
@@ -209,11 +195,6 @@ void ManagerImpl::switchCall (const std::string& id)
 bool ManagerImpl::outgoingCall (const std::string& account_id,
                                 const std::string& call_id, const std::string& to, const std::string& conf_id)
 {
-
-    std::string pattern, to_cleaned;
-    Call::CallConfiguration callConfig;
-    SIPVoIPLink *siplink;
-
     if (call_id.empty()) {
         _debug ("Manager: New outgoing call abbort, missing callid");
         return false;
@@ -231,13 +212,13 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 
     std::string current_call_id(getCurrentCallId());
 
+    std::string prefix;
     if (hookPreference.getNumberEnabled())
-        _cleaner->set_phone_number_prefix (hookPreference.getNumberAddPrefix());
-    else
-        _cleaner->set_phone_number_prefix ("");
+        prefix = hookPreference.getNumberAddPrefix();
 
-    to_cleaned = _cleaner->clean (to);
+    std::string to_cleaned(NumberCleaner::clean(to, prefix));
 
+    Call::CallConfiguration callConfig;
     /* Check what kind of call we are dealing with */
     checkCallConfiguration (call_id, to_cleaned, &callConfig);
 
@@ -255,9 +236,7 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
     if (callConfig == Call::IPtoIP) {
         _debug ("Manager: Start IP2IP call");
         /* We need to retrieve the sip voiplink instance */
-        siplink = SIPVoIPLink::instance ();
-
-        if (siplink->SIPNewIpToIpCall(call_id, to_cleaned)) {
+        if (SIPVoIPLink::instance()->SIPNewIpToIpCall(call_id, to_cleaned)) {
             switchCall (call_id);
             return true;
         } else
@@ -274,16 +253,13 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
         return false;
     }
 
-    if(!associateCallToAccount (call_id, account_id)) {
+    if(!associateCallToAccount (call_id, account_id))
     	_warn("Manager: Warning: Could not associate call id %s to account id %s", call_id.c_str(), account_id.c_str());
-    }
 
-    Call *call = NULL;
     try {
-        call = getAccountLink(account_id)->newOutgoingCall (call_id, to_cleaned);
+        Call *call = getAccountLink(account_id)->newOutgoingCall (call_id, to_cleaned);
 
         switchCall (call_id);
-
         call->setConfId(conf_id);
     } catch (const VoipLinkException &e) {
         callFailure (call_id);
@@ -445,16 +421,10 @@ bool ManagerImpl::hangupConference (const std::string& id)
     if (iter_conf != _conferencemap.end()) {
         Conference *conf = iter_conf->second;
 
-        ParticipantSet participants = conf->getParticipantList();
-        ParticipantSet::iterator iter_participant = participants.begin();
-
-        while (iter_participant != participants.end()) {
-            _debug ("Manager: Hangup conference participant %s", (*iter_participant).c_str());
-
-            hangupCall (*iter_participant);
-
-            iter_participant++;
-        }
+        const ParticipantSet &participants = conf->getParticipantList();
+        ParticipantSet::const_iterator iter;
+        for (iter = participants.begin(); iter != participants.end(); ++iter)
+            hangupCall (*iter);
     }
 
     switchCall ("");
@@ -759,7 +729,7 @@ void ManagerImpl::removeConference (const std::string& conference_id)
     // Unbind main participant audio from conference
     getMainBuffer()->unBindAll (Call::DEFAULT_ID);
 
-    ParticipantSet participants = conf->getParticipantList();
+    const ParticipantSet &participants = conf->getParticipantList();
 
     // bind main participant audio to remaining conference call
     ParticipantSet::iterator iter_p = participants.begin();
@@ -794,115 +764,71 @@ ManagerImpl::getConferenceFromCallID (const std::string& call_id)
 
 void ManagerImpl::holdConference (const std::string& id)
 {
-    _debug ("Manager: Hold conference()");
-
     ConferenceMap::iterator iter_conf = _conferencemap.find (id);
-    bool isRec = false;
 
-    std::string currentAccountId;
+    if (iter_conf == _conferencemap.end())
+    	return;
 
+    Conference *conf = iter_conf->second;
 
-    if (iter_conf != _conferencemap.end()) {
-        Conference *conf = iter_conf->second;
+	bool isRec = conf->getState() == Conference::ACTIVE_ATTACHED_REC ||
+				 conf->getState() == Conference::ACTIVE_DETACHED_REC ||
+				 conf->getState() == Conference::HOLD_REC;
 
-        if(conf->getState() == Conference::ACTIVE_ATTACHED_REC) {
-        	isRec = true;
-        } else if (conf->getState() == Conference::ACTIVE_DETACHED_REC) {
-        	isRec = true;
-        } else if (conf->getState() == Conference::HOLD_REC) {
-        	isRec = true;
-        }
+	const ParticipantSet &participants = conf->getParticipantList();
+	ParticipantSet::const_iterator iter;
+	for (iter = participants.begin(); iter != participants.end(); ++iter) {
+		switchCall (*iter);
+		onHoldCall (*iter);
+	}
 
-        ParticipantSet participants = conf->getParticipantList();
-        ParticipantSet::iterator iter_participant = participants.begin();
-
-        while (iter_participant != participants.end()) {
-            _debug ("    holdConference: participant %s", (*iter_participant).c_str());
-            currentAccountId = getAccountFromCall (*iter_participant);
-
-            switchCall (*iter_participant);
-            onHoldCall (*iter_participant);
-
-            iter_participant++;
-
-        }
-
-        conf->setState(isRec ? Conference::HOLD_REC : Conference::HOLD);
-        _dbus.getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
-    }
-
+	conf->setState(isRec ? Conference::HOLD_REC : Conference::HOLD);
+	_dbus.getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
 }
 
 void ManagerImpl::unHoldConference (const std::string& id)
 {
-    _debug ("Manager: Unhold conference()");
-
-    Conference *conf;
     ConferenceMap::iterator iter_conf = _conferencemap.find (id);
-    bool isRec = false;
-
-    std::string currentAccountId;
-
-    Call* call = NULL;
-
     if (iter_conf != _conferencemap.end()) {
-        conf = iter_conf->second;
+        Conference *conf = iter_conf->second;
 
-        ParticipantSet participants = conf->getParticipantList();
-        ParticipantSet::iterator iter_participant = participants.begin();
+        bool isRec = conf->getState() == Conference::ACTIVE_ATTACHED_REC or
+					 conf->getState() == Conference::ACTIVE_DETACHED_REC or
+					 conf->getState() == Conference::HOLD_REC;
 
-        if((conf->getState() == Conference::ACTIVE_ATTACHED_REC) ||
-           (conf->getState() == Conference::ACTIVE_DETACHED_REC) ||
-           (conf->getState() == Conference::HOLD_REC)) {
-        	isRec = true;
-        }
+        const ParticipantSet &participants(conf->getParticipantList());
 
-        while (iter_participant != participants.end()) {
-            _debug ("    unholdConference: participant %s", (*iter_participant).c_str());
-            currentAccountId = getAccountFromCall (*iter_participant);
-            call = getAccountLink (currentAccountId)->getCall (*iter_participant);
+        for (ParticipantSet::const_iterator iter = participants.begin(); iter!= participants.end(); ++iter) {
+            Call *call = getAccountLink(getAccountFromCall(*iter))->getCall(*iter);
 
             // if one call is currently recording, the conference is in state recording
-            if(call->isRecording()) {
-            	isRec = true;
-            }
+            isRec |= call->isRecording();
 
-            offHoldCall (*iter_participant);
-
-            iter_participant++;
-
+            offHoldCall (*iter);
         }
 
-        conf->setState (isRec ? Conference::ACTIVE_ATTACHED_REC : Conference::ACTIVE_ATTACHED);
+        conf->setState(isRec ? Conference::ACTIVE_ATTACHED_REC : Conference::ACTIVE_ATTACHED);
         _dbus.getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
     }
-
 }
 
 bool ManagerImpl::isConference (const std::string& id)
 {
-    ConferenceMap::iterator iter = _conferencemap.find (id);
-
-    if (iter == _conferencemap.end()) {
-        return false;
-    } else {
-        return true;
-    }
+    return (_conferencemap.find(id) != _conferencemap.end());
 }
 
 bool ManagerImpl::participToConference (const std::string& call_id)
 {
-    std::string accountId = getAccountFromCall (call_id);
-    Call *call = getAccountLink (accountId)->getCall (call_id);
+    std::string accountId(getAccountFromCall(call_id));
+    Call *call = getAccountLink (accountId)->getCall(call_id);
 
     if (call == NULL) {
     	_error("Manager: Error call is NULL in particip to conference");
         return false;
     }
 
-    if (call->getConfId() == "") {
+    if (call->getConfId().empty())
         return false;
-    }
 
     return true;
 }
@@ -910,30 +836,28 @@ bool ManagerImpl::participToConference (const std::string& call_id)
 void ManagerImpl::addParticipant (const std::string& callId, const std::string& conferenceId)
 {
     _debug ("Manager: Add participant %s to %s", callId.c_str(), conferenceId.c_str());
-
     ConferenceMap::iterator iter = _conferencemap.find (conferenceId);
     if (iter == _conferencemap.end()) {
     	_error("Manager: Error: Conference id is not valid");
     	return;
     }
 
-    std::string currentAccountId = getAccountFromCall (callId);
+    std::string currentAccountId(getAccountFromCall (callId));
     Call *call = getAccountLink (currentAccountId)->getCall (callId);
-    if(call == NULL) {
+    if (call == NULL) {
     	_error("Manager: Error: Call id is not valid");
     	return;
     }
 
     // store the current call id (it will change in offHoldCall or in answerCall)
-    std::string current_call_id = getCurrentCallId();
+    std::string current_call_id(getCurrentCallId());
 
     // detach from prior communication and switch to this conference
     if (current_call_id != callId) {
-        if (isConference (current_call_id)) {
+        if (isConference (current_call_id))
             detachParticipant (Call::DEFAULT_ID, current_call_id);
-        } else {
+        else
             onHoldCall (current_call_id);
-        }
     }
     // TODO: remove this ugly hack => There should be different calls when double clicking
     // a conference to add main participant to it, or (in this case) adding a participant
@@ -965,18 +889,15 @@ void ManagerImpl::addParticipant (const std::string& callId, const std::string& 
     	conf->bindParticipant (callId);
     }
 
-    ParticipantSet participants = conf->getParticipantList();
-    if(participants.empty()) {
+    const ParticipantSet &participants(conf->getParticipantList());
+    if (participants.empty())
     	_error("Manager: Error: Participant list is empty for this conference");
-    }
 
     // reset ring buffer for all conference participant
-    ParticipantSet::iterator iter_p = participants.begin();
-    while (iter_p != participants.end()) {
-    	// flush conference participants only
-    	getMainBuffer()->flush (*iter_p);
-    	iter_p++;
-    }
+    // flush conference participants only
+    for (ParticipantSet::const_iterator iter_p = participants.begin();
+            iter_p != participants.end(); ++iter_p)
+    	getMainBuffer()->flush(*iter_p);
 
     getMainBuffer()->flush (Call::DEFAULT_ID);
 
@@ -987,54 +908,37 @@ void ManagerImpl::addParticipant (const std::string& callId, const std::string& 
 void ManagerImpl::addMainParticipant (const std::string& conference_id)
 {
     if (hasCurrentCall()) {
-        std::string current_call_id = getCurrentCallId();
+        std::string current_call_id(getCurrentCallId());
 
-        if (isConference (current_call_id)) {
-            detachParticipant (Call::DEFAULT_ID, current_call_id);
-        } else {
-            onHoldCall (current_call_id);
-        }
+        if (isConference(current_call_id))
+            detachParticipant(Call::DEFAULT_ID, current_call_id);
+        else
+            onHoldCall(current_call_id);
     }
-
-    ConferenceMap::iterator iter = _conferencemap.find (conference_id);
-
-    Conference *conf = NULL;
 
     audioLayerMutexLock();
 
-    _debug("Manager: Add Main Participant");
-
+    ConferenceMap::const_iterator iter = _conferencemap.find (conference_id);
     if (iter != _conferencemap.end()) {
-        conf = iter->second;
+        Conference *conf = iter->second;
 
-        ParticipantSet participants = conf->getParticipantList();
+        const ParticipantSet &participants = conf->getParticipantList();
 
-        ParticipantSet::iterator iter_participant = participants.begin();
-
-        while (iter_participant != participants.end()) {
-            getMainBuffer()->bindCallID (*iter_participant, Call::DEFAULT_ID);
-            iter_participant++;
+        for (ParticipantSet::const_iterator iter_p = participants.begin();
+                iter_p != participants.end(); ++iter_p) {
+            getMainBuffer()->bindCallID(*iter_p, Call::DEFAULT_ID);
+            // Reset ringbuffer's readpointers
+			getMainBuffer()->flush(*iter_p);
         }
 
-        // Reset ringbuffer's readpointers
-        iter_participant = participants.begin();
+        getMainBuffer()->flush(Call::DEFAULT_ID);
 
-        while (iter_participant != participants.end()) {
-            getMainBuffer()->flush (*iter_participant);
-            iter_participant++;
-        }
-
-        getMainBuffer()->flush (Call::DEFAULT_ID);
-
-        if(conf->getState() == Conference::ACTIVE_DETACHED) {
-            conf->setState (Conference::ACTIVE_ATTACHED);
-        }
-        else if(conf->getState() == Conference::ACTIVE_DETACHED_REC) {
+        if (conf->getState() == Conference::ACTIVE_DETACHED)
+            conf->setState(Conference::ACTIVE_ATTACHED);
+        else if (conf->getState() == Conference::ACTIVE_DETACHED_REC)
         	conf->setState(Conference::ACTIVE_ATTACHED_REC);
-        }
-        else {
+        else
         	_warn("Manager: Warning: Invalid conference state while adding main participant");
-        }
 
         _dbus.getCallManager()->conferenceChanged (conference_id, conf->getStateStr());
     }
@@ -1046,8 +950,6 @@ void ManagerImpl::addMainParticipant (const std::string& conference_id)
 
 void ManagerImpl::joinParticipant (const std::string& callId1, const std::string& callId2)
 {
-	bool isRec = false;
-
     _debug ("Manager: Join participants %s, %s", callId1.c_str(), callId2.c_str());
 
     std::map<std::string, std::string> call1Details = getCallDetails (callId1);
@@ -1100,17 +1002,15 @@ void ManagerImpl::joinParticipant (const std::string& callId1, const std::string
     } else if (call1_state_str == "INCOMING") {
     	conf->bindParticipant (callId1);
         answerCall (callId1);
-    } else if (call1_state_str == "CURRENT") {
+    } else if (call1_state_str == "CURRENT")
         conf->bindParticipant (callId1);
-    } else if (call1_state_str == "RECORD") {
+    else if (call1_state_str == "RECORD")
     	conf->bindParticipant(callId1);
-    	isRec = true;
-    } else if (call1_state_str == "INACTIVE") {
+    else if (call1_state_str == "INACTIVE") {
         conf->bindParticipant (callId1);
         answerCall (callId1);
-    } else {
+    } else
         _warn ("Manager: Call state not recognized");
-    }
 
     // Process call2 according to its state
     std::string call2_state_str = call2Details.find ("CALL_STATE")->second;
@@ -1122,17 +1022,15 @@ void ManagerImpl::joinParticipant (const std::string& callId1, const std::string
     } else if (call2_state_str == "INCOMING") {
     	conf->bindParticipant (callId2);
         answerCall (callId2);
-    } else if (call2_state_str == "CURRENT") {
+    } else if (call2_state_str == "CURRENT")
         conf->bindParticipant (callId2);
-    } else if (call2_state_str == "RECORD") {
+    else if (call2_state_str == "RECORD")
     	conf->bindParticipant (callId2);
-    	isRec = true;
-    } else if (call2_state_str == "INACTIVE") {
+    else if (call2_state_str == "INACTIVE") {
     	conf->bindParticipant (callId2);
         answerCall (callId2);
-    } else {
+    } else
         _warn ("Manager: Call state not recognized");
-    }
 
     // Switch current call id to this conference
     switchCall (conf->getConfID());
@@ -1140,9 +1038,9 @@ void ManagerImpl::joinParticipant (const std::string& callId1, const std::string
 
     // set recording sampling rate
     audioLayerMutexLock();
-    if (_audiodriver) {
+    if (_audiodriver)
     	conf->setRecordingSmplRate(_audiodriver->getSampleRate());
-    }
+
     audioLayerMutexUnlock();
 
     getMainBuffer()->stateInfo();
@@ -1150,25 +1048,21 @@ void ManagerImpl::joinParticipant (const std::string& callId1, const std::string
 
 void ManagerImpl::createConfFromParticipantList(const std::vector< std::string > &participantList)
 {
-    bool callSuccess;
-    int successCounter = 0;
-
-    _debug("Manager: Create conference from participant list");
-
     // we must at least have 2 participant for a conference
-    if(participantList.size() <= 1) {
+    if (participantList.size() <= 1) {
         _error("Manager: Error: Participant number must be higher or equal to 2");
-	return;
+        return;
     }
 
     Conference *conf = new Conference();
 
-    for(unsigned int i = 0; i < participantList.size(); i++) {
-		std::string numberaccount = participantList[i];
-		std::string tostr = numberaccount.substr(0, numberaccount.find(","));
-			std::string account = numberaccount.substr(numberaccount.find(",")+1, numberaccount.size());
+    int successCounter = 0;
+    for (size_t i = 0; i != participantList.size(); i++) {
+		std::string numberaccount(participantList[i]);
+		std::string tostr(numberaccount.substr(0, numberaccount.find(",")));
+        std::string account(numberaccount.substr(numberaccount.find(",")+1, numberaccount.size()));
 
-		std::string generatedCallID = getNewCallID();
+		std::string generatedCallID(getNewCallID());
 
 		// Manager methods may behave differently if the call id particip to a conference
 		conf->add(generatedCallID);
@@ -1176,10 +1070,10 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
 		switchCall("");
 
 		// Create call
-		callSuccess = outgoingCall(account, generatedCallID, tostr, conf->getConfID());
+		bool callSuccess = outgoingCall(account, generatedCallID, tostr, conf->getConfID());
 
 			// If not able to create call remove this participant from the conference
-		if(!callSuccess)
+		if (!callSuccess)
 			conf->remove(generatedCallID);
 		else {
 			_dbus.getCallManager()->newCallCreated(account, generatedCallID, tostr);
@@ -1188,9 +1082,8 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
     }
 
     // Create the conference if and only if at least 2 calls have been successfully created
-    if(successCounter >= 2 ) {
+    if (successCounter >= 2 ) {
         _conferencemap.insert(std::pair<std::string, Conference *> (conf->getConfID(), conf));
-
         _dbus.getCallManager()->conferenceCreated (conf->getConfID());
 
 		audioLayerMutexLock();
@@ -1200,62 +1093,55 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
 		audioLayerMutexUnlock();
 
 		getMainBuffer()->stateInfo();
-    } else {
+    } else
 		delete conf;
-    }
-
 }
 
 void ManagerImpl::detachParticipant (const std::string& call_id,
                                      const std::string& current_id)
 {
-
     _debug ("Manager: Detach participant %s (current id: %s)", call_id.c_str(), current_id.c_str());
 
-
-    std::string current_call_id = getCurrentCallId();
+    std::string current_call_id(getCurrentCallId());
 
     if (call_id != Call::DEFAULT_ID) {
 
-        std::string currentAccountId = getAccountFromCall (call_id);
+        std::string currentAccountId(getAccountFromCall (call_id));
         Call *call = getAccountLink (currentAccountId)->getCall (call_id);
 
-        if(call == NULL) {
+        if (call == NULL) {
         	_error("Manager: Error: Could not find call %s", call_id.c_str());
         	return;
         }
 
         // TODO: add conference_id as a second parameter
-        ConferenceMap::iterator iter = _conferencemap.find (call->getConfId());
+        ConferenceMap::iterator iter = _conferencemap.find(call->getConfId());
 
-        Conference *conf = getConferenceFromCallID (call_id);
+        Conference *conf = getConferenceFromCallID(call_id);
         if (conf == NULL) {
             _error ("Manager: Error: Call is not conferencing, cannot detach");
             return;
         }
 
-        std::map<std::string, std::string> call_details = getCallDetails (call_id);
-        std::map<std::string, std::string>::iterator iter_details;
-
-        iter_details = call_details.find ("CALL_STATE");
-        if(iter_details == call_details.end()) {
+        std::map<std::string, std::string> call_details(getCallDetails(call_id));
+        std::map<std::string, std::string>::iterator iter_details(call_details.find ("CALL_STATE"));
+        if (iter_details == call_details.end()) {
         	_error ("Manager: Error: Could not find CALL_STATE");
         	return;
         }
 
-        if (iter_details->second == "RINGING") {
+        if (iter_details->second == "RINGING")
         	removeParticipant (call_id);
-        } else {
+        else {
         	onHoldCall (call_id);
         	removeParticipant (call_id);
         	processRemainingParticipant (current_call_id, conf);
         }
     } else {
-
         _debug ("Manager: Unbind main participant from conference %d");
         getMainBuffer()->unBindAll (Call::DEFAULT_ID);
 
-        if(!isConference(current_call_id)) {
+        if (!isConference(current_call_id)) {
         	_error("Manager: Warning: Current call id (%s) is not a conference", current_call_id.c_str());
         	return;
         }
@@ -1263,25 +1149,21 @@ void ManagerImpl::detachParticipant (const std::string& call_id,
         ConferenceMap::iterator iter = _conferencemap.find (current_call_id);
         Conference *conf = iter->second;
 
-        if(conf == NULL) {
+        if (conf == NULL) {
         	_debug("Manager: Error: Conference is NULL");
         	return;
         }
 
-        if(conf->getState() == Conference::ACTIVE_ATTACHED) {
+        if (conf->getState() == Conference::ACTIVE_ATTACHED)
         	conf->setState(Conference::ACTIVE_DETACHED);
-        }
-        else if(conf->getState() == Conference::ACTIVE_ATTACHED_REC) {
+        else if(conf->getState() == Conference::ACTIVE_ATTACHED_REC)
         	conf->setState(Conference::ACTIVE_DETACHED_REC);
-        }
-        else {
+        else
         	_warn("Manager: Warning: Undefined behavior, invalid conference state in detach participant");
-        }
 
         _dbus.getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
 
         switchCall ("");
-
     }
 }
 
@@ -1289,15 +1171,9 @@ void ManagerImpl::removeParticipant (const std::string& call_id)
 {
     _debug ("Manager: Remove participant %s", call_id.c_str());
 
-    // TODO: add conference_id as a second parameter
-    Conference* conf;
-
-    std::string currentAccountId;
-    Call* call = NULL;
-
     // this call is no more a conference participant
-    currentAccountId = getAccountFromCall (call_id);
-    call = getAccountLink (currentAccountId)->getCall (call_id);
+    const std::string currentAccountId(getAccountFromCall (call_id));
+    Call *call = getAccountLink (currentAccountId)->getCall (call_id);
 
     ConferenceMap conf_map = _conferencemap;
     ConferenceMap::iterator iter = conf_map.find (call->getConfId());
@@ -1307,133 +1183,91 @@ void ManagerImpl::removeParticipant (const std::string& call_id)
         return;
     }
 
-    conf = iter->second;
+    Conference *conf = iter->second;
 
     _debug ("Manager: Remove participant %s", call_id.c_str());
-    conf->remove (call_id);
+    conf->remove(call_id);
     call->setConfId ("");
 
     removeStream(call_id);
-
     getMainBuffer()->stateInfo();
 }
 
-void ManagerImpl::processRemainingParticipant (std::string current_call_id, Conference *conf)
+void ManagerImpl::processRemainingParticipant (const std::string &current_call_id, Conference *conf)
 {
-
+    const ParticipantSet &participants = conf->getParticipantList();
+    size_t n = participants.size();
     _debug ("Manager: Process remaining %d participant(s) from conference %s",
-            conf->getNbParticipants(), conf->getConfID().c_str());
+			n, conf->getConfID().c_str());
 
-    if (conf->getNbParticipants() > 1) {
-
-        ParticipantSet participants = conf->getParticipantList();
-        ParticipantSet::iterator iter_participant = participants.begin();
-
+    if (n > 1) {
         // Reset ringbuffer's readpointers
-        iter_participant = participants.begin();
-
-        while (iter_participant != participants.end()) {
-            getMainBuffer()->flush (*iter_participant);
-
-            iter_participant++;
-        }
+        for (ParticipantSet::const_iterator iter_p = participants.begin();
+                iter_p != participants.end();
+                ++iter_p)
+            getMainBuffer()->flush (*iter_p);
 
         getMainBuffer()->flush (Call::DEFAULT_ID);
-
-    } else if (conf->getNbParticipants() == 1) {
-
-        _debug ("Manager: Only one remaining participant");
-
-        std::string currentAccountId;
-        Call* call = NULL;
-
-        ParticipantSet participants = conf->getParticipantList();
+    } else if (n == 1) {
         ParticipantSet::iterator iter_participant = participants.begin();
 
         // bind main participant to remaining conference call
         if (iter_participant != participants.end()) {
 
             // this call is no more a conference participant
-            currentAccountId = getAccountFromCall (*iter_participant);
-            call = getAccountLink (currentAccountId)->getCall (*iter_participant);
+            std::string currentAccountId(getAccountFromCall (*iter_participant));
+            Call *call = getAccountLink(currentAccountId)->getCall(*iter_participant);
             call->setConfId ("");
 
             // if we are not listening to this conference
-
-            if (current_call_id != conf->getConfID()) {
+            if (current_call_id != conf->getConfID())
                 onHoldCall (call->getCallId());
-            } else {
+            else
                 switchCall (*iter_participant);
-            }
         }
 
         removeConference (conf->getConfID());
-
     } else {
-
         _debug ("Manager: No remaining participant, remove conference");
-
         removeConference (conf->getConfID());
-
         switchCall ("");
     }
-
 }
 
 void ManagerImpl::joinConference (const std::string& conf_id1,
                                   const std::string& conf_id2)
 {
-    _debug ("Manager: Join conference %s, %s", conf_id1.c_str(), conf_id2.c_str());
+    ConferenceMap::iterator iter(_conferencemap.find(conf_id1));
 
-    ConferenceMap::iterator iter;
-
-    Conference *conf1 = NULL;
-    Conference *conf2 = NULL;
-
-    iter = _conferencemap.find (conf_id1);
-
-    if (iter != _conferencemap.end()) {
-        conf1 = iter->second;
-    } else {
-        _error ("Manager: Error: Not a valid conference ID");
+    if (iter == _conferencemap.end()) {
+        _error ("Manager: Error: Not a valid conference ID: %s", conf_id1.c_str());
         return;
     }
 
-    iter = _conferencemap.find (conf_id2);
+    Conference *conf1 = iter->second;
 
-    if (iter != _conferencemap.end()) {
-        conf2 = iter->second;
-    } else {
-        _error ("Manager: Error: Not a valid conference ID");
+    if (_conferencemap.find (conf_id2) != _conferencemap.end()) {
+        _error ("Manager: Error: Not a valid conference ID: %s", conf_id2.c_str());
         return;
     }
 
-    ParticipantSet participants = conf1->getParticipantList();
+    const ParticipantSet &participants(conf1->getParticipantList());
 
-    ParticipantSet::iterator iter_participant = participants.begin();
-
-    while (iter_participant != participants.end()) {
-        detachParticipant (*iter_participant, "");
-        addParticipant (*iter_participant, conf_id2);
-
-        iter_participant++;
+    for (ParticipantSet::const_iterator iter_p = participants.begin();
+            iter_p != participants.end(); ++iter_p) {
+        detachParticipant (*iter_p, "");
+        addParticipant (*iter_p, conf_id2);
     }
-
 }
 
 void ManagerImpl::addStream (const std::string& call_id)
 {
-
     _debug ("Manager: Add audio stream %s", call_id.c_str());
 
-    std::string currentAccountId;
-    Call* call = NULL;
+    std::string currentAccountId(getAccountFromCall(call_id));
+    Call *call(getAccountLink(currentAccountId)->getCall(call_id));
 
-    currentAccountId = getAccountFromCall (call_id);
-    call = getAccountLink (currentAccountId)->getCall (call_id);
-
-    if (participToConference (call_id)) {
-
+    if (participToConference(call_id)) {
         _debug ("Manager: Add stream to conference");
 
         // bind to conference participant
@@ -1444,19 +1278,12 @@ void ManagerImpl::addStream (const std::string& call_id)
 
             conf->bindParticipant (call_id);
 
-            ParticipantSet participants = conf->getParticipantList();
+            const ParticipantSet &participants(conf->getParticipantList());
 
             // reset ring buffer for all conference participant
-            ParticipantSet::iterator iter_p = participants.begin();
-
-            while (iter_p != participants.end()) {
-
-                // to avoid puting onhold the call
-                // switchCall("");
+            for (ParticipantSet::const_iterator iter_p = participants.begin();
+                    iter_p != participants.end(); ++iter_p)
                 getMainBuffer()->flush (*iter_p);
-
-                iter_p++;
-            }
 
             getMainBuffer()->flush (Call::DEFAULT_ID);
         }
@@ -1479,9 +1306,7 @@ void ManagerImpl::addStream (const std::string& call_id)
 void ManagerImpl::removeStream (const std::string& call_id)
 {
     _debug ("Manager: Remove audio stream %s", call_id.c_str());
-
     getMainBuffer()->unBindAll (call_id);
-
     getMainBuffer()->stateInfo();
 }
 
@@ -1492,21 +1317,15 @@ void ManagerImpl::saveConfig (void)
     audioPreference.setVolumemic (getMicVolume());
     audioPreference.setVolumespkr (getSpkrVolume());
 
-    AccountMap::iterator iter = _accountMap.begin();
-
     try {
         emitter_ = new Conf::YamlEmitter (_path.c_str());
 
-        while (iter != _accountMap.end()) {
-
+        for (AccountMap::iterator iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
         	// Skip the "" account ID (which refer to the IP2IP account)
-            if (iter->first == "") {
-                iter++;
+            if (iter->first.empty())
                 continue;
-            }
-
-            iter->second->serialize (emitter_);
-            iter++;
+            else
+                iter->second->serialize (emitter_);
         }
 
         preferences.serialize (emitter_);
@@ -1528,9 +1347,7 @@ void ManagerImpl::saveConfig (void)
 //THREAD=Main
 bool ManagerImpl::sendDtmf (const std::string& id, char code)
 {
-    _debug ("Manager: Send DTMF for call %s", id.c_str());
-
-    std::string accountid = getAccountFromCall (id);
+    std::string accountid(getAccountFromCall(id));
     playDtmf (code);
     return getAccountLink (accountid)->carryingDTMFdigits (id, code);
 }
@@ -1538,23 +1355,17 @@ bool ManagerImpl::sendDtmf (const std::string& id, char code)
 //THREAD=Main | VoIPLink
 bool ManagerImpl::playDtmf (char code)
 {
-    int pulselen, layerType, size;
-    bool ret = false;
-    SFLDataFormat *buf;
-
     stopTone();
 
-    bool hasToPlayTone = voipPreferences.getPlayDtmf();
-
-    if (!hasToPlayTone) {
+    if (not voipPreferences.getPlayDtmf()) {
         _debug ("Manager: playDtmf: Do not have to play a tone...");
         return false;
     }
 
     // length in milliseconds
-    pulselen = voipPreferences.getPulseLength();
+    int pulselen = voipPreferences.getPulseLength();
 
-    if (!pulselen) {
+    if (pulselen == 0) {
         _debug ("Manager: playDtmf: Pulse length is not set...");
         return false;
     }
@@ -1563,8 +1374,6 @@ bool ManagerImpl::playDtmf (char code)
 
     // numbers of int = length in milliseconds / 1000 (number of seconds)
     //                = number of seconds * SAMPLING_RATE by SECONDS
-
-    layerType = _audiodriver->getLayerType();
 
     // fast return, no sound, so no dtmf
     if (_audiodriver == NULL || _dtmfKey == NULL) {
@@ -1577,11 +1386,11 @@ bool ManagerImpl::playDtmf (char code)
     // size (n sampling) = time_ms * sampling/s
     //                     ---------------------
     //                            ms/s
-    size = (int) ( (pulselen * (float) _audiodriver->getSampleRate()) / 1000);
+    int size = (int) ( (pulselen * (float) _audiodriver->getSampleRate()) / 1000);
 
     // this buffer is for mono
     // TODO <-- this should be global and hide if same size
-    buf = new SFLDataFormat[size];
+    SFLDataFormat *buf = new SFLDataFormat[size];
 
     // Handle dtmf
     _dtmfKey->startTone (code);
@@ -1598,38 +1407,32 @@ bool ManagerImpl::playDtmf (char code)
 
     audioLayerMutexUnlock();
 
-    ret = true;
-
     // TODO Cache the DTMF
 
     delete[] buf;
-    buf = 0;
-
-    return ret;
+    return true;
 }
 
 // Multi-thread
 bool ManagerImpl::incomingCallWaiting ()
 {
-    return (_nbIncomingWaitingCall > 0) ? true : false;
+    return _nbIncomingWaitingCall > 0;
 }
 
 void ManagerImpl::addWaitingCall (const std::string& id)
 {
-
     _info ("Manager: Add waiting call %s (%d calls)", id.c_str(), _nbIncomingWaitingCall);
 
-    ost::MutexLock m (_waitingCallMutex);
+    ost::MutexLock m(_waitingCallMutex);
     _waitingCall.insert (id);
     _nbIncomingWaitingCall++;
 }
 
 void ManagerImpl::removeWaitingCall (const std::string& id)
 {
-
     _info ("Manager: Remove waiting call %s (%d calls)", id.c_str(), _nbIncomingWaitingCall);
 
-    ost::MutexLock m (_waitingCallMutex);
+    ost::MutexLock m(_waitingCallMutex);
     // should return more than 1 if it erase a call
 
     if (_waitingCall.erase (id))
@@ -1638,12 +1441,7 @@ void ManagerImpl::removeWaitingCall (const std::string& id)
 
 bool ManagerImpl::isWaitingCall (const std::string& id)
 {
-    CallIDSet::iterator iter = _waitingCall.find (id);
-
-    if (iter != _waitingCall.end())
-        return false;
-
-    return true;
+    return _waitingCall.find(id) != _waitingCall.end();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1653,7 +1451,6 @@ bool ManagerImpl::isWaitingCall (const std::string& id)
 bool ManagerImpl::incomingCall (Call* call, const std::string& accountId)
 {
     assert(call);
-
     stopTone();
 
     _debug ("Manager: Incoming call %s for account %s", call->getCallId().data(), accountId.c_str());
@@ -1668,9 +1465,9 @@ bool ManagerImpl::incomingCall (Call* call, const std::string& accountId)
         // when placing new call from history (if call is IAX, do nothing)
         std::string peerNumber(call->getPeerNumber());
 
-        int startIndex = peerNumber.find ("sip:");
+        size_t startIndex = peerNumber.find ("sip:");
 
-        if (startIndex != (int) std::string::npos) {
+        if (startIndex != std::string::npos) {
             std::string strippedPeerNumber = peerNumber.substr (startIndex + 4);
             call->setPeerNumber (strippedPeerNumber);
         }
@@ -1678,7 +1475,6 @@ bool ManagerImpl::incomingCall (Call* call, const std::string& accountId)
 
     if (!hasCurrentCall()) {
         _debug ("Manager: Has no current call start ringing");
-
         call->setConnectionState (Call::Ringing);
         ringtone (accountId);
 
@@ -1705,11 +1501,10 @@ bool ManagerImpl::incomingCall (Call* call, const std::string& accountId)
     _debug ("Manager: From: %s, Number: %s, Display Name: %s", from.c_str(), number.c_str(), display_name.c_str());
 
     std::string display(display_name);
-    display.append (" ");
-    display.append (from);
+    display.append(" ");
+    display.append(from);
 
-    _dbus.getCallManager()->incomingCall (accountId, call->getCallId(), display.c_str());
-
+    _dbus.getCallManager()->incomingCall(accountId, call->getCallId(), display);
     return true;
 }
 
@@ -1720,25 +1515,23 @@ void ManagerImpl::incomingMessage (const std::string& callID,
                                    const std::string& message)
 {
     if (participToConference (callID)) {
-        _debug ("Manager: Particip to a conference, send message to everyone");
-
         Conference *conf = getConferenceFromCallID (callID);
 
-        ParticipantSet participants = conf->getParticipantList();
-        for (ParticipantSet::const_iterator iter_participant = participants.begin();
-                iter_participant != participants.end(); ++iter_participant) {
+        const ParticipantSet &participants = conf->getParticipantList();
+        for (ParticipantSet::const_iterator iter_p = participants.begin();
+                iter_p != participants.end(); ++iter_p) {
 
-            if (*iter_participant == callID)
+            if (*iter_p == callID)
                 continue;
 
-            std::string accountId(getAccountFromCall (*iter_participant));
+            std::string accountId(getAccountFromCall(*iter_p));
 
-            _debug ("Manager: Send message to %s, (%s)", (*iter_participant).c_str(), accountId.c_str());
+            _debug ("Manager: Send message to %s, (%s)", (*iter_p).c_str(), accountId.c_str());
 
             Account *account = getAccount (accountId);
 
             if (!account) {
-                _debug ("Manager: Failed to get account while sending instant message");
+                _error("Manager: Failed to get account while sending instant message");
                 return;
             }
             account->getVoIPLink()->sendTextMessage (_imModule, callID, message, from);
@@ -1755,10 +1548,8 @@ void ManagerImpl::incomingMessage (const std::string& callID,
 //THREAD=VoIP
 bool ManagerImpl::sendTextMessage (const std::string& callID, const std::string& message, const std::string& from)
 {
-
     if (isConference (callID)) {
         _debug ("Manager: Is a conference, send instant message to everyone");
-
         ConferenceMap::iterator it = _conferencemap.find (callID);
 
         if (it == _conferencemap.end())
@@ -1771,10 +1562,10 @@ bool ManagerImpl::sendTextMessage (const std::string& callID, const std::string&
 
         const ParticipantSet participants = conf->getParticipantList();
 
-        for (ParticipantSet::const_iterator iter_participant = participants.begin();
-                iter_participant != participants.end(); ++iter_participant) {
+        for (ParticipantSet::const_iterator iter_p = participants.begin();
+                iter_p != participants.end(); ++iter_p) {
 
-            std::string accountId = getAccountFromCall (*iter_participant);
+            std::string accountId = getAccountFromCall (*iter_p);
 
             Account *account = getAccount (accountId);
 
@@ -1783,7 +1574,7 @@ bool ManagerImpl::sendTextMessage (const std::string& callID, const std::string&
                 return false;
             }
 
-			account->getVoIPLink()->sendTextMessage (_imModule, *iter_participant, message, from);
+			account->getVoIPLink()->sendTextMessage (_imModule, *iter_p, message, from);
         }
 
         return true;
@@ -1797,11 +1588,11 @@ bool ManagerImpl::sendTextMessage (const std::string& callID, const std::string&
         if (!conf)
             return false;
 
-        const ParticipantSet participants = conf->getParticipantList();
-        for (ParticipantSet::const_iterator iter_participant = participants.begin();
-                iter_participant != participants.end(); ++iter_participant) {
+        const ParticipantSet participants(conf->getParticipantList());
+        for (ParticipantSet::const_iterator iter_p = participants.begin();
+                iter_p != participants.end(); ++iter_p) {
 
-            const std::string accountId(getAccountFromCall(*iter_participant));
+            const std::string accountId(getAccountFromCall(*iter_p));
 
             const Account *account = getAccount (accountId);
 
@@ -1810,13 +1601,10 @@ bool ManagerImpl::sendTextMessage (const std::string& callID, const std::string&
                 return false;
             }
 
-			account->getVoIPLink()->sendTextMessage (_imModule, *iter_participant, message, from);
+			account->getVoIPLink()->sendTextMessage (_imModule, *iter_p, message, from);
         }
     } else {
-
-        const std::string accountId(getAccountFromCall (callID));
-
-        const Account *account = getAccount (accountId);
+        const Account *account = getAccount (getAccountFromCall(callID));
 
         if (!account) {
             _debug ("Manager: Failed to get account while sending instant message");
@@ -1835,7 +1623,7 @@ void ManagerImpl::peerAnsweredCall (const std::string& id)
     _debug ("Manager: Peer answered call %s", id.c_str());
 
     // The if statement is usefull only if we sent two calls at the same time.
-    if (isCurrentCall (id))
+    if (isCurrentCall(id))
         stopTone();
 
     // Connect audio streams
@@ -1859,7 +1647,7 @@ void ManagerImpl::peerRingingCall (const std::string& id)
 {
     _debug ("Manager: Peer call %s ringing", id.c_str());
 
-    if (isCurrentCall (id))
+    if (isCurrentCall(id))
         ringback();
 
     _dbus.getCallManager()->callStateChanged (id, "RINGING");
@@ -1869,9 +1657,7 @@ void ManagerImpl::peerRingingCall (const std::string& id)
 void ManagerImpl::peerHungupCall (const std::string& call_id)
 {
     _debug ("Manager: Peer hungup call %s", call_id.c_str());
-
     if (participToConference (call_id)) {
-
         Conference *conf = getConferenceFromCallID (call_id);
 
         if (conf != NULL) {
@@ -1889,17 +1675,15 @@ void ManagerImpl::peerHungupCall (const std::string& call_id)
     if (getConfigFromCall (call_id) == Call::IPtoIP)
         SIPVoIPLink::instance ()->hangup (call_id);
     else {
-        std::string account_id = getAccountFromCall (call_id);
-        getAccountLink (account_id)->peerHungup (call_id);
+        const std::string account_id(getAccountFromCall (call_id));
+        getAccountLink(account_id)->peerHungup(call_id);
     }
 
     /* Broadcast a signal over DBus */
     _dbus.getCallManager()->callStateChanged (call_id, "HUNGUP");
 
     removeWaitingCall (call_id);
-
     removeCallAccount (call_id);
-
     removeStream (call_id);
 
     if (getCallList().empty()) {
@@ -1915,7 +1699,6 @@ void ManagerImpl::peerHungupCall (const std::string& call_id)
 void ManagerImpl::callBusy (const std::string& id)
 {
     _debug ("Manager: Call %s busy", id.c_str());
-
     _dbus.getCallManager()->callStateChanged (id, "BUSY");
 
     if (isCurrentCall (id)) {
@@ -1924,7 +1707,6 @@ void ManagerImpl::callBusy (const std::string& id)
     }
 
     removeCallAccount (id);
-
     removeWaitingCall (id);
 }
 
@@ -1932,16 +1714,13 @@ void ManagerImpl::callBusy (const std::string& id)
 void ManagerImpl::callFailure (const std::string& call_id)
 {
 	_dbus.getCallManager()->callStateChanged (call_id, "FAILURE");
-
     if (isCurrentCall (call_id)) {
         playATone (Tone::TONE_BUSY);
         switchCall ("");
     }
 
     if (participToConference (call_id)) {
-
         _debug ("Manager: Call %s participating to a conference failed", call_id.c_str());
-
         Conference *conf = getConferenceFromCallID (call_id);
 
         if (conf == NULL) {
@@ -1951,15 +1730,11 @@ void ManagerImpl::callFailure (const std::string& call_id)
 
         // remove this participant
         removeParticipant (call_id);
-
         processRemainingParticipant (getCurrentCallId(), conf);
-
     }
 
     removeCallAccount (call_id);
-
     removeWaitingCall (call_id);
-
 }
 
 //THREAD=VoIP
@@ -1980,11 +1755,7 @@ void ManagerImpl::connectionStatusNotification ()
  */
 bool ManagerImpl::playATone (Tone::TONEID toneId)
 {
-    bool hasToPlayTone;
-
-    hasToPlayTone = voipPreferences.getPlayTones();
-
-    if (!hasToPlayTone)
+    if (not voipPreferences.getPlayTones())
         return false;
 
     audioLayerMutexLock();
@@ -2012,9 +1783,7 @@ bool ManagerImpl::playATone (Tone::TONEID toneId)
  */
 void ManagerImpl::stopTone ()
 {
-    bool hasToPlayTone = voipPreferences.getPlayTones();
-
-    if (hasToPlayTone == false)
+    if (not voipPreferences.getPlayTones())
         return;
 
     _toneMutex.enterMutex();
@@ -2023,7 +1792,7 @@ void ManagerImpl::stopTone ()
         _telephoneTone->setCurrentTone (Tone::TONE_NULL);
 
     if (_audiofile) {
-		std::string filepath = _audiofile->getFilePath();
+		std::string filepath(_audiofile->getFilePath());
 		_dbus.getCallManager()->recordPlaybackStopped(filepath);
 		delete _audiofile;
 		_audiofile = NULL;
@@ -2037,7 +1806,7 @@ void ManagerImpl::stopTone ()
  */
 bool ManagerImpl::playTone ()
 {
-    playATone (Tone::TONE_DIALTONE);
+    playATone(Tone::TONE_DIALTONE);
     return true;
 }
 
@@ -2152,34 +1921,6 @@ ManagerImpl::getTelephoneFile ()
     return _audiofile;
 }
 
-void ManagerImpl::notificationIncomingCall (void)
-{
-    audioLayerMutexLock();
-
-    if(_audiodriver == NULL) {
-    	_error("Manager: Error: Audio layer not initialized");
-    	audioLayerMutexUnlock();
-    	return;
-    }
-
-    _debug ("ManagerImpl: Notification incoming call");
-
-    // Enable notification only if more than one call
-    if (hasCurrentCall()) {
-        std::ostringstream frequency;
-        frequency << "440/" << 160;
-        Tone tone (frequency.str(), _audiodriver->getSampleRate());
-        unsigned int nbSample = tone.getSize();
-        SFLDataFormat buf[nbSample];
-        tone.getNext (buf, nbSample);
-        /* Put the data in the urgent ring buffer */
-        _audiodriver->flushUrgent();
-        _audiodriver->putUrgent (buf, sizeof (SFLDataFormat) * nbSample);
-    }
-
-    audioLayerMutexUnlock();
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 // Private functions
 ///////////////////////////////////////////////////////////////////////////////
@@ -2253,19 +1994,15 @@ std::string ManagerImpl::getCurrentVideoCodecName (const std::string& id)
 
 std::string ManagerImpl::getCurrentCodecName (const std::string& id)
 {
-
     std::string accountid = getAccountFromCall (id);
     VoIPLink* link = getAccountLink (accountid);
     Call* call = link->getCall (id);
     std::string codecName;
 
-    _debug("Manager: Get current codec name");
-
     if (call) {
         Call::CallState state = call->getState();
-        if (state == Call::Active or state == Call::Conferencing) {
+        if (state == Call::Active or state == Call::Conferencing)
             codecName = link->getCurrentCodecName(call);
-        }
     }
 
     return codecName;
@@ -2276,24 +2013,26 @@ std::string ManagerImpl::getCurrentCodecName (const std::string& id)
  */
 void ManagerImpl::setAudioPlugin (const std::string& audioPlugin)
 {
-
 	audioLayerMutexLock();
-    int layerType = _audiodriver -> getLayerType();
 
     audioPreference.setPlugin (audioPlugin);
 
-    if (CHECK_INTERFACE (layerType , ALSA)) {
-        _debug ("Set input audio plugin");
-        _audiodriver -> setErrorMessage (-1);
-        _audiodriver -> openDevice (_audiodriver->getIndexIn(), _audiodriver->getIndexOut(),
-                                    _audiodriver->getIndexRing(), _audiodriver -> getSampleRate(),
-                                    _audiodriver -> getFrameSize(), SFL_PCM_BOTH, audioPlugin);
-
-        if (_audiodriver -> getErrorMessage() != -1)
-            notifyErrClient (_audiodriver -> getErrorMessage());
+    AlsaLayer *alsa = dynamic_cast<AlsaLayer*>(_audiodriver);
+    if (!alsa) {
+        _error("Can't find alsa device");
+        audioLayerMutexUnlock();
+        return ;
     }
-    audioLayerMutexUnlock();
 
+    bool wasStarted = _audiodriver->isStarted();
+
+    // Recreate audio driver with new settings
+    delete _audiodriver;
+    _audiodriver = new AlsaLayer;
+    if (wasStarted)
+        _audiodriver->startStream();
+
+    audioLayerMutexUnlock();
 }
 
 /**
@@ -2301,56 +2040,37 @@ void ManagerImpl::setAudioPlugin (const std::string& audioPlugin)
  */
 void ManagerImpl::setAudioDevice (const int index, int streamType)
 {
-    _debug ("Manager: Set audio device: %d", index);
-
     audioLayerMutexLock();
-
-    if(_audiodriver == NULL) {
-    	_warn ("Manager: Error: No audio driver");
-    	audioLayerMutexUnlock();
-    	return;
-    }
-
-    _audiodriver -> setErrorMessage (-1);
 
     AlsaLayer *alsaLayer = dynamic_cast<AlsaLayer*>(_audiodriver);
     if (!alsaLayer) {
-        _error("Cannot set audio output for non-alsa device");
+        _error("Can't find alsa device");
         audioLayerMutexUnlock();
         return ;
     }
-    const std::string alsaplugin(alsaLayer->getAudioPlugin());
 
-    _debug ("Manager: Set ALSA plugin: %s", alsaplugin.c_str());
+    bool wasStarted = _audiodriver->isStarted();
 
     switch (streamType) {
         case SFL_PCM_PLAYBACK:
-            _debug ("Manager: Set output device");
-            _audiodriver->openDevice (_audiodriver->getIndexIn(), index, _audiodriver->getIndexRing(),
-                                      _audiodriver->getSampleRate(), _audiodriver->getFrameSize(),
-                                      SFL_PCM_PLAYBACK, alsaplugin);
             audioPreference.setCardout (index);
             break;
         case SFL_PCM_CAPTURE:
-            _debug ("Manager: Set input device");
-            _audiodriver->openDevice (index, _audiodriver->getIndexOut(), _audiodriver->getIndexRing(),
-                                      _audiodriver->getSampleRate(), _audiodriver->getFrameSize(),
-                                      SFL_PCM_CAPTURE, alsaplugin);
             audioPreference.setCardin (index);
             break;
         case SFL_PCM_RINGTONE:
-            _debug ("Manager: Set ringtone device");
-            _audiodriver->openDevice (_audiodriver->getIndexOut(), _audiodriver->getIndexOut(), index,
-                                      _audiodriver->getSampleRate(), _audiodriver->getFrameSize(),
-                                      SFL_PCM_RINGTONE, alsaplugin);
             audioPreference.setCardring (index);
             break;
         default:
-            _warn ("Unknown stream type");
+            break;
     }
 
-    if (_audiodriver -> getErrorMessage() != -1)
-        notifyErrClient (_audiodriver -> getErrorMessage());
+    // Recreate audio driver with new settings
+    delete _audiodriver;
+    _audiodriver = new AlsaLayer;
+
+    if (wasStarted)
+        _audiodriver->startStream();
 
     audioLayerMutexUnlock();
 }
@@ -2360,16 +2080,14 @@ void ManagerImpl::setAudioDevice (const int index, int streamType)
  */
 std::vector<std::string> ManagerImpl::getAudioOutputDeviceList (void)
 {
-    _debug ("Manager: Get audio output device list");
-    AlsaLayer *alsalayer;
     std::vector<std::string> devices;
 
     audioLayerMutexLock();
 
-    alsalayer = dynamic_cast<AlsaLayer*> (_audiodriver);
+    AlsaLayer *alsalayer = dynamic_cast<AlsaLayer*>(_audiodriver);
 
     if (alsalayer)
-        devices = alsalayer -> getSoundCardsInfo (SFL_PCM_PLAYBACK);
+        devices = alsalayer->getSoundCardsInfo(SFL_PCM_PLAYBACK);
 
     audioLayerMutexUnlock();
 
@@ -2382,20 +2100,13 @@ std::vector<std::string> ManagerImpl::getAudioOutputDeviceList (void)
  */
 std::vector<std::string> ManagerImpl::getAudioInputDeviceList (void)
 {
-    AlsaLayer *alsalayer;
     std::vector<std::string> devices;
 
     audioLayerMutexLock();
 
-    alsalayer = dynamic_cast<AlsaLayer *> (_audiodriver);
-
-    if (alsalayer == NULL) {
-    	_error("Manager: Error: Audio layer not initialized");
-    	audioLayerMutexUnlock();
-    	return devices;
-    }
-
-    devices = alsalayer->getSoundCardsInfo (SFL_PCM_CAPTURE);
+    AlsaLayer *alsalayer = dynamic_cast<AlsaLayer *> (_audiodriver);
+    if (alsalayer)
+    	devices = alsalayer->getSoundCardsInfo (SFL_PCM_CAPTURE);
 
     audioLayerMutexUnlock();
 
@@ -2407,25 +2118,20 @@ std::vector<std::string> ManagerImpl::getAudioInputDeviceList (void)
  */
 std::vector<std::string> ManagerImpl::getCurrentAudioDevicesIndex ()
 {
-    _debug ("Get current audio devices index");
-
     audioLayerMutexLock();
 
     std::vector<std::string> v;
 
-    if (_audiodriver == NULL) {
-    	_error("Manager: Error: Audio layer not initialized");
-    	audioLayerMutexUnlock();
-    	return v;
+    AlsaLayer *alsa = dynamic_cast<AlsaLayer*>(_audiodriver);
+    if (alsa) {
+		std::stringstream ssi, sso, ssr;
+		sso << alsa->getIndexOut();
+		v.push_back (sso.str());
+		ssi << alsa->getIndexIn();
+		v.push_back (ssi.str());
+		ssr << alsa->getIndexRing();
+		v.push_back (ssr.str());
     }
-
-    std::stringstream ssi, sso, ssr;
-    sso << _audiodriver->getIndexOut();
-    v.push_back (sso.str());
-    ssi << _audiodriver->getIndexIn();
-    v.push_back (ssi.str());
-    ssr << _audiodriver->getIndexRing();
-    v.push_back (ssr.str());
 
     audioLayerMutexUnlock();
 
@@ -2507,14 +2213,12 @@ int ManagerImpl::isRingtoneEnabled (const std::string& id)
 void ManagerImpl::ringtoneEnabled (const std::string& id)
 {
     Account *account = getAccount (id);
-
     if (!account) {
         _warn ("Manager: Warning: invalid account in ringtone enabled");
         return;
     }
 
     account->getRingtoneEnabled() ? account->setRingtoneEnabled (false) : account->setRingtoneEnabled (true);
-
 }
 
 std::string ManagerImpl::getRecordPath (void) const
@@ -2544,11 +2248,11 @@ void ManagerImpl::setRecordingCall (const std::string& id)
 
     if (not isConference (id)) {
         _debug ("Manager: Set recording for call %s", id.c_str());
-        std::string accountid = getAccountFromCall(id);
-        rec = getAccountLink (accountid)->getCall(id);
+        std::string accountid(getAccountFromCall(id));
+        rec = getAccountLink(accountid)->getCall(id);
     } else {
         _debug ("Manager: Set recording for conference %s", id.c_str());
-        ConferenceMap::iterator it = _conferencemap.find (id);
+        ConferenceMap::const_iterator it(_conferencemap.find(id));
         Conference *conf = it->second;
         if (rec->isRecording())
         	conf->setState(Conference::ACTIVE_ATTACHED);
@@ -2564,7 +2268,6 @@ void ManagerImpl::setRecordingCall (const std::string& id)
     }
 
     rec->setRecording();
-
 	_dbus.getCallManager()->recordPlaybackFilepath(id, rec->getFileName());
 }
 
@@ -2577,8 +2280,6 @@ bool ManagerImpl::isRecording (const std::string& id)
 
 bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
 {
-    int sampleRate;
-
     _debug("Manager: Start recorded file playback %s", filepath.c_str());
 
     audioLayerMutexLock();
@@ -2589,7 +2290,7 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
         return false;
     }
 
-    sampleRate = _audiodriver->getSampleRate();
+    int sampleRate = _audiodriver->getSampleRate();
 
     audioLayerMutexUnlock();
 
@@ -2635,9 +2336,7 @@ void ManagerImpl::stopRecordedFilePlayback(const std::string& filepath)
 void ManagerImpl::setHistoryLimit (int days)
 {
     _debug ("Manager: Set history limit");
-
     preferences.setHistoryLimit (days);
-
     saveConfig();
 }
 
@@ -2654,18 +2353,12 @@ int32_t ManagerImpl::getMailNotify (void) const
 void ManagerImpl::setMailNotify (void)
 {
     _debug ("Manager: Set mail notify");
-
     preferences.getNotifyMails() ? preferences.setNotifyMails (true) : preferences.setNotifyMails (false);
-
     saveConfig();
 }
 
 void ManagerImpl::setAudioManager (int32_t api)
 {
-    int layerType;
-
-    _debug ("Manager: Setting audio manager ");
-
     audioLayerMutexLock();
 
     if (!_audiodriver) {
@@ -2673,7 +2366,7 @@ void ManagerImpl::setAudioManager (int32_t api)
         return;
     }
 
-    layerType = _audiodriver->getLayerType();
+    int layerType = _audiodriver->getLayerType();
 
     if (layerType == api) {
         _debug ("Manager: Audio manager chosen already in use. No changes made. ");
@@ -2683,7 +2376,7 @@ void ManagerImpl::setAudioManager (int32_t api)
 
     audioLayerMutexUnlock();
 
-    preferences.setAudioApi (api);
+    preferences.setAudioApi(api);
 
     switchAudioManager();
 
@@ -2698,16 +2391,12 @@ int32_t ManagerImpl::getAudioManager (void) const
 
 void ManagerImpl::notifyErrClient (int32_t errCode)
 {
-	_debug ("Manager: NOTIFY ERR NUMBER %d" , errCode);
-	_dbus.getConfigurationManager() -> errorAlert (errCode);
+	_dbus.getConfigurationManager()->errorAlert(errCode);
 }
 
 int ManagerImpl::getAudioDeviceIndex (const std::string &name)
 {
-    AlsaLayer *alsalayer;
     int soundCardIndex = 0;
-
-    _debug ("Manager: Get audio device index");
 
     audioLayerMutexLock();
 
@@ -2717,7 +2406,7 @@ int ManagerImpl::getAudioDeviceIndex (const std::string &name)
     	return soundCardIndex;
     }
 
-    alsalayer = dynamic_cast<AlsaLayer *> (_audiodriver);
+    AlsaLayer *alsalayer = dynamic_cast<AlsaLayer *> (_audiodriver);
 
     if (alsalayer)
         soundCardIndex = alsalayer -> soundCardGetIndex (name);
@@ -2729,37 +2418,22 @@ int ManagerImpl::getAudioDeviceIndex (const std::string &name)
 
 std::string ManagerImpl::getCurrentAudioOutputPlugin (void) const
 {
-    _debug ("Manager: Get alsa plugin");
-
     return audioPreference.getPlugin();
 }
 
 
 std::string ManagerImpl::getNoiseSuppressState (void) const
 {
-    // noise suppress disabled by default
     return audioPreference.getNoiseReduce() ? "enabled" : "disabled";
 }
 
 void ManagerImpl::setNoiseSuppressState (const std::string &state)
 {
-    _debug ("Manager: Set noise suppress state: %s", state.c_str());
-
-    bool isEnabled = (state == "enabled");
-
-    audioPreference.setNoiseReduce (isEnabled);
-
-    audioLayerMutexLock();
-
-    if (_audiodriver)
-        _audiodriver->setNoiseSuppressState (isEnabled);
-
-    audioLayerMutexUnlock();
+    audioPreference.setNoiseReduce (state == "enabled");
 }
 
 std::string ManagerImpl::getEchoCancelState() const
 {
-	// echo canceller disabled by default
 	return audioPreference.getEchoCancel() ? "enabled" : "disabled";
 }
 
@@ -2791,164 +2465,56 @@ void ManagerImpl::setEchoCancelDelay(int delay)
 /**
  * Initialization: Main Thread
  */
-bool ManagerImpl::initAudioDriver (void)
-{
-    _debug ("Manager: AudioLayer Creation");
-
-    audioLayerMutexLock();
-
-    if (preferences.getAudioApi() == ALSA) {
-        _audiodriver = new AlsaLayer (this);
-        _audiodriver->setMainBuffer (&_mainBuffer);
-    } else if (preferences.getAudioApi() == PULSEAUDIO) {
-        if (system("ps -C pulseaudio") == 0) {
-            _audiodriver = new PulseLayer (this);
-            _audiodriver->setMainBuffer (&_mainBuffer);
-        } else {
-            _audiodriver = new AlsaLayer (this);
-            preferences.setAudioApi (ALSA);
-            _audiodriver->setMainBuffer (&_mainBuffer);
-        }
-    } else
-        _debug ("Error - Audio API unknown");
-
-    if (_audiodriver == NULL) {
-        _debug ("Manager: Init audio driver error");
-        audioLayerMutexUnlock();
-        return false;
-    } else {
-        int error = _audiodriver->getErrorMessage();
-
-        if (error == -1) {
-            _debug ("Manager: Init audio driver: %d", error);
-            audioLayerMutexUnlock();
-            return false;
-        }
-    }
-
-    audioLayerMutexUnlock();
-
-    return true;
-}
-
-/**
- * Initialization: Main Thread and gui
- */
-void ManagerImpl::selectAudioDriver (void)
+void ManagerImpl::initAudioDriver (void)
 {
     audioLayerMutexLock();
-
-    if (_audiodriver == NULL) {
-    	_debug("Manager: Audio layer not initialized");
-    	audioLayerMutexUnlock();
-    	return;
-    }
 
     /* Retrieve the global devices info from the user config */
-    std::string alsaPlugin(audioPreference.getPlugin());
     int numCardIn = audioPreference.getCardin();
     int numCardOut = audioPreference.getCardout();
     int numCardRing = audioPreference.getCardring();
 
-    int sampleRate = getMainBuffer()->getInternalSamplingRate();
-    int frameSize = audioPreference.getFramesize();
-
-    /* Only for the ALSA layer, we check the sound card information */
-
-    AlsaLayer *alsalayer = dynamic_cast<AlsaLayer*>(_audiodriver);
-    if (alsalayer) {
-
-        if (!alsalayer->soundCardIndexExist (numCardIn, SFL_PCM_CAPTURE)) {
-            _debug (" Card with index %d doesn't exist or cannot capture. Switch to 0.", numCardIn);
-            numCardIn = ALSA_DFT_CARD_ID;
-            audioPreference.setCardin (ALSA_DFT_CARD_ID);
-        }
-
-        if (!alsalayer->soundCardIndexExist (numCardOut, SFL_PCM_PLAYBACK)) {
-            _debug (" Card with index %d doesn't exist or cannot playback. Switch to 0.", numCardOut);
-            numCardOut = ALSA_DFT_CARD_ID;
-            audioPreference.setCardout (ALSA_DFT_CARD_ID);
-        }
-
-        if (!alsalayer->soundCardIndexExist (numCardRing, SFL_PCM_RINGTONE)) {
-            _debug (" Card with index %d doesn't exist or cannot ringtone. Switch to 0.", numCardRing);
-            numCardRing = ALSA_DFT_CARD_ID;
-            audioPreference.setCardring (ALSA_DFT_CARD_ID);
-        }
+    if (!AlsaLayer::soundCardIndexExist (numCardIn, SFL_PCM_CAPTURE)) {
+        _debug (" Card with index %d doesn't exist or cannot capture. Switch to 0.", numCardIn);
+        numCardIn = ALSA_DFT_CARD_ID;
+        audioPreference.setCardin (ALSA_DFT_CARD_ID);
     }
 
-    _audiodriver->setErrorMessage (-1);
+    if (!AlsaLayer::soundCardIndexExist (numCardOut, SFL_PCM_PLAYBACK)) {
+        _debug (" Card with index %d doesn't exist or cannot playback. Switch to 0.", numCardOut);
+        numCardOut = ALSA_DFT_CARD_ID;
+        audioPreference.setCardout (ALSA_DFT_CARD_ID);
+    }
 
-    /* Open the audio devices */
-    _audiodriver->openDevice (numCardIn, numCardOut, numCardRing, sampleRate, frameSize,
-                              SFL_PCM_BOTH, alsaPlugin);
+    if (!AlsaLayer::soundCardIndexExist (numCardRing, SFL_PCM_RINGTONE)) {
+        _debug (" Card with index %d doesn't exist or cannot ringtone. Switch to 0.", numCardRing);
+        numCardRing = ALSA_DFT_CARD_ID;
+        audioPreference.setCardring (ALSA_DFT_CARD_ID);
+    }
 
-    /* Notify the error if there is one */
-
-    if (_audiodriver-> getErrorMessage() != -1)
-        notifyErrClient (_audiodriver -> getErrorMessage());
+    if (preferences.getAudioApi() == PULSEAUDIO && system("ps -C pulseaudio") == 0) {
+		_audiodriver = new PulseLayer;
+	} else {
+		preferences.setAudioApi (ALSA);
+        _audiodriver = new AlsaLayer;
+    }
 
     audioLayerMutexUnlock();
 }
 
 void ManagerImpl::switchAudioManager (void)
 {
-    _debug ("Manager: Switching audio manager ");
-
     audioLayerMutexLock();
-
-    if (_audiodriver == NULL) {
-    	audioLayerMutexUnlock();
-        return;
-    }
 
     bool wasStarted = _audiodriver->isStarted();
 
-    int type = _audiodriver->getLayerType();
-
-    int samplerate = _mainBuffer.getInternalSamplingRate();
-    int framesize = audioPreference.getFramesize();
-
-    _debug ("Manager: samplerate: %d, framesize %d", samplerate, framesize);
-
-    std::string alsaPlugin(audioPreference.getPlugin());
-
-    int numCardIn = audioPreference.getCardin();
-    int numCardOut = audioPreference.getCardout();
-    int numCardRing = audioPreference.getCardring();
-
-    _debug ("Manager: Deleting current layer... ");
-
+    int newType = (_audiodriver->getLayerType() == PULSEAUDIO) ? ALSA : PULSEAUDIO;
     delete _audiodriver;
-    _audiodriver = NULL;
 
-    switch (type) {
-        case ALSA:
-            _debug ("Manager: Creating Pulseaudio layer...");
-            _audiodriver = new PulseLayer (this);
-            _audiodriver->setMainBuffer (&_mainBuffer);
-            break;
-
-        case PULSEAUDIO:
-            _debug ("Manager: Creating ALSA layer...");
-            _audiodriver = new AlsaLayer (this);
-            _audiodriver->setMainBuffer (&_mainBuffer);
-            break;
-
-        default:
-            _warn ("Manager: Error: audio layer unknown");
-            break;
-    }
-
-    _audiodriver->setErrorMessage (-1);
-
-    _audiodriver->openDevice (numCardIn, numCardOut, numCardRing, samplerate, framesize,
-                              SFL_PCM_BOTH, alsaPlugin);
-
-    if (_audiodriver->getErrorMessage() != -1)
-        notifyErrClient (_audiodriver -> getErrorMessage());
-
-    _debug ("Manager: Current device: %d ", type);
+    if (newType == ALSA)
+    	_audiodriver = new AlsaLayer;
+    else
+    	_audiodriver = new PulseLayer();
 
     if (wasStarted)
         _audiodriver->startStream();
@@ -2966,7 +2532,6 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
         return;
     }
 
-
     // Only modify internal sampling rate if new sampling rate is higher
     int currentSamplerate = _mainBuffer.getInternalSamplingRate();
     if (currentSamplerate >= samplerate) {
@@ -2975,70 +2540,27 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
     	return;
     }
     else
-        _debug ("Manager: Audio sampling rate changed");
+        _debug ("Manager: Audio sampling rate changed: %d -> %d", currentSamplerate, samplerate);
 
     int type = _audiodriver->getLayerType();
-    int framesize = audioPreference.getFramesize();
-
-    _debug ("Manager: New samplerate: %d, New framesize %d", samplerate, framesize);
-
-    std::string alsaPlugin(audioPreference.getPlugin());
-
-    int numCardIn = audioPreference.getCardin();
-    int numCardOut = audioPreference.getCardout();
-    int numCardRing = audioPreference.getCardring();
-
-    _debug ("Manager: Deleting current layer...");
-
     bool wasActive = _audiodriver->isStarted();
 
-    delete _audiodriver;
-    _audiodriver = 0;
-
-    switch (type) {
-
-        case PULSEAUDIO:
-            _debug ("Manager: Creating Pulseaudio layer...");
-            _audiodriver = new PulseLayer (this);
-            _audiodriver->setMainBuffer (&_mainBuffer);
-            break;
-
-        case ALSA:
-            _debug ("Manager: Creating ALSA layer...");
-            _audiodriver = new AlsaLayer (this);
-            _audiodriver->setMainBuffer (&_mainBuffer);
-            break;
-
-        default:
-            _error ("Manager: Error: audio layer unknown");
-        	audioLayerMutexUnlock();
-        	return;
-    }
-
-    _audiodriver->setErrorMessage (-1);
-
-    _audiodriver->openDevice (numCardIn, numCardOut, numCardRing, samplerate, framesize,
-                              SFL_PCM_BOTH, alsaPlugin);
-
-    if (_audiodriver -> getErrorMessage() != -1)
-        notifyErrClient (_audiodriver -> getErrorMessage());
-
-    _debug ("Manager: Current device: %d ", type);
-
     _mainBuffer.setInternalSamplingRate(samplerate);
+
+    delete _audiodriver;
+    if (type == PULSEAUDIO)
+    	_audiodriver = new PulseLayer;
+    else
+    	_audiodriver = new AlsaLayer;
 
     unsigned int sampleRate = _audiodriver->getSampleRate();
 
     delete _telephoneTone;
-    _debug ("Manager: Load telephone tone");
-    std::string country = preferences.getZoneToneChoice();
-    _telephoneTone = new TelephoneTone (country, sampleRate);
+    _telephoneTone = new TelephoneTone(preferences.getZoneToneChoice(), sampleRate);
 
     delete _dtmfKey;
-    _debug ("Manager: Loading DTMF key with sample rate %d", sampleRate);
     _dtmfKey = new DTMF (sampleRate);
 
-    // Restart audio layer if it was active
     if (wasActive)
         _audiodriver->startStream();
 
@@ -3051,25 +2573,13 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
  */
 void ManagerImpl::initVolume ()
 {
-    _debug ("Initiate Volume");
     setSpkrVolume (audioPreference.getVolumespkr());
     setMicVolume (audioPreference.getVolumemic());
 }
 
 void ManagerImpl::setSpkrVolume (unsigned short spkr_vol)
 {
-    /* Set the manager sound volume */
     _spkr_volume = spkr_vol;
-
-    audioLayerMutexLock();
-
-    /* Only for PulseAudio */
-    PulseLayer *pulselayer = dynamic_cast<PulseLayer*> (_audiodriver);
-
-    if (pulselayer and pulselayer->getLayerType() == PULSEAUDIO)
-                pulselayer->setPlaybackVolume (spkr_vol);
-
-    audioLayerMutexUnlock();
 }
 
 void ManagerImpl::setMicVolume (unsigned short mic_vol)
@@ -3079,9 +2589,7 @@ void ManagerImpl::setMicVolume (unsigned short mic_vol)
 
 int ManagerImpl::getLocalIp2IpPort (void) const
 {
-    // The SIP port used for default account (IP to IP) calls=
     return preferences.getPortNum();
-
 }
 
 
@@ -3161,7 +2669,6 @@ std::vector<std::string> ManagerImpl::getAccountList () const
 {
     using std::vector;
     using std::string;
-    _debug ("Manager: Get account list");
     vector<string> account_order(loadAccountOrder());
 
     // The IP2IP profile is always available, and first in the list
@@ -3420,7 +2927,6 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser *parser)
             }
         }
     }
-
 
     // Initialize default UDP transport according to
     // IP to IP settings (most likely using port 5060)
@@ -3757,18 +3263,14 @@ std::map<std::string, std::string> ManagerImpl::getConferenceDetails (
 
 std::vector<std::string> ManagerImpl::getConferenceList (void) const
 {
-    _debug ("ManagerImpl::getConferenceList");
     std::vector<std::string> v;
     vectorFromMapKeys(_conferencemap, v);
 
     return v;
 }
 
-std::vector<std::string> ManagerImpl::getParticipantList (
-    const std::string& confID) const
+std::vector<std::string> ManagerImpl::getParticipantList (const std::string& confID) const
 {
-    _debug ("ManagerImpl: Get participant list %s", confID.c_str());
-
     ConferenceMap::const_iterator iter_conf = _conferencemap.find (confID);
     Conference *conf = NULL;
 
@@ -3777,7 +3279,7 @@ std::vector<std::string> ManagerImpl::getParticipantList (
 
     std::vector<std::string> v;
     if (conf) {
-        ParticipantSet participants = conf->getParticipantList();
+        const ParticipantSet &participants = conf->getParticipantList();
         std::copy(participants.begin(), participants.end(), std::back_inserter(v));;
     } else
         _warn ("Manager: Warning: Did not found conference %s", confID.c_str());

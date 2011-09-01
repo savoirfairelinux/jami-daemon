@@ -46,28 +46,27 @@
 
 #include "call.h"
 #include "conference.h"
-#include "numbercleaner.h"
 
-#include "audio/sound/tonelist.h"  // for Tone::TONEID declaration
-#include "audio/sound/audiofile.h"
-#include "audio/sound/dtmf.h" // DTMF class contained by value here
+#include "audio/sound/tone.h"  // for Tone::TONEID declaration
 #include "audio/codecs/audiocodecfactory.h" 
 
 #include "audio/mainbuffer.h"
-#include "yamlparser.h"
 #include "preferences.h"
 
-#include "im/InstantMessaging.h"
+namespace sfl {
+    class InstantMessaging;
+}
 
-class AudioLayer;
-class GuiFramework;
-class TelephoneTone;
-class VoIPLink;
-
-namespace Conf
-{
+namespace Conf {
+    class YamlParser;
     class YamlEmitter;
 }
+
+class DTMF;
+class AudioFile;
+class AudioLayer;
+class TelephoneTone;
+class VoIPLink;
 
 #ifdef USE_ZEROCONF
 class DNSService;
@@ -83,9 +82,6 @@ typedef std::map<std::string, Account*> AccountMap;
 typedef std::map<std::string, std::string> CallAccountMap;
 
 typedef std::map<std::string, Call::CallConfiguration> CallConfigMap;
-
-/** Define a type for std::string vector (waiting list, incoming not answered) */
-typedef std::set<std::string> CallIDSet;
 
 /** To send multiple string */
 typedef std::list<std::string> TokenList;
@@ -333,14 +329,6 @@ class ManagerImpl
         void removeParticipant (const std::string& call_id);
 
         /**
-         * Process remaining participant given a conference and the current call id.
-         * Mainly called when a participant is detached or hagned up
-         * @param current call id
-         * @param conference pointer
-         */
-        void processRemainingParticipant (std::string current_call_id, Conference *conf);
-
-        /**
          * Join two conference together into one unique conference
          */
         void joinConference (const std::string& conf_id1, const std::string& conf_id2);
@@ -365,12 +353,6 @@ class ManagerImpl
          * @param   code: pressed key.
          */
         bool sendDtmf (const std::string& id, char code);
-
-        /**
-         * Play the dtmf-associated sound
-         * @param code  The pressed key
-         */
-        bool playDtmf (char code);
 
         /**
          * Play a ringtone
@@ -973,11 +955,6 @@ class ManagerImpl
          */
         bool incomingCallWaiting (void);
 
-        /**
-         * Notification of incoming call when you are already busy
-         */
-        void notificationIncomingCall (void);
-
         /*
          * Inline functions to manage speaker volume control
          * Read by main thread and AudioLayer thread
@@ -1033,19 +1010,10 @@ class ManagerImpl
          */
         bool isCurrentCall (const std::string& callId);
 
-        /*
-         * Initialize audiodriver
-         */
-        bool initAudioDriver (void);
+        void initAudioDriver (void);
 
-        /**
-         * Enter the mutex for the audio layer
-         */
         void audioLayerMutexLock(void) { _audiolayerMutex.enterMutex(); }
 
-        /**
-         * Leave the mutex for audio layer
-         */
         void audioLayerMutexUnlock(void) { _audiolayerMutex.leaveMutex(); }
 
         /**
@@ -1054,6 +1022,19 @@ class ManagerImpl
          */
         std::vector<std::string> loadAccountOrder () const;
     private:
+        /**
+         * Play the dtmf-associated sound
+         * @param code  The pressed key
+         */
+        bool playDtmf (char code);
+
+        /**
+         * Process remaining participant given a conference and the current call id.
+         * Mainly called when a participant is detached or hagned up
+         * @param current call id
+         * @param conference pointer
+         */
+        void processRemainingParticipant (const std::string &current_call_id, Conference *conf);
 
         /**
          * Create config directory in home user and return configuration file path
@@ -1243,7 +1224,6 @@ class ManagerImpl
             return _imModule;
         }
 
-
         /**
          * Tell if there is a current call processed
          * @return bool True if there is a current call
@@ -1327,8 +1307,6 @@ class ManagerImpl
         // Assignment Operator
         ManagerImpl& operator= (const ManagerImpl& rh);
 
-        NumberCleaner *_cleaner;
-
         /**
           * To handle the persistent history
           */
@@ -1346,10 +1324,6 @@ class ManagerImpl
         void checkCallConfiguration (const std::string& id, const std::string& to, Call::CallConfiguration *callConfig);
 
         Conf::YamlEmitter *emitter_;
-
-        friend class SIPTest;
-        friend class ConfigurationTest;
-        friend class HistoryTest;
 };
 
 #endif // __MANAGER_H__

@@ -1747,11 +1747,11 @@ create_waiting_icon()
     return waiting_icon;
 }
 
-void
-create_menus (GtkUIManager *ui_manager, GtkWidget **widget)
+GtkWidget *
+create_menus (GtkUIManager *ui_manager)
 {
-
-    GtkWidget * menu_bar;
+    GtkAction *volumeToggle;
+    GtkWidget *menu_bar;
 
     menu_bar = gtk_ui_manager_get_widget (ui_manager, "/MenuBar");
     pickUpAction = gtk_ui_manager_get_action (ui_manager, "/MenuBar/CallMenu/PickUp");
@@ -1767,21 +1767,19 @@ create_menus (GtkUIManager *ui_manager, GtkWidget **widget)
     // Set the toggle buttons
     gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (gtk_ui_manager_get_action (ui_manager, "/MenuBar/ViewMenu/Dialpad")), eel_gconf_get_boolean (CONF_SHOW_DIALPAD));
     gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (volumeToggle), (gboolean) SHOW_VOLUME);
-
     gtk_action_set_sensitive (GTK_ACTION (volumeToggle), SHOW_ALSA_CONF);
-
-    // Disable it right now
     gtk_action_set_sensitive (GTK_ACTION (gtk_ui_manager_get_action (ui_manager, "/MenuBar/ViewMenu/Toolbar")), FALSE);
+
 
     /* Add the loading icon at the right of the toolbar. It is used for addressbook searches. */
     waitingLayer = create_waiting_icon ();
     gtk_menu_shell_append (GTK_MENU_SHELL (menu_bar), waitingLayer);
 
-    *widget = menu_bar;
+    return menu_bar;
 }
 
-void
-create_toolbar_actions (GtkUIManager *ui_manager, GtkWidget **widget)
+GtkWidget *
+create_toolbar_actions (GtkUIManager *ui_manager)
 {
     toolbar = gtk_ui_manager_get_widget (ui_manager, "/ToolbarActions");
 
@@ -1816,11 +1814,9 @@ create_toolbar_actions (GtkUIManager *ui_manager, GtkWidget **widget)
     }
 
     // Set the handler ID for the transfer
-    transfertButtonConnId
-    = g_signal_connect (G_OBJECT (transferToolbar), "toggled", G_CALLBACK (call_transfer_cb), NULL);
-    recordButtonConnId
-    = g_signal_connect (G_OBJECT (recordWidget), "toggled", G_CALLBACK (call_record), NULL);
+    transfertButtonConnId = g_signal_connect (G_OBJECT (transferToolbar), "toggled", G_CALLBACK (call_transfer_cb), NULL);
+    recordButtonConnId = g_signal_connect (G_OBJECT (recordWidget), "toggled", G_CALLBACK (call_record), NULL);
     active_calltree = current_calls;
 
-    *widget = toolbar;
+    return toolbar;
 }

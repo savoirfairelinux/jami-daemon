@@ -159,7 +159,7 @@ IAXAccount::unregisterVoIPLink()
 {
 	try {
         link_->sendUnregister (this);
-        link_->terminate();
+        dynamic_cast<IAXVoIPLink*>(link_)->terminate();
 	}
 	catch (const VoipLinkException &e) {
 		_error("IAXAccount: %s", e.what());

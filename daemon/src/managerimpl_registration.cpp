@@ -58,13 +58,6 @@ ManagerImpl::registerAccounts()
                 iter->second->registerVoIPLink();
         }
     }
-
-    audioLayerMutexLock();
-
-    if (_audiodriver->getErrorMessage() != -1)
-        notifyErrClient (_audiodriver->getErrorMessage());
-
-    audioLayerMutexUnlock();
 }
 
 
