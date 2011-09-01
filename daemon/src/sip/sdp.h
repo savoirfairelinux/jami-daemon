@@ -44,7 +44,7 @@
 #include <string>
 #include <stdexcept>
 
-#include "global.h" // FIXME: CodecOrder shouldn't be in global.h
+#include "global.h" // for CodecOrder
 class sdpMedia;
 
 namespace sfl {
@@ -62,13 +62,12 @@ typedef std::vector<std::string> CryptoOffer;
 
 class Sdp
 {
-
     public:
 
         /*
          * Class Constructor.
          *
-         * @param ip_addr
+         * @param memory pool
          */
         Sdp (pj_pool_t *pool);
 
@@ -147,7 +146,7 @@ class Sdp
          * On building an invite outside a dialog, build the local offer and create the
          * SDP negotiator instance with it.
          */
-        int createOffer (CodecOrder selectedCodecs);
+        int createOffer (const CodecOrder &selectedCodecs);
 
         /*
         * On receiving an invite outside a dialog, build the local offer and create the
@@ -155,7 +154,8 @@ class Sdp
         *
         * @param remote    The remote offer
         */
-        int receiveOffer (const pjmedia_sdp_session* remote, CodecOrder selectedCodecs);
+        int receiveOffer (const pjmedia_sdp_session* remote,
+                          const CodecOrder &selectedCodecs);
 
         /*
          * On receiving a message, check if it contains SDP and negotiate. Should be used for
@@ -409,12 +409,12 @@ class Sdp
          * Build the local media capabilities for this session
          * @param List of codec in preference order
          */
-        void setLocalMediaCapabilities (CodecOrder selectedCodecs);
+        void setLocalMediaCapabilities (const CodecOrder &selectedCodecs);
 
         /*
          * Build the local SDP offer
          */
-        int createLocalSession (CodecOrder selectedCodecs);
+        int createLocalSession (const CodecOrder &selectedCodecs);
 
         /*
          *  Mandatory field: Protocol version ("v=")

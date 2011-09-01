@@ -274,7 +274,7 @@ void Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media *med)
     med->attr[med->attr_count++] = attr_fmtp;
 }
 
-void Sdp::setLocalMediaCapabilities (CodecOrder selectedCodecs)
+void Sdp::setLocalMediaCapabilities (const CodecOrder &selectedCodecs)
 {
     sdpMedia *audio;
     // Clean it first
@@ -305,7 +305,7 @@ void Sdp::setLocalMediaCapabilities (CodecOrder selectedCodecs)
     localAudioMediaCap_.push_back (audio);
 }
 
-int Sdp::createLocalSession (CodecOrder selectedCodecs)
+int Sdp::createLocalSession (const CodecOrder &selectedCodecs)
 {
     char buffer[1000];
 
@@ -341,7 +341,7 @@ int Sdp::createLocalSession (CodecOrder selectedCodecs)
 
 }
 
-int Sdp::createOffer (CodecOrder selectedCodecs)
+int Sdp::createOffer (const CodecOrder &selectedCodecs)
 {
     pj_status_t status;
     pjmedia_sdp_neg_state state;
@@ -369,18 +369,17 @@ int Sdp::createOffer (CodecOrder selectedCodecs)
     return PJ_SUCCESS;
 }
 
-int Sdp::receiveOffer (const pjmedia_sdp_session* remote, CodecOrder selectedCodecs)
+int Sdp::receiveOffer (const pjmedia_sdp_session* remote,
+                       const CodecOrder &selectedCodecs)
 {
-    char buffer[1000];
-
     _debug ("SDP: Receiving initial offer");
 
     pj_status_t status;
 
-    if (!remote) {
+    if (!remote)
         return !PJ_SUCCESS;
-    }
 
+    char buffer[1000];
     memset(buffer, 0, 1000);
     pjmedia_sdp_print(remote, buffer, 1000);
     _debug("SDP: Remote SDP Session:\n%s", buffer);
