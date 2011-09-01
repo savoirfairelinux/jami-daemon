@@ -86,7 +86,7 @@ class EchoCancel
          * Add speaker data into internal buffer
          * \param inputData containing far-end voice data to be sent to speakers
          */
-        void putData (SFLDataFormat *inputData, int nbBytes);
+        void putData (SFLDataFormat *inputData, int samples);
 
         /**
          * Get data ready to be played by speakers
@@ -98,7 +98,7 @@ class EchoCancel
          * \param inputData containing mixed echo and voice data
          * \param outputData containing
          */
-        int process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes);
+        int process (SFLDataFormat *inputData, SFLDataFormat *outputData, int samples);
 
         /**
          * Set echo canceller internal sampling rate, reset if sampling rate changed

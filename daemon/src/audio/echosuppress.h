@@ -23,7 +23,7 @@ class EchoSuppress {
          */
         void putData (SFLDataFormat *, int);
 
-        int getData(SFLDataFormat *);
+        void getData(SFLDataFormat *);
 
     private:
 

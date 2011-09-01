@@ -39,14 +39,14 @@ class SpeexEchoCancel
          * Add speaker data into internal buffer
          * \param inputData containing far-end voice data to be sent to speakers
          */
-        void putData (SFLDataFormat *, int);
+        void putData (SFLDataFormat *, int samples);
 
         /**
          * Perform echo cancellation using internal buffers
          * \param inputData containing mixed echo and voice data
          * \param outputData containing
          */
-        int process (SFLDataFormat *, SFLDataFormat *, int);
+        int process (SFLDataFormat *, SFLDataFormat *, int samples);
 
     private:
 

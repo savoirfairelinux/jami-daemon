@@ -105,11 +105,9 @@ class DelayDetection
 
         ~DelayDetection();
 
-        void reset (void);
+        void putData (SFLDataFormat *inputData, int samples);
 
-        void putData (SFLDataFormat *inputData, int nbBytes);
-
-        void process (SFLDataFormat *inputData, int nbBytes);
+        void process (SFLDataFormat *inputData, int samples);
 
     private:
 

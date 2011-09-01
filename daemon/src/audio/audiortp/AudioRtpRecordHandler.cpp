@@ -141,14 +141,16 @@ int AudioRtpRecordHandler::processDataEncode (void)
         return 0;
     }
 
-    fadeIn (micData, bytesToGet / sizeof(SFLDataFormat), &_audioRtpRecord._micAmplFactor);
+    int samples = bytesToGet / sizeof(SFLDataFormat);
+
+    fadeIn (micData, samples, &_audioRtpRecord._micAmplFactor);
 
     if(Manager::instance().getEchoCancelState() == "enabled")
         echoCanceller.getData(micData);
 
 	_audioRtpRecord.audioProcessMutex.enter();
 	if (Manager::instance().audioPreference.getNoiseReduce())
-		_audioRtpRecord._noiseSuppress->process(micData, bytesToGet);
+		_audioRtpRecord._noiseSuppress->process(micData, samples);
 	_audioRtpRecord.audioProcessMutex.leave();
 
 #ifdef DUMP_PROCESS_DATA_ENCODE
@@ -203,7 +205,7 @@ void AudioRtpRecordHandler::processDataDecode (unsigned char *spkrData, unsigned
     }
 
 	if(Manager::instance().getEchoCancelState() == "enabled")
-	    echoCanceller.putData(out, outSamples * sizeof (SFLDataFormat));
+	    echoCanceller.putData(out, outSamples);
     Manager::instance().getMainBuffer()->putData (out, outSamples * sizeof (SFLDataFormat), id_);
 }
 

@@ -211,10 +211,10 @@ void EchoCancel::reset()
     _processedByte = 0;
 }
 
-void EchoCancel::putData (SFLDataFormat *inputData, int nbBytes)
+void EchoCancel::putData (SFLDataFormat *inputData, int samples)
 {
 
-    _delayDetector.putData (inputData, nbBytes);
+    _delayDetector.putData (inputData, samples * sizeof(SFLDataFormat));
 
     if (_spkrStoped) {
         _debug ("EchoCancel: Flush data");
@@ -224,7 +224,7 @@ void EchoCancel::putData (SFLDataFormat *inputData, int nbBytes)
     }
 
     // Put data in speaker ring buffer
-    _spkrData->Put (inputData, nbBytes);
+    _spkrData->Put (inputData, samples * sizeof(SFLDataFormat));
 }
 
 
@@ -241,25 +241,25 @@ int EchoCancel::getData (SFLDataFormat *outputData)
     return copied;
 }
 
-int EchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes)
+int EchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputData, int samples)
 {
 
-    _delayDetector.process (inputData, nbBytes);
+    _delayDetector.process (inputData, samples);
 
     if (_spkrStoped) {
-        memcpy(outputData, inputData, nbBytes);
-        return nbBytes;
+        memcpy(outputData, inputData, samples * sizeof(SFLDataFormat));
+        return samples;
     }
 
     int byteSize = _smplPerFrame*sizeof (SFLDataFormat);
 
     // init temporary buffers
-    memset (_tmpSpkr, 0, BUFF_SIZE*sizeof (SFLDataFormat));
-    memset (_tmpMic, 0, BUFF_SIZE*sizeof (SFLDataFormat));
-    memset (_tmpOut, 0, BUFF_SIZE*sizeof (SFLDataFormat));
+    memset (_tmpSpkr, 0, sizeof(_tmpSpkr));
+    memset (_tmpMic, 0, sizeof (_tmpMic));
+    memset (_tmpOut, 0, sizeof (_tmpOut));
 
     // Put mic data in ringbuffer
-    _micData->Put (inputData, nbBytes);
+    _micData->Put (inputData, samples * sizeof(SFLDataFormat));
 
     // Store data for synchronization
     int spkrAvail = _spkrData->AvailForGet();

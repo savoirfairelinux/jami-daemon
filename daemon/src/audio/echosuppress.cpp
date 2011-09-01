@@ -5,12 +5,15 @@
  *      Author: asavard
  */
 
+#include <cassert>
+#include <stdexcept>
+
 #include "echosuppress.h"
 #include "pj/pool.h"
 #include "pj/os.h"
-#include <stdexcept>
 
 #define ECHO_CANCEL_MEM_SIZE 1000
+#define SAMPLES_PER_FRAME 160
 
 EchoSuppress::EchoSuppress(pj_pool_t *pool)
 {
@@ -23,7 +26,7 @@ EchoSuppress::EchoSuppress(pj_pool_t *pool)
     if (!pj_thread_is_registered())
     	_warn("EchoCancel: Thread not registered...");
 
-    if (pjmedia_echo_create(pool, 8000, 160, 250, 0, PJMEDIA_ECHO_SIMPLE, &echoState) != PJ_SUCCESS)
+    if (pjmedia_echo_create(pool, 8000, SAMPLES_PER_FRAME, 250, 0, PJMEDIA_ECHO_SIMPLE, &echoState) != PJ_SUCCESS)
     	throw std::runtime_error("EchoCancel: Error: Could not create echo canceller");
 }
 
@@ -31,16 +34,15 @@ EchoSuppress::~EchoSuppress()
 {
 }
 
-void EchoSuppress::putData (SFLDataFormat *inputData, int nbBytes)
+void EchoSuppress::putData (SFLDataFormat *inputData, int samples)
 {
+	assert(samples = SAMPLES_PER_FRAME);
 	if (pjmedia_echo_playback(echoState, reinterpret_cast<pj_int16_t *>(inputData)) != PJ_SUCCESS)
         _warn("EchoCancel: Warning: Problem while putting input data");
 }
 
-int EchoSuppress::getData(SFLDataFormat *outputData)
+void EchoSuppress::getData(SFLDataFormat *outputData)
 {
     if (pjmedia_echo_capture(echoState, reinterpret_cast<pj_int16_t *>(outputData), 0) != PJ_SUCCESS)
         _warn("EchoCancel: Warning: Problem while getting output data");
-
-    return 0;
 }

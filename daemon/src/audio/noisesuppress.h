@@ -36,33 +36,19 @@
 
 class NoiseSuppress
 {
-
     public:
 
         NoiseSuppress (int smplPerFrame, int samplingRate);
 
         ~NoiseSuppress (void);
 
-        /**
-         * Reset noise suppressor internal state at runtime. Usefull when making a new call
-         */
-        void reset (void);
-
-        void process (SFLDataFormat *data, int nbBytes);
+        void process (SFLDataFormat *data, int samples);
 
     private:
 
-        void initNewNoiseSuppressor (int _smplPerFrame, int samplingRate);
-
-        /**
-		 * Noise reduction processing state
-		 */
         SpeexPreprocessState *_noiseState;
 
         int _smplPerFrame;
-
-        int _samplingRate;
-
 };
 
 #endif
