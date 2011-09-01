@@ -618,4 +618,7 @@ gboolean dbus_start_recorded_file_playback(const gchar *);
 void dbus_stop_recorded_file_playback(const gchar *);
 
 
+void dbus_start_video_preview(int width, int height, const char *format);
+
+void dbus_stop_video_preview();
 #endif
