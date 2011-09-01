@@ -80,7 +80,6 @@ AlsaLayer::AlsaLayer ()
     , playbackHandle_ (NULL)
     , ringtoneHandle_ (NULL)
     , captureHandle_ (NULL)
-    , periodSize_ (160)
     , audioPlugin_ (audioPref.getPlugin())
     , IDSoundCards_ ()
     , is_playback_prepared_ (false)
@@ -199,16 +198,26 @@ AlsaLayer::stopStream (void)
 /////////////////   ALSA PRIVATE FUNCTIONS   ////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////
 
+/*
+ * GCC extension : statement expression
+ *
+ * ALSA_CALL(function_call, error_string) will:
+ * 		call the function
+ * 		display an error if the function failed
+ * 		return the function return value
+ */
+#define ALSA_CALL(call, error) ({ \
+			int err = call; \
+			if (err < 0) \
+				_error("ALSA: "error": %s", snd_strerror(err)); \
+			err; \
+		})
+
 void AlsaLayer::stopCaptureStream (void)
 {
-    if (captureHandle_) {
-        int err = snd_pcm_drop (captureHandle_);
-        if (err < 0)
-            _error("ALSA: couldn't stop capture: %s", snd_strerror (err));
-        else {
-            is_capture_running_ = false;
-            is_capture_prepared_ = false;
-        }
+    if (captureHandle_ && ALSA_CALL(snd_pcm_drop (captureHandle_), "couldn't stop capture") >= 0) {
+		is_capture_running_ = false;
+		is_capture_prepared_ = false;
     }
 }
 
@@ -217,39 +226,24 @@ void AlsaLayer::closeCaptureStream (void)
     if (is_capture_prepared_ and is_capture_running_)
         stopCaptureStream ();
 
-    if (is_capture_open_) {
-        int err = snd_pcm_close (captureHandle_);
-        if (err < 0)
-            _error("ALSA: Couldn't close capture: %s", snd_strerror (err));
-        else
-            is_capture_open_ = false;
-    }
+    if (is_capture_open_ && ALSA_CALL(snd_pcm_close (captureHandle_), "Couldn't close capture") >= 0)
+		is_capture_open_ = false;
 }
 
 void AlsaLayer::startCaptureStream (void)
 {
-    if (captureHandle_ and not is_capture_running_) {
-        int err = snd_pcm_start (captureHandle_);
-        if (err < 0)
-            _error("ALSA: Couldn't start capture: %s",  snd_strerror (err));
-        else
+    if (captureHandle_ and not is_capture_running_)
+        if (ALSA_CALL(snd_pcm_start (captureHandle_), "Couldn't start capture") >= 0)
             is_capture_running_ = true;
-    }
 }
 
 void AlsaLayer::stopPlaybackStream (void)
 {
-    if (ringtoneHandle_ and is_playback_running_) {
-        int err = snd_pcm_drop (ringtoneHandle_);
-        if (err < 0)
-            _error("ALSA: Couldn't stop ringtone: %s", snd_strerror (err));
-    }
+    if (ringtoneHandle_ and is_playback_running_)
+    	ALSA_CALL(snd_pcm_drop(ringtoneHandle_), "Couldn't stop ringtone");
 
     if (playbackHandle_ and is_playback_running_) {
-        int err = snd_pcm_drop (playbackHandle_);
-        if (err < 0)
-            _error("ALSA: Couldn't stop playback: %s", snd_strerror (err));
-        else {
+    	if (ALSA_CALL(snd_pcm_drop(playbackHandle_), "Couldn't stop playback") >= 0) {
             is_playback_running_ = false;
             is_playback_prepared_ = false;
         }
@@ -263,17 +257,10 @@ void AlsaLayer::closePlaybackStream (void)
         stopPlaybackStream();
 
     if (is_playback_open_) {
-        int err;
-        if (ringtoneHandle_) {
-        	err = snd_pcm_close (ringtoneHandle_);
-        	if (err < 0)
-        		_error("ALSA: Couldn't stop ringtone: %s", snd_strerror (err));
-        }
+        if (ringtoneHandle_)
+        	ALSA_CALL(snd_pcm_close(ringtoneHandle_), "Couldn't stop ringtone");
 
-        err = snd_pcm_close (playbackHandle_);
-        if (err < 0)
-            _error("ALSA: Coulnd't close playback: %s", snd_strerror (err));
-        else
+        if (ALSA_CALL(snd_pcm_close(playbackHandle_), "Coulnd't close playback") >= 0)
             is_playback_open_ = false;
     }
 
@@ -281,148 +268,65 @@ void AlsaLayer::closePlaybackStream (void)
 
 void AlsaLayer::startPlaybackStream (void)
 {
-    if (playbackHandle_ and not is_playback_running_) {
-        int err = snd_pcm_start (playbackHandle_);
-        if (err  < 0)
-            _error("ALSA: Couldn't start playback: %s", snd_strerror (err));
-        else
+    if (playbackHandle_ and not is_playback_running_)
+    	if (ALSA_CALL(snd_pcm_start(playbackHandle_), "Couldn't start playback") >= 0)
             is_playback_running_ = true;
-    }
 }
 
 void AlsaLayer::prepareCaptureStream (void)
 {
-    if (is_capture_open_ and not is_capture_prepared_) {
-        int err = snd_pcm_prepare (captureHandle_);
-        if (err < 0)
-            _error("ALSA: Couldn't prepare capture: %s", snd_strerror (err));
-        else
+    if (is_capture_open_ and not is_capture_prepared_)
+    	if (ALSA_CALL(snd_pcm_prepare(captureHandle_), "Couldn't prepare capture") >= 0)
             is_capture_prepared_ = true;
-    }
 }
 
 void AlsaLayer::preparePlaybackStream (void)
 {
-    if (is_playback_open_ and not is_playback_prepared_) {
-        int err = snd_pcm_prepare (playbackHandle_);
-        if (err < 0)
-            _error("ALSA: Couldn't prepare playback: %s", snd_strerror (err));
-        else
+    if (is_playback_open_ and not is_playback_prepared_)
+    	if (ALSA_CALL(snd_pcm_prepare(playbackHandle_), "Couldn't prepare playback") >= 0)
             is_playback_prepared_ = true;
-    }
 }
 
 bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle)
 {
-    snd_pcm_hw_params_t *hwparams = NULL;
+#define TRY(call, error) do { \
+		if (ALSA_CALL(call, error) < 0) \
+			return false; \
+	} while(0)
+
+    snd_pcm_hw_params_t *hwparams;
+    snd_pcm_hw_params_alloca(&hwparams);
+
+    snd_pcm_uframes_t periodSize = 160;
+    unsigned int periods = 4;
+
+#define HW pcm_handle, hwparams /* hardware parameters */
+    TRY(snd_pcm_hw_params_any 					(HW), 								"hwparams init");
+    TRY(snd_pcm_hw_params_set_access 			(HW, SND_PCM_ACCESS_RW_INTERLEAVED), "access type");
+    TRY(snd_pcm_hw_params_set_format 			(HW, SND_PCM_FORMAT_S16_LE), 		"sample format");
+    TRY(snd_pcm_hw_params_set_rate_near 		(HW, &audioSampleRate_, NULL), 		"sample rate");
+    TRY(snd_pcm_hw_params_set_channels			(HW, 1), 							"channel count");
+    TRY(snd_pcm_hw_params_set_period_size_near	(HW, &periodSize, NULL), 			"period time");
+    TRY(snd_pcm_hw_params_set_periods_near 		(HW, &periods, NULL), 				"periods number");
+    TRY(snd_pcm_hw_params 						(HW), 								"hwparams");
+#undef HW
+
+	_debug ("ALSA: %s using sampling rate %dHz",
+			(snd_pcm_stream(pcm_handle) == SND_PCM_STREAM_PLAYBACK) ? "playback" : "capture",
+			audioSampleRate_);
+
     snd_pcm_sw_params_t *swparams = NULL;
-    int format;
-    int periods = 4;
-    int periodsize = 160;
+    snd_pcm_sw_params_alloca(&swparams);
 
-    /* Allocate the snd_pcm_hw_params_t struct */
-    snd_pcm_hw_params_malloc (&hwparams);
+#define SW pcm_handle, swparams /* software parameters */
+    snd_pcm_sw_params_current 					(SW);
+    TRY(snd_pcm_sw_params_set_start_threshold	(SW, periodSize * 2),	"start threshold");
+    TRY(snd_pcm_sw_params 						(SW), 					"sw parameters");
+#undef SW
 
-    periodSize_ = periodsize;
-    /* Full configuration space */
-
-    int err;
-    if ((err = snd_pcm_hw_params_any (pcm_handle, hwparams)) < 0) {
-        _debug ("Audio: Error: Cannot initialize hardware parameter structure (%s)", snd_strerror (err));
-        return false;
-    }
-
-    if ((err = snd_pcm_hw_params_set_access (pcm_handle, hwparams, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
-        _debug ("Audio: Error: Cannot set access type (%s)", snd_strerror (err));
-        return false;
-    }
-
-    /* Set sample format */
-    format = SND_PCM_FORMAT_S16_LE;
-
-    if ((err = snd_pcm_hw_params_set_format (pcm_handle, hwparams, (snd_pcm_format_t) format)) < 0) {
-        _debug ("Audio: Error: Cannot set sample format (%s)", snd_strerror (err));
-        return false;
-    }
-
-    /* Set sample rate. If we can't set to the desired exact value, we set to the nearest acceptable */
-    int dir = 0;
-
-    unsigned int exact_ivalue = audioSampleRate_;
-
-    if ((err = snd_pcm_hw_params_set_rate_near (pcm_handle, hwparams, &exact_ivalue, &dir) < 0)) {
-        _error("Alsa: Cannot set sample rate (%s)", snd_strerror (err));
-        return false;
-    } else
-        _debug ("Alsa: Set audio rate to %d", audioSampleRate_);
-
-    if (dir != 0) {
-        _error("Alsa: The chosen rate %d Hz is not supported by your hardware.Using %d Hz instead. ", audioSampleRate_, exact_ivalue);
-        //audioSampleRate_ = exact_ivalue;
-        // FIXME
-    }
-
-    /* Set the number of channels */
-    if ((err = snd_pcm_hw_params_set_channels (pcm_handle, hwparams, 1)) < 0) {
-        _debug ("Audio: Error: Cannot set channel count (%s)", snd_strerror (err));
-        return false;
-    }
-
-    /* Set the buffer size in frames */
-    unsigned long exact_lvalue = periodsize;
-
-    dir = 0;
-
-    if ((err = snd_pcm_hw_params_set_period_size_near (pcm_handle, hwparams, &exact_lvalue, &dir)) < 0) {
-        _debug ("Audio: Error: Cannot set period time (%s)", snd_strerror (err));
-        return false;
-    }
-
-    if (dir != 0)
-        _warn("Alsa: The chosen period size %lu bytes is not supported by your hardware.Using %lu instead. ", periodsize, exact_lvalue);
-
-    periodSize_ = exact_lvalue;
-    /* Set the number of fragments */
-    exact_ivalue = periods;
-    dir = 0;
-
-    if ((err = snd_pcm_hw_params_set_periods_near (pcm_handle, hwparams, &exact_ivalue, &dir)) < 0) {
-        _debug ("Audio: Error: Cannot set periods number (%s)", snd_strerror (err));
-        return false;
-    }
-
-    if (dir != 0)
-        _debug ("Audio: Warning: The chosen period number %i bytes is not supported by your hardware.Using %i instead. ", periods, exact_ivalue);
-
-    periods = exact_ivalue;
-
-    /* Set the hw parameters */
-
-    if ((err = snd_pcm_hw_params (pcm_handle, hwparams)) < 0) {
-        _debug ("Audio: Error: Cannot set hw parameters (%s)", snd_strerror (err));
-        return false;
-    }
-
-    snd_pcm_hw_params_free (hwparams);
-
-    /* Set the sw parameters */
-    snd_pcm_sw_params_malloc (&swparams);
-    snd_pcm_sw_params_current (pcm_handle, swparams);
-
-    /* Set the start threshold */
-
-    if ((err = snd_pcm_sw_params_set_start_threshold(pcm_handle, swparams, periodSize_ * 2)) < 0) {
-        _debug ("Audio: Error: Cannot set start threshold (%s)", snd_strerror (err));
-        return false;
-    }
-
-    if ((err = snd_pcm_sw_params (pcm_handle, swparams)) < 0) {
-        _debug ("Audio: Error: Cannot set sw parameters (%s)", snd_strerror (err));
-        return false;
-    }
-
-    snd_pcm_sw_params_free (swparams);
     return true;
+
+#undef TRY
 }
 
 //TODO	first frame causes broken pipe (underrun) because not enough data are send --> make the handle wait to be ready
@@ -444,18 +348,14 @@ AlsaLayer::write (void* buffer, int length, snd_pcm_t * handle)
 			snd_pcm_status_t* status;
 			snd_pcm_status_alloca (&status);
 
-			err = snd_pcm_status (handle, status);
-			if (err < 0)
-				_error("ALSA: Cannot get playback handle status (%s)" , snd_strerror (err));
-			else if (snd_pcm_status_get_state (status) == SND_PCM_STATE_XRUN) {
-				stopPlaybackStream();
-				preparePlaybackStream();
-				startPlaybackStream();
-			}
+			if (ALSA_CALL(snd_pcm_status (handle, status), "Cannot get playback handle status") >= 0)
+				if (snd_pcm_status_get_state (status) == SND_PCM_STATE_XRUN) {
+					stopPlaybackStream();
+					preparePlaybackStream();
+					startPlaybackStream();
+				}
 
-			err = snd_pcm_writei (handle, buffer , frames);
-			if (err < 0)
-				_error("ALSA: XRUN handling failed : %s", snd_strerror(err));
+			ALSA_CALL(snd_pcm_writei (handle, buffer , frames), "XRUN handling failed");
 			break;
 		}
 
@@ -481,7 +381,6 @@ AlsaLayer::read (void* buffer, int toCopy)
     	return snd_pcm_frames_to_bytes(captureHandle_, frames);
 
 	switch (err) {
-
 		case -EPIPE:
 		case -ESTRPIPE:
 		case -EIO:
@@ -489,14 +388,12 @@ AlsaLayer::read (void* buffer, int toCopy)
 			snd_pcm_status_t* status;
 			snd_pcm_status_alloca (&status);
 
-			err = snd_pcm_status(captureHandle_, status);
-			if (err < 0)
-				_error("ALSA: Get status failed: %s", snd_strerror(err));
-			else if (snd_pcm_status_get_state (status) == SND_PCM_STATE_XRUN) {
-				stopCaptureStream ();
-				prepareCaptureStream ();
-				startCaptureStream ();
-			}
+			if (ALSA_CALL(snd_pcm_status(captureHandle_, status), "Get status failed") >= 0)
+				if (snd_pcm_status_get_state (status) == SND_PCM_STATE_XRUN) {
+					stopCaptureStream ();
+					prepareCaptureStream ();
+					startCaptureStream ();
+				}
 
 			_error("ALSA: XRUN capture ignored (%s)", snd_strerror (err));
 			break;
@@ -506,9 +403,6 @@ AlsaLayer::read (void* buffer, int toCopy)
 			_error("ALSA: Can't capture, EPERM (%s)", snd_strerror (err));
 			prepareCaptureStream ();
 			startCaptureStream ();
-			break;
-
-		default:
 			break;
 	}
 
@@ -544,13 +438,12 @@ AlsaLayer::getSoundCardsInfo (int stream)
     if (snd_card_next (&numCard) < 0 || numCard < 0)
         return cards_id;
 
-    while (numCard >= 0) {
+    do {
         std::stringstream ss;
         ss << numCard;
-        std::string name= "hw:";
-        name.append (ss.str());
+        std::string name = "hw:" + ss.str();
 
-        if (snd_ctl_open (&handle, name.c_str(), 0) == 0) {
+        if (snd_ctl_open (&handle, name.c_str(), 0) != 0) {
             if (snd_ctl_card_info (handle, info) == 0) {
                 snd_pcm_info_set_device (pcminfo , 0);
                 snd_pcm_info_set_stream (pcminfo, (stream == SFL_PCM_CAPTURE) ? SND_PCM_STREAM_CAPTURE : SND_PCM_STREAM_PLAYBACK);
@@ -573,10 +466,8 @@ AlsaLayer::getSoundCardsInfo (int stream)
 
             snd_ctl_close (handle);
         }
+    } while (snd_card_next (&numCard) >= 0 && numCard >= 0);
 
-        if (snd_card_next (&numCard) < 0)
-            break;
-    }
 
     return cards_id;
 }
@@ -651,14 +542,12 @@ void AlsaLayer::capture(void)
     	int outBytes = outSamples * sizeof (SFLDataFormat);
         SFLDataFormat* rsmpl_out = (SFLDataFormat*) malloc (outBytes);
         converter_->resample ( (SFLDataFormat*) in, rsmpl_out, mainBufferSampleRate, audioSampleRate_, toGetSamples);
-        dcblocker_.process(rsmpl_out, outBytes);
+        dcblocker_.process(rsmpl_out, rsmpl_out, outSamples);
         getMainBuffer()->putData (rsmpl_out, outBytes);
         free (rsmpl_out);
     } else {
-        SFLDataFormat* filter_out = (SFLDataFormat*) malloc (toGetBytes);
-        dcblocker_.process(in, filter_out, toGetBytes);
-		getMainBuffer()->putData (filter_out, toGetBytes);
-		free (filter_out);
+        dcblocker_.process(in, in, toGetSamples);
+		getMainBuffer()->putData (in, toGetBytes);
     }
 
 end:

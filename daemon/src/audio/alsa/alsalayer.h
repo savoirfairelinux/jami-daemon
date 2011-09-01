@@ -44,6 +44,9 @@ class AlsaThread;
  * @brief Main sound class. Manages the data transfers between the application and the hardware.
  */
 
+/** Associate a sound card index to its string description */
+typedef std::pair<int , std::string> HwIDPair;
+
 class AlsaLayer : public AudioLayer
 {
     public:
@@ -70,14 +73,6 @@ class AlsaLayer : public AudioLayer
          * ALSA Library API
          */
         void stopStream (void);
-
-        /**
-         * Get data from the capture device
-         * @param buffer The buffer for data
-         * @param toCopy The number of bytes to get
-         * @return int The number of bytes acquired ( 0 if an error occured)
-         */
-        int getMic (void * buffer, int toCopy);
 
         /**
          * Concatenate two strings. Used to build a valid pcm device name.
@@ -115,14 +110,6 @@ class AlsaLayer : public AudioLayer
          * @return	int	  Its index
          */
         int soundCardGetIndex (const std::string &description);
-
-        /**
-         * Get the current audio plugin.
-         * @return std::string  The name of the audio plugin
-         */
-        std::string getAudioPlugin (void) const {
-            return audioPlugin_;
-        }
 
         void playback(int maxSamples);
         void capture(void);
@@ -175,9 +162,6 @@ class AlsaLayer : public AudioLayer
          * Number of audio cards on which ringtone stream has been opened
          */
         int indexRing_;
-
-        /** Associate a sound card index to its string description */
-        typedef std::pair<int , std::string> HwIDPair;
 
 
         // Copy Constructor
@@ -236,11 +220,6 @@ class AlsaLayer : public AudioLayer
          * ALSA Library API
          */
         snd_pcm_t* captureHandle_;
-
-        /**
-         * Alsa parameter - Size of a period in the hardware ring buffer
-         */
-        snd_pcm_uframes_t periodSize_;
 
         /**
          * name of the alsa audio plugin used

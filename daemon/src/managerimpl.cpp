@@ -436,34 +436,31 @@ bool ManagerImpl::hangupConference (const std::string& id)
 
 
 //THREAD=Main
-bool ManagerImpl::onHoldCall (const std::string& callId)
+void ManagerImpl::onHoldCall (const std::string& callId)
 {
-    bool returnValue = false;
-
     _debug ("Manager: Put call %s on hold", callId.c_str());
 
     stopTone();
 
-    std::string current_call_id = getCurrentCallId();
+    std::string current_call_id(getCurrentCallId());
 
     try {
-
     	if (getConfigFromCall (callId) == Call::IPtoIP) {
     		/* Direct IP to IP call */
-    		returnValue = SIPVoIPLink::instance ()-> onhold (callId);
+            SIPVoIPLink::instance ()-> onhold (callId);
     	}
     	else {
     		/* Classic call, attached to an account */
             std::string account_id(getAccountFromCall (callId));
 
-    		if (account_id.empty()) {
-                _error ("Manager: Account ID %s or callid %s doesn't exists in call onHold", account_id.c_str(), callId.c_str());
-    			return false;
-    		}
-    		returnValue = getAccountLink (account_id)->onhold (callId);
+            if (account_id.empty()) {
+                _debug ("Manager: Account ID %s or callid %s doesn't exists in call onHold", account_id.c_str(), callId.c_str());
+                return;
+            }
+    		getAccountLink(account_id)->onhold(callId);
     	}
     }
-    catch (const VoipLinkException &e){
+    catch (const VoipLinkException &e) {
     	_error("Manager: Error: %s", e.what());
     }
 
@@ -481,22 +478,19 @@ bool ManagerImpl::onHoldCall (const std::string& callId)
     _dbus.getCallManager()->callStateChanged (callId, "HOLD");
 
     getMainBuffer()->stateInfo();
-
-    return returnValue;
 }
 
 //THREAD=Main
-bool ManagerImpl::offHoldCall (const std::string& callId)
+void ManagerImpl::offHoldCall (const std::string& callId)
 {
     std::string accountId;
-    bool returnValue = true;
     std::string codecName;
 
     _debug ("Manager: Put call %s off hold", callId.c_str());
 
     stopTone();
 
-    std::string currentCallId = getCurrentCallId();
+    std::string currentCallId(getCurrentCallId());
 
     //Place current call on hold if it isn't
 
@@ -514,7 +508,7 @@ bool ManagerImpl::offHoldCall (const std::string& callId)
 
     /* Direct IP to IP call */
     if (getConfigFromCall (callId) == Call::IPtoIP)
-        returnValue = SIPVoIPLink::instance ()-> offhold (callId);
+        SIPVoIPLink::instance ()-> offhold (callId);
     else {
         /* Classic call, attached to an account */
         accountId = getAccountFromCall (callId);
@@ -525,16 +519,14 @@ bool ManagerImpl::offHoldCall (const std::string& callId)
         if (call)
         {
             isRec = call->isRecording();
-            returnValue = getAccountLink (accountId)->offhold (callId);
+            getAccountLink(accountId)->offhold(callId);
         }
     }
 
     _dbus.getCallManager()->callStateChanged (callId, isRec ? "UNHOLD_RECORD" : "UNHOLD_CURRENT");
 
     if (participToConference (callId)) {
-        std::string currentAccountId;
-
-        currentAccountId = getAccountFromCall (callId);
+        std::string currentAccountId(getAccountFromCall(callId));
         Call *call = getAccountLink (currentAccountId)->getCall (callId);
 
         if (call)
@@ -546,8 +538,6 @@ bool ManagerImpl::offHoldCall (const std::string& callId)
     addStream(callId);
 
     getMainBuffer()->stateInfo();
-
-    return returnValue;
 }
 
 //THREAD=Main
@@ -2388,11 +2378,6 @@ int32_t ManagerImpl::getAudioManager (void) const
     return preferences.getAudioApi();
 }
 
-
-void ManagerImpl::notifyErrClient (int32_t errCode)
-{
-	_dbus.getConfigurationManager()->errorAlert(errCode);
-}
 
 int ManagerImpl::getAudioDeviceIndex (const std::string &name)
 {

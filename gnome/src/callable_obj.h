@@ -35,7 +35,6 @@
 #include <glib/gprintf.h>
 #include <stdlib.h>
 #include <time.h>
-#include <pthread.h>
 
 /**
  * @enum history_state

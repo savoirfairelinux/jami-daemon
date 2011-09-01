@@ -402,7 +402,7 @@ IAXVoIPLink::peerHungup (const std::string& id)
 
 
 
-bool
+void
 IAXVoIPLink::onhold (const std::string& id)
 {
     IAXCall* call = getIAXCall (id);
@@ -411,21 +411,19 @@ IAXVoIPLink::onhold (const std::string& id)
 
     Manager::instance().getMainBuffer()->unBindAll (call->getCallId());
 
-    //if (call->getState() == Call::Hold) { _debug("Call is already on hold"); return false; }
-
     mutexIAX_.enterMutex();
-    iax_quelch_moh (call->getSession() , MUSIC_ONHOLD);
+    iax_quelch_moh (call->getSession(), MUSIC_ONHOLD);
     mutexIAX_.leaveMutex();
 
     call->setState (Call::Hold);
-    return true;
 }
 
-bool
+void
 IAXVoIPLink::offhold (const std::string& id)
 {
     IAXCall* call = getIAXCall (id);
-    CHK_VALID_CALL;
+    if (call == NULL)
+    	throw VoipLinkException("Call does not exist");
 
     Manager::instance().addStream (call->getCallId());
 
@@ -434,7 +432,6 @@ IAXVoIPLink::offhold (const std::string& id)
     mutexIAX_.leaveMutex();
     audiolayer_->startStream();
     call->setState (Call::Active);
-    return true;
 }
 
 bool

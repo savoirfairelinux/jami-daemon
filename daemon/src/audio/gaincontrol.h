@@ -23,9 +23,9 @@ public:
     /**
      * Apply addaptive gain factor on input signal
      * /param Input audio buffer
-     * /param Input buffer length
+     * /param Input samples
      */
-    void process(SFLDataFormat *, int);
+    void process(SFLDataFormat *, int samples);
 
 private:
 
