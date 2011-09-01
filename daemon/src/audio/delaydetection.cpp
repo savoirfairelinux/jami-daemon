@@ -113,8 +113,6 @@ DelayDetection::DelayDetection() : _internalState (WaitForSpeaker), _decimationF
 
 }
 
-DelayDetection::~DelayDetection() {}
-
 void DelayDetection::reset()
 {
     _nbMicSampleStored = 0;
@@ -168,11 +166,6 @@ void DelayDetection::putData (SFLDataFormat *inputData, int nbBytes)
 
 }
 
-int DelayDetection::getData (SFLDataFormat *outputData UNUSED)
-{
-    return 0;
-}
-
 void DelayDetection::process (SFLDataFormat *inputData, int nbBytes)
 {
 
@@ -210,11 +203,6 @@ void DelayDetection::process (SFLDataFormat *inputData, int nbBytes)
     int maxIndex = getMaxIndex (_correlationResult, _spkrDownSize);
 
     _debug ("MaxIndex: %d", maxIndex);
-}
-
-int DelayDetection::process (SFLDataFormat *intputData UNUSED, SFLDataFormat *outputData UNUSED, int nbBytes UNUSED)
-{
-    return 0;
 }
 
 void DelayDetection::crossCorrelate (float *ref, float *seg, float *res, int refSize, int segSize)
@@ -317,10 +305,8 @@ void DelayDetection::downsampleData (float *input, float *output, int nbSamples,
 
 void DelayDetection::bandpassFilter (float *input, int nbSamples)
 {
-
-    for (int i = 0; i < nbSamples; i++) {
+    for (int i = 0; i < nbSamples; i++)
         input[i] = _bandpassFilter.getOutputSample (input[i]);
-    }
 }
 
 
@@ -330,12 +316,11 @@ int DelayDetection::getMaxIndex (float *data, int size)
     float max = 0.0;
     int k = 0;
 
-    for (int i = 0; i < size; i++) {
+    for (int i = 0; i < size; i++)
         if (data[i] >= max) {
             max = data[i];
             k = i;
         }
-    }
 
     return k;
 }

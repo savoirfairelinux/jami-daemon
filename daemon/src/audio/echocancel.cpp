@@ -241,9 +241,6 @@ int EchoCancel::getData (SFLDataFormat *outputData)
     return copied;
 }
 
-void EchoCancel::process (SFLDataFormat *data UNUSED, int nbBytes UNUSED) {}
-
-
 int EchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes)
 {
 

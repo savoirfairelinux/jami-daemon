@@ -32,7 +32,8 @@
 #ifndef DELAYDETECTION_H
 #define DELAYDETECTION_H
 
-#include "algorithm.h"
+#include "global.h"
+#include <vector>
 
 // Template size in samples for correlation
 #define WINDOW_SIZE 256
@@ -95,7 +96,7 @@ class FirFilter
 };
 
 
-class DelayDetection : public Algorithm
+class DelayDetection
 {
 
     public:
@@ -104,15 +105,11 @@ class DelayDetection : public Algorithm
 
         ~DelayDetection();
 
-        virtual void reset (void);
+        void reset (void);
 
-        virtual void putData (SFLDataFormat *inputData, int nbBytes);
+        void putData (SFLDataFormat *inputData, int nbBytes);
 
-        virtual int getData (SFLDataFormat *getData);
-
-        virtual void process (SFLDataFormat *inputData, int nbBytes);
-
-        virtual int process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes);
+        void process (SFLDataFormat *inputData, int nbBytes);
 
     private:
 

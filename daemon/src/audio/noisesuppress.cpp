@@ -28,6 +28,7 @@
  *  as that of the covered work.
  */
 
+#include <cassert>
 #include "noisesuppress.h"
 
 NoiseSuppress::NoiseSuppress (int smplPerFrame, int samplingRate) : _noiseState (NULL)
@@ -45,29 +46,14 @@ NoiseSuppress::~NoiseSuppress()
 
 void NoiseSuppress::reset (void)
 {
-
     speex_preprocess_state_destroy (_noiseState);
-
     initNewNoiseSuppressor (_smplPerFrame, _samplingRate);
 }
 
-void NoiseSuppress::putData (SFLDataFormat * /*inputData*/, int /*nbBytes*/) {}
-
-int NoiseSuppress::getData (SFLDataFormat * /*outputData*/)
+void NoiseSuppress::process (SFLDataFormat *data, int nBytes)
 {
-    return 0;
-}
-
-void NoiseSuppress::process (SFLDataFormat *data, int /*nbBytes*/)
-{
-    if (_noiseState)
-        speex_preprocess_run (_noiseState, data);
-}
-
-int NoiseSuppress::process (SFLDataFormat * /*inputData*/,
-        SFLDataFormat * /*outputData*/, int /*nbBytes*/)
-{
-    return 0;
+	assert(_smplPerFrame == nBytes / sizeof(SFLDataFormat));
+	speex_preprocess_run (_noiseState, data);
 }
 
 void NoiseSuppress::initNewNoiseSuppressor (int smplPerFrame, int samplingRate)

@@ -70,20 +70,10 @@ SpeexEchoCancel::SpeexEchoCancel()
 
 SpeexEchoCancel::~SpeexEchoCancel()
 {
-    _debug ("EchoCancel: Delete echo canceller");
-
     speex_echo_state_destroy (_echoState);
-    _echoState = NULL;
-
     speex_preprocess_state_destroy (_preState);
-    _preState = NULL;
-
     delete _micData;
-    _micData = NULL;
-
     delete _spkrData;
-    _spkrData = NULL;
-
 #ifdef DUMP_ECHOCANCEL_INTERNAL_DATA
     delete micFile;
     delete spkrFile;
@@ -91,11 +81,6 @@ SpeexEchoCancel::~SpeexEchoCancel()
     delete spkrProcessFile;
     delete echoFile;
 #endif
-
-}
-
-void SpeexEchoCancel::reset()
-{
 
 }
 
@@ -111,33 +96,20 @@ void SpeexEchoCancel::putData (SFLDataFormat *inputData, int nbBytes)
     spkrFile->write(reinterpret_cast<char *>(inputData), nbBytes);
 #endif
 
-    // Put data in speaker ring buffer
     _spkrData->Put (inputData, nbBytes);
-
-    if( _spkrData->AvailForGet()) {
-
-    }
-
-    _debug("EchoCancel: Put spkrData data, updated size %d, put nbBytes", _spkrData->AvailForGet());
 }
-
-int SpeexEchoCancel::getData(SFLDataFormat * /*outputData*/) { return 0; }
-
-void SpeexEchoCancel::process (SFLDataFormat *data UNUSED, int nbBytes UNUSED) {}
 
 int SpeexEchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes)
 {
-
-    if (_spkrStopped) {
+    if (_spkrStopped)
         return 0;
-    }
 
-    int byteSize = EC_FRAME_SIZE * sizeof(SFLDataFormat);
+    const int byteSize = EC_FRAME_SIZE * sizeof(SFLDataFormat);
 
     // init temporary buffers
-    memset (_tmpSpkr, 0, 5000 * sizeof(SFLDataFormat));
-    memset (_tmpMic, 0, 5000 * sizeof(SFLDataFormat));
-    memset (_tmpOut, 0, 5000 * sizeof(SFLDataFormat));
+    memset (_tmpSpkr, 0, sizeof(_tmpSpkr));
+    memset (_tmpMic, 0, sizeof(_tmpMic));
+    memset (_tmpOut, 0, sizeof(_tmpOut));
 
 #ifdef DUMP_ECHOCANCEL_INTERNAL_DATA
     micFile->write(reinterpret_cast<char *>(inputData), nbBytes);

@@ -68,7 +68,7 @@
 #define MIC_ADAPT_SIZE 100 // 1 sec
 #define SPKR_ADAPT_SIZE 20 // 200 ms
 
-class EchoCancel : public Algorithm
+class EchoCancel
 {
 
     public:
@@ -80,30 +80,25 @@ class EchoCancel : public Algorithm
         /**
          * Reset echocanceller internal state at runtime. Usefull when making a new call
          */
-        virtual void reset (void);
+        void reset (void);
 
         /**
          * Add speaker data into internal buffer
          * \param inputData containing far-end voice data to be sent to speakers
          */
-        virtual void putData (SFLDataFormat *inputData, int nbBytes);
+        void putData (SFLDataFormat *inputData, int nbBytes);
 
         /**
          * Get data ready to be played by speakers
          */
-        virtual int getData (SFLDataFormat *outputData);
-
-        /**
-         * Unused
-         */
-        virtual void process (SFLDataFormat *data, int nbBytes);
+        int getData (SFLDataFormat *outputData);
 
         /**
          * Perform echo cancellation using internal buffers
          * \param inputData containing mixed echo and voice data
          * \param outputData containing
          */
-        virtual int process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes);
+        int process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes);
 
         /**
          * Set echo canceller internal sampling rate, reset if sampling rate changed

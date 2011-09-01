@@ -31,7 +31,6 @@ noinst_HEADERS = \
 		audiorecorder.h \
 		audiolayer.h \
 	 	recordable.h \
-		algorithm.h \
 		delaydetection.h \
 		echocancel.h \
 		echosuppress.h \

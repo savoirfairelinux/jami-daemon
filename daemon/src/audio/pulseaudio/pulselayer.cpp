@@ -523,7 +523,7 @@ void PulseLayer::readFromMic (void)
 	if (resample)
 		converter_->resample((SFLDataFormat*)data, mic_buffer_, mainBufferSampleRate, audioSampleRate_, samples);
 
-	dcblocker_.process(resample ? mic_buffer_ : (SFLDataFormat*)data, mic_buffer_, bytes);
+	dcblocker_.process(mic_buffer_, resample ? mic_buffer_ : (SFLDataFormat*)data, samples);
 	getMainBuffer()->putData(mic_buffer_, bytes);
 
 end:

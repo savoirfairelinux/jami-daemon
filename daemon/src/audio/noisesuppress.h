@@ -32,10 +32,9 @@
 #define NOISESUPPRESS_H
 
 #include <speex/speex_preprocess.h>
-#include "algorithm.h"
+#include "global.h"
 
-
-class NoiseSuppress : public Algorithm
+class NoiseSuppress
 {
 
     public:
@@ -45,37 +44,19 @@ class NoiseSuppress : public Algorithm
         ~NoiseSuppress (void);
 
         /**
-             * Reset noise suppressor internal state at runtime. Usefull when making a new call
-             */
-        virtual void reset (void);
-
-        /**
-         * Unused
-        */
-        virtual void putData (SFLDataFormat *inputData, int nbBytes);
-
-        /**
-        * Unused
+         * Reset noise suppressor internal state at runtime. Usefull when making a new call
          */
-        virtual int getData (SFLDataFormat *outputData);
+        void reset (void);
 
-        /**
-         * Unused
-         */
-        virtual void process (SFLDataFormat *data, int nbBytes);
-
-        /**
-         * Unused
-        */
-        virtual int process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes);
+        void process (SFLDataFormat *data, int nbBytes);
 
     private:
 
         void initNewNoiseSuppressor (int _smplPerFrame, int samplingRate);
 
         /**
-             * Noise reduction processing state
-             */
+		 * Noise reduction processing state
+		 */
         SpeexPreprocessState *_noiseState;
 
         int _smplPerFrame;

@@ -43,13 +43,11 @@ AudioLoop::AudioLoop() :_buffer (0),  _size (0), _pos (0), _sampleRate (0)
 AudioLoop::~AudioLoop()
 {
     delete [] _buffer;
-    _buffer = 0;
 }
 
 void
-AudioLoop::getNext (SFLDataFormat* output, int samples, short volume)
+AudioLoop::getNext (SFLDataFormat* output, int total_samples, short volume)
 {
-    int block;
     int pos = _pos;
 
     if(_size == 0) {
@@ -57,28 +55,28 @@ AudioLoop::getNext (SFLDataFormat* output, int samples, short volume)
     	return;
     }
 
-    while (samples) {
-        block = samples;
+    while (total_samples) {
+        int samples = total_samples;
 
-        if (block > (_size-pos)) {
-            block = _size-pos;
+        if (samples > (_size-pos)) {
+            samples = _size-pos;
         }
 
-        memcpy(output, _buffer+pos, block*sizeof (SFLDataFormat)); // short>char conversion
+        memcpy(output, _buffer+pos, samples*sizeof (SFLDataFormat)); // short>char conversion
 
         if (volume!=100) {
-            for (int i=0; i<block; i++) {
+            for (int i=0; i<samples; i++) {
                 *output = (*output * volume) /100;
                 output++;
             }
         } else {
-            output += block; // this is the destination...
+            output += samples; // this is the destination...
         }
 
         // should adjust sound here, in output???
-        pos = (pos + block) % _size;
+        pos = (pos + samples) % _size;
 
-        samples -= block;
+        total_samples -= samples;
     }
 
     _pos = pos;

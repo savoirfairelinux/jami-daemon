@@ -9,43 +9,23 @@
 #define ECHOSUPPRESS_H_
 
 #include "pjmedia/echo.h"
-#include "pj/pool.h"
+#include "global.h"
 
-#include "audio/algorithm.h"
-
-class EchoSuppress : public Algorithm {
+class EchoSuppress {
     public:
         EchoSuppress(pj_pool_t *pool);
 
-        virtual ~EchoSuppress();
-
-        virtual void reset (void);
+        ~EchoSuppress();
 
         /**
          * Add speaker data into internal buffer
          * \param inputData containing far-end voice data to be sent to speakers
          */
-        virtual void putData (SFLDataFormat *, int);
+        void putData (SFLDataFormat *, int);
 
-        virtual int getData(SFLDataFormat *);
+        int getData(SFLDataFormat *);
 
-        /**
-         * Unused
-         */
-        virtual void process (SFLDataFormat *, int);
-
-        /**
-         * Perform echo cancellation using internal buffers
-         * \param inputData containing mixed echo and voice data
-         * \param outputData containing
-         */
-        virtual int process (SFLDataFormat *, SFLDataFormat *, int);
     private:
-
-        /**
-         * Memory pool for echo cancellation
-         */
-        pj_pool_t *echoCancelPool;
 
         /**
          * The internal state of the echo canceller

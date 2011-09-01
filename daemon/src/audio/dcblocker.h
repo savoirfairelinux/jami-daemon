@@ -31,12 +31,9 @@
 #ifndef DCBLOCKER_H
 #define DCBLOCKER_H
 
-#include "algorithm.h"
 #include "global.h"
 
-#include <vector>
-
-class DcBlocker : public Algorithm
+class DcBlocker
 {
 
     public:
@@ -45,20 +42,9 @@ class DcBlocker : public Algorithm
 
         ~DcBlocker();
 
-        virtual void reset (void);
+        void reset (void);
 
-        /**
-         * Unused
-         */
-        virtual void putData (SFLDataFormat *inputData, int nbBytes);
-
-        /**
-         * Unused
-         */
-        virtual int getData (SFLDataFormat *outputData);
-
-        virtual void process (SFLDataFormat *inputData, int nbBytes);
-        virtual int process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes);
+        void process (SFLDataFormat *out, SFLDataFormat *in, int samples);
 
     private:
 

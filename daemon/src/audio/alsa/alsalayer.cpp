@@ -542,14 +542,12 @@ void AlsaLayer::capture(void)
     	int outBytes = outSamples * sizeof (SFLDataFormat);
         SFLDataFormat* rsmpl_out = (SFLDataFormat*) malloc (outBytes);
         converter_->resample ( (SFLDataFormat*) in, rsmpl_out, mainBufferSampleRate, audioSampleRate_, toGetSamples);
-        dcblocker_.process(rsmpl_out, outBytes);
+        dcblocker_.process(rsmpl_out, rsmpl_out, outSamples);
         getMainBuffer()->putData (rsmpl_out, outBytes);
         free (rsmpl_out);
     } else {
-        SFLDataFormat* filter_out = (SFLDataFormat*) malloc (toGetBytes);
-        dcblocker_.process(in, filter_out, toGetBytes);
-		getMainBuffer()->putData (filter_out, toGetBytes);
-		free (filter_out);
+        dcblocker_.process(in, in, toGetSamples);
+		getMainBuffer()->putData (in, toGetBytes);
     }
 
 end:
