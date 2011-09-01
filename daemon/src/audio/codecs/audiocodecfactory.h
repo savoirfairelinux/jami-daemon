@@ -44,8 +44,6 @@
 typedef std::pair<sfl::Codec* , void*> CodecHandlePointer;
 /** Maps a pointer on an audiocodec object to a payload */
 typedef std::map<AudioCodecType , sfl::Codec*> CodecsMap;
-/** A codec is identified by its payload. A payload is associated with a name. */
-typedef std::map<AudioCodecType, std::string> CodecMap;
 
 /*
  * @file codecdescriptor.h
