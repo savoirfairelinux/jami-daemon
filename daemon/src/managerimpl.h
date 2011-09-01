@@ -83,9 +83,6 @@ typedef std::map<std::string, std::string> CallAccountMap;
 
 typedef std::map<std::string, Call::CallConfiguration> CallConfigMap;
 
-/** Define a type for std::string vector (waiting list, incoming not answered) */
-typedef std::set<std::string> CallIDSet;
-
 /** To send multiple string */
 typedef std::list<std::string> TokenList;
 

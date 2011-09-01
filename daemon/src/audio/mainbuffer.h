@@ -87,8 +87,6 @@ class MainBuffer
 
         void unBindAll (const std::string & call_id);
 
-        void unBindAllHalfDuplexOut (const std::string & process_id);
-
         void putData (void *buffer, int toCopy, const std::string & call_id = Call::DEFAULT_ID);
 
         int getData (void *buffer, int toCopy, const std::string & call_id = Call::DEFAULT_ID);
@@ -100,8 +98,6 @@ class MainBuffer
         void flush (const std::string & call_id = Call::DEFAULT_ID);
 
         void flushAllBuffers();
-
-        void flushDefault();
 
         void syncBuffers (const std::string & call_id);
 
@@ -135,7 +131,7 @@ class MainBuffer
 
         int availForGetByID (const std::string & call_id, const std::string & reader_id);
 
-        int discardByID (int toDiscard, const std::string & call_id, const std::string & reader_id);
+        void discardByID (int toDiscard, const std::string & call_id, const std::string & reader_id);
 
         void flushByID (const std::string & call_id, const std::string & reader_id);
 

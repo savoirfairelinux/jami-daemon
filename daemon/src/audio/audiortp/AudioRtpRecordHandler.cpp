@@ -88,7 +88,6 @@ void AudioRtpRecordHandler::setRtpMedia (AudioCodec* audioCodec)
 void AudioRtpRecordHandler::initBuffers()
 {
     // Set sampling rate, main buffer choose the highest one
-    // Manager::instance().getMainBuffer()->setInternalSamplingRate (codecSampleRate);
     Manager::instance().audioSamplingRateChanged(_audioRtpRecord._codecSampleRate);
 
     // initialize SampleRate converter using AudioLayer's sampling rate

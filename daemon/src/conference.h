@@ -81,13 +81,6 @@ class Conference: public Recordable
         std::string getStateStr();
 
         /**
-         * Return the number of participant for this conference
-         */
-        int getNbParticipants() {
-            return _nbParticipant;
-        }
-
-        /**
          * Add a new participant to the conference
          */
         void add (std::string participant_id);
@@ -105,7 +98,7 @@ class Conference: public Recordable
         /**
          * Get the participant list for this conference
          */
-        ParticipantSet getParticipantList();
+        const ParticipantSet &getParticipantList();
 
         /**
          * Get recording file ID

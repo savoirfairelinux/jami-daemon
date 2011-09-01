@@ -790,7 +790,6 @@ sflphone_keypad (guint keyval, gchar * key)
                         dbus_transfert (c);
                         time (&c->_time_stop);
                         calltree_remove_call(current_calls, c, NULL);
-			calllist_remove_call(current_calls, c->_callID);
                         break;
                     case 65307: /* ESCAPE */
                         sflphone_unset_transfert ();
