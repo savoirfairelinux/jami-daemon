@@ -46,6 +46,7 @@
 
 #include <sys/stat.h>
 #include <gtk/gtk.h>
+#include <gdk/gdkkeysyms.h>
 #include <eel-gconf-extensions.h>
 
 /** Local variables */
@@ -129,7 +130,7 @@ main_window_ask_quit ()
 }
 
 static gboolean
-on_key_released (GtkWidget *widget, GdkEventKey *event, gpointer user_data UNUSED)
+on_key_released (GtkWidget *widget UNUSED, GdkEventKey *event, gpointer user_data UNUSED)
 {
     if (focus_is_on_searchbar)
         return TRUE;

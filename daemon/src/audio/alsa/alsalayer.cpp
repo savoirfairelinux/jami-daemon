@@ -80,7 +80,6 @@ AlsaLayer::AlsaLayer ()
     , playbackHandle_ (NULL)
     , ringtoneHandle_ (NULL)
     , captureHandle_ (NULL)
-    , periodSize_ (160)
     , audioPlugin_ (audioPref.getPlugin())
     , IDSoundCards_ ()
     , is_playback_prepared_ (false)
@@ -314,115 +313,45 @@ void AlsaLayer::preparePlaybackStream (void)
 
 bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle)
 {
-    snd_pcm_hw_params_t *hwparams = NULL;
+#define TRY(call, error) do { \
+		int err = call; \
+		if (err < 0) { \
+			_error("ALSA: Cannot set "error": %s", snd_strerror(err)); \
+			return false; \
+		} \
+	} while(0)
+
+    snd_pcm_hw_params_t *hwparams;
+    snd_pcm_hw_params_alloca(&hwparams);
+
+    snd_pcm_uframes_t periodSize = 160;
+    unsigned int periods = 4;
+
+#define HW pcm_handle, hwparams /* hardware parameters */
+    TRY(snd_pcm_hw_params_any 					(HW), 								"hwparams init");
+    TRY(snd_pcm_hw_params_set_access 			(HW, SND_PCM_ACCESS_RW_INTERLEAVED), "access type");
+    TRY(snd_pcm_hw_params_set_format 			(HW, SND_PCM_FORMAT_S16_LE), 		"sample format");
+    TRY(snd_pcm_hw_params_set_rate_near 		(HW, &audioSampleRate_, NULL), 		"sample rate");
+    TRY(snd_pcm_hw_params_set_channels			(HW, 1), 							"channel count");
+    TRY(snd_pcm_hw_params_set_period_size_near	(HW, &periodSize, NULL), 			"period time");
+    TRY(snd_pcm_hw_params_set_periods_near 		(HW, &periods, NULL), 				"periods number");
+    TRY(snd_pcm_hw_params 						(HW), 								"hwparams");
+#undef HW
+
+	_debug ("ALSA: Using sampling rate %dHz", audioSampleRate_);
+
     snd_pcm_sw_params_t *swparams = NULL;
-    int format;
-    int periods = 4;
-    int periodsize = 160;
+    snd_pcm_sw_params_alloca(&swparams);
 
-    /* Allocate the snd_pcm_hw_params_t struct */
-    snd_pcm_hw_params_malloc (&hwparams);
+#define SW pcm_handle, swparams /* software parameters */
+    snd_pcm_sw_params_current 					(SW);
+    TRY(snd_pcm_sw_params_set_start_threshold	(SW, periodSize * 2),	"start threshold");
+    TRY(snd_pcm_sw_params 						(SW), 					"sw parameters");
+#undef SW
 
-    periodSize_ = periodsize;
-    /* Full configuration space */
-
-    int err;
-    if ((err = snd_pcm_hw_params_any (pcm_handle, hwparams)) < 0) {
-        _debug ("Audio: Error: Cannot initialize hardware parameter structure (%s)", snd_strerror (err));
-        return false;
-    }
-
-    if ((err = snd_pcm_hw_params_set_access (pcm_handle, hwparams, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
-        _debug ("Audio: Error: Cannot set access type (%s)", snd_strerror (err));
-        return false;
-    }
-
-    /* Set sample format */
-    format = SND_PCM_FORMAT_S16_LE;
-
-    if ((err = snd_pcm_hw_params_set_format (pcm_handle, hwparams, (snd_pcm_format_t) format)) < 0) {
-        _debug ("Audio: Error: Cannot set sample format (%s)", snd_strerror (err));
-        return false;
-    }
-
-    /* Set sample rate. If we can't set to the desired exact value, we set to the nearest acceptable */
-    int dir = 0;
-
-    unsigned int exact_ivalue = audioSampleRate_;
-
-    if ((err = snd_pcm_hw_params_set_rate_near (pcm_handle, hwparams, &exact_ivalue, &dir) < 0)) {
-        _error("Alsa: Cannot set sample rate (%s)", snd_strerror (err));
-        return false;
-    } else
-        _debug ("Alsa: Set audio rate to %d", audioSampleRate_);
-
-    if (dir != 0) {
-        _error("Alsa: The chosen rate %d Hz is not supported by your hardware.Using %d Hz instead. ", audioSampleRate_, exact_ivalue);
-        //audioSampleRate_ = exact_ivalue;
-        // FIXME
-    }
-
-    /* Set the number of channels */
-    if ((err = snd_pcm_hw_params_set_channels (pcm_handle, hwparams, 1)) < 0) {
-        _debug ("Audio: Error: Cannot set channel count (%s)", snd_strerror (err));
-        return false;
-    }
-
-    /* Set the buffer size in frames */
-    unsigned long exact_lvalue = periodsize;
-
-    dir = 0;
-
-    if ((err = snd_pcm_hw_params_set_period_size_near (pcm_handle, hwparams, &exact_lvalue, &dir)) < 0) {
-        _debug ("Audio: Error: Cannot set period time (%s)", snd_strerror (err));
-        return false;
-    }
-
-    if (dir != 0)
-        _warn("Alsa: The chosen period size %lu bytes is not supported by your hardware.Using %lu instead. ", periodsize, exact_lvalue);
-
-    periodSize_ = exact_lvalue;
-    /* Set the number of fragments */
-    exact_ivalue = periods;
-    dir = 0;
-
-    if ((err = snd_pcm_hw_params_set_periods_near (pcm_handle, hwparams, &exact_ivalue, &dir)) < 0) {
-        _debug ("Audio: Error: Cannot set periods number (%s)", snd_strerror (err));
-        return false;
-    }
-
-    if (dir != 0)
-        _debug ("Audio: Warning: The chosen period number %i bytes is not supported by your hardware.Using %i instead. ", periods, exact_ivalue);
-
-    periods = exact_ivalue;
-
-    /* Set the hw parameters */
-
-    if ((err = snd_pcm_hw_params (pcm_handle, hwparams)) < 0) {
-        _debug ("Audio: Error: Cannot set hw parameters (%s)", snd_strerror (err));
-        return false;
-    }
-
-    snd_pcm_hw_params_free (hwparams);
-
-    /* Set the sw parameters */
-    snd_pcm_sw_params_malloc (&swparams);
-    snd_pcm_sw_params_current (pcm_handle, swparams);
-
-    /* Set the start threshold */
-
-    if ((err = snd_pcm_sw_params_set_start_threshold(pcm_handle, swparams, periodSize_ * 2)) < 0) {
-        _debug ("Audio: Error: Cannot set start threshold (%s)", snd_strerror (err));
-        return false;
-    }
-
-    if ((err = snd_pcm_sw_params (pcm_handle, swparams)) < 0) {
-        _debug ("Audio: Error: Cannot set sw parameters (%s)", snd_strerror (err));
-        return false;
-    }
-
-    snd_pcm_sw_params_free (swparams);
     return true;
+
+#undef TRY
 }
 
 //TODO	first frame causes broken pipe (underrun) because not enough data are send --> make the handle wait to be ready
