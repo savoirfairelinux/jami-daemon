@@ -157,7 +157,7 @@ class AudioLayer
          * Sample Rate SFLphone should send sound data to the sound card
          * The value can be set in the user config file- now: 44100HZ
          */
-        const unsigned int audioSampleRate_;
+        unsigned int audioSampleRate_;
 
         /**
          * Lock for the entire audio layer
