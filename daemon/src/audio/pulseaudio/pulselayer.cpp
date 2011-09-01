@@ -96,7 +96,7 @@ void sink_input_info_callback (pa_context *c UNUSED, const pa_sink_info *i, int 
 			i->flags & PA_SINK_LATENCY ? "LATENCY " : "",
 			i->flags & PA_SINK_HARDWARE ? "HARDWARE" : "");
 
-	((PulseLayer *)userdata)->getSinkList()->push_back (i->name);
+	((PulseLayer *)userdata)->getSinkList().push_back (i->name);
 }
 
 void source_input_info_callback (pa_context *c UNUSED, const pa_source_info *i, int eol, void *userdata)
@@ -130,7 +130,7 @@ void source_input_info_callback (pa_context *c UNUSED, const pa_source_info *i, 
 			i->flags & PA_SOURCE_LATENCY ? "LATENCY " : "",
 			i->flags & PA_SOURCE_HARDWARE ? "HARDWARE" : "");
 
-	((PulseLayer *)userdata)->getSourceList()->push_back (i->name);
+	((PulseLayer *)userdata)->getSourceList().push_back (i->name);
 }
 
 void context_changed_callback (pa_context* c, pa_subscription_event_type_t t, uint32_t idx UNUSED, void* userdata)
@@ -139,13 +139,13 @@ void context_changed_callback (pa_context* c, pa_subscription_event_type_t t, ui
     switch (t) {
         case PA_SUBSCRIPTION_EVENT_SINK:
             _debug ("Audio: PA_SUBSCRIPTION_EVENT_SINK");
-            ( (PulseLayer *) userdata)->getSinkList()->clear();
-            pa_context_get_sink_info_list (c, sink_input_info_callback,  userdata);
+            ( (PulseLayer *) userdata)->getSinkList().clear();
+            pa_context_get_sink_info_list (c, sink_input_info_callback, userdata);
             break;
         case PA_SUBSCRIPTION_EVENT_SOURCE:
             _debug ("Audio: PA_SUBSCRIPTION_EVENT_SOURCE");
-            ( (PulseLayer *) userdata)->getSourceList()->clear();
-            pa_context_get_source_info_list (c, source_input_info_callback,  userdata);
+            ( (PulseLayer *) userdata)->getSourceList().clear();
+            pa_context_get_source_info_list (c, source_input_info_callback, userdata);
             break;
         case PA_SUBSCRIPTION_EVENT_SINK_INPUT:
             _debug ("Audio: PA_SUBSCRIPTION_EVENT_SINK_INPUT");
@@ -176,10 +176,10 @@ void context_changed_callback (pa_context* c, pa_subscription_event_type_t t, ui
             break;
         case PA_SUBSCRIPTION_EVENT_REMOVE:
             _debug ("Audio: PA_SUBSCRIPTION_EVENT_REMOVE");
-            ( (PulseLayer *) userdata)->getSinkList()->clear();
-            ( (PulseLayer *) userdata)->getSourceList()->clear();
-            pa_context_get_sink_info_list (c, sink_input_info_callback,  userdata);
-            pa_context_get_source_info_list (c, source_input_info_callback,  userdata);
+            ( (PulseLayer *) userdata)->getSinkList().clear();
+            ( (PulseLayer *) userdata)->getSourceList().clear();
+            pa_context_get_sink_info_list (c, sink_input_info_callback, userdata);
+            pa_context_get_source_info_list (c, source_input_info_callback, userdata);
             break;
         case PA_SUBSCRIPTION_EVENT_TYPE_MASK:
             _debug ("Audio: PA_SUBSCRIPTION_EVENT_TYPE_MASK");
@@ -287,13 +287,13 @@ void PulseLayer::context_state_callback (pa_context* c, void* user_data)
 
 void PulseLayer::updateSinkList (void)
 {
-    getSinkList()->clear();
+    sinkList_.clear();
     pa_context_get_sink_info_list (context_, sink_input_info_callback,  this);
 }
 
 void PulseLayer::updateSourceList (void)
 {
-    getSourceList()->clear();
+    sourceList_.clear();
     pa_context_get_source_info_list (context_, source_input_info_callback, this);
 }
 

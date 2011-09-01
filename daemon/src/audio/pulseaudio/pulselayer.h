@@ -47,12 +47,12 @@ class PulseLayer : public AudioLayer
         PulseLayer ();
         ~PulseLayer (void);
 
-        std::list<std::string>* getSinkList (void) {
-            return &sinkList_;
+        std::list<std::string>& getSinkList (void) {
+            return sinkList_;
         }
 
-        std::list<std::string>* getSourceList (void) {
-            return &sourceList_;
+        std::list<std::string>& getSourceList (void) {
+            return sourceList_;
         }
 
         /**
