@@ -67,18 +67,6 @@ class SIPCall : public Call
          */
         ~SIPCall ();
 
-        void setInvSession (pjsip_inv_session* inv) {
-            _invSession = inv;
-        }
-
-        pjsip_inv_session *getInvSession() {
-            return _invSession;
-        }
-
-        void replaceInvSession (pjsip_inv_session *inv) {
-            _invSession = inv;
-        }
-
         /**
          * Return the local SDP session
          */
@@ -100,6 +88,11 @@ class SIPCall : public Call
             return pool_;
         }
 
+        /**
+         * The invite session to be reused in case of transfer
+         */
+        pjsip_inv_session *inv;
+
     private:
 
         // Copy Constructor
@@ -109,39 +102,9 @@ class SIPCall : public Call
         SIPCall& operator= (const SIPCall& rh);
 
         /**
-         * Call specific memory pool initialization size (based on empirical data)
-         */
-        static const int CALL_MEMPOOL_INIT_SIZE;
-
-        /**
-         * Call specific memory pool incrementation size
-         */
-        static const int CALL_MEMPOOL_INC_SIZE;
-
-        /**
-         * Call identifier
-         */
-        int _cid;
-
-        /**
-         * Domain identifier
-         */
-        int _did;
-
-        /**
-         * Transaction identifier
-         */
-        int _tid;
-
-        /**
          * Audio Rtp Session factory
          */
         sfl::AudioRtpFactory * _audiortp;
-
-        /**
-         * The invite session to be reused in case of transfer
-         */
-        pjsip_inv_session *_invSession;
 
         /**
          * The pool to allocate memory, released once call hang up
