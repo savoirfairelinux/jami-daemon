@@ -136,7 +136,7 @@ class IAXVoIPLink : public VoIPLink
          * @return bool true on success
          *		  false otherwise
          */
-        virtual bool onhold (const std::string& id);
+        virtual void onhold (const std::string& id);
 
         /**
          * Put a call off hold
@@ -144,7 +144,7 @@ class IAXVoIPLink : public VoIPLink
          * @return bool true on success
          *		  false otherwise
          */
-        virtual bool offhold (const std::string& id);
+        virtual void offhold (const std::string& id);
 
         /**
          * Transfer a call

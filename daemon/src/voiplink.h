@@ -127,14 +127,14 @@ class VoIPLink
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool onhold (const std::string& id) = 0;
+        virtual void onhold (const std::string& id) = 0;
 
         /**
          * Resume a call from hold state
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool offhold (const std::string& id) = 0;
+        virtual void offhold (const std::string& id) = 0;
 
         /**
          * Transfer a call to specified URI

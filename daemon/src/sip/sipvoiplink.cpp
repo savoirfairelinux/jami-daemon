@@ -515,14 +515,14 @@ void SIPVoIPLink::sendUnregister (Account *a)
 
     pjsip_regc *regc = account->getRegistrationInfo();
     if (!regc)
-    	throw VoipLinkException("Registration structure is NULL");
+        throw VoipLinkException("Registration structure is NULL");
 
     pjsip_tx_data *tdata = NULL;
     if (pjsip_regc_unregister (regc, &tdata) != PJ_SUCCESS)
-    	throw VoipLinkException("Unable to unregister sip account");
+        throw VoipLinkException("Unable to unregister sip account");
 
     if (pjsip_regc_send (regc, tdata) != PJ_SUCCESS)
-    	throw VoipLinkException("Unable to send request to unregister sip account");
+        throw VoipLinkException("Unable to send request to unregister sip account");
 
     account->setRegister (false);
 }
@@ -546,9 +546,8 @@ Call *SIPVoIPLink::newOutgoingCall (const std::string& id, const std::string& to
     // If toUri is not a well formated sip URI, use account information to process it
     std::string toUri;
     if((toUrl.find("sip:") != std::string::npos) or
-    		toUrl.find("sips:") != std::string::npos) {
+    		toUrl.find("sips:") != std::string::npos)
     	toUri = toUrl;
-    }
     else
         toUri = account->getToUri (toUrl);
 
@@ -590,7 +589,7 @@ Call *SIPVoIPLink::newOutgoingCall (const std::string& id, const std::string& to
 		call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
 	} catch (...) {
         delete call;
-		throw VoipLinkException ("Could not start rtp session for early media");
+        throw VoipLinkException ("Could not start rtp session for early media");
 	}
 
 	// init file name according to peer phone number
@@ -600,7 +599,7 @@ Call *SIPVoIPLink::newOutgoingCall (const std::string& id, const std::string& to
 	call->getLocalSDP()->setLocalIP (addrSdp);
 	if (call->getLocalSDP()->createOffer(account->getActiveCodecs()) != PJ_SUCCESS) {
 		delete call;
-		throw VoipLinkException ("Could not create local sdp offer for new call");
+        throw VoipLinkException ("Could not create local sdp offer for new call");
 	}
 
 	if (SIPStartCall(call)) {
@@ -629,10 +628,10 @@ SIPVoIPLink::answer (Call *c)
 	_debug ("UserAgent: SDP negotiation success! : call %s ", call->getCallId().c_str());
 	// Create and send a 200(OK) response
 	if (pjsip_inv_answer (inv_session, PJSIP_SC_OK, NULL, NULL, &tdata) != PJ_SUCCESS)
-		throw VoipLinkException("Could not init invite request answer (200 OK)");
+        throw VoipLinkException("Could not init invite request answer (200 OK)");
 
 	if (pjsip_inv_send_msg (inv_session, tdata) != PJ_SUCCESS)
-		throw VoipLinkException("Could not send invite request answer (200 OK)");
+        throw VoipLinkException("Could not send invite request answer (200 OK)");
 
 	call->setConnectionState (Call::Connected);
 	call->setState (Call::Active);
@@ -650,7 +649,7 @@ SIPVoIPLink::hangup (const std::string& id)
 
     pjsip_inv_session *inv = call->inv;
     if (inv == NULL)
-    	throw VoipLinkException("No invite session for this call");
+        throw VoipLinkException("No invite session for this call");
 
     // Looks for sip routes
     if (not (account->getServiceRoute().empty())) {
@@ -675,7 +674,7 @@ SIPVoIPLink::hangup (const std::string& id)
             call->getAudioRtp()->stop();
     }
     catch (...) {
-    	throw VoipLinkException("Could not stop audio rtp session");
+        throw VoipLinkException("Could not stop audio rtp session");
     }
 
     removeCall (id);
@@ -707,7 +706,7 @@ SIPVoIPLink::peerHungup (const std::string& id)
         }
     }
     catch (...) {
-    	throw VoipLinkException("Could not stop audio rtp session");
+        throw VoipLinkException("Could not stop audio rtp session");
     }
 
     removeCall (id);
@@ -717,12 +716,11 @@ void
 SIPVoIPLink::cancel (const std::string& id)
 {
     _info ("UserAgent: Cancel call %s", id.c_str());
-
     removeCall (id);
 }
 
 
-bool
+void
 SIPVoIPLink::onhold (const std::string& id)
 {
     SIPCall *call = getSIPCall(id);
@@ -749,10 +747,10 @@ SIPVoIPLink::onhold (const std::string& id)
     sdpSession->addAttributeToLocalAudioMedia("sendonly");
 
     // Create re-INVITE with new offer
-    return SIPSessionReinvite (call) == PJ_SUCCESS;
+    SIPSessionReinvite (call);
 }
 
-bool
+void
 SIPVoIPLink::offhold (const std::string& id)
 {
     _debug ("UserAgent: retrive call from hold status");
@@ -801,10 +799,9 @@ SIPVoIPLink::offhold (const std::string& id)
 
     /* Create re-INVITE with new offer */
     if (SIPSessionReinvite (call) != PJ_SUCCESS)
-        return false;
+        return;
 
     call->setState (Call::Active);
-    return true;
 }
 
 bool
@@ -1060,10 +1057,8 @@ SIPVoIPLink::dtmfSipInfo (SIPCall *call, char code)
 
     // Create a temporary memory pool
     pj_pool_t *tmp_pool = pj_pool_create (&_cp->factory, "tmpdtmf10", 1000, 1000, NULL);
-    if (tmp_pool == NULL) {
-    	_debug ("UserAgent: Could not initialize memory pool while sending DTMF");
-    	return;
-    }
+    if (tmp_pool == NULL)
+    	throw VoipLinkException("UserAgent: Could not initialize memory pool while sending DTMF");
 
     pj_str_t methodName;
     pj_strdup2 (tmp_pool, &methodName, "INFO");
@@ -1439,23 +1434,22 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const std::string& id, const std::string& to
 // Private functions
 ///////////////////////////////////////////////////////////////////////////////
 
-bool SIPVoIPLink::pjsipInit()
+void SIPVoIPLink::pjsipInit()
 {
     // Init PJLIB: must be called before any call to the pjsip library
-    pj_status_t status = pj_init();
-    // Use pjsip macros for sanity check
-    PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
+    if (pj_init() != PJ_SUCCESS)
+        return;
 
     // Init PJLIB-UTIL library
-    status = pjlib_util_init();
-    PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
+    if (pjlib_util_init() != PJ_SUCCESS)
+        return;
 
     // Set the pjsip log level
     pj_log_set_level (PJ_LOG_LEVEL);
 
     // Init PJNATH
-    status = pjnath_init();
-    PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
+    if (pjnath_init() != PJ_SUCCESS)
+        return;
 
     // Create a pool factory to allocate memory
     pj_caching_pool_init (_cp, &pj_pool_factory_default_policy, 0);
@@ -1463,36 +1457,32 @@ bool SIPVoIPLink::pjsipInit()
     // Create memory pool for application.
     _pool = pj_pool_create (&_cp->factory, "sflphone", 4000, 4000, NULL);
 
-    if (!_pool) {
-        _debug ("UserAgent: Could not initialize memory pool");
-        return PJ_ENOMEM;
-    }
+    if (!_pool)
+        throw VoipLinkException("UserAgent: Could not initialize memory pool");
 
     // Create the SIP endpoint
-    status = pjsip_endpt_create (&_cp->factory, pj_gethostname()->ptr, &_endpt);
+    if (pjsip_endpt_create (&_cp->factory, pj_gethostname()->ptr, &_endpt) != 
+            PJ_SUCCESS)
+        return;
 
-    PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
-
-    if (loadSIPLocalIP().empty()) {
-        _debug ("UserAgent: Unable to determine network capabilities");
-        return false;
-    }
+    if (loadSIPLocalIP().empty())
+        throw VoipLinkException("UserAgent: Unable to determine network capabilities");
 
     // Initialize transaction layer
-    status = pjsip_tsx_layer_init_module (_endpt);
-    PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
+    if (pjsip_tsx_layer_init_module (_endpt) != PJ_SUCCESS)
+        return;
 
     // Initialize UA layer module
-    status = pjsip_ua_init_module (_endpt, NULL);
-    PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
+    if (pjsip_ua_init_module (_endpt, NULL) != PJ_SUCCESS)
+        return;
 
     // Initialize Replaces support. See the Replaces specification in RFC 3891
-    status = pjsip_replaces_init_module (_endpt);
-    PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
+    if (pjsip_replaces_init_module (_endpt) != PJ_SUCCESS)
+        return;
 
     // Initialize 100rel support
-    status = pjsip_100rel_init_module (_endpt);
-    PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
+    if (pjsip_100rel_init_module (_endpt) != PJ_SUCCESS)
+        return;
 
     // Initialize and register sflphone module
     std::string name_mod(PACKAGE);
@@ -1501,18 +1491,17 @@ bool SIPVoIPLink::pjsipInit()
     _mod_ua.priority = PJSIP_MOD_PRIORITY_APPLICATION;
     _mod_ua.on_rx_request = &transaction_request_cb;
     _mod_ua.on_rx_response = &transaction_response_cb;
-    status = pjsip_endpt_register_module (_endpt, &_mod_ua);
-    PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
+    if (pjsip_endpt_register_module (_endpt, &_mod_ua) != PJ_SUCCESS)
+        return;
 
     // Init the event subscription module.
     // It extends PJSIP by supporting SUBSCRIBE and NOTIFY methods
-    status = pjsip_evsub_init_module (_endpt);
-    PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
+    if (pjsip_evsub_init_module (_endpt) != PJ_SUCCESS)
+        return;
 
     // Init xfer/REFER module
-    status = pjsip_xfer_init_module (_endpt);
-    PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
-    PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
+    if (pjsip_xfer_init_module (_endpt) != PJ_SUCCESS)
+        return;
 
     // Init the callback for INVITE session:
     pjsip_inv_callback inv_cb;
@@ -1525,8 +1514,8 @@ bool SIPVoIPLink::pjsipInit()
     inv_cb.on_create_offer = &sdp_create_offer_cb;
 
     // Initialize session invite module
-    status = pjsip_inv_usage_init (_endpt, &inv_cb);
-    PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
+    if (pjsip_inv_usage_init (_endpt, &inv_cb) != PJ_SUCCESS)
+        return;
 
     _debug ("UserAgent: VOIP callbacks initialized");
 
@@ -1545,14 +1534,11 @@ bool SIPVoIPLink::pjsipInit()
 
     _debug ("UserAgent: pjsip version %s for %s initialized", pj_get_version(), PJ_OS_NAME);
 
-    status = pjsip_replaces_init_module	(_endpt);
-    PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
+    if (pjsip_replaces_init_module(_endpt) != PJ_SUCCESS)
+        return;
 
     // Create the secondary thread to poll sip events
     evThread_->start();
-
-    /* Done! */
-    return PJ_SUCCESS;
 }
 
 
@@ -1602,13 +1588,12 @@ pj_status_t SIPVoIPLink::stunServerResolve (SIPAccount *account)
     return status;
 }
 
-bool SIPVoIPLink::acquireTransport (SIPAccount *account)
+void SIPVoIPLink::acquireTransport (SIPAccount *account)
 {
     // If an account is already bound to this account, decrease its reference
     // as it is going to change. If the same transport is selected, reference
     // counter will be increased
     if (account->getAccountTransport()) {
-
         _debug ("pjsip_transport_dec_ref in acquireTransport");
         pjsip_transport_dec_ref (account->getAccountTransport());
     }
@@ -1617,39 +1602,34 @@ bool SIPVoIPLink::acquireTransport (SIPAccount *account)
     // are different than one defined for already created ones
     // If TLS is enabled, TLS connection is automatically handled when sending account registration
     // However, for any other sip transaction, we must create TLS connection
-    if (createSipTransport (account))
-        return true;
+    if (not createSipTransport(account)) {
+        // A transport is already created on this port, use it
+        _debug ("Could not create a new transport (%d)", account->getLocalPort());
 
-    // A transport is already created on this port, use it
-	_debug ("Could not create a new transport (%d)", account->getLocalPort());
+        // Could not create new transport, this transport may already exists
+        pjsip_transport* tr = transportMap_[account->getLocalPort()];
+        if (tr) {
+            account->setAccountTransport (tr);
+            // Increment newly associated transport reference counter
+            // If the account is shutdowning, time is automatically canceled
+            pjsip_transport_add_ref (tr);
+        }
+        else {
+            // Transport could not either be created, socket not available
+            _debug ("Did not find transport (%d) in transport map", account->getLocalPort());
 
-	// Could not create new transport, this transport may already exists
-	pjsip_transport* tr = transportMap_[account->getLocalPort()];
-	if (tr) {
-		account->setAccountTransport (tr);
+            account->setAccountTransport(_localUDPTransport);
+            std::string localHostName(_localUDPTransport->local_name.host.ptr,
+                    _localUDPTransport->local_name.host.slen);
 
-		// Increment newly associated transport reference counter
-		// If the account is shutdowning, time is automatically canceled
-		pjsip_transport_add_ref (tr);
+            _debug ("Use default one instead (%s:%i)", localHostName.c_str(),
+                    _localUDPTransport->local_name.port);
 
-		return true;
-	}
-
-	// Transport could not either be created, socket not available
-	_debug ("Did not find transport (%d) in transport map", account->getLocalPort());
-
-	account->setAccountTransport(_localUDPTransport);
-	std::string localHostName(_localUDPTransport->local_name.host.ptr,
-                              _localUDPTransport->local_name.host.slen);
-
-	_debug ("Use default one instead (%s:%i)", localHostName.c_str(),
-            _localUDPTransport->local_name.port);
-
-	// account->setLocalAddress(localHostName);
-	account->setLocalPort(_localUDPTransport->local_name.port);
-
-	// Transport could not either be created or found in the map, socket not available
-	return false;
+            // account->setLocalAddress(localHostName);
+            account->setLocalPort(_localUDPTransport->local_name.port);
+            _error("Transport could not either be created or found in the map, socket not available");
+        }
+    }
 }
 
 
@@ -1831,7 +1811,7 @@ std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_
     // Create a temporary memory pool
     pj_pool_t *tmp_pool = pj_pool_create (&_cp->factory, "tmpdtmf10", 1000, 1000, NULL);
     if (tmp_pool == NULL)
-    	_error ("UserAgent: Could not initialize memory pool");
+    	throw VoipLinkException("UserAgent: Could not initialize memory pool");
 
     // Find the transport that must be used with the given uri
     pj_str_t tmp;
@@ -1931,10 +1911,8 @@ int SIPVoIPLink::findLocalPortFromUri (const std::string& uri, pjsip_transport *
 {
     // Create a temporary memory pool
     pj_pool_t *tmp_pool = pj_pool_create (&_cp->factory, "tmpdtmf10", 1000, 1000, NULL);
-    if (tmp_pool == NULL) {
-    	_debug ("UserAgent: Could not initialize memory pool");
-    	return false;
-    }
+    if (tmp_pool == NULL)
+    	throw VoipLinkException("UserAgent: Could not initialize memory pool");
 
     // Find the transport that must be used with the given uri
     pj_str_t tmp;
