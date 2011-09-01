@@ -198,16 +198,26 @@ AlsaLayer::stopStream (void)
 /////////////////   ALSA PRIVATE FUNCTIONS   ////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////
 
+/*
+ * GCC extension : statement expression
+ *
+ * ALSA_CALL(function_call, error_string) will:
+ * 		call the function
+ * 		display an error if the function failed
+ * 		return the function return value
+ */
+#define ALSA_CALL(call, error) ({ \
+			int err = call; \
+			if (err < 0) \
+				_error("ALSA: "error": %s", snd_strerror(err)); \
+			err; \
+		})
+
 void AlsaLayer::stopCaptureStream (void)
 {
-    if (captureHandle_) {
-        int err = snd_pcm_drop (captureHandle_);
-        if (err < 0)
-            _error("ALSA: couldn't stop capture: %s", snd_strerror (err));
-        else {
-            is_capture_running_ = false;
-            is_capture_prepared_ = false;
-        }
+    if (captureHandle_ && ALSA_CALL(snd_pcm_drop (captureHandle_), "couldn't stop capture") >= 0) {
+		is_capture_running_ = false;
+		is_capture_prepared_ = false;
     }
 }
 
@@ -216,39 +226,24 @@ void AlsaLayer::closeCaptureStream (void)
     if (is_capture_prepared_ and is_capture_running_)
         stopCaptureStream ();
 
-    if (is_capture_open_) {
-        int err = snd_pcm_close (captureHandle_);
-        if (err < 0)
-            _error("ALSA: Couldn't close capture: %s", snd_strerror (err));
-        else
-            is_capture_open_ = false;
-    }
+    if (is_capture_open_ && ALSA_CALL(snd_pcm_close (captureHandle_), "Couldn't close capture") >= 0)
+		is_capture_open_ = false;
 }
 
 void AlsaLayer::startCaptureStream (void)
 {
-    if (captureHandle_ and not is_capture_running_) {
-        int err = snd_pcm_start (captureHandle_);
-        if (err < 0)
-            _error("ALSA: Couldn't start capture: %s",  snd_strerror (err));
-        else
+    if (captureHandle_ and not is_capture_running_)
+        if (ALSA_CALL(snd_pcm_start (captureHandle_), "Couldn't start capture") >= 0)
             is_capture_running_ = true;
-    }
 }
 
 void AlsaLayer::stopPlaybackStream (void)
 {
-    if (ringtoneHandle_ and is_playback_running_) {
-        int err = snd_pcm_drop (ringtoneHandle_);
-        if (err < 0)
-            _error("ALSA: Couldn't stop ringtone: %s", snd_strerror (err));
-    }
+    if (ringtoneHandle_ and is_playback_running_)
+    	ALSA_CALL(snd_pcm_drop(ringtoneHandle_), "Couldn't stop ringtone");
 
     if (playbackHandle_ and is_playback_running_) {
-        int err = snd_pcm_drop (playbackHandle_);
-        if (err < 0)
-            _error("ALSA: Couldn't stop playback: %s", snd_strerror (err));
-        else {
+    	if (ALSA_CALL(snd_pcm_drop(playbackHandle_), "Couldn't stop playback") >= 0) {
             is_playback_running_ = false;
             is_playback_prepared_ = false;
         }
@@ -262,17 +257,10 @@ void AlsaLayer::closePlaybackStream (void)
         stopPlaybackStream();
 
     if (is_playback_open_) {
-        int err;
-        if (ringtoneHandle_) {
-        	err = snd_pcm_close (ringtoneHandle_);
-        	if (err < 0)
-        		_error("ALSA: Couldn't stop ringtone: %s", snd_strerror (err));
-        }
+        if (ringtoneHandle_)
+        	ALSA_CALL(snd_pcm_close(ringtoneHandle_), "Couldn't stop ringtone");
 
-        err = snd_pcm_close (playbackHandle_);
-        if (err < 0)
-            _error("ALSA: Coulnd't close playback: %s", snd_strerror (err));
-        else
+        if (ALSA_CALL(snd_pcm_close(playbackHandle_), "Coulnd't close playback") >= 0)
             is_playback_open_ = false;
     }
 
@@ -280,45 +268,30 @@ void AlsaLayer::closePlaybackStream (void)
 
 void AlsaLayer::startPlaybackStream (void)
 {
-    if (playbackHandle_ and not is_playback_running_) {
-        int err = snd_pcm_start (playbackHandle_);
-        if (err  < 0)
-            _error("ALSA: Couldn't start playback: %s", snd_strerror (err));
-        else
+    if (playbackHandle_ and not is_playback_running_)
+    	if (ALSA_CALL(snd_pcm_start(playbackHandle_), "Couldn't start playback") >= 0)
             is_playback_running_ = true;
-    }
 }
 
 void AlsaLayer::prepareCaptureStream (void)
 {
-    if (is_capture_open_ and not is_capture_prepared_) {
-        int err = snd_pcm_prepare (captureHandle_);
-        if (err < 0)
-            _error("ALSA: Couldn't prepare capture: %s", snd_strerror (err));
-        else
+    if (is_capture_open_ and not is_capture_prepared_)
+    	if (ALSA_CALL(snd_pcm_prepare(captureHandle_), "Couldn't prepare capture") >= 0)
             is_capture_prepared_ = true;
-    }
 }
 
 void AlsaLayer::preparePlaybackStream (void)
 {
-    if (is_playback_open_ and not is_playback_prepared_) {
-        int err = snd_pcm_prepare (playbackHandle_);
-        if (err < 0)
-            _error("ALSA: Couldn't prepare playback: %s", snd_strerror (err));
-        else
+    if (is_playback_open_ and not is_playback_prepared_)
+    	if (ALSA_CALL(snd_pcm_prepare(playbackHandle_), "Couldn't prepare playback") >= 0)
             is_playback_prepared_ = true;
-    }
 }
 
 bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle)
 {
 #define TRY(call, error) do { \
-		int err = call; \
-		if (err < 0) { \
-			_error("ALSA: Cannot set "error": %s", snd_strerror(err)); \
+		if (ALSA_CALL(call, error) < 0) \
 			return false; \
-		} \
 	} while(0)
 
     snd_pcm_hw_params_t *hwparams;
@@ -338,7 +311,9 @@ bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle)
     TRY(snd_pcm_hw_params 						(HW), 								"hwparams");
 #undef HW
 
-	_debug ("ALSA: Using sampling rate %dHz", audioSampleRate_);
+	_debug ("ALSA: %s using sampling rate %dHz",
+			(snd_pcm_stream(pcm_handle) == SND_PCM_STREAM_PLAYBACK) ? "playback" : "capture",
+			audioSampleRate_);
 
     snd_pcm_sw_params_t *swparams = NULL;
     snd_pcm_sw_params_alloca(&swparams);
@@ -373,18 +348,14 @@ AlsaLayer::write (void* buffer, int length, snd_pcm_t * handle)
 			snd_pcm_status_t* status;
 			snd_pcm_status_alloca (&status);
 
-			err = snd_pcm_status (handle, status);
-			if (err < 0)
-				_error("ALSA: Cannot get playback handle status (%s)" , snd_strerror (err));
-			else if (snd_pcm_status_get_state (status) == SND_PCM_STATE_XRUN) {
-				stopPlaybackStream();
-				preparePlaybackStream();
-				startPlaybackStream();
-			}
+			if (ALSA_CALL(snd_pcm_status (handle, status), "Cannot get playback handle status") >= 0)
+				if (snd_pcm_status_get_state (status) == SND_PCM_STATE_XRUN) {
+					stopPlaybackStream();
+					preparePlaybackStream();
+					startPlaybackStream();
+				}
 
-			err = snd_pcm_writei (handle, buffer , frames);
-			if (err < 0)
-				_error("ALSA: XRUN handling failed : %s", snd_strerror(err));
+			ALSA_CALL(snd_pcm_writei (handle, buffer , frames), "XRUN handling failed");
 			break;
 		}
 
@@ -410,7 +381,6 @@ AlsaLayer::read (void* buffer, int toCopy)
     	return snd_pcm_frames_to_bytes(captureHandle_, frames);
 
 	switch (err) {
-
 		case -EPIPE:
 		case -ESTRPIPE:
 		case -EIO:
@@ -418,14 +388,12 @@ AlsaLayer::read (void* buffer, int toCopy)
 			snd_pcm_status_t* status;
 			snd_pcm_status_alloca (&status);
 
-			err = snd_pcm_status(captureHandle_, status);
-			if (err < 0)
-				_error("ALSA: Get status failed: %s", snd_strerror(err));
-			else if (snd_pcm_status_get_state (status) == SND_PCM_STATE_XRUN) {
-				stopCaptureStream ();
-				prepareCaptureStream ();
-				startCaptureStream ();
-			}
+			if (ALSA_CALL(snd_pcm_status(captureHandle_, status), "Get status failed") >= 0)
+				if (snd_pcm_status_get_state (status) == SND_PCM_STATE_XRUN) {
+					stopCaptureStream ();
+					prepareCaptureStream ();
+					startCaptureStream ();
+				}
 
 			_error("ALSA: XRUN capture ignored (%s)", snd_strerror (err));
 			break;
@@ -435,9 +403,6 @@ AlsaLayer::read (void* buffer, int toCopy)
 			_error("ALSA: Can't capture, EPERM (%s)", snd_strerror (err));
 			prepareCaptureStream ();
 			startCaptureStream ();
-			break;
-
-		default:
 			break;
 	}
 
@@ -473,13 +438,12 @@ AlsaLayer::getSoundCardsInfo (int stream)
     if (snd_card_next (&numCard) < 0 || numCard < 0)
         return cards_id;
 
-    while (numCard >= 0) {
+    do {
         std::stringstream ss;
         ss << numCard;
-        std::string name= "hw:";
-        name.append (ss.str());
+        std::string name = "hw:" + ss.str();
 
-        if (snd_ctl_open (&handle, name.c_str(), 0) == 0) {
+        if (snd_ctl_open (&handle, name.c_str(), 0) != 0) {
             if (snd_ctl_card_info (handle, info) == 0) {
                 snd_pcm_info_set_device (pcminfo , 0);
                 snd_pcm_info_set_stream (pcminfo, (stream == SFL_PCM_CAPTURE) ? SND_PCM_STREAM_CAPTURE : SND_PCM_STREAM_PLAYBACK);
@@ -502,10 +466,8 @@ AlsaLayer::getSoundCardsInfo (int stream)
 
             snd_ctl_close (handle);
         }
+    } while (snd_card_next (&numCard) >= 0 && numCard >= 0);
 
-        if (snd_card_next (&numCard) < 0)
-            break;
-    }
 
     return cards_id;
 }
