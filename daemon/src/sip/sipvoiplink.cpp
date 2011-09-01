@@ -144,7 +144,7 @@ std::string fetchHeaderValue (pjsip_msg *msg, std::string field);
 /*
  *  The global pool factory
  */
-pj_caching_pool pool_cache, *_cp = &pool_cache;
+pj_caching_pool pool_cache;
 
 /*
  * The pool to allocate memory
@@ -533,7 +533,7 @@ void SIPVoIPLink::sendUnregister (Account *a)
 Call *SIPVoIPLink::newOutgoingCall (const std::string& id, const std::string& toUrl)
 {
     // Create a new SIP call
-    SIPCall* call = new SIPCall (id, Call::Outgoing, _cp);
+    SIPCall* call = new SIPCall (id, Call::Outgoing, &pool_cache);
 
     // Find the account associated to this call
     SIPAccount *account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (Manager::instance().getAccountFromCall (id)));
@@ -1089,7 +1089,7 @@ SIPVoIPLink::dtmfSipInfo (SIPCall *call, char code)
     _debug ("UserAgent: Send DTMF %c", code);
 
     // Create a temporary memory pool
-    pj_pool_t *tmp_pool = pj_pool_create (&_cp->factory, "tmpdtmf10", 1000, 1000, NULL);
+    pj_pool_t *tmp_pool = pj_pool_create (&pool_cache.factory, "tmpdtmf10", 1000, 1000, NULL);
     if (tmp_pool == NULL) {
     	_debug ("UserAgent: Could not initialize memory pool while sending DTMF");
     	return;
@@ -1325,7 +1325,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const std::string& id, const std::string& to
     _debug ("UserAgent: New IP2IP call %s to %s", id.c_str(), to.c_str());
 
     /* Create the call */
-    SIPCall *call = new SIPCall(id, Call::Outgoing, _cp);
+    SIPCall *call = new SIPCall(id, Call::Outgoing, &pool_cache);
 
     call->setCallConfiguration(Call::IPtoIP);
 
@@ -1510,10 +1510,10 @@ bool SIPVoIPLink::pjsipInit()
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
     // Create a pool factory to allocate memory
-    pj_caching_pool_init (_cp, &pj_pool_factory_default_policy, 0);
+    pj_caching_pool_init (&pool_cache, &pj_pool_factory_default_policy, 0);
 
     // Create memory pool for application.
-    _pool = pj_pool_create (&_cp->factory, "sflphone", 4000, 4000, NULL);
+    _pool = pj_pool_create (&pool_cache.factory, "sflphone", 4000, 4000, NULL);
 
     if (!_pool) {
         _debug ("UserAgent: Could not initialize memory pool");
@@ -1521,7 +1521,7 @@ bool SIPVoIPLink::pjsipInit()
     }
 
     // Create the SIP endpoint
-    status = pjsip_endpt_create (&_cp->factory, pj_gethostname()->ptr, &_endpt);
+    status = pjsip_endpt_create (&pool_cache.factory, pj_gethostname()->ptr, &_endpt);
 
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
@@ -1623,7 +1623,9 @@ pj_status_t SIPVoIPLink::stunServerResolve (SIPAccount *account)
 {
     // Initialize STUN configuration
     pj_stun_config stunCfg;
-    pj_stun_config_init (&stunCfg, &_cp->factory, 0, pjsip_endpt_get_ioqueue (_endpt), pjsip_endpt_get_timer_heap (_endpt));
+    pj_stun_config_init(&stunCfg, &pool_cache.factory, 0,
+            pjsip_endpt_get_ioqueue (_endpt),
+            pjsip_endpt_get_timer_heap (_endpt));
 
     const pj_stun_sock_cb stun_sock_cb = {
     		stun_sock_on_rx_data_cb,
@@ -1881,7 +1883,8 @@ std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_
     _debug ("SIP: Find local address from URI");
 
     // Create a temporary memory pool
-    pj_pool_t *tmp_pool = pj_pool_create (&_cp->factory, "tmpdtmf10", 1000, 1000, NULL);
+    pj_pool_t *tmp_pool = pj_pool_create (&pool_cache.factory, "tmpdtmf10",
+                                          1000, 1000, NULL);
     if (tmp_pool == NULL)
     	_error ("UserAgent: Could not initialize memory pool");
 
@@ -1982,7 +1985,7 @@ pjsip_tpselector *SIPVoIPLink::initTransportSelector (pjsip_transport *transport
 int SIPVoIPLink::findLocalPortFromUri (const std::string& uri, pjsip_transport *transport)
 {
     // Create a temporary memory pool
-    pj_pool_t *tmp_pool = pj_pool_create (&_cp->factory, "tmpdtmf10", 1000, 1000, NULL);
+    pj_pool_t *tmp_pool = pj_pool_create (&pool_cache.factory, "tmpdtmf10", 1000, 1000, NULL);
     if (tmp_pool == NULL) {
     	_debug ("UserAgent: Could not initialize memory pool");
     	return false;
@@ -2113,7 +2116,7 @@ pj_status_t SIPVoIPLink::createAlternateUdpTransport (SIPAccount *account)
 
     // Query the mapped IP address and port on the 'outside' of the NAT
     pj_sockaddr_in pub_addr;
-    status = pjstun_get_mapped_addr (&_cp->factory, 1, &sock, &stunServer, stunPort, &stunServer, stunPort, &pub_addr);
+    status = pjstun_get_mapped_addr (&pool_cache.factory, 1, &sock, &stunServer, stunPort, &stunServer, stunPort, &pub_addr);
     if (status != PJ_SUCCESS) {
         _debug ("UserAgwent: Error: Contacting STUN server (%d)", status);
         pj_sock_close (sock);
@@ -2281,7 +2284,7 @@ void SIPVoIPLink::pjsipShutdown (void)
     if (_pool) {
         pj_pool_release (_pool);
         _pool = NULL;
-        pj_caching_pool_destroy (_cp);
+        pj_caching_pool_destroy (&pool_cache);
     }
 
     /* Shutdown PJLIB */
@@ -2980,7 +2983,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
     _info ("UserAgent: Create a new call");
 
     // Generate a new call ID for the incoming call!
-    SIPCall* call = new SIPCall(Manager::instance().getNewCallID(), Call::Incoming, _cp);
+    SIPCall* call = new SIPCall(Manager::instance().getNewCallID(), Call::Incoming, &pool_cache);
     Manager::instance().associateCallToAccount(call->getCallId(), account_id);
 
 	// May use the published address as well
