@@ -124,6 +124,9 @@ class AlsaLayer : public AudioLayer
             return audioPlugin_;
         }
 
+        void playback(int maxSamples);
+        void capture(void);
+
         void audioCallback (void);
 
         /**
@@ -204,9 +207,8 @@ class AlsaLayer : public AudioLayer
          * ALSA Library API
          * @param buffer The data to be copied
          * @param length The size of the buffer
-         * @return int The number of frames actually copied
          */
-        int write (void* buffer, int length, snd_pcm_t *handle);
+        void write (void* buffer, int length, snd_pcm_t *handle);
 
         /**
          * Read data from the internal ring buffer
@@ -216,18 +218,6 @@ class AlsaLayer : public AudioLayer
          * @return int The number of frames actually read
          */
         int read (void* buffer, int toCopy);
-
-        /**
-         * Recover from XRUN state for capture
-         * ALSA Library API
-         */
-        void handle_xrun_capture (void);
-
-        /**
-         * Recover from XRUN state for playback
-         * ALSA Library API
-         */
-        void handle_xrun_playback (snd_pcm_t *handle);
 
         /**
          * Handles to manipulate playback stream
@@ -266,7 +256,6 @@ class AlsaLayer : public AudioLayer
         bool is_capture_running_;
         bool is_playback_open_;
         bool is_capture_open_;
-        bool trigger_request_;
 
         AlsaThread* audioThread_;
 };

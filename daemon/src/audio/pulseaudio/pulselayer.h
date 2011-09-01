@@ -39,17 +39,7 @@
 #include <list>
 #include <string>
 
-#define PLAYBACK_STREAM_NAME	    "SFLphone playback"
-#define CAPTURE_STREAM_NAME	    "SFLphone capture"
-#define RINGTONE_STREAM_NAME        "SFLphone ringtone"
-
-class RingBuffer;
-class ManagerImpl;
 class AudioStream;
-class DcBlocker;
-class SamplerateConverter;
-
-typedef std::list<std::string> DeviceList;
 
 class PulseLayer : public AudioLayer
 {
@@ -57,13 +47,21 @@ class PulseLayer : public AudioLayer
         PulseLayer ();
         ~PulseLayer (void);
 
-        DeviceList* getSinkList (void) {
+        std::list<std::string>* getSinkList (void) {
             return &sinkList_;
         }
 
-        DeviceList* getSourceList (void) {
+        std::list<std::string>* getSourceList (void) {
             return &sourceList_;
         }
+
+        /**
+         * Write data from the ring buffer to the harware and read data from the hardware
+         */
+        void readFromMic (void);
+        void writeToSpeaker (void);
+        void ringtoneToSpeaker (void);
+
 
         void updateSinkList (void);
 
@@ -79,99 +77,12 @@ class PulseLayer : public AudioLayer
 
         static void context_state_callback (pa_context* c, void* user_data);
 
-        /**
-         * Reduce volume of every audio applications connected to the same sink
-         */
-        void reducePulseAppsVolume (void);
-
-        /**
-         * Restore the volume of every audio applications connected to the same sink to PA_VOLUME_NORM
-         */
-        void restorePulseAppsVolume (void);
-
-        /**
-         * Set the volume of a sink.
-         * @param index The index of the stream
-         * @param channels	The stream's number of channels
-         * @param volume The new volume (between 0 and 100)
-         */
-        void setSinkVolume (int index, int channels, int volume);
-        void setSourceVolume (int index, int channels, int volume);
-
-        void setPlaybackVolume (int volume);
-        void setCaptureVolume (int volume);
-
-        /**
-         * Accessor
-         * @return AudioStream* The pointer on the playback AudioStream object
-         */
-        AudioStream* getPlaybackStream() const {
-            return playback_;
-        }
-
-        /**
-         * Accessor
-         * @return AudioStream* The pointer on the record AudioStream object
-         */
-        AudioStream* getRecordStream() const {
-            return record_;
-        }
-
-        /**
-         * Accessor
-         * @return AudioStream* The pointer on the ringtone AudioStream object
-         */
-        AudioStream* getRingtoneStream() const {
-            return ringtone_;
-        }
-
-        int getSpkrVolume (void) const {
-            return spkrVolume_;
-        }
-        void setSpkrVolume (int value) {
-            spkrVolume_ = value;
-        }
-
-        int getMicVolume (void) const {
-            return micVolume_;
-        }
-        void setMicVolume (int value) {
-            micVolume_ = value;
-        }
-
-        /**
-         * Handle used to write voice data to speaker
-         */
-        void processPlaybackData (void);
-
-        /**
-         * Handle used to write voice data to microphone
-         */
-        void processCaptureData (void);
-
-        /**
-         * Handle used to write audio data to speaker
-         */
-        void processRingtoneData (void);
-
-        /**
-         * Process speaker and microphone audio data
-         */
-        void processData (void);
-
     private:
         // Copy Constructor
         PulseLayer (const PulseLayer& rh);
 
         // Assignment Operator
         PulseLayer& operator= (const PulseLayer& rh);
-
-        /**
-         * Write data from the ring buffer to the harware and read data from the hardware
-         */
-        void readFromMic (void);
-        void writeToSpeaker (void);
-        void ringtoneToSpeaker (void);
 
         /**
          * Create the audio streams into the given context
@@ -183,11 +94,6 @@ class PulseLayer : public AudioLayer
          * Close the connection with the local pulseaudio server
          */
         void disconnectAudioStream (void);
-
-        /**
-         * Get some information about the pulseaudio server
-         */
-        void serverinfo (void);
 
         /** PulseAudio context and asynchronous loop */
         pa_context* context_;
@@ -208,11 +114,14 @@ class PulseLayer : public AudioLayer
          */
         AudioStream* ringtone_;
 
-        int spkrVolume_;
-        int micVolume_;
+        std::list<std::string> sinkList_;
+        std::list<std::string> sourceList_;
 
-        DeviceList sinkList_;
-        DeviceList sourceList_;
+        /*
+         * Buffers used to avoid doing malloc/free in the audio thread
+         */
+        SFLDataFormat *mic_buffer_;
+        size_t mic_buf_size_;
 
     public:
         friend class AudioLayerTest;

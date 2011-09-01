@@ -34,25 +34,11 @@
 #include <pulse/pulseaudio.h>
 #include <string>
 
-#include "global.h"
-#include "audio/ringbuffer.h"
-#include "audio/audioloop.h"
-
-#include <cc++/thread.h>
-
 /**
  * This data structure contains the different king of audio streams available
  */
 enum STREAM_TYPE {
-	PLAYBACK_STREAM, CAPTURE_STREAM, RINGTONE_STREAM, UPLOAD_STREAM
-};
-
-struct AudioStreamParams {
-	pa_context * context;
-	pa_threaded_mainloop * mainloop;
-	std::string description;
-	int type;
-	int smplrate;
+	PLAYBACK_STREAM, CAPTURE_STREAM, RINGTONE_STREAM
 };
 
 class AudioStream {
@@ -66,36 +52,11 @@ public:
 	 * @param description
 	 * @param types
 	 * @param audio sampling rate
+	 * @param device name
 	 */
-	AudioStream(pa_context *, pa_threaded_mainloop *, std::string, int, int);
+	AudioStream(pa_context *, pa_threaded_mainloop *, const char *, int, int, std::string *);
 
-	/**
-	 * Destructor
-	 */
 	~AudioStream();
-
-	/**
-	 * Write data to the urgent abstraction ring buffer. ( dtmf , double calls )
-	 * @param buffer The buffer containing the data to be played
-	 * @param toCopy The number of samples, in bytes
-	 * @return int The number of bytes played
-	 */
-	int putUrgent(void* buffer, int toCopy);
-
-	/**
-	 * Connect the pulse audio stream
-	 */
-	bool connectStream(std::string* deviceName);
-
-	/**
-	 * Drain the given stream.
-	 */
-	bool drainStream(void);
-
-	/**
-	 * Disconnect the pulseaudio stream
-	 */
-	bool disconnectStream();
 
 	/**
 	 * Accessor: Get the pulseaudio stream object
@@ -105,34 +66,7 @@ public:
 		return _audiostream;
 	}
 
-	/**
-	 * Accessor
-	 * @return std::string  The stream name
-	 */
-	std::string getStreamName(void) {
-		return _streamDescription;
-	}
-
-	/**
-	 * Accessor
-	 * @param name  The stream name
-	 */
-	void setStreamName(std::string name) {
-		_streamDescription = name;
-	}
-
-	void setVolume(double pc) {
-		_volume.values[0] *= pc / 100;
-	}
-	pa_cvolume getVolume(void) {
-		return _volume;
-	}
-
-	/**
-	 * Accessor
-	 * @return stream state
-	 */
-	pa_stream_state_t getStreamState(void);
+	bool isReady(void);
 
 private:
 
@@ -143,26 +77,9 @@ private:
 	AudioStream& operator=(const AudioStream& rh);
 
 	/**
-	 * Create the audio stream into the given context
-	 * @param c	The pulseaudio context
-	 * @return pa_stream* The newly created audio stream
-	 */
-	pa_stream* createStream(pa_context* c, std::string* deviceName);
-
-	/**
 	 * Mandatory asynchronous callback on the audio stream state
 	 */
 	static void stream_state_callback(pa_stream* s, void* user_data);
-
-	/**
-	 * Asynchronous callback on data processing ( write and read )
-	 */
-	static void audioCallback(pa_stream* s, size_t bytes, void* userdata);
-
-	/**
-	 * Write data to the sound device
-	 */
-	void write(void);
 
 	/**
 	 * The pulse audio object
@@ -170,45 +87,9 @@ private:
 	pa_stream* _audiostream;
 
 	/**
-	 * The pulse audio context
-	 */
-	pa_context* _context;
-
-	/**
-	 * The type of the stream
-	 */
-	int _streamType;
-
-	/**
-	 * The name of the stream
-	 */
-	std::string _streamDescription;
-
-	/**
-	 * Streams parameters
-	 */
-	pa_cvolume _volume;
-
-	/**
-	 * Some special flags for stream connections.
-	 * ex: PA_STREAM_ADJUST_LATENCY, PA_STREAM_START_MUTED, PA_STREAM_VARIABLE_RATE
-	 */
-	pa_stream_flags_t _flag;
-
-	/**
-	 * A sample format and attribute specification
-	 */
-	pa_sample_spec _sample_spec;
-
-	/**
 	 * A pointer to the opaque threaded main loop object
 	 */
 	pa_threaded_mainloop * _mainloop;
-
-	ost::Mutex _mutex;
-
-	bool _stream_is_ready;
-
 };
 
 #endif // _AUDIO_STREAM_H

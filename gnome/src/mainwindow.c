@@ -242,11 +242,11 @@ create_main_window ()
     vbox = gtk_vbox_new (FALSE /*homogeneous*/, 0 /*spacing*/);
     subvbox = gtk_vbox_new (FALSE /*homogeneous*/, 5 /*spacing*/);
 
-    create_menus (ui_manager, &widget);
+    widget = create_menus (ui_manager);
     gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE /*expand*/, TRUE /*fill*/,
                         0 /*padding*/);
 
-    create_toolbar_actions (ui_manager, &widget);
+    widget = create_toolbar_actions (ui_manager);
     // Do not override GNOME user settings
     gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE /*expand*/, TRUE /*fill*/,
                         0 /*padding*/);

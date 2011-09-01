@@ -100,22 +100,4 @@ void AudioLayerTest::testPulseConnect()
     _pulselayer = (PulseLayer*) Manager::instance().getAudioDriver();
 
     CPPUNIT_ASSERT (_pulselayer->getLayerType() == PULSEAUDIO);
-
-    int sampleRate;
-
-    sampleRate = manager->audioPreference.getSmplrate();
-
-    CPPUNIT_ASSERT (_pulselayer->getPlaybackStream() == NULL);
-    CPPUNIT_ASSERT (_pulselayer->getRecordStream() == NULL);
-
-    sleep (1);
-
-    CPPUNIT_ASSERT (_pulselayer->getPlaybackStream() == NULL);
-    CPPUNIT_ASSERT (_pulselayer->getRecordStream() == NULL);
-
-    _pulselayer->startStream();
-
-    CPPUNIT_ASSERT (_pulselayer->getPlaybackStream()->pulseStream() != NULL);
-    CPPUNIT_ASSERT (_pulselayer->getRecordStream()->pulseStream() != NULL);
-
 }
