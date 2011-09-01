@@ -2447,7 +2447,6 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
         return;
     }
 
-
     // Only modify internal sampling rate if new sampling rate is higher
     int currentSamplerate = _mainBuffer.getInternalSamplingRate();
     if (currentSamplerate >= samplerate) {
@@ -2456,14 +2455,10 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
     	return;
     }
     else
-        _debug ("Manager: Audio sampling rate changed");
+        _debug ("Manager: Audio sampling rate changed: %d -> %d", currentSamplerate, samplerate);
 
     int type = _audiodriver->getLayerType();
-
-    _debug ("Manager: New samplerate: %d", samplerate);
-
     bool wasActive = _audiodriver->isStarted();
-
 
     _mainBuffer.setInternalSamplingRate(samplerate);
 
@@ -2476,15 +2471,11 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
     unsigned int sampleRate = _audiodriver->getSampleRate();
 
     delete _telephoneTone;
-    _debug ("Manager: Load telephone tone");
-    std::string country = preferences.getZoneToneChoice();
-    _telephoneTone = new TelephoneTone (country, sampleRate);
+    _telephoneTone = new TelephoneTone(preferences.getZoneToneChoice(), sampleRate);
 
     delete _dtmfKey;
-    _debug ("Manager: Loading DTMF key with sample rate %d", sampleRate);
     _dtmfKey = new DTMF (sampleRate);
 
-    // Restart audio layer if it was active
     if (wasActive)
         _audiodriver->startStream();
 
@@ -3186,7 +3177,6 @@ std::map<std::string, std::string> ManagerImpl::getConferenceDetails (
 
 std::vector<std::string> ManagerImpl::getConferenceList (void) const
 {
-    _debug ("ManagerImpl::getConferenceList");
     std::vector<std::string> v;
     vectorFromMapKeys(_conferencemap, v);
 

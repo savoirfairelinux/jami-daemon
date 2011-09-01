@@ -185,7 +185,7 @@ void context_changed_callback (pa_context* c, pa_subscription_event_type_t t, ui
             _debug ("Audio: PA_SUBSCRIPTION_EVENT_TYPE_MASK");
             break;
         default:
-            _debug ("Audio: Unknown event type");
+            _debug ("Audio: Unknown event type %d", t);
 
     }
 }
