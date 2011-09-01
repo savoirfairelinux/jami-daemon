@@ -131,37 +131,36 @@ main_window_ask_quit ()
 static gboolean
 on_key_released (GtkWidget *widget, GdkEventKey *event, gpointer user_data UNUSED)
 {
-    DEBUG ("MainWindow: On key released: %s", gtk_widget_get_name (widget));
+    if (focus_is_on_searchbar)
+        return TRUE;
 
-    if (focus_is_on_searchbar == FALSE) {
-	if(event->keyval == 65293) {
-	    if(active_calltree == current_calls) {
-	        sflphone_keypad (event->keyval, event->string);
-        	return TRUE;
-	    }
-	    else if(active_calltree == history) {
-	        return FALSE;
-	    }
-	}
-
-        // If a modifier key is pressed, it's a shortcut, pass along
-        if (event->state & GDK_CONTROL_MASK || event->state & GDK_MOD1_MASK
-                || event->keyval == 60 || // <
-                event->keyval == 62 || // >
-                event->keyval == 34 || // "
-                event->keyval == 65289 || // tab
-		event->keyval == 65293 || // enter
-                event->keyval == 65361 || // left arrow
-                event->keyval == 65362 || // up arrow
-                event->keyval == 65363 || // right arrow
-                event->keyval == 65364 || // down arrow
-                event->keyval >= 65470 || // F-keys
-                event->keyval == 32 // 
-           )
-            return FALSE;
-        else {
+    if(event->keyval == GDK_KEY_Return) {
+        if(active_calltree == current_calls) {
             sflphone_keypad (event->keyval, event->string);
-    	}
+            return TRUE;
+        }
+        else if(active_calltree == history) {
+            return FALSE;
+        }
+    }
+
+    // If a modifier key is pressed, it's a shortcut, pass along
+    if (event->state & GDK_CONTROL_MASK || event->state & GDK_MOD1_MASK ||
+            event->keyval == '<' ||
+            event->keyval == '>' ||
+            event->keyval == '\"' ||
+            event->keyval == GDK_KEY_Tab ||
+            event->keyval == GDK_KEY_Return ||
+            event->keyval == GDK_KEY_Left ||
+            event->keyval == GDK_KEY_Up ||
+            event->keyval == GDK_KEY_Right ||
+            event->keyval == GDK_KEY_Down ||
+            (event->keyval >= GDK_KEY_F1 && event->keyval <= GDK_KEY_F12)||
+            event->keyval == ' '
+       )
+        return FALSE;
+    else {
+        sflphone_keypad (event->keyval, event->string);
     }
 
     return TRUE;
