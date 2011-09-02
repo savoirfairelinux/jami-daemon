@@ -417,7 +417,6 @@ video_renderer_stop(VideoRenderer *preview)
 {
     VideoRendererPrivate *priv = VIDEO_RENDERER_GET_PRIVATE(preview);
     assert(priv);
-    gboolean notify_daemon = priv->is_running;
 
     priv->is_running = FALSE;
 
