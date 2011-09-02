@@ -216,7 +216,7 @@ void DelayDetectionTest::testDelayDetection()
     mic[delay+3] = 32000;
     mic[delay+4] = 32000;
 
-    _delaydetect.putData (spkr, WINDOW_SIZE*sizeof (SFLDataFormat));
-    _delaydetect.process (mic, DELAY_BUFF_SIZE*sizeof (SFLDataFormat));
+    _delaydetect.putData (spkr, WINDOW_SIZE);
+    _delaydetect.process (mic, DELAY_BUFF_SIZE);
 
 }

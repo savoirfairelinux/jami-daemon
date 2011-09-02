@@ -143,14 +143,14 @@ class SIPVoIPLink : public VoIPLink
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool onhold (const std::string& id);
+        virtual void onhold (const std::string& id);
 
         /**
          * Put the call off hold
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool offhold (const std::string& id);
+        virtual void offhold (const std::string& id);
 
         /**
          * Transfer the call
@@ -333,7 +333,7 @@ class SIPVoIPLink : public VoIPLink
          *
          * @return bool True on success
          */
-        bool pjsipInit();
+        void pjsipInit();
 
         /**
          * Delete link-related stuff like calls
@@ -352,10 +352,8 @@ class SIPVoIPLink : public VoIPLink
          * This function should be called before registering an account
          * @param account An account for which transport is to be set
          *
-         * @return bool True if the account is successfully created or successfully obtained
-         * from the transport map
          */
-        bool acquireTransport (SIPAccount *account);
+        void acquireTransport (SIPAccount *account);
 
         /**
          * Create the default TLS litener according to account settings.

@@ -127,11 +127,13 @@
 #define SHORTCUT_TOGGLEHOLD                 "toggleHold"
 
 /** Error while opening capture device */
-#define ALSA_CAPTURE_DEVICE	      0x0001
+#define ALSA_CAPTURE_DEVICE	        0x0001
 /** Error while opening playback device */
-#define ALSA_PLAYBACK_DEVICE	      0x0010
+#define ALSA_PLAYBACK_DEVICE	    0x0010
 /** Error pulseaudio */
-#define PULSEAUDIO_NOT_RUNNING        0x0100
+#define PULSEAUDIO_NOT_RUNNING      0x0100
+/** Error codecs not loaded */
+#define CODECS_NOT_LOADED           0x1000
 
 /** Tone to play when no voice mails */
 #define TONE_WITHOUT_MESSAGE  0

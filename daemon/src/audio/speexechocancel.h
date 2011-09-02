@@ -20,7 +20,7 @@
 #ifndef SPEEXECHOCANCEL_H
 #define SPEEXECHOCANCEL_H
 
-#include "audio/algorithm.h"
+#include "global.h"
 
 class RingBuffer;
 class SpeexEchoState_;
@@ -28,34 +28,25 @@ typedef SpeexEchoState_ SpeexEchoState;
 class SpeexPreprocessState_;
 typedef SpeexPreprocessState_ SpeexPreprocessState;
 
-class SpeexEchoCancel : public Algorithm
+class SpeexEchoCancel
 {
     public:
 
         SpeexEchoCancel();
         ~SpeexEchoCancel();
 
-        virtual void reset (void);
-
         /**
          * Add speaker data into internal buffer
          * \param inputData containing far-end voice data to be sent to speakers
          */
-        virtual void putData (SFLDataFormat *, int);
-
-        virtual int getData(SFLDataFormat *);
-
-        /**
-         * Unused
-         */
-        virtual void process (SFLDataFormat *, int);
+        void putData (SFLDataFormat *, int samples);
 
         /**
          * Perform echo cancellation using internal buffers
          * \param inputData containing mixed echo and voice data
          * \param outputData containing
          */
-        virtual int process (SFLDataFormat *, SFLDataFormat *, int);
+        int process (SFLDataFormat *, SFLDataFormat *, int samples);
 
     private:
 

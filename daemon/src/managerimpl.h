@@ -205,14 +205,14 @@ class ManagerImpl
          * Put the call on hold
          * @param id  The call identifier
          */
-        bool onHoldCall (const std::string& id);
+        void onHoldCall (const std::string& id);
 
         /**
          * Functions which occur with a user's action
          * Put the call off hold
          * @param id  The call identifier
          */
-        bool offHoldCall (const std::string& id);
+        void offHoldCall (const std::string& id);
 
         /**
          * Functions which occur with a user's action
@@ -835,13 +835,6 @@ class ManagerImpl
          * @return std::vector< ::std::string >  The list of active codecs
          */
         std::vector< ::std::string > getActiveCodecList (void) const;
-
-        /*
-         * Notify the client that an error occured
-         * @param errCode The error code. Could be: ALSA_CAPTURE_ERROR
-         *					       ALSA_PLAYBACK_ERROR
-         */
-        void notifyErrClient (int32_t errCode);
 
         /**
          * Retrieve in the configuration tree the value of a parameter in a specific section

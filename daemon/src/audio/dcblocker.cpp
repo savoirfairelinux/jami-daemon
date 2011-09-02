@@ -42,34 +42,15 @@ void DcBlocker::reset()
     _ym1 = 0;
 }
 
-void DcBlocker::putData (SFLDataFormat *inputData UNUSED, int nbBytes UNUSED) {}
-
-int DcBlocker::getData (SFLDataFormat *outputData UNUSED)
+void DcBlocker::process (SFLDataFormat *out, SFLDataFormat *in, int samples)
 {
-    return 0;
-}
+    for (int i = 0; i < samples; i++) {
+        _x = in[i];
 
-void DcBlocker::process (SFLDataFormat *data, int nbBytes)
-{
-	abort(); // use the 3 args prototype with input == output
-}
-
-int DcBlocker::process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes)
-{
-
-    int nbSamples = nbBytes / sizeof (SFLDataFormat);
-
-    for (int i = 0; i < nbSamples; i++) {
-
-        _x = inputData[i];
-
-        _y = (SFLDataFormat) ( (float) _x - (float) _xm1 + 0.9999 * (float) _ym1);
+        _y = (SFLDataFormat) ( (float) _x - (float) _xm1 + 0.9999 * (float) _y);
         _xm1 = _x;
         _ym1 = _y;
 
-        outputData[i] = _y;
+        out[i] = _y;
     }
-
-    return 0;
-
 }

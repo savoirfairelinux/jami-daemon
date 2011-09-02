@@ -496,24 +496,21 @@ void PulseLayer::readFromMic (void)
     if (!record_ or !record_->isReady())
 		return;
 
-    const char *data = NULL;
+	const char *data = NULL;
     size_t bytes;
-    size_t samples;
+    if (pa_stream_peek (record_->pulseStream() , (const void**) &data , &bytes) < 0 or !data) {
+        _error("Audio: Error capture stream peek failed: %s" , pa_strerror (pa_context_errno (context_)));
+        return;
+    }
 
 	unsigned int mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
 	bool resample = audioSampleRate_ != mainBufferSampleRate;
-
-    if (pa_stream_peek (record_->pulseStream() , (const void**) &data , &bytes) < 0 or !data) {
-        _error("Audio: Error capture stream peek failed: %s" , pa_strerror (pa_context_errno (context_)));
-        goto end;
-    }
-
 	if (resample) {
 		double resampleFactor = (double) audioSampleRate_ / mainBufferSampleRate;
 		bytes = (double) bytes * resampleFactor;
 	}
 
-	samples = bytes / sizeof(SFLDataFormat);
+	size_t samples = bytes / sizeof(SFLDataFormat);
 	if (bytes > mic_buf_size_) {
 		mic_buf_size_ = bytes;
 		delete[] mic_buffer_;
@@ -523,10 +520,9 @@ void PulseLayer::readFromMic (void)
 	if (resample)
 		converter_->resample((SFLDataFormat*)data, mic_buffer_, mainBufferSampleRate, audioSampleRate_, samples);
 
-	dcblocker_.process(resample ? mic_buffer_ : (SFLDataFormat*)data, mic_buffer_, bytes);
+	dcblocker_.process(mic_buffer_, resample ? mic_buffer_ : (SFLDataFormat*)data, samples);
 	getMainBuffer()->putData(mic_buffer_, bytes);
 
-end:
     if (pa_stream_drop (record_->pulseStream()) < 0)
         _error ("Audio: Error: capture stream drop failed: %s" , pa_strerror (pa_context_errno (context_)));
 }

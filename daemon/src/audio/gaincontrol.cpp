@@ -42,12 +42,12 @@ std::fstream tmpIn("gaintestin.raw", std::fstream::out);
 std::fstream tmpOut("gaintestout.raw", std::fstream::out);
 #endif
 
-void GainControl::process(SFLDataFormat *buf, int bufLength) 
+void GainControl::process(SFLDataFormat *buf, int samples)
 {
     double rms, rmsAvgLevel, in, out, diffRms, maxRms;
 
     maxRms = 0.0;
-    for(int i = 0; i < bufLength; i++) {
+    for(int i = 0; i < samples; i++) {
         // linear conversion
 	in = (double)buf[i] / (double)SHRT_MAX;
 	

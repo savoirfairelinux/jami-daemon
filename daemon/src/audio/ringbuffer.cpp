@@ -32,7 +32,6 @@
  *  as that of the covered work.
  */
 
-#include <cassert>
 #include <cstdlib>
 #include <cstring>
 #include <utility> // for std::pair
@@ -52,22 +51,17 @@ RingBuffer::RingBuffer (int size, const std::string &call_id) : mEnd (0)
     , buffer_id (call_id)
 {
     mBuffer = new unsigned char[mBufferSize];
-    assert (mBuffer != NULL);
-
     count_rb++;
 }
 
-// Free memory on object deletion
 RingBuffer::~RingBuffer()
 {
     delete[] mBuffer;
-    mBuffer = NULL;
 }
 
 void
 RingBuffer::flush (const std::string &call_id)
 {
-
     storeReadPointer (mEnd, call_id);
 }
 
@@ -75,16 +69,9 @@ RingBuffer::flush (const std::string &call_id)
 void
 RingBuffer::flushAll ()
 {
-
-
-    ReadPointer::iterator iter_pointer = _readpointer.begin();
-
-    while (iter_pointer != _readpointer.end()) {
-
-        iter_pointer->second = mEnd;
-
-        iter_pointer++;
-    }
+    ReadPointer::iterator iter;
+    for (iter = _readpointer.begin(); iter != _readpointer.end(); ++iter)
+        iter->second = mEnd;
 }
 
 int
@@ -250,19 +237,15 @@ RingBuffer::Get (void *buffer, int toCopy, const std::string &call_id)
     return copied;
 }
 
-// Used to discard some bytes.
 int
 RingBuffer::Discard (int toDiscard, const std::string &call_id)
 {
-
     int len = getLen (call_id);
-
-    int mStart = getReadPointer (call_id);
 
     if (toDiscard > len)
         toDiscard = len;
 
-    mStart = (mStart + toDiscard) % mBufferSize;
+    int mStart = (getReadPointer (call_id) + toDiscard) % mBufferSize;
 
     storeReadPointer (mStart, call_id);
 

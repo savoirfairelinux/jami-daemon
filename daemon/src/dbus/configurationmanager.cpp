@@ -175,6 +175,9 @@ std::vector<std::string> ConfigurationManager::getAudioCodecList (void)
             list.push_back (ss.str());
         }
 
+    if (list.empty())
+        errorAlert(CODECS_NOT_LOADED);
+
     return list;
 }
 
@@ -201,7 +204,10 @@ std::vector<std::string> ConfigurationManager::getSupportedTlsMethod (void)
 
 std::vector<std::string> ConfigurationManager::getAudioCodecDetails (const int32_t& payload)
 {
-    return Manager::instance().getAudioCodecFactory().getCodecSpecifications (payload);
+    std::vector<std::string> result(Manager::instance().getAudioCodecFactory().getCodecSpecifications(payload));
+    if (result.empty())
+        errorAlert(CODECS_NOT_LOADED);
+    return result;
 }
 
 std::vector<std::string> ConfigurationManager::getVideoCodecDetails (const std::string& codec)

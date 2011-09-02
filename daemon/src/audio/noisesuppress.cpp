@@ -28,51 +28,13 @@
  *  as that of the covered work.
  */
 
+#include <cassert>
 #include "noisesuppress.h"
 
-NoiseSuppress::NoiseSuppress (int smplPerFrame, int samplingRate) : _noiseState (NULL)
-    , _smplPerFrame (smplPerFrame)
-    , _samplingRate (samplingRate)
+NoiseSuppress::NoiseSuppress (int smplPerFrame, int samplingRate)
+	: _smplPerFrame (smplPerFrame)
 {
-    initNewNoiseSuppressor (_smplPerFrame, _samplingRate);
-}
-
-
-NoiseSuppress::~NoiseSuppress()
-{
-    speex_preprocess_state_destroy (_noiseState);
-}
-
-void NoiseSuppress::reset (void)
-{
-
-    speex_preprocess_state_destroy (_noiseState);
-
-    initNewNoiseSuppressor (_smplPerFrame, _samplingRate);
-}
-
-void NoiseSuppress::putData (SFLDataFormat * /*inputData*/, int /*nbBytes*/) {}
-
-int NoiseSuppress::getData (SFLDataFormat * /*outputData*/)
-{
-    return 0;
-}
-
-void NoiseSuppress::process (SFLDataFormat *data, int /*nbBytes*/)
-{
-    if (_noiseState)
-        speex_preprocess_run (_noiseState, data);
-}
-
-int NoiseSuppress::process (SFLDataFormat * /*inputData*/,
-        SFLDataFormat * /*outputData*/, int /*nbBytes*/)
-{
-    return 0;
-}
-
-void NoiseSuppress::initNewNoiseSuppressor (int smplPerFrame, int samplingRate)
-{
-    _noiseState = speex_preprocess_state_init (smplPerFrame, samplingRate);
+    _noiseState = speex_preprocess_state_init (_smplPerFrame, samplingRate);
     int i=1;
     speex_preprocess_ctl (_noiseState, SPEEX_PREPROCESS_SET_DENOISE, &i);
     i=-20;
@@ -91,4 +53,16 @@ void NoiseSuppress::initNewNoiseSuppressor (int smplPerFrame, int samplingRate)
     speex_preprocess_ctl (_noiseState, SPEEX_PREPROCESS_SET_DEREVERB_LEVEL, &f);
     i = 0;
     speex_preprocess_ctl (_noiseState, SPEEX_PREPROCESS_SET_VAD, &i);
+}
+
+
+NoiseSuppress::~NoiseSuppress()
+{
+    speex_preprocess_state_destroy (_noiseState);
+}
+
+void NoiseSuppress::process (SFLDataFormat *data, int samples)
+{
+	assert(_smplPerFrame == samples);
+	speex_preprocess_run (_noiseState, data);
 }

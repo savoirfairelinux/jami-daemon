@@ -119,9 +119,8 @@ void AudioRtpSession::setSessionMedia (AudioCodec *audioCodec)
         }
     }
 
-    if (_type != Zrtp) {
+    if (_type != Zrtp)
 		_ca->setRecordingSmplRate (getCodecSampleRate());
-	}
 }
 
 void AudioRtpSession::sendDtmfEvent ()
