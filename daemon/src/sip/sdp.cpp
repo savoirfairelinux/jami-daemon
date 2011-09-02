@@ -262,7 +262,7 @@ void Sdp::setLocalMediaVideoCapabilities (const std::vector<std::string> &videoC
     }
 }
 
-void Sdp::setLocalMediaCapabilities (CodecOrder selectedCodecs)
+void Sdp::setLocalMediaCapabilities (const CodecOrder &selectedCodecs)
 {
     _debug ("SDP: Fetch local media capabilities. Local extern audio port: %i" , getLocalPublishedAudioPort());
 
@@ -287,7 +287,7 @@ void Sdp::setLocalMediaCapabilities (CodecOrder selectedCodecs)
     }
 }
 
-int Sdp::createLocalSession (CodecOrder selectedCodecs, const std::vector<std::string> &videoCodecs)
+int Sdp::createLocalSession (const CodecOrder &selectedCodecs, const std::vector<std::string> &videoCodecs)
 {
     _info ("SDP: Create local session");
 
@@ -323,7 +323,8 @@ int Sdp::createLocalSession (CodecOrder selectedCodecs, const std::vector<std::s
     return pjmedia_sdp_validate (localSession_);
 }
 
-int Sdp::createOffer (CodecOrder selectedCodecs, const std::vector<std::string> &videoCodecs)
+int Sdp::createOffer (const CodecOrder &selectedCodecs,
+                      const std::vector<std::string> &videoCodecs)
 {
     pj_status_t status;
 
@@ -350,19 +351,18 @@ int Sdp::createOffer (CodecOrder selectedCodecs, const std::vector<std::string> 
     return PJ_SUCCESS;
 }
 
-int Sdp::receiveOffer (const pjmedia_sdp_session* remote, const CodecOrder &selectedCodecs, const std::vector<std::string> &videoCodecs)
+int Sdp::receiveOffer (const pjmedia_sdp_session* remote,
+                       const CodecOrder &selectedCodecs,
+                       const std::vector<std::string> &videoCodecs)
 {
     if (!remote)
         return !PJ_SUCCESS;
 
-    _debug ("SDP: Receiving initial offer");
-
-    pj_status_t status;
-
     char buffer[1000];
-    int size = pjmedia_sdp_print(remote, buffer, sizeof buffer - 1);
-    buffer[size] = '\0';
+    memset(buffer, 0, 1000);
+    pjmedia_sdp_print(remote, buffer, 1000);
     _debug("SDP: Remote SDP Session:\n%s", buffer);
+    pj_status_t status;
 
     // If called for the first time
     if (!localSession_) {
@@ -740,4 +740,18 @@ void Sdp::getRemoteSdpCryptoFromOffer (const pjmedia_sdp_session* remote_sdp, Cr
             }
         }
     }
+}
+        
+void Sdp::setLocalPublishedAudioPort (int port)
+{
+    localAudioPort_ = port;
+    if (localAudioMediaCap_)
+        localAudioMediaCap_->port = port;
+}
+
+void Sdp::setLocalPublishedVideoPort (int port)
+{
+    localVideoPort_ = port;
+    if (localVideoMediaCap_)
+        localVideoMediaCap_->port = port;
 }

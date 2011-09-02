@@ -44,8 +44,8 @@
 #include <string>
 #include <stdexcept>
 
-#include "sdpmedia.h"
-#include "global.h" // FIXME: CodecOrder shouldn't be in global.h
+#include "global.h" // for CodecOrder
+class sdpMedia;
 
 namespace sfl {
     class AudioCodec;
@@ -62,13 +62,12 @@ typedef std::vector<std::string> CryptoOffer;
 
 class Sdp
 {
-
     public:
 
         /*
          * Class Constructor.
          *
-         * @param ip_addr
+         * @param memory pool
          */
         Sdp (pj_pool_t *pool);
 
@@ -131,7 +130,7 @@ class Sdp
          * On building an invite outside a dialog, build the local offer and create the
          * SDP negotiator instance with it.
          */
-        int createOffer (CodecOrder selectedCodecs, const std::vector<std::string> &videoCodecs);
+        int createOffer (const CodecOrder &selectedCodecs, const std::vector<std::string> &videoCodecs);
 
         /*
         * On receiving an invite outside a dialog, build the local offer and create the
@@ -139,7 +138,9 @@ class Sdp
         *
         * @param remote    The remote offer
         */
-        int receiveOffer (const pjmedia_sdp_session* remote, const CodecOrder &selectedCodecs, const std::vector<std::string> &videoCodecs);
+        int receiveOffer (const pjmedia_sdp_session* remote,
+                          const CodecOrder &selectedCodecs,
+                          const std::vector<std::string> &videoCodecs);
 
         /*
          * On receiving a message, check if it contains SDP and negotiate. Should be used for
@@ -196,20 +197,12 @@ class Sdp
         /**
          * @param Set the published audio port
          */
-        void  setLocalPublishedAudioPort (int port) {
-            localAudioPort_ = port;
-            if (localAudioMediaCap_)
-            	localAudioMediaCap_->port = port;
-        }
+        void  setLocalPublishedAudioPort(int port);
 
         /**
          * @param Set the published video port
          */
-        void  setLocalPublishedVideoPort (int port) {
-            localVideoPort_ = port;
-            if (localVideoMediaCap_)
-            	localVideoMediaCap_->port = port;
-        }
+        void  setLocalPublishedVideoPort (int port);
 
         /**
          * @return The published audio port
@@ -395,13 +388,14 @@ class Sdp
          * Build the local media capabilities for this session
          * @param List of codec in preference order
          */
-        void setLocalMediaCapabilities (CodecOrder selectedCodecs);
+        void setLocalMediaCapabilities (const CodecOrder &selectedCodecs);
         void setLocalMediaVideoCapabilities (const std::vector<std::string> &videoCodecs);
 
         /*
          * Build the local SDP offer
          */
-        int createLocalSession (CodecOrder selectedCodecs, const std::vector<std::string> &videoCodecs);
+        int createLocalSession (const CodecOrder &selectedCodecs,
+                                const std::vector<std::string> &videoCodecs);
 
         /*
          *  Mandatory field: Protocol version ("v=")
