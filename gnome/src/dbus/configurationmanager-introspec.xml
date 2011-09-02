@@ -226,7 +226,7 @@
 	   <method name="getAudioManager" tp:name-for-bindings="getAudioManager">
 		   <tp:docstring>
 		   </tp:docstring>
-		   <arg type="i" name="api" direction="out">
+		   <arg type="s" name="api" direction="out">
 			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>
@@ -235,7 +235,7 @@
 	   <method name="setAudioManager" tp:name-for-bindings="setAudioManager">
 		   <tp:docstring>
 		   </tp:docstring>
-		   <arg type="i" name="api" direction="in">
+		   <arg type="s" name="api" direction="in">
 			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>

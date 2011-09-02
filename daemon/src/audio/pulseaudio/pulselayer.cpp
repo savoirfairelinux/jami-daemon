@@ -193,8 +193,7 @@ void context_changed_callback (pa_context* c, pa_subscription_event_type_t t, ui
 
 
 PulseLayer::PulseLayer ()
-    : AudioLayer (PULSEAUDIO)
-    , playback_(0)
+    : playback_(0)
     , record_(0)
     , ringtone_(0)
 	, mic_buffer_(NULL)

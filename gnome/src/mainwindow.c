@@ -43,6 +43,7 @@
 #include <widget/gtkscrollbook.h>
 #include <widget/minidialog.h>
 #include "uimanager.h"
+#include "config/audioconf.h"
 
 #include <sys/stat.h>
 #include <gtk/gtk.h>

@@ -73,8 +73,7 @@ void AlsaThread::run (void)
 
 // Constructor
 AlsaLayer::AlsaLayer ()
-    : AudioLayer (ALSA)
-	, indexIn_ (audioPref.getCardin())
+	: indexIn_ (audioPref.getCardin())
 	, indexOut_ (audioPref.getCardout())
 	, indexRing_ (audioPref.getCardring())
     , playbackHandle_ (NULL)

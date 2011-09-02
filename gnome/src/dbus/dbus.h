@@ -338,17 +338,17 @@ void dbus_set_history_limit (const guint days);
 
 /**
  * ConfigurationManager - Returns the selected audio manager
- * @return int	0	ALSA
- *		1	PULSEAUDIO
+ * @return "alsa"
+ *		or "pulseaudio"
  */
-int dbus_get_audio_manager (void);
+gchar *dbus_get_audio_manager (void);
 
 /**
  * ConfigurationManager - Set the audio manager
- * @param api	0	ALSA
- *		1	PULSEAUDIO
+ * @param api	"alsa"
+ *		"pulseaudio"
  */
-void dbus_set_audio_manager (int api);
+void dbus_set_audio_manager (const gchar *api);
 
 /**
  * ConfigurationManager - Start a tone when a new call is open and no numbers have been dialed

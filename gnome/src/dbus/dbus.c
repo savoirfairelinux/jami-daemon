@@ -1734,7 +1734,7 @@ dbus_get_history_limit (void)
 }
 
 void
-dbus_set_audio_manager (int api)
+dbus_set_audio_manager (const gchar *api)
 {
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_set_audio_manager (
@@ -1744,10 +1744,10 @@ dbus_set_audio_manager (int api)
         g_error_free (error);
 }
 
-int
+gchar *
 dbus_get_audio_manager (void)
 {
-    int api;
+    gchar *api;
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_get_audio_manager (
         configurationManagerProxy, &api, &error);

@@ -44,7 +44,7 @@ namespace {
 } // end anonymous namespace
 
 Preferences::Preferences() :  _accountOrder ("")
-    , _audioApi (1) // 1 is pulseaudio, 0 alsa
+    , _audioApi (PULSEAUDIO_API_STR)
     , _historyLimit (30)
     , _historyMaxCalls (20)
     , _notifyMails (false)
@@ -66,8 +66,7 @@ void Preferences::serialize (Conf::YamlEmitter *emiter)
 	Conf::MappingNode preferencemap (NULL);
 
     Conf::ScalarNode order (_accountOrder);
-    std::string audioapistr = (_audioApi == 1) ? "pulseaudio" : "alsa";
-    Conf::ScalarNode audioapi (audioapistr);
+    Conf::ScalarNode audioapi (_audioApi);
     std::stringstream histlimitstr;
     histlimitstr << _historyLimit;
     Conf::ScalarNode historyLimit (histlimitstr.str());
@@ -109,10 +108,8 @@ void Preferences::unserialize (Conf::MappingNode *map)
     }
 
     map->getValue (orderKey, &_accountOrder);
-    std::string audioApi;
-    map->getValue (audioApiKey, &audioApi);
+    map->getValue (audioApiKey, &_audioApi);
     // 1 is pulseaudio, 0 is alsa
-    _audioApi = (audioApi == "pulseaudio") ? 1 : 0;
     map->getValue (historyLimitKey, &_historyLimit);
     map->getValue (historyMaxCallsKey, &_historyMaxCalls);
     map->getValue (notifyMailsKey, &_notifyMails);

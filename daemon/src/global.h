@@ -119,9 +119,8 @@ static const SOUND_FORMAT INT32 = 0x8;
 #define PULSEAUDIO_NOT_RUNNING      0x0100  /** Pulseaudio is not running */
 #define CODECS_NOT_LOADED           0x1000  /** Codecs not found */
 
-#define ALSA			  0
-#define PULSEAUDIO		  1
-
+#define PULSEAUDIO_API_STR          "pulseaudio"
+#define ALSA_API_STR                "alsa"
 #define UNUSED          __attribute__((__unused__))
 
 #define DEFAULT_SIP_PORT    5060

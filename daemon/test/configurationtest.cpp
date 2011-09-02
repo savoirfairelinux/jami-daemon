@@ -33,6 +33,8 @@
 
 #include "configurationtest.h"
 #include "constants.h"
+#include "audio/alsa/alsalayer.h"
+#include "audio/pulseaudio/pulselayer.h"
 
 using std::cout;
 using std::endl;
@@ -79,10 +81,10 @@ void ConfigurationTest::testInitAudioDriver()
         CPPUNIT_FAIL ("Error while loading audio layer");
 
     // Check if it has been created with the right type
-    if (Manager::instance().preferences.getAudioApi() == ALSA)
-        CPPUNIT_ASSERT_EQUAL (Manager::instance().getAudioDriver()->getLayerType(), ALSA);
-    else if (Manager::instance().preferences.getAudioApi() == PULSEAUDIO)
-        CPPUNIT_ASSERT_EQUAL (Manager::instance().getAudioDriver()->getLayerType(), PULSEAUDIO);
+    if (Manager::instance().preferences.getAudioApi() == "alsa")
+        CPPUNIT_ASSERT (!dynamic_cast<PulseLayer*>(Manager::instance().getAudioDriver()));
+    else if (Manager::instance().preferences.getAudioApi() == "pulseaudio")
+        CPPUNIT_ASSERT (!dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver()));
     else
         CPPUNIT_FAIL ("Wrong audio layer type");
 }
