@@ -628,12 +628,23 @@ sflphone_incoming_call (callable_obj_t * c)
     }
 }
 
+/* Truncates last char from dynamically allocated string */
+static void truncate_last_char(gchar **str)
+{
+    if (strlen(*str) > 0) {
+        gchar *tmp = *str;
+        tmp = g_strndup(*str, strlen(*str) - 1);
+        g_free(*str);
+        *str = tmp;
+    }
+}
+
 void
 process_dialing (callable_obj_t *c, guint keyval, gchar *key)
 {
     // We stop the tone
     if (!*c->_peer_number && c->_state != CALL_STATE_TRANSFERT)
-        dbus_start_tone (FALSE , 0);
+        dbus_start_tone (FALSE, 0);
 
     switch (keyval) {
         case GDK_Return:
@@ -645,16 +656,14 @@ process_dialing (callable_obj_t *c, guint keyval, gchar *key)
             break;
         case GDK_BackSpace:
             if (c->_state == CALL_STATE_TRANSFERT) {
-                if (*c->_trsft_to)
-                    c->_trsft_to[strlen (c->_trsft_to) - 1] = '\0';
+                truncate_last_char(&c->_trsft_to);
                 calltree_update_call (current_calls, c, NULL);
             } else {
-                if (*c->_peer_number) {
-                  c->_peer_number[strlen (c->_peer_number) -1] = '\0';
-                  calltree_update_call (current_calls, c, NULL);
-                }
-                else
-                  dbus_hang_up(c);
+                truncate_last_char(&c->_peer_number);
+                calltree_update_call (current_calls, c, NULL);
+                /* If number is now empty, hang up immediately */
+                if (strlen(c->_peer_number) == 0)
+                    dbus_hang_up(c);
             }
 
             break;

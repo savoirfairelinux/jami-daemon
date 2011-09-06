@@ -692,9 +692,9 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
             gchar * description = NULL;
             gchar * audio_codec = call_get_audio_codec (c);
 
-            if (c->_state == CALL_STATE_TRANSFERT) {
+            if (c->_state == CALL_STATE_TRANSFERT)
                 description = calltree_display_call_info (c, DISPLAY_TYPE_CALL_TRANSFER, "");
-            } else {
+            else {
                 if (c->_sas && display_sas && c->_srtp_state == SRTP_STATE_ZRTP_SAS_UNCONFIRMED && !c->_zrtp_confirmed)
                     description = calltree_display_call_info (c, DISPLAY_TYPE_SAS, "");
                 else
@@ -1712,17 +1712,18 @@ void drag_data_received_cb (GtkWidget *widget, GdkDragContext *context UNUSED, g
 
 static void menuitem_response( gchar *string )
 {
-    if(g_strcmp0(string, SFL_CREATE_CONFERENCE) == 0) {
-        sflphone_join_participant (calltree_selected_call->_callID, calltree_dragged_call->_callID);
-    }
-    else if(g_strcmp0(string, SFL_TRANSFER_CALL) == 0) {
-        DEBUG("Calltree: Transfering call %s, to %s", calltree_selected_call->_peer_number, calltree_dragged_call->_peer_number);
+    if (g_strcmp0(string, SFL_CREATE_CONFERENCE) == 0)
+        sflphone_join_participant (calltree_selected_call->_callID,
+                calltree_dragged_call->_callID);
+    else if (g_strcmp0(string, SFL_TRANSFER_CALL) == 0) {
+        DEBUG("Calltree: Transfering call %s, to %s",
+              calltree_selected_call->_peer_number,
+              calltree_dragged_call->_peer_number);
         dbus_attended_transfer(calltree_selected_call, calltree_dragged_call);
         calltree_remove_call(current_calls, calltree_selected_call, NULL);
     }
-    else {
+    else
         DEBUG("CallTree: Error unknown option selected in menu %s", string);
-    }
 
     // Make sure the create conference opetion will appear next time the menu pops
     // The create conference option will hide if tow call from the same conference are draged on each other

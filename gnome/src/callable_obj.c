@@ -181,12 +181,12 @@ callable_obj_t *create_history_entry_from_serialized_form (const gchar *entry)
             case 1:     peer_number = *ptr;     break;
             case 2:     peer_name = *ptr;       break;
             case 3:     time_start = *ptr;      break;
-	    case 4:     time_stop = *ptr;       break;
-	    case 5:     callID = *ptr;          break;
+            case 4:     time_stop = *ptr;       break;
+            case 5:     callID = *ptr;          break;
             case 6:     accountID = *ptr;       break;
             case 7:     recordfile = *ptr;      break;
-	    case 8:     confID = *ptr;          break;
-	    case 9:     time_added = *ptr;      break;
+            case 8:     confID = *ptr;          break;
+            case 9:     time_added = *ptr;      break;
             default:                            break;
         }
 
