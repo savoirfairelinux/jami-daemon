@@ -101,11 +101,20 @@ AlsaLayer::~AlsaLayer (void)
     closePlaybackStream();
 }
 
+// Retry approach taken from pa_linux_alsa.c, part of PortAudio
 bool AlsaLayer::openDevice(snd_pcm_t **pcm, const std::string &dev, snd_pcm_stream_t stream)
 {
-	int err = snd_pcm_open(pcm, dev.c_str(),stream, 0);
+    static const int MAX_RETRIES = 100;
+    int err = snd_pcm_open(pcm, dev.c_str(), stream, 0);
+    // Retry if busy, since dmix plugin may not have released the device yet
+    for (int tries = 0; tries < MAX_RETRIES and err == -EBUSY; ++tries) {
+        usleep(10000);
+        err = snd_pcm_open(pcm, dev.c_str(), stream, 0);
+    }
+
     if (err < 0) {
-        _error("Alsa: couldn't open device %s : %s",  dev.c_str(), snd_strerror(err));
+        _error("Alsa: couldn't open device %s : %s",  dev.c_str(),
+                snd_strerror(err));
         return false;
     }
 
@@ -141,9 +150,8 @@ AlsaLayer::startStream (void)
 
     if (not is_capture_open_) {
     	is_capture_open_ = openDevice(&captureHandle_, pcmc, SND_PCM_STREAM_CAPTURE);
-    	if (not is_capture_open_) {
+        if (not is_capture_open_)
             Manager::instance().getDbusManager()->getConfigurationManager()->errorAlert(ALSA_CAPTURE_DEVICE);
-    	}
     }
 
     if (not is_playback_open_) {

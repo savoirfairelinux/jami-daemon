@@ -1994,6 +1994,7 @@ void ManagerImpl::setAudioPlugin (const std::string& audioPlugin)
     // Recreate audio driver with new settings
     delete _audiodriver;
     _audiodriver = new AlsaLayer;
+    assert(preferences.getAudioApi() == ALSA_API_STR);
     if (wasStarted)
         _audiodriver->startStream();
 
@@ -2033,6 +2034,7 @@ void ManagerImpl::setAudioDevice (const int index, int streamType)
     // Recreate audio driver with new settings
     delete _audiodriver;
     _audiodriver = new AlsaLayer;
+    assert(preferences.getAudioApi() == ALSA_API_STR);
 
     if (wasStarted)
         _audiodriver->startStream();

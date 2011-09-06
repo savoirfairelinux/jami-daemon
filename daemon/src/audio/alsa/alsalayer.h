@@ -146,6 +146,11 @@ class AlsaLayer : public AudioLayer
     private:
 
 
+        /**
+         * Calls snd_pcm_open and retries if device is busy, since dmix plugin
+         * will often hold on to a device temporarily after it has been opened
+         * and closed.
+         */
         bool openDevice(snd_pcm_t **pcm, const std::string &dev, snd_pcm_stream_t stream);
 
         /**
