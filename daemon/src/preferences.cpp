@@ -29,6 +29,8 @@
  */
 
 #include "preferences.h"
+#include "audio/alsa/alsalayer.h"
+#include "audio/pulseaudio/pulselayer.h"
 #include <sstream>
 #include "global.h"
 #include <cassert>
@@ -58,8 +60,24 @@ Preferences::Preferences() :  _accountOrder ("")
 
 }
 
-Preferences::~Preferences() {}
+AudioLayer* Preferences::createAudioLayer()
+{
+    if (_audioApi == PULSEAUDIO_API_STR and system("ps -C pulseaudio") == 0)
+        return new PulseLayer;
+    else {
+        _audioApi = ALSA_API_STR;
+        return new AlsaLayer;
+    }
+}
 
+AudioLayer* Preferences::switchAndCreateAudioLayer()
+{
+    if (_audioApi == PULSEAUDIO_API_STR)
+        _audioApi = ALSA_API_STR;
+    else
+        _audioApi = PULSEAUDIO_API_STR;
+    return createAudioLayer();
+}
 
 void Preferences::serialize (Conf::YamlEmitter *emiter)
 {
