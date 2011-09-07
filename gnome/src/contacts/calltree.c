@@ -692,7 +692,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
             gchar * description = NULL;
             gchar * audio_codec = call_get_audio_codec (c);
 
-            if (c->_state == CALL_STATE_TRANSFERT)
+            if (c->_state == CALL_STATE_TRANSFER)
                 description = calltree_display_call_info (c, DISPLAY_TYPE_CALL_TRANSFER, "");
             else {
                 if (c->_sas && display_sas && c->_srtp_state == SRTP_STATE_ZRTP_SAS_UNCONFIRMED && !c->_zrtp_confirmed)
@@ -727,8 +727,8 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
                     case CALL_STATE_BUSY:
                         pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/busy.svg", NULL);
                         break;
-                    case CALL_STATE_TRANSFERT:
-                        pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/transfert.svg", NULL);
+                    case CALL_STATE_TRANSFER:
+                        pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/transfer.svg", NULL);
                         break;
                     case CALL_STATE_RECORD:
                         pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/icon_rec.svg", NULL);
@@ -1294,27 +1294,26 @@ void calltree_display (calltab_t *tab)
         DEBUG ("CallTree: Display main tab");
 
         if (active_calltree==contacts)
-            gtk_toggle_tool_button_set_active ( (GtkToggleToolButton*) contactButton, FALSE);
+            gtk_toggle_tool_button_set_active ( (GtkToggleToolButton*) contactButton_, FALSE);
         else
-            gtk_toggle_tool_button_set_active ( (GtkToggleToolButton*) historyButton, FALSE);
+            gtk_toggle_tool_button_set_active ( (GtkToggleToolButton*) historyButton_, FALSE);
     }
 
     /* case 2: we want to display the history */
     else if (tab == history) {
         DEBUG ("ConferenceList: Display history tab");
+        if (active_calltree == contacts)
+            gtk_toggle_tool_button_set_active((GtkToggleToolButton*) contactButton_, FALSE);
 
-        if (active_calltree==contacts)
-            gtk_toggle_tool_button_set_active ( (GtkToggleToolButton*) contactButton, FALSE);
-
-        gtk_toggle_tool_button_set_active ( (GtkToggleToolButton*) historyButton, TRUE);
+        gtk_toggle_tool_button_set_active((GtkToggleToolButton*) historyButton_, TRUE);
     }
     else if (tab==contacts) {
         DEBUG ("CallTree: Display contact tab");
 
-        if (active_calltree==history)
-            gtk_toggle_tool_button_set_active ( (GtkToggleToolButton*) historyButton, FALSE);
+        if (active_calltree == history)
+            gtk_toggle_tool_button_set_active((GtkToggleToolButton*) historyButton_, FALSE);
 
-        gtk_toggle_tool_button_set_active ( (GtkToggleToolButton*) contactButton, TRUE);
+        gtk_toggle_tool_button_set_active((GtkToggleToolButton*) contactButton_, TRUE);
 
         set_focus_on_addressbook_searchbar();
     }
@@ -1392,7 +1391,7 @@ static void drag_end_cb (GtkWidget * widget UNUSED, GdkDragContext * context UNU
                 calltree_selected_call->_state == CALL_STATE_INVALID ||
                 calltree_selected_call->_state == CALL_STATE_FAILURE ||
                 calltree_selected_call->_state == CALL_STATE_BUSY ||
-                calltree_selected_call->_state == CALL_STATE_TRANSFERT) {
+                calltree_selected_call->_state == CALL_STATE_TRANSFER) {
 
             DEBUG ("CallTree: Selected an invalid call");
 
@@ -1412,7 +1411,7 @@ static void drag_end_cb (GtkWidget * widget UNUSED, GdkDragContext * context UNU
                     calltree_dragged_call->_state == CALL_STATE_INVALID ||
                     calltree_dragged_call->_state == CALL_STATE_FAILURE ||
                     calltree_dragged_call->_state == CALL_STATE_BUSY ||
-                    calltree_dragged_call->_state == CALL_STATE_TRANSFERT) {
+                    calltree_dragged_call->_state == CALL_STATE_TRANSFER) {
 
                 DEBUG ("CallTree: Dragged on an invalid call");
 

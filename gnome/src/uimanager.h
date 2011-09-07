@@ -35,11 +35,9 @@
 
 G_BEGIN_DECLS
 
-guint holdConnId;     //The hold_menu signal connection ID
-
-GtkWidget *historyButton;
-GtkWidget *contactButton;
-GtkAction *volumeToggle;
+GtkWidget *historyButton_;
+GtkWidget *contactButton_;
+GtkAction *volumeToggle_;
 
 GtkUIManager *uimanager_new (void);
 

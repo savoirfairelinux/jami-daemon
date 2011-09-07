@@ -416,7 +416,7 @@ sflphone_hang_up()
                 DEBUG ("from sflphone_hang_up : ");
                 stop_notification();
                 break;
-            case CALL_STATE_TRANSFERT:
+            case CALL_STATE_TRANSFER:
                 dbus_hang_up (selectedCall);
                 call_remove_all_errors (selectedCall);
                 time (&selectedCall->_time_stop);
@@ -467,8 +467,8 @@ sflphone_pick_up()
             dbus_accept (selectedCall);
             stop_notification();
             break;
-        case CALL_STATE_TRANSFERT:
-            dbus_transfert (selectedCall);
+        case CALL_STATE_TRANSFER:
+            dbus_transfer (selectedCall);
             time (&selectedCall->_time_stop);
             calltree_remove_call(current_calls, selectedCall, NULL);
             calllist_remove_call(current_calls, selectedCall->_callID);
@@ -574,12 +574,12 @@ sflphone_record (callable_obj_t * c)
 }
 
 void
-sflphone_set_transfert()
+sflphone_set_transfer()
 {
     callable_obj_t * c = calltab_get_selected_call (current_calls);
 
     if (c) {
-        c->_state = CALL_STATE_TRANSFERT;
+        c->_state = CALL_STATE_TRANSFER;
         g_free(c->_trsft_to);
         c->_trsft_to = g_strdup ("");
         calltree_update_call (current_calls, c, NULL);
@@ -589,7 +589,7 @@ sflphone_set_transfert()
 }
 
 void
-sflphone_unset_transfert()
+sflphone_unset_transfer()
 {
     callable_obj_t * c = calltab_get_selected_call (current_calls);
 
@@ -643,7 +643,7 @@ void
 process_dialing (callable_obj_t *c, guint keyval, gchar *key)
 {
     // We stop the tone
-    if (!*c->_peer_number && c->_state != CALL_STATE_TRANSFERT)
+    if (!*c->_peer_number && c->_state != CALL_STATE_TRANSFER)
         dbus_start_tone (FALSE, 0);
 
     switch (keyval) {
@@ -655,7 +655,7 @@ process_dialing (callable_obj_t *c, guint keyval, gchar *key)
             sflphone_hang_up ();
             break;
         case GDK_BackSpace:
-            if (c->_state == CALL_STATE_TRANSFERT) {
+            if (c->_state == CALL_STATE_TRANSFER) {
                 truncate_last_char(&c->_trsft_to);
                 calltree_update_call (current_calls, c, NULL);
             } else {
@@ -678,7 +678,7 @@ process_dialing (callable_obj_t *c, guint keyval, gchar *key)
             if (keyval < 127 /* ascii */ ||
                (keyval >= GDK_Mode_switch && keyval <= GDK_KP_9) /* num keypad */) {
 
-                if (c->_state == CALL_STATE_TRANSFERT) {
+                if (c->_state == CALL_STATE_TRANSFER) {
                     gchar *new_trsft = g_strconcat (c->_trsft_to, key, NULL);
                     g_free (c->_trsft_to);
                     c->_trsft_to = new_trsft;
@@ -775,19 +775,19 @@ sflphone_keypad (guint keyval, gchar * key)
                 }
 
                 break;
-            case CALL_STATE_TRANSFERT:
+            case CALL_STATE_TRANSFER:
 
                 switch (keyval) {
                     case GDK_Return:
                     case GDK_KP_Enter:
-                        dbus_transfert (c);
+                        dbus_transfer (c);
                         time (&c->_time_stop);
                         calltree_remove_call(current_calls, c, NULL);
                         break;
                     case GDK_Escape:
-                        sflphone_unset_transfert ();
+                        sflphone_unset_transfer ();
                         break;
-                    default: // When a call is on transfert, typing new numbers will add it to c->_peer_number
+                    default: // When a call is on transfer, typing new numbers will add it to c->_peer_number
                         process_dialing (c, keyval, key);
                         break;
                 }

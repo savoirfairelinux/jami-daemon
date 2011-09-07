@@ -80,7 +80,7 @@ typedef enum {
     CALL_STATE_HOLD,
     CALL_STATE_FAILURE,
     CALL_STATE_BUSY,
-    CALL_STATE_TRANSFERT,
+    CALL_STATE_TRANSFER,
     CALL_STATE_RECORD,
 } call_state_t;
 

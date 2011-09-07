@@ -721,21 +721,21 @@ select_audio_manager (void)
     if (!must_show_alsa_conf() && !gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (pulse))) {
         dbus_set_audio_manager (ALSA_API_STR);
         alsabox = alsa_box();
-        gtk_container_add (GTK_CONTAINER (alsa_conf) , alsabox);
-        gtk_widget_show (alsa_conf);
-        gtk_widget_set_sensitive (GTK_WIDGET (alsa_conf), TRUE);
-        gtk_action_set_sensitive (GTK_ACTION (volumeToggle), TRUE);
+        gtk_container_add (GTK_CONTAINER(alsa_conf), alsabox);
+        gtk_widget_show(alsa_conf);
+        gtk_widget_set_sensitive (alsa_conf, TRUE);
+        gtk_action_set_sensitive (volumeToggle_, TRUE);
     } else if (must_show_alsa_conf() && gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (pulse))) {
         dbus_set_audio_manager (PULSEAUDIO_API_STR);
         gtk_container_remove (GTK_CONTAINER (alsa_conf) , alsabox);
-        gtk_widget_hide (alsa_conf);
-        if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (volumeToggle))) {
-            main_window_volume_controls (FALSE);
-            eel_gconf_set_integer (SHOW_VOLUME_CONTROLS, FALSE);
-            gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (volumeToggle), FALSE);
+        gtk_widget_hide(alsa_conf);
+        if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(volumeToggle_))) {
+            main_window_volume_controls(FALSE);
+            eel_gconf_set_integer(SHOW_VOLUME_CONTROLS, FALSE);
+            gtk_toggle_action_set_active(GTK_TOGGLE_ACTION (volumeToggle_), FALSE);
         }
 
-        gtk_action_set_sensitive (GTK_ACTION (volumeToggle), FALSE);
+        gtk_action_set_sensitive(volumeToggle_, FALSE);
     }
 }
 

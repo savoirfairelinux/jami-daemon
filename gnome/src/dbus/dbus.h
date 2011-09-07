@@ -79,7 +79,7 @@ void dbus_hang_up (const callable_obj_t * c);
  * CallManager - Transfer a call
  * @param c The call to transfer
  */
-void dbus_transfert (const callable_obj_t * c);
+void dbus_transfer (const callable_obj_t * c);
 
 /**
  * CallManager - Perform an attended transfer on two calls
