@@ -34,7 +34,7 @@
 #include <sstream>
 #include "global.h"
 #include <cassert>
-        
+
 const char * const Preferences::DFT_ZONE = "North America";
 
 namespace {
@@ -140,17 +140,12 @@ void Preferences::unserialize (Conf::MappingNode *map)
 }
 
 
-VoipPreference::VoipPreference() :  _playDtmf (true)
+VoipPreference::VoipPreference() : _playDtmf (true)
     , _playTones (true)
     , _pulseLength (atoi (DFT_PULSE_LENGTH_STR)) // DFT_PULSE_LENGTH_STR
     , _symmetricRtp (true)
     , _zidFile (ZRTP_ZIDFILE) // ZRTP_ZID_FILENAME
-{
-
-}
-
-VoipPreference::~VoipPreference() {}
-
+{}
 
 void VoipPreference::serialize (Conf::YamlEmitter *emitter)
 {
@@ -196,11 +191,7 @@ AddressbookPreference::AddressbookPreference() : _photo (true)
     , _business (true)
     , _home (true)
     , _mobile (true)
-{
-
-}
-
-AddressbookPreference::~AddressbookPreference() {}
+{}
 
 void AddressbookPreference::serialize (Conf::YamlEmitter *emitter)
 {
@@ -309,11 +300,7 @@ AudioPreference::AudioPreference() : _cardin (atoi (ALSA_DFT_CARD)) // ALSA_DFT_
     , _echocancel(false)
     , _echoCancelTailLength(100)
     , _echoCancelDelay(0)
-{
-
-}
-
-AudioPreference::~AudioPreference() {}
+{}
 
 void AudioPreference::serialize (Conf::YamlEmitter *emitter)
 {
@@ -415,20 +402,6 @@ void AudioPreference::unserialize (Conf::MappingNode *map)
     	pulsemap->getValue (deviceRingtoneKey, &_deviceRingtone);
     }
 }
-
-
-
-ShortcutPreferences::ShortcutPreferences() : _hangup ("")
-    , _pickup ("")
-    , _popup ("")
-    , _toggleHold ("")
-    , _togglePickupHangup ("")
-{
-
-}
-
-ShortcutPreferences::~ShortcutPreferences() {}
-
 
 std::map<std::string, std::string> ShortcutPreferences::getShortcuts() const
 {
