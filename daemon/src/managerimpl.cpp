@@ -1993,8 +1993,7 @@ void ManagerImpl::setAudioPlugin (const std::string& audioPlugin)
 
     // Recreate audio driver with new settings
     delete _audiodriver;
-    _audiodriver = new AlsaLayer;
-    assert(preferences.getAudioApi() == ALSA_API_STR);
+    _audiodriver = preferences.createAudioLayer();
     if (wasStarted)
         _audiodriver->startStream();
 
@@ -2033,8 +2032,7 @@ void ManagerImpl::setAudioDevice (const int index, int streamType)
 
     // Recreate audio driver with new settings
     delete _audiodriver;
-    _audiodriver = new AlsaLayer;
-    assert(preferences.getAudioApi() == ALSA_API_STR);
+    _audiodriver = preferences.createAudioLayer();
 
     if (wasStarted)
         _audiodriver->startStream();
@@ -2390,12 +2388,7 @@ void ManagerImpl::initAudioDriver (void)
         audioPreference.setCardring (ALSA_DFT_CARD_ID);
     }
 
-    if (preferences.getAudioApi() == PULSEAUDIO_API_STR and system("ps -C pulseaudio") == 0)
-		_audiodriver = new PulseLayer;
-	else {
-		preferences.setAudioApi(ALSA_API_STR);
-        _audiodriver = new AlsaLayer;
-    }
+    _audiodriver = preferences.createAudioLayer();
 
     audioLayerMutexUnlock();
 }
@@ -2407,14 +2400,7 @@ void ManagerImpl::switchAudioManager (void)
     bool wasStarted = _audiodriver->isStarted();
     delete _audiodriver;
 
-    if (preferences.getAudioApi() == PULSEAUDIO_API_STR) {
-    	_audiodriver = new AlsaLayer;
-        preferences.setAudioApi(ALSA_API_STR);
-    }
-    else {
-    	_audiodriver = new PulseLayer;
-        preferences.setAudioApi(PULSEAUDIO_API_STR);
-    }
+    _audiodriver = preferences.switchAndCreateAudioLayer();
 
     if (wasStarted)
         _audiodriver->startStream();
@@ -2447,10 +2433,7 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
     _mainBuffer.setInternalSamplingRate(samplerate);
 
     delete _audiodriver;
-    if (preferences.getAudioApi() == PULSEAUDIO_API_STR)
-    	_audiodriver = new PulseLayer;
-    else
-    	_audiodriver = new AlsaLayer;
+    _audiodriver = preferences.createAudioLayer();
 
     unsigned int sampleRate = _audiodriver->getSampleRate();
 

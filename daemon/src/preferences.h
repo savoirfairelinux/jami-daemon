@@ -97,6 +97,7 @@ const std::string popupShortKey ("popupWindow");
 const std::string toggleHoldShortKey ("toggleHold");
 const std::string togglePickupHangupShortKey ("togglePickupHangup");
 
+class AudioLayer;
 
 class Preferences : public Serializable
 {
@@ -107,7 +108,8 @@ class Preferences : public Serializable
 
         Preferences();
 
-        ~Preferences();
+        AudioLayer *createAudioLayer();
+        AudioLayer *switchAndCreateAudioLayer();
 
         virtual void serialize (Conf::YamlEmitter *emitter);
 
