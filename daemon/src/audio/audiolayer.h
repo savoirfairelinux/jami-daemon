@@ -66,7 +66,7 @@ class AudioLayer
         /**
          * Constructor
          */
-        AudioLayer (int type);
+        AudioLayer ();
 
         /**
          * Destructor
@@ -109,15 +109,6 @@ class AudioLayer
          */
         unsigned int getSampleRate() const {
             return audioSampleRate_;
-        }
-
-        /**
-             * Get the layer type for this instance (either Alsa or PulseAudio)
-             * @return unsigned int The layer type
-             *
-             */
-        int getLayerType (void) const {
-            return layerType_;
         }
 
         /**
@@ -171,9 +162,6 @@ class AudioLayer
         SamplerateConverter *converter_;
 
     private:
-
-        const int layerType_;
-
 
         /**
          * Time of the last incoming call notification

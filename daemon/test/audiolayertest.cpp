@@ -67,20 +67,18 @@ void AudioLayerTest::testAudioLayerSwitch()
 {
     _debug ("-------------------- AudioLayerTest::testAudioLayerSwitch --------------------\n");
 
-    int previous_layer = Manager::instance().getAudioDriver()->getLayerType();
+    bool wasAlsa = dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver()) != 0;
 
     for (int i = 0; i < 2; i++) {
-        _debug ("iter - %i",i);
+        _debug ("iter - %i", i);
         Manager::instance().switchAudioManager();
 
-        if (previous_layer == ALSA) {
-            CPPUNIT_ASSERT (Manager::instance().getAudioDriver()->getLayerType() == PULSEAUDIO);
-        } else {
-            CPPUNIT_ASSERT (Manager::instance().getAudioDriver()->getLayerType() == ALSA);
-        }
+        if (wasAlsa)
+            CPPUNIT_ASSERT (dynamic_cast<PulseLayer*>(Manager::instance().getAudioDriver()));
+        else
+            CPPUNIT_ASSERT (dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver()));
 
-        previous_layer = Manager::instance().getAudioDriver()->getLayerType();
-
+        wasAlsa = dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver()) != 0;
         usleep (100000);
     }
 }
@@ -89,7 +87,7 @@ void AudioLayerTest::testPulseConnect()
 {
     _debug ("-------------------- AudioLayerTest::testPulseConnect --------------------\n");
 
-    if (Manager::instance().getAudioDriver()->getLayerType() == ALSA) {
+    if (dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver())) {
         Manager::instance().switchAudioManager();
     	usleep (100000);
     }
@@ -97,7 +95,7 @@ void AudioLayerTest::testPulseConnect()
     ManagerImpl* manager;
     manager = &Manager::instance();
 
-    _pulselayer = (PulseLayer*) Manager::instance().getAudioDriver();
+    _pulselayer = dynamic_cast<PulseLayer*>(Manager::instance().getAudioDriver());
 
-    CPPUNIT_ASSERT (_pulselayer->getLayerType() == PULSEAUDIO);
+    CPPUNIT_ASSERT (_pulselayer);
 }

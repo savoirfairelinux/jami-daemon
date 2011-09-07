@@ -34,14 +34,13 @@
 #include "audio/dcblocker.h"
 #include "manager.h"
 
-AudioLayer::AudioLayer (int type)
+AudioLayer::AudioLayer ()
     : isStarted_ (false)
     , urgentRingBuffer_ (SIZEBUF, Call::DEFAULT_ID)
 	, audioSampleRate_(Manager::instance().getMainBuffer()->getInternalSamplingRate())
     , mutex_ ()
 	, audioPref(Manager::instance().audioPreference)
 	, converter_ (new SamplerateConverter(audioSampleRate_))
-	, layerType_ (type)
     , lastNotificationTime_ (0)
 {
     urgentRingBuffer_.createReadPointer();

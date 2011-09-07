@@ -2019,6 +2019,7 @@ void ManagerImpl::setAudioPlugin (const std::string& audioPlugin)
     // Recreate audio driver with new settings
     delete _audiodriver;
     _audiodriver = new AlsaLayer;
+    assert(preferences.getAudioApi() == ALSA_API_STR);
     if (wasStarted)
         _audiodriver->startStream();
 
@@ -2058,6 +2059,7 @@ void ManagerImpl::setAudioDevice (const int index, int streamType)
     // Recreate audio driver with new settings
     delete _audiodriver;
     _audiodriver = new AlsaLayer;
+    assert(preferences.getAudioApi() == ALSA_API_STR);
 
     if (wasStarted)
         _audiodriver->startStream();
@@ -2347,7 +2349,7 @@ void ManagerImpl::setMailNotify (void)
     saveConfig();
 }
 
-void ManagerImpl::setAudioManager (int32_t api)
+void ManagerImpl::setAudioManager (const std::string &api)
 {
     audioLayerMutexLock();
 
@@ -2356,9 +2358,7 @@ void ManagerImpl::setAudioManager (int32_t api)
         return;
     }
 
-    int layerType = _audiodriver->getLayerType();
-
-    if (layerType == api) {
+    if (api == preferences.getAudioApi()) {
         _debug ("Manager: Audio manager chosen already in use. No changes made. ");
         audioLayerMutexUnlock();
         return;
@@ -2366,14 +2366,12 @@ void ManagerImpl::setAudioManager (int32_t api)
 
     audioLayerMutexUnlock();
 
-    preferences.setAudioApi(api);
-
     switchAudioManager();
 
     saveConfig();
 }
 
-int32_t ManagerImpl::getAudioManager (void) const
+std::string ManagerImpl::getAudioManager (void) const
 {
     return preferences.getAudioApi();
 }
@@ -2477,10 +2475,10 @@ void ManagerImpl::initAudioDriver (void)
         audioPreference.setCardring (ALSA_DFT_CARD_ID);
     }
 
-    if (preferences.getAudioApi() == PULSEAUDIO && system("ps -C pulseaudio") == 0) {
+    if (preferences.getAudioApi() == PULSEAUDIO_API_STR and system("ps -C pulseaudio") == 0)
 		_audiodriver = new PulseLayer;
-	} else {
-		preferences.setAudioApi (ALSA);
+	else {
+		preferences.setAudioApi(ALSA_API_STR);
         _audiodriver = new AlsaLayer;
     }
 
@@ -2492,14 +2490,16 @@ void ManagerImpl::switchAudioManager (void)
     audioLayerMutexLock();
 
     bool wasStarted = _audiodriver->isStarted();
-
-    int newType = (_audiodriver->getLayerType() == PULSEAUDIO) ? ALSA : PULSEAUDIO;
     delete _audiodriver;
 
-    if (newType == ALSA)
+    if (preferences.getAudioApi() == PULSEAUDIO_API_STR) {
     	_audiodriver = new AlsaLayer;
-    else
-    	_audiodriver = new PulseLayer();
+        preferences.setAudioApi(ALSA_API_STR);
+    }
+    else {
+    	_audiodriver = new PulseLayer;
+        preferences.setAudioApi(PULSEAUDIO_API_STR);
+    }
 
     if (wasStarted)
         _audiodriver->startStream();
@@ -2527,13 +2527,12 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
     else
         _debug ("Manager: Audio sampling rate changed: %d -> %d", currentSamplerate, samplerate);
 
-    int type = _audiodriver->getLayerType();
     bool wasActive = _audiodriver->isStarted();
 
     _mainBuffer.setInternalSamplingRate(samplerate);
 
     delete _audiodriver;
-    if (type == PULSEAUDIO)
+    if (preferences.getAudioApi() == PULSEAUDIO_API_STR)
     	_audiodriver = new PulseLayer;
     else
     	_audiodriver = new AlsaLayer;

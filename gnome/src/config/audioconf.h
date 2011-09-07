@@ -42,5 +42,6 @@ GtkWidget* audiocodecs_box();
 GtkWidget* ringtone_box();
 
 gboolean get_api();
+gboolean must_show_alsa_conf ();
 
 #endif // __AUDIO_CONF_H

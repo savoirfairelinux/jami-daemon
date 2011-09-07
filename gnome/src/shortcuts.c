@@ -116,7 +116,7 @@ toggle_pick_up_hang_up_callback ()
     if (selectedCall) {
         switch (selectedCall->_state) {
             case CALL_STATE_INCOMING:
-            case CALL_STATE_TRANSFERT:
+            case CALL_STATE_TRANSFER:
                 sflphone_pick_up ();
                 break;
             case CALL_STATE_DIALING:

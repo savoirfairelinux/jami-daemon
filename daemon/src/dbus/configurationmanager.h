@@ -119,8 +119,8 @@ class ConfigurationManager
         std::string getVideoInputDeviceSize();
         std::string getVideoInputDeviceRate();
 
-        int32_t getAudioManager (void);
-        void setAudioManager (const int32_t& api);
+        std::string getAudioManager (void);
+        void setAudioManager (const std::string& api);
 
         int32_t isIax2Enabled (void);
         std::string getRecordPath (void);

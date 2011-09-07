@@ -197,7 +197,7 @@ preferences_dialog_fill_ringtone_audio_device_list()
 void
 select_active_output_audio_device()
 {
-    if (SHOW_ALSA_CONF) {
+    if (must_show_alsa_conf()) {
 
         GtkTreeModel* model;
         GtkTreeIter iter;
@@ -237,7 +237,7 @@ select_active_output_audio_device()
 void
 select_active_ringtone_audio_device()
 {
-    if (SHOW_ALSA_CONF) {
+    if (must_show_alsa_conf()) {
 
         GtkTreeModel* model;
         GtkTreeIter iter;
@@ -302,7 +302,7 @@ preferences_dialog_fill_input_audio_device_list()
 void
 select_active_input_audio_device()
 {
-    if (SHOW_ALSA_CONF) {
+    if (must_show_alsa_conf()) {
 
         GtkTreeModel* model;
         GtkTreeIter iter;
@@ -705,24 +705,24 @@ GtkWidget* audiocodecs_box (account_t *a)
 void
 select_audio_manager (void)
 {
-    if (!SHOW_ALSA_CONF && !gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (pulse))) {
-        dbus_set_audio_manager (ALSA);
+    if (!must_show_alsa_conf() && !gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (pulse))) {
+        dbus_set_audio_manager (ALSA_API_STR);
         alsabox = alsa_box();
-        gtk_container_add (GTK_CONTAINER (alsa_conf) , alsabox);
-        gtk_widget_show (alsa_conf);
-        gtk_widget_set_sensitive (GTK_WIDGET (alsa_conf), TRUE);
-        gtk_action_set_sensitive (GTK_ACTION (volumeToggle), TRUE);
-    } else if (SHOW_ALSA_CONF && gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (pulse))) {
-        dbus_set_audio_manager (PULSEAUDIO);
+        gtk_container_add (GTK_CONTAINER(alsa_conf), alsabox);
+        gtk_widget_show(alsa_conf);
+        gtk_widget_set_sensitive (alsa_conf, TRUE);
+        gtk_action_set_sensitive (volumeToggle_, TRUE);
+    } else if (must_show_alsa_conf() && gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (pulse))) {
+        dbus_set_audio_manager (PULSEAUDIO_API_STR);
         gtk_container_remove (GTK_CONTAINER (alsa_conf) , alsabox);
-        gtk_widget_hide (alsa_conf);
-        if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (volumeToggle))) {
-            main_window_volume_controls (FALSE);
-            eel_gconf_set_integer (SHOW_VOLUME_CONTROLS, FALSE);
-            gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (volumeToggle), FALSE);
+        gtk_widget_hide(alsa_conf);
+        if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(volumeToggle_))) {
+            main_window_volume_controls(FALSE);
+            eel_gconf_set_integer(SHOW_VOLUME_CONTROLS, FALSE);
+            gtk_toggle_action_set_active(GTK_TOGGLE_ACTION (volumeToggle_), FALSE);
         }
 
-        gtk_action_set_sensitive (GTK_ACTION (volumeToggle), FALSE);
+        gtk_action_set_sensitive(volumeToggle_, FALSE);
     }
 }
 
@@ -941,12 +941,12 @@ GtkWidget* create_audio_configuration()
     gnome_main_section_new_with_table (_ ("Sound Manager"), &frame, &table, 1, 4);
     gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
 
-    int audio_manager = dbus_get_audio_manager();
+    gchar *audio_manager = dbus_get_audio_manager();
     gboolean pulse_audio = FALSE;
 
-    if (audio_manager == PULSEAUDIO) {
+    if (g_strcmp0(audio_manager, PULSEAUDIO_API_STR) == 0)
         pulse_audio = TRUE;
-    }
+    g_free(audio_manager);
 
     pulse = gtk_radio_button_new_with_mnemonic (NULL , _ ("_Pulseaudio"));
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (pulse), pulse_audio);
@@ -962,7 +962,7 @@ GtkWidget* create_audio_configuration()
     gtk_box_pack_start (GTK_BOX (ret), alsa_conf, FALSE, FALSE, 0);
     gtk_widget_show (alsa_conf);
 
-    if (SHOW_ALSA_CONF) {
+    if (must_show_alsa_conf()) {
         // Box for the ALSA configuration
         alsabox = alsa_box();
         gtk_container_add (GTK_CONTAINER (alsa_conf) , alsabox);
@@ -1020,37 +1020,27 @@ GtkWidget* create_audio_configuration()
     enableEchoCancel = gtk_check_button_new_with_mnemonic(_("_Echo Cancellation"));
     state = dbus_get_echo_cancel_state();
     echoCancelActive = FALSE;
-    if (g_strcmp0(state, "enabled") == 0) {
+    if (g_strcmp0(state, "enabled") == 0)
         echoCancelActive = TRUE;
-    }
-    else {
+    else
         echoCancelActive = FALSE;
-    }
+
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableEchoCancel), echoCancelActive);
     g_signal_connect(G_OBJECT(enableEchoCancel), "clicked", active_echo_cancel, NULL);
     gtk_table_attach(GTK_TABLE(table), enableEchoCancel, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-    /*
-    gint value = dbus_get_echo_cancel_tail_length();
-    echoTailLength = gtk_hscale_new_with_range(100, 500, 5);
-    gtk_range_set_value(GTK_RANGE(echoTailLength), (gdouble)value);
-    gtk_table_attach(GTK_TABLE(table), echoTailLength, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    g_signal_connect(G_OBJECT(echoTailLength), "value-changed", G_CALLBACK(echo_tail_length_changed), NULL);
-
-    value = dbus_get_echo_cancel_delay();
-    echoDelay = gtk_hscale_new_with_range(0, 500, 5);
-    gtk_range_set_value(GTK_RANGE(echoDelay), (gdouble)value);
-    gtk_table_attach(GTK_TABLE(table), echoDelay, 0, 1, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    g_signal_connect(G_OBJECT(echoDelay), "value-changed", G_CALLBACK(echo_delay_changed), NULL);
-    */
-
     gtk_widget_show_all (ret);
 
-    if (!pulse_audio) {
+    if (!pulse_audio)
         gtk_widget_show (alsa_conf);
-    } else {
+    else
         gtk_widget_hide (alsa_conf);
-    }
 
     return ret;
+}
+
+/** Show/Hide the alsa configuration panel */
+gboolean must_show_alsa_conf()
+{
+    return g_strcmp0(dbus_get_audio_manager(), ALSA_API_STR) == 0;
 }

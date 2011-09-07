@@ -117,7 +117,7 @@
 			</arg>
 		</method>
 
-		<method name="transfert" tp:name-for-bindings="transfert">
+		<method name="transfer" tp:name-for-bindings="transfer">
 			<tp:docstring>
 			  Transfer a call to given phone number.
 			</tp:docstring>

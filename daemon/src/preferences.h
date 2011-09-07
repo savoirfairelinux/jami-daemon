@@ -130,10 +130,10 @@ class Preferences : public Serializable
             _accountOrder = ord;
         }
 
-        int getAudioApi (void) const {
+        std::string getAudioApi (void) const {
             return _audioApi;
         }
-        void setAudioApi (int api) {
+        void setAudioApi (const std::string &api) {
             _audioApi = api;
         }
 
@@ -205,7 +205,7 @@ class Preferences : public Serializable
         // account order
         std::string _accountOrder;
 
-        int _audioApi;
+        std::string _audioApi;
         int _historyLimit;
         int _historyMaxCalls;
         bool _notifyMails;

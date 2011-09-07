@@ -806,15 +806,15 @@ class ManagerImpl
         /**
          * Get the audio manager
          * @return int The audio manager
-         *		    0 ALSA
-         *		    1 PULSEAUDIO
+         *		    "alsa"
+         *		    "pulseaudio"
          */
-        int32_t getAudioManager (void) const;
+        std::string getAudioManager (void) const;
 
         /**
          * Set the audio manager
          */
-        void setAudioManager (int32_t api);
+        void setAudioManager (const std::string &api);
 
         void switchAudioManager (void);
 

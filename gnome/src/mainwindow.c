@@ -43,10 +43,18 @@
 #include <widget/gtkscrollbook.h>
 #include <widget/minidialog.h>
 #include "uimanager.h"
+#include "config/audioconf.h"
 
 #include <sys/stat.h>
 #include <gtk/gtk.h>
+
+/* Backward compatibility for gtk < 2.22.0 */
+#if GTK_CHECK_VERSION(2,22,0)
+#include <gdk/gdkkeysyms-compat.h>
+#else
 #include <gdk/gdkkeysyms.h>
+#endif
+
 #include <eel-gconf-extensions.h>
 
 /** Local variables */
@@ -135,7 +143,7 @@ on_key_released (GtkWidget *widget UNUSED, GdkEventKey *event, gpointer user_dat
     if (focus_is_on_searchbar)
         return TRUE;
 
-    if(event->keyval == GDK_KEY_Return) {
+    if (event->keyval == GDK_Return) {
         if(active_calltree == current_calls) {
             sflphone_keypad (event->keyval, event->string);
             return TRUE;
@@ -150,13 +158,13 @@ on_key_released (GtkWidget *widget UNUSED, GdkEventKey *event, gpointer user_dat
             event->keyval == '<' ||
             event->keyval == '>' ||
             event->keyval == '\"' ||
-            event->keyval == GDK_KEY_Tab ||
-            event->keyval == GDK_KEY_Return ||
-            event->keyval == GDK_KEY_Left ||
-            event->keyval == GDK_KEY_Up ||
-            event->keyval == GDK_KEY_Right ||
-            event->keyval == GDK_KEY_Down ||
-            (event->keyval >= GDK_KEY_F1 && event->keyval <= GDK_KEY_F12)||
+            event->keyval == GDK_Tab ||
+            event->keyval == GDK_Return ||
+            event->keyval == GDK_Left ||
+            event->keyval == GDK_Up ||
+            event->keyval == GDK_Right ||
+            event->keyval == GDK_Down ||
+            (event->keyval >= GDK_F1 && event->keyval <= GDK_F12)||
             event->keyval == ' '
        )
         return FALSE;

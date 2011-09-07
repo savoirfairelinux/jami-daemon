@@ -863,13 +863,13 @@ dbus_hang_up_conference (const conference_obj_t * c)
 }
 
 void
-dbus_transfert (const callable_obj_t * c)
+dbus_transfer (const callable_obj_t * c)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_transfert (callManagerProxy, c->_callID, c->_trsft_to, &error);
+    org_sflphone_SFLphone_CallManager_transfer (callManagerProxy, c->_callID, c->_trsft_to, &error);
 
     if (error) {
-        ERROR ("Failed to call transfert() on CallManager: %s", error->message);
+        ERROR ("Failed to call transfer() on CallManager: %s", error->message);
         g_error_free (error);
     }
 }
@@ -1854,7 +1854,7 @@ dbus_get_history_limit (void)
 }
 
 void
-dbus_set_audio_manager (int api)
+dbus_set_audio_manager (const gchar *api)
 {
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_set_audio_manager (
@@ -1864,10 +1864,10 @@ dbus_set_audio_manager (int api)
         g_error_free (error);
 }
 
-int
+gchar *
 dbus_get_audio_manager (void)
 {
-    int api;
+    gchar *api;
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_get_audio_manager (
         configurationManagerProxy, &api, &error);

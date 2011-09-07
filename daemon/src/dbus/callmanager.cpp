@@ -167,9 +167,9 @@ CallManager::unhold (const std::string& callID)
 }
 
 void
-CallManager::transfert (const std::string& callID, const std::string& to)
+CallManager::transfer (const std::string& callID, const std::string& to)
 {
-    _debug ("CallManager::transfert received");
+    _debug ("CallManager::transfer received");
     Manager::instance().transferCall (callID, to);
 }
 

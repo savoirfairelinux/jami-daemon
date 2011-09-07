@@ -176,18 +176,10 @@ is_iax_enabled (void)
 void
 select_dtmf_type (void)
 {
-
-    DEBUG ("DTMF selection changed\n");
-
-    if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (overrtp))) {
-        // dbus_set_audio_manager( ALSA );
+    if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (overrtp)))
         DEBUG ("Selected DTMF over RTP");
-    } else {
-
-        // dbus_set_audio_manager( PULSEAUDIO );
+    else
         DEBUG ("Selected DTMF over SIP");
-    }
-
 }
 
 static GPtrArray* getNewCredential (void)

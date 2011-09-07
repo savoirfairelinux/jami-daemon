@@ -3,7 +3,7 @@ icondir   = $(datadir)/pixmaps
 icon_DATA = sflphone.svg
 
 buttons_DATA = current.svg \
-				transfert.svg \
+				transfer.svg \
 				hold.svg \
 				unhold.svg \
 				refuse.svg \

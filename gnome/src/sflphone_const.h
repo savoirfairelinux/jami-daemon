@@ -135,6 +135,9 @@
 /** Error codecs not loaded */
 #define CODECS_NOT_LOADED           0x1000
 
+#define PULSEAUDIO_API_STR          "pulseaudio"
+#define ALSA_API_STR                "alsa"
+
 /** Tone to play when no voice mails */
 #define TONE_WITHOUT_MESSAGE  0
 /** Tone to play when voice mails */
@@ -143,14 +146,8 @@
 #define MINIMIZED	      TRUE
 /** Behaviour of the main window on incoming calls */
 #define __POPUP_WINDOW  (eel_gconf_get_integer (POPUP_ON_CALL))
-/** Show/Hide the alsa configuration panel */
-#define SHOW_ALSA_CONF  ( dbus_get_audio_manager() == ALSA )
 /** Show/Hide the volume controls */
-#define SHOW_VOLUME	(eel_gconf_get_integer (SHOW_VOLUME_CONTROLS) && SHOW_ALSA_CONF)
-
-/** Audio Managers */
-#define ALSA	      0
-#define PULSEAUDIO    1
+#define SHOW_VOLUME	(eel_gconf_get_integer (SHOW_VOLUME_CONTROLS) && must_show_alsa_conf())
 
 /** DTMF type */
 #define OVERRTP "overrtp"

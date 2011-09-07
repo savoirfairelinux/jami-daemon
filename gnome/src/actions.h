@@ -93,12 +93,12 @@ void sflphone_notify_voice_mail (const gchar* accountID , guint count);
  * Prepare SFLphone to transfer a call and wait for the user to dial the number to transfer to
  * Put the selected call in Transfer state
  */
-void sflphone_set_transfert();
+void sflphone_set_transfer();
 
 /**
  * Cancel the transfer and puts back the selected call to Current state
  */
-void sflphone_unset_transfert();
+void sflphone_unset_transfer();
 
 /**
  * Accept / dial the current call
