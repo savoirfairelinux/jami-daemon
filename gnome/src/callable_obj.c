@@ -177,7 +177,7 @@ callable_obj_t *create_history_entry_from_serialized_form (const gchar *entry)
     gint token;
     for (ptr = ptr_orig, token = 0; ptr && token < 10; token++, ptr++)
         switch (token) {
-            case 0:     history_state = get_history_state_from_id (*ptr); break;
+            case 0:     history_state = get_history_state_from_id(*ptr); break;
             case 1:     peer_number = *ptr;     break;
             case 2:     peer_name = *ptr;       break;
             case 3:     time_start = *ptr;      break;
