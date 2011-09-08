@@ -62,7 +62,7 @@
 #include "widget/imwidget.h"
 
 
-static GHashTable * ip2ip_profile=NULL;
+static GHashTable * ip2ip_profile;
 
 static gchar ** sflphone_order_history_hash_table(GHashTable *result)
 {
@@ -1362,9 +1362,8 @@ sflphone_request_go_clear (void)
 {
     callable_obj_t * selectedCall = calltab_get_selected_call (current_calls);
 
-    if (selectedCall) {
+    if (selectedCall)
         dbus_request_go_clear (selectedCall);
-    }
 }
 
 void
@@ -1384,37 +1383,3 @@ sflphone_call_state_changed (callable_obj_t * c, const gchar * description, cons
     update_actions();
 }
 
-
-void sflphone_get_interface_addr_from_name (char *iface_name, char **iface_addr, int size)
-{
-
-    struct ifreq ifr;
-    int fd;
-    // static char iface_addr[18];
-    char *tmp_addr;
-
-    struct sockaddr_in *saddr_in;
-    struct in_addr *addr_in;
-
-    if ( (fd = socket (AF_INET, SOCK_DGRAM,0)) < 0)
-        DEBUG ("getInterfaceAddrFromName error could not open socket\n");
-
-    memset (&ifr, 0, sizeof (struct ifreq));
-
-    strcpy (ifr.ifr_name, iface_name);
-    ifr.ifr_addr.sa_family = AF_INET;
-
-    if ( ioctl (fd, SIOCGIFADDR, &ifr) < 0)
-        DEBUG ("getInterfaceAddrFromName use default interface (0.0.0.0)\n");
-
-
-    saddr_in = (struct sockaddr_in *) &ifr.ifr_addr;
-    addr_in = & (saddr_in->sin_addr);
-
-    tmp_addr = (char *) addr_in;
-
-    snprintf (*iface_addr, size, "%d.%d.%d.%d",
-            UC (tmp_addr[0]), UC (tmp_addr[1]), UC (tmp_addr[2]), UC (tmp_addr[3]));
-
-    close (fd);
-}
