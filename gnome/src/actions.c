@@ -414,7 +414,6 @@ sflphone_hang_up()
                 call_remove_all_errors (selectedCall);
                 selectedCall->_state = CALL_STATE_DIALING;
                 DEBUG ("from sflphone_hang_up : ");
-                stop_notification();
                 break;
             case CALL_STATE_TRANSFER:
                 dbus_hang_up (selectedCall);
@@ -465,7 +464,6 @@ sflphone_pick_up()
             }
 
             dbus_accept (selectedCall);
-            stop_notification();
             break;
         case CALL_STATE_TRANSFER:
             dbus_transfer (selectedCall);
@@ -766,11 +764,9 @@ sflphone_keypad (guint keyval, gchar * key)
                         c->_history_state = INCOMING;
                         calltree_update_call (history, c, NULL);
                         dbus_accept (c);
-                        stop_notification();
                         break;
                     case GDK_Escape:
                         dbus_refuse (c);
-                        stop_notification();
                         break;
                 }
 
@@ -825,15 +821,14 @@ sflphone_keypad (guint keyval, gchar * key)
                 break;
         }
 
-    } else {
+    } else
         sflphone_new_call();
-    }
 }
 
 static void place_direct_call (const callable_obj_t * c)
 {
-    assert(c->_state == CALL_STATE_DIALING);
-        dbus_place_call (c);
+    g_assert(c->_state == CALL_STATE_DIALING);
+    dbus_place_call(c);
 }
 
 static int place_registered_call (callable_obj_t * c)
@@ -861,7 +856,7 @@ static int place_registered_call (callable_obj_t * c)
 
     DEBUG ("Actions: Get account for this call");
 
-    if (g_strcasecmp (c->_accountID, "") != 0) {
+    if (strlen(c->_accountID) != 0) {
         DEBUG ("Actions: Account %s already set for this call", c->_accountID);
         current = account_list_get_by_id (c->_accountID);
     } else {

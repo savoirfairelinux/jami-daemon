@@ -44,17 +44,6 @@
 
 G_BEGIN_DECLS
 
-typedef struct {
-    NotifyNotification *notification;
-    gchar *title;
-    gchar *body;
-    GdkPixbuf *icon;
-} GnomeNotification;
-
-void create_new_gnome_notification (gchar *title, gchar *body, NotifyUrgency urgency, gint timeout, GnomeNotification **notif);
-
-void free_notification (GnomeNotification *g);
-
 /**
  * Notify an incoming call
  * A dialog box is attached to the status icon
@@ -92,11 +81,6 @@ void notify_no_accounts();
  * Notify that there is no registered account
  */
 void notify_no_registered_accounts();
-
-/**
- * Stop and close the current notification if an action occured before the timeout
- */
-void stop_notification (void);
 
 /**
  * Notify that the RTP session is secured
