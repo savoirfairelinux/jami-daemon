@@ -108,9 +108,6 @@ class Preferences : public Serializable
 
         Preferences();
 
-        AudioLayer *createAudioLayer();
-        AudioLayer *switchAndCreateAudioLayer();
-
         virtual void serialize (Conf::YamlEmitter *emitter);
 
         virtual void unserialize (Conf::MappingNode *map);
@@ -121,13 +118,6 @@ class Preferences : public Serializable
         }
         void setAccountOrder (const std::string &ord) {
             _accountOrder = ord;
-        }
-
-        std::string getAudioApi (void) const {
-            return _audioApi;
-        }
-        void setAudioApi (const std::string &api) {
-            _audioApi = api;
         }
 
         int getHistoryLimit (void) const {
@@ -198,7 +188,6 @@ class Preferences : public Serializable
         // account order
         std::string _accountOrder;
 
-        std::string _audioApi;
         int _historyLimit;
         int _historyMaxCalls;
         bool _notifyMails;
@@ -402,6 +391,16 @@ class AudioPreference : public Serializable
 {
     public:
         AudioPreference();
+        AudioLayer *createAudioLayer();
+        AudioLayer *switchAndCreateAudioLayer();
+
+        std::string getAudioApi (void) const {
+            return _audioApi;
+        }
+
+        void setAudioApi (const std::string &api) {
+            _audioApi = api;
+        }
         virtual void serialize (Conf::YamlEmitter *emitter);
 
         virtual void unserialize (Conf::MappingNode *map);
@@ -530,6 +529,7 @@ class AudioPreference : public Serializable
         }
 
     private:
+        std::string _audioApi;
 
         // alsa preference
         int _cardin; // 0
