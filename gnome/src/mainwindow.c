@@ -429,6 +429,7 @@ main_window_zrtp_not_supported(callable_obj_t * c)
         mini_dialog = pidgin_mini_dialog_new(
                           _("Secure Communication Unavailable"), desc,
                           GTK_STOCK_DIALOG_WARNING);
+        g_free(desc);
         pidgin_mini_dialog_add_button(mini_dialog, _("Continue"), NULL, NULL);
         pidgin_mini_dialog_add_button(mini_dialog, _("Stop Call"),
                                        sflphone_hang_up, NULL);
@@ -456,6 +457,7 @@ main_window_zrtp_negotiation_failed(const gchar* const callID, const gchar* cons
                                             severity, peer_number, reason);
     PidginMiniDialog *mini_dialog = pidgin_mini_dialog_new(_("ZRTP negotiation failed"), desc,
                                           GTK_STOCK_DIALOG_WARNING);
+    g_free(desc);
     pidgin_mini_dialog_add_button(mini_dialog, _("Continue"), NULL, NULL);
     pidgin_mini_dialog_add_button(mini_dialog, _("Stop Call"), sflphone_hang_up,
                                   NULL);
@@ -472,6 +474,7 @@ main_window_confirm_go_clear(callable_obj_t * c)
             c->_peer_number);
     PidginMiniDialog *mini_dialog = pidgin_mini_dialog_new(_("Confirm Go Clear"), desc,
                                          GTK_STOCK_STOP);
+    g_free(desc);
     pidgin_mini_dialog_add_button(mini_dialog, _("Confirm"),
                                   (PidginMiniDialogCallback) dbus_set_confirm_go_clear, NULL);
     pidgin_mini_dialog_add_button(mini_dialog, _("Stop Call"), sflphone_hang_up,
