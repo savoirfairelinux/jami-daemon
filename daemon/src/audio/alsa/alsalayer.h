@@ -102,7 +102,7 @@ class AlsaLayer : public AudioLayer
          * @return bool True if it exists and supports the mode
          *		    false otherwise
          */
-        static bool soundCardIndexExist (int card , int stream);
+        static bool soundCardIndexExists(int card, int stream);
 
         /**
          * An index is associated with its string description

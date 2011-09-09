@@ -2018,7 +2018,7 @@ void ManagerImpl::setAudioPlugin (const std::string& audioPlugin)
 
     // Recreate audio driver with new settings
     delete _audiodriver;
-    _audiodriver = preferences.createAudioLayer();
+    _audiodriver = audioPreference.createAudioLayer();
     if (wasStarted)
         _audiodriver->startStream();
 
@@ -2057,7 +2057,7 @@ void ManagerImpl::setAudioDevice (const int index, int streamType)
 
     // Recreate audio driver with new settings
     delete _audiodriver;
-    _audiodriver = preferences.createAudioLayer();
+    _audiodriver = audioPreference.createAudioLayer();
 
     if (wasStarted)
         _audiodriver->startStream();
@@ -2356,7 +2356,7 @@ void ManagerImpl::setAudioManager (const std::string &api)
         return;
     }
 
-    if (api == preferences.getAudioApi()) {
+    if (api == audioPreference.getAudioApi()) {
         _debug ("Manager: Audio manager chosen already in use. No changes made. ");
         audioLayerMutexUnlock();
         return;
@@ -2371,7 +2371,7 @@ void ManagerImpl::setAudioManager (const std::string &api)
 
 std::string ManagerImpl::getAudioManager (void) const
 {
-    return preferences.getAudioApi();
+    return audioPreference.getAudioApi();
 }
 
 
@@ -2449,31 +2449,7 @@ void ManagerImpl::setEchoCancelDelay(int delay)
 void ManagerImpl::initAudioDriver (void)
 {
     audioLayerMutexLock();
-
-    /* Retrieve the global devices info from the user config */
-    int numCardIn = audioPreference.getCardin();
-    int numCardOut = audioPreference.getCardout();
-    int numCardRing = audioPreference.getCardring();
-
-    if (!AlsaLayer::soundCardIndexExist (numCardIn, SFL_PCM_CAPTURE)) {
-        _debug (" Card with index %d doesn't exist or cannot capture. Switch to 0.", numCardIn);
-        numCardIn = ALSA_DFT_CARD_ID;
-        audioPreference.setCardin (ALSA_DFT_CARD_ID);
-    }
-
-    if (!AlsaLayer::soundCardIndexExist (numCardOut, SFL_PCM_PLAYBACK)) {
-        _debug (" Card with index %d doesn't exist or cannot playback. Switch to 0.", numCardOut);
-        numCardOut = ALSA_DFT_CARD_ID;
-        audioPreference.setCardout (ALSA_DFT_CARD_ID);
-    }
-
-    if (!AlsaLayer::soundCardIndexExist (numCardRing, SFL_PCM_RINGTONE)) {
-        _debug (" Card with index %d doesn't exist or cannot ringtone. Switch to 0.", numCardRing);
-        numCardRing = ALSA_DFT_CARD_ID;
-        audioPreference.setCardring (ALSA_DFT_CARD_ID);
-    }
-
-    _audiodriver = preferences.createAudioLayer();
+    _audiodriver = audioPreference.createAudioLayer();
 
     audioLayerMutexUnlock();
 }
@@ -2485,7 +2461,7 @@ void ManagerImpl::switchAudioManager (void)
     bool wasStarted = _audiodriver->isStarted();
     delete _audiodriver;
 
-    _audiodriver = preferences.switchAndCreateAudioLayer();
+    _audiodriver = audioPreference.switchAndCreateAudioLayer();
 
     if (wasStarted)
         _audiodriver->startStream();
@@ -2518,7 +2494,7 @@ void ManagerImpl::audioSamplingRateChanged (int samplerate)
     _mainBuffer.setInternalSamplingRate(samplerate);
 
     delete _audiodriver;
-    _audiodriver = preferences.createAudioLayer();
+    _audiodriver = audioPreference.createAudioLayer();
 
     unsigned int sampleRate = _audiodriver->getSampleRate();
 

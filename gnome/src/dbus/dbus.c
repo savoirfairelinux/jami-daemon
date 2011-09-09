@@ -160,8 +160,6 @@ call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state
                 time(&c->_time_stop);
                 calltree_update_call (history, c, NULL);
             }
-
-            stop_notification();
             calltree_update_call (history, c, NULL);
             status_bar_display_account();
             sflphone_hung_up (c);

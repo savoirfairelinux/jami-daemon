@@ -81,9 +81,9 @@ void ConfigurationTest::testInitAudioDriver()
         CPPUNIT_FAIL ("Error while loading audio layer");
 
     // Check if it has been created with the right type
-    if (Manager::instance().preferences.getAudioApi() == "alsa")
+    if (Manager::instance().audioPreference.getAudioApi() == "alsa")
         CPPUNIT_ASSERT (!dynamic_cast<PulseLayer*>(Manager::instance().getAudioDriver()));
-    else if (Manager::instance().preferences.getAudioApi() == "pulseaudio")
+    else if (Manager::instance().audioPreference.getAudioApi() == "pulseaudio")
         CPPUNIT_ASSERT (!dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver()));
     else
         CPPUNIT_FAIL ("Wrong audio layer type");

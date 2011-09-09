@@ -51,11 +51,11 @@ class AlsaThread : public ost::Thread
         AlsaThread (const AlsaThread& at);
         AlsaThread& operator= (const AlsaThread& at);
 
-        AlsaLayer* _alsa;
+        AlsaLayer* alsa_;
 };
 
 AlsaThread::AlsaThread (AlsaLayer *alsa)
-    : Thread(), _alsa (alsa)
+    : Thread(), alsa_(alsa)
 {
     setCancel (cancelDeferred);
 }
@@ -66,7 +66,7 @@ AlsaThread::AlsaThread (AlsaLayer *alsa)
 void AlsaThread::run (void)
 {
     while (!testCancel()) {
-        _alsa->audioCallback();
+        alsa_->audioCallback();
         Thread::sleep (20);
     }
 }
@@ -481,21 +481,21 @@ AlsaLayer::getSoundCardsInfo (int stream)
 
 
 bool
-AlsaLayer::soundCardIndexExist (int card, int stream)
+AlsaLayer::soundCardIndexExists(int card, int stream)
 {
     snd_ctl_t* handle;
     snd_pcm_info_t *pcminfo;
-    snd_pcm_info_alloca (&pcminfo);
-    std::string name = "hw:";
+    snd_pcm_info_alloca(&pcminfo);
+    std::string name("hw:");
     std::stringstream ss;
-    ss << card ;
-    name.append (ss.str());
+    ss << card;
+    name.append(ss.str());
 
-    if (snd_ctl_open (&handle, name.c_str(), 0) != 0)
+    if (snd_ctl_open(&handle, name.c_str(), 0) != 0)
 		return false;
 
-    snd_pcm_info_set_stream (pcminfo , (stream == SFL_PCM_PLAYBACK) ? SND_PCM_STREAM_PLAYBACK : SND_PCM_STREAM_CAPTURE);
-	bool ret = snd_ctl_pcm_info (handle , pcminfo) >= 0;
+    snd_pcm_info_set_stream(pcminfo , (stream == SFL_PCM_PLAYBACK) ? SND_PCM_STREAM_PLAYBACK : SND_PCM_STREAM_CAPTURE);
+	bool ret = snd_ctl_pcm_info(handle , pcminfo) >= 0;
 	snd_ctl_close(handle);
 	return ret;
 }

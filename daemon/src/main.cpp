@@ -113,7 +113,7 @@ main (int argc, char **argv)
     if (fp) { // PID file exists. Check the former process still alive or not. If alive, give user a hint.
     	int oldPid;
     	if (fscanf(fp, "%d", &oldPid) != 1) {
-            std::cerr << "Couldn't read pidfile " << pidfile.c_str() << std::endl;
+            std::cerr << "Couldn't read pidfile " << pidfile << std::endl;
     		return 1;
     	}
 
