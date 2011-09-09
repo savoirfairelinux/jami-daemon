@@ -1240,7 +1240,7 @@ void show_account_window(account_t * currentAccount)
         currentAccount->properties = dbus_get_account_details(NULL);
         currentAccount->accountID = g_strdup("new"); //FIXME : replace with NULL for new accounts
         currentAccount->credential_information = NULL;
-        sflphone_fill_codec_list_per_account(&currentAccount);
+        sflphone_fill_codec_list_per_account(currentAccount);
     }
 
     dialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("Account settings"),
