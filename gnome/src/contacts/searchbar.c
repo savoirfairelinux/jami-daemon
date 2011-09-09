@@ -296,25 +296,8 @@ GtkWidget *addressbook_menu_new (void)
     return menu;
 }
 
-void
-focus_on_searchbar_out()
-{
-    DEBUG ("Searchbar: Unset focus from search bar");
-    // gtk_widget_grab_focus(GTK_WIDGET(sw));
-    focus_is_on_searchbar = FALSE;
-}
-
-void
-focus_on_searchbar_in()
-{
-    DEBUG ("Searchbar: Set focus on search bar");
-    // gtk_widget_grab_focus(GTK_WIDGET(sw));
-    focus_is_on_searchbar = TRUE;
-}
-
 GtkWidget* history_searchbar_new (void)
 {
-
     GtkWidget *ret, *item, *image;
 
     ret = gtk_hbox_new (FALSE, 0);

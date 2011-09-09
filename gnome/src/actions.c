@@ -1054,9 +1054,9 @@ sflphone_rec_call()
 
 void sflphone_fill_codec_list ()
 {
-    guint i, account_list_size = account_list_get_size ();
+    guint account_list_size = account_list_get_size ();
 
-    for (i=0; i<account_list_size; i++) {
+    for (guint i = 0; i < account_list_size; i++) {
         account_t *current =  account_list_get_nth (i);
         if (current)
             sflphone_fill_codec_list_per_account (current);
@@ -1065,21 +1065,19 @@ void sflphone_fill_codec_list ()
 
 static void sflphone_fill_codec_list_per_account_cat (account_t *account, gboolean is_audio)
 {
-    gchar **order;
+    gchar **order = is_audio
+        ? dbus_get_active_audio_codec_list (account->accountID)
+        : dbus_get_active_video_codec_list (account->accountID);
+
     GQueue *codeclist;
-
-    order = is_audio
-          ? dbus_get_active_audio_codec_list (account->accountID)
-          : dbus_get_active_video_codec_list (account->accountID);
-
     if (is_audio) {
         if (!account->codecs)
             account->codecs = g_queue_new();
         codeclist = account->codecs;
     } else {
-      if (!account->vcodecs)
-          account->vcodecs = g_queue_new();
-          codeclist = account->vcodecs;
+        if (!account->vcodecs)
+            account->vcodecs = g_queue_new();
+        codeclist = account->vcodecs;
     }
 
     g_queue_clear (codeclist);
@@ -1088,8 +1086,7 @@ static void sflphone_fill_codec_list_per_account_cat (account_t *account, gboole
         ERROR ("SFLphone: No codec list provided");
 
     GQueue* codecs = is_audio ? get_audio_codecs_list() : get_video_codecs_list();
-    gchar **pl;
-    for (pl=order; *pl; pl++) {
+    for (gchar **pl = order; *pl; pl++) {
         codec_t *orig;
         if (is_audio)
             orig = codec_list_get_by_payload (atoi(*pl), codecs);
@@ -1106,8 +1103,7 @@ static void sflphone_fill_codec_list_per_account_cat (account_t *account, gboole
     g_free(order);
 
     guint caps_size = g_queue_get_length (codecs);
-    guint i;
-    for (i = 0; i < caps_size; i++) {
+    for (guint i = 0; i < caps_size; i++) {
         codec_t * codec = g_queue_peek_nth (codecs, i);
         gboolean found;
         if (is_audio)
