@@ -30,7 +30,7 @@
  *  as that of the covered work.
  */
 
-#include <config.h>
+#include "config.h"
 #include "actions.h"
 #include "calltree.h"
 #include "calltab.h"
@@ -72,6 +72,20 @@ static PidginScrollBook *embedded_error_notebook;
 static gchar *status_current_message;
 static GMutex *gmutex;
 
+static gboolean focus_is_on_searchbar;
+
+void
+focus_on_searchbar_out()
+{
+    focus_is_on_searchbar = FALSE;
+}
+
+void
+focus_on_searchbar_in()
+{
+    focus_is_on_searchbar = TRUE;
+}
+
 /**
  * Handle main window resizing
  */
@@ -95,9 +109,8 @@ static gboolean window_configure_cb(GtkWidget *win UNUSED, GdkEventConfigure *ev
 static gboolean
 on_delete(GtkWidget * widget UNUSED, gpointer data UNUSED)
 {
-
     if (eel_gconf_get_integer(SHOW_STATUSICON)) {
-        gtk_widget_hide(GTK_WIDGET(get_main_window()));
+        gtk_widget_hide(get_main_window());
         set_minimized(TRUE);
     } else {
         g_mutex_free(gmutex);
@@ -166,7 +179,6 @@ on_key_released(GtkWidget *widget UNUSED, GdkEventKey *event, gpointer user_data
 void
 create_main_window()
 {
-    focus_is_on_calltree = FALSE;
     focus_is_on_searchbar = FALSE;
 
     // Get configuration stored in gconf

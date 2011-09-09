@@ -457,18 +457,6 @@ calltree_reset (calltab_t* tab)
     gtk_tree_store_clear (tab->store);
 }
 
-static void
-focus_on_calltree_out()
-{
-    focus_is_on_calltree = FALSE;
-}
-
-static void
-focus_on_calltree_in()
-{
-    focus_is_on_calltree = TRUE;
-}
-
 void
 calltree_create (calltab_t* tab, gboolean searchbar_type)
 {
@@ -515,12 +503,6 @@ calltree_create (calltab_t* tab, gboolean searchbar_type)
     g_signal_connect (G_OBJECT (tab->view), "button-press-event",
             G_CALLBACK (button_pressed),
             NULL);
-
-    g_signal_connect_after (G_OBJECT (tab->view), "focus-in-event",
-            G_CALLBACK (focus_on_calltree_in), NULL);
-    g_signal_connect_after (G_OBJECT (tab->view), "focus-out-event",
-            G_CALLBACK (focus_on_calltree_out), NULL);
-
 
     if (tab != history && tab!=contacts) {
 
