@@ -446,11 +446,6 @@ calltree_display_call_info (callable_obj_t * c, CallDisplayType display_type, co
     return msg;
 }
 
-
-
-/**
- * Reset call tree
- */
 void
 calltree_reset (calltab_t* tab)
 {
@@ -489,8 +484,8 @@ calltree_create (calltab_t* tab, gboolean searchbar_type)
             G_CALLBACK (row_activated),
             NULL);
 
-    GTK_WIDGET_SET_FLAGS (GTK_WIDGET (calltree_sw),GTK_CAN_FOCUS);
-    gtk_widget_grab_focus (GTK_WIDGET (calltree_sw));
+    gtk_widget_set_can_focus (calltree_sw, TRUE);
+    gtk_widget_grab_focus (calltree_sw);
 
     g_signal_connect (G_OBJECT (tab->view), "cursor-changed",
             G_CALLBACK (row_single_click),
