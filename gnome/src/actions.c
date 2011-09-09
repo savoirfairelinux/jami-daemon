@@ -1050,40 +1050,29 @@ sflphone_rec_call()
 
 void sflphone_fill_codec_list ()
 {
-    guint account_list_size;
-    guint i;
-    account_t *current = NULL;
+    guint account_list_size = account_list_get_size();
 
-    DEBUG ("SFLphone: Fill codec list");
-
-    account_list_size = account_list_get_size ();
-
-    for (i=0; i<account_list_size; i++) {
-        current = account_list_get_nth (i);
+    for (guint i = 0; i < account_list_size; i++) {
+        account_t *current = account_list_get_nth(i);
 
         if (current)
-            sflphone_fill_codec_list_per_account (&current);
+            sflphone_fill_codec_list_per_account(current);
     }
-
 }
 
-void sflphone_fill_codec_list_per_account (account_t **account)
+void sflphone_fill_codec_list_per_account (account_t *account)
 {
-    gchar **order;
-    gchar** pl;
-    GQueue *codeclist;
+    gchar **order = dbus_get_active_audio_codec_list(account->accountID);
 
-    order = (gchar**) dbus_get_active_audio_codec_list ( (*account)->accountID);
-
-    codeclist = (*account)->codecs;
+    GQueue *codeclist = account->codecs;
 
     // First clean the list
-    codec_list_clear (&codeclist);
+    codec_list_clear(&codeclist);
 
     if (!(*order))
         ERROR ("SFLphone: No codec list provided");
     else {
-        for (pl = order; *pl; pl++) {
+        for (gchar **pl = order; *pl; pl++) {
             codec_t * cpy = NULL;
 
             // Each account will have a copy of the system-wide capabilities
@@ -1099,8 +1088,7 @@ void sflphone_fill_codec_list_per_account (account_t **account)
 
     guint caps_size = codec_list_get_size ();
 
-    guint i;
-    for (i = 0; i < caps_size; i++) {
+    for (guint i = 0; i < caps_size; i++) {
         codec_t * current_cap = capabilities_get_nth (i);
 
         // Check if this codec has already been enabled for this account
@@ -1109,7 +1097,7 @@ void sflphone_fill_codec_list_per_account (account_t **account)
             codec_list_add (current_cap, &codeclist);
         }
     }
-    (*account)->codecs = codeclist;
+    account->codecs = codeclist;
 }
 
 void sflphone_fill_call_list (void)
