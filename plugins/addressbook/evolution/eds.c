@@ -64,7 +64,7 @@ authenticate_source (EBook *);
  * The global addressbook list
  */
 GSList *books_data = NULL;
-GMutex *books_data_mutex = NULL;
+static GStaticMutex books_data_mutex = G_STATIC_MUTEX_INIT;
 
 /**
  * Size of image that will be displayed in contact list
@@ -106,15 +106,15 @@ books_ready()
 {
     gboolean returnValue;
 
-    g_mutex_lock(books_data_mutex);
+    g_static_mutex_lock(&books_data_mutex);
 
     if (books_data == NULL) {
-        g_mutex_unlock(books_data_mutex);
+        g_static_mutex_unlock(&books_data_mutex);
         return FALSE;
     }
 
     returnValue = (g_slist_length (books_data) > 0);
-    g_mutex_unlock(books_data_mutex);
+    g_static_mutex_unlock(&books_data_mutex);
 
     return returnValue;
 }
@@ -128,11 +128,11 @@ books_active()
     GSList *book_list_iterator;
     book_data_t *book_data;
 
-    g_mutex_lock(books_data_mutex);
+    g_static_mutex_lock(&books_data_mutex);
 
     if (books_data == NULL) {
         printf("Addressbook: No books data (%s:%d)\n", __FILE__, __LINE__); 
-        g_mutex_unlock(books_data_mutex);
+        g_static_mutex_unlock(&books_data_mutex);
         return FALSE;
     }
 
@@ -142,12 +142,12 @@ books_active()
         book_data = (book_data_t *) book_list_iterator->data;
 
         if (book_data->active) {
-            g_mutex_unlock(books_data_mutex);
+            g_static_mutex_unlock(&books_data_mutex);
             return TRUE;
         }
     }
 
-    g_mutex_unlock(books_data_mutex);
+    g_static_mutex_unlock(&books_data_mutex);
 
     // If no result
     return FALSE;
@@ -161,11 +161,11 @@ books_get_book_data_by_uid (gchar *uid)
     GSList *book_list_iterator;
     book_data_t *book_data;
 
-    g_mutex_lock(books_data_mutex);
+    g_static_mutex_lock(&books_data_mutex);
 
     if (books_data == NULL) {
         printf("Addressbook: No books data (%s:%d)\n", __FILE__, __LINE__);
-        g_mutex_unlock(books_data_mutex);
+        g_static_mutex_unlock(&books_data_mutex);
         return NULL;
     }
 
@@ -178,12 +178,12 @@ books_get_book_data_by_uid (gchar *uid)
 
         if (strcmp (book_data->uid, uid) == 0) {
             printf("Addressbook: Book %s found\n", uid);
-            g_mutex_unlock(books_data_mutex);
+            g_static_mutex_unlock(&books_data_mutex);
             return book_data;
         }
     }
 
-    g_mutex_unlock(books_data_mutex);
+    g_static_mutex_unlock(&books_data_mutex);
 
     printf("Addressbook: Could not found Book %s\n", uid);
     // If no result
@@ -440,11 +440,11 @@ init_eds ()
 
     printf ("Addressbook: Init evolution data server\n");
 
-    g_mutex_lock(books_data_mutex);
+    g_static_mutex_lock(&books_data_mutex);
 
     if (books_data == NULL) {
         printf ("Addressbook: No books data (%s:%d)\n", __FILE__, __LINE__);
-        g_mutex_unlock(books_data_mutex);
+        g_static_mutex_unlock(&books_data_mutex);
         return;
     }
 
@@ -469,13 +469,7 @@ init_eds ()
 
     printf("END EVOLUTION INIT %s, %s, %s\n", current_uri, current_uid, current_name);
 
-    g_mutex_unlock(books_data_mutex);
-}
-
-void
-init_eds_mutex() {
-
-    books_data_mutex = g_mutex_new();
+    g_static_mutex_unlock(&books_data_mutex);
 }
 
 /**
@@ -565,7 +559,7 @@ fill_books_data ()
         return;
     }
 
-    g_mutex_lock(books_data_mutex);
+    g_static_mutex_lock(&books_data_mutex);
 
     if (books_data != NULL) {
         empty_books_data();
@@ -613,7 +607,7 @@ fill_books_data ()
         g_free (absuri);
     }
 
-    g_mutex_unlock(books_data_mutex);
+    g_static_mutex_unlock(&books_data_mutex);
 
     g_object_unref (source_list);
 }
@@ -621,7 +615,7 @@ fill_books_data ()
 void
 determine_default_addressbook()
 {
-    g_mutex_lock(books_data_mutex);
+    g_static_mutex_lock(&books_data_mutex);
 
     GSList *list_element = books_data;
     gboolean default_found = FALSE;
@@ -657,7 +651,7 @@ determine_default_addressbook()
         list_element = g_slist_next (list_element);
     }
 
-    g_mutex_unlock(books_data_mutex);
+    g_static_mutex_unlock(&books_data_mutex);
 }
 
 void
@@ -759,11 +753,11 @@ set_current_addressbook (const gchar *name)
     if(name == NULL)
         return;
 
-    g_mutex_lock(books_data_mutex);
+    g_static_mutex_lock(&books_data_mutex);
 
     if (!books_data) {
         printf ("Addressbook: No books data (%s:%d)\n", __FILE__, __LINE__);
-        g_mutex_unlock(books_data_mutex);
+        g_static_mutex_unlock(&books_data_mutex);
         return;
     }
 
@@ -781,7 +775,7 @@ set_current_addressbook (const gchar *name)
 
     printf("Addressbook: Set current addressbook %s, %s, %s\n", current_uri, current_uid, current_name);
 
-    g_mutex_unlock(books_data_mutex);
+    g_static_mutex_unlock(&books_data_mutex);
 }
 
 

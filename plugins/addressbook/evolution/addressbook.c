@@ -131,8 +131,6 @@ addressbook_init(gchar **book_list)
 {
     printf("Addressbook: Initialize addressbook\n");
 
-    init_eds_mutex();
-
     fill_books_data();
     addressbook_config_books(book_list);
     determine_default_addressbook();
