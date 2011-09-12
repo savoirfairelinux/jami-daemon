@@ -64,7 +64,7 @@ void searchbar_addressbook_activated (GtkEntry *entry, gchar *arg1 UNUSED, gpoin
         AddrBookFactory *factory = abookfactory_get_factory();
 	AddressBook_Config *addressbook_config; 
         addressbook_config_load_parameters(&addressbook_config);
-        factory->addrbook->search(factory->addrbook, entry, addressbook_config);
+        factory->addrbook->search(factory->addrbook->search_cb, entry, addressbook_config);
     }
 }
 
@@ -88,7 +88,7 @@ static void cbox_changed_cb (GtkWidget *widget, gpointer user_data UNUSED)
         factory->addrbook->set_current_book (gtk_combo_box_get_active_text (GTK_COMBO_BOX (widget)));
         AddressBook_Config *addressbook_config;
         addressbook_config_load_parameters(&addressbook_config);
-        factory->addrbook->search(factory->addrbook, GTK_ENTRY(addressbookentry), addressbook_config);
+        factory->addrbook->search(factory->addrbook->search_cb, GTK_ENTRY(addressbookentry), addressbook_config);
     }
 }
 
@@ -190,7 +190,7 @@ static void select_search_type (GtkWidget *item, GtkEntry  *entry UNUSED)
   
         AddressBook_Config *addressbook_config;
         addressbook_config_load_parameters(&addressbook_config);
-        factory->addrbook->search (factory->addrbook, GTK_ENTRY (addressbookentry), addressbook_config);
+        factory->addrbook->search (factory->addrbook->search_cb, GTK_ENTRY (addressbookentry), addressbook_config);
     }
 
 }

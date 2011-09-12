@@ -737,7 +737,7 @@ fetch_information_from_contact (EContact *contact, EContactField field, gchar **
     to_fetch = g_strdup ( (char*) e_contact_get_const (contact, field));
 
     if (!to_fetch) {
-        to_fetch = g_strdup (EMPTY_ENTRY);
+        to_fetch = g_strdup ("empty");
     }
 
     *info = g_strdup (to_fetch);

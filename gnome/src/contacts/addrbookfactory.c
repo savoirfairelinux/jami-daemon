@@ -81,10 +81,6 @@ void abookfactory_load_module(AddrBookFactory *factory)
     if(ab->is_ready == NULL)
         ERROR("AddressbookFactory: Error: Could not load addressbook addressbook_is_ready function");
 
-    ab->is_enabled = dlsym(handle, "addressbook_is_enabled");
-    if(ab->is_enabled == NULL)
-        ERROR("AddressbookFactory: Error: Could not load addressbook addressbook_is_enabled function");
-
     ab->is_active = dlsym(handle, "addressbook_is_active");
     if(ab->is_active == NULL)
         ERROR("AddressbookFactory: Error: Could not load addressbook addressbook_is_active function");

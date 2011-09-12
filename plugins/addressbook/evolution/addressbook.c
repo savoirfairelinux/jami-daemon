@@ -37,22 +37,12 @@
  * Perform a search on address book
  */
 void
-addressbook_search (AddrBookHandle *handle, GtkEntry* entry, AddressBook_Config *addressbook_config)
+addressbook_search (void (*search_cb)(GList *, gpointer), GtkEntry* entry, AddressBook_Config *addressbook_config)
 {
     const gchar* query = gtk_entry_get_text (GTK_ENTRY (entry));
     printf("Addressbook: Search %s\n", query);
 
-    search_async_by_contacts (gtk_entry_get_text (GTK_ENTRY (entry)), addressbook_config->max_results, handle->search_cb, addressbook_config);
-
-}
-
-/**
- * Return addressbook state
- */
-gboolean
-addressbook_is_enabled()
-{
-    return TRUE;
+    search_async_by_contacts (gtk_entry_get_text (GTK_ENTRY (entry)), addressbook_config->max_results, search_cb, addressbook_config);
 }
 
 /**

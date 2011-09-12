@@ -43,10 +43,7 @@
 #include <libebook/e-book.h>
 
 #include "addressbook.h"
-// #include "sflphone_const.h"
 
-
-#define EMPTY_ENTRY     "empty"
 
 G_BEGIN_DECLS
 

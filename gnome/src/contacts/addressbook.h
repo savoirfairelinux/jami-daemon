@@ -80,9 +80,8 @@ typedef struct AddrBookHandle AddrBookHandle;
 struct AddrBookHandle {
     void (*init) (gchar **);
     gboolean (*is_ready) (void);
-    gboolean (*is_enabled) (void);
     gboolean (*is_active) (void);
-    void (*search) (AddrBookHandle *, GtkEntry *, AddressBook_Config *);
+    void (*search) (void (*search_cb)(GList *, gpointer), GtkEntry *, AddressBook_Config *);
     GSList *(*get_books_data)(gchar **);
     book_data_t *(*get_book_data_by_uid)(gchar *);
     void (*set_current_book)(gchar *); 
