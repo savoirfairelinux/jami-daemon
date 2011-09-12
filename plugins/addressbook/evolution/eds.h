@@ -72,13 +72,6 @@ fill_books_data (void);
 void
 search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler handler, gpointer user_data);
 
-/**
- * Retrieve the specified information from the contact
- */
-void
-fetch_information_from_contact (EContact *contact, EContactField field,
-                                gchar **info);
-
 GSList*
 get_books (void);
 
@@ -109,17 +102,8 @@ addressbook_get_books_data();
 void
 set_current_addressbook (const gchar *name);
 
-/**
- * Return current addressbook name
- */
-const gchar *
-get_current_addressbook (void);
-
 void
 set_current_addressbook_test (EBookQueryTest test);
-
-EBookQueryTest
-get_current_addressbook_test (void);
 
 GSList *
 get_books_data();

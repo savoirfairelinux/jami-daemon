@@ -47,7 +47,7 @@ gint is_callID_callstruct(gconstpointer a, gconstpointer b)
 void calllist_add_contact (gchar *contact_name, gchar *contact_phone, contact_type_t type, GdkPixbuf *photo)
 {
     /* Check if the information is valid */
-    if (g_strcasecmp (contact_phone, "empty") == 0)
+    if (!contact_phone)
         return;
 
     callable_obj_t *new_call = create_new_call (CONTACT, CALL_STATE_DIALING, "", "", contact_name, contact_phone);

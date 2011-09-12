@@ -40,7 +40,11 @@
 
 #include <gtk/gtk.h>
 
-typedef enum {ABOOK_QUERY_IS, ABOOK_QUERY_BEGINS_WITH, ABOOK_QUERY_CONTAINS} AddrbookSearchType;
+typedef enum {
+    ABOOK_QUERY_IS,
+    ABOOK_QUERY_BEGINS_WITH,
+    ABOOK_QUERY_CONTAINS
+} AddrbookSearchType;
 
 /**
  * Represent a contact entry

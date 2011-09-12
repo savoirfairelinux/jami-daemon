@@ -21,7 +21,7 @@ else
 	CFLAGS="$CFLAGS -Wall -Wextra"
 fi
 
-AC_PROG_CC
+AC_PROG_CC_C99
 AC_PROG_INSTALL
 AC_HEADER_STDC
 LT_INIT
@@ -32,7 +32,10 @@ AM_GCONF_SOURCE_2
 PKG_CHECK_MODULES(SFLGTK, gtk+-2.0 > 2.2)
 PKG_CHECK_MODULES(SFLGLIB, glib-2.0 >= 2.2)
 PKG_CHECK_MODULES(LIBEBOOK, libebook-1.2 >= 1.4)
-PKG_CHECK_MODULES([LIBEDATASERVER], [libedataserver-1.2 >= 2.32], [AC_DEFINE([LIBEDATASERVER_VERSION_2_32], [], [Using libedataserver-1.2 version 2.32 or higher])],[PKG_CHECK_MODULES([LIBEDATASERVER], [libedataserver-1.2 >= 1.4])])
+PKG_CHECK_MODULES([LIBEDATASERVER], [libedataserver-1.2 >= 2.32],
+        [AC_DEFINE([LIBEDATASERVER_VERSION_2_32], [], [Using libedataserver-1.2 version 2.32 or higher])],
+        [PKG_CHECK_MODULES([LIBEDATASERVER], [libedataserver-1.2 >= 1.4])]
+        )
 
 AC_CONFIG_FILES([
 Makefile 
