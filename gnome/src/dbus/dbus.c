@@ -160,8 +160,6 @@ call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state
                 time(&c->_time_stop);
                 calltree_update_call (history, c, NULL);
             }
-
-            stop_notification();
             calltree_update_call (history, c, NULL);
             status_bar_display_account();
             sflphone_hung_up (c);
@@ -1764,11 +1762,8 @@ dbus_get_audio_manager (void)
 GHashTable*
 dbus_get_addressbook_settings (void)
 {
-
     GError *error = NULL;
     GHashTable *results = NULL;
-
-    //DEBUG ("Calling org_sflphone_SFLphone_ConfigurationManager_get_addressbook_settings");
 
     org_sflphone_SFLphone_ConfigurationManager_get_addressbook_settings (
         configurationManagerProxy, &results, &error);

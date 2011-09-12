@@ -67,12 +67,9 @@ void
 addressbook_config_save_parameters (void);
 
 /**
- * Initialize the address book structure, and retrieve the saved parameters through D-Bus
- *
- * @param settings  The addressbook structure
+ * Return the saved parameters through D-Bus
  */
-void
-addressbook_config_load_parameters (AddressBook_Config **settings);
+AddressBook_Config *addressbook_config_load_parameters();
 
 gboolean
 addressbook_display (AddressBook_Config *settings, const gchar *field);

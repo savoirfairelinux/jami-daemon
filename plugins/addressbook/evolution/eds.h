@@ -43,49 +43,9 @@
 #include <libebook/e-book.h>
 
 #include "addressbook.h"
-// #include "sflphone_const.h"
 
-
-#define EMPTY_ENTRY     "empty"
 
 G_BEGIN_DECLS
-
-/**
- * Current search id used to prevent processing
- * of previous search
- */
-int current_search_id;
-
-/**
- * Represent a contact entry
- */
-/*
-typedef struct _Hit {
-    gchar *name;
-    GdkPixbuf *photo;
-    gchar *phone_business;
-    gchar *phone_home;
-    gchar *phone_mobile;
-} Hit;
-*/
-/**
- * Book structure for "outside world"
- */
-/*
-typedef struct {
-    gchar *uid;
-    gchar *uri;
-    gchar *name;
-    gboolean active;
-    gboolean isdefault;
-} book_data_t;
-*/
-
-/**
- * Free a contact entry
- */
-void
-free_hit (Hit *h);
 
 /**
  * Template callback function for the asynchronous search
@@ -94,24 +54,11 @@ typedef void
 (* SearchAsyncHandler) (GList *hits, gpointer user_data);
 
 /**
- * Template callback function for the asynchronous open
- */
-typedef void
-(* OpenAsyncHandler) ();
-
-/**
  * Initialize the address book.
  * Connection to evolution data server
  */
 void
 init_eds ();
-
-/**
- * We need to initialize multi-threading capabilities
- * due to asynchronous callbacks
- */
-void
-init_eds_mutex(void);
 
 /**
  * Fill list of addressbooks
@@ -124,13 +71,6 @@ fill_books_data (void);
  */
 void
 search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler handler, gpointer user_data);
-
-/**
- * Retrieve the specified information from the contact
- */
-void
-fetch_information_from_contact (EContact *contact, EContactField field,
-                                gchar **info);
 
 GSList*
 get_books (void);
@@ -162,17 +102,8 @@ addressbook_get_books_data();
 void
 set_current_addressbook (const gchar *name);
 
-/**
- * Return current addressbook name
- */
-const gchar *
-get_current_addressbook (void);
-
 void
 set_current_addressbook_test (EBookQueryTest test);
-
-EBookQueryTest
-get_current_addressbook_test (void);
 
 GSList *
 get_books_data();

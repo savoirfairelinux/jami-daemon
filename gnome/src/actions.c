@@ -62,7 +62,7 @@
 #include "widget/imwidget.h"
 
 
-static GHashTable * ip2ip_profile=NULL;
+static GHashTable * ip2ip_profile;
 
 static gchar ** sflphone_order_history_hash_table(GHashTable *result)
 {
@@ -138,7 +138,7 @@ sflphone_notify_voice_mail (const gchar* accountID , guint count)
 
 static gboolean _is_direct_call (callable_obj_t * c)
 {
-    if (g_strcasecmp (c->_accountID, EMPTY_ENTRY) == 0) {
+    if (g_strcasecmp (c->_accountID, "empty") == 0) {
         if (!g_str_has_prefix (c->_peer_number, "sip:")) {
             gchar * new_number = g_strconcat ("sip:", c->_peer_number, NULL);
             g_free (c->_peer_number);
@@ -333,7 +333,7 @@ gboolean sflphone_init (GError **error)
     if (!dbus_connect (error) || !dbus_register (getpid (), "Gtk+ Client", error))
         return FALSE;
 
-    abookfactory_init_factory();
+    abook_init();
 
     // Init icons factory
     init_icon_factory ();
@@ -414,7 +414,6 @@ sflphone_hang_up()
                 call_remove_all_errors (selectedCall);
                 selectedCall->_state = CALL_STATE_DIALING;
                 DEBUG ("from sflphone_hang_up : ");
-                stop_notification();
                 break;
             case CALL_STATE_TRANSFER:
                 dbus_hang_up (selectedCall);
@@ -465,7 +464,6 @@ sflphone_pick_up()
             }
 
             dbus_accept (selectedCall);
-            stop_notification();
             break;
         case CALL_STATE_TRANSFER:
             dbus_transfer (selectedCall);
@@ -766,11 +764,9 @@ sflphone_keypad (guint keyval, gchar * key)
                         c->_history_state = INCOMING;
                         calltree_update_call (history, c, NULL);
                         dbus_accept (c);
-                        stop_notification();
                         break;
                     case GDK_Escape:
                         dbus_refuse (c);
-                        stop_notification();
                         break;
                 }
 
@@ -825,15 +821,14 @@ sflphone_keypad (guint keyval, gchar * key)
                 break;
         }
 
-    } else {
+    } else
         sflphone_new_call();
-    }
 }
 
 static void place_direct_call (const callable_obj_t * c)
 {
-    assert(c->_state == CALL_STATE_DIALING);
-        dbus_place_call (c);
+    g_assert(c->_state == CALL_STATE_DIALING);
+    dbus_place_call(c);
 }
 
 static int place_registered_call (callable_obj_t * c)
@@ -861,7 +856,7 @@ static int place_registered_call (callable_obj_t * c)
 
     DEBUG ("Actions: Get account for this call");
 
-    if (g_strcasecmp (c->_accountID, "") != 0) {
+    if (strlen(c->_accountID) != 0) {
         DEBUG ("Actions: Account %s already set for this call", c->_accountID);
         current = account_list_get_by_id (c->_accountID);
     } else {
@@ -1055,40 +1050,29 @@ sflphone_rec_call()
 
 void sflphone_fill_codec_list ()
 {
-    guint account_list_size;
-    guint i;
-    account_t *current = NULL;
+    guint account_list_size = account_list_get_size();
 
-    DEBUG ("SFLphone: Fill codec list");
-
-    account_list_size = account_list_get_size ();
-
-    for (i=0; i<account_list_size; i++) {
-        current = account_list_get_nth (i);
+    for (guint i = 0; i < account_list_size; i++) {
+        account_t *current = account_list_get_nth(i);
 
         if (current)
-            sflphone_fill_codec_list_per_account (&current);
+            sflphone_fill_codec_list_per_account(current);
     }
-
 }
 
-void sflphone_fill_codec_list_per_account (account_t **account)
+void sflphone_fill_codec_list_per_account (account_t *account)
 {
-    gchar **order;
-    gchar** pl;
-    GQueue *codeclist;
+    gchar **order = dbus_get_active_audio_codec_list(account->accountID);
 
-    order = (gchar**) dbus_get_active_audio_codec_list ( (*account)->accountID);
-
-    codeclist = (*account)->codecs;
+    GQueue *codeclist = account->codecs;
 
     // First clean the list
-    codec_list_clear (&codeclist);
+    codec_list_clear(&codeclist);
 
     if (!(*order))
         ERROR ("SFLphone: No codec list provided");
     else {
-        for (pl = order; *pl; pl++) {
+        for (gchar **pl = order; *pl; pl++) {
             codec_t * cpy = NULL;
 
             // Each account will have a copy of the system-wide capabilities
@@ -1104,8 +1088,7 @@ void sflphone_fill_codec_list_per_account (account_t **account)
 
     guint caps_size = codec_list_get_size ();
 
-    guint i;
-    for (i = 0; i < caps_size; i++) {
+    for (guint i = 0; i < caps_size; i++) {
         codec_t * current_cap = capabilities_get_nth (i);
 
         // Check if this codec has already been enabled for this account
@@ -1114,7 +1097,7 @@ void sflphone_fill_codec_list_per_account (account_t **account)
             codec_list_add (current_cap, &codeclist);
         }
     }
-    (*account)->codecs = codeclist;
+    account->codecs = codeclist;
 }
 
 void sflphone_fill_call_list (void)
@@ -1367,9 +1350,8 @@ sflphone_request_go_clear (void)
 {
     callable_obj_t * selectedCall = calltab_get_selected_call (current_calls);
 
-    if (selectedCall) {
+    if (selectedCall)
         dbus_request_go_clear (selectedCall);
-    }
 }
 
 void
@@ -1389,37 +1371,3 @@ sflphone_call_state_changed (callable_obj_t * c, const gchar * description, cons
     update_actions();
 }
 
-
-void sflphone_get_interface_addr_from_name (char *iface_name, char **iface_addr, int size)
-{
-
-    struct ifreq ifr;
-    int fd;
-    // static char iface_addr[18];
-    char *tmp_addr;
-
-    struct sockaddr_in *saddr_in;
-    struct in_addr *addr_in;
-
-    if ( (fd = socket (AF_INET, SOCK_DGRAM,0)) < 0)
-        DEBUG ("getInterfaceAddrFromName error could not open socket\n");
-
-    memset (&ifr, 0, sizeof (struct ifreq));
-
-    strcpy (ifr.ifr_name, iface_name);
-    ifr.ifr_addr.sa_family = AF_INET;
-
-    if ( ioctl (fd, SIOCGIFADDR, &ifr) < 0)
-        DEBUG ("getInterfaceAddrFromName use default interface (0.0.0.0)\n");
-
-
-    saddr_in = (struct sockaddr_in *) &ifr.ifr_addr;
-    addr_in = & (saddr_in->sin_addr);
-
-    tmp_addr = (char *) addr_in;
-
-    snprintf (*iface_addr, size, "%d.%d.%d.%d",
-            UC (tmp_addr[0]), UC (tmp_addr[1]), UC (tmp_addr[2]), UC (tmp_addr[3]));
-
-    close (fd);
-}

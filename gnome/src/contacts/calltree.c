@@ -202,7 +202,6 @@ row_activated (GtkTreeView       *tree_view UNUSED,
                 switch (selectedCall->_state) {
                     case CALL_STATE_INCOMING:
                         dbus_accept (selectedCall);
-                        stop_notification();
                         break;
                     case CALL_STATE_HOLD:
                         dbus_unhold (selectedCall);
@@ -447,27 +446,10 @@ calltree_display_call_info (callable_obj_t * c, CallDisplayType display_type, co
     return msg;
 }
 
-
-
-/**
- * Reset call tree
- */
 void
 calltree_reset (calltab_t* tab)
 {
     gtk_tree_store_clear (tab->store);
-}
-
-static void
-focus_on_calltree_out()
-{
-    focus_is_on_calltree = FALSE;
-}
-
-static void
-focus_on_calltree_in()
-{
-    focus_is_on_calltree = TRUE;
 }
 
 void
@@ -502,8 +484,8 @@ calltree_create (calltab_t* tab, gboolean searchbar_type)
             G_CALLBACK (row_activated),
             NULL);
 
-    GTK_WIDGET_SET_FLAGS (GTK_WIDGET (calltree_sw),GTK_CAN_FOCUS);
-    gtk_widget_grab_focus (GTK_WIDGET (calltree_sw));
+    gtk_widget_set_can_focus (calltree_sw, TRUE);
+    gtk_widget_grab_focus (calltree_sw);
 
     g_signal_connect (G_OBJECT (tab->view), "cursor-changed",
             G_CALLBACK (row_single_click),
@@ -516,12 +498,6 @@ calltree_create (calltab_t* tab, gboolean searchbar_type)
     g_signal_connect (G_OBJECT (tab->view), "button-press-event",
             G_CALLBACK (button_pressed),
             NULL);
-
-    g_signal_connect_after (G_OBJECT (tab->view), "focus-in-event",
-            G_CALLBACK (focus_on_calltree_in), NULL);
-    g_signal_connect_after (G_OBJECT (tab->view), "focus-out-event",
-            G_CALLBACK (focus_on_calltree_out), NULL);
-
 
     if (tab != history && tab!=contacts) {
 

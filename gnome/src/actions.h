@@ -35,13 +35,10 @@
 #include <libintl.h>
 #include <locale.h>
 
-#include <accountlist.h>
-#include <codeclist.h>
-#include <sflphone_const.h>
-#include <conference_obj.h>
-
-
-#define	UC(b)	(((int)b)&0xff)
+#include "accountlist.h"
+#include "codeclist.h"
+#include "sflphone_const.h"
+#include "conference_obj.h"
 
 /** @file actions.h
   * @brief General functions that change the state of the application.
@@ -191,8 +188,7 @@ void sflphone_set_current_account();
  */
 void sflphone_fill_codec_list ();
 
-void sflphone_fill_codec_list_per_account (account_t **);
-
+void sflphone_fill_codec_list_per_account (account_t *);
 
 void sflphone_add_participant();
 
@@ -277,11 +273,6 @@ void sflphone_request_go_clear (void);
  * @param code The status code as in SIP or IAX
  */
 void sflphone_call_state_changed (callable_obj_t * c, const gchar * description, const guint code);
-
-/**
- * Resolve an interface address given its name
- */
-void sflphone_get_interface_addr_from_name (char *iface_name, char **iface_addr, int size);
 
 void sflphone_add_main_participant (const conference_obj_t * c);
 
