@@ -22,8 +22,8 @@
 #include "AccountWizard.h"
 #include <QVBoxLayout>
 #include <QFormLayout>
-#include "sflphone_const.h"
-#include "configurationmanager_interface_singleton.h"
+#include "lib/sflphone_const.h"
+#include "lib/configurationmanager_interface_singleton.h"
 
 #include <klocale.h>
 

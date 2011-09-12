@@ -23,7 +23,7 @@
 
 #include <QAbstractListModel>
 
-#include "AccountList.h"
+#include "conf/ConfigAccountList.h"
 
 /**
    @author Jérémy Quentin <jeremy.quentin@gmail.com>
@@ -32,7 +32,7 @@ class AccountListModel : public QAbstractListModel
 {
 Q_OBJECT
 private:
-   AccountList * accounts;
+   ConfigAccountList* accounts;
 
 public:
    AccountListModel(QObject *parent = 0);

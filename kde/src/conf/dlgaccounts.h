@@ -27,8 +27,8 @@
 #include <QListWidgetItem>
 
 #include "ui_dlgaccountsbase.h"
-#include "Account.h"
-#include "AccountList.h"
+#include "AccountView.h"
+#include "ConfigAccountList.h"
 #include <QDebug>
 
 typedef QHash<QString, QString> StringHash; //Needed to fix a Qt foreach macro argument parsing bug
@@ -111,8 +111,8 @@ public:
    void loadAccount(QListWidgetItem * item);
    
 private:
-   AccountList * accountList;
-   QList< StringHash > codecList;
+   ConfigAccountList* accountList;
+   QList<StringHash> codecList;
    QListWidgetItemHash credentialInfo;
    bool accountListHasChanged;
    void loadCodecList();
@@ -137,10 +137,10 @@ private slots:
    void on_listWidget_accountList_currentItemChanged ( QListWidgetItem * current, QListWidgetItem * previous );
 //    //void on_toolButton_accountsApply_clicked(); //Disabled for future removal
    void updateAccountStates();
-   void addAccountToAccountList(Account * account);
+   void addAccountToAccountList(AccountView* account);
    void updateAccountListCommands();
    void updateStatusLabel(QListWidgetItem * item);
-   void updateStatusLabel(Account * account);
+   void updateStatusLabel(AccountView* account);
    void codecClicked(const QModelIndex & model);
    void addCodec(QString name = "");
    void codecChanged();

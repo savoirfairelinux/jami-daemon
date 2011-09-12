@@ -29,7 +29,7 @@
 #include "dlgaddressbook.h"
 #include "dlghooks.h"
 
-#include "sflphone_const.h"
+#include "lib/sflphone_const.h"
 
 ConfigurationDialog::ConfigurationDialog(SFLPhoneView *parent)
  :KConfigDialog(parent, SETTINGS_NAME, ConfigurationSkeleton::self())

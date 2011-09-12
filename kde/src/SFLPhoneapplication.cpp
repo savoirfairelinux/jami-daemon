@@ -52,7 +52,7 @@ SFLPhone* SFLPhoneApplication::getSFLPhoneWindow() const
 void SFLPhoneApplication::initializeMainWindow()
 {
   // Fetch the command line arguments
-  KCmdLineArgs *args = KCmdLineArgs::parsedArgs();
+  //KCmdLineArgs* args = KCmdLineArgs::parsedArgs();
 
   // Enable KDE session restore.
   int restoredWindow = -1;

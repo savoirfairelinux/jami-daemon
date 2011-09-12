@@ -1,6 +1,6 @@
 <RCC>
   <qresource prefix="images">
-    <file>../icons/user-group-properties.svgz</file>
+    <file>../icons/user-group-properties.svg</file>
     <file>../icons/document-encrypt.svgz</file>
     <file>../icons/sflphone.svg</file>
     <file>../icons/sflphone-kde3.svg</file>

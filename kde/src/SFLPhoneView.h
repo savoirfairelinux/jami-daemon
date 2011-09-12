@@ -32,14 +32,11 @@
 
 #include "ui_SFLPhoneView_base.h"
 #include "conf/ConfigurationDialog.h"
-//#include "CallList.h"
-#include "CallTreeItem.h"
-//#include "CallTreeView.h"
-//#include "CallTreeWidget.h"
+#include "widgets/CallTreeItem.h"
 #include "AccountWizard.h"
-#include "Contact.h"
-#include "AccountList.h"
-#include "CallModel.h"
+#include "lib/Contact.h"
+#include "lib/AccountList.h"
+#include "CallView.h"
 
 class ConfigurationDialog;
 
@@ -62,15 +59,14 @@ class SFLPhoneView : public QWidget, public Ui::SFLPhone_view
     
 private:
 
-   static ConfigurationDialog * configDialog;
-   static AccountList * accountList;
+   //static ConfigurationDialog * configDialog;
    AccountWizard * wizard;
    //List of calls in the window, and past ones.
    //Handles both current calls (dialing, ringing...) and history.
    //CallList * callList;
    QErrorMessage * errorWindow;
    //Account used prioritary if defined and registered. If not, the first registered account in accountList is used.
-   static QString priorAccountId;
+   
    bool historyLoaded;
 
 protected:
@@ -96,26 +92,8 @@ public:
    virtual ~SFLPhoneView();
    
    //Getters
-   /**
-    *   Seeks the account to use.
-    *   If priorAccountId is defined and the corresponding
-    *   account exists and is registered, uses this one, else,
-    *   asks the first registered of accountList.
-    *   If there is no account registered, returns NULL.
-    * @return the account to use if an outgoing call is placed.
-    */
-   static Account * accountInUse();
-   /**
-    *   Seeks the ID of the account to use.
-    *   If priorAccountId is defined and the corresponding
-    *   account exists and is registered, uses this one, else,
-    *   asks the first registered of accountList.
-    *   If there is no account registered, returns an empty string.
-    * @return the ID of the account to use if an outgoing call is placed.
-    */
-   static QString accountInUseId();
    
-   static AccountList * getAccountList();
+   
    QErrorMessage * getErrorWindow();
    
    //Daemon getters
@@ -144,9 +122,9 @@ public:
    //CallTreeView *addressBookTree;
    //CallTreeWidget *callTree;
    //CallTreeWidget *historyTree;
-   CallModel addressBookTree;
-   CallModel callTreeModel;
-   CallModel historyTreeModel;
+   CallView addressBookTree;
+   CallView callTreeModel;
+   CallView historyTreeModel;
 
 private slots:
    /**
@@ -323,13 +301,9 @@ public slots:
    
    void on_slider_recVol_valueChanged(int value);
    void on_slider_sndVol_valueChanged(int value);
-   void on_slider_recVol_2_valueChanged(int value);
-   void on_slider_sndVol_2_valueChanged(int value);
    
    void on_toolButton_recVol_clicked(bool checked);
    void on_toolButton_sndVol_clicked(bool checked);
-   void on_toolButton_recVol_2_clicked(bool checked);
-   void on_toolButton_sndVol_2_clicked(bool checked);
    
    void on_callTree_currentItemChanged();
    void on_callTree_itemChanged();

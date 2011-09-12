@@ -21,12 +21,12 @@
 #include "dlgaudio.h"
 
 #include <KLineEdit>
-#include "configurationmanager_interface_singleton.h"
+#include "lib/configurationmanager_interface_singleton.h"
 #include "conf/ConfigurationSkeleton.h"
 #include "conf/ConfigurationDialog.h"
 #include <QtGui/QHeaderView>
 
-#include "sflphone_const.h"
+#include "lib/sflphone_const.h"
 
 DlgAudio::DlgAudio(KConfigDialog *parent)
  : QWidget(parent)
@@ -37,14 +37,14 @@ DlgAudio::DlgAudio(KConfigDialog *parent)
    KUrlRequester_ringtone->lineEdit()->setObjectName("kcfg_ringtone"); 
    KUrlRequester_ringtone->lineEdit()->setReadOnly(true); 
         
-        KUrlRequester_destinationFolder->setMode(KFile::Directory|KFile::ExistingOnly|KFile::LocalOnly);
-        KUrlRequester_destinationFolder->setUrl(KUrl(QDir::home().path()));
-        KUrlRequester_destinationFolder->lineEdit()->setObjectName("kcfg_destinationFolder"); 
-        KUrlRequester_destinationFolder->lineEdit()->setReadOnly(true); 
+   KUrlRequester_destinationFolder->setMode(KFile::Directory|KFile::ExistingOnly|KFile::LocalOnly);
+   KUrlRequester_destinationFolder->setUrl(KUrl(QDir::home().path()));
+   KUrlRequester_destinationFolder->lineEdit()->setObjectName("kcfg_destinationFolder"); 
+   KUrlRequester_destinationFolder->lineEdit()->setReadOnly(true); 
    
    //codecTableHasChanged = false;
    
-   ConfigurationSkeleton * skeleton = ConfigurationSkeleton::self();
+   //ConfigurationSkeleton * skeleton = ConfigurationSkeleton::self();
    //CodecListModel * model = skeleton->getCodecListModel();
    //sortableCodecList->setModel(model);
    

@@ -20,13 +20,13 @@
  ***************************************************************************/
 #include "AccountListModel.h"
 
-#include "sflphone_const.h"
+#include "lib/sflphone_const.h"
 #include <QDebug>
 
 AccountListModel::AccountListModel(QObject *parent)
  : QAbstractListModel(parent)
 {
-   this->accounts = new AccountList();
+   this->accounts = new ConfigAccountList();
 }
 
 
@@ -62,7 +62,7 @@ Qt::ItemFlags AccountListModel::flags(const QModelIndex & index) const
    return QAbstractItemModel::flags(index);
 }
 
-bool AccountListModel::setData ( const QModelIndex & index, const QVariant &value, int role)
+bool AccountListModel::setData(const QModelIndex & index, const QVariant &value, int role)
 {
    qDebug() << "setData";
    if (index.isValid() && index.column() == 0 && role == Qt::CheckStateRole) {
