@@ -50,7 +50,6 @@ $(service_DATA): $(service_in_files) Makefile
 EXTRA_DIST = README $(service_in_files) \
 			 callmanager-introspec.xml \
 			 configurationmanager-introspec.xml \
-			 contactmanager-introspec.xml \
 			 instance-introspec.xml \
 			 org.freedesktop.NetworkManager.xml
 

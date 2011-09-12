@@ -8,7 +8,7 @@ Standards-Version: 3.7.3
 Package: sflphone-common
 Priority: optional
 Architecture: any
-Depends: libsamplerate0, libexpat1 , libc6, libccgnu2-1.7-0, libgsm1, libspeex1, libdbus-1-3, libasound2, libpulse0, libccrtp1-1.7-0, libspeexdsp1, libzrtpcpp-1.4-0, libssl0.9.8, libpcre3, libyaml-0-2, libcelt0-0, libdbus-c++-1.0
+Depends: libsamplerate0, libexpat1 , libc6, libccgnu2-1.7-0, libgsm1, libspeex1, libdbus-1-3, libasound2, libpulse0, libccrtp1-1.7-0, libspeexdsp1, libzrtpcpp-1.4-0, libssl0.9.8, libpcre3, libyaml-0-2, libcelt0-0, libdbus-c++-1-0
 Replaces: sflphone
 Conflicts: sflphone
 Homepage: http://www.sflphone.org
