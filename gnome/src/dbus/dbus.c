@@ -1762,11 +1762,8 @@ dbus_get_audio_manager (void)
 GHashTable*
 dbus_get_addressbook_settings (void)
 {
-
     GError *error = NULL;
     GHashTable *results = NULL;
-
-    //DEBUG ("Calling org_sflphone_SFLphone_ConfigurationManager_get_addressbook_settings");
 
     org_sflphone_SFLphone_ConfigurationManager_get_addressbook_settings (
         configurationManagerProxy, &results, &error);

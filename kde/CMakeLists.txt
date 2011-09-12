@@ -8,7 +8,8 @@ SET(CMAKE_MODULE_PATH "${LOCAL_CMAKE_MODULE_PATH}")
 # --- custom targets: ---
 INCLUDE( ${LOCAL_CMAKE_MODULE_PATH}/TargetDistclean.cmake  REQUIRED)
 
-#FIND_PACKAGE ( Kabc REQUIRED )
+FIND_PACKAGE ( Kabc REQUIRED )
+FIND_PACKAGE ( KdepimLibs REQUIRED )
 # FIND_PACKAGE ( PkgConfig REQUIRED )
 FIND_PACKAGE ( KDE4 REQUIRED )
 FIND_PACKAGE ( Qt4 REQUIRED )
@@ -28,5 +29,4 @@ add_subdirectory(src)
 add_subdirectory(doc)
 add_subdirectory(man)
 add_subdirectory(po)
-
-
+add_subdirectory(plasma)

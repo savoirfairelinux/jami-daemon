@@ -11,10 +11,11 @@
 #include <KNotification>
 
 #include "AccountWizard.h"
-#include "instance_interface_singleton.h"
-#include "sflphone_const.h"
+#include "lib/instance_interface_singleton.h"
+#include "lib/sflphone_const.h"
 #include "SFLPhoneapplication.h"
 #include "conf/ConfigurationDialog.h"
+#include "CallView.h"
 
 #include <QTableView>
 #include <QListView>
@@ -39,25 +40,23 @@ int main(int argc, char **argv)
          version, 
          ki18n(description),
          KAboutData::License_GPL_V3, 
-         ki18n("(C) 2009 Savoir-faire Linux"), 
+         ki18n("(C) 2009-2010 Savoir-faire Linux"), 
          KLocalizedString(), 
          "http://www.sflphone.org.", 
          "sflphone@lists.savoirfairelinux.net");
       about.addAuthor( ki18n("Jérémy Quentin"), KLocalizedString(), "jeremy.quentin@savoirfairelinux.com" );
+      about.addAuthor( ki18n("Emmanuel Lepage Vallee"), KLocalizedString(), "emmanuel.lepage@savoirfairelinux.com" );
       about.setTranslator( ki18nc("NAME OF TRANSLATORS","Your names"), ki18nc("EMAIL OF TRANSLATORS","Your emails") );
       KCmdLineArgs::init(argc, argv, &about);
       KCmdLineOptions options;
       KCmdLineArgs::addCmdLineOptions(options);
       
-        //configuration dbus
-        registerCommTypes();
+      //configuration dbus
+      CallView::init();
 
-      InstanceInterface & instance = InstanceInterfaceSingleton::getInstance();
-      instance.Register(getpid(), APP_NAME);
+      SFLPhoneApplication app;
 
-        SFLPhoneApplication app;
-
-        return app.exec();
+      return app.exec();
       
    }
    catch(const char * msg)

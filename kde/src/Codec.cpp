@@ -20,8 +20,8 @@
  ***************************************************************************/
 #include "Codec.h"
 
-#include "configurationmanager_interface_singleton.h"
-#include "sflphone_const.h"
+#include "lib/configurationmanager_interface_singleton.h"
+#include "lib/sflphone_const.h"
 
 Codec::Codec(int payload, bool enabled)
 {

@@ -24,7 +24,7 @@
 #include <QtGui/QHBoxLayout>
 #include <QtCore/QDebug>
 
-#include "sflphone_const.h"
+#include "lib/sflphone_const.h"
 
 AccountItemWidget::AccountItemWidget(QWidget *parent)
  : QWidget(parent)

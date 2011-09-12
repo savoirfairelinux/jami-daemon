@@ -28,8 +28,6 @@
 #define __PIDGIN_MINI_DIALOG_H__
 
 #include <glib-object.h>
-#include <gtk/gtkvbox.h>
-#include <gtk/gtklabel.h>
 
 G_BEGIN_DECLS
 

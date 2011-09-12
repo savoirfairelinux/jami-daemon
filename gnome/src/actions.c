@@ -138,7 +138,7 @@ sflphone_notify_voice_mail (const gchar* accountID , guint count)
 
 static gboolean _is_direct_call (callable_obj_t * c)
 {
-    if (g_strcasecmp (c->_accountID, EMPTY_ENTRY) == 0) {
+    if (g_strcasecmp (c->_accountID, "empty") == 0) {
         if (!g_str_has_prefix (c->_peer_number, "sip:")) {
             gchar * new_number = g_strconcat ("sip:", c->_peer_number, NULL);
             g_free (c->_peer_number);
@@ -333,7 +333,7 @@ gboolean sflphone_init (GError **error)
     if (!dbus_connect (error) || !dbus_register (getpid (), "Gtk+ Client", error))
         return FALSE;
 
-    abookfactory_init_factory();
+    abook_init();
 
     // Init icons factory
     init_icon_factory ();

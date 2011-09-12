@@ -24,7 +24,7 @@
 
 #include <QAction>
 
-#include "Account.h"
+#include "lib/Account.h"
 
 /**
    @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>

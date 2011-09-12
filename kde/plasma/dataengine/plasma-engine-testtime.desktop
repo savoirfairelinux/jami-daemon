@@ -1,0 +1,17 @@
+[Desktop Entry]
+Name=sflphone
+Comment=An SFLPhone IP soft-phone frontend
+Type=Service
+ 
+X-KDE-ServiceTypes=Plasma/DataEngine
+X-KDE-Library=plasma_engine_sflphone
+X-Plasma-EngineName=sflphone
+X-KDE-PluginInfo-Author=Emmanuel Lepage Vallee
+X-KDE-PluginInfo-Email=emmanuel.lepage@savoirfairelinux.com
+X-KDE-PluginInfo-Name=sflphone
+X-KDE-PluginInfo-Version=0.9.8
+X-KDE-PluginInfo-Website=http://www.sflphone.org/
+X-KDE-PluginInfo-Category=SIP
+#X-KDE-PluginInfo-Depends=sflphone-common
+X-KDE-PluginInfo-License=LGPL
+X-KDE-PluginInfo-EnabledByDefault=true

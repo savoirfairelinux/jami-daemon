@@ -98,7 +98,7 @@ void ManagerImpl::init (std::string config_file)
 
     _debug ("Manager: configuration file path: %s", _path.c_str());
 
-    Conf::YamlParser *parser;
+    Conf::YamlParser *parser = NULL;
 
 	try {
 		parser = new Conf::YamlParser (_path.c_str());
@@ -107,6 +107,7 @@ void ManagerImpl::init (std::string config_file)
 		parser->constructNativeData();
 	} catch (Conf::YamlParserException &e) {
 		_error ("Manager: %s", e.what());
+		fflush(stderr);
 		delete parser;
 		parser = NULL;
 	}
