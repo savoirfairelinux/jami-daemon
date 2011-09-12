@@ -2,13 +2,13 @@ Source: sflphone-client-gnome
 Maintainer: SavoirFaireLinux Inc <julien.bonjean@savoirfairelinux.com>
 Section: gnome
 Priority: optional
-Build-Depends: debhelper, libgcc1, autoconf, automake, libtool, libgtk2.0-dev, libdbus-glib-1-dev, libnotify-dev, libebook1.2-dev, libedataserver1.2-dev, libedataserverui1.2-dev, check, liblog4c-dev, libgnomeui-dev, gnome-doc-utils, rarian-compat, libwebkitgtk-dev
+Build-Depends: debhelper, libgcc1, autoconf, automake, libtool, libgtk2.0-dev, libdbus-glib-1-dev, libnotify-dev, libebook1.2-dev, check, liblog4c-dev, libgnomeui-dev, gnome-doc-utils, rarian-compat, libwebkitgtk-dev
 Standards-Version: 3.7.3
 
 Package: sflphone-client-gnome
 Priority: optional
 Architecture: any
-Depends: sflphone-common (=${source:Version}), libdbus-glib-1-2, libgtk2.0-0, libc6, libglib2.0-0, libnotify1, librsvg2-common, liblog4c3, libebook1.2-10, libedataserver1.2-14, libedataserverui1.2-11, libgnomeui-0, libwebkitgtk-1.0-0
+Depends: sflphone-common (=${source:Version}), libdbus-glib-1-2, libgtk2.0-0, libc6, libglib2.0-0, libnotify1, librsvg2-common, liblog4c3, libgnomeui-0, libwebkitgtk-1.0-0
 Replaces: sflphone
 Conflicts: sflphone
 Homepage: http://www.sflphone.org
