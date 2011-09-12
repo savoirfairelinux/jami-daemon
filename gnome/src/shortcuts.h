@@ -31,6 +31,12 @@
 #ifndef SHORTCUTS_H_
 #define SHORTCUTS_H_
 
+#include <gdk/gdkx.h>
+
+#ifndef GDK_DISPLAY
+#define GDK_DISPLAY() GDK_DISPLAY_XDISPLAY(gdk_display_get_default())
+#endif
+
 typedef struct {
     gchar *action;
     guint key;

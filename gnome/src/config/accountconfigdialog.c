@@ -1252,7 +1252,6 @@ void show_account_window(account_t * currentAccount)
                          GTK_RESPONSE_ACCEPT,
                          NULL));
 
-    gtk_dialog_set_has_separator(dialog, FALSE);
     gtk_container_set_border_width(GTK_CONTAINER(dialog), 0);
 
     notebook = gtk_notebook_new();

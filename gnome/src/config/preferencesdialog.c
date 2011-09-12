@@ -362,7 +362,6 @@ show_preferences_dialog ()
                          NULL));
 
     // Set window properties
-    gtk_dialog_set_has_separator (dialog, FALSE);
     gtk_window_set_default_size (GTK_WINDOW (dialog), 600, 400);
     gtk_container_set_border_width (GTK_CONTAINER (dialog), 0);
 

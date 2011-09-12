@@ -55,8 +55,7 @@ void show_advanced_tls_options (GHashTable * properties)
                             GTK_RESPONSE_ACCEPT,
                             NULL));
 
-    gtk_window_set_policy (GTK_WINDOW (tlsDialog), FALSE, FALSE, FALSE);
-    gtk_dialog_set_has_separator (tlsDialog, TRUE);
+    gtk_window_set_resizable(GTK_WINDOW (tlsDialog), FALSE);
     gtk_container_set_border_width (GTK_CONTAINER (tlsDialog), 0);
 
     ret = gtk_vbox_new (FALSE, 10);
@@ -124,7 +123,7 @@ void show_advanced_tls_options (GHashTable * properties)
     tlsListenerPort = gtk_spin_button_new_with_range (0, 65535, 1);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), tlsListenerPort);
     gtk_spin_button_set_value (GTK_SPIN_BUTTON (tlsListenerPort), g_ascii_strtod (tls_listener_port, NULL));
-    gtk_box_pack_start_defaults (GTK_BOX (hbox), tlsListenerPort);
+    gtk_box_pack_start(GTK_BOX (hbox), tlsListenerPort, TRUE, TRUE, 0);
 
     if (g_strcmp0 (account_id, IP2IP_PROFILE) != 0) {
         gtk_widget_set_sensitive (tlsListenerPort, FALSE);
@@ -217,35 +216,28 @@ void show_advanced_tls_options (GHashTable * properties)
     gtk_table_attach (GTK_TABLE (table), privateKeyPasswordEntry, 1, 2, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     /* TLS protocol methods */
-    GtkListStore * tlsProtocolMethodListStore;
     GtkTreeIter iter;
-    GtkWidget * tlsProtocolMethodCombo;
 
-    tlsProtocolMethodListStore =  gtk_list_store_new (1, G_TYPE_STRING);
+    GtkListStore * tlsProtocolMethodListStore =  gtk_list_store_new (1, G_TYPE_STRING);
     label = gtk_label_new_with_mnemonic (_ ("TLS protocol method"));
     gtk_table_attach (GTK_TABLE (table), label, 0, 1, 7, 8, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 
-    gchar** supported_tls_method = NULL;
-    supported_tls_method = dbus_get_supported_tls_method();
+    gchar** supported_tls_method = dbus_get_supported_tls_method();
     GtkTreeIter supported_tls_method_iter = iter;
 
-    if (supported_tls_method != NULL) {
-        char **supported_tls_method_ptr;
+    for (char **supported_tls_method_ptr = supported_tls_method; supported_tls_method_ptr && *supported_tls_method_ptr; supported_tls_method_ptr++) {
+        DEBUG ("Supported Method %s", *supported_tls_method_ptr);
+        gtk_list_store_append (tlsProtocolMethodListStore, &iter);
+        gtk_list_store_set (tlsProtocolMethodListStore, &iter, 0, *supported_tls_method_ptr, -1);
 
-        for (supported_tls_method_ptr = supported_tls_method; *supported_tls_method_ptr; supported_tls_method_ptr++) {
-            DEBUG ("Supported Method %s", *supported_tls_method_ptr);
-            gtk_list_store_append (tlsProtocolMethodListStore, &iter);
-            gtk_list_store_set (tlsProtocolMethodListStore, &iter, 0, *supported_tls_method_ptr, -1);
-
-            if (g_strcmp0 (*supported_tls_method_ptr, tls_method) == 0) {
-                DEBUG ("Setting active element in TLS protocol combo box");
-                supported_tls_method_iter = iter;
-            }
+        if (g_strcmp0 (*supported_tls_method_ptr, tls_method) == 0) {
+            DEBUG ("Setting active element in TLS protocol combo box");
+            supported_tls_method_iter = iter;
         }
     }
 
-    tlsProtocolMethodCombo = gtk_combo_box_new_with_model (GTK_TREE_MODEL (tlsProtocolMethodListStore));
+    GtkWidget *tlsProtocolMethodCombo = gtk_combo_box_new_with_model (GTK_TREE_MODEL (tlsProtocolMethodListStore));
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), tlsProtocolMethodCombo);
     gtk_table_attach (GTK_TABLE (table), tlsProtocolMethodCombo, 1, 2, 7, 8, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     g_object_unref (G_OBJECT (tlsProtocolMethodListStore));
@@ -284,12 +276,12 @@ void show_advanced_tls_options (GHashTable * properties)
     tlsTimeOutSec = gtk_spin_button_new_with_range (0, pow (2,sizeof (long)), 1);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), tlsTimeOutSec);
     gtk_spin_button_set_value (GTK_SPIN_BUTTON (tlsTimeOutSec), g_ascii_strtod (negotiation_timeout_sec, NULL));
-    gtk_box_pack_start_defaults (GTK_BOX (hbox), tlsTimeOutSec);
+    gtk_box_pack_start(GTK_BOX (hbox), tlsTimeOutSec, TRUE, TRUE, 0);
     GtkWidget * tlsTimeOutMSec;
     tlsTimeOutMSec = gtk_spin_button_new_with_range (0, pow (2,sizeof (long)), 1);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), tlsTimeOutMSec);
     gtk_spin_button_set_value (GTK_SPIN_BUTTON (tlsTimeOutMSec), g_ascii_strtod (negotiation_timeout_msec, NULL));
-    gtk_box_pack_start_defaults (GTK_BOX (hbox), tlsTimeOutMSec);
+    gtk_box_pack_start(GTK_BOX (hbox), tlsTimeOutMSec, TRUE, TRUE, 0);
 
     GtkWidget * verifyCertificateServer;
     verifyCertificateServer = gtk_check_button_new_with_mnemonic (_ ("Verify incoming certificates, as a server"));
