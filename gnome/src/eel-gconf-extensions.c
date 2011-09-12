@@ -28,9 +28,8 @@
 
 #include <gconf/gconf-client.h>
 #include <gconf/gconf.h>
-#include <gtk/gtkwidget.h>
+#include <gtk/gtk.h>
 #include <libgnome/gnome-i18n.h>
-#include <gtk/gtkmessagedialog.h>
 
 static GConfClient *global_gconf_client = NULL;
 
