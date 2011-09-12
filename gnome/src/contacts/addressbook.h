@@ -39,10 +39,6 @@
 #define __ADDRESSBOOK_H__
 
 #include <gtk/gtk.h>
-// #include <addressbook/eds.h>
-
-
-#define EMPTY_ENTRY     "empty"
 
 typedef enum {ABOOK_QUERY_IS, ABOOK_QUERY_BEGINS_WITH, ABOOK_QUERY_CONTAINS} AddrbookSearchType;
 
@@ -93,42 +89,5 @@ struct AddrBookHandle {
     void (*set_search_type)(AddrbookSearchType);
     void (*search_cb)(GList *, gpointer); 
 };
-
-/**
- * Initialize addressbook
- */
-void addressbook_init(gchar **book_list);
-
-/**
- * Return addressbook state
- */
-gboolean addressbook_is_ready();
-
-/**
- * Return addressbook state
- */
-gboolean addressbook_is_enabled();
-
-/**
- * Return if at least one addressbook is active
- */
-gboolean addressbook_is_active();
-
-
-/**
- * Perform a search in addressbook
- */
-void addressbook_search (AddrBookHandle *, GtkEntry *, AddressBook_Config *);
-
-/**
- * Get a list of addressbook book
- */
-GSList *addressbook_get_books_data(gchar **book_list);
-
-book_data_t *addressbook_get_book_data_by_uid(gchar *);
-
-void addressbook_set_current_book(gchar *);
-
-void addressbook_set_search_type(AddrbookSearchType);
 
 #endif
