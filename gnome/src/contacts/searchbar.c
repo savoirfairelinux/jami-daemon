@@ -58,14 +58,8 @@ GdkPixbuf *missed_pixbuf = NULL;
 
 void searchbar_addressbook_activated (GtkEntry *entry, gchar *arg1 UNUSED, gpointer data UNUSED)
 {
-    DEBUG ("Searchbar: Entry activated");
-
-    if(abookfactory_is_addressbook_loaded()) {
-        AddrBookFactory *factory = abookfactory_get_factory();
-	AddressBook_Config *addressbook_config; 
-        addressbook_config_load_parameters(&addressbook_config);
-        factory->addrbook->search(factory->addrbook->search_cb, entry, addressbook_config);
-    }
+    if(addrbook)
+        addrbook->search(addrbook->search_cb, entry, addressbook_config_load_parameters());
 }
 
 void searchbar_entry_changed (GtkEntry* entry UNUSED, gchar* arg1 UNUSED, gpointer data UNUSED)
@@ -82,14 +76,12 @@ void searchbar_entry_changed (GtkEntry* entry UNUSED, gchar* arg1 UNUSED, gpoint
 
 static void cbox_changed_cb (GtkWidget *widget, gpointer user_data UNUSED)
 {
-    if(abookfactory_is_addressbook_loaded()) {
-        DEBUG("Searchbar: Set new addressbook");
-        AddrBookFactory *factory = abookfactory_get_factory();
-        factory->addrbook->set_current_book (gtk_combo_box_get_active_text (GTK_COMBO_BOX (widget)));
-        AddressBook_Config *addressbook_config;
-        addressbook_config_load_parameters(&addressbook_config);
-        factory->addrbook->search(factory->addrbook->search_cb, GTK_ENTRY(addressbookentry), addressbook_config);
-    }
+    if(!addrbook)
+        return;
+
+    addrbook->set_current_book (gtk_combo_box_get_active_text (GTK_COMBO_BOX (widget)));
+    AddressBook_Config *addressbook_config = addressbook_config_load_parameters();
+    addrbook->search(addrbook->search_cb, GTK_ENTRY(addressbookentry), addressbook_config);
 }
 
 void set_focus_on_addressbook_searchbar ()
@@ -105,10 +97,8 @@ void update_searchbar_addressbook_list()
     book_data_t *book_data;
     GSList *books_data = NULL;
 
-    if(abookfactory_is_addressbook_loaded()) {
-        AddrBookFactory *factory = abookfactory_get_factory();
-        books_data = factory->addrbook->get_books_data(dbus_get_addressbook_list());
-    }
+    if (addrbook)
+        books_data = addrbook->get_books_data(dbus_get_addressbook_list());
 
     if(books_data == NULL) {
         ERROR("Searchbar: No books data found");
@@ -148,16 +138,15 @@ void update_searchbar_addressbook_list()
         }
     }
 
-    if(abookfactory_is_addressbook_loaded()) {
-        AddrBookFactory *factory = abookfactory_get_factory();
+    if(addrbook) {
         if (activeIsSet) {
             gtk_combo_box_set_active_iter (GTK_COMBO_BOX (cbox), &activeIter);
-            factory->addrbook->set_current_book(activeText);
+            addrbook->set_current_book(activeText);
         }
         else {
             gtk_combo_box_set_active (GTK_COMBO_BOX (cbox), 0);
             gtk_combo_box_get_active_text(GTK_COMBO_BOX(cbox));
-            factory->addrbook->set_current_book(gtk_combo_box_get_active_text(GTK_COMBO_BOX(cbox)));
+            addrbook->set_current_book(gtk_combo_box_get_active_text(GTK_COMBO_BOX(cbox)));
         }
     }
 
@@ -169,9 +158,7 @@ void update_searchbar_addressbook_list()
 static void select_search_type (GtkWidget *item, GtkEntry  *entry UNUSED)
 {
     
-    if(abookfactory_is_addressbook_loaded()) {
-        AddrBookFactory *factory = abookfactory_get_factory();
-
+    if(addrbook) {
         DEBUG ("Searchbar: %s", gtk_menu_item_get_label (GTK_MENU_ITEM (item)));
 
         gtk_entry_set_icon_tooltip_text (GTK_ENTRY (addressbookentry), GTK_ENTRY_ICON_PRIMARY,
@@ -179,18 +166,17 @@ static void select_search_type (GtkWidget *item, GtkEntry  *entry UNUSED)
 
 
         if (g_strcmp0 ("Search is", gtk_menu_item_get_label (GTK_MENU_ITEM (item))) == 0) {
-            factory->addrbook->set_search_type(ABOOK_QUERY_IS);
+            addrbook->set_search_type(ABOOK_QUERY_IS);
         }
         else if (g_strcmp0 ("Search begins with", gtk_menu_item_get_label (GTK_MENU_ITEM (item))) == 0) {
-            factory->addrbook->set_search_type(ABOOK_QUERY_BEGINS_WITH);
+            addrbook->set_search_type(ABOOK_QUERY_BEGINS_WITH);
         }
         else if (g_strcmp0 ("Search contains", gtk_menu_item_get_label (GTK_MENU_ITEM (item))) == 0) {
-            factory->addrbook->set_search_type(ABOOK_QUERY_CONTAINS);
+            addrbook->set_search_type(ABOOK_QUERY_CONTAINS);
         }
   
-        AddressBook_Config *addressbook_config;
-        addressbook_config_load_parameters(&addressbook_config);
-        factory->addrbook->search (factory->addrbook->search_cb, GTK_ENTRY (addressbookentry), addressbook_config);
+        AddressBook_Config *addressbook_config = addressbook_config_load_parameters();
+        addrbook->search (addrbook->search_cb, GTK_ENTRY (addressbookentry), addressbook_config);
     }
 
 }
@@ -388,19 +374,16 @@ GtkWidget* contacts_searchbar_new ()
     liststore = gtk_list_store_new (1,G_TYPE_STRING);
 
     // Create combo box to select current addressbook
-    if(!abookfactory_is_addressbook_loaded()) {
+    if(!addrbook)
     	return NULL;
-    }
 
     book_list = dbus_get_addressbook_list();
 
-    AddrBookFactory *factory = abookfactory_get_factory();
-    
-    factory->addrbook->init(book_list);
+    addrbook->init(book_list);
 
     GSList *book_list_iterator;
     book_data_t *book_data;
-    GSList *books_data = factory->addrbook->get_books_data(book_list);
+    GSList *books_data = addrbook->get_books_data(book_list);
     
     // Populate menu
     count = 0;

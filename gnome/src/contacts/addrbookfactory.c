@@ -37,89 +37,8 @@
 #include <glib.h>
 #include <dlfcn.h>
 
-static void handler_async_search(GList *hits, gpointer user_data);
+AddrBookHandle *addrbook = NULL;
 
-AddrBookFactory addressbookFactory = { .addrbook = NULL };
-
-AddrBookFactory *abookfactory_get_factory(void) {
-    return &addressbookFactory;
-}
-
-gboolean abookfactory_is_addressbook_loaded(void) {
-   return (addressbookFactory.addrbook != NULL) ? TRUE : FALSE;
-}
-
-void abookfactory_init_factory() {
-    abookfactory_load_module(&addressbookFactory);
-} 
-
-void abookfactory_scan_directory(AddrBookFactory *factory UNUSED) {
-    
-}
-
-void abookfactory_load_module(AddrBookFactory *factory)
-{
-    gchar *plugindir = PLUGINS_DIR;
-    gchar *pluginpath = g_strdup_printf("%s/libevladdrbook.so", plugindir);
-
-    DEBUG("AddressbookFactory: Loading addressbook: %s", pluginpath);
-
-    void *handle = dlopen(pluginpath, RTLD_LAZY);
-    g_free(pluginpath);
-    if(handle == NULL) {
-        ERROR("AddressbookFactory: Error: Could not load addressbook");
-        return;
-    }
-
-    AddrBookHandle *ab = g_malloc(sizeof(AddrBookHandle));
-
-    ab->init = dlsym(handle, "addressbook_init");
-    if(ab->init == NULL)
-        ERROR("AddressbookFactory: Error: Could not load addressbook_init function");
- 
-    ab->is_ready = dlsym(handle, "addressbook_is_ready");
-    if(ab->is_ready == NULL)
-        ERROR("AddressbookFactory: Error: Could not load addressbook addressbook_is_ready function");
-
-    ab->is_active = dlsym(handle, "addressbook_is_active");
-    if(ab->is_active == NULL)
-        ERROR("AddressbookFactory: Error: Could not load addressbook addressbook_is_active function");
-
-    ab->search = dlsym(handle, "addressbook_search");
-    if(ab->search == NULL)
-        ERROR("AddressbookFactory: Error: Could not load addressbook addressbook_search function");
-
-    ab->get_books_data = dlsym(handle, "addressbook_get_books_data");
-    if(ab->get_books_data == NULL)
-        ERROR("AddressbookFactory: Error: Could not load addressbook addressbook_get_books_data function");
-
-    ab->get_book_data_by_uid = dlsym(handle, "addressbook_get_book_data_by_uid");
-    if(ab->get_book_data_by_uid == NULL)
-        ERROR("AddressbookFactory: Error: Could not load addressbook addressbook_get_books_data_by_uid function");
-
-    ab->set_current_book = dlsym(handle, "addressbook_set_current_book");
-    if(ab->set_current_book == NULL)
-        ERROR("AddressbookFactory: Error: Could not load addressbook addressbook_ser_current_book");
-
-    ab->set_search_type = dlsym(handle, "addressbook_set_search_type");
-    if(ab->set_search_type == NULL)
-        ERROR("AddressbookFactory: Error: Could not load addressbook addressbook_set_search_type");
-
-    ab->search_cb = handler_async_search;
-
-    DEBUG("AddressbookFactory: Loading done");
-    factory->addrbook = ab;
-}
-
-void
-free_hit (Hit *h)
-{
-    g_free (h->name);
-    g_free (h->phone_business);
-    g_free (h->phone_home);
-    g_free (h->phone_mobile);
-    g_free (h);
-}
 
 /**
  * Callback called after all book have been processed
@@ -127,52 +46,73 @@ free_hit (Hit *h)
 static void
 handler_async_search (GList *hits, gpointer user_data)
 {
-    GList *i;
-
-    // Retrieve the address book parameters
     AddressBook_Config *addressbook_config = user_data;
 
-    // reset previous results
     calltree_reset (contacts);
     calllist_reset (contacts);
 
-    for (i = hits; i != NULL; i = i->next) {
+    for (GList *i = hits; i != NULL; i = i->next) {
         GdkPixbuf *photo = NULL;
         Hit *entry = i->data;
         if (!entry)
           continue;
 
-        // Get the photo
         if (addressbook_display (addressbook_config,
                                  ADDRESSBOOK_DISPLAY_CONTACT_PHOTO))
             photo = entry->photo;
 
-        // Create entry for business phone information
         if (addressbook_display (addressbook_config,
                                  ADDRESSBOOK_DISPLAY_PHONE_BUSINESS))
             calllist_add_contact (entry->name, entry->phone_business,
                                   CONTACT_PHONE_BUSINESS, photo);
 
-        // Create entry for home phone information
         if (addressbook_display (addressbook_config,
                                  ADDRESSBOOK_DISPLAY_PHONE_HOME))
             calllist_add_contact (entry->name, entry->phone_home,
                                   CONTACT_PHONE_HOME, photo);
 
-        // Create entry for mobile phone iddnformation
         if (addressbook_display (addressbook_config,
                                  ADDRESSBOOK_DISPLAY_PHONE_MOBILE))
             calllist_add_contact (entry->name, entry->phone_mobile,
                                   CONTACT_PHONE_MOBILE, photo);
 
-        free_hit (entry);
+        g_free (entry->name);
+        g_free (entry->phone_business);
+        g_free (entry->phone_home);
+        g_free (entry->phone_mobile);
+        g_free (entry);
     }
 
     g_list_free (hits);
+    gtk_widget_grab_focus(GTK_WIDGET (contacts->view));
+}
 
-    // Deactivate waiting image
-    // deactivateWaitingLayer();
+void abook_init()
+{
+    void *handle = dlopen(PLUGINS_DIR"/libevladdrbook.so", RTLD_LAZY);
+
+    if(handle == NULL) {
+        ERROR("Addressbook: Error: Could not load addressbook");
+        return;
+    }
+
+    addrbook = g_malloc(sizeof(AddrBookHandle));
+
+#define LOAD(func) do { \
+        addrbook-> func = dlsym(handle, "addressbook_" #func); \
+        if (addrbook-> func == NULL) \
+            ERROR("Addressbook: Couldn't load " # func); \
+    } while(0)
 
 
-    gtk_widget_grab_focus (GTK_WIDGET (contacts->view));
+    LOAD(init);
+    LOAD(is_ready);
+    LOAD(is_active);
+    LOAD(search);
+    LOAD(get_books_data);
+    LOAD(get_book_data_by_uid);
+    LOAD(set_current_book);
+    LOAD(set_search_type);
+
+    addrbook->search_cb = handler_async_search;
 }

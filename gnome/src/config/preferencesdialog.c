@@ -285,7 +285,7 @@ create_general_settings ()
 void
 save_configuration_parameters (void)
 {
-    if(abookfactory_is_addressbook_loaded()) {
+    if (addrbook) {
         // Address book config
         addressbook_config_save_parameters ();
     }
@@ -410,7 +410,7 @@ show_preferences_dialog ()
     gtk_notebook_append_page (GTK_NOTEBOOK (notebook), tab, gtk_label_new (_ ("Shortcuts")));
     gtk_notebook_page_num (GTK_NOTEBOOK (notebook), tab);
 
-    if(abookfactory_is_addressbook_loaded()) {
+    if(addrbook) {
         // Addressbook tab
         tab = create_addressbook_settings ();
         gtk_notebook_append_page (GTK_NOTEBOOK (notebook), tab, gtk_label_new (_ ("Address Book")));
@@ -451,7 +451,7 @@ GtkTreeModel* createModel()
     GError *error = NULL;
     gint i, nb_entries;
 
-    nb_entries = abookfactory_is_addressbook_loaded() ? 5 : 4;
+    nb_entries = addrbook ? 5 : 4;
 
     store = gtk_list_store_new (3, GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_INT);
     GtkIconTheme* theme = gtk_icon_theme_get_default();

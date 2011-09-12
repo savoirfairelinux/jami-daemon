@@ -31,7 +31,6 @@
 #include "addressbook-config.h"
 #include "searchbar.h"
 #include "contacts/addrbookfactory.h"
-// #include "contacts/addressbook/eds.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -44,44 +43,33 @@ enum {
     COLUMN_BOOK_ACTIVE, COLUMN_BOOK_NAME, COLUMN_BOOK_UID
 };
 
-void
-addressbook_config_load_parameters (AddressBook_Config **settings)
+AddressBook_Config *addressbook_config_load_parameters ()
 {
+    AddressBook_Config *config = g_new0 (AddressBook_Config, 1);
+    GHashTable *params = dbus_get_addressbook_settings();
 
-    GHashTable *_params = NULL;
-    AddressBook_Config *_settings;
-
-    // Allocate a struct
-    _settings = g_new0 (AddressBook_Config, 1);
-
-    // Fetch the settings from D-Bus
-    _params = (GHashTable*) dbus_get_addressbook_settings();
-
-    if (_params == NULL) {
-
-        DEBUG ("Addressbook: No parameters received, use default");
-
-        _settings->enable = 1;
-        _settings->max_results = 30;
-        _settings->display_contact_photo = 0;
-        _settings->search_phone_business = 1;
-        _settings->search_phone_home = 1;
-        _settings->search_phone_mobile = 1;
+    if (params == NULL) {
+        config->enable = 1;
+        config->max_results = 30;
+        config->display_contact_photo = 0;
+        config->search_phone_business = 1;
+        config->search_phone_home = 1;
+        config->search_phone_mobile = 1;
     } 
     else {
-        _settings->enable = (size_t) (g_hash_table_lookup (_params, ADDRESSBOOK_ENABLE));
-        _settings->max_results = (size_t) (g_hash_table_lookup (_params, ADDRESSBOOK_MAX_RESULTS));
-        _settings->display_contact_photo = (size_t) (g_hash_table_lookup (_params, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO));
-        _settings->search_phone_business = (size_t) (g_hash_table_lookup (_params, ADDRESSBOOK_DISPLAY_PHONE_BUSINESS));
-        _settings->search_phone_home = (size_t) (g_hash_table_lookup (_params, ADDRESSBOOK_DISPLAY_PHONE_HOME));
-        _settings->search_phone_mobile = (size_t) (g_hash_table_lookup (_params, ADDRESSBOOK_DISPLAY_PHONE_MOBILE));
+        config->enable = (size_t) (g_hash_table_lookup (params, ADDRESSBOOK_ENABLE));
+        config->max_results = (size_t) (g_hash_table_lookup (params, ADDRESSBOOK_MAX_RESULTS));
+        config->display_contact_photo = (size_t) (g_hash_table_lookup (params, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO));
+        config->search_phone_business = (size_t) (g_hash_table_lookup (params, ADDRESSBOOK_DISPLAY_PHONE_BUSINESS));
+        config->search_phone_home = (size_t) (g_hash_table_lookup (params, ADDRESSBOOK_DISPLAY_PHONE_HOME));
+        config->search_phone_mobile = (size_t) (g_hash_table_lookup (params, ADDRESSBOOK_DISPLAY_PHONE_MOBILE));
     }
 
     DEBUG ("Addressbook: Settings: enabled %d, max_result %d, photo %d, business %d, home %d, mobile %d",
-           _settings->enable, _settings->max_results, _settings->display_contact_photo,
-           _settings->search_phone_business, _settings->search_phone_home, _settings->search_phone_mobile);
+           config->enable, config->max_results, config->display_contact_photo,
+           config->search_phone_business, config->search_phone_home, config->search_phone_mobile);
 
-    *settings = _settings;
+    return config;
 }
 
 void
@@ -211,9 +199,8 @@ addressbook_config_book_active_toggled (
     gchar* name;
     gchar* uid;
 
-    if(!abookfactory_is_addressbook_loaded()) {
+    if(!addrbook)
         return;
-    }
 
     // Get path of clicked book active toggle box
     treePath = gtk_tree_path_new_from_string (path);
@@ -222,8 +209,6 @@ addressbook_config_book_active_toggled (
         DEBUG ("Addressbook: No valid model (%s:%d)", __FILE__, __LINE__);
         return;
     }
-
-    AddrBookFactory *factory = abookfactory_get_factory();
 
     gtk_tree_model_get_iter (model, &iter, treePath);
 
@@ -240,7 +225,7 @@ addressbook_config_book_active_toggled (
     gtk_tree_path_free (treePath);
 
     // Update current memory stored books data
-    book_data = factory->addrbook->get_book_data_by_uid(uid);
+    book_data = addrbook->get_book_data_by_uid(uid);
     if(book_data == NULL) {
 	ERROR("Addressbook: Error: Could not find addressbook %s", uid);
     }
@@ -292,14 +277,11 @@ addressbook_config_fill_book_list()
     book_data_t *book_data;
     gchar **book_list;
 
-    if(!abookfactory_is_addressbook_loaded()) {
+    if(!addrbook)
         return;
-    }
-
-    AddrBookFactory *factory = abookfactory_get_factory();
 
     book_list = dbus_get_addressbook_list();
-    GSList *books_data = factory->addrbook->get_books_data(book_list);
+    GSList *books_data = addrbook->get_books_data(book_list);
 
     if (!books_data) {
         DEBUG ("Addressbook: No valid books data (%s:%d)", __FILE__, __LINE__);
@@ -338,7 +320,7 @@ create_addressbook_settings()
     GtkTreeViewColumn *tree_view_column;
 
     // Load the user value
-    addressbook_config_load_parameters (&addressbook_config);
+    addressbook_config = addressbook_config_load_parameters();
 
     ret = gtk_vbox_new (FALSE, 10);
     gtk_container_set_border_width (GTK_CONTAINER (ret), 10);

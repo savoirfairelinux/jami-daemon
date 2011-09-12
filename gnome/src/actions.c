@@ -333,7 +333,7 @@ gboolean sflphone_init (GError **error)
     if (!dbus_connect (error) || !dbus_register (getpid (), "Gtk+ Client", error))
         return FALSE;
 
-    abookfactory_init_factory();
+    abook_init();
 
     // Init icons factory
     init_icon_factory ();
