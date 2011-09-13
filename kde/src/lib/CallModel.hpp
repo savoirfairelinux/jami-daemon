@@ -72,21 +72,21 @@ template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::
 {
    if (!historyInit) {
       ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-      MapStringString historyMap = configurationManager.getHistory().value();
+      QStringList historyMap = configurationManager.getHistory().value();
       qDebug() << "Call History = " << historyMap;
-      QMapIterator<QString, QString> i(historyMap);
-      while (i.hasNext()) {
-         i.next();
-         uint startTimeStamp = i.key().toUInt();
-         QStringList param = i.value().split("|");
-         QString type2 = param[0];
-         QString number = param[1];
-         QString name = param[2];
-         uint stopTimeStamp = param[3].toUInt();
-         QString account = param[4];
-         historyCalls[QString::number(startTimeStamp)] = Call::buildHistoryCall(generateCallId(), startTimeStamp, stopTimeStamp, account, name, number, type2);
-         addCall(historyCalls[QString::number(startTimeStamp)]);
-      }
+//       QMapIterator<QString, QString> i(historyMap);
+//       while (i.hasNext()) {
+//          i.next();
+//          uint startTimeStamp = i.key().toUInt();
+//          QStringList param = i.value().split("|");
+//          QString type2 = param[0];
+//          QString number = param[1];
+//          QString name = param[2];
+//          uint stopTimeStamp = param[3].toUInt();
+//          QString account = param[4];
+//          historyCalls[QString::number(startTimeStamp)] = Call::buildHistoryCall(generateCallId(), startTimeStamp, stopTimeStamp, account, name, number, type2);
+//          addCall(historyCalls[QString::number(startTimeStamp)]);
+//       }
    }
    historyInit = true;
    return true;
@@ -333,11 +333,11 @@ template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::
  ****************************************************************************/
 
 ///Return a list of all previous calls
-template<typename CallWidget, typename Index> MapStringString CallModel<CallWidget,Index>::getHistoryMap() 
+template<typename CallWidget, typename Index> QStringList CallModel<CallWidget,Index>::getHistory() 
 {
-   MapStringString toReturn;
+   QStringList toReturn;
    foreach(Call* call, historyCalls) {
-      toReturn[historyCalls.key(call)] = Call::getTypeFromHistoryState(call->getHistoryState()) + "|" + call->getPeerPhoneNumber() + "|" + call->getPeerName() + "|" + call->getStopTimeStamp() + "|" + call->getAccountId();
+      toReturn << call->getCallId();
    }
    return toReturn;
 }

@@ -622,19 +622,20 @@ SIPVoIPLink::answer (Call *c)
     _debug ("UserAgent: Answering call");
 
     SIPCall *call = dynamic_cast<SIPCall*>(c);
+    if (call != NULL) {
+       pjsip_inv_session *inv_session = call->inv;
 
-    pjsip_inv_session *inv_session = call->inv;
+       _debug ("UserAgent: SDP negotiation success! : call %s ", call->getCallId().c_str());
+       // Create and send a 200(OK) response
+       if (pjsip_inv_answer (inv_session, PJSIP_SC_OK, NULL, NULL, &tdata) != PJ_SUCCESS)
+       throw VoipLinkException("Could not init invite request answer (200 OK)");
+ 
+       if (pjsip_inv_send_msg (inv_session, tdata) != PJ_SUCCESS)
+       throw VoipLinkException("Could not send invite request answer (200 OK)");
 
-	_debug ("UserAgent: SDP negotiation success! : call %s ", call->getCallId().c_str());
-	// Create and send a 200(OK) response
-	if (pjsip_inv_answer (inv_session, PJSIP_SC_OK, NULL, NULL, &tdata) != PJ_SUCCESS)
-        throw VoipLinkException("Could not init invite request answer (200 OK)");
-
-	if (pjsip_inv_send_msg (inv_session, tdata) != PJ_SUCCESS)
-        throw VoipLinkException("Could not send invite request answer (200 OK)");
-
-	call->setConnectionState (Call::Connected);
-	call->setState (Call::Active);
+       call->setConnectionState (Call::Connected);
+       call->setState (Call::Active);
+    }
 }
 
 void

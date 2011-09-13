@@ -3,9 +3,11 @@
 
 #include <QtCore/QMetaType>
 #include <QtCore/QMap>
+#include <QVector>
 #include <QtCore/QString>
 
 typedef QMap<QString, QString> MapStringString;
+typedef QVector< QMap<QString, QString> > VectorMapStringString;
 typedef QMap<QString, int> MapStringInt;
 
 //Mixe from LIB and GCC website

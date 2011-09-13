@@ -91,7 +91,7 @@ class LIB_EXPORT CallModel {
       void removeConference(Call* call);
       void removeCall(Call* call);
       
-      MapStringString getHistoryMap();
+      QStringList getHistory();
 
       //Account related members
       static Account* getCurrentAccount();

@@ -499,7 +499,7 @@ void Call::acceptTransf()
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    qDebug() << "Accepting call and transfering it to number : " << transferNumber << ". callId : " << callId;
    callManager.accept(callId);
-   callManager.transfert(callId, transferNumber);
+   callManager.transfer(callId, transferNumber);
 //   historyState = TRANSFERED;
 }
 
@@ -563,7 +563,7 @@ void Call::transfer()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    qDebug() << "Transfering call to number : " << transferNumber << ". callId : " << callId;
-   callManager.transfert(callId, transferNumber);
+   callManager.transfer(callId, transferNumber);
    this->stopTime = new QDateTime(QDateTime::currentDateTime());
 }
 
@@ -700,7 +700,7 @@ void Call::setConfId(QString value) {
 
 QString Call::getCurrentCodecName() {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   return callManager.getCurrentCodecName(callId);
+   return callManager.getCurrentAudioCodecName(callId);
 }
 
 //This function could also be called mayBeSecure or haveChancesToBeEncryptedButWeCantTell.

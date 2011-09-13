@@ -61,20 +61,20 @@ void ConfigurationSkeleton::readConfig()
    ////////////////////////
    
    //Call history settings
-        setEnableHistory(QVariant(configurationManager.getHistoryEnabled()).toBool());
-   setHistoryMax(configurationManager.getHistoryLimit());
+   //setEnableHistory(true);
+   setHistoryMax(1000);//configurationManager.getHistoryLimit());
     
    ////////////////////////
    ////Display settings////
    ////////////////////////
 
    //Notification settings
-   setNotifOnCalls(configurationManager.getNotify());
-   setNotifOnMessages(configurationManager.getMailNotify());
+   setNotifOnCalls(true);
+   setNotifOnMessages(true);//configurationManager.getMailNotify());
     
    //Window display settings
-   setDisplayOnStart(! configurationManager.isStartHidden());
-   setDisplayOnCalls(configurationManager.popupMode());
+   setDisplayOnStart(true);
+   setDisplayOnCalls(true);
     
    /////////////////////////
    ////Accounts settings////
@@ -88,13 +88,13 @@ void ConfigurationSkeleton::readConfig()
    //////////////////////
    
    //Audio Interface settings
-   int audioManager = configurationManager.getAudioManager();
+   QString audioManager = configurationManager.getAudioManager();
    qDebug() << "audioManager = " << audioManager;
-   setInterface(audioManager);
+   //setInterface(audioManager); //TODO
 
    //ringtones settings
-   setEnableRingtones(configurationManager.isRingtoneEnabled());
-   QString ringtone = configurationManager.getRingtoneChoice();
+   setEnableRingtones(true);
+   QString ringtone = "";
    if(ringtone.isEmpty()) {
       setRingtone(QString(SHARE_INSTALL_PREFIX) + "sflphone/ringtones/konga.ul");
    }
@@ -122,10 +122,10 @@ void ConfigurationSkeleton::readConfig()
       
    setAlsaInputDevice(inputDevice);
    
-   qDebug() << "outputDevice = " << devices[0];
-   int outputDevice = devices[0].toInt(& ok);
-   if(!ok) qDebug() << "outputDevice is not a number";
-   setAlsaOutputDevice(outputDevice);          
+   //qDebug() << "outputDevice = " << devices[0];
+   //int outputDevice = devices[0].toInt(& ok);
+   //if(!ok) qDebug() << "outputDevice is not a number";
+   //setAlsaOutputDevice(outputDevice);          
    
    ///////////////////////
    ////Record settings////
@@ -173,7 +173,7 @@ void ConfigurationSkeleton::readConfig()
 void ConfigurationSkeleton::writeConfig()
 {
    qDebug() << "\nWriting config";
-   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   /*ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    
    
    ////////////////////////
@@ -183,9 +183,9 @@ void ConfigurationSkeleton::writeConfig()
    qDebug() << "Writing General settings";
    
    //Call history settings
-        if(enableHistory() != QVariant(configurationManager.getHistoryEnabled()).toBool() ) {
-            configurationManager.setHistoryEnabled();
-        }
+        //if(enableHistory() != QVariant(configurationManager.getHistoryEnabled()).toBool() ) {
+            //configurationManager.setHistoryEnabled();
+        //}
    configurationManager.setHistoryLimit(historyMax());
 
 
@@ -196,13 +196,13 @@ void ConfigurationSkeleton::writeConfig()
    qDebug() << "Writing Display settings";
    
    //Notification settings
-   if(notifOnCalls() != configurationManager.getNotify()) configurationManager.setNotify();
-   if(notifOnMessages() != configurationManager.getMailNotify()) configurationManager.setMailNotify();
+   //if(notifOnCalls() != configurationManager.getNotify()) configurationManager.setNotify();
+   //if(notifOnMessages() != configurationManager.getMailNotify()) configurationManager.setMailNotify();
    
    //Window display settings
    //WARNING états inversés
-   if(displayOnStart() == configurationManager.isStartHidden()) configurationManager.startHidden();
-   if(displayOnCalls() != configurationManager.popupMode()) configurationManager.switchPopupMode();
+   //if(displayOnStart() == configurationManager.isStartHidden()) configurationManager.startHidden();
+   //if(displayOnCalls() != configurationManager.popupMode()) configurationManager.switchPopupMode();
    
    /////////////////////////
    ////Accounts settings////
@@ -283,7 +283,7 @@ void ConfigurationSkeleton::writeConfig()
    hooksSettings[HOOKS_COMMAND] = hooksCommand();
    configurationManager.setHookSettings(hooksSettings);
    
-   qDebug() << "Finished to write config\n";
+   qDebug() << "Finished to write config\n";*/
    
    readConfig();
 }

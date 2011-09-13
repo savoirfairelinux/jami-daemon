@@ -83,9 +83,9 @@ bool SFLPhone::initialize()
   view->loadWindow();
 
   move(QCursor::pos().x() - geometry().width()/2, QCursor::pos().y() - geometry().height()/2);
-  if( ! configurationManager.isStartHidden()) {
-      show();
-  }
+  //if( ! configurationManager.isStartHidden()) {
+  show();
+  //}
 
   if(configurationManager.getAccountList().value().isEmpty()) {
       (new AccountWizard())->show();
@@ -146,8 +146,8 @@ void SFLPhone::setupActions()
    action_displayDialpad->setCheckable(true);
 
    action_displayVolumeControls->setCheckable(true);
-   action_displayVolumeControls->setChecked(configurationManager.getVolumeControls());
-   action_displayDialpad->setChecked(configurationManager.getDialpad());
+   action_displayVolumeControls->setChecked(/*configurationManager.getVolumeControls()*/true);
+   action_displayDialpad->setChecked(/*configurationManager.getDialpad()*/true);
    action_accountCreationWizard = new KAction(i18n("Account creation wizard"), this);
    
    connect(action_accept,                SIGNAL(triggered()),           view, SLOT(accept()));
@@ -347,9 +347,9 @@ void SFLPhone::on_view_incomingCall(const Call * call)
    {
       putForeground();
     }*/
-   if(configurationManager.getNotify()) {
-      sendNotif(call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName());
-   }
+   //if(configurationManager.getNotify()) {
+   sendNotif(call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName());
+   //}
 }
 
 void SFLPhone::on_view_addressBookEnableAsked(bool enabled)

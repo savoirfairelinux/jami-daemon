@@ -262,7 +262,7 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
    }
    
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   configurationManager.setActiveCodecList(_codecList, account->getAccountDetail(ACCOUNT_ID));
+   configurationManager.setActiveAudioCodecList(_codecList, account->getAccountDetail(ACCOUNT_ID));
    qDebug() << "Account codec have been saved" << _codecList << account->getAccountDetail(ACCOUNT_ID);
    
    saveCredential(account->getAccountDetail(ACCOUNT_ID));
@@ -367,7 +367,7 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
 
    keditlistbox_codec->clear();
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   QStringList activeCodecList = configurationManager.getActiveCodecList(account->getAccountDetail(ACCOUNT_ID));
+   QStringList activeCodecList = configurationManager.getActiveAudioCodecList(account->getAccountDetail(ACCOUNT_ID));
    foreach (QString aCodec, activeCodecList) {
       foreach (StringHash _aCodec, codecList) {
       if (_aCodec["id"] == aCodec)
@@ -613,16 +613,16 @@ void DlgAccounts::updateWidgets()
 void DlgAccounts::loadCodecList() 
 {
   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-  QStringList codecIdList = configurationManager.getCodecList();
+  QStringList codecIdList = configurationManager.getAudioCodecList();
   QStringList tmpNameList;
   
   foreach (QString aCodec, codecIdList) {
-    QStringList codec = configurationManager.getCodecDetails(aCodec.toInt());
+    QStringList codec = configurationManager.getAudioCodecDetails(aCodec.toInt());
     QHash<QString, QString> _codec;
-    _codec["name"] = codec[0];
+    _codec["name"]      = codec[0];
     _codec["frequency"] = codec[1];
-    _codec["bitrate"] = codec[2];
-    _codec["bandwidth"] = codec[3];
+    _codec["bitrate"]   = codec[2];
+    _codec["bandwidth"] = ""; //TODO remove
     _codec["id"] = aCodec;
     
     tmpNameList << _codec["name"];
@@ -711,24 +711,30 @@ void DlgAccounts::updateCombo(int value)
    }
 }
 
+
 void DlgAccounts::loadCredentails(QString accountId) {
    credentialInfo.clear();
    list_credential->clear();
-   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   int credentialCount = configurationManager.getNumberOfCredential(accountId);
-   for (int i=0; i < credentialCount; i++) {
-      QMap<QString, QString> credentialData = configurationManager.getCredential(accountId,i);
-      qDebug() << "Credential: " << credentialData;
+   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   VectorMapStringString credentials = configurationManager.getCredentials(accountId);
+   for (int i=0; i < credentials.size(); i++) {
+      qDebug() << "Credential: " << credentials[i];
       QListWidgetItem* newItem = new QListWidgetItem();
-      newItem->setText(credentialData["username"]);
-      credentialInfo[newItem] = {newItem, credentialData["username"], credentialData["password"],credentialData["realm"]};
+      newItem->setText(credentials[i]["username"]);
+      CredentialData data;
+      data.pointer = newItem;
+      data.name = credentials[i]["username"];
+      data.password =credentials[i]["password"] ;
+      data.realm = credentials[i]["realm"];
+      credentialInfo[newItem] = data;
       list_credential->addItem(newItem);
    }
 }
 
 void DlgAccounts::saveCredential(QString accountId) {
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   configurationManager.setNumberOfCredential(accountId, list_credential->count());
+   //configurationManager.setNumberOfCredential(accountId, list_credential->count()); //TODO
+   VectorMapStringString toReturn;
    
    for (int i=0; i < list_credential->count();i++) {
       QListWidgetItem* currentItem = list_credential->item(i);
@@ -736,8 +742,9 @@ void DlgAccounts::saveCredential(QString accountId) {
       credentialData["username"] = credentialInfo[currentItem].name;
       credentialData["password"] = credentialInfo[currentItem].password;
       credentialData["realm"] = credentialInfo[currentItem].realm;
-      configurationManager.setCredential(accountId, i,credentialData);
+      toReturn << credentialData;
    }
+   configurationManager.setCredentials(accountId,toReturn);
 }
 
 void DlgAccounts::addCredential() {

@@ -163,7 +163,7 @@ SFLPhoneView::~SFLPhoneView()
 void SFLPhoneView::saveState()
 {
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   configurationManager.setHistory(callTreeModel.getHistoryMap());
+   configurationManager.setHistory(callTreeModel.getHistory());
 }
 
 void SFLPhoneView::loadWindow()
@@ -739,8 +739,8 @@ void SFLPhoneView::updateVolumeControls()
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    int display = 0;
 
-   if(configurationManager.getAudioManager() == ConfigurationSkeleton::EnumInterface::ALSA) {
-      display = configurationManager.getVolumeControls();
+   if(QString(configurationManager.getAudioManager()) == "alsa") {
+      display = true;
 
       ((SFLPhone*)parent())->action_displayVolumeControls->setEnabled(true);
    }
@@ -763,7 +763,7 @@ void SFLPhoneView::updateVolumeControls()
 void SFLPhoneView::updateDialpad()
 {
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   int display = configurationManager.getDialpad();
+   int display = true;
    
    qDebug() << "updateDialpad " << display;
 
@@ -795,17 +795,17 @@ void SFLPhoneView::updateStatusMessage()
 void SFLPhoneView::displayVolumeControls()
 {
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   int display = configurationManager.getVolumeControls();
-   configurationManager.setVolumeControls(!display);
+   int display = true;//configurationManager.getVolumeControls();
+   //configurationManager.setVolumeControls(!display);
    updateVolumeControls();
 }
 
 void SFLPhoneView::displayDialpad()
 {
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   int display = configurationManager.getDialpad();
+   int display = true;// configurationManager.getDialpad();
 
-   configurationManager.setDialpad(!display);
+   //configurationManager.setDialpad(!display);
    updateDialpad();
 }
 

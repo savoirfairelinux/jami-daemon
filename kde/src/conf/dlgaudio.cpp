@@ -97,10 +97,10 @@ void DlgAudio::loadAlsaSettings()
 {
    qDebug() << "DlgAudio::loadAlsaSettings";
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   if(configurationManager.getAudioManager() == ConfigurationSkeleton::EnumInterface::ALSA) {
+   if(QString(configurationManager.getAudioManager()) == "alsa") {
       ConfigurationSkeleton * skeleton = ConfigurationSkeleton::self();
       
-      QStringList pluginList = configurationManager.getOutputAudioPluginList();
+      QStringList pluginList = configurationManager.getAudioPluginList();
       box_alsaPlugin->clear();
       box_alsaPlugin->addItems(pluginList);
       int index = box_alsaPlugin->findText(skeleton->alsaPlugin());

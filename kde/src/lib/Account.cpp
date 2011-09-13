@@ -56,7 +56,7 @@ const QString account_state_name(QString & s)
 Account::Account():accountId(NULL),accountDetails(NULL)
 {
 }
-
+#include <unistd.h>
 Account* Account::buildExistingAccountFromId(QString _accountId)
 {
    qDebug() << "Building an account from id: " << _accountId;

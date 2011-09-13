@@ -89,7 +89,7 @@
 				<tp:docstring>
 				</tp:docstring>
 			</arg>
-                        <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="MapStringString"/>
+                        <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="VectorMapStringString"/>
 			<arg type="aa{ss}" name="credentialInformation" direction="in" tp:type="String_String_Map">
 				<tp:docstring>
 				</tp:docstring>
@@ -140,7 +140,7 @@
 			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>
-		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
 		   <arg type="aa{ss}" name="credentialInformation" direction="out">
 			   <tp:docstring>
 			   </tp:docstring>
@@ -605,7 +605,6 @@
 	   <method name="getHistory" tp:name-for-bindings="getHistory">
 		   <tp:docstring>
 		   </tp:docstring>
-		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
 		   <arg type="as" name="entries" direction="out">
 			   <tp:docstring>
 			   </tp:docstring>

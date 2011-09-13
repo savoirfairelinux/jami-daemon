@@ -26,7 +26,7 @@
 Codec::Codec(int payload, bool enabled)
 {
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   QStringList details = configurationManager.getCodecDetails(payload);
+   QStringList details = configurationManager.getAudioCodecDetails(payload);
    this->payload = QString::number(payload);
    this->enabled = enabled;
    this->name = details[CODEC_NAME];
