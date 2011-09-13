@@ -77,15 +77,12 @@ void Sdp::setActiveLocalSdpSession (const pjmedia_sdp_session *sdp)
     pjmedia_sdp_media *current;
     sdpMedia *media = NULL;
     std::string dir;
-    CodecsMap codecs_list;
     pjmedia_sdp_attr *attribute = NULL;
     pjmedia_sdp_rtpmap *rtpmap;
 
     _debug ("SDP: Set active local SDP session");
 
     activeLocalSession_ = (pjmedia_sdp_session*) sdp;
-
-    codecs_list = Manager::instance().getAudioCodecFactory().getCodecsMap();
 
     // retrieve the media information
     nb_media = activeLocalSession_->media_count;
@@ -111,15 +108,15 @@ void Sdp::setActiveLocalSdpSession (const pjmedia_sdp_session *sdp)
 
             pjmedia_sdp_attr_to_rtpmap (memPool_, attribute, &rtpmap);
 
-            CodecsMap::iterator iter = codecs_list.find ( (AudioCodecType) pj_strtoul (&rtpmap->pt));
+            sfl::Codec *codec = Manager::instance().audioCodecFactory.getCodec((int) pj_strtoul (&rtpmap->pt));
 
-            if (iter == codecs_list.end())
+            if (!codec)
             {
                 delete media;
                 return;
             }
 
-            media->add_codec (iter->second);
+            media->add_codec(codec);
         }
 
         sessionAudioMedia_.push_back (media);
@@ -286,17 +283,13 @@ void Sdp::setLocalMediaCapabilities (const CodecOrder &selectedCodecs)
     audio = new sdpMedia (MIME_TYPE_AUDIO);
     audio->set_port (getLocalPublishedAudioPort());
 
-    /* We retrieve the codecs selected by the user */
-    CodecsMap codecs_list = Manager::instance().getAudioCodecFactory().getCodecsMap();
-
     if (selectedCodecs.size() == 0)
         _warn("No selected codec while building local SDP offer");
     else {
         for (CodecOrder::const_iterator iter = selectedCodecs.begin(); iter != selectedCodecs.end(); ++iter) {
-            CodecsMap::const_iterator map_iter = codecs_list.find (*iter);
-
-            if (map_iter != codecs_list.end())
-                audio->add_codec (map_iter->second);
+        	sfl::Codec *codec = Manager::instance().audioCodecFactory.getCodec(*iter);
+            if (codec)
+                audio->add_codec(codec);
             else
                 _warn ("SDP: Couldn't find audio codec");
         }

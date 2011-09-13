@@ -69,22 +69,19 @@ void codec_capabilities_load (void)
     codecsCapabilities = g_queue_new();
 
     // This is a global list inherited by all accounts
-    gchar **codecs = dbus_audio_codec_list ();
-    gchar **codecs_orig = codecs;
+    GArray *codecs = dbus_audio_codec_list ();
 
-    if (codecs != NULL) {
-        // Add the codecs in the list
-        for (; *codecs; codecs++) {
-            codec_t *c;
-            guint payload = atoi (*codecs);
-            gchar **specs = dbus_audio_codec_details (payload);
-            codec_create_new_with_specs (payload, specs, TRUE, &c);
-            g_strfreev(specs);
-            g_queue_push_tail (codecsCapabilities, (gpointer) c);
-            g_free(*codecs);
-        }
-        g_free(codecs_orig);
+    // Add the codecs in the list
+    for (guint i = 0; i < codecs->len; i++) {
+        codec_t *c;
+        gint payload = g_array_index(codecs, gint, i);
+        gchar **specs = dbus_audio_codec_details (payload);
+        codec_create_new_with_specs (payload, specs, TRUE, &c);
+        g_strfreev(specs);
+        g_queue_push_tail (codecsCapabilities, (gpointer) c);
     }
+
+    g_array_unref(codecs);
 
     // If we didn't load any codecs, problem ...
     if (g_queue_get_length (codecsCapabilities) == 0)
