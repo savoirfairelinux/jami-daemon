@@ -17,3 +17,12 @@ Description: SIP and IAX2 compatible softphone - Core
  SFLphone is released under the GNU General Public License.
  SFLphone is being developed by the global community, and maintained by
  Savoir-faire Linux, a Montreal, Quebec, Canada-based Linux consulting company.
+
+Package: sflphone-common-dbg
+Architecture: any
+Section: debug
+Priority: extra
+Depends:
+    sflphone-common (= ${binary:Version}),
+    ${misc:Depends}
+Description: debugging symbols for sflphone-common
