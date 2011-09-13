@@ -573,7 +573,7 @@ Call *SIPVoIPLink::newOutgoingCall (const std::string& id, const std::string& to
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
     // the session initialization is completed
-    sfl::Codec* audiocodec = Manager::instance().getAudioCodecFactory().instantiateCodec (PAYLOAD_CODEC_ULAW);
+    sfl::Codec* audiocodec = Manager::instance().audioCodecFactory.instantiateCodec (PAYLOAD_CODEC_ULAW);
     if (audiocodec == NULL) {
     	_error ("UserAgent: Could not instantiate codec");
     	delete call;
@@ -764,20 +764,20 @@ SIPVoIPLink::offhold (const std::string& id)
 
     try {
         // Retreive previously selected codec
-        AudioCodecType pl;
+        int pl;
         sfl::Codec *sessionMedia = sdpSession->getSessionMedia();
         if (sessionMedia == NULL) {
     	    _warn("UserAgent: Session media not yet initialized, using default (ULAW)");
     	    pl = PAYLOAD_CODEC_ULAW;
         }
         else
-    	    pl = (AudioCodecType) sessionMedia->getPayloadType();
+    	    pl = (int) sessionMedia->getPayloadType();
 
         _debug ("UserAgent: Payload from session media %d", pl);
 
 
         // Create a new instance for this codec
-        sfl::Codec* audiocodec = Manager::instance().getAudioCodecFactory().instantiateCodec (pl);
+        sfl::Codec* audiocodec = Manager::instance().audioCodecFactory.instantiateCodec (pl);
         if (audiocodec == NULL)
     	    throw VoipLinkException("Could not instantiate codec");
 
@@ -1300,7 +1300,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const std::string& id, const std::string& to
 
     _debug ("UserAgent: TO uri for IP2IP call: %s", toUri.c_str());
 
-    sfl::Codec* audiocodec = Manager::instance().getAudioCodecFactory().instantiateCodec (PAYLOAD_CODEC_ULAW);
+    sfl::Codec* audiocodec = Manager::instance().audioCodecFactory.instantiateCodec (PAYLOAD_CODEC_ULAW);
 
     // Audio Rtp Session must be initialized before creating initial offer in SDP session
     // since SDES require crypto attribute.
@@ -1522,7 +1522,7 @@ void SIPVoIPLink::pjsipInit()
 
     // Add endpoint capabilities (INFO, OPTIONS, etc) for this UA
     pj_str_t allowed[] = { { (char*) "INFO", 4}, { (char*) "REGISTER", 8}, { (char*) "OPTIONS", 7}, { (char*) "MESSAGE", 7 } };       //  //{"INVITE", 6}, {"ACK",3}, {"BYE",3}, {"CANCEL",6}
-    pj_str_t accepted = pj_str ( (char*) "application/sdp");
+    pj_str_t accepted = { (char*) "application/sdp", 15 };
 
     // Register supported methods
     pjsip_endpt_add_capability (_endpt, &_mod_ua, PJSIP_H_ALLOW, NULL, PJ_ARRAY_SIZE (allowed), allowed);
@@ -2520,7 +2520,7 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
     if (!sessionMedia)
         return;
 
-    AudioCodecType pl = (AudioCodecType) sessionMedia->getPayloadType();
+    int pl = (int) sessionMedia->getPayloadType();
 
     try {
         Manager::instance().audioLayerMutexLock();
@@ -2529,7 +2529,7 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
 
         // udate session media only if required
         if (pl != call->getAudioRtp()->getSessionMedia()) {
-            sfl::Codec* audiocodec = Manager::instance().getAudioCodecFactory().instantiateCodec (pl);
+            sfl::Codec* audiocodec = Manager::instance().audioCodecFactory.instantiateCodec (pl);
 
             if (audiocodec == NULL)
                 _error ("UserAgent: No audiocodec found");
@@ -2989,7 +2989,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
     try {
         _debug ("UserAgent: Create RTP session for this call");
         // Init default codec for early media session
-        sfl::Codec* audiocodec = Manager::instance().getAudioCodecFactory().instantiateCodec (PAYLOAD_CODEC_ULAW);
+        sfl::Codec* audiocodec = Manager::instance().audioCodecFactory.instantiateCodec (PAYLOAD_CODEC_ULAW);
         call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
     } catch (...) {
         _warn ("UserAgent: Error: Failed to create rtp thread from answer");

@@ -241,23 +241,13 @@ sflphone_hung_up (callable_obj_t * c)
 /** Internal to actions: Fill account list */
 void sflphone_fill_account_list (void)
 {
-
-    gchar** array;
-    gchar** accountID;
-    unsigned int i;
-    int count;
-
-    DEBUG ("SFLphone: Fill account list");
-
-    count = current_account_get_message_number ();
+    int count = current_account_get_message_number ();
 
     account_list_clear ();
 
-    array = (gchar **) dbus_account_list();
-
+    gchar **array = dbus_account_list();
     if (array) {
-
-        for (accountID = array; *accountID; accountID++) {
+        for (gchar **accountID = array; *accountID; accountID++) {
             account_t * a = g_new0 (account_t,1);
             a->accountID = g_strdup (*accountID);
             a->credential_information = NULL;
@@ -267,7 +257,7 @@ void sflphone_fill_account_list (void)
         g_strfreev (array);
     }
 
-    for (i = 0; i < account_list_get_size(); i++) {
+    for (unsigned i = 0; i < account_list_get_size(); i++) {
         account_t  * a = account_list_get_nth (i);
         if(a == NULL) {
             ERROR("SFLphone: Error: Could not find account %d in list", i);
@@ -311,12 +301,9 @@ void sflphone_fill_account_list (void)
             a->state = ACCOUNT_STATE_INVALID;
         }
 
-        gchar * code = NULL;
-        code = g_hash_table_lookup (details, REGISTRATION_STATE_CODE);
-
-        if (code != NULL) {
+        gchar * code = g_hash_table_lookup (details, REGISTRATION_STATE_CODE);
+        if (code != NULL)
             a->protocol_state_code = atoi (code);
-        }
 
         g_free (a->protocol_state_description);
         a->protocol_state_description = g_hash_table_lookup (details, REGISTRATION_STATE_DESCRIPTION);
@@ -438,13 +425,11 @@ void
 sflphone_pick_up()
 {
     callable_obj_t *selectedCall = calltab_get_selected_call (active_calltree);
-
-    DEBUG("SFLphone: Pick up");
-
     if (!selectedCall) {
         sflphone_new_call();
         return;
     }
+
     switch (selectedCall->_state) {
         case CALL_STATE_DIALING:
             sflphone_place_call (selectedCall);
@@ -489,13 +474,9 @@ sflphone_on_hold ()
     callable_obj_t * selectedCall = calltab_get_selected_call (current_calls);
     conference_obj_t * selectedConf = calltab_get_selected_conf (active_calltree);
 
-    DEBUG ("sflphone_on_hold");
-
     if (selectedCall) {
         switch (selectedCall->_state) {
             case CALL_STATE_CURRENT:
-                dbus_hold (selectedCall);
-                break;
             case CALL_STATE_RECORD:
                 dbus_hold (selectedCall);
                 break;
@@ -525,8 +506,6 @@ sflphone_off_hold ()
                 break;
         }
     } else if (selectedConf) {
-
-
         dbus_unhold_conference (selectedConf);
     }
 }
@@ -626,18 +605,7 @@ sflphone_incoming_call (callable_obj_t * c)
     }
 }
 
-/* Truncates last char from dynamically allocated string */
-static void truncate_last_char(gchar **str)
-{
-    if (strlen(*str) > 0) {
-        gchar *tmp = *str;
-        tmp = g_strndup(*str, strlen(*str) - 1);
-        g_free(*str);
-        *str = tmp;
-    }
-}
-
-void
+static void
 process_dialing (callable_obj_t *c, guint keyval, gchar *key)
 {
     // We stop the tone
@@ -653,18 +621,21 @@ process_dialing (callable_obj_t *c, guint keyval, gchar *key)
             sflphone_hang_up ();
             break;
         case GDK_BackSpace:
-            if (c->_state == CALL_STATE_TRANSFER) {
-                truncate_last_char(&c->_trsft_to);
+        {
+            gchar *num = (c->_state == CALL_STATE_TRANSFER) ? c->_trsft_to : c->_peer_number;
+            size_t len = strlen(num);
+            printf("\"%s\" : %zu\n", num, len);
+            if (len) {
+                len--; // delete one character
+                num[len] = '\0';
                 calltree_update_call (current_calls, c, NULL);
-            } else {
-                truncate_last_char(&c->_peer_number);
-                calltree_update_call (current_calls, c, NULL);
+
                 /* If number is now empty, hang up immediately */
-                if (strlen(c->_peer_number) == 0)
+                if (c->_state != CALL_STATE_TRANSFER && len == 0)
                     dbus_hang_up(c);
             }
-
             break;
+        }
         case GDK_Tab:
         case GDK_Alt_L:
         case GDK_Control_L:
@@ -729,6 +700,7 @@ sflphone_keypad (guint keyval, gchar * key)
             case GDK_Return:
             case GDK_KP_Enter:
             case GDK_Escape:
+            case GDK_BackSpace:
                 break;
             default:
                 calltree_display (current_calls);

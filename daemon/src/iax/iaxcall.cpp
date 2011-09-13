@@ -35,9 +35,9 @@
 #include "manager.h"
 
 namespace {
-    int codecToASTFormat(AudioCodecType c)
+    int codecToASTFormat(int c)
     {
-        static std::map<AudioCodecType, int> mapping;
+        static std::map<int, int> mapping;
         if (mapping.empty()) {
             mapping[PAYLOAD_CODEC_ULAW] = AST_FORMAT_ULAW;
             mapping[PAYLOAD_CODEC_GSM] = AST_FORMAT_GSM;
@@ -53,9 +53,9 @@ namespace {
         else
             return mapping[c];
     }
-    AudioCodecType ASTFormatToCodec(int format)
+    int ASTFormatToCodec(int format)
     {
-        static std::map<int, AudioCodecType> mapping;
+        static std::map<int, int> mapping;
         if (mapping.empty()) {
             mapping[AST_FORMAT_ULAW] = PAYLOAD_CODEC_ULAW;
             mapping[AST_FORMAT_GSM] = PAYLOAD_CODEC_GSM;
@@ -65,7 +65,7 @@ namespace {
         }
         if (mapping.find(format) == mapping.end()) {
             _error("Format not supported!");
-            return static_cast<AudioCodecType>(-1);
+            return static_cast<int>(-1);
         }
         else
             return mapping[format];
@@ -118,12 +118,7 @@ int IAXCall::getFirstMatchingFormat (int needles, const std::string &accountID) 
     return 0;
 }
 
-AudioCodecFactory& IAXCall::getAudioCodecFactory()
-{
-    return _audioCodecFactory;
-}
-
-AudioCodecType IAXCall::getAudioCodec()
+int IAXCall::getAudioCodec()
 {
     return _audioCodec;
 }

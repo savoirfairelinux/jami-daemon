@@ -69,7 +69,7 @@ class ConfigurationManager
 
         std::map< std::string, std::string > getTlsSettingsDefault (void);
 
-        std::vector< std::string > getAudioCodecList (void);
+        std::vector< int32_t > getAudioCodecList (void);
         std::vector< std::string > getSupportedTlsMethod (void);
         std::vector< std::string > getAudioCodecDetails (const int32_t& payload);
         std::vector< std::string > getActiveAudioCodecList (const std::string& accountID);

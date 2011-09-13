@@ -70,7 +70,7 @@
 ManagerImpl::ManagerImpl (void) :
     _hasTriedToRegister (false), _config(), _currentCallId2(),
     _currentCallMutex(), _audiodriver (0),
-    _dtmfKey (0), _audioCodecFactory(), _toneMutex(),
+    _dtmfKey (0), _toneMutex(),
     _telephoneTone (0), _audiofile (0), _spkr_volume (0),
     _mic_volume (0), _waitingCall(),
     _waitingCallMutex(), _nbIncomingWaitingCall (0), _path (""),
@@ -118,9 +118,6 @@ void ManagerImpl::init (std::string config_file)
     initVolume();
     initAudioDriver();
 
-    // Initialize the list of supported audio codecs
-    _audioCodecFactory.init();
-
     audioLayerMutexLock();
 
     if (_audiodriver) {
@@ -156,7 +153,6 @@ void ManagerImpl::terminate ()
     delete _audiodriver;
     _audiodriver = NULL;
 
-    _audioCodecFactory.deleteHandlePointer();
     audioLayerMutexUnlock();
 }
 
@@ -1875,7 +1871,7 @@ void ManagerImpl::ringtone (const std::string& accountID)
 		else {
 			sfl::Codec *codec;
 			if (ringchoice.find (".ul") != std::string::npos || ringchoice.find (".au") != std::string::npos)
-			     codec = _audioCodecFactory.getCodec(PAYLOAD_CODEC_ULAW);
+			     codec = audioCodecFactory.getCodec(PAYLOAD_CODEC_ULAW);
 			else
 		        throw AudioFileException("Couldn't guess an appropriate decoder");
 			_audiofile = new RawFile(ringchoice, static_cast<sfl::AudioCodec *>(codec), samplerate);

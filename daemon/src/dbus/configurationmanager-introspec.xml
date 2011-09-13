@@ -285,7 +285,7 @@
 		   <tp:docstring>
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
-		   <arg type="as" name="list" direction="out">
+		   <arg type="ai" name="list" direction="out">
 			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>

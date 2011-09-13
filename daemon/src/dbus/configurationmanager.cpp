@@ -160,18 +160,9 @@ std::vector<std::string> ConfigurationManager::getAccountList()
  * Send the list of all codecs loaded to the client through DBus.
  * Can stay global, as only the active codecs will be set per accounts
  */
-std::vector<std::string> ConfigurationManager::getAudioCodecList (void)
+std::vector<int32_t > ConfigurationManager::getAudioCodecList (void)
 {
-    std::vector<std::string> list;
-
-    const CodecsMap &codecs(Manager::instance().getAudioCodecFactory().getCodecsMap());
-
-    for (CodecsMap::const_iterator iter = codecs.begin(); iter != codecs.end(); ++iter)
-        if (iter->second) {
-            std::stringstream ss;
-            ss << iter->first;
-            list.push_back (ss.str());
-        }
+	std::vector<int32_t> list(Manager::instance().audioCodecFactory.getAudioCodecList());
 
     if (list.empty())
         errorAlert(CODECS_NOT_LOADED);
@@ -192,7 +183,7 @@ std::vector<std::string> ConfigurationManager::getSupportedTlsMethod (void)
 
 std::vector<std::string> ConfigurationManager::getAudioCodecDetails (const int32_t& payload)
 {
-    std::vector<std::string> result(Manager::instance().getAudioCodecFactory().getCodecSpecifications(payload));
+    std::vector<std::string> result(Manager::instance().audioCodecFactory.getCodecSpecifications(payload));
     if (result.empty())
         errorAlert(CODECS_NOT_LOADED);
     return result;

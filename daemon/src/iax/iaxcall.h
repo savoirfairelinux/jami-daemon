@@ -102,26 +102,11 @@ class IAXCall : public Call
          */
         int getFirstMatchingFormat (int needles, const std::string &accountID) const;
 
-        // AUDIO
-        /**
-         * Set internal codec Map: initialization only, not protected
-         * @param map The codec map
-         */
-        void setCodecMap (const AudioCodecFactory& factory) {
-            _audioCodecFactory = factory;
-        }
-
-        /**
-         * Get internal codec Map: initialization only, not protected
-         * @return CodecDescriptor	The codec map
-         */
-        AudioCodecFactory& getAudioCodecFactory();
-
         /**
          * Return audio codec [mutex protected]
-         * @return AudioCodecType The payload of the codec
+         * @return int The payload of the codec
          */
-        AudioCodecType getAudioCodec();
+        int getAudioCodec();
 
     private:
         /** Each call is associated with an iax_session */
@@ -131,15 +116,12 @@ class IAXCall : public Call
          * Set the audio codec used.  [not protected]
          * @param audioCodec  The payload of the codec
          */
-        void setAudioCodec (AudioCodecType audioCodec) {
+        void setAudioCodec (int audioCodec) {
             _audioCodec = audioCodec;
         }
 
-        /** Codec Map */
-        AudioCodecFactory _audioCodecFactory;
-
         /** Codec pointer */
-        AudioCodecType _audioCodec;
+        int _audioCodec;
 
         /**
          * Format currently in use in the conversation,

@@ -130,7 +130,7 @@ static const SOUND_FORMAT INT32 = 0x8;
 #define HOOK_DEFAULT_URL_COMMAND    "x-www-browser"
 
 /** Enumeration that contains known audio payloads */
-typedef enum {
+enum {
     // http://www.iana.org/assignments/rtp-parameters
     // http://www.gnu.org/software/ccrtp/doc/refman/html/formats_8h.html#a0
     // 0 PCMU A 8000 1 [RFC3551]
@@ -152,10 +152,10 @@ typedef enum {
     PAYLOAD_CODEC_SPEEX_8000 = 110,
     PAYLOAD_CODEC_SPEEX_16000 = 111,
     PAYLOAD_CODEC_SPEEX_32000 = 112
-} AudioCodecType;
+};
 
 /** The struct to reflect the order the user wants to use the codecs */
-typedef std::vector<AudioCodecType> CodecOrder;
+typedef std::vector<int> CodecOrder;
 
 #define IP2IP_PROFILE "IP2IP"
 #define DIR_SEPARATOR_STR "/" // Directory separator char

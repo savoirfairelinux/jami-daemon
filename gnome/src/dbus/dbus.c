@@ -1135,11 +1135,11 @@ dbus_unregister (int pid)
     }
 }
 
-gchar**
+GArray *
 dbus_audio_codec_list()
 {
     GError *error = NULL;
-    gchar** array = NULL;
+    GArray * array = NULL;
     org_sflphone_SFLphone_ConfigurationManager_get_audio_codec_list (
         configurationManagerProxy, &array, &error);
 
