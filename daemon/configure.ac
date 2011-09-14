@@ -180,16 +180,7 @@ DBUS_CPP_REQUIRED_VERSION=0.6.0-pre1
 PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,,
 	AC_MSG_ERROR([You need the DBus-c++ libraries (version $DBUS_CPP_REQUIRED_VERSION or better)]))
 
-AC_ARG_WITH(debug,
-		AS_HELP_STRING(
-				[--with-debug],
-				[Set to enable debugging information @<:@default=no@:>@]
-				),
-			[CXXFLAGS="-g -O0"],
-			[CXXFLAGS="-O2"]
-			)
-
-CXXFLAGS="${CXXFLAGS} -Wno-return-type -Wall -Wextra -Wnon-virtual-dtor"
+CXXFLAGS="${CXXFLAGS} -g -Wno-return-type -Wall -Wextra -Wnon-virtual-dtor"
 
 AC_CHECK_LIB([expat], XML_ParserCreate_MM,
 		[AC_CHECK_HEADERS(expat.h, have_expat=true, have_expat=false)],
