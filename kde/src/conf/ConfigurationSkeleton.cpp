@@ -52,6 +52,7 @@ ConfigurationSkeleton::~ConfigurationSkeleton()
 
 void ConfigurationSkeleton::readConfig()
 {
+   //ConfigurationSkeleton::readConfig();
    qDebug() << "\nReading config";
    
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
@@ -172,6 +173,7 @@ void ConfigurationSkeleton::readConfig()
 
 void ConfigurationSkeleton::writeConfig()
 {
+   //ConfigurationSkeleton::writeConfig();
    qDebug() << "\nWriting config";
    /*ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    

@@ -9,17 +9,20 @@
 
 typedef QMap<QString, QString> MapStringString;
 typedef QMap<QString, int> MapStringInt;
+typedef QVector<int> VectorInt;
 typedef QVector< QMap<QString, QString> > VectorMapStringString;
 
 Q_DECLARE_METATYPE(MapStringString)
 Q_DECLARE_METATYPE(MapStringInt)
 Q_DECLARE_METATYPE(VectorMapStringString)
+Q_DECLARE_METATYPE(VectorInt);
 
 
 inline void registerCommTypes() {
 	qDBusRegisterMetaType<MapStringString>();
 	qDBusRegisterMetaType<MapStringInt>();
 	qDBusRegisterMetaType<VectorMapStringString>();
+	qDBusRegisterMetaType<VectorInt>();
 }
 
 #endif

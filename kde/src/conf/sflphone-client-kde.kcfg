@@ -36,6 +36,12 @@
     <entry name="displayOnCalls" type="Bool">
     	<label>Defines whether the main window should be displayed when receiving a message.</label>
     </entry>
+    <entry name="displayDialpad" type="Bool">
+    	<label>Defines whether the main window should be displayed when receiving a message.</label>
+    </entry>
+    <entry name="displayVolume" type="Bool">
+    	<label>Defines whether the main window should be displayed when receiving a message.</label>
+    </entry>
     
     <!-- Audio Settings -->
     

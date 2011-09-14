@@ -121,8 +121,6 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
            this,         SLOT(on1_incomingMessage(const QString &, const QString &)));
    connect(&callManager, SIGNAL(voiceMailNotify(const QString &, int)),
            this,         SLOT(on1_voiceMailNotify(const QString &, int)));
-   //END Port to Call Model
-
 
    connect(&callManager, SIGNAL(volumeChanged(const QString &, double)),
            this,         SLOT(on1_volumeChanged(const QString &, double)));
@@ -132,6 +130,7 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
 
    connect(&configurationManager, SIGNAL(audioManagerChanged()),
       this,         SLOT(on1_audioManagerChanged()));
+   //END Port to Call Model
            
 //    connect(configDialog, SIGNAL(clearCallHistoryAsked()), //TODO restore
 //            &callTreeModel,     SLOT(clearHistory()));
@@ -623,7 +622,7 @@ QVector<Contact *> SFLPhoneView::findContactsInKAddressBook(QString textSearched
    Q_UNUSED(full);
 //    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 //    MapStringInt addressBookSettings = configurationManager.getAddressbookSettings().value();
-//    int maxResults = addressBookSettings[ADDRESSBOOK_MAX_RESULTS];
+// //    int maxResults = addressBookSettings[ADDRESSBOOK_MAX_RESULTS];
 //    int typesDisplayed = phoneNumberTypesDisplayed();
 //    bool displayPhoto = addressBookSettings[ADDRESSBOOK_DISPLAY_CONTACT_PHOTO];
 //    AddressBook * ab = KABC::StdAddressBook::self(true);
@@ -737,7 +736,7 @@ void SFLPhoneView::updateVolumeBar()
 void SFLPhoneView::updateVolumeControls()
 {
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   int display = 0;
+   int display = false;
 
    if(QString(configurationManager.getAudioManager()) == "alsa") {
       display = true;
@@ -747,27 +746,20 @@ void SFLPhoneView::updateVolumeControls()
    else {
       ((SFLPhone*)parent())->action_displayVolumeControls->setEnabled(false);
    }
-         
-   qDebug() << "updateVolumeControls " << display;
       
    ((SFLPhone*)parent())->action_displayVolumeControls->setChecked(display);
    //widget_recVol->setVisible(display);
    //widget_sndVol->setVisible(display);
-   toolButton_recVol->setVisible(display);
-   toolButton_sndVol->setVisible(display);
-   slider_recVol->setVisible(display);
-   slider_sndVol->setVisible(display);
+   toolButton_recVol->setVisible(display && ConfigurationSkeleton::displayVolume());
+   toolButton_sndVol->setVisible(display && ConfigurationSkeleton::displayVolume());
+   slider_recVol->setVisible(display && ConfigurationSkeleton::displayVolume());
+   slider_sndVol->setVisible(display && ConfigurationSkeleton::displayVolume());
    
 }
 
 void SFLPhoneView::updateDialpad()
 {
-   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   int display = true;
-   
-   qDebug() << "updateDialpad " << display;
-
-   widget_dialpad->setVisible(true);//TODO use display variable
+   widget_dialpad->setVisible(ConfigurationSkeleton::displayDialpad());//TODO use display variable
 }
 
 
@@ -792,20 +784,18 @@ void SFLPhoneView::updateStatusMessage()
 ************            Autoconnect             *************
 ************************************************************/
 
-void SFLPhoneView::displayVolumeControls()
+void SFLPhoneView::displayVolumeControls(bool checked)
 {
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    int display = true;//configurationManager.getVolumeControls();
    //configurationManager.setVolumeControls(!display);
+   ConfigurationSkeleton::setDisplayVolume(checked);
    updateVolumeControls();
 }
 
-void SFLPhoneView::displayDialpad()
+void SFLPhoneView::displayDialpad(bool checked)
 {
-   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   int display = true;// configurationManager.getDialpad();
-
-   //configurationManager.setDialpad(!display);
+   ConfigurationSkeleton::setDisplayDialpad(checked);
    updateDialpad();
 }
 

@@ -283,8 +283,8 @@
 	   <method name="getAudioCodecList" tp:name-for-bindings="getAudioCodecList">
 		   <tp:docstring>
 		   </tp:docstring>
-		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
-		   <arg type="as" name="list" direction="out">
+		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorInt"/>
+		   <arg type="ai" name="list" direction="out">
 			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>

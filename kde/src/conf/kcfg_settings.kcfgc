@@ -1,5 +1,5 @@
  
 File=sflphone-client-kde.kcfg 
 ClassName=ConfigurationSkeletonBase 
-Singleton=false 
+Singleton=true 
 Mutators=true

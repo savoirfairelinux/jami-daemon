@@ -157,8 +157,8 @@ void SFLPhone::setupActions()
    connect(action_record,                SIGNAL(triggered()),           view, SLOT(record()));
    connect(action_screen,                SIGNAL(triggered(QAction *)),  this, SLOT(updateScreen(QAction *)));
    connect(action_mailBox,               SIGNAL(triggered()),           view, SLOT(mailBox()));
-   connect(action_displayVolumeControls, SIGNAL(triggered()),           view, SLOT(displayVolumeControls()));
-   connect(action_displayDialpad,        SIGNAL(triggered()),           view, SLOT(displayDialpad()));
+   connect(action_displayVolumeControls, SIGNAL(toggled(bool)),           view, SLOT(displayVolumeControls(bool)));
+   connect(action_displayDialpad,        SIGNAL(toggled(bool)),           view, SLOT(displayDialpad(bool)));
    connect(action_accountCreationWizard, SIGNAL(triggered()),           view, SLOT(accountCreationWizard()));  
 
    action_screen->addAction(action_main);

@@ -283,8 +283,8 @@ public slots:
       }
    }
 
-   void displayVolumeControls();
-   void displayDialpad();
+   void displayVolumeControls(bool checked = true);
+   void displayDialpad(bool checked = true);
    void configureSflPhone();
    void accountCreationWizard();
    void accept();
