@@ -52,8 +52,6 @@ void im_window_add (GtkWidget *widget);
  */
 void im_window_remove_tab (GtkWidget *widget);
 
-void im_window_show ();
-
 /**
  * Return wether the instant messaging window have been created or not
  */
@@ -74,11 +72,6 @@ gint im_window_get_nb_tabs (void);
 @param		The IM widget
 */
 void im_window_add_tab (GtkWidget *widget);
-
-/*! @function
-@abstract	Decide whether or not the notebook should display its tab. Display the tabs only if more than one tab is opened.
-*/
-void im_window_hide_show_tabs ();
 
 /*! @function
 @abstract Select the specified tab as current in instant messaging window

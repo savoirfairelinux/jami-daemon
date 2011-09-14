@@ -384,10 +384,6 @@ sflphone_hang_up()
                 selectedCall->_state = CALL_STATE_DIALING;
                 time (&selectedCall->_time_stop);
 
-                //if ( (im_window_get_nb_tabs() > 1) && selectedCall->_im_widget &&
-                //        ! (IM_WIDGET (selectedCall->_im_widget)->containText))
-                //    im_window_remove_tab (selectedCall->_im_widget);
-                //else
                 im_widget_update_state (IM_WIDGET (selectedCall->_im_widget), FALSE);
 
                 break;
@@ -436,7 +432,8 @@ sflphone_pick_up()
 
             // if instant messaging window is visible, create new tab (deleted automatically if not used)
             if (im_window_is_visible())
-                im_widget_display ( (IMWidget **) (&selectedCall->_im_widget), NULL, selectedCall->_callID, NULL);
+                if (!selectedCall->_im_widget)
+                    selectedCall->_im_widget = im_widget_display(selectedCall->_callID);
 
             break;
         case CALL_STATE_INCOMING:
@@ -444,9 +441,9 @@ sflphone_pick_up()
             calltree_update_call (history, selectedCall, NULL);
 
             // if instant messaging window is visible, create new tab (deleted automatically if not used)
-            if (selectedCall->_im_widget && im_window_is_visible()) {
-                im_widget_display ( (IMWidget **) (&selectedCall->_im_widget), NULL, selectedCall->_callID, NULL);
-            }
+            if (im_window_is_visible())
+                if (!selectedCall->_im_widget)
+                    selectedCall->_im_widget = im_widget_display(selectedCall->_callID);
 
             dbus_accept (selectedCall);
             break;
@@ -896,9 +893,7 @@ sflphone_detach_participant (const gchar* callID)
         g_free (selectedCall->_confID);
         selectedCall->_confID = NULL;
     }
-    // Instant messaging widget should have been deactivated during the conference
-    if (selectedCall->_im_widget)
-        im_widget_update_state (IM_WIDGET (selectedCall->_im_widget), TRUE);
+    im_widget_update_state (IM_WIDGET (selectedCall->_im_widget), TRUE);
     calltree_remove_call (current_calls, selectedCall, NULL);
     calltree_add_call (current_calls, selectedCall, NULL);
     dbus_detach_participant (selectedCall->_callID);
