@@ -36,7 +36,6 @@
 #include <statusicon.h>
 #include <eel-gconf-extensions.h>
 
-#if GTK_CHECK_VERSION(2,10,0)
 static GtkStatusIcon *status;
 static GtkWidget *show_menu_item, *hangup_menu_item;
 static gboolean __minimized = MINIMIZED;
@@ -235,5 +234,3 @@ set_minimized (gboolean state)
     __minimized = state;
     gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (show_menu_item), !state);
 }
-
-#endif

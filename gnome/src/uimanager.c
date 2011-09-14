@@ -754,9 +754,7 @@ stop_playback_record_cb(void)
 static void
 call_configuration_assistant(void * foo UNUSED)
 {
-#if GTK_CHECK_VERSION(2,10,0)
     build_wizard();
-#endif
 }
 
 static void
@@ -1483,10 +1481,8 @@ show_edit_number(callable_obj_t *call)
 
     // Set the number to be edited
     editable_num_ = gtk_entry_new();
-#if GTK_CHECK_VERSION(2,12,0)
     gtk_widget_set_tooltip_text(editable_num_,
                                 _("Edit the phone number before making a call"));
-#endif
 
     if (call)
         gtk_entry_set_text(GTK_ENTRY(editable_num_), call->_peer_number);

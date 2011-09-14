@@ -36,11 +36,6 @@
 #include <gtk/gtk.h>
 #include <math.h>
 
-#if GTK_CHECK_VERSION(2,16,0)
-#else
-#include <libsexy/sexy-icon-entry.h>
-#endif
-
 void show_advanced_tls_options (GHashTable * properties)
 {
     GtkDialog *tlsDialog = GTK_DIALOG (gtk_dialog_new_with_buttons (_ ("Advanced options for TLS"),
@@ -161,11 +156,10 @@ void show_advanced_tls_options (GHashTable * properties)
     label = gtk_label_new ( ("Private key file"));
     gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
     gtk_table_attach (GTK_TABLE (table), label, 0, 1, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    GtkWidget * privateKeyFileChooser;
-    privateKeyFileChooser = gtk_file_chooser_button_new (_ ("Choose a private key file (optional)"), GTK_FILE_CHOOSER_ACTION_OPEN);
+    GtkWidget *privateKeyFileChooser = gtk_file_chooser_button_new (_ ("Choose a private key file (optional)"), GTK_FILE_CHOOSER_ACTION_OPEN);
     gtk_table_attach (GTK_TABLE (table), privateKeyFileChooser, 1, 2, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-    if (!tls_private_key_file == NULL) {
+    if (!tls_private_key_file) {
         gtk_file_chooser_unselect_all (GTK_FILE_CHOOSER (caListFileChooser));
     } else {
         if (!*tls_private_key_file) {
@@ -181,14 +175,8 @@ void show_advanced_tls_options (GHashTable * properties)
     gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
     gtk_table_attach (GTK_TABLE (table), label, 0, 1, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     GtkWidget * privateKeyPasswordEntry;
-#if GTK_CHECK_VERSION(2,16,0)
     privateKeyPasswordEntry = gtk_entry_new();
     gtk_entry_set_icon_from_stock (GTK_ENTRY (privateKeyPasswordEntry), GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_DIALOG_AUTHENTICATION);
-#else
-    privateKeyPasswordEntry = sexy_icon_entry_new();
-    GtkWidget * image = gtk_image_new_from_stock (GTK_STOCK_DIALOG_AUTHENTICATION , GTK_ICON_SIZE_SMALL_TOOLBAR);
-    sexy_icon_entry_set_icon (SEXY_ICON_ENTRY (privateKeyPasswordEntry), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE (image));
-#endif
     gtk_entry_set_visibility (GTK_ENTRY (privateKeyPasswordEntry), FALSE);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), privateKeyPasswordEntry);
     gtk_entry_set_text (GTK_ENTRY (privateKeyPasswordEntry), tls_password);

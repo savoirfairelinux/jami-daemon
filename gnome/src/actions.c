@@ -231,9 +231,7 @@ sflphone_hung_up (callable_obj_t * c)
     else
         im_widget_update_state (IM_WIDGET (c->_im_widget), FALSE);
 
-#if GTK_CHECK_VERSION(2,10,0)
     status_tray_icon_blink (FALSE);
-#endif
 
     statusbar_update_clock("");
 }

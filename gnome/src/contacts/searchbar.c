@@ -288,8 +288,6 @@ GtkWidget* history_searchbar_new (void)
 
     ret = gtk_hbox_new (FALSE, 0);
 
-#if GTK_CHECK_VERSION(2,16,0)
-
     searchbox = gtk_entry_new();
     gtk_entry_set_icon_from_stock (GTK_ENTRY (searchbox), GTK_ENTRY_ICON_SECONDARY, GTK_STOCK_CLEAR);
 
@@ -336,13 +334,6 @@ GtkWidget* history_searchbar_new (void)
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
 
     gtk_widget_show_all (menu);
-
-#else
-    searchbox = sexy_icon_entry_new();
-    image = gtk_image_new_from_stock (GTK_STOCK_FIND , GTK_ICON_SIZE_SMALL_TOOLBAR);
-    sexy_icon_entry_set_icon (SEXY_ICON_ENTRY (searchbox), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE (image));
-    sexy_icon_entry_add_clear_button (SEXY_ICON_ENTRY (searchbox));
-#endif
 
     g_signal_connect_after (GTK_ENTRY (searchbox), "changed", G_CALLBACK (searchbar_entry_changed), NULL);
     g_signal_connect_after (G_OBJECT (searchbox), "focus-in-event",
@@ -434,8 +425,6 @@ GtkWidget* contacts_searchbar_new ()
     gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (cbox), cell, "text", 0, NULL);
 
 
-#if GTK_CHECK_VERSION(2,16,0)
-
     // GdkPixbuf *pixbuf;
 
     gchar *tooltip_text = g_strdup ("Search is");
@@ -453,16 +442,6 @@ GtkWidget* contacts_searchbar_new ()
 
     g_signal_connect (addressbookentry, "notify::text", G_CALLBACK (text_changed_cb), NULL);
     g_signal_connect (addressbookentry, "icon-press", G_CALLBACK (icon_press_cb), NULL);
-
-#else
-
-    GtkWidget *image;
-
-    addressbookentry = sexy_icon_entry_new();
-    image = gtk_image_new_from_stock (GTK_STOCK_FIND , GTK_ICON_SIZE_SMALL_TOOLBAR);
-    sexy_icon_entry_set_icon (SEXY_ICON_ENTRY (addressbookentry), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE (image));
-    sexy_icon_entry_add_clear_button (SEXY_ICON_ENTRY (addressbookentry));
-#endif
 
     gtk_entry_set_activates_default (GTK_ENTRY (addressbookentry), TRUE);
     g_signal_connect_after (GTK_ENTRY (addressbookentry), "activate", G_CALLBACK (searchbar_addressbook_activated), NULL);

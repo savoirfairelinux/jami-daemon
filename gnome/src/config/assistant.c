@@ -33,18 +33,7 @@
 #include "assistant.h"
 #include "reqaccount.h"
 
-// From version 2.16, gtk provides the functionalities libsexy used to provide
-#if GTK_CHECK_VERSION(2,16,0)
-#else
-#include <libsexy/sexy-icon-entry.h>
-#endif
-
-#if GTK_CHECK_VERSION(2,10,0)
-
 #define SFLPHONE_ORG_SERVER "sip.sflphone.org"
-#define SFLPHONE_ORG_ALIAS "sflphone.org"
-
-
 
 struct _wizard *wiz;
 static int account_type;
@@ -360,14 +349,8 @@ GtkWidget* build_sip_account_configuration (void)
     label = gtk_label_new_with_mnemonic (_ ("_User name"));
     gtk_table_attach (GTK_TABLE (table), label, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-#if GTK_CHECK_VERSION(2,16,0)
     wiz->sip_username = gtk_entry_new();
     gtk_entry_set_icon_from_pixbuf (GTK_ENTRY (wiz->sip_username), GTK_ENTRY_ICON_PRIMARY, gdk_pixbuf_new_from_file (ICONS_DIR "/stock_person.svg", NULL));
-#else
-    wiz->sip_username = sexy_icon_entry_new();
-    image = gtk_image_new_from_file (ICONS_DIR "/stock_person.svg");
-    sexy_icon_entry_set_icon (SEXY_ICON_ENTRY (wiz->sip_username), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE (image));
-#endif
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), wiz->sip_username);
     gtk_table_attach (GTK_TABLE (table), wiz->sip_username, 1, 2, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
@@ -376,16 +359,8 @@ GtkWidget* build_sip_account_configuration (void)
     label = gtk_label_new_with_mnemonic (_ ("_Password"));
     gtk_table_attach (GTK_TABLE (table), label, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-#if GTK_CHECK_VERSION(2,16,0)
     wiz->sip_password = gtk_entry_new();
     gtk_entry_set_icon_from_stock (GTK_ENTRY (wiz->sip_password), GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_DIALOG_AUTHENTICATION);
-#else
-
-
-    wiz->sip_password = sexy_icon_entry_new();
-    image = gtk_image_new_from_stock (GTK_STOCK_DIALOG_AUTHENTICATION , GTK_ICON_SIZE_SMALL_TOOLBAR);
-    sexy_icon_entry_set_icon (SEXY_ICON_ENTRY (wiz->sip_password), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE (image));
-#endif
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), wiz->sip_password);
     gtk_entry_set_visibility (GTK_ENTRY (wiz->sip_password), FALSE);
     gtk_table_attach (GTK_TABLE (table), wiz->sip_password, 1, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -474,14 +449,8 @@ GtkWidget* build_iax_account_configuration (void)
     label = gtk_label_new_with_mnemonic (_ ("_User name"));
     gtk_table_attach (GTK_TABLE (table), label, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-#if GTK_CHECK_VERSION(2,16,0)
     wiz->iax_username = gtk_entry_new();
     gtk_entry_set_icon_from_pixbuf (GTK_ENTRY (wiz->iax_username), GTK_ENTRY_ICON_PRIMARY, gdk_pixbuf_new_from_file (ICONS_DIR "/stock_person.svg", NULL));
-#else
-    wiz->iax_username = sexy_icon_entry_new();
-    image = gtk_image_new_from_file (ICONS_DIR "/stock_person.svg");
-    sexy_icon_entry_set_icon (SEXY_ICON_ENTRY (wiz->iax_username), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE (image));
-#endif
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), wiz->iax_username);
     gtk_table_attach (GTK_TABLE (table), wiz->iax_username, 1, 2, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
@@ -489,14 +458,8 @@ GtkWidget* build_iax_account_configuration (void)
     label = gtk_label_new_with_mnemonic (_ ("_Password"));
     gtk_table_attach (GTK_TABLE (table), label, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-#if GTK_CHECK_VERSION(2,16,0)
     wiz->iax_password = gtk_entry_new();
     gtk_entry_set_icon_from_stock (GTK_ENTRY (wiz->iax_password), GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_DIALOG_AUTHENTICATION);
-#else
-    wiz->iax_password = sexy_icon_entry_new();
-    image = gtk_image_new_from_stock (GTK_STOCK_DIALOG_AUTHENTICATION , GTK_ICON_SIZE_SMALL_TOOLBAR);
-    sexy_icon_entry_set_icon (SEXY_ICON_ENTRY (wiz->iax_password), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE (image));
-#endif
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), wiz->iax_password);
     gtk_entry_set_visibility (GTK_ENTRY (wiz->iax_password), FALSE);
     gtk_table_attach (GTK_TABLE (table), wiz->iax_password, 1, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -704,5 +667,3 @@ static GtkWidget* create_vbox (GtkAssistantPageType type, const gchar *title, co
 
     return vbox;
 }
-
-#endif // GTK_CHECK_VERSION

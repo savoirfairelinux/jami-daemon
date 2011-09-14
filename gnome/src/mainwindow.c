@@ -290,24 +290,8 @@ create_main_window()
     g_timeout_add_seconds(1, calltree_update_clock, NULL);
 
     // Configuration wizard
-    if (account_list_get_size() == 1) {
-#if GTK_CHECK_VERSION(2,10,0)
+    if (account_list_get_size() == 1)
         build_wizard();
-#else
-        GtkWidget * dialog = gtk_message_dialog_new_with_markup(GTK_WINDOW(window),
-                             GTK_DIALOG_DESTROY_WITH_PARENT,
-                             GTK_MESSAGE_INFO,
-                             GTK_BUTTONS_YES_NO,
-                             "<b><big>Welcome to SFLphone!</big></b>\n\nThere are no VoIP accounts configured, would you like to edit the preferences now?");
-
-        gint response = gtk_dialog_run(GTK_DIALOG(dialog));
-
-        gtk_widget_destroy(dialog);
-
-        if (response == GTK_RESPONSE_YES)
-            show_preferences_dialog();
-#endif
-    }
 
     // Restore position according to the configuration stored in gconf
     gtk_window_move(GTK_WINDOW(window), position_x, position_y);

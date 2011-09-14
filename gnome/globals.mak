@@ -9,7 +9,6 @@ sflplugindir=$(sfllibdir)/plugins
 
 # Preprocessor flags
 AM_CPPFLAGS =		$(DEPS_CFLAGS)										\
-					$(LIBSEXY_CFLAGS)									\
 					-I$(src)/src										\
 					-I$(src)/src/config									\
 					-I$(src)/src/dbus									\
