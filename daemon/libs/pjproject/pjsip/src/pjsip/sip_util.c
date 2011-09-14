@@ -1,6 +1,6 @@
-/* $Id: sip_util.c 2932 2009-10-09 12:11:07Z bennylp $ */
+/* $Id: sip_util.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjsip/sip_util.h>
 #include <pjsip/sip_transport.h>
@@ -256,7 +245,7 @@ static void init_request_throw( pjsip_endpoint *endpt,
 
     /* Add a blank Via header in the front of the message. */
     via = pjsip_via_hdr_create(tdata->pool);
-    via->rport_param = 0;
+    via->rport_param = pjsip_cfg()->endpt.disable_rport ? -1 : 0;
     pjsip_msg_insert_first_hdr(msg, (pjsip_hdr*)via);
 
     /* Add header params as request headers */
@@ -496,7 +485,8 @@ PJ_DEF(pj_status_t) pjsip_endpt_create_response( pjsip_endpoint *endpt,
     pjsip_tx_data *tdata;
     pjsip_msg *msg, *req_msg;
     pjsip_hdr *hdr;
-    pjsip_via_hdr *via;
+    pjsip_to_hdr *to_hdr;
+    pjsip_via_hdr *top_via = NULL, *via;
     pjsip_rr_hdr *rr;
     pj_status_t status;
 
@@ -538,7 +528,13 @@ PJ_DEF(pj_status_t) pjsip_endpt_create_response( pjsip_endpoint *endpt,
     /* Copy all the via headers, in order. */
     via = rdata->msg_info.via;
     while (via) {
-	pjsip_msg_add_hdr( msg, (pjsip_hdr*)pjsip_hdr_clone(tdata->pool, via));
+	pjsip_via_hdr *new_via;
+
+	new_via = (pjsip_via_hdr*)pjsip_hdr_clone(tdata->pool, via);
+	if (top_via == NULL)
+	    top_via = new_via;
+
+	pjsip_msg_add_hdr( msg, (pjsip_hdr*)new_via);
 	via = via->next;
 	if (via != (void*)&req_msg->hdr)
 	    via = (pjsip_via_hdr*) 
@@ -569,8 +565,18 @@ PJ_DEF(pj_status_t) pjsip_endpt_create_response( pjsip_endpoint *endpt,
     pjsip_msg_add_hdr( msg, hdr);
 
     /* Copy To header. */
-    hdr = (pjsip_hdr*) pjsip_hdr_clone(tdata->pool, rdata->msg_info.to);
-    pjsip_msg_add_hdr( msg, hdr);
+    to_hdr = (pjsip_to_hdr*) pjsip_hdr_clone(tdata->pool, rdata->msg_info.to);
+    pjsip_msg_add_hdr( msg, (pjsip_hdr*)to_hdr);
+
+    /* Must add To tag in the response (Section 8.2.6.2), except if this is
+     * 100 (Trying) response. Same tag must be created for the same request
+     * (e.g. same tag in provisional and final response). The easiest way
+     * to do this is to derive the tag from Via branch parameter (or to
+     * use it directly).
+     */
+    if (to_hdr->tag.slen==0 && st_code > 100 && top_via) {
+	to_hdr->tag = top_via->branch_param;
+    }
 
     /* Copy CSeq header. */
     hdr = (pjsip_hdr*) pjsip_hdr_clone(tdata->pool, rdata->msg_info.cseq);
@@ -773,6 +779,10 @@ PJ_DEF(pj_status_t) pjsip_endpt_create_cancel( pjsip_endpoint *endpt,
 	    pjsip_hdr_clone(cancel_tdata->pool, req_tdata->saved_strict_route);
     }
 
+    /* Copy the destination host name from the original request */
+    pj_strdup(cancel_tdata->pool, &cancel_tdata->dest_info.name,
+	      &req_tdata->dest_info.name);
+
     /* Finally copy the destination info from the original request */
     pj_memcpy(&cancel_tdata->dest_info, &req_tdata->dest_info,
 	      sizeof(req_tdata->dest_info));
@@ -825,9 +835,12 @@ static pj_status_t get_dest_info(const pjsip_uri *target_uri,
 	dest_info->flag = 
 	    pjsip_transport_get_flag_from_type(dest_info->type);
     } else {
+	/* Should have never reached here; app should have configured route
+	 * set when sending to tel: URI
         pj_assert(!"Unsupported URI scheme!");
+	 */
 	PJ_TODO(SUPPORT_REQUEST_ADDR_RESOLUTION_FOR_TEL_URI);
-	return PJSIP_EINVALIDSCHEME;
+	return PJSIP_ENOROUTESET;
     }
 
     /* Handle IPv6 (http://trac.pjsip.org/repos/ticket/861) */
@@ -1128,11 +1141,12 @@ static void stateless_send_transport_cb( void *token,
 	cur_addr_len = tdata->dest_info.addr.entry[tdata->dest_info.cur_addr].addr_len;
 
 	/* Acquire transport. */
-	status = pjsip_endpt_acquire_transport( stateless_data->endpt,
+	status = pjsip_endpt_acquire_transport2(stateless_data->endpt,
 						cur_addr_type,
 						cur_addr,
 						cur_addr_len,
 						&tdata->tp_sel,
+						tdata,
 						&stateless_data->cur_transport);
 	if (status != PJ_SUCCESS) {
 	    sent = -status;
@@ -1165,7 +1179,7 @@ static void stateless_send_transport_cb( void *token,
 
 	via->transport = pj_str(stateless_data->cur_transport->type_name);
 	via->sent_by = stateless_data->cur_transport->local_name;
-	via->rport_param = 0;
+	via->rport_param = pjsip_cfg()->endpt.disable_rport ? -1 : 0;
 
 	pjsip_tx_data_invalidate_msg(tdata);
 
@@ -1313,6 +1327,9 @@ PJ_DEF(pj_status_t) pjsip_endpt_send_request_stateless(pjsip_endpoint *endpt,
      * proceed to sending the request directly.
      */
     if (tdata->dest_info.addr.count == 0) {
+	/* Copy the destination host name to TX data */
+	pj_strdup(tdata->pool, &tdata->dest_info.name, &dest_info.addr.host);
+
 	pjsip_endpt_resolve( endpt, tdata->pool, &dest_info, stateless_data,
 			     &stateless_send_resolver_callback);
     } else {
@@ -1459,6 +1476,9 @@ PJ_DEF(pj_status_t) pjsip_endpt_send_raw_to_uri(pjsip_endpoint *endpt,
 	pj_memcpy(sraw_data->sel, sel, sizeof(pjsip_tpselector));
 	pjsip_tpselector_add_ref(sraw_data->sel);
     }
+
+    /* Copy the destination host name to TX data */
+    pj_strdup(tdata->pool, &tdata->dest_info.name, &dest_info.addr.host);
 
     /* Resolve destination host.
      * The processing then resumed when the resolving callback is called.
@@ -1616,11 +1636,12 @@ static void send_response_resolver_cb( pj_status_t status, void *token,
     /* Only handle the first address resolved. */
 
     /* Acquire transport. */
-    status = pjsip_endpt_acquire_transport( send_state->endpt, 
+    status = pjsip_endpt_acquire_transport2(send_state->endpt, 
 					    addr->entry[0].type,
 					    &addr->entry[0].addr,
 					    addr->entry[0].addr_len,
 					    &send_state->tdata->tp_sel,
+					    send_state->tdata,
 					    &send_state->cur_transport);
     if (status != PJ_SUCCESS) {
 	if (send_state->app_cb) {
@@ -1696,6 +1717,10 @@ PJ_DEF(pj_status_t) pjsip_endpt_send_response( pjsip_endpoint *endpt,
 	    return status;
 	}
     } else {
+	/* Copy the destination host name to TX data */
+	pj_strdup(tdata->pool, &tdata->dest_info.name, 
+		  &res_addr->dst_host.addr.host);
+
 	pjsip_endpt_resolve(endpt, tdata->pool, &res_addr->dst_host, 
 			    send_state, &send_response_resolver_cb);
 	return PJ_SUCCESS;

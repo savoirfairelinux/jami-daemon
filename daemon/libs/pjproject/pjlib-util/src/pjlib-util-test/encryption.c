@@ -1,6 +1,6 @@
-/* $Id: encryption.c 2690 2009-05-12 08:01:56Z bennylp $ */
+/* $Id: encryption.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include "test.h"
 #include <pjlib-util.h>
@@ -505,6 +494,12 @@ static int crc32_test(void)
     return 0;
 }
 
+enum
+{
+    ENCODE = 1,
+    DECODE = 2,
+    ENCODE_DECODE = 3
+};
 
 /*
  * Base64 test vectors (RFC 4648)
@@ -513,48 +508,70 @@ static struct base64_test_vec
 {
     const char *base256;
     const char *base64;
+    unsigned flag;
 } base64_test_vec[] = 
 {
     {
 	"",
-	""
+	"",
+	ENCODE_DECODE
     },
     {
 	"f",
-	"Zg=="
+	"Zg==",
+	ENCODE_DECODE
     },
     {
 	"fo",
-	"Zm8="
+	"Zm8=",
+	ENCODE_DECODE
     },
     {
 	"foo",
-	"Zm9v"
+	"Zm9v",
+	ENCODE_DECODE
     },
     {
 	"foob",
-	"Zm9vYg=="
+	"Zm9vYg==",
+	ENCODE_DECODE
     },
     {
 	"fooba",
 	"Zm9vYmE=",
+	ENCODE_DECODE
     },
     {
 	"foobar",
-	"Zm9vYmFy"
+	"Zm9vYmFy",
+	ENCODE_DECODE
     },
     {
 	"\x14\xfb\x9c\x03\xd9\x7e",
-	"FPucA9l+"
+	"FPucA9l+",
+	ENCODE_DECODE
     },
     {
 	"\x14\xfb\x9c\x03\xd9",
-	"FPucA9k="
+	"FPucA9k=",
+	ENCODE_DECODE
     },
     {
 	"\x14\xfb\x9c\x03",
-	"FPucAw=="
-    }
+	"FPucAw==",
+	ENCODE_DECODE
+    },
+    /* with whitespaces */
+    {
+	"foobar",
+	"Zm9v\r\nYmFy",
+	DECODE
+    },
+    {
+    	"foobar",
+    	"\nZ\r\nm 9\tv\nYm\nF\ny\n",
+    	DECODE
+    },
 };
 
 
@@ -567,38 +584,43 @@ static int base64_test(void)
     PJ_LOG(3, (THIS_FILE, "  base64 test.."));
 
     for (i=0; i<PJ_ARRAY_SIZE(base64_test_vec); ++i) {
-	/* Encode test */
 	pj_str_t input;
-	int out_len = sizeof(output);
+	int out_len;
 
-	rc = pj_base64_encode((pj_uint8_t*)base64_test_vec[i].base256, 
-			      strlen(base64_test_vec[i].base256),
-			      output, &out_len);
-	if (rc != PJ_SUCCESS)
-	    return -90;
+	/* Encode test */
+	if (base64_test_vec[i].flag & ENCODE) {
+	    out_len = sizeof(output);
+	    rc = pj_base64_encode((pj_uint8_t*)base64_test_vec[i].base256,
+				  strlen(base64_test_vec[i].base256),
+				  output, &out_len);
+	    if (rc != PJ_SUCCESS)
+		return -90;
 
-	if (out_len != (int)strlen(base64_test_vec[i].base64))
-	    return -91;
+	    if (out_len != (int)strlen(base64_test_vec[i].base64))
+		return -91;
 
-	output[out_len] = '\0';
-	if (strcmp(output, base64_test_vec[i].base64) != 0)
-	    return -92;
+	    output[out_len] = '\0';
+	    if (strcmp(output, base64_test_vec[i].base64) != 0)
+		return -92;
+	}
 
 	/* Decode test */
-	out_len = sizeof(output);
-	input.ptr = (char*)base64_test_vec[i].base64;
-	input.slen = strlen(base64_test_vec[i].base64);
-	rc = pj_base64_decode(&input, (pj_uint8_t*)output, &out_len);
-	if (rc != PJ_SUCCESS)
-	    return -95;
+	if (base64_test_vec[i].flag & DECODE) {
+	    out_len = sizeof(output);
+	    input.ptr = (char*)base64_test_vec[i].base64;
+	    input.slen = strlen(base64_test_vec[i].base64);
+	    rc = pj_base64_decode(&input, (pj_uint8_t*)output, &out_len);
+	    if (rc != PJ_SUCCESS)
+		return -95;
 
-	if (out_len != (int)strlen(base64_test_vec[i].base256))
-	    return -96;
+	    if (out_len != (int)strlen(base64_test_vec[i].base256))
+		return -96;
 
-	output[out_len] = '\0';
+	    output[out_len] = '\0';
 
-	if (strcmp(output, base64_test_vec[i].base256) != 0)
-	    return -97;
+	    if (strcmp(output, base64_test_vec[i].base256) != 0)
+		return -97;
+	}
     }
 
     return 0;

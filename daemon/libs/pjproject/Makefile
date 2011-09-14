@@ -1,7 +1,8 @@
 include build.mak
 include build/host-$(HOST_NAME).mak
+-include user.mak
 
-DIRS = pjlib pjlib-util pjnath third_party pjmedia pjsip pjsip-apps
+DIRS = pjlib/build pjlib-util/build pjnath/build pjmedia/build pjsip/build $(EXTRA_DIRS)
 
 ifdef MINSIZE
 MAKE_FLAGS := MINSIZE=1
@@ -9,7 +10,7 @@ endif
 
 all clean dep depend distclean print realclean:
 	for dir in $(DIRS); do \
-		if $(MAKE) $(MAKE_FLAGS) -C $$dir/build $@; then \
+		if $(MAKE) $(MAKE_FLAGS) -C $$dir $@; then \
 		    true; \
 		else \
 		    exit 1; \
@@ -33,13 +34,10 @@ LIBS = 	pjlib/lib/libpj-$(TARGET_NAME).a \
 	pjlib-util/lib/libpjlib-util-$(TARGET_NAME).a \
 	pjnath/lib/libpjnath-$(TARGET_NAME).a \
 	pjmedia/lib/libpjmedia-$(TARGET_NAME).a \
-	pjmedia/lib/libpjmedia-audiodev-$(TARGET_NAME).a \
-	pjmedia/lib/libpjmedia-codec-$(TARGET_NAME).a \
-       	pjsip/lib/libpjsip-$(TARGET_NAME).a \
+    	pjsip/lib/libpjsip-$(TARGET_NAME).a \
 	pjsip/lib/libpjsip-ua-$(TARGET_NAME).a \
 	pjsip/lib/libpjsip-simple-$(TARGET_NAME).a \
 	pjsip/lib/libpjsua-$(TARGET_NAME).a
-BINS = 	pjsip-apps/bin/pjsua-$(TARGET_NAME)$(HOST_EXE) 
 
 size:
 	@echo -n 'Date: '
@@ -90,14 +88,18 @@ pjsip-test: pjsip/bin/pjsip-test-$(TARGET_NAME)
 pjsua-test:
 	cd tests/pjsua && python runall.py
 
-prefix = /usr/local
+prefix = $(ac_prefix)
+include version.mak
+
 install:
 	mkdir -p $(DESTDIR)$(prefix)/lib
-	cp -L $$(find . -name '*.a') $(DESTDIR)$(prefix)/lib
+	cp -f $(APP_LIB_FILES) $(DESTDIR)$(prefix)/lib/
 	mkdir -p $(DESTDIR)$(prefix)/include
-	cp -RL $$(find  . -name include) $(DESTDIR)$(prefix)
-	cd $(DESTDIR)$(prefix)/lib && for i in $$(find . -name 'libpj*a'); do\
-		ln -s $$i $$(echo $$i | sed -e "s/-$(TARGET_NAME)//");\
+	for d in pjlib pjlib-util pjnath pjmedia pjsip; do \
+		cp -RLf $$d/include/* $(DESTDIR)$(prefix)/include/; \
 	done
 	mkdir -p $(DESTDIR)$(prefix)/lib/pkgconfig
-	sed -e "s!@PREFIX@!$(DESTDIR)$(prefix)!" libpj.pc.in > $(DESTDIR)/$(prefix)/lib/pkgconfig/libpj.pc
+	sed -e "s!@PREFIX@!$(DESTDIR)$(prefix)!" libpjproject.pc.in | \
+		sed -e "s/@PJ_VERSION@/$(PJ_VERSION)/" | \
+		sed -e "s!@PJ_LDLIBS@!$(PJ_LDLIBS)!" | \
+		sed -e "s!@PJ_INSTALL_CFLAGS@!$(PJ_INSTALL_CFLAGS)!" > $(DESTDIR)/$(prefix)/lib/pkgconfig/libpjproject.pc

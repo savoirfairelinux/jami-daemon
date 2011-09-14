@@ -1,4 +1,4 @@
-/* $Id: sha1.c 2690 2009-05-12 08:01:56Z bennylp $ */
+/* $Id: sha1.c 3549 2011-05-05 05:10:06Z nanang $ */
 /*
  * Modified 2/07
  * By Benny Prijono <benny@prijono.org>

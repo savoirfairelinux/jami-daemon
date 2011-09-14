@@ -36,7 +36,7 @@ export _CXXFLAGS:= $(_CFLAGS) $(CC_CXXFLAGS) $(OS_CXXFLAGS) $(M_CXXFLAGS) \
 #
 export PJSIP_SRCDIR = ../src/pjsip
 export PJSIP_OBJS += $(OS_OBJS) $(M_OBJS) $(CC_OBJS) $(HOST_OBJS) \
-		sip_config.o \
+		sip_config.o sip_multipart.o \
 		sip_errno.o sip_msg.o sip_parser.o sip_tel_uri.o sip_uri.o \
 		sip_endpoint.o sip_util.o sip_util_proxy.o \
 		sip_resolve.o sip_transport.o sip_transport_loop.o \
@@ -75,7 +75,7 @@ export PJSIP_SIMPLE_CFLAGS += $(_CFLAGS)
 export PJSUA_LIB_SRCDIR = ../src/pjsua-lib
 export PJSUA_LIB_OBJS += $(OS_OBJS) $(M_OBJS) $(CC_OBJS) $(HOST_OBJS) \
 			pjsua_acc.o pjsua_call.o pjsua_core.o \
-			pjsua_im.o pjsua_media.o pjsua_pres.o
+			pjsua_im.o pjsua_pres.o
 export PJSUA_LIB_CFLAGS += $(_CFLAGS)
 
 
@@ -86,7 +86,7 @@ export CC_OUT CC AR RANLIB HOST_MV HOST_RM HOST_RMDIR HOST_MKDIR OBJEXT LD LDOUT
 #
 export TEST_SRCDIR = ../src/test
 export TEST_OBJS += dlg_core_test.o dns_test.o msg_err_test.o \
-		    msg_logger.o msg_test.o regc_test.o \
+		    msg_logger.o msg_test.o multipart_test.o regc_test.o \
 		    test.o transport_loop_test.o transport_tcp_test.o \
 		    transport_test.o transport_udp_test.o \
 		    tsx_basic_test.o tsx_bench.o tsx_uac_test.o \
@@ -110,7 +110,7 @@ all: $(TARGETS)
 
 doc:
 	cd .. && rm -rf docs/html docs/latex && doxygen docs/doxygen.cfg
-	@if test ! "$(WWWDIR)" == ""; then \
+	@if [ -n "$(WWWDIR)" ]; then \
 		echo "Copying to $(WWWDIR)/pjsip/docs/html.." ; \
 		cp -a ../docs/html/* $(WWWDIR)/pjsip/docs/html/ ; \
 	fi

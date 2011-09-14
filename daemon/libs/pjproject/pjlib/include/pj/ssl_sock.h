@@ -1,6 +1,6 @@
-/* $Id: ssl_sock.h 2998 2009-11-09 08:51:34Z bennylp $ */
+/* $Id: ssl_sock.h 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2009-2011 Teluu Inc. (http://www.teluu.com)
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,17 +15,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #ifndef __PJ_SSL_SOCK_H__
 #define __PJ_SSL_SOCK_H__
@@ -71,17 +60,127 @@ typedef struct pj_ssl_sock_t pj_ssl_sock_t;
 typedef struct pj_ssl_cert_t pj_ssl_cert_t;
 
 
+typedef enum pj_ssl_cert_verify_flag_t
+{
+    /**
+     * No error in verification.
+     */
+    PJ_SSL_CERT_ESUCCESS				= 0,
+
+    /**
+     * The issuer certificate cannot be found.
+     */
+    PJ_SSL_CERT_EISSUER_NOT_FOUND			= (1 << 0),
+
+    /**
+     * The certificate is untrusted.
+     */
+    PJ_SSL_CERT_EUNTRUSTED				= (1 << 1),
+
+    /**
+     * The certificate has expired or not yet valid.
+     */
+    PJ_SSL_CERT_EVALIDITY_PERIOD			= (1 << 2),
+
+    /**
+     * One or more fields of the certificate cannot be decoded due to
+     * invalid format.
+     */
+    PJ_SSL_CERT_EINVALID_FORMAT				= (1 << 3),
+
+    /**
+     * The certificate cannot be used for the specified purpose.
+     */
+    PJ_SSL_CERT_EINVALID_PURPOSE			= (1 << 4),
+
+    /**
+     * The issuer info in the certificate does not match to the (candidate) 
+     * issuer certificate, e.g: issuer name not match to subject name
+     * of (candidate) issuer certificate.
+     */
+    PJ_SSL_CERT_EISSUER_MISMATCH			= (1 << 5),
+
+    /**
+     * The CRL certificate cannot be found or cannot be read properly.
+     */
+    PJ_SSL_CERT_ECRL_FAILURE				= (1 << 6),
+
+    /**
+     * The certificate has been revoked.
+     */
+    PJ_SSL_CERT_EREVOKED				= (1 << 7),
+
+    /**
+     * The certificate chain length is too long.
+     */
+    PJ_SSL_CERT_ECHAIN_TOO_LONG				= (1 << 8),
+
+    /**
+     * The server identity does not match to any identities specified in 
+     * the certificate, e.g: subjectAltName extension, subject common name.
+     * This flag will only be set by application as SSL socket does not 
+     * perform server identity verification.
+     */
+    PJ_SSL_CERT_EIDENTITY_NOT_MATCH			= (1 << 30),
+
+    /**
+     * Unknown verification error.
+     */
+    PJ_SSL_CERT_EUNKNOWN				= (1 << 31)
+
+} pj_ssl_cert_verify_flag_t;
+
+
+typedef enum pj_ssl_cert_name_type
+{
+    PJ_SSL_CERT_NAME_UNKNOWN = 0,
+    PJ_SSL_CERT_NAME_RFC822,
+    PJ_SSL_CERT_NAME_DNS,
+    PJ_SSL_CERT_NAME_URI,
+    PJ_SSL_CERT_NAME_IP
+} pj_ssl_cert_name_type;
+
 /**
  * Describe structure of certificate info.
  */
 typedef struct pj_ssl_cert_info {
-    pj_str_t	subject;	    /**< Subject.		*/
-    pj_str_t	issuer;		    /**< Issuer.		*/
-    unsigned	version;	    /**< Certificate version.	*/
-    pj_time_val	validity_start;	    /**< Validity start.	*/
-    pj_time_val	validity_end;	    /**< Validity end.		*/
-    pj_bool_t	validity_use_gmt;   /**< Flag if validity date/time 
-					 use GMT.		*/
+
+    unsigned	version;	    /**< Certificate version	*/
+
+    pj_uint8_t	serial_no[20];	    /**< Serial number, array of
+				         octets, first index is
+					 MSB			*/
+
+    struct {
+        pj_str_t	cn;	    /**< Common name		*/
+        pj_str_t	info;	    /**< One line subject, fields
+					 are separated by slash, e.g:
+					 "CN=sample.org/OU=HRD" */
+    } subject;			    /**< Subject		*/
+
+    struct {
+        pj_str_t	cn;	    /**< Common name		*/
+        pj_str_t	info;	    /**< One line subject, fields
+					 are separated by slash.*/
+    } issuer;			    /**< Issuer			*/
+
+    struct {
+	pj_time_val	start;	    /**< Validity start		*/
+	pj_time_val	end;	    /**< Validity end		*/
+	pj_bool_t	gmt;	    /**< Flag if validity date/time 
+					 use GMT		*/
+    } validity;			    /**< Validity		*/
+
+    struct {
+	unsigned	cnt;	    /**< # of entry		*/
+	struct {
+	    pj_ssl_cert_name_type type;
+				    /**< Name type		*/
+	    pj_str_t	name;	    /**< The name		*/
+	} *entry;		    /**< Subject alt name entry */
+    } subj_alt_name;		    /**< Subject alternative
+					 name extension		*/
+
 } pj_ssl_cert_info;
 
 
@@ -104,83 +203,118 @@ PJ_DECL(pj_status_t) pj_ssl_cert_load_from_files(pj_pool_t *pool,
 						 pj_ssl_cert_t **p_cert);
 
 
+/**
+ * Dump SSL certificate info.
+ *
+ * @param ci		The certificate info.
+ * @param indent	String for left indentation.
+ * @param buf		The buffer where certificate info will be printed on.
+ * @param buf_size	The buffer size.
+ *
+ * @return		The length of the dump result, or -1 when buffer size
+ *			is not sufficient.
+ */
+PJ_DECL(pj_ssize_t) pj_ssl_cert_info_dump(const pj_ssl_cert_info *ci,
+					  const char *indent,
+					  char *buf,
+					  pj_size_t buf_size);
+
+
+/**
+ * Get SSL certificate verification error messages from verification status.
+ *
+ * @param verify_status	The SSL certificate verification status.
+ * @param error_strings	Array of strings to receive the verification error 
+ *			messages.
+ * @param count		On input it specifies maximum error messages should be
+ *			retrieved. On output it specifies the number of error
+ *			messages retrieved.
+ *
+ * @return		PJ_SUCCESS when successful.
+ */
+PJ_DECL(pj_status_t) pj_ssl_cert_get_verify_status_strings(
+						 pj_uint32_t verify_status, 
+						 const char *error_strings[],
+						 unsigned *count);
+
+
 /** 
  * Cipher suites enumeration.
  */
 typedef enum pj_ssl_cipher {
 
     /* NULL */
-    TLS_NULL_WITH_NULL_NULL               = 0x00000000,
+    PJ_TLS_NULL_WITH_NULL_NULL               	= 0x00000000,
 
     /* TLS/SSLv3 */
-    TLS_RSA_WITH_NULL_MD5                 = 0x00000001,
-    TLS_RSA_WITH_NULL_SHA                 = 0x00000002,
-    TLS_RSA_WITH_NULL_SHA256              = 0x0000003B,
-    TLS_RSA_WITH_RC4_128_MD5              = 0x00000004,
-    TLS_RSA_WITH_RC4_128_SHA              = 0x00000005,
-    TLS_RSA_WITH_3DES_EDE_CBC_SHA         = 0x0000000A,
-    TLS_RSA_WITH_AES_128_CBC_SHA          = 0x0000002F,
-    TLS_RSA_WITH_AES_256_CBC_SHA          = 0x00000035,
-    TLS_RSA_WITH_AES_128_CBC_SHA256       = 0x0000003C,
-    TLS_RSA_WITH_AES_256_CBC_SHA256       = 0x0000003D,
-    TLS_DH_DSS_WITH_3DES_EDE_CBC_SHA      = 0x0000000D,
-    TLS_DH_RSA_WITH_3DES_EDE_CBC_SHA      = 0x00000010,
-    TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA     = 0x00000013,
-    TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA     = 0x00000016,
-    TLS_DH_DSS_WITH_AES_128_CBC_SHA       = 0x00000030,
-    TLS_DH_RSA_WITH_AES_128_CBC_SHA       = 0x00000031,
-    TLS_DHE_DSS_WITH_AES_128_CBC_SHA      = 0x00000032,
-    TLS_DHE_RSA_WITH_AES_128_CBC_SHA      = 0x00000033,
-    TLS_DH_DSS_WITH_AES_256_CBC_SHA       = 0x00000036,
-    TLS_DH_RSA_WITH_AES_256_CBC_SHA       = 0x00000037,
-    TLS_DHE_DSS_WITH_AES_256_CBC_SHA      = 0x00000038,
-    TLS_DHE_RSA_WITH_AES_256_CBC_SHA      = 0x00000039,
-    TLS_DH_DSS_WITH_AES_128_CBC_SHA256    = 0x0000003E,
-    TLS_DH_RSA_WITH_AES_128_CBC_SHA256    = 0x0000003F,
-    TLS_DHE_DSS_WITH_AES_128_CBC_SHA256   = 0x00000040,
-    TLS_DHE_RSA_WITH_AES_128_CBC_SHA256   = 0x00000067,
-    TLS_DH_DSS_WITH_AES_256_CBC_SHA256    = 0x00000068,
-    TLS_DH_RSA_WITH_AES_256_CBC_SHA256    = 0x00000069,
-    TLS_DHE_DSS_WITH_AES_256_CBC_SHA256   = 0x0000006A,
-    TLS_DHE_RSA_WITH_AES_256_CBC_SHA256   = 0x0000006B,
-    TLS_DH_anon_WITH_RC4_128_MD5          = 0x00000018,
-    TLS_DH_anon_WITH_3DES_EDE_CBC_SHA     = 0x0000001B,
-    TLS_DH_anon_WITH_AES_128_CBC_SHA      = 0x00000034,
-    TLS_DH_anon_WITH_AES_256_CBC_SHA      = 0x0000003A,
-    TLS_DH_anon_WITH_AES_128_CBC_SHA256   = 0x0000006C,
-    TLS_DH_anon_WITH_AES_256_CBC_SHA256   = 0x0000006D,
+    PJ_TLS_RSA_WITH_NULL_MD5                 	= 0x00000001,
+    PJ_TLS_RSA_WITH_NULL_SHA                 	= 0x00000002,
+    PJ_TLS_RSA_WITH_NULL_SHA256              	= 0x0000003B,
+    PJ_TLS_RSA_WITH_RC4_128_MD5              	= 0x00000004,
+    PJ_TLS_RSA_WITH_RC4_128_SHA              	= 0x00000005,
+    PJ_TLS_RSA_WITH_3DES_EDE_CBC_SHA         	= 0x0000000A,
+    PJ_TLS_RSA_WITH_AES_128_CBC_SHA          	= 0x0000002F,
+    PJ_TLS_RSA_WITH_AES_256_CBC_SHA          	= 0x00000035,
+    PJ_TLS_RSA_WITH_AES_128_CBC_SHA256       	= 0x0000003C,
+    PJ_TLS_RSA_WITH_AES_256_CBC_SHA256       	= 0x0000003D,
+    PJ_TLS_DH_DSS_WITH_3DES_EDE_CBC_SHA      	= 0x0000000D,
+    PJ_TLS_DH_RSA_WITH_3DES_EDE_CBC_SHA      	= 0x00000010,
+    PJ_TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA     	= 0x00000013,
+    PJ_TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA     	= 0x00000016,
+    PJ_TLS_DH_DSS_WITH_AES_128_CBC_SHA       	= 0x00000030,
+    PJ_TLS_DH_RSA_WITH_AES_128_CBC_SHA       	= 0x00000031,
+    PJ_TLS_DHE_DSS_WITH_AES_128_CBC_SHA      	= 0x00000032,
+    PJ_TLS_DHE_RSA_WITH_AES_128_CBC_SHA      	= 0x00000033,
+    PJ_TLS_DH_DSS_WITH_AES_256_CBC_SHA       	= 0x00000036,
+    PJ_TLS_DH_RSA_WITH_AES_256_CBC_SHA       	= 0x00000037,
+    PJ_TLS_DHE_DSS_WITH_AES_256_CBC_SHA      	= 0x00000038,
+    PJ_TLS_DHE_RSA_WITH_AES_256_CBC_SHA      	= 0x00000039,
+    PJ_TLS_DH_DSS_WITH_AES_128_CBC_SHA256    	= 0x0000003E,
+    PJ_TLS_DH_RSA_WITH_AES_128_CBC_SHA256    	= 0x0000003F,
+    PJ_TLS_DHE_DSS_WITH_AES_128_CBC_SHA256   	= 0x00000040,
+    PJ_TLS_DHE_RSA_WITH_AES_128_CBC_SHA256   	= 0x00000067,
+    PJ_TLS_DH_DSS_WITH_AES_256_CBC_SHA256    	= 0x00000068,
+    PJ_TLS_DH_RSA_WITH_AES_256_CBC_SHA256    	= 0x00000069,
+    PJ_TLS_DHE_DSS_WITH_AES_256_CBC_SHA256   	= 0x0000006A,
+    PJ_TLS_DHE_RSA_WITH_AES_256_CBC_SHA256   	= 0x0000006B,
+    PJ_TLS_DH_anon_WITH_RC4_128_MD5          	= 0x00000018,
+    PJ_TLS_DH_anon_WITH_3DES_EDE_CBC_SHA     	= 0x0000001B,
+    PJ_TLS_DH_anon_WITH_AES_128_CBC_SHA      	= 0x00000034,
+    PJ_TLS_DH_anon_WITH_AES_256_CBC_SHA      	= 0x0000003A,
+    PJ_TLS_DH_anon_WITH_AES_128_CBC_SHA256   	= 0x0000006C,
+    PJ_TLS_DH_anon_WITH_AES_256_CBC_SHA256   	= 0x0000006D,
 
     /* TLS (deprecated) */
-    TLS_RSA_EXPORT_WITH_RC4_40_MD5        = 0x00000003,
-    TLS_RSA_EXPORT_WITH_RC2_CBC_40_MD5    = 0x00000006,
-    TLS_RSA_WITH_IDEA_CBC_SHA             = 0x00000007,
-    TLS_RSA_EXPORT_WITH_DES40_CBC_SHA     = 0x00000008,
-    TLS_RSA_WITH_DES_CBC_SHA              = 0x00000009,
-    TLS_DH_DSS_EXPORT_WITH_DES40_CBC_SHA  = 0x0000000B,
-    TLS_DH_DSS_WITH_DES_CBC_SHA           = 0x0000000C,
-    TLS_DH_RSA_EXPORT_WITH_DES40_CBC_SHA  = 0x0000000E,
-    TLS_DH_RSA_WITH_DES_CBC_SHA           = 0x0000000F,
-    TLS_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA = 0x00000011,
-    TLS_DHE_DSS_WITH_DES_CBC_SHA          = 0x00000012,
-    TLS_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA = 0x00000014,
-    TLS_DHE_RSA_WITH_DES_CBC_SHA          = 0x00000015,
-    TLS_DH_anon_EXPORT_WITH_RC4_40_MD5    = 0x00000017,
-    TLS_DH_anon_EXPORT_WITH_DES40_CBC_SHA = 0x00000019,
-    TLS_DH_anon_WITH_DES_CBC_SHA          = 0x0000001A,
+    PJ_TLS_RSA_EXPORT_WITH_RC4_40_MD5        	= 0x00000003,
+    PJ_TLS_RSA_EXPORT_WITH_RC2_CBC_40_MD5    	= 0x00000006,
+    PJ_TLS_RSA_WITH_IDEA_CBC_SHA             	= 0x00000007,
+    PJ_TLS_RSA_EXPORT_WITH_DES40_CBC_SHA     	= 0x00000008,
+    PJ_TLS_RSA_WITH_DES_CBC_SHA              	= 0x00000009,
+    PJ_TLS_DH_DSS_EXPORT_WITH_DES40_CBC_SHA  	= 0x0000000B,
+    PJ_TLS_DH_DSS_WITH_DES_CBC_SHA           	= 0x0000000C,
+    PJ_TLS_DH_RSA_EXPORT_WITH_DES40_CBC_SHA  	= 0x0000000E,
+    PJ_TLS_DH_RSA_WITH_DES_CBC_SHA           	= 0x0000000F,
+    PJ_TLS_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA 	= 0x00000011,
+    PJ_TLS_DHE_DSS_WITH_DES_CBC_SHA          	= 0x00000012,
+    PJ_TLS_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA 	= 0x00000014,
+    PJ_TLS_DHE_RSA_WITH_DES_CBC_SHA          	= 0x00000015,
+    PJ_TLS_DH_anon_EXPORT_WITH_RC4_40_MD5    	= 0x00000017,
+    PJ_TLS_DH_anon_EXPORT_WITH_DES40_CBC_SHA 	= 0x00000019,
+    PJ_TLS_DH_anon_WITH_DES_CBC_SHA          	= 0x0000001A,
 
     /* SSLv3 */
-    SSL_FORTEZZA_KEA_WITH_NULL_SHA        = 0x0000001C,
-    SSL_FORTEZZA_KEA_WITH_FORTEZZA_CBC_SHA= 0x0000001D,
-    SSL_FORTEZZA_KEA_WITH_RC4_128_SHA     = 0x0000001E,
+    PJ_SSL_FORTEZZA_KEA_WITH_NULL_SHA        	= 0x0000001C,
+    PJ_SSL_FORTEZZA_KEA_WITH_FORTEZZA_CBC_SHA	= 0x0000001D,
+    PJ_SSL_FORTEZZA_KEA_WITH_RC4_128_SHA     	= 0x0000001E,
     
     /* SSLv2 */
-    SSL_CK_RC4_128_WITH_MD5               = 0x00010080,
-    SSL_CK_RC4_128_EXPORT40_WITH_MD5      = 0x00020080,
-    SSL_CK_RC2_128_CBC_WITH_MD5           = 0x00030080,
-    SSL_CK_RC2_128_CBC_EXPORT40_WITH_MD5  = 0x00040080,
-    SSL_CK_IDEA_128_CBC_WITH_MD5          = 0x00050080,
-    SSL_CK_DES_64_CBC_WITH_MD5            = 0x00060040,
-    SSL_CK_DES_192_EDE3_CBC_WITH_MD5      = 0x000700C0
+    PJ_SSL_CK_RC4_128_WITH_MD5               	= 0x00010080,
+    PJ_SSL_CK_RC4_128_EXPORT40_WITH_MD5      	= 0x00020080,
+    PJ_SSL_CK_RC2_128_CBC_WITH_MD5           	= 0x00030080,
+    PJ_SSL_CK_RC2_128_CBC_EXPORT40_WITH_MD5  	= 0x00040080,
+    PJ_SSL_CK_IDEA_128_CBC_WITH_MD5          	= 0x00050080,
+    PJ_SSL_CK_DES_64_CBC_WITH_MD5            	= 0x00060040,
+    PJ_SSL_CK_DES_192_EDE3_CBC_WITH_MD5      	= 0x000700C0
 
 } pj_ssl_cipher;
 
@@ -374,13 +508,18 @@ typedef struct pj_ssl_sock_info
     /**
      * Describes active local certificate info.
      */
-    pj_ssl_cert_info local_cert_info;
+    pj_ssl_cert_info *local_cert_info;
    
     /**
      * Describes active remote certificate info.
      */
-    pj_ssl_cert_info remote_cert_info;
-   
+    pj_ssl_cert_info *remote_cert_info;
+
+    /**
+     * Status of peer certificate verification.
+     */
+    pj_uint32_t		verify_status;
+
 } pj_ssl_sock_info;
 
 
@@ -534,11 +673,11 @@ typedef struct pj_ssl_sock_param
     pj_bool_t require_client_cert;
 
     /**
-     * When secure socket is acting as client (perform outgoing connection)
-     * and it needs to verify server name (e.g: host or domain name) by
-     * matching it to the name specified in the server certificate. This 
-     * setting is useful when the server is hosting multiple domains for
-     * the same listening socket.
+     * Server name indication. When secure socket is acting as client 
+     * (perform outgoing connection) and the server may host multiple
+     * 'virtual' servers at a single underlying network address, setting
+     * this will allow client to tell the server a name of the server
+     * it is contacting.
      *
      * Default value is zero/not-set.
      */

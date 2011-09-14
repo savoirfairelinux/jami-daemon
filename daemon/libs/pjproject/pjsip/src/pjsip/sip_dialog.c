@@ -1,6 +1,6 @@
-/* $Id: sip_dialog.c 3031 2009-12-10 05:16:23Z bennylp $ */
+/* $Id: sip_dialog.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjsip/sip_dialog.h>
 #include <pjsip/sip_ua_layer.h>
@@ -56,6 +45,7 @@ pj_bool_t pjsip_include_allow_hdr_in_dlg = PJSIP_INCLUDE_ALLOW_HDR_IN_DLG;
 
 /* Contact header string */
 static const pj_str_t HCONTACT = { "Contact", 7 };
+
 
 PJ_DEF(pj_bool_t) pjsip_method_creates_dialog(const pjsip_method *m)
 {
@@ -100,6 +90,7 @@ static pj_status_t create_dialog( pjsip_user_agent *ua,
     dlg->add_allow = pjsip_include_allow_hdr_in_dlg;
 
     pj_list_init(&dlg->inv_hdr);
+    pj_list_init(&dlg->rem_cap_hdr);
 
     status = pj_mutex_create_recursive(pool, dlg->obj_name, &dlg->mutex_);
     if (status != PJ_SUCCESS)
@@ -443,8 +434,9 @@ PJ_DEF(pj_status_t) pjsip_dlg_create_uas(   pjsip_user_agent *ua,
 		      pjsip_msg_find_hdr(rdata->msg_info.msg, PJSIP_H_CONTACT,
 				         pos);
 	if (contact_hdr) {
-	    if (!PJSIP_URI_SCHEME_IS_SIP(contact_hdr->uri) && 
-		!PJSIP_URI_SCHEME_IS_SIPS(contact_hdr->uri))
+	    if (!contact_hdr->uri ||
+		(!PJSIP_URI_SCHEME_IS_SIP(contact_hdr->uri) &&
+		 !PJSIP_URI_SCHEME_IS_SIPS(contact_hdr->uri)))
 	    {
 		pos = (pjsip_hdr*)contact_hdr->next;
 		if (pos == &rdata->msg_info.msg->hdr)
@@ -532,6 +524,9 @@ PJ_DEF(pj_status_t) pjsip_dlg_create_uas(   pjsip_user_agent *ua,
     /* Calculate hash value of remote tag. */
     dlg->remote.tag_hval = pj_hash_calc(0, dlg->remote.info->tag.ptr, 
 					dlg->remote.info->tag.slen);
+
+    /* Update remote capabilities info */
+    pjsip_dlg_update_remote_cap(dlg, rdata->msg_info.msg, PJ_TRUE);
 
     /* Register this dialog to user agent. */
     status = pjsip_ua_register_dlg( ua, dlg );
@@ -622,7 +617,7 @@ PJ_DEF(pj_status_t) pjsip_dlg_fork( const pjsip_dialog *first_dlg,
     /* Find Contact header in the response */
     contact = (const pjsip_contact_hdr*)
 	      pjsip_msg_find_hdr(msg, PJSIP_H_CONTACT, NULL);
-    if (contact == NULL)
+    if (contact == NULL || contact->uri == NULL)
 	return PJSIP_EMISSINGHDR;
 
     /* Create the dialog. */
@@ -902,6 +897,27 @@ PJ_DEF(pj_status_t) pjsip_dlg_dec_session( pjsip_dialog *dlg,
     pjsip_dlg_dec_lock(dlg);
 
     return PJ_SUCCESS;
+}
+
+/*
+ * Check if the module is registered as a usage
+ */
+PJ_DEF(pj_bool_t) pjsip_dlg_has_usage( pjsip_dialog *dlg,
+					  pjsip_module *mod)
+{
+    unsigned index;
+    pj_bool_t found = PJ_FALSE;
+
+    pjsip_dlg_inc_lock(dlg);
+    for (index=0; index<dlg->usage_cnt; ++index) {
+    	if (dlg->usage[index] == mod) {
+    	    found = PJ_TRUE;
+    	    break;
+    	}
+    }
+    pjsip_dlg_dec_lock(dlg);
+
+    return found;
 }
 
 /*
@@ -1491,7 +1507,7 @@ PJ_DEF(pj_status_t) pjsip_dlg_respond(  pjsip_dialog *dlg,
 }
 
 
-/* This function is called by user agent upon receiving incoming response
+/* This function is called by user agent upon receiving incoming request
  * message.
  */
 void pjsip_dlg_on_rx_request( pjsip_dialog *dlg, pjsip_rx_data *rdata )
@@ -1578,10 +1594,11 @@ void pjsip_dlg_on_rx_request( pjsip_dialog *dlg, pjsip_rx_data *rdata )
 	contact = (pjsip_contact_hdr*)
 		  pjsip_msg_find_hdr(rdata->msg_info.msg, PJSIP_H_CONTACT, 
 				     NULL);
-	if (contact && (dlg->remote.contact==NULL ||
-			pjsip_uri_cmp(PJSIP_URI_IN_REQ_URI, 
-				      dlg->remote.contact->uri, 
-				      contact->uri)))
+	if (contact && contact->uri &&
+	    (dlg->remote.contact==NULL ||
+ 	     pjsip_uri_cmp(PJSIP_URI_IN_REQ_URI,
+			   dlg->remote.contact->uri,
+			   contact->uri)))
 	{
 	    dlg->remote.contact = (pjsip_contact_hdr*) 
 	    			  pjsip_hdr_clone(dlg->pool, contact);
@@ -1756,16 +1773,24 @@ void pjsip_dlg_on_rx_response( pjsip_dialog *dlg, pjsip_rx_data *rdata )
 	 ||
 	(dlg->role==PJSIP_ROLE_UAC &&
 	 !dlg->uac_has_2xx &&
+	 res_code > 100 &&
 	 res_code/100 <= 2 &&
 	 pjsip_method_creates_dialog(&rdata->msg_info.cseq->method) &&
 	 pj_strcmp(&dlg->remote.info->tag, &rdata->msg_info.to->tag)))
     {
 	pjsip_contact_hdr *contact;
 
+	/* Update remote capability info, when To tags in the dialog remote 
+	 * info and the incoming response are different, e.g: first response
+	 * with To-tag or forking, apply strict update.
+	 */
+	pjsip_dlg_update_remote_cap(dlg, rdata->msg_info.msg,
+				    pj_strcmp(&dlg->remote.info->tag,
+					      &rdata->msg_info.to->tag));
+
 	/* Update To tag. */
 	pj_strdup(dlg->pool, &dlg->remote.info->tag, &rdata->msg_info.to->tag);
 	/* No need to update remote's tag_hval since its never used. */
-
 
 	/* RFC 3271 Section 12.1.2:
 	 * The route set MUST be set to the list of URIs in the Record-Route
@@ -1783,10 +1808,11 @@ void pjsip_dlg_on_rx_response( pjsip_dialog *dlg, pjsip_rx_data *rdata )
 	contact = (pjsip_contact_hdr*)
 		  pjsip_msg_find_hdr(rdata->msg_info.msg, PJSIP_H_CONTACT, 
 				     NULL);
-	if (contact && (dlg->remote.contact==NULL ||
-			pjsip_uri_cmp(PJSIP_URI_IN_REQ_URI, 
-				      dlg->remote.contact->uri, 
-				      contact->uri)))
+	if (contact && contact->uri &&
+	    (dlg->remote.contact==NULL ||
+	     pjsip_uri_cmp(PJSIP_URI_IN_REQ_URI,
+			   dlg->remote.contact->uri,
+			   contact->uri)))
 	{
 	    dlg->remote.contact = (pjsip_contact_hdr*) 
 	    			  pjsip_hdr_clone(dlg->pool, contact);
@@ -1833,10 +1859,11 @@ void pjsip_dlg_on_rx_response( pjsip_dialog *dlg, pjsip_rx_data *rdata )
 	contact = (pjsip_contact_hdr*) pjsip_msg_find_hdr(rdata->msg_info.msg,
 							  PJSIP_H_CONTACT, 
 				     			  NULL);
-	if (contact && (dlg->remote.contact==NULL ||
-			pjsip_uri_cmp(PJSIP_URI_IN_REQ_URI, 
-				      dlg->remote.contact->uri, 
-				      contact->uri)))
+	if (contact && contact->uri &&
+	    (dlg->remote.contact==NULL ||
+	     pjsip_uri_cmp(PJSIP_URI_IN_REQ_URI,
+			   dlg->remote.contact->uri,
+			   contact->uri)))
 	{
 	    dlg->remote.contact = (pjsip_contact_hdr*) 
 	    			  pjsip_hdr_clone(dlg->pool, contact);
@@ -1845,7 +1872,6 @@ void pjsip_dlg_on_rx_response( pjsip_dialog *dlg, pjsip_rx_data *rdata )
 
 	dlg_update_routeset(dlg, rdata);
     }
-
 
     /* Pass to dialog usages. */
     for (i=0; i<dlg->usage_cnt; ++i) {
@@ -1948,3 +1974,226 @@ void pjsip_dlg_on_tsx_state( pjsip_dialog *dlg,
     pjsip_dlg_dec_lock(dlg);
 }
 
+
+/*
+ * Check if the specified capability is supported by remote.
+ */
+PJ_DEF(pjsip_dialog_cap_status) pjsip_dlg_remote_has_cap(
+						    pjsip_dialog *dlg,
+						    int htype,
+						    const pj_str_t *hname,
+						    const pj_str_t *token)
+{
+    const pjsip_generic_array_hdr *hdr;
+    pjsip_dialog_cap_status cap_status = PJSIP_DIALOG_CAP_UNSUPPORTED;
+    unsigned i;
+
+    PJ_ASSERT_RETURN(dlg && token, PJSIP_DIALOG_CAP_UNKNOWN);
+
+    pjsip_dlg_inc_lock(dlg);
+
+    hdr = (const pjsip_generic_array_hdr*) 
+	   pjsip_dlg_get_remote_cap_hdr(dlg, htype, hname);
+    if (!hdr) {
+	cap_status = PJSIP_DIALOG_CAP_UNKNOWN;
+    } else {
+	for (i=0; i<hdr->count; ++i) {
+	    if (!pj_stricmp(&hdr->values[i], token)) {
+		cap_status = PJSIP_DIALOG_CAP_SUPPORTED;
+		break;
+	    }
+	}
+    }
+
+    pjsip_dlg_dec_lock(dlg);
+
+    return cap_status;
+}
+
+
+/*
+ * Update remote capability of ACCEPT, ALLOW, and SUPPORTED from
+ * the received message.
+ */
+PJ_DEF(pj_status_t) pjsip_dlg_update_remote_cap(pjsip_dialog *dlg,
+					        const pjsip_msg *msg,
+						pj_bool_t strict)
+{
+    pjsip_hdr_e htypes[] = 
+	{ PJSIP_H_ACCEPT, PJSIP_H_ALLOW, PJSIP_H_SUPPORTED };
+    unsigned i;
+
+    PJ_ASSERT_RETURN(dlg && msg, PJ_EINVAL);
+
+    pjsip_dlg_inc_lock(dlg);
+
+    /* Retrieve all specified capability header types */
+    for (i = 0; i < PJ_ARRAY_SIZE(htypes); ++i) {
+	const pjsip_generic_array_hdr *hdr;
+	pj_status_t status;
+
+	/* Find this capability type in the message */
+	hdr = (const pjsip_generic_array_hdr*)
+	      pjsip_msg_find_hdr(msg, htypes[i], NULL);
+	if (!hdr) {
+	    /* Not found.
+	     * If strict update is specified, remote this capability type
+	     * from the capability list.
+	     */
+	    if (strict)
+		pjsip_dlg_remove_remote_cap_hdr(dlg, htypes[i], NULL);
+	} else {
+	    /* Found, a capability type may be specified in multiple headers,
+	     * so combine all the capability tags/values into a temporary
+	     * header.
+	     */
+	    pjsip_generic_array_hdr tmp_hdr;
+
+	    /* Init temporary header */
+	    pjsip_generic_array_hdr_init(dlg->pool, &tmp_hdr, NULL);
+	    pj_memcpy(&tmp_hdr, hdr, sizeof(pjsip_hdr));
+
+	    while (hdr) {
+		unsigned j;
+
+		/* Append the header content to temporary header */
+		for(j=0; j<hdr->count &&
+			 tmp_hdr.count<PJSIP_GENERIC_ARRAY_MAX_COUNT; ++j)
+		{
+		    tmp_hdr.values[tmp_hdr.count++] = hdr->values[j];
+		}
+
+		/* Get the next header for this capability */
+		hdr = (const pjsip_generic_array_hdr*)
+		      pjsip_msg_find_hdr(msg, htypes[i], hdr->next);
+	    }
+
+	    /* Save this capability */
+	    status = pjsip_dlg_set_remote_cap_hdr(dlg, &tmp_hdr);
+	    if (status != PJ_SUCCESS) {
+		pjsip_dlg_dec_lock(dlg);
+		return status;
+	    }
+	}
+    }
+
+    pjsip_dlg_dec_lock(dlg);
+
+    return PJ_SUCCESS;
+}
+
+
+/*
+ * Get the value of the specified capability header field of remote.
+ */
+PJ_DEF(const pjsip_hdr*) pjsip_dlg_get_remote_cap_hdr(pjsip_dialog *dlg,
+						      int htype,
+						      const pj_str_t *hname)
+{
+    pjsip_hdr *hdr;
+
+    /* Check arguments. */
+    PJ_ASSERT_RETURN(dlg, NULL);
+    PJ_ASSERT_RETURN((htype != PJSIP_H_OTHER) || (hname && hname->slen),
+		     NULL);
+
+    pjsip_dlg_inc_lock(dlg);
+
+    hdr = dlg->rem_cap_hdr.next;
+    while (hdr != &dlg->rem_cap_hdr) {
+	if ((htype != PJSIP_H_OTHER && htype == hdr->type) ||
+	    (htype == PJSIP_H_OTHER && pj_stricmp(&hdr->name, hname) == 0))
+	{
+	    pjsip_dlg_dec_lock(dlg);
+	    return hdr;
+	}
+	hdr = hdr->next;
+    }
+
+    pjsip_dlg_dec_lock(dlg);
+
+    return NULL;
+}
+
+
+/*
+ * Set remote capability header from a SIP header containing array
+ * of capability tags/values.
+ */
+PJ_DEF(pj_status_t) pjsip_dlg_set_remote_cap_hdr(
+				    pjsip_dialog *dlg,
+				    const pjsip_generic_array_hdr *cap_hdr)
+{
+    pjsip_generic_array_hdr *hdr;
+
+    /* Check arguments. */
+    PJ_ASSERT_RETURN(dlg && cap_hdr, PJ_EINVAL);
+
+    pjsip_dlg_inc_lock(dlg);
+
+    /* Find the header. */
+    hdr = (pjsip_generic_array_hdr*)
+	  pjsip_dlg_get_remote_cap_hdr(dlg, cap_hdr->type, &cap_hdr->name);
+
+    /* Quick compare if the capability is up to date */
+    if (hdr && hdr->count == cap_hdr->count) {
+	unsigned i;
+	pj_bool_t uptodate = PJ_TRUE;
+
+	for (i=0; i<hdr->count; ++i) {
+	    if (pj_stricmp(&hdr->values[i], &cap_hdr->values[i]))
+		uptodate = PJ_FALSE;
+	}
+
+	/* Capability is up to date, just return PJ_SUCCESS */
+	if (uptodate) {
+	    pjsip_dlg_dec_lock(dlg);
+	    return PJ_SUCCESS;
+	}
+    }
+
+    /* Remove existing capability header if any */
+    if (hdr)
+	pj_list_erase(hdr);
+
+    /* Add the new capability header */
+    hdr = (pjsip_generic_array_hdr*) pjsip_hdr_clone(dlg->pool, cap_hdr);
+    hdr->type = cap_hdr->type;
+    pj_strdup(dlg->pool, &hdr->name, &cap_hdr->name);
+    pj_list_push_back(&dlg->rem_cap_hdr, hdr);
+
+    pjsip_dlg_dec_lock(dlg);
+
+    /* Done. */
+    return PJ_SUCCESS;
+}
+
+/*
+ * Remove a remote capability header.
+ */
+PJ_DEF(pj_status_t) pjsip_dlg_remove_remote_cap_hdr(pjsip_dialog *dlg,
+						    int htype,
+						    const pj_str_t *hname)
+{
+    pjsip_generic_array_hdr *hdr;
+
+    /* Check arguments. */
+    PJ_ASSERT_RETURN(dlg, PJ_EINVAL);
+    PJ_ASSERT_RETURN((htype != PJSIP_H_OTHER) || (hname && hname->slen),
+		     PJ_EINVAL);
+
+    pjsip_dlg_inc_lock(dlg);
+
+    hdr = (pjsip_generic_array_hdr*)
+	  pjsip_dlg_get_remote_cap_hdr(dlg, htype, hname);
+    if (!hdr) {
+	pjsip_dlg_dec_lock(dlg);
+	return PJ_ENOTFOUND;
+    }
+
+    pj_list_erase(hdr);
+
+    pjsip_dlg_dec_lock(dlg);
+
+    return PJ_SUCCESS;
+}

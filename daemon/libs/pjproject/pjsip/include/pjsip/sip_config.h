@@ -1,6 +1,6 @@
-/* $Id: sip_config.h 3019 2009-11-20 04:18:27Z bennylp $ */
+/* $Id: sip_config.h 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #ifndef __PJSIP_SIP_CONFIG_H__
 #define __PJSIP_SIP_CONFIG_H__
@@ -63,12 +52,6 @@
  * @{
  */
 
-/*
- * Include sip_autoconf.h if autoconf is used (PJ_AUTOCONF is set)
- */
-#if defined(PJ_AUTOCONF)
-#   include <pjsip/sip_autoconf.h>
-#endif
 
 PJ_BEGIN_DECL
 
@@ -79,6 +62,21 @@ PJ_BEGIN_DECL
  */
 typedef struct pjsip_cfg_t
 {
+    /** Global settings. */
+    struct {
+	/**
+	 * Specify port number should be allowed to appear in To and From
+	 * header. Note that RFC 3261 disallow this, see Table 1 in section
+	 * 19.1.1 of the RFC. Default is PJSIP_ALLOW_PORT_IN_FROMTO_HDR.
+	 */
+	pj_bool_t allow_port_in_fromto_hdr;
+
+	/**
+	 * Disable rport in request.
+	 */
+	pj_bool_t disable_rport;
+    } endpt;
+
     /** Transaction layer settings. */
     struct {
 
@@ -233,7 +231,7 @@ PJ_INLINE(pjsip_cfg_t*) pjsip_cfg(void)
  * containing presence information can be quite large (>1500).
  */
 #ifndef PJSIP_MAX_PKT_LEN
-#   define PJSIP_MAX_PKT_LEN		2000
+#   define PJSIP_MAX_PKT_LEN		4000
 #endif
 
 
@@ -370,6 +368,19 @@ PJ_INLINE(pjsip_cfg_t*) pjsip_cfg(void)
 #   define PJSIP_UNESCAPE_IN_PLACE	0
 #endif
 
+
+/**
+ * Specify port number should be allowed to appear in To and From
+ * header. Note that RFC 3261 disallow this, see Table 1 in section
+ * 19.1.1 of the RFC. This setting can also be altered at run-time
+ * via pjsip_cfg setting, see pjsip_cfg_t.allow_port_in_fromto_hdr
+ * field.
+ *
+ * Default: 0
+ */
+#ifndef PJSIP_ALLOW_PORT_IN_FROMTO_HDR
+#   define PJSIP_ALLOW_PORT_IN_FROMTO_HDR	0
+#endif
 
 /**
  * This macro controls maximum numbers of ioqueue events to be processed
@@ -880,6 +891,24 @@ PJ_INLINE(pjsip_cfg_t*) pjsip_cfg(void)
  */
 #ifndef PJSIP_PRES_DEFAULT_EXPIRES
 #   define PJSIP_PRES_DEFAULT_EXPIRES		600
+#endif
+
+
+/**
+ * Specify the status code value to respond to bad message body in NOTIFY
+ * request for presence. Scenarios that are considered bad include non-
+ * PIDF/XML and non-XPIDF/XML body, multipart message bodies without PIDF/XML
+ * nor XPIDF/XML part, and bad (parsing error) PIDF and X-PIDF bodies
+ * themselves.
+ *
+ * Default value is 488. Application may change this to 200 to ignore the
+ * unrecognised content (this is useful if the application wishes to handle
+ * the content itself). Only non-3xx final response code is allowed here.
+ *
+ * Default: 488 (Not Acceptable Here)
+ */
+#ifndef PJSIP_PRES_BAD_CONTENT_RESPONSE
+#   define PJSIP_PRES_BAD_CONTENT_RESPONSE	488
 #endif
 
 

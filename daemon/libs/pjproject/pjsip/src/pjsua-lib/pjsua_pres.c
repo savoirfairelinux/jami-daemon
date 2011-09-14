@@ -1,6 +1,6 @@
-/* $Id: pjsua_pres.c 3031 2009-12-10 05:16:23Z bennylp $ */
+/* $Id: pjsua_pres.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjsua-lib/pjsua.h>
 #include <pjsua-lib/pjsua_internal.h>
@@ -901,6 +890,7 @@ static pj_bool_t pres_on_rx_request(pjsip_rx_data *rdata)
     else
 	uapres->remote[status] = '\0';
 
+    pjsip_evsub_add_header(sub, &acc->cfg.sub_hdr_list);
     pjsip_evsub_set_mod_data(sub, pjsua_var.mod.id, uapres);
 
     /* Add server subscription to the list: */
@@ -1286,11 +1276,29 @@ pj_status_t pjsua_pres_init_acc(int acc_id)
 }
 
 
+/* Unpublish presence publication */
+void pjsua_pres_unpublish(pjsua_acc *acc)
+{
+    if (acc->publish_sess) {
+	pjsua_acc_config *acc_cfg = &acc->cfg;
+
+	acc->online_status = PJ_FALSE;
+	send_publish(acc->index, PJ_FALSE);
+	/* By ticket #364, don't destroy the session yet (let the callback
+	   destroy it)
+	if (acc->publish_sess) {
+	    pjsip_publishc_destroy(acc->publish_sess);
+	    acc->publish_sess = NULL;
+	}
+	*/
+	acc_cfg->publish_enabled = PJ_FALSE;
+    }
+}
+
 /* Terminate server subscription for the account */
 void pjsua_pres_delete_acc(int acc_id)
 {
     pjsua_acc *acc = &pjsua_var.acc[acc_id];
-    pjsua_acc_config *acc_cfg = &pjsua_var.acc[acc_id].cfg;
     pjsua_srv_pres *uapres;
 
     uapres = pjsua_var.acc[acc_id].pres_srv_list.next;
@@ -1325,18 +1333,7 @@ void pjsua_pres_delete_acc(int acc_id)
     pj_list_init(&acc->pres_srv_list);
 
     /* Terminate presence publication, if any */
-    if (acc->publish_sess) {
-	acc->online_status = PJ_FALSE;
-	send_publish(acc_id, PJ_FALSE);
-	/* By ticket #364, don't destroy the session yet (let the callback
-	   destroy it)
-	if (acc->publish_sess) {
-	    pjsip_publishc_destroy(acc->publish_sess);
-	    acc->publish_sess = NULL;
-	}
-	*/
-	acc_cfg->publish_enabled = PJ_FALSE;
-    }
+    pjsua_pres_unpublish(acc);
 }
 
 
@@ -1561,7 +1558,11 @@ static void pjsua_evsub_on_state( pjsip_evsub *sub, pjsip_event *event)
 	    buddy->term_reason.slen = 0;
 	}
 
-	/* Call callback */
+	/* Call callbacks */
+	if (pjsua_var.ua_cfg.cb.on_buddy_evsub_state)
+	    (*pjsua_var.ua_cfg.cb.on_buddy_evsub_state)(buddy->index, sub,
+							event);
+
 	if (pjsua_var.ua_cfg.cb.on_buddy_state)
 	    (*pjsua_var.ua_cfg.cb.on_buddy_state)(buddy->index);
 
@@ -1614,7 +1615,7 @@ static void pjsua_evsub_on_tsx_state(pjsip_evsub *sub,
     contact_hdr = (pjsip_contact_hdr*)
 		  pjsip_msg_find_hdr(event->body.rx_msg.rdata->msg_info.msg,
 				     PJSIP_H_CONTACT, NULL);
-    if (!contact_hdr) {
+    if (!contact_hdr || !contact_hdr->uri) {
 	return;
     }
 
@@ -1660,30 +1661,10 @@ static void pjsua_evsub_on_rx_notify(pjsip_evsub *sub,
 }
 
 
-/* Event subscription callback. */
-static pjsip_evsub_user pres_callback = 
-{
-    &pjsua_evsub_on_state,  
-    &pjsua_evsub_on_tsx_state,
-
-    NULL,   /* on_rx_refresh: don't care about SUBSCRIBE refresh, unless 
-	     * we want to authenticate 
-	     */
-
-    &pjsua_evsub_on_rx_notify,
-
-    NULL,   /* on_client_refresh: Use default behaviour, which is to 
-	     * refresh client subscription. */
-
-    NULL,   /* on_server_timeout: Use default behaviour, which is to send 
-	     * NOTIFY to terminate. 
-	     */
-};
-
-
 /* It does what it says.. */
 static void subscribe_buddy_presence(pjsua_buddy_id buddy_id)
 {
+    pjsip_evsub_user pres_callback;
     pj_pool_t *tmp_pool = NULL;
     pjsua_buddy *buddy;
     int acc_id;
@@ -1691,6 +1672,12 @@ static void subscribe_buddy_presence(pjsua_buddy_id buddy_id)
     pj_str_t contact;
     pjsip_tx_data *tdata;
     pj_status_t status;
+
+    /* Event subscription callback. */
+    pj_bzero(&pres_callback, sizeof(pres_callback));
+    pres_callback.on_evsub_state = &pjsua_evsub_on_state;
+    pres_callback.on_tsx_state = &pjsua_evsub_on_tsx_state;
+    pres_callback.on_rx_notify = &pjsua_evsub_on_rx_notify;
 
     buddy = &pjsua_var.buddy[buddy_id];
     acc_id = pjsua_acc_find_for_outgoing(&buddy->uri);

@@ -1,6 +1,6 @@
-/* $Id: sip_resolve.c 3053 2010-01-08 17:12:05Z bennylp $ */
+/* $Id: sip_resolve.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjsip/sip_resolve.h>
 #include <pjsip/sip_transport.h>
@@ -380,21 +369,14 @@ PJ_DEF(void) pjsip_resolve( pjsip_resolver_t *resolver,
 
     if (query->query_type == PJ_DNS_TYPE_SRV) {
 
-    		unsigned option = PJ_TRUE;
-    	        if (type & PJSIP_TRANSPORT_IPV6) {
-    	            option |= PJ_DNS_SRV_FALLBACK_GETADDRINFO_IPV6;
-    	        } else {
-    	            option |= PJ_DNS_SRV_FALLBACK_GETADDRINFO_IPV4;
-    	        }
-
-    	        status = pj_dns_srv_resolve(&query->naptr[0].name,
-    	        			    &query->naptr[0].res_type,
-    	        			    query->req.def_port, pool, resolver->res,
-    	        			    option, query, &srv_resolver_cb, NULL);
+	status = pj_dns_srv_resolve(&query->naptr[0].name,
+				    &query->naptr[0].res_type,
+				    query->req.def_port, pool, resolver->res,
+				    PJ_TRUE, query, &srv_resolver_cb, NULL);
 
     } else if (query->query_type == PJ_DNS_TYPE_A) {
 
-    	 status = pj_dns_resolver_start_query(resolver->res,
+	status = pj_dns_resolver_start_query(resolver->res, 
 					     &query->naptr[0].name,
 					     PJ_DNS_TYPE_A, 0, 
 					     &dns_a_callback,

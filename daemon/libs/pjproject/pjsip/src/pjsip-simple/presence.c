@@ -1,6 +1,6 @@
-/* $Id: presence.c 2762 2009-06-15 16:03:40Z bennylp $ */
+/* $Id: presence.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,22 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjsip-simple/presence.h>
 #include <pjsip-simple/errno.h>
 #include <pjsip-simple/evsub_msg.h>
 #include <pjsip/sip_module.h>
+#include <pjsip/sip_multipart.h>
 #include <pjsip/sip_endpoint.h>
 #include <pjsip/sip_dialog.h>
 #include <pj/assert.h>
@@ -44,6 +34,12 @@
 
 #define THIS_FILE		    "presence.c"
 #define PRES_DEFAULT_EXPIRES	    PJSIP_PRES_DEFAULT_EXPIRES
+
+#if PJSIP_PRES_BAD_CONTENT_RESPONSE < 200 || \
+    PJSIP_PRES_BAD_CONTENT_RESPONSE > 699 || \
+    PJSIP_PRES_BAD_CONTENT_RESPONSE/100 == 3
+# error Invalid PJSIP_PRES_BAD_CONTENT_RESPONSE value
+#endif
 
 /*
  * Presence module (mod-presence)
@@ -356,6 +352,16 @@ PJ_DEF(pj_status_t) pjsip_pres_initiate( pjsip_evsub *sub,
 {
     return pjsip_evsub_initiate(sub, &pjsip_subscribe_method, expires, 
 				p_tdata);
+}
+
+
+/*
+ * Add custom headers.
+ */
+PJ_DEF(pj_status_t) pjsip_pres_add_header( pjsip_evsub *sub,
+					   const pjsip_hdr *hdr_list )
+{
+    return pjsip_evsub_add_header( sub, hdr_list );
 }
 
 
@@ -693,8 +699,9 @@ static pj_status_t pres_process_rx_notify( pjsip_pres *pres,
 					   pj_str_t **p_st_text,
 					   pjsip_hdr *res_hdr)
 {
+    const pj_str_t STR_MULTIPART = { "multipart", 9 };
     pjsip_ctype_hdr *ctype_hdr;
-    pj_status_t status;
+    pj_status_t status = PJ_SUCCESS;
 
     *p_st_text = NULL;
 
@@ -718,7 +725,36 @@ static pj_status_t pres_process_rx_notify( pjsip_pres *pres,
     }
 
     /* Parse content. */
+    if (pj_stricmp(&ctype_hdr->media.type, &STR_MULTIPART)==0) {
+	pjsip_multipart_part *mpart;
+	pjsip_media_type ctype;
 
+	pjsip_media_type_init(&ctype, (pj_str_t*)&STR_APPLICATION,
+			      (pj_str_t*)&STR_PIDF_XML);
+	mpart = pjsip_multipart_find_part(rdata->msg_info.msg->body,
+					  &ctype, NULL);
+	if (mpart) {
+	    status = pjsip_pres_parse_pidf2((char*)mpart->body->data,
+					    mpart->body->len, pres->tmp_pool,
+					    &pres->tmp_status);
+	}
+
+	if (mpart==NULL) {
+	    pjsip_media_type_init(&ctype, (pj_str_t*)&STR_APPLICATION,
+				  (pj_str_t*)&STR_XPIDF_XML);
+	    mpart = pjsip_multipart_find_part(rdata->msg_info.msg->body,
+					      &ctype, NULL);
+	    if (mpart) {
+		status = pjsip_pres_parse_xpidf2((char*)mpart->body->data,
+						 mpart->body->len,
+						 pres->tmp_pool,
+						 &pres->tmp_status);
+	    } else {
+		status = PJSIP_SIMPLE_EBADCONTENT;
+	    }
+	}
+    }
+    else
     if (pj_stricmp(&ctype_hdr->media.type, &STR_APPLICATION)==0 &&
 	pj_stricmp(&ctype_hdr->media.subtype, &STR_PIDF_XML)==0)
     {
@@ -739,25 +775,35 @@ static pj_status_t pres_process_rx_notify( pjsip_pres *pres,
 
     if (status != PJ_SUCCESS) {
 	/* Unsupported or bad Content-Type */
-	pjsip_accept_hdr *accept_hdr;
-	pjsip_warning_hdr *warn_hdr;
+	if (PJSIP_PRES_BAD_CONTENT_RESPONSE >= 300) {
+	    pjsip_accept_hdr *accept_hdr;
+	    pjsip_warning_hdr *warn_hdr;
 
-	*p_st_code = PJSIP_SC_NOT_ACCEPTABLE_HERE;
+	    *p_st_code = PJSIP_PRES_BAD_CONTENT_RESPONSE;
 
-	/* Add Accept header */
-	accept_hdr = pjsip_accept_hdr_create(rdata->tp_info.pool);
-	accept_hdr->values[accept_hdr->count++] = STR_APP_PIDF_XML;
-	accept_hdr->values[accept_hdr->count++] = STR_APP_XPIDF_XML;
-	pj_list_push_back(res_hdr, accept_hdr);
+	    /* Add Accept header */
+	    accept_hdr = pjsip_accept_hdr_create(rdata->tp_info.pool);
+	    accept_hdr->values[accept_hdr->count++] = STR_APP_PIDF_XML;
+	    accept_hdr->values[accept_hdr->count++] = STR_APP_XPIDF_XML;
+	    pj_list_push_back(res_hdr, accept_hdr);
 
-	/* Add Warning header */
-	warn_hdr = pjsip_warning_hdr_create_from_status(
-				    rdata->tp_info.pool,
-				    pjsip_endpt_name(pres->dlg->endpt),
-				    status);
-	pj_list_push_back(res_hdr, warn_hdr);
+	    /* Add Warning header */
+	    warn_hdr = pjsip_warning_hdr_create_from_status(
+					rdata->tp_info.pool,
+					pjsip_endpt_name(pres->dlg->endpt),
+					status);
+	    pj_list_push_back(res_hdr, warn_hdr);
 
-	return status;
+	    return status;
+	} else {
+	    pj_assert(PJSIP_PRES_BAD_CONTENT_RESPONSE/100 == 2);
+	    PJ_PERROR(4,(THIS_FILE, status,
+			 "Ignoring presence error due to "
+		         "PJSIP_PRES_BAD_CONTENT_RESPONSE setting [%d]",
+		         PJSIP_PRES_BAD_CONTENT_RESPONSE));
+	    *p_st_code = PJSIP_PRES_BAD_CONTENT_RESPONSE;
+	    status = PJ_SUCCESS;
+	}
     }
 
     /* If application calls pres_get_status(), redirect the call to

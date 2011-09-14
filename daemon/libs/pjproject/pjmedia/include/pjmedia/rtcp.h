@@ -1,6 +1,6 @@
-/* $Id: rtcp.h 2394 2008-12-23 17:27:53Z bennylp $ */
+/* $Id: rtcp.h 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #ifndef __PJMEDIA_RTCP_H__
 #define __PJMEDIA_RTCP_H__
@@ -225,6 +214,18 @@ struct pjmedia_rtcp_stat
 
     pj_uint32_t		     rtp_tx_last_ts; /**< Last TX RTP timestamp.    */
     pj_uint16_t		     rtp_tx_last_seq;/**< Last TX RTP sequence.	    */
+
+#if defined(PJMEDIA_RTCP_STAT_HAS_IPDV) && PJMEDIA_RTCP_STAT_HAS_IPDV!=0
+    pj_math_stat	     rx_ipdv;/**< Statistics of IP packet delay
+				          variation in receiving direction
+					  (in usec).			    */
+#endif
+
+#if defined(PJMEDIA_RTCP_STAT_HAS_RAW_JITTER) && PJMEDIA_RTCP_STAT_HAS_RAW_JITTER!=0
+    pj_math_stat	     rx_raw_jitter;/**< Statistic of raw jitter in
+						receiving direction 
+						(in usec).		    */
+#endif
 };
 
 
@@ -257,6 +258,7 @@ struct pjmedia_rtcp_session
     pj_time_val		    tv_base;	/**< Base time, in seconds.	    */
     pj_timestamp	    ts_base;	/**< Base system timestamp.	    */
     pj_timestamp	    ts_freq;	/**< System timestamp frequency.    */
+    pj_uint32_t		    rtp_ts_base;/**< Base RTP timestamp.	    */
 
     pj_uint32_t		    rx_lsr;	/**< NTP ts in last SR received	    */
     pj_timestamp	    rx_lsr_time;/**< Time when last SR is received  */
@@ -285,6 +287,36 @@ typedef struct pjmedia_rtcp_session pjmedia_rtcp_session;
 
 
 /**
+ * RTCP session settings.
+ */
+typedef struct pjmedia_rtcp_session_setting
+{
+    char	    *name;		/**< RTCP session name.		*/
+    unsigned	     clock_rate;	/**< Sequence.			*/
+    unsigned	     samples_per_frame;	/**< Timestamp.			*/
+    pj_uint32_t	     ssrc;		/**< Sender SSRC.		*/
+    pj_uint32_t	     rtp_ts_base;	/**< Base RTP timestamp.	*/
+} pjmedia_rtcp_session_setting;
+
+
+/**
+ * Initialize RTCP session setting.
+ *
+ * @param settings	    The RTCP session setting to be initialized.
+ */
+PJ_DECL(void) pjmedia_rtcp_session_setting_default(
+				    pjmedia_rtcp_session_setting *settings);
+
+
+/**
+ * Initialize bidirectional RTCP statistics.
+ *
+ * @param stat		    The bidirectional RTCP statistics.
+ */
+PJ_DECL(void) pjmedia_rtcp_init_stat(pjmedia_rtcp_stat *stat);
+
+
+/**
  * Initialize RTCP session.
  *
  * @param session	    The session
@@ -299,6 +331,16 @@ PJ_DECL(void) pjmedia_rtcp_init( pjmedia_rtcp_session *session,
 				 unsigned clock_rate,
 				 unsigned samples_per_frame,
 				 pj_uint32_t ssrc );
+
+
+/**
+ * Initialize RTCP session.
+ *
+ * @param session	    The session
+ * @param settings	    The RTCP session settings.
+ */
+PJ_DECL(void) pjmedia_rtcp_init2(pjmedia_rtcp_session *session,
+				 const pjmedia_rtcp_session_setting *settings);
 
 
 /**

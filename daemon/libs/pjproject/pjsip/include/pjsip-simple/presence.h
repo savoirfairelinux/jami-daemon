@@ -1,6 +1,6 @@
-/* $Id: presence.h 2762 2009-06-15 16:03:40Z bennylp $ */
+/* $Id: presence.h 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #ifndef __PJSIP_SIMPLE_PRESENCE_H__
 #define __PJSIP_SIMPLE_PRESENCE_H__
@@ -192,6 +181,18 @@ PJ_DECL(pj_status_t) pjsip_pres_initiate( pjsip_evsub *sub,
 					  pjsip_tx_data **p_tdata);
 
 
+/**
+ * Add a list of headers to the subscription instance. The list of headers
+ * will be added to outgoing presence subscription requests.
+ *
+ * @param sub		Subscription instance.
+ * @param hdr_list	List of headers to be added.
+ *
+ * @return		PJ_SUCCESS on success.
+ */
+PJ_DECL(pj_status_t) pjsip_pres_add_header( pjsip_evsub *sub,
+					    const pjsip_hdr *hdr_list );
+
 
 /**
  * Accept the incoming subscription request by sending 2xx response to
@@ -339,11 +340,31 @@ PJ_DECL(pj_status_t) pjsip_pres_create_xpidf(pj_pool_t *pool,
  * @param status	The presence status to be initialized.
  *
  * @return		PJ_SUCCESS on success.
+ *
+ * @see pjsip_pres_parse_pidf2()
  */
 PJ_DECL(pj_status_t) pjsip_pres_parse_pidf(pjsip_rx_data *rdata,
 					   pj_pool_t *pool,
 					   pjsip_pres_status *status);
 
+/**
+ * This is a utility function to parse PIDF body into PJSIP presence status.
+ *
+ * @param body		Text body, with one extra space at the end to place
+ * 			NULL character temporarily during parsing.
+ * @param body_len	Length of the body, not including the NULL termination
+ * 			character.
+ * @param pool		Pool to allocate memory to copy the strings into
+ *			the presence status structure.
+ * @param status	The presence status to be initialized.
+ *
+ * @return		PJ_SUCCESS on success.
+ *
+ * @see pjsip_pres_parse_pidf()
+ */
+PJ_DECL(pj_status_t) pjsip_pres_parse_pidf2(char *body, unsigned body_len,
+					    pj_pool_t *pool,
+					    pjsip_pres_status *status);
 
 
 /**
@@ -355,10 +376,32 @@ PJ_DECL(pj_status_t) pjsip_pres_parse_pidf(pjsip_rx_data *rdata,
  * @param status	The presence status to be initialized.
  *
  * @return		PJ_SUCCESS on success.
+ *
+ * @see pjsip_pres_parse_xpidf2()
  */
 PJ_DECL(pj_status_t) pjsip_pres_parse_xpidf(pjsip_rx_data *rdata,
 					   pj_pool_t *pool,
 					   pjsip_pres_status *status);
+
+
+/**
+ * This is a utility function to parse X-PIDF body into PJSIP presence status.
+ *
+ * @param body		Text body, with one extra space at the end to place
+ * 			NULL character temporarily during parsing.
+ * @param body_len	Length of the body, not including the NULL termination
+ * 			character.
+ * @param pool		Pool to allocate memory to copy the strings into
+ *			the presence status structure.
+ * @param status	The presence status to be initialized.
+ *
+ * @return		PJ_SUCCESS on success.
+ *
+ * @see pjsip_pres_parse_xpidf()
+ */
+PJ_DECL(pj_status_t) pjsip_pres_parse_xpidf2(char *body, unsigned body_len,
+					     pj_pool_t *pool,
+					     pjsip_pres_status *status);
 
 
 

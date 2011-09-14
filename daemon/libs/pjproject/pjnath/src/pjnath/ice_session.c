@@ -1,6 +1,6 @@
-/* $Id: ice_session.c 3022 2009-11-23 15:02:18Z bennylp $ */
+/* $Id: ice_session.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjnath/ice_session.h>
 #include <pj/addr_resolv.h>
@@ -2905,8 +2894,13 @@ PJ_DEF(pj_status_t) pj_ice_sess_on_rx_pkt(pj_ice_sess *ice,
 	return PJ_EINVAL;
     }
 
+    /* Don't check fingerprint. We only need to distinguish STUN and non-STUN
+     * packets. We don't need to verify the STUN packet too rigorously, that
+     * will be done by the user.
+     */
     status = pj_stun_msg_check((const pj_uint8_t*)pkt, pkt_size, 
-    			       PJ_STUN_IS_DATAGRAM);
+    			       PJ_STUN_IS_DATAGRAM |
+    			         PJ_STUN_NO_FINGERPRINT_CHECK);
     if (status == PJ_SUCCESS) {
 	status = pj_stun_session_on_rx_pkt(comp->stun_sess, pkt, pkt_size,
 					   PJ_STUN_IS_DATAGRAM, msg_data,

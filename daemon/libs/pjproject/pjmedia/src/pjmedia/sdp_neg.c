@@ -1,6 +1,6 @@
-/* $Id: sdp_neg.c 2926 2009-10-06 11:29:14Z nanang $ */
+/* $Id: sdp_neg.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjmedia/sdp_neg.h>
 #include <pjmedia/sdp.h>
@@ -322,8 +311,7 @@ PJ_DEF(pj_status_t) pjmedia_sdp_neg_modify_local_offer( pj_pool_t *pool,
 	if (!found) {
 	    pjmedia_sdp_media *m;
 
-	    m = pjmedia_sdp_media_clone(pool, om);
-	    m->desc.port = 0;
+	    m = pjmedia_sdp_media_clone_deactivate(pool, om);
 
 	    pj_array_insert(new_offer->media, sizeof(new_offer->media[0]),
 			    new_offer->media_count++, oi, &m);
@@ -783,15 +771,24 @@ static pj_status_t process_m_answer( pj_pool_t *pool,
 
 
     /* Check if remote has rejected our offer */
-    
     if (answer->desc.port == 0) {
 	
 	/* Remote has rejected our offer. 
-	 * Set our port to zero too in active SDP.
+	 * Deactivate our media too.
 	 */
-	offer->desc.port = 0;
+	pjmedia_sdp_media_deactivate(pool, offer);
+
+	/* Don't need to proceed */
+	return PJ_SUCCESS;
     }
 
+    /* Ticket #1148: check if remote answer does not set port to zero when
+     * offered with port zero. Let's just tolerate it.
+     */
+    if (offer->desc.port == 0) {
+	/* Don't need to proceed */
+	return PJ_SUCCESS;
+    }
 
     /* Process direction attributes */
     update_media_direction(pool, answer, offer);
@@ -826,6 +823,9 @@ static pj_status_t process_m_answer( pj_pool_t *pool,
 	PJ_TODO(CHECK_SDP_NEGOTIATION_WHEN_ASYMETRIC_MEDIA_IS_ALLOWED);
 
     } else {
+	/* Offer format priority based on answer format index/priority */
+	unsigned offer_fmt_prior[PJMEDIA_MAX_SDP_FMT];
+
 	/* Remove all format in the offer that has no matching answer */
 	for (i=0; i<offer->desc.fmt_count;) {
 	    unsigned pt;
@@ -918,21 +918,64 @@ static pj_status_t process_m_answer( pj_pool_t *pool,
 		--offer->desc.fmt_count;
 
 	    } else {
+		offer_fmt_prior[i] = j;
 		++i;
 	    }
 	}
 
-	/* Arrange format in the offer so the order match the priority
-	 * in the answer
-	 */
-	for (i=0; i<answer->desc.fmt_count; ++i) {
-	    unsigned j;
-	    pj_str_t *fmt = &answer->desc.fmt[i];
+	if (0 == offer->desc.fmt_count) {
+	    /* No common codec in the answer! */
+	    return PJMEDIA_SDPNEG_EANSNOMEDIA;
+	}
 
-	    for (j=i; j<offer->desc.fmt_count; ++j) {
-		if (pj_strcmp(fmt, &offer->desc.fmt[j])==0) {
+	/* Post process:
+	 * - Resort offer formats so the order match to the answer.
+	 * - Remove answer formats that unmatches to the offer.
+	 */
+	
+	/* Resort offer formats */
+	for (i=0; i<offer->desc.fmt_count; ++i) {
+	    unsigned j;
+	    for (j=i+1; j<offer->desc.fmt_count; ++j) {
+		if (offer_fmt_prior[i] > offer_fmt_prior[j]) {
+		    unsigned tmp = offer_fmt_prior[i];
+		    offer_fmt_prior[i] = offer_fmt_prior[j];
+		    offer_fmt_prior[j] = tmp;
 		    str_swap(&offer->desc.fmt[i], &offer->desc.fmt[j]);
-		    break;
+		}
+	    }
+	}
+
+	/* Remove unmatched answer formats */
+	{
+	    unsigned del_cnt = 0;
+	    for (i=0; i<answer->desc.fmt_count;) {
+		/* The offer is ordered now, also the offer_fmt_prior */
+		if (i >= offer->desc.fmt_count || 
+		    offer_fmt_prior[i]-del_cnt != i)
+		{
+		    pj_str_t *fmt = &answer->desc.fmt[i];
+		    pjmedia_sdp_attr *a;
+
+		    /* Remove rtpmap associated with this format */
+		    a = pjmedia_sdp_media_find_attr2(answer, "rtpmap", fmt);
+		    if (a)
+			pjmedia_sdp_media_remove_attr(answer, a);
+
+		    /* Remove fmtp associated with this format */
+		    a = pjmedia_sdp_media_find_attr2(answer, "fmtp", fmt);
+		    if (a)
+			pjmedia_sdp_media_remove_attr(answer, a);
+
+		    /* Remove this format from answer's array */
+		    pj_array_erase(answer->desc.fmt, 
+				   sizeof(answer->desc.fmt[0]),
+				   answer->desc.fmt_count, i);
+		    --answer->desc.fmt_count;
+
+		    ++del_cnt;
+		} else {
+		    ++i;
 		}
 	    }
 	}
@@ -969,8 +1012,18 @@ static pj_status_t process_answer(pj_pool_t *pool,
     /* Now update each media line in the offer with the answer. */
     for (; omi<offer->media_count; ++omi) {
 	if (ami == answer->media_count) {
+	    /* The answer has less media than the offer */
+	    pjmedia_sdp_media *am;
+
+	    /* Generate matching-but-disabled-media for the answer */
+	    am = pjmedia_sdp_media_clone_deactivate(pool, offer->media[omi]);
+	    answer->media[answer->media_count++] = am;
+	    ++ami;
+
+	    /* Deactivate our media offer too */
+	    pjmedia_sdp_media_deactivate(pool, offer->media[omi]);
+
 	    /* No answer media to be negotiated */
-	    offer->media[omi]->desc.port = 0;
 	    continue;
 	}
 
@@ -979,12 +1032,18 @@ static pj_status_t process_answer(pj_pool_t *pool,
 
 	/* If media type is mismatched, just disable the media. */
 	if (status == PJMEDIA_SDPNEG_EINVANSMEDIA) {
-	    offer->media[omi]->desc.port = 0;
+	    pjmedia_sdp_media_deactivate(pool, offer->media[omi]);
 	    continue;
 	}
-
-	if (status != PJ_SUCCESS)
+	/* No common format in the answer media. */
+	else if (status == PJMEDIA_SDPNEG_EANSNOMEDIA) {
+	    pjmedia_sdp_media_deactivate(pool, offer->media[omi]);
+	    pjmedia_sdp_media_deactivate(pool, answer->media[ami]);
+	} 
+	/* Return the error code, for other errors. */
+	else if (status != PJ_SUCCESS) {
 	    return status;
+	}
 
 	if (offer->media[omi]->desc.port != 0)
 	    has_active = PJ_TRUE;
@@ -1017,11 +1076,9 @@ static pj_status_t match_offer(pj_pool_t *pool,
     const pjmedia_sdp_media *master, *slave;
     pj_str_t pt_amr_need_adapt = {NULL, 0};
 
-    /* If offer has zero port, just clone the offer and update direction */
+    /* If offer has zero port, just clone the offer */
     if (offer->desc.port == 0) {
-	answer = pjmedia_sdp_media_clone(pool, offer);
-	remove_all_media_directions(answer);
-	update_media_direction(pool, offer, answer);
+	answer = pjmedia_sdp_media_clone_deactivate(pool, offer);
 	*p_answer = answer;
 	return PJ_SUCCESS;
     }
@@ -1309,25 +1366,12 @@ static pj_status_t create_answer( pj_pool_t *pool,
 	    /* No matching media.
 	     * Reject the offer by setting the port to zero in the answer.
 	     */
-	    //pjmedia_sdp_attr *a;
-
 	    /* For simplicity in the construction of the answer, we'll
 	     * just clone the media from the offer. Anyway receiver will
 	     * ignore anything in the media once it sees that the port
 	     * number is zero.
 	     */
-	    am = pjmedia_sdp_media_clone(pool, om);
-	    am->desc.port = 0;
-
-	    // Just set port zero to disable stream without set it to inactive.
-	    /* Remove direction attribute, and replace with inactive */
-	    remove_all_media_directions(am);
-	    //a = pjmedia_sdp_attr_create(pool, "inactive", NULL);
-	    //pjmedia_sdp_media_add_attr(am, a);
-
-	    /* Then update direction */
-	    update_media_direction(pool, om, am);
-
+	    am = pjmedia_sdp_media_clone_deactivate(pool, om);
 	} else {
 	    /* The answer is in am */
 	    pj_assert(am != NULL);
@@ -1352,7 +1396,8 @@ PJ_DEF(pj_status_t) pjmedia_sdp_neg_cancel_offer(pjmedia_sdp_neg *neg)
     PJ_ASSERT_RETURN(neg, PJ_EINVAL);
 
     /* Must be in LOCAL_OFFER state. */
-    PJ_ASSERT_RETURN(neg->state == PJMEDIA_SDP_NEG_STATE_LOCAL_OFFER,
+    PJ_ASSERT_RETURN(neg->state == PJMEDIA_SDP_NEG_STATE_LOCAL_OFFER ||
+		     neg->state == PJMEDIA_SDP_NEG_STATE_REMOTE_OFFER,
 		     PJMEDIA_SDPNEG_EINSTATE);
 
     /* Reset state to done */
@@ -1391,7 +1436,6 @@ PJ_DEF(pj_status_t) pjmedia_sdp_neg_negotiate( pj_pool_t *pool,
 	    /* Only update active SDPs when negotiation is successfull */
 	    neg->active_local_sdp = active;
 	    neg->active_remote_sdp = neg->neg_remote_sdp;
-
 	}
     } else {
 	pjmedia_sdp_session *answer = NULL;

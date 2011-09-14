@@ -1,6 +1,6 @@
-/* $Id: pjsua_internal.h 2968 2009-10-26 11:21:37Z bennylp $ */
+/* $Id: pjsua_internal.h 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #ifndef __PJSUA_INTERNAL_H__
 #define __PJSUA_INTERNAL_H__
@@ -72,6 +61,7 @@ typedef struct pjsua_call
     pj_time_val		 dis_time;  /**< Disconnect time.		    */
     pjsua_acc_id	 acc_id;    /**< Account index being used.	    */
     int			 secure_level;/**< Signaling security level.	    */
+    pjsua_call_hold_type call_hold_type; /**< How to do call hold.	    */
     pj_bool_t		 local_hold;/**< Flag for call-hold by local.	    */
     pjsua_call_media_status media_st;/**< Media state.			    */
     pjmedia_dir		 media_dir; /**< Media direction.		    */
@@ -101,6 +91,14 @@ typedef struct pjsua_call
 
     char    last_text_buf_[128];    /**< Buffer for last_text.		    */
 
+    struct {
+	pj_timer_entry	 reinv_timer;/**< Reinvite retry timer.		    */
+	pj_uint32_t	 sdp_ver;    /**< SDP version of the bad answer     */
+	int		 retry_cnt;  /**< Retry count.			    */
+        pj_bool_t        pending;    /**< Pending until CONFIRMED state     */
+    } lock_codec;		     /**< Data for codec locking when answer
+					  contains multiple codecs.	    */
+
 } pjsua_call;
 
 
@@ -117,7 +115,6 @@ struct pjsua_srv_pres
     int		     expires;	    /**< "expires" value in the request.    */
 };
 
-
 /**
  * Account
  */
@@ -131,6 +128,9 @@ typedef struct pjsua_acc
     pj_str_t	     display;	    /**< Display name, if any.		*/
     pj_str_t	     user_part;	    /**< User part of local URI.	*/
     pj_str_t	     contact;	    /**< Our Contact header.		*/
+    pj_str_t         reg_contact;   /**< Contact header for REGISTER.
+				         It may be different than acc
+				         contact if outbound is used    */
 
     pj_str_t	     srv_domain;    /**< Host part of reg server.	*/
     int		     srv_port;	    /**< Port number of reg server.	*/
@@ -139,12 +139,28 @@ typedef struct pjsua_acc
     pj_status_t	     reg_last_err;  /**< Last registration error.	*/
     int		     reg_last_code; /**< Last status last register.	*/
 
+    struct {
+	pj_bool_t	 active;    /**< Flag of reregister status.	*/
+	pj_timer_entry   timer;	    /**< Timer for reregistration.	*/
+	void		*reg_tp;    /**< Transport for registration.	*/
+	unsigned	 attempt_cnt; /**< Attempt counter.		*/
+    } auto_rereg;		    /**< Reregister/reconnect data.	*/
+
     pj_timer_entry   ka_timer;	    /**< Keep-alive timer for UDP.	*/
     pjsip_transport *ka_transport;  /**< Transport for keep-alive.	*/
     pj_sockaddr	     ka_target;	    /**< Destination address for K-A	*/
     unsigned	     ka_target_len; /**< Length of ka_target.		*/
 
     pjsip_route_hdr  route_set;	    /**< Complete route set inc. outbnd.*/
+    pj_uint32_t	     global_route_crc; /** CRC of global route setting. */
+    pj_uint32_t	     local_route_crc;  /** CRC of account route setting.*/
+
+    unsigned         rfc5626_status;/**< SIP outbound status:
+                                           0: not used
+                                           1: requested
+                                           2: acknowledged by servers   */
+    pj_str_t	     rfc5626_instprm;/**< SIP outbound instance param.  */
+    pj_str_t         rfc5626_regprm;/**< SIP outbound reg param.        */
 
     unsigned	     cred_cnt;	    /**< Number of credentials.		*/
     pjsip_cred_info  cred[PJSUA_ACC_MAX_PROXIES]; /**< Complete creds.	*/
@@ -263,6 +279,7 @@ struct pjsua_data
     pjsip_endpoint	*endpt;	    /**< Global endpoint.		*/
     pjsip_module	 mod;	    /**< pjsua's PJSIP module.		*/
     pjsua_transport_data tpdata[8]; /**< Array of transports.		*/
+    pjsip_tp_state_callback old_tp_cb; /**< Old transport callback.	*/
 
     /* Threading: */
     pj_bool_t		 thread_quit_flag;  /**< Thread quit flag.	*/
@@ -279,6 +296,9 @@ struct pjsua_data
     pj_stun_nat_type	 nat_type;	/**< NAT type.			*/
     pj_status_t		 nat_status;	/**< Detection status.		*/
     pj_bool_t		 nat_in_progress; /**< Detection in progress	*/
+
+    /* List of outbound proxies: */
+    pjsip_route_hdr	 outbound_proxy;
 
     /* Account: */
     unsigned		 acc_cnt;	     /**< Number of accounts.	*/
@@ -306,20 +326,6 @@ struct pjsua_data
     pjmedia_conf	*mconf;	    /**< Conference bridge.		*/
     pj_bool_t		 is_mswitch;/**< Are we using audio switchboard
 				         (a.k.a APS-Direct)		*/
-
-    /* Sound device */
-    pjmedia_aud_dev_index cap_dev;  /**< Capture device ID.		*/
-    pjmedia_aud_dev_index play_dev; /**< Playback device ID.		*/
-    pj_uint32_t		 aud_svmask;/**< Which settings to save		*/
-    pjmedia_aud_param	 aud_param; /**< User settings to sound dev	*/
-    pj_bool_t		 aud_open_cnt;/**< How many # device is opened	*/
-    pj_bool_t		 no_snd;    /**< No sound (app will manage it)	*/
-    pj_pool_t		*snd_pool;  /**< Sound's private pool.		*/
-    pjmedia_snd_port	*snd_port;  /**< Sound port.			*/
-    pj_timer_entry	 snd_idle_timer;/**< Sound device idle timer.	*/
-    pjmedia_master_port	*null_snd;  /**< Master port for null sound.	*/
-    pjmedia_port	*null_port; /**< Null port.			*/
-
 
     /* File players: */
     unsigned		 player_cnt;/**< Number of file players.	*/
@@ -453,6 +459,11 @@ pj_status_t pjsua_pres_init_acc(int acc_id);
  * Send PUBLISH
  */
 pj_status_t pjsua_pres_init_publish_acc(int acc_id);
+
+/**
+ *  Send un-PUBLISH
+ */
+void pjsua_pres_unpublish(pjsua_acc *acc);
 
 /**
  * Terminate server subscription for the account 

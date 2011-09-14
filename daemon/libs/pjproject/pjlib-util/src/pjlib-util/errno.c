@@ -1,6 +1,6 @@
-/* $Id: errno.c 2394 2008-12-23 17:27:53Z bennylp $ */
+/* $Id: errno.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,20 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjlib-util/errno.h>
 #include <pjlib-util/types.h>
+#include <pj/assert.h>
 #include <pj/string.h>
 
 
@@ -99,6 +89,13 @@ static const struct
     PJ_BUILD_ERR( PJLIB_UTIL_ESTUNNOREALM,	"Missing STUN REALM attribute"),
     PJ_BUILD_ERR( PJLIB_UTIL_ESTUNNONCE,	"Missing/stale STUN NONCE attribute value"),
     PJ_BUILD_ERR( PJLIB_UTIL_ESTUNTSXFAILED,	"STUN transaction terminates with failure"),
+
+    /* HTTP Client */
+    PJ_BUILD_ERR( PJLIB_UTIL_EHTTPINURL,	"Invalid URL format"),
+    PJ_BUILD_ERR( PJLIB_UTIL_EHTTPINPORT,	"Invalid URL port number"),
+    PJ_BUILD_ERR( PJLIB_UTIL_EHTTPINCHDR,	"Incomplete response header received"),
+    PJ_BUILD_ERR( PJLIB_UTIL_EHTTPINSBUF,	"Insufficient buffer"),
+    PJ_BUILD_ERR( PJLIB_UTIL_EHTTPLOST,	        "Connection lost"),
 };
 #endif	/* PJ_HAS_ERROR_STRING */
 
@@ -166,7 +163,12 @@ pj_str_t pjlib_util_strerror(pj_status_t statcode,
 
 PJ_DEF(pj_status_t) pjlib_util_init(void)
 {
-    return pj_register_strerror(PJLIB_UTIL_ERRNO_START, 
-				PJ_ERRNO_SPACE_SIZE, 
-				&pjlib_util_strerror);
+    pj_status_t status;
+    
+    status = pj_register_strerror(PJLIB_UTIL_ERRNO_START, 
+				  PJ_ERRNO_SPACE_SIZE, 
+				  &pjlib_util_strerror);
+    pj_assert(status == PJ_SUCCESS);
+
+    return PJ_SUCCESS;
 }

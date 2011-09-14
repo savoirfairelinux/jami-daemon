@@ -1,6 +1,6 @@
-/* $Id: sip_reg.c 2855 2009-08-05 18:41:23Z nanang $ */
+/* $Id: sip_reg.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjsip-ua/sip_regc.h>
 #include <pjsip/sip_endpoint.h>
@@ -48,7 +37,7 @@
 
 
 #define REFRESH_TIMER		1
-#define DELAY_BEFORE_REFRESH	PJSIP_REGISTER_CLIENT_DELAY_BEFORE_REFRESH
+#define DELAY_BEFORE_REFRESH    PJSIP_REGISTER_CLIENT_DELAY_BEFORE_REFRESH
 #define THIS_FILE		"sip_reg.c"
 
 /* Outgoing transaction timeout when server sends 100 but never replies
@@ -98,6 +87,7 @@ struct pjsip_regc
     pjsip_contact_hdr		 removed_contact_hdr_list;
     pjsip_expires_hdr		*expires_hdr;
     pj_uint32_t			 expires;
+    pj_uint32_t			 delay_before_refresh;
     pjsip_route_hdr		 route_set;
     pjsip_hdr			 hdr_list;
 
@@ -214,6 +204,7 @@ PJ_DEF(pj_status_t) pjsip_regc_get_info( pjsip_regc *regc,
     info->is_busy = (pj_atomic_get(regc->busy_ctr) || regc->has_tsx);
     info->auto_reg = regc->auto_reg;
     info->interval = regc->expires;
+    info->transport = regc->last_transport;
     
     if (regc->has_tsx)
 	info->next_reg = 0;
@@ -385,6 +376,7 @@ PJ_DEF(pj_status_t) pjsip_regc_init( pjsip_regc *regc,
 
     /* Set "Expires" header, if required. */
     set_expires( regc, expires);
+    regc->delay_before_refresh = DELAY_BEFORE_REFRESH;
 
     /* Set "Call-ID" header. */
     regc->cid_hdr = pjsip_cid_hdr_create(regc->pool);
@@ -537,6 +529,7 @@ PJ_DEF(pj_status_t) pjsip_regc_register(pjsip_regc *regc, pj_bool_t autoreg,
 {
     pjsip_msg *msg;
     pjsip_contact_hdr *hdr;
+    const pjsip_hdr *h_allow;
     pj_status_t status;
     pjsip_tx_data *tdata;
 
@@ -577,6 +570,14 @@ PJ_DEF(pj_status_t) pjsip_regc_register(pjsip_regc *regc, pj_bool_t autoreg,
     if (regc->timer.id != 0) {
 	pjsip_endpt_cancel_timer(regc->endpt, &regc->timer);
 	regc->timer.id = 0;
+    }
+
+    /* Add Allow header (http://trac.pjsip.org/repos/ticket/1039) */
+    h_allow = pjsip_endpt_get_capability(regc->endpt, PJSIP_H_ALLOW, NULL);
+    if (h_allow) {
+	pjsip_msg_add_hdr(msg, (pjsip_hdr*)
+			       pjsip_hdr_shallow_clone(tdata->pool, h_allow));
+
     }
 
     regc->auto_reg = autoreg;
@@ -773,6 +774,56 @@ static void regc_refresh_timer_cb( pj_timer_heap_t *timer_heap,
     }
 }
 
+static void schedule_registration ( pjsip_regc *regc, pj_int32_t expiration )
+{
+    if (regc->auto_reg && expiration > 0) {
+        pj_time_val delay = { 0, 0};
+
+        delay.sec = expiration - regc->delay_before_refresh;
+        if (regc->expires != PJSIP_REGC_EXPIRATION_NOT_SPECIFIED && 
+            delay.sec > (pj_int32_t)regc->expires) 
+        {
+            delay.sec = regc->expires;
+        }
+        if (delay.sec < DELAY_BEFORE_REFRESH) 
+            delay.sec = DELAY_BEFORE_REFRESH;
+        regc->timer.cb = &regc_refresh_timer_cb;
+        regc->timer.id = REFRESH_TIMER;
+        regc->timer.user_data = regc;
+        pjsip_endpt_schedule_timer( regc->endpt, &regc->timer, &delay);
+        pj_gettimeofday(&regc->last_reg);
+        regc->next_reg = regc->last_reg;
+        regc->next_reg.sec += delay.sec;
+    }
+}
+
+PJ_DEF(pj_status_t)
+pjsip_regc_set_delay_before_refresh( pjsip_regc *regc,
+				     pj_uint32_t delay )
+{
+    PJ_ASSERT_RETURN(regc, PJ_EINVAL);
+
+    if (delay > regc->expires)
+        return PJ_ETOOBIG;
+
+    if (regc->delay_before_refresh != delay)
+    {
+        regc->delay_before_refresh = delay;
+
+        if (regc->timer.id != 0) {
+            /* Cancel registration timer */
+            pjsip_endpt_cancel_timer(regc->endpt, &regc->timer);
+            regc->timer.id = 0;
+
+            /* Schedule next registration */
+            schedule_registration(regc, regc->expires);
+        }
+    }
+
+    return PJ_SUCCESS;
+}
+
+
 static pj_int32_t calculate_response_expiration(const pjsip_regc *regc,
 					        const pjsip_rx_data *rdata,
 						unsigned *contact_cnt,
@@ -940,11 +991,12 @@ static pj_int32_t calculate_response_expiration(const pjsip_regc *regc,
     return expiration;
 }
 
-static void tsx_callback(void *token, pjsip_event *event)
+static void regc_tsx_callback(void *token, pjsip_event *event)
 {
     pj_status_t status;
     pjsip_regc *regc = (pjsip_regc*) token;
     pjsip_transaction *tsx = event->body.tsx_state.tsx;
+    pj_bool_t handled = PJ_TRUE;
 
     pj_atomic_inc(regc->busy_ctr);
     pj_lock_acquire(regc->lock);
@@ -1011,7 +1063,92 @@ static void tsx_callback(void *token, pjsip_event *event)
 	/* Just reset current op */
 	regc->current_op = REGC_IDLE;
 
+    } else if (tsx->status_code == PJSIP_SC_INTERVAL_TOO_BRIEF &&
+	       regc->current_op == REGC_REGISTERING)
+    {
+	/* Handle 423 response automatically:
+	 *  - set requested expiration to Min-Expires header, ONLY IF
+	 *    the original request is a registration (as opposed to
+	 *    unregistration) and the requested expiration was indeed
+	 *    lower than Min-Expires)
+	 *  - resend the request
+	 */
+	pjsip_rx_data *rdata = event->body.tsx_state.src.rdata;
+	pjsip_min_expires_hdr *me_hdr;
+	pjsip_tx_data *tdata;
+	pj_int32_t min_exp;
+
+	/* reset current op */
+	regc->current_op = REGC_IDLE;
+
+	/* Update requested expiration */
+	me_hdr = (pjsip_min_expires_hdr*)
+		 pjsip_msg_find_hdr(rdata->msg_info.msg,
+				    PJSIP_H_MIN_EXPIRES, NULL);
+	if (me_hdr) {
+	    min_exp = me_hdr->ivalue;
+	} else {
+	    /* Broken server, Min-Expires doesn't exist.
+	     * Just guestimate then, BUT ONLY if if this is the
+	     * first time we received such response.
+	     */
+	    enum {
+		/* Note: changing this value would require changing couple of
+		 *       Python test scripts.
+		 */
+		UNSPECIFIED_MIN_EXPIRES = 3601
+	    };
+	    if (!regc->expires_hdr ||
+		 regc->expires_hdr->ivalue != UNSPECIFIED_MIN_EXPIRES)
+	    {
+		min_exp = UNSPECIFIED_MIN_EXPIRES;
+	    } else {
+		handled = PJ_FALSE;
+		PJ_LOG(4,(THIS_FILE, "Registration failed: 423 response "
+				     "without Min-Expires header is invalid"));
+		goto handle_err;
+	    }
+	}
+
+	if (regc->expires_hdr && regc->expires_hdr->ivalue >= min_exp) {
+	    /* But we already send with greater expiration time, why does
+	     * the server send us with 423? Oh well, just fail the request.
+	     */
+	    handled = PJ_FALSE;
+	    PJ_LOG(4,(THIS_FILE, "Registration failed: invalid "
+			         "Min-Expires header value in response"));
+	    goto handle_err;
+	}
+
+	set_expires(regc, min_exp);
+
+	status = pjsip_regc_register(regc, regc->auto_reg, &tdata);
+	if (status == PJ_SUCCESS) {
+	    status = pjsip_regc_send(regc, tdata);
+	}
+
+	if (status != PJ_SUCCESS) {
+	    /* Only call callback if application is still interested
+	     * in it.
+	     */
+	    if (!regc->_delete_flag) {
+		/* Should be safe to release the lock temporarily.
+		 * We do this to avoid deadlock.
+		 */
+		pj_lock_release(regc->lock);
+		call_callback(regc, status, tsx->status_code,
+			      &rdata->msg_info.msg->line.status.reason,
+			      rdata, -1, 0, NULL);
+		pj_lock_acquire(regc->lock);
+	    }
+	}
+
     } else {
+	handled = PJ_FALSE;
+    }
+
+handle_err:
+    if (!handled) {
 	pjsip_rx_data *rdata;
 	pj_int32_t expiration = NOEXP;
 	unsigned contact_cnt = 0;
@@ -1027,29 +1164,8 @@ static void tsx_callback(void *token, pjsip_event *event)
 						       PJSIP_REGC_MAX_CONTACT,
 						       contact);
 
-	    /* Mark operation as complete */
-	    regc->current_op = REGC_IDLE;
-
 	    /* Schedule next registration */
-	    if (regc->auto_reg && expiration > 0) {
-		pj_time_val delay = { 0, 0};
-
-		delay.sec = expiration - DELAY_BEFORE_REFRESH;
-		if (regc->expires != PJSIP_REGC_EXPIRATION_NOT_SPECIFIED && 
-		    delay.sec > (pj_int32_t)regc->expires) 
-		{
-		    delay.sec = regc->expires;
-		}
-		if (delay.sec < DELAY_BEFORE_REFRESH) 
-		    delay.sec = DELAY_BEFORE_REFRESH;
-		regc->timer.cb = &regc_refresh_timer_cb;
-		regc->timer.id = REFRESH_TIMER;
-		regc->timer.user_data = regc;
-		pjsip_endpt_schedule_timer( regc->endpt, &regc->timer, &delay);
-		pj_gettimeofday(&regc->last_reg);
-		regc->next_reg = regc->last_reg;
-		regc->next_reg.sec += delay.sec;
-	    }
+            schedule_registration(regc, expiration);
 
 	} else {
 	    rdata = (event->body.tsx_state.type==PJSIP_EVENT_RX_MSG) ? 
@@ -1059,6 +1175,9 @@ static void tsx_callback(void *token, pjsip_event *event)
 	/* Update registration */
 	if (expiration==NOEXP) expiration=-1;
 	regc->expires = expiration;
+
+	/* Mark operation as complete */
+	regc->current_op = REGC_IDLE;
 
 	/* Call callback. */
 	/* Should be safe to release the lock temporarily.
@@ -1127,11 +1246,43 @@ PJ_DEF(pj_status_t) pjsip_regc_send(pjsip_regc *regc, pjsip_tx_data *tdata)
     else
 	regc->current_op = REGC_REGISTERING;
 
+    /* Prevent deletion of tdata, e.g: when something wrong in sending,
+     * we need tdata to retrieve the transport.
+     */
+    pjsip_tx_data_add_ref(tdata);
+
+    /* Need to unlock the regc temporarily while sending the message to
+     * prevent deadlock (https://trac.pjsip.org/repos/ticket/1247).
+     * It should be safe to do this since the regc's refcount has been
+     * incremented.
+     */
+    pj_lock_release(regc->lock);
+
+    /* Now send the message */
     status = pjsip_endpt_send_request(regc->endpt, tdata, REGC_TSX_TIMEOUT,
-				      regc, &tsx_callback);
+				      regc, &regc_tsx_callback);
     if (status!=PJ_SUCCESS) {
 	PJ_LOG(4,(THIS_FILE, "Error sending request, status=%d", status));
     }
+
+    /* Reacquire the lock */
+    pj_lock_acquire(regc->lock);
+
+    /* Get last transport used and add reference to it */
+    if (tdata->tp_info.transport != regc->last_transport) {
+	if (regc->last_transport) {
+	    pjsip_transport_dec_ref(regc->last_transport);
+	    regc->last_transport = NULL;
+	}
+
+	if (tdata->tp_info.transport) {
+	    regc->last_transport = tdata->tp_info.transport;
+	    pjsip_transport_add_ref(regc->last_transport);
+	}
+    }
+
+    /* Release tdata */
+    pjsip_tx_data_dec_ref(tdata);
 
     pj_lock_release(regc->lock);
 

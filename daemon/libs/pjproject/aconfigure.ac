@@ -1,4 +1,4 @@
-AC_INIT(pjproject,1.0)
+AC_INIT(pjproject,1.x)
 
 host_orig="$host"
 
@@ -8,18 +8,15 @@ AC_CANONICAL_TARGET
 AC_CONFIG_HEADER([pjlib/include/pj/compat/os_auto.h
 		  pjlib/include/pj/compat/m_auto.h
 		  pjmedia/include/pjmedia/config_auto.h
-		  pjmedia/include/pjmedia-codec/config_auto.h
-		  pjsip/include/pjsip/sip_autoconf.h
 		 ])
 AC_CONFIG_FILES([build.mak 
 		 build/os-auto.mak 
-	         pjlib/build/os-auto.mak 
-	         pjlib-util/build/os-auto.mak 
+		 build/cc-auto.mak
+		 pjlib/build/os-auto.mak 
+		 pjlib-util/build/os-auto.mak 
 		 pjmedia/build/os-auto.mak
 		 pjsip/build/os-auto.mak
-		 third_party/build/portaudio/os-auto.mak 
-		 third_party/build/os-auto.mak
-	        ])
+		 ])
 
 
 dnl
@@ -33,15 +30,58 @@ fi
 
 CXXFLAGS="$CFLAGS $CXXFLAGS"
 
+dnl #
+dnl # Configure tools
+dnl #
 AC_PROG_CC
 AC_PROG_CXX
 AC_LANG_C
 
+dnl #
+dnl # Setup CROSS_COMPILE variable
+dnl #
+if test -z "$CROSS_COMPILE"; then 
+    CROSS_COMPILE=`echo ${CC} | sed 's/gcc//'`
+fi
+
+if test "$AR" = ""; then AR="${CROSS_COMPILE}ar rv"; fi
+AC_SUBST(AR)
+if test "$LD" = ""; then LD="$CC"; fi
+AC_SUBST(LD)
+if test "$LDOUT" = ""; then LDOUT="-o"; fi
+AC_SUBST(LDOUT)
+if test "$RANLIB" = ""; then RANLIB="${CROSS_COMPILE}ranlib"; fi
+AC_SUBST(RANLIB)
+if test "$OBJEXT" = ""; then OBJEXT='o'; fi
+AC_SUBST(OBJEXT)
+if test "$LIBEXT" = ""; then LIBEXT='a'; fi
+AC_SUBST(LIBEXT)
+if test "$LIBEXT2" = ""; then LIBEXT2=""; fi
+AC_SUBST(LIBEXT2)
+if test "$CC_OUT" = ""; then CC_OUT="-o"; fi
+AC_SUBST(CC_OUT)
+if test "$CC_INC" = ""; then CC_INC="-I"; fi
+AC_SUBST(CC_INC)
+if test "$CC_DEF" = ""; then CC_DEF="-D"; fi
+AC_SUBST(CC_DEF)
+if test "$CC_OPTIMIZE" = ""; then CC_OPTIMIZE="-O2"; fi
+AC_SUBST(CC_OPTIMIZE)
+if test "$CC_CFLAGS" = ""; then CC_CFLAGS="-Wall"; fi
+AC_SUBST(CC_CFLAGS)
+
+
+
 AC_SUBST(ac_pjdir)
 AC_SUBST(ac_build_mak_vars)
-case $target in 
+
+case $host in 
     *mingw* | *cygw* | *win32* | *w32* )
-	ac_pjdir=`pwd -W`
+	if pwd -W 2&> /dev/null; then
+	   ac_pjdir=`pwd -W`
+	else
+	   # We're probably cross-compiling mingw on Linux
+	   ac_pjdir=`pwd`
+	fi
 	;;
     *)
 	ac_pjdir=`pwd`
@@ -67,7 +107,7 @@ dnl Memory alignment detection
 dnl
 AC_MSG_CHECKING([memory alignment])
 case $target in
-    ia64-* | x86_64-* )
+    sparc64-* | ia64-* | x86_64-* )
 	AC_DEFINE(PJ_POOL_ALIGNMENT, 8)
 	AC_MSG_RESULT([8 bytes])
 	;;
@@ -141,17 +181,25 @@ esac
 
 AC_CHECK_HEADER(fcntl.h,[AC_DEFINE(PJ_HAS_FCNTL_H,1)])
 AC_CHECK_HEADER(linux/socket.h,[AC_DEFINE(PJ_HAS_LINUX_SOCKET_H,1)])
+AC_CHECK_HEADER(limits.h,[AC_DEFINE(PJ_HAS_LIMITS_H,1)])
 AC_CHECK_HEADER(malloc.h,[AC_DEFINE(PJ_HAS_MALLOC_H,1)])
 AC_CHECK_HEADER(netdb.h,[AC_DEFINE(PJ_HAS_NETDB_H,1)])
 AC_CHECK_HEADER(netinet/in_systm.h,[AC_DEFINE(PJ_HAS_NETINET_IN_SYSTM_H,1)])
 AC_CHECK_HEADER(netinet/in.h,[AC_DEFINE(PJ_HAS_NETINET_IN_H,1)])
 AC_CHECK_HEADER(netinet/ip.h,[AC_DEFINE(PJ_HAS_NETINET_IP_H,1)],[],
-		 [#if PJ_HAS_NETINET_IN_SYSTM_H
+		 [#if PJ_HAS_SYS_TYPES_H
+          	  #	include <sys/types.h>
+          	  #endif
+		  #if PJ_HAS_NETINET_IN_SYSTM_H
           	  #	include <netinet/in_systm.h>
+          	  #endif
+		  #if PJ_HAS_NETINET_IN_H
+          	  #	include <netinet/in.h>
           	  #endif
           	 ])
 AC_CHECK_HEADER(netinet/tcp.h,[AC_DEFINE(PJ_HAS_NETINET_TCP_H,1)])
-AC_CHECK_HEADER(ifaddrs.h,[AC_DEFINE(PJ_HAS_IFADDRS_H,1)])
+AC_CHECK_HEADER(ifaddrs.h,
+		[AC_CHECK_FUNC(getifaddrs,[AC_DEFINE(PJ_HAS_IFADDRS_H,1)])])
 AC_CHECK_HEADER(semaphore.h,[AC_DEFINE(PJ_HAS_SEMAPHORE_H,1)])
 AC_CHECK_HEADER(setjmp.h,[AC_DEFINE(PJ_HAS_SETJMP_H,1)])
 AC_CHECK_HEADER(stdarg.h,[AC_DEFINE(PJ_HAS_STDARG_H,1)])
@@ -166,6 +214,9 @@ AC_CHECK_HEADER(sys/socket.h,[AC_DEFINE(PJ_HAS_SYS_SOCKET_H,1)])
 AC_CHECK_HEADER(sys/time.h,[AC_DEFINE(PJ_HAS_SYS_TIME_H,1)])
 AC_CHECK_HEADER(sys/timeb.h,[AC_DEFINE(PJ_HAS_SYS_TIMEB_H,1)])
 AC_CHECK_HEADER(sys/types.h,[AC_DEFINE(PJ_HAS_SYS_TYPES_H,1)])
+AC_CHECK_HEADER(sys/filio.h,[AC_DEFINE(PJ_HAS_SYS_FILIO_H,1)])
+AC_CHECK_HEADER(sys/sockio.h,[AC_DEFINE(PJ_HAS_SYS_SOCKIO_H,1)])
+AC_CHECK_HEADER(sys/utsname.h,[AC_DEFINE(PJ_HAS_SYS_UTSNAME_H,1)])
 AC_CHECK_HEADER(time.h,[AC_DEFINE(PJ_HAS_TIME_H,1)])
 AC_CHECK_HEADER(unistd.h,[AC_DEFINE(PJ_HAS_UNISTD_H,1)])
 AC_CHECK_HEADER(winsock.h,[AC_DEFINE(PJ_HAS_WINSOCK_H,1)])
@@ -180,11 +231,14 @@ AC_CHECK_HEADER(mswsock.h,[AC_DEFINE(PJ_HAS_MSWSOCK_H,1)],[],
 AC_CHECK_HEADER(ws2tcpip.h,[AC_DEFINE(PJ_HAS_WS2TCPIP_H,1)])
 AC_CHECK_HEADER(uuid/uuid.h,[ac_has_uuid_h=1])
 AC_CHECK_HEADER(net/if.h,[AC_DEFINE(PJ_HAS_NET_IF_H,1)],[],
-		 [#if PJ_HAS_SYS_SOCKET_H
+		 [#if PJ_HAS_SYS_TYPES_H
+          	  #	include <sys/types.h>
+          	  #endif
+		  #if PJ_HAS_SYS_SOCKET_H
+
           	  #	include <sys/socket.h>
           	  #endif
           	 ])
-
 AC_MSG_RESULT([Setting PJ_OS_NAME to $target])
 AC_DEFINE_UNQUOTED(PJ_OS_NAME,["$target"])
 
@@ -256,7 +310,8 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
 
 dnl # Determine if socklen_t is available
 AC_MSG_CHECKING([if socklen_t is available])
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/socket.h>]],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
+                                     #include <sys/socket.h>]],
 		    		   [socklen_t xxx = 0;])],
 		  [AC_DEFINE(PJ_HAS_SOCKLEN_T,1)
 		   AC_MSG_RESULT(yes)],
@@ -351,6 +406,11 @@ case $target in
 	;;
   *)
 	ac_os_objs="$ac_os_objs file_access_unistd.o file_io_ansi.o os_core_unix.o os_error_unix.o os_time_unix.o os_timestamp_posix.o"
+	case $target in
+	  arm-apple-darwin*)
+		ac_os_objs="$ac_os_objs os_info_iphone.o"
+		;;
+	esac
 	# UUID
 	if test "$ac_has_uuid_lib" = "1" -a "$ac_has_uuid_h" = "1"; then
 		ac_os_objs="$ac_os_objs guid_uuid.o"
@@ -367,6 +427,65 @@ dnl #
 dnl # PJMEDIA
 dnl #
 
+dnl # Use external Speex installation
+AC_SUBST(ac_external_speex,0)
+AC_ARG_WITH(external-speex,
+    AC_HELP_STRING([--with-external-speex],
+		   [Use external Speex development files, not the one in "third_party" directory. When this option is set, make sure that Speex is accessible to use (hint: use CFLAGS and LDFLAGS env var to set the include/lib paths)]),
+    [
+	if test "x$with_external_speex" != "xno"; then
+		# Test Speex installation
+		AC_MSG_CHECKING([if external Speex devkit is installed])
+		AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <speex/speex.h>
+						     #include <speex/speex_echo.h>
+						     ]],
+						  [speex_echo_state_init(0, 0); speex_encoder_init(0); ])],
+				  [AC_MSG_RESULT(yes!!)
+				   AC_DEFINE(PJMEDIA_EXTERNAL_SPEEX_CODEC, 1)
+				   ac_external_speex="1"
+				   ],
+				  [AC_MSG_ERROR([Unable to use external Speex library. If Speex development files are not available in the default locations, use CFLAGS and LDFLAGS env var to set the include/lib paths])])
+	fi
+    ]
+    )
+
+dnl # Use external GSM codec library installation
+AC_SUBST(ac_external_gsm,0)
+AC_ARG_WITH(external-gsm,
+    AC_HELP_STRING([--with-external-gsm],
+		   [Use external GSM codec library, not the one in "third_party" directory. When this option is set, make sure that the GSM include/lib files are accessible to use (hint: use CFLAGS and LDFLAGS env var to set the include/lib paths)]),
+    [
+	if test "x$with_external_gsm" != "xno"; then
+                # Test GSM library installation
+                AC_MSG_CHECKING([if external GSM devkit is installed as gsm/gsm.h])
+                AC_COMPILE_IFELSE(
+                    [AC_LANG_PROGRAM([[#include <gsm/gsm.h> ]], [gsm_create(); ]) ],
+                    [AC_MSG_RESULT(yes!!)
+                     AC_DEFINE(PJMEDIA_EXTERNAL_GSM_CODEC, 1)
+                     AC_DEFINE(PJMEDIA_EXTERNAL_GSM_GSM_H, 1)
+                     ac_external_gsm="1"
+                    ],
+                    [
+                     AC_MSG_RESULT(no)
+                     AC_MSG_CHECKING([if external GSM devkit is installed as gsm.h])
+                     AC_COMPILE_IFELSE(
+                        [AC_LANG_PROGRAM([[#include <gsm.h> ]], [gsm_create(); ]) ],
+                        [AC_MSG_RESULT(yes!!)
+                         AC_DEFINE(PJMEDIA_EXTERNAL_GSM_CODEC, 1)
+                         AC_DEFINE(PJMEDIA_EXTERNAL_GSM_H, 1)
+                         ac_external_gsm="1"
+                        ],
+                        [AC_MSG_ERROR([Unable to use external GSM library. If GSM development files are not available in the default locations, use CFLAGS and LDFLAGS env var to set the include/lib paths])
+                        ]
+                     )
+                    ]
+                )
+	fi
+    ]
+    )
+
+
+
 dnl # Sound device backend selection
 AC_SUBST(ac_pjmedia_snd)
 AC_ARG_ENABLE(sound,
@@ -377,6 +496,26 @@ AC_ARG_ENABLE(sound,
 		AC_MSG_RESULT([Checking if sound is disabled... yes])
 	       fi]
 	      )
+
+dnl # Use external PortAudio installation
+AC_SUBST(ac_external_pa,0)
+AC_ARG_WITH(external-pa,
+    AC_HELP_STRING([--with-external-pa],
+		   [Use external PortAudio development files, not the one in "third_party" directory. When this option is set, make sure that PortAudio is accessible to use (hint: use CFLAGS and LDFLAGS env var to set the include/lib paths)]),
+    [
+	if test "x$with_external_pa" != "xno"; then
+		# Test PortAudio installation
+		AC_MSG_CHECKING([if external PortAudio devkit is installed])
+		AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <portaudio.h>
+						     ]],
+						  [Pa_Initialize();])],
+				  [AC_MSG_RESULT(yes!!)
+				   ac_external_pa="1"
+				   ],
+				  [AC_MSG_ERROR([Unable to use PortAudio. If PortAudio development files are not available in the default locations, use CFLAGS and LDFLAGS env var to set the include/lib paths])])
+	fi
+    ]
+    )
 
 AC_SUBST(ac_pa_cflags)
 AC_CHECK_HEADER(sys/soundcard.h,
@@ -396,6 +535,10 @@ if test "$enable_sound" = "no"; then
   true;
 else
  case $target in
+  arm-apple-darwin*)
+	LIBS="$LIBS -framework CoreAudio -framework CoreFoundation -framework AudioToolbox -framework CFNetwork -framework UIKit"
+	AC_MSG_RESULT([Checking sound device backend... AudioUnit])
+	;;
   *darwin*)
 	LIBS="$LIBS -framework CoreAudio -framework CoreServices -framework AudioUnit -framework AudioToolbox"
 	if test "`uname -r`" = "6.8"; then
@@ -544,9 +687,7 @@ AC_ARG_ENABLE(g7221-codec,
 		AC_DEFINE(PJMEDIA_HAS_G7221_CODEC,0)
 		AC_MSG_RESULT([Checking if G.722.1 codec is disabled...yes])
 	       fi],
-	       [ac_no_g7221_codec=1]
-	       AC_DEFINE(PJMEDIA_HAS_G7221_CODEC,0)
-	      AC_MSG_RESULT([Checking if G.722.1 codec is disabled...yes]))
+	      AC_MSG_RESULT([Checking if G.722.1 codec is disabled...no]))
 
 dnl # Include Speex codec
 AC_SUBST(ac_no_speex_codec)
@@ -562,10 +703,6 @@ AC_ARG_ENABLE(speex-codec,
 
 dnl # Include iLBC codec
 AC_SUBST(ac_no_ilbc_codec)
-#AC_DEFINE(ac_no_ilbc_codec, 1)
-#AC_DEFINE(PJMEDIA_HAS_ILBC_CODEC, 0)
-#AC_MSG_RESULT([Checking if iLBC codec is disabled...yes])
-
 AC_ARG_ENABLE(ilbc-codec,
 	      AC_HELP_STRING([--disable-ilbc-codec],
 			     [Exclude iLBC codec in the build]),
@@ -574,9 +711,7 @@ AC_ARG_ENABLE(ilbc-codec,
 		AC_DEFINE(PJMEDIA_HAS_ILBC_CODEC,0)
 		AC_MSG_RESULT([Checking if iLBC codec is disabled...yes])
 	       fi],
-		[ac_no_ilbc_codec=1]
-		AC_DEFINE(PJMEDIA_HAS_ILBC_CODEC,0)
-	    AC_MSG_RESULT([Checking if iLBC codec is disabled...yes]))
+	      AC_MSG_RESULT([Checking if iLBC codec is disabled...no]))
 
 dnl # Include libsamplerate
 AC_ARG_ENABLE(libsamplerate,
@@ -597,18 +732,25 @@ AC_ARG_ENABLE(ipp,
     [enable_ipp=no]
     )
 
-AC_ARG_ENABLE(ipp,
+AC_ARG_WITH(ipp,
     AC_HELP_STRING([--with-ipp=DIR],
 		   [Specify the Intel IPP location]),
     [],
     [with_ipp=no]
     )
 
-AC_ARG_ENABLE(ipp-samples,
+AC_ARG_WITH(ipp-samples,
     AC_HELP_STRING([--with-ipp-samples=DIR],
 		   [Specify the Intel IPP samples location]),
     [],
     [with_ipp_samples=no]
+    )
+
+AC_ARG_WITH(ipp-arch,
+    AC_HELP_STRING([--with-ipp-arch=ARCH],
+		   [Specify the Intel IPP ARCH suffix, e.g. "64" or "em64t. Default is blank for IA32"]),
+    [],
+    [with_ipp_arch=no]
     )
 
 if test "x$enable_ipp" != "xno"; then
@@ -629,6 +771,14 @@ if test "x$enable_ipp" != "xno"; then
 	AC_MSG_RESULT([$IPPROOT])
     fi
 
+    if test "x$with_ipp_arch" != "xno"; then
+	IPP_SUFFIX=$with_ipp_arch
+	AC_MSG_RESULT([IPP arch suffix is set to $IPP_SUFFIX])
+    else
+	IPP_SUFFIX=""
+	AC_MSG_RESULT([IPP arch suffix is set to empty])
+    fi
+
     if test x$IPPROOT = x; then
 	AC_MSG_ERROR([the location is neither specified nor can be guessed. Please specify with IPPROOT env var or with --with-ipp option])
     elif test ! -d $IPPROOT; then
@@ -638,16 +788,50 @@ if test "x$enable_ipp" != "xno"; then
     else
 	# IPP directory looks okay.
 	# Remove trailing backslash
-	IPPROOT=`echo $IPPROOT/ | sed 's/\/$//'`
+	IPPROOT=`echo $IPPROOT | sed 's/\/$//'`
 
 	SAVED_CFLAGS="$CFLAGS"
 	SAVED_LDFLAGS="$LDFLAGS"
 	SAVED_LIBS="$LIBS"
 
 	IPP_CFLAGS="-I$IPPROOT/include"
-	IPP_LDFLAGS="-L$IPPROOT/sharedlib"
-	IPP_LIBS="-lippsc -lipps -lippsr -lippcore -lguide"
+	IPP_LIBS="-lippsc${IPP_SUFFIX} -lipps${IPP_SUFFIX} -lippcore${IPP_SUFFIX}"
+
+#
+	# Some differences between Mac OS X and Linux
+	case $target in 
+	    *darwin* )
+		IPP_LDFLAGS="-L$IPPROOT/Libraries -L$IPPROOT/lib"
+		;;
+	    *)
+	    	# Find out where the libraries live.
+		IPP7_ARCH=""
+		if test -d $IPPROOT/lib/intel64; then
+		   IPP7_ARCH="intel64"
+		elif test -d $IPPROOT/lib/ia32; then
+		   IPP7_ARCH="ia32"
+		elif test -d $IPPROOT/lib/mic; then
+		   IPP7_ARCH="mic"
+		fi
+
+		if test -z "$IPP7_ARCH"; then
+		   # IPP6 (and possibly below)
+		   IPP_LDFLAGS="-L$IPPROOT/sharedlib"
+		   IPP_LIBS="$IPP_LIBS  -lippsr${IPP_SUFFIX} -lguide"
+		else
+		   # IPP7
+		   if ! test -d $IPPROOT/../compiler; then
+			AC_MSG_ERROR([Cannot find $IPPROOT/../compiler directory. Please set IPPROOT variable correctly])
+		   fi
+		   IPP_CFLAGS="$IPP_CFLAGS"
+		   IPP_LDFLAGS="-L$IPPROOT/lib/intel64 -L$IPPROOT/../compiler/lib/$IPP7_ARCH"
+		   IPP_LIBS="$IPP_LIBS -liomp5"
+		fi
+		;;
+	esac
+
 	#IPP_LDFLAGS="-L$IPPROOT/sharedlib"
+	#Static:
 	#IPP_LIBS="-lippscmerged -lippsrmerged -lippsmerged -lippcore"
 
 	CFLAGS="$CFLAGS $IPP_CFLAGS"
@@ -660,7 +844,7 @@ if test "x$enable_ipp" != "xno"; then
 					   ]],
 					   [ippStaticInit();])],
 		  [AC_MSG_RESULT(ok)],
-		  [AC_MSG_FAILURE(failed)])
+		  [AC_MSG_FAILURE(Error: unable to recognize your IPP installation. Make sure the paths and ARCH suffix are set correctly, run with --help for more info)])
 
 	CFLAGS="$SAVED_CFLAGS"
 	LDFLAGS="$SAVED_LDFLAGS"
@@ -693,26 +877,57 @@ if test "x$enable_ipp" != "xno"; then
     else
 	# Remove trailing backslash
 	IPPSAMPLES=`echo $IPPSAMPLES | sed 's/\/$//'`
-
-	# Guess the libusc.a build location
+	
+	# Guess the libusc.a/libspeech.a build location
 	AC_MSG_CHECKING([Intel IPP USC build location])
-	IPPSAMPLESLIB=`ls -d $IPPSAMPLES/speech-codecs/bin/*gcc*/lib | head -1`
-	if test ! -d $IPPSAMPLESLIB; then
-	    AC_MSG_FAILURE([the $IPPSAMPLES/speech-codecs/bin/*gcc*/lib directory not found. Have you built the samples?])
+	if test -d $IPPSAMPLES/speech-codecs/bin; then
+	    IPPVER=5 
+	    IPPSAMP_DIR=`ls -d $IPPSAMPLES/speech-codecs/bin/*gcc*/lib | head -1`
+	elif test -d $IPPSAMPLES/speech-codecs/_bin; then
+	    IPPVER=6
+	    if test -d $IPPSAMPLES/speech-codecs/_bin/*gcc*; then
+		# gcc compiler
+	    	IPPSAMP_DIR=`ls -d $IPPSAMPLES/speech-codecs/_bin/*gcc*/lib | head -1`
+	    elif test -d $IPPSAMPLES/speech-codecs/_bin/*icc*; then
+		# icc compiler
+	    	IPPSAMP_DIR=`ls -d $IPPSAMPLES/speech-codecs/_bin/*icc*/lib | head -1`
+	    else
+		AC_MSG_FAILURE([Unable to find to find built binaries under $IPPSAMPLES/speech-codecs/{bin,_bin}. Have you built the IPP samples?])
+	    fi
+	else
+	    AC_MSG_FAILURE([unable to find $IPPSAMPLES/speech-codecs/bin/*gcc*/lib or $IPPSAMPLES/speech-codecs/_bin/*gcc*/lib directory. Have you built the samples?])
 	fi
-	if test ! -f $IPPSAMPLESLIB/libusc.a; then
-	    AC_MSG_FAILURE([libusc.a doesn't exist in $IPPSAMPLESLIB])
+
+	# Test the directory
+	if test ! -d $IPPSAMP_DIR; then
+	    AC_MSG_FAILURE([There's something wrong with this script, directory $IPPSAMP_DIR does not exist])
+	    exit 1;
 	fi
-	AC_MSG_RESULT([$IPPSAMPLESLIB])
+
+    	if test "x$IPPVER" = "x5"; then
+	    IPPSAMP_LIBS="libusc.a"
+	    IPPSAMP_LDLIBS="-lusc"
+	elif test "x$IPPVER" = "x6"; then
+	    IPPSAMP_LIBS="libspeech.a"
+	    IPPSAMP_LDLIBS="-lspeech"
+	else
+	    AC_MSG_FAILURE([bug in this script: unsupported IPP version])
+	fi
+
+	if test ! -f $IPPSAMP_DIR/$IPPSAMP_LIBS; then
+	    AC_MSG_FAILURE([$IPPSAMP_LIBS doesn't exist in $IPPSAMP_DIR])
+	fi
+
+	AC_MSG_RESULT([$IPPSAMP_DIR])
 
 	SAVED_CFLAGS="$CFLAGS"
 	SAVED_LDFLAGS="$LDFLAGS"
 	SAVED_LIBS="$LIBS"
 
-	IPPSAMPLESINC="-I$IPPSAMPLES/speech-codecs/core/usc/include"
-	CFLAGS="$CFLAGS $IPPSAMPLESINC"
-	LDFLAGS="$LDFLAGS -L$IPPSAMPLESLIB"
-	LIBS="-lusc $LIBS"
+	IPPSAMP_INC="-I$IPPSAMPLES/speech-codecs/core/usc/include"
+	CFLAGS="$CFLAGS $IPPSAMP_INC"
+	LDFLAGS="$LDFLAGS -L$IPPSAMP_DIR"
+	LIBS="$IPPSAMP_LDLIBS $LIBS"
 
 	AC_MSG_CHECKING([Intel IPP USC usability])
 	AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <usc.h>
@@ -722,13 +937,17 @@ if test "x$enable_ipp" != "xno"; then
 		  [AC_MSG_FAILURE(failed)])
 
 	CFLAGS="$SAVED_CFLAGS"
-	LDFLAGS="\$(IPP_LDFLAGS) $SAVED_LDFLAGS"
-	LIBS="\$(IPP_LIBS) $SAVED_LIBS"
+	LDFLAGS="$IPP_LDFLAGS $SAVED_LDFLAGS"
+	LIBS="$IPP_LIBS $SAVED_LIBS"
 
-	IPP_CFLAGS="$IPP_CFLAGS $IPPSAMPLESINC"
-	IPP_LDFLAGS="$IPP_LDFLAGS -L$IPPSAMPLESLIB"
-	IPP_LIBS="-lusc $IPP_LIBS"
+	IPP_CFLAGS="$IPP_CFLAGS $IPPSAMP_INC"
+	IPP_LDFLAGS="$IPP_LDFLAGS -L$IPPSAMP_DIR"
+	IPP_LIBS="$IPPSAMP_LDLIBS $IPP_LIBS"
     fi
+
+    CFLAGS="$CFLAGS $IPP_CFLAGS"
+    LDFLAGS="$LDFLAGS $IPP_LDFLAGS"
+    LIBS="$LIBS $IPP_LIBS"
 
     ac_build_mak_vars="$ac_build_mak_vars\n\
 export IPP_CFLAGS=$IPP_CFLAGS\n\
@@ -762,8 +981,8 @@ AC_ARG_ENABLE(ssl,
 		AC_SUBST(libssl_present)
 		AC_SUBST(libcrypto_present)
 		AC_CHECK_HEADER(openssl/ssl.h,[openssl_h_present=1])
-		AC_CHECK_LIB(ssl,SSL_library_init,[libssl_present=1 && LIBS="$LIBS -lssl"])
 		AC_CHECK_LIB(crypto,ERR_load_BIO_strings,[libcrypto_present=1 && LIBS="$LIBS -lcrypto"])
+		AC_CHECK_LIB(ssl,SSL_library_init,[libssl_present=1 && LIBS="$LIBS -lssl"])
 		if test "x$openssl_h_present" = "x1" -a "x$libssl_present" = "x1" -a "x$libcrypto_present" = "x1"; then
 	        	AC_MSG_RESULT([OpenSSL library found, SSL support enabled])
 			# PJSIP_HAS_TLS_TRANSPORT setting follows PJ_HAS_SSL_SOCK

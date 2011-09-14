@@ -1,6 +1,6 @@
-/* $Id: session.c 2844 2009-07-29 12:14:21Z bennylp $ */
+/* $Id: session.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjmedia/session.h>
 #include <pjmedia/errno.h>
@@ -537,6 +526,23 @@ PJ_DEF(pj_status_t) pjmedia_stream_info_from_sdp(
     /* Get local fmtp for our decoder. */
     parse_fmtp(pool, local_m, si->fmt.pt, &si->param->setting.dec_fmtp);
 
+    /* Get the remote ptime for our encoder. */
+    attr = pjmedia_sdp_attr_find2(rem_m->attr_count, rem_m->attr,
+				  "ptime", NULL);
+    if (attr) {
+	pj_str_t tmp_val = attr->value;
+	unsigned frm_per_pkt;
+ 
+	pj_strltrim(&tmp_val);
+
+	/* Round up ptime when the specified is not multiple of frm_ptime */
+	frm_per_pkt = (pj_strtoul(&tmp_val) + si->param->info.frm_ptime/2) /
+		      si->param->info.frm_ptime;
+	if (frm_per_pkt != 0) {
+            si->param->setting.frm_per_pkt = (pj_uint8_t)frm_per_pkt;
+        }
+    }
+
     /* Get remote maxptime for our encoder. */
     attr = pjmedia_sdp_attr_find2(rem_m->attr_count, rem_m->attr,
 				  "maxptime", NULL);
@@ -821,7 +827,8 @@ PJ_DEF(pj_status_t) pjmedia_session_enum_streams(const pjmedia_session *session,
 	*count = session->stream_cnt;
 
     for (i=0; i<*count; ++i) {
-	pj_memcpy(&info[i], &session->stream[i], sizeof(pjmedia_stream_info));
+	pj_memcpy(&info[i], &session->stream_info[i], 
+                  sizeof(pjmedia_stream_info));
     }
 
     return PJ_SUCCESS;
@@ -849,6 +856,18 @@ PJ_DEF(pj_status_t) pjmedia_session_get_stream_stat( pjmedia_session *session,
 		     PJ_EINVAL);
 
     return pjmedia_stream_get_stat(session->stream[index], stat);
+}
+
+
+/**
+ * Reset session statistics.
+ */
+PJ_DEF(pj_status_t) pjmedia_session_reset_stream_stat( pjmedia_session *session,
+						       unsigned index)
+{
+    PJ_ASSERT_RETURN(session && index < session->stream_cnt, PJ_EINVAL);
+
+    return pjmedia_stream_reset_stat(session->stream[index]);
 }
 
 

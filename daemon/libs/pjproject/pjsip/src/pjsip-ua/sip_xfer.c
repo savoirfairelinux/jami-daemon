@@ -1,6 +1,6 @@
-/* $Id: sip_xfer.c 2750 2009-06-04 22:16:47Z bennylp $ */
+/* $Id: sip_xfer.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjsip-ua/sip_xfer.h>
 #include <pjsip-simple/evsub_msg.h>
@@ -385,6 +374,7 @@ PJ_DEF(pj_status_t) pjsip_xfer_notify( pjsip_evsub *sub,
 {
     pjsip_tx_data *tdata;
     pjsip_xfer *xfer;
+    pjsip_param *param;
     const pj_str_t reason = { "noresource", 10 };
     char *body;
     int bodylen;
@@ -433,13 +423,17 @@ PJ_DEF(pj_status_t) pjsip_xfer_notify( pjsip_evsub *sub,
 
     /* Create SIP message body. */
     msg_body = PJ_POOL_ZALLOC_T(tdata->pool, pjsip_msg_body);
-    msg_body->content_type.type = STR_MESSAGE;
-    msg_body->content_type.subtype = STR_SIPFRAG;
-    msg_body->content_type.param = STR_SIPFRAG_VERSION;
+    pjsip_media_type_init(&msg_body->content_type, (pj_str_t*)&STR_MESSAGE,
+			  (pj_str_t*)&STR_SIPFRAG);
     msg_body->data = body;
     msg_body->len = bodylen;
     msg_body->print_body = &pjsip_print_text_body;
     msg_body->clone_data = &pjsip_clone_text_data;
+
+    param = PJ_POOL_ALLOC_T(tdata->pool, pjsip_param);
+    param->name = pj_str("version");
+    param->value = pj_str("2.0");
+    pj_list_push_back(&msg_body->content_type.param, param);
 
     /* Attach sipfrag body. */
     tdata->msg->body = msg_body;

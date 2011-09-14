@@ -1,6 +1,6 @@
-/* $Id: ioqueue_common_abs.c 2826 2009-07-02 08:24:22Z bennylp $ */
+/* $Id: ioqueue_common_abs.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 
 /*
@@ -210,7 +199,7 @@ void ioqueue_dispatch_write_event(pj_ioqueue_t *ioqueue, pj_ioqueue_key_t *h)
 #if defined(PJ_HAS_TCP) && PJ_HAS_TCP!=0
     if (h->connecting) {
 	/* Completion of connect() operation */
-	pj_ssize_t bytes_transfered;
+	pj_status_t status;
 	pj_bool_t has_lock;
 
 	/* Clear operation. */
@@ -237,13 +226,13 @@ void ioqueue_dispatch_write_event(pj_ioqueue_t *ioqueue, pj_ioqueue_key_t *h)
 	     * application will get error as soon as it tries to use
 	     * the socket to send/receive.
 	     */
-	    bytes_transfered = 0;
+	      status = PJ_SUCCESS;
 	  } else {
-            bytes_transfered = value;
+	      status = PJ_STATUS_FROM_OS(value);
 	  }
  	}
 #elif defined(PJ_WIN32) && PJ_WIN32!=0
-	bytes_transfered = 0; /* success */
+	status = PJ_SUCCESS; /* success */
 #else
 	/* Excellent information in D.J. Bernstein page:
 	 * http://cr.yp.to/docs/connect.html
@@ -256,12 +245,11 @@ void ioqueue_dispatch_write_event(pj_ioqueue_t *ioqueue, pj_ioqueue_key_t *h)
 	 * of suggestions from Douglas C. Schmidt and Ken Keys.
 	 */
 	{
-	    int gp_rc;
 	    struct sockaddr_in addr;
-	    socklen_t addrlen = sizeof(addr);
+	    int addrlen = sizeof(addr);
 
-	    gp_rc = getpeername(h->fd, (struct sockaddr*)&addr, &addrlen);
-	    bytes_transfered = (gp_rc < 0) ? gp_rc : -gp_rc;
+	    status = pj_sock_getpeername(h->fd, (struct sockaddr*)&addr,
+				         &addrlen);
 	}
 #endif
 
@@ -280,7 +268,7 @@ void ioqueue_dispatch_write_event(pj_ioqueue_t *ioqueue, pj_ioqueue_key_t *h)
 
 	/* Call callback. */
         if (h->cb.on_connect_complete && !IS_CLOSING(h))
-	    (*h->cb.on_connect_complete)(h, bytes_transfered);
+	    (*h->cb.on_connect_complete)(h, status);
 
 	/* Unlock if we still hold the lock */
 	if (has_lock) {
@@ -324,11 +312,29 @@ void ioqueue_dispatch_write_event(pj_ioqueue_t *ioqueue, pj_ioqueue_key_t *h)
 	     */
 	    //write_op->op = 0;
         } else if (write_op->op == PJ_IOQUEUE_OP_SEND_TO) {
-            send_rc = pj_sock_sendto(h->fd, 
-                                     write_op->buf+write_op->written,
-                                     &sent, write_op->flags,
-                                     &write_op->rmt_addr, 
-                                     write_op->rmt_addrlen);
+	    int retry;
+	    for (retry=0; retry<2; ++retry) {
+		send_rc = pj_sock_sendto(h->fd, 
+					 write_op->buf+write_op->written,
+					 &sent, write_op->flags,
+					 &write_op->rmt_addr, 
+					 write_op->rmt_addrlen);
+#if defined(PJ_IPHONE_OS_HAS_MULTITASKING_SUPPORT) && \
+	    PJ_IPHONE_OS_HAS_MULTITASKING_SUPPORT!=0
+		/* Special treatment for dead UDP sockets here, see ticket #1107 */
+		if (send_rc==PJ_STATUS_FROM_OS(EPIPE) && !IS_CLOSING(h) &&
+		    h->fd_type==pj_SOCK_DGRAM())
+		{
+		    PJ_PERROR(4,(THIS_FILE, send_rc,
+				 "Send error for socket %d, retrying",
+				 h->fd));
+		    replace_udp_sock(h);
+		    continue;
+		}
+#endif
+		break;
+	    }
+
 	    /* Can't do this. We only clear "op" after we're finished sending
 	     * the whole buffer.
 	     */
@@ -541,6 +547,16 @@ void ioqueue_dispatch_read_event( pj_ioqueue_t *ioqueue, pj_ioqueue_key_t *h )
 
             /* In any case we would report this to caller. */
             bytes_read = -rc;
+
+#if defined(PJ_IPHONE_OS_HAS_MULTITASKING_SUPPORT) && \
+    PJ_IPHONE_OS_HAS_MULTITASKING_SUPPORT!=0
+	    /* Special treatment for dead UDP sockets here, see ticket #1107 */
+	    if (rc == PJ_STATUS_FROM_OS(ENOTCONN) && !IS_CLOSING(h) &&
+		h->fd_type==pj_SOCK_DGRAM())
+	    {
+		replace_udp_sock(h);
+	    }
+#endif
 	}
 
 	/* Unlock; from this point we don't need to hold key's mutex
@@ -919,12 +935,17 @@ PJ_DEF(pj_status_t) pj_ioqueue_sendto( pj_ioqueue_key_t *key,
 {
     struct write_operation *write_op;
     unsigned retry;
+#if defined(PJ_IPHONE_OS_HAS_MULTITASKING_SUPPORT) && \
+	    PJ_IPHONE_OS_HAS_MULTITASKING_SUPPORT!=0
+    pj_bool_t restart_retry = PJ_FALSE;
+#endif
     pj_status_t status;
     pj_ssize_t sent;
 
     PJ_ASSERT_RETURN(key && op_key && data && length, PJ_EINVAL);
     PJ_CHECK_STACK();
 
+retry_on_restart:
     /* Check if key is closing. */
     if (IS_CLOSING(key))
 	return PJ_ECANCELLED;
@@ -961,6 +982,21 @@ PJ_DEF(pj_status_t) pj_ioqueue_sendto( pj_ioqueue_key_t *key,
              * the error to caller.
              */
             if (status != PJ_STATUS_FROM_OS(PJ_BLOCKING_ERROR_VAL)) {
+#if defined(PJ_IPHONE_OS_HAS_MULTITASKING_SUPPORT) && \
+	    PJ_IPHONE_OS_HAS_MULTITASKING_SUPPORT!=0
+		/* Special treatment for dead UDP sockets here, see ticket #1107 */
+		if (status==PJ_STATUS_FROM_OS(EPIPE) && !IS_CLOSING(key) &&
+		    key->fd_type==pj_SOCK_DGRAM() && !restart_retry)
+		{
+		    PJ_PERROR(4,(THIS_FILE, status,
+				 "Send error for socket %d, retrying",
+				 key->fd));
+		    replace_udp_sock(key);
+		    restart_retry = PJ_TRUE;
+		    goto retry_on_restart;
+		}
+#endif
+
                 return status;
             }
 	    status = status;

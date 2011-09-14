@@ -1,6 +1,6 @@
-/* $Id: sip_msg.h 2968 2009-10-26 11:21:37Z bennylp $ */
+/* $Id: sip_msg.h 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #ifndef __PJSIP_SIP_MSG_H__
 #define __PJSIP_SIP_MSG_H__
@@ -476,7 +465,14 @@ typedef enum pjsip_status_code
 
     PJSIP_SC_TSX_TIMEOUT = PJSIP_SC_REQUEST_TIMEOUT,
     /*PJSIP_SC_TSX_RESOLVE_ERROR = 702,*/
-    PJSIP_SC_TSX_TRANSPORT_ERROR = PJSIP_SC_SERVICE_UNAVAILABLE
+    PJSIP_SC_TSX_TRANSPORT_ERROR = PJSIP_SC_SERVICE_UNAVAILABLE,
+
+    /* This is not an actual status code, but rather a constant
+     * to force GCC to use 32bit to represent this enum, since
+     * we have a code in PJSUA-LIB that assigns an integer
+     * to this enum (see pjsua_acc_get_info() function).
+     */
+    PJSIP_SC__force_32bit = 0x7FFFFFFF
 
 } pjsip_status_code;
 
@@ -519,9 +515,49 @@ typedef struct pjsip_media_type
 {
     pj_str_t type;	    /**< Media type. */
     pj_str_t subtype;	    /**< Media subtype. */
-    pj_str_t param;	    /**< Media type parameters (concatenated). */
+    pjsip_param param;	    /**< Media type parameters */
 } pjsip_media_type;
 
+
+/**
+ * Initialize the media type with the specified type and subtype string.
+ *
+ * @param mt		The media type.
+ * @param type		Optionally specify the media type.
+ * @param subtype	Optionally specify the media subtype.
+ */
+PJ_DECL(void) pjsip_media_type_init(pjsip_media_type *mt,
+				    pj_str_t *type,
+				    pj_str_t *subtype);
+
+/**
+ * Initialize the media type with the specified type and subtype string.
+ *
+ * @param mt		The media type.
+ * @param type		Optionally specify the media type.
+ * @param subtype	Optionally specify the media subtype.
+ */
+PJ_DECL(void) pjsip_media_type_init2(pjsip_media_type *mt,
+				     char *type,
+				     char *subtype);
+
+/**
+ * Compare two media types.
+ *
+ * @param mt1		The first media type.
+ * @param mt2		The second media type.
+ * @param cmp_param	Specify how to compare the media type parameters:
+ * 			 - 0: do not compare parameters
+ * 			 - 1: compare parameters but ignore parameters that
+ * 			      only appear in one of the media type.
+ * 			 - 2: compare the parameters.
+ *
+ * @return		Zero if both media types are equal, -1 if mt1 < mt2,
+ * 			1 if mt1 > mt2.
+ */
+PJ_DECL(int) pjsip_media_type_cmp(const pjsip_media_type *mt1,
+				  const pjsip_media_type *mt2,
+				  int cmp_param);
 
 /**
  * Copy SIP media type to another.
@@ -533,6 +569,19 @@ typedef struct pjsip_media_type
 PJ_DECL(void) pjsip_media_type_cp(pj_pool_t *pool,
 				  pjsip_media_type *dst,
 				  const pjsip_media_type *src);
+
+/**
+ * Print media type to the specified buffer.
+ *
+ * @param buf		Destination buffer.
+ * @param len		Length of the buffer.
+ * @param mt		The media type to be printed.
+ *
+ * @return		The number of characters printed to the buffer, or -1
+ * 			if there's not enough space in the buffer.
+ */
+PJ_DECL(int) pjsip_media_type_print(char *buf, unsigned len,
+				    const pjsip_media_type *mt);
 
 /**
  * @}

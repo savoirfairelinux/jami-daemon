@@ -1,6 +1,6 @@
-/* $Id: rtcp_xr.h 2394 2008-12-23 17:27:53Z bennylp $ */
+/* $Id: rtcp_xr.h 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #ifndef __PJMEDIA_RTCP_XR_H__
 #define __PJMEDIA_RTCP_XR_H__
@@ -403,7 +392,6 @@ PJ_DECL(pj_status_t) pjmedia_rtcp_xr_update_info(
  * @param session   RTCP XR session.
  * @param r_session RTCP session.
  * @param gmin      Gmin value (defined in RFC 3611), set to 0 for default (16).
- * @param ptime	    Packet time.
  * @param frames_per_packet
 		    Number of frames per packet.
  */
@@ -429,7 +417,7 @@ void pjmedia_rtcp_xr_fini( pjmedia_rtcp_xr_session *session );
  * @param size	    Size of the incoming packet.
  */
 void pjmedia_rtcp_xr_rx_rtcp_xr( pjmedia_rtcp_xr_session *session,
-				 const void *rtcp_xr_pkt,
+				 const void *rtcp_pkt,
 				 pj_size_t size);
 
 /**

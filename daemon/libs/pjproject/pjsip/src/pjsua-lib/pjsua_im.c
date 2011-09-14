@@ -1,6 +1,6 @@
-/* $Id: pjsua_im.c 2923 2009-10-01 14:17:49Z bennylp $ */
+/* $Id: pjsua_im.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjsua-lib/pjsua.h>
 #include <pjsua-lib/pjsua_internal.h>
@@ -180,7 +169,7 @@ void pjsua_im_process_pager(int call_id, const pj_str_t *from,
     contact_hdr = (pjsip_contact_hdr*)
 		  pjsip_msg_find_hdr(rdata->msg_info.msg, PJSIP_H_CONTACT,
 				     NULL);
-    if (contact_hdr) {
+    if (contact_hdr && contact_hdr->uri) {
 	contact.ptr = (char*) pj_pool_alloc(rdata->tp_info.pool, 
 				    	    PJSIP_MAX_URL_SIZE);
 	contact.slen = pjsip_uri_print(PJSIP_URI_IN_CONTACT_HDR,
