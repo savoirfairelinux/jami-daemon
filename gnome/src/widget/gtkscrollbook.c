@@ -165,7 +165,7 @@ pidgin_scroll_book_add (GtkContainer *container, GtkWidget *widget)
     PidginScrollBook *scroll_book;
 
     g_return_if_fail (GTK_IS_WIDGET (widget));
-    g_return_if_fail (widget->parent == NULL);
+    g_return_if_fail (gtk_widget_get_parent(widget) == NULL);
 
     scroll_book = PIDGIN_SCROLL_BOOK (container);
     scroll_book->children = g_list_append (scroll_book->children, widget);

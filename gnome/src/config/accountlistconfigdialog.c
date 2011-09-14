@@ -592,7 +592,7 @@ show_account_list_config_dialog (void)
     gtk_window_set_resizable (GTK_WINDOW (accountListDialog), FALSE);
 
     gnome_main_section_new (_ ("Configured Accounts"), &accountFrame);
-    gtk_box_pack_start (GTK_BOX (accountListDialog->vbox), accountFrame , TRUE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area(accountListDialog)), accountFrame , TRUE, TRUE, 0);
     gtk_widget_show (accountFrame);
 
     /* Accounts tab */
@@ -604,7 +604,7 @@ show_account_list_config_dialog (void)
     status_bar = gtk_statusbar_new();
     gtk_statusbar_set_has_resize_grip (GTK_STATUSBAR (status_bar), FALSE);
     gtk_widget_show (status_bar);
-    gtk_box_pack_start (GTK_BOX (accountListDialog->vbox), status_bar, TRUE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area(accountListDialog)), status_bar, TRUE, TRUE, 0);
 
     int number_accounts = account_list_get_registered_accounts ();
 

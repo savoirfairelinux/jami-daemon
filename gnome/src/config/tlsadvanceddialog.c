@@ -60,7 +60,7 @@ void show_advanced_tls_options (GHashTable * properties)
 
     ret = gtk_vbox_new (FALSE, 10);
     gtk_container_set_border_width (GTK_CONTAINER (ret), 10);
-    gtk_box_pack_start (GTK_BOX (tlsDialog->vbox), ret, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area(tlsDialog)), ret, FALSE, FALSE, 0);
 
     GtkWidget *frame, *table;
     gnome_main_section_new_with_table (_ ("TLS transport"), &frame, &table, 3, 13);
