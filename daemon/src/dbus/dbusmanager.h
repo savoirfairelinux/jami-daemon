@@ -34,6 +34,8 @@
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <dbus-c++/dbus.h>
+#pragma GCC diagnostic warning "-Wignored-qualifiers"
+#pragma GCC diagnostic warning "-Wunused-parameter"
 class ConfigurationManager;
 class CallManager;
 class NetworkManager;

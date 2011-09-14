@@ -93,7 +93,7 @@ AudioStream::~AudioStream()
 }
 
 void
-AudioStream::stream_state_callback (pa_stream* s, void* user_data)
+AudioStream::stream_state_callback (pa_stream* s, void* user_data UNUSED)
 {
     char str[PA_SAMPLE_SPEC_SNPRINT_MAX];
 

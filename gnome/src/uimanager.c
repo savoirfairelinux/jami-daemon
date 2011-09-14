@@ -577,14 +577,16 @@ call_im(void* foo UNUSED)
     conference_obj_t *selectedConf = calltab_get_selected_conf(current_calls);
 
     if (calltab_get_selected_type(current_calls) == A_CALL) {
-        if (selectedCall)
-            im_widget_display((IMWidget **) (&selectedCall->_im_widget), NULL, selectedCall->_callID, NULL);
-        else
+        if (selectedCall) {
+            if (!selectedCall->_im_widget)
+                selectedCall->_im_widget = im_widget_display(selectedCall->_callID);
+        } else
             WARN("Sorry. Instant messaging is not allowed outside a call\n");
     } else {
-        if (selectedConf)
-            im_widget_display((IMWidget **) (&selectedConf->_im_widget), NULL, selectedConf->_confID, NULL);
-        else
+        if (selectedConf) {
+            if (!selectedConf->_im_widget)
+                selectedConf->_im_widget = im_widget_display(selectedConf->_confID);
+        } else
             WARN("Sorry. Instant messaging is not allowed outside a call\n");
     }
 }

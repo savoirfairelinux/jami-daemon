@@ -337,9 +337,6 @@ int Sdp::createLocalSession (const CodecOrder &selectedCodecs)
 int Sdp::createOffer (const CodecOrder &selectedCodecs)
 {
     pj_status_t status;
-    pjmedia_sdp_neg_state state;
-
-    _info ("SDP: Create initial offer");
 
     // Build the SDP session descriptor
     status = createLocalSession (selectedCodecs);
@@ -354,8 +351,6 @@ int Sdp::createOffer (const CodecOrder &selectedCodecs)
         _error ("SDP: Error: Failed to create an initial SDP negotiator");
         return status;
     }
-
-    state = pjmedia_sdp_neg_get_state (negotiator_);
 
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
