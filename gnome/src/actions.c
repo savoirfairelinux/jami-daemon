@@ -619,7 +619,6 @@ process_dialing (callable_obj_t *c, guint keyval, gchar *key)
         {
             gchar *num = (c->_state == CALL_STATE_TRANSFER) ? c->_trsft_to : c->_peer_number;
             size_t len = strlen(num);
-            printf("\"%s\" : %zu\n", num, len);
             if (len) {
                 len--; // delete one character
                 num[len] = '\0';
