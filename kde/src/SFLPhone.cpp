@@ -24,7 +24,6 @@
 #include <unistd.h>
 #include <KApplication>
 #include <KStandardAction>
-//#include <KMenuBar>
 #include <KMenu>
 #include <KAction>
 #include <KToolBar>
@@ -33,9 +32,9 @@
 #include <QtGui/QCursor>
 #include <KActionCollection>
 
-#include "sflphone_const.h"
-#include "instance_interface_singleton.h"
-#include "configurationmanager_interface_singleton.h"
+#include "lib/sflphone_const.h"
+#include "lib/instance_interface_singleton.h"
+#include "lib/configurationmanager_interface_singleton.h"
 
 
 SFLPhone::SFLPhone(QWidget *parent)
@@ -84,9 +83,9 @@ bool SFLPhone::initialize()
   view->loadWindow();
 
   move(QCursor::pos().x() - geometry().width()/2, QCursor::pos().y() - geometry().height()/2);
-  if( ! configurationManager.isStartHidden()) {
-      show();
-  }
+  //if( ! configurationManager.isStartHidden()) {
+  show();
+  //}
 
   if(configurationManager.getAccountList().value().isEmpty()) {
       (new AccountWizard())->show();
@@ -99,9 +98,9 @@ bool SFLPhone::initialize()
 
 void SFLPhone::setObjectNames()
 {
-  view->setObjectName("view");
-  statusBar()->setObjectName("statusBar");
-  trayIcon->setObjectName("trayIcon");
+   view->setObjectName("view");
+   statusBar()->setObjectName("statusBar");
+   trayIcon->setObjectName("trayIcon");
 }
 
 void SFLPhone::setupActions()
@@ -116,12 +115,12 @@ void SFLPhone::setupActions()
    action_record = new KAction(this);
    action_mailBox = new KAction(this);
 
-        action_accept->setShortcut(Qt::CTRL + Qt::Key_A);
-        action_refuse->setShortcut(Qt::CTRL + Qt::Key_D);
-        action_hold->setShortcut(Qt::CTRL + Qt::Key_H);
-        action_transfer->setShortcut(Qt::CTRL + Qt::Key_T);
-        action_record->setShortcut(Qt::CTRL + Qt::Key_R);
-        action_mailBox->setShortcut(Qt::CTRL + Qt::Key_M);
+   action_accept->setShortcut(Qt::CTRL + Qt::Key_A);
+   action_refuse->setShortcut(Qt::CTRL + Qt::Key_D);
+   action_hold->setShortcut(Qt::CTRL + Qt::Key_H);
+   action_transfer->setShortcut(Qt::CTRL + Qt::Key_T);
+   action_record->setShortcut(Qt::CTRL + Qt::Key_R);
+   action_mailBox->setShortcut(Qt::CTRL + Qt::Key_M);
 
    action_screen = new QActionGroup(this);
    action_screen->setExclusive(true);
@@ -147,8 +146,8 @@ void SFLPhone::setupActions()
    action_displayDialpad->setCheckable(true);
 
    action_displayVolumeControls->setCheckable(true);
-   action_displayVolumeControls->setChecked(configurationManager.getVolumeControls());
-   action_displayDialpad->setChecked(configurationManager.getDialpad());
+   action_displayVolumeControls->setChecked(/*configurationManager.getVolumeControls()*/true);
+   action_displayDialpad->setChecked(/*configurationManager.getDialpad()*/true);
    action_accountCreationWizard = new KAction(i18n("Account creation wizard"), this);
    
    connect(action_accept,                SIGNAL(triggered()),           view, SLOT(accept()));
@@ -245,14 +244,14 @@ void SFLPhone::sendNotif(QString caller)
 //                          KNotification::CloseOnTimeout,
 //                          KGlobal::mainComponent());
 
-KNotification::event(KNotification::Notification, "New incomming call", "New call from: \n" + caller);       
+   KNotification::event(KNotification::Notification, "New incomming call", "New call from: \n" + caller);       
 }
 
-void SFLPhone::changeEvent(QEvent * event)
+void SFLPhone::changeEvent(QEvent* event)
 {
-  if (event->type() == QEvent::ActivationChange && iconChanged && isActiveWindow()) {
-    iconChanged = false;
-  }
+   if (event->type() == QEvent::ActivationChange && iconChanged && isActiveWindow()) {
+     iconChanged = false;
+   }
 }
 
 void SFLPhone::on_view_statusMessageChangeAsked(const QString & message)
@@ -328,9 +327,9 @@ void SFLPhone::on_view_screenChanged(int screen)
    else if(screen == SCREEN_ADDRESS)   action_addressBook->setChecked(true);
 }
 
-QList <QAction *> SFLPhone::getCallActions()
+QList<QAction*> SFLPhone::getCallActions()
 {
-   QList<QAction *> callActions = QList<QAction *>();
+   QList<QAction*> callActions = QList<QAction *>();
    callActions.insert((int) Accept, action_accept);
    callActions.insert((int) Refuse, action_refuse);
    callActions.insert((int) Hold, action_hold);
@@ -348,9 +347,9 @@ void SFLPhone::on_view_incomingCall(const Call * call)
    {
       putForeground();
     }*/
-   if(configurationManager.getNotify()) {
-      sendNotif(call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName());
-   }
+   //if(configurationManager.getNotify()) {
+   sendNotif(call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName());
+   //}
 }
 
 void SFLPhone::on_view_addressBookEnableAsked(bool enabled)

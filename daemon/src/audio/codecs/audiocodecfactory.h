@@ -46,18 +46,14 @@
  */
 
 /** Maps a pointer on an audiocodec object to a payload */
-typedef std::map<AudioCodecType, sfl::Codec*> CodecsMap;
+typedef std::map<int, sfl::Codec*> CodecsMap;
 
 class AudioCodecFactory
 {
     public:
-        /**
-         * Accessor to data structures
-         * @return CodecsMap& The available codec
-         */
-        const CodecsMap& getCodecsMap() const {
-            return codecsMap_;
-        }
+		AudioCodecFactory();
+
+		~AudioCodecFactory();
 
         /**
          * Get codec name by its payload
@@ -65,19 +61,15 @@ class AudioCodecFactory
          *                same as getPayload()
          * @return std::string  The name of the codec
          */
-        std::string getCodecName (AudioCodecType payload);
+        std::string getCodecName (int payload) const;
 
+        std::vector<int32_t > getAudioCodecList() const;
         /**
          * Get the codec object associated with the payload
          * @param payload The payload looked for
          * @return AudioCodec* A pointer on a AudioCodec object
          */
-        sfl::Codec* getCodec (AudioCodecType payload);
-
-        /**
-         * Initialiaze the map with all the supported codecs, even those inactive
-         */
-        void init();
+        sfl::Codec* getCodec (int payload) const;
 
         /**
          * Set the default codecs order.
@@ -90,14 +82,14 @@ class AudioCodecFactory
          * @param payload The payload of the codec
          * @return double The bit rate
          */
-        double getBitRate (AudioCodecType payload);
+        double getBitRate (int payload) const;
 
         /**
          * Get the clock rate of the specified codec
          * @param payload The payload of the codec
          * @return int The clock rate of the specified codec
          */
-        int getSampleRate (AudioCodecType payload) const;
+        int getSampleRate (int payload) const;
 
         /**
          * Set the order of codecs by their payload
@@ -106,15 +98,10 @@ class AudioCodecFactory
         void saveActiveCodecs (const std::vector<std::string>& list);
 
         /**
-         * Unreferences the codecs loaded in memory
-         */
-        void deleteHandlePointer (void);
-
-        /**
          * Instantiate a codec, used in AudioRTP to get an instance of Codec per call
          * @param CodecHandlePointer	The map containing the pointer on the object and the pointer on the handle function
          */
-        sfl::Codec* instantiateCodec (AudioCodecType payload);
+        sfl::Codec* instantiateCodec (int payload) const;
 
         /**
          * For a given codec, return its specification
@@ -122,7 +109,7 @@ class AudioCodecFactory
          * @param payload	The RTP payload of the codec
          * @return std::vector <std::string>	A vector containing codec's name, sample rate, bandwidth and bit rate
          */
-        std::vector <std::string> getCodecSpecifications (const int32_t& payload);
+        std::vector <std::string> getCodecSpecifications (const int32_t& payload) const;
 
         /**
          *  Check if the audiocodec object has been successfully created
@@ -130,7 +117,7 @@ class AudioCodecFactory
          *  @return bool  True if the audiocodec has been created
          *		false otherwise
          */
-        bool isCodecLoaded (int payload);
+        bool isCodecLoaded (int payload) const;
 
     private:
         /** Enable us to keep the handle pointer on the codec dynamicaly loaded so that we could destroy when we dont need it anymore */

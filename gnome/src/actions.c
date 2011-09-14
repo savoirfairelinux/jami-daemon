@@ -138,7 +138,7 @@ sflphone_notify_voice_mail (const gchar* accountID , guint count)
 
 static gboolean _is_direct_call (callable_obj_t * c)
 {
-    if (g_strcasecmp (c->_accountID, EMPTY_ENTRY) == 0) {
+    if (g_strcasecmp (c->_accountID, "empty") == 0) {
         if (!g_str_has_prefix (c->_peer_number, "sip:")) {
             gchar * new_number = g_strconcat ("sip:", c->_peer_number, NULL);
             g_free (c->_peer_number);
@@ -241,23 +241,13 @@ sflphone_hung_up (callable_obj_t * c)
 /** Internal to actions: Fill account list */
 void sflphone_fill_account_list (void)
 {
-
-    gchar** array;
-    gchar** accountID;
-    unsigned int i;
-    int count;
-
-    DEBUG ("SFLphone: Fill account list");
-
-    count = current_account_get_message_number ();
+    int count = current_account_get_message_number ();
 
     account_list_clear ();
 
-    array = (gchar **) dbus_account_list();
-
+    gchar **array = dbus_account_list();
     if (array) {
-
-        for (accountID = array; *accountID; accountID++) {
+        for (gchar **accountID = array; *accountID; accountID++) {
             account_t * a = g_new0 (account_t,1);
             a->accountID = g_strdup (*accountID);
             a->credential_information = NULL;
@@ -267,7 +257,7 @@ void sflphone_fill_account_list (void)
         g_strfreev (array);
     }
 
-    for (i = 0; i < account_list_get_size(); i++) {
+    for (unsigned i = 0; i < account_list_get_size(); i++) {
         account_t  * a = account_list_get_nth (i);
         if(a == NULL) {
             ERROR("SFLphone: Error: Could not find account %d in list", i);
@@ -311,12 +301,9 @@ void sflphone_fill_account_list (void)
             a->state = ACCOUNT_STATE_INVALID;
         }
 
-        gchar * code = NULL;
-        code = g_hash_table_lookup (details, REGISTRATION_STATE_CODE);
-
-        if (code != NULL) {
+        gchar * code = g_hash_table_lookup (details, REGISTRATION_STATE_CODE);
+        if (code != NULL)
             a->protocol_state_code = atoi (code);
-        }
 
         g_free (a->protocol_state_description);
         a->protocol_state_description = g_hash_table_lookup (details, REGISTRATION_STATE_DESCRIPTION);
@@ -333,7 +320,7 @@ gboolean sflphone_init (GError **error)
     if (!dbus_connect (error) || !dbus_register (getpid (), "Gtk+ Client", error))
         return FALSE;
 
-    abookfactory_init_factory();
+    abook_init();
 
     init_icon_factory();
 
@@ -401,10 +388,6 @@ sflphone_hang_up()
                 selectedCall->_state = CALL_STATE_DIALING;
                 time (&selectedCall->_time_stop);
 
-                //if ( (im_window_get_nb_tabs() > 1) && selectedCall->_im_widget &&
-                //        ! (IM_WIDGET (selectedCall->_im_widget)->containText))
-                //    im_window_remove_tab (selectedCall->_im_widget);
-                //else
                 im_widget_update_state (IM_WIDGET (selectedCall->_im_widget), FALSE);
 
                 break;
@@ -442,20 +425,19 @@ void
 sflphone_pick_up()
 {
     callable_obj_t *selectedCall = calltab_get_selected_call (active_calltree);
-
-    DEBUG("SFLphone: Pick up");
-
     if (!selectedCall) {
         sflphone_new_call();
         return;
     }
+
     switch (selectedCall->_state) {
         case CALL_STATE_DIALING:
             sflphone_place_call (selectedCall);
 
             // if instant messaging window is visible, create new tab (deleted automatically if not used)
             if (im_window_is_visible())
-                im_widget_display ( (IMWidget **) (&selectedCall->_im_widget), NULL, selectedCall->_callID, NULL);
+                if (!selectedCall->_im_widget)
+                    selectedCall->_im_widget = im_widget_display(selectedCall->_callID);
 
             break;
         case CALL_STATE_INCOMING:
@@ -463,9 +445,9 @@ sflphone_pick_up()
             calltree_update_call (history, selectedCall, NULL);
 
             // if instant messaging window is visible, create new tab (deleted automatically if not used)
-            if (selectedCall->_im_widget && im_window_is_visible()) {
-                im_widget_display ( (IMWidget **) (&selectedCall->_im_widget), NULL, selectedCall->_callID, NULL);
-            }
+            if (im_window_is_visible())
+                if (!selectedCall->_im_widget)
+                    selectedCall->_im_widget = im_widget_display(selectedCall->_callID);
 
             dbus_accept (selectedCall);
             break;
@@ -493,13 +475,9 @@ sflphone_on_hold ()
     callable_obj_t * selectedCall = calltab_get_selected_call (current_calls);
     conference_obj_t * selectedConf = calltab_get_selected_conf (active_calltree);
 
-    DEBUG ("sflphone_on_hold");
-
     if (selectedCall) {
         switch (selectedCall->_state) {
             case CALL_STATE_CURRENT:
-                dbus_hold (selectedCall);
-                break;
             case CALL_STATE_RECORD:
                 dbus_hold (selectedCall);
                 break;
@@ -529,8 +507,6 @@ sflphone_off_hold ()
                 break;
         }
     } else if (selectedConf) {
-
-
         dbus_unhold_conference (selectedConf);
     }
 }
@@ -630,18 +606,7 @@ sflphone_incoming_call (callable_obj_t * c)
     }
 }
 
-/* Truncates last char from dynamically allocated string */
-static void truncate_last_char(gchar **str)
-{
-    if (strlen(*str) > 0) {
-        gchar *tmp = *str;
-        tmp = g_strndup(*str, strlen(*str) - 1);
-        g_free(*str);
-        *str = tmp;
-    }
-}
-
-void
+static void
 process_dialing (callable_obj_t *c, guint keyval, gchar *key)
 {
     // We stop the tone
@@ -657,18 +622,21 @@ process_dialing (callable_obj_t *c, guint keyval, gchar *key)
             sflphone_hang_up ();
             break;
         case GDK_BackSpace:
-            if (c->_state == CALL_STATE_TRANSFER) {
-                truncate_last_char(&c->_trsft_to);
+        {
+            gchar *num = (c->_state == CALL_STATE_TRANSFER) ? c->_trsft_to : c->_peer_number;
+            size_t len = strlen(num);
+            printf("\"%s\" : %zu\n", num, len);
+            if (len) {
+                len--; // delete one character
+                num[len] = '\0';
                 calltree_update_call (current_calls, c, NULL);
-            } else {
-                truncate_last_char(&c->_peer_number);
-                calltree_update_call (current_calls, c, NULL);
+
                 /* If number is now empty, hang up immediately */
-                if (strlen(c->_peer_number) == 0)
+                if (c->_state != CALL_STATE_TRANSFER && len == 0)
                     dbus_hang_up(c);
             }
-
             break;
+        }
         case GDK_Tab:
         case GDK_Alt_L:
         case GDK_Control_L:
@@ -733,6 +701,7 @@ sflphone_keypad (guint keyval, gchar * key)
             case GDK_Return:
             case GDK_KP_Enter:
             case GDK_Escape:
+            case GDK_BackSpace:
                 break;
             default:
                 calltree_display (current_calls);
@@ -928,9 +897,7 @@ sflphone_detach_participant (const gchar* callID)
         g_free (selectedCall->_confID);
         selectedCall->_confID = NULL;
     }
-    // Instant messaging widget should have been deactivated during the conference
-    if (selectedCall->_im_widget)
-        im_widget_update_state (IM_WIDGET (selectedCall->_im_widget), TRUE);
+    im_widget_update_state (IM_WIDGET (selectedCall->_im_widget), TRUE);
     calltree_remove_call (current_calls, selectedCall, NULL);
     calltree_add_call (current_calls, selectedCall, NULL);
     dbus_detach_participant (selectedCall->_callID);

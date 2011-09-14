@@ -44,6 +44,10 @@
 #pragma GCC diagnostic warning "-Wignored-qualifiers"
 #pragma GCC diagnostic warning "-Wunused-parameter"
 
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
+#pragma GCC diagnostic warning "-Wunused-but-set-variable"
+#endif
+
 #include <dbus-c++/dbus.h>
 
 #include <tr1/memory> // for shared_ptr
@@ -77,7 +81,7 @@ class ConfigurationManager
 
         std::map< std::string, std::string > getTlsSettingsDefault (void);
 
-        std::vector< std::string > getAudioCodecList (void);
+        std::vector< int32_t > getAudioCodecList (void);
         std::vector< std::string > getVideoCodecList (void);
         std::vector< std::string > getSupportedTlsMethod (void);
         std::vector< std::string > getAudioCodecDetails (const int32_t& payload);

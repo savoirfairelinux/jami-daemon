@@ -64,9 +64,10 @@ YamlParser::YamlParser (const char *file) : filename (file)
 
 YamlParser::~YamlParser()
 {
-	fclose (fd);
-
-    yaml_parser_delete (&parser);
+    if (fd) {
+	    fclose (fd);
+	    yaml_parser_delete (&parser);
+    }
 
     for (int i = 0; i < eventNumber; i++)
         yaml_event_delete (&events[i]);

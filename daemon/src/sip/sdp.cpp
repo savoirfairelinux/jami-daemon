@@ -92,11 +92,7 @@ Sdp::Sdp (pj_pool_t *pool)
 
 void Sdp::setActiveLocalSdpSession (const pjmedia_sdp_session *sdp)
 {
-    _debug ("SDP: Set active local SDP session");
-
     activeLocalSession_ = (pjmedia_sdp_session*) sdp;
-
-    CodecsMap audio_codecs_list = Manager::instance().getAudioCodecFactory().getCodecsMap();
 
     for (unsigned i = 0; i < activeLocalSession_->media_count ; i++) {
         // Retrieve the media
@@ -110,7 +106,7 @@ void Sdp::setActiveLocalSdpSession (const pjmedia_sdp_session *sdp)
 		pjmedia_sdp_attr_to_rtpmap (memPool_, attribute, &rtpmap);
 
 		if (type == "audio")
-			sessionAudioCodec_ = (sfl::AudioCodec*)audio_codecs_list[(AudioCodecType)pj_strtoul (&rtpmap->pt)];
+			sessionAudioCodec_ = (sfl::AudioCodec*) Manager::instance().audioCodecFactory.getCodec((int)pj_strtoul (&rtpmap->pt));
         else if (type == "video")
 			sessionVideoCodec_ = std::string(rtpmap->enc_name.ptr, rtpmap->enc_name.slen);
     }
@@ -270,17 +266,13 @@ void Sdp::setLocalMediaCapabilities (const CodecOrder &selectedCodecs)
     localAudioMediaCap_ = new sdpMedia (MIME_TYPE_AUDIO);
     localAudioMediaCap_->port = getLocalPublishedAudioPort();
 
-    /* We retrieve the codecs selected by the user */
-    CodecsMap codecs_list = Manager::instance().getAudioCodecFactory().getCodecsMap();
-
     if (selectedCodecs.empty())
         _warn("No selected codec while building local SDP offer");
     else {
         for (CodecOrder::const_iterator iter = selectedCodecs.begin(); iter != selectedCodecs.end(); ++iter) {
-            CodecsMap::const_iterator map_iter = codecs_list.find (*iter);
-
-            if (map_iter != codecs_list.end())
-                localAudioMediaCap_->add_codec (map_iter->second);
+            sfl::Codec *codec = Manager::instance().audioCodecFactory.getCodec(*iter);
+            if (codec)
+                localAudioMediaCap_->add_codec(codec);
             else
                 _warn ("SDP: Couldn't find audio codec");
         }
@@ -327,9 +319,6 @@ int Sdp::createOffer (const CodecOrder &selectedCodecs,
                       const std::vector<std::string> &videoCodecs)
 {
     pj_status_t status;
-
-    _info ("SDP: Create initial offer");
-
     // Build the SDP session descriptor
     status = createLocalSession (selectedCodecs, videoCodecs);
     if (status != PJ_SUCCESS) {
@@ -343,8 +332,6 @@ int Sdp::createOffer (const CodecOrder &selectedCodecs,
         _error ("SDP: Error: Failed to create an initial SDP negotiator");
         return status;
     }
-
-    pjmedia_sdp_neg_get_state (negotiator_);
 
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 

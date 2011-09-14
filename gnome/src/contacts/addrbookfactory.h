@@ -32,24 +32,10 @@
 #ifndef __ADDRBOOKFACTORY_H__
 #define __ADDRBOOKFACTORY_H__
 
-#include <dlfcn.h>
-#include <gtk/gtk.h>
 #include "addressbook.h"
 
-typedef struct _addrbookfactory {
-    gboolean is_loaded;
-    AddrBookHandle *addrbook;
-} AddrBookFactory;
+void abook_init();
 
-void abookfactory_init_factory(); 
+extern AddrBookHandle *addrbook;
 
-AddrBookFactory *abookfactory_get_factory(void);
-
-gboolean abookfactory_is_addressbook_loaded(void);
-
-void abookfactory_scan_directory(AddrBookFactory *);
-
-void abookfactory_load_module(AddrBookFactory *);
-
-void free_hit(Hit *);
 #endif

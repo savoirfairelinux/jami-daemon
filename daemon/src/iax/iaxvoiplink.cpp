@@ -210,8 +210,8 @@ IAXVoIPLink::sendAudioFromMic (void)
         if (!currentCall or currentCall->getState() != Call::Active)
 			continue;
 
-		AudioCodecType codecType = currentCall->getAudioCodec();
-	    sfl::AudioCodec *audioCodec = static_cast<sfl::AudioCodec *>(currentCall->getAudioCodecFactory().getCodec(codecType));
+		int codecType = currentCall->getAudioCodec();
+	    sfl::AudioCodec *audioCodec = static_cast<sfl::AudioCodec *>(Manager::instance().audioCodecFactory.getCodec(codecType));
 
 		if (!audioCodec or !audiolayer_)
 			continue;
@@ -325,7 +325,6 @@ Call*
 IAXVoIPLink::newOutgoingCall (const std::string& id, const std::string& toUrl)
 {
     IAXCall* call = new IAXCall (id, Call::Outgoing);
-    call->setCodecMap (Manager::instance().getAudioCodecFactory());
 
     call->setPeerNumber (toUrl);
     call->initRecFileName (toUrl);
@@ -347,7 +346,6 @@ void
 IAXVoIPLink::answer (Call *c)
 {
     IAXCall* call = dynamic_cast<IAXCall*>(c);
-    call->setCodecMap(Manager::instance().getAudioCodecFactory());
 
     Manager::instance().addStream (call->getCallId());
 
@@ -518,7 +516,7 @@ std::string
 IAXVoIPLink::getCurrentCodecName(Call *c) const
 {
     IAXCall *call = dynamic_cast<IAXCall*>(c);
-    sfl::Codec *audioCodec = call->getAudioCodecFactory().getCodec(call->getAudioCodec());
+    sfl::Codec *audioCodec = Manager::instance().audioCodecFactory.getCodec(call->getAudioCodec());
     return audioCodec ? audioCodec->getMimeSubtype() : "";
 }
 
@@ -695,7 +693,7 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
         return;
     }
 
-    sfl::AudioCodec *audioCodec = static_cast<sfl::AudioCodec *>(call->getAudioCodecFactory().getCodec(call->getAudioCodec()));
+    sfl::AudioCodec *audioCodec = static_cast<sfl::AudioCodec *>(Manager::instance().audioCodecFactory.getCodec(call->getAudioCodec()));
     if (!audioCodec)
         return;
 
@@ -817,9 +815,6 @@ IAXVoIPLink::iaxHandlePrecallEvent (iax_event* event)
             // Setup the new IAXCall
             // Associate the call to the session.
             call->setSession (event->session);
-
-            // setCallAudioLocal(call);
-            call->setCodecMap (Manager::instance().getAudioCodecFactory());
 
             call->setConnectionState (Call::Progressing);
 

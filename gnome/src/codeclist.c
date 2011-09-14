@@ -68,21 +68,18 @@ static codec_t *codec_create (gint payload, gchar **specs)
 
 static gboolean codecs_audio_load (void)
 {
-    gchar **codecs = dbus_audio_codec_list();
-    gchar **codecs_orig = codecs;
-
-    if (!codecs)
-        return FALSE;
+    // This is a global list inherited by all accounts
+    GArray *codecs = dbus_audio_codec_list ();
 
     // Add the codecs in the list
-    for (; *codecs; codecs++) {
-        int payload = atoi(*codecs);
+    for (guint i = 0; i < codecs->len; i++) {
+        gint payload = g_array_index(codecs, gint, i);
         codec_t *c = codec_create(payload, dbus_audio_codec_details(payload));
         if (c)
             g_queue_push_tail (&audioCodecs, (gpointer*) c);
-        g_free(*codecs);
     }
-    g_free(codecs_orig);
+
+    g_array_unref(codecs);
 
     // If we didn't load any codecs, problem ...
     return g_queue_get_length (&audioCodecs) > 0;

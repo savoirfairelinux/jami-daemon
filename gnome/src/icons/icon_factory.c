@@ -33,7 +33,7 @@
 #include "icon_factory.h"
 #include "icons/pixmap_data.h"
 
-#include <gtk/gtkiconfactory.h>
+#include <gtk/gtk.h>
 #include "icons/pixmap_data.h"
 #include "sflphone_const.h"
 

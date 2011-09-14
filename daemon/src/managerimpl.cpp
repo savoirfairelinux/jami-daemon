@@ -72,7 +72,7 @@
 ManagerImpl::ManagerImpl (void) :
     _hasTriedToRegister (false), _config(), _currentCallId2(),
     _currentCallMutex(), _audiodriver (0),
-    _dtmfKey (0), _audioCodecFactory(), _toneMutex(),
+    _dtmfKey (0), _toneMutex(),
     _telephoneTone (0), _audiofile (0), _spkr_volume (0),
     _mic_volume (0), _waitingCall(),
     _waitingCallMutex(), _nbIncomingWaitingCall (0), _path (""),
@@ -103,7 +103,7 @@ void ManagerImpl::init (std::string config_file)
 
     _debug ("Manager: configuration file path: %s", _path.c_str());
 
-    Conf::YamlParser *parser;
+    Conf::YamlParser *parser = NULL;
 
 	try {
 		parser = new Conf::YamlParser (_path.c_str());
@@ -112,6 +112,7 @@ void ManagerImpl::init (std::string config_file)
 		parser->constructNativeData();
 	} catch (Conf::YamlParserException &e) {
 		_error ("Manager: %s", e.what());
+		fflush(stderr);
 		delete parser;
 		parser = NULL;
 	}
@@ -121,9 +122,6 @@ void ManagerImpl::init (std::string config_file)
 
     initVolume();
     initAudioDriver();
-
-    // Initialize the list of supported audio codecs
-    _audioCodecFactory.init();
 
     audioLayerMutexLock();
 
@@ -160,7 +158,6 @@ void ManagerImpl::terminate ()
     delete _audiodriver;
     _audiodriver = NULL;
 
-    _audioCodecFactory.deleteHandlePointer();
     audioLayerMutexUnlock();
 }
 
@@ -197,6 +194,11 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 {
     if (call_id.empty()) {
         _debug ("Manager: New outgoing call abbort, missing callid");
+        return false;
+    }
+    
+    if (account_id.empty()) {
+        _debug ("Manager: New outgoing call abbort, missing account");
         return false;
     }
 
@@ -258,7 +260,7 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 
     try {
         Call *call = getAccountLink(account_id)->newOutgoingCall (call_id, to_cleaned);
-
+	
         switchCall (call_id);
         call->setConfId(conf_id);
     } catch (const VoipLinkException &e) {
@@ -1104,9 +1106,6 @@ void ManagerImpl::detachParticipant (const std::string& call_id,
         	return;
         }
 
-        // TODO: add conference_id as a second parameter
-        ConferenceMap::iterator iter = _conferencemap.find(call->getConfId());
-
         Conference *conf = getConferenceFromCallID(call_id);
         if (conf == NULL) {
             _error ("Manager: Error: Call is not conferencing, cannot detach");
@@ -1874,7 +1873,7 @@ void ManagerImpl::ringtone (const std::string& accountID)
 		else {
 			sfl::Codec *codec;
 			if (ringchoice.find (".ul") != std::string::npos || ringchoice.find (".au") != std::string::npos)
-			     codec = _audioCodecFactory.getCodec(PAYLOAD_CODEC_ULAW);
+			     codec = audioCodecFactory.getCodec(PAYLOAD_CODEC_ULAW);
 			else
 		        throw AudioFileException("Couldn't guess an appropriate decoder");
 			_audiofile = new RawFile(ringchoice, static_cast<sfl::AudioCodec *>(codec), samplerate);

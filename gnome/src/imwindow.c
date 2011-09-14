@@ -83,15 +83,11 @@ on_delete (GtkWidget * widget UNUSED, gpointer data UNUSED)
 static void
 on_switch_page (GtkNotebook *notebook, GtkNotebookPage *page UNUSED, guint page_num, gpointer userdata UNUSED)
 {
-    guint index = gtk_notebook_get_current_page (GTK_NOTEBOOK (notebook));
-
     GtkWidget *tab = gtk_notebook_get_nth_page (GTK_NOTEBOOK (notebook), page_num);
 
     // show the current widget
     gtk_widget_grab_focus (tab);
     gtk_widget_show_now (tab);
-
-    DEBUG ("InstantMessaging: switch to %i -  current = %i\n", page_num, index);
 }
 
 static void
@@ -141,6 +137,7 @@ im_window_init()
 
     // Restore position according to the configuration stored in gconf
     gtk_window_move (GTK_WINDOW (im_window), position_x, position_y);
+    gtk_widget_set_visible(im_window, FALSE);
 }
 
 gboolean
@@ -155,28 +152,15 @@ im_window_is_active ()
 gboolean
 im_window_is_visible ()
 {
-    return gtk_widget_get_visible (GTK_WIDGET(im_window_get()));
-}
-
-
-void
-im_window_show ()
-{
-    gtk_window_present (im_window_get ());
+    return gtk_widget_get_visible(GTK_WIDGET(im_window_get()));
 }
 
 void
 im_window_add (GtkWidget *widget)
 {
     if (im_window_get()) {
-        /* Add the new tab to the notebook */
         im_window_add_tab (widget);
-
-        /* Show it all */
         gtk_widget_show_all (GTK_WIDGET(im_window_get()));
-    } 
-    else {
-        ERROR ("InstantMessaging: Error: Could not create the main instant messaging window");
     }
 }
 
@@ -197,6 +181,14 @@ close_tab_cb (GtkButton *button UNUSED, gpointer userdata)
 
     /* If no tabs are opened anymore, close the IM window */
     // gtk_widget_destroy (im_window);
+}
+
+static void
+im_window_hide_show_tabs ()
+{
+    /* If only one tab is open, do not display the tab, only the content */
+    gtk_notebook_set_show_tabs(GTK_NOTEBOOK (im_notebook),
+        gtk_notebook_get_n_pages (GTK_NOTEBOOK (im_notebook)) != 1);
 }
 
 void
@@ -245,17 +237,6 @@ im_window_add_tab (GtkWidget *widget)
 
     /* Decide whether or not displaying the tabs of the notebook */
     im_window_hide_show_tabs ();
-}
-
-void
-im_window_hide_show_tabs ()
-{
-    /* If only one tab is open, do not display the tab, only the content */
-    if (gtk_notebook_get_n_pages (GTK_NOTEBOOK (im_notebook)) == 1) {
-        gtk_notebook_set_show_tabs (GTK_NOTEBOOK (im_notebook), FALSE);
-    } else
-        gtk_notebook_set_show_tabs (GTK_NOTEBOOK (im_notebook), TRUE);
-
 }
 
 void

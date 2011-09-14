@@ -159,20 +159,12 @@ class ManagerImpl
         }
 
         /**
-         * Get a descriptor map of codec available
-         * @return CodecDescriptor  The internal codec map
-         */
-        AudioCodecFactory& getAudioCodecFactory (void) {
-            return _audioCodecFactory;
-        }
-
-        /**
          * Functions which occur with a user's action
          * Place a new call
          * @param accountId	The account to make tha call with
          * @param call_id  The call identifier
          * @param to  The recipient of the call
-	 * @param conf_id The conference identifier if any
+         * @param conf_id The conference identifier if any
          * @return bool true on success
          *		  false otherwise
          */
@@ -1014,6 +1006,10 @@ class ManagerImpl
          * @return std::vector<std::string> A vector containing the account ID's
          */
         std::vector<std::string> loadAccountOrder () const;
+
+        // map of codec (for configlist request)
+        const AudioCodecFactory audioCodecFactory;
+
     private:
         /**
          * Play the dtmf-associated sound
@@ -1074,9 +1070,6 @@ class ManagerImpl
         // Main thread
 
         DTMF* _dtmfKey;
-
-        // map of codec (for configlist request)
-        AudioCodecFactory _audioCodecFactory;
 
         /////////////////////
         // Protected by Mutex

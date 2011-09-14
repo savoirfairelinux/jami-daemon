@@ -65,8 +65,7 @@ void show_advanced_zrtp_options (GHashTable * properties)
                                  GTK_RESPONSE_ACCEPT,
                                  NULL)
                                 );
-    gtk_window_set_policy (GTK_WINDOW (securityDialog), FALSE, FALSE, FALSE);
-    gtk_dialog_set_has_separator (securityDialog, TRUE);
+    gtk_window_set_resizable(GTK_WINDOW (securityDialog), FALSE);
     gtk_container_set_border_width (GTK_CONTAINER (securityDialog), 0);
 
 
@@ -154,8 +153,7 @@ void show_advanced_sdes_options (GHashTable * properties)
 
                                  NULL));
 
-    gtk_window_set_policy (GTK_WINDOW (securityDialog), FALSE, FALSE, FALSE);
-    gtk_dialog_set_has_separator (securityDialog, TRUE);
+    gtk_window_set_resizable(GTK_WINDOW (securityDialog), FALSE);
     gtk_container_set_border_width (GTK_CONTAINER (securityDialog), 0);
 
     sdesTable = gtk_table_new (1, 2  , FALSE/* homogeneous */);

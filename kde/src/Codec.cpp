@@ -20,13 +20,13 @@
  ***************************************************************************/
 #include "Codec.h"
 
-#include "configurationmanager_interface_singleton.h"
-#include "sflphone_const.h"
+#include "lib/configurationmanager_interface_singleton.h"
+#include "lib/sflphone_const.h"
 
 Codec::Codec(int payload, bool enabled)
 {
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   QStringList details = configurationManager.getCodecDetails(payload);
+   QStringList details = configurationManager.getAudioCodecDetails(payload);
    this->payload = QString::number(payload);
    this->enabled = enabled;
    this->name = details[CODEC_NAME];

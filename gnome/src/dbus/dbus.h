@@ -193,7 +193,7 @@ void dbus_play_dtmf (const gchar * key);
  * ConfigurationManager - Get the audio codecs list
  * @return gchar** The list of audiocodecs
  */
-gchar** dbus_audio_codec_list();
+GArray *dbus_audio_codec_list();
 
 /**
  * ConfigurationManager - Get the video codecs list

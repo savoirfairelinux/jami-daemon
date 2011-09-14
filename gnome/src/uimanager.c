@@ -114,7 +114,7 @@ update_actions()
     g_object_ref(recordWidget_);
     g_object_ref(holdToolbar_);
     g_object_ref(offHoldToolbar_);
-    if (abookfactory_is_addressbook_loaded())
+    if (addrbook)
         g_object_ref(contactButton_);
 
     g_object_ref(historyButton_);
@@ -127,7 +127,7 @@ update_actions()
     remove_from_toolbar(transferToolbar_);
     remove_from_toolbar(historyButton_);
 
-    if (abookfactory_is_addressbook_loaded())
+    if (addrbook)
         remove_from_toolbar(contactButton_);
 
     remove_from_toolbar(voicemailToolbar_);
@@ -140,11 +140,11 @@ update_actions()
     gtk_widget_set_sensitive(recordWidget_, FALSE);
     gtk_action_set_sensitive(copyAction_, FALSE);
 
-    if (abookfactory_is_addressbook_loaded())
+    if (addrbook)
         gtk_widget_set_sensitive(contactButton_, FALSE);
 
     gtk_widget_set_sensitive(historyButton_, FALSE);
-    if (abookfactory_is_addressbook_loaded())
+    if (addrbook)
         gtk_widget_set_tooltip_text(contactButton_, _("No address book selected"));
 
     remove_from_toolbar(holdToolbar_);
@@ -163,16 +163,14 @@ update_actions()
     }
 
     // If addressbook support has been enabled and all addressbooks are loaded, display the icon
-    if (abookfactory_is_addressbook_loaded()) {
-        AddrBookFactory *bookFactory = abookfactory_get_factory();
-        AddressBook_Config *addressbook_config;
-        addressbook_config_load_parameters(&addressbook_config);
+    if (addrbook) {
+        AddressBook_Config *addressbook_config = addressbook_config_load_parameters();
 
-        if (addressbook_config->enable && bookFactory->addrbook->is_ready()) {
+        if (addressbook_config->enable && addrbook->is_ready()) {
             gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(contactButton_), -1);
 
             // Make the icon clickable only if at least one address book is active
-            if (bookFactory->addrbook->is_active()) {
+            if (addrbook->is_active()) {
                 gtk_widget_set_sensitive(contactButton_, TRUE);
                 gtk_widget_set_tooltip_text(contactButton_, _("Address book"));
             }
@@ -579,14 +577,16 @@ call_im(void* foo UNUSED)
     conference_obj_t *selectedConf = calltab_get_selected_conf(current_calls);
 
     if (calltab_get_selected_type(current_calls) == A_CALL) {
-        if (selectedCall)
-            im_widget_display((IMWidget **) (&selectedCall->_im_widget), NULL, selectedCall->_callID, NULL);
-        else
+        if (selectedCall) {
+            if (!selectedCall->_im_widget)
+                selectedCall->_im_widget = im_widget_display(selectedCall->_callID);
+        } else
             WARN("Sorry. Instant messaging is not allowed outside a call\n");
     } else {
-        if (selectedConf)
-            im_widget_display((IMWidget **) (&selectedConf->_im_widget), NULL, selectedConf->_confID, NULL);
-        else
+        if (selectedConf) {
+            if (!selectedConf->_im_widget)
+                selectedConf->_im_widget = im_widget_display(selectedConf->_confID);
+        } else
             WARN("Sorry. Instant messaging is not allowed outside a call\n");
     }
 }
@@ -1038,7 +1038,7 @@ static const GtkToggleActionEntry toggle_menu_entries[] = {
 
 GtkUIManager *uimanager_new(void)
 {
-    gint nb_entries = abookfactory_is_addressbook_loaded() ? 7 : 6;
+    gint nb_entries = addrbook ? 7 : 6;
 
     GtkWidget *window = get_main_window();
     GtkUIManager *ui_manager = gtk_ui_manager_new();
@@ -1062,7 +1062,7 @@ GtkUIManager *uimanager_new(void)
 
     g_free(path);
 
-    if (abookfactory_is_addressbook_loaded()) {
+    if (addrbook) {
         // These actions must be loaded dynamically and is not specified in the xml description
         gtk_ui_manager_add_ui(ui_manager, manager_id, "/ViewMenu",
                 "Addressbook",
@@ -1578,7 +1578,7 @@ create_toolbar_actions(GtkUIManager *ui_manager)
 		    "/ToolbarActions/StartPlaybackRecordToolbar");
     stopRecordWidget_ = gtk_ui_manager_get_widget(ui_manager,
 		    "/ToolbarActions/StopPlaybackRecordToolbar");
-    if (abookfactory_is_addressbook_loaded())
+    if (addrbook)
         contactButton_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/AddressbookToolbar");
 
     // Set the handler ID for the transfer

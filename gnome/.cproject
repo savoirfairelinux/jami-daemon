@@ -31,7 +31,6 @@
 									<listOptionValue builtIn="false" value="/usr/include/libgnome-2.0"/>
 									<listOptionValue builtIn="false" value="/usr/include/libgnomeui-2.0"/>
 									<listOptionValue builtIn="false" value="/usr/include"/>
-									<listOptionValue builtIn="false" value="/usr/include/evolution-data-server-2.32"/>
 								</option>
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1676995808" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="&quot;ICONS_DIR=&quot;/usr/share/sflphone\&quot;"/>

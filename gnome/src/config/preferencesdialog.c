@@ -281,7 +281,7 @@ create_general_settings ()
 void
 save_configuration_parameters (void)
 {
-    if(abookfactory_is_addressbook_loaded()) {
+    if (addrbook) {
         // Address book config
         addressbook_config_save_parameters ();
     }
@@ -407,7 +407,6 @@ show_preferences_dialog ()
                          NULL));
 
     // Set window properties
-    gtk_dialog_set_has_separator (dialog, FALSE);
     gtk_window_set_default_size (GTK_WINDOW (dialog), 600, 400);
     gtk_container_set_border_width (GTK_CONTAINER (dialog), 0);
 
@@ -463,7 +462,7 @@ show_preferences_dialog ()
     gtk_notebook_append_page (GTK_NOTEBOOK (notebook), tab, gtk_label_new (_ ("Shortcuts")));
     gtk_notebook_page_num (GTK_NOTEBOOK (notebook), tab);
 
-    if(abookfactory_is_addressbook_loaded()) {
+    if(addrbook) {
         // Addressbook tab
         tab = create_addressbook_settings ();
         gtk_notebook_append_page (GTK_NOTEBOOK (notebook), tab, gtk_label_new (_ ("Address Book")));

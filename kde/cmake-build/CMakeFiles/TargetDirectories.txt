@@ -1,7 +1,0 @@
-/home/emmanuel/sflphone/sflphone-client-kde/cmake-build/CMakeFiles/distclean.dir
-/home/emmanuel/sflphone/sflphone-client-kde/cmake-build/doc/CMakeFiles/doc-handbook.dir
-/home/emmanuel/sflphone/sflphone-client-kde/cmake-build/man/CMakeFiles/man-manpage-sflphone-client-kde.dir
-/home/emmanuel/sflphone/sflphone-client-kde/cmake-build/po/zh_HK/CMakeFiles/pofiles.dir
-/home/emmanuel/sflphone/sflphone-client-kde/cmake-build/src/CMakeFiles/sflphone-client-kde.dir
-/home/emmanuel/sflphone/sflphone-client-kde/cmake-build/src/CMakeFiles/sflphone-client-kde_automoc.dir
-/home/emmanuel/sflphone/sflphone-client-kde/cmake-build/CMakeFiles/uninstall.dir

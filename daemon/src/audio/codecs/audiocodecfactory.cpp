@@ -36,8 +36,7 @@
 #include <algorithm> // for std::find
 #include "fileutils.h"
 
-void
-AudioCodecFactory::init()
+AudioCodecFactory::AudioCodecFactory() : codecsMap_()
 {
     typedef std::vector<sfl::Codec*> CodecVector;
     CodecVector codecDynamicList(scanCodecDirectory());
@@ -46,7 +45,7 @@ AudioCodecFactory::init()
     else {
         for (CodecVector::const_iterator iter = codecDynamicList.begin();
                 iter != codecDynamicList.end() ; ++iter) {
-            codecsMap_[ (AudioCodecType) (*iter)->getPayloadType() ] = *iter;
+            codecsMap_[ (int) (*iter)->getPayloadType() ] = *iter;
             _debug ("Loaded codec %s" , (*iter)->getMimeSubtype().c_str());
         }
     }
@@ -61,7 +60,7 @@ void AudioCodecFactory::setDefaultOrder()
 }
 
 std::string
-AudioCodecFactory::getCodecName (AudioCodecType payload)
+AudioCodecFactory::getCodecName (int payload) const
 {
     CodecsMap::const_iterator iter = codecsMap_.find (payload);
 
@@ -71,8 +70,20 @@ AudioCodecFactory::getCodecName (AudioCodecType payload)
         return "";
 }
 
+std::vector<int32_t >
+AudioCodecFactory::getAudioCodecList() const
+{
+	std::vector<int32_t> list;
+
+	for (CodecsMap::const_iterator iter = codecsMap_.begin(); iter != codecsMap_.end(); ++iter)
+		if (iter->second)
+			list.push_back((int32_t)iter->first);
+
+	return list;
+}
+
 sfl::Codec*
-AudioCodecFactory::getCodec (AudioCodecType payload)
+AudioCodecFactory::getCodec (int payload) const
 {
     CodecsMap::const_iterator iter = codecsMap_.find (payload);
 
@@ -84,7 +95,7 @@ AudioCodecFactory::getCodec (AudioCodecType payload)
     }
 }
 
-double AudioCodecFactory::getBitRate (AudioCodecType payload)
+double AudioCodecFactory::getBitRate (int payload) const
 {
     CodecsMap::const_iterator iter = codecsMap_.find (payload);
 
@@ -94,7 +105,7 @@ double AudioCodecFactory::getBitRate (AudioCodecType payload)
         return 0.0;
 }
 
-int AudioCodecFactory::getSampleRate (AudioCodecType payload) const
+int AudioCodecFactory::getSampleRate (int payload) const
 {
     CodecsMap::const_iterator iter = codecsMap_.find (payload);
 
@@ -112,18 +123,16 @@ void AudioCodecFactory::saveActiveCodecs (const std::vector<std::string>& list)
     for (std::vector<std::string>::const_iterator iter = list.begin(); iter != list.end(); ++iter) {
         int payload = std::atoi(iter->c_str());
         if (isCodecLoaded (payload))
-            defaultCodecOrder_.push_back ( (AudioCodecType) payload);
+            defaultCodecOrder_.push_back ( (int) payload);
     }
 }
 
-void
-AudioCodecFactory::deleteHandlePointer()
+
+AudioCodecFactory::~AudioCodecFactory()
 {
     for (std::vector<CodecHandlePointer>::const_iterator iter =
             codecInMemory_.begin(); iter != codecInMemory_.end(); ++iter)
         unloadCodec (*iter);
-
-    codecInMemory_.clear();
 }
 
 std::vector<sfl::Codec*> AudioCodecFactory::scanCodecDirectory()
@@ -214,9 +223,9 @@ void AudioCodecFactory::unloadCodec (CodecHandlePointer p)
     dlclose (p.second);
 }
 
-sfl::Codec* AudioCodecFactory::instantiateCodec (AudioCodecType payload)
+sfl::Codec* AudioCodecFactory::instantiateCodec (int payload) const
 {
-    std::vector< CodecHandlePointer >::iterator iter;
+    std::vector< CodecHandlePointer >::const_iterator iter;
 
     for (iter = codecInMemory_.begin(); iter != codecInMemory_.end(); ++iter) {
         if (iter->first->getPayloadType() == payload) {
@@ -278,7 +287,7 @@ AudioCodecFactory::alreadyInCache (const std::string &lib)
     return std::find(libCache_.begin(), libCache_.end(), lib) != libCache_.end();
 }
 
-bool AudioCodecFactory::isCodecLoaded (int payload)
+bool AudioCodecFactory::isCodecLoaded (int payload) const
 {
     CodecsMap::const_iterator iter;
     for (iter = codecsMap_.begin(); iter != codecsMap_.end(); ++iter)
@@ -288,21 +297,21 @@ bool AudioCodecFactory::isCodecLoaded (int payload)
     return false;
 }
 
-std::vector <std::string> AudioCodecFactory::getCodecSpecifications (const int32_t& payload)
+std::vector <std::string> AudioCodecFactory::getCodecSpecifications (const int32_t& payload) const
 {
     std::vector<std::string> v;
     std::stringstream ss;
 
     // Add the name of the codec
-    v.push_back(getCodecName(static_cast<AudioCodecType>(payload)));
+    v.push_back(getCodecName(static_cast<int>(payload)));
 
     // Add the sample rate
-    ss << getSampleRate (static_cast<AudioCodecType>(payload));
+    ss << getSampleRate (static_cast<int>(payload));
     v.push_back(ss.str());
     ss.str("");
 
     // Add the bit rate
-    ss << getBitRate(static_cast<AudioCodecType>(payload));
+    ss << getBitRate(static_cast<int>(payload));
     v.push_back(ss.str());
 
     return v;

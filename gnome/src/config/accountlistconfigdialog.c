@@ -588,7 +588,6 @@ show_account_list_config_dialog (void)
                                     NULL));
 
     /* Set window properties */
-    gtk_dialog_set_has_separator (accountListDialog, FALSE);
     gtk_container_set_border_width (GTK_CONTAINER (accountListDialog), 0);
     gtk_window_set_resizable (GTK_WINDOW (accountListDialog), FALSE);
 

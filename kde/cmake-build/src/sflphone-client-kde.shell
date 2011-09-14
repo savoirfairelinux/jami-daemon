@@ -1,4 +1,0 @@
-#!/bin/sh
-# created by cmake, don't edit, changes will be lost
-
-LD_LIBRARY_PATH=/home/emmanuel/sflphone/sflphone-client-kde/cmake-build/lib/./:/usr/local/lib:/usr/lib:/usr/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH} "/home/emmanuel/sflphone/sflphone-client-kde/cmake-build/src/sflphone-client-kde" "$@"
