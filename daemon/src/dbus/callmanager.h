@@ -42,6 +42,11 @@
 #pragma GCC diagnostic warning "-Wignored-qualifiers"
 #pragma GCC diagnostic warning "-Wunused-parameter"
 
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
+/* This warning option only exists for gcc 4.6.0 and greater. */
+#pragma GCC diagnostic warning "-Wunused-but-set-variable"
+#endif
+
 #include <dbus-c++/dbus.h>
 #include <stdexcept>
 

@@ -172,18 +172,10 @@ WaveFile::WaveFile (const std::string& fileName, unsigned int audioSamplingRate)
     fileStream.read ( (char*) &blockal, 2);
 
     // Determine the data type
-    SOUND_FORMAT dataType;
     SINT16 dt;
     fileStream.read ( (char*) &dt, 2);
-	if (dt == 8)
-		dataType = 1; // SINT8;
-	else if (dt == 16)
-		dataType = 2; // SINT16;
-	else if (dt == 32)
-		dataType = 3; // SINT32;
-	else {
+	if (dt != 8 && dt != 16 && dt != 32)
 		throw AudioFileException("File's bits per sample with is not supported");
-	}
 
     // Find the "data" chunk
     char data[4] = { 0, 0, 0, 0 };

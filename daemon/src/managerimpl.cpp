@@ -1101,9 +1101,6 @@ void ManagerImpl::detachParticipant (const std::string& call_id,
         	return;
         }
 
-        // TODO: add conference_id as a second parameter
-        ConferenceMap::iterator iter = _conferencemap.find(call->getConfId());
-
         Conference *conf = getConferenceFromCallID(call_id);
         if (conf == NULL) {
             _error ("Manager: Error: Call is not conferencing, cannot detach");
