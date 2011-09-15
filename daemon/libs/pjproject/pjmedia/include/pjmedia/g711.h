@@ -1,6 +1,6 @@
-/* $Id: g711.h 2875 2009-08-13 15:57:26Z bennylp $ */
+/* $Id: g711.h 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #ifndef __PJMEDIA_G711_H__
 #define __PJMEDIA_G711_H__
@@ -36,16 +25,35 @@
  * @brief G711 Codec
  */
 
-#include <pjmedia-codec/types.h>
+#include <pjmedia/codec.h>
 
 /**
- * @defgroup PJMED_G711 G711 G.711 Codec
+ * @defgroup PJMED_G711 G.711 Codec
  * @ingroup PJMEDIA_CODEC_CODECS
  * @brief Standard G.711/PCMA and PCMU codec.
  * @{
- * This section describes functions to register and register G.711 codec
+ *
+ * This section describes functions to initialize and register G.711 codec
  * factory to the codec manager. After the codec factory has been registered,
  * application can use @ref PJMEDIA_CODEC API to manipulate the codec.
+ *
+ * The G.711 is an ultra low complexity codecs and in trade-off it results
+ * in high bitrate, i.e: 64kbps for 16-bit PCM with sampling rate 8000Hz.
+ *
+ * The factory contains two main compression algorithms, PCMU/u-Law and 
+ * PCMA/A-Law.
+ *
+ * \section codec_setting Codec Settings
+ *
+ * \subsection general_setting General Settings
+ *
+ * General codec settings for this codec such as VAD and PLC can be 
+ * manipulated through the <tt>setting</tt> field in #pjmedia_codec_param. 
+ * Please see the documentation of #pjmedia_codec_param for more info.
+ *
+ * \subsection specific_setting Codec Specific Settings
+ *
+ * Currently none.
  */
 
 PJ_BEGIN_DECL

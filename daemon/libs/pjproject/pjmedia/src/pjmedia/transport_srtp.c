@@ -1,6 +1,6 @@
-/* $Id: transport_srtp.c 2891 2009-08-17 15:17:36Z bennylp $ */
+/* $Id: transport_srtp.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 
 #include <pjmedia/transport_srtp.h>
@@ -323,6 +312,7 @@ static void pjmedia_srtp_deinit_lib(void)
     libsrtp_initialized = PJ_FALSE;
 }
 
+
 static int get_crypto_idx(const pj_str_t* crypto_name)
 {
     int i;
@@ -339,6 +329,30 @@ static int get_crypto_idx(const pj_str_t* crypto_name)
 
     return -1;
 }
+
+
+static int srtp_crypto_cmp(const pjmedia_srtp_crypto* c1,
+			   const pjmedia_srtp_crypto* c2)
+{
+    int r;
+
+    r = pj_strcmp(&c1->key, &c2->key);
+    if (r != 0)
+	return r;
+
+    r = pj_stricmp(&c1->name, &c2->name);
+    if (r != 0)
+	return r;
+
+    return (c1->flags != c2->flags);
+}
+
+
+static pj_bool_t srtp_crypto_empty(const pjmedia_srtp_crypto* c)
+{
+    return (c->name.slen==0 || c->key.slen==0);
+}
+
 
 PJ_DEF(void) pjmedia_srtp_setting_default(pjmedia_srtp_setting *opt)
 {
@@ -472,8 +486,11 @@ PJ_DEF(pj_status_t) pjmedia_transport_srtp_start(
     int		     cr_rx_idx = 0;
     int		     au_rx_idx = 0;
     int		     crypto_suites_cnt;
+    pj_status_t	     status = PJ_SUCCESS;
 
     PJ_ASSERT_RETURN(tp && tx && rx, PJ_EINVAL);
+
+    pj_lock_acquire(srtp->mutex);
 
     if (srtp->session_inited) {
 	pjmedia_transport_srtp_stop(tp);
@@ -497,18 +514,24 @@ PJ_DEF(pj_status_t) pjmedia_transport_srtp_start(
     /* Check whether the crypto-suite requested is supported */
     if (cr_tx_idx == -1 || cr_rx_idx == -1 || au_tx_idx == -1 || 
 	au_rx_idx == -1)
-	return PJMEDIA_SRTP_ENOTSUPCRYPTO;
+    {
+	status = PJMEDIA_SRTP_ENOTSUPCRYPTO;
+	goto on_return;
+    }
 
     /* If all options points to 'NULL' method, just bypass SRTP */
     if (cr_tx_idx == 0 && cr_rx_idx == 0 && au_tx_idx == 0 && au_rx_idx == 0) {
 	srtp->bypass_srtp = PJ_TRUE;
-	return PJ_SUCCESS;
+	goto on_return;
     }
 
     /* Check key length */
     if (tx->key.slen != (pj_ssize_t)crypto_suites[cr_tx_idx].cipher_key_len ||
         rx->key.slen != (pj_ssize_t)crypto_suites[cr_rx_idx].cipher_key_len)
-	return PJMEDIA_SRTP_EINKEYLEN;
+    {
+	status = PJMEDIA_SRTP_EINKEYLEN;
+	goto on_return;
+    }
 
     /* Init transmit direction */
     pj_bzero(&tx_, sizeof(srtp_policy_t));
@@ -534,7 +557,8 @@ PJ_DEF(pj_status_t) pjmedia_transport_srtp_start(
     tx_.next		    = NULL;
     err = srtp_create(&srtp->srtp_tx_ctx, &tx_);
     if (err != err_status_ok) {
-	return PJMEDIA_ERRNO_FROM_LIBSRTP(err);
+	status = PJMEDIA_ERRNO_FROM_LIBSRTP(err);
+	goto on_return;
     }
     srtp->tx_policy = *tx;
     pj_strset(&srtp->tx_policy.key,  srtp->tx_key, tx->key.slen);
@@ -567,7 +591,8 @@ PJ_DEF(pj_status_t) pjmedia_transport_srtp_start(
     err = srtp_create(&srtp->srtp_rx_ctx, &rx_);
     if (err != err_status_ok) {
 	srtp_dealloc(srtp->srtp_tx_ctx);
-	return PJMEDIA_ERRNO_FROM_LIBSRTP(err);
+	status = PJMEDIA_ERRNO_FROM_LIBSRTP(err);
+	goto on_return;
     }
     srtp->rx_policy = *rx;
     pj_strset(&srtp->rx_policy.key,  srtp->rx_key, rx->key.slen);
@@ -590,7 +615,9 @@ PJ_DEF(pj_status_t) pjmedia_transport_srtp_start(
 		  (au_rx_idx?"":" auth")));
     }
 
-    return PJ_SUCCESS;
+on_return:
+    pj_lock_release(srtp->mutex);
+    return status;
 }
 
 /*
@@ -603,8 +630,12 @@ PJ_DEF(pj_status_t) pjmedia_transport_srtp_stop(pjmedia_transport *srtp)
 
     PJ_ASSERT_RETURN(srtp, PJ_EINVAL);
 
-    if (!p_srtp->session_inited)
+    pj_lock_acquire(p_srtp->mutex);
+
+    if (!p_srtp->session_inited) {
+	pj_lock_release(p_srtp->mutex);
 	return PJ_SUCCESS;
+    }
 
     err = srtp_dealloc(p_srtp->srtp_rx_ctx);
     if (err != err_status_ok) {
@@ -620,6 +651,10 @@ PJ_DEF(pj_status_t) pjmedia_transport_srtp_stop(pjmedia_transport *srtp)
     }
 
     p_srtp->session_inited = PJ_FALSE;
+    pj_bzero(&p_srtp->rx_policy, sizeof(p_srtp->rx_policy));
+    pj_bzero(&p_srtp->tx_policy, sizeof(p_srtp->tx_policy));
+
+    pj_lock_release(p_srtp->mutex);
 
     return PJ_SUCCESS;
 }
@@ -679,18 +714,22 @@ static pj_status_t transport_attach(pjmedia_transport *tp,
     PJ_ASSERT_RETURN(tp && rem_addr && addr_len, PJ_EINVAL);
 
     /* Save the callbacks */
+    pj_lock_acquire(srtp->mutex);
     srtp->rtp_cb = rtp_cb;
     srtp->rtcp_cb = rtcp_cb;
     srtp->user_data = user_data;
+    pj_lock_release(srtp->mutex);
 
     /* Attach itself to transport */
     status = pjmedia_transport_attach(srtp->member_tp, srtp, rem_addr, 
 				      rem_rtcp, addr_len, &srtp_rtp_cb,
 				      &srtp_rtcp_cb);
     if (status != PJ_SUCCESS) {
+	pj_lock_acquire(srtp->mutex);
 	srtp->rtp_cb = NULL;
 	srtp->rtcp_cb = NULL;
 	srtp->user_data = NULL;
+	pj_lock_release(srtp->mutex);
 	return status;
     }
 
@@ -709,9 +748,11 @@ static void transport_detach(pjmedia_transport *tp, void *strm)
     }
 
     /* Clear up application infos from transport */
+    pj_lock_acquire(srtp->mutex);
     srtp->rtp_cb = NULL;
     srtp->rtcp_cb = NULL;
     srtp->user_data = NULL;
+    pj_lock_release(srtp->mutex);
 }
 
 static pj_status_t transport_send_rtp( pjmedia_transport *tp,
@@ -726,15 +767,16 @@ static pj_status_t transport_send_rtp( pjmedia_transport *tp,
     if (srtp->bypass_srtp)
 	return pjmedia_transport_send_rtp(srtp->member_tp, pkt, size);
 
-    if (!srtp->session_inited)
-	return PJ_SUCCESS;
-
     if (size > sizeof(srtp->rtp_tx_buffer))
 	return PJ_ETOOBIG;
 
     pj_memcpy(srtp->rtp_tx_buffer, pkt, size);
 
     pj_lock_acquire(srtp->mutex);
+    if (!srtp->session_inited) {
+	pj_lock_release(srtp->mutex);
+	return PJ_EINVALIDOP;
+    }
     err = srtp_protect(srtp->srtp_tx_ctx, srtp->rtp_tx_buffer, &len);
     pj_lock_release(srtp->mutex);
 
@@ -770,15 +812,16 @@ static pj_status_t transport_send_rtcp2(pjmedia_transport *tp,
 	                                    pkt, size);
     }
 
-    if (!srtp->session_inited)
-	return PJ_SUCCESS;
-
     if (size > sizeof(srtp->rtcp_tx_buffer))
 	return PJ_ETOOBIG;
 
     pj_memcpy(srtp->rtcp_tx_buffer, pkt, size);
 
     pj_lock_acquire(srtp->mutex);
+    if (!srtp->session_inited) {
+	pj_lock_release(srtp->mutex);
+	return PJ_EINVALIDOP;
+    }
     err = srtp_protect_rtcp(srtp->srtp_tx_ctx, srtp->rtcp_tx_buffer, &len);
     pj_lock_release(srtp->mutex);
 
@@ -811,14 +854,14 @@ static pj_status_t transport_destroy  (pjmedia_transport *tp)
 
     PJ_ASSERT_RETURN(tp, PJ_EINVAL);
 
-    pj_lock_acquire(srtp->mutex);
-
     if (srtp->setting.close_member_tp && srtp->member_tp) {
 	pjmedia_transport_close(srtp->member_tp);
     }
 
     status = pjmedia_transport_srtp_stop(tp);
 
+    /* In case mutex is being acquired by other thread */
+    pj_lock_acquire(srtp->mutex);
     pj_lock_release(srtp->mutex);
 
     pj_lock_destroy(srtp->mutex);
@@ -835,13 +878,15 @@ static void srtp_rtp_cb( void *user_data, void *pkt, pj_ssize_t size)
     transport_srtp *srtp = (transport_srtp *) user_data;
     int len = size;
     err_status_t err;
+    void (*cb)(void*, void*, pj_ssize_t) = NULL;
+    void *cb_data = NULL;
 
     if (srtp->bypass_srtp) {
 	srtp->rtp_cb(srtp->user_data, pkt, size);
 	return;
     }
 
-    if (size < 0 || !srtp->session_inited) {
+    if (size < 0) {
 	return;
     }
 
@@ -853,8 +898,11 @@ static void srtp_rtp_cb( void *user_data, void *pkt, pj_ssize_t size)
 
     pj_lock_acquire(srtp->mutex);
 
+    if (!srtp->session_inited) {
+	pj_lock_release(srtp->mutex);
+	return;
+    }
     err = srtp_unprotect(srtp->srtp_rx_ctx, (pj_uint8_t*)pkt, &len);
-
     if (srtp->probation_cnt > 0 && 
 	(err == err_status_replay_old || err == err_status_replay_fail)) 
     {
@@ -876,15 +924,20 @@ static void srtp_rtp_cb( void *user_data, void *pkt, pj_ssize_t size)
 	}
     }
 
-    if (err == err_status_ok) {
-	srtp->rtp_cb(srtp->user_data, pkt, len);
-    } else {
+    if (err != err_status_ok) {
 	PJ_LOG(5,(srtp->pool->obj_name, 
 		  "Failed to unprotect SRTP, pkt size=%d, err=%s", 
 		  size, get_libsrtp_errstr(err)));
+    } else {
+	cb = srtp->rtp_cb;
+	cb_data = srtp->user_data;
     }
 
     pj_lock_release(srtp->mutex);
+
+    if (cb) {
+	(*cb)(cb_data, pkt, len);
+    }
 }
 
 /*
@@ -895,13 +948,15 @@ static void srtp_rtcp_cb( void *user_data, void *pkt, pj_ssize_t size)
     transport_srtp *srtp = (transport_srtp *) user_data;
     int len = size;
     err_status_t err;
+    void (*cb)(void*, void*, pj_ssize_t) = NULL;
+    void *cb_data = NULL;
 
     if (srtp->bypass_srtp) {
 	srtp->rtcp_cb(srtp->user_data, pkt, size);
 	return;
     }
 
-    if (size < 0 || !srtp->session_inited) {
+    if (size < 0) {
 	return;
     }
 
@@ -910,17 +965,25 @@ static void srtp_rtcp_cb( void *user_data, void *pkt, pj_ssize_t size)
 
     pj_lock_acquire(srtp->mutex);
 
+    if (!srtp->session_inited) {
+	pj_lock_release(srtp->mutex);
+	return;
+    }
     err = srtp_unprotect_rtcp(srtp->srtp_rx_ctx, (pj_uint8_t*)pkt, &len);
-
-    if (err == err_status_ok) {
-	srtp->rtcp_cb(srtp->user_data, pkt, len);
-    } else {
+    if (err != err_status_ok) {
 	PJ_LOG(5,(srtp->pool->obj_name, 
 		  "Failed to unprotect SRTCP, pkt size=%d, err=%s",
 		  size, get_libsrtp_errstr(err)));
+    } else {
+	cb = srtp->rtcp_cb;
+	cb_data = srtp->user_data;
     }
-    
+
     pj_lock_release(srtp->mutex);
+
+    if (cb) {
+	(*cb)(cb_data, pkt, len);
+    }
 }
 
 /* Generate crypto attribute, including crypto key.
@@ -1065,9 +1128,13 @@ static pj_status_t parse_attr_crypto(pj_pool_t *pool,
 	return PJMEDIA_SDP_EINATTR;
     }
     tmp = pj_str(token);
-    crypto->key.ptr = (char*) pj_pool_zalloc(pool, MAX_KEY_LEN);
+    if (PJ_BASE64_TO_BASE256_LEN(tmp.slen) > MAX_KEY_LEN) {
+	PJ_LOG(4,(THIS_FILE, "Key too long"));
+	return PJMEDIA_SRTP_EINKEYLEN;
+    }
 
     /* Decode key */
+    crypto->key.ptr = (char*) pj_pool_zalloc(pool, MAX_KEY_LEN);
     itmp = MAX_KEY_LEN;
     status = pj_base64_decode(&tmp, (pj_uint8_t*)crypto->key.ptr, 
 			      &itmp);
@@ -1161,6 +1228,9 @@ static pj_status_t transport_encode_sdp(pjmedia_transport *tp,
 
     PJ_ASSERT_RETURN(tp && sdp_pool && sdp_local, PJ_EINVAL);
     
+    pj_bzero(&srtp->rx_policy_neg, sizeof(srtp->rx_policy_neg));
+    pj_bzero(&srtp->tx_policy_neg, sizeof(srtp->tx_policy_neg));
+
     srtp->offerer_side = sdp_remote == NULL;
 
     m_rem = sdp_remote ? sdp_remote->media[media_index] : NULL;
@@ -1172,9 +1242,16 @@ static pj_status_t transport_encode_sdp(pjmedia_transport *tp,
 	goto BYPASS_SRTP;
 
     /* If the media is inactive, do nothing. */
+    /* No, we still need to process SRTP offer/answer even if the media is
+     * marked as inactive, because the transport is still alive in this
+     * case (e.g. for keep-alive). See:
+     *   http://trac.pjsip.org/repos/ticket/1079
+     */
+    /*
     if (pjmedia_sdp_media_find_attr(m_loc, &ID_INACTIVE, NULL) || 
 	(m_rem && pjmedia_sdp_media_find_attr(m_rem, &ID_INACTIVE, NULL)))
 	goto BYPASS_SRTP;
+    */
 
     /* Check remote media transport & set local media transport 
      * based on SRTP usage option.
@@ -1366,7 +1443,10 @@ static pj_status_t transport_encode_sdp(pjmedia_transport *tp,
     goto PROPAGATE_MEDIA_CREATE;
 
 BYPASS_SRTP:
-    srtp->bypass_srtp = PJ_TRUE;
+    /* Do not update this flag here as actually the media session hasn't been
+     * updated.
+     */
+    //srtp->bypass_srtp = PJ_TRUE;
 
 PROPAGATE_MEDIA_CREATE:
     return pjmedia_transport_encode_sdp(srtp->member_tp, sdp_pool, 
@@ -1387,9 +1467,6 @@ static pj_status_t transport_media_start(pjmedia_transport *tp,
     unsigned i;
 
     PJ_ASSERT_RETURN(tp && pool && sdp_local && sdp_remote, PJ_EINVAL);
-
-    if (srtp->bypass_srtp)
-	goto BYPASS_SRTP;
 
     m_rem = sdp_remote->media[media_index];
     m_loc = sdp_local->media[media_index];
@@ -1486,19 +1563,42 @@ static pj_status_t transport_media_start(pjmedia_transport *tp,
 	/* At this point, we get valid rx_policy_neg & tx_policy_neg. */
     }
 
+    /* Make sure we have the SRTP policies */
+    if (srtp_crypto_empty(&srtp->tx_policy_neg) || 
+	srtp_crypto_empty(&srtp->rx_policy_neg))
+    {
+	goto BYPASS_SRTP;
+    }
+
     /* Reset probation counts */
     srtp->probation_cnt = PROBATION_CNT_INIT;
 
     /* Got policy_local & policy_remote, let's initalize the SRTP */
-    status = pjmedia_transport_srtp_start(tp, &srtp->tx_policy_neg, &srtp->rx_policy_neg);
-    if (status != PJ_SUCCESS)
-	return status;
+
+    /* Ticket #1075: media_start() is called whenever media description
+     * gets updated, e.g: call hold, however we should restart SRTP only
+     * when the SRTP policy settings are updated.
+     */
+    if (srtp_crypto_cmp(&srtp->tx_policy_neg, &srtp->tx_policy) ||
+	srtp_crypto_cmp(&srtp->rx_policy_neg, &srtp->rx_policy))
+    {
+	status = pjmedia_transport_srtp_start(tp,
+					      &srtp->tx_policy_neg,
+					      &srtp->rx_policy_neg);
+	if (status != PJ_SUCCESS)
+	    return status;
+    }
+
+    srtp->bypass_srtp = PJ_FALSE;
 
     goto PROPAGATE_MEDIA_START;
 
 BYPASS_SRTP:
     srtp->bypass_srtp = PJ_TRUE;
     srtp->peer_use = PJMEDIA_SRTP_DISABLED;
+    if (srtp->session_inited) {
+	pjmedia_transport_srtp_stop(tp);
+    }
 
 PROPAGATE_MEDIA_START:
     return pjmedia_transport_media_start(srtp->member_tp, pool, 
@@ -1540,6 +1640,11 @@ PJ_DEF(pj_status_t) pjmedia_transport_srtp_decrypt_pkt(pjmedia_transport *tp,
     PJ_ASSERT_ON_FAIL( (((long)pkt) & 0x03)==0, return PJ_EINVAL);
 
     pj_lock_acquire(srtp->mutex);
+
+    if (!srtp->session_inited) {
+	pj_lock_release(srtp->mutex);
+	return PJ_EINVALIDOP;
+    }
 
     if (is_rtp)
 	err = srtp_unprotect(srtp->srtp_rx_ctx, pkt, pkt_len);

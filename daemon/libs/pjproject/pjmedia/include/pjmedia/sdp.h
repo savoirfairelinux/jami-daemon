@@ -1,6 +1,6 @@
-/* $Id: sdp.h 2995 2009-11-09 05:18:12Z bennylp $ */
+/* $Id: sdp.h 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #ifndef __PJMEDIA_SDP_H__
 #define __PJMEDIA_SDP_H__
@@ -58,6 +47,14 @@ PJ_BEGIN_DECL
  */
 #ifndef PJMEDIA_MAX_SDP_FMT
 #   define PJMEDIA_MAX_SDP_FMT		32
+#endif
+
+/**
+ * The PJMEDIA_MAX_SDP_BANDW macro defines maximum bandwidth information
+ * lines in a media line.
+ */
+#ifndef PJMEDIA_MAX_SDP_BANDW
+#   define PJMEDIA_MAX_SDP_BANDW	4
 #endif
 
 /**
@@ -379,6 +376,34 @@ PJ_DECL(pjmedia_sdp_conn*) pjmedia_sdp_conn_clone(pj_pool_t *pool,
 
 
 /* **************************************************************************
+ * SDP BANDWIDTH INFO
+ ****************************************************************************
+ */
+
+/**
+ * This structure describes SDP bandwidth info ("b=" line). 
+ */
+typedef struct pjmedia_sdp_bandw
+{
+    pj_str_t	modifier;	/**< Bandwidth modifier.		*/
+    pj_uint32_t	value;	        /**< Bandwidth value.	                */
+} pjmedia_sdp_bandw;
+
+
+/** 
+ * Clone bandwidth info. 
+ * 
+ * @param pool	    Pool to allocate memory for the new bandwidth info.
+ * @param rhs	    The bandwidth into to clone.
+ *
+ * @return	    The new bandwidth info.
+ */
+PJ_DECL(pjmedia_sdp_bandw*)
+pjmedia_sdp_bandw_clone(pj_pool_t *pool, const pjmedia_sdp_bandw *rhs);
+
+
+
+/* **************************************************************************
  * SDP MEDIA INFO/LINE
  ****************************************************************************
  */
@@ -398,12 +423,14 @@ struct pjmedia_sdp_media
 	unsigned    port_count;		/**< Port count, used only when >2  */
 	pj_str_t    transport;		/**< Transport ("RTP/AVP")	    */
 	unsigned    fmt_count;		/**< Number of formats.		    */
-	pj_str_t    fmt[PJMEDIA_MAX_SDP_FMT];	/**< Media formats.	    */
+	pj_str_t    fmt[PJMEDIA_MAX_SDP_FMT];       /**< Media formats.	    */
     } desc;
 
-    pjmedia_sdp_conn *conn;		/**< Optional connection info.	    */
-    unsigned	     attr_count;	/**< Number of attributes.	    */
-    pjmedia_sdp_attr*attr[PJMEDIA_MAX_SDP_ATTR];  /**< Attributes.	    */
+    pjmedia_sdp_conn   *conn;		/**< Optional connection info.	    */
+    unsigned	        bandw_count;	/**< Number of bandwidth info.	    */
+    pjmedia_sdp_bandw  *bandw[PJMEDIA_MAX_SDP_BANDW]; /**< Bandwidth info.  */
+    unsigned	        attr_count;	/**< Number of attributes.	    */
+    pjmedia_sdp_attr   *attr[PJMEDIA_MAX_SDP_ATTR];   /**< Attributes.	    */
 
 };
 
@@ -533,6 +560,7 @@ PJ_DECL(pj_status_t) pjmedia_sdp_transport_cmp(const pj_str_t *t1,
 /**
  * Deactivate SDP media.
  *
+ * @param pool	    Memory pool to allocate memory from.
  * @param m	    The SDP media to deactivate.
  *
  * @return	    PJ_SUCCESS when SDP media successfully deactivated,
@@ -540,6 +568,19 @@ PJ_DECL(pj_status_t) pjmedia_sdp_transport_cmp(const pj_str_t *t1,
  */
 PJ_DECL(pj_status_t) pjmedia_sdp_media_deactivate(pj_pool_t *pool,
 						  pjmedia_sdp_media *m);
+
+
+/**
+ * Clone SDP media description and deactivate the new SDP media.
+ *
+ * @param pool	    Memory pool to allocate memory for the clone.
+ * @param rhs	    The SDP media to clone.
+ *
+ * @return	    New media descrption with deactivated indication.
+ */
+PJ_DECL(pjmedia_sdp_media*) pjmedia_sdp_media_clone_deactivate(
+						pj_pool_t *pool,
+						const pjmedia_sdp_media *rhs);
 
 
 /* **************************************************************************
@@ -671,7 +712,7 @@ PJ_DECL(pj_status_t) pjmedia_sdp_session_cmp(const pjmedia_sdp_session *sd1,
  *
  * @return		PJ_SUCCESS or the appropriate error code.
  */
-PJ_DECL(pj_status_t) pjmedia_sdp_session_add_attr(pjmedia_sdp_session *m,
+PJ_DECL(pj_status_t) pjmedia_sdp_session_add_attr(pjmedia_sdp_session *s,
 						  pjmedia_sdp_attr *attr);
 
 

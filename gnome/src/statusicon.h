@@ -32,8 +32,6 @@
 #ifndef __STATUSICON_H__
 #define __STATUSICON_H__
 
-#if GTK_CHECK_VERSION(2,10,0)
-
 #include <gtk/gtk.h>
 #include <sflphone_const.h>
 /**
@@ -108,7 +106,5 @@ GtkStatusIcon* get_status_icon (void);
 void statusicon_set_tooltip (void);
 
 void status_tray_icon_online (gboolean online);
-
-#endif // GTK_CHECK_VERSION
 
 #endif

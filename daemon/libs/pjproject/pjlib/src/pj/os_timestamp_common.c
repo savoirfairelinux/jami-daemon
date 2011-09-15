@@ -1,6 +1,6 @@
-/* $Id: os_timestamp_common.c 2560 2009-03-30 18:22:16Z bennylp $ */
+/* $Id: os_timestamp_common.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pj/os.h>
 #include <pj/compat/high_precision.h>
@@ -197,6 +186,20 @@ PJ_DEF(pj_uint32_t) pj_elapsed_cycle( const pj_timestamp *start,
                                       const pj_timestamp *stop )
 {
     return stop->u32.lo - start->u32.lo;
+}
+
+PJ_DEF(pj_status_t) pj_gettickcount(pj_time_val *tv)
+{
+    pj_timestamp ts, start;
+    pj_status_t status;
+
+    if ((status = pj_get_timestamp(&ts)) != PJ_SUCCESS)
+        return status;
+
+    pj_set_timestamp32(&start, 0, 0);
+    *tv = pj_elapsed_time(&start, &ts);
+
+    return PJ_SUCCESS;
 }
 
 #endif  /* PJ_HAS_HIGH_RES_TIMER */

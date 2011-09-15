@@ -65,6 +65,9 @@ print_common:
 	@echo $(APP)_CXXFLAGS=$($(APP)_CXXFLAGS)
 	@echo $(APP)_LDFLAGS=$($(APP)_LDFLAGS)
 	@echo DEPFLAGS=$(DEPFLAGS)
+	@echo CC=$(CC)
+	@echo AR=$(AR)
+	@echo RANLIB=$(RANLIB)
 
 print_bin: print_common
 	@echo EXE=$(EXE)
@@ -111,6 +114,11 @@ $(OBJDIR)/$(app).ko: $(OBJDIR)/$(app).o
 
 ../lib/$(app).ko: $(LIB) $(OBJDIR)/$(app).ko
 	cp $(OBJDIR)/$(app).ko ../lib
+
+$(OBJDIR)/%$(OBJEXT): $(SRCDIR)/%.m
+	$(CC) $($(APP)_CFLAGS) \
+		$(CC_OUT)$(subst /,$(HOST_PSEP),$@) \
+		$(subst /,$(HOST_PSEP),$<) 
 
 $(OBJDIR)/%$(OBJEXT): $(SRCDIR)/%.c
 	$(CC) $($(APP)_CFLAGS) \

@@ -576,9 +576,6 @@ pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum (const std::string& method)
     if (method == "TLSv1")
         return PJSIP_TLSV1_METHOD;
 
-    if (method == "SSLv2")
-        return PJSIP_SSLV2_METHOD;
-
     if (method == "SSLv3")
         return PJSIP_SSLV3_METHOD;
 

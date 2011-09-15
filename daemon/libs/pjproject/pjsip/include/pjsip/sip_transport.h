@@ -1,6 +1,6 @@
-/* $Id: sip_transport.h 2985 2009-11-04 13:17:31Z bennylp $ */
+/* $Id: sip_transport.h 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #ifndef __PJSIP_SIP_TRANSPORT_H__
 #define __PJSIP_SIP_TRANSPORT_H__
@@ -551,6 +540,10 @@ struct pjsip_tx_data
      */
     struct
     {
+	/** Server name. 
+	 */
+	pj_str_t		 name;
+
 	/** Server addresses resolved. 
 	 */
 	pjsip_server_addresses   addr;
@@ -580,6 +573,10 @@ struct pjsip_tx_data
      */
     pjsip_tpselector	    tp_sel;
 
+    /**
+     * Arbitrary data attached by PJSIP modules.
+     */
+    void		    *mod_data[PJSIP_MAX_MODULE];
 };
 
 
@@ -702,6 +699,24 @@ typedef struct pjsip_transport_key
 
 } pjsip_transport_key;
 
+
+/**
+ * Enumeration of transport direction types.
+ */
+typedef enum pjsip_transport_dir
+{
+    PJSIP_TP_DIR_NONE,		    /**< Direction not set, normally used by
+				         connectionless transports such as 
+					 UDP transport.			    */
+    PJSIP_TP_DIR_OUTGOING,	    /**< Outgoing connection or client mode,
+				         this is only for connection-oriented 
+					 transports.			    */
+    PJSIP_TP_DIR_INCOMING,	    /**< Incoming connection or server mode,
+					 this is only for connection-oriented
+					 transports.			    */
+} pjsip_transport_dir;
+
+
 /**
  * This structure represent the "public" interface of a SIP transport.
  * Applications normally extend this structure to include transport
@@ -716,6 +731,7 @@ struct pjsip_transport
     pj_lock_t		   *lock;	    /**< Lock object.		    */
     pj_bool_t		    tracing;	    /**< Tracing enabled?	    */
     pj_bool_t		    is_shutdown;    /**< Being shutdown?	    */
+    pj_bool_t		    is_destroying;  /**< Destroy in progress?	    */
 
     /** Key for indexing this transport in hash table. */
     pjsip_transport_key	    key;
@@ -728,10 +744,13 @@ struct pjsip_transport
     pj_sockaddr		    local_addr;	    /**< Bound address.		    */
     pjsip_host_port	    local_name;	    /**< Published name (eg. STUN). */
     pjsip_host_port	    remote_name;    /**< Remote address name.	    */
+    pjsip_transport_dir	    dir;	    /**< Connection direction.	    */
     
     pjsip_endpoint	   *endpt;	    /**< Endpoint instance.	    */
     pjsip_tpmgr		   *tpmgr;	    /**< Transport manager.	    */
     pj_timer_entry	    idle_timer;	    /**< Timer when ref cnt is zero.*/
+
+    void		   *data;	    /**< Internal transport data.   */
 
     /**
      * Function to be called by transport manager to send SIP message.
@@ -924,7 +943,8 @@ struct pjsip_tpfactory
     pjsip_host_port	    addr_name;	    /**< Published name.	*/
 
     /**
-     * Create new outbound connection.
+     * Create new outbound connection suitable for sending SIP message
+     * to specified remote address.
      * Note that the factory is responsible for both creating the
      * transport and registering it to the transport manager.
      */
@@ -934,6 +954,21 @@ struct pjsip_tpfactory
 				    const pj_sockaddr *rem_addr,
 				    int addr_len,
 				    pjsip_transport **transport);
+
+    /**
+     * Create new outbound connection suitable for sending SIP message
+     * to specified remote address by also considering outgoing SIP 
+     * message data.
+     * Note that the factory is responsible for both creating the
+     * transport and registering it to the transport manager.
+     */
+    pj_status_t (*create_transport2)(pjsip_tpfactory *factory,
+				     pjsip_tpmgr *mgr,
+				     pjsip_endpoint *endpt,
+				     const pj_sockaddr *rem_addr,
+				     int addr_len,
+				     pjsip_tx_data *tdata,
+				     pjsip_transport **transport);
 
     /**
      * Destroy the listener.
@@ -1106,6 +1141,34 @@ PJ_DECL(pj_status_t) pjsip_tpmgr_acquire_transport(pjsip_tpmgr *mgr,
 						   pjsip_transport **tp);
 
 /**
+ * Find suitable transport for sending SIP message to specified remote 
+ * destination by also considering the outgoing SIP message. If no suitable 
+ * transport is found, a new one will be created.
+ *
+ * This is an internal function since normally application doesn't have access
+ * to transport manager. Application should use pjsip_endpt_acquire_transport2()
+ * instead.
+ *
+ * @param mgr	    The transport manager instance.
+ * @param type	    The type of transport to be acquired.
+ * @param remote    The remote address to send message to.
+ * @param addr_len  Length of the remote address.
+ * @param sel	    Optional pointer to transport selector instance which is
+ *		    used to find explicit transport, if required.
+ * @param tdata	    Optional pointer to data to be sent.
+ * @param tp	    Pointer to receive the transport instance, if one is found.
+ *
+ * @return	    PJ_SUCCESS on success, or the appropriate error code.
+ */
+PJ_DECL(pj_status_t) pjsip_tpmgr_acquire_transport2(pjsip_tpmgr *mgr,
+						    pjsip_transport_type_e type,
+						    const pj_sockaddr_t *remote,
+						    int addr_len,
+						    const pjsip_tpselector *sel,
+						    pjsip_tx_data *tdata,
+						    pjsip_transport **tp);
+
+/**
  * Type of callback to receive notification when message or raw data
  * has been sent.
  *
@@ -1192,6 +1255,130 @@ PJ_DECL(pj_status_t) pjsip_tpmgr_send_raw(pjsip_tpmgr *mgr,
 					  int addr_len,
 					  void *token,
 					  pjsip_tp_send_callback cb);
+
+
+/**
+ * Enumeration of transport state types.
+ */
+typedef enum pjsip_transport_state
+{
+    PJSIP_TP_STATE_CONNECTED,	    /**< Transport connected, applicable only
+					 to connection-oriented transports
+					 such as TCP and TLS.		    */
+    PJSIP_TP_STATE_DISCONNECTED	    /**< Transport disconnected, applicable
+					 only to connection-oriented 
+					 transports such as TCP and TLS.    */
+} pjsip_transport_state;
+
+
+/**
+ * Definition of transport state listener key.
+ */
+typedef void pjsip_tp_state_listener_key;
+
+/**
+ * Structure of transport state info passed by #pjsip_tp_state_callback.
+ */
+typedef struct pjsip_transport_state_info {
+    /**
+     * The last error code related to the transport state.
+     */
+    pj_status_t		 status;
+
+    /**
+     * Optional extended info, the content is specific for each transport type.
+     */
+    void		*ext_info;
+
+    /**
+     * Optional user data. In global transport state notification, this will
+     * always be NULL.
+     */
+    void		*user_data;
+
+} pjsip_transport_state_info;
+
+
+/**
+ * Type of callback to receive transport state notifications, such as
+ * transport connected/disconnected. Application may shutdown the transport
+ * in this callback.
+ *
+ * @param tp		The transport instance.
+ * @param state		The transport state.
+ * @param info		The transport state info.
+ */
+typedef void (*pjsip_tp_state_callback)(
+				    pjsip_transport *tp,
+				    pjsip_transport_state state,
+				    const pjsip_transport_state_info *info);
+
+
+/**
+ * Set callback of global transport state notification. The caller will be
+ * notified whenever the state of any transport is changed. The type of events
+ * are defined in #pjsip_transport_state.
+ *
+ * Note that this function will override the existing callback, if any, so
+ * application is recommended to keep the old callback and manually forward
+ * the notification to the old callback, otherwise other component that 
+ * concerns about the transport state will no longer receive transport state 
+ * events.
+ * 
+ * @param mgr	    Transport manager.
+ * @param cb	    Callback to be called to notify caller about transport 
+ *		    state changing.
+ *
+ * @return	    PJ_SUCCESS on success, or the appropriate error code.
+ */
+PJ_DECL(pj_status_t) pjsip_tpmgr_set_state_cb(pjsip_tpmgr *mgr,
+					      pjsip_tp_state_callback cb);
+
+
+/**
+ * Get the callback of global transport state notification.
+ * 
+ * @param mgr	    Transport manager.
+ *
+ * @return	    The transport state callback or NULL if it is not set.
+ */
+PJ_DECL(pjsip_tp_state_callback) pjsip_tpmgr_get_state_cb(
+					      const pjsip_tpmgr *mgr);
+
+
+/**
+ * Add a listener to the specified transport for transport state notification.
+ * 
+ * @param tp	    The transport.
+ * @param cb	    Callback to be called to notify listener about transport 
+ *		    state changing.
+ * @param user_data The user data.
+ * @param key	    Output key, used to remove this listener.
+ *
+ * @return	    PJ_SUCCESS on success, or the appropriate error code.
+ */
+PJ_DECL(pj_status_t) pjsip_transport_add_state_listener (
+					    pjsip_transport *tp,
+					    pjsip_tp_state_callback cb,
+					    void *user_data,
+					    pjsip_tp_state_listener_key **key);
+
+
+/**
+ * Remove a listener from the specified transport for transport state 
+ * notification.
+ * 
+ * @param tp	    The transport.
+ * @param key	    The listener key.
+ * @param user_data The user data, for validation purpose.
+ *
+ * @return	    PJ_SUCCESS on success, or the appropriate error code.
+ */
+PJ_DECL(pj_status_t) pjsip_transport_remove_state_listener (
+				    pjsip_transport *tp,
+				    pjsip_tp_state_listener_key *key,
+				    const void *user_data);
+
 
 /**
  * @}

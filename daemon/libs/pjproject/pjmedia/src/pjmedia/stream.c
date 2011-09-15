@@ -1,6 +1,6 @@
-/* $Id: stream.c 2850 2009-08-01 09:20:59Z bennylp $ */
+/* $Id: stream.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjmedia/stream.h>
 #include <pjmedia/errno.h>
@@ -59,7 +48,23 @@
  * synthetic frames, so we need to set this to a reasonably large value
  * just as precaution
  */
-#define MAX_PLC_MSEC			240
+#define MAX_PLC_MSEC			PJMEDIA_MAX_PLC_DURATION_MSEC
+
+
+/* Tracing jitter buffer operations in a stream session to a CSV file.
+ * The trace will contain JB operation timestamp, frame info, RTP info, and
+ * the JB state right after the operation.
+ */
+#define TRACE_JB			0	/* Enable/disable trace.    */
+#define TRACE_JB_PATH_PREFIX		""	/* Optional path/prefix
+						   for the CSV filename.    */
+#if TRACE_JB
+#   include <pj/file_io.h>
+#   define TRACE_JB_INVALID_FD		((pj_oshandle_t)-1)
+#   define TRACE_JB_OPENED(s)		(s->trace_jb_fd != TRACE_JB_INVALID_FD)
+#endif
+
+
 
 /**
  * Media channel.
@@ -131,6 +136,7 @@ struct pjmedia_stream
     pj_mutex_t		    *jb_mutex;
     pjmedia_jbuf	    *jb;	    /**< Jitter buffer.		    */
     char		     jb_last_frm;   /**< Last frame type from jb    */
+    unsigned		     jb_last_frm_cnt;/**< Last JB frame type counter*/
 
     pjmedia_rtcp_session     rtcp;	    /**< RTCP for incoming RTP.	    */
 
@@ -191,8 +197,16 @@ struct pjmedia_stream
 #endif
 
 #if defined(PJMEDIA_STREAM_ENABLE_KA) && PJMEDIA_STREAM_ENABLE_KA!=0
+    pj_bool_t		     use_ka;	       /**< Stream keep-alive with non-
+						    codec-VAD mechanism is
+						    enabled?		    */
     pj_timestamp	     last_frm_ts_sent; /**< Timestamp of last sending
 					            packet		    */
+#endif
+
+#if TRACE_JB
+    pj_oshandle_t	    trace_jb_fd;	    /**< Jitter tracing file handle.*/
+    char		   *trace_jb_buf;	    /**< Jitter tracing buffer.	    */
 #endif
 };
 
@@ -218,6 +232,157 @@ static void stream_perror(const char *sender, const char *title,
     PJ_LOG(4,(sender, "%s: %s [err:%d]", title, errmsg, status));
 }
 
+
+#if TRACE_JB
+
+PJ_INLINE(int) trace_jb_print_timestamp(char **buf, pj_ssize_t len)
+{
+    pj_time_val now;
+    pj_parsed_time ptime;
+    char *p = *buf;
+
+    if (len < 14)
+	return -1;
+
+    pj_gettimeofday(&now);
+    pj_time_decode(&now, &ptime);
+    p += pj_utoa_pad(ptime.hour, p, 2, '0');
+    *p++ = ':';
+    p += pj_utoa_pad(ptime.min, p, 2, '0');
+    *p++ = ':';
+    p += pj_utoa_pad(ptime.sec, p, 2, '0');
+    *p++ = '.';
+    p += pj_utoa_pad(ptime.msec, p, 3, '0');
+    *p++ = ',';
+
+    *buf = p;
+
+    return 0;
+}
+
+PJ_INLINE(int) trace_jb_print_state(pjmedia_stream *stream, 
+				    char **buf, pj_ssize_t len)
+{
+    char *p = *buf;
+    char *endp = *buf + len;
+    pjmedia_jb_state state;
+
+    pjmedia_jbuf_get_state(stream->jb, &state);
+
+    len = pj_ansi_snprintf(p, endp-p, "%d, %d, %d",
+			   state.size, state.burst, state.prefetch);
+    if ((len < 0) || (len >= endp-p))
+	return -1;
+
+    p += len;
+    *buf = p;
+    return 0;
+}
+
+static void trace_jb_get(pjmedia_stream *stream, pjmedia_jb_frame_type ft,
+			 pj_size_t fsize)
+{
+    char *p = stream->trace_jb_buf;
+    char *endp = stream->trace_jb_buf + PJ_LOG_MAX_SIZE;
+    pj_ssize_t len = 0;
+    const char* ft_st;
+
+    if (!TRACE_JB_OPENED(stream))
+	return;
+
+    /* Print timestamp. */
+    if (trace_jb_print_timestamp(&p, endp-p))
+	goto on_insuff_buffer;
+
+    /* Print frame type and size */
+    switch(ft) {
+	case PJMEDIA_JB_MISSING_FRAME:
+	    ft_st = "missing";
+	    break;
+	case PJMEDIA_JB_NORMAL_FRAME:
+	    ft_st = "normal";
+	    break;
+	case PJMEDIA_JB_ZERO_PREFETCH_FRAME:
+	    ft_st = "prefetch";
+	    break;
+	case PJMEDIA_JB_ZERO_EMPTY_FRAME:
+	    ft_st = "empty";
+	    break;
+	default:
+	    ft_st = "unknown";
+	    break;
+    }
+
+    /* Print operation, size, frame count, frame type */
+    len = pj_ansi_snprintf(p, endp-p, "GET,%d,1,%s,,,,", fsize, ft_st);
+    if ((len < 0) || (len >= endp-p))
+	goto on_insuff_buffer;
+    p += len;
+
+    /* Print JB state */
+    if (trace_jb_print_state(stream, &p, endp-p))
+	goto on_insuff_buffer;
+
+    /* Print end of line */
+    if (endp-p < 2)
+	goto on_insuff_buffer;
+    *p++ = '\n';
+
+    /* Write and flush */
+    len = p - stream->trace_jb_buf;
+    pj_file_write(stream->trace_jb_fd, stream->trace_jb_buf, &len);
+    pj_file_flush(stream->trace_jb_fd);
+    return;
+
+on_insuff_buffer:
+    pj_assert(!"Trace buffer too small, check PJ_LOG_MAX_SIZE!");
+}
+
+static void trace_jb_put(pjmedia_stream *stream, const pjmedia_rtp_hdr *hdr,
+			 unsigned payloadlen, unsigned frame_cnt)
+{
+    char *p = stream->trace_jb_buf;
+    char *endp = stream->trace_jb_buf + PJ_LOG_MAX_SIZE;
+    pj_ssize_t len = 0;
+
+    if (!TRACE_JB_OPENED(stream))
+	return;
+
+    /* Print timestamp. */
+    if (trace_jb_print_timestamp(&p, endp-p))
+	goto on_insuff_buffer;
+
+    /* Print operation, size, frame count, RTP info */
+    len = pj_ansi_snprintf(p, endp-p,
+			   "PUT,%d,%d,,%d,%d,%d,",
+			   payloadlen, frame_cnt,
+			   pj_ntohs(hdr->seq), pj_ntohl(hdr->ts), hdr->m);
+    if ((len < 0) || (len >= endp-p))
+	goto on_insuff_buffer;
+    p += len;
+
+    /* Print JB state */
+    if (trace_jb_print_state(stream, &p, endp-p))
+	goto on_insuff_buffer;
+
+    /* Print end of line */
+    if (endp-p < 2)
+	goto on_insuff_buffer;
+    *p++ = '\n';
+
+    /* Write and flush */
+    len = p - stream->trace_jb_buf;
+    pj_file_write(stream->trace_jb_fd, stream->trace_jb_buf, &len);
+    pj_file_flush(stream->trace_jb_fd);
+    return;
+
+on_insuff_buffer:
+    pj_assert(!"Trace buffer too small, check PJ_LOG_MAX_SIZE!");
+}
+
+#endif /* TRACE_JB */
+
+
 #if defined(PJMEDIA_STREAM_ENABLE_KA) && PJMEDIA_STREAM_ENABLE_KA != 0
 /*
  * Send keep-alive packet using non-codec frame.
@@ -228,22 +393,28 @@ static void send_keep_alive_packet(pjmedia_stream *stream)
 
     /* Keep-alive packet is empty RTP */
     pj_status_t status;
-    void *rtphdr;
+    void *pkt;
     int pkt_len;
 
+    TRC_((stream->port.info.name.ptr,
+	  "Sending keep-alive (RTCP and empty RTP)"));
 
+    /* Send RTP */
     status = pjmedia_rtp_encode_rtp( &stream->enc->rtp,
 				     stream->enc->pt, 0,
 				     1,
 				     0,
-				     (const void**)&rtphdr,
+				     (const void**)&pkt,
 				     &pkt_len);
     pj_assert(status == PJ_SUCCESS);
 
-    pj_memcpy(stream->enc->out_pkt, rtphdr, pkt_len);
+    pj_memcpy(stream->enc->out_pkt, pkt, pkt_len);
     pjmedia_transport_send_rtp(stream->transport, stream->enc->out_pkt,
 			       pkt_len);
-    TRC_((stream->port.info.name.ptr, "Keep-alive sent (empty RTP)"));
+
+    /* Send RTCP */
+    pjmedia_rtcp_build_rtcp(&stream->rtcp, &pkt, &pkt_len);
+    pjmedia_transport_send_rtcp(stream->transport, pkt, pkt_len);
 
 #elif PJMEDIA_STREAM_ENABLE_KA == PJMEDIA_STREAM_KA_USER
 
@@ -251,11 +422,18 @@ static void send_keep_alive_packet(pjmedia_stream *stream)
     int pkt_len;
     const pj_str_t str_ka = PJMEDIA_STREAM_KA_USER_PKT;
 
+    TRC_((stream->port.info.name.ptr,
+	  "Sending keep-alive (custom RTP/RTCP packets)"));
+
+    /* Send to RTP port */
     pj_memcpy(stream->enc->out_pkt, str_ka.ptr, str_ka.slen);
     pkt_len = str_ka.slen;
     pjmedia_transport_send_rtp(stream->transport, stream->enc->out_pkt,
 			       pkt_len);
-    TRC_((stream->port.info.name.ptr, "Keep-alive sent"));
+
+    /* Send to RTCP port */
+    pjmedia_transport_send_rtcp(stream->transport, stream->enc->out_pkt,
+			        pkt_len);
 
 #else
     
@@ -310,7 +488,11 @@ static pj_status_t get_frame( pjmedia_port *port, pjmedia_frame *frame)
 	/* Get frame from jitter buffer. */
 	pjmedia_jbuf_get_frame2(stream->jb, channel->out_pkt, &frame_size,
 			        &frame_type, &bit_info);
-	
+
+#if TRACE_JB
+	trace_jb_get(stream, frame_type, frame_size);
+#endif
+
 	if (frame_type == PJMEDIA_JB_MISSING_FRAME) {
 	    
 	    /* Activate PLC */
@@ -336,14 +518,22 @@ static pj_status_t get_frame( pjmedia_port *port, pjmedia_frame *frame)
 		/* Either PLC failed or PLC not supported/enabled */
 		pjmedia_zero_samples(p_out_samp + samples_count,
 				     samples_required - samples_count);
-		PJ_LOG(5,(stream->port.info.name.ptr,  "Frame lost!"));
+	    }
 
+	    if (frame_type != stream->jb_last_frm) {
+		/* Report changing frame type event */
+		PJ_LOG(5,(stream->port.info.name.ptr, "Frame lost%s!",
+		          (status == PJ_SUCCESS? ", recovered":"")));
+
+		stream->jb_last_frm = frame_type;
+		stream->jb_last_frm_cnt = 1;
 	    } else {
-		PJ_LOG(5,(stream->port.info.name.ptr, 
-			  "Lost frame recovered"));
+		stream->jb_last_frm_cnt++;
 	    }
 
 	} else if (frame_type == PJMEDIA_JB_ZERO_EMPTY_FRAME) {
+
+	    const char *with_plc = "";
 
 	    /* Jitter buffer is empty. If this is the first "empty" state,
 	     * activate PLC to smoothen the fade-out, otherwise zero
@@ -353,9 +543,6 @@ static pj_status_t get_frame( pjmedia_port *port, pjmedia_frame *frame)
 	    //lost and not the subsequent ones.
 	    //if (frame_type != stream->jb_last_frm) {
 	    if (1) {
-		pjmedia_jb_state jb_state;
-		const char *with_plc = "";
-
 		/* Activate PLC to smoothen the missing frame */
 		if (stream->codec->op->recover && 
 		    stream->codec_param.setting.plc &&
@@ -380,13 +567,6 @@ static pj_status_t get_frame( pjmedia_port *port, pjmedia_frame *frame)
 
 		    with_plc = ", plc invoked";
 		} 
-
-		/* Report the state of jitter buffer */
-		pjmedia_jbuf_get_state(stream->jb, &jb_state);
-		PJ_LOG(5,(stream->port.info.name.ptr, 
-			  "Jitter buffer empty (prefetch=%d)%s", 
-			  jb_state.prefetch, with_plc));
-
 	    }
 
 	    if (samples_count < samples_required) {
@@ -395,18 +575,28 @@ static pj_status_t get_frame( pjmedia_port *port, pjmedia_frame *frame)
 		samples_count = samples_required;
 	    }
 
-	    stream->jb_last_frm = frame_type;
+	    if (stream->jb_last_frm != frame_type) {
+		pjmedia_jb_state jb_state;
+
+		/* Report changing frame type event */
+		pjmedia_jbuf_get_state(stream->jb, &jb_state);
+		PJ_LOG(5,(stream->port.info.name.ptr, 
+			  "Jitter buffer empty (prefetch=%d)%s", 
+			  jb_state.prefetch, with_plc));
+
+		stream->jb_last_frm = frame_type;
+		stream->jb_last_frm_cnt = 1;
+	    } else {
+		stream->jb_last_frm_cnt++;
+	    }
 	    break;
 
 	} else if (frame_type != PJMEDIA_JB_NORMAL_FRAME) {
 
-	    pjmedia_jb_state jb_state;
+	    const char *with_plc = "";
 
 	    /* It can only be PJMEDIA_JB_ZERO_PREFETCH frame */
 	    pj_assert(frame_type == PJMEDIA_JB_ZERO_PREFETCH_FRAME);
-
-	    /* Get the state of jitter buffer */
-	    pjmedia_jbuf_get_state(stream->jb, &jb_state);
 
 	    /* Always activate PLC when it's available.. */
 	    if (stream->codec->op->recover && 
@@ -430,25 +620,29 @@ static pj_status_t get_frame( pjmedia_port *port, pjmedia_frame *frame)
 		} while (samples_count < samples_required &&
 			 stream->plc_cnt < stream->max_plc_cnt);
 
-		//if (stream->jb_last_frm != frame_type) {
-		if (1) {
-		    PJ_LOG(5,(stream->port.info.name.ptr, 
-			      "Jitter buffer is bufferring with plc (prefetch=%d)",
-			      jb_state.prefetch));
-		}
-
+		with_plc = ", plc invoked";
 	    } 
 
 	    if (samples_count < samples_required) {
 		pjmedia_zero_samples(p_out_samp + samples_count,
 				     samples_required - samples_count);
 		samples_count = samples_required;
-		PJ_LOG(5,(stream->port.info.name.ptr, 
-			  "Jitter buffer is bufferring (prefetch=%d)..", 
-			  jb_state.prefetch));
 	    }
 
-	    stream->jb_last_frm = frame_type;
+	    if (stream->jb_last_frm != frame_type) {
+		pjmedia_jb_state jb_state;
+
+		/* Report changing frame type event */
+		pjmedia_jbuf_get_state(stream->jb, &jb_state);
+		PJ_LOG(5,(stream->port.info.name.ptr, 
+			  "Jitter buffer is bufferring (prefetch=%d)%s", 
+			  jb_state.prefetch, with_plc));
+
+		stream->jb_last_frm = frame_type;
+		stream->jb_last_frm_cnt = 1;
+	    } else {
+		stream->jb_last_frm_cnt++;
+	    }
 	    break;
 
 	} else {
@@ -474,9 +668,20 @@ static pj_status_t get_frame( pjmedia_port *port, pjmedia_frame *frame)
 		pjmedia_zero_samples(p_out_samp + samples_count, 
 				     samples_per_frame);
 	    }
-	}
 
-	stream->jb_last_frm = frame_type;
+	    if (stream->jb_last_frm != frame_type) {
+		/* Report changing frame type event */
+		PJ_LOG(5,(stream->port.info.name.ptr, 
+			  "Jitter buffer starts returning normal frames "
+			  "(after %d empty/lost)",
+			  stream->jb_last_frm_cnt, stream->jb_last_frm));
+
+		stream->jb_last_frm = frame_type;
+		stream->jb_last_frm_cnt = 1;
+	    } else {
+		stream->jb_last_frm_cnt++;
+	    }
+	}
     }
 
 
@@ -540,6 +745,10 @@ static pj_status_t get_frame_ext( pjmedia_port *port, pjmedia_frame *frame)
 	/* Get frame from jitter buffer. */
 	pjmedia_jbuf_get_frame2(stream->jb, channel->out_pkt, &frame_size,
 			        &frame_type, &bit_info);
+
+#if TRACE_JB
+	trace_jb_get(stream, frame_type, frame_size);
+#endif
 	
 	/* Unlock jitter buffer mutex. */
 	pj_mutex_unlock( stream->jb_mutex );
@@ -562,47 +771,81 @@ static pj_status_t get_frame_ext( pjmedia_port *port, pjmedia_frame *frame)
 		pjmedia_frame_ext_append_subframe(f, NULL, 0,
 					    (pj_uint16_t)samples_per_frame);
 	    }
+
+	    if (stream->jb_last_frm != frame_type) {
+		/* Report changing frame type event */
+		PJ_LOG(5,(stream->port.info.name.ptr, 
+			  "Jitter buffer starts returning normal frames "
+			  "(after %d empty/lost)",
+			  stream->jb_last_frm_cnt, stream->jb_last_frm));
+
+		stream->jb_last_frm = frame_type;
+		stream->jb_last_frm_cnt = 1;
+	    } else {
+		stream->jb_last_frm_cnt++;
+	    }
+
 	} else {
-	    status = (*stream->codec->op->recover)(stream->codec,
-						   0, frame);
-	    if (status != PJ_SUCCESS) {
+
+	    /* Try to generate frame by invoking PLC (when any) */
+	    status = PJ_SUCCESS;
+	    if (stream->codec->op->recover) {
+		status = (*stream->codec->op->recover)(stream->codec,
+						       0, frame);
+	    }
+	    
+	    /* No PLC or PLC failed */
+	    if (!stream->codec->op->recover || status != PJ_SUCCESS) {
 		pjmedia_frame_ext_append_subframe(f, NULL, 0,
 					    (pj_uint16_t)samples_per_frame);
 	    }
 
 	    if (frame_type == PJMEDIA_JB_MISSING_FRAME) {
-		PJ_LOG(5,(stream->port.info.name.ptr,  "Frame lost!"));
+		if (frame_type != stream->jb_last_frm) {
+		    /* Report changing frame type event */
+		    PJ_LOG(5,(stream->port.info.name.ptr, "Frame lost!"));
+
+		    stream->jb_last_frm = frame_type;
+		    stream->jb_last_frm_cnt = 1;
+		} else {
+		    stream->jb_last_frm_cnt++;
+		}
 	    } else if (frame_type == PJMEDIA_JB_ZERO_EMPTY_FRAME) {
-		/* Jitter buffer is empty. Check if this is the first "empty" 
-		 * state.
-		 */
 		if (frame_type != stream->jb_last_frm) {
 		    pjmedia_jb_state jb_state;
 
-		    /* Report the state of jitter buffer */
+		    /* Report changing frame type event */
 		    pjmedia_jbuf_get_state(stream->jb, &jb_state);
 		    PJ_LOG(5,(stream->port.info.name.ptr, 
 			      "Jitter buffer empty (prefetch=%d)", 
 			      jb_state.prefetch));
+
+		    stream->jb_last_frm = frame_type;
+		    stream->jb_last_frm_cnt = 1;
+		} else {
+		    stream->jb_last_frm_cnt++;
 		}
 	    } else {
-		pjmedia_jb_state jb_state;
 
 		/* It can only be PJMEDIA_JB_ZERO_PREFETCH frame */
 		pj_assert(frame_type == PJMEDIA_JB_ZERO_PREFETCH_FRAME);
 
-		/* Get the state of jitter buffer */
-		pjmedia_jbuf_get_state(stream->jb, &jb_state);
-
 		if (stream->jb_last_frm != frame_type) {
+		    pjmedia_jb_state jb_state;
+
+		    /* Report changing frame type event */
+		    pjmedia_jbuf_get_state(stream->jb, &jb_state);
 		    PJ_LOG(5,(stream->port.info.name.ptr, 
 			      "Jitter buffer is bufferring (prefetch=%d)",
 			      jb_state.prefetch));
+
+		    stream->jb_last_frm = frame_type;
+		    stream->jb_last_frm_cnt = 1;
+		} else {
+		    stream->jb_last_frm_cnt++;
 		}
 	    }
 	}
-
-	stream->jb_last_frm = frame_type;
     }
 
     return PJ_SUCCESS;
@@ -883,6 +1126,7 @@ static pj_status_t put_frame_imp( pjmedia_port *port,
     /* If the interval since last sending packet is greater than
      * PJMEDIA_STREAM_KA_INTERVAL, send keep-alive packet.
      */
+    if (stream->use_ka)
     {
 	pj_uint32_t dtx_duration;
 
@@ -1012,8 +1256,9 @@ static pj_status_t put_frame_imp( pjmedia_port *port,
 
 
     /* Encode audio frame */
-    } else if (frame->type != PJMEDIA_FRAME_TYPE_NONE &&
-	       frame->buf != NULL) 
+    } else if ((frame->type == PJMEDIA_FRAME_TYPE_AUDIO &&
+	        frame->buf != NULL) ||
+	       (frame->type == PJMEDIA_FRAME_TYPE_EXTENDED))
     {
 	/* Encode! */
 	status = stream->codec->op->encode( stream->codec, frame, 
@@ -1328,6 +1573,7 @@ static void on_rx_rtp( void *data,
     const void *payload;
     unsigned payloadlen;
     pjmedia_rtp_status seq_st;
+    pj_bool_t check_pt;
     pj_status_t status;
     pj_bool_t pkt_discarded = PJ_FALSE;
 
@@ -1357,8 +1603,15 @@ static void on_rx_rtp( void *data,
     /* Update RTP session (also checks if RTP session can accept
      * the incoming packet.
      */
-    pjmedia_rtp_session_update2(&channel->rtp, hdr, &seq_st,
-			        hdr->pt != stream->rx_event_pt);
+    check_pt = (hdr->pt != stream->rx_event_pt) && PJMEDIA_STREAM_CHECK_RTP_PT;
+    pjmedia_rtp_session_update2(&channel->rtp, hdr, &seq_st, check_pt);
+#if !PJMEDIA_STREAM_CHECK_RTP_PT
+    if (!check_pt && hdr->pt != channel->rtp.out_pt &&
+	hdr->pt != stream->rx_event_pt)
+    {
+	seq_st.status.flag.badpt = 1;
+    }
+#endif
     if (seq_st.status.value) {
 	TRC_  ((stream->port.info.name.ptr, 
 		"RTP status: badpt=%d, badssrc=%d, dup=%d, "
@@ -1461,22 +1714,30 @@ static void on_rx_rtp( void *data,
 		 * packets with valid RTP sequence and no wrapped timestamp.
 		 */
 		if (seq_st.diff == 1 && stream->rtp_rx_last_ts && 
-		    ts.u64 > stream->rtp_rx_last_ts)
+		    ts.u64 > stream->rtp_rx_last_ts && 
+		    stream->rtp_rx_last_cnt > 0)
 		{
 		    unsigned peer_frm_ts_diff;
+		    unsigned frm_ts_span;
 
+		    /* Calculate actual frame timestamp span */
+		    frm_ts_span = stream->port.info.samples_per_frame /
+				  stream->codec_param.setting.frm_per_pkt/
+				  stream->port.info.channel_count;
+
+		    /* Get remote frame timestamp span */
 		    peer_frm_ts_diff = 
 			((pj_uint32_t)ts.u64-stream->rtp_rx_last_ts) / 
 			stream->rtp_rx_last_cnt;
 
-		    /* Possibilities remote's samples per frame for G.722 
-		     * are only 160 and 320, this validation is needed
-		     * to avoid wrong decision because of silence frames.
+		    /* Possibilities remote's samples per frame for G.722
+		     * are only (frm_ts_span) and (frm_ts_span/2), this
+		     * validation is needed to avoid wrong decision because
+		     * of silence frames.
 		     */
 		    if (stream->codec_param.info.pt == PJMEDIA_RTP_PT_G722 &&
-			(peer_frm_ts_diff==stream->port.info.samples_per_frame
-			 || peer_frm_ts_diff == 
-				    stream->port.info.samples_per_frame >> 1))
+			(peer_frm_ts_diff == frm_ts_span || 
+			 peer_frm_ts_diff == (frm_ts_span>>1)))
 		    {
 			if (peer_frm_ts_diff < stream->rtp_rx_ts_len_per_frame)
 			    stream->rtp_rx_ts_len_per_frame = peer_frm_ts_diff;
@@ -1497,6 +1758,11 @@ static void on_rx_rtp( void *data,
 	    }
 
 	    ts_span = stream->rtp_rx_ts_len_per_frame;
+
+	    /* Adjust the timestamp of the parsed frames */
+	    for (i=0; i<count; ++i) {
+		frames[i].timestamp.u64 = ts.u64 + ts_span * i;
+	    }
 
 	} else {
 	    ts_span = stream->codec_param.info.frm_ptime * 
@@ -1520,6 +1786,11 @@ static void on_rx_rtp( void *data,
 	    if (discarded)
 		pkt_discarded = PJ_TRUE;
 	}
+
+#if TRACE_JB
+	trace_jb_put(stream, hdr, payloadlen, count);
+#endif
+
     }
     pj_mutex_unlock( stream->jb_mutex );
 
@@ -1725,6 +1996,11 @@ PJ_DEF(pj_status_t) pjmedia_stream_create( pjmedia_endpt *endpt,
     stream->tx_event_pt = info->tx_event_pt ? info->tx_event_pt : -1;
     stream->rx_event_pt = info->rx_event_pt ? info->rx_event_pt : -1;
     stream->last_dtmf = -1;
+    stream->jb_last_frm = PJMEDIA_JB_NORMAL_FRAME;
+
+#if defined(PJMEDIA_STREAM_ENABLE_KA) && PJMEDIA_STREAM_ENABLE_KA!=0
+    stream->use_ka = info->use_ka;
+#endif
 
     /* Build random RTCP CNAME. CNAME has user@host format */
     stream->cname.ptr = p = (char*) pj_pool_alloc(pool, 20);
@@ -1783,23 +2059,28 @@ PJ_DEF(pj_status_t) pjmedia_stream_create( pjmedia_endpt *endpt,
 					  stream->codec_param.info.frm_ptime *
 					  stream->codec_param.setting.frm_per_pkt /
 					  1000;
-    stream->port.info.bytes_per_frame = stream->codec_param.info.max_bps * 
-					stream->codec_param.info.frm_ptime *
-					stream->codec_param.setting.frm_per_pkt /
-					8 / 1000;
-    if ((stream->codec_param.info.max_bps * stream->codec_param.info.frm_ptime *
-	stream->codec_param.setting.frm_per_pkt) % 8000 != 0)
-    {
-	++stream->port.info.bytes_per_frame;
-    }
-
     stream->port.info.format.id = stream->codec_param.info.fmt_id;
     if (stream->codec_param.info.fmt_id == PJMEDIA_FORMAT_L16) {
+	/* Raw format */
+	stream->port.info.bytes_per_frame = stream->port.info.samples_per_frame *
+					    stream->port.info.bits_per_sample / 8;
+
 	stream->port.put_frame = &put_frame;
 	stream->port.get_frame = &get_frame;
     } else {
+	/* Encoded format */
+	stream->port.info.bytes_per_frame = stream->codec_param.info.max_bps * 
+					    stream->codec_param.info.frm_ptime *
+					    stream->codec_param.setting.frm_per_pkt /
+					    8 / 1000;
+	if ((stream->codec_param.info.max_bps * stream->codec_param.info.frm_ptime *
+	    stream->codec_param.setting.frm_per_pkt) % 8000 != 0)
+	{
+	    ++stream->port.info.bytes_per_frame;
+	}
 	stream->port.info.format.bitrate = stream->codec_param.info.avg_bps;
 	stream->port.info.format.vad = (stream->codec_param.setting.vad != 0);
+
 	stream->port.put_frame = &put_frame;
 	stream->port.get_frame = &get_frame_ext;
     }
@@ -1871,31 +2152,15 @@ PJ_DEF(pj_status_t) pjmedia_stream_create( pjmedia_endpt *endpt,
     stream->rtp_rx_last_cnt = 0;
     stream->rtp_tx_ts_len_per_pkt = stream->enc_samples_per_pkt /
 				     stream->codec_param.info.channel_cnt;
-    stream->rtp_rx_ts_len_per_frame = stream->port.info.samples_per_frame / 
-				       stream->codec_param.info.channel_cnt;
+    stream->rtp_rx_ts_len_per_frame = stream->port.info.samples_per_frame /
+				      stream->codec_param.setting.frm_per_pkt /
+				      stream->codec_param.info.channel_cnt;
 
-    /* Init RTCP session: */
-
-    /* Special case for G.722 */
     if (info->fmt.pt == PJMEDIA_RTP_PT_G722) {
-	pjmedia_rtcp_init(&stream->rtcp, stream->port.info.name.ptr,
-			  8000, 
-			  160,
-			  info->ssrc);
 	stream->has_g722_mpeg_bug = PJ_TRUE;
 	/* RTP clock rate = 1/2 real clock rate */
 	stream->rtp_tx_ts_len_per_pkt >>= 1;
-    } else {
-	pjmedia_rtcp_init(&stream->rtcp, stream->port.info.name.ptr,
-			  info->fmt.clock_rate, 
-			  stream->port.info.samples_per_frame, 
-			  info->ssrc);
     }
-#else
-    pjmedia_rtcp_init(&stream->rtcp, stream->port.info.name.ptr,
-		      info->fmt.clock_rate, 
-		      stream->port.info.samples_per_frame, 
-		      info->ssrc);
 #endif
 
     /* Init jitter buffer parameters: */
@@ -1950,6 +2215,29 @@ PJ_DEF(pj_status_t) pjmedia_stream_create( pjmedia_endpt *endpt,
     if (status != PJ_SUCCESS)
 	goto err_cleanup;
 
+
+    /* Init RTCP session: */
+
+    {
+	pjmedia_rtcp_session_setting rtcp_setting;
+
+	pjmedia_rtcp_session_setting_default(&rtcp_setting);
+	rtcp_setting.name = stream->port.info.name.ptr;
+	rtcp_setting.ssrc = info->ssrc;
+	rtcp_setting.rtp_ts_base = pj_ntohl(stream->enc->rtp.out_hdr.ts);
+	rtcp_setting.clock_rate = info->fmt.clock_rate;
+	rtcp_setting.samples_per_frame = stream->port.info.samples_per_frame;
+
+#if defined(PJMEDIA_HANDLE_G722_MPEG_BUG) && (PJMEDIA_HANDLE_G722_MPEG_BUG!=0)
+	/* Special case for G.722 */
+	if (info->fmt.pt == PJMEDIA_RTP_PT_G722) {
+	    rtcp_setting.clock_rate = 8000;
+	    rtcp_setting.samples_per_frame = 160;
+	}
+#endif
+
+	pjmedia_rtcp_init2(&stream->rtcp, &rtcp_setting);
+    }
 
     /* Only attach transport when stream is ready. */
     status = pjmedia_transport_attach(tp, stream, &info->rem_addr, 
@@ -2026,7 +2314,35 @@ PJ_DEF(pj_status_t) pjmedia_stream_create( pjmedia_endpt *endpt,
 
 #if defined(PJMEDIA_STREAM_ENABLE_KA) && PJMEDIA_STREAM_ENABLE_KA!=0
     /* NAT hole punching by sending KA packet via RTP transport. */
-    send_keep_alive_packet(stream);
+    if (stream->use_ka)
+	send_keep_alive_packet(stream);
+#endif
+
+#if TRACE_JB
+    {
+	char trace_name[PJ_MAXPATH];
+	pj_ssize_t len;
+
+	pj_ansi_snprintf(trace_name, sizeof(trace_name), 
+			 TRACE_JB_PATH_PREFIX "%s.csv",
+			 stream->port.info.name.ptr);
+	status = pj_file_open(pool, trace_name, PJ_O_RDWR, &stream->trace_jb_fd);
+	if (status != PJ_SUCCESS) {
+	    stream->trace_jb_fd = TRACE_JB_INVALID_FD;
+	    PJ_LOG(3,(THIS_FILE, "Failed creating RTP trace file '%s'", 
+		      trace_name));
+	} else {
+	    stream->trace_jb_buf = (char*)pj_pool_alloc(pool, PJ_LOG_MAX_SIZE);
+
+	    /* Print column header */
+	    len = pj_ansi_snprintf(stream->trace_jb_buf, PJ_LOG_MAX_SIZE,
+				   "Time, Operation, Size, Frame Count, "
+				   "Frame type, RTP Seq, RTP TS, RTP M, "
+				   "JB size, JB burst level, JB prefetch\n");
+	    pj_file_write(stream->trace_jb_fd, stream->trace_jb_buf, &len);
+	    pj_file_flush(stream->trace_jb_fd);
+	}
+    }
 #endif
 
     /* Success! */
@@ -2132,9 +2448,24 @@ PJ_DEF(pj_status_t) pjmedia_stream_destroy( pjmedia_stream *stream )
     if (stream->jb)
 	pjmedia_jbuf_destroy(stream->jb);
 
+#if TRACE_JB
+    if (TRACE_JB_OPENED(stream)) {
+	pj_file_close(stream->trace_jb_fd);
+	stream->trace_jb_fd = TRACE_JB_INVALID_FD;
+    }
+#endif
+
     return PJ_SUCCESS;
 }
 
+
+/*
+ * Get the last frame frame type retreived from the jitter buffer.
+ */
+PJ_DEF(char) pjmedia_stream_get_last_jb_frame_type(pjmedia_stream *stream)
+{
+    return stream->jb_last_frm;
+}
 
 
 /*
@@ -2196,6 +2527,20 @@ PJ_DEF(pj_status_t) pjmedia_stream_get_stat( const pjmedia_stream *stream,
     pj_memcpy(stat, &stream->rtcp.stat, sizeof(pjmedia_rtcp_stat));
     return PJ_SUCCESS;
 }
+
+
+/*
+ * Reset the stream statistics in the middle of a stream session.
+ */
+PJ_DEF(pj_status_t) pjmedia_stream_reset_stat(pjmedia_stream *stream)
+{
+    PJ_ASSERT_RETURN(stream, PJ_EINVAL);
+
+    pjmedia_rtcp_init_stat(&stream->rtcp.stat);
+
+    return PJ_SUCCESS;
+}
+
 
 #if defined(PJMEDIA_HAS_RTCP_XR) && (PJMEDIA_HAS_RTCP_XR != 0)
 /*

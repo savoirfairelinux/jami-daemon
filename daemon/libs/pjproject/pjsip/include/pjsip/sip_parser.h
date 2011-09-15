@@ -1,6 +1,6 @@
-/* $Id: sip_parser.h 2660 2009-04-28 19:38:43Z nanang $ */
+/* $Id: sip_parser.h 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #ifndef __PJSIP_SIP_PARSER_H__
 #define __PJSIP_SIP_PARSER_H__
@@ -287,7 +276,7 @@ PJ_DECL(pj_status_t) pjsip_find_msg(const char *buf,
  *			lines, and two when an error happen the value can
  *			pinpoint the location of the error in the buffer.
  *
- * @return		The instance of the header if parsing was successfull,
+ * @return		The instance of the header if parsing was successful,
  *			or otherwise a NULL pointer will be returned.
  */
 PJ_DECL(void*) pjsip_parse_hdr( pj_pool_t *pool, const pj_str_t *hname,
@@ -298,21 +287,25 @@ PJ_DECL(void*) pjsip_parse_hdr( pj_pool_t *pool, const pj_str_t *hname,
  * Parse header line(s). Multiple headers can be parsed by this function.
  * When there are multiple headers, the headers MUST be separated by either
  * a newline (as in SIP message) or ampersand mark (as in URI). This separator
- * however is optional for the last header.
+ * is optional for the last header.
  *
- * @param pool		the pool.
- * @param input		the input text to parse, which must be NULL terminated.
- * @param size		the text length.
- * @param hlist		the header list to store the parsed headers. 
+ * @param pool		The pool.
+ * @param input		The input text to parse, which must be NULL terminated.
+ * @param size		The text length.
+ * @param hlist		The header list to store the parsed headers.
  *			This list must have been initialized before calling 
  *			this function.
+ * @param options	Specify 1 here to make parsing stop when error is
+ * 			encountered when parsing the header. Otherwise the
+ * 			error is silently ignored and parsing resumes to the
+ * 			next line.
  * @return		zero if successfull, or -1 if error is encountered. 
  *			Upon error, the \a hlist argument MAY contain 
  *			successfully parsed headers.
  */
-PJ_DECL(pj_status_t) pjsip_parse_headers( pj_pool_t *pool,
-					  char *input, pj_size_t size,
-					  pj_list *hlist );
+PJ_DECL(pj_status_t) pjsip_parse_headers( pj_pool_t *pool, char *input,
+				          pj_size_t size, pjsip_hdr *hlist,
+				          unsigned options);
 
 
 /**

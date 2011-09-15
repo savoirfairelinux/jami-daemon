@@ -1,6 +1,6 @@
-/* $Id: sdp_neg_test.c 3014 2009-11-11 04:18:58Z nanang $ */
+/* $Id: sdp_neg_test.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy oa the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjmedia/sdp.h>
 #include <pjmedia/sdp_neg.h>
@@ -107,7 +96,7 @@ static struct test
 	    "m=audio 49170 RTP/AVP 0\r\n"
 	    "a=rtpmap:0 PCMU/8000\r\n"
 	    "m=video 0 RTP/AVP 31\r\n"
-	    "a=rtpmap:31 H261/90000\r\n"
+	    //"a=rtpmap:31 H261/90000\r\n"	/* <-- this is not necessary (port 0) */
 	    "m=video 53000 RTP/AVP 32\r\n"
 	    "a=rtpmap:32 MPV/90000\r\n"
 	  },
@@ -140,12 +129,13 @@ static struct test
 	    "m=audio 49170 RTP/AVP 0\r\n"
 	    "a=rtpmap:0 PCMU/8000\r\n"
 	    "m=video 0 RTP/AVP 31\r\n"
-	    //"a=rtpmap:31 H261/90000\r\n"	/* <-- this is not necessary */
+	    //"a=rtpmap:31 H261/90000\r\n"	/* <-- this is not necessary (port 0) */
 	    "m=video 53000 RTP/AVP 32\r\n"
 	    "a=rtpmap:32 MPV/90000\r\n"
 	    "m=audio 0 RTP/AVP 110\r\n"
-	    "a=rtpmap:110 telephone-events/8000\r\n"
-	    "a=sendonly\r\n"
+	    /* <-- the following attributes are not necessary (port 0) */
+	    //"a=rtpmap:110 telephone-events/8000\r\n"
+	    //"a=sendonly\r\n"
 	  }
 	}
     },
@@ -566,8 +556,10 @@ static struct test
 	    "m=audio 49170 RTP/AVP 0 8\r\n"
 	    "a=rtpmap:0 PCMU/8000\r\n"
 	    "a=rtpmap:8 PCMA/8000\r\n"
-	    "m=video 0 RTP/AVP 31\r\n"
-	    "a=rtpmap:31 H261/90000\r\n"
+	    // By #1088, the formats won't be negotiated when the media has port 0.
+	    //"m=video 0 RTP/AVP 31\r\n"
+	    "m=video 0 RTP/AVP 31 32\r\n"
+	    //"a=rtpmap:31 H261/90000\r\n"  /* <-- this is not necessary (port 0) */
 	  },
 	  {
 	    LOCAL_OFFER,
@@ -600,7 +592,7 @@ static struct test
 	    "m=audio 51372 RTP/AVP 0\r\n"
 	    "a=rtpmap:0 PCMU/8000\r\n"
 	    "m=video 0 RTP/AVP 31\r\n"
-	    "a=rtpmap:31 H261/90000\r\n"
+	    //"a=rtpmap:31 H261/90000\r\n"  /* <-- this is not necessary (port 0) */
 	  }
 	}
     },
@@ -676,7 +668,7 @@ static struct test
 	    "m=audio 49172 RTP/AVP 0\r\n"
 	    "a=rtpmap:0 PCMU/8000\r\n"
 	    "m=video 0 RTP/AVP 31\r\n"
-	    "a=rtpmap:31 H261/90000\r\n"
+	    //"a=rtpmap:31 H261/90000\r\n"  /* <-- this is not necessary (port 0) */
 	  }
 	}
     },
@@ -827,7 +819,7 @@ static struct test
 	    "c=IN IP4 host.atlanta.example.com\r\n"
 	    "t=0 0\r\n"
 	    "m=audio 0 RTP/AVP 0\r\n"
-	    "a=rtpmap:0 PCMU/8000\r\n"
+	    //"a=rtpmap:0 PCMU/8000\r\n"	  /* <-- this is not necessary (port 0) */
 	    "m=audio 51372 RTP/AVP 97 101\r\n"
 	    "a=rtpmap:97 iLBC/8000\r\n"
 	    "a=rtpmap:101 telephone-event/8000\r\n"
@@ -881,7 +873,7 @@ static struct test
 	    "c=IN IP4 host.biloxi.example.com\r\n"
 	    "t=0 0\r\n"
 	    "m=audio 0 RTP/AVP 0\r\n"
-	    "a=rtpmap:0 PCMU/8000\r\n"
+	    //"a=rtpmap:0 PCMU/8000\r\n"      /* <-- this is not necessary (port 0) */
 	    "m=audio 49170 RTP/AVP 97 101\r\n"
 	    "a=rtpmap:97 iLBC/8000\r\n"
 	    "a=rtpmap:101 telephone-event/8000\r\n",
@@ -927,7 +919,7 @@ static struct test
 	    "m=audio 49170 RTP/AVP 0\r\n"
 	    "a=rtpmap:0 PCMU/8000\r\n"
 	    "m=video 0 RTP/AVP 31\r\n"
-	    "a=rtpmap:31 H261/90000\r\n"
+	    //"a=rtpmap:31 H261/90000\r\n"    /* <-- this is not necessary (port 0) */
 	    "",
 	  }
 	}
@@ -973,7 +965,7 @@ static struct test
 	    "m=audio 3000 RTP/AVP 0\r\n"
 	    "a=rtpmap:0 PCMU/8000\r\n"
 	    "m=video 0 RTP/AVP 31\r\n"
-	    "a=rtpmap:31 H261/90000\r\n"
+	    //"a=rtpmap:31 H261/90000\r\n"    /* <-- this is not necessary (port 0) */
 	    "",
 	  }
 	}
@@ -1063,9 +1055,9 @@ static struct test
 	    "m=audio 5200 RTP/AVP 0\r\n"
 	    "a=rtpmap:0 PCMU/8000\r\n"
 	    "m=audio 0 RTP/AVP 0\r\n"
-	    "a=rtpmap:0 PCMU/8000\r\n"
+	    //"a=rtpmap:0 PCMU/8000\r\n"      /* <-- this is not necessary (port 0) */
 	    "m=video 0 RTP/AVP 31\r\n"
-	    "a=rtpmap:31 H261/90000\r\n"
+	    //"a=rtpmap:31 H261/90000\r\n"    /* <-- this is not necessary (port 0) */
 	    "",
 	  }
 	}
@@ -1241,7 +1233,7 @@ static struct test
 	    "m=audio 7000 RTP/AVP 0\r\n"
 	    "a=rtpmap:0 PCMU/8000\r\n"
 	    "m=audio 0 RTP/AVP 0\r\n"
-	    "a=rtpmap:0 PCMU/8000\r\n"
+	    //"a=rtpmap:0 PCMU/8000\r\n"      /* <-- this is not necessary (port 0) */
 	    "m=video 5000 RTP/AVP 31\r\n"
 	    "a=rtpmap:31 H261/90000\r\n"
 	    "",

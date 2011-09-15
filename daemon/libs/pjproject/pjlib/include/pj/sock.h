@@ -1,6 +1,6 @@
-/* $Id: sock.h 2966 2009-10-25 09:02:07Z bennylp $ */
+/* $Id: sock.h 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #ifndef __PJ_SOCK_H__
 #define __PJ_SOCK_H__
@@ -308,6 +297,9 @@ extern const pj_uint16_t PJ_TCP_NODELAY;
  *  @see pj_SO_REUSEADDR */
 extern const pj_uint16_t PJ_SO_REUSEADDR;
 
+/** Do not generate SIGPIPE. @see pj_SO_NOSIGPIPE */
+extern const pj_uint16_t PJ_SO_NOSIGPIPE;
+
 /** Set the protocol-defined priority for all packets to be sent on socket.
  */
 extern const pj_uint16_t PJ_SO_PRIORITY;
@@ -344,6 +336,9 @@ extern const pj_uint16_t PJ_IP_DROP_MEMBERSHIP;
     /** Get #PJ_SO_REUSEADDR constant */
     PJ_DECL(pj_uint16_t) pj_SO_REUSEADDR(void);
 
+    /** Get #PJ_SO_NOSIGPIPE constant */
+    PJ_DECL(pj_uint16_t) pj_SO_NOSIGPIPE(void);
+
     /** Get #PJ_SO_PRIORITY constant */
     PJ_DECL(pj_uint16_t) pj_SO_PRIORITY(void);
 
@@ -376,6 +371,9 @@ extern const pj_uint16_t PJ_IP_DROP_MEMBERSHIP;
 
     /** Get #PJ_SO_REUSEADDR constant */
 #   define pj_SO_REUSEADDR() PJ_SO_REUSEADDR
+
+    /** Get #PJ_SO_NOSIGPIPE constant */
+#   define pj_SO_NOSIGPIPE() PJ_SO_NOSIGPIPE
 
     /** Get #PJ_SO_PRIORITY constant */
 #   define pj_SO_PRIORITY() PJ_SO_PRIORITY
@@ -533,8 +531,10 @@ typedef union pj_in6_addr
 
     /* Do not use this with Winsock2, as this will align pj_sockaddr_in6
      * to 64-bit boundary and Winsock2 doesn't like it!
+     * Update 26/04/2010:
+     *  This is now disabled, see http://trac.pjsip.org/repos/ticket/1058
      */
-#if defined(PJ_HAS_INT64) && PJ_HAS_INT64!=0 && \
+#if 0 && defined(PJ_HAS_INT64) && PJ_HAS_INT64!=0 && \
     (!defined(PJ_WIN32) || PJ_WIN32==0)
     pj_int64_t	u6_addr64[2];
 #endif

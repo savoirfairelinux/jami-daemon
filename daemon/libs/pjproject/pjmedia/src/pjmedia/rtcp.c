@@ -1,6 +1,6 @@
-/* $Id: rtcp.c 2422 2009-01-20 07:39:03Z bennylp $ */
+/* $Id: rtcp.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjmedia/rtcp.h>
 #include <pjmedia/errno.h>
@@ -136,11 +125,73 @@ PJ_DEF(pj_status_t) pjmedia_rtcp_get_ntp_time(const pjmedia_rtcp_session *sess,
 }
 
 
+/*
+ * Initialize RTCP session setting.
+ */
+PJ_DEF(void) pjmedia_rtcp_session_setting_default(
+				    pjmedia_rtcp_session_setting *settings)
+{
+    pj_bzero(settings, sizeof(*settings));
+}
+
+
+/*
+ * Initialize bidirectional RTCP statistics.
+ *
+ */
+PJ_DEF(void) pjmedia_rtcp_init_stat(pjmedia_rtcp_stat *stat)
+{
+    pj_time_val now;
+
+    pj_assert(stat);
+
+    pj_bzero(stat, sizeof(pjmedia_rtcp_stat));
+
+    pj_math_stat_init(&stat->rtt);
+    pj_math_stat_init(&stat->rx.loss_period);
+    pj_math_stat_init(&stat->rx.jitter);
+    pj_math_stat_init(&stat->tx.loss_period);
+    pj_math_stat_init(&stat->tx.jitter);
+
+#if defined(PJMEDIA_RTCP_STAT_HAS_IPDV) && PJMEDIA_RTCP_STAT_HAS_IPDV!=0
+    pj_math_stat_init(&stat->rx_ipdv);
+#endif
+
+#if defined(PJMEDIA_RTCP_STAT_HAS_RAW_JITTER) && PJMEDIA_RTCP_STAT_HAS_RAW_JITTER!=0
+    pj_math_stat_init(&stat->rx_raw_jitter);
+#endif
+
+    pj_gettimeofday(&now);
+    stat->start = now;
+}
+
+
+/*
+ * Initialize RTCP session.
+ */
 PJ_DEF(void) pjmedia_rtcp_init(pjmedia_rtcp_session *sess, 
 			       char *name,
 			       unsigned clock_rate,
 			       unsigned samples_per_frame,
 			       pj_uint32_t ssrc)
+{
+    pjmedia_rtcp_session_setting settings;
+
+    pjmedia_rtcp_session_setting_default(&settings);
+    settings.name = name;
+    settings.clock_rate = clock_rate;
+    settings.samples_per_frame = samples_per_frame;
+    settings.ssrc = ssrc;
+
+    pjmedia_rtcp_init2(sess, &settings);
+}
+
+
+/*
+ * Initialize RTCP session.
+ */
+PJ_DEF(void) pjmedia_rtcp_init2( pjmedia_rtcp_session *sess,
+				 const pjmedia_rtcp_session_setting *settings)
 {
     pjmedia_rtcp_sr_pkt *sr_pkt = &sess->rtcp_sr_pkt;
     pj_time_val now;
@@ -152,18 +203,18 @@ PJ_DEF(void) pjmedia_rtcp_init(pjmedia_rtcp_session *sess,
     sess->rtp_last_ts = (unsigned)-1;
 
     /* Name */
-    sess->name = name ? name : (char*)THIS_FILE,
+    sess->name = settings->name ? settings->name : (char*)THIS_FILE;
 
     /* Set clock rate */
-    sess->clock_rate = clock_rate;
-    sess->pkt_size = samples_per_frame;
+    sess->clock_rate = settings->clock_rate;
+    sess->pkt_size = settings->samples_per_frame;
 
     /* Init common RTCP SR header */
     sr_pkt->common.version = 2;
     sr_pkt->common.count = 1;
     sr_pkt->common.pt = RTCP_SR;
     sr_pkt->common.length = pj_htons(12);
-    sr_pkt->common.ssrc = pj_htonl(ssrc);
+    sr_pkt->common.ssrc = pj_htonl(settings->ssrc);
     
     /* Copy to RTCP RR header */
     pj_memcpy(&sess->rtcp_rr_pkt.common, &sr_pkt->common, 
@@ -174,16 +225,12 @@ PJ_DEF(void) pjmedia_rtcp_init(pjmedia_rtcp_session *sess,
     /* Get time and timestamp base and frequency */
     pj_gettimeofday(&now);
     sess->tv_base = now;
-    sess->stat.start = now;
     pj_get_timestamp(&sess->ts_base);
     pj_get_timestamp_freq(&sess->ts_freq);
+    sess->rtp_ts_base = settings->rtp_ts_base;
 
     /* Initialize statistics states */
-    pj_math_stat_init(&sess->stat.rtt);
-    pj_math_stat_init(&sess->stat.rx.loss_period);
-    pj_math_stat_init(&sess->stat.rx.jitter);
-    pj_math_stat_init(&sess->stat.tx.loss_period);
-    pj_math_stat_init(&sess->stat.tx.jitter);
+    pjmedia_rtcp_init_stat(&sess->stat);
 
     /* RR will be initialized on receipt of the first RTP packet. */
 }
@@ -321,24 +368,61 @@ PJ_DEF(void) pjmedia_rtcp_rx_rtp2(pjmedia_rtcp_session *sess,
 	} else {
 	    pj_int32_t d;
 	    pj_uint32_t jitter;
-	    
+
 	    d = transit - sess->transit;
-	    sess->transit = transit;
 	    if (d < 0) 
 		d = -d;
 	    
 	    sess->jitter += d - ((sess->jitter + 8) >> 4);
 
-	    /* Get jitter in usec */
-	    if (d < 4294)
-		jitter = d * 1000000 / sess->clock_rate;
+	    /* Update jitter stat */
+	    jitter = sess->jitter >> 4;
+	    
+	    /* Convert jitter unit from samples to usec */
+	    if (jitter < 4294)
+		jitter = jitter * 1000000 / sess->clock_rate;
 	    else {
-		jitter = d * 1000 / sess->clock_rate;
+		jitter = jitter * 1000 / sess->clock_rate;
 		jitter *= 1000;
 	    }
-
-	    /* Update jitter stat */
 	    pj_math_stat_update(&sess->stat.rx.jitter, jitter);
+
+
+#if defined(PJMEDIA_RTCP_STAT_HAS_RAW_JITTER) && PJMEDIA_RTCP_STAT_HAS_RAW_JITTER!=0
+	    {
+		pj_uint32_t raw_jitter;
+
+		/* Convert raw jitter unit from samples to usec */
+		if (d < 4294)
+		    raw_jitter = d * 1000000 / sess->clock_rate;
+		else {
+		    raw_jitter = d * 1000 / sess->clock_rate;
+		    raw_jitter *= 1000;
+		}
+		
+		/* Update jitter stat */
+		pj_math_stat_update(&sess->stat.rx_raw_jitter, raw_jitter);
+	    }
+#endif
+
+
+#if defined(PJMEDIA_RTCP_STAT_HAS_IPDV) && PJMEDIA_RTCP_STAT_HAS_IPDV!=0
+	    {
+		pj_int32_t ipdv;
+
+		ipdv = transit - sess->transit;
+		/* Convert IPDV unit from samples to usec */
+		if (ipdv > -2147 && ipdv < 2147)
+		    ipdv = ipdv * 1000000 / (int)sess->clock_rate;
+		else {
+		    ipdv = ipdv * 1000 / (int)sess->clock_rate;
+		    ipdv *= 1000;
+		}
+		
+		/* Update jitter stat */
+		pj_math_stat_update(&sess->stat.rx_ipdv, ipdv);
+	    }
+#endif
 
 #if defined(PJMEDIA_HAS_RTCP_XR) && (PJMEDIA_HAS_RTCP_XR != 0)
 	    pjmedia_rtcp_xr_rx_rtp(&sess->xr_session, seq, 
@@ -348,6 +432,9 @@ PJ_DEF(void) pjmedia_rtcp_rx_rtp2(pjmedia_rtcp_session *sess,
 				   (sess->jitter >> 4),	    /* jitter  */
 				   -1, 0);		    /* toh     */
 #endif
+
+	    /* Update session transit */
+	    sess->transit = transit;
 	}
 #if defined(PJMEDIA_HAS_RTCP_XR) && (PJMEDIA_HAS_RTCP_XR != 0)
     } else if (seq_st.diff > 1) {
@@ -582,6 +669,8 @@ PJ_DEF(void) pjmedia_rtcp_build_rtcp(pjmedia_rtcp_session *sess,
      * sent RTCP SR.
      */
     if (sess->stat.tx.pkt != pj_ntohl(sess->rtcp_sr_pkt.sr.sender_pcount)) {
+	pj_time_val ts_time;
+	pj_uint32_t rtp_ts;
 
 	/* So we should send RTCP SR */
 	*ret_p_pkt = (void*) &sess->rtcp_sr_pkt;
@@ -599,6 +688,14 @@ PJ_DEF(void) pjmedia_rtcp_build_rtcp(pjmedia_rtcp_session *sess,
 	/* Fill in NTP timestamp in SR. */
 	sr->ntp_sec = pj_htonl(ntp.hi);
 	sr->ntp_frac = pj_htonl(ntp.lo);
+
+	/* Fill in RTP timestamp (corresponds to NTP timestamp) in SR. */
+	ts_time.sec = ntp.hi - sess->tv_base.sec - JAN_1970;
+	ts_time.msec = (long)(ntp.lo * 1000.0 / 0xFFFFFFFF);
+	rtp_ts = sess->rtp_ts_base +
+		 (pj_uint32_t)(sess->clock_rate*ts_time.sec) +
+		 (pj_uint32_t)(sess->clock_rate*ts_time.msec/1000);
+	sr->rtp_ts = pj_htonl(rtp_ts);
 
 	TRACE_((sess->name, "TX RTCP SR: ntp_ts=%p", 
 			   ((ntp.hi & 0xFFFF) << 16) + ((ntp.lo & 0xFFFF0000) 

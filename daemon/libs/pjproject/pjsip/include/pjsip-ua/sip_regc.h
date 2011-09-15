@@ -1,6 +1,6 @@
-/* $Id: sip_regc.h 2855 2009-08-05 18:41:23Z nanang $ */
+/* $Id: sip_regc.h 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #ifndef __PJSIP_SIP_REG_H__
 #define __PJSIP_SIP_REG_H__
@@ -105,6 +94,7 @@ struct pjsip_regc_info
     pj_bool_t	auto_reg;   /**< Will register automatically?		    */
     int		interval;   /**< Registration interval (seconds).	    */
     int		next_reg;   /**< Time until next registration (seconds).    */
+    pjsip_transport *transport; /**< Last transport used.		    */
 };
 
 /**
@@ -199,6 +189,20 @@ PJ_DECL(pj_status_t) pjsip_regc_init(pjsip_regc *regc,
 				     int ccnt,
 				     const pj_str_t contact[],
 				     pj_uint32_t expires);
+
+/**
+ * Set the number of seconds to refresh the client registration before
+ * the registration expires.
+ *
+ * @param regc	    The registration structure.
+ * @param delay     The number of seconds to refresh the client
+ *                  registration before the registration expires.
+ *
+ * @return	    PJ_SUCCESS on success.
+ */
+PJ_DECL(pj_status_t)
+pjsip_regc_set_delay_before_refresh( pjsip_regc *regc,
+				     pj_uint32_t delay );
 
 
 /**

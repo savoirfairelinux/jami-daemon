@@ -86,10 +86,8 @@ incoming_call_cb (DBusGProxy *proxy UNUSED, const gchar* accountID,
     g_free(peer_number);
     g_free(peer_name);
 
-#if GTK_CHECK_VERSION(2,10,0)
     status_tray_icon_blink (TRUE);
     popup_main_window();
-#endif
 
     notify_incoming_call (c);
     sflphone_incoming_call (c);
@@ -853,9 +851,7 @@ dbus_attended_transfer (const callable_obj_t *transfer, const callable_obj_t *ta
 void
 dbus_accept (const callable_obj_t * c)
 {
-#if GTK_CHECK_VERSION(2,10,0)
     status_tray_icon_blink (FALSE);
-#endif
 
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_accept (callManagerProxy, c->_callID, &error);
@@ -869,9 +865,7 @@ dbus_accept (const callable_obj_t * c)
 void
 dbus_refuse (const callable_obj_t * c)
 {
-#if GTK_CHECK_VERSION(2,10,0)
     status_tray_icon_blink (FALSE);
-#endif
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_refuse (callManagerProxy, c->_callID, &error);
 

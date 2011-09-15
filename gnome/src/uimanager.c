@@ -96,7 +96,7 @@ remove_from_toolbar(GtkWidget *widget)
 {
     /* We must ensure that a widget is a child of a container
      * before removing it. */
-    if (widget->parent == toolbar_)
+    if (gtk_widget_get_parent(widget) == toolbar_)
         gtk_container_remove(GTK_CONTAINER(toolbar_), widget);
 }
 
@@ -754,9 +754,7 @@ stop_playback_record_cb(void)
 static void
 call_configuration_assistant(void * foo UNUSED)
 {
-#if GTK_CHECK_VERSION(2,10,0)
     build_wizard();
-#endif
 }
 
 static void
@@ -1479,14 +1477,12 @@ show_edit_number(callable_obj_t *call)
     g_signal_connect(G_OBJECT(edit_dialog_), "delete-event", G_CALLBACK(on_delete), NULL);
 
     GtkWidget *hbox = gtk_hbox_new(FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_dialog_)->vbox), hbox, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(edit_dialog_))), hbox, TRUE, TRUE, 0);
 
     // Set the number to be edited
     editable_num_ = gtk_entry_new();
-#if GTK_CHECK_VERSION(2,12,0)
     gtk_widget_set_tooltip_text(editable_num_,
                                 _("Edit the phone number before making a call"));
-#endif
 
     if (call)
         gtk_entry_set_text(GTK_ENTRY(editable_num_), call->_peer_number);
@@ -1504,7 +1500,7 @@ show_edit_number(callable_obj_t *call)
     gtk_box_pack_start(GTK_BOX(hbox), ok, TRUE, TRUE, 0);
     g_signal_connect(ok, "clicked", G_CALLBACK(ok_cb), call);
 
-    gtk_widget_show_all(GTK_DIALOG(edit_dialog_)->vbox);
+    gtk_widget_show_all(gtk_dialog_get_content_area(GTK_DIALOG(edit_dialog_)));
 
     gtk_dialog_run(GTK_DIALOG(edit_dialog_));
 }

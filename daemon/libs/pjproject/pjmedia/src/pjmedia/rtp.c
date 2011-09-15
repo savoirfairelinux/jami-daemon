@@ -1,6 +1,6 @@
-/* $Id: rtp.c 2904 2009-08-20 13:06:17Z bennylp $ */
+/* $Id: rtp.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjmedia/rtp.h>
 #include <pjmedia/errno.h>
@@ -191,6 +180,15 @@ PJ_DEF(pj_status_t) pjmedia_rtp_decode_rtp( pjmedia_rtp_session *ses,
     /* Find and set payload. */
     *payload = ((pj_uint8_t*)pkt) + offset;
     *payloadlen = pkt_len - offset;
+ 
+    /* Remove payload padding if any */
+    if ((*hdr)->p && *payloadlen > 0) {
+	pj_uint8_t pad_len;
+
+	pad_len = ((pj_uint8_t*)(*payload))[*payloadlen - 1];
+	if (pad_len <= *payloadlen)
+	    *payloadlen -= pad_len;
+    }
 
     return PJ_SUCCESS;
 }

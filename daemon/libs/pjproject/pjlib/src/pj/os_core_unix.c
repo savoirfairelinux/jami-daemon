@@ -1,6 +1,6 @@
-/* $Id: os_core_unix.c 2853 2009-08-05 10:58:02Z bennylp $ */
+/* $Id: os_core_unix.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 /*
  * Contributors:
@@ -224,6 +213,9 @@ PJ_DEF(void) pj_shutdown()
 	pj_thread_local_free(thread_tls_id);
 	thread_tls_id = -1;
     }
+
+    /* Ticket #1132: Assertion when (re)starting PJLIB on different thread */
+    pj_bzero(&main_thread, sizeof(main_thread));
 #endif
 
     /* Clear static variables */
@@ -319,7 +311,15 @@ PJ_DEF(int) pj_thread_get_prio_min(pj_thread_t *thread)
     if (rc != 0)
 	return -1;
 
+#if defined(_POSIX_PRIORITY_SCHEDULING)
     return sched_get_priority_min(policy);
+#elif defined __OpenBSD__
+    /* Thread prio min/max are declared in OpenBSD private hdr */
+    return 0;
+#else
+    pj_assert("pj_thread_get_prio_min() not supported!");
+    return 0;
+#endif
 }
 
 
@@ -336,7 +336,15 @@ PJ_DEF(int) pj_thread_get_prio_max(pj_thread_t *thread)
     if (rc != 0)
 	return -1;
 
+#if defined(_POSIX_PRIORITY_SCHEDULING)
     return sched_get_priority_max(policy);
+#elif defined __OpenBSD__
+    /* Thread prio min/max are declared in OpenBSD private hdr */
+    return 31;
+#else
+    pj_assert("pj_thread_get_prio_max() not supported!");
+    return 0;
+#endif
 }
 
 
@@ -1342,7 +1350,6 @@ PJ_DEF(pj_status_t) pj_mutex_destroy(pj_mutex_t *mutex)
     if (status == 0)
 	return PJ_SUCCESS;
     else {
-	pj_assert(!"Error destroying pthread_mutex");
 	return PJ_RETURN_OS_ERROR(status);
     }
 #else

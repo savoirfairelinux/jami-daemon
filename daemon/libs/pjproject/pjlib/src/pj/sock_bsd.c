@@ -1,6 +1,6 @@
-/* $Id: sock_bsd.c 2966 2009-10-25 09:02:07Z bennylp $ */
+/* $Id: sock_bsd.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pj/sock.h>
 #include <pj/os.h>
@@ -146,6 +135,11 @@ const pj_uint16_t PJ_SO_RCVBUF  = SO_RCVBUF;
 const pj_uint16_t PJ_SO_SNDBUF  = SO_SNDBUF;
 const pj_uint16_t PJ_TCP_NODELAY= TCP_NODELAY;
 const pj_uint16_t PJ_SO_REUSEADDR= SO_REUSEADDR;
+#ifdef SO_NOSIGPIPE
+const pj_uint16_t PJ_SO_NOSIGPIPE = SO_NOSIGPIPE;
+#else
+const pj_uint16_t PJ_SO_NOSIGPIPE = 0xFFFF;
+#endif
 #if defined(SO_PRIORITY)
 const pj_uint16_t PJ_SO_PRIORITY = SO_PRIORITY;
 #else
@@ -461,7 +455,7 @@ PJ_DEF(const pj_str_t*) pj_gethostname(void)
 	    hostname.ptr[0] = '\0';
 	    hostname.slen = 0;
 	} else {
-	   hostname.slen = strlen(buf);
+            hostname.slen = strlen(buf);
 	}
     }
     return &hostname;
@@ -487,8 +481,34 @@ PJ_DEF(pj_status_t) pj_sock_socket(int af,
 
     if (*sock == PJ_INVALID_SOCKET) 
 	return PJ_RETURN_OS_ERROR(pj_get_native_netos_error());
-    else
-	return PJ_SUCCESS;
+    
+#if PJ_SOCK_DISABLE_WSAECONNRESET && \
+    (!defined(PJ_WIN32_WINCE) || PJ_WIN32_WINCE==0)
+
+#ifndef SIO_UDP_CONNRESET
+    #define SIO_UDP_CONNRESET _WSAIOW(IOC_VENDOR,12)
+#endif
+
+    /* Disable WSAECONNRESET for UDP.
+     * See https://trac.pjsip.org/repos/ticket/1197
+     */
+    if (type==PJ_SOCK_DGRAM) {
+	DWORD dwBytesReturned = 0;
+	BOOL bNewBehavior = FALSE;
+	DWORD rc;
+
+	rc = WSAIoctl(*sock, SIO_UDP_CONNRESET,
+		      &bNewBehavior, sizeof(bNewBehavior),
+		      NULL, 0, &dwBytesReturned,
+		      NULL, NULL);
+
+	if (rc==SOCKET_ERROR) {
+	    // Ignored..
+	}
+    }
+#endif
+
+    return PJ_SUCCESS;
 }
 
 #else
@@ -507,12 +527,25 @@ PJ_DEF(pj_status_t) pj_sock_socket(int af,
     PJ_ASSERT_RETURN(sock!=NULL, PJ_EINVAL);
     PJ_ASSERT_RETURN(PJ_INVALID_SOCKET==-1, 
                      (*sock=PJ_INVALID_SOCKET, PJ_EINVAL));
-
+    
     *sock = socket(af, type, proto);
     if (*sock == PJ_INVALID_SOCKET)
 	return PJ_RETURN_OS_ERROR(pj_get_native_netos_error());
-    else 
+    else {
+	pj_int32_t val = 1;
+	if (type == pj_SOCK_STREAM()) {
+	    pj_sock_setsockopt(*sock, pj_SOL_SOCKET(), pj_SO_NOSIGPIPE(),
+			       &val, sizeof(val));
+	}
+#if defined(PJ_IPHONE_OS_HAS_MULTITASKING_SUPPORT) && \
+    PJ_IPHONE_OS_HAS_MULTITASKING_SUPPORT!=0
+	if (type == pj_SOCK_DGRAM()) {
+	    pj_sock_setsockopt(*sock, pj_SOL_SOCKET(), SO_NOSIGPIPE, 
+			       &val, sizeof(val));
+	}
+#endif
 	return PJ_SUCCESS;
+    }
 }
 #endif
 

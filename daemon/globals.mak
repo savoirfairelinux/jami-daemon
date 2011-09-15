@@ -23,7 +23,6 @@ PJSIP_LIBS= \
 			-lpjmedia-$(target) \
 			-lpjsip-simple-$(target) \
 			-lpjsip-ua-$(target) \
-			-lpjmedia-codec-$(target) \
 			-lpjlib-util-$(target) \
 			-lpj-$(target) 
 

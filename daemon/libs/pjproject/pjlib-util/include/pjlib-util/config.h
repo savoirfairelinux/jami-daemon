@@ -1,6 +1,6 @@
-/* $Id: config.h 2394 2008-12-23 17:27:53Z bennylp $ */
-/*
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+/* $Id: config.h 3553 2011-05-05 06:14:19Z nanang $ */
+/* 
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -15,18 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
  */
 #ifndef __PJLIB_UTIL_CONFIG_H__
 #define __PJLIB_UTIL_CONFIG_H__
@@ -70,7 +59,7 @@
  * (the #pj_dns_packet_dup() function).
  *
  * Generally name compression is desired, since it saves some memory (see
- * PJ_DNS_RESOLVER_RES_BUF_SIZE setting). However it comes at the expense of
+ * PJ_DNS_RESOLVER_RES_BUF_SIZE setting). However it comes at the expense of 
  * a little processing overhead to perform name scanning and also a little
  * bit more stack usage (8 bytes per entry on 32bit platform).
  *
@@ -95,7 +84,7 @@
 
 
 /**
- * Default retransmission delay, in miliseconds. The combination of
+ * Default retransmission delay, in miliseconds. The combination of 
  * retransmission delay and count determines the query timeout.
  *
  * Default: 2000 (2 seconds, according to RFC 1035)
@@ -117,8 +106,8 @@
 
 
 /**
- * Maximum life-time of DNS response in the resolver response cache,
- * in seconds. If the value is zero, then DNS response caching will be
+ * Maximum life-time of DNS response in the resolver response cache, 
+ * in seconds. If the value is zero, then DNS response caching will be 
  * disabled.
  *
  * Default is 300 seconds (5 minutes).
@@ -131,8 +120,8 @@
 
 /**
  * The life-time of invalid DNS response in the resolver response cache.
- * An invalid DNS response is a response which RCODE is non-zero and
- * response without any answer section. These responses can be put in
+ * An invalid DNS response is a response which RCODE is non-zero and 
+ * response without any answer section. These responses can be put in 
  * the cache too to minimize message round-trip.
  *
  * Default: 60 (one minute).
@@ -144,7 +133,7 @@
 #endif
 
 /**
- * The interval on which nameservers which are known to be good to be
+ * The interval on which nameservers which are known to be good to be 
  * probed again to determine whether they are still good. Note that
  * this applies to both active nameserver (the one currently being used)
  * and idle nameservers (good nameservers that are not currently selected).
@@ -265,6 +254,17 @@
 #   define PJ_CRC32_HAS_TABLES			    1
 #endif
 
+
+/* **************************************************************************
+ * HTTP Client configuration
+ */
+/**
+ * Timeout value for HTTP request operation. The value is in ms.
+ * Default: 60000ms
+ */
+#ifndef PJ_HTTP_DEFAULT_TIMEOUT
+#   define PJ_HTTP_DEFAULT_TIMEOUT         (60000)
+#endif
 
 /**
  * @}

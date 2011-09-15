@@ -1,6 +1,6 @@
-/* $Id: srv_resolver.c 2394 2008-12-23 17:27:53Z bennylp $ */
+/* $Id: srv_resolver.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,21 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjlib-util/srv_resolver.h>
 #include <pjlib-util/errno.h>
-#include <pj/addr_resolv.h>
 #include <pj/array.h>
 #include <pj/assert.h>
 #include <pj/log.h>
@@ -595,53 +583,13 @@ static void dns_callback(void *user_data,
 	} else if (status != PJ_SUCCESS) {
 	    char errmsg[PJ_ERR_MSG_SIZE];
 
-	     if ((query_job->option &
-	    	     (PJ_DNS_SRV_FALLBACK_GETADDRINFO_IPV4 | PJ_DNS_SRV_FALLBACK_GETADDRINFO_IPV6)))
-	    	    {
-	    	        pj_strerror(status, errmsg, sizeof(errmsg));
-	                PJ_LOG(4,(query_job->objname,
-	                          "DNS A record resolution failed: %s,"
-	                          " trying getaddrinfo()",
-	            	           errmsg));
+	    /* Update last error */
+	    query_job->last_error = status;
 
-	                pj_addrinfo ai;
-	        	    unsigned count;
-	            	int af;
-
-	                    if ((query_job->option & PJ_DNS_SRV_FALLBACK_GETADDRINFO_IPV6)) {
-	            	    af = pj_AF_INET6();
-	            	} else {
-	    	            af = pj_AF_INET();
-	            	}
-
-	            	count = 1;
-	                status = pj_getaddrinfo(af, &query_job->domain_part, &count, &ai);
-	               if (status != PJ_SUCCESS) {
-	                   query_job->last_error = status;
-	                    pj_strerror(status, errmsg, sizeof(errmsg));
-	                   PJ_LOG(4,(query_job->objname, "DNS resolution failed with getaddrinfo(): %s",
-	                	          errmsg));
-	                } else {
-
-	                    if (srv->addr_cnt < ADDR_MAX_COUNT) {
-	                        srv->addr[srv->addr_cnt++].s_addr = ai.ai_addr.ipv4.sin_addr.s_addr;
-	                    }
-
-	                	PJ_LOG(5,(query_job->objname,
-	                              "DNS getaddrinfo() for %.*s: %s",
-	                              (int)srv->target_name.slen,
-	                              srv->target_name.ptr,
-	                              pj_inet_ntoa(srv->addr[srv->addr_cnt])));
-	                }
-	    	    } else {
-	                /* Update last error */
-	                query_job->last_error = status;
-
-	                /* Log error */
-	                pj_strerror(status, errmsg, sizeof(errmsg));
-	                PJ_LOG(4,(query_job->objname, "DNS A record resolution failed: %s",
-	                          errmsg));
-	    	    }
+	    /* Log error */
+	    pj_strerror(status, errmsg, sizeof(errmsg));
+	    PJ_LOG(4,(query_job->objname, "DNS A record resolution failed: %s", 
+		      errmsg));
 	}
 
 	++query_job->host_resolved;

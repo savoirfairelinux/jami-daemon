@@ -36,17 +36,9 @@
 #include <gtk/gtk.h>
 #include <math.h>
 
-#if GTK_CHECK_VERSION(2,16,0)
-#else
-#include <libsexy/sexy-icon-entry.h>
-#endif
-
 void show_advanced_tls_options (GHashTable * properties)
 {
-    GtkDialog * tlsDialog;
-    GtkWidget * ret;
-
-    tlsDialog = GTK_DIALOG (gtk_dialog_new_with_buttons (_ ("Advanced options for TLS"),
+    GtkDialog *tlsDialog = GTK_DIALOG (gtk_dialog_new_with_buttons (_ ("Advanced options for TLS"),
                             GTK_WINDOW (get_main_window()),
                             GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
                             GTK_STOCK_CANCEL,
@@ -58,9 +50,9 @@ void show_advanced_tls_options (GHashTable * properties)
     gtk_window_set_resizable(GTK_WINDOW (tlsDialog), FALSE);
     gtk_container_set_border_width (GTK_CONTAINER (tlsDialog), 0);
 
-    ret = gtk_vbox_new (FALSE, 10);
+    GtkWidget *ret = gtk_vbox_new (FALSE, 10);
     gtk_container_set_border_width (GTK_CONTAINER (ret), 10);
-    gtk_box_pack_start (GTK_BOX (tlsDialog->vbox), ret, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area(tlsDialog)), ret, FALSE, FALSE, 0);
 
     GtkWidget *frame, *table;
     gnome_main_section_new_with_table (_ ("TLS transport"), &frame, &table, 3, 13);
@@ -71,8 +63,8 @@ void show_advanced_tls_options (GHashTable * properties)
                           "require secure sip transactions (aka SIPS). You can configure a different\n"\
                           "TLS transport for each account. However, each of them will run on a dedicated\n"\
                           "port, different one from each other\n"));
-    GtkWidget * label;
-    label = gtk_label_new (NULL);
+
+    GtkWidget * label = gtk_label_new (NULL);
     gtk_widget_set_size_request (label, 600, 70);
     gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
     gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
@@ -117,10 +109,9 @@ void show_advanced_tls_options (GHashTable * properties)
     label = gtk_label_new (_ ("Global TLS listener (all accounts)"));
     gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
     gtk_table_attach (GTK_TABLE (table), label, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    GtkWidget * tlsListenerPort;
     GtkWidget * hbox = gtk_hbox_new (FALSE, 10);
     gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    tlsListenerPort = gtk_spin_button_new_with_range (0, 65535, 1);
+    GtkWidget *tlsListenerPort = gtk_spin_button_new_with_range (0, 65535, 1);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), tlsListenerPort);
     gtk_spin_button_set_value (GTK_SPIN_BUTTON (tlsListenerPort), g_ascii_strtod (tls_listener_port, NULL));
     gtk_box_pack_start(GTK_BOX (hbox), tlsListenerPort, TRUE, TRUE, 0);
@@ -132,42 +123,30 @@ void show_advanced_tls_options (GHashTable * properties)
     label = gtk_label_new (_ ("Certificate of Authority list"));
     gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
     gtk_table_attach (GTK_TABLE (table), label, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    GtkWidget * caListFileChooser;
-    caListFileChooser = gtk_file_chooser_button_new (_ ("Choose a CA list file (optional)"), GTK_FILE_CHOOSER_ACTION_OPEN);
+    GtkWidget * caListFileChooser = gtk_file_chooser_button_new (_ ("Choose a CA list file (optional)"), GTK_FILE_CHOOSER_ACTION_OPEN);
     gtk_table_attach (GTK_TABLE (table), caListFileChooser, 1, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
 
-    if (tls_ca_list_file == NULL) {
+    if (!tls_ca_list_file || !*tls_ca_list_file) {
         gtk_file_chooser_unselect_all (GTK_FILE_CHOOSER (caListFileChooser));
-
     } else {
-        if (g_strcmp0 (tls_ca_list_file, "") == 0) {
-
-            gtk_file_chooser_unselect_all (GTK_FILE_CHOOSER (caListFileChooser));
-        } else {
-
-            GFile * file = g_file_new_for_path (tls_ca_list_file);
-            gtk_file_chooser_set_file (GTK_FILE_CHOOSER (caListFileChooser), file, NULL);
-            g_object_unref (file);
-        }
+        GFile *file = g_file_new_for_path (tls_ca_list_file);
+        gtk_file_chooser_set_file (GTK_FILE_CHOOSER (caListFileChooser), file, NULL);
+        g_object_unref (file);
     }
 
     label = gtk_label_new (_ ("Public endpoint certificate file"));
     gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
     gtk_table_attach (GTK_TABLE (table), label, 0, 1, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    GtkWidget * certificateFileChooser;
-    certificateFileChooser = gtk_file_chooser_button_new (_ ("Choose a public endpoint certificate (optional)"), GTK_FILE_CHOOSER_ACTION_OPEN);
+    GtkWidget * certificateFileChooser = gtk_file_chooser_button_new (_ ("Choose a public endpoint certificate (optional)"), GTK_FILE_CHOOSER_ACTION_OPEN);
     gtk_table_attach (GTK_TABLE (table), certificateFileChooser, 1, 2, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-    if (tls_certificate_file == NULL) {
-        // gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(caListFileChooser), g_get_home_dir());
+    if (!tls_certificate_file) {
         gtk_file_chooser_unselect_all (GTK_FILE_CHOOSER (caListFileChooser));
     } else {
-        if (g_strcmp0 (tls_certificate_file, "") == 0) {
-
+        if (!*tls_certificate_file) {
             gtk_file_chooser_unselect_all (GTK_FILE_CHOOSER (certificateFileChooser));
         } else {
-
             GFile * file = g_file_new_for_path (tls_certificate_file);
             gtk_file_chooser_set_file (GTK_FILE_CHOOSER (certificateFileChooser), file, NULL);
             g_object_unref (file);
@@ -177,39 +156,27 @@ void show_advanced_tls_options (GHashTable * properties)
     label = gtk_label_new ( ("Private key file"));
     gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
     gtk_table_attach (GTK_TABLE (table), label, 0, 1, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    GtkWidget * privateKeyFileChooser;
-    privateKeyFileChooser = gtk_file_chooser_button_new (_ ("Choose a private key file (optional)"), GTK_FILE_CHOOSER_ACTION_OPEN);
+    GtkWidget *privateKeyFileChooser = gtk_file_chooser_button_new (_ ("Choose a private key file (optional)"), GTK_FILE_CHOOSER_ACTION_OPEN);
     gtk_table_attach (GTK_TABLE (table), privateKeyFileChooser, 1, 2, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-    if (tls_private_key_file == NULL) {
+    if (!tls_private_key_file) {
         gtk_file_chooser_unselect_all (GTK_FILE_CHOOSER (caListFileChooser));
     } else {
-
-        if (g_strcmp0 (tls_private_key_file, "") == 0) {
-
+        if (!*tls_private_key_file) {
             gtk_file_chooser_unselect_all (GTK_FILE_CHOOSER (privateKeyFileChooser));
         } else {
-
             GFile * file = g_file_new_for_path (tls_private_key_file);
             gtk_file_chooser_set_file (GTK_FILE_CHOOSER (privateKeyFileChooser), file, NULL);
             g_object_unref (file);
-
         }
-
     }
 
     label = gtk_label_new_with_mnemonic (_ ("Password for the private key"));
     gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
     gtk_table_attach (GTK_TABLE (table), label, 0, 1, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     GtkWidget * privateKeyPasswordEntry;
-#if GTK_CHECK_VERSION(2,16,0)
     privateKeyPasswordEntry = gtk_entry_new();
     gtk_entry_set_icon_from_stock (GTK_ENTRY (privateKeyPasswordEntry), GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_DIALOG_AUTHENTICATION);
-#else
-    privateKeyPasswordEntry = sexy_icon_entry_new();
-    GtkWidget * image = gtk_image_new_from_stock (GTK_STOCK_DIALOG_AUTHENTICATION , GTK_ICON_SIZE_SMALL_TOOLBAR);
-    sexy_icon_entry_set_icon (SEXY_ICON_ENTRY (privateKeyPasswordEntry), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE (image));
-#endif
     gtk_entry_set_visibility (GTK_ENTRY (privateKeyPasswordEntry), FALSE);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), privateKeyPasswordEntry);
     gtk_entry_set_text (GTK_ENTRY (privateKeyPasswordEntry), tls_password);
@@ -227,14 +194,11 @@ void show_advanced_tls_options (GHashTable * properties)
     GtkTreeIter supported_tls_method_iter = iter;
 
     for (char **supported_tls_method_ptr = supported_tls_method; supported_tls_method_ptr && *supported_tls_method_ptr; supported_tls_method_ptr++) {
-        DEBUG ("Supported Method %s", *supported_tls_method_ptr);
         gtk_list_store_append (tlsProtocolMethodListStore, &iter);
         gtk_list_store_set (tlsProtocolMethodListStore, &iter, 0, *supported_tls_method_ptr, -1);
 
-        if (g_strcmp0 (*supported_tls_method_ptr, tls_method) == 0) {
-            DEBUG ("Setting active element in TLS protocol combo box");
+        if (g_strcmp0 (*supported_tls_method_ptr, tls_method) == 0)
             supported_tls_method_iter = iter;
-        }
     }
 
     GtkWidget *tlsProtocolMethodCombo = gtk_combo_box_new_with_model (GTK_TREE_MODEL (tlsProtocolMethodListStore));

@@ -1,6 +1,6 @@
-/* $Id: sip_auth_client.c 2988 2009-11-06 04:16:36Z bennylp $ */
+/* $Id: sip_auth_client.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 
 #include <pjsip/sip_auth.h>
@@ -89,6 +78,44 @@ PJ_DEF(void) pjsip_cred_info_dup(pj_pool_t *pool,
 	dup_bin(pool, &dst->ext.aka.op, &src->ext.aka.op);
 	dup_bin(pool, &dst->ext.aka.amf, &src->ext.aka.amf);
     }
+}
+
+
+PJ_DEF(int) pjsip_cred_info_cmp(const pjsip_cred_info *cred1,
+				const pjsip_cred_info *cred2)
+{
+    int result;
+
+    result = pj_strcmp(&cred1->realm, &cred2->realm);
+    if (result) goto on_return;
+    result = pj_strcmp(&cred1->scheme, &cred2->scheme);
+    if (result) goto on_return;
+    result = pj_strcmp(&cred1->username, &cred2->username);
+    if (result) goto on_return;
+    result = pj_strcmp(&cred1->data, &cred2->data);
+    if (result) goto on_return;
+    result = (cred1->data_type != cred2->data_type);
+    if (result) goto on_return;
+
+    if ((cred1->data_type & EXT_MASK) == PJSIP_CRED_DATA_EXT_AKA) {
+	result = pj_strcmp(&cred1->ext.aka.k, &cred2->ext.aka.k);
+	if (result) goto on_return;
+	result = pj_strcmp(&cred1->ext.aka.op, &cred2->ext.aka.op);
+	if (result) goto on_return;
+	result = pj_strcmp(&cred1->ext.aka.amf, &cred2->ext.aka.amf);
+	if (result) goto on_return;
+    }
+
+on_return:
+    return result;
+}
+
+PJ_DEF(void) pjsip_auth_clt_pref_dup( pj_pool_t *pool,
+				      pjsip_auth_clt_pref *dst,
+				      const pjsip_auth_clt_pref *src)
+{
+    pj_memcpy(dst, src, sizeof(pjsip_auth_clt_pref));
+    pj_strdup_with_null(pool, &dst->algorithm, &src->algorithm);
 }
 
 
@@ -374,7 +401,9 @@ static void update_digest_session( pj_pool_t *ses_pool,
 	cached_auth->nc = 1;
 
 	/* Save realm. */
+	/* Note: allow empty realm (http://trac.pjsip.org/repos/ticket/1061)
 	pj_assert(cached_auth->realm.slen != 0);
+	*/
 	if (cached_auth->realm.slen == 0) {
 	    pj_strdup(ses_pool, &cached_auth->realm, 
 		      &hdr->challenge.digest.realm);

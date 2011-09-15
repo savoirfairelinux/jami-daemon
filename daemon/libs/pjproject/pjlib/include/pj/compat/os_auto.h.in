@@ -1,4 +1,4 @@
-/* $Id: os_auto.h.in 2970 2009-10-26 15:47:52Z nanang $ */
+/* $Id: os_auto.h.in 3543 2011-04-26 03:07:24Z ming $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #ifndef __PJ_COMPAT_OS_AUTO_H__
 #define __PJ_COMPAT_OS_AUTO_H__
@@ -59,6 +48,7 @@
 #undef PJ_HAS_CTYPE_H
 #undef PJ_HAS_ERRNO_H
 #undef PJ_HAS_FCNTL_H
+#undef PJ_HAS_LIMITS_H
 #undef PJ_HAS_LINUX_SOCKET_H
 #undef PJ_HAS_MALLOC_H
 #undef PJ_HAS_NETDB_H
@@ -82,6 +72,9 @@
 #undef PJ_HAS_SYS_TIME_H
 #undef PJ_HAS_SYS_TIMEB_H
 #undef PJ_HAS_SYS_TYPES_H
+#undef PJ_HAS_SYS_FILIO_H
+#undef PJ_HAS_SYS_SOCKIO_H
+#undef PJ_HAS_SYS_UTSNAME_H
 #undef PJ_HAS_TIME_H
 #undef PJ_HAS_UNISTD_H
 
@@ -177,6 +170,21 @@
 
 /* The type of atomic variable value: */
 #undef PJ_ATOMIC_VALUE_TYPE
+
+#if defined(PJ_DARWINOS) && PJ_DARWINOS!=0
+#    include "TargetConditionals.h"
+#    if TARGET_OS_IPHONE
+#	include "Availability.h"
+	/* Use CFHost API for pj_getaddrinfo() (see ticket #1246) */
+#	define PJ_GETADDRINFO_USE_CFHOST 1
+#    	ifdef __IPHONE_4_0
+ 	    /* Is multitasking support available?  (see ticket #1107) */
+#	    define PJ_IPHONE_OS_HAS_MULTITASKING_SUPPORT 	1
+	    /* Enable activesock TCP background mode support */
+#	    define PJ_ACTIVESOCK_TCP_IPHONE_OS_BG		1
+#	endif
+#    endif
+#endif
 
 /* If 1, use Read/Write mutex emulation for platforms that don't support it */
 #undef PJ_EMULATE_RWMUTEX

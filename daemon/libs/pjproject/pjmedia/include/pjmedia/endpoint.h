@@ -1,6 +1,6 @@
-/* $Id: endpoint.h 2506 2009-03-12 18:11:37Z bennylp $ */
+/* $Id: endpoint.h 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #ifndef __PJMEDIA_MEDIAMGR_H__
 #define __PJMEDIA_MEDIAMGR_H__
@@ -53,6 +42,21 @@
 
 
 PJ_BEGIN_DECL
+
+/**
+ * This enumeration describes various flags that can be set or retrieved in
+ * the media endpoint, by using pjmedia_endpt_set_flag() and
+ * pjmedia_endpt_get_flag() respectively.
+ */
+typedef enum pjmedia_endpt_flag
+{
+    /**
+     * This flag controls whether telephony-event should be offered in SDP.
+     * Value is boolean.
+     */
+    PJMEDIA_ENDPT_HAS_TELEPHONE_EVENT_FLAG
+
+} pjmedia_endpt_flag;
 
 
 /**
@@ -84,7 +88,31 @@ PJ_DECL(pj_status_t) pjmedia_endpt_create( pj_pool_factory *pf,
  */
 PJ_DECL(pj_status_t) pjmedia_endpt_destroy(pjmedia_endpt *endpt);
 
+/**
+ * Change the value of a flag.
+ *
+ * @param endpt		Media endpoint.
+ * @param flag		The flag.
+ * @param value		Pointer to the value to be set.
+ *
+ * @reurn		PJ_SUCCESS on success.
+ */
+PJ_DECL(pj_status_t) pjmedia_endpt_set_flag(pjmedia_endpt *endpt,
+					    pjmedia_endpt_flag flag,
+					    const void *value);
 
+/**
+ *  Retrieve the value of a flag.
+ *
+ *  @param endpt	Media endpoint.
+ *  @param flag		The flag.
+ *  @param value	Pointer to store the result.
+ *
+ *  @return		PJ_SUCCESS on success.
+ */
+PJ_DECL(pj_status_t) pjmedia_endpt_get_flag(pjmedia_endpt *endpt,
+					    pjmedia_endpt_flag flag,
+					    void *value);
 
 /**
  * Get the ioqueue instance of the media endpoint.

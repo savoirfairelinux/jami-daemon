@@ -1,6 +1,6 @@
-/* $Id: pjsua_core.c 3021 2009-11-20 23:33:07Z bennylp $ */
+/* $Id: pjsua_core.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjsua-lib/pjsua.h>
 #include <pjsua-lib/pjsua_internal.h>
@@ -75,6 +64,7 @@ static void init_data()
     pjsua_var.stun_status = PJ_EUNKNOWN;
     pjsua_var.nat_status = PJ_EPENDING;
     pj_list_init(&pjsua_var.stun_res);
+    pj_list_init(&pjsua_var.outbound_proxy);
 
     pjsua_config_default(&pjsua_var.ua_cfg);
 }
@@ -119,6 +109,7 @@ PJ_DEF(void) pjsua_config_default(pjsua_config *cfg)
 #endif
     cfg->hangup_forked_call = PJ_TRUE;
 
+    cfg->use_timer = PJSUA_SIP_TIMER_OPTIONAL;
     pjsip_timer_setting_default(&cfg->timer_setting);
 }
 
@@ -152,6 +143,8 @@ PJ_DEF(void) pjsua_msg_data_init(pjsua_msg_data *msg_data)
 {
     pj_bzero(msg_data, sizeof(*msg_data));
     pj_list_init(&msg_data->hdr_list);
+    pjsip_media_type_init(&msg_data->multipart_ctype, NULL, NULL);
+    pj_list_init(&msg_data->multipart_parts);
 }
 
 PJ_DEF(void) pjsua_transport_config_default(pjsua_transport_config *cfg)
@@ -173,20 +166,33 @@ PJ_DEF(void) pjsua_acc_config_default(pjsua_acc_config *cfg)
     pj_bzero(cfg, sizeof(*cfg));
 
     cfg->reg_timeout = PJSUA_REG_INTERVAL;
+    cfg->reg_delay_before_refresh = PJSIP_REGISTER_CLIENT_DELAY_BEFORE_REFRESH;
     cfg->unreg_timeout = PJSUA_UNREG_TIMEOUT;
     pjsip_publishc_opt_default(&cfg->publish_opt);
     cfg->unpublish_max_wait_time_msec = PJSUA_UNPUBLISH_MAX_WAIT_TIME_MSEC;
     cfg->transport_id = PJSUA_INVALID_ID;
     cfg->allow_contact_rewrite = PJ_TRUE;
     cfg->require_100rel = pjsua_var.ua_cfg.require_100rel;
-    cfg->require_timer = pjsua_var.ua_cfg.require_timer;
+    cfg->use_timer = pjsua_var.ua_cfg.use_timer;
     cfg->timer_setting = pjsua_var.ua_cfg.timer_setting;
     cfg->ka_interval = 15;
     cfg->ka_data = pj_str("\r\n");
 #if defined(PJMEDIA_HAS_SRTP) && (PJMEDIA_HAS_SRTP != 0)
     cfg->use_srtp = pjsua_var.ua_cfg.use_srtp;
     cfg->srtp_secure_signaling = pjsua_var.ua_cfg.srtp_secure_signaling;
+    cfg->srtp_optional_dup_offer = pjsua_var.ua_cfg.srtp_optional_dup_offer;
 #endif
+    cfg->reg_retry_interval = PJSUA_REG_RETRY_INTERVAL;
+    cfg->contact_rewrite_method = PJSUA_CONTACT_REWRITE_METHOD;
+    cfg->use_rfc5626 = PJ_TRUE;
+    cfg->reg_use_proxy = PJSUA_REG_USE_OUTBOUND_PROXY |
+			 PJSUA_REG_USE_ACC_PROXY;
+#if defined(PJMEDIA_STREAM_ENABLE_KA) && PJMEDIA_STREAM_ENABLE_KA!=0
+    cfg->use_stream_ka = (PJMEDIA_STREAM_ENABLE_KA != 0);
+#endif
+    pj_list_init(&cfg->reg_hdr_list);
+    pj_list_init(&cfg->sub_hdr_list);
+    cfg->call_hold_type = PJSUA_CALL_HOLD_TYPE_DEFAULT;
 }
 
 PJ_DEF(void) pjsua_buddy_config_default(pjsua_buddy_config *cfg)
@@ -627,10 +633,6 @@ PJ_DEF(pj_status_t) pjsua_create(void)
     status = pjnath_init();
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
 
-    /* Set default sound device ID */
-    pjsua_var.cap_dev = PJMEDIA_AUD_DEFAULT_CAPTURE_DEV;
-    pjsua_var.play_dev = PJMEDIA_AUD_DEFAULT_PLAYBACK_DEV;
-
     /* Init caching pool. */
     pj_caching_pool_init(&pjsua_var.cp, NULL, 0);
 
@@ -673,6 +675,7 @@ PJ_DEF(pj_status_t) pjsua_init( const pjsua_config *ua_cfg,
     pjsua_media_config	 default_media_cfg;
     const pj_str_t	 STR_OPTIONS = { "OPTIONS", 7 };
     pjsip_ua_init_param  ua_init_param;
+    unsigned i;
     pj_status_t status;
 
 
@@ -694,6 +697,15 @@ PJ_DEF(pj_status_t) pjsua_init( const pjsua_config *ua_cfg,
 	if (status != PJ_SUCCESS)
 	    return status;
     }
+
+#if defined(PJ_IPHONE_OS_HAS_MULTITASKING_SUPPORT) && \
+    PJ_IPHONE_OS_HAS_MULTITASKING_SUPPORT != 0
+    if (!(pj_get_sys_info()->flags & PJ_SYS_HAS_IOS_BG)) {
+	PJ_LOG(5, (THIS_FILE, "Device does not support "
+			      "background mode"));
+	pj_activesock_enable_iphone_os_bg(PJ_FALSE);
+    }
+#endif
 
     /* If nameserver is configured, create DNS resolver instance and
      * set it to be used by SIP resolver.
@@ -791,6 +803,36 @@ PJ_DEF(pj_status_t) pjsua_init( const pjsua_config *ua_cfg,
 	PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
     }
 
+    /* Parse outbound proxies */
+    for (i=0; i<ua_cfg->outbound_proxy_cnt; ++i) {
+	pj_str_t tmp;
+    	pj_str_t hname = { "Route", 5};
+	pjsip_route_hdr *r;
+
+	pj_strdup_with_null(pjsua_var.pool, &tmp, &ua_cfg->outbound_proxy[i]);
+
+	r = (pjsip_route_hdr*)
+	    pjsip_parse_hdr(pjsua_var.pool, &hname, tmp.ptr,
+			    (unsigned)tmp.slen, NULL);
+	if (r == NULL) {
+	    pjsua_perror(THIS_FILE, "Invalid outbound proxy URI",
+			 PJSIP_EINVALIDURI);
+	    return PJSIP_EINVALIDURI;
+	}
+
+	if (pjsua_var.ua_cfg.force_lr) {
+	    pjsip_sip_uri *sip_url;
+	    if (!PJSIP_URI_SCHEME_IS_SIP(r->name_addr.uri) &&
+		!PJSIP_URI_SCHEME_IS_SIP(r->name_addr.uri))
+	    {
+		return PJSIP_EINVALIDSCHEME;
+	    }
+	    sip_url = (pjsip_sip_uri*)r->name_addr.uri;
+	    sip_url->lr_param = 1;
+	}
+
+	pj_list_push_back(&pjsua_var.outbound_proxy, r);
+    }
     
 
     /* Initialize PJSUA call subsystem: */
@@ -881,7 +923,7 @@ PJ_DEF(pj_status_t) pjsua_init( const pjsua_config *ua_cfg,
     /* Done! */
 
     PJ_LOG(3,(THIS_FILE, "pjsua version %s for %s initialized", 
-			 pj_get_version(), PJ_OS_NAME));
+			 pj_get_version(), pj_get_sys_info()->info.ptr));
 
     return PJ_SUCCESS;
 
@@ -1279,7 +1321,7 @@ PJ_DEF(pj_status_t) pjsua_destroy(void)
 	 */
 	/* First stage, get the maximum wait time */
 	max_wait = 100;
-	for (i=0; i<PJ_ARRAY_SIZE(pjsua_var.acc); ++i) {
+	for (i=0; i<(int)PJ_ARRAY_SIZE(pjsua_var.acc); ++i) {
 	    if (!pjsua_var.acc[i].valid)
 		continue;
 	    if (pjsua_var.acc[i].cfg.unpublish_max_wait_time_msec > max_wait)
@@ -1303,7 +1345,7 @@ PJ_DEF(pj_status_t) pjsua_destroy(void)
 	}
 
 	/* Third stage, forcefully destroy unfinished unpublications */
-	for (i=0; i<PJ_ARRAY_SIZE(pjsua_var.acc); ++i) {
+	for (i=0; i<(int)PJ_ARRAY_SIZE(pjsua_var.acc); ++i) {
 	    if (pjsua_var.acc[i].publish_sess) {
 		pjsip_publishc_destroy(pjsua_var.acc[i].publish_sess);
 		pjsua_var.acc[i].publish_sess = NULL;
@@ -1333,7 +1375,7 @@ PJ_DEF(pj_status_t) pjsua_destroy(void)
 	/* Wait until all unregistrations are done (ticket #364) */
 	/* First stage, get the maximum wait time */
 	max_wait = 100;
-	for (i=0; i<PJ_ARRAY_SIZE(pjsua_var.acc); ++i) {
+	for (i=0; i<(int)PJ_ARRAY_SIZE(pjsua_var.acc); ++i) {
 	    if (!pjsua_var.acc[i].valid)
 		continue;
 	    if (pjsua_var.acc[i].cfg.unreg_timeout > max_wait)
@@ -1534,6 +1576,24 @@ static const char *addr_string(const pj_sockaddr_t *addr)
 		 pj_sockaddr_get_addr(addr),
 		 str, sizeof(str));
     return str;
+}
+
+void pjsua_acc_on_tp_state_changed(pjsip_transport *tp,
+				   pjsip_transport_state state,
+				   const pjsip_transport_state_info *info);
+
+/* Callback to receive transport state notifications */
+static void on_tp_state_callback(pjsip_transport *tp,
+				 pjsip_transport_state state,
+				 const pjsip_transport_state_info *info)
+{
+    if (pjsua_var.ua_cfg.cb.on_transport_state) {
+	(*pjsua_var.ua_cfg.cb.on_transport_state)(tp, state, info);
+    }
+    if (pjsua_var.old_tp_cb) {
+	(*pjsua_var.old_tp_cb)(tp, state, info);
+    }
+    pjsua_acc_on_tp_state_changed(tp, state, info);
 }
 
 /*
@@ -1821,9 +1881,6 @@ PJ_DEF(pj_status_t) pjsua_transport_create( pjsip_transport_type_e type,
 	/*
 	 * Create TLS transport.
 	 */
-	/*
-	 * Create TCP transport.
-	 */
 	pjsua_transport_config config;
 	pjsip_host_port a_name;
 	pjsip_tpfactory *tls;
@@ -1878,6 +1935,19 @@ PJ_DEF(pj_status_t) pjsua_transport_create( pjsip_transport_type_e type,
 	goto on_return;
     }
 
+    /* Set transport state callback */
+    if (pjsua_var.ua_cfg.cb.on_transport_state) {
+	pjsip_tp_state_callback tpcb;
+	pjsip_tpmgr *tpmgr;
+
+	tpmgr = pjsip_endpt_get_tpmgr(pjsua_var.endpt);
+	tpcb = pjsip_tpmgr_get_state_cb(tpmgr);
+
+	if (tpcb != &on_tp_state_callback) {
+	    pjsua_var.old_tp_cb = tpcb;
+	    pjsip_tpmgr_set_state_cb(tpmgr, &on_tp_state_callback);
+	}
+    }
 
     /* Return the ID */
     if (p_id) *p_id = id;
@@ -2171,6 +2241,37 @@ void pjsua_process_msg_data(pjsip_tx_data *tdata,
 				     &msg_data->msg_body);
 	tdata->msg->body = body;
     }
+
+    /* Multipart */
+    if (!pj_list_empty(&msg_data->multipart_parts) &&
+	msg_data->multipart_ctype.type.slen)
+    {
+	pjsip_msg_body *bodies;
+	pjsip_multipart_part *part;
+	pj_str_t *boundary = NULL;
+
+	bodies = pjsip_multipart_create(tdata->pool,
+				        &msg_data->multipart_ctype,
+				        boundary);
+	part = msg_data->multipart_parts.next;
+	while (part != &msg_data->multipart_parts) {
+	    pjsip_multipart_part *part_copy;
+
+	    part_copy = pjsip_multipart_clone_part(tdata->pool, part);
+	    pjsip_multipart_add_part(tdata->pool, bodies, part_copy);
+	    part = part->next;
+	}
+
+	if (tdata->msg->body) {
+	    part = pjsip_multipart_create_part(tdata->pool);
+	    part->body = tdata->msg->body;
+	    pjsip_multipart_add_part(tdata->pool, bodies, part);
+
+	    tdata->msg->body = NULL;
+	}
+
+	tdata->msg->body = bodies;
+    }
 }
 
 
@@ -2313,6 +2414,29 @@ PJ_DEF(pj_status_t) pjsua_get_nat_type(pj_stun_nat_type *type)
     return pjsua_var.nat_status;
 }
 
+/*
+ * Verify that valid url is given.
+ */
+PJ_DEF(pj_status_t) pjsua_verify_url(const char *c_url)
+{
+    pjsip_uri *p;
+    pj_pool_t *pool;
+    char *url;
+    int len = (c_url ? pj_ansi_strlen(c_url) : 0);
+
+    if (!len) return PJSIP_EINVALIDURI;
+
+    pool = pj_pool_create(&pjsua_var.cp.factory, "check%p", 1024, 0, NULL);
+    if (!pool) return PJ_ENOMEM;
+
+    url = (char*) pj_pool_alloc(pool, len+1);
+    pj_ansi_strcpy(url, c_url);
+
+    p = pjsip_parse_uri(pool, url, len, 0);
+
+    pj_pool_release(pool);
+    return p ? 0 : PJSIP_EINVALIDURI;
+}
 
 /*
  * Verify that valid SIP url is given.
@@ -2324,10 +2448,10 @@ PJ_DEF(pj_status_t) pjsua_verify_sip_url(const char *c_url)
     char *url;
     int len = (c_url ? pj_ansi_strlen(c_url) : 0);
 
-    if (!len) return -1;
+    if (!len) return PJSIP_EINVALIDURI;
 
     pool = pj_pool_create(&pjsua_var.cp.factory, "check%p", 1024, 0, NULL);
-    if (!pool) return -1;
+    if (!pool) return PJ_ENOMEM;
 
     url = (char*) pj_pool_alloc(pool, len+1);
     pj_ansi_strcpy(url, c_url);
@@ -2340,7 +2464,7 @@ PJ_DEF(pj_status_t) pjsua_verify_sip_url(const char *c_url)
     }
 
     pj_pool_release(pool);
-    return p ? 0 : -1;
+    return p ? 0 : PJSIP_EINVALIDURI;
 }
 
 /*

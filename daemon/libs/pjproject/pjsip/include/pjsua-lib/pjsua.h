@@ -1,6 +1,6 @@
-/* $Id: pjsua.h 3021 2009-11-20 23:33:07Z bennylp $ */
+/* $Id: pjsua.h 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #ifndef __PJSUA_H__
 #define __PJSUA_H__
@@ -42,9 +31,6 @@
 
 /* Include all PJMEDIA headers. */
 #include <pjmedia.h>
-
-/* Include all PJMEDIA-CODEC headers. */
-#include <pjmedia-codec.h>
 
 /* Include all PJSIP-UA headers */
 #include <pjsip_ua.h>
@@ -317,6 +303,27 @@ typedef struct pjsua_msg_data pjsua_msg_data;
 #endif
 
 /**
+ * Controls whether PJSUA-LIB should add ICE media feature tag
+ * parameter (the ";+sip.ice" parameter) to Contact header if ICE
+ * is enabled in the config.
+ *
+ * Default: 1
+ */
+#ifndef PJSUA_ADD_ICE_TAGS
+#   define PJSUA_ADD_ICE_TAGS		1
+#endif
+
+/**
+ * Timeout value used to acquire mutex lock on a particular call.
+ *
+ * Default: 2000 ms
+ */
+#ifndef PJSUA_ACQUIRE_CALL_TIMEOUT
+#   define PJSUA_ACQUIRE_CALL_TIMEOUT 2000
+#endif
+
+
+/**
  * Logging configuration, which can be (optionally) specified when calling
  * #pjsua_init(). Application must call #pjsua_logging_config_default() to
  * initialize this structure with the default values.
@@ -398,6 +405,16 @@ typedef struct pjsua_mwi_info
 				     reference.				*/
     pjsip_rx_data   *rdata;	/**< The received NOTIFY request.	*/
 } pjsua_mwi_info;
+
+
+/**
+ * Structure to be passed on registration callback.
+ */
+typedef struct pjsua_reg_info
+{
+    struct pjsip_regc_cbparam	*cbparam;   /**< Parameters returned by 
+						 registration callback.	*/
+} pjsua_reg_info;
 
 
 /**
@@ -572,9 +589,19 @@ typedef struct pjsua_callback
      * Application may then query the account info to get the
      * registration details.
      *
-     * @param acc_id	    Account ID.
+     * @param acc_id	    The account ID.
      */
     void (*on_reg_state)(pjsua_acc_id acc_id);
+
+    /**
+     * Notify application when registration status has changed.
+     * Application may inspect the registration info to get the
+     * registration status details.
+     *
+     * @param acc_id	    The account ID.
+     * @param info	    The registration info.
+     */
+    void (*on_reg_state2)(pjsua_acc_id acc_id, pjsua_reg_info *info);
 
     /**
      * Notification when incoming SUBSCRIBE request is received. Application
@@ -656,6 +683,21 @@ typedef struct pjsua_callback
      * @param buddy_id	    The buddy id.
      */
     void (*on_buddy_state)(pjsua_buddy_id buddy_id);
+
+
+    /**
+     * Notify application when the state of client subscription session
+     * associated with a buddy has changed. Application may use this
+     * callback to retrieve more detailed information about the state
+     * changed event.
+     *
+     * @param buddy_id	    The buddy id.
+     * @param sub	    Event subscription session.
+     * @param event	    The event which triggers state change event.
+     */
+    void (*on_buddy_evsub_state)(pjsua_buddy_id buddy_id,
+				 pjsip_evsub *sub,
+				 pjsip_event *event);
 
     /**
      * Notify application on incoming pager (i.e. MESSAGE request).
@@ -854,9 +896,58 @@ typedef struct pjsua_callback
      */
     void (*on_mwi_info)(pjsua_acc_id acc_id, pjsua_mwi_info *mwi_info);
 
+    /**
+     * This callback is called when transport state is changed. See also
+     * #pjsip_tp_state_callback.
+     */
+    pjsip_tp_state_callback on_transport_state;
+
+    /**
+     * This callback is called to report error in ICE media transport.
+     * Currently it is used to report TURN Refresh error.
+     *
+     * @param index	Transport index.
+     * @param op	Operation which trigger the failure.
+     * @param status	Error status.
+     * @param param	Additional info about the event. Currently this will
+     * 			always be set to NULL.
+     */
+    void (*on_ice_transport_error)(int index, pj_ice_strans_op op,
+				   pj_status_t status, void *param);
+
 } pjsua_callback;
 
 
+/**
+ * This enumeration specifies the usage of SIP Session Timers extension.
+ */
+typedef enum pjsua_sip_timer_use
+{
+    /**
+     * When this flag is specified, Session Timers will not be used in any
+     * session, except it is explicitly required in the remote request.
+     */
+    PJSUA_SIP_TIMER_INACTIVE,
+
+    /**
+     * When this flag is specified, Session Timers will be used in all 
+     * sessions whenever remote supports and uses it.
+     */
+    PJSUA_SIP_TIMER_OPTIONAL,
+
+    /**
+     * When this flag is specified, Session Timers support will be 
+     * a requirement for the remote to be able to establish a session.
+     */
+    PJSUA_SIP_TIMER_REQUIRED,
+
+    /**
+     * When this flag is specified, Session Timers will always be used
+     * in all sessions, regardless whether remote supports/uses it or not.
+     */
+    PJSUA_SIP_TIMER_ALWAYS
+
+} pjsua_sip_timer_use;
 
 
 /**
@@ -1004,13 +1095,13 @@ typedef struct pjsua_config
     pj_bool_t	    require_100rel;
 
     /**
-     * Specify whether support for Session Timers should be required by 
-     * default. Note that this setting can be further customized in account
-     * configuration (#pjsua_acc_config).
+     * Specify the usage of Session Timers for all sessions. See the
+     * #pjsua_sip_timer_use for possible values. Note that this setting can be
+     * further customized in account configuration (#pjsua_acc_config).
      *
-     * Default: PJ_FALSE
+     * Default: PJSUA_SIP_TIMER_OPTIONAL
      */
-    pj_bool_t	    require_timer;
+    pjsua_sip_timer_use use_timer;
 
     /**
      * Handle unsolicited NOTIFY requests containing message waiting 
@@ -1088,6 +1179,16 @@ typedef struct pjsua_config
      * Default: #PJSUA_DEFAULT_SRTP_SECURE_SIGNALING
      */
     int		     srtp_secure_signaling;
+
+    /**
+     * Specify whether SRTP in PJMEDIA_SRTP_OPTIONAL mode should compose 
+     * duplicated media in SDP offer, i.e: unsecured and secured version.
+     * Otherwise, the SDP media will be composed as unsecured media but 
+     * with SDP "crypto" attribute.
+     *
+     * Default: PJ_FALSE
+     */
+    pj_bool_t	     srtp_optional_dup_offer;
 #endif
 
     /**
@@ -1156,10 +1257,26 @@ struct pjsua_msg_data
     pj_str_t	content_type;
 
     /**
-     * Optional message body.
+     * Optional message body to be added to the message, only when the
+     * message doesn't have a body.
      */
     pj_str_t	msg_body;
 
+    /**
+     * Content type of the multipart body. If application wants to send
+     * multipart message bodies, it puts the parts in \a parts and set
+     * the content type in \a multipart_ctype. If the message already
+     * contains a body, the body will be added to the multipart bodies.
+     */
+    pjsip_media_type  multipart_ctype;
+
+    /**
+     * List of multipart parts. If application wants to send multipart
+     * message bodies, it puts the parts in \a parts and set the content
+     * type in \a multipart_ctype. If the message already contains a body,
+     * the body will be added to the multipart bodies.
+     */
+    pjsip_multipart_part multipart_parts;
 };
 
 
@@ -1435,13 +1552,29 @@ PJ_DECL(pj_status_t) pjsua_cancel_stun_resolution(void *token,
 
 /**
  * This is a utility function to verify that valid SIP url is given. If the
- * URL is valid, PJ_SUCCESS will be returned.
+ * URL is a valid SIP/SIPS scheme, PJ_SUCCESS will be returned.
  *
  * @param url		The URL, as NULL terminated string.
  *
  * @return		PJ_SUCCESS on success, or the appropriate error code.
+ *
+ * @see pjsua_verify_url()
  */
 PJ_DECL(pj_status_t) pjsua_verify_sip_url(const char *url);
+
+
+/**
+ * This is a utility function to verify that valid URI is given. Unlike
+ * pjsua_verify_sip_url(), this function will return PJ_SUCCESS if tel: URI
+ * is given.
+ *
+ * @param url		The URL, as NULL terminated string.
+ *
+ * @return		PJ_SUCCESS on success, or the appropriate error code.
+ *
+ * @see pjsua_verify_sip_url()
+ */
+PJ_DECL(pj_status_t) pjsua_verify_url(const char *url);
 
 
 /**
@@ -1870,6 +2003,95 @@ PJ_DECL(pj_status_t) pjsua_transport_close( pjsua_transport_id id,
 
 
 /**
+ * Default auto retry re-registration interval, in seconds. Set to 0
+ * to disable this. Application can set the timer on per account basis 
+ * by setting the pjsua_acc_config.reg_retry_interval field instead.
+ *
+ * Default: 300 (5 minutes)
+ */
+#ifndef PJSUA_REG_RETRY_INTERVAL
+#   define PJSUA_REG_RETRY_INTERVAL	300
+#endif
+
+
+/**
+ * This macro specifies the default value for \a contact_rewrite_method
+ * field in pjsua_acc_config. I specifies  how Contact update will be
+ * done with the registration, if \a allow_contact_rewrite is enabled in
+ *  the account config.
+ *
+ * If set to 1, the Contact update will be done by sending unregistration
+ * to the currently registered Contact, while simultaneously sending new
+ * registration (with different Call-ID) for the updated Contact.
+ *
+ * If set to 2, the Contact update will be done in a single, current
+ * registration session, by removing the current binding (by setting its
+ * Contact's expires parameter to zero) and adding a new Contact binding,
+ * all done in a single request.
+ *
+ * Value 1 is the legacy behavior.
+ *
+ * Default value: 2
+ */
+#ifndef PJSUA_CONTACT_REWRITE_METHOD
+#   define PJSUA_CONTACT_REWRITE_METHOD		2
+#endif
+
+
+/**
+ * Bit value used in pjsua_acc_config.reg_use_proxy field to indicate that
+ * the global outbound proxy list should be added to the REGISTER request.
+ */
+#define PJSUA_REG_USE_OUTBOUND_PROXY		1
+
+
+/**
+ * Bit value used in pjsua_acc_config.reg_use_proxy field to indicate that
+ * the account proxy list should be added to the REGISTER request.
+ */
+#define PJSUA_REG_USE_ACC_PROXY			2
+
+
+/**
+ * This enumeration specifies how we should offer call hold request to
+ * remote peer. The default value is set by compile time constant
+ * PJSUA_CALL_HOLD_TYPE_DEFAULT, and application may control the setting
+ * on per-account basis by manipulating \a call_hold_type field in
+ * #pjsua_acc_config.
+ */
+typedef enum pjsua_call_hold_type
+{
+    /**
+     * This will follow RFC 3264 recommendation to use a=sendonly,
+     * a=recvonly, and a=inactive attribute as means to signal call
+     * hold status. This is the correct value to use.
+     */
+    PJSUA_CALL_HOLD_TYPE_RFC3264,
+
+    /**
+     * This will use the old and deprecated method as specified in RFC 2543,
+     * and will offer c=0.0.0.0 in the SDP instead. Using this has many
+     * drawbacks such as inability to keep the media transport alive while
+     * the call is being put on hold, and should only be used if remote
+     * does not understand RFC 3264 style call hold offer.
+     */
+    PJSUA_CALL_HOLD_TYPE_RFC2543
+
+} pjsua_call_hold_type;
+
+
+/**
+ * Specify the default call hold type to be used in #pjsua_acc_config.
+ *
+ * Default is PJSUA_CALL_HOLD_TYPE_RFC3264, and there's no reason to change
+ * this except if you're communicating with an old/non-standard peer.
+ */
+#ifndef PJSUA_CALL_HOLD_TYPE_DEFAULT
+#   define PJSUA_CALL_HOLD_TYPE_DEFAULT		PJSUA_CALL_HOLD_TYPE_RFC3264
+#endif
+
+
+/**
  * This structure describes account configuration to be specified when
  * adding a new account with #pjsua_acc_add(). Application MUST initialize
  * this structure first by calling #pjsua_acc_config_default().
@@ -1906,6 +2128,18 @@ typedef struct pjsua_acc_config
      * value is empty, no account registration will be performed.
      */
     pj_str_t	    reg_uri;
+
+    /** 
+     * The optional custom SIP headers to be put in the registration
+     * request.
+     */
+    pjsip_hdr	    reg_hdr_list;
+
+    /** 
+     * The optional custom SIP headers to be put in the presence
+     * subscription request.
+     */
+    pjsip_hdr	    sub_hdr_list;
 
     /**
      * Subscribe to message waiting indication events (RFC 3842).
@@ -1993,12 +2227,12 @@ typedef struct pjsua_acc_config
     pj_bool_t	    require_100rel;
 
     /**
-     * Specify whether support for Session Timers should be required for all 
-     * sessions of this account.
+     * Specify the usage of Session Timers for all sessions. See the
+     * #pjsua_sip_timer_use for possible values.
      *
-     * Default: PJ_FALSE
+     * Default: PJSUA_SIP_TIMER_OPTIONAL
      */
-    pj_bool_t	    require_timer;
+    pjsua_sip_timer_use use_timer;
 
     /**
      * Specify Session Timer settings, see #pjsip_timer_setting. 
@@ -2030,6 +2264,14 @@ typedef struct pjsua_acc_config
      * default interval will be used (PJSUA_REG_INTERVAL, 300 seconds).
      */
     unsigned	    reg_timeout;
+
+    /**
+     * Specify the number of seconds to refresh the client registration
+     * before the registration expires.
+     *
+     * Default: PJSIP_REGISTER_CLIENT_DELAY_BEFORE_REFRESH, 5 seconds
+     */
+    unsigned	    reg_delay_before_refresh;
 
     /**
      * Specify the maximum time to wait for unregistration requests to
@@ -2067,18 +2309,74 @@ typedef struct pjsua_acc_config
     pjsua_transport_id  transport_id;
 
     /**
-     * This option is used to update the UDP transport address and the Contact
+     * This option is used to update the transport address and the Contact
      * header of REGISTER request. When this option is  enabled, the library 
      * will keep track of the public IP address from the response of REGISTER
      * request. Once it detects that the address has changed, it will 
      * unregister current Contact, update the Contact with transport address
      * learned from Via header, and register a new Contact to the registrar.
      * This will also update the public name of UDP transport if STUN is
-     * configured.
+     * configured. 
+     *
+     * See also contact_rewrite_method field.
      *
      * Default: 1 (yes)
      */
     pj_bool_t allow_contact_rewrite;
+
+    /**
+     * Specify how Contact update will be done with the registration, if
+     * \a allow_contact_rewrite is enabled.
+     *
+     * If set to 1, the Contact update will be done by sending unregistration
+     * to the currently registered Contact, while simultaneously sending new
+     * registration (with different Call-ID) for the updated Contact.
+     *
+     * If set to 2, the Contact update will be done in a single, current
+     * registration session, by removing the current binding (by setting its
+     * Contact's expires parameter to zero) and adding a new Contact binding,
+     * all done in a single request.
+     *
+     * Value 1 is the legacy behavior.
+     *
+     * Default value: PJSUA_CONTACT_REWRITE_METHOD (2)
+     */
+    int		     contact_rewrite_method;
+
+    /**
+     * Control the use of SIP outbound feature. SIP outbound is described in
+     * RFC 5626 to enable proxies or registrar to send inbound requests back
+     * to UA using the same connection initiated by the UA for its
+     * registration. This feature is highly useful in NAT-ed deployemtns,
+     * hence it is enabled by default.
+     *
+     * Note: currently SIP outbound can only be used with TCP and TLS
+     * transports. If UDP is used for the registration, the SIP outbound
+     * feature will be silently ignored for the account.
+     *
+     * Default: PJ_TRUE
+     */
+    unsigned	     use_rfc5626;
+
+    /**
+     * Specify SIP outbound (RFC 5626) instance ID to be used by this
+     * application. If empty, an instance ID will be generated based on
+     * the hostname of this agent. If application specifies this parameter, the
+     * value will look like "<urn:uuid:00000000-0000-1000-8000-AABBCCDDEEFF>"
+     * without the doublequote.
+     *
+     * Default: empty
+     */
+    pj_str_t	     rfc5626_instance_id;
+
+    /**
+     * Specify SIP outbound (RFC 5626) registration ID. The default value
+     * is empty, which would cause the library to automatically generate
+     * a suitable value.
+     *
+     * Default: empty
+     */
+    pj_str_t	     rfc5626_reg_id;
 
     /**
      * Set the interval for periodic keep-alive transmission for this account.
@@ -2119,7 +2417,66 @@ typedef struct pjsua_acc_config
      * Default: #PJSUA_DEFAULT_SRTP_SECURE_SIGNALING
      */
     int		     srtp_secure_signaling;
+
+    /**
+     * Specify whether SRTP in PJMEDIA_SRTP_OPTIONAL mode should compose 
+     * duplicated media in SDP offer, i.e: unsecured and secured version.
+     * Otherwise, the SDP media will be composed as unsecured media but 
+     * with SDP "crypto" attribute.
+     *
+     * Default: PJ_FALSE
+     */
+    pj_bool_t	     srtp_optional_dup_offer;
 #endif
+
+    /**
+     * Specify interval of auto registration retry upon registration failure
+     * (including caused by transport problem), in second. Set to 0 to
+     * disable auto re-registration.
+     *
+     * Default: #PJSUA_REG_RETRY_INTERVAL
+     */
+    unsigned	     reg_retry_interval;
+
+    /**
+     * Specify whether calls of the configured account should be dropped
+     * after registration failure and an attempt of re-registration has 
+     * also failed.
+     *
+     * Default: PJ_FALSE (disabled)
+     */
+    pj_bool_t	     drop_calls_on_reg_fail;
+
+    /**
+     * Specify how the registration uses the outbound and account proxy
+     * settings. This controls if and what Route headers will appear in
+     * the REGISTER request of this account. The value is bitmask combination
+     * of PJSUA_REG_USE_OUTBOUND_PROXY and PJSUA_REG_USE_ACC_PROXY bits.
+     * If the value is set to 0, the REGISTER request will not use any proxy
+     * (i.e. it will not have any Route headers).
+     *
+     * Default: 3 (PJSUA_REG_USE_OUTBOUND_PROXY | PJSUA_REG_USE_ACC_PROXY)
+     */
+    unsigned	     reg_use_proxy;
+
+#if defined(PJMEDIA_STREAM_ENABLE_KA) && (PJMEDIA_STREAM_ENABLE_KA != 0)
+    /**
+     * Specify whether stream keep-alive and NAT hole punching with
+     * non-codec-VAD mechanism (see @ref PJMEDIA_STREAM_ENABLE_KA) is enabled
+     * for this account.
+     *
+     * Default: PJ_FALSE (disabled)
+     */
+    pj_bool_t	     use_stream_ka;
+#endif
+
+    /**
+     * Specify how to offer call hold to remote peer. Please see the
+     * documentation on #pjsua_call_hold_type for more info.
+     *
+     * Default: PJSUA_CALL_HOLD_TYPE_DEFAULT
+     */
+    pjsua_call_hold_type call_hold_type;
 
 } pjsua_acc_config;
 
@@ -2182,6 +2539,14 @@ typedef struct pjsua_acc_info
      * status code of the registration.
      */
     pjsip_status_code	status;
+
+    /**
+     * Last registration error code. When the status field contains a SIP
+     * status code that indicates a registration failure, last registration
+     * error code contains the error code that causes the failure. In any
+     * other case, its value is zero.
+     */
+    pj_status_t	        reg_last_err;
 
     /**
      * String describing the registration status.
@@ -2654,7 +3019,32 @@ typedef struct pjsua_call_info
 
 } pjsua_call_info;
 
+/**
+ * Flags to be given to various call APIs. More than one flags may be
+ * specified by bitmasking them.
+ */
+typedef enum pjsua_call_flag
+{
+    /**
+     * When the call is being put on hold, specify this flag to unhold it.
+     * This flag is only valid for #pjsua_call_reinvite(). Note: for
+     * compatibility reason, this flag must have value of 1 because
+     * previously the unhold option is specified as boolean value.
+     */
+    PJSUA_CALL_UNHOLD = 1,
 
+    /**
+     * Update the local invite session's contact with the contact URI from
+     * the account. This flag is only valid for #pjsua_call_reinvite() and
+     * #pjsua_call_update(). This flag is useful in IP address change
+     * situation, after the local account's Contact has been updated
+     * (typically with re-registration) use this flag to update the invite
+     * session with the new Contact and to inform this new Contact to the
+     * remote peer with the outgoing re-INVITE or UPDATE
+     */
+    PJSUA_CALL_UPDATE_CONTACT = 2
+
+} pjsua_call_flag;
 
 /**
  * Get maximum number of calls configured in pjsua.
@@ -2775,6 +3165,32 @@ PJ_DECL(pjsua_conf_port_id) pjsua_call_get_conf_port(pjsua_call_id call_id);
 PJ_DECL(pj_status_t) pjsua_call_get_info(pjsua_call_id call_id,
 					 pjsua_call_info *info);
 
+/**
+ * Check if remote peer support the specified capability.
+ *
+ * @param call_id	Call identification.
+ * @param htype		The header type to be checked, which value may be:
+ *			- PJSIP_H_ACCEPT
+ *			- PJSIP_H_ALLOW
+ *			- PJSIP_H_SUPPORTED
+ * @param hname		If htype specifies PJSIP_H_OTHER, then the header
+ *			name must be supplied in this argument. Otherwise the 
+ *			value must be set to NULL.
+ * @param token		The capability token to check. For example, if \a 
+ *			htype is PJSIP_H_ALLOW, then \a token specifies the 
+ *			method names; if \a htype is PJSIP_H_SUPPORTED, then
+ *			\a token specifies the extension names such as
+ *			 "100rel".
+ *
+ * @return		PJSIP_DIALOG_CAP_SUPPORTED if the specified capability
+ *			is explicitly supported, see @pjsip_dialog_cap_status
+ *			for more info.
+ */
+PJ_DECL(pjsip_dialog_cap_status) pjsua_call_remote_has_cap(
+						    pjsua_call_id call_id,
+						    int htype,
+						    const pj_str_t *hname,
+						    const pj_str_t *token);
 
 /**
  * Attach application specific data to the call. Application can then
@@ -2918,22 +3334,23 @@ PJ_DECL(pj_status_t) pjsua_call_set_hold(pjsua_call_id call_id,
  * the media state of the call has changed.
  *
  * @param call_id	Call identification.
- * @param unhold	If this argument is non-zero and the call is locally
- *			held, this will release the local hold.
+ * @param options	Bitmask of pjsua_call_flag constants. Note that
+ * 			for compatibility, specifying PJ_TRUE here is
+ * 			equal to specifying PJSUA_CALL_UNHOLD flag.
  * @param msg_data	Optional message components to be sent with
  *			the request.
  *
  * @return		PJ_SUCCESS on success, or the appropriate error code.
  */
 PJ_DECL(pj_status_t) pjsua_call_reinvite(pjsua_call_id call_id,
-					 pj_bool_t unhold,
+					 unsigned options,
 					 const pjsua_msg_data *msg_data);
 
 /**
  * Send UPDATE request.
  *
  * @param call_id	Call identification.
- * @param options	Must be zero for now.
+ * @param options	Bitmask of pjsua_call_flag constants.
  * @param msg_data	Optional message components to be sent with
  *			the request.
  *
@@ -4260,281 +4677,6 @@ PJ_DECL(pj_status_t) pjsua_recorder_get_port(pjsua_recorder_id id,
  * @return		PJ_SUCCESS on success, or the appropriate error code.
  */
 PJ_DECL(pj_status_t) pjsua_recorder_destroy(pjsua_recorder_id id);
-
-
-/*****************************************************************************
- * Sound devices.
- */
-
-/**
- * Enum all audio devices installed in the system.
- *
- * @param info		Array of info to be initialized.
- * @param count		On input, specifies max elements in the array.
- *			On return, it contains actual number of elements
- *			that have been initialized.
- *
- * @return		PJ_SUCCESS on success, or the appropriate error code.
- */
-PJ_DECL(pj_status_t) pjsua_enum_aud_devs(pjmedia_aud_dev_info info[],
-					 unsigned *count);
-
-/**
- * Enum all sound devices installed in the system (old API).
- *
- * @param info		Array of info to be initialized.
- * @param count		On input, specifies max elements in the array.
- *			On return, it contains actual number of elements
- *			that have been initialized.
- *
- * @return		PJ_SUCCESS on success, or the appropriate error code.
- */
-PJ_DECL(pj_status_t) pjsua_enum_snd_devs(pjmedia_snd_dev_info info[],
-					 unsigned *count);
-
-/**
- * Get currently active sound devices. If sound devices has not been created
- * (for example when pjsua_start() is not called), it is possible that
- * the function returns PJ_SUCCESS with -1 as device IDs.
- *
- * @param capture_dev   On return it will be filled with device ID of the 
- *			capture device.
- * @param playback_dev	On return it will be filled with device ID of the 
- *			device ID of the playback device.
- *
- * @return		PJ_SUCCESS on success, or the appropriate error code.
- */
-PJ_DECL(pj_status_t) pjsua_get_snd_dev(int *capture_dev,
-				       int *playback_dev);
-
-
-/**
- * Select or change sound device. Application may call this function at
- * any time to replace current sound device.
- *
- * @param capture_dev   Device ID of the capture device.
- * @param playback_dev	Device ID of the playback device.
- *
- * @return		PJ_SUCCESS on success, or the appropriate error code.
- */
-PJ_DECL(pj_status_t) pjsua_set_snd_dev(int capture_dev,
-				       int playback_dev);
-
-
-/**
- * Set pjsua to use null sound device. The null sound device only provides
- * the timing needed by the conference bridge, and will not interract with
- * any hardware.
- *
- * @return		PJ_SUCCESS on success, or the appropriate error code.
- */
-PJ_DECL(pj_status_t) pjsua_set_null_snd_dev(void);
-
-
-/**
- * Disconnect the main conference bridge from any sound devices, and let
- * application connect the bridge to it's own sound device/master port.
- *
- * @return		The port interface of the conference bridge, 
- *			so that application can connect this to it's own
- *			sound device or master port.
- */
-PJ_DECL(pjmedia_port*) pjsua_set_no_snd_dev(void);
-
-
-/**
- * Change the echo cancellation settings.
- *
- * The behavior of this function depends on whether the sound device is
- * currently active, and if it is, whether device or software AEC is 
- * being used. 
- *
- * If the sound device is currently active, and if the device supports AEC,
- * this function will forward the change request to the device and it will
- * be up to the device on whether support the request. If software AEC is
- * being used (the software EC will be used if the device does not support
- * AEC), this function will change the software EC settings. In all cases,
- * the setting will be saved for future opening of the sound device.
- *
- * If the sound device is not currently active, this will only change the
- * default AEC settings and the setting will be applied next time the 
- * sound device is opened.
- *
- * @param tail_ms	The tail length, in miliseconds. Set to zero to
- *			disable AEC.
- * @param options	Options to be passed to pjmedia_echo_create().
- *			Normally the value should be zero.
- *
- * @return		PJ_SUCCESS on success.
- */
-PJ_DECL(pj_status_t) pjsua_set_ec(unsigned tail_ms, unsigned options);
-
-
-/**
- * Get current echo canceller tail length. 
- *
- * @param p_tail_ms	Pointer to receive the tail length, in miliseconds. 
- *			If AEC is disabled, the value will be zero.
- *
- * @return		PJ_SUCCESS on success.
- */
-PJ_DECL(pj_status_t) pjsua_get_ec_tail(unsigned *p_tail_ms);
-
-
-/**
- * Check whether the sound device is currently active. The sound device
- * may be inactive if the application has set the auto close feature to
- * non-zero (the snd_auto_close_time setting in #pjsua_media_config), or
- * if null sound device or no sound device has been configured via the
- * #pjsua_set_no_snd_dev() function.
- */
-PJ_DECL(pj_bool_t) pjsua_snd_is_active(void);
-
-    
-/**
- * Configure sound device setting to the sound device being used. If sound 
- * device is currently active, the function will forward the setting to the
- * sound device instance to be applied immediately, if it supports it. 
- *
- * The setting will be saved for future opening of the sound device, if the 
- * "keep" argument is set to non-zero. If the sound device is currently
- * inactive, and the "keep" argument is false, this function will return
- * error.
- * 
- * Note that in case the setting is kept for future use, it will be applied
- * to any devices, even when application has changed the sound device to be
- * used.
- *
- * Note also that the echo cancellation setting should be set with 
- * #pjsua_set_ec() API instead.
- *
- * See also #pjmedia_aud_stream_set_cap() for more information about setting
- * an audio device capability.
- *
- * @param cap		The sound device setting to change.
- * @param pval		Pointer to value. Please see #pjmedia_aud_dev_cap
- *			documentation about the type of value to be 
- *			supplied for each setting.
- * @param keep		Specify whether the setting is to be kept for future
- *			use.
- *
- * @return		PJ_SUCCESS on success or the appropriate error code.
- */
-PJ_DECL(pj_status_t) pjsua_snd_set_setting(pjmedia_aud_dev_cap cap,
-					   const void *pval,
-					   pj_bool_t keep);
-
-/**
- * Retrieve a sound device setting. If sound device is currently active,
- * the function will forward the request to the sound device. If sound device
- * is currently inactive, and if application had previously set the setting
- * and mark the setting as kept, then that setting will be returned.
- * Otherwise, this function will return error.
- *
- * Note that echo cancellation settings should be retrieved with 
- * #pjsua_get_ec_tail() API instead.
- *
- * @param cap		The sound device setting to retrieve.
- * @param pval		Pointer to receive the value. 
- *			Please see #pjmedia_aud_dev_cap documentation about
- *			the type of value to be supplied for each setting.
- *
- * @return		PJ_SUCCESS on success or the appropriate error code.
- */
-PJ_DECL(pj_status_t) pjsua_snd_get_setting(pjmedia_aud_dev_cap cap,
-					   void *pval);
-
-
-/*****************************************************************************
- * Codecs.
- */
-
-/**
- * Enum all supported codecs in the system.
- *
- * @param id		Array of ID to be initialized.
- * @param count		On input, specifies max elements in the array.
- *			On return, it contains actual number of elements
- *			that have been initialized.
- *
- * @return		PJ_SUCCESS on success, or the appropriate error code.
- */
-PJ_DECL(pj_status_t) pjsua_enum_codecs( pjsua_codec_info id[],
-				        unsigned *count );
-
-
-/**
- * Change codec priority.
- *
- * @param codec_id	Codec ID, which is a string that uniquely identify
- *			the codec (such as "speex/8000"). Please see pjsua
- *			manual or pjmedia codec reference for details.
- * @param priority	Codec priority, 0-255, where zero means to disable
- *			the codec.
- *
- * @return		PJ_SUCCESS on success, or the appropriate error code.
- */
-PJ_DECL(pj_status_t) pjsua_codec_set_priority( const pj_str_t *codec_id,
-					       pj_uint8_t priority );
-
-
-/**
- * Get codec parameters.
- *
- * @param codec_id	Codec ID.
- * @param param		Structure to receive codec parameters.
- *
- * @return		PJ_SUCCESS on success, or the appropriate error code.
- */
-PJ_DECL(pj_status_t) pjsua_codec_get_param( const pj_str_t *codec_id,
-					    pjmedia_codec_param *param );
-
-
-/**
- * Set codec parameters.
- *
- * @param codec_id	Codec ID.
- * @param param		Codec parameter to set.
- *
- * @return		PJ_SUCCESS on success, or the appropriate error code.
- */
-PJ_DECL(pj_status_t) pjsua_codec_set_param( const pj_str_t *codec_id,
-					    const pjmedia_codec_param *param);
-
-
-
-
-/**
- * Create UDP media transports for all the calls. This function creates
- * one UDP media transport for each call.
- *
- * @param cfg		Media transport configuration. The "port" field in the
- *			configuration is used as the start port to bind the
- *			sockets.
- *
- * @return		PJ_SUCCESS on success, or the appropriate error code.
- */
-PJ_DECL(pj_status_t) 
-pjsua_media_transports_create(const pjsua_transport_config *cfg);
-
-
-/**
- * Register custom media transports to be used by calls. There must
- * enough media transports for all calls.
- *
- * @param tp		The media transport array.
- * @param count		Number of elements in the array. This number MUST
- *			match the number of maximum calls configured when
- *			pjsua is created.
- * @param auto_delete	Flag to indicate whether the transports should be
- *			destroyed when pjsua is shutdown.
- *
- * @return		PJ_SUCCESS on success, or the appropriate error code.
- */
-PJ_DECL(pj_status_t) 
-pjsua_media_transports_attach( pjsua_media_transport tp[],
-			       unsigned count,
-			       pj_bool_t auto_delete);
 
 
 /**

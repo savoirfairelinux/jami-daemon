@@ -1,6 +1,6 @@
-/* $Id: config.h 2966 2009-10-25 09:02:07Z bennylp $ */
-/*
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+/* $Id: config.h 3553 2011-05-05 06:14:19Z nanang $ */
+/* 
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -15,18 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
  */
 #ifndef __PJNATH_CONFIG_H__
 #define __PJNATH_CONFIG_H__
@@ -77,9 +66,9 @@
 
 /**
  * The default initial STUN round-trip time estimation (the RTO value
- * in RFC 3489-bis), in miliseconds.
- * This value is used to control the STUN request
- * retransmit time. The initial value of retransmission interval
+ * in RFC 3489-bis), in miliseconds. 
+ * This value is used to control the STUN request 
+ * retransmit time. The initial value of retransmission interval 
  * would be set to this value, and will be doubled after each
  * retransmission.
  */
@@ -90,7 +79,7 @@
 
 /**
  * The STUN transaction timeout value, in miliseconds.
- * After the last retransmission is sent and if no response is received
+ * After the last retransmission is sent and if no response is received 
  * after this time, the STUN transaction will be considered to have failed.
  *
  * The default value is 16x RTO (as per RFC 3489-bis).
@@ -213,8 +202,8 @@
 
 
 /**
- * Number of seconds to refresh the permission/channel binding before the
- * permission/channel binding expires. This value should be greater than
+ * Number of seconds to refresh the permission/channel binding before the 
+ * permission/channel binding expires. This value should be greater than 
  * PJ_TURN_PERM_TIMEOUT setting.
  */
 #ifndef PJ_TURN_REFRESH_SEC_BEFORE
@@ -223,7 +212,7 @@
 
 
 /**
- * The TURN session timer heart beat interval. When this timer occurs, the
+ * The TURN session timer heart beat interval. When this timer occurs, the 
  * TURN session will scan all the permissions/channel bindings to see which
  * need to be refreshed.
  */
@@ -293,10 +282,10 @@
 /**
  * The number of bits to represent ICE candidate's local preference. The
  * local preference is used to specify preference among candidates with
- * the same type, and ICE draft suggests 65535 as the default local
- * preference, which means we need 16 bits to represent the value. But
+ * the same type, and ICE draft suggests 65535 as the default local 
+ * preference, which means we need 16 bits to represent the value. But 
  * since we don't have the facility to specify local preference, we'll
- * just disable this feature and let the preference sorted by the
+ * just disable this feature and let the preference sorted by the 
  * type only.
  *
  * Default: 0
@@ -327,15 +316,15 @@
 
 
 /**
- * According to ICE Section 8.2. Updating States, if an In-Progress pair in
- * the check list is for the same component as a nominated pair, the agent
+ * According to ICE Section 8.2. Updating States, if an In-Progress pair in 
+ * the check list is for the same component as a nominated pair, the agent 
  * SHOULD cease retransmissions for its check if its pair priority is lower
  * than the lowest priority nominated pair for that component.
  *
  * If a higher priority check is In Progress, this rule would cause that
  * check to be performed even when it most likely will fail.
  *
- * The macro here controls if ICE session should cancel all In Progress
+ * The macro here controls if ICE session should cancel all In Progress 
  * checks for the same component regardless of its priority.
  *
  * Default: 1 (yes, cancel all)
@@ -478,6 +467,25 @@
 #   define PJNATH_POOL_INC_STUN_TDATA		    1000
 #endif
 
+/** TURN session initial pool size */
+#ifndef PJNATH_POOL_LEN_TURN_SESS
+#   define PJNATH_POOL_LEN_TURN_SESS		    1000
+#endif
+
+/** TURN session pool increment size */
+#ifndef PJNATH_POOL_INC_TURN_SESS
+#   define PJNATH_POOL_INC_TURN_SESS		    1000
+#endif
+
+/** TURN socket initial pool size */
+#ifndef PJNATH_POOL_LEN_TURN_SOCK
+#   define PJNATH_POOL_LEN_TURN_SOCK		    1000
+#endif
+
+/** TURN socket pool increment size */
+#ifndef PJNATH_POOL_INC_TURN_SOCK
+#   define PJNATH_POOL_INC_TURN_SOCK		    1000
+#endif
 
 /**
  * @}

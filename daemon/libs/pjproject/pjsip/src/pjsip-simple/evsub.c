@@ -1,6 +1,6 @@
-/* $Id: evsub.c 2822 2009-06-30 13:47:44Z bennylp $ */
+/* $Id: evsub.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjsip-simple/evsub.h>
 #include <pjsip-simple/evsub_msg.h>
@@ -238,6 +227,7 @@ struct pjsip_evsub
     pjsip_event_hdr	 *event;	/**< Event description.		    */
     pjsip_expires_hdr	 *expires;	/**< Expires header		    */
     pjsip_accept_hdr	 *accept;	/**< Local Accept header.	    */
+    pjsip_hdr             sub_hdr_list; /**< User-defined header.           */
 
     pj_time_val		  refresh_time;	/**< Time to refresh.		    */
     pj_timer_entry	  timer;	/**< Internal timer.		    */
@@ -297,8 +287,10 @@ PJ_DEF(pj_status_t) pjsip_evsub_init_module(pjsip_endpoint *endpt)
 	{ "NOTIFY", 6}
     };
 
-    pj_register_strerror(PJSIP_SIMPLE_ERRNO_START, PJ_ERRNO_SPACE_SIZE,
-			 &pjsipsimple_strerror);
+    status = pj_register_strerror(PJSIP_SIMPLE_ERRNO_START,
+				  PJ_ERRNO_SPACE_SIZE,
+				  &pjsipsimple_strerror);
+    pj_assert(status == PJ_SUCCESS);
 
     PJ_ASSERT_RETURN(endpt != NULL, PJ_EINVAL);
     PJ_ASSERT_RETURN(mod_evsub.mod.id == -1, PJ_EINVALIDOP);
@@ -568,6 +560,7 @@ static void set_state( pjsip_evsub *sub, pjsip_evsub_state state,
 {
     pjsip_evsub_state prev_state = sub->state;
     pj_str_t old_state_str = sub->state_str;
+    pjsip_event dummy_event;
 
     sub->state = state;
 
@@ -585,6 +578,12 @@ static void set_state( pjsip_evsub *sub, pjsip_evsub_state state,
 	      old_state_str.ptr,
 	      (int)sub->state_str.slen,
 	      sub->state_str.ptr));
+
+    /* don't call the callback with NULL event, it may crash the app! */
+    if (!event) {
+	PJSIP_EVENT_INIT_USER(dummy_event, 0, 0, 0, 0);
+	event = &dummy_event;
+    }
 
     if (sub->user.on_evsub_state && sub->call_cb)
 	(*sub->user.on_evsub_state)(sub, event);
@@ -727,6 +726,7 @@ static pj_status_t evsub_create( pjsip_dialog *dlg,
     sub->expires = pjsip_expires_hdr_create(sub->pool, pkg->pkg_expires);
     sub->accept = (pjsip_accept_hdr*) 
     		  pjsip_hdr_clone(sub->pool, pkg->pkg_accept);
+    pj_list_init(&sub->sub_hdr_list);
 
     sub->timer.user_data = sub;
     sub->timer.cb = &on_timer;
@@ -746,24 +746,32 @@ static pj_status_t evsub_create( pjsip_dialog *dlg,
     pj_strdup(sub->pool, &sub->event->event_type, event);
 
 
-    /* Create subcription list: */
+    /* Check if another subscription has been registered to the dialog. In
+     * that case, just add ourselves to the subscription list, otherwise
+     * create and register a new subscription list.
+     */
+    if (pjsip_dlg_has_usage(dlg, &mod_evsub.mod)) {
+	dlgsub_head = (struct dlgsub*) dlg->mod_data[mod_evsub.mod.id];
+	dlgsub = PJ_POOL_ALLOC_T(sub->pool, struct dlgsub);
+	dlgsub->sub = sub;
+	pj_list_push_back(dlgsub_head, dlgsub);
+    } else {
+	dlgsub_head = PJ_POOL_ALLOC_T(sub->pool, struct dlgsub);
+	dlgsub = PJ_POOL_ALLOC_T(sub->pool, struct dlgsub);
+	dlgsub->sub = sub;
 
-    dlgsub_head = PJ_POOL_ALLOC_T(sub->pool, struct dlgsub);
-    dlgsub = PJ_POOL_ALLOC_T(sub->pool, struct dlgsub);
-    dlgsub->sub = sub;
-
-    pj_list_init(dlgsub_head);
-    pj_list_push_back(dlgsub_head, dlgsub);
+	pj_list_init(dlgsub_head);
+	pj_list_push_back(dlgsub_head, dlgsub);
 
 
-    /* Register as dialog usage: */
+	/* Register as dialog usage: */
 
-    status = pjsip_dlg_add_usage(dlg, &mod_evsub.mod, dlgsub_head);
-    if (status != PJ_SUCCESS) {
-	pjsip_dlg_dec_lock(dlg);
-	return status;
+	status = pjsip_dlg_add_usage(dlg, &mod_evsub.mod, dlgsub_head);
+	if (status != PJ_SUCCESS) {
+	    pjsip_dlg_dec_lock(dlg);
+	    return status;
+	}
     }
-
 
     PJ_LOG(5,(sub->obj_name, "%s subscription created, using dialog %s",
 	      (role==PJSIP_ROLE_UAC ? "UAC" : "UAS"),
@@ -1000,6 +1008,19 @@ PJ_DEF(pj_status_t) pjsip_evsub_initiate( pjsip_evsub *sub,
     pjsip_msg_add_hdr( tdata->msg, (pjsip_hdr*)
 		       pjsip_hdr_shallow_clone(tdata->pool, sub->expires));
 
+    /* Add Supported header (it's optional in RFC 3265, but some event package
+     * RFC may bring this requirement to SHOULD strength - e.g. RFC 5373)
+     */
+    {
+       const pjsip_hdr *hdr = pjsip_endpt_get_capability(sub->endpt,
+						         PJSIP_H_SUPPORTED,
+						         NULL);
+       if (hdr) {
+	   pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*)
+			     pjsip_hdr_shallow_clone(tdata->pool, hdr));
+       }
+    }
+
     /* Add Accept header: */
     pjsip_msg_add_hdr( tdata->msg, (pjsip_hdr*)
 		       pjsip_hdr_shallow_clone(tdata->pool, sub->accept));
@@ -1010,7 +1031,18 @@ PJ_DEF(pj_status_t) pjsip_evsub_initiate( pjsip_evsub *sub,
 		       pjsip_hdr_shallow_clone(tdata->pool, 
 					       mod_evsub.allow_events_hdr));
 
-   
+
+    /* Add custom headers */
+    {
+	const pjsip_hdr *hdr = sub->sub_hdr_list.next;
+	while (hdr != &sub->sub_hdr_list) {
+	    pjsip_msg_add_hdr( tdata->msg, (pjsip_hdr*)
+			       pjsip_hdr_shallow_clone(tdata->pool, hdr));
+	    hdr = hdr->next;
+	}
+    }
+
+
     *p_tdata = tdata;
 
 
@@ -1018,6 +1050,27 @@ on_return:
 
     pjsip_dlg_dec_lock(sub->dlg);
     return status;
+}
+
+
+/*
+ * Add custom headers.
+ */
+PJ_DEF(pj_status_t) pjsip_evsub_add_header( pjsip_evsub *sub,
+					    const pjsip_hdr *hdr_list )
+{
+    const pjsip_hdr *hdr;
+
+    PJ_ASSERT_RETURN(sub && hdr_list, PJ_EINVAL);
+
+    hdr = hdr_list->next;
+    while (hdr != hdr_list) {
+        pj_list_push_back(&sub->sub_hdr_list, (pjsip_hdr*)
+		          pjsip_hdr_clone(sub->pool, hdr));
+	hdr = hdr->next;
+    }
+
+    return PJ_SUCCESS;
 }
 
 

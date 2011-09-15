@@ -1,6 +1,6 @@
-/* $Id: resolver.c 2724 2009-05-29 13:04:03Z bennylp $ */
+/* $Id: resolver.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjlib-util/resolver.h>
 #include <pjlib-util/errno.h>
@@ -852,10 +841,11 @@ PJ_DEF(pj_status_t) pj_dns_resolver_cancel_query(pj_dns_async_query *query,
 PJ_DEF(pj_status_t) pj_dns_parse_a_response(const pj_dns_parsed_packet *pkt,
 					    pj_dns_a_record *rec)
 {
-    pj_str_t hostname, alias, *res_name;
+    enum { MAX_SEARCH = 20 };
+    pj_str_t hostname, alias = {NULL, 0}, *resname;
     unsigned bufstart = 0;
     unsigned bufleft = sizeof(rec->buf_);
-    unsigned i, ansidx;
+    unsigned i, ansidx, search_cnt=0;
 
     PJ_ASSERT_RETURN(pkt && rec, PJ_EINVAL);
 
@@ -898,17 +888,34 @@ PJ_DEF(pj_status_t) pj_dns_parse_a_response(const pj_dns_parsed_packet *pkt,
     if (ansidx == pkt->hdr.anscount)
 	return PJLIB_UTIL_EDNSNOANSWERREC;
 
-    /* If hostname is a CNAME, get the alias. */
-    if (pkt->ans[ansidx].type == PJ_DNS_TYPE_CNAME) {
-	alias = pkt->ans[ansidx].rdata.cname.name;
-	res_name = &alias;
-    } else if (pkt->ans[ansidx].type == PJ_DNS_TYPE_A) {
-	alias.ptr = NULL;
-	alias.slen = 0;
-	res_name = &hostname;
-    } else {
-	return PJLIB_UTIL_EDNSINANSWER;
+    resname = &hostname;
+
+    /* Keep following CNAME records. */
+    while (pkt->ans[ansidx].type == PJ_DNS_TYPE_CNAME &&
+	   search_cnt++ < MAX_SEARCH)
+    {
+	resname = &pkt->ans[ansidx].rdata.cname.name;
+
+	if (!alias.slen)
+	    alias = *resname;
+
+	for (i=0; i < pkt->hdr.anscount; ++i) {
+	    if (pj_stricmp(resname, &pkt->ans[i].name)==0) {
+		break;
+	    }
+	}
+
+	if (i==pkt->hdr.anscount)
+	    return PJLIB_UTIL_EDNSNOANSWERREC;
+
+	ansidx = i;
     }
+
+    if (search_cnt >= MAX_SEARCH)
+	return PJLIB_UTIL_EDNSINANSWER;
+
+    if (pkt->ans[ansidx].type != PJ_DNS_TYPE_A)
+	return PJLIB_UTIL_EDNSINANSWER;
 
     /* Copy alias to the record, if present. */
     if (alias.slen) {
@@ -923,17 +930,14 @@ PJ_DEF(pj_status_t) pj_dns_parse_a_response(const pj_dns_parsed_packet *pkt,
 	bufleft -= alias.slen;
     }
 
-    /* Now scan the answer for all type A RRs where the name matches
-     * hostname or alias.
-     */
-    for (i=0; i<pkt->hdr.anscount; ++i) {
+    /* Get the IP addresses. */
+    for (i=0; i < pkt->hdr.anscount; ++i) {
 	if (pkt->ans[i].type == PJ_DNS_TYPE_A &&
-	    pj_stricmp(&pkt->ans[i].name, res_name)==0 &&
+	    pj_stricmp(&pkt->ans[i].name, resname)==0 &&
 	    rec->addr_count < PJ_DNS_MAX_IP_IN_A_REC)
 	{
-	    rec->addr[rec->addr_count].s_addr = 
+	    rec->addr[rec->addr_count++].s_addr =
 		pkt->ans[i].rdata.a.ip_addr.s_addr;
-	    ++rec->addr_count;
 	}
     }
 
@@ -1375,6 +1379,9 @@ static void on_read_complete(pj_ioqueue_key_t *key,
     pj_hash_set(NULL, resolver->hquerybyid, &q->id, sizeof(q->id), 0, NULL);
     pj_hash_set(NULL, resolver->hquerybyres, &q->key, sizeof(q->key), 0, NULL);
 
+    /* Workaround for deadlock problem in #1108 */
+    pj_mutex_unlock(resolver->mutex);
+
     /* Notify applications first, to allow application to modify the 
      * record before it is saved to the hash table.
      */
@@ -1392,6 +1399,9 @@ static void on_read_complete(pj_ioqueue_key_t *key,
 	    child_q = child_q->next;
 	}
     }
+
+    /* Workaround for deadlock problem in #1108 */
+    pj_mutex_lock(resolver->mutex);
 
     /* Save/update response cache. */
     update_res_cache(resolver, &q->key, status, PJ_TRUE, dns_pkt);

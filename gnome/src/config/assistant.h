@@ -37,8 +37,6 @@
 #include <sflphone_const.h>
 
 
-#if GTK_CHECK_VERSION(2,10,0)
-
 #define _SIP  0
 #define _IAX  1
 
@@ -86,21 +84,9 @@ struct _wizard {
 };
 
 /**
- * @file druid.h
- * @brief Implement the configuration wizard
- */
-
-/**
  * Callbacks functions
  */
 void set_account_type (GtkWidget* widget , gpointer data);
-
-//static void cancel_callback( void );
-
-//static void close_callback( void );
-
-//static void sip_apply_callback( void );
-//static void iax_apply_callback( void );
 
 void enable_stun (GtkWidget *widget);
 
@@ -117,17 +103,4 @@ GtkWidget* build_summary (void);
 GtkWidget* build_registration_error (void);
 GtkWidget* build_email_configuration (void);
 GtkWidget* build_sfl_or_account (void);
-
-/**
- * Forward function
- */
-//static gint forward_page_func( gint current_page , gpointer data );
-
-/**
- * Page template
- */
-//static GtkWidget* create_vbox(GtkAssistantPageType type, const gchar *title, const gchar *section);
-
-#endif // GTK_CHECK_VERSION
-
 #endif

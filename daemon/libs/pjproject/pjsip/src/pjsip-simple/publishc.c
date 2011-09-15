@@ -1,6 +1,6 @@
-/* $Id: publishc.c 2940 2009-10-12 07:44:14Z bennylp $ */
+/* $Id: publishc.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjsip-simple/publish.h>
 #include <pjsip/sip_auth.h>
@@ -85,6 +74,7 @@ struct pjsip_publishc
     pjsip_endpoint		*endpt;
     pj_bool_t			 _delete_flag;
     int				 pending_tsx;
+    pj_bool_t			 in_callback;
     pj_mutex_t			*mutex;
 
     pjsip_publishc_opt		 opt;
@@ -215,7 +205,7 @@ PJ_DEF(pj_status_t) pjsip_publishc_destroy(pjsip_publishc *pubc)
 {
     PJ_ASSERT_RETURN(pubc, PJ_EINVAL);
 
-    if (pubc->pending_tsx) {
+    if (pubc->pending_tsx || pubc->in_callback) {
 	pubc->_delete_flag = 1;
 	pubc->cb = NULL;
     } else {
@@ -565,6 +555,9 @@ static void tsx_callback(void *token, pjsip_event *event)
     pj_assert(pubc->pending_tsx > 0);
     --pubc->pending_tsx;
 
+    /* Mark that we're in callback to prevent deletion (#1164) */
+    ++pubc->in_callback;
+
     /* If publication data has been deleted by user then remove publication 
      * data from transaction's callback, and don't call callback.
      */
@@ -672,6 +665,30 @@ static void tsx_callback(void *token, pjsip_event *event)
 	while (!pj_list_empty(&pubc->pending_reqs)) {
 	    pjsip_tx_data *tdata = pubc->pending_reqs.next;
 	    pj_list_erase(tdata);
+
+	    /* Add SIP-If-Match if we have etag and the request doesn't have
+	     * one (http://trac.pjsip.org/repos/ticket/996)
+	     */
+	    if (pubc->etag.slen) {
+		const pj_str_t STR_HNAME = { "SIP-If-Match", 12 };
+		pjsip_generic_string_hdr *sim_hdr;
+
+		sim_hdr = (pjsip_generic_string_hdr*)
+			  pjsip_msg_find_hdr_by_name(tdata->msg, &STR_HNAME, NULL);
+		if (!sim_hdr) {
+		    /* Create the header */
+		    sim_hdr = pjsip_generic_string_hdr_create(tdata->pool,
+							      &STR_HNAME,
+							      &pubc->etag);
+		    pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*)sim_hdr);
+
+		} else {
+		    /* Update */
+		    if (pj_strcmp(&pubc->etag, &sim_hdr->hvalue))
+			pj_strdup(tdata->pool, &sim_hdr->hvalue, &pubc->etag);
+		}
+	    }
+
 	    status = pjsip_publishc_send(pubc, tdata);
 	    if (status == PJ_EPENDING) {
 		pj_assert(!"Not expected");
@@ -683,6 +700,9 @@ static void tsx_callback(void *token, pjsip_event *event)
 	}
 	pj_mutex_unlock(pubc->mutex);
     }
+
+    /* No longer in callback. */
+    --pubc->in_callback;
 
     /* Delete the record if user destroy pubc during the callback. */
     if (pubc->_delete_flag && pubc->pending_tsx==0) {

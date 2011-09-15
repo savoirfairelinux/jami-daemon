@@ -1,6 +1,6 @@
-/* $Id: sip_uri.c 2394 2008-12-23 17:27:53Z bennylp $ */
+/* $Id: sip_uri.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjsip/sip_uri.h>
 #include <pjsip/sip_msg.h>
@@ -41,10 +30,10 @@
 /*
  * Generic parameter manipulation.
  */
-PJ_DEF(pjsip_param*) pjsip_param_find(  pjsip_param *param_list,
+PJ_DEF(pjsip_param*) pjsip_param_find(  const pjsip_param *param_list,
 					const pj_str_t *name )
 {
-    pjsip_param *p = param_list->next;
+    pjsip_param *p = (pjsip_param*)param_list->next;
     while (p != param_list) {
 	if (pj_stricmp(&p->name, name)==0)
 	    return p;
@@ -53,16 +42,30 @@ PJ_DEF(pjsip_param*) pjsip_param_find(  pjsip_param *param_list,
     return NULL;
 }
 
-PJ_DEF(const pjsip_param*) pjsip_param_cfind( const pjsip_param *param_list,
-					      const pj_str_t *name )
+PJ_DEF(int) pjsip_param_cmp( const pjsip_param *param_list1,
+			     const pjsip_param *param_list2,
+			     pj_bool_t ig_nf)
 {
-    const pjsip_param *p = param_list->next;
-    while (p != param_list) {
-	if (pj_stricmp_alnum(&p->name, name)==0)
-	    return p;
-	p = p->next;
+    const pjsip_param *p1;
+
+    if ((ig_nf & 1)==0 && pj_list_size(param_list1)!=pj_list_size(param_list2))
+	return 1;
+
+    p1 = param_list1->next;
+    while (p1 != param_list1) {
+	const pjsip_param *p2;
+	p2 = pjsip_param_find(param_list2, &p1->name);
+	if (p2 ) {
+	    int rc = pj_stricmp(&p1->value, &p2->value);
+	    if (rc != 0)
+		return rc;
+	} else if ((ig_nf & 1)==0)
+	    return 1;
+
+	p1 = p1->next;
     }
-    return NULL;
+
+    return 0;
 }
 
 PJ_DEF(void) pjsip_param_clone( pj_pool_t *pool, pjsip_param *dst_list,
@@ -71,7 +74,7 @@ PJ_DEF(void) pjsip_param_clone( pj_pool_t *pool, pjsip_param *dst_list,
     const pjsip_param *p = src_list->next;
 
     pj_list_init(dst_list);
-    while (p != src_list) {
+    while (p && p != src_list) {
 	pjsip_param *new_param = PJ_POOL_ALLOC_T(pool, pjsip_param);
 	pj_strdup(pool, &new_param->name, &p->name);
 	pj_strdup(pool, &new_param->value, &p->value);
@@ -109,7 +112,7 @@ PJ_DEF(pj_ssize_t) pjsip_param_print_on( const pjsip_param *param_list,
     int printed;
 
     p = param_list->next;
-    if (p == param_list)
+    if (p == NULL || p == param_list)
 	return 0;
 
     startbuf = buf;
@@ -285,14 +288,16 @@ static pj_ssize_t pjsip_url_print(  pjsip_uri_context_e context,
     }
 
     /* Only print port if it is explicitly specified. 
-     * Port is not allowed in To and From header.
+     * Port is not allowed in To and From header, see Table 1 in
+     * RFC 3261 Section 19.1.1
      */
-    /* Unfortunately some UA requires us to send back the port
-     * number exactly as it was sent. We don't remember whether an
-     * UA has sent us port, so we'll just send the port indiscrimately
+    /* Note: ticket #1141 adds run-time setting to allow port number to
+     * appear in From/To header. Default is still false.
      */
-    //PJ_TODO(SHOULD_DISALLOW_URI_PORT_IN_FROM_TO_HEADER)
-    if (url->port && context != PJSIP_URI_IN_FROMTO_HDR) {
+    if (url->port &&
+	(context != PJSIP_URI_IN_FROMTO_HDR ||
+	 pjsip_cfg()->endpt.allow_port_in_fromto_hdr))
+    {
 	if (endbuf - buf < 10)
 	    return -1;
 
@@ -409,8 +414,8 @@ static pj_status_t pjsip_url_compare( pjsip_uri_context_e context,
      * in comparing SIP and SIPS URIs.
      */
 
-    /* Characters other than those in the “reserved” set (see RFC 2396 [5])
-     * are equivalent to their “encoding.
+    /* Characters other than those in the reserved set (see RFC 2396 [5])
+     * are equivalent to their encoding.
      */
 
     /* An IP address that is the result of a DNS lookup of a host name 
@@ -466,17 +471,8 @@ static pj_status_t pjsip_url_compare( pjsip_uri_context_e context,
     /* All other uri-parameters appearing in only one URI are ignored when 
      * comparing the URIs.
      */
-    p1 = url1->other_param.next;
-    while (p1 != &url1->other_param) {
-	const pjsip_param *p2;
-	p2 = pjsip_param_cfind(&url2->other_param, &p1->name);
-	if (p2 ) {
-	    if (pj_stricmp(&p1->value, &p2->value) != 0)
-		return PJSIP_ECMPOTHERPARAM;
-	}
-
-	p1 = p1->next;
-    }
+    if (pjsip_param_cmp(&url1->other_param, &url2->other_param, 1)!=0)
+	return PJSIP_ECMPOTHERPARAM;
 
     /* URI header components are never ignored. Any present header component
      * MUST be present in both URIs and match for the URIs to match. 
@@ -485,7 +481,7 @@ static pj_status_t pjsip_url_compare( pjsip_uri_context_e context,
     p1 = url1->header_param.next;
     while (p1 != &url1->header_param) {
 	const pjsip_param *p2;
-	p2 = pjsip_param_cfind(&url2->header_param, &p1->name);
+	p2 = pjsip_param_find(&url2->header_param, &p1->name);
 	if (p2) {
 	    /* It seems too much to compare two header params according to
 	     * the rule of each header. We'll just compare them string to
@@ -543,6 +539,7 @@ PJ_DEF(void) pjsip_name_addr_init(pjsip_name_addr *name)
     name->vptr = &name_addr_vptr;
     name->uri = NULL;
     name->display.slen = 0;
+    name->display.ptr = NULL;
 }
 
 PJ_DEF(pjsip_name_addr*) pjsip_name_addr_create(pj_pool_t *pool)

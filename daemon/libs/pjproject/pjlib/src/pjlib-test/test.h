@@ -1,6 +1,6 @@
-/* $Id: test.h 2970 2009-10-26 15:47:52Z nanang $ */
+/* $Id: test.h 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #ifndef __PJLIB_TEST_H__
 #define __PJLIB_TEST_H__
@@ -58,6 +47,7 @@
 #define INCLUDE_ATOMIC_TEST         GROUP_OS
 #define INCLUDE_MUTEX_TEST	    (PJ_HAS_THREADS && GROUP_OS)
 #define INCLUDE_SLEEP_TEST          GROUP_OS
+#define INCLUDE_OS_TEST             GROUP_OS
 #define INCLUDE_THREAD_TEST         (PJ_HAS_THREADS && GROUP_OS)
 #define INCLUDE_SOCK_TEST	    GROUP_NETWORK
 #define INCLUDE_SOCK_PERF_TEST	    GROUP_NETWORK
@@ -89,6 +79,7 @@ extern int exception_test(void);
 extern int rand_test(void);
 extern int list_test(void);
 extern int hash_test(void);
+extern int os_test(void);
 extern int pool_test(void);
 extern int pool_perf_test(void);
 extern int string_test(void);

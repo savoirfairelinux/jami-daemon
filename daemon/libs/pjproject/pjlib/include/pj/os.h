@@ -1,6 +1,6 @@
-/* $Id: os.h 2843 2009-07-22 11:12:35Z bennylp $ */
+/* $Id: os.h 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #ifndef __PJ_OS_H__
 #define __PJ_OS_H__
@@ -43,6 +32,100 @@ PJ_BEGIN_DECL
  * @defgroup PJ_OS Operating System Dependent Functionality.
  */
 
+
+/* **************************************************************************/
+/**
+ * @defgroup PJ_SYS_INFO System Information
+ * @ingroup PJ_OS
+ * @{
+ */
+
+/**
+ * These enumeration contains constants to indicate support of miscellaneous
+ * system features. These will go in "flags" field of #pj_sys_info structure.
+ */
+typedef enum pj_sys_info_flag
+{
+    /**
+     * Support for Apple iOS background feature.
+     */
+    PJ_SYS_HAS_IOS_BG = 1
+
+} pj_sys_info_flag;
+
+
+/**
+ * This structure contains information about the system. Use #pj_get_sys_info()
+ * to obtain the system information.
+ */
+typedef struct pj_sys_info
+{
+    /**
+     * Null terminated string containing processor information (e.g. "i386",
+     * "x86_64"). It may contain empty string if the value cannot be obtained.
+     */
+    pj_str_t	machine;
+
+    /**
+     * Null terminated string identifying the system operation (e.g. "Linux",
+     * "win32", "wince"). It may contain empty string if the value cannot be
+     * obtained.
+     */
+    pj_str_t	os_name;
+
+    /**
+     * A number containing the operating system version number. By convention,
+     * this field is divided into four bytes, where the highest order byte
+     * contains the most major version of the OS, the next less significant
+     * byte contains the less major version, and so on. How the OS version
+     * number is mapped into these four bytes would be specific for each OS.
+     * For example, Linux-2.6.32-28 would yield "os_ver" value of 0x0206201c,
+     * while for Windows 7 it will be 0x06010000 (because dwMajorVersion is
+     * 6 and dwMinorVersion is 1 for Windows 7).
+     *
+     * This field may contain zero if the OS version cannot be obtained.
+     */
+    pj_uint32_t	os_ver;
+
+    /**
+     * Null terminated string identifying the SDK name that is used to build
+     * the library (e.g. "glibc", "uclibc", "msvc", "wince"). It may contain
+     * empty string if the value cannot eb obtained.
+     */
+    pj_str_t	sdk_name;
+
+    /**
+     * A number containing the SDK version, using the numbering convention as
+     * the "os_ver" field. The value will be zero if the version cannot be
+     * obtained.
+     */
+    pj_uint32_t	sdk_ver;
+
+    /**
+     * A longer null terminated string identifying the underlying system with
+     * as much information as possible.
+     */
+    pj_str_t	info;
+
+    /**
+     * Other flags containing system specific information. The value is
+     * bitmask of #pj_sys_info_flag constants.
+     */
+    pj_uint32_t	flags;
+
+} pj_sys_info;
+
+
+/**
+ * Obtain the system information.
+ *
+ * @return	System information structure.
+ */
+PJ_DECL(const pj_sys_info*) pj_get_sys_info(void);
+
+/*
+ * @}
+ */
 
 /* **************************************************************************/
 /**
@@ -1084,6 +1167,15 @@ PJ_DECL(pj_color_t) pj_term_get_color(void);
  * High resolution timer.
  */
 #if defined(PJ_HAS_HIGH_RES_TIMER) && PJ_HAS_HIGH_RES_TIMER != 0
+
+/**
+ * Get monotonic time since some unspecified starting point.
+ *
+ * @param tv	Variable to store the result.
+ *
+ * @return PJ_SUCCESS if successful.
+ */
+PJ_DECL(pj_status_t) pj_gettickcount(pj_time_val *tv);
 
 /**
  * Acquire high resolution timer value. The time value are stored

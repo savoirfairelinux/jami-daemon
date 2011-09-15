@@ -1,6 +1,6 @@
-/* $Id: transport_ice.c 2957 2009-10-20 14:44:00Z bennylp $ */
+/* $Id: transport_ice.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjmedia/transport_ice.h>
 #include <pjnath/errno.h>
@@ -185,6 +174,8 @@ static const pj_str_t STR_ICE_PWD	= { "ice-pwd", 7 };
 static const pj_str_t STR_IP4		= { "IP4", 3 };
 static const pj_str_t STR_IP6		= { "IP6", 3 };
 static const pj_str_t STR_RTCP		= { "rtcp", 4 };
+static const pj_str_t STR_BANDW_RR	= { "RR", 2 };
+static const pj_str_t STR_BANDW_RS	= { "RS", 2 };
 
 enum {
     COMP_RTP = 1,
@@ -612,6 +603,20 @@ static pj_status_t encode_session_in_sdp(struct transport_ice *tp_ice,
 	attr = pjmedia_sdp_attr_find(m->attr_count, m->attr, &STR_RTCP, NULL);
 	if (attr)
 	    pjmedia_sdp_attr_remove(&m->attr_count, m->attr, attr);
+        /* If RTCP is not in use, we MUST send b=RS:0 and b=RR:0. */
+        pj_assert(m->bandw_count + 2 <= PJ_ARRAY_SIZE(m->bandw));
+        if (m->bandw_count + 2 <= PJ_ARRAY_SIZE(m->bandw)) {
+            m->bandw[m->bandw_count] = PJ_POOL_ZALLOC_T(sdp_pool,
+                                                        pjmedia_sdp_bandw);
+            pj_memcpy(&m->bandw[m->bandw_count]->modifier, &STR_BANDW_RS,
+                      sizeof(pj_str_t));
+            m->bandw_count++;
+            m->bandw[m->bandw_count] = PJ_POOL_ZALLOC_T(sdp_pool,
+                                                        pjmedia_sdp_bandw);
+            pj_memcpy(&m->bandw[m->bandw_count]->modifier, &STR_BANDW_RR,
+                      sizeof(pj_str_t));
+            m->bandw_count++;
+        }
     }
     
 
