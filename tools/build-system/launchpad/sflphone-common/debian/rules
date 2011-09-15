@@ -22,7 +22,7 @@ configure-stamp:
 	# Add here commands to configure the package.
 	./autogen.sh
 	./configure --prefix=/usr --without-celt
-	cd libs/pjproject; ./configure
+	cd libs/pjproject; ./configure CFLAGS=-g CXXFLAGS=-g
 	touch configure-stamp
 
 #Architecture
