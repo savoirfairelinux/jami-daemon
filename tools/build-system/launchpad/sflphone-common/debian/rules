@@ -20,34 +20,28 @@ configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
-	./autogen.sh 
+	./autogen.sh
 	./configure --prefix=/usr --without-celt
-	cd libs/pjproject; ./autogen.sh; ./configure --prefix=/usr
+	cd libs/pjproject; ./configure
 	touch configure-stamp
 
-#Architecture 
-build: build-arch build-indep
+#Architecture
+build: build-arch
 
 build-arch: build-arch-stamp
-build-arch-stamp: configure-stamp 
+build-arch-stamp: configure-stamp
 
     # Add here commands to compile the arch part of the package.
 	cd libs/pjproject; $(MAKE) dep; $(MAKE) clean; $(MAKE)
 	$(MAKE)
 	touch $@
 
-build-indep: build-indep-stamp
-build-indep-stamp: configure-stamp 
-
-       # Add here commands to compile the indep part of the package.
-       #$(MAKE) doc
-	touch $@
 clean:
 	dh_testdir
 	dh_testroot
-	rm -f build-arch-stamp build-indep-stamp configure-stamp
+	rm -f build-arch-stamp configure-stamp
 	# Add here commands to clean up after the build process.
-	[ ! -f Makefile ] || $(MAKE) distclean 
+	[ ! -f Makefile ] || $(MAKE) distclean
 
 ifneq "$(wildcard /usr/share/misc/config.sub)" ""
 	cp -f /usr/share/misc/config.sub config.sub
@@ -55,29 +49,20 @@ endif
 ifneq "$(wildcard /usr/share/misc/config.guess)" ""
 	cp -f /usr/share/misc/config.guess config.guess
 endif
-	dh_clean 
+	dh_clean
 
-install: install-indep install-arch
-install-indep:
-	dh_testdir
-	dh_testroot
-	dh_clean -k -i 
-	dh_installdirs -i
-	# Add here commands to install the package into debian/sflphone.
+install: install-arch
 
 install-arch:
 	dh_testdir
 	dh_testroot
-	dh_clean -k -s 
+	dh_clean -k -s
 	dh_installdirs -s
-	# Add here commands to install the arch part of the package into 
+	# Add here commands to install the arch part of the package into
 	# debian/tmp.
 	$(MAKE) DESTDIR=$(CURDIR)/debian/$(package) install
 	rm -rf $(CURDIR)/debian/$(package)/usr/include
 	dh_install -s
-# Must not depend on anything. This is to be called by
-# binary-arch/binary-indep
-# in another 'make' thread.
 
 binary-common:
 	dh_testdir
@@ -85,35 +70,23 @@ binary-common:
 	dh_installchangelogs ChangeLog
 	dh_installdocs
 	dh_installexamples
-#	dh_installmenu
-#	dh_installdebconf	
-#	dh_installlogrotate	
-#	dh_installemacsen
-#	dh_installpam
-#	dh_installmime
-#	dh_python
-#	dh_installinit
-#	dh_installcron
-#	dh_installinfo
 	dh_installman
 	dh_link
-	dh_strip
-	dh_compress 
+	dh_strip --dbg-package=sflphone-common-dbg
+	dh_compress
 	dh_fixperms
-#	dh_perl
 	dh_makeshlibs
 	dh_installdeb
-#	dh_shlibdeps
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb
-# Build architecture independant packages using the common target.
-binary-indep: build-indep install-indep
-	$(MAKE) -f debian/rules DH_OPTIONS=-i binary-common
 
 # Build architecture dependant packages using the common target.
 binary-arch: build-arch install-arch
 	$(MAKE) -f debian/rules DH_OPTIONS=-s binary-common
 
-binary: binary-arch binary-indep
-.PHONY: build clean binary-indep binary-arch binary install install-indep install-arch configure
+override_dh_strip:
+	dh_strip --dbg-package=sflphone-common-dbg
+
+binary: binary-arch 
+.PHONY: build clean binary-arch binary install install-arch configure override_dh_strip
