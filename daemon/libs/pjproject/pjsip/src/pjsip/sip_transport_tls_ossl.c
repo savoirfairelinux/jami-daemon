@@ -351,9 +351,6 @@ static pj_status_t create_ctx( struct tls_listener *lis, SSL_CTX **p_ctx)
     case PJSIP_TLSV1_METHOD:
 	ssl_method = TLSv1_method();
 	break;
-    case PJSIP_SSLV2_METHOD:
-	ssl_method = SSLv2_method();
-	break;
     case PJSIP_SSLV3_METHOD:
 	ssl_method = SSLv3_method();
 	break;
