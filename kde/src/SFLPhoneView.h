@@ -230,6 +230,7 @@ private slots:
    void updateVolumeBar();
    void updateVolumeControls();
    void updateDialpad();
+   
 
 public slots:
    /**

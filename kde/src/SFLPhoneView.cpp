@@ -105,7 +105,6 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
       
    stackedWidget_screen->setCurrentWidget(page_callList);
    
-   
    //BEGIN Port to CallModel
    connect(&callManager, SIGNAL(callStateChanged(const QString &, const QString &)),
            this,         SLOT(on1_callStateChanged(const QString &, const QString &)));
@@ -741,13 +740,13 @@ void SFLPhoneView::updateVolumeControls()
    if(QString(configurationManager.getAudioManager()) == "alsa") {
       display = true;
 
-      ((SFLPhone*)parent())->action_displayVolumeControls->setEnabled(true);
+      SFLPhone::app()->action_displayVolumeControls->setEnabled(true);
    }
    else {
-      ((SFLPhone*)parent())->action_displayVolumeControls->setEnabled(false);
+      SFLPhone::app()->action_displayVolumeControls->setEnabled(false);
    }
       
-   ((SFLPhone*)parent())->action_displayVolumeControls->setChecked(display);
+   SFLPhone::app()->action_displayVolumeControls->setChecked(display);
    //widget_recVol->setVisible(display);
    //widget_sndVol->setVisible(display);
    toolButton_recVol->setVisible(display && ConfigurationSkeleton::displayVolume());
@@ -786,9 +785,7 @@ void SFLPhoneView::updateStatusMessage()
 
 void SFLPhoneView::displayVolumeControls(bool checked)
 {
-   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   int display = true;//configurationManager.getVolumeControls();
-   //configurationManager.setVolumeControls(!display);
+   //ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    ConfigurationSkeleton::setDisplayVolume(checked);
    updateVolumeControls();
 }
@@ -974,7 +971,7 @@ void SFLPhoneView::contextMenuEvent(QContextMenuEvent *event)
       menu.addAction(action_edit);
    }
    
-   SFLPhone * window = (SFLPhone * ) this->parent();
+   SFLPhone * window = SFLPhone::app();
    QList<QAction *> callActions = window->getCallActions();
    menu.addAction(callActions.at((int) SFLPhone::Accept));
    menu.addAction(callActions[SFLPhone::Refuse]);
@@ -1226,9 +1223,9 @@ void SFLPhoneView::on1_incomingCall(const QString & /*accountID*/, const QString
    //NEED_PORT
    changeScreen(SCREEN_MAIN);
 
-   ((SFLPhone*)parent())->activateWindow();
-   ((SFLPhone*)parent())->raise();
-   ((SFLPhone*)parent())->setVisible(true);
+   SFLPhone::app()->activateWindow();
+   SFLPhone::app()->raise();
+   SFLPhone::app()->setVisible(true);
 
    emit incomingCall(call);
 }

@@ -32,6 +32,9 @@
 
 #include <KXmlGuiWindow>
 #include <KAction>
+#include "widgets/ContactDock.h"
+#include "widgets/HistoryDock.h"
+#include "widgets/BookmarkDock.h"
 #include <QActionGroup>
 
 // #include "ui_SFLPhoneView_base.h"
@@ -96,7 +99,13 @@ private:
    bool iconChanged;
    SFLPhoneTray *trayIcon;
    KNotification *notification;
-   QLabel * statusBarWidget;
+   QLabel*       statusBarWidget;
+   ContactDock*  m_pContactCD;
+   QDockWidget*  m_pCentralDW;
+   HistoryDock*  m_pHistoryDW;
+   BookmarkDock* m_pBookmarkDW;
+   
+   static SFLPhone* m_sApp;
    
 private:
    void setObjectNames();
@@ -117,6 +126,8 @@ public:
    QList<QAction *> getCallActions();
 
    friend class SFLPhoneView;
+   
+   static SFLPhone* app();
    
    
 private slots:

@@ -39,6 +39,9 @@ SET(	sflphone_client_kde_SRCS
 	conf/ConfigAccountList.cpp
 	widgets/Dialpad.cpp
 	widgets/ContactItemWidget.cpp
+	widgets/ContactDock.cpp
+	widgets/HistoryDock.cpp
+	widgets/BookmarkDock.cpp
 	Codec.cpp
 	AccountListModel.cpp
         CallView.cpp
@@ -69,7 +72,7 @@ INSTALL(FILES conf/sflphone-client-kde.kcfg DESTINATION ${KCFG_INSTALL_DIR})
 
 KDE4_ADD_EXECUTABLE(sflphone-client-kde ${sflphone_client_kde_SRCS} ${QtApp_RCC_SRCS})
 
-TARGET_LINK_LIBRARIES(sflphone-client-kde qtsflphone ${KDE4_KDEUI_LIBS} ${KDE4_KIO_LIBS} ${KDE4_KABC_LIBS})
+TARGET_LINK_LIBRARIES(sflphone-client-kde qtsflphone ${KDE4_KDEUI_LIBS} ${KDE4_KIO_LIBS} ${KDEPIMLIBS_AKONADI_KMIME_LIBS} ${KDEPIMLIBS_AKONADI_LIBS} ${KDEPIMLIBS_AKONADI_CONTACT_LIBS} )
 
 ########### install files ###############
 

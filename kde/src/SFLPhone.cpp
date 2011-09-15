@@ -36,6 +36,7 @@
 #include "lib/instance_interface_singleton.h"
 #include "lib/configurationmanager_interface_singleton.h"
 
+SFLPhone* SFLPhone::m_sApp = NULL;
 
 SFLPhone::SFLPhone(QWidget *parent)
     : KXmlGuiWindow(parent),
@@ -43,7 +44,13 @@ SFLPhone::SFLPhone(QWidget *parent)
       view(new SFLPhoneView(this))
 {
     setupActions();
+    m_sApp = this;
 } 
+
+SFLPhone* SFLPhone::app()
+{
+   return m_sApp;
+}
 
 SFLPhone::~SFLPhone()
 {
@@ -55,13 +62,38 @@ bool SFLPhone::initialize()
     qDebug() << "Already initialized.";
     return false;
   }
-
+   
+   
   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
   // accept dnd
   setAcceptDrops(true);
 
   // tell the KXmlGuiWindow that this is indeed the main widget
-  setCentralWidget(view);
+  //setCentralWidget(view);
+  m_pCentralDW = new QDockWidget(this);
+  m_pCentralDW->setWidget(view);
+  m_pCentralDW->setWindowTitle("Call");
+  m_pCentralDW->setFeatures(QDockWidget::NoDockWidgetFeatures);
+  m_pCentralDW->setStyleSheet("\
+  QDockWidget::title {\
+     display:none;\
+     margin:0px;\
+     padding:0px;\
+     spacing:0px;\
+     max-height:0px;\
+ }\
+  \
+  ");
+  
+  addDockWidget(Qt::BottomDockWidgetArea,m_pCentralDW);
+
+   m_pContactCD = new ContactDock(this);
+   addDockWidget(Qt::LeftDockWidgetArea,m_pContactCD);
+   
+   m_pHistoryDW  = new HistoryDock(this);
+   addDockWidget(Qt::RightDockWidgetArea,m_pHistoryDW);
+   m_pBookmarkDW = new BookmarkDock(this);
+   addDockWidget(Qt::RightDockWidgetArea,m_pBookmarkDW);
 
   setWindowIcon(QIcon(ICON_SFLPHONE));
   setWindowTitle(i18n("SFLphone"));
@@ -106,7 +138,7 @@ void SFLPhone::setObjectNames()
 void SFLPhone::setupActions()
 {
    qDebug() << "setupActions";
-   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   //ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    
    action_accept = new KAction(this);
    action_refuse = new KAction(this);
@@ -341,7 +373,7 @@ QList<QAction*> SFLPhone::getCallActions()
 
 void SFLPhone::on_view_incomingCall(const Call * call)
 {
-   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   //ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
     //trayIconSignal();
     /*if(configurationManager.popupMode())
    {
