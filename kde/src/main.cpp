@@ -15,6 +15,7 @@
 #include "lib/sflphone_const.h"
 #include "SFLPhoneapplication.h"
 #include "conf/ConfigurationDialog.h"
+#include "conf/ConfigurationSkeleton.h"
 #include "CallView.h"
 
 #include <QTableView>
@@ -56,8 +57,12 @@ int main(int argc, char **argv)
 
       SFLPhoneApplication app;
 
-      return app.exec();
       
+      int retVal = app.exec();
+      
+      ConfigurationSkeleton conf;
+      conf.writeConfig();
+      return retVal;
    }
    catch(const char * msg)
    {

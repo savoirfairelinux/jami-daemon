@@ -54,6 +54,7 @@ SFLPhone* SFLPhone::app()
 
 SFLPhone::~SFLPhone()
 {
+   saveState();
 }
 
 bool SFLPhone::initialize()
@@ -68,6 +69,9 @@ bool SFLPhone::initialize()
   // accept dnd
   setAcceptDrops(true);
 
+   m_pContactCD = new ContactDock(this);
+   addDockWidget(Qt::TopDockWidgetArea,m_pContactCD);
+   
   // tell the KXmlGuiWindow that this is indeed the main widget
   //setCentralWidget(view);
   m_pCentralDW = new QDockWidget(this);
@@ -85,15 +89,18 @@ bool SFLPhone::initialize()
   \
   ");
   
-  addDockWidget(Qt::BottomDockWidgetArea,m_pCentralDW);
+  m_pCentralDW->setTitleBarWidget(new QWidget());
+  m_pCentralDW->setContentsMargins(0,0,0,0);
+  view->setContentsMargins(0,0,0,0);
+  
+  addDockWidget(Qt::TopDockWidgetArea,m_pCentralDW);
 
-   m_pContactCD = new ContactDock(this);
-   addDockWidget(Qt::LeftDockWidgetArea,m_pContactCD);
    
    m_pHistoryDW  = new HistoryDock(this);
-   addDockWidget(Qt::RightDockWidgetArea,m_pHistoryDW);
+   addDockWidget(Qt::TopDockWidgetArea,m_pHistoryDW);
    m_pBookmarkDW = new BookmarkDock(this);
-   addDockWidget(Qt::RightDockWidgetArea,m_pBookmarkDW);
+   addDockWidget(Qt::TopDockWidgetArea,m_pBookmarkDW);
+   tabifyDockWidget(m_pBookmarkDW,m_pHistoryDW);
 
   setWindowIcon(QIcon(ICON_SFLPHONE));
   setWindowTitle(i18n("SFLphone"));

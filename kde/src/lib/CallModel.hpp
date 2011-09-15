@@ -73,20 +73,31 @@ template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::
    if (!historyInit) {
       ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
       QStringList historyMap = configurationManager.getHistory().value();
-      qDebug() << "Call History = " << historyMap;
-//       QMapIterator<QString, QString> i(historyMap);
-//       while (i.hasNext()) {
-//          i.next();
-//          uint startTimeStamp = i.key().toUInt();
-//          QStringList param = i.value().split("|");
+      qDebug() << "\n\n\n\n\n\n\n\nCall History = " << historyMap<<"\n\n\n\n\n\n";
+      foreach (QString historyCallId, historyMap) {
+         QStringList param = historyCallId.split("|");
+         if (param.count() < 10) {
+            //If this ever change, look at the gnome client
+            QString history_state = param[0];
+            QString peer_number   = param[1];
+            QString peer_name     = param[2];
+            QString time_start    = param[3];
+            QString time_stop     = param[4];
+            QString callID        = param[5];
+            QString accountID     = param[6];
+            QString recordfile    = param[7];
+            QString confID        = param[8];
+            QString time_added    = param[9];
+            historyCalls[time_start] = Call::buildHistoryCall(callID, time_start.toUInt(), time_stop.toUInt(), accountID, peer_name, peer_number, history_state);
+            addCall(historyCalls[time_start]);
+         }
+
 //          QString type2 = param[0];
 //          QString number = param[1];
 //          QString name = param[2];
 //          uint stopTimeStamp = param[3].toUInt();
 //          QString account = param[4];
-//          historyCalls[QString::number(startTimeStamp)] = Call::buildHistoryCall(generateCallId(), startTimeStamp, stopTimeStamp, account, name, number, type2);
-//          addCall(historyCalls[QString::number(startTimeStamp)]);
-//       }
+      }
    }
    historyInit = true;
    return true;

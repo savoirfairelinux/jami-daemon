@@ -37,10 +37,16 @@
     	<label>Defines whether the main window should be displayed when receiving a message.</label>
     </entry>
     <entry name="displayDialpad" type="Bool">
-    	<label>Defines whether the main window should be displayed when receiving a message.</label>
+    	<label>Defines whether the dialpad is being shown by default</label>
     </entry>
     <entry name="displayVolume" type="Bool">
-    	<label>Defines whether the main window should be displayed when receiving a message.</label>
+    	<label>Defines whether the volume widgets are visible by default</label>
+    </entry>
+    <entry name="displayMenu" type="Bool">
+    	<label>Defines whether the main menu is visible by default, it can be restored with "Ctrl+m"</label>
+    </entry>
+    <entry name="displayDataRange" type="Bool">
+    	<label>Defines whether call history is restricted to a specific date range</label>
     </entry>
     
     <!-- Audio Settings -->
