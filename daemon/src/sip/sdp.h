@@ -45,10 +45,10 @@
 #include <stdexcept>
 
 #include "global.h" // for CodecOrder
-class sdpMedia;
 
 namespace sfl {
     class AudioCodec;
+    class Codec;
 }
 
 class SdpException : public std::runtime_error
@@ -140,13 +140,13 @@ class Sdp
          * Return the codec of the first media after negotiation
          * @throw SdpException
          */
-        sfl::AudioCodec* getSessionMedia (void);
+        sfl::AudioCodec* getSessionMedia (void) const;
 
         /*
          * On building an invite outside a dialog, build the local offer and create the
          * SDP negotiator instance with it.
          */
-        int createOffer (const CodecOrder &selectedCodecs);
+        void createOffer (const CodecOrder &selectedCodecs);
 
         /*
         * On receiving an invite outside a dialog, build the local offer and create the
@@ -154,36 +154,13 @@ class Sdp
         *
         * @param remote    The remote offer
         */
-        int receiveOffer (const pjmedia_sdp_session* remote,
+        void receiveOffer (const pjmedia_sdp_session* remote,
                           const CodecOrder &selectedCodecs);
-
-        /*
-         * On receiving a message, check if it contains SDP and negotiate. Should be used for
-         * SDP answer and offer but currently is only used for answer.
-         * SDP negotiator instance with the remote offer.
-         *
-         * @param inv       The  the invitation
-         * @param rdata     The remote data
-         */
-        int receivingAnswerAfterInitialOffer(const pjmedia_sdp_session* remote);
-
-        /**
-         * Generate answer after receiving Initial Offer
-         */
-        int generateAnswerAfterInitialOffer(void);
 
         /**
          * Start the sdp negotiation.
-         *
-         * @return pj_status_t  0 on success
-         *                      1 otherwise
          */
-        pj_status_t startNegotiation (void);
-
-        /**
-         * Update internal state after negotiation
-         */
-        void updateInternalState(void);
+        void startNegotiation (void);
 
         /**
          * Remove all media in the session media vector.
@@ -194,15 +171,6 @@ class Sdp
          * Remove all media in local media capability vector
          */
         void cleanLocalMediaCapabilities (void);
-
-        /*
-         * Attribute the specified port to every medias provided
-         * This is valid only because we are using one media
-         * We should change this to support multiple medias
-         *
-         * @param port  The media port
-         */
-        void setPortToAllMedia (int port);
 
         /*
          * Write accessor. Set the local IP address that will be used in the sdp session
@@ -264,23 +232,15 @@ class Sdp
             return remoteAudioPort_;
         }
 
-
         /**
-         * Get media list for this session
+         *
          */
-        std::vector<sdpMedia *> getSessionMediaList (void) const {
-            return sessionAudioMedia_;
-        }
+        void addAttributeToLocalAudioMedia(const char *);
 
         /**
          *
          */
-        void addAttributeToLocalAudioMedia(std::string);
-
-        /**
-         *
-         */
-        void removeAttributeFromLocalAudioMedia(std::string);
+        void removeAttributeFromLocalAudioMedia(const char *);
 
         /**
          * Get SRTP master key
@@ -310,6 +270,12 @@ class Sdp
         unsigned int getTelephoneEventType() const {
         	return telephoneEventPayload_;
         }
+
+        void setMediaTransportInfoFromRemoteSdp();
+
+        std::string getCodecName(void) const;
+
+        void receivingAnswerAfterInitialOffer(const pjmedia_sdp_session* remote);
 
     private:
         /**
@@ -348,12 +314,12 @@ class Sdp
         /**
          * Codec Map used for offer
          */
-        std::vector<sdpMedia *> localAudioMediaCap_;
+        std::vector< sfl::Codec* > codec_list_;
 
         /**
          * The media that will be used by the session (after the SDP negotiation)
          */
-        std::vector<sdpMedia *> sessionAudioMedia_;
+        std::vector< sfl::Codec* > sessionAudioMedia_;
 
         /**
          * IP address
@@ -397,11 +363,8 @@ class Sdp
         /*
          * Build the sdp media section
          * Add rtpmap field if necessary
-         *
-         * @param media The media to add to SDP
-         * @param med   The structure to receive the media section
          */
-        void setMediaDescriptorLine (sdpMedia* media, pjmedia_sdp_media** p_med);
+        pjmedia_sdp_media *setMediaDescriptorLine();
 
         void setTelephoneEventRtpmap(pjmedia_sdp_media *med);
 
@@ -415,83 +378,6 @@ class Sdp
          * Build the local SDP offer
          */
         int createLocalSession (const CodecOrder &selectedCodecs);
-
-        /*
-         *  Mandatory field: Protocol version ("v=")
-         *  Add the protocol version in the SDP session description
-         */
-        void addProtocol (void);
-
-        /*
-         *  Mandatory field: Origin ("o=")
-         *  Gives the originator of the session.
-         *  Serves as a globally unique identifier for this version of this session description.
-         */
-        void addOrigin (void);
-
-        /*
-         *  Mandatory field: Session name ("s=")
-         *  Add a textual session name.
-         */
-        void addSessionName (void);
-
-        /*
-         *  Optional field: Connection data ("c=")
-         *  Contains connection data.
-         */
-        void addConnectionInfo (void);
-
-        /*
-         *  Mandatory field: Timing ("t=")
-         *  Specify the start and the stop time for a session.
-         */
-        void addTiming (void);
-
-        /*
-         *  Optional field: Session information ("s=")
-         *  Provides textual information about the session.
-         */
-        void addSessionInfo (void) {}
-
-        /*
-         *  Optional field: Uri ("u=")
-         *  Add a pointer to additional information about the session.
-         */
-        void addUri (void) {}
-
-        /*
-         *  Optional fields: Email address and phone number ("e=" and "p=")
-         *  Add contact information for the person responsible for the conference.
-         */
-        void addEmail (void) {}
-
-        /*
-         *  Optional field: Bandwidth ("b=")
-         *  Denotes the proposed bandwidth to be used by the session or the media .
-         */
-        void addBandwidth (void) {}
-
-
-        /*
-         * Optional field: Time zones ("z=")
-         */
-        void addTimeZone (void) {}
-
-        /*
-         * Optional field: Encryption keys ("k=")
-         */
-        void addEncryptionKey (void) {}
-
-        /*
-         * Optional field: Attributes ("a=")
-         */
-        void addAttributes();
-
-        /*
-         * Mandatory field: Media descriptions ("m=")
-         */
-        void addAudioMediaDescription();
-
         /*
          * Adds a sdes attribute to the given media section.
          *
@@ -511,16 +397,6 @@ class Sdp
          * @throw SdpException
          */
         void addZrtpAttribute (pjmedia_sdp_media* media, std::string hash);
-
-        void setRemoteIpFromSdp (const pjmedia_sdp_session *r_sdp);
-
-        void setRemoteAudioPortFromSdp (pjmedia_sdp_media *r_media);
-
-        void setMediaTransportInfoFromRemoteSdp (const pjmedia_sdp_session *remote_sdp);
-
-        void getRemoteSdpTelephoneEventFromOffer(const pjmedia_sdp_session *remote_sdp);
-
-        void getRemoteSdpMediaFromOffer (const pjmedia_sdp_session* remote_sdp, pjmedia_sdp_media** r_media);
 };
 
 

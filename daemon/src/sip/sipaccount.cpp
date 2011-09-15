@@ -38,15 +38,8 @@
 #include <sstream>
 #include <cassert>
 
-namespace {
-    const char * const DFT_STUN_SERVER = "stun.sflphone.org"; /** Default STUN server address */
-    const char *DFT_EXPIRE_VALUE = "600"; /** Default expire value for registration */
-} // end anonymous namespace
-
 SIPAccount::SIPAccount (const std::string& accountID)
     : Account (accountID, "SIP")
-    , routeSet_ ("")
-    , pool_ (NULL)
     , regc_ (NULL)
     , bRegister_ (false)
     , registrationExpire_ ("")
@@ -59,7 +52,6 @@ SIPAccount::SIPAccount (const std::string& accountID)
     , tlsListenerPort_ (DEFAULT_SIP_TLS_PORT)
     , transportType_ (PJSIP_TRANSPORT_UNSPECIFIED)
     , transport_ (NULL)
-    , resolveOnce_ (false)
     , cred_ (NULL)
 	, stunPort_(0)
     , dtmfType_ (OVERRTP)
@@ -77,7 +69,7 @@ SIPAccount::SIPAccount (const std::string& accountID)
     , tlsRequireClientCertificate_ (true)
     , tlsNegotiationTimeoutSec_ ("2")
     , tlsNegotiationTimeoutMsec_ ("0")
-    , stunServer_ (DFT_STUN_SERVER)
+    , stunServer_ ("stun.sflphone.org")
     , stunEnabled_ (false)
     , srtpEnabled_ (false)
     , srtpKeyExchange_ ("sdes")
@@ -123,7 +115,6 @@ void SIPAccount::serialize (Conf::YamlEmitter *emitter)
     publicportstr << publishedPort_;
     Conf::ScalarNode publishPort (publicportstr.str());
     Conf::ScalarNode sameasLocal (publishedSameasLocal_);
-    Conf::ScalarNode resolveOnce (resolveOnce_);
     Conf::ScalarNode codecs (codecStr_);
     Conf::ScalarNode ringtonePath (ringtonePath_);
     Conf::ScalarNode ringtoneEnabled (ringtoneEnabled_);
@@ -176,7 +167,6 @@ void SIPAccount::serialize (Conf::YamlEmitter *emitter)
     accountmap.setKeyValue (publishAddrKey, &publishAddr);
     accountmap.setKeyValue (publishPortKey, &publishPort);
     accountmap.setKeyValue (sameasLocalKey, &sameasLocal);
-    accountmap.setKeyValue (resolveOnceKey, &resolveOnce);
     accountmap.setKeyValue (serviceRouteKey, &serviceRoute);
     accountmap.setKeyValue (dtmfTypeKey, &dtmfType);
     accountmap.setKeyValue (displayNameKey, &displayName);
@@ -271,7 +261,6 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
     map->getValue(publishPortKey, &port);
     publishedPort_ = port;
     map->getValue(sameasLocalKey, &publishedSameasLocal_);
-    map->getValue(resolveOnceKey, &resolveOnce_);
 
     std::string dtmfType;
     map->getValue(dtmfTypeKey, &dtmfType);
@@ -392,7 +381,6 @@ void SIPAccount::setAccountDetails (std::map<std::string, std::string> details)
     stunEnabled_ = details[STUN_ENABLE] == "true";
     dtmfType_ = details[ACCOUNT_DTMF_TYPE] == "overrtp" ? OVERRTP : SIPINFO;
 
-    resolveOnce_ = details[CONFIG_ACCOUNT_RESOLVE_ONCE] == "true";
     registrationExpire_ = details[CONFIG_ACCOUNT_REGISTRATION_EXPIRE];
 
     userAgent_ = details[USERAGENT];
@@ -474,7 +462,6 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 
     // Add sip specific details
     a[ROUTESET] = serviceRoute_;
-    a[CONFIG_ACCOUNT_RESOLVE_ONCE] = resolveOnce_ ? "true" : "false";
     a[USERAGENT] = userAgent_;
 
     a[CONFIG_ACCOUNT_REGISTRATION_EXPIRE] = registrationExpire_;
@@ -633,7 +620,7 @@ void SIPAccount::initStunConfiguration (void)
 void SIPAccount::loadConfig()
 {
     if (registrationExpire_.empty())
-        registrationExpire_ = DFT_EXPIRE_VALUE;
+        registrationExpire_ = "600"; /** Default expire value for registration */
 
     if (tlsEnable_ == "true") {
         initTlsConfiguration();
@@ -657,36 +644,23 @@ bool SIPAccount::hostnameMatch (const std::string& hostname) const
     return hostname == hostname_;
 }
 
-std::string SIPAccount::getMachineName (void)
-{
-    return std::string (pj_gethostname()->ptr, pj_gethostname()->slen);
-}
-
 std::string SIPAccount::getLoginName (void)
 {
-    std::string username;
-
     struct passwd * user_info = getpwuid (getuid());
-    if (user_info)
-        username = user_info->pw_name;
-
-    return username;
+    return user_info ? user_info->pw_name : "";
 }
 
 std::string SIPAccount::getFromUri (void) const
 {
-    char uri[PJSIP_MAX_URL_SIZE];
-
     std::string scheme;
     std::string transport;
     std::string username = username_;
     std::string hostname = hostname_;
 
     // UDP does not require the transport specification
-
     if (transportType_ == PJSIP_TRANSPORT_TLS) {
         scheme = "sips:";
-        transport = ";transport=" + std::string (pjsip_transport_get_type_name (transportType_));
+        transport = ";transport=" + std::string(pjsip_transport_get_type_name(transportType_));
     } else
         scheme = "sip:";
 
@@ -696,68 +670,41 @@ std::string SIPAccount::getFromUri (void) const
 
     // Get machine hostname if not provided
     if (hostname_.empty())
-        hostname = getMachineName();
+        hostname = std::string (pj_gethostname()->ptr, pj_gethostname()->slen);
 
-    int len = pj_ansi_snprintf (uri, PJSIP_MAX_URL_SIZE,
-            "<%s%s@%s%s>",
-            scheme.c_str(),
-            username.c_str(),
-            hostname.c_str(),
-            transport.c_str());
-
-    return std::string (uri, len);
+    return "<" + scheme + username + "@" + hostname + transport + ">";
 }
 
 std::string SIPAccount::getToUri (const std::string& username) const
 {
-    char uri[PJSIP_MAX_URL_SIZE];
-
     std::string scheme;
     std::string transport;
-    std::string hostname = "";
+    std::string hostname;
 
     // UDP does not require the transport specification
     if (transportType_ == PJSIP_TRANSPORT_TLS) {
         scheme = "sips:";
-        transport = ";transport=" + std::string (pjsip_transport_get_type_name (transportType_));
-    } else {
+        transport = ";transport=" + std::string(pjsip_transport_get_type_name(transportType_));
+    } else
         scheme = "sip:";
-        transport = "";
-    }
 
     // Check if scheme is already specified
-    if (username.find ("sip") == 0) {
+    if (username.find ("sip") == 0)
         scheme = "";
-    }
 
     // Check if hostname is already specified
-    if (username.find ("@") == std::string::npos) {
-        // hostname not specified
+    if (username.find ("@") == std::string::npos)
         hostname = hostname_;
-    }
 
-    int len = pj_ansi_snprintf (uri, PJSIP_MAX_URL_SIZE,
-
-            "<%s%s%s%s%s>",
-            scheme.c_str(),
-            username.c_str(),
-            (hostname.empty()) ? "" : "@",
-            hostname.c_str(),
-            transport.c_str());
-
-    return std::string (uri, len);
+    return "<" + scheme + username + (hostname.empty() ? "" : "@") + hostname + transport + ">";
 }
 
 std::string SIPAccount::getServerUri (void) const
 {
-    char uri[PJSIP_MAX_URL_SIZE];
-
     std::string scheme;
     std::string transport;
-    std::string hostname = hostname_;
 
     // UDP does not require the transport specification
-
     if (transportType_ == PJSIP_TRANSPORT_TLS) {
         scheme = "sips:";
         transport = ";transport=" + std::string (pjsip_transport_get_type_name (transportType_));
@@ -766,51 +713,24 @@ std::string SIPAccount::getServerUri (void) const
         transport = "";
     }
 
-    int len = pj_ansi_snprintf (uri, PJSIP_MAX_URL_SIZE,
-            "<%s%s%s>",
-            scheme.c_str(),
-            hostname.c_str(),
-            transport.c_str());
-
-    return std::string (uri, len);
+    return "<" + scheme + hostname_ + transport + ">";
 }
 
 std::string SIPAccount::getContactHeader (const std::string& address, const std::string& port) const
 {
-    char contact[PJSIP_MAX_URL_SIZE];
-    const char * beginquote, * endquote;
-
     std::string scheme;
     std::string transport;
 
-    // if IPV6, should be set to []
-    beginquote = endquote = "";
-
     // UDP does not require the transport specification
-
     if (transportType_ == PJSIP_TRANSPORT_TLS) {
         scheme = "sips:";
         transport = ";transport=" + std::string (pjsip_transport_get_type_name (transportType_));
     } else
         scheme = "sip:";
 
-    _debug ("Display Name: %s", displayName_.c_str());
-
-    int len = pj_ansi_snprintf (contact, PJSIP_MAX_URL_SIZE,
-
-            "%s%s<%s%s%s%s%s%s:%d%s>",
-            displayName_.c_str(),
-            (displayName_.empty() ? "" : " "),
-            scheme.c_str(),
-            username_.c_str(),
-            (username_.empty() ? "":"@"),
-            beginquote,
-            address.c_str(),
-            endquote,
-            atoi (port.c_str()),
-            transport.c_str());
-
-    return std::string (contact, len);
+    return displayName_ + (displayName_.empty() ? "" : " ") + "<" +
+    		scheme + username_ + (username_.empty() ? "":"@") +
+    		address + ":" + port + transport + ">";
 }
 
 
@@ -835,10 +755,8 @@ std::string computeMd5HashFromCredential (
     pj_md5_final (&pms, digest);
 
     char hash[32];
-    int i;
-    for (i = 0; i < 16; ++i) {
+    for (int i = 0; i < 16; ++i)
         pj_val_to_hex_digit (digest[i], &hash[2*i]);
-    }
 
     return std::string(hash, 32);
 }
@@ -975,61 +893,43 @@ std::map<std::string, std::string> SIPAccount::getTlsSettings() const
     return tlsSettings;
 }
 
+namespace {
+void set(const std::map<std::string, std::string> &details, const char *key, std::string &val) {
+    std::map<std::string, std::string>::const_iterator it = details.find(key);
+
+	if (it != details.end())
+		val = it->second;
+}
+
+void set(const std::map<std::string, std::string> &details, const char *key, bool &val) {
+    std::map<std::string, std::string>::const_iterator it = details.find(key);
+
+	if (it != details.end())
+		val = it->second == "true";
+}
+
+void set(const std::map<std::string, std::string> &details, const char *key, pj_uint16_t &val) {
+    std::map<std::string, std::string>::const_iterator it = details.find(key);
+
+	if (it != details.end())
+		val = atoi(it->second.c_str());
+}
+} //anon namespace
+
 void SIPAccount::setTlsSettings (const std::map<std::string, std::string>& details)
 {
     assert(accountID_ == IP2IP_PROFILE);
-
-    std::map<std::string, std::string>::const_iterator it;
-
-    it = details.find (TLS_LISTENER_PORT);
-
-    if (it != details.end()) tlsListenerPort_ = atoi (it->second.c_str());
-
-    it = details.find (TLS_ENABLE);
-
-    if (it != details.end()) tlsEnable_ = it->second;
-
-    it = details.find (TLS_CA_LIST_FILE);
-
-    if (it != details.end()) tlsCaListFile_ = it->second;
-
-    it = details.find (TLS_CERTIFICATE_FILE);
-
-    if (it != details.end()) tlsCertificateFile_ = it->second;
-
-    it = details.find (TLS_PRIVATE_KEY_FILE);
-
-    if (it != details.end()) tlsPrivateKeyFile_ = it->second;
-
-    it = details.find (TLS_PASSWORD);
-
-    if (it != details.end()) tlsPassword_ = it->second;
-
-    it = details.find (TLS_METHOD);
-
-    if (it != details.end()) tlsMethod_ = it->second;
-
-    it = details.find (TLS_CIPHERS);
-
-    if (it != details.end()) tlsCiphers_ = it->second;
-
-    it = details.find (TLS_SERVER_NAME);
-
-    if (it != details.end()) tlsServerName_ = it->second;
-
-    it = details.find (TLS_VERIFY_CLIENT);
-
-    if (it != details.end()) tlsVerifyClient_ = it->second == "true";
-
-    it = details.find (TLS_REQUIRE_CLIENT_CERTIFICATE);
-
-    if (it != details.end()) tlsRequireClientCertificate_ = it->second == "true";
-
-    it = details.find (TLS_NEGOTIATION_TIMEOUT_SEC);
-
-    if (it != details.end()) tlsNegotiationTimeoutSec_ = it->second;
-
-    it = details.find (TLS_NEGOTIATION_TIMEOUT_MSEC);
-
-    if (it != details.end()) tlsNegotiationTimeoutMsec_ = it->second;
+    set(details, TLS_LISTENER_PORT, tlsListenerPort_);
+    set(details, TLS_ENABLE, tlsEnable_);
+    set(details, TLS_CA_LIST_FILE, tlsCaListFile_);
+    set(details, TLS_CERTIFICATE_FILE, tlsCertificateFile_);
+    set(details, TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_);
+    set(details, TLS_PASSWORD, tlsPassword_);
+    set(details, TLS_METHOD, tlsMethod_);
+    set(details, TLS_CIPHERS, tlsCiphers_);
+    set(details, TLS_SERVER_NAME, tlsServerName_);
+    set(details, TLS_VERIFY_CLIENT, tlsVerifyClient_);
+    set(details, TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate_);
+    set(details, TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_);
+    set(details, TLS_NEGOTIATION_TIMEOUT_MSEC, tlsNegotiationTimeoutMsec_);
 }

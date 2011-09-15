@@ -219,11 +219,6 @@ void transaction_state_changed_cb (pjsip_inv_session *inv, pjsip_transaction *ts
 void registration_cb (struct pjsip_regc_cbparam *param);
 
 /*
- * DNS Callback used in workaround for bug #1852
- */
-static void dns_cb (pj_status_t status, void *token, const struct pjsip_server_addresses *addr);
-
-/*
  * Called to handle incoming requests outside dialogs
  * @param   rdata
  * @return  pj_bool_t
@@ -312,54 +307,10 @@ SIPVoIPLink::getEvent()
 
 void SIPVoIPLink::sendRegister (Account *a)
 {
-    pj_status_t status;
     pjsip_tx_data *tdata;
     pjsip_hdr hdr_list;
 
     SIPAccount *account = static_cast<SIPAccount*>(a);
-
-    // Resolve hostname here and keep its
-    // IP address for the whole time the
-    // account is connected. This was a
-    // workaround meant to help issue
-    // #1852 that we hope should be fixed
-    // soon.
-    if (account->isResolveOnce()) {
-        pjsip_host_info destination;
-
-        struct result result;
-        destination.type = PJSIP_TRANSPORT_UNSPECIFIED;
-        destination.flag = pjsip_transport_get_flag_from_type (PJSIP_TRANSPORT_UNSPECIFIED);
-        destination.addr.host = pj_str (const_cast<char*> ( (account->getHostname()).c_str()));
-        destination.addr.port = 0;
-
-        result.status = 0x12345678;
-
-        pjsip_endpt_resolve (_endpt, _pool, &destination, &result, &dns_cb);
-
-        /* The following magic number and construct are inspired from dns_test.c
-         * in test-pjsip directory.
-         */
-
-        while (result.status == 0x12345678) {
-            pj_time_val timeout = { 1, 0 };
-            pjsip_endpt_handle_events (_endpt, &timeout);
-            _debug ("status : %d", result.status);
-        }
-
-        if (result.status != PJ_SUCCESS) {
-            _debug ("Failed to resolve hostname only once."
-                    " Default resolver will be used on"
-                    " hostname for all requests.");
-        } else {
-            _debug ("%d servers where obtained from name resolution.", result.servers.count);
-            char addr_buf[80];
-
-            pj_sockaddr_print ( (pj_sockaddr_t*) &result.servers.entry[0].addr, addr_buf, sizeof (addr_buf), 3);
-            account->setHostname (addr_buf);
-        }
-    }
-
 
     // Create SIP transport or get existent SIP transport from internal map
     // according to account settings, if the transport could not be created but
@@ -375,116 +326,113 @@ void SIPVoIPLink::sendRegister (Account *a)
     }
 
     pjsip_regc *regc;
-    {
-        ost::MutexLock m(mutexSIP_);
+	ost::MutexLock m(mutexSIP_);
 
-        // Get the client registration information for this particular account
-        regc = account->getRegistrationInfo();
-        account->setRegister (true);
+	// Get the client registration information for this particular account
+	regc = account->getRegistrationInfo();
+	account->setRegister (true);
 
-        // Set the expire value of the message from the config file
-        std::istringstream stream (account->getRegistrationExpire());
-        int expire_value;
-        stream >> expire_value;
-        if (!expire_value)
-            expire_value = PJSIP_REGC_EXPIRATION_NOT_SPECIFIED;
+	// Set the expire value of the message from the config file
+	std::istringstream stream (account->getRegistrationExpire());
+	int expire_value;
+	stream >> expire_value;
+	if (!expire_value)
+		expire_value = PJSIP_REGC_EXPIRATION_NOT_SPECIFIED;
 
-        // Update the state of the voip link
-        account->setRegistrationState (Trying);
+	// Update the state of the voip link
+	account->setRegistrationState (Trying);
 
-        // Create the registration according to the account ID
-        if (pjsip_regc_create (_endpt, (void *) account, &registration_cb, &regc) != PJ_SUCCESS)
-            throw VoipLinkException("UserAgent: Unable to create regc structure.");
+	// Create the registration according to the account ID
+	if (pjsip_regc_create (_endpt, (void *) account, &registration_cb, &regc) != PJ_SUCCESS)
+		throw VoipLinkException("UserAgent: Unable to create regc structure.");
 
-        // Creates URI
-        std::string fromUri(account->getFromUri());
-        std::string srvUri(account->getServerUri());
+	// Creates URI
+	std::string fromUri(account->getFromUri());
+	std::string srvUri(account->getServerUri());
 
-        std::string address(findLocalAddressFromUri(srvUri, account->getAccountTransport()));
-        int port = findLocalPortFromUri(srvUri, account->getAccountTransport());
+	std::string address(findLocalAddressFromUri(srvUri, account->getAccountTransport()));
+	int port = findLocalPortFromUri(srvUri, account->getAccountTransport());
 
-        std::stringstream ss;
-        std::string portStr;
-        ss << port;
-        ss >> portStr;
+	std::stringstream ss;
+	std::string portStr;
+	ss << port;
+	ss >> portStr;
 
-        std::string contactUri(account->getContactHeader(address, portStr));
+	std::string contactUri(account->getContactHeader(address, portStr));
 
-        _debug ("UserAgent: sendRegister: fromUri: %s serverUri: %s contactUri: %s",
-                fromUri.c_str(),
-                srvUri.c_str(),
-                contactUri.c_str());
+	_debug ("UserAgent: sendRegister: fromUri: %s serverUri: %s contactUri: %s",
+			fromUri.c_str(),
+			srvUri.c_str(),
+			contactUri.c_str());
 
-        pj_str_t pjFrom;
-        pj_cstr (&pjFrom, fromUri.c_str());
+	pj_str_t pjFrom;
+	pj_cstr (&pjFrom, fromUri.c_str());
 
-        pj_str_t pjContact;
-        pj_cstr (&pjContact, contactUri.c_str());
+	pj_str_t pjContact;
+	pj_cstr (&pjContact, contactUri.c_str());
 
-        pj_str_t pjSrv;
-        pj_cstr (&pjSrv, srvUri.c_str());
+	pj_str_t pjSrv;
+	pj_cstr (&pjSrv, srvUri.c_str());
 
-        // Initializes registration
-        if (pjsip_regc_init (regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, expire_value) != PJ_SUCCESS)
-            throw VoipLinkException("Unable to initialize account registration structure");
+	// Initializes registration
+	if (pjsip_regc_init (regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, expire_value) != PJ_SUCCESS)
+		throw VoipLinkException("Unable to initialize account registration structure");
 
-        // Fill route set
-        if (!account->getServiceRoute().empty()) {
-            pjsip_route_hdr *route_set = createRouteSet(account, _pool);
-            pjsip_regc_set_route_set (regc, route_set);
-        }
+	// Fill route set
+	if (!account->getServiceRoute().empty()) {
+		pjsip_route_hdr *route_set = createRouteSet(account, _pool);
+		pjsip_regc_set_route_set (regc, route_set);
+	}
 
-        unsigned count = account->getCredentialCount();
-        pjsip_cred_info *info = account->getCredInfo();
-        pjsip_regc_set_credentials (regc, count, info);
+	unsigned count = account->getCredentialCount();
+	pjsip_cred_info *info = account->getCredInfo();
+	pjsip_regc_set_credentials (regc, count, info);
 
-        // Add User-Agent Header
-        pj_list_init (&hdr_list);
+	// Add User-Agent Header
+	pj_list_init (&hdr_list);
 
-        const std::string agent(account->getUserAgentName());
-        pj_str_t useragent = pj_str ((char*)agent.c_str());
-        pjsip_generic_string_hdr *h = pjsip_generic_string_hdr_create (_pool, &STR_USER_AGENT, &useragent);
+	const std::string agent(account->getUserAgentName());
+	pj_str_t useragent = pj_str ((char*)agent.c_str());
+	pjsip_generic_string_hdr *h = pjsip_generic_string_hdr_create (_pool, &STR_USER_AGENT, &useragent);
 
-        pj_list_push_back (&hdr_list, (pjsip_hdr*) h);
-        pjsip_regc_add_headers (regc, &hdr_list);
+	pj_list_push_back (&hdr_list, (pjsip_hdr*) h);
+	pjsip_regc_add_headers (regc, &hdr_list);
 
-        if (pjsip_regc_register (regc, PJ_TRUE, &tdata) != PJ_SUCCESS)
-            throw VoipLinkException("Unable to initialize transaction data for account registration");
+	if (pjsip_regc_register (regc, PJ_TRUE, &tdata) != PJ_SUCCESS)
+		throw VoipLinkException("Unable to initialize transaction data for account registration");
 
-        pjsip_tpselector *tp = initTransportSelector (account->getAccountTransport(), _pool);
+	pjsip_tpselector *tp = initTransportSelector (account->getAccountTransport(), _pool);
 
-        // pjsip_regc_set_transport increments transport ref count by one
-        status = pjsip_regc_set_transport (regc, tp);
+	// pjsip_regc_set_transport increments transport ref count by one
+	pj_status_t status = pjsip_regc_set_transport (regc, tp);
 
-        if (account->getAccountTransport()) {
-            // decrease transport's ref count, counter icrementation is
-            // managed when acquiring transport
-            pjsip_transport_dec_ref (account->getAccountTransport ());
+	if (account->getAccountTransport()) {
+		// decrease transport's ref count, counter icrementation is
+		// managed when acquiring transport
+		pjsip_transport_dec_ref (account->getAccountTransport ());
 
-            _debug ("UserAgent: After setting the transport in account registration using transport: %s %s (refcnt=%d)",
-                    account->getAccountTransport()->obj_name,
-                    account->getAccountTransport()->info,
-                    (int) pj_atomic_get (account->getAccountTransport()->ref_cnt));
-        }
+		_debug ("UserAgent: After setting the transport in account registration using transport: %s %s (refcnt=%d)",
+				account->getAccountTransport()->obj_name,
+				account->getAccountTransport()->info,
+				(int) pj_atomic_get (account->getAccountTransport()->ref_cnt));
+	}
 
-        if (status != PJ_SUCCESS)
-            throw VoipLinkException("Unable to set transport");
+	if (status != PJ_SUCCESS)
+		throw VoipLinkException("Unable to set transport");
 
-        // Send registration request
-        // pjsip_regc_send increment the transport ref count by one,
-        status = pjsip_regc_send (regc, tdata);
+	// Send registration request
+	// pjsip_regc_send increment the transport ref count by one,
+	status = pjsip_regc_send (regc, tdata);
 
-        if (account->getAccountTransport()) {
-            // Decrease transport's ref count, since coresponding reference counter decrementation
-            // is performed in pjsip_regc_destroy. This function is never called in SFLphone as the
-            // regc data structure is permanently associated to the account at first registration.
-            pjsip_transport_dec_ref (account->getAccountTransport ());
-        }
+	if (account->getAccountTransport()) {
+		// Decrease transport's ref count, since coresponding reference counter decrementation
+		// is performed in pjsip_regc_destroy. This function is never called in SFLphone as the
+		// regc data structure is permanently associated to the account at first registration.
+		pjsip_transport_dec_ref (account->getAccountTransport ());
+	}
 
-        if (status != PJ_SUCCESS)
-            throw VoipLinkException("Unable to send account registration request");
-
-    }
+	if (status != PJ_SUCCESS)
+		throw VoipLinkException("Unable to send account registration request");
 
     account->setRegistrationInfo (regc);
 
@@ -597,10 +545,7 @@ Call *SIPVoIPLink::newOutgoingCall (const std::string& id, const std::string& to
 
 	// Building the local SDP offer
 	call->getLocalSDP()->setLocalIP (addrSdp);
-	if (call->getLocalSDP()->createOffer(account->getActiveCodecs()) != PJ_SUCCESS) {
-		delete call;
-        throw VoipLinkException ("Could not create local sdp offer for new call");
-	}
+	call->getLocalSDP()->createOffer(account->getActiveCodecs());
 
 	if (SIPStartCall(call)) {
 		call->setConnectionState (Call::Progressing);
@@ -1006,16 +951,8 @@ SIPVoIPLink::refuse (const std::string& id)
 std::string
 SIPVoIPLink::getCurrentCodecName(Call *call) const
 {
-    Sdp* sdp = dynamic_cast<SIPCall*>(call)->getLocalSDP();
 
-    try {
-        if (sdp->hasSessionMedia())
-            return sdp->getSessionMedia()->getMimeSubtype();
-    } catch (const SdpException &e) {
-    	_error("UserAgent: Exception: %s", e.what());
-    }
-
-    return "";
+    return dynamic_cast<SIPCall*>(call)->getLocalSDP()->getCodecName();
 }
 
 bool
@@ -1054,8 +991,6 @@ SIPVoIPLink::carryingDTMFdigits (const std::string& id, char code)
 void
 SIPVoIPLink::dtmfSipInfo (SIPCall *call, char code)
 {
-    _debug ("UserAgent: Send DTMF %c", code);
-
     // Create a temporary memory pool
     pj_pool_t *tmp_pool = pj_pool_create (&_cp->factory, "tmpdtmf10", 1000, 1000, NULL);
     if (tmp_pool == NULL)
@@ -1315,9 +1250,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const std::string& id, const std::string& to
 
     // Building the local SDP offer
     call->getLocalSDP()->setLocalIP (localAddress);
-    pj_status_t status = call->getLocalSDP()->createOffer (account->getActiveCodecs ());
-    if (status != PJ_SUCCESS)
-        _error("UserAgent: Failed to create local offer\n");
+    call->getLocalSDP()->createOffer (account->getActiveCodecs ());
 
     // Init TLS transport if enabled
     if (account->isTlsEnabled()) {
@@ -1376,7 +1309,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const std::string& id, const std::string& to
     // (Parameters are "strduped" inside this function)
     _debug ("UserAgent: Creating dialog for this call");
     pjsip_dialog *dialog;
-    status = pjsip_dlg_create_uac (pjsip_ua_instance(), &pjFrom, &pjContact, &pjTo, NULL, &dialog);
+    pj_status_t status = pjsip_dlg_create_uac (pjsip_ua_instance(), &pjFrom, &pjContact, &pjTo, NULL, &dialog);
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
 
     // Create the invite session for this call
@@ -2242,17 +2175,6 @@ int getModId()
     return _mod_ua.id;
 }
 
-static void dns_cb (pj_status_t status, void *token, const struct pjsip_server_addresses *addr)
-{
-	_debug("UserAgent: DNS callback");
-
-    result * result = reinterpret_cast<struct result*>(token);
-
-    result->status = status;
-    if (status == PJ_SUCCESS)
-        result->servers = *addr;
-}
-
 void setVoicemailInfo (const std::string &account, pjsip_msg_body *body)
 {
     _debug ("UserAgent: checking the voice message!");
@@ -2448,7 +2370,7 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
     sdpSession->setActiveLocalSdpSession(local_sdp);
 
     // Update internal field for
-    sdpSession->updateInternalState();
+    sdpSession->setMediaTransportInfoFromRemoteSdp();
 
     try {
         call->getAudioRtp()->updateDestinationIpAddress();
@@ -2980,10 +2902,7 @@ transaction_request_cb (pjsip_rx_data *rdata)
         }
     }
 
-    if (call->getLocalSDP()->receiveOffer (r_sdp, account->getActiveCodecs ()) != PJ_SUCCESS) {
-        _warn ("UserAgent: fail in receiving initial offer");
-        goto fail;
-    }
+    call->getLocalSDP()->receiveOffer (r_sdp, account->getActiveCodecs ());
 
     // Init audio rtp session
     try {
@@ -3275,7 +3194,7 @@ void setCallMediaLocal (SIPCall* call, const std::string &localIP)
 
 	call->setLocalIp (localIP);
 	call->setLocalAudioPort (callLocalAudioPort);
-	call->getLocalSDP()->setPortToAllMedia (callLocalExternAudioPort);
+	call->getLocalSDP()->setLocalPublishedAudioPort(callLocalExternAudioPort);
 }
 
 std::string fetchHeaderValue (pjsip_msg *msg, std::string field)
@@ -3369,19 +3288,17 @@ std::string SIPVoIPLink::getInterfaceAddrFromName (const std::string &ifaceName)
 std::vector<std::string> SIPVoIPLink::getAllIpInterface (void)
 {
     pj_sockaddr addrList[16];
-    unsigned int addrCnt = PJ_ARRAY_SIZE (addrList);
+    unsigned addrCnt = PJ_ARRAY_SIZE (addrList);
 
     std::vector<std::string> ifaceList;
 
-    if (pj_enum_ip_interface (pj_AF_INET(), &addrCnt, addrList) != PJ_SUCCESS)
-        return ifaceList;
-
-    for (int i = 0; i < (int) addrCnt; i++) {
-        char tmpAddr[PJ_INET_ADDRSTRLEN];
-        pj_sockaddr_print (&addrList[i], tmpAddr, sizeof (tmpAddr), 0);
-        ifaceList.push_back (std::string (tmpAddr));
-        _debug ("Local interface %s", tmpAddr);
-    }
+    if (pj_enum_ip_interface (pj_AF_INET(), &addrCnt, addrList) == PJ_SUCCESS)
+		for (unsigned i = 0; i < addrCnt; i++) {
+			char tmpAddr[PJ_INET_ADDRSTRLEN];
+			pj_sockaddr_print (&addrList[i], tmpAddr, sizeof (tmpAddr), 0);
+			ifaceList.push_back (std::string (tmpAddr));
+			_debug ("Local interface %s", tmpAddr);
+		}
 
     return ifaceList;
 }

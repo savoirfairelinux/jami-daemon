@@ -58,7 +58,6 @@
 #include <pjsip_ua.h>
 
 #include "global.h"
-#include "sip/sdpmedia.h"
 #include "sip/sdp.h"
 
 class SdpSessionException : public std::exception

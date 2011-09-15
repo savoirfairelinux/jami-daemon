@@ -50,9 +50,6 @@ namespace Conf {
 }
 enum DtmfType { OVERRTP, SIPINFO};
 
-#define OVERRTPSTR "overrtp"
-#define SIPINFOSTR "sipinfo"
-
 // SIP specific configuration keys
 static const char *const expireKey = "expire";
 static const char *const interfaceKey = "interface";
@@ -60,7 +57,6 @@ static const char *const portKey = "port";
 static const char *const publishAddrKey = "publishAddr";
 static const char *const publishPortKey = "publishPort";
 static const char *const sameasLocalKey = "sameasLocal";
-static const char *const resolveOnceKey = "resolveOnce";
 static const char *const dtmfTypeKey = "dtmfType";
 static const char *const serviceRouteKey = "serviceRoute";
 
@@ -163,10 +159,6 @@ class SIPAccount : public Account
 
         void setCredentials (const std::vector<std::map<std::string, std::string> >& details);
         const std::vector<std::map<std::string, std::string> > &getCredentials (void);
-
-        bool isResolveOnce (void) const {
-            return resolveOnce_;
-        }
 
         /**
          * A client sendings a REGISTER request MAY suggest an expiration
@@ -454,30 +446,11 @@ class SIPAccount : public Account
 
         /**
          * If username is not provided, as it happens for Direct ip calls,
-         * fetch the hostname of the machine on which the program is running
-         * onto.
-         * @return std::string The machine hostname as returned by pj_gethostname()
-         */
-        static std::string getMachineName (void);
-
-        /**
-         * If username is not provided, as it happens for Direct ip calls,
          * fetch the Real Name field of the user that is currently
          * running this program.
          * @return std::string The login name under which SFLPhone is running.
          */
         static std::string getLoginName (void);
-
-        /**
-         * List of routes (proxies) used for registration and calls
-         */
-        std::string routeSet_;
-
-        /**
-         * Private pjsip memory pool for accounts
-         */
-        pj_pool_t *pool_;
-
 
         // The pjsip client registration information
         pjsip_regc *regc_;
@@ -509,10 +482,6 @@ class SIPAccount : public Account
         pjsip_transport_type_e transportType_;
 
         pjsip_transport* transport_;
-
-        // Special hack that is not here to stay
-        // See #1852
-        bool resolveOnce_;
 
         //Credential information
         pjsip_cred_info *cred_;

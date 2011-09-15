@@ -87,51 +87,26 @@ Call::getState()
 std::string
 Call::getStateStr ()
 {
-    CallState state = getState();
-    ConnectionState connection = getConnectionState ();
-    CallType type = _type;
-    std::string state_str;
-
-    switch (state) {
+    switch (getState()) {
     case Active:
-        switch (connection) {
-        case Ringing:
-        	(type == Incoming) ? state_str = "INCOMING":state_str = "RINGING";
-        	break;
+        switch (getConnectionState()) {
+        case Ringing: 	return isIncoming() ? "INCOMING" : "RINGING";
         case Connected:
-        default:
-            isRecording() ? state_str = "RECORD" : state_str = "CURRENT";
-            break;
+        default:		return isRecording() ? "RECORD" : "CURRENT";
         }
-    case Hold:
-    	state_str = "HOLD";
-    	break;
-    case Busy:
-    	state_str = "BUSY";
-    	break;
+    case Hold:			return "HOLD";
+    case Busy:			return "BUSY";
     case Inactive:
-    	switch (connection) {
-    	case Ringing:
-    		(type == Incoming) ? state_str = "INCOMING":state_str = "RINGING";
-    		break;
-    	case Connected:
-    		state_str = "CURRENT";
-    		break;
-    	default:
-    		state_str = "INACTIVE";
-    		break;
+    	switch (getConnectionState()) {
+    	case Ringing:	return isIncoming() ? "INCOMING" : "RINGING";
+    	case Connected:	return "CURRENT";
+    	default:		return "INACTIVE";
     	}
-    	break;
-    case Conferencing:
-    	state_str = "CONFERENCING";
-    	break;
+    case Conferencing:	return "CONFERENCING";
     case Refused:
     case Error:
-    default:
-    	state_str = "FAILURE";
-    	break;
+    default:			return "FAILURE";
     }
-    return state_str;
 }
 
 
@@ -152,36 +127,20 @@ Call::getLocalAudioPort()
 bool
 Call::setRecording()
 {
-    _debug ("Call: Set recording");
-
     bool recordStatus = Recordable::recAudio.isRecording();
 
     Recordable::recAudio.setRecording();
+    MainBuffer *mbuffer = Manager::instance().getMainBuffer();
+    std::string process_id = Recordable::recorder.getRecorderID();
 
-    // Start recording
     if (!recordStatus) {
-
-        _debug ("Call: Call not recording yet, set ringbuffers");
-
-        MainBuffer *mbuffer = Manager::instance().getMainBuffer();
-        std::string process_id = Recordable::recorder.getRecorderID();
-
         mbuffer->bindHalfDuplexOut (process_id, _id);
         mbuffer->bindHalfDuplexOut (process_id);
 
         Recordable::recorder.start();
-    }
-    // Stop recording
-    else {
-
-        _debug ("Call: Stop recording");
-
-        MainBuffer *mbuffer = Manager::instance().getMainBuffer();
-        std::string process_id = Recordable::recorder.getRecorderID();
-
+    } else {
         mbuffer->unBindHalfDuplexOut (process_id, _id);
         mbuffer->unBindHalfDuplexOut (process_id);
-
     }
 
     Manager::instance().getMainBuffer()->stateInfo();
