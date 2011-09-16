@@ -170,7 +170,7 @@ IAXVoIPLink::getEvent()
     {
         ost::MutexLock m(mutexIAX_);
         while ((event = iax_get_event (IAX_NONBLOCKING)) != NULL) {
-        // If we received an 'ACK', libiax2 tells apps to ignore them.
+        	// If we received an 'ACK', libiax2 tells apps to ignore them.
             if (event->etype == IAX_EVENT_NULL)
                 continue;
 
@@ -178,24 +178,20 @@ IAXVoIPLink::getEvent()
 
             if (call)
                 iaxHandleCallEvent (event, call);
-            else if (event->session && event->session == regSession_) {
-                // This is a registration session, deal with it
+            else if (event->session && event->session == regSession_) // This is a registration session, deal with it
                 iaxHandleRegReply (event);
-            } else {
-                // We've got an event before it's associated with any call
+            else // We've got an event before it's associated with any call
                 iaxHandlePrecallEvent (event);
-            }
 
             iax_event_free (event);
         }
+        free(event);
     }
 
     sendAudioFromMic();
 
     // thread wait 3 millisecond
     evThread_->sleep(3);
-
-    free (event);
 }
 
 void
@@ -432,11 +428,12 @@ IAXVoIPLink::offhold (const std::string& id)
     call->setState (Call::Active);
 }
 
-bool
+void
 IAXVoIPLink::transfer (const std::string& id, const std::string& to)
 {
     IAXCall* call = getIAXCall (id);
-    CHK_VALID_CALL;
+    if (!call)
+    	return;
 
     char callto[to.length() +1];
     strcpy (callto, to.c_str());
@@ -444,11 +441,6 @@ IAXVoIPLink::transfer (const std::string& id, const std::string& to)
     mutexIAX_.enterMutex();
     iax_transfer (call->getSession(), callto);
     mutexIAX_.leaveMutex();
-
-    return true;
-
-    // should we remove it?
-    // removeCall(id);
 }
 
 bool

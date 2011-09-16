@@ -40,6 +40,7 @@
 
 SIPAccount::SIPAccount (const std::string& accountID)
     : Account (accountID, "SIP")
+	, transport (NULL)
     , regc_ (NULL)
     , bRegister_ (false)
     , registrationExpire_ ("")
@@ -51,7 +52,6 @@ SIPAccount::SIPAccount (const std::string& accountID)
     , serviceRoute_ ("")
     , tlsListenerPort_ (DEFAULT_SIP_TLS_PORT)
     , transportType_ (PJSIP_TRANSPORT_UNSPECIFIED)
-    , transport_ (NULL)
     , cred_ (NULL)
 	, stunPort_(0)
     , dtmfType_ (OVERRTP)
@@ -652,8 +652,8 @@ std::string SIPAccount::getLoginName (void)
 
 std::string SIPAccount::getFromUri (void) const
 {
-    std::string scheme;
-    std::string transport;
+    std::string scheme("");
+    std::string transport("");
     std::string username = username_;
     std::string hostname = hostname_;
 
@@ -670,7 +670,7 @@ std::string SIPAccount::getFromUri (void) const
 
     // Get machine hostname if not provided
     if (hostname_.empty())
-        hostname = std::string (pj_gethostname()->ptr, pj_gethostname()->slen);
+        hostname = std::string(pj_gethostname()->ptr, pj_gethostname()->slen);
 
     return "<" + scheme + username + "@" + hostname + transport + ">";
 }

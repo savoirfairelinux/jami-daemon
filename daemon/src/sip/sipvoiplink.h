@@ -148,9 +148,8 @@ class SIPVoIPLink : public VoIPLink
          * Transfer the call
          * @param id The call identifier
          * @param to The recipient of the transfer
-         * @return bool True on success
          */
-        virtual bool transfer (const std::string& id, const std::string& to);
+        virtual void transfer (const std::string& id, const std::string& to);
 
         /**
          * Attended transfer
@@ -309,22 +308,6 @@ class SIPVoIPLink : public VoIPLink
 
         SIPVoIPLink ();
 
-        /* The singleton instance */
-        static SIPVoIPLink* instance_;
-
-        /**
-         * Initialize the PJSIP library
-         * Must be called before any other calls to the SIP layer
-         *
-         * @return bool True on success
-         */
-        void pjsipInit();
-
-        /**
-         * Delete link-related stuff like calls
-         */
-        void pjsipShutdown (void);
-
         /**
          * Resolve public address for this account
          */
@@ -381,17 +364,8 @@ class SIPVoIPLink : public VoIPLink
          *
          * @param uri The uri from which we want to discover the address to use
          * @param transport The transport to use to discover the address
-         * @return pj_str_t The extern (public) address
          */
-        std::string findLocalAddressFromUri (const std::string& uri, pjsip_transport *transport);
-
-        /*
-         * Does the same as findLocalAddressFromUri but returns a port.
-         * @param uri The uri from which we want to discover the port to use
-         * @param transport The transport to use to discover the port
-         * @return int The extern (public) port
-         */
-        int findLocalPortFromUri (const std::string& uri, pjsip_transport *transport);
+        void findLocalAddressFromUri (const std::string& uri, pjsip_transport *transport, std::string &address, std::string &port);
 
         /**
          * UDP Transports are stored in this map in order to retreive them in case
@@ -402,7 +376,7 @@ class SIPVoIPLink : public VoIPLink
         /**
          * Threading object
          */
-        EventThread* evThread_;
+        EventThread *evThread_;
 
         /**
          * Global mutex for the sip voiplink

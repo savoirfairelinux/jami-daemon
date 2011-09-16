@@ -150,10 +150,8 @@ class IAXVoIPLink : public VoIPLink
          * Transfer a call
          * @param id The ID of the call
          * @param to The recipient of the transfer
-         * @return bool true on success
-         *		  false otherwise
          */
-        virtual bool transfer (const std::string& id, const std::string& to);
+        virtual void transfer (const std::string& id, const std::string& to);
 
         /**
          * Perform attended transfer

@@ -184,8 +184,6 @@ int AudioRtpFactory::getSessionMedia()
 
 void AudioRtpFactory::updateSessionMedia (AudioCodec *audiocodec)
 {
-    _info ("AudioRtpFactory: Updating session media");
-
     if (_rtpSession == NULL) {
         throw AudioRtpFactoryException ("AudioRtpFactory: Error: _rtpSession was null when trying to update IP address");
     }
@@ -194,8 +192,6 @@ void AudioRtpFactory::updateSessionMedia (AudioCodec *audiocodec)
 
 void AudioRtpFactory::updateDestinationIpAddress (void)
 {
-    _info ("AudioRtpFactory: Updating IP address");
-
     if (_rtpSession == NULL) {
         throw AudioRtpFactoryException ("AudioRtpFactory: Error: RtpSession was null when trying to update IP address");
     }

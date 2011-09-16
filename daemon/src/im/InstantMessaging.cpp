@@ -108,7 +108,7 @@ void InstantMessaging::send_sip_message (pjsip_inv_session *session, const std::
 }
 
 
-void InstantMessaging::send_iax_message (iax_session* session, const std::string& id, const std::string& message)
+void InstantMessaging::send_iax_message (iax_session* session, const std::string& /* id */, const std::string& message)
 {
 	std::vector<std::string> msgs = split_message (message);
 	std::vector<std::string>::const_iterator iter;

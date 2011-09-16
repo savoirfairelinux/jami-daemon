@@ -364,14 +364,6 @@ class SIPAccount : public Account
         }
 
         /**
-         * Set the local port for TLS listener.
-         * @pram port The port used for TLS listener.
-         */
-        void setTlsListenerPort (pj_uint16_t port) {
-            tlsListenerPort_ = port;
-        }
-
-        /**
          * Get the public IP address set by the user for this account.
          * If this setting is not provided, the local bound adddress
          * will be used.
@@ -394,14 +386,6 @@ class SIPAccount : public Account
             return serviceRoute_;
         }
 
-        pjsip_transport* getAccountTransport (void) const {
-            return transport_;
-        }
-
-        void setAccountTransport (pjsip_transport *transport) {
-        	transport_ = transport;
-        }
-
         DtmfType getDtmfType (void) const {
             return dtmfType_;
         }
@@ -421,6 +405,8 @@ class SIPAccount : public Account
         bool getZrtpHelloHash (void) const {
             return zrtpHelloHash_;
         }
+
+        pjsip_transport* transport;
 
     private:
 
@@ -480,8 +466,6 @@ class SIPAccount : public Account
         pj_uint16_t tlsListenerPort_;
 
         pjsip_transport_type_e transportType_;
-
-        pjsip_transport* transport_;
 
         //Credential information
         pjsip_cred_info *cred_;

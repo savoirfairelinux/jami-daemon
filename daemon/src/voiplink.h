@@ -134,9 +134,8 @@ class VoIPLink
          * Transfer a call to specified URI
          * @param id The call identifier
          * @param to The recipient of the call
-         * @return bool True on success
          */
-        virtual bool transfer (const std::string& id, const std::string& to) = 0;
+        virtual void transfer (const std::string& id, const std::string& to) = 0;
 
         /**
          * Attended transfer

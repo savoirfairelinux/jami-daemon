@@ -539,35 +539,21 @@ void ManagerImpl::offHoldCall (const std::string& callId)
 //THREAD=Main
 bool ManagerImpl::transferCall (const std::string& callId, const std::string& to)
 {
-    bool returnValue = false;;
-
-    _info ("Manager: Transfer call %s", callId.c_str());
-
-    std::string currentCallId = getCurrentCallId();
-
     if (participToConference(callId)) {
-        Conference *conf = getConferenceFromCallID(callId);
-        if (conf == NULL)
-            _error("Manager: Error: Could not find conference from call id");
-
         removeParticipant (callId);
-        processRemainingParticipant (callId, conf);
-    }
-    else if (!isConference(currentCallId))
+        processRemainingParticipant (callId, getConferenceFromCallID(callId));
+    } else if (!isConference(getCurrentCallId()))
             switchCall("");
 
     // Direct IP to IP call
-    if (getConfigFromCall (callId) == Call::IPtoIP)
-        returnValue = SIPVoIPLink::instance ()-> transfer (callId, to);
+    if (getConfigFromCall(callId) == Call::IPtoIP)
+        SIPVoIPLink::instance()->transfer (callId, to);
     else {
-        std::string accountid (getAccountFromCall (callId));
-
-        if (accountid == "") {
-            _warn ("Manager: Call doesn't exists");
+        std::string accountid(getAccountFromCall (callId));
+        if (accountid == "")
             return false;
-        }
 
-        returnValue = getAccountLink (accountid)->transfer (callId, to);
+        getAccountLink(accountid)->transfer (callId, to);
     }
 
     // remove waiting call in case we make transfer without even answer
@@ -575,7 +561,7 @@ bool ManagerImpl::transferCall (const std::string& callId, const std::string& to
 
     getMainBuffer()->stateInfo();
 
-    return returnValue;
+    return true;
 }
 
 void ManagerImpl::transferFailed ()
