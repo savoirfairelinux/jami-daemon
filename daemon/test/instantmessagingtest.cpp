@@ -47,7 +47,6 @@ using std::endl;
 void InstantMessagingTest::setUp()
 {
     _im = new sfl::InstantMessaging ();
-    _im->init ();
 }
 
 void InstantMessagingTest::testSaveSingleMessage ()
