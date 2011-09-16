@@ -36,7 +36,7 @@ using std::ptrdiff_t;
 #include <ccrtp/rtp.h>
 #include <list>
 
-#include "sip/sipcall.h"
+class SIPCall;
 #include "audio/codecs/audiocodec.h"
 #include "audio/samplerateconverter.h"
 #include "audio/noisesuppress.h"
@@ -105,7 +105,7 @@ class AudioRtpRecord
 class AudioRtpRecordHandler
 {
     public:
-        AudioRtpRecordHandler (SIPCall *ca);
+        AudioRtpRecordHandler(SIPCall *);
         virtual ~AudioRtpRecordHandler();
 
         /**

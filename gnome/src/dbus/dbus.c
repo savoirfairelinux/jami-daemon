@@ -60,8 +60,6 @@ static void
 new_call_created_cb (DBusGProxy *proxy UNUSED, const gchar *accountID,
 		     const gchar *callID, const gchar *to, void *foo UNUSED)
 {
-    DEBUG("DBUS: New Call (%s) created to (%s)", callID, to);
-
     callable_obj_t *c = create_new_call(CALL, CALL_STATE_RINGING, callID, accountID, to, to);
 
     calllist_add_call(current_calls, c);
@@ -78,8 +76,6 @@ incoming_call_cb (DBusGProxy *proxy UNUSED, const gchar* accountID,
     // We receive the from field under a formatted way. We want to extract the number and the name of the caller
     gchar *peer_name = call_get_peer_name (from);
     gchar *peer_number = call_get_peer_number (from);
-
-    DEBUG ("DBus: Incoming call (%s) from %s (%s : %s)", callID, from, peer_name, peer_number);
 
     callable_obj_t *c = create_new_call (CALL, CALL_STATE_INCOMING, callID, accountID, peer_name, peer_number);
 
@@ -150,7 +146,6 @@ static void
 call_state_cb (DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state,
                void * foo  UNUSED)
 {
-    DEBUG ("DBUS: Call %s state %s",callID, state);
     callable_obj_t *c = calllist_get_call (current_calls, callID);
     if (c) {
         if (g_strcmp0 (state, "HUNGUP") == 0) {

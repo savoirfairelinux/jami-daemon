@@ -339,7 +339,7 @@ class ManagerImpl
          * @param   id: callid of the line.
          * @param   code: pressed key.
          */
-        bool sendDtmf (const std::string& id, char code);
+        void sendDtmf (const std::string& id, char code);
 
         /**
          * Play a ringtone

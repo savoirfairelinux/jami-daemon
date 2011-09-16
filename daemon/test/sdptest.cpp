@@ -143,10 +143,9 @@ void SDPTest::testInitialOfferFirstCodec ()
     pjmedia_sdp_parse(_testPool, (char*)sdp_answer1, strlen(sdp_answer1), &remoteAnswer);
 
     _session->receivingAnswerAfterInitialOffer(remoteAnswer);
-
     _session->startNegotiation();
 
-    _session->updateInternalState();
+    _session->setMediaTransportInfoFromRemoteSdp();
 
     CPPUNIT_ASSERT(_session->getLocalPublishedAudioPort() == 49567);
     CPPUNIT_ASSERT(_session->getRemoteAudioPort() == 49920);
@@ -181,7 +180,7 @@ void SDPTest::testInitialAnswerFirstCodec ()
 
     _session->startNegotiation();
 
-    _session->updateInternalState();
+    _session->setMediaTransportInfoFromRemoteSdp();
 
     CPPUNIT_ASSERT(_session->getLocalPublishedAudioPort() == 49567);
     CPPUNIT_ASSERT(_session->getRemoteAudioPort() == 49920);
@@ -216,10 +215,9 @@ void SDPTest::testInitialOfferLastCodec ()
     pjmedia_sdp_parse(_testPool, (char*)sdp_answer2, strlen(sdp_answer2), &remoteAnswer);
 
     _session->receivingAnswerAfterInitialOffer(remoteAnswer);
-
     _session->startNegotiation();
 
-    _session->updateInternalState();
+    _session->setMediaTransportInfoFromRemoteSdp();
 
     CPPUNIT_ASSERT(_session->getLocalPublishedAudioPort() == 49567);
     CPPUNIT_ASSERT(_session->getRemoteAudioPort() == 49920);
@@ -254,7 +252,7 @@ void SDPTest::testInitialAnswerLastCodec ()
 
     _session->startNegotiation();
 
-    _session->updateInternalState();
+    _session->setMediaTransportInfoFromRemoteSdp();
 
     CPPUNIT_ASSERT(_session->getLocalPublishedAudioPort() == 49567);
     CPPUNIT_ASSERT(_session->getRemoteAudioPort() == 49920);
@@ -291,10 +289,9 @@ void SDPTest::testReinvite ()
     pjmedia_sdp_parse(_testPool, (char*)sdp_answer1, strlen(sdp_answer1), &remoteAnswer);
 
     _session->receivingAnswerAfterInitialOffer(remoteAnswer);
-
     _session->startNegotiation();
 
-    _session->updateInternalState();
+    _session->setMediaTransportInfoFromRemoteSdp();
 
     CPPUNIT_ASSERT(_session->getLocalPublishedAudioPort() == 49567);
     CPPUNIT_ASSERT(_session->getRemoteAudioPort() == 49920);
@@ -308,7 +305,7 @@ void SDPTest::testReinvite ()
 
     _session->startNegotiation();
 
-    _session->updateInternalState();
+    _session->setMediaTransportInfoFromRemoteSdp();
 
     CPPUNIT_ASSERT(_session->getRemoteAudioPort() == 42445);
     CPPUNIT_ASSERT(_session->getRemoteIP() == "host.exampleReinvite.com");

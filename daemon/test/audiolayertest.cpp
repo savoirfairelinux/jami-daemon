@@ -92,9 +92,6 @@ void AudioLayerTest::testPulseConnect()
     	usleep (100000);
     }
 
-    ManagerImpl* manager;
-    manager = &Manager::instance();
-
     _pulselayer = dynamic_cast<PulseLayer*>(Manager::instance().getAudioDriver());
 
     CPPUNIT_ASSERT (_pulselayer);

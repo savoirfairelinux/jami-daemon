@@ -60,15 +60,11 @@ AudioRtpSession::AudioRtpSession (SIPCall * sipcall, RtpMethod type, ost::RTPDat
 
 AudioRtpSession::~AudioRtpSession()
 {
-    _info ("AudioRtpSession: Delete AudioRtpSession instance");
     _queue->disableStack();
 }
 
 void AudioRtpSession::updateSessionMedia (AudioCodec *audioCodec)
 {
-    _debug ("AudioSymmetricRtpSession: Update session media");
-
-    // Update internal codec for this session
     int lastSamplingRate = _audioRtpRecord._codecSampleRate;
 
     setSessionMedia(audioCodec);
@@ -84,9 +80,6 @@ void AudioRtpSession::updateSessionMedia (AudioCodec *audioCodec)
 
 void AudioRtpSession::setSessionMedia (AudioCodec *audioCodec)
 {
-    _debug ("AudioSymmetricRtpSession: Set session media");
-
-    // set internal codec info for this session
     setRtpMedia (audioCodec);
 
     // store codec info locally

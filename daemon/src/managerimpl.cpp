@@ -128,7 +128,6 @@ void ManagerImpl::init (std::string config_file)
     audioLayerMutexUnlock();
 
     _history->load_history (preferences.getHistoryLimit());
-    _imModule->init();
     registerAccounts();
 }
 
@@ -540,35 +539,21 @@ void ManagerImpl::offHoldCall (const std::string& callId)
 //THREAD=Main
 bool ManagerImpl::transferCall (const std::string& callId, const std::string& to)
 {
-    bool returnValue = false;;
-
-    _info ("Manager: Transfer call %s", callId.c_str());
-
-    std::string currentCallId = getCurrentCallId();
-
     if (participToConference(callId)) {
-        Conference *conf = getConferenceFromCallID(callId);
-        if (conf == NULL)
-            _error("Manager: Error: Could not find conference from call id");
-
         removeParticipant (callId);
-        processRemainingParticipant (callId, conf);
-    }
-    else if (!isConference(currentCallId))
+        processRemainingParticipant (callId, getConferenceFromCallID(callId));
+    } else if (!isConference(getCurrentCallId()))
             switchCall("");
 
     // Direct IP to IP call
-    if (getConfigFromCall (callId) == Call::IPtoIP)
-        returnValue = SIPVoIPLink::instance ()-> transfer (callId, to);
+    if (getConfigFromCall(callId) == Call::IPtoIP)
+        SIPVoIPLink::instance()->transfer (callId, to);
     else {
-        std::string accountid (getAccountFromCall (callId));
-
-        if (accountid == "") {
-            _warn ("Manager: Call doesn't exists");
+        std::string accountid(getAccountFromCall (callId));
+        if (accountid == "")
             return false;
-        }
 
-        returnValue = getAccountLink (accountid)->transfer (callId, to);
+        getAccountLink(accountid)->transfer (callId, to);
     }
 
     // remove waiting call in case we make transfer without even answer
@@ -576,7 +561,7 @@ bool ManagerImpl::transferCall (const std::string& callId, const std::string& to
 
     getMainBuffer()->stateInfo();
 
-    return returnValue;
+    return true;
 }
 
 void ManagerImpl::transferFailed ()
@@ -591,21 +576,15 @@ void ManagerImpl::transferSucceded ()
 
 bool ManagerImpl::attendedTransfer(const std::string& transferID, const std::string& targetID)
 {
-    bool returnValue = false;
-
-    _debug("Manager: Attended transfer");
+    bool returnValue;;
 
     // Direct IP to IP call
     if (getConfigFromCall (transferID) == Call::IPtoIP)
         returnValue = SIPVoIPLink::instance ()-> attendedTransfer(transferID, targetID);
     else {	// Classic call, attached to an account
-
         std::string accountid = getAccountFromCall (transferID);
-
-        if (accountid.empty()) {
-            _warn ("Manager: Call doesn't exists");
+        if (accountid.empty())
             return false;
-        }
 
         returnValue = getAccountLink (accountid)->attendedTransfer (transferID, targetID);
     }
@@ -618,20 +597,11 @@ bool ManagerImpl::attendedTransfer(const std::string& transferID, const std::str
 //THREAD=Main : Call:Incoming
 bool ManagerImpl::refuseCall (const std::string& id)
 {
-    std::string accountid;
     bool returnValue;
-
-    _debug ("Manager: Refuse call %s", id.c_str());
-
-    std::string current_call_id = getCurrentCallId();
 
     stopTone();
 
-    int nbCalls = getCallList().size();
-
-    if (nbCalls <= 1) {
-        _debug ("    refuseCall: stop audio stream, there is only %d call(s) remaining", nbCalls);
-
+    if (getCallList().size() <= 1) {
         audioLayerMutexLock();
         _audiodriver->stopStream();
         audioLayerMutexUnlock();
@@ -643,12 +613,9 @@ bool ManagerImpl::refuseCall (const std::string& id)
         returnValue = SIPVoIPLink::instance ()-> refuse (id);
     else {
         /* Classic call, attached to an account */
-        accountid = getAccountFromCall (id);
-
-        if (accountid.empty()) {
-            _warn ("Manager: Call doesn't exists");
+        std::string accountid = getAccountFromCall (id);
+        if (accountid.empty())
             return false;
-        }
 
         returnValue = getAccountLink (accountid)->refuse (id);
 
@@ -659,7 +626,6 @@ bool ManagerImpl::refuseCall (const std::string& id)
     // so the method did nothing
     if (returnValue) {
         removeWaitingCall (id);
-
         _dbus.getCallManager()->callStateChanged (id, "HUNGUP");
     }
 
@@ -1329,11 +1295,11 @@ void ManagerImpl::saveConfig (void)
 }
 
 //THREAD=Main
-bool ManagerImpl::sendDtmf (const std::string& id, char code)
+void ManagerImpl::sendDtmf (const std::string& id, char code)
 {
     std::string accountid(getAccountFromCall(id));
     playDtmf (code);
-    return getAccountLink (accountid)->carryingDTMFdigits (id, code);
+    getAccountLink (accountid)->carryingDTMFdigits (id, code);
 }
 
 //THREAD=Main | VoIPLink
@@ -2866,7 +2832,7 @@ ManagerImpl::getAccount (const std::string& accountID) const
     if (iter != _accountMap.end())
 		return iter->second;
 
-    _debug ("Manager: Did not found account %s, returning IP2IP account", accountID.c_str());
+    _debug ("Manager: Did not found account \"%s\", returning IP2IP account", accountID.c_str());
     return getAccount(IP2IP_PROFILE);
 }
 

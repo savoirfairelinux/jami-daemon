@@ -6,7 +6,6 @@ libsiplink_la_SOURCES = \
 		Pattern.cpp \
 		SdesNegotiator.cpp \
 		sdp.cpp \
-		sdpmedia.cpp \
 		sipaccount.cpp \
 		sipcall.cpp \
 		sipvoiplink.cpp
@@ -15,7 +14,6 @@ noinst_HEADERS = \
 		Pattern.h \
 		SdesNegotiator.h \
 		sdp.h \
-		sdpmedia.h \
 		sipaccount.h \
 		sipcall.h \
 		sipvoiplink.h

@@ -66,7 +66,7 @@ VoIPLink* ManagerImpl::getAccountLink (const std::string& accountID) const
     if (not accountID.empty())
         return getAccount (accountID)->getVoIPLink();
     else
-        return SIPVoIPLink::instance ();
+        return SIPVoIPLink::instance();
 }
 
 

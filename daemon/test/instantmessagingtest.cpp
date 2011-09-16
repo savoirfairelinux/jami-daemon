@@ -47,7 +47,6 @@ using std::endl;
 void InstantMessagingTest::setUp()
 {
     _im = new sfl::InstantMessaging ();
-    _im->init ();
 }
 
 void InstantMessagingTest::testSaveSingleMessage ()
@@ -100,47 +99,6 @@ void InstantMessagingTest::testSaveMultipleMessage ()
     testfile.close ();
     printf ("%s\n", input.c_str());
     CPPUNIT_ASSERT (input == "[Manu] Bonjour, c'est un test d'archivage de message[Alex] Cool");
-}
-
-void InstantMessagingTest::testSplitMessage ()
-{
-
-    _im->setMessageMaximumSize(10);
-    unsigned int maxSize = _im->getMessageMaximumSize();
-
-    /* A message that does not need to be split */
-    std::string short_message = "Salut";
-    std::vector<std::string> messages = _im->split_message (short_message);
-    CPPUNIT_ASSERT (messages.size() == short_message.length() / maxSize + 1);
-    CPPUNIT_ASSERT (messages[0] == short_message);
-
-    /* A message that needs to be split into two messages */
-    std::string long_message = "A message too long";
-    messages = _im->split_message (long_message);
-    int size = messages.size ();
-    int i = 0;
-    CPPUNIT_ASSERT (size == (int) (long_message.length() / maxSize + 1));
-
-    /* If only one element, do not enter the loop */
-    for (i = 0; i < size - 1; i++) {
-        CPPUNIT_ASSERT (messages[i] == long_message.substr ( (maxSize * i), maxSize) + DELIMITER_CHAR);
-    } 
-
-    /* Works for the last element, or for the only element */
-    CPPUNIT_ASSERT (messages[size- 1] == long_message.substr (maxSize * (size-1)));
-
-    /* A message that needs to be split into four messages */
-    std::string very_long_message = "A message that needs to be split into many messages";
-    messages = _im->split_message (very_long_message);
-    size = messages.size ();
-
-    /* If only one element, do not enter the loop */
-    for (i = 0; i < size - 1; i++) {
-        CPPUNIT_ASSERT (messages[i] ==very_long_message.substr ( (maxSize * i), maxSize) + DELIMITER_CHAR);
-    }
-
-    /* Works for the last element, or for the only element */
-    CPPUNIT_ASSERT (messages[size- 1] == very_long_message.substr (maxSize * (size-1)));
 }
 
 static inline char* duplicateString(char dst[], const char src[], size_t len)

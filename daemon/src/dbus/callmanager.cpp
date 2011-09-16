@@ -33,6 +33,7 @@
 #include "global.h"
 #include "callmanager.h"
 
+#include "sip/sipcall.h"
 #include "sip/sipvoiplink.h"
 #include "audio/audiortp/AudioRtpFactory.h"
 #include "audio/audiortp/AudioZrtpSession.h"
@@ -366,26 +367,15 @@ sfl::AudioZrtpSession * CallManager::getAudioZrtpSession (const std::string& cal
 
     SIPCall *call;
     try {
-        call = link->getSIPCall (callID);
+        call = link->getSIPCall(callID);
     }
     catch (const VoipLinkException &e) {
         throw CallManagerException("Call id " + callID + " is not valid");
     }
 
-    sfl::AudioRtpFactory * audioRtp = NULL;
-    audioRtp = call->getAudioRtp();
-
-    if (!audioRtp) {
-        throw CallManagerException("Failed to get AudioRtpFactory");
-    }
-
-    sfl::AudioZrtpSession * zSession = NULL;
-
-    zSession = audioRtp->getAudioZrtpSession();
-
-    if (!zSession) {
+    sfl::AudioZrtpSession * zSession = call->getAudioRtp()->getAudioZrtpSession();
+    if (!zSession)
         throw CallManagerException("Failed to get AudioZrtpSession");
-    }
 
     return zSession;
 }
