@@ -60,7 +60,6 @@ AudioRtpSession::AudioRtpSession (SIPCall * sipcall, RtpMethod type, ost::RTPDat
 
 AudioRtpSession::~AudioRtpSession()
 {
-    _info ("AudioRtpSession: Delete AudioRtpSession instance");
     _queue->disableStack();
 }
 

@@ -474,36 +474,29 @@ IAXVoIPLink::refuse (const std::string& id)
 }
 
 
-bool
+void
 IAXVoIPLink::carryingDTMFdigits (const std::string& id, char code)
 {
     IAXCall* call = getIAXCall (id);
-    CHK_VALID_CALL;
-
-    mutexIAX_.enterMutex();
-    iax_send_dtmf (call->getSession(), code);
-    mutexIAX_.leaveMutex();
-
-    return true;
+    if (call) {
+		mutexIAX_.enterMutex();
+		iax_send_dtmf (call->getSession(), code);
+		mutexIAX_.leaveMutex();
+    }
 }
 
-bool
+void
 IAXVoIPLink::sendTextMessage (sfl::InstantMessaging *module,
         const std::string& callID, const std::string& message,
         const std::string& /*from*/)
 {
     IAXCall* call = getIAXCall (callID);
-    CHK_VALID_CALL;
+    if (!call)
+    	return;
 
-    // Must active the mutex for this session
     mutexIAX_.enterMutex();
-
     module->send_iax_message (call->getSession(), callID, message.c_str());
-
-    // iax_send_text (call->getSession(), message.c_str());
     mutexIAX_.leaveMutex();
-
-    return true;
 }
 
 
@@ -649,28 +642,17 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
             break;
 
         case IAX_IE_MSGCOUNT:
-            break;
-
+        case IAX_EVENT_TIMEOUT:
         case IAX_EVENT_PONG:
+        default:
             break;
 
         case IAX_EVENT_URL:
 
-            if (Manager::instance().getConfigString (HOOKS, URLHOOK_IAX2_ENABLED) == "1") {
-                if (*event->data) {
-                    _debug ("> IAX_EVENT_URL received: %s", event->data);
-                    UrlHook::runAction (Manager::instance().getConfigString (HOOKS, URLHOOK_COMMAND), (char*) event->data);
-                }
-            }
+            if (Manager::instance().getConfigString (HOOKS, URLHOOK_IAX2_ENABLED) == "1")
+				UrlHook::runAction (Manager::instance().getConfigString (HOOKS, URLHOOK_COMMAND), (char*) event->data);
 
             break;
-
-        case IAX_EVENT_TIMEOUT:
-            break;
-
-        default:
-            _debug ("iaxHandleCallEvent: Unknown event type (in call event): %d", event->etype);
-
     }
 }
 

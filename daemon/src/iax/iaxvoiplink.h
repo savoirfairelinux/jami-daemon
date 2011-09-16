@@ -175,13 +175,11 @@ class IAXVoIPLink : public VoIPLink
          * Send DTMF
          * @param id The ID of the call
          * @param code  The code of the DTMF
-         * @return bool true on success
-         *		  false otherwise
          */
-        virtual bool carryingDTMFdigits (const std::string& id, char code);
+        virtual void carryingDTMFdigits (const std::string& id, char code);
 
 
-        virtual bool sendTextMessage (sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from);
+        virtual void sendTextMessage (sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from);
 
         /**
          * Return the codec protocol used for this call

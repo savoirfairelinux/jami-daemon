@@ -55,7 +55,6 @@ class InstantMessagingTest : public CppUnit::TestCase {
     CPPUNIT_TEST_SUITE( InstantMessagingTest );
         CPPUNIT_TEST (testSaveSingleMessage);
         CPPUNIT_TEST (testSaveMultipleMessage);
-        CPPUNIT_TEST (testSplitMessage);
 	CPPUNIT_TEST (testGenerateXmlUriList);
 	CPPUNIT_TEST (testXmlUriListParsing);
 	CPPUNIT_TEST (testGetTextArea);
@@ -81,8 +80,6 @@ class InstantMessagingTest : public CppUnit::TestCase {
         void testSaveSingleMessage ();
 		
         void testSaveMultipleMessage ();
-
-        void testSplitMessage ();
 
 	void testGenerateXmlUriList ();
 

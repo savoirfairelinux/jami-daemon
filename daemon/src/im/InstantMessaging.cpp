@@ -54,9 +54,7 @@ static void XMLCALL endElementCallback (void * /*userData*/, const char * /*name
 }
 
 
-InstantMessaging::InstantMessaging()
-    : imFiles ()
-    , messageMaxSize (MAXIMUM_MESSAGE_LENGTH) {}
+InstantMessaging::InstantMessaging() {}
 
 
 InstantMessaging::~InstantMessaging() {}
@@ -110,17 +108,12 @@ void InstantMessaging::send_sip_message (pjsip_inv_session *session, const std::
 }
 
 
-void InstantMessaging::iax_send (iax_session* session, const std::string& /*id*/, const std::string& message)
-{
-    iax_send_text(session, message.c_str()) != -1;
-}
-
 void InstantMessaging::send_iax_message (iax_session* session, const std::string& id, const std::string& message)
 {
 	std::vector<std::string> msgs = split_message (message);
 	std::vector<std::string>::const_iterator iter;
 	for (iter = msgs.begin(); iter != msgs.end(); ++iter)
-		iax_send(session, id, *iter);
+		iax_send_text(session, (*iter).c_str());
 }
 
 

@@ -117,12 +117,6 @@ class VoIPLink
         virtual void peerHungup (const std::string& id) = 0;
 
         /**
-         * Cancel the call dialing
-         * @param id The call identifier
-         */
-        virtual void cancel (const std::string& id) = 0;
-
-        /**
          * Put a call on hold
          * @param id The call identifier
          * @return bool True on success
@@ -163,9 +157,8 @@ class VoIPLink
          * Send DTMF
          * @param id The call identifier
          * @param code  The char code
-         * @return bool True on success
          */
-        virtual bool carryingDTMFdigits (const std::string& id, char code) = 0;
+        virtual void carryingDTMFdigits (const std::string& id, char code) = 0;
 
         /**
          * Return the codec protocol used for this call
@@ -180,10 +173,8 @@ class VoIPLink
          * @param The Id of the call to send the message to
          * @param The actual message to be transmitted
          * @param The sender of this message (could be another participant of a conference)
-         *
-         * @return True if the message is sent without error, false elsewhere
          */
-        virtual bool sendTextMessage (sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from) = 0;
+        virtual void sendTextMessage (sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from) = 0;
 
         /** Add a call to the call map (protected by mutex)
          * @param call A call pointer with a unique pointer

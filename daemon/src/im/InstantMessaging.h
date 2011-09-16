@@ -87,18 +87,11 @@ class InstantMessaging
         ~InstantMessaging();
 
         /**
-         * Set maximum size fo this module.
-             */
-        void setMessageMaximumSize (unsigned int max) {
-            messageMaxSize = max;
-        }
-
-        /**
          * Return the maximum number if character for a single SIP MESSAGE.
          * Longer messages should be splitted in several smaller messages using split_message
          */
-        unsigned int getMessageMaximumSize (void) {
-            return messageMaxSize;
+        size_t getMessageMaximumSize (void) {
+            return MAXIMUM_MESSAGE_LENGTH;
         }
 
         /*
@@ -120,9 +113,6 @@ class InstantMessaging
         void sip_send (pjsip_inv_session*, const std::string& id, const std::string&);
 
         void send_sip_message (pjsip_inv_session*, const std::string& id, const std::string&);
-
-        void iax_send (iax_session* session, const std::string& id, const std::string& message);
-
         void send_iax_message (iax_session *session, const std::string& id, const std::string&);
 
         std::vector<std::string> split_message(std::string);
@@ -177,24 +167,8 @@ class InstantMessaging
 
     private:
 
-        /**
-         * A queue to handle messages
-         */
-        // std::queue<std::string> queuedMessages;
-
-        /**
-         * A map to handle opened file descriptors
-         * A file descriptor is associated to a call ID
-         */
-        std::map<std::string, std::ofstream*> imFiles;
-
         InstantMessaging (const InstantMessaging&); //No Copy Constructor
         InstantMessaging& operator= (const InstantMessaging&); //No Assignment Operator
-
-        /**
-          * Maximum size in char of an instant message
-         */
-        unsigned int messageMaxSize;
 };
 }
 #endif // _INSTANT_MESSAGING_H
