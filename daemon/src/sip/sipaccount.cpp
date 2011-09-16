@@ -894,21 +894,21 @@ std::map<std::string, std::string> SIPAccount::getTlsSettings() const
 }
 
 namespace {
-void set(const std::map<std::string, std::string> &details, const char *key, std::string &val) {
+void set_opt(const std::map<std::string, std::string> &details, const char *key, std::string &val) {
     std::map<std::string, std::string>::const_iterator it = details.find(key);
 
 	if (it != details.end())
 		val = it->second;
 }
 
-void set(const std::map<std::string, std::string> &details, const char *key, bool &val) {
+void set_opt(const std::map<std::string, std::string> &details, const char *key, bool &val) {
     std::map<std::string, std::string>::const_iterator it = details.find(key);
 
 	if (it != details.end())
 		val = it->second == "true";
 }
 
-void set(const std::map<std::string, std::string> &details, const char *key, pj_uint16_t &val) {
+void set_opt(const std::map<std::string, std::string> &details, const char *key, pj_uint16_t &val) {
     std::map<std::string, std::string>::const_iterator it = details.find(key);
 
 	if (it != details.end())
@@ -919,17 +919,17 @@ void set(const std::map<std::string, std::string> &details, const char *key, pj_
 void SIPAccount::setTlsSettings (const std::map<std::string, std::string>& details)
 {
     assert(accountID_ == IP2IP_PROFILE);
-    set(details, TLS_LISTENER_PORT, tlsListenerPort_);
-    set(details, TLS_ENABLE, tlsEnable_);
-    set(details, TLS_CA_LIST_FILE, tlsCaListFile_);
-    set(details, TLS_CERTIFICATE_FILE, tlsCertificateFile_);
-    set(details, TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_);
-    set(details, TLS_PASSWORD, tlsPassword_);
-    set(details, TLS_METHOD, tlsMethod_);
-    set(details, TLS_CIPHERS, tlsCiphers_);
-    set(details, TLS_SERVER_NAME, tlsServerName_);
-    set(details, TLS_VERIFY_CLIENT, tlsVerifyClient_);
-    set(details, TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate_);
-    set(details, TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_);
-    set(details, TLS_NEGOTIATION_TIMEOUT_MSEC, tlsNegotiationTimeoutMsec_);
+    set_opt(details, TLS_LISTENER_PORT, tlsListenerPort_);
+    set_opt(details, TLS_ENABLE, tlsEnable_);
+    set_opt(details, TLS_CA_LIST_FILE, tlsCaListFile_);
+    set_opt(details, TLS_CERTIFICATE_FILE, tlsCertificateFile_);
+    set_opt(details, TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_);
+    set_opt(details, TLS_PASSWORD, tlsPassword_);
+    set_opt(details, TLS_METHOD, tlsMethod_);
+    set_opt(details, TLS_CIPHERS, tlsCiphers_);
+    set_opt(details, TLS_SERVER_NAME, tlsServerName_);
+    set_opt(details, TLS_VERIFY_CLIENT, tlsVerifyClient_);
+    set_opt(details, TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate_);
+    set_opt(details, TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_);
+    set_opt(details, TLS_NEGOTIATION_TIMEOUT_MSEC, tlsNegotiationTimeoutMsec_);
 }
