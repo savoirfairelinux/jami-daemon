@@ -158,25 +158,17 @@ void AudioRtpFactory::start (AudioCodec* audiocodec)
 void AudioRtpFactory::stop (void)
 {
     ost::MutexLock mutex (_audioRtpThreadMutex);
-    _info ("AudioRtpFactory: Stopping audio rtp session");
 
-    if (_rtpSession == NULL) {
-        _debug ("AudioRtpFactory: Rtp session already deleted");
+    if (_rtpSession == NULL)
         return;
-    }
 
-    try {
-        if (_rtpSession->getAudioRtpType() == Sdes) {
-			localContext = static_cast<AudioSrtpSession *> (_rtpSession)->_localCryptoCtx;
-			remoteContext = static_cast<AudioSrtpSession *> (_rtpSession)->_remoteCryptoCtx;
-        }
+	if (_rtpSession->getAudioRtpType() == Sdes) {
+		localContext = static_cast<AudioSrtpSession *> (_rtpSession)->_localCryptoCtx;
+		remoteContext = static_cast<AudioSrtpSession *> (_rtpSession)->_remoteCryptoCtx;
+	}
 
-        delete _rtpSession;
-        _rtpSession = NULL;
-    } catch (...) {
-        _debug ("AudioRtpFactory: Error: Exception caught when stopping the audio rtp session");
-        throw AudioRtpFactoryException ("AudioRtpFactory: Error: caught exception in AudioRtpFactory::stop");
-    }
+	delete _rtpSession;
+	_rtpSession = NULL;
 }
 
 int AudioRtpFactory::getSessionMedia()
@@ -244,7 +236,7 @@ void AudioRtpFactory::setDtmfPayloadType(unsigned int payloadType)
 
 void AudioRtpFactory::sendDtmfDigit (int digit)
 {
-    _rtpSession->putDtmfEvent (digit);
+    _rtpSession->putDtmfEvent(digit);
 }
 
 }
