@@ -22,6 +22,10 @@
 
 ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
 {
+   
+   setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
+   setMinimumSize(250,0);
+   
    m_pCollViewCV = new Akonadi::EntityTreeView();
    m_pItemView   = new Akonadi::ItemView();
    m_pFilterLE   = new KLineEdit();

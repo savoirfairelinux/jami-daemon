@@ -27,6 +27,7 @@ SET(	sflphone_client_kde_SRCS
 	AccountWizard.cpp
 	AccountItemWidget.cpp
 	widgets/CallTreeItem.cpp
+        widgets/HistoryTreeItem.cpp
 	ActionSetAccountFirst.cpp
 	conf/ConfigurationDialog.cpp
 	conf/dlggeneral.cpp

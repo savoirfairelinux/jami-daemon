@@ -73,10 +73,11 @@ template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::
    if (!historyInit) {
       ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
       QStringList historyMap = configurationManager.getHistory().value();
-      qDebug() << "\n\n\n\n\n\n\n\nCall History = " << historyMap<<"\n\n\n\n\n\n";
+      qDebug() << "\n\n\n\n\n\n\n\nCall History = " ;
       foreach (QString historyCallId, historyMap) {
          QStringList param = historyCallId.split("|");
-         if (param.count() < 10) {
+         qDebug() << "Param count" << param.size();
+         if (param.count() <= 10) {
             //If this ever change, look at the gnome client
             QString history_state = param[0];
             QString peer_number   = param[1];
@@ -344,13 +345,18 @@ template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::
  ****************************************************************************/
 
 ///Return a list of all previous calls
-template<typename CallWidget, typename Index> QStringList CallModel<CallWidget,Index>::getHistory() 
+template<typename CallWidget, typename Index> QStringList CallModel<CallWidget,Index>::getHistoryCallId() 
 {
    QStringList toReturn;
    foreach(Call* call, historyCalls) {
       toReturn << call->getCallId();
    }
    return toReturn;
+}
+
+template<typename CallWidget, typename Index> const QHash<QString, Call*> CallModel<CallWidget,Index>::getHistory()
+{
+   return historyCalls;
 }
 
 /*****************************************************************************

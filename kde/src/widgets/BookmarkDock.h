@@ -1,0 +1,21 @@
+#ifndef BOOKMARK_DOCK_H
+#define BOOKMARK_DOCK_H
+
+#include <QtGui/QDockWidget>
+
+class QTreeWidget;
+class KLineEdit;
+class QSplitter;
+
+class BookmarkDock : public QDockWidget {
+   Q_OBJECT
+public:
+   BookmarkDock(QWidget* parent);
+   virtual ~BookmarkDock();
+private:
+   QTreeWidget*  m_pItemView;
+   KLineEdit*    m_pFilterLE;
+   QSplitter*    m_pSplitter;
+};
+
+#endif
