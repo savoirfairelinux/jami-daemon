@@ -535,7 +535,7 @@ void SIPAccount::registerVoIPLink()
     	return;
 
     try {
-        link_->sendRegister (this);
+        link_->sendRegister(this);
     }
     catch (const VoipLinkException &e) {
         _error("SIPAccount: %s", e.what());

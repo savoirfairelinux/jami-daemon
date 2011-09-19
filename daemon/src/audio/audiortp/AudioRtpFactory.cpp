@@ -57,47 +57,29 @@ AudioRtpFactory::~AudioRtpFactory()
 
 void AudioRtpFactory::initAudioRtpConfig ()
 {
-    if (_rtpSession != NULL) {
-        _debug ("An audio rtp thread was already created but not" \
-                         "destroyed. Forcing it before continuing.");
+    if (_rtpSession != NULL)
         stop();
-    }
 
-    std::string accountId(Manager::instance().getAccountFromCall (ca_->getCallId()));
+    std::string accountId(Manager::instance().getAccountFromCall(ca_->getCallId()));
 
-    _debug ("AudioRtpFactory: Init rtp session for account %s", accountId.c_str());
+    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount (accountId));
+    if (account) {
+        _srtpEnabled = account->getSrtpEnabled();
+        std::string key(account->getSrtpKeyExchange());
 
-    // Manager::instance().getAccountLink (accountId);
-    Account *account = Manager::instance().getAccount (accountId);
+        if (key == "sdes")
+            _keyExchangeProtocol = Sdes;
+        else if (key == "zrtp")
+            _keyExchangeProtocol = Zrtp;
+        else
+            _keyExchangeProtocol = Symmetric;
 
-    if (!account)
-        _error ("AudioRtpFactory: Error no account found");
-
-    registerAccount(account, accountId);
-}
-
-void AudioRtpFactory::registerAccount(Account * /*account*/, const std::string & /* id */)
-{
-    _srtpEnabled = false;
-    _keyExchangeProtocol = Symmetric;
-    _helloHashEnabled = false;
-}
-
-
-void AudioRtpFactory::registerAccount(SIPAccount *sipaccount, const std::string& accountId)
-{
-    _srtpEnabled = sipaccount->getSrtpEnabled();
-    std::string tempkey(sipaccount->getSrtpKeyExchange());
-
-    if (tempkey == "sdes")
-        _keyExchangeProtocol = Sdes;
-    else if (tempkey == "zrtp")
-        _keyExchangeProtocol = Zrtp;
-    else
+        _helloHashEnabled = account->getZrtpHelloHash();
+    } else {
+        _srtpEnabled = false;
         _keyExchangeProtocol = Symmetric;
-
-    _debug ("AudioRtpFactory: Registered account %s profile selected with key exchange protocol number %d", accountId.c_str(), _keyExchangeProtocol);
-    _helloHashEnabled = sipaccount->getZrtpHelloHash();
+        _helloHashEnabled = false;
+    }
 }
 
 void AudioRtpFactory::initAudioSymmetricRtpSession ()
@@ -113,24 +95,20 @@ void AudioRtpFactory::initAudioSymmetricRtpSession ()
 
             case Zrtp:
                 _rtpSession = new AudioZrtpSession (ca_, zidFilename);
-
                 if (_helloHashEnabled) {
                     // TODO: be careful with that. The hello hash is computed asynchronously. Maybe it's
                     // not even available at that point.
                     ca_->getLocalSDP()->setZrtpHash (static_cast<AudioZrtpSession *> (_rtpSession)->getHelloHash());
                     _debug ("AudioRtpFactory: Zrtp hello hash fed to SDP");
                 }
-
                 break;
 
             case Sdes:
-
                 _rtpSession = new AudioSrtpSession (ca_);
                 break;
 
             default:
-                _debug ("AudioRtpFactory: Unsupported Rtp Session Exception Type!");
-                throw UnsupportedRtpSessionType();
+                throw UnsupportedRtpSessionType("Unsupported Rtp Session Exception Type!");
         }
     } else {
         _rtpSession = new AudioSymmetricRtpSession (ca_);

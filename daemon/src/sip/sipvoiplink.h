@@ -257,16 +257,7 @@ class SIPVoIPLink : public VoIPLink
         pjsip_tpselector *initTransportSelector (pjsip_transport *, pj_pool_t *);
 
         /**
-         * Helper function for creating a route set from information
-         * stored in configuration file.
-         */
-        pjsip_route_hdr *createRouteSet(Account *account, pj_pool_t *pool);
-
-        /**
-         * This function unset the transport for a given account. It tests wether the
-         * associated transport is used by other accounts. If not, it shutdown the transport
-         * putting its reference counter to zero. PJSIP assumes transport destruction since
-         * this action can be delayed by ongoing SIP transactions.
+         * This function unset the transport for a given account.
          */
         void shutdownSipTransport (SIPAccount *account);
 
@@ -284,11 +275,6 @@ class SIPVoIPLink : public VoIPLink
          * Create the default UDP transport according ot Ip2Ip profile settings
          */
         void createDefaultSipUdpTransport();
-
-        /**
-         * Create the default TLS litener using IP2IP_PROFILE settings
-         */
-        void createDefaultSipTlsListener();
 
     private:
         /**
@@ -313,49 +299,35 @@ class SIPVoIPLink : public VoIPLink
          */
         pj_status_t stunServerResolve (SIPAccount *);
 
-
         /**
-         * Function used to create a new sip transport or get an existing one from the map.
-         * The SIP transport is "acquired" according to account's current settings.
-         * This function should be called before registering an account
-         * @param account An account for which transport is to be set
-         *
+         * Create the default TLS listener.
          */
-        void acquireTransport (SIPAccount *account);
-
-        /**
-         * Create the default TLS litener according to account settings.
-         */
-        void createTlsListener (SIPAccount*);
+        void createTlsListener (SIPAccount*, pjsip_tpfactory **listener);
 
         /**
          * General Sip transport creation method according to the
          * transport type specified in account settings
          * @param account The account for which a transport must be created.
          */
-        bool createSipTransport (SIPAccount *account);
+        void createSipTransport (SIPAccount *account);
 
         /**
         * Create SIP UDP transport from account's setting
         * @param account The account for which a transport must be created.
-        * @param local True if the account is IP2IP
-        * @return the transport
         */
-        pjsip_transport * createUdpTransport (SIPAccount *account, bool local);
+        void createUdpTransport (SIPAccount *account);
 
         /**
          * Create a TLS transport from the default TLS listener from
          * @param account The account for which a transport must be created.
-         * @return pj_status_t PJ_SUCCESS on success
          */
-        pj_status_t createTlsTransport (SIPAccount *, std::string remoteAddr);
+        void createTlsTransport (SIPAccount *, std::string remoteAddr);
 
         /**
          * Create a UDP transport using stun server to resove public address
          * @param account The account for which a transport must be created.
-         * @return pj_status_t PJ_SUCCESS on success
          */
-        pj_status_t createAlternateUdpTransport (SIPAccount *account);
+        void createStunTransport (SIPAccount *account);
 
         /**
          * Get the correct address to use (ie advertised) from

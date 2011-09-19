@@ -165,10 +165,9 @@ IAXVoIPLink::terminateIAXCall()
 void
 IAXVoIPLink::getEvent()
 {
-    iax_event* event = NULL;
-
     {
         ost::MutexLock m(mutexIAX_);
+        iax_event *event;
         while ((event = iax_get_event (IAX_NONBLOCKING)) != NULL) {
         	// If we received an 'ACK', libiax2 tells apps to ignore them.
             if (event->etype == IAX_EVENT_NULL)
@@ -263,8 +262,6 @@ IAXVoIPLink::getIAXCall (const std::string& id)
 void
 IAXVoIPLink::sendRegister (Account *a)
 {
-    _debug ("IAX: Sending registration");
-
     IAXAccount *account = dynamic_cast<IAXAccount*>(a);
 
     if (account->getHostname().empty())
@@ -273,43 +270,28 @@ IAXVoIPLink::sendRegister (Account *a)
     if (account->getUsername().empty())
     	throw VoipLinkException("Account username is empty");
 
-    // lock
     ost::MutexLock m(mutexIAX_);
 
-    // Always use a brand new session
     if (regSession_)
         iax_destroy(regSession_);
 
     regSession_ = iax_session_new();
 
-    if (!regSession_)
-        _debug ("IAX: Error when generating new session for register");
-    else {
-        _debug ("IAX: Sending registration to %s with user %s", account->getHostname().c_str() , account->getUsername().c_str());
-        int val = iax_register (regSession_, account->getHostname().data(), account->getUsername().data(), account->getPassword().data(), 120);
-        _debug ("IAX: Return value: %d", val);
-        // set the time-out to 15 seconds, after that, resend a registration request.
-        // until we unregister.
+    if (regSession_) {
+        iax_register (regSession_, account->getHostname().data(), account->getUsername().data(), account->getPassword().data(), 120);
         nextRefreshStamp_ = time (NULL) + 10;
-
-        account->setRegistrationState (Trying);
+        account->setRegistrationState(Trying);
     }
 }
 
 void
 IAXVoIPLink::sendUnregister (Account *a)
 {
-    _debug ("IAXVoipLink: Send unregister");
-
-    {
-        ost::MutexLock m(mutexIAX_);
-        if (regSession_) {
-            iax_destroy (regSession_);
-            regSession_ = NULL;
-        }
-    }
-
-    mutexIAX_.leaveMutex();
+	ost::MutexLock m(mutexIAX_);
+	if (regSession_) {
+		iax_destroy (regSession_);
+		regSession_ = NULL;
+	}
 
     nextRefreshStamp_ = 0;
 

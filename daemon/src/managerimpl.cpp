@@ -2755,10 +2755,6 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser *parser)
     // IP to IP settings (most likely using port 5060)
     link->createDefaultSipUdpTransport();
 
-    // Call this method to create TLS listener
-    link->createDefaultSipTlsListener();
-
-
     // Force IP2IP settings to be loaded to be loaded
     // No registration in the sense of the REGISTER method is performed.
     ip2ip->registerVoIPLink();
