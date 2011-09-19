@@ -52,7 +52,7 @@ AudioRtpFactory::AudioRtpFactory(SIPCall *ca) : _rtpSession (NULL), remoteContex
 
 AudioRtpFactory::~AudioRtpFactory()
 {
-    stop();
+	delete _rtpSession;
 }
 
 void AudioRtpFactory::initAudioRtpConfig ()
@@ -86,8 +86,6 @@ void AudioRtpFactory::initAudioSymmetricRtpSession ()
 {
     ost::MutexLock m (_audioRtpThreadMutex);
 
-    _debug ("AudioRtpFactory: Srtp enable: %d ", _srtpEnabled);
-
     if (_srtpEnabled) {
         std::string zidFilename (Manager::instance().voipPreferences.getZidFile());
 
@@ -99,7 +97,6 @@ void AudioRtpFactory::initAudioSymmetricRtpSession ()
                     // TODO: be careful with that. The hello hash is computed asynchronously. Maybe it's
                     // not even available at that point.
                     ca_->getLocalSDP()->setZrtpHash (static_cast<AudioZrtpSession *> (_rtpSession)->getHelloHash());
-                    _debug ("AudioRtpFactory: Zrtp hello hash fed to SDP");
                 }
                 break;
 
@@ -112,7 +109,6 @@ void AudioRtpFactory::initAudioSymmetricRtpSession ()
         }
     } else {
         _rtpSession = new AudioSymmetricRtpSession (ca_);
-        _debug ("AudioRtpFactory: Starting a symmetric unencrypted rtp session");
     }
 }
 
@@ -151,8 +147,6 @@ void AudioRtpFactory::stop (void)
 
 int AudioRtpFactory::getSessionMedia()
 {
-    _info ("AudioRtpFactory: Update session media");
-
     if (_rtpSession == NULL) {
         throw AudioRtpFactoryException ("AudioRtpFactory: Error: RTP session was null when trying to get session media type");
     }
@@ -170,10 +164,8 @@ void AudioRtpFactory::updateSessionMedia (AudioCodec *audiocodec)
 
 void AudioRtpFactory::updateDestinationIpAddress (void)
 {
-    if (_rtpSession == NULL) {
-        throw AudioRtpFactoryException ("AudioRtpFactory: Error: RtpSession was null when trying to update IP address");
-    }
-    _rtpSession->updateDestinationIpAddress();
+    if (_rtpSession)
+    	_rtpSession->updateDestinationIpAddress();
 }
 
 sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
@@ -205,7 +197,8 @@ void AudioRtpFactory::setRemoteCryptoInfo (sfl::SdesNegotiator& nego)
 
 void AudioRtpFactory::setDtmfPayloadType(unsigned int payloadType)
 {
-    _rtpSession->setDtmfPayloadType(payloadType);
+	if (_rtpSession)
+		_rtpSession->setDtmfPayloadType(payloadType);
 }
 
 void AudioRtpFactory::sendDtmfDigit (int digit)
