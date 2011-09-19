@@ -187,12 +187,12 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
                                 const std::string& call_id, const std::string& to, const std::string& conf_id)
 {
     if (call_id.empty()) {
-        _debug ("Manager: New outgoing call abbort, missing callid");
+        _debug ("Manager: New outgoing call abort, missing callid");
         return false;
     }
     
     if (account_id.empty()) {
-        _debug ("Manager: New outgoing call abbort, missing account");
+        _debug ("Manager: New outgoing call abort, missing account");
         return false;
     }
 
@@ -2497,34 +2497,24 @@ std::vector<std::string> ManagerImpl::getAccountList () const
     else
         _error ("Manager: could not find IP2IP profile in getAccount list");
 
-    // If no order has been set, load the default one
-    // ie according to the creation date.
-
+    // If no order has been set, load the default one ie according to the creation date.
     if (account_order.empty()) {
-        _debug ("Manager: account order is empty");
         for (AccountMap::const_iterator iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
-            if (iter->second != NULL and iter->first != IP2IP_PROFILE and not iter->first.empty()) {
-                _debug ("PUSHING BACK %s", iter->first.c_str());
+        	if (iter->first == IP2IP_PROFILE || iter->first.empty())
+        		continue;
+            if (iter->second)
                 v.push_back (iter->second->getAccountID());
-            }
         }
+        return v;
     }
-    else {
-        // otherwise, load the custom one
-        // ie according to the saved order
-        _debug ("Manager: Load account list according to preferences");
 
-        for (vector<string>::const_iterator iter = account_order.begin(); iter != account_order.end(); ++iter) {
-            // This account has not been loaded, so we ignore it
-            AccountMap::const_iterator account_iter = _accountMap.find (*iter);
-            if (account_iter != _accountMap.end()) {
-                if (account_iter->second and (account_iter->first not_eq IP2IP_PROFILE) and not account_iter->first.empty()) {
-                    // If the account is valid
-                    v.push_back (account_iter->second->getAccountID());
-                }
-            }
-        }
-    }
+	for (vector<string>::const_iterator iter = account_order.begin(); iter != account_order.end(); ++iter) {
+		if (*iter == IP2IP_PROFILE || *iter == "")
+			continue;
+		AccountMap::const_iterator account_iter = _accountMap.find (*iter);
+		if (account_iter != _accountMap.end() && account_iter->second)
+			v.push_back (account_iter->second->getAccountID());
+	}
 
     return v;
 }
@@ -2714,11 +2704,7 @@ std::string ManagerImpl::getNewCallID ()
 
 std::vector<std::string> ManagerImpl::loadAccountOrder (void) const
 {
-    const std::string account_list(preferences.getAccountOrder());
-
-    _debug ("Manager: Load account order %s", account_list.c_str());
-
-    return unserialize (account_list);
+    return unserialize (preferences.getAccountOrder());
 }
 
 void ManagerImpl::loadAccountMap(Conf::YamlParser *parser)

@@ -40,10 +40,8 @@
 
 #include "manager.h"
 
-const char* CallManager::SERVER_PATH = "/org/sflphone/SFLphone/CallManager";
-
 CallManager::CallManager (DBus::Connection& connection)
-    : DBus::ObjectAdaptor (connection, SERVER_PATH)
+    : DBus::ObjectAdaptor (connection, "/org/sflphone/SFLphone/CallManager")
 {
 }
 
@@ -64,81 +62,39 @@ void
 CallManager::placeCallFirstAccount (const std::string& callID,
                                     const std::string& to)
 {
-
     if (to == "") {
         _warn ("CallManager: Warning: No number entered, call stopped");
         return;
     }
 
-    std::vector< std::string > accountOrder = Manager::instance().loadAccountOrder();
-    std::vector< std::string >::iterator iter;
+    std::vector< std::string > accountList = Manager::instance().loadAccountOrder();
+    if (accountList.size() == 0)
+    	accountList = Manager::instance().getAccountList();
 
-    Account *account;
-
-    _debug ("AccountOrder size: %d", accountOrder.size());
-
-    if (accountOrder.size() > 0) {
-
-        iter = accountOrder.begin();
-
-        while (iter != accountOrder.end()) {
-            account = Manager::instance().getAccount (*iter);
-
-            if ( (*iter != IP2IP_PROFILE) && account->isEnabled()) {
-                Manager::instance().outgoingCall (*iter, callID, to);
-                return;
-            }
-
-            iter++;
-        }
-    } else {
-        _error ("AccountOrder is empty");
-        // If accountOrder is empty fallback on accountList (which has no preference order)
-        std::vector< std::string > accountList = Manager::instance().getAccountList();
-        iter = accountList.begin();
-
-
-        _error ("AccountList size: %d", accountList.size());
-
-        if (accountList.size() > 0) {
-            while (iter != accountList.end()) {
-                _error ("iter");
-                account = Manager::instance().getAccount (*iter);
-
-                if ( (*iter != IP2IP_PROFILE) && account->isEnabled()) {
-                    _error ("makecall");
-                    Manager::instance().outgoingCall (*iter, callID, to);
-                    return;
-                }
-
-                iter++;
-            }
-
-        }
-    }
-
-    _warn ("CallManager: Warning: No enabled account found, call stopped");
-
+	std::vector< std::string >::const_iterator iter;
+	for (iter = accountList.begin(); iter != accountList.end(); ++iter) {
+		if ((*iter != IP2IP_PROFILE) && Manager::instance().getAccount(*iter)->isEnabled()) {
+			Manager::instance().outgoingCall(*iter, callID, to);
+			return;
+		}
+	}
 }
 
 void
 CallManager::refuse (const std::string& callID)
 {
-    _debug ("CallManager: Refuse %s", callID.c_str());
     Manager::instance().refuseCall (callID);
 }
 
 void
 CallManager::accept (const std::string& callID)
 {
-    _debug ("CallManager: Accept received");
     Manager::instance().answerCall (callID);
 }
 
 void
 CallManager::hangUp (const std::string& callID)
 {
-    _debug ("CallManager: HangUp received %s", callID.c_str());
     Manager::instance().hangupCall (callID);
 
 }
@@ -146,45 +102,37 @@ CallManager::hangUp (const std::string& callID)
 void
 CallManager::hangUpConference (const std::string& confID)
 {
-    _debug ("CallManager::hangUpConference received %s", confID.c_str());
     Manager::instance().hangupConference (confID);
-
 }
 
 
 void
 CallManager::hold (const std::string& callID)
 {
-    _debug ("CallManager::hold received %s", callID.c_str());
     Manager::instance().onHoldCall (callID);
-
 }
 
 void
 CallManager::unhold (const std::string& callID)
 {
-    _debug ("CallManager::unhold received %s", callID.c_str());
     Manager::instance().offHoldCall (callID);
 }
 
 void
 CallManager::transfer (const std::string& callID, const std::string& to)
 {
-    _debug ("CallManager::transfer received");
     Manager::instance().transferCall (callID, to);
 }
 
 void
 CallManager::attendedTransfer (const std::string& transferID, const std::string& targetID)
 {
-	_debug("CallManager::attended transfer received");
 	Manager::instance().attendedTransfer(transferID, targetID);
 }
 
 void
 CallManager::setVolume (const std::string& device, const double& value)
 {
-
     if (device == "speaker") {
         Manager::instance().setSpkrVolume ( (int) (value*100.0));
     } else if (device == "mic") {
@@ -197,12 +145,9 @@ CallManager::setVolume (const std::string& device, const double& value)
 double
 CallManager::getVolume (const std::string& device)
 {
-
     if (device == "speaker") {
-        _debug ("Current speaker = %d", Manager::instance().getSpkrVolume());
         return Manager::instance().getSpkrVolume() /100.0;
     } else if (device == "mic") {
-        _debug ("Current mic = %d", Manager::instance().getMicVolume());
         return Manager::instance().getMicVolume() /100.0;
     }
 
@@ -212,56 +157,48 @@ CallManager::getVolume (const std::string& device)
 void
 CallManager::joinParticipant (const std::string& sel_callID, const std::string& drag_callID)
 {
-    _debug ("CallManager: Join participant %s, %s", sel_callID.c_str(), drag_callID.c_str());
     Manager::instance().joinParticipant (sel_callID, drag_callID);
 }
 
 void
 CallManager::createConfFromParticipantList(const std::vector< std::string >& participants)
 {
-    _debug("CallManager: Create conference from participant list");
     Manager::instance().createConfFromParticipantList(participants);
 }
 
 void
 CallManager::addParticipant (const std::string& callID, const std::string& confID)
 {
-    _debug ("CallManager::addParticipant received %s, %s", callID.c_str(), confID.c_str());
     Manager::instance().addParticipant (callID, confID);
 }
 
 void
 CallManager::addMainParticipant (const std::string& confID)
 {
-    _debug ("CallManager::addMainParticipant received %s", confID.c_str());
     Manager::instance().addMainParticipant (confID);
 }
 
 void
 CallManager::detachParticipant (const std::string& callID)
 {
-    _debug ("CallManager::detachParticipant received %s", callID.c_str());
     Manager::instance().detachParticipant (callID, "");
 }
 
 void
 CallManager::joinConference (const std::string& sel_confID, const std::string& drag_confID)
 {
-    _debug ("CallManager::joinConference received %s, %s", sel_confID.c_str(), drag_confID.c_str());
     Manager::instance().joinConference (sel_confID, drag_confID);
 }
 
 void
 CallManager::holdConference (const std::string& confID)
 {
-    _debug ("CallManager::holdConference received %s", confID.c_str());
     Manager::instance().holdConference (confID);
 }
 
 void
 CallManager::unholdConference (const std::string& confID)
 {
-    _debug ("CallManager: Unhold Conference %s", confID.c_str());
     Manager::instance().unHoldConference (confID);
 }
 
@@ -280,7 +217,6 @@ CallManager::getConferenceList (void)
 std::vector< std::string >
 CallManager::getParticipantList (const std::string& confID)
 {
-    _debug ("CallManager: Get Participant list for conference %s", confID.c_str());
     return Manager::instance().getParticipantList (confID);
 }
 
@@ -383,7 +319,6 @@ sfl::AudioZrtpSession * CallManager::getAudioZrtpSession (const std::string& cal
 void
 CallManager::setSASVerified (const std::string& callID)
 {
-
     try {
         sfl::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession (callID);
@@ -392,13 +327,11 @@ CallManager::setSASVerified (const std::string& callID)
         return;
         // throw;
     }
-
 }
 
 void
 CallManager::resetSASVerified (const std::string& callID)
 {
-
     try {
         sfl::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession (callID);
@@ -407,14 +340,11 @@ CallManager::resetSASVerified (const std::string& callID)
         return;
         // throw;
     }
-
 }
 
 void
 CallManager::setConfirmGoClear (const std::string& callID)
 {
-    _debug ("CallManager::setConfirmGoClear received for account %s", callID.c_str());
-
     try {
         sfl::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession (callID);
@@ -423,14 +353,11 @@ CallManager::setConfirmGoClear (const std::string& callID)
         return;
         // throw;
     }
-
 }
 
 void
 CallManager::requestGoClear (const std::string& callID)
 {
-    _debug ("CallManager::requestGoClear received for account %s", callID.c_str());
-
     try {
         sfl::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession (callID);
@@ -439,15 +366,11 @@ CallManager::requestGoClear (const std::string& callID)
         return;
         /// throw;
     }
-
 }
 
 void
 CallManager::acceptEnrollment (const std::string& callID, const bool& accepted)
 {
-
-    _debug ("CallManager::acceptEnrollment received for account %s", callID.c_str());
-
     try {
         sfl::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession (callID);
@@ -456,15 +379,11 @@ CallManager::acceptEnrollment (const std::string& callID, const bool& accepted)
         return;
         // throw;
     }
-
 }
 
 void
 CallManager::setPBXEnrollment (const std::string& callID, const bool& yesNo)
 {
-
-    _debug ("CallManager::setPBXEnrollment received for account %s", callID.c_str());
-
     try {
         sfl::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession (callID);
@@ -473,7 +392,6 @@ CallManager::setPBXEnrollment (const std::string& callID, const bool& yesNo)
         return;
         // throw;
     }
-
 }
 
 void
