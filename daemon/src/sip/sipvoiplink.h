@@ -350,11 +350,6 @@ class SIPVoIPLink : public VoIPLink
          */
         EventThread *evThread_;
 
-        /**
-         * Global mutex for the sip voiplink
-         */
-        ost::Mutex mutexSIP_;
-
         friend class SIPTest;
 };
 

@@ -284,19 +284,17 @@ void SIPVoIPLink::sendRegister (Account *a)
         pjsip_transport_dec_ref(account->transport);
 
     createSipTransport(account);
-	if (account->transport)
-		return;
 
-	// Could not create new transport, this transport may already exists
-    account->transport = transportMap_[account->getLocalPort()];
-	if (account->transport) {
-		pjsip_transport_add_ref(account->transport);
-	} else {
-		account->transport = _localUDPTransport;
-		account->setLocalPort(_localUDPTransport->local_name.port);
-    }
-
-	ost::MutexLock m(mutexSIP_);
+	if (!account->transport) {
+		// Could not create new transport, this transport may already exists
+		account->transport = transportMap_[account->getLocalPort()];
+		if (account->transport) {
+			pjsip_transport_add_ref(account->transport);
+		} else {
+			account->transport = _localUDPTransport;
+			account->setLocalPort(_localUDPTransport->local_name.port);
+		}
+	}
 
 	account->setRegister(true);
 	account->setRegistrationState (Trying);
