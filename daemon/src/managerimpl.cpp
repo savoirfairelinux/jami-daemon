@@ -2802,7 +2802,6 @@ ManagerImpl::getAccount (const std::string& accountID) const
     if (iter != _accountMap.end())
 		return iter->second;
 
-    _debug ("Manager: Did not found account \"%s\", returning IP2IP account", accountID.c_str());
     return getAccount(IP2IP_PROFILE);
 }
 
