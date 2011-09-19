@@ -190,11 +190,6 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
         _debug ("Manager: New outgoing call abort, missing callid");
         return false;
     }
-    
-    if (account_id.empty()) {
-        _debug ("Manager: New outgoing call abort, missing account");
-        return false;
-    }
 
     // Call ID must be unique
     if (not getAccountFromCall (call_id).empty()) {
