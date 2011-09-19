@@ -59,6 +59,10 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    m_pItemView->headerItem()->setText(0,"Calls");
    m_pItemView->header()->setClickable(true);
    m_pItemView->header()->setSortIndicatorShown(true);
+   m_pItemView->setAlternatingRowColors(true);
+
+   m_pFilterLE->setPlaceholderText("Filter");
+   m_pFilterLE->setClearButtonShown(true);
    
    QStringList sortBy;
    sortBy << "Date" << "Name" << "Popularity" << "Duration";

@@ -1,6 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
- *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
+ *   Author : Mathieu Leduc-Hamel mathieu.leduc-hamel@savoirfairelinux.com *
  *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -18,38 +17,62 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
+
 #ifndef CONTACTITEMWIDGET_H
 #define CONTACTITEMWIDGET_H
 
-#include <QWidget>
+#include <QtCore/QList>
+#include <QtCore/QVariant>
+#include <QtCore/QVector>
+
+#include <QtGui/QWidget>
 #include <QtGui/QLabel>
-#include "lib/Contact.h"
+#include <QtGui/QSpacerItem>
+#include <QtGui/QHBoxLayout>
+#include <QtGui/QVBoxLayout>
+#include <KIcon>
+#include <kabc/addressee.h>
+#include <kabc/picture.h>
+#include <kabc/phonenumber.h>
 
-class Contact;
+class QTreeWidgetItem;
 
-/**
-   @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
-*/
 class ContactItemWidget : public QWidget
 {
-Q_OBJECT
+   Q_OBJECT
+ public:
+    ContactItemWidget(QWidget* parent =0);
+    ~ContactItemWidget();
 
-private:
-   QLabel * contactName;
-   QLabel * contactNumber;
-   QLabel * contactPhoto;
-   QLabel * contactType;
-   
-public:
+    KABC::Addressee* contact() const;
+    void setContact(KABC::Addressee& contact);
+    static const char * callStateIcons[12];
 
-   //Constructors & Destructors
-   ContactItemWidget(const Contact * contact, bool displayPhoto, QWidget *parent = 0);
-   ~ContactItemWidget();
-   
-   //Getters
-   QString getContactName();
-   QString getContactNumber();
+    QPixmap* getIcon();
+    QString  getContactName();
+    KABC::PhoneNumber::List getCallNumbers();
+    QString  getOrganization();
+    QString  getEmail();
+    QString  getPicture();
+    QTreeWidgetItem* getItem();
 
-};
+    void setItem(QTreeWidgetItem* item);
 
-#endif
+ private:
+    KABC::Addressee m_pContactKA;
+
+    QLabel* m_pIconL;
+    QLabel* m_pContactNameL;
+    QLabel* m_pCallNumberL;
+    QLabel* m_pOrganizationL;
+    QLabel* m_pEmailL;
+
+    QTreeWidgetItem* m_pItem;
+
+    bool init;
+
+public slots:
+   void updated();
+ };
+
+#endif // CALLTREE_ITEM_H
