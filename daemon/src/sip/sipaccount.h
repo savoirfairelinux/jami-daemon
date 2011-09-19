@@ -165,19 +165,21 @@ class SIPAccount : public Account
          * interval that indicates how long the client would like the
          * registration to be valid.
          *
-         * @return A string describing the expiration value.
+         * @return the expiration value.
          */
-        const std::string& getRegistrationExpire (void) const {
-            return registrationExpire_;
+        unsigned getRegistrationExpire (void) const {
+        	if (registrationExpire_ == 0)
+        		return PJSIP_REGC_EXPIRATION_NOT_SPECIFIED;
+        	return registrationExpire_;
         }
 
         /**
-         * Setting the Expiration Interval of Contact Addresses.
-         *
-         * @param A string describing the expiration value.
+         * Doubles the Expiration Interval of Contact Addresses.
          */
-        void setRegistrationExpire (const std::string &expr) {
-            registrationExpire_ = expr;
+        void doubleRegistrationExpire (void) {
+        	registrationExpire_ *= 2;
+        	if (registrationExpire_ < 0)
+        		registrationExpire_ = 0;
         }
 
         bool fullMatch (const std::string& username, const std::string& hostname) const;
@@ -444,7 +446,7 @@ class SIPAccount : public Account
         bool bRegister_;
 
         // Network settings
-        std::string registrationExpire_;
+        int registrationExpire_;
 
         // interface name on which this account is bound
         std::string interface_;

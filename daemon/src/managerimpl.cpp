@@ -576,22 +576,15 @@ void ManagerImpl::transferSucceded ()
 
 bool ManagerImpl::attendedTransfer(const std::string& transferID, const std::string& targetID)
 {
-    bool returnValue;;
+    if (getConfigFromCall(transferID) == Call::IPtoIP)
+        return SIPVoIPLink::instance()->attendedTransfer(transferID, targetID);
 
-    // Direct IP to IP call
-    if (getConfigFromCall (transferID) == Call::IPtoIP)
-        returnValue = SIPVoIPLink::instance ()-> attendedTransfer(transferID, targetID);
-    else {	// Classic call, attached to an account
-        std::string accountid = getAccountFromCall (transferID);
-        if (accountid.empty())
-            return false;
+    // Classic call, attached to an account
+	std::string accountid = getAccountFromCall(transferID);
+	if (accountid.empty())
+		return false;
 
-        returnValue = getAccountLink (accountid)->attendedTransfer (transferID, targetID);
-    }
-
-    getMainBuffer()->stateInfo();
-
-    return returnValue;
+	return getAccountLink(accountid)->attendedTransfer(transferID, targetID);
 }
 
 //THREAD=Main : Call:Incoming
@@ -2682,7 +2675,7 @@ bool ManagerImpl::associateCallToAccount (const std::string& callID,
     return false;
 }
 
-std::string ManagerImpl::getAccountFromCall (const std::string& callID)
+std::string ManagerImpl::getAccountFromCall(const std::string& callID)
 {
     ost::MutexLock m (_callAccountMapMutex);
 	CallAccountMap::iterator iter = _callAccountMap.find (callID);

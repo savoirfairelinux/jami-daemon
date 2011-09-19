@@ -144,6 +144,8 @@ class SIPVoIPLink : public VoIPLink
          */
         virtual void offhold (const std::string& id);
 
+        bool transferCommon(SIPCall *call, pj_str_t *dst);
+
         /**
          * Transfer the call
          * @param id The call identifier

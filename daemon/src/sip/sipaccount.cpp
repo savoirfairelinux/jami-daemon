@@ -43,7 +43,7 @@ SIPAccount::SIPAccount (const std::string& accountID)
 	, transport (NULL)
     , regc_ (NULL)
     , bRegister_ (false)
-    , registrationExpire_ ("")
+    , registrationExpire_ (600)
     , interface_ ("default")
     , publishedSameasLocal_ (true)
     , publishedIpAddress_ ("")
@@ -102,7 +102,9 @@ void SIPAccount::serialize (Conf::YamlEmitter *emitter)
     Conf::ScalarNode hostname (Account::hostname_);
     Conf::ScalarNode enable (enabled_);
     Conf::ScalarNode type (Account::type_);
-    Conf::ScalarNode expire (registrationExpire_);
+    std::stringstream expirevalstr;
+    expirevalstr << registrationExpire_;
+    Conf::ScalarNode expire (expirevalstr);
     Conf::ScalarNode interface (interface_);
     std::stringstream portstr;
     portstr << localPort_;
@@ -381,7 +383,7 @@ void SIPAccount::setAccountDetails (std::map<std::string, std::string> details)
     stunEnabled_ = details[STUN_ENABLE] == "true";
     dtmfType_ = details[ACCOUNT_DTMF_TYPE] == "overrtp" ? OVERRTP : SIPINFO;
 
-    registrationExpire_ = details[CONFIG_ACCOUNT_REGISTRATION_EXPIRE];
+    registrationExpire_ = atoi(details[CONFIG_ACCOUNT_REGISTRATION_EXPIRE].c_str());
 
     userAgent_ = details[USERAGENT];
 
@@ -464,7 +466,9 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[ROUTESET] = serviceRoute_;
     a[USERAGENT] = userAgent_;
 
-    a[CONFIG_ACCOUNT_REGISTRATION_EXPIRE] = registrationExpire_;
+    std::stringstream expireval;
+    expireval << registrationExpire_;
+    a[CONFIG_ACCOUNT_REGISTRATION_EXPIRE] = expireval.str();
     a[LOCAL_INTERFACE] = interface_;
     a[PUBLISHED_SAMEAS_LOCAL] = publishedSameasLocal_ ? "true" : "false";
     a[PUBLISHED_ADDRESS] = publishedIpAddress_;
@@ -619,8 +623,8 @@ void SIPAccount::initStunConfiguration (void)
 
 void SIPAccount::loadConfig()
 {
-    if (registrationExpire_.empty())
-        registrationExpire_ = "600"; /** Default expire value for registration */
+    if (registrationExpire_ == 0)
+        registrationExpire_ = 600; /** Default expire value for registration */
 
     if (tlsEnable_ == "true") {
         initTlsConfiguration();
