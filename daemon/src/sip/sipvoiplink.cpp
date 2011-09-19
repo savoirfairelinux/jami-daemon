@@ -285,17 +285,6 @@ void SIPVoIPLink::sendRegister (Account *a)
 
     createSipTransport(account);
 
-	if (!account->transport) {
-		// Could not create new transport, this transport may already exists
-		account->transport = transportMap_[account->getLocalPort()];
-		if (account->transport) {
-			pjsip_transport_add_ref(account->transport);
-		} else {
-			account->transport = _localUDPTransport;
-			account->setLocalPort(_localUDPTransport->local_name.port);
-		}
-	}
-
 	account->setRegister(true);
 	account->setRegistrationState (Trying);
 
@@ -1059,6 +1048,17 @@ void SIPVoIPLink::createSipTransport (SIPAccount *account)
 		createStunTransport(account);
     else
     	createUdpTransport(account);
+
+	if (!account->transport) {
+		// Could not create new transport, this transport may already exists
+		account->transport = transportMap_[account->getLocalPort()];
+		if (account->transport) {
+			pjsip_transport_add_ref(account->transport);
+		} else {
+			account->transport = _localUDPTransport;
+			account->setLocalPort(_localUDPTransport->local_name.port);
+		}
+	}
 }
 
 void SIPVoIPLink::createUdpTransport (SIPAccount *account)
@@ -1102,7 +1102,6 @@ void SIPVoIPLink::createUdpTransport (SIPAccount *account)
 
     if (account->transport)
     	transportMap_[account->getLocalPort()] = account->transport;
-
 }
 
 pjsip_tpselector *SIPVoIPLink::initTransportSelector (pjsip_transport *transport, pj_pool_t *tp_pool)
