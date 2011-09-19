@@ -142,6 +142,8 @@ void ManagerImpl::terminate ()
 
     unloadAccountMap();
 
+    delete SIPVoIPLink::instance();
+
     delete _dtmfKey;
 
     delete _telephoneTone;
@@ -209,9 +211,8 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 
     std::string to_cleaned(NumberCleaner::clean(to, prefix));
 
-    Call::CallConfiguration callConfig;
-    /* Check what kind of call we are dealing with */
-    checkCallConfiguration (call_id, to_cleaned, &callConfig);
+    Call::CallConfiguration callConfig = checkCallConfiguration (call_id, to_cleaned);
+    associateConfigToCall(call_id, callConfig);
 
     // in any cases we have to detach from current communication
     if (hasCurrentCall()) {
@@ -1684,8 +1685,7 @@ void ManagerImpl::startVoiceMessageNotification (const std::string& accountId,
 
 void ManagerImpl::connectionStatusNotification ()
 {
-    if (_dbus.isConnected())
-    	_dbus.getConfigurationManager()->accountsChanged();
+	_dbus.getConfigurationManager()->accountsChanged();
 }
 
 /**
@@ -2618,8 +2618,7 @@ std::string ManagerImpl::addAccount (
 
     saveConfig();
 
-    if (_dbus.isConnected())
-        _dbus.getConfigurationManager()->accountsChanged();
+	_dbus.getConfigurationManager()->accountsChanged();
 
     return accountID.str();
 }
@@ -2640,10 +2639,7 @@ void ManagerImpl::removeAccount (const std::string& accountID)
 
     saveConfig();
 
-    _debug ("REMOVE ACCOUNT");
-
-    if (_dbus.isConnected())
-        _dbus.getConfigurationManager()->accountsChanged();
+	_dbus.getConfigurationManager()->accountsChanged();
 }
 
 // ACCOUNT handling
@@ -2704,8 +2700,6 @@ std::vector<std::string> ManagerImpl::loadAccountOrder (void) const
 
 void ManagerImpl::loadAccountMap(Conf::YamlParser *parser)
 {
-	SIPVoIPLink *link = SIPVoIPLink::instance();
-
     // build a default IP2IP account with default parameters
     Account *ip2ip = new SIPAccount(IP2IP_PROFILE);
     _accountMap[IP2IP_PROFILE] = ip2ip;
@@ -2727,7 +2721,7 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser *parser)
 
     // Initialize default UDP transport according to
     // IP to IP settings (most likely using port 5060)
-    link->createDefaultSipUdpTransport();
+    SIPVoIPLink::instance()->createDefaultSipUdpTransport();
 
     // Force IP2IP settings to be loaded to be loaded
     // No registration in the sense of the REGISTER method is performed.
@@ -2776,8 +2770,6 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser *parser)
 
 void ManagerImpl::unloadAccountMap ()
 {
-    _debug ("Manager: Unload account map");
-
     AccountMap::iterator iter;
     for (iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
         // Avoid removing the IP2IP account twice
@@ -2786,8 +2778,6 @@ void ManagerImpl::unloadAccountMap ()
     }
 
     _accountMap.clear();
-
-    delete SIPVoIPLink::instance();
 }
 
 bool ManagerImpl::accountExists (const std::string& accountID)
@@ -2861,8 +2851,6 @@ std::map<std::string, int32_t> ManagerImpl::getAddressbookSettings () const
 void ManagerImpl::setAddressbookSettings (
     const std::map<std::string, int32_t>& settings)
 {
-    _debug ("Manager: Update addressbook settings");
-
     addressbookPreference.setEnabled (settings.find ("ADDRESSBOOK_ENABLE")->second == 1);
     addressbookPreference.setMaxResults (settings.find ("ADDRESSBOOK_MAX_RESULTS")->second);
     addressbookPreference.setPhoto (settings.find ("ADDRESSBOOK_DISPLAY_CONTACT_PHOTO")->second == 1);
@@ -2878,11 +2866,7 @@ void ManagerImpl::setAddressbookSettings (
 
 void ManagerImpl::setAddressbookList (const std::vector<std::string>& list)
 {
-    _debug ("Manager: Set addressbook list");
-
-    std::string s = ManagerImpl::serialize (list);
-    _debug("Manager: New addressbook list: %s", s.c_str());
-    addressbookPreference.setList (s);
+    addressbookPreference.setList (ManagerImpl::serialize (list));
 
     saveConfig();
 }
@@ -2921,20 +2905,9 @@ void ManagerImpl::setHookSettings (const std::map<std::string, std::string>& set
     // saveConfig();
 }
 
-void ManagerImpl::checkCallConfiguration (const std::string& id,
-        const std::string &to, Call::CallConfiguration *callConfig)
+Call::CallConfiguration ManagerImpl::checkCallConfiguration (const std::string& id, const std::string &to)
 {
-    Call::CallConfiguration config;
-
-    if (to.find (SIP_SCHEME) == 0 or to.find (SIPS_SCHEME) == 0) {
-        _debug ("Manager: Sip scheme detected (sip: or sips:), sending IP2IP Call");
-        config = Call::IPtoIP;
-    } else
-        config = Call::Classic;
-
-    associateConfigToCall (id, config);
-
-    *callConfig = config;
+    return (to.find (SIP_SCHEME) == 0 or to.find (SIPS_SCHEME) == 0) ? Call::IPtoIP : Call::Classic;
 }
 
 bool ManagerImpl::associateConfigToCall (const std::string& callID,
@@ -3006,17 +2979,12 @@ std::map<std::string, std::string> ManagerImpl::getCallDetails (const std::strin
 
 std::vector<std::string> ManagerImpl::getHistorySerialized(void) const
 {
-    _debug("Manager: Get history serialized");
-
     return _history->get_history_serialized();
 }
 
 void ManagerImpl::setHistorySerialized(std::vector<std::string> history)
 {
-
-    _debug("Manager: Set history serialized");
-
-    _history->set_serialized_history (history, preferences.getHistoryLimit());;
+	_history->set_serialized_history (history, preferences.getHistoryLimit());;
     _history->save_history();
 }
 
@@ -3056,21 +3024,16 @@ std::vector<std::string> ManagerImpl::getConferenceList (void) const
 {
     std::vector<std::string> v;
     vectorFromMapKeys(_conferencemap, v);
-
     return v;
 }
 
 std::vector<std::string> ManagerImpl::getParticipantList (const std::string& confID) const
 {
-    ConferenceMap::const_iterator iter_conf = _conferencemap.find (confID);
-    Conference *conf = NULL;
-
-    if (iter_conf != _conferencemap.end())
-        conf = iter_conf->second;
-
     std::vector<std::string> v;
-    if (conf) {
-        const ParticipantSet &participants = conf->getParticipantList();
+
+    ConferenceMap::const_iterator iter_conf = _conferencemap.find (confID);
+    if (iter_conf != _conferencemap.end()) {
+        const ParticipantSet &participants = iter_conf->second->getParticipantList();
         std::copy(participants.begin(), participants.end(), std::back_inserter(v));;
     } else
         _warn ("Manager: Warning: Did not found conference %s", confID.c_str());
