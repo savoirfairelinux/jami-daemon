@@ -2366,14 +2366,8 @@ ac_config_headers="$ac_config_headers pjlib/include/pj/compat/os_auto.h pjlib/in
 
 ac_config_files="$ac_config_files build.mak build/os-auto.mak build/cc-auto.mak pjlib/build/os-auto.mak pjlib-util/build/os-auto.mak pjmedia/build/os-auto.mak pjsip/build/os-auto.mak"
 
-
-
-if test "$CFLAGS" = ""; then
-  CFLAGS="-O2"
-else
-  CFLAGS="$CFLAGS"
-fi
-
+test "$CFLAGS" = "" && CFLAGS="-O2"
+CFLAGS="$CFLAGS -DNDEBUG -g" # no assertions, debug symbols
 CXXFLAGS="$CFLAGS $CXXFLAGS"
 
 ac_ext=c

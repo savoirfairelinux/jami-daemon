@@ -22,11 +22,9 @@ AC_CONFIG_FILES([build.mak
 dnl
 dnl Setup default CFLAGS
 dnl
-if test "$CFLAGS" = ""; then
-  CFLAGS="-O2"
-else
-  CFLAGS="$CFLAGS"
-fi
+test "$CFLAGS" = "" && CFLAGS="-O2"
+
+CFLAGS="$CFLAGS -DNDEBUG -g" # no assertions, debug symbols
 
 CXXFLAGS="$CFLAGS $CXXFLAGS"
 
