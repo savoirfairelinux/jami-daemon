@@ -1224,11 +1224,6 @@ class ManagerImpl
          */
         sfl::InstantMessaging *_imModule;
 
-        /**
-         * Check if the call is a classic call or a direct IP-to-IP call
-         */
-        Call::CallConfiguration  checkCallConfiguration (const std::string& id, const std::string& to);
-
         Conf::YamlEmitter *emitter;
 };
 

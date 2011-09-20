@@ -211,7 +211,8 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 
     std::string to_cleaned(NumberCleaner::clean(to, prefix));
 
-    Call::CallConfiguration callConfig = checkCallConfiguration (call_id, to_cleaned);
+    Call::CallConfiguration callConfig = (to_cleaned.find (SIP_SCHEME) == 0 or to_cleaned.find (SIPS_SCHEME) == 0) ? Call::IPtoIP : Call::Classic;
+
     associateConfigToCall(call_id, callConfig);
 
     // in any cases we have to detach from current communication
@@ -2903,11 +2904,6 @@ void ManagerImpl::setHookSettings (const std::map<std::string, std::string>& set
     // TODO save config is called for updateAddressbookSettings, updateHookSettings, setHistoryLimit each called
     // when closing preference window (in this order)
     // saveConfig();
-}
-
-Call::CallConfiguration ManagerImpl::checkCallConfiguration (const std::string& id, const std::string &to)
-{
-    return (to.find (SIP_SCHEME) == 0 or to.find (SIPS_SCHEME) == 0) ? Call::IPtoIP : Call::Classic;
 }
 
 bool ManagerImpl::associateConfigToCall (const std::string& callID,

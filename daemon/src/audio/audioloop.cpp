@@ -35,6 +35,7 @@
 #include "audioloop.h"
 #include <math.h>
 #include <cstring>
+#include <cassert>
 
 AudioLoop::AudioLoop() :_buffer (0),  _size (0), _pos (0), _sampleRate (0)
 {
@@ -46,9 +47,11 @@ AudioLoop::~AudioLoop()
 }
 
 void
-AudioLoop::getNext (SFLDataFormat* output, int total_samples, short volume)
+AudioLoop::getNext (SFLDataFormat* output, size_t total_samples, short volume)
 {
-    int pos = _pos;
+    size_t pos = _pos;
+
+    assert(_size);
 
     if(_size == 0) {
     	_error("AudioLoop: Error: Audio loop size is 0");
@@ -56,7 +59,7 @@ AudioLoop::getNext (SFLDataFormat* output, int total_samples, short volume)
     }
 
     while (total_samples) {
-        int samples = total_samples;
+        size_t samples = total_samples;
 
         if (samples > (_size-pos)) {
             samples = _size-pos;
@@ -65,7 +68,7 @@ AudioLoop::getNext (SFLDataFormat* output, int total_samples, short volume)
         memcpy(output, _buffer+pos, samples*sizeof (SFLDataFormat)); // short>char conversion
 
         if (volume!=100) {
-            for (int i=0; i<samples; i++) {
+            for (size_t i=0; i<samples; i++) {
                 *output = (*output * volume) /100;
                 output++;
             }
@@ -73,7 +76,6 @@ AudioLoop::getNext (SFLDataFormat* output, int total_samples, short volume)
             output += samples; // this is the destination...
         }
 
-        // should adjust sound here, in output???
         pos = (pos + samples) % _size;
 
         total_samples -= samples;
