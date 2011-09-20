@@ -39,7 +39,7 @@ ContactItemWidget::~ContactItemWidget()
 
 }
 
-void ContactItemWidget::setContact(KABC::Addressee& contact)
+void ContactItemWidget::setContact(Contact* contact)
 {
    m_pContactKA = contact;
    m_pIconL = new QLabel(this);
@@ -75,9 +75,9 @@ void ContactItemWidget::setContact(KABC::Addressee& contact)
 
 void ContactItemWidget::updated()
 {
-   m_pContactNameL->setText("<b>"+m_pContactKA.formattedName()+"</b>");
-   if (!m_pContactKA.organization().isEmpty()) {
-      m_pOrganizationL->setText(m_pContactKA.organization());
+   m_pContactNameL->setText("<b>"+m_pContactKA->getFormattedName()+"</b>");
+   if (!m_pContactKA->getOrganization().isEmpty()) {
+      m_pOrganizationL->setText(m_pContactKA->getOrganization());
    }
    else {
       m_pOrganizationL->setVisible(false);
@@ -90,51 +90,50 @@ void ContactItemWidget::updated()
       m_pEmailL->setVisible(false);
    }
    
-   KABC::PhoneNumber::List numbers = m_pContactKA.phoneNumbers();
-   foreach (KABC::PhoneNumber number, numbers) {
-      qDebug() << "Phone:" << number.number() << number.typeLabel();
+   PhoneNumbers numbers = m_pContactKA->getPhoneNumbers();
+   foreach (Contact::PhoneNumber* number, numbers) {
+      qDebug() << "Phone:" << number->getNumber() << number->getType();
    }
 
    if (getCallNumbers().count() == 1)
-      m_pCallNumberL->setText(getCallNumbers()[0].number());
+      m_pCallNumberL->setText(getCallNumbers()[0]->getNumber());
    else
       m_pCallNumberL->setText(QString::number(getCallNumbers().count())+" numbers");
-   
-   QImage photo = m_pContactKA.photo().data();
-   if (photo.isNull())
+
+   if (!m_pContactKA->getPhoto())
       m_pIconL->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
    else
-      m_pIconL->setPixmap(QPixmap::fromImage( m_pContactKA.photo().data()).scaled(QSize(48,48)));;
+      m_pIconL->setPixmap(*m_pContactKA->getPhoto());
 }
 
-QPixmap* ContactItemWidget::getIcon()
+// QPixmap* ContactItemWidget::getIcon()
+// {
+//    return new QPixmap();
+// }
+
+QString ContactItemWidget::getContactName() const
 {
-   return new QPixmap();
+   return m_pContactKA->getFormattedName();
 }
 
-QString ContactItemWidget::getContactName()
+PhoneNumbers ContactItemWidget::getCallNumbers() const
 {
-   return m_pContactKA.formattedName();
+   return m_pContactKA->getPhoneNumbers();
 }
 
-KABC::PhoneNumber::List ContactItemWidget::getCallNumbers()
+QString ContactItemWidget::getOrganization() const
 {
-   return m_pContactKA.phoneNumbers();
+   return m_pContactKA->getOrganization();
 }
 
-QString ContactItemWidget::getOrganization()
+QString ContactItemWidget::getEmail() const
 {
-   return m_pContactKA.organization();
+   return m_pContactKA->getPreferredEmail();
 }
 
-QString ContactItemWidget::getEmail()
+QPixmap* ContactItemWidget::getPicture() const
 {
-   return m_pContactKA.fullEmail();
-}
-
-QString ContactItemWidget::getPicture()
-{
-   return m_pContactKA.photo().url();
+   return (QPixmap*) m_pContactKA->getPhoto();
 }
 
 QTreeWidgetItem* ContactItemWidget::getItem()
@@ -145,4 +144,9 @@ QTreeWidgetItem* ContactItemWidget::getItem()
 void ContactItemWidget::setItem(QTreeWidgetItem* item)
 {
    m_pItem = item;
+}
+
+Contact* ContactItemWidget::getContact()
+{
+   return m_pContactKA;
 }

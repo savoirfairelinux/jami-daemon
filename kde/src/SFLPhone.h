@@ -121,7 +121,6 @@ public:
    ~SFLPhone();
         bool initialize();
    void setupActions();
-   void sendNotif(QString caller);
    void trayIconSignal();
    SFLPhoneView * getView();
    QList<QAction *> getCallActions();

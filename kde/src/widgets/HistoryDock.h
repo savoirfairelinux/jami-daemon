@@ -55,6 +55,7 @@ private slots:
    void updateLinkedFromDate(QDate date);
    void updateLinkedToDate(QDate date);
    void reload();
+   void updateContactInfo();
 };
 
 #endif

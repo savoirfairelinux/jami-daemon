@@ -27,6 +27,8 @@
 
 #include "lib/sflphone_const.h"
 #include "HistoryTreeItem.h"
+#include "AkonadiBackend.h"
+#include "lib/Contact.h"
 
 const char * HistoryTreeItem::callStateIcons[12] = {ICON_INCOMING, ICON_RINGING, ICON_CURRENT, ICON_DIALING, ICON_HOLD, ICON_FAILURE, ICON_BUSY, ICON_TRANSFER, ICON_TRANSF_HOLD, "", "", ICON_CONFERENCE};
 
@@ -54,24 +56,16 @@ void HistoryTreeItem::setCall(Call *call)
       labelIcon->setVisible(true);
       return;
    }
-      labelIcon = new QLabel(this);
-      labelPeerName = new QLabel();
-   labelIcon = new QLabel();
+   
+   labelIcon     = new QLabel(this);
+   labelPeerName = new QLabel();
+   labelIcon     = new QLabel();
+   
    labelIcon->setMinimumSize(70,48);
    labelIcon->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
    
    labelCallNumber2 = new QLabel(itemCall->getPeerPhoneNumber());
    QSpacerItem* verticalSpacer = new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding);
-   
-      
-   labelIcon->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
-        
-   if(! itemCall->getPeerName().trimmed().isEmpty()) {
-      labelPeerName = new QLabel("<b>"+itemCall->getPeerName()+"</b>");
-   }
-   else {
-      labelPeerName = new QLabel("<b>Unknow</b>");
-   }
 
    m_pTimeL = new QLabel();
    m_pTimeL->setText(QDateTime::fromTime_t(itemCall->getStartTimeStamp().toUInt()).toString());
@@ -81,19 +75,17 @@ void HistoryTreeItem::setCall(Call *call)
    m_pDurationL->setText(QString("%1").arg(dur/3600,2)+":"+QString("%1").arg((dur%3600)/60,2)+":"+QString("%1").arg((dur%3600)%60,2)+" ");
 
    QGridLayout* mainLayout = new QGridLayout(this);
-   mainLayout->addWidget(labelIcon,0,0,4,1);
-   mainLayout->addWidget(labelPeerName,0,1);
-   mainLayout->addWidget(labelCallNumber2,1,1);
-   mainLayout->addWidget(m_pTimeL,2,1);
-   mainLayout->addItem(verticalSpacer,3,1);
-   mainLayout->addWidget(m_pDurationL,0,2,4,1);
+   mainLayout->addWidget( labelIcon,0,0,4,1    );
+   mainLayout->addWidget( labelPeerName,0,1    );
+   mainLayout->addWidget( labelCallNumber2,1,1 );
+   mainLayout->addWidget( m_pTimeL,2,1         );
+   mainLayout->addItem  ( verticalSpacer,3,1   );
+   mainLayout->addWidget( m_pDurationL,0,2,4,1 );
    
    setLayout(mainLayout);
    setMinimumSize(QSize(50, 30));
 
-   connect(itemCall, SIGNAL(changed()),
-           this,     SLOT(updated()));
-
+   connect(itemCall, SIGNAL(changed()), this,     SLOT(updated()));
    updated();
 
    m_pTimeStamp = itemCall->getStartTimeStamp().toUInt();
@@ -104,6 +96,22 @@ void HistoryTreeItem::setCall(Call *call)
 
 void HistoryTreeItem::updated()
 {
+   Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(itemCall->getPeerPhoneNumber());
+   if (contact) {
+      labelIcon->setPixmap(*contact->getPhoto());
+      labelPeerName->setText("<b>"+contact->getFormattedName()+"</b>");
+   }
+   else {
+      labelIcon->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
+
+      if(! itemCall->getPeerName().trimmed().isEmpty()) {
+         labelPeerName->setText("<b>"+itemCall->getPeerName()+"</b>");
+      }
+      else {
+         labelPeerName->setText("<b>Unknow</b>");
+      }
+   }
+   
    call_state state = itemCall->getState();
    bool recording = itemCall->getRecording();
    if(state != CALL_STATE_OVER) {

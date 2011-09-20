@@ -35,6 +35,8 @@
 #include "lib/sflphone_const.h"
 #include "lib/instance_interface_singleton.h"
 #include "lib/configurationmanager_interface_singleton.h"
+#include "lib/Contact.h"
+#include "AkonadiBackend.h"
 
 SFLPhone* SFLPhone::m_sApp = NULL;
 
@@ -278,24 +280,6 @@ void SFLPhone::quitButton()
    qApp->quit();
 }
 
-void SFLPhone::sendNotif(QString caller)
-{
-//     notification = new KNotification ( QString("test_notification"), this );
-//     notification->setText("messageText")    ;
-//     notification->setPixmap( QPixmap( this->windowIcon().pixmap(32, 32) ));
-//     notification->setActions( QStringList( i18n( "Open chat" ) ) );
-//     notification->addContext(  QString::fromLatin1("call") , "caller" )  ;
-//     notification->sendEvent();
-//     KNotification::event(QString("test_notification"),
-//                          QString("Allo"),
-//                          this->windowIcon().pixmap(32, 32),
-//                          parentWidget(),
-//                          KNotification::CloseOnTimeout,
-//                          KGlobal::mainComponent());
-
-   KNotification::event(KNotification::Notification, "New incomming call", "New call from: \n" + caller);       
-}
-
 void SFLPhone::changeEvent(QEvent* event)
 {
    if (event->type() == QEvent::ActivationChange && iconChanged && isActiveWindow()) {
@@ -397,7 +381,11 @@ void SFLPhone::on_m_pView_incomingCall(const Call * call)
       putForeground();
     }*/
    //if(configurationManager.getNotify()) {
-   sendNotif(call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName());
+   Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(call->getPeerPhoneNumber());
+   if (contact) {
+      KNotification::event(KNotification::Notification, "New incomming call", "New call from: \n" + call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName(),*contact->getPhoto());
+   }
+   KNotification::event(KNotification::Notification, "New incomming call", "New call from: \n" + call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName());
    //}
 }
 

@@ -46,7 +46,7 @@ Contact::Contact()
 
 Contact::~Contact()
 {
-   delete photo;
+   delete m_pPhoto;
 }
 
 void Contact::initItem()
@@ -59,34 +59,88 @@ void Contact::initItemWidget()
    
 }
 
-QString Contact::getPhoneNumber() const
+PhoneNumbers Contact::getPhoneNumbers() const
 {
-   return phoneNumber;
+   return m_pNumbers;
 }
 
 QString Contact::getNickName() const
 {
-   return nickName;
+   return m_pNickName;
 }
 
 QString Contact::getFirstName() const
 {
-   return firstName;
+   return m_pFirstName;
 }
 
 QString Contact::getSecondName() const
 {
-   return secondName;
+   return m_pSecondName;
 }
 
 const QPixmap* Contact::getPhoto() const
 {
-   return photo;
+   return m_pPhoto;
+}
+
+QString Contact::getFormattedName() const
+{
+   return m_pFormattedName;
+}
+
+QString Contact::getOrganization()  const
+{
+   return m_pOrganization;
+}
+
+QString Contact::getPreferredEmail()  const
+{
+   return m_pPreferredEmail;
 }
 
 QString Contact::getType() const
 {
-   return type;
+   return m_pType;
+}
+
+void Contact::setPhoneNumbers(PhoneNumbers numbers)
+{
+   m_pNumbers    = numbers;
+}
+
+void Contact::setNickName(QString name)
+{
+   m_pNickName   = name;
+}
+
+void Contact::setFirstName(QString name)
+{
+   m_pFirstName  = name;
+}
+
+void Contact::setFamilyName(QString name)
+{
+   m_pSecondName = name;
+}
+
+void Contact::setPhoto(QPixmap* photo)
+{
+   m_pPhoto      = photo;
+}
+
+void Contact::setFormattedName(QString name)
+{
+   m_pFormattedName = name;
 }
 
 
+void Contact::setOrganization(QString name)
+{
+   m_pOrganization = name;
+}
+
+void Contact::setPreferredEmail(QString name)
+{
+   m_pPreferredEmail = name;
+}

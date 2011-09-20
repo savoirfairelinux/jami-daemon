@@ -2,15 +2,16 @@
 #include "ContactDock.h"
 
 #include <QtGui/QVBoxLayout>
-#include <QtGui/QTableWidget>
+#include <QtGui/QListWidget>
 #include <QtGui/QTreeWidget>
 #include <QtGui/QHeaderView>
+#include <QtGui/QCheckBox>
+#include <QtCore/QDateTime>
 
 #include <akonadi/collectionfilterproxymodel.h>
 #include <akonadi/contact/contactstreemodel.h>
 #include <akonadi/kmime/messagemodel.h>
 #include <akonadi/changerecorder.h>
-#include <akonadi/session.h>
 #include <kabc/addressee.h>
 #include <kabc/picture.h>
 #include <kabc/phonenumber.h>
@@ -25,7 +26,11 @@
 #include <akonadi/recursiveitemfetchjob.h>
 #include <kicon.h>
 
+#include "AkonadiBackend.h"
 #include "ContactItemWidget.h"
+#include "conf/ConfigurationSkeleton.h"
+#include "lib/Call.h"
+#include "SFLPhone.h"
 
 class QNumericTreeWidgetItem : public QTreeWidgetItem {
    public:
@@ -48,12 +53,12 @@ class QNumericTreeWidgetItem : public QTreeWidgetItem {
 
 ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
 {
-   m_pFilterLE     = new KLineEdit();
-   m_pCollCCB      = new Akonadi::CollectionComboBox;
-   m_pSplitter     = new QSplitter(Qt::Vertical,this);
-   m_pSortByCBB    = new QComboBox(this);
-   m_pContactView  = new QTreeWidget(this);
-   m_pCallView     = new QTableWidget(this);
+   m_pFilterLE     = new KLineEdit   (                   );
+   m_pSplitter     = new QSplitter   ( Qt::Vertical,this );
+   m_pSortByCBB    = new QComboBox   ( this              );
+   m_pContactView  = new QTreeWidget ( this              );
+   m_pCallView     = new QListWidget ( this              );
+   m_pShowHistoCK  = new QCheckBox   ( this              );
 
    QStringList sortType;
    sortType << "Name" << "Organisation" << "Phone number type" << "Rencently used" << "Group";
@@ -71,24 +76,25 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
    m_pFilterLE->setPlaceholderText("Filter");
    m_pFilterLE->setClearButtonShown(true);
 
+   m_pShowHistoCK->setChecked(ConfigurationSkeleton::displayContactCallHistory());
+   m_pShowHistoCK->setText("Display history");
+
    QVBoxLayout* mainLayout = new QVBoxLayout(mainWidget);
 
-   mainLayout->addWidget(m_pCollCCB);
-   mainLayout->addWidget(m_pSortByCBB);
-   mainLayout->addWidget(m_pSplitter);
-   m_pSplitter->addWidget(m_pContactView);
-   m_pSplitter->addWidget(m_pCallView);
-   mainLayout->addWidget(m_pFilterLE);
+   mainLayout->addWidget  ( m_pSortByCBB   );
+   mainLayout->addWidget  ( m_pShowHistoCK );
+   mainLayout->addWidget  ( m_pSplitter    );
+   m_pSplitter->addWidget ( m_pContactView );
+   m_pSplitter->addWidget ( m_pCallView    );
+   mainLayout->addWidget  ( m_pFilterLE    );
 
    m_pSplitter->setChildrenCollapsible(true);
    m_pSplitter->setStretchFactor(0,7);
-
-   m_pCollCCB->setMimeTypeFilter( QStringList() << KABC::Addressee::mimeType() );
-   m_pCollCCB->setAccessRightsFilter( Akonadi::Collection::ReadOnly );
    
-   Akonadi::Session *session = new Akonadi::Session( "SFLPhone::instance" );
-
-   connect (m_pCollCCB, SIGNAL(currentChanged(Akonadi::Collection)),this,SLOT(reloadContact()));
+   connect (AkonadiBackend::getInstance(),SIGNAL(collectionChanged()),                                   this,        SLOT(reloadContact()                      ));
+   connect (m_pContactView,               SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),this,        SLOT(loadContactHistory(QTreeWidgetItem*) ));
+   connect (m_pFilterLE,                  SIGNAL(textChanged(QString)),                                  this,        SLOT(filter(QString)                      ));
+   connect (m_pShowHistoCK,               SIGNAL(toggled(bool)),                                         m_pCallView, SLOT(setVisible(bool)                     ));
    setWindowTitle("Contact");
 }
 
@@ -97,60 +103,63 @@ ContactDock::~ContactDock()
 
 }
 
-KABC::Addressee::List ContactDock::collectAddressBookContacts() const
-{
-   KABC::Addressee::List contacts;
-   const Akonadi::Collection collection = m_pCollCCB->currentCollection();
-   if ( !collection.isValid() ) {
-      qDebug() << "The current collection is not valid";
-      return contacts;
-   }
-
-   Akonadi::RecursiveItemFetchJob *job = new Akonadi::RecursiveItemFetchJob( collection, QStringList() << KABC::Addressee::mimeType() << KABC::ContactGroup::mimeType());
-   job->fetchScope().fetchFullPayload();
-   if ( job->exec() ) {
-
-      const Akonadi::Item::List items = job->items();
-
-      foreach ( const Akonadi::Item &item, items ) {
-         if ( item.hasPayload<KABC::ContactGroup>() ) {
-            
-            qDebug() << "Group:" << item.payload<KABC::ContactGroup>().name();
-         }
-         if ( item.hasPayload<KABC::Addressee>() ) {
-            contacts << item.payload<KABC::Addressee>();
-            qDebug() << "Addressee:" << item.payload<KABC::Addressee>().givenName();
-         }
-      }
-   }
-
-   qDebug() << "End collect "<< contacts.size() << "\n\n\n";
-   return contacts;
-}
-
 void ContactDock::reloadContact()
 {
-   KABC::Addressee::List list = collectAddressBookContacts();
-
-   qDebug() << "About to display items" << list.size();
-   foreach (KABC::Addressee addr, list) {
-      qDebug() << "In list:";
+   ContactList list = AkonadiBackend::getInstance()->update();
+   foreach (Contact* cont, list) {
       ContactItemWidget* aContact  = new ContactItemWidget(m_pContactView);
       QNumericTreeWidgetItem* item = new QNumericTreeWidgetItem(m_pContactView);
       item->widget = aContact;
       aContact->setItem(item);
-      aContact->setContact(addr);
+      aContact->setContact(cont);
 
-      KABC::PhoneNumber::List numbers =  aContact->getCallNumbers();
-      if (aContact->getCallNumbers().count() > 1) {
-         foreach (KABC::PhoneNumber number, numbers) {
+      PhoneNumbers numbers =  aContact->getContact()->getPhoneNumbers();
+      qDebug() << "Phone count" << numbers.count();
+      if (numbers.count() > 1) {
+         foreach (Contact::PhoneNumber* number, numbers) {
             QNumericTreeWidgetItem* item2 = new QNumericTreeWidgetItem(item);
-            QLabel* numberL = new QLabel("<b>"+number.typeLabel()+":</b>"+number.number());
+            QLabel* numberL = new QLabel("<b>"+number->getType()+":</b>"+number->getNumber());
             m_pContactView->setItemWidget(item2,0,numberL);
          }
       }
 
       m_pContactView->addTopLevelItem(item);
       m_pContactView->setItemWidget(item,0,aContact);
+      m_pContacts << aContact;
    }
+}
+
+void ContactDock::loadContactHistory(QTreeWidgetItem* item)
+{
+   if (m_pShowHistoCK->isChecked()) {
+      m_pCallView->clear();
+      if (dynamic_cast<QNumericTreeWidgetItem*>(item) != NULL) {
+         QNumericTreeWidgetItem* realItem = dynamic_cast<QNumericTreeWidgetItem*>(item);
+         foreach (Call* call, SFLPhone::app()->model()->getHistory()) {
+            if (realItem->widget != 0) {
+               foreach (Contact::PhoneNumber* number, realItem->widget->getContact()->getPhoneNumbers()) {
+                  if (number->getNumber() == call->getPeerPhoneNumber()) {
+                     m_pCallView->addItem(QDateTime::fromTime_t(call->getStartTimeStamp().toUInt()).toString());
+                  }
+               }
+            }
+         }
+      }
+   }
+}
+
+void ContactDock::filter(QString text)
+{
+   foreach(ContactItemWidget* item, m_pContacts) {
+      bool foundNumber = false;
+      foreach (Contact::PhoneNumber* number, item->getContact()->getPhoneNumbers()) {
+         foundNumber |= number->getNumber().toLower().indexOf(text) != -1;
+      }
+      bool visible = (item->getContact()->getFormattedName().toLower().indexOf(text) != -1)
+                  || (item->getContact()->getOrganization().toLower().indexOf(text) != -1)
+                  || (item->getContact()->getPreferredEmail().toLower().indexOf(text) != -1)
+                  || foundNumber;
+      item->getItem()->setHidden(!visible);
+   }
+   m_pContactView->expandAll();
 }

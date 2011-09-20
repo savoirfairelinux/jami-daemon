@@ -36,33 +36,65 @@
    @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
 */
 class LIB_EXPORT Contact : public QObject{
-private:
-   QString     firstName;
-   QString     secondName;
-   QString     nickName;
-   QString     phoneNumber;
-   QPixmap*    photo;
-   QString     type;
-   bool        displayPhoto;
-   
+   Q_OBJECT
 public:
-
+   class PhoneNumber {
+   public:
+      PhoneNumber(QString number, QString type)
+      : m_pNumber(number),m_pType(type){}
+      QString& getNumber() {
+         return m_pNumber ;
+      }
+      QString& getType() {
+         return m_pType   ;
+      }
+   private:
+      QString m_pNumber   ;
+      QString m_pType     ;
+   };
+   typedef QList<Contact::PhoneNumber*> PhoneNumbers;
+   
+private:
+   QString      m_pFirstName      ;
+   QString      m_pSecondName     ;
+   QString      m_pNickName       ;
+   QPixmap*     m_pPhoto          ;
+   QString      m_pType           ;
+   QString      m_pFormattedName  ;
+   QString      m_pPreferredEmail ;
+   QString      m_pOrganization   ;
+   bool         displayPhoto      ;
+   PhoneNumbers m_pNumbers        ;
+public:
    //Constructors & Destructors
    explicit Contact();
    virtual ~Contact();
    
    //Getters
-   virtual QString        getPhoneNumber() const;
-   virtual QString        getNickName()    const;
-   virtual QString        getFirstName()   const;
-   virtual QString        getSecondName()  const;
-   virtual const QPixmap* getPhoto()       const;
-   virtual QString getType()               const;
-   virtual void initItem();
+   virtual PhoneNumbers   getPhoneNumbers()    const;
+   virtual QString        getNickName()        const;
+   virtual QString        getFirstName()       const;
+   virtual QString        getSecondName()      const;
+   virtual QString        getFormattedName()   const;
+   virtual QString        getOrganization()    const;
+   virtual QString        getPreferredEmail()  const;
+   virtual const QPixmap* getPhoto()           const;
+   virtual QString        getType()            const;
+   virtual void           initItem();
+
+   virtual void setPhoneNumbers   (PhoneNumbers   );
+   virtual void setFormattedName  (QString name   );
+   virtual void setNickName       (QString name   );
+   virtual void setFirstName      (QString name   );
+   virtual void setFamilyName     (QString name   );
+   virtual void setOrganization   (QString name   );
+   virtual void setPreferredEmail (QString name   );
+   virtual void setPhoto          (QPixmap* photo );
    
 protected:
    virtual void initItemWidget();
 
 };
+typedef Contact::PhoneNumbers PhoneNumbers;
 
 #endif

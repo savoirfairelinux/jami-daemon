@@ -35,6 +35,8 @@
 #include <kabc/picture.h>
 #include <kabc/phonenumber.h>
 
+#include <lib/Contact.h>
+
 class QTreeWidgetItem;
 
 class ContactItemWidget : public QWidget
@@ -45,21 +47,22 @@ class ContactItemWidget : public QWidget
     ~ContactItemWidget();
 
     KABC::Addressee* contact() const;
-    void setContact(KABC::Addressee& contact);
+    void setContact(Contact* contact);
     static const char * callStateIcons[12];
 
-    QPixmap* getIcon();
-    QString  getContactName();
-    KABC::PhoneNumber::List getCallNumbers();
-    QString  getOrganization();
-    QString  getEmail();
-    QString  getPicture();
+    //QPixmap* getIcon();
+    QString  getContactName() const;
+    PhoneNumbers getCallNumbers() const;
+    QString  getOrganization() const;
+    QString  getEmail() const;
+    QPixmap* getPicture() const;
     QTreeWidgetItem* getItem();
+    Contact* getContact();
 
     void setItem(QTreeWidgetItem* item);
 
  private:
-    KABC::Addressee m_pContactKA;
+    Contact* m_pContactKA;
 
     QLabel* m_pIconL;
     QLabel* m_pContactNameL;
