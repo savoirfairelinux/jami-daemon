@@ -16,6 +16,7 @@ class QCheckBox;
 class QPushButton;
 class QDate;
 class HistoryTreeItem;
+class HistoryTree;
 
 typedef QList<HistoryTreeItem*> HistoryList;
 
@@ -34,8 +35,7 @@ private:
 
    void updateLinkedDate(KDateWidget* item, QDate& prevDate, QDate& newDate);
    QString getIdentity(HistoryTreeItem* item);
-   
-   QTreeWidget*  m_pItemView;
+   HistoryTree*  m_pItemView;
    KLineEdit*    m_pFilterLE;
    QComboBox*    m_pSortByCBB;
    QLabel*       m_pSortByL;
@@ -56,6 +56,14 @@ private slots:
    void updateLinkedToDate(QDate date);
    void reload();
    void updateContactInfo();
+};
+
+class HistoryTree : public QTreeWidget {
+   Q_OBJECT
+public:
+   HistoryTree(QWidget* parent) : QTreeWidget(parent) {}
+   virtual QMimeData* mimeData( const QList<QTreeWidgetItem *> items) const;
+   bool dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action);
 };
 
 #endif

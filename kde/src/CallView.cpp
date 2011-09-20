@@ -52,43 +52,45 @@ bool CallView::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData 
    Q_UNUSED(index)
    Q_UNUSED(action)
    
-   QByteArray encodedData = data->data(MIME_CALLID);
+   QByteArray encodedCallId      = data->data( MIME_CALLID      );
+   QByteArray encodedPhoneNumber = data->data( MIME_PHONENUMBER );
    
-   qDebug() << "In export"<< QString(encodedData);
+   qDebug() << "In export"<< QString(encodedCallId);
+   qDebug() << "In export2"<< QString(encodedPhoneNumber);
    
-   if (!QString(encodedData).isEmpty()) {
-   clearArtefact(getIndex(encodedData));
+   if (!QString(encodedCallId).isEmpty()) {
+   clearArtefact(getIndex(encodedCallId));
    
       if (!parent) {
          qDebug() << "Call dropped on empty space";
-         if (getIndex(encodedData)->parent()) {
+         if (getIndex(encodedCallId)->parent()) {
             qDebug() << "Detaching participant";
-            detachParticipant(getCall(encodedData));
+            detachParticipant(getCall(encodedCallId));
          }
          else
             qDebug() << "The call is not in a conversation (doing nothing)";
          return true;
       }
       
-      if (getCall(parent)->getCallId() == QString(encodedData)) {
+      if (getCall(parent)->getCallId() == QString(encodedCallId)) {
          qDebug() << "Call dropped on itself (doing nothing)";
          return true;
       }
       
-      if ((parent->childCount()) && (getIndex(encodedData)->childCount())) {
+      if ((parent->childCount()) && (getIndex(encodedCallId)->childCount())) {
          qDebug() << "Merging two conferences";
-         mergeConferences(getCall(parent),getCall(encodedData));
+         mergeConferences(getCall(parent),getCall(encodedCallId));
          return true;
       }
       else if ((parent->parent()) || (parent->childCount())) {
          qDebug() << "Call dropped on a conference";
          
-         if ((getIndex(encodedData)->childCount()) && (!parent->childCount())) {
+         if ((getIndex(encodedCallId)->childCount()) && (!parent->childCount())) {
             qDebug() << "Conference dropped on a call (doing nothing)";
             return true;
          }
          
-         QTreeWidgetItem* call1 = getIndex(encodedData);
+         QTreeWidgetItem* call1 = getIndex(encodedCallId);
          QTreeWidgetItem* call2 = (parent->parent())?parent->parent():parent;
          
          if (call1->parent()) {
@@ -103,14 +105,14 @@ bool CallView::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData 
             }
             else if (call1->parent()) {
                qDebug() << "Moving call from a conference to an other";
-               detachParticipant(getCall(encodedData));
+               detachParticipant(getCall(encodedCallId));
             }
          }
          qDebug() << "Adding participant";
          addParticipant(getCall(call1),getCall(call2));
          return true;
       }
-      else if ((getIndex(encodedData)->childCount()) && (!parent->childCount())) {
+      else if ((getIndex(encodedCallId)->childCount()) && (!parent->childCount())) {
          qDebug() << "Call dropped on it's own conference (doing nothing)";
          return true;
       }
@@ -118,7 +120,7 @@ bool CallView::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData 
 
       
       qDebug() << "Call dropped on another call";
-      createConferenceFromCall(getCall(encodedData),getCall(parent));
+      createConferenceFromCall(getCall(encodedCallId),getCall(parent));
       return true;
    }
    

@@ -99,6 +99,11 @@ QString Contact::getPreferredEmail()  const
    return m_pPreferredEmail;
 }
 
+QString Contact::getUid() const
+{
+   return m_pUid;
+}
+
 QString Contact::getType() const
 {
    return m_pType;
@@ -143,4 +148,9 @@ void Contact::setOrganization(QString name)
 void Contact::setPreferredEmail(QString name)
 {
    m_pPreferredEmail = name;
+}
+
+void Contact::setUid(QString id)
+{
+   m_pUid = id;
 }

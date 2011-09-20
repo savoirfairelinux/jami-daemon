@@ -34,6 +34,7 @@
 
 /**
    @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
+   @author Jérémy Quentin <emmanuel.lepage@savoirfairelinux.com>
 */
 class LIB_EXPORT Contact : public QObject{
    Q_OBJECT
@@ -63,6 +64,7 @@ private:
    QString      m_pFormattedName  ;
    QString      m_pPreferredEmail ;
    QString      m_pOrganization   ;
+   QString      m_pUid            ;
    bool         displayPhoto      ;
    PhoneNumbers m_pNumbers        ;
 public:
@@ -77,6 +79,7 @@ public:
    virtual QString        getSecondName()      const;
    virtual QString        getFormattedName()   const;
    virtual QString        getOrganization()    const;
+   virtual QString        getUid()             const;
    virtual QString        getPreferredEmail()  const;
    virtual const QPixmap* getPhoto()           const;
    virtual QString        getType()            const;
@@ -89,6 +92,7 @@ public:
    virtual void setFamilyName     (QString name   );
    virtual void setOrganization   (QString name   );
    virtual void setPreferredEmail (QString name   );
+   virtual void setUid            (QString id     );
    virtual void setPhoto          (QPixmap* photo );
    
 protected:

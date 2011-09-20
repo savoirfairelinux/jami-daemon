@@ -60,6 +60,7 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
    m_pCallView     = new QListWidget ( this              );
    m_pShowHistoCK  = new QCheckBox   ( this              );
 
+
    QStringList sortType;
    sortType << "Name" << "Organisation" << "Phone number type" << "Rencently used" << "Group";
    m_pSortByCBB->addItems(sortType);
@@ -70,6 +71,8 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
    m_pContactView->headerItem()->setText(0,"Contacts");
    m_pContactView->header()->setClickable(true);
    m_pContactView->header()->setSortIndicatorShown(true);
+   m_pContactView->setAcceptDrops(true);
+   m_pContactView->setDragEnabled(true);
 
    m_pContactView->setAlternatingRowColors(true);
 

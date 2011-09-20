@@ -307,7 +307,11 @@ typedef enum
 } call_state;
 
 /** MIME API */
-#define MIME_CALLID "text/sflphone.call.id"
-#define MIME_PLAIN_TEXT "text/plain"
+#define MIME_CALLID           "text/sflphone.call.id"
+#define MIME_CONTACT          "text/sflphone.contact"
+#define MIME_HISTORYID        "text/sflphone.history.id"
+#define MIME_PHONENUMBER      "text/sflphone.phone.number"
+#define MIME_CONTACT_PHONE    "text/sflphone.contact.phone"
+#define MIME_PLAIN_TEXT       "text/plain"
 #endif
 

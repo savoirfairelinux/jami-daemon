@@ -76,6 +76,7 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
             aContact->setFamilyName     (tmp.familyName()     );
             aContact->setOrganization   (tmp.organization()   );
             aContact->setPreferredEmail (tmp.preferredEmail() );
+            aContact->setUid            (tmp.uid()            );
             aContact->setPhoneNumbers   (newNumbers           );
             
             if (!tmp.photo().data().isNull())

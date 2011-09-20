@@ -15,10 +15,12 @@
 #include "widgets/HistoryTreeItem.h"
 #include "conf/ConfigurationSkeleton.h"
 #include "AkonadiBackend.h"
+#include "lib/sflphone_const.h"
 
 class QNumericTreeWidgetItem : public QTreeWidgetItem {
    public:
       QNumericTreeWidgetItem(QTreeWidget* parent):QTreeWidgetItem(parent),widget(0),weight(-1){}
+      QNumericTreeWidgetItem(QTreeWidgetItem* parent):QTreeWidgetItem(parent),widget(0),weight(-1){}
       HistoryTreeItem* widget;
       int weight;
    private:
@@ -39,7 +41,7 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    setMinimumSize(250,0);
    setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
    m_pFilterLE   = new KLineEdit();
-   m_pItemView   = new QTreeWidget(this);
+   m_pItemView   = new HistoryTree(this);
    m_pSortByCBB  = new QComboBox();
    m_pSortByL    = new QLabel("Sort by:");
    m_pFromL      = new QLabel("From:");
@@ -61,6 +63,8 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    m_pItemView->header    ()->setClickable(true          );
    m_pItemView->header    ()->setSortIndicatorShown(true );
    m_pItemView->setAlternatingRowColors(true             );
+   m_pItemView->setAcceptDrops( true                     );
+   m_pItemView->setDragEnabled( true                     );
 
    m_pFilterLE->setPlaceholderText("Filter");
    m_pFilterLE->setClearButtonShown(true);
@@ -153,8 +157,9 @@ void HistoryDock::reload()
                group[getIdentity(item)]->setText(0,getIdentity(item));
                m_pItemView->addTopLevelItem(group[getIdentity(item)]);
             }
-            QTreeWidgetItem* twItem = new QTreeWidgetItem(group[getIdentity(item)]);
+            QNumericTreeWidgetItem* twItem = new QNumericTreeWidgetItem(group[getIdentity(item)]);
             item->setItem(twItem);
+            twItem->widget = item;
             m_pItemView->setItemWidget(twItem,0,item);
          }
          break;
@@ -169,8 +174,9 @@ void HistoryDock::reload()
             }
             group[getIdentity(item)]->weight++;
             group[getIdentity(item)]->setText(0,getIdentity(item)+" ("+QString::number(group[getIdentity(item)]->weight)+")");
-            QTreeWidgetItem* twItem = new QTreeWidgetItem(group[getIdentity(item)]);
+            QNumericTreeWidgetItem* twItem = new QNumericTreeWidgetItem(group[getIdentity(item)]);
             item->setItem(twItem);
+            twItem->widget = item;
             m_pItemView->setItemWidget(twItem,0,item);
          }
          break;
@@ -242,4 +248,45 @@ void HistoryDock::updateLinkedToDate(QDate date)
    disconnect(m_pFromDW  ,  SIGNAL(changed(QDate)),       this, SLOT(updateLinkedFromDate(QDate)));
    updateLinkedDate(m_pFromDW,m_pCurrentToDate,date);
    connect(m_pFromDW  ,  SIGNAL(changed(QDate)),       this, SLOT(updateLinkedFromDate(QDate)));
+}
+
+QMimeData* HistoryTree::mimeData( const QList<QTreeWidgetItem *> items) const
+{
+   qDebug() << "An history call is being dragged";
+   if (items.size() < 1) {
+      return NULL;
+   }
+
+   QMimeData *mimeData = new QMimeData();
+
+   //Contact
+   if (dynamic_cast<QNumericTreeWidgetItem*>(items[0])) {
+      QNumericTreeWidgetItem* item = dynamic_cast<QNumericTreeWidgetItem*>(items[0]);
+      if (item->widget != 0) {
+         mimeData->setData(MIME_PHONENUMBER, item->widget->call()->getPeerPhoneNumber().toUtf8());
+      }
+   }
+   else {
+      qDebug() << "the item is not a call";
+   }
+
+// 
+//    //Plain text for other applications
+//    mimeData->setData(MIME_PLAIN_TEXT, QString(getCall(items[0])->getPeerName()+"\n"+getCall(items[0])->getPeerPhoneNumber()).toAscii());
+// 
+//    //TODO Comment this line if you don't want to see ugly artefact, but the caller details will not be visible while dragged
+//    items[0]->setText(0, getCall(items[0])->getPeerName() + "\n" + getCall(items[0])->getPeerPhoneNumber());
+   return mimeData;
+}
+
+bool HistoryTree::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action)
+{
+   Q_UNUSED(index)
+   Q_UNUSED(action)
+
+   QByteArray encodedData = data->data(MIME_CALLID);
+
+   qDebug() << "In history import"<< QString(encodedData);
+
+   return false;
 }
