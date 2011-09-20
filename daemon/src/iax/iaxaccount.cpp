@@ -31,6 +31,8 @@
  *  as that of the covered work.
  */
 
+#include "config.h"
+
 #include "iaxaccount.h"
 #include "iaxvoiplink.h"
 #include "manager.h"
