@@ -1399,7 +1399,7 @@ void sdp_media_update_cb (pjsip_inv_session *inv, pj_status_t status)
 
 
     // We did not found any crypto context for this media, RTP fallback
-    if (!nego_success && call->getAudioRtp()->getAudioRtpType() == sfl::Sdes) {
+    if (!nego_success && call->getAudioRtp()->isSdesEnabled()) {
         call->getAudioRtp()->stop();
         call->getAudioRtp()->setSrtpEnabled (false);
 

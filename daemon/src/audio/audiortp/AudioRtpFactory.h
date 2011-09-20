@@ -108,15 +108,8 @@ class AudioRtpFactory
          */
         void updateDestinationIpAddress (void);
 
-        /**
-         * @param None
-         * @return The internal audio rtp session type
-         *         Symmetric = 0
-         *         Zrtp = 1
-         *         Sdes = 2
-         */
-        RtpMethod getAudioRtpType (void) const {
-        	return _keyExchangeProtocol;
+        bool isSdesEnabled (void) const {
+        	return _srtpEnabled && _keyExchangeProtocol == sfl::Sdes;
         }
 
         /**
