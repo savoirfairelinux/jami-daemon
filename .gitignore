@@ -42,7 +42,8 @@ doc/doxygen/gtk-gui-doc
 doc/*.html
 
 # Ignore built stuff
-/src/.libs
+.libs
+.deps
 
 # PJSIP files
 *.depend

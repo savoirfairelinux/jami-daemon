@@ -585,10 +585,8 @@ bool ManagerImpl::attendedTransfer(const std::string& transferID, const std::str
 }
 
 //THREAD=Main : Call:Incoming
-bool ManagerImpl::refuseCall (const std::string& id)
+void ManagerImpl::refuseCall (const std::string& id)
 {
-    bool returnValue;
-
     stopTone();
 
     if (getCallList().size() <= 1) {
@@ -600,31 +598,25 @@ bool ManagerImpl::refuseCall (const std::string& id)
     /* Direct IP to IP call */
 
     if (getConfigFromCall (id) == Call::IPtoIP)
-        returnValue = SIPVoIPLink::instance ()-> refuse (id);
+        SIPVoIPLink::instance()->refuse (id);
     else {
         /* Classic call, attached to an account */
         std::string accountid = getAccountFromCall (id);
         if (accountid.empty())
-            return false;
+            return;
 
-        returnValue = getAccountLink (accountid)->refuse (id);
+        getAccountLink(accountid)->refuse(id);
 
         removeCallAccount (id);
     }
 
-    // if the call was outgoing or established, we didn't refuse it
-    // so the method did nothing
-    if (returnValue) {
-        removeWaitingCall (id);
-        _dbus.getCallManager()->callStateChanged (id, "HUNGUP");
-    }
+	removeWaitingCall(id);
+	_dbus.getCallManager()->callStateChanged(id, "HUNGUP");
 
     // Disconnect streams
     removeStream(id);
 
     getMainBuffer()->stateInfo();
-
-    return returnValue;
 }
 
 Conference*
@@ -1361,8 +1353,6 @@ bool ManagerImpl::incomingCallWaiting ()
 
 void ManagerImpl::addWaitingCall (const std::string& id)
 {
-    _info ("Manager: Add waiting call %s (%d calls)", id.c_str(), _nbIncomingWaitingCall);
-
     ost::MutexLock m(_waitingCallMutex);
     _waitingCall.insert (id);
     _nbIncomingWaitingCall++;
@@ -1370,12 +1360,8 @@ void ManagerImpl::addWaitingCall (const std::string& id)
 
 void ManagerImpl::removeWaitingCall (const std::string& id)
 {
-    _info ("Manager: Remove waiting call %s (%d calls)", id.c_str(), _nbIncomingWaitingCall);
-
     ost::MutexLock m(_waitingCallMutex);
-    // should return more than 1 if it erase a call
-
-    if (_waitingCall.erase (id))
+    if (_waitingCall.erase(id))
         _nbIncomingWaitingCall--;
 }
 
@@ -1388,17 +1374,14 @@ bool ManagerImpl::isWaitingCall (const std::string& id)
 // Management of event peer IP-phone
 ////////////////////////////////////////////////////////////////////////////////
 // SipEvent Thread
-bool ManagerImpl::incomingCall (Call* call, const std::string& accountId)
+void ManagerImpl::incomingCall (Call* call, const std::string& accountId)
 {
     assert(call);
     stopTone();
 
-    _debug ("Manager: Incoming call %s for account %s", call->getCallId().data(), accountId.c_str());
-
     associateCallToAccount (call->getCallId(), accountId);
 
-    // If account is null it is an ip to ip call
-    if (accountId.empty())
+    if (accountId == "")
         associateConfigToCall (call->getCallId(), Call::IPtoIP);
     else {
         // strip sip: which is not required and bring confusion with ip to ip calls
@@ -1407,45 +1390,26 @@ bool ManagerImpl::incomingCall (Call* call, const std::string& accountId)
 
         size_t startIndex = peerNumber.find ("sip:");
 
-        if (startIndex != std::string::npos) {
-            std::string strippedPeerNumber = peerNumber.substr (startIndex + 4);
-            call->setPeerNumber (strippedPeerNumber);
-        }
+        if (startIndex != std::string::npos)
+            call->setPeerNumber (peerNumber.substr (startIndex + 4));
     }
 
     if (!hasCurrentCall()) {
-        _debug ("Manager: Has no current call start ringing");
         call->setConnectionState (Call::Ringing);
         ringtone (accountId);
-
-    } else
-        _debug ("Manager: has current call, beep in current audio stream");
+    }
 
     addWaitingCall (call->getCallId());
 
     std::string from(call->getPeerName());
     std::string number(call->getPeerNumber());
-    std::string display_name(call->getDisplayName());
 
-    if (not from.empty() and not number.empty()) {
-        from.append (" <");
-        from.append (number);
-        from.append (">");
-    } else if (from.empty()) {
-        from.append ("<");
-        from.append (number);
-        from.append (">");
-    }
+    if (not from.empty() and not number.empty())
+        from += " ";
 
-    /* Broadcast a signal over DBus */
-    _debug ("Manager: From: %s, Number: %s, Display Name: %s", from.c_str(), number.c_str(), display_name.c_str());
+    from += "<" + number + ">";
 
-    std::string display(display_name);
-    display.append(" ");
-    display.append(from);
-
-    _dbus.getCallManager()->incomingCall(accountId, call->getCallId(), display);
-    return true;
+    _dbus.getCallManager()->incomingCall(accountId, call->getCallId(), call->getDisplayName() + " " + from);
 }
 
 

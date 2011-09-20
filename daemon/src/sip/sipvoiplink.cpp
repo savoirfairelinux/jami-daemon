@@ -667,28 +667,26 @@ bool SIPVoIPLink::attendedTransfer(const std::string& id, const std::string& to)
     return transferCommon(getSIPCall(id), &dst);
 }
 
-bool
+void
 SIPVoIPLink::refuse (const std::string& id)
 {
     SIPCall *call = getSIPCall (id);
     if (!call->isIncoming() or call->getConnectionState() == Call::Connected)
-        return false;
+        return;
 
     call->getAudioRtp()->stop();
 
     pjsip_tx_data *tdata;
     if (pjsip_inv_end_session (call->inv, PJSIP_SC_DECLINE, NULL, &tdata) != PJ_SUCCESS)
-        return false;
+        return;
 
     if (pjsip_inv_send_msg (call->inv, tdata) != PJ_SUCCESS)
-        return false;
+        return;
 
     // Make sure the pointer is NULL in callbacks
     call->inv->mod_data[_mod_ua.id] = NULL;
 
     removeCall (id);
-
-    return true;
 }
 
 std::string
@@ -1730,8 +1728,12 @@ static pj_bool_t transaction_request_cb (pjsip_rx_data *rdata)
 	call->getAudioRtp()->start (static_cast<sfl::AudioCodec *>(audiocodec));
 
     pjsip_dialog* dialog;
-    if (pjsip_dlg_create_uas (pjsip_ua_instance(), rdata, NULL, &dialog) != PJ_SUCCESS)
-        goto fail;
+    if (pjsip_dlg_create_uas (pjsip_ua_instance(), rdata, NULL, &dialog) != PJ_SUCCESS) {
+		delete call;
+		pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, NULL, NULL, NULL);
+		return false;
+
+    }
 
     pjsip_inv_create_uas (dialog, rdata, call->getLocalSDP()->getLocalSdpSession(), 0, &call->inv);
 
@@ -1767,18 +1769,11 @@ static pj_bool_t transaction_request_cb (pjsip_rx_data *rdata)
 
     	call->setConnectionState (Call::Ringing);
 
-    	if (!Manager::instance().incomingCall (call, account_id))
-    		goto fail;
-
+    	Manager::instance().incomingCall (call, account_id);
 		Manager::instance().getAccountLink (account_id)->addCall (call);
     }
 
     return true;
-
-fail:
-	delete call;
-	pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, NULL, NULL, NULL);
-	return false;
 }
 
 static pj_bool_t transaction_response_cb (pjsip_rx_data *rdata)

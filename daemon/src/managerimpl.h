@@ -231,7 +231,7 @@ class ManagerImpl
          * Refuse the call
          * @param id  The call identifier
          */
-        bool refuseCall (const std::string& id);
+        void refuseCall (const std::string& id);
 
         /**
          * Create a new conference given two participant
@@ -365,9 +365,8 @@ class ManagerImpl
          * and notify user
          * @param call A call pointer
          * @param accountId an account id
-         * @return bool True if the call was added correctly
          */
-        bool incomingCall (Call* call, const std::string& accountId);
+        void incomingCall (Call* call, const std::string& accountId);
 
         /**
          * Notify the user that the recipient of the call has answered and the put the

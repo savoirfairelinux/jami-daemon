@@ -72,15 +72,8 @@ namespace {
     }
 }
 
-IAXCall::IAXCall (const std::string& id, Call::CallType type) : Call (id, type), _session (NULL)
+IAXCall::IAXCall (const std::string& id, Call::CallType type) : Call (id, type), session (NULL)
 {
-}
-
-void
-IAXCall::setFormat (int format)
-{
-    _format = format;
-    setAudioCodec(ASTFormatToCodec(format));
 }
 
 int
@@ -118,7 +111,7 @@ int IAXCall::getFirstMatchingFormat (int needles, const std::string &accountID) 
     return 0;
 }
 
-int IAXCall::getAudioCodec()
+int IAXCall::getAudioCodec(void)
 {
-    return _audioCodec;
+    return ASTFormatToCodec(format);
 }

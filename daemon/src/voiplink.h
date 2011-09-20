@@ -148,9 +148,8 @@ class VoIPLink
         /**
          * Refuse incoming call
          * @param id The call identifier
-         * @return bool True on success
          */
-        virtual bool refuse (const std::string& id) = 0;
+        virtual void refuse (const std::string& id) = 0;
 
         /**
          * Send DTMF

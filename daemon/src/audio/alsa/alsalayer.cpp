@@ -523,7 +523,7 @@ namespace
 
 void AlsaLayer::capture(void)
 {
-    unsigned int mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
+    unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
     bool resample = audioSampleRate_ != mainBufferSampleRate;
 
     int toGetSamples = snd_pcm_avail_update (captureHandle_);
@@ -550,11 +550,11 @@ void AlsaLayer::capture(void)
         SFLDataFormat* rsmpl_out = (SFLDataFormat*) malloc (outBytes);
         converter_->resample ( (SFLDataFormat*) in, rsmpl_out, mainBufferSampleRate, audioSampleRate_, toGetSamples);
         dcblocker_.process(rsmpl_out, rsmpl_out, outSamples);
-        getMainBuffer()->putData (rsmpl_out, outBytes);
+        Manager::instance().getMainBuffer()->putData (rsmpl_out, outBytes);
         free (rsmpl_out);
     } else {
         dcblocker_.process(in, in, toGetSamples);
-		getMainBuffer()->putData (in, toGetBytes);
+        Manager::instance().getMainBuffer()->putData (in, toGetBytes);
     }
 
 end:
@@ -565,10 +565,10 @@ void AlsaLayer::playback(int maxSamples)
 {
     unsigned short spkrVolume = Manager::instance().getSpkrVolume();
 
-    unsigned int mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
+    unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
     bool resample = audioSampleRate_ != mainBufferSampleRate;
 
-    int toGet = getMainBuffer()->availForGet();
+    int toGet = Manager::instance().getMainBuffer()->availForGet();
     int toPut = maxSamples * sizeof(SFLDataFormat);
 
     if (toGet <= 0) {    	// no audio available, play tone or silence
@@ -602,7 +602,7 @@ void AlsaLayer::playback(int maxSamples)
 		toGet = maxNbBytesToGet;
 
 	SFLDataFormat *out = (SFLDataFormat*) malloc (toGet);
-	getMainBuffer()->getData (out, toGet);
+	Manager::instance().getMainBuffer()->getData (out, toGet);
 	adjustVolume(out, toGet / sizeof(SFLDataFormat), spkrVolume);
 
 	if (resample) {
@@ -644,7 +644,7 @@ void AlsaLayer::audioCallback (void)
 		write (out, toGet, playbackHandle_);
 		free (out);
         // Consume the regular one as well (same amount of bytes)
-        getMainBuffer()->discard (toGet);
+		Manager::instance().getMainBuffer()->discard (toGet);
     } else {
     	// regular audio data
     	playback(playbackAvailSmpl);
