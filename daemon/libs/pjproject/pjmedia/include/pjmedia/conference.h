@@ -1,6 +1,6 @@
-/* $Id: conference.h 2728 2009-06-01 13:56:09Z nanang $ */
+/* $Id: conference.h 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #ifndef __PJMEDIA_CONF_H__
 #define __PJMEDIA_CONF_H__
@@ -250,7 +239,7 @@ PJ_DECL(pj_status_t) pjmedia_conf_add_port( pjmedia_conf *conf,
 
 /**
  * <i><b>Warning:</b> This API has been deprecated since 1.3 and will be
- * removed in the future release, use #PJMEDIA_SPLITCOMB instead.</i>
+ * removed in the future release, use @ref PJMEDIA_SPLITCOMB instead.</i>
  *
  * Create and add a passive media port to the conference bridge. Unlike
  * "normal" media port that is added with #pjmedia_conf_add_port(), media

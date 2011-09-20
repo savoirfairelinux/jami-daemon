@@ -28,6 +28,7 @@
  *  as that of the covered work.
  */
 
+#include <cstdlib>
 #include <dbusmanager.h>
 #include "global.h"
 #include "manager.h"
@@ -38,13 +39,6 @@
 #include "networkmanager.h"
 
 DBusManager::DBusManager()
-    : _connected(false)
-	, _callManager(NULL)
-    , _configurationManager(NULL)
-    , _instanceManager(NULL)
-#ifdef USE_NETWORKMANAGER
-    , _networkManager(NULL)
-#endif
 {
     try {
         DBus::_init_threading();
@@ -62,9 +56,9 @@ DBusManager::DBusManager()
         _networkManager = new NetworkManager (systemConnection, "/org/freedesktop/NetworkManager", "");
 #endif
 
-        _connected = true;
     } catch (const DBus::Error &err) {
-        _error("%s: %s\n", err.name(), err.what());
+        _error("%s: %s, exiting\n", err.name(), err.what());
+        ::exit(1);
     }
 }
 

@@ -1,6 +1,6 @@
-/* $Id: sip_transport_tls.h 2998 2009-11-09 08:51:34Z bennylp $ */
+/* $Id: sip_transport_tls.h 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #ifndef __PJSIP_TRANSPORT_TLS_H__
 #define __PJSIP_TRANSPORT_TLS_H__
@@ -37,6 +26,7 @@
  */
 
 #include <pjsip/sip_transport.h>
+#include <pj/ssl_sock.h>
 #include <pj/string.h>
 #include <pj/sock_qos.h>
 
@@ -132,36 +122,47 @@ typedef struct pjsip_tls_setting
     pj_str_t	server_name;
 
     /**
-     * When PJSIP is acting as a client (outgoing TLS connections), 
-     * it will always receive a certificate from the peer. 
-     * If \a verify_server is disabled (set to zero), PJSIP will not 
-     * verifiy the certificate and allows TLS connections to servers 
-     * which do not present a valid certificate. 
-     * If \a tls_verify_server is non-zero, PJSIP verifies the server 
-     * certificate and will close the TLS connection if the server 
-     * certificate is not valid.
+     * Specifies TLS transport behavior on the server TLS certificate 
+     * verification result:
+     * - If \a verify_server is disabled (set to PJ_FALSE), TLS transport 
+     *   will just notify the application via #pjsip_tp_state_callback with
+     *   state PJSIP_TP_STATE_CONNECTED regardless TLS verification result.
+     * - If \a verify_server is enabled (set to PJ_TRUE), TLS transport 
+     *   will be shutdown and application will be notified with state
+     *   PJSIP_TP_STATE_DISCONNECTED whenever there is any TLS verification
+     *   error, otherwise PJSIP_TP_STATE_CONNECTED will be notified.
      *
-     * This setting corresponds to OpenSSL SSL_VERIFY_PEER flag.
-     * Default value is zero.
+     * In any cases, application can inspect #pjsip_tls_state_info in the
+     * callback to see the verification detail.
+     *
+     * Default value is PJ_FALSE.
      */
     pj_bool_t	verify_server;
 
     /**
-     * When acting as server (incoming TLS connections), setting
-     * \a verify_client to non-zero will cause the transport to activate
-     * peer verification upon receiving incoming TLS connection.
+     * Specifies TLS transport behavior on the client TLS certificate 
+     * verification result:
+     * - If \a verify_client is disabled (set to PJ_FALSE), TLS transport 
+     *   will just notify the application via #pjsip_tp_state_callback with
+     *   state PJSIP_TP_STATE_CONNECTED regardless TLS verification result.
+     * - If \a verify_client is enabled (set to PJ_TRUE), TLS transport 
+     *   will be shutdown and application will be notified with state
+     *   PJSIP_TP_STATE_DISCONNECTED whenever there is any TLS verification
+     *   error, otherwise PJSIP_TP_STATE_CONNECTED will be notified.
      *
-     * This setting corresponds to OpenSSL SSL_VERIFY_PEER flag.
-     * Default value is zero.
+     * In any cases, application can inspect #pjsip_tls_state_info in the
+     * callback to see the verification detail.
+     *
+     * Default value is PJ_FALSE.
      */
     pj_bool_t	verify_client;
 
     /**
      * When acting as server (incoming TLS connections), reject inocming
-     * connection if client doesn't have a valid certificate.
+     * connection if client doesn't supply a TLS certificate.
      *
      * This setting corresponds to SSL_VERIFY_FAIL_IF_NO_PEER_CERT flag.
-     * Default value is zero.
+     * Default value is PJ_FALSE.
      */
     pj_bool_t	require_client_cert;
 
@@ -198,8 +199,22 @@ typedef struct pjsip_tls_setting
      */
     pj_bool_t qos_ignore_error;
 
-
 } pjsip_tls_setting;
+
+
+/**
+ * This structure defines TLS transport extended info in <tt>ext_info</tt>
+ * field of #pjsip_transport_state_info for the transport state notification
+ * callback #pjsip_tp_state_callback.
+ */
+typedef struct pjsip_tls_state_info
+{
+    /**
+     * SSL socket info.
+     */
+    pj_ssl_sock_info	*ssl_sock_info;
+
+} pjsip_tls_state_info;
 
 
 /**
@@ -234,11 +249,6 @@ PJ_INLINE(void) pjsip_tls_setting_copy(pj_pool_t *pool,
     pj_strdup_with_null(pool, &dst->ciphers, &src->ciphers);
 }
 
-PJ_DEF(pj_status_t) pjsip_tls_listener_update_settings(pjsip_endpoint *endpt,
-						       pj_pool_t *pool,
-						       pjsip_tpmgr *mgr,
-						       pjsip_tpfactory *factory,
-						       const pjsip_tls_setting *opt);
 
 /**
  * Register support for SIP TLS transport by creating TLS listener on

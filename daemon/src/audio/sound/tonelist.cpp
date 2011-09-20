@@ -32,120 +32,87 @@
  */
 #include "tonelist.h"
 
-ToneList::ToneList() : _nbTone (TONE_NBTONE) ,
-    _nbCountry (TONE_NBCOUNTRY),
-    _defaultCountryId (ZID_NORTH_AMERICA)
+static const char *toneZone[TelephoneTone::ZID_COUNTRIES][Tone::TONE_NULL] = {
+	{	// ZID_NORTH_AMERICA
+		"350+440",				//Tone::TONE_DIALTONE
+		"480+620/500,0/500",	//Tone::TONE_BUSY
+		"440+480/2000,0/4000",	//Tone::TONE_RINGTONE
+		"480+620/250,0/250",	//Tone::TONE_CONGESTION
+	},
+	{	//ZID_FRANCE
+		"440",
+		"440/500,0/500",
+		"440/1500,0/3500",
+		"440/250,0/250",
+	},
+	{	//ZID_AUSTRALIA
+		"413+438",
+		"425/375,0/375",
+		"413+438/400,0/200,413+438/400,0/2000",
+		"425/375,0/375,420/375,8/375",
+	},
+	{	//ZID_UNITED_KINGDOM
+		"350+440",
+		"400/375,0/375",
+		"400+450/400,0/200,400+450/400,0/2000",
+		"400/400,0/350,400/225,0/525",
+	},
+	{	//ZID_SPAIN
+		"425",
+		"425/200,0/200",
+		"425/1500,0/3000",
+		"425/200,0/200,425/200,0/200,425/200,0/600",
+	},
+	{	//ZID_ITALY
+		"425/600,0/1000,425/200,0/200",
+		"425/500,0/500",
+		"425/1000,0/4000",
+		"425/200,0/200",
+	},
+	{	//ZID_JAPAN
+		"400",
+		"400/500,0/500",
+		"400+15/1000,0/2000",
+		"400/500,0/500",
+	}
+};
+
+
+TelephoneTone::COUNTRYID
+TelephoneTone::getCountryId (const std::string& countryName)
 {
-    initToneDefinition();
-}
-
-ToneList::~ToneList()
-{
-}
-
-void
-ToneList::initToneDefinition()
-{
-    _toneZone[ZID_NORTH_AMERICA][Tone::TONE_DIALTONE] = "350+440";
-    _toneZone[ZID_NORTH_AMERICA][Tone::TONE_BUSY] = "480+620/500,0/500";
-    _toneZone[ZID_NORTH_AMERICA][Tone::TONE_RINGTONE] = "440+480/2000,0/4000";
-    _toneZone[ZID_NORTH_AMERICA][Tone::TONE_CONGESTION] = "480+620/250,0/250";
-
-    _toneZone[ZID_FRANCE][Tone::TONE_DIALTONE] = "440";
-    _toneZone[ZID_FRANCE][Tone::TONE_BUSY] = "440/500,0/500";
-    _toneZone[ZID_FRANCE][Tone::TONE_RINGTONE] = "440/1500,0/3500";
-    _toneZone[ZID_FRANCE][Tone::TONE_CONGESTION] = "440/250,0/250";
-
-    _toneZone[ZID_AUSTRALIA][Tone::TONE_DIALTONE] = "413+438";
-    _toneZone[ZID_AUSTRALIA][Tone::TONE_BUSY] = "425/375,0/375";
-    _toneZone[ZID_AUSTRALIA][Tone::TONE_RINGTONE] =
-        "413+438/400,0/200,413+438/400,0/2000";
-    _toneZone[ZID_AUSTRALIA][Tone::TONE_CONGESTION] = "425/375,0/375,420/375,8/375";
-
-    _toneZone[ZID_UNITED_KINGDOM][Tone::TONE_DIALTONE] = "350+440";
-    _toneZone[ZID_UNITED_KINGDOM][Tone::TONE_BUSY] = "400/375,0/375";
-    _toneZone[ZID_UNITED_KINGDOM][Tone::TONE_RINGTONE] =
-        "400+450/400,0/200,400+450/400,0/2000";
-    _toneZone[ZID_UNITED_KINGDOM][Tone::TONE_CONGESTION] =
-        "400/400,0/350,400/225,0/525";
-
-    _toneZone[ZID_SPAIN][Tone::TONE_DIALTONE] = "425";
-    _toneZone[ZID_SPAIN][Tone::TONE_BUSY] = "425/200,0/200";
-    _toneZone[ZID_SPAIN][Tone::TONE_RINGTONE] = "425/1500,0/3000";
-    _toneZone[ZID_SPAIN][Tone::TONE_CONGESTION] =
-        "425/200,0/200,425/200,0/200,425/200,0/600";
-
-    _toneZone[ZID_ITALY][Tone::TONE_DIALTONE] = "425/600,0/1000,425/200,0/200";
-    _toneZone[ZID_ITALY][Tone::TONE_BUSY] = "425/500,0/500";
-    _toneZone[ZID_ITALY][Tone::TONE_RINGTONE] = "425/1000,0/4000";
-    _toneZone[ZID_ITALY][Tone::TONE_CONGESTION] = "425/200,0/200";
-
-    _toneZone[ZID_JAPAN][Tone::TONE_DIALTONE] = "400";
-    _toneZone[ZID_JAPAN][Tone::TONE_BUSY] = "400/500,0/500";
-    _toneZone[ZID_JAPAN][Tone::TONE_RINGTONE] = "400+15/1000,0/2000";
-    _toneZone[ZID_JAPAN][Tone::TONE_CONGESTION] = "400/500,0/500";
-}
-
-std::string
-ToneList::getDefinition (COUNTRYID countryId, Tone::TONEID toneId)
-{
-    if (toneId == Tone::TONE_NULL) {
-        return "";
-    }
-
-    return _toneZone[countryId][toneId];
-}
-
-ToneList::COUNTRYID
-ToneList::getCountryId (const std::string& countryName)
-{
-    if (countryName.compare ("North America") == 0) {
-        return ZID_NORTH_AMERICA;
-    } else if (countryName.compare ("France") == 0) {
-        return ZID_FRANCE;
-    } else if (countryName.compare ("Australia") == 0) {
-        return ZID_AUSTRALIA;
-    } else if (countryName.compare ("United Kingdom") == 0) {
-        return ZID_UNITED_KINGDOM;
-    } else if (countryName.compare ("Spain") == 0) {
-        return ZID_SPAIN;
-    } else if (countryName.compare ("Italy") == 0) {
-        return ZID_ITALY;
-    } else if (countryName.compare ("Japan") == 0) {
-        return ZID_JAPAN;
-    } else {
-        return _defaultCountryId; // default, we don't want segmentation fault
-    }
+    if (countryName == "North America")		return ZID_NORTH_AMERICA;
+    if (countryName == "France")			return ZID_FRANCE;
+    if (countryName == "Australia")			return ZID_AUSTRALIA;
+    if (countryName == "United Kingdom") 	return ZID_UNITED_KINGDOM;
+    if (countryName == "Spain")				return ZID_SPAIN;
+    if (countryName == "Italy")				return ZID_ITALY;
+    if (countryName == "Japan")				return ZID_JAPAN;
+    return ZID_NORTH_AMERICA; // default
 }
 
 TelephoneTone::TelephoneTone (const std::string& countryName, unsigned int sampleRate) :
-    _currentTone (Tone::TONE_NULL),
-    _toneList()
+    _currentTone (Tone::TONE_NULL)
 {
-    _debug ("TelephoneTone: Generate new telephone tones at %u Hz", sampleRate);
+    TelephoneTone::COUNTRYID countryId = getCountryId (countryName);
 
-    ToneList::COUNTRYID countryId = _toneList.getCountryId (countryName);
-    _tone[Tone::TONE_DIALTONE] = new Tone (_toneList.getDefinition (countryId, Tone::TONE_DIALTONE), sampleRate);
-    _tone[Tone::TONE_BUSY] = new Tone (_toneList.getDefinition (countryId, Tone::TONE_BUSY), sampleRate);
-    _tone[Tone::TONE_RINGTONE] = new Tone (_toneList.getDefinition (countryId, Tone::TONE_RINGTONE), sampleRate);
-    _tone[Tone::TONE_CONGESTION] = new Tone (_toneList.getDefinition (countryId, Tone::TONE_CONGESTION), sampleRate);
-
+    _tone[Tone::TONE_DIALTONE] = new Tone (toneZone[countryId][Tone::TONE_DIALTONE], sampleRate);
+    _tone[Tone::TONE_BUSY] = new Tone (toneZone[countryId][Tone::TONE_BUSY], sampleRate);
+    _tone[Tone::TONE_RINGTONE] = new Tone (toneZone[countryId][Tone::TONE_RINGTONE], sampleRate);
+    _tone[Tone::TONE_CONGESTION] = new Tone (toneZone[countryId][Tone::TONE_CONGESTION], sampleRate);
 }
 
 TelephoneTone::~TelephoneTone()
 {
-    for (int i=0; i<_toneList.getNbTone(); i++) {
+    for (size_t i=0; i < Tone::TONE_NULL; i++)
         delete _tone[i];
-        _tone[i] = 0;
-    }
 }
 
 void
 TelephoneTone::setCurrentTone (Tone::TONEID toneId)
 {
-    if (toneId != Tone::TONE_NULL && _currentTone != toneId) {
+    if (toneId != Tone::TONE_NULL && _currentTone != toneId)
         _tone[toneId]->reset();
-    }
 
     _currentTone = toneId;
 }
@@ -153,17 +120,8 @@ TelephoneTone::setCurrentTone (Tone::TONEID toneId)
 Tone*
 TelephoneTone::getCurrentTone()
 {
-    if (_currentTone == Tone::TONE_NULL) {
-        return 0;
-    }
+    if (_currentTone == Tone::TONE_NULL)
+        return NULL;
 
     return _tone[_currentTone];
 }
-
-bool
-TelephoneTone::shouldPlay()
-{
-    return ( (_currentTone != Tone::TONE_NULL) ? true : false);
-}
-
-

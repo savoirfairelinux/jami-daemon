@@ -1,6 +1,6 @@
-/* $Id: master_port.h 2394 2008-12-23 17:27:53Z bennylp $ */
+/* $Id: master_port.h 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #ifndef __PJMEDIA_MASTER_PORT_H__
 #define __PJMEDIA_MASTER_PORT_H__
@@ -114,6 +103,26 @@ PJ_DECL(pj_status_t) pjmedia_master_port_start(pjmedia_master_port *m);
  * @return		PJ_SUCCESS on success.
  */
 PJ_DECL(pj_status_t) pjmedia_master_port_stop(pjmedia_master_port *m);
+
+
+/**
+ * Poll the master port clock and execute the callback when the clock tick has
+ * elapsed. This operation is only valid if the master port is created with
+ * #PJMEDIA_CLOCK_NO_ASYNC flag.
+ *
+ * @param m		    The master port.
+ * @param wait		    If non-zero, then the function will block until
+ *			    a clock tick elapsed and callback has been called.
+ * @param ts		    Optional argument to receive the current 
+ *			    timestamp.
+ *
+ * @return		    Non-zero if clock tick has elapsed, or FALSE if
+ *			    the function returns before a clock tick has
+ *			    elapsed.
+ */
+PJ_DECL(pj_bool_t) pjmedia_master_port_wait(pjmedia_master_port *m,
+					    pj_bool_t wait,
+					    pj_timestamp *ts);
 
 
 /**

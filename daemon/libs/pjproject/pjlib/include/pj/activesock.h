@@ -1,6 +1,6 @@
-/* $Id: activesock.h 2394 2008-12-23 17:27:53Z bennylp $ */
+/* $Id: activesock.h 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #ifndef __PJ_ASYNCSOCK_H__
 #define __PJ_ASYNCSOCK_H__
@@ -313,6 +302,40 @@ PJ_DECL(pj_status_t) pj_activesock_create_udp(pj_pool_t *pool,
  */
 PJ_DECL(pj_status_t) pj_activesock_close(pj_activesock_t *asock);
 
+#if (defined(PJ_IPHONE_OS_HAS_MULTITASKING_SUPPORT) && \
+     PJ_IPHONE_OS_HAS_MULTITASKING_SUPPORT!=0) || \
+     defined(DOXYGEN)
+/**
+ * Set iPhone OS background mode setting. Setting to 1 will enable TCP
+ * active socket to receive incoming data when application is in the
+ * background. Setting to 0 will disable it. Default value of this
+ * setting is PJ_ACTIVESOCK_TCP_IPHONE_OS_BG.
+ *
+ * This API is only available if PJ_IPHONE_OS_HAS_MULTITASKING_SUPPORT
+ * is set to non-zero.
+ *
+ * @param asock	    The active socket.
+ * @param val	    The value of background mode setting.
+ *
+ */
+PJ_DECL(void) pj_activesock_set_iphone_os_bg(pj_activesock_t *asock,
+					     int val);
+
+/**
+ * Enable/disable support for iPhone OS background mode. This setting
+ * will apply globally and will affect any active sockets created
+ * afterwards, if you want to change the setting for a particular
+ * active socket, use #pj_activesock_set_iphone_os_bg() instead.
+ * By default, this setting is enabled.
+ *
+ * This API is only available if PJ_IPHONE_OS_HAS_MULTITASKING_SUPPORT
+ * is set to non-zero.
+ *
+ * @param val	    The value of global background mode setting.
+ *
+ */
+PJ_DECL(void) pj_activesock_enable_iphone_os_bg(pj_bool_t val);
+#endif
 
 /**
  * Associate arbitrary data with the active socket. Application may

@@ -1,6 +1,6 @@
-/* $Id: sip_dialog.h 2855 2009-08-05 18:41:23Z nanang $ */
+/* $Id: sip_dialog.h 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #ifndef __PJSIP_SIP_DIALOG_H__
 #define __PJSIP_SIP_DIALOG_H__
@@ -101,6 +90,26 @@ typedef enum pjsip_dialog_state
 
 
 /**
+ * Dialog capability status.
+ */
+typedef enum pjsip_dialog_cap_status
+{
+    /** Capability is unsupported. */
+    PJSIP_DIALOG_CAP_UNSUPPORTED    = 0,
+
+    /** Capability is supported */
+    PJSIP_DIALOG_CAP_SUPPORTED	    = 1,
+
+    /** 
+     *  Unknown capability status. This is usually because we lack the 
+     *  capability info which is retrieved from capability header specified
+     *  in the dialog messages.
+     */
+    PJSIP_DIALOG_CAP_UNKNOWN	    = 2
+} pjsip_dialog_cap_status;
+
+
+/**
  * This structure describes the dialog structure. Application MUST NOT
  * try to SET the values here directly, but instead it MUST use the
  * appropriate dialog API. The dialog declaration only needs to be made 
@@ -138,6 +147,7 @@ struct pjsip_dialog
     pjsip_hdr	        inv_hdr;    /**< Headers from hparam in dest URL    */
     pjsip_dlg_party     local;	    /**< Local party info.		    */
     pjsip_dlg_party     remote;	    /**< Remote party info.		    */
+    pjsip_hdr		rem_cap_hdr;/**< List of remote capability header.  */
     pjsip_role_e	role;	    /**< Initial role.			    */
     pj_bool_t		uac_has_2xx;/**< UAC has received 2xx response?	    */
     pj_bool_t		secure;	    /**< Use secure transport?		    */
@@ -383,6 +393,18 @@ PJ_DECL(pj_status_t) pjsip_dlg_add_usage( pjsip_dialog *dlg,
 					  void *mod_data );
 
 /**
+ * Check if the specified module has been registered as usage to the dialog.
+ *
+ * @param dlg		    The dialog.
+ * @param module	    The module.
+ *
+ * @return		    PJ_TRUE if the specified module is currently
+ * 			    registered as a usage to the dialog.
+ */
+PJ_DECL(pj_bool_t) pjsip_dlg_has_usage(pjsip_dialog *dlg,
+					  pjsip_module *module);
+
+/**
  * Attach module specific data to the dialog. Application can also set 
  * the value directly by accessing dlg->mod_data[module_id].
  *
@@ -608,6 +630,113 @@ PJ_DECL(pj_status_t) pjsip_dlg_respond( pjsip_dialog *dlg,
 					const pj_str_t *st_text,
 					const pjsip_hdr *hdr_list,
 					const pjsip_msg_body *body );
+
+
+/**
+ * Check if remote peer have the specified capability as published
+ * in the dialog messages from remote peer.
+ *
+ * Notes:
+ * - The capability \a token lookup will apply exact match, but not 
+ *   case-sensitive, for example: <tt>"text/html"</tt> will not match 
+ *   <tt>"text / html"</tt> (notice the spaces).
+ *
+ * @param dlg	    The dialog.
+ * @param htype	    The header type to be checked, which value may be:
+ *		    - PJSIP_H_ACCEPT
+ *		    - PJSIP_H_ALLOW
+ *		    - PJSIP_H_SUPPORTED
+ * @param hname	    If htype specifies PJSIP_H_OTHER, then the header name
+ *		    must be supplied in this argument. Otherwise the value
+ *		    must be set to NULL.
+ * @param token	    The capability token to check. For example, if \a htype
+ *		    is PJSIP_H_ALLOW, then \a token specifies the method
+ *		    names; if \a htype is PJSIP_H_SUPPORTED, then \a token
+ *		    specifies the extension names such as "100rel".
+ *
+ * @return	    PJSIP_DIALOG_CAP_SUPPORTED if the specified capability
+ *		    is explicitly supported, see @pjsip_dialog_cap_status
+ *		    for more info.
+ */
+PJ_DECL(pjsip_dialog_cap_status) pjsip_dlg_remote_has_cap(
+						    pjsip_dialog *dlg,
+						    int htype,
+						    const pj_str_t *hname,
+						    const pj_str_t *token);
+
+/**
+ * Get the specified capability header from the remote capability headers
+ * stored in the dialog.
+ *
+ * @param dlg	    The dialog.
+ * @param htype	    The header type to be retrieved, which value may be:
+ *		    - PJSIP_H_ACCEPT
+ *		    - PJSIP_H_ALLOW
+ *		    - PJSIP_H_SUPPORTED
+ * @param hname	    If htype specifies PJSIP_H_OTHER, then the header name
+ *		    must be supplied in this argument. Otherwise the value
+ *		    must be set to NULL.
+ *
+ * @return	    The appropriate header, or NULL if the header is not
+ *		    available.
+ */
+PJ_DECL(const pjsip_hdr*) pjsip_dlg_get_remote_cap_hdr(pjsip_dialog *dlg,
+						       int htype,
+						       const pj_str_t *hname);
+
+/**
+ * Set remote capability from a SIP header containing array of capability 
+ * tags/values.
+ *
+ * @param dlg	    The dialog.
+ * @param cap_hdr   The SIP header.
+ *
+ * @return	    PJ_SUCCESS when successful, otherwise the appropriate
+ *		    error code will be returned.
+ */
+PJ_DECL(pj_status_t) pjsip_dlg_set_remote_cap_hdr(
+				    pjsip_dialog *dlg,
+				    const pjsip_generic_array_hdr *cap_hdr);
+
+/**
+ * Remove a remote capability header.
+ *
+ * @param dlg	    The dialog.
+ * @param htype	    The header type to be removed, which value may be:
+ *		    - PJSIP_H_ACCEPT
+ *		    - PJSIP_H_ALLOW
+ *		    - PJSIP_H_SUPPORTED
+ * @param hname	    If htype specifies PJSIP_H_OTHER, then the header name
+ *		    must be supplied in this argument. Otherwise the value
+ *		    must be set to NULL.
+ *
+ * @return	    PJ_SUCCESS when successful, otherwise the appropriate
+ *		    error code will be returned.
+ */
+PJ_DECL(pj_status_t) pjsip_dlg_remove_remote_cap_hdr(pjsip_dialog *dlg,
+						     int htype,
+						     const pj_str_t *hname);
+
+/**
+ * Update remote capabilities from a received message. The header types
+ * to be updated from the message will only be \a PJSIP_H_ACCEPT, 
+ * \a PJSIP_H_ALLOW, and \a PJSIP_H_SUPPORTED.
+ *
+ * @param dlg	    The dialog.
+ * @param msg	    The received message.
+ * @param strict    If this is set to PJ_TRUE, any header types missing
+ *		    from the message will cause removal of existing
+ *		    header types in the capability list. Otherwise, the 
+ *		    capability list will not be modified when any header
+ *                  type is missing.
+ *
+ * @return	    PJ_SUCCESS when successful, otherwise the appropriate
+ *		    error code will be returned.
+ */
+PJ_DECL(pj_status_t) pjsip_dlg_update_remote_cap(pjsip_dialog *dlg,
+					         const pjsip_msg *msg,
+						 pj_bool_t strict);
+
 
 
 /**

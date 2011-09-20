@@ -613,11 +613,11 @@ void DlgAccounts::updateWidgets()
 void DlgAccounts::loadCodecList() 
 {
   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-  QStringList codecIdList = configurationManager.getAudioCodecList();
+  QVector<int> codecIdList = configurationManager.getAudioCodecList();
   QStringList tmpNameList;
   
-  foreach (QString aCodec, codecIdList) {
-    QStringList codec = configurationManager.getAudioCodecDetails(aCodec.toInt());
+  foreach (int aCodec, codecIdList) {
+    QStringList codec = configurationManager.getAudioCodecDetails(aCodec);
     QHash<QString, QString> _codec;
     _codec["name"]      = codec[0];
     _codec["frequency"] = codec[1];

@@ -56,9 +56,7 @@ create_new_gnome_notification (gchar *title, gchar *body, NotifyUrgency urgency,
         notif.icon = gdk_pixbuf_new_from_file (LOGO_SMALL, NULL);
 #ifdef LIBNOTIFY_VERSION_0_7_2
 #else
-#if GTK_CHECK_VERSION(2,10,0)
         notify_notification_attach_to_status_icon (notif.notification , get_status_icon());
-#endif
 #endif
 
         notify_notification_set_urgency (notif.notification, urgency);

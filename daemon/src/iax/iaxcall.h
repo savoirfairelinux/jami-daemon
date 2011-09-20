@@ -51,38 +51,6 @@ class IAXCall : public Call
         IAXCall (const std::string& id, Call::CallType type);
 
         /**
-         * @return iax_session* The session pointer or NULL
-         */
-        iax_session* getSession() const {
-            return _session;
-        }
-
-        /**
-         * Set the session pointer
-         * @param session the session pointer to assign
-         */
-        void setSession (iax_session* session) {
-            _session = session;
-        }
-
-        /**
-         * Set format (one single bit)
-         * This function sets the _audioCodec variable with the correct
-         * codec.
-         * @param format  The format representing the codec
-         */
-        void setFormat (int format);
-
-        /**
-         * Get format for the voice codec used
-         * @return int  Bitmask for codecs defined in iax/frame.h
-         */
-        int getFormat() const {
-            return _format;
-        }
-
-
-        /**
          * @return int  The bitwise list of supported formats
          */
         int getSupportedFormat (const std::string &accountID) const;
@@ -102,32 +70,10 @@ class IAXCall : public Call
          */
         int getFirstMatchingFormat (int needles, const std::string &accountID) const;
 
-        /**
-         * Return audio codec [mutex protected]
-         * @return int The payload of the codec
-         */
-        int getAudioCodec();
+        int getAudioCodec(void);
 
-    private:
-        /** Each call is associated with an iax_session */
-        iax_session* _session;
-
-        /**
-         * Set the audio codec used.  [not protected]
-         * @param audioCodec  The payload of the codec
-         */
-        void setAudioCodec (int audioCodec) {
-            _audioCodec = audioCodec;
-        }
-
-        /** Codec pointer */
-        int _audioCodec;
-
-        /**
-         * Format currently in use in the conversation,
-         * sent in each outgoing voice packet.
-         */
-        int _format;
+        int format;
+        iax_session* session;
 };
 
 #endif

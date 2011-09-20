@@ -1,6 +1,6 @@
-/* $Id: log.c 2868 2009-08-12 17:50:52Z nanang $ */
+/* $Id: log.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pj/types.h>
 #include <pj/log.h>
@@ -41,7 +30,11 @@ PJ_DEF_DATA(int) pj_log_max_level = PJ_LOG_MAX_LEVEL;
 #else
 static int pj_log_max_level = PJ_LOG_MAX_LEVEL;
 #endif
+
+#if PJ_HAS_THREADS
 static long thread_suspended_tls_id = -1;
+#endif
+
 static pj_log_func *log_writer = &pj_log_write;
 static unsigned log_decor = PJ_LOG_HAS_TIME | PJ_LOG_HAS_MICRO_SEC |
 			    PJ_LOG_HAS_SENDER | PJ_LOG_HAS_NEWLINE |
@@ -78,15 +71,15 @@ static pj_color_t PJ_LOG_COLOR_77 = PJ_TERM_COLOR_R |
 static char log_buffer[PJ_LOG_MAX_SIZE];
 #endif
 
+#if PJ_HAS_THREADS
 static void logging_shutdown(void)
 {
-#if PJ_HAS_THREADS
     if (thread_suspended_tls_id != -1) {
 	pj_thread_local_free(thread_suspended_tls_id);
 	thread_suspended_tls_id = -1;
     }
-#endif
 }
+#endif
 
 pj_status_t pj_log_init(void)
 {

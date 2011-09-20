@@ -1,6 +1,6 @@
-/* $Id: sip_inv.h 2869 2009-08-12 17:53:47Z bennylp $ */
+/* $Id: sip_inv.h 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #ifndef __SIP_INVITE_SESSION_H__
 #define __SIP_INVITE_SESSION_H__
@@ -306,6 +295,16 @@ enum pjsip_inv_option
      */
     PJSIP_INV_SUPPORT_UPDATE	= 4,
 
+    /**
+     * Indicate support for ICE
+     */
+    PJSIP_INV_SUPPORT_ICE	= 8,
+
+    /**
+     * Require ICE support.
+     */
+    PJSIP_INV_REQUIRE_ICE	= 16,
+
     /** 
      * Require reliable provisional response extension. 
      */
@@ -320,7 +319,7 @@ enum pjsip_inv_option
      * Session timer extension will always be used even when peer doesn't
      * support/want session timer.
      */
-    PJSIP_INV_ALWAYS_USE_TIMER	= 128,
+    PJSIP_INV_ALWAYS_USE_TIMER	= 128
 
 };
 
@@ -380,6 +379,34 @@ struct pjsip_inv_session
     void		*mod_data[PJSIP_MAX_MODULE];/**< Modules data.	    */
     struct pjsip_timer	*timer;			    /**< Session Timers.    */
 };
+
+
+/**
+ * This structure represents SDP information in a pjsip_rx_data. Application
+ * retrieve this information by calling #pjsip_rdata_get_sdp_info(). This
+ * mechanism supports multipart message body.
+ */
+typedef struct pjsip_rdata_sdp_info
+{
+    /**
+     * Pointer and length of the text body in the incoming message. If
+     * the pointer is NULL, it means the message does not contain SDP
+     * body.
+     */
+    pj_str_t		 body;
+
+    /**
+     * This will contain non-zero if an invalid SDP body is found in the
+     * message.
+     */
+    pj_status_t		 sdp_err;
+
+    /**
+     * A parsed and validated SDP body.
+     */
+    pjmedia_sdp_session *sdp;
+
+} pjsip_rdata_sdp_info;
 
 
 /**
@@ -874,6 +901,21 @@ PJ_DECL(const char *) pjsip_inv_state_name(pjsip_inv_state state);
 PJ_DECL(pj_status_t) pjsip_create_sdp_body(pj_pool_t *pool,
 					   pjmedia_sdp_session *sdp,
 					   pjsip_msg_body **p_body);
+
+/**
+ * Retrieve SDP information from an incoming message. Application should
+ * prefer to use this function rather than parsing the SDP manually since
+ * this function supports multipart message body.
+ *
+ * This function will only parse the SDP once, the first time it is called
+ * on the same message. Subsequent call on the same message will just pick
+ * up the already parsed SDP from the message.
+ *
+ * @param rdata		The incoming message.
+ *
+ * @return		The SDP info.
+ */
+PJ_DECL(pjsip_rdata_sdp_info*) pjsip_rdata_get_sdp_info(pjsip_rx_data *rdata);
 
 
 PJ_END_DECL

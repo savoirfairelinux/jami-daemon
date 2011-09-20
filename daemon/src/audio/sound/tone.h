@@ -36,9 +36,6 @@
 #include <string>
 #include "audio/audioloop.h"
 
-#define TONE_NBTONE 4
-#define TONE_NBCOUNTRY 7
-
 #define TABLE_LENGTH 4096
 
 /**

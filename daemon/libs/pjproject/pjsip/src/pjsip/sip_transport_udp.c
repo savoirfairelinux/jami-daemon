@@ -1,6 +1,6 @@
-/* $Id: sip_transport_udp.c 2519 2009-03-17 11:25:52Z bennylp $ */
+/* $Id: sip_transport_udp.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjsip/sip_transport_udp.h>
 #include <pjsip/sip_endpoint.h>
@@ -61,12 +50,19 @@
  *
  * More experiments are needed probably.
  */
+/* 2010/01/14
+ *  Too many people complained about seeing "Error setting SNDBUF" log,
+ *  so lets just remove this. People who want to have SNDBUF set can
+ *  still do so by declaring these two macros in config_site.h
+ */
 #ifndef PJSIP_UDP_SO_SNDBUF_SIZE
-#   define PJSIP_UDP_SO_SNDBUF_SIZE	(24*1024*1024)
+/*#   define PJSIP_UDP_SO_SNDBUF_SIZE	(24*1024*1024)*/
+#   define PJSIP_UDP_SO_SNDBUF_SIZE	0
 #endif
 
 #ifndef PJSIP_UDP_SO_RCVBUF_SIZE
-#   define PJSIP_UDP_SO_RCVBUF_SIZE	(24*1024*1024)
+/*#   define PJSIP_UDP_SO_RCVBUF_SIZE	(24*1024*1024)*/
+#   define PJSIP_UDP_SO_RCVBUF_SIZE	0
 #endif
 
 
@@ -122,7 +118,8 @@ static void udp_on_read_complete( pj_ioqueue_key_t *key,
 				  pj_ioqueue_op_key_t *op_key, 
 				  pj_ssize_t bytes_read)
 {
-    enum { MAX_IMMEDIATE_PACKET = 10 };
+    /* See https://trac.pjsip.org/repos/ticket/1197 */
+    enum { MAX_IMMEDIATE_PACKET = 50 };
     pjsip_rx_data_op_key *rdata_op_key = (pjsip_rx_data_op_key*) op_key;
     pjsip_rx_data *rdata = rdata_op_key->rdata;
     struct udp_transport *tp = (struct udp_transport*)rdata->tp_info.transport;
@@ -561,10 +558,13 @@ static void udp_set_socket(struct udp_transport *tp,
 			   pj_sock_t sock,
 			   const pjsip_host_port *a_name)
 {
+#if PJSIP_UDP_SO_RCVBUF_SIZE || PJSIP_UDP_SO_SNDBUF_SIZE
     long sobuf_size;
     pj_status_t status;
+#endif
 
     /* Adjust socket rcvbuf size */
+#if PJSIP_UDP_SO_RCVBUF_SIZE
     sobuf_size = PJSIP_UDP_SO_RCVBUF_SIZE;
     status = pj_sock_setsockopt(sock, pj_SOL_SOCKET(), pj_SO_RCVBUF(),
 				&sobuf_size, sizeof(sobuf_size));
@@ -574,8 +574,10 @@ static void udp_set_socket(struct udp_transport *tp,
 	PJ_LOG(4,(THIS_FILE, "Error setting SO_RCVBUF: %s [%d]", errmsg,
 		  status));
     }
+#endif
 
     /* Adjust socket sndbuf size */
+#if PJSIP_UDP_SO_SNDBUF_SIZE
     sobuf_size = PJSIP_UDP_SO_SNDBUF_SIZE;
     status = pj_sock_setsockopt(sock, pj_SOL_SOCKET(), pj_SO_SNDBUF(),
 				&sobuf_size, sizeof(sobuf_size));
@@ -585,6 +587,7 @@ static void udp_set_socket(struct udp_transport *tp,
 	PJ_LOG(4,(THIS_FILE, "Error setting SO_SNDBUF: %s [%d]", errmsg,
 		  status));
     }
+#endif
 
     /* Set the socket. */
     tp->sock = sock;
@@ -733,6 +736,9 @@ static pj_status_t transport_attach( pjsip_endpoint *endpt,
     else
 	tp->base.remote_name.host = pj_str("::0");
     tp->base.remote_name.port = 0;
+
+    /* Init direction */
+    tp->base.dir = PJSIP_TP_DIR_NONE;
 
     /* Set endpoint. */
     tp->base.endpt = endpt;

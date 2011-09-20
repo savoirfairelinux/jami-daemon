@@ -127,7 +127,6 @@ void ConfigurationTest::testYamlEmitter()
     Conf::ScalarNode publishAddr ("192.168.50.182");
     Conf::ScalarNode publishPort ("5060");
     Conf::ScalarNode sameasLocal (true);
-    Conf::ScalarNode resolveOnce (false);
     Conf::ScalarNode codecs ("0/9/110/111/112/");
     Conf::ScalarNode stunServer ("stun.sflphone.org");
     Conf::ScalarNode stunEnabled (false);
@@ -173,7 +172,6 @@ void ConfigurationTest::testYamlEmitter()
     accountmap.setKeyValue (publishAddrKey, &publishAddr);
     accountmap.setKeyValue (publishPortKey, &publishPort);
     accountmap.setKeyValue (sameasLocalKey, &sameasLocal);
-    accountmap.setKeyValue (resolveOnceKey, &resolveOnce);
     accountmap.setKeyValue (dtmfTypeKey, &dtmfType);
     accountmap.setKeyValue (displayNameKey, &displayName);
 

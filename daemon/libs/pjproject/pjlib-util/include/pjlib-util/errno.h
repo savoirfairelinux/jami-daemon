@@ -1,6 +1,6 @@
-/* $Id: errno.h 2394 2008-12-23 17:27:53Z bennylp $ */
+/* $Id: errno.h 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #ifndef __PJLIB_UTIL_ERRNO_H__
 #define __PJLIB_UTIL_ERRNO_H__
@@ -368,8 +357,34 @@
 
 //#define PJ_STATUS_FROM_STUN_CODE(code)	(PJLIB_UTIL_ERRNO_START+code)
 
-
-
+/************************************************************
+ * HTTP Client ERROR
+ ***********************************************************/
+/**
+ * @hideinitializer
+ * Invalid URL format
+ */
+#define PJLIB_UTIL_EHTTPINURL	    (PJLIB_UTIL_ERRNO_START+151)/* 320151 */
+/**
+ * @hideinitializer
+ * Invalid port number
+ */
+#define PJLIB_UTIL_EHTTPINPORT	    (PJLIB_UTIL_ERRNO_START+152)/* 320152 */
+/**
+ * @hideinitializer
+ * Incomplete headers received
+ */
+#define PJLIB_UTIL_EHTTPINCHDR	    (PJLIB_UTIL_ERRNO_START+153)/* 320153 */
+/**
+ * @hideinitializer
+ * Insufficient buffer
+ */
+#define PJLIB_UTIL_EHTTPINSBUF	    (PJLIB_UTIL_ERRNO_START+154)/* 320154 */
+/**
+ * @hideinitializer
+ * Connection lost
+ */
+#define PJLIB_UTIL_EHTTPLOST	    (PJLIB_UTIL_ERRNO_START+155)/* 320155 */
 
 /**
  * @}

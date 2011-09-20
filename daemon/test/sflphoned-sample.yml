@@ -9,7 +9,7 @@ accounts:
   displayName: 
   dtmfType: true
   enable: true
-  expire: 
+  expire: 600
   hostname: 
   id: IP2IP
   interface: default
@@ -17,7 +17,6 @@ accounts:
   port: 5060
   publishAddr: 
   publishPort: 5060
-  resolveOnce: false
   ringtoneEnabled: true
   ringtonePath: /usr/share/sflphone/ringtones/konga.ul
   sameasLocal: true
@@ -50,12 +49,11 @@ accounts:
     helloHashEnabled: true
     notSuppWarning: true
 preferences:
-  audioApi: true
   historyLimit: 30
   historyMaxCalls: 20
   md5Hash: false
   notifyMails: false
-  order: Account:1312584532/Account:1312398082/Account:1312398066/Account:1309188361/Account:1309187807/Account:1309187723/Account:1309187670/Account:1309187609/Account:1309187081/Account:1308839853/Account:1308839662/Account:1308839447/Account:1308839359/Account:1308839335/Account:1308838875/Account:1308838713/Account:1308838236/Account:1307975440/Account:1307975347/Account:1307974800/Account:1307974672/Account:1307974527/Account:1303487773/Account:1303247743/Account:1302895321/Account:1302892836/Account:1302891834/Account:1302882519/Account:1302207377/Account:1302207262/Account:1302204136/Account:1302204108/Account:1294850905/Account:1294850775/Account:1294850618/Account:1294849651/Account:1294849602/Account:1294849310/Account:1288964768/Account:1288964603/Account:1288964434/Account:1288964141/Account:1288964134/
+  order: Account:1316122317/Account:1316122284/Account:1316121900/Account:1316121889/Account:1316121691/Account:1316121662/Account:1316121661/Account:1316121654/Account:1316121611/Account:1316121607/Account:1316121605/Account:1316121602/Account:1312584532/Account:1312398082/Account:1312398066/Account:1309188361/Account:1309187807/Account:1309187723/Account:1309187670/Account:1309187609/Account:1309187081/Account:1308839853/Account:1308839662/Account:1308839447/Account:1308839359/Account:1308839335/Account:1308838875/Account:1308838713/Account:1308838236/Account:1307975440/Account:1307975347/Account:1307974800/Account:1307974672/Account:1307974527/Account:1303487773/Account:1303247743/Account:1302895321/Account:1302892836/Account:1302891834/Account:1302882519/Account:1302207377/Account:1302207262/Account:1302204136/Account:1302204108/Account:1294850905/Account:1294850775/Account:1294850618/Account:1294849651/Account:1294849602/Account:1294849310/Account:1288964768/Account:1288964603/Account:1288964434/Account:1288964141/Account:1288964134/
   portNum: 5060
   registrationExpire: 180
   searchBarDisplay: true
@@ -87,10 +85,10 @@ audio:
     cardIn: 0
     cardOut: 0
     cardRing: 0
-    frameSize: 20
     plugin: default
     smplRate: 44100
   alwaysRecording: false
+  audioApi: pulseaudio
   echoCancel: false
   echoDelayLength: 0
   echoTailLength: 100

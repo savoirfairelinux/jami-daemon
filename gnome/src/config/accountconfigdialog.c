@@ -40,12 +40,6 @@
 #include "zrtpadvanceddialog.h"
 #include "tlsadvanceddialog.h"
 
-// From version 2.16, gtk provides the functionalities libsexy used to provide
-#if GTK_CHECK_VERSION(2,16,0)
-#else
-#include <libsexy/sexy-icon-entry.h>
-#endif
-
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
@@ -209,10 +203,6 @@ static GtkWidget* create_basic_tab(account_t *currentAccount)
     GtkWidget * frame;
     GtkWidget * table;
     GtkWidget * clearTextCheckbox;
-#if GTK_CHECK_VERSION(2,16,0)
-#else
-    GtkWidget *image;
-#endif
 
     int row = 0;
 
@@ -306,14 +296,8 @@ static GtkWidget* create_basic_tab(account_t *currentAccount)
     label = gtk_label_new_with_mnemonic(_("_User name"));
     gtk_table_attach(GTK_TABLE(table), label, 0, 1, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-#if GTK_CHECK_VERSION(2,16,0)
     entryUsername = gtk_entry_new();
     gtk_entry_set_icon_from_pixbuf(GTK_ENTRY(entryUsername), GTK_ENTRY_ICON_PRIMARY, gdk_pixbuf_new_from_file(ICONS_DIR "/stock_person.svg", NULL));
-#else
-    entryUsername = sexy_icon_entry_new();
-    image = gtk_image_new_from_file(ICONS_DIR "/stock_person.svg");
-    sexy_icon_entry_set_icon(SEXY_ICON_ENTRY(entryUsername), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image));
-#endif
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), entryUsername);
     gtk_entry_set_text(GTK_ENTRY(entryUsername), curUsername);
     gtk_table_attach(GTK_TABLE(table), entryUsername, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -327,14 +311,8 @@ static GtkWidget* create_basic_tab(account_t *currentAccount)
     label = gtk_label_new_with_mnemonic(_("_Password"));
     gtk_table_attach(GTK_TABLE(table), label, 0, 1, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-#if GTK_CHECK_VERSION(2,16,0)
     entryPassword = gtk_entry_new();
     gtk_entry_set_icon_from_stock(GTK_ENTRY(entryPassword), GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_DIALOG_AUTHENTICATION);
-#else
-    entryPassword = sexy_icon_entry_new();
-    image = gtk_image_new_from_stock(GTK_STOCK_DIALOG_AUTHENTICATION , GTK_ICON_SIZE_SMALL_TOOLBAR);
-    sexy_icon_entry_set_icon(SEXY_ICON_ENTRY(entryPassword), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image));
-#endif
     gtk_entry_set_visibility(GTK_ENTRY(entryPassword), FALSE);
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), entryPassword);
     gtk_entry_set_text(GTK_ENTRY(entryPassword), curPassword);
@@ -1275,7 +1253,7 @@ void show_account_window(account_t * currentAccount)
     gtk_container_set_border_width(GTK_CONTAINER(dialog), 0);
 
     notebook = gtk_notebook_new();
-    gtk_box_pack_start(GTK_BOX(dialog->vbox), notebook, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(dialog)), notebook, TRUE, TRUE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(notebook), 10);
     gtk_widget_show(notebook);
 
@@ -1446,8 +1424,10 @@ void show_account_window(account_t * currentAccount)
             g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("true"));
             g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup(SDES));
         }
-        else
+        else {
             g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("false"));
+            g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup(""));
+        }
 
         g_free(keyExchange);
 

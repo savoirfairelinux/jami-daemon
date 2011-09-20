@@ -236,7 +236,7 @@ class ManagerImpl
          * Refuse the call
          * @param id  The call identifier
          */
-        bool refuseCall (const std::string& id);
+        void refuseCall (const std::string& id);
 
         /**
          * Create a new conference given two participant
@@ -344,7 +344,7 @@ class ManagerImpl
          * @param   id: callid of the line.
          * @param   code: pressed key.
          */
-        bool sendDtmf (const std::string& id, char code);
+        void sendDtmf (const std::string& id, char code);
 
         /**
          * Play a ringtone
@@ -370,9 +370,8 @@ class ManagerImpl
          * and notify user
          * @param call A call pointer
          * @param accountId an account id
-         * @return bool True if the call was added correctly
          */
-        bool incomingCall (Call* call, const std::string& accountId);
+        void incomingCall (Call* call, const std::string& accountId);
 
         /**
          * Notify the user that the recipient of the call has answered and the put the
@@ -1303,11 +1302,6 @@ class ManagerImpl
          * send, and receive instant messages.
          */
         sfl::InstantMessaging *_imModule;
-
-        /**
-         * Check if the call is a classic call or a direct IP-to-IP call
-         */
-        void checkCallConfiguration (const std::string& id, const std::string& to, Call::CallConfiguration *callConfig);
 
         Conf::YamlEmitter *emitter_;
 };

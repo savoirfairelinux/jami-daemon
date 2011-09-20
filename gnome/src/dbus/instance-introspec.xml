@@ -29,18 +29,5 @@
 				</tp:docstring>
 			</arg>
 		</method>
-
-		<method name="getRegistrationCount" tp:name-for-bindings="getRegistrationCount">
-			<tp:docstring>
-				Get the number of connected clients.
-			</tp:docstring>
-		      <arg type="i" name="count" direction="out">
-				<tp:docstring>
-					The number of client currently connected to the core
-				</tp:docstring>
-				</arg>
-		</method>
-
-
     </interface>
 </node>

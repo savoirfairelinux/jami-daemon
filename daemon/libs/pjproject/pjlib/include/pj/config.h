@@ -1,6 +1,6 @@
-/* $Id: config.h 2970 2009-10-26 15:47:52Z nanang $ */
-/*
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+/* $Id: config.h 3554 2011-05-05 09:10:15Z nanang $ */
+/* 
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -15,18 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
  */
 #ifndef __PJ_CONFIG_H__
 #define __PJ_CONFIG_H__
@@ -60,78 +49,78 @@
  * Include target OS specific configuration.
  */
 #if defined(PJ_AUTOCONF)
-/*
- * Autoconf
- */
+    /*
+     * Autoconf
+     */
 #   include <pj/compat/os_auto.h>
 
 #elif defined(PJ_SYMBIAN) && PJ_SYMBIAN!=0
-/*
- * SymbianOS
- */
+    /*
+     * SymbianOS
+     */
 #  include <pj/compat/os_symbian.h>
 
 #elif defined(PJ_WIN32_WINCE) || defined(_WIN32_WCE) || defined(UNDER_CE)
-/*
- * Windows CE
- */
+    /*
+     * Windows CE
+     */
 #   undef PJ_WIN32_WINCE
 #   define PJ_WIN32_WINCE   1
 #   include <pj/compat/os_win32_wince.h>
 
-/* Also define Win32 */
+    /* Also define Win32 */
 #   define PJ_WIN32 1
 
 #elif defined(PJ_WIN32) || defined(_WIN32) || defined(__WIN32__) || \
 	defined(_WIN64) || defined(WIN32) || defined(__TOS_WIN__)
-/*
- * Win32
- */
+    /*
+     * Win32
+     */
 #   undef PJ_WIN32
 #   define PJ_WIN32 1
 #   include <pj/compat/os_win32.h>
 
 #elif defined(PJ_LINUX_KERNEL) && PJ_LINUX_KERNEL!=0
-/*
- * Linux kernel
- */
+    /*
+     * Linux kernel
+     */
 #  include <pj/compat/os_linux_kernel.h>
 
 #elif defined(PJ_LINUX) || defined(linux) || defined(__linux)
-/*
- * Linux
- */
+    /*
+     * Linux
+     */
 #   undef PJ_LINUX
 #   define PJ_LINUX	    1
 #   include <pj/compat/os_linux.h>
 
 #elif defined(PJ_PALMOS) && PJ_PALMOS!=0
-/*
- * Palm
- */
+    /*
+     * Palm
+     */
 #  include <pj/compat/os_palmos.h>
 
 #elif defined(PJ_SUNOS) || defined(sun) || defined(__sun)
-/*
- * SunOS
- */
+    /*
+     * SunOS
+     */
 #   undef PJ_SUNOS
 #   define PJ_SUNOS	    1
 #   include <pj/compat/os_sunos.h>
 
 #elif defined(PJ_DARWINOS) || defined(__MACOSX__) || \
       defined (__APPLE__) || defined (__MACH__)
-/*
- * MacOS X
- */
+    /*
+     * MacOS X
+     */
 #   undef PJ_DARWINOS
 #   define PJ_DARWINOS	    1
 #   include <pj/compat/os_darwinos.h>
 
 #elif defined(PJ_RTEMS) && PJ_RTEMS!=0
-/*
- * RTEMS
- */
+    /*
+     * RTEMS
+     */
 #  include <pj/compat/os_rtems.h>
 #else
 #   error "Please specify target os."
@@ -142,17 +131,17 @@
  * Target machine specific configuration.
  */
 #if defined(PJ_AUTOCONF)
-/*
- * Autoconf configured
- */
+    /*
+     * Autoconf configured
+     */
 #include <pj/compat/m_auto.h>
 
 #elif defined (PJ_M_I386) || defined(_i386_) || defined(i_386_) || \
 	defined(_X86_) || defined(x86) || defined(__i386__) || \
 	defined(__i386) || defined(_M_IX86) || defined(__I86__)
-/*
- * Generic i386 processor family, little-endian
- */
+    /*
+     * Generic i386 processor family, little-endian
+     */
 #   undef PJ_M_I386
 #   define PJ_M_I386		1
 #   define PJ_M_NAME		"i386"
@@ -163,9 +152,9 @@
 
 #elif defined (PJ_M_X86_64) || defined(__amd64__) || defined(__amd64) || \
 	defined(__x86_64__) || defined(__x86_64)
-/*
- * AMD 64bit processor, little endian
- */
+    /*
+     * AMD 64bit processor, little endian
+     */
 #   undef PJ_M_X86_64
 #   define PJ_M_X86_64		1
 #   define PJ_M_NAME		"x86_64"
@@ -175,9 +164,9 @@
 
 #elif defined(PJ_M_IA64) || defined(__ia64__) || defined(_IA64) || \
 	defined(__IA64__) || defined( 	_M_IA64)
-/*
- * Intel IA64 processor, little endian
- */
+    /*
+     * Intel IA64 processor, little endian
+     */
 #   undef PJ_M_IA64
 #   define PJ_M_IA64		1
 #   define PJ_M_NAME		"ia64"
@@ -187,22 +176,22 @@
 
 #elif defined (PJ_M_M68K) && PJ_M_M68K != 0
 
-/*
- * Motorola m64k processor, little endian
- */
+    /*
+     * Motorola m68k processor, big endian
+     */
 #   undef PJ_M_M68K
 #   define PJ_M_M68K		1
 #   define PJ_M_NAME		"m68k"
 #   define PJ_HAS_PENTIUM	0
-#   define PJ_IS_LITTLE_ENDIAN	1
-#   define PJ_IS_BIG_ENDIAN	0
+#   define PJ_IS_LITTLE_ENDIAN	0
+#   define PJ_IS_BIG_ENDIAN	1
 
 
 #elif defined (PJ_M_ALPHA) || defined (__alpha__) || defined (__alpha) || \
 	defined (_M_ALPHA)
-/*
- * DEC Alpha processor, little endian
- */
+    /*
+     * DEC Alpha processor, little endian
+     */
 #   undef PJ_M_ALPHA
 #   define PJ_M_ALPHA		1
 #   define PJ_M_NAME		"alpha"
@@ -213,9 +202,9 @@
 
 #elif defined(PJ_M_MIPS) || defined(__mips__) || defined(__mips) || \
 	defined(__MIPS__) || defined(MIPS) || defined(_MIPS_)
-/*
- * MIPS, default to little endian
- */
+    /*
+     * MIPS, default to little endian
+     */
 #   undef PJ_M_MIPS
 #   define PJ_M_MIPS		1
 #   define PJ_M_NAME		"mips"
@@ -227,9 +216,9 @@
 
 
 #elif defined (PJ_M_SPARC) || defined( 	__sparc__) || defined(__sparc)
-/*
- * Sun Sparc, big endian
- */
+    /*
+     * Sun Sparc, big endian
+     */
 #   undef PJ_M_SPARC
 #   define PJ_M_SPARC		1
 #   define PJ_M_NAME		"sparc"
@@ -239,9 +228,9 @@
 
 #elif defined (PJ_M_ARMV4) || defined(ARM) || defined(_ARM_) ||  \
 	defined(ARMV4) || defined(__arm__)
-/*
- * ARM, default to little endian
- */
+    /*
+     * ARM, default to little endian
+     */
 #   undef PJ_M_ARMV4
 #   define PJ_M_ARMV4		1
 #   define PJ_M_NAME		"armv4"
@@ -254,9 +243,9 @@
 #elif defined (PJ_M_POWERPC) || defined(__powerpc) || defined(__powerpc__) || \
 	defined(__POWERPC__) || defined(__ppc__) || defined(_M_PPC) || \
 	defined(_ARCH_PPC)
-/*
- * PowerPC, big endian
- */
+    /*
+     * PowerPC, big endian
+     */
 #   undef PJ_M_POWERPC
 #   define PJ_M_POWERPC		1
 #   define PJ_M_NAME		"powerpc"
@@ -266,57 +255,16 @@
 
 #elif defined (PJ_M_NIOS2) || defined(__nios2) || defined(__nios2__) || \
       defined(__NIOS2__) || defined(__M_NIOS2) || defined(_ARCH_NIOS2)
-/*
- * Nios2, little endian
- */
+    /*
+     * Nios2, little endian
+     */
 #   undef PJ_M_NIOS2
 #   define PJ_M_NIOS2		1
 #   define PJ_M_NAME		"nios2"
 #   define PJ_HAS_PENTIUM	0
 #   define PJ_IS_LITTLE_ENDIAN	1
 #   define PJ_IS_BIG_ENDIAN	0
-
-#elif defined (PJ_M_SH) || defined(__sh) || defined(__sh__) || \
-      defined(__SH__) || defined(__M_SH) || defined(_ARCH_SH)
-/*
- * Renesas SH, little endian and big endian
- */
-#   undef PJ_M_SH
-#   define PJ_M_SH              1
-#   define PJ_M_NAME            "sh"
-#   define PJ_HAS_PENTIUM       0
-# if defined(__LITTLE_ENDIAN__)
-#   define PJ_IS_LITTLE_ENDIAN  1
-#   define PJ_IS_BIG_ENDIAN     0
-# elif defined(__BIG_ENDIAN__)
-#   define PJ_IS_LITTLE_ENDIAN  0
-#   define PJ_IS_BIG_ENDIAN     1
-# endif
-
-#elif defined (PJ_M_HPPA) || defined(__hppa) || defined(__hppa__) || \
-      defined(__HPPA__) || defined(__M_HPPA) || defined(_ARCH_HPPA)
-/*
- * HP/PA, big endian
- */
-#   undef PJ_M_HPPA
-#   define PJ_M_HPPA            1
-#   define PJ_M_NAME            "hppa"
-#   define PJ_HAS_PENTIUM       0
-#   define PJ_IS_LITTLE_ENDIAN  0
-#   define PJ_IS_BIG_ENDIAN     1
-
-#elif defined (PJ_M_S390) || defined(__s390) || defined(__s390__) || defined(__s390x) || \
-      defined(__s390x__) || defined(__M_s390) || defined(_ARCH_s390)
-/*
- * System 390, big endian
- */
-#   undef PJ_M_S390
-#   define PJ_M_S390            1
-#   define PJ_M_NAME            "s390"
-#   define PJ_HAS_PENTIUM       0
-#   define PJ_IS_LITTLE_ENDIAN  0
-#   define PJ_IS_BIG_ENDIAN     1
-
+		
 #else
 #   error "Please specify target machine."
 #endif
@@ -437,10 +385,10 @@
  * This may affect the stack usage, depending whether PJ_LOG_USE_STACK_BUFFER
  * flag is set.
  *
- * Default: 2000
+ * Default: 4000
  */
 #ifndef PJ_LOG_MAX_SIZE
-#  define PJ_LOG_MAX_SIZE	    2000
+#  define PJ_LOG_MAX_SIZE	    4000
 #endif
 
 /**
@@ -472,7 +420,7 @@
  * in the application.
  *
  * This will slow down pool creation and destruction and will add
- * few bytes of overhead, so application would normally want to
+ * few bytes of overhead, so application would normally want to 
  * disable this feature on release build.
  *
  * Default: 0
@@ -501,14 +449,14 @@
  *
  * Default: 8192
  */
-#ifndef PJ_THREAD_DEFAULT_STACK_SIZE
+#ifndef PJ_THREAD_DEFAULT_STACK_SIZE 
 #  define PJ_THREAD_DEFAULT_STACK_SIZE    8192
 #endif
 
 
 /**
- * Specify if PJ_CHECK_STACK() macro is enabled to check the sanity of
- * the stack. The OS implementation may check that no stack overflow
+ * Specify if PJ_CHECK_STACK() macro is enabled to check the sanity of 
+ * the stack. The OS implementation may check that no stack overflow 
  * occurs, and it also may collect statistic about stack usage. Note
  * that this will increase the footprint of the libraries since it
  * tracks the filename and line number of each functions.
@@ -538,7 +486,7 @@
 #endif
 
 /**
- * Support IPv6 in the library. If this support is disabled, some IPv6
+ * Support IPv6 in the library. If this support is disabled, some IPv6 
  * related functions will return PJ_EIPV6NOTSUP.
  *
  * Default: 0 (disabled, for now)
@@ -547,21 +495,31 @@
 #  define PJ_HAS_IPV6		    0
 #endif
 
-/**
-* Maximum hostname length.
-* Libraries sometimes needs to make copy of an address to stack buffer;
-* the value here affects the stack usage.
-*
-* Default: 128
-*/
+ /**
+ * Maximum hostname length.
+ * Libraries sometimes needs to make copy of an address to stack buffer;
+ * the value here affects the stack usage.
+ *
+ * Default: 128
+ */
 #ifndef PJ_MAX_HOSTNAME
 #  define PJ_MAX_HOSTNAME	    (128)
 #endif
 
 /**
+ * Maximum consecutive identical error for accept() operation before
+ * activesock stops calling the next ioqueue accept.
+ *
+ * Default: 50
+ */
+#ifndef PJ_ACTIVESOCK_MAX_CONSECUTIVE_ACCEPT_ERROR
+#   define PJ_ACTIVESOCK_MAX_CONSECUTIVE_ACCEPT_ERROR 50
+#endif
+
+/**
  * Constants for declaring the maximum handles that can be supported by
- * a single IOQ framework. This constant might not be relevant to the
- * underlying I/O queue impelementation, but still, developers should be
+ * a single IOQ framework. This constant might not be relevant to the 
+ * underlying I/O queue impelementation, but still, developers should be 
  * aware of this constant, to make sure that the program will not break when
  * the underlying implementation changes.
  */
@@ -575,8 +533,8 @@
  * things to ensure thread safety of handle unregistration operation by
  * employing reference counter to each handle.
  *
- * In addition, the ioqueue will preallocate memory for the handles,
- * according to the maximum number of handles that is specified during
+ * In addition, the ioqueue will preallocate memory for the handles, 
+ * according to the maximum number of handles that is specified during 
  * ioqueue creation.
  *
  * All applications would normally want this enabled, but you may disable
@@ -597,7 +555,7 @@
  * concurrently/in parallel. The default is yes, which means that if there
  * are more than one pending operations complete simultaneously, more
  * than one threads may call the key's callback at the same time. This
- * generally would promote good scalability for application, at the
+ * generally would promote good scalability for application, at the 
  * expense of more complexity to manage the concurrent accesses.
  *
  * Please see the ioqueue documentation for more info.
@@ -652,14 +610,14 @@
  * set to value lower than FD_SETSIZE.
  */
 #if PJ_FD_SETSIZE_SETABLE
-/* Only override FD_SETSIZE if the value has not been set */
+    /* Only override FD_SETSIZE if the value has not been set */
 #   ifndef FD_SETSIZE
 #	define FD_SETSIZE		PJ_IOQUEUE_MAX_HANDLES
 #   endif
 #else
-/* When FD_SETSIZE is not changeable, check if PJ_IOQUEUE_MAX_HANDLES
- * is lower than FD_SETSIZE value.
- */
+    /* When FD_SETSIZE is not changeable, check if PJ_IOQUEUE_MAX_HANDLES
+     * is lower than FD_SETSIZE value.
+     */
 #   ifdef FD_SETSIZE
 #	if PJ_IOQUEUE_MAX_HANDLES > FD_SETSIZE
 #	    error "PJ_IOQUEUE_MAX_HANDLES is greater than FD_SETSIZE"
@@ -776,7 +734,7 @@
 #ifndef PJ_NATIVE_ERR_POSITIVE
 #   define PJ_NATIVE_ERR_POSITIVE   1
 #endif
-
+ 
 /**
  * Include error message string in the library (pj_strerror()).
  * This is very much desirable!
@@ -793,7 +751,7 @@
  * functions to compare alnum strings. On some systems, they're faster
  * then stricmp/strcasecmp, but they can be slower on other systems.
  * When disabled, pjlib will fallback to stricmp/strnicmp.
- *
+ * 
  * Default: 0
  */
 #ifndef PJ_HAS_STRICMP_ALNUM
@@ -805,7 +763,7 @@
  * Types of QoS backend implementation.
  */
 
-/**
+/** 
  * Dummy QoS backend implementation, will always return error on all
  * the APIs.
  */
@@ -825,7 +783,7 @@
  */
 #ifndef PJ_QOS_IMPLEMENTATION
 #   if defined(PJ_WIN32_WINCE) && PJ_WIN32_WINCE && _WIN32_WCE >= 0x502
-/* Windows Mobile 6 or later */
+	/* Windows Mobile 6 or later */
 #	define PJ_QOS_IMPLEMENTATION    PJ_QOS_WM
 #   endif
 #endif
@@ -843,6 +801,17 @@
 #endif
 
 
+/**
+ * Disable WSAECONNRESET error for UDP sockets on Win32 platforms. See
+ * https://trac.pjsip.org/repos/ticket/1197.
+ *
+ * Default: 1
+ */
+#ifndef PJ_SOCK_DISABLE_WSAECONNRESET
+#   define PJ_SOCK_DISABLE_WSAECONNRESET    1
+#endif
+
+
 /** @} */
 
 /********************************************************************
@@ -856,7 +825,7 @@
  *
  * The libraries support generation of dynamic link libraries for
  * Symbian ABIv2 target (.dso/Dynamic Shared Object files, in Symbian
- * terms). Similar procedures may be applied for Win32 DLL with some
+ * terms). Similar procedures may be applied for Win32 DLL with some 
  * modification.
  *
  * Depending on the platforms, these steps may be necessary in order to
@@ -864,7 +833,7 @@
  *  - Create the (Visual Studio) projects to produce DLL output. PJLIB
  *    does not provide ready to use project files to produce DLL, so
  *    you need to create these projects yourself. For Symbian, the MMP
- *    files have been setup to produce DSO files for targets that
+ *    files have been setup to produce DSO files for targets that 
  *    require them.
  *  - In the (Visual Studio) projects, some macros need to be declared
  *    so that appropriate modifiers are added to symbol declarations
@@ -873,49 +842,49 @@
  *    MMP files.
  *  - Some build systems require .DEF file to be specified when creating
  *    the DLL. For Symbian, .DEF files are included in pjlib distribution,
- *    in <tt>pjlib/build.symbian</tt> directory. These DEF files are
+ *    in <tt>pjlib/build.symbian</tt> directory. These DEF files are 
  *    created by running <tt>./makedef.sh all</tt> from this directory,
  *    inside Mingw.
  *
  * Macros related for building DLL/DSO files:
  *  - For platforms that supports dynamic link libraries generation,
  *    it must declare <tt>PJ_EXPORT_SPECIFIER</tt> macro which value contains
- *    the prefix to be added to symbol definition, to export this
+ *    the prefix to be added to symbol definition, to export this 
  *    symbol in the DLL/DSO. For example, on Win32/Visual Studio, the
- *    value of this macro is \a __declspec(dllexport), and for ARM
- *    ABIv2/Symbian, the value is \a EXPORT_C.
+ *    value of this macro is \a __declspec(dllexport), and for ARM 
+ *    ABIv2/Symbian, the value is \a EXPORT_C. 
  *  - For platforms that supports linking with dynamic link libraries,
  *    it must declare <tt>PJ_IMPORT_SPECIFIER</tt> macro which value contains
- *    the prefix to be added to symbol declaration, to import this
+ *    the prefix to be added to symbol declaration, to import this 
  *    symbol from a DLL/DSO. For example, on Win32/Visual Studio, the
- *    value of this macro is \a __declspec(dllimport), and for ARM
- *    ABIv2/Symbian, the value is \a IMPORT_C.
- *  - Both <tt>PJ_EXPORT_SPECIFIER</tt> and <tt>PJ_IMPORT_SPECIFIER</tt>
+ *    value of this macro is \a __declspec(dllimport), and for ARM 
+ *    ABIv2/Symbian, the value is \a IMPORT_C. 
+ *  - Both <tt>PJ_EXPORT_SPECIFIER</tt> and <tt>PJ_IMPORT_SPECIFIER</tt> 
  *    macros above can be declared in your \a config_site.h if they are not
  *    declared by pjlib.
- *  - When PJLIB is built as DLL/DSO, both <tt>PJ_DLL</tt> and
- *    <tt>PJ_EXPORTING</tt> macros must be declared, so that
+ *  - When PJLIB is built as DLL/DSO, both <tt>PJ_DLL</tt> and 
+ *    <tt>PJ_EXPORTING</tt> macros must be declared, so that 
  *     <tt>PJ_EXPORT_SPECIFIER</tt> modifier will be added into function
  *    definition.
  *  - When application wants to link dynamically with PJLIB, then it
  *    must declare <tt>PJ_DLL</tt> macro when using/including PJLIB header,
- *    so that <tt>PJ_IMPORT_SPECIFIER</tt> modifier is properly added into
+ *    so that <tt>PJ_IMPORT_SPECIFIER</tt> modifier is properly added into 
  *    symbol declarations.
  *
  * When <b>PJ_DLL</b> macro is not declared, static linking is assumed.
  *
  * For example, here are some settings to produce DLLs with Visual Studio
  * on Windows/Win32:
- *  - Create Visual Studio projects to produce DLL. Add the appropriate
+ *  - Create Visual Studio projects to produce DLL. Add the appropriate 
  *    project dependencies to avoid link errors.
- *  - In the projects, declare <tt>PJ_DLL</tt> and <tt>PJ_EXPORTING</tt>
+ *  - In the projects, declare <tt>PJ_DLL</tt> and <tt>PJ_EXPORTING</tt> 
  *    macros.
  *  - Declare these macros in your <tt>config_site.h</tt>:
  \verbatim
 	#define PJ_EXPORT_SPECIFIER  __declspec(dllexport)
 	#define PJ_IMPORT_SPECIFIER  __declspec(dllimport)
  \endverbatim
- *  - And in the application (that links with the DLL) project, add
+ *  - And in the application (that links with the DLL) project, add 
  *    <tt>PJ_DLL</tt> in the macro declarations.
  */
 
@@ -939,7 +908,7 @@
  * is built as dynamic library.
  *
  * This macro should have been added by platform specific headers,
- * if the platform supports building dynamic library target.
+ * if the platform supports building dynamic library target. 
  */
 #ifndef PJ_EXPORT_DECL_SPECIFIER
 #   define PJ_EXPORT_DECL_SPECIFIER
@@ -952,7 +921,7 @@
  * is built as dynamic library.
  *
  * This macro should have been added by platform specific headers,
- * if the platform supports building dynamic library target.
+ * if the platform supports building dynamic library target. 
  */
 #ifndef PJ_EXPORT_DEF_SPECIFIER
 #   define PJ_EXPORT_DEF_SPECIFIER
@@ -1047,7 +1016,7 @@
  * @def PJ_DECL_DATA(type)
  * @param type The data type.
  * Declare a global data.
- */
+ */ 
 #if defined(PJ_DLL)
 #   if defined(PJ_EXPORTING)
 #	define PJ_DECL_DATA(type)   PJ_EXPORT_DECL_SPECIFIER extern type
@@ -1063,7 +1032,7 @@
  * @def PJ_DEF_DATA(type)
  * @param type The data type.
  * Define a global data.
- */
+ */ 
 #if defined(PJ_DLL) && defined(PJ_EXPORTING)
 #   define PJ_DEF_DATA(type)	    PJ_EXPORT_DEF_SPECIFIER type
 #elif !defined(PJ_DEF_DATA)
@@ -1150,22 +1119,46 @@
 
 PJ_BEGIN_DECL
 
+/** PJLIB version major number. */
+#define PJ_VERSION_NUM_MAJOR	1
+
+/** PJLIB version minor number. */
+#define PJ_VERSION_NUM_MINOR	10
+
+/** PJLIB version revision number. */
+#define PJ_VERSION_NUM_REV	0
+
+/**
+ * Extra suffix for the version (e.g. "-trunk"), or empty for
+ * web release version.
+ */
+#define PJ_VERSION_NUM_EXTRA	""
+
+/**
+ * PJLIB version number consists of three bytes with the following format:
+ * 0xMMIIRR00, where MM: major number, II: minor number, RR: revision
+ * number, 00: always zero for now.
+ */
+#define PJ_VERSION_NUM	((PJ_VERSION_NUM_MAJOR << 24) |	\
+			 (PJ_VERSION_NUM_MINOR << 16) | \
+			 (PJ_VERSION_NUM_REV << 8))
+
 /**
  * PJLIB version string constant. @see pj_get_version()
  */
-PJ_DECL_DATA (const char*) PJ_VERSION;
+PJ_DECL_DATA(const char*) PJ_VERSION;
 
 /**
  * Get PJLIB version string.
  *
  * @return #PJ_VERSION constant.
  */
-PJ_DECL (const char*) pj_get_version (void);
+PJ_DECL(const char*) pj_get_version(void);
 
 /**
  * Dump configuration to log with verbosity equal to info(3).
  */
-PJ_DECL (void) pj_dump_config (void);
+PJ_DECL(void) pj_dump_config(void);
 
 PJ_END_DECL
 

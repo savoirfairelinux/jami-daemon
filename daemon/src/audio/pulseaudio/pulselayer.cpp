@@ -434,7 +434,7 @@ void PulseLayer::writeToSpeaker (void)
         urgentRingBuffer_.Get (data, urgentBytes);
         pa_stream_write (s, data, urgentBytes, NULL, 0, PA_SEEK_RELATIVE);
         // Consume the regular one as well (same amount of bytes)
-        getMainBuffer()->discard (urgentBytes);
+        Manager::instance().getMainBuffer()->discard (urgentBytes);
         return;
     }
 
@@ -450,7 +450,7 @@ void PulseLayer::writeToSpeaker (void)
 
 	flushUrgent(); // flush remaining samples in _urgentRingBuffer
 
-	size_t availSamples = getMainBuffer()->availForGet() / sizeof(SFLDataFormat);
+	size_t availSamples = Manager::instance().getMainBuffer()->availForGet() / sizeof(SFLDataFormat);
 	if (availSamples == 0) {
 		pa_stream_begin_write(s, &data, &bytes);
 		memset(data, 0, bytes);
@@ -458,7 +458,7 @@ void PulseLayer::writeToSpeaker (void)
 		return;
 	}
 
-	unsigned int mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
+	unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
 	bool resample = audioSampleRate_ != mainBufferSampleRate;
 
 	// how much samples we can write in the output
@@ -479,7 +479,7 @@ void PulseLayer::writeToSpeaker (void)
 
 	size_t inBytes = inSamples * sizeof (SFLDataFormat);
 	pa_stream_begin_write(s, &data, &inBytes);
-	getMainBuffer()->getData (data, inBytes);
+	Manager::instance().getMainBuffer()->getData (data, inBytes);
 
 	if (resample) {
 		SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (outBytes);
@@ -502,7 +502,7 @@ void PulseLayer::readFromMic (void)
         return;
     }
 
-	unsigned int mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
+	unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
 	bool resample = audioSampleRate_ != mainBufferSampleRate;
 	if (resample) {
 		double resampleFactor = (double) audioSampleRate_ / mainBufferSampleRate;
@@ -520,7 +520,7 @@ void PulseLayer::readFromMic (void)
 		converter_->resample((SFLDataFormat*)data, mic_buffer_, mainBufferSampleRate, audioSampleRate_, samples);
 
 	dcblocker_.process(mic_buffer_, resample ? mic_buffer_ : (SFLDataFormat*)data, samples);
-	getMainBuffer()->putData(mic_buffer_, bytes);
+	Manager::instance().getMainBuffer()->putData(mic_buffer_, bytes);
 
     if (pa_stream_drop (record_->pulseStream()) < 0)
         _error ("Audio: Error: capture stream drop failed: %s" , pa_strerror (pa_context_errno (context_)));

@@ -1,6 +1,6 @@
-/* $Id: port.h 2506 2009-03-12 18:11:37Z bennylp $ */
+/* $Id: port.h 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #ifndef __PJMEDIA_PORT_H__
 #define __PJMEDIA_PORT_H__
@@ -48,25 +37,37 @@
   
   @subsection The Media Port
   A media port (represented with pjmedia_port "class") provides a generic
-  and extensible framework for implementing media terminations. A media
+  and extensible framework for implementing media elements. Media element
+  itself could be a media source, sink, or processing element. A media
   port interface basically has the following properties:
   - media port information (pjmedia_port_info) to describe the
   media port properties (sampling rate, number of channels, etc.),
-  - pointer to function to acquire frames from the port (<tt>get_frame()
-  </tt> interface), which will be called by #pjmedia_port_get_frame()
-  public API, and
-  - pointer to function to store frames to the port (<tt>put_frame()</tt>
-  interface) which will be called by #pjmedia_port_put_frame() public
-  API.
+  - optional pointer to function to acquire frames from the port (the
+    <tt>get_frame() </tt> interface), which will be called by
+    #pjmedia_port_get_frame() public API, and
+  - optional pointer to function to store frames to the port (the
+    <tt>put_frame()</tt> interface) which will be called by
+    #pjmedia_port_put_frame() public API.
+
+  The <tt>get_frame()</tt> and <tt>put_frame()</tt> interface of course
+  would only need to be implemented if the media port emits and/or takes
+  media frames respectively.
   
-  Media ports are passive "objects". Applications (or other PJMEDIA 
-  components) must actively calls #pjmedia_port_get_frame() or 
-  #pjmedia_port_put_frame() from/to the media port in order to retrieve/
-  store media frames.
+  Media ports are passive "objects". By default, there is no worker thread
+  to run the media flow. Applications (or other PJMEDIA
+  components, as explained in @ref PJMEDIA_PORT_CLOCK) must actively call
+  #pjmedia_port_get_frame() or #pjmedia_port_put_frame() from/to the media
+  port in order to retrieve/store media frames.
   
   Some media ports (such as @ref PJMEDIA_CONF and @ref PJMEDIA_RESAMPLE_PORT)
-  may be interconnected with each other, while some
+  may be interconnected with (or encapsulate) other port, to perform the
+  combined task of the ports, while some
   others represent the ultimate source/sink termination for the media. 
+  Interconnection means the upstream media port will call <tt>get_frame()</tt>
+  and <tt>put_frame()</tt> to its downstream media port. For this to happen,
+  the media ports need to have the same format, where format is defined as
+  combination of sample format, clock rate, channel count, bits per sample,
+  and samples per frame for audio media.
 
 
   @subsection port_clock_ex1 Example: Manual Resampling
@@ -229,7 +230,7 @@ typedef struct pjmedia_port_info
     unsigned	    channel_count;	/**< Number of channels.	    */
     unsigned	    bits_per_sample;	/**< Bits/sample		    */
     unsigned	    samples_per_frame;	/**< No of samples per frame.	    */
-    unsigned	    bytes_per_frame;	/**< No of samples per frame.	    */
+    unsigned	    bytes_per_frame;	/**< No of bytes per frame.	    */
 } pjmedia_port_info;
 
 

@@ -112,18 +112,6 @@ class AudioLayer
         }
 
         /**
-             * Get a pointer to the application MainBuffer class.
-         *
-         * In order to send signal to other parts of the application, one must pass through the mainbuffer.
-         * Audio instances must be registered into the MainBuffer and bound together via the ManagerImpl.
-         *
-             * @return MainBuffer* a pointer to the MainBuffer instance
-             */
-        MainBuffer* getMainBuffer (void) const {
-            return Manager::instance().getMainBuffer();
-        }
-
-        /**
          * Get the mutex lock for the entire audio layer
          */
         ost::Mutex* getMutexLock (void) {

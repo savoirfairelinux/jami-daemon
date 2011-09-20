@@ -68,6 +68,10 @@ private:
    //Account used prioritary if defined and registered. If not, the first registered account in accountList is used.
    
    bool historyLoaded;
+   
+   CallView* addressBookTree;
+   CallView* callTreeModel;
+   CallView* historyTreeModel;
 
 protected:
    
@@ -95,6 +99,8 @@ public:
    
    
    QErrorMessage * getErrorWindow();
+
+   CallView* model();
    
    //Daemon getters
    /**
@@ -122,9 +128,6 @@ public:
    //CallTreeView *addressBookTree;
    //CallTreeWidget *callTree;
    //CallTreeWidget *historyTree;
-   CallView addressBookTree;
-   CallView callTreeModel;
-   CallView historyTreeModel;
 
 private slots:
    /**
@@ -230,6 +233,7 @@ private slots:
    void updateVolumeBar();
    void updateVolumeControls();
    void updateDialpad();
+   
 
 public slots:
    /**
@@ -283,8 +287,8 @@ public slots:
       }
    }
 
-   void displayVolumeControls();
-   void displayDialpad();
+   void displayVolumeControls(bool checked = true);
+   void displayDialpad(bool checked = true);
    void configureSflPhone();
    void accountCreationWizard();
    void accept();

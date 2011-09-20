@@ -1,6 +1,6 @@
-/* $Id: sip_msg.c 2968 2009-10-26 11:21:37Z bennylp $ */
+/* $Id: sip_msg.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,26 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjsip/sip_msg.h>
 #include <pjsip/sip_parser.h>
 #include <pjsip/print_util.h>
 #include <pjsip/sip_errno.h>
 #include <pj/ctype.h>
+#include <pj/guid.h>
 #include <pj/string.h>
 #include <pj/pool.h>
 #include <pj/assert.h>
+#include <pjlib-util/string.h>
 
 PJ_DEF_DATA(const pjsip_method) pjsip_invite_method =
 	{ PJSIP_INVITE_METHOD, { "INVITE",6 }};
@@ -156,7 +147,8 @@ const pjsip_hdr_name_info_t pjsip_hdr_names[] =
 pj_bool_t pjsip_use_compact_form = PJSIP_ENCODE_SHORT_HNAME;
 
 static pj_str_t status_phrase[710];
-static int print_media_type(char *buf, const pjsip_media_type *media);
+static int print_media_type(char *buf, unsigned len,
+			    const pjsip_media_type *media);
 
 static int init_status_phrase()
 {
@@ -500,14 +492,12 @@ PJ_DEF(pj_ssize_t) pjsip_msg_print( const pjsip_msg *msg,
 	    }
 
 	    /* Add Content-Type header. */
-	    if ( (end-p) < 24 + media->type.slen + media->subtype.slen + 
-			   media->param.slen) 
-	    {
+	    if ( (end-p) < 24 + media->type.slen + media->subtype.slen) {
 		return -1;
 	    }
 	    pj_memcpy(p, ctype_hdr.ptr, ctype_hdr.slen);
 	    p += ctype_hdr.slen;
-	    p += print_media_type(p, media);
+	    p += print_media_type(p, end-p, media);
 	    *p++ = '\r';
 	    *p++ = '\n';
 
@@ -613,6 +603,68 @@ PJ_DEF(const pj_str_t*) pjsip_get_status_text(int code)
 /*
  * Media type
  */
+/*
+ * Init media type.
+ */
+PJ_DEF(void) pjsip_media_type_init( pjsip_media_type *mt,
+				    pj_str_t *type,
+				    pj_str_t *subtype)
+{
+    pj_bzero(mt, sizeof(*mt));
+    pj_list_init(&mt->param);
+    if (type)
+	mt->type = *type;
+    if (subtype)
+	mt->subtype = *subtype;
+}
+
+PJ_DEF(void) pjsip_media_type_init2( pjsip_media_type *mt,
+				     char *type,
+				     char *subtype)
+{
+    pj_str_t s_type, s_subtype;
+
+    if (type) {
+	s_type = pj_str(type);
+    } else {
+	s_type.ptr = NULL;
+	s_type.slen = 0;
+    }
+
+    if (subtype) {
+	s_subtype = pj_str(subtype);
+    } else {
+	s_subtype.ptr = NULL;
+	s_subtype.slen = 0;
+    }
+
+    pjsip_media_type_init(mt, &s_type, &s_subtype);
+}
+
+/*
+ * Compare two media types.
+ */
+PJ_DEF(int) pjsip_media_type_cmp( const pjsip_media_type *mt1,
+				  const pjsip_media_type *mt2,
+				  pj_bool_t cmp_param)
+{
+    int rc;
+
+    PJ_ASSERT_RETURN(mt1 && mt2, 1);
+
+    rc = pj_stricmp(&mt1->type, &mt2->type);
+    if (rc) return rc;
+
+    rc = pj_stricmp(&mt1->subtype, &mt2->subtype);
+    if (rc) return rc;
+
+    if (cmp_param) {
+	rc = pjsip_param_cmp(&mt1->param, &mt2->param, (cmp_param==1));
+    }
+
+    return rc;
+}
+
 PJ_DEF(void) pjsip_media_type_cp( pj_pool_t *pool,
 				  pjsip_media_type *dst,
 				  const pjsip_media_type *src)
@@ -620,7 +672,7 @@ PJ_DEF(void) pjsip_media_type_cp( pj_pool_t *pool,
     PJ_ASSERT_ON_FAIL(pool && dst && src, return);
     pj_strdup(pool, &dst->type,    &src->type);
     pj_strdup(pool, &dst->subtype, &src->subtype);
-    pj_strdup(pool, &dst->param,   &src->param);
+    pjsip_param_clone(pool, &dst->param, &src->param);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1274,6 +1326,7 @@ PJ_DEF(pjsip_ctype_hdr*) pjsip_ctype_hdr_init( pj_pool_t *pool,
 
     pj_bzero(mem, sizeof(pjsip_ctype_hdr));
     init_hdr(hdr, PJSIP_H_CONTENT_TYPE, &ctype_hdr_vptr);
+    pj_list_init(&hdr->media.param);
     return hdr;
 
 }
@@ -1284,9 +1337,12 @@ PJ_DEF(pjsip_ctype_hdr*) pjsip_ctype_hdr_create( pj_pool_t *pool )
     return pjsip_ctype_hdr_init(pool, mem);
 }
 
-static int print_media_type(char *buf, const pjsip_media_type *media)
+static int print_media_type(char *buf, unsigned len,
+			    const pjsip_media_type *media)
 {
     char *p = buf;
+    pj_ssize_t printed;
+    const pjsip_parser_const_t *pc;
 
     pj_memcpy(p, media->type.ptr, media->type.slen);
     p += media->type.slen;
@@ -1294,12 +1350,23 @@ static int print_media_type(char *buf, const pjsip_media_type *media)
     pj_memcpy(p, media->subtype.ptr, media->subtype.slen);
     p += media->subtype.slen;
 
-    if (media->param.slen) {
-	pj_memcpy(p, media->param.ptr, media->param.slen);
-	p += media->param.slen;
-    }
+    pc = pjsip_parser_const();
+    printed = pjsip_param_print_on(&media->param, p, buf+len-p,
+				   &pc->pjsip_TOKEN_SPEC,
+				   &pc->pjsip_TOKEN_SPEC, ';');
+    if (printed < 0)
+	return -1;
+
+    p += printed;
 
     return p-buf;
+}
+
+
+PJ_DEF(int) pjsip_media_type_print(char *buf, unsigned len,
+				   const pjsip_media_type *media)
+{
+    return print_media_type(buf, len, media);
 }
 
 static int pjsip_ctype_hdr_print( pjsip_ctype_hdr *hdr, 
@@ -1310,8 +1377,7 @@ static int pjsip_ctype_hdr_print( pjsip_ctype_hdr *hdr,
     const pj_str_t *hname = pjsip_use_compact_form? &hdr->sname : &hdr->name;
 
     if ((pj_ssize_t)size < hname->slen + 
-			   hdr->media.type.slen + hdr->media.subtype.slen + 
-			   hdr->media.param.slen + 8)
+			   hdr->media.type.slen + hdr->media.subtype.slen + 8)
     {
 	return -1;
     }
@@ -1321,7 +1387,7 @@ static int pjsip_ctype_hdr_print( pjsip_ctype_hdr *hdr,
     *p++ = ':';
     *p++ = ' ';
 
-    len = print_media_type(p, &hdr->media);
+    len = print_media_type(p, buf+size-p, &hdr->media);
     p += len;
 
     *p = '\0';
@@ -1334,7 +1400,7 @@ static pjsip_ctype_hdr* pjsip_ctype_hdr_clone( pj_pool_t *pool,
     pjsip_ctype_hdr *hdr = pjsip_ctype_hdr_create(pool);
     pj_strdup(pool, &hdr->media.type, &rhs->media.type);
     pj_strdup(pool, &hdr->media.subtype, &rhs->media.subtype);
-    pj_strdup(pool, &hdr->media.param, &rhs->media.param);
+    pjsip_param_clone(pool, &hdr->media.param, &rhs->media.param);
     return hdr;
 }
 
@@ -1462,7 +1528,8 @@ static int pjsip_fromto_hdr_print( pjsip_fromto_hdr *hdr,
 
     buf += printed;
 
-    copy_advance_pair(buf, ";tag=", 5, hdr->tag);
+    copy_advance_pair_escape(buf, ";tag=", 5, hdr->tag,
+			     pc->pjsip_TOKEN_SPEC);
 
     printed = pjsip_param_print_on(&hdr->other_param, buf, endbuf-buf, 
 				   &pc->pjsip_TOKEN_SPEC,
@@ -1987,7 +2054,8 @@ static int pjsip_via_hdr_print( pjsip_via_hdr *hdr,
     }
 
     copy_advance_pair(buf, ";received=", 10, hdr->recvd_param);
-    copy_advance_pair(buf, ";branch=", 8, hdr->branch_param);
+    copy_advance_pair_escape(buf, ";branch=", 8, hdr->branch_param,
+			     pc->pjsip_TOKEN_SPEC);
     
     printed = pjsip_param_print_on(&hdr->other_param, buf, endbuf-buf, 
 				   &pc->pjsip_TOKEN_SPEC,
@@ -2089,12 +2157,8 @@ PJ_DEF(pj_status_t) pjsip_msg_body_copy( pj_pool_t *pool,
     PJ_ASSERT_RETURN( src_body->clone_data!=NULL, PJ_EINVAL );
 
     /* Duplicate content-type */
-    pj_strdup(pool, &dst_body->content_type.type, 
-		    &src_body->content_type.type);
-    pj_strdup(pool, &dst_body->content_type.subtype, 
-		    &src_body->content_type.subtype);
-    pj_strdup(pool, &dst_body->content_type.param,
-		    &src_body->content_type.param);
+    pjsip_media_type_cp(pool, &dst_body->content_type,
+		        &src_body->content_type);
 
     /* Duplicate data. */
     dst_body->data = (*src_body->clone_data)(pool, src_body->data, 
@@ -2140,7 +2204,7 @@ PJ_DEF(pjsip_msg_body*) pjsip_msg_body_create( pj_pool_t *pool,
 
     pj_strdup(pool, &body->content_type.type, type);
     pj_strdup(pool, &body->content_type.subtype, subtype);
-    body->content_type.param.slen = 0;
+    pj_list_init(&body->content_type.param);
 
     body->data = pj_pool_alloc(pool, text->slen);
     pj_memcpy(body->data, text->ptr, text->slen);

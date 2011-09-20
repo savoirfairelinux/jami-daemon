@@ -32,6 +32,9 @@
 
 #include <KXmlGuiWindow>
 #include <KAction>
+#include "widgets/ContactDock.h"
+#include "widgets/HistoryDock.h"
+#include "widgets/BookmarkDock.h"
 #include <QActionGroup>
 
 // #include "ui_SFLPhoneView_base.h"
@@ -42,6 +45,7 @@
 #include "widgets/SFLPhoneTray.h"
 
 class SFLPhoneView;
+class CallView;
 
 /**
  * This class represents the SFLphone main window
@@ -91,12 +95,18 @@ private:
    KAction * action_configureSflPhone;
    KAction * action_accountCreationWizard;
 
-   SFLPhoneView * view;
+   SFLPhoneView * m_pView;
    QMenu *trayIconMenu;
    bool iconChanged;
    SFLPhoneTray *trayIcon;
    KNotification *notification;
-   QLabel * statusBarWidget;
+   QLabel*       statusBarWidget;
+   ContactDock*  m_pContactCD;
+   QDockWidget*  m_pCentralDW;
+   HistoryDock*  m_pHistoryDW;
+   BookmarkDock* m_pBookmarkDW;
+   
+   static SFLPhone* m_sApp;
    
 private:
    void setObjectNames();
@@ -118,18 +128,22 @@ public:
 
    friend class SFLPhoneView;
    
+   static SFLPhone* app();
+   SFLPhoneView* view();
+   CallView* model();
+   
    
 private slots:
-   void on_view_statusMessageChangeAsked(const QString & message);
-   void on_view_windowTitleChangeAsked(const QString & message);
-   void on_view_enabledActionsChangeAsked(const bool * enabledActions);
-   void on_view_actionIconsChangeAsked(const QString * actionIcons);
-   void on_view_actionTextsChangeAsked(const QString * actionTexts);
-   void on_view_transferCheckStateChangeAsked(bool transferCheckState);
-   void on_view_recordCheckStateChangeAsked(bool recordCheckState);
-   void on_view_addressBookEnableAsked(bool enabled);
-   void on_view_screenChanged(int screen);
-   void on_view_incomingCall(const Call * call);      
+   void on_m_pView_statusMessageChangeAsked(const QString & message);
+   void on_m_pView_windowTitleChangeAsked(const QString & message);
+   void on_m_pView_enabledActionsChangeAsked(const bool * enabledActions);
+   void on_m_pView_actionIconsChangeAsked(const QString * actionIcons);
+   void on_m_pView_actionTextsChangeAsked(const QString * actionTexts);
+   void on_m_pView_transferCheckStateChangeAsked(bool transferCheckState);
+   void on_m_pView_recordCheckStateChangeAsked(bool recordCheckState);
+   void on_m_pView_addressBookEnableAsked(bool enabled);
+   void on_m_pView_screenChanged(int screen);
+   void on_m_pView_incomingCall(const Call * call);
 
    void updateScreen(QAction * action);
 

@@ -28,6 +28,7 @@
  *  as that of the covered work.
  */
 
+#include <cstddef>
 #include <stdio.h>
 #include <sstream>
 #include <cstddef>

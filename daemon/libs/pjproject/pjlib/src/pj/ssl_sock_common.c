@@ -1,6 +1,6 @@
-/* $Id: ssl_sock_common.c 2998 2009-11-09 08:51:34Z bennylp $ */
+/* $Id: ssl_sock_common.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2009-2011 Teluu Inc. (http://www.teluu.com)
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,19 +15,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pj/ssl_sock.h>
+#include <pj/assert.h>
 #include <pj/errno.h>
 #include <pj/string.h>
 
@@ -40,77 +30,68 @@ typedef struct cipher_name_t {
 /* Cipher name constants */
 static cipher_name_t cipher_names[] =
 {
-    {TLS_NULL_WITH_NULL_NULL,               "NULL"},
+    {PJ_TLS_NULL_WITH_NULL_NULL,               "NULL"},
 
     /* TLS/SSLv3 */
-    {TLS_RSA_WITH_NULL_MD5,                 "TLS_RSA_WITH_NULL_MD5"},
-    {TLS_RSA_WITH_NULL_SHA,                 "TLS_RSA_WITH_NULL_SHA"},
-    {TLS_RSA_WITH_NULL_SHA256,              "TLS_RSA_WITH_NULL_SHA256"},
-    {TLS_RSA_WITH_RC4_128_MD5,              "TLS_RSA_WITH_RC4_128_MD5"},
-    {TLS_RSA_WITH_RC4_128_SHA,              "TLS_RSA_WITH_RC4_128_SHA"},
-    {TLS_RSA_WITH_3DES_EDE_CBC_SHA,         "TLS_RSA_WITH_3DES_EDE_CBC_SHA"},
-    {TLS_RSA_WITH_AES_128_CBC_SHA,          "TLS_RSA_WITH_AES_128_CBC_SHA"},
-    {TLS_RSA_WITH_AES_256_CBC_SHA,          "TLS_RSA_WITH_AES_256_CBC_SHA"},
-    {TLS_RSA_WITH_AES_128_CBC_SHA256,       "TLS_RSA_WITH_AES_128_CBC_SHA256"},
-    {TLS_RSA_WITH_AES_256_CBC_SHA256,       "TLS_RSA_WITH_AES_256_CBC_SHA256"},
-    {TLS_DH_DSS_WITH_3DES_EDE_CBC_SHA,      "TLS_DH_DSS_WITH_3DES_EDE_CBC_SHA"},
-    {TLS_DH_RSA_WITH_3DES_EDE_CBC_SHA,      "TLS_DH_RSA_WITH_3DES_EDE_CBC_SHA"},
-    {TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA,     "TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA"},
-    {TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA,     "TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA"},
-    {TLS_DH_DSS_WITH_AES_128_CBC_SHA,       "TLS_DH_DSS_WITH_AES_128_CBC_SHA"},
-    {TLS_DH_RSA_WITH_AES_128_CBC_SHA,       "TLS_DH_RSA_WITH_AES_128_CBC_SHA"},
-    {TLS_DHE_DSS_WITH_AES_128_CBC_SHA,      "TLS_DHE_DSS_WITH_AES_128_CBC_SHA"},
-    {TLS_DHE_RSA_WITH_AES_128_CBC_SHA,      "TLS_DHE_RSA_WITH_AES_128_CBC_SHA"},
-    {TLS_DH_DSS_WITH_AES_256_CBC_SHA,       "TLS_DH_DSS_WITH_AES_256_CBC_SHA"},
-    {TLS_DH_RSA_WITH_AES_256_CBC_SHA,       "TLS_DH_RSA_WITH_AES_256_CBC_SHA"},
-    {TLS_DHE_DSS_WITH_AES_256_CBC_SHA,      "TLS_DHE_DSS_WITH_AES_256_CBC_SHA"},
-    {TLS_DHE_RSA_WITH_AES_256_CBC_SHA,      "TLS_DHE_RSA_WITH_AES_256_CBC_SHA"},
-    {TLS_DH_DSS_WITH_AES_128_CBC_SHA256,    "TLS_DH_DSS_WITH_AES_128_CBC_SHA256"},
-    {TLS_DH_RSA_WITH_AES_128_CBC_SHA256,    "TLS_DH_RSA_WITH_AES_128_CBC_SHA256"},
-    {TLS_DHE_DSS_WITH_AES_128_CBC_SHA256,   "TLS_DHE_DSS_WITH_AES_128_CBC_SHA256"},
-    {TLS_DHE_RSA_WITH_AES_128_CBC_SHA256,   "TLS_DHE_RSA_WITH_AES_128_CBC_SHA256"},
-    {TLS_DH_DSS_WITH_AES_256_CBC_SHA256,    "TLS_DH_DSS_WITH_AES_256_CBC_SHA256"},
-    {TLS_DH_RSA_WITH_AES_256_CBC_SHA256,    "TLS_DH_RSA_WITH_AES_256_CBC_SHA256"},
-    {TLS_DHE_DSS_WITH_AES_256_CBC_SHA256,   "TLS_DHE_DSS_WITH_AES_256_CBC_SHA256"},
-    {TLS_DHE_RSA_WITH_AES_256_CBC_SHA256,   "TLS_DHE_RSA_WITH_AES_256_CBC_SHA256"},
-    {TLS_DH_anon_WITH_RC4_128_MD5,          "TLS_DH_anon_WITH_RC4_128_MD5"},
-    {TLS_DH_anon_WITH_3DES_EDE_CBC_SHA,     "TLS_DH_anon_WITH_3DES_EDE_CBC_SHA"},
-    {TLS_DH_anon_WITH_AES_128_CBC_SHA,      "TLS_DH_anon_WITH_AES_128_CBC_SHA"},
-    {TLS_DH_anon_WITH_AES_256_CBC_SHA,      "TLS_DH_anon_WITH_AES_256_CBC_SHA"},
-    {TLS_DH_anon_WITH_AES_128_CBC_SHA256,   "TLS_DH_anon_WITH_AES_128_CBC_SHA256"},
-    {TLS_DH_anon_WITH_AES_256_CBC_SHA256,   "TLS_DH_anon_WITH_AES_256_CBC_SHA256"},
+    {PJ_TLS_RSA_WITH_NULL_MD5,                 "TLS_RSA_WITH_NULL_MD5"},
+    {PJ_TLS_RSA_WITH_NULL_SHA,                 "TLS_RSA_WITH_NULL_SHA"},
+    {PJ_TLS_RSA_WITH_NULL_SHA256,              "TLS_RSA_WITH_NULL_SHA256"},
+    {PJ_TLS_RSA_WITH_RC4_128_MD5,              "TLS_RSA_WITH_RC4_128_MD5"},
+    {PJ_TLS_RSA_WITH_RC4_128_SHA,              "TLS_RSA_WITH_RC4_128_SHA"},
+    {PJ_TLS_RSA_WITH_3DES_EDE_CBC_SHA,         "TLS_RSA_WITH_3DES_EDE_CBC_SHA"},
+    {PJ_TLS_RSA_WITH_AES_128_CBC_SHA,          "TLS_RSA_WITH_AES_128_CBC_SHA"},
+    {PJ_TLS_RSA_WITH_AES_256_CBC_SHA,          "TLS_RSA_WITH_AES_256_CBC_SHA"},
+    {PJ_TLS_RSA_WITH_AES_128_CBC_SHA256,       "TLS_RSA_WITH_AES_128_CBC_SHA256"},
+    {PJ_TLS_RSA_WITH_AES_256_CBC_SHA256,       "TLS_RSA_WITH_AES_256_CBC_SHA256"},
+    {PJ_TLS_DH_DSS_WITH_3DES_EDE_CBC_SHA,      "TLS_DH_DSS_WITH_3DES_EDE_CBC_SHA"},
+    {PJ_TLS_DH_RSA_WITH_3DES_EDE_CBC_SHA,      "TLS_DH_RSA_WITH_3DES_EDE_CBC_SHA"},
+    {PJ_TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA,     "TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA"},
+    {PJ_TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA,     "TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA"},
+    {PJ_TLS_DH_DSS_WITH_AES_128_CBC_SHA,       "TLS_DH_DSS_WITH_AES_128_CBC_SHA"},
+    {PJ_TLS_DH_RSA_WITH_AES_128_CBC_SHA,       "TLS_DH_RSA_WITH_AES_128_CBC_SHA"},
+    {PJ_TLS_DHE_DSS_WITH_AES_128_CBC_SHA,      "TLS_DHE_DSS_WITH_AES_128_CBC_SHA"},
+    {PJ_TLS_DHE_RSA_WITH_AES_128_CBC_SHA,      "TLS_DHE_RSA_WITH_AES_128_CBC_SHA"},
+    {PJ_TLS_DH_DSS_WITH_AES_256_CBC_SHA,       "TLS_DH_DSS_WITH_AES_256_CBC_SHA"},
+    {PJ_TLS_DH_RSA_WITH_AES_256_CBC_SHA,       "TLS_DH_RSA_WITH_AES_256_CBC_SHA"},
+    {PJ_TLS_DHE_DSS_WITH_AES_256_CBC_SHA,      "TLS_DHE_DSS_WITH_AES_256_CBC_SHA"},
+    {PJ_TLS_DHE_RSA_WITH_AES_256_CBC_SHA,      "TLS_DHE_RSA_WITH_AES_256_CBC_SHA"},
+    {PJ_TLS_DH_DSS_WITH_AES_128_CBC_SHA256,    "TLS_DH_DSS_WITH_AES_128_CBC_SHA256"},
+    {PJ_TLS_DH_RSA_WITH_AES_128_CBC_SHA256,    "TLS_DH_RSA_WITH_AES_128_CBC_SHA256"},
+    {PJ_TLS_DHE_DSS_WITH_AES_128_CBC_SHA256,   "TLS_DHE_DSS_WITH_AES_128_CBC_SHA256"},
+    {PJ_TLS_DHE_RSA_WITH_AES_128_CBC_SHA256,   "TLS_DHE_RSA_WITH_AES_128_CBC_SHA256"},
+    {PJ_TLS_DH_DSS_WITH_AES_256_CBC_SHA256,    "TLS_DH_DSS_WITH_AES_256_CBC_SHA256"},
+    {PJ_TLS_DH_RSA_WITH_AES_256_CBC_SHA256,    "TLS_DH_RSA_WITH_AES_256_CBC_SHA256"},
+    {PJ_TLS_DHE_DSS_WITH_AES_256_CBC_SHA256,   "TLS_DHE_DSS_WITH_AES_256_CBC_SHA256"},
+    {PJ_TLS_DHE_RSA_WITH_AES_256_CBC_SHA256,   "TLS_DHE_RSA_WITH_AES_256_CBC_SHA256"},
+    {PJ_TLS_DH_anon_WITH_RC4_128_MD5,          "TLS_DH_anon_WITH_RC4_128_MD5"},
+    {PJ_TLS_DH_anon_WITH_3DES_EDE_CBC_SHA,     "TLS_DH_anon_WITH_3DES_EDE_CBC_SHA"},
+    {PJ_TLS_DH_anon_WITH_AES_128_CBC_SHA,      "TLS_DH_anon_WITH_AES_128_CBC_SHA"},
+    {PJ_TLS_DH_anon_WITH_AES_256_CBC_SHA,      "TLS_DH_anon_WITH_AES_256_CBC_SHA"},
+    {PJ_TLS_DH_anon_WITH_AES_128_CBC_SHA256,   "TLS_DH_anon_WITH_AES_128_CBC_SHA256"},
+    {PJ_TLS_DH_anon_WITH_AES_256_CBC_SHA256,   "TLS_DH_anon_WITH_AES_256_CBC_SHA256"},
 
     /* TLS (deprecated) */
-    {TLS_RSA_EXPORT_WITH_RC4_40_MD5,        "TLS_RSA_EXPORT_WITH_RC4_40_MD5"},
-    {TLS_RSA_EXPORT_WITH_RC2_CBC_40_MD5,    "TLS_RSA_EXPORT_WITH_RC2_CBC_40_MD5"},
-    {TLS_RSA_WITH_IDEA_CBC_SHA,             "TLS_RSA_WITH_IDEA_CBC_SHA"},
-    {TLS_RSA_EXPORT_WITH_DES40_CBC_SHA,     "TLS_RSA_EXPORT_WITH_DES40_CBC_SHA"},
-    {TLS_RSA_WITH_DES_CBC_SHA,              "TLS_RSA_WITH_DES_CBC_SHA"},
-    {TLS_DH_DSS_EXPORT_WITH_DES40_CBC_SHA,  "TLS_DH_DSS_EXPORT_WITH_DES40_CBC_SHA"},
-    {TLS_DH_DSS_WITH_DES_CBC_SHA,           "TLS_DH_DSS_WITH_DES_CBC_SHA"},
-    {TLS_DH_RSA_EXPORT_WITH_DES40_CBC_SHA,  "TLS_DH_RSA_EXPORT_WITH_DES40_CBC_SHA"},
-    {TLS_DH_RSA_WITH_DES_CBC_SHA,           "TLS_DH_RSA_WITH_DES_CBC_SHA"},
-    {TLS_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA, "TLS_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA"},
-    {TLS_DHE_DSS_WITH_DES_CBC_SHA,          "TLS_DHE_DSS_WITH_DES_CBC_SHA"},
-    {TLS_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA, "TLS_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA"},
-    {TLS_DHE_RSA_WITH_DES_CBC_SHA,          "TLS_DHE_RSA_WITH_DES_CBC_SHA"},
-    {TLS_DH_anon_EXPORT_WITH_RC4_40_MD5,    "TLS_DH_anon_EXPORT_WITH_RC4_40_MD5"},
-    {TLS_DH_anon_EXPORT_WITH_DES40_CBC_SHA, "TLS_DH_anon_EXPORT_WITH_DES40_CBC_SHA"},
-    {TLS_DH_anon_WITH_DES_CBC_SHA,          "TLS_DH_anon_WITH_DES_CBC_SHA"},
+    {PJ_TLS_RSA_EXPORT_WITH_RC4_40_MD5,        "TLS_RSA_EXPORT_WITH_RC4_40_MD5"},
+    {PJ_TLS_RSA_EXPORT_WITH_RC2_CBC_40_MD5,    "TLS_RSA_EXPORT_WITH_RC2_CBC_40_MD5"},
+    {PJ_TLS_RSA_WITH_IDEA_CBC_SHA,             "TLS_RSA_WITH_IDEA_CBC_SHA"},
+    {PJ_TLS_RSA_EXPORT_WITH_DES40_CBC_SHA,     "TLS_RSA_EXPORT_WITH_DES40_CBC_SHA"},
+    {PJ_TLS_RSA_WITH_DES_CBC_SHA,              "TLS_RSA_WITH_DES_CBC_SHA"},
+    {PJ_TLS_DH_DSS_EXPORT_WITH_DES40_CBC_SHA,  "TLS_DH_DSS_EXPORT_WITH_DES40_CBC_SHA"},
+    {PJ_TLS_DH_DSS_WITH_DES_CBC_SHA,           "TLS_DH_DSS_WITH_DES_CBC_SHA"},
+    {PJ_TLS_DH_RSA_EXPORT_WITH_DES40_CBC_SHA,  "TLS_DH_RSA_EXPORT_WITH_DES40_CBC_SHA"},
+    {PJ_TLS_DH_RSA_WITH_DES_CBC_SHA,           "TLS_DH_RSA_WITH_DES_CBC_SHA"},
+    {PJ_TLS_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA, "TLS_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA"},
+    {PJ_TLS_DHE_DSS_WITH_DES_CBC_SHA,          "TLS_DHE_DSS_WITH_DES_CBC_SHA"},
+    {PJ_TLS_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA, "TLS_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA"},
+    {PJ_TLS_DHE_RSA_WITH_DES_CBC_SHA,          "TLS_DHE_RSA_WITH_DES_CBC_SHA"},
+    {PJ_TLS_DH_anon_EXPORT_WITH_RC4_40_MD5,    "TLS_DH_anon_EXPORT_WITH_RC4_40_MD5"},
+    {PJ_TLS_DH_anon_EXPORT_WITH_DES40_CBC_SHA, "TLS_DH_anon_EXPORT_WITH_DES40_CBC_SHA"},
+    {PJ_TLS_DH_anon_WITH_DES_CBC_SHA,          "TLS_DH_anon_WITH_DES_CBC_SHA"},
 
     /* SSLv3 */
-    {SSL_FORTEZZA_KEA_WITH_NULL_SHA,        "SSL_FORTEZZA_KEA_WITH_NULL_SHA"},
-    {SSL_FORTEZZA_KEA_WITH_FORTEZZA_CBC_SHA,"SSL_FORTEZZA_KEA_WITH_FORTEZZA_CBC_SHA"},
-    {SSL_FORTEZZA_KEA_WITH_RC4_128_SHA,     "SSL_FORTEZZA_KEA_WITH_RC4_128_SHA"},
-
-    /* SSLv2 */
-    {SSL_CK_RC4_128_WITH_MD5,               "SSL_CK_RC4_128_WITH_MD5"},
-    {SSL_CK_RC4_128_EXPORT40_WITH_MD5,      "SSL_CK_RC4_128_EXPORT40_WITH_MD5"},
-    {SSL_CK_RC2_128_CBC_WITH_MD5,           "SSL_CK_RC2_128_CBC_WITH_MD5"},
-    {SSL_CK_RC2_128_CBC_EXPORT40_WITH_MD5,  "SSL_CK_RC2_128_CBC_EXPORT40_WITH_MD5"},
-    {SSL_CK_IDEA_128_CBC_WITH_MD5,          "SSL_CK_IDEA_128_CBC_WITH_MD5"},
-    {SSL_CK_DES_64_CBC_WITH_MD5,            "SSL_CK_DES_64_CBC_WITH_MD5"},
-    {SSL_CK_DES_192_EDE3_CBC_WITH_MD5,      "SSL_CK_DES_192_EDE3_CBC_WITH_MD5"}
+    {PJ_SSL_FORTEZZA_KEA_WITH_NULL_SHA,        "SSL_FORTEZZA_KEA_WITH_NULL_SHA"},
+    {PJ_SSL_FORTEZZA_KEA_WITH_FORTEZZA_CBC_SHA,"SSL_FORTEZZA_KEA_WITH_FORTEZZA_CBC_SHA"},
+    {PJ_SSL_FORTEZZA_KEA_WITH_RC4_128_SHA,     "SSL_FORTEZZA_KEA_WITH_RC4_128_SHA"},
 };
 
 
@@ -139,6 +120,7 @@ PJ_DEF(void) pj_ssl_sock_param_default(pj_ssl_sock_param *param)
 }
 
 
+/* Get cipher name string */
 PJ_DEF(const char*) pj_ssl_cipher_name(pj_ssl_cipher cipher)
 {
     unsigned i, n;
@@ -150,4 +132,98 @@ PJ_DEF(const char*) pj_ssl_cipher_name(pj_ssl_cipher cipher)
     }
 
     return NULL;
+}
+
+
+
+
+PJ_DEF(pj_status_t) pj_ssl_cert_get_verify_status_strings(
+						pj_uint32_t verify_status, 
+						const char *error_strings[],
+						unsigned *count)
+{
+    unsigned i = 0, shift_idx = 0;
+    unsigned unknown = 0;
+    pj_uint32_t errs;
+
+    PJ_ASSERT_RETURN(error_strings && count, PJ_EINVAL);
+
+    if (verify_status == PJ_SSL_CERT_ESUCCESS && *count) {
+	error_strings[0] = "OK";
+	*count = 1;
+	return PJ_SUCCESS;
+    }
+
+    errs = verify_status;
+
+    while (errs && i < *count) {
+	pj_uint32_t err;
+	const char *p = NULL;
+
+	if ((errs & 1) == 0) {
+	    shift_idx++;
+	    errs >>= 1;
+	    continue;
+	}
+
+	err = (1 << shift_idx);
+
+	switch (err) {
+	case PJ_SSL_CERT_EISSUER_NOT_FOUND:
+	    p = "The issuer certificate cannot be found";
+	    break;
+	case PJ_SSL_CERT_EUNTRUSTED:
+	    p = "The certificate is untrusted";
+	    break;
+	case PJ_SSL_CERT_EVALIDITY_PERIOD:
+	    p = "The certificate has expired or not yet valid";
+	    break;
+	case PJ_SSL_CERT_EINVALID_FORMAT:
+	    p = "One or more fields of the certificate cannot be decoded "
+		"due to invalid format";
+	    break;
+	case PJ_SSL_CERT_EISSUER_MISMATCH:
+	    p = "The issuer info in the certificate does not match to the "
+		"(candidate) issuer certificate";
+	    break;
+	case PJ_SSL_CERT_ECRL_FAILURE:
+	    p = "The CRL certificate cannot be found or cannot be read "
+		"properly";
+	    break;
+	case PJ_SSL_CERT_EREVOKED:
+	    p = "The certificate has been revoked";
+	    break;
+	case PJ_SSL_CERT_EINVALID_PURPOSE:
+	    p = "The certificate or CA certificate cannot be used for the "
+		"specified purpose";
+	    break;
+	case PJ_SSL_CERT_ECHAIN_TOO_LONG:
+	    p = "The certificate chain length is too long";
+	    break;
+	case PJ_SSL_CERT_EIDENTITY_NOT_MATCH:
+	    p = "The server identity does not match to any identities "
+		"specified in the certificate";
+	    break;
+	case PJ_SSL_CERT_EUNKNOWN:
+	default:
+	    unknown++;
+	    break;
+	}
+	
+	/* Set error string */
+	if (p)
+	    error_strings[i++] = p;
+
+	/* Next */
+	shift_idx++;
+	errs >>= 1;
+    }
+
+    /* Unknown error */
+    if (unknown && i < *count)
+	error_strings[i++] = "Unknown verification error";
+
+    *count = i;
+
+    return PJ_SUCCESS;
 }

@@ -429,8 +429,9 @@ show_preferences_dialog ()
     notebook = gtk_notebook_new ();
     gtk_notebook_set_show_tabs (GTK_NOTEBOOK (notebook), FALSE);
     gtk_box_pack_end (GTK_BOX (hbox), notebook, TRUE, TRUE, 0);
-    gtk_box_pack_start (GTK_BOX (dialog->vbox), hbox, TRUE, TRUE, 0);
-    gtk_widget_show_all (dialog->vbox);
+    GtkWidget *box = gtk_dialog_get_content_area(dialog);
+    gtk_box_pack_start (GTK_BOX (box), hbox, TRUE, TRUE, 0);
+    gtk_widget_show_all (box);
     gtk_container_set_border_width (GTK_CONTAINER (notebook), 10);
     gtk_widget_show (notebook);
 

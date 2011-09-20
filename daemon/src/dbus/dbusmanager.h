@@ -54,15 +54,10 @@ class DBusManager
             return _configurationManager;
         };
 
-		bool isConnected() const {
-			return _connected;
-		}
-
         void exec();
         void exit();
 
     private:
-        bool				  _connected;
         CallManager*          _callManager;
         ConfigurationManager* _configurationManager;
         Instance*             _instanceManager;

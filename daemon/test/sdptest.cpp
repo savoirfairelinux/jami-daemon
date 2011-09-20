@@ -122,8 +122,6 @@ void SDPTest::testInitialOfferFirstCodec ()
 {
 	std::cout << "------------ SDPTest::testInitialOfferFirstCodec --------------" << std::endl;
 
-    CPPUNIT_ASSERT(_session->getLocalPublishedAudioPort() == 0);
-    CPPUNIT_ASSERT(_session->getRemoteAudioPort() == 0);
     CPPUNIT_ASSERT(_session->getLocalIP() == "");
     CPPUNIT_ASSERT(_session->getRemoteIP() == "");
 
@@ -139,8 +137,6 @@ void SDPTest::testInitialOfferFirstCodec ()
     videoCodecs.push_back("H263");
 
 	_session->setLocalIP("127.0.0.1");
-	_session->setLocalPublishedAudioPort(49567);
-	_session->setLocalPublishedVideoPort(49568);
 
     _session->createOffer(codecSelection, videoCodecs);
 
@@ -148,26 +144,18 @@ void SDPTest::testInitialOfferFirstCodec ()
     pjmedia_sdp_parse(_testPool, (char*)sdp_answer1, strlen(sdp_answer1), &remoteAnswer);
 
     _session->receivingAnswerAfterInitialOffer(remoteAnswer);
-
     _session->startNegotiation();
 
-    _session->updateInternalState();
+    _session->setMediaTransportInfoFromRemoteSdp();
 
-    CPPUNIT_ASSERT(_session->getLocalPublishedAudioPort() == 49567);
-    CPPUNIT_ASSERT(_session->getLocalPublishedVideoPort() == 49568);
-    CPPUNIT_ASSERT(_session->getRemoteAudioPort() == 49920);
     CPPUNIT_ASSERT(_session->getLocalIP() == "127.0.0.1");
     CPPUNIT_ASSERT(_session->getRemoteIP() == "host.example.com");
-    CPPUNIT_ASSERT(_session->getSessionAudioCodec()->getMimeSubtype() == "PCMU");
-
 }
 
 void SDPTest::testInitialAnswerFirstCodec ()
 {
 	std::cout << "------------ SDPTest::testInitialAnswerFirstCodec -------------" << std::endl;
 
-    CPPUNIT_ASSERT(_session->getLocalPublishedAudioPort() == 0);
-    CPPUNIT_ASSERT(_session->getRemoteAudioPort() == 0);
     CPPUNIT_ASSERT(_session->getLocalIP() == "");
     CPPUNIT_ASSERT(_session->getRemoteIP() == "");
 
@@ -185,30 +173,21 @@ void SDPTest::testInitialAnswerFirstCodec ()
     pjmedia_sdp_parse(_testPool, (char*)sdp_offer1, strlen(sdp_offer1), &remoteOffer);
 
     _session->setLocalIP("127.0.0.1");
-	_session->setLocalPublishedAudioPort(49567);
-	_session->setLocalPublishedVideoPort(49568);
 
     _session->receiveOffer(remoteOffer, codecSelection, videoCodecs);
 
     _session->startNegotiation();
 
-    _session->updateInternalState();
+    _session->setMediaTransportInfoFromRemoteSdp();
 
-    CPPUNIT_ASSERT(_session->getLocalPublishedAudioPort() == 49567);
-    CPPUNIT_ASSERT(_session->getLocalPublishedVideoPort() == 49568);
-    CPPUNIT_ASSERT(_session->getRemoteAudioPort() == 49920);
     CPPUNIT_ASSERT(_session->getLocalIP() == "127.0.0.1");
     CPPUNIT_ASSERT(_session->getRemoteIP() == "host.example.com");
-    CPPUNIT_ASSERT(_session->getSessionAudioCodec()->getMimeSubtype() == "PCMU");
-
 }
 
 void SDPTest::testInitialOfferLastCodec ()
 {
 	std::cout << "------------ SDPTest::testInitialOfferLastCodec --------------------" << std::endl;
 
-    CPPUNIT_ASSERT(_session->getLocalPublishedAudioPort() == 0);
-    CPPUNIT_ASSERT(_session->getRemoteAudioPort() == 0);
     CPPUNIT_ASSERT(_session->getLocalIP() == "");
     CPPUNIT_ASSERT(_session->getRemoteIP() == "");
 
@@ -224,8 +203,6 @@ void SDPTest::testInitialOfferLastCodec ()
     videoCodecs.push_back("H263");
 
 	_session->setLocalIP("127.0.0.1");
-	_session->setLocalPublishedAudioPort(49567);
-	_session->setLocalPublishedVideoPort(49568);
 
     _session->createOffer(codecSelection, videoCodecs);
 
@@ -233,26 +210,18 @@ void SDPTest::testInitialOfferLastCodec ()
     pjmedia_sdp_parse(_testPool, (char*)sdp_answer2, strlen(sdp_answer2), &remoteAnswer);
 
     _session->receivingAnswerAfterInitialOffer(remoteAnswer);
-
     _session->startNegotiation();
 
-    _session->updateInternalState();
+    _session->setMediaTransportInfoFromRemoteSdp();
 
-    CPPUNIT_ASSERT(_session->getLocalPublishedAudioPort() == 49567);
-    CPPUNIT_ASSERT(_session->getLocalPublishedVideoPort() == 49568);
-    CPPUNIT_ASSERT(_session->getRemoteAudioPort() == 49920);
     CPPUNIT_ASSERT(_session->getLocalIP() == "127.0.0.1");
     CPPUNIT_ASSERT(_session->getRemoteIP() == "host.example.com");
-    CPPUNIT_ASSERT(_session->getSessionAudioCodec()->getMimeSubtype() == "G722");
-
 }
 
 void SDPTest::testInitialAnswerLastCodec ()
 {
 	std::cout << "------------ SDPTest::testInitialAnswerLastCodec ------------" << std::endl;
 
-    CPPUNIT_ASSERT(_session->getLocalPublishedAudioPort() == 0);
-    CPPUNIT_ASSERT(_session->getRemoteAudioPort() == 0);
     CPPUNIT_ASSERT(_session->getLocalIP() == "");
     CPPUNIT_ASSERT(_session->getRemoteIP() == "");
 
@@ -270,22 +239,15 @@ void SDPTest::testInitialAnswerLastCodec ()
     pjmedia_sdp_parse(_testPool, (char*)sdp_offer2, strlen(sdp_offer2), &remoteOffer);
 
     _session->setLocalIP("127.0.0.1");
-	_session->setLocalPublishedAudioPort(49567);
-	_session->setLocalPublishedVideoPort(49568);
 
     _session->receiveOffer(remoteOffer, codecSelection, videoCodecs);
 
     _session->startNegotiation();
 
-    _session->updateInternalState();
+    _session->setMediaTransportInfoFromRemoteSdp();
 
-    CPPUNIT_ASSERT(_session->getLocalPublishedAudioPort() == 49567);
-    CPPUNIT_ASSERT(_session->getLocalPublishedVideoPort() == 49568);
-    CPPUNIT_ASSERT(_session->getRemoteAudioPort() == 49920);
     CPPUNIT_ASSERT(_session->getLocalIP() == "127.0.0.1");
     CPPUNIT_ASSERT(_session->getRemoteIP() == "host.example.com");
-    CPPUNIT_ASSERT(_session->getSessionAudioCodec()->getMimeSubtype() == "G722");
-
 }
 
 
@@ -293,8 +255,6 @@ void SDPTest::testReinvite ()
 {
 	std::cout << "------------ SDPTest::testReinvite --------------------" << std::endl;
 
-    CPPUNIT_ASSERT(_session->getLocalPublishedAudioPort() == 0);
-    CPPUNIT_ASSERT(_session->getRemoteAudioPort() == 0);
     CPPUNIT_ASSERT(_session->getLocalIP() == "");
     CPPUNIT_ASSERT(_session->getRemoteIP() == "");
 
@@ -311,8 +271,6 @@ void SDPTest::testReinvite ()
     videoCodecs.push_back("H263");
 
 	_session->setLocalIP("127.0.0.1");
-	_session->setLocalPublishedAudioPort(49567);
-	_session->setLocalPublishedVideoPort(49568);
 
     _session->createOffer(codecSelection, videoCodecs);
 
@@ -320,17 +278,12 @@ void SDPTest::testReinvite ()
     pjmedia_sdp_parse(_testPool, (char*)sdp_answer1, strlen(sdp_answer1), &remoteAnswer);
 
     _session->receivingAnswerAfterInitialOffer(remoteAnswer);
-
     _session->startNegotiation();
 
-    _session->updateInternalState();
+    _session->setMediaTransportInfoFromRemoteSdp();
 
-    CPPUNIT_ASSERT(_session->getLocalPublishedAudioPort() == 49567);
-    CPPUNIT_ASSERT(_session->getLocalPublishedVideoPort() == 49568);
-    CPPUNIT_ASSERT(_session->getRemoteAudioPort() == 49920);
     CPPUNIT_ASSERT(_session->getLocalIP() == "127.0.0.1");
     CPPUNIT_ASSERT(_session->getRemoteIP() == "host.example.com");
-    CPPUNIT_ASSERT(_session->getSessionAudioCodec()->getMimeSubtype() == "PCMU");
 
     pjmedia_sdp_parse(_testPool, (char*)sdp_reinvite, strlen(sdp_reinvite), &reinviteOffer);
 
@@ -338,9 +291,8 @@ void SDPTest::testReinvite ()
 
     _session->startNegotiation();
 
-    _session->updateInternalState();
+    _session->setMediaTransportInfoFromRemoteSdp();
 
-    CPPUNIT_ASSERT(_session->getRemoteAudioPort() == 42445);
     CPPUNIT_ASSERT(_session->getRemoteIP() == "host.exampleReinvite.com");
 
 }

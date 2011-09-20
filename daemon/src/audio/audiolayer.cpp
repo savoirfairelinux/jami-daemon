@@ -56,7 +56,7 @@ void AudioLayer::flushMain (void)
 {
     ost::MutexLock guard (mutex_);
     // should pass call id
-    getMainBuffer()->flushAllBuffers();
+    Manager::instance().getMainBuffer()->flushAllBuffers();
 }
 
 void AudioLayer::flushUrgent (void)

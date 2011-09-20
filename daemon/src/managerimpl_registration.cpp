@@ -49,14 +49,14 @@
 void
 ManagerImpl::registerAccounts()
 {
-    AccountMap::iterator iter;
+    for (AccountMap::iterator iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
+    	Account *a = iter->second;
+        if (!a)
+			continue;
 
-    for (iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
-        if (iter->second) {
-            iter->second->loadConfig();
-            if (iter->second->isEnabled())
-                iter->second->registerVoIPLink();
-        }
+        a->loadConfig();
+		if (a->isEnabled())
+			a->registerVoIPLink();
     }
 }
 
@@ -66,7 +66,7 @@ VoIPLink* ManagerImpl::getAccountLink (const std::string& accountID) const
     if (not accountID.empty())
         return getAccount (accountID)->getVoIPLink();
     else
-        return SIPVoIPLink::instance ();
+        return SIPVoIPLink::instance();
 }
 
 

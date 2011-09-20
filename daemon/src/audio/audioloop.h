@@ -61,7 +61,7 @@ class AudioLoop
          * @param nb of int16 to send
          * @param volume  The volume
          */
-        void getNext (SFLDataFormat* output, int samples, short volume=100);
+        void getNext (SFLDataFormat* output, size_t samples, short volume=100);
 
         /**
          * Reset the pointer position
@@ -74,7 +74,7 @@ class AudioLoop
          * Accessor to the size of the buffer
          * @return unsigned int The size
          */
-        unsigned int getSize() {
+        size_t getSize() {
             return _size;
         }
 
@@ -84,10 +84,10 @@ class AudioLoop
         SFLDataFormat* _buffer;
 
         /** Number of samples inside the buffer */
-        int _size;
+        size_t _size;
 
         /** current position, set to 0, when initialize */
-        int _pos;
+        size_t _pos;
 
         /** Sample rate */
         unsigned int _sampleRate;

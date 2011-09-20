@@ -52,59 +52,39 @@ AudioRtpFactory::AudioRtpFactory(SIPCall *ca) : _rtpSession (NULL), remoteContex
 
 AudioRtpFactory::~AudioRtpFactory()
 {
-    stop();
+	delete _rtpSession;
 }
 
 void AudioRtpFactory::initAudioRtpConfig ()
 {
-    if (_rtpSession != NULL) {
-        _debug ("An audio rtp thread was already created but not" \
-                         "destroyed. Forcing it before continuing.");
+    if (_rtpSession != NULL)
         stop();
-    }
 
-    std::string accountId(Manager::instance().getAccountFromCall (ca_->getCallId()));
+    std::string accountId(Manager::instance().getAccountFromCall(ca_->getCallId()));
 
-    _debug ("AudioRtpFactory: Init rtp session for account %s", accountId.c_str());
+    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount (accountId));
+    if (account) {
+        _srtpEnabled = account->getSrtpEnabled();
+        std::string key(account->getSrtpKeyExchange());
 
-    // Manager::instance().getAccountLink (accountId);
-    Account *account = Manager::instance().getAccount (accountId);
+        if (key == "sdes")
+            _keyExchangeProtocol = Sdes;
+        else if (key == "zrtp")
+            _keyExchangeProtocol = Zrtp;
+        else
+            _keyExchangeProtocol = Symmetric;
 
-    if (!account)
-        _error ("AudioRtpFactory: Error no account found");
-
-    registerAccount(account, accountId);
-}
-
-void AudioRtpFactory::registerAccount(Account * /*account*/, const std::string & /* id */)
-{
-    _srtpEnabled = false;
-    _keyExchangeProtocol = Symmetric;
-    _helloHashEnabled = false;
-}
-
-
-void AudioRtpFactory::registerAccount(SIPAccount *sipaccount, const std::string& accountId)
-{
-    _srtpEnabled = sipaccount->getSrtpEnabled();
-    std::string tempkey(sipaccount->getSrtpKeyExchange());
-
-    if (tempkey == "sdes")
-        _keyExchangeProtocol = Sdes;
-    else if (tempkey == "zrtp")
-        _keyExchangeProtocol = Zrtp;
-    else
+        _helloHashEnabled = account->getZrtpHelloHash();
+    } else {
+        _srtpEnabled = false;
         _keyExchangeProtocol = Symmetric;
-
-    _debug ("AudioRtpFactory: Registered account %s profile selected with key exchange protocol number %d", accountId.c_str(), _keyExchangeProtocol);
-    _helloHashEnabled = sipaccount->getZrtpHelloHash();
+        _helloHashEnabled = false;
+    }
 }
 
 void AudioRtpFactory::initAudioSymmetricRtpSession ()
 {
     ost::MutexLock m (_audioRtpThreadMutex);
-
-    _debug ("AudioRtpFactory: Srtp enable: %d ", _srtpEnabled);
 
     if (_srtpEnabled) {
         std::string zidFilename (Manager::instance().voipPreferences.getZidFile());
@@ -113,28 +93,22 @@ void AudioRtpFactory::initAudioSymmetricRtpSession ()
 
             case Zrtp:
                 _rtpSession = new AudioZrtpSession (ca_, zidFilename);
-
                 if (_helloHashEnabled) {
                     // TODO: be careful with that. The hello hash is computed asynchronously. Maybe it's
                     // not even available at that point.
                     ca_->getLocalSDP()->setZrtpHash (static_cast<AudioZrtpSession *> (_rtpSession)->getHelloHash());
-                    _debug ("AudioRtpFactory: Zrtp hello hash fed to SDP");
                 }
-
                 break;
 
             case Sdes:
-
                 _rtpSession = new AudioSrtpSession (ca_);
                 break;
 
             default:
-                _debug ("AudioRtpFactory: Unsupported Rtp Session Exception Type!");
-                throw UnsupportedRtpSessionType();
+                throw UnsupportedRtpSessionType("Unsupported Rtp Session Exception Type!");
         }
     } else {
         _rtpSession = new AudioSymmetricRtpSession (ca_);
-        _debug ("AudioRtpFactory: Starting a symmetric unencrypted rtp session");
     }
 }
 
@@ -158,31 +132,21 @@ void AudioRtpFactory::start (AudioCodec* audiocodec)
 void AudioRtpFactory::stop (void)
 {
     ost::MutexLock mutex (_audioRtpThreadMutex);
-    _info ("AudioRtpFactory: Stopping audio rtp session");
 
-    if (_rtpSession == NULL) {
-        _debug ("AudioRtpFactory: Rtp session already deleted");
+    if (_rtpSession == NULL)
         return;
-    }
 
-    try {
-        if (_rtpSession->getAudioRtpType() == Sdes) {
-			localContext = static_cast<AudioSrtpSession *> (_rtpSession)->_localCryptoCtx;
-			remoteContext = static_cast<AudioSrtpSession *> (_rtpSession)->_remoteCryptoCtx;
-        }
+	if (_rtpSession->getAudioRtpType() == Sdes) {
+		localContext = static_cast<AudioSrtpSession *> (_rtpSession)->_localCryptoCtx;
+		remoteContext = static_cast<AudioSrtpSession *> (_rtpSession)->_remoteCryptoCtx;
+	}
 
-        delete _rtpSession;
-        _rtpSession = NULL;
-    } catch (...) {
-        _debug ("AudioRtpFactory: Error: Exception caught when stopping the audio rtp session");
-        throw AudioRtpFactoryException ("AudioRtpFactory: Error: caught exception in AudioRtpFactory::stop");
-    }
+	delete _rtpSession;
+	_rtpSession = NULL;
 }
 
 int AudioRtpFactory::getSessionMedia()
 {
-    _info (__PRETTY_FUNCTION__);
-
     if (_rtpSession == NULL) {
         throw AudioRtpFactoryException ("AudioRtpFactory: Error: RTP session was null when trying to get session media type");
     }
@@ -192,8 +156,6 @@ int AudioRtpFactory::getSessionMedia()
 
 void AudioRtpFactory::updateSessionMedia (AudioCodec *audiocodec)
 {
-    _info ("AudioRtpFactory: Updating session media");
-
     if (_rtpSession == NULL) {
         throw AudioRtpFactoryException ("AudioRtpFactory: Error: _rtpSession was null when trying to update IP address");
     }
@@ -202,12 +164,8 @@ void AudioRtpFactory::updateSessionMedia (AudioCodec *audiocodec)
 
 void AudioRtpFactory::updateDestinationIpAddress (void)
 {
-    _info ("AudioRtpFactory: Updating IP address");
-
-    if (_rtpSession == NULL) {
-        throw AudioRtpFactoryException ("AudioRtpFactory: Error: RtpSession was null when trying to update IP address");
-    }
-    _rtpSession->updateDestinationIpAddress();
+    if (_rtpSession)
+    	_rtpSession->updateDestinationIpAddress();
 }
 
 sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
@@ -239,14 +197,13 @@ void AudioRtpFactory::setRemoteCryptoInfo (sfl::SdesNegotiator& nego)
 
 void AudioRtpFactory::setDtmfPayloadType(unsigned int payloadType)
 {
-    _rtpSession->setDtmfPayloadType(payloadType);
+	if (_rtpSession)
+		_rtpSession->setDtmfPayloadType(payloadType);
 }
 
 void AudioRtpFactory::sendDtmfDigit (int digit)
 {
-    _rtpSession->putDtmfEvent (digit);
+    _rtpSession->putDtmfEvent(digit);
 }
 
 }
-
-

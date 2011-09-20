@@ -1,6 +1,6 @@
-/* $Id: errno.c 2992 2009-11-09 04:09:13Z bennylp $ */
+/* $Id: errno.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pj/errno.h>
 #include <pj/log.h>
@@ -139,6 +128,14 @@ PJ_DEF(pj_status_t) pj_register_strerror( pj_status_t start,
 	if (IN_RANGE(start, err_msg_hnd[i].begin, err_msg_hnd[i].end) ||
 	    IN_RANGE(start+space-1, err_msg_hnd[i].begin, err_msg_hnd[i].end))
 	{
+	    if (err_msg_hnd[i].begin == start && 
+		err_msg_hnd[i].end == (start+space) &&
+		err_msg_hnd[i].strerror == f)
+	    {
+		/* The same range and handler has already been registered */
+		return PJ_SUCCESS;
+	    }
+
 	    return PJ_EEXISTS;
 	}
     }
@@ -228,7 +225,7 @@ static void pj_perror_imp(int log_level, const char *sender,
 
     /* Build the title */
     len = pj_ansi_vsnprintf(titlebuf, sizeof(titlebuf), title_fmt, marker);
-    if (len < 0 || len >= sizeof(titlebuf))
+    if (len < 0 || len >= (int)sizeof(titlebuf))
 	pj_ansi_strcpy(titlebuf, "Error");
 
     /* Get the error */

@@ -36,12 +36,12 @@
 #include <iax-client.h>
 #include "audio/codecs/audiocodec.h" // for DEC_BUFFER_SIZE
 #include "global.h"
+#include "audio/samplerateconverter.h"
 
 namespace sfl {
     class InstantMessaging;
 }
 
-class SamplerateConverter;
 class EventThread;
 class IAXCall;
 
@@ -150,10 +150,8 @@ class IAXVoIPLink : public VoIPLink
          * Transfer a call
          * @param id The ID of the call
          * @param to The recipient of the transfer
-         * @return bool true on success
-         *		  false otherwise
          */
-        virtual bool transfer (const std::string& id, const std::string& to);
+        virtual void transfer (const std::string& id, const std::string& to);
 
         /**
          * Perform attended transfer
@@ -166,22 +164,18 @@ class IAXVoIPLink : public VoIPLink
         /**
          * Refuse a call
          * @param id The ID of the call
-         * @return bool true on success
-         *		  false otherwise
          */
-        virtual bool refuse (const std::string& id);
+        virtual void refuse (const std::string& id);
 
         /**
          * Send DTMF
          * @param id The ID of the call
          * @param code  The code of the DTMF
-         * @return bool true on success
-         *		  false otherwise
          */
-        virtual bool carryingDTMFdigits (const std::string& id, char code);
+        virtual void carryingDTMFdigits (const std::string& id, char code);
 
 
-        virtual bool sendTextMessage (sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from);
+        virtual void sendTextMessage (sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from);
 
         /**
          * Return the codec protocol used for this call
@@ -189,10 +183,6 @@ class IAXVoIPLink : public VoIPLink
          */
         virtual std::string getCurrentVideoCodecName(const std::string& id);
         virtual std::string getCurrentCodecName(Call *c) const;
-
-    public: // iaxvoiplink only
-
-        void updateAudiolayer (void);
 
     private:
         /*
@@ -211,11 +201,6 @@ class IAXVoIPLink : public VoIPLink
          * @return IAXCall pointer or 0
          */
         IAXCall* getIAXCall (const std::string& id);
-
-        /**
-         * Delete every call
-         */
-        void terminateIAXCall();
 
         /**
          * Find a iaxcall by iax session number
@@ -259,7 +244,7 @@ class IAXVoIPLink : public VoIPLink
          * Send an outgoing call invite to iax
          * @param call An IAXCall pointer
          */
-        bool iaxOutgoingInvite (IAXCall* call);
+        void iaxOutgoingInvite (IAXCall* call);
 
         /** Threading object */
         EventThread* evThread_;
@@ -276,17 +261,13 @@ class IAXVoIPLink : public VoIPLink
          * iax_stuff inside this class. */
         ost::Mutex mutexIAX_;
 
-        /** Connection to audio card/device */
-        AudioLayer* audiolayer_;
-
         /** encoder/decoder/resampler buffers */
         SFLDataFormat decData[DEC_BUFFER_SIZE];
         SFLDataFormat resampledData[DEC_BUFFER_SIZE];
         unsigned char encodedData[DEC_BUFFER_SIZE];
 
-        int converterSamplingRate_;
         /** Sample rate converter object */
-        SamplerateConverter* converter_;
+        SamplerateConverter converter_;
 
         /** Whether init() was called already or not
          * This should be used in init() and terminate(), to

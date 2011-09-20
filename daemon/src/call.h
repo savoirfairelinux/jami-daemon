@@ -170,7 +170,7 @@ class Call: public Recordable
          *	      false otherwise
          */
         bool isIncoming() {
-            return (_type == Incoming) ? true : false;
+            return _type == Incoming;
         }
 
         /**

@@ -133,7 +133,6 @@ void ManagerImpl::init (std::string config_file)
     audioLayerMutexUnlock();
 
     _history->load_history (preferences.getHistoryLimit());
-    _imModule->init();
     registerAccounts();
 }
 
@@ -147,6 +146,8 @@ void ManagerImpl::terminate ()
         hangupCall (*iter);
 
     unloadAccountMap();
+
+    delete SIPVoIPLink::instance();
 
     delete _dtmfKey;
 
@@ -193,12 +194,7 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
                                 const std::string& call_id, const std::string& to, const std::string& conf_id)
 {
     if (call_id.empty()) {
-        _debug ("Manager: New outgoing call abbort, missing callid");
-        return false;
-    }
-    
-    if (account_id.empty()) {
-        _debug ("Manager: New outgoing call abbort, missing account");
+        _debug ("Manager: New outgoing call abort, missing callid");
         return false;
     }
 
@@ -220,9 +216,9 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 
     std::string to_cleaned(NumberCleaner::clean(to, prefix));
 
-    Call::CallConfiguration callConfig;
-    /* Check what kind of call we are dealing with */
-    checkCallConfiguration (call_id, to_cleaned, &callConfig);
+    Call::CallConfiguration callConfig = (to_cleaned.find (SIP_SCHEME) == 0 or to_cleaned.find (SIPS_SCHEME) == 0) ? Call::IPtoIP : Call::Classic;
+
+    associateConfigToCall(call_id, callConfig);
 
     // in any cases we have to detach from current communication
     if (hasCurrentCall()) {
@@ -545,35 +541,21 @@ void ManagerImpl::offHoldCall (const std::string& callId)
 //THREAD=Main
 bool ManagerImpl::transferCall (const std::string& callId, const std::string& to)
 {
-    bool returnValue = false;;
-
-    _info ("Manager: Transfer call %s", callId.c_str());
-
-    std::string currentCallId = getCurrentCallId();
-
     if (participToConference(callId)) {
-        Conference *conf = getConferenceFromCallID(callId);
-        if (conf == NULL)
-            _error("Manager: Error: Could not find conference from call id");
-
         removeParticipant (callId);
-        processRemainingParticipant (callId, conf);
-    }
-    else if (!isConference(currentCallId))
+        processRemainingParticipant (callId, getConferenceFromCallID(callId));
+    } else if (!isConference(getCurrentCallId()))
             switchCall("");
 
     // Direct IP to IP call
-    if (getConfigFromCall (callId) == Call::IPtoIP)
-        returnValue = SIPVoIPLink::instance ()-> transfer (callId, to);
+    if (getConfigFromCall(callId) == Call::IPtoIP)
+        SIPVoIPLink::instance()->transfer (callId, to);
     else {
-        std::string accountid (getAccountFromCall (callId));
-
-        if (accountid == "") {
-            _warn ("Manager: Call doesn't exists");
+        std::string accountid(getAccountFromCall (callId));
+        if (accountid == "")
             return false;
-        }
 
-        returnValue = getAccountLink (accountid)->transfer (callId, to);
+        getAccountLink(accountid)->transfer (callId, to);
     }
 
     // remove waiting call in case we make transfer without even answer
@@ -581,7 +563,7 @@ bool ManagerImpl::transferCall (const std::string& callId, const std::string& to
 
     getMainBuffer()->stateInfo();
 
-    return returnValue;
+    return true;
 }
 
 void ManagerImpl::transferFailed ()
@@ -596,47 +578,23 @@ void ManagerImpl::transferSucceded ()
 
 bool ManagerImpl::attendedTransfer(const std::string& transferID, const std::string& targetID)
 {
-    bool returnValue = false;
+    if (getConfigFromCall(transferID) == Call::IPtoIP)
+        return SIPVoIPLink::instance()->attendedTransfer(transferID, targetID);
 
-    _debug("Manager: Attended transfer");
+    // Classic call, attached to an account
+	std::string accountid = getAccountFromCall(transferID);
+	if (accountid.empty())
+		return false;
 
-    // Direct IP to IP call
-    if (getConfigFromCall (transferID) == Call::IPtoIP)
-        returnValue = SIPVoIPLink::instance ()-> attendedTransfer(transferID, targetID);
-    else {	// Classic call, attached to an account
-
-        std::string accountid = getAccountFromCall (transferID);
-
-        if (accountid.empty()) {
-            _warn ("Manager: Call doesn't exists");
-            return false;
-        }
-
-        returnValue = getAccountLink (accountid)->attendedTransfer (transferID, targetID);
-    }
-
-    getMainBuffer()->stateInfo();
-
-    return returnValue;
+	return getAccountLink(accountid)->attendedTransfer(transferID, targetID);
 }
 
 //THREAD=Main : Call:Incoming
-bool ManagerImpl::refuseCall (const std::string& id)
+void ManagerImpl::refuseCall (const std::string& id)
 {
-    std::string accountid;
-    bool returnValue;
-
-    _debug ("Manager: Refuse call %s", id.c_str());
-
-    std::string current_call_id = getCurrentCallId();
-
     stopTone();
 
-    int nbCalls = getCallList().size();
-
-    if (nbCalls <= 1) {
-        _debug ("    refuseCall: stop audio stream, there is only %d call(s) remaining", nbCalls);
-
+    if (getCallList().size() <= 1) {
         audioLayerMutexLock();
         _audiodriver->stopStream();
         audioLayerMutexUnlock();
@@ -645,35 +603,25 @@ bool ManagerImpl::refuseCall (const std::string& id)
     /* Direct IP to IP call */
 
     if (getConfigFromCall (id) == Call::IPtoIP)
-        returnValue = SIPVoIPLink::instance ()-> refuse (id);
+        SIPVoIPLink::instance()->refuse (id);
     else {
         /* Classic call, attached to an account */
-        accountid = getAccountFromCall (id);
+        std::string accountid = getAccountFromCall (id);
+        if (accountid.empty())
+            return;
 
-        if (accountid.empty()) {
-            _warn ("Manager: Call doesn't exists");
-            return false;
-        }
-
-        returnValue = getAccountLink (accountid)->refuse (id);
+        getAccountLink(accountid)->refuse(id);
 
         removeCallAccount (id);
     }
 
-    // if the call was outgoing or established, we didn't refuse it
-    // so the method did nothing
-    if (returnValue) {
-        removeWaitingCall (id);
-
-        _dbus.getCallManager()->callStateChanged (id, "HUNGUP");
-    }
+	removeWaitingCall(id);
+	_dbus.getCallManager()->callStateChanged(id, "HUNGUP");
 
     // Disconnect streams
     removeStream(id);
 
     getMainBuffer()->stateInfo();
-
-    return returnValue;
 }
 
 Conference*
@@ -1334,11 +1282,11 @@ void ManagerImpl::saveConfig (void)
 }
 
 //THREAD=Main
-bool ManagerImpl::sendDtmf (const std::string& id, char code)
+void ManagerImpl::sendDtmf (const std::string& id, char code)
 {
     std::string accountid(getAccountFromCall(id));
     playDtmf (code);
-    return getAccountLink (accountid)->carryingDTMFdigits (id, code);
+    getAccountLink (accountid)->carryingDTMFdigits (id, code);
 }
 
 //THREAD=Main | VoIPLink
@@ -1410,8 +1358,6 @@ bool ManagerImpl::incomingCallWaiting ()
 
 void ManagerImpl::addWaitingCall (const std::string& id)
 {
-    _info ("Manager: Add waiting call %s (%d calls)", id.c_str(), _nbIncomingWaitingCall);
-
     ost::MutexLock m(_waitingCallMutex);
     _waitingCall.insert (id);
     _nbIncomingWaitingCall++;
@@ -1419,12 +1365,8 @@ void ManagerImpl::addWaitingCall (const std::string& id)
 
 void ManagerImpl::removeWaitingCall (const std::string& id)
 {
-    _info ("Manager: Remove waiting call %s (%d calls)", id.c_str(), _nbIncomingWaitingCall);
-
     ost::MutexLock m(_waitingCallMutex);
-    // should return more than 1 if it erase a call
-
-    if (_waitingCall.erase (id))
+    if (_waitingCall.erase(id))
         _nbIncomingWaitingCall--;
 }
 
@@ -1437,17 +1379,14 @@ bool ManagerImpl::isWaitingCall (const std::string& id)
 // Management of event peer IP-phone
 ////////////////////////////////////////////////////////////////////////////////
 // SipEvent Thread
-bool ManagerImpl::incomingCall (Call* call, const std::string& accountId)
+void ManagerImpl::incomingCall (Call* call, const std::string& accountId)
 {
     assert(call);
     stopTone();
 
-    _debug ("Manager: Incoming call %s for account %s", call->getCallId().data(), accountId.c_str());
-
     associateCallToAccount (call->getCallId(), accountId);
 
-    // If account is null it is an ip to ip call
-    if (accountId.empty())
+    if (accountId == "")
         associateConfigToCall (call->getCallId(), Call::IPtoIP);
     else {
         // strip sip: which is not required and bring confusion with ip to ip calls
@@ -1456,45 +1395,26 @@ bool ManagerImpl::incomingCall (Call* call, const std::string& accountId)
 
         size_t startIndex = peerNumber.find ("sip:");
 
-        if (startIndex != std::string::npos) {
-            std::string strippedPeerNumber = peerNumber.substr (startIndex + 4);
-            call->setPeerNumber (strippedPeerNumber);
-        }
+        if (startIndex != std::string::npos)
+            call->setPeerNumber (peerNumber.substr (startIndex + 4));
     }
 
     if (!hasCurrentCall()) {
-        _debug ("Manager: Has no current call start ringing");
         call->setConnectionState (Call::Ringing);
         ringtone (accountId);
-
-    } else
-        _debug ("Manager: has current call, beep in current audio stream");
+    }
 
     addWaitingCall (call->getCallId());
 
     std::string from(call->getPeerName());
     std::string number(call->getPeerNumber());
-    std::string display_name(call->getDisplayName());
 
-    if (not from.empty() and not number.empty()) {
-        from.append (" <");
-        from.append (number);
-        from.append (">");
-    } else if (from.empty()) {
-        from.append ("<");
-        from.append (number);
-        from.append (">");
-    }
+    if (not from.empty() and not number.empty())
+        from += " ";
 
-    /* Broadcast a signal over DBus */
-    _debug ("Manager: From: %s, Number: %s, Display Name: %s", from.c_str(), number.c_str(), display_name.c_str());
+    from += "<" + number + ">";
 
-    std::string display(display_name);
-    display.append(" ");
-    display.append(from);
-
-    _dbus.getCallManager()->incomingCall(accountId, call->getCallId(), display);
-    return true;
+    _dbus.getCallManager()->incomingCall(accountId, call->getCallId(), call->getDisplayName() + " " + from);
 }
 
 
@@ -1735,8 +1655,7 @@ void ManagerImpl::startVoiceMessageNotification (const std::string& accountId,
 
 void ManagerImpl::connectionStatusNotification ()
 {
-    if (_dbus.isConnected())
-    	_dbus.getConfigurationManager()->accountsChanged();
+	_dbus.getConfigurationManager()->accountsChanged();
 }
 
 /**
@@ -2623,34 +2542,24 @@ std::vector<std::string> ManagerImpl::getAccountList () const
     else
         _error ("Manager: could not find IP2IP profile in getAccount list");
 
-    // If no order has been set, load the default one
-    // ie according to the creation date.
-
+    // If no order has been set, load the default one ie according to the creation date.
     if (account_order.empty()) {
-        _debug ("Manager: account order is empty");
         for (AccountMap::const_iterator iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
-            if (iter->second != NULL and iter->first != IP2IP_PROFILE and not iter->first.empty()) {
-                _debug ("PUSHING BACK %s", iter->first.c_str());
+        	if (iter->first == IP2IP_PROFILE || iter->first.empty())
+        		continue;
+            if (iter->second)
                 v.push_back (iter->second->getAccountID());
-            }
         }
+        return v;
     }
-    else {
-        // otherwise, load the custom one
-        // ie according to the saved order
-        _debug ("Manager: Load account list according to preferences");
 
-        for (vector<string>::const_iterator iter = account_order.begin(); iter != account_order.end(); ++iter) {
-            // This account has not been loaded, so we ignore it
-            AccountMap::const_iterator account_iter = _accountMap.find (*iter);
-            if (account_iter != _accountMap.end()) {
-                if (account_iter->second and (account_iter->first not_eq IP2IP_PROFILE) and not account_iter->first.empty()) {
-                    // If the account is valid
-                    v.push_back (account_iter->second->getAccountID());
-                }
-            }
-        }
-    }
+	for (vector<string>::const_iterator iter = account_order.begin(); iter != account_order.end(); ++iter) {
+		if (*iter == IP2IP_PROFILE || *iter == "")
+			continue;
+		AccountMap::const_iterator account_iter = _accountMap.find (*iter);
+		if (account_iter != _accountMap.end() && account_iter->second)
+			v.push_back (account_iter->second->getAccountID());
+	}
 
     return v;
 }
@@ -2759,8 +2668,7 @@ std::string ManagerImpl::addAccount (
 
     saveConfig();
 
-    if (_dbus.isConnected())
-        _dbus.getConfigurationManager()->accountsChanged();
+	_dbus.getConfigurationManager()->accountsChanged();
 
     return accountID.str();
 }
@@ -2781,10 +2689,7 @@ void ManagerImpl::removeAccount (const std::string& accountID)
 
     saveConfig();
 
-    _debug ("REMOVE ACCOUNT");
-
-    if (_dbus.isConnected())
-        _dbus.getConfigurationManager()->accountsChanged();
+	_dbus.getConfigurationManager()->accountsChanged();
 }
 
 // ACCOUNT handling
@@ -2801,7 +2706,7 @@ bool ManagerImpl::associateCallToAccount (const std::string& callID,
     return false;
 }
 
-std::string ManagerImpl::getAccountFromCall (const std::string& callID)
+std::string ManagerImpl::getAccountFromCall(const std::string& callID)
 {
     ost::MutexLock m (_callAccountMapMutex);
 	CallAccountMap::iterator iter = _callAccountMap.find (callID);
@@ -2840,17 +2745,11 @@ std::string ManagerImpl::getNewCallID ()
 
 std::vector<std::string> ManagerImpl::loadAccountOrder (void) const
 {
-    const std::string account_list(preferences.getAccountOrder());
-
-    _debug ("Manager: Load account order %s", account_list.c_str());
-
-    return unserialize (account_list);
+    return unserialize (preferences.getAccountOrder());
 }
 
 void ManagerImpl::loadAccountMap(Conf::YamlParser *parser)
 {
-	SIPVoIPLink *link = SIPVoIPLink::instance();
-
     // build a default IP2IP account with default parameters
     Account *ip2ip = new SIPAccount(IP2IP_PROFILE);
     _accountMap[IP2IP_PROFILE] = ip2ip;
@@ -2872,11 +2771,7 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser *parser)
 
     // Initialize default UDP transport according to
     // IP to IP settings (most likely using port 5060)
-    link->createDefaultSipUdpTransport();
-
-    // Call this method to create TLS listener
-    link->createDefaultSipTlsListener();
-
+    SIPVoIPLink::instance()->createDefaultSipUdpTransport();
 
     // Force IP2IP settings to be loaded to be loaded
     // No registration in the sense of the REGISTER method is performed.
@@ -2926,8 +2821,6 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser *parser)
 
 void ManagerImpl::unloadAccountMap ()
 {
-    _debug ("Manager: Unload account map");
-
     AccountMap::iterator iter;
     for (iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
         // Avoid removing the IP2IP account twice
@@ -2936,8 +2829,6 @@ void ManagerImpl::unloadAccountMap ()
     }
 
     _accountMap.clear();
-
-    delete SIPVoIPLink::instance();
 }
 
 bool ManagerImpl::accountExists (const std::string& accountID)
@@ -2952,7 +2843,6 @@ ManagerImpl::getAccount (const std::string& accountID) const
     if (iter != _accountMap.end())
 		return iter->second;
 
-    _debug ("Manager: Did not found account %s, returning IP2IP account", accountID.c_str());
     return getAccount(IP2IP_PROFILE);
 }
 
@@ -3012,8 +2902,6 @@ std::map<std::string, int32_t> ManagerImpl::getAddressbookSettings () const
 void ManagerImpl::setAddressbookSettings (
     const std::map<std::string, int32_t>& settings)
 {
-    _debug ("Manager: Update addressbook settings");
-
     addressbookPreference.setEnabled (settings.find ("ADDRESSBOOK_ENABLE")->second == 1);
     addressbookPreference.setMaxResults (settings.find ("ADDRESSBOOK_MAX_RESULTS")->second);
     addressbookPreference.setPhoto (settings.find ("ADDRESSBOOK_DISPLAY_CONTACT_PHOTO")->second == 1);
@@ -3029,11 +2917,7 @@ void ManagerImpl::setAddressbookSettings (
 
 void ManagerImpl::setAddressbookList (const std::vector<std::string>& list)
 {
-    _debug ("Manager: Set addressbook list");
-
-    std::string s = ManagerImpl::serialize (list);
-    _debug("Manager: New addressbook list: %s", s.c_str());
-    addressbookPreference.setList (s);
+    addressbookPreference.setList (ManagerImpl::serialize (list));
 
     saveConfig();
 }
@@ -3070,22 +2954,6 @@ void ManagerImpl::setHookSettings (const std::map<std::string, std::string>& set
     // TODO save config is called for updateAddressbookSettings, updateHookSettings, setHistoryLimit each called
     // when closing preference window (in this order)
     // saveConfig();
-}
-
-void ManagerImpl::checkCallConfiguration (const std::string& id,
-        const std::string &to, Call::CallConfiguration *callConfig)
-{
-    Call::CallConfiguration config;
-
-    if (to.find (SIP_SCHEME) == 0 or to.find (SIPS_SCHEME) == 0) {
-        _debug ("Manager: Sip scheme detected (sip: or sips:), sending IP2IP Call");
-        config = Call::IPtoIP;
-    } else
-        config = Call::Classic;
-
-    associateConfigToCall (id, config);
-
-    *callConfig = config;
 }
 
 bool ManagerImpl::associateConfigToCall (const std::string& callID,
@@ -3157,17 +3025,12 @@ std::map<std::string, std::string> ManagerImpl::getCallDetails (const std::strin
 
 std::vector<std::string> ManagerImpl::getHistorySerialized(void) const
 {
-    _debug("Manager: Get history serialized");
-
     return _history->get_history_serialized();
 }
 
 void ManagerImpl::setHistorySerialized(std::vector<std::string> history)
 {
-
-    _debug("Manager: Set history serialized");
-
-    _history->set_serialized_history (history, preferences.getHistoryLimit());;
+	_history->set_serialized_history (history, preferences.getHistoryLimit());;
     _history->save_history();
 }
 
@@ -3207,21 +3070,16 @@ std::vector<std::string> ManagerImpl::getConferenceList (void) const
 {
     std::vector<std::string> v;
     vectorFromMapKeys(_conferencemap, v);
-
     return v;
 }
 
 std::vector<std::string> ManagerImpl::getParticipantList (const std::string& confID) const
 {
-    ConferenceMap::const_iterator iter_conf = _conferencemap.find (confID);
-    Conference *conf = NULL;
-
-    if (iter_conf != _conferencemap.end())
-        conf = iter_conf->second;
-
     std::vector<std::string> v;
-    if (conf) {
-        const ParticipantSet &participants = conf->getParticipantList();
+
+    ConferenceMap::const_iterator iter_conf = _conferencemap.find (confID);
+    if (iter_conf != _conferencemap.end()) {
+        const ParticipantSet &participants = iter_conf->second->getParticipantList();
         std::copy(participants.begin(), participants.end(), std::back_inserter(v));;
     } else
         _warn ("Manager: Warning: Did not found conference %s", confID.c_str());

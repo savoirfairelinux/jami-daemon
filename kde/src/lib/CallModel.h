@@ -91,7 +91,8 @@ class LIB_EXPORT CallModel {
       void removeConference(Call* call);
       void removeCall(Call* call);
       
-      QStringList getHistory();
+      const QHash<QString, Call*> getHistory();
+      QStringList getHistoryCallId();
 
       //Account related members
       static Account* getCurrentAccount();

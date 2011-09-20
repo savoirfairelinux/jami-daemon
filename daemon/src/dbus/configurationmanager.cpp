@@ -187,7 +187,6 @@ std::vector<std::string> ConfigurationManager::getSupportedTlsMethod (void)
     std::vector<std::string> method;
     method.push_back ("Default");
     method.push_back ("TLSv1");
-    method.push_back ("SSLv2");
     method.push_back ("SSLv3");
     method.push_back ("SSLv23");
     return method;

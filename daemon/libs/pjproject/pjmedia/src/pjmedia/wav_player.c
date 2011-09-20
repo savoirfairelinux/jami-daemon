@@ -1,6 +1,6 @@
-/* $Id: wav_player.c 2394 2008-12-23 17:27:53Z bennylp $ */
+/* $Id: wav_player.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjmedia/wav_port.h>
 #include <pjmedia/alaw_ulaw.h>
@@ -78,6 +67,8 @@ struct file_reader_port
 
     pj_off_t	     fsize;
     unsigned	     start_data;
+    unsigned         data_len;
+    unsigned         data_left;
     pj_off_t	     fpos;
     pj_oshandle_t    fd;
 
@@ -137,24 +128,41 @@ static pj_status_t fill_buffer(struct file_reader_port *fport)
 	    return PJ_ECANCELLED;
 	}
 
+        if (size > (pj_ssize_t)fport->data_left) {
+            /* We passed the end of the data chunk,
+             * only count the portion read from the data chunk.
+             */
+            size = (pj_ssize_t)fport->data_left;
+        }
+
 	size_left -= size;
+        fport->data_left -= size;
 	fport->fpos += size;
 
 	/* If size is less than size_to_read, it indicates that we've
 	 * encountered EOF. Rewind the file.
 	 */
-	if (size < (pj_ssize_t)size_to_read) {
-	    fport->eof = PJ_TRUE;
-	    fport->eofpos = fport->buf + fport->bufsize - size_left;
-	    
-	    if (fport->options & PJMEDIA_FILE_NO_LOOP) {
-		/* Zero remaining buffer */
-		pj_bzero(fport->eofpos, size_left);
-	    }
+        if (size < (pj_ssize_t)size_to_read) {
+            fport->eof = PJ_TRUE;
+            fport->eofpos = fport->buf + fport->bufsize - size_left;
+
+            if (fport->options & PJMEDIA_FILE_NO_LOOP) {
+                /* Zero remaining buffer */
+                if (fport->fmt_tag == PJMEDIA_WAVE_FMT_TAG_PCM) {
+                    pj_bzero(fport->eofpos, size_left);
+                } else if (fport->fmt_tag == PJMEDIA_WAVE_FMT_TAG_ULAW) {
+                    int val = pjmedia_linear2ulaw(0);
+                    pj_memset(fport->eofpos, val, size_left);
+                } else if (fport->fmt_tag == PJMEDIA_WAVE_FMT_TAG_ALAW) {
+                    int val = pjmedia_linear2alaw(0);
+                    pj_memset(fport->eofpos, val, size_left);
+                }
+            }
 
 	    /* Rewind file */
 	    fport->fpos = fport->start_data;
 	    pj_file_setpos( fport->fd, fport->fpos, PJ_SEEK_SET);
+            fport->data_left = fport->data_len;
 	}
     }
 
@@ -323,9 +331,11 @@ PJ_DEF(pj_status_t) pjmedia_wav_player_port_create( pj_pool_t *pool,
     /* Current file position now points to start of data */
     status = pj_file_getpos(fport->fd, &pos);
     fport->start_data = (unsigned)pos;
+    fport->data_len = wave_hdr.data_hdr.len;
+    fport->data_left = wave_hdr.data_hdr.len;
 
     /* Validate length. */
-    if (wave_hdr.data_hdr.len != fport->fsize - fport->start_data) {
+    if (wave_hdr.data_hdr.len > fport->fsize - fport->start_data) {
 	pj_file_close(fport->fd);
 	return PJMEDIA_EWAVEUNSUPP;
     }
@@ -602,7 +612,19 @@ static pj_status_t file_get_frame(pjmedia_port *this_port,
 	/* End Of Buffer and EOF and NO LOOP */
 	if (fport->eof && (fport->options & PJMEDIA_FILE_NO_LOOP)) {
 	    fport->readpos += endread;
-	    pj_bzero((char*)frame->buf + endread, frame_size - endread);
+
+            if (fport->fmt_tag == PJMEDIA_WAVE_FMT_TAG_PCM) {
+                pj_bzero((char*)frame->buf + endread, frame_size - endread);
+            } else if (fport->fmt_tag == PJMEDIA_WAVE_FMT_TAG_ULAW) {
+                int val = pjmedia_linear2ulaw(0);
+                pj_memset((char*)frame->buf + endread, val,
+                          frame_size - endread);
+            } else if (fport->fmt_tag == PJMEDIA_WAVE_FMT_TAG_ALAW) {
+                int val = pjmedia_linear2alaw(0);
+                pj_memset((char*)frame->buf + endread, val,
+                          frame_size - endread);
+            }
+
 	    return PJ_SUCCESS;
 	}
 

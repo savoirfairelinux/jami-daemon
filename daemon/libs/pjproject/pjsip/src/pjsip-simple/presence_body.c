@@ -1,6 +1,6 @@
-/* $Id: presence_body.c 3045 2010-01-05 15:23:43Z bennylp $ */
+/* $Id: presence_body.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjsip-simple/presence.h>
 #include <pjsip-simple/errno.h>
@@ -137,7 +126,7 @@ PJ_DEF(pj_status_t) pjsip_pres_create_pidf( pj_pool_t *pool,
 				   "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ",
 				   pt.year, pt.mon+1, pt.day, 
 				   pt.hour, pt.min, pt.sec, pt.msec);
-	  if (tslen > 0 && tslen < sizeof(buf)) {
+	  if (tslen > 0 && tslen < (int)sizeof(buf)) {
 	      pj_str_t time = pj_str(buf);
 	      pjpidf_tuple_set_timestamp(pool, pidf_tuple, &time);
 	  }
@@ -210,12 +199,19 @@ PJ_DEF(pj_status_t) pjsip_pres_parse_pidf( pjsip_rx_data *rdata,
 					   pj_pool_t *pool,
 					   pjsip_pres_status *pres_status)
 {
+    return pjsip_pres_parse_pidf2((char*)rdata->msg_info.msg->body->data,
+				  rdata->msg_info.msg->body->len,
+				  pool, pres_status);
+}
+
+PJ_DEF(pj_status_t) pjsip_pres_parse_pidf2(char *body, unsigned body_len,
+					   pj_pool_t *pool,
+					   pjsip_pres_status *pres_status)
+{
     pjpidf_pres *pidf;
     pjpidf_tuple *pidf_tuple;
 
-    pidf = pjpidf_parse(rdata->tp_info.pool, 
-			(char*)rdata->msg_info.msg->body->data,
-			rdata->msg_info.msg->body->len);
+    pidf = pjpidf_parse(pool, body, body_len);
     if (pidf == NULL)
 	return PJSIP_SIMPLE_EBADPIDF;
 
@@ -262,11 +258,18 @@ PJ_DEF(pj_status_t) pjsip_pres_parse_xpidf(pjsip_rx_data *rdata,
 					   pj_pool_t *pool,
 					   pjsip_pres_status *pres_status)
 {
+    return pjsip_pres_parse_xpidf2((char*)rdata->msg_info.msg->body->data,
+				   rdata->msg_info.msg->body->len,
+				   pool, pres_status);
+}
+
+PJ_DEF(pj_status_t) pjsip_pres_parse_xpidf2(char *body, unsigned body_len,
+					    pj_pool_t *pool,
+					    pjsip_pres_status *pres_status)
+{
     pjxpidf_pres *xpidf;
 
-    xpidf = pjxpidf_parse(rdata->tp_info.pool, 
-			  (char*)rdata->msg_info.msg->body->data,
-			  rdata->msg_info.msg->body->len);
+    xpidf = pjxpidf_parse(pool, body, body_len);
     if (xpidf == NULL)
 	return PJSIP_SIMPLE_EBADXPIDF;
 

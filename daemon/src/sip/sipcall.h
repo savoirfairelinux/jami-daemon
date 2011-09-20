@@ -34,17 +34,14 @@
 
 #include "call.h"
 #include <tr1/memory>
+#include <cassert>
+#include "audio/audiortp/AudioRtpFactory.h"
 
 class pjsip_evsub;
 class pj_caching_pool;
 class pj_pool_t;
 class pjsip_inv_session;
 class Sdp;
-
-namespace sfl
-{
-class AudioRtpFactory;
-}
 
 namespace sfl_video
 {
@@ -83,7 +80,7 @@ class SIPCall : public Call
          * Returns a pointer to the AudioRtp object
          */
         sfl::AudioRtpFactory * getAudioRtp (void) {
-            return _audiortp;
+            return &_audiortp;
         }
 
         /**
@@ -116,7 +113,7 @@ class SIPCall : public Call
         /**
          * Audio Rtp Session factory
          */
-        sfl::AudioRtpFactory * _audiortp;
+        sfl::AudioRtpFactory _audiortp;
 
         /**
          * Video Rtp Session factory

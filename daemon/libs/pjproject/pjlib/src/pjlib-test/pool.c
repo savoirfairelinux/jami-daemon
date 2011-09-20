@@ -1,6 +1,6 @@
-/* $Id: pool.c 2394 2008-12-23 17:27:53Z bennylp $ */
+/* $Id: pool.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pj/pool.h>
 #include <pj/pool_buf.h>
@@ -87,6 +76,92 @@ static int capacity_test(void)
     }
 
     pj_pool_release(pool);
+    return 0;
+}
+
+/* Test that the alignment works. */
+static int pool_alignment_test(void)
+{
+    pj_pool_t *pool;
+    void *ptr;
+    enum { MEMSIZE = 64, LOOP = 100 };
+    unsigned i;
+
+    PJ_LOG(3,("test", "...alignment test"));
+
+    pool = pj_pool_create(mem, NULL, PJ_POOL_SIZE+MEMSIZE, MEMSIZE, NULL);
+    if (!pool)
+	return -300;
+
+#define IS_ALIGNED(p)	((((unsigned long)p) & (PJ_POOL_ALIGNMENT-1)) == 0)
+
+    for (i=0; i<LOOP; ++i) {
+	/* Test first allocation */
+	ptr = pj_pool_alloc(pool, 1);
+	if (!IS_ALIGNED(ptr)) {
+	    pj_pool_release(pool);
+	    return -310;
+	}
+
+	/* Test subsequent allocation */
+	ptr = pj_pool_alloc(pool, 1);
+	if (!IS_ALIGNED(ptr)) {
+	    pj_pool_release(pool);
+	    return -320;
+	}
+
+	/* Test allocation after new block is created */
+	ptr = pj_pool_alloc(pool, MEMSIZE*2+1);
+	if (!IS_ALIGNED(ptr)) {
+	    pj_pool_release(pool);
+	    return -330;
+	}
+
+	/* Reset the pool */
+	pj_pool_reset(pool);
+    }
+
+    /* Done */
+    pj_pool_release(pool);
+
+    return 0;
+}
+
+/* Test that the alignment works for pool on buf. */
+static int pool_buf_alignment_test(void)
+{
+    pj_pool_t *pool;
+    char buf[512];
+    void *ptr;
+    enum { LOOP = 100 };
+    unsigned i;
+
+    PJ_LOG(3,("test", "...pool_buf alignment test"));
+
+    pool = pj_pool_create_on_buf(NULL, buf, sizeof(buf));
+    if (!pool)
+	return -400;
+
+    for (i=0; i<LOOP; ++i) {
+	/* Test first allocation */
+	ptr = pj_pool_alloc(pool, 1);
+	if (!IS_ALIGNED(ptr)) {
+	    pj_pool_release(pool);
+	    return -410;
+	}
+
+	/* Test subsequent allocation */
+	ptr = pj_pool_alloc(pool, 1);
+	if (!IS_ALIGNED(ptr)) {
+	    pj_pool_release(pool);
+	    return -420;
+	}
+
+	/* Reset the pool */
+	pj_pool_reset(pool);
+    }
+
+    /* Done */
     return 0;
 }
 
@@ -160,7 +235,7 @@ static int pool_buf_test(void)
     enum { STATIC_BUF_SIZE = 40 };
     /* 16 is the internal struct in pool_buf */
     static char buf[ STATIC_BUF_SIZE + sizeof(pj_pool_t) + 
-		     sizeof(pj_pool_block) + 16];
+		     sizeof(pj_pool_block) + 2 * PJ_POOL_ALIGNMENT];
     pj_pool_t *pool;
     void *p;
     PJ_USE_EXCEPTION;
@@ -209,6 +284,12 @@ int pool_test(void)
     int rc;
 
     rc = capacity_test();
+    if (rc) return rc;
+
+    rc = pool_alignment_test();
+    if (rc) return rc;
+
+    rc = pool_buf_alignment_test();
     if (rc) return rc;
 
     for (loop=0; loop<LOOP; ++loop) {

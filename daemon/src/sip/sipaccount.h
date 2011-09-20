@@ -50,9 +50,6 @@ namespace Conf {
 }
 enum DtmfType { OVERRTP, SIPINFO};
 
-#define OVERRTPSTR "overrtp"
-#define SIPINFOSTR "sipinfo"
-
 // SIP specific configuration keys
 static const char *const expireKey = "expire";
 static const char *const interfaceKey = "interface";
@@ -60,7 +57,6 @@ static const char *const portKey = "port";
 static const char *const publishAddrKey = "publishAddr";
 static const char *const publishPortKey = "publishPort";
 static const char *const sameasLocalKey = "sameasLocal";
-static const char *const resolveOnceKey = "resolveOnce";
 static const char *const dtmfTypeKey = "dtmfType";
 static const char *const serviceRouteKey = "serviceRoute";
 
@@ -164,28 +160,26 @@ class SIPAccount : public Account
         void setCredentials (const std::vector<std::map<std::string, std::string> >& details);
         const std::vector<std::map<std::string, std::string> > &getCredentials (void);
 
-        bool isResolveOnce (void) const {
-            return resolveOnce_;
-        }
-
         /**
          * A client sendings a REGISTER request MAY suggest an expiration
          * interval that indicates how long the client would like the
          * registration to be valid.
          *
-         * @return A string describing the expiration value.
+         * @return the expiration value.
          */
-        const std::string& getRegistrationExpire (void) const {
-            return registrationExpire_;
+        unsigned getRegistrationExpire (void) const {
+        	if (registrationExpire_ == 0)
+        		return PJSIP_REGC_EXPIRATION_NOT_SPECIFIED;
+        	return registrationExpire_;
         }
 
         /**
-         * Setting the Expiration Interval of Contact Addresses.
-         *
-         * @param A string describing the expiration value.
+         * Doubles the Expiration Interval of Contact Addresses.
          */
-        void setRegistrationExpire (const std::string &expr) {
-            registrationExpire_ = expr;
+        void doubleRegistrationExpire (void) {
+        	registrationExpire_ *= 2;
+        	if (registrationExpire_ < 0)
+        		registrationExpire_ = 0;
         }
 
         bool fullMatch (const std::string& username, const std::string& hostname) const;
@@ -372,14 +366,6 @@ class SIPAccount : public Account
         }
 
         /**
-         * Set the local port for TLS listener.
-         * @pram port The port used for TLS listener.
-         */
-        void setTlsListenerPort (pj_uint16_t port) {
-            tlsListenerPort_ = port;
-        }
-
-        /**
          * Get the public IP address set by the user for this account.
          * If this setting is not provided, the local bound adddress
          * will be used.
@@ -402,14 +388,6 @@ class SIPAccount : public Account
             return serviceRoute_;
         }
 
-        pjsip_transport* getAccountTransport (void) const {
-            return transport_;
-        }
-
-        void setAccountTransport (pjsip_transport *transport) {
-        	transport_ = transport;
-        }
-
         DtmfType getDtmfType (void) const {
             return dtmfType_;
         }
@@ -429,6 +407,8 @@ class SIPAccount : public Account
         bool getZrtpHelloHash (void) const {
             return zrtpHelloHash_;
         }
+
+        pjsip_transport* transport;
 
     private:
 
@@ -454,30 +434,11 @@ class SIPAccount : public Account
 
         /**
          * If username is not provided, as it happens for Direct ip calls,
-         * fetch the hostname of the machine on which the program is running
-         * onto.
-         * @return std::string The machine hostname as returned by pj_gethostname()
-         */
-        static std::string getMachineName (void);
-
-        /**
-         * If username is not provided, as it happens for Direct ip calls,
          * fetch the Real Name field of the user that is currently
          * running this program.
          * @return std::string The login name under which SFLPhone is running.
          */
         static std::string getLoginName (void);
-
-        /**
-         * List of routes (proxies) used for registration and calls
-         */
-        std::string routeSet_;
-
-        /**
-         * Private pjsip memory pool for accounts
-         */
-        pj_pool_t *pool_;
-
 
         // The pjsip client registration information
         pjsip_regc *regc_;
@@ -485,7 +446,7 @@ class SIPAccount : public Account
         bool bRegister_;
 
         // Network settings
-        std::string registrationExpire_;
+        int registrationExpire_;
 
         // interface name on which this account is bound
         std::string interface_;
@@ -507,12 +468,6 @@ class SIPAccount : public Account
         pj_uint16_t tlsListenerPort_;
 
         pjsip_transport_type_e transportType_;
-
-        pjsip_transport* transport_;
-
-        // Special hack that is not here to stay
-        // See #1852
-        bool resolveOnce_;
 
         //Credential information
         pjsip_cred_info *cred_;

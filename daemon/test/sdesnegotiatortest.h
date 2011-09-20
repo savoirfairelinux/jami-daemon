@@ -36,6 +36,7 @@
 
 #include <assert.h>
 
+#include <cstddef>
 #include <stdio.h>
 #include <sstream>
 #include <ccrtp/rtp.h>

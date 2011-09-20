@@ -1,6 +1,6 @@
-/* $Id: pool.c 2963 2009-10-24 02:06:40Z bennylp $ */
+/* $Id: pool.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pj/pool.h>
 #include <pj/log.h>
@@ -42,7 +31,8 @@
 #  include <pj/pool_i.h>
 #endif
 
-#define LOG(expr)   PJ_LOG(6,expr)
+#define LOG(expr)   			PJ_LOG(6,expr)
+#define ALIGN_PTR(PTR,ALIGNMENT)	(PTR + (-(long)(PTR) & (ALIGNMENT-1)))
 
 PJ_DEF_DATA(int) PJ_NO_MEMORY_EXCEPTION;
 
@@ -82,9 +72,7 @@ static pj_pool_block *pj_pool_create_block( pj_pool_t *pool, pj_size_t size)
     block->end = ((unsigned char*)block) + size;
 
     /* Set the start pointer, aligning it as needed */
-    block->cur = (unsigned char*)
-                 (((unsigned long)block->buf + PJ_POOL_ALIGNMENT - 1) & 
-                  ~(PJ_POOL_ALIGNMENT - 1));
+    block->cur = ALIGN_PTR(block->buf, PJ_POOL_ALIGNMENT);
 
     /* Insert in the front of the list. */
     pj_list_insert_after(&pool->block_list, block);
@@ -223,8 +211,12 @@ PJ_DEF(pj_pool_t*) pj_pool_create_int( pj_pool_factory *f, const char *name,
 
     /* Create the first block from the memory. */
     block = (pj_pool_block*) (buffer + sizeof(*pool));
-    block->cur = block->buf = ((unsigned char*)block) + sizeof(pj_pool_block);
+    block->buf = ((unsigned char*)block) + sizeof(pj_pool_block);
     block->end = buffer + initial_size;
+
+    /* Set the start pointer, aligning it as needed */
+    block->cur = ALIGN_PTR(block->buf, PJ_POOL_ALIGNMENT);
+
     pj_list_insert_after(&pool->block_list, block);
 
     pj_pool_init_int(pool, name, increment_size, callback);
@@ -265,7 +257,10 @@ static void reset_pool(pj_pool_t *pool)
     }
 
     block = pool->block_list.next;
-    block->cur = block->buf;
+
+    /* Set the start pointer, aligning it as needed */
+    block->cur = ALIGN_PTR(block->buf, PJ_POOL_ALIGNMENT);
+
     pool->capacity = block->end - (unsigned char*)pool;
 }
 

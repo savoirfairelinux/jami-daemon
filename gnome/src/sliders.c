@@ -168,14 +168,8 @@ create_slider (const gchar * device)
     ret = gtk_hbox_new (FALSE /*homogeneous*/, 5 /*spacing*/);
     gtk_container_set_border_width (GTK_CONTAINER (ret), 5);
 
-#if GTK_CHECK_VERSION(2,12,0)
-
-    if (g_strcmp0 (device , "speaker") == 0)
-        gtk_widget_set_tooltip_text (GTK_WIDGET (ret), _ ("Speakers volume"));
-    else
-        gtk_widget_set_tooltip_text (GTK_WIDGET (ret), _ ("Mic volume"));
-
-#endif
+    gtk_widget_set_tooltip_text (GTK_WIDGET (ret),
+        !g_strcmp0 (device, "speaker") ? _("Speakers volume") : _("Mic volume"));
 
     button[dev] = gtk_toggle_button_new();
     gtk_box_pack_start (GTK_BOX (ret), button[dev], FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
@@ -193,4 +187,3 @@ create_slider (const gchar * device)
 
     return ret;
 }
-

@@ -1,6 +1,6 @@
-/* $Id: endpoint.c 2506 2009-03-12 18:11:37Z bennylp $ */
+/* $Id: endpoint.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,22 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #include <pjmedia/endpoint.h>
 #include <pjmedia/errno.h>
 #include <pjmedia/sdp.h>
-#include <pjmedia-audiodev/audiodev.h>
 #include <pj/assert.h>
 #include <pj/ioqueue.h>
 #include <pj/log.h>
@@ -53,11 +41,6 @@ static const pj_str_t STR_SDP_NAME = { "pjmedia", 7 };
 static const pj_str_t STR_SENDRECV = { "sendrecv", 8 };
 
 
-
-/* Flag to indicate whether pjmedia error subsystem has been registered
- * to pjlib.
- */
-static int error_subsys_registered;
 
 /* Config to control rtpmap inclusion for static payload types */
 pj_bool_t pjmedia_add_rtpmap_for_static_pt = 
@@ -98,6 +81,9 @@ struct pjmedia_endpt
 
     /** To signal polling thread to quit. */
     pj_bool_t		  quit_flag;
+
+    /** Is telephone-event enable */
+    pj_bool_t		  has_telephone_event;
 };
 
 /**
@@ -113,11 +99,9 @@ PJ_DEF(pj_status_t) pjmedia_endpt_create(pj_pool_factory *pf,
     unsigned i;
     pj_status_t status;
 
-    if (!error_subsys_registered) {
-	pj_register_strerror(PJMEDIA_ERRNO_START, PJ_ERRNO_SPACE_SIZE, 
-			     &pjmedia_strerror);
-	error_subsys_registered = 1;
-    }
+    status = pj_register_strerror(PJMEDIA_ERRNO_START, PJ_ERRNO_SPACE_SIZE,
+				  &pjmedia_strerror);
+    pj_assert(status == PJ_SUCCESS);
 
     PJ_ASSERT_RETURN(pf && p_endpt, PJ_EINVAL);
     PJ_ASSERT_RETURN(worker_cnt <= MAX_THREADS, PJ_EINVAL);
@@ -131,6 +115,7 @@ PJ_DEF(pj_status_t) pjmedia_endpt_create(pj_pool_factory *pf,
     endpt->pf = pf;
     endpt->ioqueue = ioqueue;
     endpt->thread_cnt = worker_cnt;
+    endpt->has_telephone_event = PJ_TRUE;
 
     /* Sound */
     status = pjmedia_aud_subsys_init(pf);
@@ -138,7 +123,7 @@ PJ_DEF(pj_status_t) pjmedia_endpt_create(pj_pool_factory *pf,
 	goto on_error;
 
     /* Init codec manager. */
-    status = pjmedia_codec_mgr_init(&endpt->codec_mgr);
+    status = pjmedia_codec_mgr_init(&endpt->codec_mgr, endpt->pf);
     if (status != PJ_SUCCESS)
 	goto on_error;
 
@@ -183,6 +168,7 @@ on_error:
     if (endpt->ioqueue && endpt->own_ioqueue)
 	pj_ioqueue_destroy(endpt->ioqueue);
 
+    pjmedia_codec_mgr_destroy(&endpt->codec_mgr);
     pjmedia_aud_subsys_shutdown();
     pj_pool_release(pool);
     return status;
@@ -224,12 +210,46 @@ PJ_DEF(pj_status_t) pjmedia_endpt_destroy (pjmedia_endpt *endpt)
 
     endpt->pf = NULL;
 
+    pjmedia_codec_mgr_destroy(&endpt->codec_mgr);
     pjmedia_aud_subsys_shutdown();
     pj_pool_release (endpt->pool);
 
     return PJ_SUCCESS;
 }
 
+PJ_DEF(pj_status_t) pjmedia_endpt_set_flag( pjmedia_endpt *endpt,
+					    pjmedia_endpt_flag flag,
+					    const void *value)
+{
+    PJ_ASSERT_RETURN(endpt, PJ_EINVAL);
+
+    switch (flag) {
+    case PJMEDIA_ENDPT_HAS_TELEPHONE_EVENT_FLAG:
+	endpt->has_telephone_event = *(pj_bool_t*)value;
+	break;
+    default:
+	return PJ_EINVAL;
+    }
+
+    return PJ_SUCCESS;
+}
+
+PJ_DEF(pj_status_t) pjmedia_endpt_get_flag( pjmedia_endpt *endpt,
+					    pjmedia_endpt_flag flag,
+					    void *value)
+{
+    PJ_ASSERT_RETURN(endpt, PJ_EINVAL);
+
+    switch (flag) {
+    case PJMEDIA_ENDPT_HAS_TELEPHONE_EVENT_FLAG:
+	*(pj_bool_t*)value = endpt->has_telephone_event;
+	break;
+    default:
+	return PJ_EINVAL;
+    }
+
+    return PJ_SUCCESS;
+}
 
 /**
  * Get the ioqueue instance of the media endpoint.
@@ -429,6 +449,7 @@ PJ_DEF(pj_status_t) pjmedia_endpt_create_sdp( pjmedia_endpt *endpt,
 	    rtpmap.param.slen = 1;
 
 	} else {
+	    rtpmap.param.ptr = NULL;
 	    rtpmap.param.slen = 0;
 	}
 
@@ -497,25 +518,26 @@ PJ_DEF(pj_status_t) pjmedia_endpt_create_sdp( pjmedia_endpt *endpt,
 
 #if defined(PJMEDIA_RTP_PT_TELEPHONE_EVENTS) && \
     PJMEDIA_RTP_PT_TELEPHONE_EVENTS != 0
-
     /*
      * Add support telephony event
      */
-    m->desc.fmt[m->desc.fmt_count++] = 
-	pj_str(PJMEDIA_RTP_PT_TELEPHONE_EVENTS_STR);
+    if (endpt->has_telephone_event) {
+	m->desc.fmt[m->desc.fmt_count++] =
+	    pj_str(PJMEDIA_RTP_PT_TELEPHONE_EVENTS_STR);
 
-    /* Add rtpmap. */
-    attr = PJ_POOL_ZALLOC_T(pool, pjmedia_sdp_attr);
-    attr->name = pj_str("rtpmap");
-    attr->value = pj_str(PJMEDIA_RTP_PT_TELEPHONE_EVENTS_STR 
-			 " telephone-event/8000");
-    m->attr[m->attr_count++] = attr;
+	/* Add rtpmap. */
+	attr = PJ_POOL_ZALLOC_T(pool, pjmedia_sdp_attr);
+	attr->name = pj_str("rtpmap");
+	attr->value = pj_str(PJMEDIA_RTP_PT_TELEPHONE_EVENTS_STR
+			     " telephone-event/8000");
+	m->attr[m->attr_count++] = attr;
 
-    /* Add fmtp */
-    attr = PJ_POOL_ZALLOC_T(pool, pjmedia_sdp_attr);
-    attr->name = pj_str("fmtp");
-    attr->value = pj_str(PJMEDIA_RTP_PT_TELEPHONE_EVENTS_STR " 0-15");
-    m->attr[m->attr_count++] = attr;
+	/* Add fmtp */
+	attr = PJ_POOL_ZALLOC_T(pool, pjmedia_sdp_attr);
+	attr->name = pj_str("fmtp");
+	attr->value = pj_str(PJMEDIA_RTP_PT_TELEPHONE_EVENTS_STR " 0-15");
+	m->attr[m->attr_count++] = attr;
+    }
 #endif
 
     /* Done */

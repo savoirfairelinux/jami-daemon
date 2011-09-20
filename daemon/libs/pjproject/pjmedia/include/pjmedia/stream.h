@@ -1,6 +1,6 @@
-/* $Id: stream.h 2844 2009-07-29 12:14:21Z bennylp $ */
+/* $Id: stream.h 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
- * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #ifndef __PJMEDIA_STREAM_H__
 #define __PJMEDIA_STREAM_H__
@@ -138,6 +127,12 @@ struct pjmedia_stream_info
     int			jb_max_pre; /**< Jitter buffer maximum prefetch
 					 delay in msec (-1 for default).    */
     int			jb_max;	    /**< Jitter buffer max delay in msec.   */
+
+#if defined(PJMEDIA_STREAM_ENABLE_KA) && PJMEDIA_STREAM_ENABLE_KA!=0
+    pj_bool_t		use_ka;	    /**< Stream keep-alive and NAT hole punch
+					 (see #PJMEDIA_STREAM_ENABLE_KA)
+					 is enabled?			    */
+#endif
 };
 
 
@@ -189,6 +184,16 @@ PJ_DECL(pj_status_t) pjmedia_stream_destroy(pjmedia_stream *stream);
 
 
 /**
+ * Get the last frame type retreived from the jitter buffer.
+ *
+ * @param stream	The media stream.
+ *
+ * @return		Jitter buffer frame type.
+ */
+PJ_DEF(char) pjmedia_stream_get_last_jb_frame_type(pjmedia_stream *stream);
+
+
+/**
  * Get the media port interface of the stream. The media port interface
  * declares put_frame() and get_frame() function, which is the only 
  * way for application to transmit and receive media frames from the
@@ -236,6 +241,17 @@ PJ_DECL(pj_status_t) pjmedia_stream_start(pjmedia_stream *stream);
  */
 PJ_DECL(pj_status_t) pjmedia_stream_get_stat( const pjmedia_stream *stream,
 					      pjmedia_rtcp_stat *stat);
+
+
+/**
+ * Reset the stream statistics.
+ *
+ * @param stream	The media stream.
+ *
+ * @return		PJ_SUCCESS on success.
+ */
+PJ_DECL(pj_status_t) pjmedia_stream_reset_stat(pjmedia_stream *stream);
+
 
 #if defined(PJMEDIA_HAS_RTCP_XR) && (PJMEDIA_HAS_RTCP_XR != 0)
 /**
