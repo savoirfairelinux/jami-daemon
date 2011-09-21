@@ -397,8 +397,6 @@ VideoReceiveThread::VideoReceiveThread(const std::map<std::string, std::string> 
 void VideoReceiveThread::run()
 {
     setup();
-    AVPacket inpacket;
-    int frameFinished;
     enum PixelFormat fmt = (enum PixelFormat) format_;
 
     if (!test_source_)
@@ -406,6 +404,7 @@ void VideoReceiveThread::run()
 
     while (not testCancel())
     {
+        AVPacket inpacket;
         if (not test_source_)
         {
             errno = av_read_frame(inputCtx_, &inpacket);
@@ -419,6 +418,7 @@ void VideoReceiveThread::run()
                 goto next_packet;
 
             // decode video frame from camera
+            int frameFinished;
             avcodec_decode_video2(decoderCtx_, rawFrame_, &frameFinished, &inpacket);
             if (!frameFinished)
                 goto next_packet;
@@ -466,42 +466,29 @@ next_packet:
 VideoReceiveThread::~VideoReceiveThread()
 {
     // free resources, exit thread
-	Manager::instance().getDbusManager()->getCallManager()->stoppedReceivingVideoEvent(shmKey_,
-            semKey_);
+	Manager::instance().getDbusManager()->getCallManager()->stoppedReceivingVideoEvent(shmKey_, semKey_);
     ost::Thread::terminate();
 
-    _debug("%s", __PRETTY_FUNCTION__);
-    // make sure no one is waiting for the SHM event which will never come if we've
-    // error'd out
+    // make sure no one is waiting for the SHM event which will never come if we've error'd out
     shmReady_.signal();
-    // free shared memory
+
     cleanupSemaphore(semSetID_);
     cleanupShm(shmID_, shmBuffer_);
-    semSetID_ = -1;
-    shmID_ = -1;
-    shmBuffer_ = 0;
 
     if (imgConvertCtx_)
         sws_freeContext(imgConvertCtx_);
 
-    // free the scaled frame
     if (scaledPicture_)
         av_free(scaledPicture_);
 
-    // free the YUV frame
     if (rawFrame_)
         av_free(rawFrame_);
 
-    // doesn't need to be freed, we didn't use avcodec_alloc_context
     if (decoderCtx_)
         avcodec_close(decoderCtx_);
 
-    // close the video file
     if (inputCtx_)
         av_close_input_file(inputCtx_);
-
-    _debug("Finished %s", __PRETTY_FUNCTION__);
 }
 
 } // end namespace sfl_video
-

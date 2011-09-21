@@ -393,14 +393,6 @@ std::string Sdp::getLineFromLocalSDP(const std::string &keyword) const
 std::vector<std::string> Sdp::getActiveVideoDescription() const
 {
     std::stringstream ss;
-    if (activeLocalSession_)
-    {
-        static const int SIZE = 2048;
-        char buffer[SIZE];
-        int size = pjmedia_sdp_print(activeLocalSession_, buffer, SIZE);
-        std::string localStr(buffer, size);
-        _debug("ACTIVE LOCAL SESSION LOOKS LIKE: %s", localStr.c_str());
-    }
     ss << "v=0" << std::endl;
     ss << "o=- 0 0 IN IP4 " << localIpAddr_ << std::endl;
     ss << "s=sflphone" << std::endl;
@@ -433,24 +425,21 @@ std::vector<std::string> Sdp::getActiveVideoDescription() const
         ++videoIdx;
 
     // get direction string
-    static const pj_str_t DIRECTIONS[] = {{(char*)"sendrecv", 8},
-        {(char*)"sendonly", 8}, {(char*)"recvonly", 8} ,
-        {(char*)"inactive", 8}, {NULL, 0}};
-    const pj_str_t *guess = DIRECTIONS;
+    static const pj_str_t DIRECTIONS[] = {
+		{(char*)"sendrecv", 8},
+		{(char*)"sendonly", 8},
+		{(char*)"recvonly", 8},
+		{(char*)"inactive", 8},
+		{NULL, 0}
+    };
     pjmedia_sdp_attr *direction = NULL;
 
+    const pj_str_t *guess = DIRECTIONS;
     while (!direction and guess->ptr)
-    {
-        direction = pjmedia_sdp_media_find_attr(activeLocalSession_->media[videoIdx], guess, NULL);
-        ++guess;
-    }
+        direction = pjmedia_sdp_media_find_attr(activeLocalSession_->media[videoIdx], guess++, NULL);
 
     if (direction)
-    {
-        std::string dir_str("a=");
-        dir_str += std::string(direction->name.ptr, direction->name.slen);
-        ss << dir_str << std::endl;
-    }
+        ss << "a=" + std::string(direction->name.ptr, direction->name.slen) << std::endl;
 
     v.push_back(ss.str());
     v.push_back(codec);
