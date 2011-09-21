@@ -173,6 +173,9 @@ PKG_CHECK_MODULES(LIBSWSCALE, libswscale >= 1.1.0,, AC_MSG_ERROR([Missing libsws
 dnl Check for libavdevice development package - name: libavdevice-dev
 PKG_CHECK_MODULES(LIBAVDEVICE, libavdevice >= 53.0.0,, AC_MSG_ERROR([Missing libavdevice package: libavdevice-dev]))
 
+dnl Check for libavutil development package - name: libavutil-dev
+PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 51.7.0,, AC_MSG_ERROR([Missing libavutil package: libavutil-dev]))
+
 LIBCCGNU2_MIN_VERSION=1.3.1
 PKG_CHECK_MODULES(CCGNU2, libccgnu2 >= ${LIBCCGNU2_MIN_VERSION},, AC_MSG_ERROR([Missing common cpp development package: libcommoncpp2-dev]))
 
