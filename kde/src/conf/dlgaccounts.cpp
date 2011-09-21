@@ -164,7 +164,7 @@ void DlgAccounts::saveAccountList()
             currentId = QString(current->getAccountId());
          }
       }
-      qDebug() << currentId << " : " << current->isChecked();
+      //qDebug() << currentId << " : " << current->isChecked();
    }
    //remove accounts that are in the configurationManager but not in the client
    for (int i = 0; i < accountIds.size(); i++) {

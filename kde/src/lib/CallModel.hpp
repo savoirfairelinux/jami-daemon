@@ -159,7 +159,12 @@ template<typename CallWidget, typename Index> Call* CallModel<CallWidget,Index>:
 ///Create a new dialing call from peer name and the account ID
 template<typename CallWidget, typename Index> Call* CallModel<CallWidget,Index>::addDialingCall(const QString & peerName, QString account)
 {
-   Call* call = Call::buildDialingCall(generateCallId(), peerName, account);
+   QString account2 = account;
+   if (account2.isEmpty()) {
+      account2 = getCurrentAccountId();
+   }
+   
+   Call* call = Call::buildDialingCall(generateCallId(), peerName, account2);
    activeCalls[call->getCallId()] = call;
    addCall(call);
    selectItem(call);
