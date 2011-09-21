@@ -567,7 +567,7 @@ class ManagerImpl
          * Get the echo canceller engin state from
          * the current audio layer
          */
-        std::string getEchoCancelState(void) const;
+        bool getEchoCancelState(void) const;
 
         /**
          * Set the echo canceller engin state

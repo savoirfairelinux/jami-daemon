@@ -103,7 +103,7 @@ void AudioRtpRecordHandler::initNoiseSuppress()
 
     delete _audioRtpRecord._noiseSuppress;
 
-    _audioRtpRecord._noiseSuppress = new NoiseSuppress (getCodecFrameSize(), getCodecSampleRate());
+    _audioRtpRecord._noiseSuppress = new NoiseSuppress(getCodecFrameSize(), getCodecSampleRate());
 
     _audioRtpRecord.audioProcessMutex.leave();
 }
@@ -146,13 +146,8 @@ int AudioRtpRecordHandler::processDataEncode (void)
 
     fadeIn (micData, samples, &_audioRtpRecord._micAmplFactor);
 
-    if(Manager::instance().getEchoCancelState() == "enabled")
+    if(Manager::instance().getEchoCancelState())
         echoCanceller.getData(micData);
-
-	_audioRtpRecord.audioProcessMutex.enter();
-	if (Manager::instance().audioPreference.getNoiseReduce())
-		_audioRtpRecord._noiseSuppress->process(micData, samples);
-	_audioRtpRecord.audioProcessMutex.leave();
 
 #ifdef DUMP_PROCESS_DATA_ENCODE
         teststream.write(reinterpret_cast<char *>(micData), bytesToGet);
@@ -164,8 +159,14 @@ int AudioRtpRecordHandler::processDataEncode (void)
         _audioRtpRecord._converter->resample (micData, micDataConverted, codecSampleRate, mainBufferSampleRate, samplesToGet);
     }
 
+	if (Manager::instance().audioPreference.getNoiseReduce()) {
+		_audioRtpRecord.audioProcessMutex.enter();
+		_audioRtpRecord._noiseSuppress->process(micData, getCodecFrameSize());
+		_audioRtpRecord.audioProcessMutex.leave();
+	}
+
 	_audioRtpRecord.audioCodecMutex.enter();
-	int compSize = _audioRtpRecord._audioCodec->encode (micDataEncoded, out, DEC_BUFFER_SIZE);
+	int compSize = _audioRtpRecord._audioCodec->encode (micDataEncoded, out, getCodecFrameSize());
 	_audioRtpRecord.audioCodecMutex.leave();
 
     return compSize;
@@ -205,7 +206,7 @@ void AudioRtpRecordHandler::processDataDecode (unsigned char *spkrData, unsigned
         out = spkrDataConverted;
     }
 
-	if(Manager::instance().getEchoCancelState() == "enabled")
+	if(Manager::instance().getEchoCancelState())
 	    echoCanceller.putData(out, outSamples);
     Manager::instance().getMainBuffer()->putData (out, outSamples * sizeof (SFLDataFormat), id_);
 }
