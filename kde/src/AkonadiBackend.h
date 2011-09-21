@@ -16,17 +16,17 @@ class AkonadiBackend : public QObject {
 public:
    static AkonadiBackend* getInstance();
    Contact* getContactByPhone(QString phoneNumber);
+   Contact* getContactByUid(QString uid);
 private:
    AkonadiBackend(QObject* parent);
    virtual ~AkonadiBackend();
-
-   
    
    //Attributes
    static AkonadiBackend*   m_pInstance;
    Akonadi::Session*        m_pSession;
    Akonadi::Collection      m_pCollection;
    QHash<QString,Contact*>  m_pContactByPhone;
+   QHash<QString,Contact*>  m_pContactByUid;
 public slots:
    ContactList update();
    ContactList update(Akonadi::Collection collection);

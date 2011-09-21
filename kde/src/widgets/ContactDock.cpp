@@ -37,6 +37,7 @@ class QNumericTreeWidgetItem : public QTreeWidgetItem {
       QNumericTreeWidgetItem(QTreeWidget* parent):QTreeWidgetItem(parent),widget(0),weight(-1){}
       QNumericTreeWidgetItem(QTreeWidgetItem* parent):QTreeWidgetItem(parent),widget(0),weight(-1){}
       ContactItemWidget* widget;
+      QString number;
       int weight;
    private:
       bool operator<(const QTreeWidgetItem & other) const {
@@ -56,7 +57,7 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
    m_pFilterLE     = new KLineEdit   (                   );
    m_pSplitter     = new QSplitter   ( Qt::Vertical,this );
    m_pSortByCBB    = new QComboBox   ( this              );
-   m_pContactView  = new QTreeWidget ( this              );
+   m_pContactView  = new ContactTree ( this              );
    m_pCallView     = new QListWidget ( this              );
    m_pShowHistoCK  = new QCheckBox   ( this              );
 
@@ -121,9 +122,13 @@ void ContactDock::reloadContact()
       if (numbers.count() > 1) {
          foreach (Contact::PhoneNumber* number, numbers) {
             QNumericTreeWidgetItem* item2 = new QNumericTreeWidgetItem(item);
-            QLabel* numberL = new QLabel("<b>"+number->getType()+":</b>"+number->getNumber());
+            QLabel* numberL = new QLabel("<b>"+number->getType()+":</b>"+number->getNumber(),this);
+            item2->number = number->getNumber();
             m_pContactView->setItemWidget(item2,0,numberL);
          }
+      }
+      else if (numbers.count() == 1) {
+         item->number = numbers[0]->getNumber();
       }
 
       m_pContactView->addTopLevelItem(item);
@@ -165,4 +170,42 @@ void ContactDock::filter(QString text)
       item->getItem()->setHidden(!visible);
    }
    m_pContactView->expandAll();
+}
+
+QMimeData* ContactTree::mimeData( const QList<QTreeWidgetItem *> items) const
+{
+   qDebug() << "An history call is being dragged";
+   if (items.size() < 1) {
+      return NULL;
+   }
+
+   QMimeData *mimeData = new QMimeData();
+
+   //Contact
+   if (dynamic_cast<QNumericTreeWidgetItem*>(items[0])) {
+      QNumericTreeWidgetItem* item = dynamic_cast<QNumericTreeWidgetItem*>(items[0]);
+      if (item->widget != 0) {
+         mimeData->setData(MIME_CONTACT, item->widget->getContact()->getUid().toUtf8());
+      }
+      else if (!item->number.isEmpty()) {
+         mimeData->setData(MIME_PHONENUMBER, item->number.toUtf8());
+      }
+   }
+   else {
+      qDebug() << "the item is not a call";
+   }
+   return mimeData;
+}
+
+bool ContactTree::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action)
+{
+   Q_UNUSED(index)
+   Q_UNUSED(action)
+   Q_UNUSED(parent)
+
+   QByteArray encodedData = data->data(MIME_CALLID);
+
+   qDebug() << "In history import"<< QString(encodedData);
+
+   return false;
 }

@@ -1,7 +1,11 @@
 #include "CallView.h"
+#include "AkonadiBackend.h"
+#include "lib/Contact.h"
+
+#include <QtGui/QInputDialog>
 
 ///Retrieve current and older calls from the daemon, fill history and the calls TreeView and enable drag n' drop
-CallView::CallView(ModelType type, QWidget* parent) : QTreeWidget(parent), CallModel<CallTreeItem*,QTreeWidgetItem*>(type)
+CallView::CallView(ModelType type, QWidget* parent) : QTreeWidget(parent), TreeWidgetCallModel(type)
 {
    if (type == ActiveCall)
       initCall();
@@ -46,21 +50,14 @@ CallView::CallView(ModelType type, QWidget* parent) : QTreeWidget(parent), CallM
  *                                                                           *
  ****************************************************************************/
 
-///Action performed when an item is dropped on the TreeView
-bool CallView::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action) 
+bool CallView::callToCall(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action)
 {
    Q_UNUSED(index)
    Q_UNUSED(action)
-   
    QByteArray encodedCallId      = data->data( MIME_CALLID      );
-   QByteArray encodedPhoneNumber = data->data( MIME_PHONENUMBER );
-   
-   qDebug() << "In export"<< QString(encodedCallId);
-   qDebug() << "In export2"<< QString(encodedPhoneNumber);
-   
    if (!QString(encodedCallId).isEmpty()) {
-   clearArtefact(getIndex(encodedCallId));
-   
+      clearArtefact(getIndex(encodedCallId));
+
       if (!parent) {
          qDebug() << "Call dropped on empty space";
          if (getIndex(encodedCallId)->parent()) {
@@ -71,12 +68,12 @@ bool CallView::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData 
             qDebug() << "The call is not in a conversation (doing nothing)";
          return true;
       }
-      
+
       if (getCall(parent)->getCallId() == QString(encodedCallId)) {
          qDebug() << "Call dropped on itself (doing nothing)";
          return true;
       }
-      
+
       if ((parent->childCount()) && (getIndex(encodedCallId)->childCount())) {
          qDebug() << "Merging two conferences";
          mergeConferences(getCall(parent),getCall(encodedCallId));
@@ -84,15 +81,15 @@ bool CallView::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData 
       }
       else if ((parent->parent()) || (parent->childCount())) {
          qDebug() << "Call dropped on a conference";
-         
+
          if ((getIndex(encodedCallId)->childCount()) && (!parent->childCount())) {
             qDebug() << "Conference dropped on a call (doing nothing)";
             return true;
          }
-         
+
          QTreeWidgetItem* call1 = getIndex(encodedCallId);
          QTreeWidgetItem* call2 = (parent->parent())?parent->parent():parent;
-         
+
          if (call1->parent()) {
             qDebug() << "Call 1 is part of a conference";
             if (call1->parent() == call2) {
@@ -109,6 +106,14 @@ bool CallView::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData 
             }
          }
          qDebug() << "Adding participant";
+         int state = getCall(call1)->getState();
+         if(state == CALL_STATE_INCOMING || state == CALL_STATE_DIALING || state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD) {
+            getCall(call1)->actionPerformed(CALL_ACTION_ACCEPT);
+         }
+         state = getCall(call2)->getState();
+         if(state == CALL_STATE_INCOMING || state == CALL_STATE_DIALING || state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD) {
+            getCall(call2)->actionPerformed(CALL_ACTION_ACCEPT);
+         }
          addParticipant(getCall(call1),getCall(call2));
          return true;
       }
@@ -116,14 +121,135 @@ bool CallView::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData 
          qDebug() << "Call dropped on it's own conference (doing nothing)";
          return true;
       }
-      
 
-      
+
+
       qDebug() << "Call dropped on another call";
       createConferenceFromCall(getCall(encodedCallId),getCall(parent));
       return true;
    }
+   return false;
+}
+
+bool CallView::phoneNumberToCall(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action)
+{
+   Q_UNUSED(index)
+   Q_UNUSED(action)
+   QByteArray encodedPhoneNumber = data->data( MIME_PHONENUMBER );
+   if (!QString(encodedPhoneNumber).isEmpty()) {
+      Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(encodedPhoneNumber);
+      QString name;
+      if (contact)
+         name = contact->getFormattedName();
+      else
+         name = "Unknow";
+      Call* call2 = TreeWidgetCallModel::addDialingCall(name, TreeWidgetCallModel::getCurrentAccountId());
+      call2->appendText(QString(encodedPhoneNumber));
+      if (!parent) {
+         //Dropped on free space
+         qDebug() << "Adding new dialing call";
+      }
+      else if (parent->childCount() || parent->parent()) {
+         //Dropped on a conversation
+         QTreeWidgetItem* call = (parent->parent())?parent->parent():parent;
+         addParticipant(getCall(call),call2);
+      }
+      else {
+         //Dropped on call
+         call2->actionPerformed(CALL_ACTION_ACCEPT);
+         int state = getCall(parent)->getState();
+         if(state == CALL_STATE_INCOMING || state == CALL_STATE_DIALING || state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD) {
+            getCall(parent)->actionPerformed(CALL_ACTION_ACCEPT);
+         }
+         createConferenceFromCall(call2,getCall(parent));
+      }
+   }
+   return false;
+}
+
+bool CallView::contactToCall(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action)
+{
+   qDebug() << "contactToCall";
+   Q_UNUSED(index)
+   Q_UNUSED(action)
+   QByteArray encodedContact = data->data( MIME_CONTACT );
+   if (!QString(encodedContact).isEmpty()) {
+      Contact* contact = AkonadiBackend::getInstance()->getContactByUid(encodedContact);
+      qDebug() << "Contact:" << contact;
+      if (contact) {
+         qDebug() << "In contact";
+         Call* call2;
+         if (contact->getPhoneNumbers().count() == 1) {
+            call2 = TreeWidgetCallModel::addDialingCall(contact->getFormattedName(), TreeWidgetCallModel::getCurrentAccountId());
+            call2->appendText(contact->getPhoneNumbers()[0]->getNumber());
+         }
+         else if (contact->getPhoneNumbers().count() > 1) {
+            bool ok = false;
+            QHash<QString,QString> map;
+            QStringList list;
+            foreach (Contact::PhoneNumber* number, contact->getPhoneNumbers()) {
+               map[number->getType()+" ("+number->getNumber()+")"] = number->getNumber();
+               list << number->getType()+" ("+number->getNumber()+")";
+            }
+            QString result = QInputDialog::getItem (this, QString("Select phone number"), QString("This contact have many phone number, please select the one you wish to call"), list, 0, false, &ok);
+            if (ok) {
+               call2 = TreeWidgetCallModel::addDialingCall(contact->getFormattedName(), TreeWidgetCallModel::getCurrentAccountId());
+               call2->appendText(map[result]);
+            }
+            else {
+               qDebug() << "Operation cancelled";
+               return false;
+            }
+         }
+         else {
+            qDebug() << "This contact have no valid phone number";
+            return false;
+         }
+         if (!parent) {
+            //Dropped on free space
+            qDebug() << "Adding new dialing call";
+         }
+         else if (parent->childCount() || parent->parent()) {
+            //Dropped on a conversation
+            QTreeWidgetItem* call = (parent->parent())?parent->parent():parent;
+            addParticipant(getCall(call),call2);
+         }
+         else {
+            //Dropped on call
+            call2->actionPerformed(CALL_ACTION_ACCEPT);
+            int state = getCall(parent)->getState();
+            if(state == CALL_STATE_INCOMING || state == CALL_STATE_DIALING || state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD) {
+               getCall(parent)->actionPerformed(CALL_ACTION_ACCEPT);
+            }
+            createConferenceFromCall(call2,getCall(parent));
+         }
+      }
+   }
+   return false;
+}
+
+///Action performed when an item is dropped on the TreeView
+bool CallView::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action) 
+{
+   Q_UNUSED(index)
+   Q_UNUSED(action)
    
+   QByteArray encodedCallId      = data->data( MIME_CALLID      );
+   QByteArray encodedPhoneNumber = data->data( MIME_PHONENUMBER );
+   QByteArray encodedContact     = data->data( MIME_CONTACT     );
+
+   if (!QString(encodedCallId).isEmpty()) {
+      qDebug() << "CallId dropped"<< QString(encodedCallId);
+      callToCall(parent, index, data, action);
+   }
+   else if (!QString(encodedPhoneNumber).isEmpty()) {
+      qDebug() << "PhoneNumber dropped"<< QString(encodedPhoneNumber);
+      phoneNumberToCall(parent, index, data, action);
+   }
+   else if (!QString(encodedContact).isEmpty()) {
+      qDebug() << "Contact dropped"<< QString(encodedContact);
+      contactToCall(parent, index, data, action);
+   }
    return false;
 }
 
@@ -350,7 +476,7 @@ void CallView::itemClicked(QTreeWidgetItem* item, int column) {
 Call* CallView::addConference(const QString & confID) 
 {
    qDebug() << "Conference created";
-   Call* newConf =  CallModel<CallTreeItem*,QTreeWidgetItem*>::addConference(confID);
+   Call* newConf =  TreeWidgetCallModel::addConference(confID);
 
    //InternalCallModelStruct<CallTreeItem>* aNewStruct = privateCallList_callId[confID];
    
@@ -387,7 +513,7 @@ Call* CallView::addConference(const QString & confID)
 bool CallView::conferenceChanged(const QString &confId, const QString &state) 
 {
    qDebug() << "Conference changed";
-   if (!CallModel<CallTreeItem*,QTreeWidgetItem*>::conferenceChanged(confId, state))
+   if (!TreeWidgetCallModel::conferenceChanged(confId, state))
      return false;
 
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
@@ -421,7 +547,7 @@ void CallView::conferenceRemoved(const QString &confId)
       insertItem(extractItem(getIndex(confId)->child(0)));
    }
    takeTopLevelItem(indexOfTopLevelItem(getIndex(confId)));
-   CallModel<CallTreeItem*,QTreeWidgetItem*>::conferenceRemoved(confId);
+   TreeWidgetCallModel::conferenceRemoved(confId);
    qDebug() << "Conference removed";
 }
 

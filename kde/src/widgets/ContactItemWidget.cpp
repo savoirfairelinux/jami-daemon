@@ -19,19 +19,50 @@
  ***************************************************************************/
 
 #include <QtCore/QStringList>
+#include <QtCore/QMimeData>
+#include <QtGui/QApplication>
+#include <QtGui/QClipboard>
 #include <QtGui/QGridLayout>
+#include <QtGui/QMenu>
 
 #include <klocale.h>
 #include <kdebug.h>
 #include <unistd.h>
+#include <kaction.h>
 
 #include "lib/sflphone_const.h"
 #include "ContactItemWidget.h"
 
 ContactItemWidget::ContactItemWidget(QWidget *parent)
-   : QWidget(parent), init(false)
+   : QWidget(parent), m_pMenu(0),init(false)
 {
+   setContextMenuPolicy(Qt::CustomContextMenu);
+   m_pCallAgain  = new KAction(this);
+   m_pCallAgain->setShortcut(Qt::CTRL + Qt::Key_Enter);
+   m_pCallAgain->setText("Call Again");
+   m_pCallAgain->setIcon(KIcon(ICON_DIALING));
+   m_pEditContact = new KAction(this);
+   m_pEditContact->setShortcut(Qt::CTRL + Qt::Key_E);
+   m_pEditContact->setText("Edit contact");
+   m_pEditContact->setIcon(KIcon("contact-new"));
+   m_pCopy       = new KAction(this);
+   m_pCopy->setShortcut(Qt::CTRL + Qt::Key_C);
+   m_pCopy->setText("Copy");
+   m_pCopy->setIcon(KIcon("edit-copy"));
+   m_pEmail      = new KAction(this);
+   m_pEmail->setShortcut(Qt::CTRL + Qt::Key_M);
+   m_pEmail->setText("Send Email");
+   m_pEmail->setIcon(KIcon("mail-message-new"));
+   m_pAddPhone      = new KAction(this);
+   m_pAddPhone->setShortcut(Qt::CTRL + Qt::Key_N);
+   m_pAddPhone->setText("Add Phone Number");
+   m_pAddPhone->setIcon(KIcon("list-resource-add"));
 
+   connect(m_pCallAgain    ,SIGNAL(triggered()),this,SLOT(callAgain()      ));
+   connect(m_pEditContact  ,SIGNAL(triggered()),this,SLOT(editContact()    ));
+   connect(m_pCopy         ,SIGNAL(triggered()),this,SLOT(copy()           ));
+   connect(m_pEmail        ,SIGNAL(triggered()),this,SLOT(sendEmail()      ));
+   connect(m_pAddPhone     ,SIGNAL(triggered()),this,SLOT(addPhone()       ));
 }
 
 ContactItemWidget::~ContactItemWidget()
@@ -71,6 +102,7 @@ void ContactItemWidget::setContact(Contact* contact)
    setMinimumSize(QSize(50, 30));
 
    updated();
+   connect(this,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(showContext(QPoint)));
 }
 
 void ContactItemWidget::updated()
@@ -149,4 +181,47 @@ void ContactItemWidget::setItem(QTreeWidgetItem* item)
 Contact* ContactItemWidget::getContact()
 {
    return m_pContactKA;
+}
+
+void ContactItemWidget::showContext(const QPoint& pos)
+{
+   if (!m_pMenu) {
+      m_pMenu = new QMenu(this);
+      m_pMenu->addAction(m_pCallAgain);
+      m_pMenu->addAction(m_pEditContact);
+      m_pMenu->addAction(m_pAddPhone);
+      m_pMenu->addAction(m_pCopy);
+      m_pMenu->addAction(m_pEmail);
+   }
+   m_pMenu->exec(mapToGlobal(pos));
+}
+
+
+void ContactItemWidget::sendEmail()
+{
+   qDebug() << "Sending email";
+}
+
+void ContactItemWidget::callAgain()
+{
+   qDebug() << "Calling ";
+}
+
+void ContactItemWidget::copy()
+{
+   qDebug() << "Copying contact";
+   QMimeData* mimeData = new QMimeData();
+   mimeData->setData(MIME_CONTACT, m_pContactKA->getUid().toUtf8());
+   QClipboard* clipboard = QApplication::clipboard();
+   clipboard->setMimeData(mimeData);
+}
+
+void ContactItemWidget::editContact()
+{
+   qDebug() << "Adding contact";
+}
+
+void ContactItemWidget::addPhone()
+{
+   qDebug() << "Adding to contact";
 }

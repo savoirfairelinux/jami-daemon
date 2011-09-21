@@ -456,7 +456,11 @@
               </widget>
              </item>
              <item row="1" column="1">
-              <widget class="QSpinBox" name="spinBox_ni_local_port"/>
+              <widget class="QSpinBox" name="spinBox_ni_local_port">
+               <property name="maximum">
+                <number>65535</number>
+               </property>
+              </widget>
              </item>
              <item row="0" column="2">
               <spacer name="horizontalSpacer_8">
@@ -509,7 +513,11 @@
               </widget>
              </item>
              <item row="4" column="1" colspan="2">
-              <widget class="QSpinBox" name="spinBox_pa_published_port"/>
+              <widget class="QSpinBox" name="spinBox_pa_published_port">
+               <property name="maximum">
+                <number>65535</number>
+               </property>
+              </widget>
              </item>
              <item row="3" column="1">
               <widget class="QLineEdit" name="lineEdit_pa_published_address"/>
@@ -777,8 +785,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>536</width>
-               <height>758</height>
+               <width>539</width>
+               <height>660</height>
               </rect>
              </property>
              <layout class="QGridLayout" name="gridLayout_5">
@@ -1157,6 +1165,11 @@
  </widget>
  <customwidgets>
   <customwidget>
+   <class>KEditListBox</class>
+   <extends>QGroupBox</extends>
+   <header>keditlistbox.h</header>
+  </customwidget>
+  <customwidget>
    <class>KIntSpinBox</class>
    <extends>QSpinBox</extends>
    <header>knuminput.h</header>
@@ -1165,11 +1178,6 @@
    <class>KUrlRequester</class>
    <extends>QFrame</extends>
    <header>kurlrequester.h</header>
-  </customwidget>
-  <customwidget>
-   <class>KEditListBox</class>
-   <extends>QGroupBox</extends>
-   <header>keditlistbox.h</header>
   </customwidget>
   <customwidget>
    <class>KLineEdit</class>

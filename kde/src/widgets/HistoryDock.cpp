@@ -269,13 +269,6 @@ QMimeData* HistoryTree::mimeData( const QList<QTreeWidgetItem *> items) const
    else {
       qDebug() << "the item is not a call";
    }
-
-// 
-//    //Plain text for other applications
-//    mimeData->setData(MIME_PLAIN_TEXT, QString(getCall(items[0])->getPeerName()+"\n"+getCall(items[0])->getPeerPhoneNumber()).toAscii());
-// 
-//    //TODO Comment this line if you don't want to see ugly artefact, but the caller details will not be visible while dragged
-//    items[0]->setText(0, getCall(items[0])->getPeerName() + "\n" + getCall(items[0])->getPeerPhoneNumber());
    return mimeData;
 }
 

@@ -76,8 +76,8 @@ enum CallAction {
         NumberOfCallActions};
 
 private:
-        // Whether or not the object has been initialized
-        bool   initialized_;
+   // Whether or not the object has been initialized
+   bool   initialized_;
    KAction * action_accept;
    KAction * action_refuse;
    KAction * action_hold;

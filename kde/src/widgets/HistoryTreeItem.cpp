@@ -20,10 +20,13 @@
 
 #include <QtCore/QStringList>
 #include <QtGui/QGridLayout>
+#include <QtGui/QMenu>
 
 #include <klocale.h>
 #include <kdebug.h>
 #include <unistd.h>
+#include <kaction.h>
+#include <kicon.h>
 
 #include "lib/sflphone_const.h"
 #include "HistoryTreeItem.h"
@@ -33,9 +36,41 @@
 const char * HistoryTreeItem::callStateIcons[12] = {ICON_INCOMING, ICON_RINGING, ICON_CURRENT, ICON_DIALING, ICON_HOLD, ICON_FAILURE, ICON_BUSY, ICON_TRANSFER, ICON_TRANSF_HOLD, "", "", ICON_CONFERENCE};
 
 HistoryTreeItem::HistoryTreeItem(QWidget *parent)
-   : QWidget(parent), itemCall(0), init(false)
+   : QWidget(parent), itemCall(0),m_pMenu(0), init(false)
 {
+   setContextMenuPolicy(Qt::CustomContextMenu);
+
+   m_pCallAgain    = new KAction(this);
+   m_pAddContact   = new KAction(this);
+   m_pCopy         = new KAction(this);
+   m_pEmail        = new KAction(this);
+   m_pAddToContact = new KAction(this);
    
+   m_pCallAgain->setShortcut    (Qt::CTRL + Qt::Key_Enter     );
+   m_pCallAgain->setText        ("Call Again"                 );
+   m_pCallAgain->setIcon        (KIcon(ICON_DIALING)          );
+
+   m_pAddToContact->setShortcut (Qt::CTRL + Qt::Key_E         );
+   m_pAddToContact->setText     ("Add to contact"             );
+   m_pAddToContact->setIcon     (KIcon("list-resource-add")   );
+   
+   m_pAddContact->setShortcut   (Qt::CTRL + Qt::Key_E         );
+   m_pAddContact->setText       ("Add to contact"             );
+   m_pAddContact->setIcon       (KIcon("contact-new")         );
+   
+   m_pCopy->setShortcut         (Qt::CTRL + Qt::Key_C         );
+   m_pCopy->setText             ("Copy"                       );
+   m_pCopy->setIcon             (KIcon("edit-copy")           );
+   
+   m_pEmail->setShortcut        (Qt::CTRL + Qt::Key_M         );
+   m_pEmail->setText            ("Send Email"                 );
+   m_pEmail->setIcon            (KIcon("mail-message-new")    );
+
+   connect(m_pCallAgain    ,SIGNAL(triggered()),this,SLOT(callAgain()      ));
+   connect(m_pAddContact   ,SIGNAL(triggered()),this,SLOT(addContact()     ));
+   connect(m_pCopy         ,SIGNAL(triggered()),this,SLOT(copy()           ));
+   connect(m_pEmail        ,SIGNAL(triggered()),this,SLOT(sendEmail()      ));
+   connect(m_pAddToContact ,SIGNAL(triggered()),this,SLOT(addToContact()   ));
 }
 
 HistoryTreeItem::~HistoryTreeItem()
@@ -86,6 +121,7 @@ void HistoryTreeItem::setCall(Call *call)
    setMinimumSize(QSize(50, 30));
 
    connect(itemCall, SIGNAL(changed()), this,     SLOT(updated()));
+   connect(this,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(showContext(QPoint)));
    updated();
 
    m_pTimeStamp = itemCall->getStartTimeStamp().toUInt();
@@ -163,4 +199,43 @@ QTreeWidgetItem* HistoryTreeItem::getItem()
 void HistoryTreeItem::setItem(QTreeWidgetItem* item)
 {
    m_pItem = item;
+}
+
+void HistoryTreeItem::showContext(const QPoint& pos)
+{
+   if (!m_pMenu) {
+      m_pMenu = new QMenu(this);
+      m_pMenu->addAction( m_pCallAgain    );
+      m_pMenu->addAction( m_pAddContact   );
+      m_pMenu->addAction( m_pAddToContact );
+      m_pMenu->addAction( m_pCopy         );
+      m_pMenu->addAction( m_pEmail        );
+   }
+   m_pMenu->exec(mapToGlobal(pos));
+}
+
+
+void HistoryTreeItem::sendEmail()
+{
+   qDebug() << "Sending email";
+}
+
+void HistoryTreeItem::callAgain()
+{
+   qDebug() << "Calling "<< itemCall->getPeerPhoneNumber();
+}
+
+void HistoryTreeItem::copy()
+{
+   qDebug() << "Copying contact";
+}
+
+void HistoryTreeItem::addContact()
+{
+   qDebug() << "Adding contact";
+}
+
+void HistoryTreeItem::addToContact()
+{
+   qDebug() << "Adding to contact";
 }

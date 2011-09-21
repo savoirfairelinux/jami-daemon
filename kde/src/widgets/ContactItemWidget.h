@@ -38,6 +38,8 @@
 #include <lib/Contact.h>
 
 class QTreeWidgetItem;
+class KAction;
+class QMenu;
 
 class ContactItemWidget : public QWidget
 {
@@ -45,6 +47,13 @@ class ContactItemWidget : public QWidget
  public:
     ContactItemWidget(QWidget* parent =0);
     ~ContactItemWidget();
+
+    KAction* m_pCallAgain;
+    KAction* m_pEditContact;
+    KAction* m_pCopy;
+    KAction* m_pEmail;
+    KAction* m_pAddPhone;
+    QMenu*   m_pMenu;
 
     KABC::Addressee* contact() const;
     void setContact(Contact* contact);
@@ -76,6 +85,13 @@ class ContactItemWidget : public QWidget
 
 public slots:
    void updated();
+private slots:
+   void showContext(const QPoint& pos);
+   void sendEmail();
+   void callAgain();
+   void copy();
+   void editContact();
+   void addPhone();
  };
 
 #endif // CALLTREE_ITEM_H

@@ -253,14 +253,25 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
    account->setAccountDetail(LOCAL_INTERFACE,comboBox_ni_local_address->currentText());
    
    QStringList _codecList;
+   qDebug() << keditlistbox_codec->items() << codecList;
    foreach (QString aCodec, keditlistbox_codec->items()) {
       foreach (StringHash _aCodec, codecList) {
          if (_aCodec["alias"] == aCodec) {
+            qDebug() << "Saving:" <<  _aCodec["id"];
             _codecList << _aCodec["id"];
          }
       }
+//    }
+//    foreach (QString aCodec, keditlistbox_codec->items()) {
+//       foreach (StringHash aCodec, codecList) {
+//          if (aCodec["alias"] == keditlistbox_codec->currentText()) {
+//             label_bandwidth_value->setText(aCodec["bandwidth"]);
+//             label_bitrate_value->setText(aCodec["bitrate"]);
+//             label_frequency_value->setText(aCodec["frequency"]);
+//          }
+//       }
    }
-   
+
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    configurationManager.setActiveAudioCodecList(_codecList, account->getAccountDetail(ACCOUNT_ID));
    qDebug() << "Account codec have been saved" << _codecList << account->getAccountDetail(ACCOUNT_ID);
@@ -368,10 +379,11 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
    keditlistbox_codec->clear();
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    QStringList activeCodecList = configurationManager.getActiveAudioCodecList(account->getAccountDetail(ACCOUNT_ID));
+   qDebug() << "Active codecs" << activeCodecList;
    foreach (QString aCodec, activeCodecList) {
       foreach (StringHash _aCodec, codecList) {
-      if (_aCodec["id"] == aCodec)
-         keditlistbox_codec->insertItem(_aCodec["alias"]);
+;         if (_aCodec["id"] == aCodec)
+            keditlistbox_codec->insertItem(_aCodec["alias"]);
       }
    }
         
@@ -623,7 +635,7 @@ void DlgAccounts::loadCodecList()
     _codec["frequency"] = codec[1];
     _codec["bitrate"]   = codec[2];
     _codec["bandwidth"] = ""; //TODO remove
-    _codec["id"] = aCodec;
+    _codec["id"]        = QString::number(aCodec);
     
     tmpNameList << _codec["name"];
     

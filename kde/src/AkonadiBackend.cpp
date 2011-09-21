@@ -69,6 +69,7 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
                newNumbers << new Contact::PhoneNumber(number.number(),number.typeLabel());
                m_pContactByPhone[number.number()] = aContact;
             }
+            m_pContactByUid[tmp.uid()] = aContact;
             
             aContact->setNickName       (tmp.nickName()       );
             aContact->setFormattedName  (tmp.formattedName()  );
@@ -101,6 +102,11 @@ ContactList AkonadiBackend::update()
 Contact* AkonadiBackend::getContactByPhone(QString phoneNumber)
 {
    return m_pContactByPhone[phoneNumber];
+}
+
+Contact* AkonadiBackend::getContactByUid(QString uid)
+{
+   return m_pContactByUid[uid];
 }
 
 void AkonadiBackend::collectionsReceived( const Akonadi::Collection::List&  list)
