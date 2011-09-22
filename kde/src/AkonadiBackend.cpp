@@ -88,8 +88,6 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
          }
       }
    }
-
-   qDebug() << "End collect "<< contacts.size() << "\n\n\n";
    return contacts;
 }
 
@@ -112,7 +110,6 @@ Contact* AkonadiBackend::getContactByUid(QString uid)
 void AkonadiBackend::collectionsReceived( const Akonadi::Collection::List&  list)
 {
    foreach (Akonadi::Collection coll, list) {
-      qDebug() << "\n\n\n\n\n\nLoading collection" << coll.name();
       update(coll);
       emit collectionChanged();
    }

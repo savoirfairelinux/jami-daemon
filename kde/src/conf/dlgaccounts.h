@@ -41,6 +41,7 @@ struct CredentialData {
 };
 
 typedef QHash<QListWidgetItem*, CredentialData> QListWidgetItemHash; //Needed to fix a Qt foreach macro argument parsing bug
+typedef QList<CredentialData> CredentialList;
 
 class Private_AddCodecDialog : public KDialog {
   Q_OBJECT
@@ -60,8 +61,6 @@ class Private_AddCodecDialog : public KDialog {
           codecTable->setItem(i,1,cBitrate);
           QTableWidgetItem* cFrequency = new  QTableWidgetItem(aCodec["frequency"]);
           codecTable->setItem(i,2,cFrequency);
-          QTableWidgetItem* cBandwidth = new  QTableWidgetItem(aCodec["bandwidth"]);
-          codecTable->setItem(i,3,cBandwidth);
           QTableWidgetItem* cAlias = new  QTableWidgetItem(aCodec["alias"]);
           codecTable->setItem(i,4,cAlias);
           i++;
@@ -111,9 +110,10 @@ public:
    void loadAccount(QListWidgetItem * item);
    
 private:
-   ConfigAccountList* accountList;
-   QList<StringHash> codecList;
+   ConfigAccountList*  accountList;
+   QList<StringHash>   codecList;
    QListWidgetItemHash credentialInfo;
+   CredentialList      credentialList;
    bool accountListHasChanged;
    void loadCodecList();
 

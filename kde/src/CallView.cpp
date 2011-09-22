@@ -175,9 +175,7 @@ bool CallView::contactToCall(QTreeWidgetItem *parent, int index, const QMimeData
    QByteArray encodedContact = data->data( MIME_CONTACT );
    if (!QString(encodedContact).isEmpty()) {
       Contact* contact = AkonadiBackend::getInstance()->getContactByUid(encodedContact);
-      qDebug() << "Contact:" << contact;
       if (contact) {
-         qDebug() << "In contact";
          Call* call2;
          if (contact->getPhoneNumbers().count() == 1) {
             call2 = TreeWidgetCallModel::addDialingCall(contact->getFormattedName(), TreeWidgetCallModel::getCurrentAccountId());
@@ -265,11 +263,9 @@ QMimeData* CallView::mimeData( const QList<QTreeWidgetItem *> items) const
    
    //Call ID for internal call merging and spliting
    if (getCall(items[0])->isConference()) {
-      qDebug() << "Conf id:" << getCall(items[0])->getConfId().toAscii();
       mimeData->setData(MIME_CALLID, getCall(items[0])->getConfId().toAscii());
    }
    else {
-      qDebug() << "Call id:" << getCall(items[0])->getConfId().toAscii();
       mimeData->setData(MIME_CALLID, getCall(items[0])->getCallId().toAscii());
    }
    
