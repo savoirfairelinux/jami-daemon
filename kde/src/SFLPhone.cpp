@@ -176,15 +176,9 @@ void SFLPhone::setupActions()
    action_screen = new QActionGroup(this);
    action_screen->setExclusive(true);
    action_main = new KAction(KIcon(QIcon(ICON_SCREEN_MAIN)), i18n("Main screen"), action_screen);
-   action_history = new KAction(KIcon(QIcon(ICON_SCREEN_HISTORY)), i18n("Call history"), action_screen);
-   action_addressBook = new KAction(KIcon(QIcon(ICON_SCREEN_ADDRESS)), i18n("Address book"), action_screen);
    action_main->setCheckable(true);
-   action_history->setCheckable(true);
-   action_addressBook->setCheckable(true);
    action_main->setChecked(true);
    action_screen->addAction(action_main);
-   action_screen->addAction(action_history);
-   action_screen->addAction(action_addressBook);
 
    action_close = KStandardAction::close(this, SLOT(close()), this);
    action_quit = KStandardAction::quit(this, SLOT(quitButton()), this);
@@ -213,8 +207,6 @@ void SFLPhone::setupActions()
    connect(action_accountCreationWizard, SIGNAL(triggered()),           m_pView, SLOT(accountCreationWizard()));
 
    action_screen->addAction(action_main);
-   action_screen->addAction(action_history);
-   action_screen->addAction(action_addressBook);
    
    actionCollection()->addAction("action_accept", action_accept);
    actionCollection()->addAction("action_refuse", action_refuse);
@@ -222,8 +214,6 @@ void SFLPhone::setupActions()
    actionCollection()->addAction("action_transfer", action_transfer);
    actionCollection()->addAction("action_record", action_record);
    actionCollection()->addAction("action_main", action_main);
-   actionCollection()->addAction("action_history", action_history);
-   actionCollection()->addAction("action_addressBook", action_addressBook);
    actionCollection()->addAction("action_mailBox", action_mailBox);
    actionCollection()->addAction("action_close", action_close);
    actionCollection()->addAction("action_quit", action_quit);
@@ -348,16 +338,12 @@ void SFLPhone::on_m_pView_recordCheckStateChangeAsked(bool recordCheckState)
 void SFLPhone::updateScreen(QAction * action)
 {
    if(action == action_main)   m_pView->changeScreen(SCREEN_MAIN);
-   else if(action == action_history)   m_pView->changeScreen(SCREEN_HISTORY);
-   else if(action == action_addressBook)   m_pView->changeScreen(SCREEN_ADDRESS);
 }
 
 void SFLPhone::on_m_pView_screenChanged(int screen)
 {
    qDebug() << "on_m_pView_screenChanged";
    if(screen == SCREEN_MAIN)   action_main->setChecked(true);
-   else if(screen == SCREEN_HISTORY)   action_history->setChecked(true);
-   else if(screen == SCREEN_ADDRESS)   action_addressBook->setChecked(true);
 }
 
 QList<QAction*> SFLPhone::getCallActions()
@@ -387,9 +373,4 @@ void SFLPhone::on_m_pView_incomingCall(const Call * call)
    }
    KNotification::event(KNotification::Notification, "New incomming call", "New call from: \n" + call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName());
    //}
-}
-
-void SFLPhone::on_m_pView_addressBookEnableAsked(bool enabled)
-{
-   action_addressBook->setVisible(enabled);
 }

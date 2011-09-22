@@ -22,25 +22,6 @@ CallView::CallView(ModelType type, QWidget* parent) : QTreeWidget(parent), TreeW
    //User Interface events
    connect(this, SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)), this, SLOT(itemDoubleClicked(QTreeWidgetItem*,int)));
    connect(this, SIGNAL(itemClicked(QTreeWidgetItem*,int)), this, SLOT(itemClicked(QTreeWidgetItem*,int)));
-   
-
-   
-   //D-Bus event    
-//    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
-//    connect(&callManager, SIGNAL(callStateChanged(const QString &, const QString &)),
-//            this,         SLOT(callStateChangedSignal(const QString &, const QString &)));
-//    connect(&callManager, SIGNAL(incomingCall(const QString &, const QString &, const QString &)),
-//            this,         SLOT(incomingCallSignal(const QString &, const QString &)));
-//    connect(&callManager, SIGNAL(conferenceCreated(const QString &)),
-//            this,         SLOT(conferenceCreatedSignal(const QString &)));
-//    connect(&callManager, SIGNAL(conferenceChanged(const QString &, const QString &)),
-//            this,         SLOT(conferenceChangedSignal(const QString &, const QString &)));
-//    connect(&callManager, SIGNAL(conferenceRemoved(const QString &)),
-//            this,         SLOT(conferenceRemovedSignal(const QString &)));
-//    connect(&callManager, SIGNAL(incomingMessage(const QString &, const QString &)),
-//            this,         SLOT(incomingMessageSignal(const QString &, const QString &)));
-//    connect(&callManager, SIGNAL(voiceMailNotify(const QString &, int)),
-//            this,         SLOT(voiceMailNotifySignal(const QString &, int)));
 }
 
 
@@ -287,16 +268,8 @@ QMimeData* CallView::mimeData( const QList<QTreeWidgetItem *> items) const
 ///Add a call in the model structure, the call must exist before being added to the model
 Call* CallView::addCall(Call* call, Call* parent) 
 {
-   //InternalCallModelStruct<CallTreeItem>* aNewStruct = privateCallList_call[CallModel<CallTreeItem>::addCall(call, parent)];
-   
    QTreeWidgetItem* callItem = new QTreeWidgetItem();
-   //aNewStruct->treeItem = callItem;
    updateIndex(call,callItem);
-   
-   //privateCallList_item[callItem] = aNewStruct;
-   
-   //aNewStruct->call = ;
-   //privateCallList_widget[aNewStruct->call] = aNewStruct;
    insertItem(callItem,parent);
    
    setCurrentItem(callItem);
@@ -399,11 +372,9 @@ CallTreeItem* CallView::insertItem(QTreeWidgetItem* item, QTreeWidgetItem* paren
    else
       parent->addChild(item);
    
-   //privateCallList_widget.remove(privateCallList_item[item]->call); //TODO needed?
    CallTreeItem* callItem = new CallTreeItem();
    updateWidget(getCall(item), callItem);
    callItem->setCall(getCall(item));
-   //privateCallList_widget[privateCallList_item[item]->call] = privateCallList_item[item];
    
    setItemWidget(item,0,callItem);
    
@@ -473,23 +444,12 @@ Call* CallView::addConference(const QString & confID)
 {
    qDebug() << "Conference created";
    Call* newConf =  TreeWidgetCallModel::addConference(confID);
-
-   //InternalCallModelStruct<CallTreeItem>* aNewStruct = privateCallList_callId[confID];
-   
-//    if (!aNewStruct) {
-//       qDebug() << "Conference failed";
-//       return 0;
-//    }
    
    QTreeWidgetItem* confItem = new QTreeWidgetItem();
-   //aNewStruct->treeItem = confItem;
    updateIndex(newConf,confItem);
-   
-   //privateCallList_item[confItem] = aNewStruct;
-   
-   //aNewStruct->call = ;
+
    insertItem(confItem,(QTreeWidgetItem*)0);
-   //privateCallList_widget[aNewStruct->call] = aNewStruct;
+
    
    setCurrentItem(confItem);
 
@@ -553,31 +513,6 @@ void CallView::clearHistory()
    historyCalls.clear();
 }
 
-// void CallView::callStateChangedSignal(const QString& callId, const QString& state)
-// {
-//   qDebug() << "Signal : Call State Changed for call  " << callId << " . New state : " << state;
-//    Call* call = findCallByCallId(callId);
-//    if(!call) {
-//       if(state == CALL_STATE_CHANGE_RINGING) {
-//          call = addRingingCall(callId);
-//       }
-//       else {
-//          qDebug() << "Call doesn't exist in this client. Might have been initialized by another client instance before this one started.";
-//          return;
-//       }
-//    }
-//    else {
-//       call->stateChanged(state);
-//    }
-// }
-// 
-// void CallView::incomingCallSignal(const QString& accountId, const QString& callId)
-// {
-//    Q_UNUSED(accountId)
-//    qDebug() << "Signal : Incoming Call ! ID = " << callId;
-//    addIncomingCall(callId);
-// }
-// 
 void CallView::conferenceCreatedSignal(const QString& confId)
 {
    addConference(confId);

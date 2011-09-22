@@ -73,29 +73,6 @@ void AccountList::updateAccounts()
    emit accountListUpdated();
 }
 
-//void AccountList::upAccount(int index)
-//{
-//   if(index <= 0 || index >= size()) {
-//      qDebug() << "Error : index or future index out of range in upAccount.";
-//      return;
-//   }
-//   Account* account = getAccountAt(index);
-//   accounts->remove(index);
-//   accounts->insert(index - 1, account);
-//}
-
-//void AccountList::downAccount(int index)
-//{
-//   if(index < 0 || index >= size() - 1) {
-//      qDebug() << "Error : index or future index out of range in upAccount.";
-//      return;
-//   }
-//   Account* account = getAccountAt(index);
-//   accounts->remove(index);
-//   accounts->insert(index + 1, account);
-//}
-
-
 QString AccountList::getOrderedList() const
 {
    QString order;

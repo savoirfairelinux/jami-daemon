@@ -393,22 +393,6 @@ void DlgAccounts::changedAccountList()
    qDebug() << "changedAccountList";
    accountListHasChanged = true;
    emit updateButtons();
-   //toolButton_accountsApply->setEnabled(true);
-//<<<<<<< HEAD
-   
-//   int currentIndex = edit2_protocol->currentIndex();
-
-//   if(currentIndex==0)
-//   {
-//      tab_advanced->setEnabled(true);
-//      line_stun->setEnabled(checkbox_stun->isChecked());
-//   }
-//   else
-//   {
-//      tab_advanced->setEnabled(false);
-//   }
-//=======
-//>>>>>>> master
 }
 
 
@@ -475,22 +459,6 @@ void DlgAccounts::on_button_accountRemove_clicked()
    accountList->removeAccount(item);
    listWidget_accountList->setCurrentRow( (r >= listWidget_accountList->count()) ? r-1 : r );
 }
-
-//<<<<<<< HEAD
-/*void DlgAccounts::on_toolButton_accountsApply_clicked()
-{
-   qDebug() << "on_toolButton_accountsApply_clicked";
-   updateSettings();
-   updateWidgets();
-}*/
-//=======
-// void DlgAccounts::on_toolButton_accountsApply_clicked() //This button have been removed, coded kept for potential reversal
-// {
-//    qDebug() << "on_toolButton_accountsApply_clicked";
-//    updateSettings();
-//    updateWidgets();
-// }
-//>>>>>>> master
 
 void DlgAccounts::on_edit1_alias_textChanged(const QString & text)
 {
@@ -562,7 +530,7 @@ void DlgAccounts::updateSettings()
    qDebug() << "DlgAccounts::updateSettings";
    if(accountListHasChanged) {
       saveAccountList();
-      //toolButton_accountsApply->setEnabled(false);
+      toolButton_accountsApply->setEnabled(false);
       accountListHasChanged = false;
    }
 }
@@ -571,7 +539,7 @@ void DlgAccounts::updateWidgets()
 {
    qDebug() << "DlgAccounts::updateWidgets";
    loadAccountList();
-   //toolButton_accountsApply->setEnabled(false);
+   toolButton_accountsApply->setEnabled(false);
    accountListHasChanged = false;
 }
 

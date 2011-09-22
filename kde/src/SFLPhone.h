@@ -85,8 +85,6 @@ private:
    KAction * action_record;
    QActionGroup * action_screen;
    KAction * action_main;
-   KAction * action_history;
-   KAction * action_addressBook;
    KAction * action_mailBox;
    KAction * action_close;
    KAction * action_quit;
@@ -140,7 +138,6 @@ private slots:
    void on_m_pView_actionTextsChangeAsked(const QString * actionTexts);
    void on_m_pView_transferCheckStateChangeAsked(bool transferCheckState);
    void on_m_pView_recordCheckStateChangeAsked(bool recordCheckState);
-   void on_m_pView_addressBookEnableAsked(bool enabled);
    void on_m_pView_screenChanged(int screen);
    void on_m_pView_incomingCall(const Call * call);
 

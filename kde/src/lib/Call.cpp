@@ -17,7 +17,7 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
 #include "Call.h"
 
 #include "CallModel.h"
@@ -93,46 +93,6 @@ const function Call::stateChangedFunctionMap[11][6] =
 };
 
 const char * Call::historyIcons[3] = {ICON_HISTORY_INCOMING, ICON_HISTORY_OUTGOING, ICON_HISTORY_MISSED};
-
-/*void Call::initCallItemWidget()
-{
-   itemWidget = new QWidget();
-   labelIcon = new QLabel();
-   labelCallNumber = new QLabel(peerPhoneNumber);
-   labelTransferPrefix = new QLabel(i18n("Transfer to : "));
-   labelTransferNumber = new QLabel();
-   QSpacerItem * horizontalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
-   
-   QHBoxLayout * mainLayout = new QHBoxLayout();
-   mainLayout->setContentsMargins ( 3, 1, 2, 1);
-   mainLayout->setSpacing(4);
-   QVBoxLayout * descr = new QVBoxLayout();
-   descr->setMargin(1);
-   descr->setSpacing(1);
-   QHBoxLayout * transfer = new QHBoxLayout();
-   transfer->setMargin(0);
-   transfer->setSpacing(0);
-   mainLayout->addWidget(labelIcon);
-   if(! peerName.isEmpty())
-   {
-      labelPeerName = new QLabel(peerName);
-      descr->addWidget(labelPeerName);
-   }
-   descr->addWidget(labelCallNumber);
-   transfer->addWidget(labelTransferPrefix);
-   transfer->addWidget(labelTransferNumber);
-   descr->addLayout(transfer);
-   mainLayout->addLayout(descr);
-   mainLayout->addItem(horizontalSpacer);
-
-   itemWidget->setLayout(mainLayout);
-}*/
-
- /*void Call::setItemIcon(const QString pixmap)
-{
-   labelIcon->setPixmap(QPixmap(pixmap));
-   }*/
-
 
 Call::Call(call_state startState, QString callId, QString peerName, QString peerNumber, QString account)
    : conference(false)
@@ -304,11 +264,6 @@ daemon_call_state Call::toDaemonCallState(const QString & stateName)
    return DAEMON_CALL_STATE_FAILURE;
 }
 
-/*QWidget * Call::getItemWidget()
-{
-   return itemWidget;
-   }*/
-
 QString Call::getStopTimeStamp() const
 {
    if (stopTime == NULL)
@@ -343,41 +298,6 @@ void Call::setCallNumber(QString number)
    callNumber = number;
    emit changed();
 }
-   
-
-/*QWidget * Call::getHistoryItemWidget()
-{
-   historyItemWidget = new QWidget();
-   labelHistoryIcon = new QLabel();
-   labelHistoryIcon->setPixmap(QPixmap(historyIcons[historyState]));
-   labelHistoryCallNumber = new QLabel(peerPhoneNumber);
-   if(startTime)
-      labelHistoryTime = new QLabel(startTime->toString(Qt::LocaleDate));
-   else
-      labelHistoryTime = new QLabel();
-   QSpacerItem * horizontalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
-
-   QHBoxLayout * mainLayout = new QHBoxLayout();
-   mainLayout->setContentsMargins ( 3, 1, 2, 1);
-   mainLayout->setSpacing(4);
-   QVBoxLayout * descr = new QVBoxLayout();
-   descr->setMargin(1);
-   descr->setSpacing(1);
-   descr->setMargin(0);
-   descr->setSpacing(1);
-   mainLayout->addWidget(labelHistoryIcon);
-   if(! peerName.isEmpty())
-   {
-      labelHistoryPeerName = new QLabel(peerName);
-      descr->addWidget(labelHistoryPeerName);
-   }
-   descr->addWidget(labelHistoryCallNumber);
-   descr->addWidget(labelHistoryTime);
-   mainLayout->addLayout(descr);
-   mainLayout->addItem(horizontalSpacer);
-   historyItemWidget->setLayout(mainLayout);
-   return historyItemWidget;
-   }*/
 
 call_state Call::getState() const
 {
@@ -548,7 +468,7 @@ void Call::call()
       callManager.placeCall(account, callId, callNumber);
       this->account = account;
       this->peerPhoneNumber = callNumber;
-//       Contact * contact = findContactForNumberInKAddressBook(peerPhoneNumber);
+//       Contact * contact = findContactForNumberInKAddressBook(peerPhoneNumber); //TODO port
 //       if(contact) this->peerName = contact->getNickName();
       this->startTime = new QDateTime(QDateTime::currentDateTime());
       this->historyState = OUTGOING;

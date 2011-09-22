@@ -17,7 +17,7 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
 
 #include "SFLPhoneView.h"
 
@@ -67,13 +67,6 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
    
    errorWindow = new QErrorMessage(this);
-
-   //callList = & CallListInterfaceSingleton::getInstance(); //CallList(this);
-
-   //callTree = new CallTreeView(page_callList);
-   //historyTree = new CallTreeWidget(page_callHistory);
-   //callTree = new CallTreeWidget(this);
-   //historyTree = new CallTreeWidget(this);
    callTreeModel->setTitle("Calls");
    historyTreeModel->setTitle("History");
 
@@ -81,23 +74,6 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
    page_callHistory->layout()->addWidget(historyTreeModel->getWidget());
 
    historyLoaded = false;
-
-//    for(int i = 0 ; i < callTreeModel->size() ; i++) {
-//       Call * call = (*callList)[i];
-//       if(call->getState() == CALL_STATE_OVER) {
-//          addCallToCallHistory(call);
-//       }
-//       else {
-//          addCallToCallList(call);
-//       }
-//    }
-   
-   //ConfigurationDialog* configDialog = new ConfigurationDialog(this);
-   //configDialog->setObjectName("configDialog");
-   //configDialog->setModal(true);
-   
-   //wizard = new AccountWizard(this);
-   //wizard->setModal(false);
    
    QPalette pal = QPalette(palette());
    pal.setColor(QPalette::AlternateBase, Qt::lightGray);
@@ -130,9 +106,6 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
    connect(&configurationManager, SIGNAL(audioManagerChanged()),
       this,         SLOT(on1_audioManagerChanged()));
    //END Port to Call Model
-           
-//    connect(configDialog, SIGNAL(clearCallHistoryAsked()), //TODO restore
-//            &callTreeModel,     SLOT(clearHistory()));
            
    //connect(configDialog, SIGNAL(changesApplied()),
            //this,         SLOT(loadWindow()));
@@ -173,9 +146,6 @@ void SFLPhoneView::loadWindow()
    updateVolumeBar();
    updateVolumeControls();
    updateDialpad();
-   updateSearchHistory();
-   updateAddressBookEnabled();
-   updateAddressBook();
    updateStatusMessage();
 }
 
@@ -187,30 +157,6 @@ QErrorMessage * SFLPhoneView::getErrorWindow()
 CallView* SFLPhoneView::model()
 {
    return callTreeModel;
-}
-
-// Call* SFLPhoneView::addCallToCallList(Call * call)
-// {     
-// //    return callTree->insert(call);
-//    return callTreeModel->addCall(call);
-// }
-
-// Call* SFLPhoneView::addCallToCallHistory(Call * call)
-// {
-//    //return historyTree->insert(call); //TODO restore
-//    return historyTree.addCall(call); 
-// 
-// }
-
-void SFLPhoneView::addContactToContactList(Contact * contact)
-{
-      Q_UNUSED(contact);
-//    QListWidgetItem * item = contact->getItem();
-//    QWidget * widget = contact->getItemWidget();
-//    if(item && widget) {
-//       listWidget_addressBook->addItem(item);
-//       listWidget_addressBook->setItemWidget(item, widget);
-//    }
 }
 
 void SFLPhoneView::typeString(QString str)
@@ -229,12 +175,6 @@ void SFLPhoneView::typeString(QString str)
          }
       }
 
-//       for(int i = callTreeModel->size() - 1 ; i >= 0 ; i--)
-//       {
-//          Call *call2 = (*callList)[i];
-// 
-//          
-//       }
       foreach (Call* call2, callTreeModel->getCallList()) {
          if(currentCall != call2 && call2->getState() == CALL_STATE_CURRENT) {
             action(call2, CALL_ACTION_HOLD);
@@ -247,23 +187,11 @@ void SFLPhoneView::typeString(QString str)
       if(!currentCall && !candidate) {
          qDebug() << "Typing when no item is selected. Opening an item.";
          candidate = callTreeModel->addDialingCall();
-         //callTree->setCurrentRow(callTree->count() + 1); //TODO
-         //callTreeModel->selectItem(addCallToCallList(candidate));
       }
 
       if(!currentCall && candidate) {
          candidate->appendText(str);
       }
-   }
-   if(stackedWidget_screen->currentWidget() == page_callHistory) {
-      qDebug() << "In call history.";
-      lineEdit_searchHistory->setText(lineEdit_searchHistory->text() + str);
-      lineEdit_searchHistory->setFocus();
-   }
-   if(stackedWidget_screen->currentWidget() == page_addressBook) {
-      qDebug() << "In address book.";
-      lineEdit_addressBook->setText(lineEdit_addressBook->text() + str);
-      lineEdit_addressBook->setFocus();
    }
 }
 
@@ -309,14 +237,6 @@ void SFLPhoneView::escape()
          }
       }
    }
-   if(stackedWidget_screen->currentWidget() == page_callHistory) {
-      qDebug() << "In call history.";
-      lineEdit_searchHistory->clear();
-   }
-   if(stackedWidget_screen->currentWidget() == page_addressBook) {
-      qDebug() << "In address book.";
-      lineEdit_addressBook->clear();
-   }
 }
 
 void SFLPhoneView::enter()
@@ -338,39 +258,6 @@ void SFLPhoneView::enter()
          }
       }
    }
-   if(stackedWidget_screen->currentWidget() == page_callHistory) {
-      qDebug() << "In call history.";
-      
-      Call * pastCall = historyTreeModel->getCurrentItem();
-      if (!pastCall) {
-         qDebug() << "pastCall null";
-      }
-      else {
-         changeScreen(SCREEN_MAIN);
-         Call * call = callTreeModel->addDialingCall(pastCall->getPeerName(), pastCall->getAccountId());
-         call->appendText(pastCall->getPeerPhoneNumber());
-         //addCallToCallList(call);
-         //callTree->setCurrentRow(callTree->count() - 1);
-         //callTree->setCurrentItem(addCallToCallList(call));
-         //callTreeModel->selectItem(addCallToCallList(call));
-         action(call, CALL_ACTION_ACCEPT);
-      }
-   }
-   if(stackedWidget_screen->currentWidget() == page_addressBook) {
-//       qDebug() << "In address book.";
-//       QListWidgetItem * item = listWidget_addressBook->currentItem();
-//       if(!item) {
-//          qDebug() << "Enter when no item is selected. Doing nothing.";
-//       }
-//       else {
-//          changeScreen(SCREEN_MAIN);
-//          //ContactItemWidget * w = (ContactItemWidget *) (listWidget_addressBook->itemWidget(item));
-//          Call * call = callTreeModel->addDialingCall(w->getContactName());
-//          call->appendText(w->getContactNumber());
-//          //callTreeModel->selectItem(addCallToCallList(call));
-//          action(call, CALL_ACTION_ACCEPT);
-//       }
-   }
 }
 
 void SFLPhoneView::action(Call* call, call_action action)
@@ -385,8 +272,6 @@ void SFLPhoneView::action(Call* call, call_action action)
       catch(const char * msg) {
          errorWindow->showMessage(QString(msg));
       }
-      
-      //updateCallItem(call);
       updateWindowCallState();
    }
 }
@@ -497,43 +382,6 @@ void SFLPhoneView::updateWindowCallState()
          }
       }
    }
-   if(stackedWidget_screen->currentWidget() == page_callHistory) {
-      call = historyTreeModel->getCurrentItem();
-      buttonIconFiles[SFLPhone::Accept] = ICON_ACCEPT;
-      actionTexts[SFLPhone::Accept] = ACTION_LABEL_CALL_BACK;
-      if (!call) {
-         qDebug() << "No item selected.";
-         enabledActions[SFLPhone::Accept] = false;
-         enabledActions[SFLPhone::Refuse] = false;
-         enabledActions[SFLPhone::Hold] = false;
-         enabledActions[SFLPhone::Transfer] = false;
-         enabledActions[SFLPhone::Record] = false;
-      }
-      else {
-         enabledActions[SFLPhone::Refuse] = false;
-         enabledActions[SFLPhone::Hold] = false;
-         enabledActions[SFLPhone::Transfer] = false;
-         enabledActions[SFLPhone::Record] = false;
-      }
-   }
-   if(stackedWidget_screen->currentWidget() == page_addressBook) {
-      //TODO uncomment item = addressBookTree->currentItem();
-//       buttonIconFiles[SFLPhone::Accept] = ICON_ACCEPT;
-//       if (!item) {
-//          qDebug() << "No item selected.";
-//          enabledActions[SFLPhone::Accept] = false;
-//          enabledActions[SFLPhone::Refuse] = false;
-//          enabledActions[SFLPhone::Hold] = false;
-//          enabledActions[SFLPhone::Transfer] = false;
-//          enabledActions[SFLPhone::Record] = false;
-//       }
-//       else {
-//          enabledActions[SFLPhone::Refuse] = false;
-//          enabledActions[SFLPhone::Hold] = false;
-//          enabledActions[SFLPhone::Transfer] = false;
-//          enabledActions[SFLPhone::Record] = false;
-//       }
-   }
    
    qDebug() << "Updating Window.";
    
@@ -546,64 +394,6 @@ void SFLPhoneView::updateWindowCallState()
    qDebug() << "Window updated.";
 }
 
-void SFLPhoneView::updateSearchHistory()
-{
-   qDebug() << "updateSearchHistory";
-   lineEdit_searchHistory->setVisible(!lineEdit_searchHistory->text().isEmpty());
-}
-
-
-void SFLPhoneView::updateCallHistory()
-{
-   qDebug() << "updateCallHistory";
-   while(listWidget_callHistory->count() > 0) {
-      listWidget_callHistory->takeItem(0);
-   }
-   QString textSearched = lineEdit_searchHistory->text();
-   foreach (Call* call, historyTreeModel->getCallList()) {
-      if( call->getState() == CALL_STATE_OVER && call->getHistoryState() != NONE && (call->getPeerPhoneNumber().contains(textSearched) || call->getPeerName().contains(textSearched)) ) {
-         //addCallToCallHistory(call);
-         historyTreeModel->addCall(call);
-      }
-   }
-//    alternateColors(listWidget_callHistory);
-}
-
-void SFLPhoneView::updateAddressBook()
-{
-//    qDebug() << "updateAddressBook";
-//    while(listWidget_addressBook->count() > 0) {
-//       QListWidgetItem * item = listWidget_addressBook->takeItem(0);
-//       delete item;
-//    }
-//    
-//    if(isAddressBookEnabled()) {
-//       if(loadAddressBook())
-//       {
-//          qDebug() << "add loaded";
-//          QString textSearched = lineEdit_addressBook->text();
-//          if(textSearched.isEmpty()) {
-//             label_addressBookFull->setVisible(false);
-//             return;
-//          }
-//          bool full = false;
-//          QVector<Contact *> contactsFound = findContactsInKAddressBook(textSearched, full);
-//          qDebug() << "Full : " << full;
-//          label_addressBookFull->setVisible(full);
-//          for(int i = 0 ; i < contactsFound.size() ; i++) {
-//             Contact * contact = contactsFound[i];
-//             addContactToContactList(contact);
-//          }
-//          alternateColors(listWidget_addressBook);
-//       }
-//       else {
-//          lineEdit_addressBook->setClickMessage(i18n("Address book loading..."));
-//          lineEdit_addressBook->setEnabled(false);
-//          label_addressBookFull->setVisible(false);
-//       }
-//    }
-}
-
 void SFLPhoneView::alternateColors(QListWidget * listWidget)
 {
    for(int i = 0 ; i < listWidget->count(); i++) {
@@ -614,39 +404,6 @@ void SFLPhoneView::alternateColors(QListWidget * listWidget)
    listWidget->setUpdatesEnabled( true );
 
 }
-
-QVector<Contact *> SFLPhoneView::findContactsInKAddressBook(QString textSearched, bool & full)
-{
-   Q_UNUSED(textSearched);
-   Q_UNUSED(full);
-//    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-//    MapStringInt addressBookSettings = configurationManager.getAddressbookSettings().value();
-// //    int maxResults = addressBookSettings[ADDRESSBOOK_MAX_RESULTS];
-//    int typesDisplayed = phoneNumberTypesDisplayed();
-//    bool displayPhoto = addressBookSettings[ADDRESSBOOK_DISPLAY_CONTACT_PHOTO];
-//    AddressBook * ab = KABC::StdAddressBook::self(true);
-//    QVector<Contact *> results = QVector<Contact *>();
-//    AddressBook::Iterator it;
-//    full = false;
-//    int k = 0;
-//    for ( it = ab->begin(); it != ab->end() && !full ; it++ ) {
-//       if(it->name().contains(textSearched, Qt::CaseInsensitive) || it->nickName().contains(textSearched, Qt::CaseInsensitive)) {
-//          for(int i = 0 ; i < it->phoneNumbers().count() ; i++) {
-//             int typeFlag = it->phoneNumbers().at(i).type();
-//             if((typesDisplayed & typeFlag) != 0) {
-//                results.append(new Contact( *it, it->phoneNumbers().at(i), displayPhoto ));
-//                k++;
-//             }
-//          }
-//       }
-//       if(k >= maxResults) {
-//          full = true;
-//       }
-//    }
-//    return results;
-   return QVector<Contact*>();
-}
-
 
 int SFLPhoneView::phoneNumberTypesDisplayed()
 {
@@ -802,22 +559,6 @@ void SFLPhoneView::on_widget_dialpad_typed(QString text)
    typeString(text); 
 }
 
-
-void SFLPhoneView::on_lineEdit_searchHistory_textChanged()
-{
-   qDebug() << "on_lineEdit_searchHistory_textChanged";
-   updateSearchHistory();
-   updateCallHistory();
-   updateWindowCallState();
-}
-
-void SFLPhoneView::on_lineEdit_addressBook_textChanged()
-{
-   qDebug() << "on_lineEdit_addressBook_textChanged";
-   updateAddressBook();
-   updateWindowCallState();
-}
-
 void SFLPhoneView::on_slider_recVol_valueChanged(int value)
 {
    qDebug() << "on_slider_recVol_valueChanged(" << value << ")";
@@ -905,32 +646,6 @@ Q_UNUSED(column)
 //    }
 }
 
-void SFLPhoneView::on_listWidget_callHistory_itemDoubleClicked(Call* call)
-{
-   qDebug() << "on_listWidget_callHistory_itemDoubleClicked";
-   changeScreen(SCREEN_MAIN);
-   Call* pastCall = call;
-   Call* call2 = callTreeModel->addDialingCall(pastCall->getPeerName(), pastCall->getAccountId());
-   call2->appendText(pastCall->getPeerPhoneNumber());
-   //callTreeModel->selectItem(addCallToCallList(call2));
-   action(call2, CALL_ACTION_ACCEPT);
-}
-
-
-void SFLPhoneView::on_listWidget_addressBook_itemDoubleClicked(CallTreeItem* item)
-{
-   Q_UNUSED(item)
-   qDebug() << "on_listWidget_addressBook_itemDoubleClicked";
-   changeScreen(SCREEN_MAIN);
-// TOFIX
-//   ContactItemWidget * w = (ContactItemWidget *) (listWidget_addressBook->itemWidget(item));
-//   Call * call = callList->addDialingCall(w->getContactName());
-//   call->appendItemText(w->getContactNumber());
-//   addCallToCallList(call);
-//   callTree->setCurrentRow(callTree->count() - 1);
-//   action(call, CALL_ACTION_ACCEPT);
-}
-
 void SFLPhoneView::on_stackedWidget_screen_currentChanged(int index)
 {
    qDebug() << "on_stackedWidget_screen_currentChanged";
@@ -938,21 +653,6 @@ void SFLPhoneView::on_stackedWidget_screen_currentChanged(int index)
       case SCREEN_MAIN:
          qDebug() << "Switched to call list screen.";
          emit windowTitleChangeAsked(i18n("SFLphone") + " - " + i18n("Main screen"));
-         break;
-      case SCREEN_HISTORY:
-         qDebug() << "Switched to call history screen.";
-         if(!historyLoaded)
-         {
-            updateCallHistory();
-            historyLoaded = true;
-         }
-         alternateColors(listWidget_callHistory);
-         emit windowTitleChangeAsked(i18n("SFLphone") + " - " + i18n("Call history"));
-         break;
-      case SCREEN_ADDRESS:
-         qDebug() << "Switched to address book screen.";
-         updateAddressBook();
-         emit windowTitleChangeAsked(i18n("SFLphone") + " - " + i18n("Address book"));
          break;
       default:
          qDebug() << "Error : reached an unknown index \"" << index << "\" with stackedWidget_screen.";
@@ -963,13 +663,6 @@ void SFLPhoneView::on_stackedWidget_screen_currentChanged(int index)
 void SFLPhoneView::contextMenuEvent(QContextMenuEvent *event)
 {
    KMenu menu(this);
-   if( ( stackedWidget_screen->currentWidget() == page_callHistory && listWidget_callHistory->currentItem() ) || ( stackedWidget_screen->currentWidget() == page_addressBook && listWidget_addressBook->currentItem() ) ) {
-      KAction * action_edit = new KAction(&menu);
-      action_edit->setText(i18n("Edit before call"));
-      connect(action_edit, SIGNAL(triggered()),
-              this  , SLOT(editBeforeCall()));
-      menu.addAction(action_edit);
-   }
    
    SFLPhone * window = SFLPhone::app();
    QList<QAction *> callActions = window->getCallActions();
@@ -1003,24 +696,6 @@ void SFLPhoneView::editBeforeCall()
    qDebug() << "editBeforeCall";
    QString name;
    QString number;
-   if(stackedWidget_screen->currentWidget() == page_callHistory) {
-      Call* call = historyTreeModel->getCurrentItem();
-      if(call) {
-         name = call->getPeerName();
-         number = call->getPeerPhoneNumber();
-      }
-   }
-   else if(stackedWidget_screen->currentWidget() == page_addressBook) {
-//       QListWidgetItem* item = listWidget_addressBook->currentItem();
-//                 
-//       if(item) {
-//          ContactItemWidget* w = (ContactItemWidget *) (listWidget_addressBook->itemWidget(listWidget_addressBook->currentItem()));
-//          name = w->getContactName();
-//          number = w->getContactNumber();
-//       }
-   }
-   else
-          return;
         
    bool ok;
    QString newNumber = QInputDialog::getText(this, i18n("Edit before call"), QString(), QLineEdit::Normal, number, &ok);
@@ -1045,19 +720,6 @@ void SFLPhoneView::setAccountFirst(Account * account)
    qDebug() << "Current account id" << CallView::getCurrentAccountId();
    updateStatusMessage();
 }
-
-void SFLPhoneView::on_listWidget_callHistory_currentItemChanged()
-{
-   qDebug() << "on_listWidget_callHistory_currentItemChanged";
-   updateWindowCallState();
-}
-
-void SFLPhoneView::on_listWidget_addressBook_currentItemChanged()
-{
-   qDebug() << "on_listWidget_addressBook_currentItemChanged";
-   updateWindowCallState();
-}
-
 
 void SFLPhoneView::configureSflPhone()
 {
@@ -1088,7 +750,6 @@ void SFLPhoneView::accept()
       if(!call) {
          qDebug() << "Calling when no item is selected. Opening an item.";
          callTreeModel->addDialingCall();
-         //callTreeModel->selectItem(addCallToCallList(newCall));
       }
       else {
          int state = call->getState();
@@ -1096,30 +757,11 @@ void SFLPhoneView::accept()
          {
             qDebug() << "Calling when item currently ringing, current, hold or busy. Opening an item.";
             callTreeModel->addDialingCall();
-            //callTreeModel->selectItem(addCallToCallList(newCall));
          }
          else {
             action(call, CALL_ACTION_ACCEPT);
          }
       }
-   }
-   
-   if(stackedWidget_screen->currentWidget() == page_callHistory) {
-      changeScreen(SCREEN_MAIN);
-      Call* pastCall = historyTreeModel->getCurrentItem();
-      Call* call = callTreeModel->addDialingCall(pastCall->getPeerName());
-      call->appendText(pastCall->getPeerPhoneNumber());
-      //callTreeModel->selectItem(addCallToCallList(call));
-      action(call, CALL_ACTION_ACCEPT);
-   }
-   
-   if(stackedWidget_screen->currentWidget() == page_addressBook) {
-//       changeScreen(SCREEN_MAIN);
-//       ContactItemWidget * w = (ContactItemWidget *) (listWidget_addressBook->itemWidget(listWidget_addressBook->currentItem()));
-//       Call * call = callTreeModel->addDialingCall(w->getContactName());
-//       call->appendText(w->getContactNumber());
-//       //callTreeModel->selectItem(addCallToCallList(call));
-//       action(call, CALL_ACTION_ACCEPT);
    }
 }
 
@@ -1133,14 +775,6 @@ void SFLPhoneView::refuse()
       else {
          action(call, CALL_ACTION_REFUSE);
       }
-   }
-   
-   if(stackedWidget_screen->currentWidget() == page_callHistory) {
-      lineEdit_searchHistory->clear();
-   }
-   
-   if(stackedWidget_screen->currentWidget() == page_addressBook) {
-      lineEdit_addressBook->clear();
    }
 }
 
@@ -1183,7 +817,6 @@ void SFLPhoneView::mailBox()
    QString mailBoxNumber = account->getAccountDetail(ACCOUNT_MAILBOX);
    Call * call = callTreeModel->addDialingCall();
    call->appendText(mailBoxNumber);
-   //callTreeModel->selectItem(addCallToCallList(call));
    action(call, CALL_ACTION_ACCEPT);
 }
 
@@ -1195,7 +828,6 @@ void SFLPhoneView::on1_callStateChanged(const QString &callID, const QString &st
    if(!call) {
       if(state == CALL_STATE_CHANGE_RINGING) {
          call = callTreeModel->addRingingCall(callID);
-         //addCallToCallList(call);
       }
       else {
          qDebug() << "Call doesn't exist in this client. Might have been initialized by another client instance before this one started.";
@@ -1205,7 +837,6 @@ void SFLPhoneView::on1_callStateChanged(const QString &callID, const QString &st
    else {
       call->stateChanged(state);
    }
-   //   updateCallItem(call);
    updateWindowCallState(); //NEED_PORT
 }
 
@@ -1218,7 +849,6 @@ void SFLPhoneView::on1_incomingCall(const QString & /*accountID*/, const QString
 {
    qDebug() << "Signal : Incoming Call ! ID = " << callID;
    Call* call = callTreeModel->addIncomingCall(callID);
-   //callTreeModel->selectItem(addCallToCallList(call));
 
    
    //NEED_PORT
@@ -1232,17 +862,14 @@ void SFLPhoneView::on1_incomingCall(const QString & /*accountID*/, const QString
 }
 
 void SFLPhoneView::on1_incomingConference(const QString &confID) {
-   //callTreeModel->addConference(confID);
    callTreeModel->conferenceCreatedSignal(confID);
 }
 
 void SFLPhoneView::on1_changingConference(const QString &confID, const QString &state) {
-   //callTreeModel->conferenceChanged(confID, state);
    callTreeModel->conferenceChangedSignal(confID, state);
 }
 
 void SFLPhoneView::on1_conferenceRemoved(const QString &confId) {
-   //callTreeModel->conferenceRemoved(confId);
    callTreeModel->conferenceRemovedSignal(confId);
 }
 
@@ -1272,51 +899,6 @@ void SFLPhoneView::on1_audioManagerChanged()
    updateVolumeControls();
 }
 
-void SFLPhoneView::enableAddressBook()
-{
-//    qDebug() << "\nenableAddressBook\n";
-//    lineEdit_addressBook->setClickMessage(QString());
-//    lineEdit_addressBook->setEnabled(true);
-//    AddressBook * ab = StdAddressBook::self(true);
-//    disconnect(ab,         SIGNAL(addressBookChanged(AddressBook *)),
-//               this,       SLOT(enableAddressBook()));
-}
-
-bool SFLPhoneView::loadAddressBook()
-{
-//    qDebug() << "loadAddressBook";
-//    AddressBook * ab = StdAddressBook::self(true);
-//    if(ab->loadingHasFinished()) {
-//       return true;
-//    }
-//    else {
-//       connect(ab,         SIGNAL(addressBookChanged(AddressBook *)),
-//               this,       SLOT(enableAddressBook()));
-//       return false;
-//    }
-   return false;
-}
-
-
-void SFLPhoneView::updateAddressBookEnabled()
-{
-//    qDebug() << "updateAddressBookEnabled";
-//    bool enabled = isAddressBookEnabled();
-//    emit addressBookEnableAsked(enabled);
-//    if(! enabled && stackedWidget_screen->currentWidget() == page_addressBook) {
-//       changeScreen(SCREEN_MAIN);
-//    }
-}
-
-
-bool SFLPhoneView::isAddressBookEnabled()
-{
-//    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-//    MapStringInt addressBookSettings = configurationManager.getAddressbookSettings().value();
-//    return addressBookSettings[ADDRESSBOOK_ENABLE];
-   return false;
-}
-
 void SFLPhoneView::changeScreen(int screen)
 {
    qDebug() << "changeScreen";
@@ -1336,7 +918,5 @@ void SFLPhoneView::changeScreen(int screen)
    updateWindowCallState();
    emit screenChanged(screen);
 }
-
-
 
 #include "SFLPhoneView.moc"

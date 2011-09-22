@@ -7,8 +7,6 @@ template  <typename CallWidget, typename Index> bool CallModel<CallWidget,Index>
 
 template  <typename CallWidget, typename Index> QHash<QString, Call*> CallModel<CallWidget,Index>::activeCalls;
 template  <typename CallWidget, typename Index> QHash<QString, Call*> CallModel<CallWidget,Index>::historyCalls;
-// template  <typename CallWidget, typename Index> QHash<Call*, InternalCallModelStruct* > CallModel<CallWidget,Index>::privateCallList_call;
-// template  <typename CallWidget, typename Index> QHash<QString, InternalCallModelStruct* > CallModel<CallWidget,Index>::privateCallList_callId;/*
 template  <typename CallWidget, typename Index> typename CallModel<CallWidget,Index>::InternalCall   CallModel<CallWidget,Index>::privateCallList_call;
 template  <typename CallWidget, typename Index> typename CallModel<CallWidget,Index>::InternalCallId CallModel<CallWidget,Index>::privateCallList_callId;
 template  <typename CallWidget, typename Index> typename CallModel<CallWidget,Index>::InternalIndex  CallModel<CallWidget,Index>::privateCallList_index;
@@ -90,12 +88,6 @@ template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::
             historyCalls[time_start] = Call::buildHistoryCall(callID, time_start.toUInt(), time_stop.toUInt(), accountID, peer_name, peer_number, history_state);
             addCall(historyCalls[time_start]);
          }
-
-//          QString type2 = param[0];
-//          QString number = param[1];
-//          QString name = param[2];
-//          uint stopTimeStamp = param[3].toUInt();
-//          QString account = param[4];
       }
    }
    historyInit = true;

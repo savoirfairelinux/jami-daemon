@@ -23,7 +23,7 @@
       </sizepolicy>
      </property>
      <property name="currentIndex">
-      <number>2</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="page_callList">
       <property name="sizePolicy">
@@ -41,18 +41,7 @@
         <verstretch>0</verstretch>
        </sizepolicy>
       </property>
-      <layout class="QVBoxLayout" name="verticalLayout_2">
-       <item>
-        <widget class="QListWidget" name="listWidget_callHistory"/>
-       </item>
-       <item>
-        <widget class="KLineEdit" name="lineEdit_searchHistory">
-         <property name="showClearButton" stdset="0">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-      </layout>
+      <layout class="QVBoxLayout" name="verticalLayout_2"/>
      </widget>
      <widget class="QWidget" name="page_addressBook">
       <property name="sizePolicy">
@@ -61,34 +50,7 @@
         <verstretch>0</verstretch>
        </sizepolicy>
       </property>
-      <layout class="QVBoxLayout" name="verticalLayout_5">
-       <item>
-        <widget class="QListWidget" name="listWidget_addressBook"/>
-       </item>
-       <item>
-        <widget class="KLineEdit" name="lineEdit_addressBook">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="showClearButton" stdset="0">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_addressBookFull">
-         <property name="text">
-          <string>Attention:number of results exceeds max displayed.</string>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-      </layout>
+      <layout class="QVBoxLayout" name="verticalLayout_5"/>
      </widget>
     </widget>
    </item>
@@ -231,11 +193,6 @@
   </layout>
  </widget>
  <customwidgets>
-  <customwidget>
-   <class>KLineEdit</class>
-   <extends>QLineEdit</extends>
-   <header>klineedit.h</header>
-  </customwidget>
   <customwidget>
    <class>Dialpad</class>
    <extends>QWidget</extends>
