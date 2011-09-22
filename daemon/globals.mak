@@ -2,7 +2,7 @@
 
 #CXXFLAGS=-Wall -Werror -Wextra
 
-src=$(top_srcdir)
+src=$(abs_top_srcdir)
 sfllibdir=$(DESTDIR)$(libdir)/sflphone
 sflcodecdir=$(sfllibdir)/codecs
 sflplugindir=$(sfllibdir)/plugins

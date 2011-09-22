@@ -1,3 +1,5 @@
+include ../../../globals.mak
+
 TESTS=test_video_endpoint test_thread test_v4l2
 check_PROGRAMS=test_video_endpoint test_video_rtp test_thread test_video_preview test_v4l2
 
