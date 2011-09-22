@@ -41,7 +41,7 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
    button_accountRemove->setIcon(KIcon("list-remove"));
    accountList = new ConfigAccountList(false);
    loadAccountList();
-        loadCodecList();
+   loadCodecList();
    accountListHasChanged = false;
    //toolButton_accountsApply->setEnabled(false);
    
@@ -58,6 +58,8 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
    connect(edit6_mailbox,                  SIGNAL(textEdited(const QString &)),
            this,                           SLOT(changedAccountList()));
    connect(spinbox_regExpire,              SIGNAL(editingFinished()),
+           this,                           SLOT(changedAccountList()));
+   connect(comboBox_ni_local_address,      SIGNAL(currentIndexChanged (int)),
            this,                           SLOT(changedAccountList()));
    connect(checkBox_conformRFC,            SIGNAL(clicked(bool)),
            this,                           SLOT(changedAccountList()));
@@ -246,7 +248,7 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
    account->setAccountDetail(ACCOUNT_SIP_STUN_SERVER, line_stun->text());
    
    account->setAccountDetail(PUBLISHED_SAMEAS_LOCAL, radioButton_pa_same_as_local->isChecked()?"true":"false");
-   //account->setAccountDetail(PUBLISHED_PORT, spinBox_pa_published_port->value()); //TODO fix
+   account->setAccountDetail(PUBLISHED_PORT, QString::number(spinBox_pa_published_port->value()));
    account->setAccountDetail(PUBLISHED_ADDRESS, lineEdit_pa_published_address ->text());
    
    account->setAccountDetail(LOCAL_PORT,QString::number(spinBox_pa_published_port->value()));
@@ -370,15 +372,20 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
    
    radioButton_pa_same_as_local->setChecked((account->getAccountDetail(PUBLISHED_SAMEAS_LOCAL)  == "true")?1:0);
    radioButton_pa_custom->setChecked((account->getAccountDetail(PUBLISHED_SAMEAS_LOCAL)  == "true")?1:0);
-   //spinBox_pa_published_port->setValue(account->getAccountDetail(PUBLISHED_PORT)); //TODO fix
+   spinBox_pa_published_port->setValue(account->getAccountDetail(PUBLISHED_PORT).toUInt()); //TODO fix
    lineEdit_pa_published_address->setText(account->getAccountDetail(PUBLISHED_ADDRESS));
    
-   spinBox_pa_published_port->setValue(account->getAccountDetail(LOCAL_PORT).toInt());
-   //comboBox_ni_local_address->setCurentText(account->getAccountDetail(LOCAL_INTERFACE)); //TODO need to load the list first
-
-   keditlistbox_codec->clear();
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+
+   comboBox_ni_local_address->clear();
+   QStringList interfaceList = configurationManager.getAllIpInterfaceByName();
+   comboBox_ni_local_address->addItems(interfaceList);
+   
+   spinBox_pa_published_port->setValue(account->getAccountDetail(LOCAL_PORT).toInt());
+   comboBox_ni_local_address->setCurrentIndex(comboBox_ni_local_address->findText(account->getAccountDetail(LOCAL_INTERFACE))); //TODO need to load the list first
+
    QStringList activeCodecList = configurationManager.getActiveAudioCodecList(account->getAccountDetail(ACCOUNT_ID));
+   keditlistbox_codec->clear();
    qDebug() << "Active codecs" << activeCodecList;
    foreach (QString aCodec, activeCodecList) {
       foreach (StringHash _aCodec, codecList) {

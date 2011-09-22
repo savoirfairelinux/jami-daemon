@@ -43,12 +43,12 @@ ConfigurationDialog::ConfigurationDialog(SFLPhoneView *parent)
    dlgAddressBook = new DlgAddressBook(this);
    dlgHooks       = new DlgHooks(this);
    
-   addPage( dlgGeneral      , i18n("General")      , "sflphone-client-kde" ); 
+   addPage( dlgGeneral      , i18n("General")      , "sflphone-client-kde"   ); 
    addPage( dlgDisplay      , i18n("Display")      , "applications-graphics" ); 
-   addPage( dlgAccounts     , i18n("Accounts")     , "personal" ); 
-   addPage( dlgAudio        , i18n("Audio")        , "voicecall" ); 
+   addPage( dlgAccounts     , i18n("Accounts")     , "user-identity"         );
+   addPage( dlgAudio        , i18n("Audio")        , "audio-headset"         ); 
    addPage( dlgAddressBook  , i18n("Address Book") , "x-office-address-book" );
-   addPage( dlgHooks        , i18n("Hooks")        , "insert-link" );
+   addPage( dlgHooks        , i18n("Hooks")        , "insert-link"           );
    
    connect(this, SIGNAL(applyClicked()), this,     SLOT(applyCustomSettings()));
    connect(this, SIGNAL(okClicked()),    this,     SLOT(applyCustomSettings()));
