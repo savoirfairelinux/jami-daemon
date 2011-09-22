@@ -164,9 +164,6 @@ void HistoryTreeItem::updated()
          labelCallNumber2->setText(itemCall->getCallNumber());
       }
    }
-   else {
-      qDebug() << "Updating item of call of state OVER. Doing nothing.";
-   }
    
 }
 

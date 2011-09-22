@@ -673,7 +673,7 @@ void Call::backspaceItemText()
 
 void Call::changeCurrentState(call_state newState)
 {
-   qDebug() << "Call state changed to: " << newState;
+   //qDebug() << "Call state changed to: " << newState;
    currentState = newState;
 
    emit changed();

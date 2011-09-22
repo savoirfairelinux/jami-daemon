@@ -162,7 +162,7 @@ void CallTreeItem::updated()
       }
    }
    else {
-      qDebug() << "Updating item of call of state OVER. Doing nothing.";
+      //qDebug() << "Updating item of call of state OVER. Doing nothing.";
    }
    
 }

@@ -166,7 +166,6 @@ void SFLPhoneView::saveState()
 
 void SFLPhoneView::loadWindow()
 {
-   qDebug() << "\nloadWindow";
    updateWindowCallState();
    updateRecordButton();
    updateVolumeButton();
@@ -178,7 +177,6 @@ void SFLPhoneView::loadWindow()
    updateAddressBookEnabled();
    updateAddressBook();
    updateStatusMessage();
-   qDebug() << "Finished loadWindow\n";
 }
 
 QErrorMessage * SFLPhoneView::getErrorWindow()
@@ -217,7 +215,6 @@ void SFLPhoneView::addContactToContactList(Contact * contact)
 
 void SFLPhoneView::typeString(QString str)
 {
-   qDebug() << "typeString";
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    
    if(stackedWidget_screen->currentWidget() == page_callList) {
@@ -301,7 +298,7 @@ void SFLPhoneView::escape()
       qDebug() << "In call list.";
       Call* call = callTreeModel->getCurrentItem();
       if(!call) {
-         qDebug() << "Escape when no item is selected. Doing nothing.";
+         //qDebug() << "Escape when no item is selected. Doing nothing.";
       }
       else {
          if(call->getState() == CALL_STATE_TRANSFER || call->getState() == CALL_STATE_TRANSF_HOLD) {
@@ -564,9 +561,7 @@ void SFLPhoneView::updateCallHistory()
    }
    QString textSearched = lineEdit_searchHistory->text();
    foreach (Call* call, historyTreeModel->getCallList()) {
-      qDebug() << "" << call->getCallId();
       if( call->getState() == CALL_STATE_OVER && call->getHistoryState() != NONE && (call->getPeerPhoneNumber().contains(textSearched) || call->getPeerName().contains(textSearched)) ) {
-         qDebug() << "call->getPeerPhoneNumber()=" << call->getPeerPhoneNumber() << " contains textSearched=" << textSearched;
          //addCallToCallHistory(call);
          historyTreeModel->addCall(call);
       }

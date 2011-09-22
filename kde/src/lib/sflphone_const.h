@@ -177,6 +177,7 @@
 
 /** Account States */
 #define ACCOUNT_STATE_REGISTERED          "REGISTERED"
+#define ACCOUNT_STATE_READY               "READY"
 #define ACCOUNT_STATE_UNREGISTERED        "UNREGISTERED"
 #define ACCOUNT_STATE_TRYING              "TRYING"
 #define ACCOUNT_STATE_ERROR               "ERROR"
@@ -266,9 +267,7 @@
 #define TLS_NEGOTIATION_TIMEOUT_MSEC        "TLS.negotiationTimemoutMsec"
 
 #define ACCOUNT_ID                         "Account.id"
-#define ACCOUNT_PASSWORD                   "password"
 #define ACCOUNT_AUTHENTICATION_USERNAME    "authenticationUsername"
-#define ACCOUNT_REALM                      "realm"
 #define ACCOUNT_KEY_EXCHANGE               "SRTP.keyExchange"
 #define ACCOUNT_SRTP_ENABLED               "SRTP.enable"
 #define ACCOUNT_SRTP_RTP_FALLBACK          "SRTP.rtpFallback"

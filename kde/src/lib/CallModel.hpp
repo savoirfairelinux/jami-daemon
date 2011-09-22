@@ -73,10 +73,8 @@ template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::
    if (!historyInit) {
       ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
       QStringList historyMap = configurationManager.getHistory().value();
-      qDebug() << "\n\n\n\n\n\n\n\nCall History = " ;
       foreach (QString historyCallId, historyMap) {
          QStringList param = historyCallId.split("|");
-         qDebug() << "Param count" << param.size();
          if (param.count() <= 10) {
             //If this ever change, look at the gnome client
             QString history_state = param[0];
