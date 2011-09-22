@@ -341,6 +341,7 @@ QString Call::getCallNumber() const
 void Call::setCallNumber(QString number)
 {
    callNumber = number;
+   emit changed();
 }
    
 

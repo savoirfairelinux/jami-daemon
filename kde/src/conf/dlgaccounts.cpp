@@ -360,6 +360,7 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
    }
 
    updateStatusLabel(account);
+   enablePublished();
    frame2_editAccounts->setEnabled(true);
 }
 

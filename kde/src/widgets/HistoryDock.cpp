@@ -276,6 +276,7 @@ bool HistoryTree::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeDa
 {
    Q_UNUSED(index)
    Q_UNUSED(action)
+   Q_UNUSED(parent)
 
    QByteArray encodedData = data->data(MIME_CALLID);
 

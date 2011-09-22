@@ -10,8 +10,11 @@
 #include <akonadi/itemfetchscope.h>
 #include <akonadi/collectionfetchjob.h>
 #include <akonadi/collectionfetchscope.h>
+#include <akonadi/contact/contacteditor.h>
+#include <kdialog.h>
 
 #include "lib/Contact.h"
+#include "SFLPhone.h"
 
 AkonadiBackend*  AkonadiBackend::m_pInstance = 0;
 
@@ -62,6 +65,7 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
          if ( item.hasPayload<KABC::Addressee>() ) {
             KABC::Addressee tmp = item.payload<KABC::Addressee>();
             Contact* aContact   = new Contact();
+            m_pAddrHash[tmp.uid()] = tmp;
             
             KABC::PhoneNumber::List numbers = tmp.phoneNumbers();
             PhoneNumbers newNumbers;
@@ -112,5 +116,50 @@ void AkonadiBackend::collectionsReceived( const Akonadi::Collection::List&  list
    foreach (Akonadi::Collection coll, list) {
       update(coll);
       emit collectionChanged();
+   }
+}
+
+void AkonadiBackend::editContact(Contact* contact)
+{
+   KABC::Addressee ct = m_pAddrHash[contact->getUid()];
+   if (ct.uid() != contact->getUid()) {
+      qDebug() << "Contact not found";
+      return;
+   }
+   Akonadi::ContactEditor *editor = new Akonadi::ContactEditor( Akonadi::ContactEditor::EditMode, SFLPhone::app()->view() );
+   Akonadi::Item item;
+   item.setPayload<KABC::Addressee>(ct);
+   editor->loadContact(item);
+   KDialog* dlg = new KDialog(SFLPhone::app()->view());
+   dlg->setMainWidget(editor);
+   dlg->exec();
+}
+
+void AkonadiBackend::addNewContact(Contact* contact)
+{
+   KABC::Addressee newContact;
+   newContact.setNickName       ( contact->getNickName()        );
+   newContact.setFormattedName  ( contact->getFormattedName()   );
+   newContact.setGivenName      ( contact->getFirstName()       );
+   newContact.setFamilyName     ( contact->getSecondName()      );
+   newContact.setOrganization   ( contact->getOrganization()    );
+   //newContact.setPreferredEmail ( contact->getPreferredEmail()  );//TODO
+
+            
+   //aContact->setPhoneNumbers   (newNumbers           );//TODO
+   
+    Akonadi::ContactEditor *editor = new Akonadi::ContactEditor( Akonadi::ContactEditor::CreateMode, SFLPhone::app()->view() );
+
+   editor->setContactTemplate(newContact);
+   
+   KDialog* dlg = new KDialog(SFLPhone::app()->view());
+   dlg->setMainWidget(editor);
+   dlg->exec();
+   
+    
+    
+   if ( !editor->saveContact() ) {
+      qDebug() << "Unable to save new contact to storage";
+      return;
    }
 }
