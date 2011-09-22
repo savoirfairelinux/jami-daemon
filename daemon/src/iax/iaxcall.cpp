@@ -37,38 +37,14 @@
 namespace {
     int codecToASTFormat(int c)
     {
-        static std::map<int, int> mapping;
-        if (mapping.empty()) {
-            mapping[PAYLOAD_CODEC_ULAW] = AST_FORMAT_ULAW;
-            mapping[PAYLOAD_CODEC_GSM] = AST_FORMAT_GSM;
-            mapping[PAYLOAD_CODEC_ALAW] = AST_FORMAT_ALAW;
-            mapping[PAYLOAD_CODEC_ILBC_20] = AST_FORMAT_ILBC;
-            mapping[PAYLOAD_CODEC_SPEEX_8000] = AST_FORMAT_SPEEX;
-        }
-        if (mapping.find(c) == mapping.end())
-        {
-            _error("Format not supported!");
-            return -1;
-        }
-        else
-            return mapping[c];
-    }
-    int ASTFormatToCodec(int format)
-    {
-        static std::map<int, int> mapping;
-        if (mapping.empty()) {
-            mapping[AST_FORMAT_ULAW] = PAYLOAD_CODEC_ULAW;
-            mapping[AST_FORMAT_GSM] = PAYLOAD_CODEC_GSM;
-            mapping[AST_FORMAT_ALAW] = PAYLOAD_CODEC_ALAW;
-            mapping[AST_FORMAT_ILBC] = PAYLOAD_CODEC_ILBC_20;
-            mapping[AST_FORMAT_SPEEX] = PAYLOAD_CODEC_SPEEX_8000;
-        }
-        if (mapping.find(format) == mapping.end()) {
-            _error("Format not supported!");
-            return static_cast<int>(-1);
-        }
-        else
-            return mapping[format];
+    	if (c == PAYLOAD_CODEC_ULAW)		return AST_FORMAT_ULAW;
+    	if (c == PAYLOAD_CODEC_GSM)			return AST_FORMAT_GSM;
+    	if (c == PAYLOAD_CODEC_ALAW)		return AST_FORMAT_ALAW;
+    	if (c == PAYLOAD_CODEC_ILBC_20)		return AST_FORMAT_ILBC;
+    	if (c == PAYLOAD_CODEC_SPEEX_8000)	return AST_FORMAT_SPEEX;
+
+		_error("Codec %d not supported!", c);
+		return 0;
     }
 }
 
@@ -113,5 +89,12 @@ int IAXCall::getFirstMatchingFormat (int needles, const std::string &accountID) 
 
 int IAXCall::getAudioCodec(void)
 {
-    return ASTFormatToCodec(format);
+	if (format == AST_FORMAT_ULAW)	return PAYLOAD_CODEC_ULAW;
+	if (format == AST_FORMAT_GSM)	return PAYLOAD_CODEC_GSM;
+	if (format == AST_FORMAT_ALAW)	return PAYLOAD_CODEC_ALAW;
+	if (format == AST_FORMAT_ILBC)	return PAYLOAD_CODEC_ILBC_20;
+	if (format == AST_FORMAT_SPEEX)	return PAYLOAD_CODEC_SPEEX_8000;
+
+	_error("IAX: Format %d not supported!", format);
+    return -1;
 }
