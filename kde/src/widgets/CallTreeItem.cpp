@@ -26,6 +26,8 @@
 
 #include "lib/sflphone_const.h"
 #include "CallTreeItem.h"
+#include "lib/Contact.h"
+#include "AkonadiBackend.h"
 
 const char * CallTreeItem::callStateIcons[12] = {ICON_INCOMING, ICON_RINGING, ICON_CURRENT, ICON_DIALING, ICON_HOLD, ICON_FAILURE, ICON_BUSY, ICON_TRANSFER, ICON_TRANSF_HOLD, "", "", ICON_CONFERENCE};
 
@@ -65,10 +67,11 @@ void CallTreeItem::setCall(Call *call)
       return;
    }
 
-   labelIcon = new QLabel();
-   labelCallNumber2 = new QLabel(itemCall->getPeerPhoneNumber());
+   labelIcon           = new QLabel();
+   labelCallNumber2    = new QLabel(itemCall->getPeerPhoneNumber());
    labelTransferPrefix = new QLabel(i18n("Transfer to : "));
    labelTransferNumber = new QLabel();
+   labelPeerName       = new QLabel();
    QSpacerItem* verticalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Expanding, QSizePolicy::Expanding);
    
    QHBoxLayout* mainLayout = new QHBoxLayout();
@@ -89,7 +92,7 @@ void CallTreeItem::setCall(Call *call)
    mainLayout->addWidget(labelIcon);
         
    if(! itemCall->getPeerName().isEmpty()) {
-      labelPeerName = new QLabel(itemCall->getPeerName());
+      labelPeerName->setText(itemCall->getPeerName());
       descr->addWidget(labelPeerName);
    }
 
@@ -113,6 +116,22 @@ void CallTreeItem::setCall(Call *call)
 
 void CallTreeItem::updated()
 {
+   Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(itemCall->getPeerPhoneNumber());
+   if (contact) {
+      labelIcon->setPixmap(*contact->getPhoto());
+      labelPeerName->setText("<b>"+contact->getFormattedName()+"</b>");
+   }
+   else {
+      labelIcon->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
+
+      if(! itemCall->getPeerName().trimmed().isEmpty()) {
+         labelPeerName->setText("<b>"+itemCall->getPeerName()+"</b>");
+      }
+      else {
+         labelPeerName->setText("<b>Unknow</b>");
+      }
+   }
+      
    call_state state = itemCall->getState();
    bool recording = itemCall->getRecording();
    if(state != CALL_STATE_OVER) {

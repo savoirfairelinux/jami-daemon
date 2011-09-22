@@ -42,6 +42,8 @@
 #include "lib/Call.h"
 
 class QTreeWidgetItem;
+class KAction;
+class QMenu;
 
 class HistoryTreeItem : public QWidget
 {
@@ -71,6 +73,13 @@ class HistoryTreeItem : public QWidget
     QLabel* m_pTimeL;
     QLabel* m_pDurationL;
 
+    KAction* m_pCallAgain;
+    KAction* m_pAddContact;
+    KAction* m_pAddToContact;
+    KAction* m_pCopy;
+    KAction* m_pEmail;
+    QMenu*   m_pMenu;
+
     uint m_pTimeStamp;
     uint m_pDuration;
     QString m_pName;
@@ -81,8 +90,15 @@ class HistoryTreeItem : public QWidget
 
 public slots:
    void updated();
+private slots:
+   void showContext(const QPoint& pos);
+   void sendEmail();
+   void callAgain();
+   void copy();
+   void addContact();
+   void addToContact();
 signals:
-   void over(Call*);  
- };
+   void over(Call*);
+};
 
 #endif // CALLTREE_ITEM_H

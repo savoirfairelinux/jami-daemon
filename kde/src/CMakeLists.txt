@@ -45,6 +45,7 @@ SET(	sflphone_client_kde_SRCS
 	widgets/BookmarkDock.cpp
 	Codec.cpp
 	AccountListModel.cpp
+	AkonadiBackend.cpp
         CallView.cpp
         AccountView.cpp
 )

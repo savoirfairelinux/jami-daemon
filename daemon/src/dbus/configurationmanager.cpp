@@ -332,7 +332,7 @@ void ConfigurationManager::setNoiseSuppressState (const std::string& state)
 
 std::string ConfigurationManager::getEchoCancelState(void)
 {
-    return Manager::instance().getEchoCancelState();
+	return Manager::instance().getEchoCancelState() ? "enabled" : "disabled";
 }
 
 void ConfigurationManager::setEchoCancelState(const std::string& state)

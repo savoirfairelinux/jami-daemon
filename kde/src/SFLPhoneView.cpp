@@ -1040,13 +1040,14 @@ void SFLPhoneView::editBeforeCall()
 
 void SFLPhoneView::setAccountFirst(Account * account)
 {
-   qDebug() << "setAccountFirst : " << (account ? account->getAlias() : QString());
+   qDebug() << "setAccountFirst : " << (account ? account->getAlias() : QString()) << (account ? account->getAccountId() : QString());
    if(account) {
       CallView::setPriorAccountId(account->getAccountId());
    }
    else {
       CallView::setPriorAccountId(QString());
    }
+   qDebug() << "Current account id" << CallView::getCurrentAccountId();
    updateStatusMessage();
 }
 

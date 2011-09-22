@@ -22,7 +22,9 @@ class CallTreeItemDelegate : public QItemDelegate
       }
 };
 
-class CallView : private QTreeWidget, public CallModel<CallTreeItem*,QTreeWidgetItem*> {
+typedef CallModel<CallTreeItem*,QTreeWidgetItem*> TreeWidgetCallModel;
+
+class CallView : private QTreeWidget, public TreeWidgetCallModel {
    Q_OBJECT
    public:
       CallView(ModelType type, QWidget* parent =0);
@@ -48,6 +50,9 @@ class CallView : private QTreeWidget, public CallModel<CallTreeItem*,QTreeWidget
    protected:
       void dragEnterEvent(QDragEnterEvent *e) { e->accept(); }
       void dragMoveEvent(QDragMoveEvent *e) { e->accept(); }
+      bool callToCall(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action);
+      bool phoneNumberToCall(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action);
+      bool contactToCall(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action);
       
    public slots:
       void destroyCall(Call* toDestroy);

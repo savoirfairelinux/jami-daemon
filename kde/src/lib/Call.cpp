@@ -28,7 +28,7 @@
 
 const call_state Call::actionPerformedStateMap [11][5] = 
 {
-//                      ACCEPT                  REFUSE                  TRANSFER                   HOLD                           RECORD
+//                      ACCEPT                  REFUSE                  TRANSFER                   HOLD                           RECORD           
 /*INCOMING     */  {CALL_STATE_INCOMING   , CALL_STATE_INCOMING    , CALL_STATE_ERROR        , CALL_STATE_INCOMING     ,  CALL_STATE_INCOMING     },
 /*RINGING      */  {CALL_STATE_ERROR      , CALL_STATE_RINGING     , CALL_STATE_ERROR        , CALL_STATE_ERROR        ,  CALL_STATE_RINGING      },
 /*CURRENT      */  {CALL_STATE_ERROR      , CALL_STATE_CURRENT     , CALL_STATE_TRANSFER     , CALL_STATE_CURRENT      ,  CALL_STATE_CURRENT      },
@@ -45,7 +45,7 @@ const call_state Call::actionPerformedStateMap [11][5] =
 
 const function Call::actionPerformedFunctionMap[11][5] = 
 { 
-//                      ACCEPT               REFUSE            TRANSFER                 HOLD                  RECORD
+//                      ACCEPT               REFUSE            TRANSFER                 HOLD                  RECORD            
 /*INCOMING       */  {&Call::accept     , &Call::refuse   , &Call::acceptTransf   , &Call::acceptHold  ,  &Call::setRecord     },
 /*RINGING        */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::nothing     ,  &Call::setRecord     },
 /*CURRENT        */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::hold        ,  &Call::setRecord     },
@@ -62,7 +62,7 @@ const function Call::actionPerformedFunctionMap[11][5] =
 
 const call_state Call::stateChangedStateMap [11][6] = 
 {
-//                      RINGING                  CURRENT             BUSY              HOLD                           HUNGUP           FAILURE
+//                      RINGING                  CURRENT             BUSY              HOLD                           HUNGUP           FAILURE            
 /*INCOMING     */ {CALL_STATE_INCOMING    , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
 /*RINGING      */ {CALL_STATE_RINGING     , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
 /*CURRENT      */ {CALL_STATE_CURRENT     , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
@@ -78,9 +78,9 @@ const call_state Call::stateChangedStateMap [11][6] =
 
 const function Call::stateChangedFunctionMap[11][6] = 
 { 
-//                      RINGING                  CURRENT             BUSY              HOLD                    HUNGUP           FAILURE
-/*INCOMING       */  {&Call::nothing    , &Call::start     , &Call::startWeird     , &Call::startWeird   ,  &Call::startStop    , &Call::start  },
-/*RINGING        */  {&Call::nothing    , &Call::start     , &Call::start          , &Call::start        ,  &Call::startStop    , &Call::start  },
+//                      RINGING                  CURRENT             BUSY              HOLD                    HUNGUP           FAILURE           
+/*INCOMING       */  {&Call::nothing    , &Call::start     , &Call::startWeird     , &Call::startWeird   ,  &Call::startStop    , &Call::start   },
+/*RINGING        */  {&Call::nothing    , &Call::start     , &Call::start          , &Call::start        ,  &Call::startStop    , &Call::start   },
 /*CURRENT        */  {&Call::nothing    , &Call::nothing   , &Call::warning        , &Call::nothing      ,  &Call::stop         , &Call::nothing },
 /*DIALING        */  {&Call::nothing    , &Call::warning   , &Call::warning        , &Call::warning      ,  &Call::stop         , &Call::warning },
 /*HOLD           */  {&Call::nothing    , &Call::nothing   , &Call::warning        , &Call::nothing      ,  &Call::stop         , &Call::nothing },

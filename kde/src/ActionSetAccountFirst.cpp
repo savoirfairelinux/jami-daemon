@@ -31,7 +31,6 @@ ActionSetAccountFirst::ActionSetAccountFirst(Account* account, QObject *parent)
            this,    SLOT(emitSetFirst()));
 }
 
-
 ActionSetAccountFirst::~ActionSetAccountFirst()
 {
 }
