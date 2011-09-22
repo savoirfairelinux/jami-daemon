@@ -45,7 +45,12 @@
 #include <clutter-gtk/clutter-gtk.h>
 #include <cairo.h>
 
-#include "dbus.h"
+#include "actions.h"
+
+static GtkWidget *receivingVideoWindow;
+static GtkWidget *receivingVideoArea;
+static VideoRenderer *video_renderer = NULL;
+
 
 #define VIDEO_RENDERER_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), \
             VIDEO_RENDERER_TYPE, VideoRendererPrivate))
@@ -60,7 +65,6 @@ enum
     PROP_RUNNING,
     PROP_WIDTH,
     PROP_HEIGHT,
-    PROP_FORMAT,
     PROP_DRAWAREA,
     PROP_SHMKEY,
     PROP_SEMKEY,
@@ -80,7 +84,6 @@ static void video_renderer_set_property (GObject *object, guint prop_id,
 struct _VideoRendererPrivate {
     guint width;
     guint height;
-    gchar *format;
 
     gchar *shm_buffer;
     gint sem_set_id;
@@ -200,9 +203,6 @@ video_renderer_class_init (VideoRendererClass *klass)
     properties[PROP_HEIGHT] = g_param_spec_int ("height", "Height", "Height of preview video", G_MININT, G_MAXINT, -1,
                                                      G_PARAM_READABLE|G_PARAM_WRITABLE|G_PARAM_CONSTRUCT_ONLY);
 
-    properties[PROP_FORMAT] = g_param_spec_pointer ("format", "Format", "Pixel format of preview video",
-                                                     G_PARAM_READABLE|G_PARAM_WRITABLE|G_PARAM_CONSTRUCT_ONLY);
-
     properties[PROP_SHMKEY] = g_param_spec_int ("shmkey", "ShmKey", "Unique key for shared memory identifier", G_MININT, G_MAXINT, -1,
                                                      G_PARAM_READABLE|G_PARAM_WRITABLE|G_PARAM_CONSTRUCT_ONLY);
 
@@ -241,9 +241,6 @@ video_renderer_get_property (GObject *object, guint prop_id,
         case PROP_HEIGHT:
             g_value_set_int(value, priv->height);
             break;
-        case PROP_FORMAT:
-            g_value_set_pointer(value, priv->format);
-            break;
         case PROP_SHMKEY:
             g_value_set_int(value, priv->shm_key);
             break;
@@ -280,9 +277,6 @@ video_renderer_set_property (GObject *object, guint prop_id,
             break;
         case PROP_HEIGHT:
             priv->height = g_value_get_int(value);
-            break;
-        case PROP_FORMAT:
-            priv->format = g_value_get_pointer(value);
             break;
         case PROP_SHMKEY:
             priv->shm_key = g_value_get_int(value);
@@ -336,13 +330,6 @@ sem_wait(int sem_set_id)
     return semop(sem_set_id, &sem_op, 1);
 }
 
-/* round int value up to next multiple of 4 */
-static int
-align(int value)
-{
-    return (value + 3) &~ 3;
-}
-
 static gboolean
 readFrameFromShm(VideoRendererPrivate *priv)
 {
@@ -368,30 +355,18 @@ readFrameFromShm(VideoRendererPrivate *priv)
     }
 
     if (priv->using_clutter) {
-        if (g_strcmp0(priv->format, "rgb24")) {
-            g_print("clutter render: Unknown pixel format `%s'\n", priv->format);
-            return FALSE;
-        }
-
-        clutter_texture_set_from_rgb_data (CLUTTER_TEXTURE(texture),
+        clutter_texture_set_from_rgb_data(CLUTTER_TEXTURE(texture),
                 (void*)data,
-                FALSE,
+                TRUE,
                 width,
                 height,
-                align(3 /* bytes per pixel */ * width), // stride
-                3,
-                0,
+                4 /* bytes per pixel */ * width, // stride
+                4,
+                CLUTTER_TEXTURE_RGB_FLAG_BGR,
                 NULL);
     } else {
-        if (g_strcmp0(priv->format, "bgra")) {
-            g_print("cairo render: Unknown pixel format `%s'\n", priv->format);
-            return FALSE;
-        }
-
-        cairo_format_t format = CAIRO_FORMAT_RGB24;
+        const cairo_format_t format = CAIRO_FORMAT_RGB24;
         int stride = cairo_format_stride_for_width (format, width);
-        assert(stride == align(4*width));
-
         cairo_surface_t *surface = cairo_image_surface_create_for_data (data,
                                                                  format,
                                                                  width,
@@ -402,9 +377,8 @@ readFrameFromShm(VideoRendererPrivate *priv)
             cairo_set_source_surface(priv->cairo, surface, 0, 0);
 
             cairo_status_t status = cairo_surface_status(surface);
-            if (status != CAIRO_STATUS_SURFACE_FINISHED) {
+            if (status != CAIRO_STATUS_SURFACE_FINISHED)
                 cairo_paint(priv->cairo);
-            }
             cairo_surface_destroy(surface);
         }
     }
@@ -419,12 +393,6 @@ video_renderer_stop(VideoRenderer *preview)
     assert(priv);
 
     priv->is_running = FALSE;
-
-    if (GTK_IS_WIDGET(priv->drawarea)) {
-        GdkWindow *win = gtk_widget_get_window(priv->drawarea);
-        if (GDK_IS_WINDOW(win))
-            gdk_window_clear(win);
-    }
 
     if (!priv->using_clutter)
         cairo_destroy(priv->cairo);
@@ -467,7 +435,7 @@ updateTexture(gpointer data)
  * Create a new #VideoRenderer instance.
  */
 VideoRenderer *
-video_renderer_new (GtkWidget *drawarea, int width, int height, const char *format, int shmkey, int semkey, int vbsize)
+video_renderer_new (GtkWidget *drawarea, int width, int height, int shmkey, int semkey, int vbsize)
 {
     VideoRenderer *result;
 
@@ -475,7 +443,6 @@ video_renderer_new (GtkWidget *drawarea, int width, int height, const char *form
           "drawarea", (gpointer)drawarea,
           "width", (gint)width,
           "height", (gint)height,
-          "format", (gpointer)format,
           "shmkey", (gint)shmkey,
           "semkey", (gint)semkey,
           "vbsize", (gint)vbsize,
@@ -501,7 +468,7 @@ video_renderer_run(VideoRenderer *preview)
     if (priv->sem_set_id == -1)
         return 1;
 
-    priv->using_clutter = !g_strcmp0(priv->format, "rgb24");
+    priv->using_clutter = GTK_CLUTTER_IS_EMBED(priv->drawarea);
     g_print("Preview: using %s render\n", priv->using_clutter ? "clutter" : "cairo");
 
     if (priv->using_clutter) {
@@ -533,4 +500,77 @@ video_renderer_run(VideoRenderer *preview)
 #endif
 
     return 0;
+}
+
+static void receiving_video_window_deleted_cb(GtkWidget *widget UNUSED, gpointer data UNUSED)
+{
+    sflphone_hang_up();
+}
+
+
+void receiving_video_event_cb(DBusGProxy *proxy, gint shmKey, gint semKey,
+                              gint videoBufferSize, gint destWidth,
+                              gint destHeight, GError *error, gpointer userdata)
+{
+    if (!receivingVideoWindow) {
+        receivingVideoWindow = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+        g_signal_connect (receivingVideoWindow, "delete-event", G_CALLBACK (receiving_video_window_deleted_cb), NULL);
+    }
+
+    (void)proxy;
+    (void)error;
+    (void)userdata;
+    gboolean using_clutter = clutter_init(NULL, NULL) == CLUTTER_INIT_SUCCESS;
+
+    if (!receivingVideoArea) {
+        if (using_clutter) {
+            receivingVideoArea = gtk_clutter_embed_new();
+            if (!gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(receivingVideoArea))) {
+                gtk_widget_destroy(receivingVideoArea);
+                using_clutter = 0;
+            }
+        }
+        if (!using_clutter)
+          receivingVideoArea = gtk_drawing_area_new();
+    }
+
+    g_assert(receivingVideoArea);
+    gtk_container_add(GTK_CONTAINER(receivingVideoWindow), receivingVideoArea);
+
+    if (shmKey == -1 || semKey == -1 || videoBufferSize == -1)
+        return;
+
+    gtk_widget_set_size_request (receivingVideoArea, destWidth, destHeight);
+    gtk_widget_show_all(receivingVideoWindow);
+
+    DEBUG("Video started for shm:%d sem:%d bufferSz:%d width:%d height:%d",
+           shmKey, semKey, videoBufferSize, destWidth, destHeight);
+
+    video_renderer = video_renderer_new(receivingVideoArea, destWidth, destHeight, shmKey, semKey, videoBufferSize);
+    g_assert(video_renderer);
+    if (video_renderer_run(video_renderer)) {
+        g_object_unref(video_renderer);
+        video_renderer = NULL;
+        DEBUG("Could not run video renderer");
+    }
+    else
+        DEBUG("Running video renderer");
+}
+
+void stopped_receiving_video_event_cb(DBusGProxy *proxy, gint shmKey, gint semKey, GError *error, gpointer userdata)
+{
+    (void)proxy;
+    (void)error;
+    (void)userdata;
+
+    DEBUG("Video stopped for shm:%d sem:%d", shmKey, semKey);
+
+    if (video_renderer) {
+        if (receivingVideoWindow) {
+            if (GTK_IS_WIDGET(receivingVideoWindow))
+                    gtk_widget_destroy(receivingVideoWindow);
+            receivingVideoArea = receivingVideoWindow = NULL;
+        }
+        video_renderer = NULL;
+    }
 }

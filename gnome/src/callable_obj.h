@@ -139,14 +139,6 @@ typedef struct  {
     GdkPixbuf *_contact_thumbnail;
 
     /**
-     * Maintains a list of error dialogs
-     * associated with that call so that
-     * they could be destroyed at the right
-     * moment.
-     */
-    GPtrArray * _error_dialogs;
-
-    /**
      * The recording file for this call, if NULL, no recording available
      * Should be used only for history items
      */
@@ -169,12 +161,6 @@ callable_obj_t *create_new_call (callable_type_t, call_state_t, const gchar* con
 callable_obj_t *create_new_call_from_details (const gchar *, GHashTable *);
 
 callable_obj_t *create_history_entry_from_serialized_form (const gchar *);
-
-void call_add_error (callable_obj_t * call, gpointer dialog);
-
-void call_remove_error (callable_obj_t * call, gpointer dialog);
-
-void call_remove_all_errors (callable_obj_t * call);
 
 /*
  * GCompareFunc to compare a callID (gchar* and a callable_obj_t)

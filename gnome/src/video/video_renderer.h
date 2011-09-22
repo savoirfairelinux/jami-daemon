@@ -34,6 +34,8 @@
 #include <glib-object.h>
 #include <gtk/gtk.h>
 
+#include "dbus.h"
+
 G_BEGIN_DECLS
 
 #define VIDEO_RENDERER_TYPE              (video_renderer_get_type())
@@ -61,9 +63,15 @@ struct _VideoRendererClass {
 };
 
 /* Public interface */
-VideoRenderer *video_renderer_new(GtkWidget *drawarea, int width, int height, const char *format, int shmkey, int semkey, int vbsize);
+VideoRenderer *video_renderer_new(GtkWidget *drawarea, int width, int height, int shmkey, int semkey, int vbsize);
 int video_renderer_run(VideoRenderer *preview);
 void video_renderer_stop(VideoRenderer *preview);
+
+void receiving_video_event_cb(DBusGProxy *proxy, gint shmId, gint semId,
+                              gint videoBufferSize, gint destWidth,
+                              gint destHeight, GError *error,
+                              gpointer userdata);
+void stopped_receiving_video_event_cb(DBusGProxy *proxy, gint shmId, gint semId, GError *error, gpointer userdata);
 
 G_END_DECLS
 

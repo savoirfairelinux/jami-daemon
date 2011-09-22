@@ -95,21 +95,6 @@ out:
     return ret;
 }
 
-void call_add_error (callable_obj_t * call, gpointer dialog)
-{
-    g_ptr_array_add (call->_error_dialogs, dialog);
-}
-
-void call_remove_error (callable_obj_t * call, gpointer dialog)
-{
-    g_ptr_array_remove (call->_error_dialogs, dialog);
-}
-
-void call_remove_all_errors (callable_obj_t * call)
-{
-    g_ptr_array_foreach (call->_error_dialogs, (GFunc) gtk_widget_destroy, NULL);
-}
-
 callable_obj_t *create_new_call (callable_type_t type, call_state_t state,
                       const gchar* const callID,
                       const gchar* const accountID,
@@ -120,7 +105,6 @@ callable_obj_t *create_new_call (callable_type_t type, call_state_t state,
 
     callable_obj_t *obj = g_new0 (callable_obj_t, 1);
 
-    obj->_error_dialogs = g_ptr_array_new();
     obj->_type = type;
     obj->_state = state;
     obj->_callID = *callID ? g_strdup (callID) : g_strdup_printf("%d", rand());

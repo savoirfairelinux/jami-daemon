@@ -30,12 +30,7 @@
  */
 
 #include <gtk/gtk.h>
-/* Backward compatibility for gtk < 2.22.0 */
-#if GTK_CHECK_VERSION(2,22,0)
-#include <gdk/gdkkeysyms-compat.h>
-#else
 #include <gdk/gdkkeysyms.h>
-#endif
 #include <glib/gprintf.h>
 #include <stdlib.h>
 #include <string.h>
@@ -217,7 +212,6 @@ sflphone_hung_up (callable_obj_t * c)
     calllist_remove_call (current_calls, c->_callID);
     calltree_remove_call (current_calls, c, NULL);
     c->_state = CALL_STATE_DIALING;
-    call_remove_all_errors (c);
     update_actions();
 
     if(c->_confID) {
@@ -373,7 +367,6 @@ sflphone_hang_up()
                 break;
             case CALL_STATE_RINGING:
                 dbus_hang_up (selectedCall);
-                call_remove_all_errors (selectedCall);
                 selectedCall->_state = CALL_STATE_DIALING;
                 //selectedCall->_stop = 0;
                 break;
@@ -382,7 +375,6 @@ sflphone_hang_up()
             case CALL_STATE_BUSY:
             case CALL_STATE_RECORD:
                 dbus_hang_up (selectedCall);
-                call_remove_all_errors (selectedCall);
                 selectedCall->_state = CALL_STATE_DIALING;
                 time (&selectedCall->_time_stop);
 
@@ -391,18 +383,15 @@ sflphone_hang_up()
                 break;
             case CALL_STATE_FAILURE:
                 dbus_hang_up (selectedCall);
-                call_remove_all_errors (selectedCall);
                 selectedCall->_state = CALL_STATE_DIALING;
                 break;
             case CALL_STATE_INCOMING:
                 dbus_refuse (selectedCall);
-                call_remove_all_errors (selectedCall);
                 selectedCall->_state = CALL_STATE_DIALING;
                 DEBUG ("from sflphone_hang_up : ");
                 break;
             case CALL_STATE_TRANSFER:
                 dbus_hang_up (selectedCall);
-                call_remove_all_errors (selectedCall);
                 time (&selectedCall->_time_stop);
                 break;
             default:
@@ -612,14 +601,14 @@ process_dialing (callable_obj_t *c, guint keyval, gchar *key)
         dbus_start_tone (FALSE, 0);
 
     switch (keyval) {
-        case GDK_Return:
-        case GDK_KP_Enter:
+        case GDK_KEY_Return:
+        case GDK_KEY_KP_Enter:
             sflphone_place_call (c);
             break;
-        case GDK_Escape:
+        case GDK_KEY_Escape:
             sflphone_hang_up ();
             break;
-        case GDK_BackSpace:
+        case GDK_KEY_BackSpace:
         {
             gchar *num = (c->_state == CALL_STATE_TRANSFER) ? c->_trsft_to : c->_peer_number;
             size_t len = strlen(num);
@@ -634,16 +623,16 @@ process_dialing (callable_obj_t *c, guint keyval, gchar *key)
             }
             break;
         }
-        case GDK_Tab:
-        case GDK_Alt_L:
-        case GDK_Control_L:
-        case GDK_Super_L:
-        case GDK_Caps_Lock:
+        case GDK_KEY_Tab:
+        case GDK_KEY_Alt_L:
+        case GDK_KEY_Control_L:
+        case GDK_KEY_Super_L:
+        case GDK_KEY_Caps_Lock:
             break;
         default:
 
             if (keyval < 127 /* ascii */ ||
-               (keyval >= GDK_Mode_switch && keyval <= GDK_KP_9) /* num keypad */) {
+               (keyval >= GDK_KEY_Mode_switch && keyval <= GDK_KEY_KP_9) /* num keypad */) {
 
                 if (c->_state == CALL_STATE_TRANSFER) {
                     gchar *new_trsft = g_strconcat (c->_trsft_to, key, NULL);
@@ -695,10 +684,10 @@ sflphone_keypad (guint keyval, gchar * key)
 
     if ( (active_calltree != current_calls) || (active_calltree == current_calls && !c)) {
         switch (keyval) {
-            case GDK_Return:
-            case GDK_KP_Enter:
-            case GDK_Escape:
-            case GDK_BackSpace:
+            case GDK_KEY_Return:
+            case GDK_KEY_KP_Enter:
+            case GDK_KEY_Escape:
+            case GDK_KEY_BackSpace:
                 break;
             default:
                 calltree_display (current_calls);
@@ -714,7 +703,7 @@ sflphone_keypad (guint keyval, gchar * key)
             case CALL_STATE_CURRENT:
 
                 switch (keyval) {
-                    case GDK_Escape:
+                    case GDK_KEY_Escape:
                         dbus_hang_up (c);
                         time (&c->_time_stop);
                         calltree_update_call (history, c, NULL);
@@ -729,13 +718,13 @@ sflphone_keypad (guint keyval, gchar * key)
             case CALL_STATE_INCOMING:
 
                 switch (keyval) {
-                    case GDK_Return:
-                    case GDK_KP_Enter:
+                    case GDK_KEY_Return:
+                    case GDK_KEY_KP_Enter:
                         c->_history_state = INCOMING;
                         calltree_update_call (history, c, NULL);
                         dbus_accept (c);
                         break;
-                    case GDK_Escape:
+                    case GDK_KEY_Escape:
                         dbus_refuse (c);
                         break;
                 }
@@ -744,13 +733,13 @@ sflphone_keypad (guint keyval, gchar * key)
             case CALL_STATE_TRANSFER:
 
                 switch (keyval) {
-                    case GDK_Return:
-                    case GDK_KP_Enter:
+                    case GDK_KEY_Return:
+                    case GDK_KEY_KP_Enter:
                         dbus_transfer (c);
                         time (&c->_time_stop);
                         calltree_remove_call(current_calls, c, NULL);
                         break;
-                    case GDK_Escape:
+                    case GDK_KEY_Escape:
                         sflphone_unset_transfer ();
                         break;
                     default: // When a call is on transfer, typing new numbers will add it to c->_peer_number
@@ -762,11 +751,11 @@ sflphone_keypad (guint keyval, gchar * key)
             case CALL_STATE_HOLD:
 
                 switch (keyval) {
-                    case GDK_Return:
-                    case GDK_KP_Enter:
+                    case GDK_KEY_Return:
+                    case GDK_KEY_KP_Enter:
                         dbus_unhold (c);
                         break;
-                    case GDK_Escape:
+                    case GDK_KEY_Escape:
                         dbus_hang_up (c);
                         break;
                     default: // When a call is on hold, typing new numbers will create a new call
@@ -780,7 +769,7 @@ sflphone_keypad (guint keyval, gchar * key)
             case CALL_STATE_FAILURE:
 
                 switch (keyval) {
-                    case GDK_Escape:
+                    case GDK_KEY_Escape:
                         dbus_hang_up (c);
                         calltree_update_call (history, c, NULL);
                         break;

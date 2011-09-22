@@ -164,8 +164,8 @@ on_Textview_changed (GtkWidget *widget UNUSED, GdkEventKey *event, gpointer user
     if (event->type == GDK_KEY_PRESS) {
 
         switch (event->keyval) {
-            case GDK_Return:
-            case GDK_KP_Enter:
+            case GDK_KEY_Return:
+            case GDK_KEY_KP_Enter:
 
                 /* We want to send the message on pressing ENTER */
                 if (gtk_text_buffer_get_char_count (buffer) != 0) {

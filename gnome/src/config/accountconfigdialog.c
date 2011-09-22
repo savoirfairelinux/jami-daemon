@@ -132,7 +132,7 @@ static void show_password_cb(GtkWidget *widget UNUSED, gpointer data)
 /* Signal to protocolComboBox 'changed' */
 void change_protocol_cb(account_t *currentAccount UNUSED)
 {
-    gchar *protocol = gtk_combo_box_get_active_text(GTK_COMBO_BOX(protocolComboBox));
+    gchar *protocol = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(protocolComboBox));
 
     // Only if tabs are not NULL
     if (security_tab && advanced_tab) {
@@ -258,12 +258,12 @@ static GtkWidget* create_basic_tab(account_t *currentAccount)
     label = gtk_label_new_with_mnemonic(_("_Protocol"));
     gtk_table_attach(GTK_TABLE(table), label, 0, 1, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-    protocolComboBox = gtk_combo_box_new_text();
+    protocolComboBox = gtk_combo_box_text_new();
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), protocolComboBox);
-    gtk_combo_box_append_text(GTK_COMBO_BOX(protocolComboBox), "SIP");
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(protocolComboBox), "SIP");
 
     if (dbus_is_iax2_enabled())
-        gtk_combo_box_append_text(GTK_COMBO_BOX(protocolComboBox), "IAX");
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(protocolComboBox), "IAX");
 
     if (g_strcmp0(curAccountType, "SIP") == 0)
         gtk_combo_box_set_active(GTK_COMBO_BOX(protocolComboBox),0);
@@ -272,7 +272,7 @@ static GtkWidget* create_basic_tab(account_t *currentAccount)
     else {
         DEBUG("Config: Error: Account protocol not valid");
         /* Should never come here, add debug message. */
-        gtk_combo_box_append_text(GTK_COMBO_BOX(protocolComboBox), _("Unknown"));
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(protocolComboBox), _("Unknown"));
         gtk_combo_box_set_active(GTK_COMBO_BOX(protocolComboBox), 2);
     }
 
@@ -458,7 +458,7 @@ static void editing_started_cb(GtkCellRenderer *cell UNUSED, GtkCellEditable * e
 
 static void show_advanced_zrtp_options_cb(GtkWidget *widget UNUSED, gpointer data)
 {
-    gchar *proto = gtk_combo_box_get_active_text(GTK_COMBO_BOX(keyExchangeCombo));
+    gchar *proto = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(keyExchangeCombo));
     if (g_strcasecmp(proto, "ZRTP") == 0)
         show_advanced_zrtp_options((GHashTable *) data);
     else
@@ -475,7 +475,7 @@ static void show_advanced_tls_options_cb(GtkWidget *widget UNUSED, gpointer data
 
 static void key_exchange_changed_cb(GtkWidget *widget UNUSED, gpointer data UNUSED)
 {
-    gchar *active_text = gtk_combo_box_get_active_text(GTK_COMBO_BOX(keyExchangeCombo));
+    gchar *active_text = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(keyExchangeCombo));
     DEBUG("Key exchange changed %s", active_text);
 
     gboolean set_sensitive = FALSE;
@@ -566,7 +566,7 @@ get_interface_addr_from_name(const gchar * const iface_name)
 static void local_interface_changed_cb(GtkWidget * widget UNUSED, gpointer data UNUSED)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(sameAsLocalRadioButton))) {
-        gchar *local_iface_name = gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo));
+        gchar *local_iface_name = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(localAddressCombo));
         gchar *local_iface_addr = get_interface_addr_from_name(local_iface_name);
 
         gtk_entry_set_text(GTK_ENTRY(localAddressEntry), local_iface_addr);
@@ -628,7 +628,7 @@ static void use_stun_cb(GtkWidget *widget, gpointer data UNUSED)
 static void same_as_local_cb(GtkWidget * widget, gpointer data UNUSED)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
-        gchar *local_interface = gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo));
+        gchar *local_interface = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(localAddressCombo));
         gchar *local_address = dbus_get_address_from_interface_name(local_interface);
 
         gtk_entry_set_text(GTK_ENTRY(publishedAddressEntry), local_address);
@@ -776,11 +776,11 @@ GtkWidget* create_security_widget(account_t *a)
     /* ZRTP subsection */
     label = gtk_label_new_with_mnemonic(_("SRTP key exchange"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-    keyExchangeCombo = gtk_combo_box_new_text();
+    keyExchangeCombo = gtk_combo_box_text_new();
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), keyExchangeCombo);
-    gtk_combo_box_append_text(GTK_COMBO_BOX(keyExchangeCombo), "ZRTP");
-    gtk_combo_box_append_text(GTK_COMBO_BOX(keyExchangeCombo), "SDES");
-    gtk_combo_box_append_text(GTK_COMBO_BOX(keyExchangeCombo), _("Disabled"));
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(keyExchangeCombo), "ZRTP");
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(keyExchangeCombo), "SDES");
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(keyExchangeCombo), _("Disabled"));
 
     advancedZrtpButton = gtk_button_new_from_stock(GTK_STOCK_PREFERENCES);
     g_signal_connect(G_OBJECT(advancedZrtpButton), "clicked", G_CALLBACK(show_advanced_zrtp_options_cb),a->properties);
@@ -885,49 +885,26 @@ GtkWidget* create_network(account_t *a)
      * Retreive the list of IP interface from the
      * the daemon and build the combo box.
      */
+    localAddressCombo = gtk_combo_box_text_new();
 
-    GtkListStore * ipInterfaceListStore;
-    GtkTreeIter iter;
 
-    ipInterfaceListStore =  gtk_list_store_new(1, G_TYPE_STRING);
     label = gtk_label_new_with_mnemonic(_("Local address"));
     gtk_table_attach(GTK_TABLE(table), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
 
-    GtkTreeIter current_local_iface_iter = iter;
-    gchar ** iface_list = NULL;
-    // iface_list =(gchar**) dbus_get_all_ip_interface();
-    iface_list =(gchar**) dbus_get_all_ip_interface_by_name();
-    gchar ** iface = NULL;
+    gchar **iface_list = dbus_get_all_ip_interface_by_name();
 
-    // flag to determine if local_address is found
-    gboolean iface_found = FALSE;
+    int idx = 0;
+    for (gchar **iface = iface_list; iface && *iface; iface++, idx++) {
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(localAddressCombo), *iface);
 
-    if (iface_list != NULL) {
-        // fill the iterface combo box
-        for (iface = iface_list; *iface; iface++) {
-            DEBUG("Interface %s", *iface);
-            gtk_list_store_append(ipInterfaceListStore, &iter);
-            gtk_list_store_set(ipInterfaceListStore, &iter, 0, *iface, -1);
-
-            // set the current local address
-            if (!iface_found &&(g_strcmp0(*iface, local_interface) == 0)) {
-                DEBUG("Setting active local address combo box");
-                current_local_iface_iter = iter;
-                iface_found = TRUE;
-            }
-        }
-
-        if (!iface_found) {
-            DEBUG("Did not find local ip address, take fisrt in the list");
-            gtk_tree_model_get_iter_first(GTK_TREE_MODEL(ipInterfaceListStore), &current_local_iface_iter);
-        }
+        if (g_strcmp0(*iface, local_interface) == 0)
+            gtk_combo_box_set_active(GTK_COMBO_BOX(localAddressCombo), idx);
     }
 
-    localAddressCombo = gtk_combo_box_new_with_model(GTK_TREE_MODEL(ipInterfaceListStore));
+
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), localAddressCombo);
     gtk_table_attach(GTK_TABLE(table), localAddressCombo, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    g_object_unref(G_OBJECT(ipInterfaceListStore));
 
 
     GtkCellRenderer * ipInterfaceCellRenderer;
@@ -935,12 +912,11 @@ GtkWidget* create_network(account_t *a)
 
     gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(localAddressCombo), ipInterfaceCellRenderer, TRUE);
     gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(localAddressCombo), ipInterfaceCellRenderer, "text", 0, NULL);
-    gtk_combo_box_set_active_iter(GTK_COMBO_BOX(localAddressCombo), &current_local_iface_iter);
 
 
     // Fill the text entry with the ip address of local interface selected
     localAddressEntry = gtk_entry_new();
-    gchar *local_iface_name = gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo));
+    gchar *local_iface_name = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(localAddressCombo));
     gchar *local_iface_addr = get_interface_addr_from_name(local_iface_name);
     g_free(local_iface_name);
     gtk_entry_set_text(GTK_ENTRY(localAddressEntry), local_iface_addr);
@@ -1279,7 +1255,7 @@ void show_account_window(account_t * currentAccount)
     gchar *currentProtocol;
 
     if (protocolComboBox)
-        currentProtocol = gtk_combo_box_get_active_text(GTK_COMBO_BOX(protocolComboBox));
+        currentProtocol = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(protocolComboBox));
     else
         currentProtocol = g_strdup("SIP");
 
@@ -1319,7 +1295,7 @@ void show_account_window(account_t * currentAccount)
     gchar *proto;
 
     if (protocolComboBox)
-        proto = gtk_combo_box_get_active_text(GTK_COMBO_BOX(protocolComboBox));
+        proto = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(protocolComboBox));
     else
         proto = g_strdup("SIP");
 
@@ -1395,7 +1371,7 @@ void show_account_window(account_t * currentAccount)
                 g_hash_table_replace(currentAccount->properties,
                                       g_strdup(PUBLISHED_PORT),
                                       g_strdup((gchar *) gtk_entry_get_text(GTK_ENTRY(localPortSpinBox))));
-                gchar *local_interface = gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo));
+                gchar *local_interface = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(localAddressCombo));
 
                 gchar *published_address = dbus_get_address_from_interface_name(local_interface);
                 g_free(local_interface);
@@ -1414,7 +1390,7 @@ void show_account_window(account_t * currentAccount)
             g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_DTMF_TYPE), g_strdup(SIPINFO));
         }
 
-        gchar* keyExchange = gtk_combo_box_get_active_text(GTK_COMBO_BOX(keyExchangeCombo));
+        gchar* keyExchange = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(keyExchangeCombo));
 
         if (g_strcasecmp(keyExchange, "ZRTP") == 0) {
             g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("true"));
@@ -1445,7 +1421,7 @@ void show_account_window(account_t * currentAccount)
 
         g_hash_table_replace(currentAccount->properties,
                               g_strdup(LOCAL_INTERFACE),
-                              gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo)));
+                              gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(localAddressCombo)));
 
         g_hash_table_replace(currentAccount->properties,
                               g_strdup(LOCAL_PORT),

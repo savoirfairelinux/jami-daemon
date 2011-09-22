@@ -27,10 +27,10 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#include <eel-gconf-extensions.h>
-
 #include "config.h"
 #include "sflnotify.h"
+#include "eel-gconf-extensions.h"
+
 
 typedef struct {
     NotifyNotification *notification;

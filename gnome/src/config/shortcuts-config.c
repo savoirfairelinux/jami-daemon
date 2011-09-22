@@ -63,7 +63,7 @@ accel_edited (GtkCellRendererAccel *renderer UNUSED, gchar *path, guint accel_ke
 
     Accelerator* list = shortcuts_get_list ();
     model = gtk_tree_view_get_model (treeview);
-    guint code = XKeysymToKeycode (GDK_DISPLAY(), accel_key);
+    guint code = XKeysymToKeycode (GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), accel_key);
 
     // Disable existing binding if key already used
     int i = 0;
@@ -141,8 +141,8 @@ create_shortcuts_settings ()
     while (list[i].action != NULL) {
         gtk_list_store_append (store, &iter);
         gtk_list_store_set (store, &iter, ACTION, _ (list[i].action), MASK,
-                            (gint) list[i].mask, VALUE, XKeycodeToKeysym (GDK_DISPLAY(),
-                                    list[i].key, 0), -1);
+                            (gint) list[i].mask, VALUE, 
+                            XKeycodeToKeysym (GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), list[i].key, 0), -1);
         i++;
     }
 

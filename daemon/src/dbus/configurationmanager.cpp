@@ -573,7 +573,7 @@ void ConfigurationManager::setCredentials (const std::string& accountID,
 }
 
 
-void ConfigurationManager::startVideoPreview(const int32_t &width, const int32_t &height, const std::string &fmt, int32_t &shmKey, int32_t &semKey, int32_t &videoBufferSize)
+void ConfigurationManager::startVideoPreview(const int32_t &width, const int32_t &height, int32_t &shmKey, int32_t &semKey, int32_t &videoBufferSize)
 {
     if (preview_.get()) {
         _error("Video preview was already started!");
@@ -583,7 +583,6 @@ void ConfigurationManager::startVideoPreview(const int32_t &width, const int32_t
         return;
     }
 
-    _debug("Starting video preview");
     using std::map;
     using std::string;
 
@@ -593,7 +592,6 @@ void ConfigurationManager::startVideoPreview(const int32_t &width, const int32_t
 	args["width"] = ssWidth.str();
 	ssHeight << height;
     args["height"] = ssHeight.str();
-    args["format"] = fmt;
 
     preview_.reset(new sfl_video::VideoPreview(args));
     preview_->start();

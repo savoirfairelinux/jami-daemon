@@ -34,7 +34,8 @@
 #include <mainwindow.h>
 #include <accountlist.h>
 #include <statusicon.h>
-#include <eel-gconf-extensions.h>
+
+#include "eel-gconf-extensions.h"
 
 static GtkStatusIcon *status;
 static GtkWidget *show_menu_item, *hangup_menu_item;
@@ -196,7 +197,7 @@ statusicon_set_tooltip()
         count = account_list_get_registered_accounts();
         tip = g_markup_printf_escaped ("%s - %s", _ ("SFLphone"),
                                        g_markup_printf_escaped (n_ ("%i active account", "%i active accounts", count), count));
-        gtk_status_icon_set_tooltip (status, tip);
+        gtk_status_icon_set_tooltip_markup (status, tip);
         g_free (tip);
 
     }

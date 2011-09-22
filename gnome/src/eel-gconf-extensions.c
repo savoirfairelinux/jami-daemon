@@ -29,7 +29,7 @@
 #include <gconf/gconf-client.h>
 #include <gconf/gconf.h>
 #include <gtk/gtk.h>
-#include <libgnome/gnome-i18n.h>
+#include <glib/gi18n.h>
 
 static GConfClient *global_gconf_client = NULL;
 
@@ -70,7 +70,7 @@ eel_gconf_client_get_global (void)
                                              GTK_DIALOG_MODAL,
                                              GTK_MESSAGE_ERROR,
                                              GTK_BUTTONS_OK,
-                                             _ ("Cannot find a schema for gpdf preferences. \n"
+                                             _("Cannot find a schema for gpdf preferences. \n"
                                                 "Check your gconf setup, look at gpdf FAQ for \n"
                                                 "more info"));
             gtk_dialog_run (GTK_DIALOG (dialog));

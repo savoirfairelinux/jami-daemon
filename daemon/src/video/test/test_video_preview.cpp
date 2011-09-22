@@ -40,7 +40,6 @@ void VideoPreviewTest::testPreview()
 {
     std::map<std::string, std::string> args;
     args["input"] = "/dev/video0";
-    args["format"] = "rgb24";
     args["width"] = "640";
     args["height"] = "480";
 

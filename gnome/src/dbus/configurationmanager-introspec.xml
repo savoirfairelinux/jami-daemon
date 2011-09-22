@@ -936,10 +936,6 @@
                <tp:docstring>
                </tp:docstring>
            </arg>
-           <arg type="s" name="format" direction="in">
-               <tp:docstring>
-               </tp:docstring>
-           </arg>
            <arg type="i" name="shmKey" direction="out">
                <tp:docstring>
                </tp:docstring>

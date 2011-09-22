@@ -36,13 +36,10 @@
 #include <gtk/gtk.h>
 #include <string.h>
 #include <glib/gprintf.h>
-#include <libgnome/gnome-help.h>
 
 #include <uimanager.h>
 #include <statusicon.h>
 #include <widget/imwidget.h>
-#include <eel-gconf-extensions.h>
-
 
 #include "config/audioconf.h"
 #include "uimanager.h"
@@ -50,6 +47,8 @@
 
 #include "contacts/addrbookfactory.h"
 #include "config/addressbook-config.h"
+
+#include "eel-gconf-extensions.h"
 
 #include "accountlist.h"
 #include "config/accountlistconfigdialog.h"
@@ -264,12 +263,12 @@ update_actions()
                 gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(holdToolbar_), pos++);
                 gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(transferToolbar_), pos++);
                 gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(recordWidget_), pos++);
-                gtk_signal_handler_block(GTK_OBJECT(transferToolbar_), transferButtonConnId_);
+                g_signal_handler_block(transferToolbar_, transferButtonConnId_);
                 gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(transferToolbar_), FALSE);
-                gtk_signal_handler_unblock(transferToolbar_, transferButtonConnId_);
-                g_signal_handler_block(GTK_OBJECT(recordWidget_), recordButtonConnId_);
+                g_signal_handler_unblock(transferToolbar_, transferButtonConnId_);
+                g_signal_handler_block(recordWidget_, recordButtonConnId_);
                 gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(recordWidget_), FALSE);
-                g_signal_handler_unblock(GTK_OBJECT(recordWidget_), recordButtonConnId_);
+                g_signal_handler_unblock(recordWidget_, recordButtonConnId_);
 
                 if (instant_messaging_enabled) {
                     gtk_action_set_sensitive(imAction_, TRUE);
@@ -290,12 +289,12 @@ update_actions()
                 gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(holdToolbar_), pos++);
                 gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(transferToolbar_), pos++);
                 gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(recordWidget_), pos++);
-                gtk_signal_handler_block(GTK_OBJECT(transferToolbar_), transferButtonConnId_);
+                g_signal_handler_block(transferToolbar_, transferButtonConnId_);
                 gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(transferToolbar_), FALSE);
-                gtk_signal_handler_unblock(transferToolbar_, transferButtonConnId_);
-                g_signal_handler_block(GTK_OBJECT(recordWidget_), recordButtonConnId_);
+                g_signal_handler_unblock(transferToolbar_, transferButtonConnId_);
+                g_signal_handler_block(recordWidget_, recordButtonConnId_);
                 gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(recordWidget_), TRUE);
-                g_signal_handler_unblock(GTK_OBJECT(recordWidget_), recordButtonConnId_);
+                g_signal_handler_unblock(recordWidget_, recordButtonConnId_);
 
                 if (instant_messaging_enabled) {
                     gtk_action_set_sensitive(imAction_, TRUE);
@@ -313,9 +312,9 @@ update_actions()
             case CALL_STATE_TRANSFER:
                 gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(hangUpWidget_), 1);
                 gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(transferToolbar_), 2);
-                gtk_signal_handler_block(GTK_OBJECT(transferToolbar_), transferButtonConnId_);
+                g_signal_handler_block(transferToolbar_, transferButtonConnId_);
                 gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(transferToolbar_), TRUE);
-                gtk_signal_handler_unblock(transferToolbar_, transferButtonConnId_);
+                g_signal_handler_unblock(transferToolbar_, transferButtonConnId_);
                 gtk_action_set_sensitive(hangUpAction_, TRUE);
                 gtk_widget_set_sensitive(holdMenu_, TRUE);
                 gtk_widget_set_sensitive(holdToolbar_, TRUE);
@@ -455,6 +454,8 @@ dialpad_bar_cb(GtkToggleAction *togglemenuitem, gpointer user_data UNUSED)
 static void
 help_contents_cb(GtkAction *action UNUSED)
 {
+#warning FIXME : port to GTK3
+/*
     GError *error = NULL;
 
     gnome_help_display("sflphone.xml", NULL, &error);
@@ -463,6 +464,7 @@ help_contents_cb(GtkAction *action UNUSED)
         g_warning("%s", error->message);
         g_error_free(error);
     }
+    */
 }
 
 static void

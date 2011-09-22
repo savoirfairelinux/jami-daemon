@@ -55,6 +55,8 @@ extern "C" {
 #include "video_picture.h"
 #include "fileutils.h"
 
+static const enum PixelFormat video_rgb_format = PIX_FMT_BGRA;
+
 namespace sfl_video {
 
 namespace { // anonymouse namespace
@@ -224,13 +226,6 @@ void VideoReceiveThread::setup()
 {
     dstWidth_ = atoi(args_["width"].c_str());
     dstHeight_ = atoi(args_["height"].c_str());
-    format_ = av_get_pix_fmt(args_["format"].c_str());
-    if (format_ == -1)
-    {
-        _error("%s:Couldn't find a pixel format for \"%s\"",
-                __PRETTY_FUNCTION__, args_["format"].c_str());
-        ost::Thread::exit();
-    }
 
     AVInputFormat *file_iformat = 0;
 
@@ -331,7 +326,7 @@ void VideoReceiveThread::setup()
     }
 
     // determine required buffer size and allocate buffer
-    videoBufferSize_ = bufferSize(dstWidth_, dstHeight_, format_);
+    videoBufferSize_ = bufferSize(dstWidth_, dstHeight_, video_rgb_format);
 
     // create shared memory segment and attach to it
     shmID_ = createShm(videoBufferSize_, &shmKey_);
@@ -366,7 +361,7 @@ void VideoReceiveThread::createScalingContext()
     // Create scaling context, no scaling done here
     imgConvertCtx_ = sws_getCachedContext(imgConvertCtx_, decoderCtx_->width,
             decoderCtx_->height, decoderCtx_->pix_fmt, dstWidth_,
-            dstHeight_, (enum PixelFormat) format_, SWS_BICUBIC,
+            dstHeight_, video_rgb_format, SWS_BICUBIC,
             NULL, NULL, NULL);
     if (imgConvertCtx_ == 0)
     {
@@ -397,7 +392,6 @@ VideoReceiveThread::VideoReceiveThread(const std::map<std::string, std::string> 
 void VideoReceiveThread::run()
 {
     setup();
-    enum PixelFormat fmt = (enum PixelFormat) format_;
 
     if (!test_source_)
         createScalingContext();
@@ -424,7 +418,7 @@ void VideoReceiveThread::run()
                 goto next_packet;
 
             avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
-                    reinterpret_cast<uint8_t*>(shmBuffer_), fmt, dstWidth_, dstHeight_);
+                    reinterpret_cast<uint8_t*>(shmBuffer_), video_rgb_format, dstWidth_, dstHeight_);
 
             sws_scale(imgConvertCtx_, rawFrame_->data, rawFrame_->linesize,
                     0, decoderCtx_->height, scaledPicture_->data,
@@ -434,8 +428,8 @@ void VideoReceiveThread::run()
         {
             // assign appropriate parts of buffer to image planes in scaledPicture
             avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
-                    reinterpret_cast<uint8_t*>(shmBuffer_), fmt, dstWidth_, dstHeight_);
-            const AVPixFmtDescriptor *pixdesc = &av_pix_fmt_descriptors[format_];
+                    reinterpret_cast<uint8_t*>(shmBuffer_), video_rgb_format, dstWidth_, dstHeight_);
+            const AVPixFmtDescriptor *pixdesc = &av_pix_fmt_descriptors[video_rgb_format];
             int components = pixdesc->nb_components;
             int planes = 0;
             for (int i = 0; i < components; i++)

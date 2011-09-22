@@ -40,22 +40,16 @@
 #include "sliders.h"
 #include "contacts/searchbar.h"
 #include "assistant.h"
-#include "widget/gtkscrollbook.h"
 #include "widget/minidialog.h"
 #include "uimanager.h"
 #include "config/audioconf.h"
 
+#include "eel-gconf-extensions.h"
+
 #include <sys/stat.h>
 #include <gtk/gtk.h>
 
-/* Backward compatibility for gtk < 2.22.0 */
-#if GTK_CHECK_VERSION(2,22,0)
-#include <gdk/gdkkeysyms-compat.h>
-#else
 #include <gdk/gdkkeysyms.h>
-#endif
-
-#include <eel-gconf-extensions.h>
 
 /** Local variables */
 static GtkUIManager *ui_manager;
@@ -67,7 +61,6 @@ static GtkWidget *dialpad;
 static GtkWidget *speaker_control;
 static GtkWidget *mic_control;
 static GtkWidget *statusBar;
-static PidginScrollBook *embedded_error_notebook;
 
 static gchar *status_current_message;
 static GMutex *gmutex;
@@ -147,7 +140,7 @@ on_key_released(GtkWidget *widget UNUSED, GdkEventKey *event, gpointer user_data
     if (focus_is_on_searchbar)
         return TRUE;
 
-    if (event->keyval == GDK_Return) {
+    if (event->keyval == GDK_KEY_Return) {
         if (active_calltree == current_calls) {
             sflphone_keypad(event->keyval, event->string);
             return TRUE;
@@ -161,13 +154,13 @@ on_key_released(GtkWidget *widget UNUSED, GdkEventKey *event, gpointer user_data
             event->keyval == '<' ||
             event->keyval == '>' ||
             event->keyval == '\"'||
-            event->keyval == GDK_Tab ||
-            event->keyval == GDK_Return ||
-            event->keyval == GDK_Left ||
-            event->keyval == GDK_Up ||
-            event->keyval == GDK_Right ||
-            event->keyval == GDK_Down ||
-            (event->keyval >= GDK_F1 && event->keyval <= GDK_F12) ||
+            event->keyval == GDK_KEY_Tab ||
+            event->keyval == GDK_KEY_Return ||
+            event->keyval == GDK_KEY_Left ||
+            event->keyval == GDK_KEY_Up ||
+            event->keyval == GDK_KEY_Right ||
+            event->keyval == GDK_KEY_Down ||
+            (event->keyval >= GDK_KEY_F1 && event->keyval <= GDK_KEY_F12) ||
             event->keyval == ' ')
         return FALSE;
     else
@@ -245,10 +238,6 @@ create_main_window()
                             G_CALLBACK(window_configure_cb), NULL, 0);
     gtk_box_pack_start(GTK_BOX(vbox), subvbox, FALSE /*expand*/,
                        FALSE /*fill*/, 0 /*padding*/);
-
-    embedded_error_notebook = PIDGIN_SCROLL_BOOK(pidgin_scroll_book_new());
-    gtk_box_pack_start(GTK_BOX(subvbox), GTK_WIDGET(embedded_error_notebook),
-                       FALSE, FALSE, 0);
 
     if (SHOW_VOLUME) {
         speaker_control = create_slider("speaker");
@@ -385,17 +374,22 @@ statusbar_update_clock(const gchar * const msg)
     g_free(message);
 }
 
+
 static void
-add_error_dialog(GtkWidget *dialog, callable_obj_t * call)
+destroy_error_dialog_cb(GtkWidget *dialog UNUSED, GtkWidget *win)
 {
-    gtk_container_add(GTK_CONTAINER(embedded_error_notebook), dialog);
-    call_add_error(call, dialog);
+    gtk_widget_destroy(win);
 }
 
 static void
-destroy_error_dialog_cb(GtkObject *dialog, callable_obj_t * call)
+add_error_dialog(GtkWidget *dialog)
 {
-    call_remove_error(call, dialog);
+    GtkWidget *win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_container_add(GTK_CONTAINER(win), dialog);
+
+    g_signal_connect_after(dialog, "destroy", (GCallback)destroy_error_dialog_cb, win);
+
+    gtk_widget_show(win);
 }
 
 void
@@ -430,9 +424,7 @@ main_window_zrtp_not_supported(callable_obj_t * c)
         pidgin_mini_dialog_add_button(mini_dialog, _("Stop Call"),
                                        sflphone_hang_up, NULL);
 
-        g_signal_connect_after(mini_dialog, "destroy", (GCallback)destroy_error_dialog_cb, c);
-
-        add_error_dialog(GTK_WIDGET(mini_dialog), c);
+        add_error_dialog(GTK_WIDGET(mini_dialog));
     }
 }
 
@@ -458,8 +450,7 @@ main_window_zrtp_negotiation_failed(const gchar* const callID, const gchar* cons
     pidgin_mini_dialog_add_button(mini_dialog, _("Stop Call"), sflphone_hang_up,
                                   NULL);
 
-    g_signal_connect_after(mini_dialog, "destroy",(GCallback) destroy_error_dialog_cb, c);
-    add_error_dialog(GTK_WIDGET(mini_dialog), c);
+    add_error_dialog(GTK_WIDGET(mini_dialog));
 }
 
 void
@@ -476,5 +467,5 @@ main_window_confirm_go_clear(callable_obj_t * c)
     pidgin_mini_dialog_add_button(mini_dialog, _("Stop Call"), sflphone_hang_up,
                                   NULL);
 
-    add_error_dialog(GTK_WIDGET(mini_dialog), c);
+    add_error_dialog(GTK_WIDGET(mini_dialog));
 }

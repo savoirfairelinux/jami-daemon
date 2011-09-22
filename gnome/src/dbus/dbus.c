@@ -49,8 +49,10 @@
 
 #include <widget/imwidget.h>
 
-#include <eel-gconf-extensions.h>
-#include "videoconf.h"
+#include "eel-gconf-extensions.h"
+
+#include "video/video_renderer.h"
+#include "config/videoconf.h"
 
 #define DEFAULT_DBUS_TIMEOUT 30000
 
@@ -2518,11 +2520,11 @@ dbus_send_text_message (const gchar* callID, const gchar *message)
 }
 
 void
-dbus_start_video_preview (int width, int height, const char *format)
+dbus_start_video_preview (int width, int height)
 {
     GError *error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_start_video_preview_async (
-        configurationManagerProxy, width, height, format, video_started_cb, &error);
+        configurationManagerProxy, width, height, video_started_cb, &error);
 
     if (error) {
         ERROR ("Failed to call start_video_preview () on ConfigurationManager: %s",

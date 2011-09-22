@@ -68,7 +68,6 @@ class VideoReceiveThread : public ost::Thread {
 
         int dstWidth_;
         int dstHeight_;
-        int format_;
 
         void setup();
         void createScalingContext();
