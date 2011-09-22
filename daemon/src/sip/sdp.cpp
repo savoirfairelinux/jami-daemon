@@ -45,10 +45,10 @@ Sdp::Sdp (pj_pool_t *pool)
     , activeRemoteSession_(NULL)
     , localIpAddr_("")
 	, remoteIpAddr_("")
-    , localAudioPort_(0)
-	, localVideoPort_(0)
-	, remoteAudioPort_(0)
-	, remoteVideoPort_(0)
+    , localAudioPort_(1234)
+	, localVideoPort_(1235)
+	, remoteAudioPort_(1236)
+	, remoteVideoPort_(1237)
 	, zrtpHelloHash_("")
 	, srtpCrypto_()
     , telephoneEventPayload_(101) // same as asterisk
@@ -289,8 +289,11 @@ int Sdp::createLocalSession (const CodecOrder &selectedCodecs, const std::vector
         addSdesAttribute (srtpCrypto_);
 
     char buffer[1000];
-    pjmedia_sdp_print(localSession_, buffer, sizeof(buffer));
-    _debug("SDP: Local SDP Session:\n%s", buffer);
+    int len = pjmedia_sdp_print(localSession_, buffer, sizeof(buffer));
+    if (len > 0) {
+    	buffer[len] = 0;
+    	_debug("SDP: Local SDP Session:\n%s", buffer);
+    }
 
     return pjmedia_sdp_validate (localSession_);
 }
@@ -342,8 +345,11 @@ void Sdp::startNegotiation()
     if (pjmedia_sdp_neg_get_state(negotiator_) != PJMEDIA_SDP_NEG_STATE_WAIT_NEGO)
         _warn("SDP: Warning: negotiator not in right state for negotiation");
 
-    if (pjmedia_sdp_neg_negotiate (memPool_, negotiator_, 0) != PJ_SUCCESS)
+    pj_status_t s = pjmedia_sdp_neg_negotiate (memPool_, negotiator_, 0);
+    if (s != PJ_SUCCESS) {
+    	_error("Could not negotiate! %d", s);
         return;
+    }
 
     if (pjmedia_sdp_neg_get_active_local(negotiator_, &active_local) != PJ_SUCCESS)
         _error("SDP: Could not retrieve local active session");
