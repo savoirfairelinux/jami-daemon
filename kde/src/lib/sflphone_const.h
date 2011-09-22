@@ -177,6 +177,7 @@
 
 /** Account States */
 #define ACCOUNT_STATE_REGISTERED          "REGISTERED"
+#define ACCOUNT_STATE_READY               "READY"
 #define ACCOUNT_STATE_UNREGISTERED        "UNREGISTERED"
 #define ACCOUNT_STATE_TRYING              "TRYING"
 #define ACCOUNT_STATE_ERROR               "ERROR"

@@ -150,6 +150,7 @@ private slots:
    void selectCredential(QListWidgetItem* item, QListWidgetItem* previous);
    void loadCredentails(QString accountId);
    void saveCredential(QString accountId);
+   void enablePublished();
    
    
 signals:

@@ -32,7 +32,7 @@ void AccountView::initItemWidget()
 
    if(isNew() || !enabled)
       itemWidget->setState(AccountItemWidget::Unregistered);
-   else if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED)
+   else if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED || getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_READY)
       itemWidget->setState(AccountItemWidget::Registered);
    else
       itemWidget->setState(AccountItemWidget::NotWorking);
@@ -53,7 +53,7 @@ QColor AccountView::getStateColor()
 {
    if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_UNREGISTERED)
           return Qt::black;
-   if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED)
+   if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED || getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_READY)
           return Qt::darkGreen;
    return Qt::red;
 }
@@ -63,7 +63,7 @@ QString AccountView::getStateColorName()
 {
    if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_UNREGISTERED)
           return "black";
-   if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED)
+   if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED || getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_READY)
           return "darkGreen";
    return "red";
 }
@@ -105,7 +105,7 @@ void AccountView::updateState()
          qDebug() << "itemWidget->setState(AccountItemWidget::Unregistered);";
          itemWidget->setState(AccountItemWidget::Unregistered);
       }
-      else if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED) {
+      else if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED || getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_READY) {
          qDebug() << "itemWidget->setState(AccountItemWidget::Registered);";
          itemWidget->setState(AccountItemWidget::Registered);
       }
