@@ -105,6 +105,8 @@ void VideoRtpSession::updateSDP(const Sdp &sdp)
     	sending_ = false;
     } else
     	txArgs_["codec"] = codec;
+
+    txArgs_["payload_type"] = v[2];
 }
 
 void VideoRtpSession::updateDestination(const std::string &destination,

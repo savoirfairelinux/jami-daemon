@@ -247,16 +247,19 @@ void VideoSendThread::setup()
     else
         _debug("No need to open \"%s\"", outputCtx_->filename);
 
-    av_dump_format(outputCtx_, 0, outputCtx_->filename, 1);
-    print_and_save_sdp();
-
     // write the stream header, if any
-    if (avformat_write_header(outputCtx_, NULL) < 0)
+    AVDictionary *options = NULL;
+    if (!args_["payload_type"].empty())
+        av_dict_set(&options, "payload_type", args_["payload_type"].c_str(), 0);
+    if (avformat_write_header(outputCtx_, &options) < 0)
     {
         _error("%s:Could not write header for output file (incorrect codec "
                 "parameters ?)", __PRETTY_FUNCTION__);
         ost::Thread::exit();
     }
+
+    print_and_save_sdp();
+    av_dump_format(outputCtx_, 0, outputCtx_->filename, 1);
 
     // allocate video frame
     rawFrame_ = avcodec_alloc_frame();

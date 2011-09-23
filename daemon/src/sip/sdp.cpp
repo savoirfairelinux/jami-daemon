@@ -449,6 +449,11 @@ std::vector<std::string> Sdp::getActiveVideoDescription() const
 
     v.push_back(ss.str());
     v.push_back(codec);
+
+    ss.str("");
+    ss << payload;
+
+    v.push_back(ss.str());
     return v;
 }
 
