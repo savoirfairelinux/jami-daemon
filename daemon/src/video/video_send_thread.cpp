@@ -36,6 +36,7 @@ extern "C" {
 #include <libavformat/avformat.h>
 #include <libavutil/opt.h>
 #include <libavutil/pixdesc.h>
+#include <libavutil/mathematics.h>
 #include <libavdevice/avdevice.h>
 #include <libswscale/swscale.h>
 }
