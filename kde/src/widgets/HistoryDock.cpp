@@ -52,6 +52,7 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    m_pLinkPB     = new QPushButton(this);
    
    m_pAllTimeCB->setChecked(ConfigurationSkeleton::displayDataRange());
+   enableDateRange(ConfigurationSkeleton::displayDataRange());
 
    m_pSortByL->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Preferred);
    m_pSortByCBB->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Preferred);

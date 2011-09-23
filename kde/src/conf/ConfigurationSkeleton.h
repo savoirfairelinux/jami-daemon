@@ -62,7 +62,6 @@ public:
     */
    virtual void writeConfig();
    
-   
    static ConfigurationSkeleton * self();
    
    //QStringList activeCodecList() const;

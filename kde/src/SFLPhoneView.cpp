@@ -515,6 +515,7 @@ void SFLPhoneView::displayVolumeControls(bool checked)
 
 void SFLPhoneView::displayDialpad(bool checked)
 {
+   qDebug() <<  "Max res2: " << ConfigurationSkeleton::displayDialpad() << "\n\n\n\n\n\n";
    ConfigurationSkeleton::setDisplayDialpad(checked);
    updateDialpad();
 }

@@ -37,6 +37,7 @@
 #include "lib/configurationmanager_interface_singleton.h"
 #include "lib/Contact.h"
 #include "AkonadiBackend.h"
+#include "conf/ConfigurationSkeleton.h"
 
 SFLPhone* SFLPhone::m_sApp = NULL;
 
@@ -74,6 +75,8 @@ bool SFLPhone::initialize()
     qDebug() << "Already initialized.";
     return false;
   }
+
+   ConfigurationSkeleton::self();
 
    //Keep these template paramater or the static attribute wont be share between this and the call view, they need to be
    CallModel<CallTreeItem*,QTreeWidgetItem*>* histoModel = new CallModel<CallTreeItem*,QTreeWidgetItem*>(CallModel<CallTreeItem*,QTreeWidgetItem*>::History);
@@ -193,8 +196,8 @@ void SFLPhone::setupActions()
    action_displayDialpad->setCheckable(true);
 
    action_displayVolumeControls->setCheckable(true);
-   action_displayVolumeControls->setChecked(/*configurationManager.getVolumeControls()*/true);
-   action_displayDialpad->setChecked(/*configurationManager.getDialpad()*/true);
+   action_displayVolumeControls->setChecked(ConfigurationSkeleton::displayVolume());
+   action_displayDialpad->setChecked(ConfigurationSkeleton::displayDialpad());
    action_accountCreationWizard = new KAction(i18n("Account creation wizard"), this);
    
    connect(action_accept,                SIGNAL(triggered()),           m_pView , SLOT(accept()                    ));
