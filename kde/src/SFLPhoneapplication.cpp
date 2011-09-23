@@ -8,6 +8,8 @@
 #include <KSystemTrayIcon>
 #include <KMainWindow>
 #include "lib/instance_interface_singleton.h"
+#include "lib/configurationmanager_interface_singleton.h"
+#include "lib/callmanager_interface_singleton.h"
 #include "SFLPhone.h"
 
 
@@ -33,8 +35,12 @@ SFLPhoneApplication::SFLPhoneApplication()
  */
 SFLPhoneApplication::~SFLPhoneApplication()
 {
-  // automatically destroyed
-  sflphoneWindow_ = 0;
+   // automatically destroyed
+   sflphoneWindow_ = 0;
+   disableSessionManagement();
+   InstanceInterface& instance              = InstanceInterfaceSingleton::getInstance();
+   Q_NOREPLY instance.Unregister(getpid());
+   instance.connection().disconnectFromBus(instance.connection().baseService());
 }
 
 
@@ -104,9 +110,7 @@ void SFLPhoneApplication::initializePaths()
 
 Q_NOREPLY void SFLPhoneApplication::quit2()
 {
-   disableSessionManagement();
-   InstanceInterface& instance = InstanceInterfaceSingleton::getInstance();
-   Q_NOREPLY instance.Unregister(getpid());
+   
 }
 
 #include "SFLPhoneapplication.moc"
