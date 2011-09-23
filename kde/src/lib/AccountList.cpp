@@ -106,7 +106,7 @@ Account* AccountList::firstRegisteredAccount() const
          return current;
       }
       else {
-         qDebug() << "Account " << current->getAccountId() << " is not registered";
+         qDebug() << "Account " << current->getAccountId() << " is not registered (" << current->getAccountDetail(ACCOUNT_STATUS) << ")";
       }
    }
    return NULL;

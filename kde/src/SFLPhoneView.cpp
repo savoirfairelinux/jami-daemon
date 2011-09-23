@@ -98,6 +98,8 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
            this,        SLOT(updateStatusMessage()));
    connect(CallView::getAccountList(), SIGNAL(accountListUpdated()),
            this,        SLOT(updateWindowCallState()));
+
+   CallView::getAccountList()->updateAccounts();
 }
 
 
