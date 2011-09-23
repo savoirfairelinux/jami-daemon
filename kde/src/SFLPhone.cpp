@@ -74,7 +74,10 @@ bool SFLPhone::initialize()
     qDebug() << "Already initialized.";
     return false;
   }
-   
+
+   //Keep these template paramater or the static attribute wont be share between this and the call view, they need to be
+   CallModel<CallTreeItem*,QTreeWidgetItem*>* histoModel = new CallModel<CallTreeItem*,QTreeWidgetItem*>(CallModel<CallTreeItem*,QTreeWidgetItem*>::History);
+   histoModel->initHistory();
    
   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
   // accept dnd
@@ -130,7 +133,6 @@ bool SFLPhone::initialize()
 
   setObjectNames();
   QMetaObject::connectSlotsByName(this);
-  m_pView->on_stackedWidget_screen_currentChanged(SCREEN_MAIN);
   m_pView->loadWindow();
 
   move(QCursor::pos().x() - geometry().width()/2, QCursor::pos().y() - geometry().height()/2);

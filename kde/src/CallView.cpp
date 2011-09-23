@@ -5,7 +5,7 @@
 #include <QtGui/QInputDialog>
 
 ///Retrieve current and older calls from the daemon, fill history and the calls TreeView and enable drag n' drop
-CallView::CallView(ModelType type, QWidget* parent) : QTreeWidget(parent), TreeWidgetCallModel(type)
+CallView::CallView(QWidget* parent, ModelType type) : QTreeWidget(parent), TreeWidgetCallModel(type)
 {
    if (type == ActiveCall)
       initCall();

@@ -67,11 +67,12 @@ template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::
 //Fill the history list
 //@warning This solution wont scale to multiple call or history model implementation. Some static addCall + foreach for each call would be needed if this case ever become unavoidable
 template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::initHistory()
-{
-   if (!historyInit) {
+{qDebug() << "\n\n\n\nInit history";
+   if (!historyInit) {qDebug() << "In if";
       ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
       QStringList historyMap = configurationManager.getHistory().value();
-      foreach (QString historyCallId, historyMap) {
+      qDebug() << historyMap.size();
+      foreach (QString historyCallId, historyMap) {qDebug() << "Here";
          QStringList param = historyCallId.split("|");
          if (param.count() <= 10) {
             //If this ever change, look at the gnome client

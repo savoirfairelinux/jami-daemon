@@ -24,10 +24,10 @@ class CallTreeItemDelegate : public QItemDelegate
 
 typedef CallModel<CallTreeItem*,QTreeWidgetItem*> TreeWidgetCallModel;
 
-class CallView : private QTreeWidget, public TreeWidgetCallModel {
+class CallView : public QTreeWidget, public TreeWidgetCallModel {
    Q_OBJECT
    public:
-      CallView(ModelType type, QWidget* parent =0);
+      CallView(QWidget* parent =0,ModelType type = ActiveCall);
       bool selectItem(Call* item);
       Call* getCurrentItem();
       bool removeItem(Call* item);

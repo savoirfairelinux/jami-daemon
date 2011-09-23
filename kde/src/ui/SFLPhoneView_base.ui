@@ -15,43 +15,13 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QStackedWidget" name="stackedWidget_screen">
+    <widget class="CallView" name="callTreeModel" native="true">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
-     <property name="currentIndex">
-      <number>1</number>
-     </property>
-     <widget class="QWidget" name="page_callList">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_3"/>
-     </widget>
-     <widget class="QWidget" name="page_callHistory">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <layout class="QVBoxLayout" name="verticalLayout_2"/>
-     </widget>
-     <widget class="QWidget" name="page_addressBook">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <layout class="QVBoxLayout" name="verticalLayout_5"/>
-     </widget>
     </widget>
    </item>
    <item>
@@ -197,6 +167,12 @@
    <class>Dialpad</class>
    <extends>QWidget</extends>
    <header>widgets/Dialpad.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>CallView</class>
+   <extends>QWidget</extends>
+   <header location="global">CallView.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -19,18 +19,3 @@
  ***************************************************************************/ 
 #include <CallModel.h>
 
-
-
-
-//template<> QString CallModel<InternalCallModelStruct>::priorAccountId;
-//template<> AccountList* CallModel<InternalCallModelStruct>::accountList;
-//template<> bool CallModel<InternalCallModelStruct>::instanceInit(false);
-//template<> bool CallModel<InternalCallModelStruct>::callInit(false);
-//template<> bool CallModel<InternalCallModelStruct>::historyInit(false);
-
-//template<> QHash<QString, Call*> CallModel<InternalCallModelStruct>::activeCalls;
-//template<> QHash<QString, Call*> CallModel<InternalCallModelStruct>::historyCalls;
-//template<> QHash<Call*, InternalCallModelStruct*> CallModel<InternalCallModelStruct>::privateCallList_call;
-//template<> QHash<QString, InternalCallModelStruct*> CallModel<InternalCallModelStruct>::privateCallList_callId;
-
-

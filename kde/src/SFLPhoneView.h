@@ -66,12 +66,6 @@ private:
    //CallList * callList;
    QErrorMessage * errorWindow;
    //Account used prioritary if defined and registered. If not, the first registered account in accountList is used.
-   
-   bool historyLoaded;
-   
-   CallView* addressBookTree;
-   CallView* callTreeModel;
-   CallView* historyTreeModel;
 
 protected:
    
@@ -258,8 +252,6 @@ public slots:
    void on_callTree_currentItemChanged();
    void on_callTree_itemChanged();
    void on_callTree_itemDoubleClicked(QTreeWidgetItem* item, int column);
-   
-   void on_stackedWidget_screen_currentChanged(int index);
    
    void on1_callStateChanged(const QString &callID, const QString &state);
    void on1_error(MapStringString details);
