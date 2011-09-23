@@ -7,6 +7,7 @@
 #include <KNotification>
 #include <KSystemTrayIcon>
 #include <KMainWindow>
+#include "lib/instance_interface_singleton.h"
 #include "SFLPhone.h"
 
 
@@ -22,6 +23,7 @@ SFLPhoneApplication::SFLPhoneApplication()
   // Start remaining initialisation
   initializePaths();
   initializeMainWindow();
+  connect(this,SIGNAL(aboutToQuit()),this,SLOT(quit2()));
 }
 
 
@@ -100,5 +102,11 @@ void SFLPhoneApplication::initializePaths()
   }
 }
 
+Q_NOREPLY void SFLPhoneApplication::quit2()
+{
+   disableSessionManagement();
+   InstanceInterface& instance = InstanceInterfaceSingleton::getInstance();
+   Q_NOREPLY instance.Unregister(getpid());
+}
 
 #include "SFLPhoneapplication.moc"

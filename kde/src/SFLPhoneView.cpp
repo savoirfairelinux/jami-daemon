@@ -81,8 +81,6 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
            this,         SLOT(on1_changingConference(const QString &, const QString &)));
    connect(&callManager, SIGNAL(conferenceRemoved(const QString &)),
            this,         SLOT(on1_conferenceRemoved(const QString &)));
-   connect(&callManager, SIGNAL(incomingMessage(const QString &, const QString &)),
-           this,         SLOT(on1_incomingMessage(const QString &, const QString &)));
    connect(&callManager, SIGNAL(voiceMailNotify(const QString &, int)),
            this,         SLOT(on1_voiceMailNotify(const QString &, int)));
 
@@ -91,9 +89,6 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
    
    connect(&configurationManager, SIGNAL(accountsChanged()),
            CallView::getAccountList(), SLOT(updateAccounts()));
-
-   connect(&configurationManager, SIGNAL(audioManagerChanged()),
-      this,         SLOT(on1_audioManagerChanged()));
    //END Port to Call Model
            
    //connect(configDialog, SIGNAL(changesApplied()),
@@ -103,15 +98,6 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
            this,        SLOT(updateStatusMessage()));
    connect(CallView::getAccountList(), SIGNAL(accountListUpdated()),
            this,        SLOT(updateWindowCallState()));
-
-   connect(callTreeModel->getWidget(),    SIGNAL(itemChanged()), //currentItemChanged
-      this,        SLOT(on_callTree_currentItemChanged()));
-   connect(callTreeModel->getWidget(),    SIGNAL(itemChanged()), //ITem changed
-      this,        SLOT(on_callTree_itemChanged()));
-   connect(callTreeModel->getWidget(),    SIGNAL(doubleClicked(const QModelIndex &)),
-      this,        SLOT(on_callTree_itemDoubleClicked(const QModelIndex&)));
-                
-           
 }
 
 
@@ -592,21 +578,21 @@ void SFLPhoneView::on_toolButton_sndVol_clicked(bool checked)
    updateVolumeButton();
 }
 
-void SFLPhoneView::on_callTree_currentItemChanged()
-{
-   qDebug() << "on_callTree_currentItemChanged";
-   updateWindowCallState();
-}
+// void SFLPhoneView::on_callTree_currentItemChanged()
+// {
+//    qDebug() << "on_callTree_currentItemChanged";
+//    updateWindowCallState();
+// }
 
-void SFLPhoneView::on_callTree_itemChanged()
-{
-   qDebug() << "on_callTree_itemChanged";
-}
+// void SFLPhoneView::on_callTree_itemChanged()
+// {
+//    qDebug() << "on_callTree_itemChanged";
+// }
 
-void SFLPhoneView::on_callTree_itemDoubleClicked(QTreeWidgetItem* call, int column)
-{
-Q_UNUSED(call)
-Q_UNUSED(column)
+//void SFLPhoneView::on_callTree_itemDoubleClicked(QTreeWidgetItem* call, int column)
+//{
+//Q_UNUSED(call)
+//Q_UNUSED(column)
    //TODO port
    //TODO remove once the last regression is sorted out.
 //    qDebug() << "on_callTree_itemDoubleClicked";
@@ -621,7 +607,7 @@ Q_UNUSED(column)
 //       default:
 //          qDebug() << "Double clicked an item with no action on double click.";
 //    }
-}
+//}
 
 void SFLPhoneView::contextMenuEvent(QContextMenuEvent *event)
 {
@@ -832,11 +818,6 @@ void SFLPhoneView::on1_conferenceRemoved(const QString &confId) {
    callTreeModel->conferenceRemovedSignal(confId);
 }
 
-void SFLPhoneView::on1_incomingMessage(const QString &accountID, const QString &message)
-{
-   qDebug() << "Signal : Incoming Message for account " << accountID << " ! \nMessage : " << message;
-}
-
 void SFLPhoneView::on1_voiceMailNotify(const QString &accountID, int count)
 {
    qDebug() << "Signal : VoiceMail Notify ! " << count << " new voice mails for account " << accountID;
@@ -851,12 +832,12 @@ void SFLPhoneView::on1_volumeChanged(const QString & /*device*/, double value)
       updateVolumeBar();
 }
 
-void SFLPhoneView::on1_audioManagerChanged()
-{
-   qDebug() << "Signal : Audio Manager Changed !";
-
-   updateVolumeControls();
-}
+// void SFLPhoneView::on1_audioManagerChanged()
+// {
+//    qDebug() << "Signal : Audio Manager Changed !";
+// 
+//    updateVolumeControls();
+// }
 
 void SFLPhoneView::changeScreen(int screen)
 {

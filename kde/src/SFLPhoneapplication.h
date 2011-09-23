@@ -3,7 +3,7 @@
 
 
 #include <KApplication>
-
+#include <QDBusAbstractAdaptor>
 
 class SFLPhone;
 
@@ -29,6 +29,9 @@ class SFLPhoneApplication : public KApplication
   private:
     // Reference to the sflphone window
     SFLPhone       *sflphoneWindow_;
+
+  private slots:
+     Q_NOREPLY void quit2();
 };
 
 #endif // SFLPHONEAPPLICATION_H

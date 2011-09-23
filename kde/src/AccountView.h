@@ -5,7 +5,7 @@
 
 #include "lib/Item.h"
 #include "lib/Account.h"
-#include "AccountItemWidget.h"
+#include "widgets/AccountItemWidget.h"
 #include "lib/sflphone_const.h"
 
 class AccountView : public Account, public Item<AccountItemWidget> {
