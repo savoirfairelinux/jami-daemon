@@ -25,7 +25,11 @@ AC_DEFINE_UNQUOTED(SFLPHONE_UIDIR_UNINSTALLED, "`pwd`/src/",
   [path to uninstalled SFLphone UI dir])
 
 PKG_CHECK_MODULES(DBUSGLIB, dbus-glib-1 >= 0.75, HAVE_DBUS_G_PROXY_SET_DEFAULT_TIMEOUT=true, HAVE_DBUS_G_PROXY_SET_DEFAULT_TIMEOUT=false);
-PKG_CHECK_MODULES([LIBNOTIFY], [libnotify >= 0.7.2], [AC_DEFINE([LIBNOTIFY_VERSION_0_7_2],[],[Using libnotify-0.7.2 or higher])],[PKG_CHECK_MODULES([LIBNOTIFY], [libnotify >= 0.4])])
+PKG_CHECK_MODULES([LIBNOTIFY], [libnotify >= 0.7.2])
+if echo "$LIBNOTIFY_LIBS" | grep -q gtk+-x11-2.0; then
+    AC_MSG_ERROR([Your libnotify is linked with GTK+2 ! Install libnotify4-dev])
+    exit 1
+fi
 PKG_CHECK_MODULES(CLUTTER, clutter-1.0)
 PKG_CHECK_MODULES(CLUTTERGTK, clutter-gtk-1.0)
 PKG_CHECK_MODULES(GTK, gtk+-3.0)
