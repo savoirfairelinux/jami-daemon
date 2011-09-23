@@ -530,7 +530,7 @@ void DlgAccounts::updateSettings()
    qDebug() << "DlgAccounts::updateSettings";
    if(accountListHasChanged) {
       saveAccountList();
-      toolButton_accountsApply->setEnabled(false);
+      //toolButton_accountsApply->setEnabled(false);
       accountListHasChanged = false;
    }
 }
@@ -539,7 +539,7 @@ void DlgAccounts::updateWidgets()
 {
    qDebug() << "DlgAccounts::updateWidgets";
    loadAccountList();
-   toolButton_accountsApply->setEnabled(false);
+   //toolButton_accountsApply->setEnabled(false);
    accountListHasChanged = false;
 }
 
