@@ -38,6 +38,7 @@ private slots:
    void reloadContact();
    void loadContactHistory(QTreeWidgetItem* item);
    void filter(QString text);
+   void setHistoryVisible(bool visible);
 };
 
 class ContactTree : public QTreeWidget {

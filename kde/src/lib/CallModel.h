@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/ 
+ **************************************************************************/
 
 #ifndef CALL_MODEL_H
 #define CALL_MODEL_H
@@ -44,20 +44,6 @@
  *  @note This model intend to be reimplemented by the view, not used alone
  *  @note Most of the member are static to preserve ressources and QObject::connect()
  */
-
-
-// template  <typename T, typename Index> class CallModel;
-// template  <typename Widget, typename Index> class InternalCallModelStruct : public QModelIndex {
-//    
-//    friend class CallModel<Widget,Index>;
-//    //InternalCallModelStruct* parent;
-//    Widget* call;
-//    Call* call_real;
-//    Index* treeItem; //For the view
-//    QList<InternalCallModelStruct*> children; //For the view
-//    bool conference;
-// };
-
 template  <typename CallWidget, typename Index>
 class LIB_EXPORT CallModel {
    //Q_OBJECT
@@ -71,6 +57,9 @@ class LIB_EXPORT CallModel {
       CallModel(ModelType type);
       virtual ~CallModel() {}
 
+      virtual bool initCall();
+      virtual bool initHistory();
+      
       virtual Call* addCall(Call* call, Call* parent =0);
       int size();
       Call* findCallByCallId(QString callId);
@@ -148,17 +137,13 @@ class LIB_EXPORT CallModel {
 	 QList<InternalCallModelStruct*> children; //For the view
 	 bool conference;
       };
-      typedef QHash<Call*, InternalCallModelStruct*> InternalCall;
-      typedef QHash<QString, InternalCallModelStruct*> InternalCallId;
+      typedef QHash<Call*, InternalCallModelStruct*>      InternalCall;
+      typedef QHash<QString, InternalCallModelStruct*>    InternalCallId;
       typedef QHash<CallWidget, InternalCallModelStruct*> InternalWidget;
-      typedef QHash<Index, InternalCallModelStruct*> InternalIndex;
+      typedef QHash<Index, InternalCallModelStruct*>      InternalIndex;
       
       static QHash<QString, Call*> activeCalls;
-      static QHash<QString, Call*> historyCalls;/*
-      static QHash<Call*, InternalCallModelStruct<T, Index>* > privateCallList_call;
-      static QHash<QString, InternalCallModelStruct<T, Index>* > privateCallList_callId;
-      static QHash<T, InternalCallModelStruct<T, Index>* > privateCallList_widget;
-      static QHash<Index, InternalCallModelStruct<T, Index>* > privateCallList_index;*/
+      static QHash<QString, Call*> historyCalls;
       
       static InternalCall privateCallList_call;
       static InternalCallId privateCallList_callId;
@@ -170,8 +155,6 @@ class LIB_EXPORT CallModel {
       static AccountList* accountList;
       static bool callInit;
       static bool historyInit;
-      virtual bool initCall();
-      virtual bool initHistory();
 
    private:
       static bool instanceInit;

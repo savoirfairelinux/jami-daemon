@@ -286,8 +286,9 @@ void ConfigurationSkeleton::writeConfig()
    configurationManager.setHookSettings(hooksSettings);
    
    qDebug() << "Finished to write config\n";*/
-   
-   readConfig();
+   qDebug() <<  "Max res: "  << displayDialpad()  << "\n\n\n\n\n\n";
+   qDebug() <<  "Max res3: " << ConfigurationSkeletonBase::displayDialpad()  << "\n\n\n\n\n\n";
+   ConfigurationSkeletonBase::writeConfig();
 }
 
 // QStringList ConfigurationSkeleton::activeCodecList() const
@@ -298,4 +299,12 @@ void ConfigurationSkeleton::writeConfig()
 // void ConfigurationSkeleton::setActiveCodecList(const QStringList & v)
 // {
 //    codecListModel->setActiveCodecList(v);
+// }
+
+// void ConfigurationSkeleton::writeConfig()
+// {
+//    qDebug() <<  "Max res4: "  << displayDialpad()  << "\n\n\n\n\n\n";
+//    qDebug() <<  "Max res5: " << ConfigurationSkeletonBase::displayDialpad()  << "\n\n\n\n\n\n";
+// 
+//    ConfigurationSkeletonBase::writeConfig();
 // }

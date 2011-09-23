@@ -52,6 +52,7 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    m_pLinkPB     = new QPushButton(this);
    
    m_pAllTimeCB->setChecked(ConfigurationSkeleton::displayDataRange());
+   enableDateRange(ConfigurationSkeleton::displayDataRange());
 
    m_pSortByL->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Preferred);
    m_pSortByCBB->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Preferred);
@@ -276,6 +277,7 @@ bool HistoryTree::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeDa
 {
    Q_UNUSED(index)
    Q_UNUSED(action)
+   Q_UNUSED(parent)
 
    QByteArray encodedData = data->data(MIME_CALLID);
 

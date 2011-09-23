@@ -60,8 +60,8 @@ int main(int argc, char **argv)
       
       int retVal = app.exec();
       
-      ConfigurationSkeleton conf;
-      conf.writeConfig();
+      ConfigurationSkeleton* conf = ConfigurationSkeleton::self();
+      conf->writeConfig();
       return retVal;
    }
    catch(const char * msg)

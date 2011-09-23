@@ -83,6 +83,8 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
    m_pShowHistoCK->setChecked(ConfigurationSkeleton::displayContactCallHistory());
    m_pShowHistoCK->setText("Display history");
 
+   setHistoryVisible(ConfigurationSkeleton::displayContactCallHistory());
+
    QVBoxLayout* mainLayout = new QVBoxLayout(mainWidget);
 
    mainLayout->addWidget  ( m_pSortByCBB   );
@@ -98,7 +100,7 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
    connect (AkonadiBackend::getInstance(),SIGNAL(collectionChanged()),                                   this,        SLOT(reloadContact()                      ));
    connect (m_pContactView,               SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),this,        SLOT(loadContactHistory(QTreeWidgetItem*) ));
    connect (m_pFilterLE,                  SIGNAL(textChanged(QString)),                                  this,        SLOT(filter(QString)                      ));
-   connect (m_pShowHistoCK,               SIGNAL(toggled(bool)),                                         m_pCallView, SLOT(setVisible(bool)                     ));
+   connect (m_pShowHistoCK,               SIGNAL(toggled(bool)),                                         this,        SLOT(setHistoryVisible(bool)              ));
    setWindowTitle("Contact");
 }
 
@@ -208,4 +210,11 @@ bool ContactTree::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeDa
    qDebug() << "In history import"<< QString(encodedData);
 
    return false;
+}
+
+void ContactDock::setHistoryVisible(bool visible)
+{
+   qDebug() << "Toggling history visibility";
+   m_pCallView->setVisible(visible);
+   ConfigurationSkeleton::setDisplayContactCallHistory(visible);
 }

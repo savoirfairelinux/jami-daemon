@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
 
 #include <QtCore/QStringList>
 #include <QtCore/QMimeData>
@@ -32,6 +32,7 @@
 
 #include "lib/sflphone_const.h"
 #include "ContactItemWidget.h"
+#include "AkonadiBackend.h"
 
 ContactItemWidget::ContactItemWidget(QWidget *parent)
    : QWidget(parent), m_pMenu(0),init(false)
@@ -218,7 +219,8 @@ void ContactItemWidget::copy()
 
 void ContactItemWidget::editContact()
 {
-   qDebug() << "Adding contact";
+   qDebug() << "Edit contact";
+   AkonadiBackend::getInstance()->editContact(m_pContactKA);
 }
 
 void ContactItemWidget::addPhone()

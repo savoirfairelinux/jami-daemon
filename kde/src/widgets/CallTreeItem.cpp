@@ -108,8 +108,7 @@ void CallTreeItem::setCall(Call *call)
    setLayout(mainLayout);
    setMinimumSize(QSize(50, 30));
 
-   connect(itemCall, SIGNAL(changed()),
-           this,     SLOT(updated()));
+   connect(itemCall, SIGNAL(changed()), this,     SLOT(updated()));
 
    updated();
 }

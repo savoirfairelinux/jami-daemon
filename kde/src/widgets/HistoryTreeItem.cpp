@@ -32,6 +32,7 @@
 #include "HistoryTreeItem.h"
 #include "AkonadiBackend.h"
 #include "lib/Contact.h"
+#include "SFLPhone.h"
 
 const char * HistoryTreeItem::callStateIcons[12] = {ICON_INCOMING, ICON_RINGING, ICON_CURRENT, ICON_DIALING, ICON_HOLD, ICON_FAILURE, ICON_BUSY, ICON_TRANSFER, ICON_TRANSF_HOLD, "", "", ICON_CONFERENCE};
 
@@ -51,11 +52,11 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent)
    m_pCallAgain->setIcon        (KIcon(ICON_DIALING)          );
 
    m_pAddToContact->setShortcut (Qt::CTRL + Qt::Key_E         );
-   m_pAddToContact->setText     ("Add to contact"             );
+   m_pAddToContact->setText     ("Add Number to Contact"      );
    m_pAddToContact->setIcon     (KIcon("list-resource-add")   );
    
    m_pAddContact->setShortcut   (Qt::CTRL + Qt::Key_E         );
-   m_pAddContact->setText       ("Add to contact"             );
+   m_pAddContact->setText       ("Add Contact"             );
    m_pAddContact->setIcon       (KIcon("contact-new")         );
    
    m_pCopy->setShortcut         (Qt::CTRL + Qt::Key_C         );
@@ -220,6 +221,8 @@ void HistoryTreeItem::sendEmail()
 void HistoryTreeItem::callAgain()
 {
    qDebug() << "Calling "<< itemCall->getPeerPhoneNumber();
+   SFLPhone::app()->model()->addDialingCall(m_pName, SFLPhone::app()->model()->getCurrentAccountId())->setCallNumber(m_pPhoneNumber);
+   
 }
 
 void HistoryTreeItem::copy()
@@ -230,6 +233,10 @@ void HistoryTreeItem::copy()
 void HistoryTreeItem::addContact()
 {
    qDebug() << "Adding contact";
+   Contact* aContact = new Contact();
+   aContact->setPhoneNumbers(PhoneNumbers() << new Contact::PhoneNumber(m_pPhoneNumber, "Home"));
+   aContact->setFormattedName(m_pName);
+   AkonadiBackend::getInstance()->addNewContact(aContact);
 }
 
 void HistoryTreeItem::addToContact()

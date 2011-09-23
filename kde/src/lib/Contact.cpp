@@ -27,19 +27,6 @@
 
 Contact::Contact()
 {
-//    this->firstName = addressee.name();
-//    this->secondName = addressee.familyName();
-//    this->nickName = addressee.nickName();
-//    this->phoneNumber = number.number();
-//    this->type = number.type();
-//    this->displayPhoto = displayPhoto;
-//    if(displayPhoto) {
-//       this->photo = new Picture(addressee.photo());
-//    }
-//    else {
-//       this->photo = NULL;
-//    }
-   
    initItem();
 }
 

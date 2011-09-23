@@ -66,12 +66,6 @@ private:
    //CallList * callList;
    QErrorMessage * errorWindow;
    //Account used prioritary if defined and registered. If not, the first registered account in accountList is used.
-   
-   bool historyLoaded;
-   
-   CallView* addressBookTree;
-   CallView* callTreeModel;
-   CallView* historyTreeModel;
 
 protected:
    
@@ -114,20 +108,14 @@ public:
     * 
     * @return true if the address book is enabled in config
     */
-   bool isAddressBookEnabled();
+   //bool isAddressBookEnabled();
    
-   QVector<Contact *> findContactsInKAddressBook(QString textSearched, bool & full);
+   //QVector<Contact *> findContactsInKAddressBook(QString textSearched, bool & full);
    
    /**
     *   Save the settings to save in the daemon before exit
     */
    void saveState();
-   
-   //CallTreeView *callTree;
-   //CallTreeView *historyTree;
-   //CallTreeView *addressBookTree;
-   //CallTreeWidget *callTree;
-   //CallTreeWidget *historyTree;
 
 private slots:
    /**
@@ -194,26 +182,6 @@ private slots:
    void alternateColors(QListWidget * listWidget);
    
    /**
-    *   Adds the call's item to the call-list's listwidget.
-    *   This function doesn't add anything to the callList object.
-    * @param call the call to add to the call-list's listwidget
-    */
-   //Call* addCallToCallList(Call * call);
-
-   /**
-    * Adds the call's history-item to the call-history's listwidget.
-    * This function doesn't add anything to the callList object.
-    * @param call the past call to add to the call-history's listwidget
-    */
-   //Call* addCallToCallHistory(Call * call);
-
-   /**
-    * Adds the contact's item to the addressbook's listwidget.
-    * @param contact the contact to add to the addressbook's listwidget
-    */
-   void addContactToContactList(Contact * contact);
-   
-   /**
     *   Updates the toolbar's actions' display according to the selected 
     *   item's state.
     */
@@ -224,9 +192,6 @@ private slots:
     * text searched. 
     * If empty, hide the search bar.
     */
-   void updateSearchHistory();
-   void updateCallHistory();
-   void updateAddressBook();
    void updateRecordButton();
    void updateVolumeButton();
    void updateRecordBar();
@@ -244,28 +209,6 @@ public slots:
    
    
    void updateStatusMessage();
-   
-   /**
-    *   Enable the address book search line edit.
-    *   To be called once the address book loading has finished.
-    */
-   void enableAddressBook();
-   
-   /**
-    *   Loads the address book asynchronously.
-    *   Calls enableAddressBook() once the address book
-    *   loading has finished if it is not already loaded.
-    * @return true if address book has finished loading
-    */
-   bool loadAddressBook();
-   
-   /**
-    *   Chooses to enable/disable (show/hide) the address book 
-    *   button according to the configuration's setting, and 
-    *   returns to the main window if is in address book
-    *   whereas it is disabled.
-    */
-   void updateAddressBookEnabled();
    
    
    virtual void keyPressEvent(QKeyEvent *event)
@@ -300,34 +243,23 @@ public slots:
    
    void on_widget_dialpad_typed(QString text);
    
-   void on_lineEdit_searchHistory_textChanged();
-   void on_lineEdit_addressBook_textChanged();
-   
    void on_slider_recVol_valueChanged(int value);
    void on_slider_sndVol_valueChanged(int value);
    
    void on_toolButton_recVol_clicked(bool checked);
    void on_toolButton_sndVol_clicked(bool checked);
    
-   void on_callTree_currentItemChanged();
-   void on_callTree_itemChanged();
-   void on_callTree_itemDoubleClicked(QTreeWidgetItem* item, int column);
-
-   void on_listWidget_callHistory_currentItemChanged();
-   void on_listWidget_callHistory_itemDoubleClicked(Call* item);
-
-   void on_listWidget_addressBook_currentItemChanged();
-   void on_listWidget_addressBook_itemDoubleClicked(CallTreeItem * item);
-   
-   void on_stackedWidget_screen_currentChanged(int index);
+   //void on_callTree_currentItemChanged();
+   //void on_callTree_itemChanged();
+   //void on_callTree_itemDoubleClicked(QTreeWidgetItem* item, int column);
    
    void on1_callStateChanged(const QString &callID, const QString &state);
    void on1_error(MapStringString details);
    void on1_incomingCall(const QString &accountID, const QString &callID/*, const QString &from*/);
-   void on1_incomingMessage(const QString &accountID, const QString &message);
+   //void on1_incomingMessage(const QString &accountID, const QString &message);
    void on1_voiceMailNotify(const QString &accountID, int count);
    void on1_volumeChanged(const QString &device, double value);
-   void on1_audioManagerChanged();
+   //void on1_audioManagerChanged();
    void on1_incomingConference(const QString &confID);
    void on1_changingConference(const QString &confID, const QString &state);
    void on1_conferenceRemoved(const QString &confId);
