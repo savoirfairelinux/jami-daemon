@@ -105,6 +105,11 @@
     <entry name="home" type="Bool">
     	<label>Defines whether to display personnal phone numbers.</label>
     </entry>
+
+    <!-- Bookmark -->
+    <entry name="bookmarkList" type="StringList">
+        <label>List of bookmarked clients</label>
+    </entry>
     
     <!-- Record Settings -->
     

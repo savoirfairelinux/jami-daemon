@@ -17,6 +17,7 @@
 #include "conf/ConfigurationDialog.h"
 #include "conf/ConfigurationSkeleton.h"
 #include "CallView.h"
+#include "SFLPhone.h"
 
 #include <QTableView>
 #include <QListView>
@@ -57,6 +58,12 @@ int main(int argc, char **argv)
 
       SFLPhoneApplication app;
 
+      SFLPhone* sflphoneWindow_ = new SFLPhone();
+      if( ! sflphoneWindow_->initialize() ) {
+         exit(1);
+         return 1;
+      };
+      sflphoneWindow_->show();
       
       int retVal = app.exec();
       

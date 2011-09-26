@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
 
 #include <QtCore/QStringList>
 #include <QtGui/QGridLayout>
@@ -33,10 +33,11 @@
 #include "AkonadiBackend.h"
 #include "lib/Contact.h"
 #include "SFLPhone.h"
+#include "conf/ConfigurationSkeleton.h"
 
 const char * HistoryTreeItem::callStateIcons[12] = {ICON_INCOMING, ICON_RINGING, ICON_CURRENT, ICON_DIALING, ICON_HOLD, ICON_FAILURE, ICON_BUSY, ICON_TRANSFER, ICON_TRANSF_HOLD, "", "", ICON_CONFERENCE};
 
-HistoryTreeItem::HistoryTreeItem(QWidget *parent)
+HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
    : QWidget(parent), itemCall(0),m_pMenu(0), init(false)
 {
    setContextMenuPolicy(Qt::CustomContextMenu);
@@ -46,32 +47,65 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent)
    m_pCopy         = new KAction(this);
    m_pEmail        = new KAction(this);
    m_pAddToContact = new KAction(this);
+   m_pBookmark     = new KAction(this);
    
-   m_pCallAgain->setShortcut    (Qt::CTRL + Qt::Key_Enter     );
-   m_pCallAgain->setText        ("Call Again"                 );
-   m_pCallAgain->setIcon        (KIcon(ICON_DIALING)          );
+   m_pCallAgain->setShortcut    ( Qt::CTRL + Qt::Key_Enter     );
+   m_pCallAgain->setText        ( "Call Again"                 );
+   m_pCallAgain->setIcon        ( KIcon(ICON_DIALING)          );
 
-   m_pAddToContact->setShortcut (Qt::CTRL + Qt::Key_E         );
-   m_pAddToContact->setText     ("Add Number to Contact"      );
-   m_pAddToContact->setIcon     (KIcon("list-resource-add")   );
+   m_pAddToContact->setShortcut ( Qt::CTRL + Qt::Key_E         );
+   m_pAddToContact->setText     ( "Add Number to Contact"      );
+   m_pAddToContact->setIcon     ( KIcon("list-resource-add")   );
    
-   m_pAddContact->setShortcut   (Qt::CTRL + Qt::Key_E         );
-   m_pAddContact->setText       ("Add Contact"             );
-   m_pAddContact->setIcon       (KIcon("contact-new")         );
+   m_pAddContact->setShortcut   ( Qt::CTRL + Qt::Key_E         );
+   m_pAddContact->setText       ( "Add Contact"                );
+   m_pAddContact->setIcon       ( KIcon("contact-new")         );
    
-   m_pCopy->setShortcut         (Qt::CTRL + Qt::Key_C         );
-   m_pCopy->setText             ("Copy"                       );
-   m_pCopy->setIcon             (KIcon("edit-copy")           );
+   m_pCopy->setShortcut         ( Qt::CTRL + Qt::Key_C         );
+   m_pCopy->setText             ( "Copy"                       );
+   m_pCopy->setIcon             ( KIcon("edit-copy")           );
    
-   m_pEmail->setShortcut        (Qt::CTRL + Qt::Key_M         );
-   m_pEmail->setText            ("Send Email"                 );
-   m_pEmail->setIcon            (KIcon("mail-message-new")    );
+   m_pEmail->setShortcut        ( Qt::CTRL + Qt::Key_M         );
+   m_pEmail->setText            ( "Send Email"                 );
+   m_pEmail->setIcon            ( KIcon("mail-message-new")    );
 
-   connect(m_pCallAgain    ,SIGNAL(triggered()),this,SLOT(callAgain()      ));
-   connect(m_pAddContact   ,SIGNAL(triggered()),this,SLOT(addContact()     ));
-   connect(m_pCopy         ,SIGNAL(triggered()),this,SLOT(copy()           ));
-   connect(m_pEmail        ,SIGNAL(triggered()),this,SLOT(sendEmail()      ));
-   connect(m_pAddToContact ,SIGNAL(triggered()),this,SLOT(addToContact()   ));
+   m_pBookmark->setShortcut     ( Qt::CTRL + Qt::Key_D         );
+   m_pBookmark->setText         ( "Bookmark"                   );
+   m_pBookmark->setIcon         ( KIcon("bookmarks")           );
+
+   connect(m_pCallAgain    , SIGNAL(triggered())                        , this , SLOT(callAgain()         ));
+   connect(m_pAddContact   , SIGNAL(triggered())                        , this , SLOT(addContact()        ));
+   connect(m_pCopy         , SIGNAL(triggered())                        , this , SLOT(copy()              ));
+   connect(m_pEmail        , SIGNAL(triggered())                        , this , SLOT(sendEmail()         ));
+   connect(m_pAddToContact , SIGNAL(triggered())                        , this , SLOT(addToContact()      ));
+   connect(m_pBookmark     , SIGNAL(triggered())                        , this , SLOT(bookmark()          ));
+   connect(this            , SIGNAL(customContextMenuRequested(QPoint)) , this , SLOT(showContext(QPoint) ));
+
+   labelIcon        = new QLabel( this );
+   labelPeerName    = new QLabel( this );
+   labelCallNumber2 = new QLabel( this );
+   m_pDurationL     = new QLabel( this );
+   m_pTimeL         = new QLabel( this );
+   
+   labelIcon->setMinimumSize(70,48);
+   labelIcon->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
+   QSpacerItem* verticalSpacer = new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+   QGridLayout* mainLayout = new QGridLayout(this);
+   mainLayout->addWidget ( labelIcon,0,0,4,1    );
+   mainLayout->addWidget ( labelPeerName,0,1    );
+   mainLayout->addWidget ( labelCallNumber2,1,1 );
+   mainLayout->addWidget ( m_pTimeL,2,1         );
+   mainLayout->addItem   ( verticalSpacer,3,1   );
+   mainLayout->addWidget ( m_pDurationL,0,2,4,1 );
+   setLayout(mainLayout);
+   setMinimumSize(QSize(50, 30));
+
+   if (!phone.isEmpty()) {
+      getContactInfo(phone);
+      labelCallNumber2->setText(phone);
+      m_pPhoneNumber = phone;
+   }
 }
 
 HistoryTreeItem::~HistoryTreeItem()
@@ -93,36 +127,14 @@ void HistoryTreeItem::setCall(Call *call)
       return;
    }
    
-   labelIcon     = new QLabel(this);
-   labelPeerName = new QLabel();
-   labelIcon     = new QLabel();
-   
-   labelIcon->setMinimumSize(70,48);
-   labelIcon->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
-   
-   labelCallNumber2 = new QLabel(itemCall->getPeerPhoneNumber());
-   QSpacerItem* verticalSpacer = new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding);
+   labelCallNumber2->setText(itemCall->getPeerPhoneNumber()); 
 
-   m_pTimeL = new QLabel();
    m_pTimeL->setText(QDateTime::fromTime_t(itemCall->getStartTimeStamp().toUInt()).toString());
 
-   m_pDurationL = new QLabel();
    int dur = itemCall->getStopTimeStamp().toInt() - itemCall->getStartTimeStamp().toInt();
    m_pDurationL->setText(QString("%1").arg(dur/3600,2)+":"+QString("%1").arg((dur%3600)/60,2)+":"+QString("%1").arg((dur%3600)%60,2)+" ");
 
-   QGridLayout* mainLayout = new QGridLayout(this);
-   mainLayout->addWidget( labelIcon,0,0,4,1    );
-   mainLayout->addWidget( labelPeerName,0,1    );
-   mainLayout->addWidget( labelCallNumber2,1,1 );
-   mainLayout->addWidget( m_pTimeL,2,1         );
-   mainLayout->addItem  ( verticalSpacer,3,1   );
-   mainLayout->addWidget( m_pDurationL,0,2,4,1 );
-   
-   setLayout(mainLayout);
-   setMinimumSize(QSize(50, 30));
-
-   connect(itemCall, SIGNAL(changed()), this,     SLOT(updated()));
-   connect(this,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(showContext(QPoint)));
+   connect(itemCall , SIGNAL(changed())                          , this , SLOT(updated()           ));
    updated();
 
    m_pTimeStamp = itemCall->getStartTimeStamp().toUInt();
@@ -131,24 +143,28 @@ void HistoryTreeItem::setCall(Call *call)
    m_pPhoneNumber = itemCall->getPeerPhoneNumber();
 }
 
-void HistoryTreeItem::updated()
+bool HistoryTreeItem::getContactInfo(QString phoneNumber)
 {
-   Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(itemCall->getPeerPhoneNumber());
+   Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(phoneNumber);
    if (contact) {
       labelIcon->setPixmap(*contact->getPhoto());
       labelPeerName->setText("<b>"+contact->getFormattedName()+"</b>");
    }
    else {
       labelIcon->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
+      labelPeerName->setText("<b>Unknow</b>");
+      return false;
+   }
+   return true;
+}
 
+void HistoryTreeItem::updated()
+{
+   if (!getContactInfo(itemCall->getPeerPhoneNumber())) {
       if(! itemCall->getPeerName().trimmed().isEmpty()) {
          labelPeerName->setText("<b>"+itemCall->getPeerName()+"</b>");
       }
-      else {
-         labelPeerName->setText("<b>Unknow</b>");
-      }
    }
-   
    call_state state = itemCall->getState();
    bool recording = itemCall->getRecording();
    if(state != CALL_STATE_OVER) {
@@ -208,6 +224,7 @@ void HistoryTreeItem::showContext(const QPoint& pos)
       m_pMenu->addAction( m_pAddToContact );
       m_pMenu->addAction( m_pCopy         );
       m_pMenu->addAction( m_pEmail        );
+      m_pMenu->addAction( m_pBookmark     );
    }
    m_pMenu->exec(mapToGlobal(pos));
 }
@@ -242,4 +259,9 @@ void HistoryTreeItem::addContact()
 void HistoryTreeItem::addToContact()
 {
    qDebug() << "Adding to contact";
+}
+void HistoryTreeItem::bookmark()
+{
+   qDebug() << "bookmark";
+   SFLPhone::app()->bookmarkDock()->addBookmark(m_pPhoneNumber);
 }

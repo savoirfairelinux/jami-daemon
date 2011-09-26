@@ -20,7 +20,7 @@ class SFLPhoneApplication : public KApplication
    virtual    ~SFLPhoneApplication();
 
    // Return the contact list window
-   SFLPhone*       getSFLPhoneWindow() const;
+   //SFLPhone*       getSFLPhoneWindow() const;
 
   private:  // private methods
     void         initializeMainWindow();
@@ -28,7 +28,7 @@ class SFLPhoneApplication : public KApplication
 
   private:
     // Reference to the sflphone window
-    SFLPhone       *sflphoneWindow_;
+    //SFLPhone       *sflphoneWindow_;
 
   private slots:
      Q_NOREPLY void quit2();

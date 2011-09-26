@@ -32,21 +32,21 @@
 #include "lib/Call.h"
 #include "SFLPhone.h"
 
-class QNumericTreeWidgetItem : public QTreeWidgetItem {
+class QNumericTreeWidgetItem_hist : public QTreeWidgetItem {
    public:
-      QNumericTreeWidgetItem(QTreeWidget* parent):QTreeWidgetItem(parent),widget(0),weight(-1){}
-      QNumericTreeWidgetItem(QTreeWidgetItem* parent):QTreeWidgetItem(parent),widget(0),weight(-1){}
+      QNumericTreeWidgetItem_hist(QTreeWidget* parent):QTreeWidgetItem(parent),widget(0),weight(-1){}
+      QNumericTreeWidgetItem_hist(QTreeWidgetItem* parent):QTreeWidgetItem(parent),widget(0),weight(-1){}
       ContactItemWidget* widget;
       QString number;
       int weight;
    private:
       bool operator<(const QTreeWidgetItem & other) const {
          int column = treeWidget()->sortColumn();
-         //if (dynamic_cast<QNumericTreeWidgetItem*>((QTreeWidgetItem*)&other)) {
-            //if (widget !=0 && dynamic_cast<QNumericTreeWidgetItem*>((QTreeWidgetItem*)&other)->widget != 0)
-            //   return widget->getTimeStamp() < dynamic_cast<QNumericTreeWidgetItem*>((QTreeWidgetItem*)&other)->widget->getTimeStamp();
-            //else if (weight > 0 && dynamic_cast<QNumericTreeWidgetItem*>((QTreeWidgetItem*)&other)->weight > 0)
-            //   return weight > dynamic_cast<QNumericTreeWidgetItem*>((QTreeWidgetItem*)&other)->weight;
+         //if (dynamic_cast<QNumericTreeWidgetItem_hist*>((QTreeWidgetItem*)&other)) {
+            //if (widget !=0 && dynamic_cast<QNumericTreeWidgetItem_hist*>((QTreeWidgetItem*)&other)->widget != 0)
+            //   return widget->getTimeStamp() < dynamic_cast<QNumericTreeWidgetItem_hist*>((QTreeWidgetItem*)&other)->widget->getTimeStamp();
+            //else if (weight > 0 && dynamic_cast<QNumericTreeWidgetItem_hist*>((QTreeWidgetItem*)&other)->weight > 0)
+            //   return weight > dynamic_cast<QNumericTreeWidgetItem_hist*>((QTreeWidgetItem*)&other)->weight;
          //}
          return text(column) < other.text(column);
       }
@@ -114,7 +114,7 @@ void ContactDock::reloadContact()
    ContactList list = AkonadiBackend::getInstance()->update();
    foreach (Contact* cont, list) {
       ContactItemWidget* aContact  = new ContactItemWidget(m_pContactView);
-      QNumericTreeWidgetItem* item = new QNumericTreeWidgetItem(m_pContactView);
+      QNumericTreeWidgetItem_hist* item = new QNumericTreeWidgetItem_hist(m_pContactView);
       item->widget = aContact;
       aContact->setItem(item);
       aContact->setContact(cont);
@@ -123,7 +123,7 @@ void ContactDock::reloadContact()
       qDebug() << "Phone count" << numbers.count();
       if (numbers.count() > 1) {
          foreach (Contact::PhoneNumber* number, numbers) {
-            QNumericTreeWidgetItem* item2 = new QNumericTreeWidgetItem(item);
+            QNumericTreeWidgetItem_hist* item2 = new QNumericTreeWidgetItem_hist(item);
             QLabel* numberL = new QLabel("<b>"+number->getType()+":</b>"+number->getNumber(),this);
             item2->number = number->getNumber();
             m_pContactView->setItemWidget(item2,0,numberL);
@@ -143,8 +143,8 @@ void ContactDock::loadContactHistory(QTreeWidgetItem* item)
 {
    if (m_pShowHistoCK->isChecked()) {
       m_pCallView->clear();
-      if (dynamic_cast<QNumericTreeWidgetItem*>(item) != NULL) {
-         QNumericTreeWidgetItem* realItem = dynamic_cast<QNumericTreeWidgetItem*>(item);
+      if (dynamic_cast<QNumericTreeWidgetItem_hist*>(item) != NULL) {
+         QNumericTreeWidgetItem_hist* realItem = dynamic_cast<QNumericTreeWidgetItem_hist*>(item);
          foreach (Call* call, SFLPhone::app()->model()->getHistory()) {
             if (realItem->widget != 0) {
                foreach (Contact::PhoneNumber* number, realItem->widget->getContact()->getPhoneNumbers()) {
@@ -184,8 +184,8 @@ QMimeData* ContactTree::mimeData( const QList<QTreeWidgetItem *> items) const
    QMimeData *mimeData = new QMimeData();
 
    //Contact
-   if (dynamic_cast<QNumericTreeWidgetItem*>(items[0])) {
-      QNumericTreeWidgetItem* item = dynamic_cast<QNumericTreeWidgetItem*>(items[0]);
+   if (dynamic_cast<QNumericTreeWidgetItem_hist*>(items[0])) {
+      QNumericTreeWidgetItem_hist* item = dynamic_cast<QNumericTreeWidgetItem_hist*>(items[0]);
       if (item->widget != 0) {
          mimeData->setData(MIME_CONTACT, item->widget->getContact()->getUid().toUtf8());
       }

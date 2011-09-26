@@ -33,6 +33,8 @@
 #include "lib/sflphone_const.h"
 #include "ContactItemWidget.h"
 #include "AkonadiBackend.h"
+#include "SFLPhone.h"
+#include "conf/ConfigurationSkeleton.h"
 
 ContactItemWidget::ContactItemWidget(QWidget *parent)
    : QWidget(parent), m_pMenu(0),init(false)
@@ -64,7 +66,7 @@ ContactItemWidget::ContactItemWidget(QWidget *parent)
    m_pAddPhone->setIcon(KIcon("list-resource-add"));
 
    m_pBookmark      = new KAction(this);
-   m_pBookmark->setShortcut(Qt::CTRL + Qt::Key_N);
+   m_pBookmark->setShortcut(Qt::CTRL + Qt::Key_D);
    m_pBookmark->setText("Bookmark");
    m_pBookmark->setIcon(KIcon("bookmarks"));
 
@@ -203,7 +205,10 @@ void ContactItemWidget::showContext(const QPoint& pos)
       m_pMenu->addAction(m_pAddPhone);
       m_pMenu->addAction(m_pCopy);
       m_pMenu->addAction(m_pEmail);
+      m_pMenu->addAction(m_pBookmark);
    }
+   PhoneNumbers numbers = m_pContactKA->getPhoneNumbers();
+   m_pBookmark->setEnabled(numbers.count() == 1);
    m_pMenu->exec(mapToGlobal(pos));
 }
 
@@ -240,5 +245,7 @@ void ContactItemWidget::addPhone()
 
 void ContactItemWidget::bookmark()
 {
-   
+   PhoneNumbers numbers = m_pContactKA->getPhoneNumbers();
+   if (numbers.count() == 1)
+      SFLPhone::app()->bookmarkDock()->addBookmark(numbers[0]->getNumber());
 }

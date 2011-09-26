@@ -49,7 +49,7 @@ class HistoryTreeItem : public QWidget
 {
    Q_OBJECT
  public:
-    HistoryTreeItem(QWidget* parent =0);
+    HistoryTreeItem(QWidget* parent =0, QString phone = "");
     ~HistoryTreeItem();
     
     Call* call() const;
@@ -98,6 +98,8 @@ private slots:
    void copy();
    void addContact();
    void addToContact();
+   void bookmark();
+   bool getContactInfo(QString phone);
 signals:
    void over(Call*);
 };
