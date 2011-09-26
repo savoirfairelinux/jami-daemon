@@ -147,7 +147,8 @@ bool HistoryTreeItem::getContactInfo(QString phoneNumber)
 {
    Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(phoneNumber);
    if (contact) {
-      labelIcon->setPixmap(*contact->getPhoto());
+      if (contact->getPhoto() != NULL)
+         labelIcon->setPixmap(*contact->getPhoto());
       labelPeerName->setText("<b>"+contact->getFormattedName()+"</b>");
    }
    else {
