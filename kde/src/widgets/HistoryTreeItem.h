@@ -78,6 +78,7 @@ class HistoryTreeItem : public QWidget
     KAction* m_pAddToContact;
     KAction* m_pCopy;
     KAction* m_pEmail;
+    KAction* m_pBookmark;
     QMenu*   m_pMenu;
 
     uint m_pTimeStamp;

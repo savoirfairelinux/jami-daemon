@@ -42,28 +42,38 @@ ContactItemWidget::ContactItemWidget(QWidget *parent)
    m_pCallAgain->setShortcut(Qt::CTRL + Qt::Key_Enter);
    m_pCallAgain->setText("Call Again");
    m_pCallAgain->setIcon(KIcon(ICON_DIALING));
+   
    m_pEditContact = new KAction(this);
    m_pEditContact->setShortcut(Qt::CTRL + Qt::Key_E);
    m_pEditContact->setText("Edit contact");
    m_pEditContact->setIcon(KIcon("contact-new"));
+   
    m_pCopy       = new KAction(this);
    m_pCopy->setShortcut(Qt::CTRL + Qt::Key_C);
    m_pCopy->setText("Copy");
    m_pCopy->setIcon(KIcon("edit-copy"));
+   
    m_pEmail      = new KAction(this);
    m_pEmail->setShortcut(Qt::CTRL + Qt::Key_M);
    m_pEmail->setText("Send Email");
    m_pEmail->setIcon(KIcon("mail-message-new"));
+   
    m_pAddPhone      = new KAction(this);
    m_pAddPhone->setShortcut(Qt::CTRL + Qt::Key_N);
    m_pAddPhone->setText("Add Phone Number");
    m_pAddPhone->setIcon(KIcon("list-resource-add"));
 
-   connect(m_pCallAgain    ,SIGNAL(triggered()),this,SLOT(callAgain()      ));
-   connect(m_pEditContact  ,SIGNAL(triggered()),this,SLOT(editContact()    ));
-   connect(m_pCopy         ,SIGNAL(triggered()),this,SLOT(copy()           ));
-   connect(m_pEmail        ,SIGNAL(triggered()),this,SLOT(sendEmail()      ));
-   connect(m_pAddPhone     ,SIGNAL(triggered()),this,SLOT(addPhone()       ));
+   m_pBookmark      = new KAction(this);
+   m_pBookmark->setShortcut(Qt::CTRL + Qt::Key_N);
+   m_pBookmark->setText("Bookmark");
+   m_pBookmark->setIcon(KIcon("bookmarks"));
+
+   connect(m_pCallAgain    , SIGNAL(triggered()) , this,SLOT(callAgain()      ));
+   connect(m_pEditContact  , SIGNAL(triggered()) , this,SLOT(editContact()    ));
+   connect(m_pCopy         , SIGNAL(triggered()) , this,SLOT(copy()           ));
+   connect(m_pEmail        , SIGNAL(triggered()) , this,SLOT(sendEmail()      ));
+   connect(m_pAddPhone     , SIGNAL(triggered()) , this,SLOT(addPhone()       ));
+   connect(m_pBookmark     , SIGNAL(triggered()) , this,SLOT(bookmark()       ));
 }
 
 ContactItemWidget::~ContactItemWidget()
@@ -226,4 +236,9 @@ void ContactItemWidget::editContact()
 void ContactItemWidget::addPhone()
 {
    qDebug() << "Adding to contact";
+}
+
+void ContactItemWidget::bookmark()
+{
+   
 }

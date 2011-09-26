@@ -53,6 +53,7 @@ class ContactItemWidget : public QWidget
     KAction* m_pCopy;
     KAction* m_pEmail;
     KAction* m_pAddPhone;
+    KAction* m_pBookmark;
     QMenu*   m_pMenu;
 
     KABC::Addressee* contact() const;
@@ -92,6 +93,7 @@ private slots:
    void copy();
    void editContact();
    void addPhone();
+   void bookmark();
  };
 
 #endif // CALLTREE_ITEM_H
