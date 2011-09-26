@@ -29,9 +29,9 @@
  */
 
 #include "audiocodec.h"
-#include "logger.h"
 #include <cstdio>
 #include <celt/celt.h>
+#include <stdexcept>
 
 
 class Celt : public sfl::AudioCodec
@@ -53,39 +53,39 @@ class Celt : public sfl::AudioCodec
             if (error != CELT_OK) {
                 switch (error) {
                     case CELT_BAD_ARG:
-                        _error ("Celt: An (or more) invalid argument (e.g. out of range)\n");
+                        throw std::runtime_error("Celt: An (or more) invalid argument (e.g. out of range)\n");
                         break;
                     case CELT_INVALID_MODE:
-                        _error("Celt: The mode struct passed is invalid\n");
+                        throw std::runtime_error("Celt: The mode struct passed is invalid\n");
                         break;
                     case CELT_INTERNAL_ERROR:
-                        _error("Celt: An internal error was detected\n");
+                        throw std::runtime_error("Celt: An internal error was detected\n");
                         break;
                     case CELT_CORRUPTED_DATA:
-                        _error("Celt: The data passed (e.g. compressed data to decoder) is corrupted\n");
+                        throw std::runtime_error("Celt: The data passed (e.g. compressed data to decoder) is corrupted\n");
                         break;
                     case CELT_UNIMPLEMENTED:
-                        _error("Celt: Invalid/unsupported request numbe\n");
+                        throw std::runtime_error("Celt: Invalid/unsupported request numbe\n");
                         break;
                     case CELT_INVALID_STATE:
-                        _error("Celt: An encoder or decoder structure is invalid or already freed\n");
+                        throw std::runtime_error("Celt: An encoder or decoder structure is invalid or already freed\n");
                         break;
                     case CELT_ALLOC_FAIL:
-                        _error("Celt: Memory allocation has failed\n");
+                        throw std::runtime_error("Celt: Memory allocation has failed\n");
                         break;
                     default:
-                        _error("Celt: Unknown error %d\n", error);
+                        throw std::runtime_error("Celt: Unknown error");
                 }
 
             }
 
             if (_mode == NULL)
-                _error("Celt: Failed to create Celt mode");
+                throw std::runtime_error("Celt: Failed to create Celt mode");
 
             // bytes_per_packet = 1024;
             // if (bytes_per_packet < 0 || bytes_per_packet > MAX_PACKET)
             // {
-            //     _error("bytes per packet must be between 0 and %d");
+            //     throw std::runtime_error("bytes per packet must be between 0 and %d");
             // }
 
             // celt_mode_info(mode, CELT_GET_FRAME_SIZE, &frame_size);
