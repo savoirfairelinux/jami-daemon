@@ -95,7 +95,6 @@ struct _VideoRendererPrivate {
     ClutterActor *texture;
 
     gpointer drawarea;
-    cairo_t *cairo;
 
     gboolean is_running;
 };
@@ -374,12 +373,15 @@ readFrameFromShm(VideoRendererPrivate *priv)
                                                                  stride);
 
         if (surface) {
-            cairo_set_source_surface(priv->cairo, surface, 0, 0);
+            cairo_t *cairo = gdk_cairo_create(gtk_widget_get_window(priv->drawarea));
+            cairo_set_source_surface(cairo, surface, 0, 0);
 
             cairo_status_t status = cairo_surface_status(surface);
             if (status != CAIRO_STATUS_SURFACE_FINISHED)
-                cairo_paint(priv->cairo);
+                cairo_paint(cairo);
+
             cairo_surface_destroy(surface);
+            cairo_destroy(cairo);
         }
     }
 
@@ -393,9 +395,6 @@ video_renderer_stop(VideoRenderer *preview)
     assert(priv);
 
     priv->is_running = FALSE;
-
-    if (!priv->using_clutter)
-        cairo_destroy(priv->cairo);
 
 #if GLIB_CHECK_VERSION(2,26,0)
     g_object_notify_by_pspec(G_OBJECT(preview), properties[PROP_RUNNING]);
@@ -482,9 +481,6 @@ video_renderer_run(VideoRenderer *preview)
         clutter_container_add(CLUTTER_CONTAINER (stage), priv->texture, NULL);
 
         clutter_actor_show_all(stage);
-    } else {
-        priv->cairo = gdk_cairo_create(gtk_widget_get_window(priv->drawarea));
-        assert(priv->cairo);
     }
 
     /* frames are read and saved here */
