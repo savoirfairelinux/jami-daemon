@@ -1053,6 +1053,7 @@ void ManagerImpl::detachParticipant (const std::string& call_id,
         	removeParticipant (call_id);
         	processRemainingParticipant (current_call_id, conf);
         }
+        _dbus.getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
     } else {
         _debug ("Manager: Unbind main participant from conference %d");
         getMainBuffer()->unBindAll (Call::DEFAULT_ID);

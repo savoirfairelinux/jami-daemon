@@ -520,6 +520,7 @@ void CallView::conferenceCreatedSignal(const QString& confId)
 
 void CallView::conferenceChangedSignal(const QString& confId, const QString& state)
 {
+   qDebug() << "Conf changed signal";
    conferenceChanged(confId, state);
 }
 

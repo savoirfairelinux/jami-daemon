@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
 
 #include <QtCore/QStringList>
 
@@ -34,7 +34,7 @@ const char * CallTreeItem::callStateIcons[12] = {ICON_INCOMING, ICON_RINGING, IC
 CallTreeItem::CallTreeItem(QWidget *parent)
    : QWidget(parent), itemCall(0), init(false)
 {
-   
+   setMaximumSize(99999,50);
 }
 
 CallTreeItem::~CallTreeItem()

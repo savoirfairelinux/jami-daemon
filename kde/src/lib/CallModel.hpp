@@ -270,6 +270,7 @@ template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::
 ///Executed when the daemon signal a modification in an existing conference. Update the call list and update the TreeView
 template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::conferenceChanged(const QString& confId, const QString& state) 
 {
+   qDebug() << "Conf changed2";
    Q_UNUSED(state)
    
    if (!privateCallList_callId[confId]) {
