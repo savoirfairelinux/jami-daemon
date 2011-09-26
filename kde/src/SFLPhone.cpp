@@ -64,6 +64,21 @@ CallView* SFLPhone::model()
    return m_pView->model();
 }
 
+ContactDock*  SFLPhone::contactDock()
+{
+   return m_pContactCD;
+}
+
+HistoryDock*  SFLPhone::historyDock()
+{
+   return m_pHistoryDW;
+}
+
+BookmarkDock* SFLPhone::bookmarkDock()
+{
+   return m_pBookmarkDW;
+}
+
 SFLPhone::~SFLPhone()
 {
    saveState();

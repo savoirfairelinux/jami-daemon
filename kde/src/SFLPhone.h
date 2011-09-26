@@ -128,7 +128,10 @@ public:
    static SFLPhone* app();
    SFLPhoneView* view();
    CallView* model();
-   
+
+   ContactDock*  contactDock();
+   HistoryDock*  historyDock();
+   BookmarkDock* bookmarkDock();
    
 private slots:
    void on_m_pView_statusMessageChangeAsked(const QString & message);

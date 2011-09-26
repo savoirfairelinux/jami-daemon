@@ -110,8 +110,8 @@ SFLPhoneView::~SFLPhoneView()
 
 void SFLPhoneView::saveState()
 {
-   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   configurationManager.setHistory(callTreeModel->getHistoryCallId());
+   //ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   //configurationManager.setHistory(callTreeModel->getHistoryCallId());
 }
 
 void SFLPhoneView::loadWindow()

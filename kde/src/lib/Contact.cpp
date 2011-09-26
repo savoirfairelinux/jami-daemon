@@ -25,7 +25,7 @@
 #include "sflphone_const.h"
 
 
-Contact::Contact()
+Contact::Contact():m_pPhoto(0)
 {
    initItem();
 }

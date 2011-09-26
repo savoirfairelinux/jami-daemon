@@ -145,6 +145,27 @@ void AkonadiBackend::addNewContact(Contact* contact)
    newContact.setOrganization   ( contact->getOrganization()    );
    //newContact.setPreferredEmail ( contact->getPreferredEmail()  );//TODO
 
+   foreach (Contact::PhoneNumber* nb, contact->getPhoneNumbers()) {
+      KABC::PhoneNumber pn;
+      if (nb->getType()      == "Home"   ) pn.setType(KABC::PhoneNumber::Home  );
+      else if (nb->getType() == "Work"   ) pn.setType(KABC::PhoneNumber::Work  );
+      else if (nb->getType() == "Msg"    ) pn.setType(KABC::PhoneNumber::Msg   );
+      else if (nb->getType() == "Pref"   ) pn.setType(KABC::PhoneNumber::Pref  );
+      else if (nb->getType() == "Voice"  ) pn.setType(KABC::PhoneNumber::Voice );
+      else if (nb->getType() == "Fax"    ) pn.setType(KABC::PhoneNumber::Fax   );
+      else if (nb->getType() == "Cell"   ) pn.setType(KABC::PhoneNumber::Cell  );
+      else if (nb->getType() == "Video"  ) pn.setType(KABC::PhoneNumber::Video );
+      else if (nb->getType() == "Bbs"    ) pn.setType(KABC::PhoneNumber::Bbs   );
+      else if (nb->getType() == "Modem"  ) pn.setType(KABC::PhoneNumber::Modem );
+      else if (nb->getType() == "Car"    ) pn.setType(KABC::PhoneNumber::Car   );
+      else if (nb->getType() == "Isdn"   ) pn.setType(KABC::PhoneNumber::Isdn  );
+      else if (nb->getType() == "Pcs"    ) pn.setType(KABC::PhoneNumber::Pcs   );
+      else if (nb->getType() == "Pager"  ) pn.setType(KABC::PhoneNumber::Pager );
+
+      pn.setNumber(nb->getNumber());
+      newContact.insertPhoneNumber(pn);
+   }
+
             
    //aContact->setPhoneNumbers   (newNumbers           );//TODO
    

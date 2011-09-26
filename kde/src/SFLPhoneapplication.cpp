@@ -18,7 +18,7 @@
  */
 SFLPhoneApplication::SFLPhoneApplication()
   : KApplication()
-  , sflphoneWindow_(0)
+  //, sflphoneWindow_(0)
 {
   // SFLPhoneApplication is created from main.cpp.
 
@@ -36,7 +36,7 @@ SFLPhoneApplication::SFLPhoneApplication()
 SFLPhoneApplication::~SFLPhoneApplication()
 {
    // automatically destroyed
-   sflphoneWindow_ = 0;
+   //sflphoneWindow_ = 0;
    disableSessionManagement();
    InstanceInterface& instance              = InstanceInterfaceSingleton::getInstance();
    Q_NOREPLY instance.Unregister(getpid());
@@ -48,10 +48,10 @@ SFLPhoneApplication::~SFLPhoneApplication()
 /**
  * Return the sflphone window
  */
-SFLPhone* SFLPhoneApplication::getSFLPhoneWindow() const
-{
-  return sflphoneWindow_;
-}
+// SFLPhone* SFLPhoneApplication::getSFLPhoneWindow() const
+// {
+//   return sflphoneWindow_;
+// }
 
 
 /**
@@ -63,29 +63,29 @@ void SFLPhoneApplication::initializeMainWindow()
   //KCmdLineArgs* args = KCmdLineArgs::parsedArgs();
 
   // Enable KDE session restore.
-  int restoredWindow = -1;
-  if( kapp->isSessionRestored() ) {
-    int n = 0;
-    while( KMainWindow::canBeRestored( ++n ) ) {
-      if( KMainWindow::classNameOfToplevel( n ) != QLatin1String( "SFLPhone" ) ) {
-        continue;
-      }
-
-      restoredWindow = n;
-      break;
-    }
-  }
+//   int restoredWindow = -1;
+//   if( kapp->isSessionRestored() ) {
+//     int n = 0;
+//     while( KMainWindow::canBeRestored( ++n ) ) {
+//       if( KMainWindow::classNameOfToplevel( n ) != QLatin1String( "SFLPhone" ) ) {
+//         continue;
+//       }
+// 
+//       restoredWindow = n;
+//       break;
+//     }
+//   }
 
   // Create the main window and initialize it
-  sflphoneWindow_ = new SFLPhone();
-  if( ! sflphoneWindow_->initialize() ) {
-    exit(1);
-    return;
-  }
+//   sflphoneWindow_ = new SFLPhone();
+//   if( ! sflphoneWindow_->initialize() ) {
+//     exit(1);
+//     return;
+//   }
 
   // Initialize KApplication
   //setTopWidget( sflphoneWindow_ );
-  sflphoneWindow_->show();
+//   sflphoneWindow_->show();
 }
 
 
