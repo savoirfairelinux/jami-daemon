@@ -1041,6 +1041,12 @@ class ManagerImpl
          */
         bool isWaitingCall (const std::string& id);
 
+        /** Remove a CallID/std::string association
+         * Protected by mutex
+         * @param callID the CallID to remove
+         */
+        void removeCallAccount (const std::string& callID);
+
         /**
          * Path of the ConfigFile
          */
@@ -1099,13 +1105,6 @@ class ManagerImpl
          * @return bool True if the new association is create
          */
         bool associateCallToAccount (const std::string& callID, const std::string& accountID);
-
-        /** Remove a CallID/std::string association
-         * Protected by mutex
-         * @param callID the CallID to remove
-         * @return bool True if association is removed
-         */
-        bool removeCallAccount (const std::string& callID);
 
         /**
          * Test if call is a valid call, i.e. have been created and stored in

@@ -338,22 +338,6 @@ void ManagerImpl::hangupCall (const std::string& callId)
 {
     _info ("Manager: Hangup call %s", callId.c_str());
 
-    // First stop audio layer if there is no call anymore
-    if (getCallList().empty()) {
-
-    	audioLayerMutexLock();
-
-        if(_audiodriver == NULL) {
-        	audioLayerMutexUnlock();
-        	_error("Manager: Error: Audio layer was not instantiated");
-        	return;
-        }
-
-        _debug ("Manager: stop audio stream, there is no call remaining");
-        _audiodriver->stopStream();
-        audioLayerMutexUnlock();
-    }
-
     // store the current call id
     std::string currentCallId(getCurrentCallId());
 
@@ -2629,10 +2613,19 @@ std::string ManagerImpl::getAccountFromCall(const std::string& callID)
 	return (iter == _callAccountMap.end()) ? "" : iter->second;
 }
 
-bool ManagerImpl::removeCallAccount (const std::string& callID)
+void ManagerImpl::removeCallAccount (const std::string& callID)
 {
     ost::MutexLock m (_callAccountMapMutex);
-    return _callAccountMap.erase (callID);
+    _callAccountMap.erase (callID);
+
+    // Stop audio layer if there is no call anymore
+    if (_callAccountMap.empty()) {
+    	audioLayerMutexLock();
+        if(_audiodriver)
+            _audiodriver->stopStream();
+        audioLayerMutexUnlock();
+    }
+
 }
 
 bool ManagerImpl::isValidCall(const std::string& callID)
