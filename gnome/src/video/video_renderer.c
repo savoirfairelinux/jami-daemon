@@ -48,6 +48,7 @@
 #include "actions.h"
 
 static GtkWidget *receivingVideoWindow;
+static int receivingWindowFullscreen;
 static GtkWidget *receivingVideoArea;
 static VideoRenderer *video_renderer = NULL;
 
@@ -517,6 +518,17 @@ static void receiving_video_window_deleted_cb(GtkWidget *widget UNUSED, gpointer
     sflphone_hang_up();
 }
 
+static void receiving_video_window_button_cb(GtkWindow *win, GdkEventButton *event, gpointer fullscreen)
+{
+    int *fs = fullscreen;
+    if (event->type==GDK_2BUTTON_PRESS) {
+        *fs = !*fs;
+        if (*fs)
+            gtk_window_fullscreen(win);
+        else
+            gtk_window_unfullscreen(win);
+    }
+}
 
 void receiving_video_event_cb(DBusGProxy *proxy, gint shmKey, gint semKey,
                               gint videoBufferSize, gint destWidth,
@@ -524,7 +536,11 @@ void receiving_video_event_cb(DBusGProxy *proxy, gint shmKey, gint semKey,
 {
     if (!receivingVideoWindow) {
         receivingVideoWindow = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-        g_signal_connect (receivingVideoWindow, "delete-event", G_CALLBACK (receiving_video_window_deleted_cb), NULL);
+        receivingWindowFullscreen = 0;
+        g_signal_connect(receivingVideoWindow, "button_press_event",
+            G_CALLBACK(receiving_video_window_button_cb), &receivingWindowFullscreen);
+        g_signal_connect(receivingVideoWindow, "delete-event",
+            G_CALLBACK(receiving_video_window_deleted_cb), NULL);
     }
 
     (void)proxy;
