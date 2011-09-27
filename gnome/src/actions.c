@@ -184,7 +184,7 @@ sflphone_quit ()
         // Save the history
         sflphone_save_history ();
 
-        dbus_unregister (getpid());
+        dbus_quit();
         dbus_clean ();
         calllist_clean (current_calls);
         calllist_clean (contacts);
@@ -315,7 +315,7 @@ void sflphone_fill_account_list (void)
 
 gboolean sflphone_init (GError **error)
 {
-    if (!dbus_connect (error) || !dbus_register (getpid (), "Gtk+ Client", error))
+    if (!dbus_connect (error))
         return FALSE;
 
     abook_init();

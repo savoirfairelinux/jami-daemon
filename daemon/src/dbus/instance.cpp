@@ -34,24 +34,11 @@
 Instance::Instance (DBus::Connection& connection)
     : DBus::ObjectAdaptor (connection, "/org/sflphone/SFLphone/Instance")
 {
-    count = 0;
 }
 
 void
-Instance::Register (const int32_t& pid UNUSED,
-                    const std::string& name UNUSED)
+Instance::Quit(void)
 {
-    count++;
-}
-
-
-void
-Instance::Unregister (const int32_t& pid UNUSED)
-{
-    count --;
-
-    if (count <= 0) {
-        Manager::instance().terminate();
-        Manager::instance().getDbusManager()->exit();
-    }
+    Manager::instance().terminate();
+    Manager::instance().getDbusManager()->exit();
 }

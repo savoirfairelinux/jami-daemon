@@ -1098,18 +1098,12 @@ dbus_start_tone (const int start, const guint type)
     }
 }
 
-gboolean
-dbus_register (int pid, gchar *name, GError **error)
-{
-    return org_sflphone_SFLphone_Instance_register (instanceProxy, pid, name, error);
-}
-
 void
-dbus_unregister (int pid)
+dbus_quit(void)
 {
     GError *error = NULL;
 
-    org_sflphone_SFLphone_Instance_unregister (instanceProxy, pid, &error);
+    org_sflphone_SFLphone_Instance_quit(instanceProxy, &error);
 
     if (error) {
         ERROR ("Failed to call unregister() on instanceProxy: %s",
