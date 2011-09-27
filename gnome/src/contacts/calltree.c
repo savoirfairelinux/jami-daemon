@@ -802,8 +802,6 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 
 void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 {
-    DEBUG ("----------------------------------------------- CallTree: Add call to calltree id: %s, peer name: %s", c->_callID, c->_peer_name);
-
     if (tab == history) {
         calltree_add_history_entry (c, parent);
         return;
@@ -903,8 +901,6 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 
 void calltree_add_history_entry (callable_obj_t *c, GtkTreeIter *parent)
 {
-    DEBUG ("------------------------------------------------- CallTree: Calltree add history entry %s", c->_callID);
-
     if (!eel_gconf_get_integer (HISTORY_ENABLED))
         return;
 
@@ -921,11 +917,9 @@ void calltree_add_history_entry (callable_obj_t *c, GtkTreeIter *parent)
     gtk_tree_store_prepend (history->store, &iter, parent);
 
     if (parent == NULL) {
-        DEBUG("---------------------------------------- PARENT NULL, THIS IS NOT A CONFERENCE PARTICIPANT");
         // this is a first level call not participating to a conference
         switch (c->_history_state) {
             case INCOMING:
-                DEBUG("--------------------------------------- INCOMING");
                 pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/incoming.svg", NULL);
                 break;
             case OUTGOING:
@@ -939,7 +933,6 @@ void calltree_add_history_entry (callable_obj_t *c, GtkTreeIter *parent)
         }
     }
     else {
-        DEBUG("--------------------------------------------- PARENT IS NOT NULL, THIS IS A CONFERENCE PARTICIPANT");
         // participant to a conference
         pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
     }

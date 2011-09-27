@@ -911,8 +911,6 @@ dbus_get_account_details (gchar * accountID)
     GError *error = NULL;
     GHashTable * details = NULL;
 
-    DEBUG ("Dbus: Get account detail for %s", accountID);
-
     if (!org_sflphone_SFLphone_ConfigurationManager_get_account_details (
                 configurationManagerProxy, accountID, &details, &error)) {
         if (error->domain == DBUS_GERROR && error->code
@@ -946,8 +944,6 @@ dbus_set_credentials (account_t *a)
 void
 dbus_get_credentials (account_t *a)
 {
-    DEBUG("DBUS: Get credential for account %s", a->accountID);
-
     GError *error = NULL;
     if (org_sflphone_SFLphone_ConfigurationManager_get_credentials (
                 configurationManagerProxy, a->accountID, &a->credential_information, &error))

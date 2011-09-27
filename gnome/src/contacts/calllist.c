@@ -132,8 +132,6 @@ void calllist_add_history_conference(conference_obj_t *obj)
 void
 calllist_add_call (calltab_t* tab, callable_obj_t * c)
 {
-    DEBUG("Calllist: Add Call %s", c->_callID);
-
     QueueElement *element = g_new0(QueueElement, 1);
     element->type = HIST_CALL;
     element->elem.call = c;
@@ -165,11 +163,8 @@ calllist_remove_from_history (callable_obj_t* c)
 void
 calllist_remove_call (calltab_t* tab, const gchar * callID)
 {
-    DEBUG("CallList: Remove call %s from list", callID);
-
     GList *c = g_queue_find_custom (tab->callQueue, callID, is_callID_callstruct);
     if (c == NULL) {
-        DEBUG("CallList: Could not remove call %s", callID);
     	return;
     }
 
@@ -208,8 +203,6 @@ calllist_get_nth (calltab_t* tab, guint n)
 callable_obj_t *
 calllist_get_call (calltab_t* tab, const gchar * callID)
 {
-    DEBUG("CallList: Get call: %s", callID);
-
     GList * c = g_queue_find_custom (tab->callQueue, callID, is_callID_callstruct);
     if (c == NULL) {
         ERROR("CallList: Error: Could not find call %s", callID);

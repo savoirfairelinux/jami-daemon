@@ -111,8 +111,6 @@ callable_obj_t *create_new_call (callable_type_t type, call_state_t state,
                       const gchar* const peer_name,
                       const gchar* const peer_number)
 {
-    DEBUG ("CallableObj: Create new call (Account: %s)", accountID);
-
     callable_obj_t *obj = g_new0 (callable_obj_t, 1);
 
     obj->_error_dialogs = g_ptr_array_new();

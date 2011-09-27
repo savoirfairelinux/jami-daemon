@@ -194,8 +194,6 @@ account_list_clear ()
 void
 account_list_move_up (guint index)
 {
-    DEBUG ("index  = %i\n", index);
-
     if (index != 0) {
         gpointer acc = g_queue_pop_nth (accountQueue, index);
         g_queue_push_nth (accountQueue, acc, index-1);
@@ -219,8 +217,6 @@ account_list_get_registered_accounts (void)
     for (guint i = 0; i < account_list_get_size(); i++)
         if (account_list_get_nth (i) -> state == (ACCOUNT_STATE_REGISTERED))
             res++;
-
-    DEBUG ("Account: %d registered accounts" , res);
     return res;
 }
 
