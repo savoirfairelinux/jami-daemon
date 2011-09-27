@@ -78,8 +78,8 @@ AccountView* AccountView::buildExistingAccountFromId(QString _accountId)
    //Account* a = Account::buildExistingAccountFromId( _accountId);
    ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    AccountView* a = new AccountView();
-   a->accountId = new QString(_accountId);
-   a->accountDetails = new MapStringString( configurationManager.getAccountDetails(_accountId).value() );
+   a->m_pAccountId = new QString(_accountId);
+   a->m_pAccountDetails = new MapStringString( configurationManager.getAccountDetails(_accountId).value() );
    a->initItem();
    return a;
 }
@@ -88,7 +88,7 @@ AccountView* AccountView::buildNewAccountFromAlias(QString alias)
 {
    //Account* a = Account::buildNewAccountFromAlias(alias);
    AccountView* a = new AccountView();
-   a->accountDetails = new MapStringString();
+   a->m_pAccountDetails = new MapStringString();
    a->setAccountDetail(ACCOUNT_ALIAS,alias);
    a->initItem();
    return a;

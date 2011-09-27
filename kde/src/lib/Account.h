@@ -61,8 +61,8 @@ class LIB_EXPORT Account : public QObject {
    
    protected:
       Account();
-      QString * accountId;
-      MapStringString* accountDetails;
+      QString* m_pAccountId;
+      MapStringString* m_pAccountDetails;
 
    public slots:
       void setEnabled(bool checked);
