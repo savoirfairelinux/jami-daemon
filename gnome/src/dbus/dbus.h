@@ -360,9 +360,19 @@ void dbus_set_audio_manager (const gchar *api);
 void dbus_start_tone (const int start , const guint type);
 
 /**
- * Instance - Send unregistration request to dbus services
+ * Instance - Send registration request to dbus service.
+ * Manage the instances of clients connected to the server
+ * @param pid The pid of the processus client
+ * @param name The string description of the client. Here : GTK+ Client
+ * @param error return location for a GError or NULL
  */
-void dbus_quit(void);
+gboolean dbus_register (int pid, gchar * name, GError **error);
+
+/**
+ * Instance - Send unregistration request to dbus services
+ * @param pid The pid of the processus
+ */
+void dbus_unregister (int pid);
 
 void dbus_set_sip_address (const gchar* address);
 

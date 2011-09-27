@@ -52,10 +52,16 @@ class Instance
   public DBus::IntrospectableAdaptor,
   public DBus::ObjectAdaptor
 {
+    private:
+        int count;
+
     public:
         Instance (DBus::Connection& connection);
+        static const char* SERVER_PATH;
 
-        void Quit(void);
+        void Register (const int32_t& pid, const std::string& name);
+        void Unregister (const int32_t& pid);
+        int32_t getRegistrationCount (void);
 
 };
 
