@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-09-27 16:04-0400\n"
+"POT-Creation-Date: 2011-09-27 15:50-0400\n"
 "PO-Revision-Date: 2010-10-12 14:55+0000\n"
 "Last-Translator: Jonas Fonseca <fonseca@diku.dk>\n"
 "Language-Team: Danish <da@li.org>\n"
@@ -19,720 +19,62 @@ msgstr ""
 "X-Launchpad-Export-Date: 2011-04-01 12:40+0000\n"
 "X-Generator: Launchpad (build 12710)\n"
 
-#: ../gnome/src/config/audioconf.c:682
-#: ../gnome/src/config/addressbook-config.c:423
-msgid "Name"
-msgstr "Navn"
-
-#: ../gnome/src/config/audioconf.c:687
-msgid "Frequency"
-msgstr "Frekvens"
-
-#: ../gnome/src/config/audioconf.c:692
-msgid "Bitrate"
-msgstr "Bithastighed"
-
-#: ../gnome/src/config/audioconf.c:835
-msgid "ALSA plugin"
-msgstr "ALSA plugin"
-
-#: ../gnome/src/config/audioconf.c:857
-msgid "Output"
-msgstr "Uddata"
-
-#: ../gnome/src/config/audioconf.c:879
-msgid "Input"
-msgstr "Inddata"
-
-#: ../gnome/src/config/audioconf.c:900
-msgid "Ringtone"
-msgstr "Ringetone"
-
-#: ../gnome/src/config/audioconf.c:954
-msgid "Sound Manager"
-msgstr "Lydhåndtering"
-
-#: ../gnome/src/config/audioconf.c:964
-msgid "_Pulseaudio"
-msgstr "_PulseAudio"
-
-#: ../gnome/src/config/audioconf.c:968
-msgid "_ALSA"
-msgstr "_ALSA"
-
-#: ../gnome/src/config/audioconf.c:974
-msgid "ALSA settings"
-msgstr "ALSA indstillinger"
-
-#: ../gnome/src/config/audioconf.c:994
-msgid "Recordings"
-msgstr "Optagelser"
-
-#: ../gnome/src/config/audioconf.c:998
-msgid "Destination folder"
-msgstr "Destinationsmappe"
-
-#: ../gnome/src/config/audioconf.c:1002
-msgid "Select a folder"
-msgstr "Vælg en mappe"
-
-#: ../gnome/src/config/audioconf.c:1012
-msgid "_Always recording"
-msgstr ""
-
-#: ../gnome/src/config/audioconf.c:1019
-msgid "Voice enhancement settings"
-msgstr "Indstillinger for stemmeforstærkning"
-
-#: ../gnome/src/config/audioconf.c:1022
-msgid "_Noise Reduction"
-msgstr "_Støjreducering"
-
-#: ../gnome/src/config/audioconf.c:1033
-msgid "_Echo Cancellation"
-msgstr ""
-
-#: ../gnome/src/config/assistant.c:76
-#, c-format
-msgid "This assistant is now finished."
-msgstr "Denne vejledning er nu fuldført"
-
-#: ../gnome/src/config/assistant.c:78
-msgid ""
-"You can at any time check your registration state or modify your accounts "
-"parameters in the Options/Accounts window."
-msgstr ""
-"Du kan til enhver tid undersøge din registrering eller ændre dine kontis "
-"parametre i vinduet Indstillinger/Konti"
-
-#: ../gnome/src/config/assistant.c:81
-msgid "Alias"
-msgstr "Alias"
-
-#: ../gnome/src/config/assistant.c:85
-msgid "Server"
-msgstr "Server"
-
-#: ../gnome/src/config/assistant.c:89
-msgid "Username"
-msgstr "Brugernavn"
-
-#: ../gnome/src/config/assistant.c:93
-msgid "Security: "
-msgstr "Sikkerhed: "
-
-#: ../gnome/src/config/assistant.c:96
-msgid "SRTP/ZRTP draft-zimmermann"
-msgstr "SRTP/ZRTP draft-zimmermann"
-
-#: ../gnome/src/config/assistant.c:98
-msgid "None"
-msgstr "Ingen"
-
-#: ../gnome/src/config/assistant.c:245
-msgid "SFLphone account creation wizard"
-msgstr "SFLphone-guiden til oprettelse af konto"
-
-#: ../gnome/src/config/assistant.c:272
-msgid "Welcome to the Account creation wizard of SFLphone!"
-msgstr "Velkommen til kontooperettelsesvejledning for SFLphone"
-
-#: ../gnome/src/config/assistant.c:273
-msgid "This installation wizard will help you configure an account."
-msgstr ""
-"Denne installeringsvejledning vil hjælpe dig med at konfigurere en konto"
-
-#: ../gnome/src/config/assistant.c:288
-msgid "VoIP Protocols"
-msgstr "VoIP protokoller"
-
-#: ../gnome/src/config/assistant.c:288
-msgid "Select an account type"
-msgstr "Vælg en kontotype"
-
-#: ../gnome/src/config/assistant.c:290
-msgid "SIP (Session Initiation Protocol)"
-msgstr "SIP (Session Initiation Protocol)"
-
-#: ../gnome/src/config/assistant.c:292
-msgid "IAX2 (InterAsterix Exchange)"
-msgstr "IAX2 (InterAsterix Exchange)"
-
-#: ../gnome/src/config/assistant.c:307
-msgid "Account"
-msgstr "Konto"
-
-#: ../gnome/src/config/assistant.c:307
-msgid "Please select one of the following options"
-msgstr "Vælg en af følgende indstillinger"
-
-#: ../gnome/src/config/assistant.c:309
-#, fuzzy
-msgid ""
-"Create a free SIP/IAX2 account on sflphone.org \n"
-"(For testing purpose only)"
-msgstr "Opret en gratis SIP/IAX2 konto hos sflphone.org"
-
-#: ../gnome/src/config/assistant.c:311
-msgid "Register an existing SIP or IAX2 account"
-msgstr "Registrer en eksisterende SIP eller IAX2 konto"
-
-#: ../gnome/src/config/assistant.c:325
-msgid "SIP account settings"
-msgstr "SIP kontoindstillinger"
-
-#: ../gnome/src/config/assistant.c:325 ../gnome/src/config/assistant.c:425
-msgid "Please fill the following information"
-msgstr "Udfyld venligst følgende information"
-
-#: ../gnome/src/config/assistant.c:333 ../gnome/src/config/assistant.c:433
-#: ../gnome/src/config/accountconfigdialog.c:250
-msgid "_Alias"
-msgstr "_Alias"
-
-#: ../gnome/src/config/assistant.c:341 ../gnome/src/config/assistant.c:441
-#: ../gnome/src/config/accountconfigdialog.c:288
-msgid "_Host name"
-msgstr "_Værtsnavn"
-
-#: ../gnome/src/config/assistant.c:349 ../gnome/src/config/assistant.c:449
-#: ../gnome/src/config/accountconfigdialog.c:297
-msgid "_User name"
-msgstr "_Brugernavn"
-
-#: ../gnome/src/config/assistant.c:359 ../gnome/src/config/assistant.c:458
-#: ../gnome/src/config/accountconfigdialog.c:312
-msgid "_Password"
-msgstr "_Adgangskode"
-
-#: ../gnome/src/config/assistant.c:368 ../gnome/src/config/assistant.c:467
-#: ../gnome/src/config/accountconfigdialog.c:328
-msgid "Show password"
-msgstr "Adgangskode"
-
-#: ../gnome/src/config/assistant.c:373 ../gnome/src/config/assistant.c:472
-#: ../gnome/src/config/accountconfigdialog.c:342
-msgid "_Voicemail number"
-msgstr "_Nummer for talebesked"
-
-#: ../gnome/src/config/assistant.c:381 ../gnome/src/config/assistant.c:411
-msgid "Secure communications with _ZRTP"
-msgstr "Sikker kommunikation med _ZRTP"
-
-#: ../gnome/src/config/assistant.c:395
-msgid "Optional email address"
-msgstr "Valgfri emailadresse"
-
-#: ../gnome/src/config/assistant.c:395
-msgid "This email address will be used to send your voicemail messages."
-msgstr "Denne emailadresse vil blive brugt til at sende dig indtalte beskeder"
-
-#: ../gnome/src/config/assistant.c:403
-msgid "_Email address"
-msgstr "_Emailadresse"
-
-#: ../gnome/src/config/assistant.c:425
-msgid "IAX2 account settings"
-msgstr "IAX2 kontoindstillinger"
-
-#: ../gnome/src/config/assistant.c:491
-msgid "Network Address Translation (NAT)"
-msgstr "Network Address Translation (NAT)"
-
-#: ../gnome/src/config/assistant.c:491
-msgid "You should probably enable this if you are behind a firewall."
-msgstr "Du opfordres til at aktivere dette hvis du er bag en firewall"
-
-#: ../gnome/src/config/assistant.c:500
-msgid "E_nable STUN"
-msgstr "_Benyt STUN"
-
-#: ../gnome/src/config/assistant.c:507
-msgid "_STUN server"
-msgstr "_STUN server"
-
-#: ../gnome/src/config/assistant.c:522
-msgid "Account Registration"
-msgstr "Kontoregistrering"
-
-#: ../gnome/src/config/assistant.c:522
-msgid "Congratulations!"
-msgstr "Tillykke!"
-
-#: ../gnome/src/config/hooks-config.c:149
-msgid "URL Argument"
-msgstr "Adresseargument"
-
-#: ../gnome/src/config/hooks-config.c:157
-msgid "Trigger on specific _SIP header"
-msgstr "Udløse ved specifik _SIP protokolhoved"
-
-#: ../gnome/src/config/hooks-config.c:166
-msgid "Trigger on _IAX2 URL"
-msgstr "Udløse ved _IAX2 webadresse"
-
-#: ../gnome/src/config/hooks-config.c:171
-msgid "Command to _run"
-msgstr "Kommando som skal _kaldes"
-
-#: ../gnome/src/config/hooks-config.c:181
-msgid "Phone number rewriting"
-msgstr "Omskrivning af telefonnummer"
-
-#: ../gnome/src/config/hooks-config.c:185
-msgid "_Prefix dialed numbers with"
-msgstr "_Præfiks for indtastede numre"
-
-#: ../gnome/src/config/preferencesdialog.c:185
-msgid "Desktop Notifications"
-msgstr "Meddelelser"
-
-#: ../gnome/src/config/preferencesdialog.c:190
-msgid "_Enable notifications"
-msgstr "_Aktiver meddelelser"
-
-#: ../gnome/src/config/preferencesdialog.c:197
-msgid "System Tray Icon"
-msgstr "Systembakke-ikon"
-
-#: ../gnome/src/config/preferencesdialog.c:205
-msgid "Show SFLphone in the system tray"
-msgstr "Vis SFLphone i systemfeltet"
-
-#: ../gnome/src/config/preferencesdialog.c:212
-msgid "_Popup main window on incoming call"
-msgstr "_Vis hovedvindue ved indgående opkald"
-
-#: ../gnome/src/config/preferencesdialog.c:218
-msgid "Ne_ver popup main window"
-msgstr "Aldrig _pop-op hovedvindue"
-
-#: ../gnome/src/config/preferencesdialog.c:231
-msgid "Hide SFLphone window on _startup"
-msgstr "Skjul SFLphone vinduet ved _start"
-
-#: ../gnome/src/config/preferencesdialog.c:245
-msgid "Calls History"
-msgstr "Opkaldshistorik"
-
-#: ../gnome/src/config/preferencesdialog.c:249
-msgid "_Keep my history for at least"
-msgstr "_Gem min historik i mindst"
-
-#: ../gnome/src/config/preferencesdialog.c:264
-msgid "days"
-msgstr "dage"
-
-#: ../gnome/src/config/preferencesdialog.c:269
-msgid "Instant Messaging"
-msgstr ""
-
-#: ../gnome/src/config/preferencesdialog.c:273
-#, fuzzy
-msgid "Enable instant messaging"
-msgstr "Aktiver _ringetoner"
-
-#: ../gnome/src/config/preferencesdialog.c:357
-msgid "Preferences"
-msgstr "Indstillinger"
-
-#: ../gnome/src/config/preferencesdialog.c:395
-#: ../gnome/src/config/preferencesdialog.c:441
-#: ../gnome/src/config/addressbook-config.c:328
-#: ../gnome/src/config/shortcuts-config.c:129
-msgid "General"
-msgstr "Generelt"
-
-#: ../gnome/src/config/preferencesdialog.c:400
-#: ../gnome/src/config/preferencesdialog.c:442
-#: ../gnome/src/config/accountconfigdialog.c:1110
-#: ../gnome/src/config/accountconfigdialog.c:1250
-msgid "Audio"
-msgstr "Audio"
-
-#: ../gnome/src/config/preferencesdialog.c:405
-#: ../gnome/src/config/preferencesdialog.c:443
-msgid "Hooks"
-msgstr "Hooks"
-
-#: ../gnome/src/config/preferencesdialog.c:410
-#: ../gnome/src/config/preferencesdialog.c:444
-msgid "Shortcuts"
-msgstr "Genveje"
-
-#: ../gnome/src/config/preferencesdialog.c:416
-#: ../gnome/src/config/preferencesdialog.c:445
-msgid "Address Book"
-msgstr "Adressebog"
-
-#: ../gnome/src/config/zrtpadvanceddialog.c:51
-msgid "ZRTP Options"
-msgstr "ZRTP indstillinger"
-
-#: ../gnome/src/config/zrtpadvanceddialog.c:70
-msgid "Send Hello Hash in S_DP"
-msgstr "Send \"Hello Hash\" i S_DP"
-
-#: ../gnome/src/config/zrtpadvanceddialog.c:75
-msgid "Ask User to Confirm SAS"
-msgstr "_Spørg bruger om at godkende SAS"
-
-#: ../gnome/src/config/zrtpadvanceddialog.c:80
-msgid "_Warn if ZRTP not supported"
-msgstr "_Advar hvis ZRTP ikke understøttes"
-
-#: ../gnome/src/config/zrtpadvanceddialog.c:85
-msgid "Display SAS once for hold events"
-msgstr "_Vis SAS en enkelt gang for vente-hændelser"
-
-#: ../gnome/src/config/zrtpadvanceddialog.c:123
-msgid "SDES Options"
-msgstr "SDES indstillinger"
-
-#: ../gnome/src/config/zrtpadvanceddialog.c:141
-msgid "Fallback on RTP on SDES failure"
-msgstr "Fald tilbage til RTP ved SDES fejl"
-
-#: ../gnome/src/config/accountlistconfigdialog.c:200
-#, c-format
-msgid "Server returned \"%s\" (%d)"
-msgstr "Server svarede \""
-
-#: ../gnome/src/config/accountlistconfigdialog.c:495
-msgid "Protocol"
-msgstr "Protokol"
-
-#: ../gnome/src/config/accountlistconfigdialog.c:503
-msgid "Status"
-msgstr "Status"
-
-#: ../gnome/src/config/accountlistconfigdialog.c:585
-msgid "Accounts"
-msgstr "Konti"
-
-#: ../gnome/src/config/accountlistconfigdialog.c:594
-msgid "Configured Accounts"
-msgstr "Oprettede konti"
-
-#: ../gnome/src/config/accountlistconfigdialog.c:612
-#, c-format
-msgid "There is %d active account"
-msgid_plural "There are %d active accounts"
-msgstr[0] "aktiv konto"
-msgstr[1] "aktiv konto"
-
-#: ../gnome/src/config/accountlistconfigdialog.c:618
-msgid "You have no active account"
-msgstr "Der er ingen aktive konti"
-
-#: ../gnome/src/config/addressbook-config.c:334
-msgid "_Use Evolution address books"
-msgstr "_Benyt Evolution adressekartotek"
-
-#: ../gnome/src/config/addressbook-config.c:341
-msgid "Download limit :"
-msgstr "Download begrænsning :"
-
-#: ../gnome/src/config/addressbook-config.c:349
-msgid "cards"
-msgstr "kort"
-
-#: ../gnome/src/config/addressbook-config.c:355
-msgid "_Display contact photo if available"
-msgstr "Vis _kontaktbillede hvis tilgængeligt"
-
-#: ../gnome/src/config/addressbook-config.c:363
-msgid "Fields from Evolution's address books"
-msgstr "Felter fra Evolutions adressekartotek"
-
-#: ../gnome/src/config/addressbook-config.c:367
-msgid "_Work"
-msgstr "_Arbejde"
-
-#: ../gnome/src/config/addressbook-config.c:373
-msgid "_Home"
-msgstr "_Hjem"
-
-#: ../gnome/src/config/addressbook-config.c:379
-msgid "_Mobile"
-msgstr "_Mobil"
-
-#: ../gnome/src/config/addressbook-config.c:386
-msgid "Address Books"
-msgstr "Adressekartoteker"
-
-#: ../gnome/src/config/addressbook-config.c:390
-msgid "Select which Evolution address books to use"
-msgstr "Vælg hvilke af Evolutions adressekartoteker skal benyttes"
-
-#: ../gnome/src/config/shortcuts-config.c:132
-msgid "Be careful: these shortcuts might override system-wide shortcuts."
-msgstr ""
-"Bemærk: disse genveje vil tilsidesætte genveje defineret for hele systemet."
-
-#: ../gnome/src/config/tlsadvanceddialog.c:41
-msgid "Advanced options for TLS"
-msgstr "Advancerede indstillinger for TLS"
-
-#: ../gnome/src/config/tlsadvanceddialog.c:58
-msgid "TLS transport"
-msgstr "TLS transport"
-
-#: ../gnome/src/config/tlsadvanceddialog.c:62
-msgid ""
-"TLS transport can be used along with UDP for those calls that would\n"
-"require secure sip transactions (aka SIPS). You can configure a different\n"
-"TLS transport for each account. However, each of them will run on a "
-"dedicated\n"
-"port, different one from each other\n"
-msgstr ""
-"TLS transport kan benyttes sammen med UDP for de opkald som kræver\n"
-"sikker sip transaktion (også kaldet SIPS). Du kan konfigurere forskellige\n"
-"TLS transporter for de enkelte konti. Bemærk dog at de hver vil benytte\n"
-"en dedikeret port forskellig fra hinanden.\n"
-
-#: ../gnome/src/config/tlsadvanceddialog.c:109
-msgid "Global TLS listener (all accounts)"
-msgstr "Global TLS-modtager (alle konti)"
-
-#: ../gnome/src/config/tlsadvanceddialog.c:123
-msgid "Certificate of Authority list"
-msgstr "Autoritetscertifikatsliste"
-
-#: ../gnome/src/config/tlsadvanceddialog.c:126
-msgid "Choose a CA list file (optional)"
-msgstr "Vælg en fil med en autoritetscertifikatsliste (valgfri)"
-
-#: ../gnome/src/config/tlsadvanceddialog.c:138
-msgid "Public endpoint certificate file"
-msgstr "Offentlig endpoint certifikatsfil"
-
-#: ../gnome/src/config/tlsadvanceddialog.c:141
-msgid "Choose a public endpoint certificate (optional)"
-msgstr "Vælg et offentligt endpoint-certifikat (valgfri)"
-
-#: ../gnome/src/config/tlsadvanceddialog.c:159
-msgid "Choose a private key file (optional)"
-msgstr "Vælg en privat nøglefil (valgfri)"
-
-#: ../gnome/src/config/tlsadvanceddialog.c:174
-msgid "Password for the private key"
-msgstr "Adgangskode for den private nøgle"
-
-#: ../gnome/src/config/tlsadvanceddialog.c:189
-msgid "TLS protocol method"
-msgstr "TLS protokolmetode"
-
-#: ../gnome/src/config/tlsadvanceddialog.c:217
-msgid "TLS cipher list"
-msgstr "TLS cifferliste"
-
-#: ../gnome/src/config/tlsadvanceddialog.c:226
-msgid "Server name instance for outgoing TLS connection"
-msgstr "Server navneinstans for udgående TLS forbindelse"
-
-#: ../gnome/src/config/tlsadvanceddialog.c:234
-msgid "Negotiation timeout (sec:msec)"
-msgstr "Forhandlingstimeout"
-
-#: ../gnome/src/config/tlsadvanceddialog.c:251
-msgid "Verify incoming certificates, as a server"
-msgstr "Udfør kontrol af indgående certifikater, som en server"
-
-#: ../gnome/src/config/tlsadvanceddialog.c:257
-msgid "Verify certificates from answer, as a client"
-msgstr "Udfør kontrol af certifikater fra svar, som en klient"
-
-#: ../gnome/src/config/tlsadvanceddialog.c:263
-msgid "Require certificate for incoming tls connections"
-msgstr "Kræv certifikat for indgående TLS forbindelser"
-
-#: ../gnome/src/config/accountconfigdialog.c:237
-msgid "Account Parameters"
-msgstr "Kontoparametre"
-
-#: ../gnome/src/config/accountconfigdialog.c:259
-msgid "_Protocol"
-msgstr "_Protokol"
-
-#: ../gnome/src/config/accountconfigdialog.c:276
-msgid "Unknown"
-msgstr "Ukendt"
-
-#: ../gnome/src/config/accountconfigdialog.c:333
-msgid "_Proxy"
-msgstr ""
-
-#: ../gnome/src/config/accountconfigdialog.c:351
-msgid "_User-agent"
-msgstr "_Brugeragent"
-
-#: ../gnome/src/config/accountconfigdialog.c:411
-msgid "Authentication"
-msgstr "Godkendelse"
-
-#: ../gnome/src/config/accountconfigdialog.c:412
-msgid "Secret"
-msgstr "Hemmelig"
-
-#: ../gnome/src/config/accountconfigdialog.c:654
-msgid "Credential"
-msgstr "Legitimationsoplysning"
-
-#: ../gnome/src/config/accountconfigdialog.c:688
-msgid "Authentication name"
-msgstr "Godkendelsesnavn"
-
-#: ../gnome/src/config/accountconfigdialog.c:699
-msgid "Password"
-msgstr "Adgangskode"
-
-#: ../gnome/src/config/accountconfigdialog.c:761
-#: ../gnome/src/config/accountconfigdialog.c:1271
-msgid "Security"
-msgstr "Sikkerhed"
-
-#: ../gnome/src/config/accountconfigdialog.c:772
-#, fuzzy
-msgid "Use TLS transport(sips)"
-msgstr "Benyt TLS transport (sips)"
-
-#: ../gnome/src/config/accountconfigdialog.c:778
-msgid "SRTP key exchange"
-msgstr "SRTP-nøgleudveksling"
-
-#: ../gnome/src/config/accountconfigdialog.c:784
-msgid "Disabled"
-msgstr "Deaktiveret"
-
-#: ../gnome/src/config/accountconfigdialog.c:848
-msgid "Registration"
-msgstr "Registrering"
-
-#: ../gnome/src/config/accountconfigdialog.c:852
-msgid "Registration expire"
-msgstr "Forældelse af registrering"
-
-#: ../gnome/src/config/accountconfigdialog.c:861
-msgid "_Comply with RFC 3263"
-msgstr "_Overhold RFC 3263"
-
-#: ../gnome/src/config/accountconfigdialog.c:881
-msgid "Network Interface"
+#: ../gnome/src/accountlist.c:150
+msgid "Registered"
+msgstr "Registreret"
+
+#: ../gnome/src/accountlist.c:153
+msgid "Not Registered"
+msgstr "Ikke registreret"
+
+#: ../gnome/src/accountlist.c:156
+msgid "Trying..."
+msgstr "Forsøger..."
+
+#: ../gnome/src/accountlist.c:159 ../gnome/src/sflnotify.c:144
+#: ../gnome/src/sflnotify.c:155
+msgid "Error"
+msgstr "Fejl"
+
+#: ../gnome/src/accountlist.c:162
+msgid "Authentication Failed"
+msgstr "Godkendelse mislykkedes"
+
+#: ../gnome/src/accountlist.c:165
+msgid "Network unreachable"
 msgstr "Netværk kan ikke nås"
 
-#: ../gnome/src/config/accountconfigdialog.c:894
-msgid "Local address"
-msgstr "Lokal adresse"
+#: ../gnome/src/accountlist.c:168
+msgid "Host unreachable"
+msgstr "Vært kan ikke nås"
 
-#: ../gnome/src/config/accountconfigdialog.c:953
-msgid "Local port"
-msgstr "Lokal port"
+#: ../gnome/src/accountlist.c:171
+msgid "Stun configuration error"
+msgstr "Stun konfigureringsfejl"
 
-#: ../gnome/src/config/accountconfigdialog.c:995
-#: ../gnome/src/config/accountconfigdialog.c:1029
-msgid "Published address"
-msgstr "Offentliggjort adresse"
+#: ../gnome/src/accountlist.c:174
+msgid "Stun server invalid"
+msgstr "Stun server ugyldig"
 
-#: ../gnome/src/config/accountconfigdialog.c:999
-msgid "Using STUN"
-msgstr "Ved brug af STUN"
+#: ../gnome/src/accountlist.c:177
+msgid "Ready"
+msgstr "Klar"
 
-#: ../gnome/src/config/accountconfigdialog.c:1007
-msgid "STUN server URL"
-msgstr "STUN serveradresse"
+#: ../gnome/src/accountlist.c:180
+msgid "Invalid"
+msgstr "Ugyldig"
 
-#: ../gnome/src/config/accountconfigdialog.c:1015
-msgid "Same as local parameters"
-msgstr "Samme som lokale parametre"
+#: ../gnome/src/actions.c:168
+msgid "Using account"
+msgstr "Benytter konto"
 
-#: ../gnome/src/config/accountconfigdialog.c:1018
-msgid "Set published address and port:"
-msgstr "Konfigurer offentliggjort adresse og port:"
+#: ../gnome/src/actions.c:172
+msgid "No registered accounts"
+msgstr "Ingen registrerede konti"
 
-#: ../gnome/src/config/accountconfigdialog.c:1038
-msgid "Published port"
-msgstr "Offentliggjort port"
-
-#: ../gnome/src/config/accountconfigdialog.c:1122
-msgid "DTMF"
-msgstr "DTMF"
-
-#: ../gnome/src/config/accountconfigdialog.c:1133
-msgid "RTP"
-msgstr "RTP"
-
-#: ../gnome/src/config/accountconfigdialog.c:1137
-msgid "SIP"
-msgstr "SIP"
-
-#: ../gnome/src/config/accountconfigdialog.c:1144
-msgid "Ringtones"
-msgstr "Ringetoner"
-
-#: ../gnome/src/config/accountconfigdialog.c:1147
-msgid "Choose a ringtone"
-msgstr "Vælg en ringetone"
-
-#: ../gnome/src/config/accountconfigdialog.c:1152
-msgid "_Enable ringtones"
-msgstr "Aktiver _ringetoner"
-
-#: ../gnome/src/config/accountconfigdialog.c:1164
-msgid "Audio Files"
-msgstr "Lydfiler"
-
-#: ../gnome/src/config/accountconfigdialog.c:1184
-msgid ""
-"This profile is used when you want to reach a remote peer simply by typing a "
-"sip URI such as <b>sip:remotepeer</b>. The settings you define here will "
-"also be used if no account can be matched to an incoming or outgoing call."
-msgstr ""
-"Denne profil benyttes når du ønsker at kontakte en ekstern peer ved blot at "
-"indtaste en sip-adresse såsom <b>sip:eksternpeer</b>. De indstillinger som "
-"du definerer her vil også benyttes hvis ingen konto kan tilknyttes et "
-"indgående eller udgående opkald."
-
-#: ../gnome/src/config/accountconfigdialog.c:1224
-msgid "Account settings"
-msgstr "Kontoindstillinger"
-
-#: ../gnome/src/config/accountconfigdialog.c:1244
-msgid "Basic"
-msgstr "Grundlæggende"
-
-#: ../gnome/src/config/accountconfigdialog.c:1266
-msgid "Advanced"
-msgstr "Avanceret"
-
-#: ../gnome/src/config/accountconfigdialog.c:1278
-msgid "Network"
-msgstr "Netværk"
-
-#: ../gnome/src/contacts/searchbar.c:191
-msgid "Search all"
-msgstr "Søg alle"
-
-#: ../gnome/src/contacts/searchbar.c:192 ../gnome/src/contacts/searchbar.c:205
-#: ../gnome/src/contacts/searchbar.c:217 ../gnome/src/contacts/searchbar.c:229
-msgid "Click here to change the search type"
-msgstr "Klik her for at ændre søgningstypen"
-
-#: ../gnome/src/contacts/searchbar.c:204
-msgid "Search by missed call"
-msgstr "Søg i ubesvarede opkald"
-
-#: ../gnome/src/contacts/searchbar.c:216
-msgid "Search by incoming call"
-msgstr "Søg i indgående opkald"
-
-#: ../gnome/src/contacts/searchbar.c:228
-msgid "Search by outgoing call"
-msgstr "Søg i udgående opkald"
-
-#: ../gnome/src/main.c:102 ../gnome/src/dbus/dbus.c:514
-msgid "SFLphone Error"
-msgstr "SFLphone fejl"
+#: ../gnome/src/actions.c:596 ../gnome/src/actions.c:867
+msgid "Direct SIP call"
+msgstr "Direkte IP opkald"
 
 #: ../gnome/src/callable_obj.c:310
 msgid "today at %R"
@@ -750,81 +92,16 @@ msgstr "%A klokken %R"
 msgid "%x at %R"
 msgstr "%x klokken %R"
 
-#: ../gnome/src/sflnotify.c:82
-#, c-format
-msgid "%s says:"
-msgstr ""
-
-#: ../gnome/src/sflnotify.c:98 ../gnome/src/sflnotify.c:115
-#, c-format
-msgid "%s account : %s"
-msgstr "%s konto : %s"
-
-#: ../gnome/src/sflnotify.c:103
-#, c-format
-msgid "<i>From</i> %s"
-msgstr "<i>Fra</i> %s"
-
-#: ../gnome/src/sflnotify.c:118
-#, c-format
-msgid "%d voice mail"
-msgid_plural "%d voice mails"
-msgstr[0] "%d indtalt besked"
-msgstr[1] "%d indtalte beskeder"
-
-#: ../gnome/src/sflnotify.c:130
-#, c-format
-msgid "Calling with %s account <i>%s</i>"
-msgstr "Kalder op med %s konto <i>%s</i>"
-
-#: ../gnome/src/sflnotify.c:134
-msgid "Current account"
-msgstr "Nuværende konto"
-
-#: ../gnome/src/sflnotify.c:143
-msgid "You have no accounts set up"
-msgstr "Du har ingen oprettede konti"
-
-#: ../gnome/src/sflnotify.c:144 ../gnome/src/sflnotify.c:155
-#: ../gnome/src/accountlist.c:159
-msgid "Error"
-msgstr "Fejl"
-
-#: ../gnome/src/sflnotify.c:154
-msgid "You have no registered accounts"
-msgstr "Du har ingen registrerede konti"
-
-#: ../gnome/src/sflnotify.c:166
-#, c-format
+#: ../gnome/src/eel-gconf-extensions.c:73
 msgid ""
-"<i>With:</i> %s \n"
-"using %s"
+"Cannot find a schema for gpdf preferences. \n"
+"Check your gconf setup, look at gpdf FAQ for \n"
+"more info"
 msgstr ""
-"<i>Med:</i> %s \n"
-"benyttende %s"
 
-#: ../gnome/src/sflnotify.c:177
-#, c-format
-msgid "%s does not support ZRTP."
-msgstr "%s understøtter ikke ZRTP."
-
-#: ../gnome/src/sflnotify.c:188
-#, c-format
-msgid "ZRTP negotiation failed with %s"
-msgstr "ZRTP forhandling mislykkedes med %s"
-
-#: ../gnome/src/sflnotify.c:199
-#, c-format
-msgid "<i>With:</i> %s"
-msgstr "<i>Med:</i> %s"
-
-#: ../gnome/src/sliders.c:172
-msgid "Speakers volume"
-msgstr "Højtaler lydstyrke"
-
-#: ../gnome/src/sliders.c:172
-msgid "Mic volume"
-msgstr "Mikrofon lydstyrke"
+#: ../gnome/src/main.c:102 ../gnome/src/dbus/dbus.c:514
+msgid "SFLphone Error"
+msgstr "SFLphone fejl"
 
 #: ../gnome/src/mainwindow.c:129
 msgid "There is one call in progress."
@@ -887,89 +164,96 @@ msgstr "Godkend sikkerhedsændring"
 msgid "Confirm"
 msgstr "Godkend"
 
-#: ../gnome/src/eel-gconf-extensions.c:73
-msgid ""
-"Cannot find a schema for gpdf preferences. \n"
-"Check your gconf setup, look at gpdf FAQ for \n"
-"more info"
+#: ../gnome/src/sflnotify.c:82
+#, c-format
+msgid "%s says:"
 msgstr ""
 
-#: ../gnome/src/accountlist.c:150
-msgid "Registered"
-msgstr "Registreret"
+#: ../gnome/src/sflnotify.c:98 ../gnome/src/sflnotify.c:115
+#, c-format
+msgid "%s account : %s"
+msgstr "%s konto : %s"
 
-#: ../gnome/src/accountlist.c:153
-msgid "Not Registered"
-msgstr "Ikke registreret"
+#: ../gnome/src/sflnotify.c:103
+#, c-format
+msgid "<i>From</i> %s"
+msgstr "<i>Fra</i> %s"
 
-#: ../gnome/src/accountlist.c:156
-msgid "Trying..."
-msgstr "Forsøger..."
+#: ../gnome/src/sflnotify.c:118
+#, c-format
+msgid "%d voice mail"
+msgid_plural "%d voice mails"
+msgstr[0] "%d indtalt besked"
+msgstr[1] "%d indtalte beskeder"
 
-#: ../gnome/src/accountlist.c:162
-msgid "Authentication Failed"
-msgstr "Godkendelse mislykkedes"
+#: ../gnome/src/sflnotify.c:130
+#, c-format
+msgid "Calling with %s account <i>%s</i>"
+msgstr "Kalder op med %s konto <i>%s</i>"
 
-#: ../gnome/src/accountlist.c:165
-msgid "Network unreachable"
-msgstr "Netværk kan ikke nås"
+#: ../gnome/src/sflnotify.c:134
+msgid "Current account"
+msgstr "Nuværende konto"
 
-#: ../gnome/src/accountlist.c:168
-msgid "Host unreachable"
-msgstr "Vært kan ikke nås"
+#: ../gnome/src/sflnotify.c:143
+msgid "You have no accounts set up"
+msgstr "Du har ingen oprettede konti"
 
-#: ../gnome/src/accountlist.c:171
-msgid "Stun configuration error"
-msgstr "Stun konfigureringsfejl"
+#: ../gnome/src/sflnotify.c:154
+msgid "You have no registered accounts"
+msgstr "Du har ingen registrerede konti"
 
-#: ../gnome/src/accountlist.c:174
-msgid "Stun server invalid"
-msgstr "Stun server ugyldig"
-
-#: ../gnome/src/accountlist.c:177
-msgid "Ready"
-msgstr "Klar"
-
-#: ../gnome/src/accountlist.c:180
-msgid "Invalid"
-msgstr "Ugyldig"
-
-#: ../gnome/src/dbus/dbus.c:494
+#: ../gnome/src/sflnotify.c:166
+#, c-format
 msgid ""
-"ALSA notification\n"
-"\n"
-"Error while opening playback device"
+"<i>With:</i> %s \n"
+"using %s"
 msgstr ""
-"ALSA meddelelse\n"
-"\n"
-"Fejl opstod mens afspilningsenhed blev åbnet"
+"<i>Med:</i> %s \n"
+"benyttende %s"
 
-#: ../gnome/src/dbus/dbus.c:497
-msgid ""
-"ALSA notification\n"
-"\n"
-"Error while opening capture device"
-msgstr ""
-"ALSA meddelelse\n"
-"\n"
-"Fejl opstod mens optageenhed blev åbnet"
+#: ../gnome/src/sflnotify.c:177
+#, c-format
+msgid "%s does not support ZRTP."
+msgstr "%s understøtter ikke ZRTP."
 
-#: ../gnome/src/dbus/dbus.c:500
-msgid ""
-"Pulseaudio notification\n"
-"\n"
-"Pulseaudio is not running"
-msgstr ""
-"PulseAudio meddelelse\n"
-"\n"
-"PulseAudio er tilgængelig"
+#: ../gnome/src/sflnotify.c:188
+#, c-format
+msgid "ZRTP negotiation failed with %s"
+msgstr "ZRTP forhandling mislykkedes med %s"
 
-#: ../gnome/src/dbus/dbus.c:503
-msgid ""
-"Codecs notification\n"
-"\n"
-"Codecs not found"
-msgstr ""
+#: ../gnome/src/sflnotify.c:199
+#, c-format
+msgid "<i>With:</i> %s"
+msgstr "<i>Med:</i> %s"
+
+#: ../gnome/src/sliders.c:172
+msgid "Speakers volume"
+msgstr "Højtaler lydstyrke"
+
+#: ../gnome/src/sliders.c:172
+msgid "Mic volume"
+msgstr "Mikrofon lydstyrke"
+
+#: ../gnome/src/statusicon.c:135
+msgid "_Show main window"
+msgstr "_Vis hovedvindue"
+
+#: ../gnome/src/statusicon.c:142 ../gnome/src/uimanager.c:982
+#: ../gnome/src/uimanager.c:1269 ../gnome/src/uimanager.c:1329
+msgid "_Hang up"
+msgstr "_Læg på"
+
+#: ../gnome/src/statusicon.c:197
+msgid "SFLphone"
+msgstr "SFLphone"
+
+#: ../gnome/src/statusicon.c:198
+#, c-format
+msgid "%i active account"
+msgid_plural "%i active accounts"
+msgstr[0] "%i aktiv konto"
+msgstr[1] "%i aktive konti"
 
 #: ../gnome/src/uimanager.c:148
 msgid "No address book selected"
@@ -1015,11 +299,6 @@ msgstr "_Svar"
 #: ../gnome/src/uimanager.c:981
 msgid "Answer the call"
 msgstr "Besvar opkaldet"
-
-#: ../gnome/src/uimanager.c:982 ../gnome/src/uimanager.c:1269
-#: ../gnome/src/uimanager.c:1329 ../gnome/src/statusicon.c:142
-msgid "_Hang up"
-msgstr "_Læg på"
 
 #: ../gnome/src/uimanager.c:983
 msgid "Finish the call"
@@ -1225,38 +504,758 @@ msgstr "Ændre telefonnummer"
 msgid "Edit the phone number before making a call"
 msgstr "Ændre telefonnummeret før opkald"
 
-#: ../gnome/src/actions.c:168
-msgid "Using account"
-msgstr "Benytter konto"
+#: ../gnome/src/dbus/dbus.c:494
+msgid ""
+"ALSA notification\n"
+"\n"
+"Error while opening playback device"
+msgstr ""
+"ALSA meddelelse\n"
+"\n"
+"Fejl opstod mens afspilningsenhed blev åbnet"
 
-#: ../gnome/src/actions.c:172
-msgid "No registered accounts"
-msgstr "Ingen registrerede konti"
+#: ../gnome/src/dbus/dbus.c:497
+msgid ""
+"ALSA notification\n"
+"\n"
+"Error while opening capture device"
+msgstr ""
+"ALSA meddelelse\n"
+"\n"
+"Fejl opstod mens optageenhed blev åbnet"
 
-#: ../gnome/src/actions.c:596 ../gnome/src/actions.c:867
-msgid "Direct SIP call"
-msgstr "Direkte IP opkald"
+#: ../gnome/src/dbus/dbus.c:500
+msgid ""
+"Pulseaudio notification\n"
+"\n"
+"Pulseaudio is not running"
+msgstr ""
+"PulseAudio meddelelse\n"
+"\n"
+"PulseAudio er tilgængelig"
 
-#: ../gnome/src/statusicon.c:135
-msgid "_Show main window"
-msgstr "_Vis hovedvindue"
+#: ../gnome/src/dbus/dbus.c:503
+msgid ""
+"Codecs notification\n"
+"\n"
+"Codecs not found"
+msgstr ""
 
-#: ../gnome/src/statusicon.c:197
-msgid "SFLphone"
-msgstr "SFLphone"
+#: ../gnome/src/config/accountconfigdialog.c:237
+msgid "Account Parameters"
+msgstr "Kontoparametre"
 
-#: ../gnome/src/statusicon.c:198
+#: ../gnome/src/config/accountconfigdialog.c:250
+#: ../gnome/src/config/assistant.c:333 ../gnome/src/config/assistant.c:433
+msgid "_Alias"
+msgstr "_Alias"
+
+#: ../gnome/src/config/accountconfigdialog.c:259
+msgid "_Protocol"
+msgstr "_Protokol"
+
+#: ../gnome/src/config/accountconfigdialog.c:276
+msgid "Unknown"
+msgstr "Ukendt"
+
+#: ../gnome/src/config/accountconfigdialog.c:288
+#: ../gnome/src/config/assistant.c:341 ../gnome/src/config/assistant.c:441
+msgid "_Host name"
+msgstr "_Værtsnavn"
+
+#: ../gnome/src/config/accountconfigdialog.c:297
+#: ../gnome/src/config/assistant.c:349 ../gnome/src/config/assistant.c:449
+msgid "_User name"
+msgstr "_Brugernavn"
+
+#: ../gnome/src/config/accountconfigdialog.c:312
+#: ../gnome/src/config/assistant.c:359 ../gnome/src/config/assistant.c:458
+msgid "_Password"
+msgstr "_Adgangskode"
+
+#: ../gnome/src/config/accountconfigdialog.c:328
+#: ../gnome/src/config/assistant.c:368 ../gnome/src/config/assistant.c:467
+msgid "Show password"
+msgstr "Adgangskode"
+
+#: ../gnome/src/config/accountconfigdialog.c:333
+msgid "_Proxy"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:342
+#: ../gnome/src/config/assistant.c:373 ../gnome/src/config/assistant.c:472
+msgid "_Voicemail number"
+msgstr "_Nummer for talebesked"
+
+#: ../gnome/src/config/accountconfigdialog.c:351
+msgid "_User-agent"
+msgstr "_Brugeragent"
+
+#: ../gnome/src/config/accountconfigdialog.c:411
+msgid "Authentication"
+msgstr "Godkendelse"
+
+#: ../gnome/src/config/accountconfigdialog.c:412
+msgid "Secret"
+msgstr "Hemmelig"
+
+#: ../gnome/src/config/accountconfigdialog.c:654
+msgid "Credential"
+msgstr "Legitimationsoplysning"
+
+#: ../gnome/src/config/accountconfigdialog.c:688
+msgid "Authentication name"
+msgstr "Godkendelsesnavn"
+
+#: ../gnome/src/config/accountconfigdialog.c:699
+msgid "Password"
+msgstr "Adgangskode"
+
+#: ../gnome/src/config/accountconfigdialog.c:761
+#: ../gnome/src/config/accountconfigdialog.c:1271
+msgid "Security"
+msgstr "Sikkerhed"
+
+#: ../gnome/src/config/accountconfigdialog.c:772
+#, fuzzy
+msgid "Use TLS transport(sips)"
+msgstr "Benyt TLS transport (sips)"
+
+#: ../gnome/src/config/accountconfigdialog.c:778
+msgid "SRTP key exchange"
+msgstr "SRTP-nøgleudveksling"
+
+#: ../gnome/src/config/accountconfigdialog.c:784
+msgid "Disabled"
+msgstr "Deaktiveret"
+
+#: ../gnome/src/config/accountconfigdialog.c:848
+msgid "Registration"
+msgstr "Registrering"
+
+#: ../gnome/src/config/accountconfigdialog.c:852
+msgid "Registration expire"
+msgstr "Forældelse af registrering"
+
+#: ../gnome/src/config/accountconfigdialog.c:861
+msgid "_Comply with RFC 3263"
+msgstr "_Overhold RFC 3263"
+
+#: ../gnome/src/config/accountconfigdialog.c:881
+msgid "Network Interface"
+msgstr "Netværk kan ikke nås"
+
+#: ../gnome/src/config/accountconfigdialog.c:894
+msgid "Local address"
+msgstr "Lokal adresse"
+
+#: ../gnome/src/config/accountconfigdialog.c:953
+msgid "Local port"
+msgstr "Lokal port"
+
+#: ../gnome/src/config/accountconfigdialog.c:995
+#: ../gnome/src/config/accountconfigdialog.c:1029
+msgid "Published address"
+msgstr "Offentliggjort adresse"
+
+#: ../gnome/src/config/accountconfigdialog.c:999
+msgid "Using STUN"
+msgstr "Ved brug af STUN"
+
+#: ../gnome/src/config/accountconfigdialog.c:1007
+msgid "STUN server URL"
+msgstr "STUN serveradresse"
+
+#: ../gnome/src/config/accountconfigdialog.c:1015
+msgid "Same as local parameters"
+msgstr "Samme som lokale parametre"
+
+#: ../gnome/src/config/accountconfigdialog.c:1018
+msgid "Set published address and port:"
+msgstr "Konfigurer offentliggjort adresse og port:"
+
+#: ../gnome/src/config/accountconfigdialog.c:1038
+msgid "Published port"
+msgstr "Offentliggjort port"
+
+#: ../gnome/src/config/accountconfigdialog.c:1110
+#: ../gnome/src/config/accountconfigdialog.c:1250
+#: ../gnome/src/config/preferencesdialog.c:400
+#: ../gnome/src/config/preferencesdialog.c:442
+msgid "Audio"
+msgstr "Audio"
+
+#: ../gnome/src/config/accountconfigdialog.c:1122
+msgid "DTMF"
+msgstr "DTMF"
+
+#: ../gnome/src/config/accountconfigdialog.c:1133
+msgid "RTP"
+msgstr "RTP"
+
+#: ../gnome/src/config/accountconfigdialog.c:1137
+msgid "SIP"
+msgstr "SIP"
+
+#: ../gnome/src/config/accountconfigdialog.c:1144
+msgid "Ringtones"
+msgstr "Ringetoner"
+
+#: ../gnome/src/config/accountconfigdialog.c:1147
+msgid "Choose a ringtone"
+msgstr "Vælg en ringetone"
+
+#: ../gnome/src/config/accountconfigdialog.c:1152
+msgid "_Enable ringtones"
+msgstr "Aktiver _ringetoner"
+
+#: ../gnome/src/config/accountconfigdialog.c:1164
+msgid "Audio Files"
+msgstr "Lydfiler"
+
+#: ../gnome/src/config/accountconfigdialog.c:1184
+msgid ""
+"This profile is used when you want to reach a remote peer simply by typing a "
+"sip URI such as <b>sip:remotepeer</b>. The settings you define here will "
+"also be used if no account can be matched to an incoming or outgoing call."
+msgstr ""
+"Denne profil benyttes når du ønsker at kontakte en ekstern peer ved blot at "
+"indtaste en sip-adresse såsom <b>sip:eksternpeer</b>. De indstillinger som "
+"du definerer her vil også benyttes hvis ingen konto kan tilknyttes et "
+"indgående eller udgående opkald."
+
+#: ../gnome/src/config/accountconfigdialog.c:1224
+msgid "Account settings"
+msgstr "Kontoindstillinger"
+
+#: ../gnome/src/config/accountconfigdialog.c:1244
+msgid "Basic"
+msgstr "Grundlæggende"
+
+#: ../gnome/src/config/accountconfigdialog.c:1266
+msgid "Advanced"
+msgstr "Avanceret"
+
+#: ../gnome/src/config/accountconfigdialog.c:1278
+msgid "Network"
+msgstr "Netværk"
+
+#: ../gnome/src/config/accountlistconfigdialog.c:200
 #, c-format
-msgid "%i active account"
-msgid_plural "%i active accounts"
-msgstr[0] "%i aktiv konto"
-msgstr[1] "%i aktive konti"
+msgid "Server returned \"%s\" (%d)"
+msgstr "Server svarede \""
+
+#: ../gnome/src/config/accountlistconfigdialog.c:495
+msgid "Protocol"
+msgstr "Protokol"
+
+#: ../gnome/src/config/accountlistconfigdialog.c:503
+msgid "Status"
+msgstr "Status"
+
+#: ../gnome/src/config/accountlistconfigdialog.c:585
+msgid "Accounts"
+msgstr "Konti"
+
+#: ../gnome/src/config/accountlistconfigdialog.c:594
+msgid "Configured Accounts"
+msgstr "Oprettede konti"
+
+#: ../gnome/src/config/accountlistconfigdialog.c:612
+#, c-format
+msgid "There is %d active account"
+msgid_plural "There are %d active accounts"
+msgstr[0] "aktiv konto"
+msgstr[1] "aktiv konto"
+
+#: ../gnome/src/config/accountlistconfigdialog.c:618
+msgid "You have no active account"
+msgstr "Der er ingen aktive konti"
+
+#: ../gnome/src/config/addressbook-config.c:328
+#: ../gnome/src/config/preferencesdialog.c:395
+#: ../gnome/src/config/preferencesdialog.c:441
+#: ../gnome/src/config/shortcuts-config.c:129
+msgid "General"
+msgstr "Generelt"
+
+#: ../gnome/src/config/addressbook-config.c:334
+msgid "_Use Evolution address books"
+msgstr "_Benyt Evolution adressekartotek"
+
+#: ../gnome/src/config/addressbook-config.c:341
+msgid "Download limit :"
+msgstr "Download begrænsning :"
+
+#: ../gnome/src/config/addressbook-config.c:349
+msgid "cards"
+msgstr "kort"
+
+#: ../gnome/src/config/addressbook-config.c:355
+msgid "_Display contact photo if available"
+msgstr "Vis _kontaktbillede hvis tilgængeligt"
+
+#: ../gnome/src/config/addressbook-config.c:363
+msgid "Fields from Evolution's address books"
+msgstr "Felter fra Evolutions adressekartotek"
+
+#: ../gnome/src/config/addressbook-config.c:367
+msgid "_Work"
+msgstr "_Arbejde"
+
+#: ../gnome/src/config/addressbook-config.c:373
+msgid "_Home"
+msgstr "_Hjem"
+
+#: ../gnome/src/config/addressbook-config.c:379
+msgid "_Mobile"
+msgstr "_Mobil"
+
+#: ../gnome/src/config/addressbook-config.c:386
+msgid "Address Books"
+msgstr "Adressekartoteker"
+
+#: ../gnome/src/config/addressbook-config.c:390
+msgid "Select which Evolution address books to use"
+msgstr "Vælg hvilke af Evolutions adressekartoteker skal benyttes"
+
+#: ../gnome/src/config/addressbook-config.c:423
+#: ../gnome/src/config/audioconf.c:682
+msgid "Name"
+msgstr "Navn"
+
+#: ../gnome/src/config/assistant.c:76
+#, c-format
+msgid "This assistant is now finished."
+msgstr "Denne vejledning er nu fuldført"
+
+#: ../gnome/src/config/assistant.c:78
+msgid ""
+"You can at any time check your registration state or modify your accounts "
+"parameters in the Options/Accounts window."
+msgstr ""
+"Du kan til enhver tid undersøge din registrering eller ændre dine kontis "
+"parametre i vinduet Indstillinger/Konti"
+
+#: ../gnome/src/config/assistant.c:81
+msgid "Alias"
+msgstr "Alias"
+
+#: ../gnome/src/config/assistant.c:85
+msgid "Server"
+msgstr "Server"
+
+#: ../gnome/src/config/assistant.c:89
+msgid "Username"
+msgstr "Brugernavn"
+
+#: ../gnome/src/config/assistant.c:93
+msgid "Security: "
+msgstr "Sikkerhed: "
+
+#: ../gnome/src/config/assistant.c:96
+msgid "SRTP/ZRTP draft-zimmermann"
+msgstr "SRTP/ZRTP draft-zimmermann"
+
+#: ../gnome/src/config/assistant.c:98
+msgid "None"
+msgstr "Ingen"
+
+#: ../gnome/src/config/assistant.c:245
+msgid "SFLphone account creation wizard"
+msgstr "SFLphone-guiden til oprettelse af konto"
+
+#: ../gnome/src/config/assistant.c:272
+msgid "Welcome to the Account creation wizard of SFLphone!"
+msgstr "Velkommen til kontooperettelsesvejledning for SFLphone"
+
+#: ../gnome/src/config/assistant.c:273
+msgid "This installation wizard will help you configure an account."
+msgstr ""
+"Denne installeringsvejledning vil hjælpe dig med at konfigurere en konto"
+
+#: ../gnome/src/config/assistant.c:288
+msgid "VoIP Protocols"
+msgstr "VoIP protokoller"
+
+#: ../gnome/src/config/assistant.c:288
+msgid "Select an account type"
+msgstr "Vælg en kontotype"
+
+#: ../gnome/src/config/assistant.c:290
+msgid "SIP (Session Initiation Protocol)"
+msgstr "SIP (Session Initiation Protocol)"
+
+#: ../gnome/src/config/assistant.c:292
+msgid "IAX2 (InterAsterix Exchange)"
+msgstr "IAX2 (InterAsterix Exchange)"
+
+#: ../gnome/src/config/assistant.c:307
+msgid "Account"
+msgstr "Konto"
+
+#: ../gnome/src/config/assistant.c:307
+msgid "Please select one of the following options"
+msgstr "Vælg en af følgende indstillinger"
+
+#: ../gnome/src/config/assistant.c:309
+#, fuzzy
+msgid ""
+"Create a free SIP/IAX2 account on sflphone.org \n"
+"(For testing purpose only)"
+msgstr "Opret en gratis SIP/IAX2 konto hos sflphone.org"
+
+#: ../gnome/src/config/assistant.c:311
+msgid "Register an existing SIP or IAX2 account"
+msgstr "Registrer en eksisterende SIP eller IAX2 konto"
+
+#: ../gnome/src/config/assistant.c:325
+msgid "SIP account settings"
+msgstr "SIP kontoindstillinger"
+
+#: ../gnome/src/config/assistant.c:325 ../gnome/src/config/assistant.c:425
+msgid "Please fill the following information"
+msgstr "Udfyld venligst følgende information"
+
+#: ../gnome/src/config/assistant.c:381 ../gnome/src/config/assistant.c:411
+msgid "Secure communications with _ZRTP"
+msgstr "Sikker kommunikation med _ZRTP"
+
+#: ../gnome/src/config/assistant.c:395
+msgid "Optional email address"
+msgstr "Valgfri emailadresse"
+
+#: ../gnome/src/config/assistant.c:395
+msgid "This email address will be used to send your voicemail messages."
+msgstr "Denne emailadresse vil blive brugt til at sende dig indtalte beskeder"
+
+#: ../gnome/src/config/assistant.c:403
+msgid "_Email address"
+msgstr "_Emailadresse"
+
+#: ../gnome/src/config/assistant.c:425
+msgid "IAX2 account settings"
+msgstr "IAX2 kontoindstillinger"
+
+#: ../gnome/src/config/assistant.c:491
+msgid "Network Address Translation (NAT)"
+msgstr "Network Address Translation (NAT)"
+
+#: ../gnome/src/config/assistant.c:491
+msgid "You should probably enable this if you are behind a firewall."
+msgstr "Du opfordres til at aktivere dette hvis du er bag en firewall"
+
+#: ../gnome/src/config/assistant.c:500
+msgid "E_nable STUN"
+msgstr "_Benyt STUN"
+
+#: ../gnome/src/config/assistant.c:507
+msgid "_STUN server"
+msgstr "_STUN server"
+
+#: ../gnome/src/config/assistant.c:522
+msgid "Account Registration"
+msgstr "Kontoregistrering"
+
+#: ../gnome/src/config/assistant.c:522
+msgid "Congratulations!"
+msgstr "Tillykke!"
+
+#: ../gnome/src/config/audioconf.c:687
+msgid "Frequency"
+msgstr "Frekvens"
+
+#: ../gnome/src/config/audioconf.c:692
+msgid "Bitrate"
+msgstr "Bithastighed"
+
+#: ../gnome/src/config/audioconf.c:835
+msgid "ALSA plugin"
+msgstr "ALSA plugin"
+
+#: ../gnome/src/config/audioconf.c:857
+msgid "Output"
+msgstr "Uddata"
+
+#: ../gnome/src/config/audioconf.c:879
+msgid "Input"
+msgstr "Inddata"
+
+#: ../gnome/src/config/audioconf.c:900
+msgid "Ringtone"
+msgstr "Ringetone"
+
+#: ../gnome/src/config/audioconf.c:954
+msgid "Sound Manager"
+msgstr "Lydhåndtering"
+
+#: ../gnome/src/config/audioconf.c:964
+msgid "_Pulseaudio"
+msgstr "_PulseAudio"
+
+#: ../gnome/src/config/audioconf.c:968
+msgid "_ALSA"
+msgstr "_ALSA"
+
+#: ../gnome/src/config/audioconf.c:974
+msgid "ALSA settings"
+msgstr "ALSA indstillinger"
+
+#: ../gnome/src/config/audioconf.c:994
+msgid "Recordings"
+msgstr "Optagelser"
+
+#: ../gnome/src/config/audioconf.c:998
+msgid "Destination folder"
+msgstr "Destinationsmappe"
+
+#: ../gnome/src/config/audioconf.c:1002
+msgid "Select a folder"
+msgstr "Vælg en mappe"
+
+#: ../gnome/src/config/audioconf.c:1012
+msgid "_Always recording"
+msgstr ""
+
+#: ../gnome/src/config/audioconf.c:1019
+msgid "Voice enhancement settings"
+msgstr "Indstillinger for stemmeforstærkning"
+
+#: ../gnome/src/config/audioconf.c:1022
+msgid "_Noise Reduction"
+msgstr "_Støjreducering"
+
+#: ../gnome/src/config/audioconf.c:1033
+msgid "_Echo Cancellation"
+msgstr ""
+
+#: ../gnome/src/config/hooks-config.c:149
+msgid "URL Argument"
+msgstr "Adresseargument"
+
+#: ../gnome/src/config/hooks-config.c:157
+msgid "Trigger on specific _SIP header"
+msgstr "Udløse ved specifik _SIP protokolhoved"
+
+#: ../gnome/src/config/hooks-config.c:166
+msgid "Trigger on _IAX2 URL"
+msgstr "Udløse ved _IAX2 webadresse"
+
+#: ../gnome/src/config/hooks-config.c:171
+msgid "Command to _run"
+msgstr "Kommando som skal _kaldes"
+
+#: ../gnome/src/config/hooks-config.c:181
+msgid "Phone number rewriting"
+msgstr "Omskrivning af telefonnummer"
+
+#: ../gnome/src/config/hooks-config.c:185
+msgid "_Prefix dialed numbers with"
+msgstr "_Præfiks for indtastede numre"
+
+#: ../gnome/src/config/preferencesdialog.c:185
+msgid "Desktop Notifications"
+msgstr "Meddelelser"
+
+#: ../gnome/src/config/preferencesdialog.c:190
+msgid "_Enable notifications"
+msgstr "_Aktiver meddelelser"
+
+#: ../gnome/src/config/preferencesdialog.c:197
+msgid "System Tray Icon"
+msgstr "Systembakke-ikon"
+
+#: ../gnome/src/config/preferencesdialog.c:205
+msgid "Show SFLphone in the system tray"
+msgstr "Vis SFLphone i systemfeltet"
+
+#: ../gnome/src/config/preferencesdialog.c:212
+msgid "_Popup main window on incoming call"
+msgstr "_Vis hovedvindue ved indgående opkald"
+
+#: ../gnome/src/config/preferencesdialog.c:218
+msgid "Ne_ver popup main window"
+msgstr "Aldrig _pop-op hovedvindue"
+
+#: ../gnome/src/config/preferencesdialog.c:231
+msgid "Hide SFLphone window on _startup"
+msgstr "Skjul SFLphone vinduet ved _start"
+
+#: ../gnome/src/config/preferencesdialog.c:245
+msgid "Calls History"
+msgstr "Opkaldshistorik"
+
+#: ../gnome/src/config/preferencesdialog.c:249
+msgid "_Keep my history for at least"
+msgstr "_Gem min historik i mindst"
+
+#: ../gnome/src/config/preferencesdialog.c:264
+msgid "days"
+msgstr "dage"
+
+#: ../gnome/src/config/preferencesdialog.c:269
+msgid "Instant Messaging"
+msgstr ""
+
+#: ../gnome/src/config/preferencesdialog.c:273
+#, fuzzy
+msgid "Enable instant messaging"
+msgstr "Aktiver _ringetoner"
+
+#: ../gnome/src/config/preferencesdialog.c:357
+msgid "Preferences"
+msgstr "Indstillinger"
+
+#: ../gnome/src/config/preferencesdialog.c:405
+#: ../gnome/src/config/preferencesdialog.c:443
+msgid "Hooks"
+msgstr "Hooks"
+
+#: ../gnome/src/config/preferencesdialog.c:410
+#: ../gnome/src/config/preferencesdialog.c:444
+msgid "Shortcuts"
+msgstr "Genveje"
+
+#: ../gnome/src/config/preferencesdialog.c:416
+#: ../gnome/src/config/preferencesdialog.c:445
+msgid "Address Book"
+msgstr "Adressebog"
+
+#: ../gnome/src/config/shortcuts-config.c:132
+msgid "Be careful: these shortcuts might override system-wide shortcuts."
+msgstr ""
+"Bemærk: disse genveje vil tilsidesætte genveje defineret for hele systemet."
+
+#: ../gnome/src/config/tlsadvanceddialog.c:41
+msgid "Advanced options for TLS"
+msgstr "Advancerede indstillinger for TLS"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:58
+msgid "TLS transport"
+msgstr "TLS transport"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:62
+msgid ""
+"TLS transport can be used along with UDP for those calls that would\n"
+"require secure sip transactions (aka SIPS). You can configure a different\n"
+"TLS transport for each account. However, each of them will run on a "
+"dedicated\n"
+"port, different one from each other\n"
+msgstr ""
+"TLS transport kan benyttes sammen med UDP for de opkald som kræver\n"
+"sikker sip transaktion (også kaldet SIPS). Du kan konfigurere forskellige\n"
+"TLS transporter for de enkelte konti. Bemærk dog at de hver vil benytte\n"
+"en dedikeret port forskellig fra hinanden.\n"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:109
+msgid "Global TLS listener (all accounts)"
+msgstr "Global TLS-modtager (alle konti)"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:123
+msgid "Certificate of Authority list"
+msgstr "Autoritetscertifikatsliste"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:126
+msgid "Choose a CA list file (optional)"
+msgstr "Vælg en fil med en autoritetscertifikatsliste (valgfri)"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:138
+msgid "Public endpoint certificate file"
+msgstr "Offentlig endpoint certifikatsfil"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:141
+msgid "Choose a public endpoint certificate (optional)"
+msgstr "Vælg et offentligt endpoint-certifikat (valgfri)"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:159
+msgid "Choose a private key file (optional)"
+msgstr "Vælg en privat nøglefil (valgfri)"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:174
+msgid "Password for the private key"
+msgstr "Adgangskode for den private nøgle"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:189
+msgid "TLS protocol method"
+msgstr "TLS protokolmetode"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:217
+msgid "TLS cipher list"
+msgstr "TLS cifferliste"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:226
+msgid "Server name instance for outgoing TLS connection"
+msgstr "Server navneinstans for udgående TLS forbindelse"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:234
+msgid "Negotiation timeout (sec:msec)"
+msgstr "Forhandlingstimeout"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:251
+msgid "Verify incoming certificates, as a server"
+msgstr "Udfør kontrol af indgående certifikater, som en server"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:257
+msgid "Verify certificates from answer, as a client"
+msgstr "Udfør kontrol af certifikater fra svar, som en klient"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:263
+msgid "Require certificate for incoming tls connections"
+msgstr "Kræv certifikat for indgående TLS forbindelser"
+
+#: ../gnome/src/config/zrtpadvanceddialog.c:51
+msgid "ZRTP Options"
+msgstr "ZRTP indstillinger"
+
+#: ../gnome/src/config/zrtpadvanceddialog.c:70
+msgid "Send Hello Hash in S_DP"
+msgstr "Send \"Hello Hash\" i S_DP"
+
+#: ../gnome/src/config/zrtpadvanceddialog.c:75
+msgid "Ask User to Confirm SAS"
+msgstr "_Spørg bruger om at godkende SAS"
+
+#: ../gnome/src/config/zrtpadvanceddialog.c:80
+msgid "_Warn if ZRTP not supported"
+msgstr "_Advar hvis ZRTP ikke understøttes"
+
+#: ../gnome/src/config/zrtpadvanceddialog.c:85
+msgid "Display SAS once for hold events"
+msgstr "_Vis SAS en enkelt gang for vente-hændelser"
+
+#: ../gnome/src/config/zrtpadvanceddialog.c:123
+msgid "SDES Options"
+msgstr "SDES indstillinger"
+
+#: ../gnome/src/config/zrtpadvanceddialog.c:141
+msgid "Fallback on RTP on SDES failure"
+msgstr "Fald tilbage til RTP ved SDES fejl"
+
+#: ../gnome/src/contacts/searchbar.c:191
+msgid "Search all"
+msgstr "Søg alle"
+
+#: ../gnome/src/contacts/searchbar.c:192 ../gnome/src/contacts/searchbar.c:205
+#: ../gnome/src/contacts/searchbar.c:217 ../gnome/src/contacts/searchbar.c:229
+msgid "Click here to change the search type"
+msgstr "Klik her for at ændre søgningstypen"
+
+#: ../gnome/src/contacts/searchbar.c:204
+msgid "Search by missed call"
+msgstr "Søg i ubesvarede opkald"
+
+#: ../gnome/src/contacts/searchbar.c:216
+msgid "Search by incoming call"
+msgstr "Søg i indgående opkald"
+
+#: ../gnome/src/contacts/searchbar.c:228
+msgid "Search by outgoing call"
+msgstr "Søg i udgående opkald"
 
 #, fuzzy
 #~ msgid ""
-#~ "Unable to initialize.\n"
-#~ "Make sure the daemon is running.\n"
-#~ "Error: %s"
+#~ "Unable to connect to the SFLphone server.\n"
+#~ "Make sure the daemon is running."
 #~ msgstr ""
 #~ "Forbindelse til SFLphone serveren kan ikke oprettes.\n"
 #~ "Sørg for at server-dæmonen kører."
@@ -1267,14 +1266,75 @@ msgstr[1] "%i aktive konti"
 #~ msgid "Bandwidth"
 #~ msgstr "Båndbredde"
 
-#~ msgid "_Echo Suppression"
-#~ msgstr "_Fjernelse af ekko"
-
 #~ msgid "Custom commands on incoming calls with URL"
 #~ msgstr "Brugerdefinerede kommandoer ved indgående opkald med webadresse"
 
 #~ msgid "%s will be replaced with the passed URL."
 #~ msgstr "%s vil blive erstattet med den givne webadresse."
+
+#~ msgid "_Voice Activity Detection"
+#~ msgstr "_Detektering af taleaktivitet"
+
+#~ msgid "_Noise Reduction (Narrow-Band Companding)"
+#~ msgstr "_Støjreducering (Narrow-Band Companding)"
+
+#~ msgid "SIP Port"
+#~ msgstr "SIP Port"
+
+#~ msgid "Codec"
+#~ msgstr "Kodning"
+
+#~ msgid "%i account configured"
+#~ msgid_plural "%i accounts configured"
+#~ msgstr[0] "%i konto oprettet"
+#~ msgstr[1] "%i konti oprettet"
+
+#~ msgid "There "
+#~ msgstr "Der "
+
+#~ msgid "Manually"
+#~ msgstr "Manuelt"
+
+#~ msgid "s"
+#~ msgstr "s"
+
+#~ msgid "are "
+#~ msgstr "er "
+
+#~ msgid "is "
+#~ msgstr "er "
+
+#~ msgid "_Mute other applications during a call"
+#~ msgstr "_Dæmp andre programmer ved opkald"
+
+#~ msgid "Enable voicemail _notifications"
+#~ msgstr "Aktiver _talebeskedsmeddelelser"
+
+#~ msgid "UDP Transport"
+#~ msgstr "UDP transport"
+
+#~ msgid "Direct IP calls"
+#~ msgstr "Direkte IP opkald"
+
+#~ msgid "IP call - %s"
+#~ msgstr "IP opkald - %s"
+
+#~ msgid ""
+#~ "<b>Error: No audio codecs found.\n"
+#~ "\n"
+#~ "</b> SFL audio codecs have to be placed in <i>%s</i> or in the <b>."
+#~ "sflphone</b> directory in your home( <i>%s</i> )"
+#~ msgstr ""
+#~ "<b>Fejl: Ingen audio-codec fundet\n"
+#~ "\n"
+#~ "</b>SFL audio-codecs skal installeres i <i>%s</i> eller i mappen <b>."
+#~ "sflphone</b> i dit hjemmekatalog (<i>%s</i>)"
+
+#~ msgid "Store SIP credentials as MD5 hash"
+#~ msgstr "Gem SIP-legitimationsoplysninger som _MD5-hash-værdi"
+
+#~ msgid "_Echo Suppression"
+#~ msgstr "_Fjernelse af ekko"
 
 #~ msgid "Enable STUN"
 #~ msgstr "Aktiver STUN"
@@ -1324,9 +1384,6 @@ msgstr[1] "%i aktive konti"
 #~ msgid "Keep my history for at least"
 #~ msgstr "Gem min historik i mindst"
 
-#~ msgid "SIP Port"
-#~ msgstr "SIP Port"
-
 #~ msgid "Connection"
 #~ msgstr "Forbindelse"
 
@@ -1362,9 +1419,6 @@ msgstr[1] "%i aktive konti"
 
 #~ msgid "SFLphone KDE Client"
 #~ msgstr "SFLphone KDE Client"
-
-#~ msgid "Codec"
-#~ msgstr "Kodning"
 
 #~ msgid "Main screen"
 #~ msgstr "Hovedskærmbillede"
@@ -1415,72 +1469,17 @@ msgstr[1] "%i aktive konti"
 #~ msgid "Work"
 #~ msgstr "Arbejde"
 
-#~ msgid "%i account configured"
-#~ msgid_plural "%i accounts configured"
-#~ msgstr[0] "%i konto oprettet"
-#~ msgstr[1] "%i konti oprettet"
-
-#~ msgid "There "
-#~ msgstr "Der "
-
 #~ msgid "Server returned \""
 #~ msgstr "Server svarede \""
-
-#~ msgid "Manually"
-#~ msgstr "Manuelt"
 
 #~ msgid " active account"
 #~ msgstr " aktiv konto"
 
-#~ msgid "s"
-#~ msgstr "s"
-
-#~ msgid "are "
-#~ msgstr "er "
-
-#~ msgid "is "
-#~ msgstr "er "
-
-#~ msgid "_Voice Activity Detection"
-#~ msgstr "_Detektering af taleaktivitet"
-
-#~ msgid "_Mute other applications during a call"
-#~ msgstr "_Dæmp andre programmer ved opkald"
-
-#~ msgid "_Noise Reduction (Narrow-Band Companding)"
-#~ msgstr "_Støjreducering (Narrow-Band Companding)"
-
-#~ msgid "Enable voicemail _notifications"
-#~ msgstr "Aktiver _talebeskedsmeddelelser"
-
-#~ msgid "UDP Transport"
-#~ msgstr "UDP transport"
-
-#~ msgid "Direct IP calls"
-#~ msgstr "Direkte IP opkald"
-
 #~ msgid "Configuration File"
 #~ msgstr "Konfigurationsfil"
 
-#~ msgid "IP call - %s"
-#~ msgstr "IP opkald - %s"
-
-#~ msgid ""
-#~ "<b>Error: No audio codecs found.\n"
-#~ "\n"
-#~ "</b> SFL audio codecs have to be placed in <i>%s</i> or in the <b>."
-#~ "sflphone</b> directory in your home( <i>%s</i> )"
-#~ msgstr ""
-#~ "<b>Fejl: Ingen audio-codec fundet\n"
-#~ "\n"
-#~ "</b>SFL audio-codecs skal installeres i <i>%s</i> eller i mappen <b>."
-#~ "sflphone</b> i dit hjemmekatalog (<i>%s</i>)"
-
 #~ msgid "Using STUN "
 #~ msgstr "Ved brug af STUN "
-
-#~ msgid "Store SIP credentials as MD5 hash"
-#~ msgstr "Gem SIP-legitimationsoplysninger som _MD5-hash-værdi"
 
 #~ msgctxt "NAME OF TRANSLATORS"
 #~ msgid "Your names"

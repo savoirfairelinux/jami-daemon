@@ -1,29 +1,57 @@
-# location of installation directories
+# loction of installation directories
 locale_installdir=$(DESTDIR)$(datadir)/locale
 DOMAIN=sflphone-client-gnome
 
 
 POFILES=\
-	 fr.po \
-	 es.po \
-	 de.po \
-     zh_CN.po \
-     zh_HK.po \
-	 ru.po \
-	 it.po \
-	 pt_BR.po \
-	 da.po
+	ar.po \
+	ast.po \
+	ca.po \
+	da.po \
+	de.po \
+	el.po \
+	es.po \
+	fr.po \
+	hu.po \
+	it.po \
+	ja.po \
+	ko.po \
+	oc.po \
+	pl.po \
+	pt_BR.po \
+	pt.po \
+	ru.po \
+	sv.po \
+	te.po \
+	tr.po \
+	zh_CN.po \
+	zh_HK.po \
+	zh_TW.po
 
 MOFILES=\
-	 fr.mo \
-	 es.mo \
-	 de.mo \
-     zh_CN.mo \
-     zh_HK.mo \
-	 ru.mo \
-	 it.mo \
-	 pt_BR.mo \
-	 da.mo
+	ar.mo \
+	ast.mo \
+	ca.mo \
+	da.mo \
+	de.mo \
+	el.mo \
+	es.mo \
+	fr.mo \
+	hu.mo \
+	it.mo \
+	ja.mo \
+	ko.mo \
+	oc.mo \
+	pl.mo \
+	pt_BR.mo \
+	pt.mo \
+	ru.mo \
+	sv.mo \
+	te.mo \
+	tr.mo \
+	zh_CN.mo \
+	zh_HK.mo \
+	zh_TW.mo
 
 MSGFMT=msgfmt
 
