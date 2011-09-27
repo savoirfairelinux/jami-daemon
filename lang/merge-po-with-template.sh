@@ -2,7 +2,7 @@
 
 # Merge sflphone template into the existing po files
 
-for fichier in `find  .  -name *.po`
+for file in `find  .  -name *.po`
 do
-msgmerge --update $fichier sflphone.pot
+    msgmerge --update $file sflphone.pot
 done

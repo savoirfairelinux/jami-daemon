@@ -1,22 +1,24 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Arabic translation for sflphone
+# Copyright (c) 2009 Rosetta Contributors and Canonical Ltd 2009
+# This file is distributed under the same license as the sflphone package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2009.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-09-27 16:04-0400\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"PO-Revision-Date: 2010-06-17 19:24+0000\n"
+"Last-Translator: Zied ABID <ziedabid@gmail.com>\n"
+"Language-Team: Arabic <ar@li.org>\n"
+"Language: ar\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n % 100 >= "
+"3 && n % 100 <= 10 ? 3 : n % 100 >= 11 && n % 100 <= 99 ? 4 : 5;\n"
+"X-Launchpad-Export-Date: 2011-04-01 12:41+0000\n"
+"X-Generator: Launchpad (build 12710)\n"
 
 #: ../gnome/src/config/audioconf.c:682
 #: ../gnome/src/config/addressbook-config.c:423
@@ -772,7 +774,7 @@ msgstr ""
 #: ../gnome/src/sflnotify.c:144 ../gnome/src/sflnotify.c:155
 #: ../gnome/src/accountlist.c:159
 msgid "Error"
-msgstr ""
+msgstr "خلل"
 
 #: ../gnome/src/sflnotify.c:154
 msgid "You have no registered accounts"
@@ -873,7 +875,7 @@ msgstr ""
 
 #: ../gnome/src/accountlist.c:150
 msgid "Registered"
-msgstr ""
+msgstr "مُسجّل"
 
 #: ../gnome/src/accountlist.c:153
 msgid "Not Registered"
@@ -881,7 +883,7 @@ msgstr ""
 
 #: ../gnome/src/accountlist.c:156
 msgid "Trying..."
-msgstr ""
+msgstr "غير مُسجّل"
 
 #: ../gnome/src/accountlist.c:162
 msgid "Authentication Failed"
@@ -909,7 +911,7 @@ msgstr ""
 
 #: ../gnome/src/accountlist.c:180
 msgid "Invalid"
-msgstr ""
+msgstr "غير صحيح"
 
 #: ../gnome/src/dbus/dbus.c:494
 msgid ""
@@ -1219,3 +1221,11 @@ msgid "%i active account"
 msgid_plural "%i active accounts"
 msgstr[0] ""
 msgstr[1] ""
+
+#~ msgctxt "NAME OF TRANSLATORS"
+#~ msgid "Your names"
+#~ msgstr " ,Launchpad Contributions:,Zied ABID"
+
+#~ msgctxt "EMAIL OF TRANSLATORS"
+#~ msgid "Your emails"
+#~ msgstr ",,ziedabid@gmail.com"

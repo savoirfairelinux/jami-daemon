@@ -1,22 +1,23 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Greek translation for sflphone
+# Copyright (c) 2010 Rosetta Contributors and Canonical Ltd 2010
+# This file is distributed under the same license as the sflphone package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-09-27 16:04-0400\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"PO-Revision-Date: 2010-06-17 19:26+0000\n"
+"Last-Translator: jarlaxl lamat <sztaasz@gmail.com>\n"
+"Language-Team: Greek <el@li.org>\n"
+"Language: el\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Launchpad-Export-Date: 2011-04-01 12:41+0000\n"
+"X-Generator: Launchpad (build 12710)\n"
 
 #: ../gnome/src/config/audioconf.c:682
 #: ../gnome/src/config/addressbook-config.c:423
@@ -183,32 +184,32 @@ msgstr ""
 #: ../gnome/src/config/assistant.c:333 ../gnome/src/config/assistant.c:433
 #: ../gnome/src/config/accountconfigdialog.c:250
 msgid "_Alias"
-msgstr ""
+msgstr "Ψευδώνυμο"
 
 #: ../gnome/src/config/assistant.c:341 ../gnome/src/config/assistant.c:441
 #: ../gnome/src/config/accountconfigdialog.c:288
 msgid "_Host name"
-msgstr ""
+msgstr "Εξυπηρετητής παρόχου"
 
 #: ../gnome/src/config/assistant.c:349 ../gnome/src/config/assistant.c:449
 #: ../gnome/src/config/accountconfigdialog.c:297
 msgid "_User name"
-msgstr ""
+msgstr "Ονομα χρήστη"
 
 #: ../gnome/src/config/assistant.c:359 ../gnome/src/config/assistant.c:458
 #: ../gnome/src/config/accountconfigdialog.c:312
 msgid "_Password"
-msgstr ""
+msgstr "Συνθηματικό"
 
 #: ../gnome/src/config/assistant.c:368 ../gnome/src/config/assistant.c:467
 #: ../gnome/src/config/accountconfigdialog.c:328
 msgid "Show password"
-msgstr ""
+msgstr "Εμφάνιση συνθηματικού"
 
 #: ../gnome/src/config/assistant.c:373 ../gnome/src/config/assistant.c:472
 #: ../gnome/src/config/accountconfigdialog.c:342
 msgid "_Voicemail number"
-msgstr ""
+msgstr "Αριθμός τηλεφωνητή"
 
 #: ../gnome/src/config/assistant.c:381 ../gnome/src/config/assistant.c:411
 msgid "Secure communications with _ZRTP"
@@ -538,15 +539,15 @@ msgstr ""
 
 #: ../gnome/src/config/accountconfigdialog.c:237
 msgid "Account Parameters"
-msgstr ""
+msgstr "Παράμετροι λογαρισμού"
 
 #: ../gnome/src/config/accountconfigdialog.c:259
 msgid "_Protocol"
-msgstr ""
+msgstr "_Πρωτοκολλο"
 
 #: ../gnome/src/config/accountconfigdialog.c:276
 msgid "Unknown"
-msgstr ""
+msgstr "'Αγνωστο"
 
 #: ../gnome/src/config/accountconfigdialog.c:333
 msgid "_Proxy"
@@ -558,73 +559,74 @@ msgstr ""
 
 #: ../gnome/src/config/accountconfigdialog.c:411
 msgid "Authentication"
-msgstr ""
+msgstr "Ταυτοποίηση"
 
 #: ../gnome/src/config/accountconfigdialog.c:412
 msgid "Secret"
-msgstr ""
+msgstr "Απόρρητο"
 
 #: ../gnome/src/config/accountconfigdialog.c:654
 msgid "Credential"
-msgstr ""
+msgstr "Πιστοποιητικό"
 
 #: ../gnome/src/config/accountconfigdialog.c:688
 msgid "Authentication name"
-msgstr ""
+msgstr "Όνομα εξακρίβωσης"
 
 #: ../gnome/src/config/accountconfigdialog.c:699
 msgid "Password"
-msgstr ""
+msgstr "Συνθηματικό"
 
 #: ../gnome/src/config/accountconfigdialog.c:761
 #: ../gnome/src/config/accountconfigdialog.c:1271
 msgid "Security"
-msgstr ""
+msgstr "Ασφάλεια"
 
 #: ../gnome/src/config/accountconfigdialog.c:772
+#, fuzzy
 msgid "Use TLS transport(sips)"
-msgstr ""
+msgstr "Χρήση TLS"
 
 #: ../gnome/src/config/accountconfigdialog.c:778
 msgid "SRTP key exchange"
-msgstr ""
+msgstr "Ανταλλαγή κλειδιών SRTP"
 
 #: ../gnome/src/config/accountconfigdialog.c:784
 msgid "Disabled"
-msgstr ""
+msgstr "Απενεργοποιημένο"
 
 #: ../gnome/src/config/accountconfigdialog.c:848
 msgid "Registration"
-msgstr ""
+msgstr "Εγγραφή"
 
 #: ../gnome/src/config/accountconfigdialog.c:852
 msgid "Registration expire"
-msgstr ""
+msgstr "Λήξη εγγραφής"
 
 #: ../gnome/src/config/accountconfigdialog.c:861
 msgid "_Comply with RFC 3263"
-msgstr ""
+msgstr "Συμβατότητα με RFC 3263"
 
 #: ../gnome/src/config/accountconfigdialog.c:881
 msgid "Network Interface"
-msgstr ""
+msgstr "Συσκευή δικτύου"
 
 #: ../gnome/src/config/accountconfigdialog.c:894
 msgid "Local address"
-msgstr ""
+msgstr "Τοπική διεύθυνση δικτύου"
 
 #: ../gnome/src/config/accountconfigdialog.c:953
 msgid "Local port"
-msgstr ""
+msgstr "Τοπική θύρα δικτύου"
 
 #: ../gnome/src/config/accountconfigdialog.c:995
 #: ../gnome/src/config/accountconfigdialog.c:1029
 msgid "Published address"
-msgstr ""
+msgstr "Δημοσιευμένη διευθυνση"
 
 #: ../gnome/src/config/accountconfigdialog.c:999
 msgid "Using STUN"
-msgstr ""
+msgstr "Χρήση STUN"
 
 #: ../gnome/src/config/accountconfigdialog.c:1007
 msgid "STUN server URL"
@@ -716,7 +718,7 @@ msgstr ""
 
 #: ../gnome/src/main.c:102 ../gnome/src/dbus/dbus.c:514
 msgid "SFLphone Error"
-msgstr ""
+msgstr "Σφάλμα SFLphone"
 
 #: ../gnome/src/callable_obj.c:310
 msgid "today at %R"
@@ -742,41 +744,41 @@ msgstr ""
 #: ../gnome/src/sflnotify.c:98 ../gnome/src/sflnotify.c:115
 #, c-format
 msgid "%s account : %s"
-msgstr ""
+msgstr "%s λογαριασμός %s"
 
 #: ../gnome/src/sflnotify.c:103
 #, c-format
 msgid "<i>From</i> %s"
-msgstr ""
+msgstr "<i>Από</i> %s"
 
 #: ../gnome/src/sflnotify.c:118
 #, c-format
 msgid "%d voice mail"
 msgid_plural "%d voice mails"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d Μηνυμα τηλεφωνητή"
+msgstr[1] "%d Μηνυματα τηλεφωνητή"
 
 #: ../gnome/src/sflnotify.c:130
 #, c-format
 msgid "Calling with %s account <i>%s</i>"
-msgstr ""
+msgstr "Κλήση μέ %s λογαριασμό <i>%s</i>"
 
 #: ../gnome/src/sflnotify.c:134
 msgid "Current account"
-msgstr ""
+msgstr "Τρέχων λογαριασμός"
 
 #: ../gnome/src/sflnotify.c:143
 msgid "You have no accounts set up"
-msgstr ""
+msgstr "Δεν έχετε θέσει λογαριασμούς"
 
 #: ../gnome/src/sflnotify.c:144 ../gnome/src/sflnotify.c:155
 #: ../gnome/src/accountlist.c:159
 msgid "Error"
-msgstr ""
+msgstr "Σφάλμα"
 
 #: ../gnome/src/sflnotify.c:154
 msgid "You have no registered accounts"
-msgstr ""
+msgstr "Δεν έχετε κατοχυρομένους λογαριασμούς"
 
 #: ../gnome/src/sflnotify.c:166
 #, c-format
@@ -784,59 +786,61 @@ msgid ""
 "<i>With:</i> %s \n"
 "using %s"
 msgstr ""
+"<i>Με:</i> %s \n"
+"χρηση: %s"
 
 #: ../gnome/src/sflnotify.c:177
 #, c-format
 msgid "%s does not support ZRTP."
-msgstr ""
+msgstr "Ο %s δεν υποστηρίζει ZRTP"
 
 #: ../gnome/src/sflnotify.c:188
 #, c-format
 msgid "ZRTP negotiation failed with %s"
-msgstr ""
+msgstr "Η ZRTP διαπραγμάτευση απέτυχε με %s"
 
 #: ../gnome/src/sflnotify.c:199
 #, c-format
 msgid "<i>With:</i> %s"
-msgstr ""
+msgstr "<i>Με:</i> %s"
 
 #: ../gnome/src/sliders.c:172
 msgid "Speakers volume"
-msgstr ""
+msgstr "Ένταση ηχείων"
 
 #: ../gnome/src/sliders.c:172
 msgid "Mic volume"
-msgstr ""
+msgstr "Ενταση μικροφώνου"
 
 #: ../gnome/src/mainwindow.c:129
 msgid "There is one call in progress."
-msgstr ""
+msgstr "Υπάρχει μια κλήση εν εξελίξει"
 
 #: ../gnome/src/mainwindow.c:131
 msgid "There are calls in progress."
-msgstr ""
+msgstr "Υπάρχουν κλήσεις εν εξελίξει"
 
 #: ../gnome/src/mainwindow.c:135
 msgid "Do you still want to quit?"
-msgstr ""
+msgstr "Να κλείσω σιγουρα;"
 
 #: ../gnome/src/mainwindow.c:424
 #, c-format
 msgid "ZRTP is not supported by peer %s\n"
-msgstr ""
+msgstr "Το πρωτόκολλο ZRTP δεν υποσττηρίζεται απο το peer %s\n"
 
 #: ../gnome/src/mainwindow.c:426
 msgid "Secure Communication Unavailable"
-msgstr ""
+msgstr "Κρυπτογραφημένη επικοινωνια μη διαθέσιμη"
 
 #: ../gnome/src/mainwindow.c:429 ../gnome/src/mainwindow.c:457
 msgid "Continue"
-msgstr ""
+msgstr "Συνέχεια"
 
 #: ../gnome/src/mainwindow.c:430 ../gnome/src/mainwindow.c:458
 #: ../gnome/src/mainwindow.c:476
 msgid "Stop Call"
-msgstr ""
+msgstr "Τερματισμός κλήσης"
 
 #: ../gnome/src/mainwindow.c:450
 #, c-format
@@ -844,10 +848,13 @@ msgid ""
 "A %s error forced the call with %s to fall under unencrypted mode.\n"
 "Exact reason: %s\n"
 msgstr ""
+"Ενα %s σφάλμα ανάγκασε την κλήση με %s να τερματίσει υπο μη κρυπτογραφημένη "
+"μορφή.\n"
+"Ακριβής λόγος: %s\n"
 
 #: ../gnome/src/mainwindow.c:454
 msgid "ZRTP negotiation failed"
-msgstr ""
+msgstr "Η διαπραγμάτευση ZRTP απέτυχε"
 
 #: ../gnome/src/mainwindow.c:469
 #, c-format
@@ -855,14 +862,16 @@ msgid ""
 "%s wants to stop using secure communication. Confirm will resume "
 "conversation without SRTP.\n"
 msgstr ""
+"Ο/Η %s θέλει να σταματησει να χρησιμοποιεί κρυπτογραφημένη επικοινωνία. Η "
+"επιβεβαιωση θα συνεχίσει τη συζήτηση αλλα χωρις κρυπτογράφηση\n"
 
 #: ../gnome/src/mainwindow.c:471
 msgid "Confirm Go Clear"
-msgstr ""
+msgstr "Επιβεβαίωση Φύγε Καθαρισμός"
 
 #: ../gnome/src/mainwindow.c:474
 msgid "Confirm"
-msgstr ""
+msgstr "Επιβεβαίωση"
 
 #: ../gnome/src/eel-gconf-extensions.c:73
 msgid ""
@@ -873,35 +882,35 @@ msgstr ""
 
 #: ../gnome/src/accountlist.c:150
 msgid "Registered"
-msgstr ""
+msgstr "Εγγεγραμμένος"
 
 #: ../gnome/src/accountlist.c:153
 msgid "Not Registered"
-msgstr ""
+msgstr "Μη εγγεγραμμένος"
 
 #: ../gnome/src/accountlist.c:156
 msgid "Trying..."
-msgstr ""
+msgstr "Προσπαθώ..."
 
 #: ../gnome/src/accountlist.c:162
 msgid "Authentication Failed"
-msgstr ""
+msgstr "Αποτυχία πιστοποίησης"
 
 #: ../gnome/src/accountlist.c:165
 msgid "Network unreachable"
-msgstr ""
+msgstr "Μη προσβάσιμο δίκτυο"
 
 #: ../gnome/src/accountlist.c:168
 msgid "Host unreachable"
-msgstr ""
+msgstr "Μη προσβάσιμος υπολογιστής"
 
 #: ../gnome/src/accountlist.c:171
 msgid "Stun configuration error"
-msgstr ""
+msgstr "Σφάλμα ρύθμισης εξυπηρετητή STUN"
 
 #: ../gnome/src/accountlist.c:174
 msgid "Stun server invalid"
-msgstr ""
+msgstr "Ακυρος εξυπηρετητής STUN"
 
 #: ../gnome/src/accountlist.c:177
 msgid "Ready"
@@ -909,7 +918,7 @@ msgstr ""
 
 #: ../gnome/src/accountlist.c:180
 msgid "Invalid"
-msgstr ""
+msgstr "Μη έγκυρο"
 
 #: ../gnome/src/dbus/dbus.c:494
 msgid ""
@@ -917,6 +926,9 @@ msgid ""
 "\n"
 "Error while opening playback device"
 msgstr ""
+"Ειδοποίηση απο την ALSA:\n"
+"\n"
+"Σφάλμα κατα το άνοιγμα της συσκευής αναπαραγωγής"
 
 #: ../gnome/src/dbus/dbus.c:497
 msgid ""
@@ -924,6 +936,9 @@ msgid ""
 "\n"
 "Error while opening capture device"
 msgstr ""
+"Ειδοποίηση απο την ALSA:\n"
+"\n"
+"Σφάλμα κατα το άνοιγμα της συσκευής λήψης ήχου"
 
 #: ../gnome/src/dbus/dbus.c:500
 msgid ""
@@ -931,6 +946,9 @@ msgid ""
 "\n"
 "Pulseaudio is not running"
 msgstr ""
+"Ειδοποίηση απο το Pulseaudio\n"
+"\n"
+"Tο Pulseaudio δεν τρέχει"
 
 #: ../gnome/src/dbus/dbus.c:503
 msgid ""
@@ -941,73 +959,75 @@ msgstr ""
 
 #: ../gnome/src/uimanager.c:148
 msgid "No address book selected"
-msgstr ""
+msgstr "Κανένα βιβλίο διευθύνσεω δεν έχει επιλεχθεί"
 
 #: ../gnome/src/uimanager.c:175 ../gnome/src/uimanager.c:1037
 msgid "Address book"
-msgstr ""
+msgstr "Βιβλίο διευθύνσεων"
 
 #: ../gnome/src/uimanager.c:413
-#, c-format
+#, fuzzy, c-format
 msgid "Voicemail(%i)"
-msgstr ""
+msgstr "Τηλεφωνητής (%i)"
 
 #: ../gnome/src/uimanager.c:492
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr ""
+"Το SFLphone ειναι ένα προγραμμα πελάτης VoIP συμβατό με SIP και ΙΑΧ2 "
+"πρωτόκολλα"
 
 #: ../gnome/src/uimanager.c:494
 msgid "About SFLphone"
-msgstr ""
+msgstr "Σχετικά με το SFLphone"
 
 #: ../gnome/src/uimanager.c:947 ../gnome/src/uimanager.c:992
 msgid "Voicemail"
-msgstr ""
+msgstr "Τηλεφωνητής"
 
 #: ../gnome/src/uimanager.c:977
 msgid "Call"
-msgstr ""
+msgstr "Κλήση"
 
 #: ../gnome/src/uimanager.c:978 ../gnome/src/uimanager.c:1421
 msgid "_New call"
-msgstr ""
+msgstr "_Νέα κλήση"
 
 #: ../gnome/src/uimanager.c:979
 msgid "Place a new call"
-msgstr ""
+msgstr "Κάντε μια νέα κλήση"
 
 #: ../gnome/src/uimanager.c:980 ../gnome/src/uimanager.c:1258
 msgid "_Pick up"
-msgstr ""
+msgstr "Σήκωστο  _Π"
 
 #: ../gnome/src/uimanager.c:981
 msgid "Answer the call"
-msgstr ""
+msgstr "Σηκώστε το τηλέφωνο"
 
 #: ../gnome/src/uimanager.c:982 ../gnome/src/uimanager.c:1269
 #: ../gnome/src/uimanager.c:1329 ../gnome/src/statusicon.c:142
 msgid "_Hang up"
-msgstr ""
+msgstr "Κλείστο _Η"
 
 #: ../gnome/src/uimanager.c:983
 msgid "Finish the call"
-msgstr ""
+msgstr "Κλέιστε το τηλέφωνο"
 
 #: ../gnome/src/uimanager.c:984
 msgid "O_n hold"
-msgstr ""
+msgstr "Σε α_ναμονή"
 
 #: ../gnome/src/uimanager.c:985
 msgid "Place the call on hold"
-msgstr ""
+msgstr "Βάλτε την κλήση σε αναμονή"
 
 #: ../gnome/src/uimanager.c:986
 msgid "O_ff hold"
-msgstr ""
+msgstr "Επανα_φορά"
 
 #: ../gnome/src/uimanager.c:987
 msgid "Place the call off hold"
-msgstr ""
+msgstr "Επαναφέρετε την κλήση σε αναμονή"
 
 #: ../gnome/src/uimanager.c:988 ../gnome/src/uimanager.c:1314
 msgid "Send _message"
@@ -1019,31 +1039,31 @@ msgstr ""
 
 #: ../gnome/src/uimanager.c:990
 msgid "Configuration _Assistant"
-msgstr ""
+msgstr "Οδηγός Ρυθμίσεων _Α"
 
 #: ../gnome/src/uimanager.c:991
 msgid "Run the configuration assistant"
-msgstr ""
+msgstr "Εκτέλεση του οδηγού ρύθμισης"
 
 #: ../gnome/src/uimanager.c:993
 msgid "Call your voicemail"
-msgstr ""
+msgstr "Κλήση προς τον τηλεφωνητή σας"
 
 #: ../gnome/src/uimanager.c:994
 msgid "_Close"
-msgstr ""
+msgstr "_Κλείσιμο"
 
 #: ../gnome/src/uimanager.c:995
 msgid "Minimize to system tray"
-msgstr ""
+msgstr "Ελαχιστοποίηση στη περιοχή ειδοποιήσεων"
 
 #: ../gnome/src/uimanager.c:996
 msgid "_Quit"
-msgstr ""
+msgstr "Έξοδος"
 
 #: ../gnome/src/uimanager.c:997
 msgid "Quit the program"
-msgstr ""
+msgstr "Τερματισμός του προγράμματος"
 
 #: ../gnome/src/uimanager.c:998
 msgid "_Playback record"
@@ -1063,155 +1083,155 @@ msgstr ""
 
 #: ../gnome/src/uimanager.c:1004
 msgid "_Edit"
-msgstr ""
+msgstr "_Επεξεργασία"
 
 #: ../gnome/src/uimanager.c:1005
 msgid "_Copy"
-msgstr ""
+msgstr "Αντέγρα_ψε"
 
 #: ../gnome/src/uimanager.c:1006
 msgid "Copy the selection"
-msgstr ""
+msgstr "Αντιγραφή της επιλογής"
 
 #: ../gnome/src/uimanager.c:1007
 msgid "_Paste"
-msgstr ""
+msgstr "Ε_πικόλληση"
 
 #: ../gnome/src/uimanager.c:1008
 msgid "Paste the clipboard"
-msgstr ""
+msgstr "Επικόλληση των περιεχομένων του προχείρου (clipboard)"
 
 #: ../gnome/src/uimanager.c:1009
 msgid "Clear _history"
-msgstr ""
+msgstr "Καθαρισμός ιστορικού κλ_ησεων"
 
 #: ../gnome/src/uimanager.c:1010
 msgid "Clear the call history"
-msgstr ""
+msgstr "Καθαρισμός του ιστορικού κλησεων"
 
 #: ../gnome/src/uimanager.c:1011
 msgid "_Accounts"
-msgstr ""
+msgstr "Λογαρι_ασμοί"
 
 #: ../gnome/src/uimanager.c:1012
 msgid "Edit your accounts"
-msgstr ""
+msgstr "Επεξεργασία των λογαριασμών σας"
 
 #: ../gnome/src/uimanager.c:1013
 msgid "_Preferences"
-msgstr ""
+msgstr "_Προτιμήσεις"
 
 #: ../gnome/src/uimanager.c:1014
 msgid "Change your preferences"
-msgstr ""
+msgstr "Αλλαγή των προτιμήσεων σας"
 
 #: ../gnome/src/uimanager.c:1018
 msgid "_View"
-msgstr ""
+msgstr "_Προβολή"
 
 #: ../gnome/src/uimanager.c:1021
 msgid "_Help"
-msgstr ""
+msgstr "_Βο_ηθεια"
 
 #: ../gnome/src/uimanager.c:1022
 msgid "Contents"
-msgstr ""
+msgstr "Περιεχόμενα"
 
 #: ../gnome/src/uimanager.c:1023
 msgid "Open the manual"
-msgstr ""
+msgstr "Άνοιγμα του εγχειριδίου"
 
 #: ../gnome/src/uimanager.c:1025
 msgid "About this application"
-msgstr ""
+msgstr "Περί αυτής της εφαρμογής"
 
 #: ../gnome/src/uimanager.c:1031
 msgid "_Transfer"
-msgstr ""
+msgstr "Με_ταφορά"
 
 #: ../gnome/src/uimanager.c:1031
 msgid "Transfer the call"
-msgstr ""
+msgstr "Μεταφορά της κλήσης"
 
 #: ../gnome/src/uimanager.c:1032 ../gnome/src/uimanager.c:1291
 msgid "_Record"
-msgstr ""
+msgstr "Καταγ_ραφή"
 
 #: ../gnome/src/uimanager.c:1032
 msgid "Record the current conversation"
-msgstr ""
+msgstr "Καταγραψτε τη τρέχουσα συνομιλία"
 
 #: ../gnome/src/uimanager.c:1033
 msgid "_Show toolbar"
-msgstr ""
+msgstr "Εμφάνι_ση γραμμής εργαλείων"
 
 #: ../gnome/src/uimanager.c:1033
 msgid "Show the toolbar"
-msgstr ""
+msgstr "Εμφάνιση της γραμμής εργαλείων"
 
 #: ../gnome/src/uimanager.c:1034
 msgid "_Dialpad"
-msgstr ""
+msgstr "Πληκτρολόγιο _δ"
 
 #: ../gnome/src/uimanager.c:1034
 msgid "Show the dialpad"
-msgstr ""
+msgstr "Εμφάνιση του πληκτρολογίου"
 
 #: ../gnome/src/uimanager.c:1035
 msgid "_Volume controls"
-msgstr ""
+msgstr "Ένταση ήχων"
 
 #: ../gnome/src/uimanager.c:1035
 msgid "Show the volume controls"
-msgstr ""
+msgstr "Δείξε τις ρυθμίσεις για την ένταση ήχων"
 
 #: ../gnome/src/uimanager.c:1036
 msgid "_History"
-msgstr ""
+msgstr "Ιστορικό _Η"
 
 #: ../gnome/src/uimanager.c:1036
 msgid "Calls history"
-msgstr ""
+msgstr "Ιστορικό κλήσεων"
 
 #: ../gnome/src/uimanager.c:1037
 msgid "_Address book"
-msgstr ""
+msgstr "Βιβλίο διευθύνσεων _Α"
 
 #: ../gnome/src/uimanager.c:1280 ../gnome/src/uimanager.c:1338
 msgid "On _Hold"
-msgstr ""
+msgstr "Κλ_ηση σε αναμονή"
 
 #: ../gnome/src/uimanager.c:1377
 msgid "_Call back"
-msgstr ""
+msgstr "Κλήση"
 
 #: ../gnome/src/uimanager.c:1474
 msgid "Edit phone number"
-msgstr ""
+msgstr "Επεξεργσία τηελφωνικού αριθμού"
 
 #: ../gnome/src/uimanager.c:1485
 msgid "Edit the phone number before making a call"
-msgstr ""
+msgstr "Επεξεργσία τηελφωνικού αριθμού προ της κλήσης"
 
 #: ../gnome/src/actions.c:168
 msgid "Using account"
-msgstr ""
+msgstr "Χρήση λογαριασμού"
 
 #: ../gnome/src/actions.c:172
 msgid "No registered accounts"
-msgstr ""
+msgstr "Μη πιστοποιημένοι λογαριασμοί"
 
 #: ../gnome/src/actions.c:596 ../gnome/src/actions.c:867
 msgid "Direct SIP call"
-msgstr ""
+msgstr "Κλήση κατευθείαν SIP"
 
 #: ../gnome/src/statusicon.c:135
 msgid "_Show main window"
-msgstr ""
+msgstr "Δείξε το βα_σικό παράθυρο"
 
 #: ../gnome/src/statusicon.c:197
 msgid "SFLphone"
-msgstr ""
+msgstr "SFLphone"
 
 #: ../gnome/src/statusicon.c:198
 #, c-format
@@ -1219,3 +1239,36 @@ msgid "%i active account"
 msgid_plural "%i active accounts"
 msgstr[0] ""
 msgstr[1] ""
+
+#, fuzzy
+#~ msgid ""
+#~ "Unable to initialize.\n"
+#~ "Make sure the daemon is running.\n"
+#~ "Error: %s"
+#~ msgstr ""
+#~ "Αδυναμία σύνδεσης στον εξυπηρετητη του  SFLphone\n"
+#~ "Σιγουρευτείτε οτι τρέχει ο daemon"
+
+#~ msgctxt "NAME OF TRANSLATORS"
+#~ msgid "Your names"
+#~ msgstr " ,Launchpad Contributions:,jarlaxl lamat"
+
+#~ msgctxt "EMAIL OF TRANSLATORS"
+#~ msgid "Your emails"
+#~ msgstr ",,sztaasz@gmail.com"
+
+#~ msgid "%i account configured"
+#~ msgid_plural "%i accounts configured"
+#~ msgstr[0] "Ο %i λογαριασμός  ρυθμίστηκε"
+#~ msgstr[1] "Οι %i λογαριασμοί  ρυθμίστηκαν"
+
+#~ msgid ""
+#~ "<b>Error: No audio codecs found.\n"
+#~ "\n"
+#~ "</b> SFL audio codecs have to be placed in <i>%s</i> or in the <b>."
+#~ "sflphone</b> directory in your home( <i>%s</i> )"
+#~ msgstr ""
+#~ "<b>Σφάλμα: Δεν βρέθηκαν codecs ήχου\n"
+#~ "\n"
+#~ "</b>Οι  codecs ήχου SFL πρέπει να βρίσκονται στον <i>%s</i> είτε στον <b>."
+#~ "sflphone</b> φάκελο στον προσωπικο φάκελο  ( <i>%s</i> )"
