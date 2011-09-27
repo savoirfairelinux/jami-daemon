@@ -21,8 +21,6 @@ set(GENERIC_LIB_VERSION "0.9.8")
 
 INCLUDE_DIRECTORIES ( ${QT_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR})
 
-
-
 #File to compile
 set( qtsflphone_LIB_SRCS
   Call.cpp
@@ -30,6 +28,7 @@ set( qtsflphone_LIB_SRCS
   AccountList.cpp
   CallModel.cpp
   Contact.cpp
+  ContactBackend.cpp
   Item.cpp
   configurationmanager_interface_singleton.cpp
   callmanager_interface_singleton.cpp
@@ -98,7 +97,8 @@ set( qtsflphone_LIB_HDRS
   AccountList.h
   Call.h  
   CallModel.h
-  Contact.h  
+  Contact.h
+  ContactBackend.h  
   Item.h  
   configurationmanager_interface_singleton.h
   callmanager_interface_singleton.h
