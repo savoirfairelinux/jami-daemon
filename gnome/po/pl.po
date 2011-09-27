@@ -1,22 +1,24 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Polish translation for sflphone
+# Copyright (c) 2009 Rosetta Contributors and Canonical Ltd 2009
+# This file is distributed under the same license as the sflphone package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2009.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-09-27 16:04-0400\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"PO-Revision-Date: 2010-11-06 13:49+0000\n"
+"Last-Translator: Sebastian Bujwid <Unknown>\n"
+"Language-Team: Polish <pl@li.org>\n"
+"Language: pl\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"Plural-Forms: nplurals=3; plural=n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2;\n"
+"X-Launchpad-Export-Date: 2011-04-01 12:40+0000\n"
+"X-Generator: Launchpad (build 12710)\n"
 
 #: ../gnome/src/config/audioconf.c:682
 #: ../gnome/src/config/addressbook-config.c:423
@@ -607,7 +609,7 @@ msgstr ""
 
 #: ../gnome/src/config/accountconfigdialog.c:881
 msgid "Network Interface"
-msgstr ""
+msgstr "Sieć niedostępna"
 
 #: ../gnome/src/config/accountconfigdialog.c:894
 msgid "Local address"
@@ -753,8 +755,8 @@ msgstr ""
 #, c-format
 msgid "%d voice mail"
 msgid_plural "%d voice mails"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d głosowa wiadomość"
+msgstr[1] "%d głosowych wiadomości"
 
 #: ../gnome/src/sflnotify.c:130
 #, c-format
@@ -772,7 +774,7 @@ msgstr ""
 #: ../gnome/src/sflnotify.c:144 ../gnome/src/sflnotify.c:155
 #: ../gnome/src/accountlist.c:159
 msgid "Error"
-msgstr ""
+msgstr "Błąd"
 
 #: ../gnome/src/sflnotify.c:154
 msgid "You have no registered accounts"
@@ -877,23 +879,23 @@ msgstr ""
 
 #: ../gnome/src/accountlist.c:153
 msgid "Not Registered"
-msgstr ""
+msgstr "Nie zarejestrowany"
 
 #: ../gnome/src/accountlist.c:156
 msgid "Trying..."
-msgstr ""
+msgstr "Próbuję ..."
 
 #: ../gnome/src/accountlist.c:162
 msgid "Authentication Failed"
-msgstr ""
+msgstr "Błąd autoryzacji"
 
 #: ../gnome/src/accountlist.c:165
 msgid "Network unreachable"
-msgstr ""
+msgstr "Sieć niedostępna"
 
 #: ../gnome/src/accountlist.c:168
 msgid "Host unreachable"
-msgstr ""
+msgstr "Wybrany host jest niedostępny"
 
 #: ../gnome/src/accountlist.c:171
 msgid "Stun configuration error"
@@ -905,11 +907,11 @@ msgstr ""
 
 #: ../gnome/src/accountlist.c:177
 msgid "Ready"
-msgstr ""
+msgstr "Gotowy"
 
 #: ../gnome/src/accountlist.c:180
 msgid "Invalid"
-msgstr ""
+msgstr "Niepoprawny"
 
 #: ../gnome/src/dbus/dbus.c:494
 msgid ""
@@ -917,6 +919,8 @@ msgid ""
 "\n"
 "Error while opening playback device"
 msgstr ""
+"Informacja ALSA\n"
+"Błąd otwarcia urządzenia do odtwarzania dźwięku"
 
 #: ../gnome/src/dbus/dbus.c:497
 msgid ""
@@ -924,6 +928,8 @@ msgid ""
 "\n"
 "Error while opening capture device"
 msgstr ""
+"Informacja ALSA\n"
+"Błąd otwarcia urządzenia do przechwytywania"
 
 #: ../gnome/src/dbus/dbus.c:500
 msgid ""
@@ -931,6 +937,8 @@ msgid ""
 "\n"
 "Pulseaudio is not running"
 msgstr ""
+"Informacja Pulseaudio\n"
+"Pulseaudio nie zostało uruchomione"
 
 #: ../gnome/src/dbus/dbus.c:503
 msgid ""
@@ -948,9 +956,9 @@ msgid "Address book"
 msgstr ""
 
 #: ../gnome/src/uimanager.c:413
-#, c-format
+#, fuzzy, c-format
 msgid "Voicemail(%i)"
-msgstr ""
+msgstr "%d głosowa wiadomość"
 
 #: ../gnome/src/uimanager.c:492
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
@@ -1027,7 +1035,7 @@ msgstr ""
 
 #: ../gnome/src/uimanager.c:993
 msgid "Call your voicemail"
-msgstr ""
+msgstr "%d głosowa wiadomość"
 
 #: ../gnome/src/uimanager.c:994
 msgid "_Close"
@@ -1095,7 +1103,7 @@ msgstr ""
 
 #: ../gnome/src/uimanager.c:1012
 msgid "Edit your accounts"
-msgstr ""
+msgstr "Brak zarejestrowanych kont"
 
 #: ../gnome/src/uimanager.c:1013
 msgid "_Preferences"
@@ -1195,11 +1203,11 @@ msgstr ""
 
 #: ../gnome/src/actions.c:168
 msgid "Using account"
-msgstr ""
+msgstr "Używane konto"
 
 #: ../gnome/src/actions.c:172
 msgid "No registered accounts"
-msgstr ""
+msgstr "Brak zarejestrowanych kont"
 
 #: ../gnome/src/actions.c:596 ../gnome/src/actions.c:867
 msgid "Direct SIP call"
@@ -1219,3 +1227,40 @@ msgid "%i active account"
 msgid_plural "%i active accounts"
 msgstr[0] ""
 msgstr[1] ""
+
+#, fuzzy
+#~ msgid ""
+#~ "Unable to initialize.\n"
+#~ "Make sure the daemon is running.\n"
+#~ "Error: %s"
+#~ msgstr ""
+#~ "Nie można połączyć się z serwerem SFLphone.\n"
+#~ "Upewnij się, że został uruchomiony daemon SFLphone"
+
+#~ msgctxt "account state"
+#~ msgid "Registered"
+#~ msgstr "Zarejestrowany"
+
+#~ msgid "IP call - %s"
+#~ msgstr "Telefonów IP - %s"
+
+#~ msgid "Codec"
+#~ msgstr "Kodek"
+
+#~ msgctxt "NAME OF TRANSLATORS"
+#~ msgid "Your names"
+#~ msgstr ""
+#~ ",Launchpad Contributions:,Maxime Chambreuil, ,Launchpad Contributions:,"
+#~ "Maxime Chambreuil, ,Launchpad Contributions:,Maxime Chambreuil, ,"
+#~ "Launchpad Contributions:,Mariusz Bednarz,Maxime Chambreuil, ,Launchpad "
+#~ "Contributions:,Mariusz Bednarz,Maxime Chambreuil, ,Launchpad "
+#~ "Contributions:,Mariusz Bednarz,Maxime Chambreuil (http://www."
+#~ "savoirfairelinux.com),Sebastian Bujwid"
+
+#~ msgctxt "EMAIL OF TRANSLATORS"
+#~ msgid "Your emails"
+#~ msgstr ""
+#~ ",,maxime.chambreuil@gmail.com,,,maxime.chambreuil@gmail.com,,,maxime."
+#~ "chambreuil@gmail.com,,,mbednarz@bedmar.pl,maxime.chambreuil@gmail.com,,,"
+#~ "mbednarz@bedmar.pl,maxime.chambreuil@gmail.com,,,mbednarz@bedmar.pl,"
+#~ "maxime.chambreuil@savoirfairelinux.com,"

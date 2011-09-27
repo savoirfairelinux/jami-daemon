@@ -1,79 +1,80 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Catalan translation for sflphone
+# Copyright (c) 2011 Rosetta Contributors and Canonical Ltd 2011
+# This file is distributed under the same license as the sflphone package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-09-27 16:04-0400\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"PO-Revision-Date: 2011-03-10 12:31+0000\n"
+"Last-Translator: Pau Iranzo <Unknown>\n"
+"Language-Team: Catalan <ca@li.org>\n"
+"Language: ca\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Launchpad-Export-Date: 2011-04-01 12:41+0000\n"
+"X-Generator: Launchpad (build 12710)\n"
 
 #: ../gnome/src/config/audioconf.c:682
 #: ../gnome/src/config/addressbook-config.c:423
 msgid "Name"
-msgstr ""
+msgstr "Nom"
 
 #: ../gnome/src/config/audioconf.c:687
 msgid "Frequency"
-msgstr ""
+msgstr "Periodicitat"
 
 #: ../gnome/src/config/audioconf.c:692
 msgid "Bitrate"
-msgstr ""
+msgstr "Taxa de bits"
 
 #: ../gnome/src/config/audioconf.c:835
 msgid "ALSA plugin"
-msgstr ""
+msgstr "Connector de l'ALSA"
 
 #: ../gnome/src/config/audioconf.c:857
 msgid "Output"
-msgstr ""
+msgstr "Sortida"
 
 #: ../gnome/src/config/audioconf.c:879
 msgid "Input"
-msgstr ""
+msgstr "Entrada"
 
 #: ../gnome/src/config/audioconf.c:900
 msgid "Ringtone"
-msgstr ""
+msgstr "So de trucada"
 
 #: ../gnome/src/config/audioconf.c:954
 msgid "Sound Manager"
-msgstr ""
+msgstr "Gestor de so"
 
 #: ../gnome/src/config/audioconf.c:964
 msgid "_Pulseaudio"
-msgstr ""
+msgstr "_Pulseaudio"
 
 #: ../gnome/src/config/audioconf.c:968
 msgid "_ALSA"
-msgstr ""
+msgstr "_ALSA"
 
 #: ../gnome/src/config/audioconf.c:974
 msgid "ALSA settings"
-msgstr ""
+msgstr "Paràmetres de l'ALSA"
 
 #: ../gnome/src/config/audioconf.c:994
 msgid "Recordings"
-msgstr ""
+msgstr "Enregistraments"
 
 #: ../gnome/src/config/audioconf.c:998
 msgid "Destination folder"
-msgstr ""
+msgstr "Carpeta de destinació"
 
 #: ../gnome/src/config/audioconf.c:1002
 msgid "Select a folder"
-msgstr ""
+msgstr "Seleccioneu una carpeta"
 
 #: ../gnome/src/config/audioconf.c:1012
 msgid "_Always recording"
@@ -81,11 +82,11 @@ msgstr ""
 
 #: ../gnome/src/config/audioconf.c:1019
 msgid "Voice enhancement settings"
-msgstr ""
+msgstr "Paràmetres de millora de la veu"
 
 #: ../gnome/src/config/audioconf.c:1022
 msgid "_Noise Reduction"
-msgstr ""
+msgstr "_Reducció de soroll"
 
 #: ../gnome/src/config/audioconf.c:1033
 msgid "_Echo Cancellation"
@@ -94,29 +95,32 @@ msgstr ""
 #: ../gnome/src/config/assistant.c:76
 #, c-format
 msgid "This assistant is now finished."
-msgstr ""
+msgstr "Aquest auxiliar ha finalitzat."
 
 #: ../gnome/src/config/assistant.c:78
 msgid ""
 "You can at any time check your registration state or modify your accounts "
 "parameters in the Options/Accounts window."
 msgstr ""
+"Podeu comprovar en qualsevol moment quin és l'estat del vostre registre, "
+"així com modificar els paràmetres dels vostres comptes a la finestra "
+"d'Opcions/Comptes."
 
 #: ../gnome/src/config/assistant.c:81
 msgid "Alias"
-msgstr ""
+msgstr "Sobrenom"
 
 #: ../gnome/src/config/assistant.c:85
 msgid "Server"
-msgstr ""
+msgstr "Servidor"
 
 #: ../gnome/src/config/assistant.c:89
 msgid "Username"
-msgstr ""
+msgstr "Nom d'usuari"
 
 #: ../gnome/src/config/assistant.c:93
 msgid "Security: "
-msgstr ""
+msgstr "Segureat: "
 
 #: ../gnome/src/config/assistant.c:96
 msgid "SRTP/ZRTP draft-zimmermann"
@@ -124,15 +128,16 @@ msgstr ""
 
 #: ../gnome/src/config/assistant.c:98
 msgid "None"
-msgstr ""
+msgstr "Cap"
 
 #: ../gnome/src/config/assistant.c:245
 msgid "SFLphone account creation wizard"
-msgstr ""
+msgstr "Auxiliar de creació de comptes de l'SFLphone"
 
 #: ../gnome/src/config/assistant.c:272
 msgid "Welcome to the Account creation wizard of SFLphone!"
 msgstr ""
+"Us donem la benvinguda a l'auxiliar de creació de comptes de l'SFLphone"
 
 #: ../gnome/src/config/assistant.c:273
 msgid "This installation wizard will help you configure an account."
@@ -140,123 +145,126 @@ msgstr ""
 
 #: ../gnome/src/config/assistant.c:288
 msgid "VoIP Protocols"
-msgstr ""
+msgstr "Protocols VoIP"
 
 #: ../gnome/src/config/assistant.c:288
 msgid "Select an account type"
-msgstr ""
+msgstr "Seleccioneu el tipus de compte"
 
 #: ../gnome/src/config/assistant.c:290
 msgid "SIP (Session Initiation Protocol)"
-msgstr ""
+msgstr "SIP (Session Initiation Protocol)"
 
 #: ../gnome/src/config/assistant.c:292
 msgid "IAX2 (InterAsterix Exchange)"
-msgstr ""
+msgstr "IAX2 (InterAsterix Exchange)"
 
 #: ../gnome/src/config/assistant.c:307
 msgid "Account"
-msgstr ""
+msgstr "Compte"
 
 #: ../gnome/src/config/assistant.c:307
 msgid "Please select one of the following options"
-msgstr ""
+msgstr "Seleccioneu una de les opcions següents"
 
 #: ../gnome/src/config/assistant.c:309
+#, fuzzy
 msgid ""
 "Create a free SIP/IAX2 account on sflphone.org \n"
 "(For testing purpose only)"
-msgstr ""
+msgstr "Creeu un compte gratuït SIP/IAX2 a sflphone.org"
 
 #: ../gnome/src/config/assistant.c:311
 msgid "Register an existing SIP or IAX2 account"
-msgstr ""
+msgstr "Registreu un compte SIP o IAX2 existent"
 
 #: ../gnome/src/config/assistant.c:325
 msgid "SIP account settings"
-msgstr ""
+msgstr "Paràmetres del compte SIP"
 
 #: ../gnome/src/config/assistant.c:325 ../gnome/src/config/assistant.c:425
 msgid "Please fill the following information"
-msgstr ""
+msgstr "Ompliu la informació següent"
 
 #: ../gnome/src/config/assistant.c:333 ../gnome/src/config/assistant.c:433
 #: ../gnome/src/config/accountconfigdialog.c:250
 msgid "_Alias"
-msgstr ""
+msgstr "À_lies"
 
 #: ../gnome/src/config/assistant.c:341 ../gnome/src/config/assistant.c:441
 #: ../gnome/src/config/accountconfigdialog.c:288
 msgid "_Host name"
-msgstr ""
+msgstr "Nom d'a_mfitrió"
 
 #: ../gnome/src/config/assistant.c:349 ../gnome/src/config/assistant.c:449
 #: ../gnome/src/config/accountconfigdialog.c:297
 msgid "_User name"
-msgstr ""
+msgstr "Nom d'_usuari"
 
 #: ../gnome/src/config/assistant.c:359 ../gnome/src/config/assistant.c:458
 #: ../gnome/src/config/accountconfigdialog.c:312
 msgid "_Password"
-msgstr ""
+msgstr "_Contrasenya"
 
 #: ../gnome/src/config/assistant.c:368 ../gnome/src/config/assistant.c:467
 #: ../gnome/src/config/accountconfigdialog.c:328
 msgid "Show password"
-msgstr ""
+msgstr "Mostra la contrasenya"
 
 #: ../gnome/src/config/assistant.c:373 ../gnome/src/config/assistant.c:472
 #: ../gnome/src/config/accountconfigdialog.c:342
 msgid "_Voicemail number"
-msgstr ""
+msgstr "Número de la bústia de _veu"
 
 #: ../gnome/src/config/assistant.c:381 ../gnome/src/config/assistant.c:411
 msgid "Secure communications with _ZRTP"
-msgstr ""
+msgstr "Comunicacions segures amb _ZRTP"
 
 #: ../gnome/src/config/assistant.c:395
 msgid "Optional email address"
-msgstr ""
+msgstr "Adreça de correu electrònic opcional"
 
 #: ../gnome/src/config/assistant.c:395
 msgid "This email address will be used to send your voicemail messages."
 msgstr ""
+"Aquesta adreça de correu es farà servir per enviar-vos missatges de la "
+"bústia de veu."
 
 #: ../gnome/src/config/assistant.c:403
 msgid "_Email address"
-msgstr ""
+msgstr "Adr_eça de correu electrònic"
 
 #: ../gnome/src/config/assistant.c:425
 msgid "IAX2 account settings"
-msgstr ""
+msgstr "Paràmetres del compte IAX2"
 
 #: ../gnome/src/config/assistant.c:491
 msgid "Network Address Translation (NAT)"
-msgstr ""
+msgstr "Traducció de l'adreça de xarxa (Network Address Translation o NAT)"
 
 #: ../gnome/src/config/assistant.c:491
 msgid "You should probably enable this if you are behind a firewall."
-msgstr ""
+msgstr "Heu d'activar aquesta opció si esteu darrere d'un tallafocs."
 
 #: ../gnome/src/config/assistant.c:500
 msgid "E_nable STUN"
-msgstr ""
+msgstr "Activa l'STU_N"
 
 #: ../gnome/src/config/assistant.c:507
 msgid "_STUN server"
-msgstr ""
+msgstr "Servidor _STUN"
 
 #: ../gnome/src/config/assistant.c:522
 msgid "Account Registration"
-msgstr ""
+msgstr "Registre de compte"
 
 #: ../gnome/src/config/assistant.c:522
 msgid "Congratulations!"
-msgstr ""
+msgstr "Enhorabona!"
 
 #: ../gnome/src/config/hooks-config.c:149
 msgid "URL Argument"
-msgstr ""
+msgstr "Argument URL"
 
 #: ../gnome/src/config/hooks-config.c:157
 msgid "Trigger on specific _SIP header"
@@ -268,11 +276,11 @@ msgstr ""
 
 #: ../gnome/src/config/hooks-config.c:171
 msgid "Command to _run"
-msgstr ""
+msgstr "Ordre que s'ha d'executa_r"
 
 #: ../gnome/src/config/hooks-config.c:181
 msgid "Phone number rewriting"
-msgstr ""
+msgstr "Reescriptura del número de telèfon"
 
 #: ../gnome/src/config/hooks-config.c:185
 msgid "_Prefix dialed numbers with"
@@ -280,23 +288,23 @@ msgstr ""
 
 #: ../gnome/src/config/preferencesdialog.c:185
 msgid "Desktop Notifications"
-msgstr ""
+msgstr "Notificacions d'escriptori"
 
 #: ../gnome/src/config/preferencesdialog.c:190
 msgid "_Enable notifications"
-msgstr ""
+msgstr "Activa l_es notificacions"
 
 #: ../gnome/src/config/preferencesdialog.c:197
 msgid "System Tray Icon"
-msgstr ""
+msgstr "Icona de la safata de sistema"
 
 #: ../gnome/src/config/preferencesdialog.c:205
 msgid "Show SFLphone in the system tray"
-msgstr ""
+msgstr "Mostra l'SFLPhone a l'àrea de notificació"
 
 #: ../gnome/src/config/preferencesdialog.c:212
 msgid "_Popup main window on incoming call"
-msgstr ""
+msgstr "Mostra la finestra _principal en rebre trucades entrants"
 
 #: ../gnome/src/config/preferencesdialog.c:218
 msgid "Ne_ver popup main window"
@@ -304,45 +312,46 @@ msgstr ""
 
 #: ../gnome/src/config/preferencesdialog.c:231
 msgid "Hide SFLphone window on _startup"
-msgstr ""
+msgstr "Amaga la finestra de l'SFLphone a l'inici"
 
 #: ../gnome/src/config/preferencesdialog.c:245
 msgid "Calls History"
-msgstr ""
+msgstr "Historial de trucades"
 
 #: ../gnome/src/config/preferencesdialog.c:249
 msgid "_Keep my history for at least"
-msgstr ""
+msgstr "_Mantén l'historial de trucades com a mínim"
 
 #: ../gnome/src/config/preferencesdialog.c:264
 msgid "days"
-msgstr ""
+msgstr "dies"
 
 #: ../gnome/src/config/preferencesdialog.c:269
 msgid "Instant Messaging"
 msgstr ""
 
 #: ../gnome/src/config/preferencesdialog.c:273
+#, fuzzy
 msgid "Enable instant messaging"
-msgstr ""
+msgstr "Activa _els tons de trucada"
 
 #: ../gnome/src/config/preferencesdialog.c:357
 msgid "Preferences"
-msgstr ""
+msgstr "Preferències"
 
 #: ../gnome/src/config/preferencesdialog.c:395
 #: ../gnome/src/config/preferencesdialog.c:441
 #: ../gnome/src/config/addressbook-config.c:328
 #: ../gnome/src/config/shortcuts-config.c:129
 msgid "General"
-msgstr ""
+msgstr "General"
 
 #: ../gnome/src/config/preferencesdialog.c:400
 #: ../gnome/src/config/preferencesdialog.c:442
 #: ../gnome/src/config/accountconfigdialog.c:1110
 #: ../gnome/src/config/accountconfigdialog.c:1250
 msgid "Audio"
-msgstr ""
+msgstr "Àudio"
 
 #: ../gnome/src/config/preferencesdialog.c:405
 #: ../gnome/src/config/preferencesdialog.c:443
@@ -352,36 +361,36 @@ msgstr ""
 #: ../gnome/src/config/preferencesdialog.c:410
 #: ../gnome/src/config/preferencesdialog.c:444
 msgid "Shortcuts"
-msgstr ""
+msgstr "Dreceres"
 
 #: ../gnome/src/config/preferencesdialog.c:416
 #: ../gnome/src/config/preferencesdialog.c:445
 msgid "Address Book"
-msgstr ""
+msgstr "Llibreta d'adreces"
 
 #: ../gnome/src/config/zrtpadvanceddialog.c:51
 msgid "ZRTP Options"
-msgstr ""
+msgstr "Opcions ZRTP"
 
 #: ../gnome/src/config/zrtpadvanceddialog.c:70
 msgid "Send Hello Hash in S_DP"
-msgstr ""
+msgstr "Envia el hash Hello a l'S_DP"
 
 #: ../gnome/src/config/zrtpadvanceddialog.c:75
 msgid "Ask User to Confirm SAS"
-msgstr ""
+msgstr "Demana a l'usuari que confirmi el SAS"
 
 #: ../gnome/src/config/zrtpadvanceddialog.c:80
 msgid "_Warn if ZRTP not supported"
-msgstr ""
+msgstr "No_tifica si el ZRTP no és compatible"
 
 #: ../gnome/src/config/zrtpadvanceddialog.c:85
 msgid "Display SAS once for hold events"
-msgstr ""
+msgstr "Mostra el SAS una vegada per als esdeveniments en espera"
 
 #: ../gnome/src/config/zrtpadvanceddialog.c:123
 msgid "SDES Options"
-msgstr ""
+msgstr "Opcions SDES"
 
 #: ../gnome/src/config/zrtpadvanceddialog.c:141
 msgid "Fallback on RTP on SDES failure"
@@ -394,82 +403,82 @@ msgstr ""
 
 #: ../gnome/src/config/accountlistconfigdialog.c:495
 msgid "Protocol"
-msgstr ""
+msgstr "Protocol"
 
 #: ../gnome/src/config/accountlistconfigdialog.c:503
 msgid "Status"
-msgstr ""
+msgstr "Estat"
 
 #: ../gnome/src/config/accountlistconfigdialog.c:585
 msgid "Accounts"
-msgstr ""
+msgstr "Comptes"
 
 #: ../gnome/src/config/accountlistconfigdialog.c:594
 msgid "Configured Accounts"
-msgstr ""
+msgstr "Comptes configurats"
 
 #: ../gnome/src/config/accountlistconfigdialog.c:612
 #, c-format
 msgid "There is %d active account"
 msgid_plural "There are %d active accounts"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Hi ha %d compte actiu"
+msgstr[1] "Hi ha %d comptes actius"
 
 #: ../gnome/src/config/accountlistconfigdialog.c:618
 msgid "You have no active account"
-msgstr ""
+msgstr "No teniu cap compte actiu"
 
 #: ../gnome/src/config/addressbook-config.c:334
 msgid "_Use Evolution address books"
-msgstr ""
+msgstr "Fes servir la llibreta d'adreces de l'Evol_ution"
 
 #: ../gnome/src/config/addressbook-config.c:341
 msgid "Download limit :"
-msgstr ""
+msgstr "Límit de baixada:"
 
 #: ../gnome/src/config/addressbook-config.c:349
 msgid "cards"
-msgstr ""
+msgstr "targetes"
 
 #: ../gnome/src/config/addressbook-config.c:355
 msgid "_Display contact photo if available"
-msgstr ""
+msgstr "Mostra la fotografia del contacte si es troba _disponible"
 
 #: ../gnome/src/config/addressbook-config.c:363
 msgid "Fields from Evolution's address books"
-msgstr ""
+msgstr "Camps de la llibreta d'adreces de l'Evolution"
 
 #: ../gnome/src/config/addressbook-config.c:367
 msgid "_Work"
-msgstr ""
+msgstr "F_eina"
 
 #: ../gnome/src/config/addressbook-config.c:373
 msgid "_Home"
-msgstr ""
+msgstr "_Inici"
 
 #: ../gnome/src/config/addressbook-config.c:379
 msgid "_Mobile"
-msgstr ""
+msgstr "_Mòbil"
 
 #: ../gnome/src/config/addressbook-config.c:386
 msgid "Address Books"
-msgstr ""
+msgstr "Llibretes d'adreces"
 
 #: ../gnome/src/config/addressbook-config.c:390
 msgid "Select which Evolution address books to use"
-msgstr ""
+msgstr "Seleccioneu quines llibretes d'adreces de l'Evolution es faran servir"
 
 #: ../gnome/src/config/shortcuts-config.c:132
 msgid "Be careful: these shortcuts might override system-wide shortcuts."
-msgstr ""
+msgstr "Avís: aquestes dreceres sobreescriuran les dreceres de tot el sistema."
 
 #: ../gnome/src/config/tlsadvanceddialog.c:41
 msgid "Advanced options for TLS"
-msgstr ""
+msgstr "Opcions avançades del TLS"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:58
 msgid "TLS transport"
-msgstr ""
+msgstr "Transport TLS"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:62
 msgid ""
@@ -479,6 +488,11 @@ msgid ""
 "dedicated\n"
 "port, different one from each other\n"
 msgstr ""
+"El transport TLS es fa servir amb l'UDP per a aquelles trucades que\n"
+"requereixin transaccions SIP segures (SIPS). Podeu configurar un transport\n"
+"TLS diferent per a cada compte. Tot i així, cada un d'ells s'executarà en "
+"un\n"
+"port dedicat, i cada port serà diferent dels altres\n"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:109
 msgid "Global TLS listener (all accounts)"
@@ -486,11 +500,11 @@ msgstr ""
 
 #: ../gnome/src/config/tlsadvanceddialog.c:123
 msgid "Certificate of Authority list"
-msgstr ""
+msgstr "Llista de certificats d'autoritat"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:126
 msgid "Choose a CA list file (optional)"
-msgstr ""
+msgstr "Trieu un fitxer de llista de CA (opcional)"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:138
 msgid "Public endpoint certificate file"
@@ -502,15 +516,15 @@ msgstr ""
 
 #: ../gnome/src/config/tlsadvanceddialog.c:159
 msgid "Choose a private key file (optional)"
-msgstr ""
+msgstr "Trieu un fitxer de clau privada (opcional)"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:174
 msgid "Password for the private key"
-msgstr ""
+msgstr "Contrasenya de la clau privada"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:189
 msgid "TLS protocol method"
-msgstr ""
+msgstr "Mètode del protocol TLS"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:217
 msgid "TLS cipher list"
@@ -522,31 +536,31 @@ msgstr ""
 
 #: ../gnome/src/config/tlsadvanceddialog.c:234
 msgid "Negotiation timeout (sec:msec)"
-msgstr ""
+msgstr "Temps d'espera de negociació (s:ms)"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:251
 msgid "Verify incoming certificates, as a server"
-msgstr ""
+msgstr "Comprova els certificants entrants, com a servidor"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:257
 msgid "Verify certificates from answer, as a client"
-msgstr ""
+msgstr "Comprova els certificats de resposta, com a client"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:263
 msgid "Require certificate for incoming tls connections"
-msgstr ""
+msgstr "Demana el certificat per a les connexions TLS entrants"
 
 #: ../gnome/src/config/accountconfigdialog.c:237
 msgid "Account Parameters"
-msgstr ""
+msgstr "Paràmetres dels comptes"
 
 #: ../gnome/src/config/accountconfigdialog.c:259
 msgid "_Protocol"
-msgstr ""
+msgstr "_Protocol"
 
 #: ../gnome/src/config/accountconfigdialog.c:276
 msgid "Unknown"
-msgstr ""
+msgstr "Desconegut"
 
 #: ../gnome/src/config/accountconfigdialog.c:333
 msgid "_Proxy"
@@ -558,15 +572,15 @@ msgstr ""
 
 #: ../gnome/src/config/accountconfigdialog.c:411
 msgid "Authentication"
-msgstr ""
+msgstr "Autenticació"
 
 #: ../gnome/src/config/accountconfigdialog.c:412
 msgid "Secret"
-msgstr ""
+msgstr "Secret"
 
 #: ../gnome/src/config/accountconfigdialog.c:654
 msgid "Credential"
-msgstr ""
+msgstr "Credencial"
 
 #: ../gnome/src/config/accountconfigdialog.c:688
 msgid "Authentication name"
@@ -574,16 +588,17 @@ msgstr ""
 
 #: ../gnome/src/config/accountconfigdialog.c:699
 msgid "Password"
-msgstr ""
+msgstr "﻿Contrasenya"
 
 #: ../gnome/src/config/accountconfigdialog.c:761
 #: ../gnome/src/config/accountconfigdialog.c:1271
 msgid "Security"
-msgstr ""
+msgstr "Seguretat"
 
 #: ../gnome/src/config/accountconfigdialog.c:772
+#, fuzzy
 msgid "Use TLS transport(sips)"
-msgstr ""
+msgstr "Transport TLS"
 
 #: ../gnome/src/config/accountconfigdialog.c:778
 msgid "SRTP key exchange"
@@ -591,11 +606,11 @@ msgstr ""
 
 #: ../gnome/src/config/accountconfigdialog.c:784
 msgid "Disabled"
-msgstr ""
+msgstr "Desactivat"
 
 #: ../gnome/src/config/accountconfigdialog.c:848
 msgid "Registration"
-msgstr ""
+msgstr "Registre"
 
 #: ../gnome/src/config/accountconfigdialog.c:852
 msgid "Registration expire"
@@ -607,20 +622,20 @@ msgstr ""
 
 #: ../gnome/src/config/accountconfigdialog.c:881
 msgid "Network Interface"
-msgstr ""
+msgstr "Interfície de xarxa"
 
 #: ../gnome/src/config/accountconfigdialog.c:894
 msgid "Local address"
-msgstr ""
+msgstr "Adreça local"
 
 #: ../gnome/src/config/accountconfigdialog.c:953
 msgid "Local port"
-msgstr ""
+msgstr "Port local"
 
 #: ../gnome/src/config/accountconfigdialog.c:995
 #: ../gnome/src/config/accountconfigdialog.c:1029
 msgid "Published address"
-msgstr ""
+msgstr "Adreça publicada"
 
 #: ../gnome/src/config/accountconfigdialog.c:999
 msgid "Using STUN"
@@ -632,43 +647,43 @@ msgstr ""
 
 #: ../gnome/src/config/accountconfigdialog.c:1015
 msgid "Same as local parameters"
-msgstr ""
+msgstr "Igual que als paràmetres locals"
 
 #: ../gnome/src/config/accountconfigdialog.c:1018
 msgid "Set published address and port:"
-msgstr ""
+msgstr "Estableix l'adreça i el port publicats:"
 
 #: ../gnome/src/config/accountconfigdialog.c:1038
 msgid "Published port"
-msgstr ""
+msgstr "Port publicat"
 
 #: ../gnome/src/config/accountconfigdialog.c:1122
 msgid "DTMF"
-msgstr ""
+msgstr "DTMF"
 
 #: ../gnome/src/config/accountconfigdialog.c:1133
 msgid "RTP"
-msgstr ""
+msgstr "FTP"
 
 #: ../gnome/src/config/accountconfigdialog.c:1137
 msgid "SIP"
-msgstr ""
+msgstr "SIP"
 
 #: ../gnome/src/config/accountconfigdialog.c:1144
 msgid "Ringtones"
-msgstr ""
+msgstr "Tons de trucada"
 
 #: ../gnome/src/config/accountconfigdialog.c:1147
 msgid "Choose a ringtone"
-msgstr ""
+msgstr "Seleccioneu un to de trucada"
 
 #: ../gnome/src/config/accountconfigdialog.c:1152
 msgid "_Enable ringtones"
-msgstr ""
+msgstr "Activa _els tons de trucada"
 
 #: ../gnome/src/config/accountconfigdialog.c:1164
 msgid "Audio Files"
-msgstr ""
+msgstr "Fitxers d'àudio"
 
 #: ../gnome/src/config/accountconfigdialog.c:1184
 msgid ""
@@ -676,63 +691,67 @@ msgid ""
 "sip URI such as <b>sip:remotepeer</b>. The settings you define here will "
 "also be used if no account can be matched to an incoming or outgoing call."
 msgstr ""
+"S'utilitzarà aquest perfil quan proveu de contactar l'altre extrem "
+"introduint només l'URI SIP, com ara <b>sip:remotepeer</b>. Els paràmetres "
+"que definiu aquí també es faran servir en cas que no es pugui associar cap "
+"compte amb una trucada d'entrada o de sortida."
 
 #: ../gnome/src/config/accountconfigdialog.c:1224
 msgid "Account settings"
-msgstr ""
+msgstr "Paràmetres del compte"
 
 #: ../gnome/src/config/accountconfigdialog.c:1244
 msgid "Basic"
-msgstr ""
+msgstr "Bàsic"
 
 #: ../gnome/src/config/accountconfigdialog.c:1266
 msgid "Advanced"
-msgstr ""
+msgstr "Avançat"
 
 #: ../gnome/src/config/accountconfigdialog.c:1278
 msgid "Network"
-msgstr ""
+msgstr "Xarxa"
 
 #: ../gnome/src/contacts/searchbar.c:191
 msgid "Search all"
-msgstr ""
+msgstr "Cerca-les totes"
 
 #: ../gnome/src/contacts/searchbar.c:192 ../gnome/src/contacts/searchbar.c:205
 #: ../gnome/src/contacts/searchbar.c:217 ../gnome/src/contacts/searchbar.c:229
 msgid "Click here to change the search type"
-msgstr ""
+msgstr "Feu clic aquí per canviar el tipus de cerca"
 
 #: ../gnome/src/contacts/searchbar.c:204
 msgid "Search by missed call"
-msgstr ""
+msgstr "Cerca per trucada perduda"
 
 #: ../gnome/src/contacts/searchbar.c:216
 msgid "Search by incoming call"
-msgstr ""
+msgstr "Cerca per trucada entrant"
 
 #: ../gnome/src/contacts/searchbar.c:228
 msgid "Search by outgoing call"
-msgstr ""
+msgstr "Cerca per trucada sortint"
 
 #: ../gnome/src/main.c:102 ../gnome/src/dbus/dbus.c:514
 msgid "SFLphone Error"
-msgstr ""
+msgstr "Error de l'SFLphone"
 
 #: ../gnome/src/callable_obj.c:310
 msgid "today at %R"
-msgstr ""
+msgstr "avui a les %R"
 
 #: ../gnome/src/callable_obj.c:313
 msgid "yesterday at %R"
-msgstr ""
+msgstr "ahir a les %R"
 
 #: ../gnome/src/callable_obj.c:315
 msgid "%A at %R"
-msgstr ""
+msgstr "%A a les %R"
 
 #: ../gnome/src/callable_obj.c:319
 msgid "%x at %R"
-msgstr ""
+msgstr "%x a les %R"
 
 #: ../gnome/src/sflnotify.c:82
 #, c-format
@@ -742,7 +761,7 @@ msgstr ""
 #: ../gnome/src/sflnotify.c:98 ../gnome/src/sflnotify.c:115
 #, c-format
 msgid "%s account : %s"
-msgstr ""
+msgstr "Compte %s: %s"
 
 #: ../gnome/src/sflnotify.c:103
 #, c-format
@@ -753,30 +772,30 @@ msgstr ""
 #, c-format
 msgid "%d voice mail"
 msgid_plural "%d voice mails"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d missatge de veu"
+msgstr[1] "%d missatges de veu"
 
 #: ../gnome/src/sflnotify.c:130
 #, c-format
 msgid "Calling with %s account <i>%s</i>"
-msgstr ""
+msgstr "S'està trucant a <i>%2$s</i> amb el compte %1$s"
 
 #: ../gnome/src/sflnotify.c:134
 msgid "Current account"
-msgstr ""
+msgstr "Compte actual"
 
 #: ../gnome/src/sflnotify.c:143
 msgid "You have no accounts set up"
-msgstr ""
+msgstr "No teniu cap compte configurat"
 
 #: ../gnome/src/sflnotify.c:144 ../gnome/src/sflnotify.c:155
 #: ../gnome/src/accountlist.c:159
 msgid "Error"
-msgstr ""
+msgstr "Error"
 
 #: ../gnome/src/sflnotify.c:154
 msgid "You have no registered accounts"
-msgstr ""
+msgstr "No teniu cap compte registrat"
 
 #: ../gnome/src/sflnotify.c:166
 #, c-format
@@ -784,59 +803,61 @@ msgid ""
 "<i>With:</i> %s \n"
 "using %s"
 msgstr ""
+"<i>Amb:</i> %s \n"
+"fent servir %s"
 
 #: ../gnome/src/sflnotify.c:177
 #, c-format
 msgid "%s does not support ZRTP."
-msgstr ""
+msgstr "%s no és compatible amb el ZRTP"
 
 #: ../gnome/src/sflnotify.c:188
 #, c-format
 msgid "ZRTP negotiation failed with %s"
-msgstr ""
+msgstr "Ha fallat la negociació ZRTP amb %s"
 
 #: ../gnome/src/sflnotify.c:199
 #, c-format
 msgid "<i>With:</i> %s"
-msgstr ""
+msgstr "<i>Amb:</i> %s"
 
 #: ../gnome/src/sliders.c:172
 msgid "Speakers volume"
-msgstr ""
+msgstr "Volum dels altaveus"
 
 #: ../gnome/src/sliders.c:172
 msgid "Mic volume"
-msgstr ""
+msgstr "Volum del micròfon"
 
 #: ../gnome/src/mainwindow.c:129
 msgid "There is one call in progress."
-msgstr ""
+msgstr "Hi ha una trucada en curs."
 
 #: ../gnome/src/mainwindow.c:131
 msgid "There are calls in progress."
-msgstr ""
+msgstr "Encara hi ha trucades en curs."
 
 #: ../gnome/src/mainwindow.c:135
 msgid "Do you still want to quit?"
-msgstr ""
+msgstr "Encara voleu sortir?"
 
 #: ../gnome/src/mainwindow.c:424
 #, c-format
 msgid "ZRTP is not supported by peer %s\n"
-msgstr ""
+msgstr "El ZRTP no és compatible amb l'altre extrem %s\n"
 
 #: ../gnome/src/mainwindow.c:426
 msgid "Secure Communication Unavailable"
-msgstr ""
+msgstr "La comunicació segura no es troba disponible"
 
 #: ../gnome/src/mainwindow.c:429 ../gnome/src/mainwindow.c:457
 msgid "Continue"
-msgstr ""
+msgstr "Continua"
 
 #: ../gnome/src/mainwindow.c:430 ../gnome/src/mainwindow.c:458
 #: ../gnome/src/mainwindow.c:476
 msgid "Stop Call"
-msgstr ""
+msgstr "Atura la trucada"
 
 #: ../gnome/src/mainwindow.c:450
 #, c-format
@@ -847,7 +868,7 @@ msgstr ""
 
 #: ../gnome/src/mainwindow.c:454
 msgid "ZRTP negotiation failed"
-msgstr ""
+msgstr "Ha fallat la negociació ZRTP"
 
 #: ../gnome/src/mainwindow.c:469
 #, c-format
@@ -862,7 +883,7 @@ msgstr ""
 
 #: ../gnome/src/mainwindow.c:474
 msgid "Confirm"
-msgstr ""
+msgstr "Confirma"
 
 #: ../gnome/src/eel-gconf-extensions.c:73
 msgid ""
@@ -873,43 +894,43 @@ msgstr ""
 
 #: ../gnome/src/accountlist.c:150
 msgid "Registered"
-msgstr ""
+msgstr "Registrat"
 
 #: ../gnome/src/accountlist.c:153
 msgid "Not Registered"
-msgstr ""
+msgstr "No registrat"
 
 #: ../gnome/src/accountlist.c:156
 msgid "Trying..."
-msgstr ""
+msgstr "S'està provant..."
 
 #: ../gnome/src/accountlist.c:162
 msgid "Authentication Failed"
-msgstr ""
+msgstr "No s'ha pogut autenticar"
 
 #: ../gnome/src/accountlist.c:165
 msgid "Network unreachable"
-msgstr ""
+msgstr "No es pot accedir a la xarxa"
 
 #: ../gnome/src/accountlist.c:168
 msgid "Host unreachable"
-msgstr ""
+msgstr "No es pot accedir a l'amfitrió"
 
 #: ../gnome/src/accountlist.c:171
 msgid "Stun configuration error"
-msgstr ""
+msgstr "Error de configuració de l'STUN"
 
 #: ../gnome/src/accountlist.c:174
 msgid "Stun server invalid"
-msgstr ""
+msgstr "El servidor STUN no és vàlid"
 
 #: ../gnome/src/accountlist.c:177
 msgid "Ready"
-msgstr ""
+msgstr "Preparat"
 
 #: ../gnome/src/accountlist.c:180
 msgid "Invalid"
-msgstr ""
+msgstr "No vàlid"
 
 #: ../gnome/src/dbus/dbus.c:494
 msgid ""
@@ -917,6 +938,9 @@ msgid ""
 "\n"
 "Error while opening playback device"
 msgstr ""
+"Notificació de l'ALSA\n"
+"\n"
+"S'ha produït un error en obrir el dispositiu de reproducció"
 
 #: ../gnome/src/dbus/dbus.c:497
 msgid ""
@@ -924,6 +948,9 @@ msgid ""
 "\n"
 "Error while opening capture device"
 msgstr ""
+"Notificació de l'ALSA\n"
+"\n"
+"S'ha produït un error en obrir el dispositiu de captura"
 
 #: ../gnome/src/dbus/dbus.c:500
 msgid ""
@@ -931,6 +958,9 @@ msgid ""
 "\n"
 "Pulseaudio is not running"
 msgstr ""
+"Notificació del Pulseaudio\n"
+"\n"
+"El Pulseaudio no s'està executant"
 
 #: ../gnome/src/dbus/dbus.c:503
 msgid ""
@@ -941,65 +971,66 @@ msgstr ""
 
 #: ../gnome/src/uimanager.c:148
 msgid "No address book selected"
-msgstr ""
+msgstr "No s'ha seleccionat cap llibreta d'adreces"
 
 #: ../gnome/src/uimanager.c:175 ../gnome/src/uimanager.c:1037
 msgid "Address book"
-msgstr ""
+msgstr "Llibreta d'adreces"
 
 #: ../gnome/src/uimanager.c:413
-#, c-format
+#, fuzzy, c-format
 msgid "Voicemail(%i)"
-msgstr ""
+msgstr "Bústia de veu (%i)"
 
 #: ../gnome/src/uimanager.c:492
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr ""
+"L'SFLphone és un client de VoIP compatible amb els protocols SIP i IAX2."
 
 #: ../gnome/src/uimanager.c:494
 msgid "About SFLphone"
-msgstr ""
+msgstr "Quant al SFLphone"
 
 #: ../gnome/src/uimanager.c:947 ../gnome/src/uimanager.c:992
 msgid "Voicemail"
-msgstr ""
+msgstr "Bústia de veu"
 
 #: ../gnome/src/uimanager.c:977
 msgid "Call"
-msgstr ""
+msgstr "Trucada"
 
 #: ../gnome/src/uimanager.c:978 ../gnome/src/uimanager.c:1421
 msgid "_New call"
-msgstr ""
+msgstr "Trucada _nova"
 
 #: ../gnome/src/uimanager.c:979
 msgid "Place a new call"
-msgstr ""
+msgstr "Fes una trucada nova"
 
 #: ../gnome/src/uimanager.c:980 ../gnome/src/uimanager.c:1258
 msgid "_Pick up"
-msgstr ""
+msgstr "Des_penja"
 
 #: ../gnome/src/uimanager.c:981
 msgid "Answer the call"
-msgstr ""
+msgstr "Respon a la trucada"
 
 #: ../gnome/src/uimanager.c:982 ../gnome/src/uimanager.c:1269
 #: ../gnome/src/uimanager.c:1329 ../gnome/src/statusicon.c:142
 msgid "_Hang up"
-msgstr ""
+msgstr "_Penja"
 
 #: ../gnome/src/uimanager.c:983
 msgid "Finish the call"
-msgstr ""
+msgstr "Finalitza la trucada"
 
 #: ../gnome/src/uimanager.c:984
 msgid "O_n hold"
-msgstr ""
+msgstr "E_n espera"
 
 #: ../gnome/src/uimanager.c:985
 msgid "Place the call on hold"
-msgstr ""
+msgstr "Posa la trucada en espera"
 
 #: ../gnome/src/uimanager.c:986
 msgid "O_ff hold"
@@ -1019,31 +1050,31 @@ msgstr ""
 
 #: ../gnome/src/uimanager.c:990
 msgid "Configuration _Assistant"
-msgstr ""
+msgstr "_Auxiliar de configuració"
 
 #: ../gnome/src/uimanager.c:991
 msgid "Run the configuration assistant"
-msgstr ""
+msgstr "Inicia l'auxiliar de configuració"
 
 #: ../gnome/src/uimanager.c:993
 msgid "Call your voicemail"
-msgstr ""
+msgstr "Truca a la bústia de veu"
 
 #: ../gnome/src/uimanager.c:994
 msgid "_Close"
-msgstr ""
+msgstr "_Tanca"
 
 #: ../gnome/src/uimanager.c:995
 msgid "Minimize to system tray"
-msgstr ""
+msgstr "Minimitza a l'àrea de notificació"
 
 #: ../gnome/src/uimanager.c:996
 msgid "_Quit"
-msgstr ""
+msgstr "_Surt"
 
 #: ../gnome/src/uimanager.c:997
 msgid "Quit the program"
-msgstr ""
+msgstr "Surt del programa"
 
 #: ../gnome/src/uimanager.c:998
 msgid "_Playback record"
@@ -1063,135 +1094,135 @@ msgstr ""
 
 #: ../gnome/src/uimanager.c:1004
 msgid "_Edit"
-msgstr ""
+msgstr "_Edita"
 
 #: ../gnome/src/uimanager.c:1005
 msgid "_Copy"
-msgstr ""
+msgstr "_Copia"
 
 #: ../gnome/src/uimanager.c:1006
 msgid "Copy the selection"
-msgstr ""
+msgstr "Copia la selecció"
 
 #: ../gnome/src/uimanager.c:1007
 msgid "_Paste"
-msgstr ""
+msgstr "Engan_xa"
 
 #: ../gnome/src/uimanager.c:1008
 msgid "Paste the clipboard"
-msgstr ""
+msgstr "Enganxa el contingut del porta-retalls"
 
 #: ../gnome/src/uimanager.c:1009
 msgid "Clear _history"
-msgstr ""
+msgstr "Neteja l'_historial"
 
 #: ../gnome/src/uimanager.c:1010
 msgid "Clear the call history"
-msgstr ""
+msgstr "Neteja l'historial de trucades"
 
 #: ../gnome/src/uimanager.c:1011
 msgid "_Accounts"
-msgstr ""
+msgstr "_Comptes"
 
 #: ../gnome/src/uimanager.c:1012
 msgid "Edit your accounts"
-msgstr ""
+msgstr "Editeu els vostres comptes"
 
 #: ../gnome/src/uimanager.c:1013
 msgid "_Preferences"
-msgstr ""
+msgstr "_Preferències"
 
 #: ../gnome/src/uimanager.c:1014
 msgid "Change your preferences"
-msgstr ""
+msgstr "Canvia les preferències"
 
 #: ../gnome/src/uimanager.c:1018
 msgid "_View"
-msgstr ""
+msgstr "_Visualitza"
 
 #: ../gnome/src/uimanager.c:1021
 msgid "_Help"
-msgstr ""
+msgstr "A_juda"
 
 #: ../gnome/src/uimanager.c:1022
 msgid "Contents"
-msgstr ""
+msgstr "Continguts"
 
 #: ../gnome/src/uimanager.c:1023
 msgid "Open the manual"
-msgstr ""
+msgstr "Obre el manual"
 
 #: ../gnome/src/uimanager.c:1025
 msgid "About this application"
-msgstr ""
+msgstr "Quant a aquesta aplicació"
 
 #: ../gnome/src/uimanager.c:1031
 msgid "_Transfer"
-msgstr ""
+msgstr "_Transfereix"
 
 #: ../gnome/src/uimanager.c:1031
 msgid "Transfer the call"
-msgstr ""
+msgstr "Transfereix la trucada"
 
 #: ../gnome/src/uimanager.c:1032 ../gnome/src/uimanager.c:1291
 msgid "_Record"
-msgstr ""
+msgstr "En_registra"
 
 #: ../gnome/src/uimanager.c:1032
 msgid "Record the current conversation"
-msgstr ""
+msgstr "Enregistra la conversa actual"
 
 #: ../gnome/src/uimanager.c:1033
 msgid "_Show toolbar"
-msgstr ""
+msgstr "Mo_stra la barra d'eines"
 
 #: ../gnome/src/uimanager.c:1033
 msgid "Show the toolbar"
-msgstr ""
+msgstr "Mostra la barra d'eines"
 
 #: ../gnome/src/uimanager.c:1034
 msgid "_Dialpad"
-msgstr ""
+msgstr "_Marcador"
 
 #: ../gnome/src/uimanager.c:1034
 msgid "Show the dialpad"
-msgstr ""
+msgstr "Mostra el marcador"
 
 #: ../gnome/src/uimanager.c:1035
 msgid "_Volume controls"
-msgstr ""
+msgstr "Controls de _volum"
 
 #: ../gnome/src/uimanager.c:1035
 msgid "Show the volume controls"
-msgstr ""
+msgstr "Mostra els controls de volum"
 
 #: ../gnome/src/uimanager.c:1036
 msgid "_History"
-msgstr ""
+msgstr "_Historial"
 
 #: ../gnome/src/uimanager.c:1036
 msgid "Calls history"
-msgstr ""
+msgstr "Historial de trucades"
 
 #: ../gnome/src/uimanager.c:1037
 msgid "_Address book"
-msgstr ""
+msgstr "Llibreta d'_adreces"
 
 #: ../gnome/src/uimanager.c:1280 ../gnome/src/uimanager.c:1338
 msgid "On _Hold"
-msgstr ""
+msgstr "En e_spera"
 
 #: ../gnome/src/uimanager.c:1377
 msgid "_Call back"
-msgstr ""
+msgstr "Torna la tru_cada"
 
 #: ../gnome/src/uimanager.c:1474
 msgid "Edit phone number"
-msgstr ""
+msgstr "Edita el número de telèfon"
 
 #: ../gnome/src/uimanager.c:1485
 msgid "Edit the phone number before making a call"
-msgstr ""
+msgstr "Edita el número de telèfon abans de trucar"
 
 #: ../gnome/src/actions.c:168
 msgid "Using account"
@@ -1199,23 +1230,52 @@ msgstr ""
 
 #: ../gnome/src/actions.c:172
 msgid "No registered accounts"
-msgstr ""
+msgstr "No hi ha cap compte registrat"
 
 #: ../gnome/src/actions.c:596 ../gnome/src/actions.c:867
 msgid "Direct SIP call"
-msgstr ""
+msgstr "Trucada SIP directa"
 
 #: ../gnome/src/statusicon.c:135
 msgid "_Show main window"
-msgstr ""
+msgstr "Mo_stra la finestra principal"
 
 #: ../gnome/src/statusicon.c:197
 msgid "SFLphone"
-msgstr ""
+msgstr "SFLphone"
 
 #: ../gnome/src/statusicon.c:198
 #, c-format
 msgid "%i active account"
 msgid_plural "%i active accounts"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%i compte actiu"
+msgstr[1] "%i comptes actius"
+
+#, fuzzy
+#~ msgid ""
+#~ "Unable to initialize.\n"
+#~ "Make sure the daemon is running.\n"
+#~ "Error: %s"
+#~ msgstr ""
+#~ "No es pot connectar amb el servidor SFLphone.\n"
+#~ "Assegureu-vos que el dimoni s'està executant."
+
+#~ msgid "Codecs"
+#~ msgstr "Còdecs"
+
+#~ msgid "Bandwidth"
+#~ msgstr "Ample de Banda"
+
+#~ msgid "Custom commands on incoming calls with URL"
+#~ msgstr "Ordres personalitzdes a les trucades entrants amb un URL"
+
+#~ msgid "%s will be replaced with the passed URL."
+#~ msgstr "Es reemplaçarà %s amb l'URL proveït."
+
+#~ msgctxt "NAME OF TRANSLATORS"
+#~ msgid "Your names"
+#~ msgstr " ,Launchpad Contributions:,David Planella,Pau Iranzo"
+
+#~ msgctxt "EMAIL OF TRANSLATORS"
+#~ msgid "Your emails"
+#~ msgstr ",,david.planella@ubuntu.com,"
