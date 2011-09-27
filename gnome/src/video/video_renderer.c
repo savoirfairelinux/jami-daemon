@@ -354,6 +354,11 @@ readFrameFromShm(VideoRendererPrivate *priv)
     }
 
     if (priv->using_clutter) {
+        GtkWidget *win = gtk_widget_get_toplevel(priv->drawarea);
+        gint win_width = gtk_widget_get_allocated_width(win);
+        gint win_height = gtk_widget_get_allocated_height(win);
+        clutter_actor_set_size(texture, win_width, win_height);
+
         clutter_texture_set_from_rgb_data(CLUTTER_TEXTURE(texture),
                 (void*)data,
                 TRUE,
@@ -466,6 +471,13 @@ video_renderer_run(VideoRenderer *preview)
     priv->sem_set_id = get_sem_set(priv->sem_key);
     if (priv->sem_set_id == -1)
         return 1;
+
+    GtkWindow *win = GTK_WINDOW(gtk_widget_get_toplevel(priv->drawarea));
+    GdkGeometry geom = {
+        .min_aspect = (double)priv->width / priv->height,
+        .max_aspect = (double)priv->width / priv->height,
+    };
+    gtk_window_set_geometry_hints(win, NULL, &geom, GDK_HINT_ASPECT);
 
     priv->using_clutter = GTK_CLUTTER_IS_EMBED(priv->drawarea);
     g_print("Preview: using %s render\n", priv->using_clutter ? "clutter" : "cairo");
