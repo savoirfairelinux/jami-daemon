@@ -353,10 +353,11 @@ readFrameFromShm(VideoRendererPrivate *priv)
       }
     }
 
+    GtkWidget *win = gtk_widget_get_toplevel(priv->drawarea);
+    gint win_width = gtk_widget_get_allocated_width(win);
+    gint win_height = gtk_widget_get_allocated_height(win);
+
     if (priv->using_clutter) {
-        GtkWidget *win = gtk_widget_get_toplevel(priv->drawarea);
-        gint win_width = gtk_widget_get_allocated_width(win);
-        gint win_height = gtk_widget_get_allocated_height(win);
         clutter_actor_set_size(texture, win_width, win_height);
 
         clutter_texture_set_from_rgb_data(CLUTTER_TEXTURE(texture),
@@ -379,6 +380,7 @@ readFrameFromShm(VideoRendererPrivate *priv)
 
         if (surface) {
             cairo_t *cairo = gdk_cairo_create(gtk_widget_get_window(priv->drawarea));
+            cairo_scale(cairo, (double)win_width/width, (double)win_height/height);
             cairo_set_source_surface(cairo, surface, 0, 0);
 
             cairo_status_t status = cairo_surface_status(surface);
