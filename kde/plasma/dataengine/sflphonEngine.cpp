@@ -100,7 +100,7 @@ QString SFLPhoneEngine::getCallStateName(call_state state)
 
 void SFLPhoneEngine::updateHistory()
 {
-   foreach (Call* oldCall, historyCalls) {
+   foreach (Call* oldCall, getHistory()) {
       historyCall[oldCall->getCallId()]["Name"] = oldCall->getPeerName();
       historyCall[oldCall->getCallId()]["Number"] = oldCall->getPeerPhoneNumber();
       historyCall[oldCall->getCallId()]["Date"] = oldCall->getStopTimeStamp();

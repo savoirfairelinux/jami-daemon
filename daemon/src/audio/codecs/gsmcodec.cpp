@@ -31,8 +31,8 @@
 
 
 #include "audiocodec.h"
-#include "logger.h"
 #include <cassert>
+#include <stdexcept>
 
 extern "C" {
 #include <gsm/gsm.h>
@@ -55,10 +55,10 @@ class Gsm : public sfl::AudioCodec
             _hasDynamicPayload = false;
 
             if (! (_decode_gsmhandle = gsm_create()))
-                _error("ERROR: decode_gsm_create\n");
+                throw std::runtime_error("ERROR: decode_gsm_create\n");
 
             if (! (_encode_gsmhandle = gsm_create()))
-                _error("ERROR: encode_gsm_create\n");
+                throw std::runtime_error("ERROR: encode_gsm_create\n");
         }
 
         Gsm (const Gsm&);
@@ -75,7 +75,7 @@ class Gsm : public sfl::AudioCodec
         	(void) buf_size;
 
             if (gsm_decode (_decode_gsmhandle, (gsm_byte*) src, (gsm_signal*) dst) < 0)
-                _error("ERROR: gsm_decode\n");
+                throw std::runtime_error("ERROR: gsm_decode\n");
 
             return _frameSize;
         }

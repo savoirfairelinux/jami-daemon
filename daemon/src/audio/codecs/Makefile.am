@@ -3,6 +3,7 @@ include $(top_srcdir)/globals.mak
 noinst_LTLIBRARIES = libcodecdescriptor.la
 
 libcodecdescriptor_la_SOURCES = audiocodecfactory.cpp audiocodec.cpp
+libcodecdescriptor_la_LIBADD = $(CCRTP_LIBS)
 
 if BUILD_GSM
 GSM_LIB = libcodec_gsm.so

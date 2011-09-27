@@ -510,7 +510,7 @@ void CallView::conferenceRemoved(const QString &confId)
 ///Clear the list of old calls //TODO Clear them from the daemon
 void CallView::clearHistory()
 {
-   historyCalls.clear();
+   m_pHistoryCalls.clear();
 }
 
 void CallView::conferenceCreatedSignal(const QString& confId)
@@ -520,6 +520,7 @@ void CallView::conferenceCreatedSignal(const QString& confId)
 
 void CallView::conferenceChangedSignal(const QString& confId, const QString& state)
 {
+   qDebug() << "Conf changed signal";
    conferenceChanged(confId, state);
 }
 

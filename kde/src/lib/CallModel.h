@@ -37,12 +37,13 @@
 #include "unistd.h"
 #include "typedefs.h"
 
-/** Note from the author: It was previously done by a QAbstractModel + QTreeView, but the sip-call use case is incompatible 
- *  with the MVC model. The MVC never got to a point were it was bug-free and the code was getting dirty. The QTreeWidget
- *  solution may be less "clean" than MVC, but is 3 time smaller and easier to improve (in fact, possible to improve).
- *  
- *  @note This model intend to be reimplemented by the view, not used alone
- *  @note Most of the member are static to preserve ressources and QObject::connect()
+typedef QHash<QString, Call*> CallHash;
+typedef QList<Call*>          CallList;
+
+/**
+ * Note from the author: It was previously done by a QAbstractModel + QTreeView, but the sip-call use case is incompatible  
+ *  with the MVC model. The MVC never got to a point were it was bug-free and the code was getting dirty. The Mirror model  
+ *  solution may be less "clean" than MVC, but is 3 time smaller and easier to improve (in fact, possible to improve).      
  */
 template  <typename CallWidget, typename Index>
 class LIB_EXPORT CallModel {
@@ -53,111 +54,111 @@ class LIB_EXPORT CallModel {
          History,
          Address
       };
-      
-      CallModel(ModelType type);
-      virtual ~CallModel() {}
 
-      virtual bool initCall();
-      virtual bool initHistory();
+      //Constructors, initializer and destructors
+      CallModel                ( ModelType type );
+      virtual ~CallModel       (                ) {}
+      virtual bool initCall    (                );
+      virtual bool initHistory (                );
+
+      //Call related
+      virtual Call*  addCall         ( Call* call                , Call* parent =0    );
+      Call*          addDialingCall  ( const QString& peerName="", QString account="" );
+      Call*          addIncomingCall ( const QString& callId                          );
+      Call*          addRingingCall  ( const QString& callId                          );
+      static QString generateCallId  (                                                );
+      void           removeCall      ( Call* call                                     );
       
-      virtual Call* addCall(Call* call, Call* parent =0);
-      int size();
-      Call* findCallByCallId(QString callId);
-      QList<Call*> getCallList();
-      
-      Call* addDialingCall(const QString& peerName="", QString account="");
-      Call* addIncomingCall(const QString& callId);
-      Call* addRingingCall(const QString& callId);
-      bool createConferenceFromCall(Call* call1, Call* call2);
-      bool mergeConferences(Call* conf1, Call* conf2);
-      bool addParticipant(Call* call2, Call* conference);
-      bool detachParticipant(Call* call);
-      virtual Call* addConference(const QString &confID);
-      virtual bool conferenceChanged(const QString &confId, const QString &state);
-      virtual void conferenceRemoved(const QString &confId);
       virtual bool selectItem(Call* item) { Q_UNUSED(item); return false;}
-      static QString generateCallId();
-      void removeConference(Call* call);
-      void removeCall(Call* call);
-      
-      const QHash<QString, Call*> getHistory();
-      QStringList getHistoryCallId();
 
-      //Account related members
-      static Account* getCurrentAccount();
-      static QString getCurrentAccountId();
-      static AccountList* getAccountList();
-      static QString getPriorAccoundId();
-      static void setPriorAccountId(QString value);
+      //Comference related
+      bool createConferenceFromCall  ( Call* call1, Call* call2                    );
+      bool mergeConferences          ( Call* conf1, Call* conf2                    );
+      bool addParticipant            ( Call* call2, Call* conference               );
+      bool detachParticipant         ( Call* call                                  );
+      virtual bool conferenceChanged ( const QString &confId, const QString &state );
+      virtual void conferenceRemoved ( const QString &confId                       );
+      virtual Call* addConference    ( const QString &confID                       );
+      void removeConference          ( Call* call                                  );
 
-      //Connection related members
+      //Getters
+      int size                                  ();
+      CallList                 getCallList      ();
+      static const CallHash&   getHistory       ();
+      static const QStringList getHistoryCallId ();
+
+      //Account related
+      static Account* getCurrentAccount  (               );
+      static QString getCurrentAccountId (               );
+      static AccountList* getAccountList (               );
+      static QString getPriorAccoundId   (               );
+      static void setPriorAccountId      ( QString value );
+
+      //Connection related
       static bool init();
       
       //Magic dispatcher
-      Call* getCall(const CallWidget widget) const;
-      Index getTreeItem(const CallWidget widget) const;
-      QList<Call*> getCalls(const CallWidget widget) const;
-      QList<Call*> getCalls();
-      bool isConference(const CallWidget widget) const;
+      Call* findCallByCallId( QString callId         );
+      CallList getCalls     (                        );
+      CallList getCalls     ( const CallWidget widget) const;
+      CallList getCalls     ( const QString callId   ) const;
+      CallList getCalls     ( const Call* call       ) const;
+      CallList getCalls     ( const Index idx        ) const;
       
-      Call* getCall(const Call* call) const;
-      Index getTreeItem(const Call* call) const;
-      QList<Call*> getCalls(const Call* call) const;
-      bool isConference(const Call* call) const;
+      bool isConference     ( const Call* call       ) const;
+      bool isConference     ( const QString callId   ) const;
+      bool isConference     ( const Index idx        ) const;
+      bool isConference     ( const CallWidget widget) const;
       
-      Call* getCall(const Index idx) const;
-      Index getTreeItem(const Index idx) const;
-      QList<Call*> getCalls(const Index idx) const;
-      bool isConference(const Index idx) const;
+      Call* getCall         ( const QString callId   ) const;
+      Call* getCall         ( const Index idx        ) const;
+      Call* getCall         ( const Call* call       ) const;
+      Call* getCall         ( const CallWidget widget) const;
       
-      Call* getCall(const QString callId) const;
-      Index getTreeItem(const QString callId) const;
-      QList<Call*> getCalls(const QString callId) const;
-      bool isConference(const QString callId) const;
+      Index getIndex        ( const Call* call       ) const;
+      Index getIndex        ( const Index idx        ) const;
+      Index getIndex        ( const CallWidget widget) const;
+      Index getIndex        ( const QString callId   ) const;
       
-      Index getIndex(const Call* call) const;
-      Index getIndex(const Index idx) const;
-      Index getIndex(const CallWidget widget) const;
-      Index getIndex(const QString callId) const;
+      CallWidget getWidget  ( const Call* call       ) const;
+      CallWidget getWidget  ( const Index idx        ) const;
+      CallWidget getWidget  ( const CallWidget widget) const;
+      CallWidget getWidget  ( const QString getWidget) const;
       
-      CallWidget getWidget(const Call* call) const;
-      CallWidget getWidget(const Index idx) const;
-      CallWidget getWidget(const CallWidget widget) const;
-      CallWidget getWidget(const QString getWidget) const;
-      
-      bool updateIndex(Call* call, Index value);
-      bool updateWidget(Call* call, CallWidget value);
+      bool updateIndex      ( Call* call, Index value      );
+      bool updateWidget     ( Call* call, CallWidget value );
       
       
    protected:
-      struct InternalCallModelStruct {
-	 CallWidget call;
-	 Call* call_real;
-	 Index treeItem; //For the view
-	 QList<InternalCallModelStruct*> children; //For the view
-	 bool conference;
+      struct InternalStruct;
+      typedef QList<InternalStruct*> InternalCallList;
+      struct InternalStruct {
+	 CallWidget       call       ;
+	 Call*            call_real  ;
+	 Index            index      ;
+	 InternalCallList children   ;
+	 bool             conference ;
       };
-      typedef QHash<Call*, InternalCallModelStruct*>      InternalCall;
-      typedef QHash<QString, InternalCallModelStruct*>    InternalCallId;
-      typedef QHash<CallWidget, InternalCallModelStruct*> InternalWidget;
-      typedef QHash<Index, InternalCallModelStruct*>      InternalIndex;
+      typedef QHash< Call*      , InternalStruct* > InternalCall  ;
+      typedef QHash< QString    , InternalStruct* > InternalCallId;
+      typedef QHash< CallWidget , InternalStruct* > InternalWidget;
+      typedef QHash< Index      , InternalStruct* > InternalIndex ;
       
-      static QHash<QString, Call*> activeCalls;
-      static QHash<QString, Call*> historyCalls;
+      static CallHash m_pActiveCalls ;
+      static CallHash m_pHistoryCalls;
       
-      static InternalCall privateCallList_call;
-      static InternalCallId privateCallList_callId;
-      static InternalWidget privateCallList_widget;
-      static InternalIndex privateCallList_index;
+      static InternalCall   m_pPrivateCallList_call  ;
+      static InternalCallId m_pPrivateCallList_callId;
+      static InternalWidget m_pPrivateCallList_widget;
+      static InternalIndex  m_pPrivateCallList_index ;
       
-      static QString currentAccountId;
-      static QString priorAccountId;
-      static AccountList* accountList;
-      static bool callInit;
-      static bool historyInit;
+      static QString      m_pPriorAccountId;
+      static AccountList* m_pAccountList   ;
+      static bool         m_pCallInit      ;
+      static bool         m_pHistoryInit   ;
 
    private:
-      static bool instanceInit;
+      static bool m_pInstanceInit;
    //public slots:
       //void clearHistory();
 };

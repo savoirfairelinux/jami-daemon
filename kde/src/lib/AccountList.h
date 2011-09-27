@@ -34,7 +34,7 @@ class LIB_EXPORT AccountList : public QObject{
    
 private:
 
-   QVector<Account*>*  accounts;
+   QVector<Account*>*  m_pAccounts;
 
 public:
 

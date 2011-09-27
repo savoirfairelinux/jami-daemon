@@ -6,6 +6,7 @@
 #include <akonadi/collectionmodel.h>
 #include <kabc/addressee.h>
 #include <kabc/addresseelist.h>
+#include <lib/ContactBackend.h>
 
 class Contact;
 
@@ -15,10 +16,10 @@ namespace KABC {
 
 typedef QList<Contact*> ContactList;
 
-class AkonadiBackend : public QObject {
+class AkonadiBackend : public ContactBackend {
    Q_OBJECT
 public:
-   static   AkonadiBackend* getInstance();
+   static   ContactBackend* getInstance();
    Contact* getContactByPhone ( QString phoneNumber );
    Contact* getContactByUid   ( QString uid         );
    void     editContact       ( Contact* contact    );
@@ -31,11 +32,10 @@ private:
    static AkonadiBackend*         m_pInstance       ;
    Akonadi::Session*              m_pSession        ;
    Akonadi::Collection            m_pCollection     ;
-   QHash<QString,Contact*>        m_pContactByPhone ;
-   QHash<QString,Contact*>        m_pContactByUid   ;
    QHash<QString,KABC::Addressee> m_pAddrHash       ;
+protected:
+   ContactList update_slot();
 public slots:
-   ContactList update();
    ContactList update(Akonadi::Collection collection);
    void collectionsReceived( const Akonadi::Collection::List& );
 signals:

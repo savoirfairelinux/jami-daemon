@@ -18,7 +18,7 @@
 
 AkonadiBackend*  AkonadiBackend::m_pInstance = 0;
 
-AkonadiBackend::AkonadiBackend(QObject* parent) : QObject(parent)
+AkonadiBackend::AkonadiBackend(QObject* parent) : ContactBackend(parent)
 {
    //QTimer::singleShot( 0, this, SLOT( delayedInit() ) );
    m_pSession = new Akonadi::Session( "SFLPhone::instance" );
@@ -34,7 +34,7 @@ AkonadiBackend::~AkonadiBackend()
    
 }
 
-AkonadiBackend* AkonadiBackend::getInstance()
+ContactBackend* AkonadiBackend::getInstance()
 {
    if (m_pInstance == NULL) {
       m_pInstance = new AkonadiBackend(0);
@@ -95,7 +95,7 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
    return contacts;
 }
 
-ContactList AkonadiBackend::update()
+ContactList AkonadiBackend::update_slot()
 {
    return update(m_pCollection);
 }
