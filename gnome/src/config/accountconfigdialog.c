@@ -896,23 +896,17 @@ GtkWidget* create_network(account_t *a)
 
     int idx = 0;
     for (gchar **iface = iface_list; iface && *iface; iface++, idx++) {
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(localAddressCombo), *iface);
 
+        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(localAddressCombo), NULL, *iface);
         if (g_strcmp0(*iface, local_interface) == 0)
             gtk_combo_box_set_active(GTK_COMBO_BOX(localAddressCombo), idx);
     }
+    if (!local_interface)
+        gtk_combo_box_set_active(GTK_COMBO_BOX(localAddressCombo), 0);
 
 
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), localAddressCombo);
     gtk_table_attach(GTK_TABLE(table), localAddressCombo, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-
-
-    GtkCellRenderer * ipInterfaceCellRenderer;
-    ipInterfaceCellRenderer = gtk_cell_renderer_text_new();
-
-    gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(localAddressCombo), ipInterfaceCellRenderer, TRUE);
-    gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(localAddressCombo), ipInterfaceCellRenderer, "text", 0, NULL);
-
 
     // Fill the text entry with the ip address of local interface selected
     localAddressEntry = gtk_entry_new();

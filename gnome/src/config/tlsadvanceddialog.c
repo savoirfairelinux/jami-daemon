@@ -201,11 +201,6 @@ void show_advanced_tls_options (GHashTable * properties)
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), tlsProtocolMethodCombo);
     gtk_table_attach (GTK_TABLE (table), tlsProtocolMethodCombo, 1, 2, 7, 8, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-    GtkCellRenderer *tlsProtocolMethodCellRenderer;
-    tlsProtocolMethodCellRenderer = gtk_cell_renderer_text_new();
-    gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (tlsProtocolMethodCombo), tlsProtocolMethodCellRenderer, TRUE);
-    gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (tlsProtocolMethodCombo), tlsProtocolMethodCellRenderer, "text", 0, NULL);
-
     /* Cipher list */
     GtkWidget * cipherListEntry;
     label = gtk_label_new_with_mnemonic (_ ("TLS cipher list"));
