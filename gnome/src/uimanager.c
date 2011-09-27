@@ -454,24 +454,18 @@ dialpad_bar_cb(GtkToggleAction *togglemenuitem, gpointer user_data UNUSED)
 static void
 help_contents_cb(GtkAction *action UNUSED)
 {
-#warning FIXME : port to GTK3
-/*
     GError *error = NULL;
-
-    gnome_help_display("sflphone.xml", NULL, &error);
-
+    gtk_show_uri(NULL, "ghelp:sflphone", GDK_CURRENT_TIME, &error);
     if (error != NULL) {
         g_warning("%s", error->message);
         g_error_free(error);
     }
-    */
 }
 
 static void
 help_about(void * foo UNUSED)
 {
-    gchar
-    *authors[] = {
+    static const gchar *authors[] = {
         "Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>",
         "Jean-Philippe Barrette-LaPierre",
         "Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>",
@@ -485,16 +479,21 @@ help_about(void * foo UNUSED)
         "Julien Plissonneau Duquene <julien.plissonneau.duquene@savoirfairelinux.com>",
         "Alexandre Savard <alexandre.savard@savoirfairelinux.com>", NULL
     };
-    gchar *artists[] = { "Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>",
-                         "Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>", NULL
-                       };
+    static const gchar *artists[] = {
+        "Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>",
+        "Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>", NULL
+    };
 
-    gtk_show_about_dialog(GTK_WINDOW(get_main_window()), "artists", artists,
-                           "authors", authors, "comments",
-                           _("SFLphone is a VoIP client compatible with SIP and IAX2 protocols."),
-                           "copyright", "Copyright © 2004-2011 Savoir-faire Linux Inc.", "name",
-                           PACKAGE, "title", _("About SFLphone"), "version", VERSION, "website",
-                           "http://www.sflphone.org", NULL);
+    gtk_show_about_dialog(GTK_WINDOW(get_main_window()),
+            "artists", artists,
+            "authors", authors,
+            "comments", _("SFLphone is a VoIP client compatible with SIP and IAX2 protocols."),
+            "copyright", "Copyright © 2004-2011 Savoir-faire Linux Inc.",
+            "name", PACKAGE,
+            "title", _("About SFLphone"),
+            "version", VERSION,
+            "website", "http://www.sflphone.org",
+            NULL);
 
 }
 

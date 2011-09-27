@@ -362,18 +362,12 @@ static void
 help_contents_cb (GtkWidget * widget UNUSED,
                   gpointer data UNUSED)
 {
-#warning FIXME : port to GTK3
-/*
     GError *error = NULL;
-
-    gnome_help_display ("sflphone.xml", "accounts", &error);
-
+    gtk_show_uri(NULL, "ghelp:sflphone?accounts", GDK_CURRENT_TIME, &error);
     if (error != NULL) {
-        g_warning ("%s", error->message);
-
-        g_error_free (error);
+        g_warning("%s", error->message);
+        g_error_free(error);
     }
-    */
 }
 
 static void
