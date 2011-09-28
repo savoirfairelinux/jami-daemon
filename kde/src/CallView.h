@@ -24,10 +24,10 @@ class CallTreeItemDelegate : public QItemDelegate
 
 typedef CallModel<CallTreeItem*,QTreeWidgetItem*> TreeWidgetCallModel;
 
-class CallView : public QTreeWidget, public TreeWidgetCallModel {
+class CallView : public QTreeWidget/*, public TreeWidgetCallModel*/ {
    Q_OBJECT
    public:
-      CallView(QWidget* parent =0,ModelType type = ActiveCall);
+      CallView(QWidget* parent =0);
       bool selectItem(Call* item);
       Call* getCurrentItem();
       bool removeItem(Call* item);
@@ -35,10 +35,6 @@ class CallView : public QTreeWidget, public TreeWidgetCallModel {
       void setTitle(QString title);
       bool dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action);
       virtual QMimeData* mimeData( const QList<QTreeWidgetItem *> items) const;
-      virtual Call* addCall(Call* call, Call* parent =0);
-      virtual Call* addConference(const QString &confID);
-      virtual bool conferenceChanged(const QString &confId, const QString &state);
-      virtual void conferenceRemoved(const QString &confId);
       
    private:
       QTreeWidgetItem* extractItem(QString callId);
@@ -58,12 +54,18 @@ class CallView : public QTreeWidget, public TreeWidgetCallModel {
       void destroyCall(Call* toDestroy);
       void itemDoubleClicked(QTreeWidgetItem* item, int column);
       void itemClicked(QTreeWidgetItem* item, int column);
+      Call* addCall(Call* call, Call* parent =0);
+      Call* addConference(Call* conf);
+      bool conferenceChanged(Call* conf);
+      void conferenceRemoved(Call* conf);
       //D-Bus handling
 //       void callStateChangedSignal(const QString& callId, const QString& state);
 //       void incomingCallSignal(const QString& accountId, const QString& callId);
-      void conferenceCreatedSignal(const QString& confId);
-      void conferenceChangedSignal(const QString& confId, const QString& state);
-      void conferenceRemovedSignal(const QString& confId);
+      
+//       void conferenceCreatedSignal(const QString& confId);
+//       void conferenceChangedSignal(const QString& confId, const QString& state);
+//       void conferenceRemovedSignal(const QString& confId);
+      
 //       void incomingMessageSignal(const QString& accountId, const QString& message);
 //       void voiceMailNotifySignal(const QString& accountId, int count);
       

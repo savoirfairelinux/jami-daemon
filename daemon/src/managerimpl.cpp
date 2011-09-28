@@ -1108,6 +1108,7 @@ void ManagerImpl::removeParticipant (const std::string& call_id)
 
     removeStream(call_id);
     getMainBuffer()->stateInfo();
+     _dbus.getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
 }
 
 void ManagerImpl::processRemainingParticipant (const std::string &current_call_id, Conference *conf)

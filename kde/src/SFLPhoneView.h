@@ -253,16 +253,16 @@ public slots:
    //void on_callTree_itemChanged();
    //void on_callTree_itemDoubleClicked(QTreeWidgetItem* item, int column);
    
-   void on1_callStateChanged(const QString &callID, const QString &state);
+//   void on1_callStateChanged(const QString &callID, const QString &state);
    void on1_error(MapStringString details);
-   void on1_incomingCall(const QString &accountID, const QString &callID/*, const QString &from*/);
+   void on1_incomingCall(Call* call);
    //void on1_incomingMessage(const QString &accountID, const QString &message);
    void on1_voiceMailNotify(const QString &accountID, int count);
    void on1_volumeChanged(const QString &device, double value);
    //void on1_audioManagerChanged();
-   void on1_incomingConference(const QString &confID);
-   void on1_changingConference(const QString &confID, const QString &state);
-   void on1_conferenceRemoved(const QString &confId);
+//   void on1_incomingConference(const QString &confID);
+//   void on1_changingConference(const QString &confID, const QString &state);
+//   void on1_conferenceRemoved(const QString &confId);
    void changeScreen(int screen);
    
 signals:

@@ -2,15 +2,17 @@
 #include "AkonadiBackend.h"
 #include "lib/Contact.h"
 
+#include "SFLPhone.h"
+
 #include <QtGui/QInputDialog>
 
 ///Retrieve current and older calls from the daemon, fill history and the calls TreeView and enable drag n' drop
-CallView::CallView(QWidget* parent, ModelType type) : QTreeWidget(parent), TreeWidgetCallModel(type)
+CallView::CallView(QWidget* parent) : QTreeWidget(parent)
 {
-   if (type == ActiveCall)
-      initCall();
-   else if (type == History)
-      initHistory();
+//    if (type == ActiveCall)
+//       SFLPhone::model()->initCall();
+//    else if (type == History)
+//       SFLPhone::model()->initHistory();
    
    //Widget part
    setAcceptDrops(true);
@@ -20,8 +22,13 @@ CallView::CallView(QWidget* parent, ModelType type) : QTreeWidget(parent), TreeW
    setSizePolicy(QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding));
 
    //User Interface events
-   connect(this, SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)), this, SLOT(itemDoubleClicked(QTreeWidgetItem*,int)));
-   connect(this, SIGNAL(itemClicked(QTreeWidgetItem*,int)), this, SLOT(itemClicked(QTreeWidgetItem*,int)));
+   connect(this              , SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int) ) , this, SLOT( itemDoubleClicked(QTreeWidgetItem*,int)) );
+   connect(this              , SIGNAL(itemClicked(QTreeWidgetItem*,int)       ) , this, SLOT( itemClicked(QTreeWidgetItem*,int))       );
+   connect(SFLPhone::model() , SIGNAL(conferenceCreated(Call*)                ) , this, SLOT( addConference(Call*))                    );
+   connect(SFLPhone::model() , SIGNAL(conferenceChanged(Call*)                ) , this, SLOT( conferenceChanged(Call*))                );
+   connect(SFLPhone::model() , SIGNAL(aboutToRemoveConference(Call*)          ) , this, SLOT( conferenceRemoved(Call*))                );
+   connect(SFLPhone::model() , SIGNAL(callAdded(Call*,Call*)                  ) , this, SLOT( addCall(Call*,Call*))                    );
+
 }
 
 
@@ -37,38 +44,39 @@ bool CallView::callToCall(QTreeWidgetItem *parent, int index, const QMimeData *d
    Q_UNUSED(action)
    QByteArray encodedCallId      = data->data( MIME_CALLID      );
    if (!QString(encodedCallId).isEmpty()) {
-      clearArtefact(getIndex(encodedCallId));
+      if (SFLPhone::model()->getIndex(encodedCallId))
+        clearArtefact(SFLPhone::model()->getIndex(encodedCallId));
 
       if (!parent) {
          qDebug() << "Call dropped on empty space";
-         if (getIndex(encodedCallId)->parent()) {
+         if (SFLPhone::model()->getIndex(encodedCallId)->parent()) {
             qDebug() << "Detaching participant";
-            detachParticipant(getCall(encodedCallId));
+            SFLPhone::model()->detachParticipant(SFLPhone::model()->getCall(encodedCallId));
          }
          else
             qDebug() << "The call is not in a conversation (doing nothing)";
          return true;
       }
 
-      if (getCall(parent)->getCallId() == QString(encodedCallId)) {
+      if (SFLPhone::model()->getCall(parent)->getCallId() == QString(encodedCallId)) {
          qDebug() << "Call dropped on itself (doing nothing)";
          return true;
       }
 
-      if ((parent->childCount()) && (getIndex(encodedCallId)->childCount())) {
+      if ((parent->childCount()) && (SFLPhone::model()->getIndex(encodedCallId)->childCount())) {
          qDebug() << "Merging two conferences";
-         mergeConferences(getCall(parent),getCall(encodedCallId));
+         SFLPhone::model()->mergeConferences(SFLPhone::model()->getCall(parent),SFLPhone::model()->getCall(encodedCallId));
          return true;
       }
       else if ((parent->parent()) || (parent->childCount())) {
          qDebug() << "Call dropped on a conference";
 
-         if ((getIndex(encodedCallId)->childCount()) && (!parent->childCount())) {
+         if ((SFLPhone::model()->getIndex(encodedCallId)->childCount()) && (!parent->childCount())) {
             qDebug() << "Conference dropped on a call (doing nothing)";
             return true;
          }
 
-         QTreeWidgetItem* call1 = getIndex(encodedCallId);
+         QTreeWidgetItem* call1 = SFLPhone::model()->getIndex(encodedCallId);
          QTreeWidgetItem* call2 = (parent->parent())?parent->parent():parent;
 
          if (call1->parent()) {
@@ -77,28 +85,28 @@ bool CallView::callToCall(QTreeWidgetItem *parent, int index, const QMimeData *d
                qDebug() << "Call dropped on it's own conference (doing nothing)";
                return true;
             }
-            else if (getIndex(call1)->childCount()) {
+            else if (SFLPhone::model()->getIndex(call1)->childCount()) {
                qDebug() << "Merging two conferences";
-               mergeConferences(getCall(call1),getCall(call2));
+               SFLPhone::model()->mergeConferences(SFLPhone::model()->getCall(call1),SFLPhone::model()->getCall(call2));
             }
             else if (call1->parent()) {
                qDebug() << "Moving call from a conference to an other";
-               detachParticipant(getCall(encodedCallId));
+               SFLPhone::model()->detachParticipant(SFLPhone::model()->getCall(encodedCallId));
             }
          }
          qDebug() << "Adding participant";
-         int state = getCall(call1)->getState();
+         int state = SFLPhone::model()->getCall(call1)->getState();
          if(state == CALL_STATE_INCOMING || state == CALL_STATE_DIALING || state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD) {
-            getCall(call1)->actionPerformed(CALL_ACTION_ACCEPT);
+            SFLPhone::model()->getCall(call1)->actionPerformed(CALL_ACTION_ACCEPT);
          }
-         state = getCall(call2)->getState();
+         state = SFLPhone::model()->getCall(call2)->getState();
          if(state == CALL_STATE_INCOMING || state == CALL_STATE_DIALING || state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD) {
-            getCall(call2)->actionPerformed(CALL_ACTION_ACCEPT);
+            SFLPhone::model()->getCall(call2)->actionPerformed(CALL_ACTION_ACCEPT);
          }
-         addParticipant(getCall(call1),getCall(call2));
+         SFLPhone::model()->addParticipant(SFLPhone::model()->getCall(call1),SFLPhone::model()->getCall(call2));
          return true;
       }
-      else if ((getIndex(encodedCallId)->childCount()) && (!parent->childCount())) {
+      else if ((SFLPhone::model()->getIndex(encodedCallId)->childCount()) && (!parent->childCount())) {
          qDebug() << "Call dropped on it's own conference (doing nothing)";
          return true;
       }
@@ -106,7 +114,7 @@ bool CallView::callToCall(QTreeWidgetItem *parent, int index, const QMimeData *d
 
 
       qDebug() << "Call dropped on another call";
-      createConferenceFromCall(getCall(encodedCallId),getCall(parent));
+      SFLPhone::model()->createConferenceFromCall(SFLPhone::model()->getCall(encodedCallId),SFLPhone::model()->getCall(parent));
       return true;
    }
    return false;
@@ -124,7 +132,7 @@ bool CallView::phoneNumberToCall(QTreeWidgetItem *parent, int index, const QMime
          name = contact->getFormattedName();
       else
          name = "Unknow";
-      Call* call2 = TreeWidgetCallModel::addDialingCall(name, TreeWidgetCallModel::getCurrentAccountId());
+      Call* call2 = SFLPhone::model()->addDialingCall(name, SFLPhone::model()->getCurrentAccountId());
       call2->appendText(QString(encodedPhoneNumber));
       if (!parent) {
          //Dropped on free space
@@ -133,16 +141,16 @@ bool CallView::phoneNumberToCall(QTreeWidgetItem *parent, int index, const QMime
       else if (parent->childCount() || parent->parent()) {
          //Dropped on a conversation
          QTreeWidgetItem* call = (parent->parent())?parent->parent():parent;
-         addParticipant(getCall(call),call2);
+         SFLPhone::model()->addParticipant(SFLPhone::model()->getCall(call),call2);
       }
       else {
          //Dropped on call
          call2->actionPerformed(CALL_ACTION_ACCEPT);
-         int state = getCall(parent)->getState();
+         int state = SFLPhone::model()->getCall(parent)->getState();
          if(state == CALL_STATE_INCOMING || state == CALL_STATE_DIALING || state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD) {
-            getCall(parent)->actionPerformed(CALL_ACTION_ACCEPT);
+            SFLPhone::model()->getCall(parent)->actionPerformed(CALL_ACTION_ACCEPT);
          }
-         createConferenceFromCall(call2,getCall(parent));
+         SFLPhone::model()->createConferenceFromCall(call2,SFLPhone::model()->getCall(parent));
       }
    }
    return false;
@@ -159,7 +167,7 @@ bool CallView::contactToCall(QTreeWidgetItem *parent, int index, const QMimeData
       if (contact) {
          Call* call2;
          if (contact->getPhoneNumbers().count() == 1) {
-            call2 = TreeWidgetCallModel::addDialingCall(contact->getFormattedName(), TreeWidgetCallModel::getCurrentAccountId());
+            call2 = SFLPhone::model()->addDialingCall(contact->getFormattedName(), SFLPhone::model()->getCurrentAccountId());
             call2->appendText(contact->getPhoneNumbers()[0]->getNumber());
          }
          else if (contact->getPhoneNumbers().count() > 1) {
@@ -172,7 +180,7 @@ bool CallView::contactToCall(QTreeWidgetItem *parent, int index, const QMimeData
             }
             QString result = QInputDialog::getItem (this, QString("Select phone number"), QString("This contact have many phone number, please select the one you wish to call"), list, 0, false, &ok);
             if (ok) {
-               call2 = TreeWidgetCallModel::addDialingCall(contact->getFormattedName(), TreeWidgetCallModel::getCurrentAccountId());
+               call2 = SFLPhone::model()->addDialingCall(contact->getFormattedName(), SFLPhone::model()->getCurrentAccountId());
                call2->appendText(map[result]);
             }
             else {
@@ -191,16 +199,16 @@ bool CallView::contactToCall(QTreeWidgetItem *parent, int index, const QMimeData
          else if (parent->childCount() || parent->parent()) {
             //Dropped on a conversation
             QTreeWidgetItem* call = (parent->parent())?parent->parent():parent;
-            addParticipant(getCall(call),call2);
+            SFLPhone::model()->addParticipant(SFLPhone::model()->getCall(call),call2);
          }
          else {
             //Dropped on call
             call2->actionPerformed(CALL_ACTION_ACCEPT);
-            int state = getCall(parent)->getState();
+            int state = SFLPhone::model()->getCall(parent)->getState();
             if(state == CALL_STATE_INCOMING || state == CALL_STATE_DIALING || state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD) {
-               getCall(parent)->actionPerformed(CALL_ACTION_ACCEPT);
+               SFLPhone::model()->getCall(parent)->actionPerformed(CALL_ACTION_ACCEPT);
             }
-            createConferenceFromCall(call2,getCall(parent));
+            SFLPhone::model()->createConferenceFromCall(call2,SFLPhone::model()->getCall(parent));
          }
       }
    }
@@ -243,18 +251,18 @@ QMimeData* CallView::mimeData( const QList<QTreeWidgetItem *> items) const
    QMimeData *mimeData = new QMimeData();
    
    //Call ID for internal call merging and spliting
-   if (getCall(items[0])->isConference()) {
-      mimeData->setData(MIME_CALLID, getCall(items[0])->getConfId().toAscii());
+   if (SFLPhone::model()->getCall(items[0])->isConference()) {
+      mimeData->setData(MIME_CALLID, SFLPhone::model()->getCall(items[0])->getConfId().toAscii());
    }
    else {
-      mimeData->setData(MIME_CALLID, getCall(items[0])->getCallId().toAscii());
+      mimeData->setData(MIME_CALLID, SFLPhone::model()->getCall(items[0])->getCallId().toAscii());
    }
    
    //Plain text for other applications
-   mimeData->setData(MIME_PLAIN_TEXT, QString(getCall(items[0])->getPeerName()+"\n"+getCall(items[0])->getPeerPhoneNumber()).toAscii());
+   mimeData->setData(MIME_PLAIN_TEXT, QString(SFLPhone::model()->getCall(items[0])->getPeerName()+"\n"+SFLPhone::model()->getCall(items[0])->getPeerPhoneNumber()).toAscii());
    
    //TODO Comment this line if you don't want to see ugly artefact, but the caller details will not be visible while dragged
-   items[0]->setText(0, getCall(items[0])->getPeerName() + "\n" + getCall(items[0])->getPeerPhoneNumber());
+   items[0]->setText(0, SFLPhone::model()->getCall(items[0])->getPeerName() + "\n" + SFLPhone::model()->getCall(items[0])->getPeerPhoneNumber());
    return mimeData;
 }
 
@@ -269,7 +277,7 @@ QMimeData* CallView::mimeData( const QList<QTreeWidgetItem *> items) const
 Call* CallView::addCall(Call* call, Call* parent) 
 {
    QTreeWidgetItem* callItem = new QTreeWidgetItem();
-   updateIndex(call,callItem);
+   SFLPhone::model()->updateIndex(call,callItem);
    insertItem(callItem,parent);
    
    setCurrentItem(callItem);
@@ -293,8 +301,8 @@ void CallView::setTitle(QString title)
 ///Select an item in the TreeView
 bool CallView::selectItem(Call* item) 
 {
-   if (getIndex(item)) {
-      setCurrentItem(getIndex(item));
+   if (SFLPhone::model()->getIndex(item)) {
+      setCurrentItem(SFLPhone::model()->getIndex(item));
       return true;
    }
    else
@@ -304,8 +312,8 @@ bool CallView::selectItem(Call* item)
 ///Return the current item
 Call* CallView::getCurrentItem() 
 {
-   if (currentItem() && getCall(QTreeWidget::currentItem()))
-      return getCall(QTreeWidget::currentItem());
+   if (currentItem() && SFLPhone::model()->getCall(QTreeWidget::currentItem()))
+      return SFLPhone::model()->getCall(QTreeWidget::currentItem());
    else
       return false;
 }
@@ -313,8 +321,9 @@ Call* CallView::getCurrentItem()
 ///Remove a TreeView item and delete it
 bool CallView::removeItem(Call* item) 
 {
-   if (indexOfTopLevelItem(getIndex(item)) != -1) {//TODO To remove once safe
-     removeItemWidget(getIndex(item),0);
+   exit(66);
+   if (indexOfTopLevelItem(SFLPhone::model()->getIndex(item)) != -1) {//TODO To remove once safe
+     removeItemWidget(SFLPhone::model()->getIndex(item),0);
      return true;
    }
    else
@@ -330,7 +339,7 @@ QWidget* CallView::getWidget()
 ///Convenience wrapper around extractItem(QTreeWidgetItem*)
 QTreeWidgetItem* CallView::extractItem(QString callId) 
 {
-   QTreeWidgetItem* currentItem = getIndex(callId);
+   QTreeWidgetItem* currentItem = SFLPhone::model()->getIndex(callId);
    return extractItem(currentItem);
 }
 
@@ -356,7 +365,7 @@ QTreeWidgetItem* CallView::extractItem(QTreeWidgetItem* item)
 ///Convenience wrapper around insertItem(QTreeWidgetItem*, QTreeWidgetItem*)
 CallTreeItem* CallView::insertItem(QTreeWidgetItem* item, Call* parent) 
 {
-   return insertItem(item,(parent)?getIndex(parent):0);
+   return insertItem(item,(parent)?SFLPhone::model()->getIndex(parent):0);
 }
 
 ///Insert a TreeView item in the TreeView as child of parent or as a top level item, also restore the item Widget
@@ -373,8 +382,8 @@ CallTreeItem* CallView::insertItem(QTreeWidgetItem* item, QTreeWidgetItem* paren
       parent->addChild(item);
    
    CallTreeItem* callItem = new CallTreeItem();
-   updateWidget(getCall(item), callItem);
-   callItem->setCall(getCall(item));
+   SFLPhone::model()->updateWidget(SFLPhone::model()->getCall(item), callItem);
+   callItem->setCall(SFLPhone::model()->getCall(item));
    
    setItemWidget(item,0,callItem);
    
@@ -385,15 +394,15 @@ CallTreeItem* CallView::insertItem(QTreeWidgetItem* item, QTreeWidgetItem* paren
 ///Remove a call from the interface
 void CallView::destroyCall(Call* toDestroy) 
 {
-   if (getIndex(toDestroy) == currentItem())
+   if (SFLPhone::model()->getIndex(toDestroy) == currentItem())
       setCurrentItem(0);
    
-   if (!getIndex(toDestroy))
+   if (!SFLPhone::model()->getIndex(toDestroy))
        qDebug() << "Call not found";
-   else if (indexOfTopLevelItem(getIndex(toDestroy)) != -1)
-      takeTopLevelItem(indexOfTopLevelItem(getIndex(toDestroy)));
-   else if (getIndex(toDestroy)->parent()) //May crash here
-      getIndex(toDestroy)->parent()->removeChild(getIndex(toDestroy));
+   else if (indexOfTopLevelItem(SFLPhone::model()->getIndex(toDestroy)) != -1)
+      takeTopLevelItem(indexOfTopLevelItem(SFLPhone::model()->getIndex(toDestroy)));
+   else if (SFLPhone::model()->getIndex(toDestroy)->parent()) //May crash here
+      SFLPhone::model()->getIndex(toDestroy)->parent()->removeChild(SFLPhone::model()->getIndex(toDestroy));
    else
       qDebug() << "Call not found";
 }
@@ -401,7 +410,8 @@ void CallView::destroyCall(Call* toDestroy)
 /// @todo Remove the text partially covering the TreeView item widget when it is being dragged, a beter implementation is needed
 void CallView::clearArtefact(QTreeWidgetItem* item) 
 {
-   item->setText(0,"");
+   if (item)
+      item->setText(0,"");
 }
 
 
@@ -413,13 +423,16 @@ void CallView::clearArtefact(QTreeWidgetItem* item)
 
 void CallView::itemDoubleClicked(QTreeWidgetItem* item, int column) {
    Q_UNUSED(column)
-   qDebug() << "Item doubleclicked";
-   switch(getCall(item)->getState()) {
+   qDebug() << "Item doubleclicked" << SFLPhone::model()->getCall(item)->getState();
+   switch(SFLPhone::model()->getCall(item)->getState()) {
+      case CALL_STATE_INCOMING:
+         SFLPhone::model()->getCall(item)->actionPerformed(CALL_ACTION_ACCEPT);
+         break;
       case CALL_STATE_HOLD:
-         getCall(item)->actionPerformed(CALL_ACTION_HOLD);
+         SFLPhone::model()->getCall(item)->actionPerformed(CALL_ACTION_HOLD);
          break;
       case CALL_STATE_DIALING:
-         getCall(item)->actionPerformed(CALL_ACTION_ACCEPT);
+         SFLPhone::model()->getCall(item)->actionPerformed(CALL_ACTION_ACCEPT);
          break;
       default:
          qDebug() << "Double clicked an item with no action on double click.";
@@ -428,7 +441,7 @@ void CallView::itemDoubleClicked(QTreeWidgetItem* item, int column) {
 
 void CallView::itemClicked(QTreeWidgetItem* item, int column) {
    Q_UNUSED(column)
-   emit itemChanged(getCall(item));
+   emit itemChanged(SFLPhone::model()->getCall(item));
    qDebug() << "Item clicked";
 }
 
@@ -440,13 +453,13 @@ void CallView::itemClicked(QTreeWidgetItem* item, int column) {
  ****************************************************************************/
 
 ///Add a new conference, get the call list and update the interface as needed
-Call* CallView::addConference(const QString & confID) 
+Call* CallView::addConference(Call* conf) 
 {
    qDebug() << "Conference created";
-   Call* newConf =  TreeWidgetCallModel::addConference(confID);
+   Call* newConf =  conf;//SFLPhone::model()->addConference(confID);//TODO ELV?
    
    QTreeWidgetItem* confItem = new QTreeWidgetItem();
-   updateIndex(newConf,confItem);
+   SFLPhone::model()->updateIndex(conf,confItem);
 
    insertItem(confItem,(QTreeWidgetItem*)0);
 
@@ -454,11 +467,11 @@ Call* CallView::addConference(const QString & confID)
    setCurrentItem(confItem);
 
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
-   QStringList callList = callManager.getParticipantList(confID);
+   QStringList callList = callManager.getParticipantList(conf->getConfId());
    
    foreach (QString callId, callList) {
       qDebug() << "Adding " << callId << "to the conversation";
-      insertItem(extractItem(getIndex(callId)),confItem);
+      insertItem(extractItem(SFLPhone::model()->getIndex(callId)),confItem);
    }
    
    Q_ASSERT_X(confItem->childCount() == 0, "add conference","Conference created, but without any participants");
@@ -466,68 +479,75 @@ Call* CallView::addConference(const QString & confID)
 }
 
 ///Executed when the daemon signal a modification in an existing conference. Update the call list and update the TreeView
-bool CallView::conferenceChanged(const QString &confId, const QString &state) 
+bool CallView::conferenceChanged(Call* conf) 
 {
    qDebug() << "Conference changed";
-   if (!TreeWidgetCallModel::conferenceChanged(confId, state))
-     return false;
+   //if (!SFLPhone::model()->conferenceChanged(confId, state))
+   //  return false;
 
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
-   QStringList callList = callManager.getParticipantList(confId);
+   QStringList callList = callManager.getParticipantList(conf->getConfId());
 
    QList<QTreeWidgetItem*> buffer;
    foreach (QString callId, callList) {
-      if (getCall(callId)) {
-         QTreeWidgetItem* item3 = extractItem(getIndex(callId));
-         insertItem(item3, getIndex(confId));
-         buffer << getIndex(callId);
+      if (SFLPhone::model()->getCall(callId)) {
+         QTreeWidgetItem* item3 = extractItem(SFLPhone::model()->getIndex(callId));
+         insertItem(item3, SFLPhone::model()->getIndex(conf));
+         buffer << SFLPhone::model()->getIndex(callId);
       }
       else
          qDebug() << "Call " << callId << " does not exist";
    }
 
-   for (int j =0; j < getIndex(confId)->childCount();j++) {
-      if (buffer.indexOf(getIndex(confId)->child(j)) == -1)
-         insertItem(extractItem(getIndex(confId)->child(j)));
+   for (int j =0; j < SFLPhone::model()->getIndex(conf)->childCount();j++) {
+      if (buffer.indexOf(SFLPhone::model()->getIndex(conf)->child(j)) == -1)
+         insertItem(extractItem(SFLPhone::model()->getIndex(conf)->child(j)));
    }
    
-   Q_ASSERT_X(getIndex(confId)->childCount() == 0,"changind conference","A conference can't have no participants");
+   Q_ASSERT_X(SFLPhone::model()->getIndex(conf)->childCount() == 0,"changind conference","A conference can't have no participants");
    
    return true;
 }
 
 ///Remove a conference from the model and the TreeView
-void CallView::conferenceRemoved(const QString &confId) 
+void CallView::conferenceRemoved(Call* conf) 
 {
-   while (getIndex(confId)->childCount()) {
-      insertItem(extractItem(getIndex(confId)->child(0)));
+   qDebug() << "Attempting to remove conference";
+   QTreeWidgetItem* idx = SFLPhone::model()->getIndex(conf);
+   if (idx) {
+   while (idx->childCount()) {
+      insertItem(extractItem(SFLPhone::model()->getIndex(conf)->child(0)));
    }
-   takeTopLevelItem(indexOfTopLevelItem(getIndex(confId)));
-   TreeWidgetCallModel::conferenceRemoved(confId);
+   takeTopLevelItem(indexOfTopLevelItem(SFLPhone::model()->getIndex(conf)));
+   //SFLPhone::model()->conferenceRemoved(confId);
    qDebug() << "Conference removed";
+   }
+   else {
+      qDebug() << "Conference not found";
+   }
 }
 
 ///Clear the list of old calls //TODO Clear them from the daemon
 void CallView::clearHistory()
 {
-   m_pHistoryCalls.clear();
+   //SFLPhone::model()->getHistory().clear();
 }
 
-void CallView::conferenceCreatedSignal(const QString& confId)
-{
-   addConference(confId);
-}
-
-void CallView::conferenceChangedSignal(const QString& confId, const QString& state)
-{
-   qDebug() << "Conf changed signal";
-   conferenceChanged(confId, state);
-}
-
-void CallView::conferenceRemovedSignal(const QString& confId)
-{
-   conferenceRemoved(confId);
-}
+// void CallView::conferenceCreatedSignal(const QString& confId)
+// {
+//    addConference(confId);
+// }
+// 
+// void CallView::conferenceChangedSignal(const QString& confId, const QString& state)
+// {
+//    qDebug() << "Conf changed signal";
+//    conferenceChanged(confId, state);
+// }
+// 
+// void CallView::conferenceRemovedSignal(const QString& confId)
+// {
+//    conferenceRemoved(confId);
+// }
 // 
 // void CallView::incomingMessageSignal(const QString& accountId, const QString& message)
 // {

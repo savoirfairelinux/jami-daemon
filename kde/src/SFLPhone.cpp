@@ -40,6 +40,7 @@
 #include "conf/ConfigurationSkeleton.h"
 
 SFLPhone* SFLPhone::m_sApp = NULL;
+TreeWidgetCallModel* SFLPhone::m_pModel = NULL;
 
 SFLPhone::SFLPhone(QWidget *parent)
     : KXmlGuiWindow(parent),
@@ -48,7 +49,7 @@ SFLPhone::SFLPhone(QWidget *parent)
 {
     setupActions();
     m_sApp = this;
-} 
+}
 
 SFLPhone* SFLPhone::app()
 {
@@ -59,9 +60,13 @@ SFLPhoneView* SFLPhone::view()
 {
    return m_pView;
 }
-CallView* SFLPhone::model()
+TreeWidgetCallModel* SFLPhone::model()
 {
-   return m_pView->model();
+   if (!m_pModel) {
+      m_pModel = new TreeWidgetCallModel(TreeWidgetCallModel::ActiveCall);
+      m_pModel->initCall();
+    }
+   return m_pModel;
 }
 
 ContactDock*  SFLPhone::contactDock()

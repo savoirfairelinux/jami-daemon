@@ -115,6 +115,7 @@ void CallTreeItem::setCall(Call *call)
 
 void CallTreeItem::updated()
 {
+   qDebug() << "Updating tree item";
    Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(itemCall->getPeerPhoneNumber());
    if (contact) {
       labelIcon->setPixmap(*contact->getPhoto());

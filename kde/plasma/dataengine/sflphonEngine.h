@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/ 
+ **************************************************************************/
  
 #ifndef SFLPHONEENGINE_H
 #define SFLPHONEENGINE_H
@@ -27,8 +27,9 @@
 #include "../../src/lib/CallModel.h"
 
 typedef QHash<QString,QVariant> HashStringString;
- 
-class SFLPhoneEngine : public Plasma::DataEngine, public CallModelConvenience
+class Call;
+
+class SFLPhoneEngine : public Plasma::DataEngine
 {
    Q_OBJECT
 
@@ -41,23 +42,24 @@ class SFLPhoneEngine : public Plasma::DataEngine, public CallModelConvenience
       bool updateSourceEvent(const QString& source);
        
    private:
-      QHash<QString, HashStringString > historyCall;
-      QHash<QString, HashStringString > currentCall;
-      QHash<QString, QStringList> currentConferences;
+      QHash<QString, HashStringString > historyCall  ;
+      QHash<QString, HashStringString > currentCall  ;
+      QHash<QString, QStringList> currentConferences ;
+      CallModelConvenience* m_pModel;
       QString getCallStateName(call_state state);
-      void updateHistory();
-      void updateCallList();
-      void updateContacts();
-      void updateConferenceList();
+      void updateHistory        ();
+      void updateCallList       ();
+      void updateContacts       ();
+      void updateConferenceList ();
       void updateInfo();
    private slots:
-      void callStateChangedSignal(const QString& callId, const QString& state);
-      void incomingCallSignal(const QString& accountId, const QString& callId);
-      void conferenceCreatedSignal(const QString& confId);
-      void conferenceChangedSignal(const QString& confId, const QString& state);
-      void conferenceRemovedSignal(const QString& confId);
-      void incomingMessageSignal(const QString& accountId, const QString& message);
-      void voiceMailNotifySignal(const QString& accountId, int count);
+      void callStateChangedSignal  (Call* call);
+      void incomingCallSignal      (Call* conf);
+      void conferenceCreatedSignal (Call* conf);
+      void conferenceChangedSignal (Call* conf);
+      //void conferenceRemovedSignal(const QString& confId);
+      void incomingMessageSignal( const QString& accountId, const QString& message );
+      void voiceMailNotifySignal( const QString& accountId, int count              );
       void accountChanged();
 };
  

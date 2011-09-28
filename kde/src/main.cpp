@@ -54,7 +54,7 @@ int main(int argc, char **argv)
       KCmdLineArgs::addCmdLineOptions(options);
       
       //configuration dbus
-      CallView::init();
+      TreeWidgetCallModel::init();
 
       SFLPhoneApplication app;
 

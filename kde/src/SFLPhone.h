@@ -47,6 +47,8 @@
 class SFLPhoneView;
 class CallView;
 
+typedef CallModel<CallTreeItem*,QTreeWidgetItem*> TreeWidgetCallModel;
+
 /**
  * This class represents the SFLphone main window
  * It implements the methods relative to windowing
@@ -83,7 +85,6 @@ private:
    KAction * action_hold;
    KAction * action_transfer;
    KAction * action_record;
-   QActionGroup * action_screen;
    KAction * action_main;
    KAction * action_mailBox;
    KAction * action_close;
@@ -92,6 +93,7 @@ private:
    KAction * action_displayDialpad;
    KAction * action_configureSflPhone;
    KAction * action_accountCreationWizard;
+   QActionGroup * action_screen;
 
    SFLPhoneView * m_pView;
    QMenu *trayIconMenu;
@@ -105,7 +107,7 @@ private:
    BookmarkDock* m_pBookmarkDW;
    
    static SFLPhone* m_sApp;
-   
+   static TreeWidgetCallModel* m_pModel;
 private:
    void setObjectNames();
 
@@ -127,7 +129,7 @@ public:
    
    static SFLPhone* app();
    SFLPhoneView* view();
-   CallView* model();
+   static TreeWidgetCallModel* model();
 
    ContactDock*  contactDock();
    HistoryDock*  historyDock();

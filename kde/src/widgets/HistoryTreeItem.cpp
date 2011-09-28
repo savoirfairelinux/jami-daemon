@@ -238,9 +238,10 @@ void HistoryTreeItem::sendEmail()
 
 void HistoryTreeItem::callAgain()
 {
-   qDebug() << "Calling "<< itemCall->getPeerPhoneNumber();
-   SFLPhone::app()->model()->addDialingCall(m_pName, SFLPhone::app()->model()->getCurrentAccountId())->setCallNumber(m_pPhoneNumber);
-   
+   if (itemCall) {
+      qDebug() << "Calling "<< itemCall->getPeerPhoneNumber();
+   }
+   SFLPhone::model()->addDialingCall(m_pName, SFLPhone::app()->model()->getCurrentAccountId())->setCallNumber(m_pPhoneNumber);
 }
 
 void HistoryTreeItem::copy()

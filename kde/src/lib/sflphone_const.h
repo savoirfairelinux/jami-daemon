@@ -282,27 +282,27 @@
 typedef enum
 { 
    /** Ringing incoming call */
-   CALL_STATE_INCOMING,
+   CALL_STATE_INCOMING =0,
    /** Ringing outgoing call */
-   CALL_STATE_RINGING,
+   CALL_STATE_RINGING=1,
    /** Call to which the user can speak and hear */
-   CALL_STATE_CURRENT,
+   CALL_STATE_CURRENT=2,
    /** Call which numbers are being added by the user */
-   CALL_STATE_DIALING,
+   CALL_STATE_DIALING=3,
    /** Call is on hold */
-   CALL_STATE_HOLD,
+   CALL_STATE_HOLD=4,
    /** Call has failed */
-   CALL_STATE_FAILURE,
+   CALL_STATE_FAILURE=5,
    /** Call is busy */
-   CALL_STATE_BUSY,
+   CALL_STATE_BUSY=6,
    /** Call is being transfered.  During this state, the user can enter the new number. */
-   CALL_STATE_TRANSFER,
+   CALL_STATE_TRANSFER=7,
    /** Call is on hold for transfer */
-   CALL_STATE_TRANSF_HOLD,
+   CALL_STATE_TRANSF_HOLD=8,
    /** Call is over and should not be used */
-   CALL_STATE_OVER,
+   CALL_STATE_OVER=9,
    /** This state should never be reached */
-   CALL_STATE_ERROR
+   CALL_STATE_ERROR=10
 } call_state;
 
 /** MIME API */
