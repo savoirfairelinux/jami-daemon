@@ -74,19 +74,7 @@ conference_obj_t *create_new_conference (conference_state_t state, const gchar* 
 
 conference_obj_t *create_new_conference_from_details (const gchar *conf_id, GHashTable *details)
 {
-    conference_obj_t *new_conf;
-    gchar** participants;
-    gchar* state_str;
-
-    DEBUG ("Conference: Create new conference from details");
-
-    // Allocate memory
-    new_conf = g_new0 (conference_obj_t, 1);
-    if (!new_conf) {
-        ERROR("Conference: Error: Could not allocate data ");
-        return NULL;
-    }
-
+    conference_obj_t *new_conf = g_new0 (conference_obj_t, 1);
     new_conf->_confID = g_strdup (conf_id);
 
     new_conf->_conference_secured = FALSE;
@@ -94,17 +82,13 @@ conference_obj_t *create_new_conference_from_details (const gchar *conf_id, GHas
 
     new_conf->participant_list = NULL;
 
-    // get participant list
-    participants = dbus_get_participant_list (conf_id);
-    if (participants == NULL)
-        ERROR("Conference: Error: Could not get participant list");
+    gchar **participants = dbus_get_participant_list (conf_id);
+    if (participants) {
+        conference_participant_list_update (participants, new_conf);
+        g_strfreev(participants);
+    }
 
-    // generate conference participant list
-    conference_participant_list_update (participants, new_conf);
-
-    g_strfreev(participants);
-
-    state_str = g_hash_table_lookup (details, "CONF_STATE");
+    gchar *state_str = g_hash_table_lookup (details, "CONF_STATE");
 
     if (g_strcasecmp (state_str, "ACTIVE_ATACHED") == 0)
         new_conf->_state = CONFERENCE_STATE_ACTIVE_ATACHED;

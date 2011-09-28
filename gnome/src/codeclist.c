@@ -153,13 +153,14 @@ codec_t* codec_list_get_by_name (gconstpointer name, GQueue *q)
 static gint
 is_payload_codecstruct (gconstpointer a, gconstpointer b)
 {
-    return ((codec_t*)a)->payload != GPOINTER_TO_INT (b);
+    const codec_t *c = a;
+    return (c->payload == GPOINTER_TO_INT(b)) ? 0 : 1;
 }
 
 codec_t* codec_list_get_by_payload (int payload, GQueue *q)
 {
     GList * c = g_queue_find_custom (q, (gconstpointer)(uintptr_t)payload, is_payload_codecstruct);
-    return c ? (codec_t *) c->data : NULL;
+    return c ? c->data : NULL;
 }
 
 void codec_set_prefered_order (guint index, GQueue *q)

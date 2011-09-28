@@ -109,9 +109,6 @@ void
 calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, GtkTreeIter *parent);
 
 void
-calltree_reset (calltab_t* tab);
-
-void
 calltree_display (calltab_t *tab);
 
 void

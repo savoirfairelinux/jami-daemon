@@ -179,11 +179,12 @@ static void search_all (GtkWidget *item UNUSED, GtkEntry  *entry)
     HistorySearchType = SEARCH_ALL;
 
     gtk_entry_set_icon_from_stock (entry, GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_FIND);
-    gtk_entry_set_icon_tooltip_text (entry, GTK_ENTRY_ICON_PRIMARY,
-                                     g_markup_printf_escaped ("%s\n%s",
-                                             _ ("Search all"),
-                                             _ ("Click here to change the search type")));
+    gchar *markup = g_markup_printf_escaped ("%s\n%s",
+            _ ("Search all"),
+            _ ("Click here to change the search type"));
+    gtk_entry_set_icon_tooltip_text (entry, GTK_ENTRY_ICON_PRIMARY, markup);
 
+    g_free(markup);
     history_search();
 }
 

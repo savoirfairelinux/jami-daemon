@@ -162,17 +162,13 @@ update_actions()
     }
 
     // If addressbook support has been enabled and all addressbooks are loaded, display the icon
-    if (addrbook) {
-        AddressBook_Config *addressbook_config = addressbook_config_load_parameters();
+    if (addrbook && addrbook->is_ready() && addressbook_config_load_parameters()->enable) {
+        gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(contactButton_), -1);
 
-        if (addressbook_config->enable && addrbook->is_ready()) {
-            gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(contactButton_), -1);
-
-            // Make the icon clickable only if at least one address book is active
-            if (addrbook->is_active()) {
-                gtk_widget_set_sensitive(contactButton_, TRUE);
-                gtk_widget_set_tooltip_text(contactButton_, _("Address book"));
-            }
+        // Make the icon clickable only if at least one address book is active
+        if (addrbook->is_active()) {
+            gtk_widget_set_sensitive(contactButton_, TRUE);
+            gtk_widget_set_tooltip_text(contactButton_, _("Address book"));
         }
     }
 

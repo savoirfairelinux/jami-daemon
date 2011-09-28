@@ -184,18 +184,22 @@ const gchar * account_state_name (account_state_t s)
     return state;
 }
 
-void
-account_list_clear ()
+void account_list_free_elm(gpointer elm, gpointer data UNUSED)
 {
-    g_queue_free (accountQueue);
-    accountQueue = g_queue_new ();
+    account_t *a = elm;
+    g_free(a->accountID);
+    g_free(a);
+}
+
+void account_list_free ()
+{
+    g_queue_foreach(accountQueue, account_list_free_elm, NULL);
+    g_queue_free(accountQueue);
 }
 
 void
 account_list_move_up (guint index)
 {
-    DEBUG ("index  = %i\n", index);
-
     if (index != 0) {
         gpointer acc = g_queue_pop_nth (accountQueue, index);
         g_queue_push_nth (accountQueue, acc, index-1);
@@ -219,8 +223,6 @@ account_list_get_registered_accounts (void)
     for (guint i = 0; i < account_list_get_size(); i++)
         if (account_list_get_nth (i) -> state == (ACCOUNT_STATE_REGISTERED))
             res++;
-
-    DEBUG ("Account: %d registered accounts" , res);
     return res;
 }
 

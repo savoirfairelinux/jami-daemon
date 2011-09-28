@@ -1042,5 +1042,8 @@ GtkWidget* create_audio_configuration()
 /** Show/Hide the alsa configuration panel */
 gboolean must_show_alsa_conf()
 {
-    return g_strcmp0(dbus_get_audio_manager(), ALSA_API_STR) == 0;
+    gchar *api = dbus_get_audio_manager();
+    int ret = g_strcmp0(api, ALSA_API_STR);
+    g_free(api);
+    return ret == 0;
 }

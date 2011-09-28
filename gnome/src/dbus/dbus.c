@@ -941,8 +941,6 @@ dbus_get_account_details (gchar * accountID)
     GError *error = NULL;
     GHashTable * details = NULL;
 
-    DEBUG ("Dbus: Get account detail for %s", accountID);
-
     if (!org_sflphone_SFLphone_ConfigurationManager_get_account_details (
                 configurationManagerProxy, accountID, &details, &error)) {
         if (error->domain == DBUS_GERROR && error->code
@@ -976,8 +974,6 @@ dbus_set_credentials (account_t *a)
 void
 dbus_get_credentials (account_t *a)
 {
-    DEBUG("DBUS: Get credential for account %s", a->accountID);
-
     GError *error = NULL;
     if (org_sflphone_SFLphone_ConfigurationManager_get_credentials (
                 configurationManagerProxy, a->accountID, &a->credential_information, &error))
@@ -1294,11 +1290,11 @@ dbus_get_current_audio_codec_name (const callable_obj_t * c)
     return codecName;
 }
 
-gchar**
+GArray *
 dbus_get_active_audio_codec_list (gchar *accountID)
 {
 
-    gchar ** array = NULL;
+  GArray * array = NULL;
     GError *error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_get_active_audio_codec_list (
         configurationManagerProxy, accountID, &array, &error);

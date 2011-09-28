@@ -48,7 +48,7 @@ handler_async_search (GList *hits, gpointer user_data)
 {
     AddressBook_Config *addressbook_config = user_data;
 
-    calltree_reset (contacts);
+    gtk_tree_store_clear (contacts->store);
     calllist_reset (contacts);
 
     for (GList *i = hits; i != NULL; i = i->next) {

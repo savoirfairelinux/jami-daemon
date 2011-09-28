@@ -191,8 +191,6 @@ free_callable_obj_t (callable_obj_t *c);
 
 gchar* get_peer_info (const gchar* const, const gchar* const);
 
-history_state_t get_history_state_from_id (gchar *indice);
-
 gchar* get_call_duration (callable_obj_t *obj);
 
 gchar* serialize_history_call_entry(callable_obj_t *entry);

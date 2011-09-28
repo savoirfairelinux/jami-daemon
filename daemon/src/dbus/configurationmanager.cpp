@@ -66,8 +66,7 @@ std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails (void)
     else
         return sipaccount->getIp2IpDetails();
 
-    std::map<std::string, std::string> tlsSettings;
-    tlsSettings = getTlsSettings();
+    std::map<std::string, std::string> tlsSettings = getTlsSettings();
     std::copy (tlsSettings.begin(), tlsSettings.end(), std::inserter (
                 ip2ipAccountDetails, ip2ipAccountDetails.end()));
 
@@ -205,21 +204,13 @@ std::vector<std::string> ConfigurationManager::getVideoCodecDetails (const std::
     return sfl_video::getCodecSpecifications(codec);
 }
 
-std::vector<std::string> ConfigurationManager::getActiveAudioCodecList (
-        const std::string& accountID)
+std::vector<int32_t> ConfigurationManager::getActiveAudioCodecList (const std::string& accountID)
 {
-    std::vector<std::string> v;
+    std::vector<int32_t> v;
 
     Account *acc = Manager::instance().getAccount (accountID);
-    if (acc) {
-        CodecOrder active(acc->getActiveCodecs());
-
-        for (CodecOrder::const_iterator iter = active.begin(); iter != active.end(); ++iter) {
-            std::stringstream ss;
-            ss << *iter;
-            v.push_back(ss.str());
-        }
-    }
+    if (acc)
+        return acc->getActiveCodecs();
 
     return v;
 }
@@ -273,8 +264,6 @@ std::vector<std::string> ConfigurationManager::getAudioPluginList()
 
 void ConfigurationManager::setAudioPlugin (const std::string& audioPlugin)
 {
-    _debug ("ConfigurationManager: Set audio plugin %s", audioPlugin.c_str());
-
     return Manager::instance().setAudioPlugin (audioPlugin);
 }
 
@@ -572,7 +561,6 @@ void ConfigurationManager::setCredentials (const std::string& accountID,
     }
 }
 
-
 void ConfigurationManager::startVideoPreview(const int32_t &width, const int32_t &height, int32_t &shmKey, int32_t &semKey, int32_t &videoBufferSize)
 {
     if (preview_.get()) {
@@ -608,4 +596,3 @@ void ConfigurationManager::stopVideoPreview()
 		preview_.reset();
 	}
 }
-

@@ -36,9 +36,6 @@
 #include "yamlemitter.h"
 #include "yamlnode.h"
 
-class Engine;
-// class MappingNode;
-
 class Serializable
 {
 
