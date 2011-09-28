@@ -211,9 +211,9 @@ gchar** dbus_default_audio_codec_list();
 
 /**
  * ConfigurationManager - Get the list of the audio codecs used for media negotiation
- * @return gchar** The list of audio codecs
+ * @return The list of audio codecs
  */
-gchar** dbus_get_active_audio_codec_list (gchar *accountID);
+GArray *dbus_get_active_audio_codec_list (gchar *accountID);
 
 /**
  * ConfigurationManager - Set the list of audio codecs used for media negociation

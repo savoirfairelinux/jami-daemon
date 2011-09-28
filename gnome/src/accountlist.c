@@ -184,11 +184,17 @@ const gchar * account_state_name (account_state_t s)
     return state;
 }
 
-void
-account_list_clear ()
+void account_list_free_elm(gpointer elm, gpointer data UNUSED)
 {
-    g_queue_free (accountQueue);
-    accountQueue = g_queue_new ();
+    account_t *a = elm;
+    g_free(a->accountID);
+    g_free(a);
+}
+
+void account_list_free ()
+{
+    g_queue_foreach(accountQueue, account_list_free_elm, NULL);
+    g_queue_free(accountQueue);
 }
 
 void

@@ -144,9 +144,9 @@ void account_list_set_current (account_t *current);
 const gchar * account_state_name (account_state_t s);
 
 /**
- * This function clear the list
+ * This function frees the list
  */
-void account_list_clear ();
+void account_list_free ();
 
 /**
  * Return the account associated with an ID

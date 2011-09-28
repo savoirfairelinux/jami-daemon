@@ -157,6 +157,15 @@ callable_obj_t *create_new_call_from_details (const gchar *call_id, GHashTable *
     return c;
 }
 
+static history_state_t get_history_state_from_id (gchar *indice)
+{
+    history_state_t state = atoi(indice);
+    if (state > LAST)
+        state = MISSED;
+
+    return state;
+}
+
 callable_obj_t *create_history_entry_from_serialized_form (const gchar *entry)
 {
     const gchar *peer_name = "";
@@ -227,16 +236,6 @@ gchar* get_peer_info (const gchar* const number, const gchar* const name)
     return g_strconcat ("\"", name, "\" <", number, ">", NULL);
 }
 
-history_state_t get_history_state_from_id (gchar *indice)
-{
-    history_state_t state = atoi(indice);
-
-    if (state > LAST)
-        state = MISSED;
-
-    return state;
-}
-
 gchar* get_call_duration (callable_obj_t *obj)
 {
     long duration = difftime (obj->_time_stop, obj->_time_start);
@@ -247,10 +246,9 @@ gchar* get_call_duration (callable_obj_t *obj)
 
 static const gchar* get_history_id_from_state (history_state_t state)
 {
-    static const gchar *tab[LAST] = { "0", "1", "2" };
     if (state >= LAST)
         return "";
-    return tab[state];
+    return state + "0";
 }
 
 gchar* serialize_history_call_entry (callable_obj_t *entry)

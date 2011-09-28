@@ -81,14 +81,9 @@ void codec_list_add (codec_t * c, GQueue **q);
 /**
  * Set a codec active. An active codec will be used for codec negociation
  * @param name The string description of the codec
+ * @param active If it is used or not
  */
-void codec_set_active (codec_t **c);
-
-/**
- * Set a codec inactive. An active codec won't be used for codec negociation
- * @param name The string description of the codec
- */
-void codec_set_inactive (codec_t **c);
+void codec_set_active (codec_t *c, gboolean active);
 
 /**
  * Return the number of codecs in the list
@@ -138,35 +133,8 @@ codec_t* codec_list_get_by_payload (gconstpointer payload, GQueue *q);
 
 GQueue* get_system_codec_list (void);
 
-/**
- * Instanciate a new codecs with the given payload.
- * Fetches codec specification through D-Bus
- *
- * @param payload		The unique RTP payload
- * @param active		Whether or not this codec should active (checked)
- * @param c			A pointer to receive the new codec instance
- */
-void codec_create_new (gint payload, gboolean active, codec_t **c);
 
-/*
- * Instanciate a new codec with the given specification
- *
- * @param payload	The unique RTP payload
- * @param specs		A list of codec specifications. Ordered: name, sample rate, bit rate
- * @param active	Whether or not this codec should active (checked)
- * @param c			A pointer to receive the new codec instance
- */
-void codec_create_new_with_specs (gint payload, gchar **specs, gboolean active, codec_t **c);
-
-
-void codec_create_new_from_caps (codec_t *original, codec_t **copy);
-/*
- * Attach a codec list to a specific account
- *
- * @param acc		A pointer on the account to modify
- */
-void account_create_codec_list (account_t **acc);
-
+codec_t *codec_create_new_from_caps (codec_t *original);
 
 #endif
 

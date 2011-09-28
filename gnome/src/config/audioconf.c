@@ -545,10 +545,8 @@ codec_active_toggled (GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoin
     gtk_tree_path_free (treePath);
 
     // Modify codec queue to represent change
-    if (active)
-        codec_set_active (&codec);
-    else
-        codec_set_inactive (&codec);
+    if (codec)
+        codec_set_active(codec, active);
 }
 
 /**
@@ -1055,5 +1053,8 @@ GtkWidget* create_audio_configuration()
 /** Show/Hide the alsa configuration panel */
 gboolean must_show_alsa_conf()
 {
-    return g_strcmp0(dbus_get_audio_manager(), ALSA_API_STR) == 0;
+    gchar *api = dbus_get_audio_manager();
+    int ret = g_strcmp0(api, ALSA_API_STR);
+    g_free(api);
+    return ret == 0;
 }

@@ -186,9 +186,13 @@ sflphone_quit ()
 
         dbus_unregister (getpid());
         dbus_clean ();
+        account_list_free();
         calllist_clean (current_calls);
         calllist_clean (contacts);
         calllist_clean (history);
+        gtk_tree_store_clear(history->store);
+        gtk_tree_store_clear(current_calls->store);
+        gtk_tree_store_clear(contacts->store);
         gtk_main_quit ();
     }
 }
@@ -241,7 +245,8 @@ void sflphone_fill_account_list (void)
 {
     int count = current_account_get_message_number ();
 
-    account_list_clear ();
+    account_list_free();
+    account_list_init();
 
     gchar **array = dbus_account_list();
     if (array) {
@@ -1026,29 +1031,26 @@ void sflphone_fill_codec_list ()
 
 void sflphone_fill_codec_list_per_account (account_t *account)
 {
-    gchar **order = dbus_get_active_audio_codec_list(account->accountID);
+    GArray *order = dbus_get_active_audio_codec_list(account->accountID);
 
     GQueue *codeclist = account->codecs;
 
     // First clean the list
     codec_list_clear(&codeclist);
 
-    if (!(*order))
-        ERROR ("SFLphone: No codec list provided");
-    else {
-        for (gchar **pl = order; *pl; pl++) {
-            codec_t * cpy = NULL;
+    for (guint i = 0; i < order->len; i++) {
+        gint payload = g_array_index(order, gint, i);
 
-            // Each account will have a copy of the system-wide capabilities
-            codec_create_new_from_caps (codec_list_get_by_payload ( (gconstpointer) (size_t) atoi (*pl), NULL), &cpy);
+        // Each account will have a copy of the system-wide capabilities
+        codec_t *cpy = codec_create_new_from_caps (codec_list_get_by_payload ( (gconstpointer) (uintptr_t) payload, NULL));
 
-            if (cpy) {
-                cpy->is_active = TRUE;
-                codec_list_add (cpy, &codeclist);
-            } else
-                ERROR ("SFLphone: Couldn't find codec");
-        }
+        if (cpy) {
+            codec_list_add (cpy, &codeclist);
+        } else
+            ERROR ("SFLphone: Couldn't find codec");
     }
+
+    g_array_unref(order);
 
     guint caps_size = codec_list_get_size ();
 
@@ -1066,27 +1068,18 @@ void sflphone_fill_codec_list_per_account (account_t *account)
 
 void sflphone_fill_call_list (void)
 {
-    gchar** calls = (gchar**) dbus_get_call_list();
-    GHashTable *call_details;
+    gchar **list = dbus_get_call_list();
 
-    DEBUG ("sflphone_fill_call_list");
-
-    if (!calls)
-        return;
-
-    for (; *calls; calls++) {
-        callable_obj_t *c = g_new0 (callable_obj_t, 1);
-        gchar *callID = (gchar*) (*calls);
-        call_details = dbus_get_call_details (callID);
-        c = create_new_call_from_details (callID, call_details);
+    for (gchar **calls = list; calls && *calls; calls++) {
+        gchar *callID = *calls;
+        callable_obj_t *c = create_new_call_from_details (*calls, dbus_get_call_details (*calls));
         g_free(callID);
         c->_zrtp_confirmed = FALSE;
-        // Add it to the list
-        DEBUG ("Add call retrieved from server side: %s\n", c->_callID);
         calllist_add_call (current_calls, c);
-        // Update the GUI
         calltree_add_call (current_calls, c, NULL);
     }
+
+    g_free(list);
 }
 
 
@@ -1094,28 +1087,18 @@ void sflphone_fill_conference_list (void)
 {
     // TODO Fetch the active conferences at client startup
 
-    gchar** conferences;
-    GHashTable *conference_details;
+    gchar **conferences = dbus_get_conference_list();
+    for (gchar **list = conferences; list && *list; list++) {
+        const gchar * const conf_id = *list;
 
-    DEBUG ("SFLphone: Fill conference list");
+        GHashTable *conference_details = dbus_get_conference_details (conf_id);
+        conference_obj_t *conf = create_new_conference_from_details (conf_id, conference_details);
 
-    conferences = dbus_get_conference_list();
-
-    if (conferences) {
-        for (; *conferences; conferences++) {
-            conference_obj_t *conf = g_new0 (conference_obj_t, 1);
-            const gchar * const conf_id = (gchar*) (*conferences);
-
-            conference_details = (GHashTable*) dbus_get_conference_details (conf_id);
-
-            conf = create_new_conference_from_details (conf_id, conference_details);
-
-            conf->_confID = g_strdup (conf_id);
-
-            conferencelist_add (current_calls, conf);
-            calltree_add_conference (current_calls, conf);
-        }
+        conferencelist_add (current_calls, conf);
+        calltree_add_conference (current_calls, conf);
     }
+
+    g_strfreev(conferences);
 }
 
 void sflphone_fill_history (void)
@@ -1328,6 +1311,7 @@ sflphone_call_state_changed (callable_obj_t * c, const gchar * description, cons
         return;
     }
 
+    g_free(c->_state_code_description);
     c->_state_code_description = g_strdup (description);
     c->_state_code = code;
 

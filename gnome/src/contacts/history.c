@@ -38,8 +38,9 @@ static GtkEntry *history_searchbar_widget;
 
 static gboolean history_is_visible (GtkTreeModel* model, GtkTreeIter* iter, gpointer data UNUSED)
 {
+    gboolean ret = TRUE;
     callable_obj_t *history_entry = NULL;
-    gchar* text = NULL;
+    const gchar *text = NULL;
 
     // Fetch the call description
     GValue val;
@@ -62,17 +63,19 @@ static gboolean history_is_visible (GtkTreeModel* model, GtkTreeIter* iter, gpoi
         // MISSED, INCOMING, OUTGOING, ALL
         const gchar* search = gtk_entry_get_text (history_searchbar_widget);
         if (!search || !*search)
-            return TRUE;
+            goto end;
         SearchType search_type = get_current_history_search_type();
-        gboolean match = g_regex_match_simple(search, text, G_REGEX_CASELESS, 0);
+        ret = g_regex_match_simple(search, text, G_REGEX_CASELESS, 0);
 
         if (search_type == SEARCH_ALL)
-            return match;
+            goto end;
         else // We need a match on the history_state_t and the current search type
-            return (history_entry->_history_state + 1) == search_type && match;
+            ret = ret && (history_entry->_history_state + 1) == search_type;
     }
 
-    return TRUE;
+end:
+    g_value_unset(&val);
+    return ret;
 }
 
 static GtkTreeModel* history_create_filter (GtkTreeModel* child)
@@ -90,8 +93,8 @@ void history_search (void)
 
 void history_search_init (void)
 {
-    history_filter = history_create_filter (GTK_TREE_MODEL (history->store));
-    gtk_tree_view_set_model (GTK_TREE_VIEW (history->view), GTK_TREE_MODEL (history_filter));
+    history_filter = history_create_filter(GTK_TREE_MODEL (history->store));
+    gtk_tree_view_set_model(GTK_TREE_VIEW (history->view), GTK_TREE_MODEL (history_filter));
 }
 
 void history_set_searchbar_widget (GtkWidget *searchbar)

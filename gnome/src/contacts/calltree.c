@@ -447,12 +447,6 @@ calltree_display_call_info (callable_obj_t * c, CallDisplayType display_type, co
 }
 
 void
-calltree_reset (calltab_t* tab)
-{
-    gtk_tree_store_clear (tab->store);
-}
-
-void
 calltree_create (calltab_t* tab, gboolean searchbar_type)
 {
     gchar *conference = SFL_CREATE_CONFERENCE;
@@ -817,7 +811,7 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 
     // New call in the list
 
-    const gchar * description = calltree_display_call_info (c, DISPLAY_TYPE_CALL, "");
+    gchar *description = calltree_display_call_info (c, DISPLAY_TYPE_CALL, "");
 
     gtk_tree_store_prepend (tab->store, &iter, parent);
 
@@ -865,19 +859,24 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 
     } else if (tab == contacts) {
         pixbuf = c->_contact_thumbnail;
-        description = g_strconcat (description , NULL);
     } else {
         WARN ("CallTree: This widget doesn't exist - This is a bug in the application.");
     }
 
     //Resize it
     if (pixbuf)
-        if (gdk_pixbuf_get_width (pixbuf) > 32 || gdk_pixbuf_get_height (pixbuf) > 32)
-            pixbuf =  gdk_pixbuf_scale_simple (pixbuf, 32, 32, GDK_INTERP_BILINEAR);
+        if (gdk_pixbuf_get_width (pixbuf) > 32 || gdk_pixbuf_get_height (pixbuf) > 32) {
+            GdkPixbuf *new = gdk_pixbuf_scale_simple (pixbuf, 32, 32, GDK_INTERP_BILINEAR);
+            g_object_unref(pixbuf);
+            pixbuf = new;
+        }
 
     if (pixbuf_security)
-        if (gdk_pixbuf_get_width (pixbuf_security) > 32 || gdk_pixbuf_get_height (pixbuf_security) > 32)
-            pixbuf_security =  gdk_pixbuf_scale_simple (pixbuf_security, 32, 32, GDK_INTERP_BILINEAR);
+        if (gdk_pixbuf_get_width (pixbuf_security) > 32 || gdk_pixbuf_get_height (pixbuf_security) > 32) {
+            GdkPixbuf *new = gdk_pixbuf_scale_simple (pixbuf_security, 32, 32, GDK_INTERP_BILINEAR);
+            g_object_unref(pixbuf_security);
+            pixbuf_security = new;
+        }
 
     gtk_tree_store_set (tab->store, &iter,
             0, pixbuf, // Icon
@@ -885,6 +884,8 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
             2, pixbuf_security, // Informs user about the state of security
             3, c,      // Pointer
             -1);
+
+    g_free(description);
 
     if (pixbuf != NULL)
         g_object_unref (G_OBJECT (pixbuf));
@@ -905,7 +906,6 @@ void calltree_add_history_entry (callable_obj_t *c, GtkTreeIter *parent)
         return;
 
     GdkPixbuf *pixbuf = NULL;
-    GdkPixbuf *pixbuf_security = NULL;
     GtkTreeIter iter;
 
     // New call in the list
@@ -948,17 +948,16 @@ void calltree_add_history_entry (callable_obj_t *c, GtkTreeIter *parent)
 
     //Resize it
     if (pixbuf)
-        if (gdk_pixbuf_get_width (pixbuf) > 32 || gdk_pixbuf_get_height (pixbuf) > 32)
-            pixbuf =  gdk_pixbuf_scale_simple (pixbuf, 32, 32, GDK_INTERP_BILINEAR);
-
-    if (pixbuf_security != NULL)
-        if (gdk_pixbuf_get_width (pixbuf_security) > 32 || gdk_pixbuf_get_height (pixbuf_security) > 32)
-            pixbuf_security =  gdk_pixbuf_scale_simple (pixbuf_security, 32, 32, GDK_INTERP_BILINEAR);
+        if (gdk_pixbuf_get_width (pixbuf) > 32 || gdk_pixbuf_get_height (pixbuf) > 32) {
+            GdkPixbuf *new = gdk_pixbuf_scale_simple (pixbuf, 32, 32, GDK_INTERP_BILINEAR);
+            g_object_unref(pixbuf);
+            pixbuf = new;
+        }
 
     gtk_tree_store_set (history->store, &iter,
             0, pixbuf, // Icon
             1, full_description, // Description
-            2, pixbuf_security, // Icon
+            2, NULL, // Icon
             3, c,      // Pointer
             -1);
 
@@ -966,9 +965,6 @@ void calltree_add_history_entry (callable_obj_t *c, GtkTreeIter *parent)
 
     if (pixbuf != NULL)
         g_object_unref (G_OBJECT (pixbuf));
-
-    if (pixbuf_security != NULL)
-        g_object_unref (G_OBJECT (pixbuf_security));
 
     gtk_tree_view_set_model (GTK_TREE_VIEW (history->view), GTK_TREE_MODEL (history->store));
 
@@ -1033,7 +1029,9 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
     //Resize it
     if (pixbuf) {
         if (gdk_pixbuf_get_width (pixbuf) > 32 || gdk_pixbuf_get_height (pixbuf) > 32) {
-            pixbuf =  gdk_pixbuf_scale_simple (pixbuf, 32, 32, GDK_INTERP_BILINEAR);
+            GdkPixbuf *new = gdk_pixbuf_scale_simple (pixbuf, 32, 32, GDK_INTERP_BILINEAR);
+            g_object_unref(pixbuf);
+            pixbuf = new;
         }
     } else
         DEBUG ("Error no pixbuff for conference from %s", ICONS_DIR);
@@ -1226,8 +1224,11 @@ void calltree_add_history_conference(conference_obj_t *conf)
     pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/usersAttached.svg", NULL);
 
     if (pixbuf)
-        if (gdk_pixbuf_get_width(pixbuf) > 32 || gdk_pixbuf_get_height(pixbuf) > 32)
-            pixbuf = gdk_pixbuf_scale_simple(pixbuf, 32, 32, GDK_INTERP_BILINEAR);
+        if (gdk_pixbuf_get_width(pixbuf) > 32 || gdk_pixbuf_get_height(pixbuf) > 32) {
+            GdkPixbuf *new = gdk_pixbuf_scale_simple(pixbuf, 32, 32, GDK_INTERP_BILINEAR);
+            g_object_unref(pixbuf);
+            pixbuf = new;
+        }
 
     const gchar * const date = get_formatted_start_timestamp(conf->_time_start);
     description = g_strconcat(description, date, NULL);

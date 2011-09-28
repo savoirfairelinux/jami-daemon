@@ -187,39 +187,29 @@ void hide_status_icon (void)
 void
 statusicon_set_tooltip()
 {
-    int count;
-    gchar *tip;
-
     if (status) {
-
         // Add a tooltip to the system tray icon
-        count = account_list_get_registered_accounts();
-        tip = g_markup_printf_escaped ("%s - %s", _ ("SFLphone"),
-                                       g_markup_printf_escaped (n_ ("%i active account", "%i active accounts", count), count));
-        gtk_status_icon_set_tooltip (status, tip);
-        g_free (tip);
-
+        int count = account_list_get_registered_accounts();
+        gchar *accounts = g_markup_printf_escaped(n_("%i active account", "%i active accounts", count), count);
+        gchar *tip = g_markup_printf_escaped("%s - %s", _("SFLphone"), accounts);
+        g_free(accounts);
+        gtk_status_icon_set_tooltip(status, tip);
+        g_free(tip);
     }
 }
 
 void
 status_tray_icon_blink (gboolean active)
 {
-    if (status) {
-        // Set a different icon to notify of an event
-        active ? gtk_status_icon_set_from_file (status, LOGO_NOTIF)
-        : gtk_status_icon_set_from_file (status, LOGO);
-    }
+    if (status)
+        gtk_status_icon_set_from_file (status, active ? LOGO_NOTIF : LOGO);
 }
 
 void
 status_tray_icon_online (gboolean online)
 {
-    if (status) {
-        // Set a different icon to notify of an event
-        online ? gtk_status_icon_set_from_file (status, LOGO)
-        : gtk_status_icon_set_from_file (status, LOGO_OFFLINE);
-    }
+    if (status)
+        gtk_status_icon_set_from_file(status, online ? LOGO : LOGO_OFFLINE);
 }
 
 GtkStatusIcon*
