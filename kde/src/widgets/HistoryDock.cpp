@@ -36,8 +36,20 @@ class QNumericTreeWidgetItem : public QTreeWidgetItem {
       }
 };
 
+bool KeyPressEater::eventFilter(QObject *obj, QEvent *event)
+{
+   if (event->type() == QEvent::KeyPress) {
+      m_pDock->keyPressEvent((QKeyEvent*)event);
+      return true;
+   } else {
+      // standard event processing
+      return QObject::eventFilter(obj, event);
+   }
+}
+
 HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
 {
+   setObjectName("historyDock");
    setMinimumSize(250,0);
    setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
    m_pFilterLE   = new KLineEdit();
@@ -66,6 +78,8 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    m_pItemView->setAlternatingRowColors(true             );
    m_pItemView->setAcceptDrops( true                     );
    m_pItemView->setDragEnabled( true                     );
+   KeyPressEater *keyPressEater = new KeyPressEater(this);
+   m_pItemView->installEventFilter(keyPressEater);
 
    m_pFilterLE->setPlaceholderText("Filter");
    m_pFilterLE->setClearButtonShown(true);
@@ -284,4 +298,15 @@ bool HistoryTree::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeDa
    qDebug() << "In history import"<< QString(encodedData);
 
    return false;
+}
+
+void HistoryDock::keyPressEvent(QKeyEvent* event) {
+   int key = event->key();
+   if(key == Qt::Key_Escape)
+      m_pFilterLE->setText(QString());
+   else if(key == Qt::Key_Return || key == Qt::Key_Enter) {}
+   else if((key == Qt::Key_Backspace) && (m_pFilterLE->text().size()))
+      m_pFilterLE->setText(m_pFilterLE->text().left( m_pFilterLE->text().size()-1 ));
+   else if (!event->text().isEmpty() && !(key == Qt::Key_Backspace))
+      m_pFilterLE->setText(m_pFilterLE->text()+event->text());
 }

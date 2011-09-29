@@ -61,7 +61,6 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
    setupUi(this);
    
    ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   //CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
    
    errorWindow = new QErrorMessage(this);
    callTreeModel->setTitle("Calls");
@@ -70,35 +69,13 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
    pal.setColor(QPalette::AlternateBase, Qt::lightGray);
    setPalette(pal);
    
-   //BEGIN Port to CallModel
-   connect(SFLPhone::model(), SIGNAL(incomingCall(Call*)),
-           this,         SLOT(on1_incomingCall(Call*)));
-   connect(SFLPhone::model(), SIGNAL(voiceMailNotify(const QString &, int)),
-           this,         SLOT(on1_voiceMailNotify(const QString &, int)));
-   connect(SFLPhone::model(), SIGNAL(volumeChanged(const QString &, double)),
-           this,         SLOT(on1_volumeChanged(const QString &, double)));
-   connect(SFLPhone::model(), SIGNAL(callStateChanged(Call*)),
-           this,         SLOT(updateWindowCallState()));
-   /*connect(&callManager, SIGNAL(callStateChanged(const QString &, const QString &)),
-           this,         SLOT(on1_callStateChanged(const QString &, const QString &)));
-
-   connect(&callManager, SIGNAL(conferenceCreated(const QString &)),
-           this,         SLOT(on1_incomingConference(const QString &)));
-   connect(&callManager, SIGNAL(conferenceChanged(const QString &, const QString &)),
-           this,         SLOT(on1_changingConference(const QString &, const QString &)));
-   connect(&callManager, SIGNAL(conferenceRemoved(const QString &)),
-           this,         SLOT(on1_conferenceRemoved(const QString &)));*/
-   //END Port to Call Model
-           
-   //connect(configDialog, SIGNAL(changesApplied()),
-           //this,         SLOT(loadWindow()));
-           
-   connect(TreeWidgetCallModel::getAccountList(), SIGNAL(accountListUpdated()),
-           this,        SLOT(updateStatusMessage()));
-   connect(TreeWidgetCallModel::getAccountList(), SIGNAL(accountListUpdated()),
-           this,        SLOT(updateWindowCallState()));
-   connect(&configurationManager, SIGNAL(accountsChanged()),
-           TreeWidgetCallModel::getAccountList(), SLOT(updateAccounts()));
+   connect(SFLPhone::model()                     , SIGNAL(incomingCall(Call*))                   , this                                  , SLOT(on1_incomingCall(Call*)                    ));
+   connect(SFLPhone::model()                     , SIGNAL(voiceMailNotify(const QString &, int)) , this                                  , SLOT(on1_voiceMailNotify(const QString &, int)  ));
+   connect(SFLPhone::model()                     , SIGNAL(volumeChanged(const QString &, double)), this                                  , SLOT(on1_volumeChanged(const QString &, double) ));
+   connect(SFLPhone::model()                     , SIGNAL(callStateChanged(Call*))               , this                                  , SLOT(updateWindowCallState()                    ));
+   connect(TreeWidgetCallModel::getAccountList() , SIGNAL(accountListUpdated())                  , this                                  , SLOT(updateStatusMessage()                      ));
+   connect(TreeWidgetCallModel::getAccountList() , SIGNAL(accountListUpdated())                  , this                                  , SLOT(updateWindowCallState()                    ));
+   connect(&configurationManager                 , SIGNAL(accountsChanged())                     , TreeWidgetCallModel::getAccountList() , SLOT(updateAccounts()                           ));
 
    TreeWidgetCallModel::getAccountList()->updateAccounts();
 }
@@ -117,14 +94,14 @@ void SFLPhoneView::saveState()
 
 void SFLPhoneView::loadWindow()
 {
-   updateWindowCallState();
-   updateRecordButton();
-   updateVolumeButton();
-   updateRecordBar();
-   updateVolumeBar();
-   updateVolumeControls();
-   updateDialpad();
-   updateStatusMessage();
+   updateWindowCallState ();
+   updateRecordButton    ();
+   updateVolumeButton    ();
+   updateRecordBar       ();
+   updateVolumeBar       ();
+   updateVolumeControls  ();
+   updateDialpad         ();
+   updateStatusMessage   ();
 }
 
 QErrorMessage * SFLPhoneView::getErrorWindow()
@@ -184,11 +161,6 @@ void SFLPhoneView::backspace()
       if(call->getState() == CALL_STATE_OVER) {
          if (callTreeModel->getCurrentItem())
             callTreeModel->removeItem(callTreeModel->getCurrentItem());
-
-//             if(call->getHistoryState() != NONE) {
-//                //historyTree->insert(call);
-//                historyTreeModel->addCall(call);
-//             }
       }
    }
 }
@@ -196,10 +168,9 @@ void SFLPhoneView::backspace()
 void SFLPhoneView::escape()
 {
    qDebug() << "escape";
-   qDebug() << "In call list.";
    Call* call = callTreeModel->getCurrentItem();
    if(!call) {
-      //qDebug() << "Escape when no item is selected. Doing nothing.";
+      qDebug() << "Escape when no item is selected. Doing nothing.";
    }
    else {
       if(call->getState() == CALL_STATE_TRANSFER || call->getState() == CALL_STATE_TRANSF_HOLD) {
@@ -214,7 +185,6 @@ void SFLPhoneView::escape()
 void SFLPhoneView::enter()
 {
    qDebug() << "enter";
-   qDebug() << "In call list.";
    Call* call = callTreeModel->getCurrentItem();
    if(!call) {
       qDebug() << "Error : Enter on unexisting call.";
@@ -269,96 +239,86 @@ void SFLPhoneView::updateWindowCallState()
    call = callTreeModel->getCurrentItem();
    if (!call) {
       qDebug() << "No item selected.";
-      enabledActions[SFLPhone::Refuse] = false;
-      enabledActions[SFLPhone::Hold] = false;
-      enabledActions[SFLPhone::Transfer] = false;
-      enabledActions[SFLPhone::Record] = false;
+      enabledActions[ SFLPhone::Refuse   ] = false;
+      enabledActions[ SFLPhone::Hold     ] = false;
+      enabledActions[ SFLPhone::Transfer ] = false;
+      enabledActions[ SFLPhone::Record   ] = false;
    }
    else {
       call_state state = call->getState();
       recordActivated = call->getRecording();
 
-      qDebug() << "State" << state << "call" << call;
+      qDebug() << "Reached  State" << state << " with call" << call->getCallId();
 
       switch (state) {
          case CALL_STATE_INCOMING:
-            qDebug() << "Reached CALL_STATE_INCOMING with call " << call->getCallId();
-            buttonIconFiles[SFLPhone::Accept] = ICON_ACCEPT;
-            buttonIconFiles[SFLPhone::Refuse] = ICON_REFUSE;
-            actionTexts[SFLPhone::Accept] = ACTION_LABEL_ACCEPT;
-            actionTexts[SFLPhone::Refuse] = ACTION_LABEL_REFUSE;
+            buttonIconFiles [ SFLPhone::Accept   ] = ICON_ACCEPT                 ;
+            buttonIconFiles [ SFLPhone::Refuse   ] = ICON_REFUSE                 ;
+            actionTexts     [ SFLPhone::Accept   ] = ACTION_LABEL_ACCEPT         ;
+            actionTexts     [ SFLPhone::Refuse   ] = ACTION_LABEL_REFUSE         ;
             break;
          case CALL_STATE_RINGING:
-            qDebug() << "Reached CALL_STATE_RINGING with call " << call->getCallId();
-            enabledActions[SFLPhone::Hold] = false;
-            enabledActions[SFLPhone::Transfer] = false;
+            enabledActions  [ SFLPhone::Hold     ] = false                       ;
+            enabledActions  [ SFLPhone::Transfer ] = false                       ;
             break;
          case CALL_STATE_CURRENT:
-            qDebug() << "details = " << CallManagerInterfaceSingleton::getInstance().getCallDetails(call->getCallId()).value();
-            qDebug() << "Reached CALL_STATE_CURRENT with call " << call->getCallId();
-            buttonIconFiles[SFLPhone::Record] = ICON_REC_DEL_ON;
+            buttonIconFiles [ SFLPhone::Record   ] = ICON_REC_DEL_ON             ;
             break;
          case CALL_STATE_DIALING:
-            qDebug() << "Reached CALL_STATE_DIALING with call " << call->getCallId();
-            enabledActions[SFLPhone::Hold] = false;
-            enabledActions[SFLPhone::Transfer] = false;
-            enabledActions[SFLPhone::Record] = false;
-            actionTexts[SFLPhone::Accept] = ACTION_LABEL_ACCEPT;
-            buttonIconFiles[SFLPhone::Accept] = ICON_ACCEPT;
+            enabledActions  [ SFLPhone::Hold     ] = false                       ;
+            enabledActions  [ SFLPhone::Transfer ] = false                       ;
+            enabledActions  [ SFLPhone::Record   ] = false                       ;
+            actionTexts     [ SFLPhone::Accept   ] = ACTION_LABEL_ACCEPT         ;
+            buttonIconFiles [ SFLPhone::Accept   ] = ICON_ACCEPT                 ;
             break;
          case CALL_STATE_HOLD:
-            qDebug() << "Reached CALL_STATE_HOLD with call " << call->getCallId();
-            buttonIconFiles[SFLPhone::Hold] = ICON_UNHOLD;
-            actionTexts[SFLPhone::Hold] = ACTION_LABEL_UNHOLD;
+            buttonIconFiles [ SFLPhone::Hold     ] = ICON_UNHOLD                 ;
+            actionTexts     [ SFLPhone::Hold     ] = ACTION_LABEL_UNHOLD         ;
             break;
          case CALL_STATE_FAILURE:
-            qDebug() << "Reached CALL_STATE_FAILURE with call " << call->getCallId();
-            enabledActions[SFLPhone::Accept] = false;
-            enabledActions[SFLPhone::Hold] = false;
-            enabledActions[SFLPhone::Transfer] = false;
-            enabledActions[SFLPhone::Record] = false;
+            enabledActions  [ SFLPhone::Accept   ] = false                       ;
+            enabledActions  [ SFLPhone::Hold     ] = false                       ;
+            enabledActions  [ SFLPhone::Transfer ] = false                       ;
+            enabledActions  [ SFLPhone::Record   ] = false                       ;
             break;
          case CALL_STATE_BUSY:
-            qDebug() << "Reached CALL_STATE_BUSY with call " << call->getCallId();
-            enabledActions[SFLPhone::Accept] = false;
-            enabledActions[SFLPhone::Hold] = false;
-            enabledActions[SFLPhone::Transfer] = false;
-            enabledActions[SFLPhone::Record] = false;
+            enabledActions  [ SFLPhone::Accept   ] = false                       ;
+            enabledActions  [ SFLPhone::Hold     ] = false                       ;
+            enabledActions  [ SFLPhone::Transfer ] = false                       ;
+            enabledActions  [ SFLPhone::Record   ] = false                       ;
             break;
          case CALL_STATE_TRANSFER:
-            qDebug() << "Reached CALL_STATE_TRANSFER with call " << call->getCallId();
-            buttonIconFiles[SFLPhone::Accept] = ICON_EXEC_TRANSF;
-            actionTexts[SFLPhone::Transfer] = ACTION_LABEL_GIVE_UP_TRANSF;
+            buttonIconFiles [ SFLPhone::Accept   ] = ICON_EXEC_TRANSF            ;
+            actionTexts     [ SFLPhone::Transfer ] = ACTION_LABEL_GIVE_UP_TRANSF ;
+            buttonIconFiles [ SFLPhone::Record   ] = ICON_REC_DEL_ON             ;
             transfer = true;
-            buttonIconFiles[SFLPhone::Record] = ICON_REC_DEL_ON;
             break;
          case CALL_STATE_TRANSF_HOLD:
-            qDebug() << "Reached CALL_STATE_TRANSF_HOLD with call " << call->getCallId();
-            buttonIconFiles[SFLPhone::Accept] = ICON_EXEC_TRANSF;
-            buttonIconFiles[SFLPhone::Hold] = ICON_UNHOLD;
-            actionTexts[SFLPhone::Transfer] = ACTION_LABEL_GIVE_UP_TRANSF;
-            actionTexts[SFLPhone::Hold] = ACTION_LABEL_UNHOLD;
+            buttonIconFiles [ SFLPhone::Accept   ] = ICON_EXEC_TRANSF            ;
+            buttonIconFiles [ SFLPhone::Hold     ] = ICON_UNHOLD                 ;
+            actionTexts     [ SFLPhone::Transfer ] = ACTION_LABEL_GIVE_UP_TRANSF ;
+            actionTexts     [ SFLPhone::Hold     ] = ACTION_LABEL_UNHOLD         ;
             transfer = true;
             break;
          case CALL_STATE_OVER:
-            qDebug() << "Error : Reached CALL_STATE_OVER with call " << call->getCallId() << "!";
+            qDebug() << "Error : Reached CALL_STATE_OVER with call "  << call->getCallId() << "!";
             break;
          case CALL_STATE_ERROR:
             qDebug() << "Error : Reached CALL_STATE_ERROR with call " << call->getCallId() << "!";
             break;
          default:
-            qDebug() << "Error : Reached unexisting state for call " << call->getCallId() << "!";
+            qDebug() << "Error : Reached unexisting state for call "  << call->getCallId() << "!";
             break;
       }
    }
    
    qDebug() << "Updating Window.";
    
-   emit enabledActionsChangeAsked(enabledActions);
-   emit actionIconsChangeAsked(buttonIconFiles);
-   emit actionTextsChangeAsked(actionTexts);
-   emit transferCheckStateChangeAsked(transfer);
-   emit recordCheckStateChangeAsked(recordActivated);
+   emit enabledActionsChangeAsked     ( enabledActions  );
+   emit actionIconsChangeAsked        ( buttonIconFiles );
+   emit actionTextsChangeAsked        ( actionTexts     );
+   emit transferCheckStateChangeAsked ( transfer        );
+   emit recordCheckStateChangeAsked   ( recordActivated );
 
    qDebug() << "Window updated.";
 }
@@ -475,10 +435,10 @@ void SFLPhoneView::updateVolumeControls()
    SFLPhone::app()->action_displayVolumeControls->setChecked(display);
    //widget_recVol->setVisible(display);
    //widget_sndVol->setVisible(display);
-   toolButton_recVol->setVisible(display && ConfigurationSkeleton::displayVolume());
-   toolButton_sndVol->setVisible(display && ConfigurationSkeleton::displayVolume());
-   slider_recVol->setVisible(display && ConfigurationSkeleton::displayVolume());
-   slider_sndVol->setVisible(display && ConfigurationSkeleton::displayVolume());
+   toolButton_recVol->setVisible ( display && ConfigurationSkeleton::displayVolume() );
+   toolButton_sndVol->setVisible ( display && ConfigurationSkeleton::displayVolume() );
+   slider_recVol->setVisible     ( display && ConfigurationSkeleton::displayVolume() );
+   slider_sndVol->setVisible     ( display && ConfigurationSkeleton::displayVolume() );
    
 }
 
@@ -621,26 +581,25 @@ void SFLPhoneView::contextMenuEvent(QContextMenuEvent *event)
    
    SFLPhone * window = SFLPhone::app();
    QList<QAction *> callActions = window->getCallActions();
-   menu.addAction(callActions.at((int) SFLPhone::Accept));
-   menu.addAction(callActions[SFLPhone::Refuse]);
-   menu.addAction(callActions[SFLPhone::Hold]);
-   menu.addAction(callActions[SFLPhone::Transfer]);
-   menu.addAction(callActions[SFLPhone::Record]);
+   
+   menu.addAction ( callActions.at((int) SFLPhone::Accept) );
+   menu.addAction ( callActions[ SFLPhone::Refuse   ]      );
+   menu.addAction ( callActions[ SFLPhone::Hold     ]      );
+   menu.addAction ( callActions[ SFLPhone::Transfer ]      );
+   menu.addAction ( callActions[ SFLPhone::Record   ]      );
    menu.addSeparator();
    
-   QAction * action = new ActionSetAccountFirst(NULL, &menu);
+   QAction* action = new ActionSetAccountFirst(NULL, &menu);
    action->setChecked(SFLPhone::model()->getPriorAccoundId().isEmpty());
-   connect(action,  SIGNAL(setFirst(Account *)),
-           this  ,  SLOT(setAccountFirst(Account *)));
+   connect(action,  SIGNAL(setFirst(Account *)), this  ,  SLOT(setAccountFirst(Account *)));
    menu.addAction(action);
    
    QVector<Account *> accounts = SFLPhone::model()->getAccountList()->registeredAccounts();
    for (int i = 0 ; i < accounts.size() ; i++) {
-      Account * account = accounts.at(i);
-      QAction * action = new ActionSetAccountFirst(account, &menu);
+      Account* account = accounts.at(i);
+      QAction* action = new ActionSetAccountFirst(account, &menu);
       action->setChecked(account->getAccountId() == SFLPhone::model()->getPriorAccoundId());
-      connect(action, SIGNAL(setFirst(Account *)),
-              this  , SLOT(setAccountFirst(Account *)));
+      connect(action, SIGNAL(setFirst(Account *)), this  , SLOT(setAccountFirst(Account *)));
       menu.addAction(action);
    }
    menu.exec(event->globalPos());
@@ -785,9 +744,9 @@ void SFLPhoneView::on1_incomingCall(Call* call)
    //NEED_PORT
    changeScreen(SCREEN_MAIN);
 
-   SFLPhone::app()->activateWindow();
-   SFLPhone::app()->raise();
-   SFLPhone::app()->setVisible(true);
+   SFLPhone::app()->activateWindow  (      );
+   SFLPhone::app()->raise           (      );
+   SFLPhone::app()->setVisible      ( true );
 
    emit incomingCall(call);
 }

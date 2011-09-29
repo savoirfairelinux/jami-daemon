@@ -33,7 +33,8 @@ private:
    QComboBox*                   m_pSortByCBB;
    QCheckBox*                   m_pShowHistoCK;
    QList<ContactItemWidget*>    m_pContacts;
-
+public slots:
+   virtual void keyPressEvent(QKeyEvent* event);
 private slots:
    void reloadContact();
    void loadContactHistory(QTreeWidgetItem* item);
@@ -47,6 +48,19 @@ public:
    ContactTree(QWidget* parent) : QTreeWidget(parent) {}
    virtual QMimeData* mimeData( const QList<QTreeWidgetItem *> items) const;
    bool dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action);
+};
+
+class KeyPressEaterC : public QObject
+{
+   Q_OBJECT
+public:
+   KeyPressEaterC(ContactDock* parent) : QObject(parent) {
+      m_pDock =  parent;
+   }
+protected:
+   bool eventFilter(QObject *obj, QEvent *event);
+private:
+   ContactDock* m_pDock;
 };
 
 #endif

@@ -192,12 +192,12 @@ private slots:
     * text searched. 
     * If empty, hide the search bar.
     */
-   void updateRecordButton();
-   void updateVolumeButton();
-   void updateRecordBar();
-   void updateVolumeBar();
-   void updateVolumeControls();
-   void updateDialpad();
+   void updateRecordButton   ();
+   void updateVolumeButton   ();
+   void updateRecordBar      ();
+   void updateVolumeBar      ();
+   void updateVolumeControls ();
+   void updateDialpad        ();
    
 
 public slots:
@@ -223,7 +223,7 @@ public slots:
       else
       {
          QString text = event->text();
-         if(! event->text().isEmpty())
+         if(! text.isEmpty())
          {
             typeString(text);
          }
@@ -234,12 +234,12 @@ public slots:
    void displayDialpad(bool checked = true);
    void configureSflPhone();
    void accountCreationWizard();
-   void accept();
-   void refuse();
-   void hold();
-   void transfer();
-   void record();
-   void mailBox();
+   void accept   ();
+   void refuse   ();
+   void hold     ();
+   void transfer ();
+   void record   ();
+   void mailBox  ();
    
    void on_widget_dialpad_typed(QString text);
    
@@ -249,31 +249,21 @@ public slots:
    void on_toolButton_recVol_clicked(bool checked);
    void on_toolButton_sndVol_clicked(bool checked);
    
-   //void on_callTree_currentItemChanged();
-   //void on_callTree_itemChanged();
-   //void on_callTree_itemDoubleClicked(QTreeWidgetItem* item, int column);
-   
-//   void on1_callStateChanged(const QString &callID, const QString &state);
    void on1_error(MapStringString details);
    void on1_incomingCall(Call* call);
-   //void on1_incomingMessage(const QString &accountID, const QString &message);
    void on1_voiceMailNotify(const QString &accountID, int count);
    void on1_volumeChanged(const QString &device, double value);
-   //void on1_audioManagerChanged();
-//   void on1_incomingConference(const QString &confID);
-//   void on1_changingConference(const QString &confID, const QString &state);
-//   void on1_conferenceRemoved(const QString &confId);
    void changeScreen(int screen);
    
 signals:
-   void statusMessageChangeAsked(const QString & message);
-   void windowTitleChangeAsked(const QString & title);
-   void enabledActionsChangeAsked(const bool * enabledActions);
-   void actionIconsChangeAsked(const QString * actionIcons);
-   void actionTextsChangeAsked(const QString * actionTexts);
-   void transferCheckStateChangeAsked(bool transferCheckState);
-   void recordCheckStateChangeAsked(bool recordCheckState);
-   void addressBookEnableAsked(bool enableAddressBook);
+   void statusMessageChangeAsked      ( const QString&  message            );
+   void windowTitleChangeAsked        ( const QString&  title              );
+   void enabledActionsChangeAsked     ( const bool*     enabledActions     );
+   void actionIconsChangeAsked        ( const QString*  actionIcons        );
+   void actionTextsChangeAsked        ( const QString*  actionTexts        );
+   void transferCheckStateChangeAsked ( bool            transferCheckState );
+   void recordCheckStateChangeAsked   ( bool            recordCheckState   );
+   void addressBookEnableAsked        ( bool            enableAddressBook  );
    void screenChanged(int screen);
    void incomingCall(const Call * call);
    

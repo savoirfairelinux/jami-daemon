@@ -159,8 +159,8 @@ bool CallView::phoneNumberToCall(QTreeWidgetItem *parent, int index, const QMime
 bool CallView::contactToCall(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action)
 {
    qDebug() << "contactToCall";
-   Q_UNUSED(index)
-   Q_UNUSED(action)
+   Q_UNUSED( index  )
+   Q_UNUSED( action )
    QByteArray encodedContact = data->data( MIME_CONTACT );
    if (!QString(encodedContact).isEmpty()) {
       Contact* contact = AkonadiBackend::getInstance()->getContactByUid(encodedContact);
@@ -321,7 +321,6 @@ Call* CallView::getCurrentItem()
 ///Remove a TreeView item and delete it
 bool CallView::removeItem(Call* item) 
 {
-   exit(66);
    if (indexOfTopLevelItem(SFLPhone::model()->getIndex(item)) != -1) {//TODO To remove once safe
      removeItemWidget(SFLPhone::model()->getIndex(item),0);
      return true;
@@ -533,32 +532,7 @@ void CallView::clearHistory()
    //SFLPhone::model()->getHistory().clear();
 }
 
-// void CallView::conferenceCreatedSignal(const QString& confId)
-// {
-//    addConference(confId);
-// }
-// 
-// void CallView::conferenceChangedSignal(const QString& confId, const QString& state)
-// {
-//    qDebug() << "Conf changed signal";
-//    conferenceChanged(confId, state);
-// }
-// 
-// void CallView::conferenceRemovedSignal(const QString& confId)
-// {
-//    conferenceRemoved(confId);
-// }
-// 
-// void CallView::incomingMessageSignal(const QString& accountId, const QString& message)
-// {
-//    Q_UNUSED(accountId)
-//    Q_UNUSED(message)
-//    //TODO
-// }
-// 
-// void CallView::voiceMailNotifySignal(const QString& accountId, int count)
-// {
-//    Q_UNUSED(accountId)
-//    Q_UNUSED(count)
-//    //TODO
-// }
+///Redirect keypresses to parent
+void CallView::keyPressEvent(QKeyEvent* event) {
+   SFLPhone::app()->view()->keyPressEvent(event);
+}

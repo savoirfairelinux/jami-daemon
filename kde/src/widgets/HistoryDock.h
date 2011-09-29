@@ -23,6 +23,7 @@ typedef QList<HistoryTreeItem*> HistoryList;
 class HistoryDock : public QDockWidget {
    Q_OBJECT
 public:
+   friend class KeyPressEater;
    HistoryDock(QWidget* parent);
    virtual ~HistoryDock();
 private:
@@ -50,6 +51,7 @@ private:
    QDate         m_pCurrentToDate;
 public slots:
    void enableDateRange(bool enable);
+   virtual void keyPressEvent(QKeyEvent* event);
 private slots:
    void filter(QString text);
    void updateLinkedFromDate(QDate date);
@@ -64,6 +66,19 @@ public:
    HistoryTree(QWidget* parent) : QTreeWidget(parent) {}
    virtual QMimeData* mimeData( const QList<QTreeWidgetItem *> items) const;
    bool dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action);
+};
+
+class KeyPressEater : public QObject
+{
+   Q_OBJECT
+public:
+   KeyPressEater(HistoryDock* parent) : QObject(parent) {
+      m_pDock =  parent;
+   }
+protected:
+   bool eventFilter(QObject *obj, QEvent *event);
+private:
+   HistoryDock* m_pDock;
 };
 
 #endif

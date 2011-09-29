@@ -52,8 +52,20 @@ class QNumericTreeWidgetItem_hist : public QTreeWidgetItem {
       }
 };
 
+bool KeyPressEaterC::eventFilter(QObject *obj, QEvent *event)
+{
+   if (event->type() == QEvent::KeyPress) {
+      m_pDock->keyPressEvent((QKeyEvent*)event);
+      return true;
+   } else {
+      // standard event processing
+      return QObject::eventFilter(obj, event);
+   }
+}
+
 ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
 {
+   setObjectName("contactDock");
    m_pFilterLE     = new KLineEdit   (                   );
    m_pSplitter     = new QSplitter   ( Qt::Vertical,this );
    m_pSortByCBB    = new QComboBox   ( this              );
@@ -74,6 +86,8 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
    m_pContactView->header()->setSortIndicatorShown(true);
    m_pContactView->setAcceptDrops(true);
    m_pContactView->setDragEnabled(true);
+   KeyPressEaterC *keyPressEater = new KeyPressEaterC(this);
+   m_pContactView->installEventFilter(keyPressEater);
 
    m_pContactView->setAlternatingRowColors(true);
 
@@ -217,4 +231,15 @@ void ContactDock::setHistoryVisible(bool visible)
    qDebug() << "Toggling history visibility";
    m_pCallView->setVisible(visible);
    ConfigurationSkeleton::setDisplayContactCallHistory(visible);
+}
+
+void ContactDock::keyPressEvent(QKeyEvent* event) {
+   int key = event->key();
+   if(key == Qt::Key_Escape)
+      m_pFilterLE->setText(QString());
+   else if(key == Qt::Key_Return || key == Qt::Key_Enter) {}
+   else if((key == Qt::Key_Backspace) && (m_pFilterLE->text().size()))
+      m_pFilterLE->setText(m_pFilterLE->text().left( m_pFilterLE->text().size()-1 ));
+   else if (!event->text().isEmpty() && !(key == Qt::Key_Backspace))
+      m_pFilterLE->setText(m_pFilterLE->text()+event->text());
 }

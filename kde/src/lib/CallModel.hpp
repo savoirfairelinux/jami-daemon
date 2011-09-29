@@ -135,7 +135,6 @@ template<typename CallWidget, typename Index> QList<Call*> CallModel<CallWidget,
 template<typename CallWidget, typename Index> Call* CallModel<CallWidget,Index>::addCall(Call* call, Call* parent) 
 {
    Q_UNUSED(parent)
-   qDebug() << "-------------------Adding call" << call << "-------------------";
    InternalStruct* aNewStruct = new InternalStruct;
    aNewStruct->call_real = call;
    aNewStruct->conference = false;

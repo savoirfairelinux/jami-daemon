@@ -86,7 +86,7 @@ BookmarkDock* SFLPhone::bookmarkDock()
 
 SFLPhone::~SFLPhone()
 {
-   saveState();
+   //saveState();
 }
 
 bool SFLPhone::initialize()
@@ -112,6 +112,7 @@ bool SFLPhone::initialize()
   // tell the KXmlGuiWindow that this is indeed the main widget
   //setCentralWidget(m_pView);
   m_pCentralDW = new QDockWidget(this);
+  m_pCentralDW->setObjectName("callDock");
   m_pCentralDW->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
   m_pCentralDW->setWidget(m_pView);
   m_pCentralDW->setWindowTitle("Call");
@@ -133,11 +134,10 @@ bool SFLPhone::initialize()
   
   addDockWidget(Qt::TopDockWidgetArea,m_pCentralDW);
 
-   
    m_pHistoryDW  = new HistoryDock(this);
-   addDockWidget(Qt::TopDockWidgetArea,m_pHistoryDW);
    m_pBookmarkDW = new BookmarkDock(this);
-   addDockWidget(Qt::TopDockWidgetArea,m_pBookmarkDW);
+   addDockWidget( Qt::TopDockWidgetArea,m_pHistoryDW  );
+   addDockWidget( Qt::TopDockWidgetArea,m_pBookmarkDW );
    tabifyDockWidget(m_pBookmarkDW,m_pHistoryDW);
 
   setWindowIcon(QIcon(ICON_SFLPHONE));
@@ -174,9 +174,9 @@ bool SFLPhone::initialize()
 
 void SFLPhone::setObjectNames()
 {
-   m_pView->setObjectName("m_pView");
-   statusBar()->setObjectName("statusBar");
-   trayIcon->setObjectName("trayIcon");
+   m_pView->setObjectName     ( "m_pView"   );
+   statusBar()->setObjectName ( "statusBar" );
+   trayIcon->setObjectName    ( "trayIcon"  );
 }
 
 void SFLPhone::setupActions()
@@ -200,6 +200,7 @@ void SFLPhone::setupActions()
 
    action_screen = new QActionGroup(this);
    action_screen->setExclusive(true);
+   
    action_main = new KAction(KIcon(QIcon(ICON_SCREEN_MAIN)), i18n("Main screen"), action_screen);
    action_main->setCheckable(true);
    action_main->setChecked(true);
@@ -211,13 +212,14 @@ void SFLPhone::setupActions()
    action_configureSflPhone = KStandardAction::preferences(m_pView, SLOT(configureSflPhone()), this);
    action_configureSflPhone->setText(i18n("Configure SFLphone"));
    
-   action_displayVolumeControls = new KAction(KIcon(QIcon(ICON_DISPLAY_VOLUME_CONSTROLS)), i18n("Display volume controls"), this);   
    action_displayDialpad = new KAction(KIcon(QIcon(ICON_DISPLAY_DIALPAD)), i18n("Display dialpad"), this);
    action_displayDialpad->setCheckable(true);
+   action_displayDialpad->setChecked(ConfigurationSkeleton::displayDialpad());
 
+   action_displayVolumeControls = new KAction(KIcon(QIcon(ICON_DISPLAY_VOLUME_CONSTROLS)), i18n("Display volume controls"), this);   
    action_displayVolumeControls->setCheckable(true);
    action_displayVolumeControls->setChecked(ConfigurationSkeleton::displayVolume());
-   action_displayDialpad->setChecked(ConfigurationSkeleton::displayDialpad());
+   
    action_accountCreationWizard = new KAction(i18n("Account creation wizard"), this);
    
    connect(action_accept,                SIGNAL(triggered()),           m_pView , SLOT(accept()                    ));
@@ -247,25 +249,8 @@ void SFLPhone::setupActions()
    actionCollection()->addAction("action_configureSflPhone"     , action_configureSflPhone     );
    actionCollection()->addAction("action_accountCreationWizard" , action_accountCreationWizard );
    
-   QString rcFilePath = QString(DATA_INSTALL_DIR) + "/sflphone-client-kde/sflphone-client-kdeui.rc";
-
-   if(! QFile::exists(rcFilePath)) {
-      QDir dir;
-      dir.cdUp();
-      dir.cd("data");
-      rcFilePath = dir.filePath("sflphone-client-kdeui.rc");
-      qDebug() << "rcFilePath = " << rcFilePath ;
-
-      if(! QFile::exists(rcFilePath)) {
-         QDir dir;
-         dir.cdUp();
-         dir.cdUp();
-         dir.cd("data");
-         rcFilePath = dir.filePath("sflphone-client-kdeui.rc");
-      }
-   }
-   qDebug() << "rcFilePath = " << rcFilePath ;
-   createGUI(rcFilePath);
+   setAutoSaveSettings();
+   createGUI();
 
 }
 
@@ -283,12 +268,6 @@ bool SFLPhone::queryClose()
 
 void SFLPhone::quitButton()
 {
-   
-   //qDebug() << "quitButton : " << m_pView->callTree->count() << " calls open.";
-
-   //if(m_pView->callTree->count() > 0 && instance.getRegistrationCount() <= 1) {
-      //qDebug() << "Attempting to quit when still having some calls open.";
-   //}
    m_pView->saveState();
    qApp->quit();
 }

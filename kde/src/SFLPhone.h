@@ -69,42 +69,44 @@ Q_OBJECT
 
 public:
 enum CallAction {
-        Accept,
-        Refuse,
-        Hold,
-        Transfer,
-        Record,
-        Mailbox,
-        NumberOfCallActions};
+        Accept            ,
+        Refuse            ,
+        Hold              ,
+        Transfer          ,
+        Record            ,
+        Mailbox           ,
+        NumberOfCallActions
+};
 
 private:
    // Whether or not the object has been initialized
    bool   initialized_;
-   KAction * action_accept;
-   KAction * action_refuse;
-   KAction * action_hold;
-   KAction * action_transfer;
-   KAction * action_record;
-   KAction * action_main;
-   KAction * action_mailBox;
-   KAction * action_close;
-   KAction * action_quit;
-   KAction * action_displayVolumeControls;
-   KAction * action_displayDialpad;
-   KAction * action_configureSflPhone;
-   KAction * action_accountCreationWizard;
+   KAction* action_accept                ;
+   KAction* action_refuse                ;
+   KAction* action_hold                  ;
+   KAction* action_transfer              ;
+   KAction* action_record                ;
+   KAction* action_main                  ;
+   KAction* action_mailBox               ;
+   KAction* action_close                 ;
+   KAction* action_quit                  ;
+   KAction* action_displayVolumeControls ;
+   KAction* action_displayDialpad        ;
+   KAction* action_configureSflPhone     ;
+   KAction* action_accountCreationWizard ;
+   
    QActionGroup * action_screen;
 
-   SFLPhoneView * m_pView;
-   QMenu *trayIconMenu;
-   bool iconChanged;
-   SFLPhoneTray *trayIcon;
-   KNotification *notification;
-   QLabel*       statusBarWidget;
-   ContactDock*  m_pContactCD;
-   QDockWidget*  m_pCentralDW;
-   HistoryDock*  m_pHistoryDW;
-   BookmarkDock* m_pBookmarkDW;
+   SFLPhoneView*  m_pView         ;
+   QMenu*         trayIconMenu    ;
+   bool           iconChanged     ;
+   SFLPhoneTray*  trayIcon        ;
+   KNotification* notification    ;
+   QLabel*        statusBarWidget ;
+   ContactDock*   m_pContactCD    ;
+   QDockWidget*   m_pCentralDW    ;
+   HistoryDock*   m_pHistoryDW    ;
+   BookmarkDock*  m_pBookmarkDW   ;
    
    static SFLPhone* m_sApp;
    static TreeWidgetCallModel* m_pModel;
@@ -118,33 +120,33 @@ protected:
 
 public:
    SFLPhone(QWidget *parent = 0);
-   ~SFLPhone();
-        bool initialize();
-   void setupActions();
-   void trayIconSignal();
-   SFLPhoneView * getView();
-   QList<QAction *> getCallActions();
+   ~SFLPhone                       ();
+   bool             initialize     ();
+   void             setupActions   ();
+   void             trayIconSignal ();
+   SFLPhoneView*    getView        ();
+   QList<QAction *> getCallActions ();
 
    friend class SFLPhoneView;
    
-   static SFLPhone* app();
-   SFLPhoneView* view();
-   static TreeWidgetCallModel* model();
+   static SFLPhone*            app   ();
+   static TreeWidgetCallModel* model ();
+   SFLPhoneView*               view  ();
 
    ContactDock*  contactDock();
    HistoryDock*  historyDock();
    BookmarkDock* bookmarkDock();
    
 private slots:
-   void on_m_pView_statusMessageChangeAsked(const QString & message);
-   void on_m_pView_windowTitleChangeAsked(const QString & message);
-   void on_m_pView_enabledActionsChangeAsked(const bool * enabledActions);
-   void on_m_pView_actionIconsChangeAsked(const QString * actionIcons);
-   void on_m_pView_actionTextsChangeAsked(const QString * actionTexts);
-   void on_m_pView_transferCheckStateChangeAsked(bool transferCheckState);
-   void on_m_pView_recordCheckStateChangeAsked(bool recordCheckState);
-   void on_m_pView_screenChanged(int screen);
-   void on_m_pView_incomingCall(const Call * call);
+   void on_m_pView_statusMessageChangeAsked      ( const QString& message        );
+   void on_m_pView_windowTitleChangeAsked        ( const QString& message        );
+   void on_m_pView_enabledActionsChangeAsked     ( const bool*    enabledActions );
+   void on_m_pView_actionIconsChangeAsked        ( const QString* actionIcons    );
+   void on_m_pView_actionTextsChangeAsked        ( const QString* actionTexts    );
+   void on_m_pView_transferCheckStateChangeAsked ( bool  transferCheckState      );
+   void on_m_pView_recordCheckStateChangeAsked   ( bool  recordCheckState        );
+   void on_m_pView_screenChanged                 ( int screen                    );
+   void on_m_pView_incomingCall                  ( const Call * call             );
 
    void updateScreen(QAction * action);
 

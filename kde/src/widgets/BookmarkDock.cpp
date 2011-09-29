@@ -30,6 +30,7 @@ class QNumericTreeWidgetItem : public QTreeWidgetItem {
 
 BookmarkDock::BookmarkDock(QWidget* parent) : QDockWidget(parent)
 {
+   setObjectName("bookmarkDock");
    setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
    setMinimumSize(250,0);
    
