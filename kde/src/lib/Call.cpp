@@ -24,6 +24,8 @@
 
 #include "callmanager_interface_singleton.h"
 #include "configurationmanager_interface_singleton.h"
+#include "ContactBackend.h"
+#include "Contact.h"
 
 
 const call_state Call::actionPerformedStateMap [11][5] = 
@@ -93,6 +95,13 @@ const function Call::stateChangedFunctionMap[11][6] =
 };//                                                                                                                                                   
 
 const char * Call::historyIcons[3] = {ICON_HISTORY_INCOMING, ICON_HISTORY_OUTGOING, ICON_HISTORY_MISSED};
+
+ContactBackend* Call::m_pContactBackend = 0;
+
+void Call::setContactBackend(ContactBackend* be)
+{
+   m_pContactBackend = be;
+}
 
 ///Constructor
 Call::Call(call_state startState, QString callId, QString peerName, QString peerNumber, QString account)
@@ -318,13 +327,13 @@ QString Call::getStartTimeStamp() const
 ///Get the number where the call have been transferred
 QString Call::getTransferNumber() const
 {
-   return transferNumber;
+   return m_pTransferNumber;
 }
 
 ///Get the call / peer number
 QString Call::getCallNumber() const
 {
-   return callNumber;
+   return m_pCallNumber;
 }
 
 ///Return the call id
@@ -416,13 +425,13 @@ bool Call::isSecure() const {
 ///Set the transfer number
 void Call::setTransferNumber(QString number)
 {
-   transferNumber = number;
+   m_pTransferNumber = number;
 }
 
 ///Set the call number
 void Call::setCallNumber(QString number)
 {
-   callNumber = number;
+   m_pCallNumber = number;
    emit changed();
 }
 
@@ -544,9 +553,9 @@ void Call::refuse()
 void Call::acceptTransf()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   qDebug() << "Accepting call and transfering it to number : " << transferNumber << ". callId : " << m_pCallId;
+   qDebug() << "Accepting call and transfering it to number : " << m_pTransferNumber << ". callId : " << m_pCallId;
    callManager.accept(m_pCallId);
-   callManager.transfer(m_pCallId, transferNumber);
+   callManager.transfer(m_pCallId, m_pTransferNumber);
 //   m_pHistoryState = TRANSFERED;
 }
 
@@ -595,17 +604,19 @@ void Call::call()
       this->m_pAccount = CallModelConvenience::getCurrentAccountId();
    }
    if(!m_pAccount.isEmpty()) {
-      qDebug() << "Calling " << callNumber << " with account " << m_pAccount << ". callId : " << m_pCallId;
-      callManager.placeCall(m_pAccount, m_pCallId, callNumber);
+      qDebug() << "Calling " << m_pCallNumber << " with account " << m_pAccount << ". callId : " << m_pCallId;
+      callManager.placeCall(m_pAccount, m_pCallId, m_pCallNumber);
       this->m_pAccount = m_pAccount;
-      this->m_pPeerPhoneNumber = callNumber;
-//       Contact * contact = findContactForNumberInKAddressBook(peerPhoneNumber); //TODO port
-//       if(contact) this->m_pPeerName = contact->getNickName();
+      this->m_pPeerPhoneNumber = m_pCallNumber;
+      if (m_pContactBackend) {
+         Contact* contact = m_pContactBackend->getContactByPhone(m_pPeerPhoneNumber);
+         m_pPeerName = contact->getFormattedName();
+      }
       this->m_pStartTime = new QDateTime(QDateTime::currentDateTime());
       this->m_pHistoryState = OUTGOING;
    }
    else {
-      qDebug() << "Trying to call " << transferNumber << " with no account registered . callId : " << m_pCallId;
+      qDebug() << "Trying to call " << m_pTransferNumber << " with no account registered . callId : " << m_pCallId;
       this->m_pHistoryState = NONE;
       throw "No account registered!";
    }
@@ -615,8 +626,8 @@ void Call::call()
 void Call::transfer()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   qDebug() << "Transfering call to number : " << transferNumber << ". callId : " << m_pCallId;
-   callManager.transfer(m_pCallId, transferNumber);
+   qDebug() << "Transfering call to number : " << m_pTransferNumber << ". callId : " << m_pCallId;
+   callManager.transfer(m_pCallId, m_pTransferNumber);
    this->m_pStopTime = new QDateTime(QDateTime::currentDateTime());
 }
 
@@ -694,10 +705,10 @@ void Call::appendText(QString str)
    switch (currentState) {
    case CALL_STATE_TRANSFER    :
    case CALL_STATE_TRANSF_HOLD :
-      editNumber = &transferNumber;
+      editNumber = &m_pTransferNumber;
       break;
    case CALL_STATE_DIALING     :
-      editNumber = &callNumber;
+      editNumber = &m_pCallNumber;
       break;
    default                     :
       qDebug() << "Backspace on call not editable. Doing nothing.";
@@ -717,10 +728,10 @@ void Call::backspaceItemText()
    switch (currentState) {
       case CALL_STATE_TRANSFER        :
       case CALL_STATE_TRANSF_HOLD     :
-         editNumber = &transferNumber;
+         editNumber = &m_pTransferNumber;
          break;
       case CALL_STATE_DIALING         :
-         editNumber = &callNumber;
+         editNumber = &m_pCallNumber;
          break;
       default                         :
          qDebug() << "Backspace on call not editable. Doing nothing.";

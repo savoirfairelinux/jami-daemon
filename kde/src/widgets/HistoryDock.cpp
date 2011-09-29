@@ -17,6 +17,7 @@
 #include "AkonadiBackend.h"
 #include "lib/sflphone_const.h"
 
+///Qt lack official functional sorting algo, so this hack around it
 class QNumericTreeWidgetItem : public QTreeWidgetItem {
    public:
       QNumericTreeWidgetItem(QTreeWidget* parent):QTreeWidgetItem(parent),widget(0),weight(-1){}
@@ -36,6 +37,7 @@ class QNumericTreeWidgetItem : public QTreeWidgetItem {
       }
 };
 
+///Event filter allowing to write text on the Tree widget to filter it.
 bool KeyPressEater::eventFilter(QObject *obj, QEvent *event)
 {
    if (event->type() == QEvent::KeyPress) {
@@ -47,6 +49,7 @@ bool KeyPressEater::eventFilter(QObject *obj, QEvent *event)
    }
 }
 
+///Constructor
 HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
 {
    setObjectName("historyDock");
@@ -121,10 +124,12 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    connect(AkonadiBackend::getInstance(), SIGNAL(collectionChanged()),      this, SLOT(updateContactInfo()         ));
 }
 
+///Destructor
 HistoryDock::~HistoryDock()
 {
 }
 
+///Return the identity of the call caller
 QString HistoryDock::getIdentity(HistoryTreeItem* item)
 {
    if (item->getName().trimmed().isEmpty())
@@ -133,6 +138,7 @@ QString HistoryDock::getIdentity(HistoryTreeItem* item)
       return item->getName();
 }
 
+///Update informations
 void HistoryDock::updateContactInfo()
 {
    foreach(HistoryTreeItem* hitem, m_pHistory) {
@@ -140,6 +146,7 @@ void HistoryDock::updateContactInfo()
    }
 }
 
+///Reload the history list
 void HistoryDock::reload()
 {
    m_pItemView->clear();
@@ -209,6 +216,7 @@ void HistoryDock::reload()
    m_pItemView->sortItems(0,Qt::AscendingOrder);
 }
 
+///Enable the ability to set a date range like 1 month to limit history
 void HistoryDock::enableDateRange(bool enable)
 {
    m_pFromL->setVisible(enable);
@@ -220,6 +228,7 @@ void HistoryDock::enableDateRange(bool enable)
    ConfigurationSkeleton::setDisplayDataRange(enable);
 }
 
+///Filter the history
 void HistoryDock::filter(QString text)
 {
    foreach(HistoryTreeItem* item, m_pHistory) {
@@ -229,6 +238,7 @@ void HistoryDock::filter(QString text)
    m_pItemView->expandAll();
 }
 
+///When the data range is linked, change the opposite value when editing the first
 void HistoryDock::updateLinkedDate(KDateWidget* item, QDate& prevDate, QDate& newDate)
 {
    if (m_pLinkPB->isChecked()) {
@@ -251,20 +261,23 @@ void HistoryDock::updateLinkedDate(KDateWidget* item, QDate& prevDate, QDate& ne
    prevDate = newDate;
 }
 
+///The signals have to be disabled to prevent an ifinite loop
 void HistoryDock::updateLinkedFromDate(QDate date)
 {
-   disconnect(m_pToDW  ,  SIGNAL(changed(QDate)),       this, SLOT(updateLinkedToDate(QDate)));
+   disconnect (m_pToDW  ,  SIGNAL(changed(QDate)),       this, SLOT(updateLinkedToDate(QDate)));
    updateLinkedDate(m_pToDW,m_pCurrentFromDate,date);
-   connect(m_pToDW  ,  SIGNAL(changed(QDate)),       this, SLOT(updateLinkedToDate(QDate)));
+   connect    (m_pToDW  ,  SIGNAL(changed(QDate)),       this, SLOT(updateLinkedToDate(QDate)));
 }
 
+///The signals have to be disabled to prevent an ifinite loop
 void HistoryDock::updateLinkedToDate(QDate date)
 {
    disconnect(m_pFromDW  ,  SIGNAL(changed(QDate)),       this, SLOT(updateLinkedFromDate(QDate)));
    updateLinkedDate(m_pFromDW,m_pCurrentToDate,date);
-   connect(m_pFromDW  ,  SIGNAL(changed(QDate)),       this, SLOT(updateLinkedFromDate(QDate)));
+   connect   (m_pFromDW  ,  SIGNAL(changed(QDate)),       this, SLOT(updateLinkedFromDate(QDate)));
 }
 
+///Generate serializerd version of the content 
 QMimeData* HistoryTree::mimeData( const QList<QTreeWidgetItem *> items) const
 {
    qDebug() << "An history call is being dragged";
@@ -287,6 +300,7 @@ QMimeData* HistoryTree::mimeData( const QList<QTreeWidgetItem *> items) const
    return mimeData;
 }
 
+///Handle what happen when serialized data is dropped
 bool HistoryTree::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action)
 {
    Q_UNUSED(index)
@@ -300,6 +314,7 @@ bool HistoryTree::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeDa
    return false;
 }
 
+///Handle keyboard input and redirect them to the filterbox
 void HistoryDock::keyPressEvent(QKeyEvent* event) {
    int key = event->key();
    if(key == Qt::Key_Escape)

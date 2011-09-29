@@ -37,6 +37,7 @@
 
 const char * HistoryTreeItem::callStateIcons[12] = {ICON_INCOMING, ICON_RINGING, ICON_CURRENT, ICON_DIALING, ICON_HOLD, ICON_FAILURE, ICON_BUSY, ICON_TRANSFER, ICON_TRANSF_HOLD, "", "", ICON_CONFERENCE};
 
+///Constructor
 HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
    : QWidget(parent), itemCall(0),m_pMenu(0), init(false)
 {
@@ -56,6 +57,7 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
    m_pAddToContact->setShortcut ( Qt::CTRL + Qt::Key_E         );
    m_pAddToContact->setText     ( "Add Number to Contact"      );
    m_pAddToContact->setIcon     ( KIcon("list-resource-add")   );
+   m_pAddToContact->setDisabled ( true                         );
    
    m_pAddContact->setShortcut   ( Qt::CTRL + Qt::Key_E         );
    m_pAddContact->setText       ( "Add Contact"                );
@@ -64,10 +66,12 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
    m_pCopy->setShortcut         ( Qt::CTRL + Qt::Key_C         );
    m_pCopy->setText             ( "Copy"                       );
    m_pCopy->setIcon             ( KIcon("edit-copy")           );
+   m_pCopy->setDisabled         ( true                         );
    
    m_pEmail->setShortcut        ( Qt::CTRL + Qt::Key_M         );
    m_pEmail->setText            ( "Send Email"                 );
    m_pEmail->setIcon            ( KIcon("mail-message-new")    );
+   m_pEmail->setDisabled        ( true                         );
 
    m_pBookmark->setShortcut     ( Qt::CTRL + Qt::Key_D         );
    m_pBookmark->setText         ( "Bookmark"                   );
@@ -108,16 +112,19 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
    }
 }
 
+///Destructor
 HistoryTreeItem::~HistoryTreeItem()
 {
    
 }
 
+///Return the call item
 Call* HistoryTreeItem::call() const
 {
    return itemCall;
 }
 
+///Set the call to be handled by this item
 void HistoryTreeItem::setCall(Call *call)
 {
    itemCall = call;
@@ -143,6 +150,7 @@ void HistoryTreeItem::setCall(Call *call)
    m_pPhoneNumber = itemCall->getPeerPhoneNumber();
 }
 
+///Can a contact be associed with this call?
 bool HistoryTreeItem::getContactInfo(QString phoneNumber)
 {
    Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(phoneNumber);
@@ -159,6 +167,7 @@ bool HistoryTreeItem::getContactInfo(QString phoneNumber)
    return true;
 }
 
+///The item have to be updated
 void HistoryTreeItem::updated()
 {
    if (!getContactInfo(itemCall->getPeerPhoneNumber())) {
@@ -185,37 +194,43 @@ void HistoryTreeItem::updated()
    
 }
 
+///Return the time stamp
 uint HistoryTreeItem::getTimeStamp()
 {
    return m_pTimeStamp;
 }
 
+///Return the duration
 uint HistoryTreeItem::getDuration()
 {
    return m_pDuration;
 }
 
+///Return the caller name
 QString HistoryTreeItem::getName()
 {
    return m_pName;
 }
 
+///Return the caller peer number
 QString HistoryTreeItem::getPhoneNumber()
 {
    return m_pPhoneNumber;
 }
 
-
+///Get the index item assiciated with this widget
 QTreeWidgetItem* HistoryTreeItem::getItem()
 {
    return m_pItem;
 }
 
+///Set the index associed with this widget
 void HistoryTreeItem::setItem(QTreeWidgetItem* item)
 {
    m_pItem = item;
 }
 
+///Show the context menu
 void HistoryTreeItem::showContext(const QPoint& pos)
 {
    if (!m_pMenu) {
@@ -230,12 +245,14 @@ void HistoryTreeItem::showContext(const QPoint& pos)
    m_pMenu->exec(mapToGlobal(pos));
 }
 
-
+///Send an email
 void HistoryTreeItem::sendEmail()
 {
+   //TODO
    qDebug() << "Sending email";
 }
 
+///Call the caller again
 void HistoryTreeItem::callAgain()
 {
    if (itemCall) {
@@ -244,11 +261,14 @@ void HistoryTreeItem::callAgain()
    SFLPhone::model()->addDialingCall(m_pName, SFLPhone::app()->model()->getCurrentAccountId())->setCallNumber(m_pPhoneNumber);
 }
 
+///Copy the call
 void HistoryTreeItem::copy()
 {
+   //TODO
    qDebug() << "Copying contact";
 }
 
+///Create a contact from those informations
 void HistoryTreeItem::addContact()
 {
    qDebug() << "Adding contact";
@@ -258,10 +278,14 @@ void HistoryTreeItem::addContact()
    AkonadiBackend::getInstance()->addNewContact(aContact);
 }
 
+///Add this call number to an existing contact
 void HistoryTreeItem::addToContact()
 {
+   //TODO
    qDebug() << "Adding to contact";
 }
+
+///Bookmark this contact
 void HistoryTreeItem::bookmark()
 {
    qDebug() << "bookmark";

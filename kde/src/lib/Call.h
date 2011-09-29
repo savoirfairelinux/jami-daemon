@@ -31,6 +31,8 @@
 #include "sflphone_const.h"
 #include "typedefs.h"
 
+class ContactBackend;
+
 
 /** @enum daemon_call_state_t 
   * This enum have all the states a call can take for the daemon.
@@ -134,8 +136,9 @@ private:
    QLabel * labelHistoryTime;
    */
 
-   QString transferNumber;
-   QString callNumber;
+   QString m_pTransferNumber;
+   QString m_pCallNumber;
+   static ContactBackend* m_pContactBackend;
    
    bool conference;
    
@@ -212,6 +215,7 @@ public:
    static Call* buildRingingCall  (const QString & callId                                                                                                       );
    static Call* buildHistoryCall  (const QString & callId, uint startTimeStamp, uint stopTimeStamp, QString account, QString name, QString number, QString type );
    static Call* buildExistingCall (QString callId                                                                                                               );
+   static void  setContactBackend (ContactBackend* be                                                                                                           );
 
    //Static getters
    static history_state getHistoryStateFromType            ( QString type                                    );

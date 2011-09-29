@@ -65,6 +65,12 @@ template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::
    return true;
 }
 
+///Set how the call can find more informations about the call it receive
+template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::initContact ( ContactBackend* be )
+{
+   Call::setContactBackend(be);
+}
+
 ///Fill the history list
 ///@warning This solution wont scale to multiple call or history model implementation. Some static addCall + foreach for each call would be needed if this case ever become unavoidable
 template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::initHistory()

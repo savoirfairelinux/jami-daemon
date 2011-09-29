@@ -36,6 +36,7 @@
 #include "sflphone_const.h"
 #include "unistd.h"
 #include "typedefs.h"
+#include "ContactBackend.h"
 
 typedef QHash<QString, Call*> CallHash;
 typedef QList<Call*>          CallList;
@@ -90,10 +91,11 @@ class LIB_EXPORT CallModel : public CallModelBase {
       };
 
       //Constructors, initializer and destructors
-      CallModel                ( ModelType type );
-      virtual ~CallModel       (                ) {}
-      virtual bool initCall    (                );
-      virtual bool initHistory (                );
+      CallModel                ( ModelType type     );
+      virtual ~CallModel       (                    ) {}
+      virtual bool initCall    (                    );
+      virtual bool initHistory (                    );
+      virtual void initContact ( ContactBackend* be );
 
       //Call related
       virtual Call*  addCall         ( Call* call                , Call* parent =0    );
