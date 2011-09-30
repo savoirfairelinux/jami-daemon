@@ -4,7 +4,7 @@
 #
 # Author: Francois Marier <francois@debian.org>
 
-if [ ! -e sflphone-common/configure.ac ] ; then
+if [ ! -e daemon/configure.ac ] ; then
     echo "This script must be run in the root directory of the sflphone repository"
     exit 1
 fi
@@ -31,8 +31,7 @@ rm -f *.tar.gz
 
 rm -rf lang/
 rm -rf tools/
-rm -rf sflphone-client-kde/
-rm -rf sippxml
+rm -rf kde/
 
 rm -rf .git/
 rm -f .gitignore
@@ -41,11 +40,11 @@ find -name .project -type f -exec rm {} \;
 find -name .cproject -type f -exec rm {} \;
 find -name .settings -type d -exec rm -rf {} \;
 
-pushd sflphone-common
+pushd daemon
 ./autogen.sh
 popd
 
-pushd sflphone-common/libs/pjproject
+pushd daemon/libs/pjproject
 find -name os-auto.mak -type f -exec rm {} \;
 
 # Remove pre-built binaries
@@ -88,7 +87,7 @@ rm -rf third_party/milenage/
 aclocal --force
 popd
 
-pushd sflphone-client-gnome
+pushd gnome
 ./autogen.sh
 popd
 

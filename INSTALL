@@ -2,29 +2,30 @@ INSTALLATION GUIDE
 
 * CORE INSTALLATION
     # Go to the root of the application core directory
-    cd sflphone-common
+    cd daemon
     # Compile pjsip
     cd libs/pjproject
-    ./autogen.sh
     ./configure
-    make dep && make
+    make
     # Go back to the root
     cd ../..
-    ./autogen.sh --prefix=/usr
+    ./autogen.sh
+    ./configure --prefix=/usr
     make && sudo make install
 
     You are done with the core !
 
 * GNOME CLIENT INSTALLATION
     # Go to the root of the gnome client directory
-    cd sflphone-client-gnome
-    ./autogen.sh --prefix=/usr
+    cd gnome
+    ./autogen.sh
+    ./configure --prefix=/usr
     make && sudo make install
 
     You are done with the gnome client !
 
 Then, to start SFLphone, simply go in Applications > Internet > SFLphone VoIP Client.
-    
+
     Thanks You
 
     SFLphone Team

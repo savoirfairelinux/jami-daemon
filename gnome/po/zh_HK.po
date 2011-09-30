@@ -1,0 +1,1811 @@
+# Chinese translation of SFLphone.
+# Copyright (C) 2008 The Free Software Foundation, Inc.
+# This file is distributed under the GNU General Public License Version 3.
+#
+# Yun Liu <yun.liu@savoirfairelinux.com>, 2008.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: SFLphone 0.9.2\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-09-27 15:50-0400\n"
+"PO-Revision-Date: 2009-12-03 18:09+0000\n"
+"Last-Translator: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>\n"
+"Language-Team: SavoirFaireLinux Inc <sflphoneteam@savoirfairelinux.com>\n"
+"Language: zh_HK\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Launchpad-Export-Date: 2010-06-17 18:12+0000\n"
+"X-Generator: Launchpad (build Unknown)\n"
+
+#: ../gnome/src/accountlist.c:150
+msgid "Registered"
+msgstr "已註冊"
+
+#: ../gnome/src/accountlist.c:153
+msgid "Not Registered"
+msgstr "未註冊"
+
+#: ../gnome/src/accountlist.c:156
+msgid "Trying..."
+msgstr "正在連接..."
+
+#: ../gnome/src/accountlist.c:159 ../gnome/src/sflnotify.c:144
+#: ../gnome/src/sflnotify.c:155
+msgid "Error"
+msgstr "註冊失敗"
+
+#: ../gnome/src/accountlist.c:162
+msgid "Authentication Failed"
+msgstr ""
+
+#: ../gnome/src/accountlist.c:165
+msgid "Network unreachable"
+msgstr "網路連線失敗"
+
+#: ../gnome/src/accountlist.c:168
+msgid "Host unreachable"
+msgstr "伺服器連線失敗"
+
+#: ../gnome/src/accountlist.c:171
+msgid "Stun configuration error"
+msgstr "Stun配置有誤"
+
+#: ../gnome/src/accountlist.c:174
+msgid "Stun server invalid"
+msgstr "Stun伺服器無效"
+
+#: ../gnome/src/accountlist.c:177
+msgid "Ready"
+msgstr ""
+
+#: ../gnome/src/accountlist.c:180
+msgid "Invalid"
+msgstr "無效"
+
+#: ../gnome/src/actions.c:168
+msgid "Using account"
+msgstr "使用賬戶"
+
+#: ../gnome/src/actions.c:172
+msgid "No registered accounts"
+msgstr "沒有已註冊帳戶"
+
+#: ../gnome/src/actions.c:596 ../gnome/src/actions.c:867
+msgid "Direct SIP call"
+msgstr ""
+
+#: ../gnome/src/callable_obj.c:310
+msgid "today at %R"
+msgstr ""
+
+#: ../gnome/src/callable_obj.c:313
+msgid "yesterday at %R"
+msgstr ""
+
+#: ../gnome/src/callable_obj.c:315
+msgid "%A at %R"
+msgstr ""
+
+#: ../gnome/src/callable_obj.c:319
+msgid "%x at %R"
+msgstr ""
+
+#: ../gnome/src/eel-gconf-extensions.c:73
+msgid ""
+"Cannot find a schema for gpdf preferences. \n"
+"Check your gconf setup, look at gpdf FAQ for \n"
+"more info"
+msgstr ""
+
+#: ../gnome/src/main.c:102 ../gnome/src/dbus/dbus.c:514
+msgid "SFLphone Error"
+msgstr "SFLphone 出錯"
+
+#: ../gnome/src/mainwindow.c:129
+msgid "There is one call in progress."
+msgstr "有一個電話正在處理中."
+
+#: ../gnome/src/mainwindow.c:131
+msgid "There are calls in progress."
+msgstr "有電話正在處理中."
+
+#: ../gnome/src/mainwindow.c:135
+msgid "Do you still want to quit?"
+msgstr "確認要退出?"
+
+#: ../gnome/src/mainwindow.c:424
+#, c-format
+msgid "ZRTP is not supported by peer %s\n"
+msgstr ""
+
+#: ../gnome/src/mainwindow.c:426
+msgid "Secure Communication Unavailable"
+msgstr ""
+
+#: ../gnome/src/mainwindow.c:429 ../gnome/src/mainwindow.c:457
+msgid "Continue"
+msgstr ""
+
+#: ../gnome/src/mainwindow.c:430 ../gnome/src/mainwindow.c:458
+#: ../gnome/src/mainwindow.c:476
+msgid "Stop Call"
+msgstr ""
+
+#: ../gnome/src/mainwindow.c:450
+#, c-format
+msgid ""
+"A %s error forced the call with %s to fall under unencrypted mode.\n"
+"Exact reason: %s\n"
+msgstr ""
+
+#: ../gnome/src/mainwindow.c:454
+msgid "ZRTP negotiation failed"
+msgstr ""
+
+#: ../gnome/src/mainwindow.c:469
+#, c-format
+msgid ""
+"%s wants to stop using secure communication. Confirm will resume "
+"conversation without SRTP.\n"
+msgstr ""
+
+#: ../gnome/src/mainwindow.c:471
+msgid "Confirm Go Clear"
+msgstr ""
+
+#: ../gnome/src/mainwindow.c:474
+msgid "Confirm"
+msgstr ""
+
+#: ../gnome/src/sflnotify.c:82
+#, c-format
+msgid "%s says:"
+msgstr ""
+
+#: ../gnome/src/sflnotify.c:98 ../gnome/src/sflnotify.c:115
+#, c-format
+msgid "%s account : %s"
+msgstr "%s 帳戶 : %s"
+
+#: ../gnome/src/sflnotify.c:103
+#, c-format
+msgid "<i>From</i> %s"
+msgstr "<i>撥入方</i> %s"
+
+#: ../gnome/src/sflnotify.c:118
+#, c-format
+msgid "%d voice mail"
+msgid_plural "%d voice mails"
+msgstr[0] "%d 個語音郵件"
+
+#: ../gnome/src/sflnotify.c:130
+#, c-format
+msgid "Calling with %s account <i>%s</i>"
+msgstr "使用%s帳戶<i>%s</i>呼叫"
+
+#: ../gnome/src/sflnotify.c:134
+msgid "Current account"
+msgstr "當前帳戶"
+
+#: ../gnome/src/sflnotify.c:143
+msgid "You have no accounts set up"
+msgstr "你沒有設置任何賬戶"
+
+#: ../gnome/src/sflnotify.c:154
+msgid "You have no registered accounts"
+msgstr "未發現已註冊帳戶"
+
+#: ../gnome/src/sflnotify.c:166
+#, c-format
+msgid ""
+"<i>With:</i> %s \n"
+"using %s"
+msgstr ""
+
+#: ../gnome/src/sflnotify.c:177
+#, c-format
+msgid "%s does not support ZRTP."
+msgstr ""
+
+#: ../gnome/src/sflnotify.c:188
+#, c-format
+msgid "ZRTP negotiation failed with %s"
+msgstr ""
+
+#: ../gnome/src/sflnotify.c:199
+#, c-format
+msgid "<i>With:</i> %s"
+msgstr ""
+
+#: ../gnome/src/sliders.c:172
+msgid "Speakers volume"
+msgstr "揚聲器音量"
+
+#: ../gnome/src/sliders.c:172
+msgid "Mic volume"
+msgstr "話筒音量"
+
+#: ../gnome/src/statusicon.c:135
+msgid "_Show main window"
+msgstr "顯示主窗口(S)"
+
+#: ../gnome/src/statusicon.c:142 ../gnome/src/uimanager.c:982
+#: ../gnome/src/uimanager.c:1269 ../gnome/src/uimanager.c:1329
+msgid "_Hang up"
+msgstr "放下(H)"
+
+#: ../gnome/src/statusicon.c:197
+msgid "SFLphone"
+msgstr "SFLphone"
+
+#: ../gnome/src/statusicon.c:198
+#, fuzzy, c-format
+msgid "%i active account"
+msgid_plural "%i active accounts"
+msgstr[0] "默認帳戶"
+
+#: ../gnome/src/uimanager.c:148
+msgid "No address book selected"
+msgstr "地址簿"
+
+#: ../gnome/src/uimanager.c:175 ../gnome/src/uimanager.c:1037
+msgid "Address book"
+msgstr "地址簿"
+
+#: ../gnome/src/uimanager.c:413
+#, fuzzy, c-format
+msgid "Voicemail(%i)"
+msgstr "語音郵件 (%i)"
+
+#: ../gnome/src/uimanager.c:492
+msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
+msgstr "SFLphone是一個VoIP客戶端，它兼容SIP和IAX2协议."
+
+#: ../gnome/src/uimanager.c:494
+msgid "About SFLphone"
+msgstr "有關SFLphone"
+
+#: ../gnome/src/uimanager.c:947 ../gnome/src/uimanager.c:992
+msgid "Voicemail"
+msgstr "語音郵件"
+
+#: ../gnome/src/uimanager.c:977
+msgid "Call"
+msgstr "電話"
+
+#: ../gnome/src/uimanager.c:978 ../gnome/src/uimanager.c:1421
+msgid "_New call"
+msgstr "新電話(N)"
+
+#: ../gnome/src/uimanager.c:979
+msgid "Place a new call"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:980 ../gnome/src/uimanager.c:1258
+msgid "_Pick up"
+msgstr "撥出(P)"
+
+#: ../gnome/src/uimanager.c:981
+msgid "Answer the call"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:983
+msgid "Finish the call"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:984
+msgid "O_n hold"
+msgstr "待机"
+
+#: ../gnome/src/uimanager.c:985
+msgid "Place the call on hold"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:986
+msgid "O_ff hold"
+msgstr "恢复通話"
+
+#: ../gnome/src/uimanager.c:987
+msgid "Place the call off hold"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:988 ../gnome/src/uimanager.c:1314
+#, fuzzy
+msgid "Send _message"
+msgstr "有新消息"
+
+#: ../gnome/src/uimanager.c:989
+#, fuzzy
+msgid "Send message"
+msgstr "有新消息"
+
+#: ../gnome/src/uimanager.c:990
+msgid "Configuration _Assistant"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:991
+msgid "Run the configuration assistant"
+msgstr "Stun配置有誤"
+
+#: ../gnome/src/uimanager.c:993
+msgid "Call your voicemail"
+msgstr "%d 個語音郵件"
+
+#: ../gnome/src/uimanager.c:994
+msgid "_Close"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:995
+msgid "Minimize to system tray"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:996
+msgid "_Quit"
+msgstr "編輯(E)"
+
+#: ../gnome/src/uimanager.c:997
+msgid "Quit the program"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:998
+msgid "_Playback record"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:999
+msgid "Playback recorded file"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:1000
+msgid "_Stop playback"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:1001
+msgid "Stop recorded file playback"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:1004
+msgid "_Edit"
+msgstr "編輯(E)"
+
+#: ../gnome/src/uimanager.c:1005
+msgid "_Copy"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:1006
+msgid "Copy the selection"
+msgstr "刪除所選賬戶"
+
+#: ../gnome/src/uimanager.c:1007
+msgid "_Paste"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:1008
+msgid "Paste the clipboard"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:1009
+msgid "Clear _history"
+msgstr "清空曆史記錄(C)"
+
+#: ../gnome/src/uimanager.c:1010
+msgid "Clear the call history"
+msgstr "清空曆史記錄"
+
+#: ../gnome/src/uimanager.c:1011
+msgid "_Accounts"
+msgstr "帳戶(A)"
+
+#: ../gnome/src/uimanager.c:1012
+msgid "Edit your accounts"
+msgstr "當前帳戶"
+
+#: ../gnome/src/uimanager.c:1013
+msgid "_Preferences"
+msgstr "屬性"
+
+#: ../gnome/src/uimanager.c:1014
+msgid "Change your preferences"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:1018
+msgid "_View"
+msgstr "查看(V)"
+
+#: ../gnome/src/uimanager.c:1021
+msgid "_Help"
+msgstr "幫助(H)"
+
+#: ../gnome/src/uimanager.c:1022
+msgid "Contents"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:1023
+msgid "Open the manual"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:1025
+msgid "About this application"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:1031
+msgid "_Transfer"
+msgstr "轉接"
+
+#: ../gnome/src/uimanager.c:1031
+msgid "Transfer the call"
+msgstr "轉給:"
+
+#: ../gnome/src/uimanager.c:1032 ../gnome/src/uimanager.c:1291
+msgid "_Record"
+msgstr "記錄(R)"
+
+#: ../gnome/src/uimanager.c:1032
+msgid "Record the current conversation"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:1033
+msgid "_Show toolbar"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:1033
+msgid "Show the toolbar"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:1034
+msgid "_Dialpad"
+msgstr "顯示撥號鍵盤"
+
+#: ../gnome/src/uimanager.c:1034
+msgid "Show the dialpad"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:1035
+msgid "_Volume controls"
+msgstr "音量控制(V)"
+
+#: ../gnome/src/uimanager.c:1035
+msgid "Show the volume controls"
+msgstr "音量控制(V)"
+
+#: ../gnome/src/uimanager.c:1036
+msgid "_History"
+msgstr "歷史"
+
+#: ../gnome/src/uimanager.c:1036
+msgid "Calls history"
+msgstr "呼叫記錄"
+
+#: ../gnome/src/uimanager.c:1037
+msgid "_Address book"
+msgstr "地址簿"
+
+#: ../gnome/src/uimanager.c:1280 ../gnome/src/uimanager.c:1338
+msgid "On _Hold"
+msgstr "待机"
+
+#: ../gnome/src/uimanager.c:1377
+msgid "_Call back"
+msgstr "回叫(C)"
+
+#: ../gnome/src/uimanager.c:1474
+msgid "Edit phone number"
+msgstr "編輯電話號碼"
+
+#: ../gnome/src/uimanager.c:1485
+msgid "Edit the phone number before making a call"
+msgstr "撥出電話前編輯電話號碼"
+
+#: ../gnome/src/dbus/dbus.c:494
+msgid ""
+"ALSA notification\n"
+"\n"
+"Error while opening playback device"
+msgstr ""
+"ALSA提示\n"
+"\n"
+"打開回放設備時出錯"
+
+#: ../gnome/src/dbus/dbus.c:497
+msgid ""
+"ALSA notification\n"
+"\n"
+"Error while opening capture device"
+msgstr ""
+"ALSA提示\n"
+"\n"
+"打開采集設備時出錯"
+
+#: ../gnome/src/dbus/dbus.c:500
+msgid ""
+"Pulseaudio notification\n"
+"\n"
+"Pulseaudio is not running"
+msgstr ""
+"Pulseaudio提示\n"
+"\n"
+"Pulseaudio未運行"
+
+#: ../gnome/src/dbus/dbus.c:503
+msgid ""
+"Codecs notification\n"
+"\n"
+"Codecs not found"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:237
+msgid "Account Parameters"
+msgstr "帳戶相關參數"
+
+#: ../gnome/src/config/accountconfigdialog.c:250
+#: ../gnome/src/config/assistant.c:333 ../gnome/src/config/assistant.c:433
+msgid "_Alias"
+msgstr "別稱(A)"
+
+#: ../gnome/src/config/accountconfigdialog.c:259
+msgid "_Protocol"
+msgstr "協議(P)"
+
+#: ../gnome/src/config/accountconfigdialog.c:276
+msgid "Unknown"
+msgstr "未知"
+
+#: ../gnome/src/config/accountconfigdialog.c:288
+#: ../gnome/src/config/assistant.c:341 ../gnome/src/config/assistant.c:441
+msgid "_Host name"
+msgstr "主机名稱(H)"
+
+#: ../gnome/src/config/accountconfigdialog.c:297
+#: ../gnome/src/config/assistant.c:349 ../gnome/src/config/assistant.c:449
+msgid "_User name"
+msgstr "使用者名稱(U)"
+
+#: ../gnome/src/config/accountconfigdialog.c:312
+#: ../gnome/src/config/assistant.c:359 ../gnome/src/config/assistant.c:458
+msgid "_Password"
+msgstr "密碼(P)"
+
+#: ../gnome/src/config/accountconfigdialog.c:328
+#: ../gnome/src/config/assistant.c:368 ../gnome/src/config/assistant.c:467
+msgid "Show password"
+msgstr "密碼"
+
+#: ../gnome/src/config/accountconfigdialog.c:333
+msgid "_Proxy"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:342
+#: ../gnome/src/config/assistant.c:373 ../gnome/src/config/assistant.c:472
+msgid "_Voicemail number"
+msgstr "語音郵箱(V)"
+
+#: ../gnome/src/config/accountconfigdialog.c:351
+msgid "_User-agent"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:411
+msgid "Authentication"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:412
+msgid "Secret"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:654
+msgid "Credential"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:688
+msgid "Authentication name"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:699
+msgid "Password"
+msgstr "密碼"
+
+#: ../gnome/src/config/accountconfigdialog.c:761
+#: ../gnome/src/config/accountconfigdialog.c:1271
+msgid "Security"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:772
+msgid "Use TLS transport(sips)"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:778
+msgid "SRTP key exchange"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:784
+msgid "Disabled"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:848
+msgid "Registration"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:852
+msgid "Registration expire"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:861
+msgid "_Comply with RFC 3263"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:881
+msgid "Network Interface"
+msgstr "網路連線失敗"
+
+#: ../gnome/src/config/accountconfigdialog.c:894
+msgid "Local address"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:953
+msgid "Local port"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:995
+#: ../gnome/src/config/accountconfigdialog.c:1029
+msgid "Published address"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:999
+msgid "Using STUN"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:1007
+msgid "STUN server URL"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:1015
+msgid "Same as local parameters"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:1018
+msgid "Set published address and port:"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:1038
+msgid "Published port"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:1110
+#: ../gnome/src/config/accountconfigdialog.c:1250
+#: ../gnome/src/config/preferencesdialog.c:400
+#: ../gnome/src/config/preferencesdialog.c:442
+msgid "Audio"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:1122
+msgid "DTMF"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:1133
+msgid "RTP"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:1137
+msgid "SIP"
+msgstr "SIP"
+
+#: ../gnome/src/config/accountconfigdialog.c:1144
+msgid "Ringtones"
+msgstr "鈴聲"
+
+#: ../gnome/src/config/accountconfigdialog.c:1147
+msgid "Choose a ringtone"
+msgstr "鈴聲選擇"
+
+#: ../gnome/src/config/accountconfigdialog.c:1152
+msgid "_Enable ringtones"
+msgstr "啟動鈴聲(E)"
+
+#: ../gnome/src/config/accountconfigdialog.c:1164
+msgid "Audio Files"
+msgstr "音訊檔案"
+
+#: ../gnome/src/config/accountconfigdialog.c:1184
+msgid ""
+"This profile is used when you want to reach a remote peer simply by typing a "
+"sip URI such as <b>sip:remotepeer</b>. The settings you define here will "
+"also be used if no account can be matched to an incoming or outgoing call."
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:1224
+msgid "Account settings"
+msgstr "帳戶設置"
+
+#: ../gnome/src/config/accountconfigdialog.c:1244
+msgid "Basic"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:1266
+msgid "Advanced"
+msgstr ""
+
+#: ../gnome/src/config/accountconfigdialog.c:1278
+msgid "Network"
+msgstr ""
+
+#: ../gnome/src/config/accountlistconfigdialog.c:200
+#, c-format
+msgid "Server returned \"%s\" (%d)"
+msgstr ""
+
+#: ../gnome/src/config/accountlistconfigdialog.c:495
+msgid "Protocol"
+msgstr "協議"
+
+#: ../gnome/src/config/accountlistconfigdialog.c:503
+msgid "Status"
+msgstr "狀態"
+
+#: ../gnome/src/config/accountlistconfigdialog.c:585
+msgid "Accounts"
+msgstr "帳戶"
+
+#: ../gnome/src/config/accountlistconfigdialog.c:594
+msgid "Configured Accounts"
+msgstr "已配置帳戶"
+
+#: ../gnome/src/config/accountlistconfigdialog.c:612
+#, c-format
+msgid "There is %d active account"
+msgid_plural "There are %d active accounts"
+msgstr[0] ""
+
+#: ../gnome/src/config/accountlistconfigdialog.c:618
+msgid "You have no active account"
+msgstr ""
+
+#: ../gnome/src/config/addressbook-config.c:328
+#: ../gnome/src/config/preferencesdialog.c:395
+#: ../gnome/src/config/preferencesdialog.c:441
+#: ../gnome/src/config/shortcuts-config.c:129
+msgid "General"
+msgstr "常用配置"
+
+#: ../gnome/src/config/addressbook-config.c:334
+msgid "_Use Evolution address books"
+msgstr "使用Evolution地址薄(U)"
+
+#: ../gnome/src/config/addressbook-config.c:341
+msgid "Download limit :"
+msgstr "下載上限:"
+
+#: ../gnome/src/config/addressbook-config.c:349
+msgid "cards"
+msgstr "卡"
+
+#: ../gnome/src/config/addressbook-config.c:355
+msgid "_Display contact photo if available"
+msgstr "如果可以則顯示聯繫人照片(D)"
+
+#: ../gnome/src/config/addressbook-config.c:363
+msgid "Fields from Evolution's address books"
+msgstr "使用Evolution地址薄中的如下字段:"
+
+#: ../gnome/src/config/addressbook-config.c:367
+msgid "_Work"
+msgstr "單位電話(W)"
+
+#: ../gnome/src/config/addressbook-config.c:373
+msgid "_Home"
+msgstr "家庭電話(H)"
+
+#: ../gnome/src/config/addressbook-config.c:379
+msgid "_Mobile"
+msgstr "移動電話(M)"
+
+#: ../gnome/src/config/addressbook-config.c:386
+msgid "Address Books"
+msgstr "地址簿"
+
+#: ../gnome/src/config/addressbook-config.c:390
+msgid "Select which Evolution address books to use"
+msgstr "選擇使用如下Evolution地址薄"
+
+#: ../gnome/src/config/addressbook-config.c:423
+#: ../gnome/src/config/audioconf.c:682
+msgid "Name"
+msgstr "名稱"
+
+#: ../gnome/src/config/assistant.c:76
+#, c-format
+msgid "This assistant is now finished."
+msgstr "配置完成."
+
+#: ../gnome/src/config/assistant.c:78
+msgid ""
+"You can at any time check your registration state or modify your accounts "
+"parameters in the Options/Accounts window."
+msgstr "你可以隨時在 選項/帳戶 中查看註冊狀態或者修改帳戶信息."
+
+#: ../gnome/src/config/assistant.c:81
+msgid "Alias"
+msgstr "別稱"
+
+#: ../gnome/src/config/assistant.c:85
+msgid "Server"
+msgstr "伺服器"
+
+#: ../gnome/src/config/assistant.c:89
+msgid "Username"
+msgstr "使用者名稱"
+
+#: ../gnome/src/config/assistant.c:93
+msgid "Security: "
+msgstr ""
+
+#: ../gnome/src/config/assistant.c:96
+msgid "SRTP/ZRTP draft-zimmermann"
+msgstr ""
+
+#: ../gnome/src/config/assistant.c:98
+msgid "None"
+msgstr ""
+
+#: ../gnome/src/config/assistant.c:245
+msgid "SFLphone account creation wizard"
+msgstr "SFLphone賬戶創建嚮導"
+
+#: ../gnome/src/config/assistant.c:272
+msgid "Welcome to the Account creation wizard of SFLphone!"
+msgstr "歡迎使用SFLphone帳戶創建嚮導!"
+
+#: ../gnome/src/config/assistant.c:273
+msgid "This installation wizard will help you configure an account."
+msgstr "安裝向導將幫助您配置帳戶"
+
+#: ../gnome/src/config/assistant.c:288
+msgid "VoIP Protocols"
+msgstr "VoIP協議"
+
+#: ../gnome/src/config/assistant.c:288
+msgid "Select an account type"
+msgstr "選擇帳戶類型"
+
+#: ../gnome/src/config/assistant.c:290
+msgid "SIP (Session Initiation Protocol)"
+msgstr "SIP(會話初始化協議)"
+
+#: ../gnome/src/config/assistant.c:292
+msgid "IAX2 (InterAsterix Exchange)"
+msgstr "IAX2(Asterisk內部交換協議)"
+
+#: ../gnome/src/config/assistant.c:307
+msgid "Account"
+msgstr "帳戶"
+
+#: ../gnome/src/config/assistant.c:307
+msgid "Please select one of the following options"
+msgstr "請選擇以下選項中的一個"
+
+#: ../gnome/src/config/assistant.c:309
+#, fuzzy
+msgid ""
+"Create a free SIP/IAX2 account on sflphone.org \n"
+"(For testing purpose only)"
+msgstr "在sflphone.org上創建免費的SIP/IAX2帳戶"
+
+#: ../gnome/src/config/assistant.c:311
+msgid "Register an existing SIP or IAX2 account"
+msgstr "註冊已存在的SIP或IAX2帳戶"
+
+#: ../gnome/src/config/assistant.c:325
+msgid "SIP account settings"
+msgstr "SIP帳戶配置"
+
+#: ../gnome/src/config/assistant.c:325 ../gnome/src/config/assistant.c:425
+msgid "Please fill the following information"
+msgstr "請填寫如下信息"
+
+#: ../gnome/src/config/assistant.c:381 ../gnome/src/config/assistant.c:411
+msgid "Secure communications with _ZRTP"
+msgstr ""
+
+#: ../gnome/src/config/assistant.c:395
+msgid "Optional email address"
+msgstr "可選郵件地址"
+
+#: ../gnome/src/config/assistant.c:395
+msgid "This email address will be used to send your voicemail messages."
+msgstr "這個郵件地址將被用來發送您的語音"
+
+#: ../gnome/src/config/assistant.c:403
+msgid "_Email address"
+msgstr "郵件地址(E)"
+
+#: ../gnome/src/config/assistant.c:425
+msgid "IAX2 account settings"
+msgstr "IAX2帳戶配置"
+
+#: ../gnome/src/config/assistant.c:491
+msgid "Network Address Translation (NAT)"
+msgstr "网络地址解析(NAT)"
+
+#: ../gnome/src/config/assistant.c:491
+msgid "You should probably enable this if you are behind a firewall."
+msgstr "如果你使用網路防火牆，你很有可能需要設定該項."
+
+#: ../gnome/src/config/assistant.c:500
+msgid "E_nable STUN"
+msgstr "啟用STUN(n)"
+
+#: ../gnome/src/config/assistant.c:507
+msgid "_STUN server"
+msgstr "STUN伺服器(S)"
+
+#: ../gnome/src/config/assistant.c:522
+msgid "Account Registration"
+msgstr "帳戶註冊"
+
+#: ../gnome/src/config/assistant.c:522
+msgid "Congratulations!"
+msgstr "恭喜！"
+
+#: ../gnome/src/config/audioconf.c:687
+msgid "Frequency"
+msgstr "顰律"
+
+#: ../gnome/src/config/audioconf.c:692
+msgid "Bitrate"
+msgstr "比率"
+
+#: ../gnome/src/config/audioconf.c:835
+msgid "ALSA plugin"
+msgstr "ALSA插件"
+
+#: ../gnome/src/config/audioconf.c:857
+msgid "Output"
+msgstr "輸出"
+
+#: ../gnome/src/config/audioconf.c:879
+msgid "Input"
+msgstr "輸入"
+
+#: ../gnome/src/config/audioconf.c:900
+#, fuzzy
+msgid "Ringtone"
+msgstr "鈴聲"
+
+#: ../gnome/src/config/audioconf.c:954
+msgid "Sound Manager"
+msgstr "聲音管理器"
+
+#: ../gnome/src/config/audioconf.c:964
+msgid "_Pulseaudio"
+msgstr "Pulseaudio"
+
+#: ../gnome/src/config/audioconf.c:968
+msgid "_ALSA"
+msgstr "ALSA"
+
+#: ../gnome/src/config/audioconf.c:974
+msgid "ALSA settings"
+msgstr "ALSA 配置"
+
+#: ../gnome/src/config/audioconf.c:994
+msgid "Recordings"
+msgstr "記錄"
+
+#: ../gnome/src/config/audioconf.c:998
+msgid "Destination folder"
+msgstr "目標文件夾"
+
+#: ../gnome/src/config/audioconf.c:1002
+msgid "Select a folder"
+msgstr "選擇文件夾"
+
+#: ../gnome/src/config/audioconf.c:1012
+msgid "_Always recording"
+msgstr ""
+
+#: ../gnome/src/config/audioconf.c:1019
+#, fuzzy
+msgid "Voice enhancement settings"
+msgstr "帳戶設置"
+
+#: ../gnome/src/config/audioconf.c:1022
+#, fuzzy
+msgid "_Noise Reduction"
+msgstr "降噪"
+
+#: ../gnome/src/config/audioconf.c:1033
+msgid "_Echo Cancellation"
+msgstr ""
+
+#: ../gnome/src/config/hooks-config.c:149
+msgid "URL Argument"
+msgstr "URL參數"
+
+#: ../gnome/src/config/hooks-config.c:157
+msgid "Trigger on specific _SIP header"
+msgstr "激活指定的SIP頭(S)"
+
+#: ../gnome/src/config/hooks-config.c:166
+msgid "Trigger on _IAX2 URL"
+msgstr "激活IAX2 URL(I)"
+
+#: ../gnome/src/config/hooks-config.c:171
+msgid "Command to _run"
+msgstr "運行命令(r)"
+
+#: ../gnome/src/config/hooks-config.c:181
+msgid "Phone number rewriting"
+msgstr "重設電話號碼"
+
+#: ../gnome/src/config/hooks-config.c:185
+msgid "_Prefix dialed numbers with"
+msgstr "號碼前綴(P)"
+
+#: ../gnome/src/config/preferencesdialog.c:185
+msgid "Desktop Notifications"
+msgstr "桌面提示"
+
+#: ../gnome/src/config/preferencesdialog.c:190
+msgid "_Enable notifications"
+msgstr "啟動提示(E)"
+
+#: ../gnome/src/config/preferencesdialog.c:197
+msgid "System Tray Icon"
+msgstr "系統托盤圖標"
+
+#: ../gnome/src/config/preferencesdialog.c:205
+msgid "Show SFLphone in the system tray"
+msgstr ""
+
+#: ../gnome/src/config/preferencesdialog.c:212
+msgid "_Popup main window on incoming call"
+msgstr "來電話時彈出主視窗(P)"
+
+#: ../gnome/src/config/preferencesdialog.c:218
+msgid "Ne_ver popup main window"
+msgstr "從不彈出主視窗(v)"
+
+#: ../gnome/src/config/preferencesdialog.c:231
+msgid "Hide SFLphone window on _startup"
+msgstr "在啟動時隱藏SFLphone主窗口"
+
+#: ../gnome/src/config/preferencesdialog.c:245
+msgid "Calls History"
+msgstr "打電話歷史"
+
+#: ../gnome/src/config/preferencesdialog.c:249
+msgid "_Keep my history for at least"
+msgstr ""
+
+#: ../gnome/src/config/preferencesdialog.c:264
+msgid "days"
+msgstr ""
+
+#: ../gnome/src/config/preferencesdialog.c:269
+msgid "Instant Messaging"
+msgstr ""
+
+#: ../gnome/src/config/preferencesdialog.c:273
+#, fuzzy
+msgid "Enable instant messaging"
+msgstr "啟動鈴聲"
+
+#: ../gnome/src/config/preferencesdialog.c:357
+msgid "Preferences"
+msgstr "屬性"
+
+#: ../gnome/src/config/preferencesdialog.c:405
+#: ../gnome/src/config/preferencesdialog.c:443
+msgid "Hooks"
+msgstr "鉤鍵"
+
+#: ../gnome/src/config/preferencesdialog.c:410
+#: ../gnome/src/config/preferencesdialog.c:444
+msgid "Shortcuts"
+msgstr ""
+
+#: ../gnome/src/config/preferencesdialog.c:416
+#: ../gnome/src/config/preferencesdialog.c:445
+msgid "Address Book"
+msgstr "地址簿"
+
+#: ../gnome/src/config/shortcuts-config.c:132
+msgid "Be careful: these shortcuts might override system-wide shortcuts."
+msgstr ""
+
+#: ../gnome/src/config/tlsadvanceddialog.c:41
+msgid "Advanced options for TLS"
+msgstr ""
+
+#: ../gnome/src/config/tlsadvanceddialog.c:58
+msgid "TLS transport"
+msgstr ""
+
+#: ../gnome/src/config/tlsadvanceddialog.c:62
+msgid ""
+"TLS transport can be used along with UDP for those calls that would\n"
+"require secure sip transactions (aka SIPS). You can configure a different\n"
+"TLS transport for each account. However, each of them will run on a "
+"dedicated\n"
+"port, different one from each other\n"
+msgstr ""
+
+#: ../gnome/src/config/tlsadvanceddialog.c:109
+msgid "Global TLS listener (all accounts)"
+msgstr ""
+
+#: ../gnome/src/config/tlsadvanceddialog.c:123
+msgid "Certificate of Authority list"
+msgstr ""
+
+#: ../gnome/src/config/tlsadvanceddialog.c:126
+msgid "Choose a CA list file (optional)"
+msgstr ""
+
+#: ../gnome/src/config/tlsadvanceddialog.c:138
+msgid "Public endpoint certificate file"
+msgstr ""
+
+#: ../gnome/src/config/tlsadvanceddialog.c:141
+msgid "Choose a public endpoint certificate (optional)"
+msgstr ""
+
+#: ../gnome/src/config/tlsadvanceddialog.c:159
+msgid "Choose a private key file (optional)"
+msgstr ""
+
+#: ../gnome/src/config/tlsadvanceddialog.c:174
+msgid "Password for the private key"
+msgstr ""
+
+#: ../gnome/src/config/tlsadvanceddialog.c:189
+msgid "TLS protocol method"
+msgstr ""
+
+#: ../gnome/src/config/tlsadvanceddialog.c:217
+msgid "TLS cipher list"
+msgstr ""
+
+#: ../gnome/src/config/tlsadvanceddialog.c:226
+msgid "Server name instance for outgoing TLS connection"
+msgstr ""
+
+#: ../gnome/src/config/tlsadvanceddialog.c:234
+msgid "Negotiation timeout (sec:msec)"
+msgstr ""
+
+#: ../gnome/src/config/tlsadvanceddialog.c:251
+msgid "Verify incoming certificates, as a server"
+msgstr ""
+
+#: ../gnome/src/config/tlsadvanceddialog.c:257
+msgid "Verify certificates from answer, as a client"
+msgstr ""
+
+#: ../gnome/src/config/tlsadvanceddialog.c:263
+msgid "Require certificate for incoming tls connections"
+msgstr ""
+
+#: ../gnome/src/config/zrtpadvanceddialog.c:51
+msgid "ZRTP Options"
+msgstr ""
+
+#: ../gnome/src/config/zrtpadvanceddialog.c:70
+msgid "Send Hello Hash in S_DP"
+msgstr ""
+
+#: ../gnome/src/config/zrtpadvanceddialog.c:75
+msgid "Ask User to Confirm SAS"
+msgstr ""
+
+#: ../gnome/src/config/zrtpadvanceddialog.c:80
+msgid "_Warn if ZRTP not supported"
+msgstr ""
+
+#: ../gnome/src/config/zrtpadvanceddialog.c:85
+msgid "Display SAS once for hold events"
+msgstr ""
+
+#: ../gnome/src/config/zrtpadvanceddialog.c:123
+msgid "SDES Options"
+msgstr ""
+
+#: ../gnome/src/config/zrtpadvanceddialog.c:141
+msgid "Fallback on RTP on SDES failure"
+msgstr ""
+
+#: ../gnome/src/contacts/searchbar.c:191
+msgid "Search all"
+msgstr "查詢所有"
+
+#: ../gnome/src/contacts/searchbar.c:192 ../gnome/src/contacts/searchbar.c:205
+#: ../gnome/src/contacts/searchbar.c:217 ../gnome/src/contacts/searchbar.c:229
+msgid "Click here to change the search type"
+msgstr "請點擊此處改變查詢方式"
+
+#: ../gnome/src/contacts/searchbar.c:204
+msgid "Search by missed call"
+msgstr "從未接電話中查詢"
+
+#: ../gnome/src/contacts/searchbar.c:216
+msgid "Search by incoming call"
+msgstr "從來電中查詢"
+
+#: ../gnome/src/contacts/searchbar.c:228
+msgid "Search by outgoing call"
+msgstr "從撥出電話中查詢"
+
+#~ msgid ""
+#~ "Unable to connect to the SFLphone server.\n"
+#~ "Make sure the daemon is running."
+#~ msgstr ""
+#~ "連接SFLphone伺服器失敗.\n"
+#~ "請核查daemon是否正在運行."
+
+#~ msgid "Codecs"
+#~ msgstr "編碼"
+
+#~ msgid "Bandwidth"
+#~ msgstr "顰寬"
+
+#~ msgid "Custom commands on incoming calls with URL"
+#~ msgstr "定制對帶有URL的來電的處理"
+
+#~ msgid "%s will be replaced with the passed URL."
+#~ msgstr "傳輸的URL會被替換成%s."
+
+#~ msgid "_Voice Activity Detection"
+#~ msgstr "聲音狀態檢測(V)"
+
+#~ msgid "_Noise Reduction (Narrow-Band Companding)"
+#~ msgstr "降噪處理-窄頻壓縮(N)"
+
+#~ msgid "Account creation wizard"
+#~ msgstr "帳戶創建向導"
+
+#~ msgid "Voicemail number"
+#~ msgstr "語音郵箱"
+
+#~ msgid "Enable STUN"
+#~ msgstr "啟用STUN"
+
+#~ msgid "Stun Server"
+#~ msgstr "STUN伺服器"
+
+#~ msgid ""
+#~ "After checking the settings you chose, click \"Finish\" to create the "
+#~ "account."
+#~ msgstr "當您檢查完選定的設置,請點擊\"結束\"來創建帳戶"
+
+#~ msgid "Codec"
+#~ msgstr "編碼"
+
+#~ msgid "SFLphone KDE Client"
+#~ msgstr "SFLphone KDE客戶端"
+
+#~ msgid "(C) 2009 Savoir-faire Linux"
+#~ msgstr "(C) 2009 Savoir-faire Linux"
+
+#~ msgid "Jérémy Quentin"
+#~ msgstr "Jérémy Quentin"
+
+#~ msgid "Main screen"
+#~ msgstr "主屏幕"
+
+#~ msgid "Configure SFLphone"
+#~ msgstr "配置SFLphone"
+
+#~ msgid "Display volume controls"
+#~ msgstr "顯示音量控制"
+
+#~ msgid "Incoming call"
+#~ msgstr "來電"
+
+#~ msgid "You have an incoming call from"
+#~ msgstr "您有一個電話,來自於"
+
+#~ msgid "Click to accept or refuse it."
+#~ msgstr "請點擊接聽或拒絕"
+
+#~ msgid "Address book loading..."
+#~ msgstr "載入地址簿......"
+
+#~ msgid "Edit before call"
+#~ msgstr "呼叫前進行編輯"
+
+#~ msgid "New call"
+#~ msgstr "新電話"
+
+#~ msgid "Hang up"
+#~ msgstr "放電話"
+
+#~ msgid "Hold on"
+#~ msgstr "呼叫保持"
+
+#~ msgid "Record"
+#~ msgstr "記錄"
+
+#~ msgid "Pick up"
+#~ msgstr "接電話"
+
+#~ msgid "Hold off"
+#~ msgstr "恢復通話"
+
+#~ msgid "Give up transfer"
+#~ msgstr "取消轉接"
+
+#~ msgid "Call back"
+#~ msgstr "回叫"
+
+#~ msgid ""
+#~ "By default, when you place a call, sflphone will use the first account in "
+#~ "this list which is \"registered\". Change the order of the accounts using "
+#~ "the \"Up\" and \"Down\" arrows. Enable/disable them by checking/"
+#~ "unchecking them on the left of the item. Add or remove some with \"Plus\" "
+#~ "and \"Sub\" buttons. Edit the selected account with the form on the right."
+#~ msgstr ""
+#~ "在默認情況下，當你打電話時，sflphone會使用列表當中第一個已註冊的帳戶。使用"
+#~ "箭頭\"上\"和\"下\"可以改變賬戶的順序。選擇賬戶名稱左邊的方框可以啟用帳戶，"
+#~ "取消選擇則會禁用該賬戶。通過\"加\"\"減\"按鈕可以添加或刪除賬戶。點擊\"編輯"
+#~ "\"按鈕可以改變賬戶的設置。"
+
+#~ msgid ""
+#~ "This button will remove the selected account in the list below. Be sure "
+#~ "you really don't need it anymore. If you think you might use it again "
+#~ "later, just uncheck it."
+#~ msgstr ""
+#~ "該按鈕會刪除列表中被選定的賬戶。請確認你的操作。如果你希望繼續使用某個賬"
+#~ "戶，請取消對該賬戶的選擇"
+
+#~ msgid "Remove"
+#~ msgstr "刪除"
+
+#~ msgid ""
+#~ "This button enables you to initialize a new account. You will then be "
+#~ "able to edit it using the form on the right."
+#~ msgstr ""
+#~ "通過該按鈕可以創建一個新賬戶。添加該賬戶之後你還可以通過編輯按鈕來修改設"
+#~ "置。"
+
+#~ msgid "Add"
+#~ msgstr "添加"
+
+#~ msgid "Get this account down"
+#~ msgstr "將該賬戶向下移動"
+
+#~ msgid ""
+#~ "By default, when you place a call, sflphone will use the first account in "
+#~ "this list which is \"registered\". Change the order of the accounts using "
+#~ "the \"Up\" and \"Down\" arrows."
+#~ msgstr ""
+#~ "在默認情況下，當你打電話時，sflphone會使用列表當中第一個已註冊的帳戶。使用"
+#~ "箭頭\"上\"和\"下\"可以改變賬戶的順序。選擇賬戶名稱左邊的方框可以啟用帳戶，"
+#~ "取消選擇則會禁用該賬戶。通過\"加\"\"減\"按鈕可以添加或刪除賬戶。"
+
+#~ msgid "Down"
+#~ msgstr "下"
+
+#~ msgid "Get this account up"
+#~ msgstr "把該賬戶向上移動"
+
+#~ msgid "Up"
+#~ msgstr "上"
+
+#~ msgid "Apply"
+#~ msgstr "套用"
+
+#~ msgid "IAX"
+#~ msgstr "IAX"
+
+#~ msgid "Stun parameters will be applied on each SIP account created."
+#~ msgstr "STUN參數將應用於每一個註冊的SIP帳戶"
+
+#~ msgid "Enable Stun"
+#~ msgstr "啟用STUN"
+
+#~ msgid "Format : name.server:port"
+#~ msgstr "格式 : 名稱.服務器:端口"
+
+#~ msgid "choose Stun server (example : stunserver.org)"
+#~ msgstr "選擇STUN服務器(例如:stunserver.org)"
+
+#~ msgid "Maximum results"
+#~ msgstr "結果最大值"
+
+#~ msgid "Display photo if available"
+#~ msgstr "如果可以則顯示聯繫人照片"
+
+#~ msgid "Display phone numbers of these types :"
+#~ msgstr "顯示這些格式的電話號碼"
+
+#~ msgid "Work"
+#~ msgstr "單位電話"
+
+#~ msgid "Mobile"
+#~ msgstr "移動電話"
+
+#~ msgid "Home"
+#~ msgstr "家庭電話"
+
+#~ msgid "Sound manager"
+#~ msgstr "聲音管理器"
+
+#~ msgid "ALSA"
+#~ msgstr "ALSA"
+
+#~ msgid "PulseAudio"
+#~ msgstr "PulseAudio"
+
+#~ msgid "PulseAudio settings"
+#~ msgstr "PulseAudio 配置"
+
+#~ msgid "Mute other applications during a call"
+#~ msgstr "當有來電時靜音其它應用程序"
+
+#~ msgid "Enable notifications"
+#~ msgstr "啟動提示"
+
+#~ msgid "On incoming calls"
+#~ msgstr "有新來電"
+
+#~ msgid "Show main window"
+#~ msgstr "顯示主窗口"
+
+#~ msgid "On start"
+#~ msgstr "正在啟動"
+
+#~ msgid "SIP Port"
+#~ msgstr "SIP端口"
+
+#~ msgid "Trigger on specific SIP header"
+#~ msgstr "激活指定的SIP頭"
+
+#~ msgid "Trigger on IAX2 URL"
+#~ msgstr "激活IAX2 URL"
+
+#~ msgid "Command to run"
+#~ msgstr "要運行的命令"
+
+#~ msgid "Prefix dialed numbers with"
+#~ msgstr "號碼前綴"
+
+#~ msgid "Attention:number of results exceeds max displayed."
+#~ msgstr "注意:結果超過可顯示的最大值"
+
+#~ msgid "IP call - %s"
+#~ msgstr "IP電話- %s"
+
+#~ msgid ""
+#~ "<b>Error: No audio codecs found.\n"
+#~ "\n"
+#~ "</b> SFL audio codecs have to be placed in <i>%s</i> or in the <b>."
+#~ "sflphone</b> directory in your home( <i>%s</i> )"
+#~ msgstr ""
+#~ "<b>錯誤：無法找到音訊編碼檔案.\n"
+#~ "\n"
+#~ "</b> SFL聲音編碼檔案應該位于<i>%s</i> 或者位于主目錄( <i>%s</i> )的<b>."
+#~ "sflphone</b>目錄下"
+
+#~ msgid "_Account creation wizard"
+#~ msgstr "帳戶創建向導(A)"
+
+#~ msgid "%i account configured"
+#~ msgid_plural "%i accounts configured"
+#~ msgstr[0] "已配置了%i個賬戶"
+
+#~ msgid "_Enable this account"
+#~ msgstr "啟用該賬戶(E)"
+
+#~ msgid "Enable voicemail _notifications"
+#~ msgstr "啟用語音郵箱提示(n)"
+
+#~ msgid "PulseAudio sound server"
+#~ msgstr "PulseAudio聲音伺服器"
+
+#~ msgid "_Mute other applications during a call"
+#~ msgstr "當有來電時靜音其它應用程序(c)"
+
+#~ msgid "Port"
+#~ msgstr "端口"
+
+#~ msgctxt "Config section"
+#~ msgid "Accounts"
+#~ msgstr "帳戶"
+
+#~ msgctxt "account state"
+#~ msgid "Registered"
+#~ msgstr "已註冊"
+
+#~ msgctxt "account state"
+#~ msgid "Not Registered"
+#~ msgstr "未註冊"
+
+#~ msgctxt "account state"
+#~ msgid "Trying..."
+#~ msgstr "正在連接..."
+
+#~ msgctxt "account state"
+#~ msgid "Error"
+#~ msgstr "註冊失敗"
+
+#~ msgctxt "account state"
+#~ msgid "Network unreachable"
+#~ msgstr "網路連線失敗"
+
+#~ msgctxt "account state"
+#~ msgid "Host unreachable"
+#~ msgstr "伺服器連線失敗"
+
+#~ msgctxt "account state"
+#~ msgid "Stun configuration error"
+#~ msgstr "STUN配置有誤"
+
+#~ msgctxt "account state"
+#~ msgid "Stun server invalid"
+#~ msgstr "STUN伺服器無效"
+
+#~ msgctxt "account state"
+#~ msgid "Invalid"
+#~ msgstr "無效"
+
+#~ msgctxt "Config section"
+#~ msgid "General"
+#~ msgstr "常用配置"
+
+#~ msgctxt "Config section"
+#~ msgid "Address Book"
+#~ msgstr "地址簿"
+
+#~ msgctxt "Config section"
+#~ msgid "Recordings"
+#~ msgstr "記錄"
+
+#~ msgctxt "Config section"
+#~ msgid "Hooks"
+#~ msgstr "鉤鍵"
+
+#~ msgid "User"
+#~ msgstr "使用者名稱"
+
+#~ msgid "Mailbox"
+#~ msgstr "語音郵件"
+
+#~ msgctxt "Action record a call"
+#~ msgid "Record"
+#~ msgstr "記錄"
+
+#~ msgid "%s - %s"
+#~ msgstr "%s - %s"
+
+#~ msgid "%d voice mails"
+#~ msgstr "%d 個語音郵件"
+
+#~ msgid "No registered account"
+#~ msgstr "未發現已註冊帳戶"
+
+#~ msgid ""
+#~ "This assistant is now finished.\n"
+#~ "You can at any time check your registration state or modify your accounts "
+#~ "parameters in the Options/Accounts window.\n"
+#~ "\n"
+#~ "Alias :    %s\n"
+#~ "Server :   %s\n"
+#~ "Username : %s\n"
+#~ msgstr ""
+#~ "配置完成.\n"
+#~ "你可以隨時在 選項/帳戶 中查看註冊狀態或者修改帳戶信息\n"
+#~ "別稱:         %s\n"
+#~ "伺服器:       %s\n"
+#~ "使用者名稱:   %s\n"
+
+#~ msgid "SFLphone account configuration wizard"
+#~ msgstr "SFLphone 帳戶設置向導"
+
+#~ msgid "Welcome to SFLphone!"
+#~ msgstr "歡迎使用SFLphone!"
+
+#~ msgid "Select an account type:"
+#~ msgstr "選擇帳戶類型:"
+
+#~ msgid "Please select one of the following option:"
+#~ msgstr "請選擇以下選項中的一個:"
+
+#~ msgid "SIP account configuration"
+#~ msgstr "SIP帳戶配置"
+
+#~ msgid "Please fill the following information:"
+#~ msgstr "請填寫如下信息:"
+
+#~ msgid "Optional Email Address "
+#~ msgstr "可選郵件地址 "
+
+#~ msgid "This email address will be use to send your voicemail messages"
+#~ msgstr "這個郵件地址將被用來發送您的語音郵箱消息"
+
+#~ msgid "_Email"
+#~ msgstr "郵件(E)"
+
+#~ msgid "IAX2 account configuration"
+#~ msgstr "IAX2帳戶配置"
+
+#~ msgid "Network Address Translation"
+#~ msgstr "網路地址分析"
+
+#~ msgid "Edit phone"
+#~ msgstr "編輯電話"
+
+#~ msgid "%s account: %s"
+#~ msgstr "%s 帳戶: %s"
+
+#~ msgid "You haven't setup any accounts"
+#~ msgstr "你沒有設置任何帳戶"
+
+#~ msgid "SFLphone - %i accounts configured"
+#~ msgstr "SFLphone - %i 個帳戶已配置"
+
+#~ msgid "\"Voicemail\" <%s>"
+#~ msgstr "\"語音郵件\" <%s>"
+
+#~ msgid "Record a call"
+#~ msgstr "記錄通話"
+
+#~ msgid "Download limit:"
+#~ msgstr "下載上限:"
+
+#~ msgid "_Business phone"
+#~ msgstr "商務電話(B)"
+
+#~ msgid "_Home phone"
+#~ msgstr "家庭電話(H)"
+
+#~ msgid "_Mobile phone"
+#~ msgstr "移動電話(M)"
+
+#~ msgid "Select which Evolution address books to use:"
+#~ msgstr "選擇使用如下Evolution地址薄:"
+
+#~ msgid "audio device index for output = %d"
+#~ msgstr "音訊設備輸出索引 ＝ %d"
+
+#~ msgid "ALSA configuration"
+#~ msgstr "ALSA 配置"
+
+#~ msgid "Stun parameters will apply to each SIP account created."
+#~ msgstr "Stun參數將應用於每一個註冊的SIP帳戶"
+
+#~ msgid "Enable it if you are behind a firewall"
+#~ msgstr "當使用防火牆時，需要設定此項"
+
+#~ msgid "Format: name.server:port"
+#~ msgstr "格式：name.server:port"
+
+#~ msgid "Port:"
+#~ msgstr "端口:"
+
+#~ msgid "Recordings folder"
+#~ msgstr "記錄文件夾(R)"
+
+#~ msgid "General Settings"
+#~ msgstr "常用配置"
+
+#~ msgid "Audio Settings"
+#~ msgstr "音訊配置"
+
+#~ msgid "URL Passing"
+#~ msgstr "傳輸URL"
+
+#~ msgid "Command to _run: "
+#~ msgstr "運行命令(C): "
+
+#~ msgid "Phone Number Rewriting"
+#~ msgstr "重設電話號碼"
+
+#~ msgid "_Prefix dialed numbers with:"
+#~ msgstr "號碼前綴:"
+
+#~ msgid "Accept"
+#~ msgstr "接受"
+
+#~ msgid "Refuse"
+#~ msgstr "拒絕"
+
+#~ msgid "Ignore"
+#~ msgstr "忽略"
+
+#~ msgid "<small>Missed call</small>"
+#~ msgstr "<small>未接電話</small>"
+
+#~ msgid "<small>Duration:</small> %s"
+#~ msgstr "<small>時長:</small> %s"
+
+#~ msgid "Fields"
+#~ msgstr "字段"
+
+#~ msgid "_History size limit"
+#~ msgstr "歷史記錄上限(H)"
+
+#~ msgid ""
+#~ "SFLphone can run custom commands if incoming calls come with an URL "
+#~ "attached.\n"
+#~ "In this case, %s will be replaced with the passed URL."
+#~ msgstr ""
+#~ "當來電有附加的URL時,SFLphone可運行客戶命令.\n"
+#~ "在此情況下,傳輸的URL會被替換成%s."
+
+#~ msgid "Search history"
+#~ msgstr "搜尋歷史記錄"
+
+#~ msgid "Search contact"
+#~ msgstr "搜尋聯繫人(S)"
+
+#~ msgid "Registered to %s (%s)"
+#~ msgstr "註冊到 %s (%s)"
+
+#~ msgid "%s account- %s             %s"
+#~ msgstr "%s 帳戶- %s\t\t%s"
+
+#~ msgid "Books"
+#~ msgstr "鉤鍵"
+
+#~ msgid "_Enable"
+#~ msgstr "啟用(E)"
+
+#~ msgid "_Notify voice mails"
+#~ msgstr "語音郵件通知(N)"
+
+#~ msgid "_Start hidden"
+#~ msgstr "啟動時隱藏(S)"
+
+#~ msgid "_Maximum number of calls"
+#~ msgstr "最大打出電話數目(M)"
+
+#~ msgid "_Control running applications volume"
+#~ msgstr "控制正在運行中的應用程式的音量(C)"
+
+#~ msgid "Account previously setup"
+#~ msgstr "帳戶以前設定"
+
+#~ msgid "URL argument"
+#~ msgstr "URL參數"
+
+#~ msgid "_SIP Header: "
+#~ msgstr "SIP消息頭(S): "
+
+#~ msgid "_IAX2 protocol"
+#~ msgstr "IAX2 協議(I)"
+
+#~ msgid "Search"
+#~ msgstr "搜尋"
+
+#~ msgid "_Enabled"
+#~ msgstr "啟用(E)"
+
+#~ msgid "%s account- %s"
+#~ msgstr "%s 帳戶- %s"
+
+#~ msgid "_Destination folder"
+#~ msgstr "目標文件夾(D)"
+
+#~ msgid "Maximum result number for a request: "
+#~ msgstr "最大打出電話數目 "
+
+#~ msgid "Search for and display: "
+#~ msgstr "搜尋並顯示: "
+
+#~ msgid "_STUN Server"
+#~ msgstr "STUN伺服器(S)"
+
+#~ msgctxt "NAME OF TRANSLATORS"
+#~ msgid "Your names"
+#~ msgstr ""
+#~ "Yun Liu, ,Launchpad Contributions:,Yun Liu, ,Launchpad Contributions:,"
+#~ "Emmanuel Milou,Yun Liu, ,Launchpad Contributions:,Emmanuel Milou,Yun "
+#~ "Liu, ,Launchpad Contributions:,Emmanuel Milou,Yun Liu, ,Launchpad "
+#~ "Contributions:,Emmanuel Milou,Yun Liu"
+
+#~ msgctxt "EMAIL OF TRANSLATORS"
+#~ msgid "Your emails"
+#~ msgstr ""
+#~ "yunliu2000@gmail.com,,,,,,emmanuel.milou@savoirfairelinux.com,,,,emmanuel."
+#~ "milou@savoirfairelinux.com,,,,emmanuel.milou@savoirfairelinux.com,,,,"
+#~ "emmanuel.milou@savoirfairelinux.com,"

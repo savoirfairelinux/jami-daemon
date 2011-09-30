@@ -22,9 +22,9 @@ DO_LOGGING=1
 DO_UPLOAD=1
 SNAPSHOT_TAG=`date +%Y%m%d`
 TAG_NAME_PREFIX=
-VERSION_NUMBER="0.9.13"
+VERSION_NUMBER="1.0.0"
 
-LAUNCHPAD_PACKAGES=( "sflphone-client-gnome" "sflphone-common" )
+LAUNCHPAD_PACKAGES=( "sflphone-client-gnome" "sflphone-common" "sflphone-plugins")
 
 echo
 echo "    /***********************\\"
@@ -161,6 +161,26 @@ VERSION="${SOFTWARE_VERSION}~ppa${VERSION_INDEX}~SYSTEM"
 echo "Clean build directory"
 git clean -f -x ${LAUNCHPAD_DIR}/* >/dev/null
 
+get_dir_name() {
+    case $1 in
+        sflphone-common)
+        echo daemon
+        ;;
+        sflphone-plugins)
+        echo plugins
+        ;;
+        sflphone-client-gnome)
+        echo gnome
+        ;;
+        sflphone-client-kde)
+        echo kde
+        ;;
+        *)
+        exit 1
+        ;;
+    esac
+}
+
 for LAUNCHPAD_PACKAGE in ${LAUNCHPAD_PACKAGES[*]}
 do
 	echo " Package: ${LAUNCHPAD_PACKAGE}"	
@@ -174,7 +194,8 @@ do
 	git checkout ${DEBIAN_DIR} 
 
 	echo "  --> Retrieve new sources"
-	cp -r ${REFERENCE_REPOSITORY}/${LAUNCHPAD_PACKAGE} ${LAUNCHPAD_DIR}/ 
+    DIRNAME=`get_dir_name ${LAUNCHPAD_PACKAGE}`
+	cp -r ${REFERENCE_REPOSITORY}/${DIRNAME}/* ${LAUNCHPAD_DIR}/${LAUNCHPAD_PACKAGE}
 
 	echo "  --> Update software version number (${SOFTWARE_VERSION})"
 	echo "${SOFTWARE_VERSION}" > ${LAUNCHPAD_DIR}/${LAUNCHPAD_PACKAGE}/VERSION

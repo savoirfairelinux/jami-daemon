@@ -4,12 +4,22 @@
 #
 # Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
 
+git clean -f -d -x
 XML_RESULTS="cppunitresults.xml"
 
 set -x
- 
+
+# Compile the plugins
+pushd plugins
+make distclean
+./autogen.sh
+./configure --prefix=/usr
+make -j
+popd
+
 # Compile the daemon
-pushd sflphone-common
+pushd daemon
+make distclean
 ./autogen.sh
 # Compile pjproject first
 pushd libs/pjproject
@@ -21,23 +31,24 @@ popd
 make clean
 make -j
 make doc
+make check
 popd
 
 # Run the unit tests for the daemon
-pushd sflphone-common/test
+pushd daemon/test
 # Remove the previous XML test file
 rm -rf $XML_RESULTS
-make check
-# if at least one test failed, exit
-./test --xml || exit 1
+./run_tests.sh || exit 1
 popd
 
 # Compile the client
-pushd sflphone-client-gnome
+pushd gnome
+make distclean
 ./autogen.sh
 ./configure --prefix=/usr
 make clean
 make -j 1
+make check
 popd
 
 # SUCCESS

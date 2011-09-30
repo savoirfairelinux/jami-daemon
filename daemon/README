@@ -1,0 +1,130 @@
+COPYRIGHT NOTICE
+
+Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+Additional permission under GNU GPL version 3 section 7:
+
+If you modify this program, or any covered work, by linking or
+combining it with the OpenSSL project's OpenSSL library (or a
+modified version of that library), containing parts covered by the
+terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+grants you additional permission to convey the resulting work.
+Corresponding Source for a non-source form of such a combination
+shall include the source code for the parts of OpenSSL used as well
+as that of the covered work.
+
+
+Introduction
+------------
+
+SFLPhone is a Voice-over-IP software phone. We want it to be:
+- user friendly (fast, sleek, easy to learn interface)
+- corporate grade (transfers, holds, perfect audio quality)
+- fully compatible with Asterisk (SIP and IAX protocols)
+- customizable 
+
+As the SIP/audio daemon and the user interface are separate processes,
+it is easy to provide different user interfaces. SFLPhone0.8 comes with
+a GTK graphical user interface, an interactive command line interface,
+and even scripts to control the daemon from the shell.
+
+SFLPhone is actually used by the support team of Savoir-Faire Linux Inc.
+
+More information is available on the project homepage:
+  http://www.sflphone.org/
+
+ 
+Short description of content of source tree
+-------------------------------------------
+
+- ringtones/ contains the different ringtones.
+- stund/ is an implementation of the protocol STUN used when there is a NAT.
+- utilspp/ allows to implement a singleton.
+- src/ is the core of SFLphone. It contains the main.cpp, managerimpl.cpp
+  files, audio and gui directories, and files about signalisation SIP. Later,
+  it should be better, when IAX will be implemented, that a directory groups
+  these protocols. 
+  The ManagerImpl class is the intermediaire between all the layer in the tree.
+- src/audio/ is the audio layer. It contains all about tones, dtmf,
+  audiodriver, rtp layer, audio codec ulaw, alaw and gsm.
+- src/dbus, the dbus xml interfaces, and c++ bindings
+
+
+About Savoir-Faire Linux
+------------------------
+
+Savoir-Faire Linux is a consulting company based in Montreal, Quebec.
+For more information, please check out our website:
+http://www.savoirfairelinux.com/
+
+How to compile
+--------------
+
+# First compile the SIP library
+cd libs/pjproject-1.0.3
+./autogen.sh
+./configure --disable-ilbc-codec && make clean && make dep && make
+sudo make install
+
+If you already have installed a different version of 
+pjsip on your system, you will most likely have some errors
+such as :
+
+"ln: creating symbolic link `./libpjsip-sfl.a': File exists"
+
+after executing make install.
+
+Simply remove those files and run "make install" again.
+
+# Then the daemon
+cd ../..
+./autogen.sh --prefix=/usr --with-debug
+make
+sudo make install
+
+# And the GNOME client
+cd sflphone-client-gnome
+./autogen.sh --prefix=/usr --with-debug
+make
+sudo make install
+
+ Done !
+
+Free SIP/IAx2 accounts
+---------------------
+
+You may create a free SIP/IAX2 account through the account creation wizard in the both client (KDE and GNOME).
+By doing this, you will be able to call other account registered to the same server.
+Registered to this kind of account, you will be able to test your headset by dialing *100
+
+ECHO test
+--------
+Dial *100, on sip.sflphone.org
+
+
+
+
+Contributing to SFLPhone
+------------------------
+
+Of course we love patches. And contributions. And spring rolls.
+
+Development website: http://projects.savoirfairelinux.net/wiki/sflphone
+
+Do not hesitate to join us and post comments, suggestions, questions
+and general feedback on the forge.novell mailing-list.
+
+  -- The SFLPhone Team
