@@ -19,7 +19,7 @@ LAUNCHPAD_PACKAGES=( "sflphone-client-gnome" "sflphone-common" "sflphone-plugins
 REFERENCE_REPOSITORY="${ROOT_DIR}/sflphone-source-repository"
 OSC_DIR="${REFERENCE_REPOSITORY}/tools/build-system/osc"
 
-SOFTWARE_VERSION="0.9.14"
+SOFTWARE_VERSION="1.0.0"
 
 VERSION_INDEX=1
 
