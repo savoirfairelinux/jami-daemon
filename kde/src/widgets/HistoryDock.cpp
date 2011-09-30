@@ -7,6 +7,10 @@
 #include <QtGui/QComboBox>
 #include <QtGui/QPushButton>
 #include <QtGui/QLabel>
+#include <QDebug>
+#include <QDate>
+#include <QtGui/QTreeWidgetItem>
+#include <QtCore/QString>
 #include <kdatewidget.h>
 #include <QHeaderView>
 #include <QtGui/QCheckBox>
@@ -58,12 +62,12 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    m_pFilterLE   = new KLineEdit();
    m_pItemView   = new HistoryTree(this);
    m_pSortByCBB  = new QComboBox();
-   m_pSortByL    = new QLabel("Sort by:");
-   m_pFromL      = new QLabel("From:");
-   m_pToL        = new QLabel("To:");
+   m_pSortByL    = new QLabel(i18n("Sort by:"));
+   m_pFromL      = new QLabel(i18n("From:"));
+   m_pToL        = new QLabel(i18n("To:"));
    m_pFromDW     = new KDateWidget();
    m_pToDW       = new KDateWidget();
-   m_pAllTimeCB  = new QCheckBox("Display all");
+   m_pAllTimeCB  = new QCheckBox(i18n("Display all"));
    m_pLinkPB     = new QPushButton(this);
    
    m_pAllTimeCB->setChecked(ConfigurationSkeleton::displayDataRange());
@@ -75,7 +79,7 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    m_pLinkPB->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Expanding);
    m_pLinkPB->setCheckable(true);
    
-   m_pItemView->headerItem()->setText(0,"Calls"          );
+   m_pItemView->headerItem()->setText(0,i18n("Calls")   );
    m_pItemView->header    ()->setClickable(true          );
    m_pItemView->header    ()->setSortIndicatorShown(true );
    m_pItemView->setAlternatingRowColors(true             );
@@ -84,7 +88,7 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    KeyPressEater *keyPressEater = new KeyPressEater(this);
    m_pItemView->installEventFilter(keyPressEater);
 
-   m_pFilterLE->setPlaceholderText("Filter");
+   m_pFilterLE->setPlaceholderText(i18n("Filter"));
    m_pFilterLE->setClearButtonShown(true);
    
    QStringList sortBy;
@@ -107,7 +111,7 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    mainLayout->addWidget(m_pItemView  ,6,0,1,3 );
    mainLayout->addWidget(m_pFilterLE  ,7,0,1,3 );
    
-   setWindowTitle("History");
+   setWindowTitle(i18n("History"));
 
    QDate date(2000,1,1);
    m_pFromDW->setDate(date);

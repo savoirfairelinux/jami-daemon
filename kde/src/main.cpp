@@ -26,7 +26,7 @@
 
 static const char description[] = "A KDE 4 Client for SFLphone";
 
-static const char version[] = "0.9.14";
+static const char version[] = "1.0.0";
 
 int main(int argc, char **argv)
 {

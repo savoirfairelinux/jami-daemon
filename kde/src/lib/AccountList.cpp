@@ -166,7 +166,7 @@ Account* AccountList::firstRegisteredAccount() const
    Account* current;
    for (int i = 0; i < m_pAccounts->count(); ++i) {
       current = (*m_pAccounts)[i];
-      if(current->getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED) {
+      if(current && current->getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED) {
          return current;
       }
       else {

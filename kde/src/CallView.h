@@ -1,14 +1,15 @@
 #ifndef CALL_VIEW
 #define CALL_VIEW
 
-#include <QTreeWidget>
-#include <QTreeWidgetItem>
-#include <QItemDelegate>
-
+#include <QtGui/QItemDelegate>
+#include <QtGui/QTreeWidget>
 #include "lib/CallModel.h"
-#include "lib/sflphone_const.h"
-#include "lib/callmanager_interface_singleton.h"
-#include "widgets/CallTreeItem.h"
+
+//Qt
+class QTreeWidgetItem;
+
+//SFLPhone
+class CallTreeItem;
 
 class CallTreeItemDelegate : public QItemDelegate
 {

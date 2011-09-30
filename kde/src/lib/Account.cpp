@@ -23,6 +23,8 @@
 
 #include <QtGui/QApplication>
 #include <QDebug>
+#include <QtCore/QString>
+#include <QtGui/QColor>
 
 #include "sflphone_const.h"
 #include "configurationmanager_interface_singleton.h"

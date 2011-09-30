@@ -17,16 +17,17 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
 
 
 #ifndef CALL_H
 #define CALL_H
 
-#include <QtCore/QString>
-#include <QtCore/QDateTime>
-#include <QtGui/QLabel>
-#include <QtGui/QWidget>
+//Qt
+class QString;
+class QDateTime;
+class QLabel;
+class QWidget;
 
 #include "sflphone_const.h"
 #include "typedefs.h"

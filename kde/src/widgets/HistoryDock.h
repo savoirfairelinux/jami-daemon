@@ -2,19 +2,23 @@
 #define HISTORY_DOCK_H
 
 #include <QtGui/QDockWidget>
-#include <QDebug>
-#include <QDate>
-#include <QtGui/QTreeWidgetItem>
-#include <QtCore/QString>
+#include <QtGui/QTreeWidget>
+#include <QtCore/QDate>
 
+//Qt
+class QTreeWidgetItem;
+class QString;
 class QTreeWidget;
-class KLineEdit;
 class QComboBox;
 class QLabel;
-class KDateWidget;
 class QCheckBox;
 class QPushButton;
-class QDate;
+
+//KDE
+class KLineEdit;
+class KDateWidget;
+
+//SFLPhone
 class HistoryTreeItem;
 class HistoryTree;
 

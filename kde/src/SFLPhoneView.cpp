@@ -26,6 +26,17 @@
 #include <QtGui/QBrush>
 #include <QtGui/QPalette>
 #include <QtGui/QInputDialog>
+#include <QtGui/QWidget>
+#include <QtCore/QString>
+#include <QtGui/QKeyEvent>
+#include <QErrorMessage>
+#include <KXmlGuiWindow>
+
+#include "conf/ConfigurationDialog.h"
+#include "AccountWizard.h"
+#include "lib/Contact.h"
+#include "lib/AccountList.h"
+#include "CallView.h"
 
 #include <klocale.h>
 #include <kstandardaction.h>
@@ -63,7 +74,7 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
    ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    
    errorWindow = new QErrorMessage(this);
-   callTreeModel->setTitle("Calls");
+   callTreeModel->setTitle(i18n("Calls"));
    
    QPalette pal = QPalette(palette());
    pal.setColor(QPalette::AlternateBase, Qt::lightGray);
@@ -86,12 +97,6 @@ SFLPhoneView::~SFLPhoneView()
 {
 }
 
-void SFLPhoneView::saveState()
-{
-   //ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   //configurationManager.setHistory(callTreeModel->getHistoryCallId());
-}
-
 void SFLPhoneView::loadWindow()
 {
    updateWindowCallState ();
@@ -108,11 +113,6 @@ QErrorMessage * SFLPhoneView::getErrorWindow()
 {
    return errorWindow;
 }
-
-// CallView* SFLPhoneView::model()
-// {
-//    return callTreeModel;
-// }
 
 void SFLPhoneView::typeString(QString str)
 {
@@ -323,17 +323,6 @@ void SFLPhoneView::updateWindowCallState()
    qDebug() << "Window updated.";
 }
 
-void SFLPhoneView::alternateColors(QListWidget * listWidget)
-{
-   for(int i = 0 ; i < listWidget->count(); i++) {
-      QListWidgetItem* item = listWidget->item(i);
-      QBrush c = (i % 2 == 1) ? palette().base() : palette().alternateBase();
-      item->setBackground( c );
-   }
-   listWidget->setUpdatesEnabled( true );
-
-}
-
 int SFLPhoneView::phoneNumberTypesDisplayed()
 {
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
@@ -420,25 +409,15 @@ void SFLPhoneView::updateVolumeBar()
 
 void SFLPhoneView::updateVolumeControls()
 {
+   
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   int display = false;
-
-   if(QString(configurationManager.getAudioManager()) == "alsa") {
-      display = true;
-
-      SFLPhone::app()->action_displayVolumeControls->setEnabled(true);
-   }
-   else {
-      SFLPhone::app()->action_displayVolumeControls->setEnabled(false);
-   }
-      
-   SFLPhone::app()->action_displayVolumeControls->setChecked(display);
+   //SFLPhone::app()->action_displayVolumeControls->setChecked(display);
    //widget_recVol->setVisible(display);
    //widget_sndVol->setVisible(display);
-   toolButton_recVol->setVisible ( display && ConfigurationSkeleton::displayVolume() );
-   toolButton_sndVol->setVisible ( display && ConfigurationSkeleton::displayVolume() );
-   slider_recVol->setVisible     ( display && ConfigurationSkeleton::displayVolume() );
-   slider_sndVol->setVisible     ( display && ConfigurationSkeleton::displayVolume() );
+   toolButton_recVol->setVisible ( SFLPhone::app()->action_displayVolumeControls->isChecked()  && ConfigurationSkeleton::displayVolume() );
+   toolButton_sndVol->setVisible ( SFLPhone::app()->action_displayVolumeControls->isChecked()  && ConfigurationSkeleton::displayVolume() );
+   slider_recVol->setVisible     ( SFLPhone::app()->action_displayVolumeControls->isChecked()  && ConfigurationSkeleton::displayVolume() );
+   slider_sndVol->setVisible     ( SFLPhone::app()->action_displayVolumeControls->isChecked()  && ConfigurationSkeleton::displayVolume() );
    
 }
 

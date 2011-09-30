@@ -1,18 +1,26 @@
 #ifndef AKONADI_BACKEND_H
 #define AKONADI_BACKEND_H
 
-#include <QObject>
-#include <akonadi/session.h>
-#include <akonadi/collectionmodel.h>
-#include <kabc/addressee.h>
-#include <kabc/addresseelist.h>
 #include <lib/ContactBackend.h>
+#include <akonadi/collectionmodel.h>
 
-class Contact;
+//Qt
+class QObject;
 
+//KDE
 namespace KABC {
    class Addressee;
+   class AddresseeList;
 }
+
+namespace Akonadi {
+   class Session;
+   class CollectionModel;
+   class Collection;
+}
+
+//SFLPhone
+class Contact;
 
 typedef QList<Contact*> ContactList;
 

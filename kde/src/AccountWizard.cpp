@@ -24,6 +24,10 @@
 #include <QFormLayout>
 #include "lib/sflphone_const.h"
 #include "lib/configurationmanager_interface_singleton.h"
+#include <QLabel>
+#include <QRadioButton>
+#include <QLineEdit>
+#include <QCheckBox>
 
 #include <klocale.h>
 

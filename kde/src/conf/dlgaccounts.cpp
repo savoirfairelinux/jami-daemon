@@ -24,6 +24,7 @@
 
 #include "lib/configurationmanager_interface_singleton.h"
 #include "SFLPhoneView.h"
+#include "../AccountView.h"
 #include "lib/sflphone_const.h"
 #include "conf/ConfigurationDialog.h"
 #include <vector>

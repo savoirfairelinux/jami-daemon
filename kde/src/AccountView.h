@@ -1,12 +1,15 @@
 #ifndef ACCOUNT_VIEW_H
 #define ACCOUNT_VIEW_H
 
-#include <QtGui/QListWidgetItem>
-
 #include "lib/Item.h"
 #include "lib/Account.h"
 #include "widgets/AccountItemWidget.h"
-#include "lib/sflphone_const.h"
+
+//Qt
+class QListWidgetItem;
+
+//SFLPhone
+class AccountItemWidget;
 
 class AccountView : public Account, public Item<AccountItemWidget> {
    public:

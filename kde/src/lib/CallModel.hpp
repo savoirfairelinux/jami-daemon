@@ -1,3 +1,18 @@
+#include <QHash>
+#include <QVector>
+#include <QDragEnterEvent>
+#include <QDebug>
+#include "Call.h"
+#include "AccountList.h"
+#include "dbus/metatypes.h"
+#include "callmanager_interface_singleton.h"
+#include "configurationmanager_interface_singleton.h"
+#include "instance_interface_singleton.h"
+#include "sflphone_const.h"
+#include "unistd.h"
+#include "typedefs.h"
+#include "ContactBackend.h"
+
 //Static member
 template  <typename CallWidget, typename Index> QString CallModel<CallWidget,Index>::m_pPriorAccountId   = ""    ;
 template  <typename CallWidget, typename Index> AccountList* CallModel<CallWidget,Index>::m_pAccountList = 0     ;

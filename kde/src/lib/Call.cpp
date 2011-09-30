@@ -610,7 +610,8 @@ void Call::call()
       this->m_pPeerPhoneNumber = m_pCallNumber;
       if (m_pContactBackend) {
          Contact* contact = m_pContactBackend->getContactByPhone(m_pPeerPhoneNumber);
-         m_pPeerName = contact->getFormattedName();
+         if (contact)
+            m_pPeerName = contact->getFormattedName();
       }
       this->m_pStartTime = new QDateTime(QDateTime::currentDateTime());
       this->m_pHistoryState = OUTGOING;

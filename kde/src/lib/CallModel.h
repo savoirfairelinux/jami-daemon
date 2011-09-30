@@ -22,25 +22,26 @@
 #define CALL_MODEL_H
 
 #include <QObject>
-#include <QHash>
 #include <QVector>
-#include <QDragEnterEvent>
-#include <QDebug>
-
-#include "Call.h"
-#include "AccountList.h"
-#include "dbus/metatypes.h"
-#include "callmanager_interface_singleton.h"
-#include "configurationmanager_interface_singleton.h"
-#include "instance_interface_singleton.h"
-#include "sflphone_const.h"
-#include "unistd.h"
+#include <QHash>
 #include "typedefs.h"
-#include "ContactBackend.h"
+
+//Qt
+class QDragEnterEvent;
+class QDebug;
+class QModelIndex;
+
+//SFLPhone
+class Call;
+class AccountList;
+class Account;
+class ContactBackend;
 
 typedef QHash<QString, Call*> CallHash;
 typedef QList<Call*>          CallList;
 
+///This class need to exist because template classes can't have signals ans
+///slots because Qt MOC generator can't guess the type at precompilation
 class LIB_EXPORT CallModelBase : public QObject
 {
    Q_OBJECT

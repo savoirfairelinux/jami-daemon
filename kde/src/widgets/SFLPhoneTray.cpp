@@ -20,6 +20,9 @@
  ***************************************************************************/
 
 #include <QDebug>
+#include <KAction>
+#include <QMenu>
+#include <QIcon>
 
 #include "SFLPhoneTray.h"
 

@@ -62,6 +62,7 @@ void CallModelBase::on1_callStateChanged(const QString &callID, const QString &s
 
 void CallModelBase::on1_incomingCall(const QString & accountID, const QString & callID)
 {
+   Q_UNUSED(accountID)
    qDebug() << "Signal : Incoming Call ! ID = " << callID;
    Call* call = addIncomingCall(callID);
 

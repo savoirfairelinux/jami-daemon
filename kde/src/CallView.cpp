@@ -1,19 +1,20 @@
 #include "CallView.h"
 #include "AkonadiBackend.h"
 #include "lib/Contact.h"
+#include "lib/sflphone_const.h"
+#include "lib/callmanager_interface_singleton.h"
+#include "widgets/CallTreeItem.h"
 
 #include "SFLPhone.h"
+#include "SFLPhoneView.h"
 
 #include <QtGui/QInputDialog>
+#include <QtGui/QTreeWidget>
+#include <QtGui/QTreeWidgetItem>
 
 ///Retrieve current and older calls from the daemon, fill history and the calls TreeView and enable drag n' drop
 CallView::CallView(QWidget* parent) : QTreeWidget(parent)
 {
-//    if (type == ActiveCall)
-//       SFLPhone::model()->initCall();
-//    else if (type == History)
-//       SFLPhone::model()->initHistory();
-   
    //Widget part
    setAcceptDrops(true);
    setDragEnabled(true);

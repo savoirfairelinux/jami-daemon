@@ -3,21 +3,33 @@
 
 #include <QtGui/QDockWidget>
 #include <QtGui/QTreeWidget>
-#include <QSplitter>
 
-#include <akonadi/entitytreeview.h>
-#include <akonadi/itemview.h>
-#include <klineedit.h>
-#include <kabc/addressee.h>
-#include <akonadi/contact/contactstreemodel.h>
-#include <akonadi/collectioncombobox.h>
-
+//Qt
+class QSplitter;
 class QListWidget;
 class QComboBox;
 class QTreeWidgetItem;
 class QCheckBox;
-class ContactItemWidget;
+
+//KDE
+class KLineEdit;
+
+namespace Akonadi {
+   class EntityTreeView;
+   class ItemView;
+   class CollectionCombobox;
+   namespace Contact {
+      class ContactsTreeModel;
+   }
+}
+
+namespace KABC {
+   class Addressee;
+}
+
+///SFLPhone
 class ContactTree;
+class ContactItemWidget;
 
 class ContactDock : public QDockWidget {
    Q_OBJECT

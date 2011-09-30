@@ -28,22 +28,21 @@
 #ifndef HISTORYTREE_ITEM_H
 #define HISTORYTREE_ITEM_H
 
+#include <QtGui/QWidget>
 #include <QtCore/QList>
 #include <QtCore/QVariant>
 #include <QtCore/QVector>
 
-#include <QtGui/QWidget>
-#include <QtGui/QLabel>
-#include <QtGui/QSpacerItem>
-#include <QtGui/QHBoxLayout>
-#include <QtGui/QVBoxLayout>
-#include <KIcon>
+//SFLPhone
+class Call;
 
-#include "lib/Call.h"
-
+//Qt
 class QTreeWidgetItem;
-class KAction;
 class QMenu;
+class QLabel;
+
+//KDE
+class KAction;
 
 class HistoryTreeItem : public QWidget
 {
