@@ -166,8 +166,8 @@ private slots:
     */
    void updateRecordButton   ();
    void updateVolumeButton   ();
-   void updateRecordBar      ();
-   void updateVolumeBar      ();
+   void updateRecordBar      (double _value = -1);
+   void updateVolumeBar      (double _value = -1);
    void updateVolumeControls ();
    void updateDialpad        ();
    

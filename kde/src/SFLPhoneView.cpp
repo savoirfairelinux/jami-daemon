@@ -82,7 +82,7 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
    
    connect(SFLPhone::model()                     , SIGNAL(incomingCall(Call*))                   , this                                  , SLOT(on1_incomingCall(Call*)                    ));
    connect(SFLPhone::model()                     , SIGNAL(voiceMailNotify(const QString &, int)) , this                                  , SLOT(on1_voiceMailNotify(const QString &, int)  ));
-   connect(SFLPhone::model()                     , SIGNAL(volumeChanged(const QString &, double)), this                                  , SLOT(on1_volumeChanged(const QString &, double) ));
+   //connect(SFLPhone::model()                     , SIGNAL(volumeChanged(const QString &, double)), this                                  , SLOT(on1_volumeChanged(const QString &, double) ));
    connect(SFLPhone::model()                     , SIGNAL(callStateChanged(Call*))               , this                                  , SLOT(updateWindowCallState()                    ));
    connect(TreeWidgetCallModel::getAccountList() , SIGNAL(accountListUpdated())                  , this                                  , SLOT(updateStatusMessage()                      ));
    connect(TreeWidgetCallModel::getAccountList() , SIGNAL(accountListUpdated())                  , this                                  , SLOT(updateWindowCallState()                    ));
@@ -390,20 +390,20 @@ void SFLPhoneView::updateVolumeButton()
 }
 
 
-void SFLPhoneView::updateRecordBar()
+void SFLPhoneView::updateRecordBar(double _value)
 {
-   qDebug() << "updateRecordBar";
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    double recVol = callManager.getVolume(RECORD_DEVICE);
-   int value = (int)(recVol * 100);
+   qDebug() << "updateRecordBar" << recVol;
+   int value = (_value > 0)?_value:(int)(recVol * 100);
    slider_recVol->setValue(value);
 }
-void SFLPhoneView::updateVolumeBar()
+void SFLPhoneView::updateVolumeBar(double _value)
 {
-   qDebug() << "updateVolumeBar";
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    double sndVol = callManager.getVolume(SOUND_DEVICE);
-   int value = (int)(sndVol * 100);
+   qDebug() << "updateVolumeBar" << sndVol;
+   int value = (_value > 0)?_value:(int)(sndVol * 100);
    slider_sndVol->setValue(value);
 }
 
@@ -737,11 +737,12 @@ void SFLPhoneView::on1_voiceMailNotify(const QString &accountID, int count)
 
 void SFLPhoneView::on1_volumeChanged(const QString & /*device*/, double value)
 {
-   qDebug() << "Signal : Volume Changed !";
+   //TODO uncomment after fixing infinite loop
+   qDebug() << "Signal : Volume Changed !" << value;
    if(! (toolButton_recVol->isChecked() && value == 0.0))
-      updateRecordBar();
+      updateRecordBar(value);
    if(! (toolButton_sndVol->isChecked() && value == 0.0))
-      updateVolumeBar();
+      updateVolumeBar(value);
 }
 
 // void SFLPhoneView::on1_audioManagerChanged()

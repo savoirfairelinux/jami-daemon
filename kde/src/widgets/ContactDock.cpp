@@ -86,6 +86,7 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
    QStringList sortType;
    sortType << "Name" << "Organisation" << "Phone number type" << "Rencently used" << "Group";
    m_pSortByCBB->addItems(sortType);
+   m_pSortByCBB->setDisabled(true);
 
    QWidget* mainWidget = new QWidget(this);
    setWidget(mainWidget);
