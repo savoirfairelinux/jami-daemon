@@ -12,6 +12,7 @@
 #include <Plasma/DataEngine>
 #include <Plasma/ExtenderItem>
 #include <KIcon>
+#include <QHash>
 
 #include "CallItem.h"
 #include "ConferenceItem.h"

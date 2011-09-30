@@ -2,7 +2,6 @@
 #include <QtCore/QTimer>
 #include <akonadi/control.h>
 #include <akonadi/collectionfilterproxymodel.h>
-#include <akonadi/collectionmodel.h>
 #include <akonadi/kmime/messagemodel.h>
 #include <kabc/contactgroup.h>
 #include <kabc/phonenumber.h>
@@ -13,27 +12,37 @@
 #include <akonadi/contact/contacteditor.h>
 #include <kdialog.h>
 
+#include <QObject>
+#include <akonadi/session.h>
+#include <kabc/addressee.h>
+#include <kabc/addresseelist.h>
+
 #include "lib/Contact.h"
 #include "SFLPhone.h"
+#include "SFLPhoneView.h"
 
+///Init static attributes
 AkonadiBackend*  AkonadiBackend::m_pInstance = 0;
 
+///Constructor
 AkonadiBackend::AkonadiBackend(QObject* parent) : ContactBackend(parent)
 {
    //QTimer::singleShot( 0, this, SLOT( delayedInit() ) );
    m_pSession = new Akonadi::Session( "SFLPhone::instance" );
 
-    // fetching all collections containing emails recursively, starting at the root collection
+   // fetching all collections containing emails recursively, starting at the root collection
    Akonadi::CollectionFetchJob *job = new Akonadi::CollectionFetchJob( Akonadi::Collection::root(), Akonadi::CollectionFetchJob::Recursive, this );
    job->fetchScope().setContentMimeTypes( QStringList() << "text/directory" );
    connect( job, SIGNAL( collectionsReceived( const Akonadi::Collection::List& ) ), this, SLOT( collectionsReceived( const Akonadi::Collection::List& ) ) );
 }
 
+///Destructor
 AkonadiBackend::~AkonadiBackend()
 {
    
 }
 
+///Singleton
 ContactBackend* AkonadiBackend::getInstance()
 {
    if (m_pInstance == NULL) {
@@ -42,6 +51,7 @@ ContactBackend* AkonadiBackend::getInstance()
    return m_pInstance;
 }
 
+///Update the contact list when a new Akonadi collection is added
 ContactList AkonadiBackend::update(Akonadi::Collection collection)
 {
    m_pCollection = collection;
@@ -95,22 +105,25 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
    return contacts;
 }
 
+///Update the contact list even without a new collection
 ContactList AkonadiBackend::update_slot()
 {
    return update(m_pCollection);
 }
 
-
+///Find contact using a phone number
 Contact* AkonadiBackend::getContactByPhone(QString phoneNumber)
 {
    return m_pContactByPhone[phoneNumber];
 }
 
+///Find contact by UID
 Contact* AkonadiBackend::getContactByUid(QString uid)
 {
    return m_pContactByUid[uid];
 }
 
+///Called when a new collection is added
 void AkonadiBackend::collectionsReceived( const Akonadi::Collection::List&  list)
 {
    foreach (Akonadi::Collection coll, list) {
@@ -119,6 +132,7 @@ void AkonadiBackend::collectionsReceived( const Akonadi::Collection::List&  list
    }
 }
 
+///Edit backend value using an updated frontend contact
 void AkonadiBackend::editContact(Contact* contact)
 {
    KABC::Addressee ct = m_pAddrHash[contact->getUid()];
@@ -135,6 +149,7 @@ void AkonadiBackend::editContact(Contact* contact)
    dlg->exec();
 }
 
+///Add a new contact
 void AkonadiBackend::addNewContact(Contact* contact)
 {
    KABC::Addressee newContact;
@@ -177,8 +192,6 @@ void AkonadiBackend::addNewContact(Contact* contact)
    dlg->setMainWidget(editor);
    dlg->exec();
    
-    
-    
    if ( !editor->saveContact() ) {
       qDebug() << "Unable to save new contact to storage";
       return;

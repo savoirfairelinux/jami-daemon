@@ -21,6 +21,7 @@
 #include "AccountListModel.h"
 
 #include "lib/sflphone_const.h"
+#include "conf/ConfigAccountList.h"
 #include <QDebug>
 
 AccountListModel::AccountListModel(QObject *parent)

@@ -102,10 +102,10 @@ void SFLPhoneApplication::initializePaths()
   qDebug() << "KGlobal::dirs" << QString(DATA_INSTALL_DIR);
 
   // Test whether the prefix is correct.
-  if( KGlobal::dirs()->findResource( "appdata", "icons/hi128-apps-sflphone-client-kde.png" ).isNull() ) {
-    kWarning() << "SFLPhone could not find resources in the search paths: "
-               << KGlobal::dirs()->findDirs( "appdata", QString::null ).join(", ") << endl;
-  }
+//   if( KGlobal::dirs()->findResource( "appdata", "icons/hi128-apps-sflphone-client-kde.png" ).isNull() ) {
+//     kWarning() << "SFLPhone could not find resources in the search paths: "
+//                << KGlobal::dirs()->findDirs( "appdata", QString::null ).join(", ") << endl;
+  //}
 }
 
 Q_NOREPLY void SFLPhoneApplication::quit2()

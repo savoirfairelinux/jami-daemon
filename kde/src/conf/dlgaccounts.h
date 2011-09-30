@@ -49,8 +49,18 @@ class Private_AddCodecDialog : public KDialog {
     Private_AddCodecDialog(QList< StringHash > itemList, QStringList currentItems ,QWidget* parent = 0) : KDialog(parent) {
       codecTable = new QTableWidget(this);
       codecTable->verticalHeader()->setVisible(false);
-      codecTable->setColumnCount(5);
+      codecTable->setColumnCount(4);
+      for (int i=0;i<4;i++) {
+         codecTable->setHorizontalHeaderItem( i, new QTableWidgetItem(0));
+         codecTable->horizontalHeader()->setResizeMode(i,QHeaderView::ResizeToContents);
+      }
+      
       codecTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+      codecTable->horizontalHeaderItem(0)->setText("Name");
+      codecTable->horizontalHeaderItem(1)->setText("Bitrate");
+      codecTable->horizontalHeaderItem(2)->setText("Frequency");
+      codecTable->horizontalHeaderItem(3)->setText("Alias");
+      codecTable->horizontalHeader()->setResizeMode(0,QHeaderView::Stretch);
       int i =0;
       foreach (StringHash aCodec, itemList) {
         if ( currentItems.indexOf(aCodec["alias"]) == -1) {
@@ -62,12 +72,12 @@ class Private_AddCodecDialog : public KDialog {
           QTableWidgetItem* cFrequency = new  QTableWidgetItem(aCodec["frequency"]);
           codecTable->setItem(i,2,cFrequency);
           QTableWidgetItem* cAlias = new  QTableWidgetItem(aCodec["alias"]);
-          codecTable->setItem(i,4,cAlias);
+          codecTable->setItem(i,3,cAlias);
           i++;
         }
       }
       setMainWidget(codecTable);
-      resize(400,300);
+      resize(550,300);
       
       connect(this, SIGNAL(okClicked()), this, SLOT(emitNewCodec()));
     }
@@ -75,7 +85,8 @@ class Private_AddCodecDialog : public KDialog {
     QTableWidget* codecTable;
   private slots:
     void emitNewCodec() {
-      emit addCodec(codecTable->item(codecTable->currentRow(),4)->text());
+       if (codecTable->currentRow() >= 0)
+         emit addCodec(codecTable->item(codecTable->currentRow(),3)->text());
     }
   signals:
     void addCodec(QString alias);

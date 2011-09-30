@@ -25,6 +25,17 @@
 #include <QtGui/QGridLayout>
 #include <QtGui/QMenu>
 
+#include <QtGui/QLabel>
+#include <QtGui/QSpacerItem>
+#include <QtGui/QHBoxLayout>
+#include <QtGui/QVBoxLayout>
+#include <KIcon>
+#include <kabc/addressee.h>
+#include <kabc/picture.h>
+#include <kabc/phonenumber.h>
+
+#include <lib/Contact.h>
+
 #include <klocale.h>
 #include <kdebug.h>
 #include <unistd.h>
@@ -33,42 +44,44 @@
 #include "lib/sflphone_const.h"
 #include "ContactItemWidget.h"
 #include "AkonadiBackend.h"
+#include "widgets/BookmarkDock.h"
 #include "SFLPhone.h"
 #include "conf/ConfigurationSkeleton.h"
 
+///Constructor
 ContactItemWidget::ContactItemWidget(QWidget *parent)
    : QWidget(parent), m_pMenu(0),init(false)
 {
    setContextMenuPolicy(Qt::CustomContextMenu);
    m_pCallAgain  = new KAction(this);
-   m_pCallAgain->setShortcut(Qt::CTRL + Qt::Key_Enter);
-   m_pCallAgain->setText("Call Again");
-   m_pCallAgain->setIcon(KIcon(ICON_DIALING));
+   m_pCallAgain->setShortcut   ( Qt::CTRL + Qt::Key_Enter   );
+   m_pCallAgain->setText       ( i18n("Call Again")         );
+   m_pCallAgain->setIcon       ( KIcon(ICON_DIALING)        );
    
    m_pEditContact = new KAction(this);
-   m_pEditContact->setShortcut(Qt::CTRL + Qt::Key_E);
-   m_pEditContact->setText("Edit contact");
-   m_pEditContact->setIcon(KIcon("contact-new"));
+   m_pEditContact->setShortcut ( Qt::CTRL + Qt::Key_E       );
+   m_pEditContact->setText     ( i18n("Edit contact")       );
+   m_pEditContact->setIcon     ( KIcon("contact-new")       );
    
    m_pCopy       = new KAction(this);
-   m_pCopy->setShortcut(Qt::CTRL + Qt::Key_C);
-   m_pCopy->setText("Copy");
-   m_pCopy->setIcon(KIcon("edit-copy"));
+   m_pCopy->setShortcut        ( Qt::CTRL + Qt::Key_C       );
+   m_pCopy->setText            ( i18n("Copy")               );
+   m_pCopy->setIcon            ( KIcon("edit-copy")         );
    
    m_pEmail      = new KAction(this);
-   m_pEmail->setShortcut(Qt::CTRL + Qt::Key_M);
-   m_pEmail->setText("Send Email");
-   m_pEmail->setIcon(KIcon("mail-message-new"));
+   m_pEmail->setShortcut       ( Qt::CTRL + Qt::Key_M       );
+   m_pEmail->setText           ( i18n("Send Email")         );
+   m_pEmail->setIcon           ( KIcon("mail-message-new")  );
    
    m_pAddPhone      = new KAction(this);
-   m_pAddPhone->setShortcut(Qt::CTRL + Qt::Key_N);
-   m_pAddPhone->setText("Add Phone Number");
-   m_pAddPhone->setIcon(KIcon("list-resource-add"));
+   m_pAddPhone->setShortcut    ( Qt::CTRL + Qt::Key_N       );
+   m_pAddPhone->setText        ( i18n("Add Phone Number")   );
+   m_pAddPhone->setIcon        ( KIcon("list-resource-add") );
 
    m_pBookmark      = new KAction(this);
-   m_pBookmark->setShortcut(Qt::CTRL + Qt::Key_D);
-   m_pBookmark->setText("Bookmark");
-   m_pBookmark->setIcon(KIcon("bookmarks"));
+   m_pBookmark->setShortcut    ( Qt::CTRL + Qt::Key_D       );
+   m_pBookmark->setText        ( i18n("Bookmark")           );
+   m_pBookmark->setIcon        ( KIcon("bookmarks")         );
 
    connect(m_pCallAgain    , SIGNAL(triggered()) , this,SLOT(callAgain()      ));
    connect(m_pEditContact  , SIGNAL(triggered()) , this,SLOT(editContact()    ));
@@ -78,19 +91,21 @@ ContactItemWidget::ContactItemWidget(QWidget *parent)
    connect(m_pBookmark     , SIGNAL(triggered()) , this,SLOT(bookmark()       ));
 }
 
+///Destructor
 ContactItemWidget::~ContactItemWidget()
 {
 
 }
 
+///Set the contact
 void ContactItemWidget::setContact(Contact* contact)
 {
-   m_pContactKA = contact;
-   m_pIconL = new QLabel(this);
-   m_pContactNameL = new QLabel();
-   m_pOrganizationL = new QLabel(this);
-   m_pEmailL = new QLabel();
-   m_pCallNumberL = new QLabel(this);
+   m_pContactKA     = contact;
+   m_pIconL         = new QLabel ( this );
+   m_pContactNameL  = new QLabel (      );
+   m_pOrganizationL = new QLabel ( this );
+   m_pEmailL        = new QLabel (      );
+   m_pCallNumberL   = new QLabel ( this );
    
    m_pIconL->setMinimumSize(70,48);
    m_pIconL->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
@@ -104,12 +119,12 @@ void ContactItemWidget::setContact(Contact* contact)
 
    QGridLayout* mainLayout = new QGridLayout(this);
    mainLayout->setContentsMargins(0,0,0,0);
-   mainLayout->addWidget(m_pIconL,0,0,4,1);
-   mainLayout->addWidget(m_pContactNameL,0,1);
-   mainLayout->addWidget(m_pOrganizationL,1,1);
-   mainLayout->addWidget(m_pCallNumberL,2,1);
-   mainLayout->addWidget(m_pEmailL,3,1);
-   mainLayout->addItem(verticalSpacer,4,1);
+   mainLayout->addWidget( m_pIconL        , 0 , 0 , 4 , 1 );
+   mainLayout->addWidget( m_pContactNameL , 0 , 1         );
+   mainLayout->addWidget( m_pOrganizationL, 1 , 1         );
+   mainLayout->addWidget( m_pCallNumberL  , 2 , 1         );
+   mainLayout->addWidget( m_pEmailL       , 3 , 1         );
+   mainLayout->addItem(verticalSpacer     , 4 , 1         );
 
    setLayout(mainLayout);
    setMinimumSize(QSize(50, 30));
@@ -118,6 +133,7 @@ void ContactItemWidget::setContact(Contact* contact)
    connect(this,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(showContext(QPoint)));
 }
 
+///The contact need to be updated
 void ContactItemWidget::updated()
 {
    m_pContactNameL->setText("<b>"+m_pContactKA->getFormattedName()+"</b>");
@@ -143,18 +159,13 @@ void ContactItemWidget::updated()
    if (getCallNumbers().count() == 1)
       m_pCallNumberL->setText(getCallNumbers()[0]->getNumber());
    else
-      m_pCallNumberL->setText(QString::number(getCallNumbers().count())+" numbers");
+      m_pCallNumberL->setText(QString::number(getCallNumbers().count())+i18n(" numbers"));
 
    if (!m_pContactKA->getPhoto())
       m_pIconL->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
    else
       m_pIconL->setPixmap(*m_pContactKA->getPhoto());
 }
-
-// QPixmap* ContactItemWidget::getIcon()
-// {
-//    return new QPixmap();
-// }
 
 QString ContactItemWidget::getContactName() const
 {
@@ -199,13 +210,13 @@ Contact* ContactItemWidget::getContact()
 void ContactItemWidget::showContext(const QPoint& pos)
 {
    if (!m_pMenu) {
-      m_pMenu = new QMenu(this);
-      m_pMenu->addAction(m_pCallAgain);
-      m_pMenu->addAction(m_pEditContact);
-      m_pMenu->addAction(m_pAddPhone);
-      m_pMenu->addAction(m_pCopy);
-      m_pMenu->addAction(m_pEmail);
-      m_pMenu->addAction(m_pBookmark);
+      m_pMenu = new QMenu( this          );
+      m_pMenu->addAction( m_pCallAgain   );
+      m_pMenu->addAction( m_pEditContact );
+      m_pMenu->addAction( m_pAddPhone    );
+      m_pMenu->addAction( m_pCopy        );
+      m_pMenu->addAction( m_pEmail       );
+      m_pMenu->addAction( m_pBookmark    );
    }
    PhoneNumbers numbers = m_pContactKA->getPhoneNumbers();
    m_pBookmark->setEnabled(numbers.count() == 1);

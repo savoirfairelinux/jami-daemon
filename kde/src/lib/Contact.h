@@ -21,20 +21,25 @@
 #ifndef CONTACT_H
 #define CONTACT_H
 
-#include <QtGui/QListWidgetItem>
-#include <QtGui/QWidget>
+#include <QObject>
 
-#include <QPixmap>
+//Qt
+class QListWidgetItem;
+class QWidget;
+class QPixmap;
 
-#include <kabc/addressee.h>
-#include <kabc/picture.h>
-#include <kabc/phonenumber.h>
+//KDE
+namespace KABC {
+   class Addressee   ;
+   class Picture     ;
+   class PhoneNumber ;
+}
 
 #include "typedefs.h"
 
 /**
    @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
-   @author Jérémy Quentin <emmanuel.lepage@savoirfairelinux.com>
+   @author Emmanuel Lepage <emmanuel.lepage@savoirfairelinux.com>
 */
 class LIB_EXPORT Contact : public QObject{
    Q_OBJECT
@@ -85,6 +90,7 @@ public:
    virtual QString        getType()            const;
    virtual void           initItem();
 
+   //Setters
    virtual void setPhoneNumbers   (PhoneNumbers   );
    virtual void setFormattedName  (QString name   );
    virtual void setNickName       (QString name   );

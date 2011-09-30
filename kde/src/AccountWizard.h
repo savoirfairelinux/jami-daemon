@@ -22,11 +22,12 @@
 #define ACCOUNTWIZARD_H
 
 #include <QWizard>
-#include <QLabel>
-#include <QRadioButton>
-#include <QLineEdit>
-#include <QCheckBox>
 
+//Qt
+class QLabel;
+class QRadioButton;
+class QLineEdit;
+class QCheckBox;
 
 /**
    @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>

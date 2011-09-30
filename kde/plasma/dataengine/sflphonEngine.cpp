@@ -10,49 +10,34 @@
 #include "../../src/lib/sflphone_const.h"
  
 SFLPhoneEngine::SFLPhoneEngine(QObject* parent, const QVariantList& args)
-    : Plasma::DataEngine(parent, args), CallModelConvenience(ActiveCall)
+    : Plasma::DataEngine(parent, args)
 {
    Q_UNUSED(args)
-   initCall();
-   initHistory();
-
+   m_pModel = new CallModelConvenience(CallModelConvenience::ActiveCall);
+   m_pModel->initCall();
+   m_pModel->initHistory();
+   
    ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
 
-   connect(&callManager, SIGNAL(callStateChanged(const QString&, const QString&)),
-           this,         SLOT(callStateChangedSignal(const QString&, const QString&)));
-   connect(&callManager, SIGNAL(incomingCall(const QString&, const QString&, const QString&)),
-           this,         SLOT(incomingCallSignal(const QString&, const QString&)));
-   connect(&callManager, SIGNAL(conferenceCreated(const QString&)),
-           this,         SLOT(conferenceCreatedSignal(const QString&)));
-   connect(&callManager, SIGNAL(conferenceChanged(const QString&, const QString&)),
-           this,         SLOT(conferenceChangedSignal(const QString&, const QString&)));
-   connect(&callManager, SIGNAL(conferenceRemoved(const QString&)),
-           this,         SLOT(conferenceRemovedSignal(const QString&)));
-   connect(&callManager, SIGNAL(incomingMessage(const QString&, const QString&)),
-           this,         SLOT(incomingMessageSignal(const QString&, const QString&)));
-   connect(&callManager, SIGNAL(voiceMailNotify(const QString&, int)),
-           this,         SLOT(voiceMailNotifySignal(const QString&, int)));
-   connect(&configurationManager, SIGNAL(accountsChanged()),
-           this,         SLOT(accountChanged()));
-   connect(&configurationManager, SIGNAL(accountsChanged()),
-           getAccountList(), SLOT(updateAccounts()));
-    
-    //setMinimumPollingInterval(1000);
+   connect(m_pModel              , SIGNAL( callStateChanged(Call*))  , this , SLOT(callStateChangedSignal(Call*)  ));
+   connect(&callManager          , SIGNAL( incomingCall(Call*))      , this , SLOT(incomingCallSignal(Call*)      ));
+   connect(&callManager          , SIGNAL( conferenceCreated(Call*)) , this , SLOT(conferenceCreatedSignal(Call*) ));
+   connect(&callManager          , SIGNAL( conferenceChanged(Call*)) , this , SLOT(conferenceChangedSignal(Call*) ));
 }
  
 bool SFLPhoneEngine::sourceRequestEvent(const QString &name)
 {
-   if (name == "history") {
+   if      ( name == "history"     ) {
       updateHistory();
    }
-   else if (name == "calls") {
+   else if ( name == "calls"       ) {
       updateCallList();
    }
-   else if (name == "conferences") {
+   else if ( name == "conferences" ) {
       updateConferenceList();
    }
-   else if (name == "info") {
+   else if ( name == "info"        ) {
       updateInfo();
    }
    return true;//updateSourceEvent(name);
@@ -100,22 +85,22 @@ QString SFLPhoneEngine::getCallStateName(call_state state)
 
 void SFLPhoneEngine::updateHistory()
 {
-   foreach (Call* oldCall, getHistory()) {
-      historyCall[oldCall->getCallId()]["Name"] = oldCall->getPeerName();
-      historyCall[oldCall->getCallId()]["Number"] = oldCall->getPeerPhoneNumber();
-      historyCall[oldCall->getCallId()]["Date"] = oldCall->getStopTimeStamp();
+   foreach (Call* oldCall, m_pModel->getHistory()) {
+      historyCall[oldCall->getCallId()][ "Name"   ] = oldCall->getPeerName();
+      historyCall[oldCall->getCallId()][ "Number" ] = oldCall->getPeerPhoneNumber();
+      historyCall[oldCall->getCallId()][ "Date"   ] = oldCall->getStopTimeStamp();
       setData("history", I18N_NOOP(oldCall->getCallId()), historyCall[oldCall->getCallId()]);
    }
 }
 
 void SFLPhoneEngine::updateCallList()
 {
-   foreach (Call* call, getCalls()) {
-      if ((!isConference(call)) && (call->getState() != CALL_STATE_OVER)) {
-         currentCall[call->getCallId()]["Name"] = call->getPeerName();
-         currentCall[call->getCallId()]["Number"] = call->getPeerPhoneNumber();
-         currentCall[call->getCallId()]["StateName"] = getCallStateName(call->getState());
-         currentCall[call->getCallId()]["State"] = call->getState();
+   foreach (Call* call, m_pModel->getCalls()) {
+      if ((!m_pModel->isConference(call)) && (call->getState() != CALL_STATE_OVER)) {
+         currentCall[call->getCallId()][ "Name"      ] = call->getPeerName();
+         currentCall[call->getCallId()][ "Number"    ] = call->getPeerPhoneNumber();
+         currentCall[call->getCallId()][ "StateName" ] = getCallStateName(call->getState());
+         currentCall[call->getCallId()][ "State"     ] = call->getState();
          setData("calls", call->getCallId(), currentCall[call->getCallId()]);
       }
    }
@@ -123,8 +108,8 @@ void SFLPhoneEngine::updateCallList()
 
 void SFLPhoneEngine::updateConferenceList()
 {
-   foreach (Call* call, getCalls()) {
-      if (isConference(call)) {
+   foreach (Call* call, m_pModel->getCalls()) {
+      if (m_pModel->isConference(call)) {
          CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
          currentConferences[call->getConfId()] = callManager.getParticipantList(call->getConfId());
          setData("conferences", call->getConfId(), currentConferences[call->getConfId()]);
@@ -139,52 +124,32 @@ void SFLPhoneEngine::updateContacts()
 
 void SFLPhoneEngine::updateInfo() 
 {
-   qDebug() << "Currentaccount: " << getCurrentAccountId();
-   setData("info", I18N_NOOP("Account"), getCurrentAccountId());
+   qDebug() << "Currentaccount: " << m_pModel->getCurrentAccountId();
+   setData("info", I18N_NOOP("Account"), m_pModel->getCurrentAccountId());
 }
 
-void SFLPhoneEngine::callStateChangedSignal(const QString& callId, const QString& state)
+void SFLPhoneEngine::callStateChangedSignal(Call* call)
 {
-   qDebug() << "Signal : Call State Changed for call  " << callId << " . New state : " << state;
-   Call* call = findCallByCallId(callId);
-   if(!call) {
-      if(state == CALL_STATE_CHANGE_RINGING) {
-         call = addRingingCall(callId);
-         //addCallToCallList(call);
-      }
-      else {
-         qDebug() << "Call doesn't exist in this client. Might have been initialized by another client instance before this one started.";
-         return;
-      }
-   }
-   else {
-      call->stateChanged(state);
-   }
+   Q_UNUSED(call)
    updateCallList();
 }
 
-void SFLPhoneEngine::incomingCallSignal(const QString& accountId, const QString& callId)
+void SFLPhoneEngine::incomingCallSignal(Call* call)
 {
-   Q_UNUSED(accountId)
-   addIncomingCall(callId);
+   Q_UNUSED(call)
    updateCallList();
 }
 
-void SFLPhoneEngine::conferenceCreatedSignal(const QString& confId)
+void SFLPhoneEngine::conferenceCreatedSignal(Call* conf)
 {
-   addConference(confId);
+   Q_UNUSED(conf)
    updateConferenceList();
 }
 
-void SFLPhoneEngine::conferenceChangedSignal(const QString& confId, const QString& state)
+void SFLPhoneEngine::conferenceChangedSignal(Call* conf)
 {
-   conferenceChanged(confId, state);
+   Q_UNUSED(conf)
    updateConferenceList();
-}
-
-void SFLPhoneEngine::conferenceRemovedSignal(const QString& confId)
-{
-   conferenceRemoved(confId);
 }
 
 void SFLPhoneEngine::incomingMessageSignal(const QString& accountId, const QString& message)

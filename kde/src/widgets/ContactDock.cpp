@@ -7,6 +7,10 @@
 #include <QtGui/QHeaderView>
 #include <QtGui/QCheckBox>
 #include <QtCore/QDateTime>
+#include <QSplitter>
+#include <klineedit.h>
+#include <KLocalizedString>
+#include <QtGui/QLabel>
 
 #include <akonadi/collectionfilterproxymodel.h>
 #include <akonadi/contact/contactstreemodel.h>
@@ -16,22 +20,25 @@
 #include <kabc/picture.h>
 #include <kabc/phonenumber.h>
 #include <kabc/vcard.h>
-#include <kabc/addressee.h>
 #include <kabc/field.h>
 #include <kabc/vcardline.h>
 #include <kabc/contactgroup.h>
-#include <kabc/phonenumber.h>
 #include <akonadi/itemfetchscope.h>
 #include <akonadi/entitydisplayattribute.h>
 #include <akonadi/recursiveitemfetchjob.h>
 #include <kicon.h>
+#include <akonadi/entitytreeview.h>
+#include <akonadi/itemview.h>
+#include <akonadi/collectioncombobox.h>
 
 #include "AkonadiBackend.h"
 #include "ContactItemWidget.h"
 #include "conf/ConfigurationSkeleton.h"
 #include "lib/Call.h"
 #include "SFLPhone.h"
+#include "lib/Contact.h"
 
+///Hack around Qt sorting limitation
 class QNumericTreeWidgetItem_hist : public QTreeWidgetItem {
    public:
       QNumericTreeWidgetItem_hist(QTreeWidget* parent):QTreeWidgetItem(parent),widget(0),weight(-1){}
@@ -52,8 +59,22 @@ class QNumericTreeWidgetItem_hist : public QTreeWidgetItem {
       }
 };
 
+///Forward keypresses to the filter line edit
+bool KeyPressEaterC::eventFilter(QObject *obj, QEvent *event)
+{
+   if (event->type() == QEvent::KeyPress) {
+      m_pDock->keyPressEvent((QKeyEvent*)event);
+      return true;
+   } else {
+      // standard event processing
+      return QObject::eventFilter(obj, event);
+   }
+}
+
+///Constructor
 ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
 {
+   setObjectName("contactDock");
    m_pFilterLE     = new KLineEdit   (                   );
    m_pSplitter     = new QSplitter   ( Qt::Vertical,this );
    m_pSortByCBB    = new QComboBox   ( this              );
@@ -69,19 +90,21 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
    QWidget* mainWidget = new QWidget(this);
    setWidget(mainWidget);
 
-   m_pContactView->headerItem()->setText(0,"Contacts");
+   m_pContactView->headerItem()->setText(0,i18n("Contacts"));
    m_pContactView->header()->setClickable(true);
    m_pContactView->header()->setSortIndicatorShown(true);
    m_pContactView->setAcceptDrops(true);
    m_pContactView->setDragEnabled(true);
+   KeyPressEaterC *keyPressEater = new KeyPressEaterC(this);
+   m_pContactView->installEventFilter(keyPressEater);
 
    m_pContactView->setAlternatingRowColors(true);
 
-   m_pFilterLE->setPlaceholderText("Filter");
+   m_pFilterLE->setPlaceholderText(i18n("Filter"));
    m_pFilterLE->setClearButtonShown(true);
 
    m_pShowHistoCK->setChecked(ConfigurationSkeleton::displayContactCallHistory());
-   m_pShowHistoCK->setText("Display history");
+   m_pShowHistoCK->setText(i18n("Display history"));
 
    setHistoryVisible(ConfigurationSkeleton::displayContactCallHistory());
 
@@ -101,14 +124,16 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
    connect (m_pContactView,               SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),this,        SLOT(loadContactHistory(QTreeWidgetItem*) ));
    connect (m_pFilterLE,                  SIGNAL(textChanged(QString)),                                  this,        SLOT(filter(QString)                      ));
    connect (m_pShowHistoCK,               SIGNAL(toggled(bool)),                                         this,        SLOT(setHistoryVisible(bool)              ));
-   setWindowTitle("Contact");
+   setWindowTitle(i18n("Contact"));
 }
 
+///Destructor
 ContactDock::~ContactDock()
 {
 
 }
 
+///Reload the contact
 void ContactDock::reloadContact()
 {
    ContactList list = AkonadiBackend::getInstance()->update();
@@ -139,6 +164,7 @@ void ContactDock::reloadContact()
    }
 }
 
+///Query the call history for all items related to this contact
 void ContactDock::loadContactHistory(QTreeWidgetItem* item)
 {
    if (m_pShowHistoCK->isChecked()) {
@@ -158,6 +184,7 @@ void ContactDock::loadContactHistory(QTreeWidgetItem* item)
    }
 }
 
+///Filter contact
 void ContactDock::filter(QString text)
 {
    foreach(ContactItemWidget* item, m_pContacts) {
@@ -174,6 +201,7 @@ void ContactDock::filter(QString text)
    m_pContactView->expandAll();
 }
 
+///Serialize informations to be used for drag and drop
 QMimeData* ContactTree::mimeData( const QList<QTreeWidgetItem *> items) const
 {
    qDebug() << "An history call is being dragged";
@@ -199,6 +227,7 @@ QMimeData* ContactTree::mimeData( const QList<QTreeWidgetItem *> items) const
    return mimeData;
 }
 
+///Handle data being dropped on the widget
 bool ContactTree::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action)
 {
    Q_UNUSED(index)
@@ -212,9 +241,22 @@ bool ContactTree::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeDa
    return false;
 }
 
+///Show or hide the history list 
 void ContactDock::setHistoryVisible(bool visible)
 {
    qDebug() << "Toggling history visibility";
    m_pCallView->setVisible(visible);
    ConfigurationSkeleton::setDisplayContactCallHistory(visible);
+}
+
+///Handle keypresses ont the dock
+void ContactDock::keyPressEvent(QKeyEvent* event) {
+   int key = event->key();
+   if(key == Qt::Key_Escape)
+      m_pFilterLE->setText(QString());
+   else if(key == Qt::Key_Return || key == Qt::Key_Enter) {}
+   else if((key == Qt::Key_Backspace) && (m_pFilterLE->text().size()))
+      m_pFilterLE->setText(m_pFilterLE->text().left( m_pFilterLE->text().size()-1 ));
+   else if (!event->text().isEmpty() && !(key == Qt::Key_Backspace))
+      m_pFilterLE->setText(m_pFilterLE->text()+event->text());
 }

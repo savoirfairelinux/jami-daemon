@@ -21,25 +21,27 @@
 #ifndef CONTACTITEMWIDGET_H
 #define CONTACTITEMWIDGET_H
 
+#include <QtGui/QWidget>
 #include <QtCore/QList>
 #include <QtCore/QVariant>
 #include <QtCore/QVector>
+#include "lib/Contact.h"
 
-#include <QtGui/QWidget>
-#include <QtGui/QLabel>
-#include <QtGui/QSpacerItem>
-#include <QtGui/QHBoxLayout>
-#include <QtGui/QVBoxLayout>
-#include <KIcon>
-#include <kabc/addressee.h>
-#include <kabc/picture.h>
-#include <kabc/phonenumber.h>
-
-#include <lib/Contact.h>
-
+//Qt
+class QLabel;
 class QTreeWidgetItem;
-class KAction;
 class QMenu;
+
+//KDE
+class KAction;
+class KIcon;
+
+namespace KABC {
+   class Addressee;
+}
+
+//SFLPhone
+class Contact;
 
 class ContactItemWidget : public QWidget
 {

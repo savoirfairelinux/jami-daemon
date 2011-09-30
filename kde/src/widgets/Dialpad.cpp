@@ -22,7 +22,10 @@
 
 #include <QLabel>
 #include <QDebug>
+#include <QPushButton>
+#include <QGridLayout>
 
+///Constructor
 Dialpad::Dialpad(QWidget *parent)
  : QWidget(parent)
 {
@@ -55,33 +58,33 @@ Dialpad::Dialpad(QWidget *parent)
    pushButton_diese->setObjectName(QString::fromUtf8("pushButton_diese"));
    pushButton_etoile->setObjectName(QString::fromUtf8("pushButton_etoile"));
    
-   gridLayout->addWidget(pushButton_1, 0, 0);
-   gridLayout->addWidget(pushButton_2, 0, 1);
-   gridLayout->addWidget(pushButton_3, 0, 2);
-   gridLayout->addWidget(pushButton_4, 1, 0);
-   gridLayout->addWidget(pushButton_5, 1, 1);
-   gridLayout->addWidget(pushButton_6, 1, 2);
-   gridLayout->addWidget(pushButton_7, 2, 0);
-   gridLayout->addWidget(pushButton_8, 2, 1);
-   gridLayout->addWidget(pushButton_9, 2, 2);
-   gridLayout->addWidget(pushButton_etoile, 3, 0);
-   gridLayout->addWidget(pushButton_0, 3, 1);
-   gridLayout->addWidget(pushButton_diese, 3, 2);
+   gridLayout->addWidget(pushButton_1      , 0, 0 );
+   gridLayout->addWidget(pushButton_2      , 0, 1 );
+   gridLayout->addWidget(pushButton_3      , 0, 2 );
+   gridLayout->addWidget(pushButton_4      , 1, 0 );
+   gridLayout->addWidget(pushButton_5      , 1, 1 );
+   gridLayout->addWidget(pushButton_6      , 1, 2 );
+   gridLayout->addWidget(pushButton_7      , 2, 0 );
+   gridLayout->addWidget(pushButton_8      , 2, 1 );
+   gridLayout->addWidget(pushButton_9      , 2, 2 );
+   gridLayout->addWidget(pushButton_etoile , 3, 0 );
+   gridLayout->addWidget(pushButton_0      , 3, 1 );
+   gridLayout->addWidget(pushButton_diese  , 3, 2 );
    
    fillButtons();
    
    QMetaObject::connectSlotsByName(this);
 }
 
-
+///Make the buttons
 void Dialpad::fillButtons()
 {
    QHBoxLayout * layout;
    QLabel * number;
    QLabel * text;
-   int spacing = 5;
-   int numberSize = 14;
-   int textSize = 8;
+   int spacing    = 5  ;
+   int numberSize = 14 ;
+   int textSize   = 8  ;
    
    QPushButton * buttons[12] = 
        {pushButton_1,      pushButton_2,   pushButton_3, 
@@ -117,6 +120,7 @@ void Dialpad::fillButtons()
    }
 }
 
+///Slots
 void Dialpad::on_pushButton_1_clicked()      { emit typed("1"); }
 void Dialpad::on_pushButton_2_clicked()      { emit typed("2"); }
 void Dialpad::on_pushButton_3_clicked()      { emit typed("3"); }

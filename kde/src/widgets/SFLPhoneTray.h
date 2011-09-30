@@ -23,9 +23,13 @@
 #define SFLPHONETRAY_H
 
 #include <KSystemTrayIcon>
-#include <KAction>
-#include <QMenu>
-#include <QIcon>
+
+//KDE
+class KAction;
+
+//Qt
+class QMenu;
+class QIcon;
 
 class SFLPhoneTray : public KSystemTrayIcon
 {

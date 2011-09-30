@@ -1,3 +1,18 @@
+#include <QHash>
+#include <QVector>
+#include <QDragEnterEvent>
+#include <QDebug>
+#include "Call.h"
+#include "AccountList.h"
+#include "dbus/metatypes.h"
+#include "callmanager_interface_singleton.h"
+#include "configurationmanager_interface_singleton.h"
+#include "instance_interface_singleton.h"
+#include "sflphone_const.h"
+#include "unistd.h"
+#include "typedefs.h"
+#include "ContactBackend.h"
+
 //Static member
 template  <typename CallWidget, typename Index> QString CallModel<CallWidget,Index>::m_pPriorAccountId   = ""    ;
 template  <typename CallWidget, typename Index> AccountList* CallModel<CallWidget,Index>::m_pAccountList = 0     ;
@@ -20,7 +35,7 @@ template  <typename CallWidget, typename Index> typename CallModel<CallWidget,In
  ****************************************************************************/
 
 ///Retrieve current and older calls from the daemon, fill history and the calls TreeView and enable drag n' drop
-template<typename CallWidget, typename Index> CallModel<CallWidget,Index>::CallModel(ModelType type)
+template<typename CallWidget, typename Index> CallModel<CallWidget,Index>::CallModel(ModelType type) : CallModelBase(0)
 {
    Q_UNUSED(type)
    init();
@@ -63,6 +78,12 @@ template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::
    }
    m_pCallInit = true;
    return true;
+}
+
+///Set how the call can find more informations about the call it receive
+template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::initContact ( ContactBackend* be )
+{
+   Call::setContactBackend(be);
 }
 
 ///Fill the history list
@@ -143,7 +164,7 @@ template<typename CallWidget, typename Index> Call* CallModel<CallWidget,Index>:
    m_pPrivateCallList_callId[call->getCallId()] = aNewStruct;
 
    //setCurrentItem(callItem);
-   
+   CallModelBase::addCall(call,parent);
    return call;
 }
 
@@ -245,9 +266,10 @@ template<typename CallWidget, typename Index> Call* CallModel<CallWidget,Index>:
    
    InternalStruct* aNewStruct = new InternalStruct;
    aNewStruct->call_real = newConf;
+   aNewStruct->conference = true;
    
-   m_pPrivateCallList_call[newConf] = aNewStruct;
-   m_pPrivateCallList_callId[newConf->getConfId()] = aNewStruct; //WARNING It may break something is it is done wrong
+   m_pPrivateCallList_call[newConf]  = aNewStruct;
+   m_pPrivateCallList_callId[confID] = aNewStruct;
    
    return newConf;
 }
@@ -292,7 +314,7 @@ template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::
 }
 
 ///Executed when the daemon signal a modification in an existing conference. Update the call list and update the TreeView
-template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::conferenceChanged(const QString& confId, const QString& state) 
+template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::changeConference(const QString& confId, const QString& state)
 {
    qDebug() << "Conf changed2";
    Q_UNUSED(state)
@@ -310,7 +332,7 @@ template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::
 }
 
 ///Remove a conference from the model and the TreeView
-template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::conferenceRemoved(const QString &confId) 
+template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::removeConference(const QString &confId)
 {
    qDebug() << "Ending conversation containing " << m_pPrivateCallList_callId[confId]->children.size() << " participants";
    removeConference(getCall(confId));
@@ -539,7 +561,7 @@ template<typename CallWidget, typename Index> QList<Call*> CallModel<CallWidget,
 
 ///Update the index associated with this call                      
 template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::updateIndex      (Call* call, Index value      )
-{ 
+{
    if (!m_pPrivateCallList_call[call]) {
       m_pPrivateCallList_call[call] = new InternalStruct;
       m_pPrivateCallList_call[call]->call_real = call;

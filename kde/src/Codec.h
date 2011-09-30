@@ -17,7 +17,7 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
 #ifndef CODEC_H
 #define CODEC_H
 
@@ -31,36 +31,31 @@ class Codec : public QObject
 {
 Q_OBJECT
 private:
-   QString payload;
-   QString name;
-   QString frequency;
-   QString bitrate;
-   QString bandwidth;
+   QString payload   ;
+   QString name      ;
+   QString frequency ;
+   QString bitrate   ;
+   QString bandwidth ;
    bool enabled;
 
 public:
    Codec(int payload, bool enabled);
-//    Codec(const Codec & codec);
-
-//    ~Codec();
     
-   QString getPayload() const;
-   QString getName() const;
-   QString getFrequency() const;
-   QString getBitrate() const;
-   QString getBandwidth() const;
-   bool isEnabled() const;
+   QString getPayload   () const;
+   QString getName      () const;
+   QString getFrequency () const;
+   QString getBitrate   () const;
+   QString getBandwidth () const;
+   bool isEnabled       () const;
    
-   void setPayload(QString payload);
-   void setName(QString name);
-   void setFrequency(QString frequency);
-   void setBitrate(QString bitrate);
-   void setBandwidth(QString bandwidth);
-   void setEnabled(bool enabled);
+   void setPayload   ( QString payload   );
+   void setName      ( QString name      );
+   void setFrequency ( QString frequency );
+   void setBitrate   ( QString bitrate   );
+   void setBandwidth ( QString bandwidth );
+   void setEnabled   ( bool enabled      );
    
    Codec & operator=(const Codec&);
-
-   
 };
 
 #endif

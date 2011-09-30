@@ -17,55 +17,47 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
 
 #ifndef SFLPHONEVIEW_H
 #define SFLPHONEVIEW_H
 
-#include <QtGui/QWidget>
-#include <QtCore/QString>
+#include "ui_SFLPhoneView_base.h"
 #include <QtCore/QVector>
 #include <QtCore/QList>
-#include <QtGui/QKeyEvent>
-#include <QErrorMessage>
-#include <KXmlGuiWindow>
+#include <QtGui/QWidget>
 
-#include "ui_SFLPhoneView_base.h"
-#include "conf/ConfigurationDialog.h"
-#include "widgets/CallTreeItem.h"
-#include "AccountWizard.h"
-#include "lib/Contact.h"
-#include "lib/AccountList.h"
-#include "CallView.h"
+//Qt
+class QString;
+class QKeyEvent;
+class QErrorMessage;
+class QListWidget;
 
+//SFLPhone
 class ConfigurationDialog;
+class AccountWizard;
+class CallView;
 
 
-/**
- * This is the main view class for sflphone-client-kde.  Most of the non-menu,
- * non-toolbar, and non-statusbar (e.g., non frame) GUI code should go
- * here.
- * As the state of the view has effects on the window,
- * it emits some signals to ask for changes that the window has
- * to treat.
- *
- * @short Main view
- * @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
- * @version 0.9.6
+/**                                                                             
+ * This is the main view class for sflphone-client-kde.  Most of the non-menu,  
+ * non-toolbar, and non-statusbar (e.g., non frame) GUI code should go          
+ * here.                                                                        
+ * As the state of the view has effects on the window,                          
+ * it emits some signals to ask for changes that the window has                 
+ * to treat.                                                                    
+ *                                                                              
+ * @short Main view                                                             
+ * @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>                 
+ * @version 0.9.6                                                               
  */
 class SFLPhoneView : public QWidget, public Ui::SFLPhone_view
 {
    Q_OBJECT
     
 private:
-
-   //static ConfigurationDialog * configDialog;
    AccountWizard * wizard;
-   //List of calls in the window, and past ones.
-   //Handles both current calls (dialing, ringing...) and history.
-   //CallList * callList;
    QErrorMessage * errorWindow;
-   //Account used prioritary if defined and registered. If not, the first registered account in accountList is used.
 
 protected:
    
@@ -103,19 +95,6 @@ public:
    * chosen to be displayed in SFLphone configuration.
    */
    int phoneNumberTypesDisplayed();
-   
-   /**
-    * 
-    * @return true if the address book is enabled in config
-    */
-   //bool isAddressBookEnabled();
-   
-   //QVector<Contact *> findContactsInKAddressBook(QString textSearched, bool & full);
-   
-   /**
-    *   Save the settings to save in the daemon before exit
-    */
-   void saveState();
 
 private slots:
    /**
@@ -175,13 +154,6 @@ private slots:
    void editBeforeCall();
    
    /**
-    *   Alternates colors of the list widget with the application's palettes's
-    *   base and alternateBase colors.
-    * @param listWidget the list widget to which we alternate colors
-    */
-   void alternateColors(QListWidget * listWidget);
-   
-   /**
     *   Updates the toolbar's actions' display according to the selected 
     *   item's state.
     */
@@ -192,12 +164,12 @@ private slots:
     * text searched. 
     * If empty, hide the search bar.
     */
-   void updateRecordButton();
-   void updateVolumeButton();
-   void updateRecordBar();
-   void updateVolumeBar();
-   void updateVolumeControls();
-   void updateDialpad();
+   void updateRecordButton   ();
+   void updateVolumeButton   ();
+   void updateRecordBar      ();
+   void updateVolumeBar      ();
+   void updateVolumeControls ();
+   void updateDialpad        ();
    
 
 public slots:
@@ -223,7 +195,7 @@ public slots:
       else
       {
          QString text = event->text();
-         if(! event->text().isEmpty())
+         if(! text.isEmpty())
          {
             typeString(text);
          }
@@ -234,46 +206,35 @@ public slots:
    void displayDialpad(bool checked = true);
    void configureSflPhone();
    void accountCreationWizard();
-   void accept();
-   void refuse();
-   void hold();
-   void transfer();
-   void record();
-   void mailBox();
+   void accept   ();
+   void refuse   ();
+   void hold     ();
+   void transfer ();
+   void record   ();
+   void mailBox  ();
    
    void on_widget_dialpad_typed(QString text);
    
-   void on_slider_recVol_valueChanged(int value);
-   void on_slider_sndVol_valueChanged(int value);
+   void on_slider_recVol_valueChanged ( int value    );
+   void on_slider_sndVol_valueChanged ( int value    );
+   void on_toolButton_recVol_clicked  ( bool checked );
+   void on_toolButton_sndVol_clicked  ( bool checked );
    
-   void on_toolButton_recVol_clicked(bool checked);
-   void on_toolButton_sndVol_clicked(bool checked);
-   
-   //void on_callTree_currentItemChanged();
-   //void on_callTree_itemChanged();
-   //void on_callTree_itemDoubleClicked(QTreeWidgetItem* item, int column);
-   
-   void on1_callStateChanged(const QString &callID, const QString &state);
    void on1_error(MapStringString details);
-   void on1_incomingCall(const QString &accountID, const QString &callID/*, const QString &from*/);
-   //void on1_incomingMessage(const QString &accountID, const QString &message);
+   void on1_incomingCall(Call* call);
    void on1_voiceMailNotify(const QString &accountID, int count);
    void on1_volumeChanged(const QString &device, double value);
-   //void on1_audioManagerChanged();
-   void on1_incomingConference(const QString &confID);
-   void on1_changingConference(const QString &confID, const QString &state);
-   void on1_conferenceRemoved(const QString &confId);
    void changeScreen(int screen);
    
 signals:
-   void statusMessageChangeAsked(const QString & message);
-   void windowTitleChangeAsked(const QString & title);
-   void enabledActionsChangeAsked(const bool * enabledActions);
-   void actionIconsChangeAsked(const QString * actionIcons);
-   void actionTextsChangeAsked(const QString * actionTexts);
-   void transferCheckStateChangeAsked(bool transferCheckState);
-   void recordCheckStateChangeAsked(bool recordCheckState);
-   void addressBookEnableAsked(bool enableAddressBook);
+   void statusMessageChangeAsked      ( const QString&  message            );
+   void windowTitleChangeAsked        ( const QString&  title              );
+   void enabledActionsChangeAsked     ( const bool*     enabledActions     );
+   void actionIconsChangeAsked        ( const QString*  actionIcons        );
+   void actionTextsChangeAsked        ( const QString*  actionTexts        );
+   void transferCheckStateChangeAsked ( bool            transferCheckState );
+   void recordCheckStateChangeAsked   ( bool            recordCheckState   );
+   void addressBookEnableAsked        ( bool            enableAddressBook  );
    void screenChanged(int screen);
    void incomingCall(const Call * call);
    

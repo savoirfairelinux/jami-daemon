@@ -3,10 +3,16 @@
 
 #include <QtGui/QDockWidget>
 
+//Qt
 class QTreeWidget;
-class KLineEdit;
 class QSplitter;
+
+//KDE
+class KLineEdit;
+
+//SFLPhonr
 class HistoryTreeItem;
+
 typedef QList<HistoryTreeItem*> BookmarkList;
 class BookmarkDock : public QDockWidget {
    Q_OBJECT
