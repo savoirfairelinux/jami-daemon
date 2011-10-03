@@ -40,6 +40,7 @@ class AVCodecContext;
 class AVStream;
 class AVFormatContext;
 class AVFrame;
+class AVCodec;
 
 namespace sfl_video {
 
@@ -49,7 +50,7 @@ class VideoSendThread : public ost::Thread {
         void forcePresetX264();
         void print_and_save_sdp();
         void setup();
-        void prepareEncoderContext();
+        void prepareEncoderContext(AVCodec *encoder);
         void createScalingContext();
         ost::Event sdpReady_;
 

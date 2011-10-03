@@ -273,7 +273,7 @@ void VideoReceiveThread::setup()
         }
 
         // retrieve stream information
-        if (av_find_stream_info(inputCtx_) < 0)
+        if (avformat_find_stream_info(inputCtx_, NULL) < 0)
         {
             _error("%s:Could not find stream info!", __PRETTY_FUNCTION__);
             ost::Thread::exit();
@@ -305,7 +305,7 @@ void VideoReceiveThread::setup()
             ost::Thread::exit();
         }
 
-        if (avcodec_open(decoderCtx_, inputDecoder) < 0)
+        if (avcodec_open2(decoderCtx_, inputDecoder, NULL) < 0)
         {
             _error("%s:Could not open codec!", __PRETTY_FUNCTION__);
             ost::Thread::exit();

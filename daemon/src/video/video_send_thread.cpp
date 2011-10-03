@@ -63,7 +63,7 @@ namespace sfl_video {
 void VideoSendThread::print_and_save_sdp()
 {
     size_t sdp_size = outputCtx_->streams[0]->codec->extradata_size + 2048;
-    char *sdp = reinterpret_cast<char*>(malloc(sdp_size)); /* theora sdp can be huge */
+    char *sdp = new char[sdp_size]; /* theora sdp can be huge */
     _debug("VideoSendThread:sdp_size: %d", sdp_size);
     av_sdp_create(&outputCtx_, 1, sdp, sdp_size);
     std::istringstream iss(sdp);
@@ -76,7 +76,7 @@ void VideoSendThread::print_and_save_sdp()
         sdp_ += line + "\n";
     }
     _debug("%s", sdp_.c_str());
-    free(sdp);
+    delete [] sdp;
     sdpReady_.signal();
 }
 
@@ -91,9 +91,9 @@ void VideoSendThread::forcePresetX264()
     av_set_options_string(encoderCtx_, x264_preset_ultrafast, "=", "\n");
 }
 
-void VideoSendThread::prepareEncoderContext()
+void VideoSendThread::prepareEncoderContext(AVCodec *encoder)
 {
-    encoderCtx_ = avcodec_alloc_context();
+    encoderCtx_ = avcodec_alloc_context3(encoder);
     // set some encoder settings here
     encoderCtx_->bit_rate = atoi(args_["bitrate"].c_str());
     // emit one intra frame every gop_size frames
@@ -181,7 +181,7 @@ void VideoSendThread::setup()
         }
 
         // open codec
-        if (avcodec_open(inputDecoderCtx_, inputDecoder) < 0)
+        if (avcodec_open2(inputDecoderCtx_, inputDecoder, NULL) < 0)
         {
             _error("%s:Could not open codec!", __PRETTY_FUNCTION__);
             ost::Thread::exit();
@@ -210,7 +210,7 @@ void VideoSendThread::setup()
         ost::Thread::exit();
     }
 
-    prepareEncoderContext();
+    prepareEncoderContext(encoder);
 
     /* let x264 preset override our encoder settings */
     if (args_["codec"] == "libx264")
@@ -220,7 +220,7 @@ void VideoSendThread::setup()
 
     // open encoder
     
-    if (avcodec_open(encoderCtx_, encoder) < 0)
+    if (avcodec_open2(encoderCtx_, encoder, NULL) < 0)
     {
         _error("%s:Could not open encoder!", __PRETTY_FUNCTION__);
         ost::Thread::exit();
