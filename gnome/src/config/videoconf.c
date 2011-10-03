@@ -115,9 +115,9 @@ preview_is_running_cb(GObject *obj, GParamSpec *pspec, gpointer user_data)
     gboolean running = FALSE;
     g_object_get(obj, "running", &running, NULL);
     GtkButton *button = GTK_BUTTON(user_data);
-    if (running) {
+    if (running)
         gtk_button_set_label(button, _("_Stop"));
-    } else {
+    else {
         gtk_button_set_label(button, _("_Start"));
         preview = NULL;
     }
@@ -148,13 +148,13 @@ static void
 preview_button_clicked(GtkButton *button, gpointer data UNUSED)
 {
     preview_button = GTK_WIDGET(button);
-    if (g_strcmp0(gtk_button_get_label(button), _("_Start")) == 0) {
+    if (g_strcmp0(gtk_button_get_label(button), _("_Start")) == 0)
         dbus_start_video_preview(drawWidth, drawHeight);
-    } else { /* user clicked stop */
+    else { /* user clicked stop */
         if (!preview) /* preview was not created yet on the server */
             return ;
         video_renderer_stop(preview);
-	dbus_stop_video_preview();
+        dbus_stop_video_preview();
         preview = NULL;
     }
 }
@@ -756,26 +756,22 @@ on_drawarea_unrealize(GtkWidget *drawarea, gpointer data)
 GtkWidget* create_video_configuration()
 {
     // Main widget
-    GtkWidget *ret;
+    GtkWidget *vbox = gtk_vbox_new(FALSE, 10);
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
+
     // Sub boxes
-    GtkWidget *frame;
+    GtkWidget *frame, *table;
+    gnome_main_section_new_with_table(_("Video Manager"), &frame, &table, 1, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
-    ret = gtk_vbox_new (FALSE, 10);
-    gtk_container_set_border_width (GTK_CONTAINER (ret), 10);
-
-    GtkWidget *table;
-
-    gnome_main_section_new_with_table (_ ("Video Manager"), &frame, &table, 1, 5);
-    gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
-
-    gnome_main_section_new_with_table (_ ("Video4Linux2"), &frame, &table, 1, 4);
-    gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
+    gnome_main_section_new_with_table(_("Video4Linux2"), &frame, &table, 1, 4);
+    gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
     GtkWidget *v4l2box = v4l2_box();
     gtk_table_attach(GTK_TABLE(table), v4l2box, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 6);
 
-    gnome_main_section_new_with_table (_ ("Preview"), &frame, &table, 1, 2);
-    gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
+    gnome_main_section_new_with_table(_("Preview"), &frame, &table, 1, 2);
+    gtk_box_pack_start (GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
     preview_button = gtk_button_new_with_mnemonic(_("_Start"));
     gtk_widget_set_size_request(preview_button, 80, 30);
@@ -795,26 +791,29 @@ GtkWidget* create_video_configuration()
     if (active_call)
         gtk_widget_set_sensitive(GTK_WIDGET(preview_button), FALSE);
 
-    using_clutter = clutter_init(NULL, NULL) == CLUTTER_INIT_SUCCESS;
+    using_clutter = gtk_clutter_init(NULL, NULL) == CLUTTER_INIT_SUCCESS;
     if (using_clutter) {
         drawarea = gtk_clutter_embed_new();
+        gtk_widget_set_size_request(drawarea, drawWidth, drawHeight);
+        gtk_table_attach(GTK_TABLE(table), drawarea, 0, 1, 1, 2, 0, 0, 0, 6);
         if (!gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(drawarea))) {
+            DEBUG("Could not get stage, destroying");
             gtk_widget_destroy(drawarea);
-            using_clutter = 0;
+            using_clutter = FALSE;
         }
     }
-    if (!using_clutter) 
+    if (!using_clutter) {
         drawarea = gtk_drawing_area_new();
+        gtk_table_attach(GTK_TABLE(table), drawarea, 0, 1, 1, 2, 0, 0, 0, 6);
+    }
     g_signal_connect(drawarea, "unrealize", G_CALLBACK(on_drawarea_unrealize),
-            NULL);
-    gtk_widget_set_size_request (drawarea, drawWidth, drawHeight);
-    gtk_table_attach(GTK_TABLE(table), drawarea, 0, 1, 1, 2, 0, 0, 0, 6);
+                     NULL);
 
-    gtk_widget_show_all (ret);
+    gtk_widget_show_all(vbox);
 
     // get devices list from daemon *after* showing all widgets
     // that way we can show either the list, either the "no devices found" label
     fill_devices();
 
-    return ret;
+    return vbox;
 }

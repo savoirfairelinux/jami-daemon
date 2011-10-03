@@ -449,8 +449,8 @@ show_preferences_dialog ()
 
     // Video tab
     tab = create_video_configuration ();
-    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), tab, gtk_label_new (
-                                  _ ("Video")));
+    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), tab,
+                              gtk_label_new(_("Video")));
     gtk_notebook_page_num (GTK_NOTEBOOK (notebook), tab);
 
     // Hooks tab
