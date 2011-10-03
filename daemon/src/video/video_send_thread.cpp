@@ -64,7 +64,6 @@ void VideoSendThread::print_and_save_sdp()
 {
     size_t sdp_size = outputCtx_->streams[0]->codec->extradata_size + 2048;
     char *sdp = new char[sdp_size]; /* theora sdp can be huge */
-    _debug("VideoSendThread:sdp_size: %d", sdp_size);
     av_sdp_create(&outputCtx_, 1, sdp, sdp_size);
     std::istringstream iss(sdp);
     std::string line;
@@ -127,7 +126,7 @@ void VideoSendThread::setup()
     {
         AVInputFormat *file_iformat = 0;
         // it's a v4l device if starting with /dev/video
-        if (args_["input"].substr(0, strlen("/dev/video")) == "/dev/video")
+        if (args_["input"].substr(0, sizeof("/dev/video") - 1) == "/dev/video")
         {
             _debug("%s:Using v4l2 format", __PRETTY_FUNCTION__);
             file_iformat = av_find_input_format("video4linux2");
@@ -377,7 +376,7 @@ void VideoSendThread::run()
 
         // rescale pts from encoded video framerate to rtp
         // clock rate
-        if (encoderCtx_->coded_frame->pts != (int64_t)AV_NOPTS_VALUE)
+        if (encoderCtx_->coded_frame->pts != (int64_t) AV_NOPTS_VALUE)
             opkt.pts = av_rescale_q(encoderCtx_->coded_frame->pts,
                     encoderCtx_->time_base, videoStream_->time_base);
         else
@@ -449,9 +448,5 @@ VideoSendThread::~VideoSendThread()
     // close the video file
     if (inputCtx_)
         av_close_input_file(inputCtx_);
-
-    _debug("Finished %s", __PRETTY_FUNCTION__);
-
 }
-
 } // end namespace sfl_video

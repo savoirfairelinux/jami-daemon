@@ -118,11 +118,10 @@ int createShm(unsigned numBytes, int *shmKey)
 /* attach a shared memory segment */
 uint8_t *attachShm(int shm_id)
 {
-    uint8_t *data = NULL;
-
     /* attach to the segment and get a pointer to it */
-    data = reinterpret_cast<uint8_t*>(shmat(shm_id, (void *)0, 0));
-    if (data == (uint8_t *)(-1)) {
+    uint8_t *data = reinterpret_cast<uint8_t*>(shmat(shm_id, (void *)0, 0));
+    if (data == reinterpret_cast<uint8_t *>(-1))
+    {
         _error("%s:shmat:%m", __PRETTY_FUNCTION__);
         data = NULL;
     }
@@ -190,14 +189,15 @@ int VideoReceiveThread::createSemSet(int shmKey, int *semKey)
 
     do
 		key = ftok(get_program_dir(), rand());
-    while(key == shmKey);
+    while (key == shmKey);
 
     *semKey = key;
 
     /* first we create a semaphore set with a single semaphore, */
     /* whose counter is initialized to '0'.                     */
     sem_set_id = semget(key, 1, 0600 | IPC_CREAT);
-    if (sem_set_id == -1) {
+    if (sem_set_id == -1)
+    {
         _error("%s:semget:%m", __PRETTY_FUNCTION__);
         ost::Thread::exit();
     }
@@ -265,7 +265,8 @@ void VideoReceiveThread::setup()
             av_dict_set(&options, "channel", args_["channel"].c_str(), 0);
 
         // Open video file
-        if (avformat_open_input(&inputCtx_, args_["input"].c_str(), file_iformat, &options) != 0)
+        if (avformat_open_input(&inputCtx_, args_["input"].c_str(),
+                                file_iformat, &options) != 0)
         {
             _error("%s:Could not open input file \"%s\"", __PRETTY_FUNCTION__,
                     args_["input"].c_str());
@@ -389,71 +390,74 @@ VideoReceiveThread::VideoReceiveThread(const std::map<std::string, std::string> 
     setCancel(cancelDeferred);
 }
 
+void VideoReceiveThread::runAsTestSource()
+{
+    while (not testCancel())
+    {
+        // assign appropriate parts of buffer to image planes in scaledPicture
+        avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
+                       shmBuffer_, video_rgb_format, dstWidth_, dstHeight_);
+        const AVPixFmtDescriptor *pixdesc = &av_pix_fmt_descriptors[video_rgb_format];
+        int components = pixdesc->nb_components;
+        int planes = 0;
+        for (int i = 0; i < components; i++)
+            if (pixdesc->comp[i].plane > planes)
+                planes = pixdesc->comp[i].plane;
+        planes++;
+
+        int i = frameNumber_++;
+        const unsigned pitch = scaledPicture_->linesize[0];
+
+        for (int y = 0; y < dstHeight_; y++)
+            for (unsigned x=0; x < pitch; x++)
+                scaledPicture_->data[0][y * pitch + x] = x + y + i * planes;
+
+        /* signal the semaphore that a new frame is ready */
+        sem_signal(semSetID_);
+    }
+}
+
 void VideoReceiveThread::run()
 {
     setup();
 
-    if (!test_source_)
-        createScalingContext();
-
-    while (not testCancel())
+    if (test_source_)
+        runAsTestSource();
+    else
     {
-        AVPacket inpacket;
-        if (not test_source_)
+        createScalingContext();
+        while (not testCancel())
         {
+            AVPacket inpacket;
             errno = av_read_frame(inputCtx_, &inpacket);
-            if (errno < 0) {
+            if (errno < 0)
+            {
                 _error("Couldn't read frame : %m\n");
                 break;
             }
 
             // is this a packet from the video stream?
-            if (inpacket.stream_index != videoStreamIndex_)
-                goto next_packet;
+            if (inpacket.stream_index == videoStreamIndex_)
+            {
+                int frameFinished;
+                avcodec_decode_video2(decoderCtx_, rawFrame_, &frameFinished,
+                                      &inpacket);
+                if (frameFinished)
+                {
+                    avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
+                                   shmBuffer_, video_rgb_format, dstWidth_,
+                                   dstHeight_);
 
-            // decode video frame from camera
-            int frameFinished;
-            avcodec_decode_video2(decoderCtx_, rawFrame_, &frameFinished, &inpacket);
-            if (!frameFinished)
-                goto next_packet;
+                    sws_scale(imgConvertCtx_, rawFrame_->data, rawFrame_->linesize,
+                              0, decoderCtx_->height, scaledPicture_->data,
+                              scaledPicture_->linesize);
 
-            avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
-                    reinterpret_cast<uint8_t*>(shmBuffer_), video_rgb_format, dstWidth_, dstHeight_);
-
-            sws_scale(imgConvertCtx_, rawFrame_->data, rawFrame_->linesize,
-                    0, decoderCtx_->height, scaledPicture_->data,
-                    scaledPicture_->linesize);
+                    // signal the semaphore that a new frame is ready
+                    sem_signal(semSetID_);
+                }
+            }
+            av_free_packet(&inpacket);
         }
-        else
-        {
-            // assign appropriate parts of buffer to image planes in scaledPicture
-            avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
-                    reinterpret_cast<uint8_t*>(shmBuffer_), video_rgb_format, dstWidth_, dstHeight_);
-            const AVPixFmtDescriptor *pixdesc = &av_pix_fmt_descriptors[video_rgb_format];
-            int components = pixdesc->nb_components;
-            int planes = 0;
-            for (int i = 0; i < components; i++)
-                if (pixdesc->comp[i].plane > planes)
-                    planes = pixdesc->comp[i].plane;
-            planes++;
-
-            int i = frameNumber_++;
-            const unsigned pitch = scaledPicture_->linesize[0];
-
-            for (int y = 0; y < dstHeight_; y++)
-                for (unsigned x=0; x < pitch; x++)
-                    scaledPicture_->data[0][y * pitch + x] = x + y + i * planes;
-        }
-
-        /* signal the semaphore that a new frame is ready */ 
-        sem_signal(semSetID_);
-
-        if (test_source_)
-            continue;
-
-        // free the packet that was allocated by av_read_frame
-next_packet:
-        av_free_packet(&inpacket);
     }
 }
 
@@ -484,5 +488,4 @@ VideoReceiveThread::~VideoReceiveThread()
     if (inputCtx_)
         av_close_input_file(inputCtx_);
 }
-
 } // end namespace sfl_video

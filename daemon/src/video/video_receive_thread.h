@@ -76,6 +76,7 @@ class VideoReceiveThread : public ost::Thread {
         std::string sdpFilename_;
 
         void loadSDP();
+        void runAsTestSource();
 
     public:
         explicit VideoReceiveThread(const std::map<std::string, std::string> &args);
