@@ -370,7 +370,7 @@ GtkWidget *im_widget_display (const gchar *id)
     IMWidget *imwidget = IM_WIDGET(g_object_new (IM_WIDGET_TYPE, NULL));
     imwidget->call_id = id;
     im_widget_infobar (imwidget);
-    im_window_add (GTK_WIDGET (imwidget));
+    im_window_add (imwidget);
 
     return GTK_WIDGET(imwidget);
 }
