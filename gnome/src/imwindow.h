@@ -31,12 +31,8 @@
 #define __IMWINDOW_H__
 
 #include <gtk/gtk.h>
-#include <gtk/gtk.h>
 
-#include <widget/imwidget.h>
-
-#define IM_WINDOW_WIDTH 280
-#define IM_WINDOW_HEIGHT 320
+#include "widget/imwidget.h"
 
 /** @file imwindow.h
   * @brief The IM window of the client.
@@ -45,7 +41,7 @@
 /*!	@function
 @abstract	Add IM widget to the IM window
  */
-void im_window_add (GtkWidget *widget);
+void im_window_add (IMWidget *widget);
 
 /*! @function
  @abstract	Remove IM widget from the IM window
@@ -71,7 +67,7 @@ gint im_window_get_nb_tabs (void);
 @abstract	Add a new tab in the notebook. Each tab is an IM Widget
 @param		The IM widget
 */
-void im_window_add_tab (GtkWidget *widget);
+void im_window_add_tab (IMWidget *widget);
 
 /*! @function
 @abstract Select the specified tab as current in instant messaging window

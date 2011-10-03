@@ -30,14 +30,13 @@
  *  as that of the covered work.
  */
 
-#include <config.h>
-#include <gtk/gtk.h>
+#include "config.h"
 #include "eel-gconf-extensions.h"
-#include <sflphone_const.h>
+#include "sflphone_const.h"
 
-#include <imwindow.h>
-#include <contacts/calltab.h>
-#include <contacts/calltab.h>
+#include "imwindow.h"
+#include "contacts/calltab.h"
+#include "contacts/calltab.h"
 #include <sys/stat.h>
 
 /** Local variables */
@@ -47,12 +46,12 @@ static GtkWidget *im_notebook = NULL;
 
 static void im_window_init();
 
-static GtkWindow *im_window_get()
+static GtkWidget *im_window_get()
 {
     if (im_window == NULL)
         im_window_init();
 
-    return GTK_WINDOW(im_window);
+    return im_window;
 }
 
 static gboolean window_configure_cb (GtkWidget *wini UNUSED, GdkEventConfigure *event)
@@ -62,7 +61,7 @@ static gboolean window_configure_cb (GtkWidget *wini UNUSED, GdkEventConfigure *
     eel_gconf_set_integer (CONF_IM_WINDOW_WIDTH, event->width);
     eel_gconf_set_integer (CONF_IM_WINDOW_HEIGHT, event->height);
 
-    gtk_window_get_position (im_window_get(), &pos_x, &pos_y);
+    gtk_window_get_position (GTK_WINDOW(im_window_get()), &pos_x, &pos_y);
     eel_gconf_set_integer (CONF_IM_WINDOW_POSITION_X, pos_x);
     eel_gconf_set_integer (CONF_IM_WINDOW_POSITION_Y, pos_y);
 
@@ -76,7 +75,7 @@ static gboolean
 on_delete (GtkWidget * widget UNUSED, gpointer data UNUSED)
 {
     /* Only hide the main window that contains all the instant messaging instances */
-    gtk_widget_hide (GTK_WIDGET (im_window_get()));
+    gtk_widget_hide(im_window_get());
     return TRUE;
 }
 
@@ -152,15 +151,15 @@ im_window_is_active ()
 gboolean
 im_window_is_visible ()
 {
-    return gtk_widget_get_visible(GTK_WIDGET(im_window_get()));
+    return gtk_widget_get_visible(im_window_get());
 }
 
 void
-im_window_add (GtkWidget *widget)
+im_window_add (IMWidget *widget)
 {
     if (im_window_get()) {
         im_window_add_tab (widget);
-        gtk_widget_show_all (GTK_WIDGET(im_window_get()));
+        gtk_widget_show_all (im_window_get());
     }
 }
 
@@ -192,11 +191,8 @@ im_window_hide_show_tabs ()
 }
 
 void
-im_window_add_tab (GtkWidget *widget)
+im_window_add_tab (IMWidget *im)
 {
-    /* Cast the paramater */
-    IMWidget *im = IM_WIDGET (widget);
-
     /* Fetch the call */
     callable_obj_t *im_widget_call = calllist_get_call (current_calls, im->call_id);
     conference_obj_t *im_widget_conf = conferencelist_get (current_calls, im->call_id);
@@ -222,14 +218,14 @@ im_window_add_tab (GtkWidget *widget)
     gtk_container_add (GTK_CONTAINER (tab_CloseButton), gtk_image_new_from_stock (GTK_STOCK_CLOSE, GTK_ICON_SIZE_MENU));
 
     /* Connect a signal to the close button on each tab, to be able to close the tabs individually */
-    g_signal_connect (tab_CloseButton, "clicked", G_CALLBACK (close_tab_cb), widget);
+    g_signal_connect (tab_CloseButton, "clicked", G_CALLBACK (close_tab_cb), im);
 
     /* Show it */
     gtk_widget_show_all (im_notebook);
     gtk_widget_show_all (tab_Container);
 
     /* Add the page to the notebook */
-    guint tabIndex = gtk_notebook_append_page (GTK_NOTEBOOK (im_notebook), widget, tab_Container);
+    guint tabIndex = gtk_notebook_append_page(GTK_NOTEBOOK(im_notebook), GTK_WIDGET(im), tab_Container);
 
     /* TODO Switch to the newly opened tab. Still not working */
     DEBUG ("InstantMessaging: Switch to tab: %i", tabIndex);

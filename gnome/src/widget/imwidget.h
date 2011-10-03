@@ -71,7 +71,7 @@ struct _IMWidget {
 };
 
 struct _IMWidgetClass {
-    GtkContainerClass parent_class;
+    GtkVBoxClass parent_class;
 };
 
 
