@@ -22,8 +22,10 @@
 #define DIALPAD_H
 
 #include <QWidget>
-#include <QPushButton>
-#include <QGridLayout>
+
+//Qt
+class QPushButton;
+class QGridLayout;
 
 /**
 A widget that represents a phone dialpad, with numbers and letters associated.
@@ -35,19 +37,19 @@ class Dialpad : public QWidget
 Q_OBJECT
 
 private:
-   QGridLayout * gridLayout;
-   QPushButton * pushButton_0;
-   QPushButton * pushButton_1;
-   QPushButton * pushButton_2;
-   QPushButton * pushButton_3;
-   QPushButton * pushButton_4;
-   QPushButton * pushButton_5;
-   QPushButton * pushButton_6;
-   QPushButton * pushButton_7;
-   QPushButton * pushButton_8;
-   QPushButton * pushButton_9;
-   QPushButton * pushButton_diese;
-   QPushButton * pushButton_etoile;
+   QGridLayout* gridLayout;
+   QPushButton* pushButton_0;
+   QPushButton* pushButton_1;
+   QPushButton* pushButton_2;
+   QPushButton* pushButton_3;
+   QPushButton* pushButton_4;
+   QPushButton* pushButton_5;
+   QPushButton* pushButton_6;
+   QPushButton* pushButton_7;
+   QPushButton* pushButton_8;
+   QPushButton* pushButton_9;
+   QPushButton* pushButton_diese;
+   QPushButton* pushButton_etoile;
 
 public:
     Dialpad(QWidget *parent = 0);

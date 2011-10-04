@@ -6,6 +6,7 @@
 
 #include "typedefs.h"
 
+//SFLPhone
 class Contact;
 
 typedef QList<Contact*> ContactList;

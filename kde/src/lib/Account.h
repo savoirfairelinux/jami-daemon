@@ -22,8 +22,8 @@
 #ifndef ACCOUNT_H
 #define ACCOUNT_H
 
-#include <QtCore/QString>
-#include <QtGui/QColor>
+//Qt
+class QString;
 
 #include "typedefs.h"
 

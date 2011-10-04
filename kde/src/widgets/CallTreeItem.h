@@ -19,27 +19,22 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
-
-/**
- * http://doc.trolltech.com/4.5/itemviews-editabletreemodel.html
- */
-
+ **************************************************************************/
 #ifndef CALLTREE_ITEM_H
 #define CALLTREE_ITEM_H
 
-#include <QtCore/QList>
-#include <QtCore/QVariant>
 #include <QtCore/QVector>
-
+#include <QtCore/QList>
 #include <QtGui/QWidget>
-#include <QtGui/QLabel>
-#include <QtGui/QSpacerItem>
-#include <QtGui/QHBoxLayout>
-#include <QtGui/QVBoxLayout>
-#include <KIcon>
 
-#include "lib/Call.h"
+//Qt
+class QLabel;
+
+//KDE
+class KIcon;
+
+//SFLPhone
+class Call;
 
 class CallTreeItem : public QWidget
 {

@@ -1,7 +1,15 @@
 build
 *.moc
-src/moc_*.cpp
-src/ui_*.h
+moc_*.cpp
+ui_*.h
+lib/
+*.gmo
+*_automoc.cpp
+*.files
+man/index.html
+doc/index.cache.bz2
+src/sflphone-client-kde
+src/sflphone-client-kde.shell
 #po/
 #po/* 
 #doc/
@@ -11,7 +19,7 @@ CMakeCache.txt
 CMakeLists.txt.user
 CTestTestfile.cmake
 *.cmake
-CMakeFiles/*
+CMakeFiles/
 CMakeTmp/
 qtcreator-build/
 src/.directory

@@ -2,6 +2,7 @@
 
 #include <QtGui/QVBoxLayout>
 #include <QtGui/QTreeWidgetItem>
+#include <KLocalizedString>
 #include <kicon.h>
 #include <klineedit.h>
 #include <QtGui/QTreeWidget>
@@ -30,6 +31,7 @@ class QNumericTreeWidgetItem : public QTreeWidgetItem {
 
 BookmarkDock::BookmarkDock(QWidget* parent) : QDockWidget(parent)
 {
+   setObjectName("bookmarkDock");
    setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
    setMinimumSize(250,0);
    
@@ -49,8 +51,8 @@ BookmarkDock::BookmarkDock(QWidget* parent) : QDockWidget(parent)
    m_pSplitter->setChildrenCollapsible(true);
    m_pSplitter->setStretchFactor(0,7);
    
-   setWindowTitle("Bookmark");
-   m_pItemView->headerItem()->setText(0,"Bookmark" );
+   setWindowTitle(i18n("Bookmark"));
+   m_pItemView->headerItem()->setText(0,i18n("Bookmark") );
 
    foreach (QString nb, ConfigurationSkeleton::bookmarkList()) {
       addBookmark_internal(nb);

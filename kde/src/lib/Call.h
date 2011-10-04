@@ -17,19 +17,22 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
 
 
 #ifndef CALL_H
 #define CALL_H
 
-#include <QtCore/QString>
-#include <QtCore/QDateTime>
-#include <QtGui/QLabel>
-#include <QtGui/QWidget>
+//Qt
+class QString;
+class QDateTime;
+class QLabel;
+class QWidget;
 
 #include "sflphone_const.h"
 #include "typedefs.h"
+
+class ContactBackend;
 
 
 /** @enum daemon_call_state_t 
@@ -134,8 +137,9 @@ private:
    QLabel * labelHistoryTime;
    */
 
-   QString transferNumber;
-   QString callNumber;
+   QString m_pTransferNumber;
+   QString m_pCallNumber;
+   static ContactBackend* m_pContactBackend;
    
    bool conference;
    
@@ -212,6 +216,7 @@ public:
    static Call* buildRingingCall  (const QString & callId                                                                                                       );
    static Call* buildHistoryCall  (const QString & callId, uint startTimeStamp, uint stopTimeStamp, QString account, QString name, QString number, QString type );
    static Call* buildExistingCall (QString callId                                                                                                               );
+   static void  setContactBackend (ContactBackend* be                                                                                                           );
 
    //Static getters
    static history_state getHistoryStateFromType            ( QString type                                    );

@@ -22,23 +22,60 @@
 #define CALL_MODEL_H
 
 #include <QObject>
-#include <QHash>
 #include <QVector>
-#include <QDragEnterEvent>
-#include <QDebug>
-
-#include "Call.h"
-#include "AccountList.h"
-#include "dbus/metatypes.h"
-#include "callmanager_interface_singleton.h"
-#include "configurationmanager_interface_singleton.h"
-#include "instance_interface_singleton.h"
-#include "sflphone_const.h"
-#include "unistd.h"
+#include <QHash>
 #include "typedefs.h"
+
+//Qt
+class QDragEnterEvent;
+class QDebug;
+class QModelIndex;
+
+//SFLPhone
+class Call;
+class AccountList;
+class Account;
+class ContactBackend;
 
 typedef QHash<QString, Call*> CallHash;
 typedef QList<Call*>          CallList;
+
+///This class need to exist because template classes can't have signals ans
+///slots because Qt MOC generator can't guess the type at precompilation
+class LIB_EXPORT CallModelBase : public QObject
+{
+   Q_OBJECT
+public:
+   CallModelBase(QObject* parent = 0);
+   virtual bool changeConference  ( const QString &confId, const QString &state ) = 0;
+   virtual void removeConference  ( const QString &confId                       ) = 0;
+   virtual Call* addConference    ( const QString &confID                       ) = 0;
+   virtual Call* findCallByCallId ( QString callId                              ) = 0;
+   virtual Call* addRingingCall   ( const QString& callId                       ) = 0;
+   virtual Call* addIncomingCall  ( const QString& callId                       ) = 0;
+   virtual Call* addCall          ( Call* call           , Call* parent =0      );
+   virtual Call* getCall          ( const QString callId                        ) const = 0;
+public slots:
+   void on1_callStateChanged   ( const QString& callID    , const QString &state   );
+   void on1_incomingCall       ( const QString& accountID , const QString & callID );
+   void on1_incomingConference ( const QString& confID                             );
+   void on1_changingConference ( const QString& confID    , const QString &state   );
+   void on1_conferenceRemoved  ( const QString& confId                             );
+   void on1_voiceMailNotify    ( const QString& accountID , int count              );
+   void on1_volumeChanged      ( const QString& device    , double value           );
+private:
+   static bool dbusInit;
+signals:
+   void callStateChanged        (Call* call                              );
+   void incomingCall            (Call* call                              );
+   void conferenceCreated       (Call* conf                              );
+   void conferenceChanged       (Call* conf                              );
+   void conferenceRemoved       (const QString& confId                   );
+   void aboutToRemoveConference (Call* conf                              );
+   void voiceMailNotify         (const QString& accountID , int    count );
+   void volumeChanged           (const QString& device    , double value );
+   void callAdded               (Call* call               , Call* parent );
+};
 
 /**
  * Note from the author: It was previously done by a QAbstractModel + QTreeView, but the sip-call use case is incompatible  
@@ -46,8 +83,7 @@ typedef QList<Call*>          CallList;
  *  solution may be less "clean" than MVC, but is 3 time smaller and easier to improve (in fact, possible to improve).      
  */
 template  <typename CallWidget, typename Index>
-class LIB_EXPORT CallModel {
-   //Q_OBJECT
+class LIB_EXPORT CallModel : public CallModelBase {
    public:
       enum ModelType {
          ActiveCall,
@@ -56,10 +92,11 @@ class LIB_EXPORT CallModel {
       };
 
       //Constructors, initializer and destructors
-      CallModel                ( ModelType type );
-      virtual ~CallModel       (                ) {}
-      virtual bool initCall    (                );
-      virtual bool initHistory (                );
+      CallModel                ( ModelType type     );
+      virtual ~CallModel       (                    ) {}
+      virtual bool initCall    (                    );
+      virtual bool initHistory (                    );
+      virtual void initContact ( ContactBackend* be );
 
       //Call related
       virtual Call*  addCall         ( Call* call                , Call* parent =0    );
@@ -76,8 +113,8 @@ class LIB_EXPORT CallModel {
       bool mergeConferences          ( Call* conf1, Call* conf2                    );
       bool addParticipant            ( Call* call2, Call* conference               );
       bool detachParticipant         ( Call* call                                  );
-      virtual bool conferenceChanged ( const QString &confId, const QString &state );
-      virtual void conferenceRemoved ( const QString &confId                       );
+      virtual bool changeConference ( const QString &confId, const QString &state );
+      virtual void removeConference ( const QString &confId                       );
       virtual Call* addConference    ( const QString &confID                       );
       void removeConference          ( Call* call                                  );
 

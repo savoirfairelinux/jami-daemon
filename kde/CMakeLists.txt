@@ -30,3 +30,12 @@ add_subdirectory(doc)
 add_subdirectory(man)
 add_subdirectory(po)
 add_subdirectory(plasma)
+
+# make dist target, see:
+# https://agateau.wordpress.com/2009/08/09/cmake-and-make-dist-the-simple-version/
+set(PROJECT_VERSION "1.0.0")
+set(ARCHIVE_NAME ${CMAKE_PROJECT_NAME}-${PROJECT_VERSION})
+    add_custom_target(dist
+            COMMAND git archive --prefix=${ARCHIVE_NAME}/ HEAD
+            | gzip > ${CMAKE_BINARY_DIR}/${ARCHIVE_NAME}.tar.gz
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})

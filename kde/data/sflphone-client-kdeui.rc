@@ -30,6 +30,7 @@
 			<Action name="action_displayVolumeControls" />
 			<Action name="action_displayDialpad" />
 			<Separator />
+                        <Action name="action_configureShortcut" />
 			<Action name="action_configureSflPhone" />
 			<Separator />
 			<Action name="action_accountCreationWizard" />

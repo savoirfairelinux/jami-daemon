@@ -27,41 +27,58 @@
 #include "lib/sflphone_const.h"
 #include "CallTreeItem.h"
 #include "lib/Contact.h"
+#include "lib/Call.h"
 #include "AkonadiBackend.h"
 
+#include <QtCore/QList>
+#include <QtCore/QVariant>
+#include <QtCore/QVector>
+
+#include <QtGui/QWidget>
+#include <QtGui/QLabel>
+#include <QtGui/QSpacerItem>
+#include <QtGui/QHBoxLayout>
+#include <QtGui/QVBoxLayout>
+#include <KIcon>
+
+///Constant
 const char * CallTreeItem::callStateIcons[12] = {ICON_INCOMING, ICON_RINGING, ICON_CURRENT, ICON_DIALING, ICON_HOLD, ICON_FAILURE, ICON_BUSY, ICON_TRANSFER, ICON_TRANSF_HOLD, "", "", ICON_CONFERENCE};
 
+///Constructor
 CallTreeItem::CallTreeItem(QWidget *parent)
    : QWidget(parent), itemCall(0), init(false)
 {
    setMaximumSize(99999,50);
 }
 
+///Destructor
 CallTreeItem::~CallTreeItem()
 {
    
 }
 
+///Return the call item
 Call* CallTreeItem::call() const
 {
    return itemCall;
 }
 
+///Set the call item
 void CallTreeItem::setCall(Call *call)
 {
    itemCall = call;
    
    if (itemCall->isConference()) {
       if (!init) {
-         labelHistoryPeerName = new QLabel("Conference",this);
-         labelIcon = new QLabel("Icn",this);
+         labelHistoryPeerName = new QLabel(i18n("Conference"),this);
+         labelIcon = new QLabel("",this);
          QHBoxLayout* mainLayout = new QHBoxLayout();
          mainLayout->addWidget(labelIcon);
          mainLayout->addWidget(labelHistoryPeerName);
          setLayout(mainLayout);
          init = true;
       }
-      labelIcon->setPixmap(QPixmap(ICON_CONFERENCE));
+      labelIcon->setPixmap(QPixmap(ICON_CONFERENCE).scaled(QSize(48,48)));
       labelIcon->setVisible(true);
       labelHistoryPeerName->setVisible(true);
       return;
@@ -113,8 +130,10 @@ void CallTreeItem::setCall(Call *call)
    updated();
 }
 
+///Update data
 void CallTreeItem::updated()
 {
+   qDebug() << "Updating tree item";
    Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(itemCall->getPeerPhoneNumber());
    if (contact) {
       labelIcon->setPixmap(*contact->getPhoto());
@@ -127,7 +146,7 @@ void CallTreeItem::updated()
          labelPeerName->setText("<b>"+itemCall->getPeerName()+"</b>");
       }
       else {
-         labelPeerName->setText("<b>Unknow</b>");
+         labelPeerName->setText(i18n("<b>Unknow</b>"));
       }
    }
       
@@ -165,4 +184,3 @@ void CallTreeItem::updated()
    }
    
 }
-    

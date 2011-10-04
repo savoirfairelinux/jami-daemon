@@ -1,15 +1,17 @@
 #include "AccountView.h"
 
 #include <QDebug>
-
+#include <QtGui/QListWidgetItem>
 #include "lib/sflphone_const.h"
 #include "lib/configurationmanager_interface_singleton.h"
 
+///Constructor
 AccountView::AccountView() : Account(), item2(0), itemWidget(0)
 {
 
 }
 
+///Init
 void AccountView::initItem()
 {
    if(item2 != NULL)
@@ -20,6 +22,7 @@ void AccountView::initItem()
    initItemWidget();
 }
 
+///Init widget
 void AccountView::initItemWidget()
 {
    if(itemWidget != NULL)
@@ -39,16 +42,19 @@ void AccountView::initItemWidget()
    connect(itemWidget, SIGNAL(checkStateChanged(bool)), this, SLOT(setEnabled(bool)));
 }
 
+///Get the current item
 QListWidgetItem* AccountView::getItem()
 {
    return item2;
 }
 
+///Get the current widget
 AccountItemWidget* AccountView::getItemWidget()
 {
    return itemWidget;
 }
 
+///Return the state color
 QColor AccountView::getStateColor()
 {
    if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_UNREGISTERED)
@@ -58,7 +64,7 @@ QColor AccountView::getStateColor()
    return Qt::red;
 }
 
-
+///Get the color name
 QString AccountView::getStateColorName()
 {
    if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_UNREGISTERED)
@@ -68,11 +74,13 @@ QString AccountView::getStateColorName()
    return "red";
 }
 
+///Is this item checked?
 bool AccountView::isChecked() const
 {
    return itemWidget->getEnabled();
 }
 
+///Build an item from an account id
 AccountView* AccountView::buildExistingAccountFromId(QString _accountId)
 {
    //Account* a = Account::buildExistingAccountFromId( _accountId);
@@ -84,6 +92,7 @@ AccountView* AccountView::buildExistingAccountFromId(QString _accountId)
    return a;
 }
 
+///Build an item from an alias
 AccountView* AccountView::buildNewAccountFromAlias(QString alias)
 {
    //Account* a = Account::buildNewAccountFromAlias(alias);
@@ -94,6 +103,7 @@ AccountView* AccountView::buildNewAccountFromAlias(QString alias)
    return a;
 }
 
+///Change LED color
 void AccountView::updateState()
 {
    qDebug() << "updateState";

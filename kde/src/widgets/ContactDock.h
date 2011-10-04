@@ -3,21 +3,33 @@
 
 #include <QtGui/QDockWidget>
 #include <QtGui/QTreeWidget>
-#include <QSplitter>
 
-#include <akonadi/entitytreeview.h>
-#include <akonadi/itemview.h>
-#include <klineedit.h>
-#include <kabc/addressee.h>
-#include <akonadi/contact/contactstreemodel.h>
-#include <akonadi/collectioncombobox.h>
-
+//Qt
+class QSplitter;
 class QListWidget;
 class QComboBox;
 class QTreeWidgetItem;
 class QCheckBox;
-class ContactItemWidget;
+
+//KDE
+class KLineEdit;
+
+namespace Akonadi {
+   class EntityTreeView;
+   class ItemView;
+   class CollectionCombobox;
+   namespace Contact {
+      class ContactsTreeModel;
+   }
+}
+
+namespace KABC {
+   class Addressee;
+}
+
+///SFLPhone
 class ContactTree;
+class ContactItemWidget;
 
 class ContactDock : public QDockWidget {
    Q_OBJECT
@@ -33,7 +45,8 @@ private:
    QComboBox*                   m_pSortByCBB;
    QCheckBox*                   m_pShowHistoCK;
    QList<ContactItemWidget*>    m_pContacts;
-
+public slots:
+   virtual void keyPressEvent(QKeyEvent* event);
 private slots:
    void reloadContact();
    void loadContactHistory(QTreeWidgetItem* item);
@@ -47,6 +60,19 @@ public:
    ContactTree(QWidget* parent) : QTreeWidget(parent) {}
    virtual QMimeData* mimeData( const QList<QTreeWidgetItem *> items) const;
    bool dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action);
+};
+
+class KeyPressEaterC : public QObject
+{
+   Q_OBJECT
+public:
+   KeyPressEaterC(ContactDock* parent) : QObject(parent) {
+      m_pDock =  parent;
+   }
+protected:
+   bool eventFilter(QObject *obj, QEvent *event);
+private:
+   ContactDock* m_pDock;
 };
 
 #endif

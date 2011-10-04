@@ -1,0 +1,20 @@
+Source: sflphone-client-kde
+Maintainer: SavoirFaireLinux Inc <julien.bonjean@savoirfairelinux.com>
+Section: kde
+Priority: optional
+Build-Depends: debhelper, cmake, kdepimlibs5-dev, libcommoncpp2-dev, libqt4-dev
+Standards-Version: 3.7.3
+
+Package: sflphone-client-kde
+Priority: optional
+Architecture: i386
+Depends: sflphone-common (>=${source:Version}), libcommoncpp2-1.6-0, kdepimlibs5, libqt4-dbus, libqt4-svg, libqtgui4
+Replaces: sflphone
+Conflicts: sflphone
+Homepage: http://www.sflphone.org
+Description: KDE client for SFLphone
+ Provide a KDE client for SFLphone.
+ SFLphone is meant to be a robust enterprise-class desktop phone.
+ SFLphone is released under the GNU General Public License.
+ SFLphone is being developed by the global community, and maintained by
+ Savoir-faire Linux, a Montreal, Quebec, Canada-based Linux consulting company.
