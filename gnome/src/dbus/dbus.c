@@ -1649,7 +1649,7 @@ dbus_get_record_path (void)
 {
     GError* error = NULL;
     gchar *path;
-    org_sflphone_SFLphone_ConfigurationManager_get_record_path (
+    org_sflphone_SFLphone_ConfigurationManager_get_record_path(
         configurationManagerProxy, &path, &error);
 
     if (error)

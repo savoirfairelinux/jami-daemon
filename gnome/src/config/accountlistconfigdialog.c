@@ -579,53 +579,50 @@ GtkWidget* create_account_list (GtkDialog * dialog UNUSED)
 void
 show_account_list_config_dialog (void)
 {
-    GtkWidget * accountFrame;
-    GtkWidget * tab;
-
-    accountListDialog = GTK_DIALOG (gtk_dialog_new_with_buttons (_ ("Accounts"),
+    accountListDialog = GTK_DIALOG (gtk_dialog_new_with_buttons (_("Accounts"),
                                     GTK_WINDOW (get_main_window()),
                                     GTK_DIALOG_DESTROY_WITH_PARENT,
                                     NULL));
 
     /* Set window properties */
-    gtk_container_set_border_width (GTK_CONTAINER (accountListDialog), 0);
-    gtk_window_set_resizable (GTK_WINDOW (accountListDialog), FALSE);
+    gtk_container_set_border_width(GTK_CONTAINER(accountListDialog), 0);
+    gtk_window_set_resizable(GTK_WINDOW(accountListDialog), FALSE);
 
-    gnome_main_section_new (_ ("Configured Accounts"), &accountFrame);
-    gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area(accountListDialog)), accountFrame , TRUE, TRUE, 0);
-    gtk_widget_show (accountFrame);
+    GtkWidget *accountFrame = gnome_main_section_new(_("Configured Accounts"));
+    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(accountListDialog)),
+                       accountFrame, TRUE, TRUE, 0);
+    gtk_widget_show(accountFrame);
 
     /* Accounts tab */
-    tab = create_account_list (accountListDialog);
-    gtk_widget_show (tab);
-    gtk_container_add (GTK_CONTAINER (accountFrame), tab);
+    GtkWidget *tab = create_account_list(accountListDialog);
+    gtk_widget_show(tab);
+    gtk_container_add(GTK_CONTAINER(accountFrame), tab);
 
     /* Status bar for the account list */
     status_bar = gtk_statusbar_new();
-    gtk_statusbar_set_has_resize_grip (GTK_STATUSBAR (status_bar), FALSE);
-    gtk_widget_show (status_bar);
-    gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area(accountListDialog)), status_bar, TRUE, TRUE, 0);
+    gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(status_bar), FALSE);
+    gtk_widget_show(status_bar);
+    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(accountListDialog)),
+                       status_bar, TRUE, TRUE, 0);
 
-    int number_accounts = account_list_get_registered_accounts ();
+    int number_accounts = account_list_get_registered_accounts();
 
     if (number_accounts) {
-        gchar * message = g_strdup_printf (n_ ("There is %d active account",
-                                               "There are %d active accounts", number_accounts),
-                                           number_accounts);
-        gtk_statusbar_push (GTK_STATUSBAR (status_bar), CONTEXT_ID_REGISTRATION, message);
-        g_free (message);
-    } else {
-        gtk_statusbar_push (GTK_STATUSBAR (status_bar), CONTEXT_ID_REGISTRATION, _ ("You have no active account"));
-    }
+        gchar * message = g_strdup_printf(n_("There is %d active account",
+                                             "There are %d active accounts",
+                                             number_accounts), number_accounts);
+        gtk_statusbar_push(GTK_STATUSBAR(status_bar), CONTEXT_ID_REGISTRATION, message);
+        g_free(message);
+    } else
+        gtk_statusbar_push(GTK_STATUSBAR(status_bar), CONTEXT_ID_REGISTRATION,
+                           _("You have no active account"));
 
-    gtk_dialog_run (accountListDialog);
+    gtk_dialog_run(accountListDialog);
 
-    status_bar_display_account ();
+    status_bar_display_account();
 
-    gtk_widget_destroy (GTK_WIDGET (accountListDialog));
-
+    gtk_widget_destroy(GTK_WIDGET(accountListDialog));
     accountListDialog = NULL;
-
-    update_actions ();
+    update_actions();
 }
 

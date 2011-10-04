@@ -37,46 +37,37 @@ static void
 accel_cleared (GtkCellRendererAccel *renderer UNUSED, gchar *path,
                GtkTreeView *treeview)
 {
-    DEBUG ("Accel cleared");
-
-    GtkTreeModel *model;
-    GtkTreeIter iter;
-
     // Update treeview
-    model = gtk_tree_view_get_model (treeview);
+    GtkTreeModel *model = gtk_tree_view_get_model(treeview);
 
+    GtkTreeIter iter;
     if (gtk_tree_model_get_iter_from_string (model, &iter, path))
-        gtk_list_store_set (GTK_LIST_STORE (model), &iter, MASK, 0, VALUE, 0, -1);
+        gtk_list_store_set(GTK_LIST_STORE(model), &iter, MASK, 0, VALUE, 0, -1);
 
     // Update GDK bindings
-    shortcuts_update_bindings (atoi (path), 0, 0);
+    shortcuts_update_bindings(atoi(path), 0, 0);
 }
 
 static void
 accel_edited (GtkCellRendererAccel *renderer UNUSED, gchar *path, guint accel_key,
               GdkModifierType mask, guint hardware_keycode UNUSED, GtkTreeView *treeview)
 {
-    DEBUG ("Accel edited");
-
-    GtkTreeModel *model;
+    // Disable existing binding if key already used
+    GtkTreeModel *model = gtk_tree_view_get_model(treeview);
     GtkTreeIter iter;
+    gtk_tree_model_get_iter_first(model, &iter);
 
     Accelerator* list = shortcuts_get_list ();
-    model = gtk_tree_view_get_model (treeview);
-    guint code = XKeysymToKeycode (GDK_DISPLAY(), accel_key);
-
-    // Disable existing binding if key already used
-    int i = 0;
-    gtk_tree_model_get_iter_first (model, &iter);
-
+    const guint code = XKeysymToKeycode(GDK_DISPLAY(), accel_key);
+    guint i = 0;
     while (list[i].action != NULL) {
         if (list[i].key == code && list[i].mask == mask) {
-            gtk_list_store_set (GTK_LIST_STORE (model), &iter, MASK, 0, VALUE, 0,
-                                -1);
-            WARN ("This key was already affected");
+            gtk_list_store_set(GTK_LIST_STORE (model), &iter, MASK, 0, VALUE, 0,
+                               -1);
+            WARN("This key was already affected");
         }
 
-        gtk_tree_model_iter_next (model, &iter);
+        gtk_tree_model_iter_next(model, &iter);
         i++;
     }
 
@@ -86,74 +77,70 @@ accel_edited (GtkCellRendererAccel *renderer UNUSED, gchar *path, guint accel_ke
                             VALUE, accel_key, -1);
 
     // Update GDK bindings
-    shortcuts_update_bindings (atoi (path), code, mask);
+    shortcuts_update_bindings(atoi(path), code, mask);
 }
 
 /*
- *  Create a tree view with two columns. The first is an action and the
+ * Create a tree view with two columns. The first is an action and the
  * second is a keyboard accelerator.
  */
 static void
 setup_tree_view (GtkWidget *treeview)
 {
-    GtkCellRenderer *renderer;
-    GtkTreeViewColumn *column;
+    GtkCellRenderer *renderer = gtk_cell_renderer_text_new ();
+    GtkTreeViewColumn *column = gtk_tree_view_column_new_with_attributes("Action", renderer,
+                                                                         "text", ACTION, NULL);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(treeview), column);
 
-    renderer = gtk_cell_renderer_text_new ();
-    column = gtk_tree_view_column_new_with_attributes ("Action", renderer,
-             "text", ACTION, NULL);
-    gtk_tree_view_append_column (GTK_TREE_VIEW (treeview), column);
-
-    renderer = gtk_cell_renderer_accel_new ();
-    g_object_set (renderer, "accel-mode", GTK_CELL_RENDERER_ACCEL_MODE_GTK,
-                  "editable", TRUE, NULL);
+    renderer = gtk_cell_renderer_accel_new();
+    g_object_set(renderer, "accel-mode", GTK_CELL_RENDERER_ACCEL_MODE_GTK,
+                 "editable", TRUE, NULL);
     column = gtk_tree_view_column_new_with_attributes ("Shortcut", renderer,
              "accel-mods", MASK, "accel-key", VALUE, NULL);
 
-    gtk_tree_view_append_column (GTK_TREE_VIEW (treeview), column);
-    g_signal_connect (G_OBJECT (renderer), "accel_edited", G_CALLBACK (accel_edited), (gpointer) treeview);
-    g_signal_connect (G_OBJECT (renderer), "accel_cleared", G_CALLBACK (accel_cleared), (gpointer) treeview);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(treeview), column);
+    g_signal_connect(renderer, "accel_edited", G_CALLBACK(accel_edited),
+                     (gpointer) treeview);
+    g_signal_connect(renderer, "accel_cleared", G_CALLBACK(accel_cleared),
+                     (gpointer) treeview);
 }
 
 GtkWidget*
 create_shortcuts_settings ()
 {
-    GtkWidget *vbox, *result_frame, *treeview, *label;
-
-    GtkTreeIter iter;
-    guint i = 0;
-
-    vbox = gtk_vbox_new (FALSE, 10);
+    GtkWidget *vbox = gtk_vbox_new (FALSE, 10);
     gtk_container_set_border_width (GTK_CONTAINER (vbox), 10);
 
-    gnome_main_section_new (_ ("General"), &result_frame);
+    GtkWidget * result_frame = gnome_main_section_new(_("General"));
 
-    label = gtk_label_new (
-                _ ("Be careful: these shortcuts might override system-wide shortcuts."));
-    treeview = gtk_tree_view_new ();
-    setup_tree_view (treeview);
+    GtkWidget *label = gtk_label_new(_("Be careful: these shortcuts might "
+                                       "override system-wide shortcuts."));
+    GtkWidget *treeview = gtk_tree_view_new();
+    setup_tree_view(treeview);
 
-    GtkListStore *store = gtk_list_store_new (COLUMNS, G_TYPE_STRING, G_TYPE_INT,
-                          G_TYPE_UINT);
+    GtkListStore *store = gtk_list_store_new(COLUMNS, G_TYPE_STRING, G_TYPE_INT,
+                                             G_TYPE_UINT);
 
-    Accelerator* list = shortcuts_get_list ();
+    Accelerator* list = shortcuts_get_list();
 
+    guint i = 0;
     while (list[i].action != NULL) {
-        gtk_list_store_append (store, &iter);
-        gtk_list_store_set (store, &iter, ACTION, _ (list[i].action), MASK,
-                            (gint) list[i].mask, VALUE, XKeycodeToKeysym (GDK_DISPLAY(),
-                                    list[i].key, 0), -1);
+        GtkTreeIter iter;
+        gtk_list_store_append(store, &iter);
+        gtk_list_store_set(store, &iter, ACTION, _(list[i].action), MASK,
+                           (gint) list[i].mask, VALUE,
+                           XKeycodeToKeysym(GDK_DISPLAY(), list[i].key, 0), -1);
         i++;
     }
 
-    gtk_tree_view_set_model (GTK_TREE_VIEW (treeview), GTK_TREE_MODEL (store));
-    g_object_unref (store);
+    gtk_tree_view_set_model(GTK_TREE_VIEW(treeview), GTK_TREE_MODEL(store));
+    g_object_unref(store);
 
-    gtk_container_add (GTK_CONTAINER (result_frame), treeview);
-    gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (vbox), result_frame, FALSE, FALSE, 0);
+    gtk_container_add(GTK_CONTAINER(result_frame), treeview);
+    gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), result_frame, FALSE, FALSE, 0);
 
-    gtk_widget_show_all (vbox);
+    gtk_widget_show_all(vbox);
 
     return vbox;
 }

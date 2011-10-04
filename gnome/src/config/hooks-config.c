@@ -137,8 +137,7 @@ static void phone_number_enabled_cb (GtkWidget *widget)
 
 GtkWidget* create_hooks_settings ()
 {
-
-    GtkWidget *ret, *frame, *table, *label, *widg, *info_bar;
+    GtkWidget *ret, *frame, *table, *label, *widg;
 
     // Load the user value
     hooks_load_parameters (&_urlhook_config);
@@ -151,8 +150,8 @@ GtkWidget* create_hooks_settings ()
     gtk_widget_show (frame);
 
     gchar *message = "<small>Custom commands on incoming calls with URL. %s will be replaced with the passed URL.</small>";
-    gnome_info_bar (message, GTK_MESSAGE_INFO, &info_bar);
-    gtk_table_attach (GTK_TABLE (table), info_bar, 0, 2, 0, 1, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 10, 10);
+    GtkWidget *info_bar = gnome_info_bar(message, GTK_MESSAGE_INFO);
+    gtk_table_attach(GTK_TABLE (table), info_bar, 0, 2, 0, 1, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 10, 10);
 
     widg = gtk_check_button_new_with_mnemonic (_ ("Trigger on specific _SIP header"));
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (widg), (g_strcasecmp (_urlhook_config->sip_enabled, "true") ==0) ?TRUE:FALSE);
