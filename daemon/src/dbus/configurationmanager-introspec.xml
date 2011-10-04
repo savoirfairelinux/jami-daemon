@@ -85,11 +85,11 @@
 		<method name="setCredentials" tp:name-for-bindings="setCredentials">
 			<tp:docstring>
 			</tp:docstring>
+                        <annotation name="com.trolltech.QtDBus.QtTypeName.In2" value="MapStringString"/>
 			<arg type="s" name="accountID" direction="in">
 				<tp:docstring>
 				</tp:docstring>
 			</arg>
-			<annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
 			<arg type="aa{ss}" name="credentialInformation" direction="in" tp:type="String_String_Map">
 				<tp:docstring>
 				</tp:docstring>
@@ -137,11 +137,11 @@
 	   <method name="getCredentials" tp:name-for-bindings="getCredentials">
 		   <tp:docstring>
 		   </tp:docstring>
+		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
 		   <arg type="s" name="accountID" direction="in">
 			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>
-		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
 		   <arg type="aa{ss}" name="credentialInformation" direction="out">
 			   <tp:docstring>
 			   </tp:docstring>
@@ -284,7 +284,7 @@
 	   <method name="getAudioCodecList" tp:name-for-bindings="getAudioCodecList">
 		   <tp:docstring>
 		   </tp:docstring>
-		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorInt"/>
+		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
 		   <arg type="ai" name="list" direction="out">
 			   <tp:docstring>
 			   </tp:docstring>
@@ -928,25 +928,15 @@
 	   </method>
 
 	   <method name="startVideoPreview" tp:name-for-bindings="startVideoPreview">
-           <arg type="i" name="width" direction="in">
-               <tp:docstring>
-               </tp:docstring>
+           <arg type="i" name="width" direction="out">
            </arg>
-           <arg type="i" name="height" direction="in">
-               <tp:docstring>
-               </tp:docstring>
+           <arg type="i" name="height" direction="out">
            </arg>
            <arg type="i" name="shmKey" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
            <arg type="i" name="semKey" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
            <arg type="i" name="videoBufferSize" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
 	   </method>
 

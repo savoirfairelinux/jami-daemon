@@ -58,7 +58,7 @@ static GtkWidget *preview_button = NULL;
 
 static GtkWidget *drawarea = NULL;
 static int using_clutter;
-static int drawWidth  = 352; // FIXME: should come from dbus signals
+static int drawWidth  = 352;
 static int drawHeight = 288;
 static VideoRenderer *preview = NULL;
 
@@ -125,7 +125,10 @@ preview_is_running_cb(GObject *obj, GParamSpec *pspec, gpointer user_data)
 }
 
 void
-video_started_cb(DBusGProxy *proxy, gint OUT_shmId, gint OUT_semId, gint OUT_videoBufferSize, GError *error, gpointer userdata)
+video_preview_started_cb(DBusGProxy *proxy, gint OUT_width, gint OUT_height,
+                         gint OUT_shmId, gint OUT_semId,
+                         gint OUT_videoBufferSize, GError *error,
+                         gpointer userdata)
 {
     (void)proxy;
     (void)error;
@@ -135,7 +138,11 @@ video_started_cb(DBusGProxy *proxy, gint OUT_shmId, gint OUT_semId, gint OUT_vid
         return;
     }
 
-    DEBUG("Preview started shm:%d sem:%d size:%d", OUT_shmId, OUT_semId, OUT_videoBufferSize);
+    DEBUG("Preview started width:%d height:%d shm:%d sem:%d size:%d",
+          OUT_width, OUT_height, OUT_shmId, OUT_semId, OUT_videoBufferSize);
+    drawWidth = OUT_width;
+    drawHeight = OUT_height;
+    gtk_widget_set_size_request(drawarea, drawWidth, drawHeight);
     preview = video_renderer_new(drawarea, drawWidth, drawHeight, OUT_shmId, OUT_semId, OUT_videoBufferSize);
     g_signal_connect (preview, "notify::running", G_CALLBACK (preview_is_running_cb), preview_button);
     if (video_renderer_run(preview)) {
@@ -149,7 +156,7 @@ preview_button_clicked(GtkButton *button, gpointer data UNUSED)
 {
     preview_button = GTK_WIDGET(button);
     if (g_strcmp0(gtk_button_get_label(button), _("_Start")) == 0)
-        dbus_start_video_preview(drawWidth, drawHeight);
+        dbus_start_video_preview();
     else { /* user clicked stop */
         if (!preview) /* preview was not created yet on the server */
             return ;
@@ -448,10 +455,9 @@ preferences_dialog_fill_video_input_device_rate_list()
       list = dbus_get_video_input_device_rate_list(dev, chan, size);
 
     // For each device name included in list
-    int c;
-
     if (list && *list) {
-        for (c=0; *list ; c++, list++) {
+        gint c = 0;
+        for (; *list; c++, list++) {
             gtk_list_store_append (v4l2RateList, &iter);
             gtk_list_store_set (v4l2RateList, &iter, 0, *list, 1, c, -1);
         }
@@ -497,15 +503,14 @@ preferences_dialog_fill_video_input_device_size_list()
     gchar *dev  = get_active_text(GTK_COMBO_BOX(v4l2Device));
     gchar *chan = get_active_text(GTK_COMBO_BOX(v4l2Channel));
 
-    // Call dbus to retreive list
+    // Call dbus to retrieve list
     if (dev && chan)
         list = dbus_get_video_input_device_size_list(dev, chan);
 
     if (list && *list) {
         // For each device name included in list
-        int c;
-
-        for (c=0; *list ; c++, list++) {
+        gint c = 0;
+        for (; *list; c++, list++) {
             gtk_list_store_append (v4l2SizeList, &iter);
             gtk_list_store_set (v4l2SizeList, &iter, 0, *list, 1, c, -1);
         }
@@ -556,9 +561,8 @@ preferences_dialog_fill_video_input_device_channel_list()
 
     if (list && *list) {
         // For each device name included in list
-        int c;
-
-        for (c=0; *list ; c++, list++) {
+        int c = 0;
+        for (; *list; c++, list++) {
             gtk_list_store_append (v4l2ChannelList, &iter);
             gtk_list_store_set (v4l2ChannelList, &iter, 0, *list, 1, c, -1);
         }
@@ -595,8 +599,6 @@ select_video_input_device_channel (GtkComboBox* comboBox, gpointer data UNUSED)
 static int
 preferences_dialog_fill_video_input_device_list()
 {
-
-    GtkTreeIter iter;
     gchar** list = NULL;
 
     gtk_list_store_clear (v4l2DeviceList);
@@ -605,8 +607,9 @@ preferences_dialog_fill_video_input_device_list()
     list = dbus_get_video_input_device_list();
     if (list && *list) {
         // For each device name included in list
-        int c;
-        for (c=0; *list ; c++, list++) {
+        gint c = 0;
+        for (; *list; c++, list++) {
+            GtkTreeIter iter;
             gtk_list_store_append (v4l2DeviceList, &iter);
             gtk_list_store_set (v4l2DeviceList, &iter, 0, *list, 1, c, -1);
         }
@@ -656,7 +659,6 @@ void video_device_event_cb(DBusGProxy *proxy UNUSED, void * foo  UNUSED)
 }
 
 
-
 static GtkWidget* v4l2_box ()
 {
     GtkWidget *item;
@@ -689,7 +691,6 @@ static GtkWidget* v4l2_box ()
     gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (v4l2Device), renderer, TRUE);
     gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (v4l2Device), renderer, "text", 0, NULL);
     gtk_table_attach (GTK_TABLE (table), v4l2Device, 1, 2, 0, 1, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
-
 
     // Set choices of input
     item = gtk_label_new (_ ("Channel"));
@@ -740,16 +741,16 @@ static GtkWidget* v4l2_box ()
 static gint
 on_drawarea_unrealize(GtkWidget *drawarea, gpointer data)
 {
-    (void)drawarea;(void)data;
+    (void) drawarea;
+    (void) data;
     if (preview) {
         gboolean running = FALSE;
         g_object_get(preview, "running", &running, NULL);
         if (running) {
             video_renderer_stop(preview);
-	    dbus_stop_video_preview();
-	}
+            dbus_stop_video_preview();
+        }
     }
-
     return FALSE; // call other handlers
 }
 
@@ -768,7 +769,8 @@ GtkWidget* create_video_configuration()
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
     GtkWidget *v4l2box = v4l2_box();
-    gtk_table_attach(GTK_TABLE(table), v4l2box, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 6);
+    gtk_table_attach(GTK_TABLE(table), v4l2box, 0, 1, 1, 2,
+                     GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 6);
 
     gnome_main_section_new_with_table(_("Preview"), &frame, &table, 1, 2);
     gtk_box_pack_start (GTK_BOX(vbox), frame, FALSE, FALSE, 0);
@@ -776,7 +778,8 @@ GtkWidget* create_video_configuration()
     preview_button = gtk_button_new_with_mnemonic(_("_Start"));
     gtk_widget_set_size_request(preview_button, 80, 30);
     gtk_table_attach(GTK_TABLE(table), preview_button, 0, 1, 0, 1, 0, 0, 0, 6);
-    g_signal_connect(G_OBJECT(preview_button), "clicked", G_CALLBACK(preview_button_clicked), NULL);
+    g_signal_connect(G_OBJECT(preview_button), "clicked",
+                     G_CALLBACK(preview_button_clicked), NULL);
     gtk_widget_show(GTK_WIDGET(preview_button));
 
     gchar **list = dbus_get_call_list();
@@ -799,6 +802,7 @@ GtkWidget* create_video_configuration()
         if (!gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(drawarea))) {
             DEBUG("Could not get stage, destroying");
             gtk_widget_destroy(drawarea);
+            drawarea = NULL;
             using_clutter = FALSE;
         }
     }

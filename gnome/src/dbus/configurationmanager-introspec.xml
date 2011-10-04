@@ -928,25 +928,15 @@
 	   </method>
 
 	   <method name="startVideoPreview" tp:name-for-bindings="startVideoPreview">
-           <arg type="i" name="width" direction="in">
-               <tp:docstring>
-               </tp:docstring>
+           <arg type="i" name="width" direction="out">
            </arg>
-           <arg type="i" name="height" direction="in">
-               <tp:docstring>
-               </tp:docstring>
+           <arg type="i" name="height" direction="out">
            </arg>
            <arg type="i" name="shmKey" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
            <arg type="i" name="semKey" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
            <arg type="i" name="videoBufferSize" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
 	   </method>
 

@@ -340,21 +340,19 @@ readFrameFromShm(VideoRendererPrivate *priv)
           perror("shm: ");
           return FALSE;
       }
-      else {
-          /* No new frame, so we'll try later */
-          return TRUE;
-      }
+      else
+          return TRUE; /* No new frame, so we'll try later */
     }
 
-    GtkWidget *win = gtk_widget_get_toplevel(priv->drawarea);
-    gint win_width = gtk_widget_get_allocated_width(win);
-    gint win_height = gtk_widget_get_allocated_height(win);
+    GtkWidget *parent = gtk_widget_get_parent(priv->drawarea);
+    gint parent_width = gtk_widget_get_allocated_width(parent);
+    gint parent_height = gtk_widget_get_allocated_height(parent);
 
     if (priv->using_clutter) {
-        clutter_actor_set_size(texture, win_width, win_height);
+        clutter_actor_set_size(texture, parent_width, parent_height);
 
         clutter_texture_set_from_rgb_data(CLUTTER_TEXTURE(texture),
-                (void*)data,
+                (void*) data,
                 TRUE,
                 width,
                 height,
@@ -373,7 +371,8 @@ readFrameFromShm(VideoRendererPrivate *priv)
 
         if (surface) {
             cairo_t *cairo = gdk_cairo_create(gtk_widget_get_window(priv->drawarea));
-            cairo_scale(cairo, (double)win_width/width, (double)win_height/height);
+            cairo_scale(cairo, (double) parent_width / width,
+                        (double) parent_height / height);
             cairo_set_source_surface(cairo, surface, 0, 0);
 
             cairo_status_t status = cairo_surface_status(surface);
@@ -468,8 +467,8 @@ video_renderer_run(VideoRenderer *renderer)
 
     GtkWindow *win = GTK_WINDOW(gtk_widget_get_toplevel(priv->drawarea));
     GdkGeometry geom = {
-        .min_aspect = (double)priv->width / priv->height,
-        .max_aspect = (double)priv->width / priv->height,
+        .min_aspect = (double) priv->width / priv->height,
+        .max_aspect = (double) priv->width / priv->height,
     };
     gtk_window_set_geometry_hints(win, NULL, &geom, GDK_HINT_ASPECT);
 

@@ -168,7 +168,7 @@ class ConfigurationManager
         std::map< std::string, std::string > getShortcuts ();
         void setShortcuts (const std::map< std::string, std::string >& shortcutsMap);
 
-        void startVideoPreview(const int32_t &width, const int32_t &height, int32_t &shmKey, int32_t &semKey, int32_t &videoBufferSize);
+        void startVideoPreview(int32_t &width, int32_t &height, int32_t &shmKey, int32_t &semKey, int32_t &videoBufferSize);
         void stopVideoPreview();
 };
 

@@ -2516,11 +2516,11 @@ dbus_send_text_message (const gchar* callID, const gchar *message)
 }
 
 void
-dbus_start_video_preview (int width, int height)
+dbus_start_video_preview ()
 {
     GError *error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_start_video_preview_async (
-        configurationManagerProxy, width, height, video_started_cb, &error);
+        configurationManagerProxy, video_preview_started_cb, &error);
 
     if (error) {
         ERROR ("Failed to call start_video_preview () on ConfigurationManager: %s",

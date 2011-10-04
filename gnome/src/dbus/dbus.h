@@ -617,8 +617,7 @@ gboolean dbus_start_recorded_file_playback(const gchar *);
  */
 void dbus_stop_recorded_file_playback(const gchar *);
 
-
-void dbus_start_video_preview(int width, int height);
+void dbus_start_video_preview();
 
 void dbus_stop_video_preview();
 #endif
