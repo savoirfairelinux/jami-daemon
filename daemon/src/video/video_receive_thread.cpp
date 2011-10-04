@@ -274,7 +274,11 @@ void VideoReceiveThread::setup()
         }
 
         // retrieve stream information
+#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
+        if (av_find_stream_info(inputCtx_) < 0)
+#else
         if (avformat_find_stream_info(inputCtx_, NULL) < 0)
+#endif
         {
             _error("%s:Could not find stream info!", __PRETTY_FUNCTION__);
             ost::Thread::exit();
