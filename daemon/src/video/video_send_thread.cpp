@@ -179,8 +179,11 @@ void VideoSendThread::setup()
             ost::Thread::exit();
         }
 
-        // open codec
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 12, 0)
+        if (avcodec_open(inputDecoderCtx_, inputDecoder) < 0)
+#else
         if (avcodec_open2(inputDecoderCtx_, inputDecoder, NULL) < 0)
+#endif
         {
             _error("%s:Could not open codec!", __PRETTY_FUNCTION__);
             ost::Thread::exit();
@@ -219,7 +222,11 @@ void VideoSendThread::setup()
 
     // open encoder
     
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 12, 0)
+    if (avcodec_open(encoderCtx_, encoder) < 0)
+#else
     if (avcodec_open2(encoderCtx_, encoder, NULL) < 0)
+#endif
     {
         _error("%s:Could not open encoder!", __PRETTY_FUNCTION__);
         ost::Thread::exit();

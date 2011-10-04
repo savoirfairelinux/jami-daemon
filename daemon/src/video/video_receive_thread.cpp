@@ -306,7 +306,11 @@ void VideoReceiveThread::setup()
             ost::Thread::exit();
         }
 
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 12, 0)
+        if (avcodec_open(decoderCtx_, inputDecoder) < 0)
+#else
         if (avcodec_open2(decoderCtx_, inputDecoder, NULL) < 0)
+#endif
         {
             _error("%s:Could not open codec!", __PRETTY_FUNCTION__);
             ost::Thread::exit();
