@@ -37,7 +37,9 @@
 #include <stdio.h>
 #include <string.h>
 #include "eel-gconf-extensions.h"
-
+#include "dbus.h"
+#include "logger.h"
+#include "statusicon.h"
 #include "addrbookfactory.h"
 #include "preferencesdialog.h"
 #include "addressbook-config.h"
@@ -146,18 +148,15 @@ clean_history (void)
 
 void showstatusicon_cb (GtkWidget *widget, gpointer data UNUSED)
 {
-
-    gboolean currentstatus = FALSE;
-
     // data contains the previous value of dbus_is_status_icon_enabled () - ie before the click.
-    currentstatus = (gboolean) gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+    gboolean currentstatus = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
 
     // Update the widget states
     gtk_widget_set_sensitive (GTK_WIDGET (popupwindow), currentstatus);
     gtk_widget_set_sensitive (GTK_WIDGET (neverpopupwindow), currentstatus);
     gtk_widget_set_sensitive (GTK_WIDGET (starthidden), currentstatus);
 
-    currentstatus ?       show_status_icon () : hide_status_icon ();
+    currentstatus ? show_status_icon () : hide_status_icon ();
 
     // Update through D-Bus
     eel_gconf_set_integer (SHOW_STATUSICON, currentstatus);
@@ -294,7 +293,6 @@ save_configuration_parameters (void)
 
     // History config
     dbus_set_history_limit (history_limit);
-
 }
 
 void

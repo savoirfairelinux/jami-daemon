@@ -28,21 +28,21 @@
  *  as that of the covered work.
  */
 
-#include <config.h>
-#include <preferencesdialog.h>
-#include <dbus/dbus.h>
-#include <mainwindow.h>
-#include <assistant.h>
+#include "config.h"
+#include "preferencesdialog.h"
+#include "logger.h"
+#include "dbus/dbus.h"
+#include "mainwindow.h"
+#include "assistant.h"
 #include <gtk/gtk.h>
 #include <string.h>
 #include <glib/gprintf.h>
 #include <libgnome/gnome-help.h>
 
-#include <uimanager.h>
-#include <statusicon.h>
-#include <widget/imwidget.h>
-#include <eel-gconf-extensions.h>
-
+#include "uimanager.h"
+#include "statusicon.h"
+#include "widget/imwidget.h"
+#include "eel-gconf-extensions.h"
 
 #include "config/audioconf.h"
 #include "uimanager.h"
@@ -330,7 +330,7 @@ update_actions()
 
         switch (selectedConf->_state) {
 
-            case CONFERENCE_STATE_ACTIVE_ATACHED:
+            case CONFERENCE_STATE_ACTIVE_ATTACHED:
             case CONFERENCE_STATE_ACTIVE_DETACHED:
                 DEBUG("UIManager: Conference State Active");
                 if (active_calltree == current_calls) {
@@ -542,7 +542,7 @@ call_hold(void* foo UNUSED)
     } else if (selectedConf) {
         switch (selectedConf->_state) {
             case CONFERENCE_STATE_HOLD:
-                selectedConf->_state = CONFERENCE_STATE_ACTIVE_ATACHED;
+                selectedConf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED;
                 sflphone_conference_off_hold(selectedConf);
                 break;
             case CONFERENCE_STATE_HOLD_RECORD:
@@ -550,7 +550,7 @@ call_hold(void* foo UNUSED)
                 sflphone_conference_off_hold(selectedConf);
                 break;
 
-            case CONFERENCE_STATE_ACTIVE_ATACHED:
+            case CONFERENCE_STATE_ACTIVE_ATTACHED:
             case CONFERENCE_STATE_ACTIVE_DETACHED:
                 selectedConf->_state = CONFERENCE_STATE_HOLD;
                 sflphone_conference_on_hold(selectedConf);
@@ -601,14 +601,14 @@ conference_hold(void* foo UNUSED)
 
     switch (selectedConf->_state) {
         case CONFERENCE_STATE_HOLD:
-            selectedConf->_state = CONFERENCE_STATE_ACTIVE_ATACHED;
+            selectedConf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED;
             sflphone_conference_off_hold(selectedConf);
             break;
         case CONFERENCE_STATE_HOLD_RECORD:
             selectedConf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD;
             sflphone_conference_off_hold(selectedConf);
             break;
-        case CONFERENCE_STATE_ACTIVE_ATACHED:
+        case CONFERENCE_STATE_ACTIVE_ATTACHED:
         case CONFERENCE_STATE_ACTIVE_DETACHED:
             selectedConf->_state = CONFERENCE_STATE_HOLD;
             sflphone_conference_on_hold(selectedConf);
@@ -1203,7 +1203,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event)
 
         if (selectedConf) {
             switch (selectedConf->_state) {
-                case CONFERENCE_STATE_ACTIVE_ATACHED:
+                case CONFERENCE_STATE_ACTIVE_ATTACHED:
                 case CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD:
                     hangup_or_hold_conf = TRUE;
                     break;
@@ -1351,17 +1351,15 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event)
 void
 show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event)
 {
-    DEBUG("UIManager: Show popup menu history");
-
     gboolean pickup = FALSE;
-    gboolean remove = FALSE;
+    gboolean add_remove_button = FALSE;
     gboolean edit = FALSE;
     gboolean accounts = FALSE;
 
     callable_obj_t * selectedCall = calltab_get_selected_call(history);
 
     if (selectedCall) {
-        remove = TRUE;
+        add_remove_button = TRUE;
         pickup = TRUE;
         edit = TRUE;
         accounts = TRUE;
@@ -1390,7 +1388,7 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event)
         gtk_widget_show(menu_items);
     }
 
-    if (remove) {
+    if (add_remove_button) {
         GtkWidget *menu_items = gtk_image_menu_item_new_from_stock(GTK_STOCK_DELETE,
                                                                     get_accel_group());
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);

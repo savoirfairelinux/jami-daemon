@@ -30,6 +30,7 @@
 
 #include "calllist.h"
 #include "calltree.h"
+#include "logger.h"
 #include "contacts/searchbar.h"
 #include "eel-gconf-extensions.h"
 

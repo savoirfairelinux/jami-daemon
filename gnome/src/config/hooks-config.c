@@ -29,6 +29,7 @@
  */
 
 #include "hooks-config.h"
+#include "dbus.h"
 
 URLHook_Config *_urlhook_config;
 

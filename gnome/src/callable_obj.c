@@ -28,13 +28,13 @@
  *  as that of the covered work.
  */
 
-#include <callable_obj.h>
-#include <codeclist.h>
-#include <sflphone_const.h>
+#include "callable_obj.h"
+#include "codeclist.h"
+#include "sflphone_const.h"
 #include <time.h>
 #include "contacts/calltree.h"
+#include "dbus.h"
 #include <unistd.h>
-#include <assert.h>
 
 
 gint get_state_callstruct (gconstpointer a, gconstpointer b)

@@ -29,15 +29,25 @@
  */
 
 #include "addressbook-config.h"
+#include "dbus.h"
+#include "logger.h"
 #include "searchbar.h"
 #include "contacts/addrbookfactory.h"
 #include <string.h>
 #include <stdlib.h>
 
-AddressBook_Config *addressbook_config;
-GtkWidget *book_tree_view;
+static AddressBook_Config *addressbook_config;
+static GtkWidget *book_tree_view;
 
-GtkWidget *photo, *cards_label, *scale_label, *scrolled_label, *scrolled_window, *scale_button, *business, *mobile, *home;
+static GtkWidget *photo;
+static GtkWidget *cards_label;
+static GtkWidget *scale_label;
+static GtkWidget *scrolled_label;
+static GtkWidget *scrolled_window;
+static GtkWidget *scale_button;
+static GtkWidget *business;
+static GtkWidget *mobile; 
+static GtkWidget *home;
 
 enum {
     COLUMN_BOOK_ACTIVE, COLUMN_BOOK_NAME, COLUMN_BOOK_UID
@@ -310,7 +320,6 @@ addressbook_config_fill_book_list()
 GtkWidget*
 create_addressbook_settings()
 {
-
     GtkWidget *ret, *result_frame, *table, *value, *item;
 
     GtkListStore *store;
@@ -325,8 +334,6 @@ create_addressbook_settings()
 
     gnome_main_section_new_with_table (_ ("General"), &result_frame, &table, 3, 3);
     gtk_box_pack_start (GTK_BOX (ret), result_frame, FALSE, FALSE, 0);
-    // gtk_widget_show (result_frame);
-
 
     // PHOTO DISPLAY
     item = gtk_check_button_new_with_mnemonic (_ ("_Use Evolution address books"));
@@ -348,19 +355,15 @@ create_addressbook_settings()
     gtk_table_attach (GTK_TABLE (table), cards_label, 2, 3, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_widget_show_all (scale_button);
 
-
     // PHOTO DISPLAY
     photo = gtk_check_button_new_with_mnemonic (_ ("_Display contact photo if available"));
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (photo), addressbook_config->display_contact_photo);
     g_signal_connect (G_OBJECT (photo) , "clicked" , G_CALLBACK (display_contact_photo_cb), NULL);
     gtk_table_attach (GTK_TABLE (table), photo, 1, 3, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-
-
     // Fields
     gnome_main_section_new_with_table (_ ("Fields from Evolution's address books"), &result_frame, &table, 1, 3);
     gtk_box_pack_start (GTK_BOX (ret), result_frame, FALSE, FALSE, 0);
-    // gtk_widget_show (result_frame);
 
     business = gtk_check_button_new_with_mnemonic (_ ("_Work"));
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (business), addressbook_config->search_phone_business);
@@ -379,7 +382,6 @@ create_addressbook_settings()
     g_signal_connect (G_OBJECT (mobile) , "clicked" , G_CALLBACK (search_phone_mobile_cb) , NULL);
     gtk_table_attach (GTK_TABLE (table), mobile, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-
     // Address Book
     gnome_main_section_new_with_table (_ ("Address Books"), &result_frame, &table, 2, 3);
     gtk_box_pack_start (GTK_BOX (ret), result_frame, TRUE, TRUE, 0);
@@ -396,8 +398,6 @@ create_addressbook_settings()
     gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrolled_window), GTK_SHADOW_IN);
 
     gtk_table_attach (GTK_TABLE (table), scrolled_window, 1, 4, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-
-
 
     store = gtk_list_store_new (3,
                                 G_TYPE_BOOLEAN,             // Active
@@ -436,21 +436,15 @@ create_addressbook_settings()
 gboolean
 addressbook_display (AddressBook_Config *settings, const gchar *field)
 {
-
-    gboolean display = FALSE;
-
+    gboolean display;
     if (g_strcasecmp (field, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO) == 0)
         display = (settings->display_contact_photo == 1) ? TRUE : FALSE;
-
     else if (g_strcasecmp (field, ADDRESSBOOK_DISPLAY_PHONE_BUSINESS) == 0)
         display = (settings->search_phone_business == 1) ? TRUE : FALSE;
-
     else if (g_strcasecmp (field, ADDRESSBOOK_DISPLAY_PHONE_HOME) == 0)
         display = (settings->search_phone_home == 1) ? TRUE : FALSE;
-
     else if (g_strcasecmp (field, ADDRESSBOOK_DISPLAY_PHONE_MOBILE) == 0)
         display = (settings->search_phone_mobile == 1) ? TRUE : FALSE;
-
     else
         display = FALSE;
 

@@ -30,8 +30,7 @@
 
 #include "icon_factory.h"
 #include "icons/pixmap_data.h"
-
-
+#include "logger.h"
 #include <gtk/gtk.h>
 #include "icons/pixmap_data.h"
 #include "sflphone_const.h"

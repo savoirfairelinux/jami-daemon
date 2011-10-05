@@ -33,7 +33,7 @@
 #include "config.h"
 #include "eel-gconf-extensions.h"
 #include "sflphone_const.h"
-
+#include "logger.h"
 #include "imwindow.h"
 #include "contacts/calltab.h"
 #include "contacts/calltab.h"
@@ -250,8 +250,8 @@ im_window_remove_tab (GtkWidget *widget)
     // Remove the widget from the window
 
     /* We want here to close the current tab */
-    guint index = gtk_notebook_page_num (GTK_NOTEBOOK (im_notebook), GTK_WIDGET (widget));
-    gtk_notebook_remove_page (GTK_NOTEBOOK (im_notebook), index);
+    guint page_index = gtk_notebook_page_num (GTK_NOTEBOOK (im_notebook), GTK_WIDGET (widget));
+    gtk_notebook_remove_page (GTK_NOTEBOOK (im_notebook), page_index);
 
     /* Need to do some memory clean up, so that we could re-open an Im widget for this call later. */
     IMWidget *im = IM_WIDGET (widget);

@@ -46,13 +46,12 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <sflphone_const.h>
-
+#include "sflphone_const.h"
+#include "logger.h"
 #include "reqaccount.h"
 
-int req (char *host, int port, char *req, char *ret)
+int req(char *host, int port, char *request, char *ret)
 {
-
     int s;
     struct sockaddr_in servSockAddr;
     struct hostent *servHostEnt;
@@ -87,7 +86,7 @@ int req (char *host, int port, char *req, char *ret)
 
     f = fdopen (s, "r+");
 
-    fprintf (f, "%s HTTP/1.1\r\n", req);
+    fprintf (f, "%s HTTP/1.1\r\n", request);
     fprintf (f, "Host: %s\r\n", host);
     fputs ("User-Agent: SFLphone\r\n", f);
     fputs ("\r\n", f);

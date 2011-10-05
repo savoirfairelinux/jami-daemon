@@ -30,13 +30,14 @@
  *  as that of the covered work.
  */
 
-#include <calltree.h>
+#include "calltree.h"
 #include <stdlib.h>
 #include <glib/gprintf.h>
-#include <eel-gconf-extensions.h>
 
+#include "eel-gconf-extensions.h"
 #include "dbus.h"
 #include "calllist.h"
+#include "logger.h"
 #include "conferencelist.h"
 #include "mainwindow.h"
 #include "history.h"
@@ -246,7 +247,7 @@ row_activated (GtkTreeView       *tree_view UNUSED,
                     case CONFERENCE_STATE_HOLD_RECORD:
                         sflphone_conference_off_hold (selectedConf);
                         break;
-                    case CONFERENCE_STATE_ACTIVE_ATACHED:
+                    case CONFERENCE_STATE_ACTIVE_ATTACHED:
                     case CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD:
                     default:
                         break;
@@ -1005,7 +1006,7 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 
     if (tab == current_calls) {
         switch (conf->_state) {
-            case CONFERENCE_STATE_ACTIVE_ATACHED:
+            case CONFERENCE_STATE_ACTIVE_ATTACHED:
                 pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/usersAttached.svg", NULL);
                 break;
             case CONFERENCE_STATE_ACTIVE_DETACHED:

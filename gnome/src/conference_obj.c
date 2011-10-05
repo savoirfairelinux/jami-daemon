@@ -31,8 +31,9 @@
 #include <time.h>
 
 #include "callable_obj.h"
+#include "dbus.h"
 #include "sflphone_const.h"
-
+#include "logger.h"
 #include "calltab.h"
 #include "calllist.h"
 
@@ -90,8 +91,8 @@ conference_obj_t *create_new_conference_from_details (const gchar *conf_id, GHas
 
     gchar *state_str = g_hash_table_lookup (details, "CONF_STATE");
 
-    if (g_strcasecmp (state_str, "ACTIVE_ATACHED") == 0)
-        new_conf->_state = CONFERENCE_STATE_ACTIVE_ATACHED;
+    if (g_strcasecmp (state_str, "ACTIVE_ATTACHED") == 0)
+        new_conf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED;
     else if (g_strcasecmp (state_str, "ACTIVE_ATTACHED_REC") == 0)
         new_conf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD;
     else if (g_strcasecmp (state_str, "ACTIVE_DETACHED") == 0)
@@ -243,7 +244,7 @@ gchar *serialize_history_conference_entry(conference_obj_t *entry)
 conference_obj_t *create_conference_history_entry_from_serialized(gchar *entry)
 {
     history_state_t history_state = MISSED;
-    conference_state_t state = CONFERENCE_STATE_ACTIVE_ATACHED;
+    conference_state_t state = CONFERENCE_STATE_ACTIVE_ATTACHED;
     const gchar *participant = NULL;
     const gchar *name = NULL;
     const gchar *time_start = NULL;

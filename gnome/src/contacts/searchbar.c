@@ -31,30 +31,30 @@
  *  as that of the covered work.
  */
 
-#include <searchbar.h>
-#include <calltree.h>
-#include <config/addressbook-config.h>
-#include <contacts/addressbook.h>
-// #include <contacts/addressbook/eds.h>
-#include <contacts/addrbookfactory.h>
+#include "searchbar.h"
+#include "calltree.h"
+#include "dbus.h"
+#include "logger.h"
+#include "config/addressbook-config.h"
+#include "contacts/addressbook.h"
+#include "contacts/addrbookfactory.h"
 
-GtkWidget * searchbox;
-GtkWidget * addressbookentry;
+static GtkWidget * searchbox;
+static GtkWidget * addressbookentry;
 
-GtkWidget * cbox;
-GtkListStore * liststore = NULL;
+static GtkWidget * cbox;
+static GtkListStore * liststore = NULL;
 
-gint cboxSignalId;
+static gint cboxSignalId;
 
 static GtkWidget *menu = NULL;
 
 /**
  * Searchbar icons
  */
-GdkPixbuf *incoming_pixbuf = NULL;
-GdkPixbuf *outgoing_pixbuf = NULL;
-GdkPixbuf *missed_pixbuf = NULL;
-
+static GdkPixbuf *incoming_pixbuf = NULL;
+static GdkPixbuf *outgoing_pixbuf = NULL;
+static GdkPixbuf *missed_pixbuf = NULL;
 
 void searchbar_addressbook_activated (GtkEntry *entry, gchar *arg1 UNUSED, gpointer data UNUSED)
 {
@@ -69,9 +69,8 @@ void searchbar_entry_changed (GtkEntry* entry UNUSED, gchar* arg1 UNUSED, gpoint
     if (active_calltree == contacts) {
         // Search made only when text entry is activated
         // addressbook_search (entry);
-    } else if (active_calltree == history) {
+    } else if (active_calltree == history)
         history_search();
-    }
 }
 
 static void cbox_changed_cb (GtkWidget *widget, gpointer user_data UNUSED)
@@ -258,29 +257,26 @@ static void text_changed_cb (GtkEntry *entry, GParamSpec *pspec UNUSED)
 
 GtkWidget *addressbook_menu_new (void)
 {
-
-    GtkWidget *menu, *item;
-
     // Create the menu
-    menu = gtk_menu_new ();
-    gtk_menu_attach_to_widget (GTK_MENU (menu), contacts->searchbar, NULL);
+    GtkWidget *menu_widget = gtk_menu_new ();
+    gtk_menu_attach_to_widget (GTK_MENU (menu_widget), contacts->searchbar, NULL);
 
     // Populate menu
-    item = gtk_menu_item_new_with_label ("Search is");
+    GtkWidget *item = gtk_menu_item_new_with_label ("Search is");
     g_signal_connect (item, "activate", G_CALLBACK (select_search_type), searchbox);
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu_widget), item);
 
     item = gtk_menu_item_new_with_label ("Search begins with");
     g_signal_connect (item, "activate", G_CALLBACK (select_search_type), searchbox);
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu_widget), item);
 
     item = gtk_menu_item_new_with_label ("Search contains");
     g_signal_connect (item, "activate", G_CALLBACK (select_search_type), searchbox);
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu_widget), item);
 
-    gtk_widget_show_all (menu);
+    gtk_widget_show_all (menu_widget);
 
-    return menu;
+    return menu_widget;
 }
 
 GtkWidget* history_searchbar_new (void)

@@ -31,9 +31,9 @@
 #ifndef __CALLLIST_H__
 #define __CALLLIST_H__
 
-#include <callable_obj.h>
-#include <conference_obj.h>
 #include <gtk/gtk.h>
+#include "callable_obj.h"
+#include "conference_obj.h"
 
 /** @file calllist.h
   * @brief A list to hold calls.

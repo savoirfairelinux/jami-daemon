@@ -31,6 +31,7 @@
 
 #include "config.h"
 #include "sflnotify.h"
+#include "logger.h"
 
 typedef struct {
     NotifyNotification *notification;

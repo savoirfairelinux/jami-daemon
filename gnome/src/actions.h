@@ -39,6 +39,7 @@
 #include "codeclist.h"
 #include "sflphone_const.h"
 #include "conference_obj.h"
+#include "callable_obj.h"
 
 /** @file actions.h
   * @brief General functions that change the state of the application.
@@ -276,11 +277,9 @@ void sflphone_call_state_changed (callable_obj_t * c, const gchar * description,
 
 void sflphone_add_main_participant (const conference_obj_t * c);
 
-void
-sflphone_conference_off_hold (const conference_obj_t * c);
+void sflphone_conference_off_hold (const conference_obj_t * c);
 
-void
-sflphone_srtp_sdes_off (callable_obj_t * c);
+void sflphone_srtp_sdes_off (callable_obj_t * c);
 
 void sflphone_fill_conference_list (void);
 

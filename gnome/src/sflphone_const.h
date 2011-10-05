@@ -32,8 +32,6 @@
 #define __SFLPHONE_CONST_H
 
 #include <libintl.h>
-#include "logger.h"
-#include "dbus.h"
 #include <glib/gi18n.h>
 
 /* @file sflphone_const.h

@@ -29,10 +29,10 @@
  */
 
 
-#include <audioconf.h>
-#include <utils.h>
-#include <string.h>
-#include <eel-gconf-extensions.h>
+#include "audioconf.h"
+#include "utils.h"
+#include "logger.h"
+#include "eel-gconf-extensions.h"
 #include "dbus/dbus.h"
 #include "uimanager.h"
 #include "mainwindow.h"
@@ -124,10 +124,10 @@ preferences_dialog_fill_output_audio_device_list()
 
     // Call dbus to retrieve list
     for (gchar **list = dbus_get_audio_output_device_list(); *list ; list++) {
-        int index = dbus_get_audio_device_index(*list);
+        int device_index = dbus_get_audio_device_index(*list);
         GtkTreeIter iter;
         gtk_list_store_append(outputlist, &iter);
-        gtk_list_store_set(outputlist, &iter, 0, *list, 1, index, -1);
+        gtk_list_store_set(outputlist, &iter, 0, *list, 1, device_index, -1);
     }
 }
 
@@ -138,10 +138,10 @@ preferences_dialog_fill_ringtone_audio_device_list()
 
     // Call dbus to retreive output device
     for (gchar **list = dbus_get_audio_output_device_list(); *list; list++) {
-        int index = dbus_get_audio_device_index(*list);
+        int device_index = dbus_get_audio_device_index(*list);
         GtkTreeIter iter;
         gtk_list_store_append(ringtonelist, &iter);
-        gtk_list_store_set(ringtonelist, &iter, 0, *list, 1, index, -1);
+        gtk_list_store_set(ringtonelist, &iter, 0, *list, 1, device_index, -1);
     }
 }
 
@@ -220,10 +220,10 @@ preferences_dialog_fill_input_audio_device_list()
 
     // For each device name included in list
     for (; *list; list++) {
-        int index = dbus_get_audio_device_index(*list);
+        int device_index = dbus_get_audio_device_index(*list);
         GtkTreeIter iter;
         gtk_list_store_append(inputlist, &iter);
-        gtk_list_store_set(inputlist, &iter, 0, *list, 1, index, -1);
+        gtk_list_store_set(inputlist, &iter, 0, *list, 1, device_index, -1);
     }
 
 }

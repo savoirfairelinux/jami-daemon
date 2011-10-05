@@ -27,15 +27,16 @@
  *  as that of the covered work.
  */
 
-#include <imwindow.h>
+#include "imwindow.h"
+#include "logger.h"
 #include "imwidget.h"
-#include <icons/icon_factory.h>
-#include <contacts/calltab.h>
-#include <contacts/conferencelist.h>
+#include "dbus.h"
+#include "icons/icon_factory.h"
+#include "contacts/calltab.h"
+#include "contacts/conferencelist.h"
 #include <JavaScriptCore/JavaScript.h>
 #include <gdk/gdkkeysyms.h>
 #include <gtk/gtk.h>
-#include <assert.h>
 #include "sflphone_const.h"
 
 
@@ -100,7 +101,7 @@ im_widget_add_message_time ()
 void
 im_widget_add_message (IMWidget *im, const gchar *from, const gchar *message, gint level)
 {
-    assert(im);
+    g_assert(im);
 
     /* Compute the date the message was sent */
     gchar *msgtime = im_widget_add_message_time ();
@@ -203,9 +204,9 @@ im_widget_send_message (const gchar *id, const gchar *message)
         im_widget_call = calllist_get_call (history, id);
     }
 
-    if (im_widget_conf) {
+    if (im_widget_conf)
         dbus_send_text_message (id, message);
-    } else if (im_widget_call) {
+    else if (im_widget_call) {
         if (im_widget_call->_type == CALL && (im_widget_call->_state == CALL_STATE_CURRENT ||
                                               im_widget_call->_state == CALL_STATE_HOLD ||
                                               im_widget_call->_state == CALL_STATE_RECORD)) {
@@ -299,7 +300,7 @@ static GtkWidget*
 conf_state_image_widget (conference_state_t state)
 {
     switch (state) {
-        case CONFERENCE_STATE_ACTIVE_ATACHED:
+        case CONFERENCE_STATE_ACTIVE_ATTACHED:
         case CONFERENCE_STATE_ACTIVE_DETACHED:
         case CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD:
         case CONFERENCE_STATE_ACTIVE_DETACHED_RECORD:

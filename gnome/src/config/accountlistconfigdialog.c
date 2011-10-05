@@ -36,10 +36,11 @@
 #include "actions.h"
 #include "mainwindow.h"
 #include "utils.h"
+#include "logger.h"
 #include <string.h>
 #include <libgnome/gnome-help.h>
 
-#define CONTEXT_ID_REGISTRATION 0
+static const int CONTEXT_ID_REGISTRATION = 0;
 
 static GtkWidget *addButton;
 static GtkWidget *editButton;

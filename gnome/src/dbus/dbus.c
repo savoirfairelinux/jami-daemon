@@ -29,30 +29,28 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#include <config.h>
+#include "config.h"
 
-#include <calltab.h>
-#include <callmanager-glue.h>
-#include <configurationmanager-glue.h>
-#include <instance-glue.h>
-#include <preferencesdialog.h>
-#include <accountlistconfigdialog.h>
-#include <mainwindow.h>
-#include <marshaller.h>
-#include <sliders.h>
-#include <statusicon.h>
-#include <assistant.h>
+#include "logger.h"
+#include "calltab.h"
+#include "callmanager-glue.h"
+#include "configurationmanager-glue.h"
+#include "instance-glue.h"
+#include "preferencesdialog.h"
+#include "accountlistconfigdialog.h"
+#include "mainwindow.h"
+#include "marshaller.h"
+#include "sliders.h"
+#include "statusicon.h"
+#include "assistant.h"
 
-#include <dbus.h>
-#include <actions.h>
-#include <string.h>
+#include "dbus.h"
+#include "actions.h"
 
-#include <widget/imwidget.h>
+#include "widget/imwidget.h"
 
-#include <eel-gconf-extensions.h>
-#include <mainwindow.h>
-
-#define DEFAULT_DBUS_TIMEOUT 30000
+#include "eel-gconf-extensions.h"
+#include "mainwindow.h"
 
 static DBusGProxy *callManagerProxy, *configurationManagerProxy, *instanceProxy;
 
@@ -227,8 +225,8 @@ conference_changed_cb (DBusGProxy *proxy UNUSED, const gchar* confID,
     calltree_remove_conference (current_calls, changed_conf, NULL);
 
     // update conference state
-    if (g_strcmp0 (state, "ACTIVE_ATACHED") == 0) {
-        changed_conf->_state = CONFERENCE_STATE_ACTIVE_ATACHED;
+    if (g_strcmp0 (state, "ACTIVE_ATTACHED") == 0) {
+        changed_conf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED;
     } else if (g_strcmp0 (state, "ACTIVE_DETACHED") == 0) {
         changed_conf->_state = CONFERENCE_STATE_ACTIVE_DETACHED;
     } else if (g_strcmp0 (state, "ACTIVE_ATTACHED_REC") == 0) {
@@ -261,7 +259,7 @@ conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
 {
     DEBUG ("DBUS: Conference %s added", confID);
 
-    conference_obj_t *new_conf = create_new_conference (CONFERENCE_STATE_ACTIVE_ATACHED, confID);
+    conference_obj_t *new_conf = create_new_conference (CONFERENCE_STATE_ACTIVE_ATTACHED, confID);
 
     gchar **participants = dbus_get_participant_list (new_conf->_confID);
 
@@ -701,6 +699,7 @@ dbus_connect (GError **error)
 
     /* Defines a default timeout for the proxies */
 #if HAVE_DBUS_G_PROXY_SET_DEFAULT_TIMEOUT
+    static const int DEFAULT_DBUS_TIMEOUT = 30000;
     dbus_g_proxy_set_default_timeout (callManagerProxy, DEFAULT_DBUS_TIMEOUT);
     dbus_g_proxy_set_default_timeout (instanceProxy, DEFAULT_DBUS_TIMEOUT);
     dbus_g_proxy_set_default_timeout (configurationManagerProxy, DEFAULT_DBUS_TIMEOUT);
@@ -1259,11 +1258,11 @@ dbus_get_audio_output_device_list()
  * Set audio output device from its index
  */
 void
-dbus_set_audio_output_device (const int index)
+dbus_set_audio_output_device (const int device)
 {
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_set_audio_output_device (
-        configurationManagerProxy, index, &error);
+        configurationManagerProxy, device, &error);
 
     if (error) {
         ERROR ("Failed to call set_audio_output_device() on ConfigurationManager: %s", error->message);
@@ -1275,11 +1274,11 @@ dbus_set_audio_output_device (const int index)
  * Set audio input device from its index
  */
 void
-dbus_set_audio_input_device (const int index)
+dbus_set_audio_input_device (const int device)
 {
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_set_audio_input_device (
-        configurationManagerProxy, index, &error);
+        configurationManagerProxy, device, &error);
 
     if (error) {
         ERROR ("Failed to call set_audio_input_device() on ConfigurationManager: %s", error->message);
@@ -1291,11 +1290,11 @@ dbus_set_audio_input_device (const int index)
  * Set adio ringtone device from its index
  */
 void
-dbus_set_audio_ringtone_device (const int index)
+dbus_set_audio_ringtone_device (const int device)
 {
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_set_audio_ringtone_device (
-        configurationManagerProxy, index, &error);
+        configurationManagerProxy, device, &error);
 
     if (error) {
         ERROR ("Failed to call set_audio_ringtone_device() on ConfigurationManager: %s", error->message);
@@ -1347,17 +1346,17 @@ dbus_get_current_audio_devices_index()
 int
 dbus_get_audio_device_index (const gchar *name)
 {
-    int index = 0;
+    int device_index = 0;
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_get_audio_device_index (
-        configurationManagerProxy, name, &index, &error);
+        configurationManagerProxy, name, &device_index, &error);
 
     if (error) {
         ERROR ("Failed to call get_audio_device_index() on ConfigurationManager: %s", error->message);
         g_error_free (error);
     }
 
-    return index;
+    return device_index;
 }
 
 /**

@@ -30,7 +30,7 @@
 
 #include "addrbookfactory.h"
 #include "addressbook-config.h"
-
+#include "logger.h"
 #include "calltab.h"
 #include "calltree.h"
 

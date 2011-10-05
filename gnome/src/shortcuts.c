@@ -40,6 +40,7 @@
 
 #include "shortcuts.h"
 #include "mainwindow.h"
+#include "logger.h"
 #include "callable_obj.h"
 #include "sflphone_const.h"
 #include "dbus.h"
@@ -358,7 +359,7 @@ update_shortcuts_map (const gchar* action, guint key, GdkModifierType mask)
 }
 
 static void
-update_bindings_data (guint index, guint key, GdkModifierType mask)
+update_bindings_data (guint accel_index, guint key, GdkModifierType mask)
 {
     int i = 0;
 
@@ -381,12 +382,13 @@ update_bindings_data (guint index, guint key, GdkModifierType mask)
     }
 
     // store new key
-    accelerators_list[index].key = key;
-    accelerators_list[index].mask = mask;
+    accelerators_list[accel_index].key = key;
+    accelerators_list[accel_index].mask = mask;
 
     // update value in hashtable (used for dbus calls)
-    update_shortcuts_map (accelerators_list[index].action,
-                          accelerators_list[index].key, accelerators_list[index].mask);
+    update_shortcuts_map (accelerators_list[accel_index].action,
+                          accelerators_list[accel_index].key,
+                          accelerators_list[accel_index].mask);
 }
 
 /*
@@ -397,13 +399,13 @@ update_bindings_data (guint index, guint key, GdkModifierType mask)
  * Update current bindings with a new value
  */
 void
-shortcuts_update_bindings (guint index, guint key, GdkModifierType mask)
+shortcuts_update_bindings (guint shortcut_index, guint key, GdkModifierType mask)
 {
     // first remove all existing bindings
     remove_bindings ();
 
     // update data
-    update_bindings_data (index, key, mask);
+    update_bindings_data (shortcut_index, key, mask);
 
     // recreate all bindings
     create_bindings ();

@@ -86,7 +86,7 @@ void Conference::bindParticipant (std::string participant_id)
 std::string Conference::getStateStr()
 {
     switch (_confState) {
-        case ACTIVE_ATTACHED:		return "ACTIVE_ATACHED";
+        case ACTIVE_ATTACHED:		return "ACTIVE_ATTACHED";
         case ACTIVE_DETACHED:		return "ACTIVE_DETACHED";
         case ACTIVE_ATTACHED_REC:	return "ACTIVE_ATTACHED_REC";
         case ACTIVE_DETACHED_REC:	return "ACTIVE_DETACHED_REC";

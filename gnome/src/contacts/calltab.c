@@ -28,11 +28,12 @@
  *  as that of the covered work.
  */
 
-#include <calltab.h>
+#include "calltab.h"
 #include <gtk/gtk.h>
 #include <stdlib.h>
-#include <calltree.h>
-#include <contacts/searchbar.h>
+#include "calltree.h"
+#include "contacts/searchbar.h"
+#include "logger.h"
 
 calltab_t* calltab_init (gboolean searchbar_type, gchar *name)
 {

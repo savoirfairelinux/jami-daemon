@@ -32,13 +32,16 @@
 
 #include "config.h"
 #include "actions.h"
+#include "dbus.h"
 #include "calltree.h"
 #include "calltab.h"
+#include "logger.h"
 #include "preferencesdialog.h"
 #include "dialpad.h"
 #include "mainwindow.h"
 #include "sliders.h"
 #include "contacts/searchbar.h"
+#include "statusicon.h" /* for set_minimized */
 #include "assistant.h"
 #include "widget/gtkscrollbook.h"
 #include "widget/minidialog.h"

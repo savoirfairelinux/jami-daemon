@@ -36,13 +36,11 @@
 #include <stdlib.h>
 #include <time.h>
 
-
-
 /** @enum conference_state_t
   * This enum have all the states a conference can take.
   */
 typedef enum {
-    CONFERENCE_STATE_ACTIVE_ATACHED = 0,
+    CONFERENCE_STATE_ACTIVE_ATTACHED = 0,
     CONFERENCE_STATE_ACTIVE_DETACHED,
     CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD,
     CONFERENCE_STATE_ACTIVE_DETACHED_RECORD,

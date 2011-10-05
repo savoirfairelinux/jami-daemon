@@ -198,20 +198,20 @@ void account_list_free ()
 }
 
 void
-account_list_move_up (guint index)
+account_list_move_up (guint account_index)
 {
-    if (index != 0) {
-        gpointer acc = g_queue_pop_nth (accountQueue, index);
-        g_queue_push_nth (accountQueue, acc, index-1);
+    if (account_index != 0) {
+        gpointer acc = g_queue_pop_nth (accountQueue, account_index);
+        g_queue_push_nth (accountQueue, acc, account_index - 1);
     }
 }
 
 void
-account_list_move_down (guint index)
+account_list_move_down (guint account_index)
 {
-    if (index != accountQueue->length) {
-        gpointer acc = g_queue_pop_nth (accountQueue, index);
-        g_queue_push_nth (accountQueue, acc, index+1);
+    if (account_index != accountQueue->length) {
+        gpointer acc = g_queue_pop_nth (accountQueue, account_index);
+        g_queue_push_nth (accountQueue, acc, account_index + 1);
     }
 }
 

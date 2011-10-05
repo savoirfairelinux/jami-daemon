@@ -30,11 +30,12 @@
  */
 
 #include <gtk/gtk.h>
-#include <actions.h>
-#include <mainwindow.h>
-#include <accountlist.h>
-#include <statusicon.h>
-#include <eel-gconf-extensions.h>
+#include "actions.h"
+#include "mainwindow.h"
+#include "accountlist.h"
+#include "statusicon.h"
+#include "eel-gconf-extensions.h"
+#include "logger.h"
 
 static GtkStatusIcon *status;
 static GtkWidget *show_menu_item, *hangup_menu_item;
@@ -114,27 +115,25 @@ status_click (GtkStatusIcon *status_icon UNUSED, void * foo UNUSED)
                                     !gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM (show_menu_item)));
 }
 
-void
-menu (GtkStatusIcon *status_icon, guint button, guint activate_time,
-      GtkWidget * menu)
+static void menu(GtkStatusIcon *status_icon, guint button, guint activate_time, GtkWidget * menu_widget)
 {
-    gtk_menu_popup (GTK_MENU (menu), NULL, NULL, gtk_status_icon_position_menu,
-                    status_icon, button, activate_time);
+    gtk_menu_popup(GTK_MENU(menu_widget), NULL, NULL, gtk_status_icon_position_menu,
+                   status_icon, button, activate_time);
 }
 
 GtkWidget*
 create_menu()
 {
-    GtkWidget * menu;
+    GtkWidget * menu_widget;
     GtkWidget * menu_items;
     GtkWidget * image;
 
-    menu = gtk_menu_new();
+    menu_widget = gtk_menu_new();
 
     show_menu_item
     = gtk_check_menu_item_new_with_mnemonic (_ ("_Show main window"));
     gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (show_menu_item), TRUE);
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), show_menu_item);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu_widget), show_menu_item);
     g_signal_connect (G_OBJECT (show_menu_item), "toggled",
                       G_CALLBACK (show_hide),
                       NULL);
@@ -142,24 +141,24 @@ create_menu()
     hangup_menu_item = gtk_image_menu_item_new_with_mnemonic (_ ("_Hang up"));
     image = gtk_image_new_from_file (ICONS_DIR "/icon_hangup.svg");
     gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (hangup_menu_item), image);
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), hangup_menu_item);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu_widget), hangup_menu_item);
     g_signal_connect (G_OBJECT (hangup_menu_item), "activate",
                       G_CALLBACK (status_hangup),
                       NULL);
 
     menu_items = gtk_separator_menu_item_new();
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu_widget), menu_items);
 
     menu_items = gtk_image_menu_item_new_from_stock (GTK_STOCK_QUIT,
                  get_accel_group());
     g_signal_connect_swapped (G_OBJECT (menu_items), "activate",
                               G_CALLBACK (status_quit),
                               NULL);
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu_widget), menu_items);
 
-    gtk_widget_show_all (menu);
+    gtk_widget_show_all (menu_widget);
 
-    return menu;
+    return menu_widget;
 }
 
 void

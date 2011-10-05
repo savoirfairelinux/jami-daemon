@@ -31,6 +31,15 @@
  *  as that of the covered work.
  */
 
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <string.h>
+#include <gtk/gtk.h>
+
+#include "config.h"
+#include "logger.h"
 #include "actions.h"
 #include "mainwindow.h"
 #include "accountlist.h"
@@ -39,16 +48,7 @@
 #include "zrtpadvanceddialog.h"
 #include "tlsadvanceddialog.h"
 #include "audioconf.h"
-
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <net/if.h>
-#include <netinet/in.h>
-#include <string.h>
-#include <dbus/dbus.h>
-#include <config.h>
-#include <gtk/gtk.h>
-
+#include "dbus/dbus.h"
 #include "utils.h"
 
 /**
@@ -355,7 +355,7 @@ static GtkWidget* create_basic_tab(account_t *currentAccount)
     return frame;
 }
 
-static void fill_treeview_with_credential(GtkListStore * credentialStore, account_t * account)
+static void fill_treeview_with_credential(account_t * account)
 {
     GtkTreeIter iter;
     gtk_list_store_clear(credentialStore);
@@ -373,10 +373,10 @@ static void fill_treeview_with_credential(GtkListStore * credentialStore, accoun
         GHashTable * element = g_ptr_array_index(account->credential_information, i);
         gtk_list_store_append(credentialStore, &iter);
         gtk_list_store_set(credentialStore, &iter,
-                            COLUMN_CREDENTIAL_REALM, g_hash_table_lookup(element, ACCOUNT_REALM),
-                            COLUMN_CREDENTIAL_USERNAME, g_hash_table_lookup(element, ACCOUNT_USERNAME),
-                            COLUMN_CREDENTIAL_PASSWORD, g_hash_table_lookup(element, ACCOUNT_PASSWORD),
-                            COLUMN_CREDENTIAL_DATA, element, -1);
+                           COLUMN_CREDENTIAL_REALM, g_hash_table_lookup(element, ACCOUNT_REALM),
+                           COLUMN_CREDENTIAL_USERNAME, g_hash_table_lookup(element, ACCOUNT_USERNAME),
+                           COLUMN_CREDENTIAL_PASSWORD, g_hash_table_lookup(element, ACCOUNT_PASSWORD),
+                           COLUMN_CREDENTIAL_DATA, element, -1);
     }
 }
 
@@ -697,7 +697,7 @@ GtkWidget* create_credential_widget(account_t *a)
 
     gtk_container_add(GTK_CONTAINER(scrolledWindowCredential), treeViewCredential);
 
-    fill_treeview_with_credential(credentialStore, a);
+    fill_treeview_with_credential(a);
 
     /* Credential Buttons */
     GtkWidget *hbox = gtk_hbox_new(FALSE, 10);
@@ -1079,10 +1079,10 @@ GtkWidget* create_advanced_tab(account_t *a)
     return ret;
 }
 
-void ringtone_enabled(GtkWidget *widget UNUSED, gpointer fileChooser, const gchar *accountID UNUSED)
+void ringtone_enabled(GtkWidget *widget UNUSED, gpointer data, const gchar *accountID UNUSED)
 {
     /* toggle sensitivity */
-    gtk_widget_set_sensitive(fileChooser, !gtk_widget_is_sensitive(fileChooser));
+    gtk_widget_set_sensitive(data, !gtk_widget_is_sensitive(data));
 }
 
 

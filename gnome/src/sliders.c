@@ -28,9 +28,10 @@
  *  as that of the covered work.
  */
 
-#include <sliders.h>
-#include <dbus/dbus.h>
-#include <actions.h>
+#include "sliders.h"
+#include "dbus/dbus.h"
+#include "actions.h"
+#include "logger.h"
 #include <string.h>
 
 static gdouble     value[2];
@@ -79,9 +80,9 @@ update_icons (int dev)
 void
 slider_moved (GtkRange* range, gchar* device)
 {
-    gdouble value = gtk_range_get_value (range);
-    DEBUG ("Volume changed for %s: %f ", device, value);
-    dbus_set_volume (device, value);
+    gdouble slider_value = gtk_range_get_value (range);
+    DEBUG ("Volume changed for %s: %f ", device, slider_value);
+    dbus_set_volume (device, slider_value);
 
     if (g_strcmp0 (device, "speaker") == 0)
         update_icons (SPEAKER);

@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#include <codeclist.h>
-
+#include "codeclist.h"
+#include "logger.h"
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -156,47 +156,47 @@ codec_t* codec_list_get_by_payload (gconstpointer payload, GQueue *q)
     return c ? c->data : NULL;
 }
 
-codec_t* codec_list_get_nth (guint index, GQueue *q)
+codec_t* codec_list_get_nth (guint codec_index, GQueue *q)
 {
-    return g_queue_peek_nth (q, index);
+    return g_queue_peek_nth (q, codec_index);
 }
 
-codec_t* capabilities_get_nth (guint index)
+codec_t* capabilities_get_nth (guint caps_index)
 {
-    return g_queue_peek_nth (codecsCapabilities, index);
+    return g_queue_peek_nth (codecsCapabilities, caps_index);
 }
 
-void codec_set_prefered_order (guint index, GQueue *q)
+void codec_set_prefered_order (guint codec_index, GQueue *q)
 {
-    codec_t * prefered = codec_list_get_nth (index, q);
-    g_queue_pop_nth (q, index);
+    codec_t * prefered = codec_list_get_nth (codec_index, q);
+    g_queue_pop_nth (q, codec_index);
     g_queue_push_head (q, prefered);
 }
 
-void codec_list_move_codec_up (guint index, GQueue **q)
+void codec_list_move_codec_up (guint codec_index, GQueue **q)
 {
     DEBUG ("Codec list Size: %i \n", codec_list_get_size ());
 
     GQueue *tmp = *q;
 
-    if (index != 0) {
-        gpointer codec = g_queue_pop_nth (tmp, index);
-        g_queue_push_nth (tmp, codec, index-1);
+    if (codec_index != 0) {
+        gpointer codec = g_queue_pop_nth (tmp, codec_index);
+        g_queue_push_nth (tmp, codec, codec_index - 1);
     }
 
     *q = tmp;
 }
 
-void codec_list_move_codec_down (guint index, GQueue **q)
+void codec_list_move_codec_down (guint codec_index, GQueue **q)
 {
 
     DEBUG ("Codec list Size: %i \n", codec_list_get_size());
 
     GQueue *tmp = *q;
 
-    if (index != g_queue_get_length(tmp) ) {
-        gpointer codec = g_queue_pop_nth (tmp, index);
-        g_queue_push_nth (tmp, codec, index+1);
+    if (codec_index != g_queue_get_length(tmp) ) {
+        gpointer codec = g_queue_pop_nth (tmp, codec_index);
+        g_queue_push_nth (tmp, codec, codec_index + 1);
     }
 
     *q = tmp;

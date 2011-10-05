@@ -54,6 +54,7 @@
 
 #include "actions.h"
 #include "dbus/dbus.h"
+#include "logger.h"
 #include "contacts/searchbar.h"
 #include "contacts/addrbookfactory.h"
 #include "icons/icon_factory.h"
@@ -995,11 +996,11 @@ sflphone_rec_call()
         DEBUG ("SFLphone: Set record for selected conf");
         dbus_set_record (selectedConf->_confID);
         switch (selectedConf->_state) {
-            case CONFERENCE_STATE_ACTIVE_ATACHED:
+            case CONFERENCE_STATE_ACTIVE_ATTACHED:
                 selectedConf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD;
                 break;
             case CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD:
-                selectedConf->_state = CONFERENCE_STATE_ACTIVE_ATACHED;
+                selectedConf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED;
                 break;
             case CONFERENCE_STATE_ACTIVE_DETACHED:
                 selectedConf->_state = CONFERENCE_STATE_ACTIVE_DETACHED_RECORD;
@@ -1142,7 +1143,7 @@ void sflphone_fill_history (void)
                 conference_obj_t *conf = conferencelist_get(history, history_call->_confID);
                 if (!conf) {
                     // conference does not exist yet, create it
-                    conf = create_new_conference(CONFERENCE_STATE_ACTIVE_ATACHED, history_call->_confID);
+                    conf = create_new_conference(CONFERENCE_STATE_ACTIVE_ATTACHED, history_call->_confID);
                     conferencelist_add(history, conf);
                 }
 

@@ -65,10 +65,10 @@ pidgin_scroll_book_get_type (void)
 static gboolean
 scroll_left_cb (PidginScrollBook *scroll_book)
 {
-    int index = gtk_notebook_get_current_page (GTK_NOTEBOOK (scroll_book->notebook));
+    int page_index = gtk_notebook_get_current_page (GTK_NOTEBOOK (scroll_book->notebook));
 
-    if (index > 0)
-        gtk_notebook_set_current_page (GTK_NOTEBOOK (scroll_book->notebook), index - 1);
+    if (page_index > 0)
+        gtk_notebook_set_current_page (GTK_NOTEBOOK (scroll_book->notebook), page_index - 1);
 
     return TRUE;
 }
@@ -76,17 +76,17 @@ scroll_left_cb (PidginScrollBook *scroll_book)
 static gboolean
 scroll_right_cb (PidginScrollBook *scroll_book)
 {
-    int index = gtk_notebook_get_current_page (GTK_NOTEBOOK (scroll_book->notebook));
+    int page_index = gtk_notebook_get_current_page (GTK_NOTEBOOK (scroll_book->notebook));
     int count = gtk_notebook_get_n_pages (GTK_NOTEBOOK (scroll_book->notebook));
 
-    if (index + 1 < count)
-        gtk_notebook_set_current_page (GTK_NOTEBOOK (scroll_book->notebook), index + 1);
+    if (page_index + 1 < count)
+        gtk_notebook_set_current_page (GTK_NOTEBOOK (scroll_book->notebook), page_index + 1);
 
     return TRUE;
 }
 
 static void
-refresh_scroll_box (PidginScrollBook *scroll_book, int index, int count)
+refresh_scroll_box (PidginScrollBook *scroll_book, int book_index, int count)
 {
     gtk_widget_show_all (GTK_WIDGET (scroll_book));
 
@@ -102,21 +102,21 @@ refresh_scroll_box (PidginScrollBook *scroll_book, int index, int count)
         }
     }
 
-    char *label = g_strdup_printf ("<span size='smaller' weight='bold'>(%d/%d)</span>", index+1, count);
+    char *label = g_strdup_printf ("<span size='smaller' weight='bold'>(%d/%d)</span>", book_index+1, count);
     gtk_label_set_markup (GTK_LABEL (scroll_book->label), label);
     g_free (label);
 
-    gtk_widget_set_sensitive (scroll_book->left_arrow, index != 0);
-    gtk_widget_set_sensitive (scroll_book->right_arrow, index + 1 != count);
+    gtk_widget_set_sensitive (scroll_book->left_arrow, book_index != 0);
+    gtk_widget_set_sensitive (scroll_book->right_arrow, book_index + 1 != count);
 }
 
 
 static void
 page_count_change_cb (PidginScrollBook *scroll_book)
 {
-    int index = gtk_notebook_get_current_page (GTK_NOTEBOOK (scroll_book->notebook));
+    int page_index = gtk_notebook_get_current_page (GTK_NOTEBOOK(scroll_book->notebook));
     int count = gtk_notebook_get_n_pages (GTK_NOTEBOOK (scroll_book->notebook));
-    refresh_scroll_box (scroll_book, index, count);
+    refresh_scroll_box (scroll_book, page_index, count);
 }
 
 static gboolean

@@ -31,6 +31,8 @@
 #include <string.h>
 
 #include "assistant.h"
+#include "logger.h"
+#include "dbus.h"
 #include "reqaccount.h"
 
 #define SFLPHONE_ORG_SERVER "sip.sflphone.org"
@@ -38,8 +40,8 @@
 struct _wizard *wiz;
 static int account_type;
 static int use_sflphone_org = 1;
-account_t* current;
-char message[1024];
+static account_t* current;
+static char message[1024];
 /**
  * Forward function
  */
@@ -53,11 +55,10 @@ void prefill_sip (void) ;
 
 void set_account_type (GtkWidget* widget , gpointer data UNUSED)
 {
-    if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))) {
+    if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget)))
         account_type = _SIP;
-    } else {
+    else
         account_type = _IAX ;
-    }
 }
 
 static void show_password_cb (GtkWidget *widget UNUSED, gpointer data)
@@ -70,7 +71,7 @@ static void show_password_cb (GtkWidget *widget UNUSED, gpointer data)
  * Fills string message with the final message of account registration
  * with alias, server and username specified.
  */
-void getMessageSummary (char * message , const gchar * alias, const gchar * server, const gchar * username, const gboolean zrtp)
+void getMessageSummary (const gchar * alias, const gchar * server, const gchar * username, const gboolean zrtp)
 {
     char var[64];
     sprintf (message, _ ("This assistant is now finished."));
@@ -92,11 +93,10 @@ void getMessageSummary (char * message , const gchar * alias, const gchar * serv
 
     strcat (message, _ ("Security: "));
 
-    if (zrtp) {
+    if (zrtp)
         strcat (message, _ ("SRTP/ZRTP draft-zimmermann"));
-    } else {
+    else
         strcat (message, _ ("None"));
-    }
 }
 
 void set_sflphone_org (GtkWidget* widget , gpointer data UNUSED)
@@ -178,8 +178,7 @@ static void sip_apply_callback (void)
         g_hash_table_insert (current->properties, g_strdup (PUBLISHED_ADDRESS), g_strdup ( (gchar *) *iface));
 
         dbus_add_account (current);
-        getMessageSummary (message,
-                           gtk_entry_get_text (GTK_ENTRY (wiz->sip_alias)),
+        getMessageSummary (gtk_entry_get_text (GTK_ENTRY (wiz->sip_alias)),
                            gtk_entry_get_text (GTK_ENTRY (wiz->sip_server)),
                            gtk_entry_get_text (GTK_ENTRY (wiz->sip_username)),
                            (gboolean) (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (wiz->zrtp_enable)))
@@ -205,8 +204,7 @@ static void iax_apply_callback (void)
         g_hash_table_insert (current->properties, g_strdup (ACCOUNT_PASSWORD), g_strdup ( (gchar *) gtk_entry_get_text (GTK_ENTRY (wiz->iax_password))));
 
         dbus_add_account (current);
-        getMessageSummary (message,
-                           gtk_entry_get_text (GTK_ENTRY (wiz->iax_alias)),
+        getMessageSummary (gtk_entry_get_text (GTK_ENTRY (wiz->iax_alias)),
                            gtk_entry_get_text (GTK_ENTRY (wiz->iax_server)),
                            gtk_entry_get_text (GTK_ENTRY (wiz->iax_username)),
                            FALSE

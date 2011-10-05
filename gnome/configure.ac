@@ -9,7 +9,7 @@ AC_CONFIG_MACRO_DIR([m4])
 dnl Silent build by default. Use make V=1 to increase verbosity
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
-CFLAGS="$CFLAGS -g -Wall -Wextra"
+CFLAGS="$CFLAGS -g -Wall -Wextra -Wshadow"
 
 AC_PROG_CC_C99
 AM_PROG_CC_C_O dnl for per target flags, i.e. test_program_CFLAGS
