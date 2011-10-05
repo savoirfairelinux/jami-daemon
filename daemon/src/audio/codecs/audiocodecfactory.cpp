@@ -31,6 +31,7 @@
  *  as that of the covered work.
  */
 
+#include "config.h"
 #include "audiocodecfactory.h"
 #include <cstdlib>
 #include <algorithm> // for std::find
@@ -142,7 +143,7 @@ std::vector<sfl::Codec*> AudioCodecFactory::scanCodecDirectory()
     std::vector<sfl::Codec*> codecs;
     std::vector<std::string> dirToScan;
 
-    dirToScan.push_back(std::string(HOMEDIR) + DIR_SEPARATOR_STR "." PROGDIR "/");
+    dirToScan.push_back(std::string(HOMEDIR) + DIR_SEPARATOR_STR "." PACKAGE "/");
     dirToScan.push_back(CODECS_DIR "/");
     const char *envDir = getenv("CODECS_PATH");
     if (envDir)
@@ -162,7 +163,7 @@ std::vector<sfl::Codec*> AudioCodecFactory::scanCodecDirectory()
         dirent *dirStruct;
         while ( (dirStruct = readdir (dir))) {
             std::string file = dirStruct->d_name ;
-            if (file == CURRENT_DIR or file == PARENT_DIR)
+            if (file == "." or file == "..")
                 continue;
 
             if (seemsValid (file) && !alreadyInCache (file)) {
@@ -243,8 +244,9 @@ bool AudioCodecFactory::seemsValid (const std::string &lib)
 {
     // The name of the shared library seems valid  <==> it looks like libcodec_xxx.so
     // We check this
-    std::string prefix = SFL_CODEC_VALID_PREFIX;
-    std::string suffix = SFL_CODEC_VALID_EXTEN;
+
+    static const std::string prefix("libcodec_");
+    static const std::string suffix(".so");
 
     ssize_t len = lib.length() - prefix.length() - suffix.length();
     if (len < 0)
@@ -257,17 +259,17 @@ bool AudioCodecFactory::seemsValid (const std::string &lib)
 
 
 #ifndef HAVE_SPEEX_CODEC
-    if (lib.substr (prefix.length() , len) == SPEEX_STRING_DESCRIPTION)
+    if (lib.substr (prefix.length() , len) == "speex")
         return false;
 #endif
 
 #ifndef HAVE_GSM_CODEC
-    if (lib.substr (prefix.length() , len) == GSM_STRING_DESCRIPTION)
+    if (lib.substr (prefix.length() , len) == "gsm")
         return false;
 #endif
 
 #ifndef BUILD_ILBC
-    if (lib.substr (prefix.length() , len) == ILBC_STRING_DESCRIPTION)
+    if (lib.substr (prefix.length() , len) == "ilbc")
         return false;
 #endif
 

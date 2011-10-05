@@ -39,8 +39,8 @@ SamplerateConverter::SamplerateConverter (int freq) : _maxFreq(freq)
 
     _samples = (freq * 20) / 1000; // start with 20 ms buffers
 
-    _floatBufferIn = new float32[_samples];
-    _floatBufferOut = new float32[_samples];
+    _floatBufferIn = new float[_samples];
+    _floatBufferOut = new float[_samples];
 }
 
 SamplerateConverter::~SamplerateConverter (void)
@@ -61,7 +61,6 @@ SamplerateConverter::Short2FloatArray (const short *in, float *out, int len)
         out[len] = (float) in[len] * .000030517578125f;
 }
 
-//TODO Add ifdef for int16 or float32 type
 void SamplerateConverter::resample (SFLDataFormat* dataIn , SFLDataFormat* dataOut , int inputFreq , int outputFreq , int nbSamples)
 {
     double sampleFactor = (double) outputFreq / inputFreq;
@@ -77,8 +76,8 @@ void SamplerateConverter::resample (SFLDataFormat* dataIn , SFLDataFormat* dataO
     	_samples = maxSamples;
     	delete [] _floatBufferIn;
     	delete [] _floatBufferOut;
-        _floatBufferIn = new float32[_samples];
-        _floatBufferOut = new float32[_samples];
+        _floatBufferIn = new float[_samples];
+        _floatBufferOut = new float[_samples];
     }
 
 	SRC_DATA src_data;

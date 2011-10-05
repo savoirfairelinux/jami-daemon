@@ -36,8 +36,6 @@
 #include <string>
 #include "audio/audioloop.h"
 
-#define TABLE_LENGTH 4096
-
 /**
  * @file tone.h
  * @brief Tone sample (dial, busy, ring, congestion)
@@ -51,11 +49,6 @@ class Tone : public AudioLoop
          * @param sampleRate SampleRating of audio tone
          */
         Tone (const std::string& definition, unsigned int sampleRate);
-
-        /**
-         * Destructor
-         */
-        ~Tone();
 
         /** The different kind of tones */
         enum TONEID {
@@ -74,17 +67,17 @@ class Tone : public AudioLoop
          * @param nb are the number of int16 (mono) to generate
          * by example nb=5 generate 10 int16, 5 for the left, 5 for the right
          */
-        void genSin (SFLDataFormat* buffer, int frequency1, int frequency2, int nb);
+        void genSin(SFLDataFormat* buffer, int frequency1, int frequency2, int nb);
 
         /**
          *
          */
-        void fillWavetable (void);
+        void fillWavetable(void);
 
         /**
          *
          */
-        double interpolate (double x);
+        double interpolate(double x);
 
 
     private:
@@ -93,15 +86,16 @@ class Tone : public AudioLoop
          * allocate the memory with the definition
          * @param definition String that contain frequency/time of the tone.
          */
-        void genBuffer (const std::string& definition);
+        void genBuffer(const std::string& definition);
 
         /** Sample rate */
-        unsigned int _sampleRate;
+        unsigned int sampleRate_;
 
-        double _wavetable[TABLE_LENGTH];
+        static const int TABLE_LENGTH = 4096;
+        double wavetable_[TABLE_LENGTH];
 
-        double _xhigher;
-        double _xlower;
+        double xhigher_;
+        double xlower_;
 };
 
 #endif // __TONE_H__

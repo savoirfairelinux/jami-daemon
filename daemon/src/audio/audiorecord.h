@@ -40,25 +40,19 @@ class AudioRecord
 {
 
     public:
+        enum FILE_TYPE { FILE_RAW, FILE_WAV };
 
         AudioRecord();
 
         ~AudioRecord();
 
-	/**
-	 * Set the sampling rate for this recorder
- 	 */
-        void setSndSamplingRate (int smplRate);
-
-	/**
-	 * Get the recrding sampling rate
-	 */
+        void setSndSamplingRate(int smplRate);
+        /**
+         * Get the recrding sampling rate
+         */
         int getSndSamplingRate(void) const;
 
-	/**
-	 * Set the recording option
-	 */
-        void setRecordingOption (FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate, std::string path);
+        void setRecordingOption(FILE_TYPE type, int sndSmplRate, const std::string &path);
 
 	/**
 	 * Init recording file path
@@ -183,11 +177,6 @@ class AudioRecord
          * File format (RAW / WAVE)
          */
         FILE_TYPE fileType_;
-
-        /**
-         * Sound format (SINT16/SINT32)
-         */
-        SOUND_FORMAT sndFormat_;
 
         /**
          * Number of channels

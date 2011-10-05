@@ -73,17 +73,9 @@ AudioRecord::AudioRecord() : fp (NULL)
 
 AudioRecord::~AudioRecord()
 {
-    if (mixBuffer_) {
-        delete [] mixBuffer_;
-    }
-
-    if (micBuffer_) {
-        delete [] micBuffer_;
-    }
-
-    if (spkBuffer_) {
-        delete [] spkBuffer_;
-    }
+    delete [] mixBuffer_;
+    delete [] micBuffer_;
+    delete [] spkBuffer_;
 }
 
 void AudioRecord::setSndSamplingRate (int smplRate)
@@ -96,16 +88,12 @@ int AudioRecord::getSndSamplingRate() const
 	return sndSmplRate_;
 }
 
-void AudioRecord::setRecordingOption (FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate, std::string path)
+void AudioRecord::setRecordingOption(FILE_TYPE type, int sndSmplRate, const std::string &path)
 {
-
     fileType_ = type;
-    sndFormat_ = format;
     channels_ = 1;
     sndSmplRate_ = sndSmplRate;
-
     savePath_ = path + "/";
-
 }
 
 
@@ -309,11 +297,6 @@ bool AudioRecord::setRawFile()
         return false;
     }
 
-    if (sndFormat_ != INT16) {   // TODO need to change INT16 to SINT16
-        sndFormat_ = INT16;
-        _debug ("AudioRecord::setRawFile() : using 16-bit signed integer data format for file.");
-    }
-
     _debug ("AudioRecord:setRawFile() : created RAW file.");
 
     return true;
@@ -342,9 +325,7 @@ bool AudioRecord::setWavFile()
 
     hdr.num_chans = channels_;
 
-    if (sndFormat_ == INT16) {   //  TODO need to write INT16 to SINT16
-        hdr.bits_per_samp = 16;
-    }
+    hdr.bits_per_samp = 16;
 
     hdr.bytes_per_samp = (SINT16) (channels_ * hdr.bits_per_samp / 8);
 
@@ -499,15 +480,11 @@ void AudioRecord::recData (SFLDataFormat* buffer, int nSamples)
             return;
         }
 
-
-
-        if (sndFormat_ == INT16) {   // TODO change INT16 to SINT16
-            if (fwrite (buffer, sizeof (SFLDataFormat), nSamples, fp) != (unsigned int) nSamples)
-                _warn ("AudioRecord: Could not record data! ");
-            else {
-                fflush (fp);
-                byteCounter_ += (unsigned long) (nSamples*sizeof (SFLDataFormat));
-            }
+        if (fwrite (buffer, sizeof (SFLDataFormat), nSamples, fp) != (unsigned int) nSamples)
+            _warn ("AudioRecord: Could not record data! ");
+        else {
+            fflush (fp);
+            byteCounter_ += (unsigned long) (nSamples*sizeof (SFLDataFormat));
         }
     }
 
@@ -527,25 +504,16 @@ void AudioRecord::recData (SFLDataFormat* buffer_1, SFLDataFormat* buffer_2, int
             return;
         }
 
+        for (int k = 0; k < nSamples_1; k++) {
+            mixBuffer_[k] = (buffer_1[k]+buffer_2[k]);
 
-        if (sndFormat_ == INT16) {   // TODO change INT16 to SINT16
-            for (int k=0; k<nSamples_1; k++) {
-
-                mixBuffer_[k] = (buffer_1[k]+buffer_2[k]);
-
-
-                if (fwrite (&mixBuffer_[k], 2, 1, fp) != 1)
-                    _warn ("AudioRecord: Could not record data!");
-                else {
-                    fflush (fp);
-                }
-            }
+            if (fwrite (&mixBuffer_[k], 2, 1, fp) != 1)
+                _warn ("AudioRecord: Could not record data!");
+            else
+                fflush (fp);
         }
-
-        byteCounter_ += (unsigned long) (nSamples_1*sizeof (SFLDataFormat));
-
+        byteCounter_ += (unsigned long) (nSamples_1 * sizeof(SFLDataFormat));
     }
-
     return;
 }
 

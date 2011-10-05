@@ -73,51 +73,40 @@ RawFile::RawFile(const std::string& name, sfl::AudioCodec* codec, unsigned int s
     SFLDataFormat *monoBuffer = new SFLDataFormat[decodedSize];
     SFLDataFormat *bufpos = monoBuffer;
     unsigned char *filepos = reinterpret_cast<unsigned char *>(fileBuffer);
-    _size = decodedSize;
-    while(length >= encFrameSize) {
+    size_ = decodedSize;
+    while (length >= encFrameSize) {
     	bufpos += audioCodec->decode (bufpos, filepos, encFrameSize);
     	filepos += encFrameSize;
     	length -= encFrameSize;
     }
-    delete[] fileBuffer;
+    delete [] fileBuffer;
 
-    if (sampleRate == audioRate) {
-#ifdef DATAFORMAT_IS_FLOAT
-        _buffer = new SFLDataFormat[_size];
-        src_short_to_float_array (monoBuffer, _buffer, _size);
-        delete[] monoBuffer;
-#else
-        _buffer = monoBuffer;
-#endif
-
-    } else {
+    if (sampleRate == audioRate)
+        buffer_ = monoBuffer;
+    else {
         double factord = (double) sampleRate / audioRate;
-        float* floatBufferIn = new float[_size];
-        int    sizeOut  = ceil(factord*_size);
-        src_short_to_float_array (monoBuffer, floatBufferIn, _size);
-        delete[] monoBuffer;
-        SFLDataFormat* _buffer = new SFLDataFormat[sizeOut];
+        float* floatBufferIn = new float[size_];
+        int    sizeOut  = ceil(factord * size_);
+        src_short_to_float_array (monoBuffer, floatBufferIn, size_);
+        delete [] monoBuffer;
+        delete [] buffer_;
+        buffer_ = new SFLDataFormat[sizeOut];
 
         SRC_DATA src_data;
         src_data.data_in = floatBufferIn;
-        src_data.input_frames = _size;
+        src_data.input_frames = size_;
         src_data.output_frames = sizeOut;
         src_data.src_ratio = factord;
 
-#ifdef DATAFORMAT_IS_FLOAT
-        src_data.data_out = _buffer;
-        src_simple (&src_data, SRC_SINC_BEST_QUALITY, 1);
-#else
         float* floatBufferOut = new float[sizeOut];
         src_data.data_out = floatBufferOut;
 
         src_simple (&src_data, SRC_SINC_BEST_QUALITY, 1);
-        src_float_to_short_array (floatBufferOut, _buffer, src_data.output_frames_gen);
+        src_float_to_short_array (floatBufferOut, buffer_, src_data.output_frames_gen);
 
         delete [] floatBufferOut;
-#endif
         delete [] floatBufferIn;
-        _size = src_data.output_frames_gen;
+        size_ = src_data.output_frames_gen;
     }
 }
 
@@ -148,8 +137,8 @@ WaveFile::WaveFile (const std::string& fileName, unsigned int audioSamplingRate)
     SINT32 chunk_size; // fmt chunk size
     unsigned short formatTag; // data compression tag
 
-    fileStream.read ( (char*) &chunk_size, 4); // Read fmt chunk size.
-    fileStream.read ( (char*) &formatTag, 2);
+    fileStream.read(reinterpret_cast<char*>(&chunk_size), 4); // Read fmt chunk size.
+    fileStream.read(reinterpret_cast<char*>(&formatTag), 2);
 
     if (formatTag != 1) // PCM = 1, FLOAT = 3
         throw AudioFileException("File contains an unsupported data format type");
@@ -158,12 +147,12 @@ WaveFile::WaveFile (const std::string& fileName, unsigned int audioSamplingRate)
     SINT16 chan;
     fileStream.read ( (char*) &chan, 2);
 
-    if(chan > 2)
+    if (chan > 2)
     	throw AudioFileException("WaveFile: unsupported number of channels");
 
     // Get file sample rate from the header.
     SINT32 srate;
-    fileStream.read ( (char*) &srate, 4);
+    fileStream.read( (char*) &srate, 4);
 
     SINT32 avgb;
     fileStream.read ( (char*) &avgb, 4);
@@ -185,7 +174,7 @@ WaveFile::WaveFile (const std::string& fileName, unsigned int audioSamplingRate)
 
     // Sample rate converter initialized with 88200 sample long
     int converterSamples  = ((unsigned int)srate > audioSamplingRate) ? srate : audioSamplingRate;
-    SamplerateConverter _converter (converterSamples);
+    SamplerateConverter converter_(converterSamples);
 
     // Get length of data from the header.
     SINT32 bytes;
@@ -197,31 +186,28 @@ WaveFile::WaveFile (const std::string& fileName, unsigned int audioSamplingRate)
     		nbSamples, bytes,  blockal, srate, avgb, chunk_size, dt);
 
     // Should not be longer than a minute
-    if (nbSamples > (unsigned int) (60*srate))
-        nbSamples = 60*srate;
+    if (nbSamples > static_cast<unsigned int>(60 * srate))
+        nbSamples = 60 * srate;
 
     SFLDataFormat *tempBuffer = new SFLDataFormat[nbSamples];
-    if (!tempBuffer)
-        throw AudioFileException("Could not allocate temporary buffer");
 
-    fileStream.read ( (char *) tempBuffer, nbSamples*sizeof (SFLDataFormat));
+    fileStream.read (reinterpret_cast<char *>(tempBuffer), nbSamples * sizeof(SFLDataFormat));
 
     // mix two channels together if stereo
-    if(chan == 2) {
-    	for(unsigned int i = 0; i < nbSamples-1; i+=2)
-    		tempBuffer[i/2] = (tempBuffer[i] + tempBuffer[i+1]) / 2;
-    	nbSamples /= 2;
+    if (chan == 2) {
+    	for (unsigned int i = 0; i < nbSamples - 1; i += 2)
+            tempBuffer[static_cast<size_t>(i * 0.5)] = (tempBuffer[i] + tempBuffer[i + 1]) * 0.5;
+    	nbSamples *= 0.5;
     }
 
-    if ((unsigned int)srate != audioSamplingRate) {
+    if ((unsigned int) srate != audioSamplingRate) {
         int outSamples = ((float) nbSamples * ( (float) audioSamplingRate / (float) srate));
-	    _buffer = new SFLDataFormat[outSamples];
-		_converter.resample (tempBuffer, _buffer, srate, audioSamplingRate, nbSamples);
-		delete[] tempBuffer;
-    } else {
-    	_buffer = tempBuffer;
-    }
+	    buffer_ = new SFLDataFormat[outSamples];
+		converter_.resample (tempBuffer, buffer_, srate, audioSamplingRate, nbSamples);
+		delete [] tempBuffer;
+    } else
+    	buffer_ = tempBuffer;
 
-    _size = nbSamples;
-    _sampleRate = audioSamplingRate;
+    size_ = nbSamples;
+    sampleRate_ = audioSamplingRate;
 }

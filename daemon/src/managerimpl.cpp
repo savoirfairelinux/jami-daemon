@@ -1743,6 +1743,7 @@ void ManagerImpl::ringtone (const std::string& accountID)
     std::string ringchoice = account->getRingtonePath();
 	if (ringchoice.find (DIR_SEPARATOR_STR) == std::string::npos) {
 		// check inside global share directory
+        static const char * RINGDIR = "ringtones";
 		ringchoice = std::string (PROGSHAREDIR) + DIR_SEPARATOR_STR
 					 + RINGDIR + DIR_SEPARATOR_STR + ringchoice;
 	}
@@ -1819,7 +1820,7 @@ ManagerImpl::getTelephoneFile ()
 std::string ManagerImpl::getConfigFile (void) const
 {
 	std::string configdir = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".config"
-                 + DIR_SEPARATOR_STR + PROGDIR;
+                 + DIR_SEPARATOR_STR + PACKAGE;
 
     if (XDG_CONFIG_HOME != NULL) {
         std::string xdg_env = std::string (XDG_CONFIG_HOME);
@@ -1833,6 +1834,7 @@ std::string ManagerImpl::getConfigFile (void) const
             _debug ("Cannot create directory: %m");
     }
 
+    static const char * PROGNAME = "sflphoned";
     return configdir + DIR_SEPARATOR_STR + PROGNAME + ".yml";
 }
 

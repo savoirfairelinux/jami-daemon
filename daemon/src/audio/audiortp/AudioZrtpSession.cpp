@@ -27,6 +27,8 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
+
+#include "config.h"
 #include "AudioZrtpSession.h"
 #include "ZrtpSessionCallback.h"
 
@@ -49,14 +51,13 @@ namespace sfl
 {
 
 AudioZrtpSession::AudioZrtpSession (SIPCall * sipcall, const std::string& zidFilename) :
-    // ost::SymmetricZRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
-    AudioRtpSession(sipcall, Zrtp, static_cast<ost::RTPDataQueue *>(this), static_cast<ost::Thread *>(this))
-    ,ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue> (ost::InetHostAddress (sipcall->getLocalIp().c_str()),
-            sipcall->getLocalAudioPort(),
-            0,
-            ost::MembershipBookkeeping::defaultMembersHashSize,
-            ost::defaultApplication())
-    , _zidFilename (zidFilename)
+    AudioRtpSession(sipcall, Zrtp, this, this),
+    ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue>(ost::InetHostAddress(sipcall->getLocalIp().c_str()),
+    sipcall->getLocalAudioPort(),
+    0,
+    ost::MembershipBookkeeping::defaultMembersHashSize,
+    ost::defaultApplication()),
+    _zidFilename (zidFilename)
 {
     _debug ("AudioZrtpSession initialized");
     initializeZid();
@@ -96,7 +97,7 @@ void AudioZrtpSession::initializeZid (void)
 
     // xdg_config = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".cache/sflphone";
 
-    std::string xdg_config = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".cache" + DIR_SEPARATOR_STR + PROGDIR + "/" + _zidFilename;
+    std::string xdg_config = std::string(HOMEDIR) + DIR_SEPARATOR_STR + ".cache" + DIR_SEPARATOR_STR + PACKAGE + "/" + _zidFilename;
 
     _debug ("    xdg_config %s", xdg_config.c_str());
 

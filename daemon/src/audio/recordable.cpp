@@ -32,13 +32,8 @@
 
 Recordable::Recordable() : recorder (&recAudio, Manager::instance().getMainBuffer())
 {
-
     _debug("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Recordable Constructor -=-=-=-=-=-=-=-=-=--=-=-=-");
-
-    FILE_TYPE fileType = FILE_WAV;
-    SOUND_FORMAT soundFormat = INT16;
-
-    recAudio.setRecordingOption (fileType, soundFormat, 8000, Manager::instance().audioPreference.getRecordpath());
+    recAudio.setRecordingOption (AudioRecord::FILE_WAV, 8000, Manager::instance().audioPreference.getRecordpath());
 }
 
 
