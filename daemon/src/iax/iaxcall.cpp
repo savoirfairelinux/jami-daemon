@@ -57,16 +57,16 @@ IAXCall::getSupportedFormat (const std::string &accountID) const
 {
     Account *account = Manager::instance().getAccount (accountID);
 
-    int format = 0;
+    int format_mask = 0;
     if (account) {
         CodecOrder map(account->getActiveCodecs());
         for (CodecOrder::const_iterator iter = map.begin(); iter != map.end(); ++iter)
-                format |= codecToASTFormat(*iter);
+                format_mask |= codecToASTFormat(*iter);
     }
     else
         _error ("No IAx account could be found");
 
-    return format;
+    return format_mask;
 }
 
 int IAXCall::getFirstMatchingFormat (int needles, const std::string &accountID) const
@@ -76,10 +76,10 @@ int IAXCall::getFirstMatchingFormat (int needles, const std::string &accountID) 
     if (account != NULL) {
         CodecOrder map(account->getActiveCodecs());
         for (CodecOrder::const_iterator iter = map.begin(); iter != map.end(); ++iter) {
-            int format = codecToASTFormat(*iter);
+            int format_mask = codecToASTFormat(*iter);
             // Return the first that matches
-            if (format & needles)
-                return format;
+            if (format_mask & needles)
+                return format_mask;
         }
     } else
         _error ("No IAx account could be found");

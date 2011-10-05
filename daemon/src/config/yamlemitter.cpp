@@ -374,7 +374,7 @@ void YamlEmitter::addMappingItem (int mappingid, std::string key, YamlNode *node
         	throw;
         }
     } else if (node->getType() == SEQUENCE) {
-    	SequenceNode *seqnode = (SequenceNode *)node;
+        SequenceNode *seqnode = static_cast<SequenceNode *>(node);
         if ( (temp1 = yaml_document_add_scalar (&document, NULL, (yaml_char_t *) key.c_str(), -1, YAML_PLAIN_SCALAR_STYLE)) == 0)
             throw YamlEmitterException ("Could not add scalar to document");
 
@@ -387,25 +387,21 @@ void YamlEmitter::addMappingItem (int mappingid, std::string key, YamlNode *node
         Sequence *seq = seqnode->getSequence();
         Sequence::const_iterator it;
         for (it = seq->begin(); it != seq->end(); ++it) {
-			YamlNode *node = *it;
+			YamlNode *yamlNode = *it;
 			int id;
-			if ( (id = yaml_document_add_mapping (&document, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0) {
+			if ((id = yaml_document_add_mapping (&document, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0)
 				throw YamlEmitterException ("Could not add account mapping to document");
-			}
 
-			if (yaml_document_append_sequence_item (&document, temp2, id) == 0) {
+			if (yaml_document_append_sequence_item (&document, temp2, id) == 0)
 				throw YamlEmitterException ("Could not append account mapping to sequence");
-			}
 
-			MappingNode *mapnode = (MappingNode*)node;
+			MappingNode *mapnode = static_cast<MappingNode*>(yamlNode);
 			Mapping *map = mapnode->getMapping();
 			Mapping::iterator mapit;
 			for (mapit = map->begin(); mapit != map->end() ; ++mapit)
 				addMappingItem(id, mapit->first, mapit->second);
         }
-	} else {
+    } else
         throw YamlEmitterException ("Unknown node type while adding mapping node");
-    }
 }
-
 }

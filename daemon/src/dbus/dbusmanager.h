@@ -31,11 +31,8 @@
 #ifndef __DBUSMANAGERIMPL_H__
 #define __DBUSMANAGERIMPL_H__
 
-#pragma GCC diagnostic ignored "-Wignored-qualifiers"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#include <dbus-c++/dbus.h>
-#pragma GCC diagnostic warning "-Wignored-qualifiers"
-#pragma GCC diagnostic warning "-Wunused-parameter"
+#include "dbus_cpp.h"
+
 class ConfigurationManager;
 class CallManager;
 class NetworkManager;

@@ -40,7 +40,7 @@
 
 SIPAccount::SIPAccount (const std::string& accountID)
     : Account (accountID, "SIP")
-	, transport (NULL)
+	, transport_(NULL)
     , regc_ (NULL)
     , bRegister_ (false)
     , registrationExpire_ (600)
@@ -298,11 +298,11 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
 			cred->getValue(USERNAME, &user);
 			cred->getValue(PASSWORD, &pass);
 			cred->getValue(REALM, &realm);
-			std::map<std::string, std::string> map;
-			map[USERNAME] = user;
-			map[PASSWORD] = pass;
-			map[REALM] = realm;
-			creds.push_back(map);
+			std::map<std::string, std::string> credentialMap;
+			credentialMap[USERNAME] = user;
+			credentialMap[PASSWORD] = pass;
+			credentialMap[REALM] = realm;
+			creds.push_back(credentialMap);
 		}
 	}
     if (creds.empty()) {
@@ -656,10 +656,10 @@ std::string SIPAccount::getLoginName (void)
 
 std::string SIPAccount::getFromUri (void) const
 {
-    std::string scheme("");
-    std::string transport("");
-    std::string username = username_;
-    std::string hostname = hostname_;
+    std::string scheme;
+    std::string transport;
+    std::string username(username_);
+    std::string hostname(hostname_);
 
     // UDP does not require the transport specification
     if (transportType_ == PJSIP_TRANSPORT_TLS) {

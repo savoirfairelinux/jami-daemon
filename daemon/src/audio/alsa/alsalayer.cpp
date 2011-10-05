@@ -214,10 +214,10 @@ AlsaLayer::stopStream (void)
  * 		return the function return value
  */
 #define ALSA_CALL(call, error) ({ \
-			int err = call; \
-			if (err < 0) \
-				_error("ALSA: "error": %s", snd_strerror(err)); \
-			err; \
+			int err_code = call; \
+			if (err_code < 0) \
+				_error("ALSA: "error": %s", snd_strerror(err_code)); \
+			err_code; \
 		})
 
 void AlsaLayer::stopCaptureStream (void)

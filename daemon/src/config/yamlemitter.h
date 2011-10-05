@@ -131,7 +131,6 @@ class YamlEmitter
         friend class ConfigurationTest;
 
 };
-
 }
 
 #endif

@@ -408,8 +408,7 @@ class SIPAccount : public Account
             return zrtpHelloHash_;
         }
 
-        pjsip_transport* transport;
-
+        pjsip_transport* transport_;
     private:
 
         std::vector< std::map<std::string, std::string > > credentials_;

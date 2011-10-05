@@ -86,8 +86,8 @@ IAXVoIPLink::terminate()
     for (CallMap::iterator iter = _callMap.begin(); iter != _callMap.end(); ++iter) {
         IAXCall *call = dynamic_cast<IAXCall*> (iter->second);
         if (call) {
-			ost::MutexLock m(mutexIAX_);
-			iax_hangup (call->session, (char*) "Dumped Call");
+			ost::MutexLock lock(mutexIAX_);
+			iax_hangup (call->session, const_cast<char*>("Dumped Call"));
             delete call;
         }
     }

@@ -28,10 +28,12 @@
  *  as that of the covered work.
  */
 
-#include <global.h>
 #include "networkmanager.h"
+
 #include <iostream>
-#include <instance.h>
+
+#include "global.h"
+#include "instance.h"
 #include "../manager.h"
 
 const std::string NetworkManager::statesString[5] = {"unknown", "asleep", "connecting", "connected", "disconnected"};
@@ -55,6 +57,6 @@ void NetworkManager::PropertiesChanged (const std::map< std::string, ::DBus::Var
     Manager::instance().registerAccounts();
 }
 
-NetworkManager::NetworkManager (DBus::Connection& connection, const DBus::Path& path, const char* destination) : DBus::ObjectProxy (connection, path, destination)
+NetworkManager::NetworkManager (DBus::Connection& connection, const DBus::Path& dbus_path, const char* destination) : DBus::ObjectProxy (connection, dbus_path, destination)
 {
 }

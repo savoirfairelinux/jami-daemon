@@ -93,52 +93,52 @@ class CryptoAttribute
 {
 
     public:
-        CryptoAttribute (std::string tag,
-                         std::string cryptoSuite,
-                         std::string srtpKeyMethod,
-                         std::string srtpKeyInfo,
-                         std::string lifetime,
-                         std::string mkiValue,
-                         std::string mkiLength) :
-            tag (tag),
-            cryptoSuite (cryptoSuite),
-            srtpKeyMethod (srtpKeyMethod),
-            srtpKeyInfo (srtpKeyInfo),
-            lifetime (lifetime),
-            mkiValue (mkiValue),
-            mkiLength (mkiLength) {};
+        CryptoAttribute (const std::string &tag,
+                         const std::string &cryptoSuite,
+                         const std::string &srtpKeyMethod,
+                         const std::string &srtpKeyInfo,
+                         const std::string &lifetime,
+                         const std::string &mkiValue,
+                         const std::string &mkiLength) :
+            tag_(tag),
+            cryptoSuite_(cryptoSuite),
+            srtpKeyMethod_(srtpKeyMethod),
+            srtpKeyInfo_(srtpKeyInfo),
+            lifetime_(lifetime),
+            mkiValue_(mkiValue),
+            mkiLength_(mkiLength) {}
 
 
         std::string getTag() const {
-            return tag;
-        };
+            return tag_;
+        }
         std::string getCryptoSuite() const {
-            return cryptoSuite;
-        };
+            return cryptoSuite_;
+        }
         std::string getSrtpKeyMethod() const {
-            return srtpKeyMethod;
-        };
+            return srtpKeyMethod_;
+        }
         std::string getSrtpKeyInfo() const {
-            return srtpKeyInfo;
-        };
+            return srtpKeyInfo_;
+        }
         std::string getLifetime() const {
-            return lifetime;
-        };
+            return lifetime_;
+        }
         std::string getMkiValue() const {
-            return mkiValue;
-        };
+            return mkiValue_;
+        }
         std::string getMkiLength() const {
-            return mkiLength;
-        };
+            return mkiLength_;
+        }
 
     private:
-        std::string tag;
-        std::string cryptoSuite;
-        std::string srtpKeyMethod;
-        std::string srtpKeyInfo;
-        std::string lifetime;
-        std::string mkiValue;
-        std::string mkiLength;
+        std::string tag_;
+        std::string cryptoSuite_;
+        std::string srtpKeyMethod_;
+        std::string srtpKeyInfo_;
+        std::string lifetime_;
+        std::string mkiValue_;
+        std::string mkiLength_;
 };
 
 class SdesNegotiator
@@ -156,7 +156,7 @@ class SdesNegotiator
 
     public:
         SdesNegotiator (const std::vector<CryptoSuiteDefinition>& localCapabilites, const std::vector<std::string>& remoteAttribute);
-        ~SdesNegotiator() { };
+        ~SdesNegotiator() {};
 
         bool negotiate (void);
 

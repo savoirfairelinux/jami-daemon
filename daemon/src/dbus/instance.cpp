@@ -27,8 +27,8 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#include <global.h>
-#include <instance.h>
+#include "global.h"
+#include "instance.h"
 #include "../manager.h"
 
 Instance::Instance (DBus::Connection& connection)

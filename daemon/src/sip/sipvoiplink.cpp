@@ -288,7 +288,7 @@ void SIPVoIPLink::sendRegister (Account *a)
 	std::string srvUri(account->getServerUri());
 
 	std::string address, port;
-	findLocalAddressFromUri(srvUri, account->transport, address, port);
+	findLocalAddressFromUri(srvUri, account->transport_, address, port);
 
 	std::string from(account->getFromUri());
 	pj_str_t pjFrom = pj_str((char*)from.c_str());
@@ -320,11 +320,11 @@ void SIPVoIPLink::sendRegister (Account *a)
 	if (pjsip_regc_register (regc, PJ_TRUE, &tdata) != PJ_SUCCESS)
 		throw VoipLinkException("Unable to initialize transaction data for account registration");
 
-	if (pjsip_regc_set_transport (regc, initTransportSelector (account->transport, _pool)) != PJ_SUCCESS)
+	if (pjsip_regc_set_transport (regc, initTransportSelector (account->transport_, _pool)) != PJ_SUCCESS)
 		throw VoipLinkException("Unable to set transport");
 
 	// decrease transport's ref count, counter incrementation is managed when acquiring transport
-	pjsip_transport_dec_ref(account->transport);
+	pjsip_transport_dec_ref(account->transport_);
 
 	// pjsip_regc_send increment the transport ref count by one,
 	if (pjsip_regc_send(regc, tdata) != PJ_SUCCESS)
@@ -333,7 +333,7 @@ void SIPVoIPLink::sendRegister (Account *a)
 	// Decrease transport's ref count, since coresponding reference counter decrementation
 	// is performed in pjsip_regc_destroy. This function is never called in SFLphone as the
 	// regc data structure is permanently associated to the account at first registration.
-	pjsip_transport_dec_ref (account->transport);
+	pjsip_transport_dec_ref (account->transport_);
 
     account->setRegistrationInfo (regc);
 }
@@ -753,7 +753,7 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
     std::string toUri(call->getPeerNumber()); // expecting a fully well formed sip uri
 
     std::string address, port;
-    findLocalAddressFromUri(toUri, account->transport, address, port);
+    findLocalAddressFromUri(toUri, account->transport_, address, port);
 
     std::string from(account->getFromUri());
     pj_str_t pjFrom = pj_str((char*)from.c_str());
@@ -782,7 +782,7 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
     if (pjsip_inv_invite(call->inv, &tdata) != PJ_SUCCESS)
        	return false;
 
-    pjsip_tpselector *tp = initTransportSelector(account->transport, call->inv->pool);
+    pjsip_tpselector *tp = initTransportSelector(account->transport_, call->inv->pool);
     if (pjsip_dlg_set_transport (dialog, tp) != PJ_SUCCESS)
        	return false;
 
@@ -882,7 +882,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall (const std::string& id, const std::string& to
 
         shutdownSipTransport(account);
         createTlsTransport(account, remoteAddr);
-		if (!account->transport) {
+		if (!account->transport_) {
             delete call;
             return false;
         }
@@ -951,9 +951,9 @@ void SIPVoIPLink::createDefaultSipUdpTransport()
 {
     SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(IP2IP_PROFILE));
     createUdpTransport(account);
-    assert(account->transport);
+    assert(account->transport_);
 
-    _localUDPTransport = account->transport;
+    _localUDPTransport = account->transport_;
 }
 
 void SIPVoIPLink::createTlsListener (SIPAccount *account, pjsip_tpfactory **listener)
@@ -987,7 +987,7 @@ void SIPVoIPLink::createTlsTransport (SIPAccount *account, std::string remoteAdd
     if (localTlsListener == NULL)
         createTlsListener(account, &localTlsListener);
 
-    pjsip_endpt_acquire_transport(_endpt, PJSIP_TRANSPORT_TLS, &rem_addr, sizeof (rem_addr), NULL, &account->transport);
+    pjsip_endpt_acquire_transport(_endpt, PJSIP_TRANSPORT_TLS, &rem_addr, sizeof (rem_addr), NULL, &account->transport_);
 }
 
 
@@ -1007,13 +1007,13 @@ void SIPVoIPLink::createSipTransport (SIPAccount *account)
     else
     	createUdpTransport(account);
 
-	if (!account->transport) {
+	if (!account->transport_) {
 		// Could not create new transport, this transport may already exists
-		account->transport = transportMap_[account->getLocalPort()];
-		if (account->transport) {
-			pjsip_transport_add_ref(account->transport);
-		} else {
-			account->transport = _localUDPTransport;
+		account->transport_ = transportMap_[account->getLocalPort()];
+		if (account->transport_)
+			pjsip_transport_add_ref(account->transport_);
+		else {
+			account->transport_ = _localUDPTransport;
 			account->setLocalPort(_localUDPTransport->local_name.port);
 		}
 	}
@@ -1054,11 +1054,11 @@ void SIPVoIPLink::createUdpTransport (SIPAccount *account)
 		listeningPort
     };
 
-    pjsip_udp_transport_start(_endpt, &bound_addr, &a_name, 1, &account->transport);
+    pjsip_udp_transport_start(_endpt, &bound_addr, &a_name, 1, &account->transport_);
     pjsip_tpmgr_dump_transports(pjsip_endpt_get_tpmgr(_endpt)); // dump debug information to stdout
 
-    if (account->transport)
-    	transportMap_[account->getLocalPort()] = account->transport;
+    if (account->transport_)
+    	transportMap_[account->getLocalPort()] = account->transport_;
 }
 
 pjsip_tpselector *SIPVoIPLink::initTransportSelector (pjsip_transport *transport, pj_pool_t *tp_pool)
@@ -1113,7 +1113,7 @@ void SIPVoIPLink::createStunTransport (SIPAccount *account)
     account->setPublishedAddress (listeningAddress);
     account->setPublishedPort (a_name.port);
 
-    pjsip_udp_transport_attach2 (_endpt, PJSIP_TRANSPORT_UDP, sock, &a_name, 1, &account->transport);
+    pjsip_udp_transport_attach2 (_endpt, PJSIP_TRANSPORT_UDP, sock, &a_name, 1, &account->transport_);
 
     pjsip_tpmgr_dump_transports (pjsip_endpt_get_tpmgr (_endpt));
 }
@@ -1121,9 +1121,9 @@ void SIPVoIPLink::createStunTransport (SIPAccount *account)
 
 void SIPVoIPLink::shutdownSipTransport (SIPAccount *account)
 {
-    if (account->transport) {
-        pjsip_transport_dec_ref(account->transport);
-        account->transport = NULL;
+    if (account->transport_) {
+        pjsip_transport_dec_ref(account->transport_);
+        account->transport_ = NULL;
     }
 }
 
@@ -1508,8 +1508,8 @@ void transaction_state_changed_cb (pjsip_inv_session *inv UNUSED, pjsip_transact
 
 		Manager::instance().incomingMessage(call->getCallId(), from, module->findTextMessage (formatedMessage));
 
-	} catch (sfl::InstantMessageException &e) {
-		_error ("SipVoipLink: %s", e.what());
+	} catch (const sfl::InstantMessageException &except) {
+		_error ("SipVoipLink: %s", except.what());
 	}
 }
 
@@ -1673,7 +1673,7 @@ static pj_bool_t transaction_request_cb (pjsip_rx_data *rdata)
 			? account->getPublishedAddress()
 			: addrToUse;
 
-    pjsip_tpselector *tp = SIPVoIPLink::instance()->initTransportSelector (account->transport, call->getMemoryPool());
+    pjsip_tpselector *tp = SIPVoIPLink::instance()->initTransportSelector (account->transport_, call->getMemoryPool());
 
     if (addrToUse == "0.0.0.0")
     	addrToUse = loadSIPLocalIP();

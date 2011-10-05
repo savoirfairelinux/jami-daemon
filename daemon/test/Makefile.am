@@ -24,8 +24,6 @@ test_SOURCES = \
 	configurationtest.cpp \
 	historytest.h \
 	historytest.cpp \
-	hookmanagertest.h \
-	hookmanagertest.cpp \
 	numbercleanertest.h \
 	numbercleanertest.cpp \
 	pluginmanagertest.h \
@@ -52,7 +50,6 @@ test_SOURCES = \
 	echocanceltest.h \
 	gaincontroltest.h \
 	historytest.h \
-	hookmanagertest.h \
 	instantmessagingtest.h \
 	mainbuffertest.h \
 	numbercleanertest.h \

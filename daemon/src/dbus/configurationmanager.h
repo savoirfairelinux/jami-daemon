@@ -48,7 +48,7 @@
 #pragma GCC diagnostic warning "-Wunused-but-set-variable"
 #endif
 
-#include <dbus-c++/dbus.h>
+#include "dbus_cpp.h"
 
 class ConfigurationManager
 : public org::sflphone::SFLphone::ConfigurationManager_adaptor,

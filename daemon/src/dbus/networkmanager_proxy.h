@@ -6,8 +6,7 @@
 #ifndef __dbusxx__networkmanager_proxy_h__PROXY_MARSHAL_H
 #define __dbusxx__networkmanager_proxy_h__PROXY_MARSHAL_H
 
-#include <dbus-c++/dbus.h>
-#include <cassert>
+#include "dbus_cpp.h"
 
 namespace org
 {

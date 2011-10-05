@@ -34,6 +34,7 @@
 #if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #endif
+#include "dbus_cpp.h"
 
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -43,9 +44,6 @@
 #if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
 #pragma GCC diagnostic warning "-Wunused-but-set-variable"
 #endif
-
-#include <dbus-c++/dbus.h>
-
 
 class Instance
     : public org::sflphone::SFLphone::Instance_adaptor,
