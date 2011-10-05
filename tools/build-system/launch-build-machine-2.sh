@@ -118,8 +118,8 @@ if [ ${IS_KDE_CLIENT} ]; then
 	TAG_NAME_PREFIX="kde."
 	LAUNCHPAD_PACKAGES=( "sflphone-client-kde" )
 fi
-CURRENT_RELEASE_TAG_NAME=`git tag -l "${TAG_NAME_PREFIX}[0-9]\.[0-9]\.[0-9]*\.*" | tail -n 1`
-PREVIOUS_RELEASE_TAG_NAME=`git tag -l "${TAG_NAME_PREFIX}[0-9]\.[0-9]\.[0-9]*\.*" | tail -n 2 | sed -n '1p;1q'`
+CURRENT_RELEASE_TAG_NAME=$(git for-each-ref refs/tags --sort=-authordate --format='%(refname)' --count=1 | cut -d'/' -f3)
+PREVIOUS_RELEASE_TAG_NAME=$(git for-each-ref refs/tags --sort=-authordate --format='%(refname)' --count=2 | cut -d'/' -f3 | tail -n1)
 CURRENT_RELEASE_COMMIT_HASH=`git show --pretty=format:"%H" -s ${CURRENT_RELEASE_TAG_NAME} | tail -n 1`
 PREVIOUS_RELEASE_COMMIT_HASH=`git show --pretty=format:"%H" -s ${PREVIOUS_RELEASE_TAG_NAME} | tail -n 1`
 CURRENT_COMMIT=`git show --pretty=format:"%H"  -s | tail -n 1`
