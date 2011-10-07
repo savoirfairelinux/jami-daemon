@@ -93,7 +93,7 @@ account_list_get_by_state (account_state_t state)
 }
 
 account_t *
-account_list_get_by_id (gchar * accountID)
+account_list_get_by_id (const gchar * const accountID)
 {
     GList * c = g_queue_find_custom (accountQueue, accountID, is_accountID_struct);
 

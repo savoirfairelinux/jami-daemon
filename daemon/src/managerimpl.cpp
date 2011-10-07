@@ -68,7 +68,7 @@
 #include <sys/stat.h>  // mkdir(2)
 
 ManagerImpl::ManagerImpl (void) :
-    _hasTriedToRegister (false), _config(), _currentCallId2(),
+    _hasTriedToRegister (false), _config(), currentCallId_(),
     _currentCallMutex(), _audiodriver (0),
     _dtmfKey (0), _toneMutex(),
     _telephoneTone (0), _audiofile (0), _spkr_volume (0),
@@ -159,25 +159,25 @@ void ManagerImpl::terminate ()
 
 bool ManagerImpl::isCurrentCall (const std::string& callId)
 {
-    return _currentCallId2 == callId;
+    return currentCallId_ == callId;
 }
 
 bool ManagerImpl::hasCurrentCall ()
 {
-	return not _currentCallId2.empty();
+	return not currentCallId_.empty();
 }
 
 const std::string&
 ManagerImpl::getCurrentCallId () const
 {
-    return _currentCallId2;
+    return currentCallId_;
 }
 
 void ManagerImpl::switchCall (const std::string& id)
 {
     ost::MutexLock m (_currentCallMutex);
     _debug ("----- Switch current call id to %s -----", id.c_str());
-    _currentCallId2 = id;
+    currentCallId_ = id;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -360,7 +360,7 @@ void ManagerImpl::hangupCall (const std::string& callId)
         if (conf != NULL) {
             // remove this participant
             removeParticipant (callId);
-            processRemainingParticipant (currentCallId, conf);
+            processRemainingParticipants(currentCallId, conf);
         }
     } else {
         // we are not participating to a conference, current call switched to ""
@@ -393,18 +393,21 @@ bool ManagerImpl::hangupConference (const std::string& id)
 
     ConferenceMap::iterator iter_conf = _conferencemap.find (id);
 
-    std::string currentAccountId;
-
     if (iter_conf != _conferencemap.end()) {
         Conference *conf = iter_conf->second;
-
-        const ParticipantSet &participants = conf->getParticipantList();
-        ParticipantSet::const_iterator iter;
-        for (iter = participants.begin(); iter != participants.end(); ++iter)
-            hangupCall (*iter);
+        if (conf) {
+            ParticipantSet participants(conf->getParticipantList());
+            for (ParticipantSet::const_iterator iter = participants.begin();
+                    iter != participants.end(); ++iter)
+                hangupCall(*iter);
+        }
+        else {
+            _error("Manager: No such conference %s", id.c_str());
+            return false;
+        }
     }
 
-    switchCall ("");
+    switchCall("");
 
     getMainBuffer()->stateInfo();
 
@@ -522,7 +525,7 @@ bool ManagerImpl::transferCall (const std::string& callId, const std::string& to
 {
     if (participToConference(callId)) {
         removeParticipant (callId);
-        processRemainingParticipant (callId, getConferenceFromCallID(callId));
+        processRemainingParticipants(callId, getConferenceFromCallID(callId));
     } else if (!isConference(getCurrentCallId()))
             switchCall("");
 
@@ -561,7 +564,7 @@ bool ManagerImpl::attendedTransfer(const std::string& transferID, const std::str
         return SIPVoIPLink::instance()->attendedTransfer(transferID, targetID);
 
     // Classic call, attached to an account
-	std::string accountid = getAccountFromCall(transferID);
+	std::string accountid(getAccountFromCall(transferID));
 	if (accountid.empty())
 		return false;
 
@@ -627,7 +630,7 @@ void ManagerImpl::removeConference (const std::string& conference_id)
 {
     _debug ("Manager: Remove conference %s", conference_id.c_str());
 
-    _debug ("Manager: number of participant: %d", (int) _conferencemap.size());
+    _debug ("Manager: number of participants: %u", _conferencemap.size());
     ConferenceMap::iterator iter = _conferencemap.find (conference_id);
 
     Conference* conf = NULL;
@@ -641,14 +644,14 @@ void ManagerImpl::removeConference (const std::string& conference_id)
     }
 
     // broadcast a signal over dbus
-    _dbus.getCallManager()->conferenceRemoved (conference_id);
+    _dbus.getCallManager()->conferenceRemoved(conference_id);
 
     // We now need to bind the audio to the remain participant
 
     // Unbind main participant audio from conference
     getMainBuffer()->unBindAll (Call::DEFAULT_ID);
 
-    const ParticipantSet &participants = conf->getParticipantList();
+    ParticipantSet participants(conf->getParticipantList());
 
     // bind main participant audio to remaining conference call
     ParticipantSet::iterator iter_p = participants.begin();
@@ -657,7 +660,7 @@ void ManagerImpl::removeConference (const std::string& conference_id)
         getMainBuffer()->bindCallID (*iter_p, Call::DEFAULT_ID);
 
     // Then remove the conference from the conference map
-    if (_conferencemap.erase (conference_id) == 1)
+    if (_conferencemap.erase(conference_id) == 1)
         _debug ("Manager: Conference %s removed successfully", conference_id.c_str());
     else
         _error ("Manager: Error: Cannot remove conference: %s", conference_id.c_str());
@@ -668,10 +671,8 @@ void ManagerImpl::removeConference (const std::string& conference_id)
 Conference*
 ManagerImpl::getConferenceFromCallID (const std::string& call_id)
 {
-    std::string account_id;
-
-    account_id = getAccountFromCall (call_id);
-    Call *call = getAccountLink (account_id)->getCall (call_id);
+    std::string account_id(getAccountFromCall(call_id));
+    Call *call = getAccountLink(account_id)->getCall(call_id);
 
     ConferenceMap::const_iterator iter = _conferencemap.find (call->getConfId());
 
@@ -694,11 +695,11 @@ void ManagerImpl::holdConference (const std::string& id)
 				 conf->getState() == Conference::ACTIVE_DETACHED_REC ||
 				 conf->getState() == Conference::HOLD_REC;
 
-	const ParticipantSet &participants = conf->getParticipantList();
-	ParticipantSet::const_iterator iter;
-	for (iter = participants.begin(); iter != participants.end(); ++iter) {
-		switchCall (*iter);
-		onHoldCall (*iter);
+	ParticipantSet participants(conf->getParticipantList());
+	for (ParticipantSet::const_iterator iter = participants.begin();
+            iter != participants.end(); ++iter) {
+		switchCall(*iter);
+		onHoldCall(*iter);
 	}
 
 	conf->setState(isRec ? Conference::HOLD_REC : Conference::HOLD);
@@ -715,7 +716,7 @@ void ManagerImpl::unHoldConference (const std::string& id)
 					 conf->getState() == Conference::ACTIVE_DETACHED_REC or
 					 conf->getState() == Conference::HOLD_REC;
 
-        const ParticipantSet &participants(conf->getParticipantList());
+        ParticipantSet participants(conf->getParticipantList());
 
         for (ParticipantSet::const_iterator iter = participants.begin(); iter!= participants.end(); ++iter) {
             Call *call = getAccountLink(getAccountFromCall(*iter))->getCall(*iter);
@@ -808,7 +809,7 @@ void ManagerImpl::addParticipant (const std::string& callId, const std::string& 
     	conf->bindParticipant (callId);
     }
 
-    const ParticipantSet &participants(conf->getParticipantList());
+    ParticipantSet participants(conf->getParticipantList());
     if (participants.empty())
     	_error("Manager: Error: Participant list is empty for this conference");
 
@@ -841,7 +842,7 @@ void ManagerImpl::addMainParticipant (const std::string& conference_id)
     if (iter != _conferencemap.end()) {
         Conference *conf = iter->second;
 
-        const ParticipantSet &participants = conf->getParticipantList();
+        ParticipantSet participants(conf->getParticipantList());
 
         for (ParticipantSet::const_iterator iter_p = participants.begin();
                 iter_p != participants.end(); ++iter_p) {
@@ -1051,7 +1052,7 @@ void ManagerImpl::detachParticipant (const std::string& call_id,
         else {
         	onHoldCall (call_id);
         	removeParticipant (call_id);
-        	processRemainingParticipant (current_call_id, conf);
+        	processRemainingParticipants(current_call_id, conf);
         }
         _dbus.getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
     } else {
@@ -1111,9 +1112,9 @@ void ManagerImpl::removeParticipant (const std::string& call_id)
      _dbus.getCallManager()->conferenceChanged (conf->getConfID(), conf->getStateStr());
 }
 
-void ManagerImpl::processRemainingParticipant (const std::string &current_call_id, Conference *conf)
+void ManagerImpl::processRemainingParticipants(const std::string &current_call_id, Conference *conf)
 {
-    const ParticipantSet &participants = conf->getParticipantList();
+    ParticipantSet participants(conf->getParticipantList());
     size_t n = participants.size();
     _debug ("Manager: Process remaining %d participant(s) from conference %s",
 			n, conf->getConfID().c_str());
@@ -1123,7 +1124,7 @@ void ManagerImpl::processRemainingParticipant (const std::string &current_call_i
         for (ParticipantSet::const_iterator iter_p = participants.begin();
                 iter_p != participants.end();
                 ++iter_p)
-            getMainBuffer()->flush (*iter_p);
+            getMainBuffer()->flush(*iter_p);
 
         getMainBuffer()->flush (Call::DEFAULT_ID);
     } else if (n == 1) {
@@ -1133,7 +1134,7 @@ void ManagerImpl::processRemainingParticipant (const std::string &current_call_i
         if (iter_participant != participants.end()) {
 
             // this call is no more a conference participant
-            std::string currentAccountId(getAccountFromCall (*iter_participant));
+            std::string currentAccountId(getAccountFromCall(*iter_participant));
             Call *call = getAccountLink(currentAccountId)->getCall(*iter_participant);
             call->setConfId ("");
 
@@ -1146,7 +1147,7 @@ void ManagerImpl::processRemainingParticipant (const std::string &current_call_i
 
         removeConference (conf->getConfID());
     } else {
-        _debug ("Manager: No remaining participant, remove conference");
+        _debug ("Manager: No remaining participants, remove conference");
         removeConference (conf->getConfID());
         switchCall ("");
     }
@@ -1169,7 +1170,7 @@ void ManagerImpl::joinConference (const std::string& conf_id1,
         return;
     }
 
-    const ParticipantSet &participants(conf1->getParticipantList());
+    ParticipantSet participants(conf1->getParticipantList());
 
     for (ParticipantSet::const_iterator iter_p = participants.begin();
             iter_p != participants.end(); ++iter_p) {
@@ -1196,7 +1197,7 @@ void ManagerImpl::addStream (const std::string& call_id)
 
             conf->bindParticipant (call_id);
 
-            const ParticipantSet &participants(conf->getParticipantList());
+            ParticipantSet participants(conf->getParticipantList());
 
             // reset ring buffer for all conference participant
             for (ParticipantSet::const_iterator iter_p = participants.begin();
@@ -1407,7 +1408,7 @@ void ManagerImpl::incomingMessage (const std::string& callID,
     if (participToConference (callID)) {
         Conference *conf = getConferenceFromCallID (callID);
 
-        const ParticipantSet &participants = conf->getParticipantList();
+        ParticipantSet participants(conf->getParticipantList());
         for (ParticipantSet::const_iterator iter_p = participants.begin();
                 iter_p != participants.end(); ++iter_p) {
 
@@ -1450,7 +1451,7 @@ bool ManagerImpl::sendTextMessage (const std::string& callID, const std::string&
         if (!conf)
             return false;
 
-        const ParticipantSet participants = conf->getParticipantList();
+        ParticipantSet participants(conf->getParticipantList());
 
         for (ParticipantSet::const_iterator iter_p = participants.begin();
                 iter_p != participants.end(); ++iter_p) {
@@ -1478,7 +1479,7 @@ bool ManagerImpl::sendTextMessage (const std::string& callID, const std::string&
         if (!conf)
             return false;
 
-        const ParticipantSet participants(conf->getParticipantList());
+        ParticipantSet participants(conf->getParticipantList());
         for (ParticipantSet::const_iterator iter_p = participants.begin();
                 iter_p != participants.end(); ++iter_p) {
 
@@ -1552,7 +1553,7 @@ void ManagerImpl::peerHungupCall (const std::string& call_id)
 
         if (conf != NULL) {
             removeParticipant (call_id);
-            processRemainingParticipant (getCurrentCallId(), conf);
+            processRemainingParticipants(getCurrentCallId(), conf);
         }
     } else {
         if (isCurrentCall (call_id)) {
@@ -1620,7 +1621,7 @@ void ManagerImpl::callFailure (const std::string& call_id)
 
         // remove this participant
         removeParticipant (call_id);
-        processRemainingParticipant (getCurrentCallId(), conf);
+        processRemainingParticipants(getCurrentCallId(), conf);
     }
 
     removeCallAccount (call_id);
@@ -2984,16 +2985,16 @@ std::vector<std::string> ManagerImpl::getConferenceList (void) const
     return v;
 }
 
-std::vector<std::string> ManagerImpl::getParticipantList (const std::string& confID) const
+std::vector<std::string> ManagerImpl::getParticipantList(const std::string& confID) const
 {
     std::vector<std::string> v;
 
     ConferenceMap::const_iterator iter_conf = _conferencemap.find (confID);
     if (iter_conf != _conferencemap.end()) {
-        const ParticipantSet &participants = iter_conf->second->getParticipantList();
+        const ParticipantSet participants(iter_conf->second->getParticipantList());
         std::copy(participants.begin(), participants.end(), std::back_inserter(v));;
     } else
-        _warn ("Manager: Warning: Did not found conference %s", confID.c_str());
+        _warn ("Manager: Warning: Did not find conference %s", confID.c_str());
 
     return v;
 }

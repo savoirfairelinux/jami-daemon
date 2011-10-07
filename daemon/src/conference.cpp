@@ -43,45 +43,35 @@ Conference::Conference()
     Recordable::initRecFileName (_id);
 }
 
-
-Conference::~Conference()
-{
-}
-
-
-int Conference::getState()
+int Conference::getState() const
 {
     return _confState;
 }
-
 
 void Conference::setState (ConferenceState state)
 {
     _confState = state;
 }
 
-
-void Conference::add (std::string participant_id)
+void Conference::add(const std::string &participant_id)
 {
     _participants.insert (participant_id);
 }
 
-
-void Conference::remove (std::string participant_id)
+void Conference::remove(const std::string &participant_id)
 {
-    _participants.erase (participant_id);
+    _participants.erase(participant_id);
 }
 
-void Conference::bindParticipant (std::string participant_id)
+void Conference::bindParticipant(const std::string &participant_id)
 {
-	ParticipantSet::iterator iter;
-	for (iter = _participants.begin(); iter != _participants.end(); ++iter)
-		if (participant_id != *iter)
-			Manager::instance().getMainBuffer()->bindCallID (participant_id, *iter);
+	for (ParticipantSet::iterator iter = _participants.begin();
+            iter != _participants.end(); ++iter)
+        if (participant_id != *iter)
+            Manager::instance().getMainBuffer()->bindCallID(participant_id, *iter);
 
-    Manager::instance().getMainBuffer()->bindCallID (participant_id);
+    Manager::instance().getMainBuffer()->bindCallID(participant_id);
 }
-
 
 std::string Conference::getStateStr()
 {
@@ -96,13 +86,10 @@ std::string Conference::getStateStr()
     }
 }
 
-
-const ParticipantSet &Conference::getParticipantList()
+ParticipantSet Conference::getParticipantList() const
 {
     return _participants;
 }
-
-
 
 bool Conference::setRecording()
 {
@@ -130,5 +117,4 @@ bool Conference::setRecording()
     }
 
     return recordStatus;
-
 }

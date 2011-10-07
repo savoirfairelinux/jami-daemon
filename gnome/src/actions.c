@@ -55,6 +55,7 @@
 #include "actions.h"
 #include "dbus/dbus.h"
 #include "logger.h"
+#include "contacts/calltab.h"
 #include "contacts/searchbar.h"
 #include "contacts/addrbookfactory.h"
 #include "icons/icon_factory.h"
@@ -220,7 +221,7 @@ sflphone_hung_up (callable_obj_t * c)
     DEBUG ("SFLphone: Hung up");
 
     calllist_remove_call (current_calls, c->_callID);
-    calltree_remove_call (current_calls, c, NULL);
+    calltree_remove_call (current_calls, c);
     c->_state = CALL_STATE_DIALING;
     call_remove_all_errors (c);
     update_actions();
@@ -368,7 +369,11 @@ sflphone_hang_up()
 
     DEBUG ("SFLphone: Hang up");
 
-    if (selectedCall) {
+    if (selectedConf) {
+        im_widget_update_state (IM_WIDGET (selectedConf->_im_widget), FALSE);
+        dbus_hang_up_conference (selectedConf);
+    }
+    else if (selectedCall) {
         switch (selectedCall->_state) {
             case CALL_STATE_DIALING:
                 dbus_hang_up (selectedCall);
@@ -411,9 +416,6 @@ sflphone_hang_up()
                 WARN ("Should not happen in sflphone_hang_up()!");
                 break;
         }
-    } else if (selectedConf) {
-        im_widget_update_state (IM_WIDGET (selectedConf->_im_widget), FALSE);
-        dbus_hang_up_conference (selectedConf);
     }
 
     calltree_update_call (history, selectedCall, NULL);
@@ -454,7 +456,7 @@ sflphone_pick_up()
         case CALL_STATE_TRANSFER:
             dbus_transfer (selectedCall);
             time (&selectedCall->_time_stop);
-            calltree_remove_call(current_calls, selectedCall, NULL);
+            calltree_remove_call(current_calls, selectedCall);
             calllist_remove_call(current_calls, selectedCall->_callID);
             break;
         case CALL_STATE_CURRENT:
@@ -750,7 +752,7 @@ sflphone_keypad (guint keyval, gchar * key)
                     case GDK_KP_Enter:
                         dbus_transfer (c);
                         time (&c->_time_stop);
-                        calltree_remove_call(current_calls, c, NULL);
+                        calltree_remove_call(current_calls, c);
                         break;
                     case GDK_Escape:
                         sflphone_unset_transfer ();
@@ -897,7 +899,7 @@ sflphone_detach_participant (const gchar* callID)
         selectedCall->_confID = NULL;
     }
     im_widget_update_state (IM_WIDGET (selectedCall->_im_widget), TRUE);
-    calltree_remove_call (current_calls, selectedCall, NULL);
+    calltree_remove_call (current_calls, selectedCall);
     calltree_add_call (current_calls, selectedCall, NULL);
     dbus_detach_participant (selectedCall->_callID);
 }

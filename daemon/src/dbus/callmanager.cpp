@@ -42,37 +42,34 @@
 
 CallManager::CallManager (DBus::Connection& connection)
     : DBus::ObjectAdaptor (connection, "/org/sflphone/SFLphone/CallManager")
-{
-}
+{}
 
-void
-CallManager::placeCall (const std::string& accountID,
-                        const std::string& callID,
-                        const std::string& to)     // Check if a destination number is available
+void CallManager::placeCall(const std::string& accountID,
+                            const std::string& callID,
+                            const std::string& to)
 {
-
-    if (to == "") {
+    // Check if a destination number is available
+    if (to.empty())
     	_debug ("No number entered - Call stopped");
-    } else {
+    else
     	Manager::instance().outgoingCall (accountID, callID, to);
-    }
 }
 
-void
-CallManager::placeCallFirstAccount (const std::string& callID,
-                                    const std::string& to)
+void CallManager::placeCallFirstAccount(const std::string& callID,
+                                        const std::string& to)
 {
-    if (to == "") {
+    using std::vector;
+    using std::string;
+    if (to.empty()) {
         _warn ("CallManager: Warning: No number entered, call stopped");
         return;
     }
 
-    std::vector< std::string > accountList = Manager::instance().loadAccountOrder();
-    if (accountList.size() == 0)
+    vector<string> accountList(Manager::instance().loadAccountOrder());
+    if (accountList.empty())
     	accountList = Manager::instance().getAccountList();
 
-	std::vector< std::string >::const_iterator iter;
-	for (iter = accountList.begin(); iter != accountList.end(); ++iter) {
+	for (vector<string>::const_iterator iter = accountList.begin(); iter != accountList.end(); ++iter) {
 		if ((*iter != IP2IP_PROFILE) && Manager::instance().getAccount(*iter)->isEnabled()) {
 			Manager::instance().outgoingCall(*iter, callID, to);
 			return;
@@ -96,7 +93,6 @@ void
 CallManager::hangUp (const std::string& callID)
 {
     Manager::instance().hangupCall (callID);
-
 }
 
 void
@@ -104,7 +100,6 @@ CallManager::hangUpConference (const std::string& confID)
 {
     Manager::instance().hangupConference (confID);
 }
-
 
 void
 CallManager::hold (const std::string& callID)
@@ -124,20 +119,17 @@ CallManager::transfer (const std::string& callID, const std::string& to)
     Manager::instance().transferCall (callID, to);
 }
 
-void
-CallManager::attendedTransfer (const std::string& transferID, const std::string& targetID)
+void CallManager::attendedTransfer (const std::string& transferID, const std::string& targetID)
 {
 	Manager::instance().attendedTransfer(transferID, targetID);
 }
 
-void
-CallManager::setVolume (const std::string& device, const double& value)
+void CallManager::setVolume (const std::string& device, const double& value)
 {
-    if (device == "speaker") {
-        Manager::instance().setSpkrVolume ( (int) (value*100.0));
-    } else if (device == "mic") {
-        Manager::instance().setMicVolume ( (int) (value*100.0));
-    }
+    if (device == "speaker")
+        Manager::instance().setSpkrVolume ( (int) (value * 100.0));
+    else if (device == "mic")
+        Manager::instance().setMicVolume ( (int) (value * 100.0));
 
     volumeChanged (device, value);
 }
@@ -145,11 +137,10 @@ CallManager::setVolume (const std::string& device, const double& value)
 double
 CallManager::getVolume (const std::string& device)
 {
-    if (device == "speaker") {
-        return Manager::instance().getSpkrVolume() /100.0;
-    } else if (device == "mic") {
-        return Manager::instance().getMicVolume() /100.0;
-    }
+    if (device == "speaker")
+        return Manager::instance().getSpkrVolume() / 100.0;
+    else if (device == "mic")
+        return Manager::instance().getMicVolume() / 100.0;
 
     return 0;
 }
@@ -279,7 +270,7 @@ CallManager::playDTMF (const std::string& key)
 void
 CallManager::startTone (const int32_t& start , const int32_t& type)
 {
-    if (start == true) {
+    if (start) {
         if (type == 0)
             Manager::instance().playTone();
         else
@@ -292,14 +283,13 @@ CallManager::startTone (const int32_t& start , const int32_t& type)
 // for conferencing in order to get
 // the right pointer for the given
 // callID.
-sfl::AudioZrtpSession * CallManager::getAudioZrtpSession (const std::string& callID)
+sfl::AudioZrtpSession *
+CallManager::getAudioZrtpSession(const std::string& callID)
 {
-    SIPVoIPLink * link = NULL;
-    link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (""));
+    SIPVoIPLink * link = dynamic_cast<SIPVoIPLink *>(Manager::instance().getAccountLink(""));
 
-    if (!link) {
+    if (!link)
         throw CallManagerException("Failed to get sip link");
-    }
 
     SIPCall *call;
     try {
@@ -324,8 +314,6 @@ CallManager::setSASVerified (const std::string& callID)
         zSession = getAudioZrtpSession (callID);
         zSession->SASVerified();
     } catch (...) {
-        return;
-        // throw;
     }
 }
 
@@ -337,8 +325,6 @@ CallManager::resetSASVerified (const std::string& callID)
         zSession = getAudioZrtpSession (callID);
         zSession->resetSASVerified();
     } catch (...) {
-        return;
-        // throw;
     }
 }
 
@@ -350,8 +336,6 @@ CallManager::setConfirmGoClear (const std::string& callID)
         zSession = getAudioZrtpSession (callID);
         zSession->goClearOk();
     } catch (...) {
-        return;
-        // throw;
     }
 }
 
@@ -363,8 +347,6 @@ CallManager::requestGoClear (const std::string& callID)
         zSession = getAudioZrtpSession (callID);
         zSession->requestGoClear();
     } catch (...) {
-        return;
-        /// throw;
     }
 }
 
@@ -376,8 +358,6 @@ CallManager::acceptEnrollment (const std::string& callID, const bool& accepted)
         zSession = getAudioZrtpSession (callID);
         zSession->acceptEnrollment (accepted);
     } catch (...) {
-        return;
-        // throw;
     }
 }
 
@@ -389,14 +369,12 @@ CallManager::setPBXEnrollment (const std::string& callID, const bool& yesNo)
         zSession = getAudioZrtpSession (callID);
         zSession->setPBXEnrollment (yesNo);
     } catch (...) {
-        return;
-        // throw;
     }
 }
 
 void
 CallManager::sendTextMessage (const std::string& callID, const std::string& message)
 {
-    if (!Manager::instance().sendTextMessage (callID, message, "Me"))
+    if (!Manager::instance().sendTextMessage(callID, message, "Me"))
         throw CallManagerException();
 }

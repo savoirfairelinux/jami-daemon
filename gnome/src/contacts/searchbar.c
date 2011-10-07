@@ -33,6 +33,7 @@
 
 #include "searchbar.h"
 #include "calltree.h"
+#include "calltab.h"
 #include "dbus.h"
 #include "logger.h"
 #include "config/addressbook-config.h"

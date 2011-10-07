@@ -32,6 +32,7 @@
 #include "codeclist.h"
 #include "sflphone_const.h"
 #include <time.h>
+#include "contacts/calltab.h"
 #include "contacts/calltree.h"
 #include "dbus.h"
 #include <unistd.h>

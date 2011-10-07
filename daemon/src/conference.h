@@ -34,29 +34,18 @@
 #include <string>
 
 #include "audio/recordable.h"
-#include "call.h"
-
-// class ManagerImpl;
-// class Call;
 
 typedef std::set<std::string> ParticipantSet;
 
 class Conference: public Recordable
 {
-
     public:
-
         enum ConferenceState {ACTIVE_ATTACHED, ACTIVE_DETACHED, ACTIVE_ATTACHED_REC, ACTIVE_DETACHED_REC, HOLD, HOLD_REC};
 
         /**
          * Constructor for this class, increment static counter
          */
         Conference();
-
-        /**
-         * Destructor
-         */
-        ~Conference();
 
         /**
          * Return the conference id
@@ -68,7 +57,7 @@ class Conference: public Recordable
         /**
          * Return the current conference state
          */
-        int getState();
+        int getState() const;
 
         /**
          * Set conference state
@@ -83,22 +72,22 @@ class Conference: public Recordable
         /**
          * Add a new participant to the conference
          */
-        void add (std::string participant_id);
+        void add (const std::string &participant_id);
 
         /**
          * Remove a participant from the conference
          */
-        void remove (std::string participant_id);
+        void remove (const std::string &participant_id);
 
         /**
          * Bind a participant to the conference
          */
-        void bindParticipant (std::string participant_id);
+        void bindParticipant (const std::string &participant_id);
 
         /**
          * Get the participant list for this conference
          */
-        const ParticipantSet &getParticipantList();
+        ParticipantSet getParticipantList() const;
 
         /**
          * Get recording file ID
@@ -128,12 +117,6 @@ class Conference: public Recordable
          * List of participant ids
          */
         ParticipantSet _participants;
-
-        /**
-         * Number of participant
-         */
-        int _nbParticipant;
-
 };
 
 #endif

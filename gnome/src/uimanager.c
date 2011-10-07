@@ -49,6 +49,7 @@
 #include "statusicon.h"
 
 #include "contacts/addrbookfactory.h"
+#include "contacts/calltab.h"
 #include "config/addressbook-config.h"
 
 #include "accountlist.h"

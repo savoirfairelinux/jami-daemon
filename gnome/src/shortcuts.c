@@ -42,6 +42,7 @@
 #include "mainwindow.h"
 #include "logger.h"
 #include "callable_obj.h"
+#include "contacts/calltab.h"
 #include "sflphone_const.h"
 #include "dbus.h"
 #include "actions.h"

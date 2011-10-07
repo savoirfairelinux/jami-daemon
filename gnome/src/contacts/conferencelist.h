@@ -31,63 +31,46 @@
 #ifndef __CONFERENCELIST_H__
 #define __CONFERENCELIST_H__
 
-#include <gtk/gtk.h>
-
-#include "conference_obj.h"
-#include "calllist.h"
-
 /** @file conferencelist.h
   * @brief A list to store conferences.
   */
 
-// GQueue* conferenceQueue;
-
 /** This function initialize a conference list. */
-void
-conferencelist_init (calltab_t *);
+void conferencelist_init (calltab_t *);
 
 /** This function empty and free the conference list. */
-void
-conferencelist_clean (calltab_t *);
+void conferencelist_clean (calltab_t *);
 
 /** This function empty and free the history conference list */
-void
-conferencelist_clean_history (void);
+void conferencelist_clean_history (void);
 
 /** This function empty, free the conference list and allocate a new one. */
-void
-conferencelist_reset (calltab_t *);
+void conferencelist_reset (calltab_t *);
 
 /** This function append a conference to the list.
   * @param conf The conference you want to add
   * */
-void
-conferencelist_add (calltab_t *, const conference_obj_t *);
+void conferencelist_add (calltab_t *, const conference_obj_t *);
 
 /** This function remove a conference from list.
   * @param callID The callID of the conference you want to remove
   */
-void
-conferencelist_remove (calltab_t *, const gchar *);
+void conferencelist_remove (calltab_t *, const gchar * const conf_id);
 
 /** Return the number of calls in the list
   * @return The number of calls in the list */
-guint
-conferencelist_get_size (calltab_t *);
+guint conferencelist_get_size (calltab_t *);
 
 /** Return the call at the nth position in the list
   * @param n The position of the call you want
   * @return A call or NULL */
-conference_obj_t*
-conferencelist_get_nth (calltab_t *, guint);
+conference_obj_t* conferencelist_get_nth (calltab_t *, guint);
 
 /** Return the call corresponding to the callID
   * @param n The callID of the call  want
   * @return A call or NULL */
-conference_obj_t*
-conferencelist_get (calltab_t *, const gchar *);
+conference_obj_t* conferencelist_get(calltab_t *, const gchar const *);
 
-conference_obj_t*
-conferencelist_pop_head(calltab_t *);
+conference_obj_t* conferencelist_pop_head(calltab_t *);
 
 #endif

@@ -223,7 +223,7 @@ void AudioRtpSession::updateDestinationIpAddress (void)
     // This method remove the current destination entry
 
     if (!_queue->forgetDestination (_remote_ip, _remote_port, _remote_port+1))
-        _warn ("AudioRtpSession: Could not remove previous destination");
+        _debug("AudioRtpSession: Did not remove previous destination");
 
     // new destination is stored in call
     // we just need to recall this method

@@ -942,7 +942,7 @@ class ManagerImpl
          * @param current call id
          * @param conference pointer
          */
-        void processRemainingParticipant (const std::string &current_call_id, Conference *conf);
+        void processRemainingParticipants(const std::string &current_call_id, Conference *conf);
 
         /**
          * Create config directory in home user and return configuration file path
@@ -978,7 +978,7 @@ class ManagerImpl
         Conf::ConfigTree _config;
 
         /** Current Call ID */
-        std::string _currentCallId2;
+        std::string currentCallId_;
 
         /** Protected current call access */
         ost::Mutex _currentCallMutex;

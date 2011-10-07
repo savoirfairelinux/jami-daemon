@@ -213,33 +213,31 @@ conference_changed_cb (DBusGProxy *proxy UNUSED, const gchar* confID,
 {
     DEBUG ("DBUS: Conference state changed: %s\n", state);
 
-    // sflphone_display_transfer_status("Transfer successfull");
     conference_obj_t* changed_conf = conferencelist_get (current_calls, confID);
 
-    if(changed_conf == NULL) {
-	ERROR("DBUS: Conference is NULL in conference state changed");
-	return;
+    if (changed_conf == NULL) {
+        ERROR("DBUS: Conference is NULL in conference state changed");
+        return;
     }
 
     // remove old conference from calltree
-    calltree_remove_conference (current_calls, changed_conf, NULL);
+    calltree_remove_conference (current_calls, changed_conf);
 
     // update conference state
-    if (g_strcmp0 (state, "ACTIVE_ATTACHED") == 0) {
+    if (g_strcmp0 (state, "ACTIVE_ATTACHED") == 0)
         changed_conf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED;
-    } else if (g_strcmp0 (state, "ACTIVE_DETACHED") == 0) {
+    else if (g_strcmp0 (state, "ACTIVE_DETACHED") == 0)
         changed_conf->_state = CONFERENCE_STATE_ACTIVE_DETACHED;
-    } else if (g_strcmp0 (state, "ACTIVE_ATTACHED_REC") == 0) {
+    else if (g_strcmp0 (state, "ACTIVE_ATTACHED_REC") == 0)
         changed_conf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD;
-    } else if (g_strcmp0(state, "ACTIVE_DETACHED_REC") == 0) {
+    else if (g_strcmp0(state, "ACTIVE_DETACHED_REC") == 0)
         changed_conf->_state = CONFERENCE_STATE_ACTIVE_DETACHED_RECORD;
-    } else if (g_strcmp0 (state, "HOLD") == 0) {
+    else if (g_strcmp0 (state, "HOLD") == 0)
         changed_conf->_state = CONFERENCE_STATE_HOLD;
-    } else if (g_strcmp0(state, "HOLD_REC") == 0) {
+    else if (g_strcmp0(state, "HOLD_REC") == 0)
         changed_conf->_state = CONFERENCE_STATE_HOLD_RECORD;
-    } else {
+    else
         DEBUG ("Error: conference state not recognized");
-    }
 
     // reactivate instant messaging window for these calls
     toggle_im(changed_conf, TRUE);
@@ -250,7 +248,6 @@ conference_changed_cb (DBusGProxy *proxy UNUSED, const gchar* confID,
 
     // deactivate instant messaging window for new participants
     toggle_im(changed_conf, FALSE);
-
     calltree_add_conference (current_calls, changed_conf);
 }
 
@@ -267,7 +264,7 @@ conference_created_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
     conference_participant_list_update (participants, new_conf);
 
     // Add conference ID in in each calls
-    for (gchar **part = participants; *part; part++) {
+    for (gchar **part = participants; part && *part; ++part) {
         callable_obj_t *call = calllist_get_call (current_calls, *part);
 
         // set when this call have been added to the conference
@@ -299,18 +296,16 @@ conference_removed_cb (DBusGProxy *proxy UNUSED, const gchar* confID, void * foo
     DEBUG ("DBUS: Conference removed %s", confID);
 
     conference_obj_t * c = conferencelist_get (current_calls, confID);
-    calltree_remove_conference (current_calls, c, NULL);
+    calltree_remove_conference (current_calls, c);
 
     im_widget_update_state (IM_WIDGET (c->_im_widget), FALSE);
 
-    // remove all participant for this conference
-    for (GSList *p = c->participant_list; p; p = conference_next_participant (p)) {
-
+    // remove all participants for this conference
+    for (GSList *p = c->participant_list; p; p = conference_next_participant(p)) {
         callable_obj_t *call = calllist_get_call (current_calls, p->data);
         if (call) {
             g_free (call->_confID);
             call->_confID = NULL;
-
             im_widget_update_state(IM_WIDGET (call->_im_widget), TRUE);
         }
     }
@@ -1805,11 +1800,8 @@ dbus_set_addressbook_list (const gchar** list)
 GHashTable*
 dbus_get_hook_settings (void)
 {
-
     GError *error = NULL;
     GHashTable *results = NULL;
-
-    //DEBUG ("Calling org_sflphone_SFLphone_ConfigurationManager_get_addressbook_settings");
 
     org_sflphone_SFLphone_ConfigurationManager_get_hook_settings (
         configurationManagerProxy, &results, &error);
@@ -1926,7 +1918,6 @@ dbus_get_conference_details (const gchar *confID)
 void
 dbus_set_accounts_order (const gchar* order)
 {
-
     GError *error = NULL;
 
     org_sflphone_SFLphone_ConfigurationManager_set_accounts_order (

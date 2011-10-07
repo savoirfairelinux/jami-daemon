@@ -29,6 +29,7 @@
  */
 
 #include "calllist.h"
+#include "calltab.h"
 #include "calltree.h"
 #include "logger.h"
 #include "contacts/searchbar.h"
@@ -38,13 +39,13 @@ static
 gint is_callID_callstruct(gconstpointer a, gconstpointer b)
 {
     const QueueElement *c = a;
-    if(c == NULL || c->type != HIST_CALL)
-	return 1;
+    if (c == NULL || c->type != HIST_CALL)
+        return 1;
 
     return g_strcasecmp(c->elem.call->_callID, (const gchar *) b);
 }
 
-// TODO : sflphoneGTK : try to do this more generic
+// TODO : try to do this more generically
 void calllist_add_contact (gchar *contact_name, gchar *contact_phone, contact_type_t type, GdkPixbuf *photo)
 {
     /* Check if the information is valid */
@@ -54,9 +55,9 @@ void calllist_add_contact (gchar *contact_name, gchar *contact_phone, contact_ty
     callable_obj_t *new_call = create_new_call (CONTACT, CALL_STATE_DIALING, "", "", contact_name, contact_phone);
 
     // Attach a pixbuf to a contact
-    if (photo) {
+    if (photo)
         new_call->_contact_thumbnail = gdk_pixbuf_copy (photo);
-    } else {
+    else {
         GdkPixbuf *pixbuf;
         switch (type) {
             case CONTACT_PHONE_BUSINESS:
@@ -146,9 +147,9 @@ calllist_clean_history (void)
     for (guint i = 0; i < size; i++) {
         QueueElement* c = calllist_get_nth(history, i);
         if (c->type == HIST_CALL)
-            calltree_remove_call (history, c->elem.call, NULL);
+            calltree_remove_call (history, c->elem.call);
         else if(c->type == HIST_CONFERENCE)
-            calltree_remove_conference (history, c->elem.conf, NULL);
+            calltree_remove_conference (history, c->elem.conf);
     }
 
     calllist_reset (history);
@@ -158,16 +159,15 @@ void
 calllist_remove_from_history (callable_obj_t* c)
 {
     calllist_remove_call(history, c->_callID);
-    calltree_remove_call(history, c, NULL);
+    calltree_remove_call(history, c);
 }
 
 void
 calllist_remove_call (calltab_t* tab, const gchar * callID)
 {
     GList *c = g_queue_find_custom (tab->callQueue, callID, is_callID_callstruct);
-    if (c == NULL) {
+    if (c == NULL)
     	return;
-    }
 
     QueueElement *element = (QueueElement *)c->data;
     if (element->type != HIST_CALL) {
