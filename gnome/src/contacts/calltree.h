@@ -97,9 +97,6 @@ void
 calltree_add_conference (calltab_t *, conference_obj_t *);
 
 void
-calltree_update_conference (calltab_t *, const conference_obj_t *);
-
-void
 calltree_remove_conference(calltab_t *, const conference_obj_t *);
 
 void
@@ -115,12 +112,11 @@ gboolean
 calltree_update_clock(gpointer);
 
 /**
- * Get the iter to a row provided the callID/confID
  * @param The calltab (current_calls, history, contacts)
+ * @param The call
  * @param The callID/confID
- * @return The 
  */
-GtkTreeIter 
-calltree_get_gtkiter_from_id(calltab_t *, gchar *);
+void
+calltree_(calltab_t *, callable_obj_t *, const gchar * const);
 
 #endif
