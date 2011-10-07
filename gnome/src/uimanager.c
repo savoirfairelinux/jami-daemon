@@ -836,10 +836,10 @@ edit_paste(void * foo UNUSED)
             case CALL_STATE_DIALING:
             {
                 /* Add the text to the number */
-                gchar *before = selectedCall->_peer_number;
-                DEBUG("TO: %s\n", before);
-                selectedCall->_peer_number = g_strconcat(before, no, NULL);
-                g_free(before);
+                gchar *old = selectedCall->_peer_number;
+                DEBUG("TO: %s\n", old);
+                selectedCall->_peer_number = g_strconcat(old, no, NULL);
+                g_free(old);
 
                 if (selectedCall->_state == CALL_STATE_DIALING)
                     selectedCall->_peer_info = g_strconcat("\"\" <",
@@ -855,9 +855,9 @@ edit_paste(void * foo UNUSED)
             case CALL_STATE_HOLD: { // Create a new call to hold the new text
                 selectedCall = sflphone_new_call();
 
-                g_free(selectedCall->_peer_number);
-                selectedCall->_peer_number = g_strconcat(selectedCall->_peer_number,
-                                             no, NULL);
+                gchar *old = selectedCall->_peer_number;
+                selectedCall->_peer_number = g_strconcat(old, no, NULL);
+                g_free(old);
                 DEBUG("TO: %s", selectedCall->_peer_number);
 
                 g_free(selectedCall->_peer_info);
@@ -875,8 +875,8 @@ edit_paste(void * foo UNUSED)
                     DEBUG("<%s>", oneNo);
                     dbus_play_dtmf(oneNo);
 
-                    gchar * temp = g_strconcat(selectedCall->_peer_number, oneNo,
-                                                NULL);
+                    gchar * temp = g_strconcat(selectedCall->_peer_number,
+                                               oneNo, NULL);
                     g_free(selectedCall->_peer_info);
                     selectedCall->_peer_info = get_peer_info(temp, selectedCall->_peer_name);
                     g_free(temp);
@@ -889,12 +889,9 @@ edit_paste(void * foo UNUSED)
     } else { // There is no current call, create one
         selectedCall = sflphone_new_call();
 
-        gchar * before = selectedCall->_peer_number;
-        gchar *new_peer_number = g_strconcat(selectedCall->_peer_number, no,
-                                     NULL);
-        g_free(selectedCall->_peer_number);
-        selectedCall->_peer_number = new_peer_number;
-        g_free(before);
+        gchar * old = selectedCall->_peer_number;
+        selectedCall->_peer_number = g_strconcat(old, no, NULL);
+        g_free(old);
         DEBUG("UIManager: TO: %s", selectedCall->_peer_number);
 
         g_free(selectedCall->_peer_info);

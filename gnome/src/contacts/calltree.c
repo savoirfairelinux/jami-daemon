@@ -1207,6 +1207,7 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf)
 {
     DEBUG ("CallTree: Remove conference %s", conf->_confID);
     calltree_remove_conference_recursive(tab, conf, NULL);
+    DEBUG ("CallTree: Finished Removing conference");
 }
 
 void calltree_add_history_conference(conference_obj_t *conf)

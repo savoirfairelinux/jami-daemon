@@ -61,7 +61,6 @@ conference_obj_t *create_new_conference(conference_state_t state, const gchar* c
 
     // set conference timestamp
     time(&new_conf->_time_start);
-    g_assert(new_conf->_im_widget == NULL);
 
     return new_conf;
 }
