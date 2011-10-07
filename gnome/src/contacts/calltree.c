@@ -247,7 +247,7 @@ row_activated (GtkTreeView       *tree_view UNUSED,
                         break;
                     case CONFERENCE_STATE_HOLD:
                     case CONFERENCE_STATE_HOLD_RECORD:
-                        sflphone_conference_off_hold (selectedConf);
+                        dbus_unhold_conference(selectedConf);
                         break;
                     case CONFERENCE_STATE_ACTIVE_ATTACHED:
                     case CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD:
@@ -1195,7 +1195,7 @@ void calltree_remove_conference_recursive(calltab_t* tab, const conference_obj_t
                     }
                 }
                 DEBUG ("CallTree: Remove conference %s", conf->_confID);
-                gtk_tree_store_remove (tab->store, &iter_parent);
+                gtk_tree_store_remove(tab->store, &iter_parent);
             }
         }
     }
@@ -1461,8 +1461,8 @@ static void drag_end_cb (GtkWidget * widget UNUSED, GdkDragContext * context UNU
                     if (!calltree_dragged_conf)
                         DEBUG ("Error: dragged conference is null while joining 2 conference");
 
-                    DEBUG ("Joined two conference %s, %s!\n", calltree_dragged_path, calltree_selected_path);
-                    sflphone_join_conference (calltree_selected_conf->_confID, calltree_dragged_conf->_confID);
+                    DEBUG ("Joined conferences %s and %s!\n", calltree_dragged_path, calltree_selected_path);
+                    dbus_join_conference(calltree_selected_conf->_confID, calltree_dragged_conf->_confID);
                 }
             }
 
@@ -1659,8 +1659,8 @@ void drag_data_received_cb (GtkWidget *widget, GdkDragContext *context UNUSED, g
 static void menuitem_response( gchar *string )
 {
     if (g_strcmp0(string, SFL_CREATE_CONFERENCE) == 0)
-        sflphone_join_participant (calltree_selected_call->_callID,
-                calltree_dragged_call->_callID);
+        dbus_join_participant (calltree_selected_call->_callID,
+                               calltree_dragged_call->_callID);
     else if (g_strcmp0(string, SFL_TRANSFER_CALL) == 0) {
         DEBUG("Calltree: Transfering call %s, to %s",
               calltree_selected_call->_peer_number,

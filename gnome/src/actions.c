@@ -905,15 +905,6 @@ sflphone_detach_participant (const gchar* callID)
 }
 
 void
-sflphone_join_participant (const gchar* sel_callID, const gchar* drag_callID)
-{
-    DEBUG ("sflphone join participants %s and %s", sel_callID, drag_callID);
-
-    dbus_join_participant (sel_callID, drag_callID);
-}
-
-
-void
 sflphone_add_participant (const gchar* callID, const gchar* confID)
 {
     GtkTreeIter iter;
@@ -937,40 +928,11 @@ sflphone_add_participant (const gchar* callID, const gchar* confID)
 }
 
 void
-sflphone_add_conference()
-{
-    DEBUG ("sflphone add a conference to tree view");
-    // dbus_join_participant(selected_call, dragged_call);
-}
-
-void
-sflphone_join_conference (const gchar* sel_confID, const gchar* drag_confID)
-{
-    DEBUG ("sflphone join two conference");
-    dbus_join_conference (sel_confID, drag_confID);
-}
-
-void
 sflphone_add_main_participant (const conference_obj_t * c)
 {
     DEBUG ("sflphone add main participant");
     dbus_add_main_participant (c->_confID);
 }
-
-void
-sflphone_conference_on_hold (const conference_obj_t * c)
-{
-    DEBUG ("sflphone_conference_on_hold");
-    dbus_hold_conference (c);
-}
-
-void
-sflphone_conference_off_hold (const conference_obj_t * c)
-{
-    DEBUG ("sflphone_conference_off_hold");
-    dbus_unhold_conference (c);
-}
-
 
 void
 sflphone_rec_call()

@@ -544,22 +544,22 @@ call_hold(void* foo UNUSED)
         switch (selectedConf->_state) {
             case CONFERENCE_STATE_HOLD:
                 selectedConf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED;
-                sflphone_conference_off_hold(selectedConf);
+                dbus_unhold_conference(selectedConf);
                 break;
             case CONFERENCE_STATE_HOLD_RECORD:
                 selectedConf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD;
-                sflphone_conference_off_hold(selectedConf);
+                dbus_unhold_conference(selectedConf);
                 break;
 
             case CONFERENCE_STATE_ACTIVE_ATTACHED:
             case CONFERENCE_STATE_ACTIVE_DETACHED:
                 selectedConf->_state = CONFERENCE_STATE_HOLD;
-                sflphone_conference_on_hold(selectedConf);
+                dbus_hold_conference(selectedConf);
                 break;
             case CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD:
             case CONFERENCE_STATE_ACTIVE_DETACHED_RECORD:
               selectedConf->_state = CONFERENCE_STATE_HOLD_RECORD;
-              sflphone_conference_on_hold(selectedConf);
+              dbus_hold_conference(selectedConf);
               break;
             default:
                 break;
@@ -603,21 +603,21 @@ conference_hold(void* foo UNUSED)
     switch (selectedConf->_state) {
         case CONFERENCE_STATE_HOLD:
             selectedConf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED;
-            sflphone_conference_off_hold(selectedConf);
+            dbus_unhold_conference(selectedConf);
             break;
         case CONFERENCE_STATE_HOLD_RECORD:
             selectedConf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD;
-            sflphone_conference_off_hold(selectedConf);
+            dbus_unhold_conference(selectedConf);
             break;
         case CONFERENCE_STATE_ACTIVE_ATTACHED:
         case CONFERENCE_STATE_ACTIVE_DETACHED:
             selectedConf->_state = CONFERENCE_STATE_HOLD;
-            sflphone_conference_on_hold(selectedConf);
+            dbus_hold_conference(selectedConf);
             break;
         case CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD:
         case CONFERENCE_STATE_ACTIVE_DETACHED_RECORD:
             selectedConf->_state = CONFERENCE_STATE_HOLD_RECORD;
-            sflphone_conference_on_hold(selectedConf);
+            dbus_hold_conference(selectedConf);
         default:
             break;
     }

@@ -204,11 +204,6 @@ void sflphone_fill_history (void);
 void sflphone_save_history (void);
 
 /**
- * Action called when two single call are dragged on together to create a new conference
- */
-void sflphone_join_participant (const gchar* sel_callID, const gchar* drag_callID);
-
-/**
  * Action called when a new participant is dragged in
  */
 void sflphone_add_participant (const gchar* callID, const gchar* confID);
@@ -217,12 +212,6 @@ void sflphone_add_participant (const gchar* callID, const gchar* confID);
  * Action called when a conference participant is draged out
  */
 void sflphone_detach_participant (const gchar* callID);
-
-/**
- * Action called when two conference are merged together
- */
-void sflphone_join_conference (const gchar* sel_confID, const gchar* drag_confID);
-
 
 /**
  * Nofity that the communication is
@@ -277,12 +266,8 @@ void sflphone_call_state_changed (callable_obj_t * c, const gchar * description,
 
 void sflphone_add_main_participant (const conference_obj_t * c);
 
-void sflphone_conference_off_hold (const conference_obj_t * c);
-
 void sflphone_srtp_sdes_off (callable_obj_t * c);
 
 void sflphone_fill_conference_list (void);
-
-void sflphone_conference_on_hold (const conference_obj_t * c);
 
 #endif
