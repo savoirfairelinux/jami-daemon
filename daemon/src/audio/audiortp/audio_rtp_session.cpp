@@ -32,8 +32,8 @@
  *  as that of the covered work.
  */
 
-#include "AudioRtpSession.h"
-#include "AudioSymmetricRtpSession.h"
+#include "audio_rtp_session.h"
+#include "audio_symmetric_rtp_session.h"
 
 #include "sip/sdp.h"
 #include "audio/audiolayer.h"

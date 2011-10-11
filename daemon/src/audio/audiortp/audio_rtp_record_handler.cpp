@@ -27,14 +27,12 @@
  *  as that of the covered work.
  */
 
-#include "AudioRtpRecordHandler.h"
+#include "audio_rtp_record_handler.h"
 #include <fstream>
 
 #include "sip/sipcall.h"
 #include "audio/audiolayer.h"
 #include "manager.h"
-
-// #define DUMP_PROCESS_DATA_ENCODE
 
 namespace sfl {
 

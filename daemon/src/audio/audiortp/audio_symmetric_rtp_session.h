@@ -31,66 +31,74 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
+#ifndef __AUDIO_SYMMETRIC_RTP_SESSION_H__
+#define __AUDIO_SYMMETRIC_RTP_SESSION_H__
 
-#include "AudioRtpSession.h"
-#include "AudioSymmetricRtpSession.h"
-#include "AudioRtpRecordHandler.h"
+#include <iostream>
+#include <exception>
+#include <list>
+#include <cassert>
+#include <cstddef>
 
+#include "global.h"
 
-#include "sip/sdp.h"
-#include "audio/audiolayer.h"
+#include "audio_rtp_session.h"
+#include "audio_rtp_record_handler.h"
+#include "sip/sipcall.h"
+#include "audio/codecs/audiocodec.h"
+
+using std::ptrdiff_t;
+#include <ccrtp/rtp.h>
+#include <ccrtp/iqueue.h>
+#include <cc++/numbers.h> // ost::Time
+
+#include <fstream>
 namespace sfl {
 
-AudioSymmetricRtpSession::AudioSymmetricRtpSession(SIPCall * sipcall) :
-    ost::SymmetricRTPSession(ost::InetHostAddress(sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort())
-    , AudioRtpSession(sipcall, Symmetric, this, this)
-    , _rtpThread(new AudioRtpThread(this))
-{
-    _info("AudioSymmetricRtpSession: Setting new RTP session with destination %s:%d", _ca->getLocalIp().c_str(), _ca->getLocalAudioPort());
+class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTPSession, public AudioRtpSession {
+    public:
+        /**
+        * Constructor
+        * @param sipcall The pointer on the SIP call
+        */
+        AudioSymmetricRtpSession(SIPCall* sipcall);
 
-    _audioRtpRecord._callId = _ca->getCallId();
-}
+        ~AudioSymmetricRtpSession();
 
-AudioSymmetricRtpSession::~AudioSymmetricRtpSession()
-{
-    _info("AudioSymmetricRtpSession: Delete AudioSymmetricRtpSession instance");
+        virtual bool onRTPPacketRecv(ost::IncomingRTPPkt& pkt) {
+            return AudioRtpSession::onRTPPacketRecv(pkt);
+        }
 
-    _rtpThread->running = false;
-    delete _rtpThread;
-}
+        int startSymmetricRtpThread(void) {
+            assert(_rtpThread);
+            return _rtpThread->start();
+        }
 
-AudioSymmetricRtpSession::AudioRtpThread::AudioRtpThread(AudioSymmetricRtpSession *session) : running(true), rtpSession(session)
-{
-    _debug("AudioSymmetricRtpSession: Create new rtp thread");
-}
+    private:
 
-AudioSymmetricRtpSession::AudioRtpThread::~AudioRtpThread()
-{
-    _debug("AudioSymmetricRtpSession: Delete rtp thread");
-}
+        class AudioRtpThread : public ost::Thread, public ost::TimerPort {
+            public:
+                AudioRtpThread(AudioSymmetricRtpSession *session);
+                ~AudioRtpThread();
 
-void AudioSymmetricRtpSession::AudioRtpThread::run()
-{
-    int threadSleep = 20;
+                virtual void run();
 
-    TimerPort::setTimer(threadSleep);
+                bool running;
 
-    _debug("AudioRtpThread: Entering Audio rtp thread main loop");
+            private:
+                AudioSymmetricRtpSession *rtpSession;
+        };
+        SpeexEchoCancel echoCanceller;
 
-    while (running) {
+    protected:
 
-        // Send session
-        if (rtpSession->DtmfPending())
-            rtpSession->sendDtmfEvent();
-        else
-            rtpSession->sendMicData();
+        AudioRtpThread *_rtpThread;
 
-        Thread::sleep(TimerPort::getTimer());
+    public:
 
-        TimerPort::incTimer(threadSleep);
-    }
-
-    _debug("AudioRtpThread: Leaving audio rtp thread loop");
-}
+        friend class AudioRtpThread;
+};
 
 }
+#endif // __AUDIO_SYMMETRIC_RTP_SESSION_H__
+

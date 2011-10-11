@@ -33,8 +33,7 @@
 #define SIPCALL_H
 
 #include "call.h"
-#include <cassert>
-#include "audio/audiortp/AudioRtpFactory.h"
+#include "audio/audiortp/audio_rtp_factory.h"
 
 class pjsip_evsub;
 class pj_caching_pool;

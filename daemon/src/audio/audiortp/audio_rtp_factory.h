@@ -28,21 +28,18 @@
  *  as that of the covered work.
  */
 
-#ifndef __SFL_AUDIO_RTP_FACTORY_H__
-#define __SFL_AUDIO_RTP_FACTORY_H__
+#ifndef __AUDIO_RTP_FACTORY_H__
+#define __AUDIO_RTP_FACTORY_H__
 
 #include <stdexcept>
 #include <cc++/thread.h>
-#include "account.h" // for typedef of std::string (std::string)
 #include <ccrtp/CryptoContext.h>
-#include "AudioRtpSession.h"
+#include "audio_rtp_session.h"
 
 #include "sip/SdesNegotiator.h"
 
 class SdesNegotiator;
 class SIPCall;
-class Account;
-class SIPAccount;
 
 namespace sfl {
 

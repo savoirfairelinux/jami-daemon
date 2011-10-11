@@ -27,7 +27,7 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#include "ZrtpSessionCallback.h"
+#include "zrtp_session_callback.h"
 
 #include "global.h"
 #include "sip/sipcall.h"

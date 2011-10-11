@@ -30,24 +30,20 @@
 
 
 
-#include "AudioRtpFactory.h"
-#include "AudioZrtpSession.h"
-#include "AudioSrtpSession.h"
-#include "AudioSymmetricRtpSession.h"
+#include "audio_rtp_factory.h"
+#include "audio_zrtp_session.h"
+#include "audio_srtp_session.h"
+#include "audio_symmetric_rtp_session.h"
 #include "manager.h"
 #include "sip/sdp.h"
 #include "sip/sipcall.h"
 #include "sip/sipaccount.h"
 #include "sip/SdesNegotiator.h"
 
-#include <cassert>
-
 namespace sfl {
 
 AudioRtpFactory::AudioRtpFactory(SIPCall *ca) : _rtpSession(NULL), remoteContext(NULL), localContext(NULL), ca_(ca)
-{
-
-}
+{}
 
 AudioRtpFactory::~AudioRtpFactory()
 {

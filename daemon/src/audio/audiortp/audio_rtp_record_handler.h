@@ -27,8 +27,8 @@
  *  as that of the covered work.
  */
 
-#ifndef AUDIORTPRECORDHANDLER_H_
-#define AUDIORTPRECORDHANDLER_H_
+#ifndef __AUDIO_RTP_RECORD_HANDLER_H__
+#define __AUDIO_RTP_RECORD_HANDLER_H__
 #include <cstddef>
 
 using std::ptrdiff_t;
@@ -43,7 +43,6 @@ class SIPCall;
 #include "audio/speexechocancel.h"
 #include "audio/echosuppress.h"
 #include "audio/gaincontrol.h"
-#include "managerimpl.h"
 
 namespace sfl {
 
@@ -183,4 +182,4 @@ class AudioRtpRecordHandler {
 
 }
 
-#endif /* AUDIORTPRECORD_H_ */
+#endif // __AUDIO_RTP_RECORD_HANDLER_H__

@@ -51,7 +51,7 @@
 #include <pjnath/stun_config.h>
 
 // Application import
-#include "audio/audiortp/AudioRtpFactory.h"
+#include "audio/audiortp/audio_rtp_factory.h"
 #include "manager.h"
 #include "call.h"
 #include "sip/sipcall.h"

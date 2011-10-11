@@ -32,8 +32,7 @@
  */
 
 #include "sipcall.h"
-#include "logger.h" // for _debug
-#include "audio/audiortp/AudioRtpFactory.h"
+#include "audio/audiortp/audio_rtp_factory.h"
 #include "sdp.h"
 
 SIPCall::SIPCall(const std::string& id, Call::CallType type, pj_caching_pool *caching_pool) : Call(id, type)

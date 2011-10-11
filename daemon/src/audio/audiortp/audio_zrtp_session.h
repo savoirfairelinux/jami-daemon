@@ -27,8 +27,8 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#ifndef __SFL_AUDIO_ZRTP_SESSION_H__
-#define __SFL_AUDIO_ZRTP_SESSION_H__
+#ifndef __AUDIO_ZRTP_SESSION_H__
+#define __AUDIO_ZRTP_SESSION_H__
 
 #include <cstddef>
 #include <stdexcept>
@@ -39,7 +39,7 @@ using std::ptrdiff_t;
 #include <libzrtpcpp/ZrtpQueue.h>
 #include <libzrtpcpp/ZrtpUserCallback.h>
 
-#include "AudioRtpSession.h"
+#include "audio_rtp_session.h"
 #include <cc++/numbers.h> // OST::Time
 
 class SIPCall;

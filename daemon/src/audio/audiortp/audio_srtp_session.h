@@ -27,11 +27,11 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#ifndef __SFL_AUDIO_SRTP_SESSION_H__
-#define __SFL_AUDIO_SRTP_SESSION_H__
+#ifndef __AUDIO_SRTP_SESSION_H__
+#define __AUDIO_SRTP_SESSION_H__
 
-#include "AudioRtpSession.h"
-#include "AudioSymmetricRtpSession.h"
+#include "audio_rtp_session.h"
+#include "audio_symmetric_rtp_session.h"
 #include "sip/SdesNegotiator.h"
 
 #include <ccrtp/CryptoContext.h>
@@ -183,7 +183,6 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
         /** Used to make sure remote crypto context not initialized wice. */
         bool _remoteOfferIsSet;
 };
-
 }
 
 #endif // __AUDIO_SRTP_SESSION_H__

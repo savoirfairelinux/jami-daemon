@@ -27,7 +27,7 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#include "AudioSrtpSession.h"
+#include "audio_srtp_session.h"
 
 #include "sip/sipcall.h"
 

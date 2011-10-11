@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#ifndef __SFL_ZRTP_CALLBACK_H__
-#define __SFL_ZRTP_CALLBACK_H__
+#ifndef __ZRTP_SESSION_CALLBACK_H__
+#define __ZRTP_SESSION_CALLBACK_H__
 #include <cstddef>
 
 using std::ptrdiff_t;
@@ -66,4 +66,4 @@ class ZrtpSessionCallback: public ZrtpUserCallback {
         static bool _mapInitialized;
 };
 }
-#endif
+#endif // __ZRTP_SESSION_CALLBACK_H__

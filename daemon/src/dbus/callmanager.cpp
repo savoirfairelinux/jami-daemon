@@ -35,8 +35,8 @@
 
 #include "sip/sipcall.h"
 #include "sip/sipvoiplink.h"
-#include "audio/audiortp/AudioRtpFactory.h"
-#include "audio/audiortp/AudioZrtpSession.h"
+#include "audio/audiortp/audio_rtp_factory.h"
+#include "audio/audiortp/audio_zrtp_session.h"
 
 #include "manager.h"
 
