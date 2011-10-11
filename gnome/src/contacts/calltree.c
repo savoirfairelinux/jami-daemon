@@ -1137,11 +1137,10 @@ void calltree_remove_conference_recursive(calltab_t* tab, const conference_obj_t
     for (int i = 0; i < nbChildren; i++) {
         GtkTreeIter iter_parent;
         /* if the nth child of parent has one or more children */
-        if (gtk_tree_model_iter_nth_child(model, &iter_parent, parent, i) &&
-            gtk_tree_model_iter_has_child(model, &iter_parent)) {
-
+        if (gtk_tree_model_iter_nth_child(model, &iter_parent, parent, i)) {
             /* RECRUSION! */
-            calltree_remove_conference_recursive(tab, conf, &iter_parent);
+            if (gtk_tree_model_iter_has_child(model, &iter_parent))
+                calltree_remove_conference_recursive(tab, conf, &iter_parent);
 
             GValue confval;
             confval.g_type = 0;
