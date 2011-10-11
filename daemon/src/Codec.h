@@ -38,7 +38,6 @@
 namespace sfl {
 class Codec {
     public:
-        Codec() {};
         virtual ~Codec() {}
         /**
          * @return The mimesubtype for this codec. Eg. : "video"
