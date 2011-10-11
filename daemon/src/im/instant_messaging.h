@@ -29,8 +29,8 @@
  *  as that of the covered work.
  */
 
-#ifndef _INSTANT_MESSAGING_H
-#define _INSTANT_MESSAGING_H
+#ifndef __INSTANT_MESSAGING_H__
+#define __INSTANT_MESSAGING_H__
 
 #include <string>
 #include <iostream>
@@ -168,4 +168,4 @@ class InstantMessaging {
         InstantMessaging& operator= (const InstantMessaging&); //No Assignment Operator
 };
 }
-#endif // _INSTANT_MESSAGING_H
+#endif // __INSTANT_MESSAGING_H_

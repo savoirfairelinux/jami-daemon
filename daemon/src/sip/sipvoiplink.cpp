@@ -50,7 +50,7 @@
 #include "dbus/callmanager.h"
 
 #include "hooks/urlhook.h"
-#include "im/InstantMessaging.h"
+#include "im/instant_messaging.h"
 
 #include "audio/audiolayer.h"
 

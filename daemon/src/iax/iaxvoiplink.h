@@ -248,7 +248,7 @@ class IAXVoIPLink : public VoIPLink {
         EventThread* evThread_;
 
         /** registration session : 0 if not register */
-        struct iax_session* regSession_;
+        iax_session* regSession_;
 
         /** Timestamp of when we should refresh the registration up with
          * the registrar.  Values can be: EPOCH timestamp, 0 if we want no registration, 1

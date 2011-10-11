@@ -40,7 +40,7 @@
 #include "dbus/callmanager.h"
 #include "global.h"
 #include "sip/sipaccount.h"
-#include "im/InstantMessaging.h"
+#include "im/instant_messaging.h"
 #include "iax/iaxaccount.h"
 #include "numbercleaner.h"
 

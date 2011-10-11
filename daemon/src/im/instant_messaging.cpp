@@ -29,7 +29,7 @@
  *  as that of the covered work.
  */
 
-#include "InstantMessaging.h"
+#include "instant_messaging.h"
 #include "logger.h"
 #include "expat.h"
 

@@ -31,7 +31,7 @@
 #include "iaxvoiplink.h"
 #include "iaxcall.h"
 #include "eventthread.h"
-#include "im/InstantMessaging.h"
+#include "im/instant_messaging.h"
 #include "iaxaccount.h"
 #include "manager.h"
 #include "hooks/urlhook.h"

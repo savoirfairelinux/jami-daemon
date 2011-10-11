@@ -37,7 +37,7 @@
 #include <assert.h>
 
 // Application import
-#include "im/InstantMessaging.h"
+#include "im/instant_messaging.h"
 
 /*
  * @file instantmessagingtest.h
