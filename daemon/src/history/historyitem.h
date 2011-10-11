@@ -44,51 +44,50 @@ typedef enum CallType {
 } CallType;
 
 
-class HistoryItem
-{
+class HistoryItem {
 
     public:
         /*
          * Constructor
-         * 
+         *
          * @param Timestamp start
          * @param Call type
          * @param Timestamp stop
          * @param Call name
          * @param Call number
-	 * @param Call id
+        	 * @param Call id
          * @param Call account id
-	 * @param Recording file name (if any recording were performed)
-	 * @param Configuration ID
-	 * @param time added
+        	 * @param Recording file name (if any recording were performed)
+        	 * @param Configuration ID
+        	 * @param time added
          */
-        HistoryItem (std::string, CallType, std::string, std::string, std::string, std::string, std::string, std::string, std::string, std::string);
+        HistoryItem(std::string, CallType, std::string, std::string, std::string, std::string, std::string, std::string, std::string, std::string);
 
         /*
          * Constructor from a serialized form
-	 * @string contaning serialized form
+        	 * @string contaning serialized form
          */
-        HistoryItem (std::string="");
+        HistoryItem(std::string="");
 
         /*
          * Destructor
          */
-        ~HistoryItem ();
+        ~HistoryItem();
 
-        std::string get_timestamp () const {
+        std::string get_timestamp() const {
             return _timestamp_start;
         }
 
-        bool save (Conf::ConfigTree **history);
+        bool save(Conf::ConfigTree **history);
 
-        std::string serialize (void);
+        std::string serialize(void);
 
     private:
 
         /*
          * @return true if the account ID corresponds to a loaded account
          */
-        bool valid_account (std::string);
+        bool valid_account(std::string);
 
         /*
          * Timestamp representing the date of the call
@@ -108,9 +107,9 @@ class HistoryItem
         std::string _name;
         std::string _number;
 
-	/**
-	 * The identifier fo this item
-	 */
+        /**
+         * The identifier fo this item
+         */
         std::string _id;
 
         /*
@@ -119,17 +118,17 @@ class HistoryItem
         std::string _account_id;
 
         /**
-         * Wether or not a recording exist for this call 
+         * Wether or not a recording exist for this call
          */
         std::string _recording_file;
 
         /**
-	 * The conference ID for this call (if any)
-	 */
-	std::string _confID;
+        	 * The conference ID for this call (if any)
+        	 */
+        std::string _confID;
 
         /**
-	 * Time added to conference
+        	 * Time added to conference
          */
         std::string _timeAdded;
 };

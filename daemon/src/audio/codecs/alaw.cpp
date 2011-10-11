@@ -34,13 +34,12 @@
 #include "audiocodec.h"
 #include <cassert>
 
-class Alaw : public sfl::AudioCodec
-{
+class Alaw : public sfl::AudioCodec {
 
     public:
         // 8 PCMA A 8000 1 [RFC3551]
-        Alaw (int payload=8)
-            : sfl::AudioCodec (payload, "PCMA") {
+        Alaw(int payload=8)
+            : sfl::AudioCodec(payload, "PCMA") {
             _clockRate = 8000;
             _frameSize = 160; // samples, 20 ms at 8kHz
             _channel   = 1;
@@ -50,29 +49,29 @@ class Alaw : public sfl::AudioCodec
 
         virtual ~Alaw() {}
 
-        virtual int decode (short *dst, unsigned char *src, size_t buf_size) {
-        	assert(buf_size == _frameSize / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat));
-        	unsigned char* end = src+buf_size;
+        virtual int decode(short *dst, unsigned char *src, size_t buf_size) {
+            assert(buf_size == _frameSize / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat));
+            unsigned char* end = src+buf_size;
 
             while (src<end)
-                *dst++ = ALawDecode (*src++);
+                *dst++ = ALawDecode(*src++);
 
             return _frameSize;
         }
 
-        virtual int encode (unsigned char *dst, short *src, size_t buf_size) {
-        	assert(buf_size >= _frameSize / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat));
+        virtual int encode(unsigned char *dst, short *src, size_t buf_size) {
+            assert(buf_size >= _frameSize / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat));
             uint8* end = dst+_frameSize;
 
             while (dst<end)
-                *dst++ = ALawEncode (*src++);
+                *dst++ = ALawEncode(*src++);
 
             return _frameSize / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat);
         }
 
 
 
-        int ALawDecode (uint8 alaw) {
+        int ALawDecode(uint8 alaw) {
             alaw ^= 0x55;  // A-law has alternate bits inverted for transmission
             uint sign = alaw&0x80;
             int linear = alaw&0x1f;
@@ -94,7 +93,7 @@ class Alaw : public sfl::AudioCodec
         }
 
 
-        uint8 ALawEncode (int16 pcm16) {
+        uint8 ALawEncode(int16 pcm16) {
             int p = pcm16;
             uint a;  // u-law value we are forming
 
@@ -136,10 +135,10 @@ class Alaw : public sfl::AudioCodec
 // the class factories
 extern "C" sfl::Codec* create()
 {
-    return new Alaw (8);
+    return new Alaw(8);
 }
 
-extern "C" void destroy (sfl::Codec* a)
+extern "C" void destroy(sfl::Codec* a)
 {
     delete a;
 }

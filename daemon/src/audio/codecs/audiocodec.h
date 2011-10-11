@@ -44,21 +44,20 @@
 #define DEC_BUFFER_SIZE ((44100 * 20) / 1000)
 
 namespace ost {
-    class PayloadFormat;
-    class DynamicPayloadFormat;
+class PayloadFormat;
+class DynamicPayloadFormat;
 }
 
 namespace sfl {
 
-class AudioCodec : public Codec
-{
+class AudioCodec : public Codec {
     public:
-        AudioCodec (uint8 payload, const std::string &codecName);
+        AudioCodec(uint8 payload, const std::string &codecName);
 
         /**
          * Copy constructor.
          */
-        AudioCodec (const AudioCodec& codec);
+        AudioCodec(const AudioCodec& codec);
 
         virtual ~AudioCodec();
 
@@ -80,12 +79,12 @@ class AudioCodec : public Codec
         /**
          * @Override
          */
-        void setParameter (const std::string& /*name*/, const std::string& /*value*/) {};
+        void setParameter(const std::string& /*name*/, const std::string& /*value*/) {};
 
         /**
          * @Override
          */
-        std::string getParameter (const std::string& /*name*/) const {
+        std::string getParameter(const std::string& /*name*/) const {
             return "";
         };
 
@@ -94,14 +93,14 @@ class AudioCodec : public Codec
          * @param buffer_size : the size of the input buffer
          * @return the number of samples decoded
          */
-        virtual int decode (short *dst, unsigned char *buf, size_t buffer_size) = 0;
+        virtual int decode(short *dst, unsigned char *buf, size_t buffer_size) = 0;
 
         /**
          * Encode an input buffer and fill the output buffer with the encoded data
          * @param buffer_size : the maximum size of encoded data buffer (dst)
          * @return the number of bytes encoded
          */
-        virtual int encode (unsigned char *dst, short *src, size_t buffer_size) = 0;
+        virtual int encode(unsigned char *dst, short *src, size_t buffer_size) = 0;
 
         /**
          * @Override
@@ -112,7 +111,7 @@ class AudioCodec : public Codec
          * @Override
          */
         void setPayloadType(uint8 pt) {
-        	_payload = pt;
+            _payload = pt;
         }
 
         /**
@@ -166,7 +165,7 @@ class AudioCodec : public Codec
 
         ost::DynamicPayloadFormat* _payloadFormat;
 
-        void init (uint8 payloadType, uint32 clockRate);
+        void init(uint8 payloadType, uint32 clockRate);
 };
 } // end namespace sfl
 

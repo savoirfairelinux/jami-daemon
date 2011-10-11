@@ -103,7 +103,7 @@ gboolean addressbook_is_active();
 /**
  * Perform a search in addressbook
  */
-void addressbook_search (void (*search_cb)(GList *, gpointer), GtkEntry *, AddressBook_Config *);
+void addressbook_search(void (*search_cb)(GList *, gpointer), GtkEntry *, AddressBook_Config *);
 
 /**
  * Get a list of addressbook book

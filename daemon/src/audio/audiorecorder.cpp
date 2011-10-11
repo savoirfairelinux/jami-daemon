@@ -34,14 +34,14 @@
 
 int AudioRecorder::count = 0;
 
-AudioRecorder::AudioRecorder (AudioRecord  *arec, MainBuffer *mb) : Thread()
+AudioRecorder::AudioRecorder(AudioRecord  *arec, MainBuffer *mb) : Thread()
 {
     assert(mb);
-    setCancel (cancelDeferred);
+    setCancel(cancelDeferred);
 
     ++count;
 
-    std::string id ("processid_");
+    std::string id("processid_");
 
     // convert count into string
     std::string s;
@@ -49,7 +49,7 @@ AudioRecorder::AudioRecorder (AudioRecord  *arec, MainBuffer *mb) : Thread()
     out << count;
     s = out.str();
 
-    recorderId = id.append (s);
+    recorderId = id.append(s);
 
     arecord = arec;
     mbuffer = mb;
@@ -59,7 +59,7 @@ AudioRecorder::AudioRecorder (AudioRecord  *arec, MainBuffer *mb) : Thread()
 /**
  * Reimplementation of run()
  */
-void AudioRecorder::run (void)
+void AudioRecorder::run(void)
 {
 
     int bufferLength = 10000;
@@ -67,18 +67,18 @@ void AudioRecorder::run (void)
 
     while (true) {
 
-        int availBytes = mbuffer->availForGet (recorderId);
+        int availBytes = mbuffer->availForGet(recorderId);
 
         int toGet = (availBytes < bufferLength) ? availBytes : bufferLength;
 
-        mbuffer->getData (buffer, toGet, recorderId);
+        mbuffer->getData(buffer, toGet, recorderId);
 
         if (availBytes > 0) {
 
-            arecord->recData (buffer, availBytes/sizeof (SFLDataFormat));
+            arecord->recData(buffer, availBytes/sizeof(SFLDataFormat));
         }
 
-        sleep (20);
+        sleep(20);
 
     }
 

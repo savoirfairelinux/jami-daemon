@@ -41,22 +41,21 @@ class VoIPLink;
  * @brief General thread to listen events continuously
  */
 
-class EventThread : public ost::Thread
-{
+class EventThread : public ost::Thread {
     public:
         /**
          * Thread constructor
          */
-        EventThread (VoIPLink* link);
+        EventThread(VoIPLink* link);
 
-        ~EventThread (void) {
+        ~EventThread(void) {
             terminate();
         }
 
-        virtual void run () ;
+        virtual void run() ;
 
     private:
-        EventThread (const EventThread& rh); // copy constructor
+        EventThread(const EventThread& rh);  // copy constructor
         EventThread& operator= (const EventThread& rh); // assignment operator
 
         /** VoIPLink is the object being called by getEvents() method  */

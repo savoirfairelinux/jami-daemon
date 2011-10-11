@@ -48,15 +48,14 @@
 
 
 
-class FirFilter
-{
+class FirFilter {
 
     public:
 
         /**
          * Constructor for this class
          */
-        FirFilter (std::vector<double> ir);
+        FirFilter(std::vector<double> ir);
 
         /**
          * SDestructor for this class
@@ -66,9 +65,9 @@ class FirFilter
         /**
          * Perform filtering on one sample
          */
-        float getOutputSample (float inputSample);
+        float getOutputSample(float inputSample);
 
-        void reset (void);
+        void reset(void);
 
 
     private:
@@ -96,8 +95,7 @@ class FirFilter
 };
 
 
-class DelayDetection
-{
+class DelayDetection {
 
     public:
 
@@ -105,9 +103,9 @@ class DelayDetection
 
         ~DelayDetection();
 
-        void putData (SFLDataFormat *inputData, int samples);
+        void putData(SFLDataFormat *inputData, int samples);
 
-        void process (SFLDataFormat *inputData, int samples);
+        void process(SFLDataFormat *inputData, int samples);
 
     private:
 
@@ -121,20 +119,20 @@ class DelayDetection
         /**
          * Perform a normalized crosscorrelation between template and segment
          */
-        void crossCorrelate (float *ref, float *seg, float *res, int refSize, int segSize);
+        void crossCorrelate(float *ref, float *seg, float *res, int refSize, int segSize);
 
         /**
          * Perform a correlation on specified signals (mac)
          */
-        double correlate (float *sig1, float *sig2, short size);
+        double correlate(float *sig1, float *sig2, short size);
 
-        void convertInt16ToFloat32 (SFLDataFormat *input, float *ouput, int nbSamples);
+        void convertInt16ToFloat32(SFLDataFormat *input, float *ouput, int nbSamples);
 
-        void downsampleData (float *input, float *output, int nbSamples, int factor);
+        void downsampleData(float *input, float *output, int nbSamples, int factor);
 
-        void bandpassFilter (float *input, int nbSamples);
+        void bandpassFilter(float *input, int nbSamples);
 
-        int getMaxIndex (float *data, int size);
+        int getMaxIndex(float *data, int size);
 
         State _internalState;
 

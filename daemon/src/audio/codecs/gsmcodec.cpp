@@ -42,48 +42,47 @@ extern "C" {
  * GSM audio codec C++ class (over gsm/gsm.h)
  */
 
-class Gsm : public sfl::AudioCodec
-{
+class Gsm : public sfl::AudioCodec {
 
     public:
         // _payload should be 3
-        Gsm (int payload=3) : sfl::AudioCodec (payload, "GSM"), _decode_gsmhandle (NULL), _encode_gsmhandle (NULL) {
+        Gsm(int payload=3) : sfl::AudioCodec(payload, "GSM"), _decode_gsmhandle(NULL), _encode_gsmhandle(NULL) {
             _clockRate = 8000;
             _frameSize = 160; // samples, 20 ms at 8kHz
             _channel = 1;
             _bitrate = 13.3;
             _hasDynamicPayload = false;
 
-            if (! (_decode_gsmhandle = gsm_create()))
+            if (!(_decode_gsmhandle = gsm_create()))
                 throw std::runtime_error("ERROR: decode_gsm_create\n");
 
-            if (! (_encode_gsmhandle = gsm_create()))
+            if (!(_encode_gsmhandle = gsm_create()))
                 throw std::runtime_error("ERROR: encode_gsm_create\n");
         }
 
-        Gsm (const Gsm&);
+        Gsm(const Gsm&);
 
         Gsm& operator= (const Gsm&);
 
-        virtual ~Gsm (void) {
-            gsm_destroy (_decode_gsmhandle);
-            gsm_destroy (_encode_gsmhandle);
+        virtual ~Gsm(void) {
+            gsm_destroy(_decode_gsmhandle);
+            gsm_destroy(_encode_gsmhandle);
         }
 
-        virtual int	decode	(short * dst, unsigned char * src, size_t buf_size) {
-        	assert(buf_size == 33);
-        	(void) buf_size;
+        virtual int	decode(short * dst, unsigned char * src, size_t buf_size) {
+            assert(buf_size == 33);
+            (void) buf_size;
 
-            if (gsm_decode (_decode_gsmhandle, (gsm_byte*) src, (gsm_signal*) dst) < 0)
+            if (gsm_decode(_decode_gsmhandle, (gsm_byte*) src, (gsm_signal*) dst) < 0)
                 throw std::runtime_error("ERROR: gsm_decode\n");
 
             return _frameSize;
         }
 
-        virtual int	encode	(unsigned char * dst, short * src, size_t buf_size) {
+        virtual int	encode(unsigned char * dst, short * src, size_t buf_size) {
             (void) buf_size;
             assert(buf_size >= 33);
-            gsm_encode (_encode_gsmhandle, (gsm_signal*) src, (gsm_byte*) dst);
+            gsm_encode(_encode_gsmhandle, (gsm_signal*) src, (gsm_byte*) dst);
             return 33;
         }
 
@@ -94,10 +93,10 @@ class Gsm : public sfl::AudioCodec
 
 extern "C" sfl::Codec* create()
 {
-    return new Gsm (3);
+    return new Gsm(3);
 }
 
-extern "C" void destroy (sfl::Codec* a)
+extern "C" void destroy(sfl::Codec* a)
 {
     delete a;
 }

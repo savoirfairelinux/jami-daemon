@@ -40,15 +40,14 @@
  * @file tone.h
  * @brief Tone sample (dial, busy, ring, congestion)
  */
-class Tone : public AudioLoop
-{
+class Tone : public AudioLoop {
     public:
         /**
          * Constructor
          * @param definition String that contain frequency/time of the tone
          * @param sampleRate SampleRating of audio tone
          */
-        Tone (const std::string& definition, unsigned int sampleRate);
+        Tone(const std::string& definition, unsigned int sampleRate);
 
         /** The different kind of tones */
         enum TONEID {

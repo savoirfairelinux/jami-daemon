@@ -34,19 +34,17 @@
 #include <vector>
 #include <pcre.h>
 
-namespace sfl
-{
+namespace sfl {
 
 /**
  * Exception object that is thrown when
  * an error occured while compiling the
  * regular expression.
  */
-class compile_error : public std::invalid_argument
-{
+class compile_error : public std::invalid_argument {
     public:
-        explicit compile_error (const std::string& error) :
-            std::invalid_argument (error) {}
+        explicit compile_error(const std::string& error) :
+            std::invalid_argument(error) {}
 };
 
 /**
@@ -54,11 +52,10 @@ class compile_error : public std::invalid_argument
  * an error occured while mathing a
  * pattern to an expression.
  */
-class match_error : public std::invalid_argument
-{
+class match_error : public std::invalid_argument {
     public:
-        match_error (const std::string& error) :
-            std::invalid_argument (error) {}
+        match_error(const std::string& error) :
+            std::invalid_argument(error) {}
 };
 
 /**
@@ -66,8 +63,7 @@ class match_error : public std::invalid_argument
 * some of the libpcre library.
 */
 
-class Pattern
-{
+class Pattern {
 
     public:
 
@@ -80,8 +76,8 @@ class Pattern
         *      be used for this instance.
         */
 
-        Pattern (const std::string& pattern,
-                 const std::string& options = "");
+        Pattern(const std::string& pattern,
+                const std::string& options = "");
 
         /**
          * Destructor. Pcre pattern gets freed
@@ -113,7 +109,7 @@ class Pattern
          * from the pattern that was set for
          * this object.
          */
-        void compile (void);
+        void compile(void);
 
         /**
          * Get the currently set regular expression
@@ -121,7 +117,7 @@ class Pattern
          *
          * @return The currently set pattern
          */
-        std::string getPattern (void) const {
+        std::string getPattern(void) const {
             return _pattern;
         }
 
@@ -143,7 +139,7 @@ class Pattern
          *
          * @return the start position of the overall match.
          */
-        size_t start (void) const;
+        size_t start(void) const;
 
         /**
          * Get the start position of the specified match.
@@ -152,21 +148,21 @@ class Pattern
          *
          * @return the start position of the specified match.
          */
-        size_t start (unsigned int groupNumber) const;
+        size_t start(unsigned int groupNumber) const;
 
         /**
          * Get the start position of the specified match.
          *
          * @param groupName The capturing group name.
          */
-        void start (const std::string& groupName) const;
+        void start(const std::string& groupName) const;
 
         /**
          * Get the end position of the overall match.
          *
          * @return the end position of the overall match.
          */
-        size_t end (void) const;
+        size_t end(void) const;
 
         /**
          * Get the end position of the specified match.
@@ -175,7 +171,7 @@ class Pattern
          *
          * @return the end position of the specified match.
          */
-        size_t end (unsigned int groupNumber) const;
+        size_t end(unsigned int groupNumber) const;
 
         /**
          * Get the end position of the specified match.
@@ -184,7 +180,7 @@ class Pattern
          *
          * @return the end position of the specified match.
          */
-        void end (const std::string& groupName) const;
+        void end(const std::string& groupName) const;
 
         /**
          * Get the number of capturing groups in the
@@ -195,7 +191,7 @@ class Pattern
          * @pre The regular expression should have been
          * 	    compiled prior to the execution of this method.
          */
-        unsigned int getCaptureGroupCount (void);
+        unsigned int getCaptureGroupCount(void);
 
         /**
          * Get the substring matched in a capturing
@@ -213,7 +209,7 @@ class Pattern
          *         regular expression designated
          *         the group name.
          */
-        std::string group (const std::string& groupName);
+        std::string group(const std::string& groupName);
 
         /**
          * Get the substring matched in a named group.
@@ -230,7 +226,7 @@ class Pattern
          *         regular expression designated
          *         the group number.
          */
-        std::string group (int groupNumber);
+        std::string group(int groupNumber);
 
         /**
          * Similar to python's MatchObject.groups. Get all
@@ -245,7 +241,7 @@ class Pattern
          * @pre The regular expression should have been
          * 	    compiled prior to the execution of this method.
          */
-        std::vector<std::string> groups (void);
+        std::vector<std::string> groups(void);
 
         /**
          * Try to match the compiled pattern with a
@@ -264,7 +260,7 @@ class Pattern
          *       with the new matches. Therefore, subsequent
          * 		 calls to group may return different results.
          */
-        bool matches (const std::string& subject) throw (match_error);
+        bool matches(const std::string& subject) throw(match_error);
 
         /**
          * Try to match the compiled pattern with the implicit
@@ -280,7 +276,7 @@ class Pattern
          *       with the new matches. Therefore, subsequent
          * 		 calls to group may return different results.
          */
-        bool matches (void) throw (match_error);
+        bool matches(void) throw(match_error);
 
         /**
          *  Split the subject into a list of substrings.
@@ -294,7 +290,7 @@ class Pattern
          * 	     by this operation. In other words: subject_before =
          * 		 subject_after.
          */
-        std::vector<std::string> split (void); // throw(match_error);
+        std::vector<std::string> split(void);  // throw(match_error);
 
     private:
         /**

@@ -33,12 +33,11 @@
 
 #include <syslog.h>
 
-namespace Logger
-{
-void log (const int, const char*, ...);
+namespace Logger {
+void log(const int, const char*, ...);
 
-void setConsoleLog (bool);
-void setDebugMode (bool);
+void setConsoleLog(bool);
+void setDebugMode(bool);
 };
 
 #define _error(...)	Logger::log(LOG_ERR, __VA_ARGS__)

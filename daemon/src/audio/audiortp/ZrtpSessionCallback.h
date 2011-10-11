@@ -42,20 +42,18 @@ using std::ptrdiff_t;
 
 class SIPCall;
 
-namespace sfl
-{
+namespace sfl {
 
-class ZrtpSessionCallback: public ZrtpUserCallback
-{
+class ZrtpSessionCallback: public ZrtpUserCallback {
     public:
-        ZrtpSessionCallback (SIPCall *sipcall);
+        ZrtpSessionCallback(SIPCall *sipcall);
 
-        void secureOn (std::string cipher);
-        void secureOff (void);
-        void showSAS (std::string sas, bool verified);
-        void zrtpNotSuppOther (void);
-        void showMessage (GnuZrtpCodes::MessageSeverity sev, int32_t subCode);
-        void zrtpNegotiationFailed (GnuZrtpCodes::MessageSeverity severity, int subCode);
+        void secureOn(std::string cipher);
+        void secureOff(void);
+        void showSAS(std::string sas, bool verified);
+        void zrtpNotSuppOther(void);
+        void showMessage(GnuZrtpCodes::MessageSeverity sev, int32_t subCode);
+        void zrtpNegotiationFailed(GnuZrtpCodes::MessageSeverity severity, int subCode);
         void confirmGoClear();
 
     private:

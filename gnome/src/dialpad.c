@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#include <dialpad.h>
-#include <actions.h>
+#include "dialpad.h"
+#include "actions.h"
 #include "calltab.h"
 
 /**
@@ -49,11 +49,11 @@ get_numpad_button(const gchar* number, gboolean twolines, const gchar * letters)
     GtkWidget *label = gtk_label_new("1");
     gtk_label_set_single_line_mode(GTK_LABEL(label), FALSE);
     gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
-    gchar *markup = g_markup_printf_escaped("<big><b>%s</b></big>%s%s", number,(twolines == TRUE ? "\n": ""), letters);
+    gchar *markup = g_markup_printf_escaped("<big><b>%s</b></big>%s%s", number, (twolines == TRUE ? "\n": ""), letters);
     gtk_label_set_markup(GTK_LABEL(label), markup);
     gtk_container_add(GTK_CONTAINER(button), label);
     g_signal_connect(G_OBJECT(button), "clicked",
-                      G_CALLBACK(dialpad_pressed),(gchar*) number);
+                     G_CALLBACK(dialpad_pressed),(gchar*) number);
 
     g_free(markup);
     return button;
@@ -62,18 +62,20 @@ get_numpad_button(const gchar* number, gboolean twolines, const gchar * letters)
 GtkWidget *
 create_dialpad()
 {
-    static const gchar * const key_strings[] = {"1", "",
-                                                "2", "a b c",
-                                                "3", "d e f",
-                                                "4", "g h i",
-                                                "5", "j k l",
-                                                "6", "m n o",
-                                                "7", "p q r s",
-                                                "8", "t u v",
-                                                "9", "w x y z",
-                                                "*", "",
-                                                "0", "",
-                                                "#", ""};
+    static const gchar * const key_strings[] = {
+        "1", "",
+        "2", "a b c",
+        "3", "d e f",
+        "4", "g h i",
+        "5", "j k l",
+        "6", "m n o",
+        "7", "p q r s",
+        "8", "t u v",
+        "9", "w x y z",
+        "*", "",
+        "0", "",
+        "#", ""
+    };
     enum {ROWS = 4, COLS = 3};
     GtkWidget *table = gtk_table_new(ROWS, COLS, TRUE /* homogeneous */);
     gtk_table_set_row_spacings(GTK_TABLE(table), 5);
@@ -86,5 +88,6 @@ create_dialpad()
             gtk_table_attach(GTK_TABLE(table), button, col, col + 1, row, row + 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
             entry += 2;
         }
+
     return table;
 }

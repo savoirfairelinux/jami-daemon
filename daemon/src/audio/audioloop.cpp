@@ -47,13 +47,13 @@ AudioLoop::~AudioLoop()
 }
 
 void
-AudioLoop::getNext (SFLDataFormat* output, size_t total_samples, short volume)
+AudioLoop::getNext(SFLDataFormat* output, size_t total_samples, short volume)
 {
     size_t pos = pos_;
 
     if (size_ == 0) {
-    	_error("AudioLoop: Error: Audio loop size is 0");
-    	return;
+        _error("AudioLoop: Error: Audio loop size is 0");
+        return;
     }
 
     while (total_samples) {
@@ -67,6 +67,7 @@ AudioLoop::getNext (SFLDataFormat* output, size_t total_samples, short volume)
 
         if (volume != 100) {
             double gain = volume * 0.01;
+
             for (size_t i = 0; i < samples; i++) {
                 *output *= gain;
                 output++;

@@ -41,8 +41,7 @@
  * @brief Configuration namespace for ConfigTree object (like .ini files)
  */
 
-namespace Conf
-{
+namespace Conf {
 static const char * const TRUE_STR = "true";
 
 class ConfigTreeItem;
@@ -50,8 +49,7 @@ typedef std::map<std::string, ConfigTreeItem> ItemMap;
 typedef std::map<std::string, ItemMap*> SectionMap;
 typedef std::list<std::string> TokenList;
 
-class ConfigTreeItemException
-{
+class ConfigTreeItemException {
 
     public:
         /**
@@ -67,8 +65,7 @@ class ConfigTreeItemException
 
 class ConfigTree;
 
-class ConfigTreeIterator
-{
+class ConfigTreeIterator {
 
     public:
         /**
@@ -94,9 +91,9 @@ class ConfigTreeIterator
     private:
 
         friend class ConfigTree;
-        ConfigTreeIterator (ConfigTree *configTree) : _tree (configTree), _endToken(), _iter(), _iterItem() {}
+        ConfigTreeIterator(ConfigTree *configTree) : _tree(configTree), _endToken(), _iter(), _iterItem() {}
 
-        ConfigTreeIterator (const Conf::ConfigTreeIterator&);
+        ConfigTreeIterator(const Conf::ConfigTreeIterator&);
         ConfigTreeIterator& operator= (const Conf::ConfigTreeIterator&);
 
         ConfigTree* _tree;
@@ -105,8 +102,7 @@ class ConfigTreeIterator
         ItemMap::iterator _iterItem;
 };
 
-class ConfigTree
-{
+class ConfigTree {
 
     public:
         ConfigTree();
@@ -123,10 +119,10 @@ class ConfigTree
                           value for a given key.
            @param token   A default key/value pair.
          */
-        void addDefaultValue (const std::pair<std::string, std::string>& token, std::string section = std::string (""));
+        void addDefaultValue(const std::pair<std::string, std::string>& token, std::string section = std::string(""));
 
-        void createSection (const std::string& section);
-        void removeSection (const std::string& section);
+        void createSection(const std::string& section);
+        void removeSection(const std::string& section);
         /**
          * Return an array of strings, listing the sections of the config file
          *
@@ -137,7 +133,7 @@ class ConfigTree
          */
         TokenList getSections();
 
-        void addConfigTreeItem (const std::string& section, const ConfigTreeItem item);
+        void addConfigTreeItem(const std::string& section, const ConfigTreeItem item);
         /**
          * Set a configuration value.
          *
@@ -145,7 +141,7 @@ class ConfigTree
          * @param itemName The itemName= in the .ini file
          * @param value The value to assign to that itemName
          */
-        bool setConfigTreeItem (const std::string& section, const std::string& itemName, const std::string& value);
+        bool setConfigTreeItem(const std::string& section, const std::string& itemName, const std::string& value);
 
         /**
          * Get a value.
@@ -159,25 +155,25 @@ class ConfigTree
          * @return The value of the corresponding item. The default value if the section exists
          *         but the item doesn't.
          */
-        std::string getConfigTreeItemValue (const std::string& section, const std::string& itemName) const;
-        int getConfigTreeItemIntValue (const std::string& section, const std::string& itemName) const;
-        bool getConfigTreeItemBoolValue (const std::string& section, const std::string& itemName) const;
+        std::string getConfigTreeItemValue(const std::string& section, const std::string& itemName) const;
+        int getConfigTreeItemIntValue(const std::string& section, const std::string& itemName) const;
+        bool getConfigTreeItemBoolValue(const std::string& section, const std::string& itemName) const;
 
         /**
          * Flush data to .ini file
          */
-        bool saveConfigTree (const std::string& fileName);
+        bool saveConfigTree(const std::string& fileName);
 
         /**
          * Load data (and fill ConfigTree) from disk
          */
-        int  populateFromFile (const std::string& fileName);
+        int  populateFromFile(const std::string& fileName);
 
-        bool getConfigTreeItemToken (const std::string& section, const std::string& itemName, TokenList& arg) const;
+        bool getConfigTreeItemToken(const std::string& section, const std::string& itemName, TokenList& arg) const;
 
     private:
-        std::string getDefaultValue (const std::string& key) const;
-        const ConfigTreeItem* getConfigTreeItem (const std::string& section, const std::string& itemName) const;
+        std::string getDefaultValue(const std::string& key) const;
+        const ConfigTreeItem* getConfigTreeItem(const std::string& section, const std::string& itemName) const;
 
         /**
          * List of sections. Each sections has an ItemList as child
@@ -190,28 +186,27 @@ class ConfigTree
 
     public:
         ConfigTreeIterator createIterator() {
-            return ConfigTreeIterator (this);
+            return ConfigTreeIterator(this);
         }
 };
 
-class ConfigTreeItem
-{
+class ConfigTreeItem {
 
     public:
-        ConfigTreeItem() : _name (""), _value (""), _defaultValue (""), _type ("string") {}
+        ConfigTreeItem() : _name(""), _value(""), _defaultValue(""), _type("string") {}
 
         // defaultvalue = value
-        ConfigTreeItem (const std::string& name, const std::string& value, const std::string& type) :
-            _name (name), _value (value),
-            _defaultValue (value), _type (type) {}
+        ConfigTreeItem(const std::string& name, const std::string& value, const std::string& type) :
+            _name(name), _value(value),
+            _defaultValue(value), _type(type) {}
 
-        ConfigTreeItem (const std::string& name, const std::string& value, const std::string& defaultValue, const std::string& type) :
-            _name (name), _value (value),
-            _defaultValue (defaultValue), _type (type) {}
+        ConfigTreeItem(const std::string& name, const std::string& value, const std::string& defaultValue, const std::string& type) :
+            _name(name), _value(value),
+            _defaultValue(defaultValue), _type(type) {}
 
         ~ConfigTreeItem() {}
 
-        void setValue (const std::string& value) {
+        void setValue(const std::string& value) {
             _value = value;
         }
 

@@ -34,15 +34,14 @@
 #include <speex/speex_preprocess.h>
 #include "global.h"
 
-class NoiseSuppress
-{
+class NoiseSuppress {
     public:
 
-        NoiseSuppress (int smplPerFrame, int samplingRate);
+        NoiseSuppress(int smplPerFrame, int samplingRate);
 
-        ~NoiseSuppress (void);
+        ~NoiseSuppress(void);
 
-        void process (SFLDataFormat *data, int samples);
+        void process(SFLDataFormat *data, int samples);
 
     private:
 

@@ -44,10 +44,11 @@ conference_obj_t *create_new_conference(conference_state_t state, const gchar* c
         return NULL;
     }
 
-    DEBUG ("Conference: Create new conference %s", confID);
+    DEBUG("Conference: Create new conference %s", confID);
 
     // Allocate memory
     conference_obj_t *new_conf = g_new0(conference_obj_t, 1);
+
     if (!new_conf) {
         ERROR("Conference: Error: Could not allocate data ");
         return NULL;
@@ -57,7 +58,7 @@ conference_obj_t *create_new_conference(conference_state_t state, const gchar* c
     new_conf->_state = state;
 
     // Set the ID field
-    new_conf->_confID = g_strdup (confID);
+    new_conf->_confID = g_strdup(confID);
 
     // set conference timestamp
     time(&new_conf->_time_start);
@@ -65,30 +66,31 @@ conference_obj_t *create_new_conference(conference_state_t state, const gchar* c
     return new_conf;
 }
 
-conference_obj_t *create_new_conference_from_details (const gchar *conf_id, GHashTable *details)
+conference_obj_t *create_new_conference_from_details(const gchar *conf_id, GHashTable *details)
 {
-    conference_obj_t *new_conf = g_new0 (conference_obj_t, 1);
-    new_conf->_confID = g_strdup (conf_id);
+    conference_obj_t *new_conf = g_new0(conference_obj_t, 1);
+    new_conf->_confID = g_strdup(conf_id);
 
-    gchar **participants = dbus_get_participant_list (conf_id);
+    gchar **participants = dbus_get_participant_list(conf_id);
+
     if (participants) {
-        conference_participant_list_update (participants, new_conf);
+        conference_participant_list_update(participants, new_conf);
         g_strfreev(participants);
     }
 
-    gchar *state_str = g_hash_table_lookup (details, "CONF_STATE");
+    gchar *state_str = g_hash_table_lookup(details, "CONF_STATE");
 
-    if (g_strcasecmp (state_str, "ACTIVE_ATTACHED") == 0)
+    if (g_strcasecmp(state_str, "ACTIVE_ATTACHED") == 0)
         new_conf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED;
-    else if (g_strcasecmp (state_str, "ACTIVE_ATTACHED_REC") == 0)
+    else if (g_strcasecmp(state_str, "ACTIVE_ATTACHED_REC") == 0)
         new_conf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD;
-    else if (g_strcasecmp (state_str, "ACTIVE_DETACHED") == 0)
+    else if (g_strcasecmp(state_str, "ACTIVE_DETACHED") == 0)
         new_conf->_state = CONFERENCE_STATE_ACTIVE_DETACHED;
-    else if (g_strcasecmp (state_str, "ACTIVE_DETACHED_REC") == 0)
+    else if (g_strcasecmp(state_str, "ACTIVE_DETACHED_REC") == 0)
         new_conf->_state = CONFERENCE_STATE_ACTIVE_DETACHED_RECORD;
-    else if (g_strcasecmp (state_str, "HOLD") == 0)
+    else if (g_strcasecmp(state_str, "HOLD") == 0)
         new_conf->_state = CONFERENCE_STATE_HOLD;
-    else if (g_strcasecmp (state_str, "HOLD_REC") == 0)
+    else if (g_strcasecmp(state_str, "HOLD_REC") == 0)
         new_conf->_state = CONFERENCE_STATE_HOLD_RECORD;
 
     return new_conf;
@@ -97,18 +99,19 @@ conference_obj_t *create_new_conference_from_details (const gchar *conf_id, GHas
 
 void free_conference_obj_t (conference_obj_t *c)
 {
-    g_free (c->_confID);
+    g_free(c->_confID);
 
     if (c->participant_list)
         g_slist_free(c->participant_list);
 
-    g_free (c);
+    g_free(c);
 }
 
 static
 void conference_add_participant_number(const gchar *call_id, conference_obj_t *conf)
 {
     callable_obj_t *call = calllist_get_call(current_calls, call_id);
+
     if (!call) {
         ERROR("Conference: Error: Could not find %s", call_id);
         return;
@@ -118,58 +121,59 @@ void conference_add_participant_number(const gchar *call_id, conference_obj_t *c
     conf->participant_number = g_slist_append(conf->participant_number, number_account);
 }
 
-void conference_add_participant (const gchar* call_id, conference_obj_t* conf)
+void conference_add_participant(const gchar* call_id, conference_obj_t* conf)
 {
     DEBUG("Conference: Conference %s, adding participant %s", conf->_confID, call_id);
 
     // store the new participant list after appending participant id
-    conf->participant_list = g_slist_append (conf->participant_list, (gpointer) g_strdup(call_id));
+    conf->participant_list = g_slist_append(conf->participant_list, (gpointer) g_strdup(call_id));
 
     // store the phone number of this participant
     conference_add_participant_number(call_id, conf);
 }
 
-void conference_remove_participant (const gchar* call_id, conference_obj_t* conf)
+void conference_remove_participant(const gchar* call_id, conference_obj_t* conf)
 {
     // store the new participant list after removing participant id
     conf->participant_list = g_slist_remove(conf->participant_list, (gconstpointer) call_id);
 }
 
 
-GSList* conference_next_participant (GSList* participant)
+GSList* conference_next_participant(GSList* participant)
 {
     return g_slist_next(participant);
 }
 
 
-void conference_participant_list_update (gchar** participants, conference_obj_t* conf)
+void conference_participant_list_update(gchar** participants, conference_obj_t* conf)
 {
-    DEBUG ("Conference: Participant list update");
+    DEBUG("Conference: Participant list update");
 
     if (!conf) {
-    	ERROR("Conference: Error: Conference is NULL");
+        ERROR("Conference: Error: Conference is NULL");
         return;
     }
 
     for (gchar **part = participants; part && *part; part++) {
-        gchar *call_id = (gchar *) (*part);
+        gchar *call_id = (gchar *)(*part);
         callable_obj_t *call = calllist_get_call(current_calls, call_id);
-        if(call->_confID != NULL) {
+
+        if (call->_confID != NULL) {
             g_free(call->_confID);
             call->_confID = NULL;
         }
     }
 
     if (conf->participant_list) {
-        g_slist_free (conf->participant_list);
+        g_slist_free(conf->participant_list);
         conf->participant_list = NULL;
     }
 
     for (gchar **part = participants; part && *part; part++) {
-        gchar *call_id = (gchar*) (*part);
+        gchar *call_id = (gchar*)(*part);
         callable_obj_t *call = calllist_get_call(current_calls, call_id);
         call->_confID = g_strdup(conf->_confID);
-        conference_add_participant (call_id, conf);
+        conference_add_participant(call_id, conf);
     }
 }
 
@@ -188,18 +192,20 @@ gchar *serialize_history_conference_entry(conference_obj_t *entry)
 
     confID = entry->_confID;
 
-    time_start = g_strdup_printf ("%i", (int) entry->_time_start);
-    time_stop = g_strdup_printf ("%i", (int) entry->_time_stop);
+    time_start = g_strdup_printf("%i", (int) entry->_time_start);
+    time_stop = g_strdup_printf("%i", (int) entry->_time_stop);
 
     peer_name = (entry->_confID == NULL || (strlen(entry->_confID) == 0)) ? "empty": entry->_confID;
 
     length = g_slist_length(entry->participant_list);
     participant_list = entry->participant_list;
 
-    for(i = 0; i < length; i++) {
+    for (i = 0; i < length; i++) {
         const gchar * const tmp = g_slist_nth_data(participant_list, i);
+
         if (!tmp)
             WARN("Conference: Peer number is NULL in conference list");
+
         participantstr = g_strconcat(participantstr, tmp, ";", NULL);
 
         DEBUG("Conference: Participant number: %s, concatenation: %s", tmp, participantstr);
@@ -236,6 +242,7 @@ conference_obj_t *create_conference_history_entry_from_serialized(gchar *entry)
     static const gchar * const delim = "|";
     gchar **ptr = g_strsplit(entry, delim, 10);
     gint token = 0;
+
     while (ptr && token < 10) {
         switch (token) {
             case 0:

@@ -52,77 +52,76 @@ void PluginManagerTest::setUp()
 
 void PluginManagerTest::testLoadDynamicLibrary()
 {
-    _debug ("-------------------- PluginManagerTest::testLoadDynamicLibrary --------------------\n");
+    _debug("-------------------- PluginManagerTest::testLoadDynamicLibrary --------------------\n");
 
-    CPPUNIT_ASSERT (_pm->loadDynamicLibrary (FAKE_PLUGIN_NAME) != NULL);
+    CPPUNIT_ASSERT(_pm->loadDynamicLibrary(FAKE_PLUGIN_NAME) != NULL);
 }
 
 void PluginManagerTest::testUnloadDynamicLibrary()
 {
-    _debug ("-------------------- PluginManagerTest::testUnloadDynamicLibrary --------------------\n");
+    _debug("-------------------- PluginManagerTest::testUnloadDynamicLibrary --------------------\n");
 
-    library = _pm->loadDynamicLibrary (FAKE_PLUGIN_NAME);
-    CPPUNIT_ASSERT (library != NULL);
-    CPPUNIT_ASSERT (_pm->unloadDynamicLibrary (library) == 0);
+    library = _pm->loadDynamicLibrary(FAKE_PLUGIN_NAME);
+    CPPUNIT_ASSERT(library != NULL);
+    CPPUNIT_ASSERT(_pm->unloadDynamicLibrary(library) == 0);
 }
 
 void PluginManagerTest::testInstanciatePlugin()
 {
-    _debug ("-------------------- PluginManagerTest::testInstanciatePlugin --------------------\n");
+    _debug("-------------------- PluginManagerTest::testInstanciatePlugin --------------------\n");
 
-    library = _pm->loadDynamicLibrary (FAKE_PLUGIN_NAME);
-    CPPUNIT_ASSERT (library != NULL);
-    CPPUNIT_ASSERT (_pm->instanciatePlugin (library, &plugin) == 0);
-    CPPUNIT_ASSERT (plugin!=NULL);
+    library = _pm->loadDynamicLibrary(FAKE_PLUGIN_NAME);
+    CPPUNIT_ASSERT(library != NULL);
+    CPPUNIT_ASSERT(_pm->instanciatePlugin(library, &plugin) == 0);
+    CPPUNIT_ASSERT(plugin!=NULL);
 }
 
 void PluginManagerTest::testInitPlugin()
 {
-    _debug ("-------------------- PluginManagerTest::testInitPlugin --------------------\n");
+    _debug("-------------------- PluginManagerTest::testInitPlugin --------------------\n");
 
-    library = _pm->loadDynamicLibrary (FAKE_PLUGIN_NAME);
-    CPPUNIT_ASSERT (library != NULL);
-    CPPUNIT_ASSERT (_pm->instanciatePlugin (library, &plugin) == 0);
-    CPPUNIT_ASSERT (plugin!=NULL);
-    CPPUNIT_ASSERT (plugin->getPluginName() == FAKE_PLUGIN_DESC);
+    library = _pm->loadDynamicLibrary(FAKE_PLUGIN_NAME);
+    CPPUNIT_ASSERT(library != NULL);
+    CPPUNIT_ASSERT(_pm->instanciatePlugin(library, &plugin) == 0);
+    CPPUNIT_ASSERT(plugin!=NULL);
+    CPPUNIT_ASSERT(plugin->getPluginName() == FAKE_PLUGIN_DESC);
 }
 
 void PluginManagerTest::testRegisterPlugin()
 {
-    _debug ("-------------------- PluginManagerTest::testRegisterPlugin --------------------\n");
+    _debug("-------------------- PluginManagerTest::testRegisterPlugin --------------------\n");
 
-    library = _pm->loadDynamicLibrary (FAKE_PLUGIN_NAME);
-    CPPUNIT_ASSERT (library != NULL);
-    CPPUNIT_ASSERT (_pm->instanciatePlugin (library, &plugin) == 0);
-    CPPUNIT_ASSERT (_pm->isPluginLoaded (FAKE_PLUGIN_DESC) == false);
-    CPPUNIT_ASSERT (_pm->registerPlugin (plugin, library) == 0);
-    CPPUNIT_ASSERT (_pm->isPluginLoaded (FAKE_PLUGIN_DESC) == true);
+    library = _pm->loadDynamicLibrary(FAKE_PLUGIN_NAME);
+    CPPUNIT_ASSERT(library != NULL);
+    CPPUNIT_ASSERT(_pm->instanciatePlugin(library, &plugin) == 0);
+    CPPUNIT_ASSERT(_pm->isPluginLoaded(FAKE_PLUGIN_DESC) == false);
+    CPPUNIT_ASSERT(_pm->registerPlugin(plugin, library) == 0);
+    CPPUNIT_ASSERT(_pm->isPluginLoaded(FAKE_PLUGIN_DESC) == true);
 }
 
-void PluginManagerTest::testLoadPlugins ()
+void PluginManagerTest::testLoadPlugins()
 {
-    _debug ("-------------------- PluginManagerTest::testLoadPlugins --------------------\n");
+    _debug("-------------------- PluginManagerTest::testLoadPlugins --------------------\n");
+
     try {
-        CPPUNIT_ASSERT (_pm->loadPlugins (FAKE_PLUGIN_DIR) == 0);
-        CPPUNIT_ASSERT (_pm->isPluginLoaded (FAKE_PLUGIN_DESC) == true);
-    }
-   catch (LibraryManagerException &e){
-	
+        CPPUNIT_ASSERT(_pm->loadPlugins(FAKE_PLUGIN_DIR) == 0);
+        CPPUNIT_ASSERT(_pm->isPluginLoaded(FAKE_PLUGIN_DESC) == true);
+    } catch (LibraryManagerException &e) {
+
     }
 }
 
-void PluginManagerTest::testUnloadPlugins ()
+void PluginManagerTest::testUnloadPlugins()
 {
-    _debug ("-------------------- PluginManagerTest::testUnloadPlugins --------------------\n");
+    _debug("-------------------- PluginManagerTest::testUnloadPlugins --------------------\n");
 
     try {
 
-        CPPUNIT_ASSERT (_pm->loadPlugins (FAKE_PLUGIN_DIR) == 0);
-        CPPUNIT_ASSERT (_pm->isPluginLoaded (FAKE_PLUGIN_DESC) == true);
-        CPPUNIT_ASSERT (_pm->unloadPlugins () == 0);
-        CPPUNIT_ASSERT (_pm->isPluginLoaded (FAKE_PLUGIN_DESC) == false);
-    }
-    catch (LibraryManagerException &e) {
+        CPPUNIT_ASSERT(_pm->loadPlugins(FAKE_PLUGIN_DIR) == 0);
+        CPPUNIT_ASSERT(_pm->isPluginLoaded(FAKE_PLUGIN_DESC) == true);
+        CPPUNIT_ASSERT(_pm->unloadPlugins() == 0);
+        CPPUNIT_ASSERT(_pm->isPluginLoaded(FAKE_PLUGIN_DESC) == false);
+    } catch (LibraryManagerException &e) {
 
     }
 }

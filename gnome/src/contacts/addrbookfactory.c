@@ -44,54 +44,55 @@ AddrBookHandle *addrbook = NULL;
  * Callback called after all book have been processed
  */
 static void
-handler_async_search (GList *hits, gpointer user_data)
+handler_async_search(GList *hits, gpointer user_data)
 {
     AddressBook_Config *addressbook_config = user_data;
 
-    gtk_tree_store_clear (contacts->store);
-    calllist_reset (contacts);
+    gtk_tree_store_clear(contacts->store);
+    calllist_reset(contacts);
 
     for (GList *i = hits; i != NULL; i = i->next) {
         GdkPixbuf *photo = NULL;
         Hit *entry = i->data;
-        if (!entry)
-          continue;
 
-        if (addressbook_display (addressbook_config,
-                                 ADDRESSBOOK_DISPLAY_CONTACT_PHOTO))
+        if (!entry)
+            continue;
+
+        if (addressbook_display(addressbook_config,
+                                ADDRESSBOOK_DISPLAY_CONTACT_PHOTO))
             photo = entry->photo;
 
-        if (addressbook_display (addressbook_config,
-                                 ADDRESSBOOK_DISPLAY_PHONE_BUSINESS))
-            calllist_add_contact (entry->name, entry->phone_business,
-                                  CONTACT_PHONE_BUSINESS, photo);
+        if (addressbook_display(addressbook_config,
+                                ADDRESSBOOK_DISPLAY_PHONE_BUSINESS))
+            calllist_add_contact(entry->name, entry->phone_business,
+                                 CONTACT_PHONE_BUSINESS, photo);
 
-        if (addressbook_display (addressbook_config,
-                                 ADDRESSBOOK_DISPLAY_PHONE_HOME))
-            calllist_add_contact (entry->name, entry->phone_home,
-                                  CONTACT_PHONE_HOME, photo);
+        if (addressbook_display(addressbook_config,
+                                ADDRESSBOOK_DISPLAY_PHONE_HOME))
+            calllist_add_contact(entry->name, entry->phone_home,
+                                 CONTACT_PHONE_HOME, photo);
 
-        if (addressbook_display (addressbook_config,
-                                 ADDRESSBOOK_DISPLAY_PHONE_MOBILE))
-            calllist_add_contact (entry->name, entry->phone_mobile,
-                                  CONTACT_PHONE_MOBILE, photo);
+        if (addressbook_display(addressbook_config,
+                                ADDRESSBOOK_DISPLAY_PHONE_MOBILE))
+            calllist_add_contact(entry->name, entry->phone_mobile,
+                                 CONTACT_PHONE_MOBILE, photo);
 
-        g_free (entry->name);
-        g_free (entry->phone_business);
-        g_free (entry->phone_home);
-        g_free (entry->phone_mobile);
-        g_free (entry);
+        g_free(entry->name);
+        g_free(entry->phone_business);
+        g_free(entry->phone_home);
+        g_free(entry->phone_mobile);
+        g_free(entry);
     }
 
-    g_list_free (hits);
-    gtk_widget_grab_focus(GTK_WIDGET (contacts->view));
+    g_list_free(hits);
+    gtk_widget_grab_focus(GTK_WIDGET(contacts->view));
 }
 
 void abook_init()
 {
     void *handle = dlopen(PLUGINS_DIR"/libevladdrbook.so", RTLD_LAZY);
 
-    if(handle == NULL) {
+    if (handle == NULL) {
         ERROR("Addressbook: Error: Could not load addressbook");
         return;
     }

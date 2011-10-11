@@ -62,11 +62,9 @@ const SpeexMode* speexMode[3] = {
     &speex_uwb_mode, // wb
 };
 
-class Speex : public sfl::AudioCodec
-{
+class Speex : public sfl::AudioCodec {
     public:
-        Speex (int payload) : sfl::AudioCodec (payload, "speex")
-        {
+        Speex(int payload) : sfl::AudioCodec(payload, "speex") {
             assert(payload >= 110 && payload <= 112);
             assert(110 == PAYLOAD_CODEC_SPEEX_8000 &&
                    111 == PAYLOAD_CODEC_SPEEX_16000 &&
@@ -80,42 +78,42 @@ class Speex : public sfl::AudioCodec
             _hasDynamicPayload = dynamicPayload[type];
 
             // Init the decoder struct
-            speex_bits_init (&_speex_dec_bits);
-            _speex_dec_state = speex_decoder_init (speexMode[type]);
+            speex_bits_init(&_speex_dec_bits);
+            _speex_dec_state = speex_decoder_init(speexMode[type]);
 
             // Init the encoder struct
-            speex_bits_init (&_speex_enc_bits);
-            _speex_enc_state = speex_encoder_init (speexMode[type]);
+            speex_bits_init(&_speex_enc_bits);
+            _speex_enc_state = speex_encoder_init(speexMode[type]);
 
-            speex_encoder_ctl (_speex_enc_state,SPEEX_SET_SAMPLING_RATE,&_clockRate);
-            speex_decoder_ctl (_speex_dec_state, SPEEX_GET_FRAME_SIZE, &_speex_frame_size);
+            speex_encoder_ctl(_speex_enc_state,SPEEX_SET_SAMPLING_RATE,&_clockRate);
+            speex_decoder_ctl(_speex_dec_state, SPEEX_GET_FRAME_SIZE, &_speex_frame_size);
         }
 
-        Speex (const Speex&);
+        Speex(const Speex&);
         Speex& operator= (const Speex&);
 
         ~Speex() {
             // Destroy the decoder struct
-            speex_bits_destroy (&_speex_dec_bits);
-            speex_decoder_destroy (_speex_dec_state);
+            speex_bits_destroy(&_speex_dec_bits);
+            speex_decoder_destroy(_speex_dec_state);
             _speex_dec_state = 0;
 
             // Destroy the encoder struct
-            speex_bits_destroy (&_speex_enc_bits);
-            speex_encoder_destroy (_speex_enc_state);
+            speex_bits_destroy(&_speex_enc_bits);
+            speex_encoder_destroy(_speex_enc_state);
             _speex_enc_state = 0;
         }
 
-        virtual int decode (short *dst, unsigned char *src, size_t buf_size) {
-            speex_bits_read_from (&_speex_dec_bits, (char*) src, buf_size);
-            speex_decode_int (_speex_dec_state, &_speex_dec_bits, dst);
+        virtual int decode(short *dst, unsigned char *src, size_t buf_size) {
+            speex_bits_read_from(&_speex_dec_bits, (char*) src, buf_size);
+            speex_decode_int(_speex_dec_state, &_speex_dec_bits, dst);
             return _frameSize;
         }
 
-        virtual int encode (unsigned char *dst, short *src, size_t buf_size) {
-            speex_bits_reset (&_speex_enc_bits);
-            speex_encode_int (_speex_enc_state, src, &_speex_enc_bits);
-            return speex_bits_write (&_speex_enc_bits, (char*) dst, buf_size);
+        virtual int encode(unsigned char *dst, short *src, size_t buf_size) {
+            speex_bits_reset(&_speex_enc_bits);
+            speex_encode_int(_speex_enc_state, src, &_speex_enc_bits);
+            return speex_bits_write(&_speex_enc_bits, (char*) dst, buf_size);
         }
 
     private:

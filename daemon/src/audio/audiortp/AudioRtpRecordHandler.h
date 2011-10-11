@@ -45,8 +45,7 @@ class SIPCall;
 #include "audio/gaincontrol.h"
 #include "managerimpl.h"
 
-namespace sfl
-{
+namespace sfl {
 
 // Frequency (in packet number)
 #define RTP_TIMESTAMP_RESET_FREQ 100
@@ -65,9 +64,9 @@ static const int g722RtpClockRate = 8000;
 static const int g722RtpTimeincrement = 160;
 
 inline uint32
-timeval2microtimeout (const timeval& t)
+timeval2microtimeout(const timeval& t)
 {
-    return ( (t.tv_sec * 1000000ul) + t.tv_usec);
+    return ((t.tv_sec * 1000000ul) + t.tv_usec);
 }
 
 /**
@@ -75,10 +74,9 @@ timeval2microtimeout (const timeval& t)
  * resample, process, and packetize audio streams. This class should not be
  * handled directly. Use AudioRtpRecorrdHandeler
  */
-class AudioRtpRecord
-{
+class AudioRtpRecord {
     public:
-        AudioRtpRecord ();
+        AudioRtpRecord();
         ~AudioRtpRecord();
 
         AudioCodec *_audioCodec;
@@ -102,8 +100,7 @@ class AudioRtpRecord
 };
 
 
-class AudioRtpRecordHandler
-{
+class AudioRtpRecordHandler {
     public:
         AudioRtpRecordHandler(SIPCall *);
         virtual ~AudioRtpRecordHandler();
@@ -112,64 +109,64 @@ class AudioRtpRecordHandler
          *  Set rtp media for this session
          */
 
-        void setRtpMedia (AudioCodec* audioCodec);
+        void setRtpMedia(AudioCodec* audioCodec);
 
-        AudioCodec *getAudioCodec (void) const {
+        AudioCodec *getAudioCodec(void) const {
             return _audioRtpRecord._audioCodec;
         }
 
-        int getCodecPayloadType (void) const {
+        int getCodecPayloadType(void) const {
             return _audioRtpRecord._codecPayloadType;
         }
 
-        int getCodecSampleRate (void) const {
+        int getCodecSampleRate(void) const {
             return _audioRtpRecord._codecSampleRate;
         }
 
-        int getCodecFrameSize (void) const {
+        int getCodecFrameSize(void) const {
             return _audioRtpRecord._codecFrameSize;
         }
 
-        bool getHasDynamicPayload (void) const {
+        bool getHasDynamicPayload(void) const {
             return _audioRtpRecord._hasDynamicPayloadType;
         }
 
-        int DtmfPending (void) const {
+        int DtmfPending(void) const {
             return _audioRtpRecord._dtmfQueue.size() > 0;
         }
 
-        const unsigned char *getMicDataEncoded (void) const {
+        const unsigned char *getMicDataEncoded(void) const {
             return _audioRtpRecord.encodedData;
         }
 
-        void initBuffers (void);
+        void initBuffers(void);
 
-        void initNoiseSuppress (void);
+        void initNoiseSuppress(void);
 
         /**
          * Encode audio data from mainbuffer
          */
-        int processDataEncode (void);
+        int processDataEncode(void);
 
         /**
          * Decode audio data received from peer
          */
-        void processDataDecode (unsigned char * spkrData, unsigned int size, int payloadType);
+        void processDataDecode(unsigned char * spkrData, unsigned int size, int payloadType);
 
         /**
         * Ramp In audio data to avoid audio click from peer
         */
-        void fadeIn (SFLDataFormat *audio, int size, SFLDataFormat *factor);
+        void fadeIn(SFLDataFormat *audio, int size, SFLDataFormat *factor);
 
         void setDtmfPayloadType(unsigned int payloadType) {
-        	_audioRtpRecord._dtmfPayloadType = payloadType;
+            _audioRtpRecord._dtmfPayloadType = payloadType;
         }
 
         unsigned int getDtmfPayloadType(void) const {
-        	return _audioRtpRecord._dtmfPayloadType;
+            return _audioRtpRecord._dtmfPayloadType;
         }
 
-        void putDtmfEvent (int digit);
+        void putDtmfEvent(int digit);
 
     protected:
 

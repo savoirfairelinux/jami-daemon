@@ -45,15 +45,15 @@ DBusManager::DBusManager()
         DBus::default_dispatcher = &_dispatcher;
 
         DBus::Connection sessionConnection = DBus::Connection::SessionBus();
-        sessionConnection.request_name ("org.sflphone.SFLphone");
+        sessionConnection.request_name("org.sflphone.SFLphone");
 
-        _callManager = new CallManager (sessionConnection);
-        _configurationManager = new ConfigurationManager (sessionConnection);
-        _instanceManager = new Instance (sessionConnection);
+        _callManager = new CallManager(sessionConnection);
+        _configurationManager = new ConfigurationManager(sessionConnection);
+        _instanceManager = new Instance(sessionConnection);
 
 #ifdef USE_NETWORKMANAGER
         DBus::Connection systemConnection = DBus::Connection::SystemBus();
-        _networkManager = new NetworkManager (systemConnection, "/org/freedesktop/NetworkManager", "");
+        _networkManager = new NetworkManager(systemConnection, "/org/freedesktop/NetworkManager", "");
 #endif
 
     } catch (const DBus::Error &err) {

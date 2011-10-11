@@ -36,8 +36,7 @@
  * Interface for both audio codecs as well as video codecs.
  */
 namespace sfl {
-class Codec
-{
+class Codec {
     public:
         Codec() {};
         virtual ~Codec() {}

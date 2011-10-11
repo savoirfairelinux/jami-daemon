@@ -46,46 +46,46 @@
 
 #include "audio/audiolayer.h"
 
-ost::CommandOptionNoArg	console (
+ost::CommandOptionNoArg	console(
     "console", "c", "Log in console (instead of syslog)"
 );
 
-ost::CommandOptionNoArg	debug (
+ost::CommandOptionNoArg	debug(
     "debug", "d", "Debug mode (more verbose)"
 );
 
-ost::CommandOptionNoArg	help (
+ost::CommandOptionNoArg	help(
     "help", "h", "Print help"
 );
 
 // returns true if directory exists
 static bool check_dir(const char *path)
 {
-	DIR *dir = opendir (path);
+    DIR *dir = opendir(path);
 
-	if (!dir) {	// doesn't exist
-		if (mkdir (path, 0755) != 0) {  // couldn't create the dir
-			perror(path);
-			return false;
-		}
-	} else {
-		closedir(dir);
-	}
+    if (!dir) {	// doesn't exist
+        if (mkdir(path, 0755) != 0) {   // couldn't create the dir
+            perror(path);
+            return false;
+        }
+    } else {
+        closedir(dir);
+    }
 
-	return true;
+    return true;
 }
 
 int
-main (int argc, char **argv)
+main(int argc, char **argv)
 {
     set_program_dir(argv[0]);
     // makeCommandOptionParse allocates the object with operator new, so
     // auto_ptr is fine in this context.
     // TODO: This should eventually be replaced with std::unique_ptr for C++0x
-    std::auto_ptr<ost::CommandOptionParse> args(ost::makeCommandOptionParse (argc, argv, ""));
+    std::auto_ptr<ost::CommandOptionParse> args(ost::makeCommandOptionParse(argc, argv, ""));
 
-    printf ("SFLphone Daemon "VERSION", by Savoir-Faire Linux 2004-2011\n" \
-    		"http://www.sflphone.org/\n");
+    printf("SFLphone Daemon "VERSION", by Savoir-Faire Linux 2004-2011\n" \
+           "http://www.sflphone.org/\n");
 
     if (help.numSet) {
         std::cerr << args->printUsage();
@@ -96,50 +96,55 @@ main (int argc, char **argv)
         return 1;
     }
 
-    Logger::setConsoleLog (console.numSet);
-    Logger::setDebugMode (debug.numSet);
+    Logger::setConsoleLog(console.numSet);
+    Logger::setDebugMode(debug.numSet);
 
     const char *xdg_env = XDG_CACHE_HOME;
-	std::string path = xdg_env ? xdg_env : std::string(HOMEDIR) + DIR_SEPARATOR_STR ".cache/";
+    std::string path = xdg_env ? xdg_env : std::string(HOMEDIR) + DIR_SEPARATOR_STR ".cache/";
 
-	if (!check_dir(path.c_str()))
-		return 1;
+    if (!check_dir(path.c_str()))
+        return 1;
+
     path = path + "sflphone";
-	if (!check_dir(path.c_str()))
-		return 1;
 
-	std::string pidfile = path + "/" PIDFILE;
-    FILE *fp = fopen (pidfile.c_str(),"r");
+    if (!check_dir(path.c_str()))
+        return 1;
+
+    std::string pidfile = path + "/" PIDFILE;
+    FILE *fp = fopen(pidfile.c_str(),"r");
+
     if (fp) { // PID file exists. Check the former process still alive or not. If alive, give user a hint.
-    	int oldPid;
-    	if (fscanf(fp, "%d", &oldPid) != 1) {
+        int oldPid;
+
+        if (fscanf(fp, "%d", &oldPid) != 1) {
             std::cerr << "Couldn't read pidfile " << pidfile << std::endl;
-    		return 1;
-    	}
+            return 1;
+        }
 
-		fclose (fp);
+        fclose(fp);
 
-		if (kill (oldPid, 0) == 0) {
+        if (kill(oldPid, 0) == 0) {
             std::cerr << "There is already a sflphoned daemon running in the system. Starting Failed." << std::endl;
-			return 1;
-		}
-	}
+            return 1;
+        }
+    }
 
     // write pid file
-    fp = fopen (pidfile.c_str(),"w");
+    fp = fopen(pidfile.c_str(),"w");
+
     if (!fp) {
-    	perror(pidfile.c_str());
+        perror(pidfile.c_str());
         return 1;
     } else {
         std::ostringstream pidstr;
         pidstr << getpid();
 
-        fputs (pidstr.str().c_str() , fp);
-        fclose (fp);
+        fputs(pidstr.str().c_str() , fp);
+        fclose(fp);
     }
 
     try {
-    	Manager::instance().init();
+        Manager::instance().init();
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return 1;
@@ -148,7 +153,7 @@ main (int argc, char **argv)
         return 1;
     }
 
-    _debug ("Starting DBus event loop");
+    _debug("Starting DBus event loop");
     Manager::instance().getDbusManager()->exec();
 
     return 0;

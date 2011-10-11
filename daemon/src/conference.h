@@ -37,8 +37,7 @@
 
 typedef std::set<std::string> ParticipantSet;
 
-class Conference: public Recordable
-{
+class Conference: public Recordable {
     public:
         enum ConferenceState {ACTIVE_ATTACHED, ACTIVE_DETACHED, ACTIVE_ATTACHED_REC, ACTIVE_DETACHED_REC, HOLD, HOLD_REC};
 
@@ -62,7 +61,7 @@ class Conference: public Recordable
         /**
          * Set conference state
          */
-        void setState (ConferenceState state);
+        void setState(ConferenceState state);
 
         /**
          * Return a string description of the conference state
@@ -72,17 +71,17 @@ class Conference: public Recordable
         /**
          * Add a new participant to the conference
          */
-        void add (const std::string &participant_id);
+        void add(const std::string &participant_id);
 
         /**
          * Remove a participant from the conference
          */
-        void remove (const std::string &participant_id);
+        void remove(const std::string &participant_id);
 
         /**
          * Bind a participant to the conference
          */
-        void bindParticipant (const std::string &participant_id);
+        void bindParticipant(const std::string &participant_id);
 
         /**
          * Get the participant list for this conference

@@ -57,50 +57,50 @@
 
 class ConfigurationTest: public CppUnit::TestFixture {
 
-	/*
-	 * Use cppunit library macros to add unit test the factory
-	 */
-CPPUNIT_TEST_SUITE( ConfigurationTest );
+        /*
+         * Use cppunit library macros to add unit test the factory
+         */
+        CPPUNIT_TEST_SUITE(ConfigurationTest);
 //      CPPUNIT_TEST( testDefaultValueAudio );
 //	CPPUNIT_TEST( testDefaultValuePreferences );
 //	CPPUNIT_TEST( testDefaultValueSignalisation );
 //	CPPUNIT_TEST( testInitAudioDriver );
 //      CPPUNIT_TEST( testYamlParser );
-	    CPPUNIT_TEST( testYamlEmitter );
-	CPPUNIT_TEST_SUITE_END();
+        CPPUNIT_TEST(testYamlEmitter);
+        CPPUNIT_TEST_SUITE_END();
 
-public:
-	/*
-	 * Unit tests related to the audio preferences
-	 */
-	void testDefaultValueAudio();
+    public:
+        /*
+         * Unit tests related to the audio preferences
+         */
+        void testDefaultValueAudio();
 
-	/*
-	 * Unit tests related to the global settings
-	 */
-	void testDefaultValuePreferences();
+        /*
+         * Unit tests related to the global settings
+         */
+        void testDefaultValuePreferences();
 
-	/*
-	 * Unit tests related to the global settings
-	 */
-	void testDefaultValueSignalisation();
+        /*
+         * Unit tests related to the global settings
+         */
+        void testDefaultValueSignalisation();
 
-	/*
-	 * Try to load one SIP account.
-	 * So be sure to have only one SIP account so that the test could succeed
-	 */
-	void testLoadSIPAccount();
+        /*
+         * Try to load one SIP account.
+         * So be sure to have only one SIP account so that the test could succeed
+         */
+        void testLoadSIPAccount();
 
-	void testUnloadSIPAccount();
+        void testUnloadSIPAccount();
 
-	void testInitAudioDriver();
+        void testInitAudioDriver();
 
-	void testYamlParser();
+        void testYamlParser();
 
-	void testYamlEmitter();	
+        void testYamlEmitter();
 };
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ConfigurationTest, "ConfigurationTest");
-CPPUNIT_TEST_SUITE_REGISTRATION( ConfigurationTest );
+CPPUNIT_TEST_SUITE_REGISTRATION(ConfigurationTest);
 
 #endif

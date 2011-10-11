@@ -53,22 +53,22 @@
 
 class RingtoneTest: public CppUnit::TestFixture {
 
-	/*
-	 * Use cppunit library macros to add unit test the factory
-	 */
-        CPPUNIT_TEST_SUITE( RingtoneTest );
-	    CPPUNIT_TEST( testLoadWavefile );
-	CPPUNIT_TEST_SUITE_END();
+        /*
+         * Use cppunit library macros to add unit test the factory
+         */
+        CPPUNIT_TEST_SUITE(RingtoneTest);
+        CPPUNIT_TEST(testLoadWavefile);
+        CPPUNIT_TEST_SUITE_END();
 
-public:
-	/*
-	 * Unit tests related to the audio preferences
-	 */
-	void testLoadWavefile();
+    public:
+        /*
+         * Unit tests related to the audio preferences
+         */
+        void testLoadWavefile();
 
 };
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(RingtoneTest, "RingtoneTest");
-CPPUNIT_TEST_SUITE_REGISTRATION( RingtoneTest );
+CPPUNIT_TEST_SUITE_REGISTRATION(RingtoneTest);
 
 #endif

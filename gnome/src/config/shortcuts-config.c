@@ -35,14 +35,15 @@
 #include <gdk/gdkx.h>
 
 static void
-accel_cleared (GtkCellRendererAccel *renderer UNUSED, gchar *path,
-               GtkTreeView *treeview)
+accel_cleared(GtkCellRendererAccel *renderer UNUSED, gchar *path,
+              GtkTreeView *treeview)
 {
     // Update treeview
     GtkTreeModel *model = gtk_tree_view_get_model(treeview);
 
     GtkTreeIter iter;
-    if (gtk_tree_model_get_iter_from_string (model, &iter, path))
+
+    if (gtk_tree_model_get_iter_from_string(model, &iter, path))
         gtk_list_store_set(GTK_LIST_STORE(model), &iter, MASK, 0, VALUE, 0, -1);
 
     // Update GDK bindings
@@ -50,20 +51,21 @@ accel_cleared (GtkCellRendererAccel *renderer UNUSED, gchar *path,
 }
 
 static void
-accel_edited (GtkCellRendererAccel *renderer UNUSED, gchar *path, guint accel_key,
-              GdkModifierType mask, guint hardware_keycode UNUSED, GtkTreeView *treeview)
+accel_edited(GtkCellRendererAccel *renderer UNUSED, gchar *path, guint accel_key,
+             GdkModifierType mask, guint hardware_keycode UNUSED, GtkTreeView *treeview)
 {
     // Disable existing binding if key already used
     GtkTreeModel *model = gtk_tree_view_get_model(treeview);
     GtkTreeIter iter;
     gtk_tree_model_get_iter_first(model, &iter);
 
-    Accelerator* list = shortcuts_get_list ();
+    Accelerator* list = shortcuts_get_list();
     const guint code = XKeysymToKeycode(GDK_DISPLAY(), accel_key);
     guint i = 0;
+
     while (list[i].action != NULL) {
         if (list[i].key == code && list[i].mask == mask) {
-            gtk_list_store_set(GTK_LIST_STORE (model), &iter, MASK, 0, VALUE, 0,
+            gtk_list_store_set(GTK_LIST_STORE(model), &iter, MASK, 0, VALUE, 0,
                                -1);
             WARN("This key was already affected");
         }
@@ -73,9 +75,9 @@ accel_edited (GtkCellRendererAccel *renderer UNUSED, gchar *path, guint accel_ke
     }
 
     // Update treeview
-    if (gtk_tree_model_get_iter_from_string (model, &iter, path))
-        gtk_list_store_set (GTK_LIST_STORE (model), &iter, MASK, (gint) mask,
-                            VALUE, accel_key, -1);
+    if (gtk_tree_model_get_iter_from_string(model, &iter, path))
+        gtk_list_store_set(GTK_LIST_STORE(model), &iter, MASK, (gint) mask,
+                           VALUE, accel_key, -1);
 
     // Update GDK bindings
     shortcuts_update_bindings(atoi(path), code, mask);
@@ -86,17 +88,17 @@ accel_edited (GtkCellRendererAccel *renderer UNUSED, gchar *path, guint accel_ke
  * second is a keyboard accelerator.
  */
 static void
-setup_tree_view (GtkWidget *treeview)
+setup_tree_view(GtkWidget *treeview)
 {
-    GtkCellRenderer *renderer = gtk_cell_renderer_text_new ();
+    GtkCellRenderer *renderer = gtk_cell_renderer_text_new();
     GtkTreeViewColumn *column = gtk_tree_view_column_new_with_attributes("Action", renderer,
-                                                                         "text", ACTION, NULL);
+                                "text", ACTION, NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(treeview), column);
 
     renderer = gtk_cell_renderer_accel_new();
     g_object_set(renderer, "accel-mode", GTK_CELL_RENDERER_ACCEL_MODE_GTK,
                  "editable", TRUE, NULL);
-    column = gtk_tree_view_column_new_with_attributes ("Shortcut", renderer,
+    column = gtk_tree_view_column_new_with_attributes("Shortcut", renderer,
              "accel-mods", MASK, "accel-key", VALUE, NULL);
 
     gtk_tree_view_append_column(GTK_TREE_VIEW(treeview), column);
@@ -107,10 +109,10 @@ setup_tree_view (GtkWidget *treeview)
 }
 
 GtkWidget*
-create_shortcuts_settings ()
+create_shortcuts_settings()
 {
-    GtkWidget *vbox = gtk_vbox_new (FALSE, 10);
-    gtk_container_set_border_width (GTK_CONTAINER (vbox), 10);
+    GtkWidget *vbox = gtk_vbox_new(FALSE, 10);
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
 
     GtkWidget * result_frame = gnome_main_section_new(_("General"));
 
@@ -120,11 +122,12 @@ create_shortcuts_settings ()
     setup_tree_view(treeview);
 
     GtkListStore *store = gtk_list_store_new(COLUMNS, G_TYPE_STRING, G_TYPE_INT,
-                                             G_TYPE_UINT);
+                          G_TYPE_UINT);
 
     Accelerator* list = shortcuts_get_list();
 
     guint i = 0;
+
     while (list[i].action != NULL) {
         GtkTreeIter iter;
         gtk_list_store_append(store, &iter);

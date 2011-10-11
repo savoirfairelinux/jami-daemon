@@ -47,32 +47,31 @@ class AlsaThread;
 /** Associate a sound card index to its string description */
 typedef std::pair<int , std::string> HwIDPair;
 
-class AlsaLayer : public AudioLayer
-{
+class AlsaLayer : public AudioLayer {
     public:
         /**
          * Constructor
          */
-        AlsaLayer ();
+        AlsaLayer();
 
         /**
          * Destructor
          */
-        ~AlsaLayer (void);
+        ~AlsaLayer(void);
 
         /**
          * Start the capture stream and prepare the playback stream.
          * The playback starts accordingly to its threshold
          * ALSA Library API
          */
-        void startStream (void);
+        void startStream(void);
 
         /**
          * Stop the playback and capture streams.
          * Drops the pending frames and put the capture and playback handles to PREPARED state
          * ALSA Library API
          */
-        void stopStream (void);
+        void stopStream(void);
 
         /**
          * Concatenate two strings. Used to build a valid pcm device name.
@@ -80,7 +79,7 @@ class AlsaLayer : public AudioLayer
          * @param card the sound card number
          * @return std::string the concatenated string
          */
-        std::string buildDeviceTopo (const std::string &plugin, int card);
+        std::string buildDeviceTopo(const std::string &plugin, int card);
 
         /**
          * Scan the sound card available on the system
@@ -90,7 +89,7 @@ class AlsaLayer : public AudioLayer
          *		   SFL_PCM_BOTH
          * @return std::vector<std::string> The vector containing the string description of the card
          */
-        std::vector<std::string> getSoundCardsInfo (int stream);
+        std::vector<std::string> getSoundCardsInfo(int stream);
 
         /**
          * Check if the given index corresponds to an existing sound card and supports the specified streaming mode
@@ -109,12 +108,12 @@ class AlsaLayer : public AudioLayer
          * @param description The string description
          * @return	int	  Its index
          */
-        int soundCardGetIndex (const std::string &description);
+        int soundCardGetIndex(const std::string &description);
 
         void playback(int maxSamples);
         void capture(void);
 
-        void audioCallback (void);
+        void audioCallback(void);
 
         /**
          * Get the index of the audio card for capture
@@ -135,10 +134,10 @@ class AlsaLayer : public AudioLayer
         }
 
         /**
-		 * Get the index of the audio card for ringtone (could be differnet from playback)
-		 * @return int The index of the card used for ringtone
-		 *                 0 for the first available card on the system, 1 ...
-		 */
+         * Get the index of the audio card for ringtone (could be differnet from playback)
+         * @return int The index of the card used for ringtone
+         *                 0 for the first available card on the system, 1 ...
+         */
         int getIndexRing() const {
             return indexRing_;
         }
@@ -170,7 +169,7 @@ class AlsaLayer : public AudioLayer
 
 
         // Copy Constructor
-        AlsaLayer (const AlsaLayer& rh);
+        AlsaLayer(const AlsaLayer& rh);
 
         // Assignment Operator
         AlsaLayer& operator= (const AlsaLayer& rh);
@@ -179,17 +178,17 @@ class AlsaLayer : public AudioLayer
          * Drop the pending frames and close the capture device
          * ALSA Library API
          */
-        void closeCaptureStream (void);
-        void stopCaptureStream (void);
-        void startCaptureStream (void);
-        void prepareCaptureStream (void);
+        void closeCaptureStream(void);
+        void stopCaptureStream(void);
+        void startCaptureStream(void);
+        void prepareCaptureStream(void);
 
-        void closePlaybackStream (void);
-        void stopPlaybackStream (void);
-        void startPlaybackStream (void);
-        void preparePlaybackStream (void);
+        void closePlaybackStream(void);
+        void stopPlaybackStream(void);
+        void startPlaybackStream(void);
+        void preparePlaybackStream(void);
 
-        bool alsa_set_params (snd_pcm_t *pcm_handle);
+        bool alsa_set_params(snd_pcm_t *pcm_handle);
 
         /**
          * Copy a data buffer in the internal ring buffer
@@ -197,7 +196,7 @@ class AlsaLayer : public AudioLayer
          * @param buffer The data to be copied
          * @param length The size of the buffer
          */
-        void write (void* buffer, int length, snd_pcm_t *handle);
+        void write(void* buffer, int length, snd_pcm_t *handle);
 
         /**
          * Read data from the internal ring buffer
@@ -206,7 +205,7 @@ class AlsaLayer : public AudioLayer
          * @param toCopy  The number of bytes to get
          * @return int The number of frames actually read
          */
-        int read (void* buffer, int toCopy);
+        int read(void* buffer, int toCopy);
 
         /**
          * Handles to manipulate playback stream

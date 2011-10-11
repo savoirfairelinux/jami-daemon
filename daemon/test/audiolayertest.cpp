@@ -41,23 +41,23 @@ using std::endl;
 
 void AudioLayerTest::testAudioLayerConfig()
 {
-    _debug ("-------------------- AudioLayerTest::testAudioLayerConfig --------------------\n");
+    _debug("-------------------- AudioLayerTest::testAudioLayerConfig --------------------\n");
 
-    CPPUNIT_ASSERT( Manager::instance().audioPreference.getSmplrate() == 44100);
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getSmplrate() == 44100);
 
     // alsa preferences
-    CPPUNIT_ASSERT( Manager::instance().audioPreference.getCardin() == 0);
-    CPPUNIT_ASSERT( Manager::instance().audioPreference.getCardout() == 0);
-    CPPUNIT_ASSERT( Manager::instance().audioPreference.getCardring() == 0);
-    CPPUNIT_ASSERT( Manager::instance().audioPreference.getPlugin() == "default");
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getCardin() == 0);
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getCardout() == 0);
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getCardring() == 0);
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getPlugin() == "default");
 
     // pulseaudio preferences
-    CPPUNIT_ASSERT( Manager::instance().audioPreference.getDevicePlayback() == "alsa_output.pci-0000_00_1b.0.analog-stereo");
-    CPPUNIT_ASSERT( Manager::instance().audioPreference.getDeviceRecord() == "alsa_input.pci-0000_00_1b.0.analog-stereo");
-    CPPUNIT_ASSERT( Manager::instance().audioPreference.getDeviceRingtone() == "alsa_output.pci-0000_00_1b.0.analog-stereo");
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getDevicePlayback() == "alsa_output.pci-0000_00_1b.0.analog-stereo");
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getDeviceRecord() == "alsa_input.pci-0000_00_1b.0.analog-stereo");
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getDeviceRingtone() == "alsa_output.pci-0000_00_1b.0.analog-stereo");
 
-    CPPUNIT_ASSERT( Manager::instance().audioPreference.getVolumemic() == 100);
-    CPPUNIT_ASSERT( Manager::instance().audioPreference.getVolumespkr() == 100);
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getVolumemic() == 100);
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getVolumespkr() == 100);
 
     // TODO: Fix tests
     //CPPUNIT_ASSERT ( (int) Manager::instance().getAudioDriver()->getSampleRate() == sampling_rate);
@@ -65,34 +65,34 @@ void AudioLayerTest::testAudioLayerConfig()
 
 void AudioLayerTest::testAudioLayerSwitch()
 {
-    _debug ("-------------------- AudioLayerTest::testAudioLayerSwitch --------------------\n");
+    _debug("-------------------- AudioLayerTest::testAudioLayerSwitch --------------------\n");
 
     bool wasAlsa = dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver()) != 0;
 
     for (int i = 0; i < 2; i++) {
-        _debug ("iter - %i", i);
+        _debug("iter - %i", i);
         Manager::instance().switchAudioManager();
 
         if (wasAlsa)
-            CPPUNIT_ASSERT (dynamic_cast<PulseLayer*>(Manager::instance().getAudioDriver()));
+            CPPUNIT_ASSERT(dynamic_cast<PulseLayer*>(Manager::instance().getAudioDriver()));
         else
-            CPPUNIT_ASSERT (dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver()));
+            CPPUNIT_ASSERT(dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver()));
 
         wasAlsa = dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver()) != 0;
-        usleep (100000);
+        usleep(100000);
     }
 }
 
 void AudioLayerTest::testPulseConnect()
 {
-    _debug ("-------------------- AudioLayerTest::testPulseConnect --------------------\n");
+    _debug("-------------------- AudioLayerTest::testPulseConnect --------------------\n");
 
     if (dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver())) {
         Manager::instance().switchAudioManager();
-    	usleep (100000);
+        usleep(100000);
     }
 
     _pulselayer = dynamic_cast<PulseLayer*>(Manager::instance().getAudioDriver());
 
-    CPPUNIT_ASSERT (_pulselayer);
+    CPPUNIT_ASSERT(_pulselayer);
 }

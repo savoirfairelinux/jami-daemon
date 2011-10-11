@@ -41,8 +41,7 @@
 
 class SIPCall;
 
-namespace sfl
-{
+namespace sfl {
 
 class AudioCodec;
 
@@ -54,29 +53,30 @@ typedef enum RtpMethod {
 } RtpMethod;
 
 
-class AudioRtpSession : public AudioRtpRecordHandler
-{
+class AudioRtpSession : public AudioRtpRecordHandler {
     public:
         /**
         * Constructor
         * @param sipcall The pointer on the SIP call
         */
-        AudioRtpSession (SIPCall* sipcall, RtpMethod type, ost::RTPDataQueue *queue, ost::Thread *thread);
+        AudioRtpSession(SIPCall* sipcall, RtpMethod type, ost::RTPDataQueue *queue, ost::Thread *thread);
         virtual ~AudioRtpSession();
 
-        RtpMethod getAudioRtpType() { return _type; }
-        void updateSessionMedia (AudioCodec *audioCodec);
+        RtpMethod getAudioRtpType() {
+            return _type;
+        }
+        void updateSessionMedia(AudioCodec *audioCodec);
 
-        int startRtpThread (AudioCodec*);
+        int startRtpThread(AudioCodec*);
 
         /**
          * Used mostly when receiving a reinvite
          */
-        void updateDestinationIpAddress (void);
+        void updateDestinationIpAddress(void);
 
     protected:
 
-        bool onRTPPacketRecv (ost::IncomingRTPPkt&);
+        bool onRTPPacketRecv(ost::IncomingRTPPkt&);
 
         /**
          * Send DTMF over RTP (RFC2833). The timestamp and sequence number must be
@@ -84,7 +84,7 @@ class AudioRtpSession : public AudioRtpRecordHandler
          * send the appropriate DTMF digit using this payload, discard coresponding data from mainbuffer and get
          * back the codec payload for further audio processing.
          */
-        void sendDtmfEvent ();
+        void sendDtmfEvent();
 
         /**
          * Send encoded data to peer
@@ -100,23 +100,23 @@ class AudioRtpSession : public AudioRtpRecordHandler
         /**
          * Set the audio codec for this RTP session
          */
-        void setSessionMedia (AudioCodec*);
+        void setSessionMedia(AudioCodec*);
 
         /**
          * Set RTP Sockets send/receive timeouts
          */
-        void setSessionTimeouts (void);
+        void setSessionTimeouts(void);
 
         /**
          * Retreive destination address for this session. Stored in CALL
          */
-        void setDestinationIpAddress (void);
+        void setDestinationIpAddress(void);
 
 
         /**
          * Receive data from peer
          */
-        void receiveSpeakerData ();
+        void receiveSpeakerData();
 
         // Main destination address for this rtp session.
         // Stored in case or reINVITE, which may require to forget

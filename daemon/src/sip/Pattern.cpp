@@ -31,16 +31,15 @@
 #include <sstream>
 #include <cstdio>
 
-namespace sfl
-{
+namespace sfl {
 
-Pattern::Pattern (const std::string& pattern, const std::string& options) :
-    _pattern (pattern),
-    _re (NULL),
-    _ovector (NULL),
-    _ovectorSize (0),
-    _count (0),
-    _options (0)
+Pattern::Pattern(const std::string& pattern, const std::string& options) :
+    _pattern(pattern),
+    _re(NULL),
+    _ovector(NULL),
+    _ovectorSize(0),
+    _count(0),
+    _options(0)
 {
     // Set offsets
     _offset[0] = _offset[1] = 0;
@@ -49,7 +48,7 @@ Pattern::Pattern (const std::string& pattern, const std::string& options) :
     _optionsDescription = options;
 
     for (unsigned int i = 0; i < options.length(); i++) {
-        switch (options.at (i)) {
+        switch (options.at(i)) {
 
             case 'i':
                 _options |= PCRE_CASELESS;
@@ -76,19 +75,19 @@ Pattern::Pattern (const std::string& pattern, const std::string& options) :
 Pattern::~Pattern()
 {
     if (_re != NULL) {
-        pcre_free (_re);
+        pcre_free(_re);
     }
 
     delete[] _ovector;
 }
 
-void Pattern::compile (void)
+void Pattern::compile(void)
 {
     // Compile the pattern
     int offset;
     const char * error;
 
-    _re = pcre_compile (_pattern.c_str(), 0, &error, &offset, NULL);
+    _re = pcre_compile(_pattern.c_str(), 0, &error, &offset, NULL);
 
     if (_re == NULL) {
         std::string offsetStr;
@@ -96,56 +95,56 @@ void Pattern::compile (void)
         ss << offset;
         offsetStr = ss.str();
 
-        std::string msg ("PCRE compiling failed at offset " + offsetStr);
+        std::string msg("PCRE compiling failed at offset " + offsetStr);
 
-        throw compile_error (msg);
+        throw compile_error(msg);
     }
 
     // Allocate an appropriate amount
     // of memory for the output vector.
     int captureCount;
 
-    pcre_fullinfo (_re, NULL, PCRE_INFO_CAPTURECOUNT, &captureCount);
+    pcre_fullinfo(_re, NULL, PCRE_INFO_CAPTURECOUNT, &captureCount);
 
     delete[] _ovector;
 
-    _ovector = new int[ (captureCount + 1) *3];
+    _ovector = new int[(captureCount + 1) *3];
 
     _ovectorSize = (captureCount + 1) * 3;
 }
 
-unsigned int Pattern::getCaptureGroupCount (void)
+unsigned int Pattern::getCaptureGroupCount(void)
 {
     int captureCount;
-    pcre_fullinfo (_re, NULL, PCRE_INFO_CAPTURECOUNT, &captureCount);
+    pcre_fullinfo(_re, NULL, PCRE_INFO_CAPTURECOUNT, &captureCount);
     return captureCount;
 }
 
-std::vector<std::string> Pattern::groups (void)
+std::vector<std::string> Pattern::groups(void)
 {
     const char ** stringList;
 
-    pcre_get_substring_list (_subject.c_str(),
-                             _ovector,
-                             _count,
-                             &stringList);
+    pcre_get_substring_list(_subject.c_str(),
+                            _ovector,
+                            _count,
+                            &stringList);
 
     std::vector<std::string> matchedSubstrings;
 
     for (int i = 1; stringList[i] != NULL; i++)
-        matchedSubstrings.push_back (stringList[i]);
+        matchedSubstrings.push_back(stringList[i]);
 
-    pcre_free_substring_list (stringList);
+    pcre_free_substring_list(stringList);
 
     return matchedSubstrings;
 }
 
-std::string Pattern::group (int groupNumber)
+std::string Pattern::group(int groupNumber)
 {
     const char * stringPtr;
 
-    int rc = pcre_get_substring (
-                 _subject.substr (_offset[0]).c_str(),
+    int rc = pcre_get_substring(
+                 _subject.substr(_offset[0]).c_str(),
                  _ovector,
                  _count,
                  groupNumber,
@@ -155,30 +154,30 @@ std::string Pattern::group (int groupNumber)
         switch (rc) {
 
             case PCRE_ERROR_NOSUBSTRING:
-                throw std::out_of_range ("Invalid group reference.");
+                throw std::out_of_range("Invalid group reference.");
 
             case PCRE_ERROR_NOMEMORY:
-                throw match_error ("Memory exhausted.");
+                throw match_error("Memory exhausted.");
 
             default:
-                throw match_error ("Failed to get named substring.");
+                throw match_error("Failed to get named substring.");
         }
     }
 
-    std::string matchedStr (stringPtr);
+    std::string matchedStr(stringPtr);
 
-    pcre_free_substring (stringPtr);
+    pcre_free_substring(stringPtr);
 
     return matchedStr;
 }
 
-std::string Pattern::group (const std::string& groupName)
+std::string Pattern::group(const std::string& groupName)
 {
     const char * stringPtr = NULL;
 
-    int rc = pcre_get_named_substring (
+    int rc = pcre_get_named_substring(
                  _re,
-                 _subject.substr (_offset[0]).c_str(),
+                 _subject.substr(_offset[0]).c_str(),
                  _ovector,
                  _count,
                  groupName.c_str(),
@@ -192,10 +191,10 @@ std::string Pattern::group (const std::string& groupName)
                 break;
 
             case PCRE_ERROR_NOMEMORY:
-                throw match_error ("Memory exhausted.");
+                throw match_error("Memory exhausted.");
 
             default:
-                throw match_error ("Failed to get named substring.");
+                throw match_error("Failed to get named substring.");
         }
     }
 
@@ -204,7 +203,7 @@ std::string Pattern::group (const std::string& groupName)
     if (stringPtr) {
 
         matchedStr = stringPtr;
-        pcre_free_substring (stringPtr);
+        pcre_free_substring(stringPtr);
     } else {
 
         matchedStr = "";
@@ -214,59 +213,59 @@ std::string Pattern::group (const std::string& groupName)
 
 }
 
-void Pattern::start (const std::string& groupName) const
+void Pattern::start(const std::string& groupName) const
 {
-    int index = pcre_get_stringnumber (_re, groupName.c_str());
-    start (index);
+    int index = pcre_get_stringnumber(_re, groupName.c_str());
+    start(index);
 }
 
-size_t Pattern::start (unsigned int groupNumber) const
+size_t Pattern::start(unsigned int groupNumber) const
 {
     if (groupNumber <= (unsigned int) _count) {
-        return _ovector[ (groupNumber + 1) * 2];
+        return _ovector[(groupNumber + 1) * 2];
     } else {
-        throw std::out_of_range ("Invalid group reference.");
+        throw std::out_of_range("Invalid group reference.");
     }
 }
 
-size_t Pattern::start (void) const
+size_t Pattern::start(void) const
 {
     return _ovector[0] + _offset[0];
 }
 
-void Pattern::end (const std::string& groupName) const
+void Pattern::end(const std::string& groupName) const
 {
-    int index = pcre_get_stringnumber (_re, groupName.c_str());
-    end (index);
+    int index = pcre_get_stringnumber(_re, groupName.c_str());
+    end(index);
 }
 
-size_t Pattern::end (unsigned int groupNumber) const
+size_t Pattern::end(unsigned int groupNumber) const
 {
     if (groupNumber <= (unsigned int) _count) {
-        return _ovector[ ( (groupNumber + 1) * 2) + 1 ] - 1;
+        return _ovector[((groupNumber + 1) * 2) + 1 ] - 1;
     } else {
-        throw std::out_of_range ("Invalid group reference.");
+        throw std::out_of_range("Invalid group reference.");
     }
 }
 
-size_t Pattern::end (void) const
+size_t Pattern::end(void) const
 {
     return (_ovector[1] - 1) + _offset[0];
 }
 
-bool Pattern::matches (void) throw (match_error)
+bool Pattern::matches(void) throw(match_error)
 {
-    return matches (_subject);
+    return matches(_subject);
 }
 
-bool Pattern::matches (const std::string& subject) throw (match_error)
+bool Pattern::matches(const std::string& subject) throw(match_error)
 {
 
     // Try to find a match for this pattern
-    int rc = pcre_exec (
+    int rc = pcre_exec(
                  _re,
                  NULL,
-                 subject.substr (_offset[1]).c_str(),
+                 subject.substr(_offset[1]).c_str(),
                  subject.length() - _offset[1],
                  0,
                  _options,
@@ -282,7 +281,7 @@ bool Pattern::matches (const std::string& subject) throw (match_error)
     }
 
     // Handle the case if matching should be done globally
-    if (_optionsDescription.find ("g") != std::string::npos) {
+    if (_optionsDescription.find("g") != std::string::npos) {
         _offset[0] = _offset[1];
         // New offset is old offset + end of relative offset
         _offset[1] =  _ovector[1] + _offset[0];
@@ -290,7 +289,7 @@ bool Pattern::matches (const std::string& subject) throw (match_error)
 
     // Matching succeded but not enough space.
     if (rc == 0) {
-        throw match_error ("No space to store all substrings.");
+        throw match_error("No space to store all substrings.");
         // @TODO figure out something more clever to do in that case.
     }
 
@@ -301,7 +300,7 @@ bool Pattern::matches (const std::string& subject) throw (match_error)
     return true;
 }
 
-std::vector<std::string> Pattern::split (void)
+std::vector<std::string> Pattern::split(void)
 {
     size_t tokenEnd = -1;
     size_t tokenStart = 0;
@@ -310,12 +309,12 @@ std::vector<std::string> Pattern::split (void)
 
     while (matches()) {
         tokenStart = start();
-        substringSplitted.push_back (_subject.substr (tokenEnd + 1,
-                                     tokenStart - tokenEnd - 1));
+        substringSplitted.push_back(_subject.substr(tokenEnd + 1,
+                                    tokenStart - tokenEnd - 1));
         tokenEnd = end();
     }
 
-    substringSplitted.push_back (_subject.substr (tokenEnd + 1, tokenStart - tokenEnd - 1));
+    substringSplitted.push_back(_subject.substr(tokenEnd + 1, tokenStart - tokenEnd - 1));
 
     return substringSplitted;
 }

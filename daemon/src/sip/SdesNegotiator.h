@@ -34,19 +34,17 @@
 #include <string>
 #include <vector>
 
-namespace sfl
-{
+namespace sfl {
 
 /**
  * General exception object that is thrown when
  * an error occured with a regular expression
  * operation.
  */
-class parse_error : public std::invalid_argument
-{
+class parse_error : public std::invalid_argument {
     public:
-        explicit parse_error (const std::string& error) :
-            std::invalid_argument (error) {}
+        explicit parse_error(const std::string& error) :
+            std::invalid_argument(error) {}
 };
 
 enum CipherMode {
@@ -89,17 +87,16 @@ const CryptoSuiteDefinition CryptoSuites[3] = {
 };
 
 
-class CryptoAttribute
-{
+class CryptoAttribute {
 
     public:
-        CryptoAttribute (const std::string &tag,
-                         const std::string &cryptoSuite,
-                         const std::string &srtpKeyMethod,
-                         const std::string &srtpKeyInfo,
-                         const std::string &lifetime,
-                         const std::string &mkiValue,
-                         const std::string &mkiLength) :
+        CryptoAttribute(const std::string &tag,
+                        const std::string &cryptoSuite,
+                        const std::string &srtpKeyMethod,
+                        const std::string &srtpKeyInfo,
+                        const std::string &lifetime,
+                        const std::string &mkiValue,
+                        const std::string &mkiLength) :
             tag_(tag),
             cryptoSuite_(cryptoSuite),
             srtpKeyMethod_(srtpKeyMethod),
@@ -141,8 +138,7 @@ class CryptoAttribute
         std::string mkiLength_;
 };
 
-class SdesNegotiator
-{
+class SdesNegotiator {
         /**
          * Constructor for an SDES crypto attributes
          * negotiator.
@@ -155,57 +151,57 @@ class SdesNegotiator
          */
 
     public:
-        SdesNegotiator (const std::vector<CryptoSuiteDefinition>& localCapabilites, const std::vector<std::string>& remoteAttribute);
+        SdesNegotiator(const std::vector<CryptoSuiteDefinition>& localCapabilites, const std::vector<std::string>& remoteAttribute);
         ~SdesNegotiator() {};
 
-        bool negotiate (void);
+        bool negotiate(void);
 
         /**
          * Return crypto suite after negotiation
          */
-        std::string getCryptoSuite (void) const {
+        std::string getCryptoSuite(void) const {
             return _cryptoSuite;
         }
 
         /**
          * Return key method after negotiation (most likely inline:)
          */
-        std::string getKeyMethod (void) const {
+        std::string getKeyMethod(void) const {
             return _srtpKeyMethod;
         }
 
         /**
          * Return crypto suite after negotiation
          */
-        std::string getKeyInfo (void) const {
+        std::string getKeyInfo(void) const {
             return _srtpKeyInfo;
         }
 
         /**
          * Return key lifetime after negotiation
          */
-        std::string getLifeTime (void) const {
+        std::string getLifeTime(void) const {
             return _lifetime;
         }
 
         /**
          * Return mki value after negotiation
          */
-        std::string getMkiValue (void) const {
+        std::string getMkiValue(void) const {
             return _mkiValue;
         }
 
         /**
          * Return mki length after negotiation
          */
-        std::string getMkiLength (void) const {
+        std::string getMkiLength(void) const {
             return _mkiLength;
         }
 
         /**
         * Authentication tag lenth
         */
-        std::string getAuthTagLength (void) const {
+        std::string getAuthTagLength(void) const {
             return _authTagLength;
         }
 
@@ -255,7 +251,7 @@ class SdesNegotiator
          */
         std::string _authTagLength;
 
-        std::vector<CryptoAttribute *> parse (void);
+        std::vector<CryptoAttribute *> parse(void);
 };
 }
 #endif

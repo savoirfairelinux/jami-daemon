@@ -37,10 +37,10 @@
 #include "audio/mainbuffer.h"
 
 Conference::Conference()
-	: _id (Manager::instance().getNewCallID())
-	, _confState (ACTIVE_ATTACHED)
+    : _id(Manager::instance().getNewCallID())
+    , _confState(ACTIVE_ATTACHED)
 {
-    Recordable::initRecFileName (_id);
+    Recordable::initRecFileName(_id);
 }
 
 int Conference::getState() const
@@ -48,14 +48,14 @@ int Conference::getState() const
     return _confState;
 }
 
-void Conference::setState (ConferenceState state)
+void Conference::setState(ConferenceState state)
 {
     _confState = state;
 }
 
 void Conference::add(const std::string &participant_id)
 {
-    _participants.insert (participant_id);
+    _participants.insert(participant_id);
 }
 
 void Conference::remove(const std::string &participant_id)
@@ -65,7 +65,7 @@ void Conference::remove(const std::string &participant_id)
 
 void Conference::bindParticipant(const std::string &participant_id)
 {
-	for (ParticipantSet::iterator iter = _participants.begin();
+    for (ParticipantSet::iterator iter = _participants.begin();
             iter != _participants.end(); ++iter)
         if (participant_id != *iter)
             Manager::instance().getMainBuffer()->bindCallID(participant_id, *iter);
@@ -76,13 +76,20 @@ void Conference::bindParticipant(const std::string &participant_id)
 std::string Conference::getStateStr()
 {
     switch (_confState) {
-        case ACTIVE_ATTACHED:		return "ACTIVE_ATTACHED";
-        case ACTIVE_DETACHED:		return "ACTIVE_DETACHED";
-        case ACTIVE_ATTACHED_REC:	return "ACTIVE_ATTACHED_REC";
-        case ACTIVE_DETACHED_REC:	return "ACTIVE_DETACHED_REC";
-        case HOLD:					return "HOLD";
-        case HOLD_REC:				return "HOLD_REC";
-        default:					return "";
+        case ACTIVE_ATTACHED:
+            return "ACTIVE_ATTACHED";
+        case ACTIVE_DETACHED:
+            return "ACTIVE_DETACHED";
+        case ACTIVE_ATTACHED_REC:
+            return "ACTIVE_ATTACHED_REC";
+        case ACTIVE_DETACHED_REC:
+            return "ACTIVE_DETACHED_REC";
+        case HOLD:
+            return "HOLD";
+        case HOLD_REC:
+            return "HOLD_REC";
+        default:
+            return "";
     }
 }
 
@@ -104,16 +111,16 @@ bool Conference::setRecording()
     // start recording
     if (!recordStatus) {
         for (iter = _participants.begin(); iter != _participants.end(); ++iter)
-            mbuffer->bindHalfDuplexOut (process_id, *iter);
+            mbuffer->bindHalfDuplexOut(process_id, *iter);
 
-        mbuffer->bindHalfDuplexOut (process_id);
+        mbuffer->bindHalfDuplexOut(process_id);
 
         Recordable::recorder.start();
     } else {
         for (iter = _participants.begin(); iter != _participants.end(); ++iter)
-            mbuffer->unBindHalfDuplexOut (process_id, *iter);
+            mbuffer->unBindHalfDuplexOut(process_id, *iter);
 
-        mbuffer->unBindHalfDuplexOut (process_id);
+        mbuffer->unBindHalfDuplexOut(process_id);
     }
 
     return recordStatus;

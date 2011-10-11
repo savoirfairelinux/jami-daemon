@@ -45,13 +45,12 @@
 #define FALSE 0
 
 
-class G722 : public sfl::AudioCodec
-{
+class G722 : public sfl::AudioCodec {
 
     public:
 
-        G722 (int payload=9)
-            : sfl::AudioCodec (payload, "G722") {
+        G722(int payload=9)
+            : sfl::AudioCodec(payload, "G722") {
             _clockRate = 16000;
             _frameSize = 320; // samples, 20 ms at 16kHz
             _channel   = 1;
@@ -62,29 +61,29 @@ class G722 : public sfl::AudioCodec
             decode_s = new g722_decode_state_t;
             encode_s = new g722_encode_state_t;
 
-            g722_decode_init ();
-            g722_encode_init ();
+            g722_decode_init();
+            g722_encode_init();
 
         }
 
         ~G722() {
-        	g722_decode_release();
-        	g722_encode_release();
+            g722_decode_release();
+            g722_encode_release();
         }
 
-        virtual int decode (short *dst, unsigned char *src, size_t buf_size) {
-        	assert(buf_size == _frameSize / sizeof(SFLDataFormat) * encode_s->bits_per_sample / 8);
-            return g722_decode ( (int16_t*) dst, (const uint8_t*) src, buf_size);
+        virtual int decode(short *dst, unsigned char *src, size_t buf_size) {
+            assert(buf_size == _frameSize / sizeof(SFLDataFormat) * encode_s->bits_per_sample / 8);
+            return g722_decode((int16_t*) dst, (const uint8_t*) src, buf_size);
         }
 
-        virtual int encode (unsigned char *dst, short *src, size_t buf_size) {
-            int out = g722_encode ( (uint8_t*) dst, (const int16_t*) src, _frameSize);
+        virtual int encode(unsigned char *dst, short *src, size_t buf_size) {
+            int out = g722_encode((uint8_t*) dst, (const int16_t*) src, _frameSize);
             assert((size_t)out <= buf_size);
             return out;
         }
 
 
-        void g722_encode_init (void) {
+        void g722_encode_init(void) {
 
             encode_s->itu_test_mode = FALSE;
 
@@ -110,7 +109,7 @@ class G722 : public sfl::AudioCodec
             decode_s->out_bits = 0;
         }
 
-        void g722_decode_init (void) {
+        void g722_decode_init(void) {
 
             decode_s->itu_test_mode = FALSE;
 
@@ -137,7 +136,7 @@ class G722 : public sfl::AudioCodec
             decode_s->out_bits = 0;
         }
 
-        int16_t saturate (int32_t amp) {
+        int16_t saturate(int32_t amp) {
             int16_t amp16 = 0;
 
             /* Hopefully this is optimised for the common case - not clipping */
@@ -153,7 +152,7 @@ class G722 : public sfl::AudioCodec
         }
 
 
-        void block4_encode (int band, int d) {
+        void block4_encode(int band, int d) {
             int wd1 = 0;
             int wd2 = 0;
             int wd3 = 0;
@@ -161,24 +160,24 @@ class G722 : public sfl::AudioCodec
 
             /* Block 4, RECONS */
             encode_s->band[band].d[0] = d;
-            encode_s->band[band].r[0] = saturate (encode_s->band[band].s + d);
+            encode_s->band[band].r[0] = saturate(encode_s->band[band].s + d);
 
             /* Block 4, PARREC */
-            encode_s->band[band].p[0] = saturate (encode_s->band[band].sz + d);
+            encode_s->band[band].p[0] = saturate(encode_s->band[band].sz + d);
 
             /* Block 4, UPPOL2 */
 
             for (i = 0;  i < 3;  i++)
                 encode_s->band[band].sg[i] = encode_s->band[band].p[i] >> 15;
 
-            wd1 = saturate (encode_s->band[band].a[1] << 2);
+            wd1 = saturate(encode_s->band[band].a[1] << 2);
 
             wd2 = (encode_s->band[band].sg[0] == encode_s->band[band].sg[1])  ?  -wd1  :  wd1;
 
             if (wd2 > 32767)
                 wd2 = 32767;
 
-            wd3 = (wd2 >> 7) + ( (encode_s->band[band].sg[0] == encode_s->band[band].sg[2])  ?  128  :  -128);
+            wd3 = (wd2 >> 7) + ((encode_s->band[band].sg[0] == encode_s->band[band].sg[2])  ?  128  :  -128);
 
             wd3 += (encode_s->band[band].a[2]*32512) >> 15;
 
@@ -198,9 +197,9 @@ class G722 : public sfl::AudioCodec
 
             wd2 = (encode_s->band[band].a[1]*32640) >> 15;
 
-            encode_s->band[band].ap[1] = saturate (wd1 + wd2);
+            encode_s->band[band].ap[1] = saturate(wd1 + wd2);
 
-            wd3 = saturate (15360 - encode_s->band[band].ap[2]);
+            wd3 = saturate(15360 - encode_s->band[band].ap[2]);
 
             if (encode_s->band[band].ap[1] > wd3)
                 encode_s->band[band].ap[1] = wd3;
@@ -216,7 +215,7 @@ class G722 : public sfl::AudioCodec
                 encode_s->band[band].sg[i] = encode_s->band[band].d[i] >> 15;
                 wd2 = (encode_s->band[band].sg[i] == encode_s->band[band].sg[0])  ?  wd1  :  -wd1;
                 wd3 = (encode_s->band[band].b[i]*32640) >> 15;
-                encode_s->band[band].bp[i] = saturate (wd2 + wd3);
+                encode_s->band[band].bp[i] = saturate(wd2 + wd3);
             }
 
             /* Block 4, DELAYA */
@@ -232,32 +231,32 @@ class G722 : public sfl::AudioCodec
             }
 
             /* Block 4, FILTEP */
-            wd1 = saturate (encode_s->band[band].r[1] + encode_s->band[band].r[1]);
+            wd1 = saturate(encode_s->band[band].r[1] + encode_s->band[band].r[1]);
 
             wd1 = (encode_s->band[band].a[1]*wd1) >> 15;
 
-            wd2 = saturate (encode_s->band[band].r[2] + encode_s->band[band].r[2]);
+            wd2 = saturate(encode_s->band[band].r[2] + encode_s->band[band].r[2]);
 
             wd2 = (encode_s->band[band].a[2]*wd2) >> 15;
 
-            encode_s->band[band].sp = saturate (wd1 + wd2);
+            encode_s->band[band].sp = saturate(wd1 + wd2);
 
             /* Block 4, FILTEZ */
             encode_s->band[band].sz = 0;
 
             for (i = 6;  i > 0;  i--) {
-                wd1 = saturate (encode_s->band[band].d[i] + encode_s->band[band].d[i]);
+                wd1 = saturate(encode_s->band[band].d[i] + encode_s->band[band].d[i]);
                 encode_s->band[band].sz += (encode_s->band[band].b[i]*wd1) >> 15;
             }
 
-            encode_s->band[band].sz = saturate (encode_s->band[band].sz);
+            encode_s->band[band].sz = saturate(encode_s->band[band].sz);
 
             /* Block 4, PREDIC */
-            encode_s->band[band].s = saturate (encode_s->band[band].sp + encode_s->band[band].sz);
+            encode_s->band[band].s = saturate(encode_s->band[band].sp + encode_s->band[band].sz);
 
         }
 
-        void block4_decode (int band, int d) {
+        void block4_decode(int band, int d) {
             int wd1 = 0;
             int wd2 = 0;
             int wd3 = 0;
@@ -265,17 +264,17 @@ class G722 : public sfl::AudioCodec
 
             /* Block 4, RECONS */
             decode_s->band[band].d[0] = d;
-            decode_s->band[band].r[0] = saturate (decode_s->band[band].s + d);
+            decode_s->band[band].r[0] = saturate(decode_s->band[band].s + d);
 
             /* Block 4, PARREC */
-            decode_s->band[band].p[0] = saturate (decode_s->band[band].sz + d);
+            decode_s->band[band].p[0] = saturate(decode_s->band[band].sz + d);
 
             /* Block 4, UPPOL2 */
 
             for (i = 0;  i < 3;  i++)
                 decode_s->band[band].sg[i] = decode_s->band[band].p[i] >> 15;
 
-            wd1 = saturate (decode_s->band[band].a[1] << 2);
+            wd1 = saturate(decode_s->band[band].a[1] << 2);
 
             wd2 = (decode_s->band[band].sg[0] == decode_s->band[band].sg[1])  ?  -wd1  :  wd1;
 
@@ -304,9 +303,9 @@ class G722 : public sfl::AudioCodec
 
             wd2 = (decode_s->band[band].a[1]*32640) >> 15;
 
-            decode_s->band[band].ap[1] = saturate (wd1 + wd2);
+            decode_s->band[band].ap[1] = saturate(wd1 + wd2);
 
-            wd3 = saturate (15360 - decode_s->band[band].ap[2]);
+            wd3 = saturate(15360 - decode_s->band[band].ap[2]);
 
             if (decode_s->band[band].ap[1] > wd3)
                 decode_s->band[band].ap[1] = wd3;
@@ -322,7 +321,7 @@ class G722 : public sfl::AudioCodec
                 decode_s->band[band].sg[i] = decode_s->band[band].d[i] >> 15;
                 wd2 = (decode_s->band[band].sg[i] == decode_s->band[band].sg[0])  ?  wd1  :  -wd1;
                 wd3 = (decode_s->band[band].b[i]*32640) >> 15;
-                decode_s->band[band].bp[i] = saturate (wd2 + wd3);
+                decode_s->band[band].bp[i] = saturate(wd2 + wd3);
             }
 
             /* Block 4, DELAYA */
@@ -338,28 +337,28 @@ class G722 : public sfl::AudioCodec
             }
 
             /* Block 4, FILTEP */
-            wd1 = saturate (decode_s->band[band].r[1] + decode_s->band[band].r[1]);
+            wd1 = saturate(decode_s->band[band].r[1] + decode_s->band[band].r[1]);
 
             wd1 = (decode_s->band[band].a[1]*wd1) >> 15;
 
-            wd2 = saturate (decode_s->band[band].r[2] + decode_s->band[band].r[2]);
+            wd2 = saturate(decode_s->band[band].r[2] + decode_s->band[band].r[2]);
 
             wd2 = (decode_s->band[band].a[2]*wd2) >> 15;
 
-            decode_s->band[band].sp = saturate (wd1 + wd2);
+            decode_s->band[band].sp = saturate(wd1 + wd2);
 
             /* Block 4, FILTEZ */
             decode_s->band[band].sz = 0;
 
             for (i = 6;  i > 0;  i--) {
-                wd1 = saturate (decode_s->band[band].d[i] + decode_s->band[band].d[i]);
+                wd1 = saturate(decode_s->band[band].d[i] + decode_s->band[band].d[i]);
                 decode_s->band[band].sz += (decode_s->band[band].b[i]*wd1) >> 15;
             }
 
-            decode_s->band[band].sz = saturate (decode_s->band[band].sz);
+            decode_s->band[band].sz = saturate(decode_s->band[band].sz);
 
             /* Block 4, PREDIC */
-            decode_s->band[band].s = saturate (decode_s->band[band].sp + decode_s->band[band].sz);
+            decode_s->band[band].s = saturate(decode_s->band[band].sp + decode_s->band[band].sz);
         }
 
         int g722_encode_release() {
@@ -375,7 +374,7 @@ class G722 : public sfl::AudioCodec
             return 0;
         }
 
-        int g722_decode (int16_t amp[], const uint8_t g722_data[], int len) {
+        int g722_decode(int16_t amp[], const uint8_t g722_data[], int len) {
             static const int wl[8] = {-60, -30, 58, 172, 334, 538, 1198, 3042 };
             static const int rl42[16] = {0, 7, 6, 5, 4, 3, 2, 1, 7, 6, 5, 4, 3,  2, 1, 0 };
             static const int ilb[32] = {
@@ -454,7 +453,7 @@ class G722 : public sfl::AudioCodec
                         decode_s->in_bits += 8;
                     }
 
-                    code = decode_s->in_buffer & ( (1 << decode_s->bits_per_sample) - 1);
+                    code = decode_s->in_buffer & ((1 << decode_s->bits_per_sample) - 1);
 
                     decode_s->in_buffer >>= decode_s->bits_per_sample;
                     decode_s->in_bits -= decode_s->bits_per_sample;
@@ -527,7 +526,7 @@ class G722 : public sfl::AudioCodec
 
                 decode_s->band[0].det = wd3 << 2;
 
-                block4_decode (0, dlowt);
+                block4_decode(0, dlowt);
 
                 if (!decode_s->eight_k) {
                     /* Block 2H, INVQAH */
@@ -565,12 +564,12 @@ class G722 : public sfl::AudioCodec
 
                     decode_s->band[1].det = wd3 << 2;
 
-                    block4_decode (1, dhigh);
+                    block4_decode(1, dhigh);
                 }
 
                 if (decode_s->itu_test_mode) {
-                    amp[outlen++] = (int16_t) (rlow << 1);
-                    amp[outlen++] = (int16_t) (rhigh << 1);
+                    amp[outlen++] = (int16_t)(rlow << 1);
+                    amp[outlen++] = (int16_t)(rhigh << 1);
                 } else {
                     if (decode_s->eight_k) {
                         amp[outlen++] = (int16_t) rlow;
@@ -592,9 +591,9 @@ class G722 : public sfl::AudioCodec
                             xout1 += decode_s->x[2*i + 1]*qmf_coeffs[11 - i];
                         }
 
-                        amp[outlen++] = (int16_t) (xout1 >> 12);
+                        amp[outlen++] = (int16_t)(xout1 >> 12);
 
-                        amp[outlen++] = (int16_t) (xout2 >> 12);
+                        amp[outlen++] = (int16_t)(xout2 >> 12);
                     }
                 }
             }
@@ -602,7 +601,7 @@ class G722 : public sfl::AudioCodec
             return outlen;
         }
 
-        int g722_encode (uint8_t g722_data[], const int16_t amp[], int len) {
+        int g722_encode(uint8_t g722_data[], const int16_t amp[], int len) {
             static const int q6[32] = {
                 0,   35,   72,  110,  150,  190,  233,  276,
                 323,  370,  422,  473,  530,  587,  650,  714,
@@ -713,7 +712,7 @@ class G722 : public sfl::AudioCodec
                 }
 
                 /* Block 1L, SUBTRA */
-                el = saturate (xlow - encode_s->band[0].s);
+                el = saturate(xlow - encode_s->band[0].s);
 
                 /* Block 1L, QUANTL */
                 wd = (el >= 0)  ?  el  :  - (el + 1);
@@ -751,14 +750,14 @@ class G722 : public sfl::AudioCodec
 
                 encode_s->band[0].det = wd3 << 2;
 
-                block4_encode (0, dlow);
+                block4_encode(0, dlow);
 
                 if (encode_s->eight_k) {
                     /* Just leave the high bits as zero */
                     code = (0xC0 | ilow) >> (8 - encode_s->bits_per_sample);
                 } else {
                     /* Block 1H, SUBTRA */
-                    eh = saturate (xhigh - encode_s->band[1].s);
+                    eh = saturate(xhigh - encode_s->band[1].s);
 
                     /* Block 1H, QUANTH */
                     wd = (eh >= 0)  ?  eh  :  - (eh + 1);
@@ -789,9 +788,9 @@ class G722 : public sfl::AudioCodec
 
                     encode_s->band[1].det = wd3 << 2;
 
-                    block4_encode (1, dhigh);
+                    block4_encode(1, dhigh);
 
-                    code = ( (ihigh << 6) | ilow) >> (8 - encode_s->bits_per_sample);
+                    code = ((ihigh << 6) | ilow) >> (8 - encode_s->bits_per_sample);
                 }
 
                 if (encode_s->packed) {
@@ -800,7 +799,7 @@ class G722 : public sfl::AudioCodec
                     encode_s->out_bits += encode_s->bits_per_sample;
 
                     if (encode_s->out_bits >= 8) {
-                        g722_data[g722_bytes++] = (uint8_t) (encode_s->out_buffer & 0xFF);
+                        g722_data[g722_bytes++] = (uint8_t)(encode_s->out_buffer & 0xFF);
                         encode_s->out_bits -= 8;
                         encode_s->out_buffer >>= 8;
                     }
@@ -822,10 +821,10 @@ class G722 : public sfl::AudioCodec
 // the class factories
 extern "C" sfl::Codec* create()
 {
-    return new G722 (9);
+    return new G722(9);
 }
 
-extern "C" void destroy (sfl::Codec* a)
+extern "C" void destroy(sfl::Codec* a)
 {
     delete a;
 }

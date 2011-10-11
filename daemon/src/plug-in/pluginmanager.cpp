@@ -66,7 +66,7 @@ bool hasSharedExtension(const std::string &fn)
 }
 
 int
-PluginManager::loadPlugins (const std::string &path)
+PluginManager::loadPlugins(const std::string &path)
 {
     std::string pluginDir, current;
     DIR *dir;
@@ -79,19 +79,20 @@ PluginManager::loadPlugins (const std::string &path)
 
     /* The directory in which plugins are dropped. Default: /usr/lib/sflphone/plugins/ */
     if (path.empty())
-        pluginDir = std::string (PLUGINS_DIR).append("/");
+        pluginDir = std::string(PLUGINS_DIR).append("/");
     else
         pluginDir = path;
-    _debug ("Loading plugins from %s...", pluginDir.c_str());
 
-    dir = opendir (pluginDir.c_str());
+    _debug("Loading plugins from %s...", pluginDir.c_str());
+
+    dir = opendir(pluginDir.c_str());
     /* Test if the directory exists or is readable */
 
     if (!dir)
         return 1;
 
     /* Read the directory */
-    while ( (dirStruct=readdir (dir))) {
+    while ((dirStruct=readdir(dir))) {
         /* Get the name of the current item in the directory */
         current = dirStruct->d_name;
 
@@ -101,32 +102,32 @@ PluginManager::loadPlugins (const std::string &path)
 
 
         /* Load the dynamic library */
-        library = loadDynamicLibrary (pluginDir + current);
+        library = loadDynamicLibrary(pluginDir + current);
 
         /* Instanciate the plugin object */
 
-        if (instanciatePlugin (library, &plugin) != 0) {
-            _debug ("Error instanciating the plugin ...");
+        if (instanciatePlugin(library, &plugin) != 0) {
+            _debug("Error instanciating the plugin ...");
             closedir(dir);
             return 1;
         }
 
         /* Regitering the current plugin */
-        if (registerPlugin (plugin, library) != 0) {
-            _debug ("Error registering the plugin ...");
+        if (registerPlugin(plugin, library) != 0) {
+            _debug("Error registering the plugin ...");
             closedir(dir);
             return 1;
         }
     }
 
     /* Close the directory */
-    closedir (dir);
+    closedir(dir);
 
     return 0;
 }
 
 int
-PluginManager::unloadPlugins (void)
+PluginManager::unloadPlugins(void)
 {
     PluginInfo *info;
 
@@ -140,15 +141,15 @@ PluginManager::unloadPlugins (void)
     while (iter != _loadedPlugins.end()) {
         info = iter->second;
 
-        if (deletePlugin (info) != 0) {
-            _debug ("Error deleting the plugin ... ");
+        if (deletePlugin(info) != 0) {
+            _debug("Error deleting the plugin ... ");
             return 1;
         }
 
-        unloadDynamicLibrary (info->_libraryPtr);
+        unloadDynamicLibrary(info->_libraryPtr);
 
-        if (unregisterPlugin (info) != 0) {
-            _debug ("Error unregistering the plugin ... ");
+        if (unregisterPlugin(info) != 0) {
+            _debug("Error unregistering the plugin ... ");
             return 1;
         }
 
@@ -159,14 +160,14 @@ PluginManager::unloadPlugins (void)
 }
 
 bool
-PluginManager::isPluginLoaded (const std::string &name)
+PluginManager::isPluginLoaded(const std::string &name)
 {
     if (_loadedPlugins.empty())    return false;
 
     /* Use an iterator on the loaded plugins map */
     pluginMap::iterator iter;
 
-    iter = _loadedPlugins.find (name);
+    iter = _loadedPlugins.find(name);
 
     /* Returns map::end if the specified key has not been found */
     if (iter==_loadedPlugins.end())
@@ -178,27 +179,27 @@ PluginManager::isPluginLoaded (const std::string &name)
 
 
 LibraryManager*
-PluginManager::loadDynamicLibrary (const std::string& filename)
+PluginManager::loadDynamicLibrary(const std::string& filename)
 {
     /* Load the library through the library manager */
-    return new LibraryManager (filename);
+    return new LibraryManager(filename);
 }
 
 int
-PluginManager::unloadDynamicLibrary (LibraryManager *libraryPtr)
+PluginManager::unloadDynamicLibrary(LibraryManager *libraryPtr)
 {
-    _debug ("Unloading dynamic library ...");
+    _debug("Unloading dynamic library ...");
     /* Close it */
-    return libraryPtr->unloadLibrary ();
+    return libraryPtr->unloadLibrary();
 }
 
 int
-PluginManager::instanciatePlugin (LibraryManager *libraryPtr, Plugin **plugin)
+PluginManager::instanciatePlugin(LibraryManager *libraryPtr, Plugin **plugin)
 {
     createFunc *createPlugin;
     LibraryManager::SymbolHandle symbol;
 
-    if (libraryPtr->resolveSymbol ("createPlugin", &symbol) != 0)
+    if (libraryPtr->resolveSymbol("createPlugin", &symbol) != 0)
         return 1;
 
     createPlugin = (createFunc*) symbol;
@@ -209,24 +210,24 @@ PluginManager::instanciatePlugin (LibraryManager *libraryPtr, Plugin **plugin)
 }
 
 int
-PluginManager::deletePlugin (PluginInfo *plugin)
+PluginManager::deletePlugin(PluginInfo *plugin)
 {
     destroyFunc *destroyPlugin;
     LibraryManager::SymbolHandle symbol;
 
-    if (plugin->_libraryPtr->resolveSymbol ("destroyPlugin", &symbol) != 0)
+    if (plugin->_libraryPtr->resolveSymbol("destroyPlugin", &symbol) != 0)
         return 1;
 
     destroyPlugin = (destroyFunc*) symbol;
 
     /* Call it */
-    destroyPlugin (plugin->_plugin);
+    destroyPlugin(plugin->_plugin);
 
     return 0;
 }
 
 int
-PluginManager::registerPlugin (Plugin *plugin, LibraryManager *library)
+PluginManager::registerPlugin(Plugin *plugin, LibraryManager *library)
 {
     std::string key;
     PluginInfo *p_info;
@@ -237,7 +238,7 @@ PluginManager::registerPlugin (Plugin *plugin, LibraryManager *library)
     p_info = new PluginInfo();
 
     /* Retrieve information from the plugin */
-    plugin->initFunc (&p_info);
+    plugin->initFunc(&p_info);
 
     key = p_info->_name;
 
@@ -251,19 +252,19 @@ PluginManager::registerPlugin (Plugin *plugin, LibraryManager *library)
 }
 
 int
-PluginManager::unregisterPlugin (PluginInfo *plugin)
+PluginManager::unregisterPlugin(PluginInfo *plugin)
 {
     pluginMap::iterator iter;
     std::string key;
 
     key = plugin->_name;
 
-    if (!isPluginLoaded (key))
+    if (!isPluginLoaded(key))
         return 1;
 
-    iter = _loadedPlugins.find (key);
+    iter = _loadedPlugins.find(key);
 
-    _loadedPlugins.erase (iter);
+    _loadedPlugins.erase(iter);
 
     return 0;
 }

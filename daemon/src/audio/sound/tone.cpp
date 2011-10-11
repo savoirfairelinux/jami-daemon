@@ -69,7 +69,7 @@ Tone::genBuffer(const std::string& definition)
     std::string::size_type deflen = definition.length();
 
     do {
-        posEnd = definition.find (',', posStart);
+        posEnd = definition.find(',', posStart);
 
         if (posEnd == std::string::npos)
             posEnd = deflen;
@@ -138,7 +138,7 @@ Tone::fillWavetable()
 }
 
 double
-Tone::interpolate (double x)
+Tone::interpolate(double x)
 {
     int xi_0, xi_1;
     double yi_0, yi_1, A, B;
@@ -156,7 +156,7 @@ Tone::interpolate (double x)
 }
 
 void
-Tone::genSin (SFLDataFormat* buffer, int frequency1, int frequency2, int nb)
+Tone::genSin(SFLDataFormat* buffer, int frequency1, int frequency2, int nb)
 {
     xhigher_ = 0.0;
     xlower_ = 0.0;
@@ -164,8 +164,8 @@ Tone::genSin (SFLDataFormat* buffer, int frequency1, int frequency2, int nb)
     double sr = (double) sampleRate_;
     double tableSize = (double) TABLE_LENGTH;
 
-    double N_h = sr / (double) (frequency1);
-    double N_l = sr / (double) (frequency2);
+    double N_h = sr / (double)(frequency1);
+    double N_l = sr / (double)(frequency2);
 
     double dx_h = tableSize / N_h;
     double dx_l = tableSize / N_l;

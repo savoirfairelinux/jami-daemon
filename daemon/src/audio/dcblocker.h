@@ -33,8 +33,7 @@
 
 #include "global.h"
 
-class DcBlocker
-{
+class DcBlocker {
 
     public:
 
@@ -42,9 +41,9 @@ class DcBlocker
 
         ~DcBlocker();
 
-        void reset (void);
+        void reset(void);
 
-        void process (SFLDataFormat *out, SFLDataFormat *in, int samples);
+        void process(SFLDataFormat *out, SFLDataFormat *in, int samples);
 
     private:
 

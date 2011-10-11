@@ -36,30 +36,28 @@
 
 #include "global.h"
 
-class LibraryManager
-{
+class LibraryManager {
 
     public:
         typedef void* LibraryHandle;
         typedef void* SymbolHandle;
 
-        LibraryManager (const std::string &filename);
-        ~LibraryManager (void);
+        LibraryManager(const std::string &filename);
+        ~LibraryManager(void);
 
-        int resolveSymbol (const std::string &symbol, SymbolHandle *ptr);
+        int resolveSymbol(const std::string &symbol, SymbolHandle *ptr);
 
-        int unloadLibrary (void);
+        int unloadLibrary(void);
 
     protected:
-        LibraryHandle loadLibrary (const std::string &filename);
+        LibraryHandle loadLibrary(const std::string &filename);
 
     private:
         std::string _filename;
         LibraryHandle _handlePtr;
 };
 
-class LibraryManagerException : public std::runtime_error
-{
+class LibraryManagerException : public std::runtime_error {
 
     public:
 
@@ -68,14 +66,14 @@ class LibraryManagerException : public std::runtime_error
             symbolNotFound
         } Reason;
 
-        LibraryManagerException (const std::string &libraryName, const std::string &details, Reason reason);
-        ~LibraryManagerException (void) throw() {}
+        LibraryManagerException(const std::string &libraryName, const std::string &details, Reason reason);
+        ~LibraryManagerException(void) throw() {}
 
-        Reason getReason (void) const {
+        Reason getReason(void) const {
             return _reason;
         }
 
-        const char* what () const throw();
+        const char* what() const throw();
 
     private:
         Reason _reason;

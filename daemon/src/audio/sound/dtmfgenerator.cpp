@@ -65,13 +65,13 @@ const DTMFGenerator::DTMFTone DTMFGenerator::tones[NUM_TONES] = {
 /*
  * Initialize the generator
  */
-DTMFGenerator::DTMFGenerator (unsigned int sampleRate) : state(), _sampleRate (sampleRate), tone ("", sampleRate)
+DTMFGenerator::DTMFGenerator(unsigned int sampleRate) : state(), _sampleRate(sampleRate), tone("", sampleRate)
 {
     state.offset = 0;
     state.sample = 0;
 
     for (int i = 0; i < NUM_TONES; i++) {
-        samples[i] = generateSample (i);
+        samples[i] = generateSample(i);
     }
 }
 
@@ -87,12 +87,12 @@ DTMFGenerator::~DTMFGenerator()
 /*
  * Get n samples of the signal of code code
  */
-void DTMFGenerator::getSamples (SFLDataFormat* buffer, size_t n, unsigned char code) throw (DTMFException)
+void DTMFGenerator::getSamples(SFLDataFormat* buffer, size_t n, unsigned char code) throw(DTMFException)
 {
     size_t i;
 
     if (!buffer) {
-        throw DTMFException ("Invalid parameter value");
+        throw DTMFException("Invalid parameter value");
     }
 
     switch (code) {
@@ -170,7 +170,7 @@ void DTMFGenerator::getSamples (SFLDataFormat* buffer, size_t n, unsigned char c
             break;
 
         default:
-            throw DTMFException ("Invalid code");
+            throw DTMFException("Invalid code");
             return;
             break;
     }
@@ -187,20 +187,20 @@ void DTMFGenerator::getSamples (SFLDataFormat* buffer, size_t n, unsigned char c
  * Get next n samples (continues where previous call to
  * genSample or genNextSamples stopped
  */
-void DTMFGenerator::getNextSamples (SFLDataFormat* buffer, size_t n) throw (DTMFException)
+void DTMFGenerator::getNextSamples(SFLDataFormat* buffer, size_t n) throw(DTMFException)
 {
     size_t i;
 
     if (!buffer) {
-        throw DTMFException ("Invalid parameter");
+        throw DTMFException("Invalid parameter");
     }
 
     if (state.sample == 0) {
-        throw DTMFException ("DTMF generator not initialized");
+        throw DTMFException("DTMF generator not initialized");
     }
 
     for (i = 0; i < n; i++) {
-        buffer[i] = state.sample[ (state.offset + i) % _sampleRate];
+        buffer[i] = state.sample[(state.offset + i) % _sampleRate];
     }
 
     state.offset = (state.offset + i) % _sampleRate;
@@ -210,7 +210,7 @@ void DTMFGenerator::getNextSamples (SFLDataFormat* buffer, size_t n) throw (DTMF
 /*
  * Generate a tone sample
  */
-SFLDataFormat* DTMFGenerator::generateSample (unsigned char code) throw (DTMFException)
+SFLDataFormat* DTMFGenerator::generateSample(unsigned char code) throw(DTMFException)
 {
     SFLDataFormat* ptr;
 
@@ -218,15 +218,15 @@ SFLDataFormat* DTMFGenerator::generateSample (unsigned char code) throw (DTMFExc
         ptr = new SFLDataFormat[_sampleRate];
 
         if (!ptr) {
-            throw new DTMFException ("No memory left");
+            throw new DTMFException("No memory left");
             return 0;
         }
 
-        tone.genSin (ptr, tones[code].higher, tones[code].lower,  _sampleRate);
+        tone.genSin(ptr, tones[code].higher, tones[code].lower,  _sampleRate);
 
         return ptr;
     } catch (...) {
-        throw new DTMFException ("No memory left");
+        throw new DTMFException("No memory left");
         return 0;
     }
 

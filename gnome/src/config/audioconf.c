@@ -75,6 +75,7 @@ static void preferences_dialog_fill_codec_list(account_t *a)
     gtk_list_store_clear(codecStore);
 
     GQueue *current = a ? a->codecs : get_system_codec_list();
+
     if (!a) DEBUG("Using system codec list");
 
     // Insert codecs
@@ -105,9 +106,11 @@ preferences_dialog_fill_audio_plugin_list()
 
     // Call dbus to retreive list
     gchar **list = dbus_get_audio_plugin_list();
+
     // For each API name included in list
     if (list != NULL) {
         int c = 0;
+
         for (gchar *managerName = list[c]; managerName != NULL; managerName = list[c]) {
             c++;
             GtkTreeIter iter;
@@ -193,6 +196,7 @@ select_active_ringtone_audio_device()
         // Find the currently set ringtone device
         GtkTreeIter iter;
         gtk_tree_model_get_iter_first(model, &iter);
+
         do {
             int deviceIndex;
             gtk_tree_model_get(model, &iter, 1, &deviceIndex, -1);
@@ -240,6 +244,7 @@ select_active_input_audio_device()
         // Find the currently set input device
         GtkTreeIter iter;
         gtk_tree_model_get_iter_first(model, &iter);
+
         do {
             int deviceIndex;
             gtk_tree_model_get(model, &iter, 1, &deviceIndex, -1);
@@ -299,6 +304,7 @@ select_active_output_audio_plugin()
 
     gchar *pluginname = dbus_get_current_audio_output_plugin();
     gchar *tmp = pluginname;
+
     do {
         gtk_tree_model_get(model, &iter, 0, &pluginname, -1);
 
@@ -365,6 +371,7 @@ static void
 select_codec(GtkTreeSelection *selection, GtkTreeModel *model)
 {
     GtkTreeIter iter;
+
     if (!gtk_tree_selection_get_selected(selection, &model, &iter)) {
         gtk_widget_set_sensitive(GTK_WIDGET(codecMoveUpButton), FALSE);
         gtk_widget_set_sensitive(GTK_WIDGET(codecMoveDownButton), FALSE);
@@ -407,6 +414,7 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoint
     DEBUG("%i\n", g_queue_get_length(acc->codecs));
 
     codec_t* codec;
+
     if ((g_strcasecmp(name,"speex") == 0) && (g_strcasecmp(srate,"8 kHz") == 0))
         codec = codec_list_get_by_payload((gconstpointer) 110, acc->codecs);
     else if ((g_strcasecmp(name,"speex") ==0) && (g_strcasecmp(srate,"16 kHz") ==0))
@@ -421,8 +429,8 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoint
 
     // Store value
     gtk_list_store_set(GTK_LIST_STORE(model), &iter,
-                        COLUMN_CODEC_ACTIVE, active,
-                        -1);
+                       COLUMN_CODEC_ACTIVE, active,
+                       -1);
 
     gtk_tree_path_free(treePath);
 
@@ -513,11 +521,11 @@ GtkWidget* audiocodecs_box(account_t *a)
 
     gtk_box_pack_start(GTK_BOX(audiocodecs_hbox), scrolledWindow, TRUE, TRUE, 0);
     GtkListStore *codecStore = gtk_list_store_new(CODEC_COLUMN_COUNT,
-                                     G_TYPE_BOOLEAN, /* Active */
-                                     G_TYPE_STRING,	 /* Name */
-                                     G_TYPE_STRING,	 /* Frequency */
-                                     G_TYPE_STRING,	 /* Bit rate */
-                                     G_TYPE_STRING	 /* Bandwith */);
+                               G_TYPE_BOOLEAN, /* Active */
+                               G_TYPE_STRING,	 /* Name */
+                               G_TYPE_STRING,	 /* Frequency */
+                               G_TYPE_STRING,	 /* Bit rate */
+                               G_TYPE_STRING	 /* Bandwith */);
 
     // Create codec tree view with list store
     codecTreeView = gtk_tree_view_new_with_model(GTK_TREE_MODEL(codecStore));
@@ -550,7 +558,7 @@ GtkWidget* audiocodecs_box(account_t *a)
     treeViewColumn = gtk_tree_view_column_new_with_attributes(_("Bitrate"), renderer, "text", COLUMN_CODEC_BITRATE, NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(codecTreeView), treeViewColumn);
 
-    g_object_unref (G_OBJECT(codecStore));
+    g_object_unref(G_OBJECT(codecStore));
     gtk_container_add(GTK_CONTAINER(scrolledWindow), codecTreeView);
 
     // Create button box
@@ -576,17 +584,18 @@ GtkWidget* audiocodecs_box(account_t *a)
 void
 select_audio_manager(void)
 {
-    if (!must_show_alsa_conf () && !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pulse))) {
+    if (!must_show_alsa_conf() && !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pulse))) {
         dbus_set_audio_manager(ALSA_API_STR);
         alsabox = alsa_box();
         gtk_container_add(GTK_CONTAINER(alsa_conf), alsabox);
         gtk_widget_show(alsa_conf);
         gtk_widget_set_sensitive(alsa_conf, TRUE);
         gtk_action_set_sensitive(volumeToggle_, TRUE);
-    } else if (must_show_alsa_conf () && gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pulse))) {
+    } else if (must_show_alsa_conf() && gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pulse))) {
         dbus_set_audio_manager(PULSEAUDIO_API_STR);
         gtk_container_remove(GTK_CONTAINER(alsa_conf) , alsabox);
         gtk_widget_hide(alsa_conf);
+
         if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(volumeToggle_))) {
             main_window_volume_controls(FALSE);
             eel_gconf_set_integer(SHOW_VOLUME_CONTROLS, FALSE);
@@ -771,6 +780,7 @@ GtkWidget* create_audio_configuration()
 
     if (g_strcmp0(audio_manager, PULSEAUDIO_API_STR) == 0)
         pulse_audio = TRUE;
+
     g_free(audio_manager);
 
     pulse = gtk_radio_button_new_with_mnemonic(NULL , _("_Pulseaudio"));
@@ -831,6 +841,7 @@ GtkWidget* create_audio_configuration()
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableNoiseReduction), TRUE);
     else
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableNoiseReduction), FALSE);
+
     g_free(state);
     state = NULL;
 
@@ -839,10 +850,12 @@ GtkWidget* create_audio_configuration()
 
     GtkWidget *enableEchoCancel = gtk_check_button_new_with_mnemonic(_("_Echo Cancellation"));
     state = dbus_get_echo_cancel_state();
+
     if (g_strcmp0(state, "enabled") == 0)
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableEchoCancel), TRUE);
     else
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableEchoCancel), FALSE);
+
     g_free(state);
 
     g_signal_connect(G_OBJECT(enableEchoCancel), "clicked", active_echo_cancel, NULL);

@@ -65,7 +65,7 @@ void GainControlTest::testGainProcessing()
     }
 
     inputFile.close();
-    outputFile.close(); 
+    outputFile.close();
     */
 
     CPPUNIT_ASSERT(true);

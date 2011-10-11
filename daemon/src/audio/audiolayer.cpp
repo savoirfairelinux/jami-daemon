@@ -34,70 +34,70 @@
 #include "audio/dcblocker.h"
 #include "manager.h"
 
-AudioLayer::AudioLayer ()
-    : isStarted_ (false)
-    , urgentRingBuffer_ (SIZEBUF, Call::DEFAULT_ID)
-	, audioSampleRate_(Manager::instance().getMainBuffer()->getInternalSamplingRate())
-    , mutex_ ()
-	, audioPref(Manager::instance().audioPreference)
-	, converter_ (new SamplerateConverter(audioSampleRate_))
-    , lastNotificationTime_ (0)
+AudioLayer::AudioLayer()
+    : isStarted_(false)
+    , urgentRingBuffer_(SIZEBUF, Call::DEFAULT_ID)
+    , audioSampleRate_(Manager::instance().getMainBuffer()->getInternalSamplingRate())
+    , mutex_()
+    , audioPref(Manager::instance().audioPreference)
+    , converter_(new SamplerateConverter(audioSampleRate_))
+    , lastNotificationTime_(0)
 {
     urgentRingBuffer_.createReadPointer();
 }
 
 
-AudioLayer::~AudioLayer ()
+AudioLayer::~AudioLayer()
 {
-	delete converter_;
+    delete converter_;
 }
 
-void AudioLayer::flushMain (void)
+void AudioLayer::flushMain(void)
 {
-    ost::MutexLock guard (mutex_);
+    ost::MutexLock guard(mutex_);
     // should pass call id
     Manager::instance().getMainBuffer()->flushAllBuffers();
 }
 
-void AudioLayer::flushUrgent (void)
+void AudioLayer::flushUrgent(void)
 {
-    ost::MutexLock guard (mutex_);
+    ost::MutexLock guard(mutex_);
     urgentRingBuffer_.flushAll();
 }
 
-void AudioLayer::putUrgent (void* buffer, int toCopy)
+void AudioLayer::putUrgent(void* buffer, int toCopy)
 {
-    ost::MutexLock guard (mutex_);
-    urgentRingBuffer_.Put (buffer, toCopy);
+    ost::MutexLock guard(mutex_);
+    urgentRingBuffer_.Put(buffer, toCopy);
 }
 
 // Notify (with a beep) an incoming call when there is already a call in progress
 void AudioLayer::notifyincomingCall()
 {
     if (!Manager::instance().incomingCallWaiting())
-    	return;
+        return;
 
-	time_t now = time(NULL);
+    time_t now = time(NULL);
 
-	// Notify maximum once every 5 seconds
-	if (difftime(now, lastNotificationTime_) < 5)
-		return;
+    // Notify maximum once every 5 seconds
+    if (difftime(now, lastNotificationTime_) < 5)
+        return;
 
-	lastNotificationTime_ = now;
+    lastNotificationTime_ = now;
 
-	// Enable notification only if more than one call
-	if (!Manager::instance().hasCurrentCall())
-		return;
+    // Enable notification only if more than one call
+    if (!Manager::instance().hasCurrentCall())
+        return;
 
-	Tone tone ("440/160", getSampleRate());
-	unsigned int nbSample = tone.getSize();
-	SFLDataFormat buf[nbSample];
-	tone.getNext (buf, nbSample);
+    Tone tone("440/160", getSampleRate());
+    unsigned int nbSample = tone.getSize();
+    SFLDataFormat buf[nbSample];
+    tone.getNext(buf, nbSample);
 
-	/* Put the data in the urgent ring buffer */
-	Manager::instance().audioLayerMutexLock();
-	flushUrgent();
-	putUrgent (buf, sizeof buf);
-	Manager::instance().audioLayerMutexUnlock();
+    /* Put the data in the urgent ring buffer */
+    Manager::instance().audioLayerMutexLock();
+    flushUrgent();
+    putUrgent(buf, sizeof buf);
+    Manager::instance().audioLayerMutexUnlock();
 }
 

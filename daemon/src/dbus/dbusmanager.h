@@ -38,11 +38,10 @@ class CallManager;
 class NetworkManager;
 class Instance;
 
-class DBusManager
-{
+class DBusManager {
     public:
-		DBusManager();
-		~DBusManager();
+        DBusManager();
+        ~DBusManager();
 
         CallManager * getCallManager() const {
             return _callManager;

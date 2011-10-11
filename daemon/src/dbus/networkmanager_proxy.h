@@ -8,20 +8,17 @@
 
 #include "dbus_cpp.h"
 
-namespace org
-{
-namespace freedesktop
-{
+namespace org {
+namespace freedesktop {
 
 class NetworkManager_proxy
-    : public ::DBus::InterfaceProxy
-{
+        : public ::DBus::InterfaceProxy {
     public:
 
         NetworkManager_proxy()
-            : ::DBus::InterfaceProxy ("org.freedesktop.NetworkManager") {
-            connect_signal (NetworkManager_proxy, StateChanged, _StateChanged_stub);
-            connect_signal (NetworkManager_proxy, PropertiesChanged, _PropertiesChanged_stub);
+            : ::DBus::InterfaceProxy("org.freedesktop.NetworkManager") {
+            connect_signal(NetworkManager_proxy, StateChanged, _StateChanged_stub);
+            connect_signal(NetworkManager_proxy, PropertiesChanged, _PropertiesChanged_stub);
         }
 
     public:
@@ -34,8 +31,8 @@ class NetworkManager_proxy
          */
         std::vector< ::DBus::Path > GetDevices() {
             ::DBus::CallMessage call;
-            call.member ("GetDevices");
-            ::DBus::Message ret = invoke_method (call);
+            call.member("GetDevices");
+            ::DBus::Message ret = invoke_method(call);
             ::DBus::MessageIter ri = ret.reader();
 
             std::vector< ::DBus::Path > argout;
@@ -48,26 +45,26 @@ class NetworkManager_proxy
 
         /* signal handlers for this interface
          */
-        virtual void StateChanged (const uint32_t& argin0) = 0;
-        virtual void PropertiesChanged (const std::map< std::string, ::DBus::Variant >& argin0) = 0;
+        virtual void StateChanged(const uint32_t& argin0) = 0;
+        virtual void PropertiesChanged(const std::map< std::string, ::DBus::Variant >& argin0) = 0;
 
     private:
 
         /* unmarshalers (to unpack the DBus message before calling the actual signal handler)
          */
-        void _StateChanged_stub (const ::DBus::SignalMessage &sig) {
+        void _StateChanged_stub(const ::DBus::SignalMessage &sig) {
             ::DBus::MessageIter ri = sig.reader();
 
             uint32_t arg0;
             ri >> arg0;
-            StateChanged (arg0);
+            StateChanged(arg0);
         }
-        void _PropertiesChanged_stub (const ::DBus::SignalMessage &sig) {
+        void _PropertiesChanged_stub(const ::DBus::SignalMessage &sig) {
             ::DBus::MessageIter ri = sig.reader();
 
             std::map< std::string, ::DBus::Variant > arg0;
             ri >> arg0;
-            PropertiesChanged (arg0);
+            PropertiesChanged(arg0);
         }
 };
 

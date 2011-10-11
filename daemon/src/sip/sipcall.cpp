@@ -36,10 +36,10 @@
 #include "audio/audiortp/AudioRtpFactory.h"
 #include "sdp.h"
 
-SIPCall::SIPCall (const std::string& id, Call::CallType type, pj_caching_pool *caching_pool) : Call (id, type)
-	, inv(NULL)
+SIPCall::SIPCall(const std::string& id, Call::CallType type, pj_caching_pool *caching_pool) : Call(id, type)
+    , inv(NULL)
     , _audiortp(this)
-	, pool_(pj_pool_create(&caching_pool->factory, id.c_str(), 16384, 16384, NULL))
+    , pool_(pj_pool_create(&caching_pool->factory, id.c_str(), 16384, 16384, NULL))
     , local_sdp_(new Sdp(pool_))
 {
 }
@@ -47,5 +47,5 @@ SIPCall::SIPCall (const std::string& id, Call::CallType type, pj_caching_pool *c
 SIPCall::~SIPCall()
 {
     delete local_sdp_;
-    pj_pool_release (pool_);
+    pj_pool_release(pool_);
 }

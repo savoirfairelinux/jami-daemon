@@ -36,25 +36,22 @@
 #include <string>
 #include "yamlnode.h"
 
-namespace Conf
-{
+namespace Conf {
 
 #define EMITTER_BUFFERSIZE 65536
 #define EMITTER_MAXEVENT 1024
 
-class YamlEmitterException : public std::runtime_error
-{
+class YamlEmitterException : public std::runtime_error {
     public:
-        YamlEmitterException (const std::string& str="") :
+        YamlEmitterException(const std::string& str="") :
             std::runtime_error("YamlEmitterException occured: " + str) {}
 };
 
-class YamlEmitter
-{
+class YamlEmitter {
 
     public:
 
-        YamlEmitter (const char *file);
+        YamlEmitter(const char *file);
 
         ~YamlEmitter();
 
@@ -62,19 +59,19 @@ class YamlEmitter
 
         void close() throw(YamlEmitterException);
 
-        void serializeAccount (MappingNode *map) throw(YamlEmitterException);
+        void serializeAccount(MappingNode *map) throw(YamlEmitterException);
 
-        void serializePreference (MappingNode *map) throw(YamlEmitterException);
+        void serializePreference(MappingNode *map) throw(YamlEmitterException);
 
-        void serializeVoipPreference (MappingNode *map) throw(YamlEmitterException);
+        void serializeVoipPreference(MappingNode *map) throw(YamlEmitterException);
 
-        void serializeAddressbookPreference (MappingNode *map) throw(YamlEmitterException);
+        void serializeAddressbookPreference(MappingNode *map) throw(YamlEmitterException);
 
-        void serializeHooksPreference (MappingNode *map) throw(YamlEmitterException);
+        void serializeHooksPreference(MappingNode *map) throw(YamlEmitterException);
 
-        void serializeAudioPreference (MappingNode *map) throw(YamlEmitterException);
+        void serializeAudioPreference(MappingNode *map) throw(YamlEmitterException);
 
-        void serializeShortcutPreference (MappingNode *map) throw(YamlEmitterException);
+        void serializeShortcutPreference(MappingNode *map) throw(YamlEmitterException);
 
         void writeAudio();
 
@@ -86,7 +83,7 @@ class YamlEmitter
 
     private:
 
-        void addMappingItem (int mappingid, std::string key, YamlNode *node);
+        void addMappingItem(int mappingid, std::string key, YamlNode *node);
 
         std::string filename;
 

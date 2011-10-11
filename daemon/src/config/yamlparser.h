@@ -38,27 +38,24 @@
 #include <string>
 #include <vector>
 
-namespace Conf
-{
+namespace Conf {
 
 #define PARSER_BUFFERSIZE 65536
 
 typedef std::vector<yaml_event_t> YamlEventVector;
 
-class YamlParserException : public std::runtime_error
-{
+class YamlParserException : public std::runtime_error {
     public:
-        YamlParserException (const std::string& str="") :
+        YamlParserException(const std::string& str="") :
             std::runtime_error("YamlParserException occured: " + str) {}
 };
 
 
-class YamlParser
-{
+class YamlParser {
 
     public:
 
-        YamlParser (const char *file);
+        YamlParser(const char *file);
 
         ~YamlParser();
 
@@ -68,31 +65,31 @@ class YamlParser
 
         void constructNativeData() throw(YamlParserException);
 
-        SequenceNode *getAccountSequence (void) {
+        SequenceNode *getAccountSequence(void) {
             return accountSequence;
         };
 
-        MappingNode *getPreferenceNode (void) {
+        MappingNode *getPreferenceNode(void) {
             return preferenceNode;
         }
 
-        MappingNode *getAddressbookNode (void) {
+        MappingNode *getAddressbookNode(void) {
             return addressbookNode;
         }
 
-        MappingNode *getAudioNode (void) {
+        MappingNode *getAudioNode(void) {
             return audioNode;
         }
 
-        MappingNode *getHookNode (void) {
+        MappingNode *getHookNode(void) {
             return hooksNode;
         }
 
-        MappingNode *getVoipPreferenceNode (void) {
+        MappingNode *getVoipPreferenceNode(void) {
             return voiplinkNode;
         }
 
-        MappingNode *getShortcutNode (void) {
+        MappingNode *getShortcutNode(void) {
             return shortcutNode;
         }
 
@@ -101,19 +98,19 @@ class YamlParser
         /**
          * Copy yaml parser event in event_to according to their type.
          */
-        void copyEvent (yaml_event_t *event_to, yaml_event_t *event_from) throw(YamlParserException);
+        void copyEvent(yaml_event_t *event_to, yaml_event_t *event_from) throw(YamlParserException);
 
-        void processStream (void) throw(YamlParserException);
+        void processStream(void) throw(YamlParserException);
 
-        void processDocument (void) throw(YamlParserException);
+        void processDocument(void) throw(YamlParserException);
 
-        void processScalar (YamlNode *topNode) throw(YamlParserException);
+        void processScalar(YamlNode *topNode) throw(YamlParserException);
 
-        void processSequence (YamlNode *topNode) throw(YamlParserException);
+        void processSequence(YamlNode *topNode) throw(YamlParserException);
 
-        void processMapping (YamlNode *topNode) throw(YamlParserException);
+        void processMapping(YamlNode *topNode) throw(YamlParserException);
 
-        void mainNativeDataMapping (MappingNode *map);
+        void mainNativeDataMapping(MappingNode *map);
 
         /**
          * Configuration file name

@@ -35,11 +35,11 @@ void RingtoneTest::testLoadWavefile()
     WavFile *wav = new WavFile();
 
     // Test initial values
-    CPPUNIT_ASSERT (wav->isStarted() == false);
-    CPPUNIT_ASSERT (wav->getSize() == 0);
+    CPPUNIT_ASSERT(wav->isStarted() == false);
+    CPPUNIT_ASSERT(wav->getSize() == 0);
 
     // Test protection against wrong file name
-    CPPUNIT_ASSERT (wav->loadFile (std::string ("wrongfilename.wav"), NULL, 44100) == false);
+    CPPUNIT_ASSERT(wav->loadFile(std::string("wrongfilename.wav"), NULL, 44100) == false);
 
 
 

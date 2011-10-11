@@ -33,13 +33,12 @@
 #include <string>
 #include <cstdio>
 
-namespace Logger
-{
+namespace Logger {
 
 bool consoleLog = false;
 bool debugMode = false;
 
-void log (const int level, const char* format, ...)
+void log(const int level, const char* format, ...)
 {
     if (!debugMode && level == LOG_DEBUG)
         return;
@@ -48,6 +47,7 @@ void log (const int level, const char* format, ...)
 
     if (consoleLog) {
         const char *color_prefix = "";
+
         switch (level) {
             case LOG_ERR:
                 color_prefix = RED;
@@ -57,26 +57,26 @@ void log (const int level, const char* format, ...)
                 break;
         }
 
-    	fputs(color_prefix, stderr);
+        fputs(color_prefix, stderr);
 
-        va_start (ap, format);
+        va_start(ap, format);
         vfprintf(stderr, format, ap);
-        va_end (ap);
+        va_end(ap);
 
         fputs(END_COLOR"\n", stderr);
     } else {
-		va_start (ap, format);
-		vsyslog (level, format, ap);
-		va_end (ap);
+        va_start(ap, format);
+        vsyslog(level, format, ap);
+        va_end(ap);
     }
 }
 
-void setConsoleLog (bool c)
+void setConsoleLog(bool c)
 {
     consoleLog = c;
 }
 
-void setDebugMode (bool d)
+void setDebugMode(bool d)
 {
     debugMode = d;
 }

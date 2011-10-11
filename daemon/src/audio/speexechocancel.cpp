@@ -42,17 +42,17 @@ SpeexEchoCancel::SpeexEchoCancel()
     _echoTailLength = echoTailLengthMs * samplingRate / 1000;
 
     // _echoState = speex_echo_state_init (EC_FRAME_SIZE, EC_FILTER_LENGTH);
-    _echoState = speex_echo_state_init (EC_FRAME_SIZE, _echoTailLength);
-    _preState = speex_preprocess_state_init (EC_FRAME_SIZE, samplingRate);
+    _echoState = speex_echo_state_init(EC_FRAME_SIZE, _echoTailLength);
+    _preState = speex_preprocess_state_init(EC_FRAME_SIZE, samplingRate);
 
     _debug("EchoCancel: Initializing echo canceller with delay: %d, filter length: %d, frame size: %d and samplerate %d",
-    											_echoDelay, _echoTailLength, EC_FRAME_SIZE, samplingRate);
+           _echoDelay, _echoTailLength, EC_FRAME_SIZE, samplingRate);
 
-    speex_echo_ctl (_echoState, SPEEX_ECHO_SET_SAMPLING_RATE, &samplingRate);
-    speex_preprocess_ctl (_preState, SPEEX_PREPROCESS_SET_ECHO_STATE, _echoState);
+    speex_echo_ctl(_echoState, SPEEX_ECHO_SET_SAMPLING_RATE, &samplingRate);
+    speex_preprocess_ctl(_preState, SPEEX_PREPROCESS_SET_ECHO_STATE, _echoState);
 
-    _micData = new RingBuffer (100000);
-    _spkrData = new RingBuffer (100000);
+    _micData = new RingBuffer(100000);
+    _spkrData = new RingBuffer(100000);
 
     _micData->createReadPointer();
     _spkrData->createReadPointer();
@@ -70,8 +70,8 @@ SpeexEchoCancel::SpeexEchoCancel()
 
 SpeexEchoCancel::~SpeexEchoCancel()
 {
-    speex_echo_state_destroy (_echoState);
-    speex_preprocess_state_destroy (_preState);
+    speex_echo_state_destroy(_echoState);
+    speex_preprocess_state_destroy(_preState);
     delete _micData;
     delete _spkrData;
 #ifdef DUMP_ECHOCANCEL_INTERNAL_DATA
@@ -84,7 +84,7 @@ SpeexEchoCancel::~SpeexEchoCancel()
 
 }
 
-void SpeexEchoCancel::putData (SFLDataFormat *inputData, int samples)
+void SpeexEchoCancel::putData(SFLDataFormat *inputData, int samples)
 {
     if (_spkrStopped) {
         _micData->flushAll();
@@ -96,10 +96,10 @@ void SpeexEchoCancel::putData (SFLDataFormat *inputData, int samples)
     spkrFile->write(reinterpret_cast<char *>(inputData), samples * sizeof(SFLDataFormat));
 #endif
 
-    _spkrData->Put (inputData, samples * sizeof(SFLDataFormat));
+    _spkrData->Put(inputData, samples * sizeof(SFLDataFormat));
 }
 
-int SpeexEchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputData, int samples)
+int SpeexEchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int samples)
 {
     if (_spkrStopped)
         return 0;
@@ -107,59 +107,61 @@ int SpeexEchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputDat
     const int byteSize = EC_FRAME_SIZE * sizeof(SFLDataFormat);
 
     // init temporary buffers
-    memset (_tmpSpkr, 0, sizeof(_tmpSpkr));
-    memset (_tmpMic, 0, sizeof(_tmpMic));
-    memset (_tmpOut, 0, sizeof(_tmpOut));
+    memset(_tmpSpkr, 0, sizeof(_tmpSpkr));
+    memset(_tmpMic, 0, sizeof(_tmpMic));
+    memset(_tmpOut, 0, sizeof(_tmpOut));
 
 #ifdef DUMP_ECHOCANCEL_INTERNAL_DATA
     micFile->write(reinterpret_cast<char *>(inputData), nbBytes);
 #endif
 
     // Put mic data in ringbuffer
-    _micData->Put (inputData, samples * sizeof(SFLDataFormat));
+    _micData->Put(inputData, samples * sizeof(SFLDataFormat));
 
     // Store data for synchronization
     int spkrAvail = _spkrData->AvailForGet();
     int micAvail = _micData->AvailForGet();
 
     if (spkrAvail < (_echoDelay+byteSize) || micAvail < byteSize) {
-    	_micData->Discard(byteSize);
-    	return 0;
+        _micData->Discard(byteSize);
+        return 0;
     }
 
-	_spkrData->Get (_tmpSpkr, byteSize);
-	_micData->Get (_tmpMic, byteSize);
+    _spkrData->Get(_tmpSpkr, byteSize);
+    _micData->Get(_tmpMic, byteSize);
 
 #ifdef DUMP_ECHOCANCEL_INTERNAL_DATA
-	micProcessFile->write(reinterpret_cast<char *>(_tmpMic), byteSize);
-	spkrProcessFile->write(reinterpret_cast<char *>(_tmpSpkr), byteSize);
+    micProcessFile->write(reinterpret_cast<char *>(_tmpMic), byteSize);
+    spkrProcessFile->write(reinterpret_cast<char *>(_tmpSpkr), byteSize);
 #endif
 
-	for(int i = 0; i < EC_FRAME_SIZE; i++) {
-		int32_t tmp = _tmpSpkr[i] * 3;
-		if (tmp > SHRT_MAX)
-			tmp = SHRT_MAX;
-		_tmpSpkr[i] = (int16_t)tmp;
+    for (int i = 0; i < EC_FRAME_SIZE; i++) {
+        int32_t tmp = _tmpSpkr[i] * 3;
 
-		_tmpMic[i] /= 3;
-	}
+        if (tmp > SHRT_MAX)
+            tmp = SHRT_MAX;
+
+        _tmpSpkr[i] = (int16_t)tmp;
+
+        _tmpMic[i] /= 3;
+    }
 
 
-	speex_echo_cancellation (_echoState, _tmpMic, _tmpSpkr, _tmpOut);
-	speex_preprocess_run(_preState, reinterpret_cast<short *>(_tmpOut));
+    speex_echo_cancellation(_echoState, _tmpMic, _tmpSpkr, _tmpOut);
+    speex_preprocess_run(_preState, reinterpret_cast<short *>(_tmpOut));
 
 #ifdef DUMP_ECHOCANCEL_INTERNAL_DATA
-	echoFile->write(reinterpret_cast<char *>(_tmpOut), byteSize);
+    echoFile->write(reinterpret_cast<char *>(_tmpOut), byteSize);
 #endif
 
-	for(int i = 0; i < EC_FRAME_SIZE; i++) {
-		_tmpOut[i] *= 3;
-	}
+    for (int i = 0; i < EC_FRAME_SIZE; i++) {
+        _tmpOut[i] *= 3;
+    }
 
-	memcpy (outputData, _tmpOut, byteSize);
+    memcpy(outputData, _tmpOut, byteSize);
 
-	spkrAvail = _spkrData->AvailForGet();
-	micAvail = _micData->AvailForGet();
+    spkrAvail = _spkrData->AvailForGet();
+    micAvail = _micData->AvailForGet();
 
     return EC_FRAME_SIZE;
 }

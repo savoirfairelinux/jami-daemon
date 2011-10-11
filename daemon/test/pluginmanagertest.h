@@ -42,7 +42,7 @@
 #include "plug-in/plugin.h"
 
 /*
- * @file pluginManagerTest.cpp  
+ * @file pluginManagerTest.cpp
  * @brief       Regroups unitary tests related to the plugin manager.
  */
 
@@ -51,18 +51,18 @@
 
 class PluginManagerTest : public CppUnit::TestCase {
 
-   /**
-     * Use cppunit library macros to add unit test the factory
-     */
-    CPPUNIT_TEST_SUITE( PluginManagerTest );
-        CPPUNIT_TEST( testLoadDynamicLibrary );
-        CPPUNIT_TEST( testUnloadDynamicLibrary );
-        CPPUNIT_TEST( testInstanciatePlugin );
-        CPPUNIT_TEST( testInitPlugin );
-        CPPUNIT_TEST( testRegisterPlugin );
-        CPPUNIT_TEST( testLoadPlugins );
-        CPPUNIT_TEST( testUnloadPlugins );
-    CPPUNIT_TEST_SUITE_END();
+        /**
+          * Use cppunit library macros to add unit test the factory
+          */
+        CPPUNIT_TEST_SUITE(PluginManagerTest);
+        CPPUNIT_TEST(testLoadDynamicLibrary);
+        CPPUNIT_TEST(testUnloadDynamicLibrary);
+        CPPUNIT_TEST(testInstanciatePlugin);
+        CPPUNIT_TEST(testInitPlugin);
+        CPPUNIT_TEST(testRegisterPlugin);
+        CPPUNIT_TEST(testLoadPlugins);
+        CPPUNIT_TEST(testUnloadPlugins);
+        CPPUNIT_TEST_SUITE_END();
 
     public:
         PluginManagerTest() : CppUnit::TestCase("Plugin Manager Tests")
@@ -70,7 +70,7 @@ class PluginManagerTest : public CppUnit::TestCase {
             , library(0)
             , plugin(0)
         {}
-        
+
         /*
          * Code factoring - Common resources can be initialized here.
          * This method is called by unitcpp before each test
@@ -81,21 +81,21 @@ class PluginManagerTest : public CppUnit::TestCase {
          * Code factoring - Common resources can be released here.
          * This method is called by unitcpp after each test
          */
-        void tearDown ();
+        void tearDown();
 
-        void testLoadDynamicLibrary ();
-        
-        void testUnloadDynamicLibrary ();
+        void testLoadDynamicLibrary();
 
-        void testInstanciatePlugin ();
+        void testUnloadDynamicLibrary();
 
-        void testInitPlugin ();
+        void testInstanciatePlugin();
 
-        void testRegisterPlugin ();
+        void testInitPlugin();
 
-        void testLoadPlugins ();
+        void testRegisterPlugin();
 
-        void testUnloadPlugins ();
+        void testLoadPlugins();
+
+        void testUnloadPlugins();
 
     private:
         std::string FAKE_PLUGIN_DIR;
@@ -107,6 +107,6 @@ class PluginManagerTest : public CppUnit::TestCase {
 
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(PluginManagerTest, "PluginManagerTest");
-CPPUNIT_TEST_SUITE_REGISTRATION( PluginManagerTest );
+CPPUNIT_TEST_SUITE_REGISTRATION(PluginManagerTest);
 
 #endif

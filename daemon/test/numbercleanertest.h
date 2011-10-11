@@ -40,7 +40,7 @@
 #include "numbercleaner.h"
 // #include "../src/conference.h"
 /*
- * @file numbercleanerTest.cpp  
+ * @file numbercleanerTest.cpp
  * @brief       Regroups unitary tests related to the phone number cleanup function.
  */
 
@@ -49,40 +49,40 @@
 
 class NumberCleanerTest : public CppUnit::TestCase {
 
-   /**
-     * Use cppunit library macros to add unit test the factory
-     */
-    CPPUNIT_TEST_SUITE (NumberCleanerTest);
-        CPPUNIT_TEST (test_format_1);
-        CPPUNIT_TEST (test_format_2);
-        CPPUNIT_TEST (test_format_3);
-        CPPUNIT_TEST (test_format_4);
-        CPPUNIT_TEST (test_format_5);
-        CPPUNIT_TEST (test_format_6);
+        /**
+          * Use cppunit library macros to add unit test the factory
+          */
+        CPPUNIT_TEST_SUITE(NumberCleanerTest);
+        CPPUNIT_TEST(test_format_1);
+        CPPUNIT_TEST(test_format_2);
+        CPPUNIT_TEST(test_format_3);
+        CPPUNIT_TEST(test_format_4);
+        CPPUNIT_TEST(test_format_5);
+        CPPUNIT_TEST(test_format_6);
         /*CPPUNIT_TEST (test_format_7);
         CPPUNIT_TEST (test_format_8);
         CPPUNIT_TEST (test_format_9);*/
-        CPPUNIT_TEST (test_format_10);
-    CPPUNIT_TEST_SUITE_END ();
+        CPPUNIT_TEST(test_format_10);
+        CPPUNIT_TEST_SUITE_END();
 
     public:
         NumberCleanerTest() : CppUnit::TestCase("Hook Manager Tests") {}
-        
-        void test_format_1 ();
-        void test_format_2 ();
-        void test_format_3 ();
-        void test_format_4 ();
-        void test_format_5 ();
-        void test_format_6 ();
-        void test_format_7 ();
-        void test_format_8 ();
-        void test_format_9 ();
-        void test_format_10 ();
-        void test_format_11 ();
+
+        void test_format_1();
+        void test_format_2();
+        void test_format_3();
+        void test_format_4();
+        void test_format_5();
+        void test_format_6();
+        void test_format_7();
+        void test_format_8();
+        void test_format_9();
+        void test_format_10();
+        void test_format_11();
 };
 
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(NumberCleanerTest, "NumberCleanerTest");
-CPPUNIT_TEST_SUITE_REGISTRATION( NumberCleanerTest );
+CPPUNIT_TEST_SUITE_REGISTRATION(NumberCleanerTest);
 
 #endif

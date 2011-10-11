@@ -47,38 +47,37 @@
 
 #include <ccrtp/rtp.h>
 
-namespace sfl
-{
+namespace sfl {
 
-AudioZrtpSession::AudioZrtpSession (SIPCall * sipcall, const std::string& zidFilename) :
+AudioZrtpSession::AudioZrtpSession(SIPCall * sipcall, const std::string& zidFilename) :
     AudioRtpSession(sipcall, Zrtp, this, this),
     ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue>(ost::InetHostAddress(sipcall->getLocalIp().c_str()),
-    sipcall->getLocalAudioPort(),
-    0,
-    ost::MembershipBookkeeping::defaultMembersHashSize,
-    ost::defaultApplication()),
-    _zidFilename (zidFilename)
+            sipcall->getLocalAudioPort(),
+            0,
+            ost::MembershipBookkeeping::defaultMembersHashSize,
+            ost::defaultApplication()),
+    _zidFilename(zidFilename)
 {
-    _debug ("AudioZrtpSession initialized");
+    _debug("AudioZrtpSession initialized");
     initializeZid();
 
-    setCancel (cancelDefault);
+    setCancel(cancelDefault);
 
-    _info ("AudioZrtpSession: Setting new RTP session with destination %s:%d", _ca->getLocalIp().c_str(), _ca->getLocalAudioPort());
+    _info("AudioZrtpSession: Setting new RTP session with destination %s:%d", _ca->getLocalIp().c_str(), _ca->getLocalAudioPort());
 }
 
 AudioZrtpSession::~AudioZrtpSession()
 {
-    _debug ("AudioZrtpSession: Delete AudioSymmetricRtpSession instance");
+    _debug("AudioZrtpSession: Delete AudioSymmetricRtpSession instance");
 
     try {
         terminate();
     } catch (...) {
-        _debug ("AudioZrtpSession: Thread destructor didn't terminate correctly");
+        _debug("AudioZrtpSession: Thread destructor didn't terminate correctly");
         throw;
     }
 
-    Manager::instance().getMainBuffer()->unBindAll (_ca->getCallId());
+    Manager::instance().getMainBuffer()->unBindAll(_ca->getCallId());
 }
 
 void AudioZrtpSession::final()
@@ -86,7 +85,7 @@ void AudioZrtpSession::final()
     delete this;
 }
 
-void AudioZrtpSession::initializeZid (void)
+void AudioZrtpSession::initializeZid(void)
 {
 
     if (_zidFilename.empty()) {
@@ -99,45 +98,45 @@ void AudioZrtpSession::initializeZid (void)
 
     std::string xdg_config = std::string(HOMEDIR) + DIR_SEPARATOR_STR + ".cache" + DIR_SEPARATOR_STR + PACKAGE + "/" + _zidFilename;
 
-    _debug ("    xdg_config %s", xdg_config.c_str());
+    _debug("    xdg_config %s", xdg_config.c_str());
 
     if (XDG_CACHE_HOME != NULL) {
-        std::string xdg_env = std::string (XDG_CACHE_HOME) + _zidFilename;
-        _debug ("    xdg_env %s", xdg_env.c_str());
+        std::string xdg_env = std::string(XDG_CACHE_HOME) + _zidFilename;
+        _debug("    xdg_env %s", xdg_env.c_str());
         (xdg_env.length() > 0) ? zidCompleteFilename = xdg_env : zidCompleteFilename = xdg_config;
     } else
         zidCompleteFilename = xdg_config;
 
 
-    if (initialize (zidCompleteFilename.c_str()) >= 0) {
-        _debug ("Register callbacks");
-        setEnableZrtp (true);
-        setUserCallback (new ZrtpSessionCallback (_ca));
+    if (initialize(zidCompleteFilename.c_str()) >= 0) {
+        _debug("Register callbacks");
+        setEnableZrtp(true);
+        setUserCallback(new ZrtpSessionCallback(_ca));
         return;
     }
 
-    _debug ("Initialization from ZID file failed. Trying to remove...");
+    _debug("Initialization from ZID file failed. Trying to remove...");
 
-    if (remove (zidCompleteFilename.c_str()) !=0) {
-        _debug ("Failed to remove zid file: %m");
+    if (remove(zidCompleteFilename.c_str()) !=0) {
+        _debug("Failed to remove zid file: %m");
         throw ZrtpZidException("zid file deletion failed");
     }
 
-    if (initialize (zidCompleteFilename.c_str()) < 0) {
-        _debug ("ZRTP initialization failed");
+    if (initialize(zidCompleteFilename.c_str()) < 0) {
+        _debug("ZRTP initialization failed");
         throw ZrtpZidException("zid initialization failed");
     }
 
     return;
 }
 
-void AudioZrtpSession::run ()
+void AudioZrtpSession::run()
 {
 
     // Set recording sampling rate
-    _ca->setRecordingSmplRate (getCodecSampleRate());
+    _ca->setRecordingSmplRate(getCodecSampleRate());
 
-    _debug ("AudioZrtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
+    _debug("AudioZrtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
 
     uint32 timeout = 0;
 
@@ -149,34 +148,34 @@ void AudioZrtpSession::run ()
 
         // Send session
         if (DtmfPending())
-            sendDtmfEvent ();
+            sendDtmfEvent();
         else
-            sendMicData ();
+            sendMicData();
 
-        setCancel (cancelDeferred);
+        setCancel(cancelDeferred);
         controlReceptionService();
         controlTransmissionService();
-        setCancel (cancelImmediate);
-        uint32 maxWait = timeval2microtimeout (getRTCPCheckInterval());
+        setCancel(cancelImmediate);
+        uint32 maxWait = timeval2microtimeout(getRTCPCheckInterval());
         // make sure the scheduling timeout is
         // <= the check interval for RTCP
         // packets
         timeout = (timeout > maxWait) ? maxWait : timeout;
 
         if (timeout < 1000) {   // !(timeout/1000)
-            setCancel (cancelDeferred);
+            setCancel(cancelDeferred);
             // dispatchDataPacket();
-            setCancel (cancelImmediate);
+            setCancel(cancelImmediate);
             timerTick();
         } else {
-            if (isPendingData (timeout/1000)) {
-                setCancel (cancelDeferred);
+            if (isPendingData(timeout/1000)) {
+                setCancel(cancelDeferred);
 
                 if (isActive()) { // take in only if active
                     takeInDataPacket();
                 }
 
-                setCancel (cancelImmediate);
+                setCancel(cancelImmediate);
             }
 
             timeout = 0;
@@ -184,7 +183,7 @@ void AudioZrtpSession::run ()
 
     }
 
-    _debug ("AudioZrtpSession: Left main loop for call %s", _ca->getCallId().c_str());
+    _debug("AudioZrtpSession: Left main loop for call %s", _ca->getCallId().c_str());
 }
 
 }

@@ -44,31 +44,27 @@ class SIPCall;
 class Account;
 class SIPAccount;
 
-namespace sfl
-{
+namespace sfl {
 
 class AudioZrtpSession;
 class AudioCodec;
 
-class UnsupportedRtpSessionType : public std::logic_error
-{
+class UnsupportedRtpSessionType : public std::logic_error {
     public:
-        UnsupportedRtpSessionType (const std::string& msg = "") : std::logic_error (msg) {}
+        UnsupportedRtpSessionType(const std::string& msg = "") : std::logic_error(msg) {}
 };
 
-class AudioRtpFactoryException : public std::logic_error
-{
+class AudioRtpFactoryException : public std::logic_error {
     public:
-        AudioRtpFactoryException (const std::string& msg = "") : std::logic_error (msg) {}
+        AudioRtpFactoryException(const std::string& msg = "") : std::logic_error(msg) {}
 };
 
-class AudioRtpFactory
-{
+class AudioRtpFactory {
     public:
         AudioRtpFactory(SIPCall *ca);
         ~AudioRtpFactory();
 
-        void initAudioRtpConfig ();
+        void initAudioRtpConfig();
 
         /**
          * 	Lazy instantiation method. Create a new RTP session of a given
@@ -76,14 +72,14 @@ class AudioRtpFactory
          * @param ca A pointer on a SIP call
          * @return A new AudioSymmetricRtpSession object
          */
-        void initAudioSymmetricRtpSession ();
+        void initAudioSymmetricRtpSession();
 
         /**
          * Start the audio rtp thread of the type specified in the configuration
          * file. initAudioSymmetricRtpSession must have been called prior to that.
          * @param None
          */
-        void start (AudioCodec*);
+        void start(AudioCodec*);
 
         /**
          * Stop the audio rtp thread of the type specified in the configuration
@@ -100,22 +96,22 @@ class AudioRtpFactory
         /**
          * Dynamically update session media
          */
-        void updateSessionMedia (AudioCodec *);
+        void updateSessionMedia(AudioCodec *);
 
         /**
          * Update current RTP destination address with one stored in call
          * @param None
          */
-        void updateDestinationIpAddress (void);
+        void updateDestinationIpAddress(void);
 
-        bool isSdesEnabled (void) const {
-        	return _srtpEnabled && _keyExchangeProtocol == sfl::Sdes;
+        bool isSdesEnabled(void) const {
+            return _srtpEnabled && _keyExchangeProtocol == sfl::Sdes;
         }
 
         /**
          * Manually set the srtpEnable option (usefull for RTP fallback)
          */
-        void setSrtpEnabled (bool enable) {
+        void setSrtpEnabled(bool enable) {
             _srtpEnabled = enable;
         }
 
@@ -126,13 +122,13 @@ class AudioRtpFactory
          */
         sfl::AudioZrtpSession * getAudioZrtpSession();
 
-        void initLocalCryptoInfo ();
+        void initLocalCryptoInfo();
 
         /**
          * Set remote cryptographic info. Should be called after negotiation in SDP
          * offer/answer session.
          */
-        void setRemoteCryptoInfo (sfl::SdesNegotiator& nego);
+        void setRemoteCryptoInfo(sfl::SdesNegotiator& nego);
 
         void setDtmfPayloadType(unsigned int);
 
@@ -142,7 +138,7 @@ class AudioRtpFactory
          * send the appropriate DTMF digit using this payload, discard coresponding data from mainbuffer and get
          * back the codec payload for further audio processing.
          */
-        void sendDtmfDigit (int digit);
+        void sendDtmfDigit(int digit);
 
     private:
         AudioRtpSession *_rtpSession;

@@ -55,21 +55,18 @@
 #define MODE_APPEND			std::ios::out || std::ios::app
 #define MODE_TEST			std::ios::out
 
-namespace sfl
-{
+namespace sfl {
 
-const std::string IM_XML_URI ("uri");
-const std::string BOUNDARY ("--boundary");
+const std::string IM_XML_URI("uri");
+const std::string BOUNDARY("--boundary");
 
-class InstantMessageException : public std::runtime_error
-{
+class InstantMessageException : public std::runtime_error {
     public:
-        InstantMessageException (const std::string& str="") :
+        InstantMessageException(const std::string& str="") :
             std::runtime_error("InstantMessageException occured: " + str) {}
 };
 
-class InstantMessaging
-{
+class InstantMessaging {
 
     public:
 
@@ -90,7 +87,7 @@ class InstantMessaging
          * Return the maximum number if character for a single SIP MESSAGE.
          * Longer messages should be splitted in several smaller messages using split_message
          */
-        size_t getMessageMaximumSize (void) {
+        size_t getMessageMaximumSize(void) {
             return MAXIMUM_MESSAGE_LENGTH;
         }
 
@@ -102,7 +99,7 @@ class InstantMessaging
          * @param id	The current call
          * @return True if the message could have been successfully saved, False otherwise
          */
-        bool saveMessage (const std::string& message, const std::string& author, const std::string& id, int mode = MODE_APPEND);
+        bool saveMessage(const std::string& message, const std::string& author, const std::string& id, int mode = MODE_APPEND);
 
         /*
          * Send a SIP string message inside a call
@@ -110,10 +107,10 @@ class InstantMessaging
          * @param id	The call ID we will retrieve the invite session from
          * @param message	The string message, as sent by the client
          */
-        void sip_send (pjsip_inv_session*, const std::string& id, const std::string&);
+        void sip_send(pjsip_inv_session*, const std::string& id, const std::string&);
 
-        void send_sip_message (pjsip_inv_session*, const std::string& id, const std::string&);
-        void send_iax_message (iax_session *session, const std::string& id, const std::string&);
+        void send_sip_message(pjsip_inv_session*, const std::string& id, const std::string&);
+        void send_iax_message(iax_session *session, const std::string& id, const std::string&);
 
         std::vector<std::string> split_message(std::string);
 
@@ -126,7 +123,7 @@ class InstantMessaging
         * @return A string containing the full XML formated information to be included in the
         *         sip instant message.
         */
-        std::string generateXmlUriList (UriList& list);
+        std::string generateXmlUriList(UriList& list);
 
         /**
          * Parse the Urilist from a SIP Instant Message provided by a UriList service.
@@ -135,7 +132,7 @@ class InstantMessaging
          *
          * @return An UriList of UriEntry containing parsed XML information as a map.
          */
-        UriList parseXmlUriList (std::string& urilist);
+        UriList parseXmlUriList(std::string& urilist);
 
         /**
          * Format text message according to RFC 5365, append recipient-list to the message
@@ -145,7 +142,7 @@ class InstantMessaging
          *
          * @return formated text stored into a string to be included in sip MESSAGE
          */
-        std::string appendUriList (std::string text, UriList& list);
+        std::string appendUriList(std::string text, UriList& list);
 
         /**
              * Retreive the xml formated uri list in formated text data according to RFC 5365
@@ -154,7 +151,7 @@ class InstantMessaging
          *
          * @return A string containing the XML content
          */
-        std::string findTextUriList (std::string& text);
+        std::string findTextUriList(std::string& text);
 
         /**
              * Retrive the plain text message in formated text data according to RFC 5365
@@ -163,11 +160,11 @@ class InstantMessaging
          *
          * @return A string containing the actual message
          */
-        std::string findTextMessage (std::string& text);
+        std::string findTextMessage(std::string& text);
 
     private:
 
-        InstantMessaging (const InstantMessaging&); //No Copy Constructor
+        InstantMessaging(const InstantMessaging&);  //No Copy Constructor
         InstantMessaging& operator= (const InstantMessaging&); //No Assignment Operator
 };
 }

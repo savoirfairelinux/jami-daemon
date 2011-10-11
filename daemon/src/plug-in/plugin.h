@@ -41,17 +41,16 @@
  * @brief Define a plugin object
  */
 
-class Plugin
-{
+class Plugin {
 
     public:
-        Plugin (const std::string &name) {
+        Plugin(const std::string &name) {
             _name = name;
         }
 
         virtual ~Plugin()  {}
 
-        std::string getPluginName (void) const {
+        std::string getPluginName(void) const {
             return _name;
         }
 
@@ -59,7 +58,7 @@ class Plugin
          * Return the minimal core version required so that the plugin could work
          * @return int  The version required
          */
-        virtual int initFunc (PluginInfo **info) = 0;
+        virtual int initFunc(PluginInfo **info) = 0;
 
     private:
         Plugin &operator = (const Plugin &plugin);
@@ -67,9 +66,9 @@ class Plugin
         std::string _name;
 };
 
-typedef Plugin* createFunc (void);
+typedef Plugin* createFunc(void);
 
-typedef void destroyFunc (Plugin*);
+typedef void destroyFunc(Plugin*);
 
 #endif //PLUGIN_H
 

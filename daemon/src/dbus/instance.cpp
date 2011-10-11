@@ -31,22 +31,22 @@
 #include "instance.h"
 #include "../manager.h"
 
-Instance::Instance (DBus::Connection& connection)
-    : DBus::ObjectAdaptor (connection, "/org/sflphone/SFLphone/Instance")
+Instance::Instance(DBus::Connection& connection)
+    : DBus::ObjectAdaptor(connection, "/org/sflphone/SFLphone/Instance")
 {
     count = 0;
 }
 
 void
-Instance::Register (const int32_t& pid UNUSED,
-                    const std::string& name UNUSED)
+Instance::Register(const int32_t& pid UNUSED,
+                   const std::string& name UNUSED)
 {
     count++;
 }
 
 
 void
-Instance::Unregister (const int32_t& pid UNUSED)
+Instance::Unregister(const int32_t& pid UNUSED)
 {
     count --;
 

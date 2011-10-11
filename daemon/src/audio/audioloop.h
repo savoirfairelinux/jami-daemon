@@ -33,25 +33,17 @@
 #ifndef __AUDIOLOOP_H__
 #define __AUDIOLOOP_H__
 
-#include <string>
-#include "global.h" // for int16 declaration
+#include "global.h" // for SFLDataFormat
 
 /**
  * @file audioloop.h
  * @brief Loop on a sound file
  */
 
-class AudioLoop
-{
+class AudioLoop {
     public:
-        /**
-         * Constructor
-         */
         AudioLoop();
 
-        /**
-         * Virtual destructor
-         */
         virtual ~AudioLoop();
 
         /**
@@ -95,7 +87,7 @@ class AudioLoop
     private:
 
         // Copy Constructor
-        AudioLoop (const AudioLoop& rh);
+        AudioLoop(const AudioLoop& rh);
 
         // Assignment Operator
         AudioLoop& operator= (const AudioLoop& rh);

@@ -34,9 +34,8 @@
 
 #include <string>
 
-namespace NumberCleaner
-{
-    std::string clean(std::string to_clean, const std::string &prefix = "");
+namespace NumberCleaner {
+std::string clean(std::string to_clean, const std::string &prefix = "");
 }
 
 #endif

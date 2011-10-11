@@ -64,17 +64,15 @@ class SIPCall;
 */
 
 
-namespace sfl
-{
+namespace sfl {
 
-class AudioSrtpSession : public AudioSymmetricRtpSession
-{
+class AudioSrtpSession : public AudioSymmetricRtpSession {
     public:
 
         /**
          * Constructor for this rtp session
          */
-        AudioSrtpSession (SIPCall * sipcall);
+        AudioSrtpSession(SIPCall * sipcall);
 
         ~AudioSrtpSession();
 
@@ -83,19 +81,19 @@ class AudioSrtpSession : public AudioSymmetricRtpSession
          * method must be called befor setRemoteCryptoInfo in case of an
          * outgoing call or after in case of an outgoing call.
          */
-        std::vector<std::string> getLocalCryptoInfo (void);
+        std::vector<std::string> getLocalCryptoInfo(void);
 
         /**
          * Set remote crypto header from incoming sdp offer
          */
-        void setRemoteCryptoInfo (sfl::SdesNegotiator& nego);
+        void setRemoteCryptoInfo(sfl::SdesNegotiator& nego);
 
         /**
          * Init local crypto context for outgoing data
         * this method must be called before sending first Invite request
         * with SDP offer.
         */
-        void initLocalCryptoInfo (void);
+        void initLocalCryptoInfo(void);
 
         /**
          * Restore the cryptographic context. most likely useful to restore
@@ -116,25 +114,25 @@ class AudioSrtpSession : public AudioSymmetricRtpSession
          * Init local master key according to current crypto context
          * as defined in SdesNegotiator.h
          */
-        void initializeLocalMasterKey (void);
+        void initializeLocalMasterKey(void);
 
         /**
          * Init local master salt according to current crypto context
          * as defined in SdesNegotiator.h
          */
-        void initializeLocalMasterSalt (void);
+        void initializeLocalMasterSalt(void);
 
         /**
          * Init remote crypto context in audio srtp session. This method
          * must be called after unBase64ConcatenatedKeys.
          */
-        void initializeRemoteCryptoContext (void);
+        void initializeRemoteCryptoContext(void);
 
         /**
          * Init local crypto context in audio srtp session. Make sure remote
          * crypto context is set before calling this method for incoming calls.
          */
-        void initializeLocalCryptoContext (void);
+        void initializeLocalCryptoContext(void);
 
         /**
          * Used to generate local keys to be included in SDP offer/answer.
@@ -144,17 +142,17 @@ class AudioSrtpSession : public AudioSymmetricRtpSession
         /**
          * Used to retreive keys from base64 serialization
          */
-        void unBase64ConcatenatedKeys (std::string base64keys);
+        void unBase64ConcatenatedKeys(std::string base64keys);
 
         /**
          * Encode input data as base64
          */
-        std::string encodeBase64 (unsigned char *input, int length);
+        std::string encodeBase64(unsigned char *input, int length);
 
         /**
          * Decode base64 data
          */
-        char* decodeBase64 (unsigned char *input, int length);
+        char* decodeBase64(unsigned char *input, int length);
 
         /** Default local crypto suite is AES_CM_128_HMAC_SHA1_80*/
         int _localCryptoSuite;

@@ -36,24 +36,24 @@ using std::ptrdiff_t;
 
 namespace sfl {
 
-AudioCodec::AudioCodec (uint8 payload, const std::string &codecName) :
-        _codecName (codecName), _clockRate (8000), _channel (1), _bitrate (0.0),
-        _hasDynamicPayload (false), _payload(payload)
+AudioCodec::AudioCodec(uint8 payload, const std::string &codecName) :
+    _codecName(codecName), _clockRate(8000), _channel(1), _bitrate(0.0),
+    _hasDynamicPayload(false), _payload(payload)
 {
-    init (payload, _clockRate);
+    init(payload, _clockRate);
 }
 
-AudioCodec::AudioCodec (const AudioCodec& codec) :
-        _codecName (codec._codecName), _clockRate (codec._clockRate), _channel (
-            codec._channel), _bitrate (codec._bitrate),
-            _hasDynamicPayload (false), _payload(codec._payload)
+AudioCodec::AudioCodec(const AudioCodec& codec) :
+    _codecName(codec._codecName), _clockRate(codec._clockRate), _channel(
+        codec._channel), _bitrate(codec._bitrate),
+    _hasDynamicPayload(false), _payload(codec._payload)
 {
-    init (codec._payload, codec._clockRate);
+    init(codec._payload, codec._clockRate);
 }
 
-void AudioCodec::init (uint8 payloadType, uint32 clockRate)
+void AudioCodec::init(uint8 payloadType, uint32 clockRate)
 {
-    _payloadFormat = new ost::DynamicPayloadFormat (payloadType, clockRate);
+    _payloadFormat = new ost::DynamicPayloadFormat(payloadType, clockRate);
 
     _hasDynamicPayload = (_payload >= 96 && _payload <= 127) ? true : false;
 
@@ -80,32 +80,32 @@ const ost::PayloadFormat& AudioCodec::getPayloadFormat()
     return (*_payloadFormat);
 }
 
-uint8 AudioCodec::getPayloadType (void) const
+uint8 AudioCodec::getPayloadType(void) const
 {
     return _payload;
 }
 
-bool AudioCodec::hasDynamicPayload (void) const
+bool AudioCodec::hasDynamicPayload(void) const
 {
     return _hasDynamicPayload;
 }
 
-uint32 AudioCodec::getClockRate (void) const
+uint32 AudioCodec::getClockRate(void) const
 {
     return _clockRate;
 }
 
-unsigned AudioCodec::getFrameSize (void) const
+unsigned AudioCodec::getFrameSize(void) const
 {
     return _frameSize;
 }
 
-uint8 AudioCodec::getChannel (void) const
+uint8 AudioCodec::getChannel(void) const
 {
     return _channel;
 }
 
-double AudioCodec::getBitRate (void) const
+double AudioCodec::getBitRate(void) const
 {
     return _bitrate;
 }

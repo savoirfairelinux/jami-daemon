@@ -47,8 +47,7 @@
  * @brief A call is the base class for protocol-based calls
  */
 
-class Call: public Recordable
-{
+class Call: public Recordable {
     public:
         static const char * const DEFAULT_ID;
 
@@ -83,7 +82,7 @@ class Call: public Recordable
          * @param id Unique identifier of the call
          * @param type set definitely this call as incoming/outgoing
          */
-        Call (const std::string& id, Call::CallType type);
+        Call(const std::string& id, Call::CallType type);
         virtual ~Call();
 
         /**
@@ -102,11 +101,11 @@ class Call: public Recordable
             return _confID;
         }
 
-        void setConfId (const std::string &id) {
+        void setConfId(const std::string &id) {
             _confID = id;
         }
 
-        CallType getCallType (void) const {
+        CallType getCallType(void) const {
             return _type;
         }
 
@@ -115,7 +114,7 @@ class Call: public Recordable
          * not protected by mutex (when created)
          * @param number peer number
          */
-        void setPeerNumber (const std::string& number) {
+        void setPeerNumber(const std::string& number) {
             _peerNumber = number;
         }
 
@@ -133,7 +132,7 @@ class Call: public Recordable
          * not protected by mutex (when created)
          * @param name The peer name
          */
-        void setPeerName (const std::string& name) {
+        void setPeerName(const std::string& name) {
             _peerName = name;
         }
 
@@ -151,7 +150,7 @@ class Call: public Recordable
              * not protected by mutex (when created)
              * @return std::string The peer display name
              */
-        void setDisplayName (const std::string& name) {
+        void setDisplayName(const std::string& name) {
             _displayName = name;
         }
 
@@ -177,7 +176,7 @@ class Call: public Recordable
          * Set the connection state of the call (protected by mutex)
          * @param state The connection state
          */
-        void setConnectionState (ConnectionState state);
+        void setConnectionState(ConnectionState state);
 
         /**
          * Get the connection state of the call (protected by mutex)
@@ -189,7 +188,7 @@ class Call: public Recordable
          * Set the state of the call (protected by mutex)
          * @param state The call state
          */
-        void setState (CallState state);
+        void setState(CallState state);
 
         /**
          * Get the call state of the call (protected by mutex)
@@ -197,13 +196,13 @@ class Call: public Recordable
          */
         CallState getState();
 
-        std::string getStateStr ();
+        std::string getStateStr();
 
-        void setCallConfiguration (Call::CallConfiguration callConfig) {
+        void setCallConfiguration(Call::CallConfiguration callConfig) {
             _callConfig = callConfig;
         }
 
-        Call::CallConfiguration getCallConfiguration (void) const {
+        Call::CallConfiguration getCallConfiguration(void) const {
             return _callConfig;
         }
 
@@ -211,7 +210,7 @@ class Call: public Recordable
          * Set my IP [not protected]
          * @param ip  The local IP address
          */
-        void setLocalIp (const std::string& ip)     {
+        void setLocalIp(const std::string& ip)     {
             _localIPAddress = ip;
         }
 
@@ -219,7 +218,7 @@ class Call: public Recordable
          * Set local audio port, as seen by me [not protected]
          * @param port  The local audio port
          */
-        void setLocalAudioPort (unsigned int port)  {
+        void setLocalAudioPort(unsigned int port)  {
             _localAudioPort = port;
         }
 
@@ -235,15 +234,15 @@ class Call: public Recordable
          */
         unsigned int getLocalAudioPort();
 
-        std::string getRecFileId (void) const {
+        std::string getRecFileId(void) const {
             return getPeerName();
         }
 
-        std::string getFileName (void) const {
+        std::string getFileName(void) const {
             return _peerNumber;
         }
 
-        virtual bool setRecording (void);
+        virtual bool setRecording(void);
 
     private:
         /** Protect every attribute that can be changed by two threads */

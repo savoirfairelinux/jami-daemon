@@ -35,7 +35,7 @@
 
 static int log_level = LOG_INFO;
 
-void internal_log (const int level, const char* format, ...)
+void internal_log(const int level, const char* format, ...)
 {
     if (level > log_level)
         return;
@@ -64,19 +64,19 @@ void internal_log (const int level, const char* format, ...)
         }
     }
 
-    va_start (ap, format);
-    vsprintf (buffer, format, ap);
-    va_end (ap);
+    va_start(ap, format);
+    vsprintf(buffer, format, ap);
+    va_end(ap);
 
     message[0] = '\0';
-    strncat (message, prefix, strlen (prefix));
-    strncat (message, buffer, strlen (buffer));
-    strncat (message, "\n", 1);
+    strncat(message, prefix, strlen(prefix));
+    strncat(message, buffer, strlen(buffer));
+    strncat(message, "\n", 1);
 
-    fprintf (stderr, "%s", message);
+    fprintf(stderr, "%s", message);
 }
 
-void set_log_level (const int level)
+void set_log_level(const int level)
 {
     log_level = level;
 }

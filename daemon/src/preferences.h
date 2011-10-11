@@ -99,8 +99,7 @@ static const char * const togglePickupHangupShortKey = "togglePickupHangup";
 
 class AudioLayer;
 
-class Preferences : public Serializable
-{
+class Preferences : public Serializable {
 
     public:
 
@@ -108,78 +107,78 @@ class Preferences : public Serializable
 
         Preferences();
 
-        virtual void serialize (Conf::YamlEmitter *emitter);
+        virtual void serialize(Conf::YamlEmitter *emitter);
 
-        virtual void unserialize (Conf::MappingNode *map);
+        virtual void unserialize(Conf::MappingNode *map);
 
 
-        std::string getAccountOrder (void) const {
+        std::string getAccountOrder(void) const {
             return _accountOrder;
         }
-        void setAccountOrder (const std::string &ord) {
+        void setAccountOrder(const std::string &ord) {
             _accountOrder = ord;
         }
 
-        int getHistoryLimit (void) const {
+        int getHistoryLimit(void) const {
             return _historyLimit;
         }
-        void setHistoryLimit (int lim) {
+        void setHistoryLimit(int lim) {
             _historyLimit = lim;
         }
 
-        int getHistoryMaxCalls (void) const {
+        int getHistoryMaxCalls(void) const {
             return _historyMaxCalls;
         }
-        void setHistoryMaxCalls (int max) {
+        void setHistoryMaxCalls(int max) {
             _historyMaxCalls = max;
         }
 
-        bool getNotifyMails (void) const {
+        bool getNotifyMails(void) const {
             return _notifyMails;
         }
-        void setNotifyMails (bool mails) {
+        void setNotifyMails(bool mails) {
             _notifyMails = mails;
         }
 
-        std::string getZoneToneChoice (void) const {
+        std::string getZoneToneChoice(void) const {
             return _zoneToneChoice;
         }
-        void setZoneToneChoice (const std::string &str) {
+        void setZoneToneChoice(const std::string &str) {
             _zoneToneChoice = str;
         }
 
-        int getRegistrationExpire (void) const {
+        int getRegistrationExpire(void) const {
             return _registrationExpire;
         }
-        void setRegistrationExpire (int exp) {
+        void setRegistrationExpire(int exp) {
             _registrationExpire = exp;
         }
 
-        int getPortNum (void) const {
+        int getPortNum(void) const {
             return _portNum;
         }
-        void setPortNum (int port) {
+        void setPortNum(int port) {
             _portNum = port;
         }
 
-        bool getSearchBarDisplay (void) const {
+        bool getSearchBarDisplay(void) const {
             return _searchBarDisplay;
         }
-        void setSearchBarDisplay (bool search) {
+        void setSearchBarDisplay(bool search) {
             _searchBarDisplay = search;
         }
 
-        bool getZeroConfenable (void) const {
+        bool getZeroConfenable(void) const {
             return _zeroConfenable;
         }
-        void setZeroConfenable (bool enable) {
+        void setZeroConfenable(bool enable) {
             _zeroConfenable = enable;
         }
 
-        bool getMd5Hash (void) const {
+        bool getMd5Hash(void) const {
             return _md5Hash;
         }
-        void setMd5Hash (bool md5) {
+        void setMd5Hash(bool md5) {
             _md5Hash = md5;
         }
 
@@ -201,47 +200,46 @@ class Preferences : public Serializable
 };
 
 
-class VoipPreference : public Serializable
-{
+class VoipPreference : public Serializable {
     public:
         VoipPreference();
 
-        virtual void serialize (Conf::YamlEmitter *emitter);
+        virtual void serialize(Conf::YamlEmitter *emitter);
 
-        virtual void unserialize (Conf::MappingNode *map);
+        virtual void unserialize(Conf::MappingNode *map);
 
-        bool getPlayDtmf (void) const {
+        bool getPlayDtmf(void) const {
             return _playDtmf;
         }
-        void setPlayDtmf (bool dtmf) {
+        void setPlayDtmf(bool dtmf) {
             _playDtmf = dtmf;
         }
 
-        bool getPlayTones (void) const {
+        bool getPlayTones(void) const {
             return _playTones;
         }
-        void setPlayTones (bool tone) {
+        void setPlayTones(bool tone) {
             _playTones = tone;
         }
 
-        int getPulseLength (void) const {
+        int getPulseLength(void) const {
             return _pulseLength;
         }
-        void setPulseLength (int length) {
+        void setPulseLength(int length) {
             _pulseLength = length;
         }
 
-        bool getSymmetricRtp (void) const {
+        bool getSymmetricRtp(void) const {
             return _symmetricRtp;
         }
-        void setSymmetricRtp (bool sym) {
+        void setSymmetricRtp(bool sym) {
             _symmetricRtp = sym;
         }
 
-        std::string getZidFile (void) const {
+        std::string getZidFile(void) const {
             return _zidFile;
         }
-        void setZidFile (const std::string &file) {
+        void setZidFile(const std::string &file) {
             _zidFile = file;
         }
 
@@ -255,61 +253,60 @@ class VoipPreference : public Serializable
 
 };
 
-class AddressbookPreference : public Serializable
-{
+class AddressbookPreference : public Serializable {
     public:
         AddressbookPreference();
 
-        virtual void serialize (Conf::YamlEmitter *emitter);
+        virtual void serialize(Conf::YamlEmitter *emitter);
 
-        virtual void unserialize (Conf::MappingNode *map);
+        virtual void unserialize(Conf::MappingNode *map);
 
-        bool getPhoto (void) const {
+        bool getPhoto(void) const {
             return _photo;
         }
-        void setPhoto (bool p) {
+        void setPhoto(bool p) {
             _photo = p;
         }
 
-        bool getEnabled (void) const {
+        bool getEnabled(void) const {
             return _enabled;
         }
-        void setEnabled (bool e) {
+        void setEnabled(bool e) {
             _enabled = e;
         }
 
-        std::string getList (void) const {
+        std::string getList(void) const {
             return _list;
         }
-        void setList (const std::string &l) {
+        void setList(const std::string &l) {
             _list = l;
         }
 
-        int getMaxResults (void) const {
+        int getMaxResults(void) const {
             return _maxResults;
         }
-        void setMaxResults (int r) {
+        void setMaxResults(int r) {
             _maxResults = r;
         }
 
-        bool getBusiness (void) const {
+        bool getBusiness(void) const {
             return _business;
         }
-        void setBusiness (bool b) {
+        void setBusiness(bool b) {
             _business = b;
         }
 
-        bool getHome (void) const {
+        bool getHome(void) const {
             return _home;
         }
-        void setHone (bool h) {
+        void setHone(bool h) {
             _home = h;
         }
 
-        bool getMobile (void) const {
+        bool getMobile(void) const {
             return _mobile;
         }
-        void setMobile (bool m) {
+        void setMobile(bool m) {
             _mobile = m;
         }
 
@@ -326,54 +323,53 @@ class AddressbookPreference : public Serializable
 };
 
 
-class HookPreference : public Serializable
-{
+class HookPreference : public Serializable {
     public:
         HookPreference();
 
-        virtual void serialize (Conf::YamlEmitter *emitter);
+        virtual void serialize(Conf::YamlEmitter *emitter);
 
-        virtual void unserialize (Conf::MappingNode *map);
+        virtual void unserialize(Conf::MappingNode *map);
 
-        bool getIax2Enabled (void) const {
+        bool getIax2Enabled(void) const {
             return _iax2Enabled;
         }
-        void setIax2Enabled (bool i) {
+        void setIax2Enabled(bool i) {
             _iax2Enabled = i;
         }
 
-        std::string getNumberAddPrefix (void) const {
+        std::string getNumberAddPrefix(void) const {
             return _numberAddPrefix;
         }
-        void setNumberAddPrefix (const std::string &n) {
+        void setNumberAddPrefix(const std::string &n) {
             _numberAddPrefix = n;
         }
 
-        bool getNumberEnabled (void) const {
+        bool getNumberEnabled(void) const {
             return _numberEnabled;
         }
-        void setNumberEnabled (bool n) {
+        void setNumberEnabled(bool n) {
             _numberEnabled = n;
         }
 
-        bool getSipEnabled (void) const {
+        bool getSipEnabled(void) const {
             return _sipEnabled;
         }
-        void setSipEnabled (bool s) {
+        void setSipEnabled(bool s) {
             _sipEnabled = s;
         }
 
-        std::string getUrlCommand (void) const {
+        std::string getUrlCommand(void) const {
             return _urlCommand;
         }
-        void setUrlCommand (const std::string &u) {
+        void setUrlCommand(const std::string &u) {
             _urlCommand = u;
         }
 
-        std::string getUrlSipField (void) const {
+        std::string getUrlSipField(void) const {
             return _urlSipField;
         }
-        void setUrlSipField (const std::string &u) {
+        void setUrlSipField(const std::string &u) {
             _urlSipField = u;
         }
 
@@ -387,145 +383,144 @@ class HookPreference : public Serializable
 
 };
 
-class AudioPreference : public Serializable
-{
+class AudioPreference : public Serializable {
     public:
         AudioPreference();
         AudioLayer *createAudioLayer();
         AudioLayer *switchAndCreateAudioLayer();
 
-        std::string getAudioApi (void) const {
+        std::string getAudioApi(void) const {
             return _audioApi;
         }
 
-        void setAudioApi (const std::string &api) {
+        void setAudioApi(const std::string &api) {
             _audioApi = api;
         }
-        virtual void serialize (Conf::YamlEmitter *emitter);
+        virtual void serialize(Conf::YamlEmitter *emitter);
 
-        virtual void unserialize (Conf::MappingNode *map);
+        virtual void unserialize(Conf::MappingNode *map);
 
         // alsa preference
-        int getCardin (void) const {
+        int getCardin(void) const {
             return _cardin;
         }
-        void setCardin (int c) {
+        void setCardin(int c) {
             _cardin = c;
         }
 
-        int getCardout (void) const {
+        int getCardout(void) const {
             return _cardout;
         }
-        void setCardout (int c) {
+        void setCardout(int c) {
             _cardout = c;
         }
 
-        int getCardring (void) const {
+        int getCardring(void) const {
             return _cardring;
         }
-        void setCardring (int c) {
+        void setCardring(int c) {
             _cardring = c;
         }
 
-        std::string getPlugin (void) const {
+        std::string getPlugin(void) const {
             return _plugin;
         }
 
-        void setPlugin (const std::string &p) {
+        void setPlugin(const std::string &p) {
             _plugin = p;
         }
 
-        int getSmplrate (void) const {
+        int getSmplrate(void) const {
             return _smplrate;
         }
-        void setSmplrate (int r) {
+        void setSmplrate(int r) {
             _smplrate = r;
         }
 
         //pulseaudio preference
-        std::string getDevicePlayback (void) const {
+        std::string getDevicePlayback(void) const {
             return _devicePlayback;
         }
 
-        void setDevicePlayback (const std::string &p) {
+        void setDevicePlayback(const std::string &p) {
             _devicePlayback = p;
         }
 
-        std::string getDeviceRecord (void) const {
+        std::string getDeviceRecord(void) const {
             return _deviceRecord;
         }
-        void setDeviceRecord (const std::string &r) {
+        void setDeviceRecord(const std::string &r) {
             _deviceRecord = r;
         }
 
-        std::string getDeviceRingtone (void) const {
+        std::string getDeviceRingtone(void) const {
             return _deviceRingtone;
         }
 
-        void setDeviceRingtone (const std::string &r) {
+        void setDeviceRingtone(const std::string &r) {
             _deviceRingtone = r;
         }
 
         // general preference
-        std::string getRecordpath (void) const {
+        std::string getRecordpath(void) const {
             return _recordpath;
         }
-        void setRecordpath (const std::string &r) {
+        void setRecordpath(const std::string &r) {
             _recordpath = r;
         }
 
         bool getIsAlwaysRecording(void) const {
-        	return _alwaysRecording;
+            return _alwaysRecording;
         }
 
         void setIsAlwaysRecording(bool rec) {
-        	_alwaysRecording = rec;
+            _alwaysRecording = rec;
         }
 
-        int getVolumemic (void) const {
+        int getVolumemic(void) const {
             return _volumemic;
         }
-        void setVolumemic (int m) {
+        void setVolumemic(int m) {
             _volumemic = m;
         }
 
-        int getVolumespkr (void) const {
+        int getVolumespkr(void) const {
             return _volumespkr;
         }
-        void setVolumespkr (int s) {
+        void setVolumespkr(int s) {
             _volumespkr = s;
         }
 
-        bool getNoiseReduce (void) const {
+        bool getNoiseReduce(void) const {
             return _noisereduce;
         }
 
-        void setNoiseReduce (bool noise) {
+        void setNoiseReduce(bool noise) {
             _noisereduce = noise;
         }
 
         bool getEchoCancel(void) const {
-        	return _echocancel;
+            return _echocancel;
         }
 
         void setEchoCancel(bool echo) {
-        	_echocancel = echo;
+            _echocancel = echo;
         }
 
         int getEchoCancelTailLength(void) const {
-        	return _echoCancelTailLength;
+            return _echoCancelTailLength;
         }
 
         void setEchoCancelTailLength(int length) {
-        	_echoCancelTailLength = length;
+            _echoCancelTailLength = length;
         }
 
         int getEchoCancelDelay(void) const {
-        	return _echoCancelDelay;
+            return _echoCancelDelay;
         }
 
         void setEchoCancelDelay(int delay) {
-        	_echoCancelDelay = delay;
+            _echoCancelDelay = delay;
         }
 
     private:
@@ -555,47 +550,46 @@ class AudioPreference : public Serializable
         int _echoCancelDelay;
 };
 
-class ShortcutPreferences : public Serializable
-{
+class ShortcutPreferences : public Serializable {
     public:
-        virtual void serialize (Conf::YamlEmitter *emitter);
-        virtual void unserialize (Conf::MappingNode *map);
+        virtual void serialize(Conf::YamlEmitter *emitter);
+        virtual void unserialize(Conf::MappingNode *map);
 
-        void setShortcuts (std::map<std::string, std::string> shortcuts);
-        std::map<std::string, std::string> getShortcuts (void) const;
+        void setShortcuts(std::map<std::string, std::string> shortcuts);
+        std::map<std::string, std::string> getShortcuts(void) const;
 
-        std::string getHangup (void) const {
+        std::string getHangup(void) const {
             return _hangup;
         }
-        void setHangup (const std::string &hangup) {
+        void setHangup(const std::string &hangup) {
             _hangup = hangup;
         }
 
-        std::string getPickup (void) const {
+        std::string getPickup(void) const {
             return _pickup;
         }
-        void setPickup (const std::string &pickup) {
+        void setPickup(const std::string &pickup) {
             _pickup = pickup;
         }
 
-        std::string getPopup (void) const {
+        std::string getPopup(void) const {
             return _popup;
         }
-        void setPopup (const std::string &popup) {
+        void setPopup(const std::string &popup) {
             _popup = popup;
         }
 
-        std::string getToggleHold (void) const {
+        std::string getToggleHold(void) const {
             return _toggleHold;
         }
-        void setToggleHold (std::string hold) {
+        void setToggleHold(std::string hold) {
             _toggleHold = hold;
         }
 
-        std::string getTogglePickupHangup (void) const {
+        std::string getTogglePickupHangup(void) const {
             return _togglePickupHangup;
         }
-        void setTogglePickupHangup (const std::string &toggle) {
+        void setTogglePickupHangup(const std::string &toggle) {
             _togglePickupHangup = toggle;
         }
 

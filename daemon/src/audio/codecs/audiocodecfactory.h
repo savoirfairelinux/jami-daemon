@@ -48,12 +48,11 @@
 /** Maps a pointer on an audiocodec object to a payload */
 typedef std::map<int, sfl::Codec*> CodecsMap;
 
-class AudioCodecFactory
-{
+class AudioCodecFactory {
     public:
-		AudioCodecFactory();
+        AudioCodecFactory();
 
-		~AudioCodecFactory();
+        ~AudioCodecFactory();
 
         /**
          * Get codec name by its payload
@@ -61,7 +60,7 @@ class AudioCodecFactory
          *                same as getPayload()
          * @return std::string  The name of the codec
          */
-        std::string getCodecName (int payload) const;
+        std::string getCodecName(int payload) const;
 
         std::vector<int32_t > getAudioCodecList() const;
         /**
@@ -69,7 +68,7 @@ class AudioCodecFactory
          * @param payload The payload looked for
          * @return AudioCodec* A pointer on a AudioCodec object
          */
-        sfl::Codec* getCodec (int payload) const;
+        sfl::Codec* getCodec(int payload) const;
 
         /**
          * Set the default codecs order.
@@ -82,26 +81,26 @@ class AudioCodecFactory
          * @param payload The payload of the codec
          * @return double The bit rate
          */
-        double getBitRate (int payload) const;
+        double getBitRate(int payload) const;
 
         /**
          * Get the clock rate of the specified codec
          * @param payload The payload of the codec
          * @return int The clock rate of the specified codec
          */
-        int getSampleRate (int payload) const;
+        int getSampleRate(int payload) const;
 
         /**
          * Set the order of codecs by their payload
          * @param list The ordered list sent by DBus
          */
-        void saveActiveCodecs (const std::vector<std::string>& list);
+        void saveActiveCodecs(const std::vector<std::string>& list);
 
         /**
          * Instantiate a codec, used in AudioRTP to get an instance of Codec per call
          * @param CodecHandlePointer	The map containing the pointer on the object and the pointer on the handle function
          */
-        sfl::Codec* instantiateCodec (int payload) const;
+        sfl::Codec* instantiateCodec(int payload) const;
 
         /**
          * For a given codec, return its specification
@@ -109,7 +108,7 @@ class AudioCodecFactory
          * @param payload	The RTP payload of the codec
          * @return std::vector <std::string>	A vector containing codec's name, sample rate, bandwidth and bit rate
          */
-        std::vector <std::string> getCodecSpecifications (const int32_t& payload) const;
+        std::vector <std::string> getCodecSpecifications(const int32_t& payload) const;
 
         /**
          *  Check if the audiocodec object has been successfully created
@@ -117,7 +116,7 @@ class AudioCodecFactory
          *  @return bool  True if the audiocodec has been created
          *		false otherwise
          */
-        bool isCodecLoaded (int payload) const;
+        bool isCodecLoaded(int payload) const;
 
     private:
         /** Enable us to keep the handle pointer on the codec dynamicaly loaded so that we could destroy when we dont need it anymore */
@@ -129,20 +128,20 @@ class AudioCodecFactory
          * And load the dynamic library
          * @return std::vector<AudioCodec*> The list of the codec object successfully loaded in memory
          */
-        std::vector<sfl::Codec *> scanCodecDirectory ();
+        std::vector<sfl::Codec *> scanCodecDirectory();
 
         /**
          * Load a codec
          * @param std::string	The path of the shared ( dynamic ) library.
          * @return AudioCodec*  the pointer of the object loaded.
          */
-        sfl::Codec* loadCodec (const std::string &path);
+        sfl::Codec* loadCodec(const std::string &path);
 
         /**
          * Unload a codec
          * @param CodecHandlePointer	The map containing the pointer on the object and the pointer on the handle function
          */
-        void unloadCodec (CodecHandlePointer);
+        void unloadCodec(CodecHandlePointer);
 
         /**
          * Check if the files found in searched directories seems valid
@@ -150,7 +149,7 @@ class AudioCodecFactory
          * @return bool True if the file name begins with libcodec_ and ends with .so
          *		false otherwise
          */
-        static bool seemsValid (const std::string &lib);
+        static bool seemsValid(const std::string &lib);
 
         /**
          * Check if the codecs shared library has already been scanned during the session
@@ -159,7 +158,7 @@ class AudioCodecFactory
          * @return bool True if the codecs has been scanned
          *	    false otherwise
          */
-        bool alreadyInCache (const std::string &lib);
+        bool alreadyInCache(const std::string &lib);
 
         /**
          * Map the payload of a codec and the object associated ( AudioCodec * )

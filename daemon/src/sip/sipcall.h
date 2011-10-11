@@ -46,8 +46,7 @@ class Sdp;
  * @file sipcall.h
  * @brief SIPCall are SIP implementation of a normal Call
  */
-class SIPCall : public Call
-{
+class SIPCall : public Call {
     public:
 
         /**
@@ -56,24 +55,24 @@ class SIPCall : public Call
          * @param type  The type of the call. Could be Incoming
          *						 Outgoing
          */
-        SIPCall (const std::string& id, Call::CallType type, pj_caching_pool *caching_pool);
+        SIPCall(const std::string& id, Call::CallType type, pj_caching_pool *caching_pool);
 
         /**
          * Destructor
          */
-        ~SIPCall ();
+        ~SIPCall();
 
         /**
          * Return the local SDP session
          */
-        Sdp* getLocalSDP (void) {
+        Sdp* getLocalSDP(void) {
             return local_sdp_;
         }
 
         /**
          * Returns a pointer to the AudioRtp object
          */
-        sfl::AudioRtpFactory * getAudioRtp (void) {
+        sfl::AudioRtpFactory * getAudioRtp(void) {
             return &_audiortp;
         }
 
@@ -92,7 +91,7 @@ class SIPCall : public Call
     private:
 
         // Copy Constructor
-        SIPCall (const SIPCall& rh);
+        SIPCall(const SIPCall& rh);
 
         // Assignment Operator
         SIPCall& operator= (const SIPCall& rh);

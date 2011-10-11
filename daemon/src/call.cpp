@@ -34,16 +34,16 @@
 
 const char * const Call::DEFAULT_ID = "audiolayer_id";
 
-Call::Call (const std::string& id, Call::CallType type)
+Call::Call(const std::string& id, Call::CallType type)
     : _callMutex()
-    , _localIPAddress ("")
-    , _localAudioPort (0)
-    , _id (id)
-    , _confID ("")
-    , _type (type)
-    , _connectionState (Call::Disconnected)
-    , _callState (Call::Inactive)
-    , _callConfig (Call::Classic)
+    , _localIPAddress("")
+    , _localAudioPort(0)
+    , _id(id)
+    , _confID("")
+    , _type(type)
+    , _connectionState(Call::Disconnected)
+    , _callState(Call::Inactive)
+    , _callConfig(Call::Classic)
     , _peerName()
     , _peerNumber()
 {
@@ -56,56 +56,69 @@ Call::~Call()
 }
 
 void
-Call::setConnectionState (ConnectionState state)
+Call::setConnectionState(ConnectionState state)
 {
-    ost::MutexLock m (_callMutex);
+    ost::MutexLock m(_callMutex);
     _connectionState = state;
 }
 
 Call::ConnectionState
 Call::getConnectionState()
 {
-    ost::MutexLock m (_callMutex);
+    ost::MutexLock m(_callMutex);
     return _connectionState;
 }
 
 
 void
-Call::setState (CallState state)
+Call::setState(CallState state)
 {
-    ost::MutexLock m (_callMutex);
+    ost::MutexLock m(_callMutex);
     _callState = state;
 }
 
 Call::CallState
 Call::getState()
 {
-    ost::MutexLock m (_callMutex);
+    ost::MutexLock m(_callMutex);
     return _callState;
 }
 
 std::string
-Call::getStateStr ()
+Call::getStateStr()
 {
     switch (getState()) {
-    case Active:
-        switch (getConnectionState()) {
-        case Ringing: 	return isIncoming() ? "INCOMING" : "RINGING";
-        case Connected:
-        default:		return isRecording() ? "RECORD" : "CURRENT";
-        }
-    case Hold:			return "HOLD";
-    case Busy:			return "BUSY";
-    case Inactive:
-    	switch (getConnectionState()) {
-    	case Ringing:	return isIncoming() ? "INCOMING" : "RINGING";
-    	case Connected:	return "CURRENT";
-    	default:		return "INACTIVE";
-    	}
-    case Conferencing:	return "CONFERENCING";
-    case Refused:
-    case Error:
-    default:			return "FAILURE";
+        case Active:
+
+            switch (getConnectionState()) {
+                case Ringing:
+                    return isIncoming() ? "INCOMING" : "RINGING";
+                case Connected:
+                default:
+                    return isRecording() ? "RECORD" : "CURRENT";
+            }
+
+        case Hold:
+            return "HOLD";
+        case Busy:
+            return "BUSY";
+        case Inactive:
+
+            switch (getConnectionState()) {
+                case Ringing:
+                    return isIncoming() ? "INCOMING" : "RINGING";
+                case Connected:
+                    return "CURRENT";
+                default:
+                    return "INACTIVE";
+            }
+
+        case Conferencing:
+            return "CONFERENCING";
+        case Refused:
+        case Error:
+        default:
+            return "FAILURE";
     }
 }
 
@@ -113,14 +126,14 @@ Call::getStateStr ()
 const std::string&
 Call::getLocalIp()
 {
-    ost::MutexLock m (_callMutex);
+    ost::MutexLock m(_callMutex);
     return _localIPAddress;
 }
 
 unsigned int
 Call::getLocalAudioPort()
 {
-    ost::MutexLock m (_callMutex);
+    ost::MutexLock m(_callMutex);
     return _localAudioPort;
 }
 
@@ -134,13 +147,13 @@ Call::setRecording()
     std::string process_id = Recordable::recorder.getRecorderID();
 
     if (!recordStatus) {
-        mbuffer->bindHalfDuplexOut (process_id, _id);
-        mbuffer->bindHalfDuplexOut (process_id);
+        mbuffer->bindHalfDuplexOut(process_id, _id);
+        mbuffer->bindHalfDuplexOut(process_id);
 
         Recordable::recorder.start();
     } else {
-        mbuffer->unBindHalfDuplexOut (process_id, _id);
-        mbuffer->unBindHalfDuplexOut (process_id);
+        mbuffer->unBindHalfDuplexOut(process_id, _id);
+        mbuffer->unBindHalfDuplexOut(process_id);
     }
 
     Manager::instance().getMainBuffer()->stateInfo();

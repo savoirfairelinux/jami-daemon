@@ -39,46 +39,46 @@
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/ui/text/TextTestRunner.h>
 
-int main (int argc, char* argv[])
+int main(int argc, char* argv[])
 {
-    printf ("\nSFLphone Daemon Test Suite, by Savoir-Faire Linux 2004-2010\n\n");
-    Logger::setConsoleLog (true);
-    Logger::setDebugMode (true);
+    printf("\nSFLphone Daemon Test Suite, by Savoir-Faire Linux 2004-2010\n\n");
+    Logger::setConsoleLog(true);
+    Logger::setDebugMode(true);
 
     int argvIndex = 1;
-	bool xmlOutput = false;
+    bool xmlOutput = false;
 
     if (argc > 1) {
-        if (strcmp ("--help", argv[1]) == 0) {
+        if (strcmp("--help", argv[1]) == 0) {
             argvIndex++;
 
-            CPPUNIT_NS::Test* suite = CPPUNIT_NS::TestFactoryRegistry::getRegistry ("All Tests").makeTest();
+            CPPUNIT_NS::Test* suite = CPPUNIT_NS::TestFactoryRegistry::getRegistry("All Tests").makeTest();
 
             int testSuiteCount = suite->getChildTestCount();
-            printf ("Usage: test [OPTIONS] [TEST_SUITE]\n");
-            printf ("\nOptions:\n");
-            printf (" --xml - Output results in an XML file, instead of standard output.\n");
-            printf (" --debug - Debug mode\n");
-            printf (" --help - Print help\n");
-            printf ("\nAvailable test suites:\n");
+            printf("Usage: test [OPTIONS] [TEST_SUITE]\n");
+            printf("\nOptions:\n");
+            printf(" --xml - Output results in an XML file, instead of standard output.\n");
+            printf(" --debug - Debug mode\n");
+            printf(" --help - Print help\n");
+            printf("\nAvailable test suites:\n");
 
             for (int i = 0; i < testSuiteCount; i++) {
-                printf (" - %s\n", suite->getChildTestAt (i)->getName().c_str());
+                printf(" - %s\n", suite->getChildTestAt(i)->getName().c_str());
             }
 
             return 0;
-        } else if (strcmp ("--debug", argv[1]) == 0) {
+        } else if (strcmp("--debug", argv[1]) == 0) {
             argvIndex++;
 
-            Logger::setDebugMode (true);
-            _info ("Debug mode activated");
+            Logger::setDebugMode(true);
+            _info("Debug mode activated");
 
         } else if (strcmp("--xml", argv[1]) == 0) {
             argvIndex++;
 
-			xmlOutput = true;
-            _info ("Using XML output");
-		}
+            xmlOutput = true;
+            _info("Using XML output");
+        }
     }
 
     // Default test suite : all tests
@@ -89,33 +89,33 @@ int main (int argc, char* argv[])
         argvIndex++;
     }
 
-    printf ("\n\n=== SFLphone initialization ===\n\n");
+    printf("\n\n=== SFLphone initialization ===\n\n");
     system("cp " CONFIG_SAMPLE " " CONFIG_SAMPLE ".bak");
     Manager::instance().init(CONFIG_SAMPLE);
 
     // Get the top level suite from the registry
-    printf ("\n\n=== Test Suite: %s ===\n\n", testSuiteName.c_str());
-    CPPUNIT_NS::Test *suite = CPPUNIT_NS::TestFactoryRegistry::getRegistry (testSuiteName).makeTest();
+    printf("\n\n=== Test Suite: %s ===\n\n", testSuiteName.c_str());
+    CPPUNIT_NS::Test *suite = CPPUNIT_NS::TestFactoryRegistry::getRegistry(testSuiteName).makeTest();
 
     if (suite->getChildTestCount() == 0) {
-        _error ("Invalid test suite name: %s", testSuiteName.c_str());
+        _error("Invalid test suite name: %s", testSuiteName.c_str());
         system("mv " CONFIG_SAMPLE ".bak " CONFIG_SAMPLE);
         return 1;
     }
 
     // Adds the test to the list of test to run
     CppUnit::TextTestRunner runner;
-    runner.addTest (suite);
-	/* Specify XML output */
-	std::ofstream outfile("cppunitresults.xml");
+    runner.addTest(suite);
+    /* Specify XML output */
+    std::ofstream outfile("cppunitresults.xml");
 
-	if (xmlOutput) {
-		CppUnit::XmlOutputter* outputter = new CppUnit::XmlOutputter(&runner.result(), outfile);
-		runner.setOutputter(outputter);
-	} else {
-		// Change the default outputter to a compiler error format outputter
-		runner.setOutputter (new CppUnit::CompilerOutputter (&runner.result(), std::cerr));
-	}
+    if (xmlOutput) {
+        CppUnit::XmlOutputter* outputter = new CppUnit::XmlOutputter(&runner.result(), outfile);
+        runner.setOutputter(outputter);
+    } else {
+        // Change the default outputter to a compiler error format outputter
+        runner.setOutputter(new CppUnit::CompilerOutputter(&runner.result(), std::cerr));
+    }
 
     // Run the tests.
     bool wasSuccessful = runner.run();

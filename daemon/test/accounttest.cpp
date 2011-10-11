@@ -36,19 +36,19 @@
 #include "logger.h"
 #include "validator.h"
 
-void AccountTest::TestAddRemove (void)
+void AccountTest::TestAddRemove(void)
 {
-    _debug ("-------------------- AccountTest::TestAddRemove --------------------\n");
+    _debug("-------------------- AccountTest::TestAddRemove --------------------\n");
 
     std::map<std::string, std::string> details;
     details[CONFIG_ACCOUNT_TYPE] = "SIP";
     details[CONFIG_ACCOUNT_ENABLE] = "false";
 
-    std::string accountId = Manager::instance().addAccount (details);
-    CPPUNIT_ASSERT (Validator::isNotNull (accountId));
-    CPPUNIT_ASSERT (Manager::instance().accountExists (accountId));
+    std::string accountId = Manager::instance().addAccount(details);
+    CPPUNIT_ASSERT(Validator::isNotNull(accountId));
+    CPPUNIT_ASSERT(Manager::instance().accountExists(accountId));
 
-    Manager::instance().removeAccount (accountId);
+    Manager::instance().removeAccount(accountId);
 
-    CPPUNIT_ASSERT (!Manager::instance().accountExists (accountId));
+    CPPUNIT_ASSERT(!Manager::instance().accountExists(accountId));
 }

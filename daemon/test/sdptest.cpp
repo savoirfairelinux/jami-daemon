@@ -35,107 +35,106 @@
 #include "audio/codecs/audiocodec.h"
 
 
-enum session_type
-{
+enum session_type {
     REMOTE_OFFER,
     LOCAL_OFFER,
 };
 
 static const char *sdp_answer1 = "v=0\r\n"
-                           "o=bob 2890844730 2890844730 IN IP4 host.example.com\r\n"
-                           "s= \r\n"
-                           "c=IN IP4 host.example.com\r\n"
-                           "t=0 0\r\n"
-                           "m=audio 49920 RTP/AVP 0\r\n"
-                           "a=rtpmap:0 PCMU/8000\r\n"
-                           "m=video 0 RTP/AVP 31\r\n"
-                           "m=video 53002 RTP/AVP 32\r\n"
-                           "a=rtpmap:32 MPV/90000\r\n";
+                                 "o=bob 2890844730 2890844730 IN IP4 host.example.com\r\n"
+                                 "s= \r\n"
+                                 "c=IN IP4 host.example.com\r\n"
+                                 "t=0 0\r\n"
+                                 "m=audio 49920 RTP/AVP 0\r\n"
+                                 "a=rtpmap:0 PCMU/8000\r\n"
+                                 "m=video 0 RTP/AVP 31\r\n"
+                                 "m=video 53002 RTP/AVP 32\r\n"
+                                 "a=rtpmap:32 MPV/90000\r\n";
 
 static const char *sdp_offer1 = "v=0\r\n"
-                          "o=bob 2890844730 2890844730 IN IP4 host.example.com\r\n"
-                          "s= \r\n"
-                          "c=IN IP4 host.example.com\r\n"
-                          "t=0 0\r\n"
-                          "m=audio 49920 RTP/AVP 0\r\n"
-                          "a=rtpmap:0 PCMU/8000\r\n"
-                          "m=video 0 RTP/AVP 31\r\n"
-                          "m=video 53002 RTP/AVP 32\r\n"
-                          "a=rtpmap:32 MPV/90000\r\n";
+                                "o=bob 2890844730 2890844730 IN IP4 host.example.com\r\n"
+                                "s= \r\n"
+                                "c=IN IP4 host.example.com\r\n"
+                                "t=0 0\r\n"
+                                "m=audio 49920 RTP/AVP 0\r\n"
+                                "a=rtpmap:0 PCMU/8000\r\n"
+                                "m=video 0 RTP/AVP 31\r\n"
+                                "m=video 53002 RTP/AVP 32\r\n"
+                                "a=rtpmap:32 MPV/90000\r\n";
 
 static const char *sdp_answer2 = "v=0\r\n"
-                           "o=bob 2890844730 2890844730 IN IP4 host.example.com\r\n"
-                           "s= \r\n"
-                           "c=IN IP4 host.example.com\r\n"
-                           "t=0 0\r\n"
-                           "m=audio 49920 RTP/AVP 3 97 9\r\n"
-                           "a=rtpmap:3 GSM/8000\r\n"
-		                   "a=rtpmap:97 iLBC/8000\r\n"
-		                   "a=rtpmap:9 G722/8000\r\n"
-                           "m=video 0 RTP/AVP 31\r\n"
-                           "m=video 53002 RTP/AVP 32\r\n"
-                           "a=rtpmap:32 MPV/90000\r\n";
+                                 "o=bob 2890844730 2890844730 IN IP4 host.example.com\r\n"
+                                 "s= \r\n"
+                                 "c=IN IP4 host.example.com\r\n"
+                                 "t=0 0\r\n"
+                                 "m=audio 49920 RTP/AVP 3 97 9\r\n"
+                                 "a=rtpmap:3 GSM/8000\r\n"
+                                 "a=rtpmap:97 iLBC/8000\r\n"
+                                 "a=rtpmap:9 G722/8000\r\n"
+                                 "m=video 0 RTP/AVP 31\r\n"
+                                 "m=video 53002 RTP/AVP 32\r\n"
+                                 "a=rtpmap:32 MPV/90000\r\n";
 
 static const char *sdp_offer2 = "v=0\r\n"
-                          "o=bob 2890844730 2890844730 IN IP4 host.example.com\r\n"
-                          "s= \r\n"
-                          "c=IN IP4 host.example.com\r\n"
-                          "t=0 0\r\n"
-                          "m=audio 49920 RTP/AVP 3 97 9\r\n"
-                          "a=rtpmap:3 GSM/8000\r\n"
-						  "a=rtpmap:97 iLBC/8000\r\n"
-                          "a=rtpmap:9 G722/8000\r\n"
-                          "m=video 0 RTP/AVP 31\r\n"
-                          "m=video 53002 RTP/AVP 32\r\n"
-                          "a=rtpmap:32 MPV/90000\r\n";
+                                "o=bob 2890844730 2890844730 IN IP4 host.example.com\r\n"
+                                "s= \r\n"
+                                "c=IN IP4 host.example.com\r\n"
+                                "t=0 0\r\n"
+                                "m=audio 49920 RTP/AVP 3 97 9\r\n"
+                                "a=rtpmap:3 GSM/8000\r\n"
+                                "a=rtpmap:97 iLBC/8000\r\n"
+                                "a=rtpmap:9 G722/8000\r\n"
+                                "m=video 0 RTP/AVP 31\r\n"
+                                "m=video 53002 RTP/AVP 32\r\n"
+                                "a=rtpmap:32 MPV/90000\r\n";
 
 static const char *sdp_reinvite = "v=0\r\n"
-                            "o=bob 2890844730 2890844730 IN IP4 host.example.com\r\n"
-                            "s= \r\n"
-                            "c=IN IP4 host.exampleReinvite.com\r\n"
-                            "t=0 0\r\n"
-                            "m=audio 42445 RTP/AVP 0\r\n"
-                            "a=rtpmap:0 PCMU/8000\r\n"
-                            "m=video 0 RTP/AVP 31\r\n"
-                            "m=video 53002 RTP/AVP 32\r\n"
-                            "a=rtpmap:32 MPV/90000\r\n";
+                                  "o=bob 2890844730 2890844730 IN IP4 host.example.com\r\n"
+                                  "s= \r\n"
+                                  "c=IN IP4 host.exampleReinvite.com\r\n"
+                                  "t=0 0\r\n"
+                                  "m=audio 42445 RTP/AVP 0\r\n"
+                                  "a=rtpmap:0 PCMU/8000\r\n"
+                                  "m=video 0 RTP/AVP 31\r\n"
+                                  "m=video 53002 RTP/AVP 32\r\n"
+                                  "a=rtpmap:32 MPV/90000\r\n";
 
 
 void SDPTest::setUp()
 {
-	pj_caching_pool_init (&_poolCache, &pj_pool_factory_default_policy, 0);
+    pj_caching_pool_init(&_poolCache, &pj_pool_factory_default_policy, 0);
 
-	_testPool = pj_pool_create (&_poolCache.factory, "sdptest", 4000, 4000, NULL);
+    _testPool = pj_pool_create(&_poolCache.factory, "sdptest", 4000, 4000, NULL);
 
-	_session = new Sdp(_testPool);
+    _session = new Sdp(_testPool);
 }
 
 void SDPTest::tearDown()
 {
-	delete _session;
-	_session = NULL;
-    pj_pool_release (_testPool);
+    delete _session;
+    _session = NULL;
+    pj_pool_release(_testPool);
 }
 
 
-void SDPTest::testInitialOfferFirstCodec ()
+void SDPTest::testInitialOfferFirstCodec()
 {
-	std::cout << "------------ SDPTest::testInitialOfferFirstCodec --------------" << std::endl;
+    std::cout << "------------ SDPTest::testInitialOfferFirstCodec --------------" << std::endl;
 
     CPPUNIT_ASSERT(_session->getLocalPublishedAudioPort() == 0);
     CPPUNIT_ASSERT(_session->getRemoteAudioPort() == 0);
     CPPUNIT_ASSERT(_session->getLocalIP() == "");
     CPPUNIT_ASSERT(_session->getRemoteIP() == "");
 
-	CodecOrder codecSelection;
+    CodecOrder codecSelection;
     pjmedia_sdp_session *remoteAnswer;
 
-	codecSelection.push_back(PAYLOAD_CODEC_ULAW);
-	codecSelection.push_back(PAYLOAD_CODEC_ALAW);
-	codecSelection.push_back(PAYLOAD_CODEC_G722);
+    codecSelection.push_back(PAYLOAD_CODEC_ULAW);
+    codecSelection.push_back(PAYLOAD_CODEC_ALAW);
+    codecSelection.push_back(PAYLOAD_CODEC_G722);
 
-	_session->setLocalIP("127.0.0.1");
-	_session->setLocalPublishedAudioPort(49567);
+    _session->setLocalIP("127.0.0.1");
+    _session->setLocalPublishedAudioPort(49567);
 
     _session->createOffer(codecSelection);
 
@@ -155,26 +154,26 @@ void SDPTest::testInitialOfferFirstCodec ()
 
 }
 
-void SDPTest::testInitialAnswerFirstCodec ()
+void SDPTest::testInitialAnswerFirstCodec()
 {
-	std::cout << "------------ SDPTest::testInitialAnswerFirstCodec -------------" << std::endl;
+    std::cout << "------------ SDPTest::testInitialAnswerFirstCodec -------------" << std::endl;
 
     CPPUNIT_ASSERT(_session->getLocalPublishedAudioPort() == 0);
     CPPUNIT_ASSERT(_session->getRemoteAudioPort() == 0);
     CPPUNIT_ASSERT(_session->getLocalIP() == "");
     CPPUNIT_ASSERT(_session->getRemoteIP() == "");
 
-	CodecOrder codecSelection;
+    CodecOrder codecSelection;
     pjmedia_sdp_session *remoteOffer;
 
-	codecSelection.push_back(PAYLOAD_CODEC_ULAW);
-	codecSelection.push_back(PAYLOAD_CODEC_ALAW);
-	codecSelection.push_back(PAYLOAD_CODEC_G722);
+    codecSelection.push_back(PAYLOAD_CODEC_ULAW);
+    codecSelection.push_back(PAYLOAD_CODEC_ALAW);
+    codecSelection.push_back(PAYLOAD_CODEC_G722);
 
     pjmedia_sdp_parse(_testPool, (char*)sdp_offer1, strlen(sdp_offer1), &remoteOffer);
 
     _session->setLocalIP("127.0.0.1");
-	_session->setLocalPublishedAudioPort(49567);
+    _session->setLocalPublishedAudioPort(49567);
 
     _session->receiveOffer(remoteOffer, codecSelection);
 
@@ -190,24 +189,24 @@ void SDPTest::testInitialAnswerFirstCodec ()
 
 }
 
-void SDPTest::testInitialOfferLastCodec ()
+void SDPTest::testInitialOfferLastCodec()
 {
-	std::cout << "------------ SDPTest::testInitialOfferLastCodec --------------------" << std::endl;
+    std::cout << "------------ SDPTest::testInitialOfferLastCodec --------------------" << std::endl;
 
     CPPUNIT_ASSERT(_session->getLocalPublishedAudioPort() == 0);
     CPPUNIT_ASSERT(_session->getRemoteAudioPort() == 0);
     CPPUNIT_ASSERT(_session->getLocalIP() == "");
     CPPUNIT_ASSERT(_session->getRemoteIP() == "");
 
-	CodecOrder codecSelection;
+    CodecOrder codecSelection;
     pjmedia_sdp_session *remoteAnswer;
 
-	codecSelection.push_back(PAYLOAD_CODEC_ULAW);
-	codecSelection.push_back(PAYLOAD_CODEC_ALAW);
-	codecSelection.push_back(PAYLOAD_CODEC_G722);
+    codecSelection.push_back(PAYLOAD_CODEC_ULAW);
+    codecSelection.push_back(PAYLOAD_CODEC_ALAW);
+    codecSelection.push_back(PAYLOAD_CODEC_G722);
 
-	_session->setLocalIP("127.0.0.1");
-	_session->setLocalPublishedAudioPort(49567);
+    _session->setLocalIP("127.0.0.1");
+    _session->setLocalPublishedAudioPort(49567);
 
     _session->createOffer(codecSelection);
 
@@ -227,26 +226,26 @@ void SDPTest::testInitialOfferLastCodec ()
 
 }
 
-void SDPTest::testInitialAnswerLastCodec ()
+void SDPTest::testInitialAnswerLastCodec()
 {
-	std::cout << "------------ SDPTest::testInitialAnswerLastCodec ------------" << std::endl;
+    std::cout << "------------ SDPTest::testInitialAnswerLastCodec ------------" << std::endl;
 
     CPPUNIT_ASSERT(_session->getLocalPublishedAudioPort() == 0);
     CPPUNIT_ASSERT(_session->getRemoteAudioPort() == 0);
     CPPUNIT_ASSERT(_session->getLocalIP() == "");
     CPPUNIT_ASSERT(_session->getRemoteIP() == "");
 
-	CodecOrder codecSelection;
+    CodecOrder codecSelection;
     pjmedia_sdp_session *remoteOffer;
 
-	codecSelection.push_back(PAYLOAD_CODEC_ULAW);
-	codecSelection.push_back(PAYLOAD_CODEC_ALAW);
-	codecSelection.push_back(PAYLOAD_CODEC_G722);
+    codecSelection.push_back(PAYLOAD_CODEC_ULAW);
+    codecSelection.push_back(PAYLOAD_CODEC_ALAW);
+    codecSelection.push_back(PAYLOAD_CODEC_G722);
 
     pjmedia_sdp_parse(_testPool, (char*)sdp_offer2, strlen(sdp_offer2), &remoteOffer);
 
     _session->setLocalIP("127.0.0.1");
-	_session->setLocalPublishedAudioPort(49567);
+    _session->setLocalPublishedAudioPort(49567);
 
     _session->receiveOffer(remoteOffer, codecSelection);
 
@@ -263,25 +262,25 @@ void SDPTest::testInitialAnswerLastCodec ()
 }
 
 
-void SDPTest::testReinvite ()
+void SDPTest::testReinvite()
 {
-	std::cout << "------------ SDPTest::testReinvite --------------------" << std::endl;
+    std::cout << "------------ SDPTest::testReinvite --------------------" << std::endl;
 
     CPPUNIT_ASSERT(_session->getLocalPublishedAudioPort() == 0);
     CPPUNIT_ASSERT(_session->getRemoteAudioPort() == 0);
     CPPUNIT_ASSERT(_session->getLocalIP() == "");
     CPPUNIT_ASSERT(_session->getRemoteIP() == "");
 
-	CodecOrder codecSelection;
+    CodecOrder codecSelection;
     pjmedia_sdp_session *remoteAnswer;
     pjmedia_sdp_session *reinviteOffer;
 
-	codecSelection.push_back(PAYLOAD_CODEC_ULAW);
-	codecSelection.push_back(PAYLOAD_CODEC_ALAW);
-	codecSelection.push_back(PAYLOAD_CODEC_G722);
+    codecSelection.push_back(PAYLOAD_CODEC_ULAW);
+    codecSelection.push_back(PAYLOAD_CODEC_ALAW);
+    codecSelection.push_back(PAYLOAD_CODEC_G722);
 
-	_session->setLocalIP("127.0.0.1");
-	_session->setLocalPublishedAudioPort(49567);
+    _session->setLocalIP("127.0.0.1");
+    _session->setLocalPublishedAudioPort(49567);
 
     _session->createOffer(codecSelection);
 

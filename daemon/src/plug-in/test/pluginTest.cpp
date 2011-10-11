@@ -33,15 +33,14 @@
 #define MAJOR_VERSION   1
 #define MINOR_VERSION   0
 
-class PluginTest : public Plugin
-{
+class PluginTest : public Plugin {
 
     public:
-        PluginTest (const std::string &name)
-            :Plugin (name) {
+        PluginTest(const std::string &name)
+            :Plugin(name) {
         }
 
-        virtual int initFunc (PluginInfo **info) {
+        virtual int initFunc(PluginInfo **info) {
 
             (*info)->_plugin = this;
             (*info)->_major_version = MAJOR_VERSION;
@@ -52,12 +51,12 @@ class PluginTest : public Plugin
         }
 };
 
-extern "C" Plugin* createPlugin (void)
+extern "C" Plugin* createPlugin(void)
 {
-    return new PluginTest ("mytest");
+    return new PluginTest("mytest");
 }
 
-extern "C" void destroyPlugin (Plugin *p)
+extern "C" void destroyPlugin(Plugin *p)
 {
     delete p;
 }

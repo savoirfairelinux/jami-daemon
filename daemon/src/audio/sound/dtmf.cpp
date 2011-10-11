@@ -34,23 +34,23 @@
 
 #include "dtmf.h"
 
-DTMF::DTMF (unsigned int sampleRate)
-    : currentTone (0), newTone (0), dtmfgenerator (sampleRate)
+DTMF::DTMF(unsigned int sampleRate)
+    : currentTone(0), newTone(0), dtmfgenerator(sampleRate)
 {
 }
 
-DTMF::~DTMF (void)
+DTMF::~DTMF(void)
 {
 }
 
 void
-DTMF::startTone (char code)
+DTMF::startTone(char code)
 {
     newTone = code;
 }
 
 bool
-DTMF::generateDTMF (SFLDataFormat* buffer, size_t n)
+DTMF::generateDTMF(SFLDataFormat* buffer, size_t n)
 {
     if (!buffer) return false;
 
@@ -59,11 +59,11 @@ DTMF::generateDTMF (SFLDataFormat* buffer, size_t n)
             // Currently generating a DTMF tone
             if (currentTone == newTone) {
                 // Continue generating the same tone
-                dtmfgenerator.getNextSamples (buffer, n);
+                dtmfgenerator.getNextSamples(buffer, n);
                 return true;
             } else if (newTone != 0) {
                 // New tone requested
-                dtmfgenerator.getSamples (buffer, n, newTone);
+                dtmfgenerator.getSamples(buffer, n, newTone);
                 currentTone = newTone;
                 return true;
             } else {
@@ -75,7 +75,7 @@ DTMF::generateDTMF (SFLDataFormat* buffer, size_t n)
             // Not generating any DTMF tone
             if (newTone) {
                 // Requested to generate a DTMF tone
-                dtmfgenerator.getSamples (buffer, n, newTone);
+                dtmfgenerator.getSamples(buffer, n, newTone);
                 currentTone = newTone;
                 return true;
             }

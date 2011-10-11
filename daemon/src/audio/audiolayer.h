@@ -50,14 +50,13 @@
 class MainBuffer;
 
 namespace ost {
-    class Time;
+class Time;
 }
 
-class AudioLayer
-{
+class AudioLayer {
     private:
         //copy constructor
-        AudioLayer (const AudioLayer& rh);
+        AudioLayer(const AudioLayer& rh);
 
         // assignment operator
         AudioLayer& operator= (const AudioLayer& rh);
@@ -66,28 +65,30 @@ class AudioLayer
         /**
          * Constructor
          */
-        AudioLayer ();
+        AudioLayer();
 
         /**
          * Destructor
          */
-        virtual ~AudioLayer (void);
+        virtual ~AudioLayer(void);
 
         /**
          * Start the capture stream and prepare the playback stream.
          * The playback starts accordingly to its threshold
          * ALSA Library API
          */
-        virtual void startStream (void) = 0;
+        virtual void startStream(void) = 0;
 
         /**
          * Stop the playback and capture streams.
          * Drops the pending frames and put the capture and playback handles to PREPARED state
          * ALSA Library API
          */
-        virtual void stopStream (void) = 0;
+        virtual void stopStream(void) = 0;
 
-        bool isStarted(void) const { return isStarted_; }
+        bool isStarted(void) const {
+            return isStarted_;
+        }
 
         /**
          * Send a chunk of data to the hardware buffer to start the playback
@@ -95,11 +96,11 @@ class AudioLayer
          * @param buffer The buffer containing the data to be played ( ringtones )
          * @param toCopy The size of the buffer
          */
-        void putUrgent (void* buffer, int toCopy);
+        void putUrgent(void* buffer, int toCopy);
 
-        void flushMain (void);
+        void flushMain(void);
 
-        void flushUrgent (void);
+        void flushUrgent(void);
 
 
         /**
@@ -114,14 +115,14 @@ class AudioLayer
         /**
          * Get the mutex lock for the entire audio layer
          */
-        ost::Mutex* getMutexLock (void) {
+        ost::Mutex* getMutexLock(void) {
             return &mutex_;
         }
 
-        void notifyincomingCall (void);
+        void notifyincomingCall(void);
 
     protected:
- 
+
         /**
          * Wether or not the audio layer stream is started
          */

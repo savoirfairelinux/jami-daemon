@@ -52,33 +52,32 @@ using std::ptrdiff_t;
 #include <cc++/numbers.h> // ost::Time
 
 #include <fstream>
-namespace sfl
-{
+namespace sfl {
 
-class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTPSession, public AudioRtpSession
-{
+class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTPSession, public AudioRtpSession {
     public:
         /**
         * Constructor
         * @param sipcall The pointer on the SIP call
         */
-        AudioSymmetricRtpSession (SIPCall* sipcall);
+        AudioSymmetricRtpSession(SIPCall* sipcall);
 
         ~AudioSymmetricRtpSession();
 
-        virtual bool onRTPPacketRecv (ost::IncomingRTPPkt& pkt) { return AudioRtpSession::onRTPPacketRecv(pkt); }
+        virtual bool onRTPPacketRecv(ost::IncomingRTPPkt& pkt) {
+            return AudioRtpSession::onRTPPacketRecv(pkt);
+        }
 
-        int startSymmetricRtpThread (void) {
+        int startSymmetricRtpThread(void) {
             assert(_rtpThread);
             return _rtpThread->start();
         }
 
     private:
 
-        class AudioRtpThread : public ost::Thread, public ost::TimerPort
-        {
+        class AudioRtpThread : public ost::Thread, public ost::TimerPort {
             public:
-                AudioRtpThread (AudioSymmetricRtpSession *session);
+                AudioRtpThread(AudioSymmetricRtpSession *session);
                 ~AudioRtpThread();
 
                 virtual void run();

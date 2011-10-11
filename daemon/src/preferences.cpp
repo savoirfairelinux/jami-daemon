@@ -38,11 +38,11 @@
 const char * const Preferences::DFT_ZONE = "North America";
 
 namespace {
-    static const char * const DFT_PULSE_LENGTH_STR ="250";  /** Default DTMF lenght */
-    static const char * const ZRTP_ZIDFILE = "zidFile";     /** The filename used for storing ZIDs */
-    static const char * const ALSA_DFT_CARD	= "0";          /** Default sound card index */
-    static const char * const DFT_VOL_SPKR_STR = "100";     /** Default speaker volume */
-    static const char * const DFT_VOL_MICRO_STR	= "100";    /** Default mic volume */
+static const char * const DFT_PULSE_LENGTH_STR ="250";  /** Default DTMF lenght */
+static const char * const ZRTP_ZIDFILE = "zidFile";     /** The filename used for storing ZIDs */
+static const char * const ALSA_DFT_CARD	= "0";          /** Default sound card index */
+static const char * const DFT_VOL_SPKR_STR = "100";     /** Default speaker volume */
+static const char * const DFT_VOL_MICRO_STR	= "100";    /** Default mic volume */
 } // end anonymous namespace
 
 Preferences::Preferences() :  _accountOrder("")
@@ -60,7 +60,7 @@ Preferences::Preferences() :  _accountOrder("")
 
 void Preferences::serialize(Conf::YamlEmitter *emiter)
 {
-	Conf::MappingNode preferencemap(NULL);
+    Conf::MappingNode preferencemap(NULL);
 
     Conf::ScalarNode order(_accountOrder);
     std::stringstream histlimitstr;
@@ -260,7 +260,7 @@ void HookPreference::unserialize(Conf::MappingNode *map)
 
 
 AudioPreference::AudioPreference() :
-      _audioApi(PULSEAUDIO_API_STR)
+    _audioApi(PULSEAUDIO_API_STR)
     , _cardin(atoi(ALSA_DFT_CARD)) // ALSA_DFT_CARD
     , _cardout(atoi(ALSA_DFT_CARD)) // ALSA_DFT_CARD
     , _cardring(atoi(ALSA_DFT_CARD)) // ALSA_DFT_CARD
@@ -280,13 +280,13 @@ AudioPreference::AudioPreference() :
 {}
 
 namespace {
-    void checkSoundCard(int &card, int stream)
-    {
-        if (not AlsaLayer::soundCardIndexExists(card, stream)) {
-            _warn(" Card with index %d doesn't exist or is unusable.", card);
-            card = ALSA_DFT_CARD_ID;
-        }
+void checkSoundCard(int &card, int stream)
+{
+    if (not AlsaLayer::soundCardIndexExists(card, stream)) {
+        _warn(" Card with index %d doesn't exist or is unusable.", card);
+        card = ALSA_DFT_CARD_ID;
     }
+}
 }
 
 AudioLayer* AudioPreference::createAudioLayer()
@@ -308,6 +308,7 @@ AudioLayer* AudioPreference::switchAndCreateAudioLayer()
         _audioApi = ALSA_API_STR;
     else
         _audioApi = PULSEAUDIO_API_STR;
+
     return createAudioLayer();
 }
 
@@ -387,7 +388,7 @@ void AudioPreference::serialize(Conf::YamlEmitter *emitter)
 
 void AudioPreference::unserialize(Conf::MappingNode *map)
 {
-	assert(map);
+    assert(map);
 
     map->getValue(audioApiKey, &_audioApi);
     map->getValue(recordpathKey, &_recordpath);
@@ -398,15 +399,17 @@ void AudioPreference::unserialize(Conf::MappingNode *map)
     map->getValue(echoCancelKey, &_echocancel);
 
     Conf::MappingNode *alsamap =(Conf::MappingNode *)(map->getValue("alsa"));
+
     if (alsamap) {
         alsamap->getValue(cardinKey, &_cardin);
-		alsamap->getValue(cardoutKey, &_cardout);
-		alsamap->getValue(cardringKey, &_cardring);
-		alsamap->getValue(smplrateKey, &_smplrate);
-		alsamap->getValue(pluginKey, &_plugin);
+        alsamap->getValue(cardoutKey, &_cardout);
+        alsamap->getValue(cardringKey, &_cardring);
+        alsamap->getValue(smplrateKey, &_smplrate);
+        alsamap->getValue(pluginKey, &_plugin);
     }
 
     Conf::MappingNode *pulsemap =(Conf::MappingNode *)(map->getValue("pulse"));
+
     if (pulsemap) {
         pulsemap->getValue(devicePlaybackKey, &_devicePlayback);
         pulsemap->getValue(deviceRecordKey, &_deviceRecord);
@@ -463,6 +466,7 @@ void ShortcutPreferences::unserialize(Conf::MappingNode *map)
         _error("ShortcutPreference: Error: Preference map is NULL");
         return;
     }
+
     map->getValue(hangupShortKey, &_hangup);
     map->getValue(pickupShortKey, &_pickup);
     map->getValue(popupShortKey, &_popup);

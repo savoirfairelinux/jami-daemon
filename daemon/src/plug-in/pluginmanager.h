@@ -55,8 +55,7 @@ typedef struct PluginInfo {
 
 #include "plugin.h"
 
-class PluginManager
-{
+class PluginManager {
     public:
         /**
          * Destructor
@@ -73,37 +72,37 @@ class PluginManager
          * @param path  The absolute path to the directory
          * @return int  The number of items loaded
          */
-        int loadPlugins (const std::string &path = "");
+        int loadPlugins(const std::string &path = "");
 
-        int unloadPlugins (void);
+        int unloadPlugins(void);
 
-        int instanciatePlugin (LibraryManager* libraryPtr, Plugin** plugin);
+        int instanciatePlugin(LibraryManager* libraryPtr, Plugin** plugin);
 
         /**
          * Check if a plugin has been already loaded
          * @param name  The name of the plugin looked for
          * @return bool  The pointer on the plugin or NULL if not found
          */
-        bool isPluginLoaded (const std::string &name);
+        bool isPluginLoaded(const std::string &name);
 
-        int registerPlugin (Plugin *plugin, LibraryManager *library);
+        int registerPlugin(Plugin *plugin, LibraryManager *library);
 
-        int unregisterPlugin (PluginInfo *plugin);
+        int unregisterPlugin(PluginInfo *plugin);
 
-        int deletePlugin (PluginInfo *plugin);
+        int deletePlugin(PluginInfo *plugin);
 
         /**
          * Load a unix dynamic/shared library
          * @param filename  The path to the dynamic/shared library
          * @return LibraryManager*    A pointer on the library
          */
-        LibraryManager* loadDynamicLibrary (const std::string &filename);
+        LibraryManager* loadDynamicLibrary(const std::string &filename);
 
         /**
          * Unload a unix dynamic/shared library
          * @param LibraryManager*  The pointer on the loaded library
          */
-        int unloadDynamicLibrary (LibraryManager* libraryPtr);
+        int unloadDynamicLibrary(LibraryManager* libraryPtr);
 
     private:
         /**

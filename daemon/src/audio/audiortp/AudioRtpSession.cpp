@@ -41,21 +41,20 @@
 #include <ccrtp/oqueue.h>
 #include "manager.h"
 
-namespace sfl
+namespace sfl {
+AudioRtpSession::AudioRtpSession(SIPCall * sipcall, RtpMethod type, ost::RTPDataQueue *queue, ost::Thread *thread) :
+    AudioRtpRecordHandler(sipcall)
+    , _ca(sipcall)
+    , _type(type)
+    , _timestamp(0)
+    , _timestampIncrement(0)
+    , _timestampCount(0)
+    , _isStarted(false)
+    , _queue(queue)
+    , _thread(thread)
 {
-AudioRtpSession::AudioRtpSession (SIPCall * sipcall, RtpMethod type, ost::RTPDataQueue *queue, ost::Thread *thread) :
-					AudioRtpRecordHandler (sipcall)
-					, _ca (sipcall)
-					, _type(type)
-					, _timestamp (0)
-					, _timestampIncrement (0)
-					, _timestampCount (0)
-					, _isStarted (false)
-					, _queue(queue)
-					, _thread(thread)
-{
-    assert (_ca);
-    _queue->setTypeOfService (ost::RTPDataQueue::tosEnhanced);
+    assert(_ca);
+    _queue->setTypeOfService(ost::RTPDataQueue::tosEnhanced);
 }
 
 AudioRtpSession::~AudioRtpSession()
@@ -63,7 +62,7 @@ AudioRtpSession::~AudioRtpSession()
     _queue->disableStack();
 }
 
-void AudioRtpSession::updateSessionMedia (AudioCodec *audioCodec)
+void AudioRtpSession::updateSessionMedia(AudioCodec *audioCodec)
 {
     int lastSamplingRate = _audioRtpRecord._codecSampleRate;
 
@@ -72,15 +71,15 @@ void AudioRtpSession::updateSessionMedia (AudioCodec *audioCodec)
     Manager::instance().audioSamplingRateChanged(_audioRtpRecord._codecSampleRate);
 
     if (lastSamplingRate != _audioRtpRecord._codecSampleRate) {
-        _debug ("AudioRtpSession: Update noise suppressor with sampling rate %d and frame size %d", getCodecSampleRate(), getCodecFrameSize());
+        _debug("AudioRtpSession: Update noise suppressor with sampling rate %d and frame size %d", getCodecSampleRate(), getCodecFrameSize());
         initNoiseSuppress();
     }
 
 }
 
-void AudioRtpSession::setSessionMedia (AudioCodec *audioCodec)
+void AudioRtpSession::setSessionMedia(AudioCodec *audioCodec)
 {
-    setRtpMedia (audioCodec);
+    setRtpMedia(audioCodec);
 
     // store codec info locally
     int payloadType = getCodecPayloadType();
@@ -94,29 +93,29 @@ void AudioRtpSession::setSessionMedia (AudioCodec *audioCodec)
     else
         _timestampIncrement = frameSize;
 
-    _debug ("AudioRptSession: Codec payload: %d", payloadType);
-    _debug ("AudioSymmetricRtpSession: Codec sampling rate: %d", smplRate);
-    _debug ("AudioSymmetricRtpSession: Codec frame size: %d", frameSize);
-    _debug ("AudioSymmetricRtpSession: RTP timestamp increment: %d", _timestampIncrement);
+    _debug("AudioRptSession: Codec payload: %d", payloadType);
+    _debug("AudioSymmetricRtpSession: Codec sampling rate: %d", smplRate);
+    _debug("AudioSymmetricRtpSession: Codec frame size: %d", frameSize);
+    _debug("AudioSymmetricRtpSession: RTP timestamp increment: %d", _timestampIncrement);
 
     if (payloadType == g722PayloadType) {
-        _debug ("AudioSymmetricRtpSession: Setting G722 payload format");
-        _queue->setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, g722RtpClockRate));
+        _debug("AudioSymmetricRtpSession: Setting G722 payload format");
+        _queue->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) payloadType, g722RtpClockRate));
     } else {
         if (dynamic) {
-            _debug ("AudioSymmetricRtpSession: Setting dynamic payload format");
-            _queue->setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) payloadType, smplRate));
+            _debug("AudioSymmetricRtpSession: Setting dynamic payload format");
+            _queue->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) payloadType, smplRate));
         } else {
-            _debug ("AudioSymmetricRtpSession: Setting static payload format");
-            _queue->setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) payloadType));
+            _debug("AudioSymmetricRtpSession: Setting static payload format");
+            _queue->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) payloadType));
         }
     }
 
     if (_type != Zrtp)
-		_ca->setRecordingSmplRate (getCodecSampleRate());
+        _ca->setRecordingSmplRate(getCodecSampleRate());
 }
 
-void AudioRtpSession::sendDtmfEvent ()
+void AudioRtpSession::sendDtmfEvent()
 {
     ost::RTPPacket::RFC2833Payload payload;
 
@@ -127,7 +126,7 @@ void AudioRtpSession::sendDtmfEvent ()
 
     _audioRtpRecord._dtmfQueue.pop_front();
 
-    _debug ("AudioRtpSession: Send RTP Dtmf (%d)", payload.event);
+    _debug("AudioRtpSession: Send RTP Dtmf (%d)", payload.event);
 
     _timestamp += (_type == Zrtp) ? 160 : _timestampIncrement;
 
@@ -135,20 +134,21 @@ void AudioRtpSession::sendDtmfEvent ()
     processDataEncode();
 
     // change Payload type for DTMF payload
-    _queue->setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) getDtmfPayloadType(), 8000));
+    _queue->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) getDtmfPayloadType(), 8000));
 
-    _queue->setMark (true);
-    _queue->sendImmediate (_timestamp, (const unsigned char *) (&payload), sizeof (payload));
-    _queue->setMark (false);
+    _queue->setMark(true);
+    _queue->sendImmediate(_timestamp, (const unsigned char *)(&payload), sizeof(payload));
+    _queue->setMark(false);
 
     // get back the payload to audio
-    _queue->setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) getCodecPayloadType()));
+    _queue->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) getCodecPayloadType()));
 }
 
 
-void AudioRtpSession::receiveSpeakerData ()
+void AudioRtpSession::receiveSpeakerData()
 {
-    const ost::AppDataUnit* adu = _queue->getData (_queue->getFirstTimestamp());
+    const ost::AppDataUnit* adu = _queue->getData(_queue->getFirstTimestamp());
+
     if (!adu)
         return;
 
@@ -157,7 +157,7 @@ void AudioRtpSession::receiveSpeakerData ()
 
     // DTMF over RTP, size must be over 4 in order to process it as voice data
     if (size > 4)
-        processDataDecode (spkrDataIn, size, adu->getType());
+        processDataDecode(spkrDataIn, size, adu->getType());
 
     delete adu;
 }
@@ -176,53 +176,54 @@ void AudioRtpSession::sendMicData()
     _timestamp += _timestampIncrement;
 
     if (_type == Zrtp)
-    	_queue->putData (_timestamp, getMicDataEncoded(), compSize);
+        _queue->putData(_timestamp, getMicDataEncoded(), compSize);
+
     // putData put the data on RTP queue, sendImmediate bypass this queue
-    _queue->sendImmediate (_timestamp, getMicDataEncoded(), compSize);
+    _queue->sendImmediate(_timestamp, getMicDataEncoded(), compSize);
 }
 
 
-void AudioRtpSession::setSessionTimeouts (void)
+void AudioRtpSession::setSessionTimeouts(void)
 {
-    _debug ("AudioRtpSession: Set session scheduling timeout (%d) and expireTimeout (%d)", sfl::schedulingTimeout, sfl::expireTimeout);
+    _debug("AudioRtpSession: Set session scheduling timeout (%d) and expireTimeout (%d)", sfl::schedulingTimeout, sfl::expireTimeout);
 
-    _queue->setSchedulingTimeout (sfl::schedulingTimeout);
-    _queue->setExpireTimeout (sfl::expireTimeout);
+    _queue->setSchedulingTimeout(sfl::schedulingTimeout);
+    _queue->setExpireTimeout(sfl::expireTimeout);
 }
 
-void AudioRtpSession::setDestinationIpAddress (void)
+void AudioRtpSession::setDestinationIpAddress(void)
 {
-    _info ("AudioRtpSession: Setting IP address for the RTP session");
+    _info("AudioRtpSession: Setting IP address for the RTP session");
 
     // Store remote ip in case we would need to forget current destination
-    _remote_ip = ost::InetHostAddress (_ca->getLocalSDP()->getRemoteIP().c_str());
+    _remote_ip = ost::InetHostAddress(_ca->getLocalSDP()->getRemoteIP().c_str());
 
     if (!_remote_ip) {
-        _warn ("AudioRtpSession: Target IP address (%s) is not correct!",
-               _ca->getLocalSDP()->getRemoteIP().data());
+        _warn("AudioRtpSession: Target IP address (%s) is not correct!",
+              _ca->getLocalSDP()->getRemoteIP().data());
         return;
     }
 
     // Store remote port in case we would need to forget current destination
     _remote_port = (unsigned short) _ca->getLocalSDP()->getRemoteAudioPort();
 
-    _info ("AudioRtpSession: New remote address for session: %s:%d",
-           _ca->getLocalSDP()->getRemoteIP().data(), _remote_port);
+    _info("AudioRtpSession: New remote address for session: %s:%d",
+          _ca->getLocalSDP()->getRemoteIP().data(), _remote_port);
 
-    if (!_queue->addDestination (_remote_ip, _remote_port)) {
-        _warn ("AudioRtpSession: Can't add new destination to session!");
+    if (!_queue->addDestination(_remote_ip, _remote_port)) {
+        _warn("AudioRtpSession: Can't add new destination to session!");
         return;
     }
 }
 
-void AudioRtpSession::updateDestinationIpAddress (void)
+void AudioRtpSession::updateDestinationIpAddress(void)
 {
-    _debug ("AudioRtpSession: Update destination ip address");
+    _debug("AudioRtpSession: Update destination ip address");
 
     // Destination address are stored in a list in ccrtp
     // This method remove the current destination entry
 
-    if (!_queue->forgetDestination (_remote_ip, _remote_port, _remote_port+1))
+    if (!_queue->forgetDestination(_remote_ip, _remote_port, _remote_port+1))
         _debug("AudioRtpSession: Did not remove previous destination");
 
     // new destination is stored in call
@@ -231,23 +232,24 @@ void AudioRtpSession::updateDestinationIpAddress (void)
 }
 
 
-int AudioRtpSession::startRtpThread (AudioCodec* audiocodec)
+int AudioRtpSession::startRtpThread(AudioCodec* audiocodec)
 {
     if (_isStarted)
         return 0;
 
-    _debug ("AudioSymmetricRtpSession: Starting main thread");
+    _debug("AudioSymmetricRtpSession: Starting main thread");
 
     _isStarted = true;
     setSessionTimeouts();
-    setSessionMedia (audiocodec);
+    setSessionMedia(audiocodec);
     initBuffers();
     initNoiseSuppress();
 
     _queue->enableStack();
     int ret = _thread->start();
-	if (_type == Zrtp)
-		return ret;
+
+    if (_type == Zrtp)
+        return ret;
 
     AudioSymmetricRtpSession *self = dynamic_cast<AudioSymmetricRtpSession*>(this);
     assert(self);
@@ -255,7 +257,7 @@ int AudioRtpSession::startRtpThread (AudioCodec* audiocodec)
 }
 
 
-bool AudioRtpSession::onRTPPacketRecv (ost::IncomingRTPPkt&)
+bool AudioRtpSession::onRTPPacketRecv(ost::IncomingRTPPkt&)
 {
     receiveSpeakerData();
     return true;

@@ -47,8 +47,7 @@
  * @file dtmfgenerator.h
  * @brief DMTF Generator Exception
  */
-class DTMFException : public std::runtime_error
-{
+class DTMFException : public std::runtime_error {
     public:
         DTMFException(const std::string& str) : std::runtime_error(str) {};
 };
@@ -57,8 +56,7 @@ class DTMFException : public std::runtime_error
  * @file dtmfgenerator.h
  * @brief DTMF Tone Generator
  */
-class DTMFGenerator
-{
+class DTMFGenerator {
     private:
         /** Struct to handle a DTMF */
         struct DTMFTone {
@@ -94,7 +92,7 @@ class DTMFGenerator
          * and can build one DTMF.
          * @param sampleRate frequency of the sample (ex: 8000 hz)
          */
-        DTMFGenerator (unsigned int sampleRate);
+        DTMFGenerator(unsigned int sampleRate);
 
         /**
          * Destructor
@@ -103,7 +101,7 @@ class DTMFGenerator
 
 
         // Copy Constructor
-        DTMFGenerator (const DTMFGenerator& rh);
+        DTMFGenerator(const DTMFGenerator& rh);
 
         // Assignment Operator
         DTMFGenerator& operator= (const DTMFGenerator& rh);
@@ -114,7 +112,7 @@ class DTMFGenerator
          * @param n      number of sampling to get, should be lower or equal to buffer size
          * @param code   dtmf code to get sound
          */
-        void getSamples (SFLDataFormat* buffer, size_t n, unsigned char code) throw (DTMFException);
+        void getSamples(SFLDataFormat* buffer, size_t n, unsigned char code) throw(DTMFException);
 
         /*
          * Get next n samples (continues where previous call to
@@ -122,7 +120,7 @@ class DTMFGenerator
          * @param buffer a SFLDataFormat pointer to an allocated buffer
          * @param n      number of sampling to get, should be lower or equal to buffer size
          */
-        void getNextSamples (SFLDataFormat* buffer, size_t n) throw (DTMFException);
+        void getNextSamples(SFLDataFormat* buffer, size_t n) throw(DTMFException);
 
     private:
 
@@ -131,7 +129,7 @@ class DTMFGenerator
          * @param code The code
          * @return SFLDataFormat* The generated data
          */
-        SFLDataFormat* generateSample (unsigned char code) throw (DTMFException);
+        SFLDataFormat* generateSample(unsigned char code) throw(DTMFException);
 };
 
 #endif // DTMFGENERATOR_H

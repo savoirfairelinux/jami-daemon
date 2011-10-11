@@ -31,33 +31,33 @@
 
 #include "../src/dbus/dbus.h"
 
-START_TEST (test_dbus_connect)
+START_TEST(test_dbus_connect)
 {
     GError *error = NULL;
-    fail_unless (dbus_connect (&error) == TRUE, "dbus_connect () returns FALSE");
+    fail_unless(dbus_connect(&error) == TRUE, "dbus_connect () returns FALSE");
 }
 END_TEST
 
 Suite *
-dbus_suite (void)
+dbus_suite(void)
 {
-  Suite *s = suite_create ("D-Bus");
+    Suite *s = suite_create("D-Bus");
 
-  TCase *tc_cases = tcase_create ("D-BUS connection");
-  tcase_add_test (tc_cases, test_dbus_connect);
-  suite_add_tcase (s, tc_cases);
+    TCase *tc_cases = tcase_create("D-BUS connection");
+    tcase_add_test(tc_cases, test_dbus_connect);
+    suite_add_tcase(s, tc_cases);
 
-  return s;
+    return s;
 }
 
 int
-main (void)
+main(void)
 {
-  int number_failed;
-  Suite *s = dbus_suite ();
-  SRunner *sr = srunner_create (s);
-  srunner_run_all (sr, CK_NORMAL);
-  number_failed = srunner_ntests_failed (sr);
-  srunner_free (sr);
-  return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+    int number_failed;
+    Suite *s = dbus_suite();
+    SRunner *sr = srunner_create(s);
+    srunner_run_all(sr, CK_NORMAL);
+    number_failed = srunner_ntests_failed(sr);
+    srunner_free(sr);
+    return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

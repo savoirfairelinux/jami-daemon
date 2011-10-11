@@ -32,21 +32,21 @@
 #include <stdlib.h>
 
 Suite *
-config_suite (void)
+config_suite(void)
 {
-  Suite *s = suite_create ("Config");
+    Suite *s = suite_create("Config");
 
-  return s;
+    return s;
 }
 
 int
-main (void)
+main(void)
 {
-  int number_failed;
-  Suite *s = config_suite ();
-  SRunner *sr = srunner_create (s);
-  srunner_run_all (sr, CK_NORMAL);
-  number_failed = srunner_ntests_failed (sr);
-  srunner_free (sr);
-  return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+    int number_failed;
+    Suite *s = config_suite();
+    SRunner *sr = srunner_create(s);
+    srunner_run_all(sr, CK_NORMAL);
+    number_failed = srunner_ntests_failed(sr);
+    srunner_free(sr);
+    return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

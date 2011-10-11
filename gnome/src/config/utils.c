@@ -34,10 +34,10 @@
 void gnome_main_section_new_with_table(gchar *title, GtkWidget **frame, GtkWidget **table, gint nb_col, gint nb_row)
 {
     PangoAttrList *attrs = pango_attr_list_new();
-    PangoAttribute *attr = pango_attr_weight_new (PANGO_WEIGHT_BOLD);
+    PangoAttribute *attr = pango_attr_weight_new(PANGO_WEIGHT_BOLD);
     attr->start_index = 0;
     attr->end_index = -1;
-    pango_attr_list_insert (attrs, attr);
+    pango_attr_list_insert(attrs, attr);
 
     *frame = gtk_frame_new(title);
     gtk_frame_set_shadow_type(GTK_FRAME(*frame), GTK_SHADOW_NONE);
@@ -50,7 +50,7 @@ void gnome_main_section_new_with_table(gchar *title, GtkWidget **frame, GtkWidge
     GtkWidget *align = gtk_alignment_new(0.08, 0.2, 0.1, 0.1);
     gtk_container_add(GTK_CONTAINER(*frame), align);
 
-    *table = gtk_table_new (nb_col, nb_row, FALSE);
+    *table = gtk_table_new(nb_col, nb_row, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(*table), 2);
     gtk_table_set_col_spacings(GTK_TABLE(*table), 2);
     gtk_widget_show(*table);
@@ -67,7 +67,7 @@ GtkWidget *gnome_main_section_new(const gchar * const title)
     pango_attr_list_insert(attrs, attr);
 
     GtkWidget *frame = gtk_frame_new(title);
-    gtk_frame_set_shadow_type (GTK_FRAME(frame), GTK_SHADOW_NONE);
+    gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_NONE);
     gtk_container_set_border_width(GTK_CONTAINER(frame), 2);
 
     GtkWidget *label = gtk_frame_get_label_widget(GTK_FRAME(frame));

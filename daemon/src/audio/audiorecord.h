@@ -36,8 +36,7 @@
 
 #include "global.h"
 
-class AudioRecord
-{
+class AudioRecord {
 
     public:
         enum FILE_TYPE { FILE_RAW, FILE_WAV };
@@ -54,15 +53,15 @@ class AudioRecord
 
         void setRecordingOption(FILE_TYPE type, int sndSmplRate, const std::string &path);
 
-	/**
-	 * Init recording file path
-	 */
-        void initFileName (std::string peerNumber);
+        /**
+         * Init recording file path
+         */
+        void initFileName(std::string peerNumber);
 
         /**
-	 * Return the filepath of the recording
-	 */
-	std::string getFileName(void);
+        	 * Return the filepath of the recording
+        	 */
+        std::string getFileName(void);
 
         /**
          * Check if no otehr file is opened, then create a new one
@@ -109,21 +108,21 @@ class AudioRecord
          * @param buffer  The data chunk to be recorded
          * @param nSamples Number of samples (number of bytes) to be recorded
          */
-        void recSpkrData (SFLDataFormat* buffer, int nSamples);
+        void recSpkrData(SFLDataFormat* buffer, int nSamples);
 
         /**
          * Record a chunk of data in an internal buffer
          * @param buffer  The data chunk to be recorded
          * @param nSamples Number of samples (number of bytes) to be recorded
          */
-        void recMicData (SFLDataFormat* buffer, int nSamples);
+        void recMicData(SFLDataFormat* buffer, int nSamples);
 
         /**
          * Record a chunk of data in an openend file
          * @param buffer  The data chunk to be recorded
          * @param nSamples Number of samples (number of bytes) to be recorded
          */
-        void recData (SFLDataFormat* buffer, int nSamples);
+        void recData(SFLDataFormat* buffer, int nSamples);
 
         /**
          * Record a chunk of data in an openend file, Mix two differnet buffer
@@ -132,7 +131,7 @@ class AudioRecord
          * @param nSamples_1 Number of samples (number of bytes) of buffer_1
          * @param nSamples_2 Number of samples (number of bytes) of buffer_2
          */
-        void recData (SFLDataFormat* buffer_1, SFLDataFormat* buffer_2, int nSamples_1, int nSamples_2);
+        void recData(SFLDataFormat* buffer_1, SFLDataFormat* buffer_2, int nSamples_1, int nSamples_2);
 
 
     protected:

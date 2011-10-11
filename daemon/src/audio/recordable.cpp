@@ -30,10 +30,10 @@
 #include "recordable.h"
 #include "manager.h"
 
-Recordable::Recordable() : recorder (&recAudio, Manager::instance().getMainBuffer())
+Recordable::Recordable() : recorder(&recAudio, Manager::instance().getMainBuffer())
 {
     _debug("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Recordable Constructor -=-=-=-=-=-=-=-=-=--=-=-=-");
-    recAudio.setRecordingOption (AudioRecord::FILE_WAV, 8000, Manager::instance().audioPreference.getRecordpath());
+    recAudio.setRecordingOption(AudioRecord::FILE_WAV, 8000, Manager::instance().audioPreference.getRecordpath());
 }
 
 
@@ -47,24 +47,24 @@ Recordable::~Recordable()
 }
 
 
-void Recordable::initRecFileName (std::string filename)
+void Recordable::initRecFileName(std::string filename)
 {
-    recAudio.initFileName (filename);
+    recAudio.initFileName(filename);
 }
 
 std::string Recordable::getFileName()
 {
-    return recAudio.getFileName(); 
+    return recAudio.getFileName();
 }
 
-void Recordable::setRecordingSmplRate (int smplRate)
+void Recordable::setRecordingSmplRate(int smplRate)
 {
-    recAudio.setSndSamplingRate (smplRate);
+    recAudio.setSndSamplingRate(smplRate);
 }
 
 int Recordable::getRecordingSmplRate() const
 {
-	return recAudio.getSndSamplingRate();
+    return recAudio.getSndSamplingRate();
 }
 
 

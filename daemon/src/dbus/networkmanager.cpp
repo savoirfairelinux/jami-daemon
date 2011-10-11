@@ -38,25 +38,25 @@
 
 const std::string NetworkManager::statesString[5] = {"unknown", "asleep", "connecting", "connected", "disconnected"};
 
-std::string NetworkManager::stateAsString (const uint32_t& state)
+std::string NetworkManager::stateAsString(const uint32_t& state)
 {
     return statesString[state];
 }
 
-void NetworkManager::StateChanged (const uint32_t& state)
+void NetworkManager::StateChanged(const uint32_t& state)
 {
-    _warn ("Network state changed: %s", stateAsString (state).c_str());
+    _warn("Network state changed: %s", stateAsString(state).c_str());
 }
 
-void NetworkManager::PropertiesChanged (const std::map< std::string, ::DBus::Variant >& argin0)
+void NetworkManager::PropertiesChanged(const std::map< std::string, ::DBus::Variant >& argin0)
 {
     const std::map< std::string, ::DBus::Variant >::const_iterator iter = argin0.begin();
 
-    _warn ("Properties changed: %s", iter->first.c_str());
+    _warn("Properties changed: %s", iter->first.c_str());
 
     Manager::instance().registerAccounts();
 }
 
-NetworkManager::NetworkManager (DBus::Connection& connection, const DBus::Path& dbus_path, const char* destination) : DBus::ObjectProxy (connection, dbus_path, destination)
+NetworkManager::NetworkManager(DBus::Connection& connection, const DBus::Path& dbus_path, const char* destination) : DBus::ObjectProxy(connection, dbus_path, destination)
 {
 }
