@@ -21,8 +21,11 @@
  *    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef LIFETIME_DEFAULT_INL
-#define LIFETIME_DEFAULT_INL
+#ifndef __LIFETIME_DEFAULT_INL__
+#define __LIFETIME_DEFAULT_INL__
+
+#include <cstdlib>
+#include <stdexcept>
 
 template< typename T >
 void 
@@ -35,8 +38,7 @@ template< typename T >
 void
 utilspp::LifetimeDefault< T >::onDeadReference()
 {
-   throw std::logic_error( "Dead reference detected" );
+   throw std::logic_error("Dead reference detected");
 }
 
-
-#endif
+#endif // __LIFETIME_DEFAULT_INL__

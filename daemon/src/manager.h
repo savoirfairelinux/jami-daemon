@@ -32,7 +32,7 @@
 #ifndef SFLPHONE_MANAGER_H
 #define SFLPHONE_MANAGER_H
 
-#include "utilspp/Singleton.hpp"
+#include "utilspp/singleton.hpp"
 #include "managerimpl.h"
 
 typedef utilspp::SingletonHolder<ManagerImpl> Manager;

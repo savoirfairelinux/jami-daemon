@@ -21,9 +21,10 @@
  *    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef SINGLETON_HOLDER_INL
-#define SINGLETON_HOLDER_INL
+#ifndef __SINGLETON_HOLDER_INL__
+#define __SINGLETON_HOLDER_INL__
 
+#include <cassert>
 template
 <
 class T,
@@ -123,4 +124,4 @@ template < class > class M
 >
 bool utilspp::SingletonHolder< T, C, L, M >::mDestroyed;
 
-#endif
+#endif // __SINGLETON_HOLDER_INL__

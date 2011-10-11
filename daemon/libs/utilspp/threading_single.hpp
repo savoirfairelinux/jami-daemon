@@ -21,10 +21,10 @@
  *    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef SINGLE_THREADED_HPP
-#define SINGLE_THREADED_HPP
+#ifndef __THREADING_SINGLE_HPP__
+#define __THREADING_SINGLE_HPP__
 
-#include "NullType.hpp"
+#include "null_type.hpp"
 
 namespace utilspp
 {
@@ -47,6 +47,6 @@ namespace utilspp
       };
 }
 
-#include "ThreadingSingle.inl"
+#include "threading_single.inl"
 
-#endif
+#endif // __THREADING_SINGLE_HPP__

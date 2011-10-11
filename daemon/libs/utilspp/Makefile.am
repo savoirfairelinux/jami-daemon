@@ -3,8 +3,8 @@ SUBDIRS = singleton
 noinst_LTLIBRARIES = libutilspp.la
 
 libutilspp_la_SOURCES = \
-	NullType.hpp \
-	Singleton.hpp \
-	ThreadingSingle.hpp ThreadingSingle.inl
+	null_type.hpp \
+	singleton.hpp \
+	threading_single.hpp threading_single.inl
 
 libutilspp_la_LIBADD = ./singleton/libsingleton.la

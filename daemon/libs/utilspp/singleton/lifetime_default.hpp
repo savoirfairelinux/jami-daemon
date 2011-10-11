@@ -21,30 +21,20 @@
  *    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef SINGLE_THREADED_INL
-#define SINGLE_THREADED_INL
+#ifndef LIFETIME_DEFAULT_HPP
+#define LIFETIME_DEFAULT_HPP
 
-template< typename T >
-inline
-utilspp::ThreadingSingle< T >::lock::lock()
-{}
+namespace utilspp
+{
+   template< typename T >
+   class LifetimeDefault
+   {
+      public:
+         static void scheduleDestruction( T *obj, void (*func)() );
+         static void onDeadReference();
+   };
+}
 
-template< typename T >
-inline
-utilspp::ThreadingSingle< T >::lock::lock( 
-      utilspp::ThreadingSingle< T >::mutex & )
-{}
-
-template< typename T >
-inline
-void
-utilspp::ThreadingSingle< T >::mutex::lock()
-{}
-
-template< typename T >
-inline
-void
-utilspp::ThreadingSingle< T >::mutex::unlock()
-{}
+#include "lifetime_default.inl"
 
 #endif

@@ -21,23 +21,22 @@
  *    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef LIFETIME_DEFAULT_HPP
-#define LIFETIME_DEFAULT_HPP
+#ifndef __CREATION_USING_NEW_HPP__
+#define __CREATION_USING_NEW_HPP__
 
-#include <stdexcept>
-#include <cstdlib>
-
+/**
+ * This class is a creation policy for the utilspp::singleton_holder. The
+ * policy is creating the singleton by a "new" call. 
+ */
 namespace utilspp
 {
    template< typename T >
-   class LifetimeDefault
+   struct CreationUsingNew
    {
-      public:
-         static void scheduleDestruction( T *obj, void (*func)() );
-         static void onDeadReference();
+         static T *create();
+         static void destroy( T *obj );
    };
 }
 
-#include "LifetimeDefault.inl"
-
-#endif
+#include "creation_using_new.inl"
+#endif // __CREATION_USING_NEW_HPP__

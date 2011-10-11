@@ -21,23 +21,30 @@
  *    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef CREATION_USING_NEW_HPP
-#define CREATION_USING_NEW_HPP
+#ifndef __THREADING_SINGLE_INL__
+#define __THREADING_SINGLE_INL__
 
-/**
- * This class is a creation policy for the utilspp::singleton_holder. The
- * policy is creating the singleton by a "new" call. 
- */
-namespace utilspp
-{
-   template< typename T >
-   struct CreationUsingNew
-   {
-         static T *create();
-         static void destroy( T *obj );
-   };
-}
+template< typename T >
+inline
+utilspp::ThreadingSingle< T >::lock::lock()
+{}
 
-#include "CreationUsingNew.inl"
+template< typename T >
+inline
+utilspp::ThreadingSingle< T >::lock::lock( 
+      utilspp::ThreadingSingle< T >::mutex & )
+{}
 
-#endif
+template< typename T >
+inline
+void
+utilspp::ThreadingSingle< T >::mutex::lock()
+{}
+
+template< typename T >
+inline
+void
+utilspp::ThreadingSingle< T >::mutex::unlock()
+{}
+
+#endif // __THREADING_SINGLE_INL__

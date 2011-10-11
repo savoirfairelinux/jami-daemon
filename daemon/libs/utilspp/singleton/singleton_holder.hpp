@@ -21,14 +21,12 @@
  *    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef SINGLETON_HOLDER_HPP
-#define SINGLETON_HOLDER_HPP
+#ifndef __SINGLETON_HOLDER_HPP__
+#define __SINGLETON_HOLDER_HPP__
 
-#include <cassert>
-
-#include "CreationUsingNew.hpp"
-#include "LifetimeDefault.hpp"
-#include "../ThreadingSingle.hpp"
+#include "creation_using_new.hpp"
+#include "lifetime_default.hpp"
+#include "../threading_single.hpp"
 
 namespace utilspp
 {
@@ -60,6 +58,6 @@ namespace utilspp
 
 }
 
-#include "SingletonHolder.inl"
+#include "singleton_holder.inl"
 
 #endif
