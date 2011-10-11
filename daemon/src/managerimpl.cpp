@@ -2065,13 +2065,16 @@ void ManagerImpl::setRecordingCall (const std::string& id)
     } else {
         _debug ("Manager: Set recording for conference %s", id.c_str());
         ConferenceMap::const_iterator it(_conferencemap.find(id));
-        Conference *conf = it->second;
-        if (rec->isRecording())
-        	conf->setState(Conference::ACTIVE_ATTACHED);
-        else
-        	conf->setState(Conference::ACTIVE_ATTACHED_REC);
-
-        rec = conf;
+        if (it != _conferencemap.end()) {
+            Conference *conf = it->second;
+            if (conf) {
+                rec = conf;
+                if (rec->isRecording())
+                    conf->setState(Conference::ACTIVE_ATTACHED);
+                else
+                    conf->setState(Conference::ACTIVE_ATTACHED_REC);
+            }
+        }
     }
 
     if (rec == NULL) {
