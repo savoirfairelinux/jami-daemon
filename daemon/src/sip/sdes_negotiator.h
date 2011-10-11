@@ -27,8 +27,8 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#ifndef __SFL_SDES_NEGOTIATOR_H__
-#define __SFL_SDES_NEGOTIATOR_H__
+#ifndef __SDES_NEGOTIATOR_H__
+#define __SDES_NEGOTIATOR_H__
 
 #include <stdexcept>
 #include <string>
@@ -254,4 +254,4 @@ class SdesNegotiator {
         std::vector<CryptoAttribute *> parse(void);
 };
 }
-#endif
+#endif // __SDES_NEGOTIATOR_H__

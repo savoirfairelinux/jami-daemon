@@ -44,7 +44,7 @@
 #include "sipcall.h"
 #include "sipaccount.h"
 #include "eventthread.h"
-#include "SdesNegotiator.h"
+#include "sdes_negotiator.h"
 
 #include "dbus/dbusmanager.h"
 #include "dbus/callmanager.h"

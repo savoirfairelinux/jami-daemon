@@ -36,7 +36,7 @@
 #include <ccrtp/CryptoContext.h>
 #include "audio_rtp_session.h"
 
-#include "sip/SdesNegotiator.h"
+#include "sip/sdes_negotiator.h"
 
 class SdesNegotiator;
 class SIPCall;

@@ -41,6 +41,8 @@
 #include <sstream>
 
 #include "sdesnegotiatortest.h"
+#include "sip/pattern.h"
+#include "sip/sdes_negotiator.h"
 
 #include <unistd.h>
 #include "global.h"

@@ -34,8 +34,6 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
-#include <assert.h>
-
 #include <cstddef>
 #include <stdio.h>
 #include <sstream>
@@ -50,20 +48,19 @@
 #include <pjlib-util.h>
 #include <pjnath/stun_config.h>
 
-// Application import
-#include "sip/SdesNegotiator.h"
-#include "sip/Pattern.h"
-
-
 /*
  * @file sdesnegotiationTest.cpp
  * @brief       Regroups unitary tests related to the plugin manager.
  */
 
-#ifndef _SDESNEGOTIATOR_TEST_
-#define _SDESNEGOTIATOR_TEST_
+#ifndef __SDESNEGOTIATOR_TEST_H__
+#define __SDESNEGOTIATOR_TEST_H__
 
+#include "sip/sdes_negotiator.h" // for CryptoSuiteDefinition
 
+namespace sfl {
+    class Pattern;
+}
 
 class SdesNegotiatorTest : public CppUnit::TestCase {
 
@@ -119,4 +116,4 @@ class SdesNegotiatorTest : public CppUnit::TestCase {
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(SdesNegotiatorTest, "SdesNegotiatorTest");
 CPPUNIT_TEST_SUITE_REGISTRATION(SdesNegotiatorTest);
 
-#endif
+#endif // __SDESNEGOTIATOR_TEST_H__

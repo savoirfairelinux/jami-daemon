@@ -32,7 +32,7 @@
 
 #include "audio_rtp_session.h"
 #include "audio_symmetric_rtp_session.h"
-#include "sip/SdesNegotiator.h"
+#include "sip/sdes_negotiator.h"
 
 #include <ccrtp/CryptoContext.h>
 #include <vector>

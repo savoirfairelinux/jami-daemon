@@ -28,9 +28,8 @@
  *  as that of the covered work.
  */
 
-#include "SdesNegotiator.h"
-
-#include "Pattern.h"
+#include "sdes_negotiator.h"
+#include "pattern.h"
 
 #include <cstdio>
 #include <iostream>

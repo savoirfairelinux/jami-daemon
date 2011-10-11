@@ -27,7 +27,7 @@
  *  as that of the covered work.
  */
 
-#include "Pattern.h"
+#include "pattern.h"
 #include <sstream>
 #include <cstdio>
 

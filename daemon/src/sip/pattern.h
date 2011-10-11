@@ -26,8 +26,8 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#ifndef __SFL_PATTERN_H__
-#define __SFL_PATTERN_H__
+#ifndef __PATTERN_H__
+#define __PATTERN_H__
 
 #include <stdexcept>
 #include <string>
@@ -345,4 +345,4 @@ class Pattern {
 }
 
 
-#endif
+#endif // __PATTERN_H__ // __PATTERN_H__ // __PATTERN_H__ // __PATTERN_H__

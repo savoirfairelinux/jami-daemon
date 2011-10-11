@@ -3,16 +3,14 @@ include $(top_srcdir)/globals.mak
 noinst_LTLIBRARIES = libsiplink.la
 
 libsiplink_la_SOURCES = \
-		Pattern.cpp \
-		SdesNegotiator.cpp \
+		pattern.cpp \
+		sdes_negotiator.cpp \
 		sdp.cpp \
 		sipaccount.cpp \
 		sipcall.cpp \
-		sipvoiplink.cpp
-
-noinst_HEADERS = \
-		Pattern.h \
-		SdesNegotiator.h \
+		sipvoiplink.cpp \
+		pattern.h \
+		sdes_negotiator.h \
 		sdp.h \
 		sipaccount.h \
 		sipcall.h \

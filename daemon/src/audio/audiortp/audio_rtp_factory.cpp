@@ -38,7 +38,7 @@
 #include "sip/sdp.h"
 #include "sip/sipcall.h"
 #include "sip/sipaccount.h"
-#include "sip/SdesNegotiator.h"
+#include "sip/sdes_negotiator.h"
 
 namespace sfl {
 
