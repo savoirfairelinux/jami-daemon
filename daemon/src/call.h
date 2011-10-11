@@ -37,17 +37,12 @@
 
 #include "audio/recordable.h"
 
-#define SIP_SCHEME       "sip:"
-#define SIPS_SCHEME      "sips:"
-
-#define CallConfigNULL   0
-
 /*
  * @file call.h
  * @brief A call is the base class for protocol-based calls
  */
 
-class Call: public Recordable {
+class Call : public Recordable {
     public:
         static const char * const DEFAULT_ID;
 
@@ -90,7 +85,7 @@ class Call: public Recordable {
          * @return call id
          */
         std::string getCallId() const {
-            return _id;
+            return id_;
         }
 
         /**
@@ -98,15 +93,15 @@ class Call: public Recordable {
              * @return call id
              */
         std::string getConfId() const {
-            return _confID;
+            return confID_;
         }
 
         void setConfId(const std::string &id) {
-            _confID = id;
+            confID_ = id;
         }
 
-        CallType getCallType(void) const {
-            return _type;
+        CallType getCallType() const {
+            return type_;
         }
 
         /**
@@ -115,7 +110,7 @@ class Call: public Recordable {
          * @param number peer number
          */
         void setPeerNumber(const std::string& number) {
-            _peerNumber = number;
+            peerNumber_ = number;
         }
 
         /**
@@ -123,8 +118,8 @@ class Call: public Recordable {
          * not protected by mutex (when created)
          * @return std::string The peer number
          */
-        const std::string& getPeerNumber() const {
-            return _peerNumber;
+        std::string getPeerNumber() const {
+            return peerNumber_;
         }
 
         /**
@@ -133,7 +128,7 @@ class Call: public Recordable {
          * @param name The peer name
          */
         void setPeerName(const std::string& name) {
-            _peerName = name;
+            peerName_ = name;
         }
 
         /**
@@ -141,8 +136,8 @@ class Call: public Recordable {
          * not protected by mutex (when created)
          * @return std::string The peer name
          */
-        const std::string& getPeerName() const {
-            return _peerName;
+        std::string getPeerName() const {
+            return peerName_;
         }
 
         /**
@@ -151,7 +146,7 @@ class Call: public Recordable {
              * @return std::string The peer display name
              */
         void setDisplayName(const std::string& name) {
-            _displayName = name;
+            displayName_ = name;
         }
 
         /**
@@ -160,7 +155,7 @@ class Call: public Recordable {
              * @return std::string The peer name
              */
         const std::string& getDisplayName() const {
-            return _displayName;
+            return displayName_;
         }
 
         /**
@@ -169,7 +164,7 @@ class Call: public Recordable {
          *	      false otherwise
          */
         bool isIncoming() {
-            return _type == Incoming;
+            return type_ == Incoming;
         }
 
         /**
@@ -199,11 +194,11 @@ class Call: public Recordable {
         std::string getStateStr();
 
         void setCallConfiguration(Call::CallConfiguration callConfig) {
-            _callConfig = callConfig;
+            callConfig_ = callConfig;
         }
 
-        Call::CallConfiguration getCallConfiguration(void) const {
-            return _callConfig;
+        Call::CallConfiguration getCallConfiguration() const {
+            return callConfig_;
         }
 
         /**
@@ -211,7 +206,7 @@ class Call: public Recordable {
          * @param ip  The local IP address
          */
         void setLocalIp(const std::string& ip)     {
-            _localIPAddress = ip;
+            localIPAddress_ = ip;
         }
 
         /**
@@ -219,14 +214,14 @@ class Call: public Recordable {
          * @param port  The local audio port
          */
         void setLocalAudioPort(unsigned int port)  {
-            _localAudioPort = port;
+            localAudioPort_ = port;
         }
 
         /**
          * Return my IP [mutex protected]
          * @return std::string The local IP
          */
-        const std::string& getLocalIp();
+        std::string getLocalIp();
 
         /**
          * Return port used locally (for my machine) [mutex protected]
@@ -234,57 +229,54 @@ class Call: public Recordable {
          */
         unsigned int getLocalAudioPort();
 
-        std::string getRecFileId(void) const {
+        std::string getRecFileId() const {
             return getPeerName();
         }
 
-        std::string getFileName(void) const {
-            return _peerNumber;
+        std::string getFileName() const {
+            return peerNumber_;
         }
 
-        virtual bool setRecording(void);
+        virtual bool setRecording();
 
     private:
         /** Protect every attribute that can be changed by two threads */
-        ost::Mutex _callMutex;
+        ost::Mutex callMutex_;
 
         // Informations about call socket / audio
 
         /** My IP address */
-        std::string  _localIPAddress;
+        std::string localIPAddress_;
 
         /** Local audio port, as seen by me. */
-        unsigned int _localAudioPort;
+        unsigned int localAudioPort_;
 
         /** Unique ID of the call */
-        std::string _id;
+        std::string id_;
 
         /** Unique conference ID, used exclusively in case of a conferece */
-        std::string _confID;
+        std::string confID_;
 
         /** Type of the call */
-        CallType _type;
+        CallType type_;
 
         /** Disconnected/Progressing/Trying/Ringing/Connected */
-        ConnectionState _connectionState;
+        ConnectionState connectionState_;
 
         /** Inactive/Active/Hold/Busy/Refused/Error */
-        CallState _callState;
+        CallState callState_;
 
         /** Direct IP-to-IP or classic call */
-        CallConfiguration _callConfig;
+        CallConfiguration callConfig_;
 
         /** Name of the peer */
-        std::string _peerName;
+        std::string peerName_;
 
         /** Number of the peer */
-        std::string _peerNumber;
+        std::string peerNumber_;
 
         /** Display Name */
-        std::string _displayName;
-
-        /** File name for his call, should be peer number */
-        std::string _filename;
+        std::string displayName_;
 };
 
 #endif

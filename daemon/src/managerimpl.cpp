@@ -208,6 +208,9 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
 
     std::string to_cleaned(NumberCleaner::clean(to, prefix));
 
+    static const char * const SIP_SCHEME = "sip:";
+    static const char * const SIPS_SCHEME = "sips:";
+
     Call::CallConfiguration callConfig = (to_cleaned.find(SIP_SCHEME) == 0 or to_cleaned.find(SIPS_SCHEME) == 0) ? Call::IPtoIP : Call::Classic;
 
     associateConfigToCall(call_id, callConfig);
@@ -2890,7 +2893,7 @@ void ManagerImpl::setHookSettings(const std::map<std::string, std::string>& sett
 bool ManagerImpl::associateConfigToCall(const std::string& callID,
                                         Call::CallConfiguration config)
 {
-    if (getConfigFromCall(callID) == CallConfigNULL) {  // nothing with the same ID
+    if (getConfigFromCall(callID) == 0) {  // nothing with the same ID
         callConfigMap_[callID] = config;
         _debug("Manager: Associate call %s with config %d", callID.c_str(), config);
         return true;
@@ -2903,7 +2906,7 @@ Call::CallConfiguration ManagerImpl::getConfigFromCall(const std::string& callID
     CallConfigMap::const_iterator iter = callConfigMap_.find(callID);
 
     if (iter == callConfigMap_.end())
-        return (Call::CallConfiguration) CallConfigNULL;
+        return (Call::CallConfiguration) 0;
     else
         return iter->second;
 }

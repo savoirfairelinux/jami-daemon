@@ -223,25 +223,25 @@ class Account : public Serializable {
         void setRegistrationState(const RegistrationState &state);
 
         /* They should be treated like macro definitions by the C++ compiler */
-        std::string getUsername(void) const {
+        std::string getUsername() const {
             return username_;
         }
 
-        std::string getHostname(void) const {
+        std::string getHostname() const {
             return hostname_;
         }
         void setHostname(const std::string &hostname) {
             hostname_ = hostname;
         }
 
-        std::string getAlias(void) const {
+        std::string getAlias() const {
             return alias_;
         }
         void setAlias(const std::string &alias) {
             alias_ = alias;
         }
 
-        std::string getType(void) const {
+        std::string getType() const {
             return type_;
         }
         void setType(const std::string &type) {
@@ -252,7 +252,7 @@ class Account : public Serializable {
          * Accessor to data structures
          * @return CodecOrder& The list that reflects the user's choice
          */
-        const CodecOrder& getActiveCodecs(void) const {
+        const CodecOrder& getActiveCodecs() const {
             return codecOrder_;
         }
 
@@ -262,28 +262,28 @@ class Account : public Serializable {
          */
         void setActiveCodecs(const std::vector <std::string>& list);
 
-        std::string getRingtonePath(void) const {
+        std::string getRingtonePath() const {
             return ringtonePath_;
         }
         void setRingtonePath(const std::string &path) {
             ringtonePath_ = path;
         }
 
-        bool getRingtoneEnabled(void) const {
+        bool getRingtoneEnabled() const {
             return ringtoneEnabled_;
         }
         void setRingtoneEnabled(bool enable) {
             ringtoneEnabled_ = enable;
         }
 
-        std::string getDisplayName(void) const {
+        std::string getDisplayName() const {
             return displayName_;
         }
         void setDisplayName(const std::string &name) {
             displayName_ = name;
         }
 
-        std::string getMailBox(void) const {
+        std::string getMailBox() const {
             return mailBox_;
         }
 
@@ -302,7 +302,7 @@ class Account : public Serializable {
          * Helper function used to load the default codec order from the codec factory
          * setActiveCodecs is called to sync both codecOrder_ and codecStr_
          */
-        void loadDefaultCodecs(void);
+        void loadDefaultCodecs();
 
     protected:
         static std::string mapStateNumberToString(RegistrationState state);

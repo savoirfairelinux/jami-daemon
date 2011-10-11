@@ -48,7 +48,7 @@ class EventThread : public ost::Thread {
          */
         EventThread(VoIPLink* link);
 
-        ~EventThread(void) {
+        ~EventThread() {
             terminate();
         }
 
@@ -59,7 +59,7 @@ class EventThread : public ost::Thread {
         EventThread& operator= (const EventThread& rh); // assignment operator
 
         /** VoIPLink is the object being called by getEvents() method  */
-        VoIPLink*	_link;
+        VoIPLink*	link_;
 };
 
 #endif // __EVENT_THREAD_H__
