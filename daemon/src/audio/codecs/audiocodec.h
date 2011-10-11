@@ -36,7 +36,7 @@
 #include <iostream>
 #include <dlfcn.h>
 
-#include "Codec.h"
+#include "codec.h"
 
 // We assume all decoders will be fed 20ms of audio or less
 // And we'll resample them to 44.1kHz or less
