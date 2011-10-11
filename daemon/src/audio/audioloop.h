@@ -90,7 +90,7 @@ class AudioLoop {
         AudioLoop(const AudioLoop& rh);
 
         // Assignment Operator
-        AudioLoop& operator= (const AudioLoop& rh);
+        const AudioLoop& operator= (const AudioLoop& rh);
 };
 
 #endif // __AUDIOLOOP_H__

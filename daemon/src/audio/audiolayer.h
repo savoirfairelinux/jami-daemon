@@ -31,8 +31,8 @@
  *  as that of the covered work.
  */
 
-#ifndef _AUDIO_LAYER_H
-#define _AUDIO_LAYER_H
+#ifndef __AUDIO_LAYER_H__
+#define __AUDIO_LAYER_H__
 
 #include <cc++/thread.h> // for ost::Mutex
 #include <sys/time.h>
@@ -59,7 +59,7 @@ class AudioLayer {
         AudioLayer(const AudioLayer& rh);
 
         // assignment operator
-        AudioLayer& operator= (const AudioLayer& rh);
+        const AudioLayer& operator= (const AudioLayer& rh);
 
     public:
         /**
@@ -70,23 +70,23 @@ class AudioLayer {
         /**
          * Destructor
          */
-        virtual ~AudioLayer(void);
+        virtual ~AudioLayer();
 
         /**
          * Start the capture stream and prepare the playback stream.
          * The playback starts accordingly to its threshold
          * ALSA Library API
          */
-        virtual void startStream(void) = 0;
+        virtual void startStream() = 0;
 
         /**
          * Stop the playback and capture streams.
          * Drops the pending frames and put the capture and playback handles to PREPARED state
          * ALSA Library API
          */
-        virtual void stopStream(void) = 0;
+        virtual void stopStream() = 0;
 
-        bool isStarted(void) const {
+        bool isStarted() const {
             return isStarted_;
         }
 
@@ -98,9 +98,9 @@ class AudioLayer {
          */
         void putUrgent(void* buffer, int toCopy);
 
-        void flushMain(void);
+        void flushMain();
 
-        void flushUrgent(void);
+        void flushUrgent();
 
 
         /**
@@ -115,11 +115,11 @@ class AudioLayer {
         /**
          * Get the mutex lock for the entire audio layer
          */
-        ost::Mutex* getMutexLock(void) {
+        ost::Mutex* getMutexLock() {
             return &mutex_;
         }
 
-        void notifyincomingCall(void);
+        void notifyincomingCall();
 
     protected:
 

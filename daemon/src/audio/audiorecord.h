@@ -49,7 +49,7 @@ class AudioRecord {
         /**
          * Get the recrding sampling rate
          */
-        int getSndSamplingRate(void) const;
+        int getSndSamplingRate() const;
 
         void setRecordingOption(FILE_TYPE type, int sndSmplRate, const std::string &path);
 
@@ -61,7 +61,7 @@ class AudioRecord {
         /**
         	 * Return the filepath of the recording
         	 */
-        std::string getFileName(void);
+        std::string getFileName();
 
         /**
          * Check if no otehr file is opened, then create a new one
@@ -83,14 +83,14 @@ class AudioRecord {
         bool isOpenFile();
 
         /**
-         * Check if a file already exist
+         * Check if a file already exists
          */
-        bool isFileExist();
+        bool fileExists();
 
         /**
          * Check recording state
          */
-        bool isRecording();
+        bool isRecording() const;
 
         /**
          * Set recording flag
@@ -170,7 +170,7 @@ class AudioRecord {
         /**
          * Pointer to the recorded file
          */
-        FILE *fp;                      //file pointer
+        FILE *fileHandle_;
 
         /**
          * File format (RAW / WAVE)
