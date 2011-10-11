@@ -187,7 +187,7 @@ class Account : public Serializable {
          * Get the voiplink pointer
          * @return VoIPLink* the pointer or 0
          */
-        VoIPLink* getVoIPLink() const {
+        VoIPLink* getVoIPLink() {
             return link_;
         }
 

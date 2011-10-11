@@ -49,9 +49,7 @@ class Conference: public Recordable {
         /**
          * Return the conference id
          */
-        std::string getConfID() const {
-            return _id;
-        }
+        std::string getConfID() const;
 
         /**
          * Return the current conference state
@@ -66,7 +64,7 @@ class Conference: public Recordable {
         /**
          * Return a string description of the conference state
          */
-        std::string getStateStr();
+        std::string getStateStr() const;
 
         /**
          * Add a new participant to the conference
@@ -91,31 +89,18 @@ class Conference: public Recordable {
         /**
          * Get recording file ID
          */
-        std::string getRecFileId() const {
-            return getConfID();
-        }
+        std::string getRecFileId() const;
 
         /**
          * Start/stop recording toggle
          */
         virtual bool setRecording();
-
     private:
+        std::string id_;
 
-        /**
-         * Unique ID of the conference
-         */
-        std::string _id;
+        ConferenceState confState_;
 
-        /**
-         * Conference state
-         */
-        ConferenceState _confState;
-
-        /**
-         * List of participant ids
-         */
-        ParticipantSet _participants;
+        ParticipantSet participants_;
 };
 
 #endif

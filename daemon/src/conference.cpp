@@ -37,45 +37,45 @@
 #include "audio/mainbuffer.h"
 
 Conference::Conference()
-    : _id(Manager::instance().getNewCallID())
-    , _confState(ACTIVE_ATTACHED)
+    : id_(Manager::instance().getNewCallID())
+    , confState_(ACTIVE_ATTACHED)
 {
-    Recordable::initRecFileName(_id);
+    Recordable::initRecFileName(id_);
 }
 
 int Conference::getState() const
 {
-    return _confState;
+    return confState_;
 }
 
 void Conference::setState(ConferenceState state)
 {
-    _confState = state;
+    confState_ = state;
 }
 
 void Conference::add(const std::string &participant_id)
 {
-    _participants.insert(participant_id);
+    participants_.insert(participant_id);
 }
 
 void Conference::remove(const std::string &participant_id)
 {
-    _participants.erase(participant_id);
+    participants_.erase(participant_id);
 }
 
 void Conference::bindParticipant(const std::string &participant_id)
 {
-    for (ParticipantSet::iterator iter = _participants.begin();
-            iter != _participants.end(); ++iter)
+    for (ParticipantSet::iterator iter = participants_.begin();
+            iter != participants_.end(); ++iter)
         if (participant_id != *iter)
             Manager::instance().getMainBuffer()->bindCallID(participant_id, *iter);
 
     Manager::instance().getMainBuffer()->bindCallID(participant_id);
 }
 
-std::string Conference::getStateStr()
+std::string Conference::getStateStr() const
 {
-    switch (_confState) {
+    switch (confState_) {
         case ACTIVE_ATTACHED:
             return "ACTIVE_ATTACHED";
         case ACTIVE_DETACHED:
@@ -95,7 +95,7 @@ std::string Conference::getStateStr()
 
 ParticipantSet Conference::getParticipantList() const
 {
-    return _participants;
+    return participants_;
 }
 
 bool Conference::setRecording()
@@ -105,19 +105,18 @@ bool Conference::setRecording()
     Recordable::recAudio.setRecording();
     MainBuffer *mbuffer = Manager::instance().getMainBuffer();
 
-    ParticipantSet::iterator iter;
-    std::string process_id = Recordable::recorder.getRecorderID();
+    std::string process_id(Recordable::recorder.getRecorderID());
 
     // start recording
     if (!recordStatus) {
-        for (iter = _participants.begin(); iter != _participants.end(); ++iter)
+        for (ParticipantSet::const_iterator iter = participants_.begin(); iter != participants_.end(); ++iter)
             mbuffer->bindHalfDuplexOut(process_id, *iter);
 
         mbuffer->bindHalfDuplexOut(process_id);
 
         Recordable::recorder.start();
     } else {
-        for (iter = _participants.begin(); iter != _participants.end(); ++iter)
+        for (ParticipantSet::const_iterator iter = participants_.begin(); iter != participants_.end(); ++iter)
             mbuffer->unBindHalfDuplexOut(process_id, *iter);
 
         mbuffer->unBindHalfDuplexOut(process_id);
@@ -125,3 +124,12 @@ bool Conference::setRecording()
 
     return recordStatus;
 }
+
+std::string Conference::getRecFileId() const {
+    return getConfID();
+}
+
+std::string Conference::getConfID() const {
+    return id_;
+}
+

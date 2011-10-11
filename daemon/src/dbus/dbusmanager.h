@@ -43,23 +43,23 @@ class DBusManager {
         DBusManager();
         ~DBusManager();
 
-        CallManager * getCallManager() const {
-            return _callManager;
+        CallManager * getCallManager() {
+            return callManager_;
         };
-        ConfigurationManager * getConfigurationManager() const {
-            return _configurationManager;
+        ConfigurationManager * getConfigurationManager() {
+            return configurationManager_;
         };
 
         void exec();
         void exit();
 
     private:
-        CallManager*          _callManager;
-        ConfigurationManager* _configurationManager;
-        Instance*             _instanceManager;
-        DBus::BusDispatcher   _dispatcher;
+        CallManager*          callManager_;
+        ConfigurationManager* configurationManager_;
+        Instance*             instanceManager_;
+        DBus::BusDispatcher   dispatcher_;
 #if USE_NETWORKMANAGER
-        NetworkManager* _networkManager;
+        NetworkManager* networkManager_;
 #endif
 };
 
