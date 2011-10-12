@@ -81,11 +81,9 @@ bool HistoryManager::save_history(void)
 
 bool HistoryManager::load_history_from_file(Conf::ConfigTree *history_list)
 {
-    int exist;
-
     _debug("HistoryManager: Load history from file %s", _history_path.c_str());
 
-    exist = history_list->populateFromFile(_history_path.c_str());
+    int exist = history_list->populateFromFile(_history_path.c_str());
     _history_loaded = (exist == 2) ? false : true;
 
     return _history_loaded;

@@ -29,8 +29,8 @@
  *  as that of the covered work.
  */
 
-#ifndef __CONFIG_CONFIG_H_
-#define __CONFIG_CONFIG_H_
+#ifndef __CONF_CONFIG_H__
+#define __CONF_CONFIG_H__
 
 #include <map>
 #include <string>
@@ -50,17 +50,6 @@ typedef std::map<std::string, ItemMap*> SectionMap;
 typedef std::list<std::string> TokenList;
 
 class ConfigTreeItemException {
-
-    public:
-        /**
-         * Constructor
-         * */
-        ConfigTreeItemException() {}
-
-        /**
-         * Destructor
-         * */
-        ~ConfigTreeItemException() {}
 };
 
 class ConfigTree;
@@ -79,7 +68,7 @@ class ConfigTreeIterator {
          * @return TokenList
          */
         const TokenList& end() const {
-            return _endToken;
+            return endToken_;
         }
 
         /**
@@ -89,23 +78,21 @@ class ConfigTreeIterator {
         TokenList next();
 
     private:
-
         friend class ConfigTree;
-        ConfigTreeIterator(ConfigTree *configTree) : _tree(configTree), _endToken(), _iter(), _iterItem() {}
+        ConfigTreeIterator(ConfigTree *configTree) : tree_(configTree), endToken_(), iter_(), iterItem_() {}
 
         ConfigTreeIterator(const Conf::ConfigTreeIterator&);
         ConfigTreeIterator& operator= (const Conf::ConfigTreeIterator&);
 
-        ConfigTree* _tree;
-        TokenList _endToken;
-        SectionMap::iterator _iter;
-        ItemMap::iterator _iterItem;
+        ConfigTree* tree_;
+        TokenList endToken_;
+        SectionMap::iterator iter_;
+        ItemMap::iterator iterItem_;
 };
 
 class ConfigTree {
-
     public:
-        ConfigTree();
+        ConfigTree() {}
         ~ConfigTree();
         /**
          * Add a default value for a given key.
@@ -119,7 +106,7 @@ class ConfigTree {
                           value for a given key.
            @param token   A default key/value pair.
          */
-        void addDefaultValue(const std::pair<std::string, std::string>& token, std::string section = std::string(""));
+        void addDefaultValue(const std::pair<std::string, std::string>& token, std::string section = "");
 
         void createSection(const std::string& section);
         void removeSection(const std::string& section);
@@ -178,12 +165,15 @@ class ConfigTree {
         /**
          * List of sections. Each sections has an ItemList as child
          */
-        SectionMap _sections;
+        SectionMap sections_;
 
-        std::map<std::string, std::string> _defaultValueMap;
+        std::map<std::string, std::string> defaultValueMap_;
 
         friend class ConfigTreeIterator;
 
+        // noncopyable
+        ConfigTree(const ConfigTree &other);
+        ConfigTree& operator=(const ConfigTree &other);
     public:
         ConfigTreeIterator createIterator() {
             return ConfigTreeIterator(this);
@@ -193,46 +183,44 @@ class ConfigTree {
 class ConfigTreeItem {
 
     public:
-        ConfigTreeItem() : _name(""), _value(""), _defaultValue(""), _type("string") {}
+        ConfigTreeItem() : name_(""), value_(""), defaultValue_(""), type_("string") {}
 
         // defaultvalue = value
         ConfigTreeItem(const std::string& name, const std::string& value, const std::string& type) :
-            _name(name), _value(value),
-            _defaultValue(value), _type(type) {}
+            name_(name), value_(value),
+            defaultValue_(value), type_(type) {}
 
         ConfigTreeItem(const std::string& name, const std::string& value, const std::string& defaultValue, const std::string& type) :
-            _name(name), _value(value),
-            _defaultValue(defaultValue), _type(type) {}
-
-        ~ConfigTreeItem() {}
+            name_(name), value_(value),
+            defaultValue_(defaultValue), type_(type) {}
 
         void setValue(const std::string& value) {
-            _value = value;
+            value_ = value;
         }
 
         const std::string getName() const {
-            return _name;
+            return name_;
         }
 
         const std::string getValue() const  {
-            return _value;
+            return value_;
         }
 
         const std::string getDefaultValue() const  {
-            return _defaultValue;
+            return defaultValue_;
         }
 
         const std::string getType() const  {
-            return _type;
+            return type_;
         }
 
     private:
-        std::string _name;
-        std::string _value;
-        std::string _defaultValue;
-        std::string _type;
+        std::string name_;
+        std::string value_;
+        std::string defaultValue_;
+        std::string type_;
 };
 
 } // end namespace ConfigTree
 
-#endif
+#endif // __CONFIG_CONFIG_H__
