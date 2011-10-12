@@ -64,21 +64,21 @@ class SIPCall : public Call {
         /**
          * Return the local SDP session
          */
-        Sdp* getLocalSDP(void) {
+        Sdp* getLocalSDP() {
             return local_sdp_;
         }
 
         /**
          * Returns a pointer to the AudioRtp object
          */
-        sfl::AudioRtpFactory * getAudioRtp(void) {
-            return &_audiortp;
+        sfl::AudioRtpFactory & getAudioRtp() {
+            return audiortp_;
         }
 
         /**
          * Return the local memory pool for this call
          */
-        pj_pool_t *getMemoryPool(void) {
+        pj_pool_t *getMemoryPool() {
             return pool_;
         }
 
@@ -98,7 +98,7 @@ class SIPCall : public Call {
         /**
          * Audio Rtp Session factory
          */
-        sfl::AudioRtpFactory _audiortp;
+        sfl::AudioRtpFactory audiortp_;
 
         /**
          * The pool to allocate memory, released once call hang up

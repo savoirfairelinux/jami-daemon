@@ -74,7 +74,7 @@ class Sdp {
         /**
          * Accessor for the internal memory pool
          */
-        pj_pool_t *getMemoryPool(void) const {
+        pj_pool_t *getMemoryPool() const {
             return memPool_;
         }
 
@@ -83,7 +83,7 @@ class Sdp {
          *
          *  @return The structure that describes a SDP session
          */
-        pjmedia_sdp_session *getLocalSdpSession(void) {
+        pjmedia_sdp_session *getLocalSdpSession() {
             return localSession_;
         }
 
@@ -92,7 +92,7 @@ class Sdp {
          *
          * @return The structure that describe the SDP session
          */
-        pjmedia_sdp_session *getRemoteSdpSession(void) {
+        pjmedia_sdp_session *getRemoteSdpSession() {
             return remoteSession_;
         }
 
@@ -108,7 +108,7 @@ class Sdp {
          *
          * @return pjmedia_sdp_session  The negotiated offer
          */
-        pjmedia_sdp_session* getActiveLocalSdpSession(void) {
+        pjmedia_sdp_session* getActiveLocalSdpSession() {
             return activeLocalSession_;
         }
 
@@ -124,7 +124,7 @@ class Sdp {
          *
          * @return pjmedia_sdp_session  The negotiated offer
          */
-        pjmedia_sdp_session* getActiveRemoteSdpSession(void) {
+        pjmedia_sdp_session* getActiveRemoteSdpSession() {
             return activeRemoteSession_;
         }
 
@@ -132,13 +132,13 @@ class Sdp {
         /**
          * Return whether or not the media have been determined for this sdp session
          */
-        bool hasSessionMedia(void) const;
+        bool hasSessionMedia() const;
 
         /**
          * Return the codec of the first media after negotiation
          * @throw SdpException
          */
-        sfl::AudioCodec* getSessionMedia(void) const;
+        sfl::AudioCodec* getSessionMedia() const;
 
         /*
          * On building an invite outside a dialog, build the local offer and create the
@@ -158,17 +158,17 @@ class Sdp {
         /**
          * Start the sdp negotiation.
          */
-        void startNegotiation(void);
+        void startNegotiation();
 
         /**
          * Remove all media in the session media vector.
          */
-        void cleanSessionMedia(void);
+        void cleanSessionMedia();
 
         /**
          * Remove all media in local media capability vector
          */
-        void cleanLocalMediaCapabilities(void);
+        void cleanLocalMediaCapabilities();
 
         /*
          * Write accessor. Set the local IP address that will be used in the sdp session
@@ -180,7 +180,7 @@ class Sdp {
         /*
          * Read accessor. Get the local IP address
          */
-        std::string getLocalIP(void) const {
+        std::string getLocalIP() const {
             return localIpAddr_;
         }
 
@@ -194,7 +194,7 @@ class Sdp {
         /**
          * @return The published audio port
          */
-        int  getLocalPublishedAudioPort(void) const {
+        int  getLocalPublishedAudioPort() const {
             return localAudioPort_;
         }
 
@@ -271,7 +271,7 @@ class Sdp {
 
         void setMediaTransportInfoFromRemoteSdp();
 
-        std::string getCodecName(void) const;
+        std::string getCodecName() const;
 
         void receivingAnswerAfterInitialOffer(const pjmedia_sdp_session* remote);
 
@@ -354,9 +354,9 @@ class Sdp {
          */
         unsigned int telephoneEventPayload_;
 
-        Sdp(const Sdp&);  //No Copy Constructor
-
-        Sdp& operator= (const Sdp&); //No Assignment Operator
+        // noncopyable
+        Sdp(const Sdp&);
+        Sdp& operator=(const Sdp&);
 
         /*
          * Build the sdp media section

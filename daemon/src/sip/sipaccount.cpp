@@ -582,7 +582,7 @@ pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum(const std::string& method)
     return PJSIP_SSL_UNSPECIFIED_METHOD;
 }
 
-void SIPAccount::initTlsConfiguration(void)
+void SIPAccount::initTlsConfiguration()
 {
     // TLS listener is unique and should be only modified through IP2IP_PROFILE
     tlsListenerPort_ = tlsPort_;
@@ -605,7 +605,7 @@ void SIPAccount::initTlsConfiguration(void)
     tlsSetting_.timeout.msec = atol(tlsNegotiationTimeoutMsec_.c_str());
 }
 
-void SIPAccount::initStunConfiguration(void)
+void SIPAccount::initStunConfiguration()
 {
     size_t pos;
     std::string stunServer, serverName, serverPort;
@@ -654,13 +654,13 @@ bool SIPAccount::hostnameMatch(const std::string& hostname) const
     return hostname == hostname_;
 }
 
-std::string SIPAccount::getLoginName(void)
+std::string SIPAccount::getLoginName()
 {
     struct passwd * user_info = getpwuid(getuid());
     return user_info ? user_info->pw_name : "";
 }
 
-std::string SIPAccount::getFromUri(void) const
+std::string SIPAccount::getFromUri() const
 {
     std::string scheme;
     std::string transport;
@@ -709,7 +709,7 @@ std::string SIPAccount::getToUri(const std::string& username) const
     return "<" + scheme + username + (hostname.empty() ? "" : "@") + hostname + transport + ">";
 }
 
-std::string SIPAccount::getServerUri(void) const
+std::string SIPAccount::getServerUri() const
 {
     std::string scheme;
     std::string transport;
@@ -843,7 +843,7 @@ void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::str
     }
 }
 
-const std::vector<std::map<std::string, std::string> > &SIPAccount::getCredentials(void)
+const std::vector<std::map<std::string, std::string> > &SIPAccount::getCredentials()
 {
     return credentials_;
 }
@@ -858,7 +858,7 @@ std::string SIPAccount::getUserAgentName() const
     return result;
 }
 
-std::map<std::string, std::string> SIPAccount::getIp2IpDetails(void) const
+std::map<std::string, std::string> SIPAccount::getIp2IpDetails() const
 {
     assert(accountID_ == IP2IP_PROFILE);
     std::map<std::string, std::string> ip2ipAccountDetails;

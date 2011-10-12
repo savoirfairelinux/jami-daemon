@@ -231,7 +231,7 @@ PulseLayer::PulseLayer()
     isStarted_ = true;
 }
 
-PulseLayer::~PulseLayer(void)
+PulseLayer::~PulseLayer()
 {
     disconnectAudioStream();
 
@@ -287,13 +287,13 @@ void PulseLayer::context_state_callback(pa_context* c, void* user_data)
 }
 
 
-void PulseLayer::updateSinkList(void)
+void PulseLayer::updateSinkList()
 {
     getSinkList()->clear();
     pa_context_get_sink_info_list(context_, sink_input_info_callback,  this);
 }
 
-void PulseLayer::updateSourceList(void)
+void PulseLayer::updateSourceList()
 {
     getSourceList()->clear();
     pa_context_get_source_info_list(context_, source_input_info_callback, this);
@@ -345,7 +345,7 @@ void PulseLayer::createStreams(pa_context* c)
 }
 
 
-void PulseLayer::disconnectAudioStream(void)
+void PulseLayer::disconnectAudioStream()
 {
     if (playback_) {
         if (playback_->pulseStream()) {
@@ -384,7 +384,7 @@ void PulseLayer::disconnectAudioStream(void)
     }
 }
 
-void PulseLayer::startStream(void)
+void PulseLayer::startStream()
 {
     // Create Streams
     if (!playback_ or !record_)
@@ -398,7 +398,7 @@ void PulseLayer::startStream(void)
 
 
 void
-PulseLayer::stopStream(void)
+PulseLayer::stopStream()
 {
     pa_threaded_mainloop_lock(mainloop_);
 
@@ -413,7 +413,7 @@ PulseLayer::stopStream(void)
     disconnectAudioStream();
 }
 
-void PulseLayer::writeToSpeaker(void)
+void PulseLayer::writeToSpeaker()
 {
     if (!playback_ or !playback_->isReady())
         return;
@@ -505,7 +505,7 @@ void PulseLayer::writeToSpeaker(void)
         pa_stream_write(s, data, inBytes, NULL, 0, PA_SEEK_RELATIVE);
 }
 
-void PulseLayer::readFromMic(void)
+void PulseLayer::readFromMic()
 {
     if (!record_ or !record_->isReady())
         return;
@@ -545,7 +545,7 @@ void PulseLayer::readFromMic(void)
 }
 
 
-void PulseLayer::ringtoneToSpeaker(void)
+void PulseLayer::ringtoneToSpeaker()
 {
     if (!ringtone_ or !ringtone_->isReady())
         return;

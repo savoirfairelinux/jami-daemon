@@ -63,7 +63,7 @@ class AudioRtpSession : public AudioRtpRecordHandler {
         virtual ~AudioRtpSession();
 
         RtpMethod getAudioRtpType() {
-            return _type;
+            return type_;
         }
         void updateSessionMedia(AudioCodec *audioCodec);
 
@@ -72,7 +72,7 @@ class AudioRtpSession : public AudioRtpRecordHandler {
         /**
          * Used mostly when receiving a reinvite
          */
-        void updateDestinationIpAddress(void);
+        void updateDestinationIpAddress();
 
     protected:
 
@@ -91,9 +91,9 @@ class AudioRtpSession : public AudioRtpRecordHandler {
          */
         void sendMicData();
 
-        SIPCall *_ca;
+        SIPCall *ca_;
 
-        RtpMethod _type;
+        RtpMethod type_;
 
     private:
 
@@ -105,13 +105,12 @@ class AudioRtpSession : public AudioRtpRecordHandler {
         /**
          * Set RTP Sockets send/receive timeouts
          */
-        void setSessionTimeouts(void);
+        void setSessionTimeouts();
 
         /**
          * Retreive destination address for this session. Stored in CALL
          */
-        void setDestinationIpAddress(void);
-
+        void setDestinationIpAddress();
 
         /**
          * Receive data from peer
@@ -121,35 +120,34 @@ class AudioRtpSession : public AudioRtpRecordHandler {
         // Main destination address for this rtp session.
         // Stored in case or reINVITE, which may require to forget
         // this destination and update a new one.
-        ost::InetHostAddress _remote_ip;
+        ost::InetHostAddress remote_ip_;
 
         // Main destination port for this rtp session.
         // Stored in case reINVITE, which may require to forget
         // this destination and update a new one
-        unsigned short _remote_port;
+        unsigned short remote_port_;
 
         /**
          * Timestamp for this session
          */
-        int _timestamp;
+        int timestamp_;
 
         /**
          * Timestamp incrementation value based on codec period length (framesize)
          * except for G722 which require a 8 kHz incrementation.
          */
-        int _timestampIncrement;
+        int timestampIncrement_;
 
         /**
          * Timestamp reset frequency specified in number of packet sent
          */
-        short _timestampCount;
+        short timestampCount_;
 
+        bool isStarted_;
 
-        bool _isStarted;
+        ost::RTPDataQueue *queue_;
 
-        ost::RTPDataQueue *_queue;
-
-        ost::Thread *_thread;
+        ost::Thread *thread_;
 };
 
 }

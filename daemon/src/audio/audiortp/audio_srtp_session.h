@@ -81,7 +81,7 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
          * method must be called befor setRemoteCryptoInfo in case of an
          * outgoing call or after in case of an outgoing call.
          */
-        std::vector<std::string> getLocalCryptoInfo(void);
+        std::vector<std::string> getLocalCryptoInfo();
 
         /**
          * Set remote crypto header from incoming sdp offer
@@ -93,7 +93,7 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
         * this method must be called before sending first Invite request
         * with SDP offer.
         */
-        void initLocalCryptoInfo(void);
+        void initLocalCryptoInfo();
 
         /**
          * Restore the cryptographic context. most likely useful to restore
@@ -103,10 +103,10 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
 
 
         /** Remote srtp crypto context to be set into incoming data queue. */
-        ost::CryptoContext* _remoteCryptoCtx;
+        ost::CryptoContext* remoteCryptoCtx_;
 
         /** Local srtp crypto context to be set into outgoing data queue. */
-        ost::CryptoContext* _localCryptoCtx;
+        ost::CryptoContext* localCryptoCtx_;
 
     private:
 
@@ -114,25 +114,25 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
          * Init local master key according to current crypto context
          * as defined in SdesNegotiator.h
          */
-        void initializeLocalMasterKey(void);
+        void initializeLocalMasterKey();
 
         /**
          * Init local master salt according to current crypto context
          * as defined in SdesNegotiator.h
          */
-        void initializeLocalMasterSalt(void);
+        void initializeLocalMasterSalt();
 
         /**
          * Init remote crypto context in audio srtp session. This method
          * must be called after unBase64ConcatenatedKeys.
          */
-        void initializeRemoteCryptoContext(void);
+        void initializeRemoteCryptoContext();
 
         /**
          * Init local crypto context in audio srtp session. Make sure remote
          * crypto context is set before calling this method for incoming calls.
          */
-        void initializeLocalCryptoContext(void);
+        void initializeLocalCryptoContext();
 
         /**
          * Used to generate local keys to be included in SDP offer/answer.
@@ -155,33 +155,33 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
         char* decodeBase64(unsigned char *input, int length);
 
         /** Default local crypto suite is AES_CM_128_HMAC_SHA1_80*/
-        int _localCryptoSuite;
+        int localCryptoSuite_;
 
         /** Remote crypto suite is initialized at AES_CM_128_HMAC_SHA1_80*/
-        int _remoteCryptoSuite;
+        int remoteCryptoSuite_;
 
-        uint8 _localMasterKey[16];
+        uint8 localMasterKey_[16];
 
         /** local master key length in byte */
-        int _localMasterKeyLength;
+        int localMasterKeyLength_;
 
-        uint8 _localMasterSalt[14];
+        uint8 localMasterSalt_[14];
 
         /** local master salt length in byte */
-        int _localMasterSaltLength;
+        int localMasterSaltLength_;
 
-        uint8 _remoteMasterKey[16];
+        uint8 remoteMasterKey_[16];
 
         /** remote master key length in byte */
-        int _remoteMasterKeyLength;
+        int remoteMasterKeyLength_;
 
-        uint8 _remoteMasterSalt[14];
+        uint8 remoteMasterSalt_[14];
 
         /** remote master salt length in byte */
-        int _remoteMasterSaltLength;
+        int remoteMasterSaltLength_;
 
         /** Used to make sure remote crypto context not initialized wice. */
-        bool _remoteOfferIsSet;
+        bool remoteOfferIsSet_;
 };
 }
 

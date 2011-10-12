@@ -51,11 +51,6 @@ class DTMF {
         DTMF(unsigned int sampleRate);
 
         /**
-         * Destructor
-         */
-        ~DTMF(void);
-
-        /**
          * Start the done for th given dtmf
          * @param code  The DTMF code
          */
@@ -68,10 +63,11 @@ class DTMF {
          */
         bool generateDTMF(SFLDataFormat* buffer, size_t n);
 
-        char currentTone;
-        char newTone;
+    private:
+        char currentTone_;
+        char newTone_;
 
-        DTMFGenerator dtmfgenerator;
+        DTMFGenerator dtmfgenerator_;
 };
 
 #endif // __KEY_DTMF_H_

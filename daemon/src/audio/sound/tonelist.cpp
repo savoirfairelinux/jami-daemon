@@ -88,54 +88,47 @@ static const char *toneZone[TelephoneTone::ZID_COUNTRIES][Tone::TONE_NULL] = {
 TelephoneTone::COUNTRYID
 TelephoneTone::getCountryId(const std::string& countryName)
 {
-    if (countryName == "North America")		return ZID_NORTH_AMERICA;
-
-    if (countryName == "France")			return ZID_FRANCE;
-
-    if (countryName == "Australia")			return ZID_AUSTRALIA;
-
-    if (countryName == "United Kingdom") 	return ZID_UNITED_KINGDOM;
-
-    if (countryName == "Spain")				return ZID_SPAIN;
-
-    if (countryName == "Italy")				return ZID_ITALY;
-
-    if (countryName == "Japan")				return ZID_JAPAN;
-
-    return ZID_NORTH_AMERICA; // default
+    if (countryName == "North America")		    return ZID_NORTH_AMERICA;
+    else if (countryName == "France")		    return ZID_FRANCE;
+    else if (countryName == "Australia")	    return ZID_AUSTRALIA;
+    else if (countryName == "United Kingdom") 	return ZID_UNITED_KINGDOM;
+    else if (countryName == "Spain")			return ZID_SPAIN;
+    else if (countryName == "Italy")			return ZID_ITALY;
+    else if (countryName == "Japan")			return ZID_JAPAN;
+    else                                        return ZID_NORTH_AMERICA; // default
 }
 
 TelephoneTone::TelephoneTone(const std::string& countryName, unsigned int sampleRate) :
-    _currentTone(Tone::TONE_NULL)
+    currentTone_(Tone::TONE_NULL)
 {
     TelephoneTone::COUNTRYID countryId = getCountryId(countryName);
 
-    _tone[Tone::TONE_DIALTONE] = new Tone(toneZone[countryId][Tone::TONE_DIALTONE], sampleRate);
-    _tone[Tone::TONE_BUSY] = new Tone(toneZone[countryId][Tone::TONE_BUSY], sampleRate);
-    _tone[Tone::TONE_RINGTONE] = new Tone(toneZone[countryId][Tone::TONE_RINGTONE], sampleRate);
-    _tone[Tone::TONE_CONGESTION] = new Tone(toneZone[countryId][Tone::TONE_CONGESTION], sampleRate);
+    tone_[Tone::TONE_DIALTONE] = new Tone(toneZone[countryId][Tone::TONE_DIALTONE], sampleRate);
+    tone_[Tone::TONE_BUSY] = new Tone(toneZone[countryId][Tone::TONE_BUSY], sampleRate);
+    tone_[Tone::TONE_RINGTONE] = new Tone(toneZone[countryId][Tone::TONE_RINGTONE], sampleRate);
+    tone_[Tone::TONE_CONGESTION] = new Tone(toneZone[countryId][Tone::TONE_CONGESTION], sampleRate);
 }
 
 TelephoneTone::~TelephoneTone()
 {
     for (size_t i=0; i < Tone::TONE_NULL; i++)
-        delete _tone[i];
+        delete tone_[i];
 }
 
 void
 TelephoneTone::setCurrentTone(Tone::TONEID toneId)
 {
-    if (toneId != Tone::TONE_NULL && _currentTone != toneId)
-        _tone[toneId]->reset();
+    if (toneId != Tone::TONE_NULL && currentTone_ != toneId)
+        tone_[toneId]->reset();
 
-    _currentTone = toneId;
+    currentTone_ = toneId;
 }
 
 Tone*
 TelephoneTone::getCurrentTone()
 {
-    if (_currentTone == Tone::TONE_NULL)
+    if (currentTone_ == Tone::TONE_NULL)
         return NULL;
 
-    return _tone[_currentTone];
+    return tone_[currentTone_];
 }

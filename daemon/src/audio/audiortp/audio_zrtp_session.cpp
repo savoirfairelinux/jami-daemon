@@ -56,28 +56,25 @@ AudioZrtpSession::AudioZrtpSession(SIPCall * sipcall, const std::string& zidFile
             0,
             ost::MembershipBookkeeping::defaultMembersHashSize,
             ost::defaultApplication()),
-    _zidFilename(zidFilename)
+    zidFilename_(zidFilename)
 {
     _debug("AudioZrtpSession initialized");
     initializeZid();
 
     setCancel(cancelDefault);
 
-    _info("AudioZrtpSession: Setting new RTP session with destination %s:%d", _ca->getLocalIp().c_str(), _ca->getLocalAudioPort());
+    _info("AudioZrtpSession: Setting new RTP session with destination %s:%d", ca_->getLocalIp().c_str(), ca_->getLocalAudioPort());
 }
 
 AudioZrtpSession::~AudioZrtpSession()
 {
-    _debug("AudioZrtpSession: Delete AudioSymmetricRtpSession instance");
-
     try {
         terminate();
     } catch (...) {
-        _debug("AudioZrtpSession: Thread destructor didn't terminate correctly");
         throw;
     }
 
-    Manager::instance().getMainBuffer()->unBindAll(_ca->getCallId());
+    Manager::instance().getMainBuffer()->unBindAll(ca_->getCallId());
 }
 
 void AudioZrtpSession::final()
@@ -85,23 +82,21 @@ void AudioZrtpSession::final()
     delete this;
 }
 
-void AudioZrtpSession::initializeZid(void)
+void AudioZrtpSession::initializeZid()
 {
-
-    if (_zidFilename.empty()) {
+    if (zidFilename_.empty())
         throw ZrtpZidException("zid filename empty");
-    }
 
     std::string zidCompleteFilename;
 
     // xdg_config = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".cache/sflphone";
 
-    std::string xdg_config = std::string(HOMEDIR) + DIR_SEPARATOR_STR + ".cache" + DIR_SEPARATOR_STR + PACKAGE + "/" + _zidFilename;
+    std::string xdg_config = std::string(HOMEDIR) + DIR_SEPARATOR_STR + ".cache" + DIR_SEPARATOR_STR + PACKAGE + "/" + zidFilename_;
 
     _debug("    xdg_config %s", xdg_config.c_str());
 
     if (XDG_CACHE_HOME != NULL) {
-        std::string xdg_env = std::string(XDG_CACHE_HOME) + _zidFilename;
+        std::string xdg_env = std::string(XDG_CACHE_HOME) + zidFilename_;
         _debug("    xdg_env %s", xdg_env.c_str());
         (xdg_env.length() > 0) ? zidCompleteFilename = xdg_env : zidCompleteFilename = xdg_config;
     } else
@@ -111,40 +106,32 @@ void AudioZrtpSession::initializeZid(void)
     if (initialize(zidCompleteFilename.c_str()) >= 0) {
         _debug("Register callbacks");
         setEnableZrtp(true);
-        setUserCallback(new ZrtpSessionCallback(_ca));
+        setUserCallback(new ZrtpSessionCallback(ca_));
         return;
     }
 
     _debug("Initialization from ZID file failed. Trying to remove...");
 
-    if (remove(zidCompleteFilename.c_str()) !=0) {
-        _debug("Failed to remove zid file: %m");
+    if (remove(zidCompleteFilename.c_str()) != 0)
         throw ZrtpZidException("zid file deletion failed");
-    }
 
-    if (initialize(zidCompleteFilename.c_str()) < 0) {
-        _debug("ZRTP initialization failed");
+    if (initialize(zidCompleteFilename.c_str()) < 0)
         throw ZrtpZidException("zid initialization failed");
-    }
 
     return;
 }
 
 void AudioZrtpSession::run()
 {
-
     // Set recording sampling rate
-    _ca->setRecordingSmplRate(getCodecSampleRate());
-
-    _debug("AudioZrtpSession: Entering mainloop for call %s",_ca->getCallId().c_str());
+    ca_->setRecordingSmplRate(getCodecSampleRate());
+    _debug("AudioZrtpSession: Entering mainloop for call %s", ca_->getCallId().c_str());
 
     uint32 timeout = 0;
 
     while (isActive()) {
-
-        if (timeout < 1000) {  // !(timeout/1000)
+        if (timeout < 1000)
             timeout = getSchedulingTimeout();
-        }
 
         // Send session
         if (DtmfPending())
@@ -171,19 +158,16 @@ void AudioZrtpSession::run()
             if (isPendingData(timeout/1000)) {
                 setCancel(cancelDeferred);
 
-                if (isActive()) { // take in only if active
+                if (isActive())
                     takeInDataPacket();
-                }
 
                 setCancel(cancelImmediate);
             }
-
             timeout = 0;
         }
-
     }
 
-    _debug("AudioZrtpSession: Left main loop for call %s", _ca->getCallId().c_str());
+    _debug("AudioZrtpSession: Left main loop for call %s", ca_->getCallId().c_str());
 }
 
 }

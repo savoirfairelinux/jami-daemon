@@ -32,20 +32,14 @@
 
 Recordable::Recordable() : recorder(&recAudio, Manager::instance().getMainBuffer())
 {
-    _debug("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Recordable Constructor -=-=-=-=-=-=-=-=-=--=-=-=-");
     recAudio.setRecordingOption(AudioRecord::FILE_WAV, 8000, Manager::instance().audioPreference.getRecordpath());
 }
 
-
 Recordable::~Recordable()
 {
-    _debug("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Recordable Destructor -=-=-=-=-=-=-=-=-=-=-=-=-=-");
-
-    if (recAudio.isOpenFile()) {
+    if (recAudio.isOpenFile())
         recAudio.closeFile();
-    }
 }
-
 
 void Recordable::initRecFileName(std::string filename)
 {
@@ -66,5 +60,3 @@ int Recordable::getRecordingSmplRate() const
 {
     return recAudio.getSndSamplingRate();
 }
-
-

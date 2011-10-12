@@ -42,17 +42,17 @@
 
 namespace sfl {
 
-AudioRtpFactory::AudioRtpFactory(SIPCall *ca) : _rtpSession(NULL), remoteContext(NULL), localContext(NULL), ca_(ca)
+AudioRtpFactory::AudioRtpFactory(SIPCall *ca) : rtpSession_(NULL), remoteContext_(NULL), localContext_(NULL), ca_(ca)
 {}
 
 AudioRtpFactory::~AudioRtpFactory()
 {
-    delete _rtpSession;
+    delete rtpSession_;
 }
 
 void AudioRtpFactory::initAudioRtpConfig()
 {
-    if (_rtpSession != NULL)
+    if (rtpSession_ != NULL)
         stop();
 
     std::string accountId(Manager::instance().getAccountFromCall(ca_->getCallId()));
@@ -60,150 +60,136 @@ void AudioRtpFactory::initAudioRtpConfig()
     SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(accountId));
 
     if (account) {
-        _srtpEnabled = account->getSrtpEnabled();
+        srtpEnabled_ = account->getSrtpEnabled();
         std::string key(account->getSrtpKeyExchange());
 
         if (key == "sdes")
-            _keyExchangeProtocol = Sdes;
+            keyExchangeProtocol_ = Sdes;
         else if (key == "zrtp")
-            _keyExchangeProtocol = Zrtp;
+            keyExchangeProtocol_ = Zrtp;
         else
-            _keyExchangeProtocol = Symmetric;
+            keyExchangeProtocol_ = Symmetric;
 
-        _helloHashEnabled = account->getZrtpHelloHash();
+        helloHashEnabled_ = account->getZrtpHelloHash();
     } else {
-        _srtpEnabled = false;
-        _keyExchangeProtocol = Symmetric;
-        _helloHashEnabled = false;
+        srtpEnabled_ = false;
+        keyExchangeProtocol_ = Symmetric;
+        helloHashEnabled_ = false;
     }
 }
 
 void AudioRtpFactory::initAudioSymmetricRtpSession()
 {
-    ost::MutexLock m(_audioRtpThreadMutex);
+    ost::MutexLock m(audioRtpThreadMutex_);
 
-    if (_srtpEnabled) {
+    if (srtpEnabled_) {
         std::string zidFilename(Manager::instance().voipPreferences.getZidFile());
 
-        switch (_keyExchangeProtocol) {
+        switch (keyExchangeProtocol_) {
 
             case Zrtp:
-                _rtpSession = new AudioZrtpSession(ca_, zidFilename);
-
-                if (_helloHashEnabled) {
-                    // TODO: be careful with that. The hello hash is computed asynchronously. Maybe it's
-                    // not even available at that point.
-                    ca_->getLocalSDP()->setZrtpHash(static_cast<AudioZrtpSession *>(_rtpSession)->getHelloHash());
-                }
-
+                rtpSession_ = new AudioZrtpSession(ca_, zidFilename);
+                // TODO: be careful with that. The hello hash is computed asynchronously. Maybe it's
+                // not even available at that point.
+                if (helloHashEnabled_)
+                    ca_->getLocalSDP()->setZrtpHash(static_cast<AudioZrtpSession *>(rtpSession_)->getHelloHash());
                 break;
 
             case Sdes:
-                _rtpSession = new AudioSrtpSession(ca_);
+                rtpSession_ = new AudioSrtpSession(ca_);
                 break;
 
             default:
                 throw UnsupportedRtpSessionType("Unsupported Rtp Session Exception Type!");
         }
-    } else {
-        _rtpSession = new AudioSymmetricRtpSession(ca_);
-    }
+    } else
+        rtpSession_ = new AudioSymmetricRtpSession(ca_);
 }
 
 void AudioRtpFactory::start(AudioCodec* audiocodec)
 {
-    if (_rtpSession == NULL) {
+    if (rtpSession_ == NULL)
         throw AudioRtpFactoryException("AudioRtpFactory: Error: RTP session was null when trying to start audio thread");
-    }
 
-    if (_rtpSession->getAudioRtpType() == Sdes) {
-        if (localContext && remoteContext) {
-            static_cast<AudioSrtpSession *>(_rtpSession)->restoreCryptoContext(localContext, remoteContext);
-        }
-    }
+    if (rtpSession_->getAudioRtpType() == Sdes)
+        if (localContext_ and remoteContext_)
+            static_cast<AudioSrtpSession *>(rtpSession_)->restoreCryptoContext(localContext_, remoteContext_);
 
-    if (_rtpSession->startRtpThread(audiocodec) != 0) {
+    if (rtpSession_->startRtpThread(audiocodec) != 0)
         throw AudioRtpFactoryException("AudioRtpFactory: Error: Failed to start AudioZrtpSession thread");
-    }
-
 }
 
-void AudioRtpFactory::stop(void)
+void AudioRtpFactory::stop()
 {
-    ost::MutexLock mutex(_audioRtpThreadMutex);
+    ost::MutexLock mutex(audioRtpThreadMutex_);
 
-    if (_rtpSession == NULL)
+    if (rtpSession_ == NULL)
         return;
 
-    if (_rtpSession->getAudioRtpType() == Sdes) {
-        localContext = static_cast<AudioSrtpSession *>(_rtpSession)->_localCryptoCtx;
-        remoteContext = static_cast<AudioSrtpSession *>(_rtpSession)->_remoteCryptoCtx;
+    if (rtpSession_->getAudioRtpType() == Sdes) {
+        localContext_ = static_cast<AudioSrtpSession*>(rtpSession_)->localCryptoCtx_;
+        remoteContext_ = static_cast<AudioSrtpSession*>(rtpSession_)->remoteCryptoCtx_;
     }
 
-    delete _rtpSession;
-    _rtpSession = NULL;
+    delete rtpSession_;
+    rtpSession_ = NULL;
 }
 
 int AudioRtpFactory::getSessionMedia()
 {
-    if (_rtpSession == NULL) {
+    if (rtpSession_ == NULL)
         throw AudioRtpFactoryException("AudioRtpFactory: Error: RTP session was null when trying to get session media type");
-    }
 
-    return _rtpSession->getCodecPayloadType();
+    return rtpSession_->getCodecPayloadType();
 }
 
 void AudioRtpFactory::updateSessionMedia(AudioCodec *audiocodec)
 {
-    if (_rtpSession == NULL) {
-        throw AudioRtpFactoryException("AudioRtpFactory: Error: _rtpSession was null when trying to update IP address");
-    }
+    if (rtpSession_ == NULL)
+        throw AudioRtpFactoryException("AudioRtpFactory: Error: rtpSession_ was null when trying to update IP address");
 
-    _rtpSession->updateSessionMedia(audiocodec);
+    rtpSession_->updateSessionMedia(audiocodec);
 }
 
-void AudioRtpFactory::updateDestinationIpAddress(void)
+void AudioRtpFactory::updateDestinationIpAddress()
 {
-    if (_rtpSession)
-        _rtpSession->updateDestinationIpAddress();
+    if (rtpSession_)
+        rtpSession_->updateDestinationIpAddress();
 }
 
 sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
 {
-    if (_rtpSession->getAudioRtpType() == Zrtp) {
-        return static_cast<AudioZrtpSession *>(_rtpSession);
-    } else {
-        throw AudioRtpFactoryException("RTP: Error: _rtpSession is NULL in getAudioZrtpSession");
-    }
+    if (rtpSession_->getAudioRtpType() == Zrtp)
+        return static_cast<AudioZrtpSession *>(rtpSession_);
+    else
+        throw AudioRtpFactoryException("RTP: Error: rtpSession_ is NULL in getAudioZrtpSession");
 }
 
 void sfl::AudioRtpFactory::initLocalCryptoInfo()
 {
-    if (_rtpSession && _rtpSession->getAudioRtpType() == Sdes) {
-        static_cast<AudioSrtpSession *>(_rtpSession)->initLocalCryptoInfo();
-
-        ca_->getLocalSDP()->setLocalSdpCrypto(static_cast<AudioSrtpSession *>(_rtpSession)->getLocalCryptoInfo());
+    if (rtpSession_ && rtpSession_->getAudioRtpType() == Sdes) {
+        static_cast<AudioSrtpSession *>(rtpSession_)->initLocalCryptoInfo();
+        ca_->getLocalSDP()->setLocalSdpCrypto(static_cast<AudioSrtpSession *>(rtpSession_)->getLocalCryptoInfo());
     }
 }
 
 void AudioRtpFactory::setRemoteCryptoInfo(sfl::SdesNegotiator& nego)
 {
-    if (_rtpSession && _rtpSession->getAudioRtpType() == Sdes) {
-        static_cast<AudioSrtpSession *>(_rtpSession)->setRemoteCryptoInfo(nego);
-    } else {
-        throw AudioRtpFactoryException("RTP: Error: _rtpSession is NULL in setRemoteCryptoInfo");
-    }
+    if (rtpSession_ && rtpSession_->getAudioRtpType() == Sdes)
+        static_cast<AudioSrtpSession *>(rtpSession_)->setRemoteCryptoInfo(nego);
+    else
+        throw AudioRtpFactoryException("RTP: Error: rtpSession_ is NULL in setRemoteCryptoInfo");
 }
 
 void AudioRtpFactory::setDtmfPayloadType(unsigned int payloadType)
 {
-    if (_rtpSession)
-        _rtpSession->setDtmfPayloadType(payloadType);
+    if (rtpSession_)
+        rtpSession_->setDtmfPayloadType(payloadType);
 }
 
 void AudioRtpFactory::sendDtmfDigit(int digit)
 {
-    _rtpSession->putDtmfEvent(digit);
+    rtpSession_->putDtmfEvent(digit);
 }
 
 }

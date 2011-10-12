@@ -35,8 +35,9 @@
 #include <string.h>
 #include <samplerate.h>
 
+namespace {
 // decimation filter coefficient
-float decimationCoefs[] = {-0.09870257, 0.07473655, 0.05616626, 0.04448337, 0.03630817, 0.02944626,
+const float decimationCoefs[] = {-0.09870257, 0.07473655, 0.05616626, 0.04448337, 0.03630817, 0.02944626,
                            0.02244098, 0.01463477, 0.00610982, -0.00266367, -0.01120109, -0.01873722,
                            -0.02373243, -0.02602213, -0.02437806, -0.01869834, -0.00875287, 0.00500204,
                            0.02183252, 0.04065763, 0.06015944, 0.0788299, 0.09518543, 0.10799179,
@@ -50,78 +51,75 @@ std::vector<double> ird(decimationCoefs, decimationCoefs + sizeof(decimationCoef
 
 
 // decimation filter coefficient
-float bandpassCoefs[] = {0.06278034, -0.0758545, -0.02274943, -0.0084497, 0.0702427, 0.05986113,
+const float bandpassCoefs[] = {0.06278034, -0.0758545, -0.02274943, -0.0084497, 0.0702427, 0.05986113,
                          0.06436469, -0.02412049, -0.03433526, -0.07568665, -0.03214543, -0.07236507,
                          -0.06979052, -0.12446371, -0.05530828, 0.00947243, 0.15294699, 0.17735563,
                          0.15294699, 0.00947243, -0.05530828, -0.12446371, -0.06979052, -0.07236507,
                          -0.03214543, -0.07568665, -0.03433526, -0.02412049,  0.06436469, 0.05986113,
                          0.0702427, -0.0084497, -0.02274943, -0.0758545, 0.06278034
                         };
-std::vector<double> irb(bandpassCoefs, bandpassCoefs + sizeof(bandpassCoefs) /sizeof(float));
+std::vector<double> irb(bandpassCoefs, bandpassCoefs + sizeof(bandpassCoefs) / sizeof(float));
+} // end anonymous namespace
 
 
-FirFilter::FirFilter(std::vector<double> ir) : _length(ir.size()),
-    _impulseResponse(ir),
-    _count(0)
+FirFilter::FirFilter(const std::vector<double> &ir) : length_(ir.size()),
+    impulseResponse_(ir),
+    counter_(0)
 {
-    memset(_taps, 0, sizeof(double) *MAXFILTERSIZE);
+    memset(taps_, 0, sizeof(double) * MAXFILTERSIZE);
 }
-
-FirFilter::~FirFilter() {}
 
 float FirFilter::getOutputSample(float inputSample)
 {
-    _taps[_count] = inputSample;
+    taps_[counter_] = inputSample;
     double result = 0.0;
-    int index = _count;
+    int index = counter_;
 
-    for (int i = 0; i < _length; i++) {
-        result = result + _impulseResponse[i] * _taps[index--];
+    for (int i = 0; i < length_; ++i) {
+        result = result + impulseResponse_[i] * taps_[index--];
 
         if (index < 0)
-            index = _length-1;
+            index = length_ - 1;
     }
 
-    _count++;
+    counter_++;
 
-    if (_count >= _length)
-        _count = 0;
+    if (counter_ >= length_)
+        counter_ = 0;
 
     return result;
 }
 
-void FirFilter::reset(void)
+void FirFilter::reset()
 {
-    for (int i = 0; i < _length; i++) {
-        _impulseResponse[i] = 0.0;
-    }
+    for (int i = 0; i < length_; ++i)
+        impulseResponse_[i] = 0.0;
 }
 
 
-DelayDetection::DelayDetection() : _internalState(WaitForSpeaker), _decimationFilter(ird), _bandpassFilter(irb), _segmentSize(DELAY_BUFF_SIZE), _downsamplingFactor(8)
+DelayDetection::DelayDetection() : internalState_(WaitForSpeaker), decimationFilter_(ird), bandpassFilter_(irb), segmentSize_(DELAY_BUFF_SIZE), downsamplingFactor_(8)
 {
-    _micDownSize = WINDOW_SIZE / _downsamplingFactor;
-    _spkrDownSize = DELAY_BUFF_SIZE / _downsamplingFactor;
+    micDownSize_ = WINDOW_SIZE / downsamplingFactor_;
+    spkrDownSize_ = DELAY_BUFF_SIZE / downsamplingFactor_;
 
-    memset(_spkrReference, 0, sizeof(float) *WINDOW_SIZE*2);
-    memset(_capturedData, 0, sizeof(float) *DELAY_BUFF_SIZE*2);
-    memset(_spkrReferenceDown, 0, sizeof(float) *WINDOW_SIZE*2);
-    memset(_captureDataDown, 0, sizeof(float) *DELAY_BUFF_SIZE*2);
-    memset(_spkrReferenceFilter, 0, sizeof(float) *WINDOW_SIZE*2);
-    memset(_captureDataFilter, 0, sizeof(float) *DELAY_BUFF_SIZE*2);
-    memset(_correlationResult, 0, sizeof(float) *DELAY_BUFF_SIZE*2);
+    memset(spkrReference_, 0, sizeof(float) *WINDOW_SIZE*2);
+    memset(capturedData_, 0, sizeof(float) *DELAY_BUFF_SIZE*2);
+    memset(spkrReferenceDown_, 0, sizeof(float) *WINDOW_SIZE*2);
+    memset(captureDataDown_, 0, sizeof(float) *DELAY_BUFF_SIZE*2);
+    memset(spkrReferenceFilter_, 0, sizeof(float) *WINDOW_SIZE*2);
+    memset(captureDataFilter_, 0, sizeof(float) *DELAY_BUFF_SIZE*2);
+    memset(correlationResult_, 0, sizeof(float) *DELAY_BUFF_SIZE*2);
 
 }
 
 void DelayDetection::putData(SFLDataFormat *inputData, int nbSamples)
 {
     // Machine may already got a spkr and is waiting for mic or computing correlation
-    if (_nbSpkrSampleStored == WINDOW_SIZE)
+    if (nbSpkrSampleStored_ == WINDOW_SIZE)
         return;
 
-    if ((_nbSpkrSampleStored + nbSamples) > WINDOW_SIZE)
-        nbSamples = WINDOW_SIZE - _nbSpkrSampleStored;
-
+    if ((nbSpkrSampleStored_ + nbSamples) > WINDOW_SIZE)
+        nbSamples = WINDOW_SIZE - nbSpkrSampleStored_;
 
     if (nbSamples) {
 
@@ -129,67 +127,58 @@ void DelayDetection::putData(SFLDataFormat *inputData, int nbSamples)
         float down[nbSamples];
 
         convertInt16ToFloat32(inputData, tmp, nbSamples);
-        memcpy(_spkrReference+_nbSpkrSampleStored, tmp, nbSamples*sizeof(float));
+        memcpy(spkrReference_ + nbSpkrSampleStored_, tmp, nbSamples * sizeof(float));
 
-        downsampleData(tmp, down, nbSamples, _downsamplingFactor);
-        bandpassFilter(down, nbSamples/_downsamplingFactor);
-        memcpy(_spkrReferenceDown+ (_nbSpkrSampleStored/_downsamplingFactor), down, (nbSamples/_downsamplingFactor) *sizeof(float));
+        downsampleData(tmp, down, nbSamples, downsamplingFactor_);
+        bandpassFilter(down, nbSamples / downsamplingFactor_);
+        memcpy(spkrReferenceDown_+ (nbSpkrSampleStored_ / downsamplingFactor_), down, (nbSamples / downsamplingFactor_) * sizeof(float));
 
-        _nbSpkrSampleStored += nbSamples;
-
+        nbSpkrSampleStored_ += nbSamples;
     }
 
     // Update the state
-    _internalState = WaitForMic;
-
+    internalState_ = WaitForMic;
 }
 
 void DelayDetection::process(SFLDataFormat *inputData, int nbSamples)
 {
 
-    if (_internalState != WaitForMic)
+    if (internalState_ != WaitForMic)
         return;
 
-    if ((_nbMicSampleStored + nbSamples) > DELAY_BUFF_SIZE)
-        nbSamples = DELAY_BUFF_SIZE - _nbMicSampleStored;
+    if ((nbMicSampleStored_ + nbSamples) > DELAY_BUFF_SIZE)
+        nbSamples = DELAY_BUFF_SIZE - nbMicSampleStored_;
 
     if (nbSamples) {
         float tmp[nbSamples];
         float down[nbSamples];
 
         convertInt16ToFloat32(inputData, tmp, nbSamples);
-        memcpy(_capturedData+_nbMicSampleStored, tmp, nbSamples);
+        memcpy(capturedData_ + nbMicSampleStored_, tmp, nbSamples);
 
-        downsampleData(tmp, down, nbSamples, _downsamplingFactor);
+        downsampleData(tmp, down, nbSamples, downsamplingFactor_);
 
-        memcpy(_captureDataDown+ (_nbMicSampleStored/_downsamplingFactor), down, (nbSamples/_downsamplingFactor) *sizeof(float));
+        memcpy(captureDataDown_ + (nbMicSampleStored_ / downsamplingFactor_), down, (nbSamples / downsamplingFactor_) * sizeof(float));
 
-        _nbMicSampleStored += nbSamples;
-
+        nbMicSampleStored_ += nbSamples;
     }
 
-    if (_nbMicSampleStored == DELAY_BUFF_SIZE)
-        _internalState = ComputeCorrelation;
+    if (nbMicSampleStored_ == DELAY_BUFF_SIZE)
+        internalState_ = ComputeCorrelation;
     else
         return;
 
-    _debug("_spkrDownSize: %d, _micDownSize: %d", _spkrDownSize, _micDownSize);
-    crossCorrelate(_spkrReferenceDown, _captureDataDown, _correlationResult, _micDownSize, _spkrDownSize);
+    crossCorrelate(spkrReferenceDown_, captureDataDown_, correlationResult_, micDownSize_, spkrDownSize_);
 
-    int maxIndex = getMaxIndex(_correlationResult, _spkrDownSize);
-
-    _debug("MaxIndex: %d", maxIndex);
+    int maxIndex = getMaxIndex(correlationResult_, spkrDownSize_);
 }
 
 void DelayDetection::crossCorrelate(float *ref, float *seg, float *res, int refSize, int segSize)
 {
-
-    _debug("CrossCorrelate");
-
     // Output has same size as the
     int rsize = refSize;
     int ssize = segSize;
-    int tmpsize = segSize-refSize+1;
+    int tmpsize = segSize - refSize + 1;
 
     // perform autocorrelation on reference signal
     float acref = correlate(ref, ref, rsize);
@@ -215,13 +204,13 @@ void DelayDetection::crossCorrelate(float *ref, float *seg, float *res, int refS
 
     while (rsize) {
         acseg = correlate(seg, seg, rsize);
-        res[ssize-1] = correlate(ref+i, seg, rsize);
-        r = sqrt(acref*acseg);
+        res[ssize - 1] = correlate(ref + i, seg, rsize);
+        r = sqrt(acref * acseg);
 
         if (r < 0.0001)
-            res[ssize-1] = 0.0;
+            res[ssize - 1] = 0.0;
         else
-            res[ssize-1] = res[ssize-1] / r;
+            res[ssize - 1] = res[ssize-1] / r;
 
         --rsize;
         --ssize;
@@ -231,13 +220,12 @@ void DelayDetection::crossCorrelate(float *ref, float *seg, float *res, int refS
 
 double DelayDetection::correlate(float *sig1, float *sig2, short size)
 {
-
     short s = size;
 
     double ac = 0.0;
 
     while (s--)
-        ac += sig1[s]*sig2[s];
+        ac += sig1[s] * sig2[s];
 
     return ac;
 }
@@ -245,8 +233,7 @@ double DelayDetection::correlate(float *sig1, float *sig2, short size)
 
 void DelayDetection::convertInt16ToFloat32(SFLDataFormat *input, float *output, int nbSamples)
 {
-
-#define S2F_FACTOR .000030517578125f;
+    static const float S2F_FACTOR = .000030517578125f;
     int len = nbSamples;
 
     while (len) {
@@ -258,10 +245,8 @@ void DelayDetection::convertInt16ToFloat32(SFLDataFormat *input, float *output, 
 
 void DelayDetection::downsampleData(float *input, float *output, int nbSamples, int factor)
 {
-
-    int _src_err;
-
-    SRC_STATE *_src_state  = src_new(SRC_LINEAR, 1, &_src_err);
+    int src_err;
+    SRC_STATE *src_state  = src_new(SRC_LINEAR, 1, &src_err);
 
     double downfactor = 1.0 / (double) factor;
 
@@ -274,21 +259,20 @@ void DelayDetection::downsampleData(float *input, float *output, int nbSamples, 
         src_data.src_ratio = downfactor;
         src_data.end_of_input = 0; // More data will come
 
-        src_process(_src_state, &src_data);
+        src_process(src_state, &src_data);
     }
 }
 
 
 void DelayDetection::bandpassFilter(float *input, int nbSamples)
 {
-    for (int i = 0; i < nbSamples; i++)
-        input[i] = _bandpassFilter.getOutputSample(input[i]);
+    for (int i = 0; i < nbSamples; ++i)
+        input[i] = bandpassFilter_.getOutputSample(input[i]);
 }
 
 
 int DelayDetection::getMaxIndex(float *data, int size)
 {
-
     float max = 0.0;
     int k = 0;
 

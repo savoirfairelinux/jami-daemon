@@ -202,7 +202,7 @@ CallManager::getConferenceDetails(const std::string& callID)
 }
 
 std::vector< std::string >
-CallManager::getConferenceList(void)
+CallManager::getConferenceList()
 {
     return Manager::instance().getConferenceList();
 }
@@ -245,14 +245,14 @@ CallManager::getCurrentAudioCodecName(const std::string& callID)
 }
 
 
-std::map< std::string, std::string >
+std::map<std::string, std::string>
 CallManager::getCallDetails(const std::string& callID)
 {
     return Manager::instance().getCallDetails(callID);
 }
 
-std::vector< std::string >
-CallManager::getCallList(void)
+std::vector<std::string>
+CallManager::getCallList()
 {
     return Manager::instance().getCallList();
 }
@@ -301,7 +301,7 @@ CallManager::getAudioZrtpSession(const std::string& callID)
         throw CallManagerException("Call id " + callID + " is not valid");
     }
 
-    sfl::AudioZrtpSession * zSession = call->getAudioRtp()->getAudioZrtpSession();
+    sfl::AudioZrtpSession * zSession = call->getAudioRtp().getAudioZrtpSession();
 
     if (!zSession)
         throw CallManagerException("Failed to get AudioZrtpSession");

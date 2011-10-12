@@ -63,10 +63,10 @@ class AudioStream {
          * @return pa_stream* The stream
          */
         pa_stream* pulseStream() {
-            return _audiostream;
+            return audiostream_;
         }
 
-        bool isReady(void);
+        bool isReady();
 
     private:
 
@@ -84,12 +84,12 @@ class AudioStream {
         /**
          * The pulse audio object
          */
-        pa_stream* _audiostream;
+        pa_stream* audiostream_;
 
         /**
          * A pointer to the opaque threaded main loop object
          */
-        pa_threaded_mainloop * _mainloop;
+        pa_threaded_mainloop * mainloop_;
 };
 
 #endif // _AUDIO_STREAM_H

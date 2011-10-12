@@ -37,27 +37,29 @@
 namespace {
 int codecToASTFormat(int c)
 {
-    if (c == PAYLOAD_CODEC_ULAW)		return AST_FORMAT_ULAW;
+    switch (c) {
+        case PAYLOAD_CODEC_ULAW:
+            return AST_FORMAT_ULAW;
+        case PAYLOAD_CODEC_GSM:
+            return AST_FORMAT_GSM;
+        case PAYLOAD_CODEC_ALAW:
+            return AST_FORMAT_ALAW;
+        case PAYLOAD_CODEC_ILBC_20:
+            return AST_FORMAT_ILBC;
+        case PAYLOAD_CODEC_SPEEX_8000:
+            return AST_FORMAT_SPEEX;
 
-    if (c == PAYLOAD_CODEC_GSM)			return AST_FORMAT_GSM;
-
-    if (c == PAYLOAD_CODEC_ALAW)		return AST_FORMAT_ALAW;
-
-    if (c == PAYLOAD_CODEC_ILBC_20)		return AST_FORMAT_ILBC;
-
-    if (c == PAYLOAD_CODEC_SPEEX_8000)	return AST_FORMAT_SPEEX;
-
-    _error("Codec %d not supported!", c);
-    return 0;
+        default:
+            _error("Codec %d not supported!", c);
+            return 0;
+    }
 }
 }
 
 IAXCall::IAXCall(const std::string& id, Call::CallType type) : Call(id, type), session(NULL)
-{
-}
+{}
 
-int
-IAXCall::getSupportedFormat(const std::string &accountID) const
+int IAXCall::getSupportedFormat(const std::string &accountID) const
 {
     Account *account = Manager::instance().getAccount(accountID);
 
@@ -94,18 +96,21 @@ int IAXCall::getFirstMatchingFormat(int needles, const std::string &accountID) c
     return 0;
 }
 
-int IAXCall::getAudioCodec(void)
+int IAXCall::getAudioCodec() const
 {
-    if (format == AST_FORMAT_ULAW)	return PAYLOAD_CODEC_ULAW;
-
-    if (format == AST_FORMAT_GSM)	return PAYLOAD_CODEC_GSM;
-
-    if (format == AST_FORMAT_ALAW)	return PAYLOAD_CODEC_ALAW;
-
-    if (format == AST_FORMAT_ILBC)	return PAYLOAD_CODEC_ILBC_20;
-
-    if (format == AST_FORMAT_SPEEX)	return PAYLOAD_CODEC_SPEEX_8000;
-
-    _error("IAX: Format %d not supported!", format);
-    return -1;
+    switch (format) {
+        case AST_FORMAT_ULAW:
+            return PAYLOAD_CODEC_ULAW;
+        case AST_FORMAT_GSM:
+            return PAYLOAD_CODEC_GSM;
+        case AST_FORMAT_ALAW:
+            return PAYLOAD_CODEC_ALAW;
+        case AST_FORMAT_ILBC:
+            return PAYLOAD_CODEC_ILBC_20;
+        case AST_FORMAT_SPEEX:
+            return PAYLOAD_CODEC_SPEEX_8000;
+        default:
+            _error("IAX: Format %d not supported!", format);
+            return -1;
+    }
 }

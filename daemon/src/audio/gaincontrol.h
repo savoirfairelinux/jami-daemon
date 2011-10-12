@@ -3,8 +3,6 @@
 
 #include "global.h"
 
-#define SFL_GAIN_BUFFER_LENGTH 160
-
 class GainControl {
 
     public:
@@ -16,11 +14,6 @@ class GainControl {
         GainControl(double, double);
 
         /**
-         * Destructor for this class
-         */
-        ~GainControl(void);
-
-        /**
          * Apply addaptive gain factor on input signal
          * /param Input audio buffer
          * /param Input samples
@@ -28,25 +21,6 @@ class GainControl {
         void process(SFLDataFormat *, int samples);
 
     private:
-
-        /**
-         * Rms detector
-         */
-        class RmsDetection {
-            public:
-                /**
-                 * Constructor for this class
-                     */
-                RmsDetection(void);
-
-                /**
-                	 * Get rms value
-                 * /param Audio sample
-                	 */
-                double getRms(double);
-
-        };
-
         class DetectionAverage {
             public:
                 /**
@@ -66,32 +40,32 @@ class GainControl {
                 /**
                  * Average factor for attack
                  */
-                double g_a;
+                double g_a_;
 
                 /**
                  * Attack ramp time (in ms)
                  */
-                double teta_a;
+                double teta_a_;
 
                 /**
                  * Average factor for release
                 	 */
-                double g_r;
+                double g_r_;
 
                 /**
                  * Release ramp time (in ms)
                  */
-                double teta_r;
+                double teta_r_;
 
                 /**
                 	 * Samplig rate
                 	 */
-                double samplingRate;
+                double samplingRate_;
 
                 /**
                 	 * Previous gain (first order memory)
                  */
-                double previous_y;
+                double previous_y_;
         };
 
         class Limiter {
@@ -109,54 +83,49 @@ class GainControl {
                 double limit(double);
 
             private:
-                double ratio;
-                double threshold;
+                double ratio_;
+                double threshold_;
         };
-
-        /**
-         * Current audio level detection
-         */
-        RmsDetection detector;
 
         /**
          * First order mean filter
          */
-        DetectionAverage averager;
+        DetectionAverage averager_;
 
         /**
          * Post processing compression
          */
-        Limiter limiter;
+        Limiter limiter_;
 
         /**
          * Target audio level in dB
          */
-        double targetLeveldB;
+        double targetLeveldB_;
 
         /**
          * Target audio level in linear scale
          */
-        double targetLevelLinear;
+        double targetLevelLinear_;
 
         /**
          * Current gain
          */
-        double currentGain;
+        double currentGain_;
 
         /**
          * Previou gain for smoothing
          */
-        double previousGain;
+        double previousGain_;
 
         /**
          * Maximum incrementation stop of current gain
          */
-        double maxIncreaseStep;
+        double maxIncreaseStep_;
 
         /**
          * Maximum decrease step
          */
-        double maxDecreaseStep;
+        double maxDecreaseStep_;
 
 };
 

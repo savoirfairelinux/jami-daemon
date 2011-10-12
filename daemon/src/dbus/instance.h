@@ -58,7 +58,7 @@ class Instance
 
         void Register(const int32_t& pid, const std::string& name);
         void Unregister(const int32_t& pid);
-        int32_t getRegistrationCount(void);
+        int32_t getRegistrationCount();
 
 };
 

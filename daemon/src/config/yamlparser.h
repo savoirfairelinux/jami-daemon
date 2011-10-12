@@ -59,37 +59,37 @@ class YamlParser {
 
         ~YamlParser();
 
-        void serializeEvents() throw(YamlParserException);
+        void serializeEvents();
 
-        YamlDocument *composeEvents() throw(YamlParserException);
+        YamlDocument *composeEvents();
 
-        void constructNativeData() throw(YamlParserException);
+        void constructNativeData();
 
-        SequenceNode *getAccountSequence(void) {
+        SequenceNode *getAccountSequence() {
             return accountSequence;
         };
 
-        MappingNode *getPreferenceNode(void) {
+        MappingNode *getPreferenceNode() {
             return preferenceNode;
         }
 
-        MappingNode *getAddressbookNode(void) {
+        MappingNode *getAddressbookNode() {
             return addressbookNode;
         }
 
-        MappingNode *getAudioNode(void) {
+        MappingNode *getAudioNode() {
             return audioNode;
         }
 
-        MappingNode *getHookNode(void) {
+        MappingNode *getHookNode() {
             return hooksNode;
         }
 
-        MappingNode *getVoipPreferenceNode(void) {
+        MappingNode *getVoipPreferenceNode() {
             return voiplinkNode;
         }
 
-        MappingNode *getShortcutNode(void) {
+        MappingNode *getShortcutNode() {
             return shortcutNode;
         }
 
@@ -98,17 +98,17 @@ class YamlParser {
         /**
          * Copy yaml parser event in event_to according to their type.
          */
-        void copyEvent(yaml_event_t *event_to, yaml_event_t *event_from) throw(YamlParserException);
+        void copyEvent(yaml_event_t *event_to, yaml_event_t *event_from);
 
-        void processStream(void) throw(YamlParserException);
+        void processStream();
 
-        void processDocument(void) throw(YamlParserException);
+        void processDocument();
 
-        void processScalar(YamlNode *topNode) throw(YamlParserException);
+        void processScalar(YamlNode *topNode);
 
-        void processSequence(YamlNode *topNode) throw(YamlParserException);
+        void processSequence(YamlNode *topNode);
 
-        void processMapping(YamlNode *topNode) throw(YamlParserException);
+        void processMapping(YamlNode *topNode);
 
         void mainNativeDataMapping(MappingNode *map);
 

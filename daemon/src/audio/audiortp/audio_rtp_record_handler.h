@@ -78,24 +78,23 @@ class AudioRtpRecord {
         AudioRtpRecord();
         ~AudioRtpRecord();
 
-        AudioCodec *_audioCodec;
-        ost::Mutex audioCodecMutex;
-        int _codecPayloadType;
-        bool _hasDynamicPayloadType;
-        SFLDataFormat decData[DEC_BUFFER_SIZE];
-        SFLDataFormat resampledData[DEC_BUFFER_SIZE];
-        unsigned char encodedData[DEC_BUFFER_SIZE];
-        SamplerateConverter *_converter;
-        int _codecSampleRate;
-        int _codecFrameSize;
-        int _converterSamplingRate;
-        std::list<int> _dtmfQueue;
-        SFLDataFormat _micAmplFactor;
-        NoiseSuppress *_noiseSuppress;
-        ost::Mutex audioProcessMutex;
-        std::string _callId;
-        unsigned int _dtmfPayloadType;
-
+        AudioCodec *audioCodec_;
+        ost::Mutex audioCodecMutex_;
+        int codecPayloadType_;
+        bool hasDynamicPayloadType_;
+        SFLDataFormat decData_[DEC_BUFFER_SIZE];
+        SFLDataFormat resampledData_[DEC_BUFFER_SIZE];
+        unsigned char encodedData_[DEC_BUFFER_SIZE];
+        SamplerateConverter *converter_;
+        int codecSampleRate_;
+        int codecFrameSize_;
+        int converterSamplingRate_;
+        std::list<int> dtmfQueue_;
+        SFLDataFormat micAmplFactor_;
+        NoiseSuppress *noiseSuppress_;
+        ost::Mutex audioProcessMutex_;
+        std::string callId_;
+        unsigned int dtmfPayloadType_;
 };
 
 
@@ -107,45 +106,44 @@ class AudioRtpRecordHandler {
         /**
          *  Set rtp media for this session
          */
-
         void setRtpMedia(AudioCodec* audioCodec);
 
-        AudioCodec *getAudioCodec(void) const {
-            return _audioRtpRecord._audioCodec;
+        AudioCodec *getAudioCodec() const {
+            return audioRtpRecord_.audioCodec_;
         }
 
-        int getCodecPayloadType(void) const {
-            return _audioRtpRecord._codecPayloadType;
+        int getCodecPayloadType() const {
+            return audioRtpRecord_.codecPayloadType_;
         }
 
-        int getCodecSampleRate(void) const {
-            return _audioRtpRecord._codecSampleRate;
+        int getCodecSampleRate() const {
+            return audioRtpRecord_.codecSampleRate_;
         }
 
-        int getCodecFrameSize(void) const {
-            return _audioRtpRecord._codecFrameSize;
+        int getCodecFrameSize() const {
+            return audioRtpRecord_.codecFrameSize_;
         }
 
-        bool getHasDynamicPayload(void) const {
-            return _audioRtpRecord._hasDynamicPayloadType;
+        bool getHasDynamicPayload() const {
+            return audioRtpRecord_.hasDynamicPayloadType_;
         }
 
-        int DtmfPending(void) const {
-            return _audioRtpRecord._dtmfQueue.size() > 0;
+        int DtmfPending() const {
+            return audioRtpRecord_.dtmfQueue_.size() > 0;
         }
 
-        const unsigned char *getMicDataEncoded(void) const {
-            return _audioRtpRecord.encodedData;
+        const unsigned char *getMicDataEncoded() const {
+            return audioRtpRecord_.encodedData_;
         }
 
-        void initBuffers(void);
+        void initBuffers();
 
-        void initNoiseSuppress(void);
+        void initNoiseSuppress();
 
         /**
          * Encode audio data from mainbuffer
          */
-        int processDataEncode(void);
+        int processDataEncode();
 
         /**
          * Decode audio data received from peer
@@ -158,18 +156,18 @@ class AudioRtpRecordHandler {
         void fadeIn(SFLDataFormat *audio, int size, SFLDataFormat *factor);
 
         void setDtmfPayloadType(unsigned int payloadType) {
-            _audioRtpRecord._dtmfPayloadType = payloadType;
+            audioRtpRecord_.dtmfPayloadType_ = payloadType;
         }
 
-        unsigned int getDtmfPayloadType(void) const {
-            return _audioRtpRecord._dtmfPayloadType;
+        unsigned int getDtmfPayloadType() const {
+            return audioRtpRecord_.dtmfPayloadType_;
         }
 
         void putDtmfEvent(int digit);
 
     protected:
 
-        AudioRtpRecord	_audioRtpRecord;
+        AudioRtpRecord	audioRtpRecord_;
 
     private:
 

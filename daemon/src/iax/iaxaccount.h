@@ -40,7 +40,6 @@
 class IAXAccount : public Account {
     public:
         IAXAccount(const std::string& accountID);
-
         ~IAXAccount();
 
         virtual void serialize(Conf::YamlEmitter *emitter);
@@ -51,30 +50,21 @@ class IAXAccount : public Account {
 
         std::map<std::string, std::string> getAccountDetails() const;
 
-        /**
-         * Actually useless, since config loading is done in init()
-         */
+        // Actually useless, since config loading is done in init()
         void loadConfig();
 
-        /**
-         * Register an account
-         */
+        // Register an account
         void registerVoIPLink();
 
-        /**
-         * Unregister an account
-         */
+        // Unregister an account
         void unregisterVoIPLink();
 
-        std::string getPassword(void) const {
+        std::string getPassword() const {
             return password_;
         }
 
     private:
-
-        /**
-         * Account login information: password
-         */
+         // Account login information: password
         std::string password_;
 };
 

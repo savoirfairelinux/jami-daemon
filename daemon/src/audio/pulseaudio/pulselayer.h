@@ -44,35 +44,35 @@ class AudioStream;
 class PulseLayer : public AudioLayer {
     public:
         PulseLayer();
-        ~PulseLayer(void);
+        ~PulseLayer();
 
-        std::list<std::string>* getSinkList(void) {
+        std::list<std::string>* getSinkList() {
             return &sinkList_;
         }
 
-        std::list<std::string>* getSourceList(void) {
+        std::list<std::string>* getSourceList() {
             return &sourceList_;
         }
 
         /**
          * Write data from the ring buffer to the harware and read data from the hardware
          */
-        void readFromMic(void);
-        void writeToSpeaker(void);
-        void ringtoneToSpeaker(void);
+        void readFromMic();
+        void writeToSpeaker();
+        void ringtoneToSpeaker();
 
 
-        void updateSinkList(void);
+        void updateSinkList();
 
-        void updateSourceList(void);
+        void updateSourceList();
 
         bool inSinkList(const std::string &deviceName) const;
 
         bool inSourceList(const std::string &deviceName) const;
 
-        void startStream(void);
+        void startStream();
 
-        void stopStream(void);
+        void stopStream();
 
         static void context_state_callback(pa_context* c, void* user_data);
 
@@ -92,7 +92,7 @@ class PulseLayer : public AudioLayer {
         /**
          * Close the connection with the local pulseaudio server
          */
-        void disconnectAudioStream(void);
+        void disconnectAudioStream();
 
         /** PulseAudio context and asynchronous loop */
         pa_context* context_;

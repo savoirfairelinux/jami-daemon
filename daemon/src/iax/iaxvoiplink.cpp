@@ -136,7 +136,7 @@ IAXVoIPLink::getEvent()
 }
 
 void
-IAXVoIPLink::sendAudioFromMic(void)
+IAXVoIPLink::sendAudioFromMic()
 {
     for (CallMap::const_iterator iter = callMap_.begin(); iter != callMap_.end() ; ++iter) {
         IAXCall *currentCall = dynamic_cast<IAXCall*>(iter->second);
@@ -396,7 +396,8 @@ IAXVoIPLink::carryingDTMFdigits(const std::string& id, char code)
 
 void
 IAXVoIPLink::sendTextMessage(sfl::InstantMessaging *module,
-                             const std::string& callID, const std::string& message,
+                             const std::string& callID,
+                             const std::string& message,
                              const std::string& /*from*/)
 {
     IAXCall* call = getIAXCall(callID);
@@ -439,7 +440,7 @@ IAXVoIPLink::iaxOutgoingInvite(IAXCall* call)
 
 
 IAXCall*
-IAXVoIPLink::iaxFindCallBySession(struct iax_session* session)
+IAXVoIPLink::iaxFindCallBySession(iax_session* session)
 {
     ost::MutexLock m(callMapMutex_);
 
@@ -537,8 +538,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
 
 
 /* Handle audio event, VOICE packet received */
-void
-IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
+void IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
 {
     // Skip this empty packet.
     if (!event->datalen)
@@ -580,8 +580,7 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
 /**
  * Handle the registration process
  */
-void
-IAXVoIPLink::iaxHandleRegReply(iax_event* event)
+void IAXVoIPLink::iaxHandleRegReply(iax_event* event)
 {
     IAXAccount *account = dynamic_cast<IAXAccount *>(Manager::instance().getAccount(accountID_));
 
@@ -598,8 +597,7 @@ IAXVoIPLink::iaxHandleRegReply(iax_event* event)
         nextRefreshStamp_ = time(NULL) + (event->ies.refresh ? event->ies.refresh : 60);
 }
 
-void
-IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
+void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
 {
     IAXCall *call;
     std::string id;

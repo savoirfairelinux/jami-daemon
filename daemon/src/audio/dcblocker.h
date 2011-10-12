@@ -34,20 +34,13 @@
 #include "global.h"
 
 class DcBlocker {
-
     public:
-
-        DcBlocker();
-
-        ~DcBlocker();
-
-        void reset(void);
-
+        void reset();
         void process(SFLDataFormat *out, SFLDataFormat *in, int samples);
 
     private:
 
-        SFLDataFormat _y, _x, _xm1, _ym1;
+        SFLDataFormat y_, x_, xm1_, ym1_;
 };
 
 #endif

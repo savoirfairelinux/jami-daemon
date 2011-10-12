@@ -125,8 +125,8 @@ class SIPAccount : public Account {
         virtual void setAccountDetails(std::map<std::string, std::string> details);
 
         virtual std::map<std::string, std::string> getAccountDetails() const;
-        std::map<std::string, std::string> getIp2IpDetails(void) const;
-        std::map<std::string, std::string> getTlsSettings(void) const;
+        std::map<std::string, std::string> getIp2IpDetails() const;
+        std::map<std::string, std::string> getTlsSettings() const;
         void setTlsSettings(const std::map<std::string, std::string>& details);
 
         /**
@@ -154,12 +154,12 @@ class SIPAccount : public Account {
          * @param none
          * @return int The number of credentials set for this account.
          */
-        unsigned getCredentialCount(void) const {
+        unsigned getCredentialCount() const {
             return credentials_.size();
         }
 
         void setCredentials(const std::vector<std::map<std::string, std::string> >& details);
-        const std::vector<std::map<std::string, std::string> > &getCredentials(void);
+        const std::vector<std::map<std::string, std::string> > &getCredentials();
 
         /**
          * A client sendings a REGISTER request MAY suggest an expiration
@@ -168,7 +168,7 @@ class SIPAccount : public Account {
          *
          * @return the expiration value.
          */
-        unsigned getRegistrationExpire(void) const {
+        unsigned getRegistrationExpire() const {
             if (registrationExpire_ == 0)
                 return PJSIP_REGC_EXPIRATION_NOT_SPECIFIED;
 
@@ -178,7 +178,7 @@ class SIPAccount : public Account {
         /**
          * Doubles the Expiration Interval of Contact Addresses.
          */
-        void doubleRegistrationExpire(void) {
+        void doubleRegistrationExpire() {
             registrationExpire_ *= 2;
 
             if (registrationExpire_ < 0)
@@ -204,7 +204,7 @@ class SIPAccount : public Account {
          * @param void
          * @return pjsip_regc* A pointer to the registration structure
          */
-        pjsip_regc* getRegistrationInfo(void) const {
+        pjsip_regc* getRegistrationInfo() const {
             return regc_;
         }
 
@@ -223,7 +223,7 @@ class SIPAccount : public Account {
          * file, that can be used directly by PJSIP to initialize
          * TLS transport.
          */
-        const pjsip_tls_setting * getTlsSetting(void) const {
+        const pjsip_tls_setting * getTlsSetting() const {
             return &tlsSetting_;
         }
 
@@ -232,14 +232,14 @@ class SIPAccount : public Account {
          * file, that can be used directly by PJSIP to initialize
          * an alternate UDP transport.
          */
-        std::string getStunServer(void) const {
+        std::string getStunServer() const {
             return stunServer_;
         }
         void setStunServer(const std::string &srv) {
             stunServer_ = srv;
         }
 
-        pj_str_t getStunServerName(void) const {
+        pj_str_t getStunServerName() const {
             return stunServerName_;
         }
 
@@ -248,7 +248,7 @@ class SIPAccount : public Account {
          * file, that can be used directly by PJSIP to initialize
          * an alternate UDP transport.
          */
-        pj_uint16_t getStunPort(void) const {
+        pj_uint16_t getStunPort() const {
             return stunPort_;
         }
         void setStunPort(pj_uint16_t port) {
@@ -259,7 +259,7 @@ class SIPAccount : public Account {
          * @return bool Tells if current transport for that
          * account is set to TLS.
          */
-        bool isTlsEnabled(void) const {
+        bool isTlsEnabled() const {
             return transportType_ == PJSIP_TRANSPORT_TLS;
         }
 
@@ -267,7 +267,7 @@ class SIPAccount : public Account {
          * @return bool Tells if current transport for that
          * account is set to OTHER.
          */
-        bool isStunEnabled(void) const {
+        bool isStunEnabled() const {
             return stunEnabled_;
         }
 
@@ -280,7 +280,7 @@ class SIPAccount : public Account {
          * of the host on which the UA is running, since these are not logical
          * names."
          */
-        std::string getFromUri(void) const;
+        std::string getFromUri() const;
 
         /*
          * This method adds the correct scheme, hostname and append
@@ -300,7 +300,7 @@ class SIPAccount : public Account {
          * @return pj_str_t "server" uri based on @param hostPort
          * @param hostPort A string formatted as : "hostname:port"
          */
-        std::string getServerUri(void) const;
+        std::string getServerUri() const;
 
         /**
          * @param port Optional port. Otherwise set to the port defined for that account.
@@ -312,7 +312,7 @@ class SIPAccount : public Account {
         /**
          * Get the local interface name on which this account is bound.
          */
-        std::string getLocalInterface(void) const {
+        std::string getLocalInterface() const {
             return interface_;
         }
 
@@ -330,7 +330,7 @@ class SIPAccount : public Account {
          * actually using.
          * @return pj_uint16 The port used for that account
          */
-        pj_uint16_t getLocalPort(void) const {
+        pj_uint16_t getLocalPort() const {
             return (pj_uint16_t) localPort_;
         }
 
@@ -347,7 +347,7 @@ class SIPAccount : public Account {
          * for the chosen SIP transport.
          * @return pj_uint16 The port used for that account
          */
-        pj_uint16_t getPublishedPort(void) const {
+        pj_uint16_t getPublishedPort() const {
             return (pj_uint16_t) publishedPort_;
         }
 
@@ -364,7 +364,7 @@ class SIPAccount : public Account {
              * Get the local port for TLS listener.
              * @return pj_uint16 The port used for that account
              */
-        pj_uint16_t getTlsListenerPort(void) const {
+        pj_uint16_t getTlsListenerPort() const {
             return tlsListenerPort_;
         }
 
@@ -374,7 +374,7 @@ class SIPAccount : public Account {
          * will be used.
          * @return std::string The public IPV4 address formatted in the standard dot notation.
          */
-        std::string getPublishedAddress(void) const {
+        std::string getPublishedAddress() const {
             return publishedIpAddress_;
         }
 
@@ -387,27 +387,27 @@ class SIPAccount : public Account {
             publishedIpAddress_ = publishedIpAddress;
         }
 
-        std::string getServiceRoute(void) const {
+        std::string getServiceRoute() const {
             return serviceRoute_;
         }
 
-        DtmfType getDtmfType(void) const {
+        DtmfType getDtmfType() const {
             return dtmfType_;
         }
 
-        bool getSrtpEnabled(void) const {
+        bool getSrtpEnabled() const {
             return srtpEnabled_;
         }
 
-        std::string getSrtpKeyExchange(void) const {
+        std::string getSrtpKeyExchange() const {
             return srtpKeyExchange_;
         }
 
-        bool getSrtpFallback(void) const {
+        bool getSrtpFallback() const {
             return srtpFallback_;
         }
 
-        bool getZrtpHelloHash(void) const {
+        bool getZrtpHelloHash() const {
             return zrtpHelloHash_;
         }
 
@@ -427,12 +427,12 @@ class SIPAccount : public Account {
          * Initializes tls settings from configuration file.
          *
          */
-        void initTlsConfiguration(void);
+        void initTlsConfiguration();
 
         /*
          * Initializes STUN config from the config file
          */
-        void initStunConfiguration(void);
+        void initStunConfiguration();
 
         /**
          * If username is not provided, as it happens for Direct ip calls,
@@ -440,7 +440,7 @@ class SIPAccount : public Account {
          * running this program.
          * @return std::string The login name under which SFLPhone is running.
          */
-        static std::string getLoginName(void);
+        static std::string getLoginName();
 
         // The pjsip client registration information
         pjsip_regc *regc_;

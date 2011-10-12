@@ -38,7 +38,6 @@
 
 namespace Conf {
 
-
 class YamlNode;
 
 typedef std::list<YamlNode *> Sequence;
@@ -47,63 +46,49 @@ typedef std::map<std::string, YamlNode *> Mapping;
 enum NodeType { DOCUMENT, SCALAR, MAPPING, SEQUENCE };
 
 class YamlNode {
-
     public:
 
         YamlNode(NodeType t, YamlNode *top=NULL) : type(t), topNode(top) {}
 
-        virtual ~YamlNode(void) {}
+        virtual ~YamlNode() {}
 
-        NodeType getType(void) {
+        NodeType getType() {
             return type;
         }
 
-        YamlNode *getTopNode(void) {
+        YamlNode *getTopNode() {
             return topNode;
         }
 
-        virtual void deleteChildNodes(void) = 0;
+        virtual void deleteChildNodes() = 0;
 
     private:
-
         NodeType type;
-
         YamlNode *topNode;
-
 };
 
 
 class YamlDocument : YamlNode {
-
     public:
-
         YamlDocument(YamlNode* top=NULL) : YamlNode(DOCUMENT, top) {}
-
-        ~YamlDocument() {}
 
         void addNode(YamlNode *node);
 
-        YamlNode *popNode(void);
+        YamlNode *popNode();
 
-        Sequence *getSequence(void) {
+        Sequence *getSequence() {
             return &doc;
         }
 
-        virtual void deleteChildNodes(void);
+        virtual void deleteChildNodes();
 
     private:
-
         Sequence doc;
-
 };
 
 class SequenceNode : public YamlNode {
-
     public:
-
         SequenceNode(YamlNode *top) : YamlNode(SEQUENCE, top) {}
-
-        ~SequenceNode() {}
 
         Sequence *getSequence() {
             return &seq;
@@ -111,22 +96,16 @@ class SequenceNode : public YamlNode {
 
         void addNode(YamlNode *node);
 
-        virtual void deleteChildNodes(void);
+        virtual void deleteChildNodes();
 
     private:
-
         Sequence seq;
-
 };
 
 
 class MappingNode : public YamlNode {
-
     public:
-
         MappingNode(YamlNode *top) : YamlNode(MAPPING, top) {}
-
-        ~MappingNode() {}
 
         Mapping *getMapping() {
             return &map;
@@ -147,25 +126,17 @@ class MappingNode : public YamlNode {
         void getValue(const std::string &key, int *i);
         void getValue(const std::string &key, std::string *s);
 
-        virtual void deleteChildNodes(void);
+        virtual void deleteChildNodes();
 
     private:
-
         Mapping map;
-
         std::string tmpKey;
-
 };
 
-
 class ScalarNode : public YamlNode {
-
     public:
-
         ScalarNode(std::string s="", YamlNode *top=NULL) : YamlNode(SCALAR, top), str(s) {}
         ScalarNode(bool b, YamlNode *top=NULL) : YamlNode(SCALAR, top), str(b ? "true" : "false") {}
-
-        ~ScalarNode() {}
 
         const std::string &getValue() {
             return str;
@@ -175,17 +146,13 @@ class ScalarNode : public YamlNode {
             str = s;
         }
 
-        virtual void deleteChildNodes(void) {}
+        virtual void deleteChildNodes() {}
 
     private:
-
         std::string str;
-
 };
-
 
 }
 
-
-
 #endif
+

@@ -57,7 +57,7 @@ class Recordable {
         /**
          * Stop recording
          */
-        void stopRecording(void) {
+        void stopRecording() {
             recAudio.stopRecording();
         }
 
@@ -69,7 +69,7 @@ class Recordable {
         /**
          * Return the file path for this recording
          */
-        std::string getFileName(void);
+        std::string getFileName();
 
         /**
          * Set recording sampling rate.
@@ -79,7 +79,7 @@ class Recordable {
         /**
          * Return the recording sampling rate
              */
-        int getRecordingSmplRate(void) const;
+        int getRecordingSmplRate() const;
 
         /**
          * Virtual method to be implemented in order to the main

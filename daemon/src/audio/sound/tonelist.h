@@ -39,7 +39,6 @@
 
 class TelephoneTone {
     public:
-
         /** Countries */
         enum COUNTRYID {
             ZID_NORTH_AMERICA = 0,
@@ -61,14 +60,13 @@ class TelephoneTone {
     private:
         // Copy Constructor
         TelephoneTone(const TelephoneTone& rh);
-
         // Assignment Operator
         TelephoneTone& operator= (const TelephoneTone& rh);
 
         static COUNTRYID getCountryId(const std::string& countryName);
 
-        Tone* _tone[Tone::TONE_NULL];
-        Tone::TONEID _currentTone;
+        Tone* tone_[Tone::TONE_NULL];
+        Tone::TONEID currentTone_;
 };
 
 #endif

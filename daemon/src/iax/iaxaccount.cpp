@@ -84,7 +84,7 @@ void IAXAccount::serialize(Conf::YamlEmitter *emitter)
 
     try {
         emitter->serializeAccount(&accountmap);
-    } catch (Conf::YamlEmitterException &e) {
+    } catch (const Conf::YamlEmitterException &e) {
         _error("ConfigTree: %s", e.what());
     }
 }

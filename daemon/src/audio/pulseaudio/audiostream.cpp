@@ -32,7 +32,7 @@
 #include "pulselayer.h"
 
 AudioStream::AudioStream(pa_context *c, pa_threaded_mainloop *m, const char *desc, int type, int smplrate, std::string *deviceName)
-    : _mainloop(m)
+    : mainloop_(m)
 {
     static const pa_channel_map channel_map = {
         1,
@@ -48,9 +48,9 @@ AudioStream::AudioStream(pa_context *c, pa_threaded_mainloop *m, const char *des
     assert(pa_sample_spec_valid(&sample_spec));
     assert(pa_channel_map_valid(&channel_map));
 
-    _audiostream = pa_stream_new(c, desc, &sample_spec, &channel_map);
+    audiostream_ = pa_stream_new(c, desc, &sample_spec, &channel_map);
 
-    if (!_audiostream) {
+    if (!audiostream_) {
         _error("Pulse: %s: pa_stream_new() failed : %s" , desc, pa_strerror(pa_context_errno(c)));
         throw std::runtime_error("Pulse : could not create stream\n");
     }
@@ -64,33 +64,33 @@ AudioStream::AudioStream(pa_context *c, pa_threaded_mainloop *m, const char *des
 
     const char *name = deviceName ? deviceName->c_str() : NULL;
 
-    pa_threaded_mainloop_lock(_mainloop);
+    pa_threaded_mainloop_lock(mainloop_);
 
     if (type == PLAYBACK_STREAM || type == RINGTONE_STREAM)
-        pa_stream_connect_playback(_audiostream , name, &attributes, (pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
+        pa_stream_connect_playback(audiostream_, name, &attributes, (pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
     else if (type == CAPTURE_STREAM)
-        pa_stream_connect_record(_audiostream, name, &attributes, (pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE));
+        pa_stream_connect_record(audiostream_, name, &attributes, (pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE));
 
-    pa_threaded_mainloop_unlock(_mainloop);
+    pa_threaded_mainloop_unlock(mainloop_);
 
-    pa_stream_set_state_callback(_audiostream , stream_state_callback, NULL);
+    pa_stream_set_state_callback(audiostream_, stream_state_callback, NULL);
 }
 
 AudioStream::~AudioStream()
 {
-    pa_threaded_mainloop_lock(_mainloop);
+    pa_threaded_mainloop_lock(mainloop_);
 
-    pa_stream_disconnect(_audiostream);
+    pa_stream_disconnect(audiostream_);
 
     // make sure we don't get any further callback
-    pa_stream_set_state_callback(_audiostream, NULL, NULL);
-    pa_stream_set_write_callback(_audiostream, NULL, NULL);
-    pa_stream_set_underflow_callback(_audiostream, NULL, NULL);
-    pa_stream_set_overflow_callback(_audiostream, NULL, NULL);
+    pa_stream_set_state_callback(audiostream_, NULL, NULL);
+    pa_stream_set_write_callback(audiostream_, NULL, NULL);
+    pa_stream_set_underflow_callback(audiostream_, NULL, NULL);
+    pa_stream_set_overflow_callback(audiostream_, NULL, NULL);
 
-    pa_stream_unref(_audiostream);
+    pa_stream_unref(audiostream_);
 
-    pa_threaded_mainloop_unlock(_mainloop);
+    pa_threaded_mainloop_unlock(mainloop_);
 }
 
 void
@@ -99,7 +99,6 @@ AudioStream::stream_state_callback(pa_stream* s, void* user_data UNUSED)
     char str[PA_SAMPLE_SPEC_SNPRINT_MAX];
 
     switch (pa_stream_get_state(s)) {
-
         case PA_STREAM_CREATING:
             _info("Pulse: Stream is creating...");
             break;
@@ -129,10 +128,10 @@ AudioStream::stream_state_callback(pa_stream* s, void* user_data UNUSED)
     }
 }
 
-bool AudioStream::isReady(void)
+bool AudioStream::isReady()
 {
-    if (!_audiostream)
+    if (!audiostream_)
         return false;
 
-    return pa_stream_get_state(_audiostream) == PA_STREAM_READY;
+    return pa_stream_get_state(audiostream_) == PA_STREAM_READY;
 }

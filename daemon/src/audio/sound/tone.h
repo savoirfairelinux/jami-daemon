@@ -71,7 +71,7 @@ class Tone : public AudioLoop {
         /**
          *
          */
-        void fillWavetable(void);
+        void fillWavetable();
 
         /**
          *

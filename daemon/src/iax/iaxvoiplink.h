@@ -59,31 +59,23 @@ class IAXAccount;
 class IAXVoIPLink : public VoIPLink {
     public:
 
-        /**
-         * Constructor
-         * @param accountID	The account containing the voip link
-         */
         IAXVoIPLink(const std::string& accountID);
-
-        /**
-         * Destructor
-         */
         ~IAXVoIPLink();
 
         /**
          *	Listen to events sent by the call manager ( asterisk, etc .. )
          */
-        void getEvent(void);
+        void getEvent();
 
         /**
          * Init the voip link
          */
-        virtual void init(void);
+        virtual void init();
 
         /**
          * Terminate a voip link by clearing the call list
          */
-        virtual void terminate(void);
+        virtual void terminate();
 
         /**
          * Send out registration
@@ -236,7 +228,7 @@ class IAXVoIPLink : public VoIPLink {
         /**
          * Work out the audio data from Microphone to IAX2 channel
          */
-        void sendAudioFromMic(void);
+        void sendAudioFromMic();
 
         /**
          * Send an outgoing call invite to iax

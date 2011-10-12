@@ -36,6 +36,7 @@
 #include "audio_symmetric_rtp_session.h"
 #include "audio_rtp_record_handler.h"
 #include "sip/sdp.h"
+#include "sip/sipcall.h"
 #include "audio/audiolayer.h"
 
 namespace sfl {
@@ -43,30 +44,20 @@ namespace sfl {
 AudioSymmetricRtpSession::AudioSymmetricRtpSession(SIPCall * sipcall) :
     ost::SymmetricRTPSession(ost::InetHostAddress(sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort())
     , AudioRtpSession(sipcall, Symmetric, this, this)
-    , _rtpThread(new AudioRtpThread(this))
+    , rtpThread_(new AudioRtpThread(this))
 {
-    _info("AudioSymmetricRtpSession: Setting new RTP session with destination %s:%d", _ca->getLocalIp().c_str(), _ca->getLocalAudioPort());
-
-    _audioRtpRecord._callId = _ca->getCallId();
+    _info("AudioSymmetricRtpSession: Setting new RTP session with destination %s:%d", ca_->getLocalIp().c_str(), ca_->getLocalAudioPort());
+    audioRtpRecord_.callId_ = ca_->getCallId();
 }
 
 AudioSymmetricRtpSession::~AudioSymmetricRtpSession()
 {
-    _info("AudioSymmetricRtpSession: Delete AudioSymmetricRtpSession instance");
-
-    _rtpThread->running = false;
-    delete _rtpThread;
+    rtpThread_->running = false;
+    delete rtpThread_;
 }
 
 AudioSymmetricRtpSession::AudioRtpThread::AudioRtpThread(AudioSymmetricRtpSession *session) : running(true), rtpSession(session)
-{
-    _debug("AudioSymmetricRtpSession: Create new rtp thread");
-}
-
-AudioSymmetricRtpSession::AudioRtpThread::~AudioRtpThread()
-{
-    _debug("AudioSymmetricRtpSession: Delete rtp thread");
-}
+{}
 
 void AudioSymmetricRtpSession::AudioRtpThread::run()
 {
@@ -77,7 +68,6 @@ void AudioSymmetricRtpSession::AudioRtpThread::run()
     _debug("AudioRtpThread: Entering Audio rtp thread main loop");
 
     while (running) {
-
         // Send session
         if (rtpSession->DtmfPending())
             rtpSession->sendDtmfEvent();

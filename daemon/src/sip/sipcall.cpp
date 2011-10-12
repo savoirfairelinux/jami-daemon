@@ -35,10 +35,15 @@
 #include "audio/audiortp/audio_rtp_factory.h"
 #include "sdp.h"
 
+namespace {
+    static const int INITIAL_SIZE = 16384;
+    static const int INCREMENT_SIZE = INITIAL_SIZE;
+}
+
 SIPCall::SIPCall(const std::string& id, Call::CallType type, pj_caching_pool *caching_pool) : Call(id, type)
     , inv(NULL)
-    , _audiortp(this)
-    , pool_(pj_pool_create(&caching_pool->factory, id.c_str(), 16384, 16384, NULL))
+    , audiortp_(this)
+    , pool_(pj_pool_create(&caching_pool->factory, id.c_str(), INITIAL_SIZE, INCREMENT_SIZE, NULL))
     , local_sdp_(new Sdp(pool_))
 {
 }

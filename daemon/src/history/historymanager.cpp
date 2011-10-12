@@ -48,91 +48,71 @@ static void free_history(HistoryItemMap &history_items)
 } // end anonymous namespace
 
 HistoryManager::HistoryManager()
-    :	_history_loaded(false),
-        _history_path("")
+    :	history_loaded_(false),
+        history_path_("")
 {
 }
 
 HistoryManager::~HistoryManager()
 {
-    free_history(_history_items);
+    free_history(history_items_);
 }
 
 int HistoryManager::load_history(int limit, std::string path)
 {
     Conf::ConfigTree history_list;
-
-    _debug("HistoryManager: Load history");
-
     create_history_path(path);
     load_history_from_file(&history_list);
     return load_history_items_map(&history_list, limit);
 }
 
-bool HistoryManager::save_history(void)
+bool HistoryManager::save_history()
 {
     Conf::ConfigTree history_list;
-
-    _debug("HistoryManager: Save history");
-
     save_history_items_map(&history_list);
     return save_history_to_file(&history_list);
 }
 
 bool HistoryManager::load_history_from_file(Conf::ConfigTree *history_list)
 {
-    _debug("HistoryManager: Load history from file %s", _history_path.c_str());
+    _debug("HistoryManager: Load history from file %s", history_path_.c_str());
 
-    int exist = history_list->populateFromFile(_history_path.c_str());
-    _history_loaded = (exist == 2) ? false : true;
+    int exist = history_list->populateFromFile(history_path_.c_str());
+    history_loaded_ = (exist == 2) ? false : true;
 
-    return _history_loaded;
+    return history_loaded_;
 }
 
 int HistoryManager::load_history_items_map(Conf::ConfigTree *history_list, int limit)
 {
-
-    short nb_items = 0;
-    Conf::TokenList sections;
-    HistoryItem *item;
-    Conf::TokenList::iterator iter;
-    std::string number, name, callID, accountID, timestamp_start, timestamp_stop, recording_file, confID, time_added;
-    CallType type;
-    int history_limit;
-    time_t current_timestamp;
-
-    _debug("HistoryManager: Load history items");
+    using std::string;
 
     // We want to save only the items recent enough (ie compared to CONFIG_HISTORY_LIMIT)
     // Get the current timestamp
-    (void) time(&current_timestamp);
-    history_limit = get_unix_timestamp_equivalent(limit);
+    time_t current_timestamp;
+    time(&current_timestamp);
+    int history_limit = get_unix_timestamp_equivalent(limit);
 
-    sections = history_list->getSections();
-    iter = sections.begin();
-
-    while (iter != sections.end()) {
-
-        type = (CallType) getConfigInt(*iter, "type", history_list);
-        timestamp_start = getConfigString(*iter, "timestamp_start", history_list);
-        timestamp_stop = getConfigString(*iter, "timestamp_stop", history_list);
-        name = getConfigString(*iter, "name", history_list);
-        number = getConfigString(*iter, "number", history_list);
-        callID = getConfigString(*iter, "id", history_list);
-        accountID = getConfigString(*iter, "accountid", history_list);
-        recording_file = getConfigString(*iter, "recordfile", history_list);
-        confID = getConfigString(*iter, "confid", history_list);
-        time_added = getConfigString(*iter, "timeadded", history_list);
+    Conf::TokenList sections(history_list->getSections());
+    int nb_items = 0;
+    for (Conf::TokenList::iterator iter = sections.begin(); iter != sections.end(); ++iter) {
+        CallType type = (CallType) getConfigInt(*iter, "type", history_list);
+        string timestamp_start = getConfigString(*iter, "timestamp_start", history_list);
+        string timestamp_stop = getConfigString(*iter, "timestamp_stop", history_list);
+        string name = getConfigString(*iter, "name", history_list);
+        string number = getConfigString(*iter, "number", history_list);
+        string callID = getConfigString(*iter, "id", history_list);
+        string accountID = getConfigString(*iter, "accountid", history_list);
+        string recording_file = getConfigString(*iter, "recordfile", history_list);
+        string confID = getConfigString(*iter, "confid", history_list);
+        string time_added = getConfigString(*iter, "timeadded", history_list);
 
         // Make a check on the start timestamp to know it is loadable according to CONFIG_HISTORY_LIMIT
-
         if (atoi(timestamp_start.c_str()) >= ((int) current_timestamp - history_limit)) {
-            item = new HistoryItem(timestamp_start, type, timestamp_stop, name, number, callID, accountID, recording_file, confID, time_added);
+            HistoryItem *item = new HistoryItem(timestamp_start, type, timestamp_stop, name, number, callID, accountID, recording_file, confID, time_added);
             add_new_history_entry(item);
-            nb_items ++;
+            ++nb_items;
         }
-
-        iter ++;
     }
 
     return nb_items;
@@ -141,32 +121,22 @@ int HistoryManager::load_history_items_map(Conf::ConfigTree *history_list, int l
 
 bool HistoryManager::save_history_to_file(Conf::ConfigTree *history_list)
 {
-    _debug("HistoryManager: Saving history in XDG directory: %s", _history_path.data());
-    return  history_list->saveConfigTree(_history_path.data());
+    _debug("HistoryManager: Saving history in XDG directory: %s", history_path_.c_str());
+    return history_list->saveConfigTree(history_path_.data());
 }
 
 
 int HistoryManager::save_history_items_map(Conf::ConfigTree *history_list)
 {
-    HistoryItemMap::iterator iter;
-    HistoryItem *item;
     int items_saved = 0;
-
-    _debug("HistoryManager: Save history items map");
-
-    iter = _history_items.begin();
-
-    while (iter != _history_items.end()) {
-        item = *iter;
+    for (HistoryItemMap::iterator iter = history_items_.begin(); iter != history_items_.end(); ++iter) {
+        HistoryItem *item = *iter;
 
         if (item) {
             if (item->save(&history_list))
-                items_saved ++;
-        } else {
+                ++items_saved;
+        } else 
             _debug("can't save NULL history item\n");
-        }
-
-        iter ++;
     }
 
     return items_saved;
@@ -175,7 +145,7 @@ int HistoryManager::save_history_items_map(Conf::ConfigTree *history_list)
 void HistoryManager::add_new_history_entry(HistoryItem *new_item)
 {
     // Add it in the map
-    _history_items.push_back(new_item);
+    history_items_.push_back(new_item);
 }
 
 int HistoryManager::create_history_path(std::string path)
@@ -185,8 +155,7 @@ int HistoryManager::create_history_path(std::string path)
 
     xdg_data = std::string(HOMEDIR) + DIR_SEPARATOR_STR + ".local/share/sflphone";
 
-    if (path == "") {
-
+    if (path.empty()) {
         // If the environment variable is set (not null and not empty), we'll use it to save the history
         // Else we 'll the standard one, ie: XDG_DATA_HOME = $HOMEDIR/.local/share/sflphone
         if (XDG_DATA_HOME != NULL) {
@@ -205,10 +174,9 @@ int HistoryManager::create_history_path(std::string path)
         }
 
         // Load user's history
-        _history_path = userdata + DIR_SEPARATOR_STR + "history";
+        history_path_ = userdata + DIR_SEPARATOR_STR + "history";
     } else
         set_history_path(path);
-
 
     return 0;
 }
@@ -219,7 +187,7 @@ HistoryManager::getConfigInt(const std::string& section, const std::string& name
 {
     try {
         return history_list->getConfigTreeItemIntValue(section, name);
-    } catch (Conf::ConfigTreeItemException& e) {
+    } catch (const Conf::ConfigTreeItemException& e) {
         throw e;
     }
 
@@ -231,21 +199,21 @@ HistoryManager::getConfigString(const std::string& section, const std::string& n
 {
     try {
         return history_list->getConfigTreeItemValue(section, name);
-    } catch (Conf::ConfigTreeItemException& e) {
+    } catch (const Conf::ConfigTreeItemException& e) {
         throw e;
     }
 
     return "";
 }
 
-std::vector<std::string> HistoryManager::get_history_serialized(void)
+std::vector<std::string> HistoryManager::get_history_serialized()
 {
     std::vector<std::string> serialized;
     HistoryItemMap::iterator iter;
 
     _debug("HistoryManager: Get history serialized");
 
-    for (iter = _history_items.begin(); iter != _history_items.end(); ++iter) {
+    for (iter = history_items_.begin(); iter != history_items_.end(); ++iter) {
         HistoryItem *current = *iter;
 
         if (current)
@@ -258,40 +226,31 @@ std::vector<std::string> HistoryManager::get_history_serialized(void)
 
 int HistoryManager::set_serialized_history(std::vector<std::string> history, int limit)
 {
-    std::vector<std::string>::iterator iter;
-    HistoryItem *new_item;
-    int items_added = 0;
     int history_limit;
     time_t current_timestamp;
 
     _debug("HistoryManager: Set serialized history");
 
     // Clear the existing history
-    free_history(_history_items);
+    free_history(history_items_);
 
     // We want to save only the items recent enough (ie compared to CONFIG_HISTORY_LIMIT)
     // Get the current timestamp
-    (void) time(&current_timestamp);
+    time(&current_timestamp);
     history_limit = get_unix_timestamp_equivalent(limit);
 
-    for (iter = history.begin() ; iter != history.end() ; iter ++) {
-        new_item = new HistoryItem(*iter);
-
-        if (new_item == NULL) {
-            _error("HistoryManager: Error: Could not create history item");
-        }
-
+    int items_added = 0;
+    for (std::vector<std::string>::iterator iter = history.begin() ; iter != history.end() ; ++iter) {
+        HistoryItem *new_item = new HistoryItem(*iter);
         int item_timestamp = atoi(new_item->get_timestamp().c_str());
 
         if (item_timestamp >= ((int) current_timestamp - history_limit)) {
             add_new_history_entry(new_item);
-            items_added ++;
-        } else {
+            ++items_added;
+        } else
             delete new_item;
-        }
     }
 
     return items_added;
 }
-
 

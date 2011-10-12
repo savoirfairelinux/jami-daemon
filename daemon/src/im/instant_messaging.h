@@ -67,27 +67,15 @@ class InstantMessageException : public std::runtime_error {
 };
 
 class InstantMessaging {
-
     public:
-
         typedef std::map <std::string, std::string> UriEntry;
         typedef std::list <UriEntry> UriList;
-
-        /*
-         * Class constructor
-         */
-        InstantMessaging();
-
-        /*
-         * Class destructor
-         */
-        ~InstantMessaging();
 
         /**
          * Return the maximum number if character for a single SIP MESSAGE.
          * Longer messages should be splitted in several smaller messages using split_message
          */
-        size_t getMessageMaximumSize(void) {
+        static size_t getMessageMaximumSize() {
             return MAXIMUM_MESSAGE_LENGTH;
         }
 
@@ -161,11 +149,6 @@ class InstantMessaging {
          * @return A string containing the actual message
          */
         std::string findTextMessage(std::string& text);
-
-    private:
-
-        InstantMessaging(const InstantMessaging&);  //No Copy Constructor
-        InstantMessaging& operator= (const InstantMessaging&); //No Assignment Operator
 };
 }
 #endif // __INSTANT_MESSAGING_H_

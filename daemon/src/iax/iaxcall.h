@@ -32,7 +32,6 @@
 #define IAXCALL_H
 
 #include "call.h"
-#include "audio/codecs/audiocodecfactory.h"
 
 /**
  * @file: iaxcall.h
@@ -69,7 +68,7 @@ class IAXCall : public Call {
          */
         int getFirstMatchingFormat(int needles, const std::string &accountID) const;
 
-        int getAudioCodec(void);
+        int getAudioCodec() const;
 
         int format;
         iax_session* session;

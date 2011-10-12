@@ -49,14 +49,7 @@ static void XMLCALL startElementCallback(void *userData, const char *name, const
 }
 
 static void XMLCALL endElementCallback(void * /*userData*/, const char * /*name*/)
-{
-}
-
-
-InstantMessaging::InstantMessaging() {}
-
-
-InstantMessaging::~InstantMessaging() {}
+{}
 
 bool InstantMessaging::saveMessage(const std::string& message, const std::string& author, const std::string& id, int mode)
 {

@@ -48,7 +48,7 @@ namespace sfl {
 
 class ZrtpZidException: public std::runtime_error {
     public:
-        ZrtpZidException(const std::string& str="") :
+        ZrtpZidException(const std::string& str = "") :
             std::runtime_error("ZRTP ZID initialization failed." + str) {}
 };
 
@@ -56,7 +56,6 @@ class ZrtpZidException: public std::runtime_error {
 class AudioZrtpSession : public AudioRtpSession, protected ost::Thread, public ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue> {
     public:
         AudioZrtpSession(SIPCall * sipcall, const std::string& zidFilename);
-
         ~AudioZrtpSession();
 
         virtual void final();
@@ -69,10 +68,8 @@ class AudioZrtpSession : public AudioRtpSession, protected ost::Thread, public o
         }
 
     private:
-
-        void initializeZid(void);
-
-        std::string _zidFilename;
+        void initializeZid();
+        std::string zidFilename_;
 };
 
 }

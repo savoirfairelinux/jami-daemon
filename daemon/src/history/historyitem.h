@@ -30,19 +30,17 @@
  *  as that of the covered work.
  */
 
-#ifndef _HISTORY_ITEM
-#define _HISTORY_ITEM
+#ifndef HISTORY_ITEM_H_
+#define HISTORY_ITEM_H_
 
 #include <string>
 #include <config/config.h>
-#include <iostream>
 
 typedef enum CallType {
     CALL_MISSED,
     CALL_INCOMING,
     CALL_OUTGOING
 } CallType;
-
 
 class HistoryItem {
 
@@ -69,21 +67,15 @@ class HistoryItem {
          */
         HistoryItem(std::string="");
 
-        /*
-         * Destructor
-         */
-        ~HistoryItem();
-
         std::string get_timestamp() const {
-            return _timestamp_start;
+            return timestamp_start_;
         }
 
         bool save(Conf::ConfigTree **history);
 
-        std::string serialize(void);
+        std::string serialize();
 
     private:
-
         /*
          * @return true if the account ID corresponds to a loaded account
          */
@@ -92,45 +84,45 @@ class HistoryItem {
         /*
          * Timestamp representing the date of the call
          */
-        std::string _timestamp_start;
-        std::string _timestamp_stop;
+        std::string timestamp_start_;
+        std::string timestamp_stop_;
 
         /*
          * Represents the type of call
          * Has be either CALL_MISSED, CALL_INCOMING or CALL_OUTGOING
          */
-        CallType _call_type;
+        CallType call_type_;
 
         /*
          * The information about the callee/caller, depending on the type of call.
          */
-        std::string _name;
-        std::string _number;
+        std::string name_;
+        std::string number_;
 
         /**
          * The identifier fo this item
          */
-        std::string _id;
+        std::string id_;
 
         /*
          * The account the call was made with
          */
-        std::string _account_id;
+        std::string account_id_;
 
         /**
          * Wether or not a recording exist for this call
          */
-        std::string _recording_file;
+        std::string recording_file_;
 
         /**
         	 * The conference ID for this call (if any)
         	 */
-        std::string _confID;
+        std::string confID_;
 
         /**
         	 * Time added to conference
          */
-        std::string _timeAdded;
+        std::string timeAdded_;
 };
 
 

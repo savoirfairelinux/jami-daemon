@@ -34,25 +34,19 @@
 #ifndef __AUDIO_SYMMETRIC_RTP_SESSION_H__
 #define __AUDIO_SYMMETRIC_RTP_SESSION_H__
 
-#include <iostream>
 #include <exception>
-#include <list>
 #include <cassert>
 #include <cstddef>
 
-#include "global.h"
-
 #include "audio_rtp_session.h"
-#include "audio_rtp_record_handler.h"
-#include "sip/sipcall.h"
-#include "audio/codecs/audiocodec.h"
 
 using std::ptrdiff_t;
 #include <ccrtp/rtp.h>
 #include <ccrtp/iqueue.h>
 #include <cc++/numbers.h> // ost::Time
 
-#include <fstream>
+class SIPCall;
+
 namespace sfl {
 
 class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTPSession, public AudioRtpSession {
@@ -69,9 +63,9 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTP
             return AudioRtpSession::onRTPPacketRecv(pkt);
         }
 
-        int startSymmetricRtpThread(void) {
-            assert(_rtpThread);
-            return _rtpThread->start();
+        int startSymmetricRtpThread() {
+            assert(rtpThread_);
+            return rtpThread_->start();
         }
 
     private:
@@ -79,23 +73,25 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTP
         class AudioRtpThread : public ost::Thread, public ost::TimerPort {
             public:
                 AudioRtpThread(AudioSymmetricRtpSession *session);
-                ~AudioRtpThread();
+                ~AudioRtpThread(){}
 
                 virtual void run();
 
                 bool running;
 
             private:
+                AudioRtpThread(const AudioRtpThread &);
+                AudioRtpThread& operator=(const AudioRtpThread &);
+
                 AudioSymmetricRtpSession *rtpSession;
         };
         SpeexEchoCancel echoCanceller;
 
     protected:
 
-        AudioRtpThread *_rtpThread;
+        AudioRtpThread *rtpThread_;
 
     public:
-
         friend class AudioRtpThread;
 };
 

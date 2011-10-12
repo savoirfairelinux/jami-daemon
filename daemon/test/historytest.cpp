@@ -58,7 +58,7 @@ void HistoryTest::test_create_history_path()
     result = history->create_history_path(path);
     CPPUNIT_ASSERT(result == 0);
     CPPUNIT_ASSERT(!history->is_loaded());
-    CPPUNIT_ASSERT(history->_history_path == path);
+    CPPUNIT_ASSERT(history->history_path_ == path);
 }
 
 void HistoryTest::test_load_history_from_file()

@@ -730,13 +730,13 @@ class ManagerImpl {
          * Get the desktop mail notification level
          * @return int The mail notification level
          */
-        int32_t getMailNotify(void) const;
+        int32_t getMailNotify() const;
 
         /**
          * Get the list of the active codecs
          * @return std::vector< ::std::string >  The list of active codecs
          */
-        std::vector<std::string> getActiveCodecList(void) const;
+        std::vector<std::string> getActiveCodecList() const;
 
         /**
          * Retrieve in the configuration tree the value of a parameter in a specific section

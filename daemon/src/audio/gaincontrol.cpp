@@ -1,7 +1,6 @@
-#include <math.h>
-#include <limits.h>
+#include <cmath>
+#include <climits>
 #include <fstream>
-#include <iostream>
 
 #include "global.h"
 #include "gaincontrol.h"
@@ -14,33 +13,17 @@
 
 #define SFL_GAIN_LOGe10  2.30258509299404568402
 
-// #define DUMP_GAIN_CONTROL_SIGNAL
-
-GainControl::GainControl(double sr, double target) : averager(sr, SFL_GAIN_ATTACK_TIME, SFL_GAIN_RELEASE_TIME)
-    , limiter(SFL_GAIN_LIMITER_RATIO, SFL_GAIN_LIMITER_THRESHOLD)
-    , targetLeveldB(target)
-    , targetLevelLinear(0.0)
-    , currentGain(1.0)
-    , previousGain(0.0)
-    , maxIncreaseStep(0.0)
-    , maxDecreaseStep(0.0)
+GainControl::GainControl(double sr, double target) : averager_(sr, SFL_GAIN_ATTACK_TIME, SFL_GAIN_RELEASE_TIME)
+    , limiter_(SFL_GAIN_LIMITER_RATIO, SFL_GAIN_LIMITER_THRESHOLD)
+    , targetLeveldB_(target)
+    , targetLevelLinear_(exp(targetLeveldB_ * 0.05 * SFL_GAIN_LOGe10))
+    , currentGain_(1.0)
+    , previousGain_(0.0)
+    , maxIncreaseStep_(exp(0.11513 * 12. * 160 / 8000)) // Computed on 12 frames (240 ms)
+    , maxDecreaseStep_(exp(-0.11513 * 40. * 160 / 8000))// Computed on 40 frames (800 ms)
 {
-    targetLevelLinear = exp(targetLeveldB * 0.05 * SFL_GAIN_LOGe10);
-
-    maxIncreaseStep = exp(0.11513 * 12. * 160 / 8000); // Computed on 12 frames (240 ms)
-    maxDecreaseStep = exp(-0.11513 * 40. * 160 / 8000); // Computed on 40 frames (800 ms)
-
-    _debug("GainControl: Target gain %f dB (%f linear)", targetLeveldB, targetLevelLinear);
-
+    _debug("GainControl: Target gain %f dB (%f linear)", targetLeveldB_, targetLevelLinear_);
 }
-
-GainControl::~GainControl() {}
-
-#ifdef DUMP_GAIN_CONTROL_SIGNAL
-std::fstream tmpRms("gaintestrms.raw", std::fstream::out);
-std::fstream tmpIn("gaintestin.raw", std::fstream::out);
-std::fstream tmpOut("gaintestout.raw", std::fstream::out);
-#endif
 
 void GainControl::process(SFLDataFormat *buf, int samples)
 {
@@ -52,82 +35,56 @@ void GainControl::process(SFLDataFormat *buf, int samples)
         // linear conversion
         in = (double)buf[i] / (double)SHRT_MAX;
 
-        out = currentGain * in;
+        out = currentGain_ * in;
 
-        rms = detector.getRms(out);
-        rmsAvgLevel = sqrt(averager.getAverage(rms));
+        rms = out * out;
+        rmsAvgLevel = sqrt(averager_.getAverage(rms));
 
-#ifdef DUMP_GAIN_CONTROL_SIGNAL
-        tmpRms.write(reinterpret_cast<char *>(&rmsAvgLevel), sizeof(double));
-        tmpIn.write(reinterpret_cast<char *>(&in), sizeof(double));
-#endif
-
-        if (rmsAvgLevel > maxRms) {
+        if (rmsAvgLevel > maxRms)
             maxRms = rmsAvgLevel;
-        }
 
-        out = limiter.limit(out);
-
-#ifdef DUMP_GAIN_CONTROL_SIGNAL
-        tmpOut.write(reinterpret_cast<char *>(&out), sizeof(double));
-#endif
+        out = limiter_.limit(out);
 
         buf[i] = (short)(out * (double)SHRT_MAX);
     }
 
-    diffRms = maxRms - targetLevelLinear;
+    diffRms = maxRms - targetLevelLinear_;
 
-    if ((diffRms > 0.0) && (maxRms > 0.1)) {
-        currentGain *= maxDecreaseStep;
-    } else if ((diffRms <= 0.0) && (maxRms > 0.1)) {
-        currentGain *= maxIncreaseStep;
-    } else if (maxRms <= 0.1) {
-        currentGain = 1.0;
-    }
+    if ((diffRms > 0.0) && (maxRms > 0.1))
+        currentGain_ *= maxDecreaseStep_;
+    else if ((diffRms <= 0.0) && (maxRms > 0.1))
+        currentGain_ *= maxIncreaseStep_;
+    else if (maxRms <= 0.1)
+        currentGain_ = 1.0;
 
-    currentGain = 0.5 * (currentGain + previousGain);
+    currentGain_ = 0.5 * (currentGain_ + previousGain_);
 
-    previousGain = currentGain;
-
-    // _debug("GainControl: current gain: %f, target gain: %f, rmsAvgLevel %f, target level %f",
-    //     currentGain, gainTargetLevel, rmsAvgLevel, targetLevelLinear);
-}
-
-GainControl::RmsDetection::RmsDetection() {}
-
-double GainControl::RmsDetection::getRms(double in)
-{
-    return in * in;
+    previousGain_ = currentGain_;
 }
 
 GainControl::DetectionAverage::DetectionAverage(double sr, double ta, double tr) :
-    g_a(0.0), teta_a(ta), g_r(0.0), teta_r(tr), samplingRate(sr), previous_y(0.0)
+    g_a_(0.0), teta_a_(ta), g_r_(0.0), teta_r_(tr), samplingRate_(sr), previous_y_(0.0)
 {
-    g_a = exp(-1.0 / (samplingRate * (teta_a / 1000.0)));
-    g_r = exp(-1.0 / (samplingRate * (teta_r / 1000.0)));
+    g_a_ = exp(-1.0 / (samplingRate_ * (teta_a_ / 1000.0)));
+    g_r_ = exp(-1.0 / (samplingRate_ * (teta_r_ / 1000.0)));
 }
 
 double GainControl::DetectionAverage::getAverage(double in)
 {
-    if (in > previous_y) {
-        previous_y = ((1.0 - g_a) * in) + (g_a * previous_y);
-    } else {
-        previous_y = ((1.0 - g_r) * in) + (g_r * previous_y);
-    }
-
-    return previous_y;
+    if (in > previous_y_)
+        previous_y_ = ((1.0 - g_a_) * in) + (g_a_ * previous_y_);
+    else
+        previous_y_ = ((1.0 - g_r_) * in) + (g_r_ * previous_y_);
+    return previous_y_;
 }
 
-GainControl::Limiter::Limiter(double r, double thresh) : ratio(r), threshold(thresh)
-{
-}
+GainControl::Limiter::Limiter(double r, double thresh) : ratio_(r), threshold_(thresh)
+{}
 
 double GainControl::Limiter::limit(double in)
 {
-    double out;
-
-    out = (in > threshold ? (ratio * (in - threshold)) + threshold :
-           in < -threshold ? (ratio * (in + threshold)) - threshold : in);
+    double out = (in > threshold_ ? (ratio_ * (in - threshold_)) + threshold_ :
+           in < -threshold_ ? (ratio_ * (in + threshold_)) - threshold_ : in);
 
     return out;
 }

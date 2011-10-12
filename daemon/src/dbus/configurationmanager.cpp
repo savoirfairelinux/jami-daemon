@@ -53,7 +53,7 @@ ConfigurationManager::ConfigurationManager(DBus::Connection& connection) :
     shortcutsKeys.push_back("toggle_hold");
 }
 
-std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails(void)
+std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails()
 {
     std::map<std::string, std::string> ip2ipAccountDetails;
     SIPAccount *sipaccount = static_cast<SIPAccount *>(Manager::instance().getAccount(IP2IP_PROFILE));
@@ -161,7 +161,7 @@ std::vector<std::string> ConfigurationManager::getAccountList()
  * Send the list of all codecs loaded to the client through DBus.
  * Can stay global, as only the active codecs will be set per accounts
  */
-std::vector<int32_t > ConfigurationManager::getAudioCodecList(void)
+std::vector<int32_t > ConfigurationManager::getAudioCodecList()
 {
     std::vector<int32_t> list(Manager::instance().audioCodecFactory.getAudioCodecList());
 
@@ -171,7 +171,7 @@ std::vector<int32_t > ConfigurationManager::getAudioCodecList(void)
     return list;
 }
 
-std::vector<std::string> ConfigurationManager::getSupportedTlsMethod(void)
+std::vector<std::string> ConfigurationManager::getSupportedTlsMethod()
 {
     std::vector<std::string> method;
     method.push_back("Default");
@@ -265,14 +265,14 @@ int32_t ConfigurationManager::getAudioDeviceIndex(const std::string& name)
     return Manager::instance().getAudioDeviceIndex(name);
 }
 
-std::string ConfigurationManager::getCurrentAudioOutputPlugin(void)
+std::string ConfigurationManager::getCurrentAudioOutputPlugin()
 {
     _debug("ConfigurationManager: Get audio plugin %s", Manager::instance().getCurrentAudioOutputPlugin().c_str());
 
     return Manager::instance().getCurrentAudioOutputPlugin();
 }
 
-std::string ConfigurationManager::getNoiseSuppressState(void)
+std::string ConfigurationManager::getNoiseSuppressState()
 {
     return Manager::instance().getNoiseSuppressState();
 }
@@ -282,7 +282,7 @@ void ConfigurationManager::setNoiseSuppressState(const std::string& state)
     Manager::instance().setNoiseSuppressState(state);
 }
 
-std::string ConfigurationManager::getEchoCancelState(void)
+std::string ConfigurationManager::getEchoCancelState()
 {
     return Manager::instance().getEchoCancelState() ? "enabled" : "disabled";
 }
@@ -292,7 +292,7 @@ void ConfigurationManager::setEchoCancelState(const std::string& state)
     Manager::instance().setEchoCancelState(state);
 }
 
-int ConfigurationManager::getEchoCancelTailLength(void)
+int ConfigurationManager::getEchoCancelTailLength()
 {
     return Manager::instance().getEchoCancelTailLength();
 }
@@ -302,7 +302,7 @@ void ConfigurationManager::setEchoCancelTailLength(const int32_t& length)
     Manager::instance().setEchoCancelTailLength(length);
 }
 
-int ConfigurationManager::getEchoCancelDelay(void)
+int ConfigurationManager::getEchoCancelDelay()
 {
     return Manager::instance().getEchoCancelDelay();
 }
@@ -312,12 +312,12 @@ void ConfigurationManager::setEchoCancelDelay(const int32_t& delay)
     Manager::instance().setEchoCancelDelay(delay);
 }
 
-int32_t ConfigurationManager::isIax2Enabled(void)
+int32_t ConfigurationManager::isIax2Enabled()
 {
     return HAVE_IAX;
 }
 
-std::string ConfigurationManager::getRecordPath(void)
+std::string ConfigurationManager::getRecordPath()
 {
     return Manager::instance().getRecordPath();
 }
@@ -327,7 +327,7 @@ void ConfigurationManager::setRecordPath(const std::string& recPath)
     Manager::instance().setRecordPath(recPath);
 }
 
-bool ConfigurationManager::getIsAlwaysRecording(void)
+bool ConfigurationManager::getIsAlwaysRecording()
 {
     return Manager::instance().getIsAlwaysRecording();
 }
@@ -337,7 +337,7 @@ void ConfigurationManager::setIsAlwaysRecording(const bool& rec)
     Manager::instance().setIsAlwaysRecording(rec);
 }
 
-int32_t ConfigurationManager::getHistoryLimit(void)
+int32_t ConfigurationManager::getHistoryLimit()
 {
     return Manager::instance().getHistoryLimit();
 }
@@ -352,22 +352,22 @@ void ConfigurationManager::setAudioManager(const std::string& api)
     Manager::instance().setAudioManager(api);
 }
 
-std::string ConfigurationManager::getAudioManager(void)
+std::string ConfigurationManager::getAudioManager()
 {
     return Manager::instance().getAudioManager();
 }
 
-void ConfigurationManager::setMailNotify(void)
+void ConfigurationManager::setMailNotify()
 {
     Manager::instance().setMailNotify();
 }
 
-int32_t ConfigurationManager::getMailNotify(void)
+int32_t ConfigurationManager::getMailNotify()
 {
     return Manager::instance().getMailNotify();
 }
 
-std::map<std::string, int32_t> ConfigurationManager::getAddressbookSettings(void)
+std::map<std::string, int32_t> ConfigurationManager::getAddressbookSettings()
 {
     return Manager::instance().getAddressbookSettings();
 }
@@ -377,7 +377,7 @@ void ConfigurationManager::setAddressbookSettings(const std::map<std::string, in
     Manager::instance().setAddressbookSettings(settings);
 }
 
-std::vector<std::string> ConfigurationManager::getAddressbookList(void)
+std::vector<std::string> ConfigurationManager::getAddressbookList()
 {
     return Manager::instance().getAddressbookList();
 }
@@ -388,7 +388,7 @@ void ConfigurationManager::setAddressbookList(
     Manager::instance().setAddressbookList(list);
 }
 
-std::map<std::string, std::string> ConfigurationManager::getHookSettings(void)
+std::map<std::string, std::string> ConfigurationManager::getHookSettings()
 {
     return Manager::instance().getHookSettings();
 }
@@ -404,7 +404,7 @@ void ConfigurationManager::setAccountsOrder(const std::string& order)
     Manager::instance().setAccountsOrder(order);
 }
 
-std::vector<std::string> ConfigurationManager::getHistory(void)
+std::vector<std::string> ConfigurationManager::getHistory()
 {
     return Manager::instance().getHistorySerialized();
 }
@@ -420,12 +420,12 @@ std::string ConfigurationManager::getAddrFromInterfaceName(
     return SIPVoIPLink::getInterfaceAddrFromName(interface);
 }
 
-std::vector<std::string> ConfigurationManager::getAllIpInterface(void)
+std::vector<std::string> ConfigurationManager::getAllIpInterface()
 {
     return SIPVoIPLink::getAllIpInterface();
 }
 
-std::vector<std::string> ConfigurationManager::getAllIpInterfaceByName(void)
+std::vector<std::string> ConfigurationManager::getAllIpInterfaceByName()
 {
     return SIPVoIPLink::getAllIpInterfaceByName();
 }

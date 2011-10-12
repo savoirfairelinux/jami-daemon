@@ -35,54 +35,47 @@
 #include "dtmf.h"
 
 DTMF::DTMF(unsigned int sampleRate)
-    : currentTone(0), newTone(0), dtmfgenerator(sampleRate)
+    : currentTone_(0), newTone_(0), dtmfgenerator_(sampleRate)
+{}
+
+void DTMF::startTone(char code)
 {
+    newTone_ = code;
 }
 
-DTMF::~DTMF(void)
-{
-}
-
-void
-DTMF::startTone(char code)
-{
-    newTone = code;
-}
-
-bool
-DTMF::generateDTMF(SFLDataFormat* buffer, size_t n)
+bool DTMF::generateDTMF(SFLDataFormat* buffer, size_t n)
 {
     if (!buffer) return false;
 
     try {
-        if (currentTone != 0) {
+        if (currentTone_ != 0) {
             // Currently generating a DTMF tone
-            if (currentTone == newTone) {
+            if (currentTone_ == newTone_) {
                 // Continue generating the same tone
-                dtmfgenerator.getNextSamples(buffer, n);
+                dtmfgenerator_.getNextSamples(buffer, n);
                 return true;
-            } else if (newTone != 0) {
+            } else if (newTone_ != 0) {
                 // New tone requested
-                dtmfgenerator.getSamples(buffer, n, newTone);
-                currentTone = newTone;
+                dtmfgenerator_.getSamples(buffer, n, newTone_);
+                currentTone_ = newTone_;
                 return true;
             } else {
                 // Stop requested
-                currentTone = newTone;
+                currentTone_ = newTone_;
                 return false;
             }
         } else {
             // Not generating any DTMF tone
-            if (newTone) {
+            if (newTone_) {
                 // Requested to generate a DTMF tone
-                dtmfgenerator.getSamples(buffer, n, newTone);
-                currentTone = newTone;
+                dtmfgenerator_.getSamples(buffer, n, newTone_);
+                currentTone_ = newTone_;
                 return true;
             }
-
-            return false;
+            else
+                return false;
         }
-    } catch (DTMFException e) {
+    } catch (const DTMFException &e) {
         // invalid key
         return false;
     }

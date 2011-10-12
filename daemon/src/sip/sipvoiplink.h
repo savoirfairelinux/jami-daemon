@@ -32,8 +32,8 @@
  *  as that of the covered work.
  */
 
-#ifndef SIPVOIPLINK_H
-#define SIPVOIPLINK_H
+#ifndef SIPVOIPLINK_H_
+#define SIPVOIPLINK_H_
 
 #include <map>
 
@@ -66,10 +66,6 @@ class SIPAccount;
 
 class SIPVoIPLink : public VoIPLink {
     public:
-
-        /**
-         * Destructor
-         */
         ~SIPVoIPLink();
 
         /**
@@ -81,17 +77,17 @@ class SIPVoIPLink : public VoIPLink {
         /**
          * Try to initiate the pjsip engine/thread and set config
          */
-        virtual void init(void);
+        virtual void init();
 
         /**
          * Shut the library and clean up
          */
-        virtual void terminate(void);
+        virtual void terminate();
 
         /**
          * Event listener. Each event send by the call manager is received and handled from here
          */
-        virtual void getEvent(void);
+        virtual void getEvent();
 
         /**
          * Build and send SIP registration request
@@ -226,7 +222,7 @@ class SIPVoIPLink : public VoIPLink {
          * of IPV4 address available on all of the interfaces on
          * the system.
          */
-        static std::vector<std::string> getAllIpInterface(void);
+        static std::vector<std::string> getAllIpInterface();
 
         /**
         * List all the interfaces on the system and return
@@ -236,7 +232,7 @@ class SIPVoIPLink : public VoIPLink {
         * of interface name available on all of the interfaces on
         * the system.
         */
-        static std::vector<std::string> getAllIpInterfaceByName(void);
+        static std::vector<std::string> getAllIpInterfaceByName();
 
         /**
          * List all the interfaces on the system and return
@@ -353,5 +349,4 @@ class SIPVoIPLink : public VoIPLink {
         friend class SIPTest;
 };
 
-
-#endif
+#endif // SIPVOIPLINK_H_

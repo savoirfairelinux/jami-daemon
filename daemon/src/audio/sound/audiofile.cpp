@@ -44,7 +44,7 @@
 #include "manager.h"
 
 RawFile::RawFile(const std::string& name, sfl::AudioCodec* codec, unsigned int sampleRate)
-    : audioCodec(codec)
+    : audioCodec_(codec)
 {
     filepath_ = name;
 
@@ -66,9 +66,9 @@ RawFile::RawFile(const std::string& name, sfl::AudioCodec* codec, unsigned int s
     file.read(fileBuffer,length);
     file.close();
 
-    unsigned int frameSize = audioCodec->getFrameSize();
-    unsigned int bitrate   = audioCodec->getBitRate() * 1000 / 8;
-    unsigned int audioRate = audioCodec->getClockRate();
+    unsigned int frameSize = audioCodec_->getFrameSize();
+    unsigned int bitrate   = audioCodec_->getBitRate() * 1000 / 8;
+    unsigned int audioRate = audioCodec_->getClockRate();
     unsigned int encFrameSize = frameSize * bitrate / audioRate;
     unsigned int decodedSize = length * (frameSize / encFrameSize);
 
@@ -78,7 +78,7 @@ RawFile::RawFile(const std::string& name, sfl::AudioCodec* codec, unsigned int s
     size_ = decodedSize;
 
     while (length >= encFrameSize) {
-        bufpos += audioCodec->decode(bufpos, filepos, encFrameSize);
+        bufpos += audioCodec_->decode(bufpos, filepos, encFrameSize);
         filepos += encFrameSize;
         length -= encFrameSize;
     }

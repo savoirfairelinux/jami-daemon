@@ -99,17 +99,17 @@ class AudioRtpFactory {
          * Update current RTP destination address with one stored in call
          * @param None
          */
-        void updateDestinationIpAddress(void);
+        void updateDestinationIpAddress();
 
-        bool isSdesEnabled(void) const {
-            return _srtpEnabled && _keyExchangeProtocol == sfl::Sdes;
+        bool isSdesEnabled() const {
+            return srtpEnabled_ and keyExchangeProtocol_ == sfl::Sdes;
         }
 
         /**
          * Manually set the srtpEnable option (usefull for RTP fallback)
          */
         void setSrtpEnabled(bool enable) {
-            _srtpEnabled = enable;
+            srtpEnabled_ = enable;
         }
 
         /**
@@ -138,26 +138,26 @@ class AudioRtpFactory {
         void sendDtmfDigit(int digit);
 
     private:
-        AudioRtpSession *_rtpSession;
-        ost::Mutex _audioRtpThreadMutex;
+        AudioRtpSession *rtpSession_;
+        ost::Mutex audioRtpThreadMutex_;
 
         // Field used when initializinga udio rtp session
         // May be set manually or from config using initAudioRtpConfig
-        bool _srtpEnabled;
+        bool srtpEnabled_;
 
         // Field used when initializinga udio rtp session
         // May be set manually or from config using initAudioRtpConfig
-        RtpMethod _keyExchangeProtocol;
+        RtpMethod keyExchangeProtocol_;
 
         // Field used when initializinga udio rtp session
         // May be set manually or from config using initAudioRtpConfig
-        bool _helloHashEnabled;
+        bool helloHashEnabled_;
 
         /** Remote srtp crypto context to be set into incoming data queue. */
-        ost::CryptoContext *remoteContext;
+        ost::CryptoContext *remoteContext_;
 
         /** Local srtp crypto context to be set into outgoing data queue. */
-        ost::CryptoContext *localContext;
+        ost::CryptoContext *localContext_;
 
         SIPCall *ca_;
 };

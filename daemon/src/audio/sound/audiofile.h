@@ -35,8 +35,6 @@
 #define __AUDIOFILE_H__
 
 #include <stdexcept>
-#include <fstream>
-
 #include "audio/audioloop.h"
 
 namespace sfl {
@@ -45,7 +43,7 @@ class AudioCodec;
 
 class AudioFileException : public std::runtime_error {
     public:
-        AudioFileException(const std::string& str="") :
+        AudioFileException(const std::string& str = "") :
             std::runtime_error("AudioFile: AudioFileException occured: " + str) {}
 };
 
@@ -54,7 +52,7 @@ class AudioFileException : public std::runtime_error {
  */
 class AudioFile : public AudioLoop {
     public:
-        std::string getFilePath(void) const {
+        std::string getFilePath() const {
             return filepath_;
         }
 
@@ -62,13 +60,6 @@ class AudioFile : public AudioLoop {
         /** The absolute path to the sound file */
         std::string filepath_;
 };
-
-
-
-/**
- * @file audiofile.h
- * @brief A class to manage sound files
- */
 
 class RawFile : public AudioFile {
     public:
@@ -78,24 +69,21 @@ class RawFile : public AudioFile {
         RawFile(const std::string& name, sfl::AudioCodec* codec, unsigned int sampleRate = 8000);
 
     private:
-        // Copy Constructor
+        // noncopyable
         RawFile(const RawFile& rh);
-
-        // Assignment Operator
-        const RawFile& operator= (const RawFile& rh);
+        RawFile& operator= (const RawFile& rh);
 
         /** Your preferred codec */
-        sfl::AudioCodec* audioCodec;
+        sfl::AudioCodec* audioCodec_;
 };
 
 class WaveFile : public AudioFile {
-
     public:
         /**
          * Load a sound file in memory
-        	 * @param filename  The absolute path to the file
-        	 * @param sampleRate	The sample rate to read it
-        	 */
+         * @param filename  The absolute path to the file
+         * @param sampleRate	The sample rate to read it
+         */
         WaveFile(const std::string&, unsigned int);
 };
 

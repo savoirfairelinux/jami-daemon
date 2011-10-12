@@ -152,57 +152,56 @@ class SdesNegotiator {
 
     public:
         SdesNegotiator(const std::vector<CryptoSuiteDefinition>& localCapabilites, const std::vector<std::string>& remoteAttribute);
-        ~SdesNegotiator() {};
 
-        bool negotiate(void);
+        bool negotiate();
 
         /**
          * Return crypto suite after negotiation
          */
-        std::string getCryptoSuite(void) const {
-            return _cryptoSuite;
+        std::string getCryptoSuite() const {
+            return cryptoSuite_;
         }
 
         /**
          * Return key method after negotiation (most likely inline:)
          */
-        std::string getKeyMethod(void) const {
-            return _srtpKeyMethod;
+        std::string getKeyMethod() const {
+            return srtpKeyMethod_;
         }
 
         /**
          * Return crypto suite after negotiation
          */
-        std::string getKeyInfo(void) const {
-            return _srtpKeyInfo;
+        std::string getKeyInfo() const {
+            return srtpKeyInfo_;
         }
 
         /**
          * Return key lifetime after negotiation
          */
-        std::string getLifeTime(void) const {
-            return _lifetime;
+        std::string getLifeTime() const {
+            return lifetime_;
         }
 
         /**
          * Return mki value after negotiation
          */
-        std::string getMkiValue(void) const {
-            return _mkiValue;
+        std::string getMkiValue() const {
+            return mkiValue_;
         }
 
         /**
          * Return mki length after negotiation
          */
-        std::string getMkiLength(void) const {
-            return _mkiLength;
+        std::string getMkiLength() const {
+            return mkiLength_;
         }
 
         /**
         * Authentication tag lenth
         */
-        std::string getAuthTagLength(void) const {
-            return _authTagLength;
+        std::string getAuthTagLength() const {
+            return authTagLength_;
         }
 
 
@@ -212,46 +211,46 @@ class SdesNegotiator {
          * Multiple crypto lines can be sent, and the
          * prefered method is then chosen from that list.
          */
-        std::vector<std::string> _remoteAttribute;
+        std::vector<std::string> remoteAttribute_;
 
-        std::vector<CryptoSuiteDefinition> _localCapabilities;
+        std::vector<CryptoSuiteDefinition> localCapabilities_;
 
         /**
          * Selected crypto suite after negotiation
          */
-        std::string _cryptoSuite;
+        std::string cryptoSuite_;
 
         /**
          * Selected key method after negotiation (most likely inline:)
          */
-        std::string _srtpKeyMethod;
+        std::string srtpKeyMethod_;
 
         /**
          * Selected crypto suite after negotiation
          */
-        std::string _srtpKeyInfo;
+        std::string srtpKeyInfo_;
 
         /**
          * Selected key lifetime after negotiation
          */
-        std::string _lifetime;
+        std::string lifetime_;
 
         /**
          * Selected mki value after negotiation
          */
-        std::string _mkiValue;
+        std::string mkiValue_;
 
         /**
          * Selected mki length after negotiation
          */
-        std::string _mkiLength;
+        std::string mkiLength_;
 
         /**
          * Authenticvation tag length in byte
          */
-        std::string _authTagLength;
+        std::string authTagLength_;
 
-        std::vector<CryptoAttribute *> parse(void);
+        std::vector<CryptoAttribute *> parse();
 };
 }
 #endif // __SDES_NEGOTIATOR_H__

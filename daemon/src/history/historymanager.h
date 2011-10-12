@@ -63,7 +63,7 @@ class HistoryManager {
         /**
          *@return bool True if the history has been successfully saved in the file
          */
-        bool save_history(void);
+        bool save_history();
 
         /*
          * Load the history from a file to the dedicated data structure
@@ -88,22 +88,22 @@ class HistoryManager {
         /**
          *@return bool  True if the history file has been successfully read
          */
-        bool is_loaded(void) const {
-            return _history_loaded;
+        bool is_loaded() const {
+            return history_loaded_;
         }
 
         void set_history_path(const std::string &filename) {
-            _history_path = filename;
+            history_path_ = filename;
         }
 
         /*
          *@return int   The number of items found in the history file
          */
-        int get_history_size(void) const {
-            return _history_items.size();
+        int get_history_size() const {
+            return history_items_.size();
         }
 
-        std::vector<std::string> get_history_serialized(void);
+        std::vector<std::string> get_history_serialized();
 
         int set_serialized_history(std::vector<std::string> history, int limit);
 
@@ -129,18 +129,18 @@ class HistoryManager {
         /*
          * Map containing the history items
          */
-        HistoryItemMap _history_items;
+        HistoryItemMap history_items_;
 
         /*
          * History has been loaded
          */
-        bool _history_loaded;
+        bool history_loaded_;
 
         /*
          * The path to the history file
          */
 
-        std::string _history_path;
+        std::string history_path_;
 
         friend class HistoryTest;
 };
