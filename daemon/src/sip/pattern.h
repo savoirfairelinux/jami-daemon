@@ -95,12 +95,12 @@ class Pattern {
          * @param pattern The new pattern
          */
         void operator= (const std::string& pattern) {
-            _pattern = pattern;
+            pattern_ = pattern;
             compile();
         }
 
         void operator= (const char * pattern) {
-            _pattern = pattern;
+            pattern_ = pattern;
             compile();
         }
 
@@ -109,7 +109,7 @@ class Pattern {
          * from the pattern that was set for
          * this object.
          */
-        void compile(void);
+        void compile();
 
         /**
          * Get the currently set regular expression
@@ -117,8 +117,8 @@ class Pattern {
          *
          * @return The currently set pattern
          */
-        std::string getPattern(void) const {
-            return _pattern;
+        std::string getPattern() const {
+            return pattern_;
         }
 
         /**
@@ -131,7 +131,7 @@ class Pattern {
          *
          */
         void operator<< (const std::string& subject) {
-            _subject = subject;
+            subject_ = subject;
         }
 
         /**
@@ -139,7 +139,7 @@ class Pattern {
          *
          * @return the start position of the overall match.
          */
-        size_t start(void) const;
+        size_t start() const;
 
         /**
          * Get the start position of the specified match.
@@ -162,7 +162,7 @@ class Pattern {
          *
          * @return the end position of the overall match.
          */
-        size_t end(void) const;
+        size_t end() const;
 
         /**
          * Get the end position of the specified match.
@@ -191,7 +191,7 @@ class Pattern {
          * @pre The regular expression should have been
          * 	    compiled prior to the execution of this method.
          */
-        unsigned int getCaptureGroupCount(void);
+        unsigned int getCaptureGroupCount();
 
         /**
          * Get the substring matched in a capturing
@@ -241,7 +241,7 @@ class Pattern {
          * @pre The regular expression should have been
          * 	    compiled prior to the execution of this method.
          */
-        std::vector<std::string> groups(void);
+        std::vector<std::string> groups();
 
         /**
          * Try to match the compiled pattern with a
@@ -260,7 +260,7 @@ class Pattern {
          *       with the new matches. Therefore, subsequent
          * 		 calls to group may return different results.
          */
-        bool matches(const std::string& subject) throw(match_error);
+        bool matches(const std::string& subject);
 
         /**
          * Try to match the compiled pattern with the implicit
@@ -276,7 +276,7 @@ class Pattern {
          *       with the new matches. Therefore, subsequent
          * 		 calls to group may return different results.
          */
-        bool matches(void) throw(match_error);
+        bool matches();
 
         /**
          *  Split the subject into a list of substrings.
@@ -290,59 +290,41 @@ class Pattern {
          * 	     by this operation. In other words: subject_before =
          * 		 subject_after.
          */
-        std::vector<std::string> split(void);  // throw(match_error);
+        std::vector<std::string> split();
 
     private:
-        /**
-         * The regular expression that represents that pattern.
-         */
-        std::string _pattern;
+         // The regular expression that represents that pattern.
+        std::string pattern_;
 
-        /**
-         * The optional subject string.
-         */
-        std::string _subject;
+        // The optional subject string.
+        std::string subject_;
 
         /**
          * PCRE struct that
          * contains the compiled regular
          * expression
                */
-        pcre * _re;
+        pcre * re_;
 
-        /**
-         * The internal output vector used by PCRE.
-         */
-        int * _ovector;
+        // The internal output vector used by PCRE.
+        int * ovector_;
 
-        /**
-         * The size of the _ovector
-         */
-        int _ovectorSize;
+        // The size of the ovector_
+        int ovectorSize_;
 
-        /**
-         * Current offset in the _ovector;
-         */
+        // Current offset in the ovector_;
+        int offset_[2];
 
-        int _offset[2];
+        // The number of substrings matched after calling pcre_exec.
+        int count_;
 
-        /**
-         * The number of substrings matched after calling
-         * pcre_exec.
-         */
-        int _count;
+        // PCRE options for this pattern.
+        int options_;
 
-        /**
-         * PCRE options for this pattern.
-         */
-        int _options;
-
-        /**
-         * String representation of the options.
-         */
-        std::string _optionsDescription;
+        // String representation of the options.
+        std::string optionsDescription_;
 };
 }
 
+#endif // __PATTERN_H__
 
-#endif // __PATTERN_H__ // __PATTERN_H__ // __PATTERN_H__ // __PATTERN_H__
