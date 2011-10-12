@@ -82,9 +82,9 @@ IAXVoIPLink::terminate()
     if (!initDone_)
         return;
 
-    ost::MutexLock m(_callMapMutex);
+    ost::MutexLock m(callMapMutex_);
 
-    for (CallMap::iterator iter = _callMap.begin(); iter != _callMap.end(); ++iter) {
+    for (CallMap::iterator iter = callMap_.begin(); iter != callMap_.end(); ++iter) {
         IAXCall *call = dynamic_cast<IAXCall*>(iter->second);
 
         if (call) {
@@ -94,7 +94,7 @@ IAXVoIPLink::terminate()
         }
     }
 
-    _callMap.clear();
+    callMap_.clear();
 
     initDone_ = false;
 }
@@ -138,7 +138,7 @@ IAXVoIPLink::getEvent()
 void
 IAXVoIPLink::sendAudioFromMic(void)
 {
-    for (CallMap::const_iterator iter = _callMap.begin(); iter != _callMap.end() ; ++iter) {
+    for (CallMap::const_iterator iter = callMap_.begin(); iter != callMap_.end() ; ++iter) {
         IAXCall *currentCall = dynamic_cast<IAXCall*>(iter->second);
 
         if (!currentCall or currentCall->getState() != Call::Active)
@@ -441,9 +441,9 @@ IAXVoIPLink::iaxOutgoingInvite(IAXCall* call)
 IAXCall*
 IAXVoIPLink::iaxFindCallBySession(struct iax_session* session)
 {
-    ost::MutexLock m(_callMapMutex);
+    ost::MutexLock m(callMapMutex_);
 
-    for (CallMap::const_iterator iter = _callMap.begin(); iter != _callMap.end(); ++iter) {
+    for (CallMap::const_iterator iter = callMap_.begin(); iter != callMap_.end(); ++iter) {
         IAXCall* call = dynamic_cast<IAXCall*>(iter->second);
 
         if (call and call->session == session)

@@ -35,10 +35,12 @@
 #define __VOIP_LINK_H__
 
 #include <stdexcept>
+#include <map>
+#include <cc++/thread.h> // for ost::Mutex
 
-#include "call.h"
-
+class Call;
 class Account;
+
 namespace sfl {
 class InstantMessaging;
 };
@@ -48,7 +50,7 @@ typedef std::map<std::string, Call*> CallMap;
 
 class VoipLinkException : public std::runtime_error {
     public:
-        VoipLinkException(const std::string& str="") :
+        VoipLinkException(const std::string& str = "") :
             std::runtime_error("UserAgent: VoipLinkException occured: " + str) {}
 };
 
@@ -61,20 +63,20 @@ class VoIPLink {
         /**
          * Virtual destructor
          */
-        virtual ~VoIPLink(void);
+        virtual ~VoIPLink();
 
 
         /**
          * Virtual method
          * Event listener. Each event send by the call manager is received and handled from here
          */
-        virtual void getEvent(void) = 0;
+        virtual void getEvent() = 0;
 
         /**
          * Virtual method
          * Try to initiate the communication layer and set config
          */
-        virtual void init(void) = 0;
+        virtual void init() = 0;
 
         /**
          * Virtual method
@@ -187,10 +189,10 @@ class VoIPLink {
 
     protected:
         /** Contains all the calls for this Link, protected by mutex */
-        CallMap _callMap;
+        CallMap callMap_;
 
         /** Mutex to protect call map */
-        ost::Mutex _callMapMutex;
+        ost::Mutex callMapMutex_;
 
         /** Remove a call from the call map (protected by mutex)
          * @param id A Call ID
