@@ -40,31 +40,31 @@ class Ulaw : public sfl::AudioCodec {
         // 0 PCMU A 8000 1 [RFC3551]
         Ulaw(int payload=0)
             : sfl::AudioCodec(payload, "PCMU") {
-            _clockRate = 8000;
-            _frameSize = 160; // samples, 20 ms at 8kHz
-            _channel   = 1;
-            _bitrate =  64;
-            _hasDynamicPayload = false;
+            clockRate_ = 8000;
+            frameSize_ = 160; // samples, 20 ms at 8kHz
+            channel_   = 1;
+            bitrate_ =  64;
+            hasDynamicPayload_ = false;
         }
 
         virtual int decode(short *dst, unsigned char *src, size_t buf_size) {
-            assert(buf_size == _frameSize / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat));
+            assert(buf_size == frameSize_ / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat));
             unsigned char* end = src+buf_size;
 
             while (src<end)
                 *dst++ = ULawDecode(*src++);
 
-            return _frameSize;
+            return frameSize_;
         }
 
         virtual int encode(unsigned char *dst, short *src, size_t buf_size) {
-            assert(buf_size >= _frameSize / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat));
-            uint8* end = dst+_frameSize;
+            assert(buf_size >= frameSize_ / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat));
+            uint8* end = dst + frameSize_;
 
             while (dst<end)
                 *dst++ = ULawEncode(*src++);
 
-            return _frameSize / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat);;
+            return frameSize_ / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat);;
         }
 
         int ULawDecode(uint8 ulaw) {

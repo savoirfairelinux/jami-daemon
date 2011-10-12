@@ -125,17 +125,15 @@ bool HistoryManager::save_history_to_file(Conf::ConfigTree *history_list)
     return history_list->saveConfigTree(history_path_.data());
 }
 
-
 int HistoryManager::save_history_items_map(Conf::ConfigTree *history_list)
 {
     int items_saved = 0;
     for (HistoryItemMap::iterator iter = history_items_.begin(); iter != history_items_.end(); ++iter) {
         HistoryItem *item = *iter;
 
-        if (item) {
-            if (item->save(&history_list))
-                ++items_saved;
-        } else 
+        if (item and item->save(&history_list))
+            ++items_saved;
+        else
             _debug("can't save NULL history item\n");
     }
 

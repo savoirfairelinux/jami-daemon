@@ -46,17 +46,17 @@ class Gsm : public sfl::AudioCodec {
 
     public:
         // _payload should be 3
-        Gsm(int payload=3) : sfl::AudioCodec(payload, "GSM"), _decode_gsmhandle(NULL), _encode_gsmhandle(NULL) {
-            _clockRate = 8000;
-            _frameSize = 160; // samples, 20 ms at 8kHz
-            _channel = 1;
-            _bitrate = 13.3;
-            _hasDynamicPayload = false;
+        Gsm(int payload=3) : sfl::AudioCodec(payload, "GSM"), decode_gsmhandle_(NULL), encode_gsmhandle_(NULL) {
+            clockRate_ = 8000;
+            frameSize_ = 160; // samples, 20 ms at 8kHz
+            channel_ = 1;
+            bitrate_ = 13.3;
+            hasDynamicPayload_ = false;
 
-            if (!(_decode_gsmhandle = gsm_create()))
+            if (!(decode_gsmhandle_ = gsm_create()))
                 throw std::runtime_error("ERROR: decode_gsm_create\n");
 
-            if (!(_encode_gsmhandle = gsm_create()))
+            if (!(encode_gsmhandle_ = gsm_create()))
                 throw std::runtime_error("ERROR: encode_gsm_create\n");
         }
 
@@ -65,30 +65,28 @@ class Gsm : public sfl::AudioCodec {
         Gsm& operator= (const Gsm&);
 
         virtual ~Gsm(void) {
-            gsm_destroy(_decode_gsmhandle);
-            gsm_destroy(_encode_gsmhandle);
+            gsm_destroy(decode_gsmhandle_);
+            gsm_destroy(encode_gsmhandle_);
         }
 
         virtual int	decode(short * dst, unsigned char * src, size_t buf_size) {
             assert(buf_size == 33);
-            (void) buf_size;
 
-            if (gsm_decode(_decode_gsmhandle, (gsm_byte*) src, (gsm_signal*) dst) < 0)
+            if (gsm_decode(decode_gsmhandle_, (gsm_byte*) src, (gsm_signal*) dst) < 0)
                 throw std::runtime_error("ERROR: gsm_decode\n");
 
-            return _frameSize;
+            return frameSize_;
         }
 
         virtual int	encode(unsigned char * dst, short * src, size_t buf_size) {
-            (void) buf_size;
             assert(buf_size >= 33);
-            gsm_encode(_encode_gsmhandle, (gsm_signal*) src, (gsm_byte*) dst);
+            gsm_encode(encode_gsmhandle_, (gsm_signal*) src, (gsm_byte*) dst);
             return 33;
         }
 
     private:
-        gsm _decode_gsmhandle;
-        gsm _encode_gsmhandle;
+        gsm decode_gsmhandle_;
+        gsm encode_gsmhandle_;
 };
 
 extern "C" sfl::Codec* create()

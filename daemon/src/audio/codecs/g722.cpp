@@ -51,11 +51,11 @@ class G722 : public sfl::AudioCodec {
 
         G722(int payload=9)
             : sfl::AudioCodec(payload, "G722") {
-            _clockRate = 16000;
-            _frameSize = 320; // samples, 20 ms at 16kHz
-            _channel   = 1;
-            _bitrate = 64;
-            _hasDynamicPayload = false;
+            clockRate_ = 16000;
+            frameSize_ = 320; // samples, 20 ms at 16kHz
+            channel_   = 1;
+            bitrate_ = 64;
+            hasDynamicPayload_ = false;
 
 
             decode_s = new g722_decode_state_t;
@@ -72,19 +72,18 @@ class G722 : public sfl::AudioCodec {
         }
 
         virtual int decode(short *dst, unsigned char *src, size_t buf_size) {
-            assert(buf_size == _frameSize / sizeof(SFLDataFormat) * encode_s->bits_per_sample / 8);
+            assert(buf_size == frameSize_ / sizeof(SFLDataFormat) * encode_s->bits_per_sample / 8);
             return g722_decode((int16_t*) dst, (const uint8_t*) src, buf_size);
         }
 
         virtual int encode(unsigned char *dst, short *src, size_t buf_size) {
-            int out = g722_encode((uint8_t*) dst, (const int16_t*) src, _frameSize);
+            int out = g722_encode((uint8_t*) dst, (const int16_t*) src, frameSize_);
             assert((size_t)out <= buf_size);
             return out;
         }
 
 
         void g722_encode_init(void) {
-
             encode_s->itu_test_mode = FALSE;
 
             // 8 => 64 kbps;  7 => 56 kbps;  6 => 48 kbps

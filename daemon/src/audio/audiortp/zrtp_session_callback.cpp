@@ -131,7 +131,7 @@ ZrtpSessionCallback::secureOn(std::string cipher)
 }
 
 void
-ZrtpSessionCallback::secureOff(void)
+ZrtpSessionCallback::secureOff()
 {
     _debug("Zrtp: Secure mode is off");
     Manager::instance().getDbusManager()->getCallManager()->secureZrtpOff(_sipcall->getCallId());

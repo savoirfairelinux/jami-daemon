@@ -104,7 +104,7 @@ void AudioRtpRecordHandler::putDtmfEvent(int digit)
 std::ofstream teststream("test_process_data_encode.raw");
 #endif
 
-int AudioRtpRecordHandler::processDataEncode(void)
+int AudioRtpRecordHandler::processDataEncode()
 {
     SFLDataFormat *micData 			= audioRtpRecord_.decData_;
     unsigned char *micDataEncoded 	= audioRtpRecord_.encodedData_;

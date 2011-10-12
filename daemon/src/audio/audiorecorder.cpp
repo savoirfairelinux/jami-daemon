@@ -59,7 +59,7 @@ AudioRecorder::AudioRecorder(AudioRecord  *arec, MainBuffer *mb) : Thread()
 /**
  * Reimplementation of run()
  */
-void AudioRecorder::run(void)
+void AudioRecorder::run()
 {
 
     int bufferLength = 10000;

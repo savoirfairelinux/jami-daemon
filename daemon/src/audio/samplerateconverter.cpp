@@ -43,7 +43,7 @@ SamplerateConverter::SamplerateConverter(int freq) : _maxFreq(freq)
     _floatBufferOut = new float[_samples];
 }
 
-SamplerateConverter::~SamplerateConverter(void)
+SamplerateConverter::~SamplerateConverter()
 {
     delete [] _floatBufferIn;
     delete [] _floatBufferOut;

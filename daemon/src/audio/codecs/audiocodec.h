@@ -111,7 +111,7 @@ class AudioCodec : public Codec {
          * @Override
          */
         void setPayloadType(uint8 pt) {
-            _payload = pt;
+            payload_ = pt;
         }
 
         /**
@@ -141,29 +141,29 @@ class AudioCodec : public Codec {
 
     protected:
         /** Holds SDP-compliant codec name */
-        std::string _codecName; // what we put inside sdp
+        std::string codecName_; // what we put inside sdp
 
         /** Clock rate or sample rate of the codec, in Hz */
-        uint32 _clockRate;
+        uint32 clockRate_;
 
         /** Number of channel 1 = mono, 2 = stereo */
-        uint8 _channel;
+        uint8 channel_;
 
         /** codec frame size in samples*/
-        unsigned _frameSize;
+        unsigned frameSize_;
 
         /** Bitrate */
-        double _bitrate;
+        double bitrate_;
 
         /** Bandwidth */
-        double _bandwidth;
+        double bandwidth_;
 
-        bool _hasDynamicPayload;
+        bool hasDynamicPayload_;
 
     private:
-        uint8 _payload;
+        uint8 payload_;
 
-        ost::DynamicPayloadFormat* _payloadFormat;
+        ost::DynamicPayloadFormat* payloadFormat_;
 
         void init(uint8 payloadType, uint32 clockRate);
 };

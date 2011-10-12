@@ -49,9 +49,9 @@ class ZrtpSessionCallback: public ZrtpUserCallback {
         ZrtpSessionCallback(SIPCall *sipcall);
 
         void secureOn(std::string cipher);
-        void secureOff(void);
+        void secureOff();
         void showSAS(std::string sas, bool verified);
-        void zrtpNotSuppOther(void);
+        void zrtpNotSuppOther();
         void showMessage(GnuZrtpCodes::MessageSeverity sev, int32_t subCode);
         void zrtpNegotiationFailed(GnuZrtpCodes::MessageSeverity severity, int subCode);
         void confirmGoClear();

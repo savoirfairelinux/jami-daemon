@@ -135,7 +135,7 @@ void AudioSrtpSession::setRemoteCryptoInfo(sfl::SdesNegotiator& nego)
     }
 }
 
-void AudioSrtpSession::initializeLocalMasterKey(void)
+void AudioSrtpSession::initializeLocalMasterKey()
 {
     _debug("AudioSrtp: Init local master key");
 
@@ -156,7 +156,7 @@ void AudioSrtpSession::initializeLocalMasterKey(void)
     memcpy(localMasterKey_, random_key, localMasterKeyLength_);
 }
 
-void AudioSrtpSession::initializeLocalMasterSalt(void)
+void AudioSrtpSession::initializeLocalMasterSalt()
 {
     // @TODO key may have different length depending on cipher suite
     localMasterSaltLength_ = sfl::CryptoSuites[localCryptoSuite_].masterSaltLength / 8;
@@ -212,7 +212,7 @@ void AudioSrtpSession::unBase64ConcatenatedKeys(std::string base64keys)
     delete[] output;
 }
 
-void AudioSrtpSession::initializeRemoteCryptoContext(void)
+void AudioSrtpSession::initializeRemoteCryptoContext()
 {
     _debug("AudioSrtp: Initialize remote crypto context");
 
@@ -239,7 +239,7 @@ void AudioSrtpSession::initializeRemoteCryptoContext(void)
 
 }
 
-void AudioSrtpSession::initializeLocalCryptoContext(void)
+void AudioSrtpSession::initializeLocalCryptoContext()
 {
     _debug("AudioSrtp: Initialize local crypto context");
 
