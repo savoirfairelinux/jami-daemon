@@ -33,7 +33,6 @@
 
 #include <cc++/thread.h>
 
-
 class VoIPLink;
 
 /**
@@ -43,9 +42,6 @@ class VoIPLink;
 
 class EventThread : public ost::Thread {
     public:
-        /**
-         * Thread constructor
-         */
         EventThread(VoIPLink* link);
 
         ~EventThread() {
@@ -55,10 +51,10 @@ class EventThread : public ost::Thread {
         virtual void run() ;
 
     private:
-        EventThread(const EventThread& rh);  // copy constructor
-        EventThread& operator= (const EventThread& rh); // assignment operator
+        EventThread(const EventThread& rh);
+        EventThread& operator= (const EventThread& rh);
 
-        /** VoIPLink is the object being called by getEvents() method  */
+        // VoIPLink is the object being called by getEvents() method
         VoIPLink*	link_;
 };
 
