@@ -54,13 +54,13 @@ class AudioFileException : public std::runtime_error {
  */
 class AudioFile : public AudioLoop {
     public:
-        const std::string &getFilePath(void) const {
-            return filepath;
+        std::string getFilePath(void) const {
+            return filepath_;
         }
 
     protected:
         /** The absolute path to the sound file */
-        std::string filepath;
+        std::string filepath_;
 };
 
 
@@ -82,7 +82,7 @@ class RawFile : public AudioFile {
         RawFile(const RawFile& rh);
 
         // Assignment Operator
-        RawFile& operator= (const RawFile& rh);
+        const RawFile& operator= (const RawFile& rh);
 
         /** Your preferred codec */
         sfl::AudioCodec* audioCodec;
@@ -99,4 +99,4 @@ class WaveFile : public AudioFile {
         WaveFile(const std::string&, unsigned int);
 };
 
-#endif
+#endif // __AUDIOFILE_H__

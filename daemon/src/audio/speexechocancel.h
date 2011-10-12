@@ -49,29 +49,21 @@ class SpeexEchoCancel {
 
     private:
 
-        SpeexEchoState *_echoState;
+        SpeexEchoState *echoState_;
 
-        SpeexPreprocessState *_preState;
+        SpeexPreprocessState *preState_;
 
-        RingBuffer *_micData;
-        RingBuffer *_spkrData;
+        RingBuffer *micData_;
+        RingBuffer *spkrData_;
 
-        int _echoDelay;
-        int _echoTailLength;
+        int echoDelay_;
+        int echoTailLength_;
 
-        bool _spkrStopped;
+        bool spkrStopped_;
 
-        SFLDataFormat _tmpSpkr[5000];
-        SFLDataFormat _tmpMic[5000];
-        SFLDataFormat _tmpOut[5000];
-
-#ifdef DUMP_ECHOCANCEL_INTERNAL_DATA
-        ofstream *micFile;
-        ofstream *spkrFile;
-        ofstream *micProcessFile;
-        ofstream *spkrProcessFile;
-        ofstream *echoFile;
-#endif
+        SFLDataFormat tmpSpkr_[5000];
+        SFLDataFormat tmpMic_[5000];
+        SFLDataFormat tmpOut_[5000];
 };
 
 #endif
