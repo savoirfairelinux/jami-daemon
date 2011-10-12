@@ -42,14 +42,14 @@ class AudioRecorder : public ost::Thread {
     public:
         AudioRecorder(AudioRecord  *arec, MainBuffer *mb);
 
-        ~AudioRecorder(void) {
+        ~AudioRecorder() {
             terminate();
         }
 
-        static int count;
+        static int count_;
 
-        std::string getRecorderID() {
-            return recorderId;
+        std::string getRecorderID() const {
+            return recorderId_;
         }
 
         virtual void run();
@@ -58,11 +58,11 @@ class AudioRecorder : public ost::Thread {
         AudioRecorder(const AudioRecorder& ar);
         AudioRecorder& operator= (const AudioRecorder& ar);
 
-        std::string recorderId;
+        std::string recorderId_;
 
-        MainBuffer *mbuffer;
+        MainBuffer *mbuffer_;
 
-        AudioRecord *arecord;
+        AudioRecord *arecord_;
 };
 
 #endif

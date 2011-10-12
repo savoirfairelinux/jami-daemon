@@ -64,7 +64,7 @@ class Gsm : public sfl::AudioCodec {
 
         Gsm& operator= (const Gsm&);
 
-        virtual ~Gsm(void) {
+        virtual ~Gsm() {
             gsm_destroy(decode_gsmhandle_);
             gsm_destroy(encode_gsmhandle_);
         }

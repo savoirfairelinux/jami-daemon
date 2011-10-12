@@ -83,7 +83,7 @@ class G722 : public sfl::AudioCodec {
         }
 
 
-        void g722_encode_init(void) {
+        void g722_encode_init() {
             encode_s->itu_test_mode = FALSE;
 
             // 8 => 64 kbps;  7 => 56 kbps;  6 => 48 kbps
@@ -108,7 +108,7 @@ class G722 : public sfl::AudioCodec {
             decode_s->out_bits = 0;
         }
 
-        void g722_decode_init(void) {
+        void g722_decode_init() {
 
             decode_s->itu_test_mode = FALSE;
 

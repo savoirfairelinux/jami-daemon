@@ -44,7 +44,7 @@ class AlsaThread : public ost::Thread {
             terminate();
         }
 
-        virtual void run(void);
+        virtual void run();
 
     private:
         AlsaThread(const AlsaThread& at);
@@ -62,7 +62,7 @@ AlsaThread::AlsaThread(AlsaLayer *alsa)
 /**
  * Reimplementation of run()
  */
-void AlsaThread::run(void)
+void AlsaThread::run()
 {
     while (!testCancel()) {
         alsa_->audioCallback();
@@ -91,7 +91,7 @@ AlsaLayer::AlsaLayer()
 }
 
 // Destructor
-AlsaLayer::~AlsaLayer(void)
+AlsaLayer::~AlsaLayer()
 {
     delete audioThread_;
 
@@ -127,7 +127,7 @@ bool AlsaLayer::openDevice(snd_pcm_t **pcm, const std::string &dev, snd_pcm_stre
 }
 
 void
-AlsaLayer::startStream(void)
+AlsaLayer::startStream()
 {
     dcblocker_.reset();
 
@@ -184,7 +184,7 @@ AlsaLayer::startStream(void)
 }
 
 void
-AlsaLayer::stopStream(void)
+AlsaLayer::stopStream()
 {
     isStarted_ = false;
 
@@ -222,7 +222,7 @@ AlsaLayer::stopStream(void)
 			err_code; \
 		})
 
-void AlsaLayer::stopCaptureStream(void)
+void AlsaLayer::stopCaptureStream()
 {
     if (captureHandle_ && ALSA_CALL(snd_pcm_drop(captureHandle_), "couldn't stop capture") >= 0) {
         is_capture_running_ = false;
@@ -230,7 +230,7 @@ void AlsaLayer::stopCaptureStream(void)
     }
 }
 
-void AlsaLayer::closeCaptureStream(void)
+void AlsaLayer::closeCaptureStream()
 {
     if (is_capture_prepared_ and is_capture_running_)
         stopCaptureStream();
@@ -239,14 +239,14 @@ void AlsaLayer::closeCaptureStream(void)
         is_capture_open_ = false;
 }
 
-void AlsaLayer::startCaptureStream(void)
+void AlsaLayer::startCaptureStream()
 {
     if (captureHandle_ and not is_capture_running_)
         if (ALSA_CALL(snd_pcm_start(captureHandle_), "Couldn't start capture") >= 0)
             is_capture_running_ = true;
 }
 
-void AlsaLayer::stopPlaybackStream(void)
+void AlsaLayer::stopPlaybackStream()
 {
     if (ringtoneHandle_ and is_playback_running_)
         ALSA_CALL(snd_pcm_drop(ringtoneHandle_), "Couldn't stop ringtone");
@@ -260,7 +260,7 @@ void AlsaLayer::stopPlaybackStream(void)
 }
 
 
-void AlsaLayer::closePlaybackStream(void)
+void AlsaLayer::closePlaybackStream()
 {
     if (is_playback_prepared_ and is_playback_running_)
         stopPlaybackStream();
@@ -275,21 +275,21 @@ void AlsaLayer::closePlaybackStream(void)
 
 }
 
-void AlsaLayer::startPlaybackStream(void)
+void AlsaLayer::startPlaybackStream()
 {
     if (playbackHandle_ and not is_playback_running_)
         if (ALSA_CALL(snd_pcm_start(playbackHandle_), "Couldn't start playback") >= 0)
             is_playback_running_ = true;
 }
 
-void AlsaLayer::prepareCaptureStream(void)
+void AlsaLayer::prepareCaptureStream()
 {
     if (is_capture_open_ and not is_capture_prepared_)
         if (ALSA_CALL(snd_pcm_prepare(captureHandle_), "Couldn't prepare capture") >= 0)
             is_capture_prepared_ = true;
 }
 
-void AlsaLayer::preparePlaybackStream(void)
+void AlsaLayer::preparePlaybackStream()
 {
     if (is_playback_open_ and not is_playback_prepared_)
         if (ALSA_CALL(snd_pcm_prepare(playbackHandle_), "Couldn't prepare playback") >= 0)
@@ -523,7 +523,7 @@ void adjustVolume(SFLDataFormat *src , int samples, int volumePercentage)
 }
 }
 
-void AlsaLayer::capture(void)
+void AlsaLayer::capture()
 {
     unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
     bool resample = audioSampleRate_ != mainBufferSampleRate;
@@ -628,7 +628,7 @@ void AlsaLayer::playback(int maxSamples)
     free(out);
 }
 
-void AlsaLayer::audioCallback(void)
+void AlsaLayer::audioCallback()
 {
     if (!playbackHandle_ or !captureHandle_)
         return;

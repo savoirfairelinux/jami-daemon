@@ -52,14 +52,14 @@ AudioLayer::~AudioLayer()
     delete converter_;
 }
 
-void AudioLayer::flushMain(void)
+void AudioLayer::flushMain()
 {
     ost::MutexLock guard(mutex_);
     // should pass call id
     Manager::instance().getMainBuffer()->flushAllBuffers();
 }
 
-void AudioLayer::flushUrgent(void)
+void AudioLayer::flushUrgent()
 {
     ost::MutexLock guard(mutex_);
     urgentRingBuffer_.flushAll();

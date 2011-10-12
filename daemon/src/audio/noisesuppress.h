@@ -36,18 +36,14 @@
 
 class NoiseSuppress {
     public:
-
         NoiseSuppress(int smplPerFrame, int samplingRate);
-
-        ~NoiseSuppress(void);
-
+        ~NoiseSuppress();
         void process(SFLDataFormat *data, int samples);
 
     private:
 
-        SpeexPreprocessState *_noiseState;
-
-        int _smplPerFrame;
+        SpeexPreprocessState *noiseState_;
+        int smplPerFrame_;
 };
 
 #endif
