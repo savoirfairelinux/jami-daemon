@@ -1,8 +1,6 @@
 include ../globals.mak
 
-TESTS_ENVIRONMENT = CODECS_PATH="$(top_builddir)/src/audio/codecs" \
-					FAKE_PLUGIN_DIR="$(top_builddir)/src/plug-in/test/" \
-					FAKE_PLUGIN_NAME="$(top_builddir)/src/plug-in/test/libplugintest.so"
+TESTS_ENVIRONMENT = CODECS_PATH="$(top_builddir)/src/audio/codecs"
 check_PROGRAMS = test
 
 TESTS = run_tests.sh
@@ -26,8 +24,6 @@ test_SOURCES = \
 	historytest.cpp \
 	numbercleanertest.h \
 	numbercleanertest.cpp \
-	pluginmanagertest.h \
-	pluginmanagertest.cpp \
 	rtptest.h \
 	rtptest.cpp \
 	sdesnegotiatortest.h \
@@ -53,7 +49,6 @@ test_SOURCES = \
 	instantmessagingtest.h \
 	mainbuffertest.h \
 	numbercleanertest.h \
-	pluginmanagertest.h \
 	ringtonetest.h \
 	rtptest.h \
 	sdesnegotiatortest.h \

@@ -50,8 +50,6 @@ AC_CONFIG_FILES([src/Makefile \
 		src/audio/codecs/Makefile \
 		src/config/Makefile \
 		src/dbus/Makefile \
-		src/plug-in/Makefile \
-		src/plug-in/test/Makefile \
 		src/hooks/Makefile \
 		src/history/Makefile])
 

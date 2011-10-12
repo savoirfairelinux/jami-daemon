@@ -5,7 +5,7 @@ libexec_PROGRAMS = sflphoned
 
 # all: indent
 
-SUBDIRS = dbus audio config plug-in hooks history sip iax im
+SUBDIRS = dbus audio config hooks history sip iax im
 
 sflphoned_SOURCES = main.cpp
 
@@ -58,7 +58,6 @@ libsflphone_la_LIBADD = \
 	./audio/libaudio.la \
 	./dbus/libdbus.la \
 	./config/libconfig.la \
-	./plug-in/libplugin.la \
 	./hooks/libhooks.la \
 	./history/libhistory.la
 
