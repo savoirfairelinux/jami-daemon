@@ -52,68 +52,61 @@ ZrtpSessionCallback::ZrtpSessionCallback(SIPCall *sipcall) :
     using std::pair;
     using std::string;
 
-    if (mapInitialized_)
+    // we've already initialized the maps, we only need to check one
+    if (not infoMap_.empty())
         return;
 
     _info("Zrtp: Initialize callbacks");
 
     // Information Map
-    infoMap_.insert(pair<int32, string*> (InfoHelloReceived, new string("Hello received, preparing a Commit")));
-    infoMap_.insert(pair<int32, string*> (InfoCommitDHGenerated, new string("Commit: Generated a public DH key")));
-    infoMap_.insert(pair<int32, string*> (InfoRespCommitReceived, new string("Responder: Commit received, preparing DHPart1")));
-    infoMap_.insert(pair<int32, string*> (InfoDH1DHGenerated, new string("DH1Part: Generated a public DH key")));
-    infoMap_.insert(pair<int32, string*> (InfoInitDH1Received, new string("Initiator: DHPart1 received, preparing DHPart2")));
-    infoMap_.insert(pair<int32, string*> (InfoRespDH2Received, new string("Responder: DHPart2 received, preparing Confirm1")));
-    infoMap_.insert(pair<int32, string*> (InfoInitConf1Received, new string("Initiator: Confirm1 received, preparing Confirm2")));
-    infoMap_.insert(pair<int32, string*> (InfoRespConf2Received, new string("Responder: Confirm2 received, preparing Conf2Ack")));
-    infoMap_.insert(pair<int32, string*> (InfoRSMatchFound, new string("At least one retained secrets matches - security OK")));
-    infoMap_.insert(pair<int32, string*> (InfoSecureStateOn, new string("Entered secure state")));
-    infoMap_.insert(pair<int32, string*> (InfoSecureStateOff, new string("No more security for this session")));
+    infoMap_[InfoHelloReceived] = "Hello received, preparing a Commit";
+    infoMap_[InfoCommitDHGenerated] =  "Commit: Generated a public DH key";
+    infoMap_[InfoRespCommitReceived] = "Responder: Commit received, preparing DHPart1";
+    infoMap_[InfoDH1DHGenerated] = "DH1Part: Generated a public DH key";
+    infoMap_[InfoInitDH1Received] = "Initiator: DHPart1 received, preparing DHPart2";
+    infoMap_[InfoRespDH2Received] = "Responder: DHPart2 received, preparing Confirm1";
+    infoMap_[InfoInitConf1Received] = "Initiator: Confirm1 received, preparing Confirm2";
+    infoMap_[InfoRespConf2Received] = "Responder: Confirm2 received, preparing Conf2Ack";
+    infoMap_[InfoRSMatchFound] = "At least one retained secrets matches - security OK";
+    infoMap_[InfoSecureStateOn] = "Entered secure state";
+    infoMap_[InfoSecureStateOff] = "No more security for this session";
 
     // Warning Map
-    warningMap_.insert(pair<int32, string*> (WarningDHAESmismatch,
-                       new string("Commit contains an AES256 cipher but does not offer a Diffie-Helman 4096")));
-    warningMap_.insert(pair<int32, string*> (WarningGoClearReceived, new string("Received a GoClear message")));
-    warningMap_.insert(pair<int32, string*> (WarningDHShort,
-                       new string("Hello offers an AES256 cipher but does not offer a Diffie-Helman 4096")));
-    warningMap_.insert(pair<int32, string*> (WarningNoRSMatch, new string("No retained secret matches - verify SAS")));
-    warningMap_.insert(pair<int32, string*> (WarningCRCmismatch, new string("Internal ZRTP packet checksum mismatch - packet dropped")));
-    warningMap_.insert(pair<int32, string*> (WarningSRTPauthError, new string("Dropping packet because SRTP authentication failed!")));
-    warningMap_.insert(pair<int32, string*> (WarningSRTPreplayError, new string("Dropping packet because SRTP replay check failed!")));
+    warningMap_[WarningDHAESmismatch] = "Commit contains an AES256 cipher but does not offer a Diffie-Helman 4096";
+    warningMap_[WarningGoClearReceived] = "Received a GoClear message";
+    warningMap_[WarningDHShort] = "Hello offers an AES256 cipher but does not offer a Diffie-Helman 4096";
+    warningMap_[WarningNoRSMatch] = "No retained secret matches - verify SAS";
+    warningMap_[WarningCRCmismatch] = "Internal ZRTP packet checksum mismatch - packet dropped";
+    warningMap_[WarningSRTPauthError] = "Dropping packet because SRTP authentication failed!";
+    warningMap_[WarningSRTPreplayError] = "Dropping packet because SRTP replay check failed!";
 
-    severeMap_.insert(pair<int32, string*> (SevereHelloHMACFailed, new string("Hash HMAC check of Hello failed!")));
-    severeMap_.insert(pair<int32, string*> (SevereCommitHMACFailed, new string("Hash HMAC check of Commit failed!")));
-    severeMap_.insert(pair<int32, string*> (SevereDH1HMACFailed, new string("Hash HMAC check of DHPart1 failed!")));
-    severeMap_.insert(pair<int32, string*> (SevereDH2HMACFailed, new string("Hash HMAC check of DHPart2 failed!")));
-    severeMap_.insert(pair<int32, string*> (SevereCannotSend, new string("Cannot send data - connection or peer down?")));
-    severeMap_.insert(pair<int32, string*> (SevereProtocolError, new string("Internal protocol error occured!")));
-    severeMap_.insert(pair<int32, string*> (SevereNoTimer, new string("Cannot start a timer - internal resources exhausted?")));
-    severeMap_.insert(pair<int32, string*> (SevereTooMuchRetries,
-                                            new string("Too much retries during ZRTP negotiation - connection or peer down?")));
+    severeMap_[SevereHelloHMACFailed] = "Hash HMAC check of Hello failed!";
+    severeMap_[SevereCommitHMACFailed] = "Hash HMAC check of Commit failed!";
+    severeMap_[SevereDH1HMACFailed] = "Hash HMAC check of DHPart1 failed!";
+    severeMap_[SevereDH2HMACFailed] = "Hash HMAC check of DHPart2 failed!";
+    severeMap_[SevereCannotSend] = "Cannot send data - connection or peer down?";
+    severeMap_[SevereProtocolError] = "Internal protocol error occured!";
+    severeMap_[SevereNoTimer] = "Cannot start a timer - internal resources exhausted?";
+    severeMap_[SevereTooMuchRetries] = "Too much retries during ZRTP negotiation - connection or peer down?";
 
-    /**
-     * Zrtp protocol related messages map
-     */
-
-    zrtpMap_.insert(pair<int32, string*> (MalformedPacket, new string("Malformed packet (CRC OK, but wrong structure)")));
-    zrtpMap_.insert(pair<int32, string*> (CriticalSWError, new string("Critical software error")));
-    zrtpMap_.insert(pair<int32, string*> (UnsuppZRTPVersion, new string("Unsupported ZRTP version")));
-    zrtpMap_.insert(pair<int32, string*> (HelloCompMismatch, new string("Hello components mismatch")));
-    zrtpMap_.insert(pair<int32, string*> (UnsuppHashType, new string("Hash type not supported")));
-    zrtpMap_.insert(pair<int32, string*> (UnsuppCiphertype, new string("Cipher type not supported")));
-    zrtpMap_.insert(pair<int32, string*> (UnsuppPKExchange, new string("Public key exchange not supported")));
-    zrtpMap_.insert(pair<int32, string*> (UnsuppSRTPAuthTag, new string("SRTP auth. tag not supported")));
-    zrtpMap_.insert(pair<int32, string*> (UnsuppSASScheme, new string("SAS scheme not supported")));
-    zrtpMap_.insert(pair<int32, string*> (NoSharedSecret, new string("No shared secret available, DH mode required")));
-    zrtpMap_.insert(pair<int32, string*> (DHErrorWrongPV, new string("DH Error: bad pvi or pvr ( == 1, 0, or p-1)")));
-    zrtpMap_.insert(pair<int32, string*> (DHErrorWrongHVI, new string("DH Error: hvi != hashed data")));
-    zrtpMap_.insert(pair<int32, string*> (SASuntrustedMiTM, new string("Received relayed SAS from untrusted MiTM")));
-    zrtpMap_.insert(pair<int32, string*> (ConfirmHMACWrong, new string("Auth. Error: Bad Confirm pkt HMAC")));
-    zrtpMap_.insert(pair<int32, string*> (NonceReused, new string("Nonce reuse")));
-    zrtpMap_.insert(pair<int32, string*> (EqualZIDHello, new string("Equal ZIDs in Hello")));
-    zrtpMap_.insert(pair<int32, string*> (GoCleatNotAllowed, new string("GoClear packet received, but not allowed")));
-
-    mapInitialized_ = true;
+    // Zrtp protocol related messages map
+    zrtpMap_[MalformedPacket] = "Malformed packet (CRC OK, but wrong structure)";
+    zrtpMap_[CriticalSWError] = "Critical software error";
+    zrtpMap_[UnsuppZRTPVersion] = "Unsupported ZRTP version";
+    zrtpMap_[HelloCompMismatch] = "Hello components mismatch";
+    zrtpMap_[UnsuppHashType] = "Hash type not supported";
+    zrtpMap_[UnsuppCiphertype] = "Cipher type not supported";
+    zrtpMap_[UnsuppPKExchange] = "Public key exchange not supported";
+    zrtpMap_[UnsuppSRTPAuthTag] = "SRTP auth. tag not supported";
+    zrtpMap_[UnsuppSASScheme] = "SAS scheme not supported";
+    zrtpMap_[NoSharedSecret] = "No shared secret available, DH mode required";
+    zrtpMap_[DHErrorWrongPV] = "DH Error: bad pvi or pvr ( == 1, 0, or p-1)";
+    zrtpMap_[DHErrorWrongHVI] = "DH Error: hvi != hashed data";
+    zrtpMap_[SASuntrustedMiTM] = "Received relayed SAS from untrusted MiTM";
+    zrtpMap_[ConfirmHMACWrong] = "Auth. Error: Bad Confirm pkt HMAC";
+    zrtpMap_[NonceReused] = "Nonce reuse";
+    zrtpMap_[EqualZIDHello] = "Equal ZIDs in Hello";
+    zrtpMap_[GoCleatNotAllowed] = "GoClear packet received, but not allowed";
 }
 
 void
@@ -161,8 +154,6 @@ ZrtpSessionCallback::showMessage(GnuZrtpCodes::MessageSeverity sev, int32_t subC
 void
 ZrtpSessionCallback::zrtpNegotiationFailed(MessageSeverity severity, int subCode)
 {
-    std::string* msg;
-
     if (severity == ZrtpError) {
         if (subCode < 0) {  // received an error packet from peer
             subCode *= -1;
@@ -170,16 +161,17 @@ ZrtpSessionCallback::zrtpNegotiationFailed(MessageSeverity severity, int subCode
         } else
             _debug("Zrtp: Sent error packet: ");
 
-        msg = zrtpMap_[subCode];
-
-        if (msg != NULL) {
-            _debug("%s", msg->c_str());
-            Manager::instance().getDbusManager()->getCallManager()->zrtpNegotiationFailed(sipcall_->getCallId(), *msg, "ZRTP");
+        std::map<int32, std::string>::const_iterator iter = zrtpMap_.find(subCode);
+        if (iter != zrtpMap_.end()) {
+            _debug("%s", iter->second.c_str());
+            Manager::instance().getDbusManager()->getCallManager()->zrtpNegotiationFailed(sipcall_->getCallId(), iter->second, "ZRTP");
         }
     } else {
-        msg = severeMap_[subCode];
-        _debug("%s", msg->c_str());
-        Manager::instance().getDbusManager()->getCallManager()->zrtpNegotiationFailed(sipcall_->getCallId(), *msg, "severe");
+        std::map<int32, std::string>::const_iterator iter = severeMap_.find(subCode);
+        if (iter != severeMap_.end()) {
+            _debug("%s", iter->second.c_str());
+            Manager::instance().getDbusManager()->getCallManager()->zrtpNegotiationFailed(sipcall_->getCallId(), iter->second, "severe");
+        }
     }
 }
 
@@ -190,11 +182,9 @@ ZrtpSessionCallback::confirmGoClear()
     Manager::instance().getDbusManager()->getCallManager()->zrtpNotSuppOther(sipcall_->getCallId());
 }
 
-std::map<int32, std::string*>ZrtpSessionCallback::infoMap_;
-std::map<int32, std::string*>ZrtpSessionCallback::warningMap_;
-std::map<int32, std::string*>ZrtpSessionCallback::severeMap_;
-std::map<int32, std::string*>ZrtpSessionCallback::zrtpMap_;
-
-bool ZrtpSessionCallback::mapInitialized_ = false;
+std::map<int32, std::string> ZrtpSessionCallback::infoMap_;
+std::map<int32, std::string> ZrtpSessionCallback::warningMap_;
+std::map<int32, std::string> ZrtpSessionCallback::severeMap_;
+std::map<int32, std::string> ZrtpSessionCallback::zrtpMap_;
 }
 
