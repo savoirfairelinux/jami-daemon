@@ -77,12 +77,12 @@ class SamplerateConverter {
         SamplerateConverter& operator= (const SamplerateConverter& rh);
 
         /* temporary buffers */
-        float * _floatBufferIn;
-        float * _floatBufferOut;
-        size_t _samples; // size in samples of temporary buffers
-        int _maxFreq; // maximal output frequency
+        float * floatBufferIn_;
+        float * floatBufferOut_;
+        size_t samples_; // size in samples of temporary buffers
+        int maxFreq_; // maximal output frequency
 
-        SRC_STATE* _src_state;
+        SRC_STATE* src_state_;
 };
 
 #endif //_SAMPLE_RATE_H

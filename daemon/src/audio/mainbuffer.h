@@ -58,7 +58,7 @@ class MainBuffer {
         void setInternalSamplingRate(int sr);
 
         int getInternalSamplingRate() {
-            return _internalSamplingRate;
+            return internalSamplingRate_;
         }
 
         /**
@@ -134,13 +134,13 @@ class MainBuffer {
 
         void flushByID(const std::string & call_id, const std::string & reader_id);
 
-        RingBufferMap _ringBufferMap;
+        RingBufferMap ringBufferMap_;
 
-        CallIDMap _callIDMap;
+        CallIDMap callIDMap_;
 
-        ost::Mutex _mutex;
+        ost::Mutex mutex_;
 
-        int _internalSamplingRate;
+        int internalSamplingRate_;
 
     public:
 

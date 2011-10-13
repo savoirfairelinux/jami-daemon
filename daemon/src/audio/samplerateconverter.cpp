@@ -32,23 +32,23 @@
 #include "manager.h"
 #include <cassert>
 
-SamplerateConverter::SamplerateConverter(int freq) : _maxFreq(freq)
+SamplerateConverter::SamplerateConverter(int freq) : maxFreq_(freq)
 {
     int err;
-    _src_state = src_new(SRC_LINEAR, 1, &err);
+    src_state_ = src_new(SRC_LINEAR, 1, &err);
 
-    _samples = (freq * 20) / 1000; // start with 20 ms buffers
+    samples_ = (freq * 20) / 1000; // start with 20 ms buffers
 
-    _floatBufferIn = new float[_samples];
-    _floatBufferOut = new float[_samples];
+    floatBufferIn_ = new float[samples_];
+    floatBufferOut_ = new float[samples_];
 }
 
 SamplerateConverter::~SamplerateConverter()
 {
-    delete [] _floatBufferIn;
-    delete [] _floatBufferOut;
+    delete [] floatBufferIn_;
+    delete [] floatBufferOut_;
 
-    src_delete(_src_state);
+    src_delete(src_state_);
 }
 
 void
@@ -74,25 +74,25 @@ void SamplerateConverter::resample(SFLDataFormat* dataIn , SFLDataFormat* dataOu
     if (maxSamples < (unsigned int)nbSamples)
         maxSamples = nbSamples;
 
-    if (maxSamples > _samples) {
+    if (maxSamples > samples_) {
         /* grow buffer if needed */
-        _samples = maxSamples;
-        delete [] _floatBufferIn;
-        delete [] _floatBufferOut;
-        _floatBufferIn = new float[_samples];
-        _floatBufferOut = new float[_samples];
+        samples_ = maxSamples;
+        delete [] floatBufferIn_;
+        delete [] floatBufferOut_;
+        floatBufferIn_ = new float[samples_];
+        floatBufferOut_ = new float[samples_];
     }
 
     SRC_DATA src_data;
-    src_data.data_in = _floatBufferIn;
-    src_data.data_out = _floatBufferOut;
+    src_data.data_in = floatBufferIn_;
+    src_data.data_out = floatBufferOut_;
     src_data.input_frames = nbSamples;
     src_data.output_frames = outSamples;
     src_data.src_ratio = sampleFactor;
     src_data.end_of_input = 0; // More data will come
 
-    Short2FloatArray(dataIn , _floatBufferIn, nbSamples);
-    src_process(_src_state, &src_data);
+    Short2FloatArray(dataIn , floatBufferIn_, nbSamples);
+    src_process(src_state_, &src_data);
 
-    src_float_to_short_array(_floatBufferOut, dataOut , outSamples);
+    src_float_to_short_array(floatBufferOut_, dataOut , outSamples);
 }

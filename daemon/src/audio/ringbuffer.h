@@ -42,7 +42,7 @@ class RingBuffer {
         ~RingBuffer();
 
         std::string getBufferId() {
-            return buffer_id;
+            return buffer_id_;
         }
 
         /**
@@ -61,7 +61,7 @@ class RingBuffer {
          * Get the whole readpointer list for this ringbuffer
          */
         ReadPointer* getReadPointerList() {
-            return &_readpointer;
+            return &readpointer_;
         }
 
         /**
@@ -139,18 +139,15 @@ class RingBuffer {
         // Assignment operator
         RingBuffer& operator= (const RingBuffer& rh);
 
-        /** Pointer on the first data */
-        // int           mStart;
         /** Pointer on the last data */
-        int           mEnd;
+        int           endPos_;
         /** Buffer size */
-        int           mBufferSize;
+        int           bufferSize_;
         /** Data */
-        unsigned char *mBuffer;
+        unsigned char *buffer_;
 
-        ReadPointer   _readpointer;
-
-        std::string buffer_id;
+        ReadPointer   readpointer_;
+        std::string buffer_id_;
 
     public:
 
