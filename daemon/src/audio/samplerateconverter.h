@@ -49,7 +49,7 @@ class SamplerateConverter {
         SamplerateConverter(int freq);
 
         /** Destructor */
-        ~SamplerateConverter(void);
+        ~SamplerateConverter();
 
         /**
          * resample from the samplerate1 to the samplerate2

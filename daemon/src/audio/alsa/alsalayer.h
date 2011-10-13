@@ -57,21 +57,21 @@ class AlsaLayer : public AudioLayer {
         /**
          * Destructor
          */
-        ~AlsaLayer(void);
+        ~AlsaLayer();
 
         /**
          * Start the capture stream and prepare the playback stream.
          * The playback starts accordingly to its threshold
          * ALSA Library API
          */
-        void startStream(void);
+        void startStream();
 
         /**
          * Stop the playback and capture streams.
          * Drops the pending frames and put the capture and playback handles to PREPARED state
          * ALSA Library API
          */
-        void stopStream(void);
+        void stopStream();
 
         /**
          * Concatenate two strings. Used to build a valid pcm device name.
@@ -111,9 +111,9 @@ class AlsaLayer : public AudioLayer {
         int soundCardGetIndex(const std::string &description);
 
         void playback(int maxSamples);
-        void capture(void);
+        void capture();
 
-        void audioCallback(void);
+        void audioCallback();
 
         /**
          * Get the index of the audio card for capture
@@ -178,15 +178,15 @@ class AlsaLayer : public AudioLayer {
          * Drop the pending frames and close the capture device
          * ALSA Library API
          */
-        void closeCaptureStream(void);
-        void stopCaptureStream(void);
-        void startCaptureStream(void);
-        void prepareCaptureStream(void);
+        void closeCaptureStream();
+        void stopCaptureStream();
+        void startCaptureStream();
+        void prepareCaptureStream();
 
-        void closePlaybackStream(void);
-        void stopPlaybackStream(void);
-        void startPlaybackStream(void);
-        void preparePlaybackStream(void);
+        void closePlaybackStream();
+        void stopPlaybackStream();
+        void startPlaybackStream();
+        void preparePlaybackStream();
 
         bool alsa_set_params(snd_pcm_t *pcm_handle);
 
