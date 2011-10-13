@@ -57,13 +57,13 @@ class ZrtpSessionCallback: public ZrtpUserCallback {
         void confirmGoClear();
 
     private:
-        SIPCall* _sipcall;
+        SIPCall* sipcall_;
         /* FIXME: why are these strings dynamically allocated? */
-        static std::map<int32, std::string*> _infoMap;
-        static std::map<int32, std::string*> _warningMap;
-        static std::map<int32, std::string*> _severeMap;
-        static std::map<int32, std::string*> _zrtpMap;
-        static bool _mapInitialized;
+        static std::map<int32, std::string*> infoMap_;
+        static std::map<int32, std::string*> warningMap_;
+        static std::map<int32, std::string*> severeMap_;
+        static std::map<int32, std::string*> zrtpMap_;
+        static bool mapInitialized_;
 };
 }
 #endif // __ZRTP_SESSION_CALLBACK_H__
