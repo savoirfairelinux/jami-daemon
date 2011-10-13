@@ -97,7 +97,7 @@ void Preferences::serialize(Conf::YamlEmitter *emiter)
 void Preferences::unserialize(Conf::MappingNode *map)
 {
     if (map == NULL) {
-        _error("Preference: Error: Preference map is NULL");
+        ERROR("Preference: Error: Preference map is NULL");
         return;
     }
 
@@ -144,7 +144,7 @@ void VoipPreference::serialize(Conf::YamlEmitter *emitter)
 void VoipPreference::unserialize(Conf::MappingNode *map)
 {
     if (!map) {
-        _error("VoipPreference: Error: Preference map is NULL");
+        ERROR("VoipPreference: Error: Preference map is NULL");
         return;
     }
 
@@ -193,7 +193,7 @@ void AddressbookPreference::serialize(Conf::YamlEmitter *emitter)
 void AddressbookPreference::unserialize(Conf::MappingNode *map)
 {
     if (!map) {
-        _error("Addressbook: Error: Preference map is NULL");
+        ERROR("Addressbook: Error: Preference map is NULL");
         return;
     }
 
@@ -238,7 +238,7 @@ void HookPreference::serialize(Conf::YamlEmitter *emitter)
 void HookPreference::unserialize(Conf::MappingNode *map)
 {
     if (!map) {
-        _error("Hook: Error: Preference map is NULL");
+        ERROR("Hook: Error: Preference map is NULL");
         return;
     }
 
@@ -274,7 +274,7 @@ namespace {
 void checkSoundCard(int &card, int stream)
 {
     if (not AlsaLayer::soundCardIndexExists(card, stream)) {
-        _warn(" Card with index %d doesn't exist or is unusable.", card);
+        WARN(" Card with index %d doesn't exist or is unusable.", card);
         card = ALSA_DFT_CARD_ID;
     }
 }
@@ -343,11 +343,11 @@ void AudioPreference::serialize(Conf::YamlEmitter *emitter)
     Conf::ScalarNode noise(noisereduce_);
     Conf::ScalarNode echo(echocancel_);
     std::stringstream tailstr;
-    _debug("************************************************** serialize echotail %d", echoCancelTailLength_);
+    DEBUG("************************************************** serialize echotail %d", echoCancelTailLength_);
     tailstr << echoCancelTailLength_;
     Conf::ScalarNode echotail(tailstr.str());
     std::stringstream delaystr;
-    _debug("************************************************** serialize echodelay %d", echoCancelTailLength_);
+    DEBUG("************************************************** serialize echodelay %d", echoCancelTailLength_);
     delaystr << echoCancelDelay_;
     Conf::ScalarNode echodelay(delaystr.str());
 
@@ -454,7 +454,7 @@ void ShortcutPreferences::serialize(Conf::YamlEmitter *emitter)
 void ShortcutPreferences::unserialize(Conf::MappingNode *map)
 {
     if (map == NULL) {
-        _error("ShortcutPreference: Error: Preference map is NULL");
+        ERROR("ShortcutPreference: Error: Preference map is NULL");
         return;
     }
 

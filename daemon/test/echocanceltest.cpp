@@ -37,8 +37,6 @@ using namespace std;
 
 void EchoCancelTest::testEchoCancelProcessing()
 {
-//    _debug ("-------------------- EchoCancelTest::testEchoCancelTest --------------------\n");
-
     const int nbSamples = 160;
     int inputFileLength = 0;
     int remainingLength = 0;

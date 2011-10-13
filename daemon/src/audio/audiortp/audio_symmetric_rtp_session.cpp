@@ -46,7 +46,7 @@ AudioSymmetricRtpSession::AudioSymmetricRtpSession(SIPCall * sipcall) :
     , AudioRtpSession(sipcall, Symmetric, this, this)
     , rtpThread_(new AudioRtpThread(this))
 {
-    _info("AudioSymmetricRtpSession: Setting new RTP session with destination %s:%d", ca_->getLocalIp().c_str(), ca_->getLocalAudioPort());
+    INFO("AudioSymmetricRtpSession: Setting new RTP session with destination %s:%d", ca_->getLocalIp().c_str(), ca_->getLocalAudioPort());
     audioRtpRecord_.callId_ = ca_->getCallId();
 }
 
@@ -65,7 +65,7 @@ void AudioSymmetricRtpSession::AudioRtpThread::run()
 
     TimerPort::setTimer(threadSleep);
 
-    _debug("AudioRtpThread: Entering Audio rtp thread main loop");
+    DEBUG("AudioRtpThread: Entering Audio rtp thread main loop");
 
     while (running) {
         // Send session
@@ -79,7 +79,7 @@ void AudioSymmetricRtpSession::AudioRtpThread::run()
         TimerPort::incTimer(threadSleep);
     }
 
-    _debug("AudioRtpThread: Leaving audio rtp thread loop");
+    DEBUG("AudioRtpThread: Leaving audio rtp thread loop");
 }
 
 }

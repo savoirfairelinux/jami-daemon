@@ -116,7 +116,7 @@ YamlNode *MappingNode::getValue(const std::string &key)
     if (it != map.end()) {
         return it->second;
     } else {
-        _debug("MappingNode: Could not find %s", key.c_str());
+        DEBUG("MappingNode: Could not find %s", key.c_str());
         return NULL;
     }
 }

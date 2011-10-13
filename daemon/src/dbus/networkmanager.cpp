@@ -45,14 +45,14 @@ std::string NetworkManager::stateAsString(const uint32_t& state)
 
 void NetworkManager::StateChanged(const uint32_t& state)
 {
-    _warn("Network state changed: %s", stateAsString(state).c_str());
+    WARN("Network state changed: %s", stateAsString(state).c_str());
 }
 
 void NetworkManager::PropertiesChanged(const std::map< std::string, ::DBus::Variant >& argin0)
 {
     const std::map< std::string, ::DBus::Variant >::const_iterator iter = argin0.begin();
 
-    _warn("Properties changed: %s", iter->first.c_str());
+    WARN("Properties changed: %s", iter->first.c_str());
 
     Manager::instance().registerAccounts();
 }

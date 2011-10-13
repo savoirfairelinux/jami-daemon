@@ -59,7 +59,7 @@ std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails()
     SIPAccount *sipaccount = static_cast<SIPAccount *>(Manager::instance().getAccount(IP2IP_PROFILE));
 
     if (!sipaccount) {
-        _error("ConfigurationManager: could not find account");
+        ERROR("ConfigurationManager: could not find account");
         return ip2ipAccountDetails;
     } else
         return sipaccount->getIp2IpDetails();
@@ -119,7 +119,7 @@ void ConfigurationManager::setTlsSettings(const std::map<std::string, std::strin
     SIPAccount * sipaccount = (SIPAccount *) Manager::instance().getAccount(IP2IP_PROFILE);
 
     if (!sipaccount) {
-        _debug("ConfigurationManager: Error: No valid account in set TLS settings");
+        DEBUG("ConfigurationManager: Error: No valid account in set TLS settings");
         return;
     }
 
@@ -267,7 +267,7 @@ int32_t ConfigurationManager::getAudioDeviceIndex(const std::string& name)
 
 std::string ConfigurationManager::getCurrentAudioOutputPlugin()
 {
-    _debug("ConfigurationManager: Get audio plugin %s", Manager::instance().getCurrentAudioOutputPlugin().c_str());
+    DEBUG("ConfigurationManager: Get audio plugin %s", Manager::instance().getCurrentAudioOutputPlugin().c_str());
 
     return Manager::instance().getCurrentAudioOutputPlugin();
 }

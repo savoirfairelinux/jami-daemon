@@ -41,9 +41,9 @@ namespace sfl {
  * an error occured with a regular expression
  * operation.
  */
-class parse_error : public std::invalid_argument {
+class ParseError : public std::invalid_argument {
     public:
-        explicit parse_error(const std::string& error) :
+        explicit ParseError(const std::string& error) :
             std::invalid_argument(error) {}
 };
 

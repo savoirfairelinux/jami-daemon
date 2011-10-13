@@ -70,11 +70,11 @@ class AudioLayerTest: public CppUnit::TestFixture {
 
     private:
 
-        ManagerImpl* manager;
+        ManagerImpl* manager_;
 
-        PulseLayer* _pulselayer;
+        PulseLayer* pulselayer_;
 
-        int layer;
+        int layer_;
 };
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AudioLayerTest, "AudioLayerTest");
 CPPUNIT_TEST_SUITE_REGISTRATION(AudioLayerTest);

@@ -50,7 +50,7 @@ void CallManager::placeCall(const std::string& accountID,
 {
     // Check if a destination number is available
     if (to.empty())
-        _debug("No number entered - Call stopped");
+        DEBUG("No number entered - Call stopped");
     else
         Manager::instance().outgoingCall(accountID, callID, to);
 }
@@ -62,7 +62,7 @@ void CallManager::placeCallFirstAccount(const std::string& callID,
     using std::string;
 
     if (to.empty()) {
-        _warn("CallManager: Warning: No number entered, call stopped");
+        WARN("CallManager: Warning: No number entered, call stopped");
         return;
     }
 

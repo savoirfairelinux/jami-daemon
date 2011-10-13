@@ -75,7 +75,7 @@ bool HistoryManager::save_history()
 
 bool HistoryManager::load_history_from_file(Conf::ConfigTree *history_list)
 {
-    _debug("HistoryManager: Load history from file %s", history_path_.c_str());
+    DEBUG("HistoryManager: Load history from file %s", history_path_.c_str());
 
     int exist = history_list->populateFromFile(history_path_.c_str());
     history_loaded_ = (exist == 2) ? false : true;
@@ -121,7 +121,7 @@ int HistoryManager::load_history_items_map(Conf::ConfigTree *history_list, int l
 
 bool HistoryManager::save_history_to_file(Conf::ConfigTree *history_list)
 {
-    _debug("HistoryManager: Saving history in XDG directory: %s", history_path_.c_str());
+    DEBUG("HistoryManager: Saving history in XDG directory: %s", history_path_.c_str());
     return history_list->saveConfigTree(history_path_.data());
 }
 
@@ -134,7 +134,7 @@ int HistoryManager::save_history_items_map(Conf::ConfigTree *history_list)
         if (item and item->save(&history_list))
             ++items_saved;
         else
-            _debug("can't save NULL history item\n");
+            DEBUG("can't save NULL history item\n");
     }
 
     return items_saved;
@@ -166,7 +166,7 @@ int HistoryManager::create_history_path(std::string path)
         if (mkdir(userdata.data(), 0755) != 0) {
             // If directory	creation failed
             if (errno != EEXIST) {
-                _debug("HistoryManager: Cannot create directory: %m");
+                DEBUG("HistoryManager: Cannot create directory: %m");
                 return -1;
             }
         }
@@ -209,7 +209,7 @@ std::vector<std::string> HistoryManager::get_history_serialized()
     std::vector<std::string> serialized;
     HistoryItemMap::iterator iter;
 
-    _debug("HistoryManager: Get history serialized");
+    DEBUG("HistoryManager: Get history serialized");
 
     for (iter = history_items_.begin(); iter != history_items_.end(); ++iter) {
         HistoryItem *current = *iter;
@@ -227,7 +227,7 @@ int HistoryManager::set_serialized_history(std::vector<std::string> history, int
     int history_limit;
     time_t current_timestamp;
 
-    _debug("HistoryManager: Set serialized history");
+    DEBUG("HistoryManager: Set serialized history");
 
     // Clear the existing history
     free_history(history_items_);

@@ -91,7 +91,7 @@ void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
     activeRemoteSession_ = (pjmedia_sdp_session*) sdp;
 
     if (!sdp) {
-        _error("Sdp: Error: Remote sdp is NULL while parsing telephone event attribute");
+        ERROR("Sdp: Error: Remote sdp is NULL while parsing telephone event attribute");
         return;
     }
 
@@ -110,7 +110,7 @@ void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
             return;
         }
 
-    _error("Sdp: Error: Could not found dtmf event from remote sdp");
+    ERROR("Sdp: Error: Could not found dtmf event from remote sdp");
 }
 
 std::string Sdp::getCodecName() const
@@ -207,7 +207,7 @@ void Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media *med)
 void Sdp::setLocalMediaCapabilities(const CodecOrder &selectedCodecs)
 {
     if (selectedCodecs.size() == 0)
-        _warn("No selected codec while building local SDP offer");
+        WARN("No selected codec while building local SDP offer");
 
     codec_list_.clear();
 
@@ -217,7 +217,7 @@ void Sdp::setLocalMediaCapabilities(const CodecOrder &selectedCodecs)
         if (codec)
             codec_list_.push_back(codec);
         else
-            _warn("SDP: Couldn't find audio codec");
+            WARN("SDP: Couldn't find audio codec");
     }
 }
 
@@ -261,7 +261,7 @@ int Sdp::createLocalSession(const CodecOrder &selectedCodecs)
 
     char buffer[1000];
     pjmedia_sdp_print(localSession_, buffer, sizeof(buffer));
-    _debug("SDP: Local SDP Session:\n%s", buffer);
+    DEBUG("SDP: Local SDP Session:\n%s", buffer);
 
     return pjmedia_sdp_validate(localSession_);
 }
@@ -269,9 +269,9 @@ int Sdp::createLocalSession(const CodecOrder &selectedCodecs)
 void Sdp::createOffer(const CodecOrder &selectedCodecs)
 {
     if (createLocalSession(selectedCodecs) != PJ_SUCCESS)
-        _error("SDP: Error: Failed to create initial offer");
+        ERROR("SDP: Error: Failed to create initial offer");
     else if (pjmedia_sdp_neg_create_w_local_offer(memPool_, localSession_, &negotiator_) != PJ_SUCCESS)
-        _error("SDP: Error: Failed to create an initial SDP negotiator");
+        ERROR("SDP: Error: Failed to create an initial SDP negotiator");
 }
 
 void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
@@ -283,7 +283,7 @@ void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
     pjmedia_sdp_print(remote, buffer, sizeof(buffer));
 
     if (localSession_ == NULL && createLocalSession(selectedCodecs) != PJ_SUCCESS) {
-        _error("SDP: Failed to create initial offer");
+        ERROR("SDP: Failed to create initial offer");
         return;
     }
 
@@ -311,18 +311,18 @@ void Sdp::startNegotiation()
     assert(negotiator_);
 
     if (pjmedia_sdp_neg_get_state(negotiator_) != PJMEDIA_SDP_NEG_STATE_WAIT_NEGO)
-        _warn("SDP: Warning: negotiator not in right state for negotiation");
+        WARN("SDP: Warning: negotiator not in right state for negotiation");
 
     if (pjmedia_sdp_neg_negotiate(memPool_, negotiator_, 0) != PJ_SUCCESS)
         return;
 
     if (pjmedia_sdp_neg_get_active_local(negotiator_, &active_local) != PJ_SUCCESS)
-        _error("SDP: Could not retrieve local active session");
+        ERROR("SDP: Could not retrieve local active session");
     else
         setActiveLocalSdpSession(active_local);
 
     if (pjmedia_sdp_neg_get_active_remote(negotiator_, &active_remote) != PJ_SUCCESS)
-        _error("SDP: Could not retrieve remote active session");
+        ERROR("SDP: Could not retrieve remote active session");
     else
         setActiveRemoteSdpSession(active_remote);
 }
@@ -369,7 +369,7 @@ void Sdp::removeAttributeFromLocalAudioMedia(const char *attr)
 void Sdp::setMediaTransportInfoFromRemoteSdp()
 {
     if (!activeRemoteSession_) {
-        _error("Sdp: Error: Remote sdp is NULL while parsing media");
+        ERROR("Sdp: Error: Remote sdp is NULL while parsing media");
         return;
     }
 
@@ -380,7 +380,7 @@ void Sdp::setMediaTransportInfoFromRemoteSdp()
             return;
         }
 
-    _error("SDP: No remote sdp media found in the remote offer");
+    ERROR("SDP: No remote sdp media found in the remote offer");
 }
 
 void Sdp::getRemoteSdpCryptoFromOffer(const pjmedia_sdp_session* remote_sdp, CryptoOffer& crypto_offer)

@@ -191,8 +191,8 @@ WaveFile::WaveFile(const std::string& fileName, unsigned int audioSamplingRate)
 
     unsigned long nbSamples = 8 * bytes / dt / chan;  // sample frames
 
-    _debug("WaveFile: frame size %ld, data size %d align %d rate %d avgbyte %d chunk size %d dt %d",
-           nbSamples, bytes,  blockal, srate, avgb, chunk_size, dt);
+    DEBUG("WaveFile: frame size %ld, data size %d align %d rate %d avgbyte %d chunk size %d dt %d",
+          nbSamples, bytes,  blockal, srate, avgb, chunk_size, dt);
 
     // Should not be longer than a minute
     if (nbSamples > static_cast<unsigned int>(60 * srate))

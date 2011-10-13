@@ -78,8 +78,8 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse()
             "(?P<mkiValue>[0-9]+)\\:"			 \
             "(?P<mkiLength>[0-9]{1,3})\\;?)?", "g");
 
-    } catch (const compile_error& exception) {
-        throw parse_error("A compile exception occured on a pattern.");
+    } catch (const CompileError& exception) {
+        throw ParseError("A compile exception occured on a pattern.");
     }
 
 
@@ -102,9 +102,9 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse()
             sdesLine = generalSyntaxPattern->split();
 
             if (sdesLine.size() < 3)
-                throw parse_error("Missing components in SDES line");
-        } catch (const match_error& exception) {
-            throw parse_error("Error while analyzing the SDES line.");
+                throw ParseError("Missing components in SDES line");
+        } catch (const MatchError& exception) {
+            throw ParseError("Error while analyzing the SDES line.");
         }
 
         // Check if the attribute starts with a=crypto
@@ -116,8 +116,8 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse()
         if (tagPattern->matches()) {
             try {
                 tag = tagPattern->group("tag");
-            } catch (const match_error& exception) {
-                throw parse_error("Error while parsing the tag field");
+            } catch (const MatchError& exception) {
+                throw ParseError("Error while parsing the tag field");
             }
         } else
             return cryptoAttributeVector;
@@ -131,8 +131,8 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse()
         if (cryptoSuitePattern->matches()) {
             try {
                 cryptoSuite = cryptoSuitePattern->group("cryptoSuite");
-            } catch (const match_error& exception) {
-                throw parse_error("Error while parsing the crypto-suite field");
+            } catch (const MatchError& exception) {
+                throw ParseError("Error while parsing the crypto-suite field");
             }
         } else
             return cryptoAttributeVector;
@@ -154,8 +154,8 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse()
                 mkiValue = keyParamsPattern->group("mkiValue");
                 mkiLength = keyParamsPattern->group("mkiLength");
             }
-        } catch (const match_error& exception) {
-            throw parse_error("Error while parsing the key-params field");
+        } catch (const MatchError& exception) {
+            throw ParseError("Error while parsing the key-params field");
         }
 
         // Add the new CryptoAttribute to the vector
@@ -198,9 +198,9 @@ bool SdesNegotiator::negotiate()
             iter_offer++;
         }
 
-    } catch (const parse_error& exception) {
+    } catch (const ParseError& exception) {
         return false;
-    } catch (const match_error& exception) {
+    } catch (const MatchError& exception) {
         return false;
     }
 

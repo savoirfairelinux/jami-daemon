@@ -91,7 +91,7 @@ RingBuffer::getLen(const std::string &call_id)
 void
 RingBuffer::debug()
 {
-    _debug("Start=%d; End=%d; BufferSize=%d", getSmallestReadPointer(), endPos_, bufferSize_);
+    DEBUG("Start=%d; End=%d; BufferSize=%d", getSmallestReadPointer(), endPos_, bufferSize_);
 }
 
 int
@@ -129,7 +129,7 @@ RingBuffer::storeReadPointer(int pointer_value, const std::string &call_id)
     if (iter != readpointer_.end())
         iter->second = pointer_value;
     else
-        _debug("storeReadPointer: Cannot find \"%s\" readPointer in \"%s\" ringbuffer", call_id.c_str(), buffer_id_.c_str());
+        DEBUG("storeReadPointer: Cannot find \"%s\" readPointer in \"%s\" ringbuffer", call_id.c_str(), buffer_id_.c_str());
 }
 
 

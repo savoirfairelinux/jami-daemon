@@ -67,12 +67,12 @@ bool MainBuffer::removeCallIDSet(const std::string & set_id)
     CallIDSet* callid_set = getCallIDSet(set_id);
 
     if (!callid_set) {
-        _debug("removeCallIDSet error callid set %s does not exist!", set_id.c_str());
+        DEBUG("removeCallIDSet error callid set %s does not exist!", set_id.c_str());
         return false;
     }
 
     if (callIDMap_.erase(set_id) == 0) {
-        _debug("removeCallIDSet error while removing callid set %s!", set_id.c_str());
+        DEBUG("removeCallIDSet error while removing callid set %s!", set_id.c_str());
         return false;
     }
 
@@ -92,9 +92,9 @@ void MainBuffer::removeCallIDfromSet(const std::string & set_id, const std::stri
     CallIDSet* callid_set = getCallIDSet(set_id);
 
     if (callid_set == NULL)
-        _error("removeCallIDfromSet error callid set %s does not exist!", set_id.c_str());
+        ERROR("removeCallIDfromSet error callid set %s does not exist!", set_id.c_str());
     else if (callid_set->erase(call_id) == 0)
-        _error("removeCallIDfromSet error while removing callid %s from set %s!", call_id.c_str(), set_id.c_str());
+        ERROR("removeCallIDfromSet error while removing callid %s from set %s!", call_id.c_str(), set_id.c_str());
 }
 
 RingBuffer* MainBuffer::getRingBuffer(const std::string & call_id)
@@ -119,11 +119,11 @@ bool MainBuffer::removeRingBuffer(const std::string & call_id)
             delete ring_buffer;
             return true;
         } else {
-            _error("BufferManager: Error: Fail to delete ringbuffer %s!", call_id.c_str());
+            ERROR("BufferManager: Error: Fail to delete ringbuffer %s!", call_id.c_str());
             return false;
         }
     } else {
-        _debug("BufferManager: Error: Ringbuffer %s does not exist!", call_id.c_str());
+        DEBUG("BufferManager: Error: Ringbuffer %s does not exist!", call_id.c_str());
         return true;
     }
 }
@@ -214,7 +214,7 @@ void MainBuffer::unBindHalfDuplexOut(const std::string & process_id, const std::
             removeRingBuffer(call_id);
         }
     } else {
-        _debug("Error: did not found ringbuffer %s", process_id.c_str());
+        DEBUG("Error: did not found ringbuffer %s", process_id.c_str());
         removeCallIDSet(process_id);
     }
 
@@ -320,7 +320,7 @@ int MainBuffer::availForGet(const std::string & call_id)
         CallIDSet::iterator iter_id = callid_set->begin();
 
         if ((call_id != Call::DEFAULT_ID) && (*iter_id == call_id))
-            _debug("This problem should not occur since we have %i element", (int) callid_set->size());
+            DEBUG("This problem should not occur since we have %i element", (int) callid_set->size());
 
         return availForGetByID(*iter_id, call_id);
 
@@ -346,12 +346,12 @@ int MainBuffer::availForGet(const std::string & call_id)
 int MainBuffer::availForGetByID(const std::string & call_id, const std::string & reader_id)
 {
     if ((call_id != Call::DEFAULT_ID) and (reader_id == call_id))
-        _error("MainBuffer: Error: RingBuffer has a readpointer on tiself");
+        ERROR("MainBuffer: Error: RingBuffer has a readpointer on tiself");
 
     RingBuffer* ringbuffer = getRingBuffer(call_id);
 
     if (ringbuffer == NULL) {
-        _error("MainBuffer: Error: RingBuffer does not exist");
+        ERROR("MainBuffer: Error: RingBuffer does not exist");
         return 0;
     } else
         return ringbuffer->AvailForGet(reader_id);
@@ -451,7 +451,7 @@ void MainBuffer::stateInfo()
             dbg_str.append(", ");
         }
 
-        _debug("%s", dbg_str.c_str());
+        DEBUG("%s", dbg_str.c_str());
     }
 
     // Print ringbuffers ids and readpointers
@@ -473,6 +473,6 @@ void MainBuffer::stateInfo()
                 dbg_str.append(", ");
             }
         }
-        _debug("%s", dbg_str.c_str());
+        DEBUG("%s", dbg_str.c_str());
     }
 }

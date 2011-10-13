@@ -43,12 +43,12 @@ AudioCodecFactory::AudioCodecFactory() : codecsMap_()
     CodecVector codecDynamicList(scanCodecDirectory());
 
     if (codecDynamicList.empty())
-        _error("Error - No codecs available");
+        ERROR("Error - No codecs available");
     else {
         for (CodecVector::const_iterator iter = codecDynamicList.begin();
                 iter != codecDynamicList.end() ; ++iter) {
             codecsMap_[(int)(*iter)->getPayloadType()] = *iter;
-            _debug("Loaded codec %s" , (*iter)->getMimeSubtype().c_str());
+            DEBUG("Loaded codec %s" , (*iter)->getMimeSubtype().c_str());
         }
     }
 }
@@ -93,7 +93,7 @@ AudioCodecFactory::getCodec(int payload) const
     if (iter != codecsMap_.end())
         return iter->second;
     else {
-        _error("CodecDescriptor: cannot find codec %i", payload);
+        ERROR("CodecDescriptor: cannot find codec %i", payload);
         return NULL;
     }
 }
@@ -160,7 +160,7 @@ std::vector<sfl::Codec*> AudioCodecFactory::scanCodecDirectory()
 
     for (size_t i = 0 ; i < dirToScan.size() ; i++) {
         std::string dirStr = dirToScan[i];
-        _debug("CodecDescriptor: Scanning %s to find audio codecs....",  dirStr.c_str());
+        DEBUG("CodecDescriptor: Scanning %s to find audio codecs....",  dirStr.c_str());
 
         DIR *dir = opendir(dirStr.c_str());
 
@@ -196,7 +196,7 @@ sfl::Codec* AudioCodecFactory::loadCodec(const std::string &path)
     void * codecHandle = dlopen(path.c_str() , RTLD_LAZY);
 
     if (!codecHandle) {
-        _error("%s\n", dlerror());
+        ERROR("%s\n", dlerror());
         return NULL;
     }
 
@@ -206,7 +206,7 @@ sfl::Codec* AudioCodecFactory::loadCodec(const std::string &path)
     char *error = dlerror();
 
     if (error) {
-        _error("%s\n", error);
+        ERROR("%s\n", error);
         return NULL;
     }
 
@@ -225,7 +225,7 @@ void AudioCodecFactory::unloadCodec(CodecHandlePointer p)
     char *error = dlerror();
 
     if (error) {
-        _error("%s\n", error);
+        ERROR("%s\n", error);
         return;
     }
 
@@ -245,7 +245,7 @@ sfl::Codec* AudioCodecFactory::instantiateCodec(int payload) const
             char *error = dlerror();
 
             if (error)
-                _error("%s\n", error);
+                ERROR("%s\n", error);
             else
                 return createCodec();
         }

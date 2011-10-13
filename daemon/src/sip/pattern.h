@@ -41,9 +41,9 @@ namespace sfl {
  * an error occured while compiling the
  * regular expression.
  */
-class compile_error : public std::invalid_argument {
+class CompileError : public std::invalid_argument {
     public:
-        explicit compile_error(const std::string& error) :
+        explicit CompileError(const std::string& error) :
             std::invalid_argument(error) {}
 };
 
@@ -52,9 +52,9 @@ class compile_error : public std::invalid_argument {
  * an error occured while mathing a
  * pattern to an expression.
  */
-class match_error : public std::invalid_argument {
+class MatchError : public std::invalid_argument {
     public:
-        match_error(const std::string& error) :
+        MatchError(const std::string& error) :
             std::invalid_argument(error) {}
 };
 

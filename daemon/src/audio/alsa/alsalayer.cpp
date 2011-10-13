@@ -113,7 +113,7 @@ bool AlsaLayer::openDevice(snd_pcm_t **pcm, const std::string &dev, snd_pcm_stre
     }
 
     if (err < 0) {
-        _error("Alsa: couldn't open device %s : %s",  dev.c_str(),
+        ERROR("Alsa: couldn't open device %s : %s",  dev.c_str(),
                snd_strerror(err));
         return false;
     }
@@ -218,7 +218,7 @@ AlsaLayer::stopStream()
 #define ALSA_CALL(call, error) ({ \
 			int err_code = call; \
 			if (err_code < 0) \
-				_error("ALSA: "error": %s", snd_strerror(err_code)); \
+				ERROR("ALSA: "error": %s", snd_strerror(err_code)); \
 			err_code; \
 		})
 
@@ -320,7 +320,7 @@ bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle)
     TRY(snd_pcm_hw_params(HW), "hwparams");
 #undef HW
 
-    _debug("ALSA: %s using sampling rate %dHz",
+    DEBUG("ALSA: %s using sampling rate %dHz",
            (snd_pcm_stream(pcm_handle) == SND_PCM_STREAM_PLAYBACK) ? "playback" : "capture",
            audioSampleRate_);
 
@@ -369,7 +369,7 @@ AlsaLayer::write(void* buffer, int length, snd_pcm_t * handle)
         }
 
         default:
-            _error("ALSA: unknown write error, dropping frames: %s", snd_strerror(err));
+            ERROR("ALSA: unknown write error, dropping frames: %s", snd_strerror(err));
             stopPlaybackStream();
             break;
     }
@@ -404,12 +404,12 @@ AlsaLayer::read(void* buffer, int toCopy)
                     startCaptureStream();
                 }
 
-            _error("ALSA: XRUN capture ignored (%s)", snd_strerror(err));
+            ERROR("ALSA: XRUN capture ignored (%s)", snd_strerror(err));
             break;
         }
 
         case EPERM:
-            _error("ALSA: Can't capture, EPERM (%s)", snd_strerror(err));
+            ERROR("ALSA: Can't capture, EPERM (%s)", snd_strerror(err));
             prepareCaptureStream();
             startCaptureStream();
             break;
@@ -459,9 +459,9 @@ AlsaLayer::getSoundCardsInfo(int stream)
                 snd_pcm_info_set_stream(pcminfo, (stream == SFL_PCM_CAPTURE) ? SND_PCM_STREAM_CAPTURE : SND_PCM_STREAM_PLAYBACK);
 
                 if (snd_ctl_pcm_info(handle ,pcminfo) < 0)
-                    _debug(" Cannot get info");
+                    DEBUG(" Cannot get info");
                 else {
-                    _debug("card %i : %s [%s]",
+                    DEBUG("card %i : %s [%s]",
                            numCard,
                            snd_ctl_card_info_get_id(info),
                            snd_ctl_card_info_get_name(info));
@@ -531,7 +531,7 @@ void AlsaLayer::capture()
     int toGetSamples = snd_pcm_avail_update(captureHandle_);
 
     if (toGetSamples < 0)
-        _error("Audio: Mic error: %s", snd_strerror(toGetSamples));
+        ERROR("Audio: Mic error: %s", snd_strerror(toGetSamples));
 
     if (toGetSamples <= 0)
         return;
@@ -545,7 +545,7 @@ void AlsaLayer::capture()
     SFLDataFormat* in = (SFLDataFormat*) malloc(toGetBytes);
 
     if (read(in, toGetBytes) != toGetBytes) {
-        _error("ALSA MIC : Couldn't read!");
+        ERROR("ALSA MIC : Couldn't read!");
         goto end;
     }
 

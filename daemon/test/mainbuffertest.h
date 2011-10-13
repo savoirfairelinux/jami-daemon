@@ -138,7 +138,7 @@ class MainBufferTest : public CppUnit::TestCase {
 
     private:
 
-        MainBuffer _mainbuffer;
+        MainBuffer mainbuffer_;
 };
 
 /* Register our test module */

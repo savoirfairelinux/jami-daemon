@@ -92,7 +92,7 @@ class InstantMessagingTest : public CppUnit::TestCase {
         void testIllFormatedMessage();
 
     private:
-        sfl::InstantMessaging *_im;
+        sfl::InstantMessaging *im_;
 };
 
 /* Register our test module */

@@ -95,7 +95,7 @@ void Pattern::compile()
 
         std::string msg("PCRE compiling failed at offset " + offsetStr);
 
-        throw compile_error(msg);
+        throw CompileError(msg);
     }
 
     // Allocate an appropriate amount
@@ -150,10 +150,10 @@ std::string Pattern::group(int groupNumber)
                 throw std::out_of_range("Invalid group reference.");
 
             case PCRE_ERROR_NOMEMORY:
-                throw match_error("Memory exhausted.");
+                throw MatchError("Memory exhausted.");
 
             default:
-                throw match_error("Failed to get named substring.");
+                throw MatchError("Failed to get named substring.");
         }
     }
 
@@ -177,10 +177,10 @@ std::string Pattern::group(const std::string& groupName)
                 break;
 
             case PCRE_ERROR_NOMEMORY:
-                throw match_error("Memory exhausted.");
+                throw MatchError("Memory exhausted.");
 
             default:
-                throw match_error("Failed to get named substring.");
+                throw MatchError("Failed to get named substring.");
         }
     }
 
@@ -260,7 +260,7 @@ bool Pattern::matches(const std::string& subject)
     // Matching succeded but not enough space.
     // @TODO figure out something more clever to do in this case.
     if (rc == 0)
-        throw match_error("No space to store all substrings.");
+        throw MatchError("No space to store all substrings.");
 
     // Matching succeeded. Keep the number of substrings for
     // subsequent calls to group().

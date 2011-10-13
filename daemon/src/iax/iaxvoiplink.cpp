@@ -185,7 +185,7 @@ IAXVoIPLink::sendAudioFromMic()
             ost::MutexLock m(mutexIAX_);
 
             if (iax_send_voice(currentCall->session, currentCall->format, encodedData, compSize, outSamples) == -1)
-                _error("IAX: Error sending voice data.");
+                ERROR("IAX: Error sending voice data.");
         }
     }
 }
@@ -273,7 +273,7 @@ IAXVoIPLink::answer(Call *c)
 void
 IAXVoIPLink::hangup(const std::string& id)
 {
-    _debug("IAXVoIPLink: Hangup");
+    DEBUG("IAXVoIPLink: Hangup");
 
     IAXCall* call = getIAXCall(id);
 
@@ -295,7 +295,7 @@ IAXVoIPLink::hangup(const std::string& id)
 void
 IAXVoIPLink::peerHungup(const std::string& id)
 {
-    _debug("IAXVoIPLink: Peer hung up");
+    DEBUG("IAXVoIPLink: Peer hung up");
 
     IAXCall* call = getIAXCall(id);
 

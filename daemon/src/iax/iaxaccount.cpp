@@ -52,7 +52,7 @@ IAXAccount::~IAXAccount()
 void IAXAccount::serialize(Conf::YamlEmitter *emitter)
 {
     if (emitter == NULL) {
-        _error("IAXAccount: Error: emitter is NULL in serialize");
+        ERROR("IAXAccount: Error: emitter is NULL in serialize");
         return;
     }
 
@@ -85,14 +85,14 @@ void IAXAccount::serialize(Conf::YamlEmitter *emitter)
     try {
         emitter->serializeAccount(&accountmap);
     } catch (const Conf::YamlEmitterException &e) {
-        _error("ConfigTree: %s", e.what());
+        ERROR("ConfigTree: %s", e.what());
     }
 }
 
 void IAXAccount::unserialize(Conf::MappingNode *map)
 {
     if (map == NULL) {
-        _error("IAXAccount: Error: Map is NULL in unserialize");
+        ERROR("IAXAccount: Error: Map is NULL in unserialize");
         return;
     }
 
@@ -151,7 +151,7 @@ void IAXAccount::registerVoIPLink()
         link_->init();
         link_->sendRegister(this);
     } catch (const VoipLinkException &e) {
-        _error("IAXAccount: %s", e.what());
+        ERROR("IAXAccount: %s", e.what());
     }
 }
 
@@ -162,7 +162,7 @@ IAXAccount::unregisterVoIPLink()
         link_->sendUnregister(this);
         dynamic_cast<IAXVoIPLink*>(link_)->terminate();
     } catch (const VoipLinkException &e) {
-        _error("IAXAccount: %s", e.what());
+        ERROR("IAXAccount: %s", e.what());
     }
 }
 

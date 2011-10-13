@@ -125,7 +125,7 @@ int AudioRtpRecordHandler::processDataEncode()
     int bytes = Manager::instance().getMainBuffer()->getData(micData, bytesToGet, id_);
 
     if (bytes != bytesToGet) {
-        _error("%s : asked %d bytes from mainbuffer, got %d", __PRETTY_FUNCTION__, bytesToGet, bytes);
+        ERROR("%s : asked %d bytes from mainbuffer, got %d", __PRETTY_FUNCTION__, bytesToGet, bytes);
         return 0;
     }
 

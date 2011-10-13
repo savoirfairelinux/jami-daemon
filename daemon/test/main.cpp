@@ -71,13 +71,13 @@ int main(int argc, char* argv[])
             argvIndex++;
 
             Logger::setDebugMode(true);
-            _info("Debug mode activated");
+            INFO("Debug mode activated");
 
         } else if (strcmp("--xml", argv[1]) == 0) {
             argvIndex++;
 
             xmlOutput = true;
-            _info("Using XML output");
+            INFO("Using XML output");
         }
     }
 
@@ -98,7 +98,7 @@ int main(int argc, char* argv[])
     CPPUNIT_NS::Test *suite = CPPUNIT_NS::TestFactoryRegistry::getRegistry(testSuiteName).makeTest();
 
     if (suite->getChildTestCount() == 0) {
-        _error("Invalid test suite name: %s", testSuiteName.c_str());
+        ERROR("Invalid test suite name: %s", testSuiteName.c_str());
         system("mv " CONFIG_SAMPLE ".bak " CONFIG_SAMPLE);
         return 1;
     }

@@ -153,7 +153,7 @@ main(int argc, char **argv)
         return 1;
     }
 
-    _debug("Starting DBus event loop");
+    DEBUG("Starting DBus event loop");
     Manager::instance().getDbusManager()->exec();
 
     return 0;

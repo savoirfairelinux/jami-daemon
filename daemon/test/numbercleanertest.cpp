@@ -53,76 +53,76 @@
 
 void NumberCleanerTest::test_format_1(void)
 {
-    _debug("-------------------- NumberCleanerTest::test_format_1 --------------------\n");
+    DEBUG("-------------------- NumberCleanerTest::test_format_1 --------------------\n");
     CPPUNIT_ASSERT(NumberCleaner::clean(NUMBER_TEST_1) == VALID_NUMBER);
 }
 
 void NumberCleanerTest::test_format_2(void)
 {
-    _debug("-------------------- NumberCleanerTest::test_format_2 --------------------\n");
+    DEBUG("-------------------- NumberCleanerTest::test_format_2 --------------------\n");
 
     CPPUNIT_ASSERT(NumberCleaner::clean(NUMBER_TEST_2) == VALID_NUMBER);
 }
 
 void NumberCleanerTest::test_format_3(void)
 {
-    _debug("-------------------- NumberCleanerTest::test_format_3 --------------------\n");
+    DEBUG("-------------------- NumberCleanerTest::test_format_3 --------------------\n");
 
     CPPUNIT_ASSERT(NumberCleaner::clean(NUMBER_TEST_3) == VALID_NUMBER);
 }
 
 void NumberCleanerTest::test_format_4(void)
 {
-    _debug("-------------------- NumberCleanerTest::test_format_4 --------------------\n");
+    DEBUG("-------------------- NumberCleanerTest::test_format_4 --------------------\n");
 
     CPPUNIT_ASSERT(NumberCleaner::clean(NUMBER_TEST_4) == VALID_NUMBER);
 }
 
 void NumberCleanerTest::test_format_5(void)
 {
-    _debug("-------------------- NumberCleanerTest::test_format_5 --------------------\n");
+    DEBUG("-------------------- NumberCleanerTest::test_format_5 --------------------\n");
 
     CPPUNIT_ASSERT(NumberCleaner::clean(NUMBER_TEST_5) == VALID_NUMBER);
 }
 
 void NumberCleanerTest::test_format_6(void)
 {
-    _debug("-------------------- NumberCleanerTest::test_format_6 --------------------\n");
+    DEBUG("-------------------- NumberCleanerTest::test_format_6 --------------------\n");
 
     CPPUNIT_ASSERT(NumberCleaner::clean(NUMBER_TEST_6) == VALID_NUMBER);
 }
 
 void NumberCleanerTest::test_format_7(void)
 {
-    _debug("-------------------- NumberCleanerTest::test_format_7 --------------------\n");
+    DEBUG("-------------------- NumberCleanerTest::test_format_7 --------------------\n");
 
     CPPUNIT_ASSERT(NumberCleaner::clean(NUMBER_TEST_7) == VALID_EXTENSION);
 }
 
 void NumberCleanerTest::test_format_8(void)
 {
-    _debug("-------------------- NumberCleanerTest::test_format_8 --------------------\n");
+    DEBUG("-------------------- NumberCleanerTest::test_format_8 --------------------\n");
 
     CPPUNIT_ASSERT(NumberCleaner::clean(NUMBER_TEST_8) == VALID_NUMBER);
 }
 
 void NumberCleanerTest::test_format_9(void)
 {
-    _debug("-------------------- NumberCleanerTest::test_format_9 --------------------\n");
+    DEBUG("-------------------- NumberCleanerTest::test_format_9 --------------------\n");
 
     CPPUNIT_ASSERT(NumberCleaner::clean(NUMBER_TEST_9) == VALID_NUMBER);
 }
 
 void NumberCleanerTest::test_format_10(void)
 {
-    _debug("-------------------- NumberCleanerTest::test_format_10 --------------------\n");
+    DEBUG("-------------------- NumberCleanerTest::test_format_10 --------------------\n");
 
     CPPUNIT_ASSERT(NumberCleaner::clean(NUMBER_TEST_1, "9") == VALID_PREPENDED_NUMBER);
 }
 
 void NumberCleanerTest::test_format_11(void)
 {
-    _debug("-------------------- NumberCleanerTest::test_format_11 --------------------\n");
+    DEBUG("-------------------- NumberCleanerTest::test_format_11 --------------------\n");
 
     CPPUNIT_ASSERT(NumberCleaner::clean(NUMBER_TEST_10, "9") == VALID_EXTENSION);
 }

@@ -228,7 +228,7 @@ SIPVoIPLink::SIPVoIPLink() : evThread_(new EventThread(this))
     static const pj_str_t accepted = { (char*) "application/sdp", 15 };
     pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ACCEPT, NULL, 1, &accepted);
 
-    _debug("UserAgent: pjsip version %s for %s initialized", pj_get_version(), PJ_OS_NAME);
+    DEBUG("UserAgent: pjsip version %s for %s initialized", pj_get_version(), PJ_OS_NAME);
 
     TRY(pjsip_replaces_init_module(endpt_));
 
@@ -567,7 +567,7 @@ SIPVoIPLink::offhold(const std::string& id)
         call->getAudioRtp().initAudioSymmetricRtpSession();
         call->getAudioRtp().start(static_cast<sfl::AudioCodec *>(audiocodec));
     } catch (const SdpException &e) {
-        _error("UserAgent: Exception: %s", e.what());
+        ERROR("UserAgent: Exception: %s", e.what());
     } catch (...) {
         throw VoipLinkException("Could not create audio rtp session");
     }
@@ -908,7 +908,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to)
         std::string remoteAddr = toUri.substr(at+1, trns-at-1);
 
         if (toUri.find("sips:") != 1) {
-            _debug("UserAgent: Error \"sips\" scheme required for TLS call");
+            DEBUG("UserAgent: Error \"sips\" scheme required for TLS call");
             delete call;
             return false;
         }
@@ -965,7 +965,7 @@ pj_status_t SIPVoIPLink::stunServerResolve(SIPAccount *account)
     if (status != PJ_SUCCESS) {
         char errmsg[PJ_ERR_MSG_SIZE];
         pj_strerror(status, errmsg, sizeof(errmsg));
-        _debug("Error creating STUN socket for %.*s: %s", (int) stunServer.slen, stunServer.ptr, errmsg);
+        DEBUG("Error creating STUN socket for %.*s: %s", (int) stunServer.slen, stunServer.ptr, errmsg);
         return status;
     }
 
@@ -974,7 +974,7 @@ pj_status_t SIPVoIPLink::stunServerResolve(SIPAccount *account)
     if (status != PJ_SUCCESS) {
         char errmsg[PJ_ERR_MSG_SIZE];
         pj_strerror(status, errmsg, sizeof(errmsg));
-        _debug("Error starting STUN socket for %.*s: %s", (int) stunServer.slen, stunServer.ptr, errmsg);
+        DEBUG("Error starting STUN socket for %.*s: %s", (int) stunServer.slen, stunServer.ptr, errmsg);
         pj_stun_sock_destroy(stun_sock);
     }
 
@@ -1116,7 +1116,7 @@ void SIPVoIPLink::createStunTransport(SIPAccount *account)
     pj_uint16_t stunPort = account->getStunPort();
 
     if (stunServerResolve(account) != PJ_SUCCESS) {
-        _error("Can't resolve STUN server");
+        ERROR("Can't resolve STUN server");
         return;
     }
 
@@ -1125,12 +1125,12 @@ void SIPVoIPLink::createStunTransport(SIPAccount *account)
     pj_sockaddr_in boundAddr;
 
     if (pj_sockaddr_in_init(&boundAddr, &stunServer, 0) != PJ_SUCCESS) {
-        _error("Can't initialize IPv4 socket on %*s:%i", stunServer.slen, stunServer.ptr, stunPort);
+        ERROR("Can't initialize IPv4 socket on %*s:%i", stunServer.slen, stunServer.ptr, stunPort);
         return;
     }
 
     if (pj_sock_socket(pj_AF_INET(), pj_SOCK_DGRAM(), 0, &sock) != PJ_SUCCESS) {
-        _error("Can't create or bind socket");
+        ERROR("Can't create or bind socket");
         return;
     }
 
@@ -1138,7 +1138,7 @@ void SIPVoIPLink::createStunTransport(SIPAccount *account)
     pj_sockaddr_in pub_addr;
 
     if (pjstun_get_mapped_addr(&cp_->factory, 1, &sock, &stunServer, stunPort, &stunServer, stunPort, &pub_addr) != PJ_SUCCESS) {
-        _error("Can't contact STUN server");
+        ERROR("Can't contact STUN server");
         pj_sock_close(sock);
         return;
     }
@@ -1380,19 +1380,19 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     SIPCall *call = reinterpret_cast<SIPCall *>(inv->mod_data[mod_ua_.id]);
 
     if (call == NULL) {
-        _debug("UserAgent: Call declined by peer, SDP negotiation stopped");
+        DEBUG("UserAgent: Call declined by peer, SDP negotiation stopped");
         return;
     }
 
     if (status != PJ_SUCCESS) {
-        _warn("UserAgent: Error: while negotiating the offer");
+        WARN("UserAgent: Error: while negotiating the offer");
         SIPVoIPLink::instance()->hangup(call->getCallId());
         Manager::instance().callFailure(call->getCallId());
         return;
     }
 
     if (!inv->neg) {
-        _warn("UserAgent: Error: no negotiator for this session");
+        WARN("UserAgent: Error: no negotiator for this session");
         return;
     }
 
@@ -1407,11 +1407,11 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     char buffer[1000];
     memset(buffer, 0, sizeof buffer);
     pjmedia_sdp_print(remote_sdp, buffer, 1000);
-    _debug("SDP: Remote active SDP Session:\n%s", buffer);
+    DEBUG("SDP: Remote active SDP Session:\n%s", buffer);
 
     memset(buffer, 0, 1000);
     pjmedia_sdp_print(local_sdp, buffer, 1000);
-    _debug("SDP: Local active SDP Session:\n%s", buffer);
+    DEBUG("SDP: Local active SDP Session:\n%s", buffer);
 
     // Set active SDP sessions
     sdpSession->setActiveRemoteSdpSession(remote_sdp);
@@ -1438,7 +1438,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
         sfl::SdesNegotiator sdesnego(localCapabilities, crypto_offer);
 
         if (sdesnego.negotiate()) {
-            _debug("UserAgent: SDES negotiation successfull");
+            DEBUG("UserAgent: SDES negotiation successfull");
             nego_success = true;
 
             try {
@@ -1483,9 +1483,9 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
             call->getAudioRtp().updateSessionMedia(static_cast<sfl::AudioCodec *>(audiocodec));
         }
     } catch (const SdpException &e) {
-        _error("UserAgent: Exception: %s", e.what());
+        ERROR("UserAgent: Exception: %s", e.what());
     } catch (const std::exception& rtpException) {
-        _error("UserAgent: Exception: %s", rtpException.what());
+        ERROR("UserAgent: Exception: %s", rtpException.what());
     }
 
 }
@@ -1514,7 +1514,7 @@ void transaction_state_changed_cb(pjsip_inv_session *inv UNUSED, pjsip_transacti
 
         if (r_data && r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD) {
             std::string request =  pjsip_rx_data_get_info(r_data);
-            _debug("UserAgent: %s", request.c_str());
+            DEBUG("UserAgent: %s", request.c_str());
 
             if (request.find("NOTIFY") == std::string::npos && request.find("INFO") != std::string::npos) {
                 pjsip_dlg_create_response(inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
@@ -1569,7 +1569,7 @@ void transaction_state_changed_cb(pjsip_inv_session *inv UNUSED, pjsip_transacti
         Manager::instance().incomingMessage(call->getCallId(), from, module->findTextMessage(formatedMessage));
 
     } catch (const sfl::InstantMessageException &except) {
-        _error("SipVoipLink: %s", except.what());
+        ERROR("SipVoipLink: %s", except.what());
     }
 }
 
@@ -1820,7 +1820,7 @@ static pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     pjsip_tx_data *response;
 
     if (pjsip_replaces_verify_request(rdata, &replaced_dlg, PJ_FALSE, &response) != PJ_SUCCESS) {
-        _error("Something wrong with Replaces request.");
+        ERROR("Something wrong with Replaces request.");
         pjsip_endpt_respond_stateless(endpt_, rdata, 500 /* internal server error */, NULL, NULL, NULL);
     }
 
@@ -2028,7 +2028,7 @@ std::string SIPVoIPLink::getInterfaceAddrFromName(const std::string &ifaceName)
     int fd = socket(AF_INET, SOCK_DGRAM,0);
 
     if (fd < 0) {
-        _error("UserAgent: Error: could not open socket: %m");
+        ERROR("UserAgent: Error: could not open socket: %m");
         return "";
     }
 

@@ -219,7 +219,7 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
     try {
         emitter->serializeAccount(&accountmap);
     } catch (const Conf::YamlEmitterException &e) {
-        _error("ConfigTree: %s", e.what());
+        ERROR("ConfigTree: %s", e.what());
     }
 
     Conf::Sequence *seq = credentialseq.getSequence();
@@ -528,7 +528,7 @@ void SIPAccount::registerVoIPLink()
 
     // Init TLS settings if the user wants to use TLS
     if (tlsEnable_ == "true") {
-        _debug("SIPAccount: TLS is enabled for account %s", accountID_.c_str());
+        DEBUG("SIPAccount: TLS is enabled for account %s", accountID_.c_str());
         transportType_ = PJSIP_TRANSPORT_TLS;
         initTlsConfiguration();
     }
@@ -549,7 +549,7 @@ void SIPAccount::registerVoIPLink()
     try {
         link_->sendRegister(this);
     } catch (const VoipLinkException &e) {
-        _error("SIPAccount: %s", e.what());
+        ERROR("SIPAccount: %s", e.what());
     }
 }
 
@@ -561,7 +561,7 @@ void SIPAccount::unregisterVoIPLink()
     try {
         link_->sendUnregister(this);
     } catch (const VoipLinkException &e) {
-        _error("SIPAccount: %s", e.what());
+        ERROR("SIPAccount: %s", e.what());
     }
 }
 

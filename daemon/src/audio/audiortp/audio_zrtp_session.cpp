@@ -58,12 +58,12 @@ AudioZrtpSession::AudioZrtpSession(SIPCall * sipcall, const std::string& zidFile
             ost::defaultApplication()),
     zidFilename_(zidFilename)
 {
-    _debug("AudioZrtpSession initialized");
+    DEBUG("AudioZrtpSession initialized");
     initializeZid();
 
     setCancel(cancelDefault);
 
-    _info("AudioZrtpSession: Setting new RTP session with destination %s:%d", ca_->getLocalIp().c_str(), ca_->getLocalAudioPort());
+    INFO("AudioZrtpSession: Setting new RTP session with destination %s:%d", ca_->getLocalIp().c_str(), ca_->getLocalAudioPort());
 }
 
 AudioZrtpSession::~AudioZrtpSession()
@@ -93,24 +93,24 @@ void AudioZrtpSession::initializeZid()
 
     std::string xdg_config = std::string(HOMEDIR) + DIR_SEPARATOR_STR + ".cache" + DIR_SEPARATOR_STR + PACKAGE + "/" + zidFilename_;
 
-    _debug("    xdg_config %s", xdg_config.c_str());
+    DEBUG("    xdg_config %s", xdg_config.c_str());
 
     if (XDG_CACHE_HOME != NULL) {
         std::string xdg_env = std::string(XDG_CACHE_HOME) + zidFilename_;
-        _debug("    xdg_env %s", xdg_env.c_str());
+        DEBUG("    xdg_env %s", xdg_env.c_str());
         (xdg_env.length() > 0) ? zidCompleteFilename = xdg_env : zidCompleteFilename = xdg_config;
     } else
         zidCompleteFilename = xdg_config;
 
 
     if (initialize(zidCompleteFilename.c_str()) >= 0) {
-        _debug("Register callbacks");
+        DEBUG("Register callbacks");
         setEnableZrtp(true);
         setUserCallback(new ZrtpSessionCallback(ca_));
         return;
     }
 
-    _debug("Initialization from ZID file failed. Trying to remove...");
+    DEBUG("Initialization from ZID file failed. Trying to remove...");
 
     if (remove(zidCompleteFilename.c_str()) != 0)
         throw ZrtpZidException("zid file deletion failed");
@@ -125,7 +125,7 @@ void AudioZrtpSession::run()
 {
     // Set recording sampling rate
     ca_->setRecordingSmplRate(getCodecSampleRate());
-    _debug("AudioZrtpSession: Entering mainloop for call %s", ca_->getCallId().c_str());
+    DEBUG("AudioZrtpSession: Entering mainloop for call %s", ca_->getCallId().c_str());
 
     uint32 timeout = 0;
 
@@ -167,7 +167,6 @@ void AudioZrtpSession::run()
         }
     }
 
-    _debug("AudioZrtpSession: Left main loop for call %s", ca_->getCallId().c_str());
+    DEBUG("AudioZrtpSession: Left main loop for call %s", ca_->getCallId().c_str());
 }
-
 }

@@ -41,7 +41,7 @@ using std::endl;
 
 void ConfigurationTest::testDefaultValueAudio()
 {
-    _debug("-------------------- ConfigurationTest::testDefaultValueAudio() --------------------\n");
+    DEBUG("-------------------- ConfigurationTest::testDefaultValueAudio() --------------------\n");
 
     CPPUNIT_ASSERT(Manager::instance().audioPreference.getCardin() == 0);  // ALSA_DFT_CARD);
     CPPUNIT_ASSERT(Manager::instance().audioPreference.getCardout() == 0);  // ALSA_DFT_CARD);
@@ -53,14 +53,14 @@ void ConfigurationTest::testDefaultValueAudio()
 
 void ConfigurationTest::testDefaultValuePreferences()
 {
-    _debug("-------------------- ConfigurationTest::testDefaultValuePreferences --------------------\n");
+    DEBUG("-------------------- ConfigurationTest::testDefaultValuePreferences --------------------\n");
 
     CPPUNIT_ASSERT(Manager::instance().preferences.getZoneToneChoice() == Preferences::DFT_ZONE);
 }
 
 void ConfigurationTest::testDefaultValueSignalisation()
 {
-    _debug("-------------------- ConfigurationTest::testDefaultValueSignalisation --------------------\n");
+    DEBUG("-------------------- ConfigurationTest::testDefaultValueSignalisation --------------------\n");
 
     CPPUNIT_ASSERT(Manager::instance().voipPreferences.getSymmetricRtp() == true);
     CPPUNIT_ASSERT(Manager::instance().voipPreferences.getPlayDtmf() == true);
@@ -70,7 +70,7 @@ void ConfigurationTest::testDefaultValueSignalisation()
 
 void ConfigurationTest::testInitAudioDriver()
 {
-    _debug("-------------------- ConfigurationTest::testInitAudioDriver --------------------\n");
+    DEBUG("-------------------- ConfigurationTest::testInitAudioDriver --------------------\n");
 
     // Load the audio driver
     Manager::instance().initAudioDriver();
@@ -100,7 +100,7 @@ void ConfigurationTest::testYamlParser()
 
         delete parser;
     } catch (Conf::YamlParserException &e) {
-        _error("ConfigTree: %s", e.what());
+       ERROR("ConfigTree: %s", e.what());
     }
 }
 
@@ -231,6 +231,6 @@ void ConfigurationTest::testYamlEmitter()
 
         delete emitter;
     } catch (Conf::YamlEmitterException &e) {
-        _error("ConfigTree: %s", e.what());
+       ERROR("ConfigTree: %s", e.what());
     }
 }

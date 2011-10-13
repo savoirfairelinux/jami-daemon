@@ -50,7 +50,7 @@ void HistoryTest::setUp()
 
 void HistoryTest::test_create_history_path()
 {
-    _debug("-------------------- HistoryTest::test_create_history_path --------------------\n");
+    DEBUG("-------------------- HistoryTest::test_create_history_path --------------------\n");
 
     int result;
     std::string path(HISTORY_SAMPLE);
@@ -63,7 +63,7 @@ void HistoryTest::test_create_history_path()
 
 void HistoryTest::test_load_history_from_file()
 {
-    _debug("-------------------- HistoryTest::test_load_history_from_file --------------------\n");
+    DEBUG("-------------------- HistoryTest::test_load_history_from_file --------------------\n");
 
     bool res;
     Conf::ConfigTree history_list;
@@ -77,7 +77,7 @@ void HistoryTest::test_load_history_from_file()
 
 void HistoryTest::test_load_history_items_map()
 {
-    _debug("-------------------- HistoryTest::test_load_history_items_map --------------------\n");
+    DEBUG("-------------------- HistoryTest::test_load_history_items_map --------------------\n");
 
     std::string path;
     int nb_items;
@@ -93,7 +93,7 @@ void HistoryTest::test_load_history_items_map()
 
 void HistoryTest::test_save_history_items_map()
 {
-    _debug("-------------------- HistoryTest::test_save_history_items_map --------------------\n");
+    DEBUG("-------------------- HistoryTest::test_save_history_items_map --------------------\n");
 
     std::string path;
     int nb_items_loaded, nb_items_saved;
@@ -109,7 +109,7 @@ void HistoryTest::test_save_history_items_map()
 
 void HistoryTest::test_save_history_to_file()
 {
-    _debug("-------------------- HistoryTest::test_save_history_to_file --------------------\n");
+    DEBUG("-------------------- HistoryTest::test_save_history_to_file --------------------\n");
 
     std::string path;
     Conf::ConfigTree history_list, history_list2;
@@ -125,7 +125,7 @@ void HistoryTest::test_save_history_to_file()
 
 void HistoryTest::test_get_history_serialized()
 {
-    _debug("-------------------- HistoryTest::test_get_history_serialized --------------------\n");
+    DEBUG("-------------------- HistoryTest::test_get_history_serialized --------------------\n");
 
     std::vector<std::string> res;
     std::vector<std::string>::iterator iter;
@@ -153,7 +153,7 @@ void HistoryTest::test_get_history_serialized()
 
 void HistoryTest::test_set_serialized_history()
 {
-    _debug("-------------------- HistoryTest::test_set_serialized_history --------------------\n");
+    DEBUG("-------------------- HistoryTest::test_set_serialized_history --------------------\n");
 
     // We build a map to have an efficient test
     std::vector<std::string> test_vector;
@@ -188,7 +188,7 @@ void HistoryTest::test_set_serialized_history()
 
 void HistoryTest::test_set_serialized_history_with_limit()
 {
-    _debug("-------------------- HistoryTest::test_set_serialized_history_with_limit --------------------\n");
+    DEBUG("-------------------- HistoryTest::test_set_serialized_history_with_limit --------------------\n");
 
     // We build a map to have an efficient test
     std::vector<std::string> test_vector;

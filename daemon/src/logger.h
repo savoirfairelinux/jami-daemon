@@ -40,10 +40,10 @@ void setConsoleLog(bool);
 void setDebugMode(bool);
 };
 
-#define _error(...)	Logger::log(LOG_ERR, __VA_ARGS__)
-#define _warn(...)	Logger::log(LOG_WARNING, __VA_ARGS__)
-#define _info(...)	Logger::log(LOG_INFO, __VA_ARGS__)
-#define _debug(...)	Logger::log(LOG_DEBUG, __VA_ARGS__)
+#define ERROR(...)	Logger::log(LOG_ERR, __VA_ARGS__)
+#define WARN(...)	Logger::log(LOG_WARNING, __VA_ARGS__)
+#define INFO(...)	Logger::log(LOG_INFO, __VA_ARGS__)
+#define DEBUG(...)	Logger::log(LOG_DEBUG, __VA_ARGS__)
 
 #define BLACK "\033[22;30m"
 #define RED "\033[22;31m"

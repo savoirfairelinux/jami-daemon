@@ -58,7 +58,7 @@ void VoIPLink::removeCall(const std::string& id)
 {
     ost::MutexLock m(callMapMutex_);
 
-    _debug("VoipLink: removing call %s from list", id.c_str());
+    DEBUG("VoipLink: removing call %s from list", id.c_str());
 
     delete callMap_[id];
     callMap_.erase(id);

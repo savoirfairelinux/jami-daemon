@@ -52,7 +52,7 @@ AudioLoop::getNext(SFLDataFormat* output, size_t total_samples, short volume)
     size_t pos = pos_;
 
     if (size_ == 0) {
-        _error("AudioLoop: Error: Audio loop size is 0");
+        ERROR("AudioLoop: Error: Audio loop size is 0");
         return;
     }
 

@@ -47,15 +47,15 @@ void DelayDetectionTest::testCrossCorrelation()
     float result[10];
     float expected[10] = {0.0, 0.89442719, 1.0, 0.95618289, 0.91350028, 0.88543774, 0.86640023, 0.85280287, 0.8426548, 0.83480969};
 
-    CPPUNIT_ASSERT(_delaydetect.correlate(ref, ref, 3) == 5.0);
-    CPPUNIT_ASSERT(_delaydetect.correlate(signal, signal, 10) == 285.0);
+    CPPUNIT_ASSERT(delaydetect_.correlate(ref, ref, 3) == 5.0);
+    CPPUNIT_ASSERT(delaydetect_.correlate(signal, signal, 10) == 285.0);
 
-    _delaydetect.crossCorrelate(ref, signal, result, 3, 10);
+    delaydetect_.crossCorrelate(ref, signal, result, 3, 10);
 
     float tmp;
 
     for (int i = 0; i < 10; i++) {
-        tmp = result[i]-expected[i];
+        tmp = result[i] - expected[i];
 
         if (tmp < 0.0)
             CPPUNIT_ASSERT(tmp > -0.001);
@@ -71,7 +71,7 @@ void DelayDetectionTest::testCrossCorrelationDelay()
 
     float result[10];
 
-    _delaydetect.crossCorrelate(ref, signal, result, 3, 10);
+    delaydetect_.crossCorrelate(ref, signal, result, 3, 10);
 
     float expected[10] = {0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0};
 
@@ -104,15 +104,15 @@ void DelayDetectionTest::testFirFilter()
     memset(impulse, 0, sizeof(float) *100);
     impulse[0] = 1.0;
 
-    FirFilter _decimationFilter(ird);
-    FirFilter _bandpassFilter(irb);
+    FirFilter decimationFilter_(ird);
+    FirFilter bandpassFilter_(irb);
 
     float impulseresponse[100];
     memset(impulseresponse, 0, sizeof(float) *100);
 
     // compute impulse response
     for (int i = 0; i < 100; i++) {
-        impulseresponse[i] = _decimationFilter.getOutputSample(impulse[i]);
+        impulseresponse[i] = decimationFilter_.getOutputSample(impulse[i]);
     }
 
     float tmp;
@@ -129,7 +129,7 @@ void DelayDetectionTest::testFirFilter()
 
 
     for (int i = 0; i < 100; i++) {
-        impulseresponse[i] = _bandpassFilter.getOutputSample(impulse[i]);
+        impulseresponse[i] = bandpassFilter_.getOutputSample(impulse[i]);
     }
 
     size = sizeof(bandpassCoefs) /sizeof(float);
@@ -154,7 +154,7 @@ void DelayDetectionTest::testIntToFloatConversion()
     for (int i = -32768; i < 32768; i++)
         data[i+32768] = i;
 
-    _delaydetect.convertInt16ToFloat32(data, converted, 32768*2);
+    delaydetect_.convertInt16ToFloat32(data, converted, 32768*2);
 
     for (int i = -32768; i < 0; i++) {
         CPPUNIT_ASSERT(converted[i+32768] >= -1.0);
@@ -177,9 +177,9 @@ void DelayDetectionTest::testDownSamplingData()
     for (int i = -32768; i < 32768; i++)
         data[i+32768] = i;
 
-    _delaydetect.convertInt16ToFloat32(data, converted, 32768*2);
+    delaydetect_.convertInt16ToFloat32(data, converted, 32768*2);
 
-    _delaydetect.downsampleData(converted, resampled, 32768*2, 8);
+    delaydetect_.downsampleData(converted, resampled, 32768*2, 8);
 
     for (int i = 0; i < 32768/8; i++) {
         CPPUNIT_ASSERT(resampled[i] >= -1.0);
@@ -216,7 +216,6 @@ void DelayDetectionTest::testDelayDetection()
     mic[delay+3] = 32000;
     mic[delay+4] = 32000;
 
-    _delaydetect.putData(spkr, WINDOW_SIZE);
-    _delaydetect.process(mic, DELAY_BUFF_SIZE);
-
+    delaydetect_.putData(spkr, WINDOW_SIZE);
+    delaydetect_.process(mic, DELAY_BUFF_SIZE);
 }

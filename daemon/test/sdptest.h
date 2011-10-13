@@ -116,11 +116,11 @@ class SDPTest : public CppUnit::TestCase {
 
     private:
 
-        Sdp *_session;
+        Sdp *session_;
 
-        pj_pool_t *_testPool;
+        pj_pool_t *testPool_;
 
-        pj_caching_pool _poolCache;
+        pj_caching_pool poolCache_;
 
 };
 

@@ -101,7 +101,7 @@ class DelayDetectionTest : public CppUnit::TestCase {
 
     private:
 
-        DelayDetection _delaydetect;
+        DelayDetection delaydetect_;
 
 };
 

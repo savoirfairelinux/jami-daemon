@@ -38,7 +38,7 @@
 
 void AccountTest::TestAddRemove(void)
 {
-    _debug("-------------------- AccountTest::TestAddRemove --------------------\n");
+    DEBUG("-------------------- AccountTest::TestAddRemove --------------------\n");
 
     std::map<std::string, std::string> details;
     details[CONFIG_ACCOUNT_TYPE] = "SIP";

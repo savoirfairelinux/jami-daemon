@@ -57,7 +57,7 @@ bool RtpTest::pjsipInit()
 
 void RtpTest::testRtpInitClose()
 {
-    _debug("-------------------- RtpTest::testRtpInitClose --------------------\n");
+    DEBUG("-------------------- RtpTest::testRtpInitClose --------------------\n");
 
 }
 

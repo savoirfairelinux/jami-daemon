@@ -46,19 +46,19 @@ using std::endl;
 
 void InstantMessagingTest::setUp()
 {
-    _im = new sfl::InstantMessaging();
+    im_ = new sfl::InstantMessaging();
 }
 
 void InstantMessagingTest::testSaveSingleMessage()
 {
-    _debug("-------------------- InstantMessagingTest::testSaveSingleMessage --------------------\n");
+    DEBUG("-------------------- InstantMessagingTest::testSaveSingleMessage --------------------\n");
 
     std::string input, tmp;
     std::string callID = "testfile1.txt";
     std::string filename = "im:";
 
     // Open a file stream and try to write in it
-    CPPUNIT_ASSERT(_im->saveMessage("Bonjour, c'est un test d'archivage de message", "Manu", callID, std::ios::out)  == true);
+    CPPUNIT_ASSERT(im_->saveMessage("Bonjour, c'est un test d'archivage de message", "Manu", callID, std::ios::out)  == true);
 
     filename.append(callID);
     // Read it to check it has been successfully written
@@ -76,15 +76,15 @@ void InstantMessagingTest::testSaveSingleMessage()
 
 void InstantMessagingTest::testSaveMultipleMessage()
 {
-    _debug("-------------------- InstantMessagingTest::testSaveMultipleMessage --------------------\n");
+    DEBUG("-------------------- InstantMessagingTest::testSaveMultipleMessage --------------------\n");
 
     std::string input, tmp;
     std::string callID = "testfile2.txt";
     std::string filename = "im:";
 
     // Open a file stream and try to write in it
-    CPPUNIT_ASSERT(_im->saveMessage("Bonjour, c'est un test d'archivage de message", "Manu", callID, std::ios::out)  == true);
-    CPPUNIT_ASSERT(_im->saveMessage("Cool", "Alex", callID, std::ios::out || std::ios::app)  == true);
+    CPPUNIT_ASSERT(im_->saveMessage("Bonjour, c'est un test d'archivage de message", "Manu", callID, std::ios::out)  == true);
+    CPPUNIT_ASSERT(im_->saveMessage("Cool", "Alex", callID, std::ios::out || std::ios::app)  == true);
 
     filename.append(callID);
     // Read it to check it has been successfully written
@@ -165,7 +165,7 @@ void InstantMessagingTest::testGenerateXmlUriList()
     list.push_front(entry1);
     list.push_front(entry2);
 
-    std::string buffer = _im->generateXmlUriList(list);
+    std::string buffer = im_->generateXmlUriList(list);
     CPPUNIT_ASSERT(buffer.size() != 0);
 
     std::cout << buffer << std::endl;
@@ -200,7 +200,7 @@ void InstantMessagingTest::testXmlUriListParsing()
     xmlbuffer.append("</resource-lists>");
 
 
-    sfl::InstantMessaging::UriList list = _im->parseXmlUriList(xmlbuffer);
+    sfl::InstantMessaging::UriList list = im_->parseXmlUriList(xmlbuffer);
     CPPUNIT_ASSERT(list.size() == 2);
 
     // An iterator over xml attribute
@@ -241,7 +241,7 @@ void InstantMessagingTest::testGetTextArea()
     formatedText.append("</resource-lists>");
     formatedText.append("--boundary--");
 
-    std::string message = _im->findTextMessage(formatedText);
+    std::string message = im_->findTextMessage(formatedText);
 
     std::cout << "message " << message << std::endl;
 
@@ -265,13 +265,13 @@ void InstantMessagingTest::testGetUriListArea()
     formatedText.append("</resource-lists>");
     formatedText.append("--boundary--");
 
-    std::string urilist = _im->findTextUriList(formatedText);
+    std::string urilist = im_->findTextUriList(formatedText);
 
     CPPUNIT_ASSERT(urilist.compare("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resource-lists xmlns=\"urn:ietf:params:xml:ns:resource-lists\" xmlns:cp=\"urn:ietf:params:xml:ns:copycontrol\"><list><entry uri=\"sip:alex@example.com\" cp:copyControl=\"to\" /><entry uri=\"sip:manu@example.com\" cp:copyControl=\"to\" /></list></resource-lists>") == 0);
 
     std::cout << "urilist: " << urilist << std::endl;
 
-    sfl::InstantMessaging::UriList list = _im->parseXmlUriList(urilist);
+    sfl::InstantMessaging::UriList list = im_->parseXmlUriList(urilist);
     CPPUNIT_ASSERT(list.size() == 2);
 
     // order may be important, for example to identify message sender
@@ -310,7 +310,7 @@ void InstantMessagingTest::testIllFormatedMessage()
     formatedText.append("--boundary--");
 
     try {
-        std::string message = _im->findTextMessage(formatedText);
+        std::string message = im_->findTextMessage(formatedText);
     } catch (sfl::InstantMessageException &e) {
         exceptionCaught = true;
     }
@@ -325,6 +325,6 @@ void InstantMessagingTest::testIllFormatedMessage()
 
 void InstantMessagingTest::tearDown()
 {
-    delete _im;
-    _im = 0;
+    delete im_;
+    im_ = 0;
 }

@@ -425,15 +425,12 @@ void YamlParser::constructNativeData()
 
             switch ((*iter)->getType()) {
                 case SCALAR:
-                    // _debug("construct scalar");
                     throw YamlParserException("No scalar allowed at document level, expect a mapping");
                     break;
                 case SEQUENCE:
-                    // _debug("construct sequence");
                     throw YamlParserException("No sequence allowed at document level, expect a mapping");
                     break;
                 case MAPPING: {
-                    // _debug("construct mapping");
                     MappingNode *map = (MappingNode *)(*iter);
                     mainNativeDataMapping(map);
                     break;

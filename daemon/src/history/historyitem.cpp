@@ -95,7 +95,7 @@ HistoryItem::HistoryItem(std::string serialized_form)
                 timeAdded_ = tmp;
                 break;
             default: // error
-                _error("Unserialized form %d not recognized\n", indice);
+                ERROR("Unserialized form %d not recognized\n", indice);
                 break;
         }
 

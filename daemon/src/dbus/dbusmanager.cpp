@@ -57,7 +57,7 @@ DBusManager::DBusManager()
 #endif
 
     } catch (const DBus::Error &err) {
-        _error("%s: %s, exiting\n", err.name(), err.what());
+        ERROR("%s: %s, exiting\n", err.name(), err.what());
         ::exit(EXIT_FAILURE);
     }
 }

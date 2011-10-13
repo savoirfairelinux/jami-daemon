@@ -256,7 +256,7 @@ ConfigTree::setConfigTreeItem(const std::string& section,
 bool
 ConfigTree::saveConfigTree(const std::string& fileName)
 {
-    _debug("ConfigTree: Save %s", fileName.c_str());
+    DEBUG("ConfigTree: Save %s", fileName.c_str());
 
     if (fileName.empty() and sections_.begin() == sections_.end())
         return false;
@@ -266,7 +266,7 @@ ConfigTree::saveConfigTree(const std::string& fileName)
     file.open(fileName.data(), std::fstream::out);
 
     if (!file.is_open()) {
-        _error("ConfigTree: Error: Could not open %s configuration file", fileName.c_str());
+        ERROR("ConfigTree: Error: Could not open %s configuration file", fileName.c_str());
         return false;
     }
 
@@ -290,7 +290,7 @@ ConfigTree::saveConfigTree(const std::string& fileName)
     file.close();
 
     if (chmod(fileName.c_str(), S_IRUSR | S_IWUSR))
-        _error("ConfigTree: Error: Failed to set permission on configuration: %m");
+        ERROR("ConfigTree: Error: Failed to set permission on configuration: %m");
 
     return true;
 }
@@ -302,7 +302,7 @@ ConfigTree::saveConfigTree(const std::string& fileName)
 int
 ConfigTree::populateFromFile(const std::string& fileName)
 {
-    _debug("ConfigTree: Populate from file %s", fileName.c_str());
+    DEBUG("ConfigTree: Populate from file %s", fileName.c_str());
 
     if (fileName.empty())
         return 0;
@@ -366,7 +366,7 @@ ConfigTree::populateFromFile(const std::string& fileName)
     file.close();
 
     if (chmod(fileName.c_str(), S_IRUSR | S_IWUSR))
-        _debug("Failed to set permission on configuration file because: %m");
+        DEBUG("Failed to set permission on configuration file because: %m");
 
     return 1;
 }

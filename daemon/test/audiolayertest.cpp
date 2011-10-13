@@ -41,7 +41,7 @@ using std::endl;
 
 void AudioLayerTest::testAudioLayerConfig()
 {
-    _debug("-------------------- AudioLayerTest::testAudioLayerConfig --------------------\n");
+   DEBUG("-------------------- AudioLayerTest::testAudioLayerConfig --------------------\n");
 
     CPPUNIT_ASSERT(Manager::instance().audioPreference.getSmplrate() == 44100);
 
@@ -65,12 +65,12 @@ void AudioLayerTest::testAudioLayerConfig()
 
 void AudioLayerTest::testAudioLayerSwitch()
 {
-    _debug("-------------------- AudioLayerTest::testAudioLayerSwitch --------------------\n");
+   DEBUG("-------------------- AudioLayerTest::testAudioLayerSwitch --------------------\n");
 
     bool wasAlsa = dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver()) != 0;
 
     for (int i = 0; i < 2; i++) {
-        _debug("iter - %i", i);
+       DEBUG("iter - %i", i);
         Manager::instance().switchAudioManager();
 
         if (wasAlsa)
@@ -85,14 +85,14 @@ void AudioLayerTest::testAudioLayerSwitch()
 
 void AudioLayerTest::testPulseConnect()
 {
-    _debug("-------------------- AudioLayerTest::testPulseConnect --------------------\n");
+   DEBUG("-------------------- AudioLayerTest::testPulseConnect --------------------\n");
 
     if (dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver())) {
         Manager::instance().switchAudioManager();
         usleep(100000);
     }
 
-    _pulselayer = dynamic_cast<PulseLayer*>(Manager::instance().getAudioDriver());
+    pulselayer_ = dynamic_cast<PulseLayer*>(Manager::instance().getAudioDriver());
 
-    CPPUNIT_ASSERT(_pulselayer);
+    CPPUNIT_ASSERT(pulselayer_);
 }
