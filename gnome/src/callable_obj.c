@@ -237,7 +237,7 @@ callable_obj_t *create_history_entry_from_serialized_form(const gchar *entry)
     new_call->_recordfile = g_strdup(recordfile);
     new_call->_confID = g_strdup(confID);
     new_call->_historyConfID = g_strdup(confID);
-    new_call->_time_added = atoi(time_start);
+    new_call->_time_added = atoi(time_added);
     new_call->_record_is_playing = FALSE;
 
     g_strfreev(ptr_orig);
