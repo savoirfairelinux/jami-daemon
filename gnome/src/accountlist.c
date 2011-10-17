@@ -229,9 +229,7 @@ account_list_get_registered_accounts(void)
 
 gchar* account_list_get_current_id(void)
 {
-    account_t *current;
-
-    current = account_list_get_current();
+    account_t *current = account_list_get_current();
 
     if (current)
         return current->accountID;

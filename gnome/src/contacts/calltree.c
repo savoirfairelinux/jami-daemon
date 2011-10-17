@@ -267,7 +267,7 @@ calltree_create_conf_from_participant_list(GSList *list)
 
     /* build the list up */
     for (gint i = 0; i < list_length; ++i) {
-        gchar *participant_id = g_slist_nth_data(list, i);
+        gchar *participant_id = (gchar *) g_slist_nth_data(list, i);
         callable_obj_t *call = calllist_get_call(history_tab, participant_id);
 
         /* allocate memory for the participant number */
@@ -759,8 +759,8 @@ calltree_update_call_recursive(calltab_t* tab, callable_obj_t * c, GtkTreeIter *
             }
 
             gtk_tree_store_set(store, &iter,
-                               COLUMN_ACCOUNT_PIXBUF, pixbuf, // Icon
-                               COLUMN_ACCOUNT_DESC, description, // Description
+                               COLUMN_ACCOUNT_PIXBUF, pixbuf,
+                               COLUMN_ACCOUNT_DESC, description,
                                COLUMN_ACCOUNT_SECURITY_PIXBUF, pixbuf_security,
                                COLUMN_ACCOUNT_PTR, c,
                                -1);
@@ -887,14 +887,10 @@ void calltree_add_history_entry(callable_obj_t *c, GtkTreeIter *parent)
     if (!eel_gconf_get_integer(HISTORY_ENABLED))
         return;
 
-    GtkTreeIter iter;
-
     // New call in the list
-    gchar *date = NULL;
-    gchar *duration = NULL;
-
     gchar * description = calltree_display_call_info(c, DISPLAY_TYPE_HISTORY, "");
 
+    GtkTreeIter iter;
     gtk_tree_store_prepend(history_tab->store, &iter, parent);
 
     GdkPixbuf *pixbuf = NULL;
@@ -917,8 +913,8 @@ void calltree_add_history_entry(callable_obj_t *c, GtkTreeIter *parent)
     } else // participant to a conference
         pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
 
-    date = get_formatted_start_timestamp(c->_time_start);
-    duration = get_call_duration(c);
+    gchar *date = get_formatted_start_timestamp(c->_time_start);
+    gchar *duration = get_call_duration(c);
     gchar * full_duration = g_strconcat(date, duration, NULL);
     g_free(date);
     g_free(duration);
@@ -1011,8 +1007,8 @@ void calltree_add_conference_to_current_calls(conference_obj_t* conf)
     if (conf->participant_list) {
         DEBUG("Calltree: Determine if at least one participant uses SRTP");
 
-        for (GSList *part = conf->participant_list; part; part = conference_next_participant(part)) {
-            const gchar * const call_id = part->data;
+        for (GSList *part = conf->participant_list; part; part = g_slist_next(part)) {
+            const gchar * const call_id = (gchar *) part->data;
             callable_obj_t *call = calllist_get_call(current_calls_tab, call_id);
 
             if (call == NULL)
@@ -1038,8 +1034,8 @@ void calltree_add_conference_to_current_calls(conference_obj_t* conf)
         DEBUG("Calltree: Determine if all conference participants are secured");
 
         if (conf->_conf_srtp_enabled) {
-            for (GSList *part = conf->participant_list; part; part = conference_next_participant(part)) {
-                const gchar * const call_id = part->data;
+            for (GSList *part = conf->participant_list; part; part = g_slist_next(part)) {
+                const gchar * const call_id = (gchar *) part->data;
                 callable_obj_t *call = calllist_get_call(current_calls_tab, call_id);
 
                 if (call) {
@@ -1080,8 +1076,8 @@ void calltree_add_conference_to_current_calls(conference_obj_t* conf)
         g_object_unref(pixbuf_security);
 
 
-    for (GSList *part = conf->participant_list; part; part = conference_next_participant(part)) {
-        const gchar * const call_id = part->data;
+    for (GSList *part = conf->participant_list; part; part = g_slist_next(part)) {
+        const gchar * const call_id = (gchar *) part->data;
         callable_obj_t *call = calllist_get_call(current_calls_tab, call_id);
 
         calltree_remove_call(current_calls_tab, call);
@@ -1193,8 +1189,8 @@ void calltree_add_conference_to_history(conference_obj_t *conf)
         g_object_unref(G_OBJECT(pixbuf));
 
     for (GSList *part = conf->participant_list; part;
-            part = conference_next_participant(part)) {
-        const gchar * const call_id = part->data;
+            part = g_slist_next(part)) {
+        const gchar * const call_id = (gchar *) part->data;
         callable_obj_t *call = calllist_get_call(history_tab, call_id);
 
         if (call)

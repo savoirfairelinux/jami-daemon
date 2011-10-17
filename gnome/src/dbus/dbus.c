@@ -308,7 +308,7 @@ conference_removed_cb(DBusGProxy *proxy UNUSED, const gchar* confID, void * foo 
     im_widget_update_state(IM_WIDGET(c->_im_widget), FALSE);
 
     // remove all participants for this conference
-    for (GSList *p = c->participant_list; p; p = conference_next_participant(p)) {
+    for (GSList *p = c->participant_list; p; p = g_slist_next(p)) {
         callable_obj_t *call = calllist_get_call(current_calls_tab, p->data);
 
         if (call) {

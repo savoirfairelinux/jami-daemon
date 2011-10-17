@@ -139,12 +139,6 @@ void conference_remove_participant(const gchar* call_id, conference_obj_t* conf)
 }
 
 
-GSList* conference_next_participant(GSList* participant)
-{
-    return g_slist_next(participant);
-}
-
-
 void conference_participant_list_update(gchar** participants, conference_obj_t* conf)
 {
     DEBUG("Conference: Participant list update");
@@ -154,8 +148,8 @@ void conference_participant_list_update(gchar** participants, conference_obj_t* 
         return;
     }
 
-    for (gchar **part = participants; part && *part; part++) {
-        gchar *call_id = (gchar *)(*part);
+    for (gchar **part = participants; part && *part; ++part) {
+        gchar *call_id = (gchar *) (*part);
         callable_obj_t *call = calllist_get_call(current_calls_tab, call_id);
 
         if (call->_confID != NULL) {
@@ -169,8 +163,8 @@ void conference_participant_list_update(gchar** participants, conference_obj_t* 
         conf->participant_list = NULL;
     }
 
-    for (gchar **part = participants; part && *part; part++) {
-        gchar *call_id = (gchar*)(*part);
+    for (gchar **part = participants; part && *part; ++part) {
+        gchar *call_id = (gchar *) (*part);
         callable_obj_t *call = calllist_get_call(current_calls_tab, call_id);
         call->_confID = g_strdup(conf->_confID);
         conference_add_participant(call_id, conf);
@@ -191,7 +185,7 @@ gchar *serialize_history_conference_entry(conference_obj_t *entry)
 
     gchar *participantstr = NULL;
     for (gint i = 0; i < length; ++i) {
-        const gchar * const tmp = g_slist_nth_data(participant_list, i);
+        const gchar * const tmp = (gchar *) g_slist_nth_data(participant_list, i);
 
         if (!tmp)
             WARN("Conference: Peer number is NULL in conference list");

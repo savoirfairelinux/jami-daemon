@@ -77,8 +77,6 @@ void conference_add_participant (const gchar*, conference_obj_t *);
 
 void conference_remove_participant (const gchar*, conference_obj_t *);
 
-GSList* conference_next_participant (GSList* participant);
-
 void conference_participant_list_update (gchar**, conference_obj_t*);
 
 gchar *serialize_history_conference_entry(conference_obj_t *entry);

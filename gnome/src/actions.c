@@ -95,7 +95,7 @@ static gchar ** sflphone_order_history_hash_table(GHashTable *result)
             GSList *llist = (GSList *)value;
 
             while (llist) {
-                ordered_list = (void *) g_realloc(ordered_list, (size + 1) * sizeof(void *));
+                ordered_list = (gchar **) g_realloc(ordered_list, (size + 1) * sizeof(gchar *));
                 *(ordered_list + size) = g_strdup((gchar *)llist->data);
                 size++;
                 llist = g_slist_next(llist);
@@ -105,8 +105,8 @@ static gchar ** sflphone_order_history_hash_table(GHashTable *result)
         }
     }
 
-    ordered_list = (void *) g_realloc(ordered_list, (size + 1) * sizeof(void *));
-    *(ordered_list + size) = NULL;
+    ordered_list = (gchar **) g_realloc(ordered_list, (size + 1) * sizeof(gchar *));
+    ordered_list[size] = NULL;
 
     return ordered_list;
 }
@@ -258,7 +258,7 @@ void sflphone_fill_account_list(void)
     gchar **array = dbus_account_list();
 
     if (array) {
-        for (gchar **accountID = array; *accountID; accountID++) {
+        for (gchar **accountID = array; accountID && *accountID; accountID++) {
             account_t * a = g_new0(account_t,1);
             a->accountID = g_strdup(*accountID);
             a->credential_information = NULL;
@@ -290,29 +290,28 @@ void sflphone_fill_account_list(void)
 
         gchar * status = g_hash_table_lookup(details, REGISTRATION_STATUS);
 
-        if (g_strcmp0(status, "REGISTERED") == 0) {
+        if (g_strcmp0(status, "REGISTERED") == 0)
             a->state = ACCOUNT_STATE_REGISTERED;
-        } else if (g_strcmp0(status, "UNREGISTERED") == 0) {
+        else if (g_strcmp0(status, "UNREGISTERED") == 0)
             a->state = ACCOUNT_STATE_UNREGISTERED;
-        } else if (g_strcmp0(status, "TRYING") == 0) {
+        else if (g_strcmp0(status, "TRYING") == 0)
             a->state = ACCOUNT_STATE_TRYING;
-        } else if (g_strcmp0(status, "ERROR") == 0) {
+        else if (g_strcmp0(status, "ERROR") == 0)
             a->state = ACCOUNT_STATE_ERROR;
-        } else if (g_strcmp0(status , "ERROR_AUTH") == 0) {
+        else if (g_strcmp0(status , "ERROR_AUTH") == 0)
             a->state = ACCOUNT_STATE_ERROR_AUTH;
-        } else if (g_strcmp0(status , "ERROR_NETWORK") == 0) {
+        else if (g_strcmp0(status , "ERROR_NETWORK") == 0)
             a->state = ACCOUNT_STATE_ERROR_NETWORK;
-        } else if (g_strcmp0(status , "ERROR_HOST") == 0) {
+        else if (g_strcmp0(status , "ERROR_HOST") == 0)
             a->state = ACCOUNT_STATE_ERROR_HOST;
-        } else if (g_strcmp0(status , "ERROR_CONF_STUN") == 0) {
+        else if (g_strcmp0(status , "ERROR_CONF_STUN") == 0)
             a->state = ACCOUNT_STATE_ERROR_CONF_STUN;
-        } else if (g_strcmp0(status , "ERROR_EXIST_STUN") == 0) {
+        else if (g_strcmp0(status , "ERROR_EXIST_STUN") == 0)
             a->state = ACCOUNT_STATE_ERROR_EXIST_STUN;
-        } else if (g_strcmp0(status, "READY") == 0) {
+        else if (g_strcmp0(status, "READY") == 0)
             a->state = IP2IP_PROFILE_STATUS;
-        } else {
+        else
             a->state = ACCOUNT_STATE_INVALID;
-        }
 
         gchar * code = g_hash_table_lookup(details, REGISTRATION_STATE_CODE);
 
@@ -355,7 +354,7 @@ gboolean sflphone_init(GError **error)
     sflphone_fill_ip2ip_profile();
 
     // Fetch the conference list
-    // sflphone_fill_conference_list();
+    sflphone_fill_conference_list();
 
     return TRUE;
 }
@@ -1182,15 +1181,12 @@ static void hist_free_elt(gpointer list)
 
 void sflphone_save_history(void)
 {
-    QueueElement *current;
-    conference_obj_t *conf;
-
     GHashTable *result = g_hash_table_new_full(NULL, g_str_equal, g_free, hist_free_elt);
 
     gint size = calllist_get_size(history_tab);
 
     for (gint i = 0; i < size; i++) {
-        current = calllist_get_nth(history_tab, i);
+        QueueElement *current = calllist_get_nth(history_tab, i);
 
         if (!current) {
             WARN("SFLphone: Warning: %dth element is null", i);
@@ -1217,7 +1213,7 @@ void sflphone_save_history(void)
     size = conferencelist_get_size(history_tab);
 
     for (gint i = 0; i < size; i++) {
-        conf = conferencelist_get_nth(history_tab, i);
+        conference_obj_t *conf = conferencelist_get_nth(history_tab, i);
 
         if (!conf) {
             DEBUG("SFLphone: Error: Could not get %dth conference", i);
