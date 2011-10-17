@@ -495,9 +495,8 @@ sflphone_on_hold()
                 WARN("Should not happen in sflphone_on_hold!");
                 break;
         }
-    } else if (selectedConf) {
+    } else if (selectedConf)
         dbus_hold_conference(selectedConf);
-    }
 }
 
 void
@@ -516,9 +515,8 @@ sflphone_off_hold()
                 WARN("Should not happen in sflphone_off_hold ()!");
                 break;
         }
-    } else if (selectedConf) {
+    } else if (selectedConf)
         dbus_unhold_conference(selectedConf);
-    }
 }
 
 
@@ -541,7 +539,6 @@ sflphone_busy(callable_obj_t * c)
 void
 sflphone_current(callable_obj_t * c)
 {
-
     if (c->_state != CALL_STATE_HOLD)
         time(&c->_time_start);
 
@@ -1020,9 +1017,9 @@ void sflphone_fill_codec_list_per_account(account_t *account)
         // Each account will have a copy of the system-wide capabilities
         codec_t *cpy = codec_create_new_from_caps(codec_list_get_by_payload((gconstpointer)(uintptr_t) payload, NULL));
 
-        if (cpy) {
+        if (cpy)
             codec_list_add(cpy, &codeclist);
-        } else
+        else
             ERROR("SFLphone: Couldn't find codec");
     }
 
@@ -1047,7 +1044,7 @@ void sflphone_fill_call_list(void)
 {
     gchar **list = dbus_get_call_list();
 
-    for (gchar **calls = list; calls && *calls; calls++) {
+    for (gchar **calls = list; calls && *calls; ++calls) {
         gchar *callID = *calls;
         callable_obj_t *c = create_new_call_from_details(*calls, dbus_get_call_details(*calls));
         g_free(callID);
@@ -1056,7 +1053,7 @@ void sflphone_fill_call_list(void)
         calltree_add_call(current_calls_tab, c, NULL);
     }
 
-    g_free(list);
+    g_strfreev(list);
 }
 
 
@@ -1084,7 +1081,6 @@ void sflphone_fill_history(void)
     gchar **entries, **entries_orig;
     callable_obj_t *history_call, *call;
     QueueElement *element;
-    guint i = 0, n = 0;
 
     entries = entries_orig = dbus_get_history();
 
@@ -1096,15 +1092,16 @@ void sflphone_fill_history(void)
             // create a conference entry
             conference_obj_t *history_conf = create_conference_history_entry_from_serialized(current_entry);
 
-            // verify if this conference has been already created yet
+            // verify if this conference has been already created
             conference_obj_t *conf = conferencelist_get(history_tab, history_conf->_confID);
 
             // if this conference hasn't been created yet, add it to the conference list
             if (!conf)
                 conferencelist_add(history_tab, history_conf);
             else {
-                // if this conference was already created since one of the participant have already
+                // if this conference was already created since one of the participants have already
                 // been unserialized, update the recordfile value
+                g_free(conf->_recordfile);
                 conf->_recordfile = g_strdup(history_conf->_recordfile);
             }
         } else {
@@ -1114,7 +1111,7 @@ void sflphone_fill_history(void)
             // Add it and update the GUI
             calllist_add_call(history_tab, history_call);
 
-            if (history_call->_confID && g_strcmp0(history_call->_confID, "") != 0) {
+            if (history_call->_confID && strlen(history_call->_confID) > 0) {
 
                 // process conference
                 conference_obj_t *conf = conferencelist_get(history_tab, history_call->_confID);
@@ -1137,12 +1134,12 @@ void sflphone_fill_history(void)
         g_free(*entries++);
     }
 
-    g_free(entries_orig);
+    g_strfreev(entries_orig);
 
     // fill the treeview with calls
-    n = calllist_get_size(history_tab);
+    guint n = calllist_get_size(history_tab);
 
-    for (i = 0; i < n; i++) {
+    for (guint i = 0; i < n; i++) {
         element = calllist_get_nth(history_tab, i);
 
         if (element->type == HIST_CALL) {
@@ -1154,7 +1151,7 @@ void sflphone_fill_history(void)
     // fill the treeview with conferences
     n = conferencelist_get_size(history_tab);
 
-    for (i = 0; i < n; i++) {
+    for (guint i = 0; i < n; i++) {
         conference_obj_t *conf = conferencelist_get_nth(history_tab, i);
         if (!conf)
             DEBUG("SFLphone: Error: Could not find conference");
@@ -1185,7 +1182,7 @@ void sflphone_save_history(void)
 
     gint size = calllist_get_size(history_tab);
 
-    for (gint i = 0; i < size; i++) {
+    for (gint i = 0; i < size; ++i) {
         QueueElement *current = calllist_get_nth(history_tab, i);
 
         if (!current) {
@@ -1212,7 +1209,7 @@ void sflphone_save_history(void)
 
     size = conferencelist_get_size(history_tab);
 
-    for (gint i = 0; i < size; i++) {
+    for (gint i = 0; i < size; ++i) {
         conference_obj_t *conf = conferencelist_get_nth(history_tab, i);
 
         if (!conf) {
