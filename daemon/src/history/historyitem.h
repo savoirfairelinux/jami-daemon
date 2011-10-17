@@ -73,13 +73,13 @@ class HistoryItem {
 
         bool save(Conf::ConfigTree **history);
 
-        std::string serialize();
+        std::string serialize() const;
 
     private:
         /*
          * @return true if the account ID corresponds to a loaded account
          */
-        bool valid_account(std::string);
+        bool valid_account(const std::string &id) const;
 
         /*
          * Timestamp representing the date of the call
@@ -110,17 +110,17 @@ class HistoryItem {
         std::string account_id_;
 
         /**
-         * Wether or not a recording exist for this call
+         * Whether or not a recording exist for this call
          */
         std::string recording_file_;
 
         /**
-        	 * The conference ID for this call (if any)
-        	 */
+         * The conference ID for this call (if any)
+         */
         std::string confID_;
 
         /**
-        	 * Time added to conference
+         * Time added to conference
          */
         std::string timeAdded_;
 };

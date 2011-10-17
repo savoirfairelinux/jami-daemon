@@ -53,14 +53,14 @@ HistoryItem::HistoryItem(std::string timestamp_start, CallType call_type, std::s
 
 HistoryItem::HistoryItem(std::string serialized_form)
 {
-    int indice = 0;
+    int index = 0;
 
     while (serialized_form.find(ITEM_SEPARATOR, 0) != std::string::npos) {
         size_t pos = serialized_form.find(ITEM_SEPARATOR, 0);
         std::string tmp = serialized_form.substr(0, pos);
         serialized_form.erase(0, pos + 1);
 
-        switch (indice) {
+        switch (index) {
             case 0: // The call type
                 call_type_ = (CallType) atoi(tmp.c_str());
                 break;
@@ -91,15 +91,15 @@ HistoryItem::HistoryItem(std::string serialized_form)
             case 8: // The conference ID
                 confID_ = tmp;
                 break;
-            case 9: // The time
+            case 9: // the time
                 timeAdded_ = tmp;
                 break;
             default: // error
-                ERROR("Unserialized form %d not recognized\n", indice);
+                ERROR("Unserialized form %d not recognized\n", index);
                 break;
         }
 
-        indice ++;
+        ++index;
     }
 }
 
@@ -125,7 +125,7 @@ bool HistoryItem::save(Conf::ConfigTree **history)
            && (*history)->setConfigTreeItem(sectionstr, "timeadded", timeAdded_);
 }
 
-std::string HistoryItem::serialize()
+std::string HistoryItem::serialize() const
 {
     // Replace empty string with a valid standard string value
     std::string name(name_);
@@ -149,7 +149,7 @@ std::string HistoryItem::serialize()
 }
 
 
-bool HistoryItem::valid_account(std::string id)
+bool HistoryItem::valid_account(const std::string &id) const
 {
     return Manager::instance().accountExists(id);
 }

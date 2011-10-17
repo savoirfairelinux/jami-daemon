@@ -38,8 +38,6 @@
 
 #define DAY_UNIX_TIMESTAMP      86400   // Number of seconds in one day: 60 x 60 x 24
 
-typedef std::vector <HistoryItem *> HistoryItemMap;
-
 class HistoryManager {
 
     public:
@@ -48,17 +46,12 @@ class HistoryManager {
          */
         HistoryManager();
 
-        /*
-         * Destructor
-         */
-        ~HistoryManager();
-
         /**
          *@param path  A specific file to use; if empty, use the global one
          *
          *@return int The number of history items successfully loaded
          */
-        int load_history(int limit, std::string path="");
+        int load_history(int limit, const std::string &path="");
 
         /**
          *@return bool True if the history has been successfully saved in the file
@@ -103,9 +96,9 @@ class HistoryManager {
             return history_items_.size();
         }
 
-        std::vector<std::string> get_history_serialized();
+        std::vector<std::string> get_history_serialized() const;
 
-        int set_serialized_history(std::vector<std::string> history, int limit);
+        int set_serialized_history(const std::vector<std::string> &history, int limit);
 
     private:
         int get_unix_timestamp_equivalent(int days) const {
@@ -124,12 +117,12 @@ class HistoryManager {
         /*
          * Add a new history item in the data structure
          */
-        void add_new_history_entry(HistoryItem *new_item);
+        void add_new_history_entry(const HistoryItem &new_item);
 
         /*
          * Map containing the history items
          */
-        HistoryItemMap history_items_;
+        std::vector<HistoryItem> history_items_;
 
         /*
          * History has been loaded
