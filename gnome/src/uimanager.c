@@ -176,8 +176,8 @@ update_actions()
         }
     }
 
-    callable_obj_t * selectedCall = calltab_get_selected_call(active_calltree);
-    conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree);
+    callable_obj_t * selectedCall = calltab_get_selected_call(active_calltree_tab);
+    conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree_tab);
 
     gboolean instant_messaging_enabled = TRUE;
 
@@ -233,16 +233,16 @@ update_actions()
                 DEBUG("UIManager: Call State Dialing");
                 gtk_action_set_sensitive(pickUpAction_, TRUE);
 
-                if (active_calltree == current_calls)
+                if (active_calltree_tab == current_calls_tab)
                     gtk_action_set_sensitive(hangUpAction_, TRUE);
 
                 g_object_ref(newCallWidget_);
                 gtk_container_remove(GTK_CONTAINER(toolbar_), newCallWidget_);
                 gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(pickUpWidget_), 0);
 
-                if (active_calltree == current_calls)
+                if (active_calltree_tab == current_calls_tab)
                     gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(hangUpWidget_), 1);
-                else if (active_calltree == history) {
+                else if (active_calltree_tab == history_tab) {
                     if (selectedCall->_recordfile &&(g_strcmp0(selectedCall->_recordfile, "") != 0)) {
                         if (selectedCall->_record_is_playing)
                             gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(stopRecordWidget_), 3);
@@ -339,7 +339,7 @@ update_actions()
             case CONFERENCE_STATE_ACTIVE_DETACHED:
                 DEBUG("UIManager: Conference State Active");
 
-                if (active_calltree == current_calls) {
+                if (active_calltree_tab == current_calls_tab) {
                     int pos = 1;
                     gtk_action_set_sensitive(hangUpAction_, TRUE);
                     gtk_widget_set_sensitive(holdToolbar_, TRUE);
@@ -352,7 +352,7 @@ update_actions()
                         gtk_action_set_sensitive(imAction_, TRUE);
                         gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(imToolbar_), pos);
                     }
-                } else if (active_calltree == history) {
+                } else if (active_calltree_tab == history_tab) {
                     if (selectedConf->_recordfile &&(g_strcmp0(selectedConf->_recordfile, "") != 0)) {
                         if (selectedConf->_record_is_playing)
                             gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(stopRecordWidget_), 3);
@@ -541,8 +541,8 @@ switch_account(GtkWidget* item, gpointer data UNUSED)
 static void
 call_hold(void* foo UNUSED)
 {
-    callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
-    conference_obj_t * selectedConf = calltab_get_selected_conf(current_calls);
+    callable_obj_t * selectedCall = calltab_get_selected_call(current_calls_tab);
+    conference_obj_t * selectedConf = calltab_get_selected_conf(current_calls_tab);
 
     DEBUG("UIManager: Hold button pressed");
 
@@ -581,10 +581,10 @@ call_hold(void* foo UNUSED)
 static void
 call_im(void* foo UNUSED)
 {
-    callable_obj_t *selectedCall = calltab_get_selected_call(current_calls);
-    conference_obj_t *selectedConf = calltab_get_selected_conf(current_calls);
+    callable_obj_t *selectedCall = calltab_get_selected_call(current_calls_tab);
+    conference_obj_t *selectedConf = calltab_get_selected_conf(current_calls_tab);
 
-    if (calltab_get_selected_type(current_calls) == A_CALL) {
+    if (calltab_get_selected_type(current_calls_tab) == A_CALL) {
         if (selectedCall) {
             if (!selectedCall->_im_widget)
                 selectedCall->_im_widget = im_widget_display(selectedCall->_callID);
@@ -602,7 +602,7 @@ call_im(void* foo UNUSED)
 static void
 conference_hold(void* foo UNUSED)
 {
-    conference_obj_t * selectedConf = calltab_get_selected_conf(current_calls);
+    conference_obj_t * selectedConf = calltab_get_selected_conf(current_calls_tab);
 
     DEBUG("UIManager: Hold button pressed for conference");
 
@@ -639,25 +639,25 @@ call_pick_up(void * foo UNUSED)
 {
     DEBUG("UIManager: Pick up");
 
-    if (calllist_get_size(current_calls) > 0) {
+    if (calllist_get_size(current_calls_tab) > 0) {
         sflphone_pick_up();
-    } else if (calllist_get_size(active_calltree) > 0) {
-        callable_obj_t *selectedCall = calltab_get_selected_call(active_calltree);
+    } else if (calllist_get_size(active_calltree_tab) > 0) {
+        callable_obj_t *selectedCall = calltab_get_selected_call(active_calltree_tab);
 
         if (selectedCall) {
             callable_obj_t *new_call = create_new_call(CALL, CALL_STATE_DIALING, "", "", "",
                                        selectedCall->_peer_number);
-            calllist_add_call(current_calls, new_call);
-            calltree_add_call(current_calls, new_call, NULL);
+            calllist_add_call(current_calls_tab, new_call);
+            calltree_add_call(current_calls_tab, new_call, NULL);
             sflphone_place_call(new_call);
-            calltree_display(current_calls);
+            calltree_display(current_calls_tab);
         } else {
             sflphone_new_call();
-            calltree_display(current_calls);
+            calltree_display(current_calls_tab);
         }
     } else {
         sflphone_new_call();
-        calltree_display(current_calls);
+        calltree_display(current_calls_tab);
     }
 }
 
@@ -677,7 +677,7 @@ static void
 conference_hang_up(void)
 {
     DEBUG("UIManager: Hang up button pressed(conference)");
-    conference_obj_t * selectedConf = calltab_get_selected_conf(current_calls);
+    conference_obj_t * selectedConf = calltab_get_selected_conf(current_calls_tab);
 
     if (selectedConf)
         dbus_hang_up_conference(selectedConf);
@@ -695,8 +695,8 @@ start_playback_record_cb(void)
 {
     DEBUG("UIManager: Start playback button pressed");
 
-    callable_obj_t *selectedCall = calltab_get_selected_call(history);
-    conference_obj_t *selectedConf = calltab_get_selected_conf(history);
+    callable_obj_t *selectedCall = calltab_get_selected_call(history_tab);
+    conference_obj_t *selectedConf = calltab_get_selected_conf(history_tab);
 
     if (selectedCall == NULL && selectedConf == NULL) {
         ERROR("UIManager: Error: No selected object in playback record callback");
@@ -724,8 +724,8 @@ stop_playback_record_cb(void)
 {
     DEBUG("UIManager: Stop playback button pressed");
 
-    callable_obj_t *selectedCall = calltab_get_selected_call(history);
-    conference_obj_t *selectedConf = calltab_get_selected_conf(history);
+    callable_obj_t *selectedCall = calltab_get_selected_call(history_tab);
+    conference_obj_t *selectedConf = calltab_get_selected_conf(history_tab);
 
     if (selectedCall && selectedConf) {
         ERROR("UIManager: Error: Two selected object in history treeview");
@@ -769,7 +769,7 @@ call_configuration_assistant(void * foo UNUSED)
 static void
 remove_from_history(void * foo UNUSED)
 {
-    callable_obj_t* call = calltab_get_selected_call(history);
+    callable_obj_t* call = calltab_get_selected_call(history_tab);
 
     DEBUG("UIManager: Remove the call from the history");
 
@@ -784,7 +784,7 @@ remove_from_history(void * foo UNUSED)
 static void
 call_back(void * foo UNUSED)
 {
-    callable_obj_t *selected_call = calltab_get_selected_call(active_calltree);
+    callable_obj_t *selected_call = calltab_get_selected_call(active_calltree_tab);
 
     DEBUG("UIManager: Call back");
 
@@ -797,10 +797,10 @@ call_back(void * foo UNUSED)
                                "", selected_call->_peer_name,
                                selected_call->_peer_number);
 
-    calllist_add_call(current_calls, new_call);
-    calltree_add_call(current_calls, new_call, NULL);
+    calllist_add_call(current_calls_tab, new_call);
+    calltree_add_call(current_calls_tab, new_call, NULL);
     sflphone_place_call(new_call);
-    calltree_display(current_calls);
+    calltree_display(current_calls_tab);
 }
 
 static void
@@ -820,7 +820,7 @@ static void
 edit_copy(void * foo UNUSED)
 {
     GtkClipboard* clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
-    callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
+    callable_obj_t * selectedCall = calltab_get_selected_call(current_calls_tab);
 
     DEBUG("UIManager: Edit/Copy");
 
@@ -839,7 +839,7 @@ static void
 edit_paste(void * foo UNUSED)
 {
     GtkClipboard* clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
-    callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
+    callable_obj_t * selectedCall = calltab_get_selected_call(current_calls_tab);
     gchar * no = gtk_clipboard_wait_for_text(clip);
 
     if (no && selectedCall) {
@@ -856,7 +856,7 @@ edit_paste(void * foo UNUSED)
                     selectedCall->_peer_info = g_strconcat("\"\" <",
                                                            selectedCall->_peer_number, ">", NULL);
 
-                calltree_update_call(current_calls, selectedCall, NULL);
+                calltree_update_call(current_calls_tab, selectedCall);
             }
             break;
             case CALL_STATE_RINGING:
@@ -875,7 +875,7 @@ edit_paste(void * foo UNUSED)
                 selectedCall->_peer_info = g_strconcat("\"\" <",
                                                        selectedCall->_peer_number, ">", NULL);
 
-                calltree_update_call(current_calls, selectedCall, NULL);
+                calltree_update_call(current_calls_tab, selectedCall);
             }
             break;
             case CALL_STATE_CURRENT:
@@ -892,7 +892,7 @@ edit_paste(void * foo UNUSED)
                     selectedCall->_peer_info = get_peer_info(temp, selectedCall->_peer_name);
                     g_free(temp);
                     g_free(oneNo);
-                    calltree_update_call(current_calls, selectedCall, NULL);
+                    calltree_update_call(current_calls_tab, selectedCall);
                 }
             }
             break;
@@ -908,7 +908,7 @@ edit_paste(void * foo UNUSED)
         g_free(selectedCall->_peer_info);
         selectedCall->_peer_info = g_strconcat("\"\" <",
                                                selectedCall->_peer_number, ">", NULL);
-        calltree_update_call(current_calls, selectedCall, NULL);
+        calltree_update_call(current_calls_tab, selectedCall);
     }
 
     g_free(no);
@@ -917,10 +917,10 @@ edit_paste(void * foo UNUSED)
 static void
 clear_history(void)
 {
-    if (conferencelist_get_size(history) != 0)
+    if (conferencelist_get_size(history_tab) != 0)
         conferencelist_clean_history();
 
-    if (calllist_get_size(history) != 0)
+    if (calllist_get_size(history_tab) != 0)
         calllist_clean_history();
 }
 
@@ -951,29 +951,29 @@ call_mailbox_cb(void)
                                    "", account_id,
                                    _("Voicemail"), to);
     DEBUG("TO : %s" , mailbox_call->_peer_number);
-    calllist_add_call(current_calls, mailbox_call);
-    calltree_add_call(current_calls, mailbox_call, NULL);
+    calllist_add_call(current_calls_tab, mailbox_call);
+    calltree_add_call(current_calls_tab, mailbox_call, NULL);
     update_actions();
     sflphone_place_call(mailbox_call);
-    calltree_display(current_calls);
+    calltree_display(current_calls_tab);
 }
 
 static void
 toggle_history_cb(GtkToggleAction *action, gpointer user_data UNUSED)
 {
     if (gtk_toggle_action_get_active(action))
-        calltree_display(history);
+        calltree_display(history_tab);
     else
-        calltree_display(current_calls);
+        calltree_display(current_calls_tab);
 }
 
 static void
 toggle_addressbook_cb(GtkToggleAction *action, gpointer user_data UNUSED)
 {
     if (gtk_toggle_action_get_active(action))
-        calltree_display(contacts);
+        calltree_display(contacts_tab);
     else
-        calltree_display(current_calls);
+        calltree_display(current_calls_tab);
 }
 
 static const GtkActionEntry menu_entries[] = {
@@ -1207,9 +1207,9 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event)
     callable_obj_t * selectedCall = NULL;
     conference_obj_t * selectedConf;
 
-    if (calltab_get_selected_type(current_calls) == A_CALL) {
+    if (calltab_get_selected_type(current_calls_tab) == A_CALL) {
         DEBUG("UIManager: Menus: Selected a call");
-        selectedCall = calltab_get_selected_call(current_calls);
+        selectedCall = calltab_get_selected_call(current_calls_tab);
 
         if (selectedCall) {
             copy = TRUE;
@@ -1250,7 +1250,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event)
         }
     } else {
         DEBUG("UIManager: Menus: selected a conf");
-        selectedConf = calltab_get_selected_conf(active_calltree);
+        selectedConf = calltab_get_selected_conf(active_calltree_tab);
 
         if (selectedConf) {
             switch (selectedConf->_state) {
@@ -1276,7 +1276,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event)
 
     GtkWidget *menu = gtk_menu_new();
 
-    if (calltab_get_selected_type(current_calls) == A_CALL) {
+    if (calltab_get_selected_type(current_calls_tab) == A_CALL) {
         DEBUG("UIManager: Build call menu");
 
         if (copy) {
@@ -1408,7 +1408,7 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event)
     gboolean edit = FALSE;
     gboolean accounts = FALSE;
 
-    callable_obj_t * selectedCall = calltab_get_selected_call(history);
+    callable_obj_t * selectedCall = calltab_get_selected_call(history_tab);
 
     if (selectedCall) {
         add_remove_button = TRUE;
@@ -1458,8 +1458,7 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event)
 void
 show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event)
 {
-    callable_obj_t * selectedCall = calltab_get_selected_call(contacts);
-
+    callable_obj_t * selectedCall = calltab_get_selected_call(contacts_tab);
 
     GtkWidget *menu = gtk_menu_new();
 
@@ -1495,10 +1494,10 @@ ok_cb(GtkWidget *widget UNUSED, gpointer userdata)
                                     original->_peer_name, new_number);
 
     // Update the internal data structure and the GUI
-    calllist_add_call(current_calls, modified_call);
-    calltree_add_call(current_calls, modified_call, NULL);
+    calllist_add_call(current_calls_tab, modified_call);
+    calltree_add_call(current_calls_tab, modified_call, NULL);
     sflphone_place_call(modified_call);
-    calltree_display(current_calls);
+    calltree_display(current_calls_tab);
 
     // Close the contextual menu
     gtk_widget_destroy(edit_dialog_);
@@ -1632,7 +1631,7 @@ create_toolbar_actions(GtkUIManager *ui_manager)
     // Set the handler ID for the transfer
     transferButtonConnId_ = g_signal_connect(G_OBJECT(transferToolbar_), "toggled", G_CALLBACK(call_transfer_cb), NULL);
     recordButtonConnId_ = g_signal_connect(G_OBJECT(recordWidget_), "toggled", G_CALLBACK(call_record), NULL);
-    active_calltree = current_calls;
+    active_calltree_tab = current_calls_tab;
 
     return toolbar_;
 }

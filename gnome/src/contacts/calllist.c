@@ -79,8 +79,8 @@ void calllist_add_contact(gchar *contact_name, gchar *contact_phone, contact_typ
         new_call->_contact_thumbnail = pixbuf;
     }
 
-    calllist_add_call(contacts, new_call);
-    calltree_add_call(contacts, new_call, NULL);
+    calllist_add_call(contacts_tab, new_call);
+    calltree_add_call(contacts_tab, new_call, NULL);
 }
 
 /*
@@ -119,8 +119,8 @@ void calllist_add_history_call(callable_obj_t *obj)
         QueueElement *element = g_new0(QueueElement, 1);
         element->type = HIST_CALL;
         element->elem.call = obj;
-        g_queue_push_tail(history->callQueue, (gpointer) element);
-        calltree_add_call(history, obj, NULL);
+        g_queue_push_tail(history_tab->callQueue, (gpointer) element);
+        calltree_add_history_entry(obj, NULL);
     }
 }
 
@@ -130,8 +130,8 @@ void calllist_add_history_conference(conference_obj_t *obj)
         QueueElement *element = g_new0(QueueElement, 1);
         element->type = HIST_CONFERENCE;
         element->elem.conf = obj;
-        g_queue_push_tail(history->callQueue, (gpointer) element);
-        calltree_add_conference(history, obj);
+        g_queue_push_tail(history_tab->callQueue, (gpointer) element);
+        calltree_add_conference_to_history(obj);
     }
 }
 
@@ -147,25 +147,25 @@ calllist_add_call(calltab_t* tab, callable_obj_t * c)
 void
 calllist_clean_history(void)
 {
-    guint size = calllist_get_size(history);
+    guint size = calllist_get_size(history_tab);
 
     for (guint i = 0; i < size; i++) {
-        QueueElement* c = calllist_get_nth(history, i);
+        QueueElement* c = calllist_get_nth(history_tab, i);
 
         if (c->type == HIST_CALL)
-            calltree_remove_call(history, c->elem.call);
+            calltree_remove_call(history_tab, c->elem.call);
         else if (c->type == HIST_CONFERENCE)
-            calltree_remove_conference(history, c->elem.conf);
+            calltree_remove_conference(history_tab, c->elem.conf);
     }
 
-    calllist_reset(history);
+    calllist_reset(history_tab);
 }
 
 void
 calllist_remove_from_history(callable_obj_t* c)
 {
-    calllist_remove_call(history, c->_callID);
-    calltree_remove_call(history, c);
+    calllist_remove_call(history_tab, c->_callID);
+    calltree_remove_call(history_tab, c);
 }
 
 void
@@ -185,8 +185,8 @@ calllist_remove_call(calltab_t* tab, const gchar * callID)
 
     g_queue_remove(tab->callQueue, element);
 
-    calllist_add_call(history, element->elem.call);
-    calltree_add_call(history, element->elem.call, NULL);
+    calllist_add_call(history_tab, element->elem.call);
+    calltree_add_history_entry(element->elem.call, NULL);
 }
 
 

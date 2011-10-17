@@ -66,11 +66,7 @@ void searchbar_addressbook_activated(GtkEntry *entry, gchar *arg1 UNUSED, gpoint
 void searchbar_entry_changed(GtkEntry* entry UNUSED, gchar* arg1 UNUSED, gpointer data UNUSED)
 {
     DEBUG("Searchbar: Entry changed");
-
-    if (active_calltree == contacts) {
-        // Search made only when text entry is activated
-        // addressbook_search (entry);
-    } else if (active_calltree == history)
+    if (active_calltree_tab == history_tab)
         history_search();
 }
 
@@ -234,10 +230,10 @@ static void icon_press_cb(GtkEntry *entry, gint position, GdkEventButton *event,
 {
     DEBUG("Searchbar: Icon pressed");
 
-    if (position == GTK_ENTRY_ICON_PRIMARY && active_calltree == history)
+    if (position == GTK_ENTRY_ICON_PRIMARY && active_calltree_tab == history_tab)
         gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
                        event->button, event->time);
-    else if (position == GTK_ENTRY_ICON_PRIMARY && active_calltree == contacts) {
+    else if (position == GTK_ENTRY_ICON_PRIMARY && active_calltree_tab == contacts_tab) {
         GtkWidget *addrbook_menu = addressbook_menu_new();
         gtk_menu_popup(GTK_MENU(addrbook_menu), NULL, NULL, NULL, NULL,
                        event->button, event->time);
@@ -259,7 +255,7 @@ GtkWidget *addressbook_menu_new(void)
 {
     // Create the menu
     GtkWidget *menu_widget = gtk_menu_new();
-    gtk_menu_attach_to_widget(GTK_MENU(menu_widget), contacts->searchbar, NULL);
+    gtk_menu_attach_to_widget(GTK_MENU(menu_widget), contacts_tab->searchbar, NULL);
 
     // Populate menu
     GtkWidget *item = gtk_menu_item_new_with_label("Search is");

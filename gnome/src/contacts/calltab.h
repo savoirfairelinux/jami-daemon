@@ -35,10 +35,10 @@
 #include "conferencelist.h"
 #include <gtk/gtk.h>
 
-calltab_t* active_calltree;
-calltab_t* current_calls;
-calltab_t* history;
-calltab_t* contacts;
+calltab_t* active_calltree_tab;
+calltab_t* current_calls_tab;
+calltab_t* history_tab;
+calltab_t* contacts_tab;
 
 calltab_t* calltab_init (gboolean, const gchar * const);
 

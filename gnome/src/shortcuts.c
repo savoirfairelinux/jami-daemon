@@ -110,8 +110,8 @@ filter_keys(const GdkXEvent *xevent, const GdkEvent *event UNUSED, gpointer data
 static void
 toggle_pick_up_hang_up_callback()
 {
-    callable_obj_t * selectedCall = calltab_get_selected_call(active_calltree);
-    conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree);
+    callable_obj_t * selectedCall = calltab_get_selected_call(active_calltree_tab);
+    conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree_tab);
 
     DEBUG("Shortcuts: Toggle pickup/hangup callback");
 
@@ -152,8 +152,8 @@ hang_up_callback()
 static void
 toggle_hold_callback()
 {
-    callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
-    conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree);
+    callable_obj_t * selectedCall = calltab_get_selected_call(current_calls_tab);
+    conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree_tab);
 
     if (selectedCall) {
         switch (selectedCall->_state) {

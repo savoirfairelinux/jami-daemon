@@ -60,11 +60,11 @@ new_call_created_cb(DBusGProxy *proxy UNUSED, const gchar *accountID,
 {
     callable_obj_t *c = create_new_call(CALL, CALL_STATE_RINGING, callID, accountID, to, to);
 
-    calllist_add_call(current_calls, c);
-    calltree_add_call(current_calls, c, NULL);
+    calllist_add_call(current_calls_tab, c);
+    calltree_add_call(current_calls_tab, c, NULL);
 
     update_actions();
-    calltree_display(current_calls);
+    calltree_display(current_calls_tab);
 }
 
 static void
@@ -92,7 +92,7 @@ zrtp_negotiation_failed_cb(DBusGProxy *proxy UNUSED, const gchar* callID,
                            const gchar* reason, const gchar* severity, void * foo  UNUSED)
 {
     main_window_zrtp_negotiation_failed(callID, reason, severity);
-    callable_obj_t *c = calllist_get_call(current_calls, callID);
+    callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c)
         notify_zrtp_negotiation_failed(c);
@@ -121,13 +121,13 @@ incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar* callID UNUSED, const 
 
     GtkWidget **widget;
     gchar *id;
-    callable_obj_t *call = calllist_get_call(current_calls, callID);
+    callable_obj_t *call = calllist_get_call(current_calls_tab, callID);
 
     if (call) {
         widget = &call->_im_widget;
         id = call->_callID;
     } else {
-        conference_obj_t *conf = conferencelist_get(current_calls, callID);
+        conference_obj_t *conf = conferencelist_get(current_calls_tab, callID);
 
         if (!conf) {
             ERROR("Message received, but no recipient found");
@@ -148,16 +148,16 @@ static void
 call_state_cb(DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state,
               void * foo  UNUSED)
 {
-    callable_obj_t *c = calllist_get_call(current_calls, callID);
+    callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c) {
         if (g_strcmp0(state, "HUNGUP") == 0) {
             if (c->_state == CALL_STATE_CURRENT) {
                 time(&c->_time_stop);
-                calltree_update_call(history, c, NULL);
+                calltree_update_call(history_tab, c);
             }
 
-            calltree_update_call(history, c, NULL);
+            calltree_update_call(history_tab, c);
             status_bar_display_account();
             sflphone_hung_up(c);
         } else if (g_strcmp0(state, "UNHOLD_CURRENT") == 0) {
@@ -196,10 +196,10 @@ call_state_cb(DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state,
             new_call->_history_state = (g_strcasecmp(g_hash_table_lookup(call_details, "CALL_TYPE"), "0") == 0)
                                        ? INCOMING : OUTGOING;
 
-            calllist_add_call(current_calls, new_call);
-            calltree_add_call(current_calls, new_call, NULL);
+            calllist_add_call(current_calls_tab, new_call);
+            calltree_add_call(current_calls_tab, new_call, NULL);
             update_actions();
-            calltree_display(current_calls);
+            calltree_display(current_calls_tab);
         }
     }
 }
@@ -207,7 +207,7 @@ call_state_cb(DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state,
 static void toggle_im(conference_obj_t *conf, gboolean activate)
 {
     for (GSList *part = conf->participant_list; part; part = g_slist_next(part)) {
-        callable_obj_t *call = calllist_get_call(current_calls, part->data);
+        callable_obj_t *call = calllist_get_call(current_calls_tab, part->data);
 
         if (call)
             im_widget_update_state(IM_WIDGET(call->_im_widget), activate);
@@ -220,7 +220,7 @@ conference_changed_cb(DBusGProxy *proxy UNUSED, const gchar* confID,
 {
     DEBUG("DBUS: Conference state changed: %s\n", state);
 
-    conference_obj_t* changed_conf = conferencelist_get(current_calls, confID);
+    conference_obj_t* changed_conf = conferencelist_get(current_calls_tab, confID);
 
     if (changed_conf == NULL) {
         ERROR("DBUS: Conference is NULL in conference state changed");
@@ -228,7 +228,7 @@ conference_changed_cb(DBusGProxy *proxy UNUSED, const gchar* confID,
     }
 
     // remove old conference from calltree
-    calltree_remove_conference(current_calls, changed_conf);
+    calltree_remove_conference(current_calls_tab, changed_conf);
 
     // update conference state
     if (g_strcmp0(state, "ACTIVE_ATTACHED") == 0)
@@ -255,7 +255,7 @@ conference_changed_cb(DBusGProxy *proxy UNUSED, const gchar* confID,
 
     // deactivate instant messaging window for new participants
     toggle_im(changed_conf, FALSE);
-    calltree_add_conference(current_calls, changed_conf);
+    calltree_add_conference_to_current_calls(changed_conf);
 }
 
 static void
@@ -272,9 +272,9 @@ conference_created_cb(DBusGProxy *proxy UNUSED, const gchar* confID, void * foo 
 
     // Add conference ID in in each calls
     for (gchar **part = participants; part && *part; ++part) {
-        callable_obj_t *call = calllist_get_call(current_calls, *part);
+        callable_obj_t *call = calllist_get_call(current_calls_tab, *part);
 
-        // set when this call have been added to the conference
+        /* set when this call has been added to the conference */
         time(&call->_time_added);
 
         im_widget_update_state(IM_WIDGET(call->_im_widget), FALSE);
@@ -291,10 +291,10 @@ conference_created_cb(DBusGProxy *proxy UNUSED, const gchar* confID, void * foo 
 
     time(&new_conf->_time_start);
 
-    conferencelist_add(current_calls, new_conf);
-    conferencelist_add(history, new_conf);
-    calltree_add_conference(current_calls, new_conf);
-    calltree_add_conference(history, new_conf);
+    conferencelist_add(current_calls_tab, new_conf);
+    conferencelist_add(history_tab, new_conf);
+    calltree_add_conference_to_current_calls(new_conf);
+    calltree_add_conference_to_history(new_conf);
 }
 
 static void
@@ -302,14 +302,14 @@ conference_removed_cb(DBusGProxy *proxy UNUSED, const gchar* confID, void * foo 
 {
     DEBUG("DBUS: Conference removed %s", confID);
 
-    conference_obj_t * c = conferencelist_get(current_calls, confID);
-    calltree_remove_conference(current_calls, c);
+    conference_obj_t * c = conferencelist_get(current_calls_tab, confID);
+    calltree_remove_conference(current_calls_tab, c);
 
     im_widget_update_state(IM_WIDGET(c->_im_widget), FALSE);
 
     // remove all participants for this conference
     for (GSList *p = c->participant_list; p; p = conference_next_participant(p)) {
-        callable_obj_t *call = calllist_get_call(current_calls, p->data);
+        callable_obj_t *call = calllist_get_call(current_calls_tab, p->data);
 
         if (call) {
             g_free(call->_confID);
@@ -318,7 +318,7 @@ conference_removed_cb(DBusGProxy *proxy UNUSED, const gchar* confID, void * foo 
         }
     }
 
-    conferencelist_remove(current_calls, c->_confID);
+    conferencelist_remove(current_calls_tab, c->_confID);
 }
 
 static void
@@ -326,8 +326,8 @@ record_playback_filepath_cb(DBusGProxy *proxy UNUSED, const gchar *id, const gch
 {
     DEBUG("DBUS: Filepath for %s: %s", id, filepath);
 
-    callable_obj_t *call = calllist_get_call(current_calls, id);
-    conference_obj_t *conf = conferencelist_get(current_calls, id);
+    callable_obj_t *call = calllist_get_call(current_calls_tab, id);
+    conference_obj_t *conf = conferencelist_get(current_calls_tab, id);
 
     if (call && conf) {
         ERROR("DBUS: Two objects for this callid");
@@ -350,10 +350,10 @@ record_playback_stopped_cb(DBusGProxy *proxy UNUSED, const gchar *filepath)
 {
     DEBUG("DBUS: Playback stopped for %s", filepath);
 
-    const gint calllist_size = calllist_get_size(history);
+    const gint calllist_size = calllist_get_size(history_tab);
 
     for (gint i = 0; i < calllist_size; i++) {
-        QueueElement *element = calllist_get_nth(history, i);
+        QueueElement *element = calllist_get_nth(history_tab, i);
 
         if (element == NULL) {
             ERROR("DBUS: ERROR: Could not find %dth call", i);
@@ -363,10 +363,10 @@ record_playback_stopped_cb(DBusGProxy *proxy UNUSED, const gchar *filepath)
             element->elem.call->_record_is_playing = FALSE;
     }
 
-    const gint conflist_size = conferencelist_get_size(history);
+    const gint conflist_size = conferencelist_get_size(history_tab);
 
     for (gint i = 0; i < conflist_size; i++) {
-        conference_obj_t *conf = conferencelist_get_nth(history, i);
+        conference_obj_t *conf = conferencelist_get_nth(history_tab, i);
 
         if (conf == NULL) {
             ERROR("DBUS: ERROR: Could not find %dth conf", i);
@@ -407,7 +407,7 @@ static void
 secure_sdes_on_cb(DBusGProxy *proxy UNUSED, const gchar *callID, void *foo UNUSED)
 {
     DEBUG("DBUS: SRTP using SDES is on");
-    callable_obj_t *c = calllist_get_call(current_calls, callID);
+    callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c) {
         sflphone_srtp_sdes_on(c);
@@ -420,7 +420,7 @@ static void
 secure_sdes_off_cb(DBusGProxy *proxy UNUSED, const gchar *callID, void *foo UNUSED)
 {
     DEBUG("DBUS: SRTP using SDES is off");
-    callable_obj_t *c = calllist_get_call(current_calls, callID);
+    callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c) {
         sflphone_srtp_sdes_off(c);
@@ -433,7 +433,7 @@ secure_zrtp_on_cb(DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* ci
                   void * foo  UNUSED)
 {
     DEBUG("DBUS: SRTP using ZRTP is ON secure_on_cb");
-    callable_obj_t *c = calllist_get_call(current_calls, callID);
+    callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c) {
         c->_srtp_cipher = g_strdup(cipher);
@@ -446,7 +446,7 @@ static void
 secure_zrtp_off_cb(DBusGProxy *proxy UNUSED, const gchar* callID, void * foo  UNUSED)
 {
     DEBUG("DBUS: SRTP using ZRTP is OFF");
-    callable_obj_t *c = calllist_get_call(current_calls, callID);
+    callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c) {
         sflphone_srtp_zrtp_off(c);
@@ -459,7 +459,7 @@ show_zrtp_sas_cb(DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* sas
                  const gboolean verified, void * foo  UNUSED)
 {
     DEBUG("DBUS: Showing SAS");
-    callable_obj_t * c = calllist_get_call(current_calls, callID);
+    callable_obj_t * c = calllist_get_call(current_calls_tab, callID);
 
     if (c)
         sflphone_srtp_zrtp_show_sas(c, sas, verified);
@@ -469,7 +469,7 @@ static void
 confirm_go_clear_cb(DBusGProxy *proxy UNUSED, const gchar* callID, void * foo  UNUSED)
 {
     DEBUG("DBUS: Confirm Go Clear request");
-    callable_obj_t * c = calllist_get_call(current_calls, callID);
+    callable_obj_t * c = calllist_get_call(current_calls_tab, callID);
 
     if (c)
         main_window_confirm_go_clear(c);
@@ -479,7 +479,7 @@ static void
 zrtp_not_supported_cb(DBusGProxy *proxy UNUSED, const gchar* callID, void * foo  UNUSED)
 {
     DEBUG("ZRTP not supported on the other end");
-    callable_obj_t * c = calllist_get_call(current_calls, callID);
+    callable_obj_t * c = calllist_get_call(current_calls_tab, callID);
 
     if (c) {
         main_window_zrtp_not_supported(c);
@@ -492,7 +492,7 @@ sip_call_state_cb(DBusGProxy *proxy UNUSED, const gchar* callID,
                   const gchar* description, const guint code, void * foo  UNUSED)
 {
     DEBUG("DBUS: Sip call state changed %s", callID);
-    callable_obj_t *c = calllist_get_call(current_calls, callID);
+    callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c)
         sflphone_call_state_changed(c, description, code);

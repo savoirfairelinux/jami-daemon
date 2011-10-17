@@ -57,10 +57,10 @@ on_frame_loading_done(GObject *gobject UNUSED, GParamSpec *pspec UNUSED, gpointe
             break;
         case WEBKIT_LOAD_FINISHED:
 
-            if (calllist_get_call(current_calls, im->call_id))
+            if (calllist_get_call(current_calls_tab, im->call_id))
                 im_widget_add_message(im, im->first_message_from, im->first_message, 0);
 
-            if (conferencelist_get(current_calls, im->call_id))
+            if (conferencelist_get(current_calls_tab, im->call_id))
                 im_widget_add_message(im, im->first_message_from, im->first_message, 0);
 
             g_free(im->first_message);
@@ -196,14 +196,13 @@ on_Textview_changed(GtkWidget *widget UNUSED, GdkEventKey *event, gpointer user_
 void
 im_widget_send_message(const gchar *id, const gchar *message)
 {
-    callable_obj_t *im_widget_call = calllist_get_call(current_calls, id);
-    conference_obj_t *im_widget_conf = conferencelist_get(current_calls, id);
+    callable_obj_t *im_widget_call = calllist_get_call(current_calls_tab, id);
+    conference_obj_t *im_widget_conf = conferencelist_get(current_calls_tab, id);
 
     /* If the call has been hungup, it is not anymore in the current_calls calltab */
-    if (!im_widget_call) {
-        /* So try the history tab */
-        im_widget_call = calllist_get_call(history, id);
-    }
+    /* So try the history tab */
+    if (!im_widget_call)
+        im_widget_call = calllist_get_call(history_tab, id);
 
     if (im_widget_conf)
         dbus_send_text_message(id, message);
@@ -333,8 +332,8 @@ im_widget_infobar(IMWidget *im)
     GtkWidget *content_area = gtk_info_bar_get_content_area(GTK_INFO_BAR(infobar));
 
     /* Fetch call/conference information */
-    callable_obj_t *im_widget_call = calllist_get_call(current_calls, im->call_id);
-    conference_obj_t *im_widget_conf = conferencelist_get(current_calls, im->call_id);
+    callable_obj_t *im_widget_call = calllist_get_call(current_calls_tab, im->call_id);
+    conference_obj_t *im_widget_conf = conferencelist_get(current_calls_tab, im->call_id);
 
     /* Create the label widgets with the call information saved in the IM Widget struct */
     gchar *msg1;

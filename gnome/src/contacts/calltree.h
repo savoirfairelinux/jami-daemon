@@ -72,14 +72,14 @@ void
 calltree_add_call (calltab_t *, callable_obj_t *, GtkTreeIter *);
 
 void
-calltree_add_call_to_conference(calltab_t *tab, callable_obj_t *call, const gchar * const confID);
+calltree_add_call_to_conference_in_history(callable_obj_t *call, const gchar * const confID);
 
 /*
  * Update the call tree if the call state changes
  * @param c The call to update
  */
 void
-calltree_update_call (calltab_t *, callable_obj_t *, GtkTreeIter *);
+calltree_update_call (calltab_t *, callable_obj_t *);
 
 /**
  * Remove a call from the call tree
@@ -97,7 +97,10 @@ void
 calltree_add_history_entry (callable_obj_t *, GtkTreeIter *);
 
 void
-calltree_add_conference (calltab_t *, conference_obj_t *);
+calltree_add_conference_to_current_calls(conference_obj_t *);
+
+void
+calltree_add_conference_to_history(conference_obj_t *);
 
 void
 calltree_remove_conference(calltab_t *, const conference_obj_t *);

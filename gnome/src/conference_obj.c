@@ -110,7 +110,7 @@ void free_conference_obj_t (conference_obj_t *c)
 static
 void conference_add_participant_number(const gchar *call_id, conference_obj_t *conf)
 {
-    callable_obj_t *call = calllist_get_call(current_calls, call_id);
+    callable_obj_t *call = calllist_get_call(current_calls_tab, call_id);
 
     if (!call) {
         ERROR("Conference: Error: Could not find %s", call_id);
@@ -156,7 +156,7 @@ void conference_participant_list_update(gchar** participants, conference_obj_t* 
 
     for (gchar **part = participants; part && *part; part++) {
         gchar *call_id = (gchar *)(*part);
-        callable_obj_t *call = calllist_get_call(current_calls, call_id);
+        callable_obj_t *call = calllist_get_call(current_calls_tab, call_id);
 
         if (call->_confID != NULL) {
             g_free(call->_confID);
@@ -171,7 +171,7 @@ void conference_participant_list_update(gchar** participants, conference_obj_t* 
 
     for (gchar **part = participants; part && *part; part++) {
         gchar *call_id = (gchar*)(*part);
-        callable_obj_t *call = calllist_get_call(current_calls, call_id);
+        callable_obj_t *call = calllist_get_call(current_calls_tab, call_id);
         call->_confID = g_strdup(conf->_confID);
         conference_add_participant(call_id, conf);
     }
@@ -179,48 +179,44 @@ void conference_participant_list_update(gchar** participants, conference_obj_t* 
 
 gchar *serialize_history_conference_entry(conference_obj_t *entry)
 {
-    gchar *result = "";
-    static const gchar * const separator = "|";
-    gchar *time_start = "";
-    gchar *time_stop = "";
-    gchar *peer_name = "";
-    gchar *participantstr = "";
-    gchar *confID = "";
-    GSList *participant_list;
-    gint length = 0;
-    gint i;
+    gchar *confID = entry->_confID;
 
-    confID = entry->_confID;
+    gchar *time_start = g_strdup_printf("%i", (int) entry->_time_start);
+    gchar *time_stop = g_strdup_printf("%i", (int) entry->_time_stop);
 
-    time_start = g_strdup_printf("%i", (int) entry->_time_start);
-    time_stop = g_strdup_printf("%i", (int) entry->_time_stop);
+    gchar *peer_name = (entry->_confID == NULL || (strlen(entry->_confID) == 0)) ? "empty": entry->_confID;
 
-    peer_name = (entry->_confID == NULL || (strlen(entry->_confID) == 0)) ? "empty": entry->_confID;
+    gint length = g_slist_length(entry->participant_list);
+    GSList *participant_list = entry->participant_list;
 
-    length = g_slist_length(entry->participant_list);
-    participant_list = entry->participant_list;
-
-    for (i = 0; i < length; i++) {
+    gchar *participantstr = NULL;
+    for (gint i = 0; i < length; ++i) {
         const gchar * const tmp = g_slist_nth_data(participant_list, i);
 
         if (!tmp)
             WARN("Conference: Peer number is NULL in conference list");
-
-        participantstr = g_strconcat(participantstr, tmp, ";", NULL);
+        
+        gchar *old = participantstr;
+        participantstr = g_strconcat(old, tmp, ";", NULL);
+        g_free(old);
 
         DEBUG("Conference: Participant number: %s, concatenation: %s", tmp, participantstr);
     }
 
-    result = g_strconcat("9999", separator,
-                         participantstr, separator, // peer number
-                         peer_name, separator,
-                         time_start, separator,
-                         time_stop, separator,
-                         confID, separator,
-                         "empty", separator, // peer AccountID
-                         entry->_recordfile ? entry->_recordfile : "", separator,
-                         "empty", separator,
-                         "empty", NULL);
+    static const gchar * const separator = "|";
+    gchar *result = g_strconcat("9999", separator,
+                                participantstr, separator, // peer number
+                                peer_name, separator,
+                                time_start, separator,
+                                time_stop, separator,
+                                confID, separator,
+                                "empty", separator, // peer AccountID
+                                entry->_recordfile ? entry->_recordfile : "", separator,
+                                "empty", separator,
+                                "empty", NULL);
+    g_free(participantstr);
+    g_free(time_stop);
+    g_free(time_start);
 
     return result;
 }

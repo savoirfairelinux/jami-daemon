@@ -63,7 +63,6 @@ typedef struct  {
     GtkWidget *_im_widget;           // associated instant messaging widget
     time_t _time_start;
     time_t _time_stop;
-    time_t _time_current;
     gchar *_recordfile;
     gboolean _record_is_playing;
 } conference_obj_t;

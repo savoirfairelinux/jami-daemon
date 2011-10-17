@@ -63,11 +63,11 @@ void conferencelist_clean(calltab_t *tab)
 
 void conferencelist_clean_history(void)
 {
-    while (conferencelist_get_size(history) > 0) {
-        conference_obj_t *conf = conferencelist_pop_head(history);
+    while (conferencelist_get_size(history_tab) > 0) {
+        conference_obj_t *conf = conferencelist_pop_head(history_tab);
 
         if (conf)
-            calltree_remove_conference(history, conf);
+            calltree_remove_conference(history_tab, conf);
         else
             ERROR("ConferenceList: Conference pointer is NULL");
     }

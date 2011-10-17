@@ -289,16 +289,15 @@ gchar* serialize_history_call_entry(callable_obj_t *entry)
     // "0|514-276-5468|Savoir-faire Linux|144562458" for instance
     gchar *peer_number, *peer_name, *account_id;
     static const gchar * const separator = "|";
-    gchar *time_start, *time_stop ;
     gchar *record_file;
-    gchar *confID , *time_added;
+    gchar *confID;
 
     // Need the string form for the history state
     const gchar *history_state = get_history_id_from_state(entry->_history_state);
     // and the timestamps
-    time_start = g_strdup_printf("%i", (int) entry->_time_start);
-    time_stop = g_strdup_printf("%i", (int) entry->_time_stop);
-    time_added = g_strdup_printf("%i", (int) entry->_time_added);
+    gchar *time_start = g_strdup_printf("%i", (int) entry->_time_start);
+    gchar *time_stop = g_strdup_printf("%i", (int) entry->_time_stop);
+    gchar *time_added = g_strdup_printf("%i", (int) entry->_time_added);
 
     peer_number = entry->_peer_number ? entry->_peer_number : "";
     peer_name = (entry->_peer_name && *entry->_peer_name) ? entry->_peer_name : "empty";
@@ -308,7 +307,7 @@ gchar* serialize_history_call_entry(callable_obj_t *entry)
     record_file = entry->_recordfile ? entry->_recordfile : "";
 
     gchar *result = g_strconcat(history_state, separator,
-                                entry->_peer_number, separator,
+                                peer_number, separator,
                                 peer_name, separator,
                                 time_start, separator,
                                 time_stop, separator,

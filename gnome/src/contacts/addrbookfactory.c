@@ -48,8 +48,8 @@ handler_async_search(GList *hits, gpointer user_data)
 {
     AddressBook_Config *addressbook_config = user_data;
 
-    gtk_tree_store_clear(contacts->store);
-    calllist_reset(contacts);
+    gtk_tree_store_clear(contacts_tab->store);
+    calllist_reset(contacts_tab);
 
     for (GList *i = hits; i != NULL; i = i->next) {
         GdkPixbuf *photo = NULL;
@@ -85,7 +85,7 @@ handler_async_search(GList *hits, gpointer user_data)
     }
 
     g_list_free(hits);
-    gtk_widget_grab_focus(GTK_WIDGET(contacts->view));
+    gtk_widget_grab_focus(GTK_WIDGET(contacts_tab->view));
 }
 
 void abook_init()

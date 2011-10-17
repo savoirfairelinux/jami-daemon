@@ -38,7 +38,7 @@
 static void
 dialpad_pressed(GtkWidget * widget UNUSED, gpointer data)
 {
-    gtk_widget_grab_focus(GTK_WIDGET(current_calls->view));
+    gtk_widget_grab_focus(GTK_WIDGET(current_calls_tab->view));
     sflphone_keypad(0, (gchar*) data);
 }
 

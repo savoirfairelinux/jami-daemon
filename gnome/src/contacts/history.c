@@ -95,8 +95,8 @@ void history_search(void)
 
 void history_search_init(void)
 {
-    history_filter = history_create_filter(GTK_TREE_MODEL(history->store));
-    gtk_tree_view_set_model(GTK_TREE_VIEW(history->view), GTK_TREE_MODEL(history_filter));
+    history_filter = history_create_filter(GTK_TREE_MODEL(history_tab->store));
+    gtk_tree_view_set_model(GTK_TREE_VIEW(history_tab->view), GTK_TREE_MODEL(history_filter));
 }
 
 void history_set_searchbar_widget(GtkWidget *searchbar)

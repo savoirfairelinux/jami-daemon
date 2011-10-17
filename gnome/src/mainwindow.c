@@ -129,7 +129,7 @@ main_window_ask_quit()
 {
     gchar * question;
 
-    if (calllist_get_size(current_calls) == 1)
+    if (calllist_get_size(current_calls_tab) == 1)
         question = _("There is one call in progress.");
     else
         question = _("There are calls in progress.");
@@ -152,10 +152,10 @@ on_key_released(GtkWidget *widget UNUSED, GdkEventKey *event, gpointer user_data
         return TRUE;
 
     if (event->keyval == GDK_Return) {
-        if (active_calltree == current_calls) {
+        if (active_calltree_tab == current_calls_tab) {
             sflphone_keypad(event->keyval, event->string);
             return TRUE;
-        } else if (active_calltree == history)
+        } else if (active_calltree_tab == history_tab)
             return FALSE;
     }
 
@@ -239,11 +239,11 @@ create_main_window()
     gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE /*expand*/, TRUE /*fill*/,
                        0 /*padding*/);
 
-    gtk_box_pack_start(GTK_BOX(vbox), current_calls->tree, TRUE /*expand*/,
+    gtk_box_pack_start(GTK_BOX(vbox), current_calls_tab->tree, TRUE /*expand*/,
                        TRUE /*fill*/, 0 /*padding*/);
-    gtk_box_pack_start(GTK_BOX(vbox), history->tree, TRUE /*expand*/,
+    gtk_box_pack_start(GTK_BOX(vbox), history_tab->tree, TRUE /*expand*/,
                        TRUE /*fill*/, 0 /*padding*/);
-    gtk_box_pack_start(GTK_BOX(vbox), contacts->tree, TRUE /*expand*/,
+    gtk_box_pack_start(GTK_BOX(vbox), contacts_tab->tree, TRUE /*expand*/,
                        TRUE /*fill*/, 0 /*padding*/);
 
     g_signal_connect_object(G_OBJECT(window), "configure-event",
@@ -282,10 +282,10 @@ create_main_window()
     gtk_widget_show_all(window);
 
     /* dont't show the history */
-    gtk_widget_hide(history->tree);
+    gtk_widget_hide(history_tab->tree);
 
     /* dont't show the contact list */
-    gtk_widget_hide(contacts->tree);
+    gtk_widget_hide(contacts_tab->tree);
 
     /* don't show waiting layer */
     gtk_widget_hide(waitingLayer);
@@ -448,7 +448,7 @@ main_window_zrtp_negotiation_failed(const gchar* const callID, const gchar* cons
 {
     gchar* peer_number = "(number unknown)";
     callable_obj_t * c = NULL;
-    c = calllist_get_call(current_calls, callID);
+    c = calllist_get_call(current_calls_tab, callID);
 
     if (c != NULL)
         peer_number = c->_peer_number;
