@@ -1131,7 +1131,7 @@ void sflphone_fill_history(void)
             }
         }
 
-        g_free(*entries++);
+        entries++;
     }
 
     g_strfreev(entries_orig);
