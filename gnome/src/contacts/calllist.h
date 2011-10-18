@@ -39,7 +39,7 @@
   * @brief A list to hold calls.
   */
 
-typedef enum { HIST_CONFERENCE, HIST_CALL } ElementType;
+typedef enum { HIST_CALL } ElementType;
 
 typedef union {
    callable_obj_t *call;

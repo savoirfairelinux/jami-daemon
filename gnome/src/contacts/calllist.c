@@ -91,10 +91,8 @@ calllist_free_element(gpointer data, gpointer user_data UNUSED)
 {
     QueueElement *element = data;
 
-    if (element->type == HIST_CONFERENCE)
-        free_conference_obj_t (element->elem.conf);
-    else /* HIST_CALL */
-        free_callable_obj_t (element->elem.call);
+    g_assert(element->type == HIST_CALL);
+    free_callable_obj_t(element->elem.call);
 
     g_free(element);
 }
@@ -132,8 +130,6 @@ calllist_clean_history(void)
 
         if (c->type == HIST_CALL)
             calltree_remove_call(history_tab, c->elem.call);
-        else if (c->type == HIST_CONFERENCE)
-            calltree_remove_conference(history_tab, c->elem.conf);
     }
 
     calllist_reset(history_tab);

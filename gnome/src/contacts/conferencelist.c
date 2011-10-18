@@ -61,19 +61,6 @@ void conferencelist_clean(calltab_t *tab)
     g_queue_free(tab->conferenceQueue);
 }
 
-void conferencelist_clean_history(void)
-{
-    while (conferencelist_get_size(history_tab) > 0) {
-        conference_obj_t *conf = conferencelist_pop_head(history_tab);
-
-        if (conf)
-            calltree_remove_conference(history_tab, conf);
-        else
-            ERROR("ConferenceList: Conference pointer is NULL");
-    }
-}
-
-
 void conferencelist_reset(calltab_t *tab)
 {
     if (tab == NULL) {

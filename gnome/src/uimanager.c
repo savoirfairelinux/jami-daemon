@@ -697,25 +697,14 @@ start_playback_record_cb(void)
     DEBUG("UIManager: Start playback button pressed");
 
     callable_obj_t *selectedCall = calltab_get_selected_call(history_tab);
-    conference_obj_t *selectedConf = calltab_get_selected_conf(history_tab);
 
-    if (selectedCall == NULL && selectedConf == NULL) {
+    if (selectedCall == NULL) {
         ERROR("UIManager: Error: No selected object in playback record callback");
         return;
     }
 
-    if (selectedCall && selectedConf) {
-        ERROR("UIManager: Error: Two selected object in playback record callback");
-        return;
-    }
-
-    if (selectedCall) {
-        DEBUG("UIManager: Start selected call file playback %s", selectedCall->_recordfile);
-        selectedCall->_record_is_playing = dbus_start_recorded_file_playback(selectedCall->_recordfile);
-    } else if (selectedConf) {
-        DEBUG("UIMAnager: Start selected conf file playback %s", selectedConf->_recordfile);
-        selectedConf->_record_is_playing = dbus_start_recorded_file_playback(selectedConf->_recordfile);
-    }
+    DEBUG("UIManager: Start selected call file playback %s", selectedCall->_recordfile);
+    selectedCall->_record_is_playing = dbus_start_recorded_file_playback(selectedCall->_recordfile);
 
     update_actions();
 }
@@ -726,14 +715,8 @@ stop_playback_record_cb(void)
     DEBUG("UIManager: Stop playback button pressed");
 
     callable_obj_t *selectedCall = calltab_get_selected_call(history_tab);
-    conference_obj_t *selectedConf = calltab_get_selected_conf(history_tab);
 
-    if (selectedCall && selectedConf) {
-        ERROR("UIManager: Error: Two selected object in history treeview");
-        return;
-    }
-
-    if (selectedCall == NULL && selectedConf == NULL) {
+    if (selectedCall == NULL) {
         ERROR("UIManager: Error: No selected object in history treeview");
         return;
     }
@@ -747,15 +730,6 @@ stop_playback_record_cb(void)
         dbus_stop_recorded_file_playback(selectedCall->_recordfile);
         DEBUG("UIManager: Stop selected call file playback %s", selectedCall->_recordfile);
         selectedCall->_record_is_playing = FALSE;
-    } else if (selectedConf) {
-        if (selectedConf->_recordfile == NULL) {
-            ERROR("UIManager: Error: Record file is NULL");
-            return;
-        }
-
-        dbus_stop_recorded_file_playback(selectedConf->_recordfile);
-        DEBUG("UIMAnager: Start selected call file playback: %s", selectedConf->_recordfile);
-        selectedConf->_record_is_playing = FALSE;
     }
 
     update_actions();
@@ -918,11 +892,7 @@ edit_paste(void * foo UNUSED)
 static void
 clear_history(void)
 {
-    if (conferencelist_get_size(history_tab) != 0)
-        conferencelist_clean_history();
-
-    if (calllist_get_size(history_tab) != 0)
-        calllist_clean_history();
+    calllist_clean_history();
 }
 
 /**

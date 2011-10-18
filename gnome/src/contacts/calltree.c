@@ -82,7 +82,6 @@ static void drag_end_cb(GtkWidget *, GdkDragContext *, gpointer);
 static void drag_data_received_cb(GtkWidget *, GdkDragContext *, gint, gint, GtkSelectionData *, guint, guint, gpointer);
 static void drag_history_received_cb(GtkWidget *, GdkDragContext *, gint, gint, GtkSelectionData *, guint, guint, gpointer);
 static void menuitem_response(gchar *);
-static void calltree_create_conf_from_participant_list(GSList *);
 
 enum {
     COLUMN_ACCOUNT_PIXBUF = 0,
@@ -244,45 +243,9 @@ row_activated(GtkTreeView *tree_view UNUSED,
                         break;
                 }
             }
-        } else if (active_calltree_tab == history_tab) {
-            conference_obj_t* selectedConf = calltab_get_selected_conf(history_tab);
-
-            if (selectedConf == NULL) {
-                ERROR("CallTree: Error: Could not get selected conference from history");
-                return;
-            }
-
-            calltree_create_conf_from_participant_list(selectedConf->participant_list);
-            calltree_display(current_calls_tab);
-        }
+        } else
+            WARN("CallTree: Selected a conference in history, should not be possible");
     }
-}
-
-static void
-calltree_create_conf_from_participant_list(GSList *list)
-{
-    gint list_length = g_slist_length(list);
-
-    /* create an array of gchar pointers */
-    gchar *participant_list[list_length + 1];
-
-    /* build the list up */
-    for (gint i = 0; i < list_length; ++i) {
-        gchar *participant_id = (gchar *) g_slist_nth_data(list, i);
-        callable_obj_t *call = calllist_get_call(history_tab, participant_id);
-
-        /* allocate memory for the participant number */
-        participant_list[i] = g_strconcat(call->_peer_number, ",",
-                                          call->_accountID, NULL);
-    }
-    /* NULL terminate it */
-    participant_list[list_length] = NULL;
-
-    dbus_create_conf_from_participant_list((const gchar **)participant_list);
-    /* free it, note we can't do this with g_strfreev since the array itself
-     * was created on the stack */
-    for (gint i = 0; i < list_length; ++i)
-        g_free(participant_list[i]);
 }
 
 /* Catch cursor-activated signal. That is, when the entry is single clicked */
@@ -1156,50 +1119,6 @@ void calltree_remove_conference(calltab_t* tab, const conference_obj_t* conf)
     DEBUG("CallTree: Finished Removing conference");
 }
 
-void calltree_add_conference_to_history(conference_obj_t *conf)
-{
-    if (!conf)
-        ERROR("CallTree: Error conference is NULL");
-
-    DEBUG("CallTree: Add conference %s to history", conf->_confID);
-
-    GtkTreeIter iter;
-    gtk_tree_store_prepend(history_tab->store, &iter, NULL);
-
-    GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/usersAttached.svg", NULL);
-
-    if (pixbuf && (gdk_pixbuf_get_width(pixbuf) > 32 || gdk_pixbuf_get_height(pixbuf) > 32)) {
-        GdkPixbuf *new = gdk_pixbuf_scale_simple(pixbuf, 32, 32, GDK_INTERP_BILINEAR);
-        g_object_unref(pixbuf);
-        pixbuf = new;
-    }
-
-    const gchar * const date = get_formatted_start_timestamp(conf->_time_start);
-    gchar *description = g_strconcat("Conference: \n", date, NULL);
-
-    gtk_tree_store_set(history_tab->store, &iter,
-                       COLUMN_ACCOUNT_PIXBUF, pixbuf,
-                       COLUMN_ACCOUNT_DESC, description,
-                       COLUMN_ACCOUNT_SECURITY_PIXBUF, NULL,
-                       COLUMN_ACCOUNT_PTR, conf, -1);
-
-    g_free(description);
-    if (pixbuf != NULL)
-        g_object_unref(G_OBJECT(pixbuf));
-
-    for (GSList *part = conf->participant_list; part;
-            part = g_slist_next(part)) {
-        const gchar * const call_id = (gchar *) part->data;
-        callable_obj_t *call = calllist_get_call(history_tab, call_id);
-
-        if (call)
-            calltree_add_history_entry(call, &iter);
-        else
-            ERROR("ConferenceList: Error: Could not find call \"%s\"", call_id);
-    }
-}
-
-
 void calltree_display(calltab_t *tab)
 {
     /* If we already are displaying the specified calltree */
@@ -1626,30 +1545,3 @@ static void menuitem_response(gchar *string)
     DEBUG("%s", string);
 }
 
-void calltree_add_call_to_conference_in_history(callable_obj_t *call, const gchar * const confID)
-{
-    GtkTreeIter iter;
-    GtkTreeModel *tree_model = GTK_TREE_MODEL(history_tab->store);
-
-    gtk_tree_model_get_iter_first(tree_model, &iter);
-
-    while (gtk_tree_model_iter_next(tree_model, &iter)) {
-        GValue val = { .g_type = 0 };
-        gtk_tree_model_get_value(tree_model, &iter, COLUMN_ACCOUNT_PTR, &val);
-
-        /* confID maybe the ID for an existing conference or another call */
-        if (gtk_tree_model_iter_has_child(tree_model, &iter)) {
-            conference_obj_t *c = (conference_obj_t *) g_value_get_pointer(&val);
-
-            if (g_strcmp0(c->_confID, confID) == 0)
-                break;
-        } else {
-            callable_obj_t *c = (callable_obj_t *) g_value_get_pointer(&val);
-
-            if (g_strcmp0(c->_callID, confID) == 0)
-                break;
-        }
-    }
-
-    calltree_add_history_entry(call, &iter);
-}

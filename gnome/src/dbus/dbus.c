@@ -293,9 +293,7 @@ conference_created_cb(DBusGProxy *proxy UNUSED, const gchar* confID, void * foo 
     time(&new_conf->_time_start);
 
     conferencelist_add(current_calls_tab, new_conf);
-    conferencelist_add(history_tab, new_conf);
     calltree_add_conference_to_current_calls(new_conf);
-    calltree_add_conference_to_history(new_conf);
 }
 
 static void
@@ -362,18 +360,6 @@ record_playback_stopped_cb(DBusGProxy *proxy UNUSED, const gchar *filepath)
         } else if (element->type == HIST_CALL &&
                    g_strcmp0(element->elem.call->_recordfile, filepath) == 0)
             element->elem.call->_record_is_playing = FALSE;
-    }
-
-    const gint conflist_size = conferencelist_get_size(history_tab);
-
-    for (gint i = 0; i < conflist_size; i++) {
-        conference_obj_t *conf = conferencelist_get_nth(history_tab, i);
-
-        if (conf == NULL) {
-            ERROR("DBUS: ERROR: Could not find %dth conf", i);
-            break;
-        } else if (g_strcmp0(conf->_recordfile, filepath) == 0)
-            conf->_record_is_playing = FALSE;
     }
 
     update_actions();

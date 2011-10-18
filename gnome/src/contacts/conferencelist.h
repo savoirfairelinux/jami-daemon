@@ -41,9 +41,6 @@ void conferencelist_init (calltab_t *);
 /** This function empty and free the conference list. */
 void conferencelist_clean (calltab_t *);
 
-/** This function empty and free the history conference list */
-void conferencelist_clean_history (void);
-
 /** This function empty, free the conference list and allocate a new one. */
 void conferencelist_reset (calltab_t *);
 

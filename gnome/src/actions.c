@@ -345,7 +345,6 @@ gboolean sflphone_init(GError **error)
     account_list_init();
     codec_capabilities_load();
     conferencelist_init(current_calls_tab);
-    conferencelist_init(history_tab);
 
     // Fetch the configured accounts
     sflphone_fill_account_list();
@@ -926,7 +925,6 @@ sflphone_add_participant(const gchar* callID, const gchar* confID)
 
     time(&call->_time_added);
 
-    calltree_add_call_to_conference_in_history(call, confID);
     dbus_add_participant(callID, confID);
 }
 
@@ -1079,58 +1077,15 @@ void sflphone_fill_conference_list(void)
 void sflphone_fill_history(void)
 {
     gchar **entries, **entries_orig;
-    callable_obj_t *history_call, *call;
-    QueueElement *element;
-
     entries = entries_orig = dbus_get_history();
 
     while (entries && *entries) {
         gchar *current_entry = *entries;
+        /* do something with key and value */
+        callable_obj_t *history_call = create_history_entry_from_serialized_form(current_entry);
 
-        // Parsed a conference
-        if (g_str_has_prefix(current_entry, "9999")) {
-            // create a conference entry
-            conference_obj_t *history_conf = create_conference_history_entry_from_serialized(current_entry);
-
-            // verify if this conference has been already created
-            conference_obj_t *conf = conferencelist_get(history_tab, history_conf->_confID);
-
-            // if this conference hasn't been created yet, add it to the conference list
-            if (!conf)
-                conferencelist_add(history_tab, history_conf);
-            else {
-                // if this conference was already created since one of the participants have already
-                // been unserialized, update the recordfile value
-                g_free(conf->_recordfile);
-                conf->_recordfile = g_strdup(history_conf->_recordfile);
-            }
-        } else {
-            // do something with key and value
-            history_call = create_history_entry_from_serialized_form(current_entry);
-
-            // Add it and update the GUI
-            calllist_add_call(history_tab, history_call);
-
-            if (history_call->_confID && strlen(history_call->_confID) > 0) {
-
-                // process conference
-                conference_obj_t *conf = conferencelist_get(history_tab, history_call->_confID);
-
-                if (!conf) {
-                    // conference does not exist yet, create it
-                    conf = create_new_conference(CONFERENCE_STATE_ACTIVE_ATTACHED, history_call->_confID);
-                    conferencelist_add(history_tab, conf);
-                }
-
-                // add this participant to the conference
-                conference_add_participant(history_call->_callID, conf);
-
-                // conference start timestamp corespond to
-                if (conf->_time_start > history_call->_time_added)
-                    conf->_time_start = history_call->_time_added;
-            }
-        }
-
+        /* Add it and update the GUI */
+        calllist_add_call(history_tab, history_call);
         entries++;
     }
 
@@ -1140,23 +1095,10 @@ void sflphone_fill_history(void)
     guint n = calllist_get_size(history_tab);
 
     for (guint i = 0; i < n; i++) {
-        element = calllist_get_nth(history_tab, i);
+        QueueElement *element = calllist_get_nth(history_tab, i);
 
-        if (element->type == HIST_CALL) {
-            call = element->elem.call;
-            calltree_add_history_entry(call, NULL);
-        }
-    }
-
-    // fill the treeview with conferences
-    n = conferencelist_get_size(history_tab);
-
-    for (guint i = 0; i < n; i++) {
-        conference_obj_t *conf = conferencelist_get_nth(history_tab, i);
-        if (!conf)
-            DEBUG("SFLphone: Error: Could not find conference");
-        else
-            calltree_add_conference_to_history(conf);
+        if (element->type == HIST_CALL)
+            calltree_add_history_entry(element->elem.call, NULL);
     }
 }
 
@@ -1192,36 +1134,15 @@ void sflphone_save_history(void)
 
         gchar *value;
 
-        if (current->type == HIST_CALL)
+        if (current->type == HIST_CALL) {
             value = serialize_history_call_entry(current->elem.call);
-        else if (current->type == HIST_CONFERENCE)
-            value = serialize_history_conference_entry(current->elem.conf);
-        else {
+            gchar *key = g_strdup_printf("%i", (int) current->elem.call->_time_start);
+
+            g_hash_table_replace(result, (gpointer) key,
+                    g_slist_append(g_hash_table_lookup(result, key),(gpointer) value));
+        }
+        else
             ERROR("SFLphone: Error: Unknown type for serialization");
-            break;
-        }
-
-        gchar *key = g_strdup_printf("%i", (int) current->elem.call->_time_start);
-
-        g_hash_table_replace(result, (gpointer) key,
-                             g_slist_append(g_hash_table_lookup(result, key),(gpointer) value));
-    }
-
-    size = conferencelist_get_size(history_tab);
-
-    for (gint i = 0; i < size; ++i) {
-        conference_obj_t *conf = conferencelist_get_nth(history_tab, i);
-
-        if (!conf) {
-            DEBUG("SFLphone: Error: Could not get %dth conference", i);
-            break;
-        }
-
-        gchar *value = serialize_history_conference_entry(conf);
-        gchar *key = g_strdup_printf("%i", (int) conf->_time_start);
-
-        g_hash_table_replace(result, (gpointer) key,
-                             g_slist_append(g_hash_table_lookup(result, key), (gpointer) value));
     }
 
     gchar **ordered_result = sflphone_order_history_hash_table(result);

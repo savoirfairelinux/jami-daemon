@@ -79,8 +79,4 @@ void conference_remove_participant (const gchar*, conference_obj_t *);
 
 void conference_participant_list_update (gchar**, conference_obj_t*);
 
-gchar *serialize_history_conference_entry(conference_obj_t *entry);
-
-conference_obj_t *create_conference_history_entry_from_serialized(gchar *);
-
 #endif
