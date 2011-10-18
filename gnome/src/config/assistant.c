@@ -30,6 +30,7 @@
 
 #include <string.h>
 
+#include "unused.h"
 #include "assistant.h"
 #include "logger.h"
 #include "dbus.h"

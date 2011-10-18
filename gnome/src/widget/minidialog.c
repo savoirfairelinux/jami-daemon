@@ -24,6 +24,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111-1301  USA
  */
 #include <gtk/gtk.h>
+#include "unused.h"
 #include "sflphone_const.h"
 #include "minidialog.h"
 

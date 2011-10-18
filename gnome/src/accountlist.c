@@ -29,8 +29,9 @@
  *  as that of the covered work.
  */
 
-#include <accountlist.h>
-#include <actions.h>
+#include "accountlist.h"
+#include "actions.h"
+#include "unused.h"
 
 static GQueue * accountQueue;
 

@@ -31,6 +31,7 @@
 #include "dialpad.h"
 #include "actions.h"
 #include "calltab.h"
+#include "unused.h"
 
 /**
  * button pressed event

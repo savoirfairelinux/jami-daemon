@@ -30,6 +30,7 @@
 
 #include "addressbook-config.h"
 #include "dbus.h"
+#include "unused.h"
 #include "logger.h"
 #include "searchbar.h"
 #include "contacts/addrbookfactory.h"

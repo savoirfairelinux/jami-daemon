@@ -25,6 +25,7 @@
  */
 
 #include "gtkscrollbook.h"
+#include "unused.h"
 #include "sflphone_const.h"
 
 static void pidgin_scroll_book_init(PidginScrollBook *scroll_book);

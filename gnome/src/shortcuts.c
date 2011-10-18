@@ -46,6 +46,7 @@
 #include "sflphone_const.h"
 #include "dbus.h"
 #include "actions.h"
+#include "unused.h"
 
 static void
 ungrab_key(guint key, GdkModifierType mask, const GdkWindow *root);

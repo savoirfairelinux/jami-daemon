@@ -36,6 +36,7 @@
 #include "actions.h"
 #include "mainwindow.h"
 #include "utils.h"
+#include "unused.h"
 #include "logger.h"
 #include <string.h>
 #include <libgnome/gnome-help.h>

@@ -28,10 +28,11 @@
  *  as that of the covered work.
  */
 
-#include <history.h>
 #include <string.h>
-#include <searchbar.h>
-#include <calltab.h>
+#include "history.h"
+#include "searchbar.h"
+#include "calltab.h"
+#include "unused.h"
 
 static GtkTreeModel *history_filter;
 static GtkEntry *history_searchbar_widget;

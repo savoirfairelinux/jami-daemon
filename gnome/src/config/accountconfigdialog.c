@@ -50,6 +50,7 @@
 #include "audioconf.h"
 #include "dbus/dbus.h"
 #include "utils.h"
+#include "unused.h"
 
 /**
  * TODO: tidy this up

@@ -36,6 +36,7 @@
 #include <glib/gprintf.h>
 
 #include "eel-gconf-extensions.h"
+#include "unused.h"
 #include "dbus.h"
 #include "calltab.h"
 #include "logger.h"

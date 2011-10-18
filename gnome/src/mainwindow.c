@@ -46,6 +46,7 @@
 #include "widget/gtkscrollbook.h"
 #include "widget/minidialog.h"
 #include "uimanager.h"
+#include "unused.h"
 #include "config/audioconf.h"
 
 #include <sys/stat.h>

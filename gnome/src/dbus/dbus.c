@@ -46,6 +46,7 @@
 
 #include "dbus.h"
 #include "actions.h"
+#include "unused.h"
 
 #include "widget/imwidget.h"
 

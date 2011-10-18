@@ -45,6 +45,7 @@
 #include "eel-gconf-extensions.h"
 
 #include "config/audioconf.h"
+#include "unused.h"
 #include "uimanager.h"
 #include "statusicon.h"
 

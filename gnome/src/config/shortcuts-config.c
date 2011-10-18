@@ -30,6 +30,7 @@
 
 #include "shortcuts-config.h"
 #include "shortcuts.h"
+#include "unused.h"
 #include "logger.h"
 
 #include <gdk/gdkx.h>

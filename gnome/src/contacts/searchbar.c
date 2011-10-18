@@ -36,6 +36,7 @@
 #include "calltab.h"
 #include "dbus.h"
 #include "logger.h"
+#include "unused.h"
 #include "config/addressbook-config.h"
 #include "contacts/addressbook.h"
 #include "contacts/addrbookfactory.h"

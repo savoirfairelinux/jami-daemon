@@ -31,8 +31,8 @@
 #include "calllist.h"
 #include "calltab.h"
 #include "calltree.h"
+#include "unused.h"
 #include "logger.h"
-#include "contacts/searchbar.h"
 #include "eel-gconf-extensions.h"
 
 static

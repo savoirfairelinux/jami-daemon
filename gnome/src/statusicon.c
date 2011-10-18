@@ -36,6 +36,7 @@
 #include "statusicon.h"
 #include "eel-gconf-extensions.h"
 #include "logger.h"
+#include "unused.h"
 
 static GtkStatusIcon *status;
 static GtkWidget *show_menu_item, *hangup_menu_item;

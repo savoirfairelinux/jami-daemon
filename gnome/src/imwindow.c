@@ -32,11 +32,12 @@
 
 #include "config.h"
 #include "eel-gconf-extensions.h"
-#include "sflphone_const.h"
 #include "logger.h"
 #include "imwindow.h"
+#include "unused.h"
 #include "contacts/calltab.h"
 #include "contacts/calltab.h"
+#include "sflphone_const.h"
 #include <sys/stat.h>
 
 /** Local variables */

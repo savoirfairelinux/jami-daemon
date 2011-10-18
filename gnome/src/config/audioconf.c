@@ -36,6 +36,7 @@
 #include "dbus/dbus.h"
 #include "uimanager.h"
 #include "mainwindow.h"
+#include "unused.h"
 
 /* FIXME: these should be in a struct rather than at file scope */
 static GtkListStore *pluginlist;

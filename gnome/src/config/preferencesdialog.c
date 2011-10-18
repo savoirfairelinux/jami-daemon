@@ -48,6 +48,7 @@
 #include "hooks-config.h"
 #include "audioconf.h"
 #include "uimanager.h"
+#include "unused.h"
 #include "mainwindow.h"
 
 /**
