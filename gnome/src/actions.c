@@ -1084,7 +1084,7 @@ void sflphone_fill_history(void)
 
     entries = entries_orig = dbus_get_history();
 
-    while (*entries) {
+    while (entries && *entries) {
         gchar *current_entry = *entries;
 
         // Parsed a conference

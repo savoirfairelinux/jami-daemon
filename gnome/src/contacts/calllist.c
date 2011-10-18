@@ -113,28 +113,6 @@ calllist_reset(calltab_t* tab)
     tab->callQueue = g_queue_new();
 }
 
-void calllist_add_history_call(callable_obj_t *obj)
-{
-    if (eel_gconf_get_integer(HISTORY_ENABLED)) {
-        QueueElement *element = g_new0(QueueElement, 1);
-        element->type = HIST_CALL;
-        element->elem.call = obj;
-        g_queue_push_tail(history_tab->callQueue, (gpointer) element);
-        calltree_add_history_entry(obj, NULL);
-    }
-}
-
-void calllist_add_history_conference(conference_obj_t *obj)
-{
-    if (eel_gconf_get_integer(HISTORY_ENABLED)) {
-        QueueElement *element = g_new0(QueueElement, 1);
-        element->type = HIST_CONFERENCE;
-        element->elem.conf = obj;
-        g_queue_push_tail(history_tab->callQueue, (gpointer) element);
-        calltree_add_conference_to_history(obj);
-    }
-}
-
 void
 calllist_add_call(calltab_t* tab, callable_obj_t * c)
 {

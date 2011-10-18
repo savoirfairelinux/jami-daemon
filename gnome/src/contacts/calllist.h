@@ -69,10 +69,6 @@ typedef struct {
 void
 calllist_add_contact (gchar *, gchar *, contact_type_t, GdkPixbuf *);
 
-void calllist_add_history_call (callable_obj_t *obj);
-
-void calllist_add_history_conference (conference_obj_t *obj);
-
 /** This function empty and free the call list. */
 void
 calllist_clean (calltab_t* tab);

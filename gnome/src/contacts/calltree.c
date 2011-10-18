@@ -177,8 +177,8 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
 
 /* A row is activated when it is double clicked */
 void
-row_activated(GtkTreeView       *tree_view UNUSED,
-              GtkTreePath       *path UNUSED,
+row_activated(GtkTreeView *tree_view UNUSED,
+              GtkTreePath *path UNUSED,
               GtkTreeViewColumn *column UNUSED,
               void * data UNUSED)
 {
@@ -444,7 +444,6 @@ calltree_create(calltab_t* tab, int searchbar_type)
     calltree_sw = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(calltree_sw), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(calltree_sw), GTK_SHADOW_IN);
-
 
     tab->store = gtk_tree_store_new(4,
                                     GDK_TYPE_PIXBUF, /* Icon */
@@ -959,8 +958,6 @@ void calltree_add_conference_to_current_calls(conference_obj_t* conf)
 
     DEBUG("Calltree: Add conference %s", conf->_confID);
 
-    gchar *description = g_markup_printf_escaped("<b>%s</b>", "");
-
     GtkTreeIter iter;
     gtk_tree_store_append(current_calls_tab->store, &iter, NULL);
 
@@ -1063,19 +1060,20 @@ void calltree_add_conference_to_current_calls(conference_obj_t* conf)
 
     DEBUG("Calltree: Add conference to tree store");
 
+    gchar *description = g_markup_printf_escaped("<b>%s</b>", "");
     gtk_tree_store_set(current_calls_tab->store, &iter,
                        COLUMN_ACCOUNT_PIXBUF, pixbuf,
                        COLUMN_ACCOUNT_DESC, description,
                        COLUMN_ACCOUNT_SECURITY_PIXBUF, pixbuf_security,
                        COLUMN_ACCOUNT_PTR, conf,
                        -1);
+    g_free(description);
 
     if (pixbuf)
         g_object_unref(pixbuf);
 
     if (pixbuf_security)
         g_object_unref(pixbuf_security);
-
 
     for (GSList *part = conf->participant_list; part; part = g_slist_next(part)) {
         const gchar * const call_id = (gchar *) part->data;
@@ -1106,7 +1104,7 @@ void calltree_remove_conference_recursive(calltab_t* tab, const conference_obj_t
 
         /* if the nth child of parent has one or more children */
         if (gtk_tree_model_iter_nth_child(model, &iter_parent, parent, i)) {
-            /* RECRUSION! */
+            /* RECURSION! */
             if (gtk_tree_model_iter_has_child(model, &iter_parent))
                 calltree_remove_conference_recursive(tab, conf, &iter_parent);
 
