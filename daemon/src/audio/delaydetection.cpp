@@ -169,8 +169,6 @@ void DelayDetection::process(SFLDataFormat *inputData, int nbSamples)
         return;
 
     crossCorrelate(spkrReferenceDown_, captureDataDown_, correlationResult_, micDownSize_, spkrDownSize_);
-
-    int maxIndex = getMaxIndex(correlationResult_, spkrDownSize_);
 }
 
 void DelayDetection::crossCorrelate(float *ref, float *seg, float *res, int refSize, int segSize)

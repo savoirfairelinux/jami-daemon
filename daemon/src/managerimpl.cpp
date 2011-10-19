@@ -1601,7 +1601,7 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
     removeStream(call_id);
 
     if (getCallList().empty()) {
-        DEBUG("Manager: Stop audio stream, ther is only %d call(s) remaining", getCallList().size());
+        DEBUG("Manager: Stop audio stream, there are no calls remaining");
 
         audioLayerMutexLock();
         audiodriver_->stopStream();
@@ -2784,7 +2784,7 @@ ManagerImpl::getAccount(const std::string& accountID) const
 
 std::string ManagerImpl::getAccountIdFromNameAndServer(const std::string& userName, const std::string& server) const
 {
-    INFO("Manager : username = %s , server = %s", userName.c_str(), server.c_str());
+    INFO("Manager : username = %s, server = %s", userName.c_str(), server.c_str());
     // Try to find the account id from username and server name by full match
 
     for (AccountMap::const_iterator iter = accountMap_.begin(); iter != accountMap_.end(); ++iter) {

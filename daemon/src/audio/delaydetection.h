@@ -113,7 +113,7 @@ class DelayDetection {
 
         void bandpassFilter(float *input, int nbSamples);
 
-        int getMaxIndex(float *data, int size);
+        static int getMaxIndex(float *data, int size);
 
         State internalState_;
 
