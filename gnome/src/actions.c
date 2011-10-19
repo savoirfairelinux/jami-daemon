@@ -1098,7 +1098,7 @@ void sflphone_fill_history(void)
         QueueElement *element = calllist_get_nth(history_tab, i);
 
         if (element->type == HIST_CALL)
-            calltree_add_history_entry(element->elem.call, NULL);
+            calltree_add_history_entry(element->elem.call);
     }
 }
 

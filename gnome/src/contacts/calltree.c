@@ -845,7 +845,7 @@ void calltree_add_call(calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
     gtk_tree_selection_select_iter(gtk_tree_view_get_selection(GTK_TREE_VIEW(tab->view)), &iter);
 }
 
-void calltree_add_history_entry(callable_obj_t *c, GtkTreeIter *parent)
+void calltree_add_history_entry(callable_obj_t *c)
 {
     if (!eel_gconf_get_integer(HISTORY_ENABLED))
         return;
@@ -854,27 +854,23 @@ void calltree_add_history_entry(callable_obj_t *c, GtkTreeIter *parent)
     gchar * description = calltree_display_call_info(c, DISPLAY_TYPE_HISTORY, "");
 
     GtkTreeIter iter;
-    gtk_tree_store_prepend(history_tab->store, &iter, parent);
+    gtk_tree_store_prepend(history_tab->store, &iter, NULL);
 
     GdkPixbuf *pixbuf = NULL;
 
-    if (parent == NULL) {
-        DEBUG("CallTree: This is a first level call not participating in a conference");
-        switch (c->_history_state) {
-            case INCOMING:
-                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/incoming.svg", NULL);
-                break;
-            case OUTGOING:
-                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/outgoing.svg", NULL);
-                break;
-            case MISSED:
-                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/missed.svg", NULL);
-                break;
-            default:
-                WARN("History - Should not happen!");
-        }
-    } else // participant to a conference
-        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
+    switch (c->_history_state) {
+        case INCOMING:
+            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/incoming.svg", NULL);
+            break;
+        case OUTGOING:
+            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/outgoing.svg", NULL);
+            break;
+        case MISSED:
+            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/missed.svg", NULL);
+            break;
+        default:
+            WARN("History - Should not happen!");
+    }
 
     gchar *date = get_formatted_start_timestamp(c->_time_start);
     gchar *duration = get_call_duration(c);
