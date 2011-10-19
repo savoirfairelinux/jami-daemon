@@ -60,16 +60,15 @@
 #include "global.h"
 #include "sip/sdp.h"
 
-class SdpSessionException : public std::exception
-{
+class SdpSessionException : public std::exception {
     public:
-        SdpSessionException (const std::string& str="") throw() : errstr (str) {}
+        SdpSessionException(const std::string& str="") throw() : errstr(str) {}
 
         virtual ~SdpSessionException() throw() {}
 
         virtual const char *what() const throw() {
-            std::string expt ("SdpSession: SdpSessionException occured: ");
-            expt.append (errstr);
+            std::string expt("SdpSession: SdpSessionException occured: ");
+            expt.append(errstr);
             return expt.c_str();
         }
     private:
@@ -79,54 +78,54 @@ class SdpSessionException : public std::exception
 
 class SDPTest : public CppUnit::TestCase {
 
-   /**
-     * Use cppunit library macros to add unit test the factory
-     */
-    CPPUNIT_TEST_SUITE( SDPTest );
-    CPPUNIT_TEST ( testInitialOfferLastCodec );
-    CPPUNIT_TEST ( testInitialAnswerLastCodec );
-    CPPUNIT_TEST ( testInitialOfferLastCodec );
-    CPPUNIT_TEST ( testInitialAnswerLastCodec );
-    CPPUNIT_TEST ( testReinvite );
-    CPPUNIT_TEST_SUITE_END();
+        /**
+          * Use cppunit library macros to add unit test the factory
+          */
+        CPPUNIT_TEST_SUITE(SDPTest);
+        CPPUNIT_TEST(testInitialOfferLastCodec);
+        CPPUNIT_TEST(testInitialAnswerLastCodec);
+        CPPUNIT_TEST(testInitialOfferLastCodec);
+        CPPUNIT_TEST(testInitialAnswerLastCodec);
+        CPPUNIT_TEST(testReinvite);
+        CPPUNIT_TEST_SUITE_END();
 
-public:
-    SDPTest() : CppUnit::TestCase("SDP module Tests") {}
-        
-    /**
-     * Code factoring - Common resources can be initialized here.
-     * This method is called by unitcpp before each test
-     */
-    void setUp();
+    public:
+        SDPTest() : CppUnit::TestCase("SDP module Tests") {}
 
-    /**
-     * Code factoring - Common resources can be released here.
-     * This method is called by unitcpp after each test
-     */
-    void tearDown ();
+        /**
+         * Code factoring - Common resources can be initialized here.
+         * This method is called by unitcpp before each test
+         */
+        void setUp();
 
-	void testInitialOfferFirstCodec();
+        /**
+         * Code factoring - Common resources can be released here.
+         * This method is called by unitcpp after each test
+         */
+        void tearDown();
 
-	void testInitialAnswerFirstCodec();
+        void testInitialOfferFirstCodec();
 
-	void testInitialOfferLastCodec();
+        void testInitialAnswerFirstCodec();
 
-	void testInitialAnswerLastCodec();
+        void testInitialOfferLastCodec();
 
-	void testReinvite ();
+        void testInitialAnswerLastCodec();
 
-private:
+        void testReinvite();
 
-	Sdp *_session;
+    private:
 
-	pj_pool_t *_testPool;
+        Sdp *session_;
 
-	pj_caching_pool _poolCache;
+        pj_pool_t *testPool_;
+
+        pj_caching_pool poolCache_;
 
 };
 
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(SDPTest, "SDPTest");
-CPPUNIT_TEST_SUITE_REGISTRATION( SDPTest );
+CPPUNIT_TEST_SUITE_REGISTRATION(SDPTest);
 
 #endif

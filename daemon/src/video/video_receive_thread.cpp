@@ -110,7 +110,7 @@ int createShm(unsigned numBytes, int *shmKey)
     shm_id = shmget(key, numBytes, 0644 | IPC_CREAT);
 
     if (shm_id == -1)
-        _error("%s:shmget:%m", __PRETTY_FUNCTION__);
+        ERROR("%s:shmget:%m", __PRETTY_FUNCTION__);
 
     return shm_id;
 }
@@ -122,7 +122,7 @@ uint8_t *attachShm(int shm_id)
     uint8_t *data = reinterpret_cast<uint8_t*>(shmat(shm_id, (void *)0, 0));
     if (data == reinterpret_cast<uint8_t *>(-1))
     {
-        _error("%s:shmat:%m", __PRETTY_FUNCTION__);
+        ERROR("%s:shmat:%m", __PRETTY_FUNCTION__);
         data = NULL;
     }
 
@@ -133,7 +133,7 @@ void detachShm(uint8_t *data)
 {
     /* detach from the segment: */
     if (data and shmdt(data) == -1)
-        _error("%s:shmdt:%m", __PRETTY_FUNCTION__);
+        ERROR("%s:shmdt:%m", __PRETTY_FUNCTION__);
 }
 
 void destroyShm(int shm_id)
@@ -198,7 +198,7 @@ int VideoReceiveThread::createSemSet(int shmKey, int *semKey)
     sem_set_id = semget(key, 1, 0600 | IPC_CREAT);
     if (sem_set_id == -1)
     {
-        _error("%s:semget:%m", __PRETTY_FUNCTION__);
+        ERROR("%s:semget:%m", __PRETTY_FUNCTION__);
         ost::Thread::exit();
     }
 
@@ -216,7 +216,7 @@ void VideoReceiveThread::loadSDP()
     sdpFilename_ = openTemp("/tmp", os);
 
     os << args_["receiving_sdp"];
-    _debug("%s:loaded SDP %s", __PRETTY_FUNCTION__,
+    DEBUG("%s:loaded SDP %s", __PRETTY_FUNCTION__,
             args_["receiving_sdp"].c_str());
 
     os.close();
@@ -238,7 +238,7 @@ void VideoReceiveThread::setup()
             file_iformat = av_find_input_format("sdp");
             if (!file_iformat)
             {
-                _error("%s:Could not find format \"sdp\"", __PRETTY_FUNCTION__);
+                ERROR("%s:Could not find format \"sdp\"", __PRETTY_FUNCTION__);
                 ost::Thread::exit();
             }
         }
@@ -247,11 +247,11 @@ void VideoReceiveThread::setup()
             // it's a v4l device if starting with /dev/video
             // FIXME: This is not the most robust way of checking if we mean to use a
             // v4l device
-            _debug("Using v4l2 format");
+            DEBUG("Using v4l2 format");
             file_iformat = av_find_input_format("video4linux2");
             if (!file_iformat)
             {
-                _error("%s:Could not find format!", __PRETTY_FUNCTION__);
+                ERROR("%s:Could not find format!", __PRETTY_FUNCTION__);
                 ost::Thread::exit();
             }
         }
@@ -268,7 +268,7 @@ void VideoReceiveThread::setup()
         if (avformat_open_input(&inputCtx_, args_["input"].c_str(),
                                 file_iformat, &options) != 0)
         {
-            _error("%s:Could not open input file \"%s\"", __PRETTY_FUNCTION__,
+            ERROR("%s:Could not open input file \"%s\"", __PRETTY_FUNCTION__,
                     args_["input"].c_str());
             ost::Thread::exit();
         }
@@ -280,7 +280,7 @@ void VideoReceiveThread::setup()
         if (avformat_find_stream_info(inputCtx_, NULL) < 0)
 #endif
         {
-            _error("%s:Could not find stream info!", __PRETTY_FUNCTION__);
+            ERROR("%s:Could not find stream info!", __PRETTY_FUNCTION__);
             ost::Thread::exit();
         }
 
@@ -295,7 +295,7 @@ void VideoReceiveThread::setup()
         }
         if (videoStreamIndex_ == -1)
         {
-            _error("%s:Could not find video stream!", __PRETTY_FUNCTION__);
+            ERROR("%s:Could not find video stream!", __PRETTY_FUNCTION__);
             ost::Thread::exit();
         }
 
@@ -306,7 +306,7 @@ void VideoReceiveThread::setup()
         AVCodec *inputDecoder = avcodec_find_decoder(decoderCtx_->codec_id);
         if (inputDecoder == NULL)
         {
-            _error("%s:Unsupported codec!", __PRETTY_FUNCTION__);
+            ERROR("%s:Unsupported codec!", __PRETTY_FUNCTION__);
             ost::Thread::exit();
         }
 
@@ -316,7 +316,7 @@ void VideoReceiveThread::setup()
         if (avcodec_open2(decoderCtx_, inputDecoder, NULL) < 0)
 #endif
         {
-            _error("%s:Could not open codec!", __PRETTY_FUNCTION__);
+            ERROR("%s:Could not open codec!", __PRETTY_FUNCTION__);
             ost::Thread::exit();
         }
     }
@@ -324,7 +324,7 @@ void VideoReceiveThread::setup()
     scaledPicture_ = avcodec_alloc_frame();
     if (scaledPicture_ == 0)
     {
-        _error("%s:Could not allocated output frame!", __PRETTY_FUNCTION__);
+        ERROR("%s:Could not allocated output frame!", __PRETTY_FUNCTION__);
         ost::Thread::exit();
     }
 
@@ -350,7 +350,7 @@ void VideoReceiveThread::setup()
     if (args_["input"] == sdpFilename_)
     {
         // publish our new video stream's existence
-        _debug("Publishing shm: %d sem: %d size: %d", shmKey_, semKey_,
+        DEBUG("Publishing shm: %d sem: %d size: %d", shmKey_, semKey_,
                 videoBufferSize_);
         // Fri Jul 15 12:15:59 EDT 2011:tmatth:FIXME: access to call manager
         // from this thread may not be thread-safe
@@ -374,7 +374,7 @@ void VideoReceiveThread::createScalingContext()
             NULL, NULL, NULL);
     if (imgConvertCtx_ == 0)
     {
-        _error("Cannot init the conversion context!");
+        ERROR("Cannot init the conversion context!");
         ost::Thread::exit();
     }
 }
@@ -440,7 +440,7 @@ void VideoReceiveThread::run()
             errno = av_read_frame(inputCtx_, &inpacket);
             if (errno < 0)
             {
-                _error("Couldn't read frame : %m\n");
+                ERROR("Couldn't read frame : %m\n");
                 break;
             }
 

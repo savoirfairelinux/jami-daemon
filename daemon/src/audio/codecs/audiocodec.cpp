@@ -36,33 +36,28 @@ using std::ptrdiff_t;
 
 namespace sfl {
 
-AudioCodec::AudioCodec (uint8 payload, const std::string &codecName) :
-        _codecName (codecName), _clockRate (8000), _channel (1), _bitrate (0.0),
-        _hasDynamicPayload (false), _payload(payload)
+AudioCodec::AudioCodec(uint8 payload, const std::string &codecName) :
+    codecName_(codecName), clockRate_(8000), channel_(1), bitrate_(0.0),
+    hasDynamicPayload_(false), payload_(payload)
 {
-    init (payload, _clockRate);
+    init(payload, clockRate_);
 }
 
-AudioCodec::AudioCodec (const AudioCodec& codec) :
-    _codecName(codec._codecName), _clockRate(codec._clockRate),
-    _channel(codec._channel), _bitrate (codec._bitrate),
-    _hasDynamicPayload (false), _payload(codec._payload)
+AudioCodec::AudioCodec(const AudioCodec& codec) :
+    codecName_(codec.codecName_), clockRate_(codec.clockRate_),
+    channel_(codec.channel_), bitrate_(codec.bitrate_),
+    hasDynamicPayload_(false), payload_(codec.payload_)
 {
-    init(codec._payload, codec._clockRate);
+    init(codec.payload_, codec.clockRate_);
 }
 
-void AudioCodec::init (uint8 payloadType, uint32 clockRate)
+void AudioCodec::init(uint8 payloadType, uint32 clockRate)
 {
-    _payloadFormat = new ost::DynamicPayloadFormat (payloadType, clockRate);
-
-    _hasDynamicPayload = (_payload >= 96 && _payload <= 127) ? true : false;
+    payloadFormat_ = new ost::DynamicPayloadFormat(payloadType, clockRate);
 
     // If g722 (payload 9), we need to init libccrtp symetric sessions with using
     // dynamic payload format. This way we get control on rtp clockrate.
-
-    if (_payload == 9) {
-        _hasDynamicPayload = true;
-    }
+    hasDynamicPayload_ = ((payload_ >= 96 and payload_ <= 127) or payload_ == 9);
 }
 
 std::string AudioCodec::getMimeType() const
@@ -72,47 +67,47 @@ std::string AudioCodec::getMimeType() const
 
 std::string AudioCodec::getMimeSubtype() const
 {
-    return _codecName;
+    return codecName_;
 }
 
 const ost::PayloadFormat& AudioCodec::getPayloadFormat()
 {
-    return (*_payloadFormat);
+    return *payloadFormat_;
 }
 
-uint8 AudioCodec::getPayloadType (void) const
+uint8 AudioCodec::getPayloadType() const
 {
-    return _payload;
+    return payload_;
 }
 
-bool AudioCodec::hasDynamicPayload (void) const
+bool AudioCodec::hasDynamicPayload() const
 {
-    return _hasDynamicPayload;
+    return hasDynamicPayload_;
 }
 
-uint32 AudioCodec::getClockRate (void) const
+uint32 AudioCodec::getClockRate() const
 {
-    return _clockRate;
+    return clockRate_;
 }
 
-unsigned AudioCodec::getFrameSize (void) const
+unsigned AudioCodec::getFrameSize() const
 {
-    return _frameSize;
+    return frameSize_;
 }
 
-uint8 AudioCodec::getChannel (void) const
+uint8 AudioCodec::getChannel() const
 {
-    return _channel;
+    return channel_;
 }
 
-double AudioCodec::getBitRate (void) const
+double AudioCodec::getBitRate() const
 {
-    return _bitrate;
+    return bitrate_;
 }
 
 AudioCodec::~AudioCodec()
 {
-    delete _payloadFormat;
+    delete payloadFormat_;
 }
 
 } // end namespace sfl

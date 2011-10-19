@@ -40,14 +40,13 @@
 class NetworkManager
     : public org::freedesktop::NetworkManager_proxy,
   public DBus::IntrospectableProxy,
-  public DBus::ObjectProxy
-{
+      public DBus::ObjectProxy {
     public:
 
-        NetworkManager (DBus::Connection&, const DBus::Path&, const char*);
-        void StateChanged (const uint32_t& state);
-        void PropertiesChanged (const std::map< std::string, ::DBus::Variant >& argin0);
-        std::string stateAsString (const uint32_t& state);
+        NetworkManager(DBus::Connection&, const DBus::Path&, const char*);
+        void StateChanged(const uint32_t& state);
+        void PropertiesChanged(const std::map< std::string, ::DBus::Variant >& argin0);
+        std::string stateAsString(const uint32_t& state);
 
         enum NMState {
             NM_STATE_UNKNOWN = 0,

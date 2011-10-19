@@ -51,32 +51,32 @@ G_BEGIN_DECLS
  * Template callback function for the asynchronous search
  */
 typedef void
-(* SearchAsyncHandler) (GList *hits, gpointer user_data);
+(* SearchAsyncHandler)(GList *hits, gpointer user_data);
 
 /**
  * Initialize the address book.
  * Connection to evolution data server
  */
 void
-init_eds ();
+init_eds();
 
 /**
  * Fill list of addressbooks
  */
 void
-fill_books_data (void);
+fill_books_data(void);
 
 /**
  * Asynchronous query to EDS using get contact method.
  */
 void
-search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler handler, gpointer user_data);
+search_async_by_contacts(const char *query, int max_results, SearchAsyncHandler handler, gpointer user_data);
 
 GSList*
-get_books (void);
+get_books(void);
 
 book_data_t *
-books_get_book_data_by_uid (gchar *uid);
+books_get_book_data_by_uid(gchar *uid);
 
 /**
  * Public way to know if we can perform a search
@@ -100,10 +100,10 @@ addressbook_get_books_data();
  * Set the current address book
  */
 void
-set_current_addressbook (const gchar *name);
+set_current_addressbook(const gchar *name);
 
 void
-set_current_addressbook_test (EBookQueryTest test);
+set_current_addressbook_test(EBookQueryTest test);
 
 GSList *
 get_books_data();

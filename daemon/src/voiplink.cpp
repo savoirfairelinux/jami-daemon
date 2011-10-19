@@ -31,44 +31,45 @@
  *  as that of the covered work.
  */
 
+#include "call.h"
 #include "voiplink.h"
-#include "manager.h"
 
-VoIPLink::~VoIPLink (void)
+VoIPLink::~VoIPLink()
 {
-    ost::MutexLock m(_callMapMutex);
-    for (CallMap::const_iterator iter = _callMap.begin();
-            iter != _callMap.end(); ++iter)
+    ost::MutexLock m(callMapMutex_);
+
+    for (CallMap::const_iterator iter = callMap_.begin();
+            iter != callMap_.end(); ++iter)
         delete iter->second;
 
-    _callMap.clear();
+    callMap_.clear();
 
 }
 
-void VoIPLink::addCall (Call* call)
+void VoIPLink::addCall(Call* call)
 {
-    if (call and getCall (call->getCallId()) == NULL) {
-        ost::MutexLock m(_callMapMutex);
-        _callMap[call->getCallId()] = call;
+    if (call and getCall(call->getCallId()) == NULL) {
+        ost::MutexLock m(callMapMutex_);
+        callMap_[call->getCallId()] = call;
     }
 }
 
-void VoIPLink::removeCall (const std::string& id)
+void VoIPLink::removeCall(const std::string& id)
 {
-    ost::MutexLock m(_callMapMutex);
+    ost::MutexLock m(callMapMutex_);
 
-    _debug ("VoipLink: removing call %s from list", id.c_str());
+    DEBUG("VoipLink: removing call %s from list", id.c_str());
 
-    delete _callMap[id];
-    _callMap.erase(id);
+    delete callMap_[id];
+    callMap_.erase(id);
 }
 
-Call* VoIPLink::getCall (const std::string& id)
+Call* VoIPLink::getCall(const std::string& id)
 {
-    ost::MutexLock m(_callMapMutex);
-    CallMap::iterator iter = _callMap.find (id);
+    ost::MutexLock m(callMapMutex_);
+    CallMap::iterator iter = callMap_.find(id);
 
-    if (iter != _callMap.end())
+    if (iter != callMap_.end())
         return iter->second;
     else
         return NULL;

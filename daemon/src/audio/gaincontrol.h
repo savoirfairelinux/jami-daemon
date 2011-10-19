@@ -3,160 +3,129 @@
 
 #include "global.h"
 
-#define SFL_GAIN_BUFFER_LENGTH 160
-
 class GainControl {
 
-public:
-    /**
-     * Constructor for the gain controller
-     * /param Sampling rate
-     * /param Target gain in dB
-     */
-    GainControl(double, double);
-
-    /**
-     * Destructor for this class
-     */
-    ~GainControl(void);
-
-    /**
-     * Apply addaptive gain factor on input signal
-     * /param Input audio buffer
-     * /param Input samples
-     */
-    void process(SFLDataFormat *, int samples);
-
-private:
-
-    /**
-     * Rms detector
-     */
-    class RmsDetection {
-    public:
-	/**
-	 * Constructor for this class
-         */
-	RmsDetection(void);
-
-        /**
-	 * Get rms value
-         * /param Audio sample
-	 */
-        double getRms(double);
-    
-    };
-
-    class DetectionAverage {
     public:
         /**
-         * Constructor for this class
+         * Constructor for the gain controller
          * /param Sampling rate
-         * /param Attack ramping time
-         * /param Release ramping time 
+         * /param Target gain in dB
          */
-	DetectionAverage(double, double, double);
-        
+        GainControl(double, double);
+
         /**
-	 * Process average
-	 */
-        double getAverage(double);
+         * Apply addaptive gain factor on input signal
+         * /param Input audio buffer
+         * /param Input samples
+         */
+        void process(SFLDataFormat *, int samples);
 
     private:
+        class DetectionAverage {
+            public:
+                /**
+                 * Constructor for this class
+                 * /param Sampling rate
+                 * /param Attack ramping time
+                 * /param Release ramping time
+                 */
+                DetectionAverage(double, double, double);
+
+                /**
+                	 * Process average
+                	 */
+                double getAverage(double);
+
+            private:
+                /**
+                 * Average factor for attack
+                 */
+                double g_a_;
+
+                /**
+                 * Attack ramp time (in ms)
+                 */
+                double teta_a_;
+
+                /**
+                 * Average factor for release
+                	 */
+                double g_r_;
+
+                /**
+                 * Release ramp time (in ms)
+                 */
+                double teta_r_;
+
+                /**
+                	 * Samplig rate
+                	 */
+                double samplingRate_;
+
+                /**
+                	 * Previous gain (first order memory)
+                 */
+                double previous_y_;
+        };
+
+        class Limiter {
+            public:
+                /**
+                 * Limiter
+                	 * /param Threshold
+                	 * /param Ratio
+                 */
+                Limiter(double, double);
+
+                /**
+                 * Perform compression on input signal
+                 */
+                double limit(double);
+
+            private:
+                double ratio_;
+                double threshold_;
+        };
+
         /**
-         * Average factor for attack
+         * First order mean filter
          */
-	double g_a;
+        DetectionAverage averager_;
 
         /**
-         * Attack ramp time (in ms)
+         * Post processing compression
          */
-	double teta_a;
+        Limiter limiter_;
 
         /**
-         * Average factor for release
-	 */
-        double g_r;
-
-        /**
-         * Release ramp time (in ms)
+         * Target audio level in dB
          */
-        double teta_r;
+        double targetLeveldB_;
 
         /**
-	 * Samplig rate
-	 */
-        double samplingRate;
-
-        /**
-	 * Previous gain (first order memory)
+         * Target audio level in linear scale
          */
-        double previous_y;
-    };
-
-    class Limiter {
-    public:
-        /**
-         * Limiter
-	 * /param Threshold
-	 * /param Ratio
-         */
-    	Limiter(double, double);
+        double targetLevelLinear_;
 
         /**
-         * Perform compression on input signal
+         * Current gain
          */
-        double limit(double);
+        double currentGain_;
 
-    private:
-	double ratio;
-	double threshold;
-    };
+        /**
+         * Previou gain for smoothing
+         */
+        double previousGain_;
 
-    /**
-     * Current audio level detection
-     */
-    RmsDetection detector;
+        /**
+         * Maximum incrementation stop of current gain
+         */
+        double maxIncreaseStep_;
 
-    /**
-     * First order mean filter
-     */
-    DetectionAverage averager;
-
-    /**
-     * Post processing compression
-     */
-    Limiter limiter;
-
-    /**
-     * Target audio level in dB
-     */
-    double targetLeveldB;
-
-    /**
-     * Target audio level in linear scale
-     */
-    double targetLevelLinear;
-
-    /**
-     * Current gain
-     */
-    double currentGain;
-
-    /** 
-     * Previou gain for smoothing
-     */
-    double previousGain;
-
-    /**
-     * Maximum incrementation stop of current gain
-     */
-    double maxIncreaseStep;
-
-    /**
-     * Maximum decrease step
-     */ 
-    double maxDecreaseStep;
+        /**
+         * Maximum decrease step
+         */
+        double maxDecreaseStep_;
 
 };
 

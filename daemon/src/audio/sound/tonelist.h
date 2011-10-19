@@ -37,39 +37,36 @@
 
 #include "tone.h"
 
-class TelephoneTone
-{
+class TelephoneTone {
     public:
+        /** Countries */
+        enum COUNTRYID {
+            ZID_NORTH_AMERICA = 0,
+            ZID_FRANCE,
+            ZID_AUSTRALIA,
+            ZID_UNITED_KINGDOM,
+            ZID_SPAIN,
+            ZID_ITALY,
+            ZID_JAPAN,
+            ZID_COUNTRIES,
+        };
 
-		/** Countries */
-		enum COUNTRYID {
-			ZID_NORTH_AMERICA = 0,
-			ZID_FRANCE,
-			ZID_AUSTRALIA,
-			ZID_UNITED_KINGDOM,
-			ZID_SPAIN,
-			ZID_ITALY,
-			ZID_JAPAN,
-			ZID_COUNTRIES,
-		};
-
-        TelephoneTone (const std::string& countryName, unsigned int sampleRate);
+        TelephoneTone(const std::string& countryName, unsigned int sampleRate);
         ~TelephoneTone();
 
-        void setCurrentTone (Tone::TONEID toneId);
+        void setCurrentTone(Tone::TONEID toneId);
         Tone* getCurrentTone();
 
     private:
         // Copy Constructor
-        TelephoneTone (const TelephoneTone& rh);
-
+        TelephoneTone(const TelephoneTone& rh);
         // Assignment Operator
         TelephoneTone& operator= (const TelephoneTone& rh);
 
-		static COUNTRYID getCountryId (const std::string& countryName);
+        static COUNTRYID getCountryId(const std::string& countryName);
 
-        Tone* _tone[Tone::TONE_NULL];
-        Tone::TONEID _currentTone;
+        Tone* tone_[Tone::TONE_NULL];
+        Tone::TONEID currentTone_;
 };
 
 #endif

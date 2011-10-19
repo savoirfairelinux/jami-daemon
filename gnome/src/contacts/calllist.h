@@ -31,15 +31,15 @@
 #ifndef __CALLLIST_H__
 #define __CALLLIST_H__
 
-#include <callable_obj.h>
-#include <conference_obj.h>
 #include <gtk/gtk.h>
+#include "callable_obj.h"
+#include "conference_obj.h"
 
 /** @file calllist.h
   * @brief A list to hold calls.
   */
 
-typedef enum { HIST_CONFERENCE, HIST_CALL } ElementType;
+typedef enum { HIST_CALL } ElementType;
 
 typedef union {
    callable_obj_t *call;
@@ -68,10 +68,6 @@ typedef struct {
 
 void
 calllist_add_contact (gchar *, gchar *, contact_type_t, GdkPixbuf *);
-
-void calllist_add_history_call (callable_obj_t *obj);
-
-void calllist_add_history_conference (conference_obj_t *obj);
 
 /** This function empty and free the call list. */
 void

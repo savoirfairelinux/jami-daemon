@@ -32,7 +32,6 @@
 #define IAXCALL_H
 
 #include "call.h"
-#include "audio/codecs/audiocodecfactory.h"
 
 /**
  * @file: iaxcall.h
@@ -40,20 +39,19 @@
  */
 class iax_session;
 
-class IAXCall : public Call
-{
+class IAXCall : public Call {
     public:
         /**
          * Constructor
          * @param id  The unique ID of the call
          * @param type  The type of the call
          */
-        IAXCall (const std::string& id, Call::CallType type);
+        IAXCall(const std::string& id, Call::CallType type);
 
         /**
          * @return int  The bitwise list of supported formats
          */
-        int getSupportedFormat (const std::string &accountID) const;
+        int getSupportedFormat(const std::string &accountID) const;
 
         /**
          * Return a format (int) with the first matching codec selected.
@@ -68,9 +66,9 @@ class IAXCall : public Call
          * @param needles  The format(s) (bitwise) you are looking for to match
          * @return int  The matching format, thus 0 if none matches
          */
-        int getFirstMatchingFormat (int needles, const std::string &accountID) const;
+        int getFirstMatchingFormat(int needles, const std::string &accountID) const;
 
-        int getAudioCodec(void);
+        int getAudioCodec() const;
 
         int format;
         iax_session* session;

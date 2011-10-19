@@ -38,48 +38,47 @@
 const char * const Preferences::DFT_ZONE = "North America";
 
 namespace {
-    static const char * const DFT_PULSE_LENGTH_STR ="250";  /** Default DTMF lenght */
-    static const char * const ZRTP_ZIDFILE = "zidFile";     /** The filename used for storing ZIDs */
-    static const char * const ALSA_DFT_CARD	= "0";          /** Default sound card index */
-    static const char * const DFT_VOL_SPKR_STR = "100";     /** Default speaker volume */
-    static const char * const DFT_VOL_MICRO_STR	= "100";    /** Default mic volume */
+static const char * const DFT_PULSE_LENGTH_STR ="250";  /** Default DTMF lenght */
+static const char * const ZRTP_ZIDFILE = "zidFile";     /** The filename used for storing ZIDs */
+static const char * const ALSA_DFT_CARD	= "0";          /** Default sound card index */
+static const char * const DFT_VOL_SPKR_STR = "100";     /** Default speaker volume */
+static const char * const DFT_VOL_MICRO_STR	= "100";    /** Default mic volume */
 } // end anonymous namespace
 
-Preferences::Preferences() :  _accountOrder("")
-    , _historyLimit(30)
-    , _historyMaxCalls(20)
-    , _notifyMails(false)
-    , _zoneToneChoice(DFT_ZONE) // DFT_ZONE
-    , _registrationExpire(180)
-    , _portNum(5060)
-    , _searchBarDisplay(true)
-    , _zeroConfenable(false)
-    , _md5Hash(false)
-{
-}
+Preferences::Preferences() : accountOrder_("")
+    , historyLimit_(30)
+    , historyMaxCalls_(20)
+    , notifyMails_(false)
+    , zoneToneChoice_(DFT_ZONE) // DFT_ZONE
+    , registrationExpire_(180)
+    , portNum_(5060)
+    , searchBarDisplay_(true)
+    , zeroConfenable_(false)
+    , md5Hash_(false)
+{}
 
 void Preferences::serialize(Conf::YamlEmitter *emiter)
 {
-	Conf::MappingNode preferencemap(NULL);
+    Conf::MappingNode preferencemap(NULL);
 
-    Conf::ScalarNode order(_accountOrder);
+    Conf::ScalarNode order(accountOrder_);
     std::stringstream histlimitstr;
-    histlimitstr << _historyLimit;
+    histlimitstr << historyLimit_;
     Conf::ScalarNode historyLimit(histlimitstr.str());
     std::stringstream histmaxstr;
-    histmaxstr << _historyMaxCalls;
+    histmaxstr << historyMaxCalls_;
     Conf::ScalarNode historyMaxCalls(histmaxstr.str());
-    Conf::ScalarNode notifyMails(_notifyMails);
-    Conf::ScalarNode zoneToneChoice(_zoneToneChoice);
+    Conf::ScalarNode notifyMails(notifyMails_);
+    Conf::ScalarNode zoneToneChoice(zoneToneChoice_);
     std::stringstream expirestr;
-    expirestr << _registrationExpire;
+    expirestr << registrationExpire_;
     Conf::ScalarNode registrationExpire(expirestr.str());
     std::stringstream portstr;
-    portstr << _portNum;
+    portstr << portNum_;
     Conf::ScalarNode portNum(portstr.str());
-    Conf::ScalarNode searchBarDisplay(_searchBarDisplay);
-    Conf::ScalarNode zeroConfenable(_zeroConfenable);
-    Conf::ScalarNode md5Hash(_md5Hash);
+    Conf::ScalarNode searchBarDisplay(searchBarDisplay_);
+    Conf::ScalarNode zeroConfenable(zeroConfenable_);
+    Conf::ScalarNode md5Hash(md5Hash_);
 
     preferencemap.setKeyValue(orderKey, &order);
     preferencemap.setKeyValue(historyLimitKey, &historyLimit);
@@ -98,41 +97,40 @@ void Preferences::serialize(Conf::YamlEmitter *emiter)
 void Preferences::unserialize(Conf::MappingNode *map)
 {
     if (map == NULL) {
-        _error("Preference: Error: Preference map is NULL");
+        ERROR("Preference: Error: Preference map is NULL");
         return;
     }
 
-    map->getValue(orderKey, &_accountOrder);
-    map->getValue(historyLimitKey, &_historyLimit);
-    map->getValue(historyMaxCallsKey, &_historyMaxCalls);
-    map->getValue(notifyMailsKey, &_notifyMails);
-    map->getValue(zoneToneChoiceKey, &_zoneToneChoice);
-    map->getValue(registrationExpireKey, &_registrationExpire);
-    map->getValue(portNumKey, &_portNum);
-    map->getValue(searchBarDisplayKey, &_searchBarDisplay);
-    map->getValue(zeroConfenableKey, &_zeroConfenable);
-    map->getValue(md5HashKey, &_md5Hash);
+    map->getValue(orderKey, &accountOrder_);
+    map->getValue(historyLimitKey, &historyLimit_);
+    map->getValue(historyMaxCallsKey, &historyMaxCalls_);
+    map->getValue(notifyMailsKey, &notifyMails_);
+    map->getValue(zoneToneChoiceKey, &zoneToneChoice_);
+    map->getValue(registrationExpireKey, &registrationExpire_);
+    map->getValue(portNumKey, &portNum_);
+    map->getValue(searchBarDisplayKey, &searchBarDisplay_);
+    map->getValue(zeroConfenableKey, &zeroConfenable_);
+    map->getValue(md5HashKey, &md5Hash_);
 }
 
-
-VoipPreference::VoipPreference() : _playDtmf(true)
-    , _playTones(true)
-    , _pulseLength(atoi(DFT_PULSE_LENGTH_STR)) // DFT_PULSE_LENGTH_STR
-    , _symmetricRtp(true)
-    , _zidFile(ZRTP_ZIDFILE) // ZRTP_ZID_FILENAME
+VoipPreference::VoipPreference() : playDtmf_(true)
+    , playTones_(true)
+    , pulseLength_(atoi(DFT_PULSE_LENGTH_STR))
+    , symmetricRtp_(true)
+    , zidFile_(ZRTP_ZIDFILE)
 {}
 
 void VoipPreference::serialize(Conf::YamlEmitter *emitter)
 {
     Conf::MappingNode preferencemap(NULL);
 
-    Conf::ScalarNode playDtmf(_playDtmf);
-    Conf::ScalarNode playTones(_playTones);
+    Conf::ScalarNode playDtmf(playDtmf_);
+    Conf::ScalarNode playTones(playTones_);
     std::stringstream pulselengthstr;
-    pulselengthstr << _pulseLength;
+    pulselengthstr << pulseLength_;
     Conf::ScalarNode pulseLength(pulselengthstr.str());
-    Conf::ScalarNode symmetricRtp(_symmetricRtp);
-    Conf::ScalarNode zidFile(_zidFile.c_str());
+    Conf::ScalarNode symmetricRtp(symmetricRtp_);
+    Conf::ScalarNode zidFile(zidFile_.c_str());
 
     preferencemap.setKeyValue(playDtmfKey, &playDtmf);
     preferencemap.setKeyValue(playTonesKey, &playTones);
@@ -146,41 +144,39 @@ void VoipPreference::serialize(Conf::YamlEmitter *emitter)
 void VoipPreference::unserialize(Conf::MappingNode *map)
 {
     if (!map) {
-        _error("VoipPreference: Error: Preference map is NULL");
+        ERROR("VoipPreference: Error: Preference map is NULL");
         return;
     }
 
-    map->getValue(playDtmfKey, &_playDtmf);
-    map->getValue(playTonesKey, &_playTones);
-    map->getValue(pulseLengthKey, &_pulseLength);
-    map->getValue(symmetricRtpKey, &_symmetricRtp);
-    map->getValue(zidFileKey, &_zidFile);
+    map->getValue(playDtmfKey, &playDtmf_);
+    map->getValue(playTonesKey, &playTones_);
+    map->getValue(pulseLengthKey, &pulseLength_);
+    map->getValue(symmetricRtpKey, &symmetricRtp_);
+    map->getValue(zidFileKey, &zidFile_);
 }
 
-
-
-AddressbookPreference::AddressbookPreference() : _photo(true)
-    , _enabled(true)
-    , _list("")
-    , _maxResults(25)
-    , _business(true)
-    , _home(true)
-    , _mobile(true)
+AddressbookPreference::AddressbookPreference() : photo_(true)
+    , enabled_(true)
+    , list_("")
+    , maxResults_(25)
+    , business_(true)
+    , home_(true)
+    , mobile_(true)
 {}
 
 void AddressbookPreference::serialize(Conf::YamlEmitter *emitter)
 {
     Conf::MappingNode preferencemap(NULL);
 
-    Conf::ScalarNode photo(_photo);
-    Conf::ScalarNode enabled(_enabled);
-    Conf::ScalarNode list(_list);
+    Conf::ScalarNode photo(photo_);
+    Conf::ScalarNode enabled(enabled_);
+    Conf::ScalarNode list(list_);
     std::stringstream maxresultstr;
-    maxresultstr << _maxResults;
+    maxresultstr << maxResults_;
     Conf::ScalarNode maxResults(maxresultstr.str());
-    Conf::ScalarNode business(_business);
-    Conf::ScalarNode home(_home);
-    Conf::ScalarNode mobile(_mobile);
+    Conf::ScalarNode business(business_);
+    Conf::ScalarNode home(home_);
+    Conf::ScalarNode mobile(mobile_);
 
     preferencemap.setKeyValue(photoKey, &photo);
     preferencemap.setKeyValue(enabledKey, &enabled);
@@ -197,40 +193,37 @@ void AddressbookPreference::serialize(Conf::YamlEmitter *emitter)
 void AddressbookPreference::unserialize(Conf::MappingNode *map)
 {
     if (!map) {
-        _error("Addressbook: Error: Preference map is NULL");
+        ERROR("Addressbook: Error: Preference map is NULL");
         return;
     }
 
-    map->getValue(photoKey, &_photo);
-    map->getValue(enabledKey, &_enabled);
-    map->getValue(listKey, &_list);
-    map->getValue(maxResultsKey, &_maxResults);
-    map->getValue(businessKey, &_business);
-    map->getValue(homeKey, &_home);
-    map->getValue(mobileKey, &_mobile);
+    map->getValue(photoKey, &photo_);
+    map->getValue(enabledKey, &enabled_);
+    map->getValue(listKey, &list_);
+    map->getValue(maxResultsKey, &maxResults_);
+    map->getValue(businessKey, &business_);
+    map->getValue(homeKey, &home_);
+    map->getValue(mobileKey, &mobile_);
 }
 
-
-HookPreference::HookPreference() : _iax2Enabled(false)
-    , _numberAddPrefix("")
-    , _numberEnabled(false)
-    , _sipEnabled(false)
-    , _urlCommand("x-www-browser")
-    , _urlSipField("X-sflphone-url")
-{
-
-}
+HookPreference::HookPreference() : iax2Enabled_(false)
+    , numberAddPrefix_("")
+    , numberEnabled_(false)
+    , sipEnabled_(false)
+    , urlCommand_("x-www-browser")
+    , urlSipField_("X-sflphone-url")
+{}
 
 void HookPreference::serialize(Conf::YamlEmitter *emitter)
 {
     Conf::MappingNode preferencemap(NULL);
 
-    Conf::ScalarNode iax2Enabled(_iax2Enabled);
-    Conf::ScalarNode numberAddPrefix(_numberAddPrefix);
-    Conf::ScalarNode numberEnabled(_numberEnabled);
-    Conf::ScalarNode sipEnabled(_sipEnabled);
-    Conf::ScalarNode urlCommand(_urlCommand);
-    Conf::ScalarNode urlSipField(_urlSipField);
+    Conf::ScalarNode iax2Enabled(iax2Enabled_);
+    Conf::ScalarNode numberAddPrefix(numberAddPrefix_);
+    Conf::ScalarNode numberEnabled(numberEnabled_);
+    Conf::ScalarNode sipEnabled(sipEnabled_);
+    Conf::ScalarNode urlCommand(urlCommand_);
+    Conf::ScalarNode urlSipField(urlSipField_);
 
     preferencemap.setKeyValue(iax2EnabledKey, &iax2Enabled);
     preferencemap.setKeyValue(numberAddPrefixKey, &numberAddPrefix);
@@ -245,68 +238,68 @@ void HookPreference::serialize(Conf::YamlEmitter *emitter)
 void HookPreference::unserialize(Conf::MappingNode *map)
 {
     if (!map) {
-        _error("Hook: Error: Preference map is NULL");
+        ERROR("Hook: Error: Preference map is NULL");
         return;
     }
 
-    map->getValue(iax2EnabledKey, &_iax2Enabled);
-    map->getValue(numberAddPrefixKey, &_numberAddPrefix);
-    map->getValue(numberEnabledKey, &_numberEnabled);
-    map->getValue(sipEnabledKey, &_sipEnabled);
-    map->getValue(urlCommandKey, &_urlCommand);
-    map->getValue(urlSipFieldKey, &_urlSipField);
+    map->getValue(iax2EnabledKey, &iax2Enabled_);
+    map->getValue(numberAddPrefixKey, &numberAddPrefix_);
+    map->getValue(numberEnabledKey, &numberEnabled_);
+    map->getValue(sipEnabledKey, &sipEnabled_);
+    map->getValue(urlCommandKey, &urlCommand_);
+    map->getValue(urlSipFieldKey, &urlSipField_);
 }
 
-
 AudioPreference::AudioPreference() :
-      _audioApi(PULSEAUDIO_API_STR)
-    , _cardin(atoi(ALSA_DFT_CARD))
-    , _cardout(atoi(ALSA_DFT_CARD))
-    , _cardring(atoi(ALSA_DFT_CARD))
-    , _plugin("default") // PCM_DEFAULT
-    , _smplrate(44100) // DFT_SAMPLE_RATE
-    , _devicePlayback("")
-    , _deviceRecord("")
-    , _deviceRingtone("")
-    , _recordpath("") // DFT_RECORD_PATH
-    , _alwaysRecording(false)
-    , _volumemic(atoi(DFT_VOL_SPKR_STR))
-    , _volumespkr(atoi(DFT_VOL_MICRO_STR))
-    , _noisereduce(true)
-    , _echocancel(false)
-    , _echoCancelTailLength(100)
-    , _echoCancelDelay(0)
+    audioApi_(PULSEAUDIO_API_STR)
+    , cardin_(atoi(ALSA_DFT_CARD)) // ALSA_DFT_CARD
+    , cardout_(atoi(ALSA_DFT_CARD)) // ALSA_DFT_CARD
+    , cardring_(atoi(ALSA_DFT_CARD)) // ALSA_DFT_CARD
+    , plugin_("default") // PCM_DEFAULT
+    , smplrate_(44100) // DFT_SAMPLE_RATE
+    , devicePlayback_("")
+    , deviceRecord_("")
+    , deviceRingtone_("")
+    , recordpath_("") // DFT_RECORD_PATH
+    , alwaysRecording_(false)
+    , volumemic_(atoi(DFT_VOL_SPKR_STR)) // DFT_VOL_SPKR_STR
+    , volumespkr_(atoi(DFT_VOL_MICRO_STR)) // DFT_VOL_MICRO_STR
+    , noisereduce_(true)
+    , echocancel_(false)
+    , echoCancelTailLength_(100)
+    , echoCancelDelay_(0)
 {}
 
 namespace {
-    void checkSoundCard(int &card, int stream)
-    {
-        if (not AlsaLayer::soundCardIndexExists(card, stream)) {
-            _warn(" Card with index %d doesn't exist or is unusable.", card);
-            card = ALSA_DFT_CARD_ID;
-        }
+void checkSoundCard(int &card, int stream)
+{
+    if (not AlsaLayer::soundCardIndexExists(card, stream)) {
+        WARN(" Card with index %d doesn't exist or is unusable.", card);
+        card = ALSA_DFT_CARD_ID;
     }
+}
 }
 
 AudioLayer* AudioPreference::createAudioLayer()
 {
-    if (_audioApi == PULSEAUDIO_API_STR and system("ps -C pulseaudio") == 0)
+    if (audioApi_ == PULSEAUDIO_API_STR and system("ps -C pulseaudio") == 0)
         return new PulseLayer;
     else {
-        _audioApi = ALSA_API_STR;
-        checkSoundCard(_cardin, SFL_PCM_CAPTURE);
-        checkSoundCard(_cardout, SFL_PCM_PLAYBACK);
-        checkSoundCard(_cardring, SFL_PCM_RINGTONE);
+        audioApi_ = ALSA_API_STR;
+        checkSoundCard(cardin_, SFL_PCM_CAPTURE);
+        checkSoundCard(cardout_, SFL_PCM_PLAYBACK);
+        checkSoundCard(cardring_, SFL_PCM_RINGTONE);
         return new AlsaLayer;
     }
 }
 
 AudioLayer* AudioPreference::switchAndCreateAudioLayer()
 {
-    if (_audioApi == PULSEAUDIO_API_STR)
-        _audioApi = ALSA_API_STR;
+    if (audioApi_ == PULSEAUDIO_API_STR)
+        audioApi_ = ALSA_API_STR;
     else
-        _audioApi = PULSEAUDIO_API_STR;
+        audioApi_ = PULSEAUDIO_API_STR;
+
     return createAudioLayer();
 }
 
@@ -318,44 +311,44 @@ void AudioPreference::serialize(Conf::YamlEmitter *emitter)
 
     // alsa preference
     std::stringstream instr;
-    instr << _cardin;
-    Conf::ScalarNode cardin(instr.str()); // 0
+    instr << cardin_;
+    Conf::ScalarNode cardin(instr.str());
     std::stringstream outstr;
-    outstr << _cardout;
-    Conf::ScalarNode cardout(outstr.str()); // 0
+    outstr << cardout_;
+    Conf::ScalarNode cardout(outstr.str());
     std::stringstream ringstr;
-    ringstr << _cardring;
-    Conf::ScalarNode cardring(ringstr.str());// 0
-    Conf::ScalarNode plugin(_plugin); // default
+    ringstr << cardring_;
+    Conf::ScalarNode cardring(ringstr.str());
+    Conf::ScalarNode plugin(plugin_);
 
     std::stringstream ratestr;
-    ratestr << _smplrate;
-    Conf::ScalarNode smplrate(ratestr.str());// 44100
+    ratestr << smplrate_;
+    Conf::ScalarNode smplrate(ratestr.str());
 
     //pulseaudio preference
-    Conf::ScalarNode devicePlayback(_devicePlayback);//:
-    Conf::ScalarNode deviceRecord(_deviceRecord); //:
-    Conf::ScalarNode deviceRingtone(_deviceRingtone); //:
+    Conf::ScalarNode devicePlayback(devicePlayback_);
+    Conf::ScalarNode deviceRecord(deviceRecord_);
+    Conf::ScalarNode deviceRingtone(deviceRingtone_);
 
     // general preference
-    Conf::ScalarNode audioapi(_audioApi);
-    Conf::ScalarNode recordpath(_recordpath); //: /home/msavard/Bureau
-    Conf::ScalarNode alwaysRecording(_alwaysRecording);
+    Conf::ScalarNode audioapi(audioApi_);
+    Conf::ScalarNode recordpath(recordpath_); //: /home/msavard/Bureau
+    Conf::ScalarNode alwaysRecording(alwaysRecording_);
     std::stringstream micstr;
-    micstr << _volumemic;
+    micstr << volumemic_;
     Conf::ScalarNode volumemic(micstr.str()); //:  100
     std::stringstream spkrstr;
-    spkrstr << _volumespkr;
+    spkrstr << volumespkr_;
     Conf::ScalarNode volumespkr(spkrstr.str()); //: 100
-    Conf::ScalarNode noise(_noisereduce);
-    Conf::ScalarNode echo(_echocancel);
+    Conf::ScalarNode noise(noisereduce_);
+    Conf::ScalarNode echo(echocancel_);
     std::stringstream tailstr;
-    _debug("************************************************** serialize echotail %d", _echoCancelTailLength);
-    tailstr << _echoCancelTailLength;
+    DEBUG("************************************************** serialize echotail %d", echoCancelTailLength_);
+    tailstr << echoCancelTailLength_;
     Conf::ScalarNode echotail(tailstr.str());
     std::stringstream delaystr;
-    _debug("************************************************** serialize echodelay %d", _echoCancelTailLength);
-    delaystr << _echoCancelDelay;
+    DEBUG("************************************************** serialize echodelay %d", echoCancelTailLength_);
+    delaystr << echoCancelDelay_;
     Conf::ScalarNode echodelay(delaystr.str());
 
     preferencemap.setKeyValue(audioApiKey, &audioapi);
@@ -386,60 +379,62 @@ void AudioPreference::serialize(Conf::YamlEmitter *emitter)
 
 void AudioPreference::unserialize(Conf::MappingNode *map)
 {
-	assert(map);
+    assert(map);
 
-    map->getValue(audioApiKey, &_audioApi);
-    map->getValue(recordpathKey, &_recordpath);
-    map->getValue(alwaysRecordingKey, &_alwaysRecording);
-    map->getValue(volumemicKey, &_volumemic);
-    map->getValue(volumespkrKey, &_volumespkr);
-    map->getValue(noiseReduceKey, &_noisereduce);
-    map->getValue(echoCancelKey, &_echocancel);
+    map->getValue(audioApiKey, &audioApi_);
+    map->getValue(recordpathKey, &recordpath_);
+    map->getValue(alwaysRecordingKey, &alwaysRecording_);
+    map->getValue(volumemicKey, &volumemic_);
+    map->getValue(volumespkrKey, &volumespkr_);
+    map->getValue(noiseReduceKey, &noisereduce_);
+    map->getValue(echoCancelKey, &echocancel_);
 
     Conf::MappingNode *alsamap =(Conf::MappingNode *)(map->getValue("alsa"));
+
     if (alsamap) {
-        alsamap->getValue(cardinKey, &_cardin);
-		alsamap->getValue(cardoutKey, &_cardout);
-		alsamap->getValue(cardringKey, &_cardring);
-		alsamap->getValue(smplrateKey, &_smplrate);
-		alsamap->getValue(pluginKey, &_plugin);
+        alsamap->getValue(cardinKey, &cardin_);
+        alsamap->getValue(cardoutKey, &cardout_);
+        alsamap->getValue(cardringKey, &cardring_);
+        alsamap->getValue(smplrateKey, &smplrate_);
+        alsamap->getValue(pluginKey, &plugin_);
     }
 
     Conf::MappingNode *pulsemap =(Conf::MappingNode *)(map->getValue("pulse"));
+
     if (pulsemap) {
-        pulsemap->getValue(devicePlaybackKey, &_devicePlayback);
-        pulsemap->getValue(deviceRecordKey, &_deviceRecord);
-        pulsemap->getValue(deviceRingtoneKey, &_deviceRingtone);
+        pulsemap->getValue(devicePlaybackKey, &devicePlayback_);
+        pulsemap->getValue(deviceRecordKey, &deviceRecord_);
+        pulsemap->getValue(deviceRingtoneKey, &deviceRingtone_);
     }
 }
 
 VideoPreference::VideoPreference() :
-    _Device("")
-    , _Channel("")
-    , _Size("")
-    , _Rate("")
+    device_("")
+    , channel_("")
+    , size_("")
+    , rate_("")
 {
-	_v4l2_list = new VideoV4l2List();
-	_v4l2_list->start();
+	v4l2_list_ = new VideoV4l2List();
+	v4l2_list_->start();
 }
 
 VideoPreference::~VideoPreference()
 {
-	delete _v4l2_list;
+	delete v4l2_list_;
 }
 
 std::map<std::string, std::string> VideoPreference::getVideoSettings()
 {
     std::map<std::string, std::string> map;
     std::stringstream ss;
-    map["input"] = _v4l2_list->getDeviceNode(_Device);
-    ss << _v4l2_list->getChannelNum(_Device, _Channel);
+    map["input"] = v4l2_list_->getDeviceNode(device_);
+    ss << v4l2_list_->getChannelNum(device_, channel_);
     map["channel"] = ss.str();
-    map["video_size"] = _Size;
-    size_t x_pos = _Size.find("x");
-    map["width"] = _Size.substr(0, x_pos);
-    map["height"] = _Size.substr(x_pos + 1);
-    map["framerate"] = _Rate;
+    map["video_size"] = size_;
+    size_t x_pos = size_.find("x");
+    map["width"] = size_.substr(0, x_pos);
+    map["height"] = size_.substr(x_pos + 1);
+    map["framerate"] = rate_;
 
     return map;
 }
@@ -447,21 +442,21 @@ std::map<std::string, std::string> VideoPreference::getVideoSettings()
 void VideoPreference::serialize (Conf::YamlEmitter *emitter)
 {
 	if (emitter == NULL) {
-		_error("VideoPreference: Error: emitter is NULL while serializing");
+		ERROR("VideoPreference: Error: emitter is NULL while serializing");
 		return;
 	}
 
-    Conf::MappingNode preferencemap (NULL);
+    Conf::MappingNode preferencemap(NULL);
 
-    Conf::ScalarNode Device(_Device);
-    Conf::ScalarNode Channel(_Channel);
-    Conf::ScalarNode Size(_Size);
-    Conf::ScalarNode Rate(_Rate);
+    Conf::ScalarNode device(device_);
+    Conf::ScalarNode channel(channel_);
+    Conf::ScalarNode size(size_);
+    Conf::ScalarNode rate(rate_);
 
-    preferencemap.setKeyValue(videoDeviceKey, &Device);
-    preferencemap.setKeyValue(videoChannelKey, &Channel);
-    preferencemap.setKeyValue(videoSizeKey, &Size);
-    preferencemap.setKeyValue(videoRateKey, &Rate);
+    preferencemap.setKeyValue(videoDeviceKey, &device);
+    preferencemap.setKeyValue(videoChannelKey, &channel);
+    preferencemap.setKeyValue(videoSizeKey, &size);
+    preferencemap.setKeyValue(videoRateKey, &rate);
 
     emitter->serializeVideoPreference(&preferencemap);
 }
@@ -469,25 +464,25 @@ void VideoPreference::serialize (Conf::YamlEmitter *emitter)
 void VideoPreference::unserialize (Conf::MappingNode *map)
 {
     if (map == NULL) {
-        _error ("VideoPreference: Error: Preference map is NULL");
+        ERROR("VideoPreference: Error: Preference map is NULL");
         return;
     }
 
-    map->getValue (videoDeviceKey, &_Device);
-    map->getValue (videoChannelKey, &_Channel);
-    map->getValue (videoSizeKey, &_Size);
-    map->getValue (videoRateKey, &_Rate);
+    map->getValue(videoDeviceKey, &device_);
+    map->getValue(videoChannelKey, &channel_);
+    map->getValue(videoSizeKey, &size_);
+    map->getValue(videoRateKey, &rate_);
 }
 
 std::map<std::string, std::string> ShortcutPreferences::getShortcuts() const
 {
     std::map<std::string, std::string> shortcutsMap;
 
-    shortcutsMap[hangupShortKey] = _hangup;
-    shortcutsMap[pickupShortKey] = _pickup;
-    shortcutsMap[popupShortKey] = _popup;
-    shortcutsMap[toggleHoldShortKey] = _toggleHold;
-    shortcutsMap[togglePickupHangupShortKey] = _togglePickupHangup;
+    shortcutsMap[hangupShortKey] = hangup_;
+    shortcutsMap[pickupShortKey] = pickup_;
+    shortcutsMap[popupShortKey] = popup_;
+    shortcutsMap[toggleHoldShortKey] = toggleHold_;
+    shortcutsMap[togglePickupHangupShortKey] = togglePickupHangup_;
 
     return shortcutsMap;
 }
@@ -495,11 +490,11 @@ std::map<std::string, std::string> ShortcutPreferences::getShortcuts() const
 
 void ShortcutPreferences::setShortcuts(std::map<std::string, std::string> map)
 {
-    _hangup = map[hangupShortKey];
-    _pickup = map[pickupShortKey];
-    _popup = map[popupShortKey];
-    _toggleHold = map[toggleHoldShortKey];
-    _togglePickupHangup = map[togglePickupHangupShortKey];
+    hangup_ = map[hangupShortKey];
+    pickup_ = map[pickupShortKey];
+    popup_ = map[popupShortKey];
+    toggleHold_ = map[toggleHoldShortKey];
+    togglePickupHangup_ = map[togglePickupHangupShortKey];
 }
 
 
@@ -507,11 +502,11 @@ void ShortcutPreferences::serialize(Conf::YamlEmitter *emitter)
 {
     Conf::MappingNode preferencemap(NULL);
 
-    Conf::ScalarNode hangup(_hangup);
-    Conf::ScalarNode pickup(_pickup);
-    Conf::ScalarNode popup(_popup);
-    Conf::ScalarNode toggleHold(_toggleHold);
-    Conf::ScalarNode togglePickupHangup(_togglePickupHangup);
+    Conf::ScalarNode hangup(hangup_);
+    Conf::ScalarNode pickup(pickup_);
+    Conf::ScalarNode popup(popup_);
+    Conf::ScalarNode toggleHold(toggleHold_);
+    Conf::ScalarNode togglePickupHangup(togglePickupHangup_);
 
     preferencemap.setKeyValue(hangupShortKey, &hangup);
     preferencemap.setKeyValue(pickupShortKey, &pickup);
@@ -525,12 +520,14 @@ void ShortcutPreferences::serialize(Conf::YamlEmitter *emitter)
 void ShortcutPreferences::unserialize(Conf::MappingNode *map)
 {
     if (map == NULL) {
-        _error("ShortcutPreference: Error: Preference map is NULL");
+        ERROR("ShortcutPreference: Error: Preference map is NULL");
         return;
     }
-    map->getValue(hangupShortKey, &_hangup);
-    map->getValue(pickupShortKey, &_pickup);
-    map->getValue(popupShortKey, &_popup);
-    map->getValue(toggleHoldShortKey, &_toggleHold);
-    map->getValue(togglePickupHangupShortKey, &_togglePickupHangup);
+
+    map->getValue(hangupShortKey, &hangup_);
+    map->getValue(pickupShortKey, &pickup_);
+    map->getValue(popupShortKey, &popup_);
+    map->getValue(toggleHoldShortKey, &toggleHold_);
+    map->getValue(togglePickupHangupShortKey, &togglePickupHangup_);
 }
+

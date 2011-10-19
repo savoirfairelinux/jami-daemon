@@ -31,9 +31,9 @@
 #ifndef __MAINWINDOW_H__
 #define __MAINWINDOW_H__
 
-#include <calllist.h>
-#include <calltree.h>
-#include <uimanager.h>
+#include "calllist.h"
+#include "calltree.h"
+#include "uimanager.h"
 
 #define MAIN_WINDOW_WIDTH 280
 #define MAIN_WINDOW_HEIGHT 320

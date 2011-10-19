@@ -39,7 +39,9 @@
 #include <assert.h>
 
 #include "eel-gconf-extensions.h"
-
+#include "dbus.h"
+#include "logger.h"
+#include "statusicon.h"
 #include "addrbookfactory.h"
 #include "preferencesdialog.h"
 #include "addressbook-config.h"
@@ -48,6 +50,7 @@
 #include "audioconf.h"
 #include "videoconf.h"
 #include "uimanager.h"
+#include "unused.h"
 #include "mainwindow.h"
 
 /**
@@ -87,230 +90,226 @@ static gboolean history_enabled = TRUE;
 static gboolean instant_messaging_enabled = TRUE;
 
 static void
-start_hidden (void)
+start_hidden(void)
 {
-    gboolean currentstate = eel_gconf_get_integer (START_HIDDEN);
-    eel_gconf_set_integer (START_HIDDEN, !currentstate);
+    gboolean currentstate = eel_gconf_get_integer(START_HIDDEN);
+    eel_gconf_set_integer(START_HIDDEN, !currentstate);
 }
 
 static void
-set_popup_mode (GtkWidget *widget, gpointer *userdata UNUSED)
+set_popup_mode(GtkWidget *widget, gpointer *userdata UNUSED)
 {
-    gboolean currentstate = eel_gconf_get_integer (POPUP_ON_CALL);
+    gboolean currentstate = eel_gconf_get_integer(POPUP_ON_CALL);
 
-    if (currentstate || gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))) {
-        eel_gconf_set_integer (POPUP_ON_CALL, !currentstate);
+    if (currentstate || gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
+        eel_gconf_set_integer(POPUP_ON_CALL, !currentstate);
     }
 }
 
 void
-set_notif_level ()
+set_notif_level()
 {
-    gboolean current_state = eel_gconf_get_integer (NOTIFY_ALL);
-    eel_gconf_set_integer (NOTIFY_ALL, !current_state);
+    gboolean current_state = eel_gconf_get_integer(NOTIFY_ALL);
+    eel_gconf_set_integer(NOTIFY_ALL, !current_state);
 }
 
 static void
-history_limit_cb (GtkSpinButton *button UNUSED, void *ptr)
+history_limit_cb(GtkSpinButton *button UNUSED, void *ptr)
 {
-    history_limit = gtk_spin_button_get_value_as_int ( (GtkSpinButton *) (ptr));
+    history_limit = gtk_spin_button_get_value_as_int((GtkSpinButton *)(ptr));
 }
 
 static void
-history_enabled_cb (GtkWidget *widget)
+history_enabled_cb(GtkWidget *widget)
 {
-    history_enabled = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
-    gtk_widget_set_sensitive (GTK_WIDGET (history_value), history_enabled);
+    history_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+    gtk_widget_set_sensitive(GTK_WIDGET(history_value), history_enabled);
 
     // Toggle it through D-Bus
-    eel_gconf_set_integer (HISTORY_ENABLED, !eel_gconf_get_integer (HISTORY_ENABLED));
+    eel_gconf_set_integer(HISTORY_ENABLED, !eel_gconf_get_integer(HISTORY_ENABLED));
 }
 
 static void
-instant_messaging_enabled_cb (GtkWidget *widget)
+instant_messaging_enabled_cb(GtkWidget *widget)
 {
-    instant_messaging_enabled = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+    instant_messaging_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
-    eel_gconf_set_integer (INSTANT_MESSAGING_ENABLED, !eel_gconf_get_integer (INSTANT_MESSAGING_ENABLED));
+    eel_gconf_set_integer(INSTANT_MESSAGING_ENABLED, !eel_gconf_get_integer(INSTANT_MESSAGING_ENABLED));
 }
 
 void
-clean_history (void)
+clean_history(void)
 {
-    calllist_clean_history ();
+    calllist_clean_history();
 }
 
-void showstatusicon_cb (GtkWidget *widget, gpointer data UNUSED)
+void showstatusicon_cb(GtkWidget *widget, gpointer data UNUSED)
 {
-
-    gboolean currentstatus = FALSE;
-
     // data contains the previous value of dbus_is_status_icon_enabled () - ie before the click.
-    currentstatus = (gboolean) gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+    gboolean currentstatus = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
     // Update the widget states
-    gtk_widget_set_sensitive (GTK_WIDGET (popupwindow), currentstatus);
-    gtk_widget_set_sensitive (GTK_WIDGET (neverpopupwindow), currentstatus);
-    gtk_widget_set_sensitive (GTK_WIDGET (starthidden), currentstatus);
+    gtk_widget_set_sensitive(GTK_WIDGET(popupwindow), currentstatus);
+    gtk_widget_set_sensitive(GTK_WIDGET(neverpopupwindow), currentstatus);
+    gtk_widget_set_sensitive(GTK_WIDGET(starthidden), currentstatus);
 
-    currentstatus ?       show_status_icon () : hide_status_icon ();
+    currentstatus ? show_status_icon() : hide_status_icon();
 
     // Update through D-Bus
-    eel_gconf_set_integer (SHOW_STATUSICON, currentstatus);
+    eel_gconf_set_integer(SHOW_STATUSICON, currentstatus);
 }
 
 
 GtkWidget*
-create_general_settings ()
+create_general_settings()
 {
 
     GtkWidget *ret, *notifAll, *frame, *checkBoxWidget, *label, *table, *showstatusicon;
     gboolean statusicon;
 
     // Load history configuration
-    history_load_configuration ();
+    history_load_configuration();
 
     // Load instant messaging configuration
     instant_messaging_load_configuration();
 
     // Main widget
-    ret = gtk_vbox_new (FALSE, 10);
-    gtk_container_set_border_width (GTK_CONTAINER (ret), 10);
+    ret = gtk_vbox_new(FALSE, 10);
+    gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
     // Notifications Frame
-    gnome_main_section_new_with_table (_ ("Desktop Notifications"), &frame,
-                                       &table, 2, 1);
-    gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
+    gnome_main_section_new_with_table(_("Desktop Notifications"), &frame,
+                                      &table, 2, 1);
+    gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
     // Notification All
-    notifAll = gtk_check_button_new_with_mnemonic (_ ("_Enable notifications"));
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (notifAll), eel_gconf_get_integer (NOTIFY_ALL));
-    g_signal_connect (G_OBJECT (notifAll) , "clicked" , G_CALLBACK (set_notif_level) , NULL);
-    gtk_table_attach (GTK_TABLE (table), notifAll, 0, 1, 0, 1, GTK_EXPAND
-                      | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    notifAll = gtk_check_button_new_with_mnemonic(_("_Enable notifications"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(notifAll), eel_gconf_get_integer(NOTIFY_ALL));
+    g_signal_connect(G_OBJECT(notifAll) , "clicked" , G_CALLBACK(set_notif_level) , NULL);
+    gtk_table_attach(GTK_TABLE(table), notifAll, 0, 1, 0, 1, GTK_EXPAND
+                     | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
 
     // System Tray option frame
-    gnome_main_section_new_with_table (_ ("System Tray Icon"), &frame, &table, 4,
-                                       1);
-    gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
+    gnome_main_section_new_with_table(_("System Tray Icon"), &frame, &table, 4,
+                                      1);
+    gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
     // Whether or not displaying an icon in the system tray
-    statusicon = eel_gconf_get_integer (SHOW_STATUSICON);
+    statusicon = eel_gconf_get_integer(SHOW_STATUSICON);
 
-    showstatusicon = gtk_check_button_new_with_mnemonic (
-                         _ ("Show SFLphone in the system tray"));
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (showstatusicon), statusicon);
-    g_signal_connect (G_OBJECT (showstatusicon) , "clicked" , G_CALLBACK (showstatusicon_cb), NULL);
-    gtk_table_attach (GTK_TABLE (table), showstatusicon, 0, 1, 0, 1, GTK_EXPAND
-                      | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    showstatusicon = gtk_check_button_new_with_mnemonic(
+                         _("Show SFLphone in the system tray"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(showstatusicon), statusicon);
+    g_signal_connect(G_OBJECT(showstatusicon) , "clicked" , G_CALLBACK(showstatusicon_cb), NULL);
+    gtk_table_attach(GTK_TABLE(table), showstatusicon, 0, 1, 0, 1, GTK_EXPAND
+                     | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
 
-    popupwindow = gtk_radio_button_new_with_mnemonic (NULL,
-                  _ ("_Popup main window on incoming call"));
-    g_signal_connect (G_OBJECT (popupwindow), "toggled", G_CALLBACK (set_popup_mode), NULL);
-    gtk_table_attach (GTK_TABLE (table), popupwindow, 0, 1, 1, 2, GTK_EXPAND
-                      | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    popupwindow = gtk_radio_button_new_with_mnemonic(NULL,
+                  _("_Popup main window on incoming call"));
+    g_signal_connect(G_OBJECT(popupwindow), "toggled", G_CALLBACK(set_popup_mode), NULL);
+    gtk_table_attach(GTK_TABLE(table), popupwindow, 0, 1, 1, 2, GTK_EXPAND
+                     | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
 
-    neverpopupwindow = gtk_radio_button_new_with_mnemonic_from_widget (
-                           GTK_RADIO_BUTTON (popupwindow), _ ("Ne_ver popup main window"));
-    gtk_table_attach (GTK_TABLE (table), neverpopupwindow, 0, 1, 2, 3, GTK_EXPAND
-                      | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    neverpopupwindow = gtk_radio_button_new_with_mnemonic_from_widget(
+                           GTK_RADIO_BUTTON(popupwindow), _("Ne_ver popup main window"));
+    gtk_table_attach(GTK_TABLE(table), neverpopupwindow, 0, 1, 2, 3, GTK_EXPAND
+                     | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
 
     // Toggle according to the user configuration
-    eel_gconf_get_integer (POPUP_ON_CALL) ? gtk_toggle_button_set_active (
-        GTK_TOGGLE_BUTTON (popupwindow),
+    eel_gconf_get_integer(POPUP_ON_CALL) ? gtk_toggle_button_set_active(
+        GTK_TOGGLE_BUTTON(popupwindow),
         TRUE) :
-    gtk_toggle_button_set_active (
-        GTK_TOGGLE_BUTTON (neverpopupwindow),
+    gtk_toggle_button_set_active(
+        GTK_TOGGLE_BUTTON(neverpopupwindow),
         TRUE);
 
-    starthidden = gtk_check_button_new_with_mnemonic (
-                      _ ("Hide SFLphone window on _startup"));
+    starthidden = gtk_check_button_new_with_mnemonic(
+                      _("Hide SFLphone window on _startup"));
 
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (starthidden),
-                                  eel_gconf_get_integer (START_HIDDEN));
-    g_signal_connect (G_OBJECT (starthidden) , "clicked" , G_CALLBACK (start_hidden) , NULL);
-    gtk_table_attach (GTK_TABLE (table), starthidden, 0, 1, 3, 4, GTK_EXPAND
-                      | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(starthidden),
+                                 eel_gconf_get_integer(START_HIDDEN));
+    g_signal_connect(G_OBJECT(starthidden) , "clicked" , G_CALLBACK(start_hidden) , NULL);
+    gtk_table_attach(GTK_TABLE(table), starthidden, 0, 1, 3, 4, GTK_EXPAND
+                     | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
 
     // Update the widget states
-    gtk_widget_set_sensitive (GTK_WIDGET (popupwindow),statusicon);
-    gtk_widget_set_sensitive (GTK_WIDGET (neverpopupwindow),statusicon);
-    gtk_widget_set_sensitive (GTK_WIDGET (starthidden),statusicon);
+    gtk_widget_set_sensitive(GTK_WIDGET(popupwindow),statusicon);
+    gtk_widget_set_sensitive(GTK_WIDGET(neverpopupwindow),statusicon);
+    gtk_widget_set_sensitive(GTK_WIDGET(starthidden),statusicon);
 
     // HISTORY CONFIGURATION
-    gnome_main_section_new_with_table (_ ("Calls History"), &frame, &table, 3, 1);
-    gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
+    gnome_main_section_new_with_table(_("Calls History"), &frame, &table, 3, 1);
+    gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
-    checkBoxWidget = gtk_check_button_new_with_mnemonic (
-                         _ ("_Keep my history for at least"));
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (checkBoxWidget),
-                                  history_enabled);
-    g_signal_connect (G_OBJECT (checkBoxWidget) , "clicked" , G_CALLBACK (history_enabled_cb) , NULL);
-    gtk_table_attach (GTK_TABLE (table), checkBoxWidget, 0, 1, 0, 1, GTK_EXPAND
-                      | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    checkBoxWidget = gtk_check_button_new_with_mnemonic(
+                         _("_Keep my history for at least"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkBoxWidget),
+                                 history_enabled);
+    g_signal_connect(G_OBJECT(checkBoxWidget) , "clicked" , G_CALLBACK(history_enabled_cb) , NULL);
+    gtk_table_attach(GTK_TABLE(table), checkBoxWidget, 0, 1, 0, 1, GTK_EXPAND
+                     | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
 
-    history_value = gtk_spin_button_new_with_range (1, 99, 1);
-    gtk_spin_button_set_value (GTK_SPIN_BUTTON (history_value), history_limit);
-    g_signal_connect (G_OBJECT (history_value) , "value-changed" , G_CALLBACK (history_limit_cb) , history_value);
-    gtk_widget_set_sensitive (GTK_WIDGET (history_value),
-                              gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (checkBoxWidget)));
-    gtk_table_attach (GTK_TABLE (table), history_value, 1, 2, 0, 1, GTK_EXPAND
-                      | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    history_value = gtk_spin_button_new_with_range(1, 99, 1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(history_value), history_limit);
+    g_signal_connect(G_OBJECT(history_value) , "value-changed" , G_CALLBACK(history_limit_cb) , history_value);
+    gtk_widget_set_sensitive(GTK_WIDGET(history_value),
+                             gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(checkBoxWidget)));
+    gtk_table_attach(GTK_TABLE(table), history_value, 1, 2, 0, 1, GTK_EXPAND
+                     | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
 
-    label = gtk_label_new (_ ("days"));
-    gtk_table_attach (GTK_TABLE (table), label, 2, 3, 0, 1, GTK_EXPAND | GTK_FILL,
-                      GTK_EXPAND | GTK_FILL, 0, 5);
+    label = gtk_label_new(_("days"));
+    gtk_table_attach(GTK_TABLE(table), label, 2, 3, 0, 1, GTK_EXPAND | GTK_FILL,
+                     GTK_EXPAND | GTK_FILL, 0, 5);
 
     // INSTANT MESSAGING CONFIGURATION
-    gnome_main_section_new_with_table (_ ("Instant Messaging"), &frame, &table, 1, 1);
-    gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
+    gnome_main_section_new_with_table(_("Instant Messaging"), &frame, &table, 1, 1);
+    gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
-    checkBoxWidget = gtk_check_button_new_with_mnemonic (
-                         _ ("Enable instant messaging"));
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (checkBoxWidget),
-                                  instant_messaging_enabled);
-    g_signal_connect (G_OBJECT (checkBoxWidget) , "clicked" , G_CALLBACK (instant_messaging_enabled_cb) , NULL);
-    gtk_table_attach (GTK_TABLE (table), checkBoxWidget, 0, 1, 0, 1, GTK_EXPAND
-                      | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    checkBoxWidget = gtk_check_button_new_with_mnemonic(
+                         _("Enable instant messaging"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkBoxWidget),
+                                 instant_messaging_enabled);
+    g_signal_connect(G_OBJECT(checkBoxWidget) , "clicked" , G_CALLBACK(instant_messaging_enabled_cb) , NULL);
+    gtk_table_attach(GTK_TABLE(table), checkBoxWidget, 0, 1, 0, 1, GTK_EXPAND
+                     | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
 
-    gtk_widget_show_all (ret);
+    gtk_widget_show_all(ret);
 
     return ret;
 }
 
 void
-save_configuration_parameters (void)
+save_configuration_parameters(void)
 {
     if (addrbook) {
         // Address book config
-        addressbook_config_save_parameters ();
+        addressbook_config_save_parameters();
     }
 
-    hooks_save_parameters ();
+    hooks_save_parameters();
 
     // History config
-    dbus_set_history_limit (history_limit);
-
+    dbus_set_history_limit(history_limit);
 }
 
 void
-history_load_configuration ()
+history_load_configuration()
 {
-    history_limit = dbus_get_history_limit ();
-    history_enabled = eel_gconf_get_integer (HISTORY_ENABLED);
+    history_limit = dbus_get_history_limit();
+    history_enabled = eel_gconf_get_integer(HISTORY_ENABLED);
 
 }
 
 void
-instant_messaging_load_configuration ()
+instant_messaging_load_configuration()
 {
-    instant_messaging_enabled = eel_gconf_get_integer (INSTANT_MESSAGING_ENABLED);
+    instant_messaging_enabled = eel_gconf_get_integer(INSTANT_MESSAGING_ENABLED);
 
 }
 
 
 void
-selection_changed_cb (GtkIconView *view, gpointer user_data UNUSED)
+selection_changed_cb(GtkIconView *view, gpointer user_data UNUSED)
 {
 
     GtkTreeModel *model;
@@ -318,21 +317,21 @@ selection_changed_cb (GtkIconView *view, gpointer user_data UNUSED)
     GList *list;
     gint page;
 
-    model = gtk_icon_view_get_model (view);
-    list = gtk_icon_view_get_selected_items (view);
+    model = gtk_icon_view_get_model(view);
+    list = gtk_icon_view_get_selected_items(view);
 
     if (list == NULL)
         return;
 
-    if (g_list_length (list) > 1)
+    if (g_list_length(list) > 1)
         return;
 
-    gtk_tree_model_get_iter (model, &iter, list->data);
-    gtk_tree_model_get (model, &iter, PAGE_NUMBER, &page, -1);
+    gtk_tree_model_get_iter(model, &iter, list->data);
+    gtk_tree_model_get(model, &iter, PAGE_NUMBER, &page, -1);
 
-    gtk_notebook_set_current_page (GTK_NOTEBOOK (notebook), page);
-    g_list_foreach (list, (GFunc) gtk_tree_path_free, NULL);
-    g_list_free (list);
+    gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), page);
+    g_list_foreach(list, (GFunc) gtk_tree_path_free, NULL);
+    g_list_free(list);
 }
 
 /*
@@ -390,27 +389,22 @@ static GtkTreeModel* create_model(GtkWidget *widget)
  * Show configuration window with tabs
  */
 guint
-show_preferences_dialog ()
+show_preferences_dialog()
 {
-    GtkDialog * dialog;
-    GtkWidget * hbox;
-    GtkWidget * tab;
-    guint result;
-
     dialogOpen = TRUE;
 
-    dialog = GTK_DIALOG (gtk_dialog_new_with_buttons (_ ("Preferences"),
-                         GTK_WINDOW (get_main_window()),
-                         GTK_DIALOG_DESTROY_WITH_PARENT,
-                         GTK_STOCK_CLOSE,
-                         GTK_RESPONSE_ACCEPT,
-                         NULL));
+    GtkDialog *dialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("Preferences"),
+                                   GTK_WINDOW(get_main_window()),
+                                   GTK_DIALOG_DESTROY_WITH_PARENT,
+                                   GTK_STOCK_CLOSE,
+                                   GTK_RESPONSE_ACCEPT,
+                                   NULL));
 
     // Set window properties
-    gtk_window_set_default_size (GTK_WINDOW (dialog), 600, 400);
-    gtk_container_set_border_width (GTK_CONTAINER (dialog), 0);
+    gtk_window_set_default_size(GTK_WINDOW(dialog), 600, 400);
+    gtk_container_set_border_width(GTK_CONTAINER(dialog), 0);
 
-    hbox = gtk_hbox_new (FALSE, 10);
+    GtkWidget *hbox = gtk_hbox_new(FALSE, 10);
 
     // Create tree view
     iconview = gtk_icon_view_new_with_model(create_model(hbox));
@@ -421,67 +415,66 @@ show_preferences_dialog ()
                   "columns", 1,
                   "margin", 10,
                   NULL);
+
     // Connect the callback when clicking on an item
-    g_signal_connect (G_OBJECT (iconview), "selection-changed", G_CALLBACK (selection_changed_cb), NULL);
-    gtk_box_pack_start (GTK_BOX (hbox), iconview, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(iconview), "selection-changed", G_CALLBACK(selection_changed_cb), NULL);
+    gtk_box_pack_start(GTK_BOX(hbox), iconview, TRUE, TRUE, 0);
 
     // Create tabs container
-    notebook = gtk_notebook_new ();
-    gtk_notebook_set_show_tabs (GTK_NOTEBOOK (notebook), FALSE);
-    gtk_box_pack_end (GTK_BOX (hbox), notebook, TRUE, TRUE, 0);
+    notebook = gtk_notebook_new();
+    gtk_notebook_set_show_tabs(GTK_NOTEBOOK(notebook), FALSE);
+    gtk_box_pack_end(GTK_BOX(hbox), notebook, TRUE, TRUE, 0);
     GtkWidget *box = gtk_dialog_get_content_area(dialog);
-    gtk_box_pack_start (GTK_BOX (box), hbox, TRUE, TRUE, 0);
-    gtk_widget_show_all (box);
-    gtk_container_set_border_width (GTK_CONTAINER (notebook), 10);
-    gtk_widget_show (notebook);
+    gtk_box_pack_start(GTK_BOX(box), hbox, TRUE, TRUE, 0);
+    gtk_widget_show_all(box);
+    gtk_container_set_border_width(GTK_CONTAINER(notebook), 10);
+    gtk_widget_show(notebook);
 
     // General settings tab
-    tab = create_general_settings ();
-    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), tab, gtk_label_new (_ ("General")));
-    gtk_notebook_page_num (GTK_NOTEBOOK (notebook), tab);
+    GtkWidget *tab = create_general_settings();
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("General")));
+    gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
     // Audio tab
-    tab = create_audio_configuration ();
+    tab = create_audio_configuration();
 
-    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), tab, gtk_label_new (
-                                  _ ("Audio")));
-    gtk_notebook_page_num (GTK_NOTEBOOK (notebook), tab);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Audio")));
+    gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
     // Video tab
-    tab = create_video_configuration ();
-    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), tab,
-                              gtk_label_new(_("Video")));
-    gtk_notebook_page_num (GTK_NOTEBOOK (notebook), tab);
+    tab = create_video_configuration();
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Video")));
+    gtk_notebook_page_num (GTK_NOTEBOOK(notebook), tab);
 
     // Hooks tab
-    tab = create_hooks_settings ();
-    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), tab, gtk_label_new (_ ("Hooks")));
-    gtk_notebook_page_num (GTK_NOTEBOOK (notebook), tab);
+    tab = create_hooks_settings();
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Hooks")));
+    gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
     // Shortcuts tab
     tab = create_shortcuts_settings();
-    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), tab, gtk_label_new (_ ("Shortcuts")));
-    gtk_notebook_page_num (GTK_NOTEBOOK (notebook), tab);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Shortcuts")));
+    gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
-    if(addrbook) {
+    if (addrbook) {
         // Addressbook tab
-        tab = create_addressbook_settings ();
-        gtk_notebook_append_page (GTK_NOTEBOOK (notebook), tab, gtk_label_new (_ ("Address Book")));
-        gtk_notebook_page_num (GTK_NOTEBOOK (notebook), tab);
+        tab = create_addressbook_settings();
+        gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Address Book")));
+        gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
     }
-    
+
     // By default, general settings
-    gtk_notebook_set_current_page (GTK_NOTEBOOK (notebook), 0);
+    gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), 0);
     // Highlight the corresponding icon
-    gtk_icon_view_select_path (GTK_ICON_VIEW (iconview), gtk_tree_path_new_first ());
+    gtk_icon_view_select_path(GTK_ICON_VIEW(iconview), gtk_tree_path_new_first());
 
-    result = gtk_dialog_run (dialog);
+    guint result = gtk_dialog_run(dialog);
 
-    save_configuration_parameters ();
-    update_actions ();
+    save_configuration_parameters();
+    update_actions();
 
     dialogOpen = FALSE;
 
-    gtk_widget_destroy (GTK_WIDGET (dialog));
+    gtk_widget_destroy(GTK_WIDGET(dialog));
     return result;
 }

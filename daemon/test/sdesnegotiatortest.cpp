@@ -42,6 +42,8 @@
 #include <sstream>
 
 #include "sdesnegotiatortest.h"
+#include "sip/pattern.h"
+#include "sip/sdes_negotiator.h"
 
 #include <unistd.h>
 #include "global.h"
@@ -53,15 +55,15 @@ using std::endl;
 
 void SdesNegotiatorTest::testTagPattern()
 {
-    _debug ("-------------------- SdesNegotiatorTest::testTagPattern --------------------\n");
+    DEBUG("-------------------- SdesNegotiatorTest::testTagPattern --------------------\n");
 
     std::string subject = "a=crypto:4";
 
-    pattern = new sfl::Pattern ("^a=crypto:(?P<tag>[0-9]{1,9})");
+    pattern = new sfl::Pattern("^a=crypto:(?P<tag>[0-9]{1,9})");
     *pattern << subject;
 
-    CPPUNIT_ASSERT (pattern->matches());
-    CPPUNIT_ASSERT (pattern->group ("tag").compare ("4") == 0);
+    CPPUNIT_ASSERT(pattern->matches());
+    CPPUNIT_ASSERT(pattern->group("tag").compare("4") == 0);
 
     delete pattern;
     pattern = NULL;
@@ -70,18 +72,18 @@ void SdesNegotiatorTest::testTagPattern()
 
 void SdesNegotiatorTest::testCryptoSuitePattern()
 {
-    _debug ("-------------------- SdesNegotiatorTest::testCryptoSuitePattern --------------------\n");
+    DEBUG("-------------------- SdesNegotiatorTest::testCryptoSuitePattern --------------------\n");
 
     std::string subject = "AES_CM_128_HMAC_SHA1_80";
 
-    pattern = new sfl::Pattern ("(?P<cryptoSuite>AES_CM_128_HMAC_SHA1_80|" \
-                                "AES_CM_128_HMAC_SHA1_32|"		\
-                                "F8_128_HMAC_SHA1_80|"			\
-                                "[A-Za-z0-9_]+)");
+    pattern = new sfl::Pattern("(?P<cryptoSuite>AES_CM_128_HMAC_SHA1_80|" \
+                               "AES_CM_128_HMAC_SHA1_32|"		\
+                               "F8_128_HMAC_SHA1_80|"			\
+                               "[A-Za-z0-9_]+)");
     *pattern << subject;
 
-    CPPUNIT_ASSERT (pattern->matches());
-    CPPUNIT_ASSERT (pattern->group ("cryptoSuite").compare ("AES_CM_128_HMAC_SHA1_80") == 0);
+    CPPUNIT_ASSERT(pattern->matches());
+    CPPUNIT_ASSERT(pattern->group("cryptoSuite").compare("AES_CM_128_HMAC_SHA1_80") == 0);
 
     delete pattern;
     pattern = NULL;
@@ -90,25 +92,25 @@ void SdesNegotiatorTest::testCryptoSuitePattern()
 
 void SdesNegotiatorTest::testKeyParamsPattern()
 {
-    _debug ("-------------------- SdesNegotiatorTest::testKeyParamsPattern --------------------\n");
+    DEBUG("-------------------- SdesNegotiatorTest::testKeyParamsPattern --------------------\n");
 
     std::string subject = "inline:d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj|2^20|1:32";
 
-    pattern = new sfl::Pattern ("(?P<srtpKeyMethod>inline|[A-Za-z0-9_]+)\\:" \
-                                "(?P<srtpKeyInfo>[A-Za-z0-9\x2B\x2F\x3D]+)\\|" \
-                                "(2\\^(?P<lifetime>[0-9]+)\\|"		\
-                                "(?P<mkiValue>[0-9]+)\\:"		\
-                                "(?P<mkiLength>[0-9]{1,3})\\;?)?", "g");
+    pattern = new sfl::Pattern("(?P<srtpKeyMethod>inline|[A-Za-z0-9_]+)\\:" \
+                               "(?P<srtpKeyInfo>[A-Za-z0-9\x2B\x2F\x3D]+)\\|" \
+                               "(2\\^(?P<lifetime>[0-9]+)\\|"		\
+                               "(?P<mkiValue>[0-9]+)\\:"		\
+                               "(?P<mkiLength>[0-9]{1,3})\\;?)?", "g");
 
     *pattern << subject;
 
     pattern->matches();
-    CPPUNIT_ASSERT (pattern->group ("srtpKeyMethod").compare ("inline:"));
-    CPPUNIT_ASSERT (pattern->group ("srtpKeyInfo").compare ("d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj")
-                    == 0);
-    CPPUNIT_ASSERT (pattern->group ("lifetime").compare ("20") == 0);
-    CPPUNIT_ASSERT (pattern->group ("mkiValue").compare ("1") == 0);
-    CPPUNIT_ASSERT (pattern->group ("mkiLength").compare ("32") == 0);
+    CPPUNIT_ASSERT(pattern->group("srtpKeyMethod").compare("inline:"));
+    CPPUNIT_ASSERT(pattern->group("srtpKeyInfo").compare("d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj")
+                   == 0);
+    CPPUNIT_ASSERT(pattern->group("lifetime").compare("20") == 0);
+    CPPUNIT_ASSERT(pattern->group("mkiValue").compare("1") == 0);
+    CPPUNIT_ASSERT(pattern->group("mkiLength").compare("32") == 0);
 
     delete pattern;
     pattern = NULL;
@@ -117,21 +119,21 @@ void SdesNegotiatorTest::testKeyParamsPattern()
 
 void SdesNegotiatorTest::testKeyParamsPatternWithoutMKI()
 {
-    _debug ("-------------------- SdesNegotiatorTest::testKeyParamsPatternWithoutMKI --------------------\n");
+    DEBUG("-------------------- SdesNegotiatorTest::testKeyParamsPatternWithoutMKI --------------------\n");
 
     std::string subject = "inline:d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj";
 
-    pattern = new sfl::Pattern ("(?P<srtpKeyMethod>inline|[A-Za-z0-9_]+)\\:" \
-                                "(?P<srtpKeyInfo>[A-Za-z0-9\x2B\x2F\x3D]+)" \
-                                "(\\|2\\^(?P<lifetime>[0-9]+)\\|"                \
-                                "(?P<mkiValue>[0-9]+)\\:"                \
-                                "(?P<mkiLength>[0-9]{1,3})\\;?)?", "g");
+    pattern = new sfl::Pattern("(?P<srtpKeyMethod>inline|[A-Za-z0-9_]+)\\:" \
+                               "(?P<srtpKeyInfo>[A-Za-z0-9\x2B\x2F\x3D]+)" \
+                               "(\\|2\\^(?P<lifetime>[0-9]+)\\|"                \
+                               "(?P<mkiValue>[0-9]+)\\:"                \
+                               "(?P<mkiLength>[0-9]{1,3})\\;?)?", "g");
 
     *pattern << subject;
     pattern->matches();
-    CPPUNIT_ASSERT (pattern->group ("srtpKeyMethod").compare ("inline:"));
-    CPPUNIT_ASSERT (pattern->group ("srtpKeyInfo").compare ("d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj")
-                    == 0);
+    CPPUNIT_ASSERT(pattern->group("srtpKeyMethod").compare("inline:"));
+    CPPUNIT_ASSERT(pattern->group("srtpKeyInfo").compare("d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj")
+                   == 0);
 
     delete pattern;
     pattern = NULL;
@@ -144,23 +146,23 @@ void SdesNegotiatorTest::testKeyParamsPatternWithoutMKI()
  */
 void SdesNegotiatorTest::testNegotiation()
 {
-    _debug ("-------------------- SdesNegotiatorTest::testNegotiation --------------------\n");
+    DEBUG("-------------------- SdesNegotiatorTest::testNegotiation --------------------\n");
 
     // Add a new SDES crypto line to be processed.
     remoteOffer = new std::vector<std::string>();
-    remoteOffer->push_back (std::string ("a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd|2^20|1:32"));
-    remoteOffer->push_back (std::string ("a=crypto:2 AES_CM_128_HMAC_SHA1_32 inline:NzB4d1BINUAvLEw6UzF3WSJ+PSdFcGdUJShpX1Zj|2^20|1:32"));
+    remoteOffer->push_back(std::string("a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd|2^20|1:32"));
+    remoteOffer->push_back(std::string("a=crypto:2 AES_CM_128_HMAC_SHA1_32 inline:NzB4d1BINUAvLEw6UzF3WSJ+PSdFcGdUJShpX1Zj|2^20|1:32"));
 
     // Register the local capabilities.
     localCapabilities = new std::vector<sfl::CryptoSuiteDefinition>();
 
     for (int i = 0; i < 3; i++) {
-        localCapabilities->push_back (sfl::CryptoSuites[i]);
+        localCapabilities->push_back(sfl::CryptoSuites[i]);
     }
 
-    sdesnego = new sfl::SdesNegotiator (*localCapabilities, *remoteOffer);
+    sdesnego = new sfl::SdesNegotiator(*localCapabilities, *remoteOffer);
 
-    CPPUNIT_ASSERT (sdesnego->negotiate());
+    CPPUNIT_ASSERT(sdesnego->negotiate());
     // CPPUNIT_ASSERT(sdesnego->getKeyInfo().compare("AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd|2^20|1:32")==0);
 
     delete remoteOffer;
@@ -178,24 +180,24 @@ void SdesNegotiatorTest::testNegotiation()
  */
 void SdesNegotiatorTest::testComponent()
 {
-    _debug ("-------------------- SdesNegotiatorTest::testComponent --------------------\n");
+    DEBUG("-------------------- SdesNegotiatorTest::testComponent --------------------\n");
 
     // Register the local capabilities.
     std::vector<sfl::CryptoSuiteDefinition> * capabilities = new std::vector<sfl::CryptoSuiteDefinition>();
 
     //Support all the CryptoSuites
     for (int i = 0; i < 3; i++) {
-        capabilities->push_back (sfl::CryptoSuites[i]);
+        capabilities->push_back(sfl::CryptoSuites[i]);
     }
 
     // Make sure that if a component is missing, negotiate will fail
-    std::string cryptoLine ("a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:|2^20|1:32");
+    std::string cryptoLine("a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:|2^20|1:32");
     std::vector<std::string> * cryptoOffer = new std::vector<std::string>();
-    cryptoOffer->push_back (cryptoLine);
+    cryptoOffer->push_back(cryptoLine);
 
-    sfl::SdesNegotiator * negotiator = new sfl::SdesNegotiator (*capabilities, *cryptoOffer);
+    sfl::SdesNegotiator * negotiator = new sfl::SdesNegotiator(*capabilities, *cryptoOffer);
 
-    CPPUNIT_ASSERT (negotiator->negotiate() == false);
+    CPPUNIT_ASSERT(negotiator->negotiate() == false);
 }
 
 
@@ -205,32 +207,32 @@ void SdesNegotiatorTest::testComponent()
  */
 void SdesNegotiatorTest::testMostSimpleCase()
 {
-    _debug ("-------------------- SdesNegotiatorTest::testMostSimpleCase --------------------\n");
+    DEBUG("-------------------- SdesNegotiatorTest::testMostSimpleCase --------------------\n");
 
     // Register the local capabilities.
     std::vector<sfl::CryptoSuiteDefinition> * capabilities = new std::vector<sfl::CryptoSuiteDefinition>();
 
     //Support all the CryptoSuites
     for (int i = 0; i < 3; i++) {
-        capabilities->push_back (sfl::CryptoSuites[i]);
+        capabilities->push_back(sfl::CryptoSuites[i]);
     }
 
     // Make sure taht this case works (since it's default for most application)
-    std::string cryptoLine ("a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd");
+    std::string cryptoLine("a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd");
     std::vector<std::string> * cryptoOffer = new std::vector<std::string>();
-    cryptoOffer->push_back (cryptoLine);
+    cryptoOffer->push_back(cryptoLine);
 
-    sfl::SdesNegotiator * negotiator = new sfl::SdesNegotiator (*capabilities, *cryptoOffer);
+    sfl::SdesNegotiator * negotiator = new sfl::SdesNegotiator(*capabilities, *cryptoOffer);
 
-    CPPUNIT_ASSERT (negotiator->negotiate() == true);
+    CPPUNIT_ASSERT(negotiator->negotiate() == true);
 
-    CPPUNIT_ASSERT (negotiator->getCryptoSuite() == "AES_CM_128_HMAC_SHA1_80");
-    CPPUNIT_ASSERT (negotiator->getKeyMethod() == "inline");
-    CPPUNIT_ASSERT (negotiator->getKeyInfo() == "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd");
-    CPPUNIT_ASSERT (negotiator->getLifeTime() == "");
-    CPPUNIT_ASSERT (negotiator->getMkiValue() == "");
-    CPPUNIT_ASSERT (negotiator->getMkiLength() == "");
-    CPPUNIT_ASSERT (negotiator->getAuthTagLength() == "80");
+    CPPUNIT_ASSERT(negotiator->getCryptoSuite() == "AES_CM_128_HMAC_SHA1_80");
+    CPPUNIT_ASSERT(negotiator->getKeyMethod() == "inline");
+    CPPUNIT_ASSERT(negotiator->getKeyInfo() == "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd");
+    CPPUNIT_ASSERT(negotiator->getLifeTime() == "");
+    CPPUNIT_ASSERT(negotiator->getMkiValue() == "");
+    CPPUNIT_ASSERT(negotiator->getMkiLength() == "");
+    CPPUNIT_ASSERT(negotiator->getAuthTagLength() == "80");
 
 
     delete capabilities;
@@ -244,31 +246,31 @@ void SdesNegotiatorTest::testMostSimpleCase()
 
 void SdesNegotiatorTest::test32ByteKeyLength()
 {
-    _debug ("-------------------- SdesNegotiatorTest::test32ByteKeyLength --------------------\n");
+    DEBUG("-------------------- SdesNegotiatorTest::test32ByteKeyLength --------------------\n");
 
     // Register the local capabilities.
     std::vector<sfl::CryptoSuiteDefinition> * capabilities = new std::vector<sfl::CryptoSuiteDefinition>();
 
     //Support all the CryptoSuites
     for (int i = 0; i < 3; i++) {
-        capabilities->push_back (sfl::CryptoSuites[i]);
+        capabilities->push_back(sfl::CryptoSuites[i]);
     }
 
-    std::string cryptoLine ("a=crypto:1 AES_CM_128_HMAC_SHA1_32 inline:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd");
+    std::string cryptoLine("a=crypto:1 AES_CM_128_HMAC_SHA1_32 inline:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd");
     std::vector<std::string> * cryptoOffer = new std::vector<std::string>();
-    cryptoOffer->push_back (cryptoLine);
+    cryptoOffer->push_back(cryptoLine);
 
-    sfl::SdesNegotiator * negotiator = new sfl::SdesNegotiator (*capabilities, *cryptoOffer);
+    sfl::SdesNegotiator * negotiator = new sfl::SdesNegotiator(*capabilities, *cryptoOffer);
 
-    CPPUNIT_ASSERT (negotiator->negotiate() == true);
+    CPPUNIT_ASSERT(negotiator->negotiate() == true);
 
-    CPPUNIT_ASSERT (negotiator->getCryptoSuite() == "AES_CM_128_HMAC_SHA1_32");
-    CPPUNIT_ASSERT (negotiator->getKeyMethod() == "inline");
-    CPPUNIT_ASSERT (negotiator->getKeyInfo() == "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd");
-    CPPUNIT_ASSERT (negotiator->getLifeTime() == "");
-    CPPUNIT_ASSERT (negotiator->getMkiValue() == "");
-    CPPUNIT_ASSERT (negotiator->getMkiLength() == "");
-    CPPUNIT_ASSERT (negotiator->getAuthTagLength() == "32");
+    CPPUNIT_ASSERT(negotiator->getCryptoSuite() == "AES_CM_128_HMAC_SHA1_32");
+    CPPUNIT_ASSERT(negotiator->getKeyMethod() == "inline");
+    CPPUNIT_ASSERT(negotiator->getKeyInfo() == "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd");
+    CPPUNIT_ASSERT(negotiator->getLifeTime() == "");
+    CPPUNIT_ASSERT(negotiator->getMkiValue() == "");
+    CPPUNIT_ASSERT(negotiator->getMkiLength() == "");
+    CPPUNIT_ASSERT(negotiator->getAuthTagLength() == "32");
 
     delete capabilities;
     capabilities = NULL;

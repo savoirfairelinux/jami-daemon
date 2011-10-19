@@ -37,8 +37,7 @@
 #include "global.h"
 
 
-class SamplerateConverter
-{
+class SamplerateConverter {
     public:
         /**
          * Samplerate converter is used for several situation:
@@ -47,10 +46,10 @@ class SamplerateConverter
         * internal buffer size. Converter must be reinitialized
         * every time these parameters change
         */
-        SamplerateConverter (int freq);
+        SamplerateConverter(int freq);
 
         /** Destructor */
-        ~SamplerateConverter (void);
+        ~SamplerateConverter();
 
         /**
          * resample from the samplerate1 to the samplerate2
@@ -59,7 +58,7 @@ class SamplerateConverter
          * @param SamplerateConverter2 The desired sample rate
          * @param nbSamples	  The number of samples to process
          */
-        void resample (SFLDataFormat* dataIn , SFLDataFormat* dataOut , int samplerate1 , int samplerate2 , int nbSamples);
+        void resample(SFLDataFormat* dataIn , SFLDataFormat* dataOut , int samplerate1 , int samplerate2 , int nbSamples);
 
         /**
          * Convert short table to floats for audio processing
@@ -67,23 +66,23 @@ class SamplerateConverter
          * @param out The resulting (float) array
          * @param len The number of elements in both tables
          */
-        void Short2FloatArray (const short *in, float *out, int len);
+        void Short2FloatArray(const short *in, float *out, int len);
 
 
     private:
         // Copy Constructor
-        SamplerateConverter (const SamplerateConverter& rh);
+        SamplerateConverter(const SamplerateConverter& rh);
 
         // Assignment Operator
         SamplerateConverter& operator= (const SamplerateConverter& rh);
 
         /* temporary buffers */
-        float32* _floatBufferIn;
-        float32* _floatBufferOut;
-        size_t _samples; // size in samples of temporary buffers
-        int _maxFreq; // maximal output frequency
+        float * floatBufferIn_;
+        float * floatBufferOut_;
+        size_t samples_; // size in samples of temporary buffers
+        int maxFreq_; // maximal output frequency
 
-        SRC_STATE* _src_state;
+        SRC_STATE* src_state_;
 };
 
 #endif //_SAMPLE_RATE_H

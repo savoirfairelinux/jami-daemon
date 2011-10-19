@@ -37,45 +37,34 @@
  * @file: iaxaccount.h
  * @brief An IAX Account specify IAX specific functions and objects (IAXCall/IAXVoIPLink)
  */
-class IAXAccount : public Account
-{
+class IAXAccount : public Account {
     public:
-        IAXAccount (const std::string& accountID);
-
+        IAXAccount(const std::string& accountID);
         ~IAXAccount();
 
-        virtual void serialize (Conf::YamlEmitter *emitter);
+        virtual void serialize(Conf::YamlEmitter *emitter);
 
-        virtual void unserialize (Conf::MappingNode *map);
+        virtual void unserialize(Conf::MappingNode *map);
 
-        void setAccountDetails (std::map<std::string, std::string> details);
+        void setAccountDetails(std::map<std::string, std::string> details);
 
         std::map<std::string, std::string> getAccountDetails() const;
 
-        /**
-         * Actually useless, since config loading is done in init()
-         */
+        // Actually useless, since config loading is done in init()
         void loadConfig();
 
-        /**
-         * Register an account
-         */
+        // Register an account
         void registerVoIPLink();
 
-        /**
-         * Unregister an account
-         */
+        // Unregister an account
         void unregisterVoIPLink();
 
-        std::string getPassword (void) const {
-        	return password_;
+        std::string getPassword() const {
+            return password_;
         }
 
     private:
-
-        /**
-         * Account login information: password
-         */
+         // Account login information: password
         std::string password_;
 };
 

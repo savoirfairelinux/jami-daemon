@@ -32,15 +32,6 @@
 #ifndef __CALLTREE_H__
 #define __CALLTREE_H__
 
-#include <gtk/gtk.h>
-#include <calltab.h>
-#include <mainwindow.h>
-
-#define SFLPHONE_HIG_MARGIN 10
-#define CALLTREE_CALL_ICON_WIDTH 24
-#define CALLTREE_SECURITY_ICON_WIDTH 24
-#define CALLTREE_TEXT_WIDTH (MAIN_WINDOW_WIDTH - CALLTREE_SECURITY_ICON_WIDTH - CALLTREE_CALL_ICON_WIDTH - (2*SFLPHONE_HIG_MARGIN))
-
 /** @file calltree.h
   * @brief The GtkTreeView that list calls in the main window.
   */
@@ -50,7 +41,6 @@ typedef enum {
     A_CONFERENCE,
     A_INVALID
 } CallType;
-
 
 /**
  * Tags used to identify display type in calltree
@@ -63,33 +53,37 @@ typedef enum {
     DISPLAY_TYPE_HISTORY
 } CallDisplayType;
 
+struct calltab_t;
+struct callable_obj_t;
+struct conference_obj_t;
+
 /**
  * Create a new widget calltree
  * @return GtkWidget* A new widget
  */
 void
-calltree_create (calltab_t* tab, gboolean searchbar_type);
+calltree_create (calltab_t *, int searchbar_type);
 
 /**
  * Add a call in the calltree
  * @param c The call to add
  */
 void
-calltree_add_call (calltab_t* ct, callable_obj_t * c, GtkTreeIter *parent);
+calltree_add_call (calltab_t *, callable_obj_t *, GtkTreeIter *);
 
 /*
  * Update the call tree if the call state changes
  * @param c The call to update
  */
 void
-calltree_update_call (calltab_t* ct, callable_obj_t * c, GtkTreeIter *parent);
+calltree_update_call (calltab_t *, callable_obj_t *);
 
 /**
  * Remove a call from the call tree
  * @param c The call to remove
  */
 void
-calltree_remove_call (calltab_t* ct, callable_obj_t * c, GtkTreeIter *parent);
+calltree_remove_call(calltab_t *, callable_obj_t *);
 
 /**
  * Add a callable object to history treeview
@@ -100,16 +94,13 @@ void
 calltree_add_history_entry (callable_obj_t *, GtkTreeIter *);
 
 void
-calltree_add_conference (calltab_t* tab, conference_obj_t* conf);
+calltree_add_conference_to_current_calls(conference_obj_t *);
 
 void
-calltree_update_conference (calltab_t* tab, const conference_obj_t* conf);
+calltree_remove_conference(calltab_t *, const conference_obj_t *);
 
 void
-calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, GtkTreeIter *parent);
-
-void
-calltree_display (calltab_t *tab);
+calltree_display (calltab_t *);
 
 void
 row_activated (GtkTreeView *, GtkTreePath *, GtkTreeViewColumn *, void *);
@@ -121,12 +112,11 @@ gboolean
 calltree_update_clock(gpointer);
 
 /**
- * Get the iter to a row provided the callID/confID
  * @param The calltab (current_calls, history, contacts)
+ * @param The call
  * @param The callID/confID
- * @return The 
  */
-GtkTreeIter 
-calltree_get_gtkiter_from_id(calltab_t *, gchar *);
+void
+calltree_(calltab_t *, callable_obj_t *, const gchar * const);
 
 #endif

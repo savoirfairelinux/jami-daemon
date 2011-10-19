@@ -37,78 +37,73 @@
 
 #define ITEM_SEPARATOR      "|"
 
-HistoryItem::HistoryItem (std::string timestamp_start, CallType call_type, std::string timestamp_stop, std::string name, std::string number, std::string id, std::string account_id, std::string recording, std::string confID, std::string timeAdded)
-    :	_timestamp_start (timestamp_start),
-        _timestamp_stop (timestamp_stop),
-        _call_type (call_type),
-        _name (name),
-        _number (number),
-	_id(id),
-        _account_id (account_id),
-	_recording_file(recording),
-	_confID(confID),
-	_timeAdded(timeAdded)
+HistoryItem::HistoryItem(std::string timestamp_start, CallType call_type, std::string timestamp_stop, std::string name, std::string number, std::string id, std::string account_id, std::string recording, std::string confID, std::string timeAdded)
+    :	timestamp_start_(timestamp_start),
+        timestamp_stop_(timestamp_stop),
+        call_type_(call_type),
+        name_(name),
+        number_(number),
+        id_(id),
+        account_id_(account_id),
+        recording_file_(recording),
+        confID_(confID),
+        timeAdded_(timeAdded)
+{}
+
+
+HistoryItem::HistoryItem(std::string serialized_form)
 {
-}
+    int index = 0;
 
+    while (serialized_form.find(ITEM_SEPARATOR, 0) != std::string::npos) {
+        size_t pos = serialized_form.find(ITEM_SEPARATOR, 0);
+        std::string tmp = serialized_form.substr(0, pos);
+        serialized_form.erase(0, pos + 1);
 
-HistoryItem::HistoryItem (std::string serialized_form)
-{
-    int indice = 0;
+        switch (index) {
+            case 0: // The call type
+                call_type_ = (CallType) atoi(tmp.c_str());
+                break;
+            case 1: // The number field
+                number_ = tmp;
+                break;
+            case 2: // The name field
+                name_ = tmp;
 
-    while (serialized_form.find (ITEM_SEPARATOR, 0) != std::string::npos) {
-        size_t pos = serialized_form.find (ITEM_SEPARATOR, 0);
-        std::string tmp = serialized_form.substr (0, pos);
-        serialized_form.erase (0, pos + 1);
-
-        switch (indice) {
-		case 0: // The call type
-		    _call_type = (CallType) atoi (tmp.c_str());
-			break;
-		case 1: // The number field
-			_number = tmp;
-			break;
-		case 2: // The name field
-			_name = tmp;
-			if (_name == "empty")
-				_name = "";
-			break;
-		case 3: // The start timestamp
-			_timestamp_start = tmp;
-			break;
-        case 4: // The end timestamp
-            _timestamp_stop = tmp;
-            break;
-        case 5: // The ID
-            _id = tmp;
-            break;
-		case 6: // The account ID
-			_account_id = tmp;
-			break;
-		case 7: // The recorded file name
-			_recording_file = tmp;
-			break;
-		case 8: // The conference ID
-			_confID = tmp;
-			break;
-		case 9: // The time
-		    _timeAdded = tmp;
-			break;
-		default: // error
-			_error("Unserialized form %d not recognized\n", indice);
-			break;
+                if (name_ == "empty")
+                    name_ = "";
+                break;
+            case 3: // The start timestamp
+                timestamp_start_ = tmp;
+                break;
+            case 4: // The end timestamp
+                timestamp_stop_ = tmp;
+                break;
+            case 5: // The ID
+                id_ = tmp;
+                break;
+            case 6: // The account ID
+                account_id_ = tmp;
+                break;
+            case 7: // The recorded file name
+                recording_file_ = tmp;
+                break;
+            case 8: // The conference ID
+                confID_ = tmp;
+                break;
+            case 9: // the time
+                timeAdded_ = tmp;
+                break;
+            default: // error
+                ERROR("Unserialized form %d not recognized\n", index);
+                break;
         }
 
-        indice ++;
+        ++index;
     }
 }
 
-HistoryItem::~HistoryItem ()
-{
-    // TODO
-}
-
-bool HistoryItem::save (Conf::ConfigTree **history)
+bool HistoryItem::save(Conf::ConfigTree **history)
 {
     std::stringstream section;
     std::stringstream call_type;
@@ -116,57 +111,45 @@ bool HistoryItem::save (Conf::ConfigTree **history)
     // The section is : "[" + timestamp = "]"
     section << rand();
     std::string sectionstr = section.str();
-    call_type << _call_type;
+    call_type << call_type_;
 
-    /*
-    _error("-- Unserialized type: %s", call_type.str().c_str());
-    _error("-- Unserialized time start: %s", _timestamp_start.c_str());
-    _error("-- Unserialized time stop: %s", _timestamp_stop.c_str());
-    _error("-- Unserialized number: %s", _number.c_str());
-    _error("-- Unserialized id: %s", _id.c_str());
-    _error("-- Unserialized account: %s", _account_id.c_str());
-    _error("-- Unserialized name: %s", _name.c_str());
-    _error("-- Unserialized record file: %s", _recording_file.c_str());
-    _error("-- Unserialized conference id:%s", _confID.c_str());
-    _error("-- Unserialized time added: %s", _timeAdded.c_str());
-    */
-
-    return (*history)->setConfigTreeItem (sectionstr, "type", call_type.str())
-	    && (*history)->setConfigTreeItem (sectionstr, "timestamp_start", _timestamp_start)
-        && (*history)->setConfigTreeItem (sectionstr, "timestamp_stop", _timestamp_stop)
-        && (*history)->setConfigTreeItem (sectionstr, "number", _number)
-	    && (*history)->setConfigTreeItem (sectionstr, "id", _id)
-        && (*history)->setConfigTreeItem (sectionstr, "accountid", _account_id)
-        && (*history)->setConfigTreeItem (sectionstr, "name", _name)
-	    && (*history)->setConfigTreeItem (sectionstr, "recordfile", _recording_file)
-	    && (*history)->setConfigTreeItem (sectionstr, "confid", _confID)
-	    && (*history)->setConfigTreeItem (sectionstr, "timeadded", _timeAdded);
+    return (*history)->setConfigTreeItem(sectionstr, "type", call_type.str())
+           && (*history)->setConfigTreeItem(sectionstr, "timestamp_start", timestamp_start_)
+           && (*history)->setConfigTreeItem(sectionstr, "timestamp_stop", timestamp_stop_)
+           && (*history)->setConfigTreeItem(sectionstr, "number", number_)
+           && (*history)->setConfigTreeItem(sectionstr, "id", id_)
+           && (*history)->setConfigTreeItem(sectionstr, "accountid", account_id_)
+           && (*history)->setConfigTreeItem(sectionstr, "name", name_)
+           && (*history)->setConfigTreeItem(sectionstr, "recordfile", recording_file_)
+           && (*history)->setConfigTreeItem(sectionstr, "confid", confID_)
+           && (*history)->setConfigTreeItem(sectionstr, "timeadded", timeAdded_);
 }
 
-std::string HistoryItem::serialize (void)
+std::string HistoryItem::serialize() const
 {
-    std::stringstream res;
-
     // Replace empty string with a valid standard string value
-    std::string name(_name);
-    if (name == "")
-    	name = "empty";
+    std::string name(name_);
+
+    if (name.empty())
+        name = "empty";
 
     // For the account ID, check also if the accountID corresponds to an existing account
     // ie the account may have been removed
-    std::string accountID(_account_id);
-    if (_account_id == "" || not valid_account (_account_id))
-    	accountID = "empty";
+    std::string accountID(account_id_);
 
+    if (account_id_.empty() or not valid_account(account_id_))
+        accountID = "empty";
+
+    std::stringstream res;
     // Serialize it
-    res << _call_type << ITEM_SEPARATOR << _number << ITEM_SEPARATOR << name << ITEM_SEPARATOR << _timestamp_start << ITEM_SEPARATOR << _timestamp_stop
-	<< ITEM_SEPARATOR << _id << ITEM_SEPARATOR << accountID << ITEM_SEPARATOR << _recording_file << ITEM_SEPARATOR << _confID << ITEM_SEPARATOR << _timeAdded;
+    res << call_type_ << ITEM_SEPARATOR << number_ << ITEM_SEPARATOR << name << ITEM_SEPARATOR << timestamp_start_ << ITEM_SEPARATOR << timestamp_stop_
+        << ITEM_SEPARATOR << id_ << ITEM_SEPARATOR << accountID << ITEM_SEPARATOR << recording_file_ << ITEM_SEPARATOR << confID_ << ITEM_SEPARATOR << timeAdded_;
 
     return res.str();
 }
 
 
-bool HistoryItem::valid_account (std::string id)
+bool HistoryItem::valid_account(const std::string &id) const
 {
-    return Manager::instance().accountExists (id);
+    return Manager::instance().accountExists(id);
 }

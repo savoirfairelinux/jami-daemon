@@ -59,7 +59,7 @@
 
 
 /*
- * @file audiorecorderTest.cpp  
+ * @file audiorecorderTest.cpp
  * @brief       Regroups unitary tests related to the plugin manager.
  */
 
@@ -70,30 +70,30 @@
 
 class MainBufferTest : public CppUnit::TestCase {
 
-    /*
-     * Use cppunit library macros to add unit test the factory
-     */
-    CPPUNIT_TEST_SUITE( MainBufferTest );
-       CPPUNIT_TEST( testRingBufferCreation );
-       CPPUNIT_TEST( testRingBufferReadPointer );
-       CPPUNIT_TEST( testCallIDSet );
-       CPPUNIT_TEST( testRingBufferInt );
-       CPPUNIT_TEST( testRingBufferNonDefaultID );
-       CPPUNIT_TEST( testRingBufferFloat );
-       CPPUNIT_TEST( testTwoPointer );
-       CPPUNIT_TEST( testBindUnbindBuffer );
-       CPPUNIT_TEST( testGetPutDataByID );
-       CPPUNIT_TEST( testGetPutData );
-       CPPUNIT_TEST( testDiscardFlush );
-       CPPUNIT_TEST( testReadPointerInit );
-       CPPUNIT_TEST( testRingBufferSeveralPointers );
-       CPPUNIT_TEST( testConference );
-    CPPUNIT_TEST_SUITE_END();
+        /*
+         * Use cppunit library macros to add unit test the factory
+         */
+        CPPUNIT_TEST_SUITE(MainBufferTest);
+        CPPUNIT_TEST(testRingBufferCreation);
+        CPPUNIT_TEST(testRingBufferReadPointer);
+        CPPUNIT_TEST(testCallIDSet);
+        CPPUNIT_TEST(testRingBufferInt);
+        CPPUNIT_TEST(testRingBufferNonDefaultID);
+        CPPUNIT_TEST(testRingBufferFloat);
+        CPPUNIT_TEST(testTwoPointer);
+        CPPUNIT_TEST(testBindUnbindBuffer);
+        CPPUNIT_TEST(testGetPutDataByID);
+        CPPUNIT_TEST(testGetPutData);
+        CPPUNIT_TEST(testDiscardFlush);
+        CPPUNIT_TEST(testReadPointerInit);
+        CPPUNIT_TEST(testRingBufferSeveralPointers);
+        CPPUNIT_TEST(testConference);
+        CPPUNIT_TEST_SUITE_END();
 
     public:
 
         MainBufferTest() : CppUnit::TestCase("Audio Layer Tests") {}
-        
+
         /*
          * Code factoring - Common resources can be initialized here.
          * This method is called by unitcpp before each test
@@ -108,41 +108,41 @@ class MainBufferTest : public CppUnit::TestCase {
 
         void testRingBufferCreation();
 
-	void testRingBufferReadPointer();
+        void testRingBufferReadPointer();
 
-	void testCallIDSet();
+        void testCallIDSet();
 
-	void testRingBufferInt();
+        void testRingBufferInt();
 
-	void testRingBufferNonDefaultID();
+        void testRingBufferNonDefaultID();
 
-	void testRingBufferFloat();
+        void testRingBufferFloat();
 
-	void testTwoPointer();
+        void testTwoPointer();
 
-	void testBindUnbindBuffer();
+        void testBindUnbindBuffer();
 
-	void testGetPutDataByID();
+        void testGetPutDataByID();
 
-	void testGetPutData();
+        void testGetPutData();
 
-	void testAvailForGetPut();
+        void testAvailForGetPut();
 
-	void testDiscardFlush();
+        void testDiscardFlush();
 
-	void testReadPointerInit();
+        void testReadPointerInit();
 
-	void testRingBufferSeveralPointers();
+        void testRingBufferSeveralPointers();
 
-	void testConference();
+        void testConference();
 
     private:
 
-	MainBuffer _mainbuffer;
+        MainBuffer mainbuffer_;
 };
 
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(MainBufferTest, "MainBufferTest");
-CPPUNIT_TEST_SUITE_REGISTRATION( MainBufferTest );
+CPPUNIT_TEST_SUITE_REGISTRATION(MainBufferTest);
 
 #endif

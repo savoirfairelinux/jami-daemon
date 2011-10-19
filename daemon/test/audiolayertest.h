@@ -55,28 +55,28 @@
 
 class AudioLayerTest: public CppUnit::TestFixture {
 
-CPPUNIT_TEST_SUITE( AudioLayerTest );
-		CPPUNIT_TEST( testAudioLayerConfig );
-		CPPUNIT_TEST( testPulseConnect );
-		//TODO: this test ends the test sequence when using on a alsa only system
-		//CPPUNIT_TEST(testAudioLayerSwitch);
-	CPPUNIT_TEST_SUITE_END();
+        CPPUNIT_TEST_SUITE(AudioLayerTest);
+        CPPUNIT_TEST(testAudioLayerConfig);
+        CPPUNIT_TEST(testPulseConnect);
+        //TODO: this test ends the test sequence when using on a alsa only system
+        //CPPUNIT_TEST(testAudioLayerSwitch);
+        CPPUNIT_TEST_SUITE_END();
 
-public:
+    public:
 
-	void testAudioLayerConfig();
-	void testPulseConnect();
-	void testAudioLayerSwitch();
+        void testAudioLayerConfig();
+        void testPulseConnect();
+        void testAudioLayerSwitch();
 
-private:
+    private:
 
-	ManagerImpl* manager;
+        ManagerImpl* manager_;
 
-	PulseLayer* _pulselayer;
+        PulseLayer* pulselayer_;
 
-	int layer;
+        int layer_;
 };
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AudioLayerTest, "AudioLayerTest");
-CPPUNIT_TEST_SUITE_REGISTRATION( AudioLayerTest );
+CPPUNIT_TEST_SUITE_REGISTRATION(AudioLayerTest);
 
 #endif

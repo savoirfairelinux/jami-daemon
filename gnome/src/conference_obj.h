@@ -36,13 +36,11 @@
 #include <stdlib.h>
 #include <time.h>
 
-
-
 /** @enum conference_state_t
   * This enum have all the states a conference can take.
   */
 typedef enum {
-    CONFERENCE_STATE_ACTIVE_ATACHED = 0,
+    CONFERENCE_STATE_ACTIVE_ATTACHED = 0,
     CONFERENCE_STATE_ACTIVE_DETACHED,
     CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD,
     CONFERENCE_STATE_ACTIVE_DETACHED_RECORD,
@@ -65,7 +63,6 @@ typedef struct  {
     GtkWidget *_im_widget;           // associated instant messaging widget
     time_t _time_start;
     time_t _time_stop;
-    time_t _time_current;
     gchar *_recordfile;
     gboolean _record_is_playing;
 } conference_obj_t;
@@ -80,12 +77,6 @@ void conference_add_participant (const gchar*, conference_obj_t *);
 
 void conference_remove_participant (const gchar*, conference_obj_t *);
 
-GSList* conference_next_participant (GSList* participant);
-
 void conference_participant_list_update (gchar**, conference_obj_t*);
-
-gchar *serialize_history_conference_entry(conference_obj_t *entry);
-
-conference_obj_t *create_conference_history_entry_from_serialized(gchar *);
 
 #endif

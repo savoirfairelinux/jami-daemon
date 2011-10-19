@@ -49,33 +49,35 @@
 void
 ManagerImpl::registerAccounts()
 {
-    for (AccountMap::iterator iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
-    	Account *a = iter->second;
+    for (AccountMap::iterator iter = accountMap_.begin(); iter != accountMap_.end(); ++iter) {
+        Account *a = iter->second;
+
         if (!a)
-			continue;
+            continue;
 
         a->loadConfig();
-		if (a->isEnabled())
-			a->registerVoIPLink();
+
+        if (a->isEnabled())
+            a->registerVoIPLink();
     }
 }
 
 
-VoIPLink* ManagerImpl::getAccountLink (const std::string& accountID) const
+VoIPLink* ManagerImpl::getAccountLink(const std::string& accountID) const
 {
     if (not accountID.empty())
-        return getAccount (accountID)->getVoIPLink();
+        return getAccount(accountID)->getVoIPLink();
     else
         return SIPVoIPLink::instance();
 }
 
 
 void
-ManagerImpl::sendRegister (const std::string& accountID , const int32_t& enable)
+ManagerImpl::sendRegister(const std::string& accountID , const int32_t& enable)
 {
-    Account* acc = getAccount (accountID);
+    Account* acc = getAccount(accountID);
 
-	acc->setEnabled (enable);
+    acc->setEnabled(enable);
     acc->loadConfig();
 
     Manager::instance().saveConfig();

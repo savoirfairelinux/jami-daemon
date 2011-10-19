@@ -34,10 +34,10 @@
 
 extern "C" sfl::Codec* CODEC_ENTRY()
 {
-    return new Speex (111);
+    return new Speex(111);
 }
 
-extern "C" void destroy (sfl::Codec* a)
+extern "C" void destroy(sfl::Codec* a)
 {
     delete a;
 }

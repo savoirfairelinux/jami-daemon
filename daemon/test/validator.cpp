@@ -30,17 +30,17 @@
 
 #include "validator.h"
 
-bool Validator::isNumber (std::string str)
+bool Validator::isNumber(std::string str)
 {
     unsigned int i = 0;
 
     if (!str.empty() && (str[i] == '-' || str[i] == '+'))
         i++;
 
-    return string::npos == str.find_first_not_of (".eE0123456789", i);
+    return string::npos == str.find_first_not_of(".eE0123456789", i);
 }
 
-bool Validator::isNotNull (std::string str)
+bool Validator::isNotNull(std::string str)
 {
     if (!str.empty())
         return true;
@@ -48,7 +48,7 @@ bool Validator::isNotNull (std::string str)
         return false;
 }
 
-bool Validator::isEqual (std::string str1, std::string str2)
+bool Validator::isEqual(std::string str1, std::string str2)
 {
-    return str1.compare (str2) == 0;
+    return str1.compare(str2) == 0;
 }

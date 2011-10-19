@@ -51,7 +51,7 @@
 #include <pjnath/stun_config.h>
 
 // Application import
-#include "audio/audiortp/AudioRtpFactory.h"
+#include "audio/audiortp/audio_rtp_factory.h"
 #include "manager.h"
 #include "call.h"
 #include "sip/sipcall.h"
@@ -67,53 +67,53 @@ class SIPVoIPLink;
 
 class RtpTest: public CppUnit::TestCase {
 
-	/*
-	 * Use cppunit library macros to add unit test the factory
-	 */
-CPPUNIT_TEST_SUITE( RtpTest );
-		CPPUNIT_TEST( testRtpInitClose );
-	CPPUNIT_TEST_SUITE_END();
+        /*
+         * Use cppunit library macros to add unit test the factory
+         */
+        CPPUNIT_TEST_SUITE(RtpTest);
+        CPPUNIT_TEST(testRtpInitClose);
+        CPPUNIT_TEST_SUITE_END();
 
-public:
+    public:
 
-	RtpTest() :
-		CppUnit::TestCase("Audio Layer Tests") {
-	}
+        RtpTest() :
+            CppUnit::TestCase("Audio Layer Tests") {
+        }
 
-	/*
-	 * Code factoring - Common resources can be initialized here.
-	 * This method is called by unitcpp before each test
-	 */
-	void setUp();
+        /*
+         * Code factoring - Common resources can be initialized here.
+         * This method is called by unitcpp before each test
+         */
+        void setUp();
 
-	/*
-	 * Code factoring - Common resources can be released here.
-	 * This method is called by unitcpp after each test
-	 */
-	void tearDown();
+        /*
+         * Code factoring - Common resources can be released here.
+         * This method is called by unitcpp after each test
+         */
+        void tearDown();
 
-	bool pjsipInit();
+        bool pjsipInit();
 
-	void testRtpInitClose();
+        void testRtpInitClose();
 
-private:
+    private:
 
-	enum CallType {
-		Incoming, Outgoing
-	};
+        enum CallType {
+            Incoming, Outgoing
+        };
 
-	ManagerImpl* manager;
+        ManagerImpl* manager;
 
-	AudioRtpFactory *audiortp;
+        AudioRtpFactory *audiortp;
 
-	SIPCall *sipcall;
+        SIPCall *sipcall;
 
-	pj_caching_pool _cp;
+        pj_caching_pool _cp;
 
-	pj_pool_t *_pool;
+        pj_pool_t *_pool;
 };
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(RtpTest, "RtpTest");
-CPPUNIT_TEST_SUITE_REGISTRATION( RtpTest );
+CPPUNIT_TEST_SUITE_REGISTRATION(RtpTest);
 
 #endif

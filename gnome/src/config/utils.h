@@ -35,10 +35,9 @@
 
 G_BEGIN_DECLS
 
-void gnome_main_section_new (gchar *title, GtkWidget**);
+GtkWidget *gnome_main_section_new(const gchar * const title);
 void gnome_main_section_new_with_table (gchar *title, GtkWidget**, GtkWidget**, gint nb_col, gint nb_row);
-void gnome_main_section_new_with_vbox (gchar *title, GtkWidget **frame, GtkWidget **vbox, gint nb_row);
-void gnome_info_bar (gchar *message, GtkMessageType type, GtkWidget **info_bar);
+GtkWidget *gnome_info_bar (gchar *message, GtkMessageType type);
 
 G_END_DECLS
 

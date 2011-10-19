@@ -50,20 +50,20 @@
 
 class EchoCancelTest: public CppUnit::TestFixture {
 
-        CPPUNIT_TEST_SUITE( EchoCancelTest );
-		CPPUNIT_TEST( testEchoCancelProcessing );
-	CPPUNIT_TEST_SUITE_END();
+        CPPUNIT_TEST_SUITE(EchoCancelTest);
+        CPPUNIT_TEST(testEchoCancelProcessing);
+        CPPUNIT_TEST_SUITE_END();
 
-public:
+    public:
 
-	void testEchoCancelProcessing();
+        void testEchoCancelProcessing();
 
-private:
+    private:
 
-    SpeexEchoCancel echoCanceller;
+        SpeexEchoCancel echoCanceller;
 
 };
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(EchoCancelTest, "EchoCancelTest");
-CPPUNIT_TEST_SUITE_REGISTRATION( EchoCancelTest );
+CPPUNIT_TEST_SUITE_REGISTRATION(EchoCancelTest);
 
 #endif

@@ -31,7 +31,9 @@
 
 #include <string.h>
 #include "videoconf.h"
+#include "logger.h"
 #include "utils.h"
+#include "unused.h"
 #include "eel-gconf-extensions.h"
 #include "dbus.h"
 #include "video/video_renderer.h"
@@ -739,9 +741,9 @@ static GtkWidget* v4l2_box ()
 
 
 static gint
-on_drawarea_unrealize(GtkWidget *drawarea, gpointer data)
+on_drawarea_unrealize(GtkWidget *widget, gpointer data)
 {
-    (void) drawarea;
+    (void) widget;
     (void) data;
     if (preview) {
         gboolean running = FALSE;

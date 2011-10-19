@@ -35,18 +35,18 @@
 #include "video/video_endpoint.h"
 
 Account::Account (const std::string& accountID, const std::string &type) :
-    accountID_ (accountID)
-    , link_ (NULL)
-    , enabled_ (true)
-    , type_ (type)
-    , registrationState_ (Unregistered)
-    , codecOrder_ ()
-    , videoCodecOrder_ ()
-    , codecStr_ ("")
-    , ringtonePath_ ("/usr/share/sflphone/ringtones/konga.ul")
-    , ringtoneEnabled_ (true)
-    , displayName_ ("")
-    , userAgent_ ("SFLphone")
+    accountID_(accountID)
+    , link_(NULL)
+    , enabled_(true)
+    , type_(type)
+    , registrationState_(Unregistered)
+    , codecOrder_()
+    , videoCodecOrder_()
+    , codecStr_("")
+    , ringtonePath_("/usr/share/sflphone/ringtones/konga.ul")
+    , ringtoneEnabled_(true)
+    , displayName_("")
+    , userAgent_("SFLphone")
 {
     // Initialize the codec order, used when creating a new account
     loadDefaultCodecs();
@@ -56,7 +56,7 @@ Account::~Account()
 {
 }
 
-void Account::setRegistrationState (const RegistrationState &state)
+void Account::setRegistrationState(const RegistrationState &state)
 {
     if (state != registrationState_) {
         registrationState_ = state;
@@ -68,21 +68,17 @@ void Account::setRegistrationState (const RegistrationState &state)
 
 void Account::loadDefaultCodecs()
 {
-    // TODO
-    // CodecMap codecMap = Manager::instance ().getCodecDescriptorMap ().getCodecsMap();
-
     // Initialize codec
     std::vector <std::string> codecList;
-    codecList.push_back ("0");
-    codecList.push_back ("3");
-    codecList.push_back ("8");
-    codecList.push_back ("9");
-    codecList.push_back ("110");
-    codecList.push_back ("111");
-    codecList.push_back ("112");
+    codecList.push_back("0");
+    codecList.push_back("3");
+    codecList.push_back("8");
+    codecList.push_back("9");
+    codecList.push_back("110");
+    codecList.push_back("111");
+    codecList.push_back("112");
 
-    setActiveCodecs (codecList);
-
+    setActiveCodecs(codecList);
     setActiveVideoCodecs(sfl_video::getVideoCodecList());
 }
 
@@ -91,7 +87,7 @@ void Account::setActiveVideoCodecs (const std::vector <std::string> &list)
 	videoCodecOrder_ = !list.empty() ? list : sfl_video::getVideoCodecList();
 }
 
-void Account::setActiveCodecs (const std::vector <std::string> &list)
+void Account::setActiveCodecs(const std::vector <std::string> &list)
 {
     // first clear the previously stored codecs
     codecOrder_.clear();
@@ -100,12 +96,12 @@ void Account::setActiveCodecs (const std::vector <std::string> &list)
     // we used the CodecOrder vector to save the order.
     for (std::vector<std::string>::const_iterator iter = list.begin(); iter != list.end();
             ++iter) {
-        int payload = std::atoi (iter->c_str());
-        codecOrder_.push_back ( (int) payload);
+        int payload = std::atoi(iter->c_str());
+        codecOrder_.push_back((int) payload);
     }
 
     // update the codec string according to new codec selection
-    codecStr_ = ManagerImpl::serialize (list);
+    codecStr_ = ManagerImpl::serialize(list);
 }
 
 std::string Account::mapStateNumberToString(RegistrationState state)

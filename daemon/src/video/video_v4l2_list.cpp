@@ -113,7 +113,7 @@ VideoV4l2List::VideoV4l2List() : _udev_mon(NULL)
                 try {
                     addDevice(devpath);
                 } catch (const std::runtime_error &e) {
-                    _error(e.what());
+                    ERROR(e.what());
                 }
             }
         }
@@ -125,7 +125,7 @@ VideoV4l2List::VideoV4l2List() : _udev_mon(NULL)
 
 udev_failed:
 
-	_error("udev enumeration failed");
+	ERROR("udev enumeration failed");
 
 	if (_udev_mon)
         udev_monitor_unref (_udev_mon);
@@ -143,7 +143,7 @@ udev_failed:
             if (!addDevice(ss.str().c_str()))
                 return;
         } catch (const std::runtime_error &e) {
-            _error(e.what());
+            ERROR(e.what());
             return;
         }
     }
@@ -228,37 +228,35 @@ void VideoV4l2List::run()
 			node = udev_device_get_devnode(dev);
 			action = udev_device_get_action(dev);
 			if (!strcmp(action, "add")) {
-				_debug("udev: adding %s", node);
+				DEBUG("udev: adding %s", node);
                 try {
                     addDevice(node);
     				Manager::instance().notifyVideoDeviceEvent();
                 } catch (const std::runtime_error &e) {
-                    _error(e.what());
+                    ERROR(e.what());
                 }
 			} else if (!strcmp(action, "remove")) {
-				_debug("udev: removing %s", node);
+				DEBUG("udev: removing %s", node);
 				delDevice(std::string(node));
 			}
 			udev_device_unref(dev);
 			continue;
 
 		default:
-			_error("select() returned %d (%m)", ret);
+			ERROR("select() returned %d (%m)", ret);
 			return;
 
 		case -1:
 			if (errno == EAGAIN)
 				continue;
-			_error("udev monitoring thread: select failed (%m)");
+			ERROR("udev monitoring thread: select failed (%m)");
 			return;
 		}
 	}
 }
 
 void VideoV4l2List::finalize()
-{
-
-}
+{}
 
 void VideoV4l2List::delDevice(const std::string &node)
 {

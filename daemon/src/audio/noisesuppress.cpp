@@ -31,38 +31,38 @@
 #include <cassert>
 #include "noisesuppress.h"
 
-NoiseSuppress::NoiseSuppress (int smplPerFrame, int samplingRate)
-	: _smplPerFrame (smplPerFrame)
+NoiseSuppress::NoiseSuppress(int smplPerFrame, int samplingRate)
+    : smplPerFrame_(smplPerFrame)
 {
-    _noiseState = speex_preprocess_state_init (_smplPerFrame, samplingRate);
+    noiseState_ = speex_preprocess_state_init(smplPerFrame_, samplingRate);
     int i=1;
-    speex_preprocess_ctl (_noiseState, SPEEX_PREPROCESS_SET_DENOISE, &i);
+    speex_preprocess_ctl(noiseState_, SPEEX_PREPROCESS_SET_DENOISE, &i);
     i=-20;
-    speex_preprocess_ctl (_noiseState, SPEEX_PREPROCESS_SET_NOISE_SUPPRESS, &i);
+    speex_preprocess_ctl(noiseState_, SPEEX_PREPROCESS_SET_NOISE_SUPPRESS, &i);
     i=0;
-    speex_preprocess_ctl (_noiseState, SPEEX_PREPROCESS_SET_AGC, &i);
+    speex_preprocess_ctl(noiseState_, SPEEX_PREPROCESS_SET_AGC, &i);
     i=8000;
-    speex_preprocess_ctl (_noiseState, SPEEX_PREPROCESS_SET_AGC_TARGET, &i);
+    speex_preprocess_ctl(noiseState_, SPEEX_PREPROCESS_SET_AGC_TARGET, &i);
     i=16000;
-    speex_preprocess_ctl (_noiseState, SPEEX_PREPROCESS_SET_AGC_LEVEL, &i);
+    speex_preprocess_ctl(noiseState_, SPEEX_PREPROCESS_SET_AGC_LEVEL, &i);
     i=0;
-    speex_preprocess_ctl (_noiseState, SPEEX_PREPROCESS_SET_DEREVERB, &i);
+    speex_preprocess_ctl(noiseState_, SPEEX_PREPROCESS_SET_DEREVERB, &i);
     float f=0.0;
-    speex_preprocess_ctl (_noiseState, SPEEX_PREPROCESS_SET_DEREVERB_DECAY, &f);
+    speex_preprocess_ctl(noiseState_, SPEEX_PREPROCESS_SET_DEREVERB_DECAY, &f);
     f=0.0;
-    speex_preprocess_ctl (_noiseState, SPEEX_PREPROCESS_SET_DEREVERB_LEVEL, &f);
+    speex_preprocess_ctl(noiseState_, SPEEX_PREPROCESS_SET_DEREVERB_LEVEL, &f);
     i = 0;
-    speex_preprocess_ctl (_noiseState, SPEEX_PREPROCESS_SET_VAD, &i);
+    speex_preprocess_ctl(noiseState_, SPEEX_PREPROCESS_SET_VAD, &i);
 }
 
 
 NoiseSuppress::~NoiseSuppress()
 {
-    speex_preprocess_state_destroy (_noiseState);
+    speex_preprocess_state_destroy(noiseState_);
 }
 
-void NoiseSuppress::process (SFLDataFormat *data, int samples)
+void NoiseSuppress::process(SFLDataFormat *data, int samples)
 {
-	assert(_smplPerFrame == samples);
-	speex_preprocess_run (_noiseState, data);
+    assert(smplPerFrame_ == samples);
+    speex_preprocess_run(noiseState_, data);
 }

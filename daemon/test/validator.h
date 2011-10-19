@@ -37,9 +37,9 @@
 using namespace std;
 
 class Validator {
-  public:
-	static bool isNumber(std::string str);
-	static bool isNotNull(std::string str);
-	static bool isEqual(std::string str1, std::string str2);
+    public:
+        static bool isNumber(std::string str);
+        static bool isNotNull(std::string str);
+        static bool isEqual(std::string str1, std::string str2);
 };
 #endif /* VALIDATOR_H_ */

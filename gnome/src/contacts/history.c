@@ -28,15 +28,16 @@
  *  as that of the covered work.
  */
 
-#include <history.h>
 #include <string.h>
-#include <searchbar.h>
-#include <calltab.h>
+#include "history.h"
+#include "searchbar.h"
+#include "calltab.h"
+#include "unused.h"
 
 static GtkTreeModel *history_filter;
 static GtkEntry *history_searchbar_widget;
 
-static gboolean history_is_visible (GtkTreeModel* model, GtkTreeIter* iter, gpointer data UNUSED)
+static gboolean history_is_visible(GtkTreeModel* model, GtkTreeIter* iter, gpointer data UNUSED)
 {
     gboolean ret = TRUE;
     callable_obj_t *history_entry = NULL;
@@ -45,25 +46,27 @@ static gboolean history_is_visible (GtkTreeModel* model, GtkTreeIter* iter, gpoi
     // Fetch the call description
     GValue val;
     memset(&val, 0, sizeof val);
-    gtk_tree_model_get_value (GTK_TREE_MODEL (model), iter, 1, &val);
+    gtk_tree_model_get_value(GTK_TREE_MODEL(model), iter, 1, &val);
 
-    if (G_VALUE_HOLDS_STRING (&val))
-        text = (gchar *) g_value_get_string (&val);
+    if (G_VALUE_HOLDS_STRING(&val))
+        text = (gchar *) g_value_get_string(&val);
 
     // Fetch the call type
     GValue obj;
     memset(&obj, 0, sizeof obj);
-    gtk_tree_model_get_value (GTK_TREE_MODEL (model), iter, 3, &obj);
+    gtk_tree_model_get_value(GTK_TREE_MODEL(model), iter, 3, &obj);
 
-    if (G_VALUE_HOLDS_POINTER (&obj))
-        history_entry = (gpointer) g_value_get_pointer (&obj);
+    if (G_VALUE_HOLDS_POINTER(&obj))
+        history_entry = (gpointer) g_value_get_pointer(&obj);
 
     if (text && history_entry) {
         // Filter according to the type of call
         // MISSED, INCOMING, OUTGOING, ALL
-        const gchar* search = gtk_entry_get_text (history_searchbar_widget);
+        const gchar* search = gtk_entry_get_text(history_searchbar_widget);
+
         if (!search || !*search)
             goto end;
+
         SearchType search_type = get_current_history_search_type();
         ret = g_regex_match_simple(search, text, G_REGEX_CASELESS, 0);
 
@@ -78,26 +81,26 @@ end:
     return ret;
 }
 
-static GtkTreeModel* history_create_filter (GtkTreeModel* child)
+static GtkTreeModel* history_create_filter(GtkTreeModel* child)
 {
-    GtkTreeModel* ret = gtk_tree_model_filter_new (child, NULL);
-    gtk_tree_model_filter_set_visible_func (GTK_TREE_MODEL_FILTER (ret), history_is_visible, NULL, NULL);
-    return GTK_TREE_MODEL (ret);
+    GtkTreeModel* ret = gtk_tree_model_filter_new(child, NULL);
+    gtk_tree_model_filter_set_visible_func(GTK_TREE_MODEL_FILTER(ret), history_is_visible, NULL, NULL);
+    return GTK_TREE_MODEL(ret);
 }
 
-void history_search (void)
+void history_search(void)
 {
     if (history_filter != NULL)
-        gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (history_filter));
+        gtk_tree_model_filter_refilter(GTK_TREE_MODEL_FILTER(history_filter));
 }
 
-void history_search_init (void)
+void history_search_init(void)
 {
-    history_filter = history_create_filter(GTK_TREE_MODEL (history->store));
-    gtk_tree_view_set_model(GTK_TREE_VIEW (history->view), GTK_TREE_MODEL (history_filter));
+    history_filter = history_create_filter(GTK_TREE_MODEL(history_tab->store));
+    gtk_tree_view_set_model(GTK_TREE_VIEW(history_tab->view), GTK_TREE_MODEL(history_filter));
 }
 
-void history_set_searchbar_widget (GtkWidget *searchbar)
+void history_set_searchbar_widget(GtkWidget *searchbar)
 {
     history_searchbar_widget = GTK_ENTRY(searchbar);
 }

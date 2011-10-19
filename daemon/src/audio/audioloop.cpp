@@ -37,50 +37,49 @@
 #include <cstring>
 #include <cassert>
 
-AudioLoop::AudioLoop() :_buffer (0),  _size (0), _pos (0), _sampleRate (0)
+AudioLoop::AudioLoop() : buffer_(0),  size_(0), pos_(0), sampleRate_(0)
 {
 }
 
 AudioLoop::~AudioLoop()
 {
-    delete [] _buffer;
+    delete [] buffer_;
 }
 
 void
-AudioLoop::getNext (SFLDataFormat* output, size_t total_samples, short volume)
+AudioLoop::getNext(SFLDataFormat* output, size_t total_samples, short volume)
 {
-    size_t pos = _pos;
+    size_t pos = pos_;
 
-    assert(_size);
-
-    if(_size == 0) {
-    	_error("AudioLoop: Error: Audio loop size is 0");
-    	return;
+    if (size_ == 0) {
+        ERROR("AudioLoop: Error: Audio loop size is 0");
+        return;
     }
 
     while (total_samples) {
         size_t samples = total_samples;
 
-        if (samples > (_size-pos)) {
-            samples = _size-pos;
-        }
+        if (samples > (size_ - pos))
+            samples = size_ - pos;
 
-        memcpy(output, _buffer+pos, samples*sizeof (SFLDataFormat)); // short>char conversion
+        // short->char conversion
+        memcpy(output, buffer_ + pos, samples * sizeof(SFLDataFormat));
 
-        if (volume!=100) {
-            for (size_t i=0; i<samples; i++) {
-                *output = (*output * volume) /100;
+        if (volume != 100) {
+            double gain = volume * 0.01;
+
+            for (size_t i = 0; i < samples; i++) {
+                *output *= gain;
                 output++;
             }
-        } else {
+        } else
             output += samples; // this is the destination...
-        }
 
-        pos = (pos + samples) % _size;
+        pos = (pos + samples) % size_;
 
         total_samples -= samples;
     }
 
-    _pos = pos;
+    pos_ = pos;
 }
 

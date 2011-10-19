@@ -21,7 +21,7 @@ class EchoSuppress {
          * Add speaker data into internal buffer
          * \param inputData containing far-end voice data to be sent to speakers
          */
-        void putData (SFLDataFormat *, int);
+        void putData(SFLDataFormat *, int);
 
         void getData(SFLDataFormat *);
 

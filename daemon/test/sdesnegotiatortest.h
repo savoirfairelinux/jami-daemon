@@ -34,8 +34,6 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
-#include <assert.h>
-
 #include <cstddef>
 #include <stdio.h>
 #include <sstream>
@@ -50,35 +48,34 @@
 #include <pjlib-util.h>
 #include <pjnath/stun_config.h>
 
-// Application import
-#include "sip/SdesNegotiator.h"
-#include "sip/Pattern.h"
-
-
 /*
- * @file sdesnegotiationTest.cpp  
+ * @file sdesnegotiationTest.cpp
  * @brief       Regroups unitary tests related to the plugin manager.
  */
 
-#ifndef _SDESNEGOTIATOR_TEST_
-#define _SDESNEGOTIATOR_TEST_
+#ifndef __SDESNEGOTIATOR_TEST_H__
+#define __SDESNEGOTIATOR_TEST_H__
 
+#include "sip/sdes_negotiator.h" // for CryptoSuiteDefinition
 
+namespace sfl {
+    class Pattern;
+}
 
 class SdesNegotiatorTest : public CppUnit::TestCase {
 
-    /*
-     * Use cppunit library macros to add unit test the factory
-     */
-    CPPUNIT_TEST_SUITE( SdesNegotiatorTest );
-    CPPUNIT_TEST( testTagPattern );
-    CPPUNIT_TEST( testCryptoSuitePattern );
-    CPPUNIT_TEST( testKeyParamsPattern );
-    CPPUNIT_TEST( testKeyParamsPatternWithoutMKI );
-    CPPUNIT_TEST( testNegotiation );
-    CPPUNIT_TEST( testMostSimpleCase );
-    CPPUNIT_TEST( test32ByteKeyLength );
-    CPPUNIT_TEST_SUITE_END();
+        /*
+         * Use cppunit library macros to add unit test the factory
+         */
+        CPPUNIT_TEST_SUITE(SdesNegotiatorTest);
+        CPPUNIT_TEST(testTagPattern);
+        CPPUNIT_TEST(testCryptoSuitePattern);
+        CPPUNIT_TEST(testKeyParamsPattern);
+        CPPUNIT_TEST(testKeyParamsPatternWithoutMKI);
+        CPPUNIT_TEST(testNegotiation);
+        CPPUNIT_TEST(testMostSimpleCase);
+        CPPUNIT_TEST(test32ByteKeyLength);
+        CPPUNIT_TEST_SUITE_END();
 
     public:
 
@@ -86,37 +83,37 @@ class SdesNegotiatorTest : public CppUnit::TestCase {
          * Code factoring - Common resources can be released here.
          * This method is called by unitcpp after each test
          */
-		void testTagPattern();
+        void testTagPattern();
 
-		void testCryptoSuitePattern();
+        void testCryptoSuitePattern();
 
-		void testKeyParamsPattern();
-		
-                void testKeyParamsPatternCiscoStyle();
+        void testKeyParamsPattern();
 
-		void testKeyParamsPatternWithoutMKI();
+        void testKeyParamsPatternCiscoStyle();
 
-		void testNegotiation();
-		
-		void testComponent();
+        void testKeyParamsPatternWithoutMKI();
 
-		void testMostSimpleCase();
+        void testNegotiation();
 
-                void test32ByteKeyLength();
+        void testComponent();
+
+        void testMostSimpleCase();
+
+        void test32ByteKeyLength();
 
     private:
 
-		sfl::Pattern *pattern;
+        sfl::Pattern *pattern;
 
-		sfl::SdesNegotiator *sdesnego;
+        sfl::SdesNegotiator *sdesnego;
 
-		std::vector<std::string> *remoteOffer;
+        std::vector<std::string> *remoteOffer;
 
-		std::vector<sfl::CryptoSuiteDefinition> *localCapabilities;
+        std::vector<sfl::CryptoSuiteDefinition> *localCapabilities;
 };
 
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(SdesNegotiatorTest, "SdesNegotiatorTest");
-CPPUNIT_TEST_SUITE_REGISTRATION( SdesNegotiatorTest );
+CPPUNIT_TEST_SUITE_REGISTRATION(SdesNegotiatorTest);
 
-#endif
+#endif // __SDESNEGOTIATOR_TEST_H__

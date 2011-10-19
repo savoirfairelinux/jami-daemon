@@ -289,7 +289,7 @@
 			    A map containing the ID of the conferences
 			    and their states:
 			    <ul>
-			      <li>ACTIVE_ATACHED</li>
+			      <li>ACTIVE_ATTACHED</li>
 			      <li>ACTIVE_DETACHED</li>
 			      <li>HOLD</li>
 			    </ul>

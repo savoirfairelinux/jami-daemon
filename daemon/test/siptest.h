@@ -40,7 +40,7 @@
 #include "manager.h"
 
 /*
- * @file siptest.h 
+ * @file siptest.h
  * @brief       Regroups unitary tests related to the SIP module
  */
 
@@ -49,21 +49,21 @@
 
 class SIPTest : public CppUnit::TestCase {
 
-   /**
-     * Use cppunit library macros to add unit test the factory
-     */
-    CPPUNIT_TEST_SUITE( SIPTest );
-    // CPPUNIT_TEST ( testSimpleOutgoingIpCall );
-    // CPPUNIT_TEST ( testSimpleIncomingIpCall );
-    // CPPUNIT_TEST ( testTwoOutgoingIpCall );
-    // CPPUNIT_TEST ( testTwoIncomingIpCall );
-    // CPPUNIT_TEST ( testHoldIpCall);
-    // CPPUNIT_TEST ( testIncomingIpCallSdp );
-    CPPUNIT_TEST_SUITE_END();
+        /**
+          * Use cppunit library macros to add unit test the factory
+          */
+        CPPUNIT_TEST_SUITE(SIPTest);
+        // CPPUNIT_TEST ( testSimpleOutgoingIpCall );
+        // CPPUNIT_TEST ( testSimpleIncomingIpCall );
+        // CPPUNIT_TEST ( testTwoOutgoingIpCall );
+        // CPPUNIT_TEST ( testTwoIncomingIpCall );
+        // CPPUNIT_TEST ( testHoldIpCall);
+        // CPPUNIT_TEST ( testIncomingIpCallSdp );
+        CPPUNIT_TEST_SUITE_END();
 
     public:
         SIPTest() : CppUnit::TestCase("SIP module Tests") {}
-        
+
         /*
          * Code factoring - Common resources can be initialized here.
          * This method is called by unitcpp before each test
@@ -74,18 +74,18 @@ class SIPTest : public CppUnit::TestCase {
          * Code factoring - Common resources can be released here.
          * This method is called by unitcpp after each test
          */
-        void tearDown ();
+        void tearDown();
 
 
-	void testSimpleOutgoingIpCall(void);
+        void testSimpleOutgoingIpCall(void);
 
-	void testSimpleIncomingIpCall(void);
+        void testSimpleIncomingIpCall(void);
 
-	void testTwoOutgoingIpCall(void);
+        void testTwoOutgoingIpCall(void);
 
-	void testTwoIncomingIpCall(void);
+        void testTwoIncomingIpCall(void);
 
-	void testHoldIpCall(void);
+        void testHoldIpCall(void);
 
         void testIncomingIpCallSdp(void);
     private:
@@ -93,6 +93,6 @@ class SIPTest : public CppUnit::TestCase {
 
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(SIPTest, "SIPTest");
-CPPUNIT_TEST_SUITE_REGISTRATION( SIPTest );
+CPPUNIT_TEST_SUITE_REGISTRATION(SIPTest);
 
 #endif

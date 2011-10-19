@@ -31,7 +31,7 @@
 #define __CODECLIST_H__
 
 #include <gtk/gtk.h>
-#include <accountlist.h>
+#include "accountlist.h"
 /** @file codeclist.h
   * @brief A list to hold codecs.
   */

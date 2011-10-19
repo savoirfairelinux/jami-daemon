@@ -154,7 +154,7 @@ void account_list_free ();
  * @param accountID The ID of the account
  * @return An account or NULL
  */
-account_t * account_list_get_by_id (gchar * accountID);
+account_t * account_list_get_by_id (const gchar * const accountID);
 
 /**
  * Move the account from an unit up in the account_list

@@ -45,43 +45,43 @@
 const char* ConfigurationManager::SERVER_PATH =
     "/org/sflphone/SFLphone/ConfigurationManager";
 
-ConfigurationManager::ConfigurationManager (DBus::Connection& connection) :
-    DBus::ObjectAdaptor (connection, SERVER_PATH)
+ConfigurationManager::ConfigurationManager(DBus::Connection& connection) :
+    DBus::ObjectAdaptor(connection, SERVER_PATH)
 {
-    shortcutsKeys.push_back ("pick_up");
-    shortcutsKeys.push_back ("hang_up");
-    shortcutsKeys.push_back ("popup_window");
-    shortcutsKeys.push_back ("toggle_pick_up_hang_up");
-    shortcutsKeys.push_back ("toggle_hold");
+    shortcutsKeys.push_back("pick_up");
+    shortcutsKeys.push_back("hang_up");
+    shortcutsKeys.push_back("popup_window");
+    shortcutsKeys.push_back("toggle_pick_up_hang_up");
+    shortcutsKeys.push_back("toggle_hold");
 }
 
-std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails (void)
+std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails()
 {
     std::map<std::string, std::string> ip2ipAccountDetails;
-    SIPAccount *sipaccount = static_cast<SIPAccount *>(Manager::instance().getAccount (IP2IP_PROFILE));
+    SIPAccount *sipaccount = static_cast<SIPAccount *>(Manager::instance().getAccount(IP2IP_PROFILE));
+
     if (!sipaccount) {
-        _error ("ConfigurationManager: could not find account");
+        ERROR("ConfigurationManager: could not find account");
         return ip2ipAccountDetails;
-    }
-    else
+    } else
         return sipaccount->getIp2IpDetails();
 
     std::map<std::string, std::string> tlsSettings = getTlsSettings();
-    std::copy (tlsSettings.begin(), tlsSettings.end(), std::inserter (
-                ip2ipAccountDetails, ip2ipAccountDetails.end()));
+    std::copy(tlsSettings.begin(), tlsSettings.end(), std::inserter(
+                  ip2ipAccountDetails, ip2ipAccountDetails.end()));
 
     return ip2ipAccountDetails;
 }
 
 
-std::map<std::string, std::string> ConfigurationManager::getAccountDetails (
+std::map<std::string, std::string> ConfigurationManager::getAccountDetails(
     const std::string& accountID)
 {
-    return Manager::instance().getAccountDetails (accountID);
+    return Manager::instance().getAccountDetails(accountID);
 }
 
 std::map<std::string, std::string>
-ConfigurationManager::getTlsSettingsDefault ()
+ConfigurationManager::getTlsSettingsDefault()
 {
     std::stringstream portstr;
     portstr << DEFAULT_SIP_TLS_PORT;
@@ -108,18 +108,20 @@ std::map<std::string, std::string> ConfigurationManager::getTlsSettings()
 {
     std::map<std::string, std::string> tlsSettings;
 
-    SIPAccount *sipaccount = (SIPAccount *) Manager::instance().getAccount (IP2IP_PROFILE);
+    SIPAccount *sipaccount = (SIPAccount *) Manager::instance().getAccount(IP2IP_PROFILE);
 
     if (!sipaccount)
         return tlsSettings;
+
     return sipaccount->getTlsSettings();
 }
 
-void ConfigurationManager::setTlsSettings (const std::map<std::string, std::string>& details)
+void ConfigurationManager::setTlsSettings(const std::map<std::string, std::string>& details)
 {
-    SIPAccount * sipaccount = (SIPAccount *) Manager::instance().getAccount (IP2IP_PROFILE);
+    SIPAccount * sipaccount = (SIPAccount *) Manager::instance().getAccount(IP2IP_PROFILE);
+
     if (!sipaccount) {
-        _debug ("ConfigurationManager: Error: No valid account in set TLS settings");
+        DEBUG("ConfigurationManager: Error: No valid account in set TLS settings");
         return;
     }
 
@@ -132,24 +134,24 @@ void ConfigurationManager::setTlsSettings (const std::map<std::string, std::stri
 }
 
 
-void ConfigurationManager::setAccountDetails (const std::string& accountID, const std::map<std::string, std::string>& details)
+void ConfigurationManager::setAccountDetails(const std::string& accountID, const std::map<std::string, std::string>& details)
 {
-    Manager::instance().setAccountDetails (accountID, details);
+    Manager::instance().setAccountDetails(accountID, details);
 }
 
-void ConfigurationManager::sendRegister (const std::string& accountID, const int32_t& expire)
+void ConfigurationManager::sendRegister(const std::string& accountID, const int32_t& expire)
 {
-    Manager::instance().sendRegister (accountID, expire);
+    Manager::instance().sendRegister(accountID, expire);
 }
 
-std::string ConfigurationManager::addAccount (const std::map<std::string, std::string>& details)
+std::string ConfigurationManager::addAccount(const std::map<std::string, std::string>& details)
 {
-    return Manager::instance().addAccount (details);
+    return Manager::instance().addAccount(details);
 }
 
-void ConfigurationManager::removeAccount (const std::string& accoundID)
+void ConfigurationManager::removeAccount(const std::string& accoundID)
 {
-    return Manager::instance().removeAccount (accoundID);
+    return Manager::instance().removeAccount(accoundID);
 }
 
 std::vector<std::string> ConfigurationManager::getAccountList()
@@ -161,9 +163,9 @@ std::vector<std::string> ConfigurationManager::getAccountList()
  * Send the list of all codecs loaded to the client through DBus.
  * Can stay global, as only the active codecs will be set per accounts
  */
-std::vector<int32_t > ConfigurationManager::getAudioCodecList (void)
+std::vector<int32_t > ConfigurationManager::getAudioCodecList()
 {
-	std::vector<int32_t> list(Manager::instance().audioCodecFactory.getAudioCodecList());
+    std::vector<int32_t> list(Manager::instance().audioCodecFactory.getAudioCodecList());
 
     if (list.empty())
         errorAlert(CODECS_NOT_LOADED);
@@ -171,55 +173,58 @@ std::vector<int32_t > ConfigurationManager::getAudioCodecList (void)
     return list;
 }
 
-
 /**
  * Send the list of all codecs loaded to the client through DBus.
  * Can stay global, as only the active codecs will be set per accounts
  */
-std::vector<std::string> ConfigurationManager::getVideoCodecList (void)
+std::vector<std::string> ConfigurationManager::getVideoCodecList()
 {
     return sfl_video::getVideoCodecList();
 }
 
-std::vector<std::string> ConfigurationManager::getSupportedTlsMethod (void)
+std::vector<std::string> ConfigurationManager::getSupportedTlsMethod()
 {
     std::vector<std::string> method;
-    method.push_back ("Default");
-    method.push_back ("TLSv1");
-    method.push_back ("SSLv3");
-    method.push_back ("SSLv23");
+    method.push_back("Default");
+    method.push_back("TLSv1");
+    method.push_back("SSLv3");
+    method.push_back("SSLv23");
     return method;
 }
 
-std::vector<std::string> ConfigurationManager::getAudioCodecDetails (const int32_t& payload)
+std::vector<std::string> ConfigurationManager::getAudioCodecDetails(const int32_t& payload)
 {
     std::vector<std::string> result(Manager::instance().audioCodecFactory.getCodecSpecifications(payload));
+
     if (result.empty())
         errorAlert(CODECS_NOT_LOADED);
+
     return result;
 }
 
-std::vector<std::string> ConfigurationManager::getVideoCodecDetails (const std::string& codec)
+std::vector<std::string> ConfigurationManager::getVideoCodecDetails(const std::string& codec)
 {
     return sfl_video::getCodecSpecifications(codec);
 }
 
-std::vector<int32_t> ConfigurationManager::getActiveAudioCodecList (const std::string& accountID)
+std::vector<int32_t> ConfigurationManager::getActiveAudioCodecList(const std::string& accountID)
 {
     std::vector<int32_t> v;
 
-    Account *acc = Manager::instance().getAccount (accountID);
+    Account *acc = Manager::instance().getAccount(accountID);
+
     if (acc)
         return acc->getActiveCodecs();
 
     return v;
 }
 
-void ConfigurationManager::setActiveAudioCodecList (const std::vector<std::string>& list, const std::string& accountID)
+void ConfigurationManager::setActiveAudioCodecList(const std::vector<std::string>& list, const std::string& accountID)
 {
-    Account *acc = Manager::instance().getAccount (accountID);
+    Account *acc = Manager::instance().getAccount(accountID);
+
     if (acc) {
-        acc->setActiveCodecs (list);
+        acc->setActiveCodecs(list);
         Manager::instance().saveConfig();
     }
 }
@@ -255,16 +260,16 @@ std::vector<std::string> ConfigurationManager::getAudioPluginList()
 {
     std::vector<std::string> v;
 
-    v.push_back (PCM_DEFAULT);
-    v.push_back (PCM_DMIX_DSNOOP);
+    v.push_back(PCM_DEFAULT);
+    v.push_back(PCM_DMIX_DSNOOP);
 
     return v;
 }
 
 
-void ConfigurationManager::setAudioPlugin (const std::string& audioPlugin)
+void ConfigurationManager::setAudioPlugin(const std::string& audioPlugin)
 {
-    return Manager::instance().setAudioPlugin (audioPlugin);
+    return Manager::instance().setAudioPlugin(audioPlugin);
 }
 
 std::vector<std::string> ConfigurationManager::getAudioOutputDeviceList()
@@ -277,19 +282,19 @@ std::vector<std::string> ConfigurationManager::getAudioInputDeviceList()
     return Manager::instance().getAudioInputDeviceList();
 }
 
-void ConfigurationManager::setAudioOutputDevice (const int32_t& index)
+void ConfigurationManager::setAudioOutputDevice(const int32_t& index)
 {
-    return Manager::instance().setAudioDevice (index, SFL_PCM_PLAYBACK);
+    return Manager::instance().setAudioDevice(index, SFL_PCM_PLAYBACK);
 }
 
-void ConfigurationManager::setAudioInputDevice (const int32_t& index)
+void ConfigurationManager::setAudioInputDevice(const int32_t& index)
 {
-    return Manager::instance().setAudioDevice (index, SFL_PCM_CAPTURE);
+    return Manager::instance().setAudioDevice(index, SFL_PCM_CAPTURE);
 }
 
-void ConfigurationManager::setAudioRingtoneDevice (const int32_t& index)
+void ConfigurationManager::setAudioRingtoneDevice(const int32_t& index)
 {
-    return Manager::instance().setAudioDevice (index, SFL_PCM_RINGTONE);
+    return Manager::instance().setAudioDevice(index, SFL_PCM_RINGTONE);
 }
 
 std::vector<std::string> ConfigurationManager::getCurrentAudioDevicesIndex()
@@ -297,31 +302,31 @@ std::vector<std::string> ConfigurationManager::getCurrentAudioDevicesIndex()
     return Manager::instance().getCurrentAudioDevicesIndex();
 }
 
-int32_t ConfigurationManager::getAudioDeviceIndex (const std::string& name)
+int32_t ConfigurationManager::getAudioDeviceIndex(const std::string& name)
 {
-    return Manager::instance().getAudioDeviceIndex (name);
+    return Manager::instance().getAudioDeviceIndex(name);
 }
 
-std::string ConfigurationManager::getCurrentAudioOutputPlugin (void)
+std::string ConfigurationManager::getCurrentAudioOutputPlugin()
 {
-    _debug ("ConfigurationManager: Get audio plugin %s", Manager::instance().getCurrentAudioOutputPlugin().c_str());
+    DEBUG("ConfigurationManager: Get audio plugin %s", Manager::instance().getCurrentAudioOutputPlugin().c_str());
 
     return Manager::instance().getCurrentAudioOutputPlugin();
 }
 
-std::string ConfigurationManager::getNoiseSuppressState (void)
+std::string ConfigurationManager::getNoiseSuppressState()
 {
     return Manager::instance().getNoiseSuppressState();
 }
 
-void ConfigurationManager::setNoiseSuppressState (const std::string& state)
+void ConfigurationManager::setNoiseSuppressState(const std::string& state)
 {
-    Manager::instance().setNoiseSuppressState (state);
+    Manager::instance().setNoiseSuppressState(state);
 }
 
-std::string ConfigurationManager::getEchoCancelState(void)
+std::string ConfigurationManager::getEchoCancelState()
 {
-	return Manager::instance().getEchoCancelState() ? "enabled" : "disabled";
+    return Manager::instance().getEchoCancelState() ? "enabled" : "disabled";
 }
 
 void ConfigurationManager::setEchoCancelState(const std::string& state)
@@ -329,7 +334,7 @@ void ConfigurationManager::setEchoCancelState(const std::string& state)
     Manager::instance().setEchoCancelState(state);
 }
 
-int ConfigurationManager::getEchoCancelTailLength(void)
+int ConfigurationManager::getEchoCancelTailLength()
 {
     return Manager::instance().getEchoCancelTailLength();
 }
@@ -339,7 +344,7 @@ void ConfigurationManager::setEchoCancelTailLength(const int32_t& length)
     Manager::instance().setEchoCancelTailLength(length);
 }
 
-int ConfigurationManager::getEchoCancelDelay(void)
+int ConfigurationManager::getEchoCancelDelay()
 {
     return Manager::instance().getEchoCancelDelay();
 }
@@ -409,22 +414,22 @@ void ConfigurationManager::setVideoInputDeviceRate(const std::string& api)
     Manager::instance().setVideoInputDeviceRate(api);
 }
 
-int32_t ConfigurationManager::isIax2Enabled (void)
+int32_t ConfigurationManager::isIax2Enabled()
 {
     return HAVE_IAX;
 }
 
-std::string ConfigurationManager::getRecordPath (void)
+std::string ConfigurationManager::getRecordPath()
 {
     return Manager::instance().getRecordPath();
 }
 
-void ConfigurationManager::setRecordPath (const std::string& recPath)
+void ConfigurationManager::setRecordPath(const std::string& recPath)
 {
-    Manager::instance().setRecordPath (recPath);
+    Manager::instance().setRecordPath(recPath);
 }
 
-bool ConfigurationManager::getIsAlwaysRecording(void)
+bool ConfigurationManager::getIsAlwaysRecording()
 {
     return Manager::instance().getIsAlwaysRecording();
 }
@@ -434,95 +439,93 @@ void ConfigurationManager::setIsAlwaysRecording(const bool& rec)
     Manager::instance().setIsAlwaysRecording(rec);
 }
 
-int32_t ConfigurationManager::getHistoryLimit (void)
+int32_t ConfigurationManager::getHistoryLimit()
 {
     return Manager::instance().getHistoryLimit();
 }
 
-void ConfigurationManager::setHistoryLimit (const int32_t& days)
+void ConfigurationManager::setHistoryLimit(const int32_t& days)
 {
-    Manager::instance().setHistoryLimit (days);
+    Manager::instance().setHistoryLimit(days);
 }
 
-void ConfigurationManager::setAudioManager (const std::string& api)
+void ConfigurationManager::setAudioManager(const std::string& api)
 {
-    Manager::instance().setAudioManager (api);
+    Manager::instance().setAudioManager(api);
 }
 
-std::string ConfigurationManager::getAudioManager (void)
+std::string ConfigurationManager::getAudioManager()
 {
     return Manager::instance().getAudioManager();
 }
 
-void ConfigurationManager::setMailNotify (void)
+void ConfigurationManager::setMailNotify()
 {
     Manager::instance().setMailNotify();
 }
 
-int32_t ConfigurationManager::getMailNotify (void)
+int32_t ConfigurationManager::getMailNotify()
 {
     return Manager::instance().getMailNotify();
 }
 
-std::map<std::string, int32_t> ConfigurationManager::getAddressbookSettings (void)
+std::map<std::string, int32_t> ConfigurationManager::getAddressbookSettings()
 {
     return Manager::instance().getAddressbookSettings();
 }
 
-void ConfigurationManager::setAddressbookSettings (const std::map<std::string, int32_t>& settings)
+void ConfigurationManager::setAddressbookSettings(const std::map<std::string, int32_t>& settings)
 {
-    Manager::instance().setAddressbookSettings (settings);
+    Manager::instance().setAddressbookSettings(settings);
 }
 
-std::vector<std::string> ConfigurationManager::getAddressbookList (void)
+std::vector<std::string> ConfigurationManager::getAddressbookList()
 {
     return Manager::instance().getAddressbookList();
 }
 
-void ConfigurationManager::setAddressbookList (
-        const std::vector<std::string>& list)
+void ConfigurationManager::setAddressbookList(const std::vector<std::string>& list)
 {
-    Manager::instance().setAddressbookList (list);
+    Manager::instance().setAddressbookList(list);
 }
 
-std::map<std::string, std::string> ConfigurationManager::getHookSettings (void)
+std::map<std::string, std::string> ConfigurationManager::getHookSettings()
 {
     return Manager::instance().getHookSettings();
 }
 
-void ConfigurationManager::setHookSettings (const std::map<std::string,
+void ConfigurationManager::setHookSettings(const std::map<std::string,
         std::string>& settings)
 {
-    Manager::instance().setHookSettings (settings);
+    Manager::instance().setHookSettings(settings);
 }
 
-void ConfigurationManager::setAccountsOrder (const std::string& order)
+void ConfigurationManager::setAccountsOrder(const std::string& order)
 {
-    Manager::instance().setAccountsOrder (order);
+    Manager::instance().setAccountsOrder(order);
 }
 
-std::vector<std::string> ConfigurationManager::getHistory (void)
+std::vector<std::string> ConfigurationManager::getHistory()
 {
     return Manager::instance().getHistorySerialized();
 }
 
-void ConfigurationManager::setHistory (const std::vector<std::string>& entries)
+void ConfigurationManager::setHistory(const std::vector<std::string>& entries)
 {
     Manager::instance().setHistorySerialized(entries);
 }
 
-std::string ConfigurationManager::getAddrFromInterfaceName (
-        const std::string& interface)
+std::string ConfigurationManager::getAddrFromInterfaceName(const std::string& interface)
 {
-    return SIPVoIPLink::getInterfaceAddrFromName (interface);
+    return SIPVoIPLink::getInterfaceAddrFromName(interface);
 }
 
-std::vector<std::string> ConfigurationManager::getAllIpInterface (void)
+std::vector<std::string> ConfigurationManager::getAllIpInterface()
 {
     return SIPVoIPLink::getAllIpInterface();
 }
 
-std::vector<std::string> ConfigurationManager::getAllIpInterfaceByName (void)
+std::vector<std::string> ConfigurationManager::getAllIpInterfaceByName()
 {
     return SIPVoIPLink::getAllIpInterfaceByName();
 }
@@ -532,18 +535,19 @@ std::map<std::string, std::string> ConfigurationManager::getShortcuts()
     return Manager::instance().shortcutPreferences.getShortcuts();
 }
 
-void ConfigurationManager::setShortcuts (
-        const std::map<std::string, std::string>& shortcutsMap)
+void ConfigurationManager::setShortcuts(
+    const std::map<std::string, std::string>& shortcutsMap)
 {
-    Manager::instance().shortcutPreferences.setShortcuts (shortcutsMap);
+    Manager::instance().shortcutPreferences.setShortcuts(shortcutsMap);
     Manager::instance().saveConfig();
 }
 
-std::vector<std::map<std::string, std::string> > ConfigurationManager::getCredentials (
-        const std::string& accountID)
+std::vector<std::map<std::string, std::string> > ConfigurationManager::getCredentials(
+    const std::string& accountID)
 {
-    Account *account = Manager::instance().getAccount (accountID);
+    Account *account = Manager::instance().getAccount(accountID);
     std::vector<std::map<std::string, std::string> > credentialInformation;
+
     if (!account or account->getType() != "SIP")
         return credentialInformation;
 
@@ -551,10 +555,11 @@ std::vector<std::map<std::string, std::string> > ConfigurationManager::getCreden
     return sipaccount->getCredentials();
 }
 
-void ConfigurationManager::setCredentials (const std::string& accountID,
+void ConfigurationManager::setCredentials(const std::string& accountID,
         const std::vector<std::map<std::string, std::string> >& details)
 {
-    Account *account = Manager::instance().getAccount (accountID);
+    Account *account = Manager::instance().getAccount(accountID);
+
     if (account and account->getType() == "SIP") {
         SIPAccount *sipaccount = static_cast<SIPAccount*>(account);
         sipaccount->setCredentials(details);
@@ -564,7 +569,7 @@ void ConfigurationManager::setCredentials (const std::string& accountID,
 void ConfigurationManager::startVideoPreview(int32_t &width, int32_t &height, int32_t &shmKey, int32_t &semKey, int32_t &videoBufferSize)
 {
     if (preview_.get()) {
-        _error("Video preview was already started!");
+        ERROR("Video preview was already started!");
         shmKey = -1;
         semKey = -1;
         videoBufferSize = -1;
@@ -588,7 +593,7 @@ void ConfigurationManager::startVideoPreview(int32_t &width, int32_t &height, in
 void ConfigurationManager::stopVideoPreview()
 {
 	if (preview_.get()) {
-		_debug("Stopping video preview");
+		DEBUG("Stopping video preview");
 		preview_->stop();
 		preview_.reset();
 	}

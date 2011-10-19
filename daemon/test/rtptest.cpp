@@ -43,24 +43,22 @@
 #include <time.h>
 
 #include "rtptest.h"
-#include "audio/audiortp/AudioSymmetricRtpSession.h"
+#include "audio/audiortp/audio_symmetric_rtp_session.h"
 
 #include <unistd.h>
 
 void RtpTest::setUp()
 {
-
 }
 
 bool RtpTest::pjsipInit()
 {
-
     return true;
 }
 
 void RtpTest::testRtpInitClose()
 {
-    _debug ("-------------------- RtpTest::testRtpInitClose --------------------\n");
+    DEBUG("-------------------- RtpTest::testRtpInitClose --------------------\n");
 
 }
 

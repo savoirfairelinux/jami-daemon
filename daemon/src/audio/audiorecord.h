@@ -36,39 +36,32 @@
 
 #include "global.h"
 
-class AudioRecord
-{
+class AudioRecord {
 
     public:
+        enum FILE_TYPE { FILE_RAW, FILE_WAV };
 
         AudioRecord();
 
         ~AudioRecord();
 
-	/**
-	 * Set the sampling rate for this recorder
- 	 */
-        void setSndSamplingRate (int smplRate);
+        void setSndSamplingRate(int smplRate);
+        /**
+         * Get the recrding sampling rate
+         */
+        int getSndSamplingRate() const;
 
-	/**
-	 * Get the recrding sampling rate
-	 */
-        int getSndSamplingRate(void) const;
-
-	/**
-	 * Set the recording option
-	 */
-        void setRecordingOption (FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate, std::string path);
-
-	/**
-	 * Init recording file path
-	 */
-        void initFileName (std::string peerNumber);
+        void setRecordingOption(FILE_TYPE type, int sndSmplRate, const std::string &path);
 
         /**
-	 * Return the filepath of the recording
-	 */
-	std::string getFileName(void);
+         * Init recording file path
+         */
+        void initFileName(std::string peerNumber);
+
+        /**
+        	 * Return the filepath of the recording
+        	 */
+        std::string getFileName();
 
         /**
          * Check if no otehr file is opened, then create a new one
@@ -90,14 +83,14 @@ class AudioRecord
         bool isOpenFile();
 
         /**
-         * Check if a file already exist
+         * Check if a file already exists
          */
-        bool isFileExist();
+        bool fileExists();
 
         /**
          * Check recording state
          */
-        bool isRecording();
+        bool isRecording() const;
 
         /**
          * Set recording flag
@@ -115,21 +108,21 @@ class AudioRecord
          * @param buffer  The data chunk to be recorded
          * @param nSamples Number of samples (number of bytes) to be recorded
          */
-        void recSpkrData (SFLDataFormat* buffer, int nSamples);
+        void recSpkrData(SFLDataFormat* buffer, int nSamples);
 
         /**
          * Record a chunk of data in an internal buffer
          * @param buffer  The data chunk to be recorded
          * @param nSamples Number of samples (number of bytes) to be recorded
          */
-        void recMicData (SFLDataFormat* buffer, int nSamples);
+        void recMicData(SFLDataFormat* buffer, int nSamples);
 
         /**
          * Record a chunk of data in an openend file
          * @param buffer  The data chunk to be recorded
          * @param nSamples Number of samples (number of bytes) to be recorded
          */
-        void recData (SFLDataFormat* buffer, int nSamples);
+        void recData(SFLDataFormat* buffer, int nSamples);
 
         /**
          * Record a chunk of data in an openend file, Mix two differnet buffer
@@ -138,7 +131,7 @@ class AudioRecord
          * @param nSamples_1 Number of samples (number of bytes) of buffer_1
          * @param nSamples_2 Number of samples (number of bytes) of buffer_2
          */
-        void recData (SFLDataFormat* buffer_1, SFLDataFormat* buffer_2, int nSamples_1, int nSamples_2);
+        void recData(SFLDataFormat* buffer_1, SFLDataFormat* buffer_2, int nSamples_1, int nSamples_2);
 
 
     protected:
@@ -177,17 +170,12 @@ class AudioRecord
         /**
          * Pointer to the recorded file
          */
-        FILE *fp;                      //file pointer
+        FILE *fileHandle_;
 
         /**
          * File format (RAW / WAVE)
          */
         FILE_TYPE fileType_;
-
-        /**
-         * Sound format (SINT16/SINT32)
-         */
-        SOUND_FORMAT sndFormat_;
 
         /**
          * Number of channels

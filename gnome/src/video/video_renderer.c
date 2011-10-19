@@ -46,6 +46,8 @@
 #include <cairo.h>
 
 #include "actions.h"
+#include "logger.h"
+#include "unused.h"
 
 static GtkWidget *receivingVideoWindow = NULL;
 static gboolean receivingWindowFullscreen = FALSE;

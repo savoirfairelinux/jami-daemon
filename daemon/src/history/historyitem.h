@@ -30,12 +30,11 @@
  *  as that of the covered work.
  */
 
-#ifndef _HISTORY_ITEM
-#define _HISTORY_ITEM
+#ifndef HISTORY_ITEM_H_
+#define HISTORY_ITEM_H_
 
 #include <string>
 #include <config/config.h>
-#include <iostream>
 
 typedef enum CallType {
     CALL_MISSED,
@@ -43,95 +42,87 @@ typedef enum CallType {
     CALL_OUTGOING
 } CallType;
 
-
-class HistoryItem
-{
+class HistoryItem {
 
     public:
         /*
          * Constructor
-         * 
+         *
          * @param Timestamp start
          * @param Call type
          * @param Timestamp stop
          * @param Call name
          * @param Call number
-	 * @param Call id
+        	 * @param Call id
          * @param Call account id
-	 * @param Recording file name (if any recording were performed)
-	 * @param Configuration ID
-	 * @param time added
+        	 * @param Recording file name (if any recording were performed)
+        	 * @param Configuration ID
+        	 * @param time added
          */
-        HistoryItem (std::string, CallType, std::string, std::string, std::string, std::string, std::string, std::string, std::string, std::string);
+        HistoryItem(std::string, CallType, std::string, std::string, std::string, std::string, std::string, std::string, std::string, std::string);
 
         /*
          * Constructor from a serialized form
-	 * @string contaning serialized form
+        	 * @string contaning serialized form
          */
-        HistoryItem (std::string="");
+        HistoryItem(std::string="");
 
-        /*
-         * Destructor
-         */
-        ~HistoryItem ();
-
-        std::string get_timestamp () const {
-            return _timestamp_start;
+        std::string get_timestamp() const {
+            return timestamp_start_;
         }
 
-        bool save (Conf::ConfigTree **history);
+        bool save(Conf::ConfigTree **history);
 
-        std::string serialize (void);
+        std::string serialize() const;
 
     private:
-
         /*
          * @return true if the account ID corresponds to a loaded account
          */
-        bool valid_account (std::string);
+        bool valid_account(const std::string &id) const;
 
         /*
          * Timestamp representing the date of the call
          */
-        std::string _timestamp_start;
-        std::string _timestamp_stop;
+        std::string timestamp_start_;
+        std::string timestamp_stop_;
 
         /*
          * Represents the type of call
          * Has be either CALL_MISSED, CALL_INCOMING or CALL_OUTGOING
          */
-        CallType _call_type;
+        CallType call_type_;
 
         /*
          * The information about the callee/caller, depending on the type of call.
          */
-        std::string _name;
-        std::string _number;
+        std::string name_;
+        std::string number_;
 
-	/**
-	 * The identifier fo this item
-	 */
-        std::string _id;
+        /**
+         * The identifier fo this item
+         */
+        std::string id_;
 
         /*
          * The account the call was made with
          */
-        std::string _account_id;
+        std::string account_id_;
 
         /**
-         * Wether or not a recording exist for this call 
+         * Whether or not a recording exist for this call
          */
-        std::string _recording_file;
+        std::string recording_file_;
 
         /**
-	 * The conference ID for this call (if any)
-	 */
-	std::string _confID;
-
-        /**
-	 * Time added to conference
+         * The conference ID for this call (if any)
          */
-        std::string _timeAdded;
+        std::string confID_;
+
+        /**
+         * Time added to conference
+         */
+        std::string timeAdded_;
 };
 
 

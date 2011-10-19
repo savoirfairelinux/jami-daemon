@@ -33,7 +33,6 @@
 
 #include <cc++/thread.h>
 
-
 class VoIPLink;
 
 /**
@@ -41,26 +40,22 @@ class VoIPLink;
  * @brief General thread to listen events continuously
  */
 
-class EventThread : public ost::Thread
-{
+class EventThread : public ost::Thread {
     public:
-        /**
-         * Thread constructor
-         */
-        EventThread (VoIPLink* link);
+        EventThread(VoIPLink* link);
 
-        ~EventThread (void) {
+        ~EventThread() {
             terminate();
         }
 
-        virtual void run () ;
+        virtual void run() ;
 
     private:
-        EventThread (const EventThread& rh); // copy constructor
-        EventThread& operator= (const EventThread& rh); // assignment operator
+        EventThread(const EventThread& rh);
+        EventThread& operator= (const EventThread& rh);
 
-        /** VoIPLink is the object being called by getEvents() method  */
-        VoIPLink*	_link;
+        // VoIPLink is the object being called by getEvents() method
+        VoIPLink*	link_;
 };
 
 #endif // __EVENT_THREAD_H__

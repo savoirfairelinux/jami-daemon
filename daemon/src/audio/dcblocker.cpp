@@ -30,27 +30,24 @@
 
 #include "dcblocker.h"
 
-DcBlocker::DcBlocker() : _y (0), _x (0), _xm1 (0), _ym1 (0) {}
-
-DcBlocker::~DcBlocker() {}
-
 void DcBlocker::reset()
 {
-    _y = 0;
-    _x = 0;
-    _xm1 = 0;
-    _ym1 = 0;
+    y_ = 0;
+    x_ = 0;
+    xm1_ = 0;
+    ym1_ = 0;
 }
 
-void DcBlocker::process (SFLDataFormat *out, SFLDataFormat *in, int samples)
+void DcBlocker::process(SFLDataFormat *out, SFLDataFormat *in, int samples)
 {
-    for (int i = 0; i < samples; i++) {
-        _x = in[i];
+    for (int i = 0; i < samples; ++i) {
+        x_ = in[i];
 
-        _y = (SFLDataFormat) ( (float) _x - (float) _xm1 + 0.9999 * (float) _y);
-        _xm1 = _x;
-        _ym1 = _y;
+        y_ = (SFLDataFormat) ((float) x_ - (float) xm1_ + 0.9999 * (float) y_);
+        xm1_ = x_;
+        ym1_ = y_;
 
-        out[i] = _y;
+        out[i] = y_;
     }
 }
+

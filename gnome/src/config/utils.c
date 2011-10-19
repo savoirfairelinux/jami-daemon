@@ -29,108 +29,65 @@
  */
 
 #include "utils.h"
-#include <sflphone_const.h>
+#include "sflphone_const.h"
 
-void gnome_main_section_new_with_table (gchar *title, GtkWidget **frame, GtkWidget **table, gint nb_col, gint nb_row)
+void gnome_main_section_new_with_table(gchar *title, GtkWidget **frame, GtkWidget **table, gint nb_col, gint nb_row)
 {
-    GtkWidget *_frame, *_table, *label, *align;
-    PangoAttrList *attrs = NULL;
-    PangoAttribute *attr = NULL;
-
-    attrs = pango_attr_list_new ();
-    attr = pango_attr_weight_new (PANGO_WEIGHT_BOLD);
+    PangoAttrList *attrs = pango_attr_list_new();
+    PangoAttribute *attr = pango_attr_weight_new(PANGO_WEIGHT_BOLD);
     attr->start_index = 0;
     attr->end_index = -1;
-    pango_attr_list_insert (attrs, attr);
+    pango_attr_list_insert(attrs, attr);
 
-    _frame = gtk_frame_new (title);
-    gtk_frame_set_shadow_type (GTK_FRAME (_frame), GTK_SHADOW_NONE);
-    gtk_container_set_border_width (GTK_CONTAINER (_frame), 2);
+    *frame = gtk_frame_new(title);
+    gtk_frame_set_shadow_type(GTK_FRAME(*frame), GTK_SHADOW_NONE);
+    gtk_container_set_border_width(GTK_CONTAINER(*frame), 2);
 
-    label = gtk_frame_get_label_widget (GTK_FRAME (_frame));
-    gtk_label_set_attributes (GTK_LABEL (label), attrs);
-    pango_attr_list_unref (attrs);
+    GtkWidget *label = gtk_frame_get_label_widget(GTK_FRAME(*frame));
+    gtk_label_set_attributes(GTK_LABEL(label), attrs);
+    pango_attr_list_unref(attrs);
 
-    align = gtk_alignment_new (0.08, 0.2, 0.1, 0.1);
-    gtk_container_add (GTK_CONTAINER (_frame), align);
+    GtkWidget *align = gtk_alignment_new(0.08, 0.2, 0.1, 0.1);
+    gtk_container_add(GTK_CONTAINER(*frame), align);
 
-    _table = gtk_table_new (nb_col, nb_row, FALSE);
-    gtk_table_set_row_spacings (GTK_TABLE (_table), 2);
-    gtk_table_set_col_spacings (GTK_TABLE (_table), 2);
-    gtk_widget_show (_table);
-    gtk_container_add (GTK_CONTAINER (align), _table);
-
-    *table = _table;
-    *frame = _frame;
+    *table = gtk_table_new(nb_col, nb_row, FALSE);
+    gtk_table_set_row_spacings(GTK_TABLE(*table), 2);
+    gtk_table_set_col_spacings(GTK_TABLE(*table), 2);
+    gtk_widget_show(*table);
+    gtk_container_add(GTK_CONTAINER(align), *table);
 }
 
-void gnome_main_section_new_with_vbox (gchar *title, GtkWidget **frame, GtkWidget **vbox, gint nb_row UNUSED)
-{
-    GtkWidget *_frame, *_vbox, *label, *align;
-    PangoAttrList *attrs = NULL;
-    PangoAttribute *attr = NULL;
 
-    attrs = pango_attr_list_new ();
-    attr = pango_attr_weight_new (PANGO_WEIGHT_BOLD);
+GtkWidget *gnome_main_section_new(const gchar * const title)
+{
+    PangoAttrList *attrs = pango_attr_list_new();
+    PangoAttribute *attr = pango_attr_weight_new(PANGO_WEIGHT_BOLD);
     attr->start_index = 0;
     attr->end_index = -1;
-    pango_attr_list_insert (attrs, attr);
+    pango_attr_list_insert(attrs, attr);
 
-    _frame = gtk_frame_new (title);
-    gtk_frame_set_shadow_type (GTK_FRAME (_frame), GTK_SHADOW_NONE);
-    gtk_container_set_border_width (GTK_CONTAINER (_frame), 2);
+    GtkWidget *frame = gtk_frame_new(title);
+    gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_NONE);
+    gtk_container_set_border_width(GTK_CONTAINER(frame), 2);
 
-    label = gtk_frame_get_label_widget (GTK_FRAME (_frame));
-    gtk_label_set_attributes (GTK_LABEL (label), attrs);
-    pango_attr_list_unref (attrs);
+    GtkWidget *label = gtk_frame_get_label_widget(GTK_FRAME(frame));
+    gtk_label_set_attributes(GTK_LABEL(label), attrs);
+    pango_attr_list_unref(attrs);
 
-    align = gtk_alignment_new (0.08, 0.2, 0.1, 0.1);
-    gtk_container_add (GTK_CONTAINER (_frame), align);
-
-    _vbox = gtk_vbox_new (FALSE, 10);
-    gtk_widget_show (_vbox);
-    gtk_container_add (GTK_CONTAINER (align), _vbox);
-
-    *vbox = _vbox;
-    *frame = _frame;
+    return frame;
 }
 
-void gnome_main_section_new (gchar *title, GtkWidget **frame)
+GtkWidget *gnome_info_bar(gchar *message, GtkMessageType type)
 {
-    GtkWidget *_frame, *label;
-    PangoAttrList *attrs = NULL;
-    PangoAttribute *attr = NULL;
+    GtkWidget *info_bar = gtk_info_bar_new();
+    gtk_widget_set_no_show_all(info_bar, TRUE);
+    GtkWidget *message_label = gtk_label_new(NULL);
+    gtk_widget_show(message_label);
+    GtkWidget *content_area = gtk_info_bar_get_content_area(GTK_INFO_BAR(info_bar));
+    gtk_container_add(GTK_CONTAINER(content_area), message_label);
+    gtk_label_set_markup(GTK_LABEL(message_label), message);
+    gtk_info_bar_set_message_type(GTK_INFO_BAR(info_bar), type);
+    gtk_widget_show(info_bar);
 
-    attrs = pango_attr_list_new ();
-    attr = pango_attr_weight_new (PANGO_WEIGHT_BOLD);
-    attr->start_index = 0;
-    attr->end_index = -1;
-    pango_attr_list_insert (attrs, attr);
-
-    _frame = gtk_frame_new (title);
-    gtk_frame_set_shadow_type (GTK_FRAME (_frame), GTK_SHADOW_NONE);
-    gtk_container_set_border_width (GTK_CONTAINER (_frame), 2);
-
-    label = gtk_frame_get_label_widget (GTK_FRAME (_frame));
-    gtk_label_set_attributes (GTK_LABEL (label), attrs);
-    pango_attr_list_unref (attrs);
-
-    *frame = _frame;
-}
-
-void gnome_info_bar (gchar *message, GtkMessageType type, GtkWidget **info_bar)
-{
-    GtkWidget *_info_bar, *message_label, *content_area;
-
-    _info_bar = gtk_info_bar_new();
-    gtk_widget_set_no_show_all (_info_bar, TRUE);
-    message_label = gtk_label_new (NULL);
-    gtk_widget_show (message_label);
-    content_area = gtk_info_bar_get_content_area (GTK_INFO_BAR (_info_bar));
-    gtk_container_add (GTK_CONTAINER (content_area), message_label);
-    gtk_label_set_markup (GTK_LABEL (message_label), message); //message);
-    gtk_info_bar_set_message_type (GTK_INFO_BAR (_info_bar), type);
-    gtk_widget_show (_info_bar);
-
-    *info_bar = _info_bar;
+    return info_bar;
 }

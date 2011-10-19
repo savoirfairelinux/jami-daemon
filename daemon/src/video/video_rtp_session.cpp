@@ -63,31 +63,31 @@ void VideoRtpSession::updateSDP(const Sdp &sdp)
     if (desc != rxArgs_["receiving_sdp"])
     {
         rxArgs_["receiving_sdp"] = desc;
-        _debug("%s:Updated incoming SDP to:\n %s", __PRETTY_FUNCTION__,
+        DEBUG("%s:Updated incoming SDP to:\n %s", __PRETTY_FUNCTION__,
                 rxArgs_["receiving_sdp"].c_str());
     }
 
     if (desc.find("sendrecv") != std::string::npos)
     {
-        _debug("Sending and receiving video");
+        DEBUG("Sending and receiving video");
         receiving_ = true;
         sending_ = true;
     }
     else if (desc.find("inactive") != std::string::npos)
     {
-        _debug("Video is inactive");
+        DEBUG("Video is inactive");
         receiving_ = false;
         sending_ = false;
     }
     else if (desc.find("sendonly") != std::string::npos)
     {
-        _debug("Receiving video disabled, video set to sendonly");
+        DEBUG("Receiving video disabled, video set to sendonly");
         receiving_ = false;
         sending_ = true;
     }
     else if (desc.find("recvonly") != std::string::npos)
     {
-        _debug("Sending video disabled, video set to recvonly");
+        DEBUG("Sending video disabled, video set to recvonly");
         sending_ = false;
         receiving_ = true;
     }
@@ -95,13 +95,13 @@ void VideoRtpSession::updateSDP(const Sdp &sdp)
     // setting the port to 0
     if (desc.find("m=video 0") != std::string::npos)
     {
-        _debug("Receiving video disabled, port was set to 0");
+        DEBUG("Receiving video disabled, port was set to 0");
         receiving_ = false;
     }
 
     std::string codec = libav_utils::encodersMap()[v[1]];
     if (codec.empty()) {
-    	_debug("Couldn't find encoder for \"%s\"\n", v[1].c_str());
+    	DEBUG("Couldn't find encoder for \"%s\"\n", v[1].c_str());
     	sending_ = false;
     } else
     	txArgs_["codec"] = codec;
@@ -121,13 +121,13 @@ void VideoRtpSession::updateDestination(const std::string &destination,
     {
         assert(sendThread_.get() == 0);
         txArgs_["destination"] = tmp.str();
-        _debug("%s updated dest to %s",  __PRETTY_FUNCTION__,
+        DEBUG("%s updated dest to %s",  __PRETTY_FUNCTION__,
                txArgs_["destination"].c_str());
     }
 
     if (port == 0)
     {
-        _debug("Sending video disabled, port was set to 0");
+        DEBUG("Sending video disabled, port was set to 0");
         sending_ = false;
     }
 }
@@ -163,27 +163,27 @@ void VideoRtpSession::start()
     if (sending_)
     {
         if (sendThread_.get())
-            _warn("Restarting video sender");
+            WARN("Restarting video sender");
         sendThread_.reset(new VideoSendThread(txArgs_));
         sendThread_->start();
     }
     else
-        _debug("Video sending disabled");
+        DEBUG("Video sending disabled");
 
     if (receiving_)
     {
         if (receiveThread_.get())
-            _warn("Restarting video receiver");
+            WARN("Restarting video receiver");
         receiveThread_.reset(new VideoReceiveThread(rxArgs_));
         receiveThread_->start();
     }
     else
-        _debug("Video receiving disabled");
+        DEBUG("Video receiving disabled");
 }
 
 void VideoRtpSession::stop()
 {
-    _debug("%s", __PRETTY_FUNCTION__);
+    DEBUG("%s", __PRETTY_FUNCTION__);
     if (receiveThread_.get())
         receiveThread_.reset();
 
