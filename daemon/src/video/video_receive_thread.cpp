@@ -52,7 +52,6 @@ extern "C" {
 
 #include "manager.h"
 #include "dbus/callmanager.h"
-#include "video_picture.h"
 #include "fileutils.h"
 
 static const enum PixelFormat video_rgb_format = PIX_FMT_BGRA;
