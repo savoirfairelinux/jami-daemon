@@ -383,8 +383,8 @@ Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toU
     // If toUri is not a well formated sip URI, use account information to process it
     std::string toUri;
 
-    if ((toUrl.find("sip:") != std::string::npos) or
-    toUrl.find("sips:") != std::string::npos)
+    if (toUrl.find("sip:") != std::string::npos or
+        toUrl.find("sips:") != std::string::npos)
         toUri = toUrl;
     else
         toUri = account->getToUri(toUrl);
@@ -903,9 +903,15 @@ bool SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to)
 
     // Init TLS transport if enabled
     if (account->isTlsEnabled()) {
-        int at = toUri.find("@");
-        int trns = toUri.find(";transport");
-        std::string remoteAddr = toUri.substr(at+1, trns-at-1);
+        size_t at = toUri.find("@");
+        size_t trns = toUri.find(";transport");
+        if (at == std::string::npos or trns == std::string::npos) {
+            ERROR("UserAgent: Error \"@\" or \";transport\" not in URI %s", toUri.c_str());
+            delete call;
+            return false;
+        }
+
+        std::string remoteAddr(toUri.substr(at + 1, trns - at - 1));
 
         if (toUri.find("sips:") != 1) {
             DEBUG("UserAgent: Error \"sips\" scheme required for TLS call");
