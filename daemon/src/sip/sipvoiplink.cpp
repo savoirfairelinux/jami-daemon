@@ -146,9 +146,8 @@ pjsip_route_hdr *createRouteSet(const std::string &route, pj_pool_t *hdr_pool)
     if (found != std::string::npos) {
         host = route.substr(0, found);
         port = atoi(route.substr(found + 1, route.length()).c_str());
-    } else {
+    } else
         host = route;
-    }
 
     pjsip_route_hdr *route_set = pjsip_route_hdr_create(hdr_pool);
     pjsip_route_hdr *routing = pjsip_route_hdr_create(hdr_pool);
@@ -297,10 +296,10 @@ void SIPVoIPLink::sendRegister(Account *a)
     findLocalAddressFromUri(srvUri, account->transport_, address, port);
 
     std::string from(account->getFromUri());
-    pj_str_t pjFrom = pj_str((char*)from.c_str());
+    pj_str_t pjFrom = pj_str((char*) from.c_str());
     std::string contact(account->getContactHeader(address, port));
-    pj_str_t pjContact = pj_str((char*)contact.c_str());
-    pj_str_t pjSrv = pj_str((char*)srvUri.c_str());
+    pj_str_t pjContact = pj_str((char*) contact.c_str());
+    pj_str_t pjSrv = pj_str((char*) srvUri.c_str());
 
     if (pjsip_regc_init(regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, account->getRegistrationExpire()) != PJ_SUCCESS)
         throw VoipLinkException("Unable to initialize account registration structure");
@@ -314,7 +313,7 @@ void SIPVoIPLink::sendRegister(Account *a)
     pjsip_hdr hdr_list;
     pj_list_init(&hdr_list);
     std::string useragent(account->getUserAgentName());
-    pj_str_t pJuseragent = pj_str((char*)useragent.c_str());
+    pj_str_t pJuseragent = pj_str((char*) useragent.c_str());
     const pj_str_t STR_USER_AGENT = { (char*) "User-Agent", 10 };
 
     pjsip_generic_string_hdr *h = pjsip_generic_string_hdr_create(pool_, &STR_USER_AGENT, &pJuseragent);
@@ -652,7 +651,7 @@ SIPVoIPLink::transfer(const std::string& id, const std::string& to)
         throw VoipLinkException("Could not find account");
 
     std::string toUri;
-    pj_str_t dst = { NULL, 0 };
+    pj_str_t dst = { 0, 0 };
 
     if (to.find("@") == std::string::npos) {
         toUri = account->getToUri(to);
@@ -782,13 +781,10 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
     findLocalAddressFromUri(toUri, account->transport_, address, port);
 
     std::string from(account->getFromUri());
-    pj_str_t pjFrom = pj_str((char*)from.c_str());
+    pj_str_t pjFrom = pj_str((char*) from.c_str());
     std::string contact(account->getContactHeader(address, port));
-    pj_str_t pjContact = pj_str((char*)contact.c_str());
-    pj_str_t pjTo = pj_str((char*)toUri.c_str());
-
-
-
+    pj_str_t pjContact = pj_str((char*) contact.c_str());
+    pj_str_t pjTo = pj_str((char*) toUri.c_str());
 
     pjsip_dialog *dialog;
 
@@ -1006,9 +1002,10 @@ void SIPVoIPLink::createTlsListener(SIPAccount *account, pjsip_tpfactory **liste
     pj_str_t pjAddress;
     pj_cstr(&pjAddress, PJ_INADDR_ANY);
     pj_sockaddr_in_set_str_addr(&local_addr, &pjAddress);
+    std::string localIP(loadSIPLocalIP());
 
     pjsip_host_port a_name = {
-        pj_str((char*)loadSIPLocalIP().c_str()),
+        pj_str((char*) localIP.c_str()),
         local_addr.sin_port
     };
 
@@ -1040,7 +1037,8 @@ void SIPVoIPLink::createSipTransport(SIPAccount *account)
 
     if (account->isTlsEnabled()) {
         std::string remoteSipUri(account->getServerUri());
-        size_t sips = remoteSipUri.find("<sips:") + 6;
+        static const char SIPS_PREFIX[] = "<sips:";
+        size_t sips = remoteSipUri.find(SIPS_PREFIX) + (sizeof SIPS_PREFIX) - 1;
         size_t trns = remoteSipUri.find(";transport");
         std::string remoteAddr(remoteSipUri.substr(sips, trns-sips));
 
@@ -1094,7 +1092,7 @@ void SIPVoIPLink::createUdpTransport(SIPAccount *account)
         return;
 
     const pjsip_host_port a_name = {
-        pj_str((char*)listeningAddress.c_str()),
+        pj_str((char*) listeningAddress.c_str()),
         listeningPort
     };
 
@@ -1218,7 +1216,7 @@ void SIPVoIPLink::findLocalAddressFromUri(const std::string& uri, pjsip_transpor
     if (transportType == PJSIP_TRANSPORT_UDP and transport)
         tp_sel = initTransportSelector(transport, pool_);
 
-    pj_str_t localAddress;
+    pj_str_t localAddress = {0,0};
     int i_port;
 
     if (pjsip_tpmgr_find_local_addr(tpmgr, pool_, transportType, tp_sel, &localAddress, &i_port) != PJ_SUCCESS)
@@ -1249,7 +1247,8 @@ std::string parseDisplayName(const char * buffer)
     size_t end_displayName = temp.rfind("\"");
     std::string displayName(temp.substr(begin_displayName, end_displayName - begin_displayName));
 
-    if (displayName.size() > 25)
+    static const size_t MAX_DISPLAY_NAME_SIZE = 25;
+    if (displayName.size() > MAX_DISPLAY_NAME_SIZE)
         return "";
 
     return displayName;
@@ -1257,11 +1256,12 @@ std::string parseDisplayName(const char * buffer)
 
 void stripSipUriPrefix(std::string& sipUri)
 {
-    //Remove sip: prefix
-    size_t found = sipUri.find("sip:");
+    // Remove sip: prefix
+    static const char SIP_PREFIX[] = "sip:";
+    size_t found = sipUri.find(SIP_PREFIX);
 
     if (found != std::string::npos)
-        sipUri.erase(found, found + 4);
+        sipUri.erase(found, found + (sizeof SIP_PREFIX) - 1);
 
     found = sipUri.find("@");
 
