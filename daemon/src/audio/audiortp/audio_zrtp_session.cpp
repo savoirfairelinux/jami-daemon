@@ -68,11 +68,17 @@ AudioZrtpSession::AudioZrtpSession(SIPCall * sipcall, const std::string& zidFile
 
 AudioZrtpSession::~AudioZrtpSession()
 {
+
+// tmatth:Oct 20 2011:FIXME:
+// This was crashing...seems like it's not necessary. Double check
+// with valgrind/helgrind
+#if 0
     try {
-        terminate();
+        ost::Thread::terminate();
     } catch (...) {
         throw;
     }
+#endif
 
     Manager::instance().getMainBuffer()->unBindAll(ca_->getCallId());
 }
