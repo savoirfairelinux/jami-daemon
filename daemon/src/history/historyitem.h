@@ -59,7 +59,10 @@ class HistoryItem {
         	 * @param Configuration ID
         	 * @param time added
          */
-        HistoryItem(std::string, CallType, std::string, std::string, std::string, std::string, std::string, std::string, std::string, std::string);
+        HistoryItem(const std::string&, CallType, const std::string&,
+                    const std::string&, const std::string&, const std::string&,
+                    const std::string&, const std::string&, const std::string&,
+                    const std::string&);
 
         /*
          * Constructor from a serialized form
