@@ -95,6 +95,10 @@ class AudioRtpRecord {
         ost::Mutex audioProcessMutex_;
         std::string callId_;
         unsigned int dtmfPayloadType_;
+    private:
+        /* non copyable */
+        AudioRtpRecord(const AudioRtpRecord &);
+        AudioRtpRecord & operator=(const AudioRtpRecord &);
 };
 
 

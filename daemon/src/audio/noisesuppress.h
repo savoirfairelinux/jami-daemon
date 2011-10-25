@@ -41,9 +41,11 @@ class NoiseSuppress {
         void process(SFLDataFormat *data, int samples);
 
     private:
+        NoiseSuppress(const NoiseSuppress&);
+        NoiseSuppress& operator=(const NoiseSuppress&);
 
-        SpeexPreprocessState *noiseState_;
         int smplPerFrame_;
+        SpeexPreprocessState *noiseState_;
 };
 
 #endif

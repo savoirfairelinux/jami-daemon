@@ -68,24 +68,16 @@ AudioZrtpSession::AudioZrtpSession(SIPCall * sipcall, const std::string& zidFile
 
 AudioZrtpSession::~AudioZrtpSession()
 {
-
-// tmatth:Oct 20 2011:FIXME:
-// This was crashing...seems like it's not necessary. Double check
-// with valgrind/helgrind
-#if 0
-    try {
-        ost::Thread::terminate();
-    } catch (...) {
-        throw;
-    }
-#endif
-
+    ost::Thread::terminate();
     Manager::instance().getMainBuffer()->unBindAll(ca_->getCallId());
 }
 
 void AudioZrtpSession::final()
 {
-    delete this;
+// tmatth:Oct 25 2011:FIXME:
+// This was crashing...seems like it's not necessary. Double check
+// with valgrind/helgrind
+//    delete this;
 }
 
 void AudioZrtpSession::initializeZid()
@@ -94,8 +86,6 @@ void AudioZrtpSession::initializeZid()
         throw ZrtpZidException("zid filename empty");
 
     std::string zidCompleteFilename;
-
-    // xdg_config = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".cache/sflphone";
 
     std::string xdg_config = std::string(HOMEDIR) + DIR_SEPARATOR_STR + ".cache" + DIR_SEPARATOR_STR + PACKAGE + "/" + zidFilename_;
 

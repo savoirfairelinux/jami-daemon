@@ -31,25 +31,25 @@
 #include <cassert>
 #include "noisesuppress.h"
 
-NoiseSuppress::NoiseSuppress(int smplPerFrame, int samplingRate)
-    : smplPerFrame_(smplPerFrame)
+NoiseSuppress::NoiseSuppress(int smplPerFrame, int samplingRate) :
+    smplPerFrame_(smplPerFrame),
+    noiseState_(speex_preprocess_state_init(smplPerFrame_, samplingRate))
 {
-    noiseState_ = speex_preprocess_state_init(smplPerFrame_, samplingRate);
-    int i=1;
+    int i = 1;
     speex_preprocess_ctl(noiseState_, SPEEX_PREPROCESS_SET_DENOISE, &i);
-    i=-20;
+    i = -20;
     speex_preprocess_ctl(noiseState_, SPEEX_PREPROCESS_SET_NOISE_SUPPRESS, &i);
-    i=0;
+    i = 0;
     speex_preprocess_ctl(noiseState_, SPEEX_PREPROCESS_SET_AGC, &i);
-    i=8000;
+    i = 8000;
     speex_preprocess_ctl(noiseState_, SPEEX_PREPROCESS_SET_AGC_TARGET, &i);
-    i=16000;
+    i = 16000;
     speex_preprocess_ctl(noiseState_, SPEEX_PREPROCESS_SET_AGC_LEVEL, &i);
-    i=0;
+    i = 0;
     speex_preprocess_ctl(noiseState_, SPEEX_PREPROCESS_SET_DEREVERB, &i);
-    float f=0.0;
+    float f = 0.0;
     speex_preprocess_ctl(noiseState_, SPEEX_PREPROCESS_SET_DEREVERB_DECAY, &f);
-    f=0.0;
+    f = 0.0;
     speex_preprocess_ctl(noiseState_, SPEEX_PREPROCESS_SET_DEREVERB_LEVEL, &f);
     i = 0;
     speex_preprocess_ctl(noiseState_, SPEEX_PREPROCESS_SET_VAD, &i);
