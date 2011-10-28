@@ -126,14 +126,16 @@ int SIPSessionReinvite(SIPCall *);
  */
 void onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata);
 
-std::string loadSIPLocalIP()
+std::string getSIPLocalIP()
 {
     pj_sockaddr ip_addr;
 
     if (pj_gethostip(pj_AF_INET(), &ip_addr) == PJ_SUCCESS)
         return pj_inet_ntoa(ip_addr.ipv4.sin_addr);
-
-    return "";
+    else  {
+        ERROR("SIPVoIPLink: Could not get local IP");
+        return "";
+    }
 }
 
 pjsip_route_hdr *createRouteSet(const std::string &route, pj_pool_t *hdr_pool)
@@ -187,7 +189,7 @@ SIPVoIPLink::SIPVoIPLink() : evThread_(new EventThread(this))
 
     TRY(pjsip_endpt_create(&cp_->factory, pj_gethostname()->ptr, &endpt_));
 
-    if (loadSIPLocalIP().empty())
+    if (getSIPLocalIP().empty())
         throw VoipLinkException("UserAgent: Unable to determine network capabilities");
 
     TRY(pjsip_tsx_layer_init_module(endpt_));
@@ -230,6 +232,7 @@ SIPVoIPLink::SIPVoIPLink() : evThread_(new EventThread(this))
     DEBUG("UserAgent: pjsip version %s for %s initialized", pj_get_version(), PJ_OS_NAME);
 
     TRY(pjsip_replaces_init_module(endpt_));
+#undef TRY
 
     evThread_->start();
 }
@@ -392,7 +395,7 @@ Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toU
     std::string localAddr(getInterfaceAddrFromName(account->getLocalInterface()));
 
     if (localAddr == "0.0.0.0")
-        localAddr = loadSIPLocalIP();
+        localAddr = getSIPLocalIP();
 
     setCallMediaLocal(call, localAddr);
 
@@ -402,7 +405,7 @@ Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toU
     getInterfaceAddrFromName(account->getLocalInterface());
 
     if (addrSdp == "0.0.0.0")
-        addrSdp = loadSIPLocalIP();
+        addrSdp = getSIPLocalIP();
 
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
@@ -474,7 +477,7 @@ SIPVoIPLink::hangup(const std::string& id)
         throw VoipLinkException("No invite session for this call");
 
     // Looks for sip routes
-    if (not(account->getServiceRoute().empty())) {
+    if (not account->getServiceRoute().empty()) {
         pjsip_route_hdr *route_set = createRouteSet(account->getServiceRoute(), inv->pool);
         pjsip_dlg_set_route_set(inv->dlg, route_set);
     }
@@ -877,7 +880,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to)
     std::string localAddress(getInterfaceAddrFromName(account->getLocalInterface()));
 
     if (localAddress == "0.0.0.0")
-        localAddress = loadSIPLocalIP();
+        localAddress = getSIPLocalIP();
 
     setCallMediaLocal(call, localAddress);
 
@@ -1002,7 +1005,7 @@ void SIPVoIPLink::createTlsListener(SIPAccount *account, pjsip_tpfactory **liste
     pj_str_t pjAddress;
     pj_cstr(&pjAddress, PJ_INADDR_ANY);
     pj_sockaddr_in_set_str_addr(&local_addr, &pjAddress);
-    std::string localIP(loadSIPLocalIP());
+    std::string localIP(getSIPLocalIP());
 
     pjsip_host_port a_name = {
         pj_str((char*) localIP.c_str()),
@@ -1019,7 +1022,7 @@ void SIPVoIPLink::createTlsTransport(SIPAccount *account, std::string remoteAddr
     pj_cstr(&remote, remoteAddr.c_str());
 
     pj_sockaddr_in rem_addr;
-    pj_sockaddr_in_init(&rem_addr, &remote, (pj_uint16_t) 5061);
+    pj_sockaddr_in_init(&rem_addr, &remote, (pj_uint16_t) DEFAULT_SIP_TLS_PORT);
 
     static pjsip_tpfactory *localTlsListener = NULL; /** The local tls listener */
 
@@ -1072,7 +1075,7 @@ void SIPVoIPLink::createUdpTransport(SIPAccount *account)
     bound_addr.sin_family = PJ_AF_INET;
 
     if (account->getLocalInterface() == "default") {
-        listeningAddress = loadSIPLocalIP();
+        listeningAddress = getSIPLocalIP();
         bound_addr.sin_addr.s_addr = pj_htonl(PJ_INADDR_ANY);
     } else {
         listeningAddress = getInterfaceAddrFromName(account->getLocalInterface());
@@ -1084,11 +1087,12 @@ void SIPVoIPLink::createUdpTransport(SIPAccount *account)
         listeningPort = account->getPublishedPort();
     }
 
-    // We must specify this here to avoid the IP2IP_PROFILE to create a transport with name 0.0.0.0 to appear in the via header
+    // We must specify this here to avoid the IP2IP_PROFILE creating a
+    // transport with the name 0.0.0.0 appearing in the via header
     if (account->getAccountID() == IP2IP_PROFILE)
-        listeningAddress = loadSIPLocalIP();
+        listeningAddress = getSIPLocalIP();
 
-    if (listeningAddress.empty() || listeningPort == 0)
+    if (listeningAddress.empty() or listeningPort == 0)
         return;
 
     const pjsip_host_port a_name = {
@@ -1217,7 +1221,7 @@ void SIPVoIPLink::findLocalAddressFromUri(const std::string& uri, pjsip_transpor
         tp_sel = initTransportSelector(transport, pool_);
 
     pj_str_t localAddress = {0,0};
-    int i_port;
+    int i_port = 0;
 
     if (pjsip_tpmgr_find_local_addr(tpmgr, pool_, transportType, tp_sel, &localAddress, &i_port) != PJ_SUCCESS)
         return;
@@ -1225,7 +1229,7 @@ void SIPVoIPLink::findLocalAddressFromUri(const std::string& uri, pjsip_transpor
     addr = std::string(localAddress.ptr, localAddress.slen);
 
     if (addr == "0.0.0.0")
-        addr = loadSIPLocalIP();
+        addr = getSIPLocalIP();
 
     ss.str("");
     ss << i_port;
@@ -1364,7 +1368,7 @@ static void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_
     std::string addrSdp(localAddress);
 
     if (localAddress == "0.0.0.0")
-        localAddress = loadSIPLocalIP();
+        localAddress = getSIPLocalIP();
 
     if (addrSdp == "0.0.0.0")
         addrSdp = localAddress;
@@ -1751,7 +1755,7 @@ static pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     pjsip_tpselector *tp = SIPVoIPLink::instance()->initTransportSelector(account->transport_, call->getMemoryPool());
 
     if (addrToUse == "0.0.0.0")
-        addrToUse = loadSIPLocalIP();
+        addrToUse = getSIPLocalIP();
 
     if (addrSdp == "0.0.0.0")
         addrSdp = addrToUse;
