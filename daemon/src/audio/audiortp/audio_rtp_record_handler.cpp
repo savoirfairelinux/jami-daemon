@@ -38,17 +38,24 @@ namespace sfl {
 
 static const SFLDataFormat initFadeinFactor = 32000;
 
-AudioRtpRecord::AudioRtpRecord() : audioCodec_(NULL)
+AudioRtpRecord::AudioRtpRecord() :
+    audioCodec_(0)
+    , audioCodecMutex_()
+    , codecPayloadType_(0)
     , hasDynamicPayloadType_(false)
-    , converter_(NULL)
+    , converter_(0)
     , codecSampleRate_(0)
     , codecFrameSize_(0)
+    , converterSamplingRate_(0)
     , micAmplFactor_(initFadeinFactor)
-    , noiseSuppress_(NULL)
+    , noiseSuppress_(0)
     , callId_("")
     , dtmfPayloadType_(101) // same as Asterisk
-{}
-
+{
+    memset(decData_, 0x0, sizeof decData_);
+    memset(resampledData_, 0x0, sizeof resampledData_);
+    memset(encodedData_, 0x0, sizeof encodedData_);
+}
 
 AudioRtpRecord::~AudioRtpRecord()
 {

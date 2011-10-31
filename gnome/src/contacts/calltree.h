@@ -91,7 +91,7 @@ calltree_remove_call(calltab_t *, callable_obj_t *);
  * @param The parent item in case of a conference, should be NULL in case of a normal call
  */
 void
-calltree_add_history_entry (callable_obj_t *, GtkTreeIter *);
+calltree_add_history_entry(callable_obj_t *);
 
 void
 calltree_add_conference_to_current_calls(conference_obj_t *);

@@ -30,14 +30,20 @@
  *  as that of the covered work.
  */
 
-#include <historyitem.h>
+#include "historyitem.h"
 #include <sstream>
-#include "stdlib.h"
-#include <manager.h>
+#include <cstdlib>
+#include "manager.h"
 
-#define ITEM_SEPARATOR      "|"
+static const char * const ITEM_SEPARATOR = "|";
 
-HistoryItem::HistoryItem(std::string timestamp_start, CallType call_type, std::string timestamp_stop, std::string name, std::string number, std::string id, std::string account_id, std::string recording, std::string confID, std::string timeAdded)
+HistoryItem::HistoryItem(const std::string &timestamp_start,
+                         CallType call_type, const std::string &timestamp_stop,
+                         const std::string &name, const std::string &number,
+                         const std::string &id, const std::string &account_id,
+                         const std::string &recording,
+                         const std::string &confID,
+                         const std::string &timeAdded)
     :	timestamp_start_(timestamp_start),
         timestamp_stop_(timestamp_stop),
         call_type_(call_type),
@@ -53,11 +59,9 @@ HistoryItem::HistoryItem(std::string timestamp_start, CallType call_type, std::s
 
 HistoryItem::HistoryItem(std::string serialized_form)
 {
-    int index = 0;
-
-    while (serialized_form.find(ITEM_SEPARATOR, 0) != std::string::npos) {
+    for (int index = 0; serialized_form.find(ITEM_SEPARATOR, 0) != std::string::npos; ++index) {
         size_t pos = serialized_form.find(ITEM_SEPARATOR, 0);
-        std::string tmp = serialized_form.substr(0, pos);
+        std::string tmp(serialized_form.substr(0, pos));
         serialized_form.erase(0, pos + 1);
 
         switch (index) {
@@ -98,8 +102,6 @@ HistoryItem::HistoryItem(std::string serialized_form)
                 ERROR("Unserialized form %d not recognized\n", index);
                 break;
         }
-
-        ++index;
     }
 }
 

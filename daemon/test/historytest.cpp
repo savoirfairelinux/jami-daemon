@@ -40,10 +40,24 @@
 using std::cout;
 using std::endl;
 
+namespace {
+void restore()
+{
+    if (system("mv " HISTORY_SAMPLE ".bak " HISTORY_SAMPLE) < 0)
+        ERROR("Restoration of %s failed" HISTORY_SAMPLE);
+}
+
+void backup()
+{
+    if (system("cp " HISTORY_SAMPLE " " HISTORY_SAMPLE ".bak") < 0)
+        ERROR("Backup of %s failed", HISTORY_SAMPLE);
+}
+}
+
 void HistoryTest::setUp()
 {
-    system("cp " HISTORY_SAMPLE " " HISTORY_SAMPLE ".bak");
-    // Instanciate the cleaner singleton
+    backup();
+    // Instantiate the cleaner singleton
     history = new HistoryManager();
 }
 
@@ -226,5 +240,5 @@ void HistoryTest::tearDown()
     // Delete the history object
     delete history;
     history = 0;
-    system("mv " HISTORY_SAMPLE ".bak " HISTORY_SAMPLE);
+    restore();
 }

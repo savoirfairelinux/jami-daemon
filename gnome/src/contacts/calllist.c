@@ -160,7 +160,7 @@ calllist_remove_call(calltab_t* tab, const gchar * callID)
     g_queue_remove(tab->callQueue, element);
 
     calllist_add_call(history_tab, element->elem.call);
-    calltree_add_history_entry(element->elem.call, NULL);
+    calltree_add_history_entry(element->elem.call);
 }
 
 

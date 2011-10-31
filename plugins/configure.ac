@@ -22,6 +22,8 @@ else
 fi
 
 AC_PROG_CC_C99
+dnl For target specific flags
+AM_PROG_CC_C_O
 AC_PROG_INSTALL
 AC_HEADER_STDC
 LT_INIT

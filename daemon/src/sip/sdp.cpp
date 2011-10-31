@@ -250,6 +250,16 @@ void Sdp::setLocalMediaCapabilities(const CodecOrder &selectedCodecs)
 	}
 }
 
+namespace {
+    void printSession(const pjmedia_sdp_session *session)
+    {
+        char buffer[2048];
+        size_t size = pjmedia_sdp_print(session, buffer, sizeof(buffer));
+        std::string sessionStr(buffer, size);
+        DEBUG("%s", sessionStr.c_str());
+    }
+}
+
 int Sdp::createLocalSession(const CodecOrder &selectedCodecs, const std::vector<std::string> &videoCodecs)
 {
     setLocalMediaCapabilities(selectedCodecs);
@@ -290,12 +300,8 @@ int Sdp::createLocalSession(const CodecOrder &selectedCodecs, const std::vector<
     if (!srtpCrypto_.empty())
         addSdesAttribute(srtpCrypto_);
 
-    char buffer[1000];
-    int len = pjmedia_sdp_print(localSession_, buffer, sizeof(buffer));
-    if (len < 1000 and len > 0) {
-    	buffer[len] = 0;
-    	DEBUG("SDP: Local SDP Session:\n%s", buffer);
-    }
+    DEBUG("SDP: Local SDP Session:");
+    printSession(localSession_);
 
     return pjmedia_sdp_validate(localSession_);
 }
@@ -314,8 +320,8 @@ void Sdp::receiveOffer (const pjmedia_sdp_session* remote,
 {
     assert(remote);
 
-    char buffer[1000];
-    pjmedia_sdp_print(remote, buffer, sizeof(buffer));
+    DEBUG("SDP: Remote SDP Session:");
+    printSession(remote);
 
     if(!localSession_ and createLocalSession (selectedCodecs, videoCodecs) != PJ_SUCCESS) {
 		ERROR("SDP: Failed to create initial offer");

@@ -46,14 +46,6 @@ class PulseLayer : public AudioLayer {
         PulseLayer();
         ~PulseLayer();
 
-        std::list<std::string>* getSinkList() {
-            return &sinkList_;
-        }
-
-        std::list<std::string>* getSourceList() {
-            return &sourceList_;
-        }
-
         /**
          * Write data from the ring buffer to the harware and read data from the hardware
          */
@@ -74,9 +66,18 @@ class PulseLayer : public AudioLayer {
 
         void stopStream();
 
-        static void context_state_callback(pa_context* c, void* user_data);
-
     private:
+        static void context_state_callback(pa_context* c, void* user_data);
+        static void context_changed_callback(pa_context* c,
+                                             pa_subscription_event_type_t t,
+                                             uint32_t idx , void* userdata);
+        static void source_input_info_callback(pa_context *c,
+                                               const pa_source_info *i,
+                                               int eol, void *userdata);
+        static void sink_input_info_callback(pa_context *c,
+                                             const pa_sink_info *i,
+                                             int eol, void *userdata);
+
         // Copy Constructor
         PulseLayer(const PulseLayer& rh);
 
@@ -93,10 +94,6 @@ class PulseLayer : public AudioLayer {
          * Close the connection with the local pulseaudio server
          */
         void disconnectAudioStream();
-
-        /** PulseAudio context and asynchronous loop */
-        pa_context* context_;
-        pa_threaded_mainloop* mainloop_;
 
         /**
          * A stream object to handle the pulseaudio playback stream
@@ -122,7 +119,10 @@ class PulseLayer : public AudioLayer {
         SFLDataFormat *mic_buffer_;
         size_t mic_buf_size_;
 
-    public:
+        /** PulseAudio context and asynchronous loop */
+        pa_context* context_;
+        pa_threaded_mainloop* mainloop_;
+
         friend class AudioLayerTest;
 };
 

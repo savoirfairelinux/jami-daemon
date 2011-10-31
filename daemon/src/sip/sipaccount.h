@@ -442,6 +442,10 @@ class SIPAccount : public Account {
          */
         static std::string getLoginName();
 
+        // noncopyable
+        SIPAccount(const SIPAccount &);
+        SIPAccount& operator=(const SIPAccount &);
+
         // The pjsip client registration information
         pjsip_regc *regc_;
         // To check if the account is registered
