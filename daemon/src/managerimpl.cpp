@@ -220,9 +220,9 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
         DEBUG("Manager: Has current call (%s) put it onhold", current_call_id.c_str());
 
         // if this is not a conferenceand this and is not a conference participant
-        if (!isConference(current_call_id) && !participToConference(current_call_id))
+        if (not isConference(current_call_id) and not isConferenceParticipant(current_call_id))
             onHoldCall(current_call_id);
-        else if (isConference(current_call_id) && !participToConference(call_id))
+        else if (isConference(current_call_id) and not isConferenceParticipant(call_id))
             detachParticipant(Call::DEFAULT_ID, current_call_id);
     }
 
@@ -290,11 +290,10 @@ bool ManagerImpl::answerCall(const std::string& call_id)
 
         DEBUG("Manager: Currently conversing with %s", current_call_id.c_str());
 
-        if (!isConference(current_call_id) && !participToConference(current_call_id)) {
-            // if it is not a conference and is not a conference participant
+        if (not isConference(current_call_id) and not isConferenceParticipant(current_call_id)) {
             DEBUG("Manager: Answer call: Put the current call (%s) on hold", current_call_id.c_str());
             onHoldCall(current_call_id);
-        } else if (isConference(current_call_id) && !participToConference(call_id)) {
+        } else if (isConference(current_call_id) and not isConferenceParticipant(call_id)) {
             // if we are talking to a conference and we are answering an incoming call
             DEBUG("Manager: Detach main participant from conference");
             detachParticipant(Call::DEFAULT_ID, current_call_id);
@@ -311,7 +310,7 @@ bool ManagerImpl::answerCall(const std::string& call_id)
     removeWaitingCall(call_id);
 
     // if we dragged this call into a conference already
-    if (participToConference(call_id))
+    if (isConferenceParticipant(call_id))
         switchCall(call->getConfId());
     else
         switchCall(call_id);
@@ -356,7 +355,7 @@ void ManagerImpl::hangupCall(const std::string& callId)
     // Disconnect streams
     removeStream(callId);
 
-    if (participToConference(callId)) {
+    if (isConferenceParticipant(callId)) {
         Conference *conf = getConferenceFromCallID(callId);
 
         if (conf != NULL) {
@@ -365,8 +364,8 @@ void ManagerImpl::hangupCall(const std::string& callId)
             processRemainingParticipants(currentCallId, conf);
         }
     } else {
-        // we are not participating to a conference, current call switched to ""
-        if (!isConference(currentCallId))
+        // we are not participating in a conference, current call switched to ""
+        if (not isConference(currentCallId))
             switchCall("");
     }
 
@@ -475,11 +474,10 @@ void ManagerImpl::offHoldCall(const std::string& callId)
 
     if (hasCurrentCall()) {
 
-        // if this is not a conference and this and is not a conference participant
-        if (!isConference(currentCallId) && !participToConference(currentCallId)) {
+        if (not isConference(currentCallId) and not isConferenceParticipant(currentCallId)) {
             DEBUG("Manager: Has current call (%s), put on hold", currentCallId.c_str());
             onHoldCall(currentCallId);
-        } else if (isConference(currentCallId) && !participToConference(callId))
+        } else if (isConference(currentCallId) and not isConferenceParticipant(callId))
             detachParticipant(Call::DEFAULT_ID, currentCallId);
     }
 
@@ -504,7 +502,7 @@ void ManagerImpl::offHoldCall(const std::string& callId)
 
     dbus_.getCallManager()->callStateChanged(callId, isRec ? "UNHOLD_RECORD" : "UNHOLD_CURRENT");
 
-    if (participToConference(callId)) {
+    if (isConferenceParticipant(callId)) {
         std::string currentAccountId(getAccountFromCall(callId));
         Call *call = getAccountLink(currentAccountId)->getCall(callId);
 
@@ -522,7 +520,7 @@ void ManagerImpl::offHoldCall(const std::string& callId)
 //THREAD=Main
 bool ManagerImpl::transferCall(const std::string& callId, const std::string& to)
 {
-    if (participToConference(callId)) {
+    if (isConferenceParticipant(callId)) {
         removeParticipant(callId);
         Conference *conf = getConferenceFromCallID(callId);
         processRemainingParticipants(callId, conf);
@@ -535,7 +533,7 @@ bool ManagerImpl::transferCall(const std::string& callId, const std::string& to)
     else {
         std::string accountid(getAccountFromCall(callId));
 
-        if (accountid.empty()) 
+        if (accountid.empty())
             return false;
 
         getAccountLink(accountid)->transfer(callId, to);
@@ -612,7 +610,6 @@ void ManagerImpl::refuseCall(const std::string& id)
 Conference*
 ManagerImpl::createConference(const std::string& id1, const std::string& id2)
 {
-    typedef std::pair<std::string, Conference*> ConferenceEntry;
     DEBUG("Manager: Create conference with call %s and %s", id1.c_str(), id2.c_str());
 
     Conference* conf = new Conference;
@@ -621,7 +618,7 @@ ManagerImpl::createConference(const std::string& id1, const std::string& id2)
     conf->add(id2);
 
     // Add conference to map
-    conferenceMap_.insert(ConferenceEntry(conf->getConfID(), conf));
+    conferenceMap_.insert(std::make_pair(conf->getConfID(), conf));
 
     // broadcast a signal over dbus
     dbus_.getCallManager()->conferenceCreated(conf->getConfID());
@@ -737,25 +734,16 @@ void ManagerImpl::unHoldConference(const std::string& id)
     }
 }
 
-bool ManagerImpl::isConference(const std::string& id)
+bool ManagerImpl::isConference(const std::string& id) const
 {
     return conferenceMap_.find(id) != conferenceMap_.end();
 }
 
-bool ManagerImpl::participToConference(const std::string& call_id)
+bool ManagerImpl::isConferenceParticipant(const std::string& call_id)
 {
     std::string accountId(getAccountFromCall(call_id));
     Call *call = getAccountLink(accountId)->getCall(call_id);
-
-    if (call == NULL) {
-        ERROR("Manager: Error call is NULL in particip to conference");
-        return false;
-    }
-
-    if (call->getConfId().empty())
-        return false;
-
-    return true;
+    return call and not call->getConfId().empty();
 }
 
 void ManagerImpl::addParticipant(const std::string& callId, const std::string& conferenceId)
@@ -997,7 +985,7 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
 
         std::string generatedCallID(getNewCallID());
 
-        // Manager methods may behave differently if the call id particip to a conference
+        // Manager methods may behave differently if the call id participates in a conference
         conf->add(generatedCallID);
 
         switchCall("");
@@ -1016,7 +1004,7 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
 
     // Create the conference if and only if at least 2 calls have been successfully created
     if (successCounter >= 2) {
-        conferenceMap_.insert(std::pair<std::string, Conference*>(conf->getConfID(), conf));
+        conferenceMap_.insert(std::make_pair(conf->getConfID(), conf));
         dbus_.getCallManager()->conferenceCreated(conf->getConfID());
 
         audioLayerMutexLock();
@@ -1080,7 +1068,7 @@ void ManagerImpl::detachParticipant(const std::string& call_id,
         DEBUG("Manager: Unbind main participant from conference %d");
         getMainBuffer()->unBindAll(Call::DEFAULT_ID);
 
-        if (!isConference(current_call_id)) {
+        if (not isConference(current_call_id)) {
             ERROR("Manager: Warning: Current call id (%s) is not a conference", current_call_id.c_str());
             return;
         }
@@ -1210,7 +1198,7 @@ void ManagerImpl::addStream(const std::string& call_id)
     std::string currentAccountId(getAccountFromCall(call_id));
     Call *call = getAccountLink(currentAccountId)->getCall(call_id);
 
-    if (call and participToConference(call_id)) {
+    if (call and isConferenceParticipant(call_id)) {
         DEBUG("Manager: Add stream to conference");
 
         // bind to conference participant
@@ -1426,7 +1414,7 @@ void ManagerImpl::incomingMessage(const std::string& callID,
                                   const std::string& from,
                                   const std::string& message)
 {
-    if (participToConference(callID)) {
+    if (isConferenceParticipant(callID)) {
         Conference *conf = getConferenceFromCallID(callID);
 
         ParticipantSet participants(conf->getParticipantList());
@@ -1494,8 +1482,8 @@ bool ManagerImpl::sendTextMessage(const std::string& callID, const std::string& 
         return true;
     }
 
-    if (participToConference(callID)) {
-        DEBUG("Manager: Particip to a conference, send instant message to everyone");
+    if (isConferenceParticipant(callID)) {
+        DEBUG("Manager: Call is participant in a conference, send instant message to everyone");
         Conference *conf = getConferenceFromCallID(callID);
 
         if (!conf)
@@ -1571,7 +1559,7 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
 {
     DEBUG("Manager: Peer hungup call %s", call_id.c_str());
 
-    if (participToConference(call_id)) {
+    if (isConferenceParticipant(call_id)) {
         Conference *conf = getConferenceFromCallID(call_id);
 
         if (conf != 0) {
@@ -1634,8 +1622,8 @@ void ManagerImpl::callFailure(const std::string& call_id)
         switchCall("");
     }
 
-    if (participToConference(call_id)) {
-        DEBUG("Manager: Call %s participating to a conference failed", call_id.c_str());
+    if (isConferenceParticipant(call_id)) {
+        DEBUG("Manager: Call %s participating in a conference failed", call_id.c_str());
         Conference *conf = getConferenceFromCallID(call_id);
 
         if (conf == NULL) {
@@ -2454,7 +2442,7 @@ std::vector<std::string> ManagerImpl::getAccountList() const
 
     AccountMap::const_iterator ip2ip_iter = accountMap_.find(IP2IP_PROFILE);
 
-    vector<string> v; 
+    vector<string> v;
     if (ip2ip_iter->second)
         v.push_back(ip2ip_iter->second->getAccountID());
     else

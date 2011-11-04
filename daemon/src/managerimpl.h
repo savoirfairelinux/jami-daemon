@@ -263,13 +263,13 @@ class ManagerImpl {
          * Test if this id is a conference (usefull to test current call)
          * @param the call id
          */
-        bool isConference(const std::string& call_id);
+        bool isConference(const std::string& call_id) const;
 
         /**
-         * Test if a call id particips to this conference
+         * Test if a call id corresponds to a conference participant
          * @param the call id
          */
-        bool participToConference(const std::string& call_id);
+        bool isConferenceParticipant(const std::string& call_id);
 
         /**
          * Add a participant to a conference
