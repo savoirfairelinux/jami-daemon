@@ -63,7 +63,7 @@ ManagerImpl::registerAccounts()
 }
 
 
-VoIPLink* ManagerImpl::getAccountLink(const std::string& accountID) const
+VoIPLink* ManagerImpl::getAccountLink(const std::string& accountID)
 {
     if (not accountID.empty())
         return getAccount(accountID)->getVoIPLink();

@@ -2761,7 +2761,7 @@ bool ManagerImpl::accountExists(const std::string& accountID)
 }
 
 Account*
-ManagerImpl::getAccount(const std::string& accountID) const
+ManagerImpl::getAccount(const std::string& accountID)
 {
     AccountMap::const_iterator iter = accountMap_.find(accountID);
     if (iter != accountMap_.end())

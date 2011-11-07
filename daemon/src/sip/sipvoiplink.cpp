@@ -282,7 +282,7 @@ SIPVoIPLink::getEvent()
 
 void SIPVoIPLink::sendRegister(Account *a)
 {
-    SIPAccount *account = static_cast<SIPAccount*>(a);
+    SIPAccount *account = dynamic_cast<SIPAccount*>(a);
     createSipTransport(account);
 
     account->setRegister(true);

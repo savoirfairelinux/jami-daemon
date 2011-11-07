@@ -113,7 +113,7 @@ void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
     ERROR("Sdp: Error: Could not found dtmf event from remote sdp");
 }
 
-std::string Sdp::getCodecName() const
+std::string Sdp::getCodecName()
 {
     try {
         sfl::AudioCodec *codec = getSessionMedia();
@@ -123,12 +123,12 @@ std::string Sdp::getCodecName() const
     }
 }
 
-sfl::AudioCodec* Sdp::getSessionMedia() const
+sfl::AudioCodec* Sdp::getSessionMedia()
 {
     if (sessionAudioMedia_.size() < 1)
         throw SdpException("No codec description for this media");
 
-    return static_cast<sfl::AudioCodec *>(sessionAudioMedia_[0]);
+    return dynamic_cast<sfl::AudioCodec *>(sessionAudioMedia_[0]);
 }
 
 

@@ -138,7 +138,7 @@ class Sdp {
          * Return the codec of the first media after negotiation
          * @throw SdpException
          */
-        sfl::AudioCodec* getSessionMedia() const;
+        sfl::AudioCodec* getSessionMedia();
 
         /*
          * On building an invite outside a dialog, build the local offer and create the
@@ -271,7 +271,7 @@ class Sdp {
 
         void setMediaTransportInfoFromRemoteSdp();
 
-        std::string getCodecName() const;
+        std::string getCodecName();
 
         void receivingAnswerAfterInitialOffer(const pjmedia_sdp_session* remote);
 

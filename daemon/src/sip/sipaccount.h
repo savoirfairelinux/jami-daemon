@@ -204,7 +204,7 @@ class SIPAccount : public Account {
          * @param void
          * @return pjsip_regc* A pointer to the registration structure
          */
-        pjsip_regc* getRegistrationInfo() const {
+        pjsip_regc* getRegistrationInfo() {
             return regc_;
         }
 
@@ -223,7 +223,7 @@ class SIPAccount : public Account {
          * file, that can be used directly by PJSIP to initialize
          * TLS transport.
          */
-        const pjsip_tls_setting * getTlsSetting() const {
+        pjsip_tls_setting * getTlsSetting() {
             return &tlsSetting_;
         }
 
