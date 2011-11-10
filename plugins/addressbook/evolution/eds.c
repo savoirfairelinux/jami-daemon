@@ -41,7 +41,6 @@
 #include <string.h>
 #include <pango/pango.h>
 #include "eds.h"
-//#include <addressbook-config.h>
 #include <libedataserver/e-source.h>
 
 #include "config.h"

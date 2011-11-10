@@ -268,13 +268,13 @@ class ManagerImpl {
          * Test if this id is a conference (usefull to test current call)
          * @param the call id
          */
-        bool isConference(const std::string& call_id);
+        bool isConference(const std::string& call_id) const;
 
         /**
-         * Test if a call id particips to this conference
+         * Test if a call id corresponds to a conference participant
          * @param the call id
          */
-        bool participToConference(const std::string& call_id);
+        bool isConferenceParticipant(const std::string& call_id);
 
         /**
          * Add a participant to a conference
@@ -1240,7 +1240,7 @@ class ManagerImpl {
          * @param accountID account ID to get
          * @return Account*	 The account pointer or 0
          */
-        Account* getAccount(const std::string& accountID) const;
+        Account* getAccount(const std::string& accountID);
 
         /** Return the std::string from a CallID
          * Protected by mutex
@@ -1254,7 +1254,7 @@ class ManagerImpl {
          * @param accountID	  Account ID to get
          * @return VoIPLink*   The voip link from the account pointer or 0
          */
-        VoIPLink* getAccountLink(const std::string& accountID="") const;
+        VoIPLink* getAccountLink(const std::string& accountID="");
 
         std::string getAccountIdFromNameAndServer(const std::string& userName, const std::string& server) const;
 

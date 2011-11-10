@@ -8,7 +8,7 @@ Standards-Version: 3.7.3
 Package: sflphone-client-kde
 Priority: optional
 Architecture: i386
-Depends: sflphone-common (>=${source:Version}), libcommoncpp2-1.6-0, kdepimlibs5, libqt4-dbus, libqt4-svg, libqtgui4
+Depends: sflphone-common (>=${source:Version}), ${shlibs:Depends}, ${misc:Depends}
 Replaces: sflphone
 Conflicts: sflphone
 Homepage: http://www.sflphone.org
