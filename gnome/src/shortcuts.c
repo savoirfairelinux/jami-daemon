@@ -508,7 +508,7 @@ grab_key(guint key, GdkModifierType mask, GdkWindow *root)
 
     Display *d = GDK_DISPLAY_XDISPLAY(gdk_display_get_default());
     XID x = GDK_WINDOW_XID(root);
-    
+
     XGrabKey(d, key, mask | 0, x, True, GrabModeAsync, GrabModeAsync);
     XGrabKey(d, key, mask | Mod2Mask, x, True, GrabModeAsync, GrabModeAsync);
     XGrabKey(d, key, mask | Mod5Mask, x, True, GrabModeAsync, GrabModeAsync);

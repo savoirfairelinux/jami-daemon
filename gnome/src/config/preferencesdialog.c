@@ -56,25 +56,16 @@
 /**
  * Local variables
  */
-gboolean accDialogOpen = FALSE;
-gboolean dialogOpen = FALSE;
-gboolean ringtoneEnabled = TRUE;
+static gboolean dialogOpen = FALSE;
 
+static GtkWidget * history_value;
 
-GtkWidget * status;
-GtkWidget * history_value;
+static GtkWidget *starthidden;
+static GtkWidget *popupwindow;
+static GtkWidget *neverpopupwindow;
 
-GtkWidget *starthidden;
-GtkWidget *popupwindow;
-GtkWidget *neverpopupwindow;
-
-GtkWidget *treeView;
-GtkWidget *iconview;
-GtkCellRenderer *renderer;
-GtkTreeViewColumn *column;
-GtkTreeSelection *selection;
-GtkWidget * notebook;
-
+static GtkWidget *iconview;
+static GtkWidget * notebook;
 
 enum {
     PIXBUF_COL,
@@ -101,9 +92,8 @@ set_popup_mode(GtkWidget *widget, gpointer *userdata UNUSED)
 {
     gboolean currentstate = eel_gconf_get_integer(POPUP_ON_CALL);
 
-    if (currentstate || gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
+    if (currentstate || gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)))
         eel_gconf_set_integer(POPUP_ON_CALL, !currentstate);
-    }
 }
 
 void
@@ -163,7 +153,6 @@ void showstatusicon_cb(GtkWidget *widget, gpointer data UNUSED)
 GtkWidget*
 create_general_settings()
 {
-
     GtkWidget *ret, *notifAll, *frame, *checkBoxWidget, *label, *table, *showstatusicon;
     gboolean statusicon;
 
@@ -281,14 +270,11 @@ create_general_settings()
 void
 save_configuration_parameters(void)
 {
-    if (addrbook) {
-        // Address book config
+    if (addrbook)
         addressbook_config_save_parameters();
-    }
 
     hooks_save_parameters();
 
-    // History config
     dbus_set_history_limit(history_limit);
 }
 
@@ -304,14 +290,12 @@ void
 instant_messaging_load_configuration()
 {
     instant_messaging_enabled = eel_gconf_get_integer(INSTANT_MESSAGING_ENABLED);
-
 }
 
 
 void
 selection_changed_cb(GtkIconView *view, gpointer user_data UNUSED)
 {
-
     GtkTreeModel *model;
     GtkTreeIter iter;
     GList *list;
@@ -361,17 +345,13 @@ static GtkTreeModel* create_model(GtkWidget *widget)
         {"Shortcuts", "preferences-desktop-keyboard", 4},
         {"Address Book", GTK_STOCK_ADDRESSBOOK, 5},
     };
-    GdkPixbuf *pixbuf;
-    GtkTreeIter iter;
-    GtkListStore *store;
-    gint i, nb_entries;
+    GtkListStore *store = gtk_list_store_new(3, GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_INT);
+    gint nb_entries = sizeof(browser_entries_full) / sizeof(browser_entries_full[0]);
 
-    store = gtk_list_store_new(3, GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_INT);
-    nb_entries = sizeof(browser_entries_full) / sizeof(browser_entries_full[0]);
-
-    for (i = 0; i < nb_entries; i++) {
+    for (gint i = 0; i < nb_entries; i++) {
+        GtkTreeIter iter;
         gtk_list_store_append (store, &iter);
-        pixbuf = get_icon(browser_entries_full[i].icon_name, widget);
+        GdkPixbuf *pixbuf = get_icon(browser_entries_full[i].icon_name, widget);
         gtk_list_store_set(store, &iter,
                            PIXBUF_COL, pixbuf,
                            TEXT_COL, _(browser_entries_full[i].icon_descr),
