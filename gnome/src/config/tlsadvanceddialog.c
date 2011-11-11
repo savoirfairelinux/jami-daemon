@@ -191,8 +191,8 @@ void show_advanced_tls_options(GHashTable * properties)
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
 
     gchar** supported_tls_method = dbus_get_supported_tls_method();
-    GtkTreeIter supported_tls_method_iter = iter;
 
+    GtkTreeIter supported_tls_method_iter;
     for (char **supported_tls_method_ptr = supported_tls_method; supported_tls_method_ptr && *supported_tls_method_ptr; supported_tls_method_ptr++) {
         gtk_list_store_append(tlsProtocolMethodListStore, &iter);
         gtk_list_store_set(tlsProtocolMethodListStore, &iter, 0, *supported_tls_method_ptr, -1);
@@ -268,7 +268,6 @@ void show_advanced_tls_options(GHashTable * properties)
     gtk_widget_show_all(ret);
 
     if (gtk_dialog_run(GTK_DIALOG(tlsDialog)) == GTK_RESPONSE_ACCEPT) {
-
         g_hash_table_replace(properties,
                              g_strdup(TLS_LISTENER_PORT),
                              g_strdup((gchar *) gtk_entry_get_text(GTK_ENTRY(tlsListenerPort))));
@@ -287,7 +286,7 @@ void show_advanced_tls_options(GHashTable * properties)
 
         g_hash_table_replace(properties,
                              g_strdup(TLS_METHOD),
-                             g_strdup((gchar *) gtk_combo_box_get_active_text(GTK_COMBO_BOX(tlsProtocolMethodCombo))));
+                             g_strdup((gchar *) gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(tlsProtocolMethodCombo))));
 
         g_hash_table_replace(properties,
                              g_strdup(TLS_CIPHERS),

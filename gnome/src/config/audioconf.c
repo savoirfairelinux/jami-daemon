@@ -761,7 +761,6 @@ static void record_path_changed(GtkFileChooser *chooser , GtkLabel *label UNUSED
 {
     gchar* path;
     path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(chooser));
-    DEBUG("path2 %s", path);
     dbus_set_record_path(path);
 }
 

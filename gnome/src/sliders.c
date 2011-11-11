@@ -122,13 +122,13 @@ set_slider(const gchar * device, gdouble newval)
     else
         dev = MIKE;
 
-    gtk_signal_handler_block(GTK_OBJECT(slider[dev]), movedConnId[dev]);
+    g_signal_handler_block(G_OBJECT(slider[dev]), movedConnId[dev]);
     gtk_range_set_value(GTK_RANGE(slider[dev]), newval);
-    gtk_signal_handler_unblock(slider[dev], movedConnId[dev]);
+    g_signal_handler_unblock(slider[dev], movedConnId[dev]);
 
-    gtk_signal_handler_block(GTK_OBJECT(button[dev]),toggledConnId[dev]);
+    g_signal_handler_block(G_OBJECT(button[dev]),toggledConnId[dev]);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button[dev]), (newval == 0 ? TRUE: FALSE));
-    gtk_signal_handler_unblock(button[dev], toggledConnId[dev]);
+    g_signal_handler_unblock(button[dev], toggledConnId[dev]);
 
     update_icons(dev);
 }

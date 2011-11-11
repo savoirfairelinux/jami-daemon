@@ -37,7 +37,6 @@
 #include <gtk/gtk.h>
 #include <string.h>
 #include <glib/gprintf.h>
-#include <libgnome/gnome-help.h>
 
 #include "uimanager.h"
 #include "statusicon.h"
@@ -52,6 +51,8 @@
 #include "contacts/addrbookfactory.h"
 #include "contacts/calltab.h"
 #include "config/addressbook-config.h"
+
+#include "eel-gconf-extensions.h"
 
 #include "accountlist.h"
 #include "config/accountlistconfigdialog.h"
@@ -265,12 +266,12 @@ update_actions()
                 gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(holdToolbar_), pos++);
                 gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(transferToolbar_), pos++);
                 gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(recordWidget_), pos++);
-                gtk_signal_handler_block(GTK_OBJECT(transferToolbar_), transferButtonConnId_);
+                g_signal_handler_block(transferToolbar_, transferButtonConnId_);
                 gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(transferToolbar_), FALSE);
-                gtk_signal_handler_unblock(transferToolbar_, transferButtonConnId_);
-                g_signal_handler_block(GTK_OBJECT(recordWidget_), recordButtonConnId_);
+                g_signal_handler_unblock(transferToolbar_, transferButtonConnId_);
+                g_signal_handler_block(recordWidget_, recordButtonConnId_);
                 gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(recordWidget_), FALSE);
-                g_signal_handler_unblock(GTK_OBJECT(recordWidget_), recordButtonConnId_);
+                g_signal_handler_unblock(recordWidget_, recordButtonConnId_);
 
                 if (instant_messaging_enabled) {
                     gtk_action_set_sensitive(imAction_, TRUE);
@@ -292,12 +293,12 @@ update_actions()
                 gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(holdToolbar_), pos++);
                 gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(transferToolbar_), pos++);
                 gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(recordWidget_), pos++);
-                gtk_signal_handler_block(GTK_OBJECT(transferToolbar_), transferButtonConnId_);
+                g_signal_handler_block(transferToolbar_, transferButtonConnId_);
                 gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(transferToolbar_), FALSE);
-                gtk_signal_handler_unblock(transferToolbar_, transferButtonConnId_);
-                g_signal_handler_block(GTK_OBJECT(recordWidget_), recordButtonConnId_);
+                g_signal_handler_unblock(transferToolbar_, transferButtonConnId_);
+                g_signal_handler_block(recordWidget_, recordButtonConnId_);
                 gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(recordWidget_), TRUE);
-                g_signal_handler_unblock(GTK_OBJECT(recordWidget_), recordButtonConnId_);
+                g_signal_handler_unblock(recordWidget_, recordButtonConnId_);
 
                 if (instant_messaging_enabled) {
                     gtk_action_set_sensitive(imAction_, TRUE);
@@ -315,9 +316,9 @@ update_actions()
             case CALL_STATE_TRANSFER:
                 gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(hangUpWidget_), 1);
                 gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(transferToolbar_), 2);
-                gtk_signal_handler_block(GTK_OBJECT(transferToolbar_), transferButtonConnId_);
+                g_signal_handler_block(transferToolbar_, transferButtonConnId_);
                 gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(transferToolbar_), TRUE);
-                gtk_signal_handler_unblock(transferToolbar_, transferButtonConnId_);
+                g_signal_handler_unblock(transferToolbar_, transferButtonConnId_);
                 gtk_action_set_sensitive(hangUpAction_, TRUE);
                 gtk_widget_set_sensitive(holdMenu_, TRUE);
                 gtk_widget_set_sensitive(holdToolbar_, TRUE);
@@ -465,9 +466,7 @@ static void
 help_contents_cb(GtkAction *action UNUSED)
 {
     GError *error = NULL;
-
-    gnome_help_display("sflphone.xml", NULL, &error);
-
+    gtk_show_uri(NULL, "ghelp:sflphone", GDK_CURRENT_TIME, &error);
     if (error != NULL) {
         g_warning("%s", error->message);
         g_error_free(error);
@@ -477,8 +476,7 @@ help_contents_cb(GtkAction *action UNUSED)
 static void
 help_about(void * foo UNUSED)
 {
-    gchar
-    *authors[] = {
+    static const gchar *authors[] = {
         "Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>",
         "Jean-Philippe Barrette-LaPierre",
         "Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>",
@@ -492,17 +490,21 @@ help_about(void * foo UNUSED)
         "Julien Plissonneau Duquene <julien.plissonneau.duquene@savoirfairelinux.com>",
         "Alexandre Savard <alexandre.savard@savoirfairelinux.com>", NULL
     };
-    gchar *artists[] = { "Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>",
-                         "Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>", NULL
-                       };
+    static const gchar *artists[] = {
+        "Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>",
+        "Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>", NULL
+    };
 
-    gtk_show_about_dialog(GTK_WINDOW(get_main_window()), "artists", artists,
-                          "authors", authors, "comments",
-                          _("SFLphone is a VoIP client compatible with SIP and IAX2 protocols."),
-                          "copyright", "Copyright © 2004-2011 Savoir-faire Linux Inc.", "name",
-                          PACKAGE, "title", _("About SFLphone"), "version", VERSION, "website",
-                          "http://www.sflphone.org", NULL);
-
+    gtk_show_about_dialog(GTK_WINDOW(get_main_window()),
+            "artists", artists,
+            "authors", authors,
+            "comments", _("SFLphone is a VoIP client compatible with SIP and IAX2 protocols."),
+            "copyright", "Copyright © 2004-2011 Savoir-faire Linux Inc.",
+            "name", PACKAGE,
+            "title", _("About SFLphone"),
+            "version", VERSION,
+            "website", "http://www.sflphone.org",
+            NULL);
 }
 
 /* ----------------------------------------------------------------- */
@@ -948,7 +950,6 @@ toggle_addressbook_cb(GtkToggleAction *action, gpointer user_data UNUSED)
 }
 
 static const GtkActionEntry menu_entries[] = {
-
     // Call Menu
     { "Call", NULL, N_("Call"), NULL, NULL, NULL},
     {
@@ -1028,19 +1029,13 @@ static const GtkActionEntry menu_entries[] = {
 
     // Help menu
     { "Help", NULL, N_("_Help"), NULL, NULL, NULL },
-    {
-        "HelpContents", GTK_STOCK_HELP, N_("Contents"), "F1",
-        N_("Open the manual"), G_CALLBACK(help_contents_cb)
-    },
-    {
-        "About", GTK_STOCK_ABOUT, NULL, NULL,
-        N_("About this application"), G_CALLBACK(help_about)
-    }
-
+    { "HelpContents", GTK_STOCK_HELP, N_("Contents"), "F1",
+      N_("Open the manual"), G_CALLBACK(help_contents_cb) },
+    { "About", GTK_STOCK_ABOUT, NULL, NULL,
+      N_("About this application"), G_CALLBACK(help_about) }
 };
 
 static const GtkToggleActionEntry toggle_menu_entries[] = {
-
     { "Transfer", GTK_STOCK_TRANSFER, N_("_Transfer"), "<control>T", N_("Transfer the call"), NULL, TRUE },
     { "Record", GTK_STOCK_MEDIA_RECORD, N_("_Record"), "<control>R", N_("Record the current conversation"), NULL, TRUE },
     { "Toolbar", NULL, N_("_Show toolbar"), "<control>T", N_("Show the toolbar"), NULL, TRUE },
