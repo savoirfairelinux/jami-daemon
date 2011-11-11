@@ -23,13 +23,13 @@
 */
 
 #include <stdlib.h>
-#include <config.h>
+#include "config.h"
 #include "eel-gconf-extensions.h"
 
 #include <gconf/gconf-client.h>
 #include <gconf/gconf.h>
 #include <gtk/gtk.h>
-#include <libgnome/gnome-i18n.h>
+#include <glib/gi18n.h>
 
 static GConfClient *global_gconf_client = NULL;
 

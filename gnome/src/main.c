@@ -28,17 +28,14 @@
  *  as that of the covered work.
  */
 
-#include <actions.h>
-#include <calllist.h>
-#include <config.h>
-#include <logger.h>
-#include <dbus/dbus.h>
-#include <mainwindow.h>
-#include <statusicon.h>
-#include <libgnome/libgnome.h>
-#include <libgnomeui/libgnomeui.h>
-#include <eel-gconf-extensions.h>
-
+#include "actions.h"
+#include "calllist.h"
+#include "config.h"
+#include "logger.h"
+#include "dbus/dbus.h"
+#include "mainwindow.h"
+#include "statusicon.h"
+#include "eel-gconf-extensions.h"
 #include <gtk/gtk.h>
 #include <stdlib.h>
 
@@ -84,11 +81,6 @@ main(int argc, char *argv[])
     // Internationalization
     bindtextdomain("sflphone-client-gnome", LOCALEDIR);
     textdomain("sflphone-client-gnome");
-
-    // Initialises the GNOME libraries
-    gnome_program_init("sflphone", VERSION, LIBGNOMEUI_MODULE, argc, argv,
-                       GNOME_PROGRAM_STANDARD_PROPERTIES,
-                       NULL) ;
 
     if (!sflphone_init(&error)) {
         ERROR(error->message);

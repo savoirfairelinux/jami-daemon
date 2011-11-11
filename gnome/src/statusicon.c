@@ -40,7 +40,7 @@
 
 static GtkStatusIcon *status;
 static GtkWidget *show_menu_item, *hangup_menu_item;
-static gboolean __minimized = MINIMIZED;
+static gboolean minimized_ = MINIMIZED;
 
 void
 popup_main_window(void)
@@ -93,7 +93,7 @@ status_icon_unminimize()
 gboolean
 main_widget_minimized()
 {
-    return __minimized;
+    return minimized_;
 }
 
 void
@@ -193,7 +193,7 @@ statusicon_set_tooltip()
         gchar *accounts = g_markup_printf_escaped(n_("%i active account", "%i active accounts", count), count);
         gchar *tip = g_markup_printf_escaped("%s - %s", _("SFLphone"), accounts);
         g_free(accounts);
-        gtk_status_icon_set_tooltip(status, tip);
+        gtk_status_icon_set_tooltip_markup(status, tip);
         g_free(tip);
     }
 }
@@ -221,6 +221,6 @@ get_status_icon(void)
 void
 set_minimized(gboolean state)
 {
-    __minimized = state;
+    minimized_ = state;
     gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item), !state);
 }

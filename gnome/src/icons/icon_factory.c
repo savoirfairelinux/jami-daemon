@@ -39,15 +39,11 @@ static GtkIconFactory *icon_factory = NULL;
 
 void add_icon(GtkIconFactory *factory, const gchar *stock_id, const guint8 *icon_data, GtkIconSize size)
 {
-    GtkIconSet *icons;
-    GtkIconSource *source;
-    GdkPixbuf *pixbuf;
-
-    icons = gtk_icon_factory_lookup(factory, stock_id);
+    GtkIconSet *icons = gtk_icon_factory_lookup(factory, stock_id);
 
     if (!icons) {
-        pixbuf = gdk_pixbuf_new_from_inline(-1, icon_data, FALSE, NULL);
-        source = gtk_icon_source_new();
+        GdkPixbuf *pixbuf = gdk_pixbuf_new_from_inline(-1, icon_data, FALSE, NULL);
+        GtkIconSource *source = gtk_icon_source_new();
         gtk_icon_source_set_pixbuf(source, pixbuf);
         gtk_icon_source_set_size(source, size);
 

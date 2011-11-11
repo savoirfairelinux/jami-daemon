@@ -26,8 +26,8 @@ sflphone_client_gnome_SOURCES = \
   statusicon.c \
   codeclist.c \
   reqaccount.c \
-  shortcuts.c  \
-  eel-gconf-extensions.c
+  eel-gconf-extensions.c \
+  shortcuts.c
 
 noinst_HEADERS =  actions.h sflnotify.h mainwindow.h dialpad.h codeclist.h \
                   reqaccount.h sflphone_const.h uimanager.h \
@@ -35,12 +35,12 @@ noinst_HEADERS =  actions.h sflnotify.h mainwindow.h dialpad.h codeclist.h \
                   shortcuts.h eel-gconf-extensions.h logger.h imwindow.h unused.h
 
 sflphone_client_gnome_LDADD = $(DBUSGLIB_LIBS) $(LIBNOTIFY_LIBS) $(NOTIFY_LIBS) $(SFLPHONEGTK_LIBS) $(X11_LIBS) \
-				$(GTK_LIBS) $(GLIB_LIBS) $(WEBKIT_LIBS) $(LIBGNOMEUI_LIBS) $(GNOMEDOCUTILS_LIBS) $(LD_LIBS)
+							  $(GTK_LIBS) $(GLIB_LIBS) $(WEBKIT_LIBS) $(LD_LIBS) $(GCONF_LIBS)
 
-sflphone_client_gnome_CFLAGS = $(DBUSGLIB_CFLAGS) $(LIBNOTIFY_CFLAGS) $(NOTIFY_CFLAGS) $(SFLPHONEGTK_CFLAGS) $(X11_CFLAGS) \
-                                $(GTK_CFLAGS) $(GLIB_CFLAGS) $(WEBKIT_CFLAGS) $(LIBGNOMEUI_CFLAGS) $(GNOMEDOCUTILS_CFLAGS)
+sflphone_client_gnome_CFLAGS = $(DBUSGLIB_CFLAGS) $(LIBNOTIFY_CFLAGS) $(NOTIFY_CFLAGS) $(GTK_CFLAGS) $(X11_CFLAGS) \
+                               $(GLIB_CFLAGS) $(WEBKIT_CFLAGS) $(GCONF_CFLAGS)
 
-# add symbolic link	     
+# add symbolic link
 install-exec-local:
 	echo $(prefix); echo $(bindir); echo $(datadir); echo $(libdir)
 	cd $(DESTDIR)$(bindir); ln -sf sflphone-client-gnome sflphone 
