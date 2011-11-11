@@ -44,6 +44,7 @@
 #define GTK_STOCK_SFLPHONE				"gnome-stock-sflphone"
 #define GTK_STOCK_FAIL					"gnome-stock-fail"
 #define GTK_STOCK_USER					"gnome-stock-user"
+#define GTK_STOCK_AUDIO_CARD            "audio-card"
 
 void init_icon_factory (void);
 

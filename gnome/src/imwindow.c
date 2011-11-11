@@ -81,7 +81,7 @@ on_delete(GtkWidget * widget UNUSED, gpointer data UNUSED)
 }
 
 static void
-on_switch_page(GtkNotebook *notebook, GtkNotebookPage *page UNUSED, guint page_num, gpointer userdata UNUSED)
+on_switch_page(GtkNotebook *notebook, gpointer page UNUSED, guint page_num, gpointer userdata UNUSED)
 {
     GtkWidget *tab = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), page_num);
 

@@ -49,11 +49,10 @@
 #include "unused.h"
 
 static void
-ungrab_key(guint key, GdkModifierType mask, const GdkWindow *root);
+ungrab_key(guint key, GdkModifierType mask, GdkWindow *root);
 
 static void
-grab_key(guint key, GdkModifierType mask, const GdkWindow *root);
-
+grab_key(guint key, GdkModifierType mask, GdkWindow *root);
 
 // used to store accelerator config
 static Accelerator* accelerators_list;
@@ -72,35 +71,17 @@ static GHashTable* shortcutsMap;
 static GdkFilterReturn
 filter_keys(const GdkXEvent *xevent, const GdkEvent *event UNUSED, gpointer data UNUSED)
 {
-    XEvent *xev = NULL;
-    XKeyEvent *key = NULL;
-    GdkModifierType keystate = 0;
-    int i = 0;
-
-    xev = (XEvent *) xevent;
-
-    if (xev->type != KeyPress) {
+    if (((XEvent *) xevent)->type != KeyPress)
         return GDK_FILTER_CONTINUE;
-    }
 
-    key = (XKeyEvent *) xevent;
-    keystate = key->state & ~(Mod2Mask | Mod5Mask | LockMask);
+    XKeyEvent *key = (XKeyEvent *) xevent;
+    GdkModifierType keystate = key->state & ~(Mod2Mask | Mod5Mask | LockMask);
 
-    // try to find corresponding action
-    while (accelerators_list[i].action != NULL) {
-        if (accelerators_list[i].key == key->keycode && accelerators_list[i].mask
-                == keystate) {
-            DEBUG("Shortcuts: Catched key for action: %s", accelerators_list[i].action,
-                  accelerators_list[i].key);
-
-            // call associated callback function
+    for (int i = 0; accelerators_list[i].action; ++i)
+        if (accelerators_list[i].key == key->keycode && accelerators_list[i].mask == keystate) {
             accelerators_list[i].callback();
-
             return GDK_FILTER_REMOVE;
         }
-
-        i++;
-    }
 
     return GDK_FILTER_CONTINUE;
 }
@@ -491,62 +472,54 @@ shortcuts_get_list()
  * Remove key "catcher" from GDK layer
  */
 static void
-ungrab_key(guint key, GdkModifierType mask, const GdkWindow *root)
+ungrab_key(guint key, GdkModifierType mask, GdkWindow *root)
 {
     DEBUG("Shortcuts: Ungrabbing key %d+%d", mask, key);
 
     gdk_error_trap_push();
+    Display *d = GDK_DISPLAY_XDISPLAY(gdk_display_get_default());
+    XID x = GDK_WINDOW_XID(root);
 
-    XUngrabKey(GDK_DISPLAY(), key, mask, GDK_WINDOW_XID((GdkDrawable*) root));
-    XUngrabKey(GDK_DISPLAY(), key, Mod2Mask | mask, GDK_WINDOW_XID((GdkDrawable*) root));
-    XUngrabKey(GDK_DISPLAY(), key, Mod5Mask | mask, GDK_WINDOW_XID((GdkDrawable*) root));
-    XUngrabKey(GDK_DISPLAY(), key, LockMask | mask, GDK_WINDOW_XID((GdkDrawable*) root));
-    XUngrabKey(GDK_DISPLAY(), key, Mod2Mask | Mod5Mask | mask,
-               GDK_WINDOW_XID((GdkDrawable*) root));
-    XUngrabKey(GDK_DISPLAY(), key, Mod2Mask | LockMask | mask,
-               GDK_WINDOW_XID((GdkDrawable*) root));
-    XUngrabKey(GDK_DISPLAY(), key, Mod5Mask | LockMask | mask,
-               GDK_WINDOW_XID((GdkDrawable*) root));
-    XUngrabKey(GDK_DISPLAY(), key, Mod2Mask | Mod5Mask | LockMask | mask,
-               GDK_WINDOW_XID((GdkDrawable*) root));
+    XUngrabKey(d, key, mask | 0, x);
+    XUngrabKey(d, key, mask | Mod2Mask, x);
+    XUngrabKey(d, key, mask | Mod5Mask, x);
+    XUngrabKey(d, key, mask | LockMask, x);
+    XUngrabKey(d, key, mask | Mod2Mask | LockMask, x);
+    XUngrabKey(d, key, mask | Mod2Mask | Mod5Mask, x);
+    XUngrabKey(d, key, mask | Mod2Mask | LockMask, x);
+    XUngrabKey(d, key, mask | Mod5Mask | LockMask, x);
+    XUngrabKey(d, key, mask | Mod2Mask | Mod5Mask | LockMask, x);
 
     gdk_flush();
 
-    if (gdk_error_trap_pop()) {
+    if (gdk_error_trap_pop())
         ERROR("Shortcuts: Error: Ungrabbing key %d+%d", mask, key);
-    }
 }
 
 /*
  * Add key "catcher" to GDK layer
  */
 static void
-grab_key(guint key, GdkModifierType mask, const GdkWindow *root)
+grab_key(guint key, GdkModifierType mask, GdkWindow *root)
 {
     gdk_error_trap_push();
 
     DEBUG("Shortcuts: Grabbing key %d+%d", mask, key);
 
-    XGrabKey(GDK_DISPLAY(), key, mask, GDK_WINDOW_XID((GdkDrawable*) root), True,
-             GrabModeAsync, GrabModeAsync);
-    XGrabKey(GDK_DISPLAY(), key, Mod2Mask | mask, GDK_WINDOW_XID((GdkDrawable*) root), True,
-             GrabModeAsync, GrabModeAsync);
-    XGrabKey(GDK_DISPLAY(), key, Mod5Mask | mask, GDK_WINDOW_XID((GdkDrawable*) root), True,
-             GrabModeAsync, GrabModeAsync);
-    XGrabKey(GDK_DISPLAY(), key, LockMask | mask, GDK_WINDOW_XID((GdkDrawable*) root), True,
-             GrabModeAsync, GrabModeAsync);
-    XGrabKey(GDK_DISPLAY(), key, Mod2Mask | Mod5Mask | mask,
-             GDK_WINDOW_XID((GdkDrawable*) root), True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(GDK_DISPLAY(), key, Mod2Mask | LockMask | mask,
-             GDK_WINDOW_XID((GdkDrawable*) root), True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(GDK_DISPLAY(), key, Mod5Mask | LockMask | mask,
-             GDK_WINDOW_XID((GdkDrawable*) root), True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(GDK_DISPLAY(), key, Mod2Mask | Mod5Mask | LockMask | mask,
-             GDK_WINDOW_XID((GdkDrawable*) root), True, GrabModeAsync, GrabModeAsync);
+    Display *d = GDK_DISPLAY_XDISPLAY(gdk_display_get_default());
+    XID x = GDK_WINDOW_XID(root);
+
+    XGrabKey(d, key, mask | 0, x, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(d, key, mask | Mod2Mask, x, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(d, key, mask | Mod5Mask, x, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(d, key, mask | LockMask, x, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(d, key, mask | Mod2Mask | Mod5Mask, x, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(d, key, mask | Mod2Mask | LockMask, x, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(d, key, mask | Mod5Mask | LockMask, x, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(d, key, mask | Mod2Mask | Mod5Mask | LockMask, x, True, GrabModeAsync, GrabModeAsync);
 
     gdk_flush();
 
-    if (gdk_error_trap_pop()) {
+    if (gdk_error_trap_pop())
         ERROR("Shortcuts: Error: Grabbing key %d+%d", mask, key);
-    }
 }

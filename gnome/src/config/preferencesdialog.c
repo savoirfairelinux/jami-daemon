@@ -36,6 +36,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
+
 #include "eel-gconf-extensions.h"
 #include "dbus.h"
 #include "logger.h"
@@ -44,7 +46,6 @@
 #include "preferencesdialog.h"
 #include "addressbook-config.h"
 #include "shortcuts-config.h"
-#include "audioconf.h"
 #include "hooks-config.h"
 #include "audioconf.h"
 #include "uimanager.h"
@@ -54,24 +55,16 @@
 /**
  * Local variables
  */
-gboolean accDialogOpen = FALSE;
-gboolean dialogOpen = FALSE;
-gboolean ringtoneEnabled = TRUE;
+static gboolean dialogOpen = FALSE;
 
+static GtkWidget * history_value;
 
-GtkWidget * status;
-GtkWidget * history_value;
+static GtkWidget *starthidden;
+static GtkWidget *popupwindow;
+static GtkWidget *neverpopupwindow;
 
-GtkWidget *starthidden;
-GtkWidget *popupwindow;
-GtkWidget *neverpopupwindow;
-
-GtkWidget *treeView;
-GtkWidget *iconview;
-GtkCellRenderer *renderer;
-GtkTreeViewColumn *column;
-GtkTreeSelection *selection;
-GtkWidget * notebook;
+static GtkWidget *iconview;
+static GtkWidget * notebook;
 
 
 enum {
@@ -79,12 +72,6 @@ enum {
     TEXT_COL,
     PAGE_NUMBER
 };
-
-typedef struct {
-    gchar* icon_descr;
-    gchar* icon_name;
-    gint page_number;
-} browser_t;
 
 // history preference parameters
 static int history_limit;
@@ -105,9 +92,8 @@ set_popup_mode(GtkWidget *widget, gpointer *userdata UNUSED)
 {
     gboolean currentstate = eel_gconf_get_integer(POPUP_ON_CALL);
 
-    if (currentstate || gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
+    if (currentstate || gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)))
         eel_gconf_set_integer(POPUP_ON_CALL, !currentstate);
-    }
 }
 
 void
@@ -137,7 +123,6 @@ static void
 instant_messaging_enabled_cb(GtkWidget *widget)
 {
     instant_messaging_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
     eel_gconf_set_integer(INSTANT_MESSAGING_ENABLED, !eel_gconf_get_integer(INSTANT_MESSAGING_ENABLED));
 }
 
@@ -167,7 +152,6 @@ void showstatusicon_cb(GtkWidget *widget, gpointer data UNUSED)
 GtkWidget*
 create_general_settings()
 {
-
     GtkWidget *ret, *notifAll, *frame, *checkBoxWidget, *label, *table, *showstatusicon;
     gboolean statusicon;
 
@@ -285,10 +269,8 @@ create_general_settings()
 void
 save_configuration_parameters(void)
 {
-    if (addrbook) {
-        // Address book config
+    if (addrbook)
         addressbook_config_save_parameters();
-    }
 
     hooks_save_parameters();
 
@@ -308,14 +290,12 @@ void
 instant_messaging_load_configuration()
 {
     instant_messaging_enabled = eel_gconf_get_integer(INSTANT_MESSAGING_ENABLED);
-
 }
 
 
 void
 selection_changed_cb(GtkIconView *view, gpointer user_data UNUSED)
 {
-
     GtkTreeModel *model;
     GtkTreeIter iter;
     GList *list;
@@ -338,6 +318,53 @@ selection_changed_cb(GtkIconView *view, gpointer user_data UNUSED)
     g_list_free(list);
 }
 
+/*
+ * Get an 48x48 icon from the default theme or fallback to an application icon.
+ */
+static GdkPixbuf *get_icon(const gchar *name, GtkWidget *widget)
+{
+    GtkIconTheme *theme = gtk_icon_theme_get_default();
+    GdkPixbuf *pixbuf = gtk_icon_theme_load_icon(theme, name, 48, 0, NULL);
+    if (!pixbuf)
+        pixbuf = gtk_widget_render_icon(widget, name, GTK_ICON_SIZE_DIALOG, NULL);
+
+    return pixbuf;
+}
+
+static GtkTreeModel* create_model(GtkWidget *widget)
+{
+    static const struct {
+        gchar* icon_descr;
+        gchar* icon_name;
+        gint page_number;
+    } browser_entries_full[] = {
+        {"General", GTK_STOCK_PREFERENCES, 0},
+        {"Audio", GTK_STOCK_AUDIO_CARD, 1},
+        {"Hooks", "applications-development", 2},
+        {"Shortcuts", "preferences-desktop-keyboard", 3},
+        {"Address Book", GTK_STOCK_ADDRESSBOOK, 4},
+    };
+    GdkPixbuf *pixbuf;
+    GtkTreeIter iter;
+    gint i, nb_entries;
+
+    GtkListStore *store = gtk_list_store_new(3, GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_INT);
+    nb_entries = sizeof(browser_entries_full) / sizeof(browser_entries_full[0]);
+
+    for (i = 0; i < nb_entries; i++) {
+        gtk_list_store_append (store, &iter);
+        pixbuf = get_icon(browser_entries_full[i].icon_name, widget);
+        gtk_list_store_set(store, &iter,
+                           PIXBUF_COL, pixbuf,
+                           TEXT_COL, _(browser_entries_full[i].icon_descr),
+                           PAGE_NUMBER, browser_entries_full[i].page_number,
+                           -1);
+        if (pixbuf)
+            gdk_pixbuf_unref(pixbuf);
+    }
+
+    return GTK_TREE_MODEL(store);
+}
 
 
 /**
@@ -346,35 +373,30 @@ selection_changed_cb(GtkIconView *view, gpointer user_data UNUSED)
 guint
 show_preferences_dialog()
 {
-    GtkDialog * dialog;
-    GtkWidget * hbox;
-    GtkWidget * tab;
-    guint result;
-
     dialogOpen = TRUE;
-
-    dialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("Preferences"),
-                        GTK_WINDOW(get_main_window()),
-                        GTK_DIALOG_DESTROY_WITH_PARENT,
-                        GTK_STOCK_CLOSE,
-                        GTK_RESPONSE_ACCEPT,
-                        NULL));
+    GtkDialog *dialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("Preferences"),
+                                   GTK_WINDOW(get_main_window()),
+                                   GTK_DIALOG_DESTROY_WITH_PARENT,
+                                   GTK_STOCK_CLOSE,
+                                   GTK_RESPONSE_ACCEPT,
+                                   NULL));
 
     // Set window properties
     gtk_window_set_default_size(GTK_WINDOW(dialog), 600, 400);
     gtk_container_set_border_width(GTK_CONTAINER(dialog), 0);
 
-    hbox = gtk_hbox_new(FALSE, 10);
+    GtkWidget *hbox = gtk_hbox_new(FALSE, 10);
 
     // Create tree view
-    iconview = gtk_icon_view_new_with_model(createModel());
-    g_object_set(iconview,
-                 "selection-mode", GTK_SELECTION_BROWSE,
-                 "text-column", TEXT_COL,
-                 "pixbuf-column", PIXBUF_COL,
-                 "columns", 1,
-                 "margin", 10,
-                 NULL);
+    iconview = gtk_icon_view_new_with_model(create_model(hbox));
+    g_object_set (iconview,
+                  "selection-mode", GTK_SELECTION_BROWSE,
+                  "text-column", TEXT_COL,
+                  "pixbuf-column", PIXBUF_COL,
+                  "columns", 1,
+                  "margin", 10,
+                  NULL);
+
     // Connect the callback when clicking on an item
     g_signal_connect(G_OBJECT(iconview), "selection-changed", G_CALLBACK(selection_changed_cb), NULL);
     gtk_box_pack_start(GTK_BOX(hbox), iconview, TRUE, TRUE, 0);
@@ -390,12 +412,13 @@ show_preferences_dialog()
     gtk_widget_show(notebook);
 
     // General settings tab
-    tab = create_general_settings();
+    GtkWidget *tab = create_general_settings();
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("General")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
     // Audio tab
     tab = create_audio_configuration();
+
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Audio")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
@@ -421,7 +444,7 @@ show_preferences_dialog()
     // Highlight the corresponding icon
     gtk_icon_view_select_path(GTK_ICON_VIEW(iconview), gtk_tree_path_new_first());
 
-    result = gtk_dialog_run(dialog);
+    guint result = gtk_dialog_run(dialog);
 
     save_configuration_parameters();
     update_actions();
@@ -430,51 +453,4 @@ show_preferences_dialog()
 
     gtk_widget_destroy(GTK_WIDGET(dialog));
     return result;
-}
-
-#define NB_MAX_ENTRIES 5
-
-GtkTreeModel* createModel()
-{
-    browser_t browser_entries_full[NB_MAX_ENTRIES] = {
-        {_("General"), "preferences-system", 0},
-        {_("Audio"), "multimedia-volume-control", 1},
-        {_("Hooks"), "gnome-globe", 2},
-        {_("Shortcuts"), "preferences-desktop-keyboard", 3},
-        {_("Address Book"), "address-book-new", 4},
-    };
-
-    GdkPixbuf *pixbuf;
-    GtkTreeIter iter;
-    GtkListStore *store;
-    GError *error = NULL;
-    gint i, nb_entries;
-
-    nb_entries = addrbook ? 5 : 4;
-
-    store = gtk_list_store_new(3, GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_INT);
-    GtkIconTheme* theme = gtk_icon_theme_get_default();
-
-
-    for (i = 0; i < nb_entries; i++) {
-
-        gtk_list_store_append(store, &iter);
-
-        pixbuf = gtk_icon_theme_load_icon(theme, browser_entries_full[i].icon_name, 48, 0, &error);
-
-        gtk_list_store_set(store, &iter,
-                           PIXBUF_COL, pixbuf,
-                           TEXT_COL, browser_entries_full[i].icon_descr,
-                           PAGE_NUMBER, browser_entries_full[i].page_number,
-                           -1);
-
-        if (pixbuf != NULL) {
-            gdk_pixbuf_unref(pixbuf);
-        } else {
-            DEBUG("Couldn't load icon: %s", error->message);
-            g_clear_error(&error);
-        }
-    }
-
-    return GTK_TREE_MODEL(store);
 }

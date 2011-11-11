@@ -28,12 +28,12 @@
  *  as that of the covered work.
  */
 
+#include <gdk/gdk.h>
 #include "shortcuts-config.h"
 #include "shortcuts.h"
 #include "unused.h"
 #include "logger.h"
 
-#include <gdk/gdkx.h>
 
 static void
 accel_cleared(GtkCellRendererAccel *renderer UNUSED, gchar *path,
@@ -61,10 +61,8 @@ accel_edited(GtkCellRendererAccel *renderer UNUSED, gchar *path, guint accel_key
     gtk_tree_model_get_iter_first(model, &iter);
 
     Accelerator* list = shortcuts_get_list();
-    const guint code = XKeysymToKeycode(GDK_DISPLAY(), accel_key);
-    guint i = 0;
-
-    while (list[i].action != NULL) {
+    const guint code = XKeysymToKeycode(GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), accel_key);
+    for (guint i = 0; list[i].action != NULL; ++i) {
         if (list[i].key == code && list[i].mask == mask) {
             gtk_list_store_set(GTK_LIST_STORE(model), &iter, MASK, 0, VALUE, 0,
                                -1);
@@ -72,7 +70,6 @@ accel_edited(GtkCellRendererAccel *renderer UNUSED, gchar *path, guint accel_key
         }
 
         gtk_tree_model_iter_next(model, &iter);
-        i++;
     }
 
     // Update treeview
@@ -127,15 +124,12 @@ create_shortcuts_settings()
 
     Accelerator* list = shortcuts_get_list();
 
-    guint i = 0;
-
-    while (list[i].action != NULL) {
+    for (guint i = 0; list[i].action != NULL; ++i) {
         GtkTreeIter iter;
         gtk_list_store_append(store, &iter);
         gtk_list_store_set(store, &iter, ACTION, _(list[i].action), MASK,
                            (gint) list[i].mask, VALUE,
-                           XKeycodeToKeysym(GDK_DISPLAY(), list[i].key, 0), -1);
-        i++;
+                           XKeycodeToKeysym(GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), list[i].key, 0), -1);
     }
 
     gtk_tree_view_set_model(GTK_TREE_VIEW(treeview), GTK_TREE_MODEL(store));

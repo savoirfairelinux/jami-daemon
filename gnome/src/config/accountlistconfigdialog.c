@@ -39,7 +39,6 @@
 #include "unused.h"
 #include "logger.h"
 #include <string.h>
-#include <libgnome/gnome-help.h>
 
 static const int CONTEXT_ID_REGISTRATION = 0;
 
@@ -367,12 +366,9 @@ help_contents_cb(GtkWidget * widget UNUSED,
                  gpointer data UNUSED)
 {
     GError *error = NULL;
-
-    gnome_help_display("sflphone.xml", "accounts", &error);
-
+    gtk_show_uri(NULL, "ghelp:sflphone?accounts", GDK_CURRENT_TIME, &error);
     if (error != NULL) {
         g_warning("%s", error->message);
-
         g_error_free(error);
     }
 }
@@ -603,10 +599,8 @@ show_account_list_config_dialog(void)
 
     /* Status bar for the account list */
     status_bar = gtk_statusbar_new();
-    gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(status_bar), FALSE);
-    gtk_widget_show(status_bar);
-    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(accountListDialog)),
-                       status_bar, TRUE, TRUE, 0);
+    gtk_widget_show (status_bar);
+    gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area(accountListDialog)), status_bar, TRUE, TRUE, 0);
 
     int number_accounts = account_list_get_registered_accounts();
 
