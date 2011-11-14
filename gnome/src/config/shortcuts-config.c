@@ -109,7 +109,7 @@ setup_tree_view(GtkWidget *treeview)
 GtkWidget*
 create_shortcuts_settings()
 {
-    GtkWidget *vbox = gtk_vbox_new(FALSE, 10);
+    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
 
     GtkWidget * result_frame = gnome_main_section_new(_("General"));

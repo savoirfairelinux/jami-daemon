@@ -231,12 +231,16 @@ static GtkWidget* create_basic_tab(account_t *currentAccount)
     GtkWidget *frame = gnome_main_section_new(_("Account Parameters"));
     gtk_widget_show(frame);
 
-    GtkWidget * table;
+    GtkWidget * table = NULL;
 
     if (g_strcmp0(curAccountType, "SIP") == 0)
         table = gtk_table_new(9, 2,  FALSE/* homogeneous */);
     else if (g_strcmp0(curAccountType, "IAX") == 0)
         table = gtk_table_new(8, 2, FALSE);
+    else {
+        ERROR("Unknown account type \"%s\"", curAccountType);
+        return NULL;
+    }
 
     gtk_table_set_row_spacings(GTK_TABLE(table), 10);
     gtk_table_set_col_spacings(GTK_TABLE(table), 10);
@@ -307,7 +311,7 @@ static GtkWidget* create_basic_tab(account_t *currentAccount)
 
     row++;
     label = gtk_label_new_with_mnemonic(_("_Password"));
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_table_attach(GTK_TABLE(table), label, 0, 1, row, row + 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     entryPassword = gtk_entry_new();
     gtk_entry_set_icon_from_stock(GTK_ENTRY(entryPassword), GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_DIALOG_AUTHENTICATION);
@@ -707,7 +711,7 @@ GtkWidget* create_credential_widget(account_t *a)
     fill_treeview_with_credential(a);
 
     /* Credential Buttons */
-    GtkWidget *hbox = gtk_hbox_new(FALSE, 10);
+    GtkWidget *hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     gtk_table_attach_defaults(GTK_TABLE(table), hbox, 0, 3, 1, 2);
 
     addButton = gtk_button_new_from_stock(GTK_STOCK_ADD);
@@ -719,13 +723,7 @@ GtkWidget* create_credential_widget(account_t *a)
     gtk_box_pack_start(GTK_BOX(hbox), deleteCredButton, FALSE, FALSE, 0);
 
     /* Dynamically resize the window to fit the scrolled window */
-    GtkRequisition requisitionTable;
-    GtkRequisition requisitionTreeView;
-    gtk_widget_size_request(treeViewCredential, &requisitionTreeView);
-    gtk_widget_size_request(table, &requisitionTable);
     gtk_widget_set_size_request(scrolledWindowCredential, 400, 120);
-    // same_as_local_cb(sameAsLocalRadioButton, NULL);
-    // set_published_addr_manually_cb(publishedAddrRadioButton, NULL);
 
     return frame;
 }
@@ -814,7 +812,7 @@ GtkWidget * create_security_tab(account_t *a)
     GtkWidget * frame;
     GtkWidget * ret;
 
-    ret = gtk_vbox_new(FALSE, 10);
+    ret = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
     // Credentials frame
@@ -1032,7 +1030,7 @@ GtkWidget* create_advanced_tab(account_t *a)
 
     GtkWidget *vbox, *frame;
 
-    vbox = gtk_vbox_new(FALSE, 10);
+    vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
 
     frame = create_registration_expire(a);
@@ -1062,7 +1060,7 @@ void ringtone_enabled(GtkWidget *widget UNUSED, gpointer data, const gchar *acco
 
 static GtkWidget* create_audiocodecs_configuration(account_t *currentAccount)
 {
-    GtkWidget *vbox = gtk_vbox_new(FALSE, 10);
+    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
 
     GtkWidget *box = audiocodecs_box(currentAccount);
@@ -1140,7 +1138,7 @@ static GtkWidget* create_audiocodecs_configuration(account_t *currentAccount)
 
 GtkWidget* create_direct_ip_calls_tab(account_t *a)
 {
-    GtkWidget *vbox = gtk_vbox_new(FALSE, 10);
+    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
 
     gchar *description = g_markup_printf_escaped(_("This profile is used when "
@@ -1153,8 +1151,6 @@ GtkWidget* create_direct_ip_calls_tab(account_t *a)
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
 
-    GtkRequisition requisition;
-    gtk_widget_size_request(vbox, &requisition);
     gtk_widget_set_size_request(label, 350, -1);
     gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
 
