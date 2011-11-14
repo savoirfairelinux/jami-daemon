@@ -15,11 +15,6 @@ AC_ARG_WITH(debug,
 		[with_debug=${withval}],
 		[with_debug=no]
 	)
-if test "x$with_debug" = "xfull" -o "x$with_debug" = "xyes"; then
-	CFLAGS="-g -O0 -DDEBUG -Wall -Wextra"
-else
-	CFLAGS="$CFLAGS -Wall -Wextra"
-fi
 
 AC_PROG_CC_C99
 dnl For target specific flags
@@ -27,6 +22,14 @@ AM_PROG_CC_C_O
 AC_PROG_INSTALL
 AC_HEADER_STDC
 LT_INIT
+
+MIGRATION_FLAGS="-DGDK_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED -DGTK_DISABLE_SINGLE_INCLUDES"
+if test "x$with_debug" = "xfull" -o "x$with_debug" = "xyes"; then
+    CFLAGS="-g -O0 -DDEBUG -Wall -Wextra $MIGRATION_FLAGS"
+else
+    CFLAGS="$CFLAGS -g -Wall -Wextra -Wshadow $MIGRATION_FLAGS"
+fi
+
 
 dnl GCONF utilities
 AM_GCONF_SOURCE_2

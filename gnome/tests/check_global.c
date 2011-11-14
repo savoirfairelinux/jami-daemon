@@ -30,6 +30,7 @@
 #include <check.h>
 #include <stdlib.h>
 #include <gtk/gtk.h>
+#include <glib.h>
 
 #include "../src/accountlist.h"
 #include "../src/sflphone_const.h"
@@ -37,14 +38,11 @@
 account_t* create_test_account(gchar *alias)
 {
     account_t *test;
-    gchar *id;
 
     srand(time(NULL));
 
     test = g_new0(account_t, 1);
-    id = g_new0(gchar, 30);
-    g_sprintf(id, "%s-%d", alias, rand());
-    test->accountID = g_strdup(id);
+    test->accountID = g_strdup_printf("%s-%d", alias, rand());
     test->state = ACCOUNT_STATE_REGISTERED;
     test->properties = g_hash_table_new(NULL, g_str_equal);
 
@@ -60,7 +58,6 @@ account_t* create_test_account(gchar *alias)
     g_hash_table_replace(test->properties, ACCOUNT_SIP_STUN_ENABLED, "0");
 
     return test;
-
 }
 
 START_TEST(test_add_account)
@@ -75,15 +72,14 @@ END_TEST
 
 START_TEST(test_ordered_list)
 {
-    gchar *list;
     account_t *test = create_test_account("test");
 
-    list = g_new0(gchar, 30);
-    g_sprintf(list, "%s/%s/", test->accountID, test->accountID);
+    gchar *list = g_strdup_printf("%s/%s/", test->accountID, test->accountID);
     account_list_init();
     account_list_add(test);
     account_list_add(test);
     fail_unless(g_strcasecmp(account_list_get_ordered_list(), list) == 0, "ERROR - BAD ACCOUNT LIST SERIALIZING");
+    g_free(list);
 }
 END_TEST
 

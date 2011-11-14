@@ -9,13 +9,15 @@ AC_CONFIG_MACRO_DIR([m4])
 dnl Silent build by default. Use make V=1 to increase verbosity
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
-CFLAGS="$CFLAGS -g -Wall -Wextra -Wshadow"
-
 AC_PROG_CC_C99
 AM_PROG_CC_C_O dnl for per target flags, i.e. test_program_CFLAGS
 AC_PROG_INSTALL
 AC_HEADER_STDC
 LT_INIT
+
+dnl Only need these for moving to gtk3
+MIGRATION_CFLAGS="-DGDK_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED -DGTK_DISABLE_SINGLE_INCLUDES"
+CFLAGS="$CFLAGS -g -Wall -Wextra -Wshadow $MIGRATION_CFLAGS"
 
 dnl GCONF utilities
 AM_GCONF_SOURCE_2
@@ -35,12 +37,6 @@ PKG_CHECK_MODULES(GCONF, gconf-2.0)
 PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.24)
 PKG_CHECK_MODULES(WEBKIT, webkitgtk-3.0)
 
-# This macro is defined in check.m4 and tests if check.h and
-# libcheck.a are installed in your system. It sets CHECK_CFLAGS and
-# CHECK_LIBS accordingly.  
-#  AM_PATH_CHECK([MINIMUM-VERSION,
-#                [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
-dnl AM_PATH_CHECK() DEPRECATED
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
 
 AC_CONFIG_FILES([
