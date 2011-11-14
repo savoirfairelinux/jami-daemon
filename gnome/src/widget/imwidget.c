@@ -238,7 +238,7 @@ im_widget_init(IMWidget *im)
     im->info_bar = gtk_info_bar_new();
 
     /* A bar with the entry text and the button to send the message */
-    GtkWidget *hbox = gtk_hbox_new(FALSE, 10);
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     gtk_text_view_set_editable(GTK_TEXT_VIEW(im->textarea), TRUE);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(textscrollwin), GTK_POLICY_NEVER, GTK_POLICY_NEVER);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(webscrollwin), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -249,10 +249,10 @@ im_widget_init(IMWidget *im)
 
     gtk_container_add(GTK_CONTAINER(textscrollwin), im->textarea);
     gtk_container_add(GTK_CONTAINER(webscrollwin), im->web_view);
-    gtk_container_add(GTK_CONTAINER(hbox), textscrollwin);
+    gtk_container_add(GTK_CONTAINER(box), textscrollwin);
     gtk_box_pack_start(GTK_BOX(im), im->info_bar, FALSE, FALSE, 2);
     gtk_box_pack_start(GTK_BOX(im), webscrollwin, TRUE, TRUE, 5);
-    gtk_box_pack_end(GTK_BOX(im), hbox, FALSE, FALSE, 2);
+    gtk_box_pack_end(GTK_BOX(im), box, FALSE, FALSE, 2);
     g_signal_connect(im->web_view, "navigation-policy-decision-requested", G_CALLBACK(web_view_nav_requested_cb), NULL);
     g_signal_connect(im->textarea, "key-press-event", G_CALLBACK(on_Textview_changed), im);
 
@@ -264,6 +264,11 @@ im_widget_init(IMWidget *im)
     im->containText = FALSE;
 
     g_signal_connect(G_OBJECT(im->web_frame), "notify", G_CALLBACK(on_frame_loading_done), im);
+    /* See
+     * http://developer.gnome.org/gtk3/stable/GtkVBox.html#GtkVBox.description
+     */
+    gtk_orientable_set_orientation (GTK_ORIENTABLE (im),
+                                    GTK_ORIENTATION_VERTICAL);
 }
 
 GType
@@ -286,7 +291,7 @@ im_widget_get_type(void)
         };
 
         im_widget_type = g_type_register_static(
-                             GTK_TYPE_VBOX,
+                             GTK_TYPE_BOX,
                              "IMWidget",
                              &im_widget_info,
                              0);

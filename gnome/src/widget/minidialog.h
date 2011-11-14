@@ -75,9 +75,9 @@ G_BEGIN_DECLS
  * </dl>
  */
 typedef struct {
-    GtkVBox parent;
+    GtkBox parent;
 
-    /** A GtkVBox into which extra widgets for the dialog should be packed.
+    /** A GtkBox into which extra widgets for the dialog should be packed.
      */
     GtkBox *contents;
 

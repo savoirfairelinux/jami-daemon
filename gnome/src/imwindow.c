@@ -123,11 +123,11 @@ im_window_init()
 
     gtk_widget_set_name(im_window, "imwindow");
 
-    GtkWidget *im_vbox = gtk_vbox_new(FALSE /*homogeneous*/, 0 /*spacing*/);
+    GtkWidget *im_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0 /*spacing*/);
     im_notebook = gtk_notebook_new();
 
-    gtk_container_add(GTK_CONTAINER(im_window), im_vbox);
-    gtk_box_pack_start(GTK_BOX(im_vbox), im_notebook, TRUE, TRUE, 0);
+    gtk_container_add(GTK_CONTAINER(im_window), im_box);
+    gtk_box_pack_start(GTK_BOX(im_box), im_notebook, TRUE, TRUE, 0);
     gtk_widget_show(im_notebook);
 
     g_signal_connect(G_OBJECT(im_window), "delete-event", G_CALLBACK(on_delete), NULL);
@@ -201,37 +201,37 @@ im_window_add_tab(IMWidget *im)
     conference_obj_t *im_widget_conf = conferencelist_get(current_calls_tab, im->call_id);
 
     /* A container to include the tab label and the close button */
-    GtkWidget *tab_Container = gtk_hbox_new(FALSE, 3);
-    GtkWidget *tab_Label;
-    im->tab = tab_Container;
+    GtkWidget *tab_container = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);
+    GtkWidget *tab_label;
+    im->tab = tab_container;
 
     if (im_widget_call)
-        tab_Label = gtk_label_new(*im_widget_call->_peer_name ? im_widget_call->_peer_name : im_widget_call->_peer_number);
+        tab_label = gtk_label_new(*im_widget_call->_peer_name ? im_widget_call->_peer_name : im_widget_call->_peer_number);
     else if (im_widget_conf)
-        tab_Label = gtk_label_new("Conferencing");
+        tab_label = gtk_label_new("Conferencing");
     else
-        tab_Label = gtk_label_new("");
+        tab_label = gtk_label_new("");
 
-    GtkWidget *tab_CloseButton = gtk_button_new();
+    GtkWidget *tab_close_button = gtk_button_new();
 
     /* Pack it all */
-    gtk_button_set_relief(GTK_BUTTON(tab_CloseButton), GTK_RELIEF_NONE);
-    gtk_box_pack_start(GTK_BOX(tab_Container), tab_Label, TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(tab_Container), tab_CloseButton, FALSE, FALSE, 0);
-    gtk_container_add(GTK_CONTAINER(tab_CloseButton), gtk_image_new_from_stock(GTK_STOCK_CLOSE, GTK_ICON_SIZE_MENU));
+    gtk_button_set_relief(GTK_BUTTON(tab_close_button), GTK_RELIEF_NONE);
+    gtk_box_pack_start(GTK_BOX(tab_container), tab_label, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(tab_container), tab_close_button, FALSE, FALSE, 0);
+    gtk_container_add(GTK_CONTAINER(tab_close_button), gtk_image_new_from_stock(GTK_STOCK_CLOSE, GTK_ICON_SIZE_MENU));
 
     /* Connect a signal to the close button on each tab, to be able to close the tabs individually */
-    g_signal_connect(tab_CloseButton, "clicked", G_CALLBACK(close_tab_cb), im);
+    g_signal_connect(tab_close_button, "clicked", G_CALLBACK(close_tab_cb), im);
 
     /* Show it */
     gtk_widget_show_all(im_notebook);
-    gtk_widget_show_all(tab_Container);
+    gtk_widget_show_all(tab_container);
 
     /* Add the page to the notebook */
-    guint tabIndex = gtk_notebook_append_page(GTK_NOTEBOOK(im_notebook), GTK_WIDGET(im), tab_Container);
+    guint tab_index = gtk_notebook_append_page(GTK_NOTEBOOK(im_notebook), GTK_WIDGET(im), tab_container);
 
     /* TODO Switch to the newly opened tab. Still not working */
-    DEBUG("InstantMessaging: Switch to tab: %i", tabIndex);
+    DEBUG("InstantMessaging: Switch to tab: %i", tab_index);
     gtk_notebook_set_current_page(GTK_NOTEBOOK(im_notebook), -1);
 
     /* Decide whether or not displaying the tabs of the notebook */

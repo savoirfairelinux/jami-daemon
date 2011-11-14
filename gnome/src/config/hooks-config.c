@@ -143,7 +143,7 @@ GtkWidget* create_hooks_settings()
     // Load the user value
     hooks_load_parameters(&_urlhook_config);
 
-    ret = gtk_vbox_new(FALSE, 10);
+    ret = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
     gnome_main_section_new_with_table(_("URL Argument"), &frame, &table, 5, 2);

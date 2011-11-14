@@ -221,8 +221,8 @@ create_main_window()
     gtk_window_add_accel_group(GTK_WINDOW(window),
                                gtk_ui_manager_get_accel_group(ui_manager));
 
-    vbox = gtk_vbox_new(FALSE /*homogeneous*/, 0 /*spacing*/);
-    subvbox = gtk_vbox_new(FALSE /*homogeneous*/, 5 /*spacing*/);
+    vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0 /*spacing*/);
+    subvbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5 /*spacing*/);
 
     GtkWidget *widget = create_menus(ui_manager);
     gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE /*expand*/, TRUE /*fill*/,

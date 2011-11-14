@@ -1057,9 +1057,9 @@ GtkUIManager *uimanager_new(void)
     guint manager_id;
     GError *error = NULL;
 
-    if (g_file_test(path, G_FILE_TEST_EXISTS)) {
+    if (g_file_test(path, G_FILE_TEST_EXISTS))
         manager_id = gtk_ui_manager_add_ui_from_file(ui_manager, path, &error);
-    } else {
+    else {
         g_free(path);
         path = g_build_filename(SFLPHONE_UIDIR, "./ui.xml", NULL);
 
@@ -1237,14 +1237,12 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event)
                     break;
             }
         }
-
     }
 
     GtkWidget *menu = gtk_menu_new();
 
     if (calltab_get_selected_type(current_calls_tab) == A_CALL) {
         DEBUG("UIManager: Build call menu");
-
         if (copy) {
             GtkWidget *menu_items = gtk_image_menu_item_new_from_stock(GTK_STOCK_COPY,
                                     get_accel_group());
@@ -1487,7 +1485,7 @@ show_edit_number(callable_obj_t *call)
 
     g_signal_connect(G_OBJECT(edit_dialog_), "delete-event", G_CALLBACK(on_delete), NULL);
 
-    GtkWidget *hbox = gtk_hbox_new(FALSE, 0);
+    GtkWidget *hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(edit_dialog_))), hbox, TRUE, TRUE, 0);
 
     // Set the number to be edited
@@ -1527,7 +1525,8 @@ create_waiting_icon()
                                       gtk_image_new_from_animation(gdk_pixbuf_animation_new_from_file(
                                               ICONS_DIR "/wait-on.gif", NULL)));
 
-    gtk_menu_item_set_right_justified(GTK_MENU_ITEM(waiting_icon), TRUE);
+    /* Deprecated:
+     * gtk_menu_item_set_right_justified(GTK_MENU_ITEM(waiting_icon), TRUE); */
 
     return waiting_icon;
 }

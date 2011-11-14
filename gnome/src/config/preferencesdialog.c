@@ -162,7 +162,7 @@ create_general_settings()
     instant_messaging_load_configuration();
 
     // Main widget
-    ret = gtk_vbox_new(FALSE, 10);
+    ret = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
     // Notifications Frame
@@ -326,7 +326,7 @@ static GdkPixbuf *get_icon(const gchar *name, GtkWidget *widget)
     GtkIconTheme *theme = gtk_icon_theme_get_default();
     GdkPixbuf *pixbuf = gtk_icon_theme_load_icon(theme, name, 48, 0, NULL);
     if (!pixbuf)
-        pixbuf = gtk_widget_render_icon(widget, name, GTK_ICON_SIZE_DIALOG, NULL);
+        pixbuf = gtk_widget_render_icon_pixbuf(widget, name, GTK_ICON_SIZE_DIALOG);
 
     return pixbuf;
 }
@@ -385,7 +385,7 @@ show_preferences_dialog()
     gtk_window_set_default_size(GTK_WINDOW(dialog), 600, 400);
     gtk_container_set_border_width(GTK_CONTAINER(dialog), 0);
 
-    GtkWidget *hbox = gtk_hbox_new(FALSE, 10);
+    GtkWidget *hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
 
     // Create tree view
     iconview = gtk_icon_view_new_with_model(create_model(hbox));

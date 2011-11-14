@@ -639,7 +639,7 @@ static GtkWidget* create_vbox(GtkAssistantPageType type, const gchar *title, con
     GtkWidget *label;
     gchar *str;
 
-    vbox = gtk_vbox_new(FALSE, 6);
+    vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 24);
 
     gtk_assistant_append_page(GTK_ASSISTANT(wiz->assistant), vbox);
@@ -651,9 +651,13 @@ static GtkWidget* create_vbox(GtkAssistantPageType type, const gchar *title, con
 
     gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz->assistant), vbox, TRUE);
 
+#if 0
+    /* FIXME */
+    http://developer.gnome.org/gtk3/stable/GtkAssistant.html#gtk-assistant-set-page-header-image
     wiz->logo = gdk_pixbuf_new_from_file(LOGO, NULL);
     gtk_assistant_set_page_header_image(GTK_ASSISTANT(wiz->assistant),vbox, wiz->logo);
     g_object_unref(wiz->logo);
+#endif
 
     if (section) {
         label = gtk_label_new(NULL);
