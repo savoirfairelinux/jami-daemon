@@ -74,7 +74,7 @@ How to compile
 --------------
 
 # First compile the SIP library
-cd libs/pjproject-1.0.3
+cd libs/pjproject
 ./autogen.sh
 ./configure --disable-ilbc-codec && make clean && make dep && make
 sudo make install

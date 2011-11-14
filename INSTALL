@@ -1,6 +1,13 @@
 INSTALLATION GUIDE
 
 * CORE INSTALLATION
+
+    # Install dependencies (subject to change):
+      apt-get install gnome-doc-utils build-essential autoconf libtool
+      libasound2-dev libpulse-dev libsamplerate0-dev libcommoncpp2-dev
+      libccrtp-dev libzrtpcpp-dev libdbus-1-dev libdbus-c++-dev libyaml-dev
+      libpcre3-dev libgsm1-dev libspeex-dev libspeexdsp-dev libcelt-dev
+
     # Go to the root of the application core directory
     cd daemon
     # Compile pjsip
@@ -16,6 +23,10 @@ INSTALLATION GUIDE
     You are done with the core !
 
 * GNOME CLIENT INSTALLATION
+
+    # Install dependencies (subject to change):
+    apt-get install libnotify-dev libgtk2.0-dev libwebkit-dev libgnomeui-dev check
+
     # Go to the root of the gnome client directory
     cd gnome
     ./autogen.sh
