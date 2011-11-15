@@ -29,15 +29,15 @@
  *  as that of the covered work.
  */
 
-#ifndef _PULSE_LAYER_H
-#define _PULSE_LAYER_H
-
-#include "audio/audiolayer.h"
-#include <pulse/pulseaudio.h>
-#include <pulse/stream.h>
+#ifndef PULSE_LAYER_H_
+#define PULSE_LAYER_H_
 
 #include <list>
 #include <string>
+#include <pulse/pulseaudio.h>
+#include <pulse/stream.h>
+#include "audio/audiolayer.h"
+#include "noncopyable.h"
 
 class AudioStream;
 
@@ -78,11 +78,7 @@ class PulseLayer : public AudioLayer {
                                              const pa_sink_info *i,
                                              int eol, void *userdata);
 
-        // Copy Constructor
-        PulseLayer(const PulseLayer& rh);
-
-        // Assignment Operator
-        PulseLayer& operator= (const PulseLayer& rh);
+        NON_COPYABLE(PulseLayer);
 
         /**
          * Create the audio streams into the given context
@@ -126,5 +122,5 @@ class PulseLayer : public AudioLayer {
         friend class AudioLayerTest;
 };
 
-#endif // _PULSE_LAYER_H_
+#endif // PULSE_LAYER_H_
 

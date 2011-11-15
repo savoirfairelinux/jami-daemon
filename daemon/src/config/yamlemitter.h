@@ -34,6 +34,7 @@
 #include <yaml.h>
 #include <stdexcept>
 #include <string>
+#include "noncopyable.h"
 #include "yamlnode.h"
 
 namespace Conf {
@@ -83,6 +84,7 @@ class YamlEmitter {
 
     private:
 
+        NON_COPYABLE(YamlEmitter);
         void addMappingItem(int mappingid, std::string key, YamlNode *node);
 
         std::string filename;

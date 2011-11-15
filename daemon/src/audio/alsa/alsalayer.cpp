@@ -34,6 +34,7 @@
 #include "eventthread.h"
 #include "audio/samplerateconverter.h"
 #include "managerimpl.h"
+#include "noncopyable.h"
 #include "dbus/configurationmanager.h"
 
 class AlsaThread : public ost::Thread {
@@ -47,9 +48,7 @@ class AlsaThread : public ost::Thread {
         virtual void run();
 
     private:
-        AlsaThread(const AlsaThread& at);
-        AlsaThread& operator= (const AlsaThread& at);
-
+        NON_COPYABLE(AlsaThread);
         AlsaLayer* alsa_;
 };
 

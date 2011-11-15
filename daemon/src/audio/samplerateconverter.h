@@ -32,10 +32,10 @@
 #define _SAMPLE_RATE_H
 
 #include <samplerate.h>
-#include <math.h>
+#include <cmath>
 
 #include "global.h"
-
+#include "noncopyable.h"
 
 class SamplerateConverter {
     public:
@@ -70,11 +70,7 @@ class SamplerateConverter {
 
 
     private:
-        // Copy Constructor
-        SamplerateConverter(const SamplerateConverter& rh);
-
-        // Assignment Operator
-        SamplerateConverter& operator= (const SamplerateConverter& rh);
+        NON_COPYABLE(SamplerateConverter);
 
         /* temporary buffers */
         float * floatBufferIn_;

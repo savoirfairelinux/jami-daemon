@@ -22,9 +22,9 @@
 #ifndef __RING_BUFFER__
 #define __RING_BUFFER__
 
-#include "../call.h"
-
 #include <fstream>
+#include "../call.h"
+#include "noncopyable.h"
 
 typedef std::map<std::string, int> ReadPointer;
 
@@ -133,11 +133,7 @@ class RingBuffer {
         void debug();
 
     private:
-        // Copy Constructor
-        RingBuffer(const RingBuffer& rh);
-
-        // Assignment operator
-        RingBuffer& operator= (const RingBuffer& rh);
+        NON_COPYABLE(RingBuffer);
 
         /** Pointer on the last data */
         int           endPos_;

@@ -31,6 +31,7 @@
 
 #include "global.h"
 #include "audiocodec.h"
+#include "noncopyable.h"
 #include <cstdio>
 #include <speex/speex.h>
 #include <cassert>
@@ -89,8 +90,7 @@ class Speex : public sfl::AudioCodec {
             speex_decoder_ctl(speex_dec_state_, SPEEX_GET_FRAME_SIZE, &speex_frame_size_);
         }
 
-        Speex(const Speex&);
-        Speex& operator= (const Speex&);
+        NON_COPYABLE(Speex);
 
         ~Speex() {
             // Destroy the decoder struct

@@ -32,7 +32,7 @@
 #include <cstdio>
 #include <celt/celt.h>
 #include <stdexcept>
-
+#include "noncopyable.h"
 
 class Celt : public sfl::AudioCodec {
 
@@ -89,8 +89,7 @@ class Celt : public sfl::AudioCodec {
             celt_decoder_ctl(dec_, CELT_SET_PREDICTION(2));
         }
 
-        Celt(const Celt&);
-        Celt& operator= (const Celt&);
+        NON_COPYABLE(Celt);
 
         ~Celt() {
             celt_encoder_destroy(enc_);

@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#ifndef NONCOPYABLE_H_
-#define NONCOPYABLE_H_
+#ifndef NON_COPYABLE_H_
+#define NON_COPYABLE_H_
 
 /**
  * @file noncopyable.h
@@ -43,4 +43,4 @@
     ClassName(const ClassName&); \
     ClassName& operator=(const ClassName&)
 
-#endif	// NONCOPYABLE_H_
+#endif	// NON_COPYABLE_H_

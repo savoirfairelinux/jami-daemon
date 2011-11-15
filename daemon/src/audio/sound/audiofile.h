@@ -69,9 +69,7 @@ class RawFile : public AudioFile {
         RawFile(const std::string& name, sfl::AudioCodec* codec, unsigned int sampleRate = 8000);
 
     private:
-        // noncopyable
-        RawFile(const RawFile& rh);
-        RawFile& operator= (const RawFile& rh);
+        NON_COPYABLE(RawFile);
 
         /** Your preferred codec */
         sfl::AudioCodec* audioCodec_;

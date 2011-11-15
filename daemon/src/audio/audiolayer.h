@@ -41,6 +41,7 @@
 #include "ringbuffer.h"
 #include "dcblocker.h"
 #include "samplerateconverter.h"
+#include "noncopyable.h"
 
 /**
  * @file  audiolayer.h
@@ -55,21 +56,10 @@ class Time;
 
 class AudioLayer {
     private:
-        //copy constructor
-        AudioLayer(const AudioLayer& rh);
-
-        // assignment operator
-        const AudioLayer& operator= (const AudioLayer& rh);
+        NON_COPYABLE(AudioLayer);
 
     public:
-        /**
-         * Constructor
-         */
         AudioLayer();
-
-        /**
-         * Destructor
-         */
         virtual ~AudioLayer();
 
         /**
@@ -151,7 +141,6 @@ class AudioLayer {
         SamplerateConverter *converter_;
 
     private:
-
         /**
          * Time of the last incoming call notification
          */

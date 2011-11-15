@@ -45,6 +45,7 @@
 #include <stdexcept>
 
 #include "global.h" // for CodecOrder
+#include "noncopyable.h"
 
 namespace sfl {
 class AudioCodec;
@@ -354,9 +355,7 @@ class Sdp {
          */
         unsigned int telephoneEventPayload_;
 
-        // noncopyable
-        Sdp(const Sdp&);
-        Sdp& operator=(const Sdp&);
+        NON_COPYABLE(Sdp);
 
         /*
          * Build the sdp media section

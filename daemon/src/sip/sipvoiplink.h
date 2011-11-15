@@ -282,11 +282,7 @@ class SIPVoIPLink : public VoIPLink {
 
         void dtmfSend(SIPCall *call, char code, DtmfType type);
 
-        /* Assignment Operator */
-        SIPVoIPLink& operator= (const SIPVoIPLink& rh);
-
-        /* Copy Constructor */
-        SIPVoIPLink(const SIPVoIPLink& rh);
+        NON_COPYABLE(SIPVoIPLink);
 
         SIPVoIPLink();
 

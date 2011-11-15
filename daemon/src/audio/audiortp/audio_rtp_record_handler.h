@@ -27,8 +27,8 @@
  *  as that of the covered work.
  */
 
-#ifndef __AUDIO_RTP_RECORD_HANDLER_H__
-#define __AUDIO_RTP_RECORD_HANDLER_H__
+#ifndef AUDIO_RTP_RECORD_HANDLER_H__
+#define AUDIO_RTP_RECORD_HANDLER_H__
 #include <cstddef>
 
 using std::ptrdiff_t;
@@ -37,6 +37,7 @@ using std::ptrdiff_t;
 #include <list>
 
 class SIPCall;
+#include "noncopyable.h"
 #include "audio/codecs/audiocodec.h"
 #include "audio/samplerateconverter.h"
 #include "audio/noisesuppress.h"
@@ -96,9 +97,7 @@ class AudioRtpRecord {
         std::string callId_;
         unsigned int dtmfPayloadType_;
     private:
-        /* non copyable */
-        AudioRtpRecord(const AudioRtpRecord &);
-        AudioRtpRecord & operator=(const AudioRtpRecord &);
+        NON_COPYABLE(AudioRtpRecord);
 };
 
 
@@ -184,4 +183,4 @@ class AudioRtpRecordHandler {
 
 }
 
-#endif // __AUDIO_RTP_RECORD_HANDLER_H__
+#endif // AUDIO_RTP_RECORD_HANDLER_H__
