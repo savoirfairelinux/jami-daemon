@@ -94,14 +94,16 @@ class Pattern {
          *
          * @param pattern The new pattern
          */
-        void operator= (const std::string& pattern) {
+        Pattern& operator=(const std::string& pattern) {
             pattern_ = pattern;
             compile();
+            return *this;
         }
 
-        void operator= (const char * pattern) {
+        Pattern& operator=(const char * pattern) {
             pattern_ = pattern;
             compile();
+            return *this;
         }
 
         /**
