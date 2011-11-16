@@ -38,7 +38,6 @@ class Recordable {
     public:
 
         Recordable();
-
         virtual ~Recordable();
 
         /**
@@ -93,7 +92,6 @@ class Recordable {
         AudioRecord recAudio;
 
         AudioRecorder recorder;
-
 };
 
 #endif

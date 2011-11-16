@@ -35,6 +35,8 @@
 
 using namespace std;
 
+EchoCancelTest::EchoCancelTest() : echoCanceller_() {}
+
 void EchoCancelTest::testEchoCancelProcessing()
 {
     const int nbSamples = 160;
@@ -45,14 +47,12 @@ void EchoCancelTest::testEchoCancelProcessing()
     SFLDataFormat spkrData[1000];
     SFLDataFormat echoCancelData[1000];
 
-
     // near end input with echo
     ifstream micFile("sample_no_echo_8kHz_16bit.raw", ifstream::in);
     // far end input to train filter
     ifstream spkrFile("sample_ecno_500ms_8kHz_16bit.raw", ifstream::in);
     // echo cancelled output
     ofstream echoCancelFile("sample_echocancel_500ms_8kHz_16bit.raw", ofstream::out);
-
 
     micFile.seekg(0, ios::end);
     inputFileLength = micFile.tellg() / sizeof(SFLDataFormat);
@@ -64,15 +64,13 @@ void EchoCancelTest::testEchoCancelProcessing()
         micFile.read(reinterpret_cast<char *>(micData), nbSamples * sizeof(SFLDataFormat));
         spkrFile.read(reinterpret_cast<char *>(spkrData), nbSamples * sizeof(SFLDataFormat));
 
-        echoCanceller.putData(spkrData, nbSamples);
-        echoCanceller.process(micData, echoCancelData, nbSamples);
+        echoCanceller_.putData(spkrData, nbSamples);
+        echoCanceller_.process(micData, echoCancelData, nbSamples);
 
         echoCancelFile.write(reinterpret_cast<char *>(echoCancelData), nbSamples * sizeof(SFLDataFormat));
 
         remainingLength -= nbSamples;
     }
-
-
 
     CPPUNIT_ASSERT(true);
 }

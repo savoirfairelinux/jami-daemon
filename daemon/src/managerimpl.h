@@ -1208,8 +1208,6 @@ class ManagerImpl {
          * send, and receive instant messages.
          */
         sfl::InstantMessaging *imModule_;
-
-        Conf::YamlEmitter *emitter_;
 };
 
 #endif // __MANAGER_H__

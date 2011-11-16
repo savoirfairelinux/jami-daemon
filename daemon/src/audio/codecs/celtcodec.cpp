@@ -37,7 +37,7 @@
 class Celt : public sfl::AudioCodec {
 
     public:
-        Celt(int payload = 115)	: sfl::AudioCodec(payload, "celt") {
+        Celt(int payload = 115)	: sfl::AudioCodec(payload, "celt"), mode_(0), enc_(0), dec_(0) {
             clockRate_ = 32000;
             frameSize_ = 320;  // fixed frameSize, TODO: support variable size from 64 to 512
             channel_ = 1;
@@ -119,14 +119,10 @@ class Celt : public sfl::AudioCodec {
         }
 
     private:
-
         CELTMode *mode_;
 
         CELTEncoder *enc_;
         CELTDecoder *dec_;
-
-        celt_int32 celt_frame_size_;
-        celt_int32 skip_;
 };
 
 // the class factories

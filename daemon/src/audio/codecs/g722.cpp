@@ -36,34 +36,26 @@
 #include "../common.h"
 #include "audiocodec.h"
 #include "g722.h"
+#include "noncopyable.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <cassert>
 
-#define TRUE 1
-#define FALSE 0
-
-
 class G722 : public sfl::AudioCodec {
 
     public:
-
-        G722(int payload=9)
-            : sfl::AudioCodec(payload, "G722") {
+        G722(int payload=9) : sfl::AudioCodec(payload, "G722"),
+        decode_s(new g722_decode_state_t),
+        encode_s(new g722_encode_state_t) {
             clockRate_ = 16000;
             frameSize_ = 320; // samples, 20 ms at 16kHz
             channel_   = 1;
             bitrate_ = 64;
             hasDynamicPayload_ = false;
 
-
-            decode_s = new g722_decode_state_t;
-            encode_s = new g722_encode_state_t;
-
             g722_decode_init();
             g722_encode_init();
-
         }
 
         ~G722() {
@@ -84,17 +76,16 @@ class G722 : public sfl::AudioCodec {
 
 
         void g722_encode_init() {
-            encode_s->itu_test_mode = FALSE;
+            encode_s->itu_test_mode = false;
 
             // 8 => 64 kbps;  7 => 56 kbps;  6 => 48 kbps
             encode_s->bits_per_sample = 8;
 
             // Enable 8khz mode, encode using lower subband only
-            encode_s->eight_k = FALSE;
+            encode_s->eight_k = false;
 
-
-            // Never set packed TRUE when using 64 kbps
-            encode_s->packed = FALSE;
+            // Never set packed true when using 64 kbps
+            encode_s->packed = false;
 
             memset(encode_s->band, 0, sizeof(decode_s->band));
             encode_s->band[0].det = 32;
@@ -110,16 +101,16 @@ class G722 : public sfl::AudioCodec {
 
         void g722_decode_init() {
 
-            decode_s->itu_test_mode = FALSE;
+            decode_s->itu_test_mode = false;
 
             // 8 => 64 kbps;  7 => 56 kbps;  6 => 48 kbps
             decode_s->bits_per_sample = 8;
 
             // Enable 8khz mode, encode using lower subband only
-            decode_s->eight_k = FALSE;
+            decode_s->eight_k = false;
 
-            // Never set packed TRUE when using 64 kbps
-            decode_s->packed = FALSE;
+            // Never set packed true when using 64 kbps
+            decode_s->packed = false;
 
             memset(decode_s->band, 0, sizeof(decode_s->band));
             decode_s->band[0].det = 32;
@@ -811,6 +802,7 @@ class G722 : public sfl::AudioCodec {
         }
 
     private:
+        NON_COPYABLE(G722);
 
         g722_decode_state_t *decode_s;
         g722_encode_state_t *encode_s;
@@ -827,5 +819,4 @@ extern "C" void destroy(sfl::Codec* a)
 {
     delete a;
 }
-
 

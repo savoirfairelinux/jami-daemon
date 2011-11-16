@@ -45,6 +45,7 @@ IAXVoIPLink::IAXVoIPLink(const std::string& accountID) :
     evThread_(new EventThread(this))
     , regSession_(NULL)
     , nextRefreshStamp_(0)
+    , mutexIAX_()
     , converter_(44100)
     , initDone_(false)
     , accountID_(accountID)

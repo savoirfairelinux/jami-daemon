@@ -133,11 +133,8 @@ class AudioLayer {
          * Lock for the entire audio layer
          */
         ost::Mutex mutex_;
-
         DcBlocker dcblocker_;
-
         AudioPreference &audioPref;
-
         SamplerateConverter *converter_;
 
     private:

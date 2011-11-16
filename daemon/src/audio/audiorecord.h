@@ -35,11 +35,12 @@
 #include <cstdlib>
 
 #include "global.h"
+#include "noncopyable.h"
 
 class AudioRecord {
 
     public:
-        enum FILE_TYPE { FILE_RAW, FILE_WAV };
+        enum FILE_TYPE { FILE_RAW, FILE_WAV, FILE_INVALID };
 
         AudioRecord();
 
@@ -237,6 +238,8 @@ class AudioRecord {
          */
         std::string savePath_;
 
+    private:
+        NON_COPYABLE(AudioRecord);
 };
 
 #endif // _AUDIO_RECORD_H

@@ -34,10 +34,11 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
-#include <assert.h>
+#include <cassert>
 
 // Application import
 #include "im/instant_messaging.h"
+#include "noncopyable.h"
 
 /*
  * @file instantmessagingtest.h
@@ -63,7 +64,7 @@ class InstantMessagingTest : public CppUnit::TestCase {
         CPPUNIT_TEST_SUITE_END();
 
     public:
-        InstantMessagingTest() : CppUnit::TestCase("Instant messaging module Tests") {}
+        InstantMessagingTest() : CppUnit::TestCase("Instant messaging module Tests"), im_(0) {}
 
         /*
          * Code factoring - Common resources can be initialized here.
@@ -92,6 +93,7 @@ class InstantMessagingTest : public CppUnit::TestCase {
         void testIllFormatedMessage();
 
     private:
+        NON_COPYABLE(InstantMessagingTest);
         sfl::InstantMessaging *im_;
 };
 

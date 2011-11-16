@@ -32,7 +32,8 @@
 #include "manager.h"
 #include <cassert>
 
-SamplerateConverter::SamplerateConverter(int freq) : maxFreq_(freq)
+SamplerateConverter::SamplerateConverter(int freq) : floatBufferIn_(0),
+    floatBufferOut_(0), samples_(0), maxFreq_(freq), src_state_(0)
 {
     int err;
     src_state_ = src_new(SRC_LINEAR, 1, &err);

@@ -68,12 +68,16 @@
 #include <sys/stat.h>  // mkdir(2)
 
 ManagerImpl::ManagerImpl() :
-    hasTriedToRegister_(false), config_(), currentCallId_(),
+    preferences(), voipPreferences(), addressbookPreference(),
+    hookPreference(),  audioPreference(), shortcutPreferences(),
+    hasTriedToRegister_(false), audioCodecFactory(), dbus_(), config_(), currentCallId_(),
     currentCallMutex_(), audiodriver_(0), dtmfKey_(0), toneMutex_(),
     telephoneTone_(0), audiofile_(0), speakerVolume_(0), micVolume_(0),
-    waitingCall_(), waitingCallMutex_(), nbIncomingWaitingCall_(0), path_(""),
-    callAccountMap_(), callAccountMapMutex_(), callConfigMap_(), accountMap_(),
-    history_(new HistoryManager), imModule_(new sfl::InstantMessaging)
+    audiolayerMutex_(), waitingCall_(), waitingCallMutex_(),
+    nbIncomingWaitingCall_(0), path_(), callAccountMap_(),
+    callAccountMapMutex_(), callConfigMap_(), accountMap_(),
+    mainBuffer_(), conferenceMap_(), history_(new HistoryManager),
+    imModule_(new sfl::InstantMessaging)
 {
     // initialize random generator for call id
     srand(time(NULL));

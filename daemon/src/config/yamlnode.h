@@ -35,6 +35,7 @@
 #include <list>
 #include <map>
 #include <stdexcept>
+#include "noncopyable.h"
 
 namespace Conf {
 
@@ -63,6 +64,7 @@ class YamlNode {
         virtual void deleteChildNodes() = 0;
 
     private:
+        NON_COPYABLE(YamlNode);
         NodeType type;
         YamlNode *topNode;
 };
@@ -70,7 +72,7 @@ class YamlNode {
 
 class YamlDocument : YamlNode {
     public:
-        YamlDocument(YamlNode* top=NULL) : YamlNode(DOCUMENT, top) {}
+        YamlDocument(YamlNode* top=NULL) : YamlNode(DOCUMENT, top), doc() {}
 
         void addNode(YamlNode *node);
 
@@ -88,7 +90,7 @@ class YamlDocument : YamlNode {
 
 class SequenceNode : public YamlNode {
     public:
-        SequenceNode(YamlNode *top) : YamlNode(SEQUENCE, top) {}
+        SequenceNode(YamlNode *top) : YamlNode(SEQUENCE, top), seq() {}
 
         Sequence *getSequence() {
             return &seq;
@@ -105,7 +107,7 @@ class SequenceNode : public YamlNode {
 
 class MappingNode : public YamlNode {
     public:
-        MappingNode(YamlNode *top) : YamlNode(MAPPING, top) {}
+        MappingNode(YamlNode *top) : YamlNode(MAPPING, top), map(), tmpKey() {}
 
         Mapping *getMapping() {
             return &map;

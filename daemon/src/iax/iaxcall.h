@@ -32,6 +32,7 @@
 #define IAXCALL_H
 
 #include "call.h"
+#include "noncopyable.h"
 
 /**
  * @file: iaxcall.h
@@ -72,6 +73,8 @@ class IAXCall : public Call {
 
         int format;
         iax_session* session;
+    private:
+        NON_COPYABLE(IAXCall);
 };
 
 #endif

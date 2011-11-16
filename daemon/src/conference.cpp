@@ -39,6 +39,7 @@
 Conference::Conference()
     : id_(Manager::instance().getNewCallID())
     , confState_(ACTIVE_ATTACHED)
+    , participants_()
 {
     Recordable::initRecFileName(id_);
 }

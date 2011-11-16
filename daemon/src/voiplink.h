@@ -60,11 +60,8 @@ class VoipLinkException : public std::runtime_error {
  */
 class VoIPLink {
     public:
-        /**
-         * Virtual destructor
-         */
+        VoIPLink();
         virtual ~VoIPLink();
-
 
         /**
          * Virtual method

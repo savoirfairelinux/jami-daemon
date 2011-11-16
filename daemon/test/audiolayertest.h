@@ -42,7 +42,7 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
-#include <assert.h>
+#include <cassert>
 
 // Application import
 #include "manager.h"
@@ -52,6 +52,7 @@
 #include "audio/audiolayer.h"
 #include "audio/alsa/alsalayer.h"
 #include "audio/pulseaudio/pulselayer.h"
+#include "noncopyable.h"
 
 class AudioLayerTest: public CppUnit::TestFixture {
 
@@ -63,17 +64,16 @@ class AudioLayerTest: public CppUnit::TestFixture {
         CPPUNIT_TEST_SUITE_END();
 
     public:
-
+        AudioLayerTest();
         void testAudioLayerConfig();
         void testPulseConnect();
         void testAudioLayerSwitch();
 
     private:
+        NON_COPYABLE(AudioLayerTest);
 
         ManagerImpl* manager_;
-
         PulseLayer* pulselayer_;
-
         int layer_;
 };
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AudioLayerTest, "AudioLayerTest");

@@ -33,7 +33,7 @@
 #include <utility> // for std::pair
 #include "manager.h"
 
-MainBuffer::MainBuffer() : internalSamplingRate_(8000)
+MainBuffer::MainBuffer() : ringBufferMap_(), callIDMap_(), mutex_(), internalSamplingRate_(8000)
 {}
 
 MainBuffer::~MainBuffer()

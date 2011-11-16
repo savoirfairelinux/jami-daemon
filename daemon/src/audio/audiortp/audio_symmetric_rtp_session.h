@@ -42,6 +42,7 @@
 #include "noncopyable.h"
 
 using std::ptrdiff_t;
+
 #include <ccrtp/rtp.h>
 #include <ccrtp/iqueue.h>
 #include <cc++/numbers.h> // ost::Time
@@ -70,6 +71,7 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTP
         }
 
     private:
+        NON_COPYABLE(AudioSymmetricRtpSession);
 
         class AudioRtpThread : public ost::Thread, public ost::TimerPort {
             public:

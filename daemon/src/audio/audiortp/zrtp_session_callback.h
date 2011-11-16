@@ -39,6 +39,7 @@ using std::ptrdiff_t;
 #include <libzrtpcpp/ZrtpUserCallback.h>
 #include <exception>
 #include <map>
+#include "noncopyable.h"
 
 class SIPCall;
 
@@ -57,6 +58,7 @@ class ZrtpSessionCallback: public ZrtpUserCallback {
         void confirmGoClear();
 
     private:
+        NON_COPYABLE(ZrtpSessionCallback);
         SIPCall* sipcall_;
         static std::map<int32, std::string> infoMap_;
         static std::map<int32, std::string> warningMap_;

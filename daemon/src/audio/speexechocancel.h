@@ -21,6 +21,7 @@
 #define SPEEXECHOCANCEL_H
 
 #include "global.h"
+#include "noncopyable.h"
 
 class RingBuffer;
 class SpeexEchoState_;
@@ -48,16 +49,16 @@ class SpeexEchoCancel {
         int process(SFLDataFormat *, SFLDataFormat *, int samples);
 
     private:
+        NON_COPYABLE(SpeexEchoCancel);
+
+        int echoDelay_;
+        int echoTailLength_;
 
         SpeexEchoState *echoState_;
-
         SpeexPreprocessState *preState_;
 
         RingBuffer *micData_;
         RingBuffer *spkrData_;
-
-        int echoDelay_;
-        int echoTailLength_;
 
         bool spkrStopped_;
 

@@ -30,7 +30,7 @@
 #include "recordable.h"
 #include "manager.h"
 
-Recordable::Recordable() : recorder(&recAudio, Manager::instance().getMainBuffer())
+Recordable::Recordable() : recAudio(), recorder(&recAudio, Manager::instance().getMainBuffer())
 {
     recAudio.setRecordingOption(AudioRecord::FILE_WAV, 8000, Manager::instance().audioPreference.getRecordpath());
 }

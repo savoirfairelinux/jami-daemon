@@ -167,7 +167,7 @@ pjsip_route_hdr *createRouteSet(const std::string &route, pj_pool_t *hdr_pool)
 
 /*************************************************************************************************/
 
-SIPVoIPLink::SIPVoIPLink() : evThread_(new EventThread(this))
+SIPVoIPLink::SIPVoIPLink() : transportMap_(), evThread_(new EventThread(this))
 {
 #define TRY(ret) do { \
 		if (ret != PJ_SUCCESS) \

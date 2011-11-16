@@ -38,7 +38,13 @@
 #include "configurationmanager.h"
 #include "networkmanager.h"
 
-DBusManager::DBusManager()
+DBusManager::DBusManager() : callManager_(0)
+    , configurationManager_(0)
+    , instanceManager_(0)
+    , dispatcher_()
+#if USE_NETWORKMANAGER
+    , networkManager_(0)
+#endif
 {
     try {
         DBus::_init_threading();

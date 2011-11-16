@@ -39,6 +39,9 @@
 using std::cout;
 using std::endl;
 
+AudioLayerTest::AudioLayerTest() : manager_(0), pulselayer_(0), layer_(0)
+{}
+
 void AudioLayerTest::testAudioLayerConfig()
 {
    DEBUG("-------------------- AudioLayerTest::testAudioLayerConfig --------------------\n");

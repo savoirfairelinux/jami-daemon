@@ -38,6 +38,7 @@
 #include <audio/codecs/audiocodec.h>
 #include <ccrtp/rtp.h>
 #include <ccrtp/formats.h>
+#include "noncopyable.h"
 
 class SIPCall;
 
@@ -96,6 +97,7 @@ class AudioRtpSession : public AudioRtpRecordHandler {
         RtpMethod type_;
 
     private:
+        NON_COPYABLE(AudioRtpSession);
 
         /**
          * Set the audio codec for this RTP session

@@ -33,10 +33,11 @@
 
 #include "yamlnode.h"
 #include <yaml.h>
-#include <stdio.h>
+#include <cstdio>
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include "noncopyable.h"
 
 namespace Conf {
 
@@ -66,34 +67,35 @@ class YamlParser {
         void constructNativeData();
 
         SequenceNode *getAccountSequence() {
-            return accountSequence;
+            return accountSequence_;
         };
 
         MappingNode *getPreferenceNode() {
-            return preferenceNode;
+            return preferenceNode_;
         }
 
         MappingNode *getAddressbookNode() {
-            return addressbookNode;
+            return addressbookNode_;
         }
 
         MappingNode *getAudioNode() {
-            return audioNode;
+            return audioNode_;
         }
 
         MappingNode *getHookNode() {
-            return hooksNode;
+            return hooksNode_;
         }
 
         MappingNode *getVoipPreferenceNode() {
-            return voiplinkNode;
+            return voiplinkNode_;
         }
 
         MappingNode *getShortcutNode() {
-            return shortcutNode;
+            return shortcutNode_;
         }
 
     private:
+        NON_COPYABLE(YamlParser);
 
         /**
          * Copy yaml parser event in event_to according to their type.
@@ -115,47 +117,40 @@ class YamlParser {
         /**
          * Configuration file name
          */
-        std::string filename;
+        std::string filename_;
 
         /**
          * Configuration file descriptor
          */
-        FILE *fd;
+        FILE *fd_;
 
         /**
          * The parser structure.
          */
-        yaml_parser_t parser;
+        yaml_parser_t parser_;
 
         /**
          * The event structure array.
          */
-        YamlEventVector events;
+        YamlEventVector events_;
 
         /**
          * Number of event actually parsed
          */
-        int eventNumber;
+        int eventNumber_;
 
-        YamlDocument *doc;
+        YamlDocument *doc_;
 
-        int eventIndex;
+        int eventIndex_;
 
-        SequenceNode *accountSequence;
-
-        MappingNode *preferenceNode;
-
-        MappingNode *addressbookNode;
-
-        MappingNode *audioNode;
-
-        MappingNode *hooksNode;
-
-        MappingNode *voiplinkNode;
-
-        MappingNode *shortcutNode;
+        SequenceNode *accountSequence_;
+        MappingNode *preferenceNode_;
+        MappingNode *addressbookNode_;
+        MappingNode *audioNode_;
+        MappingNode *hooksNode_;
+        MappingNode *voiplinkNode_;
+        MappingNode *shortcutNode_;
 };
-
 }
 
 #endif

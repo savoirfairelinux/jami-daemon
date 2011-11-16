@@ -52,6 +52,7 @@ class AudioFileException : public std::runtime_error {
  */
 class AudioFile : public AudioLoop {
     public:
+        AudioFile() : filepath_() {}
         std::string getFilePath() const {
             return filepath_;
         }

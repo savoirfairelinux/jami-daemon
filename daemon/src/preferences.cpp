@@ -408,6 +408,9 @@ void AudioPreference::unserialize(Conf::MappingNode *map)
     }
 }
 
+ShortcutPreferences::ShortcutPreferences() : hangup_(), pickup_(), popup_(),
+    toggleHold_(), togglePickupHangup_() {}
+
 std::map<std::string, std::string> ShortcutPreferences::getShortcuts() const
 {
     std::map<std::string, std::string> shortcutsMap;

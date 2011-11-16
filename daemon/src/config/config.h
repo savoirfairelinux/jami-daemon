@@ -92,7 +92,7 @@ class ConfigTreeIterator {
 
 class ConfigTree {
     public:
-        ConfigTree() {}
+        ConfigTree() : sections_(), defaultValueMap_() {}
         ~ConfigTree();
         /**
          * Add a default value for a given key.

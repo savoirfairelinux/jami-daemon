@@ -33,6 +33,7 @@
 #include "audio_rtp_session.h"
 #include "audio_symmetric_rtp_session.h"
 #include "sip/sdes_negotiator.h"
+#include "noncopyable.h"
 
 #include <ccrtp/CryptoContext.h>
 #include <vector>
@@ -109,6 +110,7 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
         ost::CryptoContext* localCryptoCtx_;
 
     private:
+        NON_COPYABLE(AudioSrtpSession);
 
         /**
          * Init local master key according to current crypto context

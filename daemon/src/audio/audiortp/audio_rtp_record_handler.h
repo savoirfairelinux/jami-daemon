@@ -169,18 +169,14 @@ class AudioRtpRecordHandler {
         void putDtmfEvent(int digit);
 
     protected:
-
         AudioRtpRecord	audioRtpRecord_;
 
     private:
 
         const std::string id_;
-
         EchoSuppress echoCanceller;
-
         GainControl gainController;
 };
-
 }
 
 #endif // AUDIO_RTP_RECORD_HANDLER_H__

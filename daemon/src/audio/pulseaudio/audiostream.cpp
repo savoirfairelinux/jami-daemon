@@ -32,7 +32,7 @@
 #include "pulselayer.h"
 
 AudioStream::AudioStream(pa_context *c, pa_threaded_mainloop *m, const char *desc, int type, int smplrate, std::string *deviceName)
-    : mainloop_(m)
+    : audiostream_(0), mainloop_(m)
 {
     static const pa_channel_map channel_map = {
         1,

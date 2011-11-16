@@ -277,6 +277,8 @@ class Sdp {
         void receivingAnswerAfterInitialOffer(const pjmedia_sdp_session* remote);
 
     private:
+        NON_COPYABLE(Sdp);
+
         /**
          * The pool to allocate memory, ownership to SipCall
          * SDP should not release the pool itself
@@ -354,8 +356,6 @@ class Sdp {
          * Payload type for dtmf telephone event
          */
         unsigned int telephoneEventPayload_;
-
-        NON_COPYABLE(Sdp);
 
         /*
          * Build the sdp media section

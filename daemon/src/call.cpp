@@ -39,20 +39,18 @@ Call::Call(const std::string& id, Call::CallType type)
     , localIPAddress_("")
     , localAudioPort_(0)
     , id_(id)
-    , confID_("")
+    , confID_()
     , type_(type)
     , connectionState_(Call::Disconnected)
     , callState_(Call::Inactive)
     , callConfig_(Call::Classic)
     , peerName_()
     , peerNumber_()
-{
-}
-
+    , displayName_()
+{}
 
 Call::~Call()
-{
-}
+{}
 
 void
 Call::setConnectionState(ConnectionState state)

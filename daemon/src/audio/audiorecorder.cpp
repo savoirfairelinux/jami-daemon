@@ -34,7 +34,8 @@
 
 int AudioRecorder::count_ = 0;
 
-AudioRecorder::AudioRecorder(AudioRecord  *arec, MainBuffer *mb) : Thread(), mbuffer_(mb), arecord_(arec)
+AudioRecorder::AudioRecorder(AudioRecord  *arec, MainBuffer *mb) : Thread(),
+    recorderId_(), mbuffer_(mb), arecord_(arec)
 {
     assert(mb);
     setCancel(cancelDeferred);

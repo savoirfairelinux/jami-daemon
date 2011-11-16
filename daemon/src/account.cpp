@@ -35,16 +35,20 @@
 
 Account::Account(const std::string& accountID, const std::string &type) :
     accountID_(accountID)
+    , username_()
+    , hostname_()
+    , alias_()
     , link_(NULL)
     , enabled_(true)
     , type_(type)
     , registrationState_(Unregistered)
     , codecOrder_()
-    , codecStr_("")
+    , codecStr_()
     , ringtonePath_("/usr/share/sflphone/ringtones/konga.ul")
     , ringtoneEnabled_(true)
     , displayName_("")
     , userAgent_("SFLphone")
+    , mailBox_()
 {
     // Initialize the codec order, used when creating a new account
     loadDefaultCodecs();

@@ -47,10 +47,12 @@
 #include <unistd.h>
 #include "global.h"
 
-
 using std::cout;
 using std::endl;
 
+SdesNegotiatorTest::SdesNegotiatorTest() : pattern(0), sdesnego(0),
+    remoteOffer(0), localCapabilities(0)
+{}
 
 void SdesNegotiatorTest::testTagPattern()
 {

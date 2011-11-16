@@ -33,7 +33,6 @@
 #define __AUDIO_CODEC_H__
 
 #include <string>
-#include <iostream>
 #include <dlfcn.h>
 
 #include "codec.h"
@@ -161,6 +160,7 @@ class AudioCodec : public Codec {
         bool hasDynamicPayload_;
 
     private:
+        AudioCodec& operator=(const AudioCodec&);
         uint8 payload_;
 
         ost::DynamicPayloadFormat* payloadFormat_;

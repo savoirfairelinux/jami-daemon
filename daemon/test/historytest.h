@@ -34,9 +34,10 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
-#include <assert.h>
+#include <cassert>
 
 // Application import
+#include "noncopyable.h"
 #include "history/historymanager.h"
 
 /*
@@ -64,7 +65,7 @@ class HistoryTest : public CppUnit::TestCase {
         CPPUNIT_TEST_SUITE_END();
 
     public:
-        HistoryTest() : CppUnit::TestCase("History Tests") {}
+        HistoryTest() : CppUnit::TestCase("History Tests"), history(0) {}
 
         /*
          * Code factoring - Common resources can be initialized here.
@@ -95,6 +96,7 @@ class HistoryTest : public CppUnit::TestCase {
         void tearDown();
 
     private:
+        NON_COPYABLE(HistoryTest);
         HistoryManager *history;
 };
 
