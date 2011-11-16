@@ -1030,7 +1030,9 @@ GtkWidget* create_advanced_tab(account_t *a)
 
     GtkWidget *vbox, *frame;
 
+
     vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
 
     frame = create_registration_expire(a);

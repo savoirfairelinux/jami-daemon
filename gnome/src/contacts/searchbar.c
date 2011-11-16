@@ -139,7 +139,6 @@ void update_searchbar_addressbook_list()
 
         if (book_data && book_data->active) {
 
-
             gtk_list_store_append(liststore, &iter);
             gtk_list_store_set(liststore, &iter, 0, book_data->name, -1);
 
