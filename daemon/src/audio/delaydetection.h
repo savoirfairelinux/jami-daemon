@@ -128,11 +128,6 @@ class DelayDetection {
 
         int downsamplingFactor_;
 
-        /**
-         * Resulting correlation size (s + w -1)
-         */
-        short correlationSize_;
-
         float spkrReference_[WINDOW_SIZE*2];
 
         float capturedData_[DELAY_BUFF_SIZE*2];
@@ -146,8 +141,6 @@ class DelayDetection {
         float captureDataFilter_[DELAY_BUFF_SIZE*2];
 
         float correlationResult_[DELAY_BUFF_SIZE*2];
-
-        int remainingIndex_;
 
         int spkrDownSize_;
 

@@ -33,6 +33,7 @@
 
 #include <pulse/pulseaudio.h>
 #include <string>
+#include "noncopyable.h"
 
 /**
  * This data structure contains the different king of audio streams available
@@ -69,12 +70,7 @@ class AudioStream {
         bool isReady();
 
     private:
-
-        // Copy Constructor
-        AudioStream(const AudioStream& rh);
-
-        // Assignment Operator
-        AudioStream& operator=(const AudioStream& rh);
+        NON_COPYABLE(AudioStream);
 
         /**
          * Mandatory asynchronous callback on the audio stream state

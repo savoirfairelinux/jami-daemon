@@ -52,6 +52,7 @@
 
 #include "audio/mainbuffer.h"
 #include "preferences.h"
+#include "noncopyable.h"
 
 namespace sfl {
 class InstantMessaging;
@@ -1276,11 +1277,7 @@ class ManagerImpl {
         void registerAccounts();
 
     private:
-        // Copy Constructor
-        ManagerImpl(const ManagerImpl& rh);
-
-        // Assignment Operator
-        ManagerImpl& operator= (const ManagerImpl& rh);
+        NON_COPYABLE(ManagerImpl);
 
         /**
           * To handle the persistent history
@@ -1292,8 +1289,6 @@ class ManagerImpl {
          * send, and receive instant messages.
          */
         sfl::InstantMessaging *imModule_;
-
-        Conf::YamlEmitter *emitter_;
 };
 
 #endif // __MANAGER_H__

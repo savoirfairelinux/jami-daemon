@@ -31,6 +31,7 @@
 
 
 #include "audiocodec.h"
+#include "noncopyable.h"
 #include <cassert>
 #include <stdexcept>
 
@@ -60,10 +61,6 @@ class Gsm : public sfl::AudioCodec {
                 throw std::runtime_error("ERROR: encode_gsm_create\n");
         }
 
-        Gsm(const Gsm&);
-
-        Gsm& operator= (const Gsm&);
-
         virtual ~Gsm() {
             gsm_destroy(decode_gsmhandle_);
             gsm_destroy(encode_gsmhandle_);
@@ -85,6 +82,7 @@ class Gsm : public sfl::AudioCodec {
         }
 
     private:
+        NON_COPYABLE(Gsm);
         gsm decode_gsmhandle_;
         gsm encode_gsmhandle_;
 };

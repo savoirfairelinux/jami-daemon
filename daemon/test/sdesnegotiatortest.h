@@ -48,6 +48,8 @@
 #include <pjlib-util.h>
 #include <pjnath/stun_config.h>
 
+#include "noncopyable.h"
+
 /*
  * @file sdesnegotiationTest.cpp
  * @brief       Regroups unitary tests related to the plugin manager.
@@ -79,6 +81,7 @@ class SdesNegotiatorTest : public CppUnit::TestCase {
 
     public:
 
+        SdesNegotiatorTest();
         /*
          * Code factoring - Common resources can be released here.
          * This method is called by unitcpp after each test
@@ -102,13 +105,11 @@ class SdesNegotiatorTest : public CppUnit::TestCase {
         void test32ByteKeyLength();
 
     private:
+        NON_COPYABLE(SdesNegotiatorTest);
 
         sfl::Pattern *pattern;
-
         sfl::SdesNegotiator *sdesnego;
-
         std::vector<std::string> *remoteOffer;
-
         std::vector<sfl::CryptoSuiteDefinition> *localCapabilities;
 };
 

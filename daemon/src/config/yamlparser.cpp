@@ -33,47 +33,49 @@
 #include "../global.h"
 #include "config.h"
 #include "yamlnode.h"
-#include <stdio.h>
+#include <cstdio>
 
 namespace Conf {
 
-YamlParser::YamlParser(const char *file) : filename(file)
-    , events()
-    , eventNumber(0)
-    , doc(NULL)
-    , eventIndex(0)
-    , accountSequence(NULL)
-    , preferenceNode(NULL)
-    , addressbookNode(NULL)
-    , audioNode(NULL)
-	, videoNode (NULL)
-    , hooksNode(NULL)
-    , voiplinkNode(NULL)
-    , shortcutNode(NULL)
+YamlParser::YamlParser(const char *file) : filename_(file)
+    , fd_(0)
+    , parser_()
+    , events_()
+    , eventNumber_(0)
+    , doc_(NULL)
+    , eventIndex_(0)
+    , accountSequence_(NULL)
+    , preferenceNode_(NULL)
+    , addressbookNode_(NULL)
+    , audioNode_(NULL)
+	, videoNode_(NULL)
+    , hooksNode_(NULL)
+    , voiplinkNode_(NULL)
+    , shortcutNode_(NULL)
 {
-    fd = fopen(filename.c_str(), "rb");
-    if (!fd)
+    fd_ = fopen(filename_.c_str(), "rb");
+    if (!fd_)
         throw YamlParserException("Could not open file descriptor");
 
-    if (!yaml_parser_initialize(&parser))
+    if (!yaml_parser_initialize(&parser_))
         throw YamlParserException("Could not initialize");
 
-    yaml_parser_set_input_file(&parser, fd);
+    yaml_parser_set_input_file(&parser_, fd_);
 }
 
 YamlParser::~YamlParser()
 {
-    if (fd) {
-        fclose(fd);
-        yaml_parser_delete(&parser);
+    if (fd_) {
+        fclose(fd_);
+        yaml_parser_delete(&parser_);
     }
 
-    for (int i = 0; i < eventNumber; i++)
-        yaml_event_delete(&events[i]);
+    for (int i = 0; i < eventNumber_; ++i)
+        yaml_event_delete(&events_[i]);
 
-    if (doc) {
-        doc->deleteChildNodes();
-        delete doc;
+    if (doc_) {
+        doc_->deleteChildNodes();
+        delete doc_;
     }
 }
 
@@ -82,26 +84,20 @@ void YamlParser::serializeEvents()
     bool done = false;
     yaml_event_t event, copiedEvent;
 
-    try {
-        while (not done) {
+    while (not done) {
+        if (!yaml_parser_parse(&parser_, &event))
+            throw YamlParserException("Error while parsing");
 
-            if (!yaml_parser_parse(&parser, &event))
-                throw YamlParserException("Error while parsing");
+        done = (event.type == YAML_STREAM_END_EVENT);
 
-            done = (event.type == YAML_STREAM_END_EVENT);
+        copyEvent(&copiedEvent, &event);
 
-            copyEvent(&copiedEvent, &event);
+        events_.push_back(copiedEvent);
 
-            events.push_back(copiedEvent);
+        ++eventNumber_;
 
-            eventNumber++;
-
-            yaml_event_delete(&event);
-        }
-    } catch (const YamlParserException &e) {
-        throw;
+        yaml_event_delete(&event);
     }
-
 }
 
 
@@ -200,268 +196,212 @@ void YamlParser::copyEvent(yaml_event_t *event_to, yaml_event_t *event_from)
 
 YamlDocument *YamlParser::composeEvents()
 {
-    try {
-        if (eventNumber == 0)
-            throw YamlParserException("No event available");
+    if (eventNumber_ == 0)
+        throw YamlParserException("No event available");
 
-        if (events[0].type != YAML_STREAM_START_EVENT)
-            throw YamlParserException("Parsing does not start with stream start");
+    if (events_[0].type != YAML_STREAM_START_EVENT)
+        throw YamlParserException("Parsing does not start with stream start");
 
-        eventIndex = 0;
+    eventIndex_ = 0;
 
-        processStream();
-    } catch (const YamlParserException &e) {
-        throw;
-    }
+    processStream();
 
-
-    return doc;
+    return doc_;
 }
 
 void YamlParser::processStream()
 {
-    try {
-        while ((eventIndex < eventNumber) && (events[eventIndex].type != YAML_STREAM_END_EVENT)) {
+    for (; (eventIndex_ < eventNumber_) and (events_[eventIndex_].type != YAML_STREAM_END_EVENT); ++eventIndex_)
+        if (events_[eventIndex_].type == YAML_DOCUMENT_START_EVENT)
+            processDocument();
 
-            if (events[eventIndex].type == YAML_DOCUMENT_START_EVENT)
-                processDocument();
-
-            eventIndex++;
-        }
-
-        if (events[eventIndex].type != YAML_STREAM_END_EVENT)
-            throw YamlParserException("Did not found end of stream");
-    } catch (const YamlParserException &e) {
-        throw;
-    }
+    if (events_[eventIndex_].type != YAML_STREAM_END_EVENT)
+        throw YamlParserException("Did not found end of stream");
 }
 
 void YamlParser::processDocument()
 {
-    try {
+    doc_ = new YamlDocument();
 
-        doc = new YamlDocument();
+    if (!doc_)
+        throw YamlParserException("Not able to create new document");
 
-        if (!doc)
-            throw YamlParserException("Not able to create new document");
-
-        while ((eventIndex < eventNumber) && (events[eventIndex].type != YAML_DOCUMENT_END_EVENT)) {
-
-            switch (events[eventIndex].type) {
-                case YAML_SCALAR_EVENT:
-                    processScalar((YamlNode *) doc);
-                    break;
-                case YAML_SEQUENCE_START_EVENT:
-                    processSequence((YamlNode *) doc);
-                    break;
-                case YAML_MAPPING_START_EVENT:
-                    processMapping((YamlNode *) doc);
-                    break;
-                default:
-                    break;
-            }
-
-            eventIndex++;
+    for (; (eventIndex_ < eventNumber_) and (events_[eventIndex_].type != YAML_DOCUMENT_END_EVENT); ++eventIndex_) {
+        switch (events_[eventIndex_].type) {
+            case YAML_SCALAR_EVENT:
+                processScalar((YamlNode *) doc_);
+                break;
+            case YAML_SEQUENCE_START_EVENT:
+                processSequence((YamlNode *) doc_);
+                break;
+            case YAML_MAPPING_START_EVENT:
+                processMapping((YamlNode *) doc_);
+                break;
+            default:
+                break;
         }
-
-        if (events[eventIndex].type != YAML_DOCUMENT_END_EVENT)
-            throw YamlParserException("Did not found end of document");
-
-    } catch (const YamlParserException &e) {
-        throw;
     }
+
+    if (events_[eventIndex_].type != YAML_DOCUMENT_END_EVENT)
+        throw YamlParserException("Did not found end of document");
 }
 
 
 void YamlParser::processScalar(YamlNode *topNode)
 {
-    try {
+    if (!topNode)
+        throw YamlParserException("No container for scalar");
 
-        if (!topNode)
-            throw YamlParserException("No container for scalar");
+    ScalarNode *sclr = new ScalarNode(std::string((const char*)events_[eventIndex_].data.scalar.value), topNode);
 
-        ScalarNode *sclr = new ScalarNode(std::string((const char*)events[eventIndex].data.scalar.value), topNode);
-
-        switch (topNode->getType()) {
-            case DOCUMENT:
-                ((YamlDocument *)(topNode))->addNode(sclr);
-                break;
-            case SEQUENCE:
-                ((SequenceNode *)(topNode))->addNode(sclr);
-                break;
-            case MAPPING:
-                ((MappingNode *)(topNode))->addNode(sclr);
-            case SCALAR:
-            default:
-                break;
-        }
-    } catch (const YamlParserException &e) {
-        throw;
+    switch (topNode->getType()) {
+        case DOCUMENT:
+            ((YamlDocument *)(topNode))->addNode(sclr);
+            break;
+        case SEQUENCE:
+            ((SequenceNode *)(topNode))->addNode(sclr);
+            break;
+        case MAPPING:
+            ((MappingNode *)(topNode))->addNode(sclr);
+        case SCALAR:
+        default:
+            break;
     }
 }
 
 
 void YamlParser::processSequence(YamlNode *topNode)
 {
-    try {
-        if (!topNode)
-            throw YamlParserException("No container for sequence");
+    if (!topNode)
+        throw YamlParserException("No container for sequence");
 
-        SequenceNode *seq = new SequenceNode(topNode);
+    SequenceNode *seq = new SequenceNode(topNode);
 
-        switch (topNode->getType()) {
-            case DOCUMENT:
-                ((YamlDocument *)(topNode))->addNode(seq);
+    switch (topNode->getType()) {
+        case DOCUMENT:
+            ((YamlDocument *)(topNode))->addNode(seq);
+            break;
+        case SEQUENCE:
+            ((SequenceNode *)(topNode))->addNode(seq);
+            break;
+        case MAPPING:
+            ((MappingNode *)(topNode))->addNode(seq);
+        case SCALAR:
+        default:
+            break;
+    }
+
+    ++eventIndex_;
+
+    for (; (eventIndex_ < eventNumber_) and (events_[eventIndex_].type != YAML_SEQUENCE_END_EVENT); ++eventIndex_) {
+        switch (events_[eventIndex_].type) {
+            case YAML_SCALAR_EVENT:
+                processScalar(seq);
                 break;
-            case SEQUENCE:
-                ((SequenceNode *)(topNode))->addNode(seq);
+            case YAML_SEQUENCE_START_EVENT:
+                processSequence(seq);
                 break;
-            case MAPPING:
-                ((MappingNode *)(topNode))->addNode(seq);
-            case SCALAR:
+            case YAML_MAPPING_START_EVENT:
+                processMapping(seq);
+                break;
             default:
                 break;
         }
-
-        eventIndex++;
-
-        while ((eventIndex < eventNumber) && (events[eventIndex].type != YAML_SEQUENCE_END_EVENT)) {
-
-            switch (events[eventIndex].type) {
-                case YAML_SCALAR_EVENT:
-                    processScalar(seq);
-                    break;
-                case YAML_SEQUENCE_START_EVENT:
-                    processSequence(seq);
-                    break;
-                case YAML_MAPPING_START_EVENT:
-                    processMapping(seq);
-                    break;
-                default:
-                    break;
-            }
-
-            eventIndex++;
-        }
-
-        if (events[eventIndex].type != YAML_SEQUENCE_END_EVENT)
-            throw YamlParserException("Did not found end of sequence");
-
-    } catch (const YamlParserException &e) {
-        throw;
     }
+
+    if (events_[eventIndex_].type != YAML_SEQUENCE_END_EVENT)
+        throw YamlParserException("Did not found end of sequence");
 
 }
 
 void YamlParser::processMapping(YamlNode *topNode)
 {
-    try {
+    if (!topNode)
+        throw YamlParserException("No container for mapping");
 
-        if (!topNode)
-            throw YamlParserException("No container for mapping");
+    MappingNode *map = new MappingNode(topNode);
 
-        MappingNode *map = new MappingNode(topNode);
+    switch (topNode->getType()) {
+        case DOCUMENT:
+            ((YamlDocument *)(topNode))->addNode(map);
+            break;
+        case SEQUENCE:
+            ((SequenceNode *)(topNode))->addNode(map);
+            break;
+        case MAPPING:
+            ((MappingNode *)(topNode))->addNode(map);
+        case SCALAR:
+        default:
+            break;
+    }
 
-        switch (topNode->getType()) {
-            case DOCUMENT:
-                ((YamlDocument *)(topNode))->addNode(map);
+    ++eventIndex_;
+
+    while ((eventIndex_ < eventNumber_) && (events_[eventIndex_].type != YAML_MAPPING_END_EVENT)) {
+
+        if (events_[eventIndex_].type != YAML_SCALAR_EVENT)
+            throw YamlParserException("Mapping not followed by a key");
+
+        map->setTmpKey(std::string((const char *)events_[eventIndex_].data.scalar.value));
+        ++eventIndex_;
+
+        switch (events_[eventIndex_].type) {
+            case YAML_SCALAR_EVENT:
+                processScalar(map);
                 break;
-            case SEQUENCE:
-                ((SequenceNode *)(topNode))->addNode(map);
+            case YAML_SEQUENCE_START_EVENT:
+                processSequence(map);
                 break;
-            case MAPPING:
-                ((MappingNode *)(topNode))->addNode(map);
-            case SCALAR:
+            case YAML_MAPPING_START_EVENT:
+                processMapping(map);
+                break;
             default:
                 break;
         }
 
-        eventIndex++;
-
-        while ((eventIndex < eventNumber) && (events[eventIndex].type != YAML_MAPPING_END_EVENT)) {
-
-            if (events[eventIndex].type != YAML_SCALAR_EVENT)
-                throw YamlParserException("Mapping not followed by a key");
-
-            map->setTmpKey(std::string((const char *)events[eventIndex].data.scalar.value));
-
-            eventIndex++;
-
-            switch (events[eventIndex].type) {
-                case YAML_SCALAR_EVENT:
-                    processScalar(map);
-                    break;
-                case YAML_SEQUENCE_START_EVENT:
-                    processSequence(map);
-                    break;
-                case YAML_MAPPING_START_EVENT:
-                    processMapping(map);
-                    break;
-                default:
-                    break;
-            }
-
-            eventIndex++;
-        }
-
-        if (events[eventIndex].type != YAML_MAPPING_END_EVENT)
-            throw YamlParserException("Did not found end of mapping");
-
-    } catch (const YamlParserException &e) {
-        throw;
+        ++eventIndex_;
     }
+
+    if (events_[eventIndex_].type != YAML_MAPPING_END_EVENT)
+        throw YamlParserException("Did not found end of mapping");
 }
 
 void YamlParser::constructNativeData()
 {
-    try {
-        Sequence *seq;
+    Sequence *seq = doc_->getSequence();
 
-        seq = doc->getSequence();
-
-        Sequence::iterator iter = seq->begin();
-
-        while (iter != seq->end()) {
-
-            switch ((*iter)->getType()) {
-                case SCALAR:
-                    throw YamlParserException("No scalar allowed at document level, expect a mapping");
-                    break;
-                case SEQUENCE:
-                    throw YamlParserException("No sequence allowed at document level, expect a mapping");
-                    break;
-                case MAPPING: {
-                    MappingNode *map = (MappingNode *)(*iter);
-                    mainNativeDataMapping(map);
-                    break;
-                }
-                default:
-                    throw YamlParserException("Unknown type in configuration file, expect a mapping");
-                    break;
+    for (Sequence::iterator iter = seq->begin(); iter != seq->end(); ++iter) {
+        switch ((*iter)->getType()) {
+            case SCALAR:
+                throw YamlParserException("No scalar allowed at document level, expect a mapping");
+                break;
+            case SEQUENCE:
+                throw YamlParserException("No sequence allowed at document level, expect a mapping");
+                break;
+            case MAPPING: {
+                MappingNode *map = (MappingNode *)(*iter);
+                mainNativeDataMapping(map);
+                break;
             }
-
-            iter++;
-
+            default:
+                throw YamlParserException("Unknown type in configuration file, expect a mapping");
+                break;
         }
-    } catch (const YamlParserException &e) {
-        throw;
     }
-
 }
-
 
 void YamlParser::mainNativeDataMapping(MappingNode *map)
 {
 	Mapping *mapping = map->getMapping();
 
-	accountSequence	= (SequenceNode*)(*mapping)["accounts"];
-	addressbookNode = (MappingNode*)(*mapping)["addressbook"];
-	audioNode       = (MappingNode*)(*mapping)["audio"];
-	videoNode       = (MappingNode*)(*mapping)["video"];
-	hooksNode       = (MappingNode*)(*mapping)["hooks"];
-	preferenceNode  = (MappingNode*)(*mapping)["preferences"];
-	voiplinkNode    = (MappingNode*)(*mapping)["voipPreferences"];
-	shortcutNode    = (MappingNode*)(*mapping)["shortcuts"];
+	accountSequence_    = (SequenceNode*)(*mapping)["accounts"];
+    addressbookNode_    = (MappingNode*)(*mapping)["addressbook"];
+	audioNode_          = (MappingNode*)(*mapping)["audio"];
+	videoNode_          = (MappingNode*)(*mapping)["video"];
+	hooksNode_          = (MappingNode*)(*mapping)["hooks"];
+	preferenceNode_     = (MappingNode*)(*mapping)["preferences"];
+	voiplinkNode_       = (MappingNode*)(*mapping)["voipPreferences"];
+	shortcutNode_       = (MappingNode*)(*mapping)["shortcuts"];
+}
 }
 
-}

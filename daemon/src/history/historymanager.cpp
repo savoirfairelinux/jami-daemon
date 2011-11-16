@@ -35,7 +35,8 @@
 #include <cc++/file.h>
 #include <time.h>
 
-HistoryManager::HistoryManager() : history_loaded_(false), history_path_("")
+HistoryManager::HistoryManager() :
+    history_items_(), history_loaded_(false), history_path_("")
 {}
 
 int HistoryManager::load_history(int limit, const std::string &path)

@@ -31,6 +31,7 @@
 
 #include "global.h"
 #include "audiocodec.h"
+#include "noncopyable.h"
 #include <cstdio>
 #include <speex/speex.h>
 #include <cassert>
@@ -64,33 +65,35 @@ const SpeexMode* speexMode[3] = {
 
 class Speex : public sfl::AudioCodec {
     public:
-        Speex(int payload) : sfl::AudioCodec(payload, "speex") {
-            assert(payload >= 110 && payload <= 112);
-            assert(110 == PAYLOAD_CODEC_SPEEX_8000 &&
-                   111 == PAYLOAD_CODEC_SPEEX_16000 &&
-                   112 == PAYLOAD_CODEC_SPEEX_32000);
-            int type = payload - 110;
+        Speex(int payload) :
+            sfl::AudioCodec(payload, "speex"), speex_dec_bits_(),
+            speex_enc_bits_(), speex_dec_state_(0), speex_enc_state_(0),
+            speex_frame_size_(0) {
+                assert(payload >= 110 && payload <= 112);
+                assert(110 == PAYLOAD_CODEC_SPEEX_8000 &&
+                        111 == PAYLOAD_CODEC_SPEEX_16000 &&
+                        112 == PAYLOAD_CODEC_SPEEX_32000);
+                int type = payload - 110;
 
-            clockRate_ = clockRate[type];
-            frameSize_ = frameSize[type];
-            channel_ = 1;
-            bitrate_ = bitRate[type];
-            hasDynamicPayload_ = dynamicPayload[type];
+                clockRate_ = clockRate[type];
+                frameSize_ = frameSize[type];
+                channel_ = 1;
+                bitrate_ = bitRate[type];
+                hasDynamicPayload_ = dynamicPayload[type];
 
-            // Init the decoder struct
-            speex_bits_init(&speex_dec_bits_);
-            speex_dec_state_ = speex_decoder_init(speexMode[type]);
+                // Init the decoder struct
+                speex_bits_init(&speex_dec_bits_);
+                speex_dec_state_ = speex_decoder_init(speexMode[type]);
 
-            // Init the encoder struct
-            speex_bits_init(&speex_enc_bits_);
-            speex_enc_state_ = speex_encoder_init(speexMode[type]);
+                // Init the encoder struct
+                speex_bits_init(&speex_enc_bits_);
+                speex_enc_state_ = speex_encoder_init(speexMode[type]);
 
-            speex_encoder_ctl(speex_enc_state_, SPEEX_SET_SAMPLING_RATE, &clockRate_);
-            speex_decoder_ctl(speex_dec_state_, SPEEX_GET_FRAME_SIZE, &speex_frame_size_);
+                speex_encoder_ctl(speex_enc_state_, SPEEX_SET_SAMPLING_RATE, &clockRate_);
+                speex_decoder_ctl(speex_dec_state_, SPEEX_GET_FRAME_SIZE, &speex_frame_size_);
         }
 
-        Speex(const Speex&);
-        Speex& operator= (const Speex&);
+        NON_COPYABLE(Speex);
 
         ~Speex() {
             // Destroy the decoder struct
@@ -117,8 +120,8 @@ class Speex : public sfl::AudioCodec {
         }
 
     private:
-        SpeexBits  speex_dec_bits_;
-        SpeexBits  speex_enc_bits_;
+        SpeexBits speex_dec_bits_;
+        SpeexBits speex_enc_bits_;
         void *speex_dec_state_;
         void *speex_enc_state_;
         int speex_frame_size_;

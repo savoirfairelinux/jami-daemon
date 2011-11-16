@@ -35,17 +35,16 @@ namespace sfl {
 
 Pattern::Pattern(const std::string& pattern, const std::string& options) :
     pattern_(pattern),
+    subject_(),
     re_(NULL),
     ovector_(NULL),
     ovectorSize_(0),
     count_(0),
-    options_(0)
+    options_(0),
+    optionsDescription_(options)
 {
     // Set offsets
     offset_[0] = offset_[1] = 0;
-
-    // Set options.
-    optionsDescription_ = options;
 
     for (unsigned int i = 0; i < options.length(); i++) {
         switch (options.at(i)) {

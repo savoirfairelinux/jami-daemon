@@ -90,8 +90,9 @@ cd libav-0.7
 ./configure --enable-libx264 --enable-gpl --enable-swscale --enable-libvpx --enable-libmp3lame --enable-pic --enable-libtheora
 make && sudo make install
 
-# Compile the SIP library
-cd libs/pjproject-1.0.3
+# Compile the PJSIP library
+cd libs/pjproject
+
 ./autogen.sh
 ./configure --disable-ilbc-codec && make clean && make dep && make
 sudo make install

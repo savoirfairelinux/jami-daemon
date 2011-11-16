@@ -40,19 +40,18 @@ Call::Call(const std::string& id, Call::CallType type)
     , localAudioPort_(0)
     , localVideoPort_(0)
     , id_(id)
-    , confID_("")
+    , confID_()
     , type_(type)
     , connectionState_(Call::Disconnected)
     , callState_(Call::Inactive)
     , callConfig_(Call::Classic)
     , peerName_()
     , peerNumber_()
+    , displayName_()
 {}
 
-
 Call::~Call()
-{
-}
+{}
 
 void
 Call::setConnectionState(ConnectionState state)
@@ -95,7 +94,6 @@ Call::getStateStr()
                 default:
                     return isRecording() ? "RECORD" : "CURRENT";
             }
-
         case Hold:
             return "HOLD";
         case Busy:
@@ -110,7 +108,6 @@ Call::getStateStr()
                 default:
                     return "INACTIVE";
             }
-
         case Conferencing:
             return "CONFERENCING";
         case Refused:
@@ -154,7 +151,6 @@ Call::setRecording()
     if (!recordStatus) {
         mbuffer->bindHalfDuplexOut(process_id, id_);
         mbuffer->bindHalfDuplexOut(process_id);
-
         Recordable::recorder.start();
     } else {
         mbuffer->unBindHalfDuplexOut(process_id, id_);

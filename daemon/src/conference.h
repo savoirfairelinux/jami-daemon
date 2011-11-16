@@ -97,9 +97,7 @@ class Conference : public Recordable {
         virtual bool setRecording();
     private:
         std::string id_;
-
         ConferenceState confState_;
-
         ParticipantSet participants_;
 };
 

@@ -409,10 +409,7 @@ void AudioPreference::unserialize(Conf::MappingNode *map)
 }
 
 VideoPreference::VideoPreference() :
-    device_("")
-    , channel_("")
-    , size_("")
-    , rate_("")
+    device_(), channel_(), size_(), rate_()
 {
 	v4l2_list_ = new VideoV4l2List();
 	v4l2_list_->start();
@@ -473,6 +470,9 @@ void VideoPreference::unserialize (Conf::MappingNode *map)
     map->getValue(videoSizeKey, &size_);
     map->getValue(videoRateKey, &rate_);
 }
+
+ShortcutPreferences::ShortcutPreferences() : hangup_(), pickup_(), popup_(),
+    toggleHold_(), togglePickupHangup_() {}
 
 std::map<std::string, std::string> ShortcutPreferences::getShortcuts() const
 {

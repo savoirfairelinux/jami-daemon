@@ -648,6 +648,7 @@ class VideoPreference : public Serializable
 
 class ShortcutPreferences : public Serializable {
     public:
+        ShortcutPreferences();
         virtual void serialize(Conf::YamlEmitter *emitter);
         virtual void unserialize(Conf::MappingNode *map);
 
@@ -682,7 +683,7 @@ class ShortcutPreferences : public Serializable {
             return toggleHold_;
         }
 
-        void setToggleHold(std::string hold) {
+        void setToggleHold(const std::string &hold) {
             toggleHold_ = hold;
         }
 

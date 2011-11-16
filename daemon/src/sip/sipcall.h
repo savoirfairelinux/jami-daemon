@@ -35,6 +35,7 @@
 #include "call.h"
 #include <tr1/memory>
 #include "audio/audiortp/audio_rtp_factory.h"
+#include "noncopyable.h"
 
 class pjsip_evsub;
 class pj_caching_pool;
@@ -102,11 +103,7 @@ class SIPCall : public Call {
 
     private:
 
-        // Copy Constructor
-        SIPCall(const SIPCall& rh);
-
-        // Assignment Operator
-        SIPCall& operator= (const SIPCall& rh);
+        NON_COPYABLE(SIPCall);
 
         /**
          * Audio Rtp Session factory

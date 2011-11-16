@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010 Savoir-Faire Linux Inc.
- *  Author: Alexandre Savarda <alexandre.savard@savoirfairelinux.com>
+ *  Copyright (C) 2011 Savoir-Faire Linux Inc.
+ *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,40 +28,19 @@
  *  as that of the covered work.
  */
 
-#include <cstddef>
-#include <stdio.h>
-#include <sstream>
-#include <cstddef>
-#include <ccrtp/rtp.h>
-#include <assert.h>
-#include <string>
-#include <cstring>
-#include <math.h>
-#include <dlfcn.h>
-#include <iostream>
-#include <sstream>
-#include <time.h>
+#ifndef NON_COPYABLE_H_
+#define NON_COPYABLE_H_
 
-#include "rtptest.h"
-#include "audio/audiortp/audio_symmetric_rtp_session.h"
+/**
+ * @file noncopyable.h
+ * @brief Simple macro to hide class' copy constructor and assignment operator.
+ *        Useful to avoid shallow copying (i.e. class' with pointer members)
+ *        Usage: For a class named MyClass, the macro call
+ *        NON_COPYABLE(MyClass) should go in the private section of MyClass
+ */
 
-#include <unistd.h>
+#define NON_COPYABLE(ClassName) \
+    ClassName(const ClassName&); \
+    ClassName& operator=(const ClassName&)
 
-void RtpTest::setUp()
-{
-}
-
-bool RtpTest::pjsipInit()
-{
-    return true;
-}
-
-void RtpTest::testRtpInitClose()
-{
-    DEBUG("-------------------- RtpTest::testRtpInitClose --------------------\n");
-
-}
-
-void RtpTest::tearDown()
-{
-}
+#endif	// NON_COPYABLE_H_

@@ -42,7 +42,10 @@
 
 namespace sfl {
 
-AudioRtpFactory::AudioRtpFactory(SIPCall *ca) : rtpSession_(NULL), remoteContext_(NULL), localContext_(NULL), ca_(ca)
+AudioRtpFactory::AudioRtpFactory(SIPCall *ca) : rtpSession_(NULL),
+    audioRtpThreadMutex_(), srtpEnabled_(false),
+    keyExchangeProtocol_(Symmetric), helloHashEnabled_(false),
+    remoteContext_(NULL), localContext_(NULL), ca_(ca)
 {}
 
 AudioRtpFactory::~AudioRtpFactory()

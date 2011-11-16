@@ -56,7 +56,8 @@ int codecToASTFormat(int c)
 }
 }
 
-IAXCall::IAXCall(const std::string& id, Call::CallType type) : Call(id, type), session(NULL)
+IAXCall::IAXCall(const std::string& id, Call::CallType type) : Call(id, type),
+    format(0), session(NULL)
 {}
 
 int IAXCall::getSupportedFormat(const std::string &accountID) const

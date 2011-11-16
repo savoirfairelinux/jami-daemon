@@ -45,6 +45,7 @@
 #include <stdexcept>
 
 #include "global.h" // for CodecOrder
+#include "noncopyable.h"
 
 namespace sfl {
 class AudioCodec;
@@ -246,6 +247,10 @@ class Sdp {
         sfl::AudioCodec* getSessionAudioMedia() const;
 
     private:
+        NON_COPYABLE(Sdp);
+
+        std::string getLineFromLocalSDP(const std::string &keyword) const;
+
         /**
          * The pool to allocate memory, ownership to SipCall
          * SDP should not release the pool itself
@@ -285,7 +290,6 @@ class Sdp {
         std::vector<sfl::Codec *> audio_codec_list_;
 		std::vector<std::string> video_codec_list_;
 
-
         /**
          * The codecs that will be used by the session (after the SDP negotiation)
          */
@@ -308,12 +312,6 @@ class Sdp {
         std::vector<std::string> srtpCrypto_;
 
         unsigned int telephoneEventPayload_;
-
-        // noncopyable
-        Sdp(const Sdp&);
-        Sdp& operator=(const Sdp&);
-
-        std::string getLineFromLocalSDP(const std::string &keyword) const;
 
         /*
          * Build the sdp media section

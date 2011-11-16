@@ -35,14 +35,13 @@
 #ifndef SIPACCOUNT_H
 #define SIPACCOUNT_H
 
-#include <sstream>
-
+#include <vector>
+#include <map>
 #include "account.h"
 #include "pjsip/sip_transport_tls.h"
 #include "pjsip/sip_types.h"
 #include "pjsip-ua/sip_regc.h"
-#include <vector>
-#include <map>
+#include "noncopyable.h"
 
 namespace Conf {
 class YamlEmitter;
@@ -413,6 +412,7 @@ class SIPAccount : public Account {
 
         pjsip_transport* transport_;
     private:
+        NON_COPYABLE(SIPAccount);
 
         std::vector< std::map<std::string, std::string > > credentials_;
 
@@ -441,10 +441,6 @@ class SIPAccount : public Account {
          * @return std::string The login name under which SFLPhone is running.
          */
         static std::string getLoginName();
-
-        // noncopyable
-        SIPAccount(const SIPAccount &);
-        SIPAccount& operator=(const SIPAccount &);
 
         // The pjsip client registration information
         pjsip_regc *regc_;

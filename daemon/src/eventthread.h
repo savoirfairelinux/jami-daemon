@@ -32,6 +32,7 @@
 #define __EVENT_THREAD_H__
 
 #include <cc++/thread.h>
+#include "noncopyable.h"
 
 class VoIPLink;
 
@@ -51,8 +52,7 @@ class EventThread : public ost::Thread {
         virtual void run() ;
 
     private:
-        EventThread(const EventThread& rh);
-        EventThread& operator= (const EventThread& rh);
+        NON_COPYABLE(EventThread);
 
         // VoIPLink is the object being called by getEvents() method
         VoIPLink*	link_;

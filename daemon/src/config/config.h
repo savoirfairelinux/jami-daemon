@@ -29,12 +29,13 @@
  *  as that of the covered work.
  */
 
-#ifndef __CONF_CONFIG_H__
-#define __CONF_CONFIG_H__
+#ifndef CONF_CONFIG_H__
+#define CONF_CONFIG_H__
 
 #include <map>
 #include <string>
 #include <list>
+#include "noncopyable.h"
 
 /**
  * @file config.h
@@ -81,8 +82,7 @@ class ConfigTreeIterator {
         friend class ConfigTree;
         ConfigTreeIterator(ConfigTree *configTree) : tree_(configTree), endToken_(), iter_(), iterItem_() {}
 
-        ConfigTreeIterator(const Conf::ConfigTreeIterator&);
-        ConfigTreeIterator& operator= (const Conf::ConfigTreeIterator&);
+        NON_COPYABLE(ConfigTreeIterator);
 
         ConfigTree* tree_;
         TokenList endToken_;
@@ -92,7 +92,7 @@ class ConfigTreeIterator {
 
 class ConfigTree {
     public:
-        ConfigTree() {}
+        ConfigTree() : sections_(), defaultValueMap_() {}
         ~ConfigTree();
         /**
          * Add a default value for a given key.
@@ -171,9 +171,7 @@ class ConfigTree {
 
         friend class ConfigTreeIterator;
 
-        // noncopyable
-        ConfigTree(const ConfigTree &other);
-        ConfigTree& operator=(const ConfigTree &other);
+        NON_COPYABLE(ConfigTree);
     public:
         ConfigTreeIterator createIterator() {
             return ConfigTreeIterator(this);

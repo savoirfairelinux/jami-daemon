@@ -48,7 +48,10 @@ int RingBuffer::count_rb = 0;
 RingBuffer::RingBuffer(int size, const std::string &call_id) : endPos_(0)
     , bufferSize_(size > MIN_BUFFER_SIZE ? size : MIN_BUFFER_SIZE)
     , buffer_(NULL)
+    , readpointer_()
     , buffer_id_(call_id)
+    , buffer_input_rec(0)
+    , buffer_output_rec(0)
 {
     buffer_ = new unsigned char[bufferSize_];
     count_rb++;

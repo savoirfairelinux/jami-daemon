@@ -37,7 +37,8 @@
 #include <algorithm> // for std::find
 #include "fileutils.h"
 
-AudioCodecFactory::AudioCodecFactory() : codecsMap_()
+AudioCodecFactory::AudioCodecFactory() :
+    codecsMap_(), defaultCodecOrder_(), libCache_(), codecInMemory_()
 {
     typedef std::vector<sfl::Codec*> CodecVector;
     CodecVector codecDynamicList(scanCodecDirectory());

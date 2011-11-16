@@ -70,8 +70,11 @@ PulseLayer::PulseLayer()
     : playback_(0)
     , record_(0)
     , ringtone_(0)
+    , sinkList_()
+    , sourceList_()
     , mic_buffer_(0)
     , mic_buf_size_(0)
+    , context_(0)
     , mainloop_(pa_threaded_mainloop_new())
 {
     setenv("PULSE_PROP_media.role", "phone", 1);

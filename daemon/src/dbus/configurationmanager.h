@@ -40,9 +40,11 @@
 
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Weffc++"
 #include "configurationmanager-glue.h"
 #pragma GCC diagnostic warning "-Wignored-qualifiers"
 #pragma GCC diagnostic warning "-Wunused-parameter"
+#pragma GCC diagnostic warning "-Weffc++"
 
 #if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
 #pragma GCC diagnostic warning "-Wunused-but-set-variable"
@@ -58,8 +60,8 @@ namespace sfl_video {
 
 class ConfigurationManager
     : public org::sflphone::SFLphone::ConfigurationManager_adaptor,
-  public DBus::IntrospectableAdaptor,
-      public DBus::ObjectAdaptor {
+    public DBus::IntrospectableAdaptor,
+    public DBus::ObjectAdaptor {
     private:
         std::vector<std::string> shortcutsKeys;
         // FIXME: this probably shouldn't live here

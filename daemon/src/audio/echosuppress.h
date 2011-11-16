@@ -10,6 +10,7 @@
 
 #include "pjmedia/echo.h"
 #include "global.h"
+#include "noncopyable.h"
 
 class EchoSuppress {
     public:
@@ -26,11 +27,12 @@ class EchoSuppress {
         void getData(SFLDataFormat *);
 
     private:
+        NON_COPYABLE(EchoSuppress);
 
         /**
          * The internal state of the echo canceller
          */
-        pjmedia_echo_state *echoState;
+        pjmedia_echo_state *echoState_;
 };
 
 #endif /* ECHOSUPPRESS_H_ */

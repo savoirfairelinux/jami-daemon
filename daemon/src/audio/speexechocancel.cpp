@@ -30,42 +30,37 @@
 // number of sample to process, (800 à 4000 samples, 100 to 500 ms)
 #define EC_FILTER_LENGTH 800
 
+namespace {
+const int SPEEX_SAMPLE_RATE = 8000;
+const int RINGBUFFER_SIZE = 100000;
+}
 
-SpeexEchoCancel::SpeexEchoCancel()
+SpeexEchoCancel::SpeexEchoCancel() :
+    echoDelay_(Manager::instance().getEchoCancelDelay() * SPEEX_SAMPLE_RATE / 1000),
+    echoTailLength_(Manager::instance().getEchoCancelTailLength() * SPEEX_SAMPLE_RATE / 1000),
+    echoState_(speex_echo_state_init(EC_FRAME_SIZE, echoTailLength_)),
+    preState_(speex_preprocess_state_init(EC_FRAME_SIZE, SPEEX_SAMPLE_RATE)),
+    micData_(new RingBuffer(RINGBUFFER_SIZE)),
+    spkrData_(new RingBuffer(RINGBUFFER_SIZE)),
+    spkrStopped_(true)
 {
-    int samplingRate = 8000;
-
-    int echoDelayMs = Manager::instance().getEchoCancelDelay();
-    int echoTailLengthMs = Manager::instance().getEchoCancelTailLength();
-
-    echoDelay_ = echoDelayMs * samplingRate / 1000;
-    echoTailLength_ = echoTailLengthMs * samplingRate / 1000;
-
-    // echoState_ = speex_echo_state_init (EC_FRAME_SIZE, EC_FILTER_LENGTH);
-    echoState_ = speex_echo_state_init(EC_FRAME_SIZE, echoTailLength_);
-    preState_ = speex_preprocess_state_init(EC_FRAME_SIZE, samplingRate);
-
     DEBUG("EchoCancel: Initializing echo canceller with delay: %d, filter length: %d, frame size: %d and samplerate %d",
-          echoDelay_, echoTailLength_, EC_FRAME_SIZE, samplingRate);
+          echoDelay_, echoTailLength_, EC_FRAME_SIZE, SPEEX_SAMPLE_RATE);
 
-    speex_echo_ctl(echoState_, SPEEX_ECHO_SET_SAMPLING_RATE, &samplingRate);
+    int rate = SPEEX_SAMPLE_RATE;
+    speex_echo_ctl(echoState_, SPEEX_ECHO_SET_SAMPLING_RATE, &rate);
     speex_preprocess_ctl(preState_, SPEEX_PREPROCESS_SET_ECHO_STATE, echoState_);
-
-    micData_ = new RingBuffer(100000);
-    spkrData_ = new RingBuffer(100000);
 
     micData_->createReadPointer();
     spkrData_->createReadPointer();
-
-    spkrStopped_ = true;
 }
 
 SpeexEchoCancel::~SpeexEchoCancel()
 {
     speex_echo_state_destroy(echoState_);
     speex_preprocess_state_destroy(preState_);
-    delete micData_;
     delete spkrData_;
+    delete micData_;
 }
 
 void SpeexEchoCancel::putData(SFLDataFormat *inputData, int samples)

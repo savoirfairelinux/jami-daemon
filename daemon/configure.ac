@@ -199,7 +199,7 @@ PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,,
 
 PKG_CHECK_MODULES(UDEV, libudev >= 142)
 
-CXXFLAGS="${CXXFLAGS} -g -Wno-return-type -Wall -Wextra -Wnon-virtual-dtor"
+CXXFLAGS="${CXXFLAGS} -g -Wno-return-type -Wall -Wextra -Wnon-virtual-dtor -Weffc++ -Wfatal-errors"
 
 AC_CHECK_LIB([expat], XML_ParserCreate_MM,
 		[AC_CHECK_HEADERS(expat.h, have_expat=true, have_expat=false)],

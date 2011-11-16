@@ -34,6 +34,7 @@
 #define __AUDIOLOOP_H__
 
 #include "global.h" // for SFLDataFormat
+#include "noncopyable.h"
 
 /**
  * @file audioloop.h
@@ -85,12 +86,7 @@ class AudioLoop {
         unsigned int sampleRate_;
 
     private:
-
-        // Copy Constructor
-        AudioLoop(const AudioLoop& rh);
-
-        // Assignment Operator
-        const AudioLoop& operator= (const AudioLoop& rh);
+        NON_COPYABLE(AudioLoop);
 };
 
 #endif // __AUDIOLOOP_H__

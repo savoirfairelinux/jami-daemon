@@ -37,8 +37,8 @@
 #define DTMFGENERATOR_H
 
 #include <stdexcept>
-#include <string.h>
-
+#include <string>
+#include "noncopyable.h"
 #include "tone.h"
 
 #define NUM_TONES 16
@@ -94,17 +94,9 @@ class DTMFGenerator {
          */
         DTMFGenerator(unsigned int sampleRate);
 
-        /**
-         * Destructor
-         */
         ~DTMFGenerator();
 
-
-        // Copy Constructor
-        DTMFGenerator(const DTMFGenerator& rh);
-
-        // Assignment Operator
-        DTMFGenerator& operator= (const DTMFGenerator& rh);
+        NON_COPYABLE(DTMFGenerator);
 
         /*
          * Get n samples of the signal of code code

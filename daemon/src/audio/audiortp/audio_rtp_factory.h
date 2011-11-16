@@ -35,6 +35,7 @@
 #include <cc++/thread.h>
 #include <ccrtp/CryptoContext.h>
 #include "audio_rtp_session.h"
+#include "noncopyable.h"
 
 #include "sip/sdes_negotiator.h"
 
@@ -138,6 +139,7 @@ class AudioRtpFactory {
         void sendDtmfDigit(int digit);
 
     private:
+        NON_COPYABLE(AudioRtpFactory);
         AudioRtpSession *rtpSession_;
         ost::Mutex audioRtpThreadMutex_;
 

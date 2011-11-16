@@ -47,6 +47,8 @@ AudioRtpSession::AudioRtpSession(SIPCall * sipcall, RtpMethod type, ost::RTPData
     AudioRtpRecordHandler(sipcall)
     , ca_(sipcall)
     , type_(type)
+    , remote_ip_()
+    , remote_port_(0)
     , timestamp_(0)
     , timestampIncrement_(0)
     , timestampCount_(0)

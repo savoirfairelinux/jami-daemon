@@ -36,6 +36,7 @@
 #include <vector>
 
 #include "global.h"
+#include "noncopyable.h"
 #include "config/config.h"
 #include "config/serializable.h"
 
@@ -302,11 +303,7 @@ class Account : public Serializable {
         }
 
     private:
-        // copy constructor
-        Account(const Account& rh);
-
-        // assignment operator
-        Account& operator= (const Account& rh);
+        NON_COPYABLE(Account);
 
         /**
          * Helper function used to load the default codec order from the codec factory

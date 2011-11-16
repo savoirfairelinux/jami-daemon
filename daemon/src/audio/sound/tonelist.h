@@ -58,10 +58,7 @@ class TelephoneTone {
         Tone* getCurrentTone();
 
     private:
-        // Copy Constructor
-        TelephoneTone(const TelephoneTone& rh);
-        // Assignment Operator
-        TelephoneTone& operator= (const TelephoneTone& rh);
+        NON_COPYABLE(TelephoneTone);
 
         static COUNTRYID getCountryId(const std::string& countryName);
 

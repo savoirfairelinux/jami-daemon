@@ -34,6 +34,8 @@
 #include "call.h"
 #include "voiplink.h"
 
+VoIPLink::VoIPLink() : callMap_(), callMapMutex_() {}
+
 VoIPLink::~VoIPLink()
 {
     ost::MutexLock m(callMapMutex_);

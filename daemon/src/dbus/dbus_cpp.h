@@ -27,15 +27,17 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#ifndef _DBUS_CPP_WRAPPER_H_
-#define  _DBUS_CPP_WRAPPER_H_
+#ifndef DBUS_CPP_WRAPPER_H_
+#define DBUS_CPP_WRAPPER_H_
 
 #pragma GCC diagnostic ignored "-Wshadow"
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Weffc++"
 #include <dbus-c++/dbus.h>
 #pragma GCC diagnostic warning "-Wignored-qualifiers"
 #pragma GCC diagnostic warning "-Wshadow"
 #pragma GCC diagnostic warning "-Wunused-parameter"
+#pragma GCC diagnostic warning "-Weffc++"
 
-#endif // _DBUS_CPP_WRAPPER_H_
+#endif // DBUS_CPP_WRAPPER_H_

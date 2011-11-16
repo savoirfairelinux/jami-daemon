@@ -33,6 +33,7 @@
 #include <string>
 #include <vector>
 #include <pcre.h>
+#include "noncopyable.h"
 
 namespace sfl {
 
@@ -94,14 +95,16 @@ class Pattern {
          *
          * @param pattern The new pattern
          */
-        void operator= (const std::string& pattern) {
+        Pattern& operator=(const std::string& pattern) {
             pattern_ = pattern;
             compile();
+            return *this;
         }
 
-        void operator= (const char * pattern) {
+        Pattern& operator=(const char * pattern) {
             pattern_ = pattern;
             compile();
+            return *this;
         }
 
         /**
@@ -293,6 +296,7 @@ class Pattern {
         std::vector<std::string> split();
 
     private:
+        NON_COPYABLE(Pattern);
          // The regular expression that represents that pattern.
         std::string pattern_;
 

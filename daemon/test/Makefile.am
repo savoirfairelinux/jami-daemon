@@ -24,8 +24,6 @@ test_SOURCES = \
 	historytest.cpp \
 	numbercleanertest.h \
 	numbercleanertest.cpp \
-	rtptest.h \
-	rtptest.cpp \
 	sdesnegotiatortest.h \
 	sdesnegotiatortest.cpp \
 	instantmessagingtest.h \
@@ -50,7 +48,6 @@ test_SOURCES = \
 	mainbuffertest.h \
 	numbercleanertest.h \
 	ringtonetest.h \
-	rtptest.h \
 	sdesnegotiatortest.h \
 	sdptest.h \
 	siptest.h \

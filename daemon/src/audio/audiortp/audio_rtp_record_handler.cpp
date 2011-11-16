@@ -47,8 +47,10 @@ AudioRtpRecord::AudioRtpRecord() :
     , codecSampleRate_(0)
     , codecFrameSize_(0)
     , converterSamplingRate_(0)
+    , dtmfQueue_()
     , micAmplFactor_(initFadeinFactor)
     , noiseSuppress_(0)
+    , audioProcessMutex_()
     , callId_("")
     , dtmfPayloadType_(101) // same as Asterisk
 {

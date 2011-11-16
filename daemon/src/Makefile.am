@@ -47,7 +47,8 @@ noinst_HEADERS = \
 		call.h \
 		logger.h \
 		numbercleaner.h \
-		fileutils.h
+		fileutils.h \
+		noncopyable.h
 
 libsflphone_la_LIBADD = \
 	$(top_builddir)/libs/utilspp/libutilspp.la \

@@ -31,9 +31,10 @@
 #ifndef __AUDIORECORDER_H_
 #define __AUDIORECORDER_H_
 
+#include <string>
 #include <cc++/thread.h>
 #include "audiorecord.h"
-#include <string>
+#include "noncopyable.h"
 
 class MainBuffer;
 
@@ -55,13 +56,10 @@ class AudioRecorder : public ost::Thread {
         virtual void run();
 
     private:
-        AudioRecorder(const AudioRecorder& ar);
-        AudioRecorder& operator= (const AudioRecorder& ar);
+        NON_COPYABLE(AudioRecorder);
 
         std::string recorderId_;
-
         MainBuffer *mbuffer_;
-
         AudioRecord *arecord_;
 };
 

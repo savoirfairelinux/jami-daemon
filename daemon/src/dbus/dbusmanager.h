@@ -32,6 +32,7 @@
 #define __DBUSMANAGERIMPL_H__
 
 #include "dbus_cpp.h"
+#include "noncopyable.h"
 
 class ConfigurationManager;
 class CallManager;
@@ -54,6 +55,7 @@ class DBusManager {
         void exit();
 
     private:
+        NON_COPYABLE(DBusManager);
         CallManager*          callManager_;
         ConfigurationManager* configurationManager_;
         Instance*             instanceManager_;

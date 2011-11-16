@@ -57,7 +57,9 @@ HistoryItem::HistoryItem(const std::string &timestamp_start,
 {}
 
 
-HistoryItem::HistoryItem(std::string serialized_form)
+HistoryItem::HistoryItem(std::string serialized_form) :
+    timestamp_start_(), timestamp_stop_(), call_type_(CALL_MISSED), name_(),
+    number_(), id_(), account_id_(), recording_file_(), confID_(), timeAdded_() 
 {
     for (int index = 0; serialized_form.find(ITEM_SEPARATOR, 0) != std::string::npos; ++index) {
         size_t pos = serialized_form.find(ITEM_SEPARATOR, 0);

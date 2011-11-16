@@ -39,8 +39,10 @@
 #include <cstddef>
 
 #include "audio_rtp_session.h"
+#include "noncopyable.h"
 
 using std::ptrdiff_t;
+
 #include <ccrtp/rtp.h>
 #include <ccrtp/iqueue.h>
 #include <cc++/numbers.h> // ost::Time
@@ -69,6 +71,7 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTP
         }
 
     private:
+        NON_COPYABLE(AudioSymmetricRtpSession);
 
         class AudioRtpThread : public ost::Thread, public ost::TimerPort {
             public:
@@ -80,9 +83,7 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTP
                 bool running;
 
             private:
-                AudioRtpThread(const AudioRtpThread &);
-                AudioRtpThread& operator=(const AudioRtpThread &);
-
+                NON_COPYABLE(AudioRtpThread);
                 AudioSymmetricRtpSession *rtpSession;
         };
         SpeexEchoCancel echoCanceller;

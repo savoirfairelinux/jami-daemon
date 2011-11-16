@@ -52,6 +52,7 @@ struct wavhdr {
 
 
 AudioRecord::AudioRecord() : fileHandle_(NULL)
+    , fileType_(FILE_INVALID)
     , channels_(1)
     , byteCounter_(0)
     , sndSmplRate_(8000)
@@ -62,6 +63,7 @@ AudioRecord::AudioRecord() : fileHandle_(NULL)
     , mixBuffer_(new SFLDataFormat[nbSamplesMax_])
     , micBuffer_(new SFLDataFormat[nbSamplesMax_])
     , spkBuffer_(new SFLDataFormat[nbSamplesMax_])
+    , savePath_()
 {
     createFilename();
 }

@@ -33,6 +33,7 @@
 #define _ALSA_LAYER_H
 
 #include "audio/audiolayer.h"
+#include "noncopyable.h"
 #include <alsa/asoundlib.h>
 
 class RingBuffer;
@@ -167,12 +168,7 @@ class AlsaLayer : public AudioLayer {
          */
         int indexRing_;
 
-
-        // Copy Constructor
-        AlsaLayer(const AlsaLayer& rh);
-
-        // Assignment Operator
-        AlsaLayer& operator= (const AlsaLayer& rh);
+        NON_COPYABLE(AlsaLayer);
 
         /**
          * Drop the pending frames and close the capture device

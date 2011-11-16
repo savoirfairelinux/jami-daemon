@@ -97,11 +97,15 @@ void FirFilter::reset()
 }
 
 
-DelayDetection::DelayDetection() : internalState_(WaitForSpeaker), decimationFilter_(ird), bandpassFilter_(irb), segmentSize_(DELAY_BUFF_SIZE), downsamplingFactor_(8)
+DelayDetection::DelayDetection() :
+    internalState_(WaitForSpeaker), decimationFilter_(ird),
+    bandpassFilter_(irb), segmentSize_(DELAY_BUFF_SIZE),
+    downsamplingFactor_(8),
+    spkrDownSize_(DELAY_BUFF_SIZE / downsamplingFactor_),
+    micDownSize_(WINDOW_SIZE / downsamplingFactor_),
+    nbMicSampleStored_(0),
+    nbSpkrSampleStored_(0)
 {
-    micDownSize_ = WINDOW_SIZE / downsamplingFactor_;
-    spkrDownSize_ = DELAY_BUFF_SIZE / downsamplingFactor_;
-
     memset(spkrReference_, 0, sizeof(float) *WINDOW_SIZE*2);
     memset(capturedData_, 0, sizeof(float) *DELAY_BUFF_SIZE*2);
     memset(spkrReferenceDown_, 0, sizeof(float) *WINDOW_SIZE*2);

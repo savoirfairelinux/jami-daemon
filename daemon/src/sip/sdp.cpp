@@ -43,17 +43,20 @@ Sdp::Sdp(pj_pool_t *pool)
     , remoteSession_(NULL)
     , activeLocalSession_(NULL)
     , activeRemoteSession_(NULL)
-    , localIpAddr_("")
-	, remoteIpAddr_("")
+    , audio_codec_list_()
+    , video_codec_list_()
+    , sessionAudioMedia_()
+    , sessionVideoMedia_()
+    , localIpAddr_()
+    , remoteIpAddr_()
     , localAudioPort_(1234)
 	, localVideoPort_(1235)
-	, remoteAudioPort_(1236)
+    , remoteAudioPort_(1236)
 	, remoteVideoPort_(1237)
-	, zrtpHelloHash_("")
-	, srtpCrypto_()
+    , zrtpHelloHash_()
+    , srtpCrypto_()
     , telephoneEventPayload_(101) // same as asterisk
-{
-}
+{}
 
 void Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session *sdp)
 {

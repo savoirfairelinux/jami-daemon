@@ -36,6 +36,7 @@
 #include <iax-client.h>
 #include "audio/codecs/audiocodec.h" // for DEC_BUFFER_SIZE
 #include "global.h"
+#include "noncopyable.h"
 #include "audio/samplerateconverter.h"
 
 namespace sfl {
@@ -176,6 +177,7 @@ class IAXVoIPLink : public VoIPLink {
         virtual std::string getCurrentCodecName(Call *c) const;
 
     private:
+        NON_COPYABLE(IAXVoIPLink);
         /*
          * Decode the message count IAX send.
          * Returns only the new messages number
