@@ -28,8 +28,6 @@
  *  as that of the covered work.
  */
 
-#include <assert.h>
-
 #include "icon_factory.h"
 #include "icons/pixmap_data.h"
 #include "logger.h"
