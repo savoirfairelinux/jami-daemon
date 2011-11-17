@@ -123,7 +123,6 @@ static void
 instant_messaging_enabled_cb(GtkWidget *widget)
 {
     instant_messaging_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
     eel_gconf_set_integer(INSTANT_MESSAGING_ENABLED, !eel_gconf_get_integer(INSTANT_MESSAGING_ENABLED));
 }
 
@@ -163,7 +162,7 @@ create_general_settings()
     instant_messaging_load_configuration();
 
     // Main widget
-    ret = gtk_vbox_new(FALSE, 10);
+    ret = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
     // Notifications Frame
@@ -326,7 +325,7 @@ static GdkPixbuf *get_icon(const gchar *name, GtkWidget *widget)
     GtkIconTheme *theme = gtk_icon_theme_get_default();
     GdkPixbuf *pixbuf = gtk_icon_theme_load_icon(theme, name, 48, 0, NULL);
     if (!pixbuf)
-        pixbuf = gtk_widget_render_icon(widget, name, GTK_ICON_SIZE_DIALOG, NULL);
+        pixbuf = gtk_widget_render_icon_pixbuf(widget, name, GTK_ICON_SIZE_DIALOG);
 
     return pixbuf;
 }
@@ -350,7 +349,7 @@ static GtkTreeModel* create_model(GtkWidget *widget)
 
     for (gint i = 0; i < nb_entries; i++) {
         GtkTreeIter iter;
-        gtk_list_store_append (store, &iter);
+        gtk_list_store_append(store, &iter);
         GdkPixbuf *pixbuf = get_icon(browser_entries_full[i].icon_name, widget);
         gtk_list_store_set(store, &iter,
                            PIXBUF_COL, pixbuf,
@@ -372,7 +371,6 @@ guint
 show_preferences_dialog()
 {
     dialogOpen = TRUE;
-
     GtkDialog *dialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("Preferences"),
                                    GTK_WINDOW(get_main_window()),
                                    GTK_DIALOG_DESTROY_WITH_PARENT,
@@ -384,7 +382,7 @@ show_preferences_dialog()
     gtk_window_set_default_size(GTK_WINDOW(dialog), 600, 400);
     gtk_container_set_border_width(GTK_CONTAINER(dialog), 0);
 
-    GtkWidget *hbox = gtk_hbox_new(FALSE, 10);
+    GtkWidget *hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
 
     // Create tree view
     iconview = gtk_icon_view_new_with_model(create_model(hbox));

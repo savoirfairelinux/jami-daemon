@@ -29,11 +29,9 @@
  */
 
 #include "icon_factory.h"
-#include "icons/pixmap_data.h"
 #include "logger.h"
 #include <gtk/gtk.h>
 #include "icons/pixmap_data.h"
-#include "sflphone_const.h"
 
 static GtkIconFactory *icon_factory = NULL;
 
@@ -82,3 +80,4 @@ void init_icon_factory(void)
     register_sflphone_stock_icons(icon_factory);
     gtk_icon_factory_add_default(icon_factory);
 }
+

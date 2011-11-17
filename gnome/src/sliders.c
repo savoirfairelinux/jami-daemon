@@ -166,7 +166,7 @@ create_slider(const gchar * device)
         g_object_ref(images[MIKE][VOL75]);
     }
 
-    ret = gtk_hbox_new(FALSE /*homogeneous*/, 5 /*spacing*/);
+    ret = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5 /*spacing*/);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 5);
 
     gtk_widget_set_tooltip_text(GTK_WIDGET(ret),
@@ -177,7 +177,7 @@ create_slider(const gchar * device)
     toggledConnId[dev] = g_signal_connect(G_OBJECT(button[dev]), "toggled",
                                           G_CALLBACK(mute_cb), (gpointer) device);
 
-    slider[dev] = gtk_hscale_new_with_range(0, 1, 0.05);
+    slider[dev] = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0, 1, 0.05);
     gtk_scale_set_draw_value(GTK_SCALE(slider[dev]), FALSE);
     //gtk_range_set_update_policy(GTK_RANGE(slider), GTK_UPDATE_DELAYED);
     movedConnId[dev] = g_signal_connect(G_OBJECT(slider[dev]), "value_changed",

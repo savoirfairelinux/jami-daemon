@@ -514,7 +514,7 @@ GtkWidget* create_account_list(GtkDialog * dialog UNUSED)
     gtk_container_add(GTK_CONTAINER(scrolledWindow), GTK_WIDGET(treeView));
 
     /* The buttons to press! */
-    buttonBox = gtk_vbutton_box_new();
+    buttonBox = gtk_button_box_new(GTK_ORIENTATION_VERTICAL);
     gtk_box_set_spacing(GTK_BOX(buttonBox), 10);
     gtk_button_box_set_layout(GTK_BUTTON_BOX(buttonBox), GTK_BUTTONBOX_START);
     gtk_table_attach(GTK_TABLE(table), buttonBox, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -547,7 +547,7 @@ GtkWidget* create_account_list(GtkDialog * dialog UNUSED)
     gtk_box_pack_start(GTK_BOX(buttonBox), deleteButton, FALSE, FALSE, 0);
 
     /* help and close buttons */
-    GtkWidget * buttonHbox = gtk_hbutton_box_new();
+    GtkWidget * buttonHbox = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
     gtk_table_attach(GTK_TABLE(table), buttonHbox, 0, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 10);
 
     GtkWidget * helpButton = gtk_button_new_from_stock(GTK_STOCK_HELP);
@@ -563,10 +563,10 @@ GtkWidget* create_account_list(GtkDialog * dialog UNUSED)
     // account_list_config_dialog_fill();
 
     /* Resize the scrolledWindow for a better view */
-    gtk_widget_size_request(GTK_WIDGET(treeView), &requisition);
+    gtk_widget_get_preferred_size(GTK_WIDGET(treeView), NULL, &requisition);
     gtk_widget_set_size_request(GTK_WIDGET(scrolledWindow), requisition.width + 20, requisition.height);
     GtkRequisition requisitionButton;
-    gtk_widget_size_request(GTK_WIDGET(deleteButton), &requisitionButton);
+    gtk_widget_get_preferred_size(GTK_WIDGET(deleteButton), NULL, &requisitionButton);
     gtk_widget_set_size_request(GTK_WIDGET(closeButton), requisitionButton.width, -1);
     gtk_widget_set_size_request(GTK_WIDGET(helpButton), requisitionButton.width, -1);
 

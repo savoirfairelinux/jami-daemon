@@ -42,7 +42,8 @@
 namespace sfl {
 
 AudioSymmetricRtpSession::AudioSymmetricRtpSession(SIPCall * sipcall) :
-    ost::SymmetricRTPSession(ost::InetHostAddress(sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort())
+    ost::TimerPort()
+    , ost::SymmetricRTPSession(ost::InetHostAddress(sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort())
     , AudioRtpSession(sipcall, Symmetric, this, this)
     , echoCanceller()
     , rtpThread_(new AudioRtpThread(this))

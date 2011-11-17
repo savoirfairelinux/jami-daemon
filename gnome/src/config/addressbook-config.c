@@ -324,7 +324,7 @@ addressbook_config_fill_book_list()
 GtkWidget*
 create_addressbook_settings()
 {
-    GtkWidget *ret, *result_frame, *table, *value, *item;
+    GtkWidget *result_frame, *table, *value, *item;
 
     GtkListStore *store;
     GtkCellRenderer *renderer;
@@ -333,7 +333,7 @@ create_addressbook_settings()
     // Load the user value
     addressbook_config = addressbook_config_load_parameters();
 
-    ret = gtk_vbox_new(FALSE, 10);
+    GtkWidget *ret = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
     gnome_main_section_new_with_table(_("General"), &result_frame, &table, 3, 3);
@@ -346,7 +346,7 @@ create_addressbook_settings()
     gtk_table_attach(GTK_TABLE(table), item, 1, 3, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     // SCALE BUTTON - NUMBER OF RESULTS
-    scale_button = gtk_hbox_new(FALSE, 0);
+    scale_button = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     scale_label = gtk_label_new(_("Download limit :"));
     gtk_box_pack_start(GTK_BOX(scale_button),scale_label,FALSE,FALSE,0);
     value = gtk_spin_button_new_with_range(1, G_MAXINT, 1);

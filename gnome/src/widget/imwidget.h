@@ -53,7 +53,7 @@ typedef struct _IMWidget      IMWidget;
 typedef struct _IMWidgetClass IMWidgetClass;
 
 struct _IMWidget {
-    GtkVBox parent_instance;
+    GtkBox parent_instance;
 
     /* Private */
     GtkWidget *tab;
@@ -71,7 +71,7 @@ struct _IMWidget {
 };
 
 struct _IMWidgetClass {
-    GtkVBoxClass parent_class;
+    GtkBoxClass parent_class;
 };
 
 

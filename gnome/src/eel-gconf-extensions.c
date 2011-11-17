@@ -23,7 +23,7 @@
 */
 
 #include <stdlib.h>
-#include <config.h>
+#include "config.h"
 #include "eel-gconf-extensions.h"
 
 #include <gconf/gconf-client.h>

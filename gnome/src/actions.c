@@ -70,7 +70,8 @@ static gchar ** sflphone_order_history_hash_table(GHashTable *result)
     assert(result);
 
     while (g_hash_table_size(result)) {
-        gpointer key, key_to_min, value;
+        gpointer key, value;
+        gpointer key_to_min = NULL;
 
         // find lowest timestamp in map
         g_hash_table_iter_init(&iter, result);

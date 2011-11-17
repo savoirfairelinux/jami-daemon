@@ -37,7 +37,7 @@ noinst_HEADERS =  actions.h sflnotify.h mainwindow.h dialpad.h codeclist.h \
                   shortcuts.h eel-gconf-extensions.h logger.h imwindow.h unused.h
 
 sflphone_client_gnome_LDADD = $(DBUSGLIB_LIBS) $(LIBNOTIFY_LIBS) $(NOTIFY_LIBS) $(SFLPHONEGTK_LIBS) $(X11_LIBS) \
-				$(GTK_LIBS) $(GLIB_LIBS) $(WEBKIT_LIBS) $(LD_LIBS) $(GCONF_LIBS)
+							  $(GTK_LIBS) $(GLIB_LIBS) $(WEBKIT_LIBS) $(LD_LIBS) $(GCONF_LIBS)
 
 sflphone_client_gnome_CFLAGS = $(DBUSGLIB_CFLAGS) $(LIBNOTIFY_CFLAGS) $(NOTIFY_CFLAGS) $(GTK_CFLAGS) $(X11_CFLAGS) \
                                 $(GLIB_CFLAGS) $(WEBKIT_CFLAGS) $(GCONF_CFLAGS)

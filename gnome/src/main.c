@@ -28,13 +28,13 @@
  *  as that of the covered work.
  */
 
-#include <actions.h>
-#include <calllist.h>
-#include <config.h>
-#include <logger.h>
-#include <dbus/dbus.h>
-#include <mainwindow.h>
-#include <statusicon.h>
+#include "actions.h"
+#include "calllist.h"
+#include "config.h"
+#include "logger.h"
+#include "dbus/dbus.h"
+#include "mainwindow.h"
+#include "statusicon.h"
 
 #include "eel-gconf-extensions.h"
 #include <gtk/gtk.h>

@@ -556,7 +556,7 @@ void receiving_video_event_cb(DBusGProxy *proxy, gint shmKey, gint semKey,
     }
 
     g_assert(receivingVideoArea);
-    GtkWidget *vbox = gtk_vbox_new (FALSE /* homogenous */, 6 /* spacing */);
+    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     gtk_container_add(GTK_CONTAINER(vbox), receivingVideoArea);
 
     if (shmKey == -1 || semKey == -1 || videoBufferSize == -1)

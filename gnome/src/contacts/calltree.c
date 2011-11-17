@@ -402,7 +402,7 @@ calltree_display_call_info (callable_obj_t * c, CallDisplayType display_type,
 void
 calltree_create(calltab_t* tab, int searchbar_type)
 {
-    tab->tree = gtk_vbox_new(FALSE, 10);
+    tab->tree = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
 
     // Fix bug #708 (resize)
     gtk_widget_set_size_request(tab->tree,100,80);

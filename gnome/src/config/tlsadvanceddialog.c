@@ -50,7 +50,7 @@ void show_advanced_tls_options(GHashTable * properties)
     gtk_window_set_resizable(GTK_WINDOW(tlsDialog), FALSE);
     gtk_container_set_border_width(GTK_CONTAINER(tlsDialog), 0);
 
-    GtkWidget *ret = gtk_vbox_new(FALSE, 10);
+    GtkWidget *ret = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
     gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(tlsDialog)), ret, FALSE, FALSE, 0);
 
@@ -109,7 +109,7 @@ void show_advanced_tls_options(GHashTable * properties)
     label = gtk_label_new(_("Global TLS listener (all accounts)"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_table_attach(GTK_TABLE(table), label, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    GtkWidget * hbox = gtk_hbox_new(FALSE, 10);
+    GtkWidget * hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     gtk_table_attach(GTK_TABLE(table), hbox, 1, 2, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     GtkWidget *tlsListenerPort = gtk_spin_button_new_with_range(0, 65535, 1);
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), tlsListenerPort);
@@ -235,7 +235,7 @@ void show_advanced_tls_options(GHashTable * properties)
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_table_attach(GTK_TABLE(table), label, 0, 1, 10, 11, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     GtkWidget * tlsTimeOutSec;
-    hbox = gtk_hbox_new(FALSE, 10);
+    hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     gtk_table_attach(GTK_TABLE(table), hbox, 1, 2, 10, 11, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     tlsTimeOutSec = gtk_spin_button_new_with_range(0, pow(2,sizeof(long)), 1);
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), tlsTimeOutSec);

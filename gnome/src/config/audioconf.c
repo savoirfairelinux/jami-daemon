@@ -514,7 +514,7 @@ static void codec_move_down(GtkButton *button UNUSED, gpointer data)
 
 GtkWidget* audiocodecs_box(account_t *a)
 {
-    GtkWidget *audiocodecs_hbox = gtk_hbox_new(FALSE, 10);
+    GtkWidget *audiocodecs_hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     gtk_container_set_border_width(GTK_CONTAINER(audiocodecs_hbox), 10);
 
     GtkWidget *scrolledWindow = gtk_scrolled_window_new(NULL, NULL);
@@ -564,7 +564,7 @@ GtkWidget* audiocodecs_box(account_t *a)
     gtk_container_add(GTK_CONTAINER(scrolledWindow), codecTreeView);
 
     // Create button box
-    GtkWidget *buttonBox = gtk_vbox_new(FALSE, 0);
+    GtkWidget *buttonBox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_container_set_border_width(GTK_CONTAINER(buttonBox), 10);
     gtk_box_pack_start(GTK_BOX(audiocodecs_hbox), buttonBox, FALSE, FALSE, 0);
 
@@ -654,7 +654,7 @@ active_is_always_recording(void)
 
 GtkWidget* alsa_box()
 {
-    GtkWidget *alsa_hbox = gtk_hbox_new(FALSE, 10);
+    GtkWidget *alsa_hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     gtk_widget_show(alsa_hbox);
 
     GtkWidget *table = gtk_table_new(6, 3, FALSE);
@@ -762,14 +762,13 @@ static void record_path_changed(GtkFileChooser *chooser , GtkLabel *label UNUSED
 {
     gchar* path;
     path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(chooser));
-    DEBUG("path2 %s", path);
     dbus_set_record_path(path);
 }
 
 GtkWidget* create_audio_configuration()
 {
     /* Main widget */
-    GtkWidget *audio_vbox = gtk_vbox_new(FALSE, 10);
+    GtkWidget *audio_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_container_set_border_width(GTK_CONTAINER(audio_vbox), 10);
 
     GtkWidget *frame;
