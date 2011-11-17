@@ -202,7 +202,7 @@ update_actions()
                 gtk_action_set_sensitive(hangUpAction_, TRUE);
                 // Replace the dial button with the hangup button
                 g_object_ref(newCallWidget_);
-                gtk_container_remove(GTK_CONTAINER(toolbar_), newCallWidget_);
+                remove_from_toolbar(newCallWidget_);
                 gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(pickUpWidget_),
                                    0);
                 gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(hangUpWidget_),
@@ -239,7 +239,7 @@ update_actions()
                     gtk_action_set_sensitive(hangUpAction_, TRUE);
 
                 g_object_ref(newCallWidget_);
-                gtk_container_remove(GTK_CONTAINER(toolbar_), newCallWidget_);
+                remove_from_toolbar(newCallWidget_);
                 gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(pickUpWidget_), 0);
 
                 if (active_calltree_tab == current_calls_tab)
@@ -1102,7 +1102,6 @@ fail:
         g_error_free(error);
 
     g_free(path);
-    g_free(ui_manager);
     return NULL;
 }
 
@@ -1171,7 +1170,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event)
     gboolean hangup_or_hold_conf = FALSE;
 
     callable_obj_t * selectedCall = NULL;
-    conference_obj_t * selectedConf;
+    conference_obj_t * selectedConf = NULL;
 
     if (calltab_get_selected_type(current_calls_tab) == A_CALL) {
         DEBUG("UIManager: Menus: Selected a call");
