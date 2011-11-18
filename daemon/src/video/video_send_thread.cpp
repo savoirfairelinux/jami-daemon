@@ -303,6 +303,8 @@ void VideoSendThread::createScalingContext()
 }
 
 VideoSendThread::VideoSendThread(const std::map<std::string, std::string> &args) :
+    test_source_(false),
+    sdpReady_(),
     args_(args),
     scaledPictureBuf_(0),
     outbuf_(0),
@@ -316,7 +318,7 @@ VideoSendThread::VideoSendThread(const std::map<std::string, std::string> &args)
     inputCtx_(0),
     outputCtx_(0),
     imgConvertCtx_(0),
-    sdp_("")
+    sdp_()
 {
     test_source_ = (args_["input"] == "SFLTEST");
     setCancel(cancelDeferred);

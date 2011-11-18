@@ -46,7 +46,7 @@ const char* ConfigurationManager::SERVER_PATH =
     "/org/sflphone/SFLphone/ConfigurationManager";
 
 ConfigurationManager::ConfigurationManager(DBus::Connection& connection) :
-    DBus::ObjectAdaptor(connection, SERVER_PATH)
+    DBus::ObjectAdaptor(connection, SERVER_PATH), preview_()
 {}
 
 std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails()

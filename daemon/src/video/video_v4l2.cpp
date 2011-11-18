@@ -125,18 +125,19 @@ static unsigned int pixelformat_score(unsigned pixelformat)
     return UINT_MAX - 1;
 }
 
-VideoV4l2Size::VideoV4l2Size(unsigned height, unsigned width) : height(height), width(width) {}
+VideoV4l2Size::VideoV4l2Size(unsigned height, unsigned width) :
+    height(height), width(width), rates_() {}
 
 std::vector<std::string> VideoV4l2Size::getRateList()
 {
 	std::vector<std::string> v;
 	std::stringstream ss;
 
-	size_t n = rates.size();
+	size_t n = rates_.size();
 	unsigned i;
 	for (i = 0 ; i < n ; i++) {
 		std::stringstream ss;
-		ss << rates[i];
+		ss << rates_[i];
 		v.push_back(ss.str());
 	}
 
@@ -144,10 +145,10 @@ std::vector<std::string> VideoV4l2Size::getRateList()
 }
 
 
-void VideoV4l2Size::GetFrameRates(int fd, unsigned int pixel_format)
+void VideoV4l2Size::getFrameRates(int fd, unsigned int pixel_format)
 {
     if (fd == -1) { // SFL_TEST
-        rates.push_back(30);
+        rates_.push_back(30);
         return;
     }
 
@@ -158,7 +159,7 @@ void VideoV4l2Size::GetFrameRates(int fd, unsigned int pixel_format)
     frmival.height = height;
 
     if (ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival)) {
-        rates.push_back(25);
+        rates_.push_back(25);
         ERROR("could not query frame interval for size");
         return;
     }
@@ -166,47 +167,47 @@ void VideoV4l2Size::GetFrameRates(int fd, unsigned int pixel_format)
     switch(frmival.type) {
     case V4L2_FRMIVAL_TYPE_DISCRETE:
         do {
-            rates.push_back(frmival.discrete.denominator/frmival.discrete.numerator);
+            rates_.push_back(frmival.discrete.denominator/frmival.discrete.numerator);
             frmival.index++;
         } while (!ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival));
         break;
     case V4L2_FRMIVAL_TYPE_CONTINUOUS:
-        rates.push_back(25);
+        rates_.push_back(25);
         // TODO
         ERROR("Continuous Frame Intervals not supported");
         break;
     case V4L2_FRMIVAL_TYPE_STEPWISE:
-        rates.push_back(25);
+        rates_.push_back(25);
         // TODO
         ERROR("Stepwise Frame Intervals not supported");
         break;
     }
 }
 
-VideoV4l2Channel::VideoV4l2Channel(unsigned idx, const char *s) : idx(idx), name(s) { }
+VideoV4l2Channel::VideoV4l2Channel(unsigned idx, const char *s) : idx(idx),
+    name(s), sizes_() {}
 
-void VideoV4l2Channel::SetFourcc(unsigned code)
+void VideoV4l2Channel::setFourcc(unsigned code)
 {
-    fourcc[0] = code;
-    fourcc[1] = code >> 8;
-    fourcc[2] = code >> 16;
-    fourcc[3] = code >> 24;
-    fourcc[4] = '\0';
+    fourcc_[0] = code;
+    fourcc_[1] = code >> 8;
+    fourcc_[2] = code >> 16;
+    fourcc_[3] = code >> 24;
+    fourcc_[4] = '\0';
 }
 
-const char * VideoV4l2Channel::GetFourcc()
+const char * VideoV4l2Channel::getFourcc()
 {
-	return fourcc;
+	return fourcc_;
 }
 
-std::vector<std::string> VideoV4l2Channel::getSizeList(void)
+std::vector<std::string> VideoV4l2Channel::getSizeList()
 {
     std::vector<std::string> v;
 
-    size_t n = sizes.size();
-    unsigned i;
-    for (i = 0 ; i < n ; i++) {
-        VideoV4l2Size &size = sizes[i];
+    size_t n = sizes_.size();
+    for (size_t i = 0 ; i < n ; ++i) {
+        VideoV4l2Size &size = sizes_[i];
         std::stringstream ss;
         ss << size.width << "x" << size.height;
         v.push_back(ss.str());
@@ -217,12 +218,12 @@ std::vector<std::string> VideoV4l2Channel::getSizeList(void)
 
 
 
-unsigned int VideoV4l2Channel::GetSizes(int fd, unsigned int pixelformat)
+unsigned int VideoV4l2Channel::getSizes(int fd, unsigned int pixelformat)
 {
     if (fd == -1) { //SFL_TEST
         VideoV4l2Size s(288, 352);
-        s.GetFrameRates(-1, 0);
-        sizes.push_back(s);
+        s.getFrameRates(-1, 0);
+        sizes_.push_back(s);
         return 0;
     }
 
@@ -237,9 +238,9 @@ unsigned int VideoV4l2Channel::GetSizes(int fd, unsigned int pixelformat)
     case V4L2_FRMSIZE_TYPE_DISCRETE:
         do {
             VideoV4l2Size size(frmsize.discrete.height, frmsize.discrete.width);
-            size.GetFrameRates(fd, frmsize.pixel_format);
-            sizes.push_back(size);
-            frmsize.index++;
+            size.getFrameRates(fd, frmsize.pixel_format);
+            sizes_.push_back(size);
+            ++frmsize.index;
         } while (!ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize));
         return pixelformat;
 
@@ -263,13 +264,13 @@ fallback:
         throw std::runtime_error("Couldnt get format");
     
     VideoV4l2Size size(fmt.fmt.pix.height, fmt.fmt.pix.width);
-    size.GetFrameRates(fd, fmt.fmt.pix.pixelformat);
-    sizes.push_back(size);
+    size.getFrameRates(fd, fmt.fmt.pix.pixelformat);
+    sizes_.push_back(size);
 
     return fmt.fmt.pix.pixelformat;
 }
 
-void VideoV4l2Channel::GetFormat(int fd)
+void VideoV4l2Channel::getFormat(int fd)
 {
     if (ioctl(fd, VIDIOC_S_INPUT, &idx))
         throw std::runtime_error("VIDIOC_S_INPUT failed");
@@ -300,37 +301,33 @@ void VideoV4l2Channel::GetFormat(int fd)
         throw std::runtime_error("Could not enumerate formats");
 
     fmt.index = best_idx;
-    pixelformat = GetSizes(fd, pixelformat);
+    pixelformat = getSizes(fd, pixelformat);
 
-    SetFourcc(pixelformat);
+    setFourcc(pixelformat);
 }
 
 VideoV4l2Size VideoV4l2Channel::getSize(const std::string &name)
 {
-	for (size_t i = 0; i < sizes.size(); i++) {
+	for (size_t i = 0; i < sizes_.size(); ++i) {
 		std::stringstream ss;
-		ss << sizes[i].width << "x" << sizes[i].height;
+		ss << sizes_[i].width << "x" << sizes_[i].height;
 		if (ss.str() == name)
-			return sizes[i];
+			return sizes_[i];
 	}
 
-	return sizes.back();
+	return sizes_.back();
 }
 
 
-VideoV4l2Device::VideoV4l2Device(int fd, const std::string &device)
+VideoV4l2Device::VideoV4l2Device(int fd, const std::string &device) :
+    device(device), name("TEST"), channels()
 {
     if (fd == -1) {
         VideoV4l2Channel c(0, "#^&");
-        c.GetSizes(-1, 0);
+        c.getSizes(-1, 0);
         channels.push_back(c);
-        name = "TEST";
-
-        this->device = device;
         return;
     }
-
-    unsigned idx;
 
     v4l2_capability cap;
     if (ioctl(fd, VIDIOC_QUERYCAP, &cap))
@@ -343,6 +340,7 @@ VideoV4l2Device::VideoV4l2Device(int fd, const std::string &device)
 
     v4l2_input input;
     memset(&input, 0x0, sizeof input);
+    unsigned idx;
     input.index = idx = 0;
     while (!ioctl(fd, VIDIOC_ENUMINPUT, &input)) {
         if (idx != input.index)
@@ -350,23 +348,20 @@ VideoV4l2Device::VideoV4l2Device(int fd, const std::string &device)
 
         if (input.type & V4L2_INPUT_TYPE_CAMERA) {
             VideoV4l2Channel channel(idx, (const char*)input.name);
-            channel.GetFormat(fd);
-
+            channel.getFormat(fd);
             channels.push_back(channel);
         }
 
         input.index = ++idx;
     }
-    this->device = device;
 }
 
-std::vector<std::string> VideoV4l2Device::getChannelList(void)
+std::vector<std::string> VideoV4l2Device::getChannelList() const
 {
     std::vector<std::string> v;
 
     size_t n = channels.size();
-    unsigned i;
-    for (i = 0 ; i < n ; i++)
+    for (size_t i = 0 ; i < n ; i++)
         v.push_back(channels[i].name);
 
     return v;

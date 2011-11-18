@@ -56,7 +56,6 @@ class VideoPreview {
         int semKey_;
         int videoBufferSize_;
 };
-
 }
 
 #endif // __VIDEO_PREVIEW_H__

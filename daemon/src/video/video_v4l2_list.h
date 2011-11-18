@@ -37,19 +37,19 @@
 #include <libudev.h>
 
 #include "video_v4l2.h"
-
+#include "noncopyable.h"
 
 namespace sfl_video {
 
-class VideoV4l2List : public ost::Thread {
+class VideoV4l2ListThread : public ost::Thread {
     public:
-        VideoV4l2List();
-        ~VideoV4l2List();
+        VideoV4l2ListThread();
+        ~VideoV4l2ListThread();
 
         virtual void run();
-        virtual void finalize();
+        virtual void finalize() {}
 
-        std::vector<std::string> getDeviceList(void);
+        std::vector<std::string> getDeviceList();
         std::vector<std::string> getChannelList(const std::string &dev);
         std::vector<std::string> getSizeList(const std::string &dev, const std::string &channel);
         std::vector<std::string> getRateList(const std::string &dev, const std::string &channel, const std::string &size);
@@ -59,13 +59,14 @@ class VideoV4l2List : public ost::Thread {
         unsigned getChannelNum(const std::string &dev, const std::string &name);
 
     private:
+        NON_COPYABLE(VideoV4l2ListThread);
         void delDevice(const std::string &node);
         bool addDevice(const std::string &dev);
-        std::vector<VideoV4l2Device> devices;
-        ost::Mutex _mutex;
+        std::vector<VideoV4l2Device> devices_;
+        ost::Mutex mutex_;
 
-        struct udev *_udev;
-        struct udev_monitor *_udev_mon;
+        udev *udev_;
+        udev_monitor *udev_mon_;
 };
 
 } // namespace sfl_video

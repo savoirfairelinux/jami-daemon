@@ -62,53 +62,52 @@ namespace sfl_video {
 
 static int is_v4l2(struct udev_device *dev)
 {
-	const char *version;
-	version = udev_device_get_property_value (dev, "ID_V4L_VERSION");
+	const char *version = udev_device_get_property_value(dev, "ID_V4L_VERSION");
 	/* we do not support video4linux 1 */
-	return version && strcmp (version, "1");
+	return version and strcmp(version, "1");
 }
 
-VideoV4l2List::VideoV4l2List() : _udev_mon(NULL)
+VideoV4l2ListThread::VideoV4l2ListThread() : devices_(), mutex_(), udev_(0), udev_mon_(0)
 {
-    struct udev_list_entry *devlist;
-    struct udev_enumerate *devenum;
+    udev_list_entry *devlist;
+    udev_enumerate *devenum;
 
     addDevice("SFLTEST");
 
-    _udev = udev_new();
-    if (!_udev)
+    udev_ = udev_new();
+    if (!udev_)
         goto udev_failed;
 
-    _udev_mon = udev_monitor_new_from_netlink (_udev, "udev");
-    if (!_udev_mon)
+    udev_mon_ = udev_monitor_new_from_netlink(udev_, "udev");
+    if (!udev_mon_)
         goto udev_failed;
-    if (udev_monitor_filter_add_match_subsystem_devtype (_udev_mon, "video4linux", NULL))
+    if (udev_monitor_filter_add_match_subsystem_devtype(udev_mon_, "video4linux", NULL))
         goto udev_failed;
 
     /* Enumerate existing devices */
-    devenum = udev_enumerate_new (_udev);
+    devenum = udev_enumerate_new(udev_);
     if (devenum == NULL)
         goto udev_failed;
-    if (udev_enumerate_add_match_subsystem (devenum, "video4linux"))
+    if (udev_enumerate_add_match_subsystem(devenum, "video4linux"))
     {
-        udev_enumerate_unref (devenum);
+        udev_enumerate_unref(devenum);
         goto udev_failed;
     }
 
-    udev_monitor_enable_receiving (_udev_mon);
+    udev_monitor_enable_receiving(udev_mon_);
     /* Note that we enumerate _after_ monitoring is enabled so that we do not
      * loose device events occuring while we are enumerating. We could still
      * loose events if the Netlink socket receive buffer overflows. */
-    udev_enumerate_scan_devices (devenum);
-    devlist = udev_enumerate_get_list_entry (devenum);
+    udev_enumerate_scan_devices(devenum);
+    devlist = udev_enumerate_get_list_entry(devenum);
     struct udev_list_entry *deventry;
-    udev_list_entry_foreach (deventry, devlist)
+    udev_list_entry_foreach(deventry, devlist)
     {
-        const char *path = udev_list_entry_get_name (deventry);
-        struct udev_device *dev = udev_device_new_from_syspath (_udev, path);
+        const char *path = udev_list_entry_get_name(deventry);
+        struct udev_device *dev = udev_device_new_from_syspath(udev_, path);
 
         if (is_v4l2(dev)) {
-            const char *devpath = udev_device_get_devnode (dev);
+            const char *devpath = udev_device_get_devnode(dev);
             if (devpath) {
                 try {
                     addDevice(devpath);
@@ -117,9 +116,9 @@ VideoV4l2List::VideoV4l2List() : _udev_mon(NULL)
                 }
             }
         }
-        udev_device_unref (dev);
+        udev_device_unref(dev);
     }
-    udev_enumerate_unref (devenum);
+    udev_enumerate_unref(devenum);
 
     return;
 
@@ -127,12 +126,12 @@ udev_failed:
 
 	ERROR("udev enumeration failed");
 
-	if (_udev_mon)
-        udev_monitor_unref (_udev_mon);
-    if (_udev)
-        udev_unref (_udev);
-    _udev_mon = NULL;
-    _udev = NULL;
+	if (udev_mon_)
+        udev_monitor_unref(udev_mon_);
+    if (udev_)
+        udev_unref(udev_);
+    udev_mon_ = NULL;
+    udev_ = NULL;
 
     /* fallback : go through /dev/video* */
     int idx;
@@ -154,10 +153,9 @@ namespace {
 int GetNumber(const std::string &name, size_t *sharp)
 {
 	size_t len = name.length();
-	if (len < 3) {
-		// name is too short to be numbered
+    // name is too short to be numbered
+	if (len < 3)
 		return -1;
-	}
 
 	for (size_t c = len; c; --c) {
 		if (name[c] == '#') {
@@ -174,41 +172,39 @@ int GetNumber(const std::string &name, size_t *sharp)
 
 void GiveUniqueName(VideoV4l2Device &dev, const std::vector<VideoV4l2Device> &devices)
 {
-	const std::string &name = dev.name;
     start:
     for (size_t i = 0; i < devices.size(); i++) {
-		if (name == devices[i].name) {
+		if (dev.name == devices[i].name) {
 			size_t sharp;
-			int num = GetNumber(name, &sharp);
+			int num = GetNumber(dev.name, &sharp);
 			if (num < 0) // not numbered
 				dev.name += " #0";
 			else {
 				std::stringstream ss;
 				ss  << num+1;
-				dev.name.replace(sharp+1, ss.str().length(), ss.str());
+				dev.name.replace(sharp + 1, ss.str().length(), ss.str());
 			}
 			goto start; // we changed the name, let's look again if it is unique
 		}
 	}
 }
-
 } // end anonymous namespace
 
-VideoV4l2List::~VideoV4l2List()
+VideoV4l2ListThread::~VideoV4l2ListThread()
 {
 	terminate();
-    if (_udev_mon)
-        udev_monitor_unref (_udev_mon);
-    if (_udev)
-        udev_unref (_udev);
+    if (udev_mon_)
+        udev_monitor_unref(udev_mon_);
+    if (udev_)
+        udev_unref(udev_);
 }
 
-void VideoV4l2List::run()
+void VideoV4l2ListThread::run()
 {
-	if (!_udev_mon)
+	if (!udev_mon_)
 		return;
 
-	int fd = udev_monitor_get_fd(_udev_mon);
+	int fd = udev_monitor_get_fd(udev_mon_);
     fd_set set;
     FD_ZERO(&set);
     FD_SET(fd, &set);
@@ -218,68 +214,64 @@ void VideoV4l2List::run()
 		int ret = select(fd+1, &set, NULL, NULL, NULL);
 		switch(ret) {
 
-		case 1:
-			dev = udev_monitor_receive_device(_udev_mon);
-			if (!is_v4l2(dev)) {
-				udev_device_unref(dev);
-				continue;
-			}
-
-			node = udev_device_get_devnode(dev);
-			action = udev_device_get_action(dev);
-			if (!strcmp(action, "add")) {
-				DEBUG("udev: adding %s", node);
-                try {
-                    addDevice(node);
-    				Manager::instance().notifyVideoDeviceEvent();
-                } catch (const std::runtime_error &e) {
-                    ERROR(e.what());
+            case 1:
+                dev = udev_monitor_receive_device(udev_mon_);
+                if (!is_v4l2(dev)) {
+                    udev_device_unref(dev);
+                    continue;
                 }
-			} else if (!strcmp(action, "remove")) {
-				DEBUG("udev: removing %s", node);
-				delDevice(std::string(node));
-			}
-			udev_device_unref(dev);
-			continue;
 
-		default:
-			ERROR("select() returned %d (%m)", ret);
-			return;
+                node = udev_device_get_devnode(dev);
+                action = udev_device_get_action(dev);
+                if (!strcmp(action, "add")) {
+                    DEBUG("udev: adding %s", node);
+                    try {
+                        addDevice(node);
+                        Manager::instance().notifyVideoDeviceEvent();
+                    } catch (const std::runtime_error &e) {
+                        ERROR(e.what());
+                    }
+                } else if (!strcmp(action, "remove")) {
+                    DEBUG("udev: removing %s", node);
+                    delDevice(std::string(node));
+                }
+                udev_device_unref(dev);
+                continue;
 
-		case -1:
-			if (errno == EAGAIN)
-				continue;
-			ERROR("udev monitoring thread: select failed (%m)");
-			return;
-		}
-	}
+            default:
+                ERROR("select() returned %d (%m)", ret);
+                return;
+
+            case -1:
+                if (errno == EAGAIN)
+                    continue;
+                ERROR("udev monitoring thread: select failed (%m)");
+                return;
+        }
+    }
 }
 
-void VideoV4l2List::finalize()
-{}
-
-void VideoV4l2List::delDevice(const std::string &node)
+void VideoV4l2ListThread::delDevice(const std::string &node)
 {
-	ost::MutexLock lock(_mutex);
+	ost::MutexLock lock(mutex_);
     std::vector<std::string> v;
 
-    size_t n = devices.size();
-    unsigned i;
-    for (i = 0 ; i < n ; i++) {
-        if (devices[i].device == node) {
-        	devices.erase(devices.begin() + i);
+    size_t n = devices_.size();
+    for (size_t i = 0 ; i < n ; i++) {
+        if (devices_[i].device == node) {
+        	devices_.erase(devices_.begin() + i);
 			Manager::instance().notifyVideoDeviceEvent();
         	return;
         }
     }
 }
 
-bool VideoV4l2List::addDevice(const std::string &dev)
+bool VideoV4l2ListThread::addDevice(const std::string &dev)
 {
-	ost::MutexLock lock(_mutex);
+	ost::MutexLock lock(mutex_);
 
     if (dev == "SFLTEST") {
-        devices.push_back(VideoV4l2Device(-1, dev));
+        devices_.push_back(VideoV4l2Device(-1, dev));
         return true;
     }
 
@@ -289,74 +281,71 @@ bool VideoV4l2List::addDevice(const std::string &dev)
 
     std::string s(dev);
     VideoV4l2Device v(fd, s);
-    GiveUniqueName(v, devices);
-    devices.push_back(v);
+    GiveUniqueName(v, devices_);
+    devices_.push_back(v);
 
     ::close(fd);
     return true;
 }
 
-std::vector<std::string> VideoV4l2List::getChannelList(const std::string &dev)
+std::vector<std::string> VideoV4l2ListThread::getChannelList(const std::string &dev)
 {
-	ost::MutexLock lock(_mutex);
+	ost::MutexLock lock(mutex_);
 	return getDevice(dev).getChannelList();
 }
 
-std::vector<std::string> VideoV4l2List::getSizeList(const std::string &dev, const std::string &channel)
+std::vector<std::string> VideoV4l2ListThread::getSizeList(const std::string &dev, const std::string &channel)
 {
-	ost::MutexLock lock(_mutex);
+	ost::MutexLock lock(mutex_);
 	return getDevice(dev).getChannel(channel).getSizeList();
 }
 
-std::vector<std::string> VideoV4l2List::getRateList(const std::string &dev, const std::string &channel, const std::string &size)
+std::vector<std::string> VideoV4l2ListThread::getRateList(const std::string &dev, const std::string &channel, const std::string &size)
 {
-	ost::MutexLock lock(_mutex);
+	ost::MutexLock lock(mutex_);
 	return getDevice(dev).getChannel(channel).getSize(size).getRateList();
 }
 
-std::vector<std::string> VideoV4l2List::getDeviceList(void)
+std::vector<std::string> VideoV4l2ListThread::getDeviceList(void)
 {
-	ost::MutexLock lock(_mutex);
+	ost::MutexLock lock(mutex_);
     std::vector<std::string> v;
 
-    size_t n = devices.size();
-    unsigned i;
-    for (i = 0 ; i < n ; i++) {
+    size_t n = devices_.size();
+    for (size_t i = 0 ; i < n ; i++) {
         std::stringstream ss;
-        VideoV4l2Device &dev = devices[i];
+        VideoV4l2Device &dev = devices_[i];
         std::string &name = dev.name;
-        if (name.length()) {
+        if (name.length())
             ss << name;
-        } else {
+        else
             ss << dev.device;
-        }
+
         v.push_back(ss.str());
     }
 
     return v;
 }
 
-VideoV4l2Device &VideoV4l2List::getDevice(const std::string &name)
+VideoV4l2Device &VideoV4l2ListThread::getDevice(const std::string &name)
 {
-	ost::MutexLock lock(_mutex);
-	for (size_t i = 0; i < devices.size(); i++) {
-		if (devices[i].name == name)
-			return devices[i];
-	}
+	ost::MutexLock lock(mutex_);
+	for (size_t i = 0; i < devices_.size(); i++)
+		if (devices_[i].name == name)
+			return devices_[i];
 
-	return devices.back();
+	return devices_.back();
 }
 
-unsigned VideoV4l2List::getChannelNum(const std::string &dev, const std::string &name)
+unsigned VideoV4l2ListThread::getChannelNum(const std::string &dev, const std::string &name)
 {
-	ost::MutexLock lock(_mutex);
+	ost::MutexLock lock(mutex_);
 	return getDevice(dev).getChannel(name).idx;
 }
 
-const std::string &VideoV4l2List::getDeviceNode(const std::string &name)
+const std::string &VideoV4l2ListThread::getDeviceNode(const std::string &name)
 {
-	ost::MutexLock lock(_mutex);
+	ost::MutexLock lock(mutex_);
 	return getDevice(name).device;
 }
-
 } // namespace sfl_video

@@ -52,14 +52,14 @@ class VideoV4l2Size {
         /**
          * @throw std::runtime_error
          */
-        void GetFrameRates(int fd, unsigned int pixel_format);
+        void getFrameRates(int fd, unsigned int pixel_format);
         std::vector<std::string> getRateList();
 
         unsigned height;
         unsigned width;
 
     private:
-        std::vector<float> rates;
+        std::vector<float> rates_;
 };
 
 class VideoV4l2Channel {
@@ -69,24 +69,24 @@ class VideoV4l2Channel {
         /**
          * @throw std::runtime_error
          */
-        void GetFormat(int fd);
+        void getFormat(int fd);
         /**
          * @throw std::runtime_error
          */
-        unsigned int GetSizes(int fd, unsigned int pixel_format);
+        unsigned int getSizes(int fd, unsigned int pixel_format);
 
-        void SetFourcc(unsigned code);
-        const char * GetFourcc();
+        void setFourcc(unsigned code);
+        const char * getFourcc();
 
-        std::vector<std::string> getSizeList(void);
+        std::vector<std::string> getSizeList();
         VideoV4l2Size getSize(const std::string &name);
 
         unsigned idx;
         std::string name;
 
     private:
-        std::vector<VideoV4l2Size> sizes;
-        char fourcc[5];
+        std::vector<VideoV4l2Size> sizes_;
+        char fourcc_[5];
 };
 
 class VideoV4l2Device {
@@ -99,7 +99,7 @@ class VideoV4l2Device {
         std::string device;
         std::string name;
 
-        std::vector<std::string> getChannelList(void);
+        std::vector<std::string> getChannelList() const;
 
         VideoV4l2Channel &getChannel(const std::string &name);
 

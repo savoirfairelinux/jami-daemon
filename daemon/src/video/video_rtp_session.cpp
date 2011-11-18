@@ -44,7 +44,8 @@
 
 namespace sfl_video {
 
-VideoRtpSession::VideoRtpSession() : sending_(true), receiving_(true)
+VideoRtpSession::VideoRtpSession() : sendThread_(), receiveThread_(),
+    txArgs_(), rxArgs_(), sending_(true), receiving_(true)
 {
     txArgs_ = Manager::instance().videoPreference.getVideoSettings();
     txArgs_["bitrate"] = "500000";
@@ -52,7 +53,8 @@ VideoRtpSession::VideoRtpSession() : sending_(true), receiving_(true)
 
 VideoRtpSession::VideoRtpSession(const std::map<std::string, std::string> &txArgs,
                 const std::map<std::string, std::string> &rxArgs) :
-    txArgs_(txArgs), rxArgs_(rxArgs), sending_(true), receiving_(true)
+    sendThread_(), receiveThread_(), txArgs_(txArgs), rxArgs_(rxArgs),
+    sending_(true), receiving_(true)
 {}
 
 void VideoRtpSession::updateSDP(const Sdp &sdp)

@@ -34,7 +34,8 @@
 #include <cc++/thread.h>
 #include <map>
 #include <string>
-#include <limits.h>
+#include <climits>
+#include "noncopyable.h"
 
 class SwsContext;
 class AVCodecContext;
@@ -45,9 +46,10 @@ class AVFrame;
 namespace sfl_video {
 class VideoReceiveThread : public ost::Thread {
     private:
+        NON_COPYABLE(VideoReceiveThread);
+        std::map<std::string, std::string> args_;
         bool test_source_;
         unsigned frameNumber_;
-        std::map<std::string, std::string> args_;
 
         /*-------------------------------------------------------------*/
         /* These variables should be used in thread (i.e. run()) only! */
@@ -84,9 +86,9 @@ class VideoReceiveThread : public ost::Thread {
         virtual void run();
         void waitForShm();
 
-        int getShmKey() { return shmKey_; }
-        int getSemKey() { return semKey_; }
-        int getVideoBufferSize(void) { return videoBufferSize_; }
+        int getShmKey() const { return shmKey_; }
+        int getSemKey() const { return semKey_; }
+        int getVideoBufferSize() const { return videoBufferSize_; }
 };
 }
 

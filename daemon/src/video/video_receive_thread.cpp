@@ -379,11 +379,14 @@ void VideoReceiveThread::createScalingContext()
 }
 
 VideoReceiveThread::VideoReceiveThread(const std::map<std::string, std::string> &args) : args_(args),
+    test_source_(args_["input"] == "SFLTEST"),
+    frameNumber_(0),
     shmBuffer_(0),
     shmID_(-1),
     semSetID_(-1),
     shmKey_(-1),
     semKey_(-1),
+    videoBufferSize_(0),
     decoderCtx_(0),
     rawFrame_(0),
     scaledPicture_(0),
@@ -391,9 +394,10 @@ VideoReceiveThread::VideoReceiveThread(const std::map<std::string, std::string> 
     inputCtx_(0),
     imgConvertCtx_(0),
     dstWidth_(-1),
-    dstHeight_(-1)
+    dstHeight_(-1),
+    shmReady_(),
+    sdpFilename_()
 {
-    test_source_ = (args_["input"] == "SFLTEST");
     setCancel(cancelDeferred);
 }
 

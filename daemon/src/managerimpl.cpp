@@ -71,7 +71,7 @@
 
 ManagerImpl::ManagerImpl() :
     preferences(), voipPreferences(), addressbookPreference(),
-    hookPreference(),  audioPreference(), shortcutPreferences(),
+    hookPreference(),  audioPreference(), videoPreference(), shortcutPreferences(),
     hasTriedToRegister_(false), audioCodecFactory(), dbus_(), config_(), currentCallId_(),
     currentCallMutex_(), audiodriver_(0), dtmfKey_(0), toneMutex_(),
     telephoneTone_(0), audiofile_(0), speakerVolume_(0), micVolume_(0),

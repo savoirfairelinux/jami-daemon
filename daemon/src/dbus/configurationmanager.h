@@ -63,7 +63,6 @@ class ConfigurationManager
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor {
     private:
-        std::vector<std::string> shortcutsKeys;
         // FIXME: this probably shouldn't live here
         std::tr1::shared_ptr<sfl_video::VideoPreview> preview_;
 

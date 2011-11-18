@@ -636,9 +636,10 @@ class VideoPreference : public Serializable
 
 
     private:
+        NON_COPYABLE(VideoPreference);
 
         // V4L2 devices
-        sfl_video::VideoV4l2List *v4l2_list_;
+        sfl_video::VideoV4l2ListThread *v4l2_list_;
 
         std::string device_;
         std::string channel_;

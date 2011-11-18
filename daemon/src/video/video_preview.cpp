@@ -35,7 +35,9 @@
 
 namespace sfl_video {
 
-VideoPreview::VideoPreview(const std::map<std::string, std::string> &args) : args_(args) {}
+VideoPreview::VideoPreview(const std::map<std::string, std::string> &args) :
+    receiveThread_(), args_(args), shmKey_(0), semKey_(0), videoBufferSize_(0)
+    {}
 
 bool VideoPreview::start()
 {

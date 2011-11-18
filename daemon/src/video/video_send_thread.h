@@ -34,6 +34,7 @@
 #include <cc++/thread.h>
 #include <map>
 #include <string>
+#include "noncopyable.h"
 
 class SwsContext;
 class AVCodecContext;
@@ -46,12 +47,13 @@ namespace sfl_video {
 
 class VideoSendThread : public ost::Thread {
     private:
-        bool test_source_;
+        NON_COPYABLE(VideoSendThread);
         void forcePresetX264();
         void print_and_save_sdp();
         void setup();
         void prepareEncoderContext(AVCodec *encoder);
         void createScalingContext();
+        bool test_source_;
         ost::Event sdpReady_;
 
         std::map<std::string, std::string> args_;

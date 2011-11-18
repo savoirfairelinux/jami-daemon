@@ -409,9 +409,9 @@ void AudioPreference::unserialize(Conf::MappingNode *map)
 }
 
 VideoPreference::VideoPreference() :
-    device_(), channel_(), size_(), rate_()
+    v4l2_list_(0), device_(), channel_(), size_(), rate_()
 {
-	v4l2_list_ = new VideoV4l2List();
+	v4l2_list_ = new VideoV4l2ListThread();
 	v4l2_list_->start();
 }
 
