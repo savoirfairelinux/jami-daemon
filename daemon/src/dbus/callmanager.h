@@ -31,6 +31,7 @@
 #ifndef __SFL_CALLMANAGER_H__
 #define __SFL_CALLMANAGER_H__
 
+#include "dbus_cpp.h"
 #if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
 /* This warning option only exists for gcc 4.6.0 and greater. */
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
@@ -47,29 +48,25 @@
 #pragma GCC diagnostic warning "-Wunused-but-set-variable"
 #endif
 
-#include <dbus-c++/dbus.h>
 #include <stdexcept>
 
-class CallManagerException: public std::runtime_error
-{
+class CallManagerException: public std::runtime_error {
     public:
         CallManagerException(const std::string& str="") :
             std::runtime_error("A CallManagerException occured: " + str) {}
 };
 
-namespace sfl
-{
+namespace sfl {
 class AudioZrtpSession;
 }
 
 class CallManager
     : public org::sflphone::SFLphone::CallManager_adaptor,
   public DBus::IntrospectableAdaptor,
-  public DBus::ObjectAdaptor
-{
+      public DBus::ObjectAdaptor {
     public:
 
-        CallManager (DBus::Connection& connection);
+        CallManager(DBus::Connection& connection);
         static const char* SERVER_PATH;
 
         /* methods exported by this interface,
@@ -77,61 +74,61 @@ class CallManager
          */
 
         /* Call related methods */
-        void placeCall (const std::string& accountID, const std::string& callID, const std::string& to);
-        void placeCallFirstAccount (const std::string& callID, const std::string& to);
+        void placeCall(const std::string& accountID, const std::string& callID, const std::string& to);
+        void placeCallFirstAccount(const std::string& callID, const std::string& to);
 
-        void refuse (const std::string& callID);
-        void accept (const std::string& callID);
-        void hangUp (const std::string& callID);
-        void hold (const std::string& callID);
-        void unhold (const std::string& callID);
-        void transfer (const std::string& callID, const std::string& to);
+        void refuse(const std::string& callID);
+        void accept(const std::string& callID);
+        void hangUp(const std::string& callID);
+        void hold(const std::string& callID);
+        void unhold(const std::string& callID);
+        void transfer(const std::string& callID, const std::string& to);
         void attendedTransfer(const std::string& transferID, const std::string& targetID);
-        std::map< std::string, std::string > getCallDetails (const std::string& callID);
-        std::vector< std::string > getCallList (void);
+        std::map< std::string, std::string > getCallDetails(const std::string& callID);
+        std::vector< std::string > getCallList();
         std::string getCurrentCallID();
 
         /* Conference related methods */
-        void joinParticipant (const std::string& sel_callID, const std::string& drag_callID);
-	void createConfFromParticipantList(const std::vector< std::string >& participants);
-        void addParticipant (const std::string& callID, const std::string& confID);
-        void addMainParticipant (const std::string& confID);
-        void detachParticipant (const std::string& callID);
-        void joinConference (const std::string& sel_confID, const std::string& drag_confID);
-        void hangUpConference (const std::string& confID);
-        void holdConference (const std::string& confID);
-        void unholdConference (const std::string& confID);
-        std::vector< std::string > getConferenceList (void);
-        std::vector< std::string > getParticipantList (const std::string& confID);
-        std::map< std::string, std::string > getConferenceDetails (const std::string& callID);
+        void joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
+        void createConfFromParticipantList(const std::vector< std::string >& participants);
+        void addParticipant(const std::string& callID, const std::string& confID);
+        void addMainParticipant(const std::string& confID);
+        void detachParticipant(const std::string& callID);
+        void joinConference(const std::string& sel_confID, const std::string& drag_confID);
+        void hangUpConference(const std::string& confID);
+        void holdConference(const std::string& confID);
+        void unholdConference(const std::string& confID);
+        std::vector< std::string > getConferenceList();
+        std::vector< std::string > getParticipantList(const std::string& confID);
+        std::map< std::string, std::string > getConferenceDetails(const std::string& callID);
 
-  	/* File Playback methods */
- 	bool startRecordedFilePlayback(const std::string& filepath);
-	void stopRecordedFilePlayback(const std::string& filepath);
+        /* File Playback methods */
+        bool startRecordedFilePlayback(const std::string& filepath);
+        void stopRecordedFilePlayback(const std::string& filepath);
 
         /* General audio methods */
-        void setVolume (const std::string& device, const double& value);
-        double getVolume (const std::string& device);
-        void setRecording (const std::string& callID);
-        bool getIsRecording (const std::string& callID);
-        std::string getCurrentAudioCodecName (const std::string& callID);
-        void playDTMF (const std::string& key);
-        void startTone (const int32_t& start, const int32_t& type);
+        void setVolume(const std::string& device, const double& value);
+        double getVolume(const std::string& device);
+        void setRecording(const std::string& callID);
+        bool getIsRecording(const std::string& callID);
+        std::string getCurrentAudioCodecName(const std::string& callID);
+        void playDTMF(const std::string& key);
+        void startTone(const int32_t& start, const int32_t& type);
 
         /* Security related methods */
-        void setSASVerified (const std::string& callID);
-        void resetSASVerified (const std::string& callID);
-        void setConfirmGoClear (const std::string& callID);
-        void requestGoClear (const std::string& callID);
-        void acceptEnrollment (const std::string& callID, const bool& accepted);
-        void setPBXEnrollment (const std::string& callID, const bool& yesNo);
+        void setSASVerified(const std::string& callID);
+        void resetSASVerified(const std::string& callID);
+        void setConfirmGoClear(const std::string& callID);
+        void requestGoClear(const std::string& callID);
+        void acceptEnrollment(const std::string& callID, const bool& accepted);
+        void setPBXEnrollment(const std::string& callID, const bool& yesNo);
 
         /* Instant messaging */
-        void sendTextMessage (const std::string& callID, const std::string& message);
+        void sendTextMessage(const std::string& callID, const std::string& message);
 
     private:
 
-        sfl::AudioZrtpSession * getAudioZrtpSession (const std::string& callID);
+        sfl::AudioZrtpSession * getAudioZrtpSession(const std::string& callID);
 };
 
 

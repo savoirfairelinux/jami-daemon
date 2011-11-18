@@ -32,6 +32,6 @@
 #define __FILEUTILS_H__
 
 void set_program_dir(char *program_path);
-const char *get_program_dir(void);
+const char *get_program_dir();
 
 #endif	// __FILEUTILS_H__

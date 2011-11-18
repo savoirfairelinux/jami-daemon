@@ -34,13 +34,14 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
-#include <assert.h>
+#include <cassert>
 
 // Application import
-#include "im/InstantMessaging.h"
+#include "im/instant_messaging.h"
+#include "noncopyable.h"
 
 /*
- * @file instantmessagingtest.h 
+ * @file instantmessagingtest.h
  * @brief       Regroups unitary tests related to the instant messagin module
  */
 
@@ -49,22 +50,22 @@
 
 class InstantMessagingTest : public CppUnit::TestCase {
 
-   /**
-     * Use cppunit library macros to add unit test the factory
-     */
-    CPPUNIT_TEST_SUITE( InstantMessagingTest );
-        CPPUNIT_TEST (testSaveSingleMessage);
-        CPPUNIT_TEST (testSaveMultipleMessage);
-	CPPUNIT_TEST (testGenerateXmlUriList);
-	CPPUNIT_TEST (testXmlUriListParsing);
-	CPPUNIT_TEST (testGetTextArea);
-	CPPUNIT_TEST (testGetUriListArea);
-	CPPUNIT_TEST (testIllFormatedMessage);
-    CPPUNIT_TEST_SUITE_END();
+        /**
+          * Use cppunit library macros to add unit test the factory
+          */
+        CPPUNIT_TEST_SUITE(InstantMessagingTest);
+        CPPUNIT_TEST(testSaveSingleMessage);
+        CPPUNIT_TEST(testSaveMultipleMessage);
+        CPPUNIT_TEST(testGenerateXmlUriList);
+        CPPUNIT_TEST(testXmlUriListParsing);
+        CPPUNIT_TEST(testGetTextArea);
+        CPPUNIT_TEST(testGetUriListArea);
+        CPPUNIT_TEST(testIllFormatedMessage);
+        CPPUNIT_TEST_SUITE_END();
 
     public:
-        InstantMessagingTest() : CppUnit::TestCase("Instant messaging module Tests") {}
-        
+        InstantMessagingTest() : CppUnit::TestCase("Instant messaging module Tests"), im_(0) {}
+
         /*
          * Code factoring - Common resources can be initialized here.
          * This method is called by unitcpp before each test
@@ -75,28 +76,29 @@ class InstantMessagingTest : public CppUnit::TestCase {
          * Code factoring - Common resources can be released here.
          * This method is called by unitcpp after each test
          */
-        void tearDown ();
+        void tearDown();
 
-        void testSaveSingleMessage ();
-		
-        void testSaveMultipleMessage ();
+        void testSaveSingleMessage();
 
-	void testGenerateXmlUriList ();
+        void testSaveMultipleMessage();
 
-	void testXmlUriListParsing ();
+        void testGenerateXmlUriList();
 
-	void testGetTextArea ();
+        void testXmlUriListParsing();
 
-	void testGetUriListArea ();
+        void testGetTextArea();
 
-	void testIllFormatedMessage ();        
+        void testGetUriListArea();
+
+        void testIllFormatedMessage();
 
     private:
-		sfl::InstantMessaging *_im;
+        NON_COPYABLE(InstantMessagingTest);
+        sfl::InstantMessaging *im_;
 };
 
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(InstantMessagingTest, "InstantMessagingTest");
-CPPUNIT_TEST_SUITE_REGISTRATION( InstantMessagingTest );
+CPPUNIT_TEST_SUITE_REGISTRATION(InstantMessagingTest);
 
 #endif

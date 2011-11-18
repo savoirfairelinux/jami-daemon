@@ -3,6 +3,7 @@
 .settings/*
 active
 autom4te.cache/*
+compile
 config.guess
 config.*
 configure
@@ -16,4 +17,3 @@ sflphone.desktop
 sflphone.desktop.*
 stamp-h.in
 stamp-h1
-

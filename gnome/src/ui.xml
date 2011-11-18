@@ -1,5 +1,4 @@
 <ui>
-
   <menubar name="MenuBar">
     <menu name="CallMenu" action="Call">
       <menuitem action="NewCall"/>
@@ -39,7 +38,6 @@
       <menuitem action="HelpContents"/>
       <menuitem action="About"/>
     </menu>
-
   </menubar>
 
   <toolbar name="ToolbarActions">
@@ -51,7 +49,8 @@
     <toolitem name="TransferToolbar" action="Transfer"/>
     <toolitem name="InstantMessagingToolbar" action="InstantMessaging"/>
     <toolitem name="RecordToolbar" action="Record"/>
-    <separator/>
+    <!-- FIXME: commented out because it is responsible for #7495 -->
+    <!-- separator/-->
     <toolitem name="VoicemailToolbar" action="Voicemail"/>
     <toolitem name="HistoryToolbar" action="History"/>
     <toolitem name="StartPlaybackRecordToolbar" action="StartPlaybackRecord"/>

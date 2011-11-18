@@ -33,10 +33,9 @@
 #define __AUDIO_CODEC_H__
 
 #include <string>
-#include <iostream>
 #include <dlfcn.h>
 
-#include "Codec.h"
+#include "codec.h"
 
 // We assume all decoders will be fed 20ms of audio or less
 // And we'll resample them to 44.1kHz or less
@@ -44,21 +43,20 @@
 #define DEC_BUFFER_SIZE ((44100 * 20) / 1000)
 
 namespace ost {
-    class PayloadFormat;
-    class DynamicPayloadFormat;
+class PayloadFormat;
+class DynamicPayloadFormat;
 }
 
 namespace sfl {
 
-class AudioCodec : public Codec
-{
+class AudioCodec : public Codec {
     public:
-        AudioCodec (uint8 payload, const std::string &codecName);
+        AudioCodec(uint8 payload, const std::string &codecName);
 
         /**
          * Copy constructor.
          */
-        AudioCodec (const AudioCodec& codec);
+        AudioCodec(const AudioCodec& codec);
 
         virtual ~AudioCodec();
 
@@ -80,12 +78,12 @@ class AudioCodec : public Codec
         /**
          * @Override
          */
-        void setParameter (const std::string& /*name*/, const std::string& /*value*/) {};
+        void setParameter(const std::string& /*name*/, const std::string& /*value*/) {};
 
         /**
          * @Override
          */
-        std::string getParameter (const std::string& /*name*/) const {
+        std::string getParameter(const std::string& /*name*/) const {
             return "";
         };
 
@@ -94,14 +92,14 @@ class AudioCodec : public Codec
          * @param buffer_size : the size of the input buffer
          * @return the number of samples decoded
          */
-        virtual int decode (short *dst, unsigned char *buf, size_t buffer_size) = 0;
+        virtual int decode(short *dst, unsigned char *buf, size_t buffer_size) = 0;
 
         /**
          * Encode an input buffer and fill the output buffer with the encoded data
          * @param buffer_size : the maximum size of encoded data buffer (dst)
          * @return the number of bytes encoded
          */
-        virtual int encode (unsigned char *dst, short *src, size_t buffer_size) = 0;
+        virtual int encode(unsigned char *dst, short *src, size_t buffer_size) = 0;
 
         /**
          * @Override
@@ -112,7 +110,7 @@ class AudioCodec : public Codec
          * @Override
          */
         void setPayloadType(uint8 pt) {
-        	_payload = pt;
+            payload_ = pt;
         }
 
         /**
@@ -142,31 +140,32 @@ class AudioCodec : public Codec
 
     protected:
         /** Holds SDP-compliant codec name */
-        std::string _codecName; // what we put inside sdp
+        std::string codecName_; // what we put inside sdp
 
         /** Clock rate or sample rate of the codec, in Hz */
-        uint32 _clockRate;
+        uint32 clockRate_;
 
         /** Number of channel 1 = mono, 2 = stereo */
-        uint8 _channel;
+        uint8 channel_;
 
         /** codec frame size in samples*/
-        unsigned _frameSize;
+        unsigned frameSize_;
 
         /** Bitrate */
-        double _bitrate;
+        double bitrate_;
 
         /** Bandwidth */
-        double _bandwidth;
+        double bandwidth_;
 
-        bool _hasDynamicPayload;
+        bool hasDynamicPayload_;
 
     private:
-        uint8 _payload;
+        AudioCodec& operator=(const AudioCodec&);
+        uint8 payload_;
 
-        ost::DynamicPayloadFormat* _payloadFormat;
+        ost::DynamicPayloadFormat* payloadFormat_;
 
-        void init (uint8 payloadType, uint32 clockRate);
+        void init(uint8 payloadType, uint32 clockRate);
 };
 } // end namespace sfl
 

@@ -35,45 +35,34 @@
 #define __AUDIOFILE_H__
 
 #include <stdexcept>
-#include <fstream>
-
 #include "audio/audioloop.h"
 
 namespace sfl {
 class AudioCodec;
 }
 
-class AudioFileException : public std::runtime_error
-{
-public:
-    AudioFileException (const std::string& str="") :
-        std::runtime_error("AudioFile: AudioFileException occured: " + str) {}
+class AudioFileException : public std::runtime_error {
+    public:
+        AudioFileException(const std::string& str = "") :
+            std::runtime_error("AudioFile: AudioFileException occured: " + str) {}
 };
 
 /**
  * @brief Abstract interface for file readers
  */
-class AudioFile : public AudioLoop
-{
-public:
-    const std::string &getFilePath(void) const{
-    	return filepath;
-    }
+class AudioFile : public AudioLoop {
+    public:
+        AudioFile() : filepath_() {}
+        std::string getFilePath() const {
+            return filepath_;
+        }
 
-protected:
-    /** The absolute path to the sound file */
-    std::string filepath;
+    protected:
+        /** The absolute path to the sound file */
+        std::string filepath_;
 };
 
-
-
-/**
- * @file audiofile.h
- * @brief A class to manage sound files
- */
-
-class RawFile : public AudioFile
-{
+class RawFile : public AudioFile {
     public:
         /**
          * Constructor
@@ -81,26 +70,20 @@ class RawFile : public AudioFile
         RawFile(const std::string& name, sfl::AudioCodec* codec, unsigned int sampleRate = 8000);
 
     private:
-        // Copy Constructor
-        RawFile (const RawFile& rh);
-
-        // Assignment Operator
-        RawFile& operator= (const RawFile& rh);
+        NON_COPYABLE(RawFile);
 
         /** Your preferred codec */
-        sfl::AudioCodec* audioCodec;
+        sfl::AudioCodec* audioCodec_;
 };
 
-class WaveFile : public AudioFile
-{
-
+class WaveFile : public AudioFile {
     public:
-		/**
-		 * Load a sound file in memory
-			 * @param filename  The absolute path to the file
-			 * @param sampleRate	The sample rate to read it
-			 */
-		WaveFile(const std::string&, unsigned int);
+        /**
+         * Load a sound file in memory
+         * @param filename  The absolute path to the file
+         * @param sampleRate	The sample rate to read it
+         */
+        WaveFile(const std::string&, unsigned int);
 };
 
-#endif
+#endif // __AUDIOFILE_H__

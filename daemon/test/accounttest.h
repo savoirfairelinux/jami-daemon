@@ -36,14 +36,14 @@
 
 class AccountTest : public CppUnit::TestFixture {
 
-  CPPUNIT_TEST_SUITE( AccountTest );
-  CPPUNIT_TEST( TestAddRemove );
-  CPPUNIT_TEST_SUITE_END();
+        CPPUNIT_TEST_SUITE(AccountTest);
+        CPPUNIT_TEST(TestAddRemove);
+        CPPUNIT_TEST_SUITE_END();
 
- public:
-  void TestAddRemove(void);
+    public:
+        void TestAddRemove(void);
 };
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AccountTest, "AccountTest");
-CPPUNIT_TEST_SUITE_REGISTRATION( AccountTest );
+CPPUNIT_TEST_SUITE_REGISTRATION(AccountTest);
 
 #endif /* ACCOUNTTEST_H_ */

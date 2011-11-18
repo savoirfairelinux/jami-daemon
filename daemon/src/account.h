@@ -36,6 +36,7 @@
 #include <vector>
 
 #include "global.h"
+#include "noncopyable.h"
 #include "config/config.h"
 #include "config/serializable.h"
 
@@ -143,12 +144,11 @@ static const char * const ringtonePathKey = "ringtonePath";
 static const char * const ringtoneEnabledKey = "ringtoneEnabled";
 static const char * const displayNameKey = "displayName";
 
-class Account : public Serializable
-{
+class Account : public Serializable {
 
     public:
 
-        Account (const std::string& accountID, const std::string &type);
+        Account(const std::string& accountID, const std::string &type);
 
         /**
          * Virtual destructor
@@ -159,15 +159,15 @@ class Account : public Serializable
          * Method called by the configuration engine to serialize instance's information
          * into configuration file.
          */
-        virtual void serialize (Conf::YamlEmitter *emitter) = 0;
+        virtual void serialize(Conf::YamlEmitter *emitter) = 0;
 
         /**
          * Method called by the configuration engine to restore instance internal state
          * from configuration file.
          */
-        virtual void unserialize (Conf::MappingNode *map) = 0;
+        virtual void unserialize(Conf::MappingNode *map) = 0;
 
-        virtual void setAccountDetails (std::map<std::string, std::string> details) = 0;
+        virtual void setAccountDetails(std::map<std::string, std::string> details) = 0;
 
         virtual std::map<std::string, std::string> getAccountDetails() const = 0;
 
@@ -188,7 +188,7 @@ class Account : public Serializable
          * Get the voiplink pointer
          * @return VoIPLink* the pointer or 0
          */
-        VoIPLink* getVoIPLink() const {
+        VoIPLink* getVoIPLink() {
             return link_;
         }
 
@@ -213,7 +213,7 @@ class Account : public Serializable
             return enabled_;
         }
 
-        void setEnabled (bool enable) {
+        void setEnabled(bool enable) {
             enabled_ = enable;
         }
 
@@ -221,31 +221,31 @@ class Account : public Serializable
          * Set the registration state of the specified link
          * @param state	The registration state of underlying VoIPLink
          */
-        void setRegistrationState (const RegistrationState &state);
+        void setRegistrationState(const RegistrationState &state);
 
         /* They should be treated like macro definitions by the C++ compiler */
-        std::string getUsername (void) const {
+        std::string getUsername() const {
             return username_;
         }
 
-        std::string getHostname (void) const {
+        std::string getHostname() const {
             return hostname_;
         }
-        void setHostname (const std::string &hostname) {
+        void setHostname(const std::string &hostname) {
             hostname_ = hostname;
         }
 
-        std::string getAlias (void) const {
+        std::string getAlias() const {
             return alias_;
         }
-        void setAlias (const std::string &alias) {
+        void setAlias(const std::string &alias) {
             alias_ = alias;
         }
 
-        std::string getType (void) const {
+        std::string getType() const {
             return type_;
         }
-        void setType (const std::string &type) {
+        void setType(const std::string &type) {
             type_ = type;
         }
 
@@ -253,7 +253,7 @@ class Account : public Serializable
          * Accessor to data structures
          * @return CodecOrder& The list that reflects the user's choice
          */
-        const CodecOrder& getActiveCodecs (void) const {
+        const CodecOrder& getActiveCodecs() const {
             return codecOrder_;
         }
 
@@ -261,52 +261,48 @@ class Account : public Serializable
          * Update both the codec order structure and the codec string used for
          * SDP offer and configuration respectively
          */
-        void setActiveCodecs (const std::vector <std::string>& list);
+        void setActiveCodecs(const std::vector <std::string>& list);
 
-        std::string getRingtonePath (void) const {
+        std::string getRingtonePath() const {
             return ringtonePath_;
         }
-        void setRingtonePath (const std::string &path) {
+        void setRingtonePath(const std::string &path) {
             ringtonePath_ = path;
         }
 
-        bool getRingtoneEnabled (void) const {
+        bool getRingtoneEnabled() const {
             return ringtoneEnabled_;
         }
-        void setRingtoneEnabled (bool enable) {
+        void setRingtoneEnabled(bool enable) {
             ringtoneEnabled_ = enable;
         }
 
-        std::string getDisplayName (void) const {
+        std::string getDisplayName() const {
             return displayName_;
         }
-        void setDisplayName (const std::string &name) {
+        void setDisplayName(const std::string &name) {
             displayName_ = name;
         }
 
-        std::string getMailBox (void) const {
+        std::string getMailBox() const {
             return mailBox_;
         }
 
-        void setMailBox (const std::string &mb) {
+        void setMailBox(const std::string &mb) {
             mailBox_ = mb;
         }
 
     private:
-        // copy constructor
-        Account (const Account& rh);
-
-        // assignment operator
-        Account& operator= (const Account& rh);
+        NON_COPYABLE(Account);
 
         /**
          * Helper function used to load the default codec order from the codec factory
          * setActiveCodecs is called to sync both codecOrder_ and codecStr_
          */
-        void loadDefaultCodecs (void);
+        void loadDefaultCodecs();
 
     protected:
-        static std::string mapStateNumberToString (RegistrationState state);
+        static std::string mapStateNumberToString(RegistrationState state);
 
         /**
          * Account ID are assign in constructor and shall not changed

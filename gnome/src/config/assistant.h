@@ -32,9 +32,9 @@
 #define __ASSISTANT_H
 
 
-#include <accountlist.h>
-#include <actions.h>
-#include <sflphone_const.h>
+#include "accountlist.h"
+#include "actions.h"
+#include "sflphone_const.h"
 
 
 #define _SIP  0

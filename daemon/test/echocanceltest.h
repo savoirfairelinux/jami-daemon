@@ -42,28 +42,25 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
-#include <assert.h>
+#include <cassert>
 
 #include "audio/speexechocancel.h"
 
-
-
 class EchoCancelTest: public CppUnit::TestFixture {
 
-        CPPUNIT_TEST_SUITE( EchoCancelTest );
-		CPPUNIT_TEST( testEchoCancelProcessing );
-	CPPUNIT_TEST_SUITE_END();
+        CPPUNIT_TEST_SUITE(EchoCancelTest);
+        CPPUNIT_TEST(testEchoCancelProcessing);
+        CPPUNIT_TEST_SUITE_END();
 
-public:
+    public:
+        EchoCancelTest();
+        void testEchoCancelProcessing();
 
-	void testEchoCancelProcessing();
-
-private:
-
-    SpeexEchoCancel echoCanceller;
-
+    private:
+        SpeexEchoCancel echoCanceller_;
 };
+
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(EchoCancelTest, "EchoCancelTest");
-CPPUNIT_TEST_SUITE_REGISTRATION( EchoCancelTest );
+CPPUNIT_TEST_SUITE_REGISTRATION(EchoCancelTest);
 
 #endif

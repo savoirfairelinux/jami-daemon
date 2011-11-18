@@ -29,54 +29,58 @@
  */
 
 #include "calllist.h"
+#include "calltab.h"
 #include "calltree.h"
-#include "contacts/searchbar.h"
+#include "unused.h"
+#include "logger.h"
 #include "eel-gconf-extensions.h"
 
 static
 gint is_callID_callstruct(gconstpointer a, gconstpointer b)
 {
     const QueueElement *c = a;
-    if(c == NULL || c->type != HIST_CALL)
-	return 1;
+
+    if (c == NULL || c->type != HIST_CALL)
+        return 1;
 
     return g_strcasecmp(c->elem.call->_callID, (const gchar *) b);
 }
 
-// TODO : sflphoneGTK : try to do this more generic
-void calllist_add_contact (gchar *contact_name, gchar *contact_phone, contact_type_t type, GdkPixbuf *photo)
+// TODO : try to do this more generically
+void calllist_add_contact(gchar *contact_name, gchar *contact_phone, contact_type_t type, GdkPixbuf *photo)
 {
     /* Check if the information is valid */
     if (!contact_phone)
         return;
 
-    callable_obj_t *new_call = create_new_call (CONTACT, CALL_STATE_DIALING, "", "", contact_name, contact_phone);
+    callable_obj_t *new_call = create_new_call(CONTACT, CALL_STATE_DIALING, "", "", contact_name, contact_phone);
 
     // Attach a pixbuf to a contact
-    if (photo) {
-        new_call->_contact_thumbnail = gdk_pixbuf_copy (photo);
-    } else {
+    if (photo)
+        new_call->_contact_thumbnail = gdk_pixbuf_copy(photo);
+    else {
         GdkPixbuf *pixbuf;
+
         switch (type) {
             case CONTACT_PHONE_BUSINESS:
-                pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/users.svg", NULL);
+                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/users.svg", NULL);
                 break;
             case CONTACT_PHONE_HOME:
-                pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/home.svg", NULL);
+                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/home.svg", NULL);
                 break;
             case CONTACT_PHONE_MOBILE:
-                pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/phone.svg", NULL);
+                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/phone.svg", NULL);
                 break;
             default:
-                pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/contact_default.svg", NULL);
+                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/contact_default.svg", NULL);
                 break;
         }
 
         new_call->_contact_thumbnail = pixbuf;
     }
 
-    calllist_add_call (contacts, new_call);
-    calltree_add_call (contacts, new_call, NULL);
+    calllist_add_call(contacts_tab, new_call);
+    calltree_add_call(contacts_tab, new_call, NULL);
 }
 
 /*
@@ -86,51 +90,29 @@ static void
 calllist_free_element(gpointer data, gpointer user_data UNUSED)
 {
     QueueElement *element = data;
-    if (element->type == HIST_CONFERENCE)
-        free_conference_obj_t (element->elem.conf);
-    else /* HIST_CALL */
-        free_callable_obj_t (element->elem.call);
-    g_free (element);
+
+    g_assert(element->type == HIST_CALL);
+    free_callable_obj_t(element->elem.call);
+
+    g_free(element);
 }
 
 void
-calllist_clean (calltab_t* tab)
+calllist_clean(calltab_t* tab)
 {
-    g_queue_foreach (tab->callQueue, calllist_free_element, NULL);
-    g_queue_free (tab->callQueue);
+    g_queue_foreach(tab->callQueue, calllist_free_element, NULL);
+    g_queue_free(tab->callQueue);
 }
 
 void
-calllist_reset (calltab_t* tab)
+calllist_reset(calltab_t* tab)
 {
-    calllist_clean (tab);
+    calllist_clean(tab);
     tab->callQueue = g_queue_new();
 }
 
-void calllist_add_history_call (callable_obj_t *obj)
-{
-    if (eel_gconf_get_integer (HISTORY_ENABLED)) {
-        QueueElement *element = g_new0(QueueElement, 1);
-        element->type = HIST_CALL;
-        element->elem.call = obj;
-        g_queue_push_tail (history->callQueue, (gpointer) element);
-        calltree_add_call (history, obj, NULL);
-    }
-}
-
-void calllist_add_history_conference(conference_obj_t *obj)
-{
-    if(eel_gconf_get_integer (HISTORY_ENABLED)) {
-        QueueElement *element = g_new0(QueueElement, 1);
-        element->type = HIST_CONFERENCE;
-        element->elem.conf = obj;
-        g_queue_push_tail (history->callQueue, (gpointer) element);
-        calltree_add_conference (history, obj);
-    }
-}
-
 void
-calllist_add_call (calltab_t* tab, callable_obj_t * c)
+calllist_add_call(calltab_t* tab, callable_obj_t * c)
 {
     QueueElement *element = g_new0(QueueElement, 1);
     element->type = HIST_CALL;
@@ -139,36 +121,37 @@ calllist_add_call (calltab_t* tab, callable_obj_t * c)
 }
 
 void
-calllist_clean_history (void)
+calllist_clean_history(void)
 {
-    guint size = calllist_get_size (history);
+    guint size = calllist_get_size(history_tab);
+
     for (guint i = 0; i < size; i++) {
-        QueueElement* c = calllist_get_nth(history, i);
+        QueueElement* c = calllist_get_nth(history_tab, i);
+
         if (c->type == HIST_CALL)
-            calltree_remove_call (history, c->elem.call, NULL);
-        else if(c->type == HIST_CONFERENCE)
-            calltree_remove_conference (history, c->elem.conf, NULL);
+            calltree_remove_call(history_tab, c->elem.call);
     }
 
-    calllist_reset (history);
+    calllist_reset(history_tab);
 }
 
 void
-calllist_remove_from_history (callable_obj_t* c)
+calllist_remove_from_history(callable_obj_t* c)
 {
-    calllist_remove_call(history, c->_callID);
-    calltree_remove_call(history, c, NULL);
+    calllist_remove_call(history_tab, c->_callID);
+    calltree_remove_call(history_tab, c);
 }
 
 void
-calllist_remove_call (calltab_t* tab, const gchar * callID)
+calllist_remove_call(calltab_t* tab, const gchar * callID)
 {
-    GList *c = g_queue_find_custom (tab->callQueue, callID, is_callID_callstruct);
-    if (c == NULL) {
-    	return;
-    }
+    GList *c = g_queue_find_custom(tab->callQueue, callID, is_callID_callstruct);
+
+    if (c == NULL)
+        return;
 
     QueueElement *element = (QueueElement *)c->data;
+
     if (element->type != HIST_CALL) {
         ERROR("CallList: Error: Element %s is not a call", callID);
         return;
@@ -176,8 +159,8 @@ calllist_remove_call (calltab_t* tab, const gchar * callID)
 
     g_queue_remove(tab->callQueue, element);
 
-    calllist_add_call(history, element->elem.call);
-    calltree_add_call(history, element->elem.call, NULL);
+    calllist_add_call(history_tab, element->elem.call);
+    calltree_add_history_entry(element->elem.call);
 }
 
 
@@ -189,27 +172,29 @@ calllist_get_by_state(calltab_t* tab, call_state_t state)
 }
 
 guint
-calllist_get_size (calltab_t* tab)
+calllist_get_size(calltab_t* tab)
 {
-    return g_queue_get_length (tab->callQueue);
+    return g_queue_get_length(tab->callQueue);
 }
 
 QueueElement *
-calllist_get_nth (calltab_t* tab, guint n)
+calllist_get_nth(calltab_t* tab, guint n)
 {
-    return g_queue_peek_nth (tab->callQueue, n);
+    return g_queue_peek_nth(tab->callQueue, n);
 }
 
 callable_obj_t *
-calllist_get_call (calltab_t* tab, const gchar * callID)
+calllist_get_call(calltab_t* tab, const gchar * callID)
 {
-    GList * c = g_queue_find_custom (tab->callQueue, callID, is_callID_callstruct);
+    GList * c = g_queue_find_custom(tab->callQueue, callID, is_callID_callstruct);
+
     if (c == NULL) {
         ERROR("CallList: Error: Could not find call %s", callID);
         return NULL;
     }
 
     QueueElement *element = c->data;
+
     if (element->type != HIST_CALL) {
         ERROR("CallList: Error: Element %s is not a call", callID);
         return NULL;

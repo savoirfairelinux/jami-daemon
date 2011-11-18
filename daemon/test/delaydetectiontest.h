@@ -64,49 +64,49 @@
 #define _DELAYDETECTION_TEST_
 
 /*
- * @file delaydetection.cpp  
+ * @file delaydetection.cpp
  * @brief       Regroups unitary tests related to the delay detection algorithm.
  */
 
 class DelayDetectionTest : public CppUnit::TestCase {
-  
-    CPPUNIT_TEST_SUITE( DelayDetectionTest );
-      CPPUNIT_TEST( testCrossCorrelation );
-      CPPUNIT_TEST( testCrossCorrelationDelay );
-      CPPUNIT_TEST( testFirFilter );
-      CPPUNIT_TEST( testIntToFloatConversion );
-      CPPUNIT_TEST( testDownSamplingData );
-      CPPUNIT_TEST( testDelayDetection );
-    CPPUNIT_TEST_SUITE_END();
 
- public: 
+        CPPUNIT_TEST_SUITE(DelayDetectionTest);
+        CPPUNIT_TEST(testCrossCorrelation);
+        CPPUNIT_TEST(testCrossCorrelationDelay);
+        CPPUNIT_TEST(testFirFilter);
+        CPPUNIT_TEST(testIntToFloatConversion);
+        CPPUNIT_TEST(testDownSamplingData);
+        CPPUNIT_TEST(testDelayDetection);
+        CPPUNIT_TEST_SUITE_END();
 
-    DelayDetectionTest() : CppUnit::TestCase("Delay Detection Tests") {}
+    public:
 
-    void setUp();
+        DelayDetectionTest() : CppUnit::TestCase("Delay Detection Tests") {}
 
-    void tearDown();
+        void setUp();
 
-    void testCrossCorrelation();
+        void tearDown();
 
-    void testCrossCorrelationDelay();
+        void testCrossCorrelation();
 
-    void testFirFilter();
+        void testCrossCorrelationDelay();
 
-    void testIntToFloatConversion();
+        void testFirFilter();
 
-    void testDownSamplingData();
+        void testIntToFloatConversion();
 
-    void testDelayDetection();
+        void testDownSamplingData();
 
- private:
+        void testDelayDetection();
 
-    DelayDetection _delaydetect;
-    
+    private:
+
+        DelayDetection delaydetect_;
+
 };
 
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(DelayDetectionTest, "DelayDetectionTest");
-CPPUNIT_TEST_SUITE_REGISTRATION( DelayDetectionTest );
+CPPUNIT_TEST_SUITE_REGISTRATION(DelayDetectionTest);
 
 #endif

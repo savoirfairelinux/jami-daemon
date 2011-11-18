@@ -49,38 +49,13 @@
 #define XDG_CACHE_HOME			(getenv ("XDG_CACHE_HOME"))
 const char * const ZRTP_ZID_FILENAME = "sfl.zid";
 
-typedef float float32;
-typedef short int16;
-
 //useful typedefs.
 typedef signed short SINT16;
 typedef signed int SINT32;
 
-typedef unsigned long FILE_TYPE;
-typedef unsigned long SOUND_FORMAT;
-
-const FILE_TYPE  FILE_RAW = 1;
-const FILE_TYPE  FILE_WAV = 2;
-
-static const SOUND_FORMAT INT16 = 0x2; // TODO shold change these symbols
-static const SOUND_FORMAT INT32 = 0x8;
-
 #define PIDFILE "sfl.pid"
 
-#ifdef DATAFORMAT_IS_FLOAT
-#define SFLDataFormat float32
-#define SFLDataFormatString "Float32"
-#define SFLDataAmplitude 0.05
-#else
-#define SFLDataFormat int16
-#define SFLDataFormatString "Int16"
-#define SFLDataAmplitude (32767 >> 4)
-#endif
-
-#define PROGNAME         "sflphoned"		/** Binary name */
-#define PROGDIR          "sflphone"		/** Program directory */
-#define RINGDIR          "ringtones"		/** Ringtones directory */
-#define CODECDIR         "codecs"		/** Codecs directory */
+typedef short SFLDataFormat;
 
 #define SIZEBUF 		 400000 /** About 12 sec of buffering at 8000 Hz*/
 
@@ -92,19 +67,11 @@ static const SOUND_FORMAT INT32 = 0x8;
 #define PCM_DSNOOP	"plug:dsnoop"		/** Alsa plugin for microphone sharing */
 #define PCM_DMIX_DSNOOP "dmix/dsnoop"           /** Audio profile using Alsa dmix/dsnoop */
 
-#define SFL_CODEC_VALID_PREFIX	"libcodec_"	/** Valid prefix for codecs shared library */
-#define SFL_CODEC_VALID_EXTEN	".so"		/** Valid extension for codecs shared library */
-#define CURRENT_DIR		"."		/** Current directory */
-#define PARENT_DIR		".."		/** Parent directory */
-
 #define SFL_PCM_BOTH		0x0021		/** To open both playback and capture devices */
 #define SFL_PCM_PLAYBACK	0x0022		/** To open playback device only */
 #define SFL_PCM_CAPTURE		0x0023		/** To open capture device only */
-#define SFL_PCM_RINGTONE        0x0024
+#define SFL_PCM_RINGTONE    0x0024
 
-#define GSM_STRING_DESCRIPTION	  "gsm"		/** GSM codec string description */
-#define SPEEX_STRING_DESCRIPTION  "speex"	/** SPEEX codec string description */
-#define ILBC_STRING_DESCRIPTION   "ilbc"		/** Ilbc codec string description */
 #define RINGTONE_ENABLED	      TRUE_STR		/** Custom ringtone enable or not */
 #define DISPLAY_DIALPAD		      TRUE_STR		/** Display dialpad or not */
 #define DISPLAY_VOLUME_CONTROLS	  TRUE_STR		/** Display the volume controls or not */
@@ -125,9 +92,6 @@ static const SOUND_FORMAT INT32 = 0x8;
 
 #define DEFAULT_SIP_PORT    5060
 #define DEFAULT_SIP_TLS_PORT 5061
-
-#define HOOK_DEFAULT_SIP_FIELD      "X-sflphone-url"
-#define HOOK_DEFAULT_URL_COMMAND    "x-www-browser"
 
 /** Enumeration that contains known audio payloads */
 enum {

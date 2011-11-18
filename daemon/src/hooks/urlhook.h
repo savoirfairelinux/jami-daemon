@@ -33,10 +33,7 @@
 
 #include <string>
 
-class UrlHook
-{
-public:
-	static void runAction (std::string, std::string);
-};
-
+namespace UrlHook {
+int runAction(const std::string &command, const std::string &arg);
+}
 #endif // URL_HOOK_H

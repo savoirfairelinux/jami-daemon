@@ -22,7 +22,7 @@ DO_LOGGING=1
 DO_UPLOAD=1
 SNAPSHOT_TAG=`date +%Y%m%d`
 TAG_NAME_PREFIX=
-VERSION_NUMBER="1.0.0"
+VERSION_NUMBER="1.0.1"
 
 LAUNCHPAD_PACKAGES=( "sflphone-client-gnome" "sflphone-common" "sflphone-plugins")
 
@@ -118,8 +118,8 @@ if [ ${IS_KDE_CLIENT} ]; then
 	TAG_NAME_PREFIX="kde."
 	LAUNCHPAD_PACKAGES=( "sflphone-client-kde" )
 fi
-CURRENT_RELEASE_TAG_NAME=`git tag -l "${TAG_NAME_PREFIX}[0-9]\.[0-9]\.[0-9]*\.*" | tail -n 1`
-PREVIOUS_RELEASE_TAG_NAME=`git tag -l "${TAG_NAME_PREFIX}[0-9]\.[0-9]\.[0-9]*\.*" | tail -n 2 | sed -n '1p;1q'`
+CURRENT_RELEASE_TAG_NAME=$(git for-each-ref refs/tags --sort=-authordate --format='%(refname)' --count=1 | cut -d'/' -f3)
+PREVIOUS_RELEASE_TAG_NAME=$(git for-each-ref refs/tags --sort=-authordate --format='%(refname)' --count=2 | cut -d'/' -f3 | tail -n1)
 CURRENT_RELEASE_COMMIT_HASH=`git show --pretty=format:"%H" -s ${CURRENT_RELEASE_TAG_NAME} | tail -n 1`
 PREVIOUS_RELEASE_COMMIT_HASH=`git show --pretty=format:"%H" -s ${PREVIOUS_RELEASE_TAG_NAME} | tail -n 1`
 CURRENT_COMMIT=`git show --pretty=format:"%H"  -s | tail -n 1`
@@ -131,8 +131,8 @@ if [ ${IS_KDE_CLIENT} ]; then
 	PREVIOUS_VERSION=${PREVIOUS_RELEASE_TAG_NAME%.*}
 	PREVIOUS_VERSION=${PREVIOUS_VERSION#*.}
 else
-	CURRENT_RELEASE_VERSION=${CURRENT_RELEASE_TAG_NAME%.*}
-	PREVIOUS_VERSION=${PREVIOUS_RELEASE_TAG_NAME%.*}
+	CURRENT_RELEASE_VERSION=${CURRENT_RELEASE_TAG_NAME}
+	PREVIOUS_VERSION=${PREVIOUS_RELEASE_TAG_NAME}
 fi
 
 cd ${LAUNCHPAD_DIR}
@@ -143,11 +143,7 @@ SOFTWARE_VERSION=""
 LAUNCHPAD_CONF_PREFIX=""
 
 if [ ${IS_RELEASE} ]; then
-	VERSION_APPEND=""
-	if [ "${CURRENT_RELEASE_TYPE}" != "stable" ] ; then
-		VERSION_APPEND="~${CURRENT_RELEASE_TYPE}"
-	fi
-	SOFTWARE_VERSION="${CURRENT_RELEASE_VERSION}${VERSION_APPEND}"
+	SOFTWARE_VERSION="${CURRENT_RELEASE_VERSION}"
 	COMMIT_HASH_BEGIN="${PREVIOUS_RELEASE_COMMIT_HASH}"
 	LAUNCHPAD_CONF_PREFIX="sflphone"
 else
@@ -232,7 +228,6 @@ END
 
 		LOCAL_VERSION="${SOFTWARE_VERSION}~ppa${VERSION_INDEX}~${LAUNCHPAD_DISTRIBUTION}"
 
-		cp ${DEBIAN_DIR}/control.${LAUNCHPAD_DISTRIBUTION} ${DEBIAN_DIR}/control
 		cp ${DEBIAN_DIR}/changelog.generic ${DEBIAN_DIR}/changelog
 
 		sed -i "s/SYSTEM/${LAUNCHPAD_DISTRIBUTION}/g" ${DEBIAN_DIR}/changelog

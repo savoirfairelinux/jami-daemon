@@ -31,10 +31,9 @@
 #ifndef __CALLABLE_OBJ_H__
 #define __CALLABLE_OBJ_H__
 
-#include <gtk/gtk.h>
-#include <glib/gprintf.h>
 #include <stdlib.h>
 #include <time.h>
+#include <gtk/gtk.h>
 
 /**
  * @enum history_state
@@ -98,7 +97,6 @@ typedef enum {
   * This struct holds information about a call.
   */
 typedef struct  {
-
     callable_type_t _type;          // CALL - HISTORY ENTRY - CONTACT
     call_state_t _state;            // The state of the call
     int _state_code;                // The numeric state code as defined in SIP or IAX
@@ -200,8 +198,7 @@ gchar* call_get_peer_name (const gchar*);
  */
 gchar* call_get_peer_number (const gchar*);
 
-void
-free_callable_obj_t (callable_obj_t *c);
+void free_callable_obj_t (callable_obj_t *c);
 
 gchar* get_peer_info (const gchar* const, const gchar* const);
 

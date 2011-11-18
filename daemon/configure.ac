@@ -3,7 +3,7 @@ dnl
 
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.65])
-AC_INIT([sflphone],[1.0.0],[sflphoneteam@savoirfairelinux.com],[sflphone])
+AC_INIT([sflphone],[1.0.1],[sflphoneteam@savoirfairelinux.com],[sflphone])
 AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011]])
 AC_REVISION([$Revision$])
 
@@ -50,8 +50,6 @@ AC_CONFIG_FILES([src/Makefile \
 		src/audio/codecs/Makefile \
 		src/config/Makefile \
 		src/dbus/Makefile \
-		src/plug-in/Makefile \
-		src/plug-in/test/Makefile \
 		src/hooks/Makefile \
 		src/history/Makefile])
 
@@ -180,7 +178,7 @@ DBUS_CPP_REQUIRED_VERSION=0.6.0-pre1
 PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,,
 	AC_MSG_ERROR([You need the DBus-c++ libraries (version $DBUS_CPP_REQUIRED_VERSION or better)]))
 
-CXXFLAGS="${CXXFLAGS} -g -Wno-return-type -Wall -Wextra -Wnon-virtual-dtor"
+CXXFLAGS="${CXXFLAGS} -g -Wno-return-type -Wall -Wextra -Wnon-virtual-dtor -Weffc++ -Wfatal-errors"
 
 AC_CHECK_LIB([expat], XML_ParserCreate_MM,
 		[AC_CHECK_HEADERS(expat.h, have_expat=true, have_expat=false)],

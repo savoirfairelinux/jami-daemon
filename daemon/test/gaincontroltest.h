@@ -48,19 +48,19 @@
 
 class GainControlTest: public CppUnit::TestFixture {
 
-        CPPUNIT_TEST_SUITE( GainControlTest );
-		CPPUNIT_TEST( testGainProcessing );
-	CPPUNIT_TEST_SUITE_END();
+        CPPUNIT_TEST_SUITE(GainControlTest);
+        CPPUNIT_TEST(testGainProcessing);
+        CPPUNIT_TEST_SUITE_END();
 
-public:
+    public:
 
-	void testGainProcessing();
+        void testGainProcessing();
 
-private:
+    private:
 
 
 };
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(GainControlTest, "GainControlTest");
-CPPUNIT_TEST_SUITE_REGISTRATION( GainControlTest );
+CPPUNIT_TEST_SUITE_REGISTRATION(GainControlTest);
 
 #endif

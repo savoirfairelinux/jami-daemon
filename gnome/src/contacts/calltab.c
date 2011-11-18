@@ -28,28 +28,30 @@
  *  as that of the covered work.
  */
 
-#include <calltab.h>
+#include "calltab.h"
 #include <gtk/gtk.h>
 #include <stdlib.h>
-#include <calltree.h>
-#include <contacts/searchbar.h>
+#include "calltree.h"
+#include "contacts/searchbar.h"
+#include "logger.h"
 
-calltab_t* calltab_init (gboolean searchbar_type, gchar *name)
+calltab_t* calltab_init(gboolean searchbar_type, const gchar * const name)
 {
-    calltab_t* ret = calloc (1, sizeof (calltab_t));
-    ret->_name = g_strdup (name);
+    calltab_t* ret = calloc(1, sizeof(calltab_t));
+    ret->_name = g_strdup(name);
 
-    calltree_create (ret, searchbar_type);
+    calltree_create(ret, searchbar_type);
 
-    ret->callQueue = g_queue_new ();
+    ret->callQueue = g_queue_new();
     ret->selectedCall = NULL;
 
     return ret;
 }
 
 void
-calltab_select_call (calltab_t* tab, callable_obj_t * c)
+calltab_select_call(calltab_t* tab, callable_obj_t * c)
 {
+    g_assert(tab);
     DEBUG("CallTab: Select call %s", c ? c->_callID : "");
 
     tab->selectedType = A_CALL;
@@ -59,8 +61,9 @@ calltab_select_call (calltab_t* tab, callable_obj_t * c)
 
 
 void
-calltab_select_conf (calltab_t *tab, conference_obj_t * c)
+calltab_select_conf(calltab_t *tab, conference_obj_t * c)
 {
+    g_assert(tab);
     DEBUG("CallTab: Selected conf %s", c ? c->_confID : "");
 
     tab->selectedType = A_CONFERENCE;
@@ -69,33 +72,35 @@ calltab_select_conf (calltab_t *tab, conference_obj_t * c)
 }
 
 gint
-calltab_get_selected_type (calltab_t* tab)
+calltab_get_selected_type(calltab_t* tab)
 {
+    g_assert(tab);
     return tab->selectedType;
 }
 
 callable_obj_t *
-calltab_get_selected_call (calltab_t *tab)
+calltab_get_selected_call(calltab_t *tab)
 {
+    g_assert(tab);
     return tab->selectedCall;
 }
 
 conference_obj_t*
-calltab_get_selected_conf (calltab_t *tab)
+calltab_get_selected_conf(calltab_t *tab)
 {
+    g_assert(tab);
     return tab->selectedConf;
 }
 
 void
-calltab_create_searchbar (calltab_t* tab)
+calltab_create_searchbar(calltab_t* tab)
 {
-    if (g_strcasecmp (tab->_name, HISTORY) == 0) {
-        tab->searchbar = history_searchbar_new ();
-    }
-    else if (g_strcasecmp (tab->_name, CONTACTS) == 0) {
-        tab->searchbar = contacts_searchbar_new ();
-    }
-    else {
-        ERROR ("Current calls tab does not need a searchbar\n");
-    }
+    g_assert(tab);
+
+    if (g_strcasecmp(tab->_name, HISTORY) == 0)
+        tab->searchbar = history_searchbar_new();
+    else if (g_strcasecmp(tab->_name, CONTACTS) == 0)
+        tab->searchbar = contacts_searchbar_new();
+    else
+        ERROR("Current calls tab does not need a searchbar\n");
 }

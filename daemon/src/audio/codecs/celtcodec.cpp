@@ -32,23 +32,20 @@
 #include <cstdio>
 #include <celt/celt.h>
 #include <stdexcept>
+#include "noncopyable.h"
 
-
-class Celt : public sfl::AudioCodec
-{
+class Celt : public sfl::AudioCodec {
 
     public:
-        Celt (int payload=115)	: sfl::AudioCodec (payload, "celt") {
-
-            _clockRate = 32000;
-            _frameSize = 320;  // fixed frameSize, TODO: support variable size from 64 to 512
-            _channel = 1;
-            _bitrate = 0;
-            _hasDynamicPayload = true;
-
+        Celt(int payload = 115)	: sfl::AudioCodec(payload, "celt"), mode_(0), enc_(0), dec_(0) {
+            clockRate_ = 32000;
+            frameSize_ = 320;  // fixed frameSize, TODO: support variable size from 64 to 512
+            channel_ = 1;
+            bitrate_ = 0;
+            hasDynamicPayload_ = true;
             int error = 0;
 
-            _mode = celt_mode_create (_clockRate, _frameSize, &error);
+            mode_ = celt_mode_create(clockRate_, frameSize_, &error);
 
             if (error != CELT_OK) {
                 switch (error) {
@@ -79,81 +76,62 @@ class Celt : public sfl::AudioCodec
 
             }
 
-            if (_mode == NULL)
+            if (mode_ == NULL)
                 throw std::runtime_error("Celt: Failed to create Celt mode");
 
-            // bytes_per_packet = 1024;
-            // if (bytes_per_packet < 0 || bytes_per_packet > MAX_PACKET)
-            // {
-            //     throw std::runtime_error("bytes per packet must be between 0 and %d");
-            // }
+            enc_ = celt_encoder_create(mode_, channel_, &error);
+            dec_ = celt_decoder_create(mode_, channel_, &error);
 
-            // celt_mode_info(mode, CELT_GET_FRAME_SIZE, &frame_size);
-            // celt_mode_info(mode, CELT_GET_NB_CHANNELS, &_channel);
+            celt_encoder_ctl(enc_, CELT_SET_COMPLEXITY(2));
+            celt_decoder_ctl(dec_, CELT_SET_COMPLEXITY(2));
 
-            _enc = celt_encoder_create (_mode, _channel, &error);
-
-            _dec = celt_decoder_create (_mode, _channel, &error);
-
-            celt_encoder_ctl (_enc, CELT_SET_COMPLEXITY (2));
-            celt_decoder_ctl (_dec, CELT_SET_COMPLEXITY (2));
-
-            celt_encoder_ctl (_enc, CELT_SET_PREDICTION (2));
-            celt_decoder_ctl (_dec, CELT_SET_PREDICTION (2));
-
+            celt_encoder_ctl(enc_, CELT_SET_PREDICTION(2));
+            celt_decoder_ctl(dec_, CELT_SET_PREDICTION(2));
         }
 
-        Celt (const Celt&);
-        Celt& operator= (const Celt&);
+        NON_COPYABLE(Celt);
 
         ~Celt() {
-            celt_encoder_destroy (_enc);
-            celt_decoder_destroy (_dec);
-            celt_mode_destroy (_mode);
+            celt_encoder_destroy(enc_);
+            celt_decoder_destroy(dec_);
+            celt_mode_destroy(mode_);
         }
 
-        virtual int decode (short *dst, unsigned char *src, size_t buf_size) {
+        virtual int decode(short *dst, unsigned char *src, size_t buf_size) {
 #ifdef BUILD_CELT_91 // == 91
-            //int err = 0;
-            /*err =*/ celt_decode (_dec, src, buf_size, (celt_int16*) dst, _frameSize);
+            celt_decode(dec_, src, buf_size, (celt_int16*) dst, frameSize_);
 #endif
 #ifdef BUILD_CELT_71
-            //int err = 0; // FIXME: check error code
-            /*err =*/ celt_decode (_dec, src, buf_size, (celt_int16*) dst);
+            celt_decode(dec_, src, buf_size, (celt_int16*) dst);
 #endif
-            return _frameSize;
+            return frameSize_;
         }
 
-        virtual int encode (unsigned char *dst, short *src, size_t buf_size) {
+        virtual int encode(unsigned char *dst, short *src, size_t buf_size) {
             int len = 0;
 #ifdef BUILD_CELT_91// == 91
-            len = celt_encode (_enc, (celt_int16*) src, _frameSize, dst, buf_size);
+            len = celt_encode(enc_, (celt_int16*) src, frameSize_, dst, buf_size);
 #endif
 #ifdef BUILD_CELT_71
-            len = celt_encode (_enc, (celt_int16*) src, (celt_int16 *) src, dst, buf_size);
+            len = celt_encode(enc_, (celt_int16*) src, (celt_int16 *) src, dst, buf_size);
 #endif
             return len;
         }
 
     private:
+        CELTMode *mode_;
 
-        CELTMode *_mode;
-
-        CELTEncoder *_enc;
-        CELTDecoder *_dec;
-
-        celt_int32 _celt_frame_size;
-        celt_int32 skip;
-
+        CELTEncoder *enc_;
+        CELTDecoder *dec_;
 };
 
 // the class factories
 extern "C" sfl::Codec* create()
 {
-    return new Celt (115);
+    return new Celt(115);
 }
 
-extern "C" void destroy (sfl::Codec* a)
+extern "C" void destroy(sfl::Codec* a)
 {
     delete a;
 }

@@ -32,23 +32,20 @@
 #define NOISESUPPRESS_H
 
 #include <speex/speex_preprocess.h>
-#include "global.h"
+#include "global.h" // for SFLDataFormat
+#include "noncopyable.h"
 
-class NoiseSuppress
-{
+class NoiseSuppress {
     public:
-
-        NoiseSuppress (int smplPerFrame, int samplingRate);
-
-        ~NoiseSuppress (void);
-
-        void process (SFLDataFormat *data, int samples);
+        NoiseSuppress(int smplPerFrame, int samplingRate);
+        ~NoiseSuppress();
+        void process(SFLDataFormat *data, int samples);
 
     private:
+        NON_COPYABLE(NoiseSuppress);
 
-        SpeexPreprocessState *_noiseState;
-
-        int _smplPerFrame;
+        int smplPerFrame_;
+        SpeexPreprocessState *noiseState_;
 };
 
 #endif

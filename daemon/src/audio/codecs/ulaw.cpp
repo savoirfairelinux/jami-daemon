@@ -35,40 +35,39 @@
 #include "audiocodec.h"
 #include <cassert>
 
-class Ulaw : public sfl::AudioCodec
-{
+class Ulaw : public sfl::AudioCodec {
     public:
         // 0 PCMU A 8000 1 [RFC3551]
-        Ulaw (int payload=0)
-            : sfl::AudioCodec (payload, "PCMU") {
-            _clockRate = 8000;
-            _frameSize = 160; // samples, 20 ms at 8kHz
-            _channel   = 1;
-            _bitrate =  64;
-            _hasDynamicPayload = false;
+        Ulaw(int payload=0)
+            : sfl::AudioCodec(payload, "PCMU") {
+            clockRate_ = 8000;
+            frameSize_ = 160; // samples, 20 ms at 8kHz
+            channel_   = 1;
+            bitrate_ =  64;
+            hasDynamicPayload_ = false;
         }
 
-        virtual int decode (short *dst, unsigned char *src, size_t buf_size) {
-        	assert(buf_size == _frameSize / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat));
+        virtual int decode(short *dst, unsigned char *src, size_t buf_size) {
+            assert(buf_size == frameSize_ / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat));
             unsigned char* end = src+buf_size;
 
             while (src<end)
-                *dst++ = ULawDecode (*src++);
+                *dst++ = ULawDecode(*src++);
 
-            return _frameSize;
+            return frameSize_;
         }
 
-        virtual int encode (unsigned char *dst, short *src, size_t buf_size) {
-        	assert(buf_size >= _frameSize / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat));
-            uint8* end = dst+_frameSize;
+        virtual int encode(unsigned char *dst, short *src, size_t buf_size) {
+            assert(buf_size >= frameSize_ / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat));
+            uint8* end = dst + frameSize_;
 
             while (dst<end)
-                *dst++ = ULawEncode (*src++);
+                *dst++ = ULawEncode(*src++);
 
-            return _frameSize / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat);;
+            return frameSize_ / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat);;
         }
 
-        int ULawDecode (uint8 ulaw) {
+        int ULawDecode(uint8 ulaw) {
             ulaw ^= 0xff;  // u-law has all bits inverted for transmission
             int linear = ulaw&0x0f;
             linear <<= 3;
@@ -85,7 +84,7 @@ class Ulaw : public sfl::AudioCodec
                 return linear;
         }
 
-        uint8 ULawEncode (int16 pcm16) {
+        uint8 ULawEncode(int16 pcm16) {
             int p = pcm16;
             uint u;  // u-law value we are forming
 
@@ -128,10 +127,10 @@ class Ulaw : public sfl::AudioCodec
 // the class factories
 extern "C" sfl::Codec* create()
 {
-    return new Ulaw (0);
+    return new Ulaw(0);
 }
 
-extern "C" void destroy (sfl::Codec* a)
+extern "C" void destroy(sfl::Codec* a)
 {
     delete a;
 }

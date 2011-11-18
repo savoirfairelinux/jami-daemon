@@ -33,63 +33,59 @@
 
 #include <pulse/pulseaudio.h>
 #include <string>
+#include "noncopyable.h"
 
 /**
  * This data structure contains the different king of audio streams available
  */
 enum STREAM_TYPE {
-	PLAYBACK_STREAM, CAPTURE_STREAM, RINGTONE_STREAM
+    PLAYBACK_STREAM, CAPTURE_STREAM, RINGTONE_STREAM
 };
 
 class AudioStream {
-public:
+    public:
 
-	/**
-	 * Constructor
-	 *
-	 * @param context pulseaudio's application context.
-	 * @param mainloop pulseaudio's main loop
-	 * @param description
-	 * @param types
-	 * @param audio sampling rate
-	 * @param device name
-	 */
-	AudioStream(pa_context *, pa_threaded_mainloop *, const char *, int, int, std::string *);
+        /**
+         * Constructor
+         *
+         * @param context pulseaudio's application context.
+         * @param mainloop pulseaudio's main loop
+         * @param description
+         * @param types
+         * @param audio sampling rate
+         * @param device name
+         */
+        AudioStream(pa_context *, pa_threaded_mainloop *, const char *, int, int, std::string *);
 
-	~AudioStream();
+        ~AudioStream();
 
-	/**
-	 * Accessor: Get the pulseaudio stream object
-	 * @return pa_stream* The stream
-	 */
-	pa_stream* pulseStream() {
-		return _audiostream;
-	}
+        /**
+         * Accessor: Get the pulseaudio stream object
+         * @return pa_stream* The stream
+         */
+        pa_stream* pulseStream() {
+            return audiostream_;
+        }
 
-	bool isReady(void);
+        bool isReady();
 
-private:
+    private:
+        NON_COPYABLE(AudioStream);
 
-	// Copy Constructor
-	AudioStream(const AudioStream& rh);
+        /**
+         * Mandatory asynchronous callback on the audio stream state
+         */
+        static void stream_state_callback(pa_stream* s, void* user_data);
 
-	// Assignment Operator
-	AudioStream& operator=(const AudioStream& rh);
+        /**
+         * The pulse audio object
+         */
+        pa_stream* audiostream_;
 
-	/**
-	 * Mandatory asynchronous callback on the audio stream state
-	 */
-	static void stream_state_callback(pa_stream* s, void* user_data);
-
-	/**
-	 * The pulse audio object
-	 */
-	pa_stream* _audiostream;
-
-	/**
-	 * A pointer to the opaque threaded main loop object
-	 */
-	pa_threaded_mainloop * _mainloop;
+        /**
+         * A pointer to the opaque threaded main loop object
+         */
+        pa_threaded_mainloop * mainloop_;
 };
 
 #endif // _AUDIO_STREAM_H

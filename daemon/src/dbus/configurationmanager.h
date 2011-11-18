@@ -40,108 +40,107 @@
 
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Weffc++"
 #include "configurationmanager-glue.h"
 #pragma GCC diagnostic warning "-Wignored-qualifiers"
 #pragma GCC diagnostic warning "-Wunused-parameter"
+#pragma GCC diagnostic warning "-Weffc++"
 
 #if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
 #pragma GCC diagnostic warning "-Wunused-but-set-variable"
 #endif
 
-#include <dbus-c++/dbus.h>
+#include "dbus_cpp.h"
 
-class ConfigurationManager
-: public org::sflphone::SFLphone::ConfigurationManager_adaptor,
+class ConfigurationManager :
+    public org::sflphone::SFLphone::ConfigurationManager_adaptor,
     public DBus::IntrospectableAdaptor,
-    public DBus::ObjectAdaptor
-{
-    private:
-        std::vector<std::string> shortcutsKeys;
+    public DBus::ObjectAdaptor {
 
     public:
 
-        ConfigurationManager (DBus::Connection& connection);
+        ConfigurationManager(DBus::Connection& connection);
         static const char* SERVER_PATH;
 
-        std::map< std::string, std::string > getAccountDetails (const std::string& accountID);
-        void setAccountDetails (const std::string& accountID, const std::map< std::string, std::string >& details);
-        std::string addAccount (const std::map< std::string, std::string >& details);
-        void removeAccount (const std::string& accoundID);
-        void deleteAllCredential (const std::string& accountID);
+        std::map< std::string, std::string > getAccountDetails(const std::string& accountID);
+        void setAccountDetails(const std::string& accountID, const std::map< std::string, std::string >& details);
+        std::string addAccount(const std::map< std::string, std::string >& details);
+        void removeAccount(const std::string& accoundID);
+        void deleteAllCredential(const std::string& accountID);
         std::vector< std::string > getAccountList();
-        void sendRegister (const std::string& accoundID , const int32_t& expire);
+        void sendRegister(const std::string& accoundID , const int32_t& expire);
 
-        std::map< std::string, std::string > getTlsSettingsDefault (void);
+        std::map< std::string, std::string > getTlsSettingsDefault();
 
-        std::vector< int32_t > getAudioCodecList (void);
-        std::vector< std::string > getSupportedTlsMethod (void);
-        std::vector< std::string > getAudioCodecDetails (const int32_t& payload);
-        std::vector< int32_t > getActiveAudioCodecList (const std::string& accountID);
-        void setActiveAudioCodecList (const std::vector< std::string >& list, const std::string& accountID);
+        std::vector< int32_t > getAudioCodecList();
+        std::vector< std::string > getSupportedTlsMethod();
+        std::vector< std::string > getAudioCodecDetails(const int32_t& payload);
+        std::vector< int32_t > getActiveAudioCodecList(const std::string& accountID);
+        void setActiveAudioCodecList(const std::vector< std::string >& list, const std::string& accountID);
 
         std::vector< std::string > getAudioPluginList();
-        void setAudioPlugin (const std::string& audioPlugin);
+        void setAudioPlugin(const std::string& audioPlugin);
         std::vector< std::string > getAudioOutputDeviceList();
-        void setAudioOutputDevice (const int32_t& index);
-        void setAudioInputDevice (const int32_t& index);
-        void setAudioRingtoneDevice (const int32_t& index);
+        void setAudioOutputDevice(const int32_t& index);
+        void setAudioInputDevice(const int32_t& index);
+        void setAudioRingtoneDevice(const int32_t& index);
         std::vector< std::string > getAudioInputDeviceList();
         std::vector< std::string > getCurrentAudioDevicesIndex();
-        int32_t getAudioDeviceIndex (const std::string& name);
-        std::string getCurrentAudioOutputPlugin (void);
-        std::string getNoiseSuppressState (void);
-        void setNoiseSuppressState (const std::string& state);
-        std::string getEchoCancelState(void);
+        int32_t getAudioDeviceIndex(const std::string& name);
+        std::string getCurrentAudioOutputPlugin();
+        std::string getNoiseSuppressState();
+        void setNoiseSuppressState(const std::string& state);
+        std::string getEchoCancelState();
         void setEchoCancelState(const std::string& state);
         void setEchoCancelTailLength(const int32_t& length);
-        int getEchoCancelTailLength(void);
+        int getEchoCancelTailLength();
         void setEchoCancelDelay(const int32_t& length);
-        int getEchoCancelDelay(void);
+        int getEchoCancelDelay();
 
-        std::string getAudioManager (void);
-        void setAudioManager (const std::string& api);
+        std::string getAudioManager();
+        void setAudioManager(const std::string& api);
 
-        int32_t isIax2Enabled (void);
-        std::string getRecordPath (void);
-        void setRecordPath (const std::string& recPath);
-        bool getIsAlwaysRecording(void);
+        int32_t isIax2Enabled();
+        std::string getRecordPath();
+        void setRecordPath(const std::string& recPath);
+        bool getIsAlwaysRecording();
         void setIsAlwaysRecording(const bool& rec);
 
-        void setHistoryLimit (const int32_t& days);
-        int32_t getHistoryLimit (void);
+        void setHistoryLimit(const int32_t& days);
+        int32_t getHistoryLimit();
 
-        int32_t getMailNotify (void);
-        void setMailNotify (void);
+        int32_t getMailNotify();
+        void setMailNotify();
 
 
-        std::map<std::string, int32_t> getAddressbookSettings (void);
-        void setAddressbookSettings (const std::map<std::string, int32_t>& settings);
-        std::vector< std::string > getAddressbookList (void);
-        void setAddressbookList (const std::vector< std::string >& list);
+        std::map<std::string, int32_t> getAddressbookSettings();
+        void setAddressbookSettings(const std::map<std::string, int32_t>& settings);
+        std::vector< std::string > getAddressbookList();
+        void setAddressbookList(const std::vector< std::string >& list);
 
-        void setAccountsOrder (const std::string& order);
+        void setAccountsOrder(const std::string& order);
 
-        std::map<std::string, std::string> getHookSettings (void);
-        void setHookSettings (const std::map<std::string, std::string>& settings);
+        std::map<std::string, std::string> getHookSettings();
+        void setHookSettings(const std::map<std::string, std::string>& settings);
 
-        std::vector<std::string> getHistory(void);
-        void setHistory (const std::vector<std::string> &entries);
+        std::vector<std::string> getHistory();
+        void setHistory(const std::vector<std::string> &entries);
 
-        std::map<std::string, std::string> getTlsSettings (void);
-        void setTlsSettings (const std::map< std::string, std::string >& details);
-        std::map< std::string, std::string > getIp2IpDetails (void);
+        std::map<std::string, std::string> getTlsSettings();
+        void setTlsSettings(const std::map< std::string, std::string >& details);
+        std::map< std::string, std::string > getIp2IpDetails();
 
-        std::vector< std::map< std::string, std::string > > getCredentials (const std::string& accountID);
-        void setCredentials (const std::string& accountID, const std::vector< std::map< std::string, std::string > >& details);
+        std::vector< std::map< std::string, std::string > > getCredentials(const std::string& accountID);
+        void setCredentials(const std::string& accountID, const std::vector< std::map< std::string, std::string > >& details);
 
-        std::string getAddrFromInterfaceName (const std::string& interface);
+        std::string getAddrFromInterfaceName(const std::string& interface);
 
-        std::vector<std::string> getAllIpInterface (void);
-        std::vector<std::string> getAllIpInterfaceByName (void);
+        std::vector<std::string> getAllIpInterface();
+        std::vector<std::string> getAllIpInterfaceByName();
 
-        std::map< std::string, std::string > getShortcuts ();
-        void setShortcuts (const std::map< std::string, std::string >& shortcutsMap);
+        std::map< std::string, std::string > getShortcuts();
+        void setShortcuts(const std::map< std::string, std::string >& shortcutsMap);
 };
 
-
 #endif//CONFIGURATIONMANAGER_H
+

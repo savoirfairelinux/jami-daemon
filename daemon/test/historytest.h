@@ -34,13 +34,14 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
-#include <assert.h>
+#include <cassert>
 
 // Application import
+#include "noncopyable.h"
 #include "history/historymanager.h"
 
 /*
- * @file historyTest.h  
+ * @file historyTest.h
  * @brief       Regroups unitary tests related to the phone number cleanup function.
  */
 
@@ -49,57 +50,58 @@
 
 class HistoryTest : public CppUnit::TestCase {
 
-   /**
-     * Use cppunit library macros to add unit test the factory
-     */
-    CPPUNIT_TEST_SUITE (HistoryTest);
-        CPPUNIT_TEST (test_create_history_path);
-        CPPUNIT_TEST (test_save_history_items_map);
-        CPPUNIT_TEST (test_load_history_from_file);
-        CPPUNIT_TEST (test_load_history_items_map);
-        CPPUNIT_TEST (test_get_history_serialized);
-        CPPUNIT_TEST (test_set_serialized_history);
-        CPPUNIT_TEST (test_set_serialized_history_with_limit);
-	// CPPUNIT_TEST (test_save_history_to_file);
-    CPPUNIT_TEST_SUITE_END ();
+        /**
+          * Use cppunit library macros to add unit test the factory
+          */
+        CPPUNIT_TEST_SUITE(HistoryTest);
+        CPPUNIT_TEST(test_create_history_path);
+        CPPUNIT_TEST(test_save_history_items_map);
+        CPPUNIT_TEST(test_load_history_from_file);
+        CPPUNIT_TEST(test_load_history_items_map);
+        CPPUNIT_TEST(test_get_history_serialized);
+        CPPUNIT_TEST(test_set_serialized_history);
+        CPPUNIT_TEST(test_set_serialized_history_with_limit);
+        // CPPUNIT_TEST (test_save_history_to_file);
+        CPPUNIT_TEST_SUITE_END();
 
     public:
-        HistoryTest() : CppUnit::TestCase("History Tests") {}
-        
+        HistoryTest() : CppUnit::TestCase("History Tests"), history(0) {}
+
         /*
          * Code factoring - Common resources can be initialized here.
          * This method is called by unitcpp before each test
          */
         void setUp();
 
-        void test_create_history_path ();
+        void test_create_history_path();
 
-        void test_load_history_from_file ();
+        void test_load_history_from_file();
 
-        void test_load_history_items_map ();
+        void test_load_history_items_map();
 
-        void test_save_history_items_map ();
+        void test_save_history_items_map();
 
-        void test_save_history_to_file ();
-    
-        void test_get_history_serialized ();
+        void test_save_history_to_file();
 
-        void test_set_serialized_history ();
+        void test_get_history_serialized();
 
-        void test_set_serialized_history_with_limit ();
-            
+        void test_set_serialized_history();
+
+        void test_set_serialized_history_with_limit();
+
         /*
          * Code factoring - Common resources can be released here.
          * This method is called by unitcpp after each test
          */
-        void tearDown ();
+        void tearDown();
 
     private:
+        NON_COPYABLE(HistoryTest);
         HistoryManager *history;
 };
 
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(HistoryTest, "HistoryTest");
-CPPUNIT_TEST_SUITE_REGISTRATION( HistoryTest );
+CPPUNIT_TEST_SUITE_REGISTRATION(HistoryTest);
 
 #endif

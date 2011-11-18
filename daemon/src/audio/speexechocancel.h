@@ -21,6 +21,7 @@
 #define SPEEXECHOCANCEL_H
 
 #include "global.h"
+#include "noncopyable.h"
 
 class RingBuffer;
 class SpeexEchoState_;
@@ -28,8 +29,7 @@ typedef SpeexEchoState_ SpeexEchoState;
 class SpeexPreprocessState_;
 typedef SpeexPreprocessState_ SpeexPreprocessState;
 
-class SpeexEchoCancel
-{
+class SpeexEchoCancel {
     public:
 
         SpeexEchoCancel();
@@ -39,40 +39,32 @@ class SpeexEchoCancel
          * Add speaker data into internal buffer
          * \param inputData containing far-end voice data to be sent to speakers
          */
-        void putData (SFLDataFormat *, int samples);
+        void putData(SFLDataFormat *, int samples);
 
         /**
          * Perform echo cancellation using internal buffers
          * \param inputData containing mixed echo and voice data
          * \param outputData containing
          */
-        int process (SFLDataFormat *, SFLDataFormat *, int samples);
+        int process(SFLDataFormat *, SFLDataFormat *, int samples);
 
     private:
+        NON_COPYABLE(SpeexEchoCancel);
 
-        SpeexEchoState *_echoState;
+        int echoDelay_;
+        int echoTailLength_;
 
-        SpeexPreprocessState *_preState;
+        SpeexEchoState *echoState_;
+        SpeexPreprocessState *preState_;
 
-        RingBuffer *_micData;
-        RingBuffer *_spkrData;
+        RingBuffer *micData_;
+        RingBuffer *spkrData_;
 
-        int _echoDelay;
-        int _echoTailLength;
+        bool spkrStopped_;
 
-        bool _spkrStopped;
-
-        SFLDataFormat _tmpSpkr[5000];
-        SFLDataFormat _tmpMic[5000];
-        SFLDataFormat _tmpOut[5000];
-
-#ifdef DUMP_ECHOCANCEL_INTERNAL_DATA
-        ofstream *micFile;
-        ofstream *spkrFile;
-        ofstream *micProcessFile;
-        ofstream *spkrProcessFile;
-        ofstream *echoFile;
-#endif
+        SFLDataFormat tmpSpkr_[5000];
+        SFLDataFormat tmpMic_[5000];
+        SFLDataFormat tmpOut_[5000];
 };
 
 #endif

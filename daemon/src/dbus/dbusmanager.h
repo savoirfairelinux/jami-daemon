@@ -31,39 +31,37 @@
 #ifndef __DBUSMANAGERIMPL_H__
 #define __DBUSMANAGERIMPL_H__
 
-#pragma GCC diagnostic ignored "-Wignored-qualifiers"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#include <dbus-c++/dbus.h>
-#pragma GCC diagnostic warning "-Wignored-qualifiers"
-#pragma GCC diagnostic warning "-Wunused-parameter"
+#include "dbus_cpp.h"
+#include "noncopyable.h"
+
 class ConfigurationManager;
 class CallManager;
 class NetworkManager;
 class Instance;
 
-class DBusManager
-{
+class DBusManager {
     public:
-		DBusManager();
-		~DBusManager();
+        DBusManager();
+        ~DBusManager();
 
-        CallManager * getCallManager() const {
-            return _callManager;
+        CallManager * getCallManager() {
+            return callManager_;
         };
-        ConfigurationManager * getConfigurationManager() const {
-            return _configurationManager;
+        ConfigurationManager * getConfigurationManager() {
+            return configurationManager_;
         };
 
         void exec();
         void exit();
 
     private:
-        CallManager*          _callManager;
-        ConfigurationManager* _configurationManager;
-        Instance*             _instanceManager;
-        DBus::BusDispatcher   _dispatcher;
+        NON_COPYABLE(DBusManager);
+        CallManager*          callManager_;
+        ConfigurationManager* configurationManager_;
+        Instance*             instanceManager_;
+        DBus::BusDispatcher   dispatcher_;
 #if USE_NETWORKMANAGER
-        NetworkManager* _networkManager;
+        NetworkManager* networkManager_;
 #endif
 };
 

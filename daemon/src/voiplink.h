@@ -35,10 +35,12 @@
 #define __VOIP_LINK_H__
 
 #include <stdexcept>
+#include <map>
+#include <cc++/thread.h> // for ost::Mutex
 
-#include "call.h"
-
+class Call;
 class Account;
+
 namespace sfl {
 class InstantMessaging;
 };
@@ -46,49 +48,44 @@ class InstantMessaging;
 /** Define a map that associate a Call object to a call identifier */
 typedef std::map<std::string, Call*> CallMap;
 
-class VoipLinkException : public std::runtime_error
-{
+class VoipLinkException : public std::runtime_error {
     public:
-        VoipLinkException (const std::string& str="") :
-        	std::runtime_error("UserAgent: VoipLinkException occured: " + str) {}
+        VoipLinkException(const std::string& str = "") :
+            std::runtime_error("UserAgent: VoipLinkException occured: " + str) {}
 };
 
 /**
  * @file voiplink.h
  * @brief Listener and manager interface for each VoIP protocol
  */
-class VoIPLink
-{
+class VoIPLink {
     public:
-        /**
-         * Virtual destructor
-         */
-        virtual ~VoIPLink (void);
-
+        VoIPLink();
+        virtual ~VoIPLink();
 
         /**
          * Virtual method
          * Event listener. Each event send by the call manager is received and handled from here
          */
-        virtual void getEvent (void) = 0;
+        virtual void getEvent() = 0;
 
         /**
          * Virtual method
          * Try to initiate the communication layer and set config
          */
-        virtual void init (void) = 0;
+        virtual void init() = 0;
 
         /**
          * Virtual method
          * Build and send account registration request
          */
-        virtual void sendRegister (Account *a) = 0;
+        virtual void sendRegister(Account *a) = 0;
 
         /**
          * Virtual method
          * Build and send account unregistration request
          */
-        virtual void sendUnregister (Account *a) = 0;
+        virtual void sendUnregister(Account *a) = 0;
 
         /**
          * Place a new call
@@ -96,46 +93,46 @@ class VoIPLink
          * @param toUrl  The address of the recipient of the call
          * @return Call* The current call
          */
-        virtual Call* newOutgoingCall (const std::string& id, const std::string& toUrl) = 0;
+        virtual Call* newOutgoingCall(const std::string& id, const std::string& toUrl) = 0;
 
         /**
          * Answer the call
          * @param c The call
          */
-        virtual void answer (Call *c) = 0;
+        virtual void answer(Call *c) = 0;
 
         /**
          * Hang up a call
          * @param id The call identifier
          */
-        virtual void hangup (const std::string& id) = 0;
+        virtual void hangup(const std::string& id) = 0;
 
         /**
         * Peer Hung up a call
         * @param id The call identifier
         */
-        virtual void peerHungup (const std::string& id) = 0;
+        virtual void peerHungup(const std::string& id) = 0;
 
         /**
          * Put a call on hold
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual void onhold (const std::string& id) = 0;
+        virtual void onhold(const std::string& id) = 0;
 
         /**
          * Resume a call from hold state
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual void offhold (const std::string& id) = 0;
+        virtual void offhold(const std::string& id) = 0;
 
         /**
          * Transfer a call to specified URI
          * @param id The call identifier
          * @param to The recipient of the call
          */
-        virtual void transfer (const std::string& id, const std::string& to) = 0;
+        virtual void transfer(const std::string& id, const std::string& to) = 0;
 
         /**
          * Attended transfer
@@ -143,20 +140,20 @@ class VoIPLink
          * @param The target call id
          * @return True on success
          */
-        virtual bool attendedTransfer (const std::string&, const std::string&) = 0;
+        virtual bool attendedTransfer(const std::string&, const std::string&) = 0;
 
         /**
          * Refuse incoming call
          * @param id The call identifier
          */
-        virtual void refuse (const std::string& id) = 0;
+        virtual void refuse(const std::string& id) = 0;
 
         /**
          * Send DTMF
          * @param id The call identifier
          * @param code  The char code
          */
-        virtual void carryingDTMFdigits (const std::string& id, char code) = 0;
+        virtual void carryingDTMFdigits(const std::string& id, char code) = 0;
 
         /**
          * Return the codec protocol used for this call
@@ -172,32 +169,32 @@ class VoIPLink
          * @param The actual message to be transmitted
          * @param The sender of this message (could be another participant of a conference)
          */
-        virtual void sendTextMessage (sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from) = 0;
+        virtual void sendTextMessage(sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from) = 0;
 
         /** Add a call to the call map (protected by mutex)
          * @param call A call pointer with a unique pointer
          * @return bool True if the call was unique and added
          */
-        void addCall (Call* call);
+        void addCall(Call* call);
 
         /**
          * Get the call pointer from the call map (protected by mutex)
          * @param id A Call ID
          * @return Call*  Call pointer or 0
          */
-        Call* getCall (const std::string& id);
+        Call* getCall(const std::string& id);
 
     protected:
         /** Contains all the calls for this Link, protected by mutex */
-        CallMap _callMap;
+        CallMap callMap_;
 
         /** Mutex to protect call map */
-        ost::Mutex _callMapMutex;
+        ost::Mutex callMapMutex_;
 
         /** Remove a call from the call map (protected by mutex)
          * @param id A Call ID
          */
-        void removeCall (const std::string& id);
+        void removeCall(const std::string& id);
 };
 
 #endif // __VOIP_LINK_H__

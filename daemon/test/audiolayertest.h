@@ -42,7 +42,7 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
-#include <assert.h>
+#include <cassert>
 
 // Application import
 #include "manager.h"
@@ -52,31 +52,31 @@
 #include "audio/audiolayer.h"
 #include "audio/alsa/alsalayer.h"
 #include "audio/pulseaudio/pulselayer.h"
+#include "noncopyable.h"
 
 class AudioLayerTest: public CppUnit::TestFixture {
 
-CPPUNIT_TEST_SUITE( AudioLayerTest );
-		CPPUNIT_TEST( testAudioLayerConfig );
-		CPPUNIT_TEST( testPulseConnect );
-		//TODO: this test ends the test sequence when using on a alsa only system
-		//CPPUNIT_TEST(testAudioLayerSwitch);
-	CPPUNIT_TEST_SUITE_END();
+        CPPUNIT_TEST_SUITE(AudioLayerTest);
+        CPPUNIT_TEST(testAudioLayerConfig);
+        CPPUNIT_TEST(testPulseConnect);
+        //TODO: this test ends the test sequence when using on a alsa only system
+        //CPPUNIT_TEST(testAudioLayerSwitch);
+        CPPUNIT_TEST_SUITE_END();
 
-public:
+    public:
+        AudioLayerTest();
+        void testAudioLayerConfig();
+        void testPulseConnect();
+        void testAudioLayerSwitch();
 
-	void testAudioLayerConfig();
-	void testPulseConnect();
-	void testAudioLayerSwitch();
+    private:
+        NON_COPYABLE(AudioLayerTest);
 
-private:
-
-	ManagerImpl* manager;
-
-	PulseLayer* _pulselayer;
-
-	int layer;
+        ManagerImpl* manager_;
+        PulseLayer* pulselayer_;
+        int layer_;
 };
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AudioLayerTest, "AudioLayerTest");
-CPPUNIT_TEST_SUITE_REGISTRATION( AudioLayerTest );
+CPPUNIT_TEST_SUITE_REGISTRATION(AudioLayerTest);
 
 #endif

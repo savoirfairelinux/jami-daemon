@@ -28,17 +28,14 @@
  *  as that of the covered work.
  */
 
-#include <actions.h>
-#include <calllist.h>
-#include <config.h>
-#include <logger.h>
-#include <dbus/dbus.h>
-#include <mainwindow.h>
-#include <statusicon.h>
-#include <libgnome/libgnome.h>
-#include <libgnomeui/libgnomeui.h>
-#include <eel-gconf-extensions.h>
-
+#include "actions.h"
+#include "calllist.h"
+#include "config.h"
+#include "logger.h"
+#include "dbus/dbus.h"
+#include "mainwindow.h"
+#include "statusicon.h"
+#include "eel-gconf-extensions.h"
 #include <gtk/gtk.h>
 #include <stdlib.h>
 
@@ -46,7 +43,7 @@
 #include "history.h"
 
 int
-main (int argc, char *argv[])
+main(int argc, char *argv[])
 {
     GError *error = NULL;
     // Handle logging
@@ -54,88 +51,83 @@ main (int argc, char *argv[])
 
     // Check arguments if debug mode is activated
     for (i = 0; i < argc; i++)
-        if (g_strcmp0 (argv[i], "--debug") == 0)
-            set_log_level (LOG_DEBUG);
+        if (g_strcmp0(argv[i], "--debug") == 0)
+            set_log_level(LOG_DEBUG);
 
-    g_thread_init (NULL);
-    gdk_threads_init ();
-    gdk_threads_enter ();
+    g_thread_init(NULL);
+    gdk_threads_init();
+    gdk_threads_enter();
 
     // Start GTK application
-    gtk_init (&argc, &argv);
+    gtk_init(&argc, &argv);
 
-    g_print ("%s %s\n", PACKAGE, VERSION);
-    g_print ("\nCopyright (c) 2005 - 2011 Savoir-faire Linux Inc.\n\n");
-    g_print ("This is free software.  You may redistribute copies of it under the terms of\n" \
-             "the GNU General Public License Version 3 <http://www.gnu.org/licenses/gpl.html>.\n" \
-             "There is NO WARRANTY, to the extent permitted by law.\n\n" \
-             "Additional permission under GNU GPL version 3 section 7:\n\n" \
-             "If you modify this program, or any covered work, by linking or\n" \
-             "combining it with the OpenSSL project's OpenSSL library (or a\n" \
-             "modified version of that library), containing parts covered by the\n" \
-             "terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.\n" \
-             "grants you additional permission to convey the resulting work.\n" \
-             "Corresponding Source for a non-source form of such a combination\n" \
-             "shall include the source code for the parts of OpenSSL used as well\n" \
-             "as that of the covered work.\n\n");
+    g_print("%s %s\n", PACKAGE, VERSION);
+    g_print("\nCopyright (c) 2005 - 2011 Savoir-faire Linux Inc.\n\n");
+    g_print("This is free software.  You may redistribute copies of it under the terms of\n" \
+            "the GNU General Public License Version 3 <http://www.gnu.org/licenses/gpl.html>.\n" \
+            "There is NO WARRANTY, to the extent permitted by law.\n\n" \
+            "Additional permission under GNU GPL version 3 section 7:\n\n" \
+            "If you modify this program, or any covered work, by linking or\n" \
+            "combining it with the OpenSSL project's OpenSSL library (or a\n" \
+            "modified version of that library), containing parts covered by the\n" \
+            "terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.\n" \
+            "grants you additional permission to convey the resulting work.\n" \
+            "Corresponding Source for a non-source form of such a combination\n" \
+            "shall include the source code for the parts of OpenSSL used as well\n" \
+            "as that of the covered work.\n\n");
 
-    srand (time (NULL));
+    srand(time(NULL));
 
     // Internationalization
-    bindtextdomain ("sflphone-client-gnome", LOCALEDIR);
-    textdomain ("sflphone-client-gnome");
+    bindtextdomain("sflphone-client-gnome", LOCALEDIR);
+    textdomain("sflphone-client-gnome");
 
-    // Initialises the GNOME libraries
-    gnome_program_init ("sflphone", VERSION, LIBGNOMEUI_MODULE, argc, argv,
-                        GNOME_PROGRAM_STANDARD_PROPERTIES,
-                        NULL) ;
-
-    if (!sflphone_init (&error)) {
-        ERROR (error->message);
+    if (!sflphone_init(&error)) {
+        ERROR(error->message);
         GtkWidget *dialog = gtk_message_dialog_new(
-                                 GTK_WINDOW (get_main_window()),
-                                 GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-                                 GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE,
-                                 "Unable to initialize.\nMake sure the daemon is running.\nError: %s",
-                                 error->message);
+                                GTK_WINDOW(get_main_window()),
+                                GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+                                GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE,
+                                "Unable to initialize.\nMake sure the daemon is running.\nError: %s",
+                                error->message);
 
-        gtk_window_set_title (GTK_WINDOW (dialog), _ ("SFLphone Error"));
-        gtk_dialog_run (GTK_DIALOG (dialog));
-        gtk_widget_destroy (dialog);
+        gtk_window_set_title(GTK_WINDOW(dialog), _("SFLphone Error"));
+        gtk_dialog_run(GTK_DIALOG(dialog));
+        gtk_widget_destroy(dialog);
 
-        g_error_free (error);
+        g_error_free(error);
         goto OUT;
     }
 
-    if (eel_gconf_get_integer (SHOW_STATUSICON))
-        show_status_icon ();
+    if (eel_gconf_get_integer(SHOW_STATUSICON))
+        show_status_icon();
 
-    create_main_window ();
+    create_main_window();
 
-    if (eel_gconf_get_integer (SHOW_STATUSICON) && eel_gconf_get_integer (START_HIDDEN)) {
-        gtk_widget_hide (GTK_WIDGET (get_main_window()));
-        set_minimized (TRUE);
+    if (eel_gconf_get_integer(SHOW_STATUSICON) && eel_gconf_get_integer(START_HIDDEN)) {
+        gtk_widget_hide(GTK_WIDGET(get_main_window()));
+        set_minimized(TRUE);
     }
 
 
-    status_bar_display_account ();
+    status_bar_display_account();
 
-    sflphone_fill_history ();
-    sflphone_fill_call_list ();
-    sflphone_fill_conference_list ();
+    sflphone_fill_history();
+    sflphone_fill_call_list();
+    sflphone_fill_conference_list();
     history_search_init();
 
     // Update the GUI
-    update_actions ();
+    update_actions();
 
     shortcuts_initialize_bindings();
 
-    gtk_main ();
+    gtk_main();
 
     shortcuts_destroy_bindings();
 
 OUT:
-    gdk_threads_leave ();
+    gdk_threads_leave();
 
     return error != NULL;
 }

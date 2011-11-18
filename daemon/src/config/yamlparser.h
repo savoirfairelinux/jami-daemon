@@ -33,132 +33,124 @@
 
 #include "yamlnode.h"
 #include <yaml.h>
-#include <stdio.h>
+#include <cstdio>
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include "noncopyable.h"
 
-namespace Conf
-{
+namespace Conf {
 
 #define PARSER_BUFFERSIZE 65536
 
 typedef std::vector<yaml_event_t> YamlEventVector;
 
-class YamlParserException : public std::runtime_error
-{
+class YamlParserException : public std::runtime_error {
     public:
-        YamlParserException (const std::string& str="") :
+        YamlParserException(const std::string& str="") :
             std::runtime_error("YamlParserException occured: " + str) {}
 };
 
 
-class YamlParser
-{
+class YamlParser {
 
     public:
 
-        YamlParser (const char *file);
+        YamlParser(const char *file);
 
         ~YamlParser();
 
-        void serializeEvents() throw(YamlParserException);
+        void serializeEvents();
 
-        YamlDocument *composeEvents() throw(YamlParserException);
+        YamlDocument *composeEvents();
 
-        void constructNativeData() throw(YamlParserException);
+        void constructNativeData();
 
-        SequenceNode *getAccountSequence (void) {
-            return accountSequence;
+        SequenceNode *getAccountSequence() {
+            return accountSequence_;
         };
 
-        MappingNode *getPreferenceNode (void) {
-            return preferenceNode;
+        MappingNode *getPreferenceNode() {
+            return preferenceNode_;
         }
 
-        MappingNode *getAddressbookNode (void) {
-            return addressbookNode;
+        MappingNode *getAddressbookNode() {
+            return addressbookNode_;
         }
 
-        MappingNode *getAudioNode (void) {
-            return audioNode;
+        MappingNode *getAudioNode() {
+            return audioNode_;
         }
 
-        MappingNode *getHookNode (void) {
-            return hooksNode;
+        MappingNode *getHookNode() {
+            return hooksNode_;
         }
 
-        MappingNode *getVoipPreferenceNode (void) {
-            return voiplinkNode;
+        MappingNode *getVoipPreferenceNode() {
+            return voiplinkNode_;
         }
 
-        MappingNode *getShortcutNode (void) {
-            return shortcutNode;
+        MappingNode *getShortcutNode() {
+            return shortcutNode_;
         }
 
     private:
+        NON_COPYABLE(YamlParser);
 
         /**
          * Copy yaml parser event in event_to according to their type.
          */
-        void copyEvent (yaml_event_t *event_to, yaml_event_t *event_from) throw(YamlParserException);
+        void copyEvent(yaml_event_t *event_to, yaml_event_t *event_from);
 
-        void processStream (void) throw(YamlParserException);
+        void processStream();
 
-        void processDocument (void) throw(YamlParserException);
+        void processDocument();
 
-        void processScalar (YamlNode *topNode) throw(YamlParserException);
+        void processScalar(YamlNode *topNode);
 
-        void processSequence (YamlNode *topNode) throw(YamlParserException);
+        void processSequence(YamlNode *topNode);
 
-        void processMapping (YamlNode *topNode) throw(YamlParserException);
+        void processMapping(YamlNode *topNode);
 
-        void mainNativeDataMapping (MappingNode *map);
+        void mainNativeDataMapping(MappingNode *map);
 
         /**
          * Configuration file name
          */
-        std::string filename;
+        std::string filename_;
 
         /**
          * Configuration file descriptor
          */
-        FILE *fd;
+        FILE *fd_;
 
         /**
          * The parser structure.
          */
-        yaml_parser_t parser;
+        yaml_parser_t parser_;
 
         /**
          * The event structure array.
          */
-        YamlEventVector events;
+        YamlEventVector events_;
 
         /**
          * Number of event actually parsed
          */
-        int eventNumber;
+        int eventNumber_;
 
-        YamlDocument *doc;
+        YamlDocument *doc_;
 
-        int eventIndex;
+        int eventIndex_;
 
-        SequenceNode *accountSequence;
-
-        MappingNode *preferenceNode;
-
-        MappingNode *addressbookNode;
-
-        MappingNode *audioNode;
-
-        MappingNode *hooksNode;
-
-        MappingNode *voiplinkNode;
-
-        MappingNode *shortcutNode;
+        SequenceNode *accountSequence_;
+        MappingNode *preferenceNode_;
+        MappingNode *addressbookNode_;
+        MappingNode *audioNode_;
+        MappingNode *hooksNode_;
+        MappingNode *voiplinkNode_;
+        MappingNode *shortcutNode_;
 };
-
 }
 
 #endif

@@ -38,7 +38,7 @@ void set_program_dir(char *program_path)
     program_dir = dirname(program_path);
 }
 
-const char *get_program_dir(void)
+const char *get_program_dir()
 {
     return program_dir;
 }

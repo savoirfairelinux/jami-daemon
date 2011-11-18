@@ -36,10 +36,11 @@
 #include <iax-client.h>
 #include "audio/codecs/audiocodec.h" // for DEC_BUFFER_SIZE
 #include "global.h"
+#include "noncopyable.h"
 #include "audio/samplerateconverter.h"
 
 namespace sfl {
-    class InstantMessaging;
+class InstantMessaging;
 }
 
 class EventThread;
@@ -56,47 +57,38 @@ class IAXAccount;
  * and contains IAX Call related functions
  */
 
-class IAXVoIPLink : public VoIPLink
-{
+class IAXVoIPLink : public VoIPLink {
     public:
 
-        /**
-         * Constructor
-         * @param accountID	The account containing the voip link
-         */
-        IAXVoIPLink (const std::string& accountID);
-
-        /**
-         * Destructor
-         */
+        IAXVoIPLink(const std::string& accountID);
         ~IAXVoIPLink();
 
         /**
          *	Listen to events sent by the call manager ( asterisk, etc .. )
          */
-        void getEvent (void);
+        void getEvent();
 
         /**
          * Init the voip link
          */
-        virtual void init (void);
+        virtual void init();
 
         /**
          * Terminate a voip link by clearing the call list
          */
-        virtual void terminate (void);
+        virtual void terminate();
 
         /**
          * Send out registration
          */
-        virtual void sendRegister (Account *a);
+        virtual void sendRegister(Account *a);
 
         /**
          * Destroy registration session
          * @todo Send an IAX_COMMAND_REGREL to force unregistration upstream.
          *       Urgency: low
          */
-        virtual void sendUnregister (Account *a);
+        virtual void sendUnregister(Account *a);
 
         /**
          * Create a new outgoing call
@@ -104,31 +96,31 @@ class IAXVoIPLink : public VoIPLink
          * @param toUrl The address to call
          * @return Call*  A pointer on the call
          */
-        virtual Call* newOutgoingCall (const std::string& id, const std::string& toUrl);
+        virtual Call* newOutgoingCall(const std::string& id, const std::string& toUrl);
 
         /**
          * Answer a call
          * @param c The call
          */
-        virtual void answer (Call *c);
+        virtual void answer(Call *c);
 
         /**
          * Hangup a call
          * @param id The ID of the call
          */
-        virtual void hangup (const std::string& id);
+        virtual void hangup(const std::string& id);
 
         /**
          * Peer Hungup a call
          * @param id The ID of the call
          */
-        virtual void peerHungup (const std::string& id);
+        virtual void peerHungup(const std::string& id);
 
         /**
          * Cancel a call
          * @param id The ID of the call
          */
-        virtual void cancel (const std::string& id UNUSED) {}
+        virtual void cancel(const std::string& id UNUSED) {}
 
         /**
          * Put a call on hold
@@ -136,7 +128,7 @@ class IAXVoIPLink : public VoIPLink
          * @return bool true on success
          *		  false otherwise
          */
-        virtual void onhold (const std::string& id);
+        virtual void onhold(const std::string& id);
 
         /**
          * Put a call off hold
@@ -144,14 +136,14 @@ class IAXVoIPLink : public VoIPLink
          * @return bool true on success
          *		  false otherwise
          */
-        virtual void offhold (const std::string& id);
+        virtual void offhold(const std::string& id);
 
         /**
          * Transfer a call
          * @param id The ID of the call
          * @param to The recipient of the transfer
          */
-        virtual void transfer (const std::string& id, const std::string& to);
+        virtual void transfer(const std::string& id, const std::string& to);
 
         /**
          * Perform attended transfer
@@ -165,17 +157,17 @@ class IAXVoIPLink : public VoIPLink
          * Refuse a call
          * @param id The ID of the call
          */
-        virtual void refuse (const std::string& id);
+        virtual void refuse(const std::string& id);
 
         /**
          * Send DTMF
          * @param id The ID of the call
          * @param code  The code of the DTMF
          */
-        virtual void carryingDTMFdigits (const std::string& id, char code);
+        virtual void carryingDTMFdigits(const std::string& id, char code);
 
 
-        virtual void sendTextMessage (sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from);
+        virtual void sendTextMessage(sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from);
 
         /**
          * Return the codec protocol used for this call
@@ -184,6 +176,7 @@ class IAXVoIPLink : public VoIPLink
         virtual std::string getCurrentCodecName(Call *c) const;
 
     private:
+        NON_COPYABLE(IAXVoIPLink);
         /*
          * Decode the message count IAX send.
          * Returns only the new messages number
@@ -191,7 +184,7 @@ class IAXVoIPLink : public VoIPLink
          * @param msgcount  The value sent by IAX in the REGACK message
          * @return int  The number of new messages waiting for the current registered user
          */
-        int processIAXMsgCount (int msgcount);
+        int processIAXMsgCount(int msgcount);
 
 
         /**
@@ -199,57 +192,57 @@ class IAXVoIPLink : public VoIPLink
          * @param id CallId
          * @return IAXCall pointer or 0
          */
-        IAXCall* getIAXCall (const std::string& id);
+        IAXCall* getIAXCall(const std::string& id);
 
         /**
          * Find a iaxcall by iax session number
          * @param session an iax_session valid pointer
          * @return iaxcall or 0 if not found
          */
-        IAXCall* iaxFindCallBySession (struct iax_session* session);
+        IAXCall* iaxFindCallBySession(struct iax_session* session);
 
         /**
          * Handle IAX Event for a call
          * @param event An iax_event pointer
          * @param call  An IAXCall pointer
          */
-        void iaxHandleCallEvent (iax_event* event, IAXCall* call);
+        void iaxHandleCallEvent(iax_event* event, IAXCall* call);
 
         /**
          * Handle the VOICE events specifically
          * @param event The iax_event containing the IAX_EVENT_VOICE
          * @param call  The associated IAXCall
          */
-        void iaxHandleVoiceEvent (iax_event* event, IAXCall* call);
+        void iaxHandleVoiceEvent(iax_event* event, IAXCall* call);
 
         /**
          * Handle IAX Registration Reply event
          * @param event An iax_event pointer
          */
-        void iaxHandleRegReply (iax_event* event);
+        void iaxHandleRegReply(iax_event* event);
 
         /**
          * Handle IAX pre-call setup-related events
          * @param event An iax_event pointer
          */
-        void iaxHandlePrecallEvent (iax_event* event);
+        void iaxHandlePrecallEvent(iax_event* event);
 
         /**
          * Work out the audio data from Microphone to IAX2 channel
          */
-        void sendAudioFromMic (void);
+        void sendAudioFromMic();
 
         /**
          * Send an outgoing call invite to iax
          * @param call An IAXCall pointer
          */
-        void iaxOutgoingInvite (IAXCall* call);
+        void iaxOutgoingInvite(IAXCall* call);
 
         /** Threading object */
         EventThread* evThread_;
 
         /** registration session : 0 if not register */
-        struct iax_session* regSession_;
+        iax_session* regSession_;
 
         /** Timestamp of when we should refresh the registration up with
          * the registrar.  Values can be: EPOCH timestamp, 0 if we want no registration, 1

@@ -29,7 +29,7 @@
  */
 
 #include <cstdlib>
-#include <dbusmanager.h>
+#include "dbusmanager.h"
 #include "global.h"
 #include "manager.h"
 #include "instance.h"
@@ -38,47 +38,53 @@
 #include "configurationmanager.h"
 #include "networkmanager.h"
 
-DBusManager::DBusManager()
+DBusManager::DBusManager() : callManager_(0)
+    , configurationManager_(0)
+    , instanceManager_(0)
+    , dispatcher_()
+#if USE_NETWORKMANAGER
+    , networkManager_(0)
+#endif
 {
     try {
         DBus::_init_threading();
-        DBus::default_dispatcher = &_dispatcher;
+        DBus::default_dispatcher = &dispatcher_;
 
         DBus::Connection sessionConnection = DBus::Connection::SessionBus();
-        sessionConnection.request_name ("org.sflphone.SFLphone");
+        sessionConnection.request_name("org.sflphone.SFLphone");
 
-        _callManager = new CallManager (sessionConnection);
-        _configurationManager = new ConfigurationManager (sessionConnection);
-        _instanceManager = new Instance (sessionConnection);
+        callManager_ = new CallManager(sessionConnection);
+        configurationManager_ = new ConfigurationManager(sessionConnection);
+        instanceManager_ = new Instance(sessionConnection);
 
 #ifdef USE_NETWORKMANAGER
         DBus::Connection systemConnection = DBus::Connection::SystemBus();
-        _networkManager = new NetworkManager (systemConnection, "/org/freedesktop/NetworkManager", "");
+        networkManager_ = new NetworkManager(systemConnection, "/org/freedesktop/NetworkManager", "");
 #endif
 
     } catch (const DBus::Error &err) {
-        _error("%s: %s, exiting\n", err.name(), err.what());
-        ::exit(1);
+        ERROR("%s: %s, exiting\n", err.name(), err.what());
+        ::exit(EXIT_FAILURE);
     }
 }
 
 DBusManager::~DBusManager()
 {
 #ifdef USE_NETWORKMANAGER
-    delete _networkManager;
+    delete networkManager_;
 #endif
-    delete _instanceManager;
-    delete _configurationManager;
-    delete _callManager;
+    delete instanceManager_;
+    delete configurationManager_;
+    delete callManager_;
 }
 
 void DBusManager::exec()
 {
-    _dispatcher.enter();
+    dispatcher_.enter();
 }
 
 void
 DBusManager::exit()
 {
-    _dispatcher.leave();
+    dispatcher_.leave();
 }

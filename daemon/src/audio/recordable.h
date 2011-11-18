@@ -33,13 +33,11 @@
 #include "audiorecord.h"
 #include "audiorecorder.h"
 
-class Recordable
-{
+class Recordable {
 
     public:
 
         Recordable();
-
         virtual ~Recordable();
 
         /**
@@ -58,34 +56,34 @@ class Recordable
         /**
          * Stop recording
          */
-        void stopRecording(void) {
+        void stopRecording() {
             recAudio.stopRecording();
         }
 
         /**
          * Init the recording file name according to path specified in configuration
          */
-        void initRecFileName (std::string filename);
+        void initRecFileName(std::string filename);
 
-	/**
- 	 * Return the file path for this recording
-	 */
-        std::string getFileName(void);
-        
+        /**
+         * Return the file path for this recording
+         */
+        std::string getFileName();
+
         /**
          * Set recording sampling rate.
          */
-        void setRecordingSmplRate (int smplRate);
+        void setRecordingSmplRate(int smplRate);
 
-	/**
-	 * Return the recording sampling rate
+        /**
+         * Return the recording sampling rate
+             */
+        int getRecordingSmplRate() const;
+
+        /**
+         * Virtual method to be implemented in order to the main
+         * buffer to retreive the recorded id.
          */
-        int getRecordingSmplRate(void) const;
-
-	/**
-	 * Virtual method to be implemented in order to the main
-	 * buffer to retreive the recorded id.
-	 */
         virtual std::string getRecFileId() const = 0;
 
         /**
@@ -94,7 +92,6 @@ class Recordable
         AudioRecord recAudio;
 
         AudioRecorder recorder;
-
 };
 
 #endif

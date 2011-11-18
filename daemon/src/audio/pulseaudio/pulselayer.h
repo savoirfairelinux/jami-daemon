@@ -29,75 +29,67 @@
  *  as that of the covered work.
  */
 
-#ifndef _PULSE_LAYER_H
-#define _PULSE_LAYER_H
-
-#include "audio/audiolayer.h"
-#include <pulse/pulseaudio.h>
-#include <pulse/stream.h>
+#ifndef PULSE_LAYER_H_
+#define PULSE_LAYER_H_
 
 #include <list>
 #include <string>
+#include <pulse/pulseaudio.h>
+#include <pulse/stream.h>
+#include "audio/audiolayer.h"
+#include "noncopyable.h"
 
 class AudioStream;
 
-class PulseLayer : public AudioLayer
-{
+class PulseLayer : public AudioLayer {
     public:
-        PulseLayer ();
-        ~PulseLayer (void);
-
-        std::list<std::string>* getSinkList (void) {
-            return &sinkList_;
-        }
-
-        std::list<std::string>* getSourceList (void) {
-            return &sourceList_;
-        }
+        PulseLayer();
+        ~PulseLayer();
 
         /**
          * Write data from the ring buffer to the harware and read data from the hardware
          */
-        void readFromMic (void);
-        void writeToSpeaker (void);
-        void ringtoneToSpeaker (void);
+        void readFromMic();
+        void writeToSpeaker();
+        void ringtoneToSpeaker();
 
 
-        void updateSinkList (void);
+        void updateSinkList();
 
-        void updateSourceList (void);
+        void updateSourceList();
 
-        bool inSinkList (const std::string &deviceName) const;
+        bool inSinkList(const std::string &deviceName) const;
 
-        bool inSourceList (const std::string &deviceName) const;
+        bool inSourceList(const std::string &deviceName) const;
 
-        void startStream (void);
+        void startStream();
 
-        void stopStream (void);
-
-        static void context_state_callback (pa_context* c, void* user_data);
+        void stopStream();
 
     private:
-        // Copy Constructor
-        PulseLayer (const PulseLayer& rh);
+        static void context_state_callback(pa_context* c, void* user_data);
+        static void context_changed_callback(pa_context* c,
+                                             pa_subscription_event_type_t t,
+                                             uint32_t idx , void* userdata);
+        static void source_input_info_callback(pa_context *c,
+                                               const pa_source_info *i,
+                                               int eol, void *userdata);
+        static void sink_input_info_callback(pa_context *c,
+                                             const pa_sink_info *i,
+                                             int eol, void *userdata);
 
-        // Assignment Operator
-        PulseLayer& operator= (const PulseLayer& rh);
+        NON_COPYABLE(PulseLayer);
 
         /**
          * Create the audio streams into the given context
          * @param c	The pulseaudio context
          */
-        void createStreams (pa_context* c);
+        void createStreams(pa_context* c);
 
         /**
          * Close the connection with the local pulseaudio server
          */
-        void disconnectAudioStream (void);
-
-        /** PulseAudio context and asynchronous loop */
-        pa_context* context_;
-        pa_threaded_mainloop* mainloop_;
+        void disconnectAudioStream();
 
         /**
          * A stream object to handle the pulseaudio playback stream
@@ -123,9 +115,12 @@ class PulseLayer : public AudioLayer
         SFLDataFormat *mic_buffer_;
         size_t mic_buf_size_;
 
-    public:
+        /** PulseAudio context and asynchronous loop */
+        pa_context* context_;
+        pa_threaded_mainloop* mainloop_;
+
         friend class AudioLayerTest;
 };
 
-#endif // _PULSE_LAYER_H_
+#endif // PULSE_LAYER_H_
 

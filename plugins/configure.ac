@@ -1,4 +1,4 @@
-AC_INIT([sflphone],[1.0.0],[sflphoneteam@savoirfairelinux.com],[sflphone-plugins])
+AC_INIT([sflphone],[1.0.1],[sflphoneteam@savoirfairelinux.com],[sflphone-plugins])
 AC_CONFIG_HEADERS([config.h])
 
 AM_INIT_AUTOMAKE
@@ -15,21 +15,26 @@ AC_ARG_WITH(debug,
 		[with_debug=${withval}],
 		[with_debug=no]
 	)
-if test "x$with_debug" = "xfull" -o "x$with_debug" = "xyes"; then
-	CFLAGS="-g -O0 -DDEBUG -Wall -Wextra"
-else
-	CFLAGS="$CFLAGS -Wall -Wextra"
-fi
 
 AC_PROG_CC_C99
+dnl For target specific flags
+AM_PROG_CC_C_O
 AC_PROG_INSTALL
 AC_HEADER_STDC
 LT_INIT
 
+MIGRATION_FLAGS="-DGDK_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED -DGTK_DISABLE_SINGLE_INCLUDES"
+if test "x$with_debug" = "xfull" -o "x$with_debug" = "xyes"; then
+    CFLAGS="-g -O0 -DDEBUG -Wall -Wextra $MIGRATION_FLAGS"
+else
+    CFLAGS="$CFLAGS -g -Wall -Wextra -Wshadow $MIGRATION_FLAGS"
+fi
+
+
 dnl GCONF utilities
 AM_GCONF_SOURCE_2
 
-PKG_CHECK_MODULES(GTK, gtk+-2.0 > 2.2)
+PKG_CHECK_MODULES(GTK, gtk+-3.0)
 PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.2)
 PKG_CHECK_MODULES(LIBEBOOK, libebook-1.2 >= 1.4)
 PKG_CHECK_MODULES([LIBEDATASERVER], [libedataserver-1.2 >= 2.32],

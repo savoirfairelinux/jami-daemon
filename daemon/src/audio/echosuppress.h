@@ -10,6 +10,7 @@
 
 #include "pjmedia/echo.h"
 #include "global.h"
+#include "noncopyable.h"
 
 class EchoSuppress {
     public:
@@ -21,16 +22,17 @@ class EchoSuppress {
          * Add speaker data into internal buffer
          * \param inputData containing far-end voice data to be sent to speakers
          */
-        void putData (SFLDataFormat *, int);
+        void putData(SFLDataFormat *, int);
 
         void getData(SFLDataFormat *);
 
     private:
+        NON_COPYABLE(EchoSuppress);
 
         /**
          * The internal state of the echo canceller
          */
-        pjmedia_echo_state *echoState;
+        pjmedia_echo_state *echoState_;
 };
 
 #endif /* ECHOSUPPRESS_H_ */

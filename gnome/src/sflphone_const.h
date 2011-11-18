@@ -32,8 +32,6 @@
 #define __SFLPHONE_CONST_H
 
 #include <libintl.h>
-#include "logger.h"
-#include "dbus.h"
 #include <glib/gi18n.h>
 
 /* @file sflphone_const.h
@@ -56,11 +54,6 @@
 #define n_(SING,PLUR,COUNT)   ngettext(SING,PLUR,COUNT)
 
 #define IP2IP	"IP2IP"
-
-/** Warnings unused variables **/
-#define UNUSED_VAR(var)      (void*)var
-
-#define UNUSED  __attribute__((__unused__))
 
 #define IP2IP_PROFILE                      "IP2IP"
 
@@ -171,27 +164,5 @@
 #define __TIMEOUT_MODE      "default"
 /** Desktop notifications - Time before to close the notification*/
 #define __TIMEOUT_TIME      18000       // 30 secondes
-
-/**
- * Gconf
- */
-#define CONF_PREFIX		"/apps/sflphone-client-gnome"
-#define CONF_MAIN_WINDOW_WIDTH		CONF_PREFIX "/state/window_width"
-#define CONF_MAIN_WINDOW_HEIGHT		CONF_PREFIX "/state/window_height"
-#define CONF_MAIN_WINDOW_POSITION_X		CONF_PREFIX "/state/window_position_x"
-#define CONF_MAIN_WINDOW_POSITION_Y		CONF_PREFIX "/state/window_position_y"
-#define CONF_IM_WINDOW_WIDTH		CONF_PREFIX "/state/im_width"
-#define CONF_IM_WINDOW_HEIGHT		CONF_PREFIX "/state/im_height"
-#define CONF_IM_WINDOW_POSITION_X		CONF_PREFIX "/state/im_position_x"
-#define CONF_IM_WINDOW_POSITION_Y		CONF_PREFIX "/state/im_position_y"
-/** Show/Hide the dialpad */
-#define CONF_SHOW_DIALPAD			CONF_PREFIX "/state/dialpad"
-#define SHOW_VOLUME_CONTROLS		CONF_PREFIX "/state/volume_controls"
-#define SHOW_STATUSICON				CONF_PREFIX "/state/statusicon"
-#define NOTIFY_ALL					CONF_PREFIX "/state/notify_all"
-#define START_HIDDEN				CONF_PREFIX "/state/start_hidden"
-#define POPUP_ON_CALL				CONF_PREFIX "/state/popup"
-#define HISTORY_ENABLED				CONF_PREFIX "/state/history"
-#define INSTANT_MESSAGING_ENABLED               CONF_PREFIX "/state/instant_messaging"
 
 #endif

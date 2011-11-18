@@ -22,6 +22,5 @@ export REFERENCE_REPOSITORY="${ROOT_DIR}/sflphone-source-repository"
 
 export WORKING_DIR="${ROOT_DIR}/sflphone-build-repository/tools/build-system"
 export LAUNCHPAD_DIR="${WORKING_DIR}/launchpad"
-LAUNCHPAD_DISTRIBUTIONS=( "lucid" "maverick" "natty")
+LAUNCHPAD_DISTRIBUTIONS=("natty" "oneiric" "precise")
 export LAUNCHPAD_DISTRIBUTIONS
-

@@ -33,25 +33,18 @@
 #ifndef __AUDIOLOOP_H__
 #define __AUDIOLOOP_H__
 
-#include <string>
-#include "global.h" // for int16 declaration
+#include "global.h" // for SFLDataFormat
+#include "noncopyable.h"
 
 /**
  * @file audioloop.h
  * @brief Loop on a sound file
  */
 
-class AudioLoop
-{
+class AudioLoop {
     public:
-        /**
-         * Constructor
-         */
         AudioLoop();
 
-        /**
-         * Virtual destructor
-         */
         virtual ~AudioLoop();
 
         /**
@@ -61,44 +54,39 @@ class AudioLoop
          * @param nb of int16 to send
          * @param volume  The volume
          */
-        void getNext (SFLDataFormat* output, size_t samples, short volume=100);
+        void getNext(SFLDataFormat* output, size_t samples, short volume=100);
 
         /**
          * Reset the pointer position
          */
         void reset() {
-            _pos = 0;
+            pos_ = 0;
         }
 
         /**
          * Accessor to the size of the buffer
          * @return unsigned int The size
          */
-        size_t getSize() {
-            return _size;
+        size_t getSize() const {
+            return size_;
         }
 
 
     protected:
         /** The data buffer */
-        SFLDataFormat* _buffer;
+        SFLDataFormat* buffer_;
 
         /** Number of samples inside the buffer */
-        size_t _size;
+        size_t size_;
 
         /** current position, set to 0, when initialize */
-        size_t _pos;
+        size_t pos_;
 
         /** Sample rate */
-        unsigned int _sampleRate;
+        unsigned int sampleRate_;
 
     private:
-
-        // Copy Constructor
-        AudioLoop (const AudioLoop& rh);
-
-        // Assignment Operator
-        AudioLoop& operator= (const AudioLoop& rh);
+        NON_COPYABLE(AudioLoop);
 };
 
 #endif // __AUDIOLOOP_H__

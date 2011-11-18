@@ -35,31 +35,26 @@
  * YM: 2006-11-15: changes unsigned int to std::string::size_type, thanks to Pierre Pomes (AMD64 compilation)
  */
 #include "tone.h"
-#include <math.h>
+#include <cmath>
 #include <cstdlib>
 #include <cstring>
 
-#define TABLE_LENGTH 4096
-double TWOPI = 2 * M_PI;
+static const double TWOPI = 2.0 * M_PI;
 
-Tone::Tone (const std::string& definition, unsigned int sampleRate) : AudioLoop(), _sampleRate (sampleRate), _xhigher (0.0), _xlower (0.0)
+Tone::Tone(const std::string& definition, unsigned int sampleRate) :
+    sampleRate_(sampleRate), xhigher_(0.0), xlower_(0.0)
 {
     fillWavetable();
-    genBuffer (definition); // allocate memory with definition parameter
-}
-
-Tone::~Tone()
-{
+    genBuffer(definition); // allocate memory with definition parameter
 }
 
 void
-Tone::genBuffer (const std::string& definition)
+Tone::genBuffer(const std::string& definition)
 {
-    if (definition.empty()) {
+    if (definition.empty())
         return;
-    }
 
-    _size = 0;
+    size_ = 0;
 
     SFLDataFormat* buffer = new SFLDataFormat[SIZEBUF]; //1kb
     SFLDataFormat* bufferPos = buffer;
@@ -74,69 +69,63 @@ Tone::genBuffer (const std::string& definition)
     std::string::size_type deflen = definition.length();
 
     do {
-        posEnd = definition.find (',', posStart);
+        posEnd = definition.find(',', posStart);
 
-        if (posEnd == std::string::npos) {
+        if (posEnd == std::string::npos)
             posEnd = deflen;
-        }
 
+        /* begin scope */
         {
             // Sample string: "350+440" or "350+440/2000,244+655/2000"
             int freq1, freq2, time;
-            s = definition.substr (posStart, posEnd-posStart);
+            s = definition.substr(posStart, posEnd-posStart);
 
             // The 1st frequency is before the first + or the /
-            std::string::size_type pos_plus = s.find ('+');
-            std::string::size_type pos_slash = s.find ('/');
-            std::string::size_type len = s.length();
-            std::string::size_type endfrequency = 0;
+            size_t pos_plus = s.find('+');
+            size_t pos_slash = s.find('/');
+            size_t len = s.length();
+            size_t endfrequency = 0;
 
             if (pos_slash == std::string::npos) {
                 time = 0;
                 endfrequency = len;
             } else {
-                time = atoi ( (s.substr (pos_slash+1,len-pos_slash-1)).data());
+                time = atoi(s.substr(pos_slash + 1, len - pos_slash - 1).c_str());
                 endfrequency = pos_slash;
             }
 
             // without a plus = 1 frequency
             if (pos_plus == std::string::npos) {
-                freq1 = atoi ( (s.substr (0,endfrequency)).data());
+                freq1 = atoi(s.substr(0, endfrequency).c_str());
                 freq2 = 0;
             } else {
-                freq1 = atoi ( (s.substr (0,pos_plus)).data());
-                freq2 = atoi ( (s.substr (pos_plus+1, endfrequency-pos_plus-1)).data());
+                freq1 = atoi(s.substr(0, pos_plus).c_str());
+                freq2 = atoi(s.substr(pos_plus + 1, endfrequency - pos_plus - 1).c_str());
             }
 
             // If there is time or if it's unlimited
-            if (time == 0) {
-                count = _sampleRate;
-            } else {
-                count = (_sampleRate * time) / 1000;
-            }
+            if (time == 0)
+                count = sampleRate_;
+            else
+                count = (sampleRate_ * time) / 1000;
 
             // Generate SAMPLING_RATE samples of sinus, buffer is the result
-            _debug ("genSin(%d, %d)", freq1, freq2);
-            genSin (bufferPos, freq1, freq2, count);
+            DEBUG("genSin(%d, %d)", freq1, freq2);
+            genSin(bufferPos, freq1, freq2, count);
 
             // To concatenate the different buffers for each section.
-            _size += (count);
+            size_ += count;
+            bufferPos += count;
+        } /* end scope */
 
-            bufferPos += (count);
-        }
-
-        posStart = posEnd+1;
+        posStart = posEnd + 1;
     } while (posStart < deflen);
 
-    _buffer = new SFLDataFormat[_size];
+    buffer_ = new SFLDataFormat[size_];
 
-    memcpy (_buffer, buffer, _size*sizeof (SFLDataFormat)); // copy char, not SFLDataFormat.
+    memcpy(buffer_, buffer, size_ * sizeof(SFLDataFormat)); // copy char, not SFLDataFormat.
 
-    delete[] buffer;
-
-    buffer=0;
-
-    bufferPos=0;
+    delete [] buffer;
 }
 
 void
@@ -144,65 +133,62 @@ Tone::fillWavetable()
 {
     double tableSize = (double) TABLE_LENGTH;
 
-    for (int i = 0; i < TABLE_LENGTH; i++) {
-        _wavetable[i] = sin ( ( (double) i / (tableSize - 1.0)) * TWOPI);
-    }
+    for (int i = 0; i < TABLE_LENGTH; ++i)
+        wavetable_[i] = sin((static_cast<double>(i) / (tableSize - 1.0)) * TWOPI);
 }
 
 double
-Tone::interpolate (double x)
+Tone::interpolate(double x)
 {
     int xi_0, xi_1;
     double yi_0, yi_1, A, B;
 
     xi_0 = (int) x;
-    xi_1 = xi_0+1;
+    xi_1 = xi_0 + 1;
 
-    yi_0  =_wavetable[xi_0];
-    yi_1 = _wavetable[xi_1];
+    yi_0 = wavetable_[xi_0];
+    yi_1 =  wavetable_[xi_1];
 
     A = (x - xi_0);
     B = 1.0 - A;
 
-    return A*yi_0 + B*yi_1;
+    return (A * yi_0) + (B * yi_1);
 }
 
 void
-Tone::genSin (SFLDataFormat* buffer, int frequency1, int frequency2, int nb)
+Tone::genSin(SFLDataFormat* buffer, int frequency1, int frequency2, int nb)
 {
-    _xhigher = 0.0;
-    _xlower = 0.0;
+    xhigher_ = 0.0;
+    xlower_ = 0.0;
 
-    double sr = (double) _sampleRate;
+    double sr = (double) sampleRate_;
     double tableSize = (double) TABLE_LENGTH;
 
-    double N_h = sr / (double) (frequency1);
-    double N_l = sr / (double) (frequency2);
+    double N_h = sr / (double)(frequency1);
+    double N_l = sr / (double)(frequency2);
 
     double dx_h = tableSize / N_h;
     double dx_l = tableSize / N_l;
 
-    double x_h = _xhigher;
-    double x_l = _xlower;
+    double x_h = xhigher_;
+    double x_l = xlower_;
 
-    double amp = (double) SFLDataAmplitude;
+    static const double DATA_AMPLITUDE = 2047;
+    double amp =  DATA_AMPLITUDE;
 
     for (int t = 0; t < nb; t ++) {
-        buffer[t] = (int16) (amp* (interpolate (x_h) + interpolate (x_l)));
+        buffer[t] = static_cast<SFLDataFormat>(amp * (interpolate(x_h) + interpolate(x_l)));
         x_h += dx_h;
         x_l += dx_l;
 
-        if (x_h > tableSize) {
+        while (x_h > tableSize)
             x_h -= tableSize;
-        }
 
-        if (x_l > tableSize) {
+        while (x_l > tableSize)
             x_l -= tableSize;
-        }
     }
 
-    _xhigher = x_h;
-    _xlower = x_l;
-
+    xhigher_ = x_h;
+    xlower_ = x_l;
 }
 

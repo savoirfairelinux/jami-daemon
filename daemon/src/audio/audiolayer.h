@@ -31,8 +31,8 @@
  *  as that of the covered work.
  */
 
-#ifndef _AUDIO_LAYER_H
-#define _AUDIO_LAYER_H
+#ifndef __AUDIO_LAYER_H__
+#define __AUDIO_LAYER_H__
 
 #include <cc++/thread.h> // for ost::Mutex
 #include <sys/time.h>
@@ -41,6 +41,7 @@
 #include "ringbuffer.h"
 #include "dcblocker.h"
 #include "samplerateconverter.h"
+#include "noncopyable.h"
 
 /**
  * @file  audiolayer.h
@@ -50,44 +51,34 @@
 class MainBuffer;
 
 namespace ost {
-    class Time;
+class Time;
 }
 
-class AudioLayer
-{
+class AudioLayer {
     private:
-        //copy constructor
-        AudioLayer (const AudioLayer& rh);
-
-        // assignment operator
-        AudioLayer& operator= (const AudioLayer& rh);
+        NON_COPYABLE(AudioLayer);
 
     public:
-        /**
-         * Constructor
-         */
-        AudioLayer ();
-
-        /**
-         * Destructor
-         */
-        virtual ~AudioLayer (void);
+        AudioLayer();
+        virtual ~AudioLayer();
 
         /**
          * Start the capture stream and prepare the playback stream.
          * The playback starts accordingly to its threshold
          * ALSA Library API
          */
-        virtual void startStream (void) = 0;
+        virtual void startStream() = 0;
 
         /**
          * Stop the playback and capture streams.
          * Drops the pending frames and put the capture and playback handles to PREPARED state
          * ALSA Library API
          */
-        virtual void stopStream (void) = 0;
+        virtual void stopStream() = 0;
 
-        bool isStarted(void) const { return isStarted_; }
+        bool isStarted() const {
+            return isStarted_;
+        }
 
         /**
          * Send a chunk of data to the hardware buffer to start the playback
@@ -95,11 +86,11 @@ class AudioLayer
          * @param buffer The buffer containing the data to be played ( ringtones )
          * @param toCopy The size of the buffer
          */
-        void putUrgent (void* buffer, int toCopy);
+        void putUrgent(void* buffer, int toCopy);
 
-        void flushMain (void);
+        void flushMain();
 
-        void flushUrgent (void);
+        void flushUrgent();
 
 
         /**
@@ -114,14 +105,14 @@ class AudioLayer
         /**
          * Get the mutex lock for the entire audio layer
          */
-        ost::Mutex* getMutexLock (void) {
+        ost::Mutex* getMutexLock() {
             return &mutex_;
         }
 
-        void notifyincomingCall (void);
+        void notifyincomingCall();
 
     protected:
- 
+
         /**
          * Wether or not the audio layer stream is started
          */
@@ -142,15 +133,11 @@ class AudioLayer
          * Lock for the entire audio layer
          */
         ost::Mutex mutex_;
-
         DcBlocker dcblocker_;
-
         AudioPreference &audioPref;
-
         SamplerateConverter *converter_;
 
     private:
-
         /**
          * Time of the last incoming call notification
          */

@@ -27,7 +27,6 @@
  *  grants you additional permission to convey the resulting work.
  *  Corresponding Source for a non-source form of such a combination
  *  shall include the source code for the parts of OpenSSL used as well
- *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
 
@@ -36,11 +35,11 @@
 
 #include <dbus/dbus-glib.h>
 
-#include <accountlist.h>
-#include <calllist.h>
-#include <conferencelist.h>
-#include <conference_obj.h>
-#include <sflnotify.h>
+#include "accountlist.h"
+#include "calllist.h"
+#include "conferencelist.h"
+#include "conference_obj.h"
+#include "sflnotify.h"
 
 /** @file dbus.h
   * @brief General DBus functions wrappers.

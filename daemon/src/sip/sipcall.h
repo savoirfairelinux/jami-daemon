@@ -33,8 +33,8 @@
 #define SIPCALL_H
 
 #include "call.h"
-#include <cassert>
-#include "audio/audiortp/AudioRtpFactory.h"
+#include "audio/audiortp/audio_rtp_factory.h"
+#include "noncopyable.h"
 
 class pjsip_evsub;
 class pj_caching_pool;
@@ -46,8 +46,7 @@ class Sdp;
  * @file sipcall.h
  * @brief SIPCall are SIP implementation of a normal Call
  */
-class SIPCall : public Call
-{
+class SIPCall : public Call {
     public:
 
         /**
@@ -56,31 +55,31 @@ class SIPCall : public Call
          * @param type  The type of the call. Could be Incoming
          *						 Outgoing
          */
-        SIPCall (const std::string& id, Call::CallType type, pj_caching_pool *caching_pool);
+        SIPCall(const std::string& id, Call::CallType type, pj_caching_pool *caching_pool);
 
         /**
          * Destructor
          */
-        ~SIPCall ();
+        ~SIPCall();
 
         /**
          * Return the local SDP session
          */
-        Sdp* getLocalSDP (void) {
+        Sdp* getLocalSDP() {
             return local_sdp_;
         }
 
         /**
          * Returns a pointer to the AudioRtp object
          */
-        sfl::AudioRtpFactory * getAudioRtp (void) {
-            return &_audiortp;
+        sfl::AudioRtpFactory & getAudioRtp() {
+            return audiortp_;
         }
 
         /**
          * Return the local memory pool for this call
          */
-        pj_pool_t *getMemoryPool(void) {
+        pj_pool_t *getMemoryPool() {
             return pool_;
         }
 
@@ -91,16 +90,12 @@ class SIPCall : public Call
 
     private:
 
-        // Copy Constructor
-        SIPCall (const SIPCall& rh);
-
-        // Assignment Operator
-        SIPCall& operator= (const SIPCall& rh);
+        NON_COPYABLE(SIPCall);
 
         /**
          * Audio Rtp Session factory
          */
-        sfl::AudioRtpFactory _audiortp;
+        sfl::AudioRtpFactory audiortp_;
 
         /**
          * The pool to allocate memory, released once call hang up

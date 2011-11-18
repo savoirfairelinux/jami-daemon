@@ -37,8 +37,8 @@
 #define DTMFGENERATOR_H
 
 #include <stdexcept>
-#include <string.h>
-
+#include <string>
+#include "noncopyable.h"
 #include "tone.h"
 
 #define NUM_TONES 16
@@ -47,8 +47,7 @@
  * @file dtmfgenerator.h
  * @brief DMTF Generator Exception
  */
-class DTMFException : public std::runtime_error
-{
+class DTMFException : public std::runtime_error {
     public:
         DTMFException(const std::string& str) : std::runtime_error(str) {};
 };
@@ -57,8 +56,7 @@ class DTMFException : public std::runtime_error
  * @file dtmfgenerator.h
  * @brief DTMF Tone Generator
  */
-class DTMFGenerator
-{
+class DTMFGenerator {
     private:
         /** Struct to handle a DTMF */
         struct DTMFTone {
@@ -77,16 +75,16 @@ class DTMFGenerator
         DTMFState state;
 
         /** The different kind of tones */
-        static const DTMFTone tones[NUM_TONES];
+        static const DTMFTone tones_[NUM_TONES];
 
-        /** Generated samples */
-        SFLDataFormat* samples[NUM_TONES];
+        /** Generated samples for each tone */
+        SFLDataFormat* toneBuffers_[NUM_TONES];
 
         /** Sampling rate of generated dtmf */
-        int _sampleRate;
+        int sampleRate_;
 
         /** A tone object */
-        Tone tone;
+        Tone tone_;
 
     public:
         /**
@@ -94,19 +92,11 @@ class DTMFGenerator
          * and can build one DTMF.
          * @param sampleRate frequency of the sample (ex: 8000 hz)
          */
-        DTMFGenerator (unsigned int sampleRate);
+        DTMFGenerator(unsigned int sampleRate);
 
-        /**
-         * Destructor
-         */
         ~DTMFGenerator();
 
-
-        // Copy Constructor
-        DTMFGenerator (const DTMFGenerator& rh);
-
-        // Assignment Operator
-        DTMFGenerator& operator= (const DTMFGenerator& rh);
+        NON_COPYABLE(DTMFGenerator);
 
         /*
          * Get n samples of the signal of code code
@@ -114,7 +104,7 @@ class DTMFGenerator
          * @param n      number of sampling to get, should be lower or equal to buffer size
          * @param code   dtmf code to get sound
          */
-        void getSamples (SFLDataFormat* buffer, size_t n, unsigned char code) throw (DTMFException);
+        void getSamples(SFLDataFormat* buffer, size_t n, unsigned char code);
 
         /*
          * Get next n samples (continues where previous call to
@@ -122,16 +112,16 @@ class DTMFGenerator
          * @param buffer a SFLDataFormat pointer to an allocated buffer
          * @param n      number of sampling to get, should be lower or equal to buffer size
          */
-        void getNextSamples (SFLDataFormat* buffer, size_t n) throw (DTMFException);
+        void getNextSamples(SFLDataFormat* buffer, size_t n);
 
     private:
 
         /**
-         * Generate samples for a specific dtmf code
-         * @param code The code
+         * Fill tone buffer for a given index of the array of tones.
+         * @param index of the tone in the array tones_
          * @return SFLDataFormat* The generated data
          */
-        SFLDataFormat* generateSample (unsigned char code) throw (DTMFException);
+        SFLDataFormat* fillToneBuffer(int index);
 };
 
 #endif // DTMFGENERATOR_H

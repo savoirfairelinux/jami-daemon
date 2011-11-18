@@ -5,7 +5,7 @@ libexec_PROGRAMS = sflphoned
 
 # all: indent
 
-SUBDIRS = dbus audio config plug-in hooks history sip iax im
+SUBDIRS = dbus audio config hooks history sip iax im
 
 sflphoned_SOURCES = main.cpp
 
@@ -35,7 +35,7 @@ noinst_LTLIBRARIES = libsflphone.la
 
 noinst_HEADERS = \
 		global.h \
-		Codec.h \
+		codec.h \
 		conference.h \
 		voiplink.h \
 		preferences.h \
@@ -47,7 +47,8 @@ noinst_HEADERS = \
 		call.h \
 		logger.h \
 		numbercleaner.h \
-		fileutils.h
+		fileutils.h \
+		noncopyable.h
 
 libsflphone_la_LIBADD = \
 	$(top_builddir)/libs/utilspp/libutilspp.la \
@@ -58,7 +59,6 @@ libsflphone_la_LIBADD = \
 	./audio/libaudio.la \
 	./dbus/libdbus.la \
 	./config/libconfig.la \
-	./plug-in/libplugin.la \
 	./hooks/libhooks.la \
 	./history/libhistory.la
 

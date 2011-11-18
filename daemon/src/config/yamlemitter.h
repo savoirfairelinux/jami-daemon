@@ -34,47 +34,44 @@
 #include <yaml.h>
 #include <stdexcept>
 #include <string>
+#include "noncopyable.h"
 #include "yamlnode.h"
 
-namespace Conf
-{
+namespace Conf {
 
 #define EMITTER_BUFFERSIZE 65536
 #define EMITTER_MAXEVENT 1024
 
-class YamlEmitterException : public std::runtime_error
-{
+class YamlEmitterException : public std::runtime_error {
     public:
-        YamlEmitterException (const std::string& str="") :
+        YamlEmitterException(const std::string& str="") :
             std::runtime_error("YamlEmitterException occured: " + str) {}
 };
 
-class YamlEmitter
-{
+class YamlEmitter {
 
     public:
 
-        YamlEmitter (const char *file);
-
+        YamlEmitter(const char *file);
         ~YamlEmitter();
 
-        void open() throw(YamlEmitterException);
+        void open();
 
-        void close() throw(YamlEmitterException);
+        void close();
 
-        void serializeAccount (MappingNode *map) throw(YamlEmitterException);
+        void serializeAccount(MappingNode *map);
 
-        void serializePreference (MappingNode *map) throw(YamlEmitterException);
+        void serializePreference(MappingNode *map);
 
-        void serializeVoipPreference (MappingNode *map) throw(YamlEmitterException);
+        void serializeVoipPreference(MappingNode *map);
 
-        void serializeAddressbookPreference (MappingNode *map) throw(YamlEmitterException);
+        void serializeAddressbookPreference(MappingNode *map);
 
-        void serializeHooksPreference (MappingNode *map) throw(YamlEmitterException);
+        void serializeHooksPreference(MappingNode *map);
 
-        void serializeAudioPreference (MappingNode *map) throw(YamlEmitterException);
+        void serializeAudioPreference(MappingNode *map);
 
-        void serializeShortcutPreference (MappingNode *map) throw(YamlEmitterException);
+        void serializeShortcutPreference(MappingNode *map);
 
         void writeAudio();
 
@@ -82,56 +79,51 @@ class YamlEmitter
 
         void writeVoiplink();
 
-        void serializeData() throw(YamlEmitterException);
+        void serializeData();
 
     private:
 
-        void addMappingItem (int mappingid, std::string key, YamlNode *node);
+        NON_COPYABLE(YamlEmitter);
+        void addMappingItem(int mappingid, std::string key, YamlNode *node);
 
-        std::string filename;
+        std::string filename_;
 
-        FILE *fd;
+        FILE *fd_;
 
         /**
          * The parser structure.
          */
-        yaml_emitter_t emitter;
+        yaml_emitter_t emitter_;
 
         /**
          * The event structure array.
          */
-        yaml_event_t events[EMITTER_MAXEVENT];
+        yaml_event_t events_[EMITTER_MAXEVENT];
 
-        /**
-         *
-         */
-        unsigned char buffer[EMITTER_BUFFERSIZE];
-
+        unsigned char buffer_[EMITTER_BUFFERSIZE];
 
         /**
          * Main document for this serialization
          */
-        yaml_document_t document;
+        yaml_document_t document_;
 
         /**
          * Reference id to the top levell mapping when creating
          */
-        int topLevelMapping;
+        int topLevelMapping_;
 
         /**
          * We need to add the account sequence if this is the first account to be
          */
-        bool isFirstAccount;
+        bool isFirstAccount_;
 
         /**
          * Reference to the account sequence
          */
-        int accountSequence;
+        int accountSequence_;
 
         friend class ConfigurationTest;
-
 };
-
 }
 
 #endif
