@@ -1,4 +1,4 @@
-AC_INIT([sflphone],[1.0.0],[sflphoneteam@savoirfairelinux.com],[sflphone-plugins])
+AC_INIT([sflphone],[1.0.1],[sflphoneteam@savoirfairelinux.com],[sflphone-plugins])
 AC_CONFIG_HEADERS([config.h])
 
 AM_INIT_AUTOMAKE
@@ -34,7 +34,7 @@ fi
 dnl GCONF utilities
 AM_GCONF_SOURCE_2
 
-PKG_CHECK_MODULES(GTK, gtk+-2.0 > 2.2)
+PKG_CHECK_MODULES(GTK, gtk+-3.0)
 PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.2)
 PKG_CHECK_MODULES(LIBEBOOK, libebook-1.2 >= 1.4)
 PKG_CHECK_MODULES([LIBEDATASERVER], [libedataserver-1.2 >= 2.32],
