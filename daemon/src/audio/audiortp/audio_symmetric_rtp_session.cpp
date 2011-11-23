@@ -48,7 +48,7 @@ AudioSymmetricRtpSession::AudioSymmetricRtpSession(SIPCall * sipcall) :
     , echoCanceller()
     , rtpThread_(new AudioRtpThread(this))
 {
-    INFO("AudioSymmetricRtpSession: Setting new RTP session with destination %s:%d", ca_->getLocalIp().c_str(), ca_->getLocalAudioPort());
+    DEBUG("AudioSymmetricRtpSession: Setting new RTP session with destination %s:%d", ca_->getLocalIp().c_str(), ca_->getLocalAudioPort());
     audioRtpRecord_.callId_ = ca_->getCallId();
 }
 

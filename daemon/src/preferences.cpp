@@ -282,7 +282,7 @@ void checkSoundCard(int &card, int stream)
 
 AudioLayer* AudioPreference::createAudioLayer()
 {
-    if (audioApi_ == PULSEAUDIO_API_STR and system("ps -C pulseaudio") == 0)
+    if (audioApi_ == PULSEAUDIO_API_STR and system("ps -C pulseaudio > /dev/null") == 0)
         return new PulseLayer;
     else {
         audioApi_ = ALSA_API_STR;

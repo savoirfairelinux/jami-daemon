@@ -100,15 +100,15 @@ AudioStream::stream_state_callback(pa_stream* s, void* user_data UNUSED)
 
     switch (pa_stream_get_state(s)) {
         case PA_STREAM_CREATING:
-            INFO("Pulse: Stream is creating...");
+            DEBUG("Pulse: Stream is creating...");
             break;
 
         case PA_STREAM_TERMINATED:
-            INFO("Pulse: Stream is terminating...");
+            DEBUG("Pulse: Stream is terminating...");
             break;
 
         case PA_STREAM_READY:
-            INFO("Pulse: Stream successfully created, connected to %s", pa_stream_get_device_name(s));
+            DEBUG("Pulse: Stream successfully created, connected to %s", pa_stream_get_device_name(s));
             DEBUG("Pulse: maxlength %u", pa_stream_get_buffer_attr(s)->maxlength);
             DEBUG("Pulse: tlength %u", pa_stream_get_buffer_attr(s)->tlength);
             DEBUG("Pulse: prebuf %u", pa_stream_get_buffer_attr(s)->prebuf);
@@ -118,7 +118,7 @@ AudioStream::stream_state_callback(pa_stream* s, void* user_data UNUSED)
             break;
 
         case PA_STREAM_UNCONNECTED:
-            INFO("Pulse: Stream unconnected");
+            DEBUG("Pulse: Stream unconnected");
             break;
 
         case PA_STREAM_FAILED:

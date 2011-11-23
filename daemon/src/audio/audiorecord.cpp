@@ -165,7 +165,7 @@ bool AudioRecord::isOpenFile()
 
 bool AudioRecord::fileExists()
 {
-    INFO("AudioRecord: Trying to open %s ", fileName_);
+    DEBUG("AudioRecord: Trying to open %s ", fileName_);
     return fopen(fileName_,"rb") != 0;
 }
 
@@ -179,10 +179,10 @@ bool AudioRecord::setRecording()
 {
     if (isOpenFile()) {
         if (!recordingEnabled_) {
-            INFO("AudioRecording: Start recording");
+            DEBUG("AudioRecording: Start recording");
             recordingEnabled_ = true;
         } else {
-            INFO("AudioRecording: Stop recording");
+            DEBUG("AudioRecording: Stop recording");
             recordingEnabled_ = false;
         }
     } else {
@@ -197,7 +197,7 @@ bool AudioRecord::setRecording()
 
 void AudioRecord::stopRecording()
 {
-    INFO("AudioRecording: Stop recording");
+    DEBUG("AudioRecording: Stop recording");
     recordingEnabled_ = false;
 }
 
@@ -251,7 +251,7 @@ void AudioRecord::createFilename()
     // fileName_ = out.str();
     strncpy(fileName_, out.str().c_str(), 8192);
 
-    INFO("AudioRecord: create filename for this call %s ", fileName_);
+    DEBUG("AudioRecord: create filename for this call %s ", fileName_);
 }
 
 bool AudioRecord::setRawFile()
@@ -327,7 +327,7 @@ bool AudioRecord::openExistingRawFile()
 
 bool AudioRecord::openExistingWavFile()
 {
-    INFO("%s(%s)\n", __PRETTY_FUNCTION__, fileName_);
+    DEBUG("%s(%s)\n", __PRETTY_FUNCTION__, fileName_);
 
     fileHandle_ = fopen(fileName_, "rb+");
 

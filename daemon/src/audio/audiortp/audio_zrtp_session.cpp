@@ -63,7 +63,7 @@ AudioZrtpSession::AudioZrtpSession(SIPCall * sipcall, const std::string& zidFile
 
     setCancel(cancelDefault);
 
-    INFO("AudioZrtpSession: Setting new RTP session with destination %s:%d", ca_->getLocalIp().c_str(), ca_->getLocalAudioPort());
+    DEBUG("AudioZrtpSession: Setting new RTP session with destination %s:%d", ca_->getLocalIp().c_str(), ca_->getLocalAudioPort());
 }
 
 AudioZrtpSession::~AudioZrtpSession()
@@ -77,7 +77,7 @@ void AudioZrtpSession::final()
 // tmatth:Oct 25 2011:FIXME:
 // This was crashing...seems like it's not necessary. Double check
 // with valgrind/helgrind
-//    delete this;
+// delete this;
 }
 
 void AudioZrtpSession::initializeZid()
