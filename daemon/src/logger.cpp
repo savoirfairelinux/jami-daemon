@@ -81,4 +81,8 @@ void setDebugMode(bool d)
     debugMode = d;
 }
 
+bool getDebugMode()
+{
+    return debugMode;
+}
 }
