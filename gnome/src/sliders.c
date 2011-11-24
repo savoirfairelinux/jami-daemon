@@ -33,6 +33,7 @@
 #include "actions.h"
 #include "logger.h"
 #include <string.h>
+#include <gtk/gtk.h>
 
 static gdouble     value[2];
 static GtkWidget * slider[2];

@@ -55,7 +55,7 @@ ZrtpSessionCallback::ZrtpSessionCallback(SIPCall *sipcall) :
     if (not infoMap_.empty())
         return;
 
-    INFO("Zrtp: Initialize callbacks");
+    DEBUG("Zrtp: Initialize callbacks");
 
     // Information Map
     infoMap_[InfoHelloReceived] = "Hello received, preparing a Commit";

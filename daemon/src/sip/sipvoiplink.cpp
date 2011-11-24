@@ -181,7 +181,8 @@ SIPVoIPLink::SIPVoIPLink() : transportMap_(), evThread_(new EventThread(this))
 
     TRY(pj_init());
     TRY(pjlib_util_init());
-    pj_log_set_level(0);    // From 0 (min) to 6 (max)
+    // From 0 (min) to 6 (max)
+    pj_log_set_level(Logger::getDebugMode() ? 6 : 0);
     TRY(pjnath_init());
 
     pj_caching_pool_init(cp_, &pj_pool_factory_default_policy, 0);

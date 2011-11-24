@@ -33,7 +33,9 @@
 #include "sflnotify.h"
 #include "logger.h"
 
+#if defined(NOTIFY_CHECK_VERSION)
 #define USE_NOTIFY NOTIFY_CHECK_VERSION(0,7,2)
+#endif
 
 #if USE_NOTIFY
 typedef struct {

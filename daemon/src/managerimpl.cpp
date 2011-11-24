@@ -345,7 +345,7 @@ bool ManagerImpl::answerCall(const std::string& call_id)
 //THREAD=Main
 void ManagerImpl::hangupCall(const std::string& callId)
 {
-    INFO("Manager: Hangup call %s", callId.c_str());
+    DEBUG("Manager: Hangup call %s", callId.c_str());
 
     // store the current call id
     std::string currentCallId(getCurrentCallId());
@@ -2861,7 +2861,7 @@ ManagerImpl::getAccount(const std::string& accountID)
 
 std::string ManagerImpl::getAccountIdFromNameAndServer(const std::string& userName, const std::string& server) const
 {
-    INFO("Manager : username = %s, server = %s", userName.c_str(), server.c_str());
+    DEBUG("Manager : username = %s, server = %s", userName.c_str(), server.c_str());
     // Try to find the account id from username and server name by full match
 
     for (AccountMap::const_iterator iter = accountMap_.begin(); iter != accountMap_.end(); ++iter) {

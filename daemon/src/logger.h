@@ -38,6 +38,7 @@ void log(const int, const char*, ...);
 
 void setConsoleLog(bool);
 void setDebugMode(bool);
+bool getDebugMode();
 };
 
 #define ERROR(...)	Logger::log(LOG_ERR, __VA_ARGS__)
