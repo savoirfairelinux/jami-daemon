@@ -103,6 +103,12 @@ remove_from_toolbar(GtkWidget *widget)
         gtk_container_remove(GTK_CONTAINER(toolbar_), widget);
 }
 
+static bool
+is_non_empty_string(const char *str)
+{
+    return str && strlen(str) > 0;
+}
+
 void
 update_actions()
 {
@@ -245,7 +251,7 @@ update_actions()
                 if (active_calltree_tab == current_calls_tab)
                     gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(hangUpWidget_), 1);
                 else if (active_calltree_tab == history_tab) {
-                    if (selectedCall->_recordfile && strlen(selectedCall->_recordfile) > 0) {
+                    if (is_non_empty_string(selectedCall->_recordfile)) {
                         if (selectedCall->_record_is_playing)
                             gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(stopRecordWidget_), 3);
                         else
@@ -355,7 +361,7 @@ update_actions()
                         gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(imToolbar_), pos);
                     }
                 } else if (active_calltree_tab == history_tab) {
-                    if (selectedConf->_recordfile && strlen(selectedConf->_recordfile) > 0) {
+                    if (is_non_empty_string(selectedConf->_recordfile)) {
                         if (selectedConf->_record_is_playing)
                             gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), GTK_TOOL_ITEM(stopRecordWidget_), 3);
                         else
