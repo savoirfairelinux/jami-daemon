@@ -36,8 +36,6 @@
 #include "historyitem.h"
 #include <global.h>
 
-#define DAY_UNIX_TIMESTAMP      86400   // Number of seconds in one day: 60 x 60 x 24
-
 class HistoryManager {
 
     public:
@@ -101,10 +99,6 @@ class HistoryManager {
         int set_serialized_history(const std::vector<std::string> &history, int limit);
 
     private:
-        int get_unix_timestamp_equivalent(int days) const {
-            return days * DAY_UNIX_TIMESTAMP;
-        }
-
         int getConfigInt(const std::string& section, const std::string& name, Conf::ConfigTree *history_list);
         std::string getConfigString(const std::string& section, const std::string& name, Conf::ConfigTree *history_list);
 
@@ -113,7 +107,7 @@ class HistoryManager {
          *
          * @param path  A specific file to use; if empty, use the global one
          */
-        int create_history_path(std::string path="");
+        void create_history_path(const std::string &path="");
         /*
          * Add a new history item in the data structure
          */

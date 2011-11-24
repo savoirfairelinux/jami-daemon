@@ -66,11 +66,9 @@ void HistoryTest::test_create_history_path()
 {
     DEBUG("-------------------- HistoryTest::test_create_history_path --------------------\n");
 
-    int result;
     std::string path(HISTORY_SAMPLE);
 
-    result = history->create_history_path(path);
-    CPPUNIT_ASSERT(result == 0);
+    history->create_history_path(path);
     CPPUNIT_ASSERT(!history->is_loaded());
     CPPUNIT_ASSERT(history->history_path_ == path);
 }

@@ -34,13 +34,16 @@
 #define HISTORY_ITEM_H_
 
 #include <string>
-#include <config/config.h>
 
 typedef enum CallType {
     CALL_MISSED,
     CALL_INCOMING,
     CALL_OUTGOING
 } CallType;
+
+namespace Conf {
+class ConfigTree;
+}
 
 class HistoryItem {
 

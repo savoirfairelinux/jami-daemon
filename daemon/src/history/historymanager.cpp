@@ -30,10 +30,19 @@
  *  as that of the covered work.
  */
 
-#include <historymanager.h>
-#include <errno.h>
+#include "historymanager.h"
+#include <cerrno>
 #include <cc++/file.h>
-#include <time.h>
+#include <ctime>
+#include "config/config.h"
+
+namespace {
+    int get_unix_timestamp_equivalent(int days) {
+        // Number of seconds in one day: 60 x 60 x 24
+        static const int DAY_UNIX_TIMESTAMP = 86400;
+        return days * DAY_UNIX_TIMESTAMP;
+    }
+}
 
 HistoryManager::HistoryManager() :
     history_items_(), history_loaded_(false), history_path_("")
@@ -121,21 +130,19 @@ int HistoryManager::save_history_items_map(Conf::ConfigTree *history_list)
 
 void HistoryManager::add_new_history_entry(const HistoryItem &new_item)
 {
-    // Add it in the map
     history_items_.push_back(new_item);
 }
 
-int HistoryManager::create_history_path(std::string path)
+void HistoryManager::create_history_path(const std::string &path)
 {
-    std::string userdata, xdg_env, xdg_data;
-
-    xdg_data = std::string(HOMEDIR) + DIR_SEPARATOR_STR + ".local/share/sflphone";
+    std::string xdg_data = std::string(HOMEDIR) + DIR_SEPARATOR_STR + ".local/share/sflphone";
 
     if (path.empty()) {
+        std::string userdata;
         // If the environment variable is set (not null and not empty), we'll use it to save the history
         // Else we 'll the standard one, ie: XDG_DATA_HOME = $HOMEDIR/.local/share/sflphone
         if (XDG_DATA_HOME != NULL) {
-            xdg_env = std::string(XDG_DATA_HOME);
+            std::string xdg_env(XDG_DATA_HOME);
             (xdg_env.length() > 0) ? userdata = xdg_env : userdata = xdg_data;
         } else
             userdata = xdg_data;
@@ -144,41 +151,26 @@ int HistoryManager::create_history_path(std::string path)
             // If directory	creation failed
             if (errno != EEXIST) {
                 DEBUG("HistoryManager: Cannot create directory: %m");
-                return -1;
+                return;
             }
         }
-
         // Load user's history
-        history_path_ = userdata + DIR_SEPARATOR_STR + "history";
+        set_history_path(userdata + DIR_SEPARATOR_STR + "history");
     } else
         set_history_path(path);
-
-    return 0;
 }
 
-// throw an Conf::ConfigTreeItemException if not found
+
 int
 HistoryManager::getConfigInt(const std::string& section, const std::string& name, Conf::ConfigTree *history_list)
 {
-    try {
-        return history_list->getConfigTreeItemIntValue(section, name);
-    } catch (const Conf::ConfigTreeItemException& e) {
-        throw;
-    }
-
-    return 0;
+    return history_list->getConfigTreeItemIntValue(section, name);
 }
 
 std::string
 HistoryManager::getConfigString(const std::string& section, const std::string& name, Conf::ConfigTree *history_list)
 {
-    try {
-        return history_list->getConfigTreeItemValue(section, name);
-    } catch (const Conf::ConfigTreeItemException& e) {
-        throw;
-    }
-
-    return "";
+    return history_list->getConfigTreeItemValue(section, name);
 }
 
 std::vector<std::string> HistoryManager::get_history_serialized() const
@@ -190,23 +182,18 @@ std::vector<std::string> HistoryManager::get_history_serialized() const
     return serialized;
 }
 
-
 int HistoryManager::set_serialized_history(const std::vector<std::string> &history, int limit)
 {
-    int history_limit;
-    time_t current_timestamp;
-
-    DEBUG("HistoryManager: Set serialized history");
-
     history_items_.clear();
 
     // We want to save only the items recent enough (ie compared to CONFIG_HISTORY_LIMIT)
     // Get the current timestamp
+    time_t current_timestamp;
     time(&current_timestamp);
-    history_limit = get_unix_timestamp_equivalent(limit);
+    int history_limit = get_unix_timestamp_equivalent(limit);
 
     int items_added = 0;
-    for (std::vector<std::string>::const_iterator iter = history.begin() ; iter != history.end() ; ++iter) {
+    for (std::vector<std::string>::const_iterator iter = history.begin(); iter != history.end(); ++iter) {
         HistoryItem new_item(*iter);
         int item_timestamp = atoi(new_item.get_timestamp().c_str());
 
