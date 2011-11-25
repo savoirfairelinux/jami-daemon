@@ -45,7 +45,7 @@ namespace {
 }
 
 HistoryManager::HistoryManager() :
-    history_items_(), history_loaded_(false), history_path_("")
+    history_items_(), history_items_simple_(), history_loaded_(false), history_path_("")
 {}
 
 int HistoryManager::load_history(int limit, const std::string &path)
@@ -59,7 +59,7 @@ int HistoryManager::load_history(int limit, const std::string &path)
 bool HistoryManager::save_history()
 {
     Conf::ConfigTree history_list;
-    save_history_items_map(&history_list);
+    save_history_items_vector(&history_list);
     return save_history_to_file(&history_list);
 }
 
@@ -86,16 +86,16 @@ int HistoryManager::load_history_items_map(Conf::ConfigTree *history_list, int l
     Conf::TokenList sections(history_list->getSections());
     int nb_items = 0;
     for (Conf::TokenList::iterator iter = sections.begin(); iter != sections.end(); ++iter) {
-        CallType type = (CallType) getConfigInt(*iter, "type", history_list);
-        string timestamp_start(getConfigString(*iter, "timestamp_start", history_list));
-        string timestamp_stop(getConfigString(*iter, "timestamp_stop", history_list));
-        string name(getConfigString(*iter, "name", history_list));
-        string number(getConfigString(*iter, "number", history_list));
-        string callID(getConfigString(*iter, "id", history_list));
-        string accountID(getConfigString(*iter, "accountid", history_list));
-        string recording_file(getConfigString(*iter, "recordfile", history_list));
-        string confID(getConfigString(*iter, "confid", history_list));
-        string timeAdded(getConfigString(*iter, "timeadded", history_list));
+        CallType type = static_cast<CallType>(getConfigInt(*iter, HistoryItem::TYPE_KEY, history_list));
+        string timestamp_start(getConfigString(*iter, HistoryItem::TIMESTAMP_START_KEY, history_list));
+        string timestamp_stop(getConfigString(*iter, HistoryItem::TIMESTAMP_STOP_KEY, history_list));
+        string name(getConfigString(*iter, HistoryItem::NAME_KEY, history_list));
+        string number(getConfigString(*iter, HistoryItem::NUMBER_KEY, history_list));
+        string callID(getConfigString(*iter, HistoryItem::CALLID_KEY, history_list));
+        string accountID(getConfigString(*iter, HistoryItem::ACCOUNT_ID_KEY, history_list));
+        string recording_file(getConfigString(*iter, HistoryItem::RECORDING_PATH_KEY, history_list));
+        string confID(getConfigString(*iter, HistoryItem::CONFID_KEY, history_list));
+        string timeAdded(getConfigString(*iter, HistoryItem::TIME_ADDED_KEY, history_list));
 
         // Make a check on the start timestamp to know it is loadable according to CONFIG_HISTORY_LIMIT
         if (atoi(timestamp_start.c_str()) >= ((int) current_timestamp - history_limit)) {
@@ -115,22 +115,17 @@ bool HistoryManager::save_history_to_file(Conf::ConfigTree *history_list)
     return history_list->saveConfigTree(history_path_.data());
 }
 
-int HistoryManager::save_history_items_map(Conf::ConfigTree *history_list)
+void HistoryManager::save_history_items_vector(Conf::ConfigTree *history_list)
 {
-    int items_saved = 0;
-    for (std::vector<HistoryItem>::iterator iter = history_items_.begin(); iter != history_items_.end(); ++iter) {
-        if (iter->save(&history_list))
-            ++items_saved;
-        else
+    for (std::vector<HistoryItem>::iterator iter = history_items_.begin(); iter != history_items_.end(); ++iter)
+        if (not iter->save(&history_list))
             DEBUG("can't save NULL history item\n");
-    }
-
-    return items_saved;
 }
 
 void HistoryManager::add_new_history_entry(const HistoryItem &new_item)
 {
     history_items_.push_back(new_item);
+    history_items_simple_[rand()] = new_item;
 }
 
 void HistoryManager::create_history_path(const std::string &path)
@@ -180,6 +175,18 @@ std::vector<std::string> HistoryManager::get_history_serialized() const
         serialized.push_back(iter->serialize());
 
     return serialized;
+}
+
+// Convert our map of HistoryItems to a map<int, map<string, string> >
+std::map<int, std::map<std::string, std::string> > HistoryManager::get_history_simple() const
+{
+    using std::map;
+    using std::string;
+    map<int, map<string, string> > result;
+    for (map<int, HistoryItem>::const_iterator iter = history_items_simple_.begin(); iter != history_items_simple_.end(); ++iter)
+        result[iter->first] = iter->second.toMap();
+
+    return result;
 }
 
 int HistoryManager::set_serialized_history(const std::vector<std::string> &history, int limit)

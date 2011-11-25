@@ -34,7 +34,7 @@
 #define _HISTORY_MANAGER
 
 #include "historyitem.h"
-#include <global.h>
+#include "global.h"
 
 class HistoryManager {
 
@@ -71,10 +71,7 @@ class HistoryManager {
          */
         bool save_history_to_file(Conf::ConfigTree *history_list);
 
-        /**
-         * @return int The number of history entries successfully saved
-         */
-        int save_history_items_map(Conf::ConfigTree *history_list);
+        void save_history_items_vector(Conf::ConfigTree *history_list);
 
         /**
          *@return bool  True if the history file has been successfully read
@@ -95,6 +92,7 @@ class HistoryManager {
         }
 
         std::vector<std::string> get_history_serialized() const;
+        std::map<int, std::map<std::string, std::string> > get_history_simple() const;
 
         int set_serialized_history(const std::vector<std::string> &history, int limit);
 
@@ -114,9 +112,16 @@ class HistoryManager {
         void add_new_history_entry(const HistoryItem &new_item);
 
         /*
-         * Map containing the history items
+         * Vector containing the history items
          */
         std::vector<HistoryItem> history_items_;
+
+        /*
+         * Map containing the history items
+         * key=id
+         * value=HistoryItem
+         */
+        std::map<int, HistoryItem> history_items_simple_;
 
         /*
          * History has been loaded

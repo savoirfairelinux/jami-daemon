@@ -37,29 +37,41 @@
 
 static const char * const ITEM_SEPARATOR = "|";
 
-HistoryItem::HistoryItem(const std::string &timestamp_start,
-                         CallType call_type, const std::string &timestamp_stop,
+const char * const HistoryItem::ACCOUNT_ID_KEY = "accountid";
+const char * const HistoryItem::CALLID_KEY = "callid";
+const char * const HistoryItem::CONFID_KEY = "confid";
+const char * const HistoryItem::NAME_KEY = "name";
+const char * const HistoryItem::NUMBER_KEY = "number";
+const char * const HistoryItem::RECORDING_PATH_KEY = "recordfile";
+const char * const HistoryItem::TIME_ADDED_KEY = "timeadded";
+const char * const HistoryItem::TIMESTAMP_START_KEY = "timestamp_start";
+const char * const HistoryItem::TIMESTAMP_STOP_KEY = "timestamp_stop";
+const char * const HistoryItem::TYPE_KEY = "type";
+
+HistoryItem::HistoryItem(const std::string &timestampStart,
+                         CallType callType, const std::string &timestampStop,
                          const std::string &name, const std::string &number,
-                         const std::string &id, const std::string &account_id,
+                         const std::string &callID, const std::string &accountID,
                          const std::string &recording,
                          const std::string &confID,
                          const std::string &timeAdded)
-    :	timestamp_start_(timestamp_start),
-        timestamp_stop_(timestamp_stop),
-        call_type_(call_type),
+    :	accountID_(accountID),
+        confID_(confID),
+        callID_(callID),
         name_(name),
         number_(number),
-        id_(id),
-        account_id_(account_id),
-        recording_file_(recording),
-        confID_(confID),
-        timeAdded_(timeAdded)
+        recordingPath_(recording),
+        timeAdded_(timeAdded),
+        timestampStart_(timestampStart),
+        timestampStop_(timestampStop),
+        callType_(callType)
 {}
 
 
 HistoryItem::HistoryItem(std::string serialized_form) :
-    timestamp_start_(), timestamp_stop_(), call_type_(CALL_MISSED), name_(),
-    number_(), id_(), account_id_(), recording_file_(), confID_(), timeAdded_() 
+    accountID_(), confID_(), callID_(), name_(), number_(), recordingPath_(),
+    timeAdded_(), timestampStart_(), timestampStop_(),
+    callType_(CALL_MISSED)
 {
     for (int index = 0; serialized_form.find(ITEM_SEPARATOR, 0) != std::string::npos; ++index) {
         size_t pos = serialized_form.find(ITEM_SEPARATOR, 0);
@@ -68,7 +80,7 @@ HistoryItem::HistoryItem(std::string serialized_form) :
 
         switch (index) {
             case 0: // The call type
-                call_type_ = (CallType) atoi(tmp.c_str());
+                callType_ = (CallType) atoi(tmp.c_str());
                 break;
             case 1: // The number field
                 number_ = tmp;
@@ -80,19 +92,19 @@ HistoryItem::HistoryItem(std::string serialized_form) :
                     name_ = "";
                 break;
             case 3: // The start timestamp
-                timestamp_start_ = tmp;
+                timestampStart_ = tmp;
                 break;
             case 4: // The end timestamp
-                timestamp_stop_ = tmp;
+                timestampStop_ = tmp;
                 break;
-            case 5: // The ID
-                id_ = tmp;
+            case 5: // The call ID
+                callID_ = tmp;
                 break;
             case 6: // The account ID
-                account_id_ = tmp;
+                accountID_ = tmp;
                 break;
             case 7: // The recorded file name
-                recording_file_ = tmp;
+                recordingPath_ = tmp;
                 break;
             case 8: // The conference ID
                 confID_ = tmp;
@@ -110,23 +122,23 @@ HistoryItem::HistoryItem(std::string serialized_form) :
 bool HistoryItem::save(Conf::ConfigTree **history)
 {
     std::stringstream section;
-    std::stringstream call_type;
+    std::stringstream callType;
 
     // The section is : "[" + timestamp = "]"
     section << rand();
     std::string sectionstr = section.str();
-    call_type << call_type_;
+    callType << callType_;
 
-    return (*history)->setConfigTreeItem(sectionstr, "type", call_type.str())
-           && (*history)->setConfigTreeItem(sectionstr, "timestamp_start", timestamp_start_)
-           && (*history)->setConfigTreeItem(sectionstr, "timestamp_stop", timestamp_stop_)
-           && (*history)->setConfigTreeItem(sectionstr, "number", number_)
-           && (*history)->setConfigTreeItem(sectionstr, "id", id_)
-           && (*history)->setConfigTreeItem(sectionstr, "accountid", account_id_)
-           && (*history)->setConfigTreeItem(sectionstr, "name", name_)
-           && (*history)->setConfigTreeItem(sectionstr, "recordfile", recording_file_)
-           && (*history)->setConfigTreeItem(sectionstr, "confid", confID_)
-           && (*history)->setConfigTreeItem(sectionstr, "timeadded", timeAdded_);
+    return (*history)->setConfigTreeItem(sectionstr, TYPE_KEY, callType.str())
+           && (*history)->setConfigTreeItem(sectionstr, TIMESTAMP_START_KEY, timestampStart_)
+           && (*history)->setConfigTreeItem(sectionstr, TIMESTAMP_STOP_KEY, timestampStop_)
+           && (*history)->setConfigTreeItem(sectionstr, NUMBER_KEY, number_)
+           && (*history)->setConfigTreeItem(sectionstr, CALLID_KEY, callID_)
+           && (*history)->setConfigTreeItem(sectionstr, ACCOUNT_ID_KEY, accountID_)
+           && (*history)->setConfigTreeItem(sectionstr, NAME_KEY, name_)
+           && (*history)->setConfigTreeItem(sectionstr, RECORDING_PATH_KEY, recordingPath_)
+           && (*history)->setConfigTreeItem(sectionstr, CONFID_KEY, confID_)
+           && (*history)->setConfigTreeItem(sectionstr, TIME_ADDED_KEY, timeAdded_);
 }
 
 std::string HistoryItem::serialize() const
@@ -139,17 +151,48 @@ std::string HistoryItem::serialize() const
 
     // For the account ID, check also if the accountID corresponds to an existing account
     // ie the account may have been removed
-    std::string accountID(account_id_);
+    std::string accountID(accountID_);
 
-    if (account_id_.empty() or not valid_account(account_id_))
+    if (accountID_.empty() or not valid_account(accountID_))
         accountID = "empty";
 
     std::stringstream res;
     // Serialize it
-    res << call_type_ << ITEM_SEPARATOR << number_ << ITEM_SEPARATOR << name << ITEM_SEPARATOR << timestamp_start_ << ITEM_SEPARATOR << timestamp_stop_
-        << ITEM_SEPARATOR << id_ << ITEM_SEPARATOR << accountID << ITEM_SEPARATOR << recording_file_ << ITEM_SEPARATOR << confID_ << ITEM_SEPARATOR << timeAdded_;
+    res << callType_ << ITEM_SEPARATOR << number_ << ITEM_SEPARATOR << name << ITEM_SEPARATOR << timestampStart_ << ITEM_SEPARATOR << timestampStop_
+        << ITEM_SEPARATOR << callID_ << ITEM_SEPARATOR << accountID << ITEM_SEPARATOR << recordingPath_ << ITEM_SEPARATOR << confID_ << ITEM_SEPARATOR << timeAdded_;
 
     return res.str();
+}
+
+std::map<std::string, std::string> HistoryItem::toMap() const
+{
+    std::map<std::string, std::string> result;
+
+    // Replace empty string with a valid standard string value
+    if (name_.empty())
+        result[NAME_KEY] = "empty";
+    else
+        result[NAME_KEY] = name_;
+
+    // For the account ID, check also if the accountID corresponds to an existing account
+    // ie the account may have been removed
+    std::string accountID(accountID_);
+
+    if (accountID_.empty() or not valid_account(accountID_))
+        result[ACCOUNT_ID_KEY] = "empty";
+    else
+        result[ACCOUNT_ID_KEY] = accountID_;
+
+    result[TYPE_KEY] = callType_;
+    result[NUMBER_KEY] = number_;
+    result[TIMESTAMP_START_KEY] = timestampStart_;
+    result[TIMESTAMP_STOP_KEY] = timestampStop_;
+    result[CALLID_KEY] = callID_;
+    result[RECORDING_PATH_KEY] = recordingPath_;
+    result[CONFID_KEY] = confID_;
+    result[TIME_ADDED_KEY] = timeAdded_;
+
+    return result;
 }
 
 

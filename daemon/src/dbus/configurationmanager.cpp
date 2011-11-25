@@ -403,6 +403,11 @@ std::vector<std::string> ConfigurationManager::getHistory()
     return Manager::instance().getHistorySerialized();
 }
 
+std::map<int, std::map<std::string, std::string> > ConfigurationManager::getHistorySimple()
+{
+    return Manager::instance().getHistory();
+}
+
 void ConfigurationManager::setHistory(const std::vector<std::string>& entries)
 {
     Manager::instance().setHistorySerialized(entries);

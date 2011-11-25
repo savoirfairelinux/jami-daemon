@@ -124,6 +124,7 @@ class ConfigurationManager :
         void setHookSettings(const std::map<std::string, std::string>& settings);
 
         std::vector<std::string> getHistory();
+        std::map<int, std::map<std::string, std::string> > getHistorySimple();
         void setHistory(const std::vector<std::string> &entries);
 
         std::map<std::string, std::string> getTlsSettings();

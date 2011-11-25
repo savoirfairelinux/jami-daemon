@@ -85,11 +85,11 @@
 		<method name="setCredentials" tp:name-for-bindings="setCredentials">
 			<tp:docstring>
 			</tp:docstring>
-                        <annotation name="com.trolltech.QtDBus.QtTypeName.In2" value="MapStringString"/>
 			<arg type="s" name="accountID" direction="in">
 				<tp:docstring>
 				</tp:docstring>
 			</arg>
+			<annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
 			<arg type="aa{ss}" name="credentialInformation" direction="in" tp:type="String_String_Map">
 				<tp:docstring>
 				</tp:docstring>
@@ -137,11 +137,11 @@
 	   <method name="getCredentials" tp:name-for-bindings="getCredentials">
 		   <tp:docstring>
 		   </tp:docstring>
-		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
 		   <arg type="s" name="accountID" direction="in">
 			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>
+		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
 		   <arg type="aa{ss}" name="credentialInformation" direction="out">
 			   <tp:docstring>
 			   </tp:docstring>
@@ -258,7 +258,7 @@
 			   </tp:docstring>
 		   </arg>
 	   </method>
-	   
+
 	   <method name="getIsAlwaysRecording" tp:name-for-bindings="getIsAlwaysRecording">
 		   <tp:docstring>
 		   </tp:docstring>
@@ -284,8 +284,8 @@
 	   <method name="getAudioCodecList" tp:name-for-bindings="getAudioCodecList">
 		   <tp:docstring>
 		   </tp:docstring>
-		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
-		   <arg type="as" name="list" direction="out">
+		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorInt"/>
+		   <arg type="ai" name="list" direction="out">
 			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>
@@ -332,7 +332,6 @@
 			   </tp:docstring>
 		   </arg>
 	   </method>
-
 
 	   <!-- Audio devices methods -->
 
@@ -457,7 +456,7 @@
 		     </tp:docstring>
 		   </arg>
 	   </method>
-	   
+
 	   <method name="getEchoCancelTailLength" tp:name-for-bindings="getEchoCancelTailLength">
 	           <tp:docstring>
 		   </tp:docstring>
@@ -466,22 +465,22 @@
 		     </tp:docstring>
 		   </arg>
 	   </method>
-	   
+
 	   <method name="setEchoCancelDelay" tp:name-for-bindings="setEchoCancelDelay">
 	       <tp:docstring>
 	       </tp:docstring>
 	       <arg type="i" name="index" direction="in">
 	       </arg>
-	   </method> 
-	   
+	   </method>
+
 	   <method name="getEchoCancelDelay" tp:name-for-bindings="getEchoCancelDelay">
 	       <tp:docstring>
 	       </tp:docstring>
 	       <arg type="i" name="index" direction="out">
 	       </arg>
 	   </method>
-	   
-	   
+
+
 	   <method name="getNoiseSuppressState" tp:name-for-bindings="getEchoCancelState">
 	           <tp:docstring>
 		   </tp:docstring>
@@ -520,7 +519,6 @@
 			   </tp:docstring>
 		   </arg>
 	   </method>
-
 
 	   <method name="getHistoryLimit" tp:name-for-bindings="getHistoryLimit">
 		   <tp:docstring>
@@ -613,6 +611,12 @@
 		   </arg>
 	   </method>
 
+       <method name="getHistorySimple" tp:name-for-bindings="getHistorySimple">
+		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapIntMapStringString"/>
+           <!-- Return a Dict of type <int, Dict<string, string> >...a Dict of Dicts -->
+           <arg type="a{ia{ss}}" name="info" direction="out"/>
+	   </method>
+
 	   <method name="setHistory" tp:name-for-bindings="setHistory">
 		   <tp:docstring>
 		   </tp:docstring>
@@ -624,14 +628,14 @@
 	   </method>
 
 	   <signal name="accountsChanged" tp:name-for-bindings="accountsChanged">
-	   </signal>  
+	   </signal>
 
 	   <signal name="errorAlert" tp:name-for-bindings="errorAlert">
 		   <arg type="i" name="code">
 			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>
-	   </signal> 
+	   </signal>
 
 	   <!-- TLS Methods -->
 	   <method name="getSupportedTlsMethod" tp:name-for-bindings="getSupportedTlsMethod">

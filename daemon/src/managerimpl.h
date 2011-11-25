@@ -1152,6 +1152,12 @@ class ManagerImpl {
         std::vector<std::string> getHistorySerialized() const;
 
         /**
+         * Get a list of serialized history entries
+         * @return A list of serialized entry
+         */
+        std::map<int, std::map<std::string, std::string> > getHistory() const;
+
+        /**
          * Set a list of serialized history entries
          * @param Vector of history entries
              */

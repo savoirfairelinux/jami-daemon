@@ -34,6 +34,7 @@
 #define HISTORY_ITEM_H_
 
 #include <string>
+#include <map>
 
 typedef enum CallType {
     CALL_MISSED,
@@ -46,8 +47,17 @@ class ConfigTree;
 }
 
 class HistoryItem {
-
     public:
+        static const char * const ACCOUNT_ID_KEY;
+        static const char * const CONFID_KEY;
+        static const char * const CALLID_KEY;
+        static const char * const NAME_KEY;
+        static const char * const NUMBER_KEY;
+        static const char * const RECORDING_PATH_KEY;
+        static const char * const TIME_ADDED_KEY;
+        static const char * const TIMESTAMP_START_KEY;
+        static const char * const TIMESTAMP_STOP_KEY;
+        static const char * const TYPE_KEY;
         /*
          * Constructor
          *
@@ -56,11 +66,11 @@ class HistoryItem {
          * @param Timestamp stop
          * @param Call name
          * @param Call number
-        	 * @param Call id
+         * @param Call id
          * @param Call account id
-        	 * @param Recording file name (if any recording were performed)
-        	 * @param Configuration ID
-        	 * @param time added
+         * @param Recording file name (if any recording were performed)
+         * @param Configuration ID
+         * @param time added
          */
         HistoryItem(const std::string&, CallType, const std::string&,
                     const std::string&, const std::string&, const std::string&,
@@ -74,12 +84,13 @@ class HistoryItem {
         HistoryItem(std::string="");
 
         std::string get_timestamp() const {
-            return timestamp_start_;
+            return timestampStart_;
         }
 
         bool save(Conf::ConfigTree **history);
 
         std::string serialize() const;
+        std::map<std::string, std::string> toMap() const;
 
     private:
         /*
@@ -88,16 +99,19 @@ class HistoryItem {
         bool valid_account(const std::string &id) const;
 
         /*
-         * Timestamp representing the date of the call
+         * The account the call was made with
          */
-        std::string timestamp_start_;
-        std::string timestamp_stop_;
+        std::string accountID_;
 
-        /*
-         * Represents the type of call
-         * Has be either CALL_MISSED, CALL_INCOMING or CALL_OUTGOING
+        /**
+         * The conference ID for this call (if any)
          */
-        CallType call_type_;
+        std::string confID_;
+
+        /**
+         * The identifier for this call
+         */
+        std::string callID_;
 
         /*
          * The information about the callee/caller, depending on the type of call.
@@ -106,29 +120,26 @@ class HistoryItem {
         std::string number_;
 
         /**
-         * The identifier fo this item
+         * Path of recording for this call, if it exists
          */
-        std::string id_;
-
-        /*
-         * The account the call was made with
-         */
-        std::string account_id_;
-
-        /**
-         * Whether or not a recording exist for this call
-         */
-        std::string recording_file_;
-
-        /**
-         * The conference ID for this call (if any)
-         */
-        std::string confID_;
+        std::string recordingPath_;
 
         /**
          * Time added to conference
          */
         std::string timeAdded_;
+
+        /*
+         * Timestamp representing the date of the call
+         */
+        std::string timestampStart_;
+        std::string timestampStop_;
+
+        /*
+         * Represents the type of call
+         * Has be either CALL_MISSED, CALL_INCOMING or CALL_OUTGOING
+         */
+        CallType callType_;
 };
 
 

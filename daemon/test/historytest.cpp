@@ -108,15 +108,12 @@ void HistoryTest::test_save_history_items_map()
     DEBUG("-------------------- HistoryTest::test_save_history_items_map --------------------\n");
 
     std::string path;
-    int nb_items_loaded, nb_items_saved;
     Conf::ConfigTree history_list, history_list2;
 
     history->set_history_path(HISTORY_SAMPLE);
     history->load_history_from_file(&history_list);
-    nb_items_loaded = history->load_history_items_map(&history_list,
-                      HUGE_HISTORY_LIMIT);
-    nb_items_saved = history->save_history_items_map(&history_list2);
-    CPPUNIT_ASSERT(nb_items_loaded == nb_items_saved);
+    history->load_history_items_map(&history_list, HUGE_HISTORY_LIMIT);
+    history->save_history_items_vector(&history_list2);
 }
 
 void HistoryTest::test_save_history_to_file()
@@ -131,7 +128,7 @@ void HistoryTest::test_save_history_to_file()
     history->set_history_path(HISTORY_SAMPLE);
     history->load_history_from_file(&history_list);
     history->load_history_items_map(&history_list, HUGE_HISTORY_LIMIT);
-    history->save_history_items_map(&history_list2);
+    history->save_history_items_vector(&history_list2);
     CPPUNIT_ASSERT(history->save_history_to_file(&history_list2));
 }
 
@@ -194,7 +191,7 @@ void HistoryTest::test_set_serialized_history()
     // std::cout << "test vector : " << test_vector[1] << std::endl;
     // CPPUNIT_ASSERT (Validator::isEqual (tmp, test_vector[1]));
 
-    history->save_history_items_map(&history_list);
+    history->save_history_items_vector(&history_list);
     CPPUNIT_ASSERT(history->save_history_to_file(&history_list));
 }
 
