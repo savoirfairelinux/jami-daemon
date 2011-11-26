@@ -2550,8 +2550,10 @@ std::string ManagerImpl::addAccount(const std::map<std::string, std::string>& de
 
     if (accountType == "SIP")
         newAccount = new SIPAccount(newAccountID);
+#if HAVE_IAX
     else if (accountType == "IAX")
         newAccount = new IAXAccount(newAccountID);
+#endif
     else {
         ERROR("Unknown %s param when calling addAccount(): %s",
                CONFIG_ACCOUNT_TYPE, accountType.c_str());
@@ -2735,9 +2737,11 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser *parser)
 
         Account *a;
 
+#if HAVE_IAX
         if (accountType == "IAX")
             a = new IAXAccount(accountid);
         else // assume SIP
+#endif
             a = new SIPAccount(accountid);
 
         accountMap_[accountid] = a;
