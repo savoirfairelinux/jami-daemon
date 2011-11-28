@@ -472,10 +472,10 @@ gchar** dbus_get_conference_list (void);
 void dbus_set_accounts_order (const gchar* order);
 
 /**
- * Get a list of serialized hisotry entries
- * @return The list of history entries
+ * Get a the history
+ * @return The PtrArray of history entries
  */
-gchar **dbus_get_history (void);
+GPtrArray *dbus_get_history(void);
 
 /**
  * Set the history entries into the daemon. The daemon then write teh content 

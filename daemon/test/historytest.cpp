@@ -68,8 +68,8 @@ void HistoryTest::test_create_history_path()
 
     std::string path(HISTORY_SAMPLE);
 
-    history->create_history_path(path);
-    CPPUNIT_ASSERT(!history->is_loaded());
+    history->createHistoryPath(path);
+    CPPUNIT_ASSERT(!history->isLoaded());
     CPPUNIT_ASSERT(history->history_path_ == path);
 }
 
@@ -80,11 +80,11 @@ void HistoryTest::test_load_history_from_file()
     bool res;
     Conf::ConfigTree history_list;
 
-    history->create_history_path(HISTORY_SAMPLE);
-    res = history->load_history_from_file(&history_list);
+    history->createHistoryPath(HISTORY_SAMPLE);
+    res = history->loadHistoryFromFile(history_list);
 
-    CPPUNIT_ASSERT(history->is_loaded());
-    CPPUNIT_ASSERT(res == true);
+    CPPUNIT_ASSERT(history->isLoaded());
+    CPPUNIT_ASSERT(res);
 }
 
 void HistoryTest::test_load_history_items_map()
@@ -95,12 +95,11 @@ void HistoryTest::test_load_history_items_map()
     int nb_items;
     Conf::ConfigTree history_list;
 
-    history->set_history_path(HISTORY_SAMPLE);
-    history->load_history_from_file(&history_list);
-    nb_items = history->load_history_items_map(&history_list,
-               HUGE_HISTORY_LIMIT);
+    history->setHistoryPath(HISTORY_SAMPLE);
+    history->loadHistoryFromFile(history_list);
+    nb_items = history->loadHistoryItemsMap(history_list, HUGE_HISTORY_LIMIT);
     CPPUNIT_ASSERT(nb_items == HISTORY_SAMPLE_SIZE);
-    CPPUNIT_ASSERT(history->get_history_size() == HISTORY_SAMPLE_SIZE);
+    CPPUNIT_ASSERT(history->numberOfItems() == HISTORY_SAMPLE_SIZE);
 }
 
 void HistoryTest::test_save_history_items_map()
@@ -110,10 +109,10 @@ void HistoryTest::test_save_history_items_map()
     std::string path;
     Conf::ConfigTree history_list, history_list2;
 
-    history->set_history_path(HISTORY_SAMPLE);
-    history->load_history_from_file(&history_list);
-    history->load_history_items_map(&history_list, HUGE_HISTORY_LIMIT);
-    history->save_history_items_vector(&history_list2);
+    history->setHistoryPath(HISTORY_SAMPLE);
+    history->loadHistoryFromFile(history_list);
+    history->loadHistoryItemsMap(history_list, HUGE_HISTORY_LIMIT);
+    history->saveHistoryItemsVector(history_list2);
 }
 
 void HistoryTest::test_save_history_to_file()
@@ -125,24 +124,22 @@ void HistoryTest::test_save_history_to_file()
     std::map<std::string, std::string> res;
     std::map<std::string, std::string>::iterator iter;
 
-    history->set_history_path(HISTORY_SAMPLE);
-    history->load_history_from_file(&history_list);
-    history->load_history_items_map(&history_list, HUGE_HISTORY_LIMIT);
-    history->save_history_items_vector(&history_list2);
-    CPPUNIT_ASSERT(history->save_history_to_file(&history_list2));
+    history->setHistoryPath(HISTORY_SAMPLE);
+    history->loadHistoryFromFile(history_list);
+    history->loadHistoryItemsMap(history_list, HUGE_HISTORY_LIMIT);
+    history->saveHistoryItemsVector(history_list2);
+    CPPUNIT_ASSERT(history->saveHistoryToFile(history_list2));
 }
 
 void HistoryTest::test_get_history_serialized()
 {
     DEBUG("-------------------- HistoryTest::test_get_history_serialized --------------------\n");
 
-    std::vector<std::string> res;
     std::vector<std::string>::iterator iter;
     std::string tmp;
 
-    CPPUNIT_ASSERT(history->load_history(HUGE_HISTORY_LIMIT, HISTORY_SAMPLE) == HISTORY_SAMPLE_SIZE);
-    res = history->get_history_serialized();
-    CPPUNIT_ASSERT(res.size() == HISTORY_SAMPLE_SIZE);
+    CPPUNIT_ASSERT(history->loadHistory(HUGE_HISTORY_LIMIT, HISTORY_SAMPLE) == HISTORY_SAMPLE_SIZE);
+    CPPUNIT_ASSERT(history->getSerialized().size() == HISTORY_SAMPLE_SIZE);
 
 
     // Warning - If you change the history-sample file, you must change the following lines also so that the tests could work
@@ -173,14 +170,13 @@ void HistoryTest::test_set_serialized_history()
     test_vector.push_back("2|136|Emmanuel Milou|747638685|747638765|Account:1239059899||||");
     test_vector.push_back("1|5143848557|empty|775354456|775354987|Account:43789459478||||");
 
-    CPPUNIT_ASSERT(history->load_history(HUGE_HISTORY_LIMIT, HISTORY_SAMPLE) == HISTORY_SAMPLE_SIZE);
+    CPPUNIT_ASSERT(history->loadHistory(HUGE_HISTORY_LIMIT, HISTORY_SAMPLE) == HISTORY_SAMPLE_SIZE);
     // We use a large history limit to be able to interpret results
-    CPPUNIT_ASSERT(history->set_serialized_history(test_vector, HUGE_HISTORY_LIMIT) == 3);
-    CPPUNIT_ASSERT(history->get_history_size() == 3);
+    CPPUNIT_ASSERT(history->setSerializedHistory(test_vector, HUGE_HISTORY_LIMIT) == 3);
+    CPPUNIT_ASSERT(history->numberOfItems() == 3);
 
     test_vector.clear();
-    test_vector = history->get_history_serialized();
-    CPPUNIT_ASSERT(test_vector.size() == 3);
+    CPPUNIT_ASSERT(history->getSerialized().size() == 3);
 
     // Check the first
     tmp = "0|514-276-5468|Savoir-faire Linux|144562000|144562458||empty|||";
@@ -191,8 +187,8 @@ void HistoryTest::test_set_serialized_history()
     // std::cout << "test vector : " << test_vector[1] << std::endl;
     // CPPUNIT_ASSERT (Validator::isEqual (tmp, test_vector[1]));
 
-    history->save_history_items_vector(&history_list);
-    CPPUNIT_ASSERT(history->save_history_to_file(&history_list));
+    history->saveHistoryItemsVector(history_list);
+    CPPUNIT_ASSERT(history->saveHistoryToFile(history_list));
 }
 
 void HistoryTest::test_set_serialized_history_with_limit()
@@ -215,19 +211,19 @@ void HistoryTest::test_set_serialized_history_with_limit()
     test_vector.push_back(current_2.str());
     test_vector.push_back(current_3.str());
 
-    CPPUNIT_ASSERT(history->load_history(HUGE_HISTORY_LIMIT, HISTORY_SAMPLE) == HISTORY_SAMPLE_SIZE);
+    CPPUNIT_ASSERT(history->loadHistory(HUGE_HISTORY_LIMIT, HISTORY_SAMPLE) == HISTORY_SAMPLE_SIZE);
     // We use different value of history limit
     // 10 days - the last entry should not be saved
-    CPPUNIT_ASSERT(history->set_serialized_history(test_vector, 10) == 2);
-    CPPUNIT_ASSERT(history->get_history_size() == 2);
+    CPPUNIT_ASSERT(history->setSerializedHistory(test_vector, 10) == 2);
+    CPPUNIT_ASSERT(history->numberOfItems() == 2);
 
     //  4 days - the two last entries should not be saved
-    CPPUNIT_ASSERT(history->set_serialized_history(test_vector, 4) == 1);
-    CPPUNIT_ASSERT(history->get_history_size() == 1);
+    CPPUNIT_ASSERT(history->setSerializedHistory(test_vector, 4) == 1);
+    CPPUNIT_ASSERT(history->numberOfItems() == 1);
 
     //  1 day - no entry should not be saved
-    CPPUNIT_ASSERT(history->set_serialized_history(test_vector, 1) == 0);
-    CPPUNIT_ASSERT(history->get_history_size() == 0);
+    CPPUNIT_ASSERT(history->setSerializedHistory(test_vector, 1) == 0);
+    CPPUNIT_ASSERT(history->numberOfItems() == 0);
 }
 
 void HistoryTest::tearDown()

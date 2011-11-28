@@ -166,7 +166,7 @@ callable_obj_t *create_new_call (callable_type_t, call_state_t, const gchar* con
 
 callable_obj_t *create_new_call_from_details (const gchar *, GHashTable *);
 
-callable_obj_t *create_history_entry_from_serialized_form (const gchar *);
+callable_obj_t *create_history_entry_from_hashtable (GHashTable *entry);
 
 void call_add_error (callable_obj_t * call, gpointer dialog);
 

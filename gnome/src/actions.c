@@ -41,7 +41,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <assert.h>
 
 #include <arpa/nameser.h>
 #include <netinet/in.h>
@@ -61,6 +60,7 @@
 #include "icons/icon_factory.h"
 #include "imwindow.h"
 #include "statusicon.h"
+#include "unused.h"
 #include "widget/imwidget.h"
 
 
@@ -72,7 +72,7 @@ static gchar ** sflphone_order_history_hash_table(GHashTable *result)
     gint size = 0;
     gchar **ordered_list = NULL;
 
-    assert(result);
+    g_assert(result);
 
     while (g_hash_table_size(result)) {
         gpointer key, value;
@@ -1075,32 +1075,35 @@ void sflphone_fill_conference_list(void)
     g_strfreev(conferences);
 }
 
-void sflphone_fill_history(void)
+static void
+create_callable_from_entry(gpointer data, gpointer user_data UNUSED)
 {
-    gchar **entries, **entries_orig;
-    entries = entries_orig = dbus_get_history();
+    GHashTable *entry = (GHashTable *) data;
+    callable_obj_t *history_call = create_history_entry_from_hashtable(entry);
 
-    while (entries && *entries) {
-        gchar *current_entry = *entries;
-        /* do something with key and value */
-        callable_obj_t *history_call = create_history_entry_from_serialized_form(current_entry);
+    /* Add it and update the GUI */
+    calllist_add_call(history_tab, history_call);
+}
 
-        /* Add it and update the GUI */
-        calllist_add_call(history_tab, history_call);
-        entries++;
-    }
-
-    g_strfreev(entries_orig);
-
-    // fill the treeview with calls
+static void fill_treeview_with_calls(void)
+{
     guint n = calllist_get_size(history_tab);
 
-    for (guint i = 0; i < n; i++) {
+    for (guint i = 0; i < n; ++i) {
         QueueElement *element = calllist_get_nth(history_tab, i);
 
         if (element->type == HIST_CALL)
             calltree_add_history_entry(element->elem.call);
     }
+}
+
+void sflphone_fill_history(void)
+{
+    GPtrArray *entries = dbus_get_history();
+    if (entries)
+        g_ptr_array_foreach(entries, create_callable_from_entry, NULL);
+
+    fill_treeview_with_calls();
 }
 
 #if ! (GLIB_CHECK_VERSION(2,28,0))

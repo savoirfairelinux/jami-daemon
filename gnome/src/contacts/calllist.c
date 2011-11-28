@@ -172,7 +172,7 @@ calllist_get_by_state(calltab_t* tab, call_state_t state)
 }
 
 guint
-calllist_get_size(calltab_t* tab)
+calllist_get_size(const calltab_t* tab)
 {
     return g_queue_get_length(tab->callQueue);
 }

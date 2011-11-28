@@ -49,79 +49,69 @@ class HistoryManager {
          *
          *@return int The number of history items successfully loaded
          */
-        int load_history(int limit, const std::string &path="");
+        int loadHistory(int limit, const std::string &path="");
 
         /**
          *@return bool True if the history has been successfully saved in the file
          */
-        bool save_history();
+        bool saveHistory();
 
         /*
          * Load the history from a file to the dedicated data structure
          */
-        bool load_history_from_file(Conf::ConfigTree *history_list);
+        bool loadHistoryFromFile(Conf::ConfigTree &history_list);
 
         /*
          * @return int The number of history items loaded
          */
-        int load_history_items_map(Conf::ConfigTree *history_list, int limit);
+        int loadHistoryItemsMap(Conf::ConfigTree &history_list, int limit);
 
         /*
          * Inverse method, ie save a data structure containing the history into a file
          */
-        bool save_history_to_file(Conf::ConfigTree *history_list);
+        bool saveHistoryToFile(const Conf::ConfigTree &history_list) const;
 
-        void save_history_items_vector(Conf::ConfigTree *history_list);
+        void saveHistoryItemsVector(Conf::ConfigTree &history_list) const;
 
         /**
          *@return bool  True if the history file has been successfully read
          */
-        bool is_loaded() const {
+        bool isLoaded() const {
             return history_loaded_;
         }
 
-        void set_history_path(const std::string &filename) {
+        void setHistoryPath(const std::string &filename) {
             history_path_ = filename;
         }
 
         /*
          *@return int   The number of items found in the history file
          */
-        int get_history_size() const {
+        int numberOfItems() const {
             return history_items_.size();
         }
 
-        std::vector<std::string> get_history_serialized() const;
-        std::map<int, std::map<std::string, std::string> > get_history_simple() const;
+        std::vector<std::string> getHistorySerialized() const;
+        std::vector<std::map<std::string, std::string> > getSerialized() const;
 
-        int set_serialized_history(const std::vector<std::string> &history, int limit);
+        int setSerializedHistory(const std::vector<std::string> &history, int limit);
 
     private:
-        int getConfigInt(const std::string& section, const std::string& name, Conf::ConfigTree *history_list);
-        std::string getConfigString(const std::string& section, const std::string& name, Conf::ConfigTree *history_list);
-
         /*
          * Set the path to the history file
          *
          * @param path  A specific file to use; if empty, use the global one
          */
-        void create_history_path(const std::string &path="");
+        void createHistoryPath(const std::string &path="");
         /*
          * Add a new history item in the data structure
          */
-        void add_new_history_entry(const HistoryItem &new_item);
+        void addNewHistoryEntry(const HistoryItem &new_item);
 
         /*
          * Vector containing the history items
          */
         std::vector<HistoryItem> history_items_;
-
-        /*
-         * Map containing the history items
-         * key=id
-         * value=HistoryItem
-         */
-        std::map<int, HistoryItem> history_items_simple_;
 
         /*
          * History has been loaded

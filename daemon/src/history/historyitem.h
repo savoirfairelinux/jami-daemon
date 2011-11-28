@@ -51,8 +51,8 @@ class HistoryItem {
         static const char * const ACCOUNT_ID_KEY;
         static const char * const CONFID_KEY;
         static const char * const CALLID_KEY;
-        static const char * const NAME_KEY;
-        static const char * const NUMBER_KEY;
+        static const char * const PEER_NAME_KEY;
+        static const char * const PEER_NUMBER_KEY;
         static const char * const RECORDING_PATH_KEY;
         static const char * const TIME_ADDED_KEY;
         static const char * const TIMESTAMP_START_KEY;
@@ -87,7 +87,9 @@ class HistoryItem {
             return timestampStart_;
         }
 
-        bool save(Conf::ConfigTree **history);
+        bool youngerThan(int otherTime) const;
+
+        bool save(Conf::ConfigTree &history) const;
 
         std::string serialize() const;
         std::map<std::string, std::string> toMap() const;
@@ -116,8 +118,8 @@ class HistoryItem {
         /*
          * The information about the callee/caller, depending on the type of call.
          */
-        std::string name_;
-        std::string number_;
+        std::string peerName_;
+        std::string peerNumber_;
 
         /**
          * Path of recording for this call, if it exists

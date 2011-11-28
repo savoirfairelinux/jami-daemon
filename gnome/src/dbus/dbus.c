@@ -1943,17 +1943,17 @@ dbus_set_accounts_order(const gchar* order)
     }
 }
 
-gchar **
+GPtrArray *
 dbus_get_history(void)
 {
     GError *error = NULL;
-    gchar **entries = NULL;
+    GPtrArray *entries = NULL;
 
     org_sflphone_SFLphone_ConfigurationManager_get_history(
         configurationManagerProxy, &entries, &error);
 
     if (error) {
-        ERROR("Error calling get history: %s", error->message);
+        ERROR("Error calling get history simple: %s", error->message);
         g_error_free(error);
     }
 

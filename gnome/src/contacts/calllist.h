@@ -107,7 +107,7 @@ calllist_get_by_state (calltab_t* tab, call_state_t state);
 /** Return the number of calls in the list
   * @return The number of calls in the list */
 guint
-calllist_get_size (calltab_t* tab);
+calllist_get_size (const calltab_t* tab);
 
 /** Return the call at the nth position in the list
   * @param n The position of the call you want

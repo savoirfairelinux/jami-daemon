@@ -174,73 +174,36 @@ static history_state_t get_history_state_from_id(gchar *indice)
     return state;
 }
 
-callable_obj_t *create_history_entry_from_serialized_form(const gchar *entry)
+static gconstpointer get_str(GHashTable *entry, gconstpointer key)
 {
-    const gchar *peer_name = "";
-    const gchar *peer_number = "";
-    const gchar *callID = "";
-    const gchar *accountID = "";
-    const gchar *time_start = "";
-    const gchar *time_stop = "";
-    const gchar *recordfile = "";
-    const gchar *confID = "";
-    const gchar *time_added = "";
-    history_state_t history_state = MISSED;
+    gconstpointer result = g_hash_table_lookup(entry, key);
+    if (!result || g_strcmp0(result, "empty") == 0)
+        result = "";
+    return result;
+}
 
-    gchar **ptr_orig = g_strsplit(entry, "|", 10);
-    gchar **ptr;
-    gint token;
-
-    for (ptr = ptr_orig, token = 0; ptr && token < 10; token++, ptr++)
-        switch (token) {
-            case 0:
-                history_state = get_history_state_from_id(*ptr);
-                break;
-            case 1:
-                peer_number = *ptr;
-                break;
-            case 2:
-                peer_name = *ptr;
-                break;
-            case 3:
-                time_start = *ptr;
-                break;
-            case 4:
-                time_stop = *ptr;
-                break;
-            case 5:
-                callID = *ptr;
-                break;
-            case 6:
-                accountID = *ptr;
-                break;
-            case 7:
-                recordfile = *ptr;
-                break;
-            case 8:
-                confID = *ptr;
-                break;
-            case 9:
-                time_added = *ptr;
-                break;
-            default:
-                break;
-        }
-
-    if (g_strcasecmp(peer_name, "empty") == 0)
-        peer_name = "";
-
+callable_obj_t *create_history_entry_from_hashtable(GHashTable *entry)
+{
+    gconstpointer callID = get_str(entry, "callid");
+    gconstpointer accountID =  get_str(entry, "accountid");
+    gconstpointer peer_name =  get_str(entry, "peer_name");
+    gconstpointer peer_number =  get_str(entry, "peer_number");
     callable_obj_t *new_call = create_new_call(HISTORY_ENTRY, CALL_STATE_DIALING, callID, accountID, peer_name, peer_number);
-    new_call->_history_state = history_state;
-    new_call->_time_start = atoi(time_start);
-    new_call->_time_stop = atoi(time_stop);
-    new_call->_recordfile = g_strdup(recordfile);
-    new_call->_confID = g_strdup(confID);
-    new_call->_historyConfID = g_strdup(confID);
-    new_call->_time_added = atoi(time_added);
+    gconstpointer value =  g_hash_table_lookup(entry, "state");
+    new_call->_history_state = value ? atoi(value) : MISSED;
+    value =  g_hash_table_lookup(entry, "timestamp_start");
+    new_call->_time_start = value ? atoi(value) : 0;
+    value =  g_hash_table_lookup(entry, "timestamp_stop");
+    new_call->_time_stop = value ? atoi(value) : 0;
+    value =  g_hash_table_lookup(entry, "recordfile");
+    new_call->_recordfile = g_strdup(value);
+    value =  g_hash_table_lookup(entry, "confid");
+    new_call->_confID = g_strdup(value);
+    new_call->_historyConfID = g_strdup(value);
+    value =  g_hash_table_lookup(entry, "timeadded");
+    new_call->_time_added = value ? atoi(value) : 0;
     new_call->_record_is_playing = FALSE;
 
-    g_strfreev(ptr_orig);
     return new_call;
 }
 
