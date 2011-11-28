@@ -46,10 +46,10 @@ const char * const HistoryItem::RECORDING_PATH_KEY = "recordfile";
 const char * const HistoryItem::TIME_ADDED_KEY = "timeadded";
 const char * const HistoryItem::TIMESTAMP_START_KEY = "timestamp_start";
 const char * const HistoryItem::TIMESTAMP_STOP_KEY = "timestamp_stop";
-const char * const HistoryItem::TYPE_KEY = "type";
+const char * const HistoryItem::STATE_KEY = "state";
 
 HistoryItem::HistoryItem(const std::string &timestampStart,
-                         CallType callType, const std::string &timestampStop,
+                         HistoryState state, const std::string &timestampStop,
                          const std::string &name, const std::string &number,
                          const std::string &callID, const std::string &accountID,
                          const std::string &recording,
@@ -64,14 +64,14 @@ HistoryItem::HistoryItem(const std::string &timestampStart,
         timeAdded_(timeAdded),
         timestampStart_(timestampStart),
         timestampStop_(timestampStop),
-        callType_(callType)
+        state_(state)
 {}
 
 
 HistoryItem::HistoryItem(std::string serialized_form) :
     accountID_(), confID_(), callID_(), name_(), number_(), recordingPath_(),
     timeAdded_(), timestampStart_(), timestampStop_(),
-    callType_(CALL_MISSED)
+    state_(MISSED)
 {
     for (int index = 0; serialized_form.find(ITEM_SEPARATOR, 0) != std::string::npos; ++index) {
         size_t pos = serialized_form.find(ITEM_SEPARATOR, 0);
@@ -79,8 +79,8 @@ HistoryItem::HistoryItem(std::string serialized_form) :
         serialized_form.erase(0, pos + 1);
 
         switch (index) {
-            case 0: // The call type
-                callType_ = (CallType) atoi(tmp.c_str());
+            case 0: // The call state
+                state_ = (HistoryState) atoi(tmp.c_str());
                 break;
             case 1: // The number field
                 number_ = tmp;
@@ -122,14 +122,14 @@ HistoryItem::HistoryItem(std::string serialized_form) :
 bool HistoryItem::save(Conf::ConfigTree **history)
 {
     std::stringstream section;
-    std::stringstream callType;
+    std::stringstream state;
 
     // The section is : "[" + timestamp = "]"
     section << rand();
     std::string sectionstr = section.str();
-    callType << callType_;
+    state << state_;
 
-    return (*history)->setConfigTreeItem(sectionstr, TYPE_KEY, callType.str())
+    return (*history)->setConfigTreeItem(sectionstr, STATE_KEY, state.str())
            && (*history)->setConfigTreeItem(sectionstr, TIMESTAMP_START_KEY, timestampStart_)
            && (*history)->setConfigTreeItem(sectionstr, TIMESTAMP_STOP_KEY, timestampStop_)
            && (*history)->setConfigTreeItem(sectionstr, NUMBER_KEY, number_)
@@ -158,7 +158,7 @@ std::string HistoryItem::serialize() const
 
     std::stringstream res;
     // Serialize it
-    res << callType_ << ITEM_SEPARATOR << number_ << ITEM_SEPARATOR << name << ITEM_SEPARATOR << timestampStart_ << ITEM_SEPARATOR << timestampStop_
+    res << state_ << ITEM_SEPARATOR << number_ << ITEM_SEPARATOR << name << ITEM_SEPARATOR << timestampStart_ << ITEM_SEPARATOR << timestampStop_
         << ITEM_SEPARATOR << callID_ << ITEM_SEPARATOR << accountID << ITEM_SEPARATOR << recordingPath_ << ITEM_SEPARATOR << confID_ << ITEM_SEPARATOR << timeAdded_;
 
     return res.str();
@@ -183,7 +183,7 @@ std::map<std::string, std::string> HistoryItem::toMap() const
     else
         result[ACCOUNT_ID_KEY] = accountID_;
 
-    result[TYPE_KEY] = callType_;
+    result[STATE_KEY] = state_;
     result[NUMBER_KEY] = number_;
     result[TIMESTAMP_START_KEY] = timestampStart_;
     result[TIMESTAMP_STOP_KEY] = timestampStop_;

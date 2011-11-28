@@ -36,11 +36,11 @@
 #include <string>
 #include <map>
 
-typedef enum CallType {
-    CALL_MISSED,
-    CALL_INCOMING,
-    CALL_OUTGOING
-} CallType;
+typedef enum HistoryState {
+    MISSED,
+    INCOMING,
+    OUTGOING
+} HistoryState;
 
 namespace Conf {
 class ConfigTree;
@@ -57,7 +57,7 @@ class HistoryItem {
         static const char * const TIME_ADDED_KEY;
         static const char * const TIMESTAMP_START_KEY;
         static const char * const TIMESTAMP_STOP_KEY;
-        static const char * const TYPE_KEY;
+        static const char * const STATE_KEY;
         /*
          * Constructor
          *
@@ -72,7 +72,7 @@ class HistoryItem {
          * @param Configuration ID
          * @param time added
          */
-        HistoryItem(const std::string&, CallType, const std::string&,
+        HistoryItem(const std::string&, HistoryState, const std::string&,
                     const std::string&, const std::string&, const std::string&,
                     const std::string&, const std::string&, const std::string&,
                     const std::string&);
@@ -139,7 +139,7 @@ class HistoryItem {
          * Represents the type of call
          * Has be either CALL_MISSED, CALL_INCOMING or CALL_OUTGOING
          */
-        CallType callType_;
+        HistoryState state_;
 };
 
 

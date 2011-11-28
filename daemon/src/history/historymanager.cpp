@@ -86,7 +86,7 @@ int HistoryManager::load_history_items_map(Conf::ConfigTree *history_list, int l
     Conf::TokenList sections(history_list->getSections());
     int nb_items = 0;
     for (Conf::TokenList::iterator iter = sections.begin(); iter != sections.end(); ++iter) {
-        CallType type = static_cast<CallType>(getConfigInt(*iter, HistoryItem::TYPE_KEY, history_list));
+        HistoryState state = static_cast<HistoryState>(getConfigInt(*iter, HistoryItem::STATE_KEY, history_list));
         string timestamp_start(getConfigString(*iter, HistoryItem::TIMESTAMP_START_KEY, history_list));
         string timestamp_stop(getConfigString(*iter, HistoryItem::TIMESTAMP_STOP_KEY, history_list));
         string name(getConfigString(*iter, HistoryItem::NAME_KEY, history_list));
@@ -99,7 +99,7 @@ int HistoryManager::load_history_items_map(Conf::ConfigTree *history_list, int l
 
         // Make a check on the start timestamp to know it is loadable according to CONFIG_HISTORY_LIMIT
         if (atoi(timestamp_start.c_str()) >= ((int) current_timestamp - history_limit)) {
-            HistoryItem item(timestamp_start, type, timestamp_stop, name, number, callID, accountID, recording_file, confID, timeAdded);
+            HistoryItem item(timestamp_start, state, timestamp_stop, name, number, callID, accountID, recording_file, confID, timeAdded);
             add_new_history_entry(item);
             ++nb_items;
         }
