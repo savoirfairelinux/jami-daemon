@@ -39,19 +39,19 @@ class LIB_EXPORT Account : public QObject {
       static Account* buildNewAccountFromAlias(QString alias);
    
       //Getters
-      bool isNew() const;
-      const QString & getAccountId() const;
-      MapStringString & getAccountDetails() const;
-      QString getStateName(QString & state);
-      QString getAccountDetail(QString param) const;
-      QString getAlias() const;
-      bool isEnabled() const;
-      bool isRegistered() const;
+      bool              isNew()                         const;
+      const QString&    getAccountId()                  const;
+      MapStringString&  getAccountDetails()             const;
+      QString           getStateName(QString & state)        ;
+      QString           getAccountDetail(QString param) const;
+      QString           getAlias()                      const;
+      bool              isEnabled()                     const;
+      bool              isRegistered()                  const;
    
       //Setters
-      void setAccountId(QString id);
-      void setAccountDetails(MapStringString m);
-      void setAccountDetail(QString param, QString val);
+      void setAccountId      (QString id                 );
+      void setAccountDetails (MapStringString m          );
+      void setAccountDetail  (QString param, QString val );
    
       //Updates
       virtual void updateState();

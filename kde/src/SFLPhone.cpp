@@ -250,18 +250,18 @@ void SFLPhone::setupActions()
 
 
    action_configureShortcut = new KAction(KIcon(KIcon("configure-shortcuts")), i18n("Configure Shortcut"), this);
-   
-   connect(action_accept,                SIGNAL(triggered()),           m_pView , SLOT(accept()                    ));
-   connect(action_refuse,                SIGNAL(triggered()),           m_pView , SLOT(refuse()                    ));
-   connect(action_hold,                  SIGNAL(triggered()),           m_pView , SLOT(hold()                      ));
-   connect(action_transfer,              SIGNAL(triggered()),           m_pView , SLOT(transfer()                  ));
-   connect(action_record,                SIGNAL(triggered()),           m_pView , SLOT(record()                    ));
-   connect(action_screen,                SIGNAL(triggered(QAction *)),  this    , SLOT(updateScreen(QAction *)     ));
-   connect(action_mailBox,               SIGNAL(triggered()),           m_pView , SLOT(mailBox()                   ));
-   connect(action_displayVolumeControls, SIGNAL(toggled(bool)),         m_pView , SLOT(displayVolumeControls(bool) ));
-   connect(action_displayDialpad,        SIGNAL(toggled(bool)),         m_pView , SLOT(displayDialpad(bool)        ));
-   connect(action_accountCreationWizard, SIGNAL(triggered()),           m_pView , SLOT(accountCreationWizard()     ));
-   connect(action_configureShortcut, SIGNAL(triggered()),               this    , SLOT(showShortCutEditor()        ));
+   //                    SENDER                        SIGNAL               RECEIVER                 SLOT               /
+   /**/connect(action_accept,                SIGNAL(triggered()),           m_pView , SLOT(accept()                    ));
+   /**/connect(action_refuse,                SIGNAL(triggered()),           m_pView , SLOT(refuse()                    ));
+   /**/connect(action_hold,                  SIGNAL(triggered()),           m_pView , SLOT(hold()                      ));
+   /**/connect(action_transfer,              SIGNAL(triggered()),           m_pView , SLOT(transfer()                  ));
+   /**/connect(action_record,                SIGNAL(triggered()),           m_pView , SLOT(record()                    ));
+   /**/connect(action_mailBox,               SIGNAL(triggered()),           m_pView , SLOT(mailBox()                   ));
+   /**/connect(action_displayVolumeControls, SIGNAL(toggled(bool)),         m_pView , SLOT(displayVolumeControls(bool) ));
+   /**/connect(action_displayDialpad,        SIGNAL(toggled(bool)),         m_pView , SLOT(displayDialpad(bool)        ));
+   /**/connect(action_accountCreationWizard, SIGNAL(triggered()),           m_pView , SLOT(accountCreationWizard()     ));
+   /**/connect(action_configureShortcut,     SIGNAL(triggered()),           this    , SLOT(showShortCutEditor()        ));
+   /*                                                                                                                   */
 
    action_screen->addAction(action_main);
    
@@ -372,12 +372,6 @@ void SFLPhone::on_m_pView_recordCheckStateChangeAsked(bool recordCheckState)
 {
    qDebug() << "Changing record action checkState";
    action_record->setChecked(recordCheckState);
-}
-
-///Update the GUI
-void SFLPhone::updateScreen(QAction * action)
-{
-   if(action == action_main)   m_pView->changeScreen(SCREEN_MAIN);
 }
 
 ///Do nothing

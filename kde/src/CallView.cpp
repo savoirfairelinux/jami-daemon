@@ -22,13 +22,15 @@ CallView::CallView(QWidget* parent) : QTreeWidget(parent)
    setItemDelegate(delegate); 
    setSizePolicy(QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding));
 
-   //User Interface events
-   connect(this              , SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int) ) , this, SLOT( itemDoubleClicked(QTreeWidgetItem*,int)) );
-   connect(this              , SIGNAL(itemClicked(QTreeWidgetItem*,int)       ) , this, SLOT( itemClicked(QTreeWidgetItem*,int))       );
-   connect(SFLPhone::model() , SIGNAL(conferenceCreated(Call*)                ) , this, SLOT( addConference(Call*))                    );
-   connect(SFLPhone::model() , SIGNAL(conferenceChanged(Call*)                ) , this, SLOT( conferenceChanged(Call*))                );
-   connect(SFLPhone::model() , SIGNAL(aboutToRemoveConference(Call*)          ) , this, SLOT( conferenceRemoved(Call*))                );
-   connect(SFLPhone::model() , SIGNAL(callAdded(Call*,Call*)                  ) , this, SLOT( addCall(Call*,Call*))                    );
+   //User Interface even
+   //              SENDER                              SIGNAL                       RECEIVER                  SLOT                          /
+   /**/connect(this              , SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int) ) , this, SLOT( itemDoubleClicked(QTreeWidgetItem*,int)) );
+   /**/connect(this              , SIGNAL(itemClicked(QTreeWidgetItem*,int)       ) , this, SLOT( itemClicked(QTreeWidgetItem*,int))       );
+   /**/connect(SFLPhone::model() , SIGNAL(conferenceCreated(Call*)                ) , this, SLOT( addConference(Call*))                    );
+   /**/connect(SFLPhone::model() , SIGNAL(conferenceChanged(Call*)                ) , this, SLOT( conferenceChanged(Call*))                );
+   /**/connect(SFLPhone::model() , SIGNAL(aboutToRemoveConference(Call*)          ) , this, SLOT( conferenceRemoved(Call*))                );
+   /**/connect(SFLPhone::model() , SIGNAL(callAdded(Call*,Call*)                  ) , this, SLOT( addCall(Call*,Call*))                    );
+   /*                                                                                                                                      */
 
 }
 
@@ -39,6 +41,7 @@ CallView::CallView(QWidget* parent) : QTreeWidget(parent)
  *                                                                           *
  ****************************************************************************/
 
+///A call is dropped on another call
 bool CallView::callToCall(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action)
 {
    Q_UNUSED(index)
@@ -121,6 +124,7 @@ bool CallView::callToCall(QTreeWidgetItem *parent, int index, const QMimeData *d
    return false;
 }
 
+///A string containing a call number is dropped on a call
 bool CallView::phoneNumberToCall(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action)
 {
    Q_UNUSED(index)
@@ -157,6 +161,7 @@ bool CallView::phoneNumberToCall(QTreeWidgetItem *parent, int index, const QMime
    return false;
 }
 
+///A contact ID is dropped on a call
 bool CallView::contactToCall(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action)
 {
    qDebug() << "contactToCall";

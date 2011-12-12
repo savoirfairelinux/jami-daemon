@@ -17,7 +17,7 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
 
 #include <QDebug>
 #include <KAction>
@@ -26,6 +26,7 @@
 
 #include "SFLPhoneTray.h"
 
+///Constructor
 SFLPhoneTray::SFLPhoneTray(QIcon icon, QWidget *parent)
       : KSystemTrayIcon(icon, parent),
          trayIconMenu(0),
@@ -33,10 +34,12 @@ SFLPhoneTray::SFLPhoneTray(QIcon icon, QWidget *parent)
 {
 }
 
+///Destructor
 SFLPhoneTray::~SFLPhoneTray()
 {
 }
 
+///Initializer
 bool SFLPhoneTray::initialize()
 {
    if ( initialized_ ) {
@@ -47,19 +50,13 @@ bool SFLPhoneTray::initialize()
    trayIconMenu = new QMenu(parentWidget());
    setContextMenu(trayIconMenu);
 
-   setupActions();
-
    initialized_ = true;
 
    return true;
 }
 
+///Add a new action
 void SFLPhoneTray::addAction(KAction *action)
 {
    trayIconMenu->addAction(action);
-}
-
-void SFLPhoneTray::setupActions()
-{
-   qDebug() << "setupActions";
 }

@@ -26,22 +26,25 @@
 
 #include "lib/sflphone_const.h"
 
+///Constructor
 AccountItemWidget::AccountItemWidget(QWidget *parent)
  : QWidget(parent)
 {
    checkBox = new QCheckBox(this);
    checkBox->setObjectName("checkBox");
+   
    led = new QLabel();
    led->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
    textLabel = new QLabel();
    
    QSpacerItem * horizontalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
    QHBoxLayout* hlayout = new QHBoxLayout();
-   hlayout->setContentsMargins(0,0,0,0);
-   hlayout->addWidget(checkBox);
-   hlayout->addWidget(textLabel);
-   hlayout->addItem(horizontalSpacer);
-   hlayout->addWidget(led);
+   hlayout->setContentsMargins( 0,0,0,0          );
+   hlayout->addWidget         ( checkBox         );
+   hlayout->addWidget         ( textLabel        );
+   hlayout->addItem           ( horizontalSpacer );
+   hlayout->addWidget         ( led              );
+   
    this->setLayout(hlayout);
    state = Unregistered;
    enabled = false;
@@ -50,7 +53,7 @@ AccountItemWidget::AccountItemWidget(QWidget *parent)
    QMetaObject::connectSlotsByName(this);
 }
 
-
+///Destructor
 AccountItemWidget::~AccountItemWidget()
 {
    delete led;
@@ -58,7 +61,7 @@ AccountItemWidget::~AccountItemWidget()
    delete textLabel;
 }
 
-
+///Update the LED widget color
 void AccountItemWidget::updateStateDisplay()
 {
    switch(state) {
@@ -75,40 +78,47 @@ void AccountItemWidget::updateStateDisplay()
          qDebug() << "Calling AccountItemWidget::setState with value " << state << ", not part of enum AccountItemWidget::State.";
    }
 }
-   
+
+///If this item is enable or not
 void AccountItemWidget::updateEnabledDisplay()
 {
    checkBox->setCheckState(enabled ? Qt::Checked : Qt::Unchecked);
 }
-   
+
+///Update the widget
 void AccountItemWidget::updateDisplay()
 {
    updateStateDisplay();
    updateEnabledDisplay();
 }
 
+///Set the model state of the widget
 void AccountItemWidget::setState(int state)
 {
    this->state = state;
    updateStateDisplay();
 }
 
+///If this widget is enabled or not
 void AccountItemWidget::setEnabled(bool enabled)
 {
    this->enabled = enabled;
    updateEnabledDisplay();
 }
 
+///Set the widget text
 void AccountItemWidget::setAccountText(QString text)
 {
    this->textLabel->setText(text);
 }
-   
+
+///Is this widget enabled
 bool AccountItemWidget::getEnabled()
 {
    return checkBox->checkState();
 }
 
+///Model state changed
 void AccountItemWidget::on_checkBox_stateChanged(int state)
 {
    emit checkStateChanged(state == Qt::Checked);

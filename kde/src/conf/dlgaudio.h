@@ -17,7 +17,7 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
 #ifndef DLGAUDIO_H
 #define DLGAUDIO_H
 
@@ -34,24 +34,23 @@ class DlgAudio : public QWidget, public Ui_DlgAudioBase
 {
 Q_OBJECT
 public:
-    DlgAudio(KConfigDialog *parent = 0);
+   //Constructor
+   DlgAudio(KConfigDialog *parent = 0);
 
-    ~DlgAudio();
-
-private:
-   //bool codecTableHasChanged;
+   //Destructor
+   ~DlgAudio();
 
 public slots:
    void updateWidgets();
    void updateSettings();
    bool hasChanged();
    /**
-    *   Loads the ALSA settings to fill the combo boxes
-    *   of the ALSA settings.
-    *   ALSA choices for input, output... can be load only
-    *   when the daemon has set ALSA as sound manager.
-    *   So we have to load these settings once the user choses
-    *   ALSA.
+    *   Loads the ALSA settings to fill the combo boxes         
+    *   of the ALSA settings.                                   
+    *   ALSA choices for input, output... can be load only      
+    *   when the daemon has set ALSA as sound manager.          
+    *   So we have to load these settings once the user choses  
+    *   ALSA.                                                   
     */
    void loadAlsaSettings();
    

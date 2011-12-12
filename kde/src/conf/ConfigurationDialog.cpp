@@ -36,12 +36,12 @@ ConfigurationDialog::ConfigurationDialog(SFLPhoneView *parent)
 {
    this->setWindowIcon(QIcon(ICON_SFLPHONE));
    
-   dlgGeneral     = new DlgGeneral(this);
-   dlgDisplay     = new DlgDisplay(this);
-   dlgAccounts    = new DlgAccounts(this);
-   dlgAudio       = new DlgAudio(this);
-   dlgAddressBook = new DlgAddressBook(this);
-   dlgHooks       = new DlgHooks(this);
+   dlgGeneral     = new DlgGeneral     (this);
+   dlgDisplay     = new DlgDisplay     (this);
+   dlgAccounts    = new DlgAccounts    (this);
+   dlgAudio       = new DlgAudio       (this);
+   dlgAddressBook = new DlgAddressBook (this);
+   dlgHooks       = new DlgHooks       (this);
    
    addPage( dlgGeneral      , i18n("General")      , "sflphone-client-kde"   ); 
    addPage( dlgDisplay      , i18n("Display")      , "applications-graphics" ); 

@@ -26,7 +26,7 @@
 
 static const char description[] = "A KDE 4 Client for SFLphone";
 
-static const char version[] = "1.0.0";
+static const char version[] = "1.0.2";
 
 int main(int argc, char **argv)
 {
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
          version                                    ,
          ki18n(description)                         ,
          KAboutData::License_GPL_V3                 ,
-         ki18n("(C) 2009-2010 Savoir-faire Linux")  ,
+         ki18n("(C) 2009-2012 Savoir-faire Linux")  ,
          KLocalizedString()                         ,
          "http://www.sflphone.org."                 ,
          "sflphone@lists.savoirfairelinux.net"

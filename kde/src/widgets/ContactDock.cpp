@@ -38,7 +38,7 @@
 #include "SFLPhone.h"
 #include "lib/Contact.h"
 
-///Hack around Qt sorting limitation
+///@class QNumericTreeWidgetItem_hist TreeWidget using different sorting criterias
 class QNumericTreeWidgetItem_hist : public QTreeWidgetItem {
    public:
       QNumericTreeWidgetItem_hist(QTreeWidget* parent):QTreeWidgetItem(parent),widget(0),weight(-1){}

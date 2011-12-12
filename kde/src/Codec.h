@@ -22,7 +22,9 @@
 #define CODEC_H
 
 #include <QObject>
-#include <QtCore/QString>
+
+//Qt
+class QString;
 
 /**
    @author Jérémy Quentin <jeremy.quentin@gmail.com>

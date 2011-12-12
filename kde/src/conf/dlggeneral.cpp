@@ -26,9 +26,8 @@
 DlgGeneral::DlgGeneral(QWidget *parent)
  : QWidget(parent)
 {
-	setupUi(this);
-	
-	connect(toolButton_historyClear, SIGNAL(clicked()), this, SIGNAL(clearCallHistoryAsked()));
+   setupUi(this);
+   connect(toolButton_historyClear, SIGNAL(clicked()), this, SIGNAL(clearCallHistoryAsked()));
 }
 
 

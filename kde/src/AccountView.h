@@ -13,20 +13,31 @@ class AccountItemWidget;
 
 class AccountView : public Account, public Item<AccountItemWidget> {
    public:
-      AccountView();
-      static AccountView* buildExistingAccountFromId(QString _accountId);
-      static AccountView* buildNewAccountFromAlias(QString alias);
-      QListWidgetItem* getItem();
-      AccountItemWidget* getItemWidget();
-      QColor getStateColor();
-      QString getStateColorName();
-      bool isChecked() const;
+      //Constructor
+      AccountView   ();
+      void initItem ();
+
+      //Destructor
+      ~AccountView(){};
+
+      //Getters
+      QListWidgetItem*   getItem           ()      ;
+      AccountItemWidget* getItemWidget     ()      ;
+      QColor             getStateColor     ()      ;
+      QString            getStateColorName ()      ;
+      bool               isChecked         () const;
+
+      //Mutators
+      static AccountView* buildExistingAccountFromId ( QString _accountId );
+      static AccountView* buildNewAccountFromAlias   ( QString alias      );
       virtual void updateState();
-      void initItem();
       
    private:
-      void initItemWidget();
-      QListWidgetItem* item2;
+      //Attributes
+      QListWidgetItem*   item2;
       AccountItemWidget* itemWidget;
+
+      //Private constructor
+      void initItemWidget();
 };
 #endif

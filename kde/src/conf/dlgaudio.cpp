@@ -36,27 +36,14 @@ DlgAudio::DlgAudio(KConfigDialog *parent)
    KUrlRequester_ringtone->setMode(KFile::File | KFile::ExistingOnly);
    KUrlRequester_ringtone->lineEdit()->setObjectName("kcfg_ringtone"); 
    KUrlRequester_ringtone->lineEdit()->setReadOnly(true); 
-        
+   
    KUrlRequester_destinationFolder->setMode(KFile::Directory|KFile::ExistingOnly|KFile::LocalOnly);
    KUrlRequester_destinationFolder->setUrl(KUrl(QDir::home().path()));
    KUrlRequester_destinationFolder->lineEdit()->setObjectName("kcfg_destinationFolder"); 
-   KUrlRequester_destinationFolder->lineEdit()->setReadOnly(true); 
+   KUrlRequester_destinationFolder->lineEdit()->setReadOnly(true);
    
-   //codecTableHasChanged = false;
-   
-   //ConfigurationSkeleton * skeleton = ConfigurationSkeleton::self();
-   //CodecListModel * model = skeleton->getCodecListModel();
-   //sortableCodecList->setModel(model);
-   
-//    loadAlsaSettings();
-   connect(box_alsaPlugin,        SIGNAL(activated(int)),   
-           parent,                SLOT(updateButtons()));
-           
-   connect(this,                  SIGNAL(updateButtons()),
-           parent,                SLOT(updateButtons()));
-   
-   //connect(sortableCodecList,     SIGNAL(dataChanged()),
-           //this,                  SLOT(codecTableChanged()));
+   connect( box_alsaPlugin, SIGNAL(activated(int)),  parent, SLOT(updateButtons()));
+   connect( this,           SIGNAL(updateButtons()), parent, SLOT(updateButtons()));
    
 }
 
@@ -68,8 +55,6 @@ DlgAudio::~DlgAudio()
 void DlgAudio::updateWidgets()
 {
    loadAlsaSettings();
-   
-   //codecTableHasChanged = false;
 }
 
 
@@ -87,45 +72,37 @@ bool DlgAudio::hasChanged()
 {
    qDebug() << "DlgAudio::hasChanged";
    ConfigurationSkeleton * skeleton = ConfigurationSkeleton::self();
-   bool alsaPluginHasChanged = 
-              skeleton->interface() == ConfigurationSkeleton::EnumInterface::ALSA 
-          &&  skeleton->alsaPlugin() != box_alsaPlugin->currentText();
-   return alsaPluginHasChanged ;//|| codecTableHasChanged;
+   bool alsaPluginHasChanged = skeleton->interface() == ConfigurationSkeleton::EnumInterface::ALSA && skeleton->alsaPlugin() != box_alsaPlugin->currentText();
+   return alsaPluginHasChanged ;
 }
 
 void DlgAudio::loadAlsaSettings()
 {
    qDebug() << "DlgAudio::loadAlsaSettings";
-   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    if(QString(configurationManager.getAudioManager()) == "alsa") {
-      ConfigurationSkeleton * skeleton = ConfigurationSkeleton::self();
+      ConfigurationSkeleton* skeleton = ConfigurationSkeleton::self();
       
-      QStringList pluginList = configurationManager.getAudioPluginList();
-      box_alsaPlugin->clear();
-      box_alsaPlugin->addItems(pluginList);
       int index = box_alsaPlugin->findText(skeleton->alsaPlugin());
       if(index < 0) index = 0;
-      box_alsaPlugin->setCurrentIndex(index);
+      QStringList pluginList       = configurationManager.getAudioPluginList       ();
+      box_alsaPlugin->clear                 (                              );
+      box_alsaPlugin->addItems              ( pluginList                   );
+      box_alsaPlugin->setCurrentIndex       ( index                        );
       
-      QStringList inputDeviceList = configurationManager.getAudioInputDeviceList();
-      kcfg_alsaInputDevice->clear();
-      kcfg_alsaInputDevice->addItems(inputDeviceList);
-      kcfg_alsaInputDevice->setCurrentIndex(skeleton->alsaInputDevice());
+      QStringList inputDeviceList  = configurationManager.getAudioInputDeviceList  ();
+      kcfg_alsaInputDevice->clear           (                              );
+      kcfg_alsaInputDevice->addItems        ( inputDeviceList              );
+      kcfg_alsaInputDevice->setCurrentIndex ( skeleton->alsaInputDevice()  );
       
-      QStringList outputDeviceList = configurationManager.getAudioOutputDeviceList();
-      kcfg_alsaOutputDevice->clear();
-      kcfg_alsaOutputDevice->addItems(outputDeviceList);
-      kcfg_alsaOutputDevice->setCurrentIndex(skeleton->alsaOutputDevice());
+      QStringList outputDeviceList = configurationManager.getAudioOutputDeviceList ();
+      kcfg_alsaOutputDevice->clear          (                              );
+      kcfg_alsaOutputDevice->addItems       ( outputDeviceList             );
+      kcfg_alsaOutputDevice->setCurrentIndex( skeleton->alsaOutputDevice() );
+      
       groupBox_alsa->setEnabled(true);
    }
    else {
       groupBox_alsa->setEnabled(false);
    }
 }
-
-// void DlgAudio::codecTableChanged()
-// {
-//    qDebug() << "codecTableChanged";
-//    codecTableHasChanged = true;
-//    emit updateButtons();
-// }

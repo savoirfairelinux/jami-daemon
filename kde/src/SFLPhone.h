@@ -23,7 +23,6 @@
 #define SFLPHONE_H
 
 #include <KXmlGuiWindow>
-#include <QtCore/QVector>
 #include <lib/CallModel.h>
 
 //Qt
@@ -143,7 +142,6 @@ private slots:
    void on_m_pView_screenChanged                 ( int screen                    );
    void on_m_pView_incomingCall                  ( const Call * call             );
    void showShortCutEditor                       (                               );
-   void updateScreen(QAction * action);
 
    void quitButton();
 

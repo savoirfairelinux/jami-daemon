@@ -20,6 +20,7 @@
  **************************************************************************/
 #include "Codec.h"
 
+#include <QtCore/QString>
 #include "lib/configurationmanager_interface_singleton.h"
 #include "lib/sflphone_const.h"
 

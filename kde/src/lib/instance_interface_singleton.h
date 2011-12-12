@@ -32,12 +32,10 @@ class LIB_EXPORT InstanceInterfaceSingleton
 {
 
 private:
-
-	static InstanceInterface* interface;
+   static InstanceInterface* interface;
 
 public:
-
-	static InstanceInterface& getInstance();
+   static InstanceInterface& getInstance();
 
 };
 

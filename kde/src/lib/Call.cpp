@@ -244,15 +244,15 @@ QString Call::getTypeFromHistoryState(history_state historyState)
 ///Get history state from daemon
 history_state Call::getHistoryStateFromDaemonCallState(QString daemonCallState, QString daemonCallType)
 {
-   if((daemonCallState == DAEMON_CALL_STATE_INIT_CURRENT || daemonCallState == DAEMON_CALL_STATE_INIT_HOLD) && daemonCallType == DAEMON_CALL_TYPE_INCOMING)
+   if((daemonCallState      == DAEMON_CALL_STATE_INIT_CURRENT  || daemonCallState == DAEMON_CALL_STATE_INIT_HOLD) && daemonCallType == DAEMON_CALL_TYPE_INCOMING )
       return INCOMING ;
-   else if((daemonCallState == DAEMON_CALL_STATE_INIT_CURRENT || daemonCallState == DAEMON_CALL_STATE_INIT_HOLD) && daemonCallType == DAEMON_CALL_TYPE_OUTGOING)
+   else if((daemonCallState == DAEMON_CALL_STATE_INIT_CURRENT  || daemonCallState == DAEMON_CALL_STATE_INIT_HOLD) && daemonCallType == DAEMON_CALL_TYPE_OUTGOING )
       return OUTGOING ;
-   else if(daemonCallState == DAEMON_CALL_STATE_INIT_BUSY)
+   else if(daemonCallState  == DAEMON_CALL_STATE_INIT_BUSY                                                                                                       )
       return OUTGOING ;
-   else if(daemonCallState == DAEMON_CALL_STATE_INIT_INACTIVE && daemonCallType == DAEMON_CALL_TYPE_INCOMING)
+   else if(daemonCallState  == DAEMON_CALL_STATE_INIT_INACTIVE && daemonCallType == DAEMON_CALL_TYPE_INCOMING                                                    )
       return INCOMING ;
-   else if(daemonCallState == DAEMON_CALL_STATE_INIT_INACTIVE && daemonCallType == DAEMON_CALL_TYPE_OUTGOING)
+   else if(daemonCallState  == DAEMON_CALL_STATE_INIT_INACTIVE && daemonCallType == DAEMON_CALL_TYPE_OUTGOING                                                    )
       return MISSED   ;
    else
       return NONE     ;
@@ -261,15 +261,15 @@ history_state Call::getHistoryStateFromDaemonCallState(QString daemonCallState, 
 ///Get the start sate from the daemon state
 call_state Call::getStartStateFromDaemonCallState(QString daemonCallState, QString daemonCallType)
 {
-   if(daemonCallState == DAEMON_CALL_STATE_INIT_CURRENT       )
+   if(daemonCallState      == DAEMON_CALL_STATE_INIT_CURRENT  )
       return CALL_STATE_CURRENT  ;
    else if(daemonCallState == DAEMON_CALL_STATE_INIT_HOLD     )
       return CALL_STATE_HOLD     ;
    else if(daemonCallState == DAEMON_CALL_STATE_INIT_BUSY     )
       return CALL_STATE_BUSY     ;
-   else if(daemonCallState == DAEMON_CALL_STATE_INIT_INACTIVE && daemonCallType == DAEMON_CALL_TYPE_INCOMING)
+   else if(daemonCallState == DAEMON_CALL_STATE_INIT_INACTIVE && daemonCallType == DAEMON_CALL_TYPE_INCOMING )
       return CALL_STATE_INCOMING ;
-   else if(daemonCallState == DAEMON_CALL_STATE_INIT_INACTIVE && daemonCallType == DAEMON_CALL_TYPE_OUTGOING)
+   else if(daemonCallState == DAEMON_CALL_STATE_INIT_INACTIVE && daemonCallType == DAEMON_CALL_TYPE_OUTGOING )
       return CALL_STATE_RINGING  ;
    else if(daemonCallState == DAEMON_CALL_STATE_INIT_INCOMING )
       return CALL_STATE_INCOMING ;
@@ -304,12 +304,13 @@ daemon_call_state Call::toDaemonCallState(const QString & stateName)
       return DAEMON_CALL_STATE_BUSY    ;
    if(stateName == QString(CALL_STATE_CHANGE_FAILURE)        )
       return DAEMON_CALL_STATE_FAILURE ;
+   
    qDebug() << "stateChanged signal received with unknown state.";
    return DAEMON_CALL_STATE_FAILURE    ;
 }
 
 ///Get the time (second from 1 jan 1970) when the call ended
-QString Call::getStopTimeStamp() const
+QString Call::getStopTimeStamp()    const
 {
    if (m_pStopTime == NULL)
       return QString();
@@ -317,7 +318,7 @@ QString Call::getStopTimeStamp() const
 }
 
 ///Get the time (second from 1 jan 1970) when the call started
-QString Call::getStartTimeStamp() const
+QString Call::getStartTimeStamp()   const
 {
    if (m_pStartTime == NULL)
       return QString();
@@ -325,77 +326,88 @@ QString Call::getStartTimeStamp() const
 }
 
 ///Get the number where the call have been transferred
-QString Call::getTransferNumber() const
+QString Call::getTransferNumber()    const
 {
    return m_pTransferNumber;
 }
 
 ///Get the call / peer number
-QString Call::getCallNumber() const
+QString Call::getCallNumber()        const
 {
    return m_pCallNumber;
 }
 
 ///Return the call id
-QString Call::getCallId() const
+QString Call::getCallId()            const
 {
    return m_pCallId;
 }
 
 ///Return the peer phone number
-QString Call::getPeerPhoneNumber() const
+QString Call::getPeerPhoneNumber()   const
 {
    return m_pPeerPhoneNumber;
 }
 
 ///Get the peer name
-QString Call::getPeerName() const
+QString Call::getPeerName()          const
 {
    return m_pPeerName;
 }
 
 ///Get the current state
-call_state Call::getCurrentState() const
+call_state Call::getCurrentState()   const
 {
    return currentState;
 }
 
 ///Get the call recording
-bool Call::getRecording() const
+bool Call::getRecording()            const
 {
    return recording;
 }
 
 ///Get the call account id
-QString Call::getAccountId() const
+QString Call::getAccountId()         const
 {
    return m_pAccount;
 }
 
 ///Is this call a conference
-bool Call::isConference() const {
+bool Call::isConference()            const
+{
    return conference;
 }
 
-///This call is a conference
-void Call::setConference(bool value) {
-   conference = value;
-}
-
 ///Get the conference ID
-QString Call::getConfId() const {
+QString Call::getConfId()            const
+{
    return m_pConfId;
 }
 
-///Set the conference ID
-void Call::setConfId(QString value) {
-   m_pConfId = value;
-}
-
 ///Get the current codec
-QString Call::getCurrentCodecName() const {
+QString Call::getCurrentCodecName()  const
+{
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    return callManager.getCurrentAudioCodecName(m_pCallId);
+}
+
+///Get the state
+call_state Call::getState()          const
+{
+   return currentState;
+}
+
+///Get the history state
+history_state Call::getHistoryState() const
+{
+   return m_pHistoryState;
+}
+
+///Is this call over?
+bool Call::isHistory()               const
+{
+   return (getState() == CALL_STATE_OVER);
 }
 
 ///This function could also be called mayBeSecure or haveChancesToBeEncryptedButWeCantTell.
@@ -428,6 +440,12 @@ void Call::setTransferNumber(QString number)
    m_pTransferNumber = number;
 }
 
+///This call is a conference
+void Call::setConference(bool value)
+{
+   conference = value;
+}
+
 ///Set the call number
 void Call::setCallNumber(QString number)
 {
@@ -435,22 +453,10 @@ void Call::setCallNumber(QString number)
    emit changed();
 }
 
-///Get the state
-call_state Call::getState() const
+///Set the conference ID
+void Call::setConfId(QString value)
 {
-   return currentState;
-}
-
-///Get the history state
-history_state Call::getHistoryState() const
-{
-   return m_pHistoryState;
-}
-
-///Is this call over?
-bool Call::isHistory() const
-{
-   return (getState() == CALL_STATE_OVER);
+   m_pConfId = value;
 }
 
 /*****************************************************************************
@@ -465,7 +471,6 @@ call_state Call::stateChanged(const QString& newStateName)
    if (!conference) {
       call_state previousState = currentState;
       daemon_call_state dcs = toDaemonCallState(newStateName);
-      //(this->*(stateChangedFunctionMap[currentState][dcs]))();
       changeCurrentState(stateChangedStateMap[currentState][dcs]);
       (this->*(stateChangedFunctionMap[previousState][dcs]))();
       qDebug() << "Calling stateChanged " << newStateName << " -> " << toDaemonCallState(newStateName) << " on call with state " << previousState << ". Become " << currentState;

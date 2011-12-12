@@ -196,6 +196,10 @@ class LIB_EXPORT CallModel : public CallModelBase {
 
    private:
       static bool m_pInstanceInit;
+
+      //Helpers
+      Call* addCallCommon(Call* call);
+      bool updateCommon(Call* call);
    //public slots:
       //void clearHistory();
 };

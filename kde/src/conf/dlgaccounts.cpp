@@ -36,18 +36,15 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
    setupUi(this);
    disconnect(keditlistbox_codec->addButton(),SIGNAL(clicked()));
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   button_accountUp->setIcon     (KIcon("go-up")       );
-   button_accountDown->setIcon   (KIcon("go-down")     );
-   button_accountAdd->setIcon    (KIcon("list-add")    );
-   button_accountRemove->setIcon (KIcon("list-remove") );
+   button_accountUp->setIcon     ( KIcon( "go-up"       ) );
+   button_accountDown->setIcon   ( KIcon( "go-down"     ) );
+   button_accountAdd->setIcon    ( KIcon( "list-add"    ) );
+   button_accountRemove->setIcon ( KIcon( "list-remove" ) );
    accountList = new ConfigAccountList(false);
    loadAccountList();
    loadCodecList();
    accountListHasChanged = false;
    //toolButton_accountsApply->setEnabled(false);
-
-   QRadioButton* rbloc = radioButton_pa_same_as_local;
-   QRadioButton* rbcus = radioButton_pa_custom;
 
    //SLOTS
    //                     SENDER                            SIGNAL                    RECEIVER               SLOT                 /
@@ -388,8 +385,7 @@ void DlgAccounts::addAccountToAccountList(AccountView* account)
 {
    QListWidgetItem * item = account->getItem();
    QWidget * widget = account->getItemWidget();
-   connect(widget, SIGNAL(checkStateChanged(bool)),
-           this,   SLOT(changedAccountList()));
+   connect(widget, SIGNAL(checkStateChanged(bool)), this, SLOT(changedAccountList()));
    listWidget_accountList->addItem(item);
    listWidget_accountList->setItemWidget(item, widget);
 }
@@ -558,10 +554,10 @@ void DlgAccounts::loadCodecList()
   foreach (int aCodec, codecIdList) {
     QStringList codec = configurationManager.getAudioCodecDetails(aCodec);
     QHash<QString, QString> _codec;
-    _codec["name"]      = codec[0];
-    _codec["frequency"] = codec[1];
-    _codec["bitrate"]   = codec[2];
-    _codec["id"]        = QString::number(aCodec);
+    _codec[ "name"      ] = codec[0];
+    _codec[ "frequency" ] = codec[1];
+    _codec[ "bitrate"   ] = codec[2];
+    _codec[ "id"        ] = QString::number(aCodec);
     
     tmpNameList << _codec["name"];
     

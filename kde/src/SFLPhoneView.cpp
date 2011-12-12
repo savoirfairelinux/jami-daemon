@@ -65,6 +65,7 @@ using namespace KABC;
 
 //ConfigurationDialog* SFLPhoneView::configDialog;
 
+///Constructor
 SFLPhoneView::SFLPhoneView(QWidget *parent)
    : QWidget(parent),
      wizard(0)
@@ -79,24 +80,26 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
    QPalette pal = QPalette(palette());
    pal.setColor(QPalette::AlternateBase, Qt::lightGray);
    setPalette(pal);
-   
-   connect(SFLPhone::model()                     , SIGNAL(incomingCall(Call*))                   , this                                  , SLOT(on1_incomingCall(Call*)                    ));
-   connect(SFLPhone::model()                     , SIGNAL(voiceMailNotify(const QString &, int)) , this                                  , SLOT(on1_voiceMailNotify(const QString &, int)  ));
-   //connect(SFLPhone::model()                     , SIGNAL(volumeChanged(const QString &, double)), this                                  , SLOT(on1_volumeChanged(const QString &, double) ));
-   connect(SFLPhone::model()                     , SIGNAL(callStateChanged(Call*))               , this                                  , SLOT(updateWindowCallState()                    ));
-   connect(TreeWidgetCallModel::getAccountList() , SIGNAL(accountListUpdated())                  , this                                  , SLOT(updateStatusMessage()                      ));
-   connect(TreeWidgetCallModel::getAccountList() , SIGNAL(accountListUpdated())                  , this                                  , SLOT(updateWindowCallState()                    ));
-   connect(&configurationManager                 , SIGNAL(accountsChanged())                     , TreeWidgetCallModel::getAccountList() , SLOT(updateAccounts()                           ));
+
+   //                SENDER                                        SIGNAL                             RECEIVER                                            SLOT                                  /
+   /**/connect(SFLPhone::model()                     , SIGNAL(incomingCall(Call*))                   , this                                  , SLOT(on1_incomingCall(Call*)                    ));
+   /**/connect(SFLPhone::model()                     , SIGNAL(voiceMailNotify(const QString &, int)) , this                                  , SLOT(on1_voiceMailNotify(const QString &, int)  ));
+   /**///connect(SFLPhone::model()                     , SIGNAL(volumeChanged(const QString &, double)), this                                , SLOT(on1_volumeChanged(const QString &, double) ));
+   /**/connect(SFLPhone::model()                     , SIGNAL(callStateChanged(Call*))               , this                                  , SLOT(updateWindowCallState()                    ));
+   /**/connect(TreeWidgetCallModel::getAccountList() , SIGNAL(accountListUpdated())                  , this                                  , SLOT(updateStatusMessage()                      ));
+   /**/connect(TreeWidgetCallModel::getAccountList() , SIGNAL(accountListUpdated())                  , this                                  , SLOT(updateWindowCallState()                    ));
+   /**/connect(&configurationManager                 , SIGNAL(accountsChanged())                     , TreeWidgetCallModel::getAccountList() , SLOT(updateAccounts()                           ));
+   /*                                                                                                                                                                                           */
 
    TreeWidgetCallModel::getAccountList()->updateAccounts();
 }
 
-
-
+///Destructor
 SFLPhoneView::~SFLPhoneView()
 {
 }
 
+///Init main window
 void SFLPhoneView::loadWindow()
 {
    updateWindowCallState ();
@@ -109,11 +112,13 @@ void SFLPhoneView::loadWindow()
    updateStatusMessage   ();
 }
 
+///Return the error window
 QErrorMessage * SFLPhoneView::getErrorWindow()
 {
    return errorWindow;
 }
 
+///Called on keyboard
 void SFLPhoneView::typeString(QString str)
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
@@ -148,6 +153,7 @@ void SFLPhoneView::typeString(QString str)
    }
 }
 
+///Called when a backspace is detected
 void SFLPhoneView::backspace()
 {
    qDebug() << "backspace";
@@ -165,6 +171,7 @@ void SFLPhoneView::backspace()
    }
 }
 
+///Called when escape is detected
 void SFLPhoneView::escape()
 {
    qDebug() << "escape";
@@ -182,6 +189,7 @@ void SFLPhoneView::escape()
    }
 }
 
+///Called when enter is detected
 void SFLPhoneView::enter()
 {
    qDebug() << "enter";
@@ -221,6 +229,7 @@ void SFLPhoneView::action(Call* call, call_action action)
 ******** Update Display Functions **********
 *******************************************/
 
+///Change GUI icons
 void SFLPhoneView::updateWindowCallState()
 {
    qDebug() << "updateWindowCallState";
@@ -323,6 +332,7 @@ void SFLPhoneView::updateWindowCallState()
    qDebug() << "Window updated.";
 }
 
+///Deprecated?
 int SFLPhoneView::phoneNumberTypesDisplayed()
 {
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
@@ -343,6 +353,7 @@ int SFLPhoneView::phoneNumberTypesDisplayed()
    return typesDisplayed;
 }
 
+///Change icon of the record button
 void SFLPhoneView::updateRecordButton()
 {
    qDebug() << "updateRecordButton";
@@ -365,6 +376,8 @@ void SFLPhoneView::updateRecordButton()
       toolButton_recVol->setChecked(false);
    }
 }
+
+///Update the colume button icon
 void SFLPhoneView::updateVolumeButton()
 {
    qDebug() << "updateVolumeButton";
@@ -389,7 +402,7 @@ void SFLPhoneView::updateVolumeButton()
    }
 }
 
-
+///Update the record bar
 void SFLPhoneView::updateRecordBar(double _value)
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
@@ -407,10 +420,9 @@ void SFLPhoneView::updateVolumeBar(double _value)
    slider_sndVol->setValue(value);
 }
 
+///Hide or show the volume control
 void SFLPhoneView::updateVolumeControls()
 {
-   
-   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    //SFLPhone::app()->action_displayVolumeControls->setChecked(display);
    //widget_recVol->setVisible(display);
    //widget_sndVol->setVisible(display);
@@ -421,12 +433,13 @@ void SFLPhoneView::updateVolumeControls()
    
 }
 
+///Hide or show the dialpad
 void SFLPhoneView::updateDialpad()
 {
    widget_dialpad->setVisible(ConfigurationSkeleton::displayDialpad());//TODO use display variable
 }
 
-
+///Change the statusbar message
 void SFLPhoneView::updateStatusMessage()
 {
    qDebug() << "updateStatusMessage";
@@ -448,6 +461,8 @@ void SFLPhoneView::updateStatusMessage()
 ************            Autoconnect             *************
 ************************************************************/
 
+///Proxy to hide or show the volume control
+///@TODO is it still needed? <elepage 2011>
 void SFLPhoneView::displayVolumeControls(bool checked)
 {
    //ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
@@ -455,6 +470,8 @@ void SFLPhoneView::displayVolumeControls(bool checked)
    updateVolumeControls();
 }
 
+///Proxy to hide or show the dialpad
+///@TODO is it still needed? <elepage 2011>
 void SFLPhoneView::displayDialpad(bool checked)
 {
    qDebug() <<  "Max res2: " << ConfigurationSkeleton::displayDialpad();
@@ -462,12 +479,13 @@ void SFLPhoneView::displayDialpad(bool checked)
    updateDialpad();
 }
 
-
-void SFLPhoneView::on_widget_dialpad_typed(QString text)      
+///Input grabber
+void SFLPhoneView::on_widget_dialpad_typed(QString text)
 { 
    typeString(text); 
 }
 
+///The value on the slider changed
 void SFLPhoneView::on_slider_recVol_valueChanged(int value)
 {
    qDebug() << "on_slider_recVol_valueChanged(" << value << ")";
@@ -476,6 +494,7 @@ void SFLPhoneView::on_slider_recVol_valueChanged(int value)
    updateRecordButton();
 }
 
+///The value on the slider changed
 void SFLPhoneView::on_slider_sndVol_valueChanged(int value)
 {
    qDebug() << "on_slider_sndVol_valueChanged(" << value << ")";
@@ -484,6 +503,7 @@ void SFLPhoneView::on_slider_sndVol_valueChanged(int value)
    updateVolumeButton();
 }
 
+///The mute button have been clicked
 void SFLPhoneView::on_toolButton_recVol_clicked(bool checked)
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
@@ -503,6 +523,7 @@ void SFLPhoneView::on_toolButton_recVol_clicked(bool checked)
    updateRecordButton();
 }
 
+///The mute button have been clicked
 void SFLPhoneView::on_toolButton_sndVol_clicked(bool checked)
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
@@ -523,37 +544,7 @@ void SFLPhoneView::on_toolButton_sndVol_clicked(bool checked)
    updateVolumeButton();
 }
 
-// void SFLPhoneView::on_callTree_currentItemChanged()
-// {
-//    qDebug() << "on_callTree_currentItemChanged";
-//    updateWindowCallState();
-// }
-
-// void SFLPhoneView::on_callTree_itemChanged()
-// {
-//    qDebug() << "on_callTree_itemChanged";
-// }
-
-//void SFLPhoneView::on_callTree_itemDoubleClicked(QTreeWidgetItem* call, int column)
-//{
-//Q_UNUSED(call)
-//Q_UNUSED(column)
-   //TODO port
-   //TODO remove once the last regression is sorted out.
-//    qDebug() << "on_callTree_itemDoubleClicked";
-//    call_state state = call->getCurrentState();
-//    switch(state) {
-//       case CALL_STATE_HOLD:
-//          action(call, CALL_ACTION_HOLD);
-//          break;
-//       case CALL_STATE_DIALING:
-//          action(call, CALL_ACTION_ACCEPT);
-//          break;
-//       default:
-//          qDebug() << "Double clicked an item with no action on double click.";
-//    }
-//}
-
+///There is a right click menu request
 void SFLPhoneView::contextMenuEvent(QContextMenuEvent *event)
 {
    KMenu menu(this);
@@ -584,6 +575,7 @@ void SFLPhoneView::contextMenuEvent(QContextMenuEvent *event)
    menu.exec(event->globalPos());
 }
 
+///
 void SFLPhoneView::editBeforeCall()
 {
    qDebug() << "editBeforeCall";
@@ -593,7 +585,6 @@ void SFLPhoneView::editBeforeCall()
    bool ok;
    QString newNumber = QInputDialog::getText(this, i18n("Edit before call"), QString(), QLineEdit::Normal, number, &ok);
    if(ok) {
-      changeScreen(SCREEN_MAIN);
       Call* call = SFLPhone::model()->addDialingCall(name);
       call->appendText(newNumber);
       //callTreeModel->selectItem(addCallToCallList(call));
@@ -601,6 +592,7 @@ void SFLPhoneView::editBeforeCall()
    }
 }
 
+///Pick the default account and load it
 void SFLPhoneView::setAccountFirst(Account * account)
 {
    qDebug() << "setAccountFirst : " << (account ? account->getAlias() : QString()) << (account ? account->getAccountId() : QString());
@@ -614,6 +606,7 @@ void SFLPhoneView::setAccountFirst(Account * account)
    updateStatusMessage();
 }
 
+///Show the configuration dialog
 void SFLPhoneView::configureSflPhone()
 {
    ConfigurationDialog* configDialog = new ConfigurationDialog(this);
@@ -626,6 +619,7 @@ void SFLPhoneView::configureSflPhone()
    configDialog->show();
 }
 
+///Show the accoutn creation wizard
 void SFLPhoneView::accountCreationWizard()
 {
    if (!wizard) {
@@ -634,8 +628,8 @@ void SFLPhoneView::accountCreationWizard()
    }
    wizard->show();
 }
-   
 
+///Call
 void SFLPhoneView::accept()
 {
    Call* call = callTreeModel->getCurrentItem();
@@ -656,6 +650,7 @@ void SFLPhoneView::accept()
    }
 }
 
+///Refuse call
 void SFLPhoneView::refuse()
 {
    Call* call = callTreeModel->getCurrentItem();
@@ -667,6 +662,7 @@ void SFLPhoneView::refuse()
    }
 }
 
+///Put call on hold
 void SFLPhoneView::hold()
 {
    Call* call = callTreeModel->getCurrentItem();
@@ -678,6 +674,7 @@ void SFLPhoneView::hold()
    }
 }
 
+///Transfer a call
 void SFLPhoneView::transfer()
 {
    Call* call = callTreeModel->getCurrentItem();
@@ -689,6 +686,7 @@ void SFLPhoneView::transfer()
    }
 }
 
+///Record a call
 void SFLPhoneView::record()
 {
    Call* call = callTreeModel->getCurrentItem();
@@ -700,6 +698,7 @@ void SFLPhoneView::record()
    }
 }
 
+///Access the voice mail list
 void SFLPhoneView::mailBox()
 {
    Account * account = SFLPhone::model()->getCurrentAccount();
@@ -709,19 +708,18 @@ void SFLPhoneView::mailBox()
    action(call, CALL_ACTION_ACCEPT);
 }
 
+///Called the there is an error (dbus)
 void SFLPhoneView::on1_error(MapStringString details)
 {
    qDebug() << "Signal : Daemon error : " << details;
 }
 
+///When a call is comming (dbus)
 void SFLPhoneView::on1_incomingCall(Call* call)
 {
    qDebug() << "Signal : Incoming Call ! ID = " << call->getCallId();
-   //Call* call = SFLPhone::model()->addIncomingCall(callID);
    
-
-   //NEED_PORT
-   changeScreen(SCREEN_MAIN);
+   updateWindowCallState();
 
    SFLPhone::app()->activateWindow  (      );
    SFLPhone::app()->raise           (      );
@@ -730,33 +728,20 @@ void SFLPhoneView::on1_incomingCall(Call* call)
    emit incomingCall(call);
 }
 
+///When a new voice mail is comming
 void SFLPhoneView::on1_voiceMailNotify(const QString &accountID, int count)
 {
    qDebug() << "Signal : VoiceMail Notify ! " << count << " new voice mails for account " << accountID;
 }
 
+///When the volume change
 void SFLPhoneView::on1_volumeChanged(const QString & /*device*/, double value)
 {
-   //TODO uncomment after fixing infinite loop
    qDebug() << "Signal : Volume Changed !" << value;
    if(! (toolButton_recVol->isChecked() && value == 0.0))
       updateRecordBar(value);
    if(! (toolButton_sndVol->isChecked() && value == 0.0))
       updateVolumeBar(value);
-}
-
-// void SFLPhoneView::on1_audioManagerChanged()
-// {
-//    qDebug() << "Signal : Audio Manager Changed !";
-// 
-//    updateVolumeControls();
-// }
-
-void SFLPhoneView::changeScreen(int screen)
-{
-   qDebug() << "changeScreen";
-   updateWindowCallState();
-   emit screenChanged(screen);
 }
 
 #include "SFLPhoneView.moc"

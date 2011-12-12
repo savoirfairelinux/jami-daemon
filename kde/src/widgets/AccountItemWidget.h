@@ -51,22 +51,21 @@ public:
    ~AccountItemWidget();
 
    //Getters
-   int getState();
+   int  getState  ();
    bool getEnabled();
    
    //Setters
-   void setState(int state);
-   void setEnabled(bool enabled);
-   void setAccountText(QString text);
+   void setState       (int state    );
+   void setEnabled     (bool enabled );
+   void setAccountText (QString text );
    
    //Updates
-   void updateStateDisplay();
-   void updateEnabledDisplay();
-   void updateDisplay();
+   void updateStateDisplay   ();
+   void updateEnabledDisplay ();
+   void updateDisplay        ();
    
 private slots:   
    void on_checkBox_stateChanged(int state);
-   
    
 signals:
    void checkStateChanged(bool checked);

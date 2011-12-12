@@ -17,25 +17,27 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
 #include "AccountListModel.h"
 
 #include "lib/sflphone_const.h"
 #include "conf/ConfigAccountList.h"
 #include <QDebug>
 
+///Constructor
 AccountListModel::AccountListModel(QObject *parent)
  : QAbstractListModel(parent)
 {
    this->accounts = new ConfigAccountList();
 }
 
-
+///Destructor
 AccountListModel::~AccountListModel()
 {
 }
 
-QVariant AccountListModel::data ( const QModelIndex & index, int role) const
+///Get data from the model
+QVariant AccountListModel::data ( const QModelIndex& index, int role) const
 {
    if (!index.isValid() || index.row() < 0 || index.row() >= rowCount())
       return QVariant();
@@ -56,6 +58,7 @@ QVariant AccountListModel::data ( const QModelIndex & index, int role) const
    return QVariant();
 }
 
+///Flags for "index"
 Qt::ItemFlags AccountListModel::flags(const QModelIndex & index) const
 {
    if (index.column() == 0)
@@ -63,6 +66,7 @@ Qt::ItemFlags AccountListModel::flags(const QModelIndex & index) const
    return QAbstractItemModel::flags(index);
 }
 
+///Set model data
 bool AccountListModel::setData(const QModelIndex & index, const QVariant &value, int role)
 {
    qDebug() << "setData";
@@ -74,6 +78,7 @@ bool AccountListModel::setData(const QModelIndex & index, const QVariant &value,
    return false;
 }
 
+///Move account up
 bool AccountListModel::accountUp( int index )
 {
    if(index > 0 && index <= rowCount()) {
@@ -84,6 +89,7 @@ bool AccountListModel::accountUp( int index )
    return false;
 }
 
+///Move account down
 bool AccountListModel::accountDown( int index )
 {
    if(index >= 0 && index < rowCount()) {
@@ -94,7 +100,7 @@ bool AccountListModel::accountDown( int index )
    return false;
 }
 
-
+///Remove an account
 bool AccountListModel::removeAccount( int index )
 {
    if(index >= 0 && index < rowCount()) {
@@ -105,6 +111,7 @@ bool AccountListModel::removeAccount( int index )
    return false;
 }
 
+///Add an account
 bool AccountListModel::addAccount( QString alias )
 {
    accounts->addAccount(alias);
@@ -112,13 +119,14 @@ bool AccountListModel::addAccount( QString alias )
    return true;
 }
 
+///Number of account
 int AccountListModel::rowCount(const QModelIndex & /*parent*/) const
 {
    return accounts->size();
 }
 
+///Get the account list
 QString AccountListModel::getOrderedList() const
 {
    return accounts->getOrderedList();
 }
-

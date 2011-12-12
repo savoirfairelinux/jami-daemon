@@ -40,30 +40,37 @@ class CallTreeItem : public QWidget
 {
    Q_OBJECT
  public:
+    //Constructor
     CallTreeItem(QWidget* parent =0);
     ~CallTreeItem();
-    
+
+    //Getters
     Call* call() const;
+
+    //Setters
     void setCall(Call *call);
+
+    //Const
     static const char * callStateIcons[12];
     
  private:
+    //Attributes
     Call *itemCall;
 
-    QLabel* labelIcon;
-    QLabel* labelPeerName;
-    QLabel* labelCallNumber2;
-    QLabel* labelTransferPrefix;
-    QLabel* labelTransferNumber;
-    QLabel* labelCodec;
-    QLabel* labelSecure;
+    QLabel*  labelIcon;
+    QLabel*  labelPeerName;
+    QLabel*  labelCallNumber2;
+    QLabel*  labelTransferPrefix;
+    QLabel*  labelTransferNumber;
+    QLabel*  labelCodec;
+    QLabel*  labelSecure;
     
     QWidget* historyItemWidget;
-    QLabel* labelHistoryIcon;
-    QLabel* labelHistoryPeerName;
-    QLabel* labelHistoryCallNumber;
-    QLabel* labelHistoryTime;
-    bool init;
+    QLabel*  labelHistoryIcon;
+    QLabel*  labelHistoryPeerName;
+    QLabel*  labelHistoryCallNumber;
+    QLabel*  labelHistoryTime;
+    bool     init;
 
 public slots:
    void updated();

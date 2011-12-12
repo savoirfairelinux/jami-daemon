@@ -22,6 +22,7 @@
 #include "ActionSetAccountFirst.h"
 #include <klocale.h>
 
+///Constrctor
 ActionSetAccountFirst::ActionSetAccountFirst(Account* account, QObject *parent)
  : QAction((account == NULL) ? i18n("Default account") : account->getAlias(), parent)
 {
@@ -31,10 +32,12 @@ ActionSetAccountFirst::ActionSetAccountFirst(Account* account, QObject *parent)
            this,    SLOT(emitSetFirst()));
 }
 
+///Destructor
 ActionSetAccountFirst::~ActionSetAccountFirst()
 {
 }
 
+///
 void ActionSetAccountFirst::emitSetFirst()
 {
    emit setFirst(account);

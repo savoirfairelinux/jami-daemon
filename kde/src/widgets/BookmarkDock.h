@@ -10,7 +10,7 @@ class QSplitter;
 //KDE
 class KLineEdit;
 
-//SFLPhonr
+//SFLPhone
 class HistoryTreeItem;
 
 typedef QList<HistoryTreeItem*> BookmarkList;
@@ -19,12 +19,17 @@ class BookmarkDock : public QDockWidget {
 public:
    BookmarkDock(QWidget* parent);
    virtual ~BookmarkDock();
+
+   //Mutators
    void addBookmark(QString phone);
 private:
+   //Attributes
    QTreeWidget*  m_pItemView;
    KLineEdit*    m_pFilterLE;
    QSplitter*    m_pSplitter;
    BookmarkList  m_pBookmark;
+
+   //Mutators
    void addBookmark_internal(QString phone);
 private slots:
    void filter(QString text);

@@ -37,6 +37,7 @@ class Dialpad : public QWidget
 Q_OBJECT
 
 private:
+   //Attributes
    QGridLayout* gridLayout;
    QPushButton* pushButton_0;
    QPushButton* pushButton_1;

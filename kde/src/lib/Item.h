@@ -17,24 +17,23 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
 #ifndef ITEM_H
 #define ITEM_H
 
-#include <QObject>
-#include <QListWidgetItem>
-#include <QWidget>
 #include "typedefs.h"
 
+class QListWidgetItem;
+
 /**
-	@author Jérémy Quentin <jeremy.quentin@gmail.com>
-	Represents an item of a list, that is displayed
-	by an QListWidgetItem with a QWidget inside.
-	The two objects are contained in this class, but their
-	initializations are pure virtual.
-	The template class WIDGET_TYPE should be derived from
-	QWidget.
-	The implementation of initItem should call initItemWidget
+	@author Jérémy Quentin <jeremy.quentin@gmail.com>         
+	Represents an item of a list, that is displayed           
+	by an QListWidgetItem with a QWidget inside.              
+	The two objects are contained in this class, but their    
+	initializations are pure virtual.                         
+	The template class WIDGET_TYPE should be derived from     
+	QWidget.                                                  
+	The implementation of initItem should call initItemWidget 
 */
 template<class WIDGET_TYPE>class LIB_EXPORT Item
 {
@@ -45,9 +44,9 @@ protected:
 
 public:
 	/**
-	 *  Would be great to take the QListWidget as attribute
-	 *  to be able to add the itemWidget to the item in the list.
-	 *  For the moment, we have to do it from outside.
+	 *  Would be great to take the QListWidget as attribute         
+	 *  to be able to add the itemWidget to the item in the list.   
+	 *  For the moment, we have to do it from outside.              
 	 */
 	Item(/*QListWidget *list=0*/) {
 		item = NULL;
@@ -55,8 +54,8 @@ public:
 	}
 	
 	/**
-	 *   Be careful that it is not already deleted by QObject
-	 *   Commented for safety reasons...
+	 *   Be careful that it is not already deleted by QObject 
+	 *   Commented for safety reasons...                      
 	 */
 	virtual ~Item() {
 // 		delete item;
@@ -79,8 +78,8 @@ public:
 	}
 	
 	/**
-	 *   Initializes the item and widget
-	 *   Implementation should call initItemWidget!
+	 *   Initializes the item and widget            
+	 *   Implementation should call initItemWidget! 
 	 */
 	virtual void initItem() = 0;
 	

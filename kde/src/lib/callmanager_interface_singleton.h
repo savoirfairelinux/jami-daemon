@@ -28,12 +28,10 @@ class LIB_EXPORT CallManagerInterfaceSingleton
 {
 
 private:
-
-	static CallManagerInterface * interface;
+   static CallManagerInterface* interface;
 
 public:
-
-	static CallManagerInterface & getInstance();
+   static CallManagerInterface& getInstance();
 
 };
 

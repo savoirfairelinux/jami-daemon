@@ -10,6 +10,7 @@
 #include "conf/ConfigurationSkeleton.h"
 #include "widgets/HistoryTreeItem.h"
 
+///@class QNumericTreeWidgetItem : Tree widget with different sorting criterias
 class QNumericTreeWidgetItem : public QTreeWidgetItem {
    public:
       QNumericTreeWidgetItem(QTreeWidget* parent):QTreeWidgetItem(parent),widget(0),weight(-1){}
@@ -29,6 +30,7 @@ class QNumericTreeWidgetItem : public QTreeWidgetItem {
       }
 };
 
+///Constructor
 BookmarkDock::BookmarkDock(QWidget* parent) : QDockWidget(parent)
 {
    setObjectName("bookmarkDock");
@@ -61,11 +63,13 @@ BookmarkDock::BookmarkDock(QWidget* parent) : QDockWidget(parent)
    connect(m_pFilterLE, SIGNAL(textChanged(QString)), this, SLOT(filter(QString) ));
 }
 
+///Destructor
 BookmarkDock::~BookmarkDock()
 {
    
 }
 
+///Add a new bookmark
 void BookmarkDock::addBookmark_internal(QString phone)
 {
    HistoryTreeItem* widget = new HistoryTreeItem(m_pItemView,phone);
@@ -76,12 +80,14 @@ void BookmarkDock::addBookmark_internal(QString phone)
    m_pBookmark << widget;
 }
 
+///Proxy to add a new bookmark
 void BookmarkDock::addBookmark(QString phone)
 {
    addBookmark_internal(phone);
    ConfigurationSkeleton::setBookmarkList(ConfigurationSkeleton::bookmarkList() << phone);
 }
 
+///Filter the list
 void BookmarkDock::filter(QString text)
 {
    foreach(HistoryTreeItem* item, m_pBookmark) {

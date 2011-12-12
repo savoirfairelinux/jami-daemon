@@ -42,6 +42,7 @@
 #include <kaction.h>
 
 #include "lib/sflphone_const.h"
+#include "lib/Contact.h"
 #include "ContactItemWidget.h"
 #include "AkonadiBackend.h"
 #include "widgets/BookmarkDock.h"
@@ -167,46 +168,55 @@ void ContactItemWidget::updated()
       m_pIconL->setPixmap(*m_pContactKA->getPhoto());
 }
 
+///Return contact name
 QString ContactItemWidget::getContactName() const
 {
    return m_pContactKA->getFormattedName();
 }
 
+///Return call number
 PhoneNumbers ContactItemWidget::getCallNumbers() const
 {
    return m_pContactKA->getPhoneNumbers();
 }
 
+///Return the organisation
 QString ContactItemWidget::getOrganization() const
 {
    return m_pContactKA->getOrganization();
 }
 
+///Return the email address
 QString ContactItemWidget::getEmail() const
 {
    return m_pContactKA->getPreferredEmail();
 }
 
+///Return the picture
 QPixmap* ContactItemWidget::getPicture() const
 {
    return (QPixmap*) m_pContactKA->getPhoto();
 }
 
+///Return the model index
 QTreeWidgetItem* ContactItemWidget::getItem()
 {
    return m_pItem;
 }
 
+///Set the model index
 void ContactItemWidget::setItem(QTreeWidgetItem* item)
 {
    m_pItem = item;
 }
 
+///Return the contact object
 Contact* ContactItemWidget::getContact()
 {
    return m_pContactKA;
 }
 
+///Show the context menu
 void ContactItemWidget::showContext(const QPoint& pos)
 {
    if (!m_pMenu) {
@@ -223,17 +233,21 @@ void ContactItemWidget::showContext(const QPoint& pos)
    m_pMenu->exec(mapToGlobal(pos));
 }
 
-
+///Send an email
+//TODO
 void ContactItemWidget::sendEmail()
 {
    qDebug() << "Sending email";
 }
 
+///Call the same number again
+//TODO
 void ContactItemWidget::callAgain()
 {
    qDebug() << "Calling ";
 }
 
+///Copy contact to clipboard
 void ContactItemWidget::copy()
 {
    qDebug() << "Copying contact";
@@ -243,17 +257,21 @@ void ContactItemWidget::copy()
    clipboard->setMimeData(mimeData);
 }
 
+///Edit this contact
 void ContactItemWidget::editContact()
 {
    qDebug() << "Edit contact";
    AkonadiBackend::getInstance()->editContact(m_pContactKA);
 }
 
+///Add a new phone number for this contact
+//TODO
 void ContactItemWidget::addPhone()
 {
    qDebug() << "Adding to contact";
 }
 
+///Add this contact to the bookmark list
 void ContactItemWidget::bookmark()
 {
    PhoneNumbers numbers = m_pContactKA->getPhoneNumbers();

@@ -1,12 +1,11 @@
 #ifndef SFLPHONEAPPLICATION_H
 #define SFLPHONEAPPLICATION_H
 
-
 #include <KApplication>
 #include <QDBusAbstractAdaptor>
 
+//SFLPhone
 class SFLPhone;
-
 
 class SFLPhoneApplication : public KApplication
 {
@@ -18,9 +17,6 @@ class SFLPhoneApplication : public KApplication
 
    // Destructor
    virtual    ~SFLPhoneApplication();
-
-   // Return the contact list window
-   //SFLPhone*       getSFLPhoneWindow() const;
 
   private:  // private methods
     void         initializeMainWindow();

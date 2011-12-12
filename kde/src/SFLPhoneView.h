@@ -23,8 +23,6 @@
 #define SFLPHONEVIEW_H
 
 #include "ui_SFLPhoneView_base.h"
-#include <QtCore/QVector>
-#include <QtCore/QList>
 #include <QtGui/QWidget>
 
 //Qt
@@ -224,7 +222,6 @@ public slots:
    void on1_incomingCall(Call* call);
    void on1_voiceMailNotify(const QString &accountID, int count);
    void on1_volumeChanged(const QString &device, double value);
-   void changeScreen(int screen);
    
 signals:
    void statusMessageChangeAsked      ( const QString&  message            );

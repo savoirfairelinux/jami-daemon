@@ -31,11 +31,14 @@ namespace KABC {
 class ContactTree;
 class ContactItemWidget;
 
-class ContactDock : public QDockWidget {
+class ContactDock : public QDockWidget
+{
    Q_OBJECT
 public:
+   //Constructor
    ContactDock(QWidget* parent);
    virtual ~ContactDock();
+   
 private:
    //Attributes
    KLineEdit*                   m_pFilterLE;
@@ -45,8 +48,10 @@ private:
    QComboBox*                   m_pSortByCBB;
    QCheckBox*                   m_pShowHistoCK;
    QList<ContactItemWidget*>    m_pContacts;
+   
 public slots:
    virtual void keyPressEvent(QKeyEvent* event);
+   
 private slots:
    void reloadContact();
    void loadContactHistory(QTreeWidgetItem* item);
@@ -54,6 +59,7 @@ private slots:
    void setHistoryVisible(bool visible);
 };
 
+///@class ContactTree tree view with additinal drag and drop
 class ContactTree : public QTreeWidget {
    Q_OBJECT
 public:
@@ -62,6 +68,7 @@ public:
    bool dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action);
 };
 
+///@class KeyPressEaterC keygrabber
 class KeyPressEaterC : public QObject
 {
    Q_OBJECT
@@ -69,10 +76,13 @@ public:
    KeyPressEaterC(ContactDock* parent) : QObject(parent) {
       m_pDock =  parent;
    }
+   
 protected:
    bool eventFilter(QObject *obj, QEvent *event);
+   
 private:
    ContactDock* m_pDock;
+   
 };
 
 #endif

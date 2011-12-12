@@ -17,7 +17,7 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
 
 #ifndef SFLPHONETRAY_H
 #define SFLPHONETRAY_H
@@ -36,15 +36,18 @@ class SFLPhoneTray : public KSystemTrayIcon
 Q_OBJECT
 
 public:
+   //Constructor
    SFLPhoneTray(QIcon icon, QWidget *parent = 0);
    ~SFLPhoneTray();
    bool initialize();
-   void setupActions();
+
+   //Mutators
    void addAction(KAction *action);
 
 private:
-   QMenu *trayIconMenu;
-   bool initialized_;
+   //Attributes
+   QMenu* trayIconMenu;
+   bool   initialized_;
 };
 
 #endif // SFLPHONETRAY_H

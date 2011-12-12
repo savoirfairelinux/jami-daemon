@@ -17,7 +17,7 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
 #ifndef DLGGENERAL_H
 #define DLGGENERAL_H
 
@@ -32,12 +32,14 @@ class DlgGeneral : public QWidget, public Ui_DlgGeneralBase
 {
 Q_OBJECT
 public:
-    DlgGeneral(QWidget *parent = 0);
+   //Constructor
+   DlgGeneral(QWidget *parent = 0);
 
-    ~DlgGeneral();
+   //Destructor
+   ~DlgGeneral();
 
 signals:
-	void clearCallHistoryAsked();
+   void clearCallHistoryAsked();
 
 };
 
