@@ -40,6 +40,7 @@ namespace KABC {
 //SFLPhone
 class Contact;
 
+///@class ContactItemWidget Item for the contact tree
 class ContactItemWidget : public QWidget
 {
    Q_OBJECT

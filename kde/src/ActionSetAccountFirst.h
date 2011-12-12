@@ -26,19 +26,15 @@
 
 #include "lib/Account.h"
 
-/**
-   @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
-*/
+///@class ActionSetAccountFirst Set an account to be the first
 class ActionSetAccountFirst : public QAction
 {
 Q_OBJECT
 
 private:
-   
-   Account * account;
+   Account* account;
 
 public:
-
    ActionSetAccountFirst(Account * account, QObject *parent = 0);
    ~ActionSetAccountFirst();
 

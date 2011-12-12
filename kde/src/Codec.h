@@ -26,9 +26,7 @@
 //Qt
 class QString;
 
-/**
-   @author Jérémy Quentin <jeremy.quentin@gmail.com>
-*/
+///@class Codec A SIP codec
 class Codec : public QObject
 {
 Q_OBJECT

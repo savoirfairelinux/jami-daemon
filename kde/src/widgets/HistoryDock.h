@@ -42,8 +42,10 @@ class KDateWidget;
 class HistoryTreeItem;
 class HistoryTree;
 
+//Typedef
 typedef QList<HistoryTreeItem*> HistoryList;
 
+///@class HistoryDock Dock to see the previous SFLPhone calls
 class HistoryDock : public QDockWidget {
    Q_OBJECT
    

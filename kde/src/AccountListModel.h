@@ -26,9 +26,7 @@
 //SFLPhone
 class ConfigAccountList;
 
-/**
-   @author Jérémy Quentin <jeremy.quentin@gmail.com>
-*/
+///@class AccountListModel Model for the account list widget
 class AccountListModel : public QAbstractListModel
 {
 Q_OBJECT

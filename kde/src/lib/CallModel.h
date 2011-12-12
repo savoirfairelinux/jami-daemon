@@ -40,6 +40,7 @@ class ContactBackend;
 typedef QHash<QString, Call*> CallHash;
 typedef QList<Call*>          CallList;
 
+///@class CallModelBase Base class for the central model/frontend
 ///This class need to exist because template classes can't have signals ans
 ///slots because Qt MOC generator can't guess the type at precompilation
 class LIB_EXPORT CallModelBase : public QObject
@@ -82,6 +83,7 @@ signals:
  *  with the MVC model. The MVC never got to a point were it was bug-free and the code was getting dirty. The Mirror model  
  *  solution may be less "clean" than MVC, but is 3 time smaller and easier to improve (in fact, possible to improve).      
  */
+///@class CallModel Central model/frontend to deal with sflphoned
 template  <typename CallWidget, typename Index>
 class LIB_EXPORT CallModel : public CallModelBase {
    public:

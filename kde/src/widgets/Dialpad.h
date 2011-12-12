@@ -17,7 +17,7 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
 #ifndef DIALPAD_H
 #define DIALPAD_H
 
@@ -27,11 +27,8 @@
 class QPushButton;
 class QGridLayout;
 
-/**
-A widget that represents a phone dialpad, with numbers and letters associated.
 
-   @author Jérémy Quentin <jeremy.quentin@gmail.com>
-*/
+///@class Dialpad A widget that representing a phone dialpad with associated numbers and letters
 class Dialpad : public QWidget
 {
 Q_OBJECT

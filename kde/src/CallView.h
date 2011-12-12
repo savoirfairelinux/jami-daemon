@@ -30,6 +30,7 @@ class QTreeWidgetItem;
 //SFLPhone
 class CallTreeItem;
 
+///@class CallTreeItemDelegate Delegates for CallTreeItem
 class CallTreeItemDelegate : public QItemDelegate
 {
    public:
@@ -44,7 +45,8 @@ class CallTreeItemDelegate : public QItemDelegate
 
 typedef CallModel<CallTreeItem*,QTreeWidgetItem*> TreeWidgetCallModel;
 
-class CallView : public QTreeWidget/*, public TreeWidgetCallModel*/ {
+///@class CallView Central tree widget managing active calls
+class CallView : public QTreeWidget {
    Q_OBJECT
    public:
       CallView                    ( QWidget* parent = 0                                                               );

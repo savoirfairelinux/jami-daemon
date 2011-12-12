@@ -32,6 +32,7 @@ class Contact;
 
 typedef QList<Contact*> ContactList;
 
+///@class ContactBackend Allow different way to handle contact without poluting the library
 class LIB_EXPORT ContactBackend : public QObject {
    Q_OBJECT
 public:

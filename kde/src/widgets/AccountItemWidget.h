@@ -27,23 +27,13 @@
 #include <QLabel>
 #include <kled.h>
 
-/**
-   @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
-*/
+///@class AccountItemWidget Widget for the config dialog account list
 class AccountItemWidget : public QWidget
 {
 Q_OBJECT
 
-private:
-
-   int state;
-   bool enabled;
-   QLabel * led;
-   QCheckBox * checkBox;
-   QLabel * textLabel;
-
 public:
-
+   //Enum
    enum State {Registered, Unregistered, NotWorking};
 
    //Constructors & Destructors
@@ -63,6 +53,14 @@ public:
    void updateStateDisplay   ();
    void updateEnabledDisplay ();
    void updateDisplay        ();
+   
+private:
+   //Attributes
+   int        state;
+   bool       enabled;
+   QLabel*    led;
+   QCheckBox* checkBox;
+   QLabel*    textLabel;
    
 private slots:   
    void on_checkBox_stateChanged(int state);

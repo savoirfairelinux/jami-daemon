@@ -36,6 +36,7 @@ class KIcon;
 //SFLPhone
 class Call;
 
+///@class CallTreeItem Widget for the central call treeview
 class CallTreeItem : public QWidget
 {
    Q_OBJECT

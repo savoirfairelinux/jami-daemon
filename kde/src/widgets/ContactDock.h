@@ -50,6 +50,7 @@ namespace KABC {
 class ContactTree;
 class ContactItemWidget;
 
+///@class ContactDock Dock to access contacts
 class ContactDock : public QDockWidget
 {
    Q_OBJECT

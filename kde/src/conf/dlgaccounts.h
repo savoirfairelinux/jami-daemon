@@ -46,6 +46,7 @@ typedef QHash<QString, QString> StringHash;                          //Needed to
 typedef QHash<QListWidgetItem*, CredentialData> QListWidgetItemHash; //Needed to fix a Qt foreach macro argument parsing bug
 typedef QList<CredentialData> CredentialList;
 
+///@class Private_AddCodecDialog Little dialog to add codec to the list
 class Private_AddCodecDialog : public KDialog {
   Q_OBJECT
   public:

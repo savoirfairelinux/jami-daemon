@@ -28,6 +28,7 @@
 #include "Account.h"
 #include "typedefs.h"
 
+///@class AccountList List of all daemon accounts
 class LIB_EXPORT AccountList : public QObject{
 
    Q_OBJECT

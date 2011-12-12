@@ -31,6 +31,7 @@ class KAction;
 class QMenu;
 class QIcon;
 
+///@class SFLPhoneTray The old system try, should be totally replaced by a plasmoid some day
 class SFLPhoneTray : public KSystemTrayIcon
 {
 Q_OBJECT

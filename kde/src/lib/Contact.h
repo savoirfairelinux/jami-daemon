@@ -38,6 +38,7 @@ namespace KABC {
 #include "typedefs.h"
 
 /**
+ * @class Contact Abstract version of a contact
    @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
    @author Emmanuel Lepage <emmanuel.lepage@savoirfairelinux.com>
 */
@@ -54,10 +55,12 @@ public:
       QString& getType() {
          return m_pType   ;
       }
+      
    private:
       QString m_pNumber   ;
       QString m_pType     ;
    };
+   
    typedef QList<Contact::PhoneNumber*> PhoneNumbers;
    
 private:
@@ -72,6 +75,7 @@ private:
    QString      m_pUid            ;
    bool         displayPhoto      ;
    PhoneNumbers m_pNumbers        ;
+   
 public:
    //Constructors & Destructors
    explicit Contact();

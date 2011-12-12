@@ -32,10 +32,14 @@ class KLineEdit;
 //SFLPhone
 class HistoryTreeItem;
 
+//Typedef
 typedef QList<HistoryTreeItem*> BookmarkList;
+
+///@class BookmarkDock Dock for managing favorite contacts
 class BookmarkDock : public QDockWidget {
    Q_OBJECT
 public:
+   //Constructors
    BookmarkDock(QWidget* parent);
    virtual ~BookmarkDock();
 
