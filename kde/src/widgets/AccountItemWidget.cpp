@@ -22,7 +22,7 @@
 #include "AccountItemWidget.h"
 
 #include <QtGui/QHBoxLayout>
-#include <QtCore/QDebug>
+#include <QDebug>
 
 #include "lib/sflphone_const.h"
 

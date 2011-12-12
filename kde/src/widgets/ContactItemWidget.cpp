@@ -18,7 +18,6 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
 
-#include <QtCore/QStringList>
 #include <QtCore/QMimeData>
 #include <QtGui/QApplication>
 #include <QtGui/QClipboard>
@@ -27,12 +26,7 @@
 
 #include <QtGui/QLabel>
 #include <QtGui/QSpacerItem>
-#include <QtGui/QHBoxLayout>
-#include <QtGui/QVBoxLayout>
 #include <KIcon>
-#include <kabc/addressee.h>
-#include <kabc/picture.h>
-#include <kabc/phonenumber.h>
 
 #include <lib/Contact.h>
 
@@ -42,12 +36,10 @@
 #include <kaction.h>
 
 #include "lib/sflphone_const.h"
-#include "lib/Contact.h"
 #include "ContactItemWidget.h"
 #include "AkonadiBackend.h"
 #include "widgets/BookmarkDock.h"
 #include "SFLPhone.h"
-#include "conf/ConfigurationSkeleton.h"
 
 ///Constructor
 ContactItemWidget::ContactItemWidget(QWidget *parent)

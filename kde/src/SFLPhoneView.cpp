@@ -21,32 +21,21 @@
 
 #include "SFLPhoneView.h"
 
-#include <QtGui/QLabel>
 #include <QtGui/QContextMenuEvent>
-#include <QtGui/QBrush>
 #include <QtGui/QPalette>
 #include <QtGui/QInputDialog>
 #include <QtGui/QWidget>
 #include <QtCore/QString>
-#include <QtGui/QKeyEvent>
 #include <QErrorMessage>
-#include <KXmlGuiWindow>
 
 #include "conf/ConfigurationDialog.h"
 #include "AccountWizard.h"
-#include "lib/Contact.h"
-#include "lib/AccountList.h"
-#include "CallView.h"
 
 #include <klocale.h>
-#include <kstandardaction.h>
-#include <kactioncollection.h>
 #include <kaction.h>
 #include <kmenu.h>
 
 #include <kabc/addressbook.h>
-#include <kabc/stdaddressbook.h>
-#include <kabc/addresseelist.h>
 
 #include "lib/sflphone_const.h"
 #include "conf/ConfigurationSkeleton.h"
@@ -54,11 +43,8 @@
 #include "lib/callmanager_interface_singleton.h"
 #include "lib/instance_interface_singleton.h"
 #include "ActionSetAccountFirst.h"
-#include "widgets/ContactItemWidget.h"
 #include "SFLPhone.h"
 #include "lib/typedefs.h"
-#include "widgets/Dialpad.h"
-#include "widgets/CallTreeItem.h"
 
 
 using namespace KABC;

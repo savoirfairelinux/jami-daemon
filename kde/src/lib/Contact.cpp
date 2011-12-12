@@ -24,8 +24,6 @@
 #include <kabc/addressee.h>
 #include <kabc/picture.h>
 #include <kabc/phonenumber.h>
-#include <QtGui/QListWidgetItem>
-#include <QtGui/QWidget>
 #include <QPixmap>
 
 #include "sflphone_const.h"

@@ -1,4 +1,4 @@
-/************************************** *************************************
+/***************************************************************************
  *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
  *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
  *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*

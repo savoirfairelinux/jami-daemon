@@ -22,16 +22,12 @@
 #include <QtGui/QGridLayout>
 #include <QtGui/QMenu>
 
-#include <klocale.h>
-#include <kdebug.h>
-#include <unistd.h>
-#include <kaction.h>
+#include <KLocale>
+#include <KDebug>
+#include <KAction>
 #include <QtGui/QLabel>
 #include <QtGui/QSpacerItem>
-#include <QtGui/QHBoxLayout>
-#include <QtGui/QVBoxLayout>
 #include <KIcon>
-#include <QLabel>
 
 #include "lib/sflphone_const.h"
 #include "HistoryTreeItem.h"
@@ -39,7 +35,6 @@
 #include "lib/Contact.h"
 #include "SFLPhone.h"
 #include "widgets/BookmarkDock.h"
-#include "conf/ConfigurationSkeleton.h"
 #include "lib/Call.h"
 
 const char * HistoryTreeItem::callStateIcons[12] = {ICON_INCOMING, ICON_RINGING, ICON_CURRENT, ICON_DIALING, ICON_HOLD, ICON_FAILURE, ICON_BUSY, ICON_TRANSFER, ICON_TRANSF_HOLD, "", "", ICON_CONFERENCE};

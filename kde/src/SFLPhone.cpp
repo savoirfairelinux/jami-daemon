@@ -22,24 +22,15 @@
 #include "SFLPhone.h"
 
 #include <unistd.h>
-#include <KApplication>
 #include <KStandardAction>
-#include <KMenu>
 #include <KAction>
-#include <KToolBar>
 #include <KStatusBar>
-#include <QtGui/QStatusBar>
 #include <QtGui/QCursor>
 #include <KActionCollection>
 #include <QtCore/QString>
-#include <QtGui/QListWidgetItem>
-#include <QtGui/QKeyEvent>
-#include <QErrorMessage>
-#include <KSystemTrayIcon>
 #include <KNotification>
 #include <QActionGroup>
 #include <QLabel>
-#include <QListWidget>
 #include <kshortcutsdialog.h>
 
 #include "lib/sflphone_const.h"
@@ -52,7 +43,6 @@
 #include "AccountWizard.h"
 #include "widgets/HistoryDock.h"
 #include "widgets/BookmarkDock.h"
-#include "lib/Contact.h"
 #include "SFLPhoneView.h"
 #include "widgets/SFLPhoneTray.h"
 
@@ -184,7 +174,7 @@ void SFLPhone::setupActions()
    action_screen->addAction(action_main);
 
    action_close = KStandardAction::close(this, SLOT(close()), this);
-   action_quit = KStandardAction::quit(this, SLOT(quitButton()), this);
+   action_quit  = KStandardAction::quit(this, SLOT(quitButton()), this);
    
    action_configureSflPhone = KStandardAction::preferences(m_pView, SLOT(configureSflPhone()), this);
    action_configureSflPhone->setText(i18n("Configure SFLphone"));

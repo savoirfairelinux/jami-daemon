@@ -1,5 +1,4 @@
 #include <QHash>
-#include <QVector>
 #include <QDragEnterEvent>
 #include <QDebug>
 #include "Call.h"

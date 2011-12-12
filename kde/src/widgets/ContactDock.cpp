@@ -11,26 +11,9 @@
 #include <klineedit.h>
 #include <KLocalizedString>
 #include <QtGui/QLabel>
+#include <QComboBox>
 
-#include <akonadi/collectionfilterproxymodel.h>
-#include <akonadi/contact/contactstreemodel.h>
-#include <akonadi/kmime/messagemodel.h>
-#include <akonadi/changerecorder.h>
-#include <kabc/addressee.h>
-#include <kabc/picture.h>
-#include <kabc/phonenumber.h>
-#include <kabc/vcard.h>
-#include <kabc/field.h>
-#include <kabc/vcardline.h>
-#include <kabc/contactgroup.h>
-#include <akonadi/itemfetchscope.h>
-#include <akonadi/entitydisplayattribute.h>
-#include <akonadi/recursiveitemfetchjob.h>
 #include <kicon.h>
-#include <akonadi/entitytreeview.h>
-#include <akonadi/itemview.h>
-#include <akonadi/collectioncombobox.h>
-
 #include "AkonadiBackend.h"
 #include "ContactItemWidget.h"
 #include "conf/ConfigurationSkeleton.h"

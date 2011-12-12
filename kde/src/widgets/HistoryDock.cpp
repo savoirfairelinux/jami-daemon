@@ -1,6 +1,5 @@
 #include "HistoryDock.h"
 
-#include <QtGui/QVBoxLayout>
 #include <kicon.h>
 #include <klineedit.h>
 #include <QtGui/QTreeWidget>
@@ -8,12 +7,12 @@
 #include <QtGui/QPushButton>
 #include <QtGui/QLabel>
 #include <QDebug>
-#include <QDate>
 #include <QtGui/QTreeWidgetItem>
 #include <QtCore/QString>
 #include <kdatewidget.h>
 #include <QHeaderView>
 #include <QtGui/QCheckBox>
+#include <QtGui/QGridLayout>
 #include <QDate>
 #include "SFLPhone.h"
 #include "widgets/HistoryTreeItem.h"

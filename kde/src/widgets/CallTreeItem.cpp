@@ -22,17 +22,12 @@
 
 #include <klocale.h>
 #include <kdebug.h>
-#include <unistd.h>
 
 #include "lib/sflphone_const.h"
 #include "CallTreeItem.h"
 #include "lib/Contact.h"
 #include "lib/Call.h"
 #include "AkonadiBackend.h"
-
-#include <QtCore/QList>
-#include <QtCore/QVariant>
-#include <QtCore/QVector>
 
 #include <QtGui/QWidget>
 #include <QtGui/QLabel>
