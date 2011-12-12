@@ -98,6 +98,13 @@ ContactItemWidget::~ContactItemWidget()
 
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Setters                                  *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Set the contact
 void ContactItemWidget::setContact(Contact* contact)
 {
@@ -134,6 +141,19 @@ void ContactItemWidget::setContact(Contact* contact)
    connect(this,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(showContext(QPoint)));
 }
 
+///Set the model index
+void ContactItemWidget::setItem(QTreeWidgetItem* item)
+{
+   m_pItem = item;
+}
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                                    Slots                                  *
+ *                                                                           *
+ ****************************************************************************/
+
 ///The contact need to be updated
 void ContactItemWidget::updated()
 {
@@ -167,6 +187,13 @@ void ContactItemWidget::updated()
    else
       m_pIconL->setPixmap(*m_pContactKA->getPhoto());
 }
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Getters                                  *
+ *                                                                           *
+ ****************************************************************************/
 
 ///Return contact name
 QString ContactItemWidget::getContactName() const
@@ -204,17 +231,18 @@ QTreeWidgetItem* ContactItemWidget::getItem()
    return m_pItem;
 }
 
-///Set the model index
-void ContactItemWidget::setItem(QTreeWidgetItem* item)
-{
-   m_pItem = item;
-}
-
 ///Return the contact object
 Contact* ContactItemWidget::getContact()
 {
    return m_pContactKA;
 }
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Mutator                                  *
+ *                                                                           *
+ ****************************************************************************/
 
 ///Show the context menu
 void ContactItemWidget::showContext(const QPoint& pos)

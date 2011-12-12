@@ -42,6 +42,13 @@ void AccountView::initItemWidget()
    connect(itemWidget, SIGNAL(checkStateChanged(bool)), this, SLOT(setEnabled(bool)));
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Getters                                  *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Get the current item
 QListWidgetItem* AccountView::getItem()
 {
@@ -79,6 +86,13 @@ bool AccountView::isChecked() const
 {
    return itemWidget->getEnabled();
 }
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Mutator                                  *
+ *                                                                           *
+ ****************************************************************************/
 
 ///Build an item from an account id
 AccountView* AccountView::buildExistingAccountFromId(QString _accountId)

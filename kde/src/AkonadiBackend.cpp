@@ -42,6 +42,13 @@ AkonadiBackend::~AkonadiBackend()
    
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Getters                                  *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Singleton
 ContactBackend* AkonadiBackend::getInstance()
 {
@@ -50,6 +57,25 @@ ContactBackend* AkonadiBackend::getInstance()
    }
    return m_pInstance;
 }
+
+///Find contact using a phone number
+Contact* AkonadiBackend::getContactByPhone(QString phoneNumber)
+{
+   return m_pContactByPhone[phoneNumber];
+}
+
+///Find contact by UID
+Contact* AkonadiBackend::getContactByUid(QString uid)
+{
+   return m_pContactByUid[uid];
+}
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Mutator                                  *
+ *                                                                           *
+ ****************************************************************************/
 
 ///Update the contact list when a new Akonadi collection is added
 ContactList AkonadiBackend::update(Akonadi::Collection collection)
@@ -103,33 +129,6 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
       }
    }
    return contacts;
-}
-
-///Update the contact list even without a new collection
-ContactList AkonadiBackend::update_slot()
-{
-   return update(m_pCollection);
-}
-
-///Find contact using a phone number
-Contact* AkonadiBackend::getContactByPhone(QString phoneNumber)
-{
-   return m_pContactByPhone[phoneNumber];
-}
-
-///Find contact by UID
-Contact* AkonadiBackend::getContactByUid(QString uid)
-{
-   return m_pContactByUid[uid];
-}
-
-///Called when a new collection is added
-void AkonadiBackend::collectionsReceived( const Akonadi::Collection::List&  list)
-{
-   foreach (Akonadi::Collection coll, list) {
-      update(coll);
-      emit collectionChanged();
-   }
 }
 
 ///Edit backend value using an updated frontend contact
@@ -196,4 +195,26 @@ void AkonadiBackend::addNewContact(Contact* contact)
       qDebug() << "Unable to save new contact to storage";
       return;
    }
+}
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                                    Slots                                  *
+ *                                                                           *
+ ****************************************************************************/
+
+///Called when a new collection is added
+void AkonadiBackend::collectionsReceived( const Akonadi::Collection::List&  list)
+{
+   foreach (Akonadi::Collection coll, list) {
+      update(coll);
+      emit collectionChanged();
+   }
+}
+
+///Update the contact list even without a new collection
+ContactList AkonadiBackend::update_slot()
+{
+   return update(m_pCollection);
 }

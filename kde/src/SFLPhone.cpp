@@ -75,47 +75,6 @@ SFLPhone::~SFLPhone()
    //saveState();
 }
 
-///Singleton
-SFLPhone* SFLPhone::app()
-{
-   return m_sApp;
-}
-
-///Get the view (to be used with the singleton)
-SFLPhoneView* SFLPhone::view()
-{
-   return m_pView;
-}
-
-///Singleton
-TreeWidgetCallModel* SFLPhone::model()
-{
-   if (!m_pModel) {
-      m_pModel = new TreeWidgetCallModel(TreeWidgetCallModel::ActiveCall);
-      m_pModel->initCall();
-      m_pModel->initContact(AkonadiBackend::getInstance());
-    }
-   return m_pModel;
-}
-
-///Return the contact dock
-ContactDock*  SFLPhone::contactDock()
-{
-   return m_pContactCD;
-}
-
-///Return the history dock
-HistoryDock*  SFLPhone::historyDock()
-{
-   return m_pHistoryDW;
-}
-
-///Return the bookmark dock
-BookmarkDock* SFLPhone::bookmarkDock()
-{
-   return m_pBookmarkDW;
-}
-
 ///Init everything
 bool SFLPhone::initialize()
 {
@@ -197,14 +156,6 @@ bool SFLPhone::initialize()
   return true;
 }
 
-///Set widgets object name
-void SFLPhone::setObjectNames()
-{
-   m_pView->setObjectName      ( "m_pView"   );
-   statusBar()->setObjectName  ( "statusBar" );
-   m_pTrayIcon->setObjectName  ( "trayIcon"  );
-}
-
 ///Setup evry actions
 void SFLPhone::setupActions()
 {
@@ -284,9 +235,92 @@ void SFLPhone::setupActions()
    createGUI();
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Getters                                  *
+ *                                                                           *
+ ****************************************************************************/
+
+///Singleton
+SFLPhone* SFLPhone::app()
+{
+   return m_sApp;
+}
+
+///Get the view (to be used with the singleton)
+SFLPhoneView* SFLPhone::view()
+{
+   return m_pView;
+}
+
+///Singleton
+TreeWidgetCallModel* SFLPhone::model()
+{
+   if (!m_pModel) {
+      m_pModel = new TreeWidgetCallModel(TreeWidgetCallModel::ActiveCall);
+      m_pModel->initCall();
+      m_pModel->initContact(AkonadiBackend::getInstance());
+    }
+   return m_pModel;
+}
+
+///Return the contact dock
+ContactDock*  SFLPhone::contactDock()
+{
+   return m_pContactCD;
+}
+
+///Return the history dock
+HistoryDock*  SFLPhone::historyDock()
+{
+   return m_pHistoryDW;
+}
+
+///Return the bookmark dock
+BookmarkDock* SFLPhone::bookmarkDock()
+{
+   return m_pBookmarkDW;
+}
+
 void SFLPhone::showShortCutEditor() {
    KShortcutsDialog::configure( actionCollection() );
 }
+
+///Produce an actionList for auto CallBack
+QList<QAction*> SFLPhone::getCallActions()
+{
+   QList<QAction*> callActions = QList<QAction *>();
+   callActions.insert((int) Accept   , action_accept   );
+   callActions.insert((int) Refuse   , action_refuse   );
+   callActions.insert((int) Hold     , action_hold     );
+   callActions.insert((int) Transfer , action_transfer );
+   callActions.insert((int) Record   , action_record   );
+   callActions.insert((int) Mailbox  , action_mailBox  );
+   return callActions;
+}
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Setters                                  *
+ *                                                                           *
+ ****************************************************************************/
+
+///Set widgets object name
+void SFLPhone::setObjectNames()
+{
+   m_pView->setObjectName      ( "m_pView"   );
+   statusBar()->setObjectName  ( "statusBar" );
+   m_pTrayIcon->setObjectName  ( "trayIcon"  );
+}
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Mutator                                  *
+ *                                                                           *
+ ****************************************************************************/
 
 ///[Action]Hide sflphone
 bool SFLPhone::queryClose()
@@ -380,19 +414,6 @@ void SFLPhone::on_m_pView_screenChanged(int screen)
 {
    qDebug() << "on_m_pView_screenChanged";
    if(screen == SCREEN_MAIN)   action_main->setChecked(true);
-}
-
-///Produce an actionList for auto CallBack
-QList<QAction*> SFLPhone::getCallActions()
-{
-   QList<QAction*> callActions = QList<QAction *>();
-   callActions.insert((int) Accept   , action_accept   );
-   callActions.insert((int) Refuse   , action_refuse   );
-   callActions.insert((int) Hold     , action_hold     );
-   callActions.insert((int) Transfer , action_transfer );
-   callActions.insert((int) Record   , action_record   );
-   callActions.insert((int) Mailbox  , action_mailBox  );
-   return callActions;
 }
 
 ///Called when a call is coming

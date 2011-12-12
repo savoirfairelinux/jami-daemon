@@ -55,6 +55,13 @@ bool SFLPhoneTray::initialize()
    return true;
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Mutator                                  *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Add a new action
 void SFLPhoneTray::addAction(KAction *action)
 {

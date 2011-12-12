@@ -133,6 +133,13 @@ HistoryDock::~HistoryDock()
 {
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Getters                                  *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Return the identity of the call caller
 QString HistoryDock::getIdentity(HistoryTreeItem* item)
 {
@@ -141,6 +148,13 @@ QString HistoryDock::getIdentity(HistoryTreeItem* item)
    else
       return item->getName();
 }
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Mutator                                  *
+ *                                                                           *
+ ****************************************************************************/
 
 ///Update informations
 void HistoryDock::updateContactInfo()
@@ -281,6 +295,13 @@ void HistoryDock::updateLinkedToDate(QDate date)
    connect   (m_pFromDW  ,  SIGNAL(changed(QDate)),       this, SLOT(updateLinkedFromDate(QDate)));
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                             Drag and drop                                 *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Generate serializerd version of the content 
 QMimeData* HistoryTree::mimeData( const QList<QTreeWidgetItem *> items) const
 {
@@ -317,6 +338,13 @@ bool HistoryTree::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeDa
 
    return false;
 }
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                              Keyboard handling                            *
+ *                                                                           *
+ ****************************************************************************/
 
 ///Handle keyboard input and redirect them to the filterbox
 void HistoryDock::keyPressEvent(QKeyEvent* event) {

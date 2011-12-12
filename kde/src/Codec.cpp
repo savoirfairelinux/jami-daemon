@@ -37,6 +37,13 @@ Codec::Codec(int payload, bool enabled)
    this->bandwidth = details[CODEC_BANDWIDTH];
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Getters                                  *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Return the payload
 QString Codec::getPayload() const
 {
@@ -73,6 +80,13 @@ bool Codec::isEnabled() const
   return enabled;
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Setters                                  *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Set the payload
 void Codec::setPayload(QString payload)
 {
@@ -108,5 +122,3 @@ void Codec::setEnabled(bool enabled)
 {
   this->enabled = enabled;
 }
-
-

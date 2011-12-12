@@ -57,11 +57,25 @@ CallTreeItem::~CallTreeItem()
    
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Getters                                  *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Return the call item
 Call* CallTreeItem::call() const
 {
    return itemCall;
 }
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Mutator                                  *
+ *                                                                           *
+ ****************************************************************************/
 
 ///Set the call item
 void CallTreeItem::setCall(Call *call)
@@ -182,5 +196,4 @@ void CallTreeItem::updated()
    else {
       //qDebug() << "Updating item of call of state OVER. Doing nothing.";
    }
-   
 }

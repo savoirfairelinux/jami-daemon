@@ -134,6 +134,13 @@ ContactDock::~ContactDock()
 
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Mutator                                  *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Reload the contact
 void ContactDock::reloadContact()
 {
@@ -202,6 +209,13 @@ void ContactDock::filter(QString text)
    m_pContactView->expandAll();
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                Drag and Drop                              *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Serialize informations to be used for drag and drop
 QMimeData* ContactTree::mimeData( const QList<QTreeWidgetItem *> items) const
 {
@@ -242,6 +256,13 @@ bool ContactTree::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeDa
    return false;
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Setters                                  *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Show or hide the history list 
 void ContactDock::setHistoryVisible(bool visible)
 {
@@ -249,6 +270,13 @@ void ContactDock::setHistoryVisible(bool visible)
    m_pCallView->setVisible(visible);
    ConfigurationSkeleton::setDisplayContactCallHistory(visible);
 }
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                             Keyboard handling                             *
+ *                                                                           *
+ ****************************************************************************/
 
 ///Handle keypresses ont the dock
 void ContactDock::keyPressEvent(QKeyEvent* event) {

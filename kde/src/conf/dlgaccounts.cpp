@@ -26,9 +26,53 @@
 #include "SFLPhoneView.h"
 #include "../AccountView.h"
 #include "lib/sflphone_const.h"
+#include <kconfigdialog.h>
+#include <QTableWidget>
+#include <QListWidgetItem>
 #include "conf/ConfigurationDialog.h"
-#include <vector>
-#include <string>
+#include <QWidget>
+#include <QDebug>
+
+Private_AddCodecDialog::Private_AddCodecDialog(QList< StringHash > itemList, QStringList currentItems ,QWidget* parent) : KDialog(parent) {
+      codecTable = new QTableWidget(this);
+      codecTable->verticalHeader()->setVisible(false);
+      codecTable->setColumnCount(4);
+      for (int i=0;i<4;i++) {
+         codecTable->setHorizontalHeaderItem( i, new QTableWidgetItem(0));
+         codecTable->horizontalHeader()->setResizeMode(i,QHeaderView::ResizeToContents);
+      }
+
+      codecTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+      codecTable->horizontalHeader()->setResizeMode(0,QHeaderView::Stretch);
+      codecTable->horizontalHeaderItem(0)->setText( "Name"      );
+      codecTable->horizontalHeaderItem(1)->setText( "Bitrate"   );
+      codecTable->horizontalHeaderItem(2)->setText( "Frequency" );
+      codecTable->horizontalHeaderItem(3)->setText( "Alias"     );
+      int i =0;
+      foreach (StringHash aCodec, itemList) {
+         if ( currentItems.indexOf(aCodec["alias"]) == -1) {
+            codecTable->setRowCount(i+1);
+            QTableWidgetItem* cName       = new QTableWidgetItem( aCodec["name"]      );
+            codecTable->setItem( i,0,cName      );
+            QTableWidgetItem* cBitrate    = new QTableWidgetItem( aCodec["bitrate"]   );
+            codecTable->setItem( i,1,cBitrate   );
+            QTableWidgetItem* cFrequency  = new QTableWidgetItem( aCodec["frequency"] );
+            codecTable->setItem( i,2,cFrequency );
+            QTableWidgetItem* cAlias      = new QTableWidgetItem( aCodec["alias"]     );
+            codecTable->setItem( i,3,cAlias     );
+            i++;
+         }
+      }
+      setMainWidget(codecTable);
+      resize(550,300);
+
+      connect(this, SIGNAL(okClicked()), this, SLOT(emitNewCodec()));
+}
+
+void Private_AddCodecDialog::emitNewCodec() {
+   if (codecTable->currentRow() >= 0)
+   emit addCodec(codecTable->item(codecTable->currentRow(),3)->text());
+}
 
 DlgAccounts::DlgAccounts(KConfigDialog* parent)
  : QWidget(parent)

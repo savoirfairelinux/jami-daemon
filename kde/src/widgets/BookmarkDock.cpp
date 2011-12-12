@@ -69,6 +69,13 @@ BookmarkDock::~BookmarkDock()
    
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Mutator                                  *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Add a new bookmark
 void BookmarkDock::addBookmark_internal(QString phone)
 {

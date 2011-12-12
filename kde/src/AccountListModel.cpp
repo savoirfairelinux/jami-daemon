@@ -36,6 +36,13 @@ AccountListModel::~AccountListModel()
 {
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Getters                                  *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Get data from the model
 QVariant AccountListModel::data ( const QModelIndex& index, int role) const
 {
@@ -66,6 +73,19 @@ Qt::ItemFlags AccountListModel::flags(const QModelIndex & index) const
    return QAbstractItemModel::flags(index);
 }
 
+///Get the account list
+QString AccountListModel::getOrderedList() const
+{
+   return accounts->getOrderedList();
+}
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Setters                                  *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Set model data
 bool AccountListModel::setData(const QModelIndex & index, const QVariant &value, int role)
 {
@@ -77,6 +97,13 @@ bool AccountListModel::setData(const QModelIndex & index, const QVariant &value,
    }
    return false;
 }
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Mutator                                  *
+ *                                                                           *
+ ****************************************************************************/
 
 ///Move account up
 bool AccountListModel::accountUp( int index )
@@ -123,10 +150,4 @@ bool AccountListModel::addAccount( QString alias )
 int AccountListModel::rowCount(const QModelIndex & /*parent*/) const
 {
    return accounts->size();
-}
-
-///Get the account list
-QString AccountListModel::getOrderedList() const
-{
-   return accounts->getOrderedList();
 }

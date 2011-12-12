@@ -17,7 +17,7 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
  
 #include "AccountItemWidget.h"
 
@@ -61,6 +61,13 @@ AccountItemWidget::~AccountItemWidget()
    delete textLabel;
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Mutator                                  *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Update the LED widget color
 void AccountItemWidget::updateStateDisplay()
 {
@@ -92,6 +99,13 @@ void AccountItemWidget::updateDisplay()
    updateEnabledDisplay();
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Setters                                  *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Set the model state of the widget
 void AccountItemWidget::setState(int state)
 {
@@ -117,6 +131,13 @@ bool AccountItemWidget::getEnabled()
 {
    return checkBox->checkState();
 }
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                                    SLOTS                                  *
+ *                                                                           *
+ ****************************************************************************/
 
 ///Model state changed
 void AccountItemWidget::on_checkBox_stateChanged(int state)
