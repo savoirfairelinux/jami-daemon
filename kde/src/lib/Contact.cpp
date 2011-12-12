@@ -18,14 +18,15 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
+
+//Parent
 #include "Contact.h"
 
+//Qt
 #include <QtCore/QDebug>
-#include <kabc/addressee.h>
-#include <kabc/picture.h>
-#include <kabc/phonenumber.h>
-#include <QPixmap>
+#include <QtGui/QPixmap>
 
+//SFLPhone library
 #include "sflphone_const.h"
 
 ///Constructor

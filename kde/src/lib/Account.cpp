@@ -19,12 +19,17 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+//Parent
 #include "Account.h"
 
-#include <QDebug>
+//Qt
+#include <QtCore/QDebug>
 #include <QtCore/QString>
 
+//SFLPhone
 #include "sflphone_const.h"
+
+//SFLPhone lib
 #include "configurationmanager_interface_singleton.h"
 
 ///Match state name to user readable string

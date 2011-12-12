@@ -18,33 +18,42 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
-#include <unistd.h>
+
+//Parent
 #include "SFLPhone.h"
 
+//System
 #include <unistd.h>
+
+//Qt
+#include <QtCore/QString>
+#include <QtGui/QActionGroup>
+#include <QtGui/QLabel>
+#include <QtGui/QCursor>
+
+//KDE
 #include <KStandardAction>
 #include <KAction>
 #include <KStatusBar>
-#include <QtGui/QCursor>
 #include <KActionCollection>
-#include <QtCore/QString>
 #include <KNotification>
-#include <QActionGroup>
-#include <QLabel>
-#include <kshortcutsdialog.h>
+#include <KShortcutsDialog>
 
+//SFLPhone library
 #include "lib/sflphone_const.h"
 #include "lib/instance_interface_singleton.h"
 #include "lib/configurationmanager_interface_singleton.h"
 #include "lib/Contact.h"
+
+//SFLPhone
 #include "AkonadiBackend.h"
-#include "conf/ConfigurationSkeleton.h"
-#include "widgets/ContactDock.h"
 #include "AccountWizard.h"
-#include "widgets/HistoryDock.h"
-#include "widgets/BookmarkDock.h"
 #include "SFLPhoneView.h"
 #include "widgets/SFLPhoneTray.h"
+#include "widgets/ContactDock.h"
+#include "widgets/HistoryDock.h"
+#include "widgets/BookmarkDock.h"
+#include "conf/ConfigurationSkeleton.h"
 
 SFLPhone* SFLPhone::m_sApp = NULL;
 TreeWidgetCallModel* SFLPhone::m_pModel = NULL;

@@ -1,6 +1,30 @@
-#include <QHash>
-#include <QDragEnterEvent>
-#include <QDebug>
+/***************************************************************************
+ *   Copyright (C) 2009 by Savoir-Faire Linux                              *
+ *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
+ *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 3 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ **************************************************************************/
+
+//Qt
+#include <QtCore/QHash>
+#include <QtCore/QDebug>
+#include <QtGui/QDragEnterEvent>
+
+//SFLPhone library
 #include "Call.h"
 #include "AccountList.h"
 #include "dbus/metatypes.h"
@@ -8,9 +32,11 @@
 #include "configurationmanager_interface_singleton.h"
 #include "instance_interface_singleton.h"
 #include "sflphone_const.h"
-#include "unistd.h"
 #include "typedefs.h"
 #include "ContactBackend.h"
+
+//System
+#include "unistd.h"
 
 //Static member
 template  <typename CallWidget, typename Index> QString CallModel<CallWidget,Index>::m_pPriorAccountId   = ""    ;

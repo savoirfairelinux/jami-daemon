@@ -19,10 +19,14 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
 
+//Parent
 #include "AccountList.h"
-#include "sflphone_const.h"
-#include "configurationmanager_interface_singleton.h"
 
+//SFLPhone
+#include "sflphone_const.h"
+
+//SFLPhone library
+#include "configurationmanager_interface_singleton.h"
 
 
 ///Constructors

@@ -18,9 +18,14 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
+
+//Parent
 #include "Codec.h"
 
+//Qt
 #include <QtCore/QString>
+
+//SFLPhone library
 #include "lib/configurationmanager_interface_singleton.h"
 #include "lib/sflphone_const.h"
 

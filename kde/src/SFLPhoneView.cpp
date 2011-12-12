@@ -19,35 +19,36 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
 
+//Parent
 #include "SFLPhoneView.h"
 
+//Qt
+#include <QtCore/QString>
 #include <QtGui/QContextMenuEvent>
 #include <QtGui/QPalette>
 #include <QtGui/QInputDialog>
 #include <QtGui/QWidget>
-#include <QtCore/QString>
 #include <QErrorMessage>
 
-#include "conf/ConfigurationDialog.h"
-#include "AccountWizard.h"
-
-#include <klocale.h>
-#include <kaction.h>
-#include <kmenu.h>
-
+//KDE
+#include <KLocale>
+#include <KAction>
+#include <KMenu>
 #include <kabc/addressbook.h>
 
-#include "lib/sflphone_const.h"
+//SFLPhone
+#include "conf/ConfigurationDialog.h"
 #include "conf/ConfigurationSkeleton.h"
+#include "AccountWizard.h"
+#include "ActionSetAccountFirst.h"
+#include "SFLPhone.h"
+
+//SFLPhone library
+#include "lib/typedefs.h"
 #include "lib/configurationmanager_interface_singleton.h"
 #include "lib/callmanager_interface_singleton.h"
 #include "lib/instance_interface_singleton.h"
-#include "ActionSetAccountFirst.h"
-#include "SFLPhone.h"
-#include "lib/typedefs.h"
-
-
-using namespace KABC;
+#include "lib/sflphone_const.h"
 
 //ConfigurationDialog* SFLPhoneView::configDialog;
 
@@ -353,15 +354,15 @@ int SFLPhoneView::phoneNumberTypesDisplayed()
    MapStringInt addressBookSettings = configurationManager.getAddressbookSettings().value();
    int typesDisplayed = 0;
    if(addressBookSettings[ADDRESSBOOK_DISPLAY_BUSINESS]) {
-      typesDisplayed = typesDisplayed | PhoneNumber::Work;
+      typesDisplayed = typesDisplayed | KABC::PhoneNumber::Work;
    }
    
    if(addressBookSettings[ADDRESSBOOK_DISPLAY_MOBILE]) {
-      typesDisplayed = typesDisplayed | PhoneNumber::Cell;
+      typesDisplayed = typesDisplayed | KABC::PhoneNumber::Cell;
    }
    
    if(addressBookSettings[ADDRESSBOOK_DISPLAY_HOME]) {
-      typesDisplayed = typesDisplayed | PhoneNumber::Home;
+      typesDisplayed = typesDisplayed | KABC::PhoneNumber::Home;
    }
    
    return typesDisplayed;

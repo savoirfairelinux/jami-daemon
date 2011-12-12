@@ -1,24 +1,50 @@
+/***************************************************************************
+ *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Author : Emmanuel Lepage Valle <emmanuel.lepage@savoirfairelinux.com >*
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 3 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ **************************************************************************/
 
+//Parent
 #include "ContactDock.h"
 
+//Qt
+#include <QtCore/QDateTime>
 #include <QtGui/QVBoxLayout>
 #include <QtGui/QListWidget>
 #include <QtGui/QTreeWidget>
 #include <QtGui/QHeaderView>
 #include <QtGui/QCheckBox>
-#include <QtCore/QDateTime>
-#include <QSplitter>
-#include <klineedit.h>
-#include <KLocalizedString>
+#include <QtGui/QSplitter>
 #include <QtGui/QLabel>
-#include <QComboBox>
+#include <QtGui/QComboBox>
 
-#include <kicon.h>
+//KDE
+#include <KLineEdit>
+#include <KLocalizedString>
+#include <KIcon>
+
+//SFLPhone
 #include "AkonadiBackend.h"
 #include "ContactItemWidget.h"
-#include "conf/ConfigurationSkeleton.h"
-#include "lib/Call.h"
 #include "SFLPhone.h"
+#include "conf/ConfigurationSkeleton.h"
+
+//SFLPhone library
+#include "lib/Call.h"
 #include "lib/Contact.h"
 
 ///@class QNumericTreeWidgetItem_hist TreeWidget using different sorting criterias

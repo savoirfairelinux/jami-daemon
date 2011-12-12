@@ -19,12 +19,16 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
 
-#include <QDebug>
-#include <KAction>
-#include <QMenu>
-#include <QIcon>
-
+//Parent
 #include "SFLPhoneTray.h"
+
+//Qt
+#include <QtCore/QDebug>
+#include <QtGui/QMenu>
+#include <QtGui/QIcon>
+
+//KDE
+#include <KAction>
 
 ///Constructor
 SFLPhoneTray::SFLPhoneTray(QIcon icon, QWidget *parent)

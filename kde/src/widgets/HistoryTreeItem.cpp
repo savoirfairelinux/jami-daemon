@@ -18,24 +18,31 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
 
+//Parent
+#include "HistoryTreeItem.h"
+
+//Qt
 #include <QtCore/QStringList>
 #include <QtGui/QGridLayout>
 #include <QtGui/QMenu>
+#include <QtGui/QLabel>
+#include <QtGui/QSpacerItem>
 
+//KDE
 #include <KLocale>
 #include <KDebug>
 #include <KAction>
-#include <QtGui/QLabel>
-#include <QtGui/QSpacerItem>
 #include <KIcon>
 
+//SFLPhone library
 #include "lib/sflphone_const.h"
-#include "HistoryTreeItem.h"
-#include "AkonadiBackend.h"
 #include "lib/Contact.h"
+#include "lib/Call.h"
+
+//SFLPhone
+#include "AkonadiBackend.h"
 #include "SFLPhone.h"
 #include "widgets/BookmarkDock.h"
-#include "lib/Call.h"
 
 const char * HistoryTreeItem::callStateIcons[12] = {ICON_INCOMING, ICON_RINGING, ICON_CURRENT, ICON_DIALING, ICON_HOLD, ICON_FAILURE, ICON_BUSY, ICON_TRANSFER, ICON_TRANSF_HOLD, "", "", ICON_CONFERENCE};
 

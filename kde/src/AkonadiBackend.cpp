@@ -1,23 +1,50 @@
+/***************************************************************************
+ *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Author : Emmanuel Lepage Valle <emmanuel.lepage@savoirfairelinux.com >*
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 3 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ **************************************************************************/
+
+//Parent
 #include "AkonadiBackend.h"
+
+//Qt
 #include <QtCore/QTimer>
+#include <QtCore/QObject>
+
+//KDE
+#include <kdialog.h>
 #include <akonadi/control.h>
 #include <akonadi/collectionfilterproxymodel.h>
 #include <akonadi/kmime/messagemodel.h>
-#include <kabc/contactgroup.h>
-#include <kabc/phonenumber.h>
 #include <akonadi/recursiveitemfetchjob.h>
 #include <akonadi/itemfetchscope.h>
 #include <akonadi/collectionfetchjob.h>
 #include <akonadi/collectionfetchscope.h>
 #include <akonadi/contact/contacteditor.h>
-#include <kdialog.h>
-
-#include <QObject>
 #include <akonadi/session.h>
 #include <kabc/addressee.h>
 #include <kabc/addresseelist.h>
+#include <kabc/contactgroup.h>
+#include <kabc/phonenumber.h>
 
+//SFLPhone library
 #include "lib/Contact.h"
+
+//SFLPhone
 #include "SFLPhone.h"
 #include "SFLPhoneView.h"
 

@@ -18,23 +18,30 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
 
-#include <QtCore/QStringList>
-
-#include <klocale.h>
-#include <kdebug.h>
-
-#include "lib/sflphone_const.h"
+//Parent
 #include "CallTreeItem.h"
-#include "lib/Contact.h"
-#include "lib/Call.h"
-#include "AkonadiBackend.h"
 
+//Qt
+#include <QtCore/QStringList>
 #include <QtGui/QWidget>
 #include <QtGui/QLabel>
 #include <QtGui/QSpacerItem>
 #include <QtGui/QHBoxLayout>
 #include <QtGui/QVBoxLayout>
+
+//KDE
+#include <KLocale>
+#include <KDebug>
 #include <KIcon>
+
+//SFLPhone library
+#include "lib/sflphone_const.h"
+#include "lib/Contact.h"
+#include "lib/Call.h"
+
+//SFLPhone
+#include "AkonadiBackend.h"
+
 
 ///Constant
 const char * CallTreeItem::callStateIcons[12] = {ICON_INCOMING, ICON_RINGING, ICON_CURRENT, ICON_DIALING, ICON_HOLD, ICON_FAILURE, ICON_BUSY, ICON_TRANSFER, ICON_TRANSF_HOLD, "", "", ICON_CONFERENCE};

@@ -29,9 +29,6 @@
 #define HISTORYTREE_ITEM_H
 
 #include <QtGui/QWidget>
-#include <QtCore/QList>
-#include <QtCore/QVariant>
-#include <QtCore/QVector>
 
 //SFLPhone
 class Call;

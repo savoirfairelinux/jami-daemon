@@ -1,23 +1,51 @@
+/***************************************************************************
+ *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Author : Emmanuel Lepage Valle <emmanuel.lepage@savoirfairelinux.com >*
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 3 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ **************************************************************************/
+
+//Parent
 #include "HistoryDock.h"
 
-#include <kicon.h>
-#include <klineedit.h>
+//Qt
+#include <QtCore/QDebug>
+#include <QtCore/QString>
+#include <QtCore/QDate>
 #include <QtGui/QTreeWidget>
 #include <QtGui/QComboBox>
 #include <QtGui/QPushButton>
 #include <QtGui/QLabel>
-#include <QDebug>
 #include <QtGui/QTreeWidgetItem>
-#include <QtCore/QString>
-#include <kdatewidget.h>
-#include <QHeaderView>
 #include <QtGui/QCheckBox>
 #include <QtGui/QGridLayout>
-#include <QDate>
+#include <QtGui/QHeaderView>
+
+//KDE
+#include <KIcon>
+#include <KLineEdit>
+#include <KDateWidget>
+
+//SFLPhone
 #include "SFLPhone.h"
 #include "widgets/HistoryTreeItem.h"
-#include "conf/ConfigurationSkeleton.h"
 #include "AkonadiBackend.h"
+#include "conf/ConfigurationSkeleton.h"
+
+//SFLPhone library
 #include "lib/sflphone_const.h"
 
 ///Qt lack official functional sorting algo, so this hack around it

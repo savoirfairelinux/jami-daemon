@@ -18,28 +18,35 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
 
+//Parent
+#include "ContactItemWidget.h"
+
+//Qt
 #include <QtCore/QMimeData>
 #include <QtGui/QApplication>
 #include <QtGui/QClipboard>
 #include <QtGui/QGridLayout>
 #include <QtGui/QMenu>
-
 #include <QtGui/QLabel>
 #include <QtGui/QSpacerItem>
+
+//KDE
 #include <KIcon>
+#include <KLocale>
+#include <KDebug>
+#include <KAction>
 
-#include <lib/Contact.h>
-
-#include <klocale.h>
-#include <kdebug.h>
+//System
 #include <unistd.h>
-#include <kaction.h>
 
-#include "lib/sflphone_const.h"
-#include "ContactItemWidget.h"
+//SFLPhone
 #include "AkonadiBackend.h"
 #include "widgets/BookmarkDock.h"
 #include "SFLPhone.h"
+
+//SFLPhone library
+#include "lib/Contact.h"
+#include "lib/sflphone_const.h"
 
 ///Constructor
 ContactItemWidget::ContactItemWidget(QWidget *parent)

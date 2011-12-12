@@ -18,12 +18,15 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
- 
+
+//Parent
 #include "AccountItemWidget.h"
 
+//Qt
 #include <QtGui/QHBoxLayout>
-#include <QDebug>
+#include <QtCore/QDebug>
 
+//SFLPhone library
 #include "lib/sflphone_const.h"
 
 ///Constructor

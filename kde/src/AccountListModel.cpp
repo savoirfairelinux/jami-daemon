@@ -18,11 +18,18 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
+
+//Parent
 #include "AccountListModel.h"
 
+//SFLPhone library
 #include "lib/sflphone_const.h"
+
+//SFLPhone
 #include "conf/ConfigAccountList.h"
-#include <QDebug>
+
+//Qt
+#include <QtCore/QDebug>
 
 ///Constructor
 AccountListModel::AccountListModel(QObject *parent)

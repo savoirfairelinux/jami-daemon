@@ -18,9 +18,12 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-  
+
+//Parent
 #include "ActionSetAccountFirst.h"
-#include <klocale.h>
+
+//KDE
+#include <KLocale>
 
 ///Constrctor
 ActionSetAccountFirst::ActionSetAccountFirst(Account* account, QObject *parent)
