@@ -17,7 +17,6 @@ SFLPhoneEngine::SFLPhoneEngine(QObject* parent, const QVariantList& args)
    m_pModel->initCall();
    m_pModel->initHistory();
    
-   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
 
    connect(m_pModel              , SIGNAL( callStateChanged(Call*))  , this , SLOT(callStateChangedSignal(Call*)  ));

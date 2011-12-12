@@ -333,11 +333,11 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
    spinBox_ni_local_port->setValue(account->getAccountDetail(LOCAL_PORT).toInt());
    comboBox_ni_local_address->setCurrentIndex(comboBox_ni_local_address->findText(account->getAccountDetail(LOCAL_INTERFACE))); //TODO need to load the list first
 
-   QStringList activeCodecList = configurationManager.getActiveAudioCodecList(account->getAccountDetail(ACCOUNT_ID));
+   QVector<int> activeCodecList = configurationManager.getActiveAudioCodecList(account->getAccountDetail(ACCOUNT_ID));
    keditlistbox_codec->clear();
-   foreach (QString aCodec, activeCodecList) {
+   foreach (int aCodec, activeCodecList) {
       foreach (StringHash _aCodec, codecList) {
-;         if (_aCodec["id"] == aCodec)
+         if (_aCodec["id"] == QString::number(aCodec))
             keditlistbox_codec->insertItem(_aCodec["alias"]);
       }
    }
